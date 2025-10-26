@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<pipeline:Pipline
+    xmi:version="2.0"
+    xmlns:xmi="http://www.omg.org/XMI"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xmlns:ecore="http://www.eclipse.org/emf/2002/Ecore"
+    xmlns:emfattacherconfig="https://civitas.org/handler/emf/attacher/config/1.0.0"
+    xmlns:minioconfig="https://civitas.org/minio/config/1.0.0"
+    xmlns:pipeline="http://civitas.org/pipline/model/1.0"
+    id="example">
+  <steps xsi:type="emfattacherconfig:EMFAttacherHandlerConfig"
+      id="plant_id_attacher"
+      pid="plant_id_attacher"
+      inputs="operating_data_source"
+      repoTarget="(repo_id=inmem)">
+    <targetEClassUri
+        href="../models/meter-source.ecore#//IntermediatePlant"/>
+    <incomingEClassUri
+        href="../models/meter-source.ecore#//OperatingData"/>
+    <targetReferenceUri
+        href="../models/meter-source.ecore#//IntermediatePlant/operatingData"/>
+    <foreignKeyFeatureUri
+        xsi:type="ecore:EAttribute"
+        href="../models/meter-source.ecore#//OperatingData/plantId"/>
+  </steps>
+  <steps xsi:type="minioconfig:MinIOCSVDownloadServiceConfig"
+      id="operating_data_source"
+      pid="operating_data_source"
+      bucketname="dummy-data"
+      outputs="plant_id_attacher"
+      clientTarget="minio_client">
+    
+  </steps>
+  <components
+      xsi:type="minioconfig:MinIOClientConfig"
+      pid="minio_client"
+      accessKey="minio"
+      secretKey="minio123"/>
+</pipeline:Pipline>

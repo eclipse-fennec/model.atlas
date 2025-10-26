@@ -1,0 +1,31 @@
+include:
+  - ./../civitas-dummy-generator/docker-compose.yml
+services:
+  model-atlas:
+    image: devel.data-in-motion.biz:6000/civitas/modelatlas:latest
+    ports:
+      - "8080:8080"
+    volumes:
+     - ./../workspace:/opt/modelatlas/workspace
+    depends_on:
+     - postgres
+     - minio
+    env_file:
+      - ../civitas-dummy-generator/.env
+    environment:
+      - org.civitas.model.atlas.workspace=/opt/modelatlas/workspace
+
+  data-atlas:
+    image: devel.data-in-motion.biz:6000/civitas/dataatlas:latest
+    volumes:
+      - ./../workspace:/opt/dataatlas/workspace
+    depends_on:
+      - postgres
+      - minio
+    env_file:
+      - ../civitas-dummy-generator/.env
+    environment:
+      - org.civitas.model.atlas.workspace=/opt/dataatlas/workspace
+
+
+

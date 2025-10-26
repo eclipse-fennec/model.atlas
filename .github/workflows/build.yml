@@ -1,0 +1,39 @@
+name: CI Build
+
+on:
+  push:
+    branches: [ "*" ]
+  pull_request:
+    branches: [ "*" ]
+
+env:
+  LC_ALL: en_US.UTF-8
+  GRADLE_OPTS: >-
+    -Dorg.gradle.parallel=true
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  build:
+    name: Gradle Build
+    runs-on: ubuntu-latest
+    steps:
+    - name: Git Checkout
+      uses: actions/checkout@v4
+    - name: Gradle Wrapper Validation
+      uses: gradle/actions/wrapper-validation@v4
+    - name: Set up Java
+      uses: actions/setup-java@v4
+      with:
+        distribution: "temurin"
+        cache: "gradle"
+        java-version: 21
+    - name: Grant execute permission for gradlew
+      run: chmod +x ./gradlew
+    - name: Gradle version
+      run: ./gradlew --no-daemon --version
+    - name: Build with Gradle
+      run: ./gradlew build --info
+

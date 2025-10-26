@@ -1,0 +1,84 @@
+Bundle-Developers: \
+    jalbert; \
+        email="j.albert@datainmotion.com"; \
+        name="Juergen Albert"; \
+        organization="Data In Motion"; \
+        organizationUrl="https://datainmotion.com"; \
+        roles="architect,developer", \
+    mhoffmann; \
+        name="Mark Hoffmann"; \
+        email="m.hoffmann@datainmotion.com"; \
+        url="https://www.datainmotion.com"; \
+        organization="Data In Motion"; \
+        organizationUrl="https://www.datainmotion.com"; \
+        roles="developer,architect",\
+    isalvadori; \
+        name="Ilenia Salvadori"; \
+        email="i.salvadori@datainmotion.com"; \
+        url="https://www.datainmotion.com"; \
+        organization="Data In Motion"; \
+        organizationUrl="https://www.datainmotion.com"; \
+        roles="developer",\
+    ggrune; \
+        name="Guido Grune"; \
+        email="g.grune@datainmotion.com"; \
+        url="https://www.datainmotion.com"; \
+        organization="Data In Motion"; \
+        organizationUrl="https://www.datainmotion.com"; \
+        roles="developer"
+
+# We include setups for
+#	OSGi-Test Support - gecko-osgitest
+#	DIMC Github-Configuration - gecko-dimc
+#	Jacoco Support - gecko-jacoco
+-library: \
+	fennec,\
+	fennecTest,\
+	geckoEMF,\
+	fennecQVT,\
+	fennecPersistence,\
+	geckoEMFUtil,\
+	geckoMessaging,\
+	geckoEMFRepository,\
+	jakartaREST
+
+# Needed because we enabled library 'gecko-dimc'
+# Activate baselining
+github-project: model.atlas
+github-orga: eclipse-fennec
+dimcBaselining: true
+base-version: 0.0.1
+maven-central: true
+
+# Maven Central Group-Id
+# For Geckoprojects the groupid must start with org.geckoprojects
+-groupid: org.eclipse.fennec.model.atlas
+
+javac.source: 21
+javac.target: 21
+
+-require-bnd "(version>=7.1.0)"
+
+#-jpms-module-info:
+
+-plugin.2.Central: \
+    aQute.bnd.repository.maven.provider.MavenBndRepository; \
+        snapshotUrl="https://oss.sonatype.org/content/repositories/snapshots/,https://central.sonatype.com/repository/maven-snapshots/"; \
+        releaseUrl=https://repo.maven.apache.org/maven2/; \
+        index=${.}/central.mvn; \
+        readOnly=true; \
+        poll.time=-1; \
+        name="Central"
+        
+-plugin.0.Local: \
+	aQute.bnd.deployer.repository.LocalIndexedRepo; \
+		name = Local; \
+		pretty = true; \
+		local = ${build}/local
+
+-plugin.1.Temp: \
+	aQute.bnd.deployer.repository.LocalIndexedRepo; \
+		name = Temp; \
+		pretty = true; \
+		local = ${build}/cache/temp
+		

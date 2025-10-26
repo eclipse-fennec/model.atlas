@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="ASCII"?>
+<pipeline:Pipeline xmi:version="2.0" xmlns:xmi="http://www.omg.org/XMI" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:mqtthandler="http://civitas.org/mqtt/handler/1.0" xmlns:mqttreceiver="http://civitas.org/mqtt/receiver/1.0" xmlns:pipeline="http://civitas.org/pipline/model/1.0" id="MQTT_Example_Pipeline">
+  <steps xsi:type="mqttreceiver:MqttReceiverConfig" pid="SensorReadingReceiver" id="SensorReadingReceiver" outputs="MQTTHandler" mqttTopic="buildings/#" mqttServiceTarget="(id=local)">
+    <payloadEclassuri href="http://models.civitas.org/models/building/sensor/1.0#//SensorReading"/>
+  </steps>
+  <steps xsi:type="mqtthandler:MqttEventHandlerConfig" pid="MQTTHandler" id="MQTTHandler" inputs="SensorReadingReceiver" mqttServiceTarget="(id=local)" contentType="application/xmi">
+    <mqttTopics>other/buildings/new</mqttTopics>
+  </steps>
+</pipeline:Pipeline>

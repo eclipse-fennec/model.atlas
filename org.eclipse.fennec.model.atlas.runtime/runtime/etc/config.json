@@ -1,0 +1,6 @@
+{
+  ":configurator:resource-version": 1,
+  ":configurator:symbolicname" : "org.civitas.meter.runtime",
+  ":configurator:version" : "0.0.0"
+
+}

@@ -1,0 +1,26 @@
+/*
+ * build Gradle build script
+ */
+import aQute.bnd.gradle.Export
+
+task prepareDocker(){
+	def stageDir = file('content')
+	def runtimeDir = new File(stageDir, 'runtime')
+	doFirst {
+		stageDir.deleteDir()
+    }
+    doLast {
+		println "Prepare Docker build"
+		stageDir.mkdirs()
+	     // copy all necessary files to  build/docker/ dir
+    	copy {
+	        from new File("../../org.eclipse.fennec.model.atlas.runtime/generated/distributions/executable/modelatlas.runtime_docker.jar")
+	        into stageDir
+	        rename("modelatlas.runtime_docker.jar", "org.eclipse.fennec.model.atlas.runtime.jar")
+	    }
+	    copy {
+	        from new File("../../org.eclipse.fennec.model.atlas.runtime/runtime/")
+	        into new File(stageDir, "runtime")
+	    }
+    }
+}

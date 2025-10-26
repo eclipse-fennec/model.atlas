@@ -1,0 +1,4 @@
+-include: META-INF/MANIFEST.MF
+-library: enable-emf
+-buildpath: org.eclipse.core.runtime
+-includeresource: cache=cache

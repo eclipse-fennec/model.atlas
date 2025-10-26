@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="ASCII"?>
+<pipeline:Pipeline xmi:version="2.0" xmlns:xmi="http://www.omg.org/XMI" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:ecore="http://www.eclipse.org/emf/2002/Ecore" xmlns:emfattacherconfig="https://civitas.org/handler/emf/attacher/config/1.0.0" xmlns:mqtthandler="http://civitas.org/mqtt/handler/1.0" xmlns:mqttreceiver="http://civitas.org/mqtt/receiver/1.0" xmlns:pipeline="http://civitas.org/pipline/model/1.0" xmlns:qvthandler="http://civitas.org/handler/qvt/1.0" xmlns:scheduledloaderconfig="https://civitas.org/db/loader/scheduledloader/config/1.0.0" xmlns:validationhandlerconfig="https://civitas.org/handler/validation/config/1.0" id="GLT_Pipeline">
+  <steps xsi:type="mqttreceiver:MqttReceiverConfig" pid="SensorReadingReceiver" id="SensorReadingReceiver" outputs="sensor_reading_attacher" mqttTopic="buildings/#" mqttServiceTarget="(id=local)">
+    <payloadEclassuri href="http://models.civitas.org/models/building/sensor/1.0#//SensorReading"/>
+  </steps>
+  <steps xsi:type="scheduledloaderconfig:ScheduledLoaderConfig" pid="building-glt" id="building-glt" outputs="reading_attacher" repoTarget="(repo_id=assets)" loaderName="building-glt">
+    <package href="https://civitas.org/glt/1.0.0#/"/>
+    <eclass href="https://civitas.org/glt/1.0.0#//Building"/>
+  </steps>
+  <steps xsi:type="emfattacherconfig:EMFAttacherHandlerConfig" pid="reading_attacher" id="reading_attacher" inputs="building-glt" repoTarget="(repo_id=inmem)">
+    <targetEClassUri href="https://civitas.org/glt/intermediate/1.0.0#//BuildingSensorReading"/>
+    <incomingEClassUri href="https://civitas.org/glt/1.0.0#//Building"/>
+    <targetReferenceUri href="https://civitas.org/glt/intermediate/1.0.0#//BuildingSensorReading/building"/>
+    <foreignKeyFeatureUri xsi:type="ecore:EAttribute" href="https://civitas.org/glt/1.0.0#//Building/id"/>
+  </steps>
+  <steps xsi:type="emfattacherconfig:EMFAttacherHandlerConfig" pid="sensor_reading_attacher" id="sensor_reading_attacher" outputs="sensor_validation" inputs="SensorReadingReceiver" repoTarget="(repo_id=inmem)">
+    <targetEClassUri href="https://civitas.org/glt/intermediate/1.0.0#//BuildingSensorReading"/>
+    <incomingEClassUri href="http://models.civitas.org/models/building/sensor/1.0#//SensorReading"/>
+    <targetReferenceUri href="https://civitas.org/glt/intermediate/1.0.0#//BuildingSensorReading/sensorReading"/>
+    <foreignKeyFeatureUri xsi:type="ecore:EAttribute" href="http://models.civitas.org/models/building/sensor/1.0#//SensorReading/buildingId"/>
+  </steps>
+  <steps xsi:type="validationhandlerconfig:ValidationHandlerConfig" pid="sensor_validation" id="sensor_validation" outputs="simple_alarm_QVT" inputs="sensor_reading_attacher" validationType="BELOW_THRESHOLD" threshold="18.0">
+    <incomingEClassUri href="https://civitas.org/glt/intermediate/1.0.0#//BuildingSensorReading"/>
+    <referenceUriToBeValidated href="https://civitas.org/glt/intermediate/1.0.0#//BuildingSensorReading/sensorReading"/>
+    <attributeUriToBeValidated href="http://models.civitas.org/models/building/sensor/1.0#//SensorReading/value"/>
+  </steps>
+  <steps xsi:type="qvthandler:QVTHandlerConfig" pid="simple_alarm_QVT" id="simple_alarm_QVT" outputs="AlarmMQTTHandler" inputs="sensor_validation" trafo="(transformator.id=buildingSensorReadingToSimpleAlarmQVT)">
+    <eclassuri href="https://civitas.org/glt/intermediate/1.0.0#//BuildingSensorReading"/>
+  </steps>
+  <steps xsi:type="mqtthandler:MqttEventHandlerConfig" pid="AlarmMQTTHandler" id="AlarmMQTTHandler" inputs="simple_alarm_QVT" mqttServiceTarget="(id=local)" contentType="application/xmi">
+    <mqttTopics>glt/alarm</mqttTopics>
+  </steps>
+</pipeline:Pipeline>

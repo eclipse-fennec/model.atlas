@@ -1,0 +1,55 @@
+/**
+ * Copyright (c) 2012 - 2025 Data In Motion and others.
+ * All rights reserved. 
+ * 
+ * This program and the accompanying materials are made
+ * available under the terms of the Eclipse Public License 2.0
+ * which is available at https://www.eclipse.org/legal/epl-2.0/
+ *
+ * SPDX-License-Identifier: EPL-2.0
+ * 
+ * Contributors:
+ *     Data In Motion - initial API and implementation
+ */
+modeltype ECORE "strict" uses ecore('http://www.eclipse.org/emf/2002/Ecore');
+modeltype SOURCE uses "https://civitas.org/glt/1.0.0";
+modeltype SENSOR uses "http://models.civitas.org/models/building/sensor/1.0";
+modeltype INTERMEDIATE uses "https://civitas.org/glt/intermediate/1.0.0";
+modeltype TARGET uses "https://civitas.org/alarm-notification/1.0.0";
+
+
+transformation BuildingSensorReadingToSimpleAlarm(in buildingSensorReading : INTERMEDIATE, out simpleAlarm : TARGET);
+
+main() {
+	buildingSensorReading.rootObjects()[INTERMEDIATE::BuildingSensorReading] -> map toSimpleAlarm(); 
+}
+
+mapping INTERMEDIATE::BuildingSensorReading::toSimpleAlarm(): TARGET::SimpleAlarm {
+	
+	alarmId := self.buildingId.toString().concat(self.sensorReading.timestamp.toString());
+	alarmReceiver += self.building.contacts->map toContact();
+	alarmTriggerEvent := self.sensorReading.map toSensorReading();
+	alarmTriggeringBuilder := self.building.map toBuilding();
+}
+
+mapping SOURCE::Contact::toContact(): SOURCE::Contact {
+	buildingId := self.buildingId;
+	firstName := self.firstName;
+	lastName := self.lastName;
+	role := self.role;
+	email := self.email;
+	phoneNumber := self.phoneNumber;
+}
+
+mapping SOURCE::Building::toBuilding(): SOURCE::Building {
+	id := self.id;
+	city := self.city;
+	zip := self.zip;
+	street := self.street;
+}
+
+mapping SENSOR::SensorReading::toSensorReading(): SENSOR::SensorReading {
+	timestamp := self.timestamp;
+	buildingId := self.buildingId;
+	value := self.value;
+}

@@ -1,0 +1,14 @@
+-include: modelatlas.runtime_base.bndrun
+
+-runbundles.local: org.eclipse.fennec.model.atlas.runtime.config.local
+
+
+-runproperties.local: \
+	base.path=${.},\
+	logback.configurationFile=file:${.}/runtime/etc/logback.xml,\
+	gecko.log.dir=${.}/runtime/logs,\
+	org.apache.felix.configadmin.plugin.interpolation.secretsdir=${.}/runtime/secrets,\
+	data=${.}/data/
+	
+-runtrace: true
+-resolve: never

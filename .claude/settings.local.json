@@ -1,0 +1,16 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(./gradlew:*)",
+      "WebFetch(domain:docs.osgi.org)",
+      "Bash(export JAVA_HOME=n:/tools/java/jdk-21.0.2)",
+      "Bash(export PATH=$JAVA_HOME/bin:$PATH)",
+      "Bash(mkdir:*)",
+      "Bash(for file in \"n:/git/eclipse/fennec/model.atlas/org.eclipse.fennec.model.atlas.model.documentation.provider/src/de/jena/mdo/model/documentation/provider/\"*.java)",
+      "Bash(do sed -i 's/package de\\.jena\\.mdo\\.model\\.documentation\\.provider;/package org.eclipse.fennec.model.atlas.model.documentation.provider;/g' \"$file\")",
+      "Bash(done)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

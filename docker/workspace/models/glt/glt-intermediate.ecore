@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ecore:EPackage xmi:version="2.0" xmlns:xmi="http://www.omg.org/XMI" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xmlns:ecore="http://www.eclipse.org/emf/2002/Ecore" name="gltintermediate" nsURI="https://civitas.org/glt/intermediate/1.0.0"
+    nsPrefix="gltintermediate">
+  <eAnnotations source="Version">
+    <details key="value" value="1.0"/>
+  </eAnnotations>
+  <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+    <details key="complianceLevel" value="17.0"/>
+    <details key="oSGiCompatible" value="true"/>
+    <details key="basePackage" value="org.civitas.glt.intermediate.model"/>
+    <details key="resource" value="XMI"/>
+  </eAnnotations>
+  <eClassifiers xsi:type="ecore:EClass" name="BuildingSensorReading">
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="buildingId" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EIntegerObject"
+        iD="true"/>
+    <eStructuralFeatures xsi:type="ecore:EReference" name="building" eType="ecore:EClass glt.ecore#//Building"
+        containment="true"/>
+    <eStructuralFeatures xsi:type="ecore:EReference" name="sensorReading" eType="ecore:EClass building_sensor.ecore#//SensorReading"
+        containment="true"/>
+  </eClassifiers>
+</ecore:EPackage>

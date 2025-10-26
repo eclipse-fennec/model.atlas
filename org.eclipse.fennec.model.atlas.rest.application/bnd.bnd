@@ -1,0 +1,28 @@
+-library: enable-emf
+
+-buildpath: \
+	jakarta.ws.rs-api;version='2.1.6',\
+	org.osgi.service.component.annotations,\
+	org.gecko.emf.util.annotations,\
+	org.osgi.service.cm,\
+	io.swagger.core.v3.swagger-core.jakarta;version=latest,\
+	io.swagger.core.v3.swagger-jaxrs2.jakarta;version=latest,\
+	io.swagger.core.v3.swagger-annotations,\
+	io.swagger.core.v3.swagger-integration.jakarta,\
+	io.swagger.core.v3.swagger-models.jakarta,\
+	com.fasterxml.jackson.core.jackson-core,\
+	com.fasterxml.jackson.core.jackson-databind,\
+	org.osgi.service.http.whiteboard,\
+	org.gecko.emf.json,\
+	org.gecko.emf.repository.api,\
+	org.gecko.emf.mongo.api,\
+	org.gecko.emf.util.documentation.generators.apis,\
+	org.eclipse.fennec.model.atlas.model.documentation.provider;version=latest,\
+	org.eclipse.fennec.model.atlas.mediatypes.api,\
+    org.eclipse.fennec.model.atlas.runtime,\
+	org.osgi.service.jakartars,\
+	org.apache.felix.http.servlet-api
+
+-includeresource.swagger: \
+	swagger-api=@https://github.com/swagger-api/swagger-ui/archive/refs/tags/v3.52.3.zip!/swagger-ui-3.52.3/dist/(*);rename:=$1,\
+	swagger-api=swagger

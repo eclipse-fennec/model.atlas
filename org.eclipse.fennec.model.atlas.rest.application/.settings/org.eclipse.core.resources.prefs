@@ -1,0 +1,11 @@
+eclipse.preferences.version=1
+encoding//.settings/org.eclipse.core.resources.prefs=windows-1252
+encoding//.settings/org.eclipse.jdt.ui.prefs=windows-1252
+encoding//src/de/jena/mdo/rest/application/resource/AllModelsResource.java=UTF-8
+encoding//src/de/jena/mdo/rest/application/resource/DocumentationResource.java=UTF-8
+encoding//src/de/jena/mdo/rest/application/resource/ModelResource.java=UTF-8
+encoding//src/test/component/Example.java=UTF-8
+encoding//test/test/component/ExampleTest.java=UTF-8
+encoding/<project>=UTF-8
+encoding/bnd.bnd=UTF-8
+encoding/launch.bndrun=UTF-8

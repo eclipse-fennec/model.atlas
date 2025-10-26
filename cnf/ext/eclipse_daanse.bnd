@@ -1,0 +1,7 @@
+-plugin.7.daanse: \
+    aQute.bnd.repository.maven.provider.MavenBndRepository;\
+        releaseUrl          = "https://repo.maven.apache.org/maven2/,https://devel.data-in-motion.biz/nexus/repository/dim-release/"; \
+        snapshotUrl         = "https://devel.data-in-motion.biz/nexus/repository/dim-snapshot/, https://central.sonatype.com/repository/maven-snapshots/";\
+        index               = "${.}/daanse.maven" ;\
+        readOnly            = true;\
+        name="Eclipse DAANSE"

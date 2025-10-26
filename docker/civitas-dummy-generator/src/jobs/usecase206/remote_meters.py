@@ -1,0 +1,77 @@
+"""Source System #3: Remote Meters Database job for Use Case #206."""
+
+from src.jobs.base import DatabaseJob
+from src.data_generators.meter_data import meter_data_generator
+from src.clients.postgres_client import postgres_client
+from src.config.settings import settings
+
+
+class RemoteMetersJob(DatabaseJob):
+    """Job for generating and inserting remote meter readings to PostgreSQL."""
+    
+    def __init__(self):
+        super().__init__(
+            name="remote_meters",
+            description="Generate remote meter readings and insert to PostgreSQL"
+        )
+        self.database = settings.remote_meters_db
+    
+    def execute(self) -> bool:
+        """Execute the Remote Meters job."""
+        try:
+            # Get all plant IDs for meters
+            plant_ids = meter_data_generator.get_all_plant_ids_for_meters()
+            
+            if not plant_ids:
+                self.logger.error("No plant IDs found for meters")
+                return False
+            
+            # Ensure meters exist for all plant IDs
+            meter_ids = []
+            for plant_id in plant_ids:
+                try:
+                    meter_id = postgres_client.create_meter_if_not_exists(self.database, plant_id)
+                    meter_ids.append((meter_id, plant_id))
+                except Exception as e:
+                    self.logger.error(f"Failed to create/get meter for plant {plant_id}: {e}")
+                    continue
+            
+            if not meter_ids:
+                self.logger.error("No meters available for readings")
+                return False
+            
+            # Generate and insert meter readings
+            successful_inserts = 0
+            for meter_id, plant_id in meter_ids:
+                try:
+                    # Generate reading for this plant
+                    reading = meter_data_generator.generate_single_reading(plant_id)
+                    
+                    # Insert reading
+                    result = postgres_client.insert_meter_reading(
+                        self.database,
+                        meter_id,
+                        reading['timestamp'],
+                        reading['value']
+                    )
+                    
+                    if result:
+                        successful_inserts += 1
+                        self.logger.debug(f"Inserted reading for meter {meter_id}: {reading['value']}")
+                    
+                except Exception as e:
+                    self.logger.error(f"Failed to insert reading for meter {meter_id}: {e}")
+                    continue
+            
+            success_rate = successful_inserts / len(meter_ids) if meter_ids else 0
+            self.logger.info(f"Remote meters job completed: {successful_inserts}/{len(meter_ids)} readings inserted ({success_rate:.1%})")
+            
+            return success_rate > 0.8  # Consider successful if >80% of readings inserted
+            
+        except Exception as e:
+            self.logger.error(f"Remote Meters job failed: {e}")
+            return False
+
+
+# Global job instance
+remote_meters_job = RemoteMetersJob()

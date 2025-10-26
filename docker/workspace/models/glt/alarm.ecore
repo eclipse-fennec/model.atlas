@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ecore:EPackage xmi:version="2.0" xmlns:xmi="http://www.omg.org/XMI" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xmlns:ecore="http://www.eclipse.org/emf/2002/Ecore" name="calarm" nsURI="https://civitas.org/alarm-notification/1.0.0"
+    nsPrefix="alarm">
+  <eAnnotations source="Version">
+    <details key="value" value="1.0"/>
+  </eAnnotations>
+  <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+    <details key="complianceLevel" value="17.0"/>
+    <details key="oSGiCompatible" value="true"/>
+    <details key="basePackage" value="org.civitas.prototype.model"/>
+    <details key="resource" value="XMI"/>
+  </eAnnotations>
+  <eClassifiers xsi:type="ecore:EClass" name="Alarm">
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="alarmId" lowerBound="1"
+        eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString" iD="true"/>
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="occurance" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EDate"/>
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="alarmation" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EDate"/>
+    <eStructuralFeatures xsi:type="ecore:EReference" name="assets" upperBound="-1"
+        eType="ecore:EClass civitas-base.ecore#//Asset"/>
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="severity" eType="#//SeverityType"/>
+    <eStructuralFeatures xsi:type="ecore:EReference" name="scope" upperBound="-1"
+        eType="ecore:EClass civitas-base.ecore#//AssetScope"/>
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="notificationType" eType="#//NotificationType"/>
+  </eClassifiers>
+  <eClassifiers xsi:type="ecore:EEnum" name="SeverityType">
+    <eLiterals name="INFO"/>
+    <eLiterals name="WARNING" value="1"/>
+    <eLiterals name="SEVERE" value="1"/>
+    <eLiterals name="CRITICAL" value="2"/>
+  </eClassifiers>
+  <eClassifiers xsi:type="ecore:EEnum" name="NotificationType">
+    <eLiterals name="EMAIL"/>
+    <eLiterals name="PHONE" value="1"/>
+    <eLiterals name="SMS" value="2"/>
+    <eLiterals name="PUSH" value="3"/>
+    <eLiterals name="POLICE" value="10"/>
+    <eLiterals name="FIREDEPT" value="11"/>
+    <eLiterals name="MEDEMERGENCY" value="12"/>
+  </eClassifiers>
+  <eClassifiers xsi:type="ecore:EClass" name="SimpleAlarm">
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="alarmId" lowerBound="1"
+        eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString" iD="true"/>
+    <eStructuralFeatures xsi:type="ecore:EReference" name="alarmReceiver" upperBound="-1"
+        eType="ecore:EClass glt.ecore#//Contact"
+        containment="true"/>
+    <eStructuralFeatures xsi:type="ecore:EReference" name="alarmTriggerEvent" eType="ecore:EClass building_sensor.ecore#//SensorReading"
+        containment="true"/>
+    <eStructuralFeatures xsi:type="ecore:EReference" name="alarmTriggeringBuilder"
+        eType="ecore:EClass glt.ecore#//Building"
+        containment="true"/>
+  </eClassifiers>
+</ecore:EPackage>

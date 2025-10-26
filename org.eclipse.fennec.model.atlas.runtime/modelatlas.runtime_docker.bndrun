@@ -1,0 +1,9 @@
+-include: modelatlas.runtime_base.bndrun
+
+-runbundles.docker: org.eclipse.fennec.model.atlas.runtime.config.docker
+-runproperties.docker: \
+	base.path=${.},\
+	logback.configurationFile=file:/opt/meter/runtime/etc/logback.xml,\
+	gecko.log.dir=/opt/meter/runtime/logs,\
+	org.apache.felix.configadmin.plugin.interpolation.secretsdir=${.}/runtime/secrets,\
+	data=${.}/data/
