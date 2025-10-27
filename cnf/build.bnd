@@ -36,7 +36,6 @@ Bundle-Developers: \
 	fennecTest,\
 	geckoEMF,\
 	fennecQVT,\
-	fennecPersistence,\
 	geckoEMFUtil,\
 	geckoMessaging,\
 	geckoEMFRepository,\

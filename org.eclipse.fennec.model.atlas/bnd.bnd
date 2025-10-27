@@ -5,15 +5,12 @@
 	org.osgi.service.component.annotations,\
 	org.osgi.service.cm,\
 	org.eclipse.daanse.io.fs.watcher.api,\
-	org.eclipse.daanse.jdbc.datasource.metatype.h2,\
 	org.eclipse.daanse.jdbc.db.importer.csv,\
-	org.eclipse.fennec.persistence.orm;version=latest,\
 	org.osgi.util.tracker,\
 	org.osgi.util.promise,\
 	org.gecko.emf.util.documentation.generators.apis,\
 	org.apache.felix.gogo.runtime,\
 	org.apache.felix.framework;version='7.0.5',\
-	org.eclipse.fennec.persistence,\
 	org.apache.felix.scr;version='2.2.12',\
 	org.eclipse.fennec.codec,\
 	org.eclipse.fennec.codec.constants,\

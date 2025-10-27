@@ -181,7 +181,6 @@ org.antlr:antlr4-runtime:4.7.1
 org.reactivestreams:reactive-streams:1.0.2
 com.fasterxml.jackson.datatype:jackson-datatype-jdk8:2.18.0
 javax.websocket:javax.websocket-api:1.1
-biz.aQute:biz.aQute.gogo.commands.provider:1.11.0-SNAPSHOT
 org.apache.felix:org.apache.felix.scr:2.2.14
 
 #XSD
@@ -189,3 +188,4 @@ org.apache.felix:org.apache.felix.scr:2.2.14
 org.eclipse.emf:org.eclipse.emf.ecore:2.40.0
 org.eclipse.emf:org.eclipse.emf.ecore.xmi:2.39.0
 
+#biz.aQute:biz.aQute.gogo.commands.provider:1.11.0-SNAPSHOT
