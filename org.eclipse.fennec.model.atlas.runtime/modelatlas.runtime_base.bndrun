@@ -104,8 +104,8 @@ slf4j.runpath:  \
 	org.apache.felix.metatype;version='[1.2.4,1.2.5)';startlevel=1035,\
 	org.apache.felix.scr;version='[2.2.14,2.2.15)';startlevel=1036,\
 	org.apache.servicemix.bundles.poi;version='[5.2.2,5.2.3)';startlevel=1037,\
-	org.eclipse.emf.common;version='[2.43.0,2.43.1)';startlevel=1038,\
-	org.eclipse.emf.ecore;version='[2.40.0,2.40.1)';startlevel=1039,\
+	org.eclipse.emf.common;version='[2.44.0,2.44.1)';startlevel=1038,\
+	org.eclipse.emf.ecore;version='[2.41.0,2.41.1)';startlevel=1039,\
 	org.eclipse.emf.ecore.xmi;version='[2.39.0,2.39.1)';startlevel=1040,\
 	org.eclipse.emfcloud.emfjson-jackson;version='[2.2.0,2.2.1)';startlevel=1041,\
 	org.eclipse.fennec.codec;version='[1.0.0,1.0.1)';startlevel=1042,\
@@ -127,7 +127,7 @@ slf4j.runpath:  \
 	org.eclipse.osgitech.rest.servlet.whiteboard;version='[1.2.2,1.2.3)';startlevel=1058,\
 	org.eclipse.osgitech.rest.sse;version='[1.2.2,1.2.3)';startlevel=1059,\
 	org.eclipse.parsson.jakarta.json;version='[1.1.7,1.1.8)';startlevel=1060,\
-	org.eclipse.xsd;version=snapshot;startlevel=1061,\
+	org.eclipse.xsd;version='[2.22.0,2.22.1)';startlevel=1061,\
 	org.eclipse.xtext.xbase.lib;version='[2.29.0,2.29.1)';startlevel=1062,\
 	org.gecko.com.github.miachm.sods;version='[1.6.2,1.6.3)';startlevel=1063,\
 	org.gecko.emf.bson;version='[1.2.6,1.2.7)';startlevel=1064,\

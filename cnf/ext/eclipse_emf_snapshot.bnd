@@ -1,0 +1,7 @@
+-plugin.eclipse.emf: \
+    aQute.bnd.repository.maven.provider.MavenBndRepository;\
+        releaseUrl          = "https://repo.maven.apache.org/maven2/"; \
+        snapshotUrl         = "https://repo.eclipse.org/content/repositories/emf/";\
+        index               = "${.}/emf.maven" ;\
+        readOnly            = true;\
+        name                = "Eclipse EMF Snapshot"
