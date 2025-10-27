@@ -51,6 +51,7 @@ header:
     - '**/*.basic'
     - '**/.classpath'
     - '**/*.sha'
+    - '**/*.uml'
     - 'LICENSE'
     - 'Jenkinsfile'
     - 'NOTICE'
