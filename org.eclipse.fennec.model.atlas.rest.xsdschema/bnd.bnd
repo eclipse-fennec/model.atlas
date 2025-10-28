@@ -6,4 +6,5 @@
 	org.gecko.emf.rest.jakartars;version=latest,\
 	org.eclipse.fennec.codec.constants,\
 	org.osgi.service.jakartars,\
-	org.eclipse.xsd;version=latest
+	org.eclipse.xsd;version=latest,\
+	org.osgi.service.component

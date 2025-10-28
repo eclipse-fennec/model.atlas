@@ -19,9 +19,10 @@
 	org.gecko.emf.util.documentation.generators.apis,\
 	org.eclipse.fennec.model.atlas.model.documentation.provider;version=latest,\
 	org.eclipse.fennec.model.atlas.mediatypes.api,\
-    org.eclipse.fennec.model.atlas.runtime,\
+	org.eclipse.fennec.model.atlas.runtime,\
 	org.osgi.service.jakartars,\
-	org.apache.felix.http.servlet-api
+	org.apache.felix.http.servlet-api,\
+	org.osgi.service.component
 
 #-includeresource.swagger: \
 #	swagger-api=@https://github.com/swagger-api/swagger-ui/archive/refs/tags/v3.52.3.zip!/swagger-ui-3.52.3/dist/(*);rename:=$1,\
