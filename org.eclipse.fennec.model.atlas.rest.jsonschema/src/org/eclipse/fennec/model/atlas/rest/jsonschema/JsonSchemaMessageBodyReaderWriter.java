@@ -143,7 +143,7 @@ public class JsonSchemaMessageBodyReaderWriter implements MessageBodyReader<EPac
     ResourceSet resourceSet = resourceSetFactory.getService();
     try {
       Resource resource = resourceSet.createResource(URI.createURI("temp.json"), "application/json");
-      resource.load(OPTIONS);
+      resource.load(entityStream, OPTIONS);
       EPackage ePackage = resource.getContents().isEmpty() ? null : (EPackage) resource.getContents().remove(0);
       return ePackage;
     } finally {

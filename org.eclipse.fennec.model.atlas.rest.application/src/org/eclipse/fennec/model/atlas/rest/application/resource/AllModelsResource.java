@@ -41,6 +41,7 @@ import org.eclipse.fennec.model.atlas.runtime.RequireRuntime;
 
 import io.swagger.v3.oas.annotations.Operation;
 import jakarta.ws.rs.GET;
+import jakarta.ws.rs.POST;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.PathParam;
 import jakarta.ws.rs.Produces;
@@ -292,6 +293,12 @@ public class AllModelsResource {
       return Response.noContent().build();
     }
     return Response.ok(EcoreUtil.copy(ePackage), mediaType).build();
+  }
+
+  @POST
+  @Path("/")
+  public Response registerEPackage(EPackage ePackage) {
+    return Response.ok(EcoreUtil.copy(ePackage), "application/xmi").build();
   }
 
   private EPackage getEPackageObject(String nsUri) {

@@ -136,6 +136,7 @@ public class XSDSchemaMessageBodyReaderWriter implements MessageBodyReader<EPack
     ResourceSet resourceSet = resourceSetFactory.getService();
     try {
       Resource resource = resourceSet.createResource(URI.createURI("temp.xsd"));
+      resource.load(entityStream, null);
       XSDSchema schema = resource.getContents().isEmpty() ? null : (XSDSchema) resource.getContents().remove(0);
       if (schema == null) {
         return null;
