@@ -1,0 +1,17 @@
+{
+  ":configurator:resource-version": 1,
+
+  "org.apache.felix.http~testHttp": {
+    "org.osgi.service.http.port": "8185",
+    "org.osgi.service.http.host": "localhost",
+    "org.apache.felix.http.context_path": "/",
+    "org.apache.felix.http.name": "Model Atlas Test HTTP",
+    "org.apache.felix.http.runtime.init.id": "testHttp"
+  },
+  "JakartarsServletWhiteboardRuntimeComponent~testRest": {
+    "jersey.jakartars.whiteboard.name": "Model Atlas Test REST",
+    "jersey.context.path": "rest",
+    "name": "modelatlas-test",
+    "osgi.http.whiteboard.target": "(id=testHttp)"
+  }
+}

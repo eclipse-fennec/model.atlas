@@ -1,6 +1,6 @@
 org.geckoprojects.emf:org.gecko.emf.osgi.bnd.library.workspace:6.3.0
 org.geckoprojects.emf.persistence:org.gecko.emf.repository.bnd.library.workspace:6.2.0-SNAPSHOT
-org.eclipse.osgi-technology.rest:org.eclipse.osgitech.rest.bnd.library:1.2.2
+org.eclipse.osgi-technology.rest:org.eclipse.osgitech.rest.bnd.library:1.2.3
 org.geckoprojects.search:org.gecko.emf.search.bnd.project.library:1.2.0
 org.geckoprojects.search:org.gecko.search.bnd.library:1.4.0
 org.geckoprojects.messaging:org.gecko.adapter.messaging.bnd.library.workspace:1.1.1

@@ -20,6 +20,8 @@
 	org.eclipse.fennec.model.atlas.model.documentation.provider;version=latest,\
 	org.eclipse.fennec.model.atlas.mediatypes.api,\
 	org.eclipse.fennec.model.atlas.runtime,\
+	org.eclipse.fennec.model.atlas;version=latest,\
+	org.eclipse.fennec.model.atlas.rest.model;version=latest,\
 	org.osgi.service.jakartars,\
 	org.apache.felix.http.servlet-api,\
 	org.osgi.service.component

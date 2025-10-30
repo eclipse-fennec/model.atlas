@@ -8,7 +8,10 @@
       "Bash(mkdir:*)",
       "Bash(for file in \"n:/git/eclipse/fennec/model.atlas/org.eclipse.fennec.model.atlas.model.documentation.provider/src/de/jena/mdo/model/documentation/provider/\"*.java)",
       "Bash(do sed -i 's/package de\\.jena\\.mdo\\.model\\.documentation\\.provider;/package org.eclipse.fennec.model.atlas.model.documentation.provider;/g' \"$file\")",
-      "Bash(done)"
+      "Bash(done)",
+      "Read(//n/git/datainmotion/model-atlas-cloud/org.gecko.mac.governance.rest.tests/**)",
+      "Read(//n/git/datainmotion/model-atlas-cloud/org.gecko.mac.golf.equipment.model/**)",
+      "Bash(cat:*)"
     ],
     "deny": [],
     "ask": []
