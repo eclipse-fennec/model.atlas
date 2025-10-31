@@ -142,9 +142,10 @@ public class EPackageResourceTest {
 		createdNsUris.add(nsUri);
 
 		// Verify response contains the created EPackage
-		String responseBody = response.readEntity(String.class);
-		assertNotNull(responseBody, "Response body should not be null");
-		assertTrue(responseBody.contains(nsUri), "Response should contain the nsUri");
+		EPackage createdPackage = response.readEntity(EPackage.class);
+		assertNotNull(createdPackage, "Response body should not be null");
+		assertEquals(nsUri, createdPackage.getNsURI(), "Response should contain the nsUri");
+		assertEquals("CreateTestPackage", createdPackage.getName(), "Response should contain the package name");
 	}
 
 	@Test
@@ -183,9 +184,10 @@ public class EPackageResourceTest {
 		assertEquals(Response.Status.OK.getStatusCode(), response.getStatus(),
 			"Should return 200 OK");
 
-		String responseBody = response.readEntity(String.class);
-		assertTrue(responseBody.contains(nsUri), "Response should contain the requested nsUri");
-		assertTrue(responseBody.contains("GetTestPackage"), "Response should contain the package name");
+		EPackage retrievedPackage = response.readEntity(EPackage.class);
+		assertNotNull(retrievedPackage, "Response body should not be null");
+		assertEquals(nsUri, retrievedPackage.getNsURI(), "Response should contain the requested nsUri");
+		assertEquals("GetTestPackage", retrievedPackage.getName(), "Response should contain the package name");
 	}
 
 	@Test
@@ -251,8 +253,10 @@ public class EPackageResourceTest {
 			.queryParam("nsUri", nsUri)
 			.request(MediaType.APPLICATION_XML)
 			.get();
-		String responseBody = getResponse.readEntity(String.class);
-		assertTrue(responseBody.contains("UpdatedName"), "Should contain updated name");
+		EPackage retrievedPackage = getResponse.readEntity(EPackage.class);
+		assertNotNull(retrievedPackage, "Retrieved package should not be null");
+		assertEquals("UpdatedName", retrievedPackage.getName(), "Should contain updated name");
+		assertEquals(nsUri, retrievedPackage.getNsURI(), "nsUri should remain the same");
 	}
 
 	@Test
@@ -438,14 +442,16 @@ public class EPackageResourceTest {
 		assertEquals(Response.Status.OK.getStatusCode(), jsonResponse.getStatus(),
 			"JSON request should succeed");
 
-		// Verify content types
-		String xmlContent = xmlResponse.readEntity(String.class);
-		String jsonContent = jsonResponse.readEntity(String.class);
+		// Verify entities can be deserialized
+		EPackage xmlPackage = xmlResponse.readEntity(EPackage.class);
+		EPackage jsonPackage = jsonResponse.readEntity(EPackage.class);
 
-		assertTrue(xmlContent.contains("<?xml") || xmlContent.contains("<ecore:EPackage"),
-			"XML response should contain XML content");
-		assertTrue(jsonContent.contains("\"eClass\"") || jsonContent.contains("\"name\""),
-			"JSON response should contain JSON content");
+		assertNotNull(xmlPackage, "XML response should contain a valid EPackage");
+		assertNotNull(jsonPackage, "JSON response should contain a valid EPackage");
+		assertEquals(nsUri, xmlPackage.getNsURI(), "XML response should contain correct nsUri");
+		assertEquals(nsUri, jsonPackage.getNsURI(), "JSON response should contain correct nsUri");
+		assertEquals("MediaTypePackage", xmlPackage.getName(), "XML response should contain correct name");
+		assertEquals("MediaTypePackage", jsonPackage.getName(), "JSON response should contain correct name");
 	}
 
 	@Test
@@ -466,9 +472,10 @@ public class EPackageResourceTest {
 		assertEquals(Response.Status.OK.getStatusCode(), response.getStatus(),
 			"Should return 200 OK");
 
-		String content = response.readEntity(String.class);
-		assertTrue(content.contains("\"eClass\"") || content.contains("\"name\""),
-			"Should return JSON content based on query parameter");
+		EPackage retrievedPackage = response.readEntity(EPackage.class);
+		assertNotNull(retrievedPackage, "Retrieved package should not be null");
+		assertEquals(nsUri, retrievedPackage.getNsURI(), "Should return correct nsUri");
+		assertEquals("QueryMediaTypePackage", retrievedPackage.getName(), "Should return correct name");
 	}
 
 	@Test
@@ -544,9 +551,20 @@ public class EPackageResourceTest {
 		assertEquals(Response.Status.OK.getStatusCode(), getResponse.getStatus(),
 			"Should retrieve complex EPackage successfully");
 
-		String content = getResponse.readEntity(String.class);
-		assertTrue(content.contains("Person"), "Should contain Person EClass");
-		assertTrue(content.contains("name"), "Should contain name attribute");
+		EPackage retrievedPackage = getResponse.readEntity(EPackage.class);
+		assertNotNull(retrievedPackage, "Retrieved package should not be null");
+		assertEquals(nsUri, retrievedPackage.getNsURI(), "Should have correct nsUri");
+		assertEquals(1, retrievedPackage.getEClassifiers().size(), "Should contain Person EClass");
+
+		EClass personClass = (EClass) retrievedPackage.getEClassifiers().get(0);
+		assertEquals("Person", personClass.getName(), "Should contain Person EClass");
+		assertEquals(2, personClass.getEStructuralFeatures().size(), "Person should have 2 attributes");
+
+		EAttribute nameAttr = (EAttribute) personClass.getEStructuralFeatures().stream()
+			.filter(f -> "name".equals(f.getName()))
+			.findFirst()
+			.orElse(null);
+		assertNotNull(nameAttr, "Should contain name attribute");
 	}
 
 	// ============ HELPER METHODS ============
