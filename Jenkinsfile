@@ -16,6 +16,16 @@ pipeline  {
                 checkout scm
             }
         }
+        stage('Gradle setup') {
+            steps {
+                script {
+                    echo "I am building on ${env.BRANCH_NAME}"
+                    try {
+                        sh "chmod +x ./gradlew"
+                    } 
+                }
+            }
+        }
         stage('Main branch release') {
             when { 
                 branch 'main' 
