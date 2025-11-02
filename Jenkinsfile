@@ -20,9 +20,7 @@ pipeline  {
             steps {
                 script {
                     echo "I am building on ${env.BRANCH_NAME}"
-                    try {
-                        sh "chmod +x ./gradlew"
-                    } 
+                    sh "chmod +x ./gradlew"
                 }
             }
         }
