@@ -21,7 +21,8 @@
 	bnd.identity;id='org.eclipse.fennec.model.atlas.rest.ecore.xmi',\
 	bnd.identity;id='org.eclipse.fennec.model.atlas.rest.jsonschema',\
 	bnd.identity;id='org.eclipse.fennec.model.atlas.rest.xsdschema',\
-	bnd.identity;id='org.eclipse.fennec.model.atlas.rest.tests'
+	bnd.identity;id='org.eclipse.fennec.model.atlas.rest.tests',\
+	bnd.identity;id='org.eclipse.fennec.model.atlas.rest.uml'
 
 # Ensure clean environment
 -runkeep: false
@@ -129,4 +130,13 @@
 	org.yaml.snakeyaml;version='[2.2.0,2.2.1)',\
 	slf4j.api;version='[2.0.11,2.0.12)',\
 	tools.jackson.core.jackson-core;version='[3.0.0,3.0.1)',\
-	tools.jackson.core.jackson-databind;version='[3.0.0,3.0.1)'
+	tools.jackson.core.jackson-databind;version='[3.0.0,3.0.1)',\
+	org.eclipse.emf.mapping.ecore2xml;version='[2.13.0,2.13.1)',\
+	org.eclipse.fennec.model.atlas.rest.uml;version=snapshot,\
+	org.eclipse.uml2.common;version='[2.5.0,2.5.1)',\
+	org.eclipse.uml2.types;version='[2.5.0,2.5.1)',\
+	org.eclipse.uml2.uml;version='[5.5.0,5.5.1)',\
+	org.osgi.service.cm;version='[1.6.1,1.6.2)',\
+	org.osgi.service.http.whiteboard;version='[1.1.0,1.1.1)',\
+	org.eclipse.uml2.uml.profile.standard;version='[1.5.0,1.5.1)',\
+	org.eclipse.uml2.uml.resources;version='[5.5.0,5.5.1)'

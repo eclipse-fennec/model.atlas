@@ -189,3 +189,6 @@ org.eclipse.emf:org.eclipse.emf.ecore:2.40.0
 org.eclipse.emf:org.eclipse.emf.ecore.xmi:2.39.0
 
 #biz.aQute:biz.aQute.gogo.commands.provider:1.11.0-SNAPSHOT
+
+#UML
+org.eclipse.emf:org.eclipse.emf.mapping.ecore2xml:2.13.0

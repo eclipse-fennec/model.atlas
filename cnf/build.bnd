@@ -60,6 +60,11 @@ javac.target: 21
 
 #-jpms-module-info:
 
+-plugin.3.EclipseMDT-UML2: \
+ 	aQute.bnd.repository.p2.provider.P2Repository; \
+ 	url = https://download.eclipse.org/modeling/mdt/uml2/updates/releases/; \
+ 	name = EclipseMDT-UML2
+
 -plugin.2.Central: \
     aQute.bnd.repository.maven.provider.MavenBndRepository; \
         snapshotUrl="https://oss.sonatype.org/content/repositories/snapshots/,https://central.sonatype.com/repository/maven-snapshots/"; \

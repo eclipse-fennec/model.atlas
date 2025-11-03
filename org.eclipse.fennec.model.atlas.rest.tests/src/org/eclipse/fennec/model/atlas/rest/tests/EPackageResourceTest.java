@@ -77,6 +77,37 @@ public class EPackageResourceTest {
 
 	// Track created EPackages for cleanup
 	private java.util.List<String> createdNsUris = new java.util.ArrayList<>();
+	
+	/**
+     * Basic Ecore XML definition for a package named "MyData" containing a single class "Item".
+     * This string can be used to simulate an incoming REST payload for testing deserialization.
+     */
+    public static final String MY_DATA_ECORE_XML = """
+<?xml version="1.0" encoding="UTF-8"?>
+<ecore:EPackage xmi:version="2.0"
+    xmlns:xmi="http://www.omg.org/XMI" xmlns:ecore="http://www.eclipse.org/emf/2002/Ecore"
+    name="MyData" nsURI="http://www.example.org/MyData" nsPrefix="mydata">
+  <!-- 
+    The EPackage definition starts here. It defines the namespace (nsURI) 
+    and the prefix (nsPrefix) for this model.
+  -->
+  <eClassifiers xsi:type="ecore:EClass" name="Item">
+    <!-- 
+      This is an EClass named 'Item'. It represents a class in your model.
+    -->
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="id" lowerBound="1"
+        eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EInt"/>
+    <!-- 
+      This is an EAttribute (field) named 'id' of type integer (EInt). 
+      The lowerBound="1" means this attribute is mandatory (required).
+    -->
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="name" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    <!-- 
+      This is an EAttribute (field) named 'name' of type string (EString).
+    -->
+  </eClassifiers>
+</ecore:EPackage>
+""";
 
 	@BeforeEach
 	void setUp(
@@ -164,6 +195,23 @@ public class EPackageResourceTest {
 		// Then: Should return 201 Created
 		assertEquals(Response.Status.CREATED.getStatusCode(), response.getStatus(),
 			"Should return 201 Created for JSON");
+		createdNsUris.add(nsUri);
+	}
+	
+	@Test
+	void testCreateEPackage_WithUML_Success() {
+		// Given: A new EPackage in JSON format
+		String nsUri = TestHelper.generateUniqueNsUri("createUMLTest");
+		
+
+		// When: POST with XML
+		Response response = client.target(BASE_URL)
+			.request(MediaType.APPLICATION_XML)
+			.post(Entity.xml(MY_DATA_ECORE_XML));
+
+		// Then: Should return 201 Created
+		assertEquals(Response.Status.CREATED.getStatusCode(), response.getStatus(),
+			"Should return 201 Created for XML");
 		createdNsUris.add(nsUri);
 	}
 
