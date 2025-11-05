@@ -20,12 +20,12 @@ import java.util.List;
 
 import org.eclipse.emf.ecore.EObject;
 import org.eclipse.emf.ecore.EPackage;
+import org.eclipse.fennec.model.atlas.mgmt.governanceapi.EObjectWorkflowService;
+import org.eclipse.fennec.model.atlas.mgmt.management.ManagementFactory;
+import org.eclipse.fennec.model.atlas.mgmt.management.ObjectMetadata;
+import org.eclipse.fennec.model.atlas.mgmt.management.ObjectMetadataContainer;
+import org.eclipse.fennec.model.atlas.mgmt.management.ObjectStatus;
 import org.eclipse.fennec.model.atlas.runtime.RequireRuntime;
-import org.gecko.mac.mgmt.governanceapi.EObjectWorkflowService;
-import org.gecko.mac.mgmt.management.ManagementFactory;
-import org.gecko.mac.mgmt.management.ObjectMetadata;
-import org.gecko.mac.mgmt.management.ObjectMetadataContainer;
-import org.gecko.mac.mgmt.management.ObjectStatus;
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
 import org.osgi.service.component.annotations.ServiceScope;

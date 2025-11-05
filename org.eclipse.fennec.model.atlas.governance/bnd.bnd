@@ -1,0 +1,41 @@
+Bundle-Name: Model Atlas - Governance Framework
+Bundle-Description: Model governance framework for compliance checking, approval workflows, and documentation management. Provides policy-based validation, approval status tracking, and governance documentation lifecycle management.
+
+-workingset: Workflow
+# sets the usually required buildpath using the bnd library, you can extend it with the normal -buildpath to your liking
+-library: enable-emf
+
+src=${^src},src-gov,src-gov-api,src-policy
+
+# The code generation takes a bit of time and makes the build a bit slower.
+# It might be a good idea to put comments around it, when you don't need it
+-generate:\
+	model/governance.genmodel;\
+		generate=geckoEMF;\
+		genmodel=model/governance.genmodel;\
+		output=src-gov,\
+	model/governance-api.genmodel;\
+		generate=geckoEMF;\
+		genmodel=model/governance-api.genmodel;\
+		output=src-gov-api,\
+	model/policies/policies.genmodel;\
+		generate=geckoEMF;\
+		genmodel=model/policies/policies.genmodel;\
+		output=src-policy
+# Add this attribute to find some logging information
+#		logfile=test.log;\
+
+# If this is not done with a instruction namespace, bnd would think you like
+# to take full control over whats exported and imported and will ignore @Export
+# Bundle Annotations		
+-includeresource.model: model=model
+
+-buildpath: \
+	org.osgi.util.promise;versio=latest,\
+	org.osgi.util.function;version=latest,\
+	org.osgi.service.component;version=latest,\
+	org.osgi.service.typedevent;version=latest,\
+	org.eclipse.fennec.model.atlas.management;version=snapshot
+
+Bundle-Version: 1.0.0.SNAPSHOT
+

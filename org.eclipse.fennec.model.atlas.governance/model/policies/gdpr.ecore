@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ecore:EPackage xmi:version="2.0" xmlns:xmi="http://www.omg.org/XMI" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xmlns:ecore="http://www.eclipse.org/emf/2002/Ecore" name="gdpr" nsURI="https://eclipse.org/fennec/model/atlas/policy/gdpr/1.0.0"
+    nsPrefix="gdpr">
+  <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+    <details key="modelName" value="GDPRPolicy"/>
+    <details key="complianceLevel" value="17.0"/>
+    <details key="copyrightText" value="Copyright (c) 2012 - 2025 Data In Motion and others.&#xA;All rights reserved.&#xA;&#xA;This program and the accompanying materials are made&#xA;available under the terms of the Eclipse Public License 2.0&#xA;which is available at https://www.eclipse.org/legal/epl-2.0/&#xA;&#xA;SPDX-License-Identifier: EPL-2.0&#xA;&#xA;Contributors:&#xA;     Mark Hoffmann - initial API and implementation"/>
+    <details key="resource" value="XMI"/>
+    <details key="oSGiCompatible" value="true"/>
+    <details key="prefix" value="GDPR"/>
+    <details key="basePackage" value="org.eclipse.fennec.model.atlas.policy"/>
+  </eAnnotations>
+  <eClassifiers xsi:type="ecore:EClass" name="GDPRPolicyCheck" eSuperTypes="../governance.ecore#//ComplianceCheckResult">
+    <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+      <details key="documentation" value="A specialized compliance check that represents the verification against relevant articles of the General Data Protection Regulation (GDPR)."/>
+    </eAnnotations>
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="containsPersonalData" lowerBound="1"
+        eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EBoolean" defaultValueLiteral="false">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="Check result: Does the data model contain attributes that are considered Personal Identifiable Information (PII) under GDPR?"/>
+      </eAnnotations>
+    </eStructuralFeatures>
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="legalBasisForProcessing"
+        lowerBound="1" eType="#//LegalBasis" defaultValueLiteral="NOT_APPLICABLE">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="Check result (Art. 6 GDPR): What is the legal basis for processing the personal data? This is only applicable if personal data is present."/>
+      </eAnnotations>
+    </eStructuralFeatures>
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="dataMinimizationApplied"
+        lowerBound="1" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EBoolean"
+        defaultValueLiteral="true">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="Check result (Art. 5(1)(c) GDPR): Is the collected data limited to what is necessary in relation to the purposes for which it is processed?"/>
+      </eAnnotations>
+    </eStructuralFeatures>
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="purposeLimitationMet" lowerBound="1"
+        eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EBoolean" defaultValueLiteral="true">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="Check result (Art. 5(1)(b) GDPR): Is the data collected for specified, explicit and legitimate purposes and not further processed in a manner that is incompatible with those purposes?"/>
+      </eAnnotations>
+    </eStructuralFeatures>
+  </eClassifiers>
+  <eClassifiers xsi:type="ecore:EEnum" name="LegalBasis">
+    <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+      <details key="documentation" value="Enumeration of the legal bases for processing personal data according to Art. 6 GDPR."/>
+    </eAnnotations>
+    <eLiterals name="NOT_APPLICABLE">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="No personal data is being processed."/>
+      </eAnnotations>
+    </eLiterals>
+    <eLiterals name="CONSENT" value="1">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="Art. 6(1)(a): The data subject has given consent."/>
+      </eAnnotations>
+    </eLiterals>
+    <eLiterals name="CONTRACT" value="2">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="Art. 6(1)(b): Processing is necessary for the performance of a contract."/>
+      </eAnnotations>
+    </eLiterals>
+    <eLiterals name="LEGAL_OBLIGATION" value="3">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="Art. 6(1)(c): Processing is necessary for compliance with a legal obligation."/>
+      </eAnnotations>
+    </eLiterals>
+    <eLiterals name="VITAL_INTEREST" value="4">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="Art. 6(1)(d): Processing is necessary to protect the vital interests of the data subject."/>
+      </eAnnotations>
+    </eLiterals>
+    <eLiterals name="PUBLIC_TASK" value="5">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="Art. 6(1)(e): Processing is necessary for the performance of a task carried out in the public interest."/>
+      </eAnnotations>
+    </eLiterals>
+    <eLiterals name="LEGITIMATE_INTEREST" value="6">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="Art. 6(1)(f): Processing is necessary for the purposes of the legitimate interests pursued by the controller."/>
+      </eAnnotations>
+    </eLiterals>
+  </eClassifiers>
+</ecore:EPackage>

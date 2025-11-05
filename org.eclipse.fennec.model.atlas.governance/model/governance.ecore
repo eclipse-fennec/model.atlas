@@ -1,0 +1,625 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ecore:EPackage xmi:version="2.0" xmlns:xmi="http://www.omg.org/XMI" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xmlns:ecore="http://www.eclipse.org/emf/2002/Ecore" name="governance" nsURI="https://eclipse.org/fennec/model/atlas/governance/1.0.0"
+    nsPrefix="governance">
+  <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+    <details key="modelName" value="Governance"/>
+    <details key="complianceLevel" value="17.0"/>
+    <details key="copyrightText" value="Copyright (c) 2012 - 2025 Data In Motion and others.&#xA;All rights reserved.&#xA;&#xA;This program and the accompanying materials are made&#xA;available under the terms of the Eclipse Public License 2.0&#xA;which is available at https://www.eclipse.org/legal/epl-2.0/&#xA;&#xA;SPDX-License-Identifier: EPL-2.0&#xA;&#xA;Contributors:&#xA;     Mark Hoffmann - initial API and implementation"/>
+    <details key="resource" value="XMI"/>
+    <details key="oSGiCompatible" value="true"/>
+    <details key="prefix" value="Governance"/>
+    <details key="basePackage" value="org.eclipse.fennec.model.atlas"/>
+  </eAnnotations>
+  <eClassifiers xsi:type="ecore:EClass" name="GovernanceDocumentation">
+    <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+      <details key="documentation" value="Represents the complete documentation for a specific data model version, generated as the result of a governance workflow."/>
+    </eAnnotations>
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="modelName" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="version" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="status" eType="#//ApprovalStatus"/>
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="generationTimestamp" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EDate"/>
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="generatedBy" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="approvedBy" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="description" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    <eStructuralFeatures xsi:type="ecore:EReference" name="attributes" upperBound="-1"
+        eType="#//AttributeDefinition" containment="true"/>
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="dataOwner" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="dataClassification" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    <eStructuralFeatures xsi:type="ecore:EReference" name="complianceChecks" upperBound="-1"
+        eType="#//ComplianceCheckResult" containment="true"/>
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="sourceSystemComponent"
+        eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+  </eClassifiers>
+  <eClassifiers xsi:type="ecore:EClass" name="AttributeDefinition">
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="name" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="dataType" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="unit" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="description" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+  </eClassifiers>
+  <eClassifiers xsi:type="ecore:EClass" name="ComplianceCheckResult" abstract="true">
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="status" eType="#//ComplianceStatus"/>
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="checkTimestamp" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EDate"/>
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="summary" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"
+        defaultValueLiteral="A short summary of the check result."/>
+    <eStructuralFeatures xsi:type="ecore:EReference" name="findings" upperBound="-1"
+        eType="#//Finding" containment="true"/>
+  </eClassifiers>
+  <eClassifiers xsi:type="ecore:EClass" name="Finding">
+    <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+      <details key="documentation" value="Represents a single, structured finding as the result of a compliance check, providing details for analysis and remediation."/>
+    </eAnnotations>
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="code" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="A machine-readable code or identifier for the finding type (e.g., 'PII_DETECTED')."/>
+      </eAnnotations>
+    </eStructuralFeatures>
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="severity" lowerBound="1"
+        eType="#//FindingSeverity" defaultValueLiteral="INFO">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="The severity of the finding, used for prioritization."/>
+      </eAnnotations>
+    </eStructuralFeatures>
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="description" lowerBound="1"
+        eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="A human-readable description of the finding, explaining what was detected."/>
+      </eAnnotations>
+    </eStructuralFeatures>
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="component" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="The specific component, attribute, or element within the asset where the finding was located."/>
+      </eAnnotations>
+    </eStructuralFeatures>
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="remediation" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="A suggested action or recommendation to address and resolve the finding."/>
+      </eAnnotations>
+    </eStructuralFeatures>
+  </eClassifiers>
+  <eClassifiers xsi:type="ecore:EEnum" name="ApprovalStatus">
+    <eLiterals name="DRAFT"/>
+    <eLiterals name="IN_REVIEW" value="1"/>
+    <eLiterals name="APPROVED" value="2"/>
+    <eLiterals name="REJECTED" value="3"/>
+  </eClassifiers>
+  <eClassifiers xsi:type="ecore:EEnum" name="ComplianceStatus">
+    <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+      <details key="documentation" value="Status of individual compliance checks within governance documentation"/>
+    </eAnnotations>
+    <eLiterals name="NOT_CHECKED" literal="NOT_CHECKED">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="Compliance check has not been performed yet"/>
+      </eAnnotations>
+    </eLiterals>
+    <eLiterals name="PENDING" value="1" literal="PENDING">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="Compliance check is in progress"/>
+      </eAnnotations>
+    </eLiterals>
+    <eLiterals name="PASSED" value="2" literal="PASSED">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="Compliance check passed successfully"/>
+      </eAnnotations>
+    </eLiterals>
+    <eLiterals name="FAILED" value="3" literal="FAILED">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="Compliance check failed"/>
+      </eAnnotations>
+    </eLiterals>
+    <eLiterals name="NOT_APPLICABLE" value="4" literal="NOT_APPLICABLE">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="Compliance check is not applicable for this object type"/>
+      </eAnnotations>
+    </eLiterals>
+    <eLiterals name="PARTIAL" value="5" literal="PARTIAL">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="Some aspects passed, others failed - requires manual review"/>
+      </eAnnotations>
+    </eLiterals>
+  </eClassifiers>
+  <eClassifiers xsi:type="ecore:EEnum" name="PolicyType">
+    <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+      <details key="documentation" value="Enumeration of supported compliance policies and regulations."/>
+    </eAnnotations>
+    <eLiterals name="GDPR">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="General Data Protection Regulation (Datenschutz-Grundverordnung). Checks for personal identifiable information (PII)."/>
+      </eAnnotations>
+    </eLiterals>
+    <eLiterals name="EU_AI_ACT" value="1">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="The European Union's Artificial Intelligence Act. Used for risk assessment of AI-generated models and systems."/>
+      </eAnnotations>
+    </eLiterals>
+    <eLiterals name="HIPAA" value="2">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="Health Insurance Portability and Accountability Act. Checks for protected health information (PHI) in the US healthcare context."/>
+      </eAnnotations>
+    </eLiterals>
+    <eLiterals name="ISO_27001" value="3">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="International standard for Information Security Management Systems (ISMS). Checks against security best practices."/>
+      </eAnnotations>
+    </eLiterals>
+    <eLiterals name="CRA" value="4">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="Cyber Resilience Act. Checks for security-by-design principles and vulnerability management for products with digital elements."/>
+      </eAnnotations>
+    </eLiterals>
+    <eLiterals name="MDR" value="5">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="Medical Device Regulation. Checks for compliance with regulations for medical devices, including software as a medical device."/>
+      </eAnnotations>
+    </eLiterals>
+    <eLiterals name="ISO_9001" value="6">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="International standard for Quality Management Systems (QMS). Checks for process and documentation quality."/>
+      </eAnnotations>
+    </eLiterals>
+    <eLiterals name="KRITIS" value="7">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="Regulation for Critical Infrastructures (Verordnung zur Bestimmung Kritischer Infrastrukturen). Checks for resilience and security requirements."/>
+      </eAnnotations>
+    </eLiterals>
+    <eLiterals name="DATA_QUALITY" value="8">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="Internal policy for checking data quality, such as format, range, and consistency."/>
+      </eAnnotations>
+    </eLiterals>
+    <eLiterals name="OPEN_DATA" value="9">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="Internal policy for checking data for open data requirements."/>
+      </eAnnotations>
+    </eLiterals>
+    <eLiterals name="DINSPEC91377" value="10">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="Internal policy for checking data for open data requirements."/>
+      </eAnnotations>
+    </eLiterals>
+  </eClassifiers>
+  <eClassifiers xsi:type="ecore:EClass" name="SystemComponent" eSuperTypes="#//FeatureHolder">
+    <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+      <details key="documentation" value="Represents a manageable system component within the infrastructure, such as a sensor, gateway, broker, or application instance."/>
+    </eAnnotations>
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="componentId" lowerBound="1"
+        eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString" iD="true"/>
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="name" lowerBound="1" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="description" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="trustLevel" eType="#//TrustLevel"
+        defaultValueLiteral="UNKNOWN">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="The assigned trust level of the system component, determining how its data and operations are handled."/>
+      </eAnnotations>
+    </eStructuralFeatures>
+    <eStructuralFeatures xsi:type="ecore:EReference" name="appliedPolicies" upperBound="-1"
+        eType="#//Policy" eKeys="#//Policy/policyId">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="Policies that apply to this system component."/>
+      </eAnnotations>
+    </eStructuralFeatures>
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="type" eType="#//SystemComponentType"/>
+    <eStructuralFeatures xsi:type="ecore:EReference" name="childComponents" upperBound="-1"
+        eType="#//SystemComponent" eOpposite="#//SystemComponent/parentComponents"
+        eKeys="#//SystemComponent/componentId">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="System components that are sub-components of this component."/>
+      </eAnnotations>
+    </eStructuralFeatures>
+    <eStructuralFeatures xsi:type="ecore:EReference" name="parentComponents" upperBound="-1"
+        eType="#//SystemComponent" eOpposite="#//SystemComponent/childComponents"
+        eKeys="#//SystemComponent/componentId">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="The system components this component is a sub-component of."/>
+      </eAnnotations>
+    </eStructuralFeatures>
+    <eStructuralFeatures xsi:type="ecore:EReference" name="supervisorComponent" eType="#//SystemComponent"
+        eOpposite="#//SystemComponent/supervisedComponents" eKeys="#//SystemComponent/componentId">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="The system component that acts as a trust anchor or gateway for this component (e.g., a LoRaWAN gateway supervising a sensor)."/>
+      </eAnnotations>
+    </eStructuralFeatures>
+    <eStructuralFeatures xsi:type="ecore:EReference" name="supervisedComponents" upperBound="-1"
+        eType="#//SystemComponent" eOpposite="#//SystemComponent/supervisorComponent"
+        eKeys="#//SystemComponent/componentId">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="The system components that are supervised by this component."/>
+      </eAnnotations>
+    </eStructuralFeatures>
+    <eStructuralFeatures xsi:type="ecore:EReference" name="dependencies" upperBound="-1"
+        eType="#//ComponentDependency" containment="true" eOpposite="#//ComponentDependency/component"/>
+    <eStructuralFeatures xsi:type="ecore:EReference" name="supportedFeatures" upperBound="-1"
+        eType="#//PolicyFeature" eOpposite="#//PolicyFeature/components" eKeys="#//PolicyFeature/featureId"/>
+  </eClassifiers>
+  <eClassifiers xsi:type="ecore:EClass" name="Policy">
+    <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+      <details key="documentation" value="Represents a specific policy instance that can be applied to system components."/>
+    </eAnnotations>
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="policyId" lowerBound="1"
+        eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString" iD="true"/>
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="type" eType="#//PolicyType"/>
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="name" lowerBound="1" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="description" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    <eStructuralFeatures xsi:type="ecore:EReference" name="requirementGroups" upperBound="-1"
+        eType="#//RequirementGroup" containment="true" eOpposite="#//RequirementGroup/policy"/>
+  </eClassifiers>
+  <eClassifiers xsi:type="ecore:EEnum" name="SystemComponentType">
+    <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+      <details key="documentation" value="Defines the type of a system component."/>
+    </eAnnotations>
+    <eLiterals name="UNKNOWN"/>
+    <eLiterals name="SENSOR" value="1">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="A physical or virtual sensor."/>
+      </eAnnotations>
+    </eLiterals>
+    <eLiterals name="GATEWAY" value="2">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="A gateway device, e.g., LoRaWAN Gateway."/>
+      </eAnnotations>
+    </eLiterals>
+    <eLiterals name="BROKER" value="3">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="A message broker, e.g., MQTT."/>
+      </eAnnotations>
+    </eLiterals>
+    <eLiterals name="DATABASE" value="4">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="A database system."/>
+      </eAnnotations>
+    </eLiterals>
+    <eLiterals name="INTERFACE" value="5">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="An API or interface."/>
+      </eAnnotations>
+    </eLiterals>
+    <eLiterals name="BACKEND" value="6">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="A backend application or service."/>
+      </eAnnotations>
+    </eLiterals>
+    <eLiterals name="FRONTEND" value="7">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="A frontend application."/>
+      </eAnnotations>
+    </eLiterals>
+    <eLiterals name="AI_SYSTEM" value="8">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="An Artificial Intelligence system, e.g., a model generator."/>
+      </eAnnotations>
+    </eLiterals>
+    <eLiterals name="FRAMEWORK" value="9">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="A service or framework."/>
+      </eAnnotations>
+    </eLiterals>
+    <eLiterals name="ACTOR" value="10">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="A physical or virtual actor."/>
+      </eAnnotations>
+    </eLiterals>
+  </eClassifiers>
+  <eClassifiers xsi:type="ecore:EEnum" name="TrustLevel">
+    <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+      <details key="documentation" value="Defines the level of trust assigned to an asset within the system."/>
+    </eAnnotations>
+    <eLiterals name="UNKNOWN">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="The trust level has not yet been evaluated."/>
+      </eAnnotations>
+    </eLiterals>
+    <eLiterals name="UNTRUSTED" value="1">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="The asset is explicitly considered not trustworthy."/>
+      </eAnnotations>
+    </eLiterals>
+    <eLiterals name="IN_REVIEW" value="2">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="The asset is currently undergoing a review process to determine its trust level."/>
+      </eAnnotations>
+    </eLiterals>
+    <eLiterals name="TRUSTED" value="3">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="The asset has been verified and is considered trustworthy."/>
+      </eAnnotations>
+    </eLiterals>
+  </eClassifiers>
+  <eClassifiers xsi:type="ecore:EClass" name="GovernanceSystem" eSuperTypes="#//SystemComponentHolder #//PolicyHolder #//FeatureHolder #//NamespaceHolder">
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="name" lowerBound="1" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="description" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="systemId" lowerBound="1"
+        eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString" iD="true"/>
+    <eStructuralFeatures xsi:type="ecore:EReference" name="subSystems" upperBound="-1"
+        eType="#//GovernanceSystem" containment="true" eKeys="#//GovernanceSystem/systemId"/>
+    <eStructuralFeatures xsi:type="ecore:EReference" name="referencedSystems" upperBound="-1"
+        eType="#//GovernanceSystem" eKeys="#//GovernanceSystem/systemId"/>
+    <eStructuralFeatures xsi:type="ecore:EReference" name="componentHolders" upperBound="-1"
+        eType="#//SystemComponentHolder" volatile="true" transient="true" derived="true">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="get" value="return getHolders().stream().filter(&lt;%org.eclipse.fennec.model.atlas.governance.SystemComponentHolder%>.class::isInstance).map(SystemComponentHolder.class::cast).collect(&lt;% java.util.stream.Collectors%>.toCollection(&lt;%org.eclipse.emf.common.util.BasicEList%>::new));"/>
+      </eAnnotations>
+    </eStructuralFeatures>
+    <eStructuralFeatures xsi:type="ecore:EReference" name="policyHolders" upperBound="-1"
+        eType="#//PolicyHolder" volatile="true" transient="true" derived="true">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="get" value="return getHolders().stream().filter(&lt;%org.eclipse.fennec.model.atlas.governance.PolicyHolder%>.class::isInstance).map(PolicyHolder.class::cast).collect(&lt;% java.util.stream.Collectors%>.toCollection(&lt;%org.eclipse.emf.common.util.BasicEList%>::new));"/>
+      </eAnnotations>
+    </eStructuralFeatures>
+    <eStructuralFeatures xsi:type="ecore:EReference" name="holders" upperBound="-1"
+        eType="#//SystemHolder" eOpposite="#//SystemHolder/system"/>
+    <eStructuralFeatures xsi:type="ecore:EReference" name="policies" upperBound="-1"
+        eType="#//Policy" eKeys="#//Policy/policyId"/>
+  </eClassifiers>
+  <eClassifiers xsi:type="ecore:EClass" name="SystemComponentHolder" eSuperTypes="#//SystemHolder">
+    <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+      <details key="documentation" value="An entity that can hold system components"/>
+    </eAnnotations>
+    <eStructuralFeatures xsi:type="ecore:EReference" name="systemComponents" upperBound="-1"
+        eType="#//SystemComponent" containment="true" eKeys="#//SystemComponent/componentId"/>
+  </eClassifiers>
+  <eClassifiers xsi:type="ecore:EClass" name="PolicyHolder" eSuperTypes="#//SystemHolder">
+    <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+      <details key="documentation" value="An entity that can hold policies"/>
+    </eAnnotations>
+    <eStructuralFeatures xsi:type="ecore:EReference" name="policyDefinitions" upperBound="-1"
+        eType="#//Policy" containment="true" eKeys="#//Policy/policyId"/>
+    <eStructuralFeatures xsi:type="ecore:EReference" name="mappings" upperBound="-1"
+        eType="#//FeatureRequirementMapping" containment="true"/>
+  </eClassifiers>
+  <eClassifiers xsi:type="ecore:EClass" name="SystemHolder" abstract="true">
+    <eStructuralFeatures xsi:type="ecore:EReference" name="system" eType="#//GovernanceSystem"
+        eOpposite="#//GovernanceSystem/holders" eKeys="#//GovernanceSystem/systemId"/>
+  </eClassifiers>
+  <eClassifiers xsi:type="ecore:EClass" name="HolderSystemComponent" eSuperTypes="#//SystemComponent #//SystemComponentHolder #//PolicyHolder #//FeatureHolder">
+    <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+      <details key="documentation" value="A system component that can contain other components, policies, and features. Used for complex components like gateways that supervise other components and manage their own sub-components, policies, and features."/>
+    </eAnnotations>
+  </eClassifiers>
+  <eClassifiers xsi:type="ecore:EClass" name="ComponentDependency" abstract="true">
+    <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+      <details key="documentation" value="Abstract base class representing operational dependencies between system components. Dependencies define what a component needs (Requirements) or provides (Capabilities) within specific governance namespaces."/>
+    </eAnnotations>
+    <eStructuralFeatures xsi:type="ecore:EReference" name="component" lowerBound="1"
+        eType="#//SystemComponent" eOpposite="#//SystemComponent/dependencies" eKeys="#//SystemComponent/componentId"/>
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="name" lowerBound="1" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="Human-readable name of this dependency (e.g., 'MQTT Data Inbound', 'SSL Security')"/>
+      </eAnnotations>
+    </eStructuralFeatures>
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="description" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="Detailed description of what this dependency represents"/>
+      </eAnnotations>
+    </eStructuralFeatures>
+    <eStructuralFeatures xsi:type="ecore:EReference" name="referencedComponent" eType="#//SystemComponent"
+        eKeys="#//SystemComponent/componentId">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="Optional reference to the specific system component this dependency is connected to"/>
+      </eAnnotations>
+    </eStructuralFeatures>
+    <eStructuralFeatures xsi:type="ecore:EReference" name="governanceNamespace" eType="#//GovernanceNamespace"
+        eKeys="#//GovernanceNamespace/namespaceId">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="Reference to the governance namespace this dependency operates within"/>
+      </eAnnotations>
+    </eStructuralFeatures>
+  </eClassifiers>
+  <eClassifiers xsi:type="ecore:EClass" name="Requirement" eSuperTypes="#//ComponentDependency">
+    <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+      <details key="documentation" value="Represents what a system component needs from other components within a governance namespace. Requirements are fulfilled by matching Capabilities from other components."/>
+    </eAnnotations>
+    <eStructuralFeatures xsi:type="ecore:EReference" name="capability" upperBound="-1"
+        eType="#//Capability" eOpposite="#//Capability/requirement">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="Capabilities that fulfill this requirement. Automatically matched by governance namespace."/>
+      </eAnnotations>
+    </eStructuralFeatures>
+  </eClassifiers>
+  <eClassifiers xsi:type="ecore:EClass" name="Capability" eSuperTypes="#//ComponentDependency">
+    <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+      <details key="documentation" value="Represents what a system component provides to other components within a governance namespace. Capabilities fulfill matching Requirements from other components."/>
+    </eAnnotations>
+    <eStructuralFeatures xsi:type="ecore:EReference" name="requirement" upperBound="-1"
+        eType="#//Requirement" eOpposite="#//Requirement/capability">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="Requirements that this capability fulfills. Automatically matched by governance namespace."/>
+      </eAnnotations>
+    </eStructuralFeatures>
+  </eClassifiers>
+  <eClassifiers xsi:type="ecore:EEnum" name="FindingSeverity">
+    <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+      <details key="documentation" value="Enumeration of severity levels for a compliance finding."/>
+    </eAnnotations>
+    <eLiterals name="INFO">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="Informational finding that does not indicate a problem but provides context."/>
+      </eAnnotations>
+    </eLiterals>
+    <eLiterals name="WARNING" value="1">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="A potential issue or a minor deviation from the policy that should be reviewed."/>
+      </eAnnotations>
+    </eLiterals>
+    <eLiterals name="ERROR" value="2">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="A definite violation of the policy that must be addressed."/>
+      </eAnnotations>
+    </eLiterals>
+    <eLiterals name="CRITICAL" value="3">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="A severe violation that poses a significant risk and requires immediate attention."/>
+      </eAnnotations>
+    </eLiterals>
+  </eClassifiers>
+  <eClassifiers xsi:type="ecore:EClass" name="PolicyFeature">
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="featureId" lowerBound="1"
+        eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString" iD="true"/>
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="name" lowerBound="1" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="description" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    <eStructuralFeatures xsi:type="ecore:EReference" name="parent" eType="#//FeatureHolder"
+        eOpposite="#//FeatureHolder/features"/>
+    <eStructuralFeatures xsi:type="ecore:EReference" name="components" upperBound="-1"
+        eType="#//SystemComponent" eOpposite="#//SystemComponent/supportedFeatures"
+        eKeys="#//SystemComponent/componentId"/>
+  </eClassifiers>
+  <eClassifiers xsi:type="ecore:EClass" name="FeatureHolder" eSuperTypes="#//SystemHolder">
+    <eStructuralFeatures xsi:type="ecore:EReference" name="features" upperBound="-1"
+        eType="#//PolicyFeature" containment="true" eOpposite="#//PolicyFeature/parent"/>
+  </eClassifiers>
+  <eClassifiers xsi:type="ecore:EClass" name="PolicyRequirement">
+    <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+      <details key="documentation" value="Represents a single, atomic requirement derived from a policy, such as a specific article, law, or control."/>
+    </eAnnotations>
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="requirementId" lowerBound="1"
+        eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString" iD="true">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="A unique identifier for the requirement, e.g., 'gdpr.art32' or 'iso27001.a.13.1.1'."/>
+      </eAnnotations>
+    </eStructuralFeatures>
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="name" lowerBound="1" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="description" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="documentationLink" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="A URL pointing to the official text or documentation of the policy requirement."/>
+      </eAnnotations>
+    </eStructuralFeatures>
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="modality" lowerBound="1"
+        eType="#//RequirementModality" defaultValueLiteral="MUST">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="Specifies the level of obligation for this requirement (e.g., MUST, SHOULD, MAY)."/>
+      </eAnnotations>
+    </eStructuralFeatures>
+    <eStructuralFeatures xsi:type="ecore:EReference" name="group" eType="#//RequirementGroup"
+        eOpposite="#//RequirementGroup/requirements"/>
+  </eClassifiers>
+  <eClassifiers xsi:type="ecore:EEnum" name="RequirementModality">
+    <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+      <details key="documentation" value="Defines the modality of a policy requirement, based on RFC 2119."/>
+    </eAnnotations>
+    <eLiterals name="MUST">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="Indicates an absolute requirement."/>
+      </eAnnotations>
+    </eLiterals>
+    <eLiterals name="SHOULD" value="1">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="Indicates a strong recommendation. There may exist valid reasons to ignore it, but the full implications must be understood."/>
+      </eAnnotations>
+    </eLiterals>
+    <eLiterals name="MAY" value="2">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="Indicates an optional course of action."/>
+      </eAnnotations>
+    </eLiterals>
+    <eLiterals name="MUST_NOT" value="3">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="Indicates an absolute prohibition."/>
+      </eAnnotations>
+    </eLiterals>
+    <eLiterals name="SHOULD_NOT" value="4">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="Indicates a strong recommendation against a course of action."/>
+      </eAnnotations>
+    </eLiterals>
+  </eClassifiers>
+  <eClassifiers xsi:type="ecore:EClass" name="FeatureRequirementMapping">
+    <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+      <details key="documentation" value="Defines the explicit link between a technical PolicyFeature and a regulatory PolicyRequirement, explaining how the feature satisfies the requirement."/>
+    </eAnnotations>
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="justification" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="A textual explanation of why and how the assigned feature fulfills the policy requirement."/>
+      </eAnnotations>
+    </eStructuralFeatures>
+    <eStructuralFeatures xsi:type="ecore:EReference" name="satisfiedRequirement" lowerBound="1"
+        eType="#//PolicyRequirement" eKeys="#//PolicyRequirement/requirementId"/>
+    <eStructuralFeatures xsi:type="ecore:EReference" name="fulfillingFeature" lowerBound="1"
+        eType="#//PolicyFeature" eKeys="#//PolicyFeature/featureId"/>
+  </eClassifiers>
+  <eClassifiers xsi:type="ecore:EClass" name="GovernanceNamespace">
+    <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+      <details key="documentation" value="Defines a governance namespace that can be referenced by both operational dependencies (Requirements/Capabilities) and policy elements (PolicyFeatures/PolicyRequirements) to eliminate magic strings and provide semantic clarity."/>
+    </eAnnotations>
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="namespaceId" lowerBound="1"
+        eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString" iD="true">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="Unique identifier for the namespace (e.g., 'transport.mqtt', 'security.ssl', 'compliance.gdpr')"/>
+      </eAnnotations>
+    </eStructuralFeatures>
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="name" lowerBound="1" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="Human-readable name of the namespace"/>
+      </eAnnotations>
+    </eStructuralFeatures>
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="description" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="Detailed description of what this namespace represents"/>
+      </eAnnotations>
+    </eStructuralFeatures>
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="version" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="Version of the namespace specification"/>
+      </eAnnotations>
+    </eStructuralFeatures>
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="standardReference" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="Reference to relevant standards or specifications (e.g., 'RFC 3986', 'ISO 27001')"/>
+      </eAnnotations>
+    </eStructuralFeatures>
+    <eStructuralFeatures xsi:type="ecore:EReference" name="parentNamespace" eType="#//GovernanceNamespace"
+        eOpposite="#//GovernanceNamespace/childNamespaces" eKeys="#//GovernanceNamespace/namespaceId">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="Parent namespace for hierarchical organization (e.g., 'transport' is parent of 'transport.mqtt')"/>
+      </eAnnotations>
+    </eStructuralFeatures>
+    <eStructuralFeatures xsi:type="ecore:EReference" name="childNamespaces" upperBound="-1"
+        eType="#//GovernanceNamespace" eOpposite="#//GovernanceNamespace/parentNamespace"
+        eKeys="#//GovernanceNamespace/namespaceId">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="Child namespaces for hierarchical organization"/>
+      </eAnnotations>
+    </eStructuralFeatures>
+  </eClassifiers>
+  <eClassifiers xsi:type="ecore:EClass" name="RequirementGroup">
+    <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+      <details key="documentation" value="A container for grouping related PolicyRequirements, allowing for hierarchical structuring of policies."/>
+    </eAnnotations>
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="name" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="Human-readable name of the requirement group"/>
+      </eAnnotations>
+    </eStructuralFeatures>
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="description" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="Detailed description of the requirement group"/>
+      </eAnnotations>
+    </eStructuralFeatures>
+    <eStructuralFeatures xsi:type="ecore:EReference" name="requirements" upperBound="-1"
+        eType="#//PolicyRequirement" containment="true" eOpposite="#//PolicyRequirement/group"/>
+    <eStructuralFeatures xsi:type="ecore:EReference" name="subGroups" upperBound="-1"
+        eType="#//RequirementGroup" containment="true" eOpposite="#//RequirementGroup/group"/>
+    <eStructuralFeatures xsi:type="ecore:EReference" name="group" eType="#//RequirementGroup"
+        eOpposite="#//RequirementGroup/subGroups"/>
+    <eStructuralFeatures xsi:type="ecore:EReference" name="policy" eType="#//Policy"
+        eOpposite="#//Policy/requirementGroups"/>
+  </eClassifiers>
+  <eClassifiers xsi:type="ecore:EClass" name="NamespaceHolder" eSuperTypes="#//SystemHolder">
+    <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+      <details key="documentation" value="An entity that can define and manage governance namespaces. Provides the foundational namespace definitions that can be referenced by ComponentDependencies and PolicyFeatures to eliminate magic strings."/>
+    </eAnnotations>
+    <eStructuralFeatures xsi:type="ecore:EReference" name="namespaces" upperBound="-1"
+        eType="#//GovernanceNamespace" containment="true" eKeys="#//GovernanceNamespace/namespaceId">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="Governance namespaces defined within this system"/>
+      </eAnnotations>
+    </eStructuralFeatures>
+  </eClassifiers>
+  <eClassifiers xsi:type="ecore:EClass" name="PolicyPack" eSuperTypes="#//NamespaceHolder">
+    <eStructuralFeatures xsi:type="ecore:EReference" name="policy" lowerBound="1"
+        eType="#//Policy" eKeys="#//Policy/policyId"/>
+  </eClassifiers>
+  <eClassifiers xsi:type="ecore:EClass" name="GovernanceDocumentationContainer">
+    <eStructuralFeatures xsi:type="ecore:EReference" name="documentation" upperBound="-1"
+        eType="#//GovernanceDocumentation" containment="true"/>
+  </eClassifiers>
+</ecore:EPackage>

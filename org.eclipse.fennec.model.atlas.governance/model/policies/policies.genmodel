@@ -1,0 +1,118 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<genmodel:GenModel xmi:version="2.0" xmlns:xmi="http://www.omg.org/XMI" xmlns:ecore="http://www.eclipse.org/emf/2002/Ecore"
+    xmlns:genmodel="http://www.eclipse.org/emf/2002/GenModel" copyrightText="Copyright (c) 2012 - 2025 Data In Motion and others.&#xA;All rights reserved.&#xA;&#xA;This program and the accompanying materials are made&#xA;available under the terms of the Eclipse Public License 2.0&#xA;which is available at https://www.eclipse.org/legal/epl-2.0/&#xA;&#xA;SPDX-License-Identifier: EPL-2.0&#xA;&#xA;Contributors:&#xA;     Mark Hoffmann - initial API and implementation"
+    modelDirectory="/org.eclipse.fennec.model.atlas.governance.model/src" editDirectory="/org.eclipse.fennec.model.atlas.governance.model.edit/src"
+    editorDirectory="/org.eclipse.fennec.model.atlas.governance.model.editor/src"
+    modelPluginID="org.eclipse.fennec.model.atlas.governance.model" modelName="DataQualityPolicyPolicy"
+    rootExtendsClass="org.eclipse.emf.ecore.impl.MinimalEObjectImpl$Container" importerID="org.eclipse.emf.importer.ecore"
+    complianceLevel="17.0" copyrightFields="false" editPluginID="org.eclipse.fennec.model.atlas.governance.model.edit"
+    editorPluginID="org.eclipse.fennec.model.atlas.governance.model.editor" usedGenPackages="../governance.genmodel#//governance"
+    operationReflection="true" importOrganizing="true" oSGiCompatible="true">
+  <foreignModel>data-qs.ecore</foreignModel>
+  <foreignModel>eu-ai-act.ecore</foreignModel>
+  <foreignModel>gdpr.ecore</foreignModel>
+  <foreignModel>iso27001.ecore</foreignModel>
+  <foreignModel>kritis.ecore</foreignModel>
+  <foreignModel>opendata.ecore</foreignModel>
+  <foreignModel>din-iso9001.ecore</foreignModel>
+  <foreignModel>din-spec91377.ecore</foreignModel>
+  <genPackages prefix="DataQS" basePackage="org.eclipse.fennec.model.atlas.policy"
+      resource="XMI" disposableProviderFactory="true" ecorePackage="data-qs.ecore#/">
+    <genClasses ecoreClass="data-qs.ecore#//DataQualityPolicyCheck">
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute data-qs.ecore#//DataQualityPolicyCheck/schemaConformanceVerified"/>
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute data-qs.ecore#//DataQualityPolicyCheck/valueRangeValidated"/>
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute data-qs.ecore#//DataQualityPolicyCheck/completenessChecked"/>
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute data-qs.ecore#//DataQualityPolicyCheck/formatValidationPassed"/>
+    </genClasses>
+  </genPackages>
+  <genPackages prefix="EUAI" basePackage="org.eclipse.fennec.model.atlas.policy" resource="XMI"
+      disposableProviderFactory="true" ecorePackage="eu-ai-act.ecore#/">
+    <genEnums typeSafeEnumCompatible="false" ecoreEnum="eu-ai-act.ecore#//AIActRiskLevel">
+      <genEnumLiterals ecoreEnumLiteral="eu-ai-act.ecore#//AIActRiskLevel/UNKNOWN"/>
+      <genEnumLiterals ecoreEnumLiteral="eu-ai-act.ecore#//AIActRiskLevel/MINIMAL_OR_NO_RISK"/>
+      <genEnumLiterals ecoreEnumLiteral="eu-ai-act.ecore#//AIActRiskLevel/LIMITED_RISK"/>
+      <genEnumLiterals ecoreEnumLiteral="eu-ai-act.ecore#//AIActRiskLevel/HIGH_RISK"/>
+      <genEnumLiterals ecoreEnumLiteral="eu-ai-act.ecore#//AIActRiskLevel/UNACCEPTABLE_RISK"/>
+    </genEnums>
+    <genClasses ecoreClass="eu-ai-act.ecore#//EUAIActPolicyCheck">
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute eu-ai-act.ecore#//EUAIActPolicyCheck/riskLevel"/>
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute eu-ai-act.ecore#//EUAIActPolicyCheck/isHighRiskAnnexIII"/>
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute eu-ai-act.ecore#//EUAIActPolicyCheck/threatensHealthSafetyOrRights"/>
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute eu-ai-act.ecore#//EUAIActPolicyCheck/isUnacceptableRiskArticle5"/>
+    </genClasses>
+  </genPackages>
+  <genPackages prefix="GDPR" basePackage="org.eclipse.fennec.model.atlas.policy" resource="XMI"
+      disposableProviderFactory="true" ecorePackage="gdpr.ecore#/">
+    <genEnums typeSafeEnumCompatible="false" ecoreEnum="gdpr.ecore#//LegalBasis">
+      <genEnumLiterals ecoreEnumLiteral="gdpr.ecore#//LegalBasis/NOT_APPLICABLE"/>
+      <genEnumLiterals ecoreEnumLiteral="gdpr.ecore#//LegalBasis/CONSENT"/>
+      <genEnumLiterals ecoreEnumLiteral="gdpr.ecore#//LegalBasis/CONTRACT"/>
+      <genEnumLiterals ecoreEnumLiteral="gdpr.ecore#//LegalBasis/LEGAL_OBLIGATION"/>
+      <genEnumLiterals ecoreEnumLiteral="gdpr.ecore#//LegalBasis/VITAL_INTEREST"/>
+      <genEnumLiterals ecoreEnumLiteral="gdpr.ecore#//LegalBasis/PUBLIC_TASK"/>
+      <genEnumLiterals ecoreEnumLiteral="gdpr.ecore#//LegalBasis/LEGITIMATE_INTEREST"/>
+    </genEnums>
+    <genClasses ecoreClass="gdpr.ecore#//GDPRPolicyCheck">
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute gdpr.ecore#//GDPRPolicyCheck/containsPersonalData"/>
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute gdpr.ecore#//GDPRPolicyCheck/legalBasisForProcessing"/>
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute gdpr.ecore#//GDPRPolicyCheck/dataMinimizationApplied"/>
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute gdpr.ecore#//GDPRPolicyCheck/purposeLimitationMet"/>
+    </genClasses>
+  </genPackages>
+  <genPackages prefix="ISO27" basePackage="org.eclipse.fennec.model.atlas.policy"
+      resource="XMI" disposableProviderFactory="true" ecorePackage="iso27001.ecore#/">
+    <genClasses ecoreClass="iso27001.ecore#//ISO27001PolicyCheck">
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute iso27001.ecore#//ISO27001PolicyCheck/networkControlImplemented"/>
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute iso27001.ecore#//ISO27001PolicyCheck/accessControlVerified"/>
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute iso27001.ecore#//ISO27001PolicyCheck/loggingAndMonitoringActive"/>
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute iso27001.ecore#//ISO27001PolicyCheck/assetManagementCompliant"/>
+    </genClasses>
+  </genPackages>
+  <genPackages prefix="Kritis" basePackage="org.eclipse.fennec.model.atlas.policy"
+      resource="XMI" disposableProviderFactory="true" ecorePackage="kritis.ecore#/">
+    <genClasses ecoreClass="kritis.ecore#//KRITISPolicyCheck">
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute kritis.ecore#//KRITISPolicyCheck/resilienceVerified"/>
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute kritis.ecore#//KRITISPolicyCheck/incidentResponseReady"/>
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute kritis.ecore#//KRITISPolicyCheck/supplyChainSecure"/>
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute kritis.ecore#//KRITISPolicyCheck/systemHardeningApplied"/>
+    </genClasses>
+  </genPackages>
+  <genPackages prefix="OpenData" basePackage="org.eclipse.fennec.model.atlas.policy"
+      resource="XMI" disposableProviderFactory="true" ecorePackage="opendata.ecore#/">
+    <genEnums typeSafeEnumCompatible="false" ecoreEnum="opendata.ecore#//OpenDataLicense">
+      <genEnumLiterals ecoreEnumLiteral="opendata.ecore#//OpenDataLicense/NOT_APPLICABLE"/>
+      <genEnumLiterals ecoreEnumLiteral="opendata.ecore#//OpenDataLicense/PROPRIETARY"/>
+      <genEnumLiterals ecoreEnumLiteral="opendata.ecore#//OpenDataLicense/CC0"/>
+      <genEnumLiterals ecoreEnumLiteral="opendata.ecore#//OpenDataLicense/CC_BY"/>
+      <genEnumLiterals ecoreEnumLiteral="opendata.ecore#//OpenDataLicense/ODbL"/>
+      <genEnumLiterals ecoreEnumLiteral="opendata.ecore#//OpenDataLicense/PDDL"/>
+    </genEnums>
+    <genClasses ecoreClass="opendata.ecore#//OpenDataPolicyCheck">
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute opendata.ecore#//OpenDataPolicyCheck/piiAnonymizationVerified"/>
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute opendata.ecore#//OpenDataPolicyCheck/licenseType"/>
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute opendata.ecore#//OpenDataPolicyCheck/isMachineReadable"/>
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute opendata.ecore#//OpenDataPolicyCheck/hasPublicEndpoint"/>
+    </genClasses>
+  </genPackages>
+  <genPackages prefix="ISO9001" basePackage="org.eclipse.fennec.model.atlas.policy"
+      resource="XMI" disposableProviderFactory="true" ecorePackage="din-iso9001.ecore#/">
+    <genClasses ecoreClass="din-iso9001.ecore#//ISO9001PolicyCheck">
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute din-iso9001.ecore#//ISO9001PolicyCheck/processApproachApplied"/>
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute din-iso9001.ecore#//ISO9001PolicyCheck/documentedInformationMaintained"/>
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute din-iso9001.ecore#//ISO9001PolicyCheck/customerFocusDemonstrated"/>
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute din-iso9001.ecore#//ISO9001PolicyCheck/nonconformityProcessExists"/>
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute din-iso9001.ecore#//ISO9001PolicyCheck/resourceAndCompetenceVerified"/>
+    </genClasses>
+  </genPackages>
+  <genPackages prefix="DS91377" basePackage="org.eclipse.fennec.model.atlas.policy"
+      resource="XMI" disposableProviderFactory="true" ecorePackage="din-spec91377.ecore#/">
+    <genClasses ecoreClass="din-spec91377.ecore#//DINSPEC91377PolicyCheck">
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute din-spec91377.ecore#//DINSPEC91377PolicyCheck/architectureLayersImplemented"/>
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute din-spec91377.ecore#//DINSPEC91377PolicyCheck/modelCentricDataFlowApplied"/>
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute din-spec91377.ecore#//DINSPEC91377PolicyCheck/interfaceInteroperabilityEnsured"/>
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute din-spec91377.ecore#//DINSPEC91377PolicyCheck/integrationApiStandardsMet"/>
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute din-spec91377.ecore#//DINSPEC91377PolicyCheck/managementServicesProvided"/>
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute din-spec91377.ecore#//DINSPEC91377PolicyCheck/informationSecurityConceptApplied"/>
+    </genClasses>
+  </genPackages>
+</genmodel:GenModel>
