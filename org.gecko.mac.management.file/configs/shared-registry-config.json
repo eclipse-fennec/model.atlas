@@ -1,0 +1,11 @@
+{
+	":configurator:resource-version": 1,
+	":configurator:symbolic-name": "org.gecko.mac.management.file",
+	":configurator:version": "1.0.0",
+	"LuceneEObjectRegistryService": {
+		"registry.workspace.folder": "/mac/shared-registry",
+		"storage.backend.tracking": "true",
+		"initial.index.capacity": "1000",
+		"enable.debug.logging": "true"
+	}
+}

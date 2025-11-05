@@ -1,0 +1,170 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<genmodel:GenModel xmi:version="2.0" xmlns:xmi="http://www.omg.org/XMI" xmlns:genmodel="http://www.eclipse.org/emf/2002/GenModel"
+    copyrightText="Copyright (c) 2012 - 2025 Data In Motion and others.&#xA;All rights reserved.&#xA;&#xA;This program and the accompanying materials are made&#xA;available under the terms of the Eclipse Public License 2.0&#xA;which is available at https://www.eclipse.org/legal/epl-2.0/&#xA;&#xA;SPDX-License-Identifier: EPL-2.0&#xA;&#xA;Contributors:&#xA;     Mark Hoffmann - initial API and implementation"
+    modelDirectory="/org.gecko.mac.management/src-api" modelPluginID="org.gecko.mac.management"
+    modelName="ManagementApi" rootExtendsInterface="" rootExtendsClass="org.eclipse.emf.ecore.impl.MinimalEObjectImpl$Container"
+    importerID="org.eclipse.emf.importer.ecore" complianceLevel="17.0" copyrightFields="false"
+    usedGenPackages="management.genmodel#//management" operationReflection="true"
+    importOrganizing="true" oSGiCompatible="true">
+  <foreignModel>management-api.ecore</foreignModel>
+  <genPackages prefix="ManagementApi" basePackage="org.gecko.mac.mgmt" resource="XMI"
+      disposableProviderFactory="true" ecorePackage="management-api.ecore#/">
+    <genClasses image="false" ecoreClass="management-api.ecore#//EObjectGenerationService">
+      <genTypeParameters ecoreTypeParameter="management-api.ecore#//EObjectGenerationService/T"/>
+      <genOperations ecoreOperation="management-api.ecore#//EObjectGenerationService/requestGeneration">
+        <genParameters ecoreParameter="management-api.ecore#//EObjectGenerationService/requestGeneration/jsonSample"/>
+        <genParameters ecoreParameter="management-api.ecore#//EObjectGenerationService/requestGeneration/sourceChannel"/>
+        <genParameters ecoreParameter="management-api.ecore#//EObjectGenerationService/requestGeneration/requestingUser"/>
+        <genParameters ecoreParameter="management-api.ecore#//EObjectGenerationService/requestGeneration/targetType"/>
+      </genOperations>
+      <genOperations ecoreOperation="management-api.ecore#//EObjectGenerationService/requestGeneration.1">
+        <genParameters ecoreParameter="management-api.ecore#//EObjectGenerationService/requestGeneration.1/jsonSample"/>
+        <genParameters ecoreParameter="management-api.ecore#//EObjectGenerationService/requestGeneration.1/sourceChannel"/>
+        <genParameters ecoreParameter="management-api.ecore#//EObjectGenerationService/requestGeneration.1/requestingUser"/>
+        <genParameters ecoreParameter="management-api.ecore#//EObjectGenerationService/requestGeneration.1/targetType"/>
+        <genParameters ecoreParameter="management-api.ecore#//EObjectGenerationService/requestGeneration.1/parentEObject"/>
+      </genOperations>
+      <genOperations ecoreOperation="management-api.ecore#//EObjectGenerationService/getGenerationStatus">
+        <genParameters ecoreParameter="management-api.ecore#//EObjectGenerationService/getGenerationStatus/requestId"/>
+      </genOperations>
+      <genOperations ecoreOperation="management-api.ecore#//EObjectGenerationService/cancelGeneration">
+        <genParameters ecoreParameter="management-api.ecore#//EObjectGenerationService/cancelGeneration/requestId"/>
+      </genOperations>
+      <genOperations ecoreOperation="management-api.ecore#//EObjectGenerationService/listActiveGenerations"/>
+    </genClasses>
+    <genClasses image="false" ecoreClass="management-api.ecore#//EObjectDiscoveryService">
+      <genTypeParameters ecoreTypeParameter="management-api.ecore#//EObjectDiscoveryService/T"/>
+      <genOperations ecoreOperation="management-api.ecore#//EObjectDiscoveryService/findObjectByJsonPattern">
+        <genParameters ecoreParameter="management-api.ecore#//EObjectDiscoveryService/findObjectByJsonPattern/jsonSample"/>
+        <genParameters ecoreParameter="management-api.ecore#//EObjectDiscoveryService/findObjectByJsonPattern/sourceChannel"/>
+        <genParameters ecoreParameter="management-api.ecore#//EObjectDiscoveryService/findObjectByJsonPattern/targetType"/>
+      </genOperations>
+      <genOperations ecoreOperation="management-api.ecore#//EObjectDiscoveryService/searchSimilarObjects">
+        <genParameters ecoreParameter="management-api.ecore#//EObjectDiscoveryService/searchSimilarObjects/jsonSample"/>
+        <genParameters ecoreParameter="management-api.ecore#//EObjectDiscoveryService/searchSimilarObjects/targetType"/>
+        <genParameters ecoreParameter="management-api.ecore#//EObjectDiscoveryService/searchSimilarObjects/similarityThreshold"/>
+      </genOperations>
+      <genOperations ecoreOperation="management-api.ecore#//EObjectDiscoveryService/createJsonFingerprint">
+        <genParameters ecoreParameter="management-api.ecore#//EObjectDiscoveryService/createJsonFingerprint/jsonSample"/>
+      </genOperations>
+      <genOperations ecoreOperation="management-api.ecore#//EObjectDiscoveryService/isGenerationInProgress">
+        <genParameters ecoreParameter="management-api.ecore#//EObjectDiscoveryService/isGenerationInProgress/jsonFingerprint"/>
+      </genOperations>
+      <genOperations ecoreOperation="management-api.ecore#//EObjectDiscoveryService/cacheGenerationRequest">
+        <genParameters ecoreParameter="management-api.ecore#//EObjectDiscoveryService/cacheGenerationRequest/jsonFingerprint"/>
+        <genParameters ecoreParameter="management-api.ecore#//EObjectDiscoveryService/cacheGenerationRequest/requestId"/>
+      </genOperations>
+      <genOperations ecoreOperation="management-api.ecore#//EObjectDiscoveryService/removeGenerationRequestFromCache">
+        <genParameters ecoreParameter="management-api.ecore#//EObjectDiscoveryService/removeGenerationRequestFromCache/jsonFingerprint"/>
+      </genOperations>
+      <genOperations ecoreOperation="management-api.ecore#//EObjectDiscoveryService/cacheObjectMetadata">
+        <genParameters ecoreParameter="management-api.ecore#//EObjectDiscoveryService/cacheObjectMetadata/objectRegistration"/>
+      </genOperations>
+      <genOperations ecoreOperation="management-api.ecore#//EObjectDiscoveryService/removeObjectRegistrationFromCache">
+        <genParameters ecoreParameter="management-api.ecore#//EObjectDiscoveryService/removeObjectRegistrationFromCache/objectId"/>
+      </genOperations>
+      <genOperations ecoreOperation="management-api.ecore#//EObjectDiscoveryService/getGenerationRequestIdForFingerprint">
+        <genParameters ecoreParameter="management-api.ecore#//EObjectDiscoveryService/getGenerationRequestIdForFingerprint/jsonFingerprint"/>
+      </genOperations>
+    </genClasses>
+    <genClasses image="false" ecoreClass="management-api.ecore#//EObjectStorageService">
+      <genTypeParameters ecoreTypeParameter="management-api.ecore#//EObjectStorageService/T"/>
+      <genOperations ecoreOperation="management-api.ecore#//EObjectStorageService/storeObject">
+        <genParameters ecoreParameter="management-api.ecore#//EObjectStorageService/storeObject/objectId"/>
+        <genParameters ecoreParameter="management-api.ecore#//EObjectStorageService/storeObject/object"/>
+        <genParameters ecoreParameter="management-api.ecore#//EObjectStorageService/storeObject/metadata"/>
+      </genOperations>
+      <genOperations ecoreOperation="management-api.ecore#//EObjectStorageService/retrieveObject">
+        <genParameters ecoreParameter="management-api.ecore#//EObjectStorageService/retrieveObject/objectId"/>
+      </genOperations>
+      <genOperations ecoreOperation="management-api.ecore#//EObjectStorageService/retrieveMetadata">
+        <genParameters ecoreParameter="management-api.ecore#//EObjectStorageService/retrieveMetadata/objectId"/>
+      </genOperations>
+      <genOperations ecoreOperation="management-api.ecore#//EObjectStorageService/deleteObject">
+        <genParameters ecoreParameter="management-api.ecore#//EObjectStorageService/deleteObject/objectId"/>
+      </genOperations>
+      <genOperations ecoreOperation="management-api.ecore#//EObjectStorageService/listObjectIds"/>
+      <genOperations ecoreOperation="management-api.ecore#//EObjectStorageService/queryObjects">
+        <genParameters ecoreParameter="management-api.ecore#//EObjectStorageService/queryObjects/query"/>
+      </genOperations>
+      <genOperations ecoreOperation="management-api.ecore#//EObjectStorageService/updateMetadata">
+        <genParameters ecoreParameter="management-api.ecore#//EObjectStorageService/updateMetadata/objectId"/>
+        <genParameters ecoreParameter="management-api.ecore#//EObjectStorageService/updateMetadata/metadata"/>
+      </genOperations>
+      <genOperations ecoreOperation="management-api.ecore#//EObjectStorageService/updateStatus">
+        <genParameters ecoreParameter="management-api.ecore#//EObjectStorageService/updateStatus/objectId"/>
+        <genParameters ecoreParameter="management-api.ecore#//EObjectStorageService/updateStatus/newStatus"/>
+        <genParameters ecoreParameter="management-api.ecore#//EObjectStorageService/updateStatus/changeUser"/>
+      </genOperations>
+      <genOperations ecoreOperation="management-api.ecore#//EObjectStorageService/exists">
+        <genParameters ecoreParameter="management-api.ecore#//EObjectStorageService/exists/objectId"/>
+      </genOperations>
+      <genOperations ecoreOperation="management-api.ecore#//EObjectStorageService/getObjectCount"/>
+      <genOperations ecoreOperation="management-api.ecore#//EObjectStorageService/getBackendType"/>
+    </genClasses>
+    <genClasses image="false" ecoreClass="management-api.ecore#//EObjectRegistryService">
+      <genTypeParameters ecoreTypeParameter="management-api.ecore#//EObjectRegistryService/T"/>
+      <genOperations ecoreOperation="management-api.ecore#//EObjectRegistryService/getMetadata">
+        <genParameters ecoreParameter="management-api.ecore#//EObjectRegistryService/getMetadata/objectId"/>
+      </genOperations>
+      <genOperations ecoreOperation="management-api.ecore#//EObjectRegistryService/findByObjectName">
+        <genParameters ecoreParameter="management-api.ecore#//EObjectRegistryService/findByObjectName/objectName"/>
+      </genOperations>
+      <genOperations ecoreOperation="management-api.ecore#//EObjectRegistryService/findByObjectNameAndRole">
+        <genParameters ecoreParameter="management-api.ecore#//EObjectRegistryService/findByObjectNameAndRole/objectName"/>
+        <genParameters ecoreParameter="management-api.ecore#//EObjectRegistryService/findByObjectNameAndRole/role"/>
+      </genOperations>
+      <genOperations ecoreOperation="management-api.ecore#//EObjectRegistryService/findByRole">
+        <genParameters ecoreParameter="management-api.ecore#//EObjectRegistryService/findByRole/role"/>
+      </genOperations>
+      <genOperations ecoreOperation="management-api.ecore#//EObjectRegistryService/findByStatus">
+        <genParameters ecoreParameter="management-api.ecore#//EObjectRegistryService/findByStatus/status"/>
+      </genOperations>
+      <genOperations ecoreOperation="management-api.ecore#//EObjectRegistryService/findPendingApproval"/>
+      <genOperations ecoreOperation="management-api.ecore#//EObjectRegistryService/findByVersion">
+        <genParameters ecoreParameter="management-api.ecore#//EObjectRegistryService/findByVersion/version"/>
+      </genOperations>
+      <genOperations ecoreOperation="management-api.ecore#//EObjectRegistryService/findByVersionPattern">
+        <genParameters ecoreParameter="management-api.ecore#//EObjectRegistryService/findByVersionPattern/versionPattern"/>
+      </genOperations>
+      <genOperations ecoreOperation="management-api.ecore#//EObjectRegistryService/findByFingerprint">
+        <genParameters ecoreParameter="management-api.ecore#//EObjectRegistryService/findByFingerprint/fingerprint"/>
+      </genOperations>
+      <genOperations ecoreOperation="management-api.ecore#//EObjectRegistryService/findByObjectType">
+        <genParameters ecoreParameter="management-api.ecore#//EObjectRegistryService/findByObjectType/objectType"/>
+      </genOperations>
+      <genOperations ecoreOperation="management-api.ecore#//EObjectRegistryService/findByStatusAndType">
+        <genParameters ecoreParameter="management-api.ecore#//EObjectRegistryService/findByStatusAndType/status"/>
+        <genParameters ecoreParameter="management-api.ecore#//EObjectRegistryService/findByStatusAndType/objectType"/>
+      </genOperations>
+      <genOperations ecoreOperation="management-api.ecore#//EObjectRegistryService/findRecentlyModified">
+        <genParameters ecoreParameter="management-api.ecore#//EObjectRegistryService/findRecentlyModified/sinceTime"/>
+        <genParameters ecoreParameter="management-api.ecore#//EObjectRegistryService/findRecentlyModified/maxResults"/>
+      </genOperations>
+      <genOperations ecoreOperation="management-api.ecore#//EObjectRegistryService/updateCache">
+        <genParameters ecoreParameter="management-api.ecore#//EObjectRegistryService/updateCache/metadata"/>
+      </genOperations>
+      <genOperations ecoreOperation="management-api.ecore#//EObjectRegistryService/removeFromCache">
+        <genParameters ecoreParameter="management-api.ecore#//EObjectRegistryService/removeFromCache/objectId"/>
+      </genOperations>
+      <genOperations ecoreOperation="management-api.ecore#//EObjectRegistryService/getRegistryStatistics"/>
+    </genClasses>
+    <genClasses image="false" ecoreClass="management-api.ecore#//StorageRegistry">
+      <genOperations ecoreOperation="management-api.ecore#//StorageRegistry/getStorageByRole">
+        <genParameters ecoreParameter="management-api.ecore#//StorageRegistry/getStorageByRole/role"/>
+      </genOperations>
+      <genOperations ecoreOperation="management-api.ecore#//StorageRegistry/getAllStorages"/>
+      <genOperations ecoreOperation="management-api.ecore#//StorageRegistry/getAvailableRoles"/>
+      <genOperations ecoreOperation="management-api.ecore#//StorageRegistry/updateGovernanceDocumentationId">
+        <genParameters ecoreParameter="management-api.ecore#//StorageRegistry/updateGovernanceDocumentationId/role"/>
+        <genParameters ecoreParameter="management-api.ecore#//StorageRegistry/updateGovernanceDocumentationId/objectName"/>
+        <genParameters ecoreParameter="management-api.ecore#//StorageRegistry/updateGovernanceDocumentationId/newDocumentationId"/>
+        <genParameters ecoreParameter="management-api.ecore#//StorageRegistry/updateGovernanceDocumentationId/reason"/>
+      </genOperations>
+      <genOperations ecoreOperation="management-api.ecore#//StorageRegistry/searchMetadataAcrossRoles">
+        <genParameters ecoreParameter="management-api.ecore#//StorageRegistry/searchMetadataAcrossRoles/query"/>
+      </genOperations>
+      <genOperations ecoreOperation="management-api.ecore#//StorageRegistry/getStorageStatistics"/>
+    </genClasses>
+  </genPackages>
+</genmodel:GenModel>

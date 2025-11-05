@@ -22,8 +22,11 @@ Test-Cases: ${classes;HIERARCHY_INDIRECTLY_ANNOTATED;org.junit.platform.commons.
 	org.eclipse.emf.ecore;version=latest,\
 	org.eclipse.emf.ecore.xmi;version=latest,\
 	org.eclipse.emf.common;version=latest,\
-    org.eclipse.osgitech.rest;version=latest,\
-    org.eclipse.osgitech.rest.servlet.whiteboard;version=latest
+	org.eclipse.osgitech.rest;version=latest,\
+	org.eclipse.osgitech.rest.servlet.whiteboard;version=latest,\
+	org.osgi.service.cm,\
+	org.gecko.mac.governance,\
+	org.gecko.mac.management
 
 Private-Package: org.eclipse.fennec.model.atlas.rest.tests,\
 	org.eclipse.fennec.model.atlas.rest.tests.helper

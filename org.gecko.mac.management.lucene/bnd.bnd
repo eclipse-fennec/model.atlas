@@ -1,0 +1,17 @@
+-workingset: Workflow
+
+-library: \
+	enable-emf
+	
+-buildpath: \
+	org.osgi.framework;version=latest,\
+	org.osgi.util.promise;version=latest,\
+	org.osgi.util.function;version=latest,\
+	org.osgi.service.component;version=latest,\
+	org.osgi.service.cm;version=latest,\
+	org.apache.lucene.core;version=latest,\
+	org.apache.lucene.queryparser;version=latest,\
+	org.gecko.mac.management;version=snapshot
+
+Bundle-Name: MAC Lucene Registry 
+Bundle-Description: Lucene-based registry implementation for Model Atlas Cloud

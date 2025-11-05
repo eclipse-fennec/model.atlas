@@ -1,0 +1,476 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ecore:EPackage xmi:version="2.0" xmlns:xmi="http://www.omg.org/XMI" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xmlns:ecore="http://www.eclipse.org/emf/2002/Ecore" name="api" nsURI="http://datainmotion.com/mac/management/api/1.0.0"
+    nsPrefix="mgmtapi">
+  <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+    <details key="modelName" value="ManagementApi"/>
+    <details key="complianceLevel" value="17.0"/>
+    <details key="copyrightText" value="Copyright (c) 2012 - 2025 Data In Motion and others.&#xA;All rights reserved.&#xA;&#xA;This program and the accompanying materials are made&#xA;available under the terms of the Eclipse Public License 2.0&#xA;which is available at https://www.eclipse.org/legal/epl-2.0/&#xA;&#xA;SPDX-License-Identifier: EPL-2.0&#xA;&#xA;Contributors:&#xA;     Mark Hoffmann - initial API and implementation"/>
+    <details key="resource" value="XMI"/>
+    <details key="prefix" value="ManagementApi"/>
+    <details key="basePackage" value="org.gecko.mac.mgmt"/>
+    <details key="rootExtendsInterface" value=""/>
+    <details key="oSGiCompatible" value="true"/>
+  </eAnnotations>
+  <eClassifiers xsi:type="ecore:EClass" name="EObjectGenerationService" abstract="true"
+      interface="true">
+    <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+      <details key="documentation" value="Service for AI-based EObject generation from JSON samples. Supports asynchronous generation with progress tracking, duplicate detection via fingerprinting, and automatic model registry integration. Used by IoT Broker for unknown sensor types and by manual model creation workflows."/>
+    </eAnnotations>
+    <eTypeParameters name="T">
+      <eBounds eClassifier="ecore:EClass http://www.eclipse.org/emf/2002/Ecore#//EObject"/>
+    </eTypeParameters>
+    <eOperations name="requestGeneration">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="Request EObject generation from JSON sample. Returns Promise&amp;lt;String&amp;gt; with unique request ID for status tracking. Example: service.requestGeneration('{&quot;temperature&quot;: 23.5}', 'SENSINACT', 'iot-system', 'SensorModel').then(requestId -&amp;gt; pollForCompletion(requestId))"/>
+      </eAnnotations>
+      <eGenericType eClassifier="ecore:EDataType management.ecore#//Promise">
+        <eTypeArguments eClassifier="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+      </eGenericType>
+      <eParameters name="jsonSample" lowerBound="1" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+      <eParameters name="sourceChannel" lowerBound="1" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+      <eParameters name="requestingUser" lowerBound="1" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+      <eParameters name="targetType" lowerBound="1" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    </eOperations>
+    <eOperations name="requestGeneration">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="Request EObject generation with parent context. Use when generating child objects that reference an existing parent EObject. The parentEObject provides type context for better AI generation results."/>
+      </eAnnotations>
+      <eGenericType eClassifier="ecore:EDataType management.ecore#//Promise">
+        <eTypeArguments eClassifier="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+      </eGenericType>
+      <eParameters name="jsonSample" lowerBound="1" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+      <eParameters name="sourceChannel" lowerBound="1" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+      <eParameters name="requestingUser" lowerBound="1" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+      <eParameters name="targetType" lowerBound="1" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+      <eParameters name="parentEObject">
+        <eGenericType eTypeParameter="#//EObjectGenerationService/T"/>
+      </eParameters>
+    </eOperations>
+    <eOperations name="getGenerationStatus">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="Get current status of generation request"/>
+      </eAnnotations>
+      <eGenericType eClassifier="ecore:EDataType management.ecore#//Promise">
+        <eTypeArguments eClassifier="ecore:EClass management.ecore#//GenerationRequest"/>
+      </eGenericType>
+      <eParameters name="requestId" lowerBound="1" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    </eOperations>
+    <eOperations name="cancelGeneration">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="Cancel ongoing generation request"/>
+      </eAnnotations>
+      <eGenericType eClassifier="ecore:EDataType management.ecore#//Promise">
+        <eTypeArguments eClassifier="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EBooleanObject"/>
+      </eGenericType>
+      <eParameters name="requestId" lowerBound="1" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    </eOperations>
+    <eOperations name="listActiveGenerations">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="List all active generation requests"/>
+      </eAnnotations>
+      <eGenericType eClassifier="ecore:EDataType management.ecore#//Promise">
+        <eTypeArguments eClassifier="ecore:EDataType management.ecore#//List">
+          <eTypeArguments eClassifier="ecore:EClass management.ecore#//GenerationRequest"/>
+        </eTypeArguments>
+      </eGenericType>
+    </eOperations>
+  </eClassifiers>
+  <eClassifiers xsi:type="ecore:EClass" name="EObjectDiscoveryService" abstract="true"
+      interface="true">
+    <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+      <details key="documentation" value="Generic service for JSON pattern recognition and object discovery"/>
+    </eAnnotations>
+    <eTypeParameters name="T">
+      <eBounds eClassifier="ecore:EClass http://www.eclipse.org/emf/2002/Ecore#//EObject"/>
+    </eTypeParameters>
+    <eOperations name="findObjectByJsonPattern">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="Find existing EObject that matches JSON structure"/>
+      </eAnnotations>
+      <eGenericType eClassifier="ecore:EDataType management.ecore#//Promise">
+        <eTypeArguments eClassifier="ecore:EClass management.ecore#//ObjectMetadata"/>
+      </eGenericType>
+      <eParameters name="jsonSample" lowerBound="1" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+      <eParameters name="sourceChannel" lowerBound="1" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+      <eParameters name="targetType" lowerBound="1" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    </eOperations>
+    <eOperations name="searchSimilarObjects">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="Search for objects with similar JSON patterns"/>
+      </eAnnotations>
+      <eGenericType eClassifier="ecore:EDataType management.ecore#//Promise">
+        <eTypeArguments eClassifier="ecore:EDataType management.ecore#//List">
+          <eTypeArguments eClassifier="ecore:EClass management.ecore#//ObjectMetadata"/>
+        </eTypeArguments>
+      </eGenericType>
+      <eParameters name="jsonSample" lowerBound="1" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+      <eParameters name="targetType" lowerBound="1" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+      <eParameters name="similarityThreshold" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EDouble"/>
+    </eOperations>
+    <eOperations name="createJsonFingerprint">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="Create structural fingerprint from JSON sample"/>
+      </eAnnotations>
+      <eGenericType eClassifier="ecore:EDataType management.ecore#//Promise">
+        <eTypeArguments eClassifier="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+      </eGenericType>
+      <eParameters name="jsonSample" lowerBound="1" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    </eOperations>
+    <eOperations name="isGenerationInProgress">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="Check if generation is already in progress for this pattern"/>
+      </eAnnotations>
+      <eGenericType eClassifier="ecore:EDataType management.ecore#//Promise">
+        <eTypeArguments eClassifier="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EBooleanObject"/>
+      </eGenericType>
+      <eParameters name="jsonFingerprint" lowerBound="1" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    </eOperations>
+    <eOperations name="cacheGenerationRequest">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="Cache generation request to prevent duplicates"/>
+      </eAnnotations>
+      <eGenericType eClassifier="ecore:EDataType management.ecore#//Promise">
+        <eTypeArguments eClassifier="ecore:EDataType management.ecore#//Void"/>
+      </eGenericType>
+      <eParameters name="jsonFingerprint" lowerBound="1" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+      <eParameters name="requestId" lowerBound="1" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    </eOperations>
+    <eOperations name="removeGenerationRequestFromCache">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="Remove generation request from cache"/>
+      </eAnnotations>
+      <eGenericType eClassifier="ecore:EDataType management.ecore#//Promise">
+        <eTypeArguments eClassifier="ecore:EDataType management.ecore#//Void"/>
+      </eGenericType>
+      <eParameters name="jsonFingerprint" lowerBound="1" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    </eOperations>
+    <eOperations name="cacheObjectMetadata">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="Cache ObjectMetadata"/>
+      </eAnnotations>
+      <eGenericType eClassifier="ecore:EDataType management.ecore#//Promise">
+        <eTypeArguments eClassifier="ecore:EDataType management.ecore#//Void"/>
+      </eGenericType>
+      <eParameters name="objectRegistration" lowerBound="1" eType="ecore:EClass management.ecore#//ObjectMetadata"/>
+    </eOperations>
+    <eOperations name="removeObjectRegistrationFromCache">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="Remove ObjectMetadata from cache"/>
+      </eAnnotations>
+      <eGenericType eClassifier="ecore:EDataType management.ecore#//Promise">
+        <eTypeArguments eClassifier="ecore:EDataType management.ecore#//Void"/>
+      </eGenericType>
+      <eParameters name="objectId" lowerBound="1" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    </eOperations>
+    <eOperations name="getGenerationRequestIdForFingerprint">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="Retrieves the id of the GenerationRequest for that fingerprint, so one can further asks for the status"/>
+      </eAnnotations>
+      <eGenericType eClassifier="ecore:EDataType management.ecore#//Promise">
+        <eTypeArguments eClassifier="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+      </eGenericType>
+      <eParameters name="jsonFingerprint" lowerBound="1" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    </eOperations>
+  </eClassifiers>
+  <eClassifiers xsi:type="ecore:EClass" name="EObjectStorageService" abstract="true"
+      interface="true">
+    <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+      <details key="documentation" value="Generic storage abstraction for pluggable backends (Git/MinIO)"/>
+    </eAnnotations>
+    <eTypeParameters name="T">
+      <eBounds eClassifier="ecore:EClass http://www.eclipse.org/emf/2002/Ecore#//EObject"/>
+    </eTypeParameters>
+    <eOperations name="storeObject">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="Store object with metadata, returns promise with storage ID"/>
+      </eAnnotations>
+      <eGenericType eClassifier="ecore:EDataType management.ecore#//Promise">
+        <eTypeArguments eClassifier="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+      </eGenericType>
+      <eParameters name="objectId" lowerBound="1" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+      <eParameters name="object" lowerBound="1">
+        <eGenericType eTypeParameter="#//EObjectStorageService/T"/>
+      </eParameters>
+      <eParameters name="metadata" lowerBound="1" eType="ecore:EClass management.ecore#//ObjectMetadata"/>
+    </eOperations>
+    <eOperations name="retrieveObject">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="Retrieve object by ID"/>
+      </eAnnotations>
+      <eGenericType eClassifier="ecore:EDataType management.ecore#//Promise">
+        <eTypeArguments eTypeParameter="#//EObjectStorageService/T"/>
+      </eGenericType>
+      <eParameters name="objectId" lowerBound="1" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    </eOperations>
+    <eOperations name="retrieveMetadata">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="Retrieve metadata by object ID"/>
+      </eAnnotations>
+      <eGenericType eClassifier="ecore:EDataType management.ecore#//Promise">
+        <eTypeArguments eClassifier="ecore:EClass management.ecore#//ObjectMetadata"/>
+      </eGenericType>
+      <eParameters name="objectId" lowerBound="1" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    </eOperations>
+    <eOperations name="deleteObject">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="Delete object by ID, returns promise with success flag"/>
+      </eAnnotations>
+      <eGenericType eClassifier="ecore:EDataType management.ecore#//Promise">
+        <eTypeArguments eClassifier="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EBooleanObject"/>
+      </eGenericType>
+      <eParameters name="objectId" lowerBound="1" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    </eOperations>
+    <eOperations name="listObjectIds">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="List all object IDs"/>
+      </eAnnotations>
+      <eGenericType eClassifier="ecore:EDataType management.ecore#//Promise">
+        <eTypeArguments eClassifier="ecore:EDataType management.ecore#//List">
+          <eTypeArguments eClassifier="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+        </eTypeArguments>
+      </eGenericType>
+    </eOperations>
+    <eOperations name="queryObjects">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="Query objects with criteria"/>
+      </eAnnotations>
+      <eGenericType eClassifier="ecore:EDataType management.ecore#//Promise">
+        <eTypeArguments eClassifier="ecore:EDataType management.ecore#//List">
+          <eTypeArguments eClassifier="ecore:EClass management.ecore#//ObjectMetadata"/>
+        </eTypeArguments>
+      </eGenericType>
+      <eParameters name="query" lowerBound="1" eType="ecore:EClass management.ecore#//ObjectQuery"/>
+    </eOperations>
+    <eOperations name="updateMetadata">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="Update metadata for existing object without changing the object itself. Useful for workflow state transitions, review annotations, and compliance updates."/>
+      </eAnnotations>
+      <eGenericType eClassifier="ecore:EDataType management.ecore#//Promise">
+        <eTypeArguments eClassifier="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EBooleanObject"/>
+      </eGenericType>
+      <eParameters name="objectId" lowerBound="1" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+      <eParameters name="metadata" lowerBound="1" eType="ecore:EClass management.ecore#//ObjectMetadata"/>
+    </eOperations>
+    <eOperations name="updateStatus">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="Convenience method to update only the lifecycle status of an object. Automatically sets lastChangeTime and can optionally set lastChangeUser."/>
+      </eAnnotations>
+      <eGenericType eClassifier="ecore:EDataType management.ecore#//Promise">
+        <eTypeArguments eClassifier="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EBooleanObject"/>
+      </eGenericType>
+      <eParameters name="objectId" lowerBound="1" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+      <eParameters name="newStatus" lowerBound="1" eType="ecore:EEnum management.ecore#//ObjectStatus"/>
+      <eParameters name="changeUser" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    </eOperations>
+    <eOperations name="exists" lowerBound="1" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EBooleanObject">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="Check if object exists without loading it. More efficient than retrieveObject() when only existence check is needed."/>
+      </eAnnotations>
+      <eParameters name="objectId" lowerBound="1" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    </eOperations>
+    <eOperations name="getObjectCount" lowerBound="1" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//ELong">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="Get total count of objects in storage. Efficient count operation without loading all objects."/>
+      </eAnnotations>
+    </eOperations>
+    <eOperations name="getBackendType" lowerBound="1" eType="ecore:EEnum management.ecore#//StorageBackendType">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="Get the storage backend type (FILE, MINIO, GIT) for debugging and monitoring purposes"/>
+      </eAnnotations>
+    </eOperations>
+  </eClassifiers>
+  <eClassifiers xsi:type="ecore:EClass" name="EObjectRegistryService" abstract="true"
+      interface="true">
+    <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+      <details key="documentation" value="Registry service providing fast lookup and lifecycle management of object metadata. Implementation leverages Lucene indexing for O(log n) performance on queries by objectId, status, version, and other metadata fields. Serves as the central ObjectRegistration registry eliminating need for separate in-memory collections."/>
+    </eAnnotations>
+    <eTypeParameters name="T">
+      <eBounds eClassifier="ecore:EClass http://www.eclipse.org/emf/2002/Ecore#//EObject"/>
+    </eTypeParameters>
+    <eOperations name="getMetadata" lowerBound="1">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="Retrieve object metadata by unique objectId. Returns Optional.empty() if not found. ObjectId is now globally unique across all storage roles."/>
+      </eAnnotations>
+      <eGenericType eClassifier="ecore:EDataType management.ecore#//Optional">
+        <eTypeArguments eClassifier="ecore:EClass management.ecore#//ObjectMetadata"/>
+      </eGenericType>
+      <eParameters name="objectId" lowerBound="1" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    </eOperations>
+    <eOperations name="findByObjectName">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="Find all metadata instances for a logical object across all storage roles. Returns list of metadata for the same objectName in different roles (draft, approved, documentation)."/>
+      </eAnnotations>
+      <eGenericType eClassifier="ecore:EDataType management.ecore#//List">
+        <eTypeArguments eClassifier="ecore:EClass management.ecore#//ObjectMetadata"/>
+      </eGenericType>
+      <eParameters name="objectName" lowerBound="1" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    </eOperations>
+    <eOperations name="findByObjectNameAndRole">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="Find metadata for specific logical object and storage role. Returns Optional.empty() if not found for the specific objectName and role combination."/>
+      </eAnnotations>
+      <eGenericType eClassifier="ecore:EDataType management.ecore#//Optional">
+        <eTypeArguments eClassifier="ecore:EClass management.ecore#//ObjectMetadata"/>
+      </eGenericType>
+      <eParameters name="objectName" lowerBound="1" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+      <eParameters name="role" lowerBound="1" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    </eOperations>
+    <eOperations name="findByRole">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="Find all objects with the specified storage role (draft, approved, documentation) across all logical objects. Useful for role-based workflows."/>
+      </eAnnotations>
+      <eGenericType eClassifier="ecore:EDataType management.ecore#//List">
+        <eTypeArguments eClassifier="ecore:EClass management.ecore#//ObjectMetadata"/>
+      </eGenericType>
+      <eParameters name="role" lowerBound="1" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    </eOperations>
+    <eOperations name="findByStatus">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="Find all objects with the specified lifecycle status (DRAFT, APPROVED, REJECTED, DEPLOYED, ARCHIVED). Uses Lucene exact-match indexing for efficient retrieval."/>
+      </eAnnotations>
+      <eGenericType eClassifier="ecore:EDataType management.ecore#//List">
+        <eTypeArguments eClassifier="ecore:EClass management.ecore#//ObjectMetadata"/>
+      </eGenericType>
+      <eParameters name="status" lowerBound="1" eType="ecore:EEnum management.ecore#//ObjectStatus"/>
+    </eOperations>
+    <eOperations name="findPendingApproval">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="Convenience method to find all objects with status=DRAFT that are pending approval. Equivalent to findByStatus(ObjectStatus.DRAFT)."/>
+      </eAnnotations>
+      <eGenericType eClassifier="ecore:EDataType management.ecore#//List">
+        <eTypeArguments eClassifier="ecore:EClass management.ecore#//ObjectMetadata"/>
+      </eGenericType>
+    </eOperations>
+    <eOperations name="findByVersion">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="Find objects by exact version match. For wildcard searches (e.g. '1.*'), use findByVersionPattern()."/>
+      </eAnnotations>
+      <eGenericType eClassifier="ecore:EDataType management.ecore#//List">
+        <eTypeArguments eClassifier="ecore:EClass management.ecore#//ObjectMetadata"/>
+      </eGenericType>
+      <eParameters name="version" lowerBound="1" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    </eOperations>
+    <eOperations name="findByVersionPattern">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="Find objects by version wildcard pattern (e.g. '1.*' for all 1.x versions, '2.1.*' for all 2.1.x versions). Uses Lucene analyzed field for pattern matching."/>
+      </eAnnotations>
+      <eGenericType eClassifier="ecore:EDataType management.ecore#//List">
+        <eTypeArguments eClassifier="ecore:EClass management.ecore#//ObjectMetadata"/>
+      </eGenericType>
+      <eParameters name="versionPattern" lowerBound="1" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    </eOperations>
+    <eOperations name="findByFingerprint">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="Find objects by generation trigger fingerprint for duplicate detection. Essential for AI generation workflow to prevent creating duplicate models for the same JSON structure. Returns Optional.empty() if no object with the specified fingerprint exists."/>
+      </eAnnotations>
+      <eGenericType eClassifier="ecore:EDataType management.ecore#//Optional">
+        <eTypeArguments eClassifier="ecore:EClass management.ecore#//ObjectMetadata"/>
+      </eGenericType>
+      <eParameters name="fingerprint" lowerBound="1" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    </eOperations>
+    <eOperations name="findByObjectType">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="Find all objects of the specified type (e.g. 'EPackage', 'Route', 'SensorModel'). Useful for type-specific workflows and bulk operations."/>
+      </eAnnotations>
+      <eGenericType eClassifier="ecore:EDataType management.ecore#//List">
+        <eTypeArguments eClassifier="ecore:EClass management.ecore#//ObjectMetadata"/>
+      </eGenericType>
+      <eParameters name="objectType" lowerBound="1" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    </eOperations>
+    <eOperations name="findByStatusAndType">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="Find objects matching both status and type criteria. Combines exact-match indexing for optimal performance on common query patterns."/>
+      </eAnnotations>
+      <eGenericType eClassifier="ecore:EDataType management.ecore#//List">
+        <eTypeArguments eClassifier="ecore:EClass management.ecore#//ObjectMetadata"/>
+      </eGenericType>
+      <eParameters name="status" lowerBound="1" eType="ecore:EEnum management.ecore#//ObjectStatus"/>
+      <eParameters name="objectType" lowerBound="1" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    </eOperations>
+    <eOperations name="findRecentlyModified">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="Find objects modified within the specified time window. Returns objects sorted by lastChangeTime descending (most recent first)."/>
+      </eAnnotations>
+      <eGenericType eClassifier="ecore:EDataType management.ecore#//List">
+        <eTypeArguments eClassifier="ecore:EClass management.ecore#//ObjectMetadata"/>
+      </eGenericType>
+      <eParameters name="sinceTime" lowerBound="1" eType="ecore:EDataType management.ecore#//Instant"/>
+      <eParameters name="maxResults" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EInt"/>
+    </eOperations>
+    <eOperations name="updateCache">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="Update registry cache with new or modified metadata. Automatically updates Lucene index for immediate searchability. Called by EObjectStorageService on save operations. Uses metadata.getObjectId() as unique key and metadata.getRole() for role-based indexing."/>
+      </eAnnotations>
+      <eParameters name="metadata" lowerBound="1" eType="ecore:EClass management.ecore#//ObjectMetadata"/>
+    </eOperations>
+    <eOperations name="removeFromCache">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="Remove object from registry cache and Lucene index by unique objectId. Called by EObjectStorageService on delete operations to maintain consistency."/>
+      </eAnnotations>
+      <eParameters name="objectId" lowerBound="1" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    </eOperations>
+    <eOperations name="getRegistryStatistics">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="Get registry statistics including total object count, count by status, count by type, and index health metrics. Useful for monitoring and dashboard displays."/>
+      </eAnnotations>
+      <eGenericType eClassifier="ecore:EDataType management.ecore#//Promise">
+        <eTypeArguments eClassifier="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EMap">
+          <eTypeArguments eClassifier="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+          <eTypeArguments eClassifier="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EJavaObject"/>
+        </eTypeArguments>
+      </eGenericType>
+    </eOperations>
+  </eClassifiers>
+  <eClassifiers xsi:type="ecore:EClass" name="StorageRegistry" abstract="true" interface="true">
+    <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+      <details key="documentation" value="Registry service for role-based storage service discovery and governance documentation lifecycle management. Provides centralized access to all storage services by role (draft, approved, release, documentation, archived) and handles bi-directional governance documentation references across storage tiers."/>
+    </eAnnotations>
+    <eOperations name="getStorageByRole">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="Get storage service by role name. Returns the storage service configured for the specified role (e.g. 'draft', 'approved', 'release', 'documentation'). Returns null if no storage service is registered for the given role."/>
+      </eAnnotations>
+      <eGenericType eClassifier="#//EObjectStorageService">
+        <eTypeArguments eClassifier="ecore:EClass http://www.eclipse.org/emf/2002/Ecore#//EObject"/>
+      </eGenericType>
+      <eParameters name="role" lowerBound="1" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    </eOperations>
+    <eOperations name="getAllStorages" upperBound="-1">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="Get all registered storage services. Returns a list of all storage services across all roles, useful for bulk operations and system health checks."/>
+      </eAnnotations>
+      <eGenericType eClassifier="#//EObjectStorageService">
+        <eTypeArguments eClassifier="ecore:EClass http://www.eclipse.org/emf/2002/Ecore#//EObject"/>
+      </eGenericType>
+    </eOperations>
+    <eOperations name="getAvailableRoles" upperBound="-1" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="Get set of all available storage roles. Returns the role names of all registered storage services (e.g. ['draft', 'approved', 'release', 'documentation'])."/>
+      </eAnnotations>
+    </eOperations>
+    <eOperations name="updateGovernanceDocumentationId" lowerBound="1" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EInt">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="Update governance documentation ID for all active objects with the specified object name in a specific storage role. This maintains bi-directional references between ObjectMetadata and GovernanceDocumentation for objects in the specified role only. Active objects (DRAFT, APPROVED, DEPLOYED) are updated with the new documentation ID, while archived objects preserve their historical references for audit trail."/>
+      </eAnnotations>
+      <eParameters name="role" lowerBound="1" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+      <eParameters name="objectName" lowerBound="1" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+      <eParameters name="newDocumentationId" lowerBound="1" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+      <eParameters name="reason" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    </eOperations>
+    <eOperations name="searchMetadataAcrossRoles" upperBound="-1" eType="ecore:EClass management.ecore#//ObjectMetadata">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="Search metadata across all storage roles using a query. Aggregates results from all registered storage services, useful for cross-role object discovery and lifecycle analysis."/>
+      </eAnnotations>
+      <eParameters name="query" lowerBound="1" eType="ecore:EClass management.ecore#//ObjectQuery"/>
+    </eOperations>
+    <eOperations name="getStorageStatistics">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="Get comprehensive storage statistics across all roles. Returns statistics including object counts per role, storage backend types, and overall system health metrics."/>
+      </eAnnotations>
+      <eGenericType eClassifier="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EMap">
+        <eTypeArguments eClassifier="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+        <eTypeArguments eClassifier="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EJavaObject"/>
+      </eGenericType>
+    </eOperations>
+  </eClassifiers>
+</ecore:EPackage>

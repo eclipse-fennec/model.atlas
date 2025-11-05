@@ -39,7 +39,8 @@ Bundle-Developers: \
 	geckoEMFUtil,\
 	geckoMessaging,\
 	geckoEMFRepository,\
-	jakartaREST
+	jakartaREST,\
+	geckoLibraries
 
 # Needed because we enabled library 'gecko-dimc'
 # Activate baselining

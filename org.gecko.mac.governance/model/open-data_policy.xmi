@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<governance:Policy xmi:version="2.0" xmlns:xmi="http://www.omg.org/XMI" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:governance="https://datainmotion.com/mac/governance/1.0.0" xsi:schemaLocation="https://datainmotion.com/mac/governance/1.0.0 governance.ecore" policyId="opendata.default.en" type="OPEN_DATA" name="Open Data Requirements" description="A set of policy requirements based on common Open Data principles.">
+  <requirementGroups name="Licensing and Reuse" description="Requirements related to the legal terms under which the data is made available.">
+    <requirements requirementId="od.license.open" name="Use of a recognized Open License" description="Data must be published under a recognized, open license (e.g., CC0, CC-BY, ODbL) that permits free use, reuse, and redistribution."/>
+    <requirements requirementId="od.license.nondiscriminatory" name="Non-discriminatory access" description="The license must not discriminate against any persons, groups, or fields of endeavor. It must allow for commercial and non-commercial reuse."/>
+    <requirements requirementId="od.license.attribution" name="Clear Attribution" description="If the license requires attribution, the preferred method for attribution must be clearly stated and easy to follow." modality="SHOULD"/>
+  </requirementGroups>
+  <requirementGroups name="Accessibility and Formats" description="Requirements related to the technical accessibility and format of the data.">
+    <requirements requirementId="od.format.open" name="Use of Open, Non-Proprietary Formats" description="Data must be provided in an open, non-proprietary format that is not controlled by a single entity (e.g., CSV, JSON, XML, GeoJSON)."/>
+    <requirements requirementId="od.format.machinereadable" name="Machine-readable Data" description="Data must be structured and provided in a machine-readable format to allow for effective automated processing."/>
+    <requirements requirementId="od.access.bulk" name="Bulk Download Availability" description="The entire dataset should be available for download in bulk to allow for offline use and comprehensive analysis." modality="SHOULD"/>
+    <requirements requirementId="od.access.api" name="API Access" description="Data should be accessible via a stable, documented, and publicly available Application Programming Interface (API) for granular access." modality="SHOULD"/>
+  </requirementGroups>
+  <requirementGroups name="Discoverability and Metadata" description="Requirements to ensure that potential users can easily find and understand the data.">
+    <requirements requirementId="od.metadata.provided" name="Provision of Comprehensive Metadata" description="Comprehensive metadata must be provided, describing the dataset's content, structure, scope, temporal coverage, and context."/>
+    <requirements requirementId="od.metadata.standard" name="Use of Metadata Standards" description="Metadata should follow a recognized standard (e.g., DCAT, Dublin Core, schema.org) to enhance interoperability and discoverability." modality="SHOULD"/>
+    <requirements requirementId="od.documentation.provided" name="Clear Documentation" description="Clear documentation for the data, including a data dictionary explaining each field, must be available to users."/>
+  </requirementGroups>
+  <requirementGroups name="Privacy and Anonymization" description="Requirements to ensure that the publication of open data does not compromise individual privacy.">
+    <requirements requirementId="od.privacy.anonymized" name="Effective Anonymization" description="If the dataset is derived from personal data, it must be properly anonymized using established techniques to prevent the re-identification of individuals."/>
+    <requirements requirementId="od.privacy.no_pii" name="No Direct Personal Identifiable Information" description="The published dataset must not contain any direct Personal Identifiable Information (PII) such as names, addresses, or identification numbers." modality="MUST_NOT"/>
+  </requirementGroups>
+</governance:Policy>

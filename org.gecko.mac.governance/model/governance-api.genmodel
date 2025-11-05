@@ -1,0 +1,237 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<genmodel:GenModel xmi:version="2.0" xmlns:xmi="http://www.omg.org/XMI" xmlns:genmodel="http://www.eclipse.org/emf/2002/GenModel"
+    copyrightText="Copyright (c) 2012 - 2025 Data In Motion and others.&#xA;All rights reserved.&#xA;&#xA;This program and the accompanying materials are made&#xA;available under the terms of the Eclipse Public License 2.0&#xA;which is available at https://www.eclipse.org/legal/epl-2.0/&#xA;&#xA;SPDX-License-Identifier: EPL-2.0&#xA;&#xA;Contributors:&#xA;     Mark Hoffmann - initial API and implementation"
+    modelDirectory="/org.gecko.mac.governance/src" modelPluginID="org.gecko.mac.governance"
+    modelName="ManagementApi" rootExtendsInterface="" rootExtendsClass="org.eclipse.emf.ecore.impl.MinimalEObjectImpl$Container"
+    suppressEMFTypes="true" importerID="org.eclipse.emf.importer.ecore" suppressNotification="true"
+    complianceLevel="17.0" copyrightFields="false" usedGenPackages="governance.genmodel#//governance ../../org.gecko.mac.management/model/management.genmodel#//management"
+    operationReflection="true" importOrganizing="true" oSGiCompatible="true">
+  <foreignModel>governance-api.ecore</foreignModel>
+  <genPackages prefix="ManagementApi" basePackage="org.gecko.mac.mgmt" resource="XMI"
+      disposableProviderFactory="true" ecorePackage="governance-api.ecore#/">
+    <genClasses image="false" ecoreClass="governance-api.ecore#//EObjectWorkflowService">
+      <genTypeParameters ecoreTypeParameter="governance-api.ecore#//EObjectWorkflowService/T"/>
+      <genOperations ecoreOperation="governance-api.ecore#//EObjectWorkflowService/approveObject">
+        <genParameters ecoreParameter="governance-api.ecore#//EObjectWorkflowService/approveObject/objectId"/>
+        <genParameters ecoreParameter="governance-api.ecore#//EObjectWorkflowService/approveObject/reviewUser"/>
+        <genParameters ecoreParameter="governance-api.ecore#//EObjectWorkflowService/approveObject/approvalReason"/>
+      </genOperations>
+      <genOperations ecoreOperation="governance-api.ecore#//EObjectWorkflowService/rejectObject">
+        <genParameters ecoreParameter="governance-api.ecore#//EObjectWorkflowService/rejectObject/objectId"/>
+        <genParameters ecoreParameter="governance-api.ecore#//EObjectWorkflowService/rejectObject/reviewUser"/>
+        <genParameters ecoreParameter="governance-api.ecore#//EObjectWorkflowService/rejectObject/rejectionReason"/>
+      </genOperations>
+      <genOperations ecoreOperation="governance-api.ecore#//EObjectWorkflowService/releaseObject">
+        <genParameters ecoreParameter="governance-api.ecore#//EObjectWorkflowService/releaseObject/objectId"/>
+        <genParameters ecoreParameter="governance-api.ecore#//EObjectWorkflowService/releaseObject/releaseNotes"/>
+        <genParameters ecoreParameter="governance-api.ecore#//EObjectWorkflowService/releaseObject/requireComplianceCheck"/>
+      </genOperations>
+      <genOperations ecoreOperation="governance-api.ecore#//EObjectWorkflowService/listApprovedObjects"/>
+      <genOperations ecoreOperation="governance-api.ecore#//EObjectWorkflowService/listRejectedObjects"/>
+      <genOperations ecoreOperation="governance-api.ecore#//EObjectWorkflowService/listReleasedObjects"/>
+      <genOperations ecoreOperation="governance-api.ecore#//EObjectWorkflowService/getObject">
+        <genParameters ecoreParameter="governance-api.ecore#//EObjectWorkflowService/getObject/objectId"/>
+      </genOperations>
+      <genOperations ecoreOperation="governance-api.ecore#//EObjectWorkflowService/getObjectContent">
+        <genParameters ecoreParameter="governance-api.ecore#//EObjectWorkflowService/getObjectContent/objectId"/>
+      </genOperations>
+      <genOperations ecoreOperation="governance-api.ecore#//EObjectWorkflowService/updateObject">
+        <genParameters ecoreParameter="governance-api.ecore#//EObjectWorkflowService/updateObject/objectId"/>
+        <genParameters ecoreParameter="governance-api.ecore#//EObjectWorkflowService/updateObject/updatedObject"/>
+      </genOperations>
+      <genOperations ecoreOperation="governance-api.ecore#//EObjectWorkflowService/deleteObject">
+        <genParameters ecoreParameter="governance-api.ecore#//EObjectWorkflowService/deleteObject/objectId"/>
+      </genOperations>
+    </genClasses>
+    <genClasses image="false" ecoreClass="governance-api.ecore#//SystemComponentGovernanceService">
+      <genOperations ecoreOperation="governance-api.ecore#//SystemComponentGovernanceService/registerSystemComponent">
+        <genParameters ecoreParameter="governance-api.ecore#//SystemComponentGovernanceService/registerSystemComponent/componentId"/>
+        <genParameters ecoreParameter="governance-api.ecore#//SystemComponentGovernanceService/registerSystemComponent/componentType"/>
+        <genParameters ecoreParameter="governance-api.ecore#//SystemComponentGovernanceService/registerSystemComponent/name"/>
+        <genParameters ecoreParameter="governance-api.ecore#//SystemComponentGovernanceService/registerSystemComponent/description"/>
+      </genOperations>
+      <genOperations ecoreOperation="governance-api.ecore#//SystemComponentGovernanceService/updateSystemComponentTrustLevel">
+        <genParameters ecoreParameter="governance-api.ecore#//SystemComponentGovernanceService/updateSystemComponentTrustLevel/componentId"/>
+        <genParameters ecoreParameter="governance-api.ecore#//SystemComponentGovernanceService/updateSystemComponentTrustLevel/trustLevel"/>
+      </genOperations>
+      <genOperations ecoreOperation="governance-api.ecore#//SystemComponentGovernanceService/runSystemComponentCompliance">
+        <genParameters ecoreParameter="governance-api.ecore#//SystemComponentGovernanceService/runSystemComponentCompliance/componentId"/>
+        <genParameters ecoreParameter="governance-api.ecore#//SystemComponentGovernanceService/runSystemComponentCompliance/policyTypes"/>
+        <genParameters ecoreParameter="governance-api.ecore#//SystemComponentGovernanceService/runSystemComponentCompliance/reviewUser"/>
+      </genOperations>
+      <genOperations ecoreOperation="governance-api.ecore#//SystemComponentGovernanceService/applyPoliciesToSystemComponent">
+        <genParameters ecoreParameter="governance-api.ecore#//SystemComponentGovernanceService/applyPoliciesToSystemComponent/componentId"/>
+        <genParameters ecoreParameter="governance-api.ecore#//SystemComponentGovernanceService/applyPoliciesToSystemComponent/policyIds"/>
+      </genOperations>
+      <genOperations ecoreOperation="governance-api.ecore#//SystemComponentGovernanceService/getSystemComponent">
+        <genParameters ecoreParameter="governance-api.ecore#//SystemComponentGovernanceService/getSystemComponent/componentId"/>
+      </genOperations>
+      <genOperations ecoreOperation="governance-api.ecore#//SystemComponentGovernanceService/findSystemComponentsByGovernanceStatus">
+        <genParameters ecoreParameter="governance-api.ecore#//SystemComponentGovernanceService/findSystemComponentsByGovernanceStatus/complianceStatus"/>
+      </genOperations>
+      <genOperations ecoreOperation="governance-api.ecore#//SystemComponentGovernanceService/linkModelToSystemComponent">
+        <genParameters ecoreParameter="governance-api.ecore#//SystemComponentGovernanceService/linkModelToSystemComponent/objectId"/>
+        <genParameters ecoreParameter="governance-api.ecore#//SystemComponentGovernanceService/linkModelToSystemComponent/componentId"/>
+      </genOperations>
+      <genOperations ecoreOperation="governance-api.ecore#//SystemComponentGovernanceService/getSystemComponentsByType">
+        <genParameters ecoreParameter="governance-api.ecore#//SystemComponentGovernanceService/getSystemComponentsByType/componentType"/>
+      </genOperations>
+      <genOperations ecoreOperation="governance-api.ecore#//SystemComponentGovernanceService/getSystemId"/>
+    </genClasses>
+    <genClasses image="false" ecoreClass="governance-api.ecore#//GovernanceComplianceService">
+      <genOperations ecoreOperation="governance-api.ecore#//GovernanceComplianceService/runComplianceChecks">
+        <genParameters ecoreParameter="governance-api.ecore#//GovernanceComplianceService/runComplianceChecks/objectId"/>
+        <genParameters ecoreParameter="governance-api.ecore#//GovernanceComplianceService/runComplianceChecks/reviewUser"/>
+        <genParameters ecoreParameter="governance-api.ecore#//GovernanceComplianceService/runComplianceChecks/complianceReason"/>
+      </genOperations>
+      <genOperations ecoreOperation="governance-api.ecore#//GovernanceComplianceService/runSpecificComplianceChecks">
+        <genParameters ecoreParameter="governance-api.ecore#//GovernanceComplianceService/runSpecificComplianceChecks/objectId"/>
+        <genParameters ecoreParameter="governance-api.ecore#//GovernanceComplianceService/runSpecificComplianceChecks/policyTypes"/>
+        <genParameters ecoreParameter="governance-api.ecore#//GovernanceComplianceService/runSpecificComplianceChecks/reviewUser"/>
+      </genOperations>
+      <genOperations ecoreOperation="governance-api.ecore#//GovernanceComplianceService/runSystemComponentCompliance">
+        <genParameters ecoreParameter="governance-api.ecore#//GovernanceComplianceService/runSystemComponentCompliance/systemId"/>
+        <genParameters ecoreParameter="governance-api.ecore#//GovernanceComplianceService/runSystemComponentCompliance/componentId"/>
+        <genParameters ecoreParameter="governance-api.ecore#//GovernanceComplianceService/runSystemComponentCompliance/policyTypes"/>
+        <genParameters ecoreParameter="governance-api.ecore#//GovernanceComplianceService/runSystemComponentCompliance/reviewUser"/>
+      </genOperations>
+      <genOperations ecoreOperation="governance-api.ecore#//GovernanceComplianceService/getComplianceStatus">
+        <genParameters ecoreParameter="governance-api.ecore#//GovernanceComplianceService/getComplianceStatus/objectId"/>
+      </genOperations>
+      <genOperations ecoreOperation="governance-api.ecore#//GovernanceComplianceService/validatePolicyCompliance">
+        <genParameters ecoreParameter="governance-api.ecore#//GovernanceComplianceService/validatePolicyCompliance/objectId"/>
+        <genParameters ecoreParameter="governance-api.ecore#//GovernanceComplianceService/validatePolicyCompliance/policyType"/>
+        <genParameters ecoreParameter="governance-api.ecore#//GovernanceComplianceService/validatePolicyCompliance/reviewUser"/>
+      </genOperations>
+      <genOperations ecoreOperation="governance-api.ecore#//GovernanceComplianceService/getAvailablePolicies"/>
+    </genClasses>
+    <genClasses image="false" ecoreClass="governance-api.ecore#//GovernanceSystemRepository">
+      <genOperations ecoreOperation="governance-api.ecore#//GovernanceSystemRepository/getGovernanceSystem">
+        <genParameters ecoreParameter="governance-api.ecore#//GovernanceSystemRepository/getGovernanceSystem/systemId"/>
+      </genOperations>
+      <genOperations ecoreOperation="governance-api.ecore#//GovernanceSystemRepository/createSystemComponent">
+        <genParameters ecoreParameter="governance-api.ecore#//GovernanceSystemRepository/createSystemComponent/systemId"/>
+        <genParameters ecoreParameter="governance-api.ecore#//GovernanceSystemRepository/createSystemComponent/componentId"/>
+        <genParameters ecoreParameter="governance-api.ecore#//GovernanceSystemRepository/createSystemComponent/componentType"/>
+        <genParameters ecoreParameter="governance-api.ecore#//GovernanceSystemRepository/createSystemComponent/name"/>
+        <genParameters ecoreParameter="governance-api.ecore#//GovernanceSystemRepository/createSystemComponent/description"/>
+      </genOperations>
+      <genOperations ecoreOperation="governance-api.ecore#//GovernanceSystemRepository/getSystemComponent">
+        <genParameters ecoreParameter="governance-api.ecore#//GovernanceSystemRepository/getSystemComponent/systemId"/>
+        <genParameters ecoreParameter="governance-api.ecore#//GovernanceSystemRepository/getSystemComponent/componentId"/>
+      </genOperations>
+      <genOperations ecoreOperation="governance-api.ecore#//GovernanceSystemRepository/updateSystemComponentTrustLevel">
+        <genParameters ecoreParameter="governance-api.ecore#//GovernanceSystemRepository/updateSystemComponentTrustLevel/systemId"/>
+        <genParameters ecoreParameter="governance-api.ecore#//GovernanceSystemRepository/updateSystemComponentTrustLevel/componentId"/>
+        <genParameters ecoreParameter="governance-api.ecore#//GovernanceSystemRepository/updateSystemComponentTrustLevel/trustLevel"/>
+      </genOperations>
+      <genOperations ecoreOperation="governance-api.ecore#//GovernanceSystemRepository/applyPoliciesToSystemComponent">
+        <genParameters ecoreParameter="governance-api.ecore#//GovernanceSystemRepository/applyPoliciesToSystemComponent/systemId"/>
+        <genParameters ecoreParameter="governance-api.ecore#//GovernanceSystemRepository/applyPoliciesToSystemComponent/componentId"/>
+        <genParameters ecoreParameter="governance-api.ecore#//GovernanceSystemRepository/applyPoliciesToSystemComponent/policyIds"/>
+      </genOperations>
+      <genOperations ecoreOperation="governance-api.ecore#//GovernanceSystemRepository/findSystemComponentsByComplianceStatus">
+        <genParameters ecoreParameter="governance-api.ecore#//GovernanceSystemRepository/findSystemComponentsByComplianceStatus/systemId"/>
+        <genParameters ecoreParameter="governance-api.ecore#//GovernanceSystemRepository/findSystemComponentsByComplianceStatus/complianceStatus"/>
+      </genOperations>
+      <genOperations ecoreOperation="governance-api.ecore#//GovernanceSystemRepository/getSystemComponentsByType">
+        <genParameters ecoreParameter="governance-api.ecore#//GovernanceSystemRepository/getSystemComponentsByType/systemId"/>
+        <genParameters ecoreParameter="governance-api.ecore#//GovernanceSystemRepository/getSystemComponentsByType/componentType"/>
+      </genOperations>
+      <genOperations ecoreOperation="governance-api.ecore#//GovernanceSystemRepository/linkModelToSystemComponent">
+        <genParameters ecoreParameter="governance-api.ecore#//GovernanceSystemRepository/linkModelToSystemComponent/objectId"/>
+        <genParameters ecoreParameter="governance-api.ecore#//GovernanceSystemRepository/linkModelToSystemComponent/systemId"/>
+        <genParameters ecoreParameter="governance-api.ecore#//GovernanceSystemRepository/linkModelToSystemComponent/componentId"/>
+      </genOperations>
+    </genClasses>
+    <genClasses image="false" ecoreClass="governance-api.ecore#//SystemComponentGovernanceConfig">
+      <genOperations ecoreOperation="governance-api.ecore#//SystemComponentGovernanceConfig/systemId"/>
+      <genOperations ecoreOperation="governance-api.ecore#//SystemComponentGovernanceConfig/description"/>
+    </genClasses>
+    <genClasses image="false" ecoreClass="governance-api.ecore#//WorkflowDraftProvider">
+      <genTypeParameters ecoreTypeParameter="governance-api.ecore#//WorkflowDraftProvider/T"/>
+      <genOperations ecoreOperation="governance-api.ecore#//WorkflowDraftProvider/uploadDraft">
+        <genParameters ecoreParameter="governance-api.ecore#//WorkflowDraftProvider/uploadDraft/object"/>
+        <genParameters ecoreParameter="governance-api.ecore#//WorkflowDraftProvider/uploadDraft/metadata"/>
+      </genOperations>
+      <genOperations ecoreOperation="governance-api.ecore#//WorkflowDraftProvider/listDraftObjects"/>
+      <genOperations ecoreOperation="governance-api.ecore#//WorkflowDraftProvider/getDraft">
+        <genParameters ecoreParameter="governance-api.ecore#//WorkflowDraftProvider/getDraft/objectId"/>
+      </genOperations>
+      <genOperations ecoreOperation="governance-api.ecore#//WorkflowDraftProvider/getDraftContent">
+        <genParameters ecoreParameter="governance-api.ecore#//WorkflowDraftProvider/getDraftContent/objectId"/>
+      </genOperations>
+      <genOperations ecoreOperation="governance-api.ecore#//WorkflowDraftProvider/updateDraft">
+        <genParameters ecoreParameter="governance-api.ecore#//WorkflowDraftProvider/updateDraft/objectId"/>
+        <genParameters ecoreParameter="governance-api.ecore#//WorkflowDraftProvider/updateDraft/updatedObject"/>
+      </genOperations>
+      <genOperations ecoreOperation="governance-api.ecore#//WorkflowDraftProvider/deleteDraft">
+        <genParameters ecoreParameter="governance-api.ecore#//WorkflowDraftProvider/deleteDraft/objectId"/>
+      </genOperations>
+      <genOperations ecoreOperation="governance-api.ecore#//WorkflowDraftProvider/checkDraft">
+        <genParameters ecoreParameter="governance-api.ecore#//WorkflowDraftProvider/checkDraft/objectId"/>
+        <genParameters ecoreParameter="governance-api.ecore#//WorkflowDraftProvider/checkDraft/reviewUser"/>
+        <genParameters ecoreParameter="governance-api.ecore#//WorkflowDraftProvider/checkDraft/complianceReason"/>
+      </genOperations>
+    </genClasses>
+    <genClasses image="false" ecoreClass="governance-api.ecore#//WorkflowComplianceProvider">
+      <genOperations ecoreOperation="governance-api.ecore#//WorkflowComplianceProvider/checkObject">
+        <genParameters ecoreParameter="governance-api.ecore#//WorkflowComplianceProvider/checkObject/objectId"/>
+        <genParameters ecoreParameter="governance-api.ecore#//WorkflowComplianceProvider/checkObject/reviewUser"/>
+        <genParameters ecoreParameter="governance-api.ecore#//WorkflowComplianceProvider/checkObject/complianceReason"/>
+      </genOperations>
+      <genOperations ecoreOperation="governance-api.ecore#//WorkflowComplianceProvider/runComplianceChecks">
+        <genParameters ecoreParameter="governance-api.ecore#//WorkflowComplianceProvider/runComplianceChecks/objectId"/>
+        <genParameters ecoreParameter="governance-api.ecore#//WorkflowComplianceProvider/runComplianceChecks/policyTypes"/>
+        <genParameters ecoreParameter="governance-api.ecore#//WorkflowComplianceProvider/runComplianceChecks/reviewUser"/>
+      </genOperations>
+      <genOperations ecoreOperation="governance-api.ecore#//WorkflowComplianceProvider/getComplianceStatus">
+        <genParameters ecoreParameter="governance-api.ecore#//WorkflowComplianceProvider/getComplianceStatus/objectId"/>
+      </genOperations>
+      <genOperations ecoreOperation="governance-api.ecore#//WorkflowComplianceProvider/setGovernanceDocumentationDraft">
+        <genParameters ecoreParameter="governance-api.ecore#//WorkflowComplianceProvider/setGovernanceDocumentationDraft/objectId"/>
+        <genParameters ecoreParameter="governance-api.ecore#//WorkflowComplianceProvider/setGovernanceDocumentationDraft/reviewUser"/>
+        <genParameters ecoreParameter="governance-api.ecore#//WorkflowComplianceProvider/setGovernanceDocumentationDraft/reason"/>
+      </genOperations>
+      <genOperations ecoreOperation="governance-api.ecore#//WorkflowComplianceProvider/setGovernanceDocumentationInReview">
+        <genParameters ecoreParameter="governance-api.ecore#//WorkflowComplianceProvider/setGovernanceDocumentationInReview/objectId"/>
+        <genParameters ecoreParameter="governance-api.ecore#//WorkflowComplianceProvider/setGovernanceDocumentationInReview/reviewUser"/>
+        <genParameters ecoreParameter="governance-api.ecore#//WorkflowComplianceProvider/setGovernanceDocumentationInReview/reason"/>
+      </genOperations>
+      <genOperations ecoreOperation="governance-api.ecore#//WorkflowComplianceProvider/setGovernanceDocumentationApproved">
+        <genParameters ecoreParameter="governance-api.ecore#//WorkflowComplianceProvider/setGovernanceDocumentationApproved/objectId"/>
+        <genParameters ecoreParameter="governance-api.ecore#//WorkflowComplianceProvider/setGovernanceDocumentationApproved/reviewUser"/>
+        <genParameters ecoreParameter="governance-api.ecore#//WorkflowComplianceProvider/setGovernanceDocumentationApproved/reason"/>
+      </genOperations>
+      <genOperations ecoreOperation="governance-api.ecore#//WorkflowComplianceProvider/setGovernanceDocumentationRejected">
+        <genParameters ecoreParameter="governance-api.ecore#//WorkflowComplianceProvider/setGovernanceDocumentationRejected/objectId"/>
+        <genParameters ecoreParameter="governance-api.ecore#//WorkflowComplianceProvider/setGovernanceDocumentationRejected/reviewUser"/>
+        <genParameters ecoreParameter="governance-api.ecore#//WorkflowComplianceProvider/setGovernanceDocumentationRejected/reason"/>
+      </genOperations>
+    </genClasses>
+    <genClasses image="false" ecoreClass="governance-api.ecore#//GovernanceDocumentationService">
+      <genOperations ecoreOperation="governance-api.ecore#//GovernanceDocumentationService/storeDocumentation">
+        <genParameters ecoreParameter="governance-api.ecore#//GovernanceDocumentationService/storeDocumentation/objectId"/>
+        <genParameters ecoreParameter="governance-api.ecore#//GovernanceDocumentationService/storeDocumentation/documentation"/>
+        <genParameters ecoreParameter="governance-api.ecore#//GovernanceDocumentationService/storeDocumentation/reviewUser"/>
+        <genParameters ecoreParameter="governance-api.ecore#//GovernanceDocumentationService/storeDocumentation/reason"/>
+      </genOperations>
+      <genOperations ecoreOperation="governance-api.ecore#//GovernanceDocumentationService/getLatestDocumentation">
+        <genParameters ecoreParameter="governance-api.ecore#//GovernanceDocumentationService/getLatestDocumentation/objectId"/>
+      </genOperations>
+      <genOperations ecoreOperation="governance-api.ecore#//GovernanceDocumentationService/getDocumentation">
+        <genParameters ecoreParameter="governance-api.ecore#//GovernanceDocumentationService/getDocumentation/documentationId"/>
+      </genOperations>
+      <genOperations ecoreOperation="governance-api.ecore#//GovernanceDocumentationService/getDocumentationHistory">
+        <genParameters ecoreParameter="governance-api.ecore#//GovernanceDocumentationService/getDocumentationHistory/objectId"/>
+      </genOperations>
+      <genOperations ecoreOperation="governance-api.ecore#//GovernanceDocumentationService/hasDocumentation">
+        <genParameters ecoreParameter="governance-api.ecore#//GovernanceDocumentationService/hasDocumentation/objectId"/>
+      </genOperations>
+      <genOperations ecoreOperation="governance-api.ecore#//GovernanceDocumentationService/deleteAllDocumentation">
+        <genParameters ecoreParameter="governance-api.ecore#//GovernanceDocumentationService/deleteAllDocumentation/objectId"/>
+      </genOperations>
+      <genOperations ecoreOperation="governance-api.ecore#//GovernanceDocumentationService/getDocumentationStatistics"/>
+    </genClasses>
+  </genPackages>
+</genmodel:GenModel>

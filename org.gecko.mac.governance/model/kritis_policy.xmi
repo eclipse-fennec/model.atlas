@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<governance:Policy
+    xmi:version="2.0"
+    xmlns:xmi="http://www.omg.org/XMI"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xmlns:governance="https://datainmotion.com/mac/governance/1.0.0"
+    xsi:schemaLocation="https://datainmotion.com/mac/governance/1.0.0 governance.ecore"
+    policyId="kritis.default.en"
+    type="KRITIS"
+    name="KRITIS - Critical Infrastructure Requirements (Germany)"
+    description="A set of policy requirements based on the German BSI Act (BSIG) for the protection of critical infrastructures.">
+  <requirementGroups
+      name="Organizational and Reporting Obligations"
+      description="Requirements related to the operator's organizational duties and reporting to authorities like the BSI (Federal Office for Information Security).">
+    <requirements
+        requirementId="kritis.org.contactpoint"
+        name="Establishment of a contact point"
+        description="The operator of a critical infrastructure must designate a contact point that is available 24/7. This point of contact must be reported to the BSI."
+        documentationLink="https://www.bsi.bund.de/DE/Themen/KRITIS-und-regulierte-Unternehmen/KRITIS-regulierte-Unternehmen_node.html"
+        modality="MUST"/>
+    <requirements
+        requirementId="kritis.org.incidentreporting"
+        name="Reporting of significant incidents"
+        description="Significant IT security incidents affecting the availability, integrity, authenticity, and confidentiality of the critical infrastructure must be reported to the BSI immediately."
+        documentationLink="https://www.bsi.bund.de/DE/Themen/KRITIS-und-regulierte-Unternehmen/KRITIS-regulierte-Unternehmen_node.html"
+        modality="MUST"/>
+    <requirements
+        requirementId="kritis.org.audits"
+        name="Regular security audits"
+        description="Operators must provide evidence of compliance by conducting regular security audits, assessments, or certifications at least every two years."
+        documentationLink="https://www.bsi.bund.de/DE/Themen/KRITIS-und-regulierte-Unternehmen/KRITIS-regulierte-Unternehmen_node.html"
+        modality="MUST"/>
+  </requirementGroups>
+  <requirementGroups
+      name="Technical and Organizational Security Measures"
+      description="Requirements for implementing appropriate state-of-the-art security measures to prevent outages and disruptions.">
+    <requirements
+        requirementId="kritis.tech.stateoftheart"
+        name="Implementation of state-of-the-art security measures"
+        description="The operator must implement organizational and technical precautions to avoid disruptions to the availability, integrity, authenticity, and confidentiality of their information technology systems, components, or processes that are essential for the functioning of the critical infrastructures they operate."
+        documentationLink="https://www.bsi.bund.de/DE/Themen/KRITIS-und-regulierte-Unternehmen/KRITIS-regulierte-Unternehmen_node.html"
+        modality="MUST"/>
+    <requirements
+        requirementId="kritis.tech.resilience"
+        name="System Resilience and Redundancy"
+        description="Systems critical to the service must be designed with sufficient resilience and redundancy to withstand failures and disruptions."
+        documentationLink="https://www.bsi.bund.de/DE/Themen/KRITIS-und-regulierte-Unternehmen/KRITIS-regulierte-Unternehmen_node.html"
+        modality="MUST"/>
+    <requirements
+        requirementId="kritis.tech.detection"
+        name="Capabilities for incident detection"
+        description="Appropriate systems for attack and incident detection must be in place to identify security-relevant events in a timely manner."
+        documentationLink="https://www.bsi.bund.de/DE/Themen/KRITIS-und-regulierte-Unternehmen/KRITIS-regulierte-Unternehmen_node.html"
+        modality="MUST"/>
+    <requirements
+        requirementId="kritis.tech.networksecurity"
+        name="Network Security and Segregation"
+        description="The network architecture must be secured, for example through network segmentation and firewalls, to protect critical components from unauthorized access."
+        documentationLink="https://www.bsi.bund.de/DE/Themen/KRITIS-und-regulierte-Unternehmen/KRITIS-regulierte-Unternehmen_node.html"
+        modality="MUST"/>
+    <requirements
+        requirementId="kritis.tech.physicalsecurity"
+        name="Adequate physical security measures"
+        description="Physical access to critical IT systems and infrastructure components must be protected against unauthorized entry and environmental threats."
+        documentationLink="https://www.bsi.bund.de/DE/Themen/KRITIS-und-regulierte-Unternehmen/KRITIS-regulierte-Unternehmen_node.html"
+        modality="MUST"/>
+    <requirements
+        requirementId="kritis.tech.supplychain"
+        name="Supply Chain Security"
+        description="Risks associated with the supply chain for IT products and services must be identified and managed to prevent the introduction of vulnerabilities."
+        documentationLink="https://www.bsi.bund.de/DE/Themen/KRITIS-und-regulierte-Unternehmen/KRITIS-regulierte-Unternehmen_node.html"
+        modality="SHOULD"/>
+  </requirementGroups>
+</governance:Policy>

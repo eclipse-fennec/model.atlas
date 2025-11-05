@@ -1,0 +1,417 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<governance:GovernanceSystem
+    xmi:version="2.0"
+    xmlns:xmi="http://www.omg.org/XMI"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xmlns:governance="https://datainmotion.com/mac/governance/1.0.0"
+    xsi:schemaLocation="https://datainmotion.com/mac/governance/1.0.0 governance.ecore"
+    name="The Golf Player Tour System"
+    description="The software system for the Golf Playertour"
+    systemId="playertour">
+  <systemComponents
+      xsi:type="governance:HolderSystemComponent"
+      componentId="pt.lora.gateway"
+      name="LoRaWAN Gateway"
+      description="The LoRaWAN Gateway as Trust-Anchor"
+      trustLevel="TRUSTED"
+      type="GATEWAY"
+      supervisedComponents="pt.sensor.groundhuminity01 pt.sensor.groundhuminity02"
+      supportedFeatures="network.security.ssl network.protocol.mqttv3 network.security.upa network.protocol.mqttv5 network.security.ppk.client-server">
+    <dependencies
+        xsi:type="governance:Capability"
+        name="LoRaWAN MQTT Data Outbound"
+        description="Outgoing MQTT LoRaWAN data"
+        referencedComponent="pt.mqtt.broker"
+        governanceNamespace="transport.protocol.mqtt"/>
+    <dependencies
+        xsi:type="governance:Requirement"
+        name="LoRaWAN MQTT Data Inbound"
+        description="Incoming MQTT sensor data"
+        governanceNamespace="transport.protocol.mqtt"/>
+    <systemComponents
+        componentId="pt.sensor.groundhuminity01"
+        name="Ground Huminity Sensor 01"
+        description="Sensor to measure ground huminity"
+        trustLevel="UNTRUSTED"
+        type="SENSOR"
+        supervisorComponent="pt.lora.gateway">
+      <dependencies
+          xsi:type="governance:Capability"
+          name="Ground Huminity MQTT Outbound"
+          description="Provide MQTT Data"
+          referencedComponent="pt.lora.gateway"
+          governanceNamespace="transport.protocol.mqtt"/>
+    </systemComponents>
+    <systemComponents
+        componentId="pt.sensor.groundhuminity02"
+        name="Ground Huminity Sensor 02"
+        description="Sensor to measure ground huminity"
+        trustLevel="UNTRUSTED"
+        type="SENSOR"
+        supervisorComponent="pt.lora.gateway">
+      <dependencies
+          xsi:type="governance:Capability"
+          name="Ground Huminity MQTT Outbound"
+          description="Provide MQTT Data"
+          referencedComponent="pt.lora.gateway"
+          governanceNamespace="transport.protocol.mqtt"/>
+    </systemComponents>
+  </systemComponents>
+  <systemComponents
+      componentId="pt.governance.engine"
+      name="Governance Engine"
+      description="The engine that checks policies and handles workflows"
+      trustLevel="TRUSTED"
+      type="BACKEND">
+    <dependencies
+        xsi:type="governance:Requirement"
+        name="Generated model"
+        description="The generated model for approval"
+        governanceNamespace="model.emf.instance"/>
+    <dependencies
+        xsi:type="governance:Requirement"
+        name="Release Information"
+        description="The release information of a model"
+        governanceNamespace="transport.http"/>
+    <dependencies
+        xsi:type="governance:Capability"
+        name="Release Model"
+        description="Release an approved model"
+        referencedComponent="pt.modelatlas"
+        governanceNamespace="model.emf.instance"/>
+  </systemComponents>
+  <systemComponents
+      componentId="pt.mqtt.broker"
+      name="RabbitMQ MQTT Broker"
+      description="The RabbitMQ AMQP/MQTT broker"
+      trustLevel="TRUSTED"
+      type="BROKER"
+      supportedFeatures="network.security.ssl network.security.ppk.client-server network.security.upa network.protocol.mqttv3 network.protocol.mqttv5 rabbitmq.transport.amqp rabbitmq.transport.amqp.ssl rabbitmq.tenant">
+    <features
+        featureId="rabbitmq.transport.amqp"
+        name="AMQP Transport Protocol"
+        description="Supports the AMQP Transport protocol"
+        components="pt.mqtt.broker"/>
+    <features
+        featureId="rabbitmq.transport.amqp.ssl"
+        name="AMQP Secure Transport Protocol"
+        description="Supports the AMQP Transport protocol"
+        components="pt.mqtt.broker"/>
+    <features
+        featureId="rabbitmq.tenant"
+        name="Multi Tenancy"
+        description="Multi-tenancy support"
+        components="pt.mqtt.broker"/>
+    <dependencies
+        xsi:type="governance:Requirement"
+        name="RabbitMQ MQTT Inbound"
+        description="Receive MQTT data from LoRaWAN gateway"
+        governanceNamespace="transport.protocol.mqtt"/>
+    <dependencies
+        xsi:type="governance:Capability"
+        name="RabbitMQ MQTT Outbound"
+        description="Forward MQTT data to SensiNact"
+        governanceNamespace="transport.protocol.mqtt"/>
+    <dependencies
+        xsi:type="governance:Capability"
+        name="RabbitMQ MQTT Adapter"
+        description="Forward MQTT data to SensiNact"
+        governanceNamespace="mqtt.broker"/>
+    <dependencies
+        xsi:type="governance:Capability"
+        name="RabbitMQ MQTT SSL"
+        governanceNamespace="security.ssl"/>
+  </systemComponents>
+  <systemComponents
+      componentId="pt.modelatlas"
+      name="Fennec ModelAtlas"
+      description="Single point of truth for the governance models"
+      trustLevel="TRUSTED"
+      type="GATEWAY">
+    <dependencies
+        xsi:type="governance:Requirement"
+        name="Register EPackages"
+        description="Store released models from governance engine"
+        referencedComponent="pt.governance.engine"
+        governanceNamespace="model.emf.instance"/>
+    <dependencies
+        xsi:type="governance:Capability"
+        name="EMF EPackage Registry"
+        governanceNamespace="model.emf.registry"/>
+  </systemComponents>
+  <systemComponents
+      xsi:type="governance:HolderSystemComponent"
+      componentId="eclipse.sensinact"
+      name="Eclipse SensiNact"
+      trustLevel="TRUSTED"
+      type="BROKER">
+    <dependencies
+        xsi:type="governance:Requirement"
+        name="EMF Model Instance"
+        description="EMF Model Instance to SensiNact core"
+        referencedComponent="eclipse.fennec.emf.osgi"
+        governanceNamespace="model.emf.instance"/>
+    <systemComponents
+        componentId="eclipse.fennec.emf.osgi"
+        name="Fennec EMF Core"
+        trustLevel="TRUSTED"
+        type="FRAMEWORK">
+      <dependencies
+          xsi:type="governance:Capability"
+          name="EMF Model Instance"
+          governanceNamespace="model.emf.instance"/>
+      <dependencies
+          xsi:type="governance:Requirement"
+          name="EMF Model Payload"
+          governanceNamespace="model.emf.input"/>
+      <dependencies
+          xsi:type="governance:Requirement"
+          name="EMF EPackage Registry"
+          description="Fennec Model Atlas Model Registry"
+          governanceNamespace="model.emf.registry"/>
+    </systemComponents>
+    <systemComponents
+        componentId="eclipse.sensinact.southbound.mqtt"
+        name="MQTT Adapter"
+        trustLevel="TRUSTED"
+        type="FRAMEWORK">
+      <dependencies
+          xsi:type="governance:Requirement"
+          name="MQTT Broker"
+          referencedComponent="pt.mqtt.broker"
+          governanceNamespace="mqtt.broker"/>
+      <dependencies
+          xsi:type="governance:Capability"
+          name="MQTT Payload"
+          referencedComponent="eclipse.fennec.emf.osgi"
+          governanceNamespace="model.emf.input"/>
+    </systemComponents>
+    <systemComponents
+        componentId="eclipse.fennec.ai.generator"
+        name="Fennec EMF AI Model Generator">
+      <dependencies
+          xsi:type="governance:Capability"
+          name="Generate EPackage"
+          description="The generated EMF EPackage"
+          referencedComponent="pt.governance.engine"
+          governanceNamespace="model.emf.instance"/>
+      <dependencies
+          xsi:type="governance:Requirement"
+          name="Json Data Input"
+          description="Json Data for model creation"
+          referencedComponent="eclipse.sensinact.southbound.mqtt"
+          governanceNamespace="application/json"/>
+    </systemComponents>
+    <systemComponents
+        name="OGC STA "
+        trustLevel="TRUSTED"
+        type="INTERFACE"
+        supportedFeatures="network.protocol.ogc10 network.protocol.ogc11"/>
+  </systemComponents>
+  <systemComponents
+      xsi:type="governance:HolderSystemComponent"
+      componentId="pt.ui"
+      name="User Interface"
+      trustLevel="TRUSTED"
+      type="FRONTEND">
+    <dependencies
+        xsi:type="governance:Capability"
+        name="Web UI"
+        governanceNamespace="transport.http"/>
+    <systemComponents
+        componentId="pt.ui.governanceCockpit"
+        name="Governance Dashboard"
+        trustLevel="TRUSTED"
+        type="FRONTEND">
+      <dependencies
+          xsi:type="governance:Requirement"
+          name="Governanc e Status Data"
+          referencedComponent="pt.governance.engine"/>
+      <dependencies
+          xsi:type="governance:Capability"
+          name="Approve EPackage"
+          description="The release information of a model"
+          referencedComponent="pt.governance.engine"/>
+    </systemComponents>
+    <systemComponents
+        componentId="pt.ui.governanceCockpit"
+        name="Playertour IoT Dashboard"
+        trustLevel="TRUSTED"
+        type="FRONTEND">
+      <dependencies
+          xsi:type="governance:Requirement"
+          name="Receive Data via OGC STA"
+          description="The data from SensiNact"
+          referencedComponent="//@systemComponents[componentId='eclipse.sensinact']/@systemComponents[componentId=null]"
+          governanceNamespace="transport.http"/>
+    </systemComponents>
+  </systemComponents>
+  <features
+      featureId="network.security.ssl"
+      name="SSL Support"
+      description="SSL Transport Support"
+      components="pt.lora.gateway pt.mqtt.broker"/>
+  <features
+      featureId="network.security.ppk.client-server"
+      name="PPK Client-Server Authentication"
+      description="Client Service Certificate Authentication"
+      components="pt.lora.gateway pt.mqtt.broker"/>
+  <features
+      featureId="network.security.upa"
+      name="User-Password Authentication"
+      components="pt.lora.gateway pt.mqtt.broker"/>
+  <features
+      featureId="network.protocol.mqttv3"
+      name="MQTT V3"
+      description="Support for MQTT Version 3"
+      components="pt.lora.gateway pt.mqtt.broker"/>
+  <features
+      featureId="network.protocol.mqttv5"
+      name="MQTT V5"
+      description="Support for MQTT Version 5"
+      components="pt.lora.gateway pt.mqtt.broker"/>
+  <features
+      featureId="network.protocol.ogc10"
+      name="STA OGC V1.0"
+      description="Support for OGC Sensorthings API 1.0"
+      components="//@systemComponents[componentId='eclipse.sensinact']/@systemComponents[componentId=null]"/>
+  <features
+      featureId="network.protocol.ogc11"
+      name="STA OGC V1.1"
+      description="Support for OGC Sensorthings API 1.1"
+      components="//@systemComponents[componentId='eclipse.sensinact']/@systemComponents[componentId=null]"/>
+  <namespaces
+      namespaceId="transport"
+      name="Transport Layer"
+      description="Generic transport layer protocols and capabilities"
+      version="1.0"
+      standardReference="OSI Layer 4"
+      childNamespaces="transport.http"/>
+  <namespaces
+      namespaceId="transport.protocol.mqtt"
+      name="Transport Protocol MQTT"
+      description="Message Queuing Telemetry Transport protocol for IoT communication"
+      version=""
+      standardReference=""
+      parentNamespace="mqtt.broker"
+      childNamespaces="transport.protocol.mqtt.311 transport.protocol.mqtt.5"/>
+  <namespaces
+      namespaceId="transport.http"
+      name="HTTP Transport Protocol"
+      description="Hypertext Transfer Protocol for web communication"
+      version="1.1/2.0"
+      standardReference="RFC 7230-7237"
+      parentNamespace="transport"/>
+  <namespaces
+      namespaceId="security"
+      name="Security Layer"
+      description="Security protocols and authentication mechanisms"
+      version="1.0"/>
+  <namespaces
+      namespaceId="security.ssl"
+      name="Transport Layer SSL/TLS Security"
+      description="Transport Layer Security protocols"
+      version="1.3"
+      standardReference="RFC 8446"
+      parentNamespace="mqtt.broker"/>
+  <namespaces
+      namespaceId="data"
+      name="Data Layer"
+      description="Data processing and transformation capabilities"
+      version="1.0"/>
+  <namespaces
+      namespaceId="application/json"
+      name="Transport Format Json"
+      description="JavaScript Object Notation data handling"
+      version="1.0"
+      standardReference="RFC 8259"
+      parentNamespace="model.emf.input"/>
+  <namespaces
+      namespaceId="application/xml"
+      name="Transport Format XML"
+      description="XML Markup Language"
+      version="1.0"
+      standardReference="RFC 8259"
+      parentNamespace="model.emf.input"/>
+  <namespaces
+      namespaceId="application/yaml"
+      name="Transport Format Yaml"
+      description="Yaml Ain't Markup Language"
+      version="1.0"
+      standardReference="RFC 8259"/>
+  <namespaces
+      namespaceId="plain/text"
+      name="Transport Format Text"
+      description="Plain Text format"
+      version="1.0"
+      standardReference="RFC 8259"/>
+  <namespaces
+      namespaceId="model.emf.instance"
+      name="EMF Model Instance"
+      description="A EMF model instance"/>
+  <namespaces
+      namespaceId="model.emf.input"
+      name="EMF Model Payload"
+      description="A EMF model instance payload"
+      childNamespaces="application/xml application/json"/>
+  <namespaces
+      namespaceId="model.emf.registry"
+      name="EMF Model Registry"
+      description="A EMF model registry"/>
+  <namespaces
+      namespaceId="mqtt.broker"
+      name="Broker MQTT"
+      description="Message Queuing Telemetry Transport protocol for IoT communication"
+      version="3.1.1/5.0"
+      standardReference="ISO/IEC 20922:2016"
+      childNamespaces="transport.protocol.mqtt security.ssl"/>
+  <namespaces
+      namespaceId="ogc.sta.1.1"
+      name="API OGC STA 1.1"
+      description="OGC Sensorthings API"
+      version="1.1"
+      standardReference=""
+      parentNamespace="ogc.sta"/>
+  <namespaces
+      namespaceId="ogc.sta.10"
+      name="API OGC STA 1.0"
+      description="OGC Sensorthings API"
+      version="1.0"
+      standardReference=""
+      parentNamespace="ogc.sta"/>
+  <namespaces
+      namespaceId="ogc.sta"
+      name="API OGC STA"
+      description="OGC Sensorthings API"
+      version=""
+      standardReference=""
+      childNamespaces="ogc.sta.1.1 ogc.sta.10"/>
+  <namespaces
+      namespaceId="transport.protocol.mqtt.311"
+      name="Transport Protocol MQTT 3.1.1"
+      description="Message Queuing Telemetry Transport protocol for IoT communication"
+      version="3.1.1"
+      standardReference="https://docs.oasis-open.org/mqtt/mqtt/v3.1.1"
+      parentNamespace="transport.protocol.mqtt"/>
+  <namespaces
+      namespaceId="transport.protocol.mqtt.5"
+      name="Transport Protocol MQTT 5"
+      description="Message Queuing Telemetry Transport protocol for IoT communication"
+      version="5.0"
+      standardReference="https://docs.oasis-open.org/mqtt/mqtt/v5.0/"
+      parentNamespace="transport.protocol.mqtt"/>
+  <policies
+      href="din-9001_policy.xmi#iso9001.default.en"/>
+  <policies
+      href="din-spec91377_policy.xmi#din-spec-91377.default.en"/>
+  <policies
+      href="euai-act_policy.xmi#eu-ai-act.default.en"/>
+  <policies
+      href="gdpr_policy.xmi#gdpr.default.en"/>
+  <policies
+      href="iso27001_policy.xmi#iso27001.default.en"/>
+  <policies
+      href="open-data_policy.xmi#opendata.default.en"/>
+  <policies
+      href="data-quality_policy.xmi#dataquality.default.en"/>
+</governance:GovernanceSystem>

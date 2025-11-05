@@ -24,7 +24,10 @@
 	org.eclipse.fennec.model.atlas.rest.model;version=latest,\
 	org.osgi.service.jakartars,\
 	org.apache.felix.http.servlet-api,\
-	org.osgi.service.component
+	org.osgi.service.component,\
+	org.gecko.mac.management;version=snapshot,\
+	org.osgi.util.promise,\
+	org.gecko.mac.governance;version=snapshot
 
 #-includeresource.swagger: \
 #	swagger-api=@https://github.com/swagger-api/swagger-ui/archive/refs/tags/v3.52.3.zip!/swagger-ui-3.52.3/dist/(*);rename:=$1,\

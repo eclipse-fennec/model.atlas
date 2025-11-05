@@ -1,0 +1,14 @@
+-workingset: Workflow
+-library: \
+	enable-emf
+	
+-buildpath: \
+	org.osgi.framework;version=latest,\
+	org.osgi.util.promise;version=latest,\
+	org.osgi.util.function;version=latest,\
+	org.osgi.service.component;version=latest,\
+	org.osgi.service.cm;version=latest,\
+	org.gecko.mac.management;version=snapshot
+
+Bundle-Name: MAC Management File Storage Implementation
+Bundle-Description: File-based storage implementation for EPackage workflow management

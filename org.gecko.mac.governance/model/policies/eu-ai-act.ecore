@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ecore:EPackage xmi:version="2.0" xmlns:xmi="http://www.omg.org/XMI" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xmlns:ecore="http://www.eclipse.org/emf/2002/Ecore" name="euaiact" nsURI="https://datainmotion.com/mac/policy/eu_ai_act/1.0.0"
+    nsPrefix="euaiact">
+  <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+    <details key="modelName" value="EUAIActPolicy"/>
+    <details key="complianceLevel" value="17.0"/>
+    <details key="copyrightText" value="Copyright (c) 2012 - 2025 Data In Motion and others.&#xA;All rights reserved.&#xA;&#xA;This program and the accompanying materials are made&#xA;available under the terms of the Eclipse Public License 2.0&#xA;which is available at https://www.eclipse.org/legal/epl-2.0/&#xA;&#xA;SPDX-License-Identifier: EPL-2.0&#xA;&#xA;Contributors:&#xA;     Mark Hoffmann - initial API and implementation"/>
+    <details key="resource" value="XMI"/>
+    <details key="oSGiCompatible" value="true"/>
+    <details key="prefix" value="EUAI"/>
+    <details key="basePackage" value="org.gecko.mac.policy"/>
+  </eAnnotations>
+  <eClassifiers xsi:type="ecore:EClass" name="EUAIActPolicyCheck" eSuperTypes="../governance.ecore#//ComplianceCheckResult">
+    <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+      <details key="documentation" value="A specialized compliance check that represents the risk assessment according to the EU AI Act."/>
+    </eAnnotations>
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="riskLevel" lowerBound="1"
+        eType="#//AIActRiskLevel" defaultValueLiteral="UNKNOWN">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="The final, determined risk level of the AI system according to the EU AI Act classification."/>
+      </eAnnotations>
+    </eStructuralFeatures>
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="isHighRiskAnnexIII" lowerBound="1"
+        eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EBoolean" defaultValueLiteral="false">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="Check result: Does the system fall into one of the high-risk categories defined in Annex III of the AI Act?"/>
+      </eAnnotations>
+    </eStructuralFeatures>
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="threatensHealthSafetyOrRights"
+        lowerBound="1" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EBoolean"
+        defaultValueLiteral="false">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="Check result: Does the system pose a potential threat to health, safety, or fundamental rights?"/>
+      </eAnnotations>
+    </eStructuralFeatures>
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="isUnacceptableRiskArticle5"
+        lowerBound="1" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EBoolean"
+        defaultValueLiteral="false">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="Check result: Does the system employ any of the prohibited practices listed in Article 5 (e.g., social scoring)?"/>
+      </eAnnotations>
+    </eStructuralFeatures>
+  </eClassifiers>
+  <eClassifiers xsi:type="ecore:EEnum" name="AIActRiskLevel">
+    <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+      <details key="documentation" value="Enumeration of risk levels as defined by the EU AI Act."/>
+    </eAnnotations>
+    <eLiterals name="UNKNOWN">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="The risk level has not yet been determined."/>
+      </eAnnotations>
+    </eLiterals>
+    <eLiterals name="MINIMAL_OR_NO_RISK" value="1">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="The AI system does not pose a significant risk."/>
+      </eAnnotations>
+    </eLiterals>
+    <eLiterals name="LIMITED_RISK" value="2">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="The AI system is subject to transparency obligations."/>
+      </eAnnotations>
+    </eLiterals>
+    <eLiterals name="HIGH_RISK" value="3">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="The AI system is classified as high-risk and is subject to strict requirements."/>
+      </eAnnotations>
+    </eLiterals>
+    <eLiterals name="UNACCEPTABLE_RISK" value="4">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="The AI system is prohibited."/>
+      </eAnnotations>
+    </eLiterals>
+  </eClassifiers>
+</ecore:EPackage>

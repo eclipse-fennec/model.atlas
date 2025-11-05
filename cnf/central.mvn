@@ -122,6 +122,8 @@ org.bndtools:org.bndtools.templates.osgi:7.0.0
 
 #org.eclipse.fennec.emf:org.eclipse.fennec.emf.osgi.bnd.library.workspace:1.0.0-SNAPSHOT
 #org.eclipse.osgi-technology.rest:org.eclipse.osgitech.rest.bnd.library:1.2.3
+org.geckoprojects.libraries:org.gecko.libraries.workspace.library:1.0.0-SNAPSHOT
+
 
 commons-fileupload:commons-fileupload:1.6.0
 commons-io:commons-io:2.20.0

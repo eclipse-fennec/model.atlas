@@ -17,3 +17,4 @@ org.eclipse.fennec.bnd:org.eclipse.fennec.osgitest.bnd.library:0.0.3-SNAPSHOT
 
 org.geckoprojects.fennec.persistence:org.gecko.fennec.persistence.workspace.library:1.0.0-SNAPSHOT
 
+

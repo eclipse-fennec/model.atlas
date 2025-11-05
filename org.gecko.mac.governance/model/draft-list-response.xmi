@@ -1,0 +1,75 @@
+
+<?xml version="1.0" encoding="UTF-8"?>
+<mgmt:ObjectMetadataContainer
+    xmlns:xmi="http://www.omg.org/XMI"
+    xmlns:mgmt="http://datainmotion.com/mac/management/1.0.0"
+    xsi:schemaLocation="http://datainmotion.com/mac/management/1.0.0 management.ecore
+    xmi:version="2.0"
+    containerId="draft-container-001">
+
+  <metadata
+      objectId="draft-001"
+      objectName="WeatherStationSensor_v1"
+      uploadUser="alice.smith@example.com"
+      uploadTime="2024-11-01T10:15:30.000Z"
+      sourceChannel="AI_GENERATOR"
+      contentHash="a3d8f1b2c4e5f6g7h8i9j0k1l2m3n4o5"
+      objectType="EPackage"
+      status="DRAFT"/>
+
+  <metadata
+      objectId="draft-002"
+      objectName="ParkingSensor_v2"
+      uploadUser="bob.jones@example.com"
+      uploadTime="2024-11-03T09:00:00.000Z"
+      sourceChannel="MANUAL_UPLOAD"
+      contentHash="b4e9g2c5d6f7h8i9j0k1l2m3n4o5p6q7"
+      objectType="EPackage"
+      status="DRAFT"
+      complianceStatus="PENDING"/>
+
+  <metadata
+      objectId="draft-003"
+      objectName="TrafficFlowMonitor_v1"
+      uploadUser="carol.white@example.com"
+      uploadTime="2024-11-04T11:30:45.000Z"
+      lastChangeTime="2024-11-04T16:10:20.000Z"
+      sourceChannel="SENSINACT"
+      contentHash="c5f0h3d7e8g9i0j1k2l3m4n5o6p7q8r9"
+      objectType="EPackage"
+      status="DRAFT"
+      complianceStatus="IN_PROGRESS"
+      complianceCheckTime="2024-11-04T16:00:00.000Z"/>
+
+  <metadata
+      objectId="draft-004"
+      objectName="EnergyMeter_v3"
+      uploadUser="david.miller@example.com"
+      uploadTime="2024-11-05T08:45:00.000Z"
+      lastChangeTime="2024-11-05T10:30:00.000Z"
+      sourceChannel="AI_GENERATOR"
+      contentHash="d6g1i4e9f0h1j2k3l4m5n6o7p8q9r0s1"
+      objectType="EPackage"
+      status="APPROVED"
+      complianceStatus="COMPLIANT"
+      complianceCheckTime="2024-11-05T10:00:00.000Z"
+      reviewUser="admin@example.com"
+      reviewTime="2024-11-05T10:30:00.000Z"
+      reviewReason="All compliance checks passed"/>
+
+  <metadata
+      objectId="draft-005"
+      objectName="WaterQualitySensor_v1"
+      uploadUser="eve.johnson@example.com"
+      uploadTime="2024-10-28T13:20:00.000Z"
+      lastChangeTime="2024-10-30T15:45:00.000Z"
+      sourceChannel="SENSINACT"
+      contentHash="e7h2j5f1g2i3k4l5m6n7o8p9q0r1s2t3"
+      objectType="EPackage"
+      status="REJECTED"
+      complianceStatus="FAILED"
+      complianceCheckTime="2024-10-30T14:00:00.000Z"
+      reviewUser="admin@example.com"
+      reviewTime="2024-10-30T15:45:00.000Z"
+      reviewReason="Missing GDPR compliance documentation"/>
+</mgmt:ObjectMetadataContainer>
