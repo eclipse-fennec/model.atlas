@@ -5,4 +5,4 @@
 	org.osgi.service.component,\
 	org.eclipse.uml2.uml;version=latest,\
 	org.eclipse.uml2.common;version=latest,\
-	org.eclipse.uml2.uml.resources;version=latest,\
+	org.eclipse.uml2.uml.resources;version=latest
