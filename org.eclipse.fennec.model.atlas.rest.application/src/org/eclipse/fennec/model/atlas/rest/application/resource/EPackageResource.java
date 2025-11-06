@@ -114,8 +114,8 @@ public class EPackageResource {
 	}
 
 	@POST
-	@Consumes({ MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML, "application/xmi" })
-	@Produces({ MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML, "application/xmi" })
+	@Consumes({ MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML, "application/xmi", "application/schema+json"  })
+	@Produces({ MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML, "application/xmi", "application/schema+json"  })
 	@Operation(
 		summary = "Create a new EPackage",
 		description = "Register a new EPackage in the system",
@@ -161,7 +161,7 @@ public class EPackageResource {
 	}
 
 	@GET
-	@Produces({ MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML, "application/xmi" })
+	@Produces({ MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML, "application/xmi", "application/schema+json" })
 	@Operation(
 		summary = "Get an EPackage or list all EPackages",
 		description = "Get a specific EPackage by nsUri, or list all if no nsUri provided",
@@ -209,8 +209,8 @@ public class EPackageResource {
 	}
 
 	@PUT
-	@Consumes({ MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML, "application/xmi" })
-	@Produces({ MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML, "application/xmi" })
+	@Consumes({ MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML, "application/xmi", "application/schema+json"  })
+	@Produces({ MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML, "application/xmi", "application/schema+json" })
 	@Operation(
 		summary = "Update an existing EPackage",
 		description = "Update an EPackage identified by nsUri",

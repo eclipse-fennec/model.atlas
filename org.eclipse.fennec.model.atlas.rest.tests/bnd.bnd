@@ -30,7 +30,9 @@ Private-Package: org.eclipse.fennec.model.atlas.rest.tests,\
 
 Bundle-Version: 1.0.0.SNAPSHOT
 
--includeresource: OSGI-INF/configurator/=configs/
+-includeresource: \
+	OSGI-INF/configurator/=configs/,\
+	test-data=test-data/
 
 Require-Capability: osgi.extender;filter:='(osgi.extender=osgi.configurator)'
 
