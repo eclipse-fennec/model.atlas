@@ -98,4 +98,4 @@ jobs:
             push: true
             tags: |-
                docker.io/eclipsefennec/model.atlas:snapshot
-               ghcr.io/eclipsefennec/model.atlas:snapshot
+               ghcr.io/eclipse-fennec/model.atlas:snapshot
