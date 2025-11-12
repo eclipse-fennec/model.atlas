@@ -27,4 +27,4 @@ EXPOSE 8080 8081 8082 8083 8084 8085 8090
 WORKDIR ${OPT_DIR}
 USER ${USERNAME}
 
-CMD ["java", "-Dgosh.args=--nointeractive", "-Dgecko.data.dir=/opt/modelatlas/runtime/data", "-Dgecko.conf.dir=/opt/modelatlas/runtime/etc", "-Dgecko.base.dir=/opt/modelatlas", "-Dgecko.log.dir=/opt/modelatlas/runtime/log", "-Dlogback.configurationFile=file:/opt/modelatlas/runtime/etc/logback.xml",  "-jar", "rg.eclipse.fennec.model.atlas.runtime.jar"]
+CMD ["java", "-Dgosh.args=--nointeractive", "-Dgecko.data.dir=/opt/modelatlas/runtime/data", "-Dgecko.conf.dir=/opt/modelatlas/runtime/etc", "-Dgecko.base.dir=/opt/modelatlas", "-Dgecko.log.dir=/opt/modelatlas/runtime/log", "-Dlogback.configurationFile=file:/opt/modelatlas/runtime/etc/logback.xml",  "-jar", "modelatlas.runtime_docker.jar"]
