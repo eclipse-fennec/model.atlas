@@ -70,13 +70,6 @@ jobs:
          with:
             name: jar-files
             path: .
-      -  name: Update dockerhub repo description
-         uses: peter-evans/dockerhub-description@432a30c9e07499fd01da9f8a49f0faf9e0ca5b77 # v4.0.2
-         with:
-            username: ${{ secrets.DOCKER_USERNAME }}
-            password: ${{ secrets.DOCKER_API_TOKEN }}
-            repository: eclipsefennec/model.atlas
-            readme-filepath: ./docker/modelatlas/README.md
 
       -  name: Set up Docker Buildx
          uses: docker/setup-buildx-action@e468171a9de216ec08956ac3ada2f0791b6bd435 # v3.11.1
