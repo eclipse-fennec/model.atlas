@@ -61,12 +61,12 @@ import jakarta.ws.rs.core.Response;
  * 
  * <h3>Draft Management Endpoints</h3>
  * <ul>
- * <li><strong>POST /epackages//workflow/drafts</strong> - Upload new EPackage draft with metadata</li>
- * <li><strong>GET /epackages//workflow/drafts</strong> - List all draft EPackages</li>
- * <li><strong>GET /epackages//workflow/drafts/{packageID}</strong> - Get draft metadata by ID</li>
- * <li><strong>GET /epackages//workflow/drafts/{packageID}/content</strong> - Get draft EPackage content</li>
- * <li><strong>PUT /epackages//workflow/drafts/{packageID}</strong> - Update existing draft EPackage</li>
- * <li><strong>DELETE /epackages//workflow/drafts/{packageID}</strong> - Delete draft EPackage</li>
+ * <li><strong>POST /packages/workflow/drafts</strong> - Upload new EPackage draft with metadata</li>
+ * <li><strong>GET /packages/workflow/drafts</strong> - List all draft EPackages</li>
+ * <li><strong>GET /packages/workflow/drafts/{packageNs}</strong> - Get draft metadata by ID</li>
+ * <li><strong>GET /packages/workflow/drafts/{packageID}/content</strong> - Get draft EPackage content</li>
+ * <li><strong>PUT /packages/workflow/drafts/{packageID}</strong> - Update existing draft EPackage</li>
+ * <li><strong>DELETE /packages/workflow/drafts/{packageID}</strong> - Delete draft EPackage</li>
  * </ul>
  * 
  * 
@@ -96,7 +96,7 @@ import jakarta.ws.rs.core.Response;
 @JakartarsResource()
 @JakartarsName("EPackageWorkflowResource")
 @Component(name = "EPackageWorkflowResource", service = EPackageWorkflowResource.class, scope = ServiceScope.PROTOTYPE)
-@Path("/epackages/workflow")
+@Path("/packages/workflow")
 @Tag(name = "EPackage Management", description = "CRUD operations for workflow of EMF EPackages")
 public class EPackageWorkflowResource {
 
@@ -226,30 +226,30 @@ public class EPackageWorkflowResource {
     
   
     @GET
-    @Path("/drafts/{packageID}")
+    @Path("/drafts/nsuri")
     @Produces({"application/xmi", MediaType.TEXT_PLAIN})
     @Operation(
-			summary = "Get draft EPackage metadata by ID",
-			description = "Get draft EPackage metadata by ID",
+			summary = "Get draft EPackage metadata by packageNsURI",
+			description = "Get draft EPackage metadata by packageNsURI",
 			responses = {
 				@ApiResponse(
 					responseCode = "200",
-					description = "Returns the metadata of the draft EPackage with the requested ID",
+					description = "Returns the metadata of the draft EPackage with the requested packageNsURI",
 					content = @Content(mediaType = "application/xmi", schema = @Schema(implementation = ObjectMetadata.class))
 				),
-				@ApiResponse(responseCode = "404", description = "No draft corresponding to that ID was found", content = @Content(mediaType = MediaType.TEXT_PLAIN)),
+				@ApiResponse(responseCode = "404", description = "No draft corresponding to that packageNsURI was found", content = @Content(mediaType = MediaType.TEXT_PLAIN)),
 				@ApiResponse(responseCode = "500", description = "Exception occurs", content = @Content(mediaType = MediaType.TEXT_PLAIN))
 			}
 		)
-    public Response getDraft(@Parameter(name = "packageID", description = "The ID of the EPackage draft to look for", required = true) @PathParam("packageID") String packageID) {
+    public Response getDraft(@Parameter(name = "packageNsURI", description = "The namespace URI of the EPackage draft to look for", required = true) @QueryParam("packageNsURI") String packageNsURI) {
         try {
-            ObjectMetadata metadata = workflowService.getDraft(packageID);
+            ObjectMetadata metadata = workflowService.getDraft(packageNsURI);
             
             if (nonNull(metadata)) {
                 return Response.ok(metadata).type("application/xmi").build();
             } else {
                 return Response.status(Response.Status.NOT_FOUND)
-                              .entity("Draft not found: " + packageID)
+                              .entity("Draft not found: " + packageNsURI)
                               .type(MediaType.TEXT_PLAIN)
                               .build();
             }
@@ -263,30 +263,30 @@ public class EPackageWorkflowResource {
     
 
     @GET
-    @Path("/drafts/{packageID}/content")
+    @Path("/drafts/nsuri/content")
     @Produces({"application/xmi", MediaType.TEXT_PLAIN})
     @Operation(
-			summary = "Get draft EPackage by ID",
-			description = "Get draft EPackage by ID",
+			summary = "Get draft EPackage by packageNsURI",
+			description = "Get draft EPackage by packageNsURI",
 			responses = {
 				@ApiResponse(
 					responseCode = "200",
-					description = "Returns the EPackage draft with the requested ID",
+					description = "Returns the EPackage draft with the requested packageNsURI",
 					content = @Content(mediaType = "application/xmi", schema = @Schema(implementation = EPackage.class))
 				),
-				@ApiResponse(responseCode = "404", description = "No draft corresponding to that ID was found", content = @Content(mediaType = MediaType.TEXT_PLAIN)),
+				@ApiResponse(responseCode = "404", description = "No draft corresponding to that packageNsURI was found", content = @Content(mediaType = MediaType.TEXT_PLAIN)),
 				@ApiResponse(responseCode = "500", description = "Exception occurs", content = @Content(mediaType = MediaType.TEXT_PLAIN))
 			}
 		)
-    public Response getDraftContent(@Parameter(name = "packageID", description = "The ID of the EPackage draft to look for", required = true) @PathParam("packageID") String packageID) {
+    public Response getDraftContent(@Parameter(name = "packageNsURI", description = "The packageNsURI of the EPackage draft to look for", required = true) @QueryParam("packageNsURI") String packageNsURI) {
         try {
-            EObject content = workflowService.getDraftContent(packageID);
+            EObject content = workflowService.getDraftContent(packageNsURI);
             
             if (nonNull(content)) {
                 return Response.ok(content).type("application/xmi").build();
             } else {
                 return Response.status(Response.Status.NOT_FOUND)
-                              .entity("Draft content not found: " + packageID)
+                              .entity("Draft content not found: " + packageNsURI)
                               .type(MediaType.TEXT_PLAIN)
                               .build();
             }
@@ -299,33 +299,33 @@ public class EPackageWorkflowResource {
     }
     
     @PUT
-    @Path("/drafts/{packageID}")
+    @Path("/drafts/nsuri")
     @Produces({MediaType.TEXT_PLAIN})
     @Operation(
-			summary = "Update the draft with the provided ID with the provided content",
-			description = "Update the EPackage draft with the provided ID, with the provided new content",
+			summary = "Update the draft with the provided packageNsURI with the provided content",
+			description = "Update the EPackage draft with the provided packageNsURI, with the provided new content",
 			responses = {
 				@ApiResponse(
 					responseCode = "200",
 					description = "The draft has been successfully updated",
 					content = @Content(mediaType = MediaType.TEXT_PLAIN)
 				),
-				@ApiResponse(responseCode = "404", description = "No draft corresponding to that ID was found", content = @Content(mediaType = MediaType.TEXT_PLAIN)),
+				@ApiResponse(responseCode = "404", description = "No draft corresponding to that packageNsURI was found", content = @Content(mediaType = MediaType.TEXT_PLAIN)),
 				@ApiResponse(responseCode = "500", description = "Exception occurs", content = @Content(mediaType = MediaType.TEXT_PLAIN))
 			}
 		)
     public Response updateDraft(
-    		@Parameter(name = "packageID", description = "The ID of the EPackage draft to look for", required = true) @PathParam("packageID") String packageID,
+    		@Parameter(name = "packageNsURI", description = "The packageNsURI of the EPackage draft to look for", required = true) @QueryParam("packageNsURI") String packageNsURI,
     		@RequestBody(description = "The updated EPackage content", required = true, content = @Content(schema = @Schema(implementation = EPackage.class))) EPackage updatedEPackage) {
         try {
-            Promise<Void> promise = workflowService.updateDraft(packageID, updatedEPackage);
+            Promise<Void> promise = workflowService.updateDraft(packageNsURI, updatedEPackage);
             promise.getValue(); // Wait for completion
             
             return Response.ok("Draft updated successfully").type(MediaType.TEXT_PLAIN).build();
             
         } catch (IllegalArgumentException e) {
             return Response.status(Response.Status.NOT_FOUND)
-                          .entity("Draft not found: " + packageID)
+                          .entity("Draft not found: " + packageNsURI)
                           .type(MediaType.TEXT_PLAIN)
                           .build();
         } catch (Exception e) {
@@ -343,30 +343,30 @@ public class EPackageWorkflowResource {
      * @return HTTP 204 if deleted, 404 if not found, or 500 for errors
      */
     @DELETE
-    @Path("/drafts/{packageID}")
+    @Path("/drafts/nsuri/")
     @Produces({MediaType.TEXT_PLAIN})
     @Operation(
-			summary = "Delete the EPackage draft with the provided ID",
-			description = "Delete the EPackage draft with the provided ID",
+			summary = "Delete the EPackage draft with the provided packageNsURI",
+			description = "Delete the EPackage draft with the provided packageNsURI",
 			responses = {
 				@ApiResponse(
 					responseCode = "204",
 					description = "The draft has been successfully deleted"
 				),
-				@ApiResponse(responseCode = "404", description = "No draft corresponding to that ID was found", content = @Content(mediaType = MediaType.TEXT_PLAIN)),
+				@ApiResponse(responseCode = "404", description = "No draft corresponding to that packageNsURI was found", content = @Content(mediaType = MediaType.TEXT_PLAIN)),
 				@ApiResponse(responseCode = "500", description = "Exception occurs", content = @Content(mediaType = MediaType.TEXT_PLAIN))
 			}
 		)
-    public Response deleteDraft(@Parameter(name = "packageID", description = "The ID of the EPackage draft to look for", required = true) @PathParam("packageID") String packageID) {
+    public Response deleteDraft(@Parameter(name = "packageNsURI", description = "The packageNsURI of the EPackage draft to look for", required = true) @PathParam("packageNsURI") String packageNsURI) {
         try {
-            Promise<Boolean> promise = workflowService.deleteDraft(packageID);
+            Promise<Boolean> promise = workflowService.deleteDraft(packageNsURI);
             Boolean success = promise.getValue(); // Wait for completion
             
             if (success) {
                 return Response.noContent().build();
             } else {
                 return Response.status(Response.Status.NOT_FOUND)
-                              .entity("Draft not found: " + packageID)
+                              .entity("Draft not found: " + packageNsURI)
                               .type(MediaType.TEXT_PLAIN)
                               .build();
             }
@@ -384,23 +384,23 @@ public class EPackageWorkflowResource {
  	// ======================
 
     @POST
-    @Path("/state/{packageID}/approve")
+    @Path("/state/nsuri/approve")
     @Produces({"application/xmi", MediaType.TEXT_PLAIN})
     @Operation(
-			summary = "Approve the EPackage with the provided ID for release",
-			description = "Approve the EPackage with the provided ID for release",
+			summary = "Approve the EPackage with the provided packageNsURI for release",
+			description = "Approve the EPackage with the provided packageNsURI for release",
 			responses = {
 				@ApiResponse(
 					responseCode = "200",
 					description = "Approval was succesfull and updated EPackage metadata are returned",
 					content = @Content(mediaType = "application/xmi", schema = @Schema(implementation = ObjectMetadata.class))
 				),
-				@ApiResponse(responseCode = "404", description = "No EPackage corresponding to that ID was found", content = @Content(mediaType = MediaType.TEXT_PLAIN)),
+				@ApiResponse(responseCode = "404", description = "No EPackage corresponding to that packageNsURI was found", content = @Content(mediaType = MediaType.TEXT_PLAIN)),
 				@ApiResponse(responseCode = "500", description = "Exception occurs", content = @Content(mediaType = MediaType.TEXT_PLAIN))
 			}
 		)
     public Response approveObject(
-    		@Parameter(name = "packageID", description = "The ID of the EPackage to look for", required = true) @PathParam("packageID") String packageID,
+    		@Parameter(name = "packageNsURI", description = "The packageNsURI of the EPackage to look for", required = true) @QueryParam("packageNsURI") String packageNsURI,
             @Parameter(name = "reviewUser", description = "An identifier for the user who made the review", required = true) @QueryParam("reviewUser") String reviewUser,
             @Parameter(name = "approvalReason", description = "A short and optional motivation for approval", required = false) @QueryParam("approvalReason") String approvalReason) {
         try {
@@ -411,13 +411,13 @@ public class EPackageWorkflowResource {
                               .build();
             }
             
-            ObjectMetadata updatedMetadata = workflowService.approveObject(packageID, reviewUser, approvalReason);
+            ObjectMetadata updatedMetadata = workflowService.approveObject(packageNsURI, reviewUser, approvalReason);
             
             if (nonNull(updatedMetadata)) {
                 return Response.ok(updatedMetadata).type("application/xmi").build();
             } else {
                 return Response.status(Response.Status.NOT_FOUND)
-                              .entity("Object not found: " + packageID)
+                              .entity("Object not found: " + packageNsURI)
                               .type(MediaType.TEXT_PLAIN)
                               .build();
             }
@@ -431,23 +431,23 @@ public class EPackageWorkflowResource {
     
   
     @POST
-    @Path("/state/{packageID}/reject")
+    @Path("/state/nsuri/reject")
     @Produces({"application/xmi", MediaType.TEXT_PLAIN})
     @Operation(
-			summary = "Reject the EPackage with the provided ID during review",
-			description = "Reject the EPackage with the provided ID during review",
+			summary = "Reject the EPackage with the provided packageNsURI during review",
+			description = "Reject the EPackage with the provided packageNsURI during review",
 			responses = {
 				@ApiResponse(
 					responseCode = "200",
 					description = "Rejection was succesfull and updated EPackage metadata are returned",
 					content = @Content(mediaType = "application/xmi", schema = @Schema(implementation = ObjectMetadata.class))
 				),
-				@ApiResponse(responseCode = "404", description = "No EPackage corresponding to that ID was found", content = @Content(mediaType = MediaType.TEXT_PLAIN)),
+				@ApiResponse(responseCode = "404", description = "No EPackage corresponding to that packageNsURI was found", content = @Content(mediaType = MediaType.TEXT_PLAIN)),
 				@ApiResponse(responseCode = "500", description = "Exception occurs", content = @Content(mediaType = MediaType.TEXT_PLAIN))
 			}
 		)
     public Response rejectObject(
-    		@Parameter(name = "packageID", description = "The ID of the EPackage to look for", required = true) @PathParam("packageID") String packageID,
+    		@Parameter(name = "packageNsURI", description = "The packageNsURI of the EPackage to look for", required = true) @QueryParam("packageNsURI") String packageNsURI,
             @Parameter(name = "reviewUser", description = "An identifier for the user who made the review", required = true) @QueryParam("reviewUser") String reviewUser,
             @Parameter(name = "rejectionReason", description = "A short and optional motivation for rejection", required = false) @QueryParam("rejectionReason") String rejectionReason)  {
         try {
@@ -458,13 +458,13 @@ public class EPackageWorkflowResource {
                               .build();
             }
             
-            ObjectMetadata updatedMetadata = workflowService.rejectObject(packageID, reviewUser, rejectionReason);
+            ObjectMetadata updatedMetadata = workflowService.rejectObject(packageNsURI, reviewUser, rejectionReason);
             
             if (nonNull(updatedMetadata)) {
                 return Response.ok(updatedMetadata).type("application/xmi").build();
             } else {
                 return Response.status(Response.Status.NOT_FOUND)
-                              .entity("Object not found: " + packageID)
+                              .entity("Object not found: " + packageNsURI)
                               .type(MediaType.TEXT_PLAIN)
                               .build();
             }
@@ -485,36 +485,36 @@ public class EPackageWorkflowResource {
      * @return HTTP 200 with updated metadata, 404 if not found, or 500 for errors
      */
     @POST
-    @Path("/state/{packageID}/release")
+    @Path("/state/nsuri/release")
     @Produces({"application/xmi", MediaType.TEXT_PLAIN})
     @Operation(
-			summary = "Release the EPackage with the provided ID to production",
-			description = "Release the EPackage with the provided ID to production",
+			summary = "Release the EPackage with the provided packageNsURI to production",
+			description = "Release the EPackage with the provided packageNsURI to production",
 			responses = {
 				@ApiResponse(
 					responseCode = "200",
 					description = "Release was succesfull and updated EPackage metadata are returned",
 					content = @Content(mediaType = "application/xmi", schema = @Schema(implementation = ObjectMetadata.class))
 				),
-				@ApiResponse(responseCode = "404", description = "No EPackage corresponding to that ID was found", content = @Content(mediaType = MediaType.TEXT_PLAIN)),
+				@ApiResponse(responseCode = "404", description = "No EPackage corresponding to that packageNsURI was found", content = @Content(mediaType = MediaType.TEXT_PLAIN)),
 				@ApiResponse(responseCode = "500", description = "Exception occurs", content = @Content(mediaType = MediaType.TEXT_PLAIN))
 			}
 		)
     public Response releaseObject(
     		
-    		@Parameter(name = "packageID", description = "The ID of the EPackage to look for", required = true) @PathParam("packageID") String packageID,
+    		@Parameter(name = "packageNsURI", description = "The packageNsURI of the EPackage to look for", required = true) @QueryParam("packageNsURI") String packageNsURI,
             @Parameter(name = "releaseNotes", description = "Optional release notes", required = false) @QueryParam("releaseNotes") String releaseNotes
              ) {
         try {
             boolean requireCheck = false;
             
-            ObjectMetadata updatedMetadata = workflowService.releaseObject(packageID, releaseNotes, requireCheck);
+            ObjectMetadata updatedMetadata = workflowService.releaseObject(packageNsURI, releaseNotes, requireCheck);
             
             if (nonNull(updatedMetadata)) {
                 return Response.ok(updatedMetadata).type("application/xmi").build();
             } else {
                 return Response.status(Response.Status.NOT_FOUND)
-                              .entity("Object not found: " + packageID)
+                              .entity("Object not found: " + packageNsURI)
                               .type(MediaType.TEXT_PLAIN)
                               .build();
             }
@@ -672,30 +672,30 @@ public class EPackageWorkflowResource {
 
 
     @GET
-    @Path("/{packageID}")
+    @Path("")
     @Produces({"application/xmi", MediaType.TEXT_PLAIN})
     @Operation(
-			summary = "Get the EPackage metadata with the provided ID",
-			description = "Get the EPackage metadata with the provided ID",
+			summary = "Get the EPackage metadata with the provided packageNsURI",
+			description = "Get the EPackage metadata with the provided packageNsURI",
 			responses = {
 				@ApiResponse(
 					responseCode = "200",
 					description = "Request was succesfull and EPackage metadata are returned",
 					content = @Content(mediaType = "application/xmi", schema = @Schema(implementation = ObjectMetadata.class))
 				),
-				@ApiResponse(responseCode = "404", description = "No EPackage corresponding to that ID was found", content = @Content(mediaType = MediaType.TEXT_PLAIN)),
+				@ApiResponse(responseCode = "404", description = "No EPackage corresponding to that packageNsURI was found", content = @Content(mediaType = MediaType.TEXT_PLAIN)),
 				@ApiResponse(responseCode = "500", description = "Exception occurs", content = @Content(mediaType = MediaType.TEXT_PLAIN))
 			}
 		)
-    public Response getObject(@Parameter(name = "packageID", description = "The id of the EPackage to look for", required = true) @PathParam("packageID") String packageID) {
+    public Response getObject(@Parameter(name = "packageNsURI", description = "The packageNsURI of the EPackage to look for", required = true) @QueryParam("packageNsURI") String packageNsURI) {
         try {
-            ObjectMetadata metadata = workflowService.getObject(packageID);
+            ObjectMetadata metadata = workflowService.getObject(packageNsURI);
             
             if (nonNull(metadata)) {
                 return Response.ok(metadata).type("application/xmi").build();
             } else {
                 return Response.status(Response.Status.NOT_FOUND)
-                              .entity("Object not found: " + packageID)
+                              .entity("Object not found: " + packageNsURI)
                               .type(MediaType.TEXT_PLAIN)
                               .build();
             }
@@ -708,30 +708,30 @@ public class EPackageWorkflowResource {
     }
 
     @GET
-    @Path("/{packageID}/content")
+    @Path("/content")
     @Produces({"application/xmi", MediaType.TEXT_PLAIN})
     @Operation(
-			summary = "Get the EPackage with the provided ID",
-			description = "Get the EPackage with the provided ID",
+			summary = "Get the EPackage with the provided packageNsURI",
+			description = "Get the EPackage with the provided packageNsURI",
 			responses = {
 				@ApiResponse(
 					responseCode = "200",
 					description = "Request was succesfull and EPackage is returned",
 					content = @Content(mediaType = "application/xmi", schema = @Schema(implementation = EPackage.class))
 				),
-				@ApiResponse(responseCode = "404", description = "No EPackage corresponding to that ID was found", content = @Content(mediaType = MediaType.TEXT_PLAIN)),
+				@ApiResponse(responseCode = "404", description = "No EPackage corresponding to that packageNsURI was found", content = @Content(mediaType = MediaType.TEXT_PLAIN)),
 				@ApiResponse(responseCode = "500", description = "Exception occurs", content = @Content(mediaType = MediaType.TEXT_PLAIN))
 			}
 		)
-    public Response getObjectContent(@Parameter(name = "packageID", description = "The id of the EPackage to look for", required = true) @PathParam("packageID") String packageID) {
+    public Response getObjectContent(@Parameter(name = "packageNsURI", description = "The packageNsURI of the EPackage to look for", required = true) @QueryParam("packageNsURI") String packageNsURI) {
         try {
-            Object content = workflowService.getObjectContent(packageID);
+            Object content = workflowService.getObjectContent(packageNsURI);
             
             if (nonNull(content)) {
                 return Response.ok(content).type("application/xmi").build();
             } else {
                 return Response.status(Response.Status.NOT_FOUND)
-                              .entity("Object content not found: " + packageID)
+                              .entity("Object content not found: " + packageNsURI)
                               .type(MediaType.TEXT_PLAIN)
                               .build();
             }
@@ -745,26 +745,26 @@ public class EPackageWorkflowResource {
 
  
     @PUT
-    @Path("/{packageID}")
+    @Path("")
     @Produces({MediaType.TEXT_PLAIN})
     @Operation(
-			summary = "Update an existing EPackage with the provided ID (works across all workflow states)",
-			description = "Update an existing EPackage with the provided ID (works across all workflow states)",
+			summary = "Update an existing EPackage with the provided packageNsURI (works across all workflow states)",
+			description = "Update an existing EPackage with the provided packageNsURI (works across all workflow states)",
 			responses = {
 				@ApiResponse(
 					responseCode = "200",
 					description = "Request was succesfull",
 					content = @Content(mediaType = MediaType.TEXT_PLAIN)
 				),
-				@ApiResponse(responseCode = "404", description = "No EPackage corresponding to that ID was found", content = @Content(mediaType = MediaType.TEXT_PLAIN)),
+				@ApiResponse(responseCode = "404", description = "No EPackage corresponding to that packageNsURI was found", content = @Content(mediaType = MediaType.TEXT_PLAIN)),
 				@ApiResponse(responseCode = "500", description = "Exception occurs", content = @Content(mediaType = MediaType.TEXT_PLAIN))
 			}
 		)
     public Response updateObject(
-    		@Parameter(name = "packageID", description = "The id of the EPackage to look for", required = true) @PathParam("packageID") String packageID, 
+    		@Parameter(name = "packageNsURI", description = "The packageNsURI of the EPackage to look for", required = true) @QueryParam("packageNsURI") String packageNsURI, 
     		@Parameter(schema = @Schema(implementation = EPackage.class), name = "updateEPackage", description = "The update EPackage content", required = true) @RequestBody EPackage updateEPackage) {
         try {
-            Promise<Void> promise = workflowService.updateObject(packageID, updateEPackage);
+            Promise<Void> promise = workflowService.updateObject(packageNsURI, updateEPackage);
             promise.getValue(); // Wait for completion
             
             return Response.ok("Object updated successfully")
@@ -773,7 +773,7 @@ public class EPackageWorkflowResource {
             
         } catch (IllegalArgumentException e) {
             return Response.status(Response.Status.NOT_FOUND)
-                          .entity("Object not found: " + packageID)
+                          .entity("Object not found: " + packageNsURI)
                           .type(MediaType.TEXT_PLAIN)
                           .build();
         } catch (Exception e) {
@@ -786,31 +786,31 @@ public class EPackageWorkflowResource {
 
   
     @DELETE
-    @Path("/{packageID}")
+    @Path("")
     @Produces({MediaType.TEXT_PLAIN})
     @Operation(
-			summary = "Delete the EPackage with the provided ID (works across all workflow states)",
-			description = "Delete the EPackage with the provided ID (works across all workflow states)",
+			summary = "Delete the EPackage with the provided packageNsURI (works across all workflow states)",
+			description = "Delete the EPackage with the provided packageNsURI (works across all workflow states)",
 			responses = {
 				@ApiResponse(
 					responseCode = "204",
 					description = "The EPackage has been successfully deleted",
 					content = @Content(mediaType = MediaType.TEXT_PLAIN)
 				),
-				@ApiResponse(responseCode = "404", description = "No EPackage corresponding to that ID was found", content = @Content(mediaType = MediaType.TEXT_PLAIN)),
+				@ApiResponse(responseCode = "404", description = "No EPackage corresponding to that packageNsURI was found", content = @Content(mediaType = MediaType.TEXT_PLAIN)),
 				@ApiResponse(responseCode = "500", description = "Exception occurs", content = @Content(mediaType = MediaType.TEXT_PLAIN))
 			}
 		)
-    public Response deleteObject(@Parameter(name = "packageID", description = "The id of the EPackage to look for", required = true) @PathParam("packageID") String packageID) {
+    public Response deleteObject(@Parameter(name = "packageNsURI", description = "The packageNsURI of the EPackage to look for", required = true) @QueryParam("packageNsURI") String packageNsURI) {
         try {
-            Promise<Boolean> promise = workflowService.deleteObject(packageID);
+            Promise<Boolean> promise = workflowService.deleteObject(packageNsURI);
             Boolean success = promise.getValue(); // Wait for completion
             
             if (success) {
                 return Response.noContent().build();
             } else {
                 return Response.status(Response.Status.NOT_FOUND)
-                              .entity("Object not found: " + packageID)
+                              .entity("Object not found: " + packageNsURI)
                               .type(MediaType.TEXT_PLAIN)
                               .build();
             }
