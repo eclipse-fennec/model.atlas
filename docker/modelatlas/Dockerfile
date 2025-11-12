@@ -9,7 +9,7 @@ RUN mkdir -p ${OPT_DIR} && \
     mkdir -p ${OPT_DIR}/logs && \
     mkdir -p /tmp
 
-COPY ../../modelatlas.runtime_docker.jar ${OPT_DIR}/
+COPY modelatlas.runtime_docker.jar ${OPT_DIR}/
 
 RUN mkdir ${HOME_DIR}
 
