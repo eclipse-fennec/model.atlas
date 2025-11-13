@@ -9,11 +9,14 @@
 	logback.configurationFile=file:${.}/logback.xml,\
 	geckotest=true,\
 	gecko.log.level=INFO
+	
 
 -runtrace: false
 
--runvm: -ea
-
+-runvm: \
+	-ea,\
+	-Dorg.osgi.framework.system.packages.extra=javax.*,jdk.internal.org.xml.sax.helpers.*
+	
 -resolve.effective: active
 
 -runrequires: \
