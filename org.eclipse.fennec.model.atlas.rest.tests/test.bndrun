@@ -14,8 +14,7 @@
 -runtrace: false
 
 -runvm: \
-	-ea,\
-	-Dorg.osgi.framework.system.packages.extra=javax.*,jdk.internal.org.xml.sax.helpers.*
+	-ea
 	
 -resolve.effective: active
 
