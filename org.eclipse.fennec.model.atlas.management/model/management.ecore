@@ -317,6 +317,11 @@
         <details key="documentation" value="Git-based storage backend"/>
       </eAnnotations>
     </eLiterals>
+    <eLiterals name="APICURIO" value="3" literal="APICURIO">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="Apicurio-based storage backend"/>
+      </eAnnotations>
+    </eLiterals>
   </eClassifiers>
   <eClassifiers xsi:type="ecore:EEnum" name="GenerationStatus">
     <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
