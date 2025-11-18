@@ -204,14 +204,14 @@ public class EPackageResourceTest {
 		String nsUri = TestHelper.generateUniqueNsUri("createUMLTest");
 		
 
-		// When: POST with XML
+		// When: POST with UML
 		Response response = client.target(BASE_URL)
-			.request(MediaType.APPLICATION_XML)
+			.request("application/uml")
 			.post(Entity.xml(MY_DATA_ECORE_XML));
 
 		// Then: Should return 201 Created
 		assertEquals(Response.Status.CREATED.getStatusCode(), response.getStatus(),
-			"Should return 201 Created for XML");
+			"Should return 201 Created for UML");
 		createdNsUris.add(nsUri);
 	}
 
