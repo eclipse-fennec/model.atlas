@@ -34,6 +34,9 @@ import org.eclipse.emf.ecore.resource.ResourceSet;
 import org.eclipse.fennec.model.atlas.rest.model.EPackageListResponse;
 import org.eclipse.fennec.model.atlas.rest.tests.helper.ResourceAware;
 import org.eclipse.fennec.model.atlas.rest.tests.helper.TestHelper;
+import org.eclipse.uml2.uml.Model;
+import org.eclipse.uml2.uml.Package;
+import org.eclipse.uml2.uml.UMLFactory;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -50,6 +53,7 @@ import jakarta.ws.rs.client.Entity;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.ext.MessageBodyWriter;
+
 
 /**
  * Integration tests for the EPackage REST API endpoints.
@@ -199,15 +203,16 @@ public class EPackageResourceTest {
 	}
 	
 	@Test
-	void testCreateEPackage_WithUML_Success() {
+	void testCreateEPackage_WithUML_Success() throws IOException {
 		// Given: A new EPackage in JSON format
 		String nsUri = TestHelper.generateUniqueNsUri("createUMLTest");
-		
+		Package umlPackage = createUMLPackage(nsUri);
+		String xmiContent = TestHelper.serializeToXMI(umlPackage, resourceSet);
 
 		// When: POST with UML
 		Response response = client.target(BASE_URL)
 			.request("application/uml")
-			.post(Entity.xml(MY_DATA_ECORE_XML));
+			.post(Entity.entity(xmiContent, "application/uml"));
 
 		// Then: Should return 201 Created
 		assertEquals(Response.Status.CREATED.getStatusCode(), response.getStatus(),
@@ -226,6 +231,29 @@ public class EPackageResourceTest {
 		Response response = client.target(BASE_URL)
 			.queryParam("nsUri", nsUri)
 			.request(MediaType.APPLICATION_XML)
+			.get();
+
+		// Then: Should return 200 OK with the EPackage
+		assertEquals(Response.Status.OK.getStatusCode(), response.getStatus(),
+			"Should return 200 OK");
+
+		EPackage retrievedPackage = response.readEntity(EPackage.class);
+		assertNotNull(retrievedPackage, "Response body should not be null");
+		assertEquals(nsUri, retrievedPackage.getNsURI(), "Response should contain the requested nsUri");
+		assertEquals("GetTestPackage", retrievedPackage.getName(), "Response should contain the package name");
+	}
+	
+	@Test
+	void testGetEPackage_UML_ByNsUri_Success() throws IOException {
+		// Given: An existing EPackage
+		String nsUri = TestHelper.generateUniqueNsUri("getTest");
+		EPackage testPackage = createBasicTestEPackage(nsUri, "GetTestPackage", "get");
+		createEPackageViaREST(testPackage);
+
+		// When: GET with nsUri query parameter
+		Response response = client.target(BASE_URL)
+			.queryParam("nsUri", nsUri)
+			.request("application/uml")
 			.get();
 
 		// Then: Should return 200 OK with the EPackage
@@ -657,5 +685,13 @@ public class EPackageResourceTest {
 			"Failed to create test EPackage: " + ePackage.getNsURI());
 
 		createdNsUris.add(ePackage.getNsURI());
+	}
+	
+	private Package createUMLPackage(String nsUri) {
+		Model model = UMLFactory.eINSTANCE.createModel();
+		model.setName("test-uml");
+		model.setURI(nsUri);
+		return model;
+		
 	}
 }

@@ -95,8 +95,6 @@ public class UMLMessageBodyReaderWriter implements MessageBodyReader<EPackage>, 
 			MultivaluedMap<String, String> httpHeaders, InputStream entityStream)
 					throws IOException, WebApplicationException {
 		ResourceSet resourceSet = resourceSetFactory.getService();
-//		UMLResourcesUtil.init(resourceSet);
-//		resourceSet.getResourceFactoryRegistry().getExtensionToFactoryMap().put("uml", new UML22UMLResourceFactoryImpl());
 		try {
 			Resource resource = resourceSet.createResource(URI.createURI("temp.uml"));
 			resource.load(entityStream, null);
