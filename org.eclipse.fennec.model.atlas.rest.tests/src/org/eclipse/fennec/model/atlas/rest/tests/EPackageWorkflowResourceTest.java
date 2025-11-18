@@ -21,7 +21,6 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.time.Instant;
-import java.util.Date;
 import java.util.Dictionary;
 import java.util.Hashtable;
 import java.util.List;
@@ -33,16 +32,12 @@ import org.eclipse.emf.ecore.EPackage;
 import org.eclipse.emf.ecore.EcoreFactory;
 import org.eclipse.emf.ecore.resource.Resource;
 import org.eclipse.emf.ecore.resource.ResourceSet;
-import org.eclipse.fennec.model.atlas.governance.ApprovalStatus;
-import org.eclipse.fennec.model.atlas.governance.GovernanceDocumentation;
-import org.eclipse.fennec.model.atlas.governance.GovernanceFactory;
-import org.eclipse.fennec.model.atlas.governance.PolicyType;
-import org.eclipse.fennec.model.atlas.mgmt.governanceapi.EObjectWorkflowService;
 import org.eclipse.fennec.model.atlas.mgmt.management.ManagementFactory;
 import org.eclipse.fennec.model.atlas.mgmt.management.ObjectMetadata;
 import org.eclipse.fennec.model.atlas.mgmt.management.ObjectStatus;
 import org.eclipse.fennec.model.atlas.rest.tests.helper.ResourceAware;
 import org.eclipse.fennec.model.atlas.rest.tests.helper.TestHelper;
+import org.eclipse.fennec.model.atlas.wf.workflowapi.EObjectWorkflowService;
 import org.gecko.emf.osgi.annotation.require.RequireEMF;
 import org.gecko.emf.rest.annotations.RequireEMFMessageBodyReaderWriter;
 import org.junit.jupiter.api.AfterEach;
@@ -71,7 +66,6 @@ import jakarta.ws.rs.core.Response;
  * <p>Tests cover:</p>
  * <ul>
  * <li>Draft management operations (upload, list, get, update, delete)</li>
- * <li>Compliance checking and governance documentation generation</li>
  * <li>Workflow state management (approve, reject, release)</li>
  * <li>Object listing by status (approved, rejected, released)</li>
  * <li>Content retrieval and metadata operations</li>
@@ -93,14 +87,14 @@ import jakarta.ws.rs.core.Response;
 @ExtendWith(ServiceExtension.class)
 public class EPackageWorkflowResourceTest {
 
-    private static final String BASE_URL = "http://localhost:8185/rest/epackages/workflow";
-    private static final String TEST_OBJECT_ID = "test-epackage-workflow-v1.0";
+    private static final String BASE_URL = "http://localhost:8185/rest/packages/workflow";
+    private static final String TEST_PACKAGE_NSURI = "http://test.example.com/testpackage/1.0";
     private static final String TEST_UPLOAD_USER = "test.developer@company.com";
     private static final String TEST_REVIEW_USER = "test.steward@company.com";
     private static final String TEST_SOURCE_CHANNEL = "MANUAL_UPLOAD";
 //    private static final String TEST_OBJECT_TYPE = "EPackage";
 
-    @InjectService(filter = "(emf.name=governance)")
+    @InjectService(filter = "(emf.name=workflowapi)")
     ResourceSet resourceSet;
 
     @InjectService
@@ -163,7 +157,7 @@ public class EPackageWorkflowResourceTest {
     @Test
     public void testUploadDraft_Success() throws Exception {
         // Create a test EObject (simple EPackage)
-        EPackage testEObject = TestHelper.createTestEPackage("http://test.example.com/testpackage/1.0", "TestPackage", "test");
+        EPackage testEObject = TestHelper.createTestEPackage(TEST_PACKAGE_NSURI, "TestPackage", "test");
         String xmiContent = serializeToXMI(testEObject);
 
         Response response = restClient
@@ -180,15 +174,15 @@ public class EPackageWorkflowResourceTest {
         System.out.println("DEBUG testUploadDraft_Success - Response status: " + response.getStatus());
         String responseContent = response.readEntity(String.class);
         System.out.println("DEBUG testUploadDraft_Success - Response content: " + responseContent);
-        
+
         assertEquals(201, response.getStatus(), "Should return HTTP 201 Created");
         assertNotNull(responseContent, "Should return content");
-        assertEquals(TEST_OBJECT_ID, responseContent.trim(), "Response should be the object ID");
+        assertEquals(TEST_PACKAGE_NSURI, responseContent.trim(), "Response should be the package nsURI");
     }
 
     @Test
     public void testUploadDraft_MissingUploadUser() throws Exception {
-        EPackage testEObject = TestHelper.createTestEPackage("http://test.example.com/testpackage/1.0", "TestPackage", "test");
+        EPackage testEObject = TestHelper.createTestEPackage(TEST_PACKAGE_NSURI, "TestPackage", "test");
         String xmiContent = TestHelper.serializeToXMI(testEObject, resourceSet);
 
         Response response = restClient
@@ -202,7 +196,7 @@ public class EPackageWorkflowResourceTest {
         System.out.println("DEBUG - Response status: " + response.getStatus());
         String errorContent = response.readEntity(String.class);
         System.out.println("DEBUG - Error content: " + errorContent);
-        
+
         assertEquals(400, response.getStatus(), "Should return HTTP 400 Bad Request");
         assertTrue(errorContent.contains("uploadUser"), "Error should mention missing uploadUser");
     }
@@ -221,9 +215,9 @@ public class EPackageWorkflowResourceTest {
         assertNotNull(responseContent, "Should return content");
         assertTrue(responseContent.contains("ObjectMetadataContainer"), "Response should contain ObjectMetadataContainer");
         assertTrue(responseContent.contains("metadata"), "Response should contain metadata elements");
-        
+
         // Verify we can handle multiple draft objects (mock returns at least one)
-        assertTrue(responseContent.contains(TEST_OBJECT_ID), "Response should contain the test object ID");
+        assertTrue(responseContent.contains(TEST_PACKAGE_NSURI), "Response should contain the test package nsURI");
     }
 
     @Test
@@ -231,7 +225,8 @@ public class EPackageWorkflowResourceTest {
         Response response = restClient
                 .target(BASE_URL)
                 .path("drafts")
-                .path(TEST_OBJECT_ID)
+                .path("nsuri")
+                .queryParam("packageNsURI", TEST_PACKAGE_NSURI)
                 .request("application/xmi")
                 .get();
 
@@ -242,24 +237,25 @@ public class EPackageWorkflowResourceTest {
         assertNotNull(xmiContent, "Should return XMI content");
         assertTrue(xmiContent.contains("ObjectMetadata"), "Should contain ObjectMetadata element");
         // Note: DRAFT is default enum value (0), so EMF doesn't serialize it - absence indicates DRAFT status
-        assertTrue(xmiContent.contains("objectId=\"" + TEST_OBJECT_ID + "\""), "Should contain the test object ID");
+        assertTrue(xmiContent.contains("objectId=\"" + TEST_PACKAGE_NSURI + "\""), "Should contain the test package nsURI");
     }
 
     @Test
     public void testGetDraft_NotFound() {
-        String nonExistentObjectId = "non-existent-draft";
+        String nonExistentNsURI = "http://non-existent-draft.com/test/1.0";
 
         Response response = restClient
                 .target(BASE_URL)
                 .path("drafts")
-                .path(nonExistentObjectId)
+                .path("nsuri")
+                .queryParam("packageNsURI", nonExistentNsURI)
                 .request("text/plain")
                 .get();
 
         assertEquals(404, response.getStatus(), "Should return HTTP 404 Not Found");
 
         String errorContent = response.readEntity(String.class);
-        assertTrue(errorContent.contains(nonExistentObjectId), "Error should mention the object ID");
+        assertTrue(errorContent.contains(nonExistentNsURI), "Error should mention the package nsURI");
     }
     
     @Test
@@ -267,8 +263,9 @@ public class EPackageWorkflowResourceTest {
         Response response = restClient
                 .target(BASE_URL)
                 .path("drafts")
-                .path(TEST_OBJECT_ID)
+                .path("nsuri")
                 .path("content")
+                .queryParam("packageNsURI", TEST_PACKAGE_NSURI)
                 .request("application/xmi")
                 .get();
 
@@ -282,32 +279,34 @@ public class EPackageWorkflowResourceTest {
     
     @Test
     public void testGetDraftContent_NotFound() {
-        String nonExistentObjectId = "non-existent-draft";
+        String nonExistentNsURI = "http://non-existent-draft.com/test/1.0";
 
         Response response = restClient
                 .target(BASE_URL)
                 .path("drafts")
-                .path(nonExistentObjectId)
+                .path("nsuri")
                 .path("content")
+                .queryParam("packageNsURI", nonExistentNsURI)
                 .request("text/plain")
                 .get();
 
         assertEquals(404, response.getStatus(), "Should return HTTP 404 Not Found");
 
         String errorContent = response.readEntity(String.class);
-        assertTrue(errorContent.contains(nonExistentObjectId), "Error should mention the object ID");
+        assertTrue(errorContent.contains(nonExistentNsURI), "Error should mention the package nsURI");
     }
     
     @Test
     public void testUpdateDraft_Success() throws Exception {
         // Create a test EObject (simple EPackage)
-        EPackage testEObject = TestHelper.createTestEPackage("http://test.example.com/testpackage/1.0", "TestPackage", "test");
+        EPackage testEObject = TestHelper.createTestEPackage(TEST_PACKAGE_NSURI, "TestPackage", "test");
         String xmiContent = serializeToXMI(testEObject);
 
         Response response = restClient
                 .target(BASE_URL)
                 .path("drafts")
-                .path(TEST_OBJECT_ID)
+                .path("nsuri")
+                .queryParam("packageNsURI", TEST_PACKAGE_NSURI)
                 .request("text/plain")
                 .put(Entity.entity(xmiContent, "application/xmi"));
 
@@ -315,20 +314,21 @@ public class EPackageWorkflowResourceTest {
         System.out.println("DEBUG testUpdateDraft_Success - Response status: " + response.getStatus());
         String responseContent = response.readEntity(String.class);
         System.out.println("DEBUG testUpdateDraft_Success - Response content: " + responseContent);
-        
+
         assertEquals(200, response.getStatus(), "Should return HTTP 200");
     }
     
     @Test
     public void testUpdateDraft_NotFound() throws Exception {
         // Create a test EObject (simple EPackage)
-        EPackage testEObject = TestHelper.createTestEPackage("http://test.example.com/testpackage/1.0", "TestPackage", "test");
+        EPackage testEObject = TestHelper.createTestEPackage(TEST_PACKAGE_NSURI, "TestPackage", "test");
         String xmiContent = serializeToXMI(testEObject);
 
         Response response = restClient
                 .target(BASE_URL)
                 .path("drafts")
-                .path("non-existent-draft")
+                .path("nsuri")
+                .queryParam("packageNsURI", "http://non-existent-draft.com/test/1.0")
                 .request("text/plain")
                 .put(Entity.entity(xmiContent, "application/xmi"));
 
@@ -336,7 +336,7 @@ public class EPackageWorkflowResourceTest {
         System.out.println("DEBUG testUpdateDraft_Success - Response status: " + response.getStatus());
         String responseContent = response.readEntity(String.class);
         System.out.println("DEBUG testUpdateDraft_Success - Response content: " + responseContent);
-        
+
         assertEquals(404, response.getStatus(), "Should return HTTP 404");
     }
 
@@ -345,7 +345,8 @@ public class EPackageWorkflowResourceTest {
         Response response = restClient
                 .target(BASE_URL)
                 .path("drafts")
-                .path(TEST_OBJECT_ID)
+                .path("nsuri")
+                .queryParam("packageNsURI", TEST_PACKAGE_NSURI)
                 .request()
                 .delete();
 
@@ -361,8 +362,9 @@ public class EPackageWorkflowResourceTest {
         Response response = restClient
                 .target(BASE_URL)
                 .path("state")
-                .path(TEST_OBJECT_ID)
+                .path("nsuri")
                 .path("approve")
+                .queryParam("packageNsURI", TEST_PACKAGE_NSURI)
                 .queryParam("reviewUser", TEST_REVIEW_USER)
                 .queryParam("approvalReason", "All compliance checks passed")
                 .request("application/xmi")
@@ -382,8 +384,9 @@ public class EPackageWorkflowResourceTest {
         Response response = restClient
                 .target(BASE_URL)
                 .path("state")
-                .path(TEST_OBJECT_ID)
+                .path("nsuri")
                 .path("reject")
+                .queryParam("packageNsURI", TEST_PACKAGE_NSURI)
                 .queryParam("reviewUser", TEST_REVIEW_USER)
                 .queryParam("rejectionReason", "Compliance issues found")
                 .request("application/xmi")
@@ -403,8 +406,9 @@ public class EPackageWorkflowResourceTest {
         Response response = restClient
                 .target(BASE_URL)
                 .path("state")
-                .path(TEST_OBJECT_ID)
+                .path("nsuri")
                 .path("release")
+                .queryParam("packageNsURI", TEST_PACKAGE_NSURI)
                 .queryParam("releaseNotes", TEST_REVIEW_USER)
                 .request("application/xmi")
                 .post(Entity.entity("", "application/xmi"));
@@ -423,7 +427,7 @@ public class EPackageWorkflowResourceTest {
     @Test
     public void testListApprovedObjects_Success() {
         Response response = restClient
-                .target(BASE_URL)          
+                .target(BASE_URL)
                 .path("approved")
                 .request("application/xmi")
                 .get();
@@ -434,9 +438,9 @@ public class EPackageWorkflowResourceTest {
         assertNotNull(responseContent, "Should return content");
         assertTrue(responseContent.contains("ObjectMetadataContainer"), "Response should contain ObjectMetadataContainer");
         assertTrue(responseContent.contains("metadata"), "Response should contain metadata elements");
-        
+
         // Verify we can handle multiple approved objects (mock returns at least one)
-        assertTrue(responseContent.contains(TEST_OBJECT_ID), "Response should contain the test object ID");
+        assertTrue(responseContent.contains(TEST_PACKAGE_NSURI), "Response should contain the test package nsURI");
         assertTrue(responseContent.contains("APPROVED"), "Response should contain approved status");
     }
 
@@ -454,16 +458,16 @@ public class EPackageWorkflowResourceTest {
         assertNotNull(responseContent, "Should return content");
         assertTrue(responseContent.contains("ObjectMetadataContainer"), "Response should contain ObjectMetadataContainer");
         assertTrue(responseContent.contains("metadata"), "Response should contain metadata elements");
-        
+
         // Since this endpoint aggregates from all workflow states, it should contain objects from all states
         // The mock service returns one object for each list method, so we should have multiple objects
-        assertTrue(responseContent.contains(TEST_OBJECT_ID), "Response should contain the test object ID");
-        
+        assertTrue(responseContent.contains(TEST_PACKAGE_NSURI), "Response should contain the test package nsURI");
+
         // Verify we get objects from different workflow states
-        assertTrue(responseContent.contains("DRAFT") || responseContent.contains("APPROVED") || 
-                  responseContent.contains("REJECTED") || responseContent.contains("DEPLOYED"), 
+        assertTrue(responseContent.contains("DRAFT") || responseContent.contains("APPROVED") ||
+                  responseContent.contains("REJECTED") || responseContent.contains("DEPLOYED"),
                   "Response should contain objects from various workflow states");
-        
+
         // The response should contain multiple metadata entries since we aggregate from all states
         int metadataCount = (responseContent.split("<metadata").length - 1);
         assertTrue(metadataCount >= 4, "Should contain at least 4 metadata entries (one from each workflow state)");
@@ -472,7 +476,7 @@ public class EPackageWorkflowResourceTest {
     @Test
     public void testListRejectedObjects_Success() {
         Response response = restClient
-                .target(BASE_URL)          
+                .target(BASE_URL)
                 .path("rejected")
                 .request("application/xmi")
                 .get();
@@ -483,16 +487,16 @@ public class EPackageWorkflowResourceTest {
         assertNotNull(responseContent, "Should return content");
         assertTrue(responseContent.contains("ObjectMetadataContainer"), "Response should contain ObjectMetadataContainer");
         assertTrue(responseContent.contains("metadata"), "Response should contain metadata elements");
-        
-        // Verify we can handle multiple approved objects (mock returns at least one)
-        assertTrue(responseContent.contains(TEST_OBJECT_ID), "Response should contain the test object ID");
-        assertTrue(responseContent.contains("REJECTED"), "Response should contain approved status");
+
+        // Verify we can handle multiple rejected objects (mock returns at least one)
+        assertTrue(responseContent.contains(TEST_PACKAGE_NSURI), "Response should contain the test package nsURI");
+        assertTrue(responseContent.contains("REJECTED"), "Response should contain rejected status");
     }
     
     @Test
     public void testListReleasedObjects_Success() {
         Response response = restClient
-                .target(BASE_URL)          
+                .target(BASE_URL)
                 .path("released")
                 .request("application/xmi")
                 .get();
@@ -503,17 +507,17 @@ public class EPackageWorkflowResourceTest {
         assertNotNull(responseContent, "Should return content");
         assertTrue(responseContent.contains("ObjectMetadataContainer"), "Response should contain ObjectMetadataContainer");
         assertTrue(responseContent.contains("metadata"), "Response should contain metadata elements");
-        
-        // Verify we can handle multiple approved objects (mock returns at least one)
-        assertTrue(responseContent.contains(TEST_OBJECT_ID), "Response should contain the test object ID");
-        assertTrue(responseContent.contains("DEPLOYED"), "Response should contain approved status");
+
+        // Verify we can handle multiple released objects (mock returns at least one)
+        assertTrue(responseContent.contains(TEST_PACKAGE_NSURI), "Response should contain the test package nsURI");
+        assertTrue(responseContent.contains("DEPLOYED"), "Response should contain released status");
     }
     
     @Test
     public void testGetObject_Success() {
         Response response = restClient
-                .target(BASE_URL)          
-                .path(TEST_OBJECT_ID)
+                .target(BASE_URL)
+                .queryParam("packageNsURI", TEST_PACKAGE_NSURI)
                 .request("application/xmi")
                 .get();
 
@@ -527,9 +531,9 @@ public class EPackageWorkflowResourceTest {
     @Test
     public void testGetObjectContent_Success() {
         Response response = restClient
-                .target(BASE_URL)          
-                .path(TEST_OBJECT_ID)
+                .target(BASE_URL)
                 .path("content")
+                .queryParam("packageNsURI", TEST_PACKAGE_NSURI)
                 .request("application/xmi")
                 .get();
 
@@ -542,26 +546,26 @@ public class EPackageWorkflowResourceTest {
     
     @Test
     public void testUpdateObject_Success() throws IOException {
-    	
-    	 // Create a test EObject (simple EPackage)
-        EPackage testEObject = TestHelper.createTestEPackage("http://test.example.com/testpackage/1.0", "TestPackage", "test");
+
+        // Create a test EObject (simple EPackage)
+        EPackage testEObject = TestHelper.createTestEPackage(TEST_PACKAGE_NSURI, "TestPackage", "test");
         String xmiContent = TestHelper.serializeToXMI(testEObject, resourceSet);
 
         Response response = restClient
-                .target(BASE_URL)          
-                .path(TEST_OBJECT_ID)
+                .target(BASE_URL)
+                .queryParam("packageNsURI", TEST_PACKAGE_NSURI)
                 .request("text/plain")
-                .put(Entity.entity(xmiContent, "application/xmi"));;
+                .put(Entity.entity(xmiContent, "application/xmi"));
 
         assertEquals(200, response.getStatus(), "Should return HTTP 200 OK");
     }
     
     @Test
     public void testDeleteObject_Success() {
-   
+
         Response response = restClient
-                .target(BASE_URL)          
-                .path(TEST_OBJECT_ID)
+                .target(BASE_URL)
+                .queryParam("packageNsURI", TEST_PACKAGE_NSURI)
                 .request("text/plain")
                 .delete();
 
@@ -593,246 +597,168 @@ public class EPackageWorkflowResourceTest {
 
         @Override
         public Promise<String> uploadDraft(EObject eObject, ObjectMetadata metadata) {
-            return Promises.resolved(TEST_OBJECT_ID);
+            return Promises.resolved(TEST_PACKAGE_NSURI);
         }
 
         @Override
         public List<ObjectMetadata> listDraftObjects() {
             ObjectMetadata metadata1 = ManagementFactory.eINSTANCE.createObjectMetadata();
-            metadata1.setObjectId(TEST_OBJECT_ID);
+            metadata1.setObjectId(TEST_PACKAGE_NSURI);
             metadata1.setUploadUser(TEST_UPLOAD_USER);
             metadata1.setStatus(ObjectStatus.DRAFT);
             metadata1.setUploadTime(Instant.now());
-            
+
             ObjectMetadata metadata2 = ManagementFactory.eINSTANCE.createObjectMetadata();
-            metadata2.setObjectId(TEST_OBJECT_ID + "-draft-2");
+            metadata2.setObjectId(TEST_PACKAGE_NSURI + "-draft-2");
             metadata2.setUploadUser("second.developer@company.com");
             metadata2.setStatus(ObjectStatus.DRAFT);
             metadata2.setUploadTime(Instant.now());
-            
+
             return List.of(metadata1, metadata2);
         }
 
         @Override
-        public ObjectMetadata getDraft(String objectId) {
-            if ("non-existent-draft".equals(objectId)) {
+        public ObjectMetadata getDraft(String packageNsURI) {
+            if ("http://non-existent-draft.com/test/1.0".equals(packageNsURI)) {
                 return null;
             }
-            
+
             ObjectMetadata metadata = ManagementFactory.eINSTANCE.createObjectMetadata();
-            metadata.setObjectId(objectId);
+            metadata.setObjectId(packageNsURI);
             metadata.setUploadUser(TEST_UPLOAD_USER);
             metadata.setStatus(ObjectStatus.DRAFT);
             metadata.setUploadTime(Instant.now());
-            
+
             return metadata;
         }
 
         @Override
-        public EObject getDraftContent(String objectId) {
-            if ("non-existent-draft".equals(objectId)) {
+        public EObject getDraftContent(String packageNsURI) {
+            if ("http://non-existent-draft.com/test/1.0".equals(packageNsURI)) {
                 return null;
             }
-            
+
             return EcoreFactory.eINSTANCE.createEPackage();
         }
 
         @Override
-        public Promise<Void> updateDraft(String objectId, EObject updatedObject) {
-        	if ("non-existent-draft".equals(objectId)) {
+        public Promise<Void> updateDraft(String packageNsURI, EObject updatedObject) {
+            if ("http://non-existent-draft.com/test/1.0".equals(packageNsURI)) {
                 throw new IllegalArgumentException();
             }
             return Promises.resolved(null);
         }
 
         @Override
-        public Promise<Boolean> deleteDraft(String objectId) {
-            return Promises.resolved(!"non-existent-draft".equals(objectId));
+        public Promise<Boolean> deleteDraft(String packageNsURI) {
+            return Promises.resolved(!"http://non-existent-draft.com/test/1.0".equals(packageNsURI));
         }
 
-        @Override
-        public Promise<GovernanceDocumentation> checkDraft(String objectId, String reviewUser, String complianceReason) {
-            GovernanceDocumentation documentation = GovernanceFactory.eINSTANCE.createGovernanceDocumentation();
-            documentation.setModelName("Test Model");
-            documentation.setVersion("1.0");
-            documentation.setStatus(ApprovalStatus.APPROVED);
-            
-            return Promises.resolved(documentation);
-        }
+       
 
         @Override
-        public Promise<GovernanceDocumentation> runComplianceChecks(String objectId, List<PolicyType> policyTypes, String reviewUser) {
-            GovernanceDocumentation documentation = GovernanceFactory.eINSTANCE.createGovernanceDocumentation();
-            documentation.setModelName("Test Model");
-            documentation.setVersion("1.0");
-            documentation.setStatus(ApprovalStatus.APPROVED);
-            
-            return Promises.resolved(documentation);
-        }
-
-        @Override
-        public Promise<GovernanceDocumentation> checkObject(String objectId, String reviewUser, String complianceReason) {
-            GovernanceDocumentation documentation = GovernanceFactory.eINSTANCE.createGovernanceDocumentation();
-            documentation.setModelName("Test Model");
-            documentation.setVersion("1.0");
-            documentation.setStatus(ApprovalStatus.APPROVED);
-            
-            return Promises.resolved(documentation);
-        }
-
-        @Override
-        public GovernanceDocumentation getComplianceStatus(String objectId) {
-            GovernanceDocumentation documentation = GovernanceFactory.eINSTANCE.createGovernanceDocumentation();
-            documentation.setModelName("Test Model");
-            documentation.setVersion("1.0");
-            documentation.setStatus(ApprovalStatus.APPROVED);
-            
-            return documentation;
-        }
-
-        @Override
-        public ObjectMetadata approveObject(String objectId, String reviewUser, String approvalReason) {
+        public ObjectMetadata approveObject(String packageNsURI, String reviewUser, String approvalReason) {
             ObjectMetadata metadata = ManagementFactory.eINSTANCE.createObjectMetadata();
-            metadata.setObjectId(objectId);
+            metadata.setObjectId(packageNsURI);
             metadata.setReviewUser(reviewUser);
             metadata.setStatus(ObjectStatus.APPROVED);
             metadata.setReviewTime(Instant.now());
-            
+
             return metadata;
         }
 
         @Override
-        public ObjectMetadata rejectObject(String objectId, String reviewUser, String rejectionReason) {
+        public ObjectMetadata rejectObject(String packageNsURI, String reviewUser, String rejectionReason) {
             ObjectMetadata metadata = ManagementFactory.eINSTANCE.createObjectMetadata();
-            metadata.setObjectId(objectId);
+            metadata.setObjectId(packageNsURI);
             metadata.setReviewUser(reviewUser);
             metadata.setStatus(ObjectStatus.REJECTED);
             metadata.setReviewTime(Instant.now());
-            
+
             return metadata;
         }
 
         @Override
-        public ObjectMetadata releaseObject(String objectId, String releaseNotes, boolean requireComplianceCheck) {
+        public ObjectMetadata releaseObject(String packageNsURI, String releaseNotes, boolean requireComplianceCheck) {
             ObjectMetadata metadata = ManagementFactory.eINSTANCE.createObjectMetadata();
-            metadata.setObjectId(objectId);
+            metadata.setObjectId(packageNsURI);
             metadata.setStatus(ObjectStatus.DEPLOYED);
             metadata.setReviewTime(Instant.now());
-            
+
             return metadata;
         }
 
         @Override
         public List<ObjectMetadata> listApprovedObjects() {
             ObjectMetadata metadata1 = ManagementFactory.eINSTANCE.createObjectMetadata();
-            metadata1.setObjectId(TEST_OBJECT_ID + "-approved-1");
+            metadata1.setObjectId(TEST_PACKAGE_NSURI + "-approved-1");
             metadata1.setStatus(ObjectStatus.APPROVED);
             metadata1.setReviewTime(Instant.now());
-            
+
             ObjectMetadata metadata2 = ManagementFactory.eINSTANCE.createObjectMetadata();
-            metadata2.setObjectId(TEST_OBJECT_ID + "-approved-2");
+            metadata2.setObjectId(TEST_PACKAGE_NSURI + "-approved-2");
             metadata2.setStatus(ObjectStatus.APPROVED);
             metadata2.setReviewTime(Instant.now());
-            
+
             return List.of(metadata1, metadata2);
         }
 
         @Override
         public List<ObjectMetadata> listRejectedObjects() {
             ObjectMetadata metadata1 = ManagementFactory.eINSTANCE.createObjectMetadata();
-            metadata1.setObjectId(TEST_OBJECT_ID + "-rejected-1");
+            metadata1.setObjectId(TEST_PACKAGE_NSURI + "-rejected-1");
             metadata1.setStatus(ObjectStatus.REJECTED);
             metadata1.setReviewTime(Instant.now());
-            
+
             ObjectMetadata metadata2 = ManagementFactory.eINSTANCE.createObjectMetadata();
-            metadata2.setObjectId(TEST_OBJECT_ID + "-rejected-2");
+            metadata2.setObjectId(TEST_PACKAGE_NSURI + "-rejected-2");
             metadata2.setStatus(ObjectStatus.REJECTED);
             metadata2.setReviewTime(Instant.now());
-            
+
             return List.of(metadata1, metadata2);
         }
 
         @Override
         public List<ObjectMetadata> listReleasedObjects() {
             ObjectMetadata metadata1 = ManagementFactory.eINSTANCE.createObjectMetadata();
-            metadata1.setObjectId(TEST_OBJECT_ID + "-released-1");
+            metadata1.setObjectId(TEST_PACKAGE_NSURI + "-released-1");
             metadata1.setStatus(ObjectStatus.DEPLOYED);
             metadata1.setReviewTime(Instant.now());
-            
+
             ObjectMetadata metadata2 = ManagementFactory.eINSTANCE.createObjectMetadata();
-            metadata2.setObjectId(TEST_OBJECT_ID + "-released-2");
+            metadata2.setObjectId(TEST_PACKAGE_NSURI + "-released-2");
             metadata2.setStatus(ObjectStatus.DEPLOYED);
             metadata2.setReviewTime(Instant.now());
-            
+
             return List.of(metadata1, metadata2);
         }
 
         @Override
-        public ObjectMetadata getObject(String objectId) {
+        public ObjectMetadata getObject(String packageNsURI) {
             ObjectMetadata metadata = ManagementFactory.eINSTANCE.createObjectMetadata();
-            metadata.setObjectId(objectId);
+            metadata.setObjectId(packageNsURI);
             metadata.setStatus(ObjectStatus.DRAFT);
             metadata.setUploadTime(Instant.now());
-            
+
             return metadata;
         }
 
         @Override
-        public Object getObjectContent(String objectId) {
+        public Object getObjectContent(String packageNsURI) {
             return EcoreFactory.eINSTANCE.createEPackage();
         }
 
         @Override
-        public Promise<Void> updateObject(String objectId, EObject updatedObject) {
+        public Promise<Void> updateObject(String packageNsURI, EObject updatedObject) {
             return Promises.resolved(null);
         }
 
         @Override
-        public Promise<Boolean> deleteObject(String objectId) {
+        public Promise<Boolean> deleteObject(String packageNsURI) {
             return Promises.resolved(true);
         }
 
-        // Governance Documentation State Transition Methods
-        @Override
-        public GovernanceDocumentation setGovernanceDocumentationDraft(String objectId, String reviewUser, String reason) {
-            GovernanceDocumentation documentation = GovernanceFactory.eINSTANCE.createGovernanceDocumentation();
-            documentation.setModelName("Test Model " + objectId);
-            documentation.setStatus(ApprovalStatus.DRAFT);
-            documentation.setGeneratedBy(reviewUser);
-            documentation.setGenerationTimestamp(new Date());
-            return documentation;
-        }
-
-        @Override
-        public GovernanceDocumentation setGovernanceDocumentationInReview(String objectId, String reviewUser, String reason) {
-            GovernanceDocumentation documentation = GovernanceFactory.eINSTANCE.createGovernanceDocumentation();
-            documentation.setModelName("Test Model " + objectId);
-            documentation.setStatus(ApprovalStatus.IN_REVIEW);
-            documentation.setGeneratedBy(reviewUser);
-            documentation.setGenerationTimestamp(new Date());
-            return documentation;
-        }
-
-        @Override
-        public GovernanceDocumentation setGovernanceDocumentationApproved(String objectId, String reviewUser, String reason) {
-            GovernanceDocumentation documentation = GovernanceFactory.eINSTANCE.createGovernanceDocumentation();
-            documentation.setModelName("Test Model " + objectId);
-            documentation.setStatus(ApprovalStatus.APPROVED);
-            documentation.setGeneratedBy(reviewUser);
-            documentation.setApprovedBy(reviewUser);
-            documentation.setGenerationTimestamp(new Date());
-            return documentation;
-        }
-
-        @Override
-        public GovernanceDocumentation setGovernanceDocumentationRejected(String objectId, String reviewUser, String reason) {
-            GovernanceDocumentation documentation = GovernanceFactory.eINSTANCE.createGovernanceDocumentation();
-            documentation.setModelName("Test Model " + objectId);
-            documentation.setStatus(ApprovalStatus.REJECTED);
-            documentation.setGeneratedBy(reviewUser);
-            documentation.setGenerationTimestamp(new Date());
-            return documentation;
-        }
+       
 
     }
 }
