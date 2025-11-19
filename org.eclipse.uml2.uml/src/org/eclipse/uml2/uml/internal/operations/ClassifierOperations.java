@@ -838,9 +838,10 @@ public class ClassifierOperations
 			parentAttributes.addAll(parent.getAttributes());
 		}
 
-		allSlottableFeatures.addAll(
-			(Collection<? extends StructuralFeature>) inherit(classifier,
-				parentAttributes));
+		inherit(classifier, parentAttributes).stream().map(StructuralFeature.class::cast).forEach(allSlottableFeatures::add);
+		// Did not compile with gradle fro some reason of mystery generic handling
+//		allSlottableFeatures.addAll(
+//			(Collection<? extends StructuralFeature>) inherit(classifier, parentAttributes));
 
 		return ECollections.unmodifiableEList(allSlottableFeatures);
 	}
