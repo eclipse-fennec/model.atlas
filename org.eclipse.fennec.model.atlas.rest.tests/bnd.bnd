@@ -25,12 +25,7 @@ Test-Cases: ${classes;HIERARCHY_INDIRECTLY_ANNOTATED;org.junit.platform.commons.
     org.eclipse.osgitech.rest;version=latest,\
     org.eclipse.osgitech.rest.servlet.whiteboard;version=latest
 
-Private-Package: org.eclipse.fennec.model.atlas.rest.tests,\
-	org.eclipse.fennec.model.atlas.rest.tests.helper
-
-Bundle-Version: 1.0.0.SNAPSHOT
-
--includeresource: OSGI-INF/configurator/=configs/
+-includeresource.config: OSGI-INF/configurator/=configs/
 
 Require-Capability: osgi.extender;filter:='(osgi.extender=osgi.configurator)'
 
@@ -40,6 +35,6 @@ Require-Capability: osgi.extender;filter:='(osgi.extender=osgi.configurator)'
 	org.eclipse.fennec.model.atlas.rest.model,\
     org.eclipse.fennec.model.atlas.rest.xsdschema,\
     org.eclipse.fennec.model.atlas.rest.jsonschema,\
-    org.eclipse.fennec.model.atlas.rest.ecore.xmi
-
--runee: JavaSE-21
+    org.eclipse.fennec.model.atlas.rest.ecore.xmi,\
+    org.eclipse.fennec.model.atlas.rest.uml,\
+    org.eclipse.uml2.uml

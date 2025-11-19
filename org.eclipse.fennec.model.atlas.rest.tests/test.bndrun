@@ -8,7 +8,8 @@
 	org.osgi.service.http.port=-1,\
 	logback.configurationFile=file:${.}/logback.xml,\
 	geckotest=true,\
-	gecko.log.level=INFO
+	gecko.log.level=INFO,\
+	${if;${is;${driver};gradle};gosh.args=--nointeractive}
 	
 
 -runtrace: false
