@@ -38,7 +38,7 @@ import org.osgi.annotation.versioning.ProviderType;
  * @generated
  */
 @ProviderType
-@EPackage(uri = WorkflowApiPackage.eNS_URI, genModel = "/model/workflow-api.genmodel", genModelSourceLocations = {"model/workflow-api.genmodel","org.eclipse.fennec.model.atlas.governance/model/workflow-api.genmodel"}, ecore="/model/workflow-api.ecore", ecoreSourceLocations="/model/workflow-api.ecore")
+@EPackage(uri = WorkflowApiPackage.eNS_URI, genModel = "/model/workflow-api.genmodel", genModelSourceLocations = {"model/workflow-api.genmodel","org.eclipse.fennec.model.atlas.workflow/model/workflow-api.genmodel"}, ecore="/model/workflow-api.ecore", ecoreSourceLocations="/model/workflow-api.ecore")
 public interface WorkflowApiPackage extends org.eclipse.emf.ecore.EPackage {
 	/**
 	 * The package name.
