@@ -1,0 +1,20 @@
+services:
+  model-atlas:
+    image:     eclipsefennec/model.atlas:snapshot
+    ports:
+      - "8080:8080"
+
+# --- Apicurio Registry ---
+  apicurio-registry:
+    container_name: apicurio-registry
+    image: apicurio/apicurio-registry:latest-release
+    ports:
+          - "8081:8080"
+    environment:
+      - APICURIO_REST_DELETION_GROUP_ENABLED=true
+      - APICURIO_REST_DELETION_ARTIFACT_ENABLED=true
+      - APICURIO_REST_DELETION_ARTIFACT-VERSION_ENABLED=true
+      - APICURIO_REST_MUTABILITY_ARTIFACT_VERSION_CONTENT_ENABLED=true
+    
+
+
