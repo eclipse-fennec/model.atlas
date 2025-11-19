@@ -14,6 +14,7 @@
 package org.eclipse.fennec.model.atlas.management.apicurio;
 
 import org.eclipse.emf.ecore.EObject;
+import org.eclipse.emf.ecore.resource.ResourceSet;
 import org.eclipse.fennec.model.atlas.mgmt.annotations.MacCapabilityConstants;
 import org.eclipse.fennec.model.atlas.mgmt.api.EObjectRegistryService;
 import org.eclipse.fennec.model.atlas.mgmt.api.EObjectStorageService;
@@ -37,19 +38,22 @@ import org.osgi.service.metatype.annotations.ObjectClassDefinition;
 @RequireEMF
 @RequireConfigurationAdmin
 @Component(
-	name = EObjectApicurioStorageService.PID,
-	service = EObjectStorageService.class,
-    property = "storage.backend=file",
-    configurationPolicy = ConfigurationPolicy.REQUIRE
-)
+		name = EObjectApicurioStorageService.PID,
+		service = EObjectStorageService.class,
+		property = "storage.backend=apicurio",
+		configurationPolicy = ConfigurationPolicy.REQUIRE
+		)
 @Designate(ocd = EObjectApicurioStorageService.Config.class)
 @Capability(namespace = MacCapabilityConstants.NAMESPACE_MAC_MANAGEMENT, name = MacCapabilityConstants.CAP_EOBJECT_STORAGE, version = "1.0", attribute = "storage.backend=apicurio")
 @ServiceDescription("Apicurio-based storage implementation for EObject workflow management")
 public class EObjectApicurioStorageService extends AbstractEObjectStorageService {
 
 	@Reference
-    private EObjectRegistryService<EObject> registry;
-	
+	private EObjectRegistryService<EObject> registry;
+
+	@Reference(target = "(emf.name=management)")
+	private ResourceSet resourceSet;
+
 	@ObjectClassDefinition(
 			name = "Apicurio Storage Configuration",
 			description = "Configuration for apicurio-based EObject storage service"
@@ -61,7 +65,7 @@ public class EObjectApicurioStorageService extends AbstractEObjectStorageService
 				description = "Base Apicurio URL for REST requests"
 				)
 		String base_url() default "http://localhost:8080/apis/registry/v3/";
-		
+
 		@AttributeDefinition(
 				name = "Artifact Group Id",
 				description = "Artifact Group Id to identify under which group the artifacts should be stored in the Apicurio Registry"
@@ -74,25 +78,25 @@ public class EObjectApicurioStorageService extends AbstractEObjectStorageService
 				)
 		String storage_role() default "draft";
 	}
-	
+
 	public static final String PID = "ApicurioObjectStorage";
 	private String apicurioURL;
 	private String storageRole;
-	
+
 	@Activate
-    public void activate(BundleContext bundleContext, Config config) throws Exception {
-        this.bctx = bundleContext;
-        this.apicurioURL = constructApicurioURL(config.base_url(), config.artifact_group_id());
-        this.storageRole = config.storage_role();    
-        
-        // Call parent activation
-        activateStorageService();
-    }
-	
+	public void activate(BundleContext bundleContext, Config config) throws Exception {
+		this.bctx = bundleContext;
+		this.apicurioURL = constructApicurioURL(config.base_url(), config.artifact_group_id());
+		this.storageRole = config.storage_role();    
+
+		// Call parent activation
+		activateStorageService();
+	}
+
 	@Deactivate
-    public void deactivate() {
-        deactivateStorageService();
-    }
+	public void deactivate() {
+		deactivateStorageService();
+	}
 
 	/* 
 	 * (non-Javadoc)
@@ -100,8 +104,7 @@ public class EObjectApicurioStorageService extends AbstractEObjectStorageService
 	 */
 	@Override
 	protected AbstractStorageHelper createStorageHelper() throws Exception {
-		// TODO Auto-generated method stub
-		return null;
+		return new ApicurioStorageHelper(resourceSet, apicurioURL);
 	}
 
 	/* 

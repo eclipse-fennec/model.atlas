@@ -1,5 +1,5 @@
 <?xml version='1.0' encoding='UTF-8'?>
-<repository xmlns="http://www.osgi.org/xmlns/repository/v1.0.0" name="Local" increment="1762154865123">
+<repository xmlns="http://www.osgi.org/xmlns/repository/v1.0.0" name="Local" increment="1763541348293">
   <resource>
     <capability namespace="osgi.identity">
       <attribute name="license" value="Eclipse Public License 2.0"/>
@@ -276,6 +276,279 @@
   <resource>
     <capability namespace="osgi.identity">
       <attribute name="license" value="Eclipse Public License 2.0"/>
+      <attribute name="copyright" value="Data In Motion Consulting GmbH - All rights reserved"/>
+      <attribute name="osgi.identity" value="io.apicurio.registry.common"/>
+      <attribute name="documentation" value="https://github.com/geckoprojects-org/org.gecko.libraries"/>
+      <attribute name="type" value="osgi.bundle"/>
+      <attribute name="version" value="3.1.2" type="Version"/>
+    </capability>
+    <capability namespace="osgi.wiring.package">
+      <directive name="uses" value="com.fasterxml.jackson.annotation,io.quarkus.runtime.annotations"/>
+      <attribute name="bundle-symbolic-name" value="io.apicurio.registry.common"/>
+      <attribute name="bundle-version" value="3.1.2" type="Version"/>
+      <attribute name="osgi.wiring.package" value="io.apicurio.registry.config.artifactTypes"/>
+      <attribute name="version" value="3.1.2" type="Version"/>
+      <attribute name="bnd.hashes" value="495639562,-171776369,2746471,-922850799,-828437508,1358934376" type="List&lt;Long&gt;"/>
+    </capability>
+    <capability namespace="osgi.wiring.package">
+      <directive name="uses" value="com.fasterxml.jackson.annotation,io.quarkus.runtime.annotations"/>
+      <attribute name="bundle-symbolic-name" value="io.apicurio.registry.common"/>
+      <attribute name="bundle-version" value="3.1.2" type="Version"/>
+      <attribute name="osgi.wiring.package" value="io.apicurio.registry.events.dto"/>
+      <attribute name="version" value="3.1.2" type="Version"/>
+      <attribute name="bnd.hashes" value="-2060861779,-503617186,2098939471" type="List&lt;Long&gt;"/>
+    </capability>
+    <capability namespace="osgi.wiring.package">
+      <attribute name="bundle-symbolic-name" value="io.apicurio.registry.common"/>
+      <attribute name="bundle-version" value="3.1.2" type="Version"/>
+      <attribute name="osgi.wiring.package" value="io.apicurio.registry.exception"/>
+      <attribute name="version" value="3.1.2" type="Version"/>
+      <attribute name="bnd.hashes" value="474624264,-1579393394" type="List&lt;Long&gt;"/>
+    </capability>
+    <capability namespace="osgi.wiring.package">
+      <attribute name="bundle-symbolic-name" value="io.apicurio.registry.common"/>
+      <attribute name="bundle-version" value="3.1.2" type="Version"/>
+      <attribute name="osgi.wiring.package" value="io.apicurio.registry.model"/>
+      <attribute name="version" value="3.1.2" type="Version"/>
+      <attribute name="bnd.hashes" value="-2060861779,39236221,2266,70332,1958081498,-1486163537,596865011" type="List&lt;Long&gt;"/>
+    </capability>
+    <capability namespace="osgi.wiring.package">
+      <directive name="uses" value="com.fasterxml.jackson.databind,io.apicurio.registry.types,io.quarkus.jackson,jakarta.annotation,jakarta.inject,jakarta.ws.rs.core"/>
+      <attribute name="bundle-symbolic-name" value="io.apicurio.registry.common"/>
+      <attribute name="bundle-version" value="3.1.2" type="Version"/>
+      <attribute name="osgi.wiring.package" value="io.apicurio.registry.rest"/>
+      <attribute name="version" value="3.1.2" type="Version"/>
+      <attribute name="bnd.hashes" value="-1835006106,-1820973795" type="List&lt;Long&gt;"/>
+    </capability>
+    <capability namespace="osgi.wiring.package">
+      <directive name="uses" value="io.apicurio.registry.rest.v2.beans,io.apicurio.registry.types,jakarta.validation.constraints,jakarta.ws.rs,jakarta.ws.rs.core"/>
+      <attribute name="bundle-symbolic-name" value="io.apicurio.registry.common"/>
+      <attribute name="bundle-version" value="3.1.2" type="Version"/>
+      <attribute name="osgi.wiring.package" value="io.apicurio.registry.rest.v2"/>
+      <attribute name="version" value="3.1.2" type="Version"/>
+      <attribute name="bnd.hashes" value="-854156195,-1479689694,1814769350,813380086,1424476029,-1216258538" type="List&lt;Long&gt;"/>
+    </capability>
+    <capability namespace="osgi.wiring.package">
+      <directive name="uses" value="com.fasterxml.jackson.annotation,io.apicurio.registry.types,io.quarkus.runtime.annotations"/>
+      <attribute name="bundle-symbolic-name" value="io.apicurio.registry.common"/>
+      <attribute name="bundle-version" value="3.1.2" type="Version"/>
+      <attribute name="osgi.wiring.package" value="io.apicurio.registry.rest.v2.beans"/>
+      <attribute name="version" value="3.1.2" type="Version"/>
+      <attribute name="bnd.hashes" value="-791482508,1179184052,-2011714009,-2082833158,-400406982,-2117227679,-1508566918,-324853318,1430454241,-1580787742,-1225315038,-1039923847,-1472239713,622286431,-1648279460,-441630943,-1058431775,1952053018,-851096484,-688745316,-1679915457,-751211440,-2060608880,1103868107,-1505378295,-1912116791,182135602,46000720,1111693456,456717003,425532968,-873160600,-30547469,643575955,1157530963,67232232,-695674643,1133211821,-1894348082,-1174697076,-216679476,-533988081,796674041,-664256445,-300204797,-2018830280,613539292,-1432721892,-756374337,-2101703389,1522276835,-1158445224,1350829279,-1286909025,2558748,1665183483,1697484731,1439778944,1851068540,608389308,1442129439,-1104600574,1627858754,-567599271,-1416424925,-1446371613,-1468620200,-1423351830,912666922,1758410353,-1812727115,1977193520,-686639810,-130237314,-1658947683,-419984967,677174137,-377755774,-633913956,1258939868,1697479935,1274220883,246875667,1083332904,-823010782,-260649118,-202159303,1931316596,1712622004,-1822240729,-392850587,-1287246043,27404118" type="List&lt;Long&gt;"/>
+    </capability>
+    <capability namespace="osgi.wiring.package">
+      <directive name="uses" value="io.apicurio.registry.rest.v3.beans,io.apicurio.registry.types,jakarta.validation.constraints,jakarta.ws.rs,jakarta.ws.rs.core"/>
+      <attribute name="bundle-symbolic-name" value="io.apicurio.registry.common"/>
+      <attribute name="bundle-version" value="3.1.2" type="Version"/>
+      <attribute name="osgi.wiring.package" value="io.apicurio.registry.rest.v3"/>
+      <attribute name="version" value="3.1.2" type="Version"/>
+      <attribute name="bnd.hashes" value="-854156195,-1479689694,1814769350,813380086,1424476029,-1216258538" type="List&lt;Long&gt;"/>
+    </capability>
+    <capability namespace="osgi.wiring.package">
+      <directive name="uses" value="com.fasterxml.jackson.annotation,io.apicurio.registry.types,io.quarkus.runtime.annotations"/>
+      <attribute name="bundle-symbolic-name" value="io.apicurio.registry.common"/>
+      <attribute name="bundle-version" value="3.1.2" type="Version"/>
+      <attribute name="osgi.wiring.package" value="io.apicurio.registry.rest.v3.beans"/>
+      <attribute name="version" value="3.1.2" type="Version"/>
+      <attribute name="bnd.hashes" value="-394584377,-455919225,-1349269964,-2082833158,-400406982,-2117227679,-1580787742,-1225315038,-1039923847,-1472239713,622286431,-1648279460,1501669159,-441630943,-1058431775,1952053018,-658228438,413232234,-213351631,-2019227793,-1777824209,1298451084,-851096484,-688745316,-1679915457,-751211440,-2060608880,1103868107,-96304979,514537581,-1308222706,-280971476,1687951212,-1895127697,-1010042915,-1958373475,1211062750,-579916968,-253979240,1152076483,83717699,1349085955,-932337096,-698089505,45469343,-897880036,46000720,1111693456,456717003,409900534,1925808438,-1948420635,1413636902,-661440922,1292967605,1726464369,1098544945,-875925814,1734632696,-1537474760,1923982627,-695674643,1133211821,-1894348082,-1174697076,-216679476,-533988081,-1872396844,-45436342,1646077803,613539292,-1432721892,-756374337,-1524808872,-2084655720,-1440206141,-131336118,-1784309366,723339793,-2101703389,1522276835,-1158445224,1876416005,1952850373,1090492598,1350829279,-1286909025,2558748,1665183483,1697484731,1439778944,612841871,-1270566833,-681001876,-1104600574,1627858754,-567599271,-1171985806,-267831374,1573844201,-1416424925,-1446371613,-1468620200,-1423351830,912666922,1758410353,-1595045176,104709384,-1569167021,1977193520,-686639810,-130237314,-1658947683,-419984967,677174137,-377755774,-633913956,1258939868,1697479935,-823010782,-260649118,-202159303,1958573835,1541918667,-83987856,2622298,-1732309960,-2015237106,-1376515250,1726237389,1582568919,1211771031,892051748,-384899142,1940082938,76011681,1931316596,1712622004,-1822240729,-392850587,-1287246043,27404118,1569015149,201939485,-712517155,1220542366" type="List&lt;Long&gt;"/>
+    </capability>
+    <capability namespace="osgi.wiring.package">
+      <directive name="uses" value="com.fasterxml.jackson.annotation,io.quarkus.runtime.annotations,jakarta.ws.rs.core"/>
+      <attribute name="bundle-symbolic-name" value="io.apicurio.registry.common"/>
+      <attribute name="bundle-version" value="3.1.2" type="Version"/>
+      <attribute name="osgi.wiring.package" value="io.apicurio.registry.types"/>
+      <attribute name="version" value="3.1.2" type="Version"/>
+      <attribute name="bnd.hashes" value="-1627961721,1434046911,-507894708,-1640911925,986147744,-1895049979,-706743182,-201933584,828121206,50746041" type="List&lt;Long&gt;"/>
+    </capability>
+    <capability namespace="osgi.wiring.package">
+      <directive name="uses" value="io.apicurio.registry.types.webhooks.beans,jakarta.validation.constraints,jakarta.ws.rs"/>
+      <attribute name="bundle-symbolic-name" value="io.apicurio.registry.common"/>
+      <attribute name="bundle-version" value="3.1.2" type="Version"/>
+      <attribute name="osgi.wiring.package" value="io.apicurio.registry.types.webhooks"/>
+      <attribute name="version" value="3.1.2" type="Version"/>
+      <attribute name="bnd.hashes" value="377154419,-359497380,356906983,-699137041,61755943,517791327" type="List&lt;Long&gt;"/>
+    </capability>
+    <capability namespace="osgi.wiring.package">
+      <directive name="uses" value="com.fasterxml.jackson.annotation"/>
+      <attribute name="bundle-symbolic-name" value="io.apicurio.registry.common"/>
+      <attribute name="bundle-version" value="3.1.2" type="Version"/>
+      <attribute name="osgi.wiring.package" value="io.apicurio.registry.types.webhooks.beans"/>
+      <attribute name="version" value="3.1.2" type="Version"/>
+      <attribute name="bnd.hashes" value="-1039923847,1811597962,377895846,2064929665,-358755953,841113494,357648410,1445582840,1084142222,-698395614,-2077901482,62497370,-1934340192,2140448758,-816264674,518532754,-1206789613,1701959260,866301289,1969839311" type="List&lt;Long&gt;"/>
+    </capability>
+    <capability namespace="osgi.wiring.package">
+      <directive name="uses" value="com.fasterxml.jackson.annotation,jakarta.enterprise.inject.spi,jakarta.ws.rs.client"/>
+      <attribute name="bundle-symbolic-name" value="io.apicurio.registry.common"/>
+      <attribute name="bundle-version" value="3.1.2" type="Version"/>
+      <attribute name="osgi.wiring.package" value="io.apicurio.registry.utils"/>
+      <attribute name="version" value="3.1.2" type="Version"/>
+      <attribute name="bnd.hashes" value="98148133,-167042006,2096514,-648119711,-278641204,1930674891,1737679975,194602192,1930675747,1539831397,-2099881368,1086934000,-983799793,1986033488,612166645,-46011024,420425683,-1937965862" type="List&lt;Long&gt;"/>
+    </capability>
+    <capability namespace="osgi.wiring.bundle">
+      <attribute name="bundle-version" value="3.1.2" type="Version"/>
+      <attribute name="osgi.wiring.bundle" value="io.apicurio.registry.common"/>
+    </capability>
+    <capability namespace="osgi.wiring.host">
+      <attribute name="bundle-version" value="3.1.2" type="Version"/>
+      <attribute name="osgi.wiring.host" value="io.apicurio.registry.common"/>
+    </capability>
+    <capability namespace="osgi.content">
+      <attribute name="size" value="644347" type="Long"/>
+      <attribute name="mime" value="application/vnd.osgi.bundle"/>
+      <attribute name="url" value="io.apicurio.registry.common/io.apicurio.registry.common-3.1.2.jar"/>
+      <attribute name="osgi.content" value="7277EFB36BB2221BC03E880526BF885CB117E784CE90977958EE9C55C038AF28"/>
+    </capability>
+    <requirement namespace="osgi.wiring.package">
+      <directive name="filter" value="(osgi.wiring.package=com.fasterxml.jackson.annotation)"/>
+      <attribute name="osgi.wiring.package" value="com.fasterxml.jackson.annotation"/>
+    </requirement>
+    <requirement namespace="osgi.wiring.package">
+      <directive name="filter" value="(osgi.wiring.package=com.fasterxml.jackson.databind)"/>
+      <attribute name="osgi.wiring.package" value="com.fasterxml.jackson.databind"/>
+    </requirement>
+    <requirement namespace="osgi.wiring.package">
+      <directive name="filter" value="(osgi.wiring.package=io.apicurio.common.apps.config)"/>
+      <attribute name="osgi.wiring.package" value="io.apicurio.common.apps.config"/>
+    </requirement>
+    <requirement namespace="osgi.wiring.package">
+      <directive name="filter" value="(osgi.wiring.package=io.quarkus.jackson)"/>
+      <attribute name="osgi.wiring.package" value="io.quarkus.jackson"/>
+    </requirement>
+    <requirement namespace="osgi.wiring.package">
+      <directive name="filter" value="(osgi.wiring.package=io.quarkus.runtime.annotations)"/>
+      <attribute name="osgi.wiring.package" value="io.quarkus.runtime.annotations"/>
+    </requirement>
+    <requirement namespace="osgi.wiring.package">
+      <directive name="filter" value="(osgi.wiring.package=jakarta.annotation)"/>
+      <attribute name="osgi.wiring.package" value="jakarta.annotation"/>
+    </requirement>
+    <requirement namespace="osgi.wiring.package">
+      <directive name="filter" value="(osgi.wiring.package=jakarta.enterprise.inject.spi)"/>
+      <attribute name="osgi.wiring.package" value="jakarta.enterprise.inject.spi"/>
+    </requirement>
+    <requirement namespace="osgi.wiring.package">
+      <directive name="filter" value="(osgi.wiring.package=jakarta.inject)"/>
+      <attribute name="osgi.wiring.package" value="jakarta.inject"/>
+    </requirement>
+    <requirement namespace="osgi.wiring.package">
+      <directive name="filter" value="(osgi.wiring.package=jakarta.validation)"/>
+      <attribute name="osgi.wiring.package" value="jakarta.validation"/>
+    </requirement>
+    <requirement namespace="osgi.wiring.package">
+      <directive name="filter" value="(osgi.wiring.package=jakarta.validation.constraints)"/>
+      <attribute name="osgi.wiring.package" value="jakarta.validation.constraints"/>
+    </requirement>
+    <requirement namespace="osgi.wiring.package">
+      <directive name="filter" value="(osgi.wiring.package=jakarta.ws.rs)"/>
+      <attribute name="osgi.wiring.package" value="jakarta.ws.rs"/>
+    </requirement>
+    <requirement namespace="osgi.wiring.package">
+      <directive name="filter" value="(osgi.wiring.package=jakarta.ws.rs.client)"/>
+      <attribute name="osgi.wiring.package" value="jakarta.ws.rs.client"/>
+    </requirement>
+    <requirement namespace="osgi.wiring.package">
+      <directive name="filter" value="(osgi.wiring.package=jakarta.ws.rs.core)"/>
+      <attribute name="osgi.wiring.package" value="jakarta.ws.rs.core"/>
+    </requirement>
+    <requirement namespace="osgi.wiring.package">
+      <directive name="filter" value="(osgi.wiring.package=java.io)"/>
+      <attribute name="osgi.wiring.package" value="java.io"/>
+    </requirement>
+    <requirement namespace="osgi.wiring.package">
+      <directive name="filter" value="(osgi.wiring.package=java.lang)"/>
+      <attribute name="osgi.wiring.package" value="java.lang"/>
+    </requirement>
+    <requirement namespace="osgi.wiring.package">
+      <directive name="filter" value="(osgi.wiring.package=java.lang.annotation)"/>
+      <attribute name="osgi.wiring.package" value="java.lang.annotation"/>
+    </requirement>
+    <requirement namespace="osgi.wiring.package">
+      <directive name="filter" value="(osgi.wiring.package=java.lang.invoke)"/>
+      <attribute name="osgi.wiring.package" value="java.lang.invoke"/>
+    </requirement>
+    <requirement namespace="osgi.wiring.package">
+      <directive name="filter" value="(osgi.wiring.package=java.lang.reflect)"/>
+      <attribute name="osgi.wiring.package" value="java.lang.reflect"/>
+    </requirement>
+    <requirement namespace="osgi.wiring.package">
+      <directive name="filter" value="(osgi.wiring.package=java.math)"/>
+      <attribute name="osgi.wiring.package" value="java.math"/>
+    </requirement>
+    <requirement namespace="osgi.wiring.package">
+      <directive name="filter" value="(osgi.wiring.package=java.nio.charset)"/>
+      <attribute name="osgi.wiring.package" value="java.nio.charset"/>
+    </requirement>
+    <requirement namespace="osgi.wiring.package">
+      <directive name="filter" value="(osgi.wiring.package=java.nio.file)"/>
+      <attribute name="osgi.wiring.package" value="java.nio.file"/>
+    </requirement>
+    <requirement namespace="osgi.wiring.package">
+      <directive name="filter" value="(osgi.wiring.package=java.nio.file.attribute)"/>
+      <attribute name="osgi.wiring.package" value="java.nio.file.attribute"/>
+    </requirement>
+    <requirement namespace="osgi.wiring.package">
+      <directive name="filter" value="(osgi.wiring.package=java.security)"/>
+      <attribute name="osgi.wiring.package" value="java.security"/>
+    </requirement>
+    <requirement namespace="osgi.wiring.package">
+      <directive name="filter" value="(osgi.wiring.package=java.security.cert)"/>
+      <attribute name="osgi.wiring.package" value="java.security.cert"/>
+    </requirement>
+    <requirement namespace="osgi.wiring.package">
+      <directive name="filter" value="(osgi.wiring.package=java.text)"/>
+      <attribute name="osgi.wiring.package" value="java.text"/>
+    </requirement>
+    <requirement namespace="osgi.wiring.package">
+      <directive name="filter" value="(osgi.wiring.package=java.util)"/>
+      <attribute name="osgi.wiring.package" value="java.util"/>
+    </requirement>
+    <requirement namespace="osgi.wiring.package">
+      <directive name="filter" value="(osgi.wiring.package=java.util.concurrent)"/>
+      <attribute name="osgi.wiring.package" value="java.util.concurrent"/>
+    </requirement>
+    <requirement namespace="osgi.wiring.package">
+      <directive name="filter" value="(osgi.wiring.package=java.util.function)"/>
+      <attribute name="osgi.wiring.package" value="java.util.function"/>
+    </requirement>
+    <requirement namespace="osgi.wiring.package">
+      <directive name="filter" value="(osgi.wiring.package=java.util.regex)"/>
+      <attribute name="osgi.wiring.package" value="java.util.regex"/>
+    </requirement>
+    <requirement namespace="osgi.wiring.package">
+      <directive name="filter" value="(osgi.wiring.package=java.util.stream)"/>
+      <attribute name="osgi.wiring.package" value="java.util.stream"/>
+    </requirement>
+    <requirement namespace="osgi.wiring.package">
+      <directive name="filter" value="(osgi.wiring.package=java.util.zip)"/>
+      <attribute name="osgi.wiring.package" value="java.util.zip"/>
+    </requirement>
+    <requirement namespace="osgi.wiring.package">
+      <directive name="filter" value="(osgi.wiring.package=javax.net.ssl)"/>
+      <attribute name="osgi.wiring.package" value="javax.net.ssl"/>
+    </requirement>
+    <requirement namespace="osgi.wiring.package">
+      <directive name="filter" value="(osgi.wiring.package=org.eclipse.microprofile.config)"/>
+      <attribute name="osgi.wiring.package" value="org.eclipse.microprofile.config"/>
+    </requirement>
+    <requirement namespace="osgi.wiring.package">
+      <directive name="filter" value="(osgi.wiring.package=org.eclipse.microprofile.config.inject)"/>
+      <attribute name="osgi.wiring.package" value="org.eclipse.microprofile.config.inject"/>
+    </requirement>
+    <requirement namespace="osgi.wiring.package">
+      <directive name="filter" value="(osgi.wiring.package=org.eclipse.microprofile.config.spi)"/>
+      <attribute name="osgi.wiring.package" value="org.eclipse.microprofile.config.spi"/>
+    </requirement>
+    <requirement namespace="osgi.wiring.package">
+      <directive name="filter" value="(osgi.wiring.package=org.slf4j)"/>
+      <attribute name="osgi.wiring.package" value="org.slf4j"/>
+    </requirement>
+    <requirement namespace="osgi.ee">
+      <directive name="filter" value="(&amp;(osgi.ee=JavaSE)(version=17))"/>
+    </requirement>
+  </resource>
+  <resource>
+    <capability namespace="osgi.identity">
+      <attribute name="license" value="Eclipse Public License 2.0"/>
       <attribute name="copyright" value="Data In Motion Consuling GmbH - All rights reserved"/>
       <attribute name="osgi.identity" value="org.gecko.emf.util.documentation.generators.mermaid"/>
       <attribute name="documentation" value="https://github.com/geckoprojects-org/org.gecko.emf.util"/>
@@ -414,6 +687,141 @@
     </requirement>
     <requirement namespace="osgi.ee">
       <directive name="filter" value="(&amp;(osgi.ee=JavaSE)(version=11))"/>
+    </requirement>
+  </resource>
+  <resource>
+    <capability namespace="osgi.identity">
+      <attribute name="license" value="Eclipse Public License 2.0"/>
+      <attribute name="copyright" value="Data In Motion Consulting GmbH - All rights reserved"/>
+      <attribute name="osgi.identity" value="io.apicurio.registry.rest.client"/>
+      <attribute name="documentation" value="https://github.com/geckoprojects-org/org.gecko.libraries"/>
+      <attribute name="type" value="osgi.bundle"/>
+      <attribute name="version" value="1.3.2.Final" type="Version"/>
+    </capability>
+    <capability namespace="osgi.wiring.package">
+      <directive name="uses" value="io.apicurio.registry.rest.beans,io.apicurio.registry.types,javax.enterprise.inject,javax.ws.rs,javax.ws.rs.core,okhttp3"/>
+      <attribute name="bundle-symbolic-name" value="io.apicurio.registry.rest.client"/>
+      <attribute name="bundle-version" value="1.3.2.Final" type="Version"/>
+      <attribute name="osgi.wiring.package" value="io.apicurio.registry.client"/>
+      <attribute name="version" value="1.3.2" type="Version"/>
+      <attribute name="bnd.hashes" value="77631455,-1759875844,2053113966,2047239484" type="List&lt;Long&gt;"/>
+    </capability>
+    <capability namespace="osgi.wiring.package">
+      <directive name="uses" value="okhttp3,retrofit2"/>
+      <attribute name="bundle-symbolic-name" value="io.apicurio.registry.rest.client"/>
+      <attribute name="bundle-version" value="1.3.2.Final" type="Version"/>
+      <attribute name="osgi.wiring.package" value="io.apicurio.registry.client.request"/>
+      <attribute name="version" value="1.3.2" type="Version"/>
+      <attribute name="bnd.hashes" value="2024042338,1250306783,732146594,2129631707" type="List&lt;Long&gt;"/>
+    </capability>
+    <capability namespace="osgi.wiring.package">
+      <directive name="uses" value="io.apicurio.registry.rest.beans,io.apicurio.registry.types,okhttp3,retrofit2,retrofit2.http"/>
+      <attribute name="bundle-symbolic-name" value="io.apicurio.registry.rest.client"/>
+      <attribute name="bundle-version" value="1.3.2.Final" type="Version"/>
+      <attribute name="osgi.wiring.package" value="io.apicurio.registry.client.service"/>
+      <attribute name="version" value="1.3.2" type="Version"/>
+      <attribute name="bnd.hashes" value="477617844,391128317,-1794394658,-195363891" type="List&lt;Long&gt;"/>
+    </capability>
+    <capability namespace="osgi.wiring.bundle">
+      <attribute name="bundle-version" value="1.3.2.Final" type="Version"/>
+      <attribute name="osgi.wiring.bundle" value="io.apicurio.registry.rest.client"/>
+    </capability>
+    <capability namespace="osgi.wiring.host">
+      <attribute name="bundle-version" value="1.3.2.Final" type="Version"/>
+      <attribute name="osgi.wiring.host" value="io.apicurio.registry.rest.client"/>
+    </capability>
+    <capability namespace="osgi.content">
+      <attribute name="size" value="45236" type="Long"/>
+      <attribute name="mime" value="application/vnd.osgi.bundle"/>
+      <attribute name="url" value="io.apicurio.registry.rest.client/io.apicurio.registry.rest.client-1.3.2.jar"/>
+      <attribute name="osgi.content" value="D9F91702BD74459DB76A8F5375809772E6EBD1063AAEBF10F6C5823D84E8862F"/>
+    </capability>
+    <requirement namespace="osgi.wiring.package">
+      <directive name="filter" value="(osgi.wiring.package=io.apicurio.registry.rest.beans)"/>
+      <attribute name="osgi.wiring.package" value="io.apicurio.registry.rest.beans"/>
+    </requirement>
+    <requirement namespace="osgi.wiring.package">
+      <directive name="filter" value="(osgi.wiring.package=io.apicurio.registry.types)"/>
+      <attribute name="osgi.wiring.package" value="io.apicurio.registry.types"/>
+    </requirement>
+    <requirement namespace="osgi.wiring.package">
+      <directive name="filter" value="(osgi.wiring.package=io.apicurio.registry.utils)"/>
+      <attribute name="osgi.wiring.package" value="io.apicurio.registry.utils"/>
+    </requirement>
+    <requirement namespace="osgi.wiring.package">
+      <directive name="filter" value="(osgi.wiring.package=java.io)"/>
+      <attribute name="osgi.wiring.package" value="java.io"/>
+    </requirement>
+    <requirement namespace="osgi.wiring.package">
+      <directive name="filter" value="(osgi.wiring.package=java.lang)"/>
+      <attribute name="osgi.wiring.package" value="java.lang"/>
+    </requirement>
+    <requirement namespace="osgi.wiring.package">
+      <directive name="filter" value="(osgi.wiring.package=java.lang.invoke)"/>
+      <attribute name="osgi.wiring.package" value="java.lang.invoke"/>
+    </requirement>
+    <requirement namespace="osgi.wiring.package">
+      <directive name="filter" value="(osgi.wiring.package=java.security)"/>
+      <attribute name="osgi.wiring.package" value="java.security"/>
+    </requirement>
+    <requirement namespace="osgi.wiring.package">
+      <directive name="filter" value="(osgi.wiring.package=java.security.cert)"/>
+      <attribute name="osgi.wiring.package" value="java.security.cert"/>
+    </requirement>
+    <requirement namespace="osgi.wiring.package">
+      <directive name="filter" value="(osgi.wiring.package=java.util)"/>
+      <attribute name="osgi.wiring.package" value="java.util"/>
+    </requirement>
+    <requirement namespace="osgi.wiring.package">
+      <directive name="filter" value="(osgi.wiring.package=java.util.concurrent)"/>
+      <attribute name="osgi.wiring.package" value="java.util.concurrent"/>
+    </requirement>
+    <requirement namespace="osgi.wiring.package">
+      <directive name="filter" value="(osgi.wiring.package=java.util.function)"/>
+      <attribute name="osgi.wiring.package" value="java.util.function"/>
+    </requirement>
+    <requirement namespace="osgi.wiring.package">
+      <directive name="filter" value="(osgi.wiring.package=java.util.logging)"/>
+      <attribute name="osgi.wiring.package" value="java.util.logging"/>
+    </requirement>
+    <requirement namespace="osgi.wiring.package">
+      <directive name="filter" value="(osgi.wiring.package=java.util.stream)"/>
+      <attribute name="osgi.wiring.package" value="java.util.stream"/>
+    </requirement>
+    <requirement namespace="osgi.wiring.package">
+      <directive name="filter" value="(osgi.wiring.package=javax.enterprise.inject)"/>
+      <attribute name="osgi.wiring.package" value="javax.enterprise.inject"/>
+    </requirement>
+    <requirement namespace="osgi.wiring.package">
+      <directive name="filter" value="(osgi.wiring.package=javax.net.ssl)"/>
+      <attribute name="osgi.wiring.package" value="javax.net.ssl"/>
+    </requirement>
+    <requirement namespace="osgi.wiring.package">
+      <directive name="filter" value="(osgi.wiring.package=javax.ws.rs)"/>
+      <attribute name="osgi.wiring.package" value="javax.ws.rs"/>
+    </requirement>
+    <requirement namespace="osgi.wiring.package">
+      <directive name="filter" value="(osgi.wiring.package=javax.ws.rs.core)"/>
+      <attribute name="osgi.wiring.package" value="javax.ws.rs.core"/>
+    </requirement>
+    <requirement namespace="osgi.wiring.package">
+      <directive name="filter" value="(osgi.wiring.package=okhttp3)"/>
+      <attribute name="osgi.wiring.package" value="okhttp3"/>
+    </requirement>
+    <requirement namespace="osgi.wiring.package">
+      <directive name="filter" value="(osgi.wiring.package=retrofit2)"/>
+      <attribute name="osgi.wiring.package" value="retrofit2"/>
+    </requirement>
+    <requirement namespace="osgi.wiring.package">
+      <directive name="filter" value="(osgi.wiring.package=retrofit2.converter.jackson)"/>
+      <attribute name="osgi.wiring.package" value="retrofit2.converter.jackson"/>
+    </requirement>
+    <requirement namespace="osgi.wiring.package">
+      <directive name="filter" value="(osgi.wiring.package=retrofit2.http)"/>
+      <attribute name="osgi.wiring.package" value="retrofit2.http"/>
+    </requirement>
+    <requirement namespace="osgi.ee">
+      <directive name="filter" value="(&amp;(osgi.ee=JavaSE)(version=1.8))"/>
     </requirement>
   </resource>
   <resource>
@@ -792,6 +1200,151 @@
     </requirement>
     <requirement namespace="osgi.extender">
       <directive name="filter" value="(&amp;(osgi.extender=osgi.component)(version&gt;=1.4.0)(!(version&gt;=2.0.0)))"/>
+    </requirement>
+  </resource>
+  <resource>
+    <capability namespace="osgi.identity">
+      <attribute name="license" value="Eclipse Public License 2.0"/>
+      <attribute name="copyright" value="Data In Motion Consulting GmbH - All rights reserved"/>
+      <attribute name="osgi.identity" value="io.apicurio.registry.client"/>
+      <attribute name="documentation" value="https://github.com/geckoprojects-org/org.gecko.libraries"/>
+      <attribute name="type" value="osgi.bundle"/>
+      <attribute name="version" value="3.0.0.M2" type="Version"/>
+    </capability>
+    <capability namespace="osgi.wiring.package">
+      <directive name="uses" value="io.apicurio.registry.rest.v2.beans,io.apicurio.registry.types,io.apicurio.rest.client.auth,io.apicurio.rest.client.spi"/>
+      <attribute name="bundle-symbolic-name" value="io.apicurio.registry.client"/>
+      <attribute name="bundle-version" value="3.0.0.M2" type="Version"/>
+      <attribute name="osgi.wiring.package" value="io.apicurio.registry.rest.client"/>
+      <attribute name="version" value="3.0.0" type="Version"/>
+      <attribute name="bnd.hashes" value="715494362,1717767120,1150483080,180577634" type="List&lt;Long&gt;"/>
+    </capability>
+    <capability namespace="osgi.wiring.package">
+      <attribute name="bundle-symbolic-name" value="io.apicurio.registry.client"/>
+      <attribute name="bundle-version" value="3.0.0.M2" type="Version"/>
+      <attribute name="osgi.wiring.package" value="io.apicurio.registry.rest.client.config"/>
+      <attribute name="version" value="3.0.0" type="Version"/>
+      <attribute name="bnd.hashes" value="-1731103987" type="List&lt;Long&gt;"/>
+    </capability>
+    <capability namespace="osgi.wiring.package">
+      <directive name="uses" value="io.apicurio.registry.rest.v2.beans,io.apicurio.rest.client.error"/>
+      <attribute name="bundle-symbolic-name" value="io.apicurio.registry.client"/>
+      <attribute name="bundle-version" value="3.0.0.M2" type="Version"/>
+      <attribute name="osgi.wiring.package" value="io.apicurio.registry.rest.client.exception"/>
+      <attribute name="version" value="3.0.0" type="Version"/>
+      <attribute name="bnd.hashes" value="-1017177093,-608590739,-95163186,-646165371,-2143224311,1643655293,2023933255,259597540,1371765584,1524307969,-1611971349,1195516903,-1591430164,35106156,1890380234,-1818544159,-1230607730,-557501813,29979776,-30333005,1638136042,111710768,519049555,-1415935960,1531488791,959349988,-1317388058,-1636288831,368055435,204377334,1950218652,1671937438,1597241011,622118600" type="List&lt;Long&gt;"/>
+    </capability>
+    <capability namespace="osgi.wiring.package">
+      <directive name="uses" value="com.fasterxml.jackson.core,io.apicurio.registry.rest.client,io.apicurio.registry.rest.client.exception,io.apicurio.registry.rest.v2.beans,io.apicurio.registry.types,io.apicurio.rest.client.error,io.apicurio.rest.client.spi"/>
+      <attribute name="bundle-symbolic-name" value="io.apicurio.registry.client"/>
+      <attribute name="bundle-version" value="3.0.0.M2" type="Version"/>
+      <attribute name="osgi.wiring.package" value="io.apicurio.registry.rest.client.impl"/>
+      <attribute name="version" value="3.0.0" type="Version"/>
+      <attribute name="bnd.hashes" value="1942416666,1105434690,-1308222706,1982155976" type="List&lt;Long&gt;"/>
+    </capability>
+    <capability namespace="osgi.wiring.package">
+      <attribute name="bundle-symbolic-name" value="io.apicurio.registry.client"/>
+      <attribute name="bundle-version" value="3.0.0.M2" type="Version"/>
+      <attribute name="osgi.wiring.package" value="io.apicurio.registry.rest.client.request"/>
+      <attribute name="version" value="3.0.0" type="Version"/>
+      <attribute name="bnd.hashes" value="-1842766326" type="List&lt;Long&gt;"/>
+    </capability>
+    <capability namespace="osgi.wiring.package">
+      <directive name="uses" value="com.fasterxml.jackson.core,io.apicurio.registry.rest.v2.beans,io.apicurio.registry.types,io.apicurio.rest.client.request"/>
+      <attribute name="bundle-symbolic-name" value="io.apicurio.registry.client"/>
+      <attribute name="bundle-version" value="3.0.0.M2" type="Version"/>
+      <attribute name="osgi.wiring.package" value="io.apicurio.registry.rest.client.request.provider"/>
+      <attribute name="version" value="3.0.0" type="Version"/>
+      <attribute name="bnd.hashes" value="-229318876,1547924052,-103006928,-1841265814,591055805,-1880959011" type="List&lt;Long&gt;"/>
+    </capability>
+    <capability namespace="osgi.wiring.bundle">
+      <attribute name="bundle-version" value="3.0.0.M2" type="Version"/>
+      <attribute name="osgi.wiring.bundle" value="io.apicurio.registry.client"/>
+    </capability>
+    <capability namespace="osgi.wiring.host">
+      <attribute name="bundle-version" value="3.0.0.M2" type="Version"/>
+      <attribute name="osgi.wiring.host" value="io.apicurio.registry.client"/>
+    </capability>
+    <capability namespace="osgi.content">
+      <attribute name="size" value="170864" type="Long"/>
+      <attribute name="mime" value="application/vnd.osgi.bundle"/>
+      <attribute name="url" value="io.apicurio.registry.client/io.apicurio.registry.client-3.0.0.jar"/>
+      <attribute name="osgi.content" value="4DEA3218E05598527382E1DBB4A6C6ED5C51F29179751651EF2ADFBF0C819B08"/>
+    </capability>
+    <requirement namespace="osgi.wiring.package">
+      <directive name="filter" value="(osgi.wiring.package=com.fasterxml.jackson.core)"/>
+      <attribute name="osgi.wiring.package" value="com.fasterxml.jackson.core"/>
+    </requirement>
+    <requirement namespace="osgi.wiring.package">
+      <directive name="filter" value="(osgi.wiring.package=com.fasterxml.jackson.core.type)"/>
+      <attribute name="osgi.wiring.package" value="com.fasterxml.jackson.core.type"/>
+    </requirement>
+    <requirement namespace="osgi.wiring.package">
+      <directive name="filter" value="(osgi.wiring.package=com.fasterxml.jackson.databind)"/>
+      <attribute name="osgi.wiring.package" value="com.fasterxml.jackson.databind"/>
+    </requirement>
+    <requirement namespace="osgi.wiring.package">
+      <directive name="filter" value="(osgi.wiring.package=io.apicurio.registry.rest.v2.beans)"/>
+      <attribute name="osgi.wiring.package" value="io.apicurio.registry.rest.v2.beans"/>
+    </requirement>
+    <requirement namespace="osgi.wiring.package">
+      <directive name="filter" value="(osgi.wiring.package=io.apicurio.registry.types)"/>
+      <attribute name="osgi.wiring.package" value="io.apicurio.registry.types"/>
+    </requirement>
+    <requirement namespace="osgi.wiring.package">
+      <directive name="filter" value="(osgi.wiring.package=io.apicurio.registry.utils)"/>
+      <attribute name="osgi.wiring.package" value="io.apicurio.registry.utils"/>
+    </requirement>
+    <requirement namespace="osgi.wiring.package">
+      <directive name="filter" value="(osgi.wiring.package=io.apicurio.rest.client.auth)"/>
+      <attribute name="osgi.wiring.package" value="io.apicurio.rest.client.auth"/>
+    </requirement>
+    <requirement namespace="osgi.wiring.package">
+      <directive name="filter" value="(osgi.wiring.package=io.apicurio.rest.client.auth.exception)"/>
+      <attribute name="osgi.wiring.package" value="io.apicurio.rest.client.auth.exception"/>
+    </requirement>
+    <requirement namespace="osgi.wiring.package">
+      <directive name="filter" value="(osgi.wiring.package=io.apicurio.rest.client.error)"/>
+      <attribute name="osgi.wiring.package" value="io.apicurio.rest.client.error"/>
+    </requirement>
+    <requirement namespace="osgi.wiring.package">
+      <directive name="filter" value="(osgi.wiring.package=io.apicurio.rest.client.request)"/>
+      <attribute name="osgi.wiring.package" value="io.apicurio.rest.client.request"/>
+    </requirement>
+    <requirement namespace="osgi.wiring.package">
+      <directive name="filter" value="(osgi.wiring.package=io.apicurio.rest.client.spi)"/>
+      <attribute name="osgi.wiring.package" value="io.apicurio.rest.client.spi"/>
+    </requirement>
+    <requirement namespace="osgi.wiring.package">
+      <directive name="filter" value="(osgi.wiring.package=java.io)"/>
+      <attribute name="osgi.wiring.package" value="java.io"/>
+    </requirement>
+    <requirement namespace="osgi.wiring.package">
+      <directive name="filter" value="(osgi.wiring.package=java.lang)"/>
+      <attribute name="osgi.wiring.package" value="java.lang"/>
+    </requirement>
+    <requirement namespace="osgi.wiring.package">
+      <directive name="filter" value="(osgi.wiring.package=java.lang.invoke)"/>
+      <attribute name="osgi.wiring.package" value="java.lang.invoke"/>
+    </requirement>
+    <requirement namespace="osgi.wiring.package">
+      <directive name="filter" value="(osgi.wiring.package=java.nio.charset)"/>
+      <attribute name="osgi.wiring.package" value="java.nio.charset"/>
+    </requirement>
+    <requirement namespace="osgi.wiring.package">
+      <directive name="filter" value="(osgi.wiring.package=java.util)"/>
+      <attribute name="osgi.wiring.package" value="java.util"/>
+    </requirement>
+    <requirement namespace="osgi.wiring.package">
+      <directive name="filter" value="(osgi.wiring.package=java.util.function)"/>
+      <attribute name="osgi.wiring.package" value="java.util.function"/>
+    </requirement>
+    <requirement namespace="osgi.wiring.package">
+      <directive name="filter" value="(osgi.wiring.package=org.slf4j)"/>
+      <attribute name="osgi.wiring.package" value="org.slf4j"/>
+    </requirement>
+    <requirement namespace="osgi.ee">
+      <directive name="filter" value="(&amp;(osgi.ee=JavaSE)(version=11))"/>
     </requirement>
   </resource>
   <resource>

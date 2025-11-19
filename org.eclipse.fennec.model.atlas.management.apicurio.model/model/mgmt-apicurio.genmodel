@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<genmodel:GenModel xmi:version="2.0" xmlns:xmi="http://www.omg.org/XMI" xmlns:ecore="http://www.eclipse.org/emf/2002/Ecore"
+    xmlns:genmodel="http://www.eclipse.org/emf/2002/GenModel" modelDirectory="/org.eclipse.fennec.model.atlas.management.apicurio.model/src"
+    modelPluginID="org.eclipse.fennec.model.atlas.management.apicurio.model" modelName="mngm-apicurio"
+    rootExtendsClass="org.eclipse.emf.ecore.impl.MinimalEObjectImpl$Container" importerID="org.eclipse.emf.importer.ecore"
+    complianceLevel="17.0" suppressGenModelAnnotations="false" copyrightFields="false"
+    operationReflection="true" importOrganizing="true" oSGiCompatible="true">
+  <foreignModel>mgmt-apicurio.ecore</foreignModel>
+  <genPackages prefix="MgmtApicurio" basePackage="org.eclipse.fennec.model.atlas.mgmt"
+      resource="XMI" disposableProviderFactory="true" ecorePackage="mgmt-apicurio.ecore#/">
+    <genEnums typeSafeEnumCompatible="false" ecoreEnum="mgmt-apicurio.ecore#//ArtifactType">
+      <genEnumLiterals ecoreEnumLiteral="mgmt-apicurio.ecore#//ArtifactType/XML"/>
+      <genEnumLiterals ecoreEnumLiteral="mgmt-apicurio.ecore#//ArtifactType/JSON"/>
+      <genEnumLiterals ecoreEnumLiteral="mgmt-apicurio.ecore#//ArtifactType/XSD"/>
+    </genEnums>
+    <genClasses ecoreClass="mgmt-apicurio.ecore#//Artifact">
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute mgmt-apicurio.ecore#//Artifact/artifactId"/>
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute mgmt-apicurio.ecore#//Artifact/artifactType"/>
+    </genClasses>
+    <genClasses ecoreClass="mgmt-apicurio.ecore#//SimpleArtifact">
+      <genFeatures property="None" children="true" createChild="true" ecoreFeature="ecore:EReference mgmt-apicurio.ecore#//SimpleArtifact/content"/>
+    </genClasses>
+    <genClasses ecoreClass="mgmt-apicurio.ecore#//VersionedArtifact">
+      <genFeatures property="None" children="true" createChild="true" ecoreFeature="ecore:EReference mgmt-apicurio.ecore#//VersionedArtifact/firstVersion"/>
+    </genClasses>
+    <genClasses ecoreClass="mgmt-apicurio.ecore#//Content">
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute mgmt-apicurio.ecore#//Content/contentType"/>
+      <genFeatures property="None" children="true" createChild="true" ecoreFeature="ecore:EAttribute mgmt-apicurio.ecore#//Content/content"/>
+    </genClasses>
+    <genClasses ecoreClass="mgmt-apicurio.ecore#//FirstVersion">
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute mgmt-apicurio.ecore#//FirstVersion/version"/>
+      <genFeatures property="None" children="true" createChild="true" ecoreFeature="ecore:EReference mgmt-apicurio.ecore#//FirstVersion/content"/>
+    </genClasses>
+  </genPackages>
+</genmodel:GenModel>
