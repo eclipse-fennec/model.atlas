@@ -34,22 +34,22 @@ public interface MgmtApicurioFactory extends EFactory {
 	Artifact createArtifact();
 
 	/**
-	 * Returns a new object of class '<em>Simple Artifact</em>'.
+	 * Returns a new object of class '<em>Create Artifact</em>'.
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
-	 * @return a new object of class '<em>Simple Artifact</em>'.
+	 * @return a new object of class '<em>Create Artifact</em>'.
 	 * @generated
 	 */
-	SimpleArtifact createSimpleArtifact();
+	CreateArtifact createCreateArtifact();
 
 	/**
-	 * Returns a new object of class '<em>Versioned Artifact</em>'.
+	 * Returns a new object of class '<em>Create Artifact Version</em>'.
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
-	 * @return a new object of class '<em>Versioned Artifact</em>'.
+	 * @return a new object of class '<em>Create Artifact Version</em>'.
 	 * @generated
 	 */
-	VersionedArtifact createVersionedArtifact();
+	CreateArtifactVersion createCreateArtifactVersion();
 
 	/**
 	 * Returns a new object of class '<em>Content</em>'.
@@ -61,13 +61,22 @@ public interface MgmtApicurioFactory extends EFactory {
 	Content createContent();
 
 	/**
-	 * Returns a new object of class '<em>First Version</em>'.
+	 * Returns a new object of class '<em>Version</em>'.
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
-	 * @return a new object of class '<em>First Version</em>'.
+	 * @return a new object of class '<em>Version</em>'.
 	 * @generated
 	 */
-	FirstVersion createFirstVersion();
+	Version createVersion();
+
+	/**
+	 * Returns a new object of class '<em>Artifact Reference</em>'.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @return a new object of class '<em>Artifact Reference</em>'.
+	 * @generated
+	 */
+	ArtifactReference createArtifactReference();
 
 	/**
 	 * Returns the package supported by this factory.

@@ -72,17 +72,17 @@ public class MgmtApicurioSwitch<T> extends Switch<T> {
 				if (result == null) result = defaultCase(theEObject);
 				return result;
 			}
-			case MgmtApicurioPackage.SIMPLE_ARTIFACT: {
-				SimpleArtifact simpleArtifact = (SimpleArtifact)theEObject;
-				T result = caseSimpleArtifact(simpleArtifact);
-				if (result == null) result = caseArtifact(simpleArtifact);
+			case MgmtApicurioPackage.CREATE_ARTIFACT: {
+				CreateArtifact createArtifact = (CreateArtifact)theEObject;
+				T result = caseCreateArtifact(createArtifact);
+				if (result == null) result = caseArtifact(createArtifact);
 				if (result == null) result = defaultCase(theEObject);
 				return result;
 			}
-			case MgmtApicurioPackage.VERSIONED_ARTIFACT: {
-				VersionedArtifact versionedArtifact = (VersionedArtifact)theEObject;
-				T result = caseVersionedArtifact(versionedArtifact);
-				if (result == null) result = caseArtifact(versionedArtifact);
+			case MgmtApicurioPackage.CREATE_ARTIFACT_VERSION: {
+				CreateArtifactVersion createArtifactVersion = (CreateArtifactVersion)theEObject;
+				T result = caseCreateArtifactVersion(createArtifactVersion);
+				if (result == null) result = caseVersion(createArtifactVersion);
 				if (result == null) result = defaultCase(theEObject);
 				return result;
 			}
@@ -92,9 +92,15 @@ public class MgmtApicurioSwitch<T> extends Switch<T> {
 				if (result == null) result = defaultCase(theEObject);
 				return result;
 			}
-			case MgmtApicurioPackage.FIRST_VERSION: {
-				FirstVersion firstVersion = (FirstVersion)theEObject;
-				T result = caseFirstVersion(firstVersion);
+			case MgmtApicurioPackage.VERSION: {
+				Version version = (Version)theEObject;
+				T result = caseVersion(version);
+				if (result == null) result = defaultCase(theEObject);
+				return result;
+			}
+			case MgmtApicurioPackage.ARTIFACT_REFERENCE: {
+				ArtifactReference artifactReference = (ArtifactReference)theEObject;
+				T result = caseArtifactReference(artifactReference);
 				if (result == null) result = defaultCase(theEObject);
 				return result;
 			}
@@ -118,32 +124,32 @@ public class MgmtApicurioSwitch<T> extends Switch<T> {
 	}
 
 	/**
-	 * Returns the result of interpreting the object as an instance of '<em>Simple Artifact</em>'.
+	 * Returns the result of interpreting the object as an instance of '<em>Create Artifact</em>'.
 	 * <!-- begin-user-doc -->
 	 * This implementation returns null;
 	 * returning a non-null result will terminate the switch.
 	 * <!-- end-user-doc -->
 	 * @param object the target of the switch.
-	 * @return the result of interpreting the object as an instance of '<em>Simple Artifact</em>'.
+	 * @return the result of interpreting the object as an instance of '<em>Create Artifact</em>'.
 	 * @see #doSwitch(org.eclipse.emf.ecore.EObject) doSwitch(EObject)
 	 * @generated
 	 */
-	public T caseSimpleArtifact(SimpleArtifact object) {
+	public T caseCreateArtifact(CreateArtifact object) {
 		return null;
 	}
 
 	/**
-	 * Returns the result of interpreting the object as an instance of '<em>Versioned Artifact</em>'.
+	 * Returns the result of interpreting the object as an instance of '<em>Create Artifact Version</em>'.
 	 * <!-- begin-user-doc -->
 	 * This implementation returns null;
 	 * returning a non-null result will terminate the switch.
 	 * <!-- end-user-doc -->
 	 * @param object the target of the switch.
-	 * @return the result of interpreting the object as an instance of '<em>Versioned Artifact</em>'.
+	 * @return the result of interpreting the object as an instance of '<em>Create Artifact Version</em>'.
 	 * @see #doSwitch(org.eclipse.emf.ecore.EObject) doSwitch(EObject)
 	 * @generated
 	 */
-	public T caseVersionedArtifact(VersionedArtifact object) {
+	public T caseCreateArtifactVersion(CreateArtifactVersion object) {
 		return null;
 	}
 
@@ -163,17 +169,32 @@ public class MgmtApicurioSwitch<T> extends Switch<T> {
 	}
 
 	/**
-	 * Returns the result of interpreting the object as an instance of '<em>First Version</em>'.
+	 * Returns the result of interpreting the object as an instance of '<em>Version</em>'.
 	 * <!-- begin-user-doc -->
 	 * This implementation returns null;
 	 * returning a non-null result will terminate the switch.
 	 * <!-- end-user-doc -->
 	 * @param object the target of the switch.
-	 * @return the result of interpreting the object as an instance of '<em>First Version</em>'.
+	 * @return the result of interpreting the object as an instance of '<em>Version</em>'.
 	 * @see #doSwitch(org.eclipse.emf.ecore.EObject) doSwitch(EObject)
 	 * @generated
 	 */
-	public T caseFirstVersion(FirstVersion object) {
+	public T caseVersion(Version object) {
+		return null;
+	}
+
+	/**
+	 * Returns the result of interpreting the object as an instance of '<em>Artifact Reference</em>'.
+	 * <!-- begin-user-doc -->
+	 * This implementation returns null;
+	 * returning a non-null result will terminate the switch.
+	 * <!-- end-user-doc -->
+	 * @param object the target of the switch.
+	 * @return the result of interpreting the object as an instance of '<em>Artifact Reference</em>'.
+	 * @see #doSwitch(org.eclipse.emf.ecore.EObject) doSwitch(EObject)
+	 * @generated
+	 */
+	public T caseArtifactReference(ArtifactReference object) {
 		return null;
 	}
 

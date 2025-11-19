@@ -2,6 +2,8 @@
  */
 package org.eclipse.fennec.model.atlas.mgmt.mgmtapicurio;
 
+import org.eclipse.emf.common.util.EList;
+
 import org.eclipse.emf.ecore.EObject;
 
 import org.osgi.annotation.versioning.ProviderType;
@@ -17,6 +19,7 @@ import org.osgi.annotation.versioning.ProviderType;
  * <ul>
  *   <li>{@link org.eclipse.fennec.model.atlas.mgmt.mgmtapicurio.Content#getContentType <em>Content Type</em>}</li>
  *   <li>{@link org.eclipse.fennec.model.atlas.mgmt.mgmtapicurio.Content#getContent <em>Content</em>}</li>
+ *   <li>{@link org.eclipse.fennec.model.atlas.mgmt.mgmtapicurio.Content#getReferences <em>References</em>}</li>
  * </ul>
  *
  * @see org.eclipse.fennec.model.atlas.mgmt.mgmtapicurio.MgmtApicurioPackage#getContent()
@@ -29,10 +32,13 @@ public interface Content extends EObject {
 	 * Returns the value of the '<em><b>Content Type</b></em>' attribute.
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
+	 * <!-- begin-model-doc -->
+	 * The content-type, such as application/json or text/xml.
+	 * <!-- end-model-doc -->
 	 * @return the value of the '<em>Content Type</em>' attribute.
 	 * @see #setContentType(String)
 	 * @see org.eclipse.fennec.model.atlas.mgmt.mgmtapicurio.MgmtApicurioPackage#getContent_ContentType()
-	 * @model
+	 * @model required="true"
 	 * @generated
 	 */
 	String getContentType();
@@ -51,10 +57,13 @@ public interface Content extends EObject {
 	 * Returns the value of the '<em><b>Content</b></em>' attribute.
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
+	 * <!-- begin-model-doc -->
+	 * Raw content of the artifact version or a valid (and accessible) URL where the content can be found.
+	 * <!-- end-model-doc -->
 	 * @return the value of the '<em>Content</em>' attribute.
 	 * @see #setContent(String)
 	 * @see org.eclipse.fennec.model.atlas.mgmt.mgmtapicurio.MgmtApicurioPackage#getContent_Content()
-	 * @model
+	 * @model required="true"
 	 * @generated
 	 */
 	String getContent();
@@ -68,5 +77,17 @@ public interface Content extends EObject {
 	 * @generated
 	 */
 	void setContent(String value);
+
+	/**
+	 * Returns the value of the '<em><b>References</b></em>' containment reference list.
+	 * The list contents are of type {@link org.eclipse.fennec.model.atlas.mgmt.mgmtapicurio.ArtifactReference}.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @return the value of the '<em>References</em>' containment reference list.
+	 * @see org.eclipse.fennec.model.atlas.mgmt.mgmtapicurio.MgmtApicurioPackage#getContent_References()
+	 * @model containment="true"
+	 * @generated
+	 */
+	EList<ArtifactReference> getReferences();
 
 } // Content

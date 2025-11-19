@@ -72,20 +72,24 @@ public class MgmtApicurioAdapterFactory extends AdapterFactoryImpl {
 				return createArtifactAdapter();
 			}
 			@Override
-			public Adapter caseSimpleArtifact(SimpleArtifact object) {
-				return createSimpleArtifactAdapter();
+			public Adapter caseCreateArtifact(CreateArtifact object) {
+				return createCreateArtifactAdapter();
 			}
 			@Override
-			public Adapter caseVersionedArtifact(VersionedArtifact object) {
-				return createVersionedArtifactAdapter();
+			public Adapter caseCreateArtifactVersion(CreateArtifactVersion object) {
+				return createCreateArtifactVersionAdapter();
 			}
 			@Override
 			public Adapter caseContent(Content object) {
 				return createContentAdapter();
 			}
 			@Override
-			public Adapter caseFirstVersion(FirstVersion object) {
-				return createFirstVersionAdapter();
+			public Adapter caseVersion(Version object) {
+				return createVersionAdapter();
+			}
+			@Override
+			public Adapter caseArtifactReference(ArtifactReference object) {
+				return createArtifactReferenceAdapter();
 			}
 			@Override
 			public Adapter defaultCase(EObject object) {
@@ -122,30 +126,30 @@ public class MgmtApicurioAdapterFactory extends AdapterFactoryImpl {
 	}
 
 	/**
-	 * Creates a new adapter for an object of class '{@link org.eclipse.fennec.model.atlas.mgmt.mgmtapicurio.SimpleArtifact <em>Simple Artifact</em>}'.
+	 * Creates a new adapter for an object of class '{@link org.eclipse.fennec.model.atlas.mgmt.mgmtapicurio.CreateArtifact <em>Create Artifact</em>}'.
 	 * <!-- begin-user-doc -->
 	 * This default implementation returns null so that we can easily ignore cases;
 	 * it's useful to ignore a case when inheritance will catch all the cases anyway.
 	 * <!-- end-user-doc -->
 	 * @return the new adapter.
-	 * @see org.eclipse.fennec.model.atlas.mgmt.mgmtapicurio.SimpleArtifact
+	 * @see org.eclipse.fennec.model.atlas.mgmt.mgmtapicurio.CreateArtifact
 	 * @generated
 	 */
-	public Adapter createSimpleArtifactAdapter() {
+	public Adapter createCreateArtifactAdapter() {
 		return null;
 	}
 
 	/**
-	 * Creates a new adapter for an object of class '{@link org.eclipse.fennec.model.atlas.mgmt.mgmtapicurio.VersionedArtifact <em>Versioned Artifact</em>}'.
+	 * Creates a new adapter for an object of class '{@link org.eclipse.fennec.model.atlas.mgmt.mgmtapicurio.CreateArtifactVersion <em>Create Artifact Version</em>}'.
 	 * <!-- begin-user-doc -->
 	 * This default implementation returns null so that we can easily ignore cases;
 	 * it's useful to ignore a case when inheritance will catch all the cases anyway.
 	 * <!-- end-user-doc -->
 	 * @return the new adapter.
-	 * @see org.eclipse.fennec.model.atlas.mgmt.mgmtapicurio.VersionedArtifact
+	 * @see org.eclipse.fennec.model.atlas.mgmt.mgmtapicurio.CreateArtifactVersion
 	 * @generated
 	 */
-	public Adapter createVersionedArtifactAdapter() {
+	public Adapter createCreateArtifactVersionAdapter() {
 		return null;
 	}
 
@@ -164,16 +168,30 @@ public class MgmtApicurioAdapterFactory extends AdapterFactoryImpl {
 	}
 
 	/**
-	 * Creates a new adapter for an object of class '{@link org.eclipse.fennec.model.atlas.mgmt.mgmtapicurio.FirstVersion <em>First Version</em>}'.
+	 * Creates a new adapter for an object of class '{@link org.eclipse.fennec.model.atlas.mgmt.mgmtapicurio.Version <em>Version</em>}'.
 	 * <!-- begin-user-doc -->
 	 * This default implementation returns null so that we can easily ignore cases;
 	 * it's useful to ignore a case when inheritance will catch all the cases anyway.
 	 * <!-- end-user-doc -->
 	 * @return the new adapter.
-	 * @see org.eclipse.fennec.model.atlas.mgmt.mgmtapicurio.FirstVersion
+	 * @see org.eclipse.fennec.model.atlas.mgmt.mgmtapicurio.Version
 	 * @generated
 	 */
-	public Adapter createFirstVersionAdapter() {
+	public Adapter createVersionAdapter() {
+		return null;
+	}
+
+	/**
+	 * Creates a new adapter for an object of class '{@link org.eclipse.fennec.model.atlas.mgmt.mgmtapicurio.ArtifactReference <em>Artifact Reference</em>}'.
+	 * <!-- begin-user-doc -->
+	 * This default implementation returns null so that we can easily ignore cases;
+	 * it's useful to ignore a case when inheritance will catch all the cases anyway.
+	 * <!-- end-user-doc -->
+	 * @return the new adapter.
+	 * @see org.eclipse.fennec.model.atlas.mgmt.mgmtapicurio.ArtifactReference
+	 * @generated
+	 */
+	public Adapter createArtifactReferenceAdapter() {
 		return null;
 	}
 

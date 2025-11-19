@@ -11,13 +11,14 @@ import org.eclipse.emf.ecore.EReference;
 import org.eclipse.emf.ecore.impl.EPackageImpl;
 
 import org.eclipse.fennec.model.atlas.mgmt.mgmtapicurio.Artifact;
+import org.eclipse.fennec.model.atlas.mgmt.mgmtapicurio.ArtifactReference;
 import org.eclipse.fennec.model.atlas.mgmt.mgmtapicurio.ArtifactType;
 import org.eclipse.fennec.model.atlas.mgmt.mgmtapicurio.Content;
-import org.eclipse.fennec.model.atlas.mgmt.mgmtapicurio.FirstVersion;
+import org.eclipse.fennec.model.atlas.mgmt.mgmtapicurio.CreateArtifact;
+import org.eclipse.fennec.model.atlas.mgmt.mgmtapicurio.CreateArtifactVersion;
 import org.eclipse.fennec.model.atlas.mgmt.mgmtapicurio.MgmtApicurioFactory;
 import org.eclipse.fennec.model.atlas.mgmt.mgmtapicurio.MgmtApicurioPackage;
-import org.eclipse.fennec.model.atlas.mgmt.mgmtapicurio.SimpleArtifact;
-import org.eclipse.fennec.model.atlas.mgmt.mgmtapicurio.VersionedArtifact;
+import org.eclipse.fennec.model.atlas.mgmt.mgmtapicurio.Version;
 
 /**
  * <!-- begin-user-doc -->
@@ -38,14 +39,14 @@ public class MgmtApicurioPackageImpl extends EPackageImpl implements MgmtApicuri
 	 * <!-- end-user-doc -->
 	 * @generated
 	 */
-	private EClass simpleArtifactEClass = null;
+	private EClass createArtifactEClass = null;
 
 	/**
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
 	 * @generated
 	 */
-	private EClass versionedArtifactEClass = null;
+	private EClass createArtifactVersionEClass = null;
 
 	/**
 	 * <!-- begin-user-doc -->
@@ -59,7 +60,14 @@ public class MgmtApicurioPackageImpl extends EPackageImpl implements MgmtApicuri
 	 * <!-- end-user-doc -->
 	 * @generated
 	 */
-	private EClass firstVersionEClass = null;
+	private EClass versionEClass = null;
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	private EClass artifactReferenceEClass = null;
 
 	/**
 	 * <!-- begin-user-doc -->
@@ -164,8 +172,8 @@ public class MgmtApicurioPackageImpl extends EPackageImpl implements MgmtApicuri
 	 * @generated
 	 */
 	@Override
-	public EClass getSimpleArtifact() {
-		return simpleArtifactEClass;
+	public EAttribute getArtifact_Name() {
+		return (EAttribute)artifactEClass.getEStructuralFeatures().get(2);
 	}
 
 	/**
@@ -174,8 +182,8 @@ public class MgmtApicurioPackageImpl extends EPackageImpl implements MgmtApicuri
 	 * @generated
 	 */
 	@Override
-	public EReference getSimpleArtifact_Content() {
-		return (EReference)simpleArtifactEClass.getEStructuralFeatures().get(0);
+	public EAttribute getArtifact_Description() {
+		return (EAttribute)artifactEClass.getEStructuralFeatures().get(3);
 	}
 
 	/**
@@ -184,8 +192,8 @@ public class MgmtApicurioPackageImpl extends EPackageImpl implements MgmtApicuri
 	 * @generated
 	 */
 	@Override
-	public EClass getVersionedArtifact() {
-		return versionedArtifactEClass;
+	public EClass getCreateArtifact() {
+		return createArtifactEClass;
 	}
 
 	/**
@@ -194,8 +202,18 @@ public class MgmtApicurioPackageImpl extends EPackageImpl implements MgmtApicuri
 	 * @generated
 	 */
 	@Override
-	public EReference getVersionedArtifact_FirstVersion() {
-		return (EReference)versionedArtifactEClass.getEStructuralFeatures().get(0);
+	public EReference getCreateArtifact_FirstVersion() {
+		return (EReference)createArtifactEClass.getEStructuralFeatures().get(0);
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
+	public EClass getCreateArtifactVersion() {
+		return createArtifactVersionEClass;
 	}
 
 	/**
@@ -234,8 +252,8 @@ public class MgmtApicurioPackageImpl extends EPackageImpl implements MgmtApicuri
 	 * @generated
 	 */
 	@Override
-	public EClass getFirstVersion() {
-		return firstVersionEClass;
+	public EReference getContent_References() {
+		return (EReference)contentEClass.getEStructuralFeatures().get(2);
 	}
 
 	/**
@@ -244,8 +262,8 @@ public class MgmtApicurioPackageImpl extends EPackageImpl implements MgmtApicuri
 	 * @generated
 	 */
 	@Override
-	public EAttribute getFirstVersion_Version() {
-		return (EAttribute)firstVersionEClass.getEStructuralFeatures().get(0);
+	public EClass getVersion() {
+		return versionEClass;
 	}
 
 	/**
@@ -254,8 +272,108 @@ public class MgmtApicurioPackageImpl extends EPackageImpl implements MgmtApicuri
 	 * @generated
 	 */
 	@Override
-	public EReference getFirstVersion_Content() {
-		return (EReference)firstVersionEClass.getEStructuralFeatures().get(1);
+	public EAttribute getVersion_Version() {
+		return (EAttribute)versionEClass.getEStructuralFeatures().get(0);
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
+	public EReference getVersion_Content() {
+		return (EReference)versionEClass.getEStructuralFeatures().get(1);
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
+	public EAttribute getVersion_Name() {
+		return (EAttribute)versionEClass.getEStructuralFeatures().get(2);
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
+	public EAttribute getVersion_Description() {
+		return (EAttribute)versionEClass.getEStructuralFeatures().get(3);
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
+	public EAttribute getVersion_Branches() {
+		return (EAttribute)versionEClass.getEStructuralFeatures().get(4);
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
+	public EAttribute getVersion_IsDraft() {
+		return (EAttribute)versionEClass.getEStructuralFeatures().get(5);
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
+	public EClass getArtifactReference() {
+		return artifactReferenceEClass;
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
+	public EAttribute getArtifactReference_GroupId() {
+		return (EAttribute)artifactReferenceEClass.getEStructuralFeatures().get(0);
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
+	public EAttribute getArtifactReference_ArtifactId() {
+		return (EAttribute)artifactReferenceEClass.getEStructuralFeatures().get(1);
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
+	public EAttribute getArtifactReference_Name() {
+		return (EAttribute)artifactReferenceEClass.getEStructuralFeatures().get(2);
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
+	public EAttribute getArtifactReference_Version() {
+		return (EAttribute)artifactReferenceEClass.getEStructuralFeatures().get(3);
 	}
 
 	/**
@@ -300,20 +418,32 @@ public class MgmtApicurioPackageImpl extends EPackageImpl implements MgmtApicuri
 		artifactEClass = createEClass(ARTIFACT);
 		createEAttribute(artifactEClass, ARTIFACT__ARTIFACT_ID);
 		createEAttribute(artifactEClass, ARTIFACT__ARTIFACT_TYPE);
+		createEAttribute(artifactEClass, ARTIFACT__NAME);
+		createEAttribute(artifactEClass, ARTIFACT__DESCRIPTION);
 
-		simpleArtifactEClass = createEClass(SIMPLE_ARTIFACT);
-		createEReference(simpleArtifactEClass, SIMPLE_ARTIFACT__CONTENT);
+		createArtifactEClass = createEClass(CREATE_ARTIFACT);
+		createEReference(createArtifactEClass, CREATE_ARTIFACT__FIRST_VERSION);
 
-		versionedArtifactEClass = createEClass(VERSIONED_ARTIFACT);
-		createEReference(versionedArtifactEClass, VERSIONED_ARTIFACT__FIRST_VERSION);
+		createArtifactVersionEClass = createEClass(CREATE_ARTIFACT_VERSION);
 
 		contentEClass = createEClass(CONTENT);
 		createEAttribute(contentEClass, CONTENT__CONTENT_TYPE);
 		createEAttribute(contentEClass, CONTENT__CONTENT);
+		createEReference(contentEClass, CONTENT__REFERENCES);
 
-		firstVersionEClass = createEClass(FIRST_VERSION);
-		createEAttribute(firstVersionEClass, FIRST_VERSION__VERSION);
-		createEReference(firstVersionEClass, FIRST_VERSION__CONTENT);
+		versionEClass = createEClass(VERSION);
+		createEAttribute(versionEClass, VERSION__VERSION);
+		createEReference(versionEClass, VERSION__CONTENT);
+		createEAttribute(versionEClass, VERSION__NAME);
+		createEAttribute(versionEClass, VERSION__DESCRIPTION);
+		createEAttribute(versionEClass, VERSION__BRANCHES);
+		createEAttribute(versionEClass, VERSION__IS_DRAFT);
+
+		artifactReferenceEClass = createEClass(ARTIFACT_REFERENCE);
+		createEAttribute(artifactReferenceEClass, ARTIFACT_REFERENCE__GROUP_ID);
+		createEAttribute(artifactReferenceEClass, ARTIFACT_REFERENCE__ARTIFACT_ID);
+		createEAttribute(artifactReferenceEClass, ARTIFACT_REFERENCE__NAME);
+		createEAttribute(artifactReferenceEClass, ARTIFACT_REFERENCE__VERSION);
 
 		// Create enums
 		artifactTypeEEnum = createEEnum(ARTIFACT_TYPE);
@@ -347,33 +477,52 @@ public class MgmtApicurioPackageImpl extends EPackageImpl implements MgmtApicuri
 		// Set bounds for type parameters
 
 		// Add supertypes to classes
-		simpleArtifactEClass.getESuperTypes().add(this.getArtifact());
-		versionedArtifactEClass.getESuperTypes().add(this.getArtifact());
+		createArtifactEClass.getESuperTypes().add(this.getArtifact());
+		createArtifactVersionEClass.getESuperTypes().add(this.getVersion());
 
 		// Initialize classes, features, and operations; add parameters
 		initEClass(artifactEClass, Artifact.class, "Artifact", !IS_ABSTRACT, !IS_INTERFACE, IS_GENERATED_INSTANCE_CLASS);
-		initEAttribute(getArtifact_ArtifactId(), ecorePackage.getEString(), "artifactId", null, 0, 1, Artifact.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_UNSETTABLE, !IS_ID, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
+		initEAttribute(getArtifact_ArtifactId(), ecorePackage.getEString(), "artifactId", null, 1, 1, Artifact.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_UNSETTABLE, !IS_ID, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
 		initEAttribute(getArtifact_ArtifactType(), this.getArtifactType(), "artifactType", null, 0, 1, Artifact.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_UNSETTABLE, !IS_ID, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
+		initEAttribute(getArtifact_Name(), ecorePackage.getEString(), "name", null, 0, 1, Artifact.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_UNSETTABLE, !IS_ID, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
+		initEAttribute(getArtifact_Description(), ecorePackage.getEString(), "description", null, 0, 1, Artifact.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_UNSETTABLE, !IS_ID, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
 
-		initEClass(simpleArtifactEClass, SimpleArtifact.class, "SimpleArtifact", !IS_ABSTRACT, !IS_INTERFACE, IS_GENERATED_INSTANCE_CLASS);
-		initEReference(getSimpleArtifact_Content(), this.getContent(), null, "content", null, 0, 1, SimpleArtifact.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, IS_COMPOSITE, !IS_RESOLVE_PROXIES, !IS_UNSETTABLE, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
+		initEClass(createArtifactEClass, CreateArtifact.class, "CreateArtifact", !IS_ABSTRACT, !IS_INTERFACE, IS_GENERATED_INSTANCE_CLASS);
+		initEReference(getCreateArtifact_FirstVersion(), this.getVersion(), null, "firstVersion", null, 0, 1, CreateArtifact.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, IS_COMPOSITE, !IS_RESOLVE_PROXIES, !IS_UNSETTABLE, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
 
-		initEClass(versionedArtifactEClass, VersionedArtifact.class, "VersionedArtifact", !IS_ABSTRACT, !IS_INTERFACE, IS_GENERATED_INSTANCE_CLASS);
-		initEReference(getVersionedArtifact_FirstVersion(), this.getFirstVersion(), null, "firstVersion", null, 0, 1, VersionedArtifact.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, IS_COMPOSITE, !IS_RESOLVE_PROXIES, !IS_UNSETTABLE, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
+		initEClass(createArtifactVersionEClass, CreateArtifactVersion.class, "CreateArtifactVersion", !IS_ABSTRACT, !IS_INTERFACE, IS_GENERATED_INSTANCE_CLASS);
 
 		initEClass(contentEClass, Content.class, "Content", !IS_ABSTRACT, !IS_INTERFACE, IS_GENERATED_INSTANCE_CLASS);
-		initEAttribute(getContent_ContentType(), ecorePackage.getEString(), "contentType", null, 0, 1, Content.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_UNSETTABLE, !IS_ID, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
-		initEAttribute(getContent_Content(), ecorePackage.getEString(), "content", null, 0, 1, Content.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_UNSETTABLE, !IS_ID, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
+		initEAttribute(getContent_ContentType(), ecorePackage.getEString(), "contentType", null, 1, 1, Content.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_UNSETTABLE, !IS_ID, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
+		initEAttribute(getContent_Content(), ecorePackage.getEString(), "content", null, 1, 1, Content.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_UNSETTABLE, !IS_ID, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
+		initEReference(getContent_References(), this.getArtifactReference(), null, "references", null, 0, -1, Content.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, IS_COMPOSITE, !IS_RESOLVE_PROXIES, !IS_UNSETTABLE, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
 
-		initEClass(firstVersionEClass, FirstVersion.class, "FirstVersion", !IS_ABSTRACT, !IS_INTERFACE, IS_GENERATED_INSTANCE_CLASS);
-		initEAttribute(getFirstVersion_Version(), ecorePackage.getEString(), "version", null, 0, 1, FirstVersion.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_UNSETTABLE, !IS_ID, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
-		initEReference(getFirstVersion_Content(), this.getContent(), null, "content", null, 0, 1, FirstVersion.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, IS_COMPOSITE, !IS_RESOLVE_PROXIES, !IS_UNSETTABLE, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
+		initEClass(versionEClass, Version.class, "Version", !IS_ABSTRACT, !IS_INTERFACE, IS_GENERATED_INSTANCE_CLASS);
+		initEAttribute(getVersion_Version(), ecorePackage.getEString(), "version", null, 0, 1, Version.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_UNSETTABLE, !IS_ID, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
+		initEReference(getVersion_Content(), this.getContent(), null, "content", null, 1, 1, Version.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, IS_COMPOSITE, !IS_RESOLVE_PROXIES, !IS_UNSETTABLE, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
+		initEAttribute(getVersion_Name(), ecorePackage.getEString(), "name", null, 0, 1, Version.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_UNSETTABLE, !IS_ID, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
+		initEAttribute(getVersion_Description(), ecorePackage.getEString(), "description", null, 0, 1, Version.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_UNSETTABLE, !IS_ID, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
+		initEAttribute(getVersion_Branches(), ecorePackage.getEString(), "branches", null, 0, -1, Version.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_UNSETTABLE, !IS_ID, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
+		initEAttribute(getVersion_IsDraft(), ecorePackage.getEBoolean(), "isDraft", null, 0, 1, Version.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_UNSETTABLE, !IS_ID, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
+
+		initEClass(artifactReferenceEClass, ArtifactReference.class, "ArtifactReference", !IS_ABSTRACT, !IS_INTERFACE, IS_GENERATED_INSTANCE_CLASS);
+		initEAttribute(getArtifactReference_GroupId(), ecorePackage.getEString(), "groupId", null, 1, 1, ArtifactReference.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_UNSETTABLE, !IS_ID, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
+		initEAttribute(getArtifactReference_ArtifactId(), ecorePackage.getEString(), "artifactId", null, 1, 1, ArtifactReference.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_UNSETTABLE, !IS_ID, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
+		initEAttribute(getArtifactReference_Name(), ecorePackage.getEString(), "name", null, 1, 1, ArtifactReference.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_UNSETTABLE, !IS_ID, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
+		initEAttribute(getArtifactReference_Version(), ecorePackage.getEString(), "version", null, 0, 1, ArtifactReference.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_UNSETTABLE, !IS_ID, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
 
 		// Initialize enums and add enum literals
 		initEEnum(artifactTypeEEnum, ArtifactType.class, "ArtifactType");
 		addEEnumLiteral(artifactTypeEEnum, ArtifactType.XML);
 		addEEnumLiteral(artifactTypeEEnum, ArtifactType.JSON);
 		addEEnumLiteral(artifactTypeEEnum, ArtifactType.XSD);
+		addEEnumLiteral(artifactTypeEEnum, ArtifactType.ASYNCAPI);
+		addEEnumLiteral(artifactTypeEEnum, ArtifactType.AVRO);
+		addEEnumLiteral(artifactTypeEEnum, ArtifactType.GRAPHQL);
+		addEEnumLiteral(artifactTypeEEnum, ArtifactType.KCONNECT);
+		addEEnumLiteral(artifactTypeEEnum, ArtifactType.OPENAPI);
+		addEEnumLiteral(artifactTypeEEnum, ArtifactType.PROTOBUF);
+		addEEnumLiteral(artifactTypeEEnum, ArtifactType.WSDL);
 
 		// Create resource
 		createResource(eNS_URI);
@@ -417,6 +566,60 @@ public class MgmtApicurioPackageImpl extends EPackageImpl implements MgmtApicuri
 			   "oSGiCompatible", "true",
 			   "basePackage", "org.eclipse.fennec.model.atlas.mgmt",
 			   "resource", "XMI"
+		   });
+		addAnnotation
+		  (createArtifactEClass,
+		   source,
+		   new String[] {
+			   "documentation", "When you first create an artifact in Apicurio, this is the object you should use."
+		   });
+		addAnnotation
+		  (createArtifactVersionEClass,
+		   source,
+		   new String[] {
+			   "documentation", "Creates a new version of the artifact by uploading new content."
+		   });
+		addAnnotation
+		  (getContent_ContentType(),
+		   source,
+		   new String[] {
+			   "documentation", "The content-type, such as application/json or text/xml."
+		   });
+		addAnnotation
+		  (getContent_Content(),
+		   source,
+		   new String[] {
+			   "documentation", "Raw content of the artifact version or a valid (and accessible) URL where the content can be found."
+		   });
+		addAnnotation
+		  (getVersion_Version(),
+		   source,
+		   new String[] {
+			   "documentation", "A single version of an artifact. Can be provided by the client when creating a new version, or it can be server-generated. The value can be any string unique to the artifact, but it is recommended to use a simple integer or a semver value."
+		   });
+		addAnnotation
+		  (artifactTypeEEnum.getELiterals().get(4),
+		   source,
+		   new String[] {
+			   "documentation", "Apache Avro schema"
+		   });
+		addAnnotation
+		  (artifactTypeEEnum.getELiterals().get(6),
+		   source,
+		   new String[] {
+			   "documentation", "Apache Kafka Connect schema"
+		   });
+		addAnnotation
+		  (artifactTypeEEnum.getELiterals().get(8),
+		   source,
+		   new String[] {
+			   "documentation", "Google protocol buffers schema"
+		   });
+		addAnnotation
+		  (artifactTypeEEnum.getELiterals().get(9),
+		   source,
+		   new String[] {
+			   "documentation", "Web Service Definition Language"
 		   });
 	}
 

@@ -186,7 +186,7 @@ public abstract class AbstractStorageHelper implements AutoCloseable {
             objectOp.getResource().save(Collections.emptyMap());
             
             // Let storage implementation handle the actual persistence
-            persistResource(objectPath, objectOp.getResource());
+            persistResource(objectPath, objectOp.getResource(), metadata);
         } finally {
             objectOp.cleanup();
         }
@@ -224,7 +224,7 @@ public abstract class AbstractStorageHelper implements AutoCloseable {
             metadataOp.getResource().save(Collections.emptyMap());
             
             // Let storage implementation handle the actual persistence
-            persistResource(metadataPath, metadataOp.getResource());
+            persistResource(metadataPath, metadataOp.getResource(), metadata);
         } finally {
             metadataOp.cleanup();
         }
@@ -309,6 +309,14 @@ public abstract class AbstractStorageHelper implements AutoCloseable {
         return objectId + METADATA_EXTENSION;
     }
     
+    /**
+     * Persists a resource to the storage backend.
+     * This is called after EMF serialization to handle storage-specific operations.
+     */
+    protected void persistResource(String path, Resource resource, ObjectMetadata metadata) throws IOException {
+    	persistResource(path, resource);
+    };
+    
     // Abstract methods to be implemented by storage-specific classes
     
     /**
@@ -322,6 +330,8 @@ public abstract class AbstractStorageHelper implements AutoCloseable {
      * This is called after EMF serialization to handle storage-specific operations.
      */
     protected abstract void persistResource(String path, Resource resource) throws IOException;
+    
+    
     
     /**
      * Checks if a resource exists in storage.

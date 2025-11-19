@@ -23,6 +23,8 @@ import org.eclipse.fennec.model.atlas.mgmt.mgmtapicurio.MgmtApicurioPackage;
  * <ul>
  *   <li>{@link org.eclipse.fennec.model.atlas.mgmt.mgmtapicurio.impl.ArtifactImpl#getArtifactId <em>Artifact Id</em>}</li>
  *   <li>{@link org.eclipse.fennec.model.atlas.mgmt.mgmtapicurio.impl.ArtifactImpl#getArtifactType <em>Artifact Type</em>}</li>
+ *   <li>{@link org.eclipse.fennec.model.atlas.mgmt.mgmtapicurio.impl.ArtifactImpl#getName <em>Name</em>}</li>
+ *   <li>{@link org.eclipse.fennec.model.atlas.mgmt.mgmtapicurio.impl.ArtifactImpl#getDescription <em>Description</em>}</li>
  * </ul>
  *
  * @generated
@@ -67,6 +69,46 @@ public class ArtifactImpl extends MinimalEObjectImpl.Container implements Artifa
 	 * @ordered
 	 */
 	protected ArtifactType artifactType = ARTIFACT_TYPE_EDEFAULT;
+
+	/**
+	 * The default value of the '{@link #getName() <em>Name</em>}' attribute.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @see #getName()
+	 * @generated
+	 * @ordered
+	 */
+	protected static final String NAME_EDEFAULT = null;
+
+	/**
+	 * The cached value of the '{@link #getName() <em>Name</em>}' attribute.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @see #getName()
+	 * @generated
+	 * @ordered
+	 */
+	protected String name = NAME_EDEFAULT;
+
+	/**
+	 * The default value of the '{@link #getDescription() <em>Description</em>}' attribute.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @see #getDescription()
+	 * @generated
+	 * @ordered
+	 */
+	protected static final String DESCRIPTION_EDEFAULT = null;
+
+	/**
+	 * The cached value of the '{@link #getDescription() <em>Description</em>}' attribute.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @see #getDescription()
+	 * @generated
+	 * @ordered
+	 */
+	protected String description = DESCRIPTION_EDEFAULT;
 
 	/**
 	 * <!-- begin-user-doc -->
@@ -139,12 +181,62 @@ public class ArtifactImpl extends MinimalEObjectImpl.Container implements Artifa
 	 * @generated
 	 */
 	@Override
+	public String getName() {
+		return name;
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
+	public void setName(String newName) {
+		String oldName = name;
+		name = newName;
+		if (eNotificationRequired())
+			eNotify(new ENotificationImpl(this, Notification.SET, MgmtApicurioPackage.ARTIFACT__NAME, oldName, name));
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
+	public String getDescription() {
+		return description;
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
+	public void setDescription(String newDescription) {
+		String oldDescription = description;
+		description = newDescription;
+		if (eNotificationRequired())
+			eNotify(new ENotificationImpl(this, Notification.SET, MgmtApicurioPackage.ARTIFACT__DESCRIPTION, oldDescription, description));
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
 	public Object eGet(int featureID, boolean resolve, boolean coreType) {
 		switch (featureID) {
 			case MgmtApicurioPackage.ARTIFACT__ARTIFACT_ID:
 				return getArtifactId();
 			case MgmtApicurioPackage.ARTIFACT__ARTIFACT_TYPE:
 				return getArtifactType();
+			case MgmtApicurioPackage.ARTIFACT__NAME:
+				return getName();
+			case MgmtApicurioPackage.ARTIFACT__DESCRIPTION:
+				return getDescription();
 		}
 		return super.eGet(featureID, resolve, coreType);
 	}
@@ -162,6 +254,12 @@ public class ArtifactImpl extends MinimalEObjectImpl.Container implements Artifa
 				return;
 			case MgmtApicurioPackage.ARTIFACT__ARTIFACT_TYPE:
 				setArtifactType((ArtifactType)newValue);
+				return;
+			case MgmtApicurioPackage.ARTIFACT__NAME:
+				setName((String)newValue);
+				return;
+			case MgmtApicurioPackage.ARTIFACT__DESCRIPTION:
+				setDescription((String)newValue);
 				return;
 		}
 		super.eSet(featureID, newValue);
@@ -181,6 +279,12 @@ public class ArtifactImpl extends MinimalEObjectImpl.Container implements Artifa
 			case MgmtApicurioPackage.ARTIFACT__ARTIFACT_TYPE:
 				setArtifactType(ARTIFACT_TYPE_EDEFAULT);
 				return;
+			case MgmtApicurioPackage.ARTIFACT__NAME:
+				setName(NAME_EDEFAULT);
+				return;
+			case MgmtApicurioPackage.ARTIFACT__DESCRIPTION:
+				setDescription(DESCRIPTION_EDEFAULT);
+				return;
 		}
 		super.eUnset(featureID);
 	}
@@ -197,6 +301,10 @@ public class ArtifactImpl extends MinimalEObjectImpl.Container implements Artifa
 				return ARTIFACT_ID_EDEFAULT == null ? artifactId != null : !ARTIFACT_ID_EDEFAULT.equals(artifactId);
 			case MgmtApicurioPackage.ARTIFACT__ARTIFACT_TYPE:
 				return artifactType != ARTIFACT_TYPE_EDEFAULT;
+			case MgmtApicurioPackage.ARTIFACT__NAME:
+				return NAME_EDEFAULT == null ? name != null : !NAME_EDEFAULT.equals(name);
+			case MgmtApicurioPackage.ARTIFACT__DESCRIPTION:
+				return DESCRIPTION_EDEFAULT == null ? description != null : !DESCRIPTION_EDEFAULT.equals(description);
 		}
 		return super.eIsSet(featureID);
 	}
@@ -215,6 +323,10 @@ public class ArtifactImpl extends MinimalEObjectImpl.Container implements Artifa
 		result.append(artifactId);
 		result.append(", artifactType: ");
 		result.append(artifactType);
+		result.append(", name: ");
+		result.append(name);
+		result.append(", description: ");
+		result.append(description);
 		result.append(')');
 		return result.toString();
 	}

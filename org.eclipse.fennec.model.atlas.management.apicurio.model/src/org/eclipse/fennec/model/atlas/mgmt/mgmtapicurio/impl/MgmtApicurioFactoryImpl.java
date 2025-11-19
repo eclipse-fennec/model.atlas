@@ -58,10 +58,11 @@ public class MgmtApicurioFactoryImpl extends EFactoryImpl implements MgmtApicuri
 	public EObject create(EClass eClass) {
 		switch (eClass.getClassifierID()) {
 			case MgmtApicurioPackage.ARTIFACT: return createArtifact();
-			case MgmtApicurioPackage.SIMPLE_ARTIFACT: return createSimpleArtifact();
-			case MgmtApicurioPackage.VERSIONED_ARTIFACT: return createVersionedArtifact();
+			case MgmtApicurioPackage.CREATE_ARTIFACT: return createCreateArtifact();
+			case MgmtApicurioPackage.CREATE_ARTIFACT_VERSION: return createCreateArtifactVersion();
 			case MgmtApicurioPackage.CONTENT: return createContent();
-			case MgmtApicurioPackage.FIRST_VERSION: return createFirstVersion();
+			case MgmtApicurioPackage.VERSION: return createVersion();
+			case MgmtApicurioPackage.ARTIFACT_REFERENCE: return createArtifactReference();
 			default:
 				throw new IllegalArgumentException("The class '" + eClass.getName() + "' is not a valid classifier");
 		}
@@ -114,9 +115,9 @@ public class MgmtApicurioFactoryImpl extends EFactoryImpl implements MgmtApicuri
 	 * @generated
 	 */
 	@Override
-	public SimpleArtifact createSimpleArtifact() {
-		SimpleArtifactImpl simpleArtifact = new SimpleArtifactImpl();
-		return simpleArtifact;
+	public CreateArtifact createCreateArtifact() {
+		CreateArtifactImpl createArtifact = new CreateArtifactImpl();
+		return createArtifact;
 	}
 
 	/**
@@ -125,9 +126,9 @@ public class MgmtApicurioFactoryImpl extends EFactoryImpl implements MgmtApicuri
 	 * @generated
 	 */
 	@Override
-	public VersionedArtifact createVersionedArtifact() {
-		VersionedArtifactImpl versionedArtifact = new VersionedArtifactImpl();
-		return versionedArtifact;
+	public CreateArtifactVersion createCreateArtifactVersion() {
+		CreateArtifactVersionImpl createArtifactVersion = new CreateArtifactVersionImpl();
+		return createArtifactVersion;
 	}
 
 	/**
@@ -147,9 +148,20 @@ public class MgmtApicurioFactoryImpl extends EFactoryImpl implements MgmtApicuri
 	 * @generated
 	 */
 	@Override
-	public FirstVersion createFirstVersion() {
-		FirstVersionImpl firstVersion = new FirstVersionImpl();
-		return firstVersion;
+	public Version createVersion() {
+		VersionImpl version = new VersionImpl();
+		return version;
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
+	public ArtifactReference createArtifactReference() {
+		ArtifactReferenceImpl artifactReference = new ArtifactReferenceImpl();
+		return artifactReference;
 	}
 
 	/**

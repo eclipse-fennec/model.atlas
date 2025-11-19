@@ -14,6 +14,7 @@
 package org.eclipse.fennec.model.atlas.management.apicurio.tests;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -93,7 +94,7 @@ public class EObjectApicurioStorageServiceTest {
 	@SuppressWarnings({"rawtypes", "unchecked"})
 	@Test
 	@DefaultApicurioStorageConfiguration
-	public void testStoreAndRetrieveEPackageInXMI(
+	public void testStoreAndRetrieveEPackageInJson(
 			@InjectService(cardinality = 0, filter = "(storage.backend=apicurio)")
 			ServiceAware<EObjectStorageService> serviceAware) throws Exception {
 		assertNotNull(serviceAware);
@@ -112,7 +113,7 @@ public class EObjectApicurioStorageServiceTest {
 		metadata.setUploadUser("testUser");
 		metadata.setUploadTime(Instant.now());
 		metadata.setSourceChannel("testChannel");
-		metadata.setContentHash("testhash1234");
+		metadata.setContentHash("testhash123");
 		metadata.setVersion("1.0.0");
 		
 		// Specify .xmi extension for EPackage
@@ -120,17 +121,13 @@ public class EObjectApicurioStorageServiceTest {
 		metadata.getProperties().put("content.type", "application/json");
 
 		// Store the package
-		Promise<String> storePromise = storageService.storeObject("test-id-1234", testPackage, metadata);
+		Promise<String> storePromise = storageService.storeObject("test-id-123", testPackage, metadata);
 		String storageId = storePromise.getValue();
 
 		assertNotNull(storageId);
 		assertEquals("test-id-123", storageId);
 
-		// Verify files were created
-//		File ecoreFile = new File(tempDir.toFile(), storageId + ".ecore");
-//		File metadataFile = new File(tempDir.toFile(), storageId + ".metadata.xmi");
-//		assertTrue(ecoreFile.exists(), "Ecore file should exist");
-//		assertTrue(metadataFile.exists(), "Metadata file should exist");
+		// Verify artifacts were created
 //
 //		// Retrieve the package
 //		Promise<EObject> retrievePromise = storageService.retrieveObject(storageId);
@@ -141,8 +138,8 @@ public class EObjectApicurioStorageServiceTest {
 //		assertEquals("TestPackage", retrievedPackage.getName());
 //		assertEquals("test", retrievedPackage.getNsPrefix());
 //		assertEquals("http://test/1.0", retrievedPackage.getNsURI());
-//
-//		// Retrieve metadata
+////
+////		// Retrieve metadata
 //		Promise<ObjectMetadata> metadataPromise = storageService.retrieveMetadata(storageId);
 //		ObjectMetadata retrievedMetadata = metadataPromise.getValue();
 //
@@ -152,6 +149,58 @@ public class EObjectApicurioStorageServiceTest {
 //		assertEquals("testhash123", retrievedMetadata.getContentHash());
 
 	}
+	
+	@SuppressWarnings({"rawtypes", "unchecked"})
+	@Test
+	@DefaultApicurioStorageConfiguration
+	public void testExists(
+			@InjectService(cardinality = 0, filter = "(storage.backend=apicurio)")
+			ServiceAware<EObjectStorageService> serviceAware) throws Exception {
+		assertNotNull(serviceAware);
+
+		EObjectStorageService<EObject> storageService = (EObjectStorageService<EObject>) serviceAware.waitForService(5000L);
+		assertNotNull(storageService, "Storage service should be available");
+
+		// Test non-existent object
+		Boolean existsBefore = storageService.exists("non-existent-id");
+		assertFalse(existsBefore, "Non-existent object should not exist");
+
+		// Store an object
+		EPackage testPackage = EcoreFactory.eINSTANCE.createEPackage();
+		testPackage.setName("ExistsTest");
+
+		ObjectMetadata metadata = ManagementFactory.eINSTANCE.createObjectMetadata();
+		metadata.setUploadUser("testUser");
+		metadata.setSourceChannel("testChannel");
+		metadata.setContentHash("testHash");
+		metadata.setObjectType("EPackage");
+		metadata.setUploadTime(Instant.now());
+		metadata.getProperties().put("file.extension", ".json");
+
+		Promise<String> storePromise = storageService.storeObject("exists-test-id", testPackage, metadata);
+		String storageId = storePromise.getValue();
+
+		// Test existing object
+		Boolean existsAfter = storageService.exists(storageId);
+		assertTrue(existsAfter, "Stored object should exist");
+
+		// Delete the object
+		Promise<Boolean> deletePromise = storageService.deleteObject(storageId);
+		deletePromise.getValue();
+
+		// Test after deletion
+		Boolean existsAfterDelete = storageService.exists(storageId);
+		assertFalse(existsAfterDelete, "Deleted object should not exist");
+
+		// Test with null and empty IDs
+		Boolean existsNull = storageService.exists(null);
+		assertFalse(existsNull, "Null ID should return false");
+
+		Boolean existsEmpty = storageService.exists("");
+		assertFalse(existsEmpty, "Empty ID should return false");
+
+	}
+
 
 
 }

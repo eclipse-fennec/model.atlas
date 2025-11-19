@@ -49,7 +49,89 @@ public enum ArtifactType implements Enumerator {
 	 * @generated
 	 * @ordered
 	 */
-	XSD(2, "XSD", "XSD");
+	XSD(2, "XSD", "XSD"),
+
+	/**
+	 * The '<em><b>ASYNCAPI</b></em>' literal object.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @see #ASYNCAPI_VALUE
+	 * @generated
+	 * @ordered
+	 */
+	ASYNCAPI(3, "ASYNCAPI", "ASYNCAPI"),
+
+	/**
+	 * The '<em><b>AVRO</b></em>' literal object.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * <!-- begin-model-doc -->
+	 * Apache Avro schema
+	 * <!-- end-model-doc -->
+	 * @see #AVRO_VALUE
+	 * @generated
+	 * @ordered
+	 */
+	AVRO(4, "AVRO", "AVRO"),
+
+	/**
+	 * The '<em><b>GRAPHQL</b></em>' literal object.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @see #GRAPHQL_VALUE
+	 * @generated
+	 * @ordered
+	 */
+	GRAPHQL(5, "GRAPHQL", "GRAPHQL"),
+
+	/**
+	 * The '<em><b>KCONNECT</b></em>' literal object.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * <!-- begin-model-doc -->
+	 * Apache Kafka Connect schema
+	 * <!-- end-model-doc -->
+	 * @see #KCONNECT_VALUE
+	 * @generated
+	 * @ordered
+	 */
+	KCONNECT(6, "KCONNECT", "KCONNECT"),
+
+	/**
+	 * The '<em><b>OPENAPI</b></em>' literal object.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @see #OPENAPI_VALUE
+	 * @generated
+	 * @ordered
+	 */
+	OPENAPI(7, "OPENAPI", "OPENAPI"),
+
+	/**
+	 * The '<em><b>PROTOBUF</b></em>' literal object.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * <!-- begin-model-doc -->
+	 * Google protocol buffers schema
+	 * <!-- end-model-doc -->
+	 * @see #PROTOBUF_VALUE
+	 * @generated
+	 * @ordered
+	 */
+	PROTOBUF(8, "PROTOBUF", "PROTOBUF"),
+
+	/**
+	 * The '<em><b>WSDL</b></em>' literal object.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * <!-- begin-model-doc -->
+	 * Web Service Definition Language
+	 * <!-- end-model-doc -->
+	 * @see #WSDL_VALUE
+	 * @generated
+	 * @ordered
+	 */
+	WSDL(9, "WSDL", "WSDL");
 
 	/**
 	 * The '<em><b>XML</b></em>' literal value.
@@ -85,6 +167,95 @@ public enum ArtifactType implements Enumerator {
 	public static final int XSD_VALUE = 2;
 
 	/**
+	 * The '<em><b>ASYNCAPI</b></em>' literal value.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @see #ASYNCAPI
+	 * @model
+	 * @generated
+	 * @ordered
+	 */
+	public static final int ASYNCAPI_VALUE = 3;
+
+	/**
+	 * The '<em><b>AVRO</b></em>' literal value.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * <!-- begin-model-doc -->
+	 * Apache Avro schema
+	 * <!-- end-model-doc -->
+	 * @see #AVRO
+	 * @model
+	 * @generated
+	 * @ordered
+	 */
+	public static final int AVRO_VALUE = 4;
+
+	/**
+	 * The '<em><b>GRAPHQL</b></em>' literal value.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @see #GRAPHQL
+	 * @model
+	 * @generated
+	 * @ordered
+	 */
+	public static final int GRAPHQL_VALUE = 5;
+
+	/**
+	 * The '<em><b>KCONNECT</b></em>' literal value.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * <!-- begin-model-doc -->
+	 * Apache Kafka Connect schema
+	 * <!-- end-model-doc -->
+	 * @see #KCONNECT
+	 * @model
+	 * @generated
+	 * @ordered
+	 */
+	public static final int KCONNECT_VALUE = 6;
+
+	/**
+	 * The '<em><b>OPENAPI</b></em>' literal value.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @see #OPENAPI
+	 * @model
+	 * @generated
+	 * @ordered
+	 */
+	public static final int OPENAPI_VALUE = 7;
+
+	/**
+	 * The '<em><b>PROTOBUF</b></em>' literal value.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * <!-- begin-model-doc -->
+	 * Google protocol buffers schema
+	 * <!-- end-model-doc -->
+	 * @see #PROTOBUF
+	 * @model
+	 * @generated
+	 * @ordered
+	 */
+	public static final int PROTOBUF_VALUE = 8;
+
+	/**
+	 * The '<em><b>WSDL</b></em>' literal value.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * <!-- begin-model-doc -->
+	 * Web Service Definition Language
+	 * <!-- end-model-doc -->
+	 * @see #WSDL
+	 * @model
+	 * @generated
+	 * @ordered
+	 */
+	public static final int WSDL_VALUE = 9;
+
+	/**
 	 * An array of all the '<em><b>Artifact Type</b></em>' enumerators.
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
@@ -95,6 +266,13 @@ public enum ArtifactType implements Enumerator {
 			XML,
 			JSON,
 			XSD,
+			ASYNCAPI,
+			AVRO,
+			GRAPHQL,
+			KCONNECT,
+			OPENAPI,
+			PROTOBUF,
+			WSDL,
 		};
 
 	/**
@@ -154,6 +332,13 @@ public enum ArtifactType implements Enumerator {
 			case XML_VALUE: return XML;
 			case JSON_VALUE: return JSON;
 			case XSD_VALUE: return XSD;
+			case ASYNCAPI_VALUE: return ASYNCAPI;
+			case AVRO_VALUE: return AVRO;
+			case GRAPHQL_VALUE: return GRAPHQL;
+			case KCONNECT_VALUE: return KCONNECT;
+			case OPENAPI_VALUE: return OPENAPI;
+			case PROTOBUF_VALUE: return PROTOBUF;
+			case WSDL_VALUE: return WSDL;
 		}
 		return null;
 	}

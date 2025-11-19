@@ -80,14 +80,16 @@ public class EObjectApicurioStorageService extends AbstractEObjectStorageService
 	}
 
 	public static final String PID = "ApicurioObjectStorage";
-	private String apicurioURL;
-	private String storageRole;
+
+
+	private Config config;
 
 	@Activate
 	public void activate(BundleContext bundleContext, Config config) throws Exception {
 		this.bctx = bundleContext;
-		this.apicurioURL = constructApicurioURL(config.base_url(), config.artifact_group_id());
-		this.storageRole = config.storage_role();    
+		this.config = config;
+//		this.apicurioURL = constructApicurioURL(config.base_url(), config.artifact_group_id());
+//		this.storageRole = config.storage_role();    
 
 		// Call parent activation
 		activateStorageService();
@@ -104,7 +106,7 @@ public class EObjectApicurioStorageService extends AbstractEObjectStorageService
 	 */
 	@Override
 	protected AbstractStorageHelper createStorageHelper() throws Exception {
-		return new ApicurioStorageHelper(resourceSet, apicurioURL);
+		return new ApicurioStorageHelper(resourceSet, config);
 	}
 
 	/* 
@@ -122,7 +124,7 @@ public class EObjectApicurioStorageService extends AbstractEObjectStorageService
 	 */
 	@Override
 	protected String getStorageRole() {
-		return storageRole;
+		return config.storage_role();
 	}
 
 	/* 
@@ -134,7 +136,5 @@ public class EObjectApicurioStorageService extends AbstractEObjectStorageService
 		return registry;
 	}
 
-	private String constructApicurioURL(String baseURL, String gourpId) {
-		return baseURL.concat("groups/").concat(gourpId).concat("/artifacts");
-	}
+	
 }

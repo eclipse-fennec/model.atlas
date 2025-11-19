@@ -12,29 +12,88 @@
     <details key="resource" value="XMI"/>
   </eAnnotations>
   <eClassifiers xsi:type="ecore:EClass" name="Artifact">
-    <eStructuralFeatures xsi:type="ecore:EAttribute" name="artifactId" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="artifactId" lowerBound="1"
+        eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
     <eStructuralFeatures xsi:type="ecore:EAttribute" name="artifactType" eType="#//ArtifactType"/>
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="name" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="description" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
   </eClassifiers>
-  <eClassifiers xsi:type="ecore:EClass" name="SimpleArtifact" eSuperTypes="#//Artifact">
-    <eStructuralFeatures xsi:type="ecore:EReference" name="content" eType="#//Content"
+  <eClassifiers xsi:type="ecore:EClass" name="CreateArtifact" eSuperTypes="#//Artifact">
+    <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+      <details key="documentation" value="When you first create an artifact in Apicurio, this is the object you should use."/>
+    </eAnnotations>
+    <eStructuralFeatures xsi:type="ecore:EReference" name="firstVersion" eType="#//Version"
         containment="true"/>
   </eClassifiers>
-  <eClassifiers xsi:type="ecore:EClass" name="VersionedArtifact" eSuperTypes="#//Artifact">
-    <eStructuralFeatures xsi:type="ecore:EReference" name="firstVersion" eType="#//FirstVersion"
-        containment="true"/>
+  <eClassifiers xsi:type="ecore:EClass" name="CreateArtifactVersion" eSuperTypes="#//Version">
+    <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+      <details key="documentation" value="Creates a new version of the artifact by uploading new content."/>
+    </eAnnotations>
   </eClassifiers>
   <eClassifiers xsi:type="ecore:EClass" name="Content">
-    <eStructuralFeatures xsi:type="ecore:EAttribute" name="contentType" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
-    <eStructuralFeatures xsi:type="ecore:EAttribute" name="content" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="contentType" lowerBound="1"
+        eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="The content-type, such as application/json or text/xml."/>
+      </eAnnotations>
+    </eStructuralFeatures>
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="content" lowerBound="1"
+        eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="Raw content of the artifact version or a valid (and accessible) URL where the content can be found."/>
+      </eAnnotations>
+    </eStructuralFeatures>
+    <eStructuralFeatures xsi:type="ecore:EReference" name="references" upperBound="-1"
+        eType="#//ArtifactReference" containment="true"/>
   </eClassifiers>
-  <eClassifiers xsi:type="ecore:EClass" name="FirstVersion">
+  <eClassifiers xsi:type="ecore:EClass" name="Version">
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="version" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="A single version of an artifact. Can be provided by the client when creating a new version, or it can be server-generated. The value can be any string unique to the artifact, but it is recommended to use a simple integer or a semver value."/>
+      </eAnnotations>
+    </eStructuralFeatures>
+    <eStructuralFeatures xsi:type="ecore:EReference" name="content" lowerBound="1"
+        eType="#//Content" containment="true"/>
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="name" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="description" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="branches" upperBound="-1"
+        eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="isDraft" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EBoolean"/>
+  </eClassifiers>
+  <eClassifiers xsi:type="ecore:EClass" name="ArtifactReference">
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="groupId" lowerBound="1"
+        eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="artifactId" lowerBound="1"
+        eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="name" lowerBound="1" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
     <eStructuralFeatures xsi:type="ecore:EAttribute" name="version" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
-    <eStructuralFeatures xsi:type="ecore:EReference" name="content" eType="#//Content"
-        containment="true"/>
   </eClassifiers>
   <eClassifiers xsi:type="ecore:EEnum" name="ArtifactType">
     <eLiterals name="XML"/>
     <eLiterals name="JSON" value="1"/>
     <eLiterals name="XSD" value="2"/>
+    <eLiterals name="ASYNCAPI" value="3"/>
+    <eLiterals name="AVRO" value="4">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="Apache Avro schema"/>
+      </eAnnotations>
+    </eLiterals>
+    <eLiterals name="GRAPHQL" value="5"/>
+    <eLiterals name="KCONNECT" value="6">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="Apache Kafka Connect schema"/>
+      </eAnnotations>
+    </eLiterals>
+    <eLiterals name="OPENAPI" value="7"/>
+    <eLiterals name="PROTOBUF" value="8">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="Google protocol buffers schema"/>
+      </eAnnotations>
+    </eLiterals>
+    <eLiterals name="WSDL" value="9">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="Web Service Definition Language"/>
+      </eAnnotations>
+    </eLiterals>
   </eClassifiers>
 </ecore:EPackage>

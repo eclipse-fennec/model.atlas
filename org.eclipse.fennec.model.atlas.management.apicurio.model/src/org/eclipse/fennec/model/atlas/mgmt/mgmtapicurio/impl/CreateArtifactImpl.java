@@ -10,40 +10,40 @@ import org.eclipse.emf.ecore.InternalEObject;
 
 import org.eclipse.emf.ecore.impl.ENotificationImpl;
 
-import org.eclipse.fennec.model.atlas.mgmt.mgmtapicurio.Content;
+import org.eclipse.fennec.model.atlas.mgmt.mgmtapicurio.CreateArtifact;
 import org.eclipse.fennec.model.atlas.mgmt.mgmtapicurio.MgmtApicurioPackage;
-import org.eclipse.fennec.model.atlas.mgmt.mgmtapicurio.SimpleArtifact;
+import org.eclipse.fennec.model.atlas.mgmt.mgmtapicurio.Version;
 
 /**
  * <!-- begin-user-doc -->
- * An implementation of the model object '<em><b>Simple Artifact</b></em>'.
+ * An implementation of the model object '<em><b>Create Artifact</b></em>'.
  * <!-- end-user-doc -->
  * <p>
  * The following features are implemented:
  * </p>
  * <ul>
- *   <li>{@link org.eclipse.fennec.model.atlas.mgmt.mgmtapicurio.impl.SimpleArtifactImpl#getContent <em>Content</em>}</li>
+ *   <li>{@link org.eclipse.fennec.model.atlas.mgmt.mgmtapicurio.impl.CreateArtifactImpl#getFirstVersion <em>First Version</em>}</li>
  * </ul>
  *
  * @generated
  */
-public class SimpleArtifactImpl extends ArtifactImpl implements SimpleArtifact {
+public class CreateArtifactImpl extends ArtifactImpl implements CreateArtifact {
 	/**
-	 * The cached value of the '{@link #getContent() <em>Content</em>}' containment reference.
+	 * The cached value of the '{@link #getFirstVersion() <em>First Version</em>}' containment reference.
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
-	 * @see #getContent()
+	 * @see #getFirstVersion()
 	 * @generated
 	 * @ordered
 	 */
-	protected Content content;
+	protected Version firstVersion;
 
 	/**
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
 	 * @generated
 	 */
-	protected SimpleArtifactImpl() {
+	protected CreateArtifactImpl() {
 		super();
 	}
 
@@ -54,7 +54,7 @@ public class SimpleArtifactImpl extends ArtifactImpl implements SimpleArtifact {
 	 */
 	@Override
 	protected EClass eStaticClass() {
-		return MgmtApicurioPackage.Literals.SIMPLE_ARTIFACT;
+		return MgmtApicurioPackage.Literals.CREATE_ARTIFACT;
 	}
 
 	/**
@@ -63,8 +63,8 @@ public class SimpleArtifactImpl extends ArtifactImpl implements SimpleArtifact {
 	 * @generated
 	 */
 	@Override
-	public Content getContent() {
-		return content;
+	public Version getFirstVersion() {
+		return firstVersion;
 	}
 
 	/**
@@ -72,11 +72,11 @@ public class SimpleArtifactImpl extends ArtifactImpl implements SimpleArtifact {
 	 * <!-- end-user-doc -->
 	 * @generated
 	 */
-	public NotificationChain basicSetContent(Content newContent, NotificationChain msgs) {
-		Content oldContent = content;
-		content = newContent;
+	public NotificationChain basicSetFirstVersion(Version newFirstVersion, NotificationChain msgs) {
+		Version oldFirstVersion = firstVersion;
+		firstVersion = newFirstVersion;
 		if (eNotificationRequired()) {
-			ENotificationImpl notification = new ENotificationImpl(this, Notification.SET, MgmtApicurioPackage.SIMPLE_ARTIFACT__CONTENT, oldContent, newContent);
+			ENotificationImpl notification = new ENotificationImpl(this, Notification.SET, MgmtApicurioPackage.CREATE_ARTIFACT__FIRST_VERSION, oldFirstVersion, newFirstVersion);
 			if (msgs == null) msgs = notification; else msgs.add(notification);
 		}
 		return msgs;
@@ -88,18 +88,18 @@ public class SimpleArtifactImpl extends ArtifactImpl implements SimpleArtifact {
 	 * @generated
 	 */
 	@Override
-	public void setContent(Content newContent) {
-		if (newContent != content) {
+	public void setFirstVersion(Version newFirstVersion) {
+		if (newFirstVersion != firstVersion) {
 			NotificationChain msgs = null;
-			if (content != null)
-				msgs = ((InternalEObject)content).eInverseRemove(this, EOPPOSITE_FEATURE_BASE - MgmtApicurioPackage.SIMPLE_ARTIFACT__CONTENT, null, msgs);
-			if (newContent != null)
-				msgs = ((InternalEObject)newContent).eInverseAdd(this, EOPPOSITE_FEATURE_BASE - MgmtApicurioPackage.SIMPLE_ARTIFACT__CONTENT, null, msgs);
-			msgs = basicSetContent(newContent, msgs);
+			if (firstVersion != null)
+				msgs = ((InternalEObject)firstVersion).eInverseRemove(this, EOPPOSITE_FEATURE_BASE - MgmtApicurioPackage.CREATE_ARTIFACT__FIRST_VERSION, null, msgs);
+			if (newFirstVersion != null)
+				msgs = ((InternalEObject)newFirstVersion).eInverseAdd(this, EOPPOSITE_FEATURE_BASE - MgmtApicurioPackage.CREATE_ARTIFACT__FIRST_VERSION, null, msgs);
+			msgs = basicSetFirstVersion(newFirstVersion, msgs);
 			if (msgs != null) msgs.dispatch();
 		}
 		else if (eNotificationRequired())
-			eNotify(new ENotificationImpl(this, Notification.SET, MgmtApicurioPackage.SIMPLE_ARTIFACT__CONTENT, newContent, newContent));
+			eNotify(new ENotificationImpl(this, Notification.SET, MgmtApicurioPackage.CREATE_ARTIFACT__FIRST_VERSION, newFirstVersion, newFirstVersion));
 	}
 
 	/**
@@ -110,8 +110,8 @@ public class SimpleArtifactImpl extends ArtifactImpl implements SimpleArtifact {
 	@Override
 	public NotificationChain eInverseRemove(InternalEObject otherEnd, int featureID, NotificationChain msgs) {
 		switch (featureID) {
-			case MgmtApicurioPackage.SIMPLE_ARTIFACT__CONTENT:
-				return basicSetContent(null, msgs);
+			case MgmtApicurioPackage.CREATE_ARTIFACT__FIRST_VERSION:
+				return basicSetFirstVersion(null, msgs);
 		}
 		return super.eInverseRemove(otherEnd, featureID, msgs);
 	}
@@ -124,8 +124,8 @@ public class SimpleArtifactImpl extends ArtifactImpl implements SimpleArtifact {
 	@Override
 	public Object eGet(int featureID, boolean resolve, boolean coreType) {
 		switch (featureID) {
-			case MgmtApicurioPackage.SIMPLE_ARTIFACT__CONTENT:
-				return getContent();
+			case MgmtApicurioPackage.CREATE_ARTIFACT__FIRST_VERSION:
+				return getFirstVersion();
 		}
 		return super.eGet(featureID, resolve, coreType);
 	}
@@ -138,8 +138,8 @@ public class SimpleArtifactImpl extends ArtifactImpl implements SimpleArtifact {
 	@Override
 	public void eSet(int featureID, Object newValue) {
 		switch (featureID) {
-			case MgmtApicurioPackage.SIMPLE_ARTIFACT__CONTENT:
-				setContent((Content)newValue);
+			case MgmtApicurioPackage.CREATE_ARTIFACT__FIRST_VERSION:
+				setFirstVersion((Version)newValue);
 				return;
 		}
 		super.eSet(featureID, newValue);
@@ -153,8 +153,8 @@ public class SimpleArtifactImpl extends ArtifactImpl implements SimpleArtifact {
 	@Override
 	public void eUnset(int featureID) {
 		switch (featureID) {
-			case MgmtApicurioPackage.SIMPLE_ARTIFACT__CONTENT:
-				setContent((Content)null);
+			case MgmtApicurioPackage.CREATE_ARTIFACT__FIRST_VERSION:
+				setFirstVersion((Version)null);
 				return;
 		}
 		super.eUnset(featureID);
@@ -168,10 +168,10 @@ public class SimpleArtifactImpl extends ArtifactImpl implements SimpleArtifact {
 	@Override
 	public boolean eIsSet(int featureID) {
 		switch (featureID) {
-			case MgmtApicurioPackage.SIMPLE_ARTIFACT__CONTENT:
-				return content != null;
+			case MgmtApicurioPackage.CREATE_ARTIFACT__FIRST_VERSION:
+				return firstVersion != null;
 		}
 		return super.eIsSet(featureID);
 	}
 
-} //SimpleArtifactImpl
+} //CreateArtifactImpl
