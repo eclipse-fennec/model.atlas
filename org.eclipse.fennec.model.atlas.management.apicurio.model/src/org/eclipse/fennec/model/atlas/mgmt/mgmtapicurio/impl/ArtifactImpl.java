@@ -3,11 +3,19 @@
 package org.eclipse.fennec.model.atlas.mgmt.mgmtapicurio.impl;
 
 import org.eclipse.emf.common.notify.Notification;
+import org.eclipse.emf.common.notify.NotificationChain;
+
+import org.eclipse.emf.common.util.EMap;
 
 import org.eclipse.emf.ecore.EClass;
+import org.eclipse.emf.ecore.EStructuralFeature;
+import org.eclipse.emf.ecore.InternalEObject;
 
 import org.eclipse.emf.ecore.impl.ENotificationImpl;
 import org.eclipse.emf.ecore.impl.MinimalEObjectImpl;
+
+import org.eclipse.emf.ecore.util.EcoreEMap;
+import org.eclipse.emf.ecore.util.InternalEList;
 
 import org.eclipse.fennec.model.atlas.mgmt.mgmtapicurio.Artifact;
 import org.eclipse.fennec.model.atlas.mgmt.mgmtapicurio.ArtifactType;
@@ -25,6 +33,7 @@ import org.eclipse.fennec.model.atlas.mgmt.mgmtapicurio.MgmtApicurioPackage;
  *   <li>{@link org.eclipse.fennec.model.atlas.mgmt.mgmtapicurio.impl.ArtifactImpl#getArtifactType <em>Artifact Type</em>}</li>
  *   <li>{@link org.eclipse.fennec.model.atlas.mgmt.mgmtapicurio.impl.ArtifactImpl#getName <em>Name</em>}</li>
  *   <li>{@link org.eclipse.fennec.model.atlas.mgmt.mgmtapicurio.impl.ArtifactImpl#getDescription <em>Description</em>}</li>
+ *   <li>{@link org.eclipse.fennec.model.atlas.mgmt.mgmtapicurio.impl.ArtifactImpl#getLabels <em>Labels</em>}</li>
  * </ul>
  *
  * @generated
@@ -109,6 +118,16 @@ public class ArtifactImpl extends MinimalEObjectImpl.Container implements Artifa
 	 * @ordered
 	 */
 	protected String description = DESCRIPTION_EDEFAULT;
+
+	/**
+	 * The cached value of the '{@link #getLabels() <em>Labels</em>}' map.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @see #getLabels()
+	 * @generated
+	 * @ordered
+	 */
+	protected EMap<String, String> labels;
 
 	/**
 	 * <!-- begin-user-doc -->
@@ -227,6 +246,33 @@ public class ArtifactImpl extends MinimalEObjectImpl.Container implements Artifa
 	 * @generated
 	 */
 	@Override
+	public EMap<String, String> getLabels() {
+		if (labels == null) {
+			labels = new EcoreEMap<String,String>(MgmtApicurioPackage.Literals.LABELS, LabelsImpl.class, this, MgmtApicurioPackage.ARTIFACT__LABELS);
+		}
+		return labels;
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
+	public NotificationChain eInverseRemove(InternalEObject otherEnd, int featureID, NotificationChain msgs) {
+		switch (featureID) {
+			case MgmtApicurioPackage.ARTIFACT__LABELS:
+				return ((InternalEList<?>)getLabels()).basicRemove(otherEnd, msgs);
+		}
+		return super.eInverseRemove(otherEnd, featureID, msgs);
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
 	public Object eGet(int featureID, boolean resolve, boolean coreType) {
 		switch (featureID) {
 			case MgmtApicurioPackage.ARTIFACT__ARTIFACT_ID:
@@ -237,6 +283,9 @@ public class ArtifactImpl extends MinimalEObjectImpl.Container implements Artifa
 				return getName();
 			case MgmtApicurioPackage.ARTIFACT__DESCRIPTION:
 				return getDescription();
+			case MgmtApicurioPackage.ARTIFACT__LABELS:
+				if (coreType) return getLabels();
+				else return getLabels().map();
 		}
 		return super.eGet(featureID, resolve, coreType);
 	}
@@ -260,6 +309,9 @@ public class ArtifactImpl extends MinimalEObjectImpl.Container implements Artifa
 				return;
 			case MgmtApicurioPackage.ARTIFACT__DESCRIPTION:
 				setDescription((String)newValue);
+				return;
+			case MgmtApicurioPackage.ARTIFACT__LABELS:
+				((EStructuralFeature.Setting)getLabels()).set(newValue);
 				return;
 		}
 		super.eSet(featureID, newValue);
@@ -285,6 +337,9 @@ public class ArtifactImpl extends MinimalEObjectImpl.Container implements Artifa
 			case MgmtApicurioPackage.ARTIFACT__DESCRIPTION:
 				setDescription(DESCRIPTION_EDEFAULT);
 				return;
+			case MgmtApicurioPackage.ARTIFACT__LABELS:
+				getLabels().clear();
+				return;
 		}
 		super.eUnset(featureID);
 	}
@@ -305,6 +360,8 @@ public class ArtifactImpl extends MinimalEObjectImpl.Container implements Artifa
 				return NAME_EDEFAULT == null ? name != null : !NAME_EDEFAULT.equals(name);
 			case MgmtApicurioPackage.ARTIFACT__DESCRIPTION:
 				return DESCRIPTION_EDEFAULT == null ? description != null : !DESCRIPTION_EDEFAULT.equals(description);
+			case MgmtApicurioPackage.ARTIFACT__LABELS:
+				return labels != null && !labels.isEmpty();
 		}
 		return super.eIsSet(featureID);
 	}

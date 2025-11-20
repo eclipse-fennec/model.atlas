@@ -115,38 +115,40 @@ public class EObjectApicurioStorageServiceTest {
 		metadata.setSourceChannel("testChannel");
 		metadata.setContentHash("testhash123");
 		metadata.setVersion("1.0.0");
+		metadata.setObjectRef(testPackage);
+		metadata.setObjectName("test-id-123");
 		
 		// Specify .xmi extension for EPackage
 		metadata.getProperties().put("file.extension", ".json");
 		metadata.getProperties().put("content.type", "application/json");
 
 		// Store the package
-		Promise<String> storePromise = storageService.storeObject("test-id-123", testPackage, metadata);
+		Promise<String> storePromise = storageService.storeObject("default:draft:test-id-123.json", testPackage, metadata);
 		String storageId = storePromise.getValue();
 
 		assertNotNull(storageId);
-		assertEquals("test-id-123", storageId);
+		assertEquals("default:draft:test-id-123.json", storageId);
 
 		// Verify artifacts were created
 //
 //		// Retrieve the package
-//		Promise<EObject> retrievePromise = storageService.retrieveObject(storageId);
-//		EPackage retrievedPackage = (EPackage) retrievePromise.getValue();
+		Promise<EObject> retrievePromise = storageService.retrieveObject(storageId);
+		EPackage retrievedPackage = (EPackage) retrievePromise.getValue();
+
+		assertNotEquals(testPackage, retrievedPackage);
+		assertNotNull(retrievedPackage);
+		assertEquals("TestPackage", retrievedPackage.getName());
+		assertEquals("test", retrievedPackage.getNsPrefix());
+		assertEquals("http://test/1.0", retrievedPackage.getNsURI());
 //
-//		assertNotEquals(testPackage, retrievedPackage);
-//		assertNotNull(retrievedPackage);
-//		assertEquals("TestPackage", retrievedPackage.getName());
-//		assertEquals("test", retrievedPackage.getNsPrefix());
-//		assertEquals("http://test/1.0", retrievedPackage.getNsURI());
-////
-////		// Retrieve metadata
-//		Promise<ObjectMetadata> metadataPromise = storageService.retrieveMetadata(storageId);
-//		ObjectMetadata retrievedMetadata = metadataPromise.getValue();
-//
-//		assertNotNull(retrievedMetadata);
-//		assertEquals("testUser", retrievedMetadata.getUploadUser());
-//		assertEquals("testChannel", retrievedMetadata.getSourceChannel());
-//		assertEquals("testhash123", retrievedMetadata.getContentHash());
+//		// Retrieve metadata
+		Promise<ObjectMetadata> metadataPromise = storageService.retrieveMetadata(storageId);
+		ObjectMetadata retrievedMetadata = metadataPromise.getValue();
+
+		assertNotNull(retrievedMetadata);
+		assertEquals("testUser", retrievedMetadata.getUploadUser());
+		assertEquals("testChannel", retrievedMetadata.getSourceChannel());
+		assertEquals("testhash123", retrievedMetadata.getContentHash());
 
 	}
 	
@@ -186,7 +188,8 @@ public class EObjectApicurioStorageServiceTest {
 
 		// Delete the object
 		Promise<Boolean> deletePromise = storageService.deleteObject(storageId);
-		deletePromise.getValue();
+		Boolean deleted = deletePromise.getValue();
+		assertTrue(deleted);
 
 		// Test after deletion
 		Boolean existsAfterDelete = storageService.exists(storageId);

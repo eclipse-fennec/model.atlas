@@ -20,11 +20,18 @@
       <genEnumLiterals ecoreEnumLiteral="mgmt-apicurio.ecore#//ArtifactType/PROTOBUF"/>
       <genEnumLiterals ecoreEnumLiteral="mgmt-apicurio.ecore#//ArtifactType/WSDL"/>
     </genEnums>
+    <genEnums typeSafeEnumCompatible="false" ecoreEnum="mgmt-apicurio.ecore#//VersionStateType">
+      <genEnumLiterals ecoreEnumLiteral="mgmt-apicurio.ecore#//VersionStateType/ENABLED"/>
+      <genEnumLiterals ecoreEnumLiteral="mgmt-apicurio.ecore#//VersionStateType/DISABLED"/>
+      <genEnumLiterals ecoreEnumLiteral="mgmt-apicurio.ecore#//VersionStateType/DEPRECATED"/>
+      <genEnumLiterals ecoreEnumLiteral="mgmt-apicurio.ecore#//VersionStateType/DRAFT"/>
+    </genEnums>
     <genClasses ecoreClass="mgmt-apicurio.ecore#//Artifact">
       <genFeatures createChild="false" ecoreFeature="ecore:EAttribute mgmt-apicurio.ecore#//Artifact/artifactId"/>
       <genFeatures createChild="false" ecoreFeature="ecore:EAttribute mgmt-apicurio.ecore#//Artifact/artifactType"/>
       <genFeatures createChild="false" ecoreFeature="ecore:EAttribute mgmt-apicurio.ecore#//Artifact/name"/>
       <genFeatures createChild="false" ecoreFeature="ecore:EAttribute mgmt-apicurio.ecore#//Artifact/description"/>
+      <genFeatures property="None" children="true" createChild="true" ecoreFeature="ecore:EReference mgmt-apicurio.ecore#//Artifact/labels"/>
     </genClasses>
     <genClasses ecoreClass="mgmt-apicurio.ecore#//CreateArtifact">
       <genFeatures property="None" children="true" createChild="true" ecoreFeature="ecore:EReference mgmt-apicurio.ecore#//CreateArtifact/firstVersion"/>
@@ -42,12 +49,38 @@
       <genFeatures createChild="false" ecoreFeature="ecore:EAttribute mgmt-apicurio.ecore#//Version/description"/>
       <genFeatures createChild="false" ecoreFeature="ecore:EAttribute mgmt-apicurio.ecore#//Version/branches"/>
       <genFeatures createChild="false" ecoreFeature="ecore:EAttribute mgmt-apicurio.ecore#//Version/isDraft"/>
+      <genFeatures property="None" children="true" createChild="true" ecoreFeature="ecore:EReference mgmt-apicurio.ecore#//Version/labels"/>
     </genClasses>
     <genClasses ecoreClass="mgmt-apicurio.ecore#//ArtifactReference">
       <genFeatures createChild="false" ecoreFeature="ecore:EAttribute mgmt-apicurio.ecore#//ArtifactReference/groupId"/>
       <genFeatures createChild="false" ecoreFeature="ecore:EAttribute mgmt-apicurio.ecore#//ArtifactReference/artifactId"/>
       <genFeatures createChild="false" ecoreFeature="ecore:EAttribute mgmt-apicurio.ecore#//ArtifactReference/name"/>
       <genFeatures createChild="false" ecoreFeature="ecore:EAttribute mgmt-apicurio.ecore#//ArtifactReference/version"/>
+    </genClasses>
+    <genClasses ecoreClass="mgmt-apicurio.ecore#//SearchedArtifact">
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute mgmt-apicurio.ecore#//SearchedArtifact/createdOn"/>
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute mgmt-apicurio.ecore#//SearchedArtifact/owner"/>
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute mgmt-apicurio.ecore#//SearchedArtifact/modifiedOn"/>
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute mgmt-apicurio.ecore#//SearchedArtifact/modifiedBy"/>
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute mgmt-apicurio.ecore#//SearchedArtifact/groupId"/>
+    </genClasses>
+    <genClasses ecoreClass="mgmt-apicurio.ecore#//SearchResponse">
+      <genFeatures property="None" children="true" createChild="true" ecoreFeature="ecore:EReference mgmt-apicurio.ecore#//SearchResponse/artifacts"/>
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute mgmt-apicurio.ecore#//SearchResponse/count"/>
+    </genClasses>
+    <genClasses ecoreClass="mgmt-apicurio.ecore#//Labels">
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute mgmt-apicurio.ecore#//Labels/key"/>
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute mgmt-apicurio.ecore#//Labels/value"/>
+    </genClasses>
+    <genClasses ecoreClass="mgmt-apicurio.ecore#//SearchVersionResponse">
+      <genFeatures property="None" children="true" createChild="true" ecoreFeature="ecore:EReference mgmt-apicurio.ecore#//SearchVersionResponse/versions"/>
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute mgmt-apicurio.ecore#//SearchVersionResponse/count"/>
+    </genClasses>
+    <genClasses ecoreClass="mgmt-apicurio.ecore#//SearchedVersion">
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute mgmt-apicurio.ecore#//SearchedVersion/globalId"/>
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute mgmt-apicurio.ecore#//SearchedVersion/version"/>
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute mgmt-apicurio.ecore#//SearchedVersion/contentId"/>
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute mgmt-apicurio.ecore#//SearchedVersion/state"/>
     </genClasses>
   </genPackages>
 </genmodel:GenModel>

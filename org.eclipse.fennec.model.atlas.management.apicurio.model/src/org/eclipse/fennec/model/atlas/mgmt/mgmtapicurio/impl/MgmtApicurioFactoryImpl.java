@@ -2,6 +2,8 @@
  */
 package org.eclipse.fennec.model.atlas.mgmt.mgmtapicurio.impl;
 
+import java.util.Map;
+
 import org.eclipse.emf.ecore.EClass;
 import org.eclipse.emf.ecore.EDataType;
 import org.eclipse.emf.ecore.EObject;
@@ -63,6 +65,11 @@ public class MgmtApicurioFactoryImpl extends EFactoryImpl implements MgmtApicuri
 			case MgmtApicurioPackage.CONTENT: return createContent();
 			case MgmtApicurioPackage.VERSION: return createVersion();
 			case MgmtApicurioPackage.ARTIFACT_REFERENCE: return createArtifactReference();
+			case MgmtApicurioPackage.SEARCHED_ARTIFACT: return createSearchedArtifact();
+			case MgmtApicurioPackage.SEARCH_RESPONSE: return createSearchResponse();
+			case MgmtApicurioPackage.LABELS: return (EObject)createLabels();
+			case MgmtApicurioPackage.SEARCH_VERSION_RESPONSE: return createSearchVersionResponse();
+			case MgmtApicurioPackage.SEARCHED_VERSION: return createSearchedVersion();
 			default:
 				throw new IllegalArgumentException("The class '" + eClass.getName() + "' is not a valid classifier");
 		}
@@ -78,6 +85,8 @@ public class MgmtApicurioFactoryImpl extends EFactoryImpl implements MgmtApicuri
 		switch (eDataType.getClassifierID()) {
 			case MgmtApicurioPackage.ARTIFACT_TYPE:
 				return createArtifactTypeFromString(eDataType, initialValue);
+			case MgmtApicurioPackage.VERSION_STATE_TYPE:
+				return createVersionStateTypeFromString(eDataType, initialValue);
 			default:
 				throw new IllegalArgumentException("The datatype '" + eDataType.getName() + "' is not a valid classifier");
 		}
@@ -93,6 +102,8 @@ public class MgmtApicurioFactoryImpl extends EFactoryImpl implements MgmtApicuri
 		switch (eDataType.getClassifierID()) {
 			case MgmtApicurioPackage.ARTIFACT_TYPE:
 				return convertArtifactTypeToString(eDataType, instanceValue);
+			case MgmtApicurioPackage.VERSION_STATE_TYPE:
+				return convertVersionStateTypeToString(eDataType, instanceValue);
 			default:
 				throw new IllegalArgumentException("The datatype '" + eDataType.getName() + "' is not a valid classifier");
 		}
@@ -169,6 +180,60 @@ public class MgmtApicurioFactoryImpl extends EFactoryImpl implements MgmtApicuri
 	 * <!-- end-user-doc -->
 	 * @generated
 	 */
+	@Override
+	public SearchedArtifact createSearchedArtifact() {
+		SearchedArtifactImpl searchedArtifact = new SearchedArtifactImpl();
+		return searchedArtifact;
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
+	public SearchResponse createSearchResponse() {
+		SearchResponseImpl searchResponse = new SearchResponseImpl();
+		return searchResponse;
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	public Map.Entry<String, String> createLabels() {
+		LabelsImpl labels = new LabelsImpl();
+		return labels;
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
+	public SearchVersionResponse createSearchVersionResponse() {
+		SearchVersionResponseImpl searchVersionResponse = new SearchVersionResponseImpl();
+		return searchVersionResponse;
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
+	public SearchedVersion createSearchedVersion() {
+		SearchedVersionImpl searchedVersion = new SearchedVersionImpl();
+		return searchedVersion;
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
 	public ArtifactType createArtifactTypeFromString(EDataType eDataType, String initialValue) {
 		ArtifactType result = ArtifactType.get(initialValue);
 		if (result == null) throw new IllegalArgumentException("The value '" + initialValue + "' is not a valid enumerator of '" + eDataType.getName() + "'");
@@ -181,6 +246,26 @@ public class MgmtApicurioFactoryImpl extends EFactoryImpl implements MgmtApicuri
 	 * @generated
 	 */
 	public String convertArtifactTypeToString(EDataType eDataType, Object instanceValue) {
+		return instanceValue == null ? null : instanceValue.toString();
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	public VersionStateType createVersionStateTypeFromString(EDataType eDataType, String initialValue) {
+		VersionStateType result = VersionStateType.get(initialValue);
+		if (result == null) throw new IllegalArgumentException("The value '" + initialValue + "' is not a valid enumerator of '" + eDataType.getName() + "'");
+		return result;
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	public String convertVersionStateTypeToString(EDataType eDataType, Object instanceValue) {
 		return instanceValue == null ? null : instanceValue.toString();
 	}
 

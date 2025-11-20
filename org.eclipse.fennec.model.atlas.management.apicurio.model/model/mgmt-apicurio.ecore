@@ -17,6 +17,8 @@
     <eStructuralFeatures xsi:type="ecore:EAttribute" name="artifactType" eType="#//ArtifactType"/>
     <eStructuralFeatures xsi:type="ecore:EAttribute" name="name" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
     <eStructuralFeatures xsi:type="ecore:EAttribute" name="description" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    <eStructuralFeatures xsi:type="ecore:EReference" name="labels" upperBound="-1"
+        eType="#//Labels" containment="true"/>
   </eClassifiers>
   <eClassifiers xsi:type="ecore:EClass" name="CreateArtifact" eSuperTypes="#//Artifact">
     <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
@@ -59,6 +61,8 @@
     <eStructuralFeatures xsi:type="ecore:EAttribute" name="branches" upperBound="-1"
         eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
     <eStructuralFeatures xsi:type="ecore:EAttribute" name="isDraft" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EBoolean"/>
+    <eStructuralFeatures xsi:type="ecore:EReference" name="labels" upperBound="-1"
+        eType="#//Labels" containment="true"/>
   </eClassifiers>
   <eClassifiers xsi:type="ecore:EClass" name="ArtifactReference">
     <eStructuralFeatures xsi:type="ecore:EAttribute" name="groupId" lowerBound="1"
@@ -95,5 +99,50 @@
         <details key="documentation" value="Web Service Definition Language"/>
       </eAnnotations>
     </eLiterals>
+  </eClassifiers>
+  <eClassifiers xsi:type="ecore:EClass" name="SearchedArtifact" eSuperTypes="#//Artifact">
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="createdOn" lowerBound="1"
+        eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="owner" lowerBound="1" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="modifiedOn" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="modifiedBy" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="groupId" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+  </eClassifiers>
+  <eClassifiers xsi:type="ecore:EClass" name="SearchResponse">
+    <eStructuralFeatures xsi:type="ecore:EReference" name="artifacts" upperBound="-1"
+        eType="#//SearchedArtifact" containment="true"/>
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="count" lowerBound="1" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EInt">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="The total number of artifacts that matched the query that produced the result set (may be more than the number of artifacts in the result set)."/>
+      </eAnnotations>
+    </eStructuralFeatures>
+  </eClassifiers>
+  <eClassifiers xsi:type="ecore:EClass" name="Labels" instanceClassName="java.util.Map$Entry">
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="key" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="value" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+  </eClassifiers>
+  <eClassifiers xsi:type="ecore:EClass" name="SearchVersionResponse">
+    <eStructuralFeatures xsi:type="ecore:EReference" name="versions" upperBound="-1"
+        eType="#//SearchedVersion" containment="true"/>
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="count" lowerBound="1" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EInt">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="The total number of artifacts that matched the query that produced the result set (may be more than the number of artifacts in the result set)."/>
+      </eAnnotations>
+    </eStructuralFeatures>
+  </eClassifiers>
+  <eClassifiers xsi:type="ecore:EClass" name="SearchedVersion" eSuperTypes="#//Artifact">
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="globalId" lowerBound="1"
+        eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="version" lowerBound="1"
+        eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="contentId" lowerBound="1"
+        eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="state" lowerBound="1" eType="#//VersionStateType"/>
+  </eClassifiers>
+  <eClassifiers xsi:type="ecore:EEnum" name="VersionStateType">
+    <eLiterals name="ENABLED"/>
+    <eLiterals name="DISABLED" value="1"/>
+    <eLiterals name="DEPRECATED" value="2"/>
+    <eLiterals name="DRAFT" value="3"/>
   </eClassifiers>
 </ecore:EPackage>

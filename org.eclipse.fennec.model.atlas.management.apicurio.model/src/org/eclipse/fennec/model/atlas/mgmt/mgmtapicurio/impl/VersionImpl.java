@@ -8,14 +8,18 @@ import org.eclipse.emf.common.notify.Notification;
 import org.eclipse.emf.common.notify.NotificationChain;
 
 import org.eclipse.emf.common.util.EList;
+import org.eclipse.emf.common.util.EMap;
 
 import org.eclipse.emf.ecore.EClass;
+import org.eclipse.emf.ecore.EStructuralFeature;
 import org.eclipse.emf.ecore.InternalEObject;
 
 import org.eclipse.emf.ecore.impl.ENotificationImpl;
 import org.eclipse.emf.ecore.impl.MinimalEObjectImpl;
 
 import org.eclipse.emf.ecore.util.EDataTypeUniqueEList;
+import org.eclipse.emf.ecore.util.EcoreEMap;
+import org.eclipse.emf.ecore.util.InternalEList;
 
 import org.eclipse.fennec.model.atlas.mgmt.mgmtapicurio.Content;
 import org.eclipse.fennec.model.atlas.mgmt.mgmtapicurio.MgmtApicurioPackage;
@@ -35,6 +39,7 @@ import org.eclipse.fennec.model.atlas.mgmt.mgmtapicurio.Version;
  *   <li>{@link org.eclipse.fennec.model.atlas.mgmt.mgmtapicurio.impl.VersionImpl#getDescription <em>Description</em>}</li>
  *   <li>{@link org.eclipse.fennec.model.atlas.mgmt.mgmtapicurio.impl.VersionImpl#getBranches <em>Branches</em>}</li>
  *   <li>{@link org.eclipse.fennec.model.atlas.mgmt.mgmtapicurio.impl.VersionImpl#isIsDraft <em>Is Draft</em>}</li>
+ *   <li>{@link org.eclipse.fennec.model.atlas.mgmt.mgmtapicurio.impl.VersionImpl#getLabels <em>Labels</em>}</li>
  * </ul>
  *
  * @generated
@@ -139,6 +144,16 @@ public class VersionImpl extends MinimalEObjectImpl.Container implements Version
 	 * @ordered
 	 */
 	protected boolean isDraft = IS_DRAFT_EDEFAULT;
+
+	/**
+	 * The cached value of the '{@link #getLabels() <em>Labels</em>}' map.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @see #getLabels()
+	 * @generated
+	 * @ordered
+	 */
+	protected EMap<String, String> labels;
 
 	/**
 	 * <!-- begin-user-doc -->
@@ -315,10 +330,25 @@ public class VersionImpl extends MinimalEObjectImpl.Container implements Version
 	 * @generated
 	 */
 	@Override
+	public EMap<String, String> getLabels() {
+		if (labels == null) {
+			labels = new EcoreEMap<String,String>(MgmtApicurioPackage.Literals.LABELS, LabelsImpl.class, this, MgmtApicurioPackage.VERSION__LABELS);
+		}
+		return labels;
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
 	public NotificationChain eInverseRemove(InternalEObject otherEnd, int featureID, NotificationChain msgs) {
 		switch (featureID) {
 			case MgmtApicurioPackage.VERSION__CONTENT:
 				return basicSetContent(null, msgs);
+			case MgmtApicurioPackage.VERSION__LABELS:
+				return ((InternalEList<?>)getLabels()).basicRemove(otherEnd, msgs);
 		}
 		return super.eInverseRemove(otherEnd, featureID, msgs);
 	}
@@ -343,6 +373,9 @@ public class VersionImpl extends MinimalEObjectImpl.Container implements Version
 				return getBranches();
 			case MgmtApicurioPackage.VERSION__IS_DRAFT:
 				return isIsDraft();
+			case MgmtApicurioPackage.VERSION__LABELS:
+				if (coreType) return getLabels();
+				else return getLabels().map();
 		}
 		return super.eGet(featureID, resolve, coreType);
 	}
@@ -375,6 +408,9 @@ public class VersionImpl extends MinimalEObjectImpl.Container implements Version
 			case MgmtApicurioPackage.VERSION__IS_DRAFT:
 				setIsDraft((Boolean)newValue);
 				return;
+			case MgmtApicurioPackage.VERSION__LABELS:
+				((EStructuralFeature.Setting)getLabels()).set(newValue);
+				return;
 		}
 		super.eSet(featureID, newValue);
 	}
@@ -405,6 +441,9 @@ public class VersionImpl extends MinimalEObjectImpl.Container implements Version
 			case MgmtApicurioPackage.VERSION__IS_DRAFT:
 				setIsDraft(IS_DRAFT_EDEFAULT);
 				return;
+			case MgmtApicurioPackage.VERSION__LABELS:
+				getLabels().clear();
+				return;
 		}
 		super.eUnset(featureID);
 	}
@@ -429,6 +468,8 @@ public class VersionImpl extends MinimalEObjectImpl.Container implements Version
 				return branches != null && !branches.isEmpty();
 			case MgmtApicurioPackage.VERSION__IS_DRAFT:
 				return isDraft != IS_DRAFT_EDEFAULT;
+			case MgmtApicurioPackage.VERSION__LABELS:
+				return labels != null && !labels.isEmpty();
 		}
 		return super.eIsSet(featureID);
 	}

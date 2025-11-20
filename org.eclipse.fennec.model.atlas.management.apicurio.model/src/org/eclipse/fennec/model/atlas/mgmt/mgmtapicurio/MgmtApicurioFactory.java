@@ -79,6 +79,42 @@ public interface MgmtApicurioFactory extends EFactory {
 	ArtifactReference createArtifactReference();
 
 	/**
+	 * Returns a new object of class '<em>Searched Artifact</em>'.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @return a new object of class '<em>Searched Artifact</em>'.
+	 * @generated
+	 */
+	SearchedArtifact createSearchedArtifact();
+
+	/**
+	 * Returns a new object of class '<em>Search Response</em>'.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @return a new object of class '<em>Search Response</em>'.
+	 * @generated
+	 */
+	SearchResponse createSearchResponse();
+
+	/**
+	 * Returns a new object of class '<em>Search Version Response</em>'.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @return a new object of class '<em>Search Version Response</em>'.
+	 * @generated
+	 */
+	SearchVersionResponse createSearchVersionResponse();
+
+	/**
+	 * Returns a new object of class '<em>Searched Version</em>'.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @return a new object of class '<em>Searched Version</em>'.
+	 * @generated
+	 */
+	SearchedVersion createSearchedVersion();
+
+	/**
 	 * Returns the package supported by this factory.
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->

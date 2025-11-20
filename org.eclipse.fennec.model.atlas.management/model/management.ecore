@@ -135,6 +135,11 @@
         <details key="documentation" value="Reason for approval or rejection"/>
       </eAnnotations>
     </eStructuralFeatures>
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="storageId" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="This attribute is used when retrieving an object or checking for its existence. If this is not set, the objectId will be used. This is needed when the storage assigns a different id to the object when stored."/>
+      </eAnnotations>
+    </eStructuralFeatures>
   </eClassifiers>
   <eClassifiers xsi:type="ecore:EClass" name="StringToObjectMapEntry" instanceClassName="java.util.Map$Entry">
     <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">

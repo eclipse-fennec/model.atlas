@@ -281,7 +281,7 @@ public abstract class AbstractEObjectStorageService implements EObjectStorageSer
                 }
                 
                 // Use helper to save both object and metadata
-                storageHelper.saveEObject(storageId, object, metadata);
+                String actualStorageId = storageHelper.saveEObject(storageId, object, metadata);
                 storageHelper.saveMetadata(storageId, metadata);
                 
                 // Update registry cache if available
@@ -292,12 +292,13 @@ public abstract class AbstractEObjectStorageService implements EObjectStorageSer
                     if (metadataCopy.getObjectType() == null && object != null) {
                         metadataCopy.setObjectType(object.eClass().getName());
                     }
+                    metadataCopy.setStorageId(actualStorageId);
                     registryService.updateCache(metadataCopy);
                 }
                 
                 String fileExtension = storageHelper.getFileExtension(metadata);
-                LOGGER.info("Stored EObject with ID: " + storageId + " and extension: " + fileExtension);
-                return storageId;
+                LOGGER.info("Stored EObject with ID: " + actualStorageId + " and extension: " + fileExtension);
+                return actualStorageId;
                 
             } catch (Exception e) {
                 LOGGER.log(Level.SEVERE, "Failed to store object", e);

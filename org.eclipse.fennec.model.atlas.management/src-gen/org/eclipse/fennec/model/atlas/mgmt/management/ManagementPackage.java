@@ -285,13 +285,22 @@ public interface ManagementPackage extends org.eclipse.emf.ecore.EPackage {
 	int OBJECT_METADATA__LAST_CHANGE_REASON = 21;
 
 	/**
+	 * The feature id for the '<em><b>Storage Id</b></em>' attribute.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 * @ordered
+	 */
+	int OBJECT_METADATA__STORAGE_ID = 22;
+
+	/**
 	 * The number of structural features of the '<em>Object Metadata</em>' class.
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
 	 * @generated
 	 * @ordered
 	 */
-	int OBJECT_METADATA_FEATURE_COUNT = 22;
+	int OBJECT_METADATA_FEATURE_COUNT = 23;
 
 	/**
 	 * The number of operations of the '<em>Object Metadata</em>' class.
@@ -929,6 +938,17 @@ public interface ManagementPackage extends org.eclipse.emf.ecore.EPackage {
 	EAttribute getObjectMetadata_LastChangeReason();
 
 	/**
+	 * Returns the meta object for the attribute '{@link org.eclipse.fennec.model.atlas.mgmt.management.ObjectMetadata#getStorageId <em>Storage Id</em>}'.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @return the meta object for the attribute '<em>Storage Id</em>'.
+	 * @see org.eclipse.fennec.model.atlas.mgmt.management.ObjectMetadata#getStorageId()
+	 * @see #getObjectMetadata()
+	 * @generated
+	 */
+	EAttribute getObjectMetadata_StorageId();
+
+	/**
 	 * Returns the meta object for class '{@link java.util.Map.Entry <em>String To Object Map Entry</em>}'.
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
@@ -1486,6 +1506,14 @@ public interface ManagementPackage extends org.eclipse.emf.ecore.EPackage {
 		 * @generated
 		 */
 		EAttribute OBJECT_METADATA__LAST_CHANGE_REASON = eINSTANCE.getObjectMetadata_LastChangeReason();
+
+		/**
+		 * The meta object literal for the '<em><b>Storage Id</b></em>' attribute feature.
+		 * <!-- begin-user-doc -->
+		 * <!-- end-user-doc -->
+		 * @generated
+		 */
+		EAttribute OBJECT_METADATA__STORAGE_ID = eINSTANCE.getObjectMetadata_StorageId();
 
 		/**
 		 * The meta object literal for the '{@link org.eclipse.fennec.model.atlas.mgmt.management.impl.StringToObjectMapEntryImpl <em>String To Object Map Entry</em>}' class.

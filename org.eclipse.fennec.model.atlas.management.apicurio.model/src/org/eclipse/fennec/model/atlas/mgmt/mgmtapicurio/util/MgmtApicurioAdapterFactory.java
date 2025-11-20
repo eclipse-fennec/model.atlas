@@ -2,6 +2,8 @@
  */
 package org.eclipse.fennec.model.atlas.mgmt.mgmtapicurio.util;
 
+import java.util.Map;
+
 import org.eclipse.emf.common.notify.Adapter;
 import org.eclipse.emf.common.notify.Notifier;
 
@@ -90,6 +92,26 @@ public class MgmtApicurioAdapterFactory extends AdapterFactoryImpl {
 			@Override
 			public Adapter caseArtifactReference(ArtifactReference object) {
 				return createArtifactReferenceAdapter();
+			}
+			@Override
+			public Adapter caseSearchedArtifact(SearchedArtifact object) {
+				return createSearchedArtifactAdapter();
+			}
+			@Override
+			public Adapter caseSearchResponse(SearchResponse object) {
+				return createSearchResponseAdapter();
+			}
+			@Override
+			public Adapter caseLabels(Map.Entry<String, String> object) {
+				return createLabelsAdapter();
+			}
+			@Override
+			public Adapter caseSearchVersionResponse(SearchVersionResponse object) {
+				return createSearchVersionResponseAdapter();
+			}
+			@Override
+			public Adapter caseSearchedVersion(SearchedVersion object) {
+				return createSearchedVersionAdapter();
 			}
 			@Override
 			public Adapter defaultCase(EObject object) {
@@ -192,6 +214,76 @@ public class MgmtApicurioAdapterFactory extends AdapterFactoryImpl {
 	 * @generated
 	 */
 	public Adapter createArtifactReferenceAdapter() {
+		return null;
+	}
+
+	/**
+	 * Creates a new adapter for an object of class '{@link org.eclipse.fennec.model.atlas.mgmt.mgmtapicurio.SearchedArtifact <em>Searched Artifact</em>}'.
+	 * <!-- begin-user-doc -->
+	 * This default implementation returns null so that we can easily ignore cases;
+	 * it's useful to ignore a case when inheritance will catch all the cases anyway.
+	 * <!-- end-user-doc -->
+	 * @return the new adapter.
+	 * @see org.eclipse.fennec.model.atlas.mgmt.mgmtapicurio.SearchedArtifact
+	 * @generated
+	 */
+	public Adapter createSearchedArtifactAdapter() {
+		return null;
+	}
+
+	/**
+	 * Creates a new adapter for an object of class '{@link org.eclipse.fennec.model.atlas.mgmt.mgmtapicurio.SearchResponse <em>Search Response</em>}'.
+	 * <!-- begin-user-doc -->
+	 * This default implementation returns null so that we can easily ignore cases;
+	 * it's useful to ignore a case when inheritance will catch all the cases anyway.
+	 * <!-- end-user-doc -->
+	 * @return the new adapter.
+	 * @see org.eclipse.fennec.model.atlas.mgmt.mgmtapicurio.SearchResponse
+	 * @generated
+	 */
+	public Adapter createSearchResponseAdapter() {
+		return null;
+	}
+
+	/**
+	 * Creates a new adapter for an object of class '{@link java.util.Map.Entry <em>Labels</em>}'.
+	 * <!-- begin-user-doc -->
+	 * This default implementation returns null so that we can easily ignore cases;
+	 * it's useful to ignore a case when inheritance will catch all the cases anyway.
+	 * <!-- end-user-doc -->
+	 * @return the new adapter.
+	 * @see java.util.Map.Entry
+	 * @generated
+	 */
+	public Adapter createLabelsAdapter() {
+		return null;
+	}
+
+	/**
+	 * Creates a new adapter for an object of class '{@link org.eclipse.fennec.model.atlas.mgmt.mgmtapicurio.SearchVersionResponse <em>Search Version Response</em>}'.
+	 * <!-- begin-user-doc -->
+	 * This default implementation returns null so that we can easily ignore cases;
+	 * it's useful to ignore a case when inheritance will catch all the cases anyway.
+	 * <!-- end-user-doc -->
+	 * @return the new adapter.
+	 * @see org.eclipse.fennec.model.atlas.mgmt.mgmtapicurio.SearchVersionResponse
+	 * @generated
+	 */
+	public Adapter createSearchVersionResponseAdapter() {
+		return null;
+	}
+
+	/**
+	 * Creates a new adapter for an object of class '{@link org.eclipse.fennec.model.atlas.mgmt.mgmtapicurio.SearchedVersion <em>Searched Version</em>}'.
+	 * <!-- begin-user-doc -->
+	 * This default implementation returns null so that we can easily ignore cases;
+	 * it's useful to ignore a case when inheritance will catch all the cases anyway.
+	 * <!-- end-user-doc -->
+	 * @return the new adapter.
+	 * @see org.eclipse.fennec.model.atlas.mgmt.mgmtapicurio.SearchedVersion
+	 * @generated
+	 */
+	public Adapter createSearchedVersionAdapter() {
 		return null;
 	}
 

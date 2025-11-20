@@ -2,6 +2,8 @@
  */
 package org.eclipse.fennec.model.atlas.mgmt.mgmtapicurio.util;
 
+import java.util.Map;
+
 import org.eclipse.emf.ecore.EObject;
 import org.eclipse.emf.ecore.EPackage;
 
@@ -104,6 +106,38 @@ public class MgmtApicurioSwitch<T> extends Switch<T> {
 				if (result == null) result = defaultCase(theEObject);
 				return result;
 			}
+			case MgmtApicurioPackage.SEARCHED_ARTIFACT: {
+				SearchedArtifact searchedArtifact = (SearchedArtifact)theEObject;
+				T result = caseSearchedArtifact(searchedArtifact);
+				if (result == null) result = caseArtifact(searchedArtifact);
+				if (result == null) result = defaultCase(theEObject);
+				return result;
+			}
+			case MgmtApicurioPackage.SEARCH_RESPONSE: {
+				SearchResponse searchResponse = (SearchResponse)theEObject;
+				T result = caseSearchResponse(searchResponse);
+				if (result == null) result = defaultCase(theEObject);
+				return result;
+			}
+			case MgmtApicurioPackage.LABELS: {
+				@SuppressWarnings("unchecked") Map.Entry<String, String> labels = (Map.Entry<String, String>)theEObject;
+				T result = caseLabels(labels);
+				if (result == null) result = defaultCase(theEObject);
+				return result;
+			}
+			case MgmtApicurioPackage.SEARCH_VERSION_RESPONSE: {
+				SearchVersionResponse searchVersionResponse = (SearchVersionResponse)theEObject;
+				T result = caseSearchVersionResponse(searchVersionResponse);
+				if (result == null) result = defaultCase(theEObject);
+				return result;
+			}
+			case MgmtApicurioPackage.SEARCHED_VERSION: {
+				SearchedVersion searchedVersion = (SearchedVersion)theEObject;
+				T result = caseSearchedVersion(searchedVersion);
+				if (result == null) result = caseArtifact(searchedVersion);
+				if (result == null) result = defaultCase(theEObject);
+				return result;
+			}
 			default: return defaultCase(theEObject);
 		}
 	}
@@ -195,6 +229,81 @@ public class MgmtApicurioSwitch<T> extends Switch<T> {
 	 * @generated
 	 */
 	public T caseArtifactReference(ArtifactReference object) {
+		return null;
+	}
+
+	/**
+	 * Returns the result of interpreting the object as an instance of '<em>Searched Artifact</em>'.
+	 * <!-- begin-user-doc -->
+	 * This implementation returns null;
+	 * returning a non-null result will terminate the switch.
+	 * <!-- end-user-doc -->
+	 * @param object the target of the switch.
+	 * @return the result of interpreting the object as an instance of '<em>Searched Artifact</em>'.
+	 * @see #doSwitch(org.eclipse.emf.ecore.EObject) doSwitch(EObject)
+	 * @generated
+	 */
+	public T caseSearchedArtifact(SearchedArtifact object) {
+		return null;
+	}
+
+	/**
+	 * Returns the result of interpreting the object as an instance of '<em>Search Response</em>'.
+	 * <!-- begin-user-doc -->
+	 * This implementation returns null;
+	 * returning a non-null result will terminate the switch.
+	 * <!-- end-user-doc -->
+	 * @param object the target of the switch.
+	 * @return the result of interpreting the object as an instance of '<em>Search Response</em>'.
+	 * @see #doSwitch(org.eclipse.emf.ecore.EObject) doSwitch(EObject)
+	 * @generated
+	 */
+	public T caseSearchResponse(SearchResponse object) {
+		return null;
+	}
+
+	/**
+	 * Returns the result of interpreting the object as an instance of '<em>Labels</em>'.
+	 * <!-- begin-user-doc -->
+	 * This implementation returns null;
+	 * returning a non-null result will terminate the switch.
+	 * <!-- end-user-doc -->
+	 * @param object the target of the switch.
+	 * @return the result of interpreting the object as an instance of '<em>Labels</em>'.
+	 * @see #doSwitch(org.eclipse.emf.ecore.EObject) doSwitch(EObject)
+	 * @generated
+	 */
+	public T caseLabels(Map.Entry<String, String> object) {
+		return null;
+	}
+
+	/**
+	 * Returns the result of interpreting the object as an instance of '<em>Search Version Response</em>'.
+	 * <!-- begin-user-doc -->
+	 * This implementation returns null;
+	 * returning a non-null result will terminate the switch.
+	 * <!-- end-user-doc -->
+	 * @param object the target of the switch.
+	 * @return the result of interpreting the object as an instance of '<em>Search Version Response</em>'.
+	 * @see #doSwitch(org.eclipse.emf.ecore.EObject) doSwitch(EObject)
+	 * @generated
+	 */
+	public T caseSearchVersionResponse(SearchVersionResponse object) {
+		return null;
+	}
+
+	/**
+	 * Returns the result of interpreting the object as an instance of '<em>Searched Version</em>'.
+	 * <!-- begin-user-doc -->
+	 * This implementation returns null;
+	 * returning a non-null result will terminate the switch.
+	 * <!-- end-user-doc -->
+	 * @param object the target of the switch.
+	 * @return the result of interpreting the object as an instance of '<em>Searched Version</em>'.
+	 * @see #doSwitch(org.eclipse.emf.ecore.EObject) doSwitch(EObject)
+	 * @generated
+	 */
+	public T caseSearchedVersion(SearchedVersion object) {
 		return null;
 	}
 

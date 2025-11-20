@@ -20,11 +20,16 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.logging.Logger;
 
+import org.eclipse.emf.common.util.EMap;
 import org.eclipse.emf.common.util.URI;
+import org.eclipse.emf.ecore.EClass;
 import org.eclipse.emf.ecore.EObject;
 import org.eclipse.emf.ecore.resource.Resource;
 import org.eclipse.emf.ecore.resource.ResourceSet;
+import org.eclipse.emf.ecore.util.EcoreUtil;
+import org.eclipse.emf.ecore.xmi.XMLResource;
 import org.eclipse.fennec.model.atlas.management.apicurio.EObjectApicurioStorageService.Config;
 import org.eclipse.fennec.model.atlas.mgmt.management.ObjectMetadata;
 import org.eclipse.fennec.model.atlas.mgmt.mgmtapicurio.Artifact;
@@ -32,8 +37,13 @@ import org.eclipse.fennec.model.atlas.mgmt.mgmtapicurio.ArtifactType;
 import org.eclipse.fennec.model.atlas.mgmt.mgmtapicurio.Content;
 import org.eclipse.fennec.model.atlas.mgmt.mgmtapicurio.CreateArtifact;
 import org.eclipse.fennec.model.atlas.mgmt.mgmtapicurio.MgmtApicurioFactory;
+import org.eclipse.fennec.model.atlas.mgmt.mgmtapicurio.MgmtApicurioPackage;
+import org.eclipse.fennec.model.atlas.mgmt.mgmtapicurio.SearchResponse;
+import org.eclipse.fennec.model.atlas.mgmt.mgmtapicurio.SearchVersionResponse;
+import org.eclipse.fennec.model.atlas.mgmt.mgmtapicurio.SearchedVersion;
 import org.eclipse.fennec.model.atlas.mgmt.mgmtapicurio.Version;
 import org.eclipse.fennec.model.atlas.mgmt.storage.AbstractStorageHelper;
+import org.gecko.emf.json.constants.EMFJs;
 import org.gecko.emf.osgi.constants.EMFUriHandlerConstants;
 
 /**
@@ -43,7 +53,9 @@ import org.gecko.emf.osgi.constants.EMFUriHandlerConstants;
  * @since Nov 18, 2025
  */
 public class ApicurioStorageHelper extends AbstractStorageHelper {
-
+	
+	private static final Logger LOGGER = Logger.getLogger(ApicurioStorageHelper.class.getName());
+	private static final String METADATA_WITHOUT_EXTENSION = METADATA_EXTENSION.replace(".xmi", "");
 	private final String apicurioURL;
 	private String storageRole;
 	private Config config;
@@ -78,30 +90,6 @@ public class ApicurioStorageHelper extends AbstractStorageHelper {
 
 	}
 
-	/* 
-	 * (non-Javadoc)
-	 * @see org.eclipse.fennec.model.atlas.mgmt.storage.AbstractStorageHelper#persistResource(java.lang.String, org.eclipse.emf.ecore.resource.Resource, org.eclipse.fennec.model.atlas.mgmt.management.ObjectMetadata)
-	 */
-	@Override
-	protected void persistResource(String path, Resource resource, ObjectMetadata metadata) throws IOException {
-		ResourceOperation objectOp = createResource(URI.createURI(apicurioURL), "application/json");
-		try(ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream()) {
-			resource.save(byteArrayOutputStream, null);
-			ByteArrayInputStream is = new ByteArrayInputStream(byteArrayOutputStream.toByteArray());			
-			Artifact artifact = createArtifact(path, resource.getURI().fileExtension(), metadata, is);
-			Resource apicurioResource = objectOp.getResource();
-			apicurioResource.getContents().add(artifact);
-			Map<String, Object> options = new HashMap<>();
-			options.put(EMFUriHandlerConstants.OPTION_HTTP_METHOD, "POST");
-			Map<String, String> headers = new HashMap<>();
-			headers.put("Content-Type", "application/json");
-			options.put(EMFUriHandlerConstants.OPTION_HTTP_HEADERS, headers);
-			apicurioResource.save(System.out, options);
-			apicurioResource.save(options);
-		} finally {
-			objectOp.cleanup();
-		}
-	}
 
 	/* 
 	 * (non-Javadoc)
@@ -114,25 +102,181 @@ public class ApicurioStorageHelper extends AbstractStorageHelper {
 			return null;
 		}
 
-		URI objectUri = createStorageURI(objectPath);
-		ResourceOperation operation = loadResource(objectUri);
-		try {
-			if (operation.getResource().getContents().isEmpty()) {
-				return null;
-			}
-			return operation.getResource().getContents().get(0);
-		} finally {
-			operation.cleanup();
+//		TODO: we should search for versions where the artifactId is = objectId
+//		      we should sort the versions and take the latest one 
+//			  then we shoould query the versions endpoint for the content of the artifact
+		URI searchVersionsURI = URI.createURI(config.base_url().concat("search/versions?orderBy=version&order=desc&artifactId=").concat(objectId));
+		SearchVersionResponse versionResponse = (SearchVersionResponse) sendGETRequest(searchVersionsURI, MgmtApicurioPackage.Literals.SEARCH_VERSION_RESPONSE, "application/json");
+		if(versionResponse == null || versionResponse.getCount() == 0) return null;
+		
+		SearchedVersion latestVersion = versionResponse.getVersions().get(0);
+		String version = latestVersion.getVersion();
+		String eClassURI = latestVersion.getLabels().get("objectEClassURI");
+		if(eClassURI == null) {
+			LOGGER.severe(String.format("Cannot retrieve object %s because it was not possible to determine its objectEClassURI from the Version", objectId));
+			return null;
 		}
+		String contentType = latestVersion.getLabels().get("contentType");
+		URI objectUri = URI.createURI(apicurioURL.concat("/").concat(objectPath).concat("/versions/").concat(version).concat("/content"));		
+		EObject eObj = sendGETRequest(objectUri, (EClass) resourceSet.getEObject(URI.createURI(eClassURI), false), contentType);
+		return eObj;
+	}
+	
+	private EObject sendGETRequest(URI uri, EClass expectedResponseEClass, String mediaType) throws IOException {
+		ResourceOperation searchOp = createResource(uri, mediaType);
+		try {
+			Map<String, Object> options = new HashMap<>();
+			options.put(EMFJs.OPTION_ROOT_ELEMENT, expectedResponseEClass);
+			options.put(XMLResource.OPTION_ROOT_OBJECTS, expectedResponseEClass);
+			options.put(EMFUriHandlerConstants.OPTION_HTTP_METHOD, "GET");
+			searchOp.getResource().load(options);
+			if(!searchOp.getResource().getContents().isEmpty()) {
+				if(searchOp.getResource().getContents().get(0).eClass().getInstanceClassName().equals(expectedResponseEClass.getInstanceClassName())) {
+					return searchOp.getResource().getContents().get(0);
+				} else {
+					LOGGER.severe(String.format("No response of type %s for request %s", expectedResponseEClass.getName(), uri));
+				}
+			} else {
+				LOGGER.severe(String.format("No response content for request %s", uri));
+			}
+		} finally {
+			searchOp.cleanup();
+		}
+		return null;
+	}
+	
+	/* 
+	 * (non-Javadoc)
+	 * @see org.eclipse.fennec.model.atlas.mgmt.storage.AbstractStorageHelper#buildMetadataPath(java.lang.String)
+	 */
+//	@Override
+//	protected String buildMetadataPath(String objectId) {
+//		 return objectId + METADATA_WITHOUT_EXTENSION;
+//	}
+	
+	
+	/* 
+	 * (non-Javadoc)
+	 * @see org.eclipse.fennec.model.atlas.mgmt.storage.AbstractStorageHelper#loadMetadata(java.lang.String)
+	 */
+	@Override
+	public ObjectMetadata loadMetadata(String objectId) throws IOException {
+		String objectPath = buildMetadataPath(objectId);
+		if (objectPath == null) {
+			return null;
+		}
+
+//		TODO: we should search for versions where the artifactId is = objectId
+//		      we should sort the versions and take the latest one 
+//			  then we shoould query the versions endpoint for the content of the artifact
+		URI searchVersionsURI = URI.createURI(config.base_url().concat("search/versions?orderBy=version&order=desc&artifactId=").concat(objectId));
+		SearchVersionResponse versionResponse = (SearchVersionResponse) sendGETRequest(searchVersionsURI, MgmtApicurioPackage.Literals.SEARCH_VERSION_RESPONSE, "application/json");
+		if(versionResponse == null || versionResponse.getCount() == 0) return null;
+		
+		SearchedVersion latestVersion = versionResponse.getVersions().get(0);
+		String version = latestVersion.getVersion();
+		String eClassURI = latestVersion.getLabels().get("objectEClassURI");
+		if(eClassURI == null) {
+			LOGGER.severe(String.format("Cannot retrieve object %s because it was not possible to determine its objectEClassURI from the Version", objectId));
+			return null;
+		}
+		
+		URI objectUri = URI.createURI(apicurioURL.concat("/").concat(objectPath).concat("/versions/").concat(version).concat("/content"));		
+		ObjectMetadata eObj = (ObjectMetadata) sendGETRequest(objectUri, (EClass) resourceSet.getEObject(URI.createURI(eClassURI), false), "application/xml");
+		return eObj;
 	}
 
-
-	private Artifact createArtifact(String objectId, String fileExtension, ObjectMetadata metadata, ByteArrayInputStream is) {
-		if(objectId.endsWith(fileExtension)) {
-			objectId = objectId.replaceFirst("."+fileExtension, "");
+	/* 
+	 * (non-Javadoc)
+	 * @see org.eclipse.fennec.model.atlas.mgmt.storage.AbstractStorageHelper#saveEObject(java.lang.String, org.eclipse.emf.ecore.EObject, org.eclipse.fennec.model.atlas.mgmt.management.ObjectMetadata)
+	 */
+	@Override
+	public String saveEObject(String objectId, EObject object, ObjectMetadata metadata) throws IOException {
+		String fileExtension = getFileExtension(metadata);
+        String contentType = getContentType(metadata);
+        
+        URI objectUri = URI.createURI(objectId);
+        ResourceOperation contentRes = createResource(objectUri, contentType);
+        contentRes.getResource().getContents().add(object);
+        ResourceOperation objectOp = createResource(URI.createURI(apicurioURL), "application/json");
+        String storageId = objectId;
+		try(ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream()) {
+			contentRes.getResource().save(System.out, null);
+			contentRes.getResource().save(byteArrayOutputStream, null);
+			ByteArrayInputStream is = new ByteArrayInputStream(byteArrayOutputStream.toByteArray());			
+			Artifact artifact = createArtifact(objectId, fileExtension, metadata, is, false);
+			storageId = artifact.getArtifactId();
+			Resource apicurioResource = objectOp.getResource();
+			apicurioResource.getContents().add(artifact);
+			Map<String, Object> options = new HashMap<>();
+			options.put(EMFUriHandlerConstants.OPTION_HTTP_METHOD, "POST");
+			Map<String, String> headers = new HashMap<>();
+			headers.put("Content-Type", "application/json");
+			options.put(EMFUriHandlerConstants.OPTION_HTTP_HEADERS, headers);
+			apicurioResource.save(System.out, options);
+			apicurioResource.save(options);
+		} finally {
+			objectOp.cleanup();
+			contentRes.cleanup();
 		}
+        
+        return storageId;
+	}
+	
+	/* 
+	 * (non-Javadoc)
+	 * @see org.eclipse.fennec.model.atlas.mgmt.storage.AbstractStorageHelper#saveMetadata(java.lang.String, org.eclipse.fennec.model.atlas.mgmt.management.ObjectMetadata)
+	 */
+	@Override
+	public void saveMetadata(String objectId, ObjectMetadata metadata) throws IOException {
+		 Objects.requireNonNull(objectId, "Cannot save metadata - objectId cannot be null");
+	        Objects.requireNonNull(metadata, "Cannot save metadata - metadata cannot be null");
+	        
+	        if (objectId.isEmpty()) {
+	            throw new IllegalArgumentException("Cannot save metadata - objectId cannot be empty");
+	        }
+	        
+	        // CRITICAL: Ensure metadata always has objectId before persistence
+	        if (Objects.isNull(metadata.getObjectId()) || metadata.getObjectId().isEmpty()) {
+	            metadata.setObjectId(objectId);
+	            LOGGER.fine("Set objectId in metadata before saving: " + objectId);
+	        }
+	        
+	        // Validate that objectId matches the storage path
+	        if (!Objects.equals(objectId, metadata.getObjectId())) {
+	            throw new IllegalStateException("Metadata objectId (" + metadata.getObjectId() + 
+	                                          ") does not match storage objectId (" + objectId + ")");
+	        }
+	        
+	        String metadataPath = buildMetadataPath(objectId);
+	        URI metadataUri = createStorageURI(metadataPath);
+	        ResourceOperation contentRes = createResource(metadataUri, "application/xmi");
+	        contentRes.getResource().getContents().add(metadata);
+	        ResourceOperation objectOp = createResource(URI.createURI(apicurioURL), "application/json");
+			try(ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream()) {
+				contentRes.getResource().save(byteArrayOutputStream, null);
+				ByteArrayInputStream is = new ByteArrayInputStream(byteArrayOutputStream.toByteArray());			
+				Artifact artifact = createArtifact(metadataPath, ".xmi", metadata, is, true);
+				artifact.getArtifactId();
+				Resource apicurioResource = objectOp.getResource();
+				apicurioResource.getContents().add(artifact);
+				Map<String, Object> options = new HashMap<>();
+				options.put(EMFUriHandlerConstants.OPTION_HTTP_METHOD, "POST");
+				Map<String, String> headers = new HashMap<>();
+				headers.put("Content-Type", "application/json");
+				options.put(EMFUriHandlerConstants.OPTION_HTTP_HEADERS, headers);
+				apicurioResource.save(System.out, options);
+				apicurioResource.save(options);
+			} finally {
+				objectOp.cleanup();
+				contentRes.cleanup();
+			}
+	        
+	}
+
+	private Artifact createArtifact(String objectId, String fileExtension, ObjectMetadata metadata, ByteArrayInputStream is, boolean isMetadata) {
 		Content content = MgmtApicurioFactory.eINSTANCE.createContent();
-		String contentType = fileExtension.equals("json") ? "application/json" : "application/xml";
+		String contentType = fileExtension.equals(".json") ? "application/json" : "application/xml";
 		content.setContentType(contentType);
 		content.setContent(new String(is.readAllBytes()));	
 		ArtifactType artifactType = convertContentTypeToArtifactType(contentType);
@@ -140,6 +284,8 @@ public class ApicurioStorageHelper extends AbstractStorageHelper {
 		artifact.setArtifactType(artifactType);
 		artifact.setArtifactId(objectId);
 		artifact.setName(metadata.getObjectName());
+		addLabels(artifact.getLabels(), metadata, isMetadata);
+		artifact.getLabels().put("contentType", contentType);
 		Version version = MgmtApicurioFactory.eINSTANCE.createVersion();
 		if(metadata.getVersion() != null && !metadata.getVersion().isEmpty()) {
 			version.setVersion(metadata.getVersion());
@@ -147,11 +293,34 @@ public class ApicurioStorageHelper extends AbstractStorageHelper {
 		if("draft".equals(storageRole.toLowerCase().trim())) {
 			version.setIsDraft(true);
 		}
+		addLabels(version.getLabels(), metadata, isMetadata);
+		version.getLabels().put("contentType", contentType);
 		version.setName(metadata.getObjectName());
 		version.setContent(content);
 		artifact.setFirstVersion(version);
 		return artifact;
 
+	}
+	
+	private void addLabels(EMap<String, String> labels, ObjectMetadata metadata, boolean isMetadata) {
+		if(metadata.getUploadUser() != null) labels.put("uploadUser", metadata.getUploadUser());
+		if(metadata.getUploadTime() != null) labels.put("uploadTime", metadata.getUploadTime().toString());
+		if(metadata.getLastChangeUser() != null) labels.put("lastChangeUser", metadata.getLastChangeUser());
+		if(metadata.getLastChangeTime() != null) labels.put("lastChangeTime", metadata.getLastChangeTime().toString());
+		if(metadata.getReviewUser() != null) labels.put("reviewUser", metadata.getReviewUser());
+		if(metadata.getReviewTime() != null) labels.put("reviewTime", metadata.getReviewTime().toString());
+		if(metadata.getReviewReason() != null) labels.put("reviewReason", metadata.getReviewReason());
+		if(metadata.getContentHash() != null) labels.put("contentHash", metadata.getContentHash());
+		if(metadata.getGenerationTriggerFingerprint() != null) labels.put("generationTriggerFingerprint", metadata.getGenerationTriggerFingerprint());
+		if(isMetadata) {
+			labels.put("objectType", "ObjectMetadata");
+			labels.put("objectEClassURI", EcoreUtil.getURI(metadata.eClass()).toString());
+		} else {
+			if(metadata.getObjectType() != null) labels.put("objectType", metadata.getObjectType());
+			if(metadata.getObjectRef() != null) labels.put("objectEClassURI", EcoreUtil.getURI(metadata.getObjectRef().eClass()).toString());
+		}
+		
+		
 	}
 
 	private ArtifactType convertContentTypeToArtifactType(String contentType) {
@@ -174,7 +343,6 @@ public class ApicurioStorageHelper extends AbstractStorageHelper {
 	 */
 	@Override
 	protected boolean storageExists(String path) throws IOException {
-		//TODO: REMOVE THE EXTENSION !
 		return doStorageExists(apicurioURL.concat("/").concat(path));
 	}
 	
@@ -198,6 +366,7 @@ public class ApicurioStorageHelper extends AbstractStorageHelper {
 	}
 	
 	private boolean doStorageExists(String url) {
+//		TODO: Replace this with sendGETRequest
 		ResourceOperation objectOp = createResource(URI.createURI(url), "application/json");
 		try {
 			Map<String, Object> options = new HashMap<>();
@@ -211,6 +380,29 @@ public class ApicurioStorageHelper extends AbstractStorageHelper {
 		}
 		return true;
 	}
+	
+	private SearchResponse searchArtifacts(String url) throws IOException {
+		ResourceOperation objectOp = createResource(URI.createURI(url), "application/json");
+		try {
+			Map<String, Object> options = new HashMap<>();
+			options.put(EMFJs.OPTION_ROOT_ELEMENT, MgmtApicurioPackage.Literals.SEARCH_RESPONSE);
+			options.put(EMFUriHandlerConstants.OPTION_HTTP_METHOD, "GET");
+			objectOp.getResource().load(options);
+			if(!objectOp.getResource().getContents().isEmpty()) {
+				if(objectOp.getResource().getContents().get(0) instanceof SearchResponse response) {
+					return response;
+				} else {
+					LOGGER.severe(String.format("No response of type SearchResponse for request %s", url));
+				}
+			} else {
+				LOGGER.severe(String.format("No response content for request %s", url));
+			}
+		} 
+		finally {
+			objectOp.cleanup();
+		}
+		return null;
+	}
 
 	/* 
 	 * (non-Javadoc)
@@ -218,10 +410,8 @@ public class ApicurioStorageHelper extends AbstractStorageHelper {
 	 */
 	@Override
 	protected String findObjectPath(String objectId) throws IOException {
-//		TODO: here we need to extract the result of the search. Because the doStorageExissts return true even if the count is 0 for search!
-		if(doStorageExists(config.base_url().concat("search/artifacts?groupId=").concat(config.artifact_group_id()).concat("&artifactId=").concat(objectId))) {
-			return objectId;
-		}
+		SearchResponse searchResponse = searchArtifacts(config.base_url().concat("search/artifacts?groupId=").concat(config.artifact_group_id()).concat("&artifactId=").concat(objectId));
+		if(searchResponse != null && searchResponse.getCount() > 0) return objectId;
 		return null;
 	}
 
@@ -230,9 +420,25 @@ public class ApicurioStorageHelper extends AbstractStorageHelper {
 	 * @see org.eclipse.fennec.model.atlas.mgmt.storage.AbstractStorageHelper#deleteObject(java.lang.String)
 	 */
 	@Override
-	public boolean deleteObject(String objectId) throws IOException {
-		// TODO Auto-generated method stub
-		return false;
+	public boolean deleteObject(String objectId) {
+		//Remove both object (all extensions and versions) and metadata
+		return doDelete(apicurioURL.concat("/").concat(objectId)) && doDelete(apicurioURL.concat("/").concat(objectId).concat(METADATA_EXTENSION).replace(".xmi", ""));
+	}
+	
+	private boolean doDelete(String url) {
+		ResourceOperation objectOp = createResource(URI.createURI(url), "application/json");
+		try {
+			Map<String, Object> options = new HashMap<>();
+			options.put(EMFUriHandlerConstants.OPTION_HTTP_METHOD, "DELETE");
+			objectOp.getResource().save(options);
+		} catch(IOException e) {
+			LOGGER.severe(String.format("Error removing artifact %s from Apicurio registry", url));
+			return false;
+		}
+		finally {
+			objectOp.cleanup();
+		}
+		return true;
 	}
 
 	/* 

@@ -3,6 +3,7 @@
 package org.eclipse.fennec.model.atlas.mgmt.mgmtapicurio;
 
 import org.eclipse.emf.common.util.EList;
+import org.eclipse.emf.common.util.EMap;
 
 import org.eclipse.emf.ecore.EObject;
 
@@ -23,6 +24,7 @@ import org.osgi.annotation.versioning.ProviderType;
  *   <li>{@link org.eclipse.fennec.model.atlas.mgmt.mgmtapicurio.Version#getDescription <em>Description</em>}</li>
  *   <li>{@link org.eclipse.fennec.model.atlas.mgmt.mgmtapicurio.Version#getBranches <em>Branches</em>}</li>
  *   <li>{@link org.eclipse.fennec.model.atlas.mgmt.mgmtapicurio.Version#isIsDraft <em>Is Draft</em>}</li>
+ *   <li>{@link org.eclipse.fennec.model.atlas.mgmt.mgmtapicurio.Version#getLabels <em>Labels</em>}</li>
  * </ul>
  *
  * @see org.eclipse.fennec.model.atlas.mgmt.mgmtapicurio.MgmtApicurioPackage#getVersion()
@@ -155,5 +157,18 @@ public interface Version extends EObject {
 	 * @generated
 	 */
 	void setIsDraft(boolean value);
+
+	/**
+	 * Returns the value of the '<em><b>Labels</b></em>' map.
+	 * The key is of type {@link java.lang.String},
+	 * and the value is of type {@link java.lang.String},
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @return the value of the '<em>Labels</em>' map.
+	 * @see org.eclipse.fennec.model.atlas.mgmt.mgmtapicurio.MgmtApicurioPackage#getVersion_Labels()
+	 * @model mapType="org.eclipse.fennec.model.atlas.mgmt.mgmtapicurio.Labels&lt;org.eclipse.emf.ecore.EString, org.eclipse.emf.ecore.EString&gt;"
+	 * @generated
+	 */
+	EMap<String, String> getLabels();
 
 } // Version

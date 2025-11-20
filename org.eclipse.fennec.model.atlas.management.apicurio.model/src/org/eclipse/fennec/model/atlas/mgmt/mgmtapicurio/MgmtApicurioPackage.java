@@ -112,13 +112,22 @@ public interface MgmtApicurioPackage extends org.eclipse.emf.ecore.EPackage {
 	int ARTIFACT__DESCRIPTION = 3;
 
 	/**
+	 * The feature id for the '<em><b>Labels</b></em>' map.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 * @ordered
+	 */
+	int ARTIFACT__LABELS = 4;
+
+	/**
 	 * The number of structural features of the '<em>Artifact</em>' class.
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
 	 * @generated
 	 * @ordered
 	 */
-	int ARTIFACT_FEATURE_COUNT = 4;
+	int ARTIFACT_FEATURE_COUNT = 5;
 
 	/**
 	 * The number of operations of the '<em>Artifact</em>' class.
@@ -174,6 +183,15 @@ public interface MgmtApicurioPackage extends org.eclipse.emf.ecore.EPackage {
 	 * @ordered
 	 */
 	int CREATE_ARTIFACT__DESCRIPTION = ARTIFACT__DESCRIPTION;
+
+	/**
+	 * The feature id for the '<em><b>Labels</b></em>' map.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 * @ordered
+	 */
+	int CREATE_ARTIFACT__LABELS = ARTIFACT__LABELS;
 
 	/**
 	 * The feature id for the '<em><b>First Version</b></em>' containment reference.
@@ -267,13 +285,22 @@ public interface MgmtApicurioPackage extends org.eclipse.emf.ecore.EPackage {
 	int VERSION__IS_DRAFT = 5;
 
 	/**
+	 * The feature id for the '<em><b>Labels</b></em>' map.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 * @ordered
+	 */
+	int VERSION__LABELS = 6;
+
+	/**
 	 * The number of structural features of the '<em>Version</em>' class.
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
 	 * @generated
 	 * @ordered
 	 */
-	int VERSION_FEATURE_COUNT = 6;
+	int VERSION_FEATURE_COUNT = 7;
 
 	/**
 	 * The number of operations of the '<em>Version</em>' class.
@@ -347,6 +374,15 @@ public interface MgmtApicurioPackage extends org.eclipse.emf.ecore.EPackage {
 	 * @ordered
 	 */
 	int CREATE_ARTIFACT_VERSION__IS_DRAFT = VERSION__IS_DRAFT;
+
+	/**
+	 * The feature id for the '<em><b>Labels</b></em>' map.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 * @ordered
+	 */
+	int CREATE_ARTIFACT_VERSION__LABELS = VERSION__LABELS;
 
 	/**
 	 * The number of structural features of the '<em>Create Artifact Version</em>' class.
@@ -486,6 +522,371 @@ public interface MgmtApicurioPackage extends org.eclipse.emf.ecore.EPackage {
 	int ARTIFACT_REFERENCE_OPERATION_COUNT = 0;
 
 	/**
+	 * The meta object id for the '{@link org.eclipse.fennec.model.atlas.mgmt.mgmtapicurio.impl.SearchedArtifactImpl <em>Searched Artifact</em>}' class.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @see org.eclipse.fennec.model.atlas.mgmt.mgmtapicurio.impl.SearchedArtifactImpl
+	 * @see org.eclipse.fennec.model.atlas.mgmt.mgmtapicurio.impl.MgmtApicurioPackageImpl#getSearchedArtifact()
+	 * @generated
+	 */
+	int SEARCHED_ARTIFACT = 6;
+
+	/**
+	 * The feature id for the '<em><b>Artifact Id</b></em>' attribute.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 * @ordered
+	 */
+	int SEARCHED_ARTIFACT__ARTIFACT_ID = ARTIFACT__ARTIFACT_ID;
+
+	/**
+	 * The feature id for the '<em><b>Artifact Type</b></em>' attribute.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 * @ordered
+	 */
+	int SEARCHED_ARTIFACT__ARTIFACT_TYPE = ARTIFACT__ARTIFACT_TYPE;
+
+	/**
+	 * The feature id for the '<em><b>Name</b></em>' attribute.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 * @ordered
+	 */
+	int SEARCHED_ARTIFACT__NAME = ARTIFACT__NAME;
+
+	/**
+	 * The feature id for the '<em><b>Description</b></em>' attribute.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 * @ordered
+	 */
+	int SEARCHED_ARTIFACT__DESCRIPTION = ARTIFACT__DESCRIPTION;
+
+	/**
+	 * The feature id for the '<em><b>Labels</b></em>' map.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 * @ordered
+	 */
+	int SEARCHED_ARTIFACT__LABELS = ARTIFACT__LABELS;
+
+	/**
+	 * The feature id for the '<em><b>Created On</b></em>' attribute.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 * @ordered
+	 */
+	int SEARCHED_ARTIFACT__CREATED_ON = ARTIFACT_FEATURE_COUNT + 0;
+
+	/**
+	 * The feature id for the '<em><b>Owner</b></em>' attribute.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 * @ordered
+	 */
+	int SEARCHED_ARTIFACT__OWNER = ARTIFACT_FEATURE_COUNT + 1;
+
+	/**
+	 * The feature id for the '<em><b>Modified On</b></em>' attribute.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 * @ordered
+	 */
+	int SEARCHED_ARTIFACT__MODIFIED_ON = ARTIFACT_FEATURE_COUNT + 2;
+
+	/**
+	 * The feature id for the '<em><b>Modified By</b></em>' attribute.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 * @ordered
+	 */
+	int SEARCHED_ARTIFACT__MODIFIED_BY = ARTIFACT_FEATURE_COUNT + 3;
+
+	/**
+	 * The feature id for the '<em><b>Group Id</b></em>' attribute.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 * @ordered
+	 */
+	int SEARCHED_ARTIFACT__GROUP_ID = ARTIFACT_FEATURE_COUNT + 4;
+
+	/**
+	 * The number of structural features of the '<em>Searched Artifact</em>' class.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 * @ordered
+	 */
+	int SEARCHED_ARTIFACT_FEATURE_COUNT = ARTIFACT_FEATURE_COUNT + 5;
+
+	/**
+	 * The number of operations of the '<em>Searched Artifact</em>' class.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 * @ordered
+	 */
+	int SEARCHED_ARTIFACT_OPERATION_COUNT = ARTIFACT_OPERATION_COUNT + 0;
+
+	/**
+	 * The meta object id for the '{@link org.eclipse.fennec.model.atlas.mgmt.mgmtapicurio.impl.SearchResponseImpl <em>Search Response</em>}' class.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @see org.eclipse.fennec.model.atlas.mgmt.mgmtapicurio.impl.SearchResponseImpl
+	 * @see org.eclipse.fennec.model.atlas.mgmt.mgmtapicurio.impl.MgmtApicurioPackageImpl#getSearchResponse()
+	 * @generated
+	 */
+	int SEARCH_RESPONSE = 7;
+
+	/**
+	 * The feature id for the '<em><b>Artifacts</b></em>' containment reference list.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 * @ordered
+	 */
+	int SEARCH_RESPONSE__ARTIFACTS = 0;
+
+	/**
+	 * The feature id for the '<em><b>Count</b></em>' attribute.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 * @ordered
+	 */
+	int SEARCH_RESPONSE__COUNT = 1;
+
+	/**
+	 * The number of structural features of the '<em>Search Response</em>' class.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 * @ordered
+	 */
+	int SEARCH_RESPONSE_FEATURE_COUNT = 2;
+
+	/**
+	 * The number of operations of the '<em>Search Response</em>' class.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 * @ordered
+	 */
+	int SEARCH_RESPONSE_OPERATION_COUNT = 0;
+
+	/**
+	 * The meta object id for the '{@link org.eclipse.fennec.model.atlas.mgmt.mgmtapicurio.impl.LabelsImpl <em>Labels</em>}' class.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @see org.eclipse.fennec.model.atlas.mgmt.mgmtapicurio.impl.LabelsImpl
+	 * @see org.eclipse.fennec.model.atlas.mgmt.mgmtapicurio.impl.MgmtApicurioPackageImpl#getLabels()
+	 * @generated
+	 */
+	int LABELS = 8;
+
+	/**
+	 * The feature id for the '<em><b>Key</b></em>' attribute.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 * @ordered
+	 */
+	int LABELS__KEY = 0;
+
+	/**
+	 * The feature id for the '<em><b>Value</b></em>' attribute.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 * @ordered
+	 */
+	int LABELS__VALUE = 1;
+
+	/**
+	 * The number of structural features of the '<em>Labels</em>' class.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 * @ordered
+	 */
+	int LABELS_FEATURE_COUNT = 2;
+
+	/**
+	 * The number of operations of the '<em>Labels</em>' class.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 * @ordered
+	 */
+	int LABELS_OPERATION_COUNT = 0;
+
+	/**
+	 * The meta object id for the '{@link org.eclipse.fennec.model.atlas.mgmt.mgmtapicurio.impl.SearchVersionResponseImpl <em>Search Version Response</em>}' class.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @see org.eclipse.fennec.model.atlas.mgmt.mgmtapicurio.impl.SearchVersionResponseImpl
+	 * @see org.eclipse.fennec.model.atlas.mgmt.mgmtapicurio.impl.MgmtApicurioPackageImpl#getSearchVersionResponse()
+	 * @generated
+	 */
+	int SEARCH_VERSION_RESPONSE = 9;
+
+	/**
+	 * The feature id for the '<em><b>Versions</b></em>' containment reference list.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 * @ordered
+	 */
+	int SEARCH_VERSION_RESPONSE__VERSIONS = 0;
+
+	/**
+	 * The feature id for the '<em><b>Count</b></em>' attribute.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 * @ordered
+	 */
+	int SEARCH_VERSION_RESPONSE__COUNT = 1;
+
+	/**
+	 * The number of structural features of the '<em>Search Version Response</em>' class.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 * @ordered
+	 */
+	int SEARCH_VERSION_RESPONSE_FEATURE_COUNT = 2;
+
+	/**
+	 * The number of operations of the '<em>Search Version Response</em>' class.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 * @ordered
+	 */
+	int SEARCH_VERSION_RESPONSE_OPERATION_COUNT = 0;
+
+	/**
+	 * The meta object id for the '{@link org.eclipse.fennec.model.atlas.mgmt.mgmtapicurio.impl.SearchedVersionImpl <em>Searched Version</em>}' class.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @see org.eclipse.fennec.model.atlas.mgmt.mgmtapicurio.impl.SearchedVersionImpl
+	 * @see org.eclipse.fennec.model.atlas.mgmt.mgmtapicurio.impl.MgmtApicurioPackageImpl#getSearchedVersion()
+	 * @generated
+	 */
+	int SEARCHED_VERSION = 10;
+
+	/**
+	 * The feature id for the '<em><b>Artifact Id</b></em>' attribute.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 * @ordered
+	 */
+	int SEARCHED_VERSION__ARTIFACT_ID = ARTIFACT__ARTIFACT_ID;
+
+	/**
+	 * The feature id for the '<em><b>Artifact Type</b></em>' attribute.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 * @ordered
+	 */
+	int SEARCHED_VERSION__ARTIFACT_TYPE = ARTIFACT__ARTIFACT_TYPE;
+
+	/**
+	 * The feature id for the '<em><b>Name</b></em>' attribute.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 * @ordered
+	 */
+	int SEARCHED_VERSION__NAME = ARTIFACT__NAME;
+
+	/**
+	 * The feature id for the '<em><b>Description</b></em>' attribute.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 * @ordered
+	 */
+	int SEARCHED_VERSION__DESCRIPTION = ARTIFACT__DESCRIPTION;
+
+	/**
+	 * The feature id for the '<em><b>Labels</b></em>' map.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 * @ordered
+	 */
+	int SEARCHED_VERSION__LABELS = ARTIFACT__LABELS;
+
+	/**
+	 * The feature id for the '<em><b>Global Id</b></em>' attribute.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 * @ordered
+	 */
+	int SEARCHED_VERSION__GLOBAL_ID = ARTIFACT_FEATURE_COUNT + 0;
+
+	/**
+	 * The feature id for the '<em><b>Version</b></em>' attribute.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 * @ordered
+	 */
+	int SEARCHED_VERSION__VERSION = ARTIFACT_FEATURE_COUNT + 1;
+
+	/**
+	 * The feature id for the '<em><b>Content Id</b></em>' attribute.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 * @ordered
+	 */
+	int SEARCHED_VERSION__CONTENT_ID = ARTIFACT_FEATURE_COUNT + 2;
+
+	/**
+	 * The feature id for the '<em><b>State</b></em>' attribute.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 * @ordered
+	 */
+	int SEARCHED_VERSION__STATE = ARTIFACT_FEATURE_COUNT + 3;
+
+	/**
+	 * The number of structural features of the '<em>Searched Version</em>' class.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 * @ordered
+	 */
+	int SEARCHED_VERSION_FEATURE_COUNT = ARTIFACT_FEATURE_COUNT + 4;
+
+	/**
+	 * The number of operations of the '<em>Searched Version</em>' class.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 * @ordered
+	 */
+	int SEARCHED_VERSION_OPERATION_COUNT = ARTIFACT_OPERATION_COUNT + 0;
+
+	/**
 	 * The meta object id for the '{@link org.eclipse.fennec.model.atlas.mgmt.mgmtapicurio.ArtifactType <em>Artifact Type</em>}' enum.
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
@@ -493,7 +894,17 @@ public interface MgmtApicurioPackage extends org.eclipse.emf.ecore.EPackage {
 	 * @see org.eclipse.fennec.model.atlas.mgmt.mgmtapicurio.impl.MgmtApicurioPackageImpl#getArtifactType()
 	 * @generated
 	 */
-	int ARTIFACT_TYPE = 6;
+	int ARTIFACT_TYPE = 11;
+
+	/**
+	 * The meta object id for the '{@link org.eclipse.fennec.model.atlas.mgmt.mgmtapicurio.VersionStateType <em>Version State Type</em>}' enum.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @see org.eclipse.fennec.model.atlas.mgmt.mgmtapicurio.VersionStateType
+	 * @see org.eclipse.fennec.model.atlas.mgmt.mgmtapicurio.impl.MgmtApicurioPackageImpl#getVersionStateType()
+	 * @generated
+	 */
+	int VERSION_STATE_TYPE = 12;
 
 
 	/**
@@ -549,6 +960,17 @@ public interface MgmtApicurioPackage extends org.eclipse.emf.ecore.EPackage {
 	 * @generated
 	 */
 	EAttribute getArtifact_Description();
+
+	/**
+	 * Returns the meta object for the map '{@link org.eclipse.fennec.model.atlas.mgmt.mgmtapicurio.Artifact#getLabels <em>Labels</em>}'.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @return the meta object for the map '<em>Labels</em>'.
+	 * @see org.eclipse.fennec.model.atlas.mgmt.mgmtapicurio.Artifact#getLabels()
+	 * @see #getArtifact()
+	 * @generated
+	 */
+	EReference getArtifact_Labels();
 
 	/**
 	 * Returns the meta object for class '{@link org.eclipse.fennec.model.atlas.mgmt.mgmtapicurio.CreateArtifact <em>Create Artifact</em>}'.
@@ -701,6 +1123,17 @@ public interface MgmtApicurioPackage extends org.eclipse.emf.ecore.EPackage {
 	EAttribute getVersion_IsDraft();
 
 	/**
+	 * Returns the meta object for the map '{@link org.eclipse.fennec.model.atlas.mgmt.mgmtapicurio.Version#getLabels <em>Labels</em>}'.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @return the meta object for the map '<em>Labels</em>'.
+	 * @see org.eclipse.fennec.model.atlas.mgmt.mgmtapicurio.Version#getLabels()
+	 * @see #getVersion()
+	 * @generated
+	 */
+	EReference getVersion_Labels();
+
+	/**
 	 * Returns the meta object for class '{@link org.eclipse.fennec.model.atlas.mgmt.mgmtapicurio.ArtifactReference <em>Artifact Reference</em>}'.
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
@@ -755,6 +1188,223 @@ public interface MgmtApicurioPackage extends org.eclipse.emf.ecore.EPackage {
 	EAttribute getArtifactReference_Version();
 
 	/**
+	 * Returns the meta object for class '{@link org.eclipse.fennec.model.atlas.mgmt.mgmtapicurio.SearchedArtifact <em>Searched Artifact</em>}'.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @return the meta object for class '<em>Searched Artifact</em>'.
+	 * @see org.eclipse.fennec.model.atlas.mgmt.mgmtapicurio.SearchedArtifact
+	 * @generated
+	 */
+	EClass getSearchedArtifact();
+
+	/**
+	 * Returns the meta object for the attribute '{@link org.eclipse.fennec.model.atlas.mgmt.mgmtapicurio.SearchedArtifact#getCreatedOn <em>Created On</em>}'.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @return the meta object for the attribute '<em>Created On</em>'.
+	 * @see org.eclipse.fennec.model.atlas.mgmt.mgmtapicurio.SearchedArtifact#getCreatedOn()
+	 * @see #getSearchedArtifact()
+	 * @generated
+	 */
+	EAttribute getSearchedArtifact_CreatedOn();
+
+	/**
+	 * Returns the meta object for the attribute '{@link org.eclipse.fennec.model.atlas.mgmt.mgmtapicurio.SearchedArtifact#getOwner <em>Owner</em>}'.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @return the meta object for the attribute '<em>Owner</em>'.
+	 * @see org.eclipse.fennec.model.atlas.mgmt.mgmtapicurio.SearchedArtifact#getOwner()
+	 * @see #getSearchedArtifact()
+	 * @generated
+	 */
+	EAttribute getSearchedArtifact_Owner();
+
+	/**
+	 * Returns the meta object for the attribute '{@link org.eclipse.fennec.model.atlas.mgmt.mgmtapicurio.SearchedArtifact#getModifiedOn <em>Modified On</em>}'.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @return the meta object for the attribute '<em>Modified On</em>'.
+	 * @see org.eclipse.fennec.model.atlas.mgmt.mgmtapicurio.SearchedArtifact#getModifiedOn()
+	 * @see #getSearchedArtifact()
+	 * @generated
+	 */
+	EAttribute getSearchedArtifact_ModifiedOn();
+
+	/**
+	 * Returns the meta object for the attribute '{@link org.eclipse.fennec.model.atlas.mgmt.mgmtapicurio.SearchedArtifact#getModifiedBy <em>Modified By</em>}'.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @return the meta object for the attribute '<em>Modified By</em>'.
+	 * @see org.eclipse.fennec.model.atlas.mgmt.mgmtapicurio.SearchedArtifact#getModifiedBy()
+	 * @see #getSearchedArtifact()
+	 * @generated
+	 */
+	EAttribute getSearchedArtifact_ModifiedBy();
+
+	/**
+	 * Returns the meta object for the attribute '{@link org.eclipse.fennec.model.atlas.mgmt.mgmtapicurio.SearchedArtifact#getGroupId <em>Group Id</em>}'.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @return the meta object for the attribute '<em>Group Id</em>'.
+	 * @see org.eclipse.fennec.model.atlas.mgmt.mgmtapicurio.SearchedArtifact#getGroupId()
+	 * @see #getSearchedArtifact()
+	 * @generated
+	 */
+	EAttribute getSearchedArtifact_GroupId();
+
+	/**
+	 * Returns the meta object for class '{@link org.eclipse.fennec.model.atlas.mgmt.mgmtapicurio.SearchResponse <em>Search Response</em>}'.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @return the meta object for class '<em>Search Response</em>'.
+	 * @see org.eclipse.fennec.model.atlas.mgmt.mgmtapicurio.SearchResponse
+	 * @generated
+	 */
+	EClass getSearchResponse();
+
+	/**
+	 * Returns the meta object for the containment reference list '{@link org.eclipse.fennec.model.atlas.mgmt.mgmtapicurio.SearchResponse#getArtifacts <em>Artifacts</em>}'.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @return the meta object for the containment reference list '<em>Artifacts</em>'.
+	 * @see org.eclipse.fennec.model.atlas.mgmt.mgmtapicurio.SearchResponse#getArtifacts()
+	 * @see #getSearchResponse()
+	 * @generated
+	 */
+	EReference getSearchResponse_Artifacts();
+
+	/**
+	 * Returns the meta object for the attribute '{@link org.eclipse.fennec.model.atlas.mgmt.mgmtapicurio.SearchResponse#getCount <em>Count</em>}'.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @return the meta object for the attribute '<em>Count</em>'.
+	 * @see org.eclipse.fennec.model.atlas.mgmt.mgmtapicurio.SearchResponse#getCount()
+	 * @see #getSearchResponse()
+	 * @generated
+	 */
+	EAttribute getSearchResponse_Count();
+
+	/**
+	 * Returns the meta object for class '{@link java.util.Map.Entry <em>Labels</em>}'.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @return the meta object for class '<em>Labels</em>'.
+	 * @see java.util.Map.Entry
+	 * @model keyDataType="org.eclipse.emf.ecore.EString"
+	 *        valueDataType="org.eclipse.emf.ecore.EString"
+	 * @generated
+	 */
+	EClass getLabels();
+
+	/**
+	 * Returns the meta object for the attribute '{@link java.util.Map.Entry <em>Key</em>}'.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @return the meta object for the attribute '<em>Key</em>'.
+	 * @see java.util.Map.Entry
+	 * @see #getLabels()
+	 * @generated
+	 */
+	EAttribute getLabels_Key();
+
+	/**
+	 * Returns the meta object for the attribute '{@link java.util.Map.Entry <em>Value</em>}'.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @return the meta object for the attribute '<em>Value</em>'.
+	 * @see java.util.Map.Entry
+	 * @see #getLabels()
+	 * @generated
+	 */
+	EAttribute getLabels_Value();
+
+	/**
+	 * Returns the meta object for class '{@link org.eclipse.fennec.model.atlas.mgmt.mgmtapicurio.SearchVersionResponse <em>Search Version Response</em>}'.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @return the meta object for class '<em>Search Version Response</em>'.
+	 * @see org.eclipse.fennec.model.atlas.mgmt.mgmtapicurio.SearchVersionResponse
+	 * @generated
+	 */
+	EClass getSearchVersionResponse();
+
+	/**
+	 * Returns the meta object for the containment reference list '{@link org.eclipse.fennec.model.atlas.mgmt.mgmtapicurio.SearchVersionResponse#getVersions <em>Versions</em>}'.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @return the meta object for the containment reference list '<em>Versions</em>'.
+	 * @see org.eclipse.fennec.model.atlas.mgmt.mgmtapicurio.SearchVersionResponse#getVersions()
+	 * @see #getSearchVersionResponse()
+	 * @generated
+	 */
+	EReference getSearchVersionResponse_Versions();
+
+	/**
+	 * Returns the meta object for the attribute '{@link org.eclipse.fennec.model.atlas.mgmt.mgmtapicurio.SearchVersionResponse#getCount <em>Count</em>}'.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @return the meta object for the attribute '<em>Count</em>'.
+	 * @see org.eclipse.fennec.model.atlas.mgmt.mgmtapicurio.SearchVersionResponse#getCount()
+	 * @see #getSearchVersionResponse()
+	 * @generated
+	 */
+	EAttribute getSearchVersionResponse_Count();
+
+	/**
+	 * Returns the meta object for class '{@link org.eclipse.fennec.model.atlas.mgmt.mgmtapicurio.SearchedVersion <em>Searched Version</em>}'.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @return the meta object for class '<em>Searched Version</em>'.
+	 * @see org.eclipse.fennec.model.atlas.mgmt.mgmtapicurio.SearchedVersion
+	 * @generated
+	 */
+	EClass getSearchedVersion();
+
+	/**
+	 * Returns the meta object for the attribute '{@link org.eclipse.fennec.model.atlas.mgmt.mgmtapicurio.SearchedVersion#getGlobalId <em>Global Id</em>}'.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @return the meta object for the attribute '<em>Global Id</em>'.
+	 * @see org.eclipse.fennec.model.atlas.mgmt.mgmtapicurio.SearchedVersion#getGlobalId()
+	 * @see #getSearchedVersion()
+	 * @generated
+	 */
+	EAttribute getSearchedVersion_GlobalId();
+
+	/**
+	 * Returns the meta object for the attribute '{@link org.eclipse.fennec.model.atlas.mgmt.mgmtapicurio.SearchedVersion#getVersion <em>Version</em>}'.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @return the meta object for the attribute '<em>Version</em>'.
+	 * @see org.eclipse.fennec.model.atlas.mgmt.mgmtapicurio.SearchedVersion#getVersion()
+	 * @see #getSearchedVersion()
+	 * @generated
+	 */
+	EAttribute getSearchedVersion_Version();
+
+	/**
+	 * Returns the meta object for the attribute '{@link org.eclipse.fennec.model.atlas.mgmt.mgmtapicurio.SearchedVersion#getContentId <em>Content Id</em>}'.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @return the meta object for the attribute '<em>Content Id</em>'.
+	 * @see org.eclipse.fennec.model.atlas.mgmt.mgmtapicurio.SearchedVersion#getContentId()
+	 * @see #getSearchedVersion()
+	 * @generated
+	 */
+	EAttribute getSearchedVersion_ContentId();
+
+	/**
+	 * Returns the meta object for the attribute '{@link org.eclipse.fennec.model.atlas.mgmt.mgmtapicurio.SearchedVersion#getState <em>State</em>}'.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @return the meta object for the attribute '<em>State</em>'.
+	 * @see org.eclipse.fennec.model.atlas.mgmt.mgmtapicurio.SearchedVersion#getState()
+	 * @see #getSearchedVersion()
+	 * @generated
+	 */
+	EAttribute getSearchedVersion_State();
+
+	/**
 	 * Returns the meta object for enum '{@link org.eclipse.fennec.model.atlas.mgmt.mgmtapicurio.ArtifactType <em>Artifact Type</em>}'.
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
@@ -763,6 +1413,16 @@ public interface MgmtApicurioPackage extends org.eclipse.emf.ecore.EPackage {
 	 * @generated
 	 */
 	EEnum getArtifactType();
+
+	/**
+	 * Returns the meta object for enum '{@link org.eclipse.fennec.model.atlas.mgmt.mgmtapicurio.VersionStateType <em>Version State Type</em>}'.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @return the meta object for enum '<em>Version State Type</em>'.
+	 * @see org.eclipse.fennec.model.atlas.mgmt.mgmtapicurio.VersionStateType
+	 * @generated
+	 */
+	EEnum getVersionStateType();
 
 	/**
 	 * Returns the factory that creates the instances of the model.
@@ -828,6 +1488,14 @@ public interface MgmtApicurioPackage extends org.eclipse.emf.ecore.EPackage {
 		 * @generated
 		 */
 		EAttribute ARTIFACT__DESCRIPTION = eINSTANCE.getArtifact_Description();
+
+		/**
+		 * The meta object literal for the '<em><b>Labels</b></em>' map feature.
+		 * <!-- begin-user-doc -->
+		 * <!-- end-user-doc -->
+		 * @generated
+		 */
+		EReference ARTIFACT__LABELS = eINSTANCE.getArtifact_Labels();
 
 		/**
 		 * The meta object literal for the '{@link org.eclipse.fennec.model.atlas.mgmt.mgmtapicurio.impl.CreateArtifactImpl <em>Create Artifact</em>}' class.
@@ -950,6 +1618,14 @@ public interface MgmtApicurioPackage extends org.eclipse.emf.ecore.EPackage {
 		EAttribute VERSION__IS_DRAFT = eINSTANCE.getVersion_IsDraft();
 
 		/**
+		 * The meta object literal for the '<em><b>Labels</b></em>' map feature.
+		 * <!-- begin-user-doc -->
+		 * <!-- end-user-doc -->
+		 * @generated
+		 */
+		EReference VERSION__LABELS = eINSTANCE.getVersion_Labels();
+
+		/**
 		 * The meta object literal for the '{@link org.eclipse.fennec.model.atlas.mgmt.mgmtapicurio.impl.ArtifactReferenceImpl <em>Artifact Reference</em>}' class.
 		 * <!-- begin-user-doc -->
 		 * <!-- end-user-doc -->
@@ -992,6 +1668,176 @@ public interface MgmtApicurioPackage extends org.eclipse.emf.ecore.EPackage {
 		EAttribute ARTIFACT_REFERENCE__VERSION = eINSTANCE.getArtifactReference_Version();
 
 		/**
+		 * The meta object literal for the '{@link org.eclipse.fennec.model.atlas.mgmt.mgmtapicurio.impl.SearchedArtifactImpl <em>Searched Artifact</em>}' class.
+		 * <!-- begin-user-doc -->
+		 * <!-- end-user-doc -->
+		 * @see org.eclipse.fennec.model.atlas.mgmt.mgmtapicurio.impl.SearchedArtifactImpl
+		 * @see org.eclipse.fennec.model.atlas.mgmt.mgmtapicurio.impl.MgmtApicurioPackageImpl#getSearchedArtifact()
+		 * @generated
+		 */
+		EClass SEARCHED_ARTIFACT = eINSTANCE.getSearchedArtifact();
+
+		/**
+		 * The meta object literal for the '<em><b>Created On</b></em>' attribute feature.
+		 * <!-- begin-user-doc -->
+		 * <!-- end-user-doc -->
+		 * @generated
+		 */
+		EAttribute SEARCHED_ARTIFACT__CREATED_ON = eINSTANCE.getSearchedArtifact_CreatedOn();
+
+		/**
+		 * The meta object literal for the '<em><b>Owner</b></em>' attribute feature.
+		 * <!-- begin-user-doc -->
+		 * <!-- end-user-doc -->
+		 * @generated
+		 */
+		EAttribute SEARCHED_ARTIFACT__OWNER = eINSTANCE.getSearchedArtifact_Owner();
+
+		/**
+		 * The meta object literal for the '<em><b>Modified On</b></em>' attribute feature.
+		 * <!-- begin-user-doc -->
+		 * <!-- end-user-doc -->
+		 * @generated
+		 */
+		EAttribute SEARCHED_ARTIFACT__MODIFIED_ON = eINSTANCE.getSearchedArtifact_ModifiedOn();
+
+		/**
+		 * The meta object literal for the '<em><b>Modified By</b></em>' attribute feature.
+		 * <!-- begin-user-doc -->
+		 * <!-- end-user-doc -->
+		 * @generated
+		 */
+		EAttribute SEARCHED_ARTIFACT__MODIFIED_BY = eINSTANCE.getSearchedArtifact_ModifiedBy();
+
+		/**
+		 * The meta object literal for the '<em><b>Group Id</b></em>' attribute feature.
+		 * <!-- begin-user-doc -->
+		 * <!-- end-user-doc -->
+		 * @generated
+		 */
+		EAttribute SEARCHED_ARTIFACT__GROUP_ID = eINSTANCE.getSearchedArtifact_GroupId();
+
+		/**
+		 * The meta object literal for the '{@link org.eclipse.fennec.model.atlas.mgmt.mgmtapicurio.impl.SearchResponseImpl <em>Search Response</em>}' class.
+		 * <!-- begin-user-doc -->
+		 * <!-- end-user-doc -->
+		 * @see org.eclipse.fennec.model.atlas.mgmt.mgmtapicurio.impl.SearchResponseImpl
+		 * @see org.eclipse.fennec.model.atlas.mgmt.mgmtapicurio.impl.MgmtApicurioPackageImpl#getSearchResponse()
+		 * @generated
+		 */
+		EClass SEARCH_RESPONSE = eINSTANCE.getSearchResponse();
+
+		/**
+		 * The meta object literal for the '<em><b>Artifacts</b></em>' containment reference list feature.
+		 * <!-- begin-user-doc -->
+		 * <!-- end-user-doc -->
+		 * @generated
+		 */
+		EReference SEARCH_RESPONSE__ARTIFACTS = eINSTANCE.getSearchResponse_Artifacts();
+
+		/**
+		 * The meta object literal for the '<em><b>Count</b></em>' attribute feature.
+		 * <!-- begin-user-doc -->
+		 * <!-- end-user-doc -->
+		 * @generated
+		 */
+		EAttribute SEARCH_RESPONSE__COUNT = eINSTANCE.getSearchResponse_Count();
+
+		/**
+		 * The meta object literal for the '{@link org.eclipse.fennec.model.atlas.mgmt.mgmtapicurio.impl.LabelsImpl <em>Labels</em>}' class.
+		 * <!-- begin-user-doc -->
+		 * <!-- end-user-doc -->
+		 * @see org.eclipse.fennec.model.atlas.mgmt.mgmtapicurio.impl.LabelsImpl
+		 * @see org.eclipse.fennec.model.atlas.mgmt.mgmtapicurio.impl.MgmtApicurioPackageImpl#getLabels()
+		 * @generated
+		 */
+		EClass LABELS = eINSTANCE.getLabels();
+
+		/**
+		 * The meta object literal for the '<em><b>Key</b></em>' attribute feature.
+		 * <!-- begin-user-doc -->
+		 * <!-- end-user-doc -->
+		 * @generated
+		 */
+		EAttribute LABELS__KEY = eINSTANCE.getLabels_Key();
+
+		/**
+		 * The meta object literal for the '<em><b>Value</b></em>' attribute feature.
+		 * <!-- begin-user-doc -->
+		 * <!-- end-user-doc -->
+		 * @generated
+		 */
+		EAttribute LABELS__VALUE = eINSTANCE.getLabels_Value();
+
+		/**
+		 * The meta object literal for the '{@link org.eclipse.fennec.model.atlas.mgmt.mgmtapicurio.impl.SearchVersionResponseImpl <em>Search Version Response</em>}' class.
+		 * <!-- begin-user-doc -->
+		 * <!-- end-user-doc -->
+		 * @see org.eclipse.fennec.model.atlas.mgmt.mgmtapicurio.impl.SearchVersionResponseImpl
+		 * @see org.eclipse.fennec.model.atlas.mgmt.mgmtapicurio.impl.MgmtApicurioPackageImpl#getSearchVersionResponse()
+		 * @generated
+		 */
+		EClass SEARCH_VERSION_RESPONSE = eINSTANCE.getSearchVersionResponse();
+
+		/**
+		 * The meta object literal for the '<em><b>Versions</b></em>' containment reference list feature.
+		 * <!-- begin-user-doc -->
+		 * <!-- end-user-doc -->
+		 * @generated
+		 */
+		EReference SEARCH_VERSION_RESPONSE__VERSIONS = eINSTANCE.getSearchVersionResponse_Versions();
+
+		/**
+		 * The meta object literal for the '<em><b>Count</b></em>' attribute feature.
+		 * <!-- begin-user-doc -->
+		 * <!-- end-user-doc -->
+		 * @generated
+		 */
+		EAttribute SEARCH_VERSION_RESPONSE__COUNT = eINSTANCE.getSearchVersionResponse_Count();
+
+		/**
+		 * The meta object literal for the '{@link org.eclipse.fennec.model.atlas.mgmt.mgmtapicurio.impl.SearchedVersionImpl <em>Searched Version</em>}' class.
+		 * <!-- begin-user-doc -->
+		 * <!-- end-user-doc -->
+		 * @see org.eclipse.fennec.model.atlas.mgmt.mgmtapicurio.impl.SearchedVersionImpl
+		 * @see org.eclipse.fennec.model.atlas.mgmt.mgmtapicurio.impl.MgmtApicurioPackageImpl#getSearchedVersion()
+		 * @generated
+		 */
+		EClass SEARCHED_VERSION = eINSTANCE.getSearchedVersion();
+
+		/**
+		 * The meta object literal for the '<em><b>Global Id</b></em>' attribute feature.
+		 * <!-- begin-user-doc -->
+		 * <!-- end-user-doc -->
+		 * @generated
+		 */
+		EAttribute SEARCHED_VERSION__GLOBAL_ID = eINSTANCE.getSearchedVersion_GlobalId();
+
+		/**
+		 * The meta object literal for the '<em><b>Version</b></em>' attribute feature.
+		 * <!-- begin-user-doc -->
+		 * <!-- end-user-doc -->
+		 * @generated
+		 */
+		EAttribute SEARCHED_VERSION__VERSION = eINSTANCE.getSearchedVersion_Version();
+
+		/**
+		 * The meta object literal for the '<em><b>Content Id</b></em>' attribute feature.
+		 * <!-- begin-user-doc -->
+		 * <!-- end-user-doc -->
+		 * @generated
+		 */
+		EAttribute SEARCHED_VERSION__CONTENT_ID = eINSTANCE.getSearchedVersion_ContentId();
+
+		/**
+		 * The meta object literal for the '<em><b>State</b></em>' attribute feature.
+		 * <!-- begin-user-doc -->
+		 * <!-- end-user-doc -->
+		 * @generated
+		 */
+		EAttribute SEARCHED_VERSION__STATE = eINSTANCE.getSearchedVersion_State();
+
+		/**
 		 * The meta object literal for the '{@link org.eclipse.fennec.model.atlas.mgmt.mgmtapicurio.ArtifactType <em>Artifact Type</em>}' enum.
 		 * <!-- begin-user-doc -->
 		 * <!-- end-user-doc -->
@@ -1000,6 +1846,16 @@ public interface MgmtApicurioPackage extends org.eclipse.emf.ecore.EPackage {
 		 * @generated
 		 */
 		EEnum ARTIFACT_TYPE = eINSTANCE.getArtifactType();
+
+		/**
+		 * The meta object literal for the '{@link org.eclipse.fennec.model.atlas.mgmt.mgmtapicurio.VersionStateType <em>Version State Type</em>}' enum.
+		 * <!-- begin-user-doc -->
+		 * <!-- end-user-doc -->
+		 * @see org.eclipse.fennec.model.atlas.mgmt.mgmtapicurio.VersionStateType
+		 * @see org.eclipse.fennec.model.atlas.mgmt.mgmtapicurio.impl.MgmtApicurioPackageImpl#getVersionStateType()
+		 * @generated
+		 */
+		EEnum VERSION_STATE_TYPE = eINSTANCE.getVersionStateType();
 
 	}
 

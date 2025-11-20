@@ -71,6 +71,7 @@
       <genFeatures createChild="false" ecoreFeature="ecore:EAttribute management.ecore#//ObjectMetadata/objectName"/>
       <genFeatures createChild="false" ecoreFeature="ecore:EAttribute management.ecore#//ObjectMetadata/role"/>
       <genFeatures createChild="false" ecoreFeature="ecore:EAttribute management.ecore#//ObjectMetadata/lastChangeReason"/>
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute management.ecore#//ObjectMetadata/storageId"/>
     </genClasses>
     <genClasses ecoreClass="management.ecore#//StringToObjectMapEntry">
       <genFeatures createChild="false" ecoreFeature="ecore:EAttribute management.ecore#//StringToObjectMapEntry/key"/>
