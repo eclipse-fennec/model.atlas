@@ -43,6 +43,7 @@ public abstract class AbstractStorageHelper implements AutoCloseable {
     
     private static final Logger LOGGER = Logger.getLogger(AbstractStorageHelper.class.getName());
     protected static final String DEFAULT_EXTENSION = ".xmi";
+    protected static final String DEFAULT_CONTENT_TYPE = "application/xml";
     protected static final String METADATA_EXTENSION = ".metadata.xmi";
     protected static final String FILE_EXTENSION_PROPERTY = "file.extension";
     protected static final String CONTENT_TYPE_PROPERTY = "content.type";
@@ -121,7 +122,7 @@ public abstract class AbstractStorageHelper implements AutoCloseable {
         if (metadata.getProperties() != null && metadata.getProperties().containsKey(CONTENT_TYPE_PROPERTY)) {
             return (String) metadata.getProperties().get(CONTENT_TYPE_PROPERTY);
         }
-        return null;
+        return DEFAULT_CONTENT_TYPE;
     }
     
     /**

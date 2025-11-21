@@ -27,3 +27,5 @@ We are using **v3.0.x** of the Apicurio Registry, so the base url we are using f
   We have to decide how to proceed here. Do we want to just keep updating the same artifact? Do we want for every update to store a different version? We have a version attribute in the metadata as well. We can have multiple variants of the object (e.g. in json, xmi, etc) but the metadata will be just one. If the version has changed then, maybe we should remove the older version in apicurio and save it again as new?? 
 
 - We need to understand how we can retrieve an artifact. Doing something like `http://localhost:8080/apis/registry/v3/groups/default/artifacts/default:draft:test-id-123.json` only retrieves the metadata. To retrieve the actual content we would need to know the version and at that point in the storage we do not have the `ObjectMetadata` from which to extract the version.
+
+- If we are using `ifExists=CREATE_VERSION` when creating/updating an  artifact, we should take care that the version is updated when we update the artifact. We cannot use the same version, otherwise the request will fail with a 409

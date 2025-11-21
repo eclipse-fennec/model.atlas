@@ -16,6 +16,7 @@ package org.eclipse.fennec.model.atlas.management.apicurio;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -29,7 +30,6 @@ import org.eclipse.emf.ecore.EObject;
 import org.eclipse.emf.ecore.resource.Resource;
 import org.eclipse.emf.ecore.resource.ResourceSet;
 import org.eclipse.emf.ecore.util.EcoreUtil;
-import org.eclipse.emf.ecore.xmi.XMLResource;
 import org.eclipse.fennec.model.atlas.management.apicurio.EObjectApicurioStorageService.Config;
 import org.eclipse.fennec.model.atlas.mgmt.management.ObjectMetadata;
 import org.eclipse.fennec.model.atlas.mgmt.mgmtapicurio.Artifact;
@@ -40,6 +40,7 @@ import org.eclipse.fennec.model.atlas.mgmt.mgmtapicurio.MgmtApicurioFactory;
 import org.eclipse.fennec.model.atlas.mgmt.mgmtapicurio.MgmtApicurioPackage;
 import org.eclipse.fennec.model.atlas.mgmt.mgmtapicurio.SearchResponse;
 import org.eclipse.fennec.model.atlas.mgmt.mgmtapicurio.SearchVersionResponse;
+import org.eclipse.fennec.model.atlas.mgmt.mgmtapicurio.SearchedArtifact;
 import org.eclipse.fennec.model.atlas.mgmt.mgmtapicurio.SearchedVersion;
 import org.eclipse.fennec.model.atlas.mgmt.mgmtapicurio.Version;
 import org.eclipse.fennec.model.atlas.mgmt.storage.AbstractStorageHelper;
@@ -55,7 +56,6 @@ import org.gecko.emf.osgi.constants.EMFUriHandlerConstants;
 public class ApicurioStorageHelper extends AbstractStorageHelper {
 	
 	private static final Logger LOGGER = Logger.getLogger(ApicurioStorageHelper.class.getName());
-	private static final String METADATA_WITHOUT_EXTENSION = METADATA_EXTENSION.replace(".xmi", "");
 	private final String apicurioURL;
 	private String storageRole;
 	private Config config;
@@ -79,6 +79,11 @@ public class ApicurioStorageHelper extends AbstractStorageHelper {
 	protected URI createStorageURI(String path) {
 		return URI.createURI(path);
 	}
+	
+//	@Override
+//	protected URI createStorageURI(String path) {
+//		return URI.createURI(apicurioURL.concat("/").concat(path));
+//	}
 
 	/* 
 	 * (non-Javadoc)
@@ -102,7 +107,7 @@ public class ApicurioStorageHelper extends AbstractStorageHelper {
 			return null;
 		}
 
-//		TODO: we should search for versions where the artifactId is = objectId
+//		we should search for versions where the artifactId is = objectId
 //		      we should sort the versions and take the latest one 
 //			  then we shoould query the versions endpoint for the content of the artifact
 		URI searchVersionsURI = URI.createURI(config.base_url().concat("search/versions?orderBy=version&order=desc&artifactId=").concat(objectId));
@@ -117,6 +122,7 @@ public class ApicurioStorageHelper extends AbstractStorageHelper {
 			return null;
 		}
 		String contentType = latestVersion.getLabels().get("contentType");
+		if(contentType == null) contentType = "application/xmi";
 		URI objectUri = URI.createURI(apicurioURL.concat("/").concat(objectPath).concat("/versions/").concat(version).concat("/content"));		
 		EObject eObj = sendGETRequest(objectUri, (EClass) resourceSet.getEObject(URI.createURI(eClassURI), false), contentType);
 		return eObj;
@@ -127,7 +133,6 @@ public class ApicurioStorageHelper extends AbstractStorageHelper {
 		try {
 			Map<String, Object> options = new HashMap<>();
 			options.put(EMFJs.OPTION_ROOT_ELEMENT, expectedResponseEClass);
-			options.put(XMLResource.OPTION_ROOT_OBJECTS, expectedResponseEClass);
 			options.put(EMFUriHandlerConstants.OPTION_HTTP_METHOD, "GET");
 			searchOp.getResource().load(options);
 			if(!searchOp.getResource().getContents().isEmpty()) {
@@ -169,7 +174,7 @@ public class ApicurioStorageHelper extends AbstractStorageHelper {
 //		TODO: we should search for versions where the artifactId is = objectId
 //		      we should sort the versions and take the latest one 
 //			  then we shoould query the versions endpoint for the content of the artifact
-		URI searchVersionsURI = URI.createURI(config.base_url().concat("search/versions?orderBy=version&order=desc&artifactId=").concat(objectId));
+		URI searchVersionsURI = URI.createURI(config.base_url().concat("search/versions?orderBy=version&order=desc&artifactId=").concat(objectPath));
 		SearchVersionResponse versionResponse = (SearchVersionResponse) sendGETRequest(searchVersionsURI, MgmtApicurioPackage.Literals.SEARCH_VERSION_RESPONSE, "application/json");
 		if(versionResponse == null || versionResponse.getCount() == 0) return null;
 		
@@ -182,9 +187,21 @@ public class ApicurioStorageHelper extends AbstractStorageHelper {
 		}
 		
 		URI objectUri = URI.createURI(apicurioURL.concat("/").concat(objectPath).concat("/versions/").concat(version).concat("/content"));		
-		ObjectMetadata eObj = (ObjectMetadata) sendGETRequest(objectUri, (EClass) resourceSet.getEObject(URI.createURI(eClassURI), false), "application/xml");
+		ObjectMetadata eObj = (ObjectMetadata) sendGETRequest(objectUri, (EClass) resourceSet.getEObject(URI.createURI(eClassURI), false), "application/xmi");
 		return eObj;
 	}
+	
+	/* 
+	 * (non-Javadoc)
+	 * @see org.eclipse.fennec.model.atlas.mgmt.storage.AbstractStorageHelper#buildObjectPath(java.lang.String, java.lang.String)
+	 */
+	@Override
+	protected String buildObjectPath(String objectId, String extension) {
+		return config.artifact_group_id().concat(":").concat(config.storage_role()).concat(":").concat(objectId).concat(extension);
+//		return super.buildObjectPath(objectId, extension);
+	}
+	
+
 
 	/* 
 	 * (non-Javadoc)
@@ -192,19 +209,19 @@ public class ApicurioStorageHelper extends AbstractStorageHelper {
 	 */
 	@Override
 	public String saveEObject(String objectId, EObject object, ObjectMetadata metadata) throws IOException {
-		String fileExtension = getFileExtension(metadata);
+//		String fileExtension = getFileExtension(metadata);
         String contentType = getContentType(metadata);
         
         URI objectUri = URI.createURI(objectId);
         ResourceOperation contentRes = createResource(objectUri, contentType);
         contentRes.getResource().getContents().add(object);
-        ResourceOperation objectOp = createResource(URI.createURI(apicurioURL), "application/json");
+        ResourceOperation objectOp = createResource(URI.createURI(apicurioURL.concat("?ifExists=CREATE_VERSION")), "application/json");
         String storageId = objectId;
 		try(ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream()) {
 			contentRes.getResource().save(System.out, null);
 			contentRes.getResource().save(byteArrayOutputStream, null);
 			ByteArrayInputStream is = new ByteArrayInputStream(byteArrayOutputStream.toByteArray());			
-			Artifact artifact = createArtifact(objectId, fileExtension, metadata, is, false);
+			Artifact artifact = createArtifact(objectId, contentType, metadata, is, false);
 			storageId = artifact.getArtifactId();
 			Resource apicurioResource = objectOp.getResource();
 			apicurioResource.getContents().add(artifact);
@@ -252,11 +269,11 @@ public class ApicurioStorageHelper extends AbstractStorageHelper {
 	        URI metadataUri = createStorageURI(metadataPath);
 	        ResourceOperation contentRes = createResource(metadataUri, "application/xmi");
 	        contentRes.getResource().getContents().add(metadata);
-	        ResourceOperation objectOp = createResource(URI.createURI(apicurioURL), "application/json");
+	        ResourceOperation objectOp = createResource(URI.createURI(apicurioURL.concat("?ifExists=CREATE_VERSION")), "application/json");
 			try(ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream()) {
 				contentRes.getResource().save(byteArrayOutputStream, null);
 				ByteArrayInputStream is = new ByteArrayInputStream(byteArrayOutputStream.toByteArray());			
-				Artifact artifact = createArtifact(metadataPath, ".xmi", metadata, is, true);
+				Artifact artifact = createArtifact(metadataPath, "application/xml", metadata, is, true);
 				artifact.getArtifactId();
 				Resource apicurioResource = objectOp.getResource();
 				apicurioResource.getContents().add(artifact);
@@ -265,7 +282,7 @@ public class ApicurioStorageHelper extends AbstractStorageHelper {
 				Map<String, String> headers = new HashMap<>();
 				headers.put("Content-Type", "application/json");
 				options.put(EMFUriHandlerConstants.OPTION_HTTP_HEADERS, headers);
-				apicurioResource.save(System.out, options);
+//				apicurioResource.save(System.out, options);
 				apicurioResource.save(options);
 			} finally {
 				objectOp.cleanup();
@@ -274,9 +291,9 @@ public class ApicurioStorageHelper extends AbstractStorageHelper {
 	        
 	}
 
-	private Artifact createArtifact(String objectId, String fileExtension, ObjectMetadata metadata, ByteArrayInputStream is, boolean isMetadata) {
+	private Artifact createArtifact(String objectId, String contentType, ObjectMetadata metadata, ByteArrayInputStream is, boolean isMetadata) {
 		Content content = MgmtApicurioFactory.eINSTANCE.createContent();
-		String contentType = fileExtension.equals(".json") ? "application/json" : "application/xml";
+//		String contentType = fileExtension.equals(".json") ? "application/json" : "application/xml";
 		content.setContentType(contentType);
 		content.setContent(new String(is.readAllBytes()));	
 		ArtifactType artifactType = convertContentTypeToArtifactType(contentType);
@@ -343,7 +360,14 @@ public class ApicurioStorageHelper extends AbstractStorageHelper {
 	 */
 	@Override
 	protected boolean storageExists(String path) throws IOException {
-		return doStorageExists(apicurioURL.concat("/").concat(path));
+		try {
+			SearchedArtifact searchResponse = (SearchedArtifact) sendGETRequest(URI.createURI(apicurioURL.concat("/").concat(path)), MgmtApicurioPackage.Literals.SEARCHED_ARTIFACT, "application/json");
+			if(searchResponse == null) return false;
+			return true;		
+		} catch(IOException e) {
+			return false;
+		}
+		
 	}
 	
 	/* 
@@ -365,21 +389,7 @@ public class ApicurioStorageHelper extends AbstractStorageHelper {
         return false;
 	}
 	
-	private boolean doStorageExists(String url) {
-//		TODO: Replace this with sendGETRequest
-		ResourceOperation objectOp = createResource(URI.createURI(url), "application/json");
-		try {
-			Map<String, Object> options = new HashMap<>();
-			options.put(EMFUriHandlerConstants.OPTION_HTTP_METHOD, "GET");
-			objectOp.getResource().load(options);
-		} catch(Exception e) {			
-			return false;
-		}		
-		finally {
-			objectOp.cleanup();
-		}
-		return true;
-	}
+	
 	
 	private SearchResponse searchArtifacts(String url) throws IOException {
 		ResourceOperation objectOp = createResource(URI.createURI(url), "application/json");
@@ -422,7 +432,7 @@ public class ApicurioStorageHelper extends AbstractStorageHelper {
 	@Override
 	public boolean deleteObject(String objectId) {
 		//Remove both object (all extensions and versions) and metadata
-		return doDelete(apicurioURL.concat("/").concat(objectId)) && doDelete(apicurioURL.concat("/").concat(objectId).concat(METADATA_EXTENSION).replace(".xmi", ""));
+		return doDelete(apicurioURL.concat("/").concat(objectId)) && doDelete(apicurioURL.concat("/").concat(objectId).concat(METADATA_EXTENSION));
 	}
 	
 	private boolean doDelete(String url) {
@@ -447,8 +457,10 @@ public class ApicurioStorageHelper extends AbstractStorageHelper {
 	 */
 	@Override
 	public List<String> listObjectIds() throws IOException {
-		// TODO Auto-generated method stub
-		return null;
+		URI url = URI.createURI(apicurioURL);
+		SearchResponse searchResponse = (SearchResponse) sendGETRequest(url, MgmtApicurioPackage.Literals.SEARCH_RESPONSE, "application/json");
+		if(searchResponse == null || searchResponse.getCount() == 0) return Collections.emptyList();
+		return searchResponse.getArtifacts().stream().map(a -> a.getArtifactId()).filter(id -> !id.endsWith(".metadata.xmi")).toList();
 	}
 	
 	private String constructApicurioURL(String baseURL, String gourpId) {

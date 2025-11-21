@@ -17,6 +17,7 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 
 import org.eclipse.fennec.model.atlas.management.lucene.tests.annotations.LuceneTestAnnotations.RegistryConfiguration;
+import org.osgi.test.common.annotation.Property;
 import org.osgi.test.common.annotation.config.WithFactoryConfiguration;
 
 /**
@@ -47,6 +48,13 @@ public class ApicurioTestAnnotations {
     @RegistryConfiguration
     @Retention(RetentionPolicy.RUNTIME)
     public @interface DefaultApicurioStorageConfiguration {
+    }
+    
+    @WithFactoryConfiguration(factoryPid = PID_APICURIO_STORAGE, name = "test", location = "?", properties = {
+    		@Property(key = "storage.role", value = "custom-role")})
+    @RegistryConfiguration
+    @Retention(RetentionPolicy.RUNTIME)
+    public @interface CustomRoleApicurioStorageConfiguration {
     }
 
 }
