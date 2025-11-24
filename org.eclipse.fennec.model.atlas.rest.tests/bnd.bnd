@@ -1,0 +1,41 @@
+Bundle-Name: Model Atlas - EPackage REST API Integration Tests
+Bundle-Description: Integration tests for EPackage REST endpoints with full stack testing
+
+Test-Cases: ${classes;HIERARCHY_INDIRECTLY_ANNOTATED;org.junit.platform.commons.annotation.Testable;CONCRETE}
+
+-library: \
+	enableOSGi-Test,\
+	enable-emf
+
+-buildpath: \
+	org.osgi.framework;version=latest,\
+	org.osgi.util.promise;version=latest,\
+	org.osgi.util.tracker;version=latest,\
+	org.osgi.service.component;version=latest,\
+	org.osgi.service.jakartars;version=latest,\
+	jakarta.ws.rs-api;version=latest,\
+	org.gecko.emf.osgi.api;version=latest,\
+	org.gecko.emf.rest.jakartars;version=latest,\
+	org.eclipse.fennec.model.atlas;version=latest,\
+	org.eclipse.fennec.model.atlas.rest.application;version=latest,\
+	org.eclipse.fennec.model.atlas.rest.model;version=latest,\
+	org.eclipse.emf.ecore;version=latest,\
+	org.eclipse.emf.ecore.xmi;version=latest,\
+	org.eclipse.emf.common;version=latest,\
+	org.eclipse.osgitech.rest;version=latest,\
+	org.eclipse.osgitech.rest.servlet.whiteboard;version=latest,\
+	org.eclipse.uml2.uml
+
+-includeresource.config: OSGI-INF/configurator/=configs/
+
+Require-Capability: osgi.extender;filter:='(osgi.extender=osgi.configurator)'
+
+-dependson: \
+	org.eclipse.fennec.model.atlas,\
+	org.eclipse.fennec.model.atlas.rest.application,\
+	org.eclipse.fennec.model.atlas.rest.model,\
+    org.eclipse.fennec.model.atlas.rest.xsdschema,\
+    org.eclipse.fennec.model.atlas.rest.jsonschema,\
+    org.eclipse.fennec.model.atlas.rest.ecore.xmi,\
+    org.eclipse.fennec.model.atlas.rest.uml,\
+    org.eclipse.uml2.uml

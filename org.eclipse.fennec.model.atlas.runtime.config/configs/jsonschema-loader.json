@@ -1,0 +1,25 @@
+{
+  ":configurator:resource-version": 1,
+  
+	"DefaultObjectMapperConfigurator~jsonschema": 
+  	{
+	    "type": "json",
+		"codecFactoryConfigurator.target" : "(type=json)",
+		"disableFeature": [
+			"JsonWriteFeature.ESCAPE_FORWARD_SLASHES"
+		],
+		"enableFeatures": [
+			"SerializationFeature.INDENT_OUTPUT"
+		]
+	},
+	"DefaultCodecModuleConfigurator~jsonschema":
+	{
+		 "type": "json",
+		 "serializers.target": "(component.name=JsonSchemaCodecEMFSerializers)",
+		 "deserializers.target": "(component.name=JsonSchemaCodecEMFDeserializers)",
+		 "test": "test"
+	},
+	"DefaultCodecFactoryConfigurator~jsonschema": {
+		"type": "json"
+	}
+}

@@ -1,0 +1,87 @@
+pipeline  {
+    agent any
+
+    tools {
+        jdk 'OpenJDK21'
+    }
+    options {
+        buildDiscarder(logRotator(numToKeepStr: '5'))
+    }
+
+    stages {
+        
+        stage('clean workspace and checkout') {
+            steps {
+                cleanWs()
+                checkout scm
+            }
+        }
+        stage('Gradle setup') {
+            steps {
+                script {
+                    echo "I am building on ${env.BRANCH_NAME}"
+                    sh "chmod +x ./gradlew"
+                }
+            }
+        }
+        stage('Main branch release') {
+            when { 
+                branch 'main' 
+            }
+            steps {
+                script {
+                    echo "I am building on ${env.BRANCH_NAME}"
+                    try {
+                        sh "./gradlew clean build -Drelease.dir=$JENKINS_HOME/repo.gecko/release/org.gecko.civitas --info --stacktrace -Dmaven.repo.local=${WORKSPACE}/.m2"
+                    } finally {
+                        junit testResults: '**/generated/test-reports/**/TEST-*.xml', allowEmptyResults: true, skipPublishingChecks: true
+                    }
+                }
+            }
+        }
+        stage('Snapshot branch release') {
+            when { 
+                branch 'snapshot'
+            }
+            steps  {
+                script {
+                    echo "I am building on ${env.JOB_NAME}"
+                    try {
+                        sh "./gradlew clean build --info --stacktrace -Dmaven.repo.local=${WORKSPACE}/.m2"
+                    } finally {
+                        junit testResults: '**/generated/test-reports/**/TEST-*.xml', allowEmptyResults: true, skipPublishingChecks: true
+                    }
+                }
+            }
+        }
+        stage('Resolve and Export Applications'){
+            steps  {
+                echo "I am exporting applications on branch: ${env.GIT_BRANCH}"
+
+                sh "./gradlew org.eclipse.fennec.model.atlas.runtime:resolve.modelatlas.runtime_base --info --stacktrace -Dmaven.repo.local=${WORKSPACE}/.m2"
+                sh "./gradlew org.eclipse.fennec.model.atlas.runtime:export.modelatlas.runtime_docker --info --stacktrace -Dmaven.repo.local=${WORKSPACE}/.m2"
+            }
+        }
+
+        stage('Prepare Docker'){
+            steps  {
+                echo "I am building and publishing a docker image on branch: ${env.GIT_BRANCH}"
+                sh "./gradlew prepareDocker --info --stacktrace -Dmaven.repo.local=${WORKSPACE}/.m2"
+
+            }
+        }
+        stage('Docker image build'){
+            steps  {
+                echo "I am building and publishing a docker image on branch: ${env.GIT_BRANCH}"
+                
+                step([$class: 'DockerBuilderPublisher',
+                      dockerFileDirectory: 'docker/modelatlas',
+                            cloud: 'docker',
+                            tagsString: 'devel.data-in-motion.biz:6000/fennec/modelatlas:latest',
+                            pushOnSuccess: true,
+                            pushCredentialsId: 'dim-nexus'])
+
+            }
+        }
+    }
+}

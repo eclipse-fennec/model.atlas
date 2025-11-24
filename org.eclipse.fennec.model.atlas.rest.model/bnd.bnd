@@ -1,0 +1,18 @@
+-library: enable-emf
+
+-buildpath: \
+	org.osgi.annotation.versioning,\
+	org.osgi.annotation.bundle
+
+# Generate OSGi-compatible EMF code from genmodel
+-generate:\
+	model/rest-response.genmodel;\
+		generate=geckoEMF;\
+		genmodel=model/rest-response.genmodel;\
+		output=src
+
+# Include model files in bundle
+-includeresource.model: model=model
+
+Bundle-Version: 1.0.0.SNAPSHOT
+-workingset: atlas

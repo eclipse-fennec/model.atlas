@@ -1,0 +1,70 @@
+plugins {
+  id "org.sonarqube" version "6.2.0.5505"
+  id 'jacoco'
+  id 'java'
+}
+
+// We need to define a repository for the root project, otherwise Jacoco dependencies cannot be resolved
+repositories {
+  mavenCentral()
+}
+
+subprojects {
+
+    //  Apply plugin: 'jacoco' to all submodules JUnit tests are generated as generated/jacoco/test.exec
+    apply plugin: 'jacoco'
+    apply plugin: 'java'
+    // We need to define a repository, otherwise Jacoco dependencies cannot be resolved
+    repositories {
+        mavenCentral()
+    }
+    // Allow gradle to enable JUnit support in submodules
+    test {
+        useJUnitPlatform()
+    }
+    
+       // Add JUnit dependencies for modules that have Gradle tests
+    dependencies {
+        testImplementation 'org.junit.jupiter:junit-jupiter:5.13.4'
+        testImplementation 'org.junit.platform:junit-platform-launcher:1.13.4'
+        testImplementation 'org.mockito:mockito-junit-jupiter:4.11.0'
+        testImplementation 'org.assertj:assertj-core:3.27.4'
+    }
+    
+}
+
+// Sonar setup
+sonarqube {
+  properties {
+    property "sonar.projectName", "fennec.bnd.libraries"
+    property "sonar.projectKey", "eclipse-fennec-fennec.bnd.libraries"
+    property "sonar.organization", "eclipse-fennec"
+    property "sonar.host.url", "https://sonarcloud.io"
+    property "sonar.coverage.jacoco.xmlReportPaths", "${rootDir}/build/reports/jacoco/codeCoverageReport/codeCoverageReport.xml"
+    //property "sonar.exclusions", "org.eclipse.fennec.project/**/*.java, org.eclipse.fennec.other.project/**/*.java"
+  }
+}
+
+task codeCoverageReport(type: JacocoReport) {
+    dependsOn(test)
+    // Gather execution data from all subprojects for JUnit generated/jacoco/test.exec for OSGi Tests generated/tmp/testOSGi/generated/jacoco.exec
+    // Latter are generated via agent in the test.bndrun
+    executionData fileTree(project.rootDir.absolutePath).include("**/**/*.exec")
+
+    // Add all relevant sourcesets from the subprojects
+    subprojects.each {
+        sourceSets it.sourceSets.main
+    }
+
+    // Generate xml reports for tools like sonar and html for humans
+    reports {
+        xml.required = true
+        html.required = true
+        csv.required = false
+    }
+}
+
+tasks.named("sonar") {
+    dependsOn(codeCoverageReport)
+}
+

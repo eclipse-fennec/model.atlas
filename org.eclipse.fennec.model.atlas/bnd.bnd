@@ -1,0 +1,17 @@
+-library: enable-emf
+-workingset: atlas
+
+-buildpath: \
+	org.osgi.service.component.annotations,\
+	org.osgi.service.cm,\
+	org.eclipse.daanse.io.fs.watcher.api,\
+	org.eclipse.daanse.jdbc.db.importer.csv,\
+	org.osgi.util.tracker,\
+	org.osgi.util.promise,\
+	org.gecko.emf.util.documentation.generators.apis,\
+	org.apache.felix.gogo.runtime,\
+	org.apache.felix.framework;version='7.0.5',\
+	org.apache.felix.scr;version='2.2.12',\
+	org.eclipse.fennec.codec,\
+	org.eclipse.fennec.codec.constants,\
+	org.eclipse.fennec.model.atlas.emf.common

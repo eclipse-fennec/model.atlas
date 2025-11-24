@@ -1,0 +1,33 @@
+/**
+ * Copyright (c) 2012 - 2025 Data In Motion and others.
+ * All rights reserved. 
+ * 
+ * This program and the accompanying materials are made
+ * available under the terms of the Eclipse Public License 2.0
+ * which is available at https://www.eclipse.org/legal/epl-2.0/
+ *
+ * SPDX-License-Identifier: EPL-2.0
+ * 
+ * Contributors:
+ *     Data In Motion - initial API and implementation
+ */
+modeltype ECORE "strict" uses ecore('http://www.eclipse.org/emf/2002/Ecore');
+modeltype SOURCE uses "https://civitas.org/meter/source/1.0.0";
+
+
+transformation BasicDataFromWithToWOPrefix(in basicDataIn : SOURCE, out basicDataOut : SOURCE);
+
+main() {
+	basicDataIn.rootObjects()[SOURCE::BasicData] -> map toBasicDataWOPrefix(); 
+}
+
+mapping SOURCE::BasicData::toBasicDataWOPrefix(): SOURCE::BasicData {
+	
+	plantId := self.plantId.replaceFirst("p_", "");
+	net := self.net;
+	type := self.type;
+	city := self.city;
+	zip := self.zip;
+	street := self.street;
+}
+

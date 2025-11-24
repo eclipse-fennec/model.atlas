@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<?pde version="3.8"?>
+<target name="emf">
+  <locations>
+    <location type="BndRepositoryLocation">
+      <repository name="org.gecko.civitas"/>
+    </location>
+    <location type="BndRepositoryLocation">
+      <repository name="GeckoEMF Dependencies - 6.3.0"/>
+    </location>
+    <location type="BndRepositoryLocation">
+      <repository name="Fennec QVT M2M - 1.0.0.SNAPSHOT"/>
+    </location>
+  </locations>
+</target>

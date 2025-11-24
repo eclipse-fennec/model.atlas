@@ -1,0 +1,19 @@
+{
+  ":configurator:resource-version": 1,
+  
+	"DefaultObjectMapperConfigurator~csv": 
+  	{
+	    "type": "csv",
+		"codecFactoryConfigurator.target" : "(type=csv)",
+		"disableFeature": [
+            "JsonWriteFeature.ESCAPE_FORWARD_SLASHES"
+        ]
+	},
+	"DefaultCodecModuleConfigurator~csv":
+	{
+		"type": "csv",
+		"serializers.target": "(component.name=DefaultCodecEMFSerializers)",
+		"deserializers.target": "(component.name=DefaultCodecEMFDeserializers)",
+		"test": "csv"
+	}
+}

@@ -1,0 +1,11 @@
+-buildpath: \
+	org.gecko.emf.util.documentation.generators.apis,\
+	org.eclipse.emf.ecore,\
+	org.eclipse.emf.common,\
+	org.osgi.service.cm,\
+	org.osgi.service.metatype.annotations,\
+	org.osgi.service.component.annotations,\
+	org.osgi.annotation.versioning,\
+	org.osgi.annotation.bundle
+
+Bundle-Version: 1.0.0.SNAPSHOT

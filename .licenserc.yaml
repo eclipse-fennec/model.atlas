@@ -1,0 +1,76 @@
+header:
+  license:
+    spdx-id: EPL-2.0
+    copyright-owner: Data In Motion
+    content: |
+      All rights reserved. 
+      
+      This program and the accompanying materials are made
+      available under the terms of the Eclipse Public License 2.0
+      which is available at https://www.eclipse.org/legal/epl-2.0/
+      SPDX-License-Identifier: EPL-2.0
+      
+      Contributors:
+    pattern: |
+      This program and the accompanying materials are made
+      available under the terms of the Eclipse Public License 2.0
+      which is available at https://www.eclipse.org/legal/epl-2.0/
+  paths-ignore:
+    - 'dist'
+    - 'licenses'
+    - '**/package-info.java'
+    - '**/packageinfo'
+    - '**/module-info.java'
+    - '**/*.bnd'
+    - '**/*.bndrun'
+    - '**/*.xml'
+    - '**/*.xmi'
+    - '**/*.yml'
+    - '**/*.csv'	
+    - '**/*.jsonschema'	
+    - '**/*.yaml'
+    - '**/*.json'
+    - '**/*.conf'
+    - '**/*.ecore'
+    - '**/*.genmodel'
+    - '**/*.md'
+    - '**/*.target'
+    - '**/*.pipeline'
+    - '**/*.MD'
+    - '**/.keep'
+    - '**/*.jetproperties'
+    - '**/*.javajet'
+    - '**/*.javajetinc'
+    - '**/*.properties'
+    - '**/*.maven'
+    - '**/*.mvn'
+    - '**/*.MF'
+    - '**/*.html'
+    - '**/*.ftl'
+    - '**/*.aird'
+    - '**/*.basic'
+    - '**/.classpath'
+    - '**/*.sha'
+    - '**/*.uml'
+    - 'LICENSE'
+    - 'Jenkinsfile'
+    - 'NOTICE'
+    - '.gitattributes'
+    - '.github/**'
+    - '.gitignore'
+    - 'cnf/release/**.*'
+    - 'docker/**/*'
+    - '.gradle-wrapper/gradle-wrapper.properties'
+    - '.licenserc.yaml'
+    - '**/.project'
+    - '**/*.prefs'
+    - 'build.gradle'
+    - 'gradle.properties'
+    - 'gradlew'
+    - 'gradlew.bat'
+    - 'settings.gradle'
+    - '**/*.urimap'
+    - '**/*.eorm'
+    - 'org.eclipse.uml2.uml/**'
+ 
+  comment: always

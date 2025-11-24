@@ -1,0 +1,30 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "http://models.civitas.org/models/building/sensor/1.0",
+  "title": "sensor",
+  "definitions": {
+    "SensorReading": {
+      "type": "object",
+      "properties": {
+        "buildingId": {
+          "description": "The identifier of the meter that the reading came from.",
+          "type": "string"
+        },
+        "value": {
+          "description": "The value of the meter reading.",
+          "type": "number"
+        },
+        "timestamp": {
+          "description": "The date and time of the meter reading.",
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "buildingId",
+        "value",
+        "timestamp"
+      ]
+    }
+  }
+}

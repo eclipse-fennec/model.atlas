@@ -1,0 +1,18 @@
+-buildpath: \
+	org.osgi.annotation.versioning,\
+	org.osgi.annotation.bundle,\
+	org.apache.felix.cm.json,\
+	org.gecko.emf.osgi.component,\
+	org.apache.felix.configadmin,\
+	org.eclipse.fennec.qvt.api,\
+	org.eclipse.fennec.qvt.component,\
+	org.gecko.emf.util.annotations,\
+	org.osgi.service.http.whiteboard,\
+	org.osgi.service.jakartars
+	
+Bundle-Version: 1.0.0.SNAPSHOT
+
+#-includeresource: OSGI-INF/configurator/=configs/
+#Require-Capability: osgi.extender;filter:='(osgi.extender=osgi.configurator)'
+
+-workingset: modelatlas

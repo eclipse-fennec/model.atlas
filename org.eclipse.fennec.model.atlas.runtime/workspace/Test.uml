@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xmi:XMI xmi:version="2.5.1" xmlns:xmi="http://www.omg.org/spec/XMI/20131001" xmlns:uml="http://www.omg.org/spec/UML/20161101">
+  <uml:Model xmi:type="uml:Model" xmi:id="model_il06gv55e" name="Test">
+    <packagedElement xmi:type="uml:Class" xmi:id="cls_7f8a4467-d5bd-4ce4-a96a-99650f2fe49f" name="Baum">
+      <ownedAttribute xmi:type="uml:Property" xmi:id="attr_0ae6a00c-170d-4c75-b2cf-b40cd290e1ad" name="testAttribute" visibility="public">
+        <type xmi:type="uml:PrimitiveType" href="http://www.omg.org/spec/UML/20161101/PrimitiveTypes.xmi#String" />
+      </ownedAttribute>
+      <ownedAttribute xmi:type="uml:Property" xmi:id="attr_dcd12e58-8ca4-48df-b1be-0796378247dd" name="id" visibility="public">
+        <type xmi:type="uml:PrimitiveType" href="http://www.omg.org/spec/UML/20161101/PrimitiveTypes.xmi#String" />
+      </ownedAttribute>
+      <ownedAttribute xmi:type="uml:Property" xmi:id="attr_88fb3c59-660b-41ff-899c-c604386283e0" name="somethingElse" visibility="public" type="cls_d017958a-4c54-41ad-95da-3187d7e583ae" />
+    </packagedElement>
+    <packagedElement xmi:type="uml:Class" xmi:id="cls_d017958a-4c54-41ad-95da-3187d7e583ae" name="SomethingElse">
+    </packagedElement>
+    <packageImport xmi:type="uml:PackageImport" xmi:id="model_il06gv55e_PrimitiveTypesImport">
+      <importedPackage href="http://www.omg.org/spec/UML/20161101/PrimitiveTypes.xmi#_0" />
+    </packageImport>
+  </uml:Model>
+</xmi:XMI>

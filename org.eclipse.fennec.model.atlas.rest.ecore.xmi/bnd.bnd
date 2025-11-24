@@ -1,0 +1,5 @@
+-library: enable-emf
+-buildpath: \
+	org.osgi.service.component,\
+	org.osgi.service.jakartars,\
+	jakarta.ws.rs-api
