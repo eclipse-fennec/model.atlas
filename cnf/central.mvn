@@ -189,3 +189,12 @@ org.eclipse.emf:org.eclipse.emf.ecore:2.40.0
 org.eclipse.emf:org.eclipse.emf.ecore.xmi:2.39.0
 
 #biz.aQute:biz.aQute.gogo.commands.provider:1.11.0-SNAPSHOT
+
+# Codec
+org.geckoprojects.codec:org.eclipse.fennec.codec:1.1.0-SNAPSHOT
+org.geckoprojects.codec:org.eclipse.fennec.codec.json:1.1.0-SNAPSHOT
+org.geckoprojects.codec:org.eclipse.fennec.codec.jsonschema:1.1.0-SNAPSHOT
+org.geckoprojects.codec:org.eclipse.fennec.codec.csv:1.1.0-SNAPSHOT
+org.geckoprojects.codec:org.eclipse.fennec.codec.info:1.1.0-SNAPSHOT
+org.geckoprojects.codec:org.eclipse.fennec.codec.info.model:1.1.0-SNAPSHOT
+org.geckoprojects.codec:org.eclipse.fennec.codec.constants:1.1.0-SNAPSHOT
