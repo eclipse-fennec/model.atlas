@@ -22,8 +22,9 @@ Test-Cases: ${classes;HIERARCHY_INDIRECTLY_ANNOTATED;org.junit.platform.commons.
 	org.eclipse.emf.ecore;version=latest,\
 	org.eclipse.emf.ecore.xmi;version=latest,\
 	org.eclipse.emf.common;version=latest,\
-    org.eclipse.osgitech.rest;version=latest,\
-    org.eclipse.osgitech.rest.servlet.whiteboard;version=latest
+	org.eclipse.osgitech.rest;version=latest,\
+	org.eclipse.osgitech.rest.servlet.whiteboard;version=latest,\
+	org.eclipse.uml2.uml
 
 -includeresource.config: OSGI-INF/configurator/=configs/
 

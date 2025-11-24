@@ -12,10 +12,6 @@ import org.eclipse.emf.ecore.EPackage;
 import org.eclipse.emf.ecore.resource.Resource;
 import org.eclipse.emf.ecore.resource.ResourceSet;
 import org.eclipse.uml2.uml.Package;
-import org.eclipse.uml2.uml.internal.resource.UML22UMLResourceFactoryImpl;
-import org.eclipse.uml2.uml.internal.resource.UML302UMLResourceFactoryImpl;
-import org.eclipse.uml2.uml.resource.UMLResource;
-import org.eclipse.uml2.uml.resource.UMLResource.Factory;
 import org.eclipse.uml2.uml.util.UMLUtil;
 import org.osgi.service.component.ComponentServiceObjects;
 import org.osgi.service.component.annotations.Component;
@@ -35,7 +31,6 @@ import jakarta.ws.rs.core.MultivaluedMap;
 import jakarta.ws.rs.ext.MessageBodyReader;
 import jakarta.ws.rs.ext.MessageBodyWriter;
 import jakarta.ws.rs.ext.Provider;
-import org.eclipse.uml2.uml.resources.util.UMLResourcesUtil;
 
 @Component(name = "UMLMessageBodyReaderWriter", service = { MessageBodyReader.class,
 		MessageBodyWriter.class }, enabled = true, scope = ServiceScope.SINGLETON)
@@ -43,8 +38,8 @@ import org.eclipse.uml2.uml.resources.util.UMLResourcesUtil;
 @JakartarsName("UMLMessageBodyReaderWriter")
 @JakartarsApplicationSelect("(|(emf=true)(" + JakartarsWhiteboardConstants.JAKARTA_RS_NAME + "=.default))")
 @Provider
-@Produces("application/xml")
-@Consumes("application/xml")
+@Produces("application/uml")
+@Consumes("application/uml")
 public class UMLMessageBodyReaderWriter implements MessageBodyReader<EPackage>, MessageBodyWriter<EPackage>{
 
 
@@ -57,7 +52,7 @@ public class UMLMessageBodyReaderWriter implements MessageBodyReader<EPackage>, 
 	 */
 	@Override
 	public boolean isWriteable(Class<?> type, Type genericType, Annotation[] annotations, MediaType mediaType) {
-		return EPackage.class.isAssignableFrom(type) && "application/xml".equals(mediaType.toString());
+		return EPackage.class.isAssignableFrom(type) && "application/uml".equals(mediaType.toString());
 	}
 
 	/* 
@@ -69,7 +64,7 @@ public class UMLMessageBodyReaderWriter implements MessageBodyReader<EPackage>, 
 			MultivaluedMap<String, Object> httpHeaders, OutputStream entityStream)
 					throws IOException, WebApplicationException {
 
-		String fileName = t.getName() + ".xml";
+		String fileName = t.getName() + ".uml";
 		Collection<Package> convertFromEcore = UMLUtil.convertFromEcore(t, null);
 		ResourceSet resourceSet = resourceSetFactory.getService();
 		try {
@@ -100,10 +95,8 @@ public class UMLMessageBodyReaderWriter implements MessageBodyReader<EPackage>, 
 			MultivaluedMap<String, String> httpHeaders, InputStream entityStream)
 					throws IOException, WebApplicationException {
 		ResourceSet resourceSet = resourceSetFactory.getService();
-//		UMLResourcesUtil.init(resourceSet);
-//		resourceSet.getResourceFactoryRegistry().getExtensionToFactoryMap().put("uml", new UML22UMLResourceFactoryImpl());
 		try {
-			Resource resource = resourceSet.createResource(URI.createURI("temp.uml"), "org.eclipse.uml2.uml_4_0_0");
+			Resource resource = resourceSet.createResource(URI.createURI("temp.uml"));
 			resource.load(entityStream, null);
 			Package umlPackage = resource.getContents().isEmpty() ? null : (Package) resource.getContents().remove(0);
 			if (umlPackage == null) {
