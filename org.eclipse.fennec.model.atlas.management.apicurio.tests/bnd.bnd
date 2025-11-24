@@ -19,7 +19,9 @@ Test-Cases: ${classes;HIERARCHY_INDIRECTLY_ANNOTATED;org.junit.platform.commons.
 	org.eclipse.fennec.model.atlas.management;version=snapshot,\
 	org.eclipse.fennec.model.atlas.management.lucene;version=snapshot,\
 	org.eclipse.fennec.model.atlas.management.lucene.tests;version=snapshot,\
-	org.eclipse.fennec.model.atlas.management.apicurio;version=snapshot
+	org.eclipse.fennec.model.atlas.management.apicurio;version=snapshot,\
+	org.testcontainers:junit-jupiter,\
+	org.testcontainers:testcontainers
 	
 Bundle-Version: 1.0.0.SNAPSHOT
 

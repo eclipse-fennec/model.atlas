@@ -175,7 +175,7 @@ public abstract class AbstractStorageHelper implements AutoCloseable {
      * The storage-specific implementation handles the actual writing.
      * Returns the storage id
      */
-    public String saveEObject(String objectId, EObject object, ObjectMetadata metadata) throws IOException {
+    public void saveEObject(String objectId, EObject object, ObjectMetadata metadata) throws IOException {
         String fileExtension = getFileExtension(metadata);
         String contentType = getContentType(metadata);
         
@@ -192,14 +192,31 @@ public abstract class AbstractStorageHelper implements AutoCloseable {
         } finally {
             objectOp.cleanup();
         }
-        return objectId;
     }
     
     /**
      * Serializes metadata to storage as XMI.
      */
     public void saveMetadata(String objectId, ObjectMetadata metadata) throws IOException {
-        Objects.requireNonNull(objectId, "Cannot save metadata - objectId cannot be null");
+        
+        validateMetadata(objectId, metadata);
+        String metadataPath = buildMetadataPath(objectId);
+        URI metadataUri = createStorageURI(metadataPath);
+        
+        ResourceOperation metadataOp = createResource(metadataUri, null);
+        try {
+            metadataOp.getResource().getContents().add(metadata);
+            metadataOp.getResource().save(Collections.emptyMap());
+            
+            // Let storage implementation handle the actual persistence
+            persistResource(metadataPath, metadataOp.getResource());
+        } finally {
+            metadataOp.cleanup();
+        }
+    }
+    
+    protected void validateMetadata(String objectId, ObjectMetadata metadata) {
+    	Objects.requireNonNull(objectId, "Cannot save metadata - objectId cannot be null");
         Objects.requireNonNull(metadata, "Cannot save metadata - metadata cannot be null");
         
         if (objectId.isEmpty()) {
@@ -216,20 +233,6 @@ public abstract class AbstractStorageHelper implements AutoCloseable {
         if (!Objects.equals(objectId, metadata.getObjectId())) {
             throw new IllegalStateException("Metadata objectId (" + metadata.getObjectId() + 
                                           ") does not match storage objectId (" + objectId + ")");
-        }
-        
-        String metadataPath = buildMetadataPath(objectId);
-        URI metadataUri = createStorageURI(metadataPath);
-        
-        ResourceOperation metadataOp = createResource(metadataUri, null);
-        try {
-            metadataOp.getResource().getContents().add(metadata);
-            metadataOp.getResource().save(Collections.emptyMap());
-            
-            // Let storage implementation handle the actual persistence
-            persistResource(metadataPath, metadataOp.getResource());
-        } finally {
-            metadataOp.cleanup();
         }
     }
     

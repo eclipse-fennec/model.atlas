@@ -1,6 +1,0 @@
-{
-  "eClass" : "http://www.eclipse.org/emf/2002/Ecore#//EPackage",
-  "name" : "TestPackage",
-  "nsURI" : "http://test/1.0",
-  "nsPrefix" : "test"
-}

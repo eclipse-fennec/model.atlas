@@ -1,5 +1,0 @@
-<?xml version="1.0" encoding="ASCII"?>
-<mgmt:ObjectMetadata xmi:version="2.0" xmlns:xmi="http://www.omg.org/XMI" xmlns:mgmt="http://eclipse.org/fennec/model/atlas/management/1.0.0" uploadUser="testUser" uploadTime="2025-11-19T12:46:41.830024127Z" sourceChannel="testChannel" contentHash="testhash1235" objectType="EPackage" version="1.0.0" objectId="test-id-1235" role="draft">
-  <properties key="file.extension" value="ACED00057400052E6A736F6E"/>
-  <properties key="content.type" value="ACED00057400106170706C69636174696F6E2F6A736F6E"/>
-</mgmt:ObjectMetadata>

@@ -191,3 +191,7 @@ org.eclipse.emf:org.eclipse.emf.ecore:2.40.0
 org.eclipse.emf:org.eclipse.emf.ecore.xmi:2.39.0
 
 #biz.aQute:biz.aQute.gogo.commands.provider:1.11.0-SNAPSHOT
+
+#Test Containers
+org.testcontainers:testcontainers:2.0.2
+org.testcontainers:junit-jupiter:1.21.3

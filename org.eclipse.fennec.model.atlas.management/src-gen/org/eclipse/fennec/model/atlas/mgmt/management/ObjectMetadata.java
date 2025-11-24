@@ -56,7 +56,6 @@ import org.osgi.annotation.versioning.ProviderType;
  *   <li>{@link org.eclipse.fennec.model.atlas.mgmt.management.ObjectMetadata#getObjectName <em>Object Name</em>}</li>
  *   <li>{@link org.eclipse.fennec.model.atlas.mgmt.management.ObjectMetadata#getRole <em>Role</em>}</li>
  *   <li>{@link org.eclipse.fennec.model.atlas.mgmt.management.ObjectMetadata#getLastChangeReason <em>Last Change Reason</em>}</li>
- *   <li>{@link org.eclipse.fennec.model.atlas.mgmt.management.ObjectMetadata#getStorageId <em>Storage Id</em>}</li>
  * </ul>
  *
  * @see org.eclipse.fennec.model.atlas.mgmt.management.ManagementPackage#getObjectMetadata()
@@ -609,30 +608,5 @@ public interface ObjectMetadata extends EObject {
 	 * @generated
 	 */
 	void setLastChangeReason(String value);
-
-	/**
-	 * Returns the value of the '<em><b>Storage Id</b></em>' attribute.
-	 * <!-- begin-user-doc -->
-	 * <!-- end-user-doc -->
-	 * <!-- begin-model-doc -->
-	 * This attribute is used when retrieving an object or checking for its existence. If this is not set, the objectId will be used. This is needed when the storage assigns a different id to the object when stored.
-	 * <!-- end-model-doc -->
-	 * @return the value of the '<em>Storage Id</em>' attribute.
-	 * @see #setStorageId(String)
-	 * @see org.eclipse.fennec.model.atlas.mgmt.management.ManagementPackage#getObjectMetadata_StorageId()
-	 * @model
-	 * @generated
-	 */
-	String getStorageId();
-
-	/**
-	 * Sets the value of the '{@link org.eclipse.fennec.model.atlas.mgmt.management.ObjectMetadata#getStorageId <em>Storage Id</em>}' attribute.
-	 * <!-- begin-user-doc -->
-	 * <!-- end-user-doc -->
-	 * @param value the new value of the '<em>Storage Id</em>' attribute.
-	 * @see #getStorageId()
-	 * @generated
-	 */
-	void setStorageId(String value);
 
 } // ObjectMetadata

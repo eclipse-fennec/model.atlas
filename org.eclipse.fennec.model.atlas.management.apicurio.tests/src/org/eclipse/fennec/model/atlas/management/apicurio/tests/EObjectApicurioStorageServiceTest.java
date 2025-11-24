@@ -39,6 +39,7 @@ import org.eclipse.fennec.model.atlas.mgmt.management.ManagementFactory;
 import org.eclipse.fennec.model.atlas.mgmt.management.ObjectMetadata;
 import org.eclipse.fennec.model.atlas.mgmt.management.ObjectStatus;
 import org.eclipse.fennec.model.atlas.mgmt.management.StorageBackendType;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -54,6 +55,10 @@ import org.osgi.test.junit5.cm.ConfigurationExtension;
 import org.osgi.test.junit5.context.BundleContextExtension;
 import org.osgi.test.junit5.service.ServiceExtension;
 import org.osgi.util.promise.Promise;
+import org.testcontainers.containers.GenericContainer;
+import org.testcontainers.junit.jupiter.Container;
+import org.testcontainers.junit.jupiter.Testcontainers;
+import org.testcontainers.utility.DockerImageName;
 
 //import org.mockito.Mock;
 //import org.mockito.junit.jupiter.MockitoExtension;
@@ -64,7 +69,18 @@ import org.osgi.util.promise.Promise;
 @ExtendWith(BundleContextExtension.class)
 @ExtendWith(ServiceExtension.class)
 @ExtendWith(ConfigurationExtension.class)
+@Testcontainers
 public class EObjectApicurioStorageServiceTest {
+	
+	@SuppressWarnings("resource")
+	@Container
+	  static GenericContainer<?> APICURIO_REGISTRY =
+	      new GenericContainer<>(DockerImageName.parse("apicurio/apicurio-registry:latest-release"))
+	          .withExposedPorts(8080)
+	          .withEnv("APICURIO_REST_DELETION_ARTIFACT_ENABLED", "true")
+	          .withReuse(false);
+
+
 
 	//	@Mock
 	//	TestInterface test;
@@ -75,6 +91,22 @@ public class EObjectApicurioStorageServiceTest {
 	@TempDir
 	Path tempDir;
 
+	@BeforeAll
+    static void setup() {
+        // Get the dynamically mapped port and host
+        String host = APICURIO_REGISTRY.getHost();
+        Integer port = APICURIO_REGISTRY.getFirstMappedPort();
+        assertNotNull(host, "Apicurio Registry host should be set");
+        assertNotNull(port, "Apicurio Registry port should be set");
+
+        // Set this as a System Property or configuration for your OSGi client
+        // so it knows where to connect.
+//        System.setProperty("apicurio.registry.url", String.format("http://%s:%d/api", host, port));
+
+        // Wait for the Apicurio Registry to be ready (optional, but good practice)
+        // APICURIO_REGISTRY.waitingFor(Wait.forHttp("/health/ready").forStatusCode(200));
+    }
+	
 	@BeforeEach
 	public void before(@InjectBundleContext BundleContext ctx) {
 		assertNotNull(context, "BundleContext should not be null");

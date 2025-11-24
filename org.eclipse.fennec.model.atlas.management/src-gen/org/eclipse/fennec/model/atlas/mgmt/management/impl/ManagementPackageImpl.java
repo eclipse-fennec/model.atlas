@@ -442,16 +442,6 @@ public class ManagementPackageImpl extends EPackageImpl implements ManagementPac
 	 * @generated
 	 */
 	@Override
-	public EAttribute getObjectMetadata_StorageId() {
-		return (EAttribute)objectMetadataEClass.getEStructuralFeatures().get(22);
-	}
-
-	/**
-	 * <!-- begin-user-doc -->
-	 * <!-- end-user-doc -->
-	 * @generated
-	 */
-	@Override
 	public EClass getStringToObjectMapEntry() {
 		return stringToObjectMapEntryEClass;
 	}
@@ -818,7 +808,6 @@ public class ManagementPackageImpl extends EPackageImpl implements ManagementPac
 		createEAttribute(objectMetadataEClass, OBJECT_METADATA__OBJECT_NAME);
 		createEAttribute(objectMetadataEClass, OBJECT_METADATA__ROLE);
 		createEAttribute(objectMetadataEClass, OBJECT_METADATA__LAST_CHANGE_REASON);
-		createEAttribute(objectMetadataEClass, OBJECT_METADATA__STORAGE_ID);
 
 		stringToObjectMapEntryEClass = createEClass(STRING_TO_OBJECT_MAP_ENTRY);
 		createEAttribute(stringToObjectMapEntryEClass, STRING_TO_OBJECT_MAP_ENTRY__KEY);
@@ -917,7 +906,6 @@ public class ManagementPackageImpl extends EPackageImpl implements ManagementPac
 		initEAttribute(getObjectMetadata_ObjectName(), ecorePackage.getEString(), "objectName", null, 0, 1, ObjectMetadata.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_UNSETTABLE, !IS_ID, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
 		initEAttribute(getObjectMetadata_Role(), ecorePackage.getEString(), "role", null, 1, 1, ObjectMetadata.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_UNSETTABLE, !IS_ID, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
 		initEAttribute(getObjectMetadata_LastChangeReason(), ecorePackage.getEString(), "lastChangeReason", null, 0, 1, ObjectMetadata.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_UNSETTABLE, !IS_ID, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
-		initEAttribute(getObjectMetadata_StorageId(), ecorePackage.getEString(), "storageId", null, 0, 1, ObjectMetadata.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_UNSETTABLE, !IS_ID, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
 
 		initEClass(stringToObjectMapEntryEClass, Map.Entry.class, "StringToObjectMapEntry", !IS_ABSTRACT, !IS_INTERFACE, !IS_GENERATED_INSTANCE_CLASS);
 		initEAttribute(getStringToObjectMapEntry_Key(), ecorePackage.getEString(), "key", null, 1, 1, Map.Entry.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_UNSETTABLE, !IS_ID, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
@@ -1148,12 +1136,6 @@ public class ManagementPackageImpl extends EPackageImpl implements ManagementPac
 		   source,
 		   new String[] {
 			   "documentation", "Reason for approval or rejection"
-		   });
-		addAnnotation
-		  (getObjectMetadata_StorageId(),
-		   source,
-		   new String[] {
-			   "documentation", "This attribute is used when retrieving an object or checking for its existence. If this is not set, the objectId will be used. This is needed when the storage assigns a different id to the object when stored."
 		   });
 		addAnnotation
 		  (stringToObjectMapEntryEClass,
