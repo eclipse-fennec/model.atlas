@@ -13,6 +13,8 @@
  */
 package org.eclipse.fennec.model.atlas.management.apicurio.tests;
 
+import static java.net.HttpURLConnection.HTTP_OK;
+import static java.net.HttpURLConnection.HTTP_UNAUTHORIZED;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
@@ -21,6 +23,7 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.nio.file.Path;
+import java.time.Duration;
 import java.time.Instant;
 import java.util.Dictionary;
 import java.util.Hashtable;
@@ -39,6 +42,7 @@ import org.eclipse.fennec.model.atlas.mgmt.management.ManagementFactory;
 import org.eclipse.fennec.model.atlas.mgmt.management.ObjectMetadata;
 import org.eclipse.fennec.model.atlas.mgmt.management.ObjectStatus;
 import org.eclipse.fennec.model.atlas.mgmt.management.StorageBackendType;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -56,9 +60,8 @@ import org.osgi.test.junit5.context.BundleContextExtension;
 import org.osgi.test.junit5.service.ServiceExtension;
 import org.osgi.util.promise.Promise;
 import org.testcontainers.containers.GenericContainer;
-import org.testcontainers.junit.jupiter.Container;
-import org.testcontainers.junit.jupiter.Testcontainers;
-import org.testcontainers.utility.DockerImageName;
+import org.testcontainers.containers.wait.strategy.HttpWaitStrategy;
+import org.testcontainers.containers.wait.strategy.WaitStrategy;
 
 //import org.mockito.Mock;
 //import org.mockito.junit.jupiter.MockitoExtension;
@@ -69,19 +72,8 @@ import org.testcontainers.utility.DockerImageName;
 @ExtendWith(BundleContextExtension.class)
 @ExtendWith(ServiceExtension.class)
 @ExtendWith(ConfigurationExtension.class)
-@Testcontainers
 public class EObjectApicurioStorageServiceTest {
 	
-	@SuppressWarnings("resource")
-	@Container
-	  static GenericContainer<?> APICURIO_REGISTRY =
-	      new GenericContainer<>(DockerImageName.parse("apicurio/apicurio-registry:latest-release"))
-	          .withExposedPorts(8080)
-	          .withEnv("APICURIO_REST_DELETION_ARTIFACT_ENABLED", "true")
-	          .withReuse(false);
-
-
-
 	//	@Mock
 	//	TestInterface test;
 
@@ -91,21 +83,37 @@ public class EObjectApicurioStorageServiceTest {
 	@TempDir
 	Path tempDir;
 
+	private static GenericContainer<?> APICURIO_CONTAINER;
+	
 	@BeforeAll
     static void setup() {
+		
+		try (GenericContainer<?> container = new GenericContainer<>("apicurio/apicurio-registry:latest-release")) {
+
+			APICURIO_CONTAINER = container;
+			APICURIO_CONTAINER.withEnv("APICURIO_REST_DELETION_ARTIFACT_ENABLED", "true")
+                    .withExposedPorts(8080);
+
+            WaitStrategy waitStrategy = new HttpWaitStrategy().usingTls().allowInsecure().forPort(8080)
+                    .forStatusCodeMatching(response -> response == HTTP_OK || response == HTTP_UNAUTHORIZED)
+                    .withReadTimeout(Duration.ofSeconds(30)).withStartupTimeout(Duration.ofMinutes(5));
+            APICURIO_CONTAINER.setWaitStrategy(waitStrategy);
+
+            APICURIO_CONTAINER.start();
+        }
+		
         // Get the dynamically mapped port and host
-        String host = APICURIO_REGISTRY.getHost();
-        Integer port = APICURIO_REGISTRY.getFirstMappedPort();
+        String host = APICURIO_CONTAINER.getHost();
+        Integer port = APICURIO_CONTAINER.getFirstMappedPort();
         assertNotNull(host, "Apicurio Registry host should be set");
         assertNotNull(port, "Apicurio Registry port should be set");
-
-        // Set this as a System Property or configuration for your OSGi client
-        // so it knows where to connect.
-//        System.setProperty("apicurio.registry.url", String.format("http://%s:%d/api", host, port));
-
-        // Wait for the Apicurio Registry to be ready (optional, but good practice)
-        // APICURIO_REGISTRY.waitingFor(Wait.forHttp("/health/ready").forStatusCode(200));
     }
+	
+	@AfterEach
+	public void afterEach() {
+		APICURIO_CONTAINER.stop();
+		APICURIO_CONTAINER = null;
+	}
 	
 	@BeforeEach
 	public void before(@InjectBundleContext BundleContext ctx) {
@@ -114,6 +122,20 @@ public class EObjectApicurioStorageServiceTest {
 
 		// Set system property for template argument resolution
 		System.setProperty(ApicurioTestAnnotations.PROP_TEMP_DIR, tempDir.toString());
+		
+		try (GenericContainer<?> container = new GenericContainer<>("apicurio/apicurio-registry:latest-release")) {
+
+			APICURIO_CONTAINER = container;
+			APICURIO_CONTAINER.withEnv("APICURIO_REST_DELETION_ARTIFACT_ENABLED", "true")
+                    .withExposedPorts(8080);
+
+            WaitStrategy waitStrategy = new HttpWaitStrategy().usingTls().allowInsecure().forPort(8080)
+                    .forStatusCodeMatching(response -> response == HTTP_OK || response == HTTP_UNAUTHORIZED)
+                    .withReadTimeout(Duration.ofSeconds(30)).withStartupTimeout(Duration.ofMinutes(5));
+            APICURIO_CONTAINER.setWaitStrategy(waitStrategy);
+
+            APICURIO_CONTAINER.start();
+        }
 	}
 
 	@SuppressWarnings({"rawtypes", "unchecked"})
