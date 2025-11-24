@@ -71,5 +71,6 @@ header:
     - 'settings.gradle'
     - '**/*.urimap'
     - '**/*.eorm'
+    - 'org.eclipse.uml2.uml/**'
  
   comment: always

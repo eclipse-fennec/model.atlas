@@ -39,7 +39,7 @@ jobs:
       -  name: Gradle version
          run: ./gradlew --no-daemon --version
       -  name: Build with Gradle
-         run: ./gradlew build --info
+         run: ./gradlew build --info --stacktrace
       -  name: Resolve ModelAtlas bndrun
          run: ./gradlew org.eclipse.fennec.model.atlas.runtime:resolve.modelatlas.runtime_base --info
       -  name: Export ModelAtlas bndrun
