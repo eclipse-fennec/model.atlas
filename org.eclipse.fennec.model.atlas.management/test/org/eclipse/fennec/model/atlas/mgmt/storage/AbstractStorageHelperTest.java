@@ -157,7 +157,7 @@ public class AbstractStorageHelperTest {
         // No content.type property
         
         String contentType = helper.getContentType(metadata);
-        assertNull(contentType);
+        assertEquals(TestableStorageHelper.DEFAULT_CONTENT_TYPE, contentType);
     }
     
     @Test
