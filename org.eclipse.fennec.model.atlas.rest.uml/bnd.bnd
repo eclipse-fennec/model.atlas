@@ -1,0 +1,8 @@
+-library: enable-emf
+-buildpath: \
+	jakarta.ws.rs-api,\
+	org.osgi.service.jakartars,\
+	org.osgi.service.component,\
+	org.eclipse.uml2.uml;version=snapshot,\
+	org.eclipse.uml2.common;version=latest,\
+	org.eclipse.uml2.uml.resources;version=latest
