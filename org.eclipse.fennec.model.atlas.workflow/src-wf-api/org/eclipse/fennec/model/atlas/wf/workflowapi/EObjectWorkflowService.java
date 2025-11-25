@@ -13,9 +13,15 @@
  */
 package org.eclipse.fennec.model.atlas.wf.workflowapi;
 
+import java.util.List;
+
 import org.eclipse.emf.ecore.EObject;
 
+import org.eclipse.fennec.model.atlas.mgmt.management.ObjectMetadata;
+
 import org.osgi.annotation.versioning.ProviderType;
+
+import org.osgi.util.promise.Promise;
 
 /**
  * <!-- begin-user-doc -->
@@ -32,5 +38,93 @@ import org.osgi.annotation.versioning.ProviderType;
  * @generated
  */
 @ProviderType
-public interface EObjectWorkflowService<T extends EObject> extends WorkflowStageProvider<?>, WorkflowTransitionService<?> {
+public interface EObjectWorkflowService<T extends EObject> {
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * <!-- begin-model-doc -->
+	 * Upload an EObject to a certain stage (draft, review, etc); returns promise with object ID
+	 * <!-- end-model-doc -->
+	 * @model dataType="org.eclipse.fennec.model.atlas.mgmt.management.Promise&lt;org.eclipse.emf.ecore.EString&gt;" objectRequired="true" metadataRequired="true"
+	 * @generated
+	 */
+	Promise<String> uploadToStage(String stage, T object, ObjectMetadata metadata);
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * <!-- begin-model-doc -->
+	 * Get object registration by ID from a certain stage. If nothing is found in that stage, the parents release stages are also inspected. 
+	 * <!-- end-model-doc -->
+	 * @model objectIdRequired="true"
+	 * @generated
+	 */
+	ObjectMetadata getFromStage(String stage, String objectId);
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * <!-- begin-model-doc -->
+	 * Get the actual EObject content by ID for a certain stage. If nothing is found, the parents release stages are also inspected.
+	 * <!-- end-model-doc -->
+	 * @model objectIdRequired="true"
+	 * @generated
+	 */
+	T getContentFromStage(String stage, String objectId);
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * <!-- begin-model-doc -->
+	 * Update an existing object
+	 * <!-- end-model-doc -->
+	 * @model dataType="org.eclipse.fennec.model.atlas.mgmt.management.Promise&lt;org.eclipse.fennec.model.atlas.mgmt.management.Void&gt;" updatedObjectRequired="true" objectIdRequired="true"
+	 * @generated
+	 */
+	Promise<Void> updateInStage(String stage, T updatedObject, String objectId);
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * <!-- begin-model-doc -->
+	 * Delete an object
+	 * <!-- end-model-doc -->
+	 * @model dataType="org.eclipse.fennec.model.atlas.mgmt.management.Promise&lt;org.eclipse.emf.ecore.EBooleanObject&gt;" objectIdRequired="true"
+	 * @generated
+	 */
+	Promise<Boolean> deleteFromStage(String stage, String objectId);
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * <!-- begin-model-doc -->
+	 * List all objects in draft/review status
+	 * <!-- end-model-doc -->
+	 * @model dataType="org.eclipse.fennec.model.atlas.mgmt.management.List&lt;org.eclipse.fennec.model.atlas.mgmt.management.ObjectMetadata&gt;" many="false"
+	 * @generated
+	 */
+	List<ObjectMetadata> listInStage(String stage);
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * <!-- begin-model-doc -->
+	 * Performs a transition of an EObject from one stage to another, if allowed.
+	 * <!-- end-model-doc -->
+	 * @model objectIdRequired="true"
+	 * @generated
+	 */
+	ObjectMetadata transitionToStage(String objectId, String fromStage, String toStage);
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * <!-- begin-model-doc -->
+	 * Checks whether a transition from one stage to another is allowed or not.
+	 * <!-- end-model-doc -->
+	 * @model
+	 * @generated
+	 */
+	boolean isTransitionAllowed(String fromStage, String toStage);
+
 } // EObjectWorkflowService

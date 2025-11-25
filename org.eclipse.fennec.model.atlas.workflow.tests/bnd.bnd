@@ -1,5 +1,5 @@
-Bundle-Name: Model Atlas Cloud - Governance Tests
-Bundle-Description: OSGi integration tests for governance framework and compliance management. Tests policy enforcement, audit workflows, and business rule validation.
+Bundle-Name: Model Atlas Cloud - Workflow Tests
+Bundle-Description: OSGi integration tests for workflow framework. 
 
 Test-Cases: ${classes;HIERARCHY_INDIRECTLY_ANNOTATED;org.junit.platform.commons.annotation.Testable;CONCRETE}
 

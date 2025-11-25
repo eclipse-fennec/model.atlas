@@ -13,45 +13,39 @@
       resource="XMI" disposableProviderFactory="true" ecorePackage="workflow-api.ecore#/">
     <genClasses image="false" ecoreClass="workflow-api.ecore#//EObjectWorkflowService">
       <genTypeParameters ecoreTypeParameter="workflow-api.ecore#//EObjectWorkflowService/T"/>
-    </genClasses>
-    <genClasses image="false" ecoreClass="workflow-api.ecore#//WorkflowStageProvider">
-      <genTypeParameters ecoreTypeParameter="workflow-api.ecore#//WorkflowStageProvider/T"/>
-      <genOperations ecoreOperation="workflow-api.ecore#//WorkflowStageProvider/uploadToStage">
-        <genParameters ecoreParameter="workflow-api.ecore#//WorkflowStageProvider/uploadToStage/stage"/>
-        <genParameters ecoreParameter="workflow-api.ecore#//WorkflowStageProvider/uploadToStage/object"/>
-        <genParameters ecoreParameter="workflow-api.ecore#//WorkflowStageProvider/uploadToStage/metadata"/>
+      <genOperations ecoreOperation="workflow-api.ecore#//EObjectWorkflowService/uploadToStage">
+        <genParameters ecoreParameter="workflow-api.ecore#//EObjectWorkflowService/uploadToStage/stage"/>
+        <genParameters ecoreParameter="workflow-api.ecore#//EObjectWorkflowService/uploadToStage/object"/>
+        <genParameters ecoreParameter="workflow-api.ecore#//EObjectWorkflowService/uploadToStage/metadata"/>
       </genOperations>
-      <genOperations ecoreOperation="workflow-api.ecore#//WorkflowStageProvider/getFromStage">
-        <genParameters ecoreParameter="workflow-api.ecore#//WorkflowStageProvider/getFromStage/stage"/>
-        <genParameters ecoreParameter="workflow-api.ecore#//WorkflowStageProvider/getFromStage/objectId"/>
+      <genOperations ecoreOperation="workflow-api.ecore#//EObjectWorkflowService/getFromStage">
+        <genParameters ecoreParameter="workflow-api.ecore#//EObjectWorkflowService/getFromStage/stage"/>
+        <genParameters ecoreParameter="workflow-api.ecore#//EObjectWorkflowService/getFromStage/objectId"/>
       </genOperations>
-      <genOperations ecoreOperation="workflow-api.ecore#//WorkflowStageProvider/getContentFromStage">
-        <genParameters ecoreParameter="workflow-api.ecore#//WorkflowStageProvider/getContentFromStage/stage"/>
-        <genParameters ecoreParameter="workflow-api.ecore#//WorkflowStageProvider/getContentFromStage/objectId"/>
+      <genOperations ecoreOperation="workflow-api.ecore#//EObjectWorkflowService/getContentFromStage">
+        <genParameters ecoreParameter="workflow-api.ecore#//EObjectWorkflowService/getContentFromStage/stage"/>
+        <genParameters ecoreParameter="workflow-api.ecore#//EObjectWorkflowService/getContentFromStage/objectId"/>
       </genOperations>
-      <genOperations ecoreOperation="workflow-api.ecore#//WorkflowStageProvider/updateInStage">
-        <genParameters ecoreParameter="workflow-api.ecore#//WorkflowStageProvider/updateInStage/stage"/>
-        <genParameters ecoreParameter="workflow-api.ecore#//WorkflowStageProvider/updateInStage/updatedObject"/>
-        <genParameters ecoreParameter="workflow-api.ecore#//WorkflowStageProvider/updateInStage/objectId"/>
+      <genOperations ecoreOperation="workflow-api.ecore#//EObjectWorkflowService/updateInStage">
+        <genParameters ecoreParameter="workflow-api.ecore#//EObjectWorkflowService/updateInStage/stage"/>
+        <genParameters ecoreParameter="workflow-api.ecore#//EObjectWorkflowService/updateInStage/updatedObject"/>
+        <genParameters ecoreParameter="workflow-api.ecore#//EObjectWorkflowService/updateInStage/objectId"/>
       </genOperations>
-      <genOperations ecoreOperation="workflow-api.ecore#//WorkflowStageProvider/deleteFromStage">
-        <genParameters ecoreParameter="workflow-api.ecore#//WorkflowStageProvider/deleteFromStage/stage"/>
-        <genParameters ecoreParameter="workflow-api.ecore#//WorkflowStageProvider/deleteFromStage/objectId"/>
+      <genOperations ecoreOperation="workflow-api.ecore#//EObjectWorkflowService/deleteFromStage">
+        <genParameters ecoreParameter="workflow-api.ecore#//EObjectWorkflowService/deleteFromStage/stage"/>
+        <genParameters ecoreParameter="workflow-api.ecore#//EObjectWorkflowService/deleteFromStage/objectId"/>
       </genOperations>
-      <genOperations ecoreOperation="workflow-api.ecore#//WorkflowStageProvider/listInStage">
-        <genParameters ecoreParameter="workflow-api.ecore#//WorkflowStageProvider/listInStage/stage"/>
+      <genOperations ecoreOperation="workflow-api.ecore#//EObjectWorkflowService/listInStage">
+        <genParameters ecoreParameter="workflow-api.ecore#//EObjectWorkflowService/listInStage/stage"/>
       </genOperations>
-    </genClasses>
-    <genClasses image="false" ecoreClass="workflow-api.ecore#//WorkflowTransitionService">
-      <genTypeParameters ecoreTypeParameter="workflow-api.ecore#//WorkflowTransitionService/T"/>
-      <genOperations ecoreOperation="workflow-api.ecore#//WorkflowTransitionService/transitionToStage">
-        <genParameters ecoreParameter="workflow-api.ecore#//WorkflowTransitionService/transitionToStage/objectId"/>
-        <genParameters ecoreParameter="workflow-api.ecore#//WorkflowTransitionService/transitionToStage/fromStage"/>
-        <genParameters ecoreParameter="workflow-api.ecore#//WorkflowTransitionService/transitionToStage/toStage"/>
+      <genOperations ecoreOperation="workflow-api.ecore#//EObjectWorkflowService/transitionToStage">
+        <genParameters ecoreParameter="workflow-api.ecore#//EObjectWorkflowService/transitionToStage/objectId"/>
+        <genParameters ecoreParameter="workflow-api.ecore#//EObjectWorkflowService/transitionToStage/fromStage"/>
+        <genParameters ecoreParameter="workflow-api.ecore#//EObjectWorkflowService/transitionToStage/toStage"/>
       </genOperations>
-      <genOperations ecoreOperation="workflow-api.ecore#//WorkflowTransitionService/isTransitionAllowed">
-        <genParameters ecoreParameter="workflow-api.ecore#//WorkflowTransitionService/isTransitionAllowed/fromStage"/>
-        <genParameters ecoreParameter="workflow-api.ecore#//WorkflowTransitionService/isTransitionAllowed/toStage"/>
+      <genOperations ecoreOperation="workflow-api.ecore#//EObjectWorkflowService/isTransitionAllowed">
+        <genParameters ecoreParameter="workflow-api.ecore#//EObjectWorkflowService/isTransitionAllowed/fromStage"/>
+        <genParameters ecoreParameter="workflow-api.ecore#//EObjectWorkflowService/isTransitionAllowed/toStage"/>
       </genOperations>
     </genClasses>
   </genPackages>

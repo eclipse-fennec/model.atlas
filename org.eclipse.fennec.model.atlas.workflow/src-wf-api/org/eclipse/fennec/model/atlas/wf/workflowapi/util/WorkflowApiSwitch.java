@@ -80,20 +80,6 @@ public class WorkflowApiSwitch<T1> extends Switch<T1> {
 			case WorkflowApiPackage.EOBJECT_WORKFLOW_SERVICE: {
 				EObjectWorkflowService<?> eObjectWorkflowService = (EObjectWorkflowService<?>)theEObject;
 				T1 result = caseEObjectWorkflowService(eObjectWorkflowService);
-				if (result == null) result = caseWorkflowStageProvider(eObjectWorkflowService);
-				if (result == null) result = caseWorkflowTransitionService(eObjectWorkflowService);
-				if (result == null) result = defaultCase(theEObject);
-				return result;
-			}
-			case WorkflowApiPackage.WORKFLOW_STAGE_PROVIDER: {
-				WorkflowStageProvider<?> workflowStageProvider = (WorkflowStageProvider<?>)theEObject;
-				T1 result = caseWorkflowStageProvider(workflowStageProvider);
-				if (result == null) result = defaultCase(theEObject);
-				return result;
-			}
-			case WorkflowApiPackage.WORKFLOW_TRANSITION_SERVICE: {
-				WorkflowTransitionService<?> workflowTransitionService = (WorkflowTransitionService<?>)theEObject;
-				T1 result = caseWorkflowTransitionService(workflowTransitionService);
 				if (result == null) result = defaultCase(theEObject);
 				return result;
 			}
@@ -113,36 +99,6 @@ public class WorkflowApiSwitch<T1> extends Switch<T1> {
 	 * @generated
 	 */
 	public <T extends EObject> T1 caseEObjectWorkflowService(EObjectWorkflowService<T> object) {
-		return null;
-	}
-
-	/**
-	 * Returns the result of interpreting the object as an instance of '<em>Workflow Stage Provider</em>'.
-	 * <!-- begin-user-doc -->
-	 * This implementation returns null;
-	 * returning a non-null result will terminate the switch.
-	 * <!-- end-user-doc -->
-	 * @param object the target of the switch.
-	 * @return the result of interpreting the object as an instance of '<em>Workflow Stage Provider</em>'.
-	 * @see #doSwitch(org.eclipse.emf.ecore.EObject) doSwitch(EObject)
-	 * @generated
-	 */
-	public <T extends EObject> T1 caseWorkflowStageProvider(WorkflowStageProvider<T> object) {
-		return null;
-	}
-
-	/**
-	 * Returns the result of interpreting the object as an instance of '<em>Workflow Transition Service</em>'.
-	 * <!-- begin-user-doc -->
-	 * This implementation returns null;
-	 * returning a non-null result will terminate the switch.
-	 * <!-- end-user-doc -->
-	 * @param object the target of the switch.
-	 * @return the result of interpreting the object as an instance of '<em>Workflow Transition Service</em>'.
-	 * @see #doSwitch(org.eclipse.emf.ecore.EObject) doSwitch(EObject)
-	 * @generated
-	 */
-	public <T extends EObject> T1 caseWorkflowTransitionService(WorkflowTransitionService<T> object) {
 		return null;
 	}
 
