@@ -167,6 +167,8 @@ com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:2.18.0
 org.apache.commons:commons-text:1.10.0
 org.apache.commons:commons-lang3:3.17.0
 
+com.fasterxml.jackson.core:jackson-annotations:2.20
+
 #xtext
 org.eclipse.xtext:org.eclipse.xtext.xbase.lib:2.29.0.M1
 org.eclipse.xtext:org.eclipse.xtext.builder:2.10.0
@@ -195,3 +197,5 @@ org.eclipse.emf:org.eclipse.emf.ecore.xmi:2.39.0
 #Test Containers
 org.eclipse.daanse:org.eclipse.daanse.tooling.testcontainers.core:0.0.1-SNAPSHOT
 net.java.dev.jna:jna:5.18.1
+org.apache.commons:commons-compress:1.28.0
+org.apache.commons:commons-lang3:3.20.0

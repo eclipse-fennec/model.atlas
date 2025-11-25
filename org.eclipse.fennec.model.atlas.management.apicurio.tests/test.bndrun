@@ -41,7 +41,6 @@
 	org.eclipse.fennec.model.atlas.management.lucene;version=snapshot,\
 	org.eclipse.fennec.model.atlas.management.lucene.tests;version=snapshot,\
 	org.eclipse.fennec.model.atlas.management.apicurio.model;version=snapshot,\
-	com.fasterxml.jackson.core.jackson-annotations;version='[2.19.2,2.19.3)',\
 	com.fasterxml.jackson.core.jackson-core;version='[2.19.2,2.19.3)',\
 	com.fasterxml.jackson.core.jackson-databind;version='[2.19.2,2.19.3)',\
 	com.fasterxml.jackson.dataformat.jackson-dataformat-properties;version='[2.18.0,2.18.1)',\
@@ -49,4 +48,14 @@
 	com.fasterxml.jackson.datatype.jackson-datatype-jsr310;version='[2.18.0,2.18.1)',\
 	org.eclipse.emfcloud.emfjson-jackson;version='[2.2.0,2.2.1)',\
 	org.gecko.emf.json;version='[1.5.1,1.5.2)',\
-	org.yaml.snakeyaml;version='[2.2.0,2.2.1)'
+	org.yaml.snakeyaml;version='[2.2.0,2.2.1)',\
+	ch.qos.logback.classic;version='[1.5.3,1.5.4)',\
+	ch.qos.logback.core;version='[1.5.3,1.5.4)',\
+	com.fasterxml.jackson.core.jackson-annotations;version='[2.20.0,2.20.1)',\
+	com.sun.jna;version='[5.18.1,5.18.2)',\
+	org.apache.aries.spifly.dynamic.framework.extension;version='[1.3.7,1.3.8)',\
+	org.apache.commons.commons-compress;version='[1.28.0,1.28.1)',\
+	org.apache.commons.commons-io;version='[2.20.0,2.20.1)',\
+	org.apache.commons.lang3;version='[3.20.0,3.20.1)',\
+	org.eclipse.daanse.tooling.testcontainers.core;version='[0.0.1,0.0.2)',\
+	slf4j.api;version='[2.0.11,2.0.12)'
