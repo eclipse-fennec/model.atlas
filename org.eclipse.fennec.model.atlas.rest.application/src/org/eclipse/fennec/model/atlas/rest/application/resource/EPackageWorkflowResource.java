@@ -1,11 +1,13 @@
 /**
  * Copyright (c) 2012 - 2025 Data In Motion and others.
- * All rights reserved. 
- * 
- * This program and the accompanying materials are made available under the terms of the 
- * Eclipse Public License v1.0 which accompanies this distribution, and is available at
- * http://www.eclipse.org/legal/epl-v10.html
- * 
+ * All rights reserved.
+ *
+ * This program and the accompanying materials are made
+ * available under the terms of the Eclipse Public License 2.0
+ * which is available at https://www.eclipse.org/legal/epl-2.0/
+ *
+ * SPDX-License-Identifier: EPL-2.0
+ *
  * Contributors:
  *     Data In Motion - initial API and implementation
  */
@@ -20,7 +22,7 @@ import java.util.List;
 
 import org.eclipse.emf.ecore.EObject;
 import org.eclipse.emf.ecore.EPackage;
-import org.eclipse.fennec.model.atlas.mgmt.governanceapi.EObjectWorkflowService;
+import org.eclipse.fennec.model.atlas.wf.workflowapi.EObjectWorkflowService;
 import org.eclipse.fennec.model.atlas.mgmt.management.ManagementFactory;
 import org.eclipse.fennec.model.atlas.mgmt.management.ObjectMetadata;
 import org.eclipse.fennec.model.atlas.mgmt.management.ObjectMetadataContainer;
@@ -72,19 +74,19 @@ import jakarta.ws.rs.core.Response;
  * 
  * <h3>Workflow State Management Endpoints</h3>
  * <ul>
- * <li><strong>POST /epackages//workflow/state/{packageID}/approve</strong> - Approve EPackage for release</li>
- * <li><strong>POST /epackages//workflow/state/{packageID}/reject</strong> - Reject EPackage during review</li>
- * <li><strong>POST /epackages//workflow/state/{packageID}/release</strong> - Release approved EPackage to production</li>
+ * <li><strong>POST /packages//workflow/state/{packageID}/approve</strong> - Approve EPackage for release</li>
+ * <li><strong>POST /packages//workflow/state/{packageID}/reject</strong> - Reject EPackage during review</li>
+ * <li><strong>POST /packages//workflow/state/{packageID}/release</strong> - Release approved EPackage to production</li>
  * </ul>
  * 
  * 
  * <h3>Object Listing Endpoints</h3>
  * <ul>
- * <li><strong>GET /epackages//workflow/approved</strong> - List all approved EPackages</li>
- * <li><strong>GET /epackages//workflow/rejected</strong> - List all rejected EPackages</li>
- * <li><strong>GET /epackages//workflow/released</strong> - List all released EPackages</li>
- * <li><strong>GET /epackages//workflow/{packageID}</strong> - Get EPackage metadata by ID</li>
- * <li><strong>GET /epackages//workflow/{packageID}/content</strong> - Get EPackage content by ID</li>
+ * <li><strong>GET /packages//workflow/approved</strong> - List all approved EPackages</li>
+ * <li><strong>GET /packages//workflow/rejected</strong> - List all rejected EPackages</li>
+ * <li><strong>GET /packages//workflow/released</strong> - List all released EPackages</li>
+ * <li><strong>GET /packages//workflow/{packageID}</strong> - Get EPackage metadata by ID</li>
+ * <li><strong>GET /packages//workflow/{packageID}/content</strong> - Get EPackage content by ID</li>
  * </ul>
  * 
  * <h3>EMF Serialization</h3>

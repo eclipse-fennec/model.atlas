@@ -25,7 +25,7 @@ Test-Cases: ${classes;HIERARCHY_INDIRECTLY_ANNOTATED;org.junit.platform.commons.
 	org.eclipse.osgitech.rest;version=latest,\
 	org.eclipse.osgitech.rest.servlet.whiteboard;version=latest,\
 	org.osgi.service.cm,\
-	org.eclipse.fennec.model.atlas.governance,\
+	org.eclipse.fennec.model.atlas.workflow,\
 	org.eclipse.fennec.model.atlas.management
 
 Private-Package: org.eclipse.fennec.model.atlas.rest.tests,\
