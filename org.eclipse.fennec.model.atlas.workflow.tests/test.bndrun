@@ -1,6 +1,6 @@
 -library: enableOSGi-Test
 
--runrequires: bnd.identity;id='org.eclipse.fennec.model.atlas.governance.tests'
+-runrequires: bnd.identity;id='org.eclipse.fennec.model.atlas.workflow.tests'
 	
 -runbundles.test: \
 	org.eclipse.fennec.model.atlas.governance.tests;version=snapshot
@@ -44,8 +44,8 @@
 	org.eclipse.emf.ecore.xmi;version='[2.39.0,2.39.1)',\
 	org.objenesis;version='[3.4.0,3.4.1)',\
 	slf4j.api;version='[2.0.11,2.0.12)',\
-	org.eclipse.fennec.model.atlas.governance;version=snapshot,\
-	org.eclipse.fennec.model.atlas.governance.tests;version=snapshot,\
 	org.eclipse.fennec.model.atlas.management;version=snapshot,\
 	org.eclipse.fennec.model.atlas.management.file;version=snapshot,\
-	org.eclipse.fennec.model.atlas.management.lucene;version=snapshot
+	org.eclipse.fennec.model.atlas.management.lucene;version=snapshot,\
+	org.eclipse.fennec.model.atlas.workflow;version=snapshot,\
+	org.eclipse.fennec.model.atlas.workflow.tests;version=snapshot
