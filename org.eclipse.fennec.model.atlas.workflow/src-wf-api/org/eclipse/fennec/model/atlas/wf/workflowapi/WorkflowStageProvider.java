@@ -25,7 +25,7 @@ import org.osgi.util.promise.Promise;
 
 /**
  * <!-- begin-user-doc -->
- * A representation of the model object '<em><b>Workflow Draft Provider</b></em>'.
+ * A representation of the model object '<em><b>Workflow Stage Provider</b></em>'.
  * <!-- end-user-doc -->
  *
  * <!-- begin-model-doc -->
@@ -33,55 +33,44 @@ import org.osgi.util.promise.Promise;
  * <!-- end-model-doc -->
  *
  *
- * @see org.eclipse.fennec.model.atlas.wf.workflowapi.WorkflowApiPackage#getWorkflowDraftProvider()
+ * @see org.eclipse.fennec.model.atlas.wf.workflowapi.WorkflowApiPackage#getWorkflowStageProvider()
  * @model interface="true" abstract="true"
  * @generated
  */
 @ProviderType
-public interface WorkflowDraftProvider<T extends EObject> {
+public interface WorkflowStageProvider<T extends EObject> {
 	/**
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
 	 * <!-- begin-model-doc -->
-	 * Upload an EObject to draft storage for review, returns promise with object ID
+	 * Upload an EObject to a certain stage (draft, review, etc); returns promise with object ID
 	 * <!-- end-model-doc -->
 	 * @model dataType="org.eclipse.fennec.model.atlas.mgmt.management.Promise&lt;org.eclipse.emf.ecore.EString&gt;" objectRequired="true" metadataRequired="true"
 	 * @generated
 	 */
-	Promise<String> uploadDraft(T object, ObjectMetadata metadata);
+	Promise<String> uploadToStage(String stage, T object, ObjectMetadata metadata);
 
 	/**
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
 	 * <!-- begin-model-doc -->
-	 * List all objects in draft/review status
-	 * <!-- end-model-doc -->
-	 * @model dataType="org.eclipse.fennec.model.atlas.mgmt.management.List&lt;org.eclipse.fennec.model.atlas.mgmt.management.ObjectMetadata&gt;" many="false"
-	 * @generated
-	 */
-	List<ObjectMetadata> listDraftObjects();
-
-	/**
-	 * <!-- begin-user-doc -->
-	 * <!-- end-user-doc -->
-	 * <!-- begin-model-doc -->
-	 * Get object registration by ID
+	 * Get object registration by ID from a certain stage. If nothing is found in that stage, the parents release stages are also inspected. 
 	 * <!-- end-model-doc -->
 	 * @model objectIdRequired="true"
 	 * @generated
 	 */
-	ObjectMetadata getDraft(String objectId);
+	ObjectMetadata getFromStage(String stage, String objectId);
 
 	/**
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
 	 * <!-- begin-model-doc -->
-	 * Get the actual EObject content by ID
+	 * Get the actual EObject content by ID for a certain stage. If nothing is found, the parents release stages are also inspected.
 	 * <!-- end-model-doc -->
 	 * @model objectIdRequired="true"
 	 * @generated
 	 */
-	T getDraftContent(String objectId);
+	T getContentFromStage(String stage, String objectId);
 
 	/**
 	 * <!-- begin-user-doc -->
@@ -89,10 +78,10 @@ public interface WorkflowDraftProvider<T extends EObject> {
 	 * <!-- begin-model-doc -->
 	 * Update an existing object
 	 * <!-- end-model-doc -->
-	 * @model dataType="org.eclipse.fennec.model.atlas.mgmt.management.Promise&lt;org.eclipse.fennec.model.atlas.mgmt.management.Void&gt;" objectIdRequired="true" updatedObjectRequired="true"
+	 * @model dataType="org.eclipse.fennec.model.atlas.mgmt.management.Promise&lt;org.eclipse.fennec.model.atlas.mgmt.management.Void&gt;" updatedObjectRequired="true" objectIdRequired="true"
 	 * @generated
 	 */
-	Promise<Void> updateDraft(String objectId, T updatedObject);
+	Promise<Void> updateInStage(String stage, T updatedObject, String objectId);
 
 	/**
 	 * <!-- begin-user-doc -->
@@ -103,6 +92,17 @@ public interface WorkflowDraftProvider<T extends EObject> {
 	 * @model dataType="org.eclipse.fennec.model.atlas.mgmt.management.Promise&lt;org.eclipse.emf.ecore.EBooleanObject&gt;" objectIdRequired="true"
 	 * @generated
 	 */
-	Promise<Boolean> deleteDraft(String objectId);
+	Promise<Boolean> deleteFromStage(String stage, String objectId);
 
-} // WorkflowDraftProvider
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * <!-- begin-model-doc -->
+	 * List all objects in draft/review status
+	 * <!-- end-model-doc -->
+	 * @model dataType="org.eclipse.fennec.model.atlas.mgmt.management.List&lt;org.eclipse.fennec.model.atlas.mgmt.management.ObjectMetadata&gt;" many="false"
+	 * @generated
+	 */
+	List<ObjectMetadata> listInStage(String stage);
+
+} // WorkflowStageProvider

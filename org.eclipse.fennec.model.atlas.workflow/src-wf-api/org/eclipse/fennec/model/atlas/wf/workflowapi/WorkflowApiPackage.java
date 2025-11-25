@@ -73,86 +73,86 @@ public interface WorkflowApiPackage extends org.eclipse.emf.ecore.EPackage {
 	WorkflowApiPackage eINSTANCE = org.eclipse.fennec.model.atlas.wf.workflowapi.impl.WorkflowApiPackageImpl.init();
 
 	/**
-	 * The meta object id for the '{@link org.eclipse.fennec.model.atlas.wf.workflowapi.WorkflowDraftProvider <em>Workflow Draft Provider</em>}' class.
+	 * The meta object id for the '{@link org.eclipse.fennec.model.atlas.wf.workflowapi.WorkflowStageProvider <em>Workflow Stage Provider</em>}' class.
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
-	 * @see org.eclipse.fennec.model.atlas.wf.workflowapi.WorkflowDraftProvider
-	 * @see org.eclipse.fennec.model.atlas.wf.workflowapi.impl.WorkflowApiPackageImpl#getWorkflowDraftProvider()
+	 * @see org.eclipse.fennec.model.atlas.wf.workflowapi.WorkflowStageProvider
+	 * @see org.eclipse.fennec.model.atlas.wf.workflowapi.impl.WorkflowApiPackageImpl#getWorkflowStageProvider()
 	 * @generated
 	 */
-	int WORKFLOW_DRAFT_PROVIDER = 1;
+	int WORKFLOW_STAGE_PROVIDER = 1;
 
 	/**
-	 * The number of structural features of the '<em>Workflow Draft Provider</em>' class.
+	 * The number of structural features of the '<em>Workflow Stage Provider</em>' class.
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
 	 * @generated
 	 * @ordered
 	 */
-	int WORKFLOW_DRAFT_PROVIDER_FEATURE_COUNT = 0;
+	int WORKFLOW_STAGE_PROVIDER_FEATURE_COUNT = 0;
 
 	/**
-	 * The operation id for the '<em>Upload Draft</em>' operation.
+	 * The operation id for the '<em>Upload To Stage</em>' operation.
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
 	 * @generated
 	 * @ordered
 	 */
-	int WORKFLOW_DRAFT_PROVIDER___UPLOAD_DRAFT__EOBJECT_OBJECTMETADATA = 0;
+	int WORKFLOW_STAGE_PROVIDER___UPLOAD_TO_STAGE__STRING_EOBJECT_OBJECTMETADATA = 0;
 
 	/**
-	 * The operation id for the '<em>List Draft Objects</em>' operation.
+	 * The operation id for the '<em>Get From Stage</em>' operation.
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
 	 * @generated
 	 * @ordered
 	 */
-	int WORKFLOW_DRAFT_PROVIDER___LIST_DRAFT_OBJECTS = 1;
+	int WORKFLOW_STAGE_PROVIDER___GET_FROM_STAGE__STRING_STRING = 1;
 
 	/**
-	 * The operation id for the '<em>Get Draft</em>' operation.
+	 * The operation id for the '<em>Get Content From Stage</em>' operation.
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
 	 * @generated
 	 * @ordered
 	 */
-	int WORKFLOW_DRAFT_PROVIDER___GET_DRAFT__STRING = 2;
+	int WORKFLOW_STAGE_PROVIDER___GET_CONTENT_FROM_STAGE__STRING_STRING = 2;
 
 	/**
-	 * The operation id for the '<em>Get Draft Content</em>' operation.
+	 * The operation id for the '<em>Update In Stage</em>' operation.
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
 	 * @generated
 	 * @ordered
 	 */
-	int WORKFLOW_DRAFT_PROVIDER___GET_DRAFT_CONTENT__STRING = 3;
+	int WORKFLOW_STAGE_PROVIDER___UPDATE_IN_STAGE__STRING_EOBJECT_STRING = 3;
 
 	/**
-	 * The operation id for the '<em>Update Draft</em>' operation.
+	 * The operation id for the '<em>Delete From Stage</em>' operation.
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
 	 * @generated
 	 * @ordered
 	 */
-	int WORKFLOW_DRAFT_PROVIDER___UPDATE_DRAFT__STRING_EOBJECT = 4;
+	int WORKFLOW_STAGE_PROVIDER___DELETE_FROM_STAGE__STRING_STRING = 4;
 
 	/**
-	 * The operation id for the '<em>Delete Draft</em>' operation.
+	 * The operation id for the '<em>List In Stage</em>' operation.
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
 	 * @generated
 	 * @ordered
 	 */
-	int WORKFLOW_DRAFT_PROVIDER___DELETE_DRAFT__STRING = 5;
+	int WORKFLOW_STAGE_PROVIDER___LIST_IN_STAGE__STRING = 5;
 
 	/**
-	 * The number of operations of the '<em>Workflow Draft Provider</em>' class.
+	 * The number of operations of the '<em>Workflow Stage Provider</em>' class.
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
 	 * @generated
 	 * @ordered
 	 */
-	int WORKFLOW_DRAFT_PROVIDER_OPERATION_COUNT = 6;
+	int WORKFLOW_STAGE_PROVIDER_OPERATION_COUNT = 6;
 
 	/**
 	 * The meta object id for the '{@link org.eclipse.fennec.model.atlas.wf.workflowapi.EObjectWorkflowService <em>EObject Workflow Service</em>}' class.
@@ -171,151 +171,79 @@ public interface WorkflowApiPackage extends org.eclipse.emf.ecore.EPackage {
 	 * @generated
 	 * @ordered
 	 */
-	int EOBJECT_WORKFLOW_SERVICE_FEATURE_COUNT = WORKFLOW_DRAFT_PROVIDER_FEATURE_COUNT + 0;
+	int EOBJECT_WORKFLOW_SERVICE_FEATURE_COUNT = WORKFLOW_STAGE_PROVIDER_FEATURE_COUNT + 0;
 
 	/**
-	 * The operation id for the '<em>Upload Draft</em>' operation.
+	 * The operation id for the '<em>Upload To Stage</em>' operation.
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
 	 * @generated
 	 * @ordered
 	 */
-	int EOBJECT_WORKFLOW_SERVICE___UPLOAD_DRAFT__EOBJECT_OBJECTMETADATA = WORKFLOW_DRAFT_PROVIDER___UPLOAD_DRAFT__EOBJECT_OBJECTMETADATA;
+	int EOBJECT_WORKFLOW_SERVICE___UPLOAD_TO_STAGE__STRING_EOBJECT_OBJECTMETADATA = WORKFLOW_STAGE_PROVIDER___UPLOAD_TO_STAGE__STRING_EOBJECT_OBJECTMETADATA;
 
 	/**
-	 * The operation id for the '<em>List Draft Objects</em>' operation.
+	 * The operation id for the '<em>Get From Stage</em>' operation.
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
 	 * @generated
 	 * @ordered
 	 */
-	int EOBJECT_WORKFLOW_SERVICE___LIST_DRAFT_OBJECTS = WORKFLOW_DRAFT_PROVIDER___LIST_DRAFT_OBJECTS;
+	int EOBJECT_WORKFLOW_SERVICE___GET_FROM_STAGE__STRING_STRING = WORKFLOW_STAGE_PROVIDER___GET_FROM_STAGE__STRING_STRING;
 
 	/**
-	 * The operation id for the '<em>Get Draft</em>' operation.
+	 * The operation id for the '<em>Get Content From Stage</em>' operation.
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
 	 * @generated
 	 * @ordered
 	 */
-	int EOBJECT_WORKFLOW_SERVICE___GET_DRAFT__STRING = WORKFLOW_DRAFT_PROVIDER___GET_DRAFT__STRING;
+	int EOBJECT_WORKFLOW_SERVICE___GET_CONTENT_FROM_STAGE__STRING_STRING = WORKFLOW_STAGE_PROVIDER___GET_CONTENT_FROM_STAGE__STRING_STRING;
 
 	/**
-	 * The operation id for the '<em>Get Draft Content</em>' operation.
+	 * The operation id for the '<em>Update In Stage</em>' operation.
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
 	 * @generated
 	 * @ordered
 	 */
-	int EOBJECT_WORKFLOW_SERVICE___GET_DRAFT_CONTENT__STRING = WORKFLOW_DRAFT_PROVIDER___GET_DRAFT_CONTENT__STRING;
+	int EOBJECT_WORKFLOW_SERVICE___UPDATE_IN_STAGE__STRING_EOBJECT_STRING = WORKFLOW_STAGE_PROVIDER___UPDATE_IN_STAGE__STRING_EOBJECT_STRING;
 
 	/**
-	 * The operation id for the '<em>Update Draft</em>' operation.
+	 * The operation id for the '<em>Delete From Stage</em>' operation.
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
 	 * @generated
 	 * @ordered
 	 */
-	int EOBJECT_WORKFLOW_SERVICE___UPDATE_DRAFT__STRING_EOBJECT = WORKFLOW_DRAFT_PROVIDER___UPDATE_DRAFT__STRING_EOBJECT;
+	int EOBJECT_WORKFLOW_SERVICE___DELETE_FROM_STAGE__STRING_STRING = WORKFLOW_STAGE_PROVIDER___DELETE_FROM_STAGE__STRING_STRING;
 
 	/**
-	 * The operation id for the '<em>Delete Draft</em>' operation.
+	 * The operation id for the '<em>List In Stage</em>' operation.
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
 	 * @generated
 	 * @ordered
 	 */
-	int EOBJECT_WORKFLOW_SERVICE___DELETE_DRAFT__STRING = WORKFLOW_DRAFT_PROVIDER___DELETE_DRAFT__STRING;
+	int EOBJECT_WORKFLOW_SERVICE___LIST_IN_STAGE__STRING = WORKFLOW_STAGE_PROVIDER___LIST_IN_STAGE__STRING;
 
 	/**
-	 * The operation id for the '<em>Approve Object</em>' operation.
+	 * The operation id for the '<em>Transition To Stage</em>' operation.
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
 	 * @generated
 	 * @ordered
 	 */
-	int EOBJECT_WORKFLOW_SERVICE___APPROVE_OBJECT__STRING_STRING_STRING = WORKFLOW_DRAFT_PROVIDER_OPERATION_COUNT + 0;
+	int EOBJECT_WORKFLOW_SERVICE___TRANSITION_TO_STAGE__STRING_STRING_STRING = WORKFLOW_STAGE_PROVIDER_OPERATION_COUNT + 0;
 
 	/**
-	 * The operation id for the '<em>Reject Object</em>' operation.
+	 * The operation id for the '<em>Is Transition Allowed</em>' operation.
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
 	 * @generated
 	 * @ordered
 	 */
-	int EOBJECT_WORKFLOW_SERVICE___REJECT_OBJECT__STRING_STRING_STRING = WORKFLOW_DRAFT_PROVIDER_OPERATION_COUNT + 1;
-
-	/**
-	 * The operation id for the '<em>Release Object</em>' operation.
-	 * <!-- begin-user-doc -->
-	 * <!-- end-user-doc -->
-	 * @generated
-	 * @ordered
-	 */
-	int EOBJECT_WORKFLOW_SERVICE___RELEASE_OBJECT__STRING_STRING_BOOLEAN = WORKFLOW_DRAFT_PROVIDER_OPERATION_COUNT + 2;
-
-	/**
-	 * The operation id for the '<em>List Approved Objects</em>' operation.
-	 * <!-- begin-user-doc -->
-	 * <!-- end-user-doc -->
-	 * @generated
-	 * @ordered
-	 */
-	int EOBJECT_WORKFLOW_SERVICE___LIST_APPROVED_OBJECTS = WORKFLOW_DRAFT_PROVIDER_OPERATION_COUNT + 3;
-
-	/**
-	 * The operation id for the '<em>List Rejected Objects</em>' operation.
-	 * <!-- begin-user-doc -->
-	 * <!-- end-user-doc -->
-	 * @generated
-	 * @ordered
-	 */
-	int EOBJECT_WORKFLOW_SERVICE___LIST_REJECTED_OBJECTS = WORKFLOW_DRAFT_PROVIDER_OPERATION_COUNT + 4;
-
-	/**
-	 * The operation id for the '<em>List Released Objects</em>' operation.
-	 * <!-- begin-user-doc -->
-	 * <!-- end-user-doc -->
-	 * @generated
-	 * @ordered
-	 */
-	int EOBJECT_WORKFLOW_SERVICE___LIST_RELEASED_OBJECTS = WORKFLOW_DRAFT_PROVIDER_OPERATION_COUNT + 5;
-
-	/**
-	 * The operation id for the '<em>Get Object</em>' operation.
-	 * <!-- begin-user-doc -->
-	 * <!-- end-user-doc -->
-	 * @generated
-	 * @ordered
-	 */
-	int EOBJECT_WORKFLOW_SERVICE___GET_OBJECT__STRING = WORKFLOW_DRAFT_PROVIDER_OPERATION_COUNT + 6;
-
-	/**
-	 * The operation id for the '<em>Get Object Content</em>' operation.
-	 * <!-- begin-user-doc -->
-	 * <!-- end-user-doc -->
-	 * @generated
-	 * @ordered
-	 */
-	int EOBJECT_WORKFLOW_SERVICE___GET_OBJECT_CONTENT__STRING = WORKFLOW_DRAFT_PROVIDER_OPERATION_COUNT + 7;
-
-	/**
-	 * The operation id for the '<em>Update Object</em>' operation.
-	 * <!-- begin-user-doc -->
-	 * <!-- end-user-doc -->
-	 * @generated
-	 * @ordered
-	 */
-	int EOBJECT_WORKFLOW_SERVICE___UPDATE_OBJECT__STRING_EOBJECT = WORKFLOW_DRAFT_PROVIDER_OPERATION_COUNT + 8;
-
-	/**
-	 * The operation id for the '<em>Delete Object</em>' operation.
-	 * <!-- begin-user-doc -->
-	 * <!-- end-user-doc -->
-	 * @generated
-	 * @ordered
-	 */
-	int EOBJECT_WORKFLOW_SERVICE___DELETE_OBJECT__STRING = WORKFLOW_DRAFT_PROVIDER_OPERATION_COUNT + 9;
+	int EOBJECT_WORKFLOW_SERVICE___IS_TRANSITION_ALLOWED__STRING_STRING = WORKFLOW_STAGE_PROVIDER_OPERATION_COUNT + 1;
 
 	/**
 	 * The number of operations of the '<em>EObject Workflow Service</em>' class.
@@ -324,7 +252,53 @@ public interface WorkflowApiPackage extends org.eclipse.emf.ecore.EPackage {
 	 * @generated
 	 * @ordered
 	 */
-	int EOBJECT_WORKFLOW_SERVICE_OPERATION_COUNT = WORKFLOW_DRAFT_PROVIDER_OPERATION_COUNT + 10;
+	int EOBJECT_WORKFLOW_SERVICE_OPERATION_COUNT = WORKFLOW_STAGE_PROVIDER_OPERATION_COUNT + 2;
+
+	/**
+	 * The meta object id for the '{@link org.eclipse.fennec.model.atlas.wf.workflowapi.WorkflowTransitionService <em>Workflow Transition Service</em>}' class.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @see org.eclipse.fennec.model.atlas.wf.workflowapi.WorkflowTransitionService
+	 * @see org.eclipse.fennec.model.atlas.wf.workflowapi.impl.WorkflowApiPackageImpl#getWorkflowTransitionService()
+	 * @generated
+	 */
+	int WORKFLOW_TRANSITION_SERVICE = 2;
+
+	/**
+	 * The number of structural features of the '<em>Workflow Transition Service</em>' class.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 * @ordered
+	 */
+	int WORKFLOW_TRANSITION_SERVICE_FEATURE_COUNT = 0;
+
+	/**
+	 * The operation id for the '<em>Transition To Stage</em>' operation.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 * @ordered
+	 */
+	int WORKFLOW_TRANSITION_SERVICE___TRANSITION_TO_STAGE__STRING_STRING_STRING = 0;
+
+	/**
+	 * The operation id for the '<em>Is Transition Allowed</em>' operation.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 * @ordered
+	 */
+	int WORKFLOW_TRANSITION_SERVICE___IS_TRANSITION_ALLOWED__STRING_STRING = 1;
+
+	/**
+	 * The number of operations of the '<em>Workflow Transition Service</em>' class.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 * @ordered
+	 */
+	int WORKFLOW_TRANSITION_SERVICE_OPERATION_COUNT = 2;
 
 
 	/**
@@ -338,174 +312,104 @@ public interface WorkflowApiPackage extends org.eclipse.emf.ecore.EPackage {
 	EClass getEObjectWorkflowService();
 
 	/**
-	 * Returns the meta object for the '{@link org.eclipse.fennec.model.atlas.wf.workflowapi.EObjectWorkflowService#approveObject(java.lang.String, java.lang.String, java.lang.String) <em>Approve Object</em>}' operation.
+	 * Returns the meta object for class '{@link org.eclipse.fennec.model.atlas.wf.workflowapi.WorkflowStageProvider <em>Workflow Stage Provider</em>}'.
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
-	 * @return the meta object for the '<em>Approve Object</em>' operation.
-	 * @see org.eclipse.fennec.model.atlas.wf.workflowapi.EObjectWorkflowService#approveObject(java.lang.String, java.lang.String, java.lang.String)
+	 * @return the meta object for class '<em>Workflow Stage Provider</em>'.
+	 * @see org.eclipse.fennec.model.atlas.wf.workflowapi.WorkflowStageProvider
 	 * @generated
 	 */
-	EOperation getEObjectWorkflowService__ApproveObject__String_String_String();
+	EClass getWorkflowStageProvider();
 
 	/**
-	 * Returns the meta object for the '{@link org.eclipse.fennec.model.atlas.wf.workflowapi.EObjectWorkflowService#rejectObject(java.lang.String, java.lang.String, java.lang.String) <em>Reject Object</em>}' operation.
+	 * Returns the meta object for the '{@link org.eclipse.fennec.model.atlas.wf.workflowapi.WorkflowStageProvider#uploadToStage(java.lang.String, org.eclipse.emf.ecore.EObject, org.eclipse.fennec.model.atlas.mgmt.management.ObjectMetadata) <em>Upload To Stage</em>}' operation.
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
-	 * @return the meta object for the '<em>Reject Object</em>' operation.
-	 * @see org.eclipse.fennec.model.atlas.wf.workflowapi.EObjectWorkflowService#rejectObject(java.lang.String, java.lang.String, java.lang.String)
+	 * @return the meta object for the '<em>Upload To Stage</em>' operation.
+	 * @see org.eclipse.fennec.model.atlas.wf.workflowapi.WorkflowStageProvider#uploadToStage(java.lang.String, org.eclipse.emf.ecore.EObject, org.eclipse.fennec.model.atlas.mgmt.management.ObjectMetadata)
 	 * @generated
 	 */
-	EOperation getEObjectWorkflowService__RejectObject__String_String_String();
+	EOperation getWorkflowStageProvider__UploadToStage__String_EObject_ObjectMetadata();
 
 	/**
-	 * Returns the meta object for the '{@link org.eclipse.fennec.model.atlas.wf.workflowapi.EObjectWorkflowService#releaseObject(java.lang.String, java.lang.String, boolean) <em>Release Object</em>}' operation.
+	 * Returns the meta object for the '{@link org.eclipse.fennec.model.atlas.wf.workflowapi.WorkflowStageProvider#getFromStage(java.lang.String, java.lang.String) <em>Get From Stage</em>}' operation.
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
-	 * @return the meta object for the '<em>Release Object</em>' operation.
-	 * @see org.eclipse.fennec.model.atlas.wf.workflowapi.EObjectWorkflowService#releaseObject(java.lang.String, java.lang.String, boolean)
+	 * @return the meta object for the '<em>Get From Stage</em>' operation.
+	 * @see org.eclipse.fennec.model.atlas.wf.workflowapi.WorkflowStageProvider#getFromStage(java.lang.String, java.lang.String)
 	 * @generated
 	 */
-	EOperation getEObjectWorkflowService__ReleaseObject__String_String_boolean();
+	EOperation getWorkflowStageProvider__GetFromStage__String_String();
 
 	/**
-	 * Returns the meta object for the '{@link org.eclipse.fennec.model.atlas.wf.workflowapi.EObjectWorkflowService#listApprovedObjects() <em>List Approved Objects</em>}' operation.
+	 * Returns the meta object for the '{@link org.eclipse.fennec.model.atlas.wf.workflowapi.WorkflowStageProvider#getContentFromStage(java.lang.String, java.lang.String) <em>Get Content From Stage</em>}' operation.
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
-	 * @return the meta object for the '<em>List Approved Objects</em>' operation.
-	 * @see org.eclipse.fennec.model.atlas.wf.workflowapi.EObjectWorkflowService#listApprovedObjects()
+	 * @return the meta object for the '<em>Get Content From Stage</em>' operation.
+	 * @see org.eclipse.fennec.model.atlas.wf.workflowapi.WorkflowStageProvider#getContentFromStage(java.lang.String, java.lang.String)
 	 * @generated
 	 */
-	EOperation getEObjectWorkflowService__ListApprovedObjects();
+	EOperation getWorkflowStageProvider__GetContentFromStage__String_String();
 
 	/**
-	 * Returns the meta object for the '{@link org.eclipse.fennec.model.atlas.wf.workflowapi.EObjectWorkflowService#listRejectedObjects() <em>List Rejected Objects</em>}' operation.
+	 * Returns the meta object for the '{@link org.eclipse.fennec.model.atlas.wf.workflowapi.WorkflowStageProvider#updateInStage(java.lang.String, org.eclipse.emf.ecore.EObject, java.lang.String) <em>Update In Stage</em>}' operation.
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
-	 * @return the meta object for the '<em>List Rejected Objects</em>' operation.
-	 * @see org.eclipse.fennec.model.atlas.wf.workflowapi.EObjectWorkflowService#listRejectedObjects()
+	 * @return the meta object for the '<em>Update In Stage</em>' operation.
+	 * @see org.eclipse.fennec.model.atlas.wf.workflowapi.WorkflowStageProvider#updateInStage(java.lang.String, org.eclipse.emf.ecore.EObject, java.lang.String)
 	 * @generated
 	 */
-	EOperation getEObjectWorkflowService__ListRejectedObjects();
+	EOperation getWorkflowStageProvider__UpdateInStage__String_EObject_String();
 
 	/**
-	 * Returns the meta object for the '{@link org.eclipse.fennec.model.atlas.wf.workflowapi.EObjectWorkflowService#listReleasedObjects() <em>List Released Objects</em>}' operation.
+	 * Returns the meta object for the '{@link org.eclipse.fennec.model.atlas.wf.workflowapi.WorkflowStageProvider#deleteFromStage(java.lang.String, java.lang.String) <em>Delete From Stage</em>}' operation.
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
-	 * @return the meta object for the '<em>List Released Objects</em>' operation.
-	 * @see org.eclipse.fennec.model.atlas.wf.workflowapi.EObjectWorkflowService#listReleasedObjects()
+	 * @return the meta object for the '<em>Delete From Stage</em>' operation.
+	 * @see org.eclipse.fennec.model.atlas.wf.workflowapi.WorkflowStageProvider#deleteFromStage(java.lang.String, java.lang.String)
 	 * @generated
 	 */
-	EOperation getEObjectWorkflowService__ListReleasedObjects();
+	EOperation getWorkflowStageProvider__DeleteFromStage__String_String();
 
 	/**
-	 * Returns the meta object for the '{@link org.eclipse.fennec.model.atlas.wf.workflowapi.EObjectWorkflowService#getObject(java.lang.String) <em>Get Object</em>}' operation.
+	 * Returns the meta object for the '{@link org.eclipse.fennec.model.atlas.wf.workflowapi.WorkflowStageProvider#listInStage(java.lang.String) <em>List In Stage</em>}' operation.
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
-	 * @return the meta object for the '<em>Get Object</em>' operation.
-	 * @see org.eclipse.fennec.model.atlas.wf.workflowapi.EObjectWorkflowService#getObject(java.lang.String)
+	 * @return the meta object for the '<em>List In Stage</em>' operation.
+	 * @see org.eclipse.fennec.model.atlas.wf.workflowapi.WorkflowStageProvider#listInStage(java.lang.String)
 	 * @generated
 	 */
-	EOperation getEObjectWorkflowService__GetObject__String();
+	EOperation getWorkflowStageProvider__ListInStage__String();
 
 	/**
-	 * Returns the meta object for the '{@link org.eclipse.fennec.model.atlas.wf.workflowapi.EObjectWorkflowService#getObjectContent(java.lang.String) <em>Get Object Content</em>}' operation.
+	 * Returns the meta object for class '{@link org.eclipse.fennec.model.atlas.wf.workflowapi.WorkflowTransitionService <em>Workflow Transition Service</em>}'.
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
-	 * @return the meta object for the '<em>Get Object Content</em>' operation.
-	 * @see org.eclipse.fennec.model.atlas.wf.workflowapi.EObjectWorkflowService#getObjectContent(java.lang.String)
+	 * @return the meta object for class '<em>Workflow Transition Service</em>'.
+	 * @see org.eclipse.fennec.model.atlas.wf.workflowapi.WorkflowTransitionService
 	 * @generated
 	 */
-	EOperation getEObjectWorkflowService__GetObjectContent__String();
+	EClass getWorkflowTransitionService();
 
 	/**
-	 * Returns the meta object for the '{@link org.eclipse.fennec.model.atlas.wf.workflowapi.EObjectWorkflowService#updateObject(java.lang.String, org.eclipse.emf.ecore.EObject) <em>Update Object</em>}' operation.
+	 * Returns the meta object for the '{@link org.eclipse.fennec.model.atlas.wf.workflowapi.WorkflowTransitionService#transitionToStage(java.lang.String, java.lang.String, java.lang.String) <em>Transition To Stage</em>}' operation.
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
-	 * @return the meta object for the '<em>Update Object</em>' operation.
-	 * @see org.eclipse.fennec.model.atlas.wf.workflowapi.EObjectWorkflowService#updateObject(java.lang.String, org.eclipse.emf.ecore.EObject)
+	 * @return the meta object for the '<em>Transition To Stage</em>' operation.
+	 * @see org.eclipse.fennec.model.atlas.wf.workflowapi.WorkflowTransitionService#transitionToStage(java.lang.String, java.lang.String, java.lang.String)
 	 * @generated
 	 */
-	EOperation getEObjectWorkflowService__UpdateObject__String_EObject();
+	EOperation getWorkflowTransitionService__TransitionToStage__String_String_String();
 
 	/**
-	 * Returns the meta object for the '{@link org.eclipse.fennec.model.atlas.wf.workflowapi.EObjectWorkflowService#deleteObject(java.lang.String) <em>Delete Object</em>}' operation.
+	 * Returns the meta object for the '{@link org.eclipse.fennec.model.atlas.wf.workflowapi.WorkflowTransitionService#isTransitionAllowed(java.lang.String, java.lang.String) <em>Is Transition Allowed</em>}' operation.
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
-	 * @return the meta object for the '<em>Delete Object</em>' operation.
-	 * @see org.eclipse.fennec.model.atlas.wf.workflowapi.EObjectWorkflowService#deleteObject(java.lang.String)
+	 * @return the meta object for the '<em>Is Transition Allowed</em>' operation.
+	 * @see org.eclipse.fennec.model.atlas.wf.workflowapi.WorkflowTransitionService#isTransitionAllowed(java.lang.String, java.lang.String)
 	 * @generated
 	 */
-	EOperation getEObjectWorkflowService__DeleteObject__String();
-
-	/**
-	 * Returns the meta object for class '{@link org.eclipse.fennec.model.atlas.wf.workflowapi.WorkflowDraftProvider <em>Workflow Draft Provider</em>}'.
-	 * <!-- begin-user-doc -->
-	 * <!-- end-user-doc -->
-	 * @return the meta object for class '<em>Workflow Draft Provider</em>'.
-	 * @see org.eclipse.fennec.model.atlas.wf.workflowapi.WorkflowDraftProvider
-	 * @generated
-	 */
-	EClass getWorkflowDraftProvider();
-
-	/**
-	 * Returns the meta object for the '{@link org.eclipse.fennec.model.atlas.wf.workflowapi.WorkflowDraftProvider#uploadDraft(org.eclipse.emf.ecore.EObject, org.eclipse.fennec.model.atlas.mgmt.management.ObjectMetadata) <em>Upload Draft</em>}' operation.
-	 * <!-- begin-user-doc -->
-	 * <!-- end-user-doc -->
-	 * @return the meta object for the '<em>Upload Draft</em>' operation.
-	 * @see org.eclipse.fennec.model.atlas.wf.workflowapi.WorkflowDraftProvider#uploadDraft(org.eclipse.emf.ecore.EObject, org.eclipse.fennec.model.atlas.mgmt.management.ObjectMetadata)
-	 * @generated
-	 */
-	EOperation getWorkflowDraftProvider__UploadDraft__EObject_ObjectMetadata();
-
-	/**
-	 * Returns the meta object for the '{@link org.eclipse.fennec.model.atlas.wf.workflowapi.WorkflowDraftProvider#listDraftObjects() <em>List Draft Objects</em>}' operation.
-	 * <!-- begin-user-doc -->
-	 * <!-- end-user-doc -->
-	 * @return the meta object for the '<em>List Draft Objects</em>' operation.
-	 * @see org.eclipse.fennec.model.atlas.wf.workflowapi.WorkflowDraftProvider#listDraftObjects()
-	 * @generated
-	 */
-	EOperation getWorkflowDraftProvider__ListDraftObjects();
-
-	/**
-	 * Returns the meta object for the '{@link org.eclipse.fennec.model.atlas.wf.workflowapi.WorkflowDraftProvider#getDraft(java.lang.String) <em>Get Draft</em>}' operation.
-	 * <!-- begin-user-doc -->
-	 * <!-- end-user-doc -->
-	 * @return the meta object for the '<em>Get Draft</em>' operation.
-	 * @see org.eclipse.fennec.model.atlas.wf.workflowapi.WorkflowDraftProvider#getDraft(java.lang.String)
-	 * @generated
-	 */
-	EOperation getWorkflowDraftProvider__GetDraft__String();
-
-	/**
-	 * Returns the meta object for the '{@link org.eclipse.fennec.model.atlas.wf.workflowapi.WorkflowDraftProvider#getDraftContent(java.lang.String) <em>Get Draft Content</em>}' operation.
-	 * <!-- begin-user-doc -->
-	 * <!-- end-user-doc -->
-	 * @return the meta object for the '<em>Get Draft Content</em>' operation.
-	 * @see org.eclipse.fennec.model.atlas.wf.workflowapi.WorkflowDraftProvider#getDraftContent(java.lang.String)
-	 * @generated
-	 */
-	EOperation getWorkflowDraftProvider__GetDraftContent__String();
-
-	/**
-	 * Returns the meta object for the '{@link org.eclipse.fennec.model.atlas.wf.workflowapi.WorkflowDraftProvider#updateDraft(java.lang.String, org.eclipse.emf.ecore.EObject) <em>Update Draft</em>}' operation.
-	 * <!-- begin-user-doc -->
-	 * <!-- end-user-doc -->
-	 * @return the meta object for the '<em>Update Draft</em>' operation.
-	 * @see org.eclipse.fennec.model.atlas.wf.workflowapi.WorkflowDraftProvider#updateDraft(java.lang.String, org.eclipse.emf.ecore.EObject)
-	 * @generated
-	 */
-	EOperation getWorkflowDraftProvider__UpdateDraft__String_EObject();
-
-	/**
-	 * Returns the meta object for the '{@link org.eclipse.fennec.model.atlas.wf.workflowapi.WorkflowDraftProvider#deleteDraft(java.lang.String) <em>Delete Draft</em>}' operation.
-	 * <!-- begin-user-doc -->
-	 * <!-- end-user-doc -->
-	 * @return the meta object for the '<em>Delete Draft</em>' operation.
-	 * @see org.eclipse.fennec.model.atlas.wf.workflowapi.WorkflowDraftProvider#deleteDraft(java.lang.String)
-	 * @generated
-	 */
-	EOperation getWorkflowDraftProvider__DeleteDraft__String();
+	EOperation getWorkflowTransitionService__IsTransitionAllowed__String_String();
 
 	/**
 	 * Returns the factory that creates the instances of the model.
@@ -541,142 +445,88 @@ public interface WorkflowApiPackage extends org.eclipse.emf.ecore.EPackage {
 		EClass EOBJECT_WORKFLOW_SERVICE = eINSTANCE.getEObjectWorkflowService();
 
 		/**
-		 * The meta object literal for the '<em><b>Approve Object</b></em>' operation.
+		 * The meta object literal for the '{@link org.eclipse.fennec.model.atlas.wf.workflowapi.WorkflowStageProvider <em>Workflow Stage Provider</em>}' class.
 		 * <!-- begin-user-doc -->
 		 * <!-- end-user-doc -->
+		 * @see org.eclipse.fennec.model.atlas.wf.workflowapi.WorkflowStageProvider
+		 * @see org.eclipse.fennec.model.atlas.wf.workflowapi.impl.WorkflowApiPackageImpl#getWorkflowStageProvider()
 		 * @generated
 		 */
-		EOperation EOBJECT_WORKFLOW_SERVICE___APPROVE_OBJECT__STRING_STRING_STRING = eINSTANCE.getEObjectWorkflowService__ApproveObject__String_String_String();
+		EClass WORKFLOW_STAGE_PROVIDER = eINSTANCE.getWorkflowStageProvider();
 
 		/**
-		 * The meta object literal for the '<em><b>Reject Object</b></em>' operation.
+		 * The meta object literal for the '<em><b>Upload To Stage</b></em>' operation.
 		 * <!-- begin-user-doc -->
 		 * <!-- end-user-doc -->
 		 * @generated
 		 */
-		EOperation EOBJECT_WORKFLOW_SERVICE___REJECT_OBJECT__STRING_STRING_STRING = eINSTANCE.getEObjectWorkflowService__RejectObject__String_String_String();
+		EOperation WORKFLOW_STAGE_PROVIDER___UPLOAD_TO_STAGE__STRING_EOBJECT_OBJECTMETADATA = eINSTANCE.getWorkflowStageProvider__UploadToStage__String_EObject_ObjectMetadata();
 
 		/**
-		 * The meta object literal for the '<em><b>Release Object</b></em>' operation.
+		 * The meta object literal for the '<em><b>Get From Stage</b></em>' operation.
 		 * <!-- begin-user-doc -->
 		 * <!-- end-user-doc -->
 		 * @generated
 		 */
-		EOperation EOBJECT_WORKFLOW_SERVICE___RELEASE_OBJECT__STRING_STRING_BOOLEAN = eINSTANCE.getEObjectWorkflowService__ReleaseObject__String_String_boolean();
+		EOperation WORKFLOW_STAGE_PROVIDER___GET_FROM_STAGE__STRING_STRING = eINSTANCE.getWorkflowStageProvider__GetFromStage__String_String();
 
 		/**
-		 * The meta object literal for the '<em><b>List Approved Objects</b></em>' operation.
+		 * The meta object literal for the '<em><b>Get Content From Stage</b></em>' operation.
 		 * <!-- begin-user-doc -->
 		 * <!-- end-user-doc -->
 		 * @generated
 		 */
-		EOperation EOBJECT_WORKFLOW_SERVICE___LIST_APPROVED_OBJECTS = eINSTANCE.getEObjectWorkflowService__ListApprovedObjects();
+		EOperation WORKFLOW_STAGE_PROVIDER___GET_CONTENT_FROM_STAGE__STRING_STRING = eINSTANCE.getWorkflowStageProvider__GetContentFromStage__String_String();
 
 		/**
-		 * The meta object literal for the '<em><b>List Rejected Objects</b></em>' operation.
+		 * The meta object literal for the '<em><b>Update In Stage</b></em>' operation.
 		 * <!-- begin-user-doc -->
 		 * <!-- end-user-doc -->
 		 * @generated
 		 */
-		EOperation EOBJECT_WORKFLOW_SERVICE___LIST_REJECTED_OBJECTS = eINSTANCE.getEObjectWorkflowService__ListRejectedObjects();
+		EOperation WORKFLOW_STAGE_PROVIDER___UPDATE_IN_STAGE__STRING_EOBJECT_STRING = eINSTANCE.getWorkflowStageProvider__UpdateInStage__String_EObject_String();
 
 		/**
-		 * The meta object literal for the '<em><b>List Released Objects</b></em>' operation.
+		 * The meta object literal for the '<em><b>Delete From Stage</b></em>' operation.
 		 * <!-- begin-user-doc -->
 		 * <!-- end-user-doc -->
 		 * @generated
 		 */
-		EOperation EOBJECT_WORKFLOW_SERVICE___LIST_RELEASED_OBJECTS = eINSTANCE.getEObjectWorkflowService__ListReleasedObjects();
+		EOperation WORKFLOW_STAGE_PROVIDER___DELETE_FROM_STAGE__STRING_STRING = eINSTANCE.getWorkflowStageProvider__DeleteFromStage__String_String();
 
 		/**
-		 * The meta object literal for the '<em><b>Get Object</b></em>' operation.
+		 * The meta object literal for the '<em><b>List In Stage</b></em>' operation.
 		 * <!-- begin-user-doc -->
 		 * <!-- end-user-doc -->
 		 * @generated
 		 */
-		EOperation EOBJECT_WORKFLOW_SERVICE___GET_OBJECT__STRING = eINSTANCE.getEObjectWorkflowService__GetObject__String();
+		EOperation WORKFLOW_STAGE_PROVIDER___LIST_IN_STAGE__STRING = eINSTANCE.getWorkflowStageProvider__ListInStage__String();
 
 		/**
-		 * The meta object literal for the '<em><b>Get Object Content</b></em>' operation.
+		 * The meta object literal for the '{@link org.eclipse.fennec.model.atlas.wf.workflowapi.WorkflowTransitionService <em>Workflow Transition Service</em>}' class.
 		 * <!-- begin-user-doc -->
 		 * <!-- end-user-doc -->
+		 * @see org.eclipse.fennec.model.atlas.wf.workflowapi.WorkflowTransitionService
+		 * @see org.eclipse.fennec.model.atlas.wf.workflowapi.impl.WorkflowApiPackageImpl#getWorkflowTransitionService()
 		 * @generated
 		 */
-		EOperation EOBJECT_WORKFLOW_SERVICE___GET_OBJECT_CONTENT__STRING = eINSTANCE.getEObjectWorkflowService__GetObjectContent__String();
+		EClass WORKFLOW_TRANSITION_SERVICE = eINSTANCE.getWorkflowTransitionService();
 
 		/**
-		 * The meta object literal for the '<em><b>Update Object</b></em>' operation.
+		 * The meta object literal for the '<em><b>Transition To Stage</b></em>' operation.
 		 * <!-- begin-user-doc -->
 		 * <!-- end-user-doc -->
 		 * @generated
 		 */
-		EOperation EOBJECT_WORKFLOW_SERVICE___UPDATE_OBJECT__STRING_EOBJECT = eINSTANCE.getEObjectWorkflowService__UpdateObject__String_EObject();
+		EOperation WORKFLOW_TRANSITION_SERVICE___TRANSITION_TO_STAGE__STRING_STRING_STRING = eINSTANCE.getWorkflowTransitionService__TransitionToStage__String_String_String();
 
 		/**
-		 * The meta object literal for the '<em><b>Delete Object</b></em>' operation.
+		 * The meta object literal for the '<em><b>Is Transition Allowed</b></em>' operation.
 		 * <!-- begin-user-doc -->
 		 * <!-- end-user-doc -->
 		 * @generated
 		 */
-		EOperation EOBJECT_WORKFLOW_SERVICE___DELETE_OBJECT__STRING = eINSTANCE.getEObjectWorkflowService__DeleteObject__String();
-
-		/**
-		 * The meta object literal for the '{@link org.eclipse.fennec.model.atlas.wf.workflowapi.WorkflowDraftProvider <em>Workflow Draft Provider</em>}' class.
-		 * <!-- begin-user-doc -->
-		 * <!-- end-user-doc -->
-		 * @see org.eclipse.fennec.model.atlas.wf.workflowapi.WorkflowDraftProvider
-		 * @see org.eclipse.fennec.model.atlas.wf.workflowapi.impl.WorkflowApiPackageImpl#getWorkflowDraftProvider()
-		 * @generated
-		 */
-		EClass WORKFLOW_DRAFT_PROVIDER = eINSTANCE.getWorkflowDraftProvider();
-
-		/**
-		 * The meta object literal for the '<em><b>Upload Draft</b></em>' operation.
-		 * <!-- begin-user-doc -->
-		 * <!-- end-user-doc -->
-		 * @generated
-		 */
-		EOperation WORKFLOW_DRAFT_PROVIDER___UPLOAD_DRAFT__EOBJECT_OBJECTMETADATA = eINSTANCE.getWorkflowDraftProvider__UploadDraft__EObject_ObjectMetadata();
-
-		/**
-		 * The meta object literal for the '<em><b>List Draft Objects</b></em>' operation.
-		 * <!-- begin-user-doc -->
-		 * <!-- end-user-doc -->
-		 * @generated
-		 */
-		EOperation WORKFLOW_DRAFT_PROVIDER___LIST_DRAFT_OBJECTS = eINSTANCE.getWorkflowDraftProvider__ListDraftObjects();
-
-		/**
-		 * The meta object literal for the '<em><b>Get Draft</b></em>' operation.
-		 * <!-- begin-user-doc -->
-		 * <!-- end-user-doc -->
-		 * @generated
-		 */
-		EOperation WORKFLOW_DRAFT_PROVIDER___GET_DRAFT__STRING = eINSTANCE.getWorkflowDraftProvider__GetDraft__String();
-
-		/**
-		 * The meta object literal for the '<em><b>Get Draft Content</b></em>' operation.
-		 * <!-- begin-user-doc -->
-		 * <!-- end-user-doc -->
-		 * @generated
-		 */
-		EOperation WORKFLOW_DRAFT_PROVIDER___GET_DRAFT_CONTENT__STRING = eINSTANCE.getWorkflowDraftProvider__GetDraftContent__String();
-
-		/**
-		 * The meta object literal for the '<em><b>Update Draft</b></em>' operation.
-		 * <!-- begin-user-doc -->
-		 * <!-- end-user-doc -->
-		 * @generated
-		 */
-		EOperation WORKFLOW_DRAFT_PROVIDER___UPDATE_DRAFT__STRING_EOBJECT = eINSTANCE.getWorkflowDraftProvider__UpdateDraft__String_EObject();
-
-		/**
-		 * The meta object literal for the '<em><b>Delete Draft</b></em>' operation.
-		 * <!-- begin-user-doc -->
-		 * <!-- end-user-doc -->
-		 * @generated
-		 */
-		EOperation WORKFLOW_DRAFT_PROVIDER___DELETE_DRAFT__STRING = eINSTANCE.getWorkflowDraftProvider__DeleteDraft__String();
+		EOperation WORKFLOW_TRANSITION_SERVICE___IS_TRANSITION_ALLOWED__STRING_STRING = eINSTANCE.getWorkflowTransitionService__IsTransitionAllowed__String_String();
 
 	}
 

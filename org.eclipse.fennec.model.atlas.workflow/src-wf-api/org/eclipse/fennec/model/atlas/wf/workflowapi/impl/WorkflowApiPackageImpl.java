@@ -26,7 +26,8 @@ import org.eclipse.fennec.model.atlas.mgmt.management.ManagementPackage;
 import org.eclipse.fennec.model.atlas.wf.workflowapi.EObjectWorkflowService;
 import org.eclipse.fennec.model.atlas.wf.workflowapi.WorkflowApiFactory;
 import org.eclipse.fennec.model.atlas.wf.workflowapi.WorkflowApiPackage;
-import org.eclipse.fennec.model.atlas.wf.workflowapi.WorkflowDraftProvider;
+import org.eclipse.fennec.model.atlas.wf.workflowapi.WorkflowStageProvider;
+import org.eclipse.fennec.model.atlas.wf.workflowapi.WorkflowTransitionService;
 
 /**
  * <!-- begin-user-doc -->
@@ -47,7 +48,14 @@ public class WorkflowApiPackageImpl extends EPackageImpl implements WorkflowApiP
 	 * <!-- end-user-doc -->
 	 * @generated
 	 */
-	private EClass workflowDraftProviderEClass = null;
+	private EClass workflowStageProviderEClass = null;
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	private EClass workflowTransitionServiceEClass = null;
 
 	/**
 	 * Creates an instance of the model <b>Package</b>, registered with
@@ -128,8 +136,8 @@ public class WorkflowApiPackageImpl extends EPackageImpl implements WorkflowApiP
 	 * @generated
 	 */
 	@Override
-	public EOperation getEObjectWorkflowService__ApproveObject__String_String_String() {
-		return eObjectWorkflowServiceEClass.getEOperations().get(0);
+	public EClass getWorkflowStageProvider() {
+		return workflowStageProviderEClass;
 	}
 
 	/**
@@ -138,8 +146,8 @@ public class WorkflowApiPackageImpl extends EPackageImpl implements WorkflowApiP
 	 * @generated
 	 */
 	@Override
-	public EOperation getEObjectWorkflowService__RejectObject__String_String_String() {
-		return eObjectWorkflowServiceEClass.getEOperations().get(1);
+	public EOperation getWorkflowStageProvider__UploadToStage__String_EObject_ObjectMetadata() {
+		return workflowStageProviderEClass.getEOperations().get(0);
 	}
 
 	/**
@@ -148,8 +156,8 @@ public class WorkflowApiPackageImpl extends EPackageImpl implements WorkflowApiP
 	 * @generated
 	 */
 	@Override
-	public EOperation getEObjectWorkflowService__ReleaseObject__String_String_boolean() {
-		return eObjectWorkflowServiceEClass.getEOperations().get(2);
+	public EOperation getWorkflowStageProvider__GetFromStage__String_String() {
+		return workflowStageProviderEClass.getEOperations().get(1);
 	}
 
 	/**
@@ -158,8 +166,8 @@ public class WorkflowApiPackageImpl extends EPackageImpl implements WorkflowApiP
 	 * @generated
 	 */
 	@Override
-	public EOperation getEObjectWorkflowService__ListApprovedObjects() {
-		return eObjectWorkflowServiceEClass.getEOperations().get(3);
+	public EOperation getWorkflowStageProvider__GetContentFromStage__String_String() {
+		return workflowStageProviderEClass.getEOperations().get(2);
 	}
 
 	/**
@@ -168,8 +176,8 @@ public class WorkflowApiPackageImpl extends EPackageImpl implements WorkflowApiP
 	 * @generated
 	 */
 	@Override
-	public EOperation getEObjectWorkflowService__ListRejectedObjects() {
-		return eObjectWorkflowServiceEClass.getEOperations().get(4);
+	public EOperation getWorkflowStageProvider__UpdateInStage__String_EObject_String() {
+		return workflowStageProviderEClass.getEOperations().get(3);
 	}
 
 	/**
@@ -178,8 +186,8 @@ public class WorkflowApiPackageImpl extends EPackageImpl implements WorkflowApiP
 	 * @generated
 	 */
 	@Override
-	public EOperation getEObjectWorkflowService__ListReleasedObjects() {
-		return eObjectWorkflowServiceEClass.getEOperations().get(5);
+	public EOperation getWorkflowStageProvider__DeleteFromStage__String_String() {
+		return workflowStageProviderEClass.getEOperations().get(4);
 	}
 
 	/**
@@ -188,8 +196,8 @@ public class WorkflowApiPackageImpl extends EPackageImpl implements WorkflowApiP
 	 * @generated
 	 */
 	@Override
-	public EOperation getEObjectWorkflowService__GetObject__String() {
-		return eObjectWorkflowServiceEClass.getEOperations().get(6);
+	public EOperation getWorkflowStageProvider__ListInStage__String() {
+		return workflowStageProviderEClass.getEOperations().get(5);
 	}
 
 	/**
@@ -198,8 +206,8 @@ public class WorkflowApiPackageImpl extends EPackageImpl implements WorkflowApiP
 	 * @generated
 	 */
 	@Override
-	public EOperation getEObjectWorkflowService__GetObjectContent__String() {
-		return eObjectWorkflowServiceEClass.getEOperations().get(7);
+	public EClass getWorkflowTransitionService() {
+		return workflowTransitionServiceEClass;
 	}
 
 	/**
@@ -208,8 +216,8 @@ public class WorkflowApiPackageImpl extends EPackageImpl implements WorkflowApiP
 	 * @generated
 	 */
 	@Override
-	public EOperation getEObjectWorkflowService__UpdateObject__String_EObject() {
-		return eObjectWorkflowServiceEClass.getEOperations().get(8);
+	public EOperation getWorkflowTransitionService__TransitionToStage__String_String_String() {
+		return workflowTransitionServiceEClass.getEOperations().get(0);
 	}
 
 	/**
@@ -218,78 +226,8 @@ public class WorkflowApiPackageImpl extends EPackageImpl implements WorkflowApiP
 	 * @generated
 	 */
 	@Override
-	public EOperation getEObjectWorkflowService__DeleteObject__String() {
-		return eObjectWorkflowServiceEClass.getEOperations().get(9);
-	}
-
-	/**
-	 * <!-- begin-user-doc -->
-	 * <!-- end-user-doc -->
-	 * @generated
-	 */
-	@Override
-	public EClass getWorkflowDraftProvider() {
-		return workflowDraftProviderEClass;
-	}
-
-	/**
-	 * <!-- begin-user-doc -->
-	 * <!-- end-user-doc -->
-	 * @generated
-	 */
-	@Override
-	public EOperation getWorkflowDraftProvider__UploadDraft__EObject_ObjectMetadata() {
-		return workflowDraftProviderEClass.getEOperations().get(0);
-	}
-
-	/**
-	 * <!-- begin-user-doc -->
-	 * <!-- end-user-doc -->
-	 * @generated
-	 */
-	@Override
-	public EOperation getWorkflowDraftProvider__ListDraftObjects() {
-		return workflowDraftProviderEClass.getEOperations().get(1);
-	}
-
-	/**
-	 * <!-- begin-user-doc -->
-	 * <!-- end-user-doc -->
-	 * @generated
-	 */
-	@Override
-	public EOperation getWorkflowDraftProvider__GetDraft__String() {
-		return workflowDraftProviderEClass.getEOperations().get(2);
-	}
-
-	/**
-	 * <!-- begin-user-doc -->
-	 * <!-- end-user-doc -->
-	 * @generated
-	 */
-	@Override
-	public EOperation getWorkflowDraftProvider__GetDraftContent__String() {
-		return workflowDraftProviderEClass.getEOperations().get(3);
-	}
-
-	/**
-	 * <!-- begin-user-doc -->
-	 * <!-- end-user-doc -->
-	 * @generated
-	 */
-	@Override
-	public EOperation getWorkflowDraftProvider__UpdateDraft__String_EObject() {
-		return workflowDraftProviderEClass.getEOperations().get(4);
-	}
-
-	/**
-	 * <!-- begin-user-doc -->
-	 * <!-- end-user-doc -->
-	 * @generated
-	 */
-	@Override
-	public EOperation getWorkflowDraftProvider__DeleteDraft__String() {
-		return workflowDraftProviderEClass.getEOperations().get(5);
+	public EOperation getWorkflowTransitionService__IsTransitionAllowed__String_String() {
+		return workflowTransitionServiceEClass.getEOperations().get(1);
 	}
 
 	/**
@@ -322,24 +260,18 @@ public class WorkflowApiPackageImpl extends EPackageImpl implements WorkflowApiP
 
 		// Create classes and their features
 		eObjectWorkflowServiceEClass = createEClass(EOBJECT_WORKFLOW_SERVICE);
-		createEOperation(eObjectWorkflowServiceEClass, EOBJECT_WORKFLOW_SERVICE___APPROVE_OBJECT__STRING_STRING_STRING);
-		createEOperation(eObjectWorkflowServiceEClass, EOBJECT_WORKFLOW_SERVICE___REJECT_OBJECT__STRING_STRING_STRING);
-		createEOperation(eObjectWorkflowServiceEClass, EOBJECT_WORKFLOW_SERVICE___RELEASE_OBJECT__STRING_STRING_BOOLEAN);
-		createEOperation(eObjectWorkflowServiceEClass, EOBJECT_WORKFLOW_SERVICE___LIST_APPROVED_OBJECTS);
-		createEOperation(eObjectWorkflowServiceEClass, EOBJECT_WORKFLOW_SERVICE___LIST_REJECTED_OBJECTS);
-		createEOperation(eObjectWorkflowServiceEClass, EOBJECT_WORKFLOW_SERVICE___LIST_RELEASED_OBJECTS);
-		createEOperation(eObjectWorkflowServiceEClass, EOBJECT_WORKFLOW_SERVICE___GET_OBJECT__STRING);
-		createEOperation(eObjectWorkflowServiceEClass, EOBJECT_WORKFLOW_SERVICE___GET_OBJECT_CONTENT__STRING);
-		createEOperation(eObjectWorkflowServiceEClass, EOBJECT_WORKFLOW_SERVICE___UPDATE_OBJECT__STRING_EOBJECT);
-		createEOperation(eObjectWorkflowServiceEClass, EOBJECT_WORKFLOW_SERVICE___DELETE_OBJECT__STRING);
 
-		workflowDraftProviderEClass = createEClass(WORKFLOW_DRAFT_PROVIDER);
-		createEOperation(workflowDraftProviderEClass, WORKFLOW_DRAFT_PROVIDER___UPLOAD_DRAFT__EOBJECT_OBJECTMETADATA);
-		createEOperation(workflowDraftProviderEClass, WORKFLOW_DRAFT_PROVIDER___LIST_DRAFT_OBJECTS);
-		createEOperation(workflowDraftProviderEClass, WORKFLOW_DRAFT_PROVIDER___GET_DRAFT__STRING);
-		createEOperation(workflowDraftProviderEClass, WORKFLOW_DRAFT_PROVIDER___GET_DRAFT_CONTENT__STRING);
-		createEOperation(workflowDraftProviderEClass, WORKFLOW_DRAFT_PROVIDER___UPDATE_DRAFT__STRING_EOBJECT);
-		createEOperation(workflowDraftProviderEClass, WORKFLOW_DRAFT_PROVIDER___DELETE_DRAFT__STRING);
+		workflowStageProviderEClass = createEClass(WORKFLOW_STAGE_PROVIDER);
+		createEOperation(workflowStageProviderEClass, WORKFLOW_STAGE_PROVIDER___UPLOAD_TO_STAGE__STRING_EOBJECT_OBJECTMETADATA);
+		createEOperation(workflowStageProviderEClass, WORKFLOW_STAGE_PROVIDER___GET_FROM_STAGE__STRING_STRING);
+		createEOperation(workflowStageProviderEClass, WORKFLOW_STAGE_PROVIDER___GET_CONTENT_FROM_STAGE__STRING_STRING);
+		createEOperation(workflowStageProviderEClass, WORKFLOW_STAGE_PROVIDER___UPDATE_IN_STAGE__STRING_EOBJECT_STRING);
+		createEOperation(workflowStageProviderEClass, WORKFLOW_STAGE_PROVIDER___DELETE_FROM_STAGE__STRING_STRING);
+		createEOperation(workflowStageProviderEClass, WORKFLOW_STAGE_PROVIDER___LIST_IN_STAGE__STRING);
+
+		workflowTransitionServiceEClass = createEClass(WORKFLOW_TRANSITION_SERVICE);
+		createEOperation(workflowTransitionServiceEClass, WORKFLOW_TRANSITION_SERVICE___TRANSITION_TO_STAGE__STRING_STRING_STRING);
+		createEOperation(workflowTransitionServiceEClass, WORKFLOW_TRANSITION_SERVICE___IS_TRANSITION_ALLOWED__STRING_STRING);
 	}
 
 	/**
@@ -370,82 +302,35 @@ public class WorkflowApiPackageImpl extends EPackageImpl implements WorkflowApiP
 
 		// Create type parameters
 		ETypeParameter eObjectWorkflowServiceEClass_T = addETypeParameter(eObjectWorkflowServiceEClass, "T");
-		ETypeParameter workflowDraftProviderEClass_T = addETypeParameter(workflowDraftProviderEClass, "T");
+		ETypeParameter workflowStageProviderEClass_T = addETypeParameter(workflowStageProviderEClass, "T");
+		ETypeParameter workflowTransitionServiceEClass_T = addETypeParameter(workflowTransitionServiceEClass, "T");
 
 		// Set bounds for type parameters
 		EGenericType g1 = createEGenericType(ecorePackage.getEObject());
 		eObjectWorkflowServiceEClass_T.getEBounds().add(g1);
 		g1 = createEGenericType(ecorePackage.getEObject());
-		workflowDraftProviderEClass_T.getEBounds().add(g1);
+		workflowStageProviderEClass_T.getEBounds().add(g1);
+		g1 = createEGenericType(ecorePackage.getEObject());
+		workflowTransitionServiceEClass_T.getEBounds().add(g1);
 
 		// Add supertypes to classes
-		g1 = createEGenericType(this.getWorkflowDraftProvider());
-		EGenericType g2 = createEGenericType(eObjectWorkflowServiceEClass_T);
+		g1 = createEGenericType(this.getWorkflowStageProvider());
+		EGenericType g2 = createEGenericType();
+		g1.getETypeArguments().add(g2);
+		eObjectWorkflowServiceEClass.getEGenericSuperTypes().add(g1);
+		g1 = createEGenericType(this.getWorkflowTransitionService());
+		g2 = createEGenericType();
 		g1.getETypeArguments().add(g2);
 		eObjectWorkflowServiceEClass.getEGenericSuperTypes().add(g1);
 
 		// Initialize classes, features, and operations; add parameters
 		initEClass(eObjectWorkflowServiceEClass, EObjectWorkflowService.class, "EObjectWorkflowService", IS_ABSTRACT, IS_INTERFACE, IS_GENERATED_INSTANCE_CLASS);
 
-		EOperation op = initEOperation(getEObjectWorkflowService__ApproveObject__String_String_String(), theManagementPackage.getObjectMetadata(), "approveObject", 0, 1, IS_UNIQUE, IS_ORDERED);
-		addEParameter(op, ecorePackage.getEString(), "objectId", 1, 1, IS_UNIQUE, IS_ORDERED);
-		addEParameter(op, ecorePackage.getEString(), "reviewUser", 1, 1, IS_UNIQUE, IS_ORDERED);
-		addEParameter(op, ecorePackage.getEString(), "approvalReason", 0, 1, IS_UNIQUE, IS_ORDERED);
+		initEClass(workflowStageProviderEClass, WorkflowStageProvider.class, "WorkflowStageProvider", IS_ABSTRACT, IS_INTERFACE, IS_GENERATED_INSTANCE_CLASS);
 
-		op = initEOperation(getEObjectWorkflowService__RejectObject__String_String_String(), theManagementPackage.getObjectMetadata(), "rejectObject", 0, 1, IS_UNIQUE, IS_ORDERED);
-		addEParameter(op, ecorePackage.getEString(), "objectId", 1, 1, IS_UNIQUE, IS_ORDERED);
-		addEParameter(op, ecorePackage.getEString(), "reviewUser", 1, 1, IS_UNIQUE, IS_ORDERED);
-		addEParameter(op, ecorePackage.getEString(), "rejectionReason", 1, 1, IS_UNIQUE, IS_ORDERED);
-
-		op = initEOperation(getEObjectWorkflowService__ReleaseObject__String_String_boolean(), theManagementPackage.getObjectMetadata(), "releaseObject", 0, 1, IS_UNIQUE, IS_ORDERED);
-		addEParameter(op, ecorePackage.getEString(), "objectId", 1, 1, IS_UNIQUE, IS_ORDERED);
-		addEParameter(op, ecorePackage.getEString(), "releaseNotes", 0, 1, IS_UNIQUE, IS_ORDERED);
-		addEParameter(op, ecorePackage.getEBoolean(), "requireComplianceCheck", 1, 1, IS_UNIQUE, IS_ORDERED);
-
-		op = initEOperation(getEObjectWorkflowService__ListApprovedObjects(), null, "listApprovedObjects", 0, 1, IS_UNIQUE, IS_ORDERED);
-		g1 = createEGenericType(theManagementPackage.getList());
-		g2 = createEGenericType(theManagementPackage.getObjectMetadata());
-		g1.getETypeArguments().add(g2);
-		initEOperation(op, g1);
-
-		op = initEOperation(getEObjectWorkflowService__ListRejectedObjects(), null, "listRejectedObjects", 0, 1, IS_UNIQUE, IS_ORDERED);
-		g1 = createEGenericType(theManagementPackage.getList());
-		g2 = createEGenericType(theManagementPackage.getObjectMetadata());
-		g1.getETypeArguments().add(g2);
-		initEOperation(op, g1);
-
-		op = initEOperation(getEObjectWorkflowService__ListReleasedObjects(), null, "listReleasedObjects", 0, 1, IS_UNIQUE, IS_ORDERED);
-		g1 = createEGenericType(theManagementPackage.getList());
-		g2 = createEGenericType(theManagementPackage.getObjectMetadata());
-		g1.getETypeArguments().add(g2);
-		initEOperation(op, g1);
-
-		op = initEOperation(getEObjectWorkflowService__GetObject__String(), theManagementPackage.getObjectMetadata(), "getObject", 0, 1, IS_UNIQUE, IS_ORDERED);
-		addEParameter(op, ecorePackage.getEString(), "objectId", 1, 1, IS_UNIQUE, IS_ORDERED);
-
-		op = initEOperation(getEObjectWorkflowService__GetObjectContent__String(), ecorePackage.getEObject(), "getObjectContent", 0, 1, IS_UNIQUE, IS_ORDERED);
-		addEParameter(op, ecorePackage.getEString(), "objectId", 1, 1, IS_UNIQUE, IS_ORDERED);
-
-		op = initEOperation(getEObjectWorkflowService__UpdateObject__String_EObject(), null, "updateObject", 0, 1, IS_UNIQUE, IS_ORDERED);
-		addEParameter(op, ecorePackage.getEString(), "objectId", 1, 1, IS_UNIQUE, IS_ORDERED);
-		g1 = createEGenericType(eObjectWorkflowServiceEClass_T);
-		addEParameter(op, g1, "updatedObject", 1, 1, IS_UNIQUE, IS_ORDERED);
-		g1 = createEGenericType(theManagementPackage.getPromise());
-		g2 = createEGenericType(theManagementPackage.getVoid());
-		g1.getETypeArguments().add(g2);
-		initEOperation(op, g1);
-
-		op = initEOperation(getEObjectWorkflowService__DeleteObject__String(), null, "deleteObject", 0, 1, IS_UNIQUE, IS_ORDERED);
-		addEParameter(op, ecorePackage.getEString(), "objectId", 1, 1, IS_UNIQUE, IS_ORDERED);
-		g1 = createEGenericType(theManagementPackage.getPromise());
-		g2 = createEGenericType(ecorePackage.getEBooleanObject());
-		g1.getETypeArguments().add(g2);
-		initEOperation(op, g1);
-
-		initEClass(workflowDraftProviderEClass, WorkflowDraftProvider.class, "WorkflowDraftProvider", IS_ABSTRACT, IS_INTERFACE, IS_GENERATED_INSTANCE_CLASS);
-
-		op = initEOperation(getWorkflowDraftProvider__UploadDraft__EObject_ObjectMetadata(), null, "uploadDraft", 0, 1, IS_UNIQUE, IS_ORDERED);
-		g1 = createEGenericType(workflowDraftProviderEClass_T);
+		EOperation op = initEOperation(getWorkflowStageProvider__UploadToStage__String_EObject_ObjectMetadata(), null, "uploadToStage", 0, 1, IS_UNIQUE, IS_ORDERED);
+		addEParameter(op, ecorePackage.getEString(), "stage", 0, 1, IS_UNIQUE, IS_ORDERED);
+		g1 = createEGenericType(workflowStageProviderEClass_T);
 		addEParameter(op, g1, "object", 1, 1, IS_UNIQUE, IS_ORDERED);
 		addEParameter(op, theManagementPackage.getObjectMetadata(), "metadata", 1, 1, IS_UNIQUE, IS_ORDERED);
 		g1 = createEGenericType(theManagementPackage.getPromise());
@@ -453,35 +338,51 @@ public class WorkflowApiPackageImpl extends EPackageImpl implements WorkflowApiP
 		g1.getETypeArguments().add(g2);
 		initEOperation(op, g1);
 
-		op = initEOperation(getWorkflowDraftProvider__ListDraftObjects(), null, "listDraftObjects", 0, 1, IS_UNIQUE, IS_ORDERED);
-		g1 = createEGenericType(theManagementPackage.getList());
-		g2 = createEGenericType(theManagementPackage.getObjectMetadata());
-		g1.getETypeArguments().add(g2);
+		op = initEOperation(getWorkflowStageProvider__GetFromStage__String_String(), theManagementPackage.getObjectMetadata(), "getFromStage", 0, 1, IS_UNIQUE, IS_ORDERED);
+		addEParameter(op, ecorePackage.getEString(), "stage", 0, 1, IS_UNIQUE, IS_ORDERED);
+		addEParameter(op, ecorePackage.getEString(), "objectId", 1, 1, IS_UNIQUE, IS_ORDERED);
+
+		op = initEOperation(getWorkflowStageProvider__GetContentFromStage__String_String(), null, "getContentFromStage", 0, 1, IS_UNIQUE, IS_ORDERED);
+		addEParameter(op, ecorePackage.getEString(), "stage", 0, 1, IS_UNIQUE, IS_ORDERED);
+		addEParameter(op, ecorePackage.getEString(), "objectId", 1, 1, IS_UNIQUE, IS_ORDERED);
+		g1 = createEGenericType(workflowStageProviderEClass_T);
 		initEOperation(op, g1);
 
-		op = initEOperation(getWorkflowDraftProvider__GetDraft__String(), theManagementPackage.getObjectMetadata(), "getDraft", 0, 1, IS_UNIQUE, IS_ORDERED);
-		addEParameter(op, ecorePackage.getEString(), "objectId", 1, 1, IS_UNIQUE, IS_ORDERED);
-
-		op = initEOperation(getWorkflowDraftProvider__GetDraftContent__String(), null, "getDraftContent", 0, 1, IS_UNIQUE, IS_ORDERED);
-		addEParameter(op, ecorePackage.getEString(), "objectId", 1, 1, IS_UNIQUE, IS_ORDERED);
-		g1 = createEGenericType(workflowDraftProviderEClass_T);
-		initEOperation(op, g1);
-
-		op = initEOperation(getWorkflowDraftProvider__UpdateDraft__String_EObject(), null, "updateDraft", 0, 1, IS_UNIQUE, IS_ORDERED);
-		addEParameter(op, ecorePackage.getEString(), "objectId", 1, 1, IS_UNIQUE, IS_ORDERED);
-		g1 = createEGenericType(workflowDraftProviderEClass_T);
+		op = initEOperation(getWorkflowStageProvider__UpdateInStage__String_EObject_String(), null, "updateInStage", 0, 1, IS_UNIQUE, IS_ORDERED);
+		addEParameter(op, ecorePackage.getEString(), "stage", 0, 1, IS_UNIQUE, IS_ORDERED);
+		g1 = createEGenericType(workflowStageProviderEClass_T);
 		addEParameter(op, g1, "updatedObject", 1, 1, IS_UNIQUE, IS_ORDERED);
+		addEParameter(op, ecorePackage.getEString(), "objectId", 1, 1, IS_UNIQUE, IS_ORDERED);
 		g1 = createEGenericType(theManagementPackage.getPromise());
 		g2 = createEGenericType(theManagementPackage.getVoid());
 		g1.getETypeArguments().add(g2);
 		initEOperation(op, g1);
 
-		op = initEOperation(getWorkflowDraftProvider__DeleteDraft__String(), null, "deleteDraft", 0, 1, IS_UNIQUE, IS_ORDERED);
+		op = initEOperation(getWorkflowStageProvider__DeleteFromStage__String_String(), null, "deleteFromStage", 0, 1, IS_UNIQUE, IS_ORDERED);
+		addEParameter(op, ecorePackage.getEString(), "stage", 0, 1, IS_UNIQUE, IS_ORDERED);
 		addEParameter(op, ecorePackage.getEString(), "objectId", 1, 1, IS_UNIQUE, IS_ORDERED);
 		g1 = createEGenericType(theManagementPackage.getPromise());
 		g2 = createEGenericType(ecorePackage.getEBooleanObject());
 		g1.getETypeArguments().add(g2);
 		initEOperation(op, g1);
+
+		op = initEOperation(getWorkflowStageProvider__ListInStage__String(), null, "listInStage", 0, 1, IS_UNIQUE, IS_ORDERED);
+		addEParameter(op, ecorePackage.getEString(), "stage", 0, 1, IS_UNIQUE, IS_ORDERED);
+		g1 = createEGenericType(theManagementPackage.getList());
+		g2 = createEGenericType(theManagementPackage.getObjectMetadata());
+		g1.getETypeArguments().add(g2);
+		initEOperation(op, g1);
+
+		initEClass(workflowTransitionServiceEClass, WorkflowTransitionService.class, "WorkflowTransitionService", IS_ABSTRACT, IS_INTERFACE, IS_GENERATED_INSTANCE_CLASS);
+
+		op = initEOperation(getWorkflowTransitionService__TransitionToStage__String_String_String(), theManagementPackage.getObjectMetadata(), "transitionToStage", 0, 1, IS_UNIQUE, IS_ORDERED);
+		addEParameter(op, ecorePackage.getEString(), "objectId", 1, 1, IS_UNIQUE, IS_ORDERED);
+		addEParameter(op, ecorePackage.getEString(), "fromStage", 0, 1, IS_UNIQUE, IS_ORDERED);
+		addEParameter(op, ecorePackage.getEString(), "toStage", 0, 1, IS_UNIQUE, IS_ORDERED);
+
+		op = initEOperation(getWorkflowTransitionService__IsTransitionAllowed__String_String(), ecorePackage.getEBoolean(), "isTransitionAllowed", 0, 1, IS_UNIQUE, IS_ORDERED);
+		addEParameter(op, ecorePackage.getEString(), "fromStage", 0, 1, IS_UNIQUE, IS_ORDERED);
+		addEParameter(op, ecorePackage.getEString(), "toStage", 0, 1, IS_UNIQUE, IS_ORDERED);
 
 		// Create resource
 		createResource(eNS_URI);

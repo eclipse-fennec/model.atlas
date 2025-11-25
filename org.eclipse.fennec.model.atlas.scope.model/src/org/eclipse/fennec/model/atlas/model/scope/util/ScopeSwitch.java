@@ -11,14 +11,16 @@
  * Contributors:
  *      Mark Hoffmann - initial API and implementation
  */
-package org.eclipse.fennec.model.atlas.wf.workflowapi.util;
+package org.eclipse.fennec.model.atlas.model.scope.util;
+
+import java.util.Map;
 
 import org.eclipse.emf.ecore.EObject;
 import org.eclipse.emf.ecore.EPackage;
 
 import org.eclipse.emf.ecore.util.Switch;
 
-import org.eclipse.fennec.model.atlas.wf.workflowapi.*;
+import org.eclipse.fennec.model.atlas.model.scope.*;
 
 /**
  * <!-- begin-user-doc -->
@@ -30,17 +32,17 @@ import org.eclipse.fennec.model.atlas.wf.workflowapi.*;
  * until a non-null result is returned,
  * which is the result of the switch.
  * <!-- end-user-doc -->
- * @see org.eclipse.fennec.model.atlas.wf.workflowapi.WorkflowApiPackage
+ * @see org.eclipse.fennec.model.atlas.model.scope.ScopePackage
  * @generated
  */
-public class WorkflowApiSwitch<T1> extends Switch<T1> {
+public class ScopeSwitch<T> extends Switch<T> {
 	/**
 	 * The cached model package
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
 	 * @generated
 	 */
-	protected static WorkflowApiPackage modelPackage;
+	protected static ScopePackage modelPackage;
 
 	/**
 	 * Creates an instance of the switch.
@@ -48,9 +50,9 @@ public class WorkflowApiSwitch<T1> extends Switch<T1> {
 	 * <!-- end-user-doc -->
 	 * @generated
 	 */
-	public WorkflowApiSwitch() {
+	public ScopeSwitch() {
 		if (modelPackage == null) {
-			modelPackage = WorkflowApiPackage.eINSTANCE;
+			modelPackage = ScopePackage.eINSTANCE;
 		}
 	}
 
@@ -75,25 +77,23 @@ public class WorkflowApiSwitch<T1> extends Switch<T1> {
 	 * @generated
 	 */
 	@Override
-	protected T1 doSwitch(int classifierID, EObject theEObject) {
+	protected T doSwitch(int classifierID, EObject theEObject) {
 		switch (classifierID) {
-			case WorkflowApiPackage.EOBJECT_WORKFLOW_SERVICE: {
-				EObjectWorkflowService<?> eObjectWorkflowService = (EObjectWorkflowService<?>)theEObject;
-				T1 result = caseEObjectWorkflowService(eObjectWorkflowService);
-				if (result == null) result = caseWorkflowStageProvider(eObjectWorkflowService);
-				if (result == null) result = caseWorkflowTransitionService(eObjectWorkflowService);
+			case ScopePackage.SCOPE: {
+				Scope scope = (Scope)theEObject;
+				T result = caseScope(scope);
 				if (result == null) result = defaultCase(theEObject);
 				return result;
 			}
-			case WorkflowApiPackage.WORKFLOW_STAGE_PROVIDER: {
-				WorkflowStageProvider<?> workflowStageProvider = (WorkflowStageProvider<?>)theEObject;
-				T1 result = caseWorkflowStageProvider(workflowStageProvider);
+			case ScopePackage.LINKS_MAP: {
+				@SuppressWarnings("unchecked") Map.Entry<String, String> linksMap = (Map.Entry<String, String>)theEObject;
+				T result = caseLinksMap(linksMap);
 				if (result == null) result = defaultCase(theEObject);
 				return result;
 			}
-			case WorkflowApiPackage.WORKFLOW_TRANSITION_SERVICE: {
-				WorkflowTransitionService<?> workflowTransitionService = (WorkflowTransitionService<?>)theEObject;
-				T1 result = caseWorkflowTransitionService(workflowTransitionService);
+			case ScopePackage.SCOPE_CONTAINER: {
+				ScopeContainer scopeContainer = (ScopeContainer)theEObject;
+				T result = caseScopeContainer(scopeContainer);
 				if (result == null) result = defaultCase(theEObject);
 				return result;
 			}
@@ -102,47 +102,47 @@ public class WorkflowApiSwitch<T1> extends Switch<T1> {
 	}
 
 	/**
-	 * Returns the result of interpreting the object as an instance of '<em>EObject Workflow Service</em>'.
+	 * Returns the result of interpreting the object as an instance of '<em>Scope</em>'.
 	 * <!-- begin-user-doc -->
 	 * This implementation returns null;
 	 * returning a non-null result will terminate the switch.
 	 * <!-- end-user-doc -->
 	 * @param object the target of the switch.
-	 * @return the result of interpreting the object as an instance of '<em>EObject Workflow Service</em>'.
+	 * @return the result of interpreting the object as an instance of '<em>Scope</em>'.
 	 * @see #doSwitch(org.eclipse.emf.ecore.EObject) doSwitch(EObject)
 	 * @generated
 	 */
-	public <T extends EObject> T1 caseEObjectWorkflowService(EObjectWorkflowService<T> object) {
+	public T caseScope(Scope object) {
 		return null;
 	}
 
 	/**
-	 * Returns the result of interpreting the object as an instance of '<em>Workflow Stage Provider</em>'.
+	 * Returns the result of interpreting the object as an instance of '<em>Links Map</em>'.
 	 * <!-- begin-user-doc -->
 	 * This implementation returns null;
 	 * returning a non-null result will terminate the switch.
 	 * <!-- end-user-doc -->
 	 * @param object the target of the switch.
-	 * @return the result of interpreting the object as an instance of '<em>Workflow Stage Provider</em>'.
+	 * @return the result of interpreting the object as an instance of '<em>Links Map</em>'.
 	 * @see #doSwitch(org.eclipse.emf.ecore.EObject) doSwitch(EObject)
 	 * @generated
 	 */
-	public <T extends EObject> T1 caseWorkflowStageProvider(WorkflowStageProvider<T> object) {
+	public T caseLinksMap(Map.Entry<String, String> object) {
 		return null;
 	}
 
 	/**
-	 * Returns the result of interpreting the object as an instance of '<em>Workflow Transition Service</em>'.
+	 * Returns the result of interpreting the object as an instance of '<em>Container</em>'.
 	 * <!-- begin-user-doc -->
 	 * This implementation returns null;
 	 * returning a non-null result will terminate the switch.
 	 * <!-- end-user-doc -->
 	 * @param object the target of the switch.
-	 * @return the result of interpreting the object as an instance of '<em>Workflow Transition Service</em>'.
+	 * @return the result of interpreting the object as an instance of '<em>Container</em>'.
 	 * @see #doSwitch(org.eclipse.emf.ecore.EObject) doSwitch(EObject)
 	 * @generated
 	 */
-	public <T extends EObject> T1 caseWorkflowTransitionService(WorkflowTransitionService<T> object) {
+	public T caseScopeContainer(ScopeContainer object) {
 		return null;
 	}
 
@@ -158,8 +158,8 @@ public class WorkflowApiSwitch<T1> extends Switch<T1> {
 	 * @generated
 	 */
 	@Override
-	public T1 defaultCase(EObject object) {
+	public T defaultCase(EObject object) {
 		return null;
 	}
 
-} //WorkflowApiSwitch
+} //ScopeSwitch

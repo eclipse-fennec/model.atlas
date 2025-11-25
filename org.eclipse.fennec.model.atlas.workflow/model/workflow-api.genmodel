@@ -13,57 +13,45 @@
       resource="XMI" disposableProviderFactory="true" ecorePackage="workflow-api.ecore#/">
     <genClasses image="false" ecoreClass="workflow-api.ecore#//EObjectWorkflowService">
       <genTypeParameters ecoreTypeParameter="workflow-api.ecore#//EObjectWorkflowService/T"/>
-      <genOperations ecoreOperation="workflow-api.ecore#//EObjectWorkflowService/approveObject">
-        <genParameters ecoreParameter="workflow-api.ecore#//EObjectWorkflowService/approveObject/objectId"/>
-        <genParameters ecoreParameter="workflow-api.ecore#//EObjectWorkflowService/approveObject/reviewUser"/>
-        <genParameters ecoreParameter="workflow-api.ecore#//EObjectWorkflowService/approveObject/approvalReason"/>
+    </genClasses>
+    <genClasses image="false" ecoreClass="workflow-api.ecore#//WorkflowStageProvider">
+      <genTypeParameters ecoreTypeParameter="workflow-api.ecore#//WorkflowStageProvider/T"/>
+      <genOperations ecoreOperation="workflow-api.ecore#//WorkflowStageProvider/uploadToStage">
+        <genParameters ecoreParameter="workflow-api.ecore#//WorkflowStageProvider/uploadToStage/stage"/>
+        <genParameters ecoreParameter="workflow-api.ecore#//WorkflowStageProvider/uploadToStage/object"/>
+        <genParameters ecoreParameter="workflow-api.ecore#//WorkflowStageProvider/uploadToStage/metadata"/>
       </genOperations>
-      <genOperations ecoreOperation="workflow-api.ecore#//EObjectWorkflowService/rejectObject">
-        <genParameters ecoreParameter="workflow-api.ecore#//EObjectWorkflowService/rejectObject/objectId"/>
-        <genParameters ecoreParameter="workflow-api.ecore#//EObjectWorkflowService/rejectObject/reviewUser"/>
-        <genParameters ecoreParameter="workflow-api.ecore#//EObjectWorkflowService/rejectObject/rejectionReason"/>
+      <genOperations ecoreOperation="workflow-api.ecore#//WorkflowStageProvider/getFromStage">
+        <genParameters ecoreParameter="workflow-api.ecore#//WorkflowStageProvider/getFromStage/stage"/>
+        <genParameters ecoreParameter="workflow-api.ecore#//WorkflowStageProvider/getFromStage/objectId"/>
       </genOperations>
-      <genOperations ecoreOperation="workflow-api.ecore#//EObjectWorkflowService/releaseObject">
-        <genParameters ecoreParameter="workflow-api.ecore#//EObjectWorkflowService/releaseObject/objectId"/>
-        <genParameters ecoreParameter="workflow-api.ecore#//EObjectWorkflowService/releaseObject/releaseNotes"/>
-        <genParameters ecoreParameter="workflow-api.ecore#//EObjectWorkflowService/releaseObject/requireComplianceCheck"/>
+      <genOperations ecoreOperation="workflow-api.ecore#//WorkflowStageProvider/getContentFromStage">
+        <genParameters ecoreParameter="workflow-api.ecore#//WorkflowStageProvider/getContentFromStage/stage"/>
+        <genParameters ecoreParameter="workflow-api.ecore#//WorkflowStageProvider/getContentFromStage/objectId"/>
       </genOperations>
-      <genOperations ecoreOperation="workflow-api.ecore#//EObjectWorkflowService/listApprovedObjects"/>
-      <genOperations ecoreOperation="workflow-api.ecore#//EObjectWorkflowService/listRejectedObjects"/>
-      <genOperations ecoreOperation="workflow-api.ecore#//EObjectWorkflowService/listReleasedObjects"/>
-      <genOperations ecoreOperation="workflow-api.ecore#//EObjectWorkflowService/getObject">
-        <genParameters ecoreParameter="workflow-api.ecore#//EObjectWorkflowService/getObject/objectId"/>
+      <genOperations ecoreOperation="workflow-api.ecore#//WorkflowStageProvider/updateInStage">
+        <genParameters ecoreParameter="workflow-api.ecore#//WorkflowStageProvider/updateInStage/stage"/>
+        <genParameters ecoreParameter="workflow-api.ecore#//WorkflowStageProvider/updateInStage/updatedObject"/>
+        <genParameters ecoreParameter="workflow-api.ecore#//WorkflowStageProvider/updateInStage/objectId"/>
       </genOperations>
-      <genOperations ecoreOperation="workflow-api.ecore#//EObjectWorkflowService/getObjectContent">
-        <genParameters ecoreParameter="workflow-api.ecore#//EObjectWorkflowService/getObjectContent/objectId"/>
+      <genOperations ecoreOperation="workflow-api.ecore#//WorkflowStageProvider/deleteFromStage">
+        <genParameters ecoreParameter="workflow-api.ecore#//WorkflowStageProvider/deleteFromStage/stage"/>
+        <genParameters ecoreParameter="workflow-api.ecore#//WorkflowStageProvider/deleteFromStage/objectId"/>
       </genOperations>
-      <genOperations ecoreOperation="workflow-api.ecore#//EObjectWorkflowService/updateObject">
-        <genParameters ecoreParameter="workflow-api.ecore#//EObjectWorkflowService/updateObject/objectId"/>
-        <genParameters ecoreParameter="workflow-api.ecore#//EObjectWorkflowService/updateObject/updatedObject"/>
-      </genOperations>
-      <genOperations ecoreOperation="workflow-api.ecore#//EObjectWorkflowService/deleteObject">
-        <genParameters ecoreParameter="workflow-api.ecore#//EObjectWorkflowService/deleteObject/objectId"/>
+      <genOperations ecoreOperation="workflow-api.ecore#//WorkflowStageProvider/listInStage">
+        <genParameters ecoreParameter="workflow-api.ecore#//WorkflowStageProvider/listInStage/stage"/>
       </genOperations>
     </genClasses>
-    <genClasses image="false" ecoreClass="workflow-api.ecore#//WorkflowDraftProvider">
-      <genTypeParameters ecoreTypeParameter="workflow-api.ecore#//WorkflowDraftProvider/T"/>
-      <genOperations ecoreOperation="workflow-api.ecore#//WorkflowDraftProvider/uploadDraft">
-        <genParameters ecoreParameter="workflow-api.ecore#//WorkflowDraftProvider/uploadDraft/object"/>
-        <genParameters ecoreParameter="workflow-api.ecore#//WorkflowDraftProvider/uploadDraft/metadata"/>
+    <genClasses image="false" ecoreClass="workflow-api.ecore#//WorkflowTransitionService">
+      <genTypeParameters ecoreTypeParameter="workflow-api.ecore#//WorkflowTransitionService/T"/>
+      <genOperations ecoreOperation="workflow-api.ecore#//WorkflowTransitionService/transitionToStage">
+        <genParameters ecoreParameter="workflow-api.ecore#//WorkflowTransitionService/transitionToStage/objectId"/>
+        <genParameters ecoreParameter="workflow-api.ecore#//WorkflowTransitionService/transitionToStage/fromStage"/>
+        <genParameters ecoreParameter="workflow-api.ecore#//WorkflowTransitionService/transitionToStage/toStage"/>
       </genOperations>
-      <genOperations ecoreOperation="workflow-api.ecore#//WorkflowDraftProvider/listDraftObjects"/>
-      <genOperations ecoreOperation="workflow-api.ecore#//WorkflowDraftProvider/getDraft">
-        <genParameters ecoreParameter="workflow-api.ecore#//WorkflowDraftProvider/getDraft/objectId"/>
-      </genOperations>
-      <genOperations ecoreOperation="workflow-api.ecore#//WorkflowDraftProvider/getDraftContent">
-        <genParameters ecoreParameter="workflow-api.ecore#//WorkflowDraftProvider/getDraftContent/objectId"/>
-      </genOperations>
-      <genOperations ecoreOperation="workflow-api.ecore#//WorkflowDraftProvider/updateDraft">
-        <genParameters ecoreParameter="workflow-api.ecore#//WorkflowDraftProvider/updateDraft/objectId"/>
-        <genParameters ecoreParameter="workflow-api.ecore#//WorkflowDraftProvider/updateDraft/updatedObject"/>
-      </genOperations>
-      <genOperations ecoreOperation="workflow-api.ecore#//WorkflowDraftProvider/deleteDraft">
-        <genParameters ecoreParameter="workflow-api.ecore#//WorkflowDraftProvider/deleteDraft/objectId"/>
+      <genOperations ecoreOperation="workflow-api.ecore#//WorkflowTransitionService/isTransitionAllowed">
+        <genParameters ecoreParameter="workflow-api.ecore#//WorkflowTransitionService/isTransitionAllowed/fromStage"/>
+        <genParameters ecoreParameter="workflow-api.ecore#//WorkflowTransitionService/isTransitionAllowed/toStage"/>
       </genOperations>
     </genClasses>
   </genPackages>

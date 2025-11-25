@@ -11,7 +11,9 @@
  * Contributors:
  *      Mark Hoffmann - initial API and implementation
  */
-package org.eclipse.fennec.model.atlas.wf.workflowapi.util;
+package org.eclipse.fennec.model.atlas.model.scope.util;
+
+import java.util.Map;
 
 import org.eclipse.emf.common.notify.Adapter;
 import org.eclipse.emf.common.notify.Notifier;
@@ -20,24 +22,24 @@ import org.eclipse.emf.common.notify.impl.AdapterFactoryImpl;
 
 import org.eclipse.emf.ecore.EObject;
 
-import org.eclipse.fennec.model.atlas.wf.workflowapi.*;
+import org.eclipse.fennec.model.atlas.model.scope.*;
 
 /**
  * <!-- begin-user-doc -->
  * The <b>Adapter Factory</b> for the model.
  * It provides an adapter <code>createXXX</code> method for each class of the model.
  * <!-- end-user-doc -->
- * @see org.eclipse.fennec.model.atlas.wf.workflowapi.WorkflowApiPackage
+ * @see org.eclipse.fennec.model.atlas.model.scope.ScopePackage
  * @generated
  */
-public class WorkflowApiAdapterFactory extends AdapterFactoryImpl {
+public class ScopeAdapterFactory extends AdapterFactoryImpl {
 	/**
 	 * The cached model package.
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
 	 * @generated
 	 */
-	protected static WorkflowApiPackage modelPackage;
+	protected static ScopePackage modelPackage;
 
 	/**
 	 * Creates an instance of the adapter factory.
@@ -45,9 +47,9 @@ public class WorkflowApiAdapterFactory extends AdapterFactoryImpl {
 	 * <!-- end-user-doc -->
 	 * @generated
 	 */
-	public WorkflowApiAdapterFactory() {
+	public ScopeAdapterFactory() {
 		if (modelPackage == null) {
-			modelPackage = WorkflowApiPackage.eINSTANCE;
+			modelPackage = ScopePackage.eINSTANCE;
 		}
 	}
 
@@ -76,19 +78,19 @@ public class WorkflowApiAdapterFactory extends AdapterFactoryImpl {
 	 * <!-- end-user-doc -->
 	 * @generated
 	 */
-	protected WorkflowApiSwitch<Adapter> modelSwitch =
-		new WorkflowApiSwitch<Adapter>() {
+	protected ScopeSwitch<Adapter> modelSwitch =
+		new ScopeSwitch<Adapter>() {
 			@Override
-			public <T extends EObject> Adapter caseEObjectWorkflowService(EObjectWorkflowService<T> object) {
-				return createEObjectWorkflowServiceAdapter();
+			public Adapter caseScope(Scope object) {
+				return createScopeAdapter();
 			}
 			@Override
-			public <T extends EObject> Adapter caseWorkflowStageProvider(WorkflowStageProvider<T> object) {
-				return createWorkflowStageProviderAdapter();
+			public Adapter caseLinksMap(Map.Entry<String, String> object) {
+				return createLinksMapAdapter();
 			}
 			@Override
-			public <T extends EObject> Adapter caseWorkflowTransitionService(WorkflowTransitionService<T> object) {
-				return createWorkflowTransitionServiceAdapter();
+			public Adapter caseScopeContainer(ScopeContainer object) {
+				return createScopeContainerAdapter();
 			}
 			@Override
 			public Adapter defaultCase(EObject object) {
@@ -111,44 +113,44 @@ public class WorkflowApiAdapterFactory extends AdapterFactoryImpl {
 
 
 	/**
-	 * Creates a new adapter for an object of class '{@link org.eclipse.fennec.model.atlas.wf.workflowapi.EObjectWorkflowService <em>EObject Workflow Service</em>}'.
+	 * Creates a new adapter for an object of class '{@link org.eclipse.fennec.model.atlas.model.scope.Scope <em>Scope</em>}'.
 	 * <!-- begin-user-doc -->
 	 * This default implementation returns null so that we can easily ignore cases;
 	 * it's useful to ignore a case when inheritance will catch all the cases anyway.
 	 * <!-- end-user-doc -->
 	 * @return the new adapter.
-	 * @see org.eclipse.fennec.model.atlas.wf.workflowapi.EObjectWorkflowService
+	 * @see org.eclipse.fennec.model.atlas.model.scope.Scope
 	 * @generated
 	 */
-	public Adapter createEObjectWorkflowServiceAdapter() {
+	public Adapter createScopeAdapter() {
 		return null;
 	}
 
 	/**
-	 * Creates a new adapter for an object of class '{@link org.eclipse.fennec.model.atlas.wf.workflowapi.WorkflowStageProvider <em>Workflow Stage Provider</em>}'.
+	 * Creates a new adapter for an object of class '{@link java.util.Map.Entry <em>Links Map</em>}'.
 	 * <!-- begin-user-doc -->
 	 * This default implementation returns null so that we can easily ignore cases;
 	 * it's useful to ignore a case when inheritance will catch all the cases anyway.
 	 * <!-- end-user-doc -->
 	 * @return the new adapter.
-	 * @see org.eclipse.fennec.model.atlas.wf.workflowapi.WorkflowStageProvider
+	 * @see java.util.Map.Entry
 	 * @generated
 	 */
-	public Adapter createWorkflowStageProviderAdapter() {
+	public Adapter createLinksMapAdapter() {
 		return null;
 	}
 
 	/**
-	 * Creates a new adapter for an object of class '{@link org.eclipse.fennec.model.atlas.wf.workflowapi.WorkflowTransitionService <em>Workflow Transition Service</em>}'.
+	 * Creates a new adapter for an object of class '{@link org.eclipse.fennec.model.atlas.model.scope.ScopeContainer <em>Container</em>}'.
 	 * <!-- begin-user-doc -->
 	 * This default implementation returns null so that we can easily ignore cases;
 	 * it's useful to ignore a case when inheritance will catch all the cases anyway.
 	 * <!-- end-user-doc -->
 	 * @return the new adapter.
-	 * @see org.eclipse.fennec.model.atlas.wf.workflowapi.WorkflowTransitionService
+	 * @see org.eclipse.fennec.model.atlas.model.scope.ScopeContainer
 	 * @generated
 	 */
-	public Adapter createWorkflowTransitionServiceAdapter() {
+	public Adapter createScopeContainerAdapter() {
 		return null;
 	}
 
@@ -164,4 +166,4 @@ public class WorkflowApiAdapterFactory extends AdapterFactoryImpl {
 		return null;
 	}
 
-} //WorkflowApiAdapterFactory
+} //ScopeAdapterFactory
