@@ -1,0 +1,38 @@
+Bundle-Name: Model Atlas Cloud - Governance Tests
+Bundle-Description: OSGi integration tests for governance framework and compliance management. Tests policy enforcement, audit workflows, and business rule validation.
+
+Test-Cases: ${classes;HIERARCHY_INDIRECTLY_ANNOTATED;org.junit.platform.commons.annotation.Testable;CONCRETE}
+
+-workingset: Workflow
+
+-library: \
+	enableOSGi-Test,\
+	enable-emf
+
+# Issue31 related	
+#-includeresource: \
+#	model=model
+
+# sets the usually required buildpath using the bnd library, you can extend it with the normal -buildpath to your liking
+-buildpath: \
+	org.osgi.framework;version=latest,\
+	org.osgi.util.promise;version=latest,\
+	org.osgi.service.cm;version=latest,\
+	org.osgi.service.typedevent;version=latest,\
+	org.osgi.test.junit5.cm;version=latest,\
+	org.eclipse.fennec.model.atlas.management;version=snapshot,\
+	org.eclipse.fennec.model.atlas.workflow;version=snapshot
+# Issue 31 related
+#	org.gecko.mac.lorawan.model;version=snapshot,\
+#	org.eclipse.fennec.codec.info
+	
+Bundle-Version: 1.0.0.SNAPSHOT
+
+# Sometimes without DynamicImport Mockito will not find certain classes
+#DynamicImport-Package: *
+
+-dependson: \
+	org.eclipse.fennec.model.atlas.workflow,\
+	org.eclipse.fennec.model.atlas.management,\
+	org.eclipse.fennec.model.atlas.management.lucene,\
+	org.eclipse.fennec.model.atlas.management.file

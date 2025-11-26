@@ -24,6 +24,9 @@ Test-Cases: ${classes;HIERARCHY_INDIRECTLY_ANNOTATED;org.junit.platform.commons.
 	org.eclipse.emf.common;version=latest,\
 	org.eclipse.osgitech.rest;version=latest,\
 	org.eclipse.osgitech.rest.servlet.whiteboard;version=latest,\
+	org.osgi.service.cm,\
+	org.eclipse.fennec.model.atlas.workflow,\
+	org.eclipse.fennec.model.atlas.management,\
 	org.eclipse.uml2.uml
 
 -includeresource.config: OSGI-INF/configurator/=configs/
