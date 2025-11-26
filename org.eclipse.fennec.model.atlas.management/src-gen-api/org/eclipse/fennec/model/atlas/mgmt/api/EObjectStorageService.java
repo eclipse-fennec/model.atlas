@@ -48,10 +48,10 @@ public interface EObjectStorageService<T extends EObject> {
 	 * <!-- begin-model-doc -->
 	 * Store object with metadata, returns promise with storage ID
 	 * <!-- end-model-doc -->
-	 * @model dataType="org.eclipse.fennec.model.atlas.mgmt.management.Promise&lt;org.eclipse.emf.ecore.EString&gt;" objectIdRequired="true" objectRequired="true" metadataRequired="true"
+	 * @model dataType="org.eclipse.fennec.model.atlas.mgmt.management.Promise&lt;org.eclipse.fennec.model.atlas.mgmt.management.ObjectMetadata&gt;" objectIdRequired="true" objectRequired="true" metadataRequired="true"
 	 * @generated
 	 */
-	Promise<String> storeObject(String objectId, T object, ObjectMetadata metadata);
+	Promise<ObjectMetadata> storeObject(String objectId, T object, ObjectMetadata metadata);
 
 	/**
 	 * <!-- begin-user-doc -->

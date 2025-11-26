@@ -26,6 +26,7 @@ import org.eclipse.fennec.model.atlas.model.scope.Scope;
 import org.eclipse.fennec.model.atlas.model.scope.ScopeContainer;
 import org.eclipse.fennec.model.atlas.model.scope.ScopeFactory;
 import org.eclipse.fennec.model.atlas.model.scope.ScopePackage;
+import org.eclipse.fennec.model.atlas.model.scope.StageTransition;
 
 /**
  * <!-- begin-user-doc -->
@@ -54,6 +55,13 @@ public class ScopePackageImpl extends EPackageImpl implements ScopePackage {
 	 * @generated
 	 */
 	private EClass scopeContainerEClass = null;
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	private EClass stageTransitionEClass = null;
 
 	/**
 	 * Creates an instance of the model <b>Package</b>, registered with
@@ -171,6 +179,36 @@ public class ScopePackageImpl extends EPackageImpl implements ScopePackage {
 	 * @generated
 	 */
 	@Override
+	public EAttribute getScope_Stages() {
+		return (EAttribute)scopeEClass.getEStructuralFeatures().get(4);
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
+	public EAttribute getScope_FinalStage() {
+		return (EAttribute)scopeEClass.getEStructuralFeatures().get(5);
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
+	public EAttribute getScope_WritableStages() {
+		return (EAttribute)scopeEClass.getEStructuralFeatures().get(6);
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
 	public EClass getLinksMap() {
 		return linksMapEClass;
 	}
@@ -221,6 +259,36 @@ public class ScopePackageImpl extends EPackageImpl implements ScopePackage {
 	 * @generated
 	 */
 	@Override
+	public EClass getStageTransition() {
+		return stageTransitionEClass;
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
+	public EAttribute getStageTransition_ObjectId() {
+		return (EAttribute)stageTransitionEClass.getEStructuralFeatures().get(0);
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
+	public EAttribute getStageTransition_TargetStage() {
+		return (EAttribute)stageTransitionEClass.getEStructuralFeatures().get(1);
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
 	public ScopeFactory getScopeFactory() {
 		return (ScopeFactory)getEFactoryInstance();
 	}
@@ -249,6 +317,9 @@ public class ScopePackageImpl extends EPackageImpl implements ScopePackage {
 		createEAttribute(scopeEClass, SCOPE__PARENT_SCOPE);
 		createEAttribute(scopeEClass, SCOPE__DESCRIPTION);
 		createEReference(scopeEClass, SCOPE__LINKS);
+		createEAttribute(scopeEClass, SCOPE__STAGES);
+		createEAttribute(scopeEClass, SCOPE__FINAL_STAGE);
+		createEAttribute(scopeEClass, SCOPE__WRITABLE_STAGES);
 
 		linksMapEClass = createEClass(LINKS_MAP);
 		createEAttribute(linksMapEClass, LINKS_MAP__KEY);
@@ -256,6 +327,10 @@ public class ScopePackageImpl extends EPackageImpl implements ScopePackage {
 
 		scopeContainerEClass = createEClass(SCOPE_CONTAINER);
 		createEReference(scopeContainerEClass, SCOPE_CONTAINER__SCOPES);
+
+		stageTransitionEClass = createEClass(STAGE_TRANSITION);
+		createEAttribute(stageTransitionEClass, STAGE_TRANSITION__OBJECT_ID);
+		createEAttribute(stageTransitionEClass, STAGE_TRANSITION__TARGET_STAGE);
 	}
 
 	/**
@@ -293,6 +368,9 @@ public class ScopePackageImpl extends EPackageImpl implements ScopePackage {
 		initEAttribute(getScope_ParentScope(), ecorePackage.getEString(), "parentScope", null, 0, 1, Scope.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_UNSETTABLE, !IS_ID, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
 		initEAttribute(getScope_Description(), ecorePackage.getEString(), "description", null, 0, 1, Scope.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_UNSETTABLE, !IS_ID, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
 		initEReference(getScope_Links(), this.getLinksMap(), null, "links", null, 0, -1, Scope.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, IS_COMPOSITE, !IS_RESOLVE_PROXIES, !IS_UNSETTABLE, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
+		initEAttribute(getScope_Stages(), ecorePackage.getEString(), "stages", null, 0, -1, Scope.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_UNSETTABLE, !IS_ID, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
+		initEAttribute(getScope_FinalStage(), ecorePackage.getEString(), "finalStage", null, 0, 1, Scope.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_UNSETTABLE, !IS_ID, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
+		initEAttribute(getScope_WritableStages(), ecorePackage.getEString(), "writableStages", null, 0, -1, Scope.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_UNSETTABLE, !IS_ID, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
 
 		initEClass(linksMapEClass, Map.Entry.class, "LinksMap", !IS_ABSTRACT, !IS_INTERFACE, !IS_GENERATED_INSTANCE_CLASS);
 		initEAttribute(getLinksMap_Key(), ecorePackage.getEString(), "key", null, 0, 1, Map.Entry.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_UNSETTABLE, !IS_ID, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
@@ -300,6 +378,10 @@ public class ScopePackageImpl extends EPackageImpl implements ScopePackage {
 
 		initEClass(scopeContainerEClass, ScopeContainer.class, "ScopeContainer", !IS_ABSTRACT, !IS_INTERFACE, IS_GENERATED_INSTANCE_CLASS);
 		initEReference(getScopeContainer_Scopes(), this.getScope(), null, "scopes", null, 0, -1, ScopeContainer.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, IS_COMPOSITE, !IS_RESOLVE_PROXIES, !IS_UNSETTABLE, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
+
+		initEClass(stageTransitionEClass, StageTransition.class, "StageTransition", !IS_ABSTRACT, !IS_INTERFACE, IS_GENERATED_INSTANCE_CLASS);
+		initEAttribute(getStageTransition_ObjectId(), ecorePackage.getEString(), "objectId", null, 0, 1, StageTransition.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_UNSETTABLE, !IS_ID, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
+		initEAttribute(getStageTransition_TargetStage(), ecorePackage.getEString(), "targetStage", null, 0, 1, StageTransition.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_UNSETTABLE, !IS_ID, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
 
 		// Create resource
 		createResource(eNS_URI);
@@ -344,6 +426,30 @@ public class ScopePackageImpl extends EPackageImpl implements ScopePackage {
 			   "basePackage", "org.eclipse.fennec.model.atlas.model",
 			   "resource", "XMI",
 			   "copyrightText", "Copyright (c) 2012 - 2025 Data In Motion and others.\nAll rights reserved.\n\nThis program and the accompanying materials are made\navailable under the terms of the Eclipse Public License 2.0\nwhich is available at https://www.eclipse.org/legal/epl-2.0/\n\nSPDX-License-Identifier: EPL-2.0\n\nContributors:\n     Mark Hoffmann - initial API and implementation"
+		   });
+		addAnnotation
+		  (getScope_Stages(),
+		   source,
+		   new String[] {
+			   "documentation", "These are the stages allowed for this scope (e.g. draft, approved, release)"
+		   });
+		addAnnotation
+		  (getScope_FinalStage(),
+		   source,
+		   new String[] {
+			   "documentation", "This is the stage that is considered the final one for this scope (e.g. release)"
+		   });
+		addAnnotation
+		  (getScope_WritableStages(),
+		   source,
+		   new String[] {
+			   "documentation", "These are the writable stages allowed for this scope (e.g. draft, approved)"
+		   });
+		addAnnotation
+		  (getStageTransition_ObjectId(),
+		   source,
+		   new String[] {
+			   "documentation", "The id of the EObject to move. In case of EPackage this would be the nsUri."
 		   });
 	}
 

@@ -264,7 +264,7 @@ public abstract class AbstractEObjectStorageService implements EObjectStorageSer
     }
 
     @Override
-    public Promise<String> storeObject(String objectId, EObject object, ObjectMetadata metadata) {
+    public Promise<ObjectMetadata> storeObject(String objectId, EObject object, ObjectMetadata metadata) {
         return promiseFactory.submit(() -> {
             try {
                 // Use provided objectId or generate one
@@ -297,7 +297,7 @@ public abstract class AbstractEObjectStorageService implements EObjectStorageSer
                 
                 String fileExtension = storageHelper.getFileExtension(metadata);
                 LOGGER.info("Stored EObject with ID: " + storageId + " and extension: " + fileExtension);
-                return storageId;
+                return metadata;
                 
             } catch (Exception e) {
                 LOGGER.log(Level.SEVERE, "Failed to store object", e);

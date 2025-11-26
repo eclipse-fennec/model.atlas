@@ -93,6 +93,10 @@ public class ScopeAdapterFactory extends AdapterFactoryImpl {
 				return createScopeContainerAdapter();
 			}
 			@Override
+			public Adapter caseStageTransition(StageTransition object) {
+				return createStageTransitionAdapter();
+			}
+			@Override
 			public Adapter defaultCase(EObject object) {
 				return createEObjectAdapter();
 			}
@@ -151,6 +155,20 @@ public class ScopeAdapterFactory extends AdapterFactoryImpl {
 	 * @generated
 	 */
 	public Adapter createScopeContainerAdapter() {
+		return null;
+	}
+
+	/**
+	 * Creates a new adapter for an object of class '{@link org.eclipse.fennec.model.atlas.model.scope.StageTransition <em>Stage Transition</em>}'.
+	 * <!-- begin-user-doc -->
+	 * This default implementation returns null so that we can easily ignore cases;
+	 * it's useful to ignore a case when inheritance will catch all the cases anyway.
+	 * <!-- end-user-doc -->
+	 * @return the new adapter.
+	 * @see org.eclipse.fennec.model.atlas.model.scope.StageTransition
+	 * @generated
+	 */
+	public Adapter createStageTransitionAdapter() {
 		return null;
 	}
 

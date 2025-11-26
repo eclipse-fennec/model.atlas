@@ -914,7 +914,7 @@ public class ManagementApiPackageImpl extends EPackageImpl implements Management
 		addEParameter(op, g1, "object", 1, 1, IS_UNIQUE, IS_ORDERED);
 		addEParameter(op, theManagementPackage.getObjectMetadata(), "metadata", 1, 1, IS_UNIQUE, IS_ORDERED);
 		g1 = createEGenericType(theManagementPackage.getPromise());
-		g2 = createEGenericType(ecorePackage.getEString());
+		g2 = createEGenericType(theManagementPackage.getObjectMetadata());
 		g1.getETypeArguments().add(g2);
 		initEOperation(op, g1);
 

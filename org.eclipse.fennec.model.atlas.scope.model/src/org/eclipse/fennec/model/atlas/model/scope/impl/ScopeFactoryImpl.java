@@ -72,6 +72,7 @@ public class ScopeFactoryImpl extends EFactoryImpl implements ScopeFactory {
 			case ScopePackage.SCOPE: return createScope();
 			case ScopePackage.LINKS_MAP: return (EObject)createLinksMap();
 			case ScopePackage.SCOPE_CONTAINER: return createScopeContainer();
+			case ScopePackage.STAGE_TRANSITION: return createStageTransition();
 			default:
 				throw new IllegalArgumentException("The class '" + eClass.getName() + "' is not a valid classifier");
 		}
@@ -107,6 +108,17 @@ public class ScopeFactoryImpl extends EFactoryImpl implements ScopeFactory {
 	public ScopeContainer createScopeContainer() {
 		ScopeContainerImpl scopeContainer = new ScopeContainerImpl();
 		return scopeContainer;
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
+	public StageTransition createStageTransition() {
+		StageTransitionImpl stageTransition = new StageTransitionImpl();
+		return stageTransition;
 	}
 
 	/**

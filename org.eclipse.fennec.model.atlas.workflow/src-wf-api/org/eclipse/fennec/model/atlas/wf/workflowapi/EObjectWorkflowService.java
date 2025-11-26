@@ -43,12 +43,12 @@ public interface EObjectWorkflowService<T extends EObject> {
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
 	 * <!-- begin-model-doc -->
-	 * Upload an EObject to a certain stage (draft, review, etc); returns promise with object ID
+	 * Upload an EObject to a certain stage (draft, review, etc); returns promise with uploaded ObjectMetadata.
 	 * <!-- end-model-doc -->
-	 * @model dataType="org.eclipse.fennec.model.atlas.mgmt.management.Promise&lt;org.eclipse.emf.ecore.EString&gt;" objectRequired="true" metadataRequired="true"
+	 * @model dataType="org.eclipse.fennec.model.atlas.mgmt.management.Promise&lt;org.eclipse.fennec.model.atlas.mgmt.management.ObjectMetadata&gt;" objectRequired="true" metadataRequired="true"
 	 * @generated
 	 */
-	Promise<String> uploadToStage(String stage, T object, ObjectMetadata metadata);
+	Promise<ObjectMetadata> uploadToStage(String stage, T object, ObjectMetadata metadata);
 
 	/**
 	 * <!-- begin-user-doc -->
@@ -87,12 +87,12 @@ public interface EObjectWorkflowService<T extends EObject> {
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
 	 * <!-- begin-model-doc -->
-	 * Update an existing object
+	 * Update an existing object. Returned updated ObjectMetadata.
 	 * <!-- end-model-doc -->
-	 * @model dataType="org.eclipse.fennec.model.atlas.mgmt.management.Promise&lt;org.eclipse.fennec.model.atlas.mgmt.management.Void&gt;" updatedObjectRequired="true" objectIdRequired="true"
+	 * @model dataType="org.eclipse.fennec.model.atlas.mgmt.management.Promise&lt;org.eclipse.fennec.model.atlas.mgmt.management.ObjectMetadata&gt;" updatedObjectRequired="true" objectIdRequired="true"
 	 * @generated
 	 */
-	Promise<Void> updateInStage(String stage, T updatedObject, String objectId);
+	Promise<ObjectMetadata> updateInStage(String stage, T updatedObject, String objectId);
 
 	/**
 	 * <!-- begin-user-doc -->

@@ -13,6 +13,7 @@
  */
 package org.eclipse.fennec.model.atlas.model.scope;
 
+import org.eclipse.emf.common.util.EList;
 import org.eclipse.emf.common.util.EMap;
 
 import org.eclipse.emf.ecore.EObject;
@@ -32,6 +33,9 @@ import org.osgi.annotation.versioning.ProviderType;
  *   <li>{@link org.eclipse.fennec.model.atlas.model.scope.Scope#getParentScope <em>Parent Scope</em>}</li>
  *   <li>{@link org.eclipse.fennec.model.atlas.model.scope.Scope#getDescription <em>Description</em>}</li>
  *   <li>{@link org.eclipse.fennec.model.atlas.model.scope.Scope#getLinks <em>Links</em>}</li>
+ *   <li>{@link org.eclipse.fennec.model.atlas.model.scope.Scope#getStages <em>Stages</em>}</li>
+ *   <li>{@link org.eclipse.fennec.model.atlas.model.scope.Scope#getFinalStage <em>Final Stage</em>}</li>
+ *   <li>{@link org.eclipse.fennec.model.atlas.model.scope.Scope#getWritableStages <em>Writable Stages</em>}</li>
  * </ul>
  *
  * @see org.eclipse.fennec.model.atlas.model.scope.ScopePackage#getScope()
@@ -118,5 +122,60 @@ public interface Scope extends EObject {
 	 * @generated
 	 */
 	EMap<String, String> getLinks();
+
+	/**
+	 * Returns the value of the '<em><b>Stages</b></em>' attribute list.
+	 * The list contents are of type {@link java.lang.String}.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * <!-- begin-model-doc -->
+	 * These are the stages allowed for this scope (e.g. draft, approved, release)
+	 * <!-- end-model-doc -->
+	 * @return the value of the '<em>Stages</em>' attribute list.
+	 * @see org.eclipse.fennec.model.atlas.model.scope.ScopePackage#getScope_Stages()
+	 * @model
+	 * @generated
+	 */
+	EList<String> getStages();
+
+	/**
+	 * Returns the value of the '<em><b>Final Stage</b></em>' attribute.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * <!-- begin-model-doc -->
+	 * This is the stage that is considered the final one for this scope (e.g. release)
+	 * <!-- end-model-doc -->
+	 * @return the value of the '<em>Final Stage</em>' attribute.
+	 * @see #setFinalStage(String)
+	 * @see org.eclipse.fennec.model.atlas.model.scope.ScopePackage#getScope_FinalStage()
+	 * @model
+	 * @generated
+	 */
+	String getFinalStage();
+
+	/**
+	 * Sets the value of the '{@link org.eclipse.fennec.model.atlas.model.scope.Scope#getFinalStage <em>Final Stage</em>}' attribute.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @param value the new value of the '<em>Final Stage</em>' attribute.
+	 * @see #getFinalStage()
+	 * @generated
+	 */
+	void setFinalStage(String value);
+
+	/**
+	 * Returns the value of the '<em><b>Writable Stages</b></em>' attribute list.
+	 * The list contents are of type {@link java.lang.String}.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * <!-- begin-model-doc -->
+	 * These are the writable stages allowed for this scope (e.g. draft, approved)
+	 * <!-- end-model-doc -->
+	 * @return the value of the '<em>Writable Stages</em>' attribute list.
+	 * @see org.eclipse.fennec.model.atlas.model.scope.ScopePackage#getScope_WritableStages()
+	 * @model
+	 * @generated
+	 */
+	EList<String> getWritableStages();
 
 } // Scope

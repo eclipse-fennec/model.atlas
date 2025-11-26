@@ -13,9 +13,12 @@
  */
 package org.eclipse.fennec.model.atlas.model.scope.impl;
 
+import java.util.Collection;
+
 import org.eclipse.emf.common.notify.Notification;
 import org.eclipse.emf.common.notify.NotificationChain;
 
+import org.eclipse.emf.common.util.EList;
 import org.eclipse.emf.common.util.EMap;
 
 import org.eclipse.emf.ecore.EClass;
@@ -25,6 +28,7 @@ import org.eclipse.emf.ecore.InternalEObject;
 import org.eclipse.emf.ecore.impl.ENotificationImpl;
 import org.eclipse.emf.ecore.impl.MinimalEObjectImpl;
 
+import org.eclipse.emf.ecore.util.EDataTypeUniqueEList;
 import org.eclipse.emf.ecore.util.EcoreEMap;
 import org.eclipse.emf.ecore.util.InternalEList;
 
@@ -43,6 +47,9 @@ import org.eclipse.fennec.model.atlas.model.scope.ScopePackage;
  *   <li>{@link org.eclipse.fennec.model.atlas.model.scope.impl.ScopeImpl#getParentScope <em>Parent Scope</em>}</li>
  *   <li>{@link org.eclipse.fennec.model.atlas.model.scope.impl.ScopeImpl#getDescription <em>Description</em>}</li>
  *   <li>{@link org.eclipse.fennec.model.atlas.model.scope.impl.ScopeImpl#getLinks <em>Links</em>}</li>
+ *   <li>{@link org.eclipse.fennec.model.atlas.model.scope.impl.ScopeImpl#getStages <em>Stages</em>}</li>
+ *   <li>{@link org.eclipse.fennec.model.atlas.model.scope.impl.ScopeImpl#getFinalStage <em>Final Stage</em>}</li>
+ *   <li>{@link org.eclipse.fennec.model.atlas.model.scope.impl.ScopeImpl#getWritableStages <em>Writable Stages</em>}</li>
  * </ul>
  *
  * @generated
@@ -117,6 +124,46 @@ public class ScopeImpl extends MinimalEObjectImpl.Container implements Scope {
 	 * @ordered
 	 */
 	protected EMap<String, String> links;
+
+	/**
+	 * The cached value of the '{@link #getStages() <em>Stages</em>}' attribute list.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @see #getStages()
+	 * @generated
+	 * @ordered
+	 */
+	protected EList<String> stages;
+
+	/**
+	 * The default value of the '{@link #getFinalStage() <em>Final Stage</em>}' attribute.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @see #getFinalStage()
+	 * @generated
+	 * @ordered
+	 */
+	protected static final String FINAL_STAGE_EDEFAULT = null;
+
+	/**
+	 * The cached value of the '{@link #getFinalStage() <em>Final Stage</em>}' attribute.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @see #getFinalStage()
+	 * @generated
+	 * @ordered
+	 */
+	protected String finalStage = FINAL_STAGE_EDEFAULT;
+
+	/**
+	 * The cached value of the '{@link #getWritableStages() <em>Writable Stages</em>}' attribute list.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @see #getWritableStages()
+	 * @generated
+	 * @ordered
+	 */
+	protected EList<String> writableStages;
 
 	/**
 	 * <!-- begin-user-doc -->
@@ -225,6 +272,55 @@ public class ScopeImpl extends MinimalEObjectImpl.Container implements Scope {
 	 * @generated
 	 */
 	@Override
+	public EList<String> getStages() {
+		if (stages == null) {
+			stages = new EDataTypeUniqueEList<String>(String.class, this, ScopePackage.SCOPE__STAGES);
+		}
+		return stages;
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
+	public String getFinalStage() {
+		return finalStage;
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
+	public void setFinalStage(String newFinalStage) {
+		String oldFinalStage = finalStage;
+		finalStage = newFinalStage;
+		if (eNotificationRequired())
+			eNotify(new ENotificationImpl(this, Notification.SET, ScopePackage.SCOPE__FINAL_STAGE, oldFinalStage, finalStage));
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
+	public EList<String> getWritableStages() {
+		if (writableStages == null) {
+			writableStages = new EDataTypeUniqueEList<String>(String.class, this, ScopePackage.SCOPE__WRITABLE_STAGES);
+		}
+		return writableStages;
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
 	public NotificationChain eInverseRemove(InternalEObject otherEnd, int featureID, NotificationChain msgs) {
 		switch (featureID) {
 			case ScopePackage.SCOPE__LINKS:
@@ -250,6 +346,12 @@ public class ScopeImpl extends MinimalEObjectImpl.Container implements Scope {
 			case ScopePackage.SCOPE__LINKS:
 				if (coreType) return getLinks();
 				else return getLinks().map();
+			case ScopePackage.SCOPE__STAGES:
+				return getStages();
+			case ScopePackage.SCOPE__FINAL_STAGE:
+				return getFinalStage();
+			case ScopePackage.SCOPE__WRITABLE_STAGES:
+				return getWritableStages();
 		}
 		return super.eGet(featureID, resolve, coreType);
 	}
@@ -259,6 +361,7 @@ public class ScopeImpl extends MinimalEObjectImpl.Container implements Scope {
 	 * <!-- end-user-doc -->
 	 * @generated
 	 */
+	@SuppressWarnings("unchecked")
 	@Override
 	public void eSet(int featureID, Object newValue) {
 		switch (featureID) {
@@ -273,6 +376,17 @@ public class ScopeImpl extends MinimalEObjectImpl.Container implements Scope {
 				return;
 			case ScopePackage.SCOPE__LINKS:
 				((EStructuralFeature.Setting)getLinks()).set(newValue);
+				return;
+			case ScopePackage.SCOPE__STAGES:
+				getStages().clear();
+				getStages().addAll((Collection<? extends String>)newValue);
+				return;
+			case ScopePackage.SCOPE__FINAL_STAGE:
+				setFinalStage((String)newValue);
+				return;
+			case ScopePackage.SCOPE__WRITABLE_STAGES:
+				getWritableStages().clear();
+				getWritableStages().addAll((Collection<? extends String>)newValue);
 				return;
 		}
 		super.eSet(featureID, newValue);
@@ -298,6 +412,15 @@ public class ScopeImpl extends MinimalEObjectImpl.Container implements Scope {
 			case ScopePackage.SCOPE__LINKS:
 				getLinks().clear();
 				return;
+			case ScopePackage.SCOPE__STAGES:
+				getStages().clear();
+				return;
+			case ScopePackage.SCOPE__FINAL_STAGE:
+				setFinalStage(FINAL_STAGE_EDEFAULT);
+				return;
+			case ScopePackage.SCOPE__WRITABLE_STAGES:
+				getWritableStages().clear();
+				return;
 		}
 		super.eUnset(featureID);
 	}
@@ -318,6 +441,12 @@ public class ScopeImpl extends MinimalEObjectImpl.Container implements Scope {
 				return DESCRIPTION_EDEFAULT == null ? description != null : !DESCRIPTION_EDEFAULT.equals(description);
 			case ScopePackage.SCOPE__LINKS:
 				return links != null && !links.isEmpty();
+			case ScopePackage.SCOPE__STAGES:
+				return stages != null && !stages.isEmpty();
+			case ScopePackage.SCOPE__FINAL_STAGE:
+				return FINAL_STAGE_EDEFAULT == null ? finalStage != null : !FINAL_STAGE_EDEFAULT.equals(finalStage);
+			case ScopePackage.SCOPE__WRITABLE_STAGES:
+				return writableStages != null && !writableStages.isEmpty();
 		}
 		return super.eIsSet(featureID);
 	}
@@ -338,6 +467,12 @@ public class ScopeImpl extends MinimalEObjectImpl.Container implements Scope {
 		result.append(parentScope);
 		result.append(", description: ");
 		result.append(description);
+		result.append(", stages: ");
+		result.append(stages);
+		result.append(", finalStage: ");
+		result.append(finalStage);
+		result.append(", writableStages: ");
+		result.append(writableStages);
 		result.append(')');
 		return result.toString();
 	}

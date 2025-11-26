@@ -105,7 +105,8 @@ public class EObjectWorkflowServiceImpl<T extends EObject> implements EObjectWor
 	void activate(WorkflowServiceConfig config) {
 		this.config = requireNonNull(config, "Configuration cannot be null");
 		requireTrue(isStageAllowed(config.final_stage()), String.format("Final Stage %s should also be part of the stages config property", config.final_stage()));
-
+		for(String writableStage : config.writable_stages()) requireTrue(isStageAllowed(writableStage), String.format("Writable Stage %s should also be part of the stages config property", writableStage));
+		
 		requireNonNull(registryService, "Registry service must be available");
 		requireNonNull(postReleaseActionService, "Post-release action service must be available");
 
@@ -129,14 +130,12 @@ public class EObjectWorkflowServiceImpl<T extends EObject> implements EObjectWor
 	 * @see org.eclipse.fennec.model.atlas.wf.workflowapi.EObjectWorkflowService#uploadToStage(java.lang.String, org.eclipse.emf.ecore.EObject, org.eclipse.fennec.model.atlas.mgmt.management.ObjectMetadata)
 	 */
 	@Override
-	public Promise<String> uploadToStage(String stage, T object, ObjectMetadata metadata) {
+	public Promise<ObjectMetadata> uploadToStage(String stage, T object, ObjectMetadata metadata) {
 		return promiseFactory.submit(() -> {
 			requireNonNull(object, "Object cannot be null");
 			requireNonNull(metadata, "Metadata cannot be null");
 			requireTrue(isStageAllowed(stage), String.format("Stage %s is not supported from WorkflowService", stage));
 
-			// Ensure draft status
-			metadata.setStatus(ObjectStatus.DRAFT);
 			metadata.setLastChangeTime(Instant.now());
 
 			requireNonNull(metadata.getObjectName());
@@ -146,9 +145,8 @@ public class EObjectWorkflowServiceImpl<T extends EObject> implements EObjectWor
 				logger.severe(String.format("Cannot retrieve EObjectStorageService for %s. Object %s cannot be saved", stage, metadata.getObjectId()));
 				return null;
 			}
-			String objectId = getPromiseValue(storageService.storeObject(metadata.getObjectId(), object, metadata));
-
-			return objectId;
+			ObjectMetadata objectMetadata = getPromiseValue(storageService.storeObject(metadata.getObjectId(), object, metadata));
+			return objectMetadata;
 		});
 	}
 
@@ -165,9 +163,14 @@ public class EObjectWorkflowServiceImpl<T extends EObject> implements EObjectWor
 			ObjectMetadata localMetadata = getPromiseValue(storageService.retrieveMetadata(objectId));
 			if(localMetadata == null && parentWorkflowService != null) {
 				logger.warning(String.format("Object %s not found for scope %s. Looking in the parent scope %s final stage", objectId, config.scope(), config.parent_scope()));
-				return parentWorkflowService.getFromFinalStage(objectId);
+//				we might want to set a read-only flag on the parent metadata here
+				ObjectMetadata parentMetadata = parentWorkflowService.getFromFinalStage(objectId);
+				if(parentMetadata != null) parentMetadata.setIsReadOnly(true);
+				return parentMetadata;
 			}			
-			return getPromiseValue(storageService.retrieveMetadata(objectId));
+//			if stage is not writable we might want to set a read-only flag (?)
+			if(!isStageWritable(stage)) localMetadata.setIsReadOnly(true);
+			return localMetadata;
 		}
 		return null;
 	}
@@ -200,12 +203,13 @@ public class EObjectWorkflowServiceImpl<T extends EObject> implements EObjectWor
 	 * @see org.eclipse.fennec.model.atlas.wf.workflowapi.EObjectWorkflowService#updateInStage(java.lang.String, org.eclipse.emf.ecore.EObject, java.lang.String)
 	 */
 	@Override
-	public Promise<Void> updateInStage(String stage, T updatedObject, String objectId) {
+	public Promise<ObjectMetadata> updateInStage(String stage, T updatedObject, String objectId) {
 		return promiseFactory.submit(() -> {
 			requireNonNull(objectId, "Object ID cannot be null");
 			requireNonNull(updatedObject, "Updated object cannot be null");
 			requireTrue(isStageAllowed(stage), String.format("Stage %s is not supported from WorkflowService", stage));
-
+			requireTrue(isStageWritable(stage), String.format("Stage %s is not writable for this WorkflowService", stage));
+			
 			EObjectStorageService<T> storageService = getStorageByStage(stage);
 			if(storageService == null) {
 				logger.severe(String.format("Cannot retrieve EObjectStorageService for %s. Object %s cannot be updated", stage, objectId));
@@ -213,18 +217,13 @@ public class EObjectWorkflowServiceImpl<T extends EObject> implements EObjectWor
 			}
 
 			// Get current metadata
-			ObjectMetadata metadata = getPromiseValue(storageService.retrieveMetadata(objectId));
-
-			// Ensure it's still a draft
-			if (metadata.getStatus() != ObjectStatus.DRAFT && metadata.getStatus() != ObjectStatus.REJECTED) {
-				throw new IllegalStateException("Can only update objects in DRAFT or REJECTED status");
-			}
-
+			ObjectMetadata metadata = getPromiseValue(storageService.retrieveMetadata(objectId));		
 			metadata.setLastChangeTime(Instant.now());
+			metadata.setObjectRef(updatedObject);
 
 			// Update the object in draft storage
-			getPromiseValue(storageService.storeObject(objectId, updatedObject, metadata));
-			return null;
+			metadata = getPromiseValue(storageService.storeObject(objectId, updatedObject, metadata));
+			return metadata;
 		});
 	}
 
@@ -372,6 +371,8 @@ public class EObjectWorkflowServiceImpl<T extends EObject> implements EObjectWor
 	public boolean isTransitionAllowed(String fromStage, String toStage) {
 		requireTrue(isStageAllowed(fromStage), String.format("Stage %s is not supported from WorkflowService", fromStage));
 		requireTrue(isStageAllowed(toStage), String.format("Stage %s is not supported from WorkflowService", toStage));
+		requireTrue(isStageWritable(fromStage), String.format("Stage %s is not writable from WorkflowService", fromStage));
+		requireTrue(isStageWritable(toStage), String.format("Stage %s is not writable from WorkflowService", toStage));
 		return true;
 	}
 
@@ -384,6 +385,10 @@ public class EObjectWorkflowServiceImpl<T extends EObject> implements EObjectWor
 	
 	private boolean isStageAllowed(String stage) {
 		return List.of(config.stages()).contains(stage);
+	}
+	
+	private boolean isStageWritable(String stage) {
+		return List.of(config.writable_stages()).contains(stage);
 	}
 
 	@SuppressWarnings("unchecked")

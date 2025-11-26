@@ -124,8 +124,8 @@ public class EObjectFileStorageServiceTest {
 		metadata.getProperties().put("file.extension", ".ecore");
 
 		// Store the package
-		Promise<String> storePromise = storageService.storeObject("test-id-123", testPackage, metadata);
-		String storageId = storePromise.getValue();
+		Promise<ObjectMetadata> storePromise = storageService.storeObject("test-id-123", testPackage, metadata);
+		storePromise.getValue(); String storageId = metadata.getObjectId();
 
 		assertNotNull(storageId);
 		assertEquals("test-id-123", storageId);
@@ -180,7 +180,7 @@ public class EObjectFileStorageServiceTest {
 			metadata.setUploadTime(Instant.now());
 			metadata.getProperties().put("file.extension", ".ecore");
 
-			Promise<String> storePromise = storageService.storeObject("test-pkg-" + i, pkg, metadata);
+			Promise<ObjectMetadata> storePromise = storageService.storeObject("test-pkg-" + i, pkg, metadata);
 			storePromise.getValue();
 		}
 
@@ -215,8 +215,8 @@ public class EObjectFileStorageServiceTest {
 		metadata.setUploadUser("testUser");
 		metadata.getProperties().put("file.extension", ".ecore");
 
-		Promise<String> storePromise = storageService.storeObject("delete-test-id", testPackage, metadata);
-		String storageId = storePromise.getValue();
+		Promise<ObjectMetadata> storePromise = storageService.storeObject("delete-test-id", testPackage, metadata);
+		storePromise.getValue(); String storageId = metadata.getObjectId();
 
 		// Verify files exist
 		File ecoreFile = new File(tempDir.toFile(), storageId + ".ecore");
@@ -258,8 +258,8 @@ public class EObjectFileStorageServiceTest {
 		metadata.setUploadUser("testUser");
 		metadata.getProperties().put("file.extension", ".ecore");
 
-		Promise<String> storePromise = storageService.storeObject(null, testPackage, metadata);
-		String storageId = storePromise.getValue();
+		Promise<ObjectMetadata> storePromise = storageService.storeObject(null, testPackage, metadata);
+		storePromise.getValue(); String storageId = metadata.getObjectId();
 
 		assertNotNull(storageId);
 		assertFalse(storageId.isEmpty());
@@ -297,8 +297,9 @@ public class EObjectFileStorageServiceTest {
 		metadata1.setUploadUser("testUser");
 		metadata1.getProperties().put("file.extension", "ecore"); // without dot
 
-		Promise<String> storePromise1 = storageService.storeObject("custom-ext-1", testPackage1, metadata1);
-		String storageId1 = storePromise1.getValue();
+		Promise<ObjectMetadata> storePromise1 = storageService.storeObject("custom-ext-1", testPackage1, metadata1);
+		storePromise1.getValue();
+		String storageId1 = metadata1.getObjectId();
 
 		// Verify file with .ecore extension exists
 		File ecoreFile = new File(tempDir.toFile(), storageId1 + ".ecore");
@@ -316,8 +317,9 @@ public class EObjectFileStorageServiceTest {
 		metadata2.setUploadUser("testUser");
 		// No file.extension property set - should use default .xmi
 
-		Promise<String> storePromise2 = storageService.storeObject("default-ext", testPackage2, metadata2);
-		String storageId2 = storePromise2.getValue();
+		Promise<ObjectMetadata> storePromise2 = storageService.storeObject("default-ext", testPackage2, metadata2);
+		storePromise2.getValue();
+		String storageId2 = metadata2.getObjectId();
 
 		// Verify file with .xmi extension exists
 		File xmiFile = new File(tempDir.toFile(), storageId2 + ".xmi");
@@ -366,8 +368,8 @@ public class EObjectFileStorageServiceTest {
 		metadata.getProperties().put("file.extension", ".ecore");
 		metadata.getProperties().put("content.type", "org.eclipse.emf.ecore");
 
-		Promise<String> storePromise = storageService.storeObject("content-type-test", testPackage, metadata);
-		String storageId = storePromise.getValue();
+		Promise<ObjectMetadata> storePromise = storageService.storeObject("content-type-test", testPackage, metadata);
+		storePromise.getValue(); String storageId = metadata.getObjectId();
 
 		// Verify file exists
 		File ecoreFile = new File(tempDir.toFile(), storageId + ".ecore");
@@ -410,8 +412,8 @@ public class EObjectFileStorageServiceTest {
 		metadata.setUploadTime(Instant.now());
 		metadata.getProperties().put("file.extension", ".ecore");
 
-		Promise<String> storePromise = storageService.storeObject("update-metadata-test", testPackage, metadata);
-		String storageId = storePromise.getValue();
+		Promise<ObjectMetadata> storePromise = storageService.storeObject("update-metadata-test", testPackage, metadata);
+		storePromise.getValue(); String storageId = metadata.getObjectId();
 
 		// Create updated metadata
 		ObjectMetadata updatedMetadata = ManagementFactory.eINSTANCE.createObjectMetadata();
@@ -476,8 +478,8 @@ public class EObjectFileStorageServiceTest {
 		metadata.setStatus(ObjectStatus.DRAFT);
 		metadata.getProperties().put("file.extension", ".ecore");
 
-		Promise<String> storePromise = storageService.storeObject("update-status-test", testPackage, metadata);
-		String storageId = storePromise.getValue();
+		Promise<ObjectMetadata> storePromise = storageService.storeObject("update-status-test", testPackage, metadata);
+		storePromise.getValue(); String storageId = metadata.getObjectId();
 
 		// Verify initial status
 		Promise<ObjectMetadata> initialPromise = storageService.retrieveMetadata(storageId);
@@ -548,8 +550,8 @@ public class EObjectFileStorageServiceTest {
 		metadata.setUploadTime(Instant.now());
 		metadata.getProperties().put("file.extension", ".ecore");
 
-		Promise<String> storePromise = storageService.storeObject("exists-test-id", testPackage, metadata);
-		String storageId = storePromise.getValue();
+		Promise<ObjectMetadata> storePromise = storageService.storeObject("exists-test-id", testPackage, metadata);
+		storePromise.getValue(); String storageId = metadata.getObjectId();
 
 		// Test existing object
 		Boolean existsAfter = storageService.exists(storageId);
@@ -600,7 +602,7 @@ public class EObjectFileStorageServiceTest {
 			metadata.setUploadTime(Instant.now());
 			metadata.getProperties().put("file.extension", ".ecore");
 
-			Promise<String> storePromise = storageService.storeObject("count-test-" + i, pkg, metadata);
+			Promise<ObjectMetadata> storePromise = storageService.storeObject("count-test-" + i, pkg, metadata);
 			storePromise.getValue();
 		}
 
@@ -713,9 +715,10 @@ public class EObjectFileStorageServiceTest {
 		// Note: role is intentionally not set to test automatic role setting
 
 		// Test storeObject with automatic role setting
-		Promise<String> storePromise = storageService.storeObject("role-test-id", testPackage, metadata);
+		Promise<ObjectMetadata> storePromise = storageService.storeObject("role-test-id", testPackage, metadata);
 		assertNull(storePromise.getFailure(), "Store operation should succeed");
-		String objectId = storePromise.getValue();
+		storePromise.getValue();
+		String objectId = metadata.getObjectId();
 		assertEquals("role-test-id", objectId);
 
 		// Verify role was automatically set based on status
@@ -778,9 +781,10 @@ public class EObjectFileStorageServiceTest {
 		// Explicitly set a different role that should be overridden
 		metadataWithPresetRole.setRole("wrong-role");
 		
-		Promise<String> overrideStorePromise = storageService.storeObject("role-override-test", overrideTestPackage, metadataWithPresetRole);
+		Promise<ObjectMetadata> overrideStorePromise = storageService.storeObject("role-override-test", overrideTestPackage, metadataWithPresetRole);
 		assertNull(overrideStorePromise.getFailure(), "Override store operation should succeed");
-		String overrideObjectId = overrideStorePromise.getValue();
+		overrideStorePromise.getValue();
+		String overrideObjectId = metadataWithPresetRole.getObjectId();
 		assertEquals("role-override-test", overrideObjectId);
 		
 		// Verify the storage service role overrode the preset role
@@ -832,7 +836,7 @@ public class EObjectFileStorageServiceTest {
 		metadata.setSourceChannel("APPROVED_TEST");
 
 		// Store object
-		Promise<String> storePromise = storageService.storeObject("approved-test-id", testPackage, metadata);
+		Promise<ObjectMetadata> storePromise = storageService.storeObject("approved-test-id", testPackage, metadata);
 		assertNull(storePromise.getFailure(), "Store operation should succeed");
 		
 		// Verify the configured storage role was set
@@ -885,8 +889,9 @@ public class EObjectFileStorageServiceTest {
 		metadata.setSourceChannel("DEFAULT_TEST");
 		metadata.getProperties().put("file.extension", ".ecore");
 
-		Promise<String> storePromise = storageService.storeObject("default-role-test", testPackage, metadata);
-		String objectId = storePromise.getValue();
+		Promise<ObjectMetadata> storePromise = storageService.storeObject("default-role-test", testPackage, metadata);
+		storePromise.getValue();
+		String objectId = metadata.getObjectId();
 		assertEquals("default-role-test", objectId);
 
 		// Verify default role "draft" was set
@@ -937,7 +942,8 @@ public class EObjectFileStorageServiceTest {
 		draftMetadata.setSourceChannel("TEST");
 		
 		// Store object with DRAFT status
-		String draftObjectId = storageService.storeObject("registry-test-draft", testPackage, draftMetadata).getValue();
+		storageService.storeObject("registry-test-draft", testPackage, draftMetadata).getValue();
+		String draftObjectId = draftMetadata.getObjectId();
 		assertNotNull(draftObjectId, "Draft object ID should not be null");
 		
 		// Wait a moment for registry update (if async)
@@ -983,7 +989,8 @@ public class EObjectFileStorageServiceTest {
 		rejectedMetadata.setUploadTime(Instant.now());
 		rejectedMetadata.setSourceChannel("TEST");
 		
-		String rejectedObjectId = storageService.storeObject("registry-test-rejected", rejectedPackage, rejectedMetadata).getValue();
+		storageService.storeObject("registry-test-rejected", rejectedPackage, rejectedMetadata).getValue();
+		String rejectedObjectId = rejectedMetadata.getObjectId();
 		assertNotNull(rejectedObjectId, "Rejected object ID should not be null");
 		
 		// Wait a moment for registry update (if async)

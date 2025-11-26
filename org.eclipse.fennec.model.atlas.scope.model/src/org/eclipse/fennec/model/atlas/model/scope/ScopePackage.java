@@ -122,13 +122,40 @@ public interface ScopePackage extends org.eclipse.emf.ecore.EPackage {
 	int SCOPE__LINKS = 3;
 
 	/**
+	 * The feature id for the '<em><b>Stages</b></em>' attribute list.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 * @ordered
+	 */
+	int SCOPE__STAGES = 4;
+
+	/**
+	 * The feature id for the '<em><b>Final Stage</b></em>' attribute.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 * @ordered
+	 */
+	int SCOPE__FINAL_STAGE = 5;
+
+	/**
+	 * The feature id for the '<em><b>Writable Stages</b></em>' attribute list.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 * @ordered
+	 */
+	int SCOPE__WRITABLE_STAGES = 6;
+
+	/**
 	 * The number of structural features of the '<em>Scope</em>' class.
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
 	 * @generated
 	 * @ordered
 	 */
-	int SCOPE_FEATURE_COUNT = 4;
+	int SCOPE_FEATURE_COUNT = 7;
 
 	/**
 	 * The number of operations of the '<em>Scope</em>' class.
@@ -222,6 +249,52 @@ public interface ScopePackage extends org.eclipse.emf.ecore.EPackage {
 	 */
 	int SCOPE_CONTAINER_OPERATION_COUNT = 0;
 
+	/**
+	 * The meta object id for the '{@link org.eclipse.fennec.model.atlas.model.scope.impl.StageTransitionImpl <em>Stage Transition</em>}' class.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @see org.eclipse.fennec.model.atlas.model.scope.impl.StageTransitionImpl
+	 * @see org.eclipse.fennec.model.atlas.model.scope.impl.ScopePackageImpl#getStageTransition()
+	 * @generated
+	 */
+	int STAGE_TRANSITION = 3;
+
+	/**
+	 * The feature id for the '<em><b>Object Id</b></em>' attribute.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 * @ordered
+	 */
+	int STAGE_TRANSITION__OBJECT_ID = 0;
+
+	/**
+	 * The feature id for the '<em><b>Target Stage</b></em>' attribute.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 * @ordered
+	 */
+	int STAGE_TRANSITION__TARGET_STAGE = 1;
+
+	/**
+	 * The number of structural features of the '<em>Stage Transition</em>' class.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 * @ordered
+	 */
+	int STAGE_TRANSITION_FEATURE_COUNT = 2;
+
+	/**
+	 * The number of operations of the '<em>Stage Transition</em>' class.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 * @ordered
+	 */
+	int STAGE_TRANSITION_OPERATION_COUNT = 0;
+
 
 	/**
 	 * Returns the meta object for class '{@link org.eclipse.fennec.model.atlas.model.scope.Scope <em>Scope</em>}'.
@@ -278,6 +351,39 @@ public interface ScopePackage extends org.eclipse.emf.ecore.EPackage {
 	EReference getScope_Links();
 
 	/**
+	 * Returns the meta object for the attribute list '{@link org.eclipse.fennec.model.atlas.model.scope.Scope#getStages <em>Stages</em>}'.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @return the meta object for the attribute list '<em>Stages</em>'.
+	 * @see org.eclipse.fennec.model.atlas.model.scope.Scope#getStages()
+	 * @see #getScope()
+	 * @generated
+	 */
+	EAttribute getScope_Stages();
+
+	/**
+	 * Returns the meta object for the attribute '{@link org.eclipse.fennec.model.atlas.model.scope.Scope#getFinalStage <em>Final Stage</em>}'.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @return the meta object for the attribute '<em>Final Stage</em>'.
+	 * @see org.eclipse.fennec.model.atlas.model.scope.Scope#getFinalStage()
+	 * @see #getScope()
+	 * @generated
+	 */
+	EAttribute getScope_FinalStage();
+
+	/**
+	 * Returns the meta object for the attribute list '{@link org.eclipse.fennec.model.atlas.model.scope.Scope#getWritableStages <em>Writable Stages</em>}'.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @return the meta object for the attribute list '<em>Writable Stages</em>'.
+	 * @see org.eclipse.fennec.model.atlas.model.scope.Scope#getWritableStages()
+	 * @see #getScope()
+	 * @generated
+	 */
+	EAttribute getScope_WritableStages();
+
+	/**
 	 * Returns the meta object for class '{@link java.util.Map.Entry <em>Links Map</em>}'.
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
@@ -331,6 +437,38 @@ public interface ScopePackage extends org.eclipse.emf.ecore.EPackage {
 	 * @generated
 	 */
 	EReference getScopeContainer_Scopes();
+
+	/**
+	 * Returns the meta object for class '{@link org.eclipse.fennec.model.atlas.model.scope.StageTransition <em>Stage Transition</em>}'.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @return the meta object for class '<em>Stage Transition</em>'.
+	 * @see org.eclipse.fennec.model.atlas.model.scope.StageTransition
+	 * @generated
+	 */
+	EClass getStageTransition();
+
+	/**
+	 * Returns the meta object for the attribute '{@link org.eclipse.fennec.model.atlas.model.scope.StageTransition#getObjectId <em>Object Id</em>}'.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @return the meta object for the attribute '<em>Object Id</em>'.
+	 * @see org.eclipse.fennec.model.atlas.model.scope.StageTransition#getObjectId()
+	 * @see #getStageTransition()
+	 * @generated
+	 */
+	EAttribute getStageTransition_ObjectId();
+
+	/**
+	 * Returns the meta object for the attribute '{@link org.eclipse.fennec.model.atlas.model.scope.StageTransition#getTargetStage <em>Target Stage</em>}'.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @return the meta object for the attribute '<em>Target Stage</em>'.
+	 * @see org.eclipse.fennec.model.atlas.model.scope.StageTransition#getTargetStage()
+	 * @see #getStageTransition()
+	 * @generated
+	 */
+	EAttribute getStageTransition_TargetStage();
 
 	/**
 	 * Returns the factory that creates the instances of the model.
@@ -398,6 +536,30 @@ public interface ScopePackage extends org.eclipse.emf.ecore.EPackage {
 		EReference SCOPE__LINKS = eINSTANCE.getScope_Links();
 
 		/**
+		 * The meta object literal for the '<em><b>Stages</b></em>' attribute list feature.
+		 * <!-- begin-user-doc -->
+		 * <!-- end-user-doc -->
+		 * @generated
+		 */
+		EAttribute SCOPE__STAGES = eINSTANCE.getScope_Stages();
+
+		/**
+		 * The meta object literal for the '<em><b>Final Stage</b></em>' attribute feature.
+		 * <!-- begin-user-doc -->
+		 * <!-- end-user-doc -->
+		 * @generated
+		 */
+		EAttribute SCOPE__FINAL_STAGE = eINSTANCE.getScope_FinalStage();
+
+		/**
+		 * The meta object literal for the '<em><b>Writable Stages</b></em>' attribute list feature.
+		 * <!-- begin-user-doc -->
+		 * <!-- end-user-doc -->
+		 * @generated
+		 */
+		EAttribute SCOPE__WRITABLE_STAGES = eINSTANCE.getScope_WritableStages();
+
+		/**
 		 * The meta object literal for the '{@link org.eclipse.fennec.model.atlas.model.scope.impl.LinksMapImpl <em>Links Map</em>}' class.
 		 * <!-- begin-user-doc -->
 		 * <!-- end-user-doc -->
@@ -440,6 +602,32 @@ public interface ScopePackage extends org.eclipse.emf.ecore.EPackage {
 		 * @generated
 		 */
 		EReference SCOPE_CONTAINER__SCOPES = eINSTANCE.getScopeContainer_Scopes();
+
+		/**
+		 * The meta object literal for the '{@link org.eclipse.fennec.model.atlas.model.scope.impl.StageTransitionImpl <em>Stage Transition</em>}' class.
+		 * <!-- begin-user-doc -->
+		 * <!-- end-user-doc -->
+		 * @see org.eclipse.fennec.model.atlas.model.scope.impl.StageTransitionImpl
+		 * @see org.eclipse.fennec.model.atlas.model.scope.impl.ScopePackageImpl#getStageTransition()
+		 * @generated
+		 */
+		EClass STAGE_TRANSITION = eINSTANCE.getStageTransition();
+
+		/**
+		 * The meta object literal for the '<em><b>Object Id</b></em>' attribute feature.
+		 * <!-- begin-user-doc -->
+		 * <!-- end-user-doc -->
+		 * @generated
+		 */
+		EAttribute STAGE_TRANSITION__OBJECT_ID = eINSTANCE.getStageTransition_ObjectId();
+
+		/**
+		 * The meta object literal for the '<em><b>Target Stage</b></em>' attribute feature.
+		 * <!-- begin-user-doc -->
+		 * <!-- end-user-doc -->
+		 * @generated
+		 */
+		EAttribute STAGE_TRANSITION__TARGET_STAGE = eINSTANCE.getStageTransition_TargetStage();
 
 	}
 

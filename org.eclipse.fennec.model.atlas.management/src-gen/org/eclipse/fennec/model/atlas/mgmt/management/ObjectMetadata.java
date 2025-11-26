@@ -57,6 +57,7 @@ import org.osgi.annotation.versioning.ProviderType;
  *   <li>{@link org.eclipse.fennec.model.atlas.mgmt.management.ObjectMetadata#getRole <em>Role</em>}</li>
  *   <li>{@link org.eclipse.fennec.model.atlas.mgmt.management.ObjectMetadata#getLastChangeReason <em>Last Change Reason</em>}</li>
  *   <li>{@link org.eclipse.fennec.model.atlas.mgmt.management.ObjectMetadata#getScope <em>Scope</em>}</li>
+ *   <li>{@link org.eclipse.fennec.model.atlas.mgmt.management.ObjectMetadata#isIsReadOnly <em>Is Read Only</em>}</li>
  * </ul>
  *
  * @see org.eclipse.fennec.model.atlas.mgmt.management.ManagementPackage#getObjectMetadata()
@@ -634,5 +635,30 @@ public interface ObjectMetadata extends EObject {
 	 * @generated
 	 */
 	void setScope(String value);
+
+	/**
+	 * Returns the value of the '<em><b>Is Read Only</b></em>' attribute.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * <!-- begin-model-doc -->
+	 * This is to be set when an EObject is retrieved from a parent scope in its final stage and then cannot be modified.
+	 * <!-- end-model-doc -->
+	 * @return the value of the '<em>Is Read Only</em>' attribute.
+	 * @see #setIsReadOnly(boolean)
+	 * @see org.eclipse.fennec.model.atlas.mgmt.management.ManagementPackage#getObjectMetadata_IsReadOnly()
+	 * @model
+	 * @generated
+	 */
+	boolean isIsReadOnly();
+
+	/**
+	 * Sets the value of the '{@link org.eclipse.fennec.model.atlas.mgmt.management.ObjectMetadata#isIsReadOnly <em>Is Read Only</em>}' attribute.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @param value the new value of the '<em>Is Read Only</em>' attribute.
+	 * @see #isIsReadOnly()
+	 * @generated
+	 */
+	void setIsReadOnly(boolean value);
 
 } // ObjectMetadata

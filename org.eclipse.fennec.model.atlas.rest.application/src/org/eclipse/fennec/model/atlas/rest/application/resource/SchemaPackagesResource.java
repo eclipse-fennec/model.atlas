@@ -13,9 +13,23 @@
  */
 package org.eclipse.fennec.model.atlas.rest.application.resource;
 
+import java.io.UnsupportedEncodingException;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
+import java.time.Instant;
+import java.util.List;
+
 import org.eclipse.emf.ecore.EPackage;
+import org.eclipse.fennec.model.atlas.mgmt.management.ManagementFactory;
+import org.eclipse.fennec.model.atlas.mgmt.management.ObjectMetadata;
+import org.eclipse.fennec.model.atlas.mgmt.management.ObjectMetadataContainer;
+import org.eclipse.fennec.model.atlas.model.scope.Scope;
+import org.eclipse.fennec.model.atlas.model.scope.StageTransition;
 import org.eclipse.fennec.model.atlas.runtime.RequireRuntime;
+import org.eclipse.fennec.model.atlas.scope.ScopeCollector;
+import org.eclipse.fennec.model.atlas.wf.workflowapi.EObjectWorkflowService;
 import org.osgi.service.component.annotations.Component;
+import org.osgi.service.component.annotations.Reference;
 import org.osgi.service.component.annotations.ServiceScope;
 import org.osgi.service.jakartars.whiteboard.propertytypes.JakartarsName;
 import org.osgi.service.jakartars.whiteboard.propertytypes.JakartarsResource;
@@ -51,17 +65,19 @@ import jakarta.ws.rs.core.Response;
 @RequireRuntime
 @JakartarsResource()
 @JakartarsName("SchemaPackagesResource")
-@Component(service = SchemaPackagesResource.class, scope = ServiceScope.PROTOTYPE)
+@Component(name = "SchemaPackagesResource", service = SchemaPackagesResource.class, scope = ServiceScope.PROTOTYPE)
 @Path("/{scopeName}/schema")
 @Tag(name = "Schema Management", description = "CRUD operations for schema packages")
 public class SchemaPackagesResource {
 
 	@Context
 	private HttpHeaders headers;
-
-	// TODO: Inject schema package service
-	// @Reference
-	// private SchemaPackageService schemaPackageService;
+	
+	 @Reference
+	 private ScopeCollector scopeCollector;
+	 
+	 @Reference
+	 private ManagementFactory mgmtFactory;
 
 	// ======================
 	// Released Stage APIs (default)
@@ -78,7 +94,7 @@ public class SchemaPackagesResource {
 	@Produces({ MediaType.APPLICATION_JSON })
 	@Operation(
 		summary = "List released packages in scope",
-		description = "List all packages in the final/released stage for this scope, including packages from parent scopes",
+		description = "List all packages in the final stage for this scope, including packages from parent scopes",
 		responses = {
 			@ApiResponse(
 				responseCode = "200",
@@ -92,8 +108,15 @@ public class SchemaPackagesResource {
 	public Response listReleasedPackages(
 		@Parameter(description = "The scope name", required = true)
 		@PathParam("scopeName") String scopeName) {
-		// TODO: Implement released package listing with hierarchical visibility
-		return Response.status(Response.Status.NOT_IMPLEMENTED).build();
+
+		EObjectWorkflowService<?> workflowService = getEObjectWorkflowServiceByScope(scopeName);
+		if(workflowService == null) {
+			return Response.status(Response.Status.NOT_FOUND).build();
+		}
+		List<ObjectMetadata> objectsMetadata = workflowService.listInFinalStage();
+		ObjectMetadataContainer container = mgmtFactory.createObjectMetadataContainer();
+		container.getMetadata().addAll(objectsMetadata);		
+		return Response.status(Response.Status.OK).entity(container).build();
 	}
 
 	// ======================
@@ -136,9 +159,15 @@ public class SchemaPackagesResource {
 		@QueryParam("nsUri") String nsUri,
 		@Parameter(description = "Package name filter (supports wildcards, e.g., *Billing*)")
 		@QueryParam("name") String name) {
-		// TODO: Implement package listing with optional nsUri/name filtering
-		// TODO: Handle hierarchical visibility for nsUri lookup
-		return Response.status(Response.Status.NOT_IMPLEMENTED).build();
+
+		EObjectWorkflowService<?> workflowService = getEObjectWorkflowServiceByScope(scopeName);
+		if(workflowService == null) {
+			return Response.status(Response.Status.NOT_FOUND).build();
+		}
+		List<ObjectMetadata> objectsMetadata = workflowService.listInStage(stageName);
+		ObjectMetadataContainer container = mgmtFactory.createObjectMetadataContainer();
+		container.getMetadata().addAll(objectsMetadata);		
+		return Response.status(Response.Status.OK).entity(container).build();
 	}
 
 	/**
@@ -152,6 +181,7 @@ public class SchemaPackagesResource {
 	 * @param ePackage the schema package content
 	 * @return SchemaPackage metadata
 	 */
+	@SuppressWarnings("unchecked")
 	@POST
 	@Path("/stages/{stageName}")
 	@Consumes({ MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML, "application/ecore+xml" })
@@ -185,10 +215,39 @@ public class SchemaPackagesResource {
 		@RequestBody(description = "The schema package content", required = true,
 		             content = @Content(schema = @Schema(implementation = EPackage.class)))
 		EPackage ePackage) {
-		// TODO: Validate nsUri parameter
-		// TODO: Check uniqueness across visibility chain
-		// TODO: Create package and return metadata with Location header
-		return Response.status(Response.Status.NOT_IMPLEMENTED).build();
+		//TODO: Validate nsUri parameter
+		
+		EObjectWorkflowService<EPackage> workflowService = (EObjectWorkflowService<EPackage>) getEObjectWorkflowServiceByScope(scopeName);
+		if(workflowService == null) {
+			return Response.status(Response.Status.NOT_FOUND).build();
+		}
+		
+		try {
+			String encodedNsURI = encodePackageNsURI(nsUri);
+//			Check uniqueness across visibility chain
+			if(workflowService.getFromStage(stageName, encodedNsURI) != null) {
+				return Response.status(Response.Status.CONFLICT).build();
+			}
+//			Create package and return metadata with Location header
+			ObjectMetadata metadata = mgmtFactory.createObjectMetadata();
+			metadata.setObjectId(encodedNsURI);
+			metadata.setObjectName(name);
+			metadata.setUploadTime(Instant.now());
+			metadata.setRole(stageName);
+			metadata.setScope(scopeName);
+			metadata.setVersion(version);
+			metadata.setObjectRef(ePackage);
+			
+			metadata = workflowService.uploadToStage(stageName, ePackage, metadata).getValue();
+			
+			return Response
+					.status(Response.Status.NOT_IMPLEMENTED)
+					.header("Location", "/".concat(scopeName).concat("/schemas/stages/").concat(stageName).concat("?nsUri=").concat(encodedNsURI))
+					.entity(metadata)
+					.build();
+		} catch (Exception e) {
+			return Response.status(Response.Status.INTERNAL_SERVER_ERROR).build();
+		}
 	}
 
 	/**
@@ -199,6 +258,7 @@ public class SchemaPackagesResource {
 	 * @param nsUri the namespace URI (required)
 	 * @return Schema package content in requested format
 	 */
+	@SuppressWarnings("unchecked")
 	@GET
 	@Path("/stages/{stageName}/content")
 	@Produces({ MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML, "application/ecore+xml", "application/schema+json" })
@@ -226,7 +286,22 @@ public class SchemaPackagesResource {
 		// TODO: Find package by nsUri (hierarchical visibility)
 		// TODO: Transform to requested format based on Accept header
 		// TODO: Return content with appropriate Content-Type
-		return Response.status(Response.Status.NOT_IMPLEMENTED).build();
+//		This should call getContentFromStage
+		EObjectWorkflowService<EPackage> workflowService = (EObjectWorkflowService<EPackage>) getEObjectWorkflowServiceByScope(scopeName);
+		if(workflowService == null) {
+			return Response.status(Response.Status.NOT_FOUND).build();
+		}
+		try {
+			String encodedNsUri = encodePackageNsURI(nsUri);			
+			EPackage ePackage = workflowService.getContentFromStage(stageName, encodedNsUri);
+			if(ePackage == null) {
+				return Response.status(Response.Status.NO_CONTENT).build();
+			}
+			return Response.status(Response.Status.OK).entity(ePackage).build();
+			
+		} catch(Exception e) {
+			return Response.status(Response.Status.INTERNAL_SERVER_ERROR).build();
+		}		
 	}
 
 	/**
@@ -238,6 +313,7 @@ public class SchemaPackagesResource {
 	 * @param ePackage the new schema package content
 	 * @return Updated SchemaPackage metadata
 	 */
+	@SuppressWarnings("unchecked")
 	@PUT
 	@Path("/stages/{stageName}/content")
 	@Consumes({ MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML, "application/ecore+xml" })
@@ -253,9 +329,8 @@ public class SchemaPackagesResource {
 				content = @Content(mediaType = MediaType.APPLICATION_JSON)
 			),
 			@ApiResponse(responseCode = "400", description = "Invalid package data"),
-			@ApiResponse(responseCode = "403", description = "Stage is read-only"),
-			@ApiResponse(responseCode = "404", description = "Package not found"),
-			@ApiResponse(responseCode = "405", description = "Method not allowed for this stage"),
+			@ApiResponse(responseCode = "403", description = "Stage is read-only or Package is only present in a parent scope final stage and so it's read-only"),
+			@ApiResponse(responseCode = "404", description = "Workflow, Scope or Package not found"),
 			@ApiResponse(responseCode = "500", description = "Internal server error")
 		}
 	)
@@ -269,10 +344,31 @@ public class SchemaPackagesResource {
 		@RequestBody(description = "The new schema package content", required = true,
 		             content = @Content(schema = @Schema(implementation = EPackage.class)))
 		EPackage ePackage) {
-		// TODO: Check if stage is writable
-		// TODO: Update package content
-		// TODO: Return updated metadata
-		return Response.status(Response.Status.NOT_IMPLEMENTED).build();
+		EObjectWorkflowService<EPackage> workflowService = (EObjectWorkflowService<EPackage>) getEObjectWorkflowServiceByScope(scopeName);
+		Scope scope = getScopeByScopeName(scopeName);
+		if(workflowService == null || scope == null) {
+			return Response.status(Response.Status.NOT_FOUND).build();
+		}
+		try {			
+			if(!scope.getWritableStages().contains(stageName)) {
+				return Response.status(Response.Status.FORBIDDEN).build();
+			}
+			String encodedNsUri = encodePackageNsURI(nsUri);
+			ObjectMetadata existingMetadata = workflowService.getFromStage(stageName, encodedNsUri);
+			if(existingMetadata == null) {
+				return Response.status(Response.Status.NOT_FOUND).build();
+			}
+//			We might want to check if the metadata is read only (e.g. if it was retrieved from a parent final stage
+			if(existingMetadata.isIsReadOnly()) {
+				return Response.status(Response.Status.FORBIDDEN).build();
+			}
+			
+			ObjectMetadata metadata = workflowService.updateInStage(stageName, ePackage, encodedNsUri).getValue();			
+			return Response.status(Response.Status.OK).entity(metadata).build();
+			
+		} catch(Exception e) {
+			return Response.status(Response.Status.INTERNAL_SERVER_ERROR).build();
+		}
 	}
 
 	/**
@@ -283,6 +379,7 @@ public class SchemaPackagesResource {
 	 * @param nsUri the namespace URI (required)
 	 * @return 204 No Content on success
 	 */
+	@SuppressWarnings("unchecked")
 	@DELETE
 	@Path("/stages/{stageName}")
 	@Operation(
@@ -294,7 +391,7 @@ public class SchemaPackagesResource {
 				responseCode = "204",
 				description = "Package deleted successfully"
 			),
-			@ApiResponse(responseCode = "403", description = "Stage is read-only"),
+			@ApiResponse(responseCode = "403", description = "Stage is read-only or Package is only present in a parent scope final stage and so it's read-only"),
 			@ApiResponse(responseCode = "404", description = "Package not found"),
 			@ApiResponse(responseCode = "500", description = "Internal server error")
 		}
@@ -306,15 +403,39 @@ public class SchemaPackagesResource {
 		@PathParam("stageName") String stageName,
 		@Parameter(description = "The namespace URI of the package to delete", required = true)
 		@QueryParam("nsUri") String nsUri) {
-		// TODO: Check if stage is writable
-		// TODO: Delete package
-		return Response.status(Response.Status.NOT_IMPLEMENTED).build();
+		
+		EObjectWorkflowService<EPackage> workflowService = (EObjectWorkflowService<EPackage>) getEObjectWorkflowServiceByScope(scopeName);
+		Scope scope = getScopeByScopeName(scopeName);
+		if(workflowService == null || scope == null) {
+			return Response.status(Response.Status.NOT_FOUND).build();
+		}
+		try {			
+			if(!scope.getWritableStages().contains(stageName)) {
+				return Response.status(Response.Status.FORBIDDEN).build();
+			}
+			String encodedNsUri = encodePackageNsURI(nsUri);
+			ObjectMetadata existingMetadata = workflowService.getFromStage(stageName, encodedNsUri);
+			if(existingMetadata == null) {
+				return Response.status(Response.Status.NOT_FOUND).build();
+			} 
+			if(existingMetadata.isIsReadOnly()) {
+				return Response.status(Response.Status.FORBIDDEN).build();
+			}
+			
+			boolean deleted = workflowService.deleteFromStage(stageName, encodedNsUri).getValue();	
+			if(deleted) return Response.status(Response.Status.NO_CONTENT).build();
+			return Response.status(Response.Status.INTERNAL_SERVER_ERROR).build();
+			
+		} catch(Exception e) {
+			return Response.status(Response.Status.INTERNAL_SERVER_ERROR).build();
+		}
 	}
 
 	// ======================
 	// Lifecycle Actions
 	// ======================
 
+	@SuppressWarnings("unchecked")
 	/**
 	 * Transition a package from one stage to another.
 	 *
@@ -347,13 +468,52 @@ public class SchemaPackagesResource {
 		@PathParam("scopeName") String scopeName,
 		@Parameter(description = "The source stage name", required = true)
 		@PathParam("stageName") String stageName,
-		@RequestBody(description = "Transition request with nsUri and targetStage", required = true)
-		Object transitionRequest) {
-		// TODO: Parse transition request (nsUri, targetStage)
-		// TODO: Verify package is in source stage
-		// TODO: Validate transition is allowed
-		// TODO: Move package to target stage
-		// TODO: Return updated metadata
-		return Response.status(Response.Status.NOT_IMPLEMENTED).build();
+		@RequestBody(
+			description = "Transition request with objectId and targetStage", 
+			required = true, 
+			content = @Content(schema = @Schema(implementation = StageTransition.class)))
+		StageTransition transitionRequest) {
+		// Parse transition request (nsUri, targetStage)
+		// Verify package is in source stage
+		// Validate transition is allowed
+		// Move package to target stage
+		// Return updated metadata
+		EObjectWorkflowService<EPackage> workflowService = (EObjectWorkflowService<EPackage>) getEObjectWorkflowServiceByScope(scopeName);
+		if(workflowService == null) {
+			return Response.status(Response.Status.NOT_FOUND).build();
+		}
+		try {
+			String encodedNsUri = encodePackageNsURI(transitionRequest.getObjectId());
+			ObjectMetadata existingMetadata = workflowService.getFromStage(stageName, encodedNsUri);
+			if(existingMetadata == null) {
+				return Response.status(Response.Status.NOT_FOUND).build();
+			}
+			if(existingMetadata.isIsReadOnly()) {
+				return Response.status(Response.Status.BAD_REQUEST).build();
+			}
+			if(workflowService.isTransitionAllowed(stageName, transitionRequest.getTargetStage())) {
+				return Response.status(Response.Status.BAD_REQUEST).build();
+			}
+			ObjectMetadata metadata = workflowService.transitionToStage(encodedNsUri, stageName, transitionRequest.getTargetStage());
+			return Response.status(Response.Status.OK).entity(metadata).build();
+		} catch(Exception e) {
+			return Response.status(Response.Status.INTERNAL_SERVER_ERROR).build();
+		}
+		
+		
+	}
+	
+	private EObjectWorkflowService<?> getEObjectWorkflowServiceByScope(String scope) {
+		return scopeCollector.getWorkflowServiceByScope(scope);
+	}
+	
+	private Scope getScopeByScopeName(String scope) {
+		return scopeCollector.getScopeByName(scope);
+	}
+	
+	private String encodePackageNsURI(String nsUri) throws UnsupportedEncodingException {
+		return URLEncoder.encode(
+				nsUri, 
+                StandardCharsets.UTF_8.toString());
 	}
 }

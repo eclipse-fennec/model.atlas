@@ -130,8 +130,9 @@ public class MetadataLifecycleIntegrationTest {
         // === PHASE 2: Store with provided objectId ===
         
         String providedObjectId = "provided-id-12345";
-        Promise<String> storePromise = storageService.storeObject(providedObjectId, testPackage, originalMetadata);
-        String returnedObjectId = storePromise.getValue();
+        Promise<ObjectMetadata> storePromise = storageService.storeObject(providedObjectId, testPackage, originalMetadata);
+        storePromise.getValue();
+        String returnedObjectId = originalMetadata.getObjectId();
         
         // Verify store operation results
         assertEquals(providedObjectId, returnedObjectId, "Should return the provided objectId");
@@ -217,8 +218,9 @@ public class MetadataLifecycleIntegrationTest {
         
         // === PHASE 2: Store with auto-generated objectId ===
         
-        Promise<String> storePromise = storageService.storeObject(null, testPackage, originalMetadata);
-        String generatedObjectId = storePromise.getValue();
+        Promise<ObjectMetadata> storePromise = storageService.storeObject(null, testPackage, originalMetadata);
+        storePromise.getValue();
+        String generatedObjectId = originalMetadata.getObjectId();
         
         // Verify auto-generation results
         assertNotNull(generatedObjectId, "Generated objectId should not be null");
@@ -246,8 +248,8 @@ public class MetadataLifecycleIntegrationTest {
         secondMetadata.setUploadUser("second-user");
         secondMetadata.setStatus(ObjectStatus.DRAFT);
         
-        Promise<String> secondStorePromise = storageService.storeObject(null, testPackage, secondMetadata);
-        String secondGeneratedId = secondStorePromise.getValue();
+        storageService.storeObject(null, testPackage, secondMetadata).getValue();
+        String secondGeneratedId = secondMetadata.getObjectId();
         
         assertNotEquals(generatedObjectId, secondGeneratedId, "Multiple generated IDs should be unique");
         assertEquals(secondGeneratedId, secondMetadata.getObjectId(), "Second metadata should have its generated ID");
@@ -291,7 +293,7 @@ public class MetadataLifecycleIntegrationTest {
         initialMetadata.setUploadTime(Instant.now());
         
         String objectId = "update-test-id";
-        Promise<String> storePromise = storageService.storeObject(objectId, testPackage, initialMetadata);
+        Promise<ObjectMetadata> storePromise = storageService.storeObject(objectId, testPackage, initialMetadata);
         storePromise.getValue();
         
         // Verify initial state
@@ -380,7 +382,7 @@ public class MetadataLifecycleIntegrationTest {
         metadata.setUploadTime(Instant.now());
         
         String objectId = "delete-test-id";
-        Promise<String> storePromise = storageService.storeObject(objectId, testPackage, metadata);
+        Promise<ObjectMetadata> storePromise = storageService.storeObject(objectId, testPackage, metadata);
         storePromise.getValue();
         
         // === PHASE 2: Verify object exists before deletion ===

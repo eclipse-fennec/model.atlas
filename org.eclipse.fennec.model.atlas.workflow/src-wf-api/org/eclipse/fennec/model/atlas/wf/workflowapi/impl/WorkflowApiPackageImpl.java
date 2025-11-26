@@ -300,7 +300,7 @@ public class WorkflowApiPackageImpl extends EPackageImpl implements WorkflowApiP
 		addEParameter(op, g1, "object", 1, 1, IS_UNIQUE, IS_ORDERED);
 		addEParameter(op, theManagementPackage.getObjectMetadata(), "metadata", 1, 1, IS_UNIQUE, IS_ORDERED);
 		g1 = createEGenericType(theManagementPackage.getPromise());
-		EGenericType g2 = createEGenericType(ecorePackage.getEString());
+		EGenericType g2 = createEGenericType(theManagementPackage.getObjectMetadata());
 		g1.getETypeArguments().add(g2);
 		initEOperation(op, g1);
 
@@ -323,7 +323,7 @@ public class WorkflowApiPackageImpl extends EPackageImpl implements WorkflowApiP
 		addEParameter(op, g1, "updatedObject", 1, 1, IS_UNIQUE, IS_ORDERED);
 		addEParameter(op, ecorePackage.getEString(), "objectId", 1, 1, IS_UNIQUE, IS_ORDERED);
 		g1 = createEGenericType(theManagementPackage.getPromise());
-		g2 = createEGenericType(theManagementPackage.getVoid());
+		g2 = createEGenericType(theManagementPackage.getObjectMetadata());
 		g1.getETypeArguments().add(g2);
 		initEOperation(op, g1);
 

@@ -180,12 +180,12 @@ public class AbstractEObjectStorageServiceTest {
         when(mockStorageHelper.getFileExtension(any())).thenReturn("ecore");
 
         // Execute
-        Promise<String> result = storageService.storeObject("test-id", testPackage, metadata);
-        String objectId = result.getValue();
+        Promise<ObjectMetadata> result = storageService.storeObject("test-id", testPackage, metadata);
+        metadata = result.getValue();
 
         // Verify role was automatically set
         assertEquals("test-role", metadata.getRole());
-        assertEquals("test-id", objectId);
+        assertEquals("test-id", metadata.getObjectId());
 
         // Verify storage helper was called
         verify(mockStorageHelper).saveEObject("test-id", testPackage, metadata);
@@ -210,9 +210,10 @@ public class AbstractEObjectStorageServiceTest {
         when(mockStorageHelper.getFileExtension(any())).thenReturn("ecore");
 
         // Execute with null objectId (should generate UUID)
-        Promise<String> result = storageService.storeObject(null, testPackage, metadata);
-        String objectId = result.getValue();
-
+        Promise<ObjectMetadata> result = storageService.storeObject(null, testPackage, metadata);
+        metadata = result.getValue();
+        String objectId = metadata.getObjectId();
+       
         // Verify UUID was generated
         assertNotNull(objectId);
         assertDoesNotThrow(() -> UUID.fromString(objectId));
@@ -243,8 +244,8 @@ public class AbstractEObjectStorageServiceTest {
         when(mockStorageHelper.getFileExtension(any())).thenReturn("ecore");
 
         // Execute with null objectId (should generate UUID and set it in metadata)
-        Promise<String> result = storageService.storeObject(null, testPackage, metadata);
-        String returnedObjectId = result.getValue();
+        storageService.storeObject(null, testPackage, metadata).getValue();
+        String returnedObjectId = metadata.getObjectId();
 
         // Verify the caller's metadata object now has the objectId set
         assertNotNull(metadata.getObjectId(), "ObjectId should be set in caller's metadata");
@@ -276,8 +277,9 @@ public class AbstractEObjectStorageServiceTest {
 
         // Execute with provided objectId
         String providedObjectId = "my-custom-object-id";
-        Promise<String> result = storageService.storeObject(providedObjectId, testPackage, metadata);
-        String returnedObjectId = result.getValue();
+        Promise<ObjectMetadata> result = storageService.storeObject(providedObjectId, testPackage, metadata);
+        metadata = result.getValue();
+        String returnedObjectId = metadata.getObjectId();
 
         // Verify the caller's metadata object has the provided objectId
         assertEquals(providedObjectId, metadata.getObjectId(), "Metadata should have the provided objectId");
@@ -583,7 +585,7 @@ public class AbstractEObjectStorageServiceTest {
         doThrow(new RuntimeException("Storage error")).when(mockStorageHelper).saveEObject(any(), any(), any());
 
         // Execute and verify exception is propagated
-        Promise<String> result = storageService.storeObject("test-id", testPackage, metadata);
+        Promise<ObjectMetadata> result = storageService.storeObject("test-id", testPackage, metadata);
         // Verify the promise failed and contains the expected exception
         Throwable failure = result.getFailure();
         assertNotNull(failure, "Promise should have failed");
@@ -806,9 +808,10 @@ public class AbstractEObjectStorageServiceTest {
         when(mockStorageHelper.getFileExtension(any())).thenReturn("ecore");
 
         // Execute
-        Promise<String> result = storageService.storeObject("test-id", testPackage, metadata);
-        String objectId = result.getValue();
-
+        Promise<ObjectMetadata> result = storageService.storeObject("test-id", testPackage, metadata);
+        metadata = result.getValue();
+        String objectId = metadata.getObjectId();
+        
         // Verify objectType was automatically set
         assertEquals("EPackage", metadata.getObjectType(), 
                     "ObjectType should be automatically set to 'EPackage'");
@@ -838,7 +841,7 @@ public class AbstractEObjectStorageServiceTest {
         when(mockStorageHelper.getFileExtension(any())).thenReturn("ecore");
 
         // Execute
-        Promise<String> result = storageService.storeObject("test-id", testPackage, metadata);
+        Promise<ObjectMetadata> result = storageService.storeObject("test-id", testPackage, metadata);
         result.getValue();
 
         // Verify custom objectType was preserved

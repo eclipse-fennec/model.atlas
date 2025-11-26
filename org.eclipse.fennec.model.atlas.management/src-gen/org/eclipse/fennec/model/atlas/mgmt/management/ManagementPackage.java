@@ -294,13 +294,22 @@ public interface ManagementPackage extends org.eclipse.emf.ecore.EPackage {
 	int OBJECT_METADATA__SCOPE = 22;
 
 	/**
+	 * The feature id for the '<em><b>Is Read Only</b></em>' attribute.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 * @ordered
+	 */
+	int OBJECT_METADATA__IS_READ_ONLY = 23;
+
+	/**
 	 * The number of structural features of the '<em>Object Metadata</em>' class.
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
 	 * @generated
 	 * @ordered
 	 */
-	int OBJECT_METADATA_FEATURE_COUNT = 23;
+	int OBJECT_METADATA_FEATURE_COUNT = 24;
 
 	/**
 	 * The number of operations of the '<em>Object Metadata</em>' class.
@@ -967,6 +976,17 @@ public interface ManagementPackage extends org.eclipse.emf.ecore.EPackage {
 	EAttribute getObjectMetadata_Scope();
 
 	/**
+	 * Returns the meta object for the attribute '{@link org.eclipse.fennec.model.atlas.mgmt.management.ObjectMetadata#isIsReadOnly <em>Is Read Only</em>}'.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @return the meta object for the attribute '<em>Is Read Only</em>'.
+	 * @see org.eclipse.fennec.model.atlas.mgmt.management.ObjectMetadata#isIsReadOnly()
+	 * @see #getObjectMetadata()
+	 * @generated
+	 */
+	EAttribute getObjectMetadata_IsReadOnly();
+
+	/**
 	 * Returns the meta object for class '{@link java.util.Map.Entry <em>String To Object Map Entry</em>}'.
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
@@ -1554,6 +1574,14 @@ public interface ManagementPackage extends org.eclipse.emf.ecore.EPackage {
 		 * @generated
 		 */
 		EAttribute OBJECT_METADATA__SCOPE = eINSTANCE.getObjectMetadata_Scope();
+
+		/**
+		 * The meta object literal for the '<em><b>Is Read Only</b></em>' attribute feature.
+		 * <!-- begin-user-doc -->
+		 * <!-- end-user-doc -->
+		 * @generated
+		 */
+		EAttribute OBJECT_METADATA__IS_READ_ONLY = eINSTANCE.getObjectMetadata_IsReadOnly();
 
 		/**
 		 * The meta object literal for the '{@link org.eclipse.fennec.model.atlas.mgmt.management.impl.StringToObjectMapEntryImpl <em>String To Object Map Entry</em>}' class.

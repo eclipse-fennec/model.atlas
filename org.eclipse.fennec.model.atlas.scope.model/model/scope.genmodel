@@ -13,6 +13,9 @@
       <genFeatures createChild="false" ecoreFeature="ecore:EAttribute scope.ecore#//Scope/parentScope"/>
       <genFeatures createChild="false" ecoreFeature="ecore:EAttribute scope.ecore#//Scope/description"/>
       <genFeatures notify="false" createChild="false" propertySortChoices="true" ecoreFeature="ecore:EReference scope.ecore#//Scope/links"/>
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute scope.ecore#//Scope/stages"/>
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute scope.ecore#//Scope/finalStage"/>
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute scope.ecore#//Scope/writableStages"/>
     </genClasses>
     <genClasses ecoreClass="scope.ecore#//LinksMap">
       <genFeatures createChild="false" ecoreFeature="ecore:EAttribute scope.ecore#//LinksMap/key"/>
@@ -20,6 +23,10 @@
     </genClasses>
     <genClasses ecoreClass="scope.ecore#//ScopeContainer">
       <genFeatures property="None" children="true" createChild="true" ecoreFeature="ecore:EReference scope.ecore#//ScopeContainer/scopes"/>
+    </genClasses>
+    <genClasses ecoreClass="scope.ecore#//StageTransition">
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute scope.ecore#//StageTransition/objectId"/>
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute scope.ecore#//StageTransition/targetStage"/>
     </genClasses>
   </genPackages>
 </genmodel:GenModel>

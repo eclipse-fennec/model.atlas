@@ -54,6 +54,15 @@ public interface ScopeFactory extends EFactory {
 	ScopeContainer createScopeContainer();
 
 	/**
+	 * Returns a new object of class '<em>Stage Transition</em>'.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @return a new object of class '<em>Stage Transition</em>'.
+	 * @generated
+	 */
+	StageTransition createStageTransition();
+
+	/**
 	 * Returns the package supported by this factory.
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->

@@ -66,6 +66,7 @@ import org.eclipse.fennec.model.atlas.mgmt.management.ObjectStatus;
  *   <li>{@link org.eclipse.fennec.model.atlas.mgmt.management.impl.ObjectMetadataImpl#getRole <em>Role</em>}</li>
  *   <li>{@link org.eclipse.fennec.model.atlas.mgmt.management.impl.ObjectMetadataImpl#getLastChangeReason <em>Last Change Reason</em>}</li>
  *   <li>{@link org.eclipse.fennec.model.atlas.mgmt.management.impl.ObjectMetadataImpl#getScope <em>Scope</em>}</li>
+ *   <li>{@link org.eclipse.fennec.model.atlas.mgmt.management.impl.ObjectMetadataImpl#isIsReadOnly <em>Is Read Only</em>}</li>
  * </ul>
  *
  * @generated
@@ -510,6 +511,26 @@ public class ObjectMetadataImpl extends MinimalEObjectImpl.Container implements 
 	 * @ordered
 	 */
 	protected String scope = SCOPE_EDEFAULT;
+
+	/**
+	 * The default value of the '{@link #isIsReadOnly() <em>Is Read Only</em>}' attribute.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @see #isIsReadOnly()
+	 * @generated
+	 * @ordered
+	 */
+	protected static final boolean IS_READ_ONLY_EDEFAULT = false;
+
+	/**
+	 * The cached value of the '{@link #isIsReadOnly() <em>Is Read Only</em>}' attribute.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @see #isIsReadOnly()
+	 * @generated
+	 * @ordered
+	 */
+	protected boolean isReadOnly = IS_READ_ONLY_EDEFAULT;
 
 	/**
 	 * <!-- begin-user-doc -->
@@ -1072,6 +1093,29 @@ public class ObjectMetadataImpl extends MinimalEObjectImpl.Container implements 
 	 * @generated
 	 */
 	@Override
+	public boolean isIsReadOnly() {
+		return isReadOnly;
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
+	public void setIsReadOnly(boolean newIsReadOnly) {
+		boolean oldIsReadOnly = isReadOnly;
+		isReadOnly = newIsReadOnly;
+		if (eNotificationRequired())
+			eNotify(new ENotificationImpl(this, Notification.SET, ManagementPackage.OBJECT_METADATA__IS_READ_ONLY, oldIsReadOnly, isReadOnly));
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
 	public NotificationChain eInverseRemove(InternalEObject otherEnd, int featureID, NotificationChain msgs) {
 		switch (featureID) {
 			case ManagementPackage.OBJECT_METADATA__PROPERTIES:
@@ -1136,6 +1180,8 @@ public class ObjectMetadataImpl extends MinimalEObjectImpl.Container implements 
 				return getLastChangeReason();
 			case ManagementPackage.OBJECT_METADATA__SCOPE:
 				return getScope();
+			case ManagementPackage.OBJECT_METADATA__IS_READ_ONLY:
+				return isIsReadOnly();
 		}
 		return super.eGet(featureID, resolve, coreType);
 	}
@@ -1216,6 +1262,9 @@ public class ObjectMetadataImpl extends MinimalEObjectImpl.Container implements 
 				return;
 			case ManagementPackage.OBJECT_METADATA__SCOPE:
 				setScope((String)newValue);
+				return;
+			case ManagementPackage.OBJECT_METADATA__IS_READ_ONLY:
+				setIsReadOnly((Boolean)newValue);
 				return;
 		}
 		super.eSet(featureID, newValue);
@@ -1298,6 +1347,9 @@ public class ObjectMetadataImpl extends MinimalEObjectImpl.Container implements 
 			case ManagementPackage.OBJECT_METADATA__SCOPE:
 				setScope(SCOPE_EDEFAULT);
 				return;
+			case ManagementPackage.OBJECT_METADATA__IS_READ_ONLY:
+				setIsReadOnly(IS_READ_ONLY_EDEFAULT);
+				return;
 		}
 		super.eUnset(featureID);
 	}
@@ -1356,6 +1408,8 @@ public class ObjectMetadataImpl extends MinimalEObjectImpl.Container implements 
 				return LAST_CHANGE_REASON_EDEFAULT == null ? lastChangeReason != null : !LAST_CHANGE_REASON_EDEFAULT.equals(lastChangeReason);
 			case ManagementPackage.OBJECT_METADATA__SCOPE:
 				return SCOPE_EDEFAULT == null ? scope != null : !SCOPE_EDEFAULT.equals(scope);
+			case ManagementPackage.OBJECT_METADATA__IS_READ_ONLY:
+				return isReadOnly != IS_READ_ONLY_EDEFAULT;
 		}
 		return super.eIsSet(featureID);
 	}
@@ -1412,6 +1466,8 @@ public class ObjectMetadataImpl extends MinimalEObjectImpl.Container implements 
 		result.append(lastChangeReason);
 		result.append(", scope: ");
 		result.append(scope);
+		result.append(", isReadOnly: ");
+		result.append(isReadOnly);
 		result.append(')');
 		return result.toString();
 	}

@@ -19,7 +19,7 @@ import org.eclipse.fennec.model.atlas.model.scope.Scope;
 import org.eclipse.fennec.model.atlas.model.scope.ScopeContainer;
 import org.eclipse.fennec.model.atlas.model.scope.ScopeFactory;
 import org.eclipse.fennec.model.atlas.runtime.RequireRuntime;
-import org.eclipse.fennec.model.atlas.scope.ScopeServiceCollector;
+import org.eclipse.fennec.model.atlas.scope.ScopeCollector;
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
 import org.osgi.service.component.annotations.ServiceScope;
@@ -48,13 +48,13 @@ import jakarta.ws.rs.core.Response;
 @RequireRuntime
 @JakartarsResource()
 @JakartarsName("ScopesResource")
-@Component(service = ScopesResource.class, scope = ServiceScope.PROTOTYPE)
+@Component(name = "ScopeResource", service = ScopesResource.class, scope = ServiceScope.PROTOTYPE)
 @Path("/scopes")
 @Tag(name = "Scope Management", description = "Discovery and management of Model Atlas scopes")
 public class ScopesResource {
 
 	 @Reference
-	 private ScopeServiceCollector scopeServiceCollector;
+	 private ScopeCollector scopeCollector;
 
 	/**
 	 * List all configured scopes.
@@ -77,7 +77,7 @@ public class ScopesResource {
 	)
 	public Response listScopes() {
 		
-		List<Scope> scopes = scopeServiceCollector.getScopes();
+		List<Scope> scopes = scopeCollector.getScopes();
 		ScopeContainer container = ScopeFactory.eINSTANCE.createScopeContainer();
 		container.getScopes().addAll(scopes);
 		return Response.status(Response.Status.OK).entity(container).build();
@@ -109,7 +109,7 @@ public class ScopesResource {
 		@Parameter(description = "The name of the scope", required = true)
 		@PathParam("scopeName") String scopeName) {
 		
-		Scope scope = scopeServiceCollector.getScopeByName(scopeName);
+		Scope scope = scopeCollector.getScopeByName(scopeName);
 		if(scope == null) return Response.status(Response.Status.NO_CONTENT).build();
 		return Response.status(Response.Status.OK).entity(scope).build();
 	}

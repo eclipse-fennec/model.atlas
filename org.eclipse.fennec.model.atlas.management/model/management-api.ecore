@@ -186,7 +186,7 @@
         <details key="documentation" value="Store object with metadata, returns promise with storage ID"/>
       </eAnnotations>
       <eGenericType eClassifier="ecore:EDataType management.ecore#//Promise">
-        <eTypeArguments eClassifier="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+        <eTypeArguments eClassifier="ecore:EClass management.ecore#//ObjectMetadata"/>
       </eGenericType>
       <eParameters name="objectId" lowerBound="1" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
       <eParameters name="object" lowerBound="1">

@@ -24,10 +24,10 @@
     </eTypeParameters>
     <eOperations name="uploadToStage">
       <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
-        <details key="documentation" value="Upload an EObject to a certain stage (draft, review, etc); returns promise with object ID"/>
+        <details key="documentation" value="Upload an EObject to a certain stage (draft, review, etc); returns promise with uploaded ObjectMetadata."/>
       </eAnnotations>
       <eGenericType eClassifier="ecore:EDataType ../../org.eclipse.fennec.model.atlas.management/model/management.ecore#//Promise">
-        <eTypeArguments eClassifier="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+        <eTypeArguments eClassifier="ecore:EClass ../../org.eclipse.fennec.model.atlas.management/model/management.ecore#//ObjectMetadata"/>
       </eGenericType>
       <eParameters name="stage" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
       <eParameters name="object" lowerBound="1">
@@ -58,10 +58,10 @@
     </eOperations>
     <eOperations name="updateInStage">
       <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
-        <details key="documentation" value="Update an existing object"/>
+        <details key="documentation" value="Update an existing object. Returned updated ObjectMetadata."/>
       </eAnnotations>
       <eGenericType eClassifier="ecore:EDataType ../../org.eclipse.fennec.model.atlas.management/model/management.ecore#//Promise">
-        <eTypeArguments eClassifier="ecore:EDataType ../../org.eclipse.fennec.model.atlas.management/model/management.ecore#//Void"/>
+        <eTypeArguments eClassifier="ecore:EClass ../../org.eclipse.fennec.model.atlas.management/model/management.ecore#//ObjectMetadata"/>
       </eGenericType>
       <eParameters name="stage" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
       <eParameters name="updatedObject" lowerBound="1">

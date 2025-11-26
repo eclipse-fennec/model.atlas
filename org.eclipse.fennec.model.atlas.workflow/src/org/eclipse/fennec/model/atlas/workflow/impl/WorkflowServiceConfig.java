@@ -93,6 +93,14 @@ public @interface WorkflowServiceConfig {
 			defaultValue = "release"
 			)
 	String final_stage() default "release";
+	
+	@AttributeDefinition(
+			name = "Workflow Writable Stages",
+			required = false, 
+			description = "The stages that can be writable for this workflow",
+			defaultValue = {"draft", "approved"}
+			)
+	String[] writable_stages() default {"draft", "approved"};
     
     /**
      * Timeout in milliseconds for transactional operations.

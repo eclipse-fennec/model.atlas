@@ -10,9 +10,12 @@ Test-Cases: ${classes;HIERARCHY_INDIRECTLY_ANNOTATED;org.junit.platform.commons.
 	org.eclipse.fennec.model.atlas.scope;version=snapshot,\
 	org.eclipse.fennec.model.atlas.scope.model;version=snapshot,\
 	org.osgi.test.junit5.cm,\
-	org.osgi.service.cm
+	org.osgi.service.cm,\
+	org.eclipse.fennec.model.atlas.workflow;version=snapshot
 	
-Private-Package: org.eclipse.fennec.model.atlas.scope.tests
+Private-Package: \
+	org.eclipse.fennec.model.atlas.scope.tests,\
+	org.eclipse.fennec.model.atlas.scope.tests.annotations
 
 Bundle-Version: 1.0.0.SNAPSHOT
 
