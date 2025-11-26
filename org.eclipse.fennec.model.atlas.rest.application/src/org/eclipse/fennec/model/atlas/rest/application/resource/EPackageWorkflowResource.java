@@ -115,7 +115,7 @@ public class EPackageWorkflowResource {
 	
 	@POST
 	@Path("/drafts")
-	@Produces({"application/xmi", MediaType.TEXT_PLAIN})
+	@Produces({"application/json", "application/xmi", MediaType.TEXT_PLAIN})
 	@Operation(
 			summary = "Upload a new draft for an EPackage",
 			description = "Upload an EPackage as a draft",
@@ -194,7 +194,7 @@ public class EPackageWorkflowResource {
 
     @GET
     @Path("/drafts")
-    @Produces({"application/xmi", MediaType.TEXT_PLAIN})
+    @Produces({"application/json", "application/xmi", MediaType.TEXT_PLAIN})
     @Operation(
 			summary = "List all EPackages in draft/review status",
 			description = "List all EPackages in draft/review status",
@@ -229,7 +229,7 @@ public class EPackageWorkflowResource {
   
     @GET
     @Path("/drafts/nsuri")
-    @Produces({"application/xmi", MediaType.TEXT_PLAIN})
+    @Produces({"application/json", "application/xmi", MediaType.TEXT_PLAIN})
     @Operation(
 			summary = "Get draft EPackage metadata by packageNsURI",
 			description = "Get draft EPackage metadata by packageNsURI",
@@ -248,7 +248,7 @@ public class EPackageWorkflowResource {
             ObjectMetadata metadata = workflowService.getDraft(packageNsURI);
             
             if (nonNull(metadata)) {
-                return Response.ok(metadata).type("application/xmi").build();
+                return Response.ok(metadata).build();
             } else {
                 return Response.status(Response.Status.NOT_FOUND)
                               .entity("Draft not found: " + packageNsURI)
@@ -266,7 +266,7 @@ public class EPackageWorkflowResource {
 
     @GET
     @Path("/drafts/nsuri/content")
-    @Produces({"application/xmi", MediaType.TEXT_PLAIN})
+    @Produces({"application/json", "application/xmi", MediaType.TEXT_PLAIN})
     @Operation(
 			summary = "Get draft EPackage by packageNsURI",
 			description = "Get draft EPackage by packageNsURI",
@@ -565,7 +565,7 @@ public class EPackageWorkflowResource {
 
     @GET
     @Path("/all")
-    @Produces({"application/xmi", MediaType.TEXT_PLAIN})
+    @Produces({"application/json", "application/xmi", MediaType.TEXT_PLAIN})
     @Operation(
 			summary = "List all EPackages across all workflow states (draft, rejected, approved, released)",
 			description = "List all EPackages across all workflow states (draft, rejected, approved, released)",
@@ -613,7 +613,7 @@ public class EPackageWorkflowResource {
  
     @GET
     @Path("/rejected")
-    @Produces({"application/xmi", MediaType.TEXT_PLAIN})
+    @Produces({"application/json", "application/xmi", MediaType.TEXT_PLAIN})
     @Operation(
 			summary = "List all rejected EPackages",
 			description = "List all rejected EPackages",
@@ -644,7 +644,7 @@ public class EPackageWorkflowResource {
  
     @GET
     @Path("/released")
-    @Produces({"application/xmi", MediaType.TEXT_PLAIN})
+    @Produces({"application/json", "application/xmi", MediaType.TEXT_PLAIN})
     @Operation(
 			summary = "List all released EPackages",
 			description = "List all released EPackages",
@@ -675,7 +675,7 @@ public class EPackageWorkflowResource {
 
     @GET
     @Path("")
-    @Produces({"application/xmi", MediaType.TEXT_PLAIN})
+    @Produces({"application/json", "application/xmi", MediaType.TEXT_PLAIN})
     @Operation(
 			summary = "Get the EPackage metadata with the provided packageNsURI",
 			description = "Get the EPackage metadata with the provided packageNsURI",
@@ -711,7 +711,7 @@ public class EPackageWorkflowResource {
 
     @GET
     @Path("/content")
-    @Produces({"application/xmi", MediaType.TEXT_PLAIN})
+    @Produces({"application/json", "application/xmi", MediaType.TEXT_PLAIN})
     @Operation(
 			summary = "Get the EPackage with the provided packageNsURI",
 			description = "Get the EPackage with the provided packageNsURI",
