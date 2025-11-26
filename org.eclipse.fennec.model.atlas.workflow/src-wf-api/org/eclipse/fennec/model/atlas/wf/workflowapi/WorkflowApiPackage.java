@@ -110,13 +110,22 @@ public interface WorkflowApiPackage extends org.eclipse.emf.ecore.EPackage {
 	int EOBJECT_WORKFLOW_SERVICE___GET_FROM_STAGE__STRING_STRING = 1;
 
 	/**
+	 * The operation id for the '<em>Get From Final Stage</em>' operation.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 * @ordered
+	 */
+	int EOBJECT_WORKFLOW_SERVICE___GET_FROM_FINAL_STAGE__STRING = 2;
+
+	/**
 	 * The operation id for the '<em>Get Content From Stage</em>' operation.
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
 	 * @generated
 	 * @ordered
 	 */
-	int EOBJECT_WORKFLOW_SERVICE___GET_CONTENT_FROM_STAGE__STRING_STRING = 2;
+	int EOBJECT_WORKFLOW_SERVICE___GET_CONTENT_FROM_STAGE__STRING_STRING = 3;
 
 	/**
 	 * The operation id for the '<em>Update In Stage</em>' operation.
@@ -125,7 +134,7 @@ public interface WorkflowApiPackage extends org.eclipse.emf.ecore.EPackage {
 	 * @generated
 	 * @ordered
 	 */
-	int EOBJECT_WORKFLOW_SERVICE___UPDATE_IN_STAGE__STRING_EOBJECT_STRING = 3;
+	int EOBJECT_WORKFLOW_SERVICE___UPDATE_IN_STAGE__STRING_EOBJECT_STRING = 4;
 
 	/**
 	 * The operation id for the '<em>Delete From Stage</em>' operation.
@@ -134,7 +143,7 @@ public interface WorkflowApiPackage extends org.eclipse.emf.ecore.EPackage {
 	 * @generated
 	 * @ordered
 	 */
-	int EOBJECT_WORKFLOW_SERVICE___DELETE_FROM_STAGE__STRING_STRING = 4;
+	int EOBJECT_WORKFLOW_SERVICE___DELETE_FROM_STAGE__STRING_STRING = 5;
 
 	/**
 	 * The operation id for the '<em>List In Stage</em>' operation.
@@ -143,7 +152,16 @@ public interface WorkflowApiPackage extends org.eclipse.emf.ecore.EPackage {
 	 * @generated
 	 * @ordered
 	 */
-	int EOBJECT_WORKFLOW_SERVICE___LIST_IN_STAGE__STRING = 5;
+	int EOBJECT_WORKFLOW_SERVICE___LIST_IN_STAGE__STRING = 6;
+
+	/**
+	 * The operation id for the '<em>List In Final Stage</em>' operation.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 * @ordered
+	 */
+	int EOBJECT_WORKFLOW_SERVICE___LIST_IN_FINAL_STAGE = 7;
 
 	/**
 	 * The operation id for the '<em>Transition To Stage</em>' operation.
@@ -152,7 +170,7 @@ public interface WorkflowApiPackage extends org.eclipse.emf.ecore.EPackage {
 	 * @generated
 	 * @ordered
 	 */
-	int EOBJECT_WORKFLOW_SERVICE___TRANSITION_TO_STAGE__STRING_STRING_STRING = 6;
+	int EOBJECT_WORKFLOW_SERVICE___TRANSITION_TO_STAGE__STRING_STRING_STRING = 8;
 
 	/**
 	 * The operation id for the '<em>Is Transition Allowed</em>' operation.
@@ -161,7 +179,7 @@ public interface WorkflowApiPackage extends org.eclipse.emf.ecore.EPackage {
 	 * @generated
 	 * @ordered
 	 */
-	int EOBJECT_WORKFLOW_SERVICE___IS_TRANSITION_ALLOWED__STRING_STRING = 7;
+	int EOBJECT_WORKFLOW_SERVICE___IS_TRANSITION_ALLOWED__STRING_STRING = 9;
 
 	/**
 	 * The number of operations of the '<em>EObject Workflow Service</em>' class.
@@ -170,7 +188,7 @@ public interface WorkflowApiPackage extends org.eclipse.emf.ecore.EPackage {
 	 * @generated
 	 * @ordered
 	 */
-	int EOBJECT_WORKFLOW_SERVICE_OPERATION_COUNT = 8;
+	int EOBJECT_WORKFLOW_SERVICE_OPERATION_COUNT = 10;
 
 
 	/**
@@ -202,6 +220,16 @@ public interface WorkflowApiPackage extends org.eclipse.emf.ecore.EPackage {
 	 * @generated
 	 */
 	EOperation getEObjectWorkflowService__GetFromStage__String_String();
+
+	/**
+	 * Returns the meta object for the '{@link org.eclipse.fennec.model.atlas.wf.workflowapi.EObjectWorkflowService#getFromFinalStage(java.lang.String) <em>Get From Final Stage</em>}' operation.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @return the meta object for the '<em>Get From Final Stage</em>' operation.
+	 * @see org.eclipse.fennec.model.atlas.wf.workflowapi.EObjectWorkflowService#getFromFinalStage(java.lang.String)
+	 * @generated
+	 */
+	EOperation getEObjectWorkflowService__GetFromFinalStage__String();
 
 	/**
 	 * Returns the meta object for the '{@link org.eclipse.fennec.model.atlas.wf.workflowapi.EObjectWorkflowService#getContentFromStage(java.lang.String, java.lang.String) <em>Get Content From Stage</em>}' operation.
@@ -242,6 +270,16 @@ public interface WorkflowApiPackage extends org.eclipse.emf.ecore.EPackage {
 	 * @generated
 	 */
 	EOperation getEObjectWorkflowService__ListInStage__String();
+
+	/**
+	 * Returns the meta object for the '{@link org.eclipse.fennec.model.atlas.wf.workflowapi.EObjectWorkflowService#listInFinalStage() <em>List In Final Stage</em>}' operation.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @return the meta object for the '<em>List In Final Stage</em>' operation.
+	 * @see org.eclipse.fennec.model.atlas.wf.workflowapi.EObjectWorkflowService#listInFinalStage()
+	 * @generated
+	 */
+	EOperation getEObjectWorkflowService__ListInFinalStage();
 
 	/**
 	 * Returns the meta object for the '{@link org.eclipse.fennec.model.atlas.wf.workflowapi.EObjectWorkflowService#transitionToStage(java.lang.String, java.lang.String, java.lang.String) <em>Transition To Stage</em>}' operation.
@@ -313,6 +351,14 @@ public interface WorkflowApiPackage extends org.eclipse.emf.ecore.EPackage {
 		EOperation EOBJECT_WORKFLOW_SERVICE___GET_FROM_STAGE__STRING_STRING = eINSTANCE.getEObjectWorkflowService__GetFromStage__String_String();
 
 		/**
+		 * The meta object literal for the '<em><b>Get From Final Stage</b></em>' operation.
+		 * <!-- begin-user-doc -->
+		 * <!-- end-user-doc -->
+		 * @generated
+		 */
+		EOperation EOBJECT_WORKFLOW_SERVICE___GET_FROM_FINAL_STAGE__STRING = eINSTANCE.getEObjectWorkflowService__GetFromFinalStage__String();
+
+		/**
 		 * The meta object literal for the '<em><b>Get Content From Stage</b></em>' operation.
 		 * <!-- begin-user-doc -->
 		 * <!-- end-user-doc -->
@@ -343,6 +389,14 @@ public interface WorkflowApiPackage extends org.eclipse.emf.ecore.EPackage {
 		 * @generated
 		 */
 		EOperation EOBJECT_WORKFLOW_SERVICE___LIST_IN_STAGE__STRING = eINSTANCE.getEObjectWorkflowService__ListInStage__String();
+
+		/**
+		 * The meta object literal for the '<em><b>List In Final Stage</b></em>' operation.
+		 * <!-- begin-user-doc -->
+		 * <!-- end-user-doc -->
+		 * @generated
+		 */
+		EOperation EOBJECT_WORKFLOW_SERVICE___LIST_IN_FINAL_STAGE = eINSTANCE.getEObjectWorkflowService__ListInFinalStage();
 
 		/**
 		 * The meta object literal for the '<em><b>Transition To Stage</b></em>' operation.

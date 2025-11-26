@@ -285,13 +285,22 @@ public interface ManagementPackage extends org.eclipse.emf.ecore.EPackage {
 	int OBJECT_METADATA__LAST_CHANGE_REASON = 21;
 
 	/**
+	 * The feature id for the '<em><b>Scope</b></em>' attribute.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 * @ordered
+	 */
+	int OBJECT_METADATA__SCOPE = 22;
+
+	/**
 	 * The number of structural features of the '<em>Object Metadata</em>' class.
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
 	 * @generated
 	 * @ordered
 	 */
-	int OBJECT_METADATA_FEATURE_COUNT = 22;
+	int OBJECT_METADATA_FEATURE_COUNT = 23;
 
 	/**
 	 * The number of operations of the '<em>Object Metadata</em>' class.
@@ -395,13 +404,31 @@ public interface ManagementPackage extends org.eclipse.emf.ecore.EPackage {
 	int OBJECT_QUERY__STATUS = 3;
 
 	/**
+	 * The feature id for the '<em><b>Role</b></em>' attribute.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 * @ordered
+	 */
+	int OBJECT_QUERY__ROLE = 4;
+
+	/**
+	 * The feature id for the '<em><b>Scope</b></em>' attribute.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 * @ordered
+	 */
+	int OBJECT_QUERY__SCOPE = 5;
+
+	/**
 	 * The number of structural features of the '<em>Object Query</em>' class.
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
 	 * @generated
 	 * @ordered
 	 */
-	int OBJECT_QUERY_FEATURE_COUNT = 4;
+	int OBJECT_QUERY_FEATURE_COUNT = 6;
 
 	/**
 	 * The number of operations of the '<em>Object Query</em>' class.
@@ -929,6 +956,17 @@ public interface ManagementPackage extends org.eclipse.emf.ecore.EPackage {
 	EAttribute getObjectMetadata_LastChangeReason();
 
 	/**
+	 * Returns the meta object for the attribute '{@link org.eclipse.fennec.model.atlas.mgmt.management.ObjectMetadata#getScope <em>Scope</em>}'.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @return the meta object for the attribute '<em>Scope</em>'.
+	 * @see org.eclipse.fennec.model.atlas.mgmt.management.ObjectMetadata#getScope()
+	 * @see #getObjectMetadata()
+	 * @generated
+	 */
+	EAttribute getObjectMetadata_Scope();
+
+	/**
 	 * Returns the meta object for class '{@link java.util.Map.Entry <em>String To Object Map Entry</em>}'.
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
@@ -1015,6 +1053,28 @@ public interface ManagementPackage extends org.eclipse.emf.ecore.EPackage {
 	 * @generated
 	 */
 	EAttribute getObjectQuery_Status();
+
+	/**
+	 * Returns the meta object for the attribute '{@link org.eclipse.fennec.model.atlas.mgmt.management.ObjectQuery#getRole <em>Role</em>}'.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @return the meta object for the attribute '<em>Role</em>'.
+	 * @see org.eclipse.fennec.model.atlas.mgmt.management.ObjectQuery#getRole()
+	 * @see #getObjectQuery()
+	 * @generated
+	 */
+	EAttribute getObjectQuery_Role();
+
+	/**
+	 * Returns the meta object for the attribute '{@link org.eclipse.fennec.model.atlas.mgmt.management.ObjectQuery#getScope <em>Scope</em>}'.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @return the meta object for the attribute '<em>Scope</em>'.
+	 * @see org.eclipse.fennec.model.atlas.mgmt.management.ObjectQuery#getScope()
+	 * @see #getObjectQuery()
+	 * @generated
+	 */
+	EAttribute getObjectQuery_Scope();
 
 	/**
 	 * Returns the meta object for class '{@link org.eclipse.fennec.model.atlas.mgmt.management.GenerationRequest <em>Generation Request</em>}'.
@@ -1488,6 +1548,14 @@ public interface ManagementPackage extends org.eclipse.emf.ecore.EPackage {
 		EAttribute OBJECT_METADATA__LAST_CHANGE_REASON = eINSTANCE.getObjectMetadata_LastChangeReason();
 
 		/**
+		 * The meta object literal for the '<em><b>Scope</b></em>' attribute feature.
+		 * <!-- begin-user-doc -->
+		 * <!-- end-user-doc -->
+		 * @generated
+		 */
+		EAttribute OBJECT_METADATA__SCOPE = eINSTANCE.getObjectMetadata_Scope();
+
+		/**
 		 * The meta object literal for the '{@link org.eclipse.fennec.model.atlas.mgmt.management.impl.StringToObjectMapEntryImpl <em>String To Object Map Entry</em>}' class.
 		 * <!-- begin-user-doc -->
 		 * <!-- end-user-doc -->
@@ -1554,6 +1622,22 @@ public interface ManagementPackage extends org.eclipse.emf.ecore.EPackage {
 		 * @generated
 		 */
 		EAttribute OBJECT_QUERY__STATUS = eINSTANCE.getObjectQuery_Status();
+
+		/**
+		 * The meta object literal for the '<em><b>Role</b></em>' attribute feature.
+		 * <!-- begin-user-doc -->
+		 * <!-- end-user-doc -->
+		 * @generated
+		 */
+		EAttribute OBJECT_QUERY__ROLE = eINSTANCE.getObjectQuery_Role();
+
+		/**
+		 * The meta object literal for the '<em><b>Scope</b></em>' attribute feature.
+		 * <!-- begin-user-doc -->
+		 * <!-- end-user-doc -->
+		 * @generated
+		 */
+		EAttribute OBJECT_QUERY__SCOPE = eINSTANCE.getObjectQuery_Scope();
 
 		/**
 		 * The meta object literal for the '{@link org.eclipse.fennec.model.atlas.mgmt.management.impl.GenerationRequestImpl <em>Generation Request</em>}' class.

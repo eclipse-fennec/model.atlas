@@ -109,6 +109,7 @@ public class LuceneRegistryHelper extends AbstractRegistryHelper {
     public static final String FIELD_OBJECT_NAME = "objectName";
     public static final String FIELD_ROLE = "role";
     public static final String FIELD_PROPERTIES = "properties";
+    public static final String FIELD_SCOPE = "scope";
     
     // Additional fields for advanced querying
     public static final String FIELD_LAST_CHANGE_USER = "lastChangeUser";
@@ -533,9 +534,10 @@ public class LuceneRegistryHelper extends AbstractRegistryHelper {
             doc.add(new StringField(FIELD_STATUS, metadata.getStatus().getLiteral(), Field.Store.YES));
         }
         
-        // Object name and role
+        // Object name and role, scope
         addFieldIfNotNull(doc, FIELD_OBJECT_NAME, metadata.getObjectName(), true);
         addFieldIfNotNull(doc, FIELD_ROLE, metadata.getRole(), false);
+        addFieldIfNotNull(doc, FIELD_SCOPE, metadata.getScope(), false);
         
         // Additional metadata fields - following LuceneFileStorageHelper pattern
         addFieldIfNotNull(doc, FIELD_GENERATION_TRIGGER_FINGERPRINT, metadata.getGenerationTriggerFingerprint(), false);
@@ -625,7 +627,8 @@ public class LuceneRegistryHelper extends AbstractRegistryHelper {
                 FIELD_STATUS,
                 FIELD_OBJECT_REF,
                 FIELD_OBJECT_METADATA_ID,
-                FIELD_ROLE
+                FIELD_ROLE,
+                FIELD_SCOPE
             );
             
             // Set of analyzed user fields for wildcard/fuzzy searches

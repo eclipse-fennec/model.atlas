@@ -485,6 +485,39 @@ public class LuceneEObjectRegistryService<T extends EObject> implements EObjectR
 			return stats;
 		});
 	}
+	
+	/* 
+	 * (non-Javadoc)
+	 * @see org.eclipse.fennec.model.atlas.mgmt.api.EObjectRegistryService#findByScopeAndRole(java.lang.String, java.lang.String)
+	 */
+	@Override
+	public List<ObjectMetadata> findByScopeAndRole(String scope, String role) {
+		requireNonNull(scope, "Scope cannot be null");
+		requireNonNull(role, "Role cannot be null");
+
+		try {
+			// Use Lucene for efficient search
+			String query = LuceneRegistryHelper.FIELD_SCOPE + ":" + scope + 
+					" AND " + LuceneRegistryHelper.FIELD_ROLE + ":" + role;
+			List<String> objectIds = luceneHelper.searchObjectIds(query, Integer.MAX_VALUE);
+			List<ObjectMetadata> luceneResults = loadMetadataList(objectIds);
+
+			// If Lucene returns results or cache is empty, use Lucene results
+			if (!luceneResults.isEmpty() || metadataCache.isEmpty()) {
+				return luceneResults;
+			}
+
+			// If Lucene returns empty but cache has objects, fall back to cache scan
+			logDebug("Lucene search returned empty results, falling back to cache scan for role: " + role);
+		} catch (Exception e) {
+			LOGGER.log(Level.SEVERE, "Error in Lucene search by role: " + role, e);
+			// Fall back to cache scan
+		}
+		// Fallback to in-memory cache scan
+		return metadataCache.values().stream()
+				.filter(metadata -> role.equals(metadata.getRole()) && scope.equals(metadata.getScope()))
+				.toList();
+	}
 
 	// === Helper Methods ===
 
@@ -720,4 +753,6 @@ public class LuceneEObjectRegistryService<T extends EObject> implements EObjectR
 			LOGGER.fine(message);
 		}
 	}
+
+	
 }

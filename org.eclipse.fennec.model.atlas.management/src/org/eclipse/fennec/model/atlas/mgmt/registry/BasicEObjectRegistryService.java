@@ -707,5 +707,24 @@ public class BasicEObjectRegistryService<T extends EObject> implements EObjectRe
 			cacheLock.readLock().unlock();
 		}
 	}
+	
+	/* 
+	 * (non-Javadoc)
+	 * @see org.eclipse.fennec.model.atlas.mgmt.api.EObjectRegistryService#findByScopeAndRole(java.lang.String, java.lang.String)
+	 */
+	@Override
+	public List<ObjectMetadata> findByScopeAndRole(String scope, String role) {
+		requireNonNull(scope, "Scope must not be null");
+		requireNonNull(role, "Role must not be null");
+		
+		cacheLock.readLock().lock();
+		try {
+			return metadataById.values().stream()
+				.filter(metadata -> role.equals(metadata.getRole()) && scope.equals(metadata.getScope()))
+				.collect(java.util.stream.Collectors.toList());
+		} finally {
+			cacheLock.readLock().unlock();
+		}
+	}
 
 }

@@ -14,6 +14,7 @@
 package org.eclipse.fennec.model.atlas.workflow.tests;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -40,6 +41,7 @@ import org.osgi.test.common.annotation.InjectBundleContext;
 import org.osgi.test.common.annotation.InjectService;
 import org.osgi.test.common.annotation.Property;
 import org.osgi.test.common.annotation.Property.TemplateArgument;
+import org.osgi.test.common.annotation.Property.Type;
 import org.osgi.test.common.annotation.Property.ValueSource;
 import org.osgi.test.common.annotation.config.WithFactoryConfiguration;
 import org.osgi.test.common.service.ServiceAware;
@@ -100,7 +102,8 @@ public class ScopeAwareWorkflowServiceTest {
      * Test basic upload and retrieval within a single scope.
      * @throws InvocationTargetException 
      */
-    @Test
+    @SuppressWarnings({ "unchecked", "rawtypes" })
+	@Test
     @WithFactoryConfiguration(factoryPid = "LuceneEObjectRegistryService", name = "registry", location = "?", properties = {
         @Property(key = "registry.workspace.folder", value = "%s/registry", templateArguments = {
             @TemplateArgument(source = ValueSource.SystemProperty, value = PROP_TEMP_DIR)
@@ -113,18 +116,23 @@ public class ScopeAwareWorkflowServiceTest {
         @Property(key = "storage.scope", value = "my-tenant"),
         @Property(key = "storage.role", value = "draft")
     })
+    @WithFactoryConfiguration(factoryPid = "FileObjectStorage", name = "tenant-release", location = "?", properties = {
+            @Property(key = "workspace.folder", value = "%s/tenant-release", templateArguments = {
+                @TemplateArgument(source = ValueSource.SystemProperty, value = PROP_TEMP_DIR)
+            }),
+            @Property(key = "storage.scope", value = "my-tenant"),
+            @Property(key = "storage.role", value = "release")
+        })
     @WithFactoryConfiguration(factoryPid = "EObjectWorkflowService", name = "tenant-workflow", location = "?", properties = {
-        @Property(key = "scope.name", value = "my-tenant"),
+        @Property(key = "scope", value = "my-tenant"),
         @Property(key = "parent.scope", value = ""),
-        @Property(key = "stages", value = {"Draft", "Released"}),
-        @Property(key = "stage.storage.mapping", value = {"Draft=draft", "Released=release"}),
-        @Property(key = "allowed.transitions", value = {"Draft->Released"})
+        @Property(key = "stages", value = {"draft", "release"}, type = Type.Array)
     })
     public void testSingleScopeUploadAndRetrieve(
-            @InjectService(cardinality = 0, filter = "(scope.name=my-tenant)")
-            ServiceAware<EObjectWorkflowService<EPackage>> workflowAware) throws InterruptedException, InvocationTargetException {
+            @InjectService(cardinality = 0, filter = "(scope=my-tenant)")
+            ServiceAware<EObjectWorkflowService> workflowAware) throws InterruptedException, InvocationTargetException {
 
-        EObjectWorkflowService<EPackage> workflow = workflowAware.waitForService(5000);
+        EObjectWorkflowService<EObject> workflow = workflowAware.waitForService(5000);
         assertNotNull(workflow, "Workflow service should be available");
 
         // Create test package
@@ -141,20 +149,22 @@ public class ScopeAwareWorkflowServiceTest {
 
         // Upload to Draft stage
         String nsUri = pkg.getNsURI();
-        String objectId = workflow.uploadToStage("Draft", pkg, metadata).getValue();
+        String objectId = workflow.uploadToStage("draft", pkg, metadata).getValue();
         assertNotNull(objectId, "Object ID should be returned");
 
         // Retrieve from Draft stage
-        ObjectMetadata retrieved = workflow.getFromStage("Draft", nsUri);
+        ObjectMetadata retrieved = workflow.getFromStage("draft", objectId);
         assertNotNull(retrieved, "Should retrieve uploaded package");
         assertEquals("TestPackage", retrieved.getObjectName());
         assertEquals("testUser", retrieved.getUploadUser());
 
         // Retrieve content
-        EPackage content = workflow.getContentFromStage("Draft", nsUri);
+        EObject content = workflow.getContentFromStage("draft", objectId);
         assertNotNull(content, "Should retrieve package content");
-        assertEquals("TestPackage", content.getName());
-        assertEquals(nsUri, content.getNsURI());
+        assertInstanceOf(EPackage.class, content);
+        EPackage packageContent = (EPackage) content;
+        assertEquals("TestPackage", packageContent.getName());
+        assertEquals(nsUri, packageContent.getNsURI());
     }
 
     // ========================================
@@ -192,13 +202,13 @@ public class ScopeAwareWorkflowServiceTest {
     @WithFactoryConfiguration(factoryPid = "EObjectWorkflowService", name = "parent-workflow", location = "?", properties = {
         @Property(key = "scope", value = "parent-scope"),
         @Property(key = "parent.scope", value = ""),
-        @Property(key = "stages", value = {"release"})
+        @Property(key = "stages", value = {"release"}, type = Type.Array)
     })
     // Child workflow (references parent)
     @WithFactoryConfiguration(factoryPid = "EObjectWorkflowService", name = "child-workflow", location = "?", properties = {
         @Property(key = "scope", value = "child-scope"),
         @Property(key = "parent.scope", value = "parent-scope"),
-        @Property(key = "stages", value = {"draft", "release"}),
+        @Property(key = "stages", value = {"draft", "release"}, type = Type.Array),
         @Property(key = "parentWorkflowService.target", value = "(scope=parent-scope)")
     })
     public void testHierarchicalLookup(
@@ -242,7 +252,8 @@ public class ScopeAwareWorkflowServiceTest {
     // Test: Stage Transitions
     // ========================================
 
-    /**
+    @SuppressWarnings({ "unchecked", "rawtypes" })
+	/**
      * Test transitioning a package from Draft to Released stage.
      * @throws InvocationTargetException 
      */
@@ -267,18 +278,16 @@ public class ScopeAwareWorkflowServiceTest {
         @Property(key = "storage.role", value = "release")
     })
     @WithFactoryConfiguration(factoryPid = "EObjectWorkflowService", name = "test-workflow", location = "?", properties = {
-        @Property(key = "scope.name", value = "test-scope"),
+        @Property(key = "scope", value = "test-scope"),
         @Property(key = "parent.scope", value = ""),
-        @Property(key = "stages", value = {"Draft", "Released"}),
-        @Property(key = "stage.storage.mapping", value = {"Draft=draft", "Released=release"}),
-        @Property(key = "allowed.transitions", value = {"Draft->Released"}),
+        @Property(key = "stages", value = {"draft", "release"}, type = Type.Array),
         @Property(key = "delete.after.transition", value = "true")
     })
     public void testStageTransition(
-            @InjectService(cardinality = 0, filter = "(scope.name=test-scope)")
-            ServiceAware<EObjectWorkflowService<EPackage>> workflowAware) throws InterruptedException, InvocationTargetException {
+            @InjectService(cardinality = 0, filter = "(scope=test-scope)")
+            ServiceAware<EObjectWorkflowService> workflowAware) throws InterruptedException, InvocationTargetException {
 
-        EObjectWorkflowService<EPackage> workflow = workflowAware.waitForService(5000);
+        EObjectWorkflowService<EObject> workflow = workflowAware.waitForService(5000);
         assertNotNull(workflow, "Workflow service should be available");
 
         // Create and upload package to Draft
@@ -291,24 +300,23 @@ public class ScopeAwareWorkflowServiceTest {
         metadata.setUploadUser("transUser");
         metadata.setObjectName("TransitionPackage");
 
-        String nsUri = pkg.getNsURI();
-        workflow.uploadToStage("Draft", pkg, metadata).getValue();
+        String storageId = workflow.uploadToStage("draft", pkg, metadata).getValue();
 
         // Verify in Draft stage
-        ObjectMetadata draft = workflow.getFromStage("Draft", nsUri);
+        ObjectMetadata draft = workflow.getFromStage("draft", storageId);
         assertNotNull(draft, "Should exist in Draft stage");
 
         // Transition to Released
-        ObjectMetadata released = workflow.transitionToStage(nsUri, "Draft", "Released");
+        ObjectMetadata released = workflow.transitionToStage(storageId, "draft", "release");
         assertNotNull(released, "Transition should succeed");
 //        assertEquals("Released", released.getStage(), "Should be in Released stage");
 
         // Verify no longer in Draft (deleted after transition)
-        ObjectMetadata draftGone = workflow.getFromStage("Draft", nsUri);
+        ObjectMetadata draftGone = workflow.getFromStage("draft", storageId);
         assertNull(draftGone, "Should no longer exist in Draft stage");
 
         // Verify in Released stage
-        ObjectMetadata releasedCheck = workflow.getFromStage("Released", nsUri);
+        ObjectMetadata releasedCheck = workflow.getFromStage("release", storageId);
         assertNotNull(releasedCheck, "Should exist in Released stage");
         assertEquals("TransitionPackage", releasedCheck.getObjectName());
     }
@@ -317,7 +325,8 @@ public class ScopeAwareWorkflowServiceTest {
     // Test: List Operations with Hierarchy
     // ========================================
 
-    /**
+    @SuppressWarnings({ "unchecked", "rawtypes" })
+	/**
      * Test listing packages includes both local and parent packages.
      * @throws InvocationTargetException 
      */
@@ -342,25 +351,24 @@ public class ScopeAwareWorkflowServiceTest {
         @Property(key = "storage.role", value = "release")
     })
     @WithFactoryConfiguration(factoryPid = "EObjectWorkflowService", name = "parent-workflow", location = "?", properties = {
-        @Property(key = "scope.name", value = "parent"),
+        @Property(key = "scope", value = "parent"),
         @Property(key = "parent.scope", value = ""),
-        @Property(key = "stages", value = {"Released"}),
-        @Property(key = "stage.storage.mapping", value = {"Released=release"})
+        @Property(key = "stages", value = {"release"}, type = Type.Array)
     })
     @WithFactoryConfiguration(factoryPid = "EObjectWorkflowService", name = "child-workflow", location = "?", properties = {
-        @Property(key = "scope.name", value = "child"),
+        @Property(key = "scope", value = "child"),
         @Property(key = "parent.scope", value = "parent"),
-        @Property(key = "stages", value = {"Released"}),
-        @Property(key = "stage.storage.mapping", value = {"Released=release"})
+        @Property(key = "stages", value = {"release"}, type = Type.Array),
+        @Property(key = "parentWorkflowService.target", value = "(scope=parent)")
     })
     public void testListWithHierarchy(
-            @InjectService(cardinality = 0, filter = "(scope.name=parent)")
-            ServiceAware<EObjectWorkflowService<EPackage>> parentWorkflowAware,
-            @InjectService(cardinality = 0, filter = "(scope.name=child)")
-            ServiceAware<EObjectWorkflowService<EPackage>> childWorkflowAware) throws InterruptedException, InvocationTargetException {
+            @InjectService(cardinality = 0, filter = "(scope=parent)")
+            ServiceAware<EObjectWorkflowService> parentWorkflowAware,
+            @InjectService(cardinality = 0, filter = "(scope=child)")
+            ServiceAware<EObjectWorkflowService> childWorkflowAware) throws InterruptedException, InvocationTargetException {
 
-        EObjectWorkflowService<EPackage> parentWorkflow = parentWorkflowAware.waitForService(5000);
-        EObjectWorkflowService<EPackage> childWorkflow = childWorkflowAware.waitForService(5000);
+        EObjectWorkflowService<EObject> parentWorkflow = parentWorkflowAware.waitForService(5000);
+        EObjectWorkflowService<EObject> childWorkflow = childWorkflowAware.waitForService(5000);
 
         assertNotNull(parentWorkflow);
         assertNotNull(childWorkflow);
@@ -374,7 +382,9 @@ public class ScopeAwareWorkflowServiceTest {
         ObjectMetadata parentMeta = managementFactory.createObjectMetadata();
         parentMeta.setObjectName("ParentPkg");
         parentMeta.setUploadUser("parentUser");
-        parentWorkflow.uploadToStage("Released", parentPkg, parentMeta).getValue();
+        parentMeta.setScope("parent");
+        parentMeta.setRole("release");
+        parentWorkflow.uploadToStage("release", parentPkg, parentMeta).getValue();
 
         // Upload to child
         EPackage childPkg = ecoreFactory.createEPackage();
@@ -383,15 +393,17 @@ public class ScopeAwareWorkflowServiceTest {
         ObjectMetadata childMeta = managementFactory.createObjectMetadata();
         childMeta.setObjectName("ChildPkg");
         childMeta.setUploadUser("childUser");
-        childWorkflow.uploadToStage("Released", childPkg, childMeta).getValue();
+        childMeta.setScope("child");
+        childMeta.setRole("release");
+        childWorkflow.uploadToStage("release", childPkg, childMeta).getValue();
 
         // List from parent - should only see parent package
-        List<ObjectMetadata> parentList = parentWorkflow.listInStage("Released");
+        List<ObjectMetadata> parentList = parentWorkflow.listInStage("release");
         assertEquals(1, parentList.size(), "Parent should see 1 package");
         assertEquals("ParentPkg", parentList.get(0).getObjectName());
 
         // List from child - should see both child and parent packages
-        List<ObjectMetadata> childList = childWorkflow.listInStage("Released");
+        List<ObjectMetadata> childList = childWorkflow.listInStage("release");
         assertEquals(2, childList.size(), "Child should see 2 packages (local + parent)");
 
         boolean hasParent = childList.stream().anyMatch(m -> "ParentPkg".equals(m.getObjectName()));
@@ -412,7 +424,8 @@ public class ScopeAwareWorkflowServiceTest {
     // Test: Update and Delete Operations
     // ========================================
 
-    /**
+    @SuppressWarnings({ "unchecked", "rawtypes" })
+	/**
      * Test updating and deleting packages within a stage.
      * @throws InvocationTargetException 
      */
@@ -429,17 +442,24 @@ public class ScopeAwareWorkflowServiceTest {
         @Property(key = "storage.scope", value = "test-scope"),
         @Property(key = "storage.role", value = "draft")
     })
+    @WithFactoryConfiguration(factoryPid = "FileObjectStorage", name = "release-storage", location = "?", properties = {
+            @Property(key = "workspace.folder", value = "%s/release-storage", templateArguments = {
+                @TemplateArgument(source = ValueSource.SystemProperty, value = PROP_TEMP_DIR)
+            }),
+            @Property(key = "storage.scope", value = "test-scope"),
+            @Property(key = "storage.role", value = "release")
+        })
     @WithFactoryConfiguration(factoryPid = "EObjectWorkflowService", name = "test-workflow", location = "?", properties = {
-        @Property(key = "scope.name", value = "test-scope"),
+        @Property(key = "scope", value = "test-scope"),
         @Property(key = "parent.scope", value = ""),
-        @Property(key = "stages", value = {"Draft"}),
-        @Property(key = "stage.storage.mapping", value = {"Draft=draft"})
+        @Property(key = "stages", value = {"draft"}, type = Type.Array),
+        @Property(key = "final.stage", value = "draft")
     })
     public void testUpdateAndDelete(
-            @InjectService(cardinality = 0, filter = "(scope.name=test-scope)")
-            ServiceAware<EObjectWorkflowService<EPackage>> workflowAware) throws InterruptedException, InvocationTargetException {
+            @InjectService(cardinality = 0, filter = "(scope=test-scope)")
+            ServiceAware<EObjectWorkflowService> workflowAware) throws InterruptedException, InvocationTargetException {
 
-        EObjectWorkflowService<EPackage> workflow = workflowAware.waitForService(5000);
+        EObjectWorkflowService<EObject> workflow = workflowAware.waitForService(5000);
         assertNotNull(workflow);
 
         // Upload package
@@ -450,33 +470,360 @@ public class ScopeAwareWorkflowServiceTest {
         metadata.setObjectName("OriginalName");
         metadata.setUploadUser("testUser");
 
-        String nsUri = pkg.getNsURI();
-        workflow.uploadToStage("Draft", pkg, metadata).getValue();
+        String storageId = workflow.uploadToStage("draft", pkg, metadata).getValue();
 
         // Update package
         pkg.setName("UpdatedName");
-        workflow.uploadToStage("Draft", pkg, metadata).getValue();
+        storageId = workflow.uploadToStage("draft", pkg, metadata).getValue();
 
-        EPackage updated = workflow.getContentFromStage("Draft", nsUri);
+        EObject updated = workflow.getContentFromStage("draft", storageId);
         assertNotNull(updated);
-        assertEquals("UpdatedName", updated.getName(), "Name should be updated");
+        assertInstanceOf(EPackage.class, updated);
+        EPackage updatedPackage = (EPackage) updated;        
+        assertEquals("UpdatedName", updatedPackage.getName(), "Name should be updated");
 
         // Delete package
-        Boolean deleted = workflow.deleteFromStage("Draft", nsUri).getValue();
+        Boolean deleted = workflow.deleteFromStage("draft", storageId).getValue();
         assertTrue(deleted, "Delete should return true");
 
         // Verify deleted
-        ObjectMetadata gone = workflow.getFromStage("Draft", nsUri);
+        ObjectMetadata gone = workflow.getFromStage("draft", storageId);
         assertNull(gone, "Package should be deleted");
+    }
+
+    // ========================================
+    // Test: Final Stage Operations
+    // ========================================
+
+    @SuppressWarnings({ "unchecked", "rawtypes" })
+    /**
+     * Test basic final stage operations: getFromFinalStage and listInFinalStage.
+     * @throws InvocationTargetException
+     */
+    @Test
+    @WithFactoryConfiguration(factoryPid = "LuceneEObjectRegistryService", name = "registry", location = "?", properties = {
+        @Property(key = "registry.workspace.folder", value = "%s/registry", templateArguments = {
+            @TemplateArgument(source = ValueSource.SystemProperty, value = PROP_TEMP_DIR)
+        })
+    })
+    @WithFactoryConfiguration(factoryPid = "FileObjectStorage", name = "draft-storage", location = "?", properties = {
+        @Property(key = "workspace.folder", value = "%s/draft-storage", templateArguments = {
+            @TemplateArgument(source = ValueSource.SystemProperty, value = PROP_TEMP_DIR)
+        }),
+        @Property(key = "storage.scope", value = "test-scope"),
+        @Property(key = "storage.role", value = "draft")
+    })
+    @WithFactoryConfiguration(factoryPid = "FileObjectStorage", name = "release-storage", location = "?", properties = {
+        @Property(key = "workspace.folder", value = "%s/release-storage", templateArguments = {
+            @TemplateArgument(source = ValueSource.SystemProperty, value = PROP_TEMP_DIR)
+        }),
+        @Property(key = "storage.scope", value = "test-scope"),
+        @Property(key = "storage.role", value = "release")
+    })
+    @WithFactoryConfiguration(factoryPid = "EObjectWorkflowService", name = "test-workflow", location = "?", properties = {
+        @Property(key = "scope", value = "test-scope"),
+        @Property(key = "parent.scope", value = ""),
+        @Property(key = "stages", value = {"draft", "release"}, type = Type.Array),
+        @Property(key = "final.stage", value = "release")
+    })
+    public void testFinalStageOperations(
+            @InjectService(cardinality = 0, filter = "(scope=test-scope)")
+            ServiceAware<EObjectWorkflowService> workflowAware) throws InterruptedException, InvocationTargetException {
+
+        EObjectWorkflowService<EObject> workflow = workflowAware.waitForService(5000);
+        assertNotNull(workflow, "Workflow service should be available");
+
+        // Create and upload first package to release stage
+        EPackage pkg1 = ecoreFactory.createEPackage();
+        pkg1.setName("Package1");
+        pkg1.setNsURI("http://test1.example.com/v1");
+        pkg1.setNsPrefix("test1");
+
+        ObjectMetadata metadata1 = managementFactory.createObjectMetadata();
+        metadata1.setUploadUser("testUser");
+        metadata1.setObjectName("Package1");
+        metadata1.setObjectId("pkg1");
+        metadata1.setScope("test-scope");
+
+        String objectId1 = workflow.uploadToStage("release", pkg1, metadata1).getValue();
+        assertNotNull(objectId1);
+
+        // Create and upload second package to release stage
+        EPackage pkg2 = ecoreFactory.createEPackage();
+        pkg2.setName("Package2");
+        pkg2.setNsURI("http://test2.example.com/v1");
+        pkg2.setNsPrefix("test2");
+
+        ObjectMetadata metadata2 = managementFactory.createObjectMetadata();
+        metadata2.setUploadUser("testUser");
+        metadata2.setObjectName("Package2");
+        metadata2.setObjectId("pkg2");
+        metadata2.setScope("test-scope");
+
+        String objectId2 = workflow.uploadToStage("release", pkg2, metadata2).getValue();
+        assertNotNull(objectId2);
+
+        // Upload one package to draft stage (should not appear in final stage list)
+        EPackage draftPkg = ecoreFactory.createEPackage();
+        draftPkg.setName("DraftPackage");
+        draftPkg.setNsURI("http://draft.example.com/v1");
+        draftPkg.setNsPrefix("draft");
+
+        ObjectMetadata draftMetadata = managementFactory.createObjectMetadata();
+        draftMetadata.setUploadUser("testUser");
+        draftMetadata.setObjectName("DraftPackage");
+        draftMetadata.setObjectId("draft");
+        draftMetadata.setScope("test-scope");
+
+        workflow.uploadToStage("draft", draftPkg, draftMetadata).getValue();
+
+        // Test getFromFinalStage
+        ObjectMetadata retrieved1 = workflow.getFromFinalStage(objectId1);
+        assertNotNull(retrieved1, "Should retrieve package from final stage");
+        assertEquals("Package1", retrieved1.getObjectName());
+
+        ObjectMetadata retrieved2 = workflow.getFromFinalStage(objectId2);
+        assertNotNull(retrieved2, "Should retrieve package from final stage");
+        assertEquals("Package2", retrieved2.getObjectName());
+
+        // Test listInFinalStage
+        List<ObjectMetadata> finalStageList = workflow.listInFinalStage();
+        assertEquals(2, finalStageList.size(), "Should list only packages in final (release) stage");
+
+        boolean hasPkg1 = finalStageList.stream().anyMatch(m -> "Package1".equals(m.getObjectName()));
+        boolean hasPkg2 = finalStageList.stream().anyMatch(m -> "Package2".equals(m.getObjectName()));
+        boolean hasDraft = finalStageList.stream().anyMatch(m -> "DraftPackage".equals(m.getObjectName()));
+
+        assertTrue(hasPkg1, "Should find Package1 in final stage");
+        assertTrue(hasPkg2, "Should find Package2 in final stage");
+        assertTrue(!hasDraft, "Should not find draft package in final stage list");
+    }
+
+    @SuppressWarnings({ "unchecked", "rawtypes" })
+    /**
+     * Test final stage operations with hierarchical scopes.
+     * Child workflow should see packages from both its own final stage and parent's final stage.
+     * @throws InvocationTargetException
+     */
+    @Test
+    @WithFactoryConfiguration(factoryPid = "LuceneEObjectRegistryService", name = "registry", location = "?", properties = {
+        @Property(key = "registry.workspace.folder", value = "%s/registry", templateArguments = {
+            @TemplateArgument(source = ValueSource.SystemProperty, value = PROP_TEMP_DIR)
+        })
+    })
+    // Parent scope storage
+    @WithFactoryConfiguration(factoryPid = "FileObjectStorage", name = "parent-release", location = "?", properties = {
+        @Property(key = "workspace.folder", value = "%s/parent-release", templateArguments = {
+            @TemplateArgument(source = ValueSource.SystemProperty, value = PROP_TEMP_DIR)
+        }),
+        @Property(key = "storage.scope", value = "parent-scope"),
+        @Property(key = "storage.role", value = "release")
+    })
+    // Child scope storage
+    @WithFactoryConfiguration(factoryPid = "FileObjectStorage", name = "child-release", location = "?", properties = {
+        @Property(key = "workspace.folder", value = "%s/child-release", templateArguments = {
+            @TemplateArgument(source = ValueSource.SystemProperty, value = PROP_TEMP_DIR)
+        }),
+        @Property(key = "storage.scope", value = "child-scope"),
+        @Property(key = "storage.role", value = "release")
+    })
+    // Parent workflow
+    @WithFactoryConfiguration(factoryPid = "EObjectWorkflowService", name = "parent-workflow", location = "?", properties = {
+        @Property(key = "scope", value = "parent-scope"),
+        @Property(key = "parent.scope", value = ""),
+        @Property(key = "stages", value = {"release"}, type = Type.Array),
+        @Property(key = "final.stage", value = "release")
+    })
+    // Child workflow (references parent)
+    @WithFactoryConfiguration(factoryPid = "EObjectWorkflowService", name = "child-workflow", location = "?", properties = {
+        @Property(key = "scope", value = "child-scope"),
+        @Property(key = "parent.scope", value = "parent-scope"),
+        @Property(key = "stages", value = {"release"}, type = Type.Array),
+        @Property(key = "final.stage", value = "release"),
+        @Property(key = "parentWorkflowService.target", value = "(scope=parent-scope)")
+    })
+    public void testFinalStageWithHierarchy(
+            @InjectService(cardinality = 0, filter = "(scope=parent-scope)")
+            ServiceAware<EObjectWorkflowService> parentWorkflowAware,
+            @InjectService(cardinality = 0, filter = "(scope=child-scope)")
+            ServiceAware<EObjectWorkflowService> childWorkflowAware) throws InterruptedException, InvocationTargetException {
+
+        EObjectWorkflowService<EObject> parentWorkflow = parentWorkflowAware.waitForService(5000);
+        EObjectWorkflowService<EObject> childWorkflow = childWorkflowAware.waitForService(5000);
+
+        assertNotNull(parentWorkflow, "Parent workflow should be available");
+        assertNotNull(childWorkflow, "Child workflow should be available");
+
+        Thread.sleep(2000); // Allow parent injection
+
+        // Upload package to parent's final (release) stage
+        EPackage parentPkg = ecoreFactory.createEPackage();
+        parentPkg.setName("ParentPackage");
+        parentPkg.setNsURI("http://parent.example.com/v1");
+        parentPkg.setNsPrefix("parent");
+
+        ObjectMetadata parentMetadata = managementFactory.createObjectMetadata();
+        parentMetadata.setUploadUser("parentUser");
+        parentMetadata.setObjectName("ParentPackage");
+        parentMetadata.setObjectId("parent-pkg");
+        parentMetadata.setScope("parent-scope");
+        parentMetadata.setRole("release");
+
+        String parentObjectId = parentWorkflow.uploadToStage("release", parentPkg, parentMetadata).getValue();
+        assertNotNull(parentObjectId);
+
+        // Upload package to child's final (release) stage
+        EPackage childPkg = ecoreFactory.createEPackage();
+        childPkg.setName("ChildPackage");
+        childPkg.setNsURI("http://child.example.com/v1");
+        childPkg.setNsPrefix("child");
+
+        ObjectMetadata childMetadata = managementFactory.createObjectMetadata();
+        childMetadata.setUploadUser("childUser");
+        childMetadata.setObjectName("ChildPackage");
+        childMetadata.setObjectId("child-pkg");
+        childMetadata.setScope("child-scope");
+        childMetadata.setRole("release");
+        
+        String childObjectId = childWorkflow.uploadToStage("release", childPkg, childMetadata).getValue();
+        assertNotNull(childObjectId);
+
+        // Test getFromFinalStage - child should find parent's package
+        ObjectMetadata parentFound = childWorkflow.getFromFinalStage(parentObjectId);
+        assertNotNull(parentFound, "Child should find parent package via getFromFinalStage");
+        assertEquals("ParentPackage", parentFound.getObjectName());
+
+        // Test getFromFinalStage - child should find its own package
+        ObjectMetadata childFound = childWorkflow.getFromFinalStage(childObjectId);
+        assertNotNull(childFound, "Child should find its own package via getFromFinalStage");
+        assertEquals("ChildPackage", childFound.getObjectName());
+
+        // Test listInFinalStage - parent should only see its own package
+        List<ObjectMetadata> parentList = parentWorkflow.listInFinalStage();
+        assertEquals(1, parentList.size(), "Parent should see only its own package");
+        assertEquals("ParentPackage", parentList.get(0).getObjectName());
+
+        // Test listInFinalStage - child should see both packages
+        List<ObjectMetadata> childList = childWorkflow.listInFinalStage();
+        assertEquals(2, childList.size(), "Child should see both its own and parent's package");
+
+        boolean hasParent = childList.stream().anyMatch(m -> "ParentPackage".equals(m.getObjectName()));
+        boolean hasChild = childList.stream().anyMatch(m -> "ChildPackage".equals(m.getObjectName()));
+
+        assertTrue(hasParent, "Child's final stage list should include parent package");
+        assertTrue(hasChild, "Child's final stage list should include child package");
+    }
+
+    @SuppressWarnings({ "unchecked", "rawtypes" })
+    /**
+     * Test final stage configuration with custom final stage (not "release").
+     * Verifies that final.stage property correctly determines which stage is considered final.
+     * @throws InvocationTargetException
+     */
+    @Test
+    @WithFactoryConfiguration(factoryPid = "LuceneEObjectRegistryService", name = "registry", location = "?", properties = {
+        @Property(key = "registry.workspace.folder", value = "%s/registry", templateArguments = {
+            @TemplateArgument(source = ValueSource.SystemProperty, value = PROP_TEMP_DIR)
+        })
+    })
+    @WithFactoryConfiguration(factoryPid = "FileObjectStorage", name = "draft-storage", location = "?", properties = {
+        @Property(key = "workspace.folder", value = "%s/draft-storage", templateArguments = {
+            @TemplateArgument(source = ValueSource.SystemProperty, value = PROP_TEMP_DIR)
+        }),
+        @Property(key = "storage.scope", value = "custom-scope"),
+        @Property(key = "storage.role", value = "draft")
+    })
+    @WithFactoryConfiguration(factoryPid = "FileObjectStorage", name = "approved-storage", location = "?", properties = {
+            @Property(key = "workspace.folder", value = "%s/approved-storage", templateArguments = {
+                @TemplateArgument(source = ValueSource.SystemProperty, value = PROP_TEMP_DIR)
+            }),
+            @Property(key = "storage.scope", value = "custom-scope"),
+            @Property(key = "storage.role", value = "approved")
+        })
+    @WithFactoryConfiguration(factoryPid = "FileObjectStorage", name = "approved-storage", location = "?", properties = {
+        @Property(key = "workspace.folder", value = "%s/approved-storage", templateArguments = {
+            @TemplateArgument(source = ValueSource.SystemProperty, value = PROP_TEMP_DIR)
+        }),
+        @Property(key = "storage.scope", value = "custom-scope"),
+        @Property(key = "storage.role", value = "approved")
+    })
+    @WithFactoryConfiguration(factoryPid = "FileObjectStorage", name = "release-storage", location = "?", properties = {
+            @Property(key = "workspace.folder", value = "%s/release-storage", templateArguments = {
+                @TemplateArgument(source = ValueSource.SystemProperty, value = PROP_TEMP_DIR)
+            }),
+            @Property(key = "storage.scope", value = "custom-scope"),
+            @Property(key = "storage.role", value = "release")
+        })
+    @WithFactoryConfiguration(factoryPid = "EObjectWorkflowService", name = "custom-workflow", location = "?", properties = {
+        @Property(key = "scope", value = "custom-scope"),
+        @Property(key = "parent.scope", value = ""),
+        @Property(key = "stages", value = {"draft", "approved"}, type = Type.Array),
+        @Property(key = "final.stage", value = "approved")
+    })
+    public void testCustomFinalStage(
+            @InjectService(cardinality = 0, filter = "(scope=custom-scope)")
+            ServiceAware<EObjectWorkflowService> workflowAware) throws InterruptedException, InvocationTargetException {
+
+        EObjectWorkflowService<EObject> workflow = workflowAware.waitForService(5000);
+        assertNotNull(workflow, "Workflow service should be available");
+
+        // Upload to draft stage
+        EPackage draftPkg = ecoreFactory.createEPackage();
+        draftPkg.setName("DraftPackage");
+        draftPkg.setNsURI("http://draft.example.com/v1");
+        draftPkg.setNsPrefix("draft");
+
+        ObjectMetadata draftMetadata = managementFactory.createObjectMetadata();
+        draftMetadata.setUploadUser("testUser");
+        draftMetadata.setObjectName("DraftPackage");
+        draftMetadata.setObjectId("draft-pkg");
+        draftMetadata.setScope("custom-scope");
+
+        String draftObjectId = workflow.uploadToStage("draft", draftPkg, draftMetadata).getValue();
+        assertNotNull(draftObjectId);
+
+        // Upload to approved stage (configured as final stage)
+        EPackage approvedPkg = ecoreFactory.createEPackage();
+        approvedPkg.setName("ApprovedPackage");
+        approvedPkg.setNsURI("http://approved.example.com/v1");
+        approvedPkg.setNsPrefix("approved");
+
+        ObjectMetadata approvedMetadata = managementFactory.createObjectMetadata();
+        approvedMetadata.setUploadUser("testUser");
+        approvedMetadata.setObjectName("ApprovedPackage");
+        approvedMetadata.setObjectId("approved-pkg");
+        approvedMetadata.setScope("custom-scope");
+
+        String approvedObjectId = workflow.uploadToStage("approved", approvedPkg, approvedMetadata).getValue();
+        assertNotNull(approvedObjectId);
+
+        // Test getFromFinalStage - should find approved package
+        ObjectMetadata approvedFound = workflow.getFromFinalStage(approvedObjectId);
+        assertNotNull(approvedFound, "Should find package in final (approved) stage");
+        assertEquals("ApprovedPackage", approvedFound.getObjectName());
+
+        // Test getFromFinalStage - should also check final stage when object not in draft
+        ObjectMetadata foundViaFinal = workflow.getFromFinalStage(approvedObjectId);
+        assertNotNull(foundViaFinal, "Should find approved package via getFromFinalStage");
+
+        // Test listInFinalStage - should only list approved stage packages
+        List<ObjectMetadata> finalList = workflow.listInFinalStage();
+        assertEquals(1, finalList.size(), "Should only list packages in final (approved) stage");
+        assertEquals("ApprovedPackage", finalList.get(0).getObjectName());
+
+        // Verify draft package is not in final stage list
+        boolean hasDraft = finalList.stream().anyMatch(m -> "DraftPackage".equals(m.getObjectName()));
+        assertTrue(!hasDraft, "Draft package should not appear in final stage list");
     }
 
     // ========================================
     // Test: Three-Level Hierarchy
     // ========================================
 
-    /**
+    @SuppressWarnings({ "unchecked", "rawtypes" })
+	/**
      * Test three-level scope hierarchy: child -> parent -> grandparent.
-     * @throws InvocationTargetException 
+     * @throws InvocationTargetException
      */
     @Test
     @WithFactoryConfiguration(factoryPid = "LuceneEObjectRegistryService", name = "registry", location = "?", properties = {
@@ -510,33 +857,32 @@ public class ScopeAwareWorkflowServiceTest {
     })
     // Grandparent workflow
     @WithFactoryConfiguration(factoryPid = "EObjectWorkflowService", name = "grandparent-workflow", location = "?", properties = {
-        @Property(key = "scope.name", value = "grandparent"),
+        @Property(key = "scope", value = "grandparent"),
         @Property(key = "parent.scope", value = ""),
-        @Property(key = "stages", value = {"Released"}),
-        @Property(key = "stage.storage.mapping", value = {"Released=release"})
+        @Property(key = "stages", value = {"release"}, type = Type.Array)
     })
     // Parent workflow
     @WithFactoryConfiguration(factoryPid = "EObjectWorkflowService", name = "parent-workflow", location = "?", properties = {
-        @Property(key = "scope.name", value = "parent"),
+        @Property(key = "scope", value = "parent"),
         @Property(key = "parent.scope", value = "grandparent"),
-        @Property(key = "stages", value = {"Released"}),
-        @Property(key = "stage.storage.mapping", value = {"Released=release"})
+        @Property(key = "stages", value = {"release"}, type = Type.Array),
+        @Property(key = "parentWorkflowService.target", value = "(scope=grandparent)")
     })
     // Child workflow
     @WithFactoryConfiguration(factoryPid = "EObjectWorkflowService", name = "child-workflow", location = "?", properties = {
-        @Property(key = "scope.name", value = "child"),
+        @Property(key = "scope", value = "child"),
         @Property(key = "parent.scope", value = "parent"),
-        @Property(key = "stages", value = {"Released"}),
-        @Property(key = "stage.storage.mapping", value = {"Released=release"})
+        @Property(key = "stages", value = {"release"}, type = Type.Array),
+        @Property(key = "parentWorkflowService.target", value = "(scope=parent)")
     })
     public void testThreeLevelHierarchy(
-            @InjectService(cardinality = 0, filter = "(scope.name=grandparent)")
-            ServiceAware<EObjectWorkflowService<EPackage>> grandparentWorkflowAware,
-            @InjectService(cardinality = 0, filter = "(scope.name=child)")
-            ServiceAware<EObjectWorkflowService<EPackage>> childWorkflowAware) throws InterruptedException, InvocationTargetException {
+            @InjectService(cardinality = 0, filter = "(scope=grandparent)")
+            ServiceAware<EObjectWorkflowService> grandparentWorkflowAware,
+            @InjectService(cardinality = 0, filter = "(scope=child)")
+            ServiceAware<EObjectWorkflowService> childWorkflowAware) throws InterruptedException, InvocationTargetException {
 
-        EObjectWorkflowService<EPackage> grandparentWorkflow = grandparentWorkflowAware.waitForService(5000);
-        EObjectWorkflowService<EPackage> childWorkflow = childWorkflowAware.waitForService(5000);
+        EObjectWorkflowService<EObject> grandparentWorkflow = grandparentWorkflowAware.waitForService(5000);
+        EObjectWorkflowService<EObject> childWorkflow = childWorkflowAware.waitForService(5000);
 
         assertNotNull(grandparentWorkflow);
         assertNotNull(childWorkflow);
@@ -550,10 +896,10 @@ public class ScopeAwareWorkflowServiceTest {
         ObjectMetadata grandparentMeta = managementFactory.createObjectMetadata();
         grandparentMeta.setObjectName("GrandparentPkg");
         grandparentMeta.setUploadUser("gpUser");
-        grandparentWorkflow.uploadToStage("Released", grandparentPkg, grandparentMeta).getValue();
+        String storageId = grandparentWorkflow.uploadToStage("release", grandparentPkg, grandparentMeta).getValue();
 
         // Child should find grandparent's package
-        ObjectMetadata found = childWorkflow.getFromStage("Released", grandparentPkg.getNsURI());
+        ObjectMetadata found = childWorkflow.getFromStage("release", storageId);
         assertNotNull(found, "Child should find grandparent package via two-level delegation");
         assertEquals("GrandparentPkg", found.getObjectName());
 //        assertTrue(found.isReadOnly(), "Grandparent package should be read-only");

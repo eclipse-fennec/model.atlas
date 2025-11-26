@@ -140,7 +140,7 @@ public class WorkflowApiPackageImpl extends EPackageImpl implements WorkflowApiP
 	 * @generated
 	 */
 	@Override
-	public EOperation getEObjectWorkflowService__GetContentFromStage__String_String() {
+	public EOperation getEObjectWorkflowService__GetFromFinalStage__String() {
 		return eObjectWorkflowServiceEClass.getEOperations().get(2);
 	}
 
@@ -150,7 +150,7 @@ public class WorkflowApiPackageImpl extends EPackageImpl implements WorkflowApiP
 	 * @generated
 	 */
 	@Override
-	public EOperation getEObjectWorkflowService__UpdateInStage__String_EObject_String() {
+	public EOperation getEObjectWorkflowService__GetContentFromStage__String_String() {
 		return eObjectWorkflowServiceEClass.getEOperations().get(3);
 	}
 
@@ -160,7 +160,7 @@ public class WorkflowApiPackageImpl extends EPackageImpl implements WorkflowApiP
 	 * @generated
 	 */
 	@Override
-	public EOperation getEObjectWorkflowService__DeleteFromStage__String_String() {
+	public EOperation getEObjectWorkflowService__UpdateInStage__String_EObject_String() {
 		return eObjectWorkflowServiceEClass.getEOperations().get(4);
 	}
 
@@ -170,7 +170,7 @@ public class WorkflowApiPackageImpl extends EPackageImpl implements WorkflowApiP
 	 * @generated
 	 */
 	@Override
-	public EOperation getEObjectWorkflowService__ListInStage__String() {
+	public EOperation getEObjectWorkflowService__DeleteFromStage__String_String() {
 		return eObjectWorkflowServiceEClass.getEOperations().get(5);
 	}
 
@@ -180,7 +180,7 @@ public class WorkflowApiPackageImpl extends EPackageImpl implements WorkflowApiP
 	 * @generated
 	 */
 	@Override
-	public EOperation getEObjectWorkflowService__TransitionToStage__String_String_String() {
+	public EOperation getEObjectWorkflowService__ListInStage__String() {
 		return eObjectWorkflowServiceEClass.getEOperations().get(6);
 	}
 
@@ -190,8 +190,28 @@ public class WorkflowApiPackageImpl extends EPackageImpl implements WorkflowApiP
 	 * @generated
 	 */
 	@Override
-	public EOperation getEObjectWorkflowService__IsTransitionAllowed__String_String() {
+	public EOperation getEObjectWorkflowService__ListInFinalStage() {
 		return eObjectWorkflowServiceEClass.getEOperations().get(7);
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
+	public EOperation getEObjectWorkflowService__TransitionToStage__String_String_String() {
+		return eObjectWorkflowServiceEClass.getEOperations().get(8);
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
+	public EOperation getEObjectWorkflowService__IsTransitionAllowed__String_String() {
+		return eObjectWorkflowServiceEClass.getEOperations().get(9);
 	}
 
 	/**
@@ -226,10 +246,12 @@ public class WorkflowApiPackageImpl extends EPackageImpl implements WorkflowApiP
 		eObjectWorkflowServiceEClass = createEClass(EOBJECT_WORKFLOW_SERVICE);
 		createEOperation(eObjectWorkflowServiceEClass, EOBJECT_WORKFLOW_SERVICE___UPLOAD_TO_STAGE__STRING_EOBJECT_OBJECTMETADATA);
 		createEOperation(eObjectWorkflowServiceEClass, EOBJECT_WORKFLOW_SERVICE___GET_FROM_STAGE__STRING_STRING);
+		createEOperation(eObjectWorkflowServiceEClass, EOBJECT_WORKFLOW_SERVICE___GET_FROM_FINAL_STAGE__STRING);
 		createEOperation(eObjectWorkflowServiceEClass, EOBJECT_WORKFLOW_SERVICE___GET_CONTENT_FROM_STAGE__STRING_STRING);
 		createEOperation(eObjectWorkflowServiceEClass, EOBJECT_WORKFLOW_SERVICE___UPDATE_IN_STAGE__STRING_EOBJECT_STRING);
 		createEOperation(eObjectWorkflowServiceEClass, EOBJECT_WORKFLOW_SERVICE___DELETE_FROM_STAGE__STRING_STRING);
 		createEOperation(eObjectWorkflowServiceEClass, EOBJECT_WORKFLOW_SERVICE___LIST_IN_STAGE__STRING);
+		createEOperation(eObjectWorkflowServiceEClass, EOBJECT_WORKFLOW_SERVICE___LIST_IN_FINAL_STAGE);
 		createEOperation(eObjectWorkflowServiceEClass, EOBJECT_WORKFLOW_SERVICE___TRANSITION_TO_STAGE__STRING_STRING_STRING);
 		createEOperation(eObjectWorkflowServiceEClass, EOBJECT_WORKFLOW_SERVICE___IS_TRANSITION_ALLOWED__STRING_STRING);
 	}
@@ -286,6 +308,9 @@ public class WorkflowApiPackageImpl extends EPackageImpl implements WorkflowApiP
 		addEParameter(op, ecorePackage.getEString(), "stage", 0, 1, IS_UNIQUE, IS_ORDERED);
 		addEParameter(op, ecorePackage.getEString(), "objectId", 1, 1, IS_UNIQUE, IS_ORDERED);
 
+		op = initEOperation(getEObjectWorkflowService__GetFromFinalStage__String(), theManagementPackage.getObjectMetadata(), "getFromFinalStage", 0, 1, IS_UNIQUE, IS_ORDERED);
+		addEParameter(op, ecorePackage.getEString(), "objectId", 1, 1, IS_UNIQUE, IS_ORDERED);
+
 		op = initEOperation(getEObjectWorkflowService__GetContentFromStage__String_String(), null, "getContentFromStage", 0, 1, IS_UNIQUE, IS_ORDERED);
 		addEParameter(op, ecorePackage.getEString(), "stage", 0, 1, IS_UNIQUE, IS_ORDERED);
 		addEParameter(op, ecorePackage.getEString(), "objectId", 1, 1, IS_UNIQUE, IS_ORDERED);
@@ -312,6 +337,12 @@ public class WorkflowApiPackageImpl extends EPackageImpl implements WorkflowApiP
 
 		op = initEOperation(getEObjectWorkflowService__ListInStage__String(), null, "listInStage", 0, 1, IS_UNIQUE, IS_ORDERED);
 		addEParameter(op, ecorePackage.getEString(), "stage", 0, 1, IS_UNIQUE, IS_ORDERED);
+		g1 = createEGenericType(theManagementPackage.getList());
+		g2 = createEGenericType(theManagementPackage.getObjectMetadata());
+		g1.getETypeArguments().add(g2);
+		initEOperation(op, g1);
+
+		op = initEOperation(getEObjectWorkflowService__ListInFinalStage(), null, "listInFinalStage", 0, 1, IS_UNIQUE, IS_ORDERED);
 		g1 = createEGenericType(theManagementPackage.getList());
 		g2 = createEGenericType(theManagementPackage.getObjectMetadata());
 		g1.getETypeArguments().add(g2);

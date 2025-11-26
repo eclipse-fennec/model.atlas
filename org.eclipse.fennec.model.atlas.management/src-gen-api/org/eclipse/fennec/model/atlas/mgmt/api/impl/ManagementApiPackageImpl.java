@@ -582,6 +582,16 @@ public class ManagementApiPackageImpl extends EPackageImpl implements Management
 	 * @generated
 	 */
 	@Override
+	public EOperation getEObjectRegistryService__FindByScopeAndRole__String_String() {
+		return eObjectRegistryServiceEClass.getEOperations().get(15);
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
 	public EClass getStorageRegistry() {
 		return storageRegistryEClass;
 	}
@@ -722,6 +732,7 @@ public class ManagementApiPackageImpl extends EPackageImpl implements Management
 		createEOperation(eObjectRegistryServiceEClass, EOBJECT_REGISTRY_SERVICE___UPDATE_CACHE__OBJECTMETADATA);
 		createEOperation(eObjectRegistryServiceEClass, EOBJECT_REGISTRY_SERVICE___REMOVE_FROM_CACHE__STRING);
 		createEOperation(eObjectRegistryServiceEClass, EOBJECT_REGISTRY_SERVICE___GET_REGISTRY_STATISTICS);
+		createEOperation(eObjectRegistryServiceEClass, EOBJECT_REGISTRY_SERVICE___FIND_BY_SCOPE_AND_ROLE__STRING_STRING);
 
 		storageRegistryEClass = createEClass(STORAGE_REGISTRY);
 		createEOperation(storageRegistryEClass, STORAGE_REGISTRY___GET_STORAGE_BY_ROLE__STRING);
@@ -1071,6 +1082,14 @@ public class ManagementApiPackageImpl extends EPackageImpl implements Management
 		g2.getETypeArguments().add(g3);
 		g3 = createEGenericType(ecorePackage.getEJavaObject());
 		g2.getETypeArguments().add(g3);
+		initEOperation(op, g1);
+
+		op = initEOperation(getEObjectRegistryService__FindByScopeAndRole__String_String(), null, "findByScopeAndRole", 0, 1, IS_UNIQUE, IS_ORDERED);
+		addEParameter(op, ecorePackage.getEString(), "scope", 1, 1, IS_UNIQUE, IS_ORDERED);
+		addEParameter(op, ecorePackage.getEString(), "role", 1, 1, IS_UNIQUE, IS_ORDERED);
+		g1 = createEGenericType(theManagementPackage.getList());
+		g2 = createEGenericType(theManagementPackage.getObjectMetadata());
+		g1.getETypeArguments().add(g2);
 		initEOperation(op, g1);
 
 		initEClass(storageRegistryEClass, StorageRegistry.class, "StorageRegistry", IS_ABSTRACT, IS_INTERFACE, IS_GENERATED_INSTANCE_CLASS);

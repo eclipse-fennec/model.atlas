@@ -209,4 +209,15 @@ public interface EObjectRegistryService<T extends EObject> {
 	 */
 	Promise<Map<String, Object>> getRegistryStatistics();
 
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * <!-- begin-model-doc -->
+	 * Find all objects with the specified storage role (draft, approved, documentation) and the specified scope (the tenant) across all logical objects.
+	 * <!-- end-model-doc -->
+	 * @model dataType="org.eclipse.fennec.model.atlas.mgmt.management.List&lt;org.eclipse.fennec.model.atlas.mgmt.management.ObjectMetadata&gt;" many="false" scopeRequired="true" roleRequired="true"
+	 * @generated
+	 */
+	List<ObjectMetadata> findByScopeAndRole(String scope, String role);
+
 } // EObjectRegistryService

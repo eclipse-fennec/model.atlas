@@ -56,6 +56,7 @@ import org.osgi.annotation.versioning.ProviderType;
  *   <li>{@link org.eclipse.fennec.model.atlas.mgmt.management.ObjectMetadata#getObjectName <em>Object Name</em>}</li>
  *   <li>{@link org.eclipse.fennec.model.atlas.mgmt.management.ObjectMetadata#getRole <em>Role</em>}</li>
  *   <li>{@link org.eclipse.fennec.model.atlas.mgmt.management.ObjectMetadata#getLastChangeReason <em>Last Change Reason</em>}</li>
+ *   <li>{@link org.eclipse.fennec.model.atlas.mgmt.management.ObjectMetadata#getScope <em>Scope</em>}</li>
  * </ul>
  *
  * @see org.eclipse.fennec.model.atlas.mgmt.management.ManagementPackage#getObjectMetadata()
@@ -608,5 +609,30 @@ public interface ObjectMetadata extends EObject {
 	 * @generated
 	 */
 	void setLastChangeReason(String value);
+
+	/**
+	 * Returns the value of the '<em><b>Scope</b></em>' attribute.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * <!-- begin-model-doc -->
+	 * The scope to which this metadata belongs (it's the tenant that own the object)
+	 * <!-- end-model-doc -->
+	 * @return the value of the '<em>Scope</em>' attribute.
+	 * @see #setScope(String)
+	 * @see org.eclipse.fennec.model.atlas.mgmt.management.ManagementPackage#getObjectMetadata_Scope()
+	 * @model
+	 * @generated
+	 */
+	String getScope();
+
+	/**
+	 * Sets the value of the '{@link org.eclipse.fennec.model.atlas.mgmt.management.ObjectMetadata#getScope <em>Scope</em>}' attribute.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @param value the new value of the '<em>Scope</em>' attribute.
+	 * @see #getScope()
+	 * @generated
+	 */
+	void setScope(String value);
 
 } // ObjectMetadata

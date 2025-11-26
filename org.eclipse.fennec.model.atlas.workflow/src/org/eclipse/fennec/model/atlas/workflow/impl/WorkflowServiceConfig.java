@@ -81,8 +81,18 @@ public @interface WorkflowServiceConfig {
 	@AttributeDefinition(
 			name = "Workflow Stages",
 			required = false, 
-			description = "The stages this workflow supports")
-	String[] stages();
+			description = "The stages this workflow supports",
+			defaultValue = {"draft", "approved", "release"}
+			)
+	String[] stages() default {"draft", "approved", "release"};
+	
+	@AttributeDefinition(
+			name = "Workflow Final Stafe",
+			required = false, 
+			description = "The final stage for this workflow",
+			defaultValue = "release"
+			)
+	String final_stage() default "release";
     
     /**
      * Timeout in milliseconds for transactional operations.

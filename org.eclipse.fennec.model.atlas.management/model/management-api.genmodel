@@ -150,6 +150,10 @@
         <genParameters ecoreParameter="management-api.ecore#//EObjectRegistryService/removeFromCache/objectId"/>
       </genOperations>
       <genOperations ecoreOperation="management-api.ecore#//EObjectRegistryService/getRegistryStatistics"/>
+      <genOperations ecoreOperation="management-api.ecore#//EObjectRegistryService/findByScopeAndRole">
+        <genParameters ecoreParameter="management-api.ecore#//EObjectRegistryService/findByScopeAndRole/scope"/>
+        <genParameters ecoreParameter="management-api.ecore#//EObjectRegistryService/findByScopeAndRole/role"/>
+      </genOperations>
     </genClasses>
     <genClasses image="false" ecoreClass="management-api.ecore#//StorageRegistry">
       <genOperations ecoreOperation="management-api.ecore#//StorageRegistry/getStorageByRole">

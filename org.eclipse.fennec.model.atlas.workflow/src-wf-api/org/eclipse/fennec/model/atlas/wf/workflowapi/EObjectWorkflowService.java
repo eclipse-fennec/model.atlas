@@ -65,6 +65,17 @@ public interface EObjectWorkflowService<T extends EObject> {
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
 	 * <!-- begin-model-doc -->
+	 * Get object registration by ID from the final stage of a workflow. If nothing is found in that stage, the parents final stages are also inspected. 
+	 * <!-- end-model-doc -->
+	 * @model objectIdRequired="true"
+	 * @generated
+	 */
+	ObjectMetadata getFromFinalStage(String objectId);
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * <!-- begin-model-doc -->
 	 * Get the actual EObject content by ID for a certain stage. If nothing is found, the parents release stages are also inspected.
 	 * <!-- end-model-doc -->
 	 * @model objectIdRequired="true"
@@ -98,12 +109,23 @@ public interface EObjectWorkflowService<T extends EObject> {
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
 	 * <!-- begin-model-doc -->
-	 * List all objects in draft/review status
+	 * List all objects in a certain stage of the workflow
 	 * <!-- end-model-doc -->
 	 * @model dataType="org.eclipse.fennec.model.atlas.mgmt.management.List&lt;org.eclipse.fennec.model.atlas.mgmt.management.ObjectMetadata&gt;" many="false"
 	 * @generated
 	 */
 	List<ObjectMetadata> listInStage(String stage);
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * <!-- begin-model-doc -->
+	 * List all objects in the final stage of the workflow
+	 * <!-- end-model-doc -->
+	 * @model dataType="org.eclipse.fennec.model.atlas.mgmt.management.List&lt;org.eclipse.fennec.model.atlas.mgmt.management.ObjectMetadata&gt;" many="false"
+	 * @generated
+	 */
+	List<ObjectMetadata> listInFinalStage();
 
 	/**
 	 * <!-- begin-user-doc -->
