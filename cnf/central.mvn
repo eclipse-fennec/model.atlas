@@ -130,11 +130,11 @@ commons-io:commons-io:2.20.0
 org.apache.commons:commons-csv:1.14.1
 commons-codec:commons-codec:1.19.0
 
-tools.jackson.core:jackson-core:3.0.0-rc6
-tools.jackson.core:jackson-databind:3.0.0-rc6
-tools.jackson.dataformat:jackson-dataformat-properties:3.0.0-rc6
-tools.jackson.dataformat:jackson-dataformat-yaml:3.0.0-rc6
-com.fasterxml.jackson.core:jackson-annotations:2.19.2
+tools.jackson.core:jackson-core:3.0.1
+tools.jackson.core:jackson-databind:3.0.1
+tools.jackson.dataformat:jackson-dataformat-properties:3.0.1
+tools.jackson.dataformat:jackson-dataformat-yaml:3.0.1
+com.fasterxml.jackson.core:jackson-annotations:2.20
 
 org.eclipse.osgi-technology.scheduler:api:0.0.1-SNAPSHOT
 org.eclipse.osgi-technology.scheduler:basic:0.0.1-SNAPSHOT
@@ -193,6 +193,16 @@ org.eclipse.emf:org.eclipse.emf.ecore:2.40.0
 org.eclipse.emf:org.eclipse.emf.ecore.xmi:2.39.0
 
 #biz.aQute:biz.aQute.gogo.commands.provider:1.11.0-SNAPSHOT
+
+
+# Codec
+org.geckoprojects.codec:org.eclipse.fennec.codec:1.1.0-SNAPSHOT
+org.geckoprojects.codec:org.eclipse.fennec.codec.json:1.1.0-SNAPSHOT
+org.geckoprojects.codec:org.eclipse.fennec.codec.jsonschema:1.1.0-SNAPSHOT
+org.geckoprojects.codec:org.eclipse.fennec.codec.csv:1.1.0-SNAPSHOT
+org.geckoprojects.codec:org.eclipse.fennec.codec.info:1.1.0-SNAPSHOT
+org.geckoprojects.codec:org.eclipse.fennec.codec.info.model:1.1.0-SNAPSHOT
+org.geckoprojects.codec:org.eclipse.fennec.codec.constants:1.1.0-SNAPSHOT
 
 
 #UML

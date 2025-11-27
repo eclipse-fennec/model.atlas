@@ -113,6 +113,7 @@ public class EPackageResourceTest {
 </ecore:EPackage>
 """;
 
+	@SuppressWarnings("rawtypes")
 	@BeforeEach
 	void setUp(
 	    @InjectBundleContext BundleContext context,
@@ -218,6 +219,91 @@ public class EPackageResourceTest {
 		assertEquals(Response.Status.CREATED.getStatusCode(), response.getStatus(),
 			"Should return 201 Created for UML");
 		createdNsUris.add(nsUri);
+	}
+
+	@Test
+	void testCreateEPackage_WithJsonSchema_Success() {
+		// Given: A new EPackage in JSON Schema format
+		String nsUri = TestHelper.generateUniqueNsUri("createJsonSchemaTest");
+		String jsonSchemaEPackage = String.format("""
+			{
+			  "$schema": "https://json-schema.org/draft/2020-12/schema",
+			  "$id": "%s",
+			  "title": "JsonSchemaTestPackage",
+			  "type": "object",
+			  "definitions": {
+			    "TestClass": {
+			      "type": "object",
+			      "properties": {
+			        "name": { "type": "string" },
+			        "value": { "type": "integer" }
+			      }
+			    }
+			  }
+			}
+			""", nsUri);
+
+		// When: POST with JSON Schema
+		Response response = client.target(BASE_URL)
+			.request("application/schema+json")
+			.post(Entity.entity(jsonSchemaEPackage, "application/schema+json"));
+
+		// Then: Should return 201 Created
+		assertEquals(Response.Status.CREATED.getStatusCode(), response.getStatus(),
+			"Should return 201 Created for JSON Schema");
+		createdNsUris.add(nsUri);
+
+		// Verify response contains the created EPackage
+		EPackage createdPackage = response.readEntity(EPackage.class);
+		assertNotNull(createdPackage, "Response body should not be null");
+		assertEquals(nsUri, createdPackage.getNsURI(), "Response should contain the nsUri");
+	}
+
+	@Test
+	void testGetEPackage_AsJsonSchema_Success() throws IOException {
+		// Given: An existing EPackage
+		String nsUri = TestHelper.generateUniqueNsUri("getJsonSchemaTest");
+		EPackage testPackage = createBasicTestEPackage(nsUri, "JsonSchemaGetPackage", "jsget");
+		createEPackageViaREST(testPackage);
+
+		// When: GET with JSON Schema media type
+		Response response = client.target(BASE_URL)
+			.queryParam("nsUri", nsUri)
+			.request("application/schema+json")
+			.get();
+
+		// Then: Should return 200 OK with JSON Schema
+		assertEquals(Response.Status.OK.getStatusCode(), response.getStatus(),
+			"Should return 200 OK");
+
+		String jsonSchema = response.readEntity(String.class);
+		assertNotNull(jsonSchema, "Response body should not be null");
+		assertTrue(jsonSchema.contains("definitions"), "Response should contain JSON Schema definitions");
+		assertTrue(jsonSchema.contains(nsUri), "Response should contain the nsUri");
+	}
+
+	@Test
+	void testCreateAndRetrieveEPackage_WithJsonSchema_RoundTrip() throws IOException {
+		// Given: A complex EPackage with classes and attributes
+		String nsUri = TestHelper.generateUniqueNsUri("roundTripJsonSchemaTest");
+		EPackage complexPackage = createComplexTestEPackage(nsUri);
+
+		// When: Create via XMI and retrieve as JSON Schema
+		createEPackageViaREST(complexPackage);
+
+		Response response = client.target(BASE_URL)
+			.queryParam("nsUri", nsUri)
+			.request("application/schema+json")
+			.get();
+
+		// Then: Should retrieve as valid JSON Schema
+		assertEquals(Response.Status.OK.getStatusCode(), response.getStatus(),
+			"Should return 200 OK");
+
+		String jsonSchema = response.readEntity(String.class);
+		assertNotNull(jsonSchema, "JSON Schema should not be null");
+		assertTrue(jsonSchema.contains("definitions"), "Should contain definitions");
+		assertTrue(jsonSchema.contains("Person"), "Should contain Person class from complex package");
 	}
 
 	@Test
@@ -528,6 +614,53 @@ public class EPackageResourceTest {
 		assertEquals(nsUri, jsonPackage.getNsURI(), "JSON response should contain correct nsUri");
 		assertEquals("MediaTypePackage", xmlPackage.getName(), "XML response should contain correct name");
 		assertEquals("MediaTypePackage", jsonPackage.getName(), "JSON response should contain correct name");
+	}
+
+	@Test
+	void testMediaTypeNegotiation_IncludingJsonSchema() throws IOException {
+		// Given: An existing EPackage with complex structure
+		String nsUri = TestHelper.generateUniqueNsUri("multiMediaTypeTest");
+		EPackage testPackage = createBasicTestEPackage(nsUri, "MediaTypePackage", "mt");
+		createEPackageViaREST(testPackage);
+
+		// When: GET with XML, JSON, and JSON Schema media types
+		Response xmlResponse = client.target(BASE_URL)
+			.queryParam("nsUri", nsUri)
+			.request(MediaType.APPLICATION_XML)
+			.get();
+
+		Response jsonResponse = client.target(BASE_URL)
+			.queryParam("nsUri", nsUri)
+			.request(MediaType.APPLICATION_JSON)
+			.get();
+
+		Response jsonSchemaResponse = client.target(BASE_URL)
+			.queryParam("nsUri", nsUri)
+			.request("application/schema+json")
+			.get();
+
+		// Then: All media types should succeed
+		assertEquals(Response.Status.OK.getStatusCode(), xmlResponse.getStatus(),
+			"XML request should succeed");
+		assertEquals(Response.Status.OK.getStatusCode(), jsonResponse.getStatus(),
+			"JSON request should succeed");
+		assertEquals(Response.Status.OK.getStatusCode(), jsonSchemaResponse.getStatus(),
+			"JSON Schema request should succeed");
+
+		// Verify XML and JSON can be deserialized to EPackage
+		EPackage xmlPackage = xmlResponse.readEntity(EPackage.class);
+		EPackage jsonPackage = jsonResponse.readEntity(EPackage.class);
+
+		assertNotNull(xmlPackage, "XML response should contain a valid EPackage");
+		assertNotNull(jsonPackage, "JSON response should contain a valid EPackage");
+		assertEquals(nsUri, xmlPackage.getNsURI(), "XML response should contain correct nsUri");
+		assertEquals(nsUri, jsonPackage.getNsURI(), "JSON response should contain correct nsUri");
+
+		// Verify JSON Schema response contains schema structure
+		String jsonSchema = jsonSchemaResponse.readEntity(String.class);
+		assertNotNull(jsonSchema, "JSON Schema response should not be null");
+		assertTrue(jsonSchema.contains("definitions"), "JSON Schema should contain definitions");
+		assertTrue(jsonSchema.contains(nsUri), "JSON Schema should contain the nsUri");
 	}
 
 	@Test
