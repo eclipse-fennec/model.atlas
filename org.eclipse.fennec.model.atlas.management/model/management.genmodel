@@ -28,6 +28,7 @@
       <genEnumLiterals ecoreEnumLiteral="management.ecore#//StorageBackendType/FILE"/>
       <genEnumLiterals ecoreEnumLiteral="management.ecore#//StorageBackendType/MINIO"/>
       <genEnumLiterals ecoreEnumLiteral="management.ecore#//StorageBackendType/GIT"/>
+      <genEnumLiterals ecoreEnumLiteral="management.ecore#//StorageBackendType/APICURIO"/>
     </genEnums>
     <genEnums typeSafeEnumCompatible="false" ecoreEnum="management.ecore#//GenerationStatus">
       <genEnumLiterals ecoreEnumLiteral="management.ecore#//GenerationStatus/REQUESTED"/>

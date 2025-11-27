@@ -43,6 +43,7 @@ public abstract class AbstractStorageHelper implements AutoCloseable {
     
     private static final Logger LOGGER = Logger.getLogger(AbstractStorageHelper.class.getName());
     protected static final String DEFAULT_EXTENSION = ".xmi";
+    protected static final String DEFAULT_CONTENT_TYPE = "application/xml";
     protected static final String METADATA_EXTENSION = ".metadata.xmi";
     protected static final String FILE_EXTENSION_PROPERTY = "file.extension";
     protected static final String CONTENT_TYPE_PROPERTY = "content.type";
@@ -121,7 +122,7 @@ public abstract class AbstractStorageHelper implements AutoCloseable {
         if (metadata.getProperties() != null && metadata.getProperties().containsKey(CONTENT_TYPE_PROPERTY)) {
             return (String) metadata.getProperties().get(CONTENT_TYPE_PROPERTY);
         }
-        return null;
+        return DEFAULT_CONTENT_TYPE;
     }
     
     /**
@@ -172,6 +173,7 @@ public abstract class AbstractStorageHelper implements AutoCloseable {
     /**
      * Serializes an EObject to storage using EMF resources.
      * The storage-specific implementation handles the actual writing.
+     * Returns the storage id
      */
     public void saveEObject(String objectId, EObject object, ObjectMetadata metadata) throws IOException {
         String fileExtension = getFileExtension(metadata);
@@ -196,7 +198,25 @@ public abstract class AbstractStorageHelper implements AutoCloseable {
      * Serializes metadata to storage as XMI.
      */
     public void saveMetadata(String objectId, ObjectMetadata metadata) throws IOException {
-        Objects.requireNonNull(objectId, "Cannot save metadata - objectId cannot be null");
+        
+        validateMetadata(objectId, metadata);
+        String metadataPath = buildMetadataPath(objectId);
+        URI metadataUri = createStorageURI(metadataPath);
+        
+        ResourceOperation metadataOp = createResource(metadataUri, null);
+        try {
+            metadataOp.getResource().getContents().add(metadata);
+            metadataOp.getResource().save(Collections.emptyMap());
+            
+            // Let storage implementation handle the actual persistence
+            persistResource(metadataPath, metadataOp.getResource());
+        } finally {
+            metadataOp.cleanup();
+        }
+    }
+    
+    protected void validateMetadata(String objectId, ObjectMetadata metadata) {
+    	Objects.requireNonNull(objectId, "Cannot save metadata - objectId cannot be null");
         Objects.requireNonNull(metadata, "Cannot save metadata - metadata cannot be null");
         
         if (objectId.isEmpty()) {
@@ -213,20 +233,6 @@ public abstract class AbstractStorageHelper implements AutoCloseable {
         if (!Objects.equals(objectId, metadata.getObjectId())) {
             throw new IllegalStateException("Metadata objectId (" + metadata.getObjectId() + 
                                           ") does not match storage objectId (" + objectId + ")");
-        }
-        
-        String metadataPath = buildMetadataPath(objectId);
-        URI metadataUri = createStorageURI(metadataPath);
-        
-        ResourceOperation metadataOp = createResource(metadataUri, null);
-        try {
-            metadataOp.getResource().getContents().add(metadata);
-            metadataOp.getResource().save(Collections.emptyMap());
-            
-            // Let storage implementation handle the actual persistence
-            persistResource(metadataPath, metadataOp.getResource());
-        } finally {
-            metadataOp.cleanup();
         }
     }
     
@@ -277,22 +283,27 @@ public abstract class AbstractStorageHelper implements AutoCloseable {
             // Resolve all proxies to ensure containment references (like properties EMap) are properly loaded
             ObjectMetadata metadata = (ObjectMetadata) eObject;
             
-            // CRITICAL: Validate data integrity - metadata must have objectId
-            if (Objects.isNull(metadata.getObjectId()) || metadata.getObjectId().isEmpty()) {
-                throw new IllegalStateException("Data integrity violation: loaded metadata for objectId '" + 
-                                              objectId + "' has no objectId set. This indicates a fundamental storage error.");
-            }
-            
-            // Validate that the loaded objectId matches the requested objectId
-            if (!Objects.equals(objectId, metadata.getObjectId())) {
-                throw new IllegalStateException("Data integrity violation: loaded metadata objectId '" + 
-                                              metadata.getObjectId() + "' does not match requested objectId '" + objectId + "'");
-            }
+           checkMetadataConsistency(objectId, metadata);
             
             return metadata;
         } finally {
             operation.cleanup();
         }
+    }
+    
+    protected void checkMetadataConsistency(String objectId, ObjectMetadata metadata) {
+    	 // CRITICAL: Validate data integrity - metadata must have objectId
+        if (Objects.isNull(metadata.getObjectId()) || metadata.getObjectId().isEmpty()) {
+            throw new IllegalStateException("Data integrity violation: loaded metadata for objectId '" + 
+                                          objectId + "' has no objectId set. This indicates a fundamental storage error.");
+        }
+        
+        // Validate that the loaded objectId matches the requested objectId
+        if (!Objects.equals(objectId, metadata.getObjectId())) {
+            throw new IllegalStateException("Data integrity violation: loaded metadata objectId '" + 
+                                          metadata.getObjectId() + "' does not match requested objectId '" + objectId + "'");
+        }
+        
     }
     
     /**
@@ -309,6 +320,7 @@ public abstract class AbstractStorageHelper implements AutoCloseable {
         return objectId + METADATA_EXTENSION;
     }
     
+    
     // Abstract methods to be implemented by storage-specific classes
     
     /**
@@ -322,6 +334,8 @@ public abstract class AbstractStorageHelper implements AutoCloseable {
      * This is called after EMF serialization to handle storage-specific operations.
      */
     protected abstract void persistResource(String path, Resource resource) throws IOException;
+    
+    
     
     /**
      * Checks if a resource exists in storage.

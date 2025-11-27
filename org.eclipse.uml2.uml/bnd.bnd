@@ -1,0 +1,21 @@
+-library: enable-emf
+
+Bundle-Version: 5.7.0.SNAPSHOT
+
+-buildpath: \
+	org.eclipse.core.runtime;version=latest,\
+	org.eclipse.equinox.registry;version=latest,\
+	org.eclipse.uml2.common;version=latest,\
+	org.eclipse.uml2.types;version=latest,\
+	org.eclipse.emf.mapping.ecore2xml;version=latest
+
+-includeresource: resources
+
+Require-Bundle: org.eclipse.core.runtime;bundle-version="[3.5.0,4.0.0)";resolution:=optional;x-installation:=greedy
+
+Export-Package: org.eclipse.uml2.uml,\
+ org.eclipse.uml2.uml.internal.impl;x-internal:=true,\
+ org.eclipse.uml2.uml.internal.operations;x-internal:=true,\
+ org.eclipse.uml2.uml.internal.resource;x-internal:=true,\
+ org.eclipse.uml2.uml.resource,\
+ org.eclipse.uml2.uml.util

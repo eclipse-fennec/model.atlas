@@ -72,7 +72,20 @@ public enum StorageBackendType implements Enumerator {
 	 * @generated
 	 * @ordered
 	 */
-	GIT(2, "GIT", "GIT");
+	GIT(2, "GIT", "GIT"),
+
+	/**
+	 * The '<em><b>APICURIO</b></em>' literal object.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * <!-- begin-model-doc -->
+	 * Apicurio-based storage backend
+	 * <!-- end-model-doc -->
+	 * @see #APICURIO_VALUE
+	 * @generated
+	 * @ordered
+	 */
+	APICURIO(3, "APICURIO", "APICURIO");
 
 	/**
 	 * The '<em><b>FILE</b></em>' literal value.
@@ -117,6 +130,20 @@ public enum StorageBackendType implements Enumerator {
 	public static final int GIT_VALUE = 2;
 
 	/**
+	 * The '<em><b>APICURIO</b></em>' literal value.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * <!-- begin-model-doc -->
+	 * Apicurio-based storage backend
+	 * <!-- end-model-doc -->
+	 * @see #APICURIO
+	 * @model
+	 * @generated
+	 * @ordered
+	 */
+	public static final int APICURIO_VALUE = 3;
+
+	/**
 	 * An array of all the '<em><b>Storage Backend Type</b></em>' enumerators.
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
@@ -127,6 +154,7 @@ public enum StorageBackendType implements Enumerator {
 			FILE,
 			MINIO,
 			GIT,
+			APICURIO,
 		};
 
 	/**
@@ -186,6 +214,7 @@ public enum StorageBackendType implements Enumerator {
 			case FILE_VALUE: return FILE;
 			case MINIO_VALUE: return MINIO;
 			case GIT_VALUE: return GIT;
+			case APICURIO_VALUE: return APICURIO;
 		}
 		return null;
 	}
