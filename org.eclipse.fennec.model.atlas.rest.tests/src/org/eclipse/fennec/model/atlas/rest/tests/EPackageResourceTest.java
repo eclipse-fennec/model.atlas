@@ -34,6 +34,9 @@ import org.eclipse.emf.ecore.resource.ResourceSet;
 import org.eclipse.fennec.model.atlas.rest.model.EPackageListResponse;
 import org.eclipse.fennec.model.atlas.rest.tests.helper.ResourceAware;
 import org.eclipse.fennec.model.atlas.rest.tests.helper.TestHelper;
+import org.eclipse.uml2.uml.Model;
+import org.eclipse.uml2.uml.Package;
+import org.eclipse.uml2.uml.UMLFactory;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -50,6 +53,7 @@ import jakarta.ws.rs.client.Entity;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.ext.MessageBodyWriter;
+
 
 /**
  * Integration tests for the EPackage REST API endpoints.
@@ -77,6 +81,37 @@ public class EPackageResourceTest {
 
 	// Track created EPackages for cleanup
 	private java.util.List<String> createdNsUris = new java.util.ArrayList<>();
+	
+	/**
+     * Basic Ecore XML definition for a package named "MyData" containing a single class "Item".
+     * This string can be used to simulate an incoming REST payload for testing deserialization.
+     */
+    public static final String MY_DATA_ECORE_XML = """
+<?xml version="1.0" encoding="UTF-8"?>
+<ecore:EPackage xmi:version="2.0"
+    xmlns:xmi="http://www.omg.org/XMI" xmlns:ecore="http://www.eclipse.org/emf/2002/Ecore"
+    name="MyData" nsURI="http://www.example.org/MyData" nsPrefix="mydata">
+  <!-- 
+    The EPackage definition starts here. It defines the namespace (nsURI) 
+    and the prefix (nsPrefix) for this model.
+  -->
+  <eClassifiers xsi:type="ecore:EClass" name="Item">
+    <!-- 
+      This is an EClass named 'Item'. It represents a class in your model.
+    -->
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="id" lowerBound="1"
+        eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EInt"/>
+    <!-- 
+      This is an EAttribute (field) named 'id' of type integer (EInt). 
+      The lowerBound="1" means this attribute is mandatory (required).
+    -->
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="name" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    <!-- 
+      This is an EAttribute (field) named 'name' of type string (EString).
+    -->
+  </eClassifiers>
+</ecore:EPackage>
+""";
 
 	@SuppressWarnings("rawtypes")
 	@BeforeEach
@@ -165,6 +200,24 @@ public class EPackageResourceTest {
 		// Then: Should return 201 Created
 		assertEquals(Response.Status.CREATED.getStatusCode(), response.getStatus(),
 			"Should return 201 Created for JSON");
+		createdNsUris.add(nsUri);
+	}
+	
+	@Test
+	void testCreateEPackage_WithUML_Success() throws IOException {
+		// Given: A new EPackage in JSON format
+		String nsUri = TestHelper.generateUniqueNsUri("createUMLTest");
+		Package umlPackage = createUMLPackage(nsUri);
+		String xmiContent = TestHelper.serializeToXMI(umlPackage, resourceSet);
+
+		// When: POST with UML
+		Response response = client.target(BASE_URL)
+			.request("application/uml")
+			.post(Entity.entity(xmiContent, "application/uml"));
+
+		// Then: Should return 201 Created
+		assertEquals(Response.Status.CREATED.getStatusCode(), response.getStatus(),
+			"Should return 201 Created for UML");
 		createdNsUris.add(nsUri);
 	}
 
@@ -264,6 +317,29 @@ public class EPackageResourceTest {
 		Response response = client.target(BASE_URL)
 			.queryParam("nsUri", nsUri)
 			.request(MediaType.APPLICATION_XML)
+			.get();
+
+		// Then: Should return 200 OK with the EPackage
+		assertEquals(Response.Status.OK.getStatusCode(), response.getStatus(),
+			"Should return 200 OK");
+
+		EPackage retrievedPackage = response.readEntity(EPackage.class);
+		assertNotNull(retrievedPackage, "Response body should not be null");
+		assertEquals(nsUri, retrievedPackage.getNsURI(), "Response should contain the requested nsUri");
+		assertEquals("GetTestPackage", retrievedPackage.getName(), "Response should contain the package name");
+	}
+	
+	@Test
+	void testGetEPackage_UML_ByNsUri_Success() throws IOException {
+		// Given: An existing EPackage
+		String nsUri = TestHelper.generateUniqueNsUri("getTest");
+		EPackage testPackage = createBasicTestEPackage(nsUri, "GetTestPackage", "get");
+		createEPackageViaREST(testPackage);
+
+		// When: GET with nsUri query parameter
+		Response response = client.target(BASE_URL)
+			.queryParam("nsUri", nsUri)
+			.request("application/uml")
 			.get();
 
 		// Then: Should return 200 OK with the EPackage
@@ -742,5 +818,13 @@ public class EPackageResourceTest {
 			"Failed to create test EPackage: " + ePackage.getNsURI());
 
 		createdNsUris.add(ePackage.getNsURI());
+	}
+	
+	private Package createUMLPackage(String nsUri) {
+		Model model = UMLFactory.eINSTANCE.createModel();
+		model.setName("test-uml");
+		model.setURI(nsUri);
+		return model;
+		
 	}
 }

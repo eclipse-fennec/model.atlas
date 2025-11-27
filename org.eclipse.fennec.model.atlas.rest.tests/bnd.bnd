@@ -22,8 +22,12 @@ Test-Cases: ${classes;HIERARCHY_INDIRECTLY_ANNOTATED;org.junit.platform.commons.
 	org.eclipse.emf.ecore;version=latest,\
 	org.eclipse.emf.ecore.xmi;version=latest,\
 	org.eclipse.emf.common;version=latest,\
-    org.eclipse.osgitech.rest;version=latest,\
-    org.eclipse.osgitech.rest.servlet.whiteboard;version=latest
+	org.eclipse.osgitech.rest;version=latest,\
+	org.eclipse.osgitech.rest.servlet.whiteboard;version=latest,\
+	org.osgi.service.cm,\
+	org.eclipse.fennec.model.atlas.workflow,\
+	org.eclipse.fennec.model.atlas.management,\
+	org.eclipse.uml2.uml
 
 Private-Package: org.eclipse.fennec.model.atlas.rest.tests,\
 	org.eclipse.fennec.model.atlas.rest.tests.helper
@@ -34,6 +38,7 @@ Bundle-Version: 1.0.0.SNAPSHOT
 	OSGI-INF/configurator/=configs/,\
 	test-data=test-data/
 
+
 Require-Capability: osgi.extender;filter:='(osgi.extender=osgi.configurator)'
 
 -dependson: \
@@ -42,6 +47,6 @@ Require-Capability: osgi.extender;filter:='(osgi.extender=osgi.configurator)'
 	org.eclipse.fennec.model.atlas.rest.model,\
     org.eclipse.fennec.model.atlas.rest.xsdschema,\
     org.eclipse.fennec.model.atlas.rest.jsonschema,\
-    org.eclipse.fennec.model.atlas.rest.ecore.xmi
-
--runee: JavaSE-21
+    org.eclipse.fennec.model.atlas.rest.ecore.xmi,\
+    org.eclipse.fennec.model.atlas.rest.uml,\
+    org.eclipse.uml2.uml

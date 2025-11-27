@@ -39,7 +39,8 @@ Bundle-Developers: \
 	geckoEMFUtil,\
 	geckoMessaging,\
 	geckoEMFRepository,\
-	jakartaREST
+	jakartaREST,\
+	geckoLibraries
 
 # Needed because we enabled library 'gecko-dimc'
 # Activate baselining
@@ -59,6 +60,11 @@ javac.target: 21
 -require-bnd "(version>=7.1.0)"
 
 #-jpms-module-info:
+
+-plugin.3.EclipseMDT-UML2: \
+ 	aQute.bnd.repository.p2.provider.P2Repository; \
+ 	url = https://download.eclipse.org/modeling/mdt/uml2/updates/releases/; \
+ 	name = EclipseMDT-UML2
 
 -plugin.2.Central: \
     aQute.bnd.repository.maven.provider.MavenBndRepository; \

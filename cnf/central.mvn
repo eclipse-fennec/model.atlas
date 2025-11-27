@@ -114,7 +114,7 @@ org.osgi:osgi.cmpn:7.0.0
 
 #log
 org.slf4j:slf4j-api:2.0.11
-org.slf4j:jul-to-slf4j:2.0.11                                                                                                                                          
+org.slf4j:jul-to-slf4j:2.0.11
 ch.qos.logback:logback-core:1.5.3
 ch.qos.logback:logback-classic:1.5.3
 
@@ -122,6 +122,8 @@ org.bndtools:org.bndtools.templates.osgi:7.0.0
 
 #org.eclipse.fennec.emf:org.eclipse.fennec.emf.osgi.bnd.library.workspace:1.0.0-SNAPSHOT
 #org.eclipse.osgi-technology.rest:org.eclipse.osgitech.rest.bnd.library:1.2.3
+org.geckoprojects.libraries:org.gecko.libraries.workspace.library:1.0.0-SNAPSHOT
+
 
 commons-fileupload:commons-fileupload:1.6.0
 commons-io:commons-io:2.20.0
@@ -165,6 +167,8 @@ com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:2.18.0
 org.apache.commons:commons-text:1.10.0
 org.apache.commons:commons-lang3:3.17.0
 
+com.fasterxml.jackson.core:jackson-annotations:2.20
+
 #xtext
 org.eclipse.xtext:org.eclipse.xtext.xbase.lib:2.29.0.M1
 org.eclipse.xtext:org.eclipse.xtext.builder:2.10.0
@@ -190,6 +194,7 @@ org.eclipse.emf:org.eclipse.emf.ecore.xmi:2.39.0
 
 #biz.aQute:biz.aQute.gogo.commands.provider:1.11.0-SNAPSHOT
 
+
 # Codec
 org.geckoprojects.codec:org.eclipse.fennec.codec:1.1.0-SNAPSHOT
 org.geckoprojects.codec:org.eclipse.fennec.codec.json:1.1.0-SNAPSHOT
@@ -198,3 +203,16 @@ org.geckoprojects.codec:org.eclipse.fennec.codec.csv:1.1.0-SNAPSHOT
 org.geckoprojects.codec:org.eclipse.fennec.codec.info:1.1.0-SNAPSHOT
 org.geckoprojects.codec:org.eclipse.fennec.codec.info.model:1.1.0-SNAPSHOT
 org.geckoprojects.codec:org.eclipse.fennec.codec.constants:1.1.0-SNAPSHOT
+
+
+#UML
+org.eclipse.emf:org.eclipse.emf.mapping.ecore2xml:2.13.0
+## can be removed after the UML Classloader issues PR is done and org.eclipse.uml2.uml is removed
+org.eclipse.core:org.eclipse.core.runtime:3.7.0
+org.eclipse.platform:org.eclipse.equinox.registry:3.7.0
+
+#Test Containers
+org.eclipse.daanse:org.eclipse.daanse.tooling.testcontainers.core:0.0.1-SNAPSHOT
+net.java.dev.jna:jna:5.18.1
+org.apache.commons:commons-compress:1.28.0
+org.apache.commons:commons-lang3:3.20.0

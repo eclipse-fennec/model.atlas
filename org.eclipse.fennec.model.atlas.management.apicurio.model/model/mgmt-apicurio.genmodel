@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<genmodel:GenModel xmi:version="2.0" xmlns:xmi="http://www.omg.org/XMI" xmlns:ecore="http://www.eclipse.org/emf/2002/Ecore"
+    xmlns:genmodel="http://www.eclipse.org/emf/2002/GenModel" copyrightText="Copyright (c) 2012 - 2025 Data In Motion and others.&#xA;All rights reserved.&#xA;&#xA;This program and the accompanying materials are made&#xA;available under the terms of the Eclipse Public License 2.0&#xA;which is available at https://www.eclipse.org/legal/epl-2.0/&#xA;&#xA;SPDX-License-Identifier: EPL-2.0&#xA;&#xA;Contributors:&#xA;    Data In Motion - initial API and implementation"
+    modelDirectory="/org.eclipse.fennec.model.atlas.management.apicurio.model/src"
+    modelPluginID="org.eclipse.fennec.model.atlas.management.apicurio.model" modelName="mngm-apicurio"
+    rootExtendsClass="org.eclipse.emf.ecore.impl.MinimalEObjectImpl$Container" importerID="org.eclipse.emf.importer.ecore"
+    complianceLevel="17.0" suppressGenModelAnnotations="false" copyrightFields="false"
+    operationReflection="true" importOrganizing="true" oSGiCompatible="true">
+  <foreignModel>mgmt-apicurio.ecore</foreignModel>
+  <genPackages prefix="MgmtApicurio" basePackage="org.eclipse.fennec.model.atlas.mgmt"
+      resource="XMI" disposableProviderFactory="true" ecorePackage="mgmt-apicurio.ecore#/">
+    <genEnums typeSafeEnumCompatible="false" ecoreEnum="mgmt-apicurio.ecore#//ArtifactType">
+      <genEnumLiterals ecoreEnumLiteral="mgmt-apicurio.ecore#//ArtifactType/XML"/>
+      <genEnumLiterals ecoreEnumLiteral="mgmt-apicurio.ecore#//ArtifactType/JSON"/>
+      <genEnumLiterals ecoreEnumLiteral="mgmt-apicurio.ecore#//ArtifactType/XSD"/>
+      <genEnumLiterals ecoreEnumLiteral="mgmt-apicurio.ecore#//ArtifactType/ASYNCAPI"/>
+      <genEnumLiterals ecoreEnumLiteral="mgmt-apicurio.ecore#//ArtifactType/AVRO"/>
+      <genEnumLiterals ecoreEnumLiteral="mgmt-apicurio.ecore#//ArtifactType/GRAPHQL"/>
+      <genEnumLiterals ecoreEnumLiteral="mgmt-apicurio.ecore#//ArtifactType/KCONNECT"/>
+      <genEnumLiterals ecoreEnumLiteral="mgmt-apicurio.ecore#//ArtifactType/OPENAPI"/>
+      <genEnumLiterals ecoreEnumLiteral="mgmt-apicurio.ecore#//ArtifactType/PROTOBUF"/>
+      <genEnumLiterals ecoreEnumLiteral="mgmt-apicurio.ecore#//ArtifactType/WSDL"/>
+    </genEnums>
+    <genEnums typeSafeEnumCompatible="false" ecoreEnum="mgmt-apicurio.ecore#//VersionStateType">
+      <genEnumLiterals ecoreEnumLiteral="mgmt-apicurio.ecore#//VersionStateType/ENABLED"/>
+      <genEnumLiterals ecoreEnumLiteral="mgmt-apicurio.ecore#//VersionStateType/DISABLED"/>
+      <genEnumLiterals ecoreEnumLiteral="mgmt-apicurio.ecore#//VersionStateType/DEPRECATED"/>
+      <genEnumLiterals ecoreEnumLiteral="mgmt-apicurio.ecore#//VersionStateType/DRAFT"/>
+    </genEnums>
+    <genClasses ecoreClass="mgmt-apicurio.ecore#//Artifact">
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute mgmt-apicurio.ecore#//Artifact/artifactId"/>
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute mgmt-apicurio.ecore#//Artifact/artifactType"/>
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute mgmt-apicurio.ecore#//Artifact/name"/>
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute mgmt-apicurio.ecore#//Artifact/description"/>
+      <genFeatures property="None" children="true" createChild="true" ecoreFeature="ecore:EReference mgmt-apicurio.ecore#//Artifact/labels"/>
+    </genClasses>
+    <genClasses ecoreClass="mgmt-apicurio.ecore#//CreateArtifact">
+      <genFeatures property="None" children="true" createChild="true" ecoreFeature="ecore:EReference mgmt-apicurio.ecore#//CreateArtifact/firstVersion"/>
+    </genClasses>
+    <genClasses ecoreClass="mgmt-apicurio.ecore#//CreateArtifactVersion"/>
+    <genClasses ecoreClass="mgmt-apicurio.ecore#//Content">
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute mgmt-apicurio.ecore#//Content/contentType"/>
+      <genFeatures property="None" children="true" createChild="true" ecoreFeature="ecore:EAttribute mgmt-apicurio.ecore#//Content/content"/>
+      <genFeatures property="None" children="true" createChild="true" ecoreFeature="ecore:EReference mgmt-apicurio.ecore#//Content/references"/>
+    </genClasses>
+    <genClasses ecoreClass="mgmt-apicurio.ecore#//Version">
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute mgmt-apicurio.ecore#//Version/version"/>
+      <genFeatures property="None" children="true" createChild="true" ecoreFeature="ecore:EReference mgmt-apicurio.ecore#//Version/content"/>
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute mgmt-apicurio.ecore#//Version/name"/>
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute mgmt-apicurio.ecore#//Version/description"/>
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute mgmt-apicurio.ecore#//Version/branches"/>
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute mgmt-apicurio.ecore#//Version/isDraft"/>
+      <genFeatures property="None" children="true" createChild="true" ecoreFeature="ecore:EReference mgmt-apicurio.ecore#//Version/labels"/>
+    </genClasses>
+    <genClasses ecoreClass="mgmt-apicurio.ecore#//ArtifactReference">
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute mgmt-apicurio.ecore#//ArtifactReference/groupId"/>
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute mgmt-apicurio.ecore#//ArtifactReference/artifactId"/>
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute mgmt-apicurio.ecore#//ArtifactReference/name"/>
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute mgmt-apicurio.ecore#//ArtifactReference/version"/>
+    </genClasses>
+    <genClasses ecoreClass="mgmt-apicurio.ecore#//SearchedArtifact">
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute mgmt-apicurio.ecore#//SearchedArtifact/createdOn"/>
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute mgmt-apicurio.ecore#//SearchedArtifact/owner"/>
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute mgmt-apicurio.ecore#//SearchedArtifact/modifiedOn"/>
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute mgmt-apicurio.ecore#//SearchedArtifact/modifiedBy"/>
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute mgmt-apicurio.ecore#//SearchedArtifact/groupId"/>
+    </genClasses>
+    <genClasses ecoreClass="mgmt-apicurio.ecore#//SearchResponse">
+      <genFeatures property="None" children="true" createChild="true" ecoreFeature="ecore:EReference mgmt-apicurio.ecore#//SearchResponse/artifacts"/>
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute mgmt-apicurio.ecore#//SearchResponse/count"/>
+    </genClasses>
+    <genClasses ecoreClass="mgmt-apicurio.ecore#//Labels">
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute mgmt-apicurio.ecore#//Labels/key"/>
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute mgmt-apicurio.ecore#//Labels/value"/>
+    </genClasses>
+    <genClasses ecoreClass="mgmt-apicurio.ecore#//SearchVersionResponse">
+      <genFeatures property="None" children="true" createChild="true" ecoreFeature="ecore:EReference mgmt-apicurio.ecore#//SearchVersionResponse/versions"/>
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute mgmt-apicurio.ecore#//SearchVersionResponse/count"/>
+    </genClasses>
+    <genClasses ecoreClass="mgmt-apicurio.ecore#//SearchedVersion">
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute mgmt-apicurio.ecore#//SearchedVersion/globalId"/>
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute mgmt-apicurio.ecore#//SearchedVersion/version"/>
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute mgmt-apicurio.ecore#//SearchedVersion/contentId"/>
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute mgmt-apicurio.ecore#//SearchedVersion/state"/>
+    </genClasses>
+  </genPackages>
+</genmodel:GenModel>

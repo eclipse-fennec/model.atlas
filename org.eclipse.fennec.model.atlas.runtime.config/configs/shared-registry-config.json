@@ -1,0 +1,18 @@
+{
+	":configurator:resource-version": 1,
+	":configurator:version": "1.0.0",
+	"LuceneEObjectRegistryService~main": {
+		"registry.workspace.folder": "$[env:STORAGE_ROOT;default=$[prop:STORAGE_ROOT;default=/tmp/mac]]/main-registry",
+		"registry": "main",
+		"storage.backend.tracking": "true",
+		"initial.index.capacity": "1000",
+		"enable.debug.logging": "true"
+	},
+	"LuceneEObjectRegistryService~documentation": {
+		"registry.workspace.folder": "$[env:STORAGE_ROOT;default=$[prop:STORAGE_ROOT;default=/tmp/mac]]/documentation-registry",
+		"registry": "documentation",
+		"storage.backend.tracking": "true",
+		"initial.index.capacity": "1000",
+		"enable.debug.logging": "true"
+	}
+}

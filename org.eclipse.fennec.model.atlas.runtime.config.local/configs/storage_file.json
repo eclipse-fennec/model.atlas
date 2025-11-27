@@ -1,0 +1,19 @@
+{
+	":configurator:resource-version": 1,
+	":configurator:version": "1.0.0",
+	"FileObjectStorage~draft": {
+		"workspace.folder": "$[env:STORAGE_ROOT;default=$[prop:STORAGE_ROOT;default=/tmp/mac]]/draft-storage",
+		"storage.role": "draft",
+		"registry.target": "(registry=main)"
+	},
+	"FileObjectStorage~released": {
+		"workspace.folder": "$[env:STORAGE_ROOT;default=$[prop:STORAGE_ROOT;default=/tmp/mac]]/release-storage",
+		"storage.role": "release",
+		"registry.target": "(registry=main)"
+	},
+	"FileObjectStorage~documentation": {
+		"workspace.folder": "$[env:STORAGE_ROOT;default=$[prop:STORAGE_ROOT;default=/tmp/mac]]/documentation-storage",
+		"storage.role": "documentation",
+		"registry.target": "(registry=documentation)"
+	}
+}

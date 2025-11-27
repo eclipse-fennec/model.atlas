@@ -1,0 +1,173 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ecore:EPackage xmi:version="2.0" xmlns:xmi="http://www.omg.org/XMI" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xmlns:ecore="http://www.eclipse.org/emf/2002/Ecore" name="workflowapi" nsURI="http://eclipse.org/fennec/model/atlas/workflow/api/1.0.0"
+    nsPrefix="workflowapi">
+  <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+    <details key="modelName" value="WorkflowApi"/>
+    <details key="complianceLevel" value="17.0"/>
+    <details key="copyrightText" value="Copyright (c) 2012 - 2025 Data In Motion and others.&#xA;All rights reserved.&#xA;&#xA;This program and the accompanying materials are made&#xA;available under the terms of the Eclipse Public License 2.0&#xA;which is available at https://www.eclipse.org/legal/epl-2.0/&#xA;&#xA;SPDX-License-Identifier: EPL-2.0&#xA;&#xA;Contributors:&#xA;     Mark Hoffmann - initial API and implementation"/>
+    <details key="resource" value="XMI"/>
+    <details key="prefix" value="WorkflowApi"/>
+    <details key="basePackage" value="org.eclipse.fennec.model.atlas.wf"/>
+    <details key="rootExtendsInterface" value=""/>
+    <details key="oSGiCompatible" value="true"/>
+    <details key="suppressNotification" value="true"/>
+    <details key="suppressEMFTypes" value="true"/>
+  </eAnnotations>
+  <eClassifiers xsi:type="ecore:EClass" name="EObjectWorkflowService" abstract="true"
+      interface="true">
+    <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+      <details key="documentation" value="Generic orchestrator for EObject workflow management"/>
+    </eAnnotations>
+    <eTypeParameters name="T">
+      <eBounds eClassifier="ecore:EClass http://www.eclipse.org/emf/2002/Ecore#//EObject"/>
+    </eTypeParameters>
+    <eOperations name="approveObject" eType="ecore:EClass ../../org.eclipse.fennec.model.atlas.management/model/management.ecore#//ObjectMetadata">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="Approve an object for release, returns updated registration"/>
+      </eAnnotations>
+      <eParameters name="objectId" lowerBound="1" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+      <eParameters name="reviewUser" lowerBound="1" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+      <eParameters name="approvalReason" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    </eOperations>
+    <eOperations name="rejectObject" eType="ecore:EClass ../../org.eclipse.fennec.model.atlas.management/model/management.ecore#//ObjectMetadata">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="Reject an object during review, returns updated registration"/>
+      </eAnnotations>
+      <eParameters name="objectId" lowerBound="1" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+      <eParameters name="reviewUser" lowerBound="1" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+      <eParameters name="rejectionReason" lowerBound="1" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    </eOperations>
+    <eOperations name="releaseObject" eType="ecore:EClass ../../org.eclipse.fennec.model.atlas.management/model/management.ecore#//ObjectMetadata">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="Release an approved object to production storage after compliance checks, returns updated registration"/>
+      </eAnnotations>
+      <eParameters name="objectId" lowerBound="1" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+      <eParameters name="releaseNotes" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+      <eParameters name="requireComplianceCheck" lowerBound="1" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EBoolean"/>
+    </eOperations>
+    <eOperations name="listApprovedObjects">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="List all approved objects ready for release"/>
+      </eAnnotations>
+      <eGenericType eClassifier="ecore:EDataType ../../org.eclipse.fennec.model.atlas.management/model/management.ecore#//List">
+        <eTypeArguments eClassifier="ecore:EClass ../../org.eclipse.fennec.model.atlas.management/model/management.ecore#//ObjectMetadata"/>
+      </eGenericType>
+    </eOperations>
+    <eOperations name="listRejectedObjects">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="List all rejected objects"/>
+      </eAnnotations>
+      <eGenericType eClassifier="ecore:EDataType ../../org.eclipse.fennec.model.atlas.management/model/management.ecore#//List">
+        <eTypeArguments eClassifier="ecore:EClass ../../org.eclipse.fennec.model.atlas.management/model/management.ecore#//ObjectMetadata"/>
+      </eGenericType>
+    </eOperations>
+    <eOperations name="listReleasedObjects">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="List all released/production objects"/>
+      </eAnnotations>
+      <eGenericType eClassifier="ecore:EDataType ../../org.eclipse.fennec.model.atlas.management/model/management.ecore#//List">
+        <eTypeArguments eClassifier="ecore:EClass ../../org.eclipse.fennec.model.atlas.management/model/management.ecore#//ObjectMetadata"/>
+      </eGenericType>
+    </eOperations>
+    <eOperations name="getObject" eType="ecore:EClass ../../org.eclipse.fennec.model.atlas.management/model/management.ecore#//ObjectMetadata">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="Get object registration by ID"/>
+      </eAnnotations>
+      <eParameters name="objectId" lowerBound="1" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    </eOperations>
+    <eOperations name="getObjectContent" eType="ecore:EClass http://www.eclipse.org/emf/2002/Ecore#//EObject">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="Get the actual EObject content by ID"/>
+      </eAnnotations>
+      <eParameters name="objectId" lowerBound="1" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    </eOperations>
+    <eOperations name="updateObject">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="Update an existing object"/>
+      </eAnnotations>
+      <eGenericType eClassifier="ecore:EDataType ../../org.eclipse.fennec.model.atlas.management/model/management.ecore#//Promise">
+        <eTypeArguments eClassifier="ecore:EDataType ../../org.eclipse.fennec.model.atlas.management/model/management.ecore#//Void"/>
+      </eGenericType>
+      <eParameters name="objectId" lowerBound="1" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+      <eParameters name="updatedObject" lowerBound="1">
+        <eGenericType eTypeParameter="#//EObjectWorkflowService/T"/>
+      </eParameters>
+    </eOperations>
+    <eOperations name="deleteObject">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="Delete an object"/>
+      </eAnnotations>
+      <eGenericType eClassifier="ecore:EDataType ../../org.eclipse.fennec.model.atlas.management/model/management.ecore#//Promise">
+        <eTypeArguments eClassifier="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EBooleanObject"/>
+      </eGenericType>
+      <eParameters name="objectId" lowerBound="1" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    </eOperations>
+    <eGenericSuperTypes eClassifier="#//WorkflowDraftProvider">
+      <eTypeArguments eTypeParameter="#//EObjectWorkflowService/T"/>
+    </eGenericSuperTypes>
+  </eClassifiers>
+  <eClassifiers xsi:type="ecore:EClass" name="WorkflowDraftProvider" abstract="true"
+      interface="true">
+    <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+      <details key="documentation" value="Generic orchestrator for EObject workflow management"/>
+    </eAnnotations>
+    <eTypeParameters name="T">
+      <eBounds eClassifier="ecore:EClass http://www.eclipse.org/emf/2002/Ecore#//EObject"/>
+    </eTypeParameters>
+    <eOperations name="uploadDraft">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="Upload an EObject to draft storage for review, returns promise with object ID"/>
+      </eAnnotations>
+      <eGenericType eClassifier="ecore:EDataType ../../org.eclipse.fennec.model.atlas.management/model/management.ecore#//Promise">
+        <eTypeArguments eClassifier="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+      </eGenericType>
+      <eParameters name="object" lowerBound="1">
+        <eGenericType eTypeParameter="#//WorkflowDraftProvider/T"/>
+      </eParameters>
+      <eParameters name="metadata" lowerBound="1" eType="ecore:EClass ../../org.eclipse.fennec.model.atlas.management/model/management.ecore#//ObjectMetadata"/>
+    </eOperations>
+    <eOperations name="listDraftObjects">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="List all objects in draft/review status"/>
+      </eAnnotations>
+      <eGenericType eClassifier="ecore:EDataType ../../org.eclipse.fennec.model.atlas.management/model/management.ecore#//List">
+        <eTypeArguments eClassifier="ecore:EClass ../../org.eclipse.fennec.model.atlas.management/model/management.ecore#//ObjectMetadata"/>
+      </eGenericType>
+    </eOperations>
+    <eOperations name="getDraft" eType="ecore:EClass ../../org.eclipse.fennec.model.atlas.management/model/management.ecore#//ObjectMetadata">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="Get object registration by ID"/>
+      </eAnnotations>
+      <eParameters name="objectId" lowerBound="1" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    </eOperations>
+    <eOperations name="getDraftContent">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="Get the actual EObject content by ID"/>
+      </eAnnotations>
+      <eGenericType eTypeParameter="#//WorkflowDraftProvider/T"/>
+      <eParameters name="objectId" lowerBound="1" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    </eOperations>
+    <eOperations name="updateDraft">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="Update an existing object"/>
+      </eAnnotations>
+      <eGenericType eClassifier="ecore:EDataType ../../org.eclipse.fennec.model.atlas.management/model/management.ecore#//Promise">
+        <eTypeArguments eClassifier="ecore:EDataType ../../org.eclipse.fennec.model.atlas.management/model/management.ecore#//Void"/>
+      </eGenericType>
+      <eParameters name="objectId" lowerBound="1" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+      <eParameters name="updatedObject" lowerBound="1">
+        <eGenericType eTypeParameter="#//WorkflowDraftProvider/T"/>
+      </eParameters>
+    </eOperations>
+    <eOperations name="deleteDraft">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="Delete an object"/>
+      </eAnnotations>
+      <eGenericType eClassifier="ecore:EDataType ../../org.eclipse.fennec.model.atlas.management/model/management.ecore#//Promise">
+        <eTypeArguments eClassifier="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EBooleanObject"/>
+      </eGenericType>
+      <eParameters name="objectId" lowerBound="1" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    </eOperations>
+  </eClassifiers>
+</ecore:EPackage>

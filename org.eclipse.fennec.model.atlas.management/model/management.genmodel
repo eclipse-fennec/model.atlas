@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<genmodel:GenModel xmi:version="2.0" xmlns:xmi="http://www.omg.org/XMI" xmlns:ecore="http://www.eclipse.org/emf/2002/Ecore"
+    xmlns:genmodel="http://www.eclipse.org/emf/2002/GenModel" copyrightText="Copyright (c) 2012 - 2025 Data In Motion and others.&#xA;All rights reserved.&#xA;&#xA;This program and the accompanying materials are made&#xA;available under the terms of the Eclipse Public License 2.0&#xA;which is available at https://www.eclipse.org/legal/epl-2.0/&#xA;&#xA;SPDX-License-Identifier: EPL-2.0&#xA;&#xA;Contributors:&#xA;     Mark Hoffmann - initial API and implementation"
+    modelDirectory="/org.eclipse.fennec.model.atlas.management/src" editDirectory="/org.eclipse.fennec.model.atlas.management.edit/src"
+    editorDirectory="/org.eclipse.fennec.model.atlas.management.editor/src" modelPluginID="org.eclipse.fennec.model.atlas.management"
+    modelName="Management" rootExtendsClass="org.eclipse.emf.ecore.impl.MinimalEObjectImpl$Container"
+    importerID="org.eclipse.emf.importer.ecore" complianceLevel="17.0" suppressGenModelAnnotations="false"
+    copyrightFields="false" editPluginID="org.eclipse.fennec.model.atlas.management.edit"
+    editorPluginID="org.eclipse.fennec.model.atlas.management.editor" operationReflection="true"
+    importOrganizing="true" oSGiCompatible="true">
+  <foreignModel>management.ecore</foreignModel>
+  <genPackages prefix="Management" basePackage="org.eclipse.fennec.model.atlas.mgmt"
+      resource="XMI" disposableProviderFactory="true" ecorePackage="management.ecore#/">
+    <genEnums typeSafeEnumCompatible="false" ecoreEnum="management.ecore#//ObjectStatus">
+      <genEnumLiterals ecoreEnumLiteral="management.ecore#//ObjectStatus/DRAFT"/>
+      <genEnumLiterals ecoreEnumLiteral="management.ecore#//ObjectStatus/APPROVED"/>
+      <genEnumLiterals ecoreEnumLiteral="management.ecore#//ObjectStatus/REJECTED"/>
+      <genEnumLiterals ecoreEnumLiteral="management.ecore#//ObjectStatus/DEPLOYED"/>
+      <genEnumLiterals ecoreEnumLiteral="management.ecore#//ObjectStatus/ARCHIVED"/>
+    </genEnums>
+    <genEnums typeSafeEnumCompatible="false" ecoreEnum="management.ecore#//PackageStatus">
+      <genEnumLiterals ecoreEnumLiteral="management.ecore#//PackageStatus/DRAFT"/>
+      <genEnumLiterals ecoreEnumLiteral="management.ecore#//PackageStatus/APPROVED"/>
+      <genEnumLiterals ecoreEnumLiteral="management.ecore#//PackageStatus/DEPLOYED"/>
+      <genEnumLiterals ecoreEnumLiteral="management.ecore#//PackageStatus/ARCHIVED"/>
+    </genEnums>
+    <genEnums typeSafeEnumCompatible="false" ecoreEnum="management.ecore#//StorageBackendType">
+      <genEnumLiterals ecoreEnumLiteral="management.ecore#//StorageBackendType/FILE"/>
+      <genEnumLiterals ecoreEnumLiteral="management.ecore#//StorageBackendType/MINIO"/>
+      <genEnumLiterals ecoreEnumLiteral="management.ecore#//StorageBackendType/GIT"/>
+      <genEnumLiterals ecoreEnumLiteral="management.ecore#//StorageBackendType/APICURIO"/>
+    </genEnums>
+    <genEnums typeSafeEnumCompatible="false" ecoreEnum="management.ecore#//GenerationStatus">
+      <genEnumLiterals ecoreEnumLiteral="management.ecore#//GenerationStatus/REQUESTED"/>
+      <genEnumLiterals ecoreEnumLiteral="management.ecore#//GenerationStatus/IN_PROGRESS"/>
+      <genEnumLiterals ecoreEnumLiteral="management.ecore#//GenerationStatus/COMPLETED"/>
+      <genEnumLiterals ecoreEnumLiteral="management.ecore#//GenerationStatus/FAILED"/>
+      <genEnumLiterals ecoreEnumLiteral="management.ecore#//GenerationStatus/CANCELLED"/>
+    </genEnums>
+    <genDataTypes ecoreDataType="management.ecore#//Instant"/>
+    <genDataTypes ecoreDataType="management.ecore#//Promise">
+      <genTypeParameters ecoreTypeParameter="management.ecore#//Promise/T"/>
+    </genDataTypes>
+    <genDataTypes ecoreDataType="management.ecore#//List">
+      <genTypeParameters ecoreTypeParameter="management.ecore#//List/T"/>
+    </genDataTypes>
+    <genDataTypes ecoreDataType="management.ecore#//Void"/>
+    <genDataTypes ecoreDataType="management.ecore#//Optional">
+      <genTypeParameters ecoreTypeParameter="management.ecore#//Optional/T"/>
+    </genDataTypes>
+    <genClasses ecoreClass="management.ecore#//ObjectMetadata">
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute management.ecore#//ObjectMetadata/uploadUser"/>
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute management.ecore#//ObjectMetadata/uploadTime"/>
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute management.ecore#//ObjectMetadata/sourceChannel"/>
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute management.ecore#//ObjectMetadata/contentHash"/>
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute management.ecore#//ObjectMetadata/objectType"/>
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute management.ecore#//ObjectMetadata/reviewUser"/>
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute management.ecore#//ObjectMetadata/reviewTime"/>
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute management.ecore#//ObjectMetadata/reviewReason"/>
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute management.ecore#//ObjectMetadata/generationTriggerFingerprint"/>
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute management.ecore#//ObjectMetadata/complianceCheckTime"/>
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute management.ecore#//ObjectMetadata/complianceStatus"/>
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute management.ecore#//ObjectMetadata/governanceDocumentationId"/>
+      <genFeatures property="None" children="true" createChild="true" ecoreFeature="ecore:EReference management.ecore#//ObjectMetadata/properties"/>
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute management.ecore#//ObjectMetadata/lastChangeUser"/>
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute management.ecore#//ObjectMetadata/lastChangeTime"/>
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute management.ecore#//ObjectMetadata/status"/>
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute management.ecore#//ObjectMetadata/version"/>
+      <genFeatures notify="false" createChild="false" propertySortChoices="true" ecoreFeature="ecore:EReference management.ecore#//ObjectMetadata/objectRef"/>
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute management.ecore#//ObjectMetadata/objectId"/>
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute management.ecore#//ObjectMetadata/objectName"/>
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute management.ecore#//ObjectMetadata/role"/>
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute management.ecore#//ObjectMetadata/lastChangeReason"/>
+    </genClasses>
+    <genClasses ecoreClass="management.ecore#//StringToObjectMapEntry">
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute management.ecore#//StringToObjectMapEntry/key"/>
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute management.ecore#//StringToObjectMapEntry/value"/>
+    </genClasses>
+    <genClasses ecoreClass="management.ecore#//ObjectQuery">
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute management.ecore#//ObjectQuery/uploadUser"/>
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute management.ecore#//ObjectQuery/sourceChannel"/>
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute management.ecore#//ObjectQuery/objectType"/>
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute management.ecore#//ObjectQuery/status"/>
+    </genClasses>
+    <genClasses ecoreClass="management.ecore#//GenerationRequest">
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute management.ecore#//GenerationRequest/requestId"/>
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute management.ecore#//GenerationRequest/jsonSample"/>
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute management.ecore#//GenerationRequest/jsonFingerprint"/>
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute management.ecore#//GenerationRequest/sourceChannel"/>
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute management.ecore#//GenerationRequest/requestingUser"/>
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute management.ecore#//GenerationRequest/status"/>
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute management.ecore#//GenerationRequest/requestTime"/>
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute management.ecore#//GenerationRequest/startTime"/>
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute management.ecore#//GenerationRequest/completionTime"/>
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute management.ecore#//GenerationRequest/errorMessage"/>
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute management.ecore#//GenerationRequest/resultPackageId"/>
+    </genClasses>
+    <genClasses ecoreClass="management.ecore#//ObjectMetadataContainer">
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute management.ecore#//ObjectMetadataContainer/containerId"/>
+      <genFeatures notify="false" createChild="false" propertySortChoices="true" ecoreFeature="ecore:EReference management.ecore#//ObjectMetadataContainer/metadata"/>
+    </genClasses>
+  </genPackages>
+</genmodel:GenModel>
