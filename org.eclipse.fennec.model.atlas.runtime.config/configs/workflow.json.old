@@ -1,0 +1,18 @@
+{
+	":configurator:resource-version": 1,
+	":configurator:version": "1.0.0",
+	"EObjectWorkflowService~gated": {
+		"workflow.id": "governance-workflow",
+		"draftStorage.target": "(storage.role=draft)",
+		"approvedStorage.target": "(storage.role=release)",
+		"archive.drafts.on.approval": "true",
+		"registryService.target": "(registry=main)",
+		"enable.auto.rollback": "true",
+		"transaction.timeout.ms": "30000",
+		"require.compliance.checks": "false",
+		"max.concurrent.approvals": "10",
+		"enable.detailed.logging": "true",
+		"enable.auto.compliance.check": "true",
+		"require.approved.governance.documentation": "true"
+	}
+}

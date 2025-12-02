@@ -14,12 +14,12 @@
 package org.eclipse.fennec.model.atlas.rest.application.resource;
 
 import java.io.UnsupportedEncodingException;
-import java.net.URLEncoder;
-import java.nio.charset.StandardCharsets;
 import java.time.Instant;
+import java.util.Base64;
 import java.util.List;
 
 import org.eclipse.emf.ecore.EPackage;
+import org.eclipse.emf.ecore.util.EcoreUtil;
 import org.eclipse.fennec.model.atlas.mgmt.management.ManagementFactory;
 import org.eclipse.fennec.model.atlas.mgmt.management.ObjectMetadata;
 import org.eclipse.fennec.model.atlas.mgmt.management.ObjectMetadataContainer;
@@ -78,6 +78,12 @@ public class SchemaPackagesResource {
 	 
 	 @Reference
 	 private ManagementFactory mgmtFactory;
+	 
+	 @GET
+	 @Produces({MediaType.TEXT_PLAIN})
+	 public Response hello() {
+		 return Response.ok().entity("Hello").build();
+	 }
 
 	// ======================
 	// Released Stage APIs (default)
@@ -164,10 +170,30 @@ public class SchemaPackagesResource {
 		if(workflowService == null) {
 			return Response.status(Response.Status.NOT_FOUND).build();
 		}
-		List<ObjectMetadata> objectsMetadata = workflowService.listInStage(stageName);
-		ObjectMetadataContainer container = mgmtFactory.createObjectMetadataContainer();
-		container.getMetadata().addAll(objectsMetadata);		
-		return Response.status(Response.Status.OK).entity(container).build();
+		try {
+			if(nsUri != null) {
+				String encodedUri = encodePackageNsURI(nsUri);
+				ObjectMetadata metadata = workflowService.getFromStage(stageName, encodedUri);
+				if(metadata == null) {
+					return Response.status(Response.Status.NOT_FOUND).build();
+				} else {
+					return Response.status(Response.Status.OK).entity(metadata).build();
+				}
+			} else {
+//				TODO: missing search by name
+				List<ObjectMetadata> objectsMetadata = workflowService.listInStage(stageName);
+				if(objectsMetadata.isEmpty()) {
+					return Response.status(Response.Status.NOT_FOUND).build();
+				}
+				ObjectMetadataContainer container = mgmtFactory.createObjectMetadataContainer();
+				container.getMetadata().addAll(objectsMetadata);		
+				return Response.status(Response.Status.OK).entity(container).build();
+			}
+			
+		} catch (Exception e) {
+			return Response.status(Response.Status.INTERNAL_SERVER_ERROR).build();
+		}
+		
 	}
 
 	/**
@@ -236,12 +262,13 @@ public class SchemaPackagesResource {
 			metadata.setRole(stageName);
 			metadata.setScope(scopeName);
 			metadata.setVersion(version);
-			metadata.setObjectRef(ePackage);
+			metadata.setObjectType(EcoreUtil.getURI(ePackage.eClass()).toString());
+			metadata.getProperties().put("nsUri", nsUri);
 			
 			metadata = workflowService.uploadToStage(stageName, ePackage, metadata).getValue();
 			
 			return Response
-					.status(Response.Status.NOT_IMPLEMENTED)
+					.status(Response.Status.OK)
 					.header("Location", "/".concat(scopeName).concat("/schemas/stages/").concat(stageName).concat("?nsUri=").concat(encodedNsURI))
 					.entity(metadata)
 					.build();
@@ -338,7 +365,9 @@ public class SchemaPackagesResource {
 		@Parameter(description = "The scope name", required = true)
 		@PathParam("scopeName") String scopeName,
 		@Parameter(description = "The stage name", required = true)
-		@PathParam("stageName") String stageName,
+		@PathParam("stageName") String stageName,		
+		@Parameter(description = "The updated version", required = true)
+		@QueryParam("version") String version,
 		@Parameter(description = "The namespace URI of the package", required = true)
 		@QueryParam("nsUri") String nsUri,
 		@RequestBody(description = "The new schema package content", required = true,
@@ -363,7 +392,7 @@ public class SchemaPackagesResource {
 				return Response.status(Response.Status.FORBIDDEN).build();
 			}
 			
-			ObjectMetadata metadata = workflowService.updateInStage(stageName, ePackage, encodedNsUri).getValue();			
+			ObjectMetadata metadata = workflowService.updateInStage(stageName, ePackage, encodedNsUri, version).getValue();			
 			return Response.status(Response.Status.OK).entity(metadata).build();
 			
 		} catch(Exception e) {
@@ -491,7 +520,7 @@ public class SchemaPackagesResource {
 			if(existingMetadata.isIsReadOnly()) {
 				return Response.status(Response.Status.BAD_REQUEST).build();
 			}
-			if(workflowService.isTransitionAllowed(stageName, transitionRequest.getTargetStage())) {
+			if(!workflowService.isTransitionAllowed(stageName, transitionRequest.getTargetStage())) {
 				return Response.status(Response.Status.BAD_REQUEST).build();
 			}
 			ObjectMetadata metadata = workflowService.transitionToStage(encodedNsUri, stageName, transitionRequest.getTargetStage());
@@ -512,8 +541,9 @@ public class SchemaPackagesResource {
 	}
 	
 	private String encodePackageNsURI(String nsUri) throws UnsupportedEncodingException {
-		return URLEncoder.encode(
-				nsUri, 
-                StandardCharsets.UTF_8.toString());
+		return new String(Base64.getUrlEncoder().encode(nsUri.getBytes()));
+//		return URLEncoder.encode(
+//				nsUri, 
+//                StandardCharsets.UTF_8.toString());
 	}
 }

@@ -424,8 +424,6 @@ public class EObjectApicurioStorageServiceTest {
 			metadata.setUploadUser("testUser");
 			metadata.getProperties().put("file.extension", ".json");
 			metadata.getProperties().put("content.type", "application/json");
-			metadata.setObjectRef(testPackage);
-			metadata.setObjectType("EPackage");
 
 			storageService.storeObject(null, testPackage, metadata).getValue();
 			String storageId = metadata.getObjectId();
@@ -625,10 +623,8 @@ public class EObjectApicurioStorageServiceTest {
 			metadata.setUploadUser("originalUser");
 			metadata.setSourceChannel("originalChannel");
 			metadata.setContentHash("originalHash");
-			metadata.setObjectType("EPackage");
 			metadata.setUploadTime(Instant.now());
 			metadata.getProperties().put("file.extension", ".ecore");
-			metadata.setObjectRef(testPackage);
 
 			storageService.storeObject("update-metadata-test", testPackage, metadata).getValue();
 			String storageId = metadata.getObjectId();
@@ -638,7 +634,6 @@ public class EObjectApicurioStorageServiceTest {
 			updatedMetadata.setUploadUser("updatedUser");
 			updatedMetadata.setSourceChannel("updatedChannel");
 			updatedMetadata.setContentHash("updatedHash");
-			updatedMetadata.setObjectType("EPackage");
 			updatedMetadata.setUploadTime(Instant.now());
 			updatedMetadata.setReviewUser("reviewUser");
 			updatedMetadata.setReviewTime(Instant.now());

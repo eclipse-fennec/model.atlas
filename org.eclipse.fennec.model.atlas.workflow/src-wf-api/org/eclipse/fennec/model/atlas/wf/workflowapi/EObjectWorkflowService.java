@@ -89,10 +89,10 @@ public interface EObjectWorkflowService<T extends EObject> {
 	 * <!-- begin-model-doc -->
 	 * Update an existing object. Returned updated ObjectMetadata.
 	 * <!-- end-model-doc -->
-	 * @model dataType="org.eclipse.fennec.model.atlas.mgmt.management.Promise&lt;org.eclipse.fennec.model.atlas.mgmt.management.ObjectMetadata&gt;" updatedObjectRequired="true" objectIdRequired="true"
+	 * @model dataType="org.eclipse.fennec.model.atlas.mgmt.management.Promise&lt;org.eclipse.fennec.model.atlas.mgmt.management.ObjectMetadata&gt;" updatedObjectRequired="true" objectIdRequired="true" versionRequired="true"
 	 * @generated
 	 */
-	Promise<ObjectMetadata> updateInStage(String stage, T updatedObject, String objectId);
+	Promise<ObjectMetadata> updateInStage(String stage, T updatedObject, String objectId, String version);
 
 	/**
 	 * <!-- begin-user-doc -->

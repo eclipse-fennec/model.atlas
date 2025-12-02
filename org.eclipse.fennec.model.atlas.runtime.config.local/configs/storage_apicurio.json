@@ -1,0 +1,19 @@
+{
+	":configurator:resource-version": 1,
+	":configurator:version": "1.0.0",
+	"ApicurioObjectStorage~draft": {
+		"base.url": "http://$[env:APICURIO_HOST;default=$[prop:APICURIO_HOST;default=localhost]]:$[env:APICURIO_PORT;default=$[prop:APICURIO_PORT;default=8080]]/apis/registry/v3/",
+		"storage.role": "draft",
+		"registry.target": "(registry=main)"
+	},
+	"ApicurioObjectStorage~approved": {
+		"base.url": "http://$[env:APICURIO_HOST;default=$[prop:APICURIO_HOST;default=localhost]]:$[env:APICURIO_PORT;default=$[prop:APICURIO_PORT;default=8080]]/apis/registry/v3/",
+		"storage.role": "approved",
+		"registry.target": "(registry=main)"
+	},
+	"ApicurioObjectStorage~release": {
+		"base.url": "http://$[env:APICURIO_HOST;default=$[prop:APICURIO_HOST;default=localhost]]:$[env:APICURIO_PORT;default=$[prop:APICURIO_PORT;default=8080]]/apis/registry/v3/",
+		"storage.role": "release",
+		"registry.target": "(registry=main)"
+	}
+}

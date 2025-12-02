@@ -33,6 +33,7 @@
         <genParameters ecoreParameter="workflow-api.ecore#//EObjectWorkflowService/updateInStage/stage"/>
         <genParameters ecoreParameter="workflow-api.ecore#//EObjectWorkflowService/updateInStage/updatedObject"/>
         <genParameters ecoreParameter="workflow-api.ecore#//EObjectWorkflowService/updateInStage/objectId"/>
+        <genParameters ecoreParameter="workflow-api.ecore#//EObjectWorkflowService/updateInStage/version"/>
       </genOperations>
       <genOperations ecoreOperation="workflow-api.ecore#//EObjectWorkflowService/deleteFromStage">
         <genParameters ecoreParameter="workflow-api.ecore#//EObjectWorkflowService/deleteFromStage/stage"/>

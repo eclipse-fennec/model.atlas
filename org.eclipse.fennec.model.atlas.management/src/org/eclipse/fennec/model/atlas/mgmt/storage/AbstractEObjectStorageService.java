@@ -276,7 +276,7 @@ public abstract class AbstractEObjectStorageService implements EObjectStorageSer
                     metadata.setRole(storageRole);
                     // Set the objectType if not already set
                     if (metadata.getObjectType() == null && object != null) {
-                        metadata.setObjectType(object.eClass().getName());
+                        metadata.setObjectType(EcoreUtil.getURI(object.eClass()).toString());
                     }
                 }
                 
@@ -290,7 +290,7 @@ public abstract class AbstractEObjectStorageService implements EObjectStorageSer
                     metadataCopy.setObjectId(storageId); // Ensure objectId is set
                     // Ensure objectType is set in registry copy as well
                     if (metadataCopy.getObjectType() == null && object != null) {
-                        metadataCopy.setObjectType(object.eClass().getName());
+                        metadataCopy.setObjectType(EcoreUtil.getURI(object.eClass()).toString());
                     }
                     registryService.updateCache(metadataCopy);
                 }

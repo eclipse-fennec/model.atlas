@@ -76,6 +76,7 @@ public class ScopeCollector {
 		scope.getLinks().put("schemas", "/"+properties.get("scope")+"/schema");
 		scope.setFinalStage((String) properties.get("final.stage"));
 		scope.getStages().addAll(List.of((String[]) properties.get("stages")));
+		scope.getWritableStages().addAll(List.of((String[]) properties.get("writable.stages")));
 		return scope;
 	}
 	

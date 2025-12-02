@@ -134,7 +134,7 @@ public interface WorkflowApiPackage extends org.eclipse.emf.ecore.EPackage {
 	 * @generated
 	 * @ordered
 	 */
-	int EOBJECT_WORKFLOW_SERVICE___UPDATE_IN_STAGE__STRING_EOBJECT_STRING = 4;
+	int EOBJECT_WORKFLOW_SERVICE___UPDATE_IN_STAGE__STRING_EOBJECT_STRING_STRING = 4;
 
 	/**
 	 * The operation id for the '<em>Delete From Stage</em>' operation.
@@ -242,14 +242,14 @@ public interface WorkflowApiPackage extends org.eclipse.emf.ecore.EPackage {
 	EOperation getEObjectWorkflowService__GetContentFromStage__String_String();
 
 	/**
-	 * Returns the meta object for the '{@link org.eclipse.fennec.model.atlas.wf.workflowapi.EObjectWorkflowService#updateInStage(java.lang.String, org.eclipse.emf.ecore.EObject, java.lang.String) <em>Update In Stage</em>}' operation.
+	 * Returns the meta object for the '{@link org.eclipse.fennec.model.atlas.wf.workflowapi.EObjectWorkflowService#updateInStage(java.lang.String, org.eclipse.emf.ecore.EObject, java.lang.String, java.lang.String) <em>Update In Stage</em>}' operation.
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
 	 * @return the meta object for the '<em>Update In Stage</em>' operation.
-	 * @see org.eclipse.fennec.model.atlas.wf.workflowapi.EObjectWorkflowService#updateInStage(java.lang.String, org.eclipse.emf.ecore.EObject, java.lang.String)
+	 * @see org.eclipse.fennec.model.atlas.wf.workflowapi.EObjectWorkflowService#updateInStage(java.lang.String, org.eclipse.emf.ecore.EObject, java.lang.String, java.lang.String)
 	 * @generated
 	 */
-	EOperation getEObjectWorkflowService__UpdateInStage__String_EObject_String();
+	EOperation getEObjectWorkflowService__UpdateInStage__String_EObject_String_String();
 
 	/**
 	 * Returns the meta object for the '{@link org.eclipse.fennec.model.atlas.wf.workflowapi.EObjectWorkflowService#deleteFromStage(java.lang.String, java.lang.String) <em>Delete From Stage</em>}' operation.
@@ -372,7 +372,7 @@ public interface WorkflowApiPackage extends org.eclipse.emf.ecore.EPackage {
 		 * <!-- end-user-doc -->
 		 * @generated
 		 */
-		EOperation EOBJECT_WORKFLOW_SERVICE___UPDATE_IN_STAGE__STRING_EOBJECT_STRING = eINSTANCE.getEObjectWorkflowService__UpdateInStage__String_EObject_String();
+		EOperation EOBJECT_WORKFLOW_SERVICE___UPDATE_IN_STAGE__STRING_EOBJECT_STRING_STRING = eINSTANCE.getEObjectWorkflowService__UpdateInStage__String_EObject_String_String();
 
 		/**
 		 * The meta object literal for the '<em><b>Delete From Stage</b></em>' operation.

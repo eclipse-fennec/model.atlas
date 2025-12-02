@@ -137,6 +137,7 @@ public class EObjectWorkflowServiceImpl<T extends EObject> implements EObjectWor
 			requireTrue(isStageAllowed(stage), String.format("Stage %s is not supported from WorkflowService", stage));
 
 			metadata.setLastChangeTime(Instant.now());
+			metadata.setRole(stage);
 
 			requireNonNull(metadata.getObjectName());
 
@@ -200,10 +201,10 @@ public class EObjectWorkflowServiceImpl<T extends EObject> implements EObjectWor
 
 	/* 
 	 * (non-Javadoc)
-	 * @see org.eclipse.fennec.model.atlas.wf.workflowapi.EObjectWorkflowService#updateInStage(java.lang.String, org.eclipse.emf.ecore.EObject, java.lang.String)
+	 * @see org.eclipse.fennec.model.atlas.wf.workflowapi.EObjectWorkflowService#updateInStage(java.lang.String, org.eclipse.emf.ecore.EObject, java.lang.String, java.lang.String)
 	 */
 	@Override
-	public Promise<ObjectMetadata> updateInStage(String stage, T updatedObject, String objectId) {
+	public Promise<ObjectMetadata> updateInStage(String stage, T updatedObject, String objectId, String updatedVersion) {
 		return promiseFactory.submit(() -> {
 			requireNonNull(objectId, "Object ID cannot be null");
 			requireNonNull(updatedObject, "Updated object cannot be null");
@@ -219,8 +220,9 @@ public class EObjectWorkflowServiceImpl<T extends EObject> implements EObjectWor
 			// Get current metadata
 			ObjectMetadata metadata = getPromiseValue(storageService.retrieveMetadata(objectId));		
 			metadata.setLastChangeTime(Instant.now());
-			metadata.setObjectRef(updatedObject);
-
+			metadata.setRole(stage);
+			metadata.setVersion(updatedVersion);
+			
 			// Update the object in draft storage
 			metadata = getPromiseValue(storageService.storeObject(objectId, updatedObject, metadata));
 			return metadata;
@@ -343,8 +345,8 @@ public class EObjectWorkflowServiceImpl<T extends EObject> implements EObjectWor
 		}
 
 		// Update metadata for new stage
-		//        metadata.setStage(toStage);
 		metadata.setLastChangeTime(Instant.now());
+		metadata.setRole(toStage);
 
 		// Store in target stage
 		EObjectStorageService<T> targetStorage = getStorageByStage(toStage);
@@ -352,12 +354,14 @@ public class EObjectWorkflowServiceImpl<T extends EObject> implements EObjectWor
 			logger.severe(String.format("Cannot retrieve EObjectStorageService for %s. Cannot move object.", toStage));
 			return null;
 		}
-		getPromiseValue(targetStorage.storeObject(objectId, object, metadata));
-
-		// Delete from source stage (if configured)
+		
+		// Delete from source stage (if configured). If the registry is shared though, this will cause to remove also the newly created metadata,
+		// so we have to do it before storing the object in the target stage
 		if (config.delete_after_transition()) {
 			getPromiseValue(sourceStorage.deleteObject(objectId));
 		}
+		
+		getPromiseValue(targetStorage.storeObject(objectId, object, metadata));	
 
 		return metadata;
 

@@ -160,7 +160,7 @@ public class WorkflowApiPackageImpl extends EPackageImpl implements WorkflowApiP
 	 * @generated
 	 */
 	@Override
-	public EOperation getEObjectWorkflowService__UpdateInStage__String_EObject_String() {
+	public EOperation getEObjectWorkflowService__UpdateInStage__String_EObject_String_String() {
 		return eObjectWorkflowServiceEClass.getEOperations().get(4);
 	}
 
@@ -248,7 +248,7 @@ public class WorkflowApiPackageImpl extends EPackageImpl implements WorkflowApiP
 		createEOperation(eObjectWorkflowServiceEClass, EOBJECT_WORKFLOW_SERVICE___GET_FROM_STAGE__STRING_STRING);
 		createEOperation(eObjectWorkflowServiceEClass, EOBJECT_WORKFLOW_SERVICE___GET_FROM_FINAL_STAGE__STRING);
 		createEOperation(eObjectWorkflowServiceEClass, EOBJECT_WORKFLOW_SERVICE___GET_CONTENT_FROM_STAGE__STRING_STRING);
-		createEOperation(eObjectWorkflowServiceEClass, EOBJECT_WORKFLOW_SERVICE___UPDATE_IN_STAGE__STRING_EOBJECT_STRING);
+		createEOperation(eObjectWorkflowServiceEClass, EOBJECT_WORKFLOW_SERVICE___UPDATE_IN_STAGE__STRING_EOBJECT_STRING_STRING);
 		createEOperation(eObjectWorkflowServiceEClass, EOBJECT_WORKFLOW_SERVICE___DELETE_FROM_STAGE__STRING_STRING);
 		createEOperation(eObjectWorkflowServiceEClass, EOBJECT_WORKFLOW_SERVICE___LIST_IN_STAGE__STRING);
 		createEOperation(eObjectWorkflowServiceEClass, EOBJECT_WORKFLOW_SERVICE___LIST_IN_FINAL_STAGE);
@@ -317,11 +317,12 @@ public class WorkflowApiPackageImpl extends EPackageImpl implements WorkflowApiP
 		g1 = createEGenericType(eObjectWorkflowServiceEClass_T);
 		initEOperation(op, g1);
 
-		op = initEOperation(getEObjectWorkflowService__UpdateInStage__String_EObject_String(), null, "updateInStage", 0, 1, IS_UNIQUE, IS_ORDERED);
+		op = initEOperation(getEObjectWorkflowService__UpdateInStage__String_EObject_String_String(), null, "updateInStage", 0, 1, IS_UNIQUE, IS_ORDERED);
 		addEParameter(op, ecorePackage.getEString(), "stage", 0, 1, IS_UNIQUE, IS_ORDERED);
 		g1 = createEGenericType(eObjectWorkflowServiceEClass_T);
 		addEParameter(op, g1, "updatedObject", 1, 1, IS_UNIQUE, IS_ORDERED);
 		addEParameter(op, ecorePackage.getEString(), "objectId", 1, 1, IS_UNIQUE, IS_ORDERED);
+		addEParameter(op, ecorePackage.getEString(), "version", 1, 1, IS_UNIQUE, IS_ORDERED);
 		g1 = createEGenericType(theManagementPackage.getPromise());
 		g2 = createEGenericType(theManagementPackage.getObjectMetadata());
 		g1.getETypeArguments().add(g2);
