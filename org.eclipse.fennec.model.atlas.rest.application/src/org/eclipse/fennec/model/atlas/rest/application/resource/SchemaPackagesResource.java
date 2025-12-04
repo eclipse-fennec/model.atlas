@@ -75,8 +75,6 @@ import jakarta.ws.rs.core.Response.Status;
 @Tag(name = "Schema Management", description = "CRUD operations for schema packages")
 public class SchemaPackagesResource {
 
-
-
 	@Reference
 	private ScopeCollector scopeCollector;
 
@@ -117,7 +115,7 @@ public class SchemaPackagesResource {
 	 * @return List of SchemaPackage metadata objects
 	 */
 	@GET
-	@Produces({ MediaType.APPLICATION_JSON })
+	@Produces
 	@Operation(
 			summary = "List released packages in scope",
 			description = "List all packages in the final stage for this scope, including packages from parent scopes",
@@ -163,7 +161,7 @@ public class SchemaPackagesResource {
 	 */
 	@GET
 	@Path("/stages/{stageName}")
-	@Produces({ MediaType.APPLICATION_JSON })
+	@Produces
 	@Operation(
 			summary = "List packages in a specific stage",
 			description = "List all packages within a specific stage, with optional filtering by nsUri or name. " +
@@ -232,8 +230,8 @@ public class SchemaPackagesResource {
 	@SuppressWarnings("unchecked")
 	@POST
 	@Path("/stages/{stageName}")
-	@Consumes({ MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML, "application/ecore+xml" })
-	@Produces({ MediaType.APPLICATION_JSON })
+	@Consumes
+	@Produces
 	@Operation(
 			summary = "Create a new schema package",
 			description = "Create a new SchemaPackage in the specified stage. Checks for uniqueness based on nsUri.",
@@ -311,7 +309,7 @@ public class SchemaPackagesResource {
 	@SuppressWarnings("unchecked")
 	@GET
 	@Path("/stages/{stageName}/content")
-	@Produces({ MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML, "application/ecore+xml", "application/schema+json" })
+	@Produces
 	@Operation(
 			summary = "Get package content",
 			description = "Retrieve the content of a SchemaPackage in the requested format. " +
@@ -365,8 +363,8 @@ public class SchemaPackagesResource {
 	@SuppressWarnings("unchecked")
 	@PUT
 	@Path("/stages/{stageName}/content")
-	@Consumes({ MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML, "application/ecore+xml" })
-	@Produces({ MediaType.APPLICATION_JSON })
+	@Consumes
+	@Produces
 	@Operation(
 			summary = "Update package content",
 			description = "Replace the content of an existing SchemaPackage. " +
@@ -442,7 +440,7 @@ public class SchemaPackagesResource {
 					"Fails if the stage is read-only.",
 					responses = {
 							@ApiResponse(
-									responseCode = "204",
+									responseCode = "200",
 									description = "Package deleted successfully"
 									),
 							@ApiResponse(responseCode = "403", description = "Stage is read-only or Package is only present in a parent scope final stage and so it's read-only"),
@@ -477,7 +475,7 @@ public class SchemaPackagesResource {
 			}
 
 			boolean deleted = workflowService.deleteFromStage(stageName, encodedNsUri).getValue();	
-			if(deleted) return Response.status(Response.Status.NO_CONTENT).build();
+			if(deleted) return Response.status(Response.Status.OK).build();
 			return Response.status(Response.Status.INTERNAL_SERVER_ERROR).build();
 
 		} catch(Exception e) {
@@ -500,8 +498,8 @@ public class SchemaPackagesResource {
 	 */
 	@POST
 	@Path("/stages/{stageName}/actions/transition")
-	@Consumes({ MediaType.APPLICATION_JSON })
-	@Produces({ MediaType.APPLICATION_JSON })
+	@Consumes
+	@Produces
 	@Operation(
 			summary = "Transition package between stages",
 			description = "Move a package from the current stage to a target stage. " +

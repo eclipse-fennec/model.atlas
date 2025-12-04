@@ -24,8 +24,9 @@ import org.eclipse.emf.common.util.URI;
 import org.eclipse.emf.ecore.EPackage;
 import org.eclipse.emf.ecore.EcorePackage;
 import org.eclipse.emf.ecore.resource.Resource;
-import org.eclipse.fennec.codec.jsonschema.resource.JsonSchemaResourceFactory;
+import org.eclipse.emf.ecore.resource.ResourceSet;
 import org.eclipse.fennec.codec.options.CodecOptionsBuilder;
+import org.gecko.emf.osgi.constants.EMFNamespaces;
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
 import org.osgi.service.component.annotations.ServiceScope;
@@ -69,9 +70,12 @@ public class JsonSchemaMessageBodyReaderWriter implements MessageBodyReader<EPac
 
 
 	//  We need to inject this and not the resource factory because we might have conflicts with the json resource. (see codec documentation!)
-	@Reference
-	private JsonSchemaResourceFactory jsonSchemaResourceFactory;
+//	@Reference
+//	private JsonSchemaResourceFactory jsonSchemaResourceFactory;
 
+	@Reference(target = "("+EMFNamespaces.EMF_MODEL_CONTENT_TYPE + "=application/schema+json)")
+	private ResourceSet resourceSet;
+	
 	/*
 	 * (non-Javadoc)
 	 * 
@@ -97,7 +101,7 @@ public class JsonSchemaMessageBodyReaderWriter implements MessageBodyReader<EPac
 			MultivaluedMap<String, Object> httpHeaders, OutputStream entityStream)
 					throws IOException, WebApplicationException {
 
-		Resource resource = jsonSchemaResourceFactory.createResource(URI.createURI(t.getNsURI()));
+		Resource resource = resourceSet.createResource(URI.createURI(t.getNsURI()), "application/schema+json");
 		resource.getContents().add(t);
 		resource.save(entityStream, OPTIONS);
 		resource.getContents().clear();
@@ -130,7 +134,7 @@ public class JsonSchemaMessageBodyReaderWriter implements MessageBodyReader<EPac
 			MultivaluedMap<String, String> httpHeaders, InputStream entityStream)
 					throws IOException, WebApplicationException {
 
-		Resource resource = jsonSchemaResourceFactory.createResource(URI.createURI("temp.json"));
+		Resource resource = resourceSet.createResource(URI.createURI("temp.jsonschema"), "application/schema+json");
 		resource.load(entityStream, OPTIONS);
 		EPackage ePackage = resource.getContents().isEmpty() ? null : (EPackage) resource.getContents().remove(0);
 		return ePackage;
