@@ -29,7 +29,15 @@ Test-Cases: ${classes;HIERARCHY_INDIRECTLY_ANNOTATED;org.junit.platform.commons.
 	org.eclipse.fennec.model.atlas.management,\
 	org.eclipse.uml2.uml
 
--includeresource.config: OSGI-INF/configurator/=configs/
+Private-Package: org.eclipse.fennec.model.atlas.rest.tests,\
+	org.eclipse.fennec.model.atlas.rest.tests.helper
+
+Bundle-Version: 1.0.0.SNAPSHOT
+
+-includeresource: \
+	OSGI-INF/configurator/=configs/,\
+	test-data=test-data/
+
 
 Require-Capability: osgi.extender;filter:='(osgi.extender=osgi.configurator)'
 
