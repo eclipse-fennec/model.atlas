@@ -1,19 +1,40 @@
 {
 	":configurator:resource-version": 1,
 	":configurator:version": "1.0.0",
-	"ApicurioObjectStorage~draft": {
+	"ApicurioObjectStorage~default-draft": {
 		"base.url": "http://$[env:APICURIO_HOST;default=$[prop:APICURIO_HOST;default=localhost]]:$[env:APICURIO_PORT;default=$[prop:APICURIO_PORT;default=8080]]/apis/registry/v3/",
 		"storage.role": "draft",
 		"registry.target": "(registry=main)"
 	},
-	"ApicurioObjectStorage~approved": {
+	"ApicurioObjectStorage~default-approved": {
 		"base.url": "http://$[env:APICURIO_HOST;default=$[prop:APICURIO_HOST;default=localhost]]:$[env:APICURIO_PORT;default=$[prop:APICURIO_PORT;default=8080]]/apis/registry/v3/",
 		"storage.role": "approved",
 		"registry.target": "(registry=main)"
 	},
-	"ApicurioObjectStorage~release": {
+	"ApicurioObjectStorage~default-release": {
 		"base.url": "http://$[env:APICURIO_HOST;default=$[prop:APICURIO_HOST;default=localhost]]:$[env:APICURIO_PORT;default=$[prop:APICURIO_PORT;default=8080]]/apis/registry/v3/",
 		"storage.role": "release",
 		"registry.target": "(registry=main)"
+	},
+	"ApicurioObjectStorage~atlas-draft": {
+		"base.url": "http://$[env:APICURIO_HOST;default=$[prop:APICURIO_HOST;default=localhost]]:$[env:APICURIO_PORT;default=$[prop:APICURIO_PORT;default=8080]]/apis/registry/v3/",
+		"storage.role": "draft",
+		"registry.target": "(registry=main)",
+		"storage.scope": "atlas",
+		"artifact.group.id": "atlas"
+	},
+	"ApicurioObjectStorage~atlas-approved": {
+		"base.url": "http://$[env:APICURIO_HOST;default=$[prop:APICURIO_HOST;default=localhost]]:$[env:APICURIO_PORT;default=$[prop:APICURIO_PORT;default=8080]]/apis/registry/v3/",
+		"storage.role": "approved",
+		"registry.target": "(registry=main)",
+		"storage.scope": "atlas",
+		"artifact.group.id": "atlas"
+	},
+	"ApicurioObjectStorage~atlas-release": {
+		"base.url": "http://$[env:APICURIO_HOST;default=$[prop:APICURIO_HOST;default=localhost]]:$[env:APICURIO_PORT;default=$[prop:APICURIO_PORT;default=8080]]/apis/registry/v3/",
+		"storage.role": "release",
+		"registry.target": "(registry=main)",
+		"storage.scope": "atlas",
+		"artifact.group.id": "atlas"
 	}
 }

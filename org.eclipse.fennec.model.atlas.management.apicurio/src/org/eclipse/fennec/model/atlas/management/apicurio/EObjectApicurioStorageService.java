@@ -71,12 +71,22 @@ public class EObjectApicurioStorageService extends AbstractEObjectStorageService
 				description = "Artifact Group Id to identify under which group the artifacts should be stored in the Apicurio Registry. The final group id will be then a combination of this and the stage"
 				)
 		String artifact_group_id() default "default";
+		
+		@AttributeDefinition(
+				name = "Storage Scope",
+				description = "Scope of this storage service (default, atlas, etc.). In case of apicurio this is the same as the artifact.group.id"
+				)
+		String storage_scope() default "default";
 
 		@AttributeDefinition(
 				name = "Storage Role",
 				description = "Role of this storage service (draft, approved, documentation, etc.)"
 				)
 		String storage_role() default "draft";
+		
+		
+		
+		
 	}
 
 	public static final String PID = "ApicurioObjectStorage";

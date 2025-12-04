@@ -9,7 +9,7 @@
  * SPDX-License-Identifier: EPL-2.0
  *
  * Contributors:
- *      Mark Hoffmann - initial API and implementation
+ *      Data In Motion - initial API and implementation
  */
 package org.eclipse.fennec.model.atlas.workflow.impl;
 
@@ -91,7 +91,7 @@ public class EObjectWorkflowServiceImpl<T extends EObject> implements EObjectWor
 	@Reference
 	EObjectStorageServiceCollector storageServiceCollector;
 
-	@Reference(target = "(scope=no-inject)", cardinality = ReferenceCardinality.OPTIONAL)
+	@Reference(cardinality = ReferenceCardinality.OPTIONAL)
 	EObjectWorkflowService<T> parentWorkflowService;
 
 	@Reference
@@ -168,7 +168,9 @@ public class EObjectWorkflowServiceImpl<T extends EObject> implements EObjectWor
 				ObjectMetadata parentMetadata = parentWorkflowService.getFromFinalStage(objectId);
 				if(parentMetadata != null) parentMetadata.setIsReadOnly(true);
 				return parentMetadata;
-			}			
+			} else if(localMetadata == null) {
+				return localMetadata;
+			}
 //			if stage is not writable we might want to set a read-only flag (?)
 			if(!isStageWritable(stage)) localMetadata.setIsReadOnly(true);
 			return localMetadata;
@@ -327,7 +329,9 @@ public class EObjectWorkflowServiceImpl<T extends EObject> implements EObjectWor
 	@Override
 	public ObjectMetadata transitionToStage(String objectId, String fromStage, String toStage) {
 		// Validate transition is allowed
-		isTransitionAllowed(fromStage, toStage);
+		if(!isTransitionAllowed(fromStage, toStage)) {
+			throw new IllegalStateException(String.format("Transition is not allowed for object %s from stage %s to stage %s", objectId, fromStage, toStage));
+		}
 
 		// Get object from source stage
 		EObjectStorageService<T> sourceStorage = getStorageByStage(fromStage);
@@ -373,10 +377,7 @@ public class EObjectWorkflowServiceImpl<T extends EObject> implements EObjectWor
 	 */
 	@Override
 	public boolean isTransitionAllowed(String fromStage, String toStage) {
-		requireTrue(isStageAllowed(fromStage), String.format("Stage %s is not supported from WorkflowService", fromStage));
-		requireTrue(isStageAllowed(toStage), String.format("Stage %s is not supported from WorkflowService", toStage));
-		requireTrue(isStageWritable(fromStage), String.format("Stage %s is not writable from WorkflowService", fromStage));
-		requireTrue(isStageWritable(toStage), String.format("Stage %s is not writable from WorkflowService", toStage));
+		if(!isStageAllowed(fromStage) || !isStageAllowed(toStage) || !isStageWritable(fromStage) || !isStageWritable(toStage) || !areStagesSubsequent(fromStage, toStage)) return false;
 		return true;
 	}
 
@@ -385,6 +386,12 @@ public class EObjectWorkflowServiceImpl<T extends EObject> implements EObjectWor
 	private static void requireTrue(boolean value, String message) {
 		if(value) return;
 		throw new IllegalStateException(message);
+	}
+	
+	private boolean areStagesSubsequent(String fromStage, String toStage) {
+		int fromIndex = List.of(config.stages()).indexOf(fromStage);
+		int toIndex = List.of(config.stages()).indexOf(toStage);
+		return (toIndex - fromIndex) == 1;
 	}
 	
 	private boolean isStageAllowed(String stage) {

@@ -9,7 +9,7 @@
  * SPDX-License-Identifier: EPL-2.0
  * 
  * Contributors:
- *      Mark Hoffmann - initial API and implementation
+ *      Data In Motion - initial API and implementation
  */
 package org.eclipse.fennec.model.atlas.mgmt.management;
 
@@ -38,7 +38,7 @@ import org.osgi.annotation.versioning.ProviderType;
  * <!-- end-user-doc -->
  * @see org.eclipse.fennec.model.atlas.mgmt.management.ManagementFactory
  * @model kind="package"
- *        annotation="http://www.eclipse.org/emf/2002/GenModel modelName='Management' complianceLevel='17.0' copyrightText='Copyright (c) 2012 - 2025 Data In Motion and others.\nAll rights reserved.\n\nThis program and the accompanying materials are made\navailable under the terms of the Eclipse Public License 2.0\nwhich is available at https://www.eclipse.org/legal/epl-2.0/\n\nSPDX-License-Identifier: EPL-2.0\n\nContributors:\n     Mark Hoffmann - initial API and implementation' resource='XMI' oSGiCompatible='true' prefix='Management' basePackage='org.eclipse.fennec.model.atlas.mgmt'"
+ *        annotation="http://www.eclipse.org/emf/2002/GenModel modelName='Management' complianceLevel='17.0' copyrightText='Copyright (c) 2012 - 2025 Data In Motion and others.\nAll rights reserved.\n\nThis program and the accompanying materials are made\navailable under the terms of the Eclipse Public License 2.0\nwhich is available at https://www.eclipse.org/legal/epl-2.0/\n\nSPDX-License-Identifier: EPL-2.0\n\nContributors:\n     Data In Motion - initial API and implementation' resource='XMI' oSGiCompatible='true' prefix='Management' basePackage='org.eclipse.fennec.model.atlas.mgmt'"
  * @generated
  */
 @ProviderType

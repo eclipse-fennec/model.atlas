@@ -334,7 +334,7 @@ public class ApicurioStorageHelper extends AbstractStorageHelper {
 	
 	private boolean isLatestVersionValid(SearchedVersion latestVersion, String objectId) {
 		if(latestVersion == null) {
-			LOGGER.severe(String.format("No version for artifact %s was found", objectId));
+			LOGGER.warning(String.format("No version for artifact %s was found", objectId));
 			return false;
 		}
 		String eClassURI = latestVersion.getLabels().get("objectType");

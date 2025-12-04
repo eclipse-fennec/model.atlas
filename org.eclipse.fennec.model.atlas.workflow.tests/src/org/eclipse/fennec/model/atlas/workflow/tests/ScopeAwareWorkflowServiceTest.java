@@ -17,6 +17,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.lang.reflect.InvocationTargetException;
@@ -835,6 +836,318 @@ public class ScopeAwareWorkflowServiceTest {
         // Verify draft package is not in final stage list
         boolean hasDraft = finalList.stream().anyMatch(m -> "DraftPackage".equals(m.getObjectName()));
         assertTrue(!hasDraft, "Draft package should not appear in final stage list");
+    }
+
+    // ========================================
+    // Test: Invalid Transition Scenarios
+    // ========================================
+
+    @SuppressWarnings({ "unchecked", "rawtypes" })
+    /**
+     * Test that transition from draft to release (skipping approved) throws an exception.
+     * Stages are configured as: draft -> approved -> release
+     * Direct transition from draft to release should fail.
+     * @throws InvocationTargetException
+     */
+    @Test
+    @WithFactoryConfiguration(factoryPid = "LuceneEObjectRegistryService", name = "registry", location = "?", properties = {
+        @Property(key = "registry.workspace.folder", value = "%s/registry", templateArguments = {
+            @TemplateArgument(source = ValueSource.SystemProperty, value = PROP_TEMP_DIR)
+        })
+    })
+    @WithFactoryConfiguration(factoryPid = "FileObjectStorage", name = "draft-storage", location = "?", properties = {
+        @Property(key = "workspace.folder", value = "%s/draft-storage", templateArguments = {
+            @TemplateArgument(source = ValueSource.SystemProperty, value = PROP_TEMP_DIR)
+        }),
+        @Property(key = "storage.scope", value = "test-scope"),
+        @Property(key = "storage.role", value = "draft")
+    })
+    @WithFactoryConfiguration(factoryPid = "FileObjectStorage", name = "approved-storage", location = "?", properties = {
+        @Property(key = "workspace.folder", value = "%s/approved-storage", templateArguments = {
+            @TemplateArgument(source = ValueSource.SystemProperty, value = PROP_TEMP_DIR)
+        }),
+        @Property(key = "storage.scope", value = "test-scope"),
+        @Property(key = "storage.role", value = "approved")
+    })
+    @WithFactoryConfiguration(factoryPid = "FileObjectStorage", name = "release-storage", location = "?", properties = {
+        @Property(key = "workspace.folder", value = "%s/release-storage", templateArguments = {
+            @TemplateArgument(source = ValueSource.SystemProperty, value = PROP_TEMP_DIR)
+        }),
+        @Property(key = "storage.scope", value = "test-scope"),
+        @Property(key = "storage.role", value = "release")
+    })
+    @WithFactoryConfiguration(factoryPid = "EObjectWorkflowService", name = "test-workflow", location = "?", properties = {
+        @Property(key = "scope", value = "test-scope"),
+        @Property(key = "parent.scope", value = ""),
+        @Property(key = "stages", value = {"draft", "approved", "release"}, type = Type.Array),
+        @Property(key = "writable.stages", value = {"draft", "approved", "release"}, type = Type.Array)
+    })
+    public void testInvalidTransitionSkipsStage(
+            @InjectService(cardinality = 0, filter = "(scope=test-scope)")
+            ServiceAware<EObjectWorkflowService> workflowAware) throws InterruptedException, InvocationTargetException {
+
+        EObjectWorkflowService<EObject> workflow = workflowAware.waitForService(5000);
+        assertNotNull(workflow, "Workflow service should be available");
+
+        // Create and upload package to Draft
+        EPackage pkg = ecoreFactory.createEPackage();
+        pkg.setName("TestPackage");
+        pkg.setNsURI("http://test.invalid.transition.com/v1");
+        pkg.setNsPrefix("test");
+
+        ObjectMetadata metadata = managementFactory.createObjectMetadata();
+        metadata.setUploadUser("testUser");
+        metadata.setObjectName("TestPackage");
+
+        workflow.uploadToStage("draft", pkg, metadata).getValue();
+        String storageId = metadata.getObjectId();
+        assertNotNull(storageId);
+
+        // Verify in Draft stage
+        ObjectMetadata draft = workflow.getFromStage("draft", storageId);
+        assertNotNull(draft, "Should exist in Draft stage");
+
+        // Try to transition directly from draft to release (skipping approved) - should throw exception
+        IllegalStateException exception = assertThrows(
+            IllegalStateException.class,
+            () -> workflow.transitionToStage(storageId, "draft", "release"),
+            "Should throw IllegalStateException when trying to skip stages"
+        );
+
+        assertTrue(exception.getMessage().contains("Transition is not allowed"),
+            "Exception message should indicate transition is not allowed");
+        assertTrue(exception.getMessage().contains("draft"),
+            "Exception message should mention source stage");
+        assertTrue(exception.getMessage().contains("release"),
+            "Exception message should mention target stage");
+
+        // Verify object is still in draft stage (unchanged)
+        ObjectMetadata stillInDraft = workflow.getFromStage("draft", storageId);
+        assertNotNull(stillInDraft, "Object should still be in draft stage after failed transition");
+
+        // Verify object is NOT in release stage
+        ObjectMetadata notInRelease = workflow.getFromStage("release", storageId);
+        assertNull(notInRelease, "Object should not be in release stage after failed transition");
+    }
+
+    @SuppressWarnings({ "unchecked", "rawtypes" })
+    /**
+     * Test that valid sequential transitions work correctly.
+     * Validates that draft -> approved -> release works as expected.
+     * @throws InvocationTargetException
+     */
+    @Test
+    @WithFactoryConfiguration(factoryPid = "LuceneEObjectRegistryService", name = "registry", location = "?", properties = {
+        @Property(key = "registry.workspace.folder", value = "%s/registry", templateArguments = {
+            @TemplateArgument(source = ValueSource.SystemProperty, value = PROP_TEMP_DIR)
+        })
+    })
+    @WithFactoryConfiguration(factoryPid = "FileObjectStorage", name = "draft-storage", location = "?", properties = {
+        @Property(key = "workspace.folder", value = "%s/draft-storage", templateArguments = {
+            @TemplateArgument(source = ValueSource.SystemProperty, value = PROP_TEMP_DIR)
+        }),
+        @Property(key = "storage.scope", value = "test-scope"),
+        @Property(key = "storage.role", value = "draft")
+    })
+    @WithFactoryConfiguration(factoryPid = "FileObjectStorage", name = "approved-storage", location = "?", properties = {
+        @Property(key = "workspace.folder", value = "%s/approved-storage", templateArguments = {
+            @TemplateArgument(source = ValueSource.SystemProperty, value = PROP_TEMP_DIR)
+        }),
+        @Property(key = "storage.scope", value = "test-scope"),
+        @Property(key = "storage.role", value = "approved")
+    })
+    @WithFactoryConfiguration(factoryPid = "FileObjectStorage", name = "release-storage", location = "?", properties = {
+        @Property(key = "workspace.folder", value = "%s/release-storage", templateArguments = {
+            @TemplateArgument(source = ValueSource.SystemProperty, value = PROP_TEMP_DIR)
+        }),
+        @Property(key = "storage.scope", value = "test-scope"),
+        @Property(key = "storage.role", value = "release")
+    })
+    @WithFactoryConfiguration(factoryPid = "EObjectWorkflowService", name = "test-workflow", location = "?", properties = {
+        @Property(key = "scope", value = "test-scope"),
+        @Property(key = "parent.scope", value = ""),
+        @Property(key = "stages", value = {"draft", "approved", "release"}, type = Type.Array),
+        @Property(key = "writable.stages", value = {"draft", "approved", "release"}, type = Type.Array),
+        @Property(key = "delete.after.transition", value = "true")
+    })
+    public void testValidSequentialTransitions(
+            @InjectService(cardinality = 0, filter = "(scope=test-scope)")
+            ServiceAware<EObjectWorkflowService> workflowAware) throws InterruptedException, InvocationTargetException {
+
+        EObjectWorkflowService<EObject> workflow = workflowAware.waitForService(5000);
+        assertNotNull(workflow, "Workflow service should be available");
+
+        // Create and upload package to Draft
+        EPackage pkg = ecoreFactory.createEPackage();
+        pkg.setName("SequentialPackage");
+        pkg.setNsURI("http://sequential.test.com/v1");
+        pkg.setNsPrefix("seq");
+
+        ObjectMetadata metadata = managementFactory.createObjectMetadata();
+        metadata.setUploadUser("testUser");
+        metadata.setObjectName("SequentialPackage");
+
+        workflow.uploadToStage("draft", pkg, metadata).getValue();
+        String storageId = metadata.getObjectId();
+
+        // Verify in Draft stage
+        ObjectMetadata draft = workflow.getFromStage("draft", storageId);
+        assertNotNull(draft, "Should exist in Draft stage");
+
+        // Valid transition: draft -> approved
+        ObjectMetadata approved = workflow.transitionToStage(storageId, "draft", "approved");
+        assertNotNull(approved, "Transition to approved should succeed");
+
+        // Verify in approved stage and not in draft (due to delete.after.transition=true)
+        ObjectMetadata draftGone = workflow.getFromStage("draft", storageId);
+        assertNull(draftGone, "Should no longer exist in Draft stage");
+
+        ObjectMetadata approvedCheck = workflow.getFromStage("approved", storageId);
+        assertNotNull(approvedCheck, "Should exist in Approved stage");
+
+        // Valid transition: approved -> release
+        ObjectMetadata released = workflow.transitionToStage(storageId, "approved", "release");
+        assertNotNull(released, "Transition to release should succeed");
+
+        // Verify in release stage and not in approved
+        ObjectMetadata approvedGone = workflow.getFromStage("approved", storageId);
+        assertNull(approvedGone, "Should no longer exist in Approved stage");
+
+        ObjectMetadata releaseCheck = workflow.getFromStage("release", storageId);
+        assertNotNull(releaseCheck, "Should exist in Release stage");
+        assertEquals("SequentialPackage", releaseCheck.getObjectName());
+    }
+
+    @SuppressWarnings({ "unchecked", "rawtypes" })
+    /**
+     * Test transition to non-existent stage throws exception.
+     * @throws InvocationTargetException
+     */
+    @Test
+    @WithFactoryConfiguration(factoryPid = "LuceneEObjectRegistryService", name = "registry", location = "?", properties = {
+        @Property(key = "registry.workspace.folder", value = "%s/registry", templateArguments = {
+            @TemplateArgument(source = ValueSource.SystemProperty, value = PROP_TEMP_DIR)
+        })
+    })
+    @WithFactoryConfiguration(factoryPid = "FileObjectStorage", name = "draft-storage", location = "?", properties = {
+        @Property(key = "workspace.folder", value = "%s/draft-storage", templateArguments = {
+            @TemplateArgument(source = ValueSource.SystemProperty, value = PROP_TEMP_DIR)
+        }),
+        @Property(key = "storage.scope", value = "test-scope"),
+        @Property(key = "storage.role", value = "draft")
+    })
+    @WithFactoryConfiguration(factoryPid = "FileObjectStorage", name = "release-storage", location = "?", properties = {
+        @Property(key = "workspace.folder", value = "%s/release-storage", templateArguments = {
+            @TemplateArgument(source = ValueSource.SystemProperty, value = PROP_TEMP_DIR)
+        }),
+        @Property(key = "storage.scope", value = "test-scope"),
+        @Property(key = "storage.role", value = "release")
+    })
+    @WithFactoryConfiguration(factoryPid = "EObjectWorkflowService", name = "test-workflow", location = "?", properties = {
+        @Property(key = "scope", value = "test-scope"),
+        @Property(key = "parent.scope", value = ""),
+        @Property(key = "stages", value = {"draft", "release"}, type = Type.Array),
+        @Property(key = "writable.stages", value = {"draft", "release"}, type = Type.Array)
+    })
+    public void testTransitionToNonExistentStage(
+            @InjectService(cardinality = 0, filter = "(scope=test-scope)")
+            ServiceAware<EObjectWorkflowService> workflowAware) throws InterruptedException, InvocationTargetException {
+
+        EObjectWorkflowService<EObject> workflow = workflowAware.waitForService(5000);
+        assertNotNull(workflow, "Workflow service should be available");
+
+        // Create and upload package to Draft
+        EPackage pkg = ecoreFactory.createEPackage();
+        pkg.setName("TestPackage");
+        pkg.setNsURI("http://test.nonexistent.com/v1");
+        pkg.setNsPrefix("test");
+
+        ObjectMetadata metadata = managementFactory.createObjectMetadata();
+        metadata.setUploadUser("testUser");
+        metadata.setObjectName("TestPackage");
+
+        workflow.uploadToStage("draft", pkg, metadata).getValue();
+        String storageId = metadata.getObjectId();
+
+        // Try to transition to non-existent stage
+        IllegalStateException exception = assertThrows(
+            IllegalStateException.class,
+            () -> workflow.transitionToStage(storageId, "draft", "nonexistent"),
+            "Should throw IllegalStateException when transitioning to non-existent stage"
+        );
+
+        assertTrue(exception.getMessage().contains("Transition is not allowed"),
+            "Exception message should indicate transition is not allowed");
+    }
+
+    @SuppressWarnings({ "unchecked", "rawtypes" })
+    /**
+     * Test backward transition (e.g., release -> draft) is not allowed.
+     * @throws InvocationTargetException
+     */
+    @Test
+    @WithFactoryConfiguration(factoryPid = "LuceneEObjectRegistryService", name = "registry", location = "?", properties = {
+        @Property(key = "registry.workspace.folder", value = "%s/registry", templateArguments = {
+            @TemplateArgument(source = ValueSource.SystemProperty, value = PROP_TEMP_DIR)
+        })
+    })
+    @WithFactoryConfiguration(factoryPid = "FileObjectStorage", name = "draft-storage", location = "?", properties = {
+        @Property(key = "workspace.folder", value = "%s/draft-storage", templateArguments = {
+            @TemplateArgument(source = ValueSource.SystemProperty, value = PROP_TEMP_DIR)
+        }),
+        @Property(key = "storage.scope", value = "test-scope"),
+        @Property(key = "storage.role", value = "draft")
+    })
+    @WithFactoryConfiguration(factoryPid = "FileObjectStorage", name = "release-storage", location = "?", properties = {
+        @Property(key = "workspace.folder", value = "%s/release-storage", templateArguments = {
+            @TemplateArgument(source = ValueSource.SystemProperty, value = PROP_TEMP_DIR)
+        }),
+        @Property(key = "storage.scope", value = "test-scope"),
+        @Property(key = "storage.role", value = "release")
+    })
+    @WithFactoryConfiguration(factoryPid = "EObjectWorkflowService", name = "test-workflow", location = "?", properties = {
+        @Property(key = "scope", value = "test-scope"),
+        @Property(key = "parent.scope", value = ""),
+        @Property(key = "stages", value = {"draft", "release"}, type = Type.Array),
+        @Property(key = "writable.stages", value = {"draft", "release"}, type = Type.Array)
+    })
+    public void testBackwardTransitionNotAllowed(
+            @InjectService(cardinality = 0, filter = "(scope=test-scope)")
+            ServiceAware<EObjectWorkflowService> workflowAware) throws InterruptedException, InvocationTargetException {
+
+        EObjectWorkflowService<EObject> workflow = workflowAware.waitForService(5000);
+        assertNotNull(workflow, "Workflow service should be available");
+
+        // Create and upload package directly to Release
+        EPackage pkg = ecoreFactory.createEPackage();
+        pkg.setName("ReleasedPackage");
+        pkg.setNsURI("http://backward.test.com/v1");
+        pkg.setNsPrefix("back");
+
+        ObjectMetadata metadata = managementFactory.createObjectMetadata();
+        metadata.setUploadUser("testUser");
+        metadata.setObjectName("ReleasedPackage");
+
+        workflow.uploadToStage("release", pkg, metadata).getValue();
+        String storageId = metadata.getObjectId();
+
+        // Verify in Release stage
+        ObjectMetadata release = workflow.getFromStage("release", storageId);
+        assertNotNull(release, "Should exist in Release stage");
+
+        // Try backward transition: release -> draft (should fail)
+        IllegalStateException exception = assertThrows(
+            IllegalStateException.class,
+            () -> workflow.transitionToStage(storageId, "release", "draft"),
+            "Should throw IllegalStateException when trying backward transition"
+        );
+
+        assertTrue(exception.getMessage().contains("Transition is not allowed"),
+            "Exception message should indicate transition is not allowed");
+
+        // Verify object is still in release stage
+        ObjectMetadata stillInRelease = workflow.getFromStage("release", storageId);
+        assertNotNull(stillInRelease, "Object should still be in release stage after failed transition");
     }
 
     // ========================================
