@@ -2,7 +2,7 @@
 .gradle/
 /target/
 .metadata
-/build/
+build/
 /documents/build/
 /docker/build/
 /docker/dataatlas/build/

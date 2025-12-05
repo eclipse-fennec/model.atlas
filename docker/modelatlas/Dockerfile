@@ -1,30 +1,33 @@
-FROM eclipse-temurin:21-jre-alpine
+FROM eclipse-temurin:21.0.9_10-jre-alpine
 
-ENV USERNAME=modelatlas \
-	HOME_DIR=/modelatlas \
-	OPT_DIR=/opt/modelatlas \
-	GECKO_VERSION=2.0.0
+ENV APP_HOME=/opt/modelatlas \
+    RUNTIME_DIR=/opt/modelatlas/runtime \
+    DATA_DIR=/opt/modelatlas/runtime/data \
+    LOG_DIR=/opt/modelatlas/runtime/log \
+    TMPDIR=/tmp/modelatlas \
+    RUNTIME_JAR=/opt/modelatlas/modelatlas.runtime_docker.jar
 
-RUN mkdir -p ${OPT_DIR} && \
-    mkdir -p ${OPT_DIR}/logs && \
-    mkdir -p /tmp
+RUN set -eux; \
+    addgroup -g 7743 -S modelatlas; \
+    adduser -u 7743 -h /home/modelatlas -s /sbin/nologin -S modelatlas -G modelatlas; \
+    mkdir -p "${APP_HOME}"
 
-COPY docker/modelatlas/modelatlas.runtime_docker.jar ${OPT_DIR}/
+COPY content/modelatlas.runtime_docker.jar "${RUNTIME_JAR}"
+COPY content/runtime/ "${RUNTIME_DIR}/"
 
-RUN mkdir ${HOME_DIR}
+RUN set -eux; \
+    mkdir -p "${LOG_DIR}" "${TMPDIR}"; \
+    chown -R modelatlas:modelatlas "${DATA_DIR}"; \
+    chmod -R u+rwX,go-rwx "${DATA_DIR}"; \
+    chown modelatlas:modelatlas "${LOG_DIR}"; \
+    chmod 0700 "${LOG_DIR}"; \
+    chown modelatlas:modelatlas "${TMPDIR}"; \
+    chown -R modelatlas:modelatlas "${LOG_DIR}"; \
+    chmod -R u+rwX,go-rwx "${LOG_DIR}"; \
+    chmod 0700 "${TMPDIR}"
 
-RUN addgroup -g 7743 -S ${USERNAME} && \
-    adduser -u 7743 -h ${HOME_DIR} -s /bin/false -S ${USERNAME} -G ${USERNAME}
+EXPOSE 8080
+WORKDIR ${APP_HOME}
+USER modelatlas
 
-RUN chown -R ${USERNAME} ${OPT_DIR} && \
-    chmod -R u+rwx ${OPT_DIR} && \
-    chown -R ${USERNAME} /tmp && \
-    chmod -R u+rw /tmp
-
-RUN cd ${OPT_DIR}
-
-EXPOSE 8080 8081 8082 8083 8084 8085 8090
-WORKDIR ${OPT_DIR}
-USER ${USERNAME}
-
-CMD ["java", "-Dgosh.args=--nointeractive", "-Dgecko.data.dir=/opt/modelatlas/runtime/data", "-Dgecko.conf.dir=/opt/modelatlas/runtime/etc", "-Dgecko.base.dir=/opt/modelatlas", "-Dgecko.log.dir=/opt/modelatlas/runtime/log", "-Dlogback.configurationFile=file:/opt/modelatlas/runtime/etc/logback.xml",  "-jar", "modelatlas.runtime_docker.jar"]
+CMD ["java", "-Dgosh.args=--nointeractive", "-Ddata=${DATA_DIR}", "-Datlas.log.dir=/opt/modelatlas/runtime/log", "-Dlogback.configurationFile=file:/opt/modelatlas/runtime/etc/logback.xml", "-Djava.io.tmpdir=/tmp/modelatlas", "-jar", "/opt/modelatlas/modelatlas.runtime_docker.jar"]

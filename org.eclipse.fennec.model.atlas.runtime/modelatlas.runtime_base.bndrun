@@ -119,12 +119,12 @@ slf4j.runpath:  \
 	org.eclipse.emf.ecore.xmi;version='[2.39.0,2.39.1)';startlevel=1047,\
 	org.eclipse.emf.mapping.ecore2xml;version='[2.13.0,2.13.1)';startlevel=1048,\
 	org.eclipse.emfcloud.emfjson-jackson;version='[2.2.0,2.2.1)';startlevel=1049,\
-	org.eclipse.fennec.codec;version='[1.0.0,1.0.1)';startlevel=1050,\
-	org.eclipse.fennec.codec.constants;version='[1.0.0,1.0.1)';startlevel=1051,\
-	org.eclipse.fennec.codec.csv;version='[1.0.0,1.0.1)';startlevel=1052,\
-	org.eclipse.fennec.codec.info;version='[1.0.0,1.0.1)';startlevel=1053,\
-	org.eclipse.fennec.codec.info.model;version='[1.0.0,1.0.1)';startlevel=1054,\
-	org.eclipse.fennec.codec.json;version='[1.0.0,1.0.1)';startlevel=1055,\
+	org.eclipse.fennec.codec;version='[1.1.0,1.1.1)';startlevel=1050,\
+	org.eclipse.fennec.codec.constants;version='[1.1.0,1.1.1)';startlevel=1051,\
+	org.eclipse.fennec.codec.csv;version='[1.1.0,1.1.1)';startlevel=1052,\
+	org.eclipse.fennec.codec.info;version='[1.1.0,1.1.1)';startlevel=1053,\
+	org.eclipse.fennec.codec.info.model;version='[1.1.0,1.1.1)';startlevel=1054,\
+	org.eclipse.fennec.codec.json;version='[1.1.0,1.1.1)';startlevel=1055,\
 	org.eclipse.fennec.model.atlas;version=snapshot;startlevel=1056,\
 	org.eclipse.fennec.model.atlas.emf.common;version=snapshot;startlevel=1057,\
 	org.eclipse.fennec.model.atlas.management;version=snapshot;startlevel=1058,\
@@ -196,5 +196,5 @@ slf4j.runpath:  \
 	org.osgi.util.promise;version='[1.3.0,1.3.1)';startlevel=1124,\
 	org.osgi.util.pushstream;version='[1.1.0,1.1.1)';startlevel=1125,\
 	org.yaml.snakeyaml;version='[2.2.0,2.2.1)';startlevel=1126,\
-	tools.jackson.core.jackson-core;version='[3.0.0,3.0.1)';startlevel=1127,\
-	tools.jackson.core.jackson-databind;version='[3.0.0,3.0.1)';startlevel=1128
+	tools.jackson.core.jackson-core;version='[3.0.1,3.0.2)';startlevel=1127,\
+	tools.jackson.core.jackson-databind;version='[3.0.1,3.0.2)';startlevel=1128
