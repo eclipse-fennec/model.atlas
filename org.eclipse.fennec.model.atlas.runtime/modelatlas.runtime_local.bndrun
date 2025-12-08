@@ -8,7 +8,7 @@
 	logback.configurationFile=file:${.}/runtime/etc/logback.xml,\
 	gecko.log.dir=${.}/runtime/logs,\
 	org.apache.felix.configadmin.plugin.interpolation.secretsdir=${.}/runtime/secrets,\
-	data=${.}/data/
+	data=${.}/runtime/data/
 	
 -runtrace: true
 -resolve: never

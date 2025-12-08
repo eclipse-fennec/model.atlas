@@ -68,3 +68,4 @@ slf4j.runpath:  \
 	bnd.identity;id='org.gecko.emf.osgi.api',\
 	bnd.identity;id='jakarta.servlet-api'
 
+
