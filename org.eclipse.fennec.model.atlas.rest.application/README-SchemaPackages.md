@@ -53,6 +53,7 @@ Provides the underlying workflow operations for schema management within a scope
 **Used Operations:**
 - `listInFinalStage()`: List schemas in the final/released stage (with hierarchy)
 - `listInStage(String stage)`: List schemas in a specific stage
+- `listInStageByName(String stage, String name)`: List schemas filtered by name (supports wildcards, scope-specific)
 - `getFromStage(String stage, String objectId)`: Retrieve schema metadata
 - `getContentFromStage(String stage, String objectId)`: Retrieve actual EPackage content
 - `uploadToStage(String stage, EPackage object, ObjectMetadata metadata)`: Create new schema
@@ -162,14 +163,19 @@ Accept: application/json
 
 **Query Parameters**:
 - `nsUri` (optional): Find single package by exact namespace URI (hierarchical lookup)
-- `name` (optional): Filter by package name (supports wildcards, e.g., `*Billing*`)
+- `name` (optional): Filter by package name with wildcard support (scope-specific, no hierarchy)
 
 **Behavior**:
-- **Without `nsUri`**: Lists all packages in the specified stage (local scope only)
+- **Without parameters**: Lists all packages in the specified stage (local scope only)
 - **With `nsUri`**: Performs hierarchical lookup (local stage, then parent final stages)
+- **With `name`**: Filters packages by name in the local scope only (no hierarchical lookup)
+  - Supports trailing wildcards: `Billing*` (matches "Billing", "BillingInvoice", "BillingReport")
+  - Exact match: `BillingModel` (matches only "BillingModel")
+  - **Note**: Leading wildcards (e.g., `*Billing`) are NOT supported due to Lucene limitations
 
 **Response**:
 - **200 OK**: Returns `ObjectMetadataContainer` with list of `ObjectMetadata`
+- **204 No Content**: No packages match the filter criteria
 - **404 Not Found**: Scope or stage does not exist
 
 **Example**:
@@ -180,6 +186,14 @@ curl -X GET https://api.example.com/my-tenant/schema/stages/draft \
 
 # Find specific package by nsUri (with hierarchical lookup)
 curl -X GET "https://api.example.com/my-tenant/schema/stages/draft?nsUri=http%3A%2F%2Fexample.com%2Fschemas%2Fbilling%2Fv1" \
+  -H "Accept: application/json"
+
+# Filter by exact name (scope-specific, no hierarchy)
+curl -X GET "https://api.example.com/my-tenant/schema/stages/draft?name=BillingModel" \
+  -H "Accept: application/json"
+
+# Filter with wildcard (scope-specific, no hierarchy)
+curl -X GET "https://api.example.com/my-tenant/schema/stages/draft?name=Billing*" \
   -H "Accept: application/json"
 ```
 
@@ -566,6 +580,65 @@ private String encodePackageNsURI(String nsUri) throws UnsupportedEncodingExcept
 
 ---
 
+## Name Filtering and Wildcards
+
+### Overview
+
+The `name` query parameter on the list packages endpoint supports filtering packages by their object name with optional wildcard patterns. This filtering is **scope-specific** and does not traverse hierarchical scopes.
+
+### Wildcard Patterns
+
+The system uses Apache Lucene for indexing and searching, which has specific wildcard support:
+
+**Supported Patterns:**
+- **Exact match**: `BillingModel` - Matches only "BillingModel"
+- **Trailing wildcard**: `Billing*` - Matches "Billing", "BillingModel", "BillingInvoice", "BillingReport"
+- **Mid-string wildcard**: `Billing*Model` - Matches "BillingDataModel", "BillingReportModel"
+- **Question mark wildcard**: `Billing?` - Matches exactly one character (e.g., "Billing1", "BillingA")
+
+**NOT Supported:**
+- **Leading wildcard**: `*Model` - NOT supported by Lucene (would match "BillingModel", "UserModel" but throws error)
+- **Pure wildcard**: `*` - NOT supported in name filtering
+
+### Scope-Specific Behavior
+
+Unlike `nsUri` parameter which performs hierarchical lookup, the `name` parameter only searches within the specified scope and stage:
+
+```bash
+# This only searches in my-tenant/draft (no parent lookup)
+GET /my-tenant/schema/stages/draft?name=Billing*
+
+# This searches in my-tenant/draft first, then parent scopes (hierarchical)
+GET /my-tenant/schema/stages/draft?nsUri=http://example.com/billing/v1
+```
+
+**Rationale**: Name-based filtering is intended for browsing and discovery within a scope's own packages, not for cross-scope lookups.
+
+### Examples
+
+```bash
+# Find all packages starting with "Sensor"
+curl -X GET "https://api.example.com/my-tenant/schema/stages/draft?name=Sensor*" \
+  -H "Accept: application/json"
+
+# Find exact package name
+curl -X GET "https://api.example.com/my-tenant/schema/stages/draft?name=BillingModel" \
+  -H "Accept: application/json"
+
+# Find packages containing "Billing" followed by "Model"
+curl -X GET "https://api.example.com/my-tenant/schema/stages/draft?name=Billing*Model" \
+  -H "Accept: application/json"
+```
+
+### Best Practices
+
+1. **Use trailing wildcards**: Always place wildcards at the end of patterns for best performance
+2. **Avoid leading wildcards**: These are not supported and will result in no matches
+3. **Use nsUri for cross-scope lookup**: If you need hierarchical search, use `nsUri` parameter
+4. **Combine with stage**: Name filtering works within the specified stage only
+
+---
+
 ## Error Handling
 
 ### HTTP Status Codes
@@ -827,13 +900,19 @@ The resource is annotated with Swagger/OpenAPI v3 annotations for automatic API 
 ## Testing
 
 Comprehensive integration tests can be found in:
-- `ScopeAwareWorkflowServiceTest.java` - Tests workflow service operations
-- Tests cover:
+- `SchemaPackagesResourceTest.java` - REST API integration tests including name filtering
+- `ScopeAwareWorkflowServiceTest.java` - Workflow service operations including `listInStageByName`
+- `LuceneRegistryServiceTest.java` - Lucene-backed registry with scope/role/name filtering
+- `BasicEObjectRegistryServiceTest.java` - In-memory registry implementation tests
+
+Tests cover:
   - Single scope operations
   - Hierarchical scope lookups
   - Stage transitions
   - Final stage operations
   - Custom stage configurations
+  - Name-based filtering with wildcards (scope-specific)
+  - Scope/role/name combination queries
 
 ---
 
@@ -882,6 +961,38 @@ Cannot store EObjectWorkflowService with scope property not set or empty
 1. Check all stages in current scope
 2. Check parent scope final stages
 3. Use different `nsUri` or update existing package
+
+---
+
+### Name filtering returns no results
+
+**Cause**: Using leading wildcards or invalid patterns
+
+**Solution**:
+1. Ensure wildcards are at the end: Use `Billing*` not `*Billing`
+2. Check for special characters in scope names (hyphens can cause Lucene parsing issues)
+3. Verify the package name is exactly as stored (case-sensitive)
+4. Try exact match first to confirm package exists: `?name=ExactName`
+
+**Example of problematic query**:
+```bash
+# This will NOT work (leading wildcard)
+GET /my-tenant/schema/stages/draft?name=*Model
+
+# This WILL work (trailing wildcard)
+GET /my-tenant/schema/stages/draft?name=Billing*
+```
+
+---
+
+### Scope names with hyphens causing issues
+
+**Cause**: Hyphens in scope names (e.g., `test-scope`) can interfere with Lucene query parsing
+
+**Solution**:
+1. Use alphanumeric scope names without special characters: `testscope` instead of `test-scope`
+2. If you must use hyphens, URL-encode them in queries
+3. Consider using underscores instead: `test_scope`
 
 ---
 
