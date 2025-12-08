@@ -42,6 +42,10 @@
       <genOperations ecoreOperation="workflow-api.ecore#//EObjectWorkflowService/listInStage">
         <genParameters ecoreParameter="workflow-api.ecore#//EObjectWorkflowService/listInStage/stage"/>
       </genOperations>
+      <genOperations ecoreOperation="workflow-api.ecore#//EObjectWorkflowService/listInStageByName">
+        <genParameters ecoreParameter="workflow-api.ecore#//EObjectWorkflowService/listInStageByName/stage"/>
+        <genParameters ecoreParameter="workflow-api.ecore#//EObjectWorkflowService/listInStageByName/name"/>
+      </genOperations>
       <genOperations ecoreOperation="workflow-api.ecore#//EObjectWorkflowService/listInFinalStage"/>
       <genOperations ecoreOperation="workflow-api.ecore#//EObjectWorkflowService/transitionToStage">
         <genParameters ecoreParameter="workflow-api.ecore#//EObjectWorkflowService/transitionToStage/objectId"/>

@@ -120,6 +120,17 @@ public interface EObjectWorkflowService<T extends EObject> {
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
 	 * <!-- begin-model-doc -->
+	 * List all objects with a matching name filter in a certain stage of the workflow
+	 * <!-- end-model-doc -->
+	 * @model dataType="org.eclipse.fennec.model.atlas.mgmt.management.List&lt;org.eclipse.fennec.model.atlas.mgmt.management.ObjectMetadata&gt;" many="false"
+	 * @generated
+	 */
+	List<ObjectMetadata> listInStageByName(String stage, String name);
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * <!-- begin-model-doc -->
 	 * List all objects in the final stage of the workflow
 	 * <!-- end-model-doc -->
 	 * @model dataType="org.eclipse.fennec.model.atlas.mgmt.management.List&lt;org.eclipse.fennec.model.atlas.mgmt.management.ObjectMetadata&gt;" many="false"

@@ -24,6 +24,7 @@ import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.stream.Collectors;
 
 import org.eclipse.emf.ecore.EObject;
 import org.eclipse.emf.ecore.util.EcoreUtil;
@@ -391,7 +392,11 @@ public abstract class AbstractEObjectStorageService implements EObjectStorageSer
             
             try {
                 // Use registry service methods based on query parameters
-                if (query.getStatus() != null && query.getObjectType() != null) {
+            	if(query.getRole() != null && query.getScope() != null && query.getName() != null) {
+            		results = registryService.findByScopeRoleAndName(query.getScope(), query.getRole(), query.getName());
+            	} else if (query.getRole() != null && query.getScope() != null) {
+            		results = registryService.findByScopeAndRole(query.getRole(), query.getScope());
+            	} else if (query.getStatus() != null && query.getObjectType() != null) {
                     // Most specific query - status + type
                     results = registryService.findByStatusAndType(query.getStatus(), query.getObjectType());
                 } else if (query.getStatus() != null) {
@@ -410,7 +415,7 @@ public abstract class AbstractEObjectStorageService implements EObjectStorageSer
                 if (storageRole != null) {
                     results = results.stream()
                             .filter(metadata -> storageRole.equals(metadata.getRole()))
-                            .collect(java.util.stream.Collectors.toList());
+                            .collect(Collectors.toList());
                 }
                 
                 LOGGER.info("Registry query completed: " + results.size() + " objects found");

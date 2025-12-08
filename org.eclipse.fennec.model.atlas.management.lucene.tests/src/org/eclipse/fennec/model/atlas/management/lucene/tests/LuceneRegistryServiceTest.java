@@ -324,7 +324,7 @@ public class LuceneRegistryServiceTest {
         ObjectMetadata draftMetadata = createTestMetadata("obj-1", "SensorModel", "1.0.0", ObjectStatus.DRAFT, "draft");
         ObjectMetadata approvedMetadata = createTestMetadata("obj-2", "SensorModel", "1.0.0", ObjectStatus.APPROVED, "approved");
         ObjectMetadata documentationMetadata = createTestMetadata("obj-3", "SensorModel", "1.0.0", ObjectStatus.APPROVED, "documentation");
-        
+
         // Same objectName, different roles - should be separate objects
         ObjectMetadata packageDraft = createTestMetadata("pkg-draft", "CommonPackage", "2.0.0", ObjectStatus.DRAFT, "draft");
         ObjectMetadata packageApproved = createTestMetadata("pkg-approved", "CommonPackage", "2.0.0", ObjectStatus.APPROVED, "approved");
@@ -386,6 +386,84 @@ public class LuceneRegistryServiceTest {
         // Service is automatically cleaned up by test annotation
     }
 
+    @SuppressWarnings({ "rawtypes", "unchecked" })
+    @Test
+    @RegistryConfiguration
+    public void testFindByScopeRoleAndName(
+        @InjectService(filter = "(registry.type=shared)")
+        EObjectRegistryService registryService
+    ) throws Exception {
+
+        // Create test objects with different scopes, roles, and names
+        ObjectMetadata tenant1DraftSensor = createTestMetadataWithScope("t1-sensor-draft", "SensorModel", "1.0.0", ObjectStatus.DRAFT, "draft", "tenant1");
+        ObjectMetadata tenant1ApprovedSensor = createTestMetadataWithScope("t1-sensor-approved", "SensorModel", "2.0.0", ObjectStatus.APPROVED, "approved", "tenant1");
+        ObjectMetadata tenant1DraftActuator = createTestMetadataWithScope("t1-actuator-draft", "ActuatorModel", "1.0.0", ObjectStatus.DRAFT, "draft", "tenant1");
+
+        ObjectMetadata tenant2DraftSensor = createTestMetadataWithScope("t2-sensor-draft", "SensorModel", "1.0.0", ObjectStatus.DRAFT, "draft", "tenant2");
+        ObjectMetadata tenant2ApprovedSensor = createTestMetadataWithScope("t2-sensor-approved", "SensorModel", "2.0.0", ObjectStatus.APPROVED, "approved", "tenant2");
+        ObjectMetadata tenant2DocSensor = createTestMetadataWithScope("t2-sensor-doc", "SensorDocumentation", "1.0.0", ObjectStatus.APPROVED, "documentation", "tenant2");
+
+        // Same name, different tenants and roles
+        ObjectMetadata tenant1DraftCommon = createTestMetadataWithScope("t1-common-draft", "CommonPackage", "1.0.0", ObjectStatus.DRAFT, "draft", "tenant1");
+        ObjectMetadata tenant2DraftCommon = createTestMetadataWithScope("t2-common-draft", "CommonPackage", "1.0.0", ObjectStatus.DRAFT, "draft", "tenant2");
+        ObjectMetadata tenant2ApprovedCommon = createTestMetadataWithScope("t2-common-approved", "CommonPackage", "2.0.0", ObjectStatus.APPROVED, "approved", "tenant2");
+
+        // Update registry cache
+        registryService.updateCache(tenant1DraftSensor);
+        registryService.updateCache(tenant1ApprovedSensor);
+        registryService.updateCache(tenant1DraftActuator);
+        registryService.updateCache(tenant2DraftSensor);
+        registryService.updateCache(tenant2ApprovedSensor);
+        registryService.updateCache(tenant2DocSensor);
+        registryService.updateCache(tenant1DraftCommon);
+        registryService.updateCache(tenant2DraftCommon);
+        registryService.updateCache(tenant2ApprovedCommon);
+
+        // Test 1: Exact match - specific scope, role, and name
+        List<ObjectMetadata> tenant1DraftSensors = registryService.findByScopeRoleAndName("tenant1", "draft", "SensorModel");
+        assertEquals(1, tenant1DraftSensors.size(), "Should find 1 SensorModel in tenant1 draft");
+        assertEquals("t1-sensor-draft", tenant1DraftSensors.get(0).getObjectId());
+
+        // Test 2: Different scope, same role and name
+        List<ObjectMetadata> tenant2DraftSensors = registryService.findByScopeRoleAndName("tenant2", "draft", "SensorModel");
+        assertEquals(1, tenant2DraftSensors.size(), "Should find 1 SensorModel in tenant2 draft");
+        assertEquals("t2-sensor-draft", tenant2DraftSensors.get(0).getObjectId());
+
+        // Test 3: Different role, same scope and name
+        List<ObjectMetadata> tenant1ApprovedSensors = registryService.findByScopeRoleAndName("tenant1", "approved", "SensorModel");
+        assertEquals(1, tenant1ApprovedSensors.size(), "Should find 1 SensorModel in tenant1 approved");
+        assertEquals("t1-sensor-approved", tenant1ApprovedSensors.get(0).getObjectId());
+
+        // Test 4: Wildcard search - find all Sensor* models in tenant2 draft
+        List<ObjectMetadata> tenant2DraftSensorWildcard = registryService.findByScopeRoleAndName("tenant2", "draft", "Sensor*");
+        assertEquals(1, tenant2DraftSensorWildcard.size(), "Should find 1 Sensor* model in tenant2 draft");
+        assertTrue(tenant2DraftSensorWildcard.stream().anyMatch(m -> m.getObjectName().startsWith("Sensor")));
+
+        // Test 5: Wildcard search - find all models with "Sensor" in name across tenant2 documentation
+        List<ObjectMetadata> tenant2DocSensorWildcard = registryService.findByScopeRoleAndName("tenant2", "documentation", "Sensor*");
+        assertEquals(1, tenant2DocSensorWildcard.size(), "Should find 1 Sensor* model in tenant2 documentation");
+        assertEquals("t2-sensor-doc", tenant2DocSensorWildcard.get(0).getObjectId());
+
+        // Test 6: Multiple matches - same name, scope, and role
+        List<ObjectMetadata> tenant2DraftCommons = registryService.findByScopeRoleAndName("tenant2", "draft", "CommonPackage");
+        assertEquals(1, tenant2DraftCommons.size(), "Should find 1 CommonPackage in tenant2 draft");
+        assertEquals("t2-common-draft", tenant2DraftCommons.get(0).getObjectId());
+
+        // Test 7: Non-existent combination - wrong scope
+        List<ObjectMetadata> nonExistentScope = registryService.findByScopeRoleAndName("tenant3", "draft", "SensorModel");
+        assertEquals(0, nonExistentScope.size(), "Should find 0 results for non-existent tenant3");
+
+        // Test 8: Non-existent combination - wrong role
+        List<ObjectMetadata> nonExistentRole = registryService.findByScopeRoleAndName("tenant1", "documentation", "SensorModel");
+        assertEquals(0, nonExistentRole.size(), "Should find 0 results for SensorModel in tenant1 documentation (doesn't exist)");
+
+        // Test 9: Non-existent combination - wrong name
+        List<ObjectMetadata> nonExistentName = registryService.findByScopeRoleAndName("tenant1", "draft", "NonExistentModel");
+        assertEquals(0, nonExistentName.size(), "Should find 0 results for NonExistentModel");
+
+        // Service is automatically cleaned up by test annotation
+    }
+
     private ObjectMetadata createTestMetadata(String objectId, String objectName, String version, ObjectStatus status, String role) {
         ObjectMetadata metadata = ManagementFactory.eINSTANCE.createObjectMetadata();
         metadata.setObjectId(objectId);
@@ -398,6 +476,12 @@ public class LuceneRegistryServiceTest {
         metadata.setSourceChannel("TEST_CHANNEL");
         metadata.setLastChangeTime(Instant.now());
         metadata.setRole(role);
+        return metadata;
+    }
+
+    private ObjectMetadata createTestMetadataWithScope(String objectId, String objectName, String version, ObjectStatus status, String role, String scope) {
+        ObjectMetadata metadata = createTestMetadata(objectId, objectName, version, status, role);
+        metadata.setScope(scope);
         return metadata;
     }
     

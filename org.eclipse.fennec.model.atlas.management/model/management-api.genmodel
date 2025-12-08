@@ -154,6 +154,11 @@
         <genParameters ecoreParameter="management-api.ecore#//EObjectRegistryService/findByScopeAndRole/scope"/>
         <genParameters ecoreParameter="management-api.ecore#//EObjectRegistryService/findByScopeAndRole/role"/>
       </genOperations>
+      <genOperations ecoreOperation="management-api.ecore#//EObjectRegistryService/findByScopeRoleAndName">
+        <genParameters ecoreParameter="management-api.ecore#//EObjectRegistryService/findByScopeRoleAndName/scope"/>
+        <genParameters ecoreParameter="management-api.ecore#//EObjectRegistryService/findByScopeRoleAndName/role"/>
+        <genParameters ecoreParameter="management-api.ecore#//EObjectRegistryService/findByScopeRoleAndName/name"/>
+      </genOperations>
     </genClasses>
     <genClasses image="false" ecoreClass="management-api.ecore#//StorageRegistry">
       <genOperations ecoreOperation="management-api.ecore#//StorageRegistry/getStorageByRole">

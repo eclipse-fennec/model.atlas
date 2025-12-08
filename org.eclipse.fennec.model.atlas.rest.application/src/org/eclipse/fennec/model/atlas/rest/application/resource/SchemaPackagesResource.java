@@ -165,7 +165,8 @@ public class SchemaPackagesResource {
 	@Operation(
 			summary = "List packages in a specific stage",
 			description = "List all packages within a specific stage, with optional filtering by nsUri or name. " +
-					"Respects hierarchical visibility when nsUri is specified.",
+					"Respects hierarchical visibility when nsUri is specified. " +
+					"A name filter with wildcard can be provided, but be aware that no wildcard as first character is supported nor case-sensitive searches.",
 					responses = {
 							@ApiResponse(
 									responseCode = "200",
@@ -199,6 +200,14 @@ public class SchemaPackagesResource {
 				} else {
 					return Response.status(Response.Status.OK).entity(metadata).build();
 				}
+			} else if(name != null) {
+				List<ObjectMetadata> objectsMetadata = workflowService.listInStageByName(stageName, name);
+				if(objectsMetadata.isEmpty()) {
+					return Response.status(Response.Status.NO_CONTENT).build();
+				}
+				ObjectMetadataContainer container = mgmtFactory.createObjectMetadataContainer();
+				container.getMetadata().addAll(objectsMetadata);		
+				return Response.status(Response.Status.OK).entity(container).build();
 			} else {
 				//				TODO: missing search by name
 				List<ObjectMetadata> objectsMetadata = workflowService.listInStage(stageName);

@@ -545,13 +545,22 @@ public interface ManagementApiPackage extends org.eclipse.emf.ecore.EPackage {
 	int EOBJECT_REGISTRY_SERVICE___FIND_BY_SCOPE_AND_ROLE__STRING_STRING = 15;
 
 	/**
+	 * The operation id for the '<em>Find By Scope Role And Name</em>' operation.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 * @ordered
+	 */
+	int EOBJECT_REGISTRY_SERVICE___FIND_BY_SCOPE_ROLE_AND_NAME__STRING_STRING_STRING = 16;
+
+	/**
 	 * The number of operations of the '<em>EObject Registry Service</em>' class.
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
 	 * @generated
 	 * @ordered
 	 */
-	int EOBJECT_REGISTRY_SERVICE_OPERATION_COUNT = 16;
+	int EOBJECT_REGISTRY_SERVICE_OPERATION_COUNT = 17;
 
 	/**
 	 * The meta object id for the '{@link org.eclipse.fennec.model.atlas.mgmt.api.StorageRegistry <em>Storage Registry</em>}' class.
@@ -1087,6 +1096,16 @@ public interface ManagementApiPackage extends org.eclipse.emf.ecore.EPackage {
 	EOperation getEObjectRegistryService__FindByScopeAndRole__String_String();
 
 	/**
+	 * Returns the meta object for the '{@link org.eclipse.fennec.model.atlas.mgmt.api.EObjectRegistryService#findByScopeRoleAndName(java.lang.String, java.lang.String, java.lang.String) <em>Find By Scope Role And Name</em>}' operation.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @return the meta object for the '<em>Find By Scope Role And Name</em>' operation.
+	 * @see org.eclipse.fennec.model.atlas.mgmt.api.EObjectRegistryService#findByScopeRoleAndName(java.lang.String, java.lang.String, java.lang.String)
+	 * @generated
+	 */
+	EOperation getEObjectRegistryService__FindByScopeRoleAndName__String_String_String();
+
+	/**
 	 * Returns the meta object for class '{@link org.eclipse.fennec.model.atlas.mgmt.api.StorageRegistry <em>Storage Registry</em>}'.
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
@@ -1546,6 +1565,14 @@ public interface ManagementApiPackage extends org.eclipse.emf.ecore.EPackage {
 		 * @generated
 		 */
 		EOperation EOBJECT_REGISTRY_SERVICE___FIND_BY_SCOPE_AND_ROLE__STRING_STRING = eINSTANCE.getEObjectRegistryService__FindByScopeAndRole__String_String();
+
+		/**
+		 * The meta object literal for the '<em><b>Find By Scope Role And Name</b></em>' operation.
+		 * <!-- begin-user-doc -->
+		 * <!-- end-user-doc -->
+		 * @generated
+		 */
+		EOperation EOBJECT_REGISTRY_SERVICE___FIND_BY_SCOPE_ROLE_AND_NAME__STRING_STRING_STRING = eINSTANCE.getEObjectRegistryService__FindByScopeRoleAndName__String_String_String();
 
 		/**
 		 * The meta object literal for the '{@link org.eclipse.fennec.model.atlas.mgmt.api.StorageRegistry <em>Storage Registry</em>}' class.

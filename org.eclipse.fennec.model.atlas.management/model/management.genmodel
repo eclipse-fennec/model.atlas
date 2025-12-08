@@ -85,6 +85,7 @@
       <genFeatures createChild="false" ecoreFeature="ecore:EAttribute management.ecore#//ObjectQuery/status"/>
       <genFeatures createChild="false" ecoreFeature="ecore:EAttribute management.ecore#//ObjectQuery/role"/>
       <genFeatures createChild="false" ecoreFeature="ecore:EAttribute management.ecore#//ObjectQuery/scope"/>
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute management.ecore#//ObjectQuery/name"/>
     </genClasses>
     <genClasses ecoreClass="management.ecore#//GenerationRequest">
       <genFeatures createChild="false" ecoreFeature="ecore:EAttribute management.ecore#//GenerationRequest/requestId"/>

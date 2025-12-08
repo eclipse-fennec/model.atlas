@@ -138,6 +138,7 @@ public class EObjectWorkflowServiceImpl<T extends EObject> implements EObjectWor
 
 			metadata.setLastChangeTime(Instant.now());
 			metadata.setRole(stage);
+			metadata.setScope(config.scope());
 
 			requireNonNull(metadata.getObjectName());
 
@@ -293,6 +294,31 @@ public class EObjectWorkflowServiceImpl<T extends EObject> implements EObjectWor
 	
 	/* 
 	 * (non-Javadoc)
+	 * @see org.eclipse.fennec.model.atlas.wf.workflowapi.EObjectWorkflowService#listInStageByName(java.lang.String, java.lang.String)
+	 */
+	@Override
+	public List<ObjectMetadata> listInStageByName(String stage, String name) {
+		requireTrue(isStageAllowed(stage), String.format("Stage %s is not supported from WorkflowService", stage));
+		try {
+			return requireNonNullElse(registryService.findByScopeRoleAndName(config.scope(), stage, name), List.of());
+		} catch (Exception e) {
+			logger.log(Level.WARNING, "Error listing objects via registry, falling back to storage query", e);
+			try {
+				EObjectStorageService<T> storageService = getStorageByStage(stage);
+				if(storageService == null) {
+					logger.severe(String.format("Cannot retrieve EObjectStorageService for %s. Cannot list objects.", stage));
+					return List.of();
+				}
+				return requireNonNullElse(getPromiseValue(storageService.queryObjects(createQuery(Map.of(ManagementPackage.Literals.OBJECT_QUERY__ROLE, stage, ManagementPackage.Literals.OBJECT_QUERY__SCOPE, config.scope(), ManagementPackage.Literals.OBJECT_QUERY__NAME, name)))), List.of());
+			} catch (Exception ex) {
+				logger.log(Level.WARNING, "Error listing objects, returning empty list", ex);
+				return List.of();
+			}
+		}
+	}
+	
+	/* 
+	 * (non-Javadoc)
 	 * @see org.eclipse.fennec.model.atlas.wf.workflowapi.EObjectWorkflowService#listInFinalStage()
 	 */
 	@Override
@@ -433,6 +459,8 @@ public class EObjectWorkflowServiceImpl<T extends EObject> implements EObjectWor
 		});
 		return query;
 	}
+
+	
 
 	
 

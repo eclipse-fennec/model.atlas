@@ -518,6 +518,158 @@ public class SchemaPackagesResourceTest {
         assertEquals(204, response.getStatus(), "Should return HTTP 204 No Content");
     }
 
+    // ========== List Packages By Name Tests ==========
+
+    @Test
+    public void testListPackagesInStageByName_ExactMatch() {
+        Response response = restClient
+                .target(BASE_URL)
+                .path(TEST_SCOPE_NAME)
+                .path("schema")
+                .path("stages")
+                .path(TEST_STAGE_DRAFT)
+                .queryParam("name", TEST_PACKAGE_NAME)
+                .request("application/json")
+                .get();
+
+        assertEquals(200, response.getStatus(), "Should return HTTP 200 OK");
+
+        String responseContent = response.readEntity(String.class);
+        assertNotNull(responseContent, "Should return content");
+        assertTrue(responseContent.contains("objectId"), "Response should contain objectId");
+        assertTrue(responseContent.contains(TEST_PACKAGE_NAME), "Response should contain the package name");
+    }
+
+    @Test
+    public void testListPackagesInStageByName_WildcardMatch() {
+        Response response = restClient
+                .target(BASE_URL)
+                .path(TEST_SCOPE_NAME)
+                .path("schema")
+                .path("stages")
+                .path(TEST_STAGE_DRAFT)
+                .queryParam("name", "Test*")
+                .request("application/json")
+                .get();
+
+        assertEquals(200, response.getStatus(), "Should return HTTP 200 OK");
+
+        String responseContent = response.readEntity(String.class);
+        assertNotNull(responseContent, "Should return content");
+        assertTrue(responseContent.contains("objectId"), "Response should contain objectId");
+    }
+
+    @Test
+    public void testListPackagesInStageByName_PartialWildcardMatch() {
+        Response response = restClient
+                .target(BASE_URL)
+                .path(TEST_SCOPE_NAME)
+                .path("schema")
+                .path("stages")
+                .path(TEST_STAGE_DRAFT)
+                .queryParam("name", "TestSchema*")
+                .request("application/json")
+                .get();
+
+        assertEquals(200, response.getStatus(), "Should return HTTP 200 OK");
+
+        String responseContent = response.readEntity(String.class);
+        assertNotNull(responseContent, "Should return content");
+        assertTrue(responseContent.contains("objectId"), "Response should contain objectId");
+    }
+
+    @Test
+    public void testListPackagesInStageByName_NotFound() {
+        Response response = restClient
+                .target(BASE_URL)
+                .path(TEST_SCOPE_NAME)
+                .path("schema")
+                .path("stages")
+                .path(TEST_STAGE_DRAFT)
+                .queryParam("name", "NonExistentPackage")
+                .request("application/json")
+                .get();
+
+        assertEquals(204, response.getStatus(), "Should return HTTP 204 No Content when no packages match");
+    }
+
+    @Test
+    public void testListPackagesInStageByName_DifferentPackage() {
+        Response response = restClient
+                .target(BASE_URL)
+                .path(TEST_SCOPE_NAME)
+                .path("schema")
+                .path("stages")
+                .path(TEST_STAGE_DRAFT)
+                .queryParam("name", "SensorModel")
+                .request("application/json")
+                .get();
+
+        assertEquals(200, response.getStatus(), "Should return HTTP 200 OK");
+
+        String responseContent = response.readEntity(String.class);
+        assertNotNull(responseContent, "Should return content");
+        assertTrue(responseContent.contains("SensorModel"), "Response should contain SensorModel");
+    }
+
+    @Test
+    public void testListPackagesInStageByName_CombinedWithNsUri() {
+        Response response = restClient
+                .target(BASE_URL)
+                .path(TEST_SCOPE_NAME)
+                .path("schema")
+                .path("stages")
+                .path(TEST_STAGE_DRAFT)
+                .queryParam("nsUri", TEST_PACKAGE_NSURI)
+                .queryParam("name", TEST_PACKAGE_NAME)
+                .request("application/json")
+                .get();
+
+        assertEquals(200, response.getStatus(), "Should return HTTP 200 OK");
+
+        String responseContent = response.readEntity(String.class);
+        assertNotNull(responseContent, "Should return content");
+        assertTrue(responseContent.contains("objectId"), "Response should contain objectId");
+    }
+
+    @Test
+    public void testListPackagesInStageByName_PrefixWildcard() {
+        Response response = restClient
+                .target(BASE_URL)
+                .path(TEST_SCOPE_NAME)
+                .path("schema")
+                .path("stages")
+                .path(TEST_STAGE_DRAFT)
+                .queryParam("name", "Sensor*")
+                .request("application/json")
+                .get();
+
+        assertEquals(200, response.getStatus(), "Should return HTTP 200 OK");
+
+        String responseContent = response.readEntity(String.class);
+        assertNotNull(responseContent, "Should return content");
+        assertTrue(responseContent.contains("SensorModel"), "Response should contain SensorModel");
+    }
+
+    @Test
+    public void testListPackagesInStageByName_DifferentStage() {
+        Response response = restClient
+                .target(BASE_URL)
+                .path(TEST_SCOPE_NAME)
+                .path("schema")
+                .path("stages")
+                .path(TEST_STAGE_APPROVED)
+                .queryParam("name", TEST_PACKAGE_NAME)
+                .request("application/json")
+                .get();
+
+        assertEquals(200, response.getStatus(), "Should return HTTP 200 OK");
+
+        String responseContent = response.readEntity(String.class);
+        assertNotNull(responseContent, "Should return content");
+        assertTrue(responseContent.contains("objectId"), "Response should contain objectId");
+    }
+
     // ========== Mock Service Implementation ==========
 
     /**
@@ -669,5 +821,52 @@ public class SchemaPackagesResourceTest {
             // Disallow skipping stages (e.g., draft -> release)
             return false;
         }
+
+		/*
+		 * (non-Javadoc)
+		 * @see org.eclipse.fennec.model.atlas.wf.workflowapi.EObjectWorkflowService#listInStageByName(java.lang.String, java.lang.String)
+		 */
+		@Override
+		public List<ObjectMetadata> listInStageByName(String stage, String name) {
+			// Support wildcard search with * character (only trailing wildcards like "Prefix*")
+			boolean isWildcard = name.contains("*");
+			String nameFilter = isWildcard ? name.replace("*", "") : name;
+
+			// Create test metadata that matches the filter
+			if ("TestSchema".equals(name) || (isWildcard && TEST_PACKAGE_NAME.startsWith(nameFilter))) {
+				ObjectMetadata metadata = ManagementFactory.eINSTANCE.createObjectMetadata();
+				String encodedNsUri = Base64.getUrlEncoder().encodeToString(TEST_PACKAGE_NSURI.getBytes());
+				metadata.setObjectId(encodedNsUri);
+				metadata.setRole(stage);
+				metadata.setObjectName(TEST_PACKAGE_NAME);
+				metadata.setUploadTime(Instant.now());
+				return List.of(metadata);
+			}
+
+			// Match for Test* wildcard
+			if (isWildcard && TEST_PACKAGE_NAME.startsWith(nameFilter)) {
+				ObjectMetadata metadata = ManagementFactory.eINSTANCE.createObjectMetadata();
+				String encodedNsUri = Base64.getUrlEncoder().encodeToString(TEST_PACKAGE_NSURI.getBytes());
+				metadata.setObjectId(encodedNsUri);
+				metadata.setRole(stage);
+				metadata.setObjectName(TEST_PACKAGE_NAME);
+				metadata.setUploadTime(Instant.now());
+				return List.of(metadata);
+			}
+
+			// If looking for SensorModel, return a matching object
+			if ("SensorModel".equals(name) || (isWildcard && "SensorModel".startsWith(nameFilter))) {
+				ObjectMetadata sensorMetadata = ManagementFactory.eINSTANCE.createObjectMetadata();
+				String encodedSensorNsUri = Base64.getUrlEncoder().encodeToString("http://test.example.com/sensor/1.0".getBytes());
+				sensorMetadata.setObjectId(encodedSensorNsUri);
+				sensorMetadata.setRole(stage);
+				sensorMetadata.setObjectName("SensorModel");
+				sensorMetadata.setUploadTime(Instant.now());
+				return List.of(sensorMetadata);
+			}
+
+			// Return empty list if no match
+			return List.of();
+		}
     }
 }

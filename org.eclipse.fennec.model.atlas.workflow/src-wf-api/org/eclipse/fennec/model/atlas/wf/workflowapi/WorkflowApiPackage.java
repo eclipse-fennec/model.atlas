@@ -155,13 +155,22 @@ public interface WorkflowApiPackage extends org.eclipse.emf.ecore.EPackage {
 	int EOBJECT_WORKFLOW_SERVICE___LIST_IN_STAGE__STRING = 6;
 
 	/**
+	 * The operation id for the '<em>List In Stage By Name</em>' operation.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 * @ordered
+	 */
+	int EOBJECT_WORKFLOW_SERVICE___LIST_IN_STAGE_BY_NAME__STRING_STRING = 7;
+
+	/**
 	 * The operation id for the '<em>List In Final Stage</em>' operation.
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
 	 * @generated
 	 * @ordered
 	 */
-	int EOBJECT_WORKFLOW_SERVICE___LIST_IN_FINAL_STAGE = 7;
+	int EOBJECT_WORKFLOW_SERVICE___LIST_IN_FINAL_STAGE = 8;
 
 	/**
 	 * The operation id for the '<em>Transition To Stage</em>' operation.
@@ -170,7 +179,7 @@ public interface WorkflowApiPackage extends org.eclipse.emf.ecore.EPackage {
 	 * @generated
 	 * @ordered
 	 */
-	int EOBJECT_WORKFLOW_SERVICE___TRANSITION_TO_STAGE__STRING_STRING_STRING = 8;
+	int EOBJECT_WORKFLOW_SERVICE___TRANSITION_TO_STAGE__STRING_STRING_STRING = 9;
 
 	/**
 	 * The operation id for the '<em>Is Transition Allowed</em>' operation.
@@ -179,7 +188,7 @@ public interface WorkflowApiPackage extends org.eclipse.emf.ecore.EPackage {
 	 * @generated
 	 * @ordered
 	 */
-	int EOBJECT_WORKFLOW_SERVICE___IS_TRANSITION_ALLOWED__STRING_STRING = 9;
+	int EOBJECT_WORKFLOW_SERVICE___IS_TRANSITION_ALLOWED__STRING_STRING = 10;
 
 	/**
 	 * The number of operations of the '<em>EObject Workflow Service</em>' class.
@@ -188,7 +197,7 @@ public interface WorkflowApiPackage extends org.eclipse.emf.ecore.EPackage {
 	 * @generated
 	 * @ordered
 	 */
-	int EOBJECT_WORKFLOW_SERVICE_OPERATION_COUNT = 10;
+	int EOBJECT_WORKFLOW_SERVICE_OPERATION_COUNT = 11;
 
 
 	/**
@@ -270,6 +279,16 @@ public interface WorkflowApiPackage extends org.eclipse.emf.ecore.EPackage {
 	 * @generated
 	 */
 	EOperation getEObjectWorkflowService__ListInStage__String();
+
+	/**
+	 * Returns the meta object for the '{@link org.eclipse.fennec.model.atlas.wf.workflowapi.EObjectWorkflowService#listInStageByName(java.lang.String, java.lang.String) <em>List In Stage By Name</em>}' operation.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @return the meta object for the '<em>List In Stage By Name</em>' operation.
+	 * @see org.eclipse.fennec.model.atlas.wf.workflowapi.EObjectWorkflowService#listInStageByName(java.lang.String, java.lang.String)
+	 * @generated
+	 */
+	EOperation getEObjectWorkflowService__ListInStageByName__String_String();
 
 	/**
 	 * Returns the meta object for the '{@link org.eclipse.fennec.model.atlas.wf.workflowapi.EObjectWorkflowService#listInFinalStage() <em>List In Final Stage</em>}' operation.
@@ -389,6 +408,14 @@ public interface WorkflowApiPackage extends org.eclipse.emf.ecore.EPackage {
 		 * @generated
 		 */
 		EOperation EOBJECT_WORKFLOW_SERVICE___LIST_IN_STAGE__STRING = eINSTANCE.getEObjectWorkflowService__ListInStage__String();
+
+		/**
+		 * The meta object literal for the '<em><b>List In Stage By Name</b></em>' operation.
+		 * <!-- begin-user-doc -->
+		 * <!-- end-user-doc -->
+		 * @generated
+		 */
+		EOperation EOBJECT_WORKFLOW_SERVICE___LIST_IN_STAGE_BY_NAME__STRING_STRING = eINSTANCE.getEObjectWorkflowService__ListInStageByName__String_String();
 
 		/**
 		 * The meta object literal for the '<em><b>List In Final Stage</b></em>' operation.

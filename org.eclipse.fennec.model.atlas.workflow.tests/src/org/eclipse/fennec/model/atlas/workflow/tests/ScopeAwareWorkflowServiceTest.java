@@ -1151,6 +1151,98 @@ public class ScopeAwareWorkflowServiceTest {
     }
 
     // ========================================
+    // Test: List By Name Operations
+    // ========================================
+
+    @SuppressWarnings({ "unchecked", "rawtypes" })
+    /**
+     * Test listInStageByName with exact matches and wildcards.
+     * @throws InvocationTargetException
+     */
+    @Test
+    @WithFactoryConfiguration(factoryPid = "LuceneEObjectRegistryService", name = "registry", location = "?", properties = {
+        @Property(key = "registry.workspace.folder", value = "%s/registry", templateArguments = {
+            @TemplateArgument(source = ValueSource.SystemProperty, value = PROP_TEMP_DIR)
+        })
+    })
+    @WithFactoryConfiguration(factoryPid = "FileObjectStorage", name = "release-storage", location = "?", properties = {
+            @Property(key = "workspace.folder", value = "%s/release-storage", templateArguments = {
+                @TemplateArgument(source = ValueSource.SystemProperty, value = PROP_TEMP_DIR)
+            }),
+            @Property(key = "storage.scope", value = "testscope"),
+            @Property(key = "storage.role", value = "release")
+        })
+    @WithFactoryConfiguration(factoryPid = "FileObjectStorage", name = "draft-storage", location = "?", properties = {
+        @Property(key = "workspace.folder", value = "%s/draft-storage", templateArguments = {
+            @TemplateArgument(source = ValueSource.SystemProperty, value = PROP_TEMP_DIR)
+        }),
+        @Property(key = "storage.scope", value = "testscope"),
+        @Property(key = "storage.role", value = "draft")
+    })
+    @WithFactoryConfiguration(factoryPid = "EObjectWorkflowService", name = "test-workflow", location = "?", properties = {
+        @Property(key = "scope", value = "testscope"),
+        @Property(key = "parent.scope", value = ""),
+        @Property(key = "stages", value = {"draft"}, type = Type.Array),
+        @Property(key = "final.stage", value = "draft"),
+        @Property(key = "writable.stages", value = {"draft"}, type = Type.Array)
+    })
+    public void testListInStageByName(
+            @InjectService(cardinality = 0, filter = "(scope=testscope)")
+            ServiceAware<EObjectWorkflowService> workflowAware) throws InterruptedException, InvocationTargetException {
+
+        EObjectWorkflowService<EObject> workflow = workflowAware.waitForService(5000);
+        assertNotNull(workflow, "Workflow service should be available");
+
+        // Upload multiple packages with different names
+        EPackage sensorPkg = ecoreFactory.createEPackage();
+        sensorPkg.setName("SensorModel");
+        sensorPkg.setNsURI("http://sensor.test.com/v1");
+        ObjectMetadata sensorMeta = managementFactory.createObjectMetadata();
+        sensorMeta.setObjectName("SensorModel");
+        sensorMeta.setUploadUser("testUser");
+        workflow.uploadToStage("draft", sensorPkg, sensorMeta).getValue();
+
+        EPackage actuatorPkg = ecoreFactory.createEPackage();
+        actuatorPkg.setName("ActuatorModel");
+        actuatorPkg.setNsURI("http://actuator.test.com/v1");
+        ObjectMetadata actuatorMeta = managementFactory.createObjectMetadata();
+        actuatorMeta.setObjectName("ActuatorModel");
+        actuatorMeta.setUploadUser("testUser");
+        workflow.uploadToStage("draft", actuatorPkg, actuatorMeta).getValue();
+
+        EPackage devicePkg = ecoreFactory.createEPackage();
+        devicePkg.setName("DeviceModel");
+        devicePkg.setNsURI("http://device.test.com/v1");
+        ObjectMetadata deviceMeta = managementFactory.createObjectMetadata();
+        deviceMeta.setObjectName("DeviceModel");
+        deviceMeta.setUploadUser("testUser");
+        workflow.uploadToStage("draft", devicePkg, deviceMeta).getValue();
+
+        // Test exact name match
+        List<ObjectMetadata> sensorList = workflow.listInStageByName("draft", "SensorModel");
+        assertEquals(1, sensorList.size(), "Should find exactly one SensorModel");
+        assertEquals("SensorModel", sensorList.get(0).getObjectName());
+
+        // Test wildcard match - find all models starting with "Sensor"
+        List<ObjectMetadata> sensorWildcard = workflow.listInStageByName("draft", "Sensor*");
+        assertEquals(1, sensorWildcard.size(), "Should find 1 package starting with 'Sensor'");
+        assertTrue(sensorWildcard.stream().allMatch(m -> m.getObjectName().startsWith("Sensor")));
+
+        // Test wildcard match - find all models starting with "Device"
+        List<ObjectMetadata> deviceWildcard = workflow.listInStageByName("draft", "Device*");
+        assertEquals(1, deviceWildcard.size(), "Should find 1 package starting with 'Device'");
+        assertTrue(deviceWildcard.stream().allMatch(m -> m.getObjectName().startsWith("Device")));
+
+        // Test non-existent name
+        List<ObjectMetadata> nonExistent = workflow.listInStageByName("draft", "NonExistent");
+        assertTrue(nonExistent.isEmpty(), "Should return empty list for non-existent name");
+
+        // Test non-matching wildcard
+        List<ObjectMetadata> nonMatching = workflow.listInStageByName("draft", "Other*");
+        assertTrue(nonMatching.isEmpty(), "Should return empty list for non-matching wildcard");
+    }
+
+    // ========================================
     // Test: Three-Level Hierarchy
     // ========================================
 

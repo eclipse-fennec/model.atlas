@@ -562,6 +562,16 @@ public class ManagementPackageImpl extends EPackageImpl implements ManagementPac
 	 * @generated
 	 */
 	@Override
+	public EAttribute getObjectQuery_Name() {
+		return (EAttribute)objectQueryEClass.getEStructuralFeatures().get(6);
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
 	public EClass getGenerationRequest() {
 		return generationRequestEClass;
 	}
@@ -862,6 +872,7 @@ public class ManagementPackageImpl extends EPackageImpl implements ManagementPac
 		createEAttribute(objectQueryEClass, OBJECT_QUERY__STATUS);
 		createEAttribute(objectQueryEClass, OBJECT_QUERY__ROLE);
 		createEAttribute(objectQueryEClass, OBJECT_QUERY__SCOPE);
+		createEAttribute(objectQueryEClass, OBJECT_QUERY__NAME);
 
 		generationRequestEClass = createEClass(GENERATION_REQUEST);
 		createEAttribute(generationRequestEClass, GENERATION_REQUEST__REQUEST_ID);
@@ -964,6 +975,7 @@ public class ManagementPackageImpl extends EPackageImpl implements ManagementPac
 		initEAttribute(getObjectQuery_Status(), this.getObjectStatus(), "status", null, 0, 1, ObjectQuery.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_UNSETTABLE, !IS_ID, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
 		initEAttribute(getObjectQuery_Role(), ecorePackage.getEString(), "role", null, 0, 1, ObjectQuery.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_UNSETTABLE, !IS_ID, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
 		initEAttribute(getObjectQuery_Scope(), ecorePackage.getEString(), "scope", null, 0, 1, ObjectQuery.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_UNSETTABLE, !IS_ID, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
+		initEAttribute(getObjectQuery_Name(), ecorePackage.getEString(), "name", null, 0, 1, ObjectQuery.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_UNSETTABLE, !IS_ID, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
 
 		initEClass(generationRequestEClass, GenerationRequest.class, "GenerationRequest", !IS_ABSTRACT, !IS_INTERFACE, IS_GENERATED_INSTANCE_CLASS);
 		initEAttribute(getGenerationRequest_RequestId(), ecorePackage.getEString(), "requestId", null, 1, 1, GenerationRequest.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_UNSETTABLE, !IS_ID, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
@@ -1256,6 +1268,12 @@ public class ManagementPackageImpl extends EPackageImpl implements ManagementPac
 		   source,
 		   new String[] {
 			   "documentation", "Filter by object scope"
+		   });
+		addAnnotation
+		  (getObjectQuery_Name(),
+		   source,
+		   new String[] {
+			   "documentation", "Filter by object name"
 		   });
 		addAnnotation
 		  (generationRequestEClass,
