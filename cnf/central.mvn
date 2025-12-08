@@ -188,9 +188,10 @@ javax.websocket:javax.websocket-api:1.1
 org.apache.felix:org.apache.felix.scr:2.2.14
 
 #XSD
-#org.eclipse.emf:org.eclipse.xsd:2.22.0-SNAPSHOT
-org.eclipse.emf:org.eclipse.emf.ecore:2.40.0
+org.eclipse.emf:org.eclipse.xsd:2.22.0
+org.eclipse.emf:org.eclipse.emf.ecore:2.41.0
 org.eclipse.emf:org.eclipse.emf.ecore.xmi:2.39.0
+org.eclipse.emf:org.eclipse.emf.common:2.44.0
 
 #biz.aQute:biz.aQute.gogo.commands.provider:1.11.0-SNAPSHOT
 

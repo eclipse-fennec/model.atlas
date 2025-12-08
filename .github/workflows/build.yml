@@ -75,7 +75,9 @@ jobs:
             name: jar-files
             path: .
       -  name: Move jar
-         run: mv **/generated/distributions/executable/modelatlas.runtime_docker.jar docker/modelatlas; ls -l docker/modelatlas
+         run: mkdir docker/modelatlas/content/ -p; mv **/generated/distributions/executable/modelatlas.runtime_docker.jar docker/modelatlas/content/modelatlas.runtime_docker.jar; ls -lR docker/modelatlas/content
+      -  name: Move runtime
+         run: mkdir docker/modelatlas/content/runtime/ -p; cp org.eclipse.fennec.model.atlas.runtime/runtime/* docker/modelatlas/content/runtime -rf; ls -lR docker/modelatlas/content
       -  name: Set up Docker Buildx
          uses: docker/setup-buildx-action@e468171a9de216ec08956ac3ada2f0791b6bd435 # v3.11.1
       -  name: Login to Docker Hub
@@ -92,8 +94,7 @@ jobs:
       -  name: Build and Push Multi-Arch Docker Image
          uses: docker/build-push-action@263435318d21b8e681c14492fe198d362a7d2c83 # v6.18.0
          with:
-            context: .
-            file: docker/modelatlas/Dockerfile
+            context: docker/modelatlas/
             platforms: linux/amd64,linux/arm64/v8
             push: true
             tags: |-
