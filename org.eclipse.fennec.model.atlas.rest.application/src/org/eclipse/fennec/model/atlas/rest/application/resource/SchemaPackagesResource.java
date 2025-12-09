@@ -123,7 +123,7 @@ public class SchemaPackagesResource {
 					@ApiResponse(
 							responseCode = "200",
 							description = "Packages retrieved successfully",
-							content = @Content(mediaType = MediaType.APPLICATION_JSON)
+							content = @Content(schema = @Schema( type = "array", implementation = ObjectMetadata.class))
 							),
 					@ApiResponse(responseCode = "204", description = "Scope not found"),
 					@ApiResponse(responseCode = "500", description = "Internal server error")
@@ -171,7 +171,19 @@ public class SchemaPackagesResource {
 							@ApiResponse(
 									responseCode = "200",
 									description = "Packages retrieved successfully",
-									content = @Content(mediaType = MediaType.APPLICATION_JSON)
+									content = @Content(
+											schema =  @Schema(implementation = ObjectMetadata.class)
+//											oneOf = {
+//						                            // Option 1: A single ObjectMetadata object (when objectKey is provided)
+//						                            @Schema(implementation = ObjectMetadata.class),
+//
+//						                            // Option 2: A list/array of ObjectMetadata objects (when objectKey is NOT provided)
+////						                            @Schema(
+////						                                type = "array",
+////						                                implementation = ObjectMetadata.class						                                
+////						                            )
+//						                        }
+											)
 									),
 							@ApiResponse(responseCode = "204", description = "Scope, stage, or package not found"),
 							@ApiResponse(responseCode = "500", description = "Internal server error")
@@ -248,7 +260,7 @@ public class SchemaPackagesResource {
 					@ApiResponse(
 							responseCode = "201",
 							description = "Package created successfully",
-							content = @Content(mediaType = MediaType.APPLICATION_JSON)
+							content = @Content(schema = @Schema(implementation = ObjectMetadata.class))
 							),
 					@ApiResponse(responseCode = "400", description = "Invalid package data or missing required parameters"),
 					@ApiResponse(responseCode = "409", description = "Package with nsUri already exists"),
@@ -326,7 +338,8 @@ public class SchemaPackagesResource {
 					responses = {
 							@ApiResponse(
 									responseCode = "200",
-									description = "Package content retrieved successfully"
+									description = "Package content retrieved successfully",
+									content = @Content(schema = @Schema(implementation = EPackage.class))
 									),
 							@ApiResponse(responseCode = "204", description = "Scope or Package not found"),
 							@ApiResponse(responseCode = "406", description = "Requested format not supported"),
@@ -382,7 +395,7 @@ public class SchemaPackagesResource {
 							@ApiResponse(
 									responseCode = "200",
 									description = "Package updated successfully",
-									content = @Content(mediaType = MediaType.APPLICATION_JSON)
+									content = @Content(schema = @Schema(implementation = ObjectMetadata.class))
 									),
 							@ApiResponse(responseCode = "400", description = "Invalid package data"),
 							@ApiResponse(responseCode = "403", description = "Stage is read-only or Package is only present in a parent scope final stage and so it's read-only"),
@@ -517,7 +530,7 @@ public class SchemaPackagesResource {
 							@ApiResponse(
 									responseCode = "200",
 									description = "Package transitioned successfully",
-									content = @Content(mediaType = MediaType.APPLICATION_JSON)
+									content = @Content(schema = @Schema(implementation = ObjectMetadata.class))
 									),
 							@ApiResponse(responseCode = "400", description = "Invalid transition or missing parameters"),
 							@ApiResponse(responseCode = "204", description = "Scope not found, or Package not found in source stage"),

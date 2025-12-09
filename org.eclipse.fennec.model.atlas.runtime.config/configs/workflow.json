@@ -4,7 +4,7 @@
 	"EObjectWorkflowService~atlas": {
 		"workflow.id": "atlas-workflow",
 		"scope": "atlas",
-		"description": "Atlas workflow",
+		"description": "Atlas workflow. This is the parent of all other scopes and only contains a release stage.",
 		"parent.scope": "",
 		"parentWorkflowService.target": "(scope=no-inject)",
 		"delete.after.transition": true,
@@ -16,7 +16,7 @@
 	"EObjectWorkflowService~default": {
 		"workflow.id": "default-workflow",
 		"scope": "default",
-		"description": "Test package workflow",
+		"description": "Package workflow. Handles the workflow of Package objects, from the draft stage, to approved, to release.",
 		"parent.scope": "atlas",
 		"parentWorkflowService.target": "(scope=atlas)",
 		"delete.after.transition": true,
