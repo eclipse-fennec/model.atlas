@@ -9,7 +9,7 @@
  * SPDX-License-Identifier: EPL-2.0
  *
  * Contributors:
- *      Mark Hoffmann - initial API and implementation
+ *      Data In Motion - initial API and implementation
  */
 package org.eclipse.fennec.model.atlas.mgmt.registry;
 
@@ -673,7 +673,7 @@ public class BasicEObjectRegistryService<T extends EObject> implements EObjectRe
 		try {
 			return metadataById.values().stream()
 				.filter(metadata -> objectName.equals(metadata.getObjectName()))
-				.collect(java.util.stream.Collectors.toList());
+				.collect(Collectors.toList());
 		} finally {
 			cacheLock.readLock().unlock();
 		}
@@ -702,7 +702,56 @@ public class BasicEObjectRegistryService<T extends EObject> implements EObjectRe
 		try {
 			return metadataById.values().stream()
 				.filter(metadata -> role.equals(metadata.getRole()))
-				.collect(java.util.stream.Collectors.toList());
+				.collect(Collectors.toList());
+		} finally {
+			cacheLock.readLock().unlock();
+		}
+	}
+	
+	/* 
+	 * (non-Javadoc)
+	 * @see org.eclipse.fennec.model.atlas.mgmt.api.EObjectRegistryService#findByScopeAndRole(java.lang.String, java.lang.String)
+	 */
+	@Override
+	public List<ObjectMetadata> findByScopeAndRole(String scope, String role) {
+		requireNonNull(scope, "Scope must not be null");
+		requireNonNull(role, "Role must not be null");
+		
+		cacheLock.readLock().lock();
+		try {
+			return metadataById.values().stream()
+				.filter(metadata -> role.equals(metadata.getRole()) && scope.equals(metadata.getScope()))
+				.collect(Collectors.toList());
+		} finally {
+			cacheLock.readLock().unlock();
+		}
+	}
+
+	/* 
+	 * (non-Javadoc)
+	 * @see org.eclipse.fennec.model.atlas.mgmt.api.EObjectRegistryService#findByScopeRoleAndName(java.lang.String, java.lang.String, java.lang.String)
+	 */
+	@Override
+	public List<ObjectMetadata> findByScopeRoleAndName(String scope, String role, String name) {
+		requireNonNull(scope, "Scope must not be null");
+		requireNonNull(role, "Role must not be null");
+		requireNonNull(name, "Name must not be null");
+		
+//		name can also contain * for wildcard search
+		boolean isExact = !name.contains("*");
+		String nameFilter = name.contains("*") ? name.replaceAll("\\*", "") : name;
+		cacheLock.readLock().lock();
+		try {
+			if(isExact) {
+				return metadataById.values().stream()
+						.filter(metadata -> role.equals(metadata.getRole()) && scope.equals(metadata.getScope()) && name.equals(metadata.getObjectName()))
+						.collect(Collectors.toList());
+			} else {
+				return metadataById.values().stream()
+						.filter(metadata -> role.equals(metadata.getRole()) && scope.equals(metadata.getScope()) && metadata.getObjectName().contains(nameFilter))
+						.collect(Collectors.toList());
+			}
+			
 		} finally {
 			cacheLock.readLock().unlock();
 		}

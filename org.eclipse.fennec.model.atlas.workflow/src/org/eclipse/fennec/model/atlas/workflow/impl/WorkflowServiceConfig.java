@@ -9,7 +9,7 @@
  * SPDX-License-Identifier: EPL-2.0
  *
  * Contributors:
- *      Mark Hoffmann - initial API and implementation
+ *      Data In Motion - initial API and implementation
  */
 package org.eclipse.fennec.model.atlas.workflow.impl;
 
@@ -42,78 +42,65 @@ public @interface WorkflowServiceConfig {
     )
     String workflow_id() default "default";
     
-    /**
-     * OSGi filter for the draft storage service.
-     * This allows selecting specific storage backends for draft objects.
-     * 
-     * Examples:
-     * - "(storage.backend=file)" - Use file-based storage for drafts
-     * - "(storage.backend=minio)" - Use MinIO storage for drafts
-     * - "(&(storage.backend=file)(storage.workspace=/drafts))" - Specific file storage configuration
-     * 
-     * @return OSGi filter for draft storage service
-     */
-    @AttributeDefinition(
-        name = "Draft Storage Filter",
-        description = "OSGi filter to select the storage service for draft objects",
-        required = true
-    )
-    String draft_storage_filter();
     
-    /**
-     * OSGi filter for the approved storage service.
-     * This allows selecting different storage backends for approved objects.
-     * 
-     * Examples:
-     * - "(storage.backend=minio)" - Use MinIO storage for approved objects
-     * - "(storage.backend=git)" - Use Git-based storage for approved objects
-     * - "(&(storage.backend=file)(storage.workspace=/approved))" - Specific file storage configuration
-     * 
-     * @return OSGi filter for approved storage service
-     */
     @AttributeDefinition(
-        name = "Approved Storage Filter",
-        description = "OSGi filter to select the storage service for approved objects",
-        required = true
-    )
-    String approved_storage_filter();
-    
-    /**
-     * OSGi filter for the governance documentation storage service.
-     * If not specified, governance documentation will not be stored separately.
-     * 
-     * Examples:
-     * - "(storage.backend=file)" - Store governance docs in file storage
-     * - "(storage.backend=minio)" - Store governance docs in MinIO
-     * 
-     * @return OSGi filter for governance documentation storage service
-     */
-    @AttributeDefinition(
-        name = "Documentation Storage Filter",
-        description = "OSGi filter to select the storage service for governance documentation (optional)",
-        required = false
-    )
-    String documentation_storage_filter() default "";
-    
-    /**
-     * Whether to archive drafts after approval instead of deleting them.
-     * 
-     * When true:
-     * - Draft objects are marked as ARCHIVED after approval
-     * - Original draft remains accessible for audit purposes
-     * 
-     * When false:
-     * - Draft objects are deleted after successful approval
-     * - Saves storage space but loses audit trail
-     * 
-     * @return true to archive drafts, false to delete them
-     */
-    @AttributeDefinition(
-        name = "Archive Drafts on Approval",
-        description = "Whether to archive drafts after approval instead of deleting them",
-        type = AttributeType.BOOLEAN
-    )
-    boolean archive_drafts_on_approval() default true;
+            name = "Scope", 
+            description = "Unique identifier for the scope this workflow should handle",
+            required = true
+        )
+	String scope();
+	
+	@AttributeDefinition(
+			name = "Description",
+			required = false, 
+			description = "The scope description")
+	String description();
+	
+	@AttributeDefinition(
+			name = "Parent Scope",
+			required = false, 
+			description = "The parent scope", 
+			defaultValue = "atlas")
+	String parent_scope() default "atlas";	
+	
+	@AttributeDefinition(
+			name = "Parent Workflow Service Target Filter",
+			required = false, 
+			description = "The parent workflow service target filter, to be able to delegate to the parent service when an object is not found in the current scope", 
+			defaultValue = "atlas")
+	String parentWorkflowService_target() default "(scope=atlas)";	
+	
+	
+	@AttributeDefinition(
+			name = "Delete After Transition",
+			required = false, 
+			description = "Whether or not to delete an object from the source stage if a transition to another target stage has been completed", 
+			defaultValue = "false")
+	boolean delete_after_transition() default false;	
+	
+	@AttributeDefinition(
+			name = "Workflow Stages",
+			required = false, 
+			description = "The stages this workflow supports",
+			defaultValue = {"draft", "approved", "release"}
+			)
+	String[] stages() default {"draft", "approved", "release"};
+	
+	@AttributeDefinition(
+			name = "Workflow Final Stafe",
+			required = false, 
+			description = "The final stage for this workflow",
+			defaultValue = "release"
+			)
+	String final_stage() default "release";
+	
+	@AttributeDefinition(
+			name = "Workflow Writable Stages",
+			required = false, 
+			description = "The stages that can be writable for this workflow",
+			defaultValue = {"draft", "approved"}
+			)
+	String[] writable_stages() default {"draft", "approved"};
     
     /**
      * Timeout in milliseconds for transactional operations.
@@ -156,27 +143,7 @@ public @interface WorkflowServiceConfig {
     )
     boolean enable_auto_rollback() default true;
     
-    /**
-     * Whether to require governance compliance checks before approval.
-     * 
-     * When true:
-     * - Compliance checks are mandatory before object approval
-     * - Approval fails if compliance service is unavailable
-     * - Governance documentation is automatically generated
-     * 
-     * When false:
-     * - Compliance checks are optional
-     * - Objects can be approved without governance validation
-     * - Useful for non-critical or internal objects
-     * 
-     * @return true to require compliance checks
-     */
-    @AttributeDefinition(
-        name = "Require Compliance Checks",
-        description = "Whether to require governance compliance checks before approval",
-        type = AttributeType.BOOLEAN
-    )
-    boolean require_compliance_checks() default false;
+   
     
     /**
      * Maximum number of concurrent approval operations.
@@ -216,47 +183,7 @@ public @interface WorkflowServiceConfig {
     )
     boolean enable_detailed_logging() default false;
     
-    /**
-     * Whether to automatically trigger compliance checks after draft upload.
-     * 
-     * When true:
-     * - Compliance checks are automatically triggered when a draft is uploaded
-     * - Governance documentation is generated for immediate review
-     * - Streamlines the workflow for faster governance processing
-     * 
-     * When false:
-     * - Compliance checks must be manually triggered
-     * - Allows for draft refinement before compliance checking
-     * - Useful for iterative development workflows
-     * 
-     * @return true to enable automatic compliance checks
-     */
-    @AttributeDefinition(
-        name = "Enable Auto Compliance Check",
-        description = "Whether to automatically trigger compliance checks after draft upload",
-        type = AttributeType.BOOLEAN
-    )
-    boolean enable_auto_compliance_check() default true;
     
-    /**
-     * Whether to require approved governance documentation before object approval.
-     * 
-     * When true:
-     * - Objects cannot be approved without approved governance documentation
-     * - Approval process validates governance documentation status
-     * - Enforces governance-gated workflow for compliance
-     * 
-     * When false:
-     * - Objects can be approved without governance documentation
-     * - Compliance checks are optional in the approval process
-     * - Useful for non-regulated environments or internal tools
-     * 
-     * @return true to require approved governance documentation
-     */
-    @AttributeDefinition(
-        name = "Require Approved Governance Documentation",
-        description = "Whether to require approved governance documentation before object approval",
-        type = AttributeType.BOOLEAN
-    )
-    boolean require_approved_governance_documentation() default true;
+    
+ 
 }

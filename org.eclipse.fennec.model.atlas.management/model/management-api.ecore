@@ -5,7 +5,7 @@
   <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
     <details key="modelName" value="ManagementApi"/>
     <details key="complianceLevel" value="17.0"/>
-    <details key="copyrightText" value="Copyright (c) 2012 - 2025 Data In Motion and others.&#xA;All rights reserved.&#xA;&#xA;This program and the accompanying materials are made&#xA;available under the terms of the Eclipse Public License 2.0&#xA;which is available at https://www.eclipse.org/legal/epl-2.0/&#xA;&#xA;SPDX-License-Identifier: EPL-2.0&#xA;&#xA;Contributors:&#xA;     Mark Hoffmann - initial API and implementation"/>
+    <details key="copyrightText" value="Copyright (c) 2012 - 2025 Data In Motion and others.&#xA;All rights reserved.&#xA;&#xA;This program and the accompanying materials are made&#xA;available under the terms of the Eclipse Public License 2.0&#xA;which is available at https://www.eclipse.org/legal/epl-2.0/&#xA;&#xA;SPDX-License-Identifier: EPL-2.0&#xA;&#xA;Contributors:&#xA;     Data In Motion - initial API and implementation"/>
     <details key="resource" value="XMI"/>
     <details key="prefix" value="ManagementApi"/>
     <details key="basePackage" value="org.eclipse.fennec.model.atlas.mgmt"/>
@@ -186,7 +186,7 @@
         <details key="documentation" value="Store object with metadata, returns promise with storage ID"/>
       </eAnnotations>
       <eGenericType eClassifier="ecore:EDataType management.ecore#//Promise">
-        <eTypeArguments eClassifier="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+        <eTypeArguments eClassifier="ecore:EClass management.ecore#//ObjectMetadata"/>
       </eGenericType>
       <eParameters name="objectId" lowerBound="1" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
       <eParameters name="object" lowerBound="1">
@@ -420,6 +420,27 @@
           <eTypeArguments eClassifier="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EJavaObject"/>
         </eTypeArguments>
       </eGenericType>
+    </eOperations>
+    <eOperations name="findByScopeAndRole">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="Find all objects with the specified storage role (draft, approved, documentation) and the specified scope (the tenant) across all logical objects."/>
+      </eAnnotations>
+      <eGenericType eClassifier="ecore:EDataType management.ecore#//List">
+        <eTypeArguments eClassifier="ecore:EClass management.ecore#//ObjectMetadata"/>
+      </eGenericType>
+      <eParameters name="scope" lowerBound="1" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+      <eParameters name="role" lowerBound="1" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    </eOperations>
+    <eOperations name="findByScopeRoleAndName">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="Find all objects with the specified storage role (draft, approved, documentation) and the specified scope (the tenant) across all logical objects, and whose name matches the given filter. "/>
+      </eAnnotations>
+      <eGenericType eClassifier="ecore:EDataType management.ecore#//List">
+        <eTypeArguments eClassifier="ecore:EClass management.ecore#//ObjectMetadata"/>
+      </eGenericType>
+      <eParameters name="scope" lowerBound="1" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+      <eParameters name="role" lowerBound="1" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+      <eParameters name="name" lowerBound="1" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
     </eOperations>
   </eClassifiers>
   <eClassifiers xsi:type="ecore:EClass" name="StorageRegistry" abstract="true" interface="true">

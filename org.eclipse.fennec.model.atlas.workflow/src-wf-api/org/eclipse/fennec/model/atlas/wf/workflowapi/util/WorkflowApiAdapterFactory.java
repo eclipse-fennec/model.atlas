@@ -9,7 +9,7 @@
  * SPDX-License-Identifier: EPL-2.0
  * 
  * Contributors:
- *      Mark Hoffmann - initial API and implementation
+ *      Data In Motion - initial API and implementation
  */
 package org.eclipse.fennec.model.atlas.wf.workflowapi.util;
 
@@ -83,10 +83,6 @@ public class WorkflowApiAdapterFactory extends AdapterFactoryImpl {
 				return createEObjectWorkflowServiceAdapter();
 			}
 			@Override
-			public <T extends EObject> Adapter caseWorkflowDraftProvider(WorkflowDraftProvider<T> object) {
-				return createWorkflowDraftProviderAdapter();
-			}
-			@Override
 			public Adapter defaultCase(EObject object) {
 				return createEObjectAdapter();
 			}
@@ -117,20 +113,6 @@ public class WorkflowApiAdapterFactory extends AdapterFactoryImpl {
 	 * @generated
 	 */
 	public Adapter createEObjectWorkflowServiceAdapter() {
-		return null;
-	}
-
-	/**
-	 * Creates a new adapter for an object of class '{@link org.eclipse.fennec.model.atlas.wf.workflowapi.WorkflowDraftProvider <em>Workflow Draft Provider</em>}'.
-	 * <!-- begin-user-doc -->
-	 * This default implementation returns null so that we can easily ignore cases;
-	 * it's useful to ignore a case when inheritance will catch all the cases anyway.
-	 * <!-- end-user-doc -->
-	 * @return the new adapter.
-	 * @see org.eclipse.fennec.model.atlas.wf.workflowapi.WorkflowDraftProvider
-	 * @generated
-	 */
-	public Adapter createWorkflowDraftProviderAdapter() {
 		return null;
 	}
 

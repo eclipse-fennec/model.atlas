@@ -165,8 +165,8 @@ public class EObjectApicurioStorageServiceTest {
 			metadata.getProperties().put("content.type", "application/json");
 
 			// Store the package
-			Promise<String> storePromise = storageService.storeObject("default:draft:test-id-123.json", testPackage, metadata);
-			String storageId = storePromise.getValue();
+			storageService.storeObject("default:draft:test-id-123.json", testPackage, metadata).getValue();
+			String storageId = metadata.getObjectId();
 
 			assertNotNull(storageId);
 			assertEquals("default:draft:test-id-123.json", storageId);
@@ -243,8 +243,8 @@ public class EObjectApicurioStorageServiceTest {
 			metadata.setUploadTime(Instant.now());
 			metadata.getProperties().put("file.extension", ".json");
 
-			Promise<String> storePromise = storageService.storeObject("exists-test-id", testPackage, metadata);
-			String storageId = storePromise.getValue();
+			storageService.storeObject("exists-test-id", testPackage, metadata).getValue();
+			String storageId = metadata.getObjectId();
 
 			// Test existing object
 			Boolean existsAfter = storageService.exists(storageId);
@@ -305,8 +305,8 @@ public class EObjectApicurioStorageServiceTest {
 			metadata.setUploadUser("testUser");
 			metadata.getProperties().put("file.extension", ".xmi");
 
-			Promise<String> storePromise = storageService.storeObject("delete-test-id", testPackage, metadata);
-			String storageId = storePromise.getValue();
+			storageService.storeObject("delete-test-id", testPackage, metadata).getValue();
+			String storageId = metadata.getObjectId();
 
 
 			// Delete the object
@@ -361,8 +361,7 @@ public class EObjectApicurioStorageServiceTest {
 				metadata.setUploadTime(Instant.now());
 				metadata.getProperties().put("file.extension", ".xmi");
 
-				Promise<String> storePromise = storageService.storeObject("test-pkg-" + i, pkg, metadata);
-				storePromise.getValue();
+				storageService.storeObject("test-pkg-" + i, pkg, metadata).getValue();
 			}
 
 			// List all object IDs
@@ -425,11 +424,9 @@ public class EObjectApicurioStorageServiceTest {
 			metadata.setUploadUser("testUser");
 			metadata.getProperties().put("file.extension", ".json");
 			metadata.getProperties().put("content.type", "application/json");
-			metadata.setObjectRef(testPackage);
-			metadata.setObjectType("EPackage");
 
-			Promise<String> storePromise = storageService.storeObject(null, testPackage, metadata);
-			String storageId = storePromise.getValue();
+			storageService.storeObject(null, testPackage, metadata).getValue();
+			String storageId = metadata.getObjectId();
 
 			assertNotNull(storageId);
 			assertFalse(storageId.isEmpty());
@@ -484,8 +481,8 @@ public class EObjectApicurioStorageServiceTest {
 			metadata1.getProperties().put("file.extension", "json"); // without dot
 			metadata1.setObjectRef(testPackage1);
 
-			Promise<String> storePromise1 = storageService.storeObject("custom-ext-1", testPackage1, metadata1);
-			String storageId1 = storePromise1.getValue();
+			storageService.storeObject("custom-ext-1", testPackage1, metadata1).getValue();
+			String storageId1 = metadata1.getObjectId();
 
 			// Verify file with .json extension exists
 			assertTrue(storageService.exists(storageId1), "Artifact should exist");
@@ -499,8 +496,8 @@ public class EObjectApicurioStorageServiceTest {
 			metadata2.setObjectRef(testPackage2);
 			// No file.extension property set - should use default .xmi
 
-			Promise<String> storePromise2 = storageService.storeObject("default-ext", testPackage2, metadata2);
-			String storageId2 = storePromise2.getValue();
+			storageService.storeObject("default-ext", testPackage2, metadata2).getValue();
+			String storageId2 = metadata2.getObjectId();
 
 			// Verify file with .xmi extension exists
 			assertTrue(storageService.exists(storageId2), "Artifact should exist");
@@ -571,8 +568,8 @@ public class EObjectApicurioStorageServiceTest {
 			metadata.getProperties().put("content.type", "application/xml");
 			metadata.setObjectRef(testPackage);
 
-			Promise<String> storePromise = storageService.storeObject("content-type-test", testPackage, metadata);
-			String storageId = storePromise.getValue();
+			storageService.storeObject("content-type-test", testPackage, metadata).getValue();
+			String storageId = metadata.getObjectId();
 
 			// Verify file exists
 			assertTrue(storageService.exists(storageId));
@@ -626,20 +623,17 @@ public class EObjectApicurioStorageServiceTest {
 			metadata.setUploadUser("originalUser");
 			metadata.setSourceChannel("originalChannel");
 			metadata.setContentHash("originalHash");
-			metadata.setObjectType("EPackage");
 			metadata.setUploadTime(Instant.now());
 			metadata.getProperties().put("file.extension", ".ecore");
-			metadata.setObjectRef(testPackage);
 
-			Promise<String> storePromise = storageService.storeObject("update-metadata-test", testPackage, metadata);
-			String storageId = storePromise.getValue();
+			storageService.storeObject("update-metadata-test", testPackage, metadata).getValue();
+			String storageId = metadata.getObjectId();
 
 			// Create updated metadata
 			ObjectMetadata updatedMetadata = ManagementFactory.eINSTANCE.createObjectMetadata();
 			updatedMetadata.setUploadUser("updatedUser");
 			updatedMetadata.setSourceChannel("updatedChannel");
 			updatedMetadata.setContentHash("updatedHash");
-			updatedMetadata.setObjectType("EPackage");
 			updatedMetadata.setUploadTime(Instant.now());
 			updatedMetadata.setReviewUser("reviewUser");
 			updatedMetadata.setReviewTime(Instant.now());
@@ -718,8 +712,8 @@ public class EObjectApicurioStorageServiceTest {
 			metadata.getProperties().put("file.extension", ".ecore");
 			metadata.setObjectRef(testPackage);
 
-			Promise<String> storePromise = storageService.storeObject("update-status-test", testPackage, metadata);
-			String storageId = storePromise.getValue();
+			storageService.storeObject("update-status-test", testPackage, metadata).getValue();
+			String storageId = metadata.getObjectId();
 
 			// Verify initial status
 			Promise<ObjectMetadata> initialPromise = storageService.retrieveMetadata(storageId);
@@ -812,8 +806,7 @@ public class EObjectApicurioStorageServiceTest {
 				metadata.getProperties().put("file.extension", ".ecore");
 				metadata.setObjectRef(pkg);
 
-				Promise<String> storePromise = storageService.storeObject("count-test-" + i, pkg, metadata);
-				storePromise.getValue();
+				storageService.storeObject("count-test-" + i, pkg, metadata).getValue();
 			}
 
 			// Count after storing 5 objects
@@ -978,9 +971,10 @@ public class EObjectApicurioStorageServiceTest {
 			metadata.setObjectRef(testPackage);
 
 			// Test storeObject with automatic role setting
-			Promise<String> storePromise = storageService.storeObject("role-test-id", testPackage, metadata);
+			Promise<ObjectMetadata> storePromise = storageService.storeObject("role-test-id", testPackage, metadata);
 			assertNull(storePromise.getFailure(), "Store operation should succeed");
-			String objectId = storePromise.getValue();
+			storePromise.getValue();
+			String objectId = metadata.getObjectId();
 			assertEquals("role-test-id", objectId);
 
 			// Verify role was automatically set based on status
@@ -1044,9 +1038,10 @@ public class EObjectApicurioStorageServiceTest {
 			metadataWithPresetRole.setRole("wrong-role");
 			metadataWithPresetRole.setObjectRef(overrideTestPackage);
 
-			Promise<String> overrideStorePromise = storageService.storeObject("role-override-test", overrideTestPackage, metadataWithPresetRole);
+			Promise<ObjectMetadata> overrideStorePromise = storageService.storeObject("role-override-test", overrideTestPackage, metadataWithPresetRole);
 			assertNull(overrideStorePromise.getFailure(), "Override store operation should succeed");
-			String overrideObjectId = overrideStorePromise.getValue();
+			overrideStorePromise.getValue();
+			String overrideObjectId = metadataWithPresetRole.getObjectId();
 			assertEquals("role-override-test", overrideObjectId);
 
 			// Verify the storage service role overrode the preset role
@@ -1123,7 +1118,7 @@ public class EObjectApicurioStorageServiceTest {
 			metadata.setObjectRef(testPackage);
 
 			// Store object
-			Promise<String> storePromise = storageService.storeObject("approved-test-id", testPackage, metadata);
+			Promise<ObjectMetadata> storePromise = storageService.storeObject("approved-test-id", testPackage, metadata);
 			assertNull(storePromise.getFailure(), "Store operation should succeed");
 
 			// Verify the configured storage role was set
@@ -1195,8 +1190,8 @@ public class EObjectApicurioStorageServiceTest {
 			metadata.getProperties().put("file.extension", ".ecore");
 			metadata.setObjectRef(testPackage);
 
-			Promise<String> storePromise = storageService.storeObject("default-role-test", testPackage, metadata);
-			String objectId = storePromise.getValue();
+			storageService.storeObject("default-role-test", testPackage, metadata).getValue();
+			String objectId = metadata.getObjectId();
 			assertEquals("default-role-test", objectId);
 
 			// Verify default role "draft" was set
@@ -1274,7 +1269,8 @@ public class EObjectApicurioStorageServiceTest {
 			draftMetadata.setObjectRef(testPackage);
 
 			// Store object with DRAFT status
-			String draftObjectId = storageService.storeObject("registry-test-draft", testPackage, draftMetadata).getValue();
+			storageService.storeObject("registry-test-draft", testPackage, draftMetadata).getValue();
+			String draftObjectId = draftMetadata.getObjectId();
 			assertNotNull(draftObjectId, "Draft object ID should not be null");
 
 			// Wait a moment for registry update (if async)
@@ -1323,7 +1319,8 @@ public class EObjectApicurioStorageServiceTest {
 			rejectedMetadata.setSourceChannel("TEST");
 			rejectedMetadata.setObjectRef(rejectedPackage);
 
-			String rejectedObjectId = storageService.storeObject("registry-test-rejected", rejectedPackage, rejectedMetadata).getValue();
+			storageService.storeObject("registry-test-rejected", rejectedPackage, rejectedMetadata).getValue();
+			String rejectedObjectId = rejectedMetadata.getObjectId();
 			assertNotNull(rejectedObjectId, "Rejected object ID should not be null");
 
 			// Wait a moment for registry update (if async)

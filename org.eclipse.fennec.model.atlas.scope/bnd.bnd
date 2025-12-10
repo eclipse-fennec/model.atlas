@@ -1,0 +1,4 @@
+-library: enable-emf
+-buildpath: \
+	org.eclipse.fennec.model.atlas.scope.model;version=snapshot,\
+	org.eclipse.fennec.model.atlas.workflow;version=snapshot

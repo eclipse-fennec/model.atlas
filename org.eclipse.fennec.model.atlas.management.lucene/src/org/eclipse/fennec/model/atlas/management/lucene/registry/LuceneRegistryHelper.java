@@ -9,7 +9,7 @@
  * SPDX-License-Identifier: EPL-2.0
  *
  * Contributors:
- *      Mark Hoffmann - initial API and implementation
+ *      Data In Motion - initial API and implementation
  */
 package org.eclipse.fennec.model.atlas.management.lucene.registry;
 
@@ -20,6 +20,7 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.logging.Level;
@@ -46,6 +47,7 @@ import org.apache.lucene.search.ScoreDoc;
 import org.apache.lucene.search.SearcherManager;
 import org.apache.lucene.search.TermQuery;
 import org.apache.lucene.search.TopDocs;
+import org.apache.lucene.search.WildcardQuery;
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.FSDirectory;
 import org.eclipse.emf.common.util.URI;
@@ -109,6 +111,7 @@ public class LuceneRegistryHelper extends AbstractRegistryHelper {
     public static final String FIELD_OBJECT_NAME = "objectName";
     public static final String FIELD_ROLE = "role";
     public static final String FIELD_PROPERTIES = "properties";
+    public static final String FIELD_SCOPE = "scope";
     
     // Additional fields for advanced querying
     public static final String FIELD_LAST_CHANGE_USER = "lastChangeUser";
@@ -533,9 +536,10 @@ public class LuceneRegistryHelper extends AbstractRegistryHelper {
             doc.add(new StringField(FIELD_STATUS, metadata.getStatus().getLiteral(), Field.Store.YES));
         }
         
-        // Object name and role
+        // Object name and role, scope
         addFieldIfNotNull(doc, FIELD_OBJECT_NAME, metadata.getObjectName(), true);
         addFieldIfNotNull(doc, FIELD_ROLE, metadata.getRole(), false);
+        addFieldIfNotNull(doc, FIELD_SCOPE, metadata.getScope(), false);
         
         // Additional metadata fields - following LuceneFileStorageHelper pattern
         addFieldIfNotNull(doc, FIELD_GENERATION_TRIGGER_FINGERPRINT, metadata.getGenerationTriggerFingerprint(), false);
@@ -615,7 +619,7 @@ public class LuceneRegistryHelper extends AbstractRegistryHelper {
     private Query parseQuery(String queryString) throws IOException {
         try {
             // Set of fields that use StringField (exact match)
-            java.util.Set<String> exactMatchFields = java.util.Set.of(
+            Set<String> exactMatchFields = Set.of(
                 FIELD_UPLOAD_USER,
                 FIELD_REVIEW_USER,
                 FIELD_LAST_CHANGE_USER,
@@ -625,11 +629,12 @@ public class LuceneRegistryHelper extends AbstractRegistryHelper {
                 FIELD_STATUS,
                 FIELD_OBJECT_REF,
                 FIELD_OBJECT_METADATA_ID,
-                FIELD_ROLE
+                FIELD_ROLE,
+                FIELD_SCOPE
             );
             
             // Set of analyzed user fields for wildcard/fuzzy searches
-            java.util.Set<String> analyzedUserFields = java.util.Set.of(
+            Set<String> analyzedUserFields = Set.of(
                 FIELD_UPLOAD_USER_TEXT,
                 FIELD_REVIEW_USER_TEXT,
                 FIELD_LAST_CHANGE_USER_TEXT
@@ -643,6 +648,7 @@ public class LuceneRegistryHelper extends AbstractRegistryHelper {
                     break;
                 }
             }
+            
             
             // If using analyzed user fields, use standard QueryParser
             if (hasAnalyzedUserField) {
@@ -670,7 +676,7 @@ public class LuceneRegistryHelper extends AbstractRegistryHelper {
      * Builds a query for exact match fields using TermQuery instead of QueryParser.
      * This avoids PhraseQuery issues with StringField that don't store position data.
      */
-    private Query buildExactMatchQuery(String queryString, java.util.Set<String> exactMatchFields) {
+    private Query buildExactMatchQuery(String queryString, Set<String> exactMatchFields) {
         // Check if query contains any exact match fields
         boolean hasExactMatchField = false;
         for (String fieldName : exactMatchFields) {
@@ -685,7 +691,7 @@ public class LuceneRegistryHelper extends AbstractRegistryHelper {
         }
         
         // Parse the query manually for exact match fields
-        java.util.List<Query> clauses = new java.util.ArrayList<>();
+        List<Query> clauses = new ArrayList<>();
         boolean isOrQuery = queryString.contains(" OR ");
         
         // Split by AND or OR

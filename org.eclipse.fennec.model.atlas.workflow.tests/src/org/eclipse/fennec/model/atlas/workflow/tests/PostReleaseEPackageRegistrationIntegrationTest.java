@@ -9,7 +9,7 @@
  * SPDX-License-Identifier: EPL-2.0
  * 
  * Contributors:
- *      Mark Hoffmann - initial API and implementation
+ *      Data In Motion - initial API and implementation
  */
 package org.eclipse.fennec.model.atlas.workflow.tests;
 
@@ -110,7 +110,8 @@ public class PostReleaseEPackageRegistrationIntegrationTest {
         
         // 2. Create metadata and store EPackage directly in approved storage (simulating released object)
         ObjectMetadata metadata = createTestMetadata(objectId);
-        String storageId = (String) approvedStorage.storeObject(objectId, testPackage, metadata).getValue();
+        approvedStorage.storeObject(objectId, testPackage, metadata).getValue();
+        String storageId = metadata.getObjectId();
         assertNotNull(storageId);
         
         // 3. Verify EPackage is not yet available as OSGi service
@@ -203,7 +204,8 @@ public class PostReleaseEPackageRegistrationIntegrationTest {
             
             // 2. Create metadata and store EPackage directly in approved storage (simulating released object)
             ObjectMetadata metadata = createTestMetadata(objectId);
-            String storageId = (String) approvedStorage.storeObject(objectId, testPackage, metadata).getValue();
+            approvedStorage.storeObject(objectId, testPackage, metadata).getValue();
+            String storageId = metadata.getObjectId();
             assertNotNull(storageId);
             
             // 3. Verify EPackage is not yet available as OSGi service

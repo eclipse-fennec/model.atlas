@@ -9,7 +9,7 @@
  * SPDX-License-Identifier: EPL-2.0
  *
  * Contributors:
- *      Mark Hoffmann - initial API and implementation
+ *      Data In Motion - initial API and implementation
  */
 package org.eclipse.fennec.model.atlas.management.lucene.service;
 
@@ -486,6 +486,39 @@ public class LuceneEObjectRegistryService<T extends EObject> implements EObjectR
 		});
 	}
 
+	/* 
+	 * (non-Javadoc)
+	 * @see org.eclipse.fennec.model.atlas.mgmt.api.EObjectRegistryService#findByScopeAndRole(java.lang.String, java.lang.String)
+	 */
+	@Override
+	public List<ObjectMetadata> findByScopeAndRole(String scope, String role) {
+		requireNonNull(scope, "Scope cannot be null");
+		requireNonNull(role, "Role cannot be null");
+
+		try {
+			// Use Lucene for efficient search
+			String query = LuceneRegistryHelper.FIELD_SCOPE + ":" + scope + 
+					" AND " + LuceneRegistryHelper.FIELD_ROLE + ":" + role;
+			List<String> objectIds = luceneHelper.searchObjectIds(query, Integer.MAX_VALUE);
+			List<ObjectMetadata> luceneResults = loadMetadataList(objectIds);
+
+			// If Lucene returns results or cache is empty, use Lucene results
+			if (!luceneResults.isEmpty() || metadataCache.isEmpty()) {
+				return luceneResults;
+			}
+
+			// If Lucene returns empty but cache has objects, fall back to cache scan
+			logDebug("Lucene search returned empty results, falling back to cache scan for role: " + role);
+		} catch (Exception e) {
+			LOGGER.log(Level.SEVERE, "Error in Lucene search by role: " + role, e);
+			// Fall back to cache scan
+		}
+		// Fallback to in-memory cache scan
+		return metadataCache.values().stream()
+				.filter(metadata -> role.equals(metadata.getRole()) && scope.equals(metadata.getScope()))
+				.toList();
+	}
+
 	// === Helper Methods ===
 
 	private void initializeLuceneHelper(Path registryPath) {
@@ -650,19 +683,9 @@ public class LuceneEObjectRegistryService<T extends EObject> implements EObjectR
 	}
 
 	@Override
-	public List<ObjectMetadata> findByVersion(String version) {
-		requireNonNull(version, "Version cannot be null");
-		
-		// Simple implementation - can be enhanced with Lucene later
-		return metadataCache.values().stream()
-				.filter(metadata -> version.equals(metadata.getVersion()))
-				.toList();
-	}
-
-	@Override
 	public List<ObjectMetadata> findByVersionPattern(String versionPattern) {
 		requireNonNull(versionPattern, "Version pattern cannot be null");
-		
+
 		try {
 			// Simple pattern matching - can be enhanced later
 			String regex = versionPattern.replace("*", ".*");
@@ -679,7 +702,7 @@ public class LuceneEObjectRegistryService<T extends EObject> implements EObjectR
 	@Override
 	public Optional<ObjectMetadata> findByFingerprint(String fingerprint) {
 		requireNonNull(fingerprint, "Fingerprint cannot be null");
-		
+
 		return metadataCache.values().stream()
 				.filter(metadata -> fingerprint.equals(metadata.getGenerationTriggerFingerprint()))
 				.findFirst();
@@ -688,7 +711,7 @@ public class LuceneEObjectRegistryService<T extends EObject> implements EObjectR
 	@Override
 	public List<ObjectMetadata> findByObjectType(String objectType) {
 		requireNonNull(objectType, "Object type cannot be null");
-		
+
 		return metadataCache.values().stream()
 				.filter(metadata -> objectType.equals(metadata.getObjectType()))
 				.toList();
@@ -698,7 +721,7 @@ public class LuceneEObjectRegistryService<T extends EObject> implements EObjectR
 	public List<ObjectMetadata> findByStatusAndType(ObjectStatus status, String objectType) {
 		requireNonNull(status, "Status cannot be null");
 		requireNonNull(objectType, "Object type cannot be null");
-		
+
 		return metadataCache.values().stream()
 				.filter(metadata -> status.equals(metadata.getStatus()) && objectType.equals(metadata.getObjectType()))
 				.toList();
@@ -707,11 +730,21 @@ public class LuceneEObjectRegistryService<T extends EObject> implements EObjectR
 	@Override
 	public List<ObjectMetadata> findRecentlyModified(Instant sinceTime, int maxResults) {
 		requireNonNull(sinceTime, "Since time cannot be null");
-		
+
 		return metadataCache.values().stream()
 				.filter(metadata -> metadata.getLastChangeTime() != null && metadata.getLastChangeTime().isAfter(sinceTime))
 				.sorted((a, b) -> b.getLastChangeTime().compareTo(a.getLastChangeTime()))
 				.limit(maxResults)
+				.toList();
+	}
+
+	@Override
+	public List<ObjectMetadata> findByVersion(String version) {
+		requireNonNull(version, "Version cannot be null");
+	
+		// Simple implementation - can be enhanced with Lucene later
+		return metadataCache.values().stream()
+				.filter(metadata -> version.equals(metadata.getVersion()))
 				.toList();
 	}
 
@@ -720,4 +753,43 @@ public class LuceneEObjectRegistryService<T extends EObject> implements EObjectR
 			LOGGER.fine(message);
 		}
 	}
+
+	/* 
+	 * (non-Javadoc)
+	 * @see org.eclipse.fennec.model.atlas.mgmt.api.EObjectRegistryService#findByScopeRoleAndName(java.lang.String, java.lang.String, java.lang.String)
+	 */
+	@Override
+	public List<ObjectMetadata> findByScopeRoleAndName(String scope, String role, String objectName) {
+		requireNonNull(objectName, "Object name cannot be null");
+		requireNonNull(role, "Role cannot be null");
+		requireNonNull(scope, "Scope cannot be null");
+
+		try {
+			// Use Lucene for efficient objectName and role search
+			if(!objectName.contains("*")) objectName = "\"" + objectName + "\""; //if is an exact match we add the "", otherwise not
+			String query = "(" + LuceneRegistryHelper.FIELD_OBJECT_NAME + ":" + objectName + 
+					" AND " + LuceneRegistryHelper.FIELD_ROLE + ":" + role + 
+					" AND " + LuceneRegistryHelper.FIELD_SCOPE + ":" + scope + ")";
+			List<String> objectIds = luceneHelper.searchObjectIds(query, Integer.MAX_VALUE);
+			List<ObjectMetadata> luceneResults = loadMetadataList(objectIds);
+			// If Lucene returns results or cache is empty, use Lucene results
+			if (!luceneResults.isEmpty() || metadataCache.isEmpty()) {
+				return luceneResults;
+			}
+
+			// If Lucene returns empty but cache has objects, fall back to cache scan
+			logDebug("Lucene search returned empty results, falling back to cache scan for role: " + role);
+		} catch (Exception e) {
+			LOGGER.log(Level.SEVERE, "Error in Lucene search by role: " + role, e);
+			// Fall back to cache scan
+		}
+		// Fallback to in-memory cache scan
+		//		name can also contain * for wildcard search
+		String nameFilter = objectName.contains("*") ? objectName.replaceAll("\\*", "") : objectName;
+		return metadataCache.values().stream()
+				.filter(metadata -> role.equals(metadata.getRole()) && scope.equals(metadata.getScope()) && metadata.getObjectName().contains(nameFilter))
+				.toList();
+	}
+
+
 }

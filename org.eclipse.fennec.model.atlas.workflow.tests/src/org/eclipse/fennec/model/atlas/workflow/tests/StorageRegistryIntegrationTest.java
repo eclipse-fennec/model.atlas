@@ -9,7 +9,7 @@
  * SPDX-License-Identifier: EPL-2.0
  *
  * Contributors:
- *      Mark Hoffmann - initial API and implementation
+ *      Data In Motion - initial API and implementation
  */
 package org.eclipse.fennec.model.atlas.workflow.tests;
 
@@ -141,7 +141,8 @@ class StorageRegistryIntegrationTest {
         ObjectMetadata testMetadata = createTestMetadata("test-object-1", ObjectStatus.DRAFT, "TestPackage");
         
         // Store a simple EObject (we'll use ObjectMetadata itself as the EObject for simplicity)
-        String objectId = draftStorage.storeObject("test-object-1", testMetadata, testMetadata).getValue();
+        draftStorage.storeObject("test-object-1", testMetadata, testMetadata).getValue();
+        String objectId = testMetadata.getObjectId();
         assertNotNull(objectId);
 
         // Now test cross-storage search
@@ -183,8 +184,11 @@ class StorageRegistryIntegrationTest {
         EObject testReleaseObject = managementFactory.createObjectMetadata();
         
         // Store objects
-        String draftId = draftStorage.storeObject("draft-obj", testDraftObject, draftMetadata).getValue();
-        String releaseId = releaseStorage.storeObject("release-obj", testReleaseObject, releaseMetadata).getValue();
+        draftStorage.storeObject("draft-obj", testDraftObject, draftMetadata).getValue();
+        releaseStorage.storeObject("release-obj", testReleaseObject, releaseMetadata).getValue();
+        
+        String draftId = draftMetadata.getObjectId();
+        String releaseId = releaseMetadata.getObjectId();
         
         // Update governance documentation ID for draft role only
         int draftUpdatedCount = storageRegistry.updateGovernanceDocumentationId(

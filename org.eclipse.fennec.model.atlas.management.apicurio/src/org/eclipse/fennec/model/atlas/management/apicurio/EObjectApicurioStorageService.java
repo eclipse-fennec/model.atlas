@@ -68,15 +68,25 @@ public class EObjectApicurioStorageService extends AbstractEObjectStorageService
 
 		@AttributeDefinition(
 				name = "Artifact Group Id",
-				description = "Artifact Group Id to identify under which group the artifacts should be stored in the Apicurio Registry"
+				description = "Artifact Group Id to identify under which group the artifacts should be stored in the Apicurio Registry. The final group id will be then a combination of this and the stage"
 				)
 		String artifact_group_id() default "default";
+		
+		@AttributeDefinition(
+				name = "Storage Scope",
+				description = "Scope of this storage service (default, atlas, etc.). In case of apicurio this is the same as the artifact.group.id"
+				)
+		String storage_scope() default "default";
 
 		@AttributeDefinition(
 				name = "Storage Role",
 				description = "Role of this storage service (draft, approved, documentation, etc.)"
 				)
 		String storage_role() default "draft";
+		
+		
+		
+		
 	}
 
 	public static final String PID = "ApicurioObjectStorage";
@@ -88,12 +98,13 @@ public class EObjectApicurioStorageService extends AbstractEObjectStorageService
 	public void activate(BundleContext bundleContext, Config config) throws Exception {
 		this.bctx = bundleContext;
 		this.config = config;
-//		this.apicurioURL = constructApicurioURL(config.base_url(), config.artifact_group_id());
-//		this.storageRole = config.storage_role();    
-
+		
 		// Call parent activation
 		activateStorageService();
 	}
+
+
+	
 
 	@Deactivate
 	public void deactivate() {
@@ -106,7 +117,7 @@ public class EObjectApicurioStorageService extends AbstractEObjectStorageService
 	 */
 	@Override
 	protected AbstractStorageHelper createStorageHelper() throws Exception {
-		return new ApicurioStorageHelper(resourceSet, config);
+		return new ApicurioStorageHelper(resourceSet, registry, config);
 	}
 
 	/* 
@@ -135,6 +146,7 @@ public class EObjectApicurioStorageService extends AbstractEObjectStorageService
 	protected EObjectRegistryService<EObject> getRegistryService() {
 		return registry;
 	}
+
 
 	
 }

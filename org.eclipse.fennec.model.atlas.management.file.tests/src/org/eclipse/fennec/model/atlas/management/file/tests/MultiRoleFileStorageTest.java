@@ -9,7 +9,7 @@
  * SPDX-License-Identifier: EPL-2.0
  *
  * Contributors:
- *      Mark Hoffmann - initial API and implementation
+ *      Data In Motion - initial API and implementation
  */
 package org.eclipse.fennec.model.atlas.management.file.tests;
 
@@ -147,16 +147,16 @@ public class MultiRoleFileStorageTest {
         docMetadata.getProperties().put("file.extension", ".ecore");
 
         // Store objects in their respective services
-        Promise<String> draftStorePromise = draftService.storeObject("multi-draft-test", draftPackage, draftMetadata);
-        String draftId = draftStorePromise.getValue();
+        draftService.storeObject("multi-draft-test", draftPackage, draftMetadata).getValue();
+        String draftId = draftMetadata.getObjectId();
         assertEquals("multi-draft-test", draftId);
 
-        Promise<String> approvedStorePromise = approvedService.storeObject("multi-approved-test", approvedPackage, approvedMetadata);
-        String approvedId = approvedStorePromise.getValue();
+        approvedService.storeObject("multi-approved-test", approvedPackage, approvedMetadata).getValue();
+        String approvedId = approvedMetadata.getObjectId();
         assertEquals("multi-approved-test", approvedId);
 
-        Promise<String> docStorePromise = docService.storeObject("multi-doc-test", docPackage, docMetadata);
-        String docId = docStorePromise.getValue();
+       docService.storeObject("multi-doc-test", docPackage, docMetadata).getValue();
+        String docId = docMetadata.getObjectId();
         assertEquals("multi-doc-test", docId);
 
         // Verify each service assigned its configured role, overriding the preset "wrong-role"

@@ -9,7 +9,7 @@
  * SPDX-License-Identifier: EPL-2.0
  * 
  * Contributors:
- *      Mark Hoffmann - initial API and implementation
+ *      Data In Motion - initial API and implementation
  */
 package org.eclipse.fennec.model.atlas.wf.workflowapi.util;
 
@@ -80,13 +80,6 @@ public class WorkflowApiSwitch<T1> extends Switch<T1> {
 			case WorkflowApiPackage.EOBJECT_WORKFLOW_SERVICE: {
 				EObjectWorkflowService<?> eObjectWorkflowService = (EObjectWorkflowService<?>)theEObject;
 				T1 result = caseEObjectWorkflowService(eObjectWorkflowService);
-				if (result == null) result = caseWorkflowDraftProvider(eObjectWorkflowService);
-				if (result == null) result = defaultCase(theEObject);
-				return result;
-			}
-			case WorkflowApiPackage.WORKFLOW_DRAFT_PROVIDER: {
-				WorkflowDraftProvider<?> workflowDraftProvider = (WorkflowDraftProvider<?>)theEObject;
-				T1 result = caseWorkflowDraftProvider(workflowDraftProvider);
 				if (result == null) result = defaultCase(theEObject);
 				return result;
 			}
@@ -106,21 +99,6 @@ public class WorkflowApiSwitch<T1> extends Switch<T1> {
 	 * @generated
 	 */
 	public <T extends EObject> T1 caseEObjectWorkflowService(EObjectWorkflowService<T> object) {
-		return null;
-	}
-
-	/**
-	 * Returns the result of interpreting the object as an instance of '<em>Workflow Draft Provider</em>'.
-	 * <!-- begin-user-doc -->
-	 * This implementation returns null;
-	 * returning a non-null result will terminate the switch.
-	 * <!-- end-user-doc -->
-	 * @param object the target of the switch.
-	 * @return the result of interpreting the object as an instance of '<em>Workflow Draft Provider</em>'.
-	 * @see #doSwitch(org.eclipse.emf.ecore.EObject) doSwitch(EObject)
-	 * @generated
-	 */
-	public <T extends EObject> T1 caseWorkflowDraftProvider(WorkflowDraftProvider<T> object) {
 		return null;
 	}
 

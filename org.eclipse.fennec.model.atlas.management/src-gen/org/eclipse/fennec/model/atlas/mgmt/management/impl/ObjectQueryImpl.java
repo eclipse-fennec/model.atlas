@@ -9,7 +9,7 @@
  * SPDX-License-Identifier: EPL-2.0
  * 
  * Contributors:
- *      Mark Hoffmann - initial API and implementation
+ *      Data In Motion - initial API and implementation
  */
 package org.eclipse.fennec.model.atlas.mgmt.management.impl;
 
@@ -36,6 +36,9 @@ import org.eclipse.fennec.model.atlas.mgmt.management.ObjectStatus;
  *   <li>{@link org.eclipse.fennec.model.atlas.mgmt.management.impl.ObjectQueryImpl#getSourceChannel <em>Source Channel</em>}</li>
  *   <li>{@link org.eclipse.fennec.model.atlas.mgmt.management.impl.ObjectQueryImpl#getObjectType <em>Object Type</em>}</li>
  *   <li>{@link org.eclipse.fennec.model.atlas.mgmt.management.impl.ObjectQueryImpl#getStatus <em>Status</em>}</li>
+ *   <li>{@link org.eclipse.fennec.model.atlas.mgmt.management.impl.ObjectQueryImpl#getRole <em>Role</em>}</li>
+ *   <li>{@link org.eclipse.fennec.model.atlas.mgmt.management.impl.ObjectQueryImpl#getScope <em>Scope</em>}</li>
+ *   <li>{@link org.eclipse.fennec.model.atlas.mgmt.management.impl.ObjectQueryImpl#getName <em>Name</em>}</li>
  * </ul>
  *
  * @generated
@@ -120,6 +123,66 @@ public class ObjectQueryImpl extends MinimalEObjectImpl.Container implements Obj
 	 * @ordered
 	 */
 	protected ObjectStatus status = STATUS_EDEFAULT;
+
+	/**
+	 * The default value of the '{@link #getRole() <em>Role</em>}' attribute.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @see #getRole()
+	 * @generated
+	 * @ordered
+	 */
+	protected static final String ROLE_EDEFAULT = null;
+
+	/**
+	 * The cached value of the '{@link #getRole() <em>Role</em>}' attribute.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @see #getRole()
+	 * @generated
+	 * @ordered
+	 */
+	protected String role = ROLE_EDEFAULT;
+
+	/**
+	 * The default value of the '{@link #getScope() <em>Scope</em>}' attribute.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @see #getScope()
+	 * @generated
+	 * @ordered
+	 */
+	protected static final String SCOPE_EDEFAULT = null;
+
+	/**
+	 * The cached value of the '{@link #getScope() <em>Scope</em>}' attribute.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @see #getScope()
+	 * @generated
+	 * @ordered
+	 */
+	protected String scope = SCOPE_EDEFAULT;
+
+	/**
+	 * The default value of the '{@link #getName() <em>Name</em>}' attribute.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @see #getName()
+	 * @generated
+	 * @ordered
+	 */
+	protected static final String NAME_EDEFAULT = null;
+
+	/**
+	 * The cached value of the '{@link #getName() <em>Name</em>}' attribute.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @see #getName()
+	 * @generated
+	 * @ordered
+	 */
+	protected String name = NAME_EDEFAULT;
 
 	/**
 	 * <!-- begin-user-doc -->
@@ -238,6 +301,75 @@ public class ObjectQueryImpl extends MinimalEObjectImpl.Container implements Obj
 	 * @generated
 	 */
 	@Override
+	public String getRole() {
+		return role;
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
+	public void setRole(String newRole) {
+		String oldRole = role;
+		role = newRole;
+		if (eNotificationRequired())
+			eNotify(new ENotificationImpl(this, Notification.SET, ManagementPackage.OBJECT_QUERY__ROLE, oldRole, role));
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
+	public String getScope() {
+		return scope;
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
+	public void setScope(String newScope) {
+		String oldScope = scope;
+		scope = newScope;
+		if (eNotificationRequired())
+			eNotify(new ENotificationImpl(this, Notification.SET, ManagementPackage.OBJECT_QUERY__SCOPE, oldScope, scope));
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
+	public String getName() {
+		return name;
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
+	public void setName(String newName) {
+		String oldName = name;
+		name = newName;
+		if (eNotificationRequired())
+			eNotify(new ENotificationImpl(this, Notification.SET, ManagementPackage.OBJECT_QUERY__NAME, oldName, name));
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
 	public Object eGet(int featureID, boolean resolve, boolean coreType) {
 		switch (featureID) {
 			case ManagementPackage.OBJECT_QUERY__UPLOAD_USER:
@@ -248,6 +380,12 @@ public class ObjectQueryImpl extends MinimalEObjectImpl.Container implements Obj
 				return getObjectType();
 			case ManagementPackage.OBJECT_QUERY__STATUS:
 				return getStatus();
+			case ManagementPackage.OBJECT_QUERY__ROLE:
+				return getRole();
+			case ManagementPackage.OBJECT_QUERY__SCOPE:
+				return getScope();
+			case ManagementPackage.OBJECT_QUERY__NAME:
+				return getName();
 		}
 		return super.eGet(featureID, resolve, coreType);
 	}
@@ -271,6 +409,15 @@ public class ObjectQueryImpl extends MinimalEObjectImpl.Container implements Obj
 				return;
 			case ManagementPackage.OBJECT_QUERY__STATUS:
 				setStatus((ObjectStatus)newValue);
+				return;
+			case ManagementPackage.OBJECT_QUERY__ROLE:
+				setRole((String)newValue);
+				return;
+			case ManagementPackage.OBJECT_QUERY__SCOPE:
+				setScope((String)newValue);
+				return;
+			case ManagementPackage.OBJECT_QUERY__NAME:
+				setName((String)newValue);
 				return;
 		}
 		super.eSet(featureID, newValue);
@@ -296,6 +443,15 @@ public class ObjectQueryImpl extends MinimalEObjectImpl.Container implements Obj
 			case ManagementPackage.OBJECT_QUERY__STATUS:
 				setStatus(STATUS_EDEFAULT);
 				return;
+			case ManagementPackage.OBJECT_QUERY__ROLE:
+				setRole(ROLE_EDEFAULT);
+				return;
+			case ManagementPackage.OBJECT_QUERY__SCOPE:
+				setScope(SCOPE_EDEFAULT);
+				return;
+			case ManagementPackage.OBJECT_QUERY__NAME:
+				setName(NAME_EDEFAULT);
+				return;
 		}
 		super.eUnset(featureID);
 	}
@@ -316,6 +472,12 @@ public class ObjectQueryImpl extends MinimalEObjectImpl.Container implements Obj
 				return OBJECT_TYPE_EDEFAULT == null ? objectType != null : !OBJECT_TYPE_EDEFAULT.equals(objectType);
 			case ManagementPackage.OBJECT_QUERY__STATUS:
 				return status != STATUS_EDEFAULT;
+			case ManagementPackage.OBJECT_QUERY__ROLE:
+				return ROLE_EDEFAULT == null ? role != null : !ROLE_EDEFAULT.equals(role);
+			case ManagementPackage.OBJECT_QUERY__SCOPE:
+				return SCOPE_EDEFAULT == null ? scope != null : !SCOPE_EDEFAULT.equals(scope);
+			case ManagementPackage.OBJECT_QUERY__NAME:
+				return NAME_EDEFAULT == null ? name != null : !NAME_EDEFAULT.equals(name);
 		}
 		return super.eIsSet(featureID);
 	}
@@ -338,6 +500,12 @@ public class ObjectQueryImpl extends MinimalEObjectImpl.Container implements Obj
 		result.append(objectType);
 		result.append(", status: ");
 		result.append(status);
+		result.append(", role: ");
+		result.append(role);
+		result.append(", scope: ");
+		result.append(scope);
+		result.append(", name: ");
+		result.append(name);
 		result.append(')');
 		return result.toString();
 	}

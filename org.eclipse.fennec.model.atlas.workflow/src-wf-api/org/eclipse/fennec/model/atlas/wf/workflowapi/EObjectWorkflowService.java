@@ -9,7 +9,7 @@
  * SPDX-License-Identifier: EPL-2.0
  * 
  * Contributors:
- *      Mark Hoffmann - initial API and implementation
+ *      Data In Motion - initial API and implementation
  */
 package org.eclipse.fennec.model.atlas.wf.workflowapi;
 
@@ -38,105 +38,61 @@ import org.osgi.util.promise.Promise;
  * @generated
  */
 @ProviderType
-public interface EObjectWorkflowService<T extends EObject> extends WorkflowDraftProvider<T> {
+public interface EObjectWorkflowService<T extends EObject> {
 	/**
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
 	 * <!-- begin-model-doc -->
-	 * Approve an object for release, returns updated registration
+	 * Upload an EObject to a certain stage (draft, review, etc); returns promise with uploaded ObjectMetadata.
 	 * <!-- end-model-doc -->
-	 * @model objectIdRequired="true" reviewUserRequired="true"
+	 * @model dataType="org.eclipse.fennec.model.atlas.mgmt.management.Promise&lt;org.eclipse.fennec.model.atlas.mgmt.management.ObjectMetadata&gt;" objectRequired="true" metadataRequired="true"
 	 * @generated
 	 */
-	ObjectMetadata approveObject(String objectId, String reviewUser, String approvalReason);
+	Promise<ObjectMetadata> uploadToStage(String stage, T object, ObjectMetadata metadata);
 
 	/**
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
 	 * <!-- begin-model-doc -->
-	 * Reject an object during review, returns updated registration
-	 * <!-- end-model-doc -->
-	 * @model objectIdRequired="true" reviewUserRequired="true" rejectionReasonRequired="true"
-	 * @generated
-	 */
-	ObjectMetadata rejectObject(String objectId, String reviewUser, String rejectionReason);
-
-	/**
-	 * <!-- begin-user-doc -->
-	 * <!-- end-user-doc -->
-	 * <!-- begin-model-doc -->
-	 * Release an approved object to production storage after compliance checks, returns updated registration
-	 * <!-- end-model-doc -->
-	 * @model objectIdRequired="true" requireComplianceCheckRequired="true"
-	 * @generated
-	 */
-	ObjectMetadata releaseObject(String objectId, String releaseNotes, boolean requireComplianceCheck);
-
-	/**
-	 * <!-- begin-user-doc -->
-	 * <!-- end-user-doc -->
-	 * <!-- begin-model-doc -->
-	 * List all approved objects ready for release
-	 * <!-- end-model-doc -->
-	 * @model dataType="org.eclipse.fennec.model.atlas.mgmt.management.List&lt;org.eclipse.fennec.model.atlas.mgmt.management.ObjectMetadata&gt;" many="false"
-	 * @generated
-	 */
-	List<ObjectMetadata> listApprovedObjects();
-
-	/**
-	 * <!-- begin-user-doc -->
-	 * <!-- end-user-doc -->
-	 * <!-- begin-model-doc -->
-	 * List all rejected objects
-	 * <!-- end-model-doc -->
-	 * @model dataType="org.eclipse.fennec.model.atlas.mgmt.management.List&lt;org.eclipse.fennec.model.atlas.mgmt.management.ObjectMetadata&gt;" many="false"
-	 * @generated
-	 */
-	List<ObjectMetadata> listRejectedObjects();
-
-	/**
-	 * <!-- begin-user-doc -->
-	 * <!-- end-user-doc -->
-	 * <!-- begin-model-doc -->
-	 * List all released/production objects
-	 * <!-- end-model-doc -->
-	 * @model dataType="org.eclipse.fennec.model.atlas.mgmt.management.List&lt;org.eclipse.fennec.model.atlas.mgmt.management.ObjectMetadata&gt;" many="false"
-	 * @generated
-	 */
-	List<ObjectMetadata> listReleasedObjects();
-
-	/**
-	 * <!-- begin-user-doc -->
-	 * <!-- end-user-doc -->
-	 * <!-- begin-model-doc -->
-	 * Get object registration by ID
+	 * Get object registration by ID from a certain stage. If nothing is found in that stage, the parents release stages are also inspected. 
 	 * <!-- end-model-doc -->
 	 * @model objectIdRequired="true"
 	 * @generated
 	 */
-	ObjectMetadata getObject(String objectId);
+	ObjectMetadata getFromStage(String stage, String objectId);
 
 	/**
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
 	 * <!-- begin-model-doc -->
-	 * Get the actual EObject content by ID
+	 * Get object registration by ID from the final stage of a workflow. If nothing is found in that stage, the parents final stages are also inspected. 
 	 * <!-- end-model-doc -->
 	 * @model objectIdRequired="true"
 	 * @generated
 	 */
-	Object getObjectContent(String objectId);
+	ObjectMetadata getFromFinalStage(String objectId);
 
 	/**
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
 	 * <!-- begin-model-doc -->
-	 * Update an existing object
+	 * Get the actual EObject content by ID for a certain stage. If nothing is found, the parents release stages are also inspected.
 	 * <!-- end-model-doc -->
-	 * @model dataType="org.eclipse.fennec.model.atlas.mgmt.management.Promise&lt;org.eclipse.fennec.model.atlas.mgmt.management.Void&gt;" objectIdRequired="true" updatedObjectRequired="true"
+	 * @model objectIdRequired="true"
 	 * @generated
 	 */
-	Promise<Void> updateObject(String objectId, T updatedObject);
+	T getContentFromStage(String stage, String objectId);
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * <!-- begin-model-doc -->
+	 * Update an existing object. Returned updated ObjectMetadata.
+	 * <!-- end-model-doc -->
+	 * @model dataType="org.eclipse.fennec.model.atlas.mgmt.management.Promise&lt;org.eclipse.fennec.model.atlas.mgmt.management.ObjectMetadata&gt;" updatedObjectRequired="true" objectIdRequired="true" versionRequired="true"
+	 * @generated
+	 */
+	Promise<ObjectMetadata> updateInStage(String stage, T updatedObject, String objectId, String version);
 
 	/**
 	 * <!-- begin-user-doc -->
@@ -147,6 +103,61 @@ public interface EObjectWorkflowService<T extends EObject> extends WorkflowDraft
 	 * @model dataType="org.eclipse.fennec.model.atlas.mgmt.management.Promise&lt;org.eclipse.emf.ecore.EBooleanObject&gt;" objectIdRequired="true"
 	 * @generated
 	 */
-	Promise<Boolean> deleteObject(String objectId);
+	Promise<Boolean> deleteFromStage(String stage, String objectId);
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * <!-- begin-model-doc -->
+	 * List all objects in a certain stage of the workflow
+	 * <!-- end-model-doc -->
+	 * @model dataType="org.eclipse.fennec.model.atlas.mgmt.management.List&lt;org.eclipse.fennec.model.atlas.mgmt.management.ObjectMetadata&gt;" many="false"
+	 * @generated
+	 */
+	List<ObjectMetadata> listInStage(String stage);
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * <!-- begin-model-doc -->
+	 * List all objects with a matching name filter in a certain stage of the workflow
+	 * <!-- end-model-doc -->
+	 * @model dataType="org.eclipse.fennec.model.atlas.mgmt.management.List&lt;org.eclipse.fennec.model.atlas.mgmt.management.ObjectMetadata&gt;" many="false"
+	 * @generated
+	 */
+	List<ObjectMetadata> listInStageByName(String stage, String name);
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * <!-- begin-model-doc -->
+	 * List all objects in the final stage of the workflow
+	 * <!-- end-model-doc -->
+	 * @model dataType="org.eclipse.fennec.model.atlas.mgmt.management.List&lt;org.eclipse.fennec.model.atlas.mgmt.management.ObjectMetadata&gt;" many="false"
+	 * @generated
+	 */
+	List<ObjectMetadata> listInFinalStage();
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * <!-- begin-model-doc -->
+	 * Performs a transition of an EObject from one stage to another, if allowed.
+	 * <!-- end-model-doc -->
+	 * @model objectIdRequired="true"
+	 * @generated
+	 */
+	ObjectMetadata transitionToStage(String objectId, String fromStage, String toStage);
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * <!-- begin-model-doc -->
+	 * Checks whether a transition from one stage to another is allowed or not.
+	 * <!-- end-model-doc -->
+	 * @model
+	 * @generated
+	 */
+	boolean isTransitionAllowed(String fromStage, String toStage);
 
 } // EObjectWorkflowService

@@ -31,6 +31,7 @@ import org.eclipse.emf.ecore.resource.Resource;
 import org.eclipse.emf.ecore.resource.ResourceSet;
 import org.eclipse.emf.ecore.util.EcoreUtil;
 import org.eclipse.fennec.model.atlas.management.apicurio.EObjectApicurioStorageService.Config;
+import org.eclipse.fennec.model.atlas.mgmt.api.EObjectRegistryService;
 import org.eclipse.fennec.model.atlas.mgmt.management.ObjectMetadata;
 import org.eclipse.fennec.model.atlas.mgmt.mgmtapicurio.Artifact;
 import org.eclipse.fennec.model.atlas.mgmt.mgmtapicurio.ArtifactType;
@@ -58,17 +59,24 @@ public class ApicurioStorageHelper extends AbstractStorageHelper {
 	private static final Logger LOGGER = Logger.getLogger(ApicurioStorageHelper.class.getName());
 	private final String apicurioURL;
 	private String storageRole;
+	private String apicurioGroupId;
 	private Config config;
+	private EObjectRegistryService<EObject> registry;
 
 	/**
 	 * Creates a new instance.
 	 * @param resourceSet
+	 * @throws IOException 
 	 */
-	public ApicurioStorageHelper(ResourceSet resourceSet, EObjectApicurioStorageService.Config config) {
+	public ApicurioStorageHelper(ResourceSet resourceSet, EObjectRegistryService<EObject> registry, EObjectApicurioStorageService.Config config) throws IOException {
 		super(resourceSet);
+		this.registry = registry;
 		this.config = config;
-		this.apicurioURL = constructApicurioURL(config.base_url(), config.artifact_group_id());
+		this.apicurioGroupId = config.artifact_group_id().concat("-").concat(config.storage_role());
+		this.apicurioURL = constructApicurioURL(config.base_url(), apicurioGroupId);
 		this.storageRole = config.storage_role();
+		
+		updateRegistryCache();
 	}
 
 
@@ -89,7 +97,7 @@ public class ApicurioStorageHelper extends AbstractStorageHelper {
 			String contentType = latestVersion.getLabels().get("contentType");
 			if(contentType == null) contentType = "application/xmi";
 			URI objectUri = URI.createURI(apicurioURL.concat("/").concat(objectPath).concat("/versions/").concat(latestVersion.getVersion()).concat("/content"));		
-			EObject eObj = sendGETRequest(objectUri, (EClass) resourceSet.getEObject(URI.createURI(latestVersion.getLabels().get("objectEClassURI")), false), contentType);
+			EObject eObj = sendGETRequest(objectUri, (EClass) resourceSet.getEObject(URI.createURI(latestVersion.getLabels().get("objectType")), false), contentType);
 			return eObj;
 		}
 		return null;
@@ -111,7 +119,7 @@ public class ApicurioStorageHelper extends AbstractStorageHelper {
 		SearchedVersion latestVersion = getLatestVersionForArtifactId(objectPath);
 		if(isLatestVersionValid(latestVersion, objectId)) {
 			URI objectUri = URI.createURI(apicurioURL.concat("/").concat(objectPath).concat("/versions/").concat(latestVersion.getVersion()).concat("/content"));		
-			ObjectMetadata eObj = (ObjectMetadata) sendGETRequest(objectUri, (EClass) resourceSet.getEObject(URI.createURI(latestVersion.getLabels().get("objectEClassURI")), false), "application/xmi");
+			ObjectMetadata eObj = (ObjectMetadata) sendGETRequest(objectUri, (EClass) resourceSet.getEObject(URI.createURI(latestVersion.getLabels().get("objectType")), false), "application/xmi");
 			return eObj;
 		} 
 		return null;
@@ -170,7 +178,7 @@ public class ApicurioStorageHelper extends AbstractStorageHelper {
 	 */
 	@Override
 	protected String findObjectPath(String objectId) throws IOException {
-		String url = config.base_url().concat("search/artifacts?groupId=").concat(config.artifact_group_id()).concat("&artifactId=").concat(objectId);
+		String url = config.base_url().concat("search/artifacts?groupId=").concat(apicurioGroupId).concat("&artifactId=").concat(objectId);
 		SearchResponse searchResponse =  (SearchResponse) sendGETRequest(
 			      URI.createURI(url),
 			      MgmtApicurioPackage.Literals.SEARCH_RESPONSE,
@@ -294,14 +302,13 @@ public class ApicurioStorageHelper extends AbstractStorageHelper {
 		if(metadata.getContentHash() != null) labels.put("contentHash", metadata.getContentHash());
 		if(metadata.getGenerationTriggerFingerprint() != null) labels.put("generationTriggerFingerprint", metadata.getGenerationTriggerFingerprint());
 		if(isMetadata) {
-			labels.put("objectType", "ObjectMetadata");
-			labels.put("objectEClassURI", EcoreUtil.getURI(metadata.eClass()).toString());
+			labels.put("objectType", EcoreUtil.getURI(metadata.eClass()).toString());
 		} else {
 			if(metadata.getObjectType() != null) labels.put("objectType", metadata.getObjectType());
-			if(metadata.getObjectRef() != null) labels.put("objectEClassURI", EcoreUtil.getURI(metadata.getObjectRef().eClass()).toString());
 		}
-
-
+		metadata.getProperties().forEach(e -> {
+			labels.put(e.getKey(), e.getValue().toString());
+		});
 	}
 
 	private ArtifactType convertContentTypeToArtifactType(String contentType) {
@@ -319,7 +326,7 @@ public class ApicurioStorageHelper extends AbstractStorageHelper {
 	}
 	
 	private SearchedVersion getLatestVersionForArtifactId(String artifactId) throws IOException {
-		URI searchVersionsURI = URI.createURI(config.base_url().concat("search/versions?orderBy=version&order=desc&artifactId=").concat(artifactId));
+		URI searchVersionsURI = URI.createURI(config.base_url().concat("search/versions?orderBy=version&order=desc&artifactId=").concat(artifactId).concat("&groupId=").concat(apicurioGroupId));
 		SearchVersionResponse versionResponse = (SearchVersionResponse) sendGETRequest(searchVersionsURI, MgmtApicurioPackage.Literals.SEARCH_VERSION_RESPONSE, "application/json");
 		if(versionResponse == null || versionResponse.getCount() == 0) return null;
 		return versionResponse.getVersions().get(0);
@@ -327,12 +334,12 @@ public class ApicurioStorageHelper extends AbstractStorageHelper {
 	
 	private boolean isLatestVersionValid(SearchedVersion latestVersion, String objectId) {
 		if(latestVersion == null) {
-			LOGGER.severe(String.format("No version for artifact %s was found", objectId));
+			LOGGER.warning(String.format("No version for artifact %s was found", objectId));
 			return false;
 		}
-		String eClassURI = latestVersion.getLabels().get("objectEClassURI");
+		String eClassURI = latestVersion.getLabels().get("objectType");
 		if(eClassURI == null) {
-			LOGGER.severe(String.format("Cannot retrieve object %s because it was not possible to determine its objectEClassURI from the Version", objectId));
+			LOGGER.severe(String.format("Cannot retrieve object %s because it was not possible to determine its objectType from the Version", objectId));
 			return false;
 		}		
 		return true;
@@ -358,6 +365,7 @@ public class ApicurioStorageHelper extends AbstractStorageHelper {
 					EMFUriHandlerConstants.OPTION_HTTP_METHOD, "POST",
 					EMFUriHandlerConstants.OPTION_HTTP_HEADERS, Map.of("Content-Type", "application/json")
 					);
+			apicurioResource.save(System.out, options);
 			apicurioResource.save(options);
 		} finally {
 			objectOp.cleanup();
@@ -365,5 +373,30 @@ public class ApicurioStorageHelper extends AbstractStorageHelper {
 		}
 	}
 
+	
+	/**
+	 * When the service comes up it should retrieve from apicurio the existing metadata and cache them in the registry
+	 * @throws IOException 
+	 */
+	private void updateRegistryCache() throws IOException {
+		String url = config.base_url().concat("search/artifacts?groupId=").concat(apicurioGroupId);
+		SearchResponse searchResponse =  (SearchResponse) sendGETRequest(
+			      URI.createURI(url),
+			      MgmtApicurioPackage.Literals.SEARCH_RESPONSE,
+			      "application/json"
+			  );
+		searchResponse.getArtifacts().forEach(a -> {
+			try {
+				EObject eObj = loadEObject(a.getArtifactId());
+				if(eObj instanceof ObjectMetadata metadata) {
+					registry.updateCache(metadata);
+				}
+			} catch (IOException e) {
+				LOGGER.severe(String.format("IOException while updating registry cache at apicurio storage startup"));
+				e.printStackTrace();
+			}
+		});
+		
+	}
 
 }

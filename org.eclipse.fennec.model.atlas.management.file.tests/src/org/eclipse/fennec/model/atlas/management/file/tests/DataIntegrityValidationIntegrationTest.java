@@ -9,7 +9,7 @@
  * SPDX-License-Identifier: EPL-2.0
  *
  * Contributors:
- *      Mark Hoffmann - initial API and implementation
+ *      Data In Motion - initial API and implementation
  */
 package org.eclipse.fennec.model.atlas.management.file.tests;
 
@@ -107,8 +107,9 @@ public class DataIntegrityValidationIntegrationTest {
         metadata.setUploadTime(Instant.now());
         
         String objectId = "corruption-test-object";
-        Promise<String> storePromise = storageService.storeObject(objectId, testPackage, metadata);
-        String storedObjectId = storePromise.getValue();
+        Promise<ObjectMetadata> storePromise = storageService.storeObject(objectId, testPackage, metadata);
+        storePromise.getValue();
+        String storedObjectId = metadata.getObjectId();
         
         // Verify object was stored successfully
         assertTrue(storageService.exists(storedObjectId), "Object should exist after storage");
@@ -182,7 +183,7 @@ public class DataIntegrityValidationIntegrationTest {
         metadata.setUploadTime(Instant.now());
         
         String objectId = "missing-id-test-object";
-        Promise<String> storePromise = storageService.storeObject(objectId, testPackage, metadata);
+        Promise<ObjectMetadata> storePromise = storageService.storeObject(objectId, testPackage, metadata);
         storePromise.getValue();
         
         // === PHASE 2: Corrupt the metadata file by removing objectId ===
@@ -249,7 +250,7 @@ public class DataIntegrityValidationIntegrationTest {
         metadata.setUploadTime(Instant.now());
         
         String objectId = "corrupted-file-test-object";
-        Promise<String> storePromise = storageService.storeObject(objectId, testPackage, metadata);
+        Promise<ObjectMetadata> storePromise = storageService.storeObject(objectId, testPackage, metadata);
         storePromise.getValue();
         
         // === PHASE 2: Completely corrupt the metadata file ===

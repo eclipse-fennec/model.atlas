@@ -9,7 +9,7 @@
  * SPDX-License-Identifier: EPL-2.0
  *
  * Contributors:
- *      Mark Hoffmann - initial API and implementation
+ *      Data In Motion - initial API and implementation
  */
 package org.eclipse.fennec.model.atlas.mgmt.storage;
 
@@ -24,6 +24,7 @@ import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.stream.Collectors;
 
 import org.eclipse.emf.ecore.EObject;
 import org.eclipse.emf.ecore.util.EcoreUtil;
@@ -264,7 +265,7 @@ public abstract class AbstractEObjectStorageService implements EObjectStorageSer
     }
 
     @Override
-    public Promise<String> storeObject(String objectId, EObject object, ObjectMetadata metadata) {
+    public Promise<ObjectMetadata> storeObject(String objectId, EObject object, ObjectMetadata metadata) {
         return promiseFactory.submit(() -> {
             try {
                 // Use provided objectId or generate one
@@ -276,7 +277,7 @@ public abstract class AbstractEObjectStorageService implements EObjectStorageSer
                     metadata.setRole(storageRole);
                     // Set the objectType if not already set
                     if (metadata.getObjectType() == null && object != null) {
-                        metadata.setObjectType(object.eClass().getName());
+                        metadata.setObjectType(EcoreUtil.getURI(object.eClass()).toString());
                     }
                 }
                 
@@ -290,14 +291,14 @@ public abstract class AbstractEObjectStorageService implements EObjectStorageSer
                     metadataCopy.setObjectId(storageId); // Ensure objectId is set
                     // Ensure objectType is set in registry copy as well
                     if (metadataCopy.getObjectType() == null && object != null) {
-                        metadataCopy.setObjectType(object.eClass().getName());
+                        metadataCopy.setObjectType(EcoreUtil.getURI(object.eClass()).toString());
                     }
                     registryService.updateCache(metadataCopy);
                 }
                 
                 String fileExtension = storageHelper.getFileExtension(metadata);
                 LOGGER.info("Stored EObject with ID: " + storageId + " and extension: " + fileExtension);
-                return storageId;
+                return metadata;
                 
             } catch (Exception e) {
                 LOGGER.log(Level.SEVERE, "Failed to store object", e);
@@ -391,7 +392,11 @@ public abstract class AbstractEObjectStorageService implements EObjectStorageSer
             
             try {
                 // Use registry service methods based on query parameters
-                if (query.getStatus() != null && query.getObjectType() != null) {
+            	if(query.getRole() != null && query.getScope() != null && query.getName() != null) {
+            		results = registryService.findByScopeRoleAndName(query.getScope(), query.getRole(), query.getName());
+            	} else if (query.getRole() != null && query.getScope() != null) {
+            		results = registryService.findByScopeAndRole(query.getRole(), query.getScope());
+            	} else if (query.getStatus() != null && query.getObjectType() != null) {
                     // Most specific query - status + type
                     results = registryService.findByStatusAndType(query.getStatus(), query.getObjectType());
                 } else if (query.getStatus() != null) {
@@ -410,7 +415,7 @@ public abstract class AbstractEObjectStorageService implements EObjectStorageSer
                 if (storageRole != null) {
                     results = results.stream()
                             .filter(metadata -> storageRole.equals(metadata.getRole()))
-                            .collect(java.util.stream.Collectors.toList());
+                            .collect(Collectors.toList());
                 }
                 
                 LOGGER.info("Registry query completed: " + results.size() + " objects found");
