@@ -637,8 +637,7 @@ public class LuceneRegistryHelper extends AbstractRegistryHelper {
             Set<String> analyzedUserFields = Set.of(
                 FIELD_UPLOAD_USER_TEXT,
                 FIELD_REVIEW_USER_TEXT,
-                FIELD_LAST_CHANGE_USER_TEXT,
-                FIELD_OBJECT_NAME
+                FIELD_LAST_CHANGE_USER_TEXT
             );
             
             // Check if query uses analyzed user fields (test queries)

@@ -36,6 +36,8 @@ import java.util.UUID;
 import org.eclipse.emf.ecore.EObject;
 import org.eclipse.emf.ecore.EPackage;
 import org.eclipse.emf.ecore.EcoreFactory;
+import org.eclipse.emf.ecore.EcorePackage;
+import org.eclipse.emf.ecore.util.EcoreUtil;
 import org.eclipse.fennec.model.atlas.mgmt.api.EObjectRegistryService;
 import org.eclipse.fennec.model.atlas.mgmt.management.ManagementFactory;
 import org.eclipse.fennec.model.atlas.mgmt.management.ObjectMetadata;
@@ -813,13 +815,13 @@ public class AbstractEObjectStorageServiceTest {
         String objectId = metadata.getObjectId();
         
         // Verify objectType was automatically set
-        assertEquals("EPackage", metadata.getObjectType(), 
-                    "ObjectType should be automatically set to 'EPackage'");
+        assertEquals(EcoreUtil.getURI(EcorePackage.Literals.EPACKAGE).toString(), metadata.getObjectType(), 
+                    "ObjectType should be automatically set to " + EcoreUtil.getURI(EcorePackage.Literals.EPACKAGE).toString());
         assertEquals("test-id", objectId);
 
         // Verify registry was called with metadata containing objectType
         verify(mockRegistryService).updateCache(argThat(cachedMetadata -> 
-            "EPackage".equals(cachedMetadata.getObjectType())));
+        EcoreUtil.getURI(EcorePackage.Literals.EPACKAGE).toString().equals(cachedMetadata.getObjectType())));
     }
 
     @Test

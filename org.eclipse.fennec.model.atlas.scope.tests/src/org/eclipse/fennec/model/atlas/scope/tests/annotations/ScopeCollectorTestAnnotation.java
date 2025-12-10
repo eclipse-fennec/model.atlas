@@ -78,6 +78,7 @@ public class ScopeCollectorTestAnnotation {
 	        @Property(key = "description", value = "my-tenant scope"),
 	        @Property(key = "parent.scope", value = "my-parent-tenant"),
 	        @Property(key = "stages", value = {"draft", "release"}, type = Type.Array),
+	        @Property(key = "writable.stages", value = {"draft", "release"}, type = Type.Array),
 	        @Property(key = "final.stage", value = "release")
 	    })
 	@Retention(RetentionPolicy.RUNTIME)
@@ -87,6 +88,7 @@ public class ScopeCollectorTestAnnotation {
 	        @Property(key = "scope", value = "my-parent-tenant"),
 	        @Property(key = "description", value = "my-parent-tenant scope"),
 	        @Property(key = "stages", value = {"release"}, type = Type.Array),
+	        @Property(key = "writable.stages", value = {"release"}, type = Type.Array),
 	        @Property(key = "final.stage", value = "release")
 	    })
 	@Retention(RetentionPolicy.RUNTIME)
