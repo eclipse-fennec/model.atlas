@@ -231,4 +231,26 @@ public interface EObjectRegistryService<T extends EObject> {
 	 */
 	List<ObjectMetadata> findByScopeRoleAndName(String scope, String role, String name);
 
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * <!-- begin-model-doc -->
+	 * Find all objects with the specified storage role (draft, approved, documentation), the specified scope (the tenant) and the specified registry across all logical objects.
+	 * <!-- end-model-doc -->
+	 * @model dataType="org.eclipse.fennec.model.atlas.mgmt.management.List&lt;org.eclipse.fennec.model.atlas.mgmt.management.ObjectMetadata&gt;" many="false" scopeRequired="true" registryRequired="true" roleRequired="true"
+	 * @generated
+	 */
+	List<ObjectMetadata> findByScopeRegistryAndRole(String scope, String registry, String role);
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * <!-- begin-model-doc -->
+	 * Find all objects with the specified storage role (draft, approved, documentation), the specified scope (the tenant) and the specified registry across all logical objects that matches the given name filter.
+	 * <!-- end-model-doc -->
+	 * @model dataType="org.eclipse.fennec.model.atlas.mgmt.management.List&lt;org.eclipse.fennec.model.atlas.mgmt.management.ObjectMetadata&gt;" many="false" scopeRequired="true" registryRequired="true" roleRequired="true" nameRequired="true"
+	 * @generated
+	 */
+	List<ObjectMetadata> findByScopeRegistryRoleAndName(String scope, String registry, String role, String name);
+
 } // EObjectRegistryService

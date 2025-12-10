@@ -77,7 +77,7 @@ public class ScopesResource {
 	)
 	public Response listScopes() {
 		
-		List<Scope> scopes = scopeCollector.getScopes();
+		List<Scope> scopes = scopeCollector.getAllScopes();
 		ScopeContainer container = ScopeFactory.eINSTANCE.createScopeContainer();
 		container.getScopes().addAll(scopes);
 		return Response.status(Response.Status.OK).entity(container).build();
@@ -90,11 +90,11 @@ public class ScopesResource {
 	 * @return Scope object
 	 */
 	@GET
-	@Path("/{scopeName}")
+	@Path("/{workflowScopeName}")
 	@Produces({ MediaType.APPLICATION_JSON })
 	@Operation(
-		summary = "Get scope metadata",
-		description = "Retrieve metadata for a specific scope by name",
+		summary = "Get workflow scope metadata",
+		description = "Retrieve metadata for a specific workflow scope by name",
 		responses = {
 			@ApiResponse(
 				responseCode = "200",
@@ -105,11 +105,36 @@ public class ScopesResource {
 			@ApiResponse(responseCode = "500", description = "Internal server error")
 		}
 	)
-	public Response getScope(
-		@Parameter(description = "The name of the scope", required = true)
-		@PathParam("scopeName") String scopeName) {
+	public Response getWorkflowScope(
+		@Parameter(description = "The name of the workflow scope", required = true)
+		@PathParam("workflowScopeName") String workflowScopeName) {
 		
-		Scope scope = scopeCollector.getScopeByName(scopeName);
+		Scope scope = scopeCollector.getSchemaWorkflowScopeByName(workflowScopeName);
+		if(scope == null) return Response.status(Response.Status.NO_CONTENT).build();
+		return Response.status(Response.Status.OK).entity(scope).build();
+	}
+	
+	@GET
+	@Path("/{registryScopeName}")
+	@Produces({ MediaType.APPLICATION_JSON })
+	@Operation(
+		summary = "Get registry scope metadata",
+		description = "Retrieve metadata for a specific registry scope by name",
+		responses = {
+			@ApiResponse(
+				responseCode = "200",
+				description = "Scope found",
+				content = @Content(mediaType = MediaType.APPLICATION_JSON)
+			),
+			@ApiResponse(responseCode = "404", description = "Scope not found"),
+			@ApiResponse(responseCode = "500", description = "Internal server error")
+		}
+	)
+	public Response getRegistryScope(
+		@Parameter(description = "The name of the registry scope", required = true)
+		@PathParam("registryScopeName") String registryScopeName) {
+		
+		Scope scope = scopeCollector.getObjectRegistryScopeByName(registryScopeName);
 		if(scope == null) return Response.status(Response.Status.NO_CONTENT).build();
 		return Response.status(Response.Status.OK).entity(scope).build();
 	}

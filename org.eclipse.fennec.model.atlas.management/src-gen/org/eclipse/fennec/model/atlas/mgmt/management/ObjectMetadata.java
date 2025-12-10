@@ -58,6 +58,7 @@ import org.osgi.annotation.versioning.ProviderType;
  *   <li>{@link org.eclipse.fennec.model.atlas.mgmt.management.ObjectMetadata#getLastChangeReason <em>Last Change Reason</em>}</li>
  *   <li>{@link org.eclipse.fennec.model.atlas.mgmt.management.ObjectMetadata#getScope <em>Scope</em>}</li>
  *   <li>{@link org.eclipse.fennec.model.atlas.mgmt.management.ObjectMetadata#isIsReadOnly <em>Is Read Only</em>}</li>
+ *   <li>{@link org.eclipse.fennec.model.atlas.mgmt.management.ObjectMetadata#getRegistry <em>Registry</em>}</li>
  * </ul>
  *
  * @see org.eclipse.fennec.model.atlas.mgmt.management.ManagementPackage#getObjectMetadata()
@@ -621,7 +622,7 @@ public interface ObjectMetadata extends EObject {
 	 * @return the value of the '<em>Scope</em>' attribute.
 	 * @see #setScope(String)
 	 * @see org.eclipse.fennec.model.atlas.mgmt.management.ManagementPackage#getObjectMetadata_Scope()
-	 * @model
+	 * @model required="true"
 	 * @generated
 	 */
 	String getScope();
@@ -660,5 +661,30 @@ public interface ObjectMetadata extends EObject {
 	 * @generated
 	 */
 	void setIsReadOnly(boolean value);
+
+	/**
+	 * Returns the value of the '<em><b>Registry</b></em>' attribute.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * <!-- begin-model-doc -->
+	 * The registry to which this metadata belongs (e.g. schema, configuration, script, etc.)
+	 * <!-- end-model-doc -->
+	 * @return the value of the '<em>Registry</em>' attribute.
+	 * @see #setRegistry(String)
+	 * @see org.eclipse.fennec.model.atlas.mgmt.management.ManagementPackage#getObjectMetadata_Registry()
+	 * @model required="true"
+	 * @generated
+	 */
+	String getRegistry();
+
+	/**
+	 * Sets the value of the '{@link org.eclipse.fennec.model.atlas.mgmt.management.ObjectMetadata#getRegistry <em>Registry</em>}' attribute.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @param value the new value of the '<em>Registry</em>' attribute.
+	 * @see #getRegistry()
+	 * @generated
+	 */
+	void setRegistry(String value);
 
 } // ObjectMetadata

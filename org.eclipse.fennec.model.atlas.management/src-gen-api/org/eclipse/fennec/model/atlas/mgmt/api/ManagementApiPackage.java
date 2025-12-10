@@ -554,13 +554,31 @@ public interface ManagementApiPackage extends org.eclipse.emf.ecore.EPackage {
 	int EOBJECT_REGISTRY_SERVICE___FIND_BY_SCOPE_ROLE_AND_NAME__STRING_STRING_STRING = 16;
 
 	/**
+	 * The operation id for the '<em>Find By Scope Registry And Role</em>' operation.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 * @ordered
+	 */
+	int EOBJECT_REGISTRY_SERVICE___FIND_BY_SCOPE_REGISTRY_AND_ROLE__STRING_STRING_STRING = 17;
+
+	/**
+	 * The operation id for the '<em>Find By Scope Registry Role And Name</em>' operation.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 * @ordered
+	 */
+	int EOBJECT_REGISTRY_SERVICE___FIND_BY_SCOPE_REGISTRY_ROLE_AND_NAME__STRING_STRING_STRING_STRING = 18;
+
+	/**
 	 * The number of operations of the '<em>EObject Registry Service</em>' class.
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
 	 * @generated
 	 * @ordered
 	 */
-	int EOBJECT_REGISTRY_SERVICE_OPERATION_COUNT = 17;
+	int EOBJECT_REGISTRY_SERVICE_OPERATION_COUNT = 19;
 
 	/**
 	 * The meta object id for the '{@link org.eclipse.fennec.model.atlas.mgmt.api.StorageRegistry <em>Storage Registry</em>}' class.
@@ -1106,6 +1124,26 @@ public interface ManagementApiPackage extends org.eclipse.emf.ecore.EPackage {
 	EOperation getEObjectRegistryService__FindByScopeRoleAndName__String_String_String();
 
 	/**
+	 * Returns the meta object for the '{@link org.eclipse.fennec.model.atlas.mgmt.api.EObjectRegistryService#findByScopeRegistryAndRole(java.lang.String, java.lang.String, java.lang.String) <em>Find By Scope Registry And Role</em>}' operation.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @return the meta object for the '<em>Find By Scope Registry And Role</em>' operation.
+	 * @see org.eclipse.fennec.model.atlas.mgmt.api.EObjectRegistryService#findByScopeRegistryAndRole(java.lang.String, java.lang.String, java.lang.String)
+	 * @generated
+	 */
+	EOperation getEObjectRegistryService__FindByScopeRegistryAndRole__String_String_String();
+
+	/**
+	 * Returns the meta object for the '{@link org.eclipse.fennec.model.atlas.mgmt.api.EObjectRegistryService#findByScopeRegistryRoleAndName(java.lang.String, java.lang.String, java.lang.String, java.lang.String) <em>Find By Scope Registry Role And Name</em>}' operation.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @return the meta object for the '<em>Find By Scope Registry Role And Name</em>' operation.
+	 * @see org.eclipse.fennec.model.atlas.mgmt.api.EObjectRegistryService#findByScopeRegistryRoleAndName(java.lang.String, java.lang.String, java.lang.String, java.lang.String)
+	 * @generated
+	 */
+	EOperation getEObjectRegistryService__FindByScopeRegistryRoleAndName__String_String_String_String();
+
+	/**
 	 * Returns the meta object for class '{@link org.eclipse.fennec.model.atlas.mgmt.api.StorageRegistry <em>Storage Registry</em>}'.
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
@@ -1573,6 +1611,22 @@ public interface ManagementApiPackage extends org.eclipse.emf.ecore.EPackage {
 		 * @generated
 		 */
 		EOperation EOBJECT_REGISTRY_SERVICE___FIND_BY_SCOPE_ROLE_AND_NAME__STRING_STRING_STRING = eINSTANCE.getEObjectRegistryService__FindByScopeRoleAndName__String_String_String();
+
+		/**
+		 * The meta object literal for the '<em><b>Find By Scope Registry And Role</b></em>' operation.
+		 * <!-- begin-user-doc -->
+		 * <!-- end-user-doc -->
+		 * @generated
+		 */
+		EOperation EOBJECT_REGISTRY_SERVICE___FIND_BY_SCOPE_REGISTRY_AND_ROLE__STRING_STRING_STRING = eINSTANCE.getEObjectRegistryService__FindByScopeRegistryAndRole__String_String_String();
+
+		/**
+		 * The meta object literal for the '<em><b>Find By Scope Registry Role And Name</b></em>' operation.
+		 * <!-- begin-user-doc -->
+		 * <!-- end-user-doc -->
+		 * @generated
+		 */
+		EOperation EOBJECT_REGISTRY_SERVICE___FIND_BY_SCOPE_REGISTRY_ROLE_AND_NAME__STRING_STRING_STRING_STRING = eINSTANCE.getEObjectRegistryService__FindByScopeRegistryRoleAndName__String_String_String_String();
 
 		/**
 		 * The meta object literal for the '{@link org.eclipse.fennec.model.atlas.mgmt.api.StorageRegistry <em>Storage Registry</em>}' class.

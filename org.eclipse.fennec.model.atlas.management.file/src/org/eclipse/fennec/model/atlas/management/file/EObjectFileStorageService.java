@@ -119,10 +119,22 @@ public class EObjectFileStorageService extends AbstractEObjectStorageService {
         String workspace_folder() default "/tmp/epackage-storage";
         
         @AttributeDefinition(
-            name = "Storage Role",
-            description = "Role of this storage service (draft, approved, documentation, etc.)"
-        )
-        String storage_role() default "draft";
+				name = "Storage Scope",
+				description = "Scope of this storage service (default, atlas, etc.)."
+				)
+		String storage_scope() default "default";
+
+		@AttributeDefinition(
+				name = "Storage Role",
+				description = "Role of this storage service (draft, approved, documentation, etc.)"
+				)
+		String storage_role() default "draft";
+		
+		@AttributeDefinition(
+				name = "Storage Registry",
+				description = "Registry of this storage service (schema, configuration, script, etc.)"
+				)
+		String storage_registry() default "schema";
     }
 
     public static final String PID = "FileObjectStorage";

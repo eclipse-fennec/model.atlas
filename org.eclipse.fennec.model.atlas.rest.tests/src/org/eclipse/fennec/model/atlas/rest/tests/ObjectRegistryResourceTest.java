@@ -19,13 +19,13 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.time.Instant;
-import java.util.Base64;
 import java.util.Collections;
 import java.util.Dictionary;
 import java.util.Hashtable;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
+import org.eclipse.emf.ecore.EObject;
 import org.eclipse.emf.ecore.EPackage;
 import org.eclipse.emf.ecore.resource.ResourceSet;
 import org.eclipse.fennec.model.atlas.mgmt.management.ManagementFactory;
@@ -60,16 +60,16 @@ import jakarta.ws.rs.client.Entity;
 import jakarta.ws.rs.core.Response;
 
 /**
- * Integration tests for SchemaPackagesResource REST endpoints.
+ * Integration tests for ObjectRegistryResource REST endpoints.
  *
  * <p>Tests cover:</p>
  * <ul>
- * <li>Listing packages in final stage and specific stages</li>
- * <li>Creating packages in stages</li>
- * <li>Retrieving package metadata and content</li>
- * <li>Updating package content</li>
- * <li>Deleting packages</li>
- * <li>Transitioning packages between stages</li>
+ * <li>Listing objects in final stage and specific stages</li>
+ * <li>Creating objects in stages (when implemented)</li>
+ * <li>Retrieving object metadata and content</li>
+ * <li>Updating object content</li>
+ * <li>Deleting objects</li>
+ * <li>Transitioning objects between stages</li>
  * <li>Scope-based workflow operations</li>
  * <li>Error handling and validation scenarios</li>
  * </ul>
@@ -83,12 +83,13 @@ import jakarta.ws.rs.core.Response;
 @RequireConfigurationAdmin
 @ExtendWith(BundleContextExtension.class)
 @ExtendWith(ServiceExtension.class)
-public class SchemaPackagesResourceTest {
+public class ObjectRegistryResourceTest {
 
     private static final String BASE_URL = "http://localhost:8185/rest";
     private static final String TEST_SCOPE_NAME = "test-scope";
-    private static final String TEST_PACKAGE_NSURI = "http://test.example.com/schema/1.0";
-    private static final String TEST_PACKAGE_NAME = "TestSchema";
+    private static final String TEST_REGISTRY_NAME = "test-registry";
+    private static final String TEST_OBJECT_ID = "test-object-123";
+    private static final String TEST_OBJECT_NAME = "TestObject";
     private static final String TEST_STAGE_DRAFT = "draft";
     private static final String TEST_STAGE_APPROVED = "approved";
     private static final String TEST_STAGE_RELEASE = "release";
@@ -125,12 +126,12 @@ public class SchemaPackagesResourceTest {
         // Ensure XMI factory is registered
         TestHelper.ensureXMIFactory(resourceSet);
 
-        // Wait for the SchemaPackagesResource to be registered in Jakarta REST runtime
-        ResourceAware resourceAware = ResourceAware.create(context, "SchemaPackagesResource");
+        // Wait for the ObjectRegistryResource to be registered in Jakarta REST runtime
+        ResourceAware resourceAware = ResourceAware.create(context, "ObjectRegistryResource");
         boolean resourceReady = resourceAware.waitForResource(15, TimeUnit.SECONDS);
 
         assertTrue(resourceReady,
-                "SchemaPackagesResource should be registered within 15 seconds. " +
+                "ObjectRegistryResource should be registered within 15 seconds. " +
                 "Check that the resource is properly configured and the Jakarta REST runtime is working.");
     }
 
@@ -153,11 +154,12 @@ public class SchemaPackagesResourceTest {
     // ========== List Operations Tests ==========
 
     @Test
-    public void testListReleasedPackages_Success() {
+    public void testListReleasedObjects_Success() {
         Response response = restClient
                 .target(BASE_URL)
                 .path(TEST_SCOPE_NAME)
-                .path("schema")
+                .path("registries")
+                .path(TEST_REGISTRY_NAME)
                 .request("application/json")
                 .get();
 
@@ -169,11 +171,12 @@ public class SchemaPackagesResourceTest {
     }
 
     @Test
-    public void testListReleasedPackages_ScopeNotFound() {
+    public void testListReleasedObjects_ScopeNotFound() {
         Response response = restClient
                 .target(BASE_URL)
                 .path("non-existent-scope")
-                .path("schema")
+                .path("registries")
+                .path(TEST_REGISTRY_NAME)
                 .request("application/json")
                 .get();
 
@@ -181,11 +184,12 @@ public class SchemaPackagesResourceTest {
     }
 
     @Test
-    public void testListPackagesInStage_Success() {
+    public void testListObjectsInStage_Success() {
         Response response = restClient
                 .target(BASE_URL)
                 .path(TEST_SCOPE_NAME)
-                .path("schema")
+                .path("registries")
+                .path(TEST_REGISTRY_NAME)
                 .path("stages")
                 .path(TEST_STAGE_DRAFT)
                 .request("application/json")
@@ -199,14 +203,15 @@ public class SchemaPackagesResourceTest {
     }
 
     @Test
-    public void testListPackagesInStage_WithNsUriFilter() {
+    public void testListObjectsInStage_WithObjectIdFilter() {
         Response response = restClient
                 .target(BASE_URL)
                 .path(TEST_SCOPE_NAME)
-                .path("schema")
+                .path("registries")
+                .path(TEST_REGISTRY_NAME)
                 .path("stages")
                 .path(TEST_STAGE_DRAFT)
-                .queryParam("nsUri", TEST_PACKAGE_NSURI)
+                .queryParam("objectId", TEST_OBJECT_ID)
                 .request("application/json")
                 .get();
 
@@ -218,97 +223,54 @@ public class SchemaPackagesResourceTest {
     }
 
     @Test
-    public void testListPackagesInStage_NotFound() {
+    public void testListObjectsInStage_WithNameFilter() {
         Response response = restClient
                 .target(BASE_URL)
                 .path(TEST_SCOPE_NAME)
-                .path("schema")
+                .path("registries")
+                .path(TEST_REGISTRY_NAME)
                 .path("stages")
                 .path(TEST_STAGE_DRAFT)
-                .queryParam("nsUri", "http://non-existent.com/schema/1.0")
+                .queryParam("name", TEST_OBJECT_NAME)
+                .request("application/json")
+                .get();
+
+        assertEquals(200, response.getStatus(), "Should return HTTP 200 OK");
+
+        String responseContent = response.readEntity(String.class);
+        assertNotNull(responseContent, "Should return content");
+        assertTrue(responseContent.contains("objectId"), "Response should contain objectId");
+    }
+
+    @Test
+    public void testListObjectsInStage_NotFound() {
+        Response response = restClient
+                .target(BASE_URL)
+                .path(TEST_SCOPE_NAME)
+                .path("registries")
+                .path(TEST_REGISTRY_NAME)
+                .path("stages")
+                .path(TEST_STAGE_DRAFT)
+                .queryParam("objectId", "non-existent-object")
                 .request("application/json")
                 .get();
 
         assertEquals(204, response.getStatus(), "Should return HTTP 204 No Content");
     }
 
-    // ========== Create Package Tests ==========
+    // ========== Get Object Content Tests ==========
 
     @Test
-    public void testCreatePackage_Success() throws Exception {
-        EPackage testPackage = TestHelper.createTestEPackage("http://non-existent.com/schema/1.0", "new-package", "new");
-        String xmiContent = TestHelper.serializeToXMI(testPackage, resourceSet);
-
+    public void testGetObjectContent_Success() {
         Response response = restClient
                 .target(BASE_URL)
                 .path(TEST_SCOPE_NAME)
-                .path("schema")
-                .path("stages")
-                .path(TEST_STAGE_DRAFT)
-                .queryParam("nsUri", "http://non-existent.com/schema/1.0")
-                .queryParam("name", "new-package")
-                .queryParam("version", "1.0.0")
-                .request("application/xmi")
-                .post(Entity.entity(xmiContent, "application/xmi"));
-
-        System.out.println("DEBUG testCreatePackage_Success - Response status: " + response.getStatus());
-        String responseContent = response.readEntity(String.class);
-        System.out.println("DEBUG testCreatePackage_Success - Response content: " + responseContent);
-
-        assertEquals(200, response.getStatus(), "Should return HTTP 200 OK");
-        assertNotNull(responseContent, "Should return content");
-    }
-
-    @Test
-    public void testCreatePackage_Conflict() throws Exception {
-        EPackage testPackage = TestHelper.createTestEPackage("http://existing.com/schema/1.0", "ExistingSchema", "existing");
-        String xmiContent = TestHelper.serializeToXMI(testPackage, resourceSet);
-
-        Response response = restClient
-                .target(BASE_URL)
-                .path(TEST_SCOPE_NAME)
-                .path("schema")
-                .path("stages")
-                .path(TEST_STAGE_DRAFT)
-                .queryParam("nsUri", "http://existing.com/schema/1.0")
-                .queryParam("name", "ExistingSchema")
-                .request("application/xmi")
-                .post(Entity.entity(xmiContent, "application/xmi"));
-
-        assertEquals(409, response.getStatus(), "Should return HTTP 409 Conflict");
-    }
-
-    @Test
-    public void testCreatePackage_ScopeNotFound() throws Exception {
-        EPackage testPackage = TestHelper.createTestEPackage(TEST_PACKAGE_NSURI, TEST_PACKAGE_NAME, "test");
-        String xmiContent = TestHelper.serializeToXMI(testPackage, resourceSet);
-
-        Response response = restClient
-                .target(BASE_URL)
-                .path("non-existent-scope")
-                .path("schema")
-                .path("stages")
-                .path(TEST_STAGE_DRAFT)
-                .queryParam("nsUri", TEST_PACKAGE_NSURI)
-                .queryParam("name", TEST_PACKAGE_NAME)
-                .request("application/xmi")
-                .post(Entity.entity(xmiContent, "application/xmi"));
-
-        assertEquals(404, response.getStatus(), "Should return HTTP 404 Not Found");
-    }
-
-    // ========== Get Package Content Tests ==========
-
-    @Test
-    public void testGetPackageContent_Success() {
-        Response response = restClient
-                .target(BASE_URL)
-                .path(TEST_SCOPE_NAME)
-                .path("schema")
+                .path("registries")
+                .path(TEST_REGISTRY_NAME)
                 .path("stages")
                 .path(TEST_STAGE_DRAFT)
                 .path("content")
-                .queryParam("nsUri", TEST_PACKAGE_NSURI)
+                .queryParam("objectId", TEST_OBJECT_ID)
                 .request("application/json")
                 .get();
 
@@ -319,61 +281,66 @@ public class SchemaPackagesResourceTest {
     }
 
     @Test
-    public void testGetPackageContent_NotFound() {
+    public void testGetObjectContent_NotFound() {
         Response response = restClient
                 .target(BASE_URL)
                 .path(TEST_SCOPE_NAME)
-                .path("schema")
+                .path("registries")
+                .path(TEST_REGISTRY_NAME)
                 .path("stages")
                 .path(TEST_STAGE_DRAFT)
                 .path("content")
-                .queryParam("nsUri", "http://non-existent.com/schema/1.0")
+                .queryParam("objectId", "non-existent-object")
                 .request("application/json")
                 .get();
 
         assertEquals(204, response.getStatus(), "Should return HTTP 204 No Content");
     }
 
-    // ========== Update Package Content Tests ==========
+    // ========== Update Object Content Tests ==========
 
     @Test
-    public void testUpdatePackageContent_Success() throws Exception {
-        EPackage updatedPackage = TestHelper.createTestEPackage(TEST_PACKAGE_NSURI, "UpdatedSchema", "test");
-        String xmiContent = TestHelper.serializeToXMI(updatedPackage, resourceSet);
+    public void testUpdateObjectContent_Success() throws Exception {
+        EPackage updatedObject = TestHelper.createTestEPackage("http://test.com/object/1.0", "UpdatedObject", "test");
+        String xmiContent = TestHelper.serializeToXMI(updatedObject, resourceSet);
 
         Response response = restClient
                 .target(BASE_URL)
                 .path(TEST_SCOPE_NAME)
-                .path("schema")
+                .path("registries")
+                .path(TEST_REGISTRY_NAME)
                 .path("stages")
                 .path(TEST_STAGE_DRAFT)
                 .path("content")
-                .queryParam("nsUri", TEST_PACKAGE_NSURI)
+                .queryParam("objectId", TEST_OBJECT_ID)
                 .queryParam("version", "1.1.0")
+                .queryParam("schemaNsUri", "http://test.com/object/1.0")
                 .request("application/xmi")
                 .put(Entity.entity(xmiContent, "application/xmi"));
 
-        System.out.println("DEBUG testUpdatePackageContent_Success - Response status: " + response.getStatus());
+        System.out.println("DEBUG testUpdateObjectContent_Success - Response status: " + response.getStatus());
         String responseContent = response.readEntity(String.class);
-        System.out.println("DEBUG testUpdatePackageContent_Success - Response content: " + responseContent);
+        System.out.println("DEBUG testUpdateObjectContent_Success - Response content: " + responseContent);
 
         assertEquals(200, response.getStatus(), "Should return HTTP 200 OK");
     }
 
     @Test
-    public void testUpdatePackageContent_ReadOnlyStage() throws Exception {
-        EPackage updatedPackage = TestHelper.createTestEPackage(TEST_PACKAGE_NSURI, "UpdatedSchema", "test");
-        String xmiContent = TestHelper.serializeToXMI(updatedPackage, resourceSet);
+    public void testUpdateObjectContent_ReadOnlyStage() throws Exception {
+        EPackage updatedObject = TestHelper.createTestEPackage("http://test.com/object/1.0", "UpdatedObject", "test");
+        String xmiContent = TestHelper.serializeToXMI(updatedObject, resourceSet);
 
         Response response = restClient
                 .target(BASE_URL)
                 .path(TEST_SCOPE_NAME)
-                .path("schema")
+                .path("registries")
+                .path(TEST_REGISTRY_NAME)
                 .path("stages")
                 .path("readonly-stage")
                 .path("content")
-                .queryParam("nsUri", TEST_PACKAGE_NSURI)
+                .queryParam("objectId", TEST_OBJECT_ID)
                 .queryParam("version", "1.1.0")
+                .queryParam("schemaNsUri", "http://test.com/object/1.0")
                 .request("application/xmi")
                 .put(Entity.entity(xmiContent, "application/xmi"));
 
@@ -381,36 +348,39 @@ public class SchemaPackagesResourceTest {
     }
 
     @Test
-    public void testUpdatePackageContent_NotFound() throws Exception {
-        EPackage updatedPackage = TestHelper.createTestEPackage("http://non-existent.com/schema/1.0", "NonExistent", "ne");
-        String xmiContent = TestHelper.serializeToXMI(updatedPackage, resourceSet);
+    public void testUpdateObjectContent_NotFound() throws Exception {
+        EPackage updatedObject = TestHelper.createTestEPackage("http://test.com/object/1.0", "NonExistent", "ne");
+        String xmiContent = TestHelper.serializeToXMI(updatedObject, resourceSet);
 
         Response response = restClient
                 .target(BASE_URL)
                 .path(TEST_SCOPE_NAME)
-                .path("schema")
+                .path("registries")
+                .path(TEST_REGISTRY_NAME)
                 .path("stages")
                 .path(TEST_STAGE_DRAFT)
                 .path("content")
-                .queryParam("nsUri", "http://non-existent.com/schema/1.0")
+                .queryParam("objectId", "non-existent-object")
                 .queryParam("version", "1.0.0")
+                .queryParam("schemaNsUri", "http://test.com/object/1.0")
                 .request("application/xmi")
                 .put(Entity.entity(xmiContent, "application/xmi"));
 
         assertEquals(204, response.getStatus(), "Should return HTTP 204 No Content");
     }
 
-    // ========== Delete Package Tests ==========
+    // ========== Delete Object Tests ==========
 
     @Test
-    public void testDeletePackage_Success() {
+    public void testDeleteObject_Success() {
         Response response = restClient
                 .target(BASE_URL)
                 .path(TEST_SCOPE_NAME)
-                .path("schema")
+                .path("registries")
+                .path(TEST_REGISTRY_NAME)
                 .path("stages")
                 .path(TEST_STAGE_DRAFT)
-                .queryParam("nsUri", TEST_PACKAGE_NSURI)
+                .queryParam("objectId", TEST_OBJECT_ID)
                 .request()
                 .delete();
 
@@ -418,14 +388,15 @@ public class SchemaPackagesResourceTest {
     }
 
     @Test
-    public void testDeletePackage_ReadOnlyStage() {
+    public void testDeleteObject_ReadOnlyStage() {
         Response response = restClient
                 .target(BASE_URL)
                 .path(TEST_SCOPE_NAME)
-                .path("schema")
+                .path("registries")
+                .path(TEST_REGISTRY_NAME)
                 .path("stages")
                 .path("readonly-stage")
-                .queryParam("nsUri", TEST_PACKAGE_NSURI)
+                .queryParam("objectId", TEST_OBJECT_ID)
                 .request()
                 .delete();
 
@@ -433,14 +404,15 @@ public class SchemaPackagesResourceTest {
     }
 
     @Test
-    public void testDeletePackage_NotFound() {
+    public void testDeleteObject_NotFound() {
         Response response = restClient
                 .target(BASE_URL)
                 .path(TEST_SCOPE_NAME)
-                .path("schema")
+                .path("registries")
+                .path(TEST_REGISTRY_NAME)
                 .path("stages")
                 .path(TEST_STAGE_DRAFT)
-                .queryParam("nsUri", "http://non-existent.com/schema/1.0")
+                .queryParam("objectId", "non-existent-object")
                 .request()
                 .delete();
 
@@ -450,9 +422,9 @@ public class SchemaPackagesResourceTest {
     // ========== Transition Tests ==========
 
     @Test
-    public void testTransitionPackage_Success() throws Exception {
+    public void testTransitionObject_Success() throws Exception {
         StageTransition transition = ScopeFactory.eINSTANCE.createStageTransition();
-        transition.setObjectId(TEST_PACKAGE_NSURI);
+        transition.setObjectId(TEST_OBJECT_ID);
         transition.setTargetStage(TEST_STAGE_APPROVED);
 
         String xmiContent = TestHelper.serializeToXMI(transition, resourceSet);
@@ -460,7 +432,8 @@ public class SchemaPackagesResourceTest {
         Response response = restClient
                 .target(BASE_URL)
                 .path(TEST_SCOPE_NAME)
-                .path("schema")
+                .path("registries")
+                .path(TEST_REGISTRY_NAME)
                 .path("stages")
                 .path(TEST_STAGE_DRAFT)
                 .path("actions")
@@ -468,17 +441,17 @@ public class SchemaPackagesResourceTest {
                 .request("application/xmi")
                 .post(Entity.entity(xmiContent, "application/xmi"));
 
-        System.out.println("DEBUG testTransitionPackage_Success - Response status: " + response.getStatus());
+        System.out.println("DEBUG testTransitionObject_Success - Response status: " + response.getStatus());
         String responseContent = response.readEntity(String.class);
-        System.out.println("DEBUG testTransitionPackage_Success - Response content: " + responseContent);
+        System.out.println("DEBUG testTransitionObject_Success - Response content: " + responseContent);
 
         assertEquals(200, response.getStatus(), "Should return HTTP 200 OK");
     }
 
     @Test
-    public void testTransitionPackage_InvalidTransition() throws Exception {
+    public void testTransitionObject_InvalidTransition() throws Exception {
         StageTransition transition = ScopeFactory.eINSTANCE.createStageTransition();
-        transition.setObjectId(TEST_PACKAGE_NSURI);
+        transition.setObjectId(TEST_OBJECT_ID);
         transition.setTargetStage(TEST_STAGE_RELEASE); // Invalid: skipping approved stage
 
         String xmiContent = TestHelper.serializeToXMI(transition, resourceSet);
@@ -486,7 +459,8 @@ public class SchemaPackagesResourceTest {
         Response response = restClient
                 .target(BASE_URL)
                 .path(TEST_SCOPE_NAME)
-                .path("schema")
+                .path("registries")
+                .path(TEST_REGISTRY_NAME)
                 .path("stages")
                 .path(TEST_STAGE_DRAFT)
                 .path("actions")
@@ -498,9 +472,9 @@ public class SchemaPackagesResourceTest {
     }
 
     @Test
-    public void testTransitionPackage_NotFound() throws Exception {
+    public void testTransitionObject_NotFound() throws Exception {
         StageTransition transition = ScopeFactory.eINSTANCE.createStageTransition();
-        transition.setObjectId("http://non-existent.com/schema/1.0");
+        transition.setObjectId("non-existent-object");
         transition.setTargetStage(TEST_STAGE_APPROVED);
 
         String xmiContent = TestHelper.serializeToXMI(transition, resourceSet);
@@ -508,7 +482,8 @@ public class SchemaPackagesResourceTest {
         Response response = restClient
                 .target(BASE_URL)
                 .path(TEST_SCOPE_NAME)
-                .path("schema")
+                .path("registries")
+                .path(TEST_REGISTRY_NAME)
                 .path("stages")
                 .path(TEST_STAGE_DRAFT)
                 .path("actions")
@@ -519,17 +494,18 @@ public class SchemaPackagesResourceTest {
         assertEquals(204, response.getStatus(), "Should return HTTP 204 No Content");
     }
 
-    // ========== List Packages By Name Tests ==========
+    // ========== List Objects By Name Tests ==========
 
     @Test
-    public void testListPackagesInStageByName_ExactMatch() {
+    public void testListObjectsInStageByName_ExactMatch() {
         Response response = restClient
                 .target(BASE_URL)
                 .path(TEST_SCOPE_NAME)
-                .path("schema")
+                .path("registries")
+                .path(TEST_REGISTRY_NAME)
                 .path("stages")
                 .path(TEST_STAGE_DRAFT)
-                .queryParam("name", TEST_PACKAGE_NAME)
+                .queryParam("name", TEST_OBJECT_NAME)
                 .request("application/json")
                 .get();
 
@@ -538,15 +514,16 @@ public class SchemaPackagesResourceTest {
         String responseContent = response.readEntity(String.class);
         assertNotNull(responseContent, "Should return content");
         assertTrue(responseContent.contains("objectId"), "Response should contain objectId");
-        assertTrue(responseContent.contains(TEST_PACKAGE_NAME), "Response should contain the package name");
+        assertTrue(responseContent.contains(TEST_OBJECT_NAME), "Response should contain the object name");
     }
 
     @Test
-    public void testListPackagesInStageByName_WildcardMatch() {
+    public void testListObjectsInStageByName_WildcardMatch() {
         Response response = restClient
                 .target(BASE_URL)
                 .path(TEST_SCOPE_NAME)
-                .path("schema")
+                .path("registries")
+                .path(TEST_REGISTRY_NAME)
                 .path("stages")
                 .path(TEST_STAGE_DRAFT)
                 .queryParam("name", "Test*")
@@ -561,14 +538,31 @@ public class SchemaPackagesResourceTest {
     }
 
     @Test
-    public void testListPackagesInStageByName_PartialWildcardMatch() {
+    public void testListObjectsInStageByName_NotFound() {
         Response response = restClient
                 .target(BASE_URL)
                 .path(TEST_SCOPE_NAME)
-                .path("schema")
+                .path("registries")
+                .path(TEST_REGISTRY_NAME)
                 .path("stages")
                 .path(TEST_STAGE_DRAFT)
-                .queryParam("name", "TestSchema*")
+                .queryParam("name", "NonExistentObject")
+                .request("application/json")
+                .get();
+
+        assertEquals(204, response.getStatus(), "Should return HTTP 204 No Content when no objects match");
+    }
+
+    @Test
+    public void testListObjectsInStageByName_DifferentObject() {
+        Response response = restClient
+                .target(BASE_URL)
+                .path(TEST_SCOPE_NAME)
+                .path("registries")
+                .path(TEST_REGISTRY_NAME)
+                .path("stages")
+                .path(TEST_STAGE_DRAFT)
+                .queryParam("name", "SensorData")
                 .request("application/json")
                 .get();
 
@@ -576,91 +570,19 @@ public class SchemaPackagesResourceTest {
 
         String responseContent = response.readEntity(String.class);
         assertNotNull(responseContent, "Should return content");
-        assertTrue(responseContent.contains("objectId"), "Response should contain objectId");
+        assertTrue(responseContent.contains("SensorData"), "Response should contain SensorData");
     }
 
     @Test
-    public void testListPackagesInStageByName_NotFound() {
+    public void testListObjectsInStageByName_DifferentStage() {
         Response response = restClient
                 .target(BASE_URL)
                 .path(TEST_SCOPE_NAME)
-                .path("schema")
-                .path("stages")
-                .path(TEST_STAGE_DRAFT)
-                .queryParam("name", "NonExistentPackage")
-                .request("application/json")
-                .get();
-
-        assertEquals(204, response.getStatus(), "Should return HTTP 204 No Content when no packages match");
-    }
-
-    @Test
-    public void testListPackagesInStageByName_DifferentPackage() {
-        Response response = restClient
-                .target(BASE_URL)
-                .path(TEST_SCOPE_NAME)
-                .path("schema")
-                .path("stages")
-                .path(TEST_STAGE_DRAFT)
-                .queryParam("name", "SensorModel")
-                .request("application/json")
-                .get();
-
-        assertEquals(200, response.getStatus(), "Should return HTTP 200 OK");
-
-        String responseContent = response.readEntity(String.class);
-        assertNotNull(responseContent, "Should return content");
-        assertTrue(responseContent.contains("SensorModel"), "Response should contain SensorModel");
-    }
-
-    @Test
-    public void testListPackagesInStageByName_CombinedWithNsUri() {
-        Response response = restClient
-                .target(BASE_URL)
-                .path(TEST_SCOPE_NAME)
-                .path("schema")
-                .path("stages")
-                .path(TEST_STAGE_DRAFT)
-                .queryParam("nsUri", TEST_PACKAGE_NSURI)
-                .queryParam("name", TEST_PACKAGE_NAME)
-                .request("application/json")
-                .get();
-
-        assertEquals(200, response.getStatus(), "Should return HTTP 200 OK");
-
-        String responseContent = response.readEntity(String.class);
-        assertNotNull(responseContent, "Should return content");
-        assertTrue(responseContent.contains("objectId"), "Response should contain objectId");
-    }
-
-    @Test
-    public void testListPackagesInStageByName_PrefixWildcard() {
-        Response response = restClient
-                .target(BASE_URL)
-                .path(TEST_SCOPE_NAME)
-                .path("schema")
-                .path("stages")
-                .path(TEST_STAGE_DRAFT)
-                .queryParam("name", "Sensor*")
-                .request("application/json")
-                .get();
-
-        assertEquals(200, response.getStatus(), "Should return HTTP 200 OK");
-
-        String responseContent = response.readEntity(String.class);
-        assertNotNull(responseContent, "Should return content");
-        assertTrue(responseContent.contains("SensorModel"), "Response should contain SensorModel");
-    }
-
-    @Test
-    public void testListPackagesInStageByName_DifferentStage() {
-        Response response = restClient
-                .target(BASE_URL)
-                .path(TEST_SCOPE_NAME)
-                .path("schema")
+                .path("registries")
+                .path(TEST_REGISTRY_NAME)
                 .path("stages")
                 .path(TEST_STAGE_APPROVED)
-                .queryParam("name", TEST_PACKAGE_NAME)
+                .queryParam("name", TEST_OBJECT_NAME)
                 .request("application/json")
                 .get();
 
@@ -682,7 +604,7 @@ public class SchemaPackagesResourceTest {
         private final Scope mockScope = createMockScope();
 
         @Override
-        public EObjectWorkflowService<?> getWorkflowServiceByScope(String scopeName) {
+        public EObjectWorkflowService<?> getObjectRegistryServiceByScope(String scopeName) {
             if (TEST_SCOPE_NAME.equals(scopeName)) {
                 return mockWorkflowService;
             }
@@ -690,7 +612,7 @@ public class SchemaPackagesResourceTest {
         }
 
         @Override
-        public Scope getSchemaWorkflowScopeByName(String name) {
+        public Scope getObjectRegistryScopeByName(String name) {
             if (TEST_SCOPE_NAME.equals(name)) {
                 return mockScope;
             }
@@ -698,33 +620,29 @@ public class SchemaPackagesResourceTest {
         }
 
         @Override
-        public List<Scope> getSchemaWorkflowScopes() {
+        public List<Scope> getObjectRegistryScopes() {
             return List.of(mockScope);
         }
-        
-        /* 
-         * (non-Javadoc)
-         * @see org.eclipse.fennec.model.atlas.scope.ScopeCollector#getObjectRegistryScopes()
-         */
+
         @Override
-        public List<Scope> getObjectRegistryScopes() {
-        	return Collections.emptyList();
+        public EObjectWorkflowService<?> getWorkflowServiceByScope(String scopeName) {
+            return null;
         }
-        
-        /* 
-         * (non-Javadoc)
-         * @see org.eclipse.fennec.model.atlas.scope.ScopeCollector#getObjectRegistryScopeByName(java.lang.String)
-         */
+
         @Override
-        public Scope getObjectRegistryScopeByName(String name) {
-        	return null;
+        public Scope getSchemaWorkflowScopeByName(String name) {
+            return null;
         }
-        
+
+        @Override
+        public List<Scope> getSchemaWorkflowScopes() {
+            return Collections.emptyList();
+        }
+
         @Override
         public List<Scope> getAllScopes() {
             return List.of(mockScope);
         }
-
 
         private Scope createMockScope() {
             Scope scope = ScopeFactory.eINSTANCE.createScope();
@@ -739,10 +657,10 @@ public class SchemaPackagesResourceTest {
     /**
      * Mock implementation of EObjectWorkflowService for testing.
      */
-    public static class MockEObjectWorkflowService implements EObjectWorkflowService<EPackage> {
+    public static class MockEObjectWorkflowService implements EObjectWorkflowService<EObject> {
 
         @Override
-        public Promise<ObjectMetadata> uploadToStageForRegistry(String stage, String registry, EPackage object, ObjectMetadata metadata) {
+        public Promise<ObjectMetadata> uploadToStageForRegistry(String stage, String registry, EObject object, ObjectMetadata metadata) {
             metadata.setRole(stage);
             metadata.setRegistry(registry);
             metadata.setUploadTime(Instant.now());
@@ -751,18 +669,9 @@ public class SchemaPackagesResourceTest {
 
         @Override
         public ObjectMetadata getFromStageForRegistry(String stage, String registry, String objectId) {
-            String decodedId = new String(Base64.getUrlDecoder().decode(objectId));
 
-            if (decodedId.equals("http://non-existent.com/schema/1.0")) {
+            if (objectId.equals("non-existent-object")) {
                 return null;
-            }
-
-            if (decodedId.equals("http://existing.com/schema/1.0")) {
-                ObjectMetadata metadata = ManagementFactory.eINSTANCE.createObjectMetadata();
-                metadata.setObjectId(objectId);
-                metadata.setRole(stage);
-                metadata.setRegistry(registry);
-                return metadata;
             }
 
             ObjectMetadata metadata = ManagementFactory.eINSTANCE.createObjectMetadata();
@@ -780,21 +689,19 @@ public class SchemaPackagesResourceTest {
         }
 
         @Override
-        public EPackage getContentFromStageForRegistry(String stage, String registry, String objectId) {
-            String decodedId = new String(Base64.getUrlDecoder().decode(objectId));
+        public EObject getContentFromStageForRegistry(String stage, String registry, String objectId) {
 
-            if (decodedId.equals("http://non-existent.com/schema/1.0")) {
+            if (objectId.equals("non-existent-object")) {
                 return null;
             }
 
-            return TestHelper.createTestEPackage(decodedId, "TestPackage", "test");
+            return TestHelper.createTestEPackage("http://test.com/object/1.0", "TestObject", "test");
         }
 
         @Override
-        public Promise<ObjectMetadata> updateInStageForRegistry(String stage, String registry, EPackage updatedObject, String objectId, String updatedVersion) {
-            String decodedId = new String(Base64.getUrlDecoder().decode(objectId));
+        public Promise<ObjectMetadata> updateInStageForRegistry(String stage, String registry, EObject updatedObject, String objectId, String updatedVersion) {
 
-            if (decodedId.equals("http://non-existent.com/schema/1.0")) {
+            if (objectId.equals("non-existent-object")) {
                 return Promises.resolved(null);
             }
 
@@ -809,18 +716,16 @@ public class SchemaPackagesResourceTest {
 
         @Override
         public Promise<Boolean> deleteFromStageForRegistry(String stage, String registry, String objectId) {
-            String decodedId = new String(Base64.getUrlDecoder().decode(objectId));
-            return Promises.resolved(!decodedId.equals("http://non-existent.com/schema/1.0"));
+            return Promises.resolved(!objectId.equals("non-existent-object"));
         }
 
         @Override
         public List<ObjectMetadata> listInStageForRegistry(String stage, String registry) {
             ObjectMetadata metadata = ManagementFactory.eINSTANCE.createObjectMetadata();
-            String encodedNsUri = Base64.getUrlEncoder().encodeToString(TEST_PACKAGE_NSURI.getBytes());
-            metadata.setObjectId(encodedNsUri);
+            metadata.setObjectId(TEST_OBJECT_ID);
             metadata.setRole(stage);
             metadata.setRegistry(registry);
-            metadata.setObjectName(TEST_PACKAGE_NAME);
+            metadata.setObjectName(TEST_OBJECT_NAME);
             metadata.setUploadTime(Instant.now());
             return List.of(metadata);
         }
@@ -853,54 +758,49 @@ public class SchemaPackagesResourceTest {
             return false;
         }
 
-		/*
-		 * (non-Javadoc)
-		 * @see org.eclipse.fennec.model.atlas.wf.workflowapi.EObjectWorkflowService#listInStageByName(java.lang.String, java.lang.String)
-		 */
-		@Override
-		public List<ObjectMetadata> listInStageForRegistryByName(String stage, String registry, String name) {
-			// Support wildcard search with * character (only trailing wildcards like "Prefix*")
-			boolean isWildcard = name.contains("*");
-			String nameFilter = isWildcard ? name.replace("*", "") : name;
+        @Override
+        public List<ObjectMetadata> listInStageForRegistryByName(String stage, String registry, String name) {
+            // Support wildcard search with * character (only trailing wildcards like "Prefix*")
+            boolean isWildcard = name.contains("*");
+            String nameFilter = isWildcard ? name.replace("*", "") : name;
 
-			// Create test metadata that matches the filter
-			if ("TestSchema".equals(name) || (isWildcard && TEST_PACKAGE_NAME.startsWith(nameFilter))) {
-				ObjectMetadata metadata = ManagementFactory.eINSTANCE.createObjectMetadata();
-				String encodedNsUri = Base64.getUrlEncoder().encodeToString(TEST_PACKAGE_NSURI.getBytes());
-				metadata.setObjectId(encodedNsUri);
-				metadata.setRole(stage);
-				metadata.setRegistry(registry);
-				metadata.setObjectName(TEST_PACKAGE_NAME);
-				metadata.setUploadTime(Instant.now());
-				return List.of(metadata);
-			}
+            // Create test metadata that matches the filter
+            if (TEST_OBJECT_NAME.equals(name) || (isWildcard && TEST_OBJECT_NAME.startsWith(nameFilter))) {
+                ObjectMetadata metadata = ManagementFactory.eINSTANCE.createObjectMetadata();
+                metadata.setObjectId(TEST_OBJECT_ID);
+                metadata.setRole(stage);
+                metadata.setRegistry(registry);
+                metadata.setObjectName(TEST_OBJECT_NAME);
+                metadata.setUploadTime(Instant.now());
+                return List.of(metadata);
+            }
 
-			// Match for Test* wildcard
-			if (isWildcard && TEST_PACKAGE_NAME.startsWith(nameFilter)) {
-				ObjectMetadata metadata = ManagementFactory.eINSTANCE.createObjectMetadata();
-				String encodedNsUri = Base64.getUrlEncoder().encodeToString(TEST_PACKAGE_NSURI.getBytes());
-				metadata.setObjectId(encodedNsUri);
-				metadata.setRole(stage);
-				metadata.setRegistry(registry);
-				metadata.setObjectName(TEST_PACKAGE_NAME);
-				metadata.setUploadTime(Instant.now());
-				return List.of(metadata);
-			}
+            // Match for Test* wildcard
+            if (isWildcard && TEST_OBJECT_NAME.startsWith(nameFilter)) {
+                ObjectMetadata metadata = ManagementFactory.eINSTANCE.createObjectMetadata();
+                metadata.setObjectId(TEST_OBJECT_ID);
+                metadata.setRole(stage);
+                metadata.setRegistry(registry);
+                metadata.setObjectName(TEST_OBJECT_NAME);
+                metadata.setUploadTime(Instant.now());
+                return List.of(metadata);
+            }
 
-			// If looking for SensorModel, return a matching object
-			if ("SensorModel".equals(name) || (isWildcard && "SensorModel".startsWith(nameFilter))) {
-				ObjectMetadata sensorMetadata = ManagementFactory.eINSTANCE.createObjectMetadata();
-				String encodedSensorNsUri = Base64.getUrlEncoder().encodeToString("http://test.example.com/sensor/1.0".getBytes());
-				sensorMetadata.setObjectId(encodedSensorNsUri);
-				sensorMetadata.setRole(stage);
-				sensorMetadata.setRegistry(registry);
-				sensorMetadata.setObjectName("SensorModel");
-				sensorMetadata.setUploadTime(Instant.now());
-				return List.of(sensorMetadata);
-			}
+            // If looking for SensorData, return a matching object
+            if ("SensorData".equals(name) || (isWildcard && "SensorData".startsWith(nameFilter))) {
+                ObjectMetadata sensorMetadata = ManagementFactory.eINSTANCE.createObjectMetadata();
+                sensorMetadata.setObjectId("sensor-object-456");
+                sensorMetadata.setRole(stage);
+                sensorMetadata.setRegistry(registry);
+                sensorMetadata.setObjectName("SensorData");
+                sensorMetadata.setUploadTime(Instant.now());
+                return List.of(sensorMetadata);
+            }
 
-			// Return empty list if no match
-			return List.of();
-		}
+            // Return empty list if no match
+            return List.of();
+        }
+
+        
     }
 }

@@ -73,6 +73,7 @@
       <genFeatures createChild="false" ecoreFeature="ecore:EAttribute management.ecore#//ObjectMetadata/lastChangeReason"/>
       <genFeatures createChild="false" ecoreFeature="ecore:EAttribute management.ecore#//ObjectMetadata/scope"/>
       <genFeatures createChild="false" ecoreFeature="ecore:EAttribute management.ecore#//ObjectMetadata/isReadOnly"/>
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute management.ecore#//ObjectMetadata/registry"/>
     </genClasses>
     <genClasses ecoreClass="management.ecore#//StringToObjectMapEntry">
       <genFeatures createChild="false" ecoreFeature="ecore:EAttribute management.ecore#//StringToObjectMapEntry/key"/>
@@ -86,6 +87,7 @@
       <genFeatures createChild="false" ecoreFeature="ecore:EAttribute management.ecore#//ObjectQuery/role"/>
       <genFeatures createChild="false" ecoreFeature="ecore:EAttribute management.ecore#//ObjectQuery/scope"/>
       <genFeatures createChild="false" ecoreFeature="ecore:EAttribute management.ecore#//ObjectQuery/name"/>
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute management.ecore#//ObjectQuery/registry"/>
     </genClasses>
     <genClasses ecoreClass="management.ecore#//GenerationRequest">
       <genFeatures createChild="false" ecoreFeature="ecore:EAttribute management.ecore#//GenerationRequest/requestId"/>

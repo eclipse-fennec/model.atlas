@@ -115,14 +115,16 @@ public class ScopeAwareWorkflowServiceTest {
 	            @TemplateArgument(source = ValueSource.SystemProperty, value = PROP_TEMP_DIR)
 	        }),
 	        @Property(key = "storage.scope", value = "my-tenant"),
-	        @Property(key = "storage.role", value = "draft")
+	        @Property(key = "storage.role", value = "draft"),
+	        @Property(key = "storage.registry", value = "schema")
 	    })
     @WithFactoryConfiguration(factoryPid = "FileObjectStorage", name = "tenant-release", location = "?", properties = {
             @Property(key = "workspace.folder", value = "%s/tenant-release", templateArguments = {
                 @TemplateArgument(source = ValueSource.SystemProperty, value = PROP_TEMP_DIR)
             }),
             @Property(key = "storage.scope", value = "my-tenant"),
-            @Property(key = "storage.role", value = "release")
+            @Property(key = "storage.role", value = "release"),
+            @Property(key = "storage.registry", value = "schema")
         })
     @WithFactoryConfiguration(factoryPid = "EObjectWorkflowService", name = "tenant-workflow", location = "?", properties = {
 	        @Property(key = "scope", value = "my-tenant"),
@@ -151,18 +153,18 @@ public class ScopeAwareWorkflowServiceTest {
 
         // Upload to Draft stage
         String nsUri = pkg.getNsURI();
-        workflow.uploadToStage("draft", pkg, metadata).getValue();
+        workflow.uploadToStageForRegistry("draft", "schema", pkg, metadata).getValue();
         String objectId = metadata.getObjectId();
         assertNotNull(objectId, "Object ID should be returned");
 
         // Retrieve from Draft stage
-        ObjectMetadata retrieved = workflow.getFromStage("draft", objectId);
+        ObjectMetadata retrieved = workflow.getFromStageForRegistry("draft", "schema", objectId);
         assertNotNull(retrieved, "Should retrieve uploaded package");
         assertEquals("TestPackage", retrieved.getObjectName());
         assertEquals("testUser", retrieved.getUploadUser());
 
         // Retrieve content
-        EObject content = workflow.getContentFromStage("draft", objectId);
+        EObject content = workflow.getContentFromStageForRegistry("draft", "schema", objectId);
         assertNotNull(content, "Should retrieve package content");
         assertInstanceOf(EPackage.class, content);
         EPackage packageContent = (EPackage) content;
@@ -191,7 +193,8 @@ public class ScopeAwareWorkflowServiceTest {
             @TemplateArgument(source = ValueSource.SystemProperty, value = PROP_TEMP_DIR)
         }),
         @Property(key = "storage.scope", value = "parent-scope"),
-        @Property(key = "storage.role", value = "release")
+        @Property(key = "storage.role", value = "release"),
+        @Property(key = "storage.registry", value = "schema")
     })
     // Child scope storage
     @WithFactoryConfiguration(factoryPid = "FileObjectStorage", name = "child-draft", location = "?", properties = {
@@ -199,7 +202,8 @@ public class ScopeAwareWorkflowServiceTest {
             @TemplateArgument(source = ValueSource.SystemProperty, value = PROP_TEMP_DIR)
         }),
         @Property(key = "storage.scope", value = "child-scope"),
-        @Property(key = "storage.role", value = "draft")
+        @Property(key = "storage.role", value = "draft"),
+        @Property(key = "storage.registry", value = "schema")
     })
     // Parent workflow
     @WithFactoryConfiguration(factoryPid = "EObjectWorkflowService", name = "parent-workflow", location = "?", properties = {
@@ -240,12 +244,12 @@ public class ScopeAwareWorkflowServiceTest {
         parentMetadata.setUploadUser("parentUser");
         parentMetadata.setObjectName("ParentPackage");
 
-        parentWorkflow.uploadToStage("release", parentPkg, parentMetadata).getValue();
+        parentWorkflow.uploadToStageForRegistry("release", "schema", parentPkg, parentMetadata).getValue();
         String storageId = parentMetadata.getObjectId();
         assertNotNull(storageId);
-        
+
         // Child SHOULD find it in Released stage (hierarchical lookup)
-        ObjectMetadata found = childWorkflow.getFromStage("draft", storageId);
+        ObjectMetadata found = childWorkflow.getFromStageForRegistry("draft", "schema", storageId);
         assertNotNull(found, "Should find parent package in Released stage via hierarchy");
 
      
@@ -274,7 +278,8 @@ public class ScopeAwareWorkflowServiceTest {
             @TemplateArgument(source = ValueSource.SystemProperty, value = PROP_TEMP_DIR)
         }),
         @Property(key = "storage.scope", value = "test-scope"),
-        @Property(key = "storage.role", value = "draft")
+        @Property(key = "storage.role", value = "draft"),
+        @Property(key = "storage.registry", value = "schema")
     })
     @WithFactoryConfiguration(factoryPid = "FileObjectStorage", name = "release-storage", location = "?", properties = {
         @Property(key = "workspace.folder", value = "%s/release-storage", templateArguments = {
@@ -307,24 +312,24 @@ public class ScopeAwareWorkflowServiceTest {
         metadata.setUploadUser("transUser");
         metadata.setObjectName("TransitionPackage");
 
-        workflow.uploadToStage("draft", pkg, metadata).getValue();
+        workflow.uploadToStageForRegistry("draft", "schema", pkg, metadata).getValue();
         String storageId = metadata.getObjectId();
 
         // Verify in Draft stage
-        ObjectMetadata draft = workflow.getFromStage("draft", storageId);
+        ObjectMetadata draft = workflow.getFromStageForRegistry("draft", "schema", storageId);
         assertNotNull(draft, "Should exist in Draft stage");
 
         // Transition to Released
-        ObjectMetadata released = workflow.transitionToStage(storageId, "draft", "release");
+        ObjectMetadata released = workflow.transitionToStageForRegistry(storageId, "draft", "release", "schema");
         assertNotNull(released, "Transition should succeed");
 //        assertEquals("Released", released.getStage(), "Should be in Released stage");
 
         // Verify no longer in Draft (deleted after transition)
-        ObjectMetadata draftGone = workflow.getFromStage("draft", storageId);
+        ObjectMetadata draftGone = workflow.getFromStageForRegistry("draft", "schema", storageId);
         assertNull(draftGone, "Should no longer exist in Draft stage");
 
         // Verify in Released stage
-        ObjectMetadata releasedCheck = workflow.getFromStage("release", storageId);
+        ObjectMetadata releasedCheck = workflow.getFromStageForRegistry("release", "schema", storageId);
         assertNotNull(releasedCheck, "Should exist in Released stage");
         assertEquals("TransitionPackage", releasedCheck.getObjectName());
     }
@@ -349,14 +354,16 @@ public class ScopeAwareWorkflowServiceTest {
             @TemplateArgument(source = ValueSource.SystemProperty, value = PROP_TEMP_DIR)
         }),
         @Property(key = "storage.scope", value = "parent"),
-        @Property(key = "storage.role", value = "release")
+        @Property(key = "storage.role", value = "release"),
+        @Property(key = "storage.registry", value = "schema")
     })
     @WithFactoryConfiguration(factoryPid = "FileObjectStorage", name = "child-release", location = "?", properties = {
         @Property(key = "workspace.folder", value = "%s/child-release", templateArguments = {
             @TemplateArgument(source = ValueSource.SystemProperty, value = PROP_TEMP_DIR)
         }),
         @Property(key = "storage.scope", value = "child"),
-        @Property(key = "storage.role", value = "release")
+        @Property(key = "storage.role", value = "release"),
+        @Property(key = "storage.registry", value = "schema")
     })
     @WithFactoryConfiguration(factoryPid = "EObjectWorkflowService", name = "parent-workflow", location = "?", properties = {
         @Property(key = "scope", value = "parent"),
@@ -394,7 +401,7 @@ public class ScopeAwareWorkflowServiceTest {
         parentMeta.setUploadUser("parentUser");
         parentMeta.setScope("parent");
         parentMeta.setRole("release");
-        parentWorkflow.uploadToStage("release", parentPkg, parentMeta).getValue();
+        parentWorkflow.uploadToStageForRegistry("release", "schema", parentPkg, parentMeta).getValue();
 
         // Upload to child
         EPackage childPkg = ecoreFactory.createEPackage();
@@ -405,15 +412,15 @@ public class ScopeAwareWorkflowServiceTest {
         childMeta.setUploadUser("childUser");
         childMeta.setScope("child");
         childMeta.setRole("release");
-        childWorkflow.uploadToStage("release", childPkg, childMeta).getValue();
+        childWorkflow.uploadToStageForRegistry("release", "schema", childPkg, childMeta).getValue();
 
         // List from parent - should only see parent package
-        List<ObjectMetadata> parentList = parentWorkflow.listInStage("release");
+        List<ObjectMetadata> parentList = parentWorkflow.listInStageForRegistry("release", "schema");
         assertEquals(1, parentList.size(), "Parent should see 1 package");
         assertEquals("ParentPkg", parentList.get(0).getObjectName());
 
         // List from child - should see both child and parent packages
-        List<ObjectMetadata> childList = childWorkflow.listInStage("release");
+        List<ObjectMetadata> childList = childWorkflow.listInStageForRegistry("release", "schema");
         assertEquals(2, childList.size(), "Child should see 2 packages (local + parent)");
 
         boolean hasParent = childList.stream().anyMatch(m -> "ParentPkg".equals(m.getObjectName()));
@@ -450,14 +457,16 @@ public class ScopeAwareWorkflowServiceTest {
             @TemplateArgument(source = ValueSource.SystemProperty, value = PROP_TEMP_DIR)
         }),
         @Property(key = "storage.scope", value = "test-scope"),
-        @Property(key = "storage.role", value = "draft")
+        @Property(key = "storage.role", value = "draft"),
+        @Property(key = "storage.registry", value = "schema")
     })
     @WithFactoryConfiguration(factoryPid = "FileObjectStorage", name = "release-storage", location = "?", properties = {
             @Property(key = "workspace.folder", value = "%s/release-storage", templateArguments = {
                 @TemplateArgument(source = ValueSource.SystemProperty, value = PROP_TEMP_DIR)
             }),
             @Property(key = "storage.scope", value = "test-scope"),
-            @Property(key = "storage.role", value = "release")
+            @Property(key = "storage.role", value = "release"),
+            @Property(key = "storage.registry", value = "schema")
         })
     @WithFactoryConfiguration(factoryPid = "EObjectWorkflowService", name = "test-workflow", location = "?", properties = {
         @Property(key = "scope", value = "test-scope"),
@@ -481,25 +490,25 @@ public class ScopeAwareWorkflowServiceTest {
         metadata.setObjectName("OriginalName");
         metadata.setUploadUser("testUser");
 
-        workflow.uploadToStage("draft", pkg, metadata).getValue();
+        workflow.uploadToStageForRegistry("draft", "schema", pkg, metadata).getValue();
         String storageId = metadata.getObjectId();
 
         // Update package
         pkg.setName("UpdatedName");
-        workflow.uploadToStage("draft", pkg, metadata).getValue();
+        workflow.uploadToStageForRegistry("draft", "schema", pkg, metadata).getValue();
 
-        EObject updated = workflow.getContentFromStage("draft", storageId);
+        EObject updated = workflow.getContentFromStageForRegistry("draft", "schema", storageId);
         assertNotNull(updated);
         assertInstanceOf(EPackage.class, updated);
         EPackage updatedPackage = (EPackage) updated;        
         assertEquals("UpdatedName", updatedPackage.getName(), "Name should be updated");
 
         // Delete package
-        Boolean deleted = workflow.deleteFromStage("draft", storageId).getValue();
+        Boolean deleted = workflow.deleteFromStageForRegistry("draft", "schema", storageId).getValue();
         assertTrue(deleted, "Delete should return true");
 
         // Verify deleted
-        ObjectMetadata gone = workflow.getFromStage("draft", storageId);
+        ObjectMetadata gone = workflow.getFromStageForRegistry("draft", "schema", storageId);
         assertNull(gone, "Package should be deleted");
     }
 
@@ -523,7 +532,8 @@ public class ScopeAwareWorkflowServiceTest {
             @TemplateArgument(source = ValueSource.SystemProperty, value = PROP_TEMP_DIR)
         }),
         @Property(key = "storage.scope", value = "test-scope"),
-        @Property(key = "storage.role", value = "draft")
+        @Property(key = "storage.role", value = "draft"),
+        @Property(key = "storage.registry", value = "schema")
     })
     @WithFactoryConfiguration(factoryPid = "FileObjectStorage", name = "release-storage", location = "?", properties = {
         @Property(key = "workspace.folder", value = "%s/release-storage", templateArguments = {
@@ -558,7 +568,7 @@ public class ScopeAwareWorkflowServiceTest {
         metadata1.setObjectId("pkg1");
         metadata1.setScope("test-scope");
 
-        workflow.uploadToStage("release", pkg1, metadata1).getValue();
+        workflow.uploadToStageForRegistry("release", "schema", pkg1, metadata1).getValue();
         String objectId1 = metadata1.getObjectId();
         assertNotNull(objectId1);
 
@@ -574,7 +584,7 @@ public class ScopeAwareWorkflowServiceTest {
         metadata2.setObjectId("pkg2");
         metadata2.setScope("test-scope");
 
-        workflow.uploadToStage("release", pkg2, metadata2).getValue();
+        workflow.uploadToStageForRegistry("release", "schema", pkg2, metadata2).getValue();
         String objectId2 = metadata2.getObjectId();
         assertNotNull(objectId2);
 
@@ -590,19 +600,19 @@ public class ScopeAwareWorkflowServiceTest {
         draftMetadata.setObjectId("draft");
         draftMetadata.setScope("test-scope");
 
-        workflow.uploadToStage("draft", draftPkg, draftMetadata).getValue();
+        workflow.uploadToStageForRegistry("draft", "schema", draftPkg, draftMetadata).getValue();
 
         // Test getFromFinalStage
-        ObjectMetadata retrieved1 = workflow.getFromFinalStage(objectId1);
+        ObjectMetadata retrieved1 = workflow.getFromFinalStageForRegistry("schema",objectId1);
         assertNotNull(retrieved1, "Should retrieve package from final stage");
         assertEquals("Package1", retrieved1.getObjectName());
 
-        ObjectMetadata retrieved2 = workflow.getFromFinalStage(objectId2);
+        ObjectMetadata retrieved2 = workflow.getFromFinalStageForRegistry("schema",objectId2);
         assertNotNull(retrieved2, "Should retrieve package from final stage");
         assertEquals("Package2", retrieved2.getObjectName());
 
         // Test listInFinalStage
-        List<ObjectMetadata> finalStageList = workflow.listInFinalStage();
+        List<ObjectMetadata> finalStageList = workflow.listInFinalStageForRegistry("schema");
         assertEquals(2, finalStageList.size(), "Should list only packages in final (release) stage");
 
         boolean hasPkg1 = finalStageList.stream().anyMatch(m -> "Package1".equals(m.getObjectName()));
@@ -686,7 +696,7 @@ public class ScopeAwareWorkflowServiceTest {
         parentMetadata.setScope("parent-scope");
         parentMetadata.setRole("release");
 
-        parentWorkflow.uploadToStage("release", parentPkg, parentMetadata).getValue();
+        parentWorkflow.uploadToStageForRegistry("release", "schema", parentPkg, parentMetadata).getValue();
         String parentObjectId = parentMetadata.getObjectId();
         assertNotNull(parentObjectId);
 
@@ -703,27 +713,27 @@ public class ScopeAwareWorkflowServiceTest {
         childMetadata.setScope("child-scope");
         childMetadata.setRole("release");
         
-        childWorkflow.uploadToStage("release", childPkg, childMetadata).getValue();
+        childWorkflow.uploadToStageForRegistry("release", "schema", childPkg, childMetadata).getValue();
         String childObjectId = childMetadata.getObjectId();
         assertNotNull(childObjectId);
 
         // Test getFromFinalStage - child should find parent's package
-        ObjectMetadata parentFound = childWorkflow.getFromFinalStage(parentObjectId);
+        ObjectMetadata parentFound = childWorkflow.getFromFinalStageForRegistry("schema", parentObjectId);
         assertNotNull(parentFound, "Child should find parent package via getFromFinalStage");
         assertEquals("ParentPackage", parentFound.getObjectName());
 
         // Test getFromFinalStage - child should find its own package
-        ObjectMetadata childFound = childWorkflow.getFromFinalStage(childObjectId);
+        ObjectMetadata childFound = childWorkflow.getFromFinalStageForRegistry("schema", childObjectId);
         assertNotNull(childFound, "Child should find its own package via getFromFinalStage");
         assertEquals("ChildPackage", childFound.getObjectName());
 
         // Test listInFinalStage - parent should only see its own package
-        List<ObjectMetadata> parentList = parentWorkflow.listInFinalStage();
+        List<ObjectMetadata> parentList = parentWorkflow.listInFinalStageForRegistry("schema");
         assertEquals(1, parentList.size(), "Parent should see only its own package");
         assertEquals("ParentPackage", parentList.get(0).getObjectName());
 
         // Test listInFinalStage - child should see both packages
-        List<ObjectMetadata> childList = childWorkflow.listInFinalStage();
+        List<ObjectMetadata> childList = childWorkflow.listInFinalStageForRegistry("schema");
         assertEquals(2, childList.size(), "Child should see both its own and parent's package");
 
         boolean hasParent = childList.stream().anyMatch(m -> "ParentPackage".equals(m.getObjectName()));
@@ -750,14 +760,16 @@ public class ScopeAwareWorkflowServiceTest {
             @TemplateArgument(source = ValueSource.SystemProperty, value = PROP_TEMP_DIR)
         }),
         @Property(key = "storage.scope", value = "custom-scope"),
-        @Property(key = "storage.role", value = "draft")
+        @Property(key = "storage.role", value = "draft"),
+        @Property(key = "storage.registry", value = "schema")
     })
     @WithFactoryConfiguration(factoryPid = "FileObjectStorage", name = "approved-storage", location = "?", properties = {
             @Property(key = "workspace.folder", value = "%s/approved-storage", templateArguments = {
                 @TemplateArgument(source = ValueSource.SystemProperty, value = PROP_TEMP_DIR)
             }),
             @Property(key = "storage.scope", value = "custom-scope"),
-            @Property(key = "storage.role", value = "approved")
+            @Property(key = "storage.role", value = "approved"),
+            @Property(key = "storage.registry", value = "schema")
         })
     @WithFactoryConfiguration(factoryPid = "FileObjectStorage", name = "approved-storage", location = "?", properties = {
         @Property(key = "workspace.folder", value = "%s/approved-storage", templateArguments = {
@@ -799,7 +811,7 @@ public class ScopeAwareWorkflowServiceTest {
         draftMetadata.setObjectId("draft-pkg");
         draftMetadata.setScope("custom-scope");
 
-        workflow.uploadToStage("draft", draftPkg, draftMetadata).getValue();
+        workflow.uploadToStageForRegistry("draft", "schema", draftPkg, draftMetadata).getValue();
         String draftObjectId = draftMetadata.getObjectId();
         assertNotNull(draftObjectId);
 
@@ -815,21 +827,21 @@ public class ScopeAwareWorkflowServiceTest {
         approvedMetadata.setObjectId("approved-pkg");
         approvedMetadata.setScope("custom-scope");
 
-        workflow.uploadToStage("approved", approvedPkg, approvedMetadata).getValue();
+        workflow.uploadToStageForRegistry("approved", "schema", approvedPkg, approvedMetadata).getValue();
         String approvedObjectId = approvedMetadata.getObjectId();
         assertNotNull(approvedObjectId);
 
         // Test getFromFinalStage - should find approved package
-        ObjectMetadata approvedFound = workflow.getFromFinalStage(approvedObjectId);
+        ObjectMetadata approvedFound = workflow.getFromFinalStageForRegistry("schema",approvedObjectId);
         assertNotNull(approvedFound, "Should find package in final (approved) stage");
         assertEquals("ApprovedPackage", approvedFound.getObjectName());
 
         // Test getFromFinalStage - should also check final stage when object not in draft
-        ObjectMetadata foundViaFinal = workflow.getFromFinalStage(approvedObjectId);
+        ObjectMetadata foundViaFinal = workflow.getFromFinalStageForRegistry("schema",approvedObjectId);
         assertNotNull(foundViaFinal, "Should find approved package via getFromFinalStage");
 
         // Test listInFinalStage - should only list approved stage packages
-        List<ObjectMetadata> finalList = workflow.listInFinalStage();
+        List<ObjectMetadata> finalList = workflow.listInFinalStageForRegistry("schema");
         assertEquals(1, finalList.size(), "Should only list packages in final (approved) stage");
         assertEquals("ApprovedPackage", finalList.get(0).getObjectName());
 
@@ -860,14 +872,16 @@ public class ScopeAwareWorkflowServiceTest {
             @TemplateArgument(source = ValueSource.SystemProperty, value = PROP_TEMP_DIR)
         }),
         @Property(key = "storage.scope", value = "test-scope"),
-        @Property(key = "storage.role", value = "draft")
+        @Property(key = "storage.role", value = "draft"),
+        @Property(key = "storage.registry", value = "schema")
     })
     @WithFactoryConfiguration(factoryPid = "FileObjectStorage", name = "approved-storage", location = "?", properties = {
         @Property(key = "workspace.folder", value = "%s/approved-storage", templateArguments = {
             @TemplateArgument(source = ValueSource.SystemProperty, value = PROP_TEMP_DIR)
         }),
         @Property(key = "storage.scope", value = "test-scope"),
-        @Property(key = "storage.role", value = "approved")
+        @Property(key = "storage.role", value = "approved"),
+        @Property(key = "storage.registry", value = "schema")
     })
     @WithFactoryConfiguration(factoryPid = "FileObjectStorage", name = "release-storage", location = "?", properties = {
         @Property(key = "workspace.folder", value = "%s/release-storage", templateArguments = {
@@ -899,18 +913,18 @@ public class ScopeAwareWorkflowServiceTest {
         metadata.setUploadUser("testUser");
         metadata.setObjectName("TestPackage");
 
-        workflow.uploadToStage("draft", pkg, metadata).getValue();
+        workflow.uploadToStageForRegistry("draft", "schema", pkg, metadata).getValue();
         String storageId = metadata.getObjectId();
         assertNotNull(storageId);
 
         // Verify in Draft stage
-        ObjectMetadata draft = workflow.getFromStage("draft", storageId);
+        ObjectMetadata draft = workflow.getFromStageForRegistry("draft", "schema", storageId);
         assertNotNull(draft, "Should exist in Draft stage");
 
         // Try to transition directly from draft to release (skipping approved) - should throw exception
         IllegalStateException exception = assertThrows(
             IllegalStateException.class,
-            () -> workflow.transitionToStage(storageId, "draft", "release"),
+            () -> workflow.transitionToStageForRegistry(storageId, "draft", "release", "schema"),
             "Should throw IllegalStateException when trying to skip stages"
         );
 
@@ -922,11 +936,11 @@ public class ScopeAwareWorkflowServiceTest {
             "Exception message should mention target stage");
 
         // Verify object is still in draft stage (unchanged)
-        ObjectMetadata stillInDraft = workflow.getFromStage("draft", storageId);
+        ObjectMetadata stillInDraft = workflow.getFromStageForRegistry("draft", "schema", storageId);
         assertNotNull(stillInDraft, "Object should still be in draft stage after failed transition");
 
         // Verify object is NOT in release stage
-        ObjectMetadata notInRelease = workflow.getFromStage("release", storageId);
+        ObjectMetadata notInRelease = workflow.getFromStageForRegistry("release", "schema", storageId);
         assertNull(notInRelease, "Object should not be in release stage after failed transition");
     }
 
@@ -947,14 +961,16 @@ public class ScopeAwareWorkflowServiceTest {
             @TemplateArgument(source = ValueSource.SystemProperty, value = PROP_TEMP_DIR)
         }),
         @Property(key = "storage.scope", value = "test-scope"),
-        @Property(key = "storage.role", value = "draft")
+        @Property(key = "storage.role", value = "draft"),
+        @Property(key = "storage.registry", value = "schema")
     })
     @WithFactoryConfiguration(factoryPid = "FileObjectStorage", name = "approved-storage", location = "?", properties = {
         @Property(key = "workspace.folder", value = "%s/approved-storage", templateArguments = {
             @TemplateArgument(source = ValueSource.SystemProperty, value = PROP_TEMP_DIR)
         }),
         @Property(key = "storage.scope", value = "test-scope"),
-        @Property(key = "storage.role", value = "approved")
+        @Property(key = "storage.role", value = "approved"),
+        @Property(key = "storage.registry", value = "schema")
     })
     @WithFactoryConfiguration(factoryPid = "FileObjectStorage", name = "release-storage", location = "?", properties = {
         @Property(key = "workspace.folder", value = "%s/release-storage", templateArguments = {
@@ -987,33 +1003,33 @@ public class ScopeAwareWorkflowServiceTest {
         metadata.setUploadUser("testUser");
         metadata.setObjectName("SequentialPackage");
 
-        workflow.uploadToStage("draft", pkg, metadata).getValue();
+        workflow.uploadToStageForRegistry("draft", "schema", pkg, metadata).getValue();
         String storageId = metadata.getObjectId();
 
         // Verify in Draft stage
-        ObjectMetadata draft = workflow.getFromStage("draft", storageId);
+        ObjectMetadata draft = workflow.getFromStageForRegistry("draft", "schema", storageId);
         assertNotNull(draft, "Should exist in Draft stage");
 
         // Valid transition: draft -> approved
-        ObjectMetadata approved = workflow.transitionToStage(storageId, "draft", "approved");
+        ObjectMetadata approved = workflow.transitionToStageForRegistry(storageId, "draft", "approved", "schema");
         assertNotNull(approved, "Transition to approved should succeed");
 
         // Verify in approved stage and not in draft (due to delete.after.transition=true)
-        ObjectMetadata draftGone = workflow.getFromStage("draft", storageId);
+        ObjectMetadata draftGone = workflow.getFromStageForRegistry("draft", "schema", storageId);
         assertNull(draftGone, "Should no longer exist in Draft stage");
 
-        ObjectMetadata approvedCheck = workflow.getFromStage("approved", storageId);
+        ObjectMetadata approvedCheck = workflow.getFromStageForRegistry("approved", "schema", storageId);
         assertNotNull(approvedCheck, "Should exist in Approved stage");
 
         // Valid transition: approved -> release
-        ObjectMetadata released = workflow.transitionToStage(storageId, "approved", "release");
+        ObjectMetadata released = workflow.transitionToStageForRegistry(storageId, "approved", "release", "schema");
         assertNotNull(released, "Transition to release should succeed");
 
         // Verify in release stage and not in approved
-        ObjectMetadata approvedGone = workflow.getFromStage("approved", storageId);
+        ObjectMetadata approvedGone = workflow.getFromStageForRegistry("approved", "schema", storageId);
         assertNull(approvedGone, "Should no longer exist in Approved stage");
 
-        ObjectMetadata releaseCheck = workflow.getFromStage("release", storageId);
+        ObjectMetadata releaseCheck = workflow.getFromStageForRegistry("release", "schema", storageId);
         assertNotNull(releaseCheck, "Should exist in Release stage");
         assertEquals("SequentialPackage", releaseCheck.getObjectName());
     }
@@ -1034,7 +1050,8 @@ public class ScopeAwareWorkflowServiceTest {
             @TemplateArgument(source = ValueSource.SystemProperty, value = PROP_TEMP_DIR)
         }),
         @Property(key = "storage.scope", value = "test-scope"),
-        @Property(key = "storage.role", value = "draft")
+        @Property(key = "storage.role", value = "draft"),
+        @Property(key = "storage.registry", value = "schema")
     })
     @WithFactoryConfiguration(factoryPid = "FileObjectStorage", name = "release-storage", location = "?", properties = {
         @Property(key = "workspace.folder", value = "%s/release-storage", templateArguments = {
@@ -1066,13 +1083,13 @@ public class ScopeAwareWorkflowServiceTest {
         metadata.setUploadUser("testUser");
         metadata.setObjectName("TestPackage");
 
-        workflow.uploadToStage("draft", pkg, metadata).getValue();
+        workflow.uploadToStageForRegistry("draft", "schema", pkg, metadata).getValue();
         String storageId = metadata.getObjectId();
 
         // Try to transition to non-existent stage
         IllegalStateException exception = assertThrows(
             IllegalStateException.class,
-            () -> workflow.transitionToStage(storageId, "draft", "nonexistent"),
+            () -> workflow.transitionToStageForRegistry(storageId, "draft", "schema", "nonexistent"),
             "Should throw IllegalStateException when transitioning to non-existent stage"
         );
 
@@ -1096,7 +1113,8 @@ public class ScopeAwareWorkflowServiceTest {
             @TemplateArgument(source = ValueSource.SystemProperty, value = PROP_TEMP_DIR)
         }),
         @Property(key = "storage.scope", value = "test-scope"),
-        @Property(key = "storage.role", value = "draft")
+        @Property(key = "storage.role", value = "draft"),
+        @Property(key = "storage.registry", value = "schema")
     })
     @WithFactoryConfiguration(factoryPid = "FileObjectStorage", name = "release-storage", location = "?", properties = {
         @Property(key = "workspace.folder", value = "%s/release-storage", templateArguments = {
@@ -1128,17 +1146,17 @@ public class ScopeAwareWorkflowServiceTest {
         metadata.setUploadUser("testUser");
         metadata.setObjectName("ReleasedPackage");
 
-        workflow.uploadToStage("release", pkg, metadata).getValue();
+        workflow.uploadToStageForRegistry("release", "schema", pkg, metadata).getValue();
         String storageId = metadata.getObjectId();
 
         // Verify in Release stage
-        ObjectMetadata release = workflow.getFromStage("release", storageId);
+        ObjectMetadata release = workflow.getFromStageForRegistry("release", "schema", storageId);
         assertNotNull(release, "Should exist in Release stage");
 
         // Try backward transition: release -> draft (should fail)
         IllegalStateException exception = assertThrows(
             IllegalStateException.class,
-            () -> workflow.transitionToStage(storageId, "release", "draft"),
+            () -> workflow.transitionToStageForRegistry(storageId, "release", "schema", "draft"),
             "Should throw IllegalStateException when trying backward transition"
         );
 
@@ -1146,7 +1164,7 @@ public class ScopeAwareWorkflowServiceTest {
             "Exception message should indicate transition is not allowed");
 
         // Verify object is still in release stage
-        ObjectMetadata stillInRelease = workflow.getFromStage("release", storageId);
+        ObjectMetadata stillInRelease = workflow.getFromStageForRegistry("release", "schema", storageId);
         assertNotNull(stillInRelease, "Object should still be in release stage after failed transition");
     }
 
@@ -1170,14 +1188,16 @@ public class ScopeAwareWorkflowServiceTest {
                 @TemplateArgument(source = ValueSource.SystemProperty, value = PROP_TEMP_DIR)
             }),
             @Property(key = "storage.scope", value = "testscope"),
-            @Property(key = "storage.role", value = "release")
+            @Property(key = "storage.role", value = "release"),
+            @Property(key = "storage.registry", value = "schema")
         })
     @WithFactoryConfiguration(factoryPid = "FileObjectStorage", name = "draft-storage", location = "?", properties = {
         @Property(key = "workspace.folder", value = "%s/draft-storage", templateArguments = {
             @TemplateArgument(source = ValueSource.SystemProperty, value = PROP_TEMP_DIR)
         }),
         @Property(key = "storage.scope", value = "testscope"),
-        @Property(key = "storage.role", value = "draft")
+        @Property(key = "storage.role", value = "draft"),
+        @Property(key = "storage.registry", value = "schema")
     })
     @WithFactoryConfiguration(factoryPid = "EObjectWorkflowService", name = "test-workflow", location = "?", properties = {
         @Property(key = "scope", value = "testscope"),
@@ -1200,7 +1220,7 @@ public class ScopeAwareWorkflowServiceTest {
         ObjectMetadata sensorMeta = managementFactory.createObjectMetadata();
         sensorMeta.setObjectName("SensorModel");
         sensorMeta.setUploadUser("testUser");
-        workflow.uploadToStage("draft", sensorPkg, sensorMeta).getValue();
+        workflow.uploadToStageForRegistry("draft", "schema", sensorPkg, sensorMeta).getValue();
 
         EPackage actuatorPkg = ecoreFactory.createEPackage();
         actuatorPkg.setName("ActuatorModel");
@@ -1208,7 +1228,7 @@ public class ScopeAwareWorkflowServiceTest {
         ObjectMetadata actuatorMeta = managementFactory.createObjectMetadata();
         actuatorMeta.setObjectName("ActuatorModel");
         actuatorMeta.setUploadUser("testUser");
-        workflow.uploadToStage("draft", actuatorPkg, actuatorMeta).getValue();
+        workflow.uploadToStageForRegistry("draft", "schema", actuatorPkg, actuatorMeta).getValue();
 
         EPackage devicePkg = ecoreFactory.createEPackage();
         devicePkg.setName("DeviceModel");
@@ -1216,29 +1236,29 @@ public class ScopeAwareWorkflowServiceTest {
         ObjectMetadata deviceMeta = managementFactory.createObjectMetadata();
         deviceMeta.setObjectName("DeviceModel");
         deviceMeta.setUploadUser("testUser");
-        workflow.uploadToStage("draft", devicePkg, deviceMeta).getValue();
+        workflow.uploadToStageForRegistry("draft", "schema", devicePkg, deviceMeta).getValue();
 
         // Test exact name match
-        List<ObjectMetadata> sensorList = workflow.listInStageByName("draft", "SensorModel");
+        List<ObjectMetadata> sensorList = workflow.listInStageForRegistryByName("draft", "schema", "SensorModel");
         assertEquals(1, sensorList.size(), "Should find exactly one SensorModel");
         assertEquals("SensorModel", sensorList.get(0).getObjectName());
 
         // Test wildcard match - find all models starting with "Sensor"
-        List<ObjectMetadata> sensorWildcard = workflow.listInStageByName("draft", "Sensor*");
+        List<ObjectMetadata> sensorWildcard = workflow.listInStageForRegistryByName("draft", "schema", "Sensor*");
         assertEquals(1, sensorWildcard.size(), "Should find 1 package starting with 'Sensor'");
         assertTrue(sensorWildcard.stream().allMatch(m -> m.getObjectName().startsWith("Sensor")));
 
         // Test wildcard match - find all models starting with "Device"
-        List<ObjectMetadata> deviceWildcard = workflow.listInStageByName("draft", "Device*");
+        List<ObjectMetadata> deviceWildcard = workflow.listInStageForRegistryByName("draft", "schema", "Device*");
         assertEquals(1, deviceWildcard.size(), "Should find 1 package starting with 'Device'");
         assertTrue(deviceWildcard.stream().allMatch(m -> m.getObjectName().startsWith("Device")));
 
         // Test non-existent name
-        List<ObjectMetadata> nonExistent = workflow.listInStageByName("draft", "NonExistent");
+        List<ObjectMetadata> nonExistent = workflow.listInStageForRegistryByName("draft", "schema", "NonExistent");
         assertTrue(nonExistent.isEmpty(), "Should return empty list for non-existent name");
 
         // Test non-matching wildcard
-        List<ObjectMetadata> nonMatching = workflow.listInStageByName("draft", "Other*");
+        List<ObjectMetadata> nonMatching = workflow.listInStageForRegistryByName("draft", "schema", "Other*");
         assertTrue(nonMatching.isEmpty(), "Should return empty list for non-matching wildcard");
     }
 
@@ -1263,7 +1283,8 @@ public class ScopeAwareWorkflowServiceTest {
             @TemplateArgument(source = ValueSource.SystemProperty, value = PROP_TEMP_DIR)
         }),
         @Property(key = "storage.scope", value = "grandparent"),
-        @Property(key = "storage.role", value = "release")
+        @Property(key = "storage.role", value = "release"),
+        @Property(key = "storage.registry", value = "schema")
     })
     // Parent storage
     @WithFactoryConfiguration(factoryPid = "FileObjectStorage", name = "parent-release", location = "?", properties = {
@@ -1271,7 +1292,8 @@ public class ScopeAwareWorkflowServiceTest {
             @TemplateArgument(source = ValueSource.SystemProperty, value = PROP_TEMP_DIR)
         }),
         @Property(key = "storage.scope", value = "parent"),
-        @Property(key = "storage.role", value = "release")
+        @Property(key = "storage.role", value = "release"),
+        @Property(key = "storage.registry", value = "schema")
     })
     // Child storage
     @WithFactoryConfiguration(factoryPid = "FileObjectStorage", name = "child-release", location = "?", properties = {
@@ -1279,7 +1301,8 @@ public class ScopeAwareWorkflowServiceTest {
             @TemplateArgument(source = ValueSource.SystemProperty, value = PROP_TEMP_DIR)
         }),
         @Property(key = "storage.scope", value = "child"),
-        @Property(key = "storage.role", value = "release")
+        @Property(key = "storage.role", value = "release"),
+        @Property(key = "storage.registry", value = "schema")
     })
     // Grandparent workflow
     @WithFactoryConfiguration(factoryPid = "EObjectWorkflowService", name = "grandparent-workflow", location = "?", properties = {
@@ -1325,11 +1348,11 @@ public class ScopeAwareWorkflowServiceTest {
         ObjectMetadata grandparentMeta = managementFactory.createObjectMetadata();
         grandparentMeta.setObjectName("GrandparentPkg");
         grandparentMeta.setUploadUser("gpUser");
-        grandparentWorkflow.uploadToStage("release", grandparentPkg, grandparentMeta).getValue();
+        grandparentWorkflow.uploadToStageForRegistry("release", "schema", grandparentPkg, grandparentMeta).getValue();
         String storageId = grandparentMeta.getObjectId();
 
         // Child should find grandparent's package
-        ObjectMetadata found = childWorkflow.getFromStage("release", storageId);
+        ObjectMetadata found = childWorkflow.getFromStageForRegistry("release", "schema", storageId);
         assertNotNull(found, "Child should find grandparent package via two-level delegation");
         assertEquals("GrandparentPkg", found.getObjectName());
 //        assertTrue(found.isReadOnly(), "Grandparent package should be read-only");

@@ -602,6 +602,26 @@ public class ManagementApiPackageImpl extends EPackageImpl implements Management
 	 * @generated
 	 */
 	@Override
+	public EOperation getEObjectRegistryService__FindByScopeRegistryAndRole__String_String_String() {
+		return eObjectRegistryServiceEClass.getEOperations().get(17);
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
+	public EOperation getEObjectRegistryService__FindByScopeRegistryRoleAndName__String_String_String_String() {
+		return eObjectRegistryServiceEClass.getEOperations().get(18);
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
 	public EClass getStorageRegistry() {
 		return storageRegistryEClass;
 	}
@@ -744,6 +764,8 @@ public class ManagementApiPackageImpl extends EPackageImpl implements Management
 		createEOperation(eObjectRegistryServiceEClass, EOBJECT_REGISTRY_SERVICE___GET_REGISTRY_STATISTICS);
 		createEOperation(eObjectRegistryServiceEClass, EOBJECT_REGISTRY_SERVICE___FIND_BY_SCOPE_AND_ROLE__STRING_STRING);
 		createEOperation(eObjectRegistryServiceEClass, EOBJECT_REGISTRY_SERVICE___FIND_BY_SCOPE_ROLE_AND_NAME__STRING_STRING_STRING);
+		createEOperation(eObjectRegistryServiceEClass, EOBJECT_REGISTRY_SERVICE___FIND_BY_SCOPE_REGISTRY_AND_ROLE__STRING_STRING_STRING);
+		createEOperation(eObjectRegistryServiceEClass, EOBJECT_REGISTRY_SERVICE___FIND_BY_SCOPE_REGISTRY_ROLE_AND_NAME__STRING_STRING_STRING_STRING);
 
 		storageRegistryEClass = createEClass(STORAGE_REGISTRY);
 		createEOperation(storageRegistryEClass, STORAGE_REGISTRY___GET_STORAGE_BY_ROLE__STRING);
@@ -1105,6 +1127,25 @@ public class ManagementApiPackageImpl extends EPackageImpl implements Management
 
 		op = initEOperation(getEObjectRegistryService__FindByScopeRoleAndName__String_String_String(), null, "findByScopeRoleAndName", 0, 1, IS_UNIQUE, IS_ORDERED);
 		addEParameter(op, ecorePackage.getEString(), "scope", 1, 1, IS_UNIQUE, IS_ORDERED);
+		addEParameter(op, ecorePackage.getEString(), "role", 1, 1, IS_UNIQUE, IS_ORDERED);
+		addEParameter(op, ecorePackage.getEString(), "name", 1, 1, IS_UNIQUE, IS_ORDERED);
+		g1 = createEGenericType(theManagementPackage.getList());
+		g2 = createEGenericType(theManagementPackage.getObjectMetadata());
+		g1.getETypeArguments().add(g2);
+		initEOperation(op, g1);
+
+		op = initEOperation(getEObjectRegistryService__FindByScopeRegistryAndRole__String_String_String(), null, "findByScopeRegistryAndRole", 0, 1, IS_UNIQUE, IS_ORDERED);
+		addEParameter(op, ecorePackage.getEString(), "scope", 1, 1, IS_UNIQUE, IS_ORDERED);
+		addEParameter(op, ecorePackage.getEString(), "registry", 1, 1, IS_UNIQUE, IS_ORDERED);
+		addEParameter(op, ecorePackage.getEString(), "role", 1, 1, IS_UNIQUE, IS_ORDERED);
+		g1 = createEGenericType(theManagementPackage.getList());
+		g2 = createEGenericType(theManagementPackage.getObjectMetadata());
+		g1.getETypeArguments().add(g2);
+		initEOperation(op, g1);
+
+		op = initEOperation(getEObjectRegistryService__FindByScopeRegistryRoleAndName__String_String_String_String(), null, "findByScopeRegistryRoleAndName", 0, 1, IS_UNIQUE, IS_ORDERED);
+		addEParameter(op, ecorePackage.getEString(), "scope", 1, 1, IS_UNIQUE, IS_ORDERED);
+		addEParameter(op, ecorePackage.getEString(), "registry", 1, 1, IS_UNIQUE, IS_ORDERED);
 		addEParameter(op, ecorePackage.getEString(), "role", 1, 1, IS_UNIQUE, IS_ORDERED);
 		addEParameter(op, ecorePackage.getEString(), "name", 1, 1, IS_UNIQUE, IS_ORDERED);
 		g1 = createEGenericType(theManagementPackage.getList());

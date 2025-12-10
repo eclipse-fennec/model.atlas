@@ -62,7 +62,7 @@ import jakarta.ws.rs.core.Response.Status;
  */
 @RequireRuntime
 @JakartarsResource
-@Component(service = AllModelsResource.class, scope = ServiceScope.PROTOTYPE)
+//@Component(service = AllModelsResource.class, scope = ServiceScope.PROTOTYPE)
 @Path("/models")
 public class AllModelsResource {
 

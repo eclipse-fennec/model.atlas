@@ -16,7 +16,6 @@ package org.eclipse.fennec.model.atlas.workflow.impl;
 import static java.util.Objects.requireNonNull;
 import static java.util.Objects.requireNonNullElse;
 
-import java.lang.reflect.InvocationTargetException;
 import java.time.Instant;
 import java.util.Collections;
 import java.util.LinkedList;
@@ -28,17 +27,13 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import org.eclipse.emf.ecore.EObject;
-import org.eclipse.emf.ecore.EStructuralFeature;
 import org.eclipse.fennec.model.atlas.mgmt.annotations.RequireEObjectRegistry;
 import org.eclipse.fennec.model.atlas.mgmt.annotations.RequireEObjectStorage;
 import org.eclipse.fennec.model.atlas.mgmt.api.EObjectRegistryService;
 import org.eclipse.fennec.model.atlas.mgmt.api.EObjectStorageService;
 import org.eclipse.fennec.model.atlas.mgmt.collector.EObjectStorageServiceCollector;
-import org.eclipse.fennec.model.atlas.mgmt.management.ManagementFactory;
 import org.eclipse.fennec.model.atlas.mgmt.management.ManagementPackage;
 import org.eclipse.fennec.model.atlas.mgmt.management.ObjectMetadata;
-import org.eclipse.fennec.model.atlas.mgmt.management.ObjectQuery;
-import org.eclipse.fennec.model.atlas.mgmt.management.ObjectStatus;
 import org.eclipse.fennec.model.atlas.wf.workflowapi.EObjectWorkflowService;
 import org.eclipse.fennec.model.atlas.workflow.PostReleaseActionService;
 import org.osgi.service.component.annotations.Activate;
@@ -84,7 +79,6 @@ public class EObjectWorkflowServiceImpl<T extends EObject> implements EObjectWor
 
 	private final PromiseFactory promiseFactory = new PromiseFactory(null);
 	private final Map<String, ReentrantLock> objectLocks = new ConcurrentHashMap<>();
-	private final ManagementFactory managementFactory = ManagementFactory.eINSTANCE;
 
 	private WorkflowServiceConfig config;
 
@@ -104,9 +98,9 @@ public class EObjectWorkflowServiceImpl<T extends EObject> implements EObjectWor
 	@Activate
 	void activate(WorkflowServiceConfig config) {
 		this.config = requireNonNull(config, "Configuration cannot be null");
-		requireTrue(isStageAllowed(config.final_stage()), String.format("Final Stage %s should also be part of the stages config property", config.final_stage()));
-		for(String writableStage : config.writable_stages()) requireTrue(isStageAllowed(writableStage), String.format("Writable Stage %s should also be part of the stages config property", writableStage));
-		
+		WorkflowServiceHelper.requireTrue(WorkflowServiceHelper.isStageAllowed(config,config.final_stage()), String.format("Final Stage %s should also be part of the stages config property", config.final_stage()));
+		for(String writableStage : config.writable_stages()) WorkflowServiceHelper.requireTrue(WorkflowServiceHelper.isStageAllowed(config,writableStage), String.format("Writable Stage %s should also be part of the stages config property", writableStage));
+
 		requireNonNull(registryService, "Registry service must be available");
 		requireNonNull(postReleaseActionService, "Post-release action service must be available");
 
@@ -120,60 +114,57 @@ public class EObjectWorkflowServiceImpl<T extends EObject> implements EObjectWor
 		logger.info("Deactivated EObjectWorkflowService: " + config.workflow_id());
 	}
 
-
-
-
-
-
 	/* 
 	 * (non-Javadoc)
-	 * @see org.eclipse.fennec.model.atlas.wf.workflowapi.EObjectWorkflowService#uploadToStage(java.lang.String, org.eclipse.emf.ecore.EObject, org.eclipse.fennec.model.atlas.mgmt.management.ObjectMetadata)
+	 * @see org.eclipse.fennec.model.atlas.wf.workflowapi.EObjectWorkflowService#uploadToStageForRegistry(java.lang.String, java.lang.String, org.eclipse.emf.ecore.EObject, org.eclipse.fennec.model.atlas.mgmt.management.ObjectMetadata)
 	 */
 	@Override
-	public Promise<ObjectMetadata> uploadToStage(String stage, T object, ObjectMetadata metadata) {
+	public Promise<ObjectMetadata> uploadToStageForRegistry(String stage, String registry, T object,
+			ObjectMetadata metadata) {
 		return promiseFactory.submit(() -> {
 			requireNonNull(object, "Object cannot be null");
 			requireNonNull(metadata, "Metadata cannot be null");
-			requireTrue(isStageAllowed(stage), String.format("Stage %s is not supported from WorkflowService", stage));
+			validateInput(stage, registry);
 
 			metadata.setLastChangeTime(Instant.now());
 			metadata.setRole(stage);
+			metadata.setRegistry(registry);
 			metadata.setScope(config.scope());
 
 			requireNonNull(metadata.getObjectName());
 
-			EObjectStorageService<T> storageService = getStorageByStage(stage);
+			EObjectStorageService<T> storageService = getStorageService(stage, registry);
 			if(storageService == null) {
 				logger.severe(String.format("Cannot retrieve EObjectStorageService for %s. Object %s cannot be saved", stage, metadata.getObjectId()));
 				return null;
 			}
-			ObjectMetadata objectMetadata = getPromiseValue(storageService.storeObject(metadata.getObjectId(), object, metadata));
+			ObjectMetadata objectMetadata = WorkflowServiceHelper.getPromiseValue(storageService.storeObject(metadata.getObjectId(), object, metadata));
 			return objectMetadata;
 		});
 	}
 
 	/* 
 	 * (non-Javadoc)
-	 * @see org.eclipse.fennec.model.atlas.wf.workflowapi.EObjectWorkflowService#getFromStage(java.lang.String, java.lang.String)
+	 * @see org.eclipse.fennec.model.atlas.wf.workflowapi.EObjectWorkflowService#getFromStageForRegistry(java.lang.String, java.lang.String, java.lang.String)
 	 */
 	@Override
-	public ObjectMetadata getFromStage(String stage, String objectId) {
+	public ObjectMetadata getFromStageForRegistry(String stage, String registry, String objectId) {
 		requireNonNull(objectId, "Object ID cannot be null");
-		requireTrue(isStageAllowed(stage), String.format("Stage %s is not supported from WorkflowService", stage));
-		EObjectStorageService<T> storageService = getStorageByStage(stage);
+		validateInput(stage, registry);
+		EObjectStorageService<T> storageService = getStorageService(stage, registry);
 		if(storageService != null) {
-			ObjectMetadata localMetadata = getPromiseValue(storageService.retrieveMetadata(objectId));
+			ObjectMetadata localMetadata = WorkflowServiceHelper.getPromiseValue(storageService.retrieveMetadata(objectId));
 			if(localMetadata == null && parentWorkflowService != null) {
-				logger.warning(String.format("Object %s not found for scope %s. Looking in the parent scope %s final stage", objectId, config.scope(), config.parent_scope()));
-//				we might want to set a read-only flag on the parent metadata here
-				ObjectMetadata parentMetadata = parentWorkflowService.getFromFinalStage(objectId);
+				logger.warning(String.format("Object %s not found for scope '%s', registry '%s' and stage '%s'. Looking in the parent scope '%s', registry '%s' and final stage", objectId, config.scope(), registry, stage, config.parent_scope(), registry));
+				//				we might want to set a read-only flag on the parent metadata here
+				ObjectMetadata parentMetadata = parentWorkflowService.getFromFinalStageForRegistry(registry, objectId);
 				if(parentMetadata != null) parentMetadata.setIsReadOnly(true);
 				return parentMetadata;
 			} else if(localMetadata == null) {
 				return localMetadata;
 			}
-//			if stage is not writable we might want to set a read-only flag (?)
-			if(!isStageWritable(stage)) localMetadata.setIsReadOnly(true);
+			//			if stage is not writable we might want to set a read-only flag (?)
+			if(!WorkflowServiceHelper.isStageWritable(config,stage)) localMetadata.setIsReadOnly(true);
 			return localMetadata;
 		}
 		return null;
@@ -181,81 +172,82 @@ public class EObjectWorkflowServiceImpl<T extends EObject> implements EObjectWor
 
 	/* 
 	 * (non-Javadoc)
-	 * @see org.eclipse.fennec.model.atlas.wf.workflowapi.EObjectWorkflowService#getFromFinalStage(java.lang.String)
+	 * @see org.eclipse.fennec.model.atlas.wf.workflowapi.EObjectWorkflowService#getFromFinalStageForRegistry(java.lang.String, java.lang.String)
 	 */
 	@Override
-	public ObjectMetadata getFromFinalStage(String objectId) {
-		return getFromStage(config.final_stage(), objectId);
+	public ObjectMetadata getFromFinalStageForRegistry(String registry, String objectId) {
+		return getFromStageForRegistry(config.final_stage(), registry, objectId);
 	}
-
 
 	/* 
 	 * (non-Javadoc)
-	 * @see org.eclipse.fennec.model.atlas.wf.workflowapi.EObjectWorkflowService#getContentFromStage(java.lang.String, java.lang.String)
+	 * @see org.eclipse.fennec.model.atlas.wf.workflowapi.EObjectWorkflowService#getContentFromStageForRegistry(java.lang.String, java.lang.String, java.lang.String)
 	 */
 	@Override
-	public T getContentFromStage(String stage, String objectId) {
+	public T getContentFromStageForRegistry(String stage, String registry, String objectId) {
 		requireNonNull(objectId, "Object ID cannot be null");
-		requireTrue(isStageAllowed(stage), String.format("Stage %s is not supported from WorkflowService", stage));
-		EObjectStorageService<T> storageService = getStorageByStage(stage);
-		if(storageService != null) return getPromiseValue(storageService.retrieveObject(objectId));
+		validateInput(stage, registry);
+		EObjectStorageService<T> storageService = getStorageService(stage, registry);
+		if(storageService != null) return WorkflowServiceHelper.getPromiseValue(storageService.retrieveObject(objectId));
 		return null;
 	}
 
 	/* 
 	 * (non-Javadoc)
-	 * @see org.eclipse.fennec.model.atlas.wf.workflowapi.EObjectWorkflowService#updateInStage(java.lang.String, org.eclipse.emf.ecore.EObject, java.lang.String, java.lang.String)
+	 * @see org.eclipse.fennec.model.atlas.wf.workflowapi.EObjectWorkflowService#updateInStageForRegistry(java.lang.String, java.lang.String, org.eclipse.emf.ecore.EObject, java.lang.String, java.lang.String)
 	 */
 	@Override
-	public Promise<ObjectMetadata> updateInStage(String stage, T updatedObject, String objectId, String updatedVersion) {
+	public Promise<ObjectMetadata> updateInStageForRegistry(String stage, String registry, T updatedObject,
+			String objectId, String updatedVersion) {
 		return promiseFactory.submit(() -> {
 			requireNonNull(objectId, "Object ID cannot be null");
 			requireNonNull(updatedObject, "Updated object cannot be null");
-			requireTrue(isStageAllowed(stage), String.format("Stage %s is not supported from WorkflowService", stage));
-			requireTrue(isStageWritable(stage), String.format("Stage %s is not writable for this WorkflowService", stage));
-			
-			EObjectStorageService<T> storageService = getStorageByStage(stage);
+			validateInput(stage, registry);
+			WorkflowServiceHelper.requireTrue(WorkflowServiceHelper.isStageWritable(config,stage), String.format("Stage %s is not writable for this WorkflowService", stage));
+
+			EObjectStorageService<T> storageService = getStorageService(stage, registry);
 			if(storageService == null) {
-				logger.severe(String.format("Cannot retrieve EObjectStorageService for %s. Object %s cannot be updated", stage, objectId));
+				logger.severe(String.format("Cannot retrieve EObjectStorageService for scope '%s', registry '%s' and stage '%s'. Object %s cannot be updated", config.scope(), registry, stage, objectId));
 				return null;
 			}
 
 			// Get current metadata
-			ObjectMetadata metadata = getPromiseValue(storageService.retrieveMetadata(objectId));		
+			ObjectMetadata metadata = WorkflowServiceHelper.getPromiseValue(storageService.retrieveMetadata(objectId));		
 			metadata.setLastChangeTime(Instant.now());
 			metadata.setRole(stage);
+			metadata.setRegistry(registry);
 			metadata.setVersion(updatedVersion);
-			
+
 			// Update the object in draft storage
-			metadata = getPromiseValue(storageService.storeObject(objectId, updatedObject, metadata));
+			metadata = WorkflowServiceHelper.getPromiseValue(storageService.storeObject(objectId, updatedObject, metadata));
 			return metadata;
 		});
 	}
 
 	/* 
 	 * (non-Javadoc)
-	 * @see org.eclipse.fennec.model.atlas.wf.workflowapi.EObjectWorkflowService#deleteFromStage(java.lang.String, java.lang.String)
+	 * @see org.eclipse.fennec.model.atlas.wf.workflowapi.EObjectWorkflowService#deleteFromStageForRegistry(java.lang.String, java.lang.String, java.lang.String)
 	 */
 	@Override
-	public Promise<Boolean> deleteFromStage(String stage, String objectId) {
+	public Promise<Boolean> deleteFromStageForRegistry(String stage, String registry, String objectId) {
 		return promiseFactory.submit(() -> {
 			requireNonNull(objectId, "Object ID cannot be null");
-			requireTrue(isStageAllowed(stage), String.format("Stage %s is not supported from WorkflowService", stage));
+			validateInput(stage, registry);
 
-			EObjectStorageService<T> storageService = getStorageByStage(stage);
+			EObjectStorageService<T> storageService = getStorageService(stage, registry);
 			if(storageService == null) {
-				logger.severe(String.format("Cannot retrieve EObjectStorageService for %s. Object %s cannot be deleted", stage, objectId));
+				logger.severe(String.format("Cannot retrieve EObjectStorageService for scope '%s', registry '%s' and stage '%s'. Object %s cannot be deleted", config.scope(), registry, stage, objectId));
 				return false;
 			}
 
-			// Verify it exists and is in draft status
-			ObjectMetadata metadata = getPromiseValue(storageService.retrieveMetadata(objectId));
-			if (metadata.getStatus() != ObjectStatus.DRAFT && metadata.getStatus() != ObjectStatus.REJECTED) {
-				throw new IllegalStateException("Can only delete objects in DRAFT or REJECTED status");
+			// Verify it exists
+			ObjectMetadata metadata = WorkflowServiceHelper.getPromiseValue(storageService.retrieveMetadata(objectId));
+			if(metadata == null) {
+				throw new IllegalStateException(String.format("Cannot delete object %s for scope '%s', registry '%s' and stage '%s' because no metadata has been found for it", objectId, config.scope(), registry, stage));
 			}
 
 			// Delete from draft storage
-			boolean deleted = getPromiseValue(storageService.deleteObject(objectId));
+			boolean deleted = WorkflowServiceHelper.getPromiseValue(storageService.deleteObject(objectId));
 
 			// Remove from registry
 			if (deleted) {
@@ -268,74 +260,74 @@ public class EObjectWorkflowServiceImpl<T extends EObject> implements EObjectWor
 
 	/* 
 	 * (non-Javadoc)
-	 * @see org.eclipse.fennec.model.atlas.wf.workflowapi.EObjectWorkflowService#listInStage(java.lang.String)
+	 * @see org.eclipse.fennec.model.atlas.wf.workflowapi.EObjectWorkflowService#listInStageForRegistry(java.lang.String, java.lang.String)
 	 */
 	@Override
-	public List<ObjectMetadata> listInStage(String stage) {
-		requireTrue(isStageAllowed(stage), String.format("Stage %s is not supported from WorkflowService", stage));
-		if(stage.equals(config.final_stage())) return listInFinalStage();		
+	public List<ObjectMetadata> listInStageForRegistry(String stage, String registry) {
+		validateInput(stage, registry);
+		if(stage.equals(config.final_stage())) return listInFinalStageForRegistry(registry);		
 		try {
 			return requireNonNullElse(registryService.findByScopeAndRole(config.scope(), stage), List.of());
 		} catch (Exception e) {
 			logger.log(Level.WARNING, "Error listing objects via registry, falling back to storage query", e);
 			try {
-				EObjectStorageService<T> storageService = getStorageByStage(stage);
+				EObjectStorageService<T> storageService = getStorageService(stage, registry);
 				if(storageService == null) {
-					logger.severe(String.format("Cannot retrieve EObjectStorageService for %s. Cannot list objects.", stage));
+					logger.severe(String.format("Cannot retrieve EObjectStorageService for scope '%s', registry '%s' and stage '%s'. Cannot list objects.", config.scope(), registry, stage));
 					return List.of();
 				}
-				return requireNonNullElse(getPromiseValue(storageService.queryObjects(createQuery(Map.of(ManagementPackage.Literals.OBJECT_QUERY__ROLE, stage, ManagementPackage.Literals.OBJECT_QUERY__SCOPE, config.scope())))), List.of());
+				return requireNonNullElse(WorkflowServiceHelper.getPromiseValue(storageService.queryObjects(WorkflowServiceHelper.createQuery(Map.of(ManagementPackage.Literals.OBJECT_QUERY__ROLE, stage, ManagementPackage.Literals.OBJECT_QUERY__SCOPE, config.scope(), ManagementPackage.Literals.OBJECT_QUERY__REGISTRY, registry)))), List.of());
 			} catch (Exception ex) {
 				logger.log(Level.WARNING, "Error listing objects, returning empty list", ex);
 				return List.of();
 			}
 		}
 	}
-	
+
 	/* 
 	 * (non-Javadoc)
-	 * @see org.eclipse.fennec.model.atlas.wf.workflowapi.EObjectWorkflowService#listInStageByName(java.lang.String, java.lang.String)
+	 * @see org.eclipse.fennec.model.atlas.wf.workflowapi.EObjectWorkflowService#listInStageForRegistryByName(java.lang.String, java.lang.String, java.lang.String)
 	 */
 	@Override
-	public List<ObjectMetadata> listInStageByName(String stage, String name) {
-		requireTrue(isStageAllowed(stage), String.format("Stage %s is not supported from WorkflowService", stage));
+	public List<ObjectMetadata> listInStageForRegistryByName(String stage, String registry, String name) {
+		validateInput(stage, registry);
 		try {
 			return requireNonNullElse(registryService.findByScopeRoleAndName(config.scope(), stage, name), List.of());
 		} catch (Exception e) {
 			logger.log(Level.WARNING, "Error listing objects via registry, falling back to storage query", e);
 			try {
-				EObjectStorageService<T> storageService = getStorageByStage(stage);
+				EObjectStorageService<T> storageService = getStorageService(stage, registry);
 				if(storageService == null) {
-					logger.severe(String.format("Cannot retrieve EObjectStorageService for %s. Cannot list objects.", stage));
+					logger.severe(String.format("Cannot retrieve EObjectStorageService for scope '%s', registry '%s' and stage '%s'. Cannot list objects.", config.scope(), registry, stage));
 					return List.of();
 				}
-				return requireNonNullElse(getPromiseValue(storageService.queryObjects(createQuery(Map.of(ManagementPackage.Literals.OBJECT_QUERY__ROLE, stage, ManagementPackage.Literals.OBJECT_QUERY__SCOPE, config.scope(), ManagementPackage.Literals.OBJECT_QUERY__NAME, name)))), List.of());
+				return requireNonNullElse(WorkflowServiceHelper.getPromiseValue(storageService.queryObjects(WorkflowServiceHelper.createQuery(Map.of(ManagementPackage.Literals.OBJECT_QUERY__ROLE, stage, ManagementPackage.Literals.OBJECT_QUERY__SCOPE, config.scope(), ManagementPackage.Literals.OBJECT_QUERY__REGISTRY, registry, ManagementPackage.Literals.OBJECT_QUERY__NAME, name)))), List.of());
 			} catch (Exception ex) {
 				logger.log(Level.WARNING, "Error listing objects, returning empty list", ex);
 				return List.of();
 			}
 		}
 	}
-	
+
 	/* 
 	 * (non-Javadoc)
-	 * @see org.eclipse.fennec.model.atlas.wf.workflowapi.EObjectWorkflowService#listInFinalStage()
+	 * @see org.eclipse.fennec.model.atlas.wf.workflowapi.EObjectWorkflowService#listInFinalStageForRegistry(java.lang.String)
 	 */
 	@Override
-	public List<ObjectMetadata> listInFinalStage() {
+	public List<ObjectMetadata> listInFinalStageForRegistry(String registry) {
 		List<ObjectMetadata> metadata = new LinkedList<>();
 		try {			
-			 List<ObjectMetadata> localMetadata = requireNonNullElse(registryService.findByScopeAndRole(config.scope(), config.final_stage()), List.of());
-			 metadata.addAll(localMetadata);			 
+			List<ObjectMetadata> localMetadata = requireNonNullElse(registryService.findByScopeAndRole(config.scope(), config.final_stage()), List.of());
+			metadata.addAll(localMetadata);			 
 		} catch (Exception e) {
 			logger.log(Level.WARNING, "Error listing objects via registry, falling back to storage query", e);
 			try {
-				EObjectStorageService<T> storageService = getStorageByStage(config.final_stage());
+				EObjectStorageService<T> storageService = getStorageService(config.final_stage(), registry);
 				if(storageService == null) {
-					logger.severe(String.format("Cannot retrieve EObjectStorageService for %s. Cannot list objects.", config.final_stage()));		
+					logger.severe(String.format("Cannot retrieve EObjectStorageService for scope '%s', registry '%s' and stage '%s'. Cannot list objects.", config.scope(), registry, config.final_stage()));		
 					return Collections.emptyList();
 				}
-				List<ObjectMetadata> localMetadata =  requireNonNullElse(getPromiseValue(storageService.queryObjects(createQuery(Map.of(ManagementPackage.Literals.OBJECT_QUERY__ROLE, config.final_stage(), ManagementPackage.Literals.OBJECT_QUERY__SCOPE, config.scope())))), List.of());
+				List<ObjectMetadata> localMetadata =  requireNonNullElse(WorkflowServiceHelper.getPromiseValue(storageService.queryObjects(WorkflowServiceHelper.createQuery(Map.of(ManagementPackage.Literals.OBJECT_QUERY__ROLE, config.final_stage(), ManagementPackage.Literals.OBJECT_QUERY__SCOPE, config.scope(), ManagementPackage.Literals.OBJECT_QUERY__REGISTRY, registry)))), List.of());
 				metadata.addAll(localMetadata);			
 			} catch (Exception ex) {
 				logger.log(Level.WARNING, "Error listing objects, returning empty list", ex);
@@ -343,32 +335,33 @@ public class EObjectWorkflowServiceImpl<T extends EObject> implements EObjectWor
 			}
 		}
 		if(parentWorkflowService != null) {
-			metadata.addAll(parentWorkflowService.listInFinalStage());
+			metadata.addAll(parentWorkflowService.listInFinalStageForRegistry(registry));
 		}		
 		return metadata;
 	}
 
 	/* 
 	 * (non-Javadoc)
-	 * @see org.eclipse.fennec.model.atlas.wf.workflowapi.EObjectWorkflowService#transitionToStage(java.lang.String, java.lang.String, java.lang.String)
+	 * @see org.eclipse.fennec.model.atlas.wf.workflowapi.EObjectWorkflowService#transitionToStageForRegistry(java.lang.String, java.lang.String, java.lang.String, java.lang.String)
 	 */
 	@Override
-	public ObjectMetadata transitionToStage(String objectId, String fromStage, String toStage) {
+	public ObjectMetadata transitionToStageForRegistry(String objectId, String fromStage, String toStage,
+			String registry) {
 		// Validate transition is allowed
 		if(!isTransitionAllowed(fromStage, toStage)) {
 			throw new IllegalStateException(String.format("Transition is not allowed for object %s from stage %s to stage %s", objectId, fromStage, toStage));
 		}
 
 		// Get object from source stage
-		EObjectStorageService<T> sourceStorage = getStorageByStage(fromStage);
+		EObjectStorageService<T> sourceStorage = getStorageService(fromStage, registry);
 		if(sourceStorage == null) {
-			logger.severe(String.format("Cannot retrieve EObjectStorageService for %s. Cannot move object.", fromStage));
+			logger.severe(String.format("Cannot retrieve EObjectStorageService for scope '%s', registry '%s' and stage '%s'. Cannot move object.", config.scope(), registry, fromStage));
 			return null;
 		}
 		//        String sourceId = buildObjectId(fromStage, nsUri);
 
-		T object =  getPromiseValue(sourceStorage.retrieveObject(objectId));
-		ObjectMetadata metadata = getPromiseValue(sourceStorage.retrieveMetadata(objectId));
+		T object =  WorkflowServiceHelper.getPromiseValue(sourceStorage.retrieveObject(objectId));
+		ObjectMetadata metadata = WorkflowServiceHelper.getPromiseValue(sourceStorage.retrieveMetadata(objectId));
 
 		if (object == null || metadata == null) {
 			throw new IllegalArgumentException("Object not found in stage " + fromStage + ": " + objectId);
@@ -379,90 +372,52 @@ public class EObjectWorkflowServiceImpl<T extends EObject> implements EObjectWor
 		metadata.setRole(toStage);
 
 		// Store in target stage
-		EObjectStorageService<T> targetStorage = getStorageByStage(toStage);
+		EObjectStorageService<T> targetStorage = getStorageService(toStage, registry);
 		if(targetStorage == null) {
-			logger.severe(String.format("Cannot retrieve EObjectStorageService for %s. Cannot move object.", toStage));
+			logger.severe(String.format("Cannot retrieve EObjectStorageService for scope '%s', registry '%s' and stage '%s'. Cannot move object.", config.scope(), registry, toStage));
 			return null;
 		}
-		
+
 		// Delete from source stage (if configured). If the registry is shared though, this will cause to remove also the newly created metadata,
 		// so we have to do it before storing the object in the target stage
 		if (config.delete_after_transition()) {
-			getPromiseValue(sourceStorage.deleteObject(objectId));
+			WorkflowServiceHelper.getPromiseValue(sourceStorage.deleteObject(objectId));
 		}
-		
-		getPromiseValue(targetStorage.storeObject(objectId, object, metadata));	
+
+		WorkflowServiceHelper.getPromiseValue(targetStorage.storeObject(objectId, object, metadata));	
 
 		return metadata;
-
 	}
-
+	
 	/* 
 	 * (non-Javadoc)
 	 * @see org.eclipse.fennec.model.atlas.wf.workflowapi.WorkflowTransitionService#isTransitionAllowed(java.lang.String, java.lang.String)
 	 */
 	@Override
 	public boolean isTransitionAllowed(String fromStage, String toStage) {
-		if(!isStageAllowed(fromStage) || !isStageAllowed(toStage) || !isStageWritable(fromStage) || !isStageWritable(toStage) || !areStagesSubsequent(fromStage, toStage)) return false;
+		if(!WorkflowServiceHelper.isStageAllowed(config, fromStage) || !WorkflowServiceHelper.isStageAllowed(config, toStage) || !WorkflowServiceHelper.isStageWritable(config,fromStage) || !WorkflowServiceHelper.isStageWritable(config,toStage) || !WorkflowServiceHelper.areStagesSubsequent(config,fromStage, toStage)) return false;
 		return true;
 	}
 
 	// Helper methods
-	
-	private static void requireTrue(boolean value, String message) {
-		if(value) return;
-		throw new IllegalStateException(message);
-	}
-	
-	private boolean areStagesSubsequent(String fromStage, String toStage) {
-		int fromIndex = List.of(config.stages()).indexOf(fromStage);
-		int toIndex = List.of(config.stages()).indexOf(toStage);
-		return (toIndex - fromIndex) == 1;
-	}
-	
-	private boolean isStageAllowed(String stage) {
-		return List.of(config.stages()).contains(stage);
-	}
-	
-	private boolean isStageWritable(String stage) {
-		return List.of(config.writable_stages()).contains(stage);
-	}
 
 	@SuppressWarnings("unchecked")
-	private EObjectStorageService<T> getStorageByStage(String stage) {
-		EObjectStorageService<T> storageService = (EObjectStorageService<T>) storageServiceCollector.getStorage(config.scope(), stage);
+	private EObjectStorageService<T> getStorageService(String stage, String registry) {
+		EObjectStorageService<T> storageService = (EObjectStorageService<T>) storageServiceCollector.getStorage(config.scope(), registry, stage);
 		if(storageService == null) {
-			logger.severe(String.format("Cannot retrieve EObjectStorageService for %s", stage));
+			logger.severe(String.format("Cannot retrieve EObjectStorageService for scope '%s', registry '%s' and stage '%s'", config.scope(), registry, stage));
 			return null;
 		}
 		return storageService;
 	}
 
-	/**
-	 * Helper method to unwrap Promise results with proper exception handling
-	 */
-	private <R> R getPromiseValue(Promise<R> promise) {
-		try {
-			return promise.getValue();
-		} catch (InvocationTargetException | InterruptedException e) {
-			throw new RuntimeException("Promise execution failed", e);
-		}
+
+	private void validateInput(String stage, String registry) {
+		WorkflowServiceHelper.requireTrue(WorkflowServiceHelper.isStageAllowed(config,stage), String.format("Stage %s is not supported from WorkflowService", stage));
+		WorkflowServiceHelper.requireTrue(WorkflowServiceHelper.isRegistryAllowed(config,registry), String.format("Registry %s is not supported from WorkflowService", registry));
 	}
 
 
 
 
-	private ObjectQuery createQuery(Map<EStructuralFeature, Object> queryValueMap) {
-		ObjectQuery query = managementFactory.createObjectQuery();
-		queryValueMap.forEach((k,v) -> {
-			query.eSet(k, v);
-		});
-		return query;
-	}
-
-	
-
-	
-
-	
 }

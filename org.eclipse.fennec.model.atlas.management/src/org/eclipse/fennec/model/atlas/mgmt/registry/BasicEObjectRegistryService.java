@@ -757,4 +757,56 @@ public class BasicEObjectRegistryService<T extends EObject> implements EObjectRe
 		}
 	}
 
+	/* 
+	 * (non-Javadoc)
+	 * @see org.eclipse.fennec.model.atlas.mgmt.api.EObjectRegistryService#findByScopeRegistryAndRole(java.lang.String, java.lang.String, java.lang.String)
+	 */
+	@Override
+	public List<ObjectMetadata> findByScopeRegistryAndRole(String scope, String registry, String role) {
+		requireNonNull(scope, "Scope must not be null");
+		requireNonNull(registry, "Registry must not be null");
+		requireNonNull(role, "Role must not be null");
+		
+		cacheLock.readLock().lock();
+		try {
+			return metadataById.values().stream()
+				.filter(metadata -> role.equals(metadata.getRole()) && scope.equals(metadata.getScope()) && registry.equals(metadata.getRegistry()))
+				.collect(Collectors.toList());
+		} finally {
+			cacheLock.readLock().unlock();
+		}
+	}
+
+	/* 
+	 * (non-Javadoc)
+	 * @see org.eclipse.fennec.model.atlas.mgmt.api.EObjectRegistryService#findByScopeRegistryRoleAndName(java.lang.String, java.lang.String, java.lang.String, java.lang.String)
+	 */
+	@Override
+	public List<ObjectMetadata> findByScopeRegistryRoleAndName(String scope, String registry, String role,
+			String name) {
+		requireNonNull(scope, "Scope must not be null");
+		requireNonNull(registry, "Registry must not be null");
+		requireNonNull(role, "Role must not be null");
+		requireNonNull(name, "Name must not be null");
+		
+//		name can also contain * for wildcard search
+		boolean isExact = !name.contains("*");
+		String nameFilter = name.contains("*") ? name.replaceAll("\\*", "") : name;
+		cacheLock.readLock().lock();
+		try {
+			if(isExact) {
+				return metadataById.values().stream()
+						.filter(metadata -> role.equals(metadata.getRole()) && scope.equals(metadata.getScope()) && registry.equals(metadata.getRegistry()) && name.equals(metadata.getObjectName()))
+						.collect(Collectors.toList());
+			} else {
+				return metadataById.values().stream()
+						.filter(metadata -> role.equals(metadata.getRole()) && scope.equals(metadata.getScope()) && registry.equals(metadata.getRegistry()) && metadata.getObjectName().contains(nameFilter))
+						.collect(Collectors.toList());
+			}
+			
+		} finally {
+			cacheLock.readLock().unlock();
+		}
+	}
+
 }

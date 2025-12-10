@@ -11,7 +11,8 @@
 		"stages": ["release"],
 		"final.stage": "release",
 		"writable.stages": ["release"],
-		"registryService.target": "(registry=main)"
+		"registryService.target": "(registry=main)",
+		"type": "schemaWorkflow"
 	},
 	"EObjectWorkflowService~default": {
 		"workflow.id": "default-workflow",
@@ -23,6 +24,7 @@
 		"stages": ["draft", "approved", "release"],
 		"final.stage": "release",
 		"writable.stages": ["draft", "approved", "release"],
-		"registryService.target": "(registry=main)"
+		"registryService.target": "(registry=main)",
+		"type": "schemaWorkflow"
 	}
 }

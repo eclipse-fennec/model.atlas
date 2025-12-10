@@ -112,6 +112,7 @@ public class LuceneRegistryHelper extends AbstractRegistryHelper {
     public static final String FIELD_ROLE = "role";
     public static final String FIELD_PROPERTIES = "properties";
     public static final String FIELD_SCOPE = "scope";
+    public static final String FIELD_REGISTRY = "registry";
     
     // Additional fields for advanced querying
     public static final String FIELD_LAST_CHANGE_USER = "lastChangeUser";
@@ -540,6 +541,7 @@ public class LuceneRegistryHelper extends AbstractRegistryHelper {
         addFieldIfNotNull(doc, FIELD_OBJECT_NAME, metadata.getObjectName(), true);
         addFieldIfNotNull(doc, FIELD_ROLE, metadata.getRole(), false);
         addFieldIfNotNull(doc, FIELD_SCOPE, metadata.getScope(), false);
+        addFieldIfNotNull(doc, FIELD_REGISTRY, metadata.getRegistry(), false);
         
         // Additional metadata fields - following LuceneFileStorageHelper pattern
         addFieldIfNotNull(doc, FIELD_GENERATION_TRIGGER_FINGERPRINT, metadata.getGenerationTriggerFingerprint(), false);

@@ -462,6 +462,16 @@ public class ManagementPackageImpl extends EPackageImpl implements ManagementPac
 	 * @generated
 	 */
 	@Override
+	public EAttribute getObjectMetadata_Registry() {
+		return (EAttribute)objectMetadataEClass.getEStructuralFeatures().get(24);
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
 	public EClass getStringToObjectMapEntry() {
 		return stringToObjectMapEntryEClass;
 	}
@@ -564,6 +574,16 @@ public class ManagementPackageImpl extends EPackageImpl implements ManagementPac
 	@Override
 	public EAttribute getObjectQuery_Name() {
 		return (EAttribute)objectQueryEClass.getEStructuralFeatures().get(6);
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
+	public EAttribute getObjectQuery_Registry() {
+		return (EAttribute)objectQueryEClass.getEStructuralFeatures().get(7);
 	}
 
 	/**
@@ -860,6 +880,7 @@ public class ManagementPackageImpl extends EPackageImpl implements ManagementPac
 		createEAttribute(objectMetadataEClass, OBJECT_METADATA__LAST_CHANGE_REASON);
 		createEAttribute(objectMetadataEClass, OBJECT_METADATA__SCOPE);
 		createEAttribute(objectMetadataEClass, OBJECT_METADATA__IS_READ_ONLY);
+		createEAttribute(objectMetadataEClass, OBJECT_METADATA__REGISTRY);
 
 		stringToObjectMapEntryEClass = createEClass(STRING_TO_OBJECT_MAP_ENTRY);
 		createEAttribute(stringToObjectMapEntryEClass, STRING_TO_OBJECT_MAP_ENTRY__KEY);
@@ -873,6 +894,7 @@ public class ManagementPackageImpl extends EPackageImpl implements ManagementPac
 		createEAttribute(objectQueryEClass, OBJECT_QUERY__ROLE);
 		createEAttribute(objectQueryEClass, OBJECT_QUERY__SCOPE);
 		createEAttribute(objectQueryEClass, OBJECT_QUERY__NAME);
+		createEAttribute(objectQueryEClass, OBJECT_QUERY__REGISTRY);
 
 		generationRequestEClass = createEClass(GENERATION_REQUEST);
 		createEAttribute(generationRequestEClass, GENERATION_REQUEST__REQUEST_ID);
@@ -961,8 +983,9 @@ public class ManagementPackageImpl extends EPackageImpl implements ManagementPac
 		initEAttribute(getObjectMetadata_ObjectName(), ecorePackage.getEString(), "objectName", null, 0, 1, ObjectMetadata.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_UNSETTABLE, !IS_ID, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
 		initEAttribute(getObjectMetadata_Role(), ecorePackage.getEString(), "role", null, 1, 1, ObjectMetadata.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_UNSETTABLE, !IS_ID, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
 		initEAttribute(getObjectMetadata_LastChangeReason(), ecorePackage.getEString(), "lastChangeReason", null, 0, 1, ObjectMetadata.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_UNSETTABLE, !IS_ID, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
-		initEAttribute(getObjectMetadata_Scope(), ecorePackage.getEString(), "scope", null, 0, 1, ObjectMetadata.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_UNSETTABLE, !IS_ID, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
+		initEAttribute(getObjectMetadata_Scope(), ecorePackage.getEString(), "scope", null, 1, 1, ObjectMetadata.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_UNSETTABLE, !IS_ID, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
 		initEAttribute(getObjectMetadata_IsReadOnly(), ecorePackage.getEBoolean(), "isReadOnly", null, 0, 1, ObjectMetadata.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_UNSETTABLE, !IS_ID, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
+		initEAttribute(getObjectMetadata_Registry(), ecorePackage.getEString(), "registry", null, 1, 1, ObjectMetadata.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_UNSETTABLE, !IS_ID, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
 
 		initEClass(stringToObjectMapEntryEClass, Map.Entry.class, "StringToObjectMapEntry", !IS_ABSTRACT, !IS_INTERFACE, !IS_GENERATED_INSTANCE_CLASS);
 		initEAttribute(getStringToObjectMapEntry_Key(), ecorePackage.getEString(), "key", null, 1, 1, Map.Entry.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_UNSETTABLE, !IS_ID, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
@@ -976,6 +999,7 @@ public class ManagementPackageImpl extends EPackageImpl implements ManagementPac
 		initEAttribute(getObjectQuery_Role(), ecorePackage.getEString(), "role", null, 0, 1, ObjectQuery.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_UNSETTABLE, !IS_ID, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
 		initEAttribute(getObjectQuery_Scope(), ecorePackage.getEString(), "scope", null, 0, 1, ObjectQuery.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_UNSETTABLE, !IS_ID, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
 		initEAttribute(getObjectQuery_Name(), ecorePackage.getEString(), "name", null, 0, 1, ObjectQuery.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_UNSETTABLE, !IS_ID, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
+		initEAttribute(getObjectQuery_Registry(), ecorePackage.getEString(), "registry", null, 0, 1, ObjectQuery.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_UNSETTABLE, !IS_ID, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
 
 		initEClass(generationRequestEClass, GenerationRequest.class, "GenerationRequest", !IS_ABSTRACT, !IS_INTERFACE, IS_GENERATED_INSTANCE_CLASS);
 		initEAttribute(getGenerationRequest_RequestId(), ecorePackage.getEString(), "requestId", null, 1, 1, GenerationRequest.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_UNSETTABLE, !IS_ID, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
@@ -1210,6 +1234,12 @@ public class ManagementPackageImpl extends EPackageImpl implements ManagementPac
 			   "documentation", "This is to be set when an EObject is retrieved from a parent scope in its final stage and then cannot be modified."
 		   });
 		addAnnotation
+		  (getObjectMetadata_Registry(),
+		   source,
+		   new String[] {
+			   "documentation", "The registry to which this metadata belongs (e.g. schema, configuration, script, etc.)"
+		   });
+		addAnnotation
 		  (stringToObjectMapEntryEClass,
 		   source,
 		   new String[] {
@@ -1274,6 +1304,12 @@ public class ManagementPackageImpl extends EPackageImpl implements ManagementPac
 		   source,
 		   new String[] {
 			   "documentation", "Filter by object name"
+		   });
+		addAnnotation
+		  (getObjectQuery_Registry(),
+		   source,
+		   new String[] {
+			   "documentation", "Filter by object scope"
 		   });
 		addAnnotation
 		  (generationRequestEClass,

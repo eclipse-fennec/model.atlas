@@ -51,226 +51,154 @@ import org.osgi.service.component.annotations.ReferencePolicyOption;
  * @since 1.0
  */
 @Component(
-    name = "EObjectStorageServiceCollector",
-    immediate = true,
-    service = EObjectStorageServiceCollector.class
-)
+		name = "EObjectStorageServiceCollector",
+		immediate = true,
+		service = EObjectStorageServiceCollector.class
+		)
 public class EObjectStorageServiceCollector {
 
-    private static final Logger LOGGER = Logger.getLogger(EObjectStorageServiceCollector.class.getName());
+	private static final Logger LOGGER = Logger.getLogger(EObjectStorageServiceCollector.class.getName());
 
-    // Map: "scope:role" -> StorageService
-    private final Map<String, EObjectStorageService<?>> storageByKey = new ConcurrentHashMap<>();
+	// Map: "scope:registry:role" -> StorageService
+	private final Map<String, EObjectStorageService<?>> storageByKey = new ConcurrentHashMap<>();
 
-    // Fallback map for shared storage (no scope specified): "role" -> StorageService
-    private final Map<String, EObjectStorageService<?>> sharedStorageByRole = new ConcurrentHashMap<>();
 
-    /**
-     * Get a storage service by scope and role.
-     *
-     * <p>Lookup order:
-     * <ol>
-     * <li>Scope-specific storage: (scope, role)</li>
-     * <li>Shared storage: (role)</li>
-     * </ol>
-     * </p>
-     *
-     * @param scope the scope/tenant name (e.g., "my-tenant", "global")
-     * @param role the storage role (e.g., "draft", "release", "archive")
-     * @return the storage service for the specified scope and role, or null if not found
-     */
-    public EObjectStorageService<?> getStorage(String scope, String role) {
-        if (scope == null || scope.isEmpty()) {
-            LOGGER.warning("Attempted to get storage with null or empty scope");
-            return null;
-        }
-        if (role == null || role.isEmpty()) {
-            LOGGER.warning("Attempted to get storage with null or empty role");
-            return null;
-        }
+	/**
+	 * Get a storage service by scope, registry and role.
+	 *
+	 * @param scope the scope/tenant name (e.g., "my-tenant", "global")
+	 * @param registry the registry name (e.g., "schema", "configuration")
+	 * @param role the storage role (e.g., "draft", "release", "archive")
+	 * @return the storage service for the specified scope, registry and role, or null if not found
+	 */
+	public EObjectStorageService<?> getStorage(String scope, String registry, String role) {
+		if (scope == null || scope.isEmpty()) {
+			LOGGER.warning("Attempted to get storage with null or empty scope");
+			return null;
+		}
+		if (registry == null || registry.isEmpty()) {
+			LOGGER.warning("Attempted to get storage with null or empty registry");
+			return null;
+		}
+		if (role == null || role.isEmpty()) {
+			LOGGER.warning("Attempted to get storage with null or empty role");
+			return null;
+		}
+		String key = buildKey(scope, registry, role);
+		return storageByKey.getOrDefault(key, null);
+	}
 
-        // Try scope-specific storage first
-        String key = buildKey(scope, role);
-        EObjectStorageService<?> storage = storageByKey.get(key);
 
-        // Fallback to shared storage
-        if (storage == null) {
-            storage = sharedStorageByRole.get(role);
-            if (storage != null) {
-                LOGGER.fine(String.format("Using shared storage for scope '%s', role '%s'", scope, role));
-            }
-        }
 
-        return storage;
-    }
+	/**
+	 * Check if a storage service exists for the specified scope, registry and role.
+	 *
+	 * @param scope the scope name
+	 * @param registry the registry name
+	 * @param role the storage role to check
+	 * @return true if a storage service exists for this scope, registry and role
+	 */
+	public boolean hasStorage(String scope, String registry, String role) {
+		if (scope == null || registry == null || role == null) {
+			return false;
+		}
+		String key = buildKey(scope, registry, role);
+		return storageByKey.containsKey(key);
+	}
 
-    /**
-     * Get a storage service by its role (backward compatibility).
-     *
-     * @param role the storage role (e.g., "draft", "release", "archive")
-     * @return the storage service with the specified role, or null if not found
-     * @deprecated Use {@link #getStorage(String, String)} instead
-     */
-    @Deprecated
-    public EObjectStorageService<?> getStorageByRole(String role) {
-        if (role == null || role.isEmpty()) {
-            LOGGER.warning("Attempted to get storage with null or empty role");
-            return null;
-        }
-        return sharedStorageByRole.get(role);
-    }
+	/**
+	 * Get all registered storage keys in format "scope:registry:role".
+	 *
+	 * @return array of registered storage keys
+	 */
+	public String[] getRegisteredKeys() {
+		return storageByKey.keySet().toArray(new String[0]);
+	}
 
-    /**
-     * Check if a storage service exists for the specified scope and role.
-     *
-     * @param scope the scope name
-     * @param role the storage role to check
-     * @return true if a storage service exists for this scope and role
-     */
-    public boolean hasStorage(String scope, String role) {
-        if (scope == null || role == null) {
-            return false;
-        }
-        String key = buildKey(scope, role);
-        return storageByKey.containsKey(key) || sharedStorageByRole.containsKey(role);
-    }
+	/**
+	 * Build a key for storage lookup.
+	 *
+	 * @param scope the scope name
+	 * @param registry the registry name
+	 * @param role the role name
+	 * @return the composite key "scope:registry:role"
+	 */
+	private String buildKey(String scope, String registry, String role) {
+		return scope + ":" + registry + ":" + role;
+	}
 
-    /**
-     * Check if a storage service with the specified role exists (backward compatibility).
-     *
-     * @param role the storage role to check
-     * @return true if a storage service with this role is registered
-     * @deprecated Use {@link #hasStorage(String, String)} instead
-     */
-    @Deprecated
-    public boolean hasStorageForRole(String role) {
-        return role != null && sharedStorageByRole.containsKey(role);
-    }
+	/**
+	 * Bind a storage service when it becomes available.
+	 *
+	 * @param storageService the storage service to register
+	 * @param properties the service properties
+	 */
+	@Reference(
+			cardinality = ReferenceCardinality.MULTIPLE,
+			policy = ReferencePolicy.DYNAMIC,
+			policyOption = ReferencePolicyOption.GREEDY
+			)
+	public void bindStorageService(EObjectStorageService<?> storageService, Map<String, Object> properties) {
+		Object roleObj = properties.get("storage.role");
+		Object scopeObj = properties.get("storage.scope");
+		Object registryObj = properties.get("storage.registry");
 
-    /**
-     * Get all registered storage keys in format "scope:role".
-     *
-     * @return array of registered storage keys
-     */
-    public String[] getRegisteredKeys() {
-        return storageByKey.keySet().toArray(new String[0]);
-    }
+		if (roleObj == null || roleObj.toString().isEmpty()) {
+			LOGGER.warning("EObjectStorageService registered without or empty 'storage.role' property - ignoring");
+			return;
+		}
+		if (scopeObj == null || scopeObj.toString().isEmpty()) {
+			LOGGER.warning("EObjectStorageService registered without or empty 'storage.scope' property - ignoring");
+			return;
+		}
+		if (registryObj == null || registryObj.toString().isEmpty()) {
+			LOGGER.warning("EObjectStorageService registered without or empty 'storage.registry' property - ignoring");
+			return;
+		}
 
-    /**
-     * Get all registered storage roles (shared storage only).
-     *
-     * @return array of registered storage role names
-     * @deprecated Use {@link #getRegisteredKeys()} instead
-     */
-    @Deprecated
-    public String[] getRegisteredRoles() {
-        return sharedStorageByRole.keySet().toArray(new String[0]);
-    }
+		String role = roleObj.toString();
+		String scope = scopeObj.toString();
+		String registry = registryObj.toString();
 
-    /**
-     * Build a key for storage lookup.
-     *
-     * @param scope the scope name
-     * @param role the role name
-     * @return the composite key "scope:role"
-     */
-    private String buildKey(String scope, String role) {
-        return scope + ":" + role;
-    }
+		// Scope-specific storage
+		String key = buildKey(scope, registry, role);
 
-    /**
-     * Bind a storage service when it becomes available.
-     *
-     * <p>Storage services can register in two ways:
-     * <ul>
-     * <li>Scope-specific: with both "storage.scope" and "storage.role" properties</li>
-     * <li>Shared: with only "storage.role" property (no scope)</li>
-     * </ul>
-     * </p>
-     *
-     * @param storageService the storage service to register
-     * @param properties the service properties
-     */
-    @Reference(
-        cardinality = ReferenceCardinality.MULTIPLE,
-        policy = ReferencePolicy.DYNAMIC,
-        policyOption = ReferencePolicyOption.GREEDY
-    )
-    public void bindStorageService(EObjectStorageService<?> storageService, Map<String, Object> properties) {
-        Object roleObj = properties.get("storage.role");
+		EObjectStorageService<?> existing = storageByKey.put(key, storageService);
+		if (existing != null) {
+			LOGGER.warning(String.format(
+					"Multiple EObjectStorageService instances registered for scope '%s', role '%s' - overwriting",
+					scope, role
+					));
+		} else {
+			LOGGER.info(String.format("Registered EObjectStorageService for scope '%s', registry '%s' and role '%s'", scope, registry, role));
+		}
+	}
 
-        if (roleObj == null) {
-            LOGGER.warning("EObjectStorageService registered without 'storage.role' property - ignoring");
-            return;
-        }
+	/**
+	 * Unbind a storage service when it is no longer available.
+	 *
+	 * @param storageService the storage service to unregister
+	 * @param properties the service properties
+	 */
+	public void unbindStorageService(EObjectStorageService<?> storageService, Map<String, Object> properties) {
+		Object roleObj = properties.get("storage.role");
+		Object scopeObj = properties.get("storage.scope");
+		Object registryObj = properties.get("storage.registry");
 
-        String role = roleObj.toString();
-        if (role.isEmpty()) {
-            LOGGER.warning("EObjectStorageService registered with empty 'storage.role' property - ignoring");
-            return;
-        }
+		if (roleObj == null || scopeObj == null || registryObj == null) {
+			return;
+		}
 
-        Object scopeObj = properties.get("storage.scope");
+		String role = roleObj.toString();
+		String scope = scopeObj.toString();
+		String registry = registryObj.toString();
 
-        if (scopeObj != null && !scopeObj.toString().isEmpty()) {
-            // Scope-specific storage
-            String scope = scopeObj.toString();
-            String key = buildKey(scope, role);
+		String key = buildKey(scope, registry, role);
 
-            EObjectStorageService<?> existing = storageByKey.put(key, storageService);
-            if (existing != null) {
-                LOGGER.warning(String.format(
-                    "Multiple EObjectStorageService instances registered for scope '%s', role '%s' - overwriting",
-                    scope, role
-                ));
-            } else {
-                LOGGER.info(String.format("Registered EObjectStorageService for scope '%s', role '%s'", scope, role));
-            }
-        } else {
-            // Shared storage (no scope specified)
-            EObjectStorageService<?> existing = sharedStorageByRole.put(role, storageService);
-            if (existing != null) {
-                LOGGER.warning(String.format(
-                    "Multiple shared EObjectStorageService instances registered with role '%s' - overwriting",
-                    role
-                ));
-            } else {
-                LOGGER.info(String.format("Registered shared EObjectStorageService with role '%s'", role));
-            }
-        }
-    }
+		boolean removed = storageByKey.remove(key, storageService);
+		if (removed) {
+			LOGGER.info(String.format("Unregistered EObjectStorageService for scope '%s', registry '%s' and role '%s'", scope, registry, role));
+		}
+	}
 
-    /**
-     * Unbind a storage service when it is no longer available.
-     *
-     * @param storageService the storage service to unregister
-     * @param properties the service properties
-     */
-    public void unbindStorageService(EObjectStorageService<?> storageService, Map<String, Object> properties) {
-        Object roleObj = properties.get("storage.role");
-
-        if (roleObj == null) {
-            return;
-        }
-
-        String role = roleObj.toString();
-        Object scopeObj = properties.get("storage.scope");
-
-        if (scopeObj != null && !scopeObj.toString().isEmpty()) {
-            // Scope-specific storage
-            String scope = scopeObj.toString();
-            String key = buildKey(scope, role);
-
-            boolean removed = storageByKey.remove(key, storageService);
-            if (removed) {
-                LOGGER.info(String.format("Unregistered EObjectStorageService for scope '%s', role '%s'", scope, role));
-            }
-        } else {
-            // Shared storage
-            boolean removed = sharedStorageByRole.remove(role, storageService);
-            if (removed) {
-                LOGGER.info(String.format("Unregistered shared EObjectStorageService with role '%s'", role));
-            }
-        }
-    }
 }

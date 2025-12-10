@@ -37,6 +37,7 @@ import org.osgi.annotation.versioning.ProviderType;
  *   <li>{@link org.eclipse.fennec.model.atlas.mgmt.management.ObjectQuery#getRole <em>Role</em>}</li>
  *   <li>{@link org.eclipse.fennec.model.atlas.mgmt.management.ObjectQuery#getScope <em>Scope</em>}</li>
  *   <li>{@link org.eclipse.fennec.model.atlas.mgmt.management.ObjectQuery#getName <em>Name</em>}</li>
+ *   <li>{@link org.eclipse.fennec.model.atlas.mgmt.management.ObjectQuery#getRegistry <em>Registry</em>}</li>
  * </ul>
  *
  * @see org.eclipse.fennec.model.atlas.mgmt.management.ManagementPackage#getObjectQuery()
@@ -222,5 +223,30 @@ public interface ObjectQuery extends EObject {
 	 * @generated
 	 */
 	void setName(String value);
+
+	/**
+	 * Returns the value of the '<em><b>Registry</b></em>' attribute.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * <!-- begin-model-doc -->
+	 * Filter by object scope
+	 * <!-- end-model-doc -->
+	 * @return the value of the '<em>Registry</em>' attribute.
+	 * @see #setRegistry(String)
+	 * @see org.eclipse.fennec.model.atlas.mgmt.management.ManagementPackage#getObjectQuery_Registry()
+	 * @model
+	 * @generated
+	 */
+	String getRegistry();
+
+	/**
+	 * Sets the value of the '{@link org.eclipse.fennec.model.atlas.mgmt.management.ObjectQuery#getRegistry <em>Registry</em>}' attribute.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @param value the new value of the '<em>Registry</em>' attribute.
+	 * @see #getRegistry()
+	 * @generated
+	 */
+	void setRegistry(String value);
 
 } // ObjectQuery

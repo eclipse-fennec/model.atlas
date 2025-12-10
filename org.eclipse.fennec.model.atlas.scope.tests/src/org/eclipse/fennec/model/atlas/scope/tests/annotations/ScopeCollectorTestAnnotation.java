@@ -48,7 +48,8 @@ public class ScopeCollectorTestAnnotation {
 	            @TemplateArgument(source = ValueSource.SystemProperty, value = PROP_TEMP_DIR)
 	        }),
 	        @Property(key = "storage.scope", value = "my-tenant"),
-	        @Property(key = "storage.role", value = "draft")
+	        @Property(key = "storage.role", value = "draft"),
+	        @Property(key = "storage.registry", value = "schema")
 	    })
 	@Retention(RetentionPolicy.RUNTIME)
 	public @interface DraftStorageConfiguration {}
@@ -58,7 +59,8 @@ public class ScopeCollectorTestAnnotation {
 	            @TemplateArgument(source = ValueSource.SystemProperty, value = PROP_TEMP_DIR)
 	        }),
 	        @Property(key = "storage.scope", value = "my-tenant"),
-	        @Property(key = "storage.role", value = "release")
+	        @Property(key = "storage.role", value = "release"),
+	        @Property(key = "storage.registry", value = "schema")
 	    })
 	@Retention(RetentionPolicy.RUNTIME)
 	public @interface ReleaseStorageConfiguration {}
@@ -68,16 +70,19 @@ public class ScopeCollectorTestAnnotation {
 	            @TemplateArgument(source = ValueSource.SystemProperty, value = PROP_TEMP_DIR)
 	        }),
 	        @Property(key = "storage.scope", value = "my-parent-tenant"),
-	        @Property(key = "storage.role", value = "release")
+	        @Property(key = "storage.role", value = "release"),
+	        @Property(key = "storage.registry", value = "schema")
 	    })
 	@Retention(RetentionPolicy.RUNTIME)
 	public @interface ParentReleaseStorageConfiguration {}
 	
 	@WithFactoryConfiguration(factoryPid = "EObjectWorkflowService", name = "tenant-workflow", location = "?", properties = {
 	        @Property(key = "scope", value = "my-tenant"),
+	        @Property(key = "type", value = "schemaWorkflow"),
 	        @Property(key = "description", value = "my-tenant scope"),
 	        @Property(key = "parent.scope", value = "my-parent-tenant"),
 	        @Property(key = "stages", value = {"draft", "release"}, type = Type.Array),
+	        @Property(key = "writable.stages", value = {"draft", "release"}, type = Type.Array),
 	        @Property(key = "final.stage", value = "release")
 	    })
 	@Retention(RetentionPolicy.RUNTIME)
@@ -85,8 +90,10 @@ public class ScopeCollectorTestAnnotation {
 	
 	@WithFactoryConfiguration(factoryPid = "EObjectWorkflowService", name = "parent-tenant-workflow", location = "?", properties = {
 	        @Property(key = "scope", value = "my-parent-tenant"),
+	        @Property(key = "type", value = "schemaWorkflow"),
 	        @Property(key = "description", value = "my-parent-tenant scope"),
 	        @Property(key = "stages", value = {"release"}, type = Type.Array),
+	        @Property(key = "writable.stages", value = {"release"}, type = Type.Array),
 	        @Property(key = "final.stage", value = "release")
 	    })
 	@Retention(RetentionPolicy.RUNTIME)

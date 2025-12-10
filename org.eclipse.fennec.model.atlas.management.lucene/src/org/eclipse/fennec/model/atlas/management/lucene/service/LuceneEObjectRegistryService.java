@@ -791,5 +791,89 @@ public class LuceneEObjectRegistryService<T extends EObject> implements EObjectR
 				.toList();
 	}
 
+	/* 
+	 * (non-Javadoc)
+	 * @see org.eclipse.fennec.model.atlas.mgmt.api.EObjectRegistryService#findByScopeRegistryAndRole(java.lang.String, java.lang.String, java.lang.String)
+	 */
+	@Override
+	public List<ObjectMetadata> findByScopeRegistryAndRole(String scope, String registry, String role) {
+		requireNonNull(scope, "Scope cannot be null");
+		requireNonNull(registry, "Registry cannot be null");
+		requireNonNull(role, "Role cannot be null");
+
+		try {
+			// Use Lucene for efficient search
+			String query = LuceneRegistryHelper.FIELD_SCOPE + ":" + scope + 
+					" AND " + LuceneRegistryHelper.FIELD_ROLE + ":" + role + 
+					" AND " + LuceneRegistryHelper.FIELD_REGISTRY + ":" + registry;
+			List<String> objectIds = luceneHelper.searchObjectIds(query, Integer.MAX_VALUE);
+			List<ObjectMetadata> luceneResults = loadMetadataList(objectIds);
+
+			// If Lucene returns results or cache is empty, use Lucene results
+			if (!luceneResults.isEmpty() || metadataCache.isEmpty()) {
+				return luceneResults;
+			}
+
+			// If Lucene returns empty but cache has objects, fall back to cache scan
+			logDebug("Lucene search returned empty results, falling back to cache scan for role: " + role);
+		} catch (Exception e) {
+			LOGGER.log(Level.SEVERE, "Error in Lucene search by role: " + role, e);
+			// Fall back to cache scan
+		}
+		// Fallback to in-memory cache scan
+		return metadataCache.values().stream()
+				.filter(metadata -> role.equals(metadata.getRole()) && scope.equals(metadata.getScope()) && registry.equals(metadata.getRegistry()))
+				.toList();
+	}
+
+	/* 
+	 * (non-Javadoc)
+	 * @see org.eclipse.fennec.model.atlas.mgmt.api.EObjectRegistryService#findByScopeRegistryRoleAndName(java.lang.String, java.lang.String, java.lang.String, java.lang.String)
+	 */
+	@Override
+	public List<ObjectMetadata> findByScopeRegistryRoleAndName(String scope, String registry, String role,
+			String objectName) {
+		requireNonNull(objectName, "Object name cannot be null");
+		requireNonNull(role, "Role cannot be null");
+		requireNonNull(registry, "Registry cannot be null");
+		requireNonNull(scope, "Scope cannot be null");
+
+		try {
+			// Use Lucene for efficient objectName and role search
+			if(!objectName.contains("*")) objectName = "\"" + objectName + "\""; //if is an exact match we add the "", otherwise not
+			String query = "(" + LuceneRegistryHelper.FIELD_OBJECT_NAME + ":" + objectName + 
+					" AND " + LuceneRegistryHelper.FIELD_ROLE + ":" + role + 
+					" AND " + LuceneRegistryHelper.FIELD_SCOPE + ":" + scope + 
+					" AND " + LuceneRegistryHelper.FIELD_REGISTRY + ":" + registry + 
+					")";
+			List<String> objectIds = luceneHelper.searchObjectIds(query, Integer.MAX_VALUE);
+			List<ObjectMetadata> luceneResults = loadMetadataList(objectIds);
+			// If Lucene returns results or cache is empty, use Lucene results
+			if (!luceneResults.isEmpty() || metadataCache.isEmpty()) {
+				return luceneResults;
+			}
+
+			// If Lucene returns empty but cache has objects, fall back to cache scan
+			logDebug("Lucene search returned empty results, falling back to cache scan for role: " + role);
+		} catch (Exception e) {
+			LOGGER.log(Level.SEVERE, "Error in Lucene search by role: " + role, e);
+			// Fall back to cache scan
+		}
+		// Fallback to in-memory cache scan
+		//		name can also contain * for wildcard search
+		boolean isExact = !objectName.contains("*");
+		String nameFilter = objectName.contains("*") ? objectName.replaceAll("\\*", "") : objectName;
+		if(isExact) {
+			return metadataCache.values().stream()
+					.filter(metadata -> role.equals(metadata.getRole()) && scope.equals(metadata.getScope()) && registry.equals(metadata.getRegistry()) && nameFilter.equals(metadata.getObjectName()))
+					.toList();
+		} else {
+			return metadataCache.values().stream()
+					.filter(metadata -> role.equals(metadata.getRole()) && scope.equals(metadata.getScope()) && registry.equals(metadata.getRegistry()) && metadata.getObjectName().contains(nameFilter))
+					.toList();
+		}
+		
+	}
+
 
 }

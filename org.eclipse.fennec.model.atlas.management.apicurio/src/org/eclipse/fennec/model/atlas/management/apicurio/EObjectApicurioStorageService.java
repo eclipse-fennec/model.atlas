@@ -65,12 +65,6 @@ public class EObjectApicurioStorageService extends AbstractEObjectStorageService
 				description = "Base Apicurio URL for REST requests"
 				)
 		String base_url() default "http://localhost:8080/apis/registry/v3/";
-
-		@AttributeDefinition(
-				name = "Artifact Group Id",
-				description = "Artifact Group Id to identify under which group the artifacts should be stored in the Apicurio Registry. The final group id will be then a combination of this and the stage"
-				)
-		String artifact_group_id() default "default";
 		
 		@AttributeDefinition(
 				name = "Storage Scope",
@@ -84,9 +78,11 @@ public class EObjectApicurioStorageService extends AbstractEObjectStorageService
 				)
 		String storage_role() default "draft";
 		
-		
-		
-		
+		@AttributeDefinition(
+				name = "Storage Registry",
+				description = "Registry of this storage service (schema, configuration, script, etc.)"
+				)
+		String storage_registry() default "schema";
 	}
 
 	public static final String PID = "ApicurioObjectStorage";

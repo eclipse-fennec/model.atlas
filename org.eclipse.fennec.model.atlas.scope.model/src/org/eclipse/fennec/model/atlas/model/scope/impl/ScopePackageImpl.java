@@ -149,7 +149,7 @@ public class ScopePackageImpl extends EPackageImpl implements ScopePackage {
 	 * @generated
 	 */
 	@Override
-	public EAttribute getScope_ParentScope() {
+	public EAttribute getScope_Type() {
 		return (EAttribute)scopeEClass.getEStructuralFeatures().get(1);
 	}
 
@@ -159,7 +159,7 @@ public class ScopePackageImpl extends EPackageImpl implements ScopePackage {
 	 * @generated
 	 */
 	@Override
-	public EAttribute getScope_Description() {
+	public EAttribute getScope_ParentScope() {
 		return (EAttribute)scopeEClass.getEStructuralFeatures().get(2);
 	}
 
@@ -169,8 +169,18 @@ public class ScopePackageImpl extends EPackageImpl implements ScopePackage {
 	 * @generated
 	 */
 	@Override
+	public EAttribute getScope_Description() {
+		return (EAttribute)scopeEClass.getEStructuralFeatures().get(3);
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
 	public EReference getScope_Links() {
-		return (EReference)scopeEClass.getEStructuralFeatures().get(3);
+		return (EReference)scopeEClass.getEStructuralFeatures().get(4);
 	}
 
 	/**
@@ -180,16 +190,6 @@ public class ScopePackageImpl extends EPackageImpl implements ScopePackage {
 	 */
 	@Override
 	public EAttribute getScope_Stages() {
-		return (EAttribute)scopeEClass.getEStructuralFeatures().get(4);
-	}
-
-	/**
-	 * <!-- begin-user-doc -->
-	 * <!-- end-user-doc -->
-	 * @generated
-	 */
-	@Override
-	public EAttribute getScope_FinalStage() {
 		return (EAttribute)scopeEClass.getEStructuralFeatures().get(5);
 	}
 
@@ -199,8 +199,18 @@ public class ScopePackageImpl extends EPackageImpl implements ScopePackage {
 	 * @generated
 	 */
 	@Override
-	public EAttribute getScope_WritableStages() {
+	public EAttribute getScope_FinalStage() {
 		return (EAttribute)scopeEClass.getEStructuralFeatures().get(6);
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
+	public EAttribute getScope_WritableStages() {
+		return (EAttribute)scopeEClass.getEStructuralFeatures().get(7);
 	}
 
 	/**
@@ -314,6 +324,7 @@ public class ScopePackageImpl extends EPackageImpl implements ScopePackage {
 		// Create classes and their features
 		scopeEClass = createEClass(SCOPE);
 		createEAttribute(scopeEClass, SCOPE__NAME);
+		createEAttribute(scopeEClass, SCOPE__TYPE);
 		createEAttribute(scopeEClass, SCOPE__PARENT_SCOPE);
 		createEAttribute(scopeEClass, SCOPE__DESCRIPTION);
 		createEReference(scopeEClass, SCOPE__LINKS);
@@ -365,6 +376,7 @@ public class ScopePackageImpl extends EPackageImpl implements ScopePackage {
 		// Initialize classes, features, and operations; add parameters
 		initEClass(scopeEClass, Scope.class, "Scope", !IS_ABSTRACT, !IS_INTERFACE, IS_GENERATED_INSTANCE_CLASS);
 		initEAttribute(getScope_Name(), ecorePackage.getEString(), "name", null, 0, 1, Scope.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_UNSETTABLE, !IS_ID, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
+		initEAttribute(getScope_Type(), ecorePackage.getEString(), "type", null, 0, 1, Scope.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_UNSETTABLE, !IS_ID, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
 		initEAttribute(getScope_ParentScope(), ecorePackage.getEString(), "parentScope", null, 0, 1, Scope.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_UNSETTABLE, !IS_ID, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
 		initEAttribute(getScope_Description(), ecorePackage.getEString(), "description", null, 0, 1, Scope.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_UNSETTABLE, !IS_ID, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
 		initEReference(getScope_Links(), this.getLinksMap(), null, "links", null, 0, -1, Scope.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, IS_COMPOSITE, !IS_RESOLVE_PROXIES, !IS_UNSETTABLE, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
@@ -426,6 +438,12 @@ public class ScopePackageImpl extends EPackageImpl implements ScopePackage {
 			   "basePackage", "org.eclipse.fennec.model.atlas.model",
 			   "resource", "XMI",
 			   "copyrightText", "Copyright (c) 2012 - 2025 Data In Motion and others.\nAll rights reserved.\n\nThis program and the accompanying materials are made\navailable under the terms of the Eclipse Public License 2.0\nwhich is available at https://www.eclipse.org/legal/epl-2.0/\n\nSPDX-License-Identifier: EPL-2.0\n\nContributors:\n     Data In Motion - initial API and implementation"
+		   });
+		addAnnotation
+		  (getScope_Type(),
+		   source,
+		   new String[] {
+			   "documentation", "This allows to distinguish between schema workflow scopes and storage registry scopes"
 		   });
 		addAnnotation
 		  (getScope_Stages(),

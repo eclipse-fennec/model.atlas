@@ -44,6 +44,7 @@ import org.eclipse.fennec.model.atlas.model.scope.ScopePackage;
  * </p>
  * <ul>
  *   <li>{@link org.eclipse.fennec.model.atlas.model.scope.impl.ScopeImpl#getName <em>Name</em>}</li>
+ *   <li>{@link org.eclipse.fennec.model.atlas.model.scope.impl.ScopeImpl#getType <em>Type</em>}</li>
  *   <li>{@link org.eclipse.fennec.model.atlas.model.scope.impl.ScopeImpl#getParentScope <em>Parent Scope</em>}</li>
  *   <li>{@link org.eclipse.fennec.model.atlas.model.scope.impl.ScopeImpl#getDescription <em>Description</em>}</li>
  *   <li>{@link org.eclipse.fennec.model.atlas.model.scope.impl.ScopeImpl#getLinks <em>Links</em>}</li>
@@ -74,6 +75,26 @@ public class ScopeImpl extends MinimalEObjectImpl.Container implements Scope {
 	 * @ordered
 	 */
 	protected String name = NAME_EDEFAULT;
+
+	/**
+	 * The default value of the '{@link #getType() <em>Type</em>}' attribute.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @see #getType()
+	 * @generated
+	 * @ordered
+	 */
+	protected static final String TYPE_EDEFAULT = null;
+
+	/**
+	 * The cached value of the '{@link #getType() <em>Type</em>}' attribute.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @see #getType()
+	 * @generated
+	 * @ordered
+	 */
+	protected String type = TYPE_EDEFAULT;
 
 	/**
 	 * The default value of the '{@link #getParentScope() <em>Parent Scope</em>}' attribute.
@@ -213,6 +234,29 @@ public class ScopeImpl extends MinimalEObjectImpl.Container implements Scope {
 	 * @generated
 	 */
 	@Override
+	public String getType() {
+		return type;
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
+	public void setType(String newType) {
+		String oldType = type;
+		type = newType;
+		if (eNotificationRequired())
+			eNotify(new ENotificationImpl(this, Notification.SET, ScopePackage.SCOPE__TYPE, oldType, type));
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
 	public String getParentScope() {
 		return parentScope;
 	}
@@ -339,6 +383,8 @@ public class ScopeImpl extends MinimalEObjectImpl.Container implements Scope {
 		switch (featureID) {
 			case ScopePackage.SCOPE__NAME:
 				return getName();
+			case ScopePackage.SCOPE__TYPE:
+				return getType();
 			case ScopePackage.SCOPE__PARENT_SCOPE:
 				return getParentScope();
 			case ScopePackage.SCOPE__DESCRIPTION:
@@ -367,6 +413,9 @@ public class ScopeImpl extends MinimalEObjectImpl.Container implements Scope {
 		switch (featureID) {
 			case ScopePackage.SCOPE__NAME:
 				setName((String)newValue);
+				return;
+			case ScopePackage.SCOPE__TYPE:
+				setType((String)newValue);
 				return;
 			case ScopePackage.SCOPE__PARENT_SCOPE:
 				setParentScope((String)newValue);
@@ -403,6 +452,9 @@ public class ScopeImpl extends MinimalEObjectImpl.Container implements Scope {
 			case ScopePackage.SCOPE__NAME:
 				setName(NAME_EDEFAULT);
 				return;
+			case ScopePackage.SCOPE__TYPE:
+				setType(TYPE_EDEFAULT);
+				return;
 			case ScopePackage.SCOPE__PARENT_SCOPE:
 				setParentScope(PARENT_SCOPE_EDEFAULT);
 				return;
@@ -435,6 +487,8 @@ public class ScopeImpl extends MinimalEObjectImpl.Container implements Scope {
 		switch (featureID) {
 			case ScopePackage.SCOPE__NAME:
 				return NAME_EDEFAULT == null ? name != null : !NAME_EDEFAULT.equals(name);
+			case ScopePackage.SCOPE__TYPE:
+				return TYPE_EDEFAULT == null ? type != null : !TYPE_EDEFAULT.equals(type);
 			case ScopePackage.SCOPE__PARENT_SCOPE:
 				return PARENT_SCOPE_EDEFAULT == null ? parentScope != null : !PARENT_SCOPE_EDEFAULT.equals(parentScope);
 			case ScopePackage.SCOPE__DESCRIPTION:
@@ -463,6 +517,8 @@ public class ScopeImpl extends MinimalEObjectImpl.Container implements Scope {
 		StringBuilder result = new StringBuilder(super.toString());
 		result.append(" (name: ");
 		result.append(name);
+		result.append(", type: ");
+		result.append(type);
 		result.append(", parentScope: ");
 		result.append(parentScope);
 		result.append(", description: ");

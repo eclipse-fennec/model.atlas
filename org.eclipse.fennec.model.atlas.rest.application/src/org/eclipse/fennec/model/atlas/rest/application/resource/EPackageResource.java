@@ -63,7 +63,7 @@ import jakarta.ws.rs.core.Response.Status;
 @RequireRuntime
 @JakartarsResource()
 @JakartarsName("EPackageResource")
-@Component(service = EPackageResource.class, scope = ServiceScope.PROTOTYPE)
+//@Component(service = EPackageResource.class, scope = ServiceScope.PROTOTYPE)
 @Path("/epackages")
 @Tag(name = "EPackage Management", description = "CRUD operations for EMF EPackages")
 public class EPackageResource {

@@ -93,7 +93,7 @@ public class ScopeCollectorTest {
 
 		Thread.sleep(2000);
 
-		List<Scope> scopes = serviceCollector.getScopes();
+		List<Scope> scopes = serviceCollector.getAllScopes();
 		assertEquals(1, scopes.size(), "scope list should have 1 element");
 
 		Scope scope = scopes.get(0);
@@ -128,7 +128,7 @@ public class ScopeCollectorTest {
 
 		Thread.sleep(2000);
 
-		List<Scope> scopes = serviceCollector.getScopes();
+		List<Scope> scopes = serviceCollector.getAllScopes();
 		assertEquals(2, scopes.size(), "scope list should have 2 elements");
 
 		// Verify all scopes are present
@@ -154,13 +154,13 @@ public class ScopeCollectorTest {
 
 		Thread.sleep(2000);
 
-		Scope scope = serviceCollector.getScopeByName("my-tenant");
+		Scope scope = serviceCollector.getSchemaWorkflowScopeByName("my-tenant");
 		assertNotNull(scope, "Should find scope by name");
 		assertEquals("my-tenant", scope.getName());
 		assertEquals("my-tenant scope", scope.getDescription());
 		assertEquals("my-parent-tenant", scope.getParentScope());
 
-		Scope parentScope = serviceCollector.getScopeByName("my-parent-tenant");
+		Scope parentScope = serviceCollector.getSchemaWorkflowScopeByName("my-parent-tenant");
 		assertNotNull(parentScope, "Should find other scope by name");
 		assertEquals("my-parent-tenant", parentScope.getName());
 	}
@@ -183,7 +183,7 @@ public class ScopeCollectorTest {
 
 		Thread.sleep(2000);
 
-		Scope scope = serviceCollector.getScopeByName("non-existent-scope");
+		Scope scope = serviceCollector.getSchemaWorkflowScopeByName("non-existent-scope");
 		assertEquals(null, scope, "Should return null for non-existent scope");
 	}
 
@@ -199,7 +199,7 @@ public class ScopeCollectorTest {
 
 		Thread.sleep(500);
 
-		List<Scope> scopes = serviceCollector.getScopes();
+		List<Scope> scopes = serviceCollector.getAllScopes();
 		assertNotNull(scopes, "Scopes list should not be null");
 		assertEquals(0, scopes.size(), "Scopes list should be empty");
 	}
@@ -222,7 +222,7 @@ public class ScopeCollectorTest {
 
 		Thread.sleep(2000);
 
-		Scope scope = serviceCollector.getScopeByName("my-parent-tenant");
+		Scope scope = serviceCollector.getSchemaWorkflowScopeByName("my-parent-tenant");
 		assertNotNull(scope);
 		assertEquals("my-parent-tenant", scope.getName());
 		assertEquals("my-parent-tenant scope", scope.getDescription());
@@ -249,7 +249,7 @@ public class ScopeCollectorTest {
 
 		Thread.sleep(2000);
 
-		Scope scope = serviceCollector.getScopeByName("my-tenant");
+		Scope scope = serviceCollector.getSchemaWorkflowScopeByName("my-tenant");
 		assertNotNull(scope);
 
 		assertEquals(2, scope.getLinks().size(), "Should have exactly 2 links");
@@ -283,18 +283,18 @@ public class ScopeCollectorTest {
 		Thread.sleep(2000);
 
 		// Verify scope is initially present
-		Scope scope = serviceCollector.getScopeByName("my-parent-tenant");
+		Scope scope = serviceCollector.getSchemaWorkflowScopeByName("my-parent-tenant");
 		assertNotNull(scope, "Scope should be present initially");
-		assertEquals(1, serviceCollector.getScopes().size(), "Should have 1 scope");
+		assertEquals(1, serviceCollector.getAllScopes().size(), "Should have 1 scope");
 
 		// Delete the configuration to trigger unbind
 		configuration.delete();
 		Thread.sleep(2000);
 
 		// Verify scope has been removed
-		Scope removedScope = serviceCollector.getScopeByName("my-parent-tenant");
+		Scope removedScope = serviceCollector.getSchemaWorkflowScopeByName("my-parent-tenant");
 		assertNull(removedScope, "Scope should be removed after configuration deletion");
-		assertEquals(0, serviceCollector.getScopes().size(), "Should have 0 scopes after removal");
+		assertEquals(0, serviceCollector.getAllScopes().size(), "Should have 0 scopes after removal");
 	}
 
 	/**
@@ -315,7 +315,7 @@ public class ScopeCollectorTest {
 		assertNotNull(serviceCollector);
 
 		// Initially no scopes
-		assertEquals(0, serviceCollector.getScopes().size(), "Should start with 0 scopes");
+		assertEquals(0, serviceCollector.getAllScopes().size(), "Should start with 0 scopes");
 
 		// Create a scope configuration
 		Dictionary<String, Object> props = new Hashtable<>();
@@ -327,18 +327,18 @@ public class ScopeCollectorTest {
 		Thread.sleep(2000);
 
 		// Verify scope is registered
-		Scope scope = serviceCollector.getScopeByName("my-parent-tenant");
+		Scope scope = serviceCollector.getSchemaWorkflowScopeByName("my-parent-tenant");
 		assertNotNull(scope, "Scope should be registered");
 		assertEquals("my-parent-tenant", scope.getName());
-		assertEquals(1, serviceCollector.getScopes().size());
+		assertEquals(1, serviceCollector.getAllScopes().size());
 
 		// Delete configuration
 		configuration.delete();
 		Thread.sleep(2000);
 
 		// Verify removal
-		assertNull(serviceCollector.getScopeByName("my-parent-tenant"), "Scope should be removed");
-		assertEquals(0, serviceCollector.getScopes().size());
+		assertNull(serviceCollector.getSchemaWorkflowScopeByName("my-parent-tenant"), "Scope should be removed");
+		assertEquals(0, serviceCollector.getAllScopes().size());
 
 		// Re-register with updated properties
 		ConfigurationAdmin configAdmin = configAdminAware.waitForService(1000);
@@ -348,11 +348,11 @@ public class ScopeCollectorTest {
 		Thread.sleep(2000);
 
 		// Verify re-registration with updated properties
-		Scope reregisteredScope = serviceCollector.getScopeByName("my-parent-tenant");
+		Scope reregisteredScope = serviceCollector.getSchemaWorkflowScopeByName("my-parent-tenant");
 		assertNotNull(reregisteredScope, "Scope should be re-registered");
 		assertEquals("my-parent-tenant", reregisteredScope.getName());
 		assertEquals("Updated description after re-registration", reregisteredScope.getDescription());
-		assertEquals(1, serviceCollector.getScopes().size());
+		assertEquals(1, serviceCollector.getAllScopes().size());
 
 		// Cleanup
 		configuration.delete();
@@ -385,7 +385,7 @@ public class ScopeCollectorTest {
 		Thread.sleep(2000);
 
 		// Verify initial state
-		Scope scope = serviceCollector.getScopeByName("my-parent-tenant");
+		Scope scope = serviceCollector.getSchemaWorkflowScopeByName("my-parent-tenant");
 		assertNotNull(scope);
 		assertEquals("Initial description", scope.getDescription());
 		assertEquals("atlas", scope.getParentScope());
@@ -398,7 +398,7 @@ public class ScopeCollectorTest {
 		Thread.sleep(2000);
 
 		// Verify updated state
-		Scope updatedScope = serviceCollector.getScopeByName("my-parent-tenant");
+		Scope updatedScope = serviceCollector.getSchemaWorkflowScopeByName("my-parent-tenant");
 		assertNotNull(updatedScope, "Scope should still exist after update");
 		assertEquals("my-parent-tenant", updatedScope.getName());
 		assertEquals("Updated description", updatedScope.getDescription());

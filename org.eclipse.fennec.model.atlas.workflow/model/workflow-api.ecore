@@ -22,98 +22,108 @@
     <eTypeParameters name="T">
       <eBounds eClassifier="ecore:EClass http://www.eclipse.org/emf/2002/Ecore#//EObject"/>
     </eTypeParameters>
-    <eOperations name="uploadToStage">
+    <eOperations name="uploadToStageForRegistry">
       <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
-        <details key="documentation" value="Upload an EObject to a certain stage (draft, review, etc); returns promise with uploaded ObjectMetadata."/>
+        <details key="documentation" value="Upload an EObject to a certain stage (draft, review, etc) for a certain registry (schema, configuration, script, etc); returns promise with uploaded ObjectMetadata."/>
       </eAnnotations>
       <eGenericType eClassifier="ecore:EDataType ../../org.eclipse.fennec.model.atlas.management/model/management.ecore#//Promise">
         <eTypeArguments eClassifier="ecore:EClass ../../org.eclipse.fennec.model.atlas.management/model/management.ecore#//ObjectMetadata"/>
       </eGenericType>
       <eParameters name="stage" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+      <eParameters name="registry" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
       <eParameters name="object" lowerBound="1">
         <eGenericType eTypeParameter="#//EObjectWorkflowService/T"/>
       </eParameters>
       <eParameters name="metadata" lowerBound="1" eType="ecore:EClass ../../org.eclipse.fennec.model.atlas.management/model/management.ecore#//ObjectMetadata"/>
     </eOperations>
-    <eOperations name="getFromStage" eType="ecore:EClass ../../org.eclipse.fennec.model.atlas.management/model/management.ecore#//ObjectMetadata">
+    <eOperations name="getFromStageForRegistry" eType="ecore:EClass ../../org.eclipse.fennec.model.atlas.management/model/management.ecore#//ObjectMetadata">
       <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
-        <details key="documentation" value="Get object registration by ID from a certain stage. If nothing is found in that stage, the parents release stages are also inspected. "/>
+        <details key="documentation" value="Get object registration by ID from a certain stage and a certain registry. If nothing is found in that stage/registry, the parents final stage of the same registry are also inspected. "/>
       </eAnnotations>
       <eParameters name="stage" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+      <eParameters name="registry" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
       <eParameters name="objectId" lowerBound="1" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
     </eOperations>
-    <eOperations name="getFromFinalStage" eType="ecore:EClass ../../org.eclipse.fennec.model.atlas.management/model/management.ecore#//ObjectMetadata">
+    <eOperations name="getFromFinalStageForRegistry" eType="ecore:EClass ../../org.eclipse.fennec.model.atlas.management/model/management.ecore#//ObjectMetadata">
       <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
-        <details key="documentation" value="Get object registration by ID from the final stage of a workflow. If nothing is found in that stage, the parents final stages are also inspected. "/>
+        <details key="documentation" value="Get object registration by ID from the final stage of a workflow and the specified registry. If nothing is found in that stage, the parents final stage of the same registry are also inspected. "/>
       </eAnnotations>
+      <eParameters name="registry" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
       <eParameters name="objectId" lowerBound="1" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
     </eOperations>
-    <eOperations name="getContentFromStage">
+    <eOperations name="getContentFromStageForRegistry">
       <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
-        <details key="documentation" value="Get the actual EObject content by ID for a certain stage. If nothing is found, the parents release stages are also inspected."/>
+        <details key="documentation" value="Get the actual EObject content by ID for a certain stage and registry. If nothing is found, the parents final stage of the same registry are also inspected."/>
       </eAnnotations>
       <eGenericType eTypeParameter="#//EObjectWorkflowService/T"/>
       <eParameters name="stage" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+      <eParameters name="registry" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
       <eParameters name="objectId" lowerBound="1" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
     </eOperations>
-    <eOperations name="updateInStage">
+    <eOperations name="updateInStageForRegistry">
       <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
-        <details key="documentation" value="Update an existing object. Returned updated ObjectMetadata."/>
+        <details key="documentation" value="Update an existing object in a certain stage and registry. Returned updated ObjectMetadata."/>
       </eAnnotations>
       <eGenericType eClassifier="ecore:EDataType ../../org.eclipse.fennec.model.atlas.management/model/management.ecore#//Promise">
         <eTypeArguments eClassifier="ecore:EClass ../../org.eclipse.fennec.model.atlas.management/model/management.ecore#//ObjectMetadata"/>
       </eGenericType>
       <eParameters name="stage" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+      <eParameters name="registry" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
       <eParameters name="updatedObject" lowerBound="1">
         <eGenericType eTypeParameter="#//EObjectWorkflowService/T"/>
       </eParameters>
       <eParameters name="objectId" lowerBound="1" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
       <eParameters name="version" lowerBound="1" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
     </eOperations>
-    <eOperations name="deleteFromStage">
+    <eOperations name="deleteFromStageForRegistry">
       <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
-        <details key="documentation" value="Delete an object"/>
+        <details key="documentation" value="Delete an object from a certain registry and stage. Returns whether the deletion was successfull."/>
       </eAnnotations>
       <eGenericType eClassifier="ecore:EDataType ../../org.eclipse.fennec.model.atlas.management/model/management.ecore#//Promise">
         <eTypeArguments eClassifier="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EBooleanObject"/>
       </eGenericType>
       <eParameters name="stage" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+      <eParameters name="registry" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
       <eParameters name="objectId" lowerBound="1" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
     </eOperations>
-    <eOperations name="listInStage">
+    <eOperations name="listInStageForRegistry">
       <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
-        <details key="documentation" value="List all objects in a certain stage of the workflow"/>
+        <details key="documentation" value="List all objects in a certain stage and registry of the workflow"/>
       </eAnnotations>
       <eGenericType eClassifier="ecore:EDataType ../../org.eclipse.fennec.model.atlas.management/model/management.ecore#//List">
         <eTypeArguments eClassifier="ecore:EClass ../../org.eclipse.fennec.model.atlas.management/model/management.ecore#//ObjectMetadata"/>
       </eGenericType>
       <eParameters name="stage" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+      <eParameters name="registry" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
     </eOperations>
-    <eOperations name="listInStageByName">
+    <eOperations name="listInStageForRegistryByName">
       <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
-        <details key="documentation" value="List all objects with a matching name filter in a certain stage of the workflow"/>
+        <details key="documentation" value="List all objects with a matching name filter in a certain stage and registry of the workflow"/>
       </eAnnotations>
       <eGenericType eClassifier="ecore:EDataType ../../org.eclipse.fennec.model.atlas.management/model/management.ecore#//List">
         <eTypeArguments eClassifier="ecore:EClass ../../org.eclipse.fennec.model.atlas.management/model/management.ecore#//ObjectMetadata"/>
       </eGenericType>
       <eParameters name="stage" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+      <eParameters name="registry" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
       <eParameters name="name" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
     </eOperations>
-    <eOperations name="listInFinalStage">
+    <eOperations name="listInFinalStageForRegistry">
       <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
-        <details key="documentation" value="List all objects in the final stage of the workflow"/>
+        <details key="documentation" value="List all objects in the final stage and for the specified registry of the workflow"/>
       </eAnnotations>
       <eGenericType eClassifier="ecore:EDataType ../../org.eclipse.fennec.model.atlas.management/model/management.ecore#//List">
         <eTypeArguments eClassifier="ecore:EClass ../../org.eclipse.fennec.model.atlas.management/model/management.ecore#//ObjectMetadata"/>
       </eGenericType>
+      <eParameters name="registry" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
     </eOperations>
-    <eOperations name="transitionToStage" eType="ecore:EClass ../../org.eclipse.fennec.model.atlas.management/model/management.ecore#//ObjectMetadata">
+    <eOperations name="transitionToStageForRegistry" eType="ecore:EClass ../../org.eclipse.fennec.model.atlas.management/model/management.ecore#//ObjectMetadata">
       <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
-        <details key="documentation" value="Performs a transition of an EObject from one stage to another, if allowed."/>
+        <details key="documentation" value="Performs a transition of an EObject from one stage to another of a certain registry, if allowed."/>
       </eAnnotations>
       <eParameters name="objectId" lowerBound="1" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
       <eParameters name="fromStage" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
       <eParameters name="toStage" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+      <eParameters name="registry" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
     </eOperations>
     <eOperations name="isTransitionAllowed" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EBoolean">
       <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">

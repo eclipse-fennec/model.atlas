@@ -30,6 +30,7 @@ import org.osgi.annotation.versioning.ProviderType;
  * </p>
  * <ul>
  *   <li>{@link org.eclipse.fennec.model.atlas.model.scope.Scope#getName <em>Name</em>}</li>
+ *   <li>{@link org.eclipse.fennec.model.atlas.model.scope.Scope#getType <em>Type</em>}</li>
  *   <li>{@link org.eclipse.fennec.model.atlas.model.scope.Scope#getParentScope <em>Parent Scope</em>}</li>
  *   <li>{@link org.eclipse.fennec.model.atlas.model.scope.Scope#getDescription <em>Description</em>}</li>
  *   <li>{@link org.eclipse.fennec.model.atlas.model.scope.Scope#getLinks <em>Links</em>}</li>
@@ -65,6 +66,31 @@ public interface Scope extends EObject {
 	 * @generated
 	 */
 	void setName(String value);
+
+	/**
+	 * Returns the value of the '<em><b>Type</b></em>' attribute.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * <!-- begin-model-doc -->
+	 * This allows to distinguish between schema workflow scopes and storage registry scopes
+	 * <!-- end-model-doc -->
+	 * @return the value of the '<em>Type</em>' attribute.
+	 * @see #setType(String)
+	 * @see org.eclipse.fennec.model.atlas.model.scope.ScopePackage#getScope_Type()
+	 * @model
+	 * @generated
+	 */
+	String getType();
+
+	/**
+	 * Sets the value of the '{@link org.eclipse.fennec.model.atlas.model.scope.Scope#getType <em>Type</em>}' attribute.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @param value the new value of the '<em>Type</em>' attribute.
+	 * @see #getType()
+	 * @generated
+	 */
+	void setType(String value);
 
 	/**
 	 * Returns the value of the '<em><b>Parent Scope</b></em>' attribute.

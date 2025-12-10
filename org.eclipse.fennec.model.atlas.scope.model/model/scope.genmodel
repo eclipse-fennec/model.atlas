@@ -10,6 +10,7 @@
       disposableProviderFactory="true" ecorePackage="scope.ecore#/">
     <genClasses ecoreClass="scope.ecore#//Scope">
       <genFeatures createChild="false" ecoreFeature="ecore:EAttribute scope.ecore#//Scope/name"/>
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute scope.ecore#//Scope/type"/>
       <genFeatures createChild="false" ecoreFeature="ecore:EAttribute scope.ecore#//Scope/parentScope"/>
       <genFeatures createChild="false" ecoreFeature="ecore:EAttribute scope.ecore#//Scope/description"/>
       <genFeatures notify="false" createChild="false" propertySortChoices="true" ecoreFeature="ecore:EReference scope.ecore#//Scope/links"/>

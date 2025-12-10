@@ -39,6 +39,7 @@ import org.eclipse.fennec.model.atlas.mgmt.management.ObjectStatus;
  *   <li>{@link org.eclipse.fennec.model.atlas.mgmt.management.impl.ObjectQueryImpl#getRole <em>Role</em>}</li>
  *   <li>{@link org.eclipse.fennec.model.atlas.mgmt.management.impl.ObjectQueryImpl#getScope <em>Scope</em>}</li>
  *   <li>{@link org.eclipse.fennec.model.atlas.mgmt.management.impl.ObjectQueryImpl#getName <em>Name</em>}</li>
+ *   <li>{@link org.eclipse.fennec.model.atlas.mgmt.management.impl.ObjectQueryImpl#getRegistry <em>Registry</em>}</li>
  * </ul>
  *
  * @generated
@@ -183,6 +184,26 @@ public class ObjectQueryImpl extends MinimalEObjectImpl.Container implements Obj
 	 * @ordered
 	 */
 	protected String name = NAME_EDEFAULT;
+
+	/**
+	 * The default value of the '{@link #getRegistry() <em>Registry</em>}' attribute.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @see #getRegistry()
+	 * @generated
+	 * @ordered
+	 */
+	protected static final String REGISTRY_EDEFAULT = null;
+
+	/**
+	 * The cached value of the '{@link #getRegistry() <em>Registry</em>}' attribute.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @see #getRegistry()
+	 * @generated
+	 * @ordered
+	 */
+	protected String registry = REGISTRY_EDEFAULT;
 
 	/**
 	 * <!-- begin-user-doc -->
@@ -370,6 +391,29 @@ public class ObjectQueryImpl extends MinimalEObjectImpl.Container implements Obj
 	 * @generated
 	 */
 	@Override
+	public String getRegistry() {
+		return registry;
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
+	public void setRegistry(String newRegistry) {
+		String oldRegistry = registry;
+		registry = newRegistry;
+		if (eNotificationRequired())
+			eNotify(new ENotificationImpl(this, Notification.SET, ManagementPackage.OBJECT_QUERY__REGISTRY, oldRegistry, registry));
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
 	public Object eGet(int featureID, boolean resolve, boolean coreType) {
 		switch (featureID) {
 			case ManagementPackage.OBJECT_QUERY__UPLOAD_USER:
@@ -386,6 +430,8 @@ public class ObjectQueryImpl extends MinimalEObjectImpl.Container implements Obj
 				return getScope();
 			case ManagementPackage.OBJECT_QUERY__NAME:
 				return getName();
+			case ManagementPackage.OBJECT_QUERY__REGISTRY:
+				return getRegistry();
 		}
 		return super.eGet(featureID, resolve, coreType);
 	}
@@ -418,6 +464,9 @@ public class ObjectQueryImpl extends MinimalEObjectImpl.Container implements Obj
 				return;
 			case ManagementPackage.OBJECT_QUERY__NAME:
 				setName((String)newValue);
+				return;
+			case ManagementPackage.OBJECT_QUERY__REGISTRY:
+				setRegistry((String)newValue);
 				return;
 		}
 		super.eSet(featureID, newValue);
@@ -452,6 +501,9 @@ public class ObjectQueryImpl extends MinimalEObjectImpl.Container implements Obj
 			case ManagementPackage.OBJECT_QUERY__NAME:
 				setName(NAME_EDEFAULT);
 				return;
+			case ManagementPackage.OBJECT_QUERY__REGISTRY:
+				setRegistry(REGISTRY_EDEFAULT);
+				return;
 		}
 		super.eUnset(featureID);
 	}
@@ -478,6 +530,8 @@ public class ObjectQueryImpl extends MinimalEObjectImpl.Container implements Obj
 				return SCOPE_EDEFAULT == null ? scope != null : !SCOPE_EDEFAULT.equals(scope);
 			case ManagementPackage.OBJECT_QUERY__NAME:
 				return NAME_EDEFAULT == null ? name != null : !NAME_EDEFAULT.equals(name);
+			case ManagementPackage.OBJECT_QUERY__REGISTRY:
+				return REGISTRY_EDEFAULT == null ? registry != null : !REGISTRY_EDEFAULT.equals(registry);
 		}
 		return super.eIsSet(featureID);
 	}
@@ -506,6 +560,8 @@ public class ObjectQueryImpl extends MinimalEObjectImpl.Container implements Obj
 		result.append(scope);
 		result.append(", name: ");
 		result.append(name);
+		result.append(", registry: ");
+		result.append(registry);
 		result.append(')');
 		return result.toString();
 	}

@@ -1,40 +1,29 @@
 {
 	":configurator:resource-version": 1,
 	":configurator:version": "1.0.0",
-	"ApicurioObjectStorage~default-draft": {
+	"ApicurioObjectStorage~default-schema-draft": {
 		"base.url": "http://$[env:APICURIO_HOST;default=$[prop:APICURIO_HOST;default=localhost]]:$[env:APICURIO_PORT;default=$[prop:APICURIO_PORT;default=8080]]/apis/registry/v3/",
 		"storage.role": "draft",
+		"storage.registry": "schema",
 		"registry.target": "(registry=main)"
 	},
-	"ApicurioObjectStorage~default-approved": {
+	"ApicurioObjectStorage~default-schema-approved": {
 		"base.url": "http://$[env:APICURIO_HOST;default=$[prop:APICURIO_HOST;default=localhost]]:$[env:APICURIO_PORT;default=$[prop:APICURIO_PORT;default=8080]]/apis/registry/v3/",
 		"storage.role": "approved",
+		"storage.registry": "schema",
 		"registry.target": "(registry=main)"
 	},
-	"ApicurioObjectStorage~default-release": {
+	"ApicurioObjectStorage~default-schema-release": {
 		"base.url": "http://$[env:APICURIO_HOST;default=$[prop:APICURIO_HOST;default=localhost]]:$[env:APICURIO_PORT;default=$[prop:APICURIO_PORT;default=8080]]/apis/registry/v3/",
 		"storage.role": "release",
+		"storage.registry": "schema",
 		"registry.target": "(registry=main)"
 	},
-	"ApicurioObjectStorage~atlas-draft": {
-		"base.url": "http://$[env:APICURIO_HOST;default=$[prop:APICURIO_HOST;default=localhost]]:$[env:APICURIO_PORT;default=$[prop:APICURIO_PORT;default=8080]]/apis/registry/v3/",
-		"storage.role": "draft",
-		"registry.target": "(registry=main)",
-		"storage.scope": "atlas",
-		"artifact.group.id": "atlas"
-	},
-	"ApicurioObjectStorage~atlas-approved": {
-		"base.url": "http://$[env:APICURIO_HOST;default=$[prop:APICURIO_HOST;default=localhost]]:$[env:APICURIO_PORT;default=$[prop:APICURIO_PORT;default=8080]]/apis/registry/v3/",
-		"storage.role": "approved",
-		"registry.target": "(registry=main)",
-		"storage.scope": "atlas",
-		"artifact.group.id": "atlas"
-	},
-	"ApicurioObjectStorage~atlas-release": {
+	"ApicurioObjectStorage~atlas-schema-release": {
 		"base.url": "http://$[env:APICURIO_HOST;default=$[prop:APICURIO_HOST;default=localhost]]:$[env:APICURIO_PORT;default=$[prop:APICURIO_PORT;default=8080]]/apis/registry/v3/",
 		"storage.role": "release",
+		"storage.registry": "schema",
 		"registry.target": "(registry=main)",
-		"storage.scope": "atlas",
-		"artifact.group.id": "atlas"
+		"storage.scope": "atlas"
 	}
 }

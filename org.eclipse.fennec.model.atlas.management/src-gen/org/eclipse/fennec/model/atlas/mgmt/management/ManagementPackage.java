@@ -303,13 +303,22 @@ public interface ManagementPackage extends org.eclipse.emf.ecore.EPackage {
 	int OBJECT_METADATA__IS_READ_ONLY = 23;
 
 	/**
+	 * The feature id for the '<em><b>Registry</b></em>' attribute.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 * @ordered
+	 */
+	int OBJECT_METADATA__REGISTRY = 24;
+
+	/**
 	 * The number of structural features of the '<em>Object Metadata</em>' class.
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
 	 * @generated
 	 * @ordered
 	 */
-	int OBJECT_METADATA_FEATURE_COUNT = 24;
+	int OBJECT_METADATA_FEATURE_COUNT = 25;
 
 	/**
 	 * The number of operations of the '<em>Object Metadata</em>' class.
@@ -440,13 +449,22 @@ public interface ManagementPackage extends org.eclipse.emf.ecore.EPackage {
 	int OBJECT_QUERY__NAME = 6;
 
 	/**
+	 * The feature id for the '<em><b>Registry</b></em>' attribute.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 * @ordered
+	 */
+	int OBJECT_QUERY__REGISTRY = 7;
+
+	/**
 	 * The number of structural features of the '<em>Object Query</em>' class.
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
 	 * @generated
 	 * @ordered
 	 */
-	int OBJECT_QUERY_FEATURE_COUNT = 7;
+	int OBJECT_QUERY_FEATURE_COUNT = 8;
 
 	/**
 	 * The number of operations of the '<em>Object Query</em>' class.
@@ -996,6 +1014,17 @@ public interface ManagementPackage extends org.eclipse.emf.ecore.EPackage {
 	EAttribute getObjectMetadata_IsReadOnly();
 
 	/**
+	 * Returns the meta object for the attribute '{@link org.eclipse.fennec.model.atlas.mgmt.management.ObjectMetadata#getRegistry <em>Registry</em>}'.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @return the meta object for the attribute '<em>Registry</em>'.
+	 * @see org.eclipse.fennec.model.atlas.mgmt.management.ObjectMetadata#getRegistry()
+	 * @see #getObjectMetadata()
+	 * @generated
+	 */
+	EAttribute getObjectMetadata_Registry();
+
+	/**
 	 * Returns the meta object for class '{@link java.util.Map.Entry <em>String To Object Map Entry</em>}'.
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
@@ -1115,6 +1144,17 @@ public interface ManagementPackage extends org.eclipse.emf.ecore.EPackage {
 	 * @generated
 	 */
 	EAttribute getObjectQuery_Name();
+
+	/**
+	 * Returns the meta object for the attribute '{@link org.eclipse.fennec.model.atlas.mgmt.management.ObjectQuery#getRegistry <em>Registry</em>}'.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @return the meta object for the attribute '<em>Registry</em>'.
+	 * @see org.eclipse.fennec.model.atlas.mgmt.management.ObjectQuery#getRegistry()
+	 * @see #getObjectQuery()
+	 * @generated
+	 */
+	EAttribute getObjectQuery_Registry();
 
 	/**
 	 * Returns the meta object for class '{@link org.eclipse.fennec.model.atlas.mgmt.management.GenerationRequest <em>Generation Request</em>}'.
@@ -1604,6 +1644,14 @@ public interface ManagementPackage extends org.eclipse.emf.ecore.EPackage {
 		EAttribute OBJECT_METADATA__IS_READ_ONLY = eINSTANCE.getObjectMetadata_IsReadOnly();
 
 		/**
+		 * The meta object literal for the '<em><b>Registry</b></em>' attribute feature.
+		 * <!-- begin-user-doc -->
+		 * <!-- end-user-doc -->
+		 * @generated
+		 */
+		EAttribute OBJECT_METADATA__REGISTRY = eINSTANCE.getObjectMetadata_Registry();
+
+		/**
 		 * The meta object literal for the '{@link org.eclipse.fennec.model.atlas.mgmt.management.impl.StringToObjectMapEntryImpl <em>String To Object Map Entry</em>}' class.
 		 * <!-- begin-user-doc -->
 		 * <!-- end-user-doc -->
@@ -1694,6 +1742,14 @@ public interface ManagementPackage extends org.eclipse.emf.ecore.EPackage {
 		 * @generated
 		 */
 		EAttribute OBJECT_QUERY__NAME = eINSTANCE.getObjectQuery_Name();
+
+		/**
+		 * The meta object literal for the '<em><b>Registry</b></em>' attribute feature.
+		 * <!-- begin-user-doc -->
+		 * <!-- end-user-doc -->
+		 * @generated
+		 */
+		EAttribute OBJECT_QUERY__REGISTRY = eINSTANCE.getObjectQuery_Registry();
 
 		/**
 		 * The meta object literal for the '{@link org.eclipse.fennec.model.atlas.mgmt.management.impl.GenerationRequestImpl <em>Generation Request</em>}' class.

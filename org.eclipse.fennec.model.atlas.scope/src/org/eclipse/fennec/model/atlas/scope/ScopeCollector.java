@@ -38,21 +38,38 @@ public class ScopeCollector {
 	private static final Logger LOGGER = Logger.getLogger(ScopeCollector.class.getName());
 	private Map<String, Scope> scopeMap = new ConcurrentHashMap<>();
 	private Map<String, EObjectWorkflowService<?>> workflowServicesMap = new ConcurrentHashMap<>();
+	private Map<String, EObjectWorkflowService<?>> objectRegistryServicesMap = new ConcurrentHashMap<>();
 	
-	public Scope getScopeByName(String name) {
-		return scopeMap.getOrDefault(name, null);
+	public Scope getSchemaWorkflowScopeByName(String name) {
+		return scopeMap.values().stream().filter(s -> "schemaWorkflow".equals(s.getType()) && name.equals(s.getName())).findFirst().orElse(null);
 	}
 	
-	public List<Scope> getScopes() {
+	public Scope getObjectRegistryScopeByName(String name) {
+		return scopeMap.values().stream().filter(s -> "objectRegistry".equals(s.getType()) && name.equals(s.getName())).findFirst().orElse(null);
+	}
+	
+	public List<Scope> getAllScopes() {
 		return scopeMap.values().stream().toList();
+	}
+	
+	public List<Scope> getSchemaWorkflowScopes() {
+		return scopeMap.values().stream().filter(s -> "schemaWorkflow".equals(s.getType())).toList();
+	}
+	
+	public List<Scope> getObjectRegistryScopes() {
+		return scopeMap.values().stream().filter(s -> "objectRegistry".equals(s.getType())).toList();
 	}
 	
 	public EObjectWorkflowService<?> getWorkflowServiceByScope(String scopeName) {
 		return workflowServicesMap.getOrDefault(scopeName, null);
 	}
 	
+	public EObjectWorkflowService<?> getObjectRegistryServiceByScope(String scopeName) {
+		return objectRegistryServicesMap.getOrDefault(scopeName, null);
+	}
 	
-	@Reference(policy = ReferencePolicy.DYNAMIC, policyOption = ReferencePolicyOption.GREEDY, cardinality = ReferenceCardinality.MULTIPLE)
+	
+	@Reference(target = "(type=schemaWorkflow)", policy = ReferencePolicy.DYNAMIC, policyOption = ReferencePolicyOption.GREEDY, cardinality = ReferenceCardinality.MULTIPLE)
 	public void bindWorkflowService(EObjectWorkflowService<?> workflowService, Map<String, Object> properties) {
 		if(!properties.containsKey("scope") || properties.get("scope") == null || ((String) properties.get("scope")).isEmpty()) {
 			LOGGER.severe(String.format("Cannot store EObjectWorkflowService with scope property not set or empty"));
@@ -67,9 +84,25 @@ public class ScopeCollector {
 		workflowServicesMap.remove(properties.get("scope"));
 	}
 	
+	@Reference(target = "(type=objectRegistry)", policy = ReferencePolicy.DYNAMIC, policyOption = ReferencePolicyOption.GREEDY, cardinality = ReferenceCardinality.MULTIPLE)
+	public void bindStorageRegistryService(EObjectWorkflowService<?> workflowService, Map<String, Object> properties) {
+		if(!properties.containsKey("scope") || properties.get("scope") == null || ((String) properties.get("scope")).isEmpty()) {
+			LOGGER.severe(String.format("Cannot store EObjectWorkflowService with scope property not set or empty"));
+			return;
+		}
+		scopeMap.put((String) properties.get("scope"), createScopeFromConfig(properties));
+		objectRegistryServicesMap.put((String) properties.get("scope"), workflowService);
+	}
+	
+	public void unbindStorageRegistryService(EObjectWorkflowService<?> workflowService, Map<String, Object> properties) {
+		scopeMap.remove(properties.get("scope"));
+		objectRegistryServicesMap.remove(properties.get("scope"));
+	}
+	
 	private Scope createScopeFromConfig(Map<String, Object> properties) {
 		Scope scope = ScopeFactory.eINSTANCE.createScope();
 		scope.setName((String) properties.get("scope"));
+		scope.setType((String)properties.get("type"));
 		scope.setDescription((String) properties.get("description"));
 		scope.setParentScope((String) properties.get("parent.scope"));
 		scope.getLinks().put("self", "/scopes/"+properties.get("scope"));

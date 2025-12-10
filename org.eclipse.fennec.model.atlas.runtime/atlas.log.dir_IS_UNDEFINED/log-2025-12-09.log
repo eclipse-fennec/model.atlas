@@ -1,0 +1,486 @@
+2025-12-09 09:17:44.628 [FelixStartLevel] INFO  o.a.a.t.b.i.TypedEventBusActivator - Aries Typed Event Bus Starting
+2025-12-09 09:17:44.654 [FelixStartLevel] INFO  o.a.a.t.b.i.TypedEventBusActivator - Aries Typed Event Bus Started
+2025-12-09 09:17:44.662 [FelixStartLevel] INFO  o.a.f.c.p.i.InterpolationConfigurationPlugin - Configured directory for secrets: /opt/git/model.atlas/org.eclipse.fennec.model.atlas.runtime/runtime/secrets
+2025-12-09 09:17:44.768 [FelixStartLevel] WARN  org.apache.felix.http - Jetty not started (HTTP and HTTPS disabled)
+2025-12-09 09:17:46.744 [CM Event Dispatcher (Fire ConfigurationEvent: pid=LuceneEObjectRegistryService~documentation)] INFO  o.a.f.c.p.i.InterpolationConfigurationPlugin - Replaced value of configuration property 'registry.workspace.folder' for PID LuceneEObjectRegistryService~documentation
+2025-12-09 09:17:46.745 [CM Event Dispatcher (Fire ConfigurationEvent: pid=LuceneEObjectRegistryService~main)] INFO  o.a.f.c.p.i.InterpolationConfigurationPlugin - Replaced value of configuration property 'registry.workspace.folder' for PID LuceneEObjectRegistryService~main
+2025-12-09 09:17:46.896 [CM Configuration Updater (Update: pid=org.apache.felix.http~maHttp)] INFO  org.eclipse.jetty.server.Server - jetty-11.0.22; built: 2024-06-27T16:27:26.756Z; git: e711d4c7040cb1e61aa68cb248fa7280b734a3bb; jvm 21.0.9+10-Ubuntu-124.04
+2025-12-09 09:17:46.976 [CM Configuration Updater (Update: pid=org.apache.felix.http~maHttp)] INFO  o.e.j.s.s.DefaultSessionIdManager - Session workerName=node0
+2025-12-09 09:17:46.991 [CM Configuration Updater (Update: pid=org.apache.felix.http~maHttp)] INFO  o.e.j.server.handler.ContextHandler - Started o.e.j.s.ServletContextHandler@36889fd2{/atlas,null,AVAILABLE}
+2025-12-09 09:17:47.000 [CM Configuration Updater (Update: pid=org.apache.felix.http~maHttp)] INFO  org.eclipse.jetty.server.Server - Started Server@5417c1f6{STARTING}[11.0.22,sto=0] @3071ms
+2025-12-09 09:17:47.037 [CM Configuration Updater (Update: pid=org.apache.felix.http~maHttp)] INFO  o.e.jetty.server.AbstractConnector - Started ServerConnector@7bf051ac{HTTP/1.1, (http/1.1)}{0.0.0.0:8086}
+2025-12-09 09:17:47.038 [CM Configuration Updater (Update: pid=org.apache.felix.http~maHttp)] INFO  org.apache.felix.http - Started Jetty 11.0.22 at port(s) HTTP:8086 on context path /atlas [minThreads=8,maxThreads=200,acceptors=2,selectors=10]
+2025-12-09 09:17:47.166 [CM Event Dispatcher (Fire ConfigurationEvent: pid=ApicurioObjectStorage~atlas-approved)] INFO  o.a.f.c.p.i.InterpolationConfigurationPlugin - Replaced value of configuration property 'base.url' for PID ApicurioObjectStorage~atlas-approved
+2025-12-09 09:17:47.411 [CM Event Dispatcher (Fire ConfigurationEvent: pid=ApicurioObjectStorage~atlas-draft)] INFO  o.a.f.c.p.i.InterpolationConfigurationPlugin - Replaced value of configuration property 'base.url' for PID ApicurioObjectStorage~atlas-draft
+2025-12-09 09:17:47.414 [CM Event Dispatcher (Fire ConfigurationEvent: pid=ApicurioObjectStorage~atlas-release)] INFO  o.a.f.c.p.i.InterpolationConfigurationPlugin - Replaced value of configuration property 'base.url' for PID ApicurioObjectStorage~atlas-release
+2025-12-09 09:17:47.428 [CM Event Dispatcher (Fire ConfigurationEvent: pid=ApicurioObjectStorage~default-approved)] INFO  o.a.f.c.p.i.InterpolationConfigurationPlugin - Replaced value of configuration property 'base.url' for PID ApicurioObjectStorage~default-approved
+2025-12-09 09:17:47.432 [CM Event Dispatcher (Fire ConfigurationEvent: pid=ApicurioObjectStorage~default-draft)] INFO  o.a.f.c.p.i.InterpolationConfigurationPlugin - Replaced value of configuration property 'base.url' for PID ApicurioObjectStorage~default-draft
+2025-12-09 09:17:47.436 [CM Event Dispatcher (Fire ConfigurationEvent: pid=ApicurioObjectStorage~default-release)] INFO  o.a.f.c.p.i.InterpolationConfigurationPlugin - Replaced value of configuration property 'base.url' for PID ApicurioObjectStorage~default-release
+2025-12-09 09:17:47.438 [CM Event Dispatcher (Fire ConfigurationEvent: pid=FileObjectStorage~documentation)] INFO  o.a.f.c.p.i.InterpolationConfigurationPlugin - Replaced value of configuration property 'workspace.folder' for PID FileObjectStorage~documentation
+2025-12-09 09:22:28.195 [FelixStartLevel] INFO  o.a.a.t.b.i.TypedEventBusActivator - Aries Typed Event Bus Starting
+2025-12-09 09:22:28.222 [FelixStartLevel] INFO  o.a.a.t.b.i.TypedEventBusActivator - Aries Typed Event Bus Started
+2025-12-09 09:22:28.228 [FelixStartLevel] INFO  o.a.f.c.p.i.InterpolationConfigurationPlugin - Configured directory for secrets: /opt/git/model.atlas/org.eclipse.fennec.model.atlas.runtime/runtime/secrets
+2025-12-09 09:22:28.343 [FelixStartLevel] WARN  org.apache.felix.http - Jetty not started (HTTP and HTTPS disabled)
+2025-12-09 09:22:30.320 [CM Event Dispatcher (Fire ConfigurationEvent: pid=LuceneEObjectRegistryService~documentation)] INFO  o.a.f.c.p.i.InterpolationConfigurationPlugin - Replaced value of configuration property 'registry.workspace.folder' for PID LuceneEObjectRegistryService~documentation
+2025-12-09 09:22:30.321 [CM Event Dispatcher (Fire ConfigurationEvent: pid=LuceneEObjectRegistryService~main)] INFO  o.a.f.c.p.i.InterpolationConfigurationPlugin - Replaced value of configuration property 'registry.workspace.folder' for PID LuceneEObjectRegistryService~main
+2025-12-09 09:22:30.462 [CM Configuration Updater (Update: pid=org.apache.felix.http~maHttp)] INFO  org.eclipse.jetty.server.Server - jetty-11.0.22; built: 2024-06-27T16:27:26.756Z; git: e711d4c7040cb1e61aa68cb248fa7280b734a3bb; jvm 21.0.9+10-Ubuntu-124.04
+2025-12-09 09:22:30.556 [CM Configuration Updater (Update: pid=org.apache.felix.http~maHttp)] INFO  o.e.j.s.s.DefaultSessionIdManager - Session workerName=node0
+2025-12-09 09:22:30.573 [CM Configuration Updater (Update: pid=org.apache.felix.http~maHttp)] INFO  o.e.j.server.handler.ContextHandler - Started o.e.j.s.ServletContextHandler@79f83ebc{/atlas,null,AVAILABLE}
+2025-12-09 09:22:30.581 [CM Configuration Updater (Update: pid=org.apache.felix.http~maHttp)] INFO  org.eclipse.jetty.server.Server - Started Server@3fa99b68{STARTING}[11.0.22,sto=0] @3352ms
+2025-12-09 09:22:30.623 [CM Configuration Updater (Update: pid=org.apache.felix.http~maHttp)] INFO  o.e.jetty.server.AbstractConnector - Started ServerConnector@75d4dc7d{HTTP/1.1, (http/1.1)}{0.0.0.0:8086}
+2025-12-09 09:22:30.625 [CM Configuration Updater (Update: pid=org.apache.felix.http~maHttp)] INFO  org.apache.felix.http - Started Jetty 11.0.22 at port(s) HTTP:8086 on context path /atlas [minThreads=8,maxThreads=200,acceptors=2,selectors=10]
+2025-12-09 09:22:30.852 [CM Event Dispatcher (Fire ConfigurationEvent: pid=ApicurioObjectStorage~atlas-approved)] INFO  o.a.f.c.p.i.InterpolationConfigurationPlugin - Replaced value of configuration property 'base.url' for PID ApicurioObjectStorage~atlas-approved
+2025-12-09 09:22:31.074 [CM Event Dispatcher (Fire ConfigurationEvent: pid=ApicurioObjectStorage~atlas-draft)] INFO  o.a.f.c.p.i.InterpolationConfigurationPlugin - Replaced value of configuration property 'base.url' for PID ApicurioObjectStorage~atlas-draft
+2025-12-09 09:22:31.079 [CM Event Dispatcher (Fire ConfigurationEvent: pid=ApicurioObjectStorage~atlas-release)] INFO  o.a.f.c.p.i.InterpolationConfigurationPlugin - Replaced value of configuration property 'base.url' for PID ApicurioObjectStorage~atlas-release
+2025-12-09 09:22:31.096 [CM Event Dispatcher (Fire ConfigurationEvent: pid=ApicurioObjectStorage~default-approved)] INFO  o.a.f.c.p.i.InterpolationConfigurationPlugin - Replaced value of configuration property 'base.url' for PID ApicurioObjectStorage~default-approved
+2025-12-09 09:22:31.100 [CM Event Dispatcher (Fire ConfigurationEvent: pid=ApicurioObjectStorage~default-draft)] INFO  o.a.f.c.p.i.InterpolationConfigurationPlugin - Replaced value of configuration property 'base.url' for PID ApicurioObjectStorage~default-draft
+2025-12-09 09:22:31.102 [CM Event Dispatcher (Fire ConfigurationEvent: pid=ApicurioObjectStorage~default-release)] INFO  o.a.f.c.p.i.InterpolationConfigurationPlugin - Replaced value of configuration property 'base.url' for PID ApicurioObjectStorage~default-release
+2025-12-09 09:22:31.106 [CM Event Dispatcher (Fire ConfigurationEvent: pid=FileObjectStorage~documentation)] INFO  o.a.f.c.p.i.InterpolationConfigurationPlugin - Replaced value of configuration property 'workspace.folder' for PID FileObjectStorage~documentation
+2025-12-09 09:28:27.697 [FelixStartLevel] INFO  o.a.a.t.b.i.TypedEventBusActivator - Aries Typed Event Bus Starting
+2025-12-09 09:28:27.724 [FelixStartLevel] INFO  o.a.a.t.b.i.TypedEventBusActivator - Aries Typed Event Bus Started
+2025-12-09 09:28:27.731 [FelixStartLevel] INFO  o.a.f.c.p.i.InterpolationConfigurationPlugin - Configured directory for secrets: /opt/git/model.atlas/org.eclipse.fennec.model.atlas.runtime/runtime/secrets
+2025-12-09 09:28:27.860 [FelixStartLevel] WARN  org.apache.felix.http - Jetty not started (HTTP and HTTPS disabled)
+2025-12-09 09:28:29.807 [CM Event Dispatcher (Fire ConfigurationEvent: pid=LuceneEObjectRegistryService~documentation)] INFO  o.a.f.c.p.i.InterpolationConfigurationPlugin - Replaced value of configuration property 'registry.workspace.folder' for PID LuceneEObjectRegistryService~documentation
+2025-12-09 09:28:29.809 [CM Event Dispatcher (Fire ConfigurationEvent: pid=LuceneEObjectRegistryService~main)] INFO  o.a.f.c.p.i.InterpolationConfigurationPlugin - Replaced value of configuration property 'registry.workspace.folder' for PID LuceneEObjectRegistryService~main
+2025-12-09 09:28:29.942 [CM Configuration Updater (Update: pid=org.apache.felix.http~maHttp)] INFO  org.eclipse.jetty.server.Server - jetty-11.0.22; built: 2024-06-27T16:27:26.756Z; git: e711d4c7040cb1e61aa68cb248fa7280b734a3bb; jvm 21.0.9+10-Ubuntu-124.04
+2025-12-09 09:28:30.020 [CM Configuration Updater (Update: pid=org.apache.felix.http~maHttp)] INFO  o.e.j.s.s.DefaultSessionIdManager - Session workerName=node0
+2025-12-09 09:28:30.042 [CM Configuration Updater (Update: pid=org.apache.felix.http~maHttp)] INFO  o.e.j.server.handler.ContextHandler - Started o.e.j.s.ServletContextHandler@fd6298d{/atlas,null,AVAILABLE}
+2025-12-09 09:28:30.053 [CM Configuration Updater (Update: pid=org.apache.felix.http~maHttp)] INFO  org.eclipse.jetty.server.Server - Started Server@4d0f9036{STARTING}[11.0.22,sto=0] @3164ms
+2025-12-09 09:28:30.093 [CM Configuration Updater (Update: pid=org.apache.felix.http~maHttp)] INFO  o.e.jetty.server.AbstractConnector - Started ServerConnector@28ed854b{HTTP/1.1, (http/1.1)}{0.0.0.0:8086}
+2025-12-09 09:28:30.094 [CM Configuration Updater (Update: pid=org.apache.felix.http~maHttp)] INFO  org.apache.felix.http - Started Jetty 11.0.22 at port(s) HTTP:8086 on context path /atlas [minThreads=8,maxThreads=200,acceptors=2,selectors=10]
+2025-12-09 09:28:30.299 [CM Event Dispatcher (Fire ConfigurationEvent: pid=ApicurioObjectStorage~atlas-approved)] INFO  o.a.f.c.p.i.InterpolationConfigurationPlugin - Replaced value of configuration property 'base.url' for PID ApicurioObjectStorage~atlas-approved
+2025-12-09 09:28:30.483 [CM Event Dispatcher (Fire ConfigurationEvent: pid=ApicurioObjectStorage~atlas-draft)] INFO  o.a.f.c.p.i.InterpolationConfigurationPlugin - Replaced value of configuration property 'base.url' for PID ApicurioObjectStorage~atlas-draft
+2025-12-09 09:28:30.485 [CM Event Dispatcher (Fire ConfigurationEvent: pid=ApicurioObjectStorage~atlas-release)] INFO  o.a.f.c.p.i.InterpolationConfigurationPlugin - Replaced value of configuration property 'base.url' for PID ApicurioObjectStorage~atlas-release
+2025-12-09 09:28:30.496 [CM Event Dispatcher (Fire ConfigurationEvent: pid=ApicurioObjectStorage~default-approved)] INFO  o.a.f.c.p.i.InterpolationConfigurationPlugin - Replaced value of configuration property 'base.url' for PID ApicurioObjectStorage~default-approved
+2025-12-09 09:28:30.498 [CM Event Dispatcher (Fire ConfigurationEvent: pid=ApicurioObjectStorage~default-draft)] INFO  o.a.f.c.p.i.InterpolationConfigurationPlugin - Replaced value of configuration property 'base.url' for PID ApicurioObjectStorage~default-draft
+2025-12-09 09:28:30.500 [CM Event Dispatcher (Fire ConfigurationEvent: pid=ApicurioObjectStorage~default-release)] INFO  o.a.f.c.p.i.InterpolationConfigurationPlugin - Replaced value of configuration property 'base.url' for PID ApicurioObjectStorage~default-release
+2025-12-09 09:28:30.502 [CM Event Dispatcher (Fire ConfigurationEvent: pid=FileObjectStorage~documentation)] INFO  o.a.f.c.p.i.InterpolationConfigurationPlugin - Replaced value of configuration property 'workspace.folder' for PID FileObjectStorage~documentation
+2025-12-09 09:40:27.438 [FelixStartLevel] INFO  o.a.a.t.b.i.TypedEventBusActivator - Aries Typed Event Bus Starting
+2025-12-09 09:40:27.467 [FelixStartLevel] INFO  o.a.a.t.b.i.TypedEventBusActivator - Aries Typed Event Bus Started
+2025-12-09 09:40:27.477 [FelixStartLevel] INFO  o.a.f.c.p.i.InterpolationConfigurationPlugin - Configured directory for secrets: /opt/git/model.atlas/org.eclipse.fennec.model.atlas.runtime/runtime/secrets
+2025-12-09 09:40:27.586 [FelixStartLevel] WARN  org.apache.felix.http - Jetty not started (HTTP and HTTPS disabled)
+2025-12-09 09:40:29.535 [CM Event Dispatcher (Fire ConfigurationEvent: pid=LuceneEObjectRegistryService~documentation)] INFO  o.a.f.c.p.i.InterpolationConfigurationPlugin - Replaced value of configuration property 'registry.workspace.folder' for PID LuceneEObjectRegistryService~documentation
+2025-12-09 09:40:29.536 [CM Event Dispatcher (Fire ConfigurationEvent: pid=LuceneEObjectRegistryService~main)] INFO  o.a.f.c.p.i.InterpolationConfigurationPlugin - Replaced value of configuration property 'registry.workspace.folder' for PID LuceneEObjectRegistryService~main
+2025-12-09 09:40:29.678 [CM Configuration Updater (Update: pid=org.apache.felix.http~maHttp)] INFO  org.eclipse.jetty.server.Server - jetty-11.0.22; built: 2024-06-27T16:27:26.756Z; git: e711d4c7040cb1e61aa68cb248fa7280b734a3bb; jvm 21.0.9+10-Ubuntu-124.04
+2025-12-09 09:40:29.779 [CM Configuration Updater (Update: pid=org.apache.felix.http~maHttp)] INFO  o.e.j.s.s.DefaultSessionIdManager - Session workerName=node0
+2025-12-09 09:40:29.803 [CM Configuration Updater (Update: pid=org.apache.felix.http~maHttp)] INFO  o.e.j.server.handler.ContextHandler - Started o.e.j.s.ServletContextHandler@79f83ebc{/atlas,null,AVAILABLE}
+2025-12-09 09:40:29.816 [CM Configuration Updater (Update: pid=org.apache.felix.http~maHttp)] INFO  org.eclipse.jetty.server.Server - Started Server@3fa99b68{STARTING}[11.0.22,sto=0] @3213ms
+2025-12-09 09:40:29.877 [CM Configuration Updater (Update: pid=org.apache.felix.http~maHttp)] INFO  o.e.jetty.server.AbstractConnector - Started ServerConnector@75d4dc7d{HTTP/1.1, (http/1.1)}{0.0.0.0:8086}
+2025-12-09 09:40:29.879 [CM Configuration Updater (Update: pid=org.apache.felix.http~maHttp)] INFO  org.apache.felix.http - Started Jetty 11.0.22 at port(s) HTTP:8086 on context path /atlas [minThreads=8,maxThreads=200,acceptors=2,selectors=10]
+2025-12-09 09:40:29.926 [CM Event Dispatcher (Fire ConfigurationEvent: pid=ApicurioObjectStorage~atlas-approved)] INFO  o.a.f.c.p.i.InterpolationConfigurationPlugin - Replaced value of configuration property 'base.url' for PID ApicurioObjectStorage~atlas-approved
+2025-12-09 09:40:30.154 [CM Event Dispatcher (Fire ConfigurationEvent: pid=ApicurioObjectStorage~atlas-draft)] INFO  o.a.f.c.p.i.InterpolationConfigurationPlugin - Replaced value of configuration property 'base.url' for PID ApicurioObjectStorage~atlas-draft
+2025-12-09 09:40:30.158 [CM Event Dispatcher (Fire ConfigurationEvent: pid=ApicurioObjectStorage~atlas-release)] INFO  o.a.f.c.p.i.InterpolationConfigurationPlugin - Replaced value of configuration property 'base.url' for PID ApicurioObjectStorage~atlas-release
+2025-12-09 09:40:30.172 [CM Event Dispatcher (Fire ConfigurationEvent: pid=ApicurioObjectStorage~default-approved)] INFO  o.a.f.c.p.i.InterpolationConfigurationPlugin - Replaced value of configuration property 'base.url' for PID ApicurioObjectStorage~default-approved
+2025-12-09 09:40:30.175 [CM Event Dispatcher (Fire ConfigurationEvent: pid=ApicurioObjectStorage~default-draft)] INFO  o.a.f.c.p.i.InterpolationConfigurationPlugin - Replaced value of configuration property 'base.url' for PID ApicurioObjectStorage~default-draft
+2025-12-09 09:40:30.178 [CM Event Dispatcher (Fire ConfigurationEvent: pid=ApicurioObjectStorage~default-release)] INFO  o.a.f.c.p.i.InterpolationConfigurationPlugin - Replaced value of configuration property 'base.url' for PID ApicurioObjectStorage~default-release
+2025-12-09 09:40:30.181 [CM Event Dispatcher (Fire ConfigurationEvent: pid=FileObjectStorage~documentation)] INFO  o.a.f.c.p.i.InterpolationConfigurationPlugin - Replaced value of configuration property 'workspace.folder' for PID FileObjectStorage~documentation
+2025-12-09 09:41:05.910 [FelixStartLevel] INFO  o.a.a.t.b.i.TypedEventBusActivator - Aries Typed Event Bus Starting
+2025-12-09 09:41:05.934 [FelixStartLevel] INFO  o.a.a.t.b.i.TypedEventBusActivator - Aries Typed Event Bus Started
+2025-12-09 09:41:05.940 [FelixStartLevel] INFO  o.a.f.c.p.i.InterpolationConfigurationPlugin - Configured directory for secrets: /opt/git/model.atlas/org.eclipse.fennec.model.atlas.runtime/runtime/secrets
+2025-12-09 09:41:06.032 [FelixStartLevel] WARN  org.apache.felix.http - Jetty not started (HTTP and HTTPS disabled)
+2025-12-09 09:41:07.950 [CM Event Dispatcher (Fire ConfigurationEvent: pid=LuceneEObjectRegistryService~documentation)] INFO  o.a.f.c.p.i.InterpolationConfigurationPlugin - Replaced value of configuration property 'registry.workspace.folder' for PID LuceneEObjectRegistryService~documentation
+2025-12-09 09:41:07.951 [CM Event Dispatcher (Fire ConfigurationEvent: pid=LuceneEObjectRegistryService~main)] INFO  o.a.f.c.p.i.InterpolationConfigurationPlugin - Replaced value of configuration property 'registry.workspace.folder' for PID LuceneEObjectRegistryService~main
+2025-12-09 09:41:08.094 [CM Configuration Updater (Update: pid=org.apache.felix.http~maHttp)] INFO  org.eclipse.jetty.server.Server - jetty-11.0.22; built: 2024-06-27T16:27:26.756Z; git: e711d4c7040cb1e61aa68cb248fa7280b734a3bb; jvm 21.0.9+10-Ubuntu-124.04
+2025-12-09 09:41:08.166 [CM Configuration Updater (Update: pid=org.apache.felix.http~maHttp)] INFO  o.e.j.s.s.DefaultSessionIdManager - Session workerName=node0
+2025-12-09 09:41:08.189 [CM Configuration Updater (Update: pid=org.apache.felix.http~maHttp)] INFO  o.e.j.server.handler.ContextHandler - Started o.e.j.s.ServletContextHandler@4b4bb167{/atlas,null,AVAILABLE}
+2025-12-09 09:41:08.203 [CM Configuration Updater (Update: pid=org.apache.felix.http~maHttp)] INFO  org.eclipse.jetty.server.Server - Started Server@243ddac{STARTING}[11.0.22,sto=0] @3123ms
+2025-12-09 09:41:08.260 [CM Configuration Updater (Update: pid=org.apache.felix.http~maHttp)] INFO  o.e.jetty.server.AbstractConnector - Started ServerConnector@6fd92f02{HTTP/1.1, (http/1.1)}{0.0.0.0:8086}
+2025-12-09 09:41:08.261 [CM Configuration Updater (Update: pid=org.apache.felix.http~maHttp)] INFO  org.apache.felix.http - Started Jetty 11.0.22 at port(s) HTTP:8086 on context path /atlas [minThreads=8,maxThreads=200,acceptors=2,selectors=10]
+2025-12-09 09:41:08.446 [CM Event Dispatcher (Fire ConfigurationEvent: pid=ApicurioObjectStorage~atlas-approved)] INFO  o.a.f.c.p.i.InterpolationConfigurationPlugin - Replaced value of configuration property 'base.url' for PID ApicurioObjectStorage~atlas-approved
+2025-12-09 09:41:08.959 [CM Event Dispatcher (Fire ConfigurationEvent: pid=ApicurioObjectStorage~atlas-draft)] INFO  o.a.f.c.p.i.InterpolationConfigurationPlugin - Replaced value of configuration property 'base.url' for PID ApicurioObjectStorage~atlas-draft
+2025-12-09 09:41:08.976 [CM Event Dispatcher (Fire ConfigurationEvent: pid=ApicurioObjectStorage~atlas-release)] INFO  o.a.f.c.p.i.InterpolationConfigurationPlugin - Replaced value of configuration property 'base.url' for PID ApicurioObjectStorage~atlas-release
+2025-12-09 09:41:09.002 [CM Event Dispatcher (Fire ConfigurationEvent: pid=ApicurioObjectStorage~default-approved)] INFO  o.a.f.c.p.i.InterpolationConfigurationPlugin - Replaced value of configuration property 'base.url' for PID ApicurioObjectStorage~default-approved
+2025-12-09 09:41:09.014 [CM Event Dispatcher (Fire ConfigurationEvent: pid=ApicurioObjectStorage~default-draft)] INFO  o.a.f.c.p.i.InterpolationConfigurationPlugin - Replaced value of configuration property 'base.url' for PID ApicurioObjectStorage~default-draft
+2025-12-09 09:41:09.025 [CM Event Dispatcher (Fire ConfigurationEvent: pid=ApicurioObjectStorage~default-release)] INFO  o.a.f.c.p.i.InterpolationConfigurationPlugin - Replaced value of configuration property 'base.url' for PID ApicurioObjectStorage~default-release
+2025-12-09 09:41:09.037 [CM Event Dispatcher (Fire ConfigurationEvent: pid=FileObjectStorage~documentation)] INFO  o.a.f.c.p.i.InterpolationConfigurationPlugin - Replaced value of configuration property 'workspace.folder' for PID FileObjectStorage~documentation
+2025-12-09 09:41:12.846 [qtp285724450-283] ERROR org.apache.felix.http - Exception while processing request to /rest/openapi.json
+jakarta.servlet.ServletException: java.lang.NullPointerException
+	at org.glassfish.jersey.servlet.WebComponent.serviceImpl(WebComponent.java:409)
+	at org.glassfish.jersey.servlet.WebComponent.service(WebComponent.java:346)
+	at org.glassfish.jersey.servlet.ServletContainer.service(ServletContainer.java:357)
+	at org.glassfish.jersey.servlet.ServletContainer.service(ServletContainer.java:311)
+	at org.eclipse.osgitech.rest.runtime.WhiteboardServletContainer.service(WhiteboardServletContainer.java:137)
+	at org.glassfish.jersey.servlet.ServletContainer.service(ServletContainer.java:205)
+	at org.apache.felix.http.base.internal.handler.ServletHandler.handle(ServletHandler.java:128)
+	at org.apache.felix.http.base.internal.dispatch.InvocationChain.doFilter(InvocationChain.java:86)
+	at org.apache.felix.http.base.internal.dispatch.Dispatcher$1.doFilter(Dispatcher.java:153)
+	at org.apache.felix.http.base.internal.whiteboard.WhiteboardManager.invokePreprocessors(WhiteboardManager.java:944)
+	at org.apache.felix.http.base.internal.dispatch.Dispatcher.dispatch(Dispatcher.java:95)
+	at org.apache.felix.http.base.internal.dispatch.DispatcherServlet.service(DispatcherServlet.java:49)
+	at jakarta.servlet.http.HttpServlet.service(HttpServlet.java:614)
+	at org.eclipse.jetty.servlet.ServletHolder.handle(ServletHolder.java:764)
+	at org.eclipse.jetty.servlet.ServletHandler.doHandle(ServletHandler.java:529)
+	at org.eclipse.jetty.server.handler.ScopedHandler.nextHandle(ScopedHandler.java:221)
+	at org.eclipse.jetty.server.session.SessionHandler.doHandle(SessionHandler.java:1580)
+	at org.eclipse.jetty.server.handler.ScopedHandler.nextHandle(ScopedHandler.java:221)
+	at org.eclipse.jetty.server.handler.ContextHandler.doHandle(ContextHandler.java:1381)
+	at org.eclipse.jetty.server.handler.ScopedHandler.nextScope(ScopedHandler.java:176)
+	at org.eclipse.jetty.servlet.ServletHandler.doScope(ServletHandler.java:484)
+	at org.eclipse.jetty.server.session.SessionHandler.doScope(SessionHandler.java:1553)
+	at org.eclipse.jetty.server.handler.ScopedHandler.nextScope(ScopedHandler.java:174)
+	at org.eclipse.jetty.server.handler.ContextHandler.doScope(ContextHandler.java:1303)
+	at org.eclipse.jetty.server.handler.ScopedHandler.handle(ScopedHandler.java:129)
+	at org.eclipse.jetty.server.handler.ContextHandlerCollection.handle(ContextHandlerCollection.java:149)
+	at org.eclipse.jetty.server.handler.HandlerWrapper.handle(HandlerWrapper.java:122)
+	at org.eclipse.jetty.server.Server.handle(Server.java:563)
+	at org.eclipse.jetty.server.HttpChannel$RequestDispatchable.dispatch(HttpChannel.java:1598)
+	at org.eclipse.jetty.server.HttpChannel.dispatch(HttpChannel.java:753)
+	at org.eclipse.jetty.server.HttpChannel.handle(HttpChannel.java:501)
+	at org.eclipse.jetty.server.HttpConnection.onFillable(HttpConnection.java:287)
+	at org.eclipse.jetty.io.AbstractConnection$ReadCallback.succeeded(AbstractConnection.java:314)
+	at org.eclipse.jetty.io.FillInterest.fillable(FillInterest.java:100)
+	at org.eclipse.jetty.io.SelectableChannelEndPoint$1.run(SelectableChannelEndPoint.java:53)
+	at org.eclipse.jetty.util.thread.QueuedThreadPool.runJob(QueuedThreadPool.java:969)
+	at org.eclipse.jetty.util.thread.QueuedThreadPool$Runner.doRunJob(QueuedThreadPool.java:1194)
+	at org.eclipse.jetty.util.thread.QueuedThreadPool$Runner.run(QueuedThreadPool.java:1149)
+	at java.base/java.lang.Thread.run(Thread.java:1583)
+Caused by: java.lang.NullPointerException: null
+	at java.base/java.util.Objects.requireNonNull(Objects.java:233)
+	at io.swagger.v3.core.util.AnnotationsUtils.getContent(AnnotationsUtils.java:1688)
+	at io.swagger.v3.jaxrs2.OperationParser.getApiResponses(OperationParser.java:94)
+	at io.swagger.v3.jaxrs2.Reader.setOperationObjectFromApiOperationAnnotation(Reader.java:1431)
+	at io.swagger.v3.jaxrs2.Reader.parseMethod(Reader.java:1109)
+	at io.swagger.v3.jaxrs2.Reader.parseMethod(Reader.java:960)
+	at io.swagger.v3.jaxrs2.Reader.read(Reader.java:506)
+	at io.swagger.v3.jaxrs2.Reader.read(Reader.java:203)
+	at io.swagger.v3.jaxrs2.Reader.read(Reader.java:232)
+	at io.swagger.v3.oas.integration.GenericOpenApiContext.read(GenericOpenApiContext.java:721)
+	at org.eclipse.fennec.model.atlas.rest.application.resource.openapi.OpenApiResource.getOpenApi(OpenApiResource.java:117)
+	at java.base/jdk.internal.reflect.DirectMethodHandleAccessor.invoke(DirectMethodHandleAccessor.java:103)
+	at java.base/java.lang.reflect.Method.invoke(Method.java:580)
+	at org.glassfish.jersey.server.model.internal.ResourceMethodInvocationHandlerFactory.lambda$static$0(ResourceMethodInvocationHandlerFactory.java:52)
+	at org.glassfish.jersey.server.model.internal.AbstractJavaResourceMethodDispatcher$1.run(AbstractJavaResourceMethodDispatcher.java:146)
+	at org.glassfish.jersey.server.model.internal.AbstractJavaResourceMethodDispatcher.invoke(AbstractJavaResourceMethodDispatcher.java:189)
+	at org.glassfish.jersey.server.model.internal.JavaResourceMethodDispatcherProvider$ResponseOutInvoker.doDispatch(JavaResourceMethodDispatcherProvider.java:176)
+	at org.glassfish.jersey.server.model.internal.AbstractJavaResourceMethodDispatcher.dispatch(AbstractJavaResourceMethodDispatcher.java:93)
+	at org.glassfish.jersey.server.model.ResourceMethodInvoker.invoke(ResourceMethodInvoker.java:478)
+	at org.glassfish.jersey.server.model.ResourceMethodInvoker.apply(ResourceMethodInvoker.java:400)
+	at org.glassfish.jersey.server.model.ResourceMethodInvoker.apply(ResourceMethodInvoker.java:81)
+	at org.glassfish.jersey.server.ServerRuntime$1.run(ServerRuntime.java:261)
+	at org.glassfish.jersey.internal.Errors$1.call(Errors.java:248)
+	at org.glassfish.jersey.internal.Errors$1.call(Errors.java:244)
+	at org.glassfish.jersey.internal.Errors.process(Errors.java:292)
+	at org.glassfish.jersey.internal.Errors.process(Errors.java:274)
+	at org.glassfish.jersey.internal.Errors.process(Errors.java:244)
+	at org.glassfish.jersey.process.internal.RequestScope.runInScope(RequestScope.java:265)
+	at org.glassfish.jersey.server.ServerRuntime.process(ServerRuntime.java:240)
+	at org.glassfish.jersey.server.ApplicationHandler.handle(ApplicationHandler.java:697)
+	at org.glassfish.jersey.servlet.WebComponent.serviceImpl(WebComponent.java:394)
+	... 38 common frames omitted
+2025-12-09 09:41:45.867 [FelixStartLevel] INFO  o.a.a.t.b.i.TypedEventBusActivator - Aries Typed Event Bus Starting
+2025-12-09 09:41:45.892 [FelixStartLevel] INFO  o.a.a.t.b.i.TypedEventBusActivator - Aries Typed Event Bus Started
+2025-12-09 09:41:45.898 [FelixStartLevel] INFO  o.a.f.c.p.i.InterpolationConfigurationPlugin - Configured directory for secrets: /opt/git/model.atlas/org.eclipse.fennec.model.atlas.runtime/runtime/secrets
+2025-12-09 09:41:46.000 [FelixStartLevel] WARN  org.apache.felix.http - Jetty not started (HTTP and HTTPS disabled)
+2025-12-09 09:41:48.013 [CM Event Dispatcher (Fire ConfigurationEvent: pid=LuceneEObjectRegistryService~documentation)] INFO  o.a.f.c.p.i.InterpolationConfigurationPlugin - Replaced value of configuration property 'registry.workspace.folder' for PID LuceneEObjectRegistryService~documentation
+2025-12-09 09:41:48.014 [CM Event Dispatcher (Fire ConfigurationEvent: pid=LuceneEObjectRegistryService~main)] INFO  o.a.f.c.p.i.InterpolationConfigurationPlugin - Replaced value of configuration property 'registry.workspace.folder' for PID LuceneEObjectRegistryService~main
+2025-12-09 09:41:48.122 [CM Configuration Updater (Update: pid=org.apache.felix.http~maHttp)] INFO  org.eclipse.jetty.server.Server - jetty-11.0.22; built: 2024-06-27T16:27:26.756Z; git: e711d4c7040cb1e61aa68cb248fa7280b734a3bb; jvm 21.0.9+10-Ubuntu-124.04
+2025-12-09 09:41:48.208 [CM Configuration Updater (Update: pid=org.apache.felix.http~maHttp)] INFO  o.e.j.s.s.DefaultSessionIdManager - Session workerName=node0
+2025-12-09 09:41:48.228 [CM Configuration Updater (Update: pid=org.apache.felix.http~maHttp)] INFO  o.e.j.server.handler.ContextHandler - Started o.e.j.s.ServletContextHandler@45fd4102{/atlas,null,AVAILABLE}
+2025-12-09 09:41:48.236 [CM Configuration Updater (Update: pid=org.apache.felix.http~maHttp)] INFO  org.eclipse.jetty.server.Server - Started Server@1558913e{STARTING}[11.0.22,sto=0] @3123ms
+2025-12-09 09:41:48.293 [CM Configuration Updater (Update: pid=org.apache.felix.http~maHttp)] INFO  o.e.jetty.server.AbstractConnector - Started ServerConnector@22f57663{HTTP/1.1, (http/1.1)}{0.0.0.0:8086}
+2025-12-09 09:41:48.294 [CM Configuration Updater (Update: pid=org.apache.felix.http~maHttp)] INFO  org.apache.felix.http - Started Jetty 11.0.22 at port(s) HTTP:8086 on context path /atlas [minThreads=8,maxThreads=200,acceptors=2,selectors=10]
+2025-12-09 09:41:48.448 [CM Event Dispatcher (Fire ConfigurationEvent: pid=ApicurioObjectStorage~atlas-approved)] INFO  o.a.f.c.p.i.InterpolationConfigurationPlugin - Replaced value of configuration property 'base.url' for PID ApicurioObjectStorage~atlas-approved
+2025-12-09 09:41:48.703 [CM Event Dispatcher (Fire ConfigurationEvent: pid=ApicurioObjectStorage~atlas-draft)] INFO  o.a.f.c.p.i.InterpolationConfigurationPlugin - Replaced value of configuration property 'base.url' for PID ApicurioObjectStorage~atlas-draft
+2025-12-09 09:41:48.723 [CM Event Dispatcher (Fire ConfigurationEvent: pid=ApicurioObjectStorage~atlas-release)] INFO  o.a.f.c.p.i.InterpolationConfigurationPlugin - Replaced value of configuration property 'base.url' for PID ApicurioObjectStorage~atlas-release
+2025-12-09 09:41:48.753 [CM Event Dispatcher (Fire ConfigurationEvent: pid=ApicurioObjectStorage~default-approved)] INFO  o.a.f.c.p.i.InterpolationConfigurationPlugin - Replaced value of configuration property 'base.url' for PID ApicurioObjectStorage~default-approved
+2025-12-09 09:41:48.770 [CM Event Dispatcher (Fire ConfigurationEvent: pid=ApicurioObjectStorage~default-draft)] INFO  o.a.f.c.p.i.InterpolationConfigurationPlugin - Replaced value of configuration property 'base.url' for PID ApicurioObjectStorage~default-draft
+2025-12-09 09:41:48.785 [CM Event Dispatcher (Fire ConfigurationEvent: pid=ApicurioObjectStorage~default-release)] INFO  o.a.f.c.p.i.InterpolationConfigurationPlugin - Replaced value of configuration property 'base.url' for PID ApicurioObjectStorage~default-release
+2025-12-09 09:41:48.800 [CM Event Dispatcher (Fire ConfigurationEvent: pid=FileObjectStorage~documentation)] INFO  o.a.f.c.p.i.InterpolationConfigurationPlugin - Replaced value of configuration property 'workspace.folder' for PID FileObjectStorage~documentation
+2025-12-09 09:42:07.913 [qtp1695458698-259] ERROR org.apache.felix.http - Exception while processing request to /rest/openapi.json
+jakarta.servlet.ServletException: java.lang.NullPointerException
+	at org.glassfish.jersey.servlet.WebComponent.serviceImpl(WebComponent.java:409)
+	at org.glassfish.jersey.servlet.WebComponent.service(WebComponent.java:346)
+	at org.glassfish.jersey.servlet.ServletContainer.service(ServletContainer.java:357)
+	at org.glassfish.jersey.servlet.ServletContainer.service(ServletContainer.java:311)
+	at org.eclipse.osgitech.rest.runtime.WhiteboardServletContainer.service(WhiteboardServletContainer.java:137)
+	at org.glassfish.jersey.servlet.ServletContainer.service(ServletContainer.java:205)
+	at org.apache.felix.http.base.internal.handler.ServletHandler.handle(ServletHandler.java:128)
+	at org.apache.felix.http.base.internal.dispatch.InvocationChain.doFilter(InvocationChain.java:86)
+	at org.apache.felix.http.base.internal.dispatch.Dispatcher$1.doFilter(Dispatcher.java:153)
+	at org.apache.felix.http.base.internal.whiteboard.WhiteboardManager.invokePreprocessors(WhiteboardManager.java:944)
+	at org.apache.felix.http.base.internal.dispatch.Dispatcher.dispatch(Dispatcher.java:95)
+	at org.apache.felix.http.base.internal.dispatch.DispatcherServlet.service(DispatcherServlet.java:49)
+	at jakarta.servlet.http.HttpServlet.service(HttpServlet.java:614)
+	at org.eclipse.jetty.servlet.ServletHolder.handle(ServletHolder.java:764)
+	at org.eclipse.jetty.servlet.ServletHandler.doHandle(ServletHandler.java:529)
+	at org.eclipse.jetty.server.handler.ScopedHandler.nextHandle(ScopedHandler.java:221)
+	at org.eclipse.jetty.server.session.SessionHandler.doHandle(SessionHandler.java:1580)
+	at org.eclipse.jetty.server.handler.ScopedHandler.nextHandle(ScopedHandler.java:221)
+	at org.eclipse.jetty.server.handler.ContextHandler.doHandle(ContextHandler.java:1381)
+	at org.eclipse.jetty.server.handler.ScopedHandler.nextScope(ScopedHandler.java:176)
+	at org.eclipse.jetty.servlet.ServletHandler.doScope(ServletHandler.java:484)
+	at org.eclipse.jetty.server.session.SessionHandler.doScope(SessionHandler.java:1553)
+	at org.eclipse.jetty.server.handler.ScopedHandler.nextScope(ScopedHandler.java:174)
+	at org.eclipse.jetty.server.handler.ContextHandler.doScope(ContextHandler.java:1303)
+	at org.eclipse.jetty.server.handler.ScopedHandler.handle(ScopedHandler.java:129)
+	at org.eclipse.jetty.server.handler.ContextHandlerCollection.handle(ContextHandlerCollection.java:149)
+	at org.eclipse.jetty.server.handler.HandlerWrapper.handle(HandlerWrapper.java:122)
+	at org.eclipse.jetty.server.Server.handle(Server.java:563)
+	at org.eclipse.jetty.server.HttpChannel$RequestDispatchable.dispatch(HttpChannel.java:1598)
+	at org.eclipse.jetty.server.HttpChannel.dispatch(HttpChannel.java:753)
+	at org.eclipse.jetty.server.HttpChannel.handle(HttpChannel.java:501)
+	at org.eclipse.jetty.server.HttpConnection.onFillable(HttpConnection.java:287)
+	at org.eclipse.jetty.io.AbstractConnection$ReadCallback.succeeded(AbstractConnection.java:314)
+	at org.eclipse.jetty.io.FillInterest.fillable(FillInterest.java:100)
+	at org.eclipse.jetty.io.SelectableChannelEndPoint$1.run(SelectableChannelEndPoint.java:53)
+	at org.eclipse.jetty.util.thread.QueuedThreadPool.runJob(QueuedThreadPool.java:969)
+	at org.eclipse.jetty.util.thread.QueuedThreadPool$Runner.doRunJob(QueuedThreadPool.java:1194)
+	at org.eclipse.jetty.util.thread.QueuedThreadPool$Runner.run(QueuedThreadPool.java:1149)
+	at java.base/java.lang.Thread.run(Thread.java:1583)
+Caused by: java.lang.NullPointerException: null
+	at java.base/java.util.Objects.requireNonNull(Objects.java:233)
+	at io.swagger.v3.core.util.AnnotationsUtils.getContent(AnnotationsUtils.java:1688)
+	at io.swagger.v3.jaxrs2.OperationParser.getApiResponses(OperationParser.java:94)
+	at io.swagger.v3.jaxrs2.Reader.setOperationObjectFromApiOperationAnnotation(Reader.java:1431)
+	at io.swagger.v3.jaxrs2.Reader.parseMethod(Reader.java:1109)
+	at io.swagger.v3.jaxrs2.Reader.parseMethod(Reader.java:960)
+	at io.swagger.v3.jaxrs2.Reader.read(Reader.java:506)
+	at io.swagger.v3.jaxrs2.Reader.read(Reader.java:203)
+	at io.swagger.v3.jaxrs2.Reader.read(Reader.java:232)
+	at io.swagger.v3.oas.integration.GenericOpenApiContext.read(GenericOpenApiContext.java:721)
+	at org.eclipse.fennec.model.atlas.rest.application.resource.openapi.OpenApiResource.getOpenApi(OpenApiResource.java:117)
+	at java.base/jdk.internal.reflect.DirectMethodHandleAccessor.invoke(DirectMethodHandleAccessor.java:103)
+	at java.base/java.lang.reflect.Method.invoke(Method.java:580)
+	at org.glassfish.jersey.server.model.internal.ResourceMethodInvocationHandlerFactory.lambda$static$0(ResourceMethodInvocationHandlerFactory.java:52)
+	at org.glassfish.jersey.server.model.internal.AbstractJavaResourceMethodDispatcher$1.run(AbstractJavaResourceMethodDispatcher.java:146)
+	at org.glassfish.jersey.server.model.internal.AbstractJavaResourceMethodDispatcher.invoke(AbstractJavaResourceMethodDispatcher.java:189)
+	at org.glassfish.jersey.server.model.internal.JavaResourceMethodDispatcherProvider$ResponseOutInvoker.doDispatch(JavaResourceMethodDispatcherProvider.java:176)
+	at org.glassfish.jersey.server.model.internal.AbstractJavaResourceMethodDispatcher.dispatch(AbstractJavaResourceMethodDispatcher.java:93)
+	at org.glassfish.jersey.server.model.ResourceMethodInvoker.invoke(ResourceMethodInvoker.java:478)
+	at org.glassfish.jersey.server.model.ResourceMethodInvoker.apply(ResourceMethodInvoker.java:400)
+	at org.glassfish.jersey.server.model.ResourceMethodInvoker.apply(ResourceMethodInvoker.java:81)
+	at org.glassfish.jersey.server.ServerRuntime$1.run(ServerRuntime.java:261)
+	at org.glassfish.jersey.internal.Errors$1.call(Errors.java:248)
+	at org.glassfish.jersey.internal.Errors$1.call(Errors.java:244)
+	at org.glassfish.jersey.internal.Errors.process(Errors.java:292)
+	at org.glassfish.jersey.internal.Errors.process(Errors.java:274)
+	at org.glassfish.jersey.internal.Errors.process(Errors.java:244)
+	at org.glassfish.jersey.process.internal.RequestScope.runInScope(RequestScope.java:265)
+	at org.glassfish.jersey.server.ServerRuntime.process(ServerRuntime.java:240)
+	at org.glassfish.jersey.server.ApplicationHandler.handle(ApplicationHandler.java:697)
+	at org.glassfish.jersey.servlet.WebComponent.serviceImpl(WebComponent.java:394)
+	... 38 common frames omitted
+2025-12-09 09:44:26.088 [FelixStartLevel] INFO  o.a.a.t.b.i.TypedEventBusActivator - Aries Typed Event Bus Starting
+2025-12-09 09:44:26.114 [FelixStartLevel] INFO  o.a.a.t.b.i.TypedEventBusActivator - Aries Typed Event Bus Started
+2025-12-09 09:44:26.121 [FelixStartLevel] INFO  o.a.f.c.p.i.InterpolationConfigurationPlugin - Configured directory for secrets: /opt/git/model.atlas/org.eclipse.fennec.model.atlas.runtime/runtime/secrets
+2025-12-09 09:44:26.215 [FelixStartLevel] WARN  org.apache.felix.http - Jetty not started (HTTP and HTTPS disabled)
+2025-12-09 09:44:28.216 [CM Event Dispatcher (Fire ConfigurationEvent: pid=LuceneEObjectRegistryService~documentation)] INFO  o.a.f.c.p.i.InterpolationConfigurationPlugin - Replaced value of configuration property 'registry.workspace.folder' for PID LuceneEObjectRegistryService~documentation
+2025-12-09 09:44:28.217 [CM Event Dispatcher (Fire ConfigurationEvent: pid=LuceneEObjectRegistryService~main)] INFO  o.a.f.c.p.i.InterpolationConfigurationPlugin - Replaced value of configuration property 'registry.workspace.folder' for PID LuceneEObjectRegistryService~main
+2025-12-09 09:44:28.348 [CM Configuration Updater (Update: pid=org.apache.felix.http~maHttp)] INFO  org.eclipse.jetty.server.Server - jetty-11.0.22; built: 2024-06-27T16:27:26.756Z; git: e711d4c7040cb1e61aa68cb248fa7280b734a3bb; jvm 21.0.9+10-Ubuntu-124.04
+2025-12-09 09:44:28.423 [CM Configuration Updater (Update: pid=org.apache.felix.http~maHttp)] INFO  o.e.j.s.s.DefaultSessionIdManager - Session workerName=node0
+2025-12-09 09:44:28.441 [CM Configuration Updater (Update: pid=org.apache.felix.http~maHttp)] INFO  o.e.j.server.handler.ContextHandler - Started o.e.j.s.ServletContextHandler@fd6298d{/atlas,null,AVAILABLE}
+2025-12-09 09:44:28.450 [CM Configuration Updater (Update: pid=org.apache.felix.http~maHttp)] INFO  org.eclipse.jetty.server.Server - Started Server@4d0f9036{STARTING}[11.0.22,sto=0] @3170ms
+2025-12-09 09:44:28.488 [CM Configuration Updater (Update: pid=org.apache.felix.http~maHttp)] INFO  o.e.jetty.server.AbstractConnector - Started ServerConnector@28ed854b{HTTP/1.1, (http/1.1)}{0.0.0.0:8086}
+2025-12-09 09:44:28.490 [CM Configuration Updater (Update: pid=org.apache.felix.http~maHttp)] INFO  org.apache.felix.http - Started Jetty 11.0.22 at port(s) HTTP:8086 on context path /atlas [minThreads=8,maxThreads=200,acceptors=2,selectors=10]
+2025-12-09 09:44:28.669 [CM Event Dispatcher (Fire ConfigurationEvent: pid=ApicurioObjectStorage~atlas-approved)] INFO  o.a.f.c.p.i.InterpolationConfigurationPlugin - Replaced value of configuration property 'base.url' for PID ApicurioObjectStorage~atlas-approved
+2025-12-09 09:44:28.977 [CM Event Dispatcher (Fire ConfigurationEvent: pid=ApicurioObjectStorage~atlas-draft)] INFO  o.a.f.c.p.i.InterpolationConfigurationPlugin - Replaced value of configuration property 'base.url' for PID ApicurioObjectStorage~atlas-draft
+2025-12-09 09:44:28.996 [CM Event Dispatcher (Fire ConfigurationEvent: pid=ApicurioObjectStorage~atlas-release)] INFO  o.a.f.c.p.i.InterpolationConfigurationPlugin - Replaced value of configuration property 'base.url' for PID ApicurioObjectStorage~atlas-release
+2025-12-09 09:44:29.028 [CM Event Dispatcher (Fire ConfigurationEvent: pid=ApicurioObjectStorage~default-approved)] INFO  o.a.f.c.p.i.InterpolationConfigurationPlugin - Replaced value of configuration property 'base.url' for PID ApicurioObjectStorage~default-approved
+2025-12-09 09:44:29.045 [CM Event Dispatcher (Fire ConfigurationEvent: pid=ApicurioObjectStorage~default-draft)] INFO  o.a.f.c.p.i.InterpolationConfigurationPlugin - Replaced value of configuration property 'base.url' for PID ApicurioObjectStorage~default-draft
+2025-12-09 09:44:29.060 [CM Event Dispatcher (Fire ConfigurationEvent: pid=ApicurioObjectStorage~default-release)] INFO  o.a.f.c.p.i.InterpolationConfigurationPlugin - Replaced value of configuration property 'base.url' for PID ApicurioObjectStorage~default-release
+2025-12-09 09:44:29.072 [CM Event Dispatcher (Fire ConfigurationEvent: pid=FileObjectStorage~documentation)] INFO  o.a.f.c.p.i.InterpolationConfigurationPlugin - Replaced value of configuration property 'workspace.folder' for PID FileObjectStorage~documentation
+2025-12-09 09:51:44.726 [FelixStartLevel] INFO  o.a.a.t.b.i.TypedEventBusActivator - Aries Typed Event Bus Starting
+2025-12-09 09:51:44.752 [FelixStartLevel] INFO  o.a.a.t.b.i.TypedEventBusActivator - Aries Typed Event Bus Started
+2025-12-09 09:51:44.759 [FelixStartLevel] INFO  o.a.f.c.p.i.InterpolationConfigurationPlugin - Configured directory for secrets: /opt/git/model.atlas/org.eclipse.fennec.model.atlas.runtime/runtime/secrets
+2025-12-09 09:51:44.881 [FelixStartLevel] WARN  org.apache.felix.http - Jetty not started (HTTP and HTTPS disabled)
+2025-12-09 09:51:46.819 [CM Event Dispatcher (Fire ConfigurationEvent: pid=LuceneEObjectRegistryService~documentation)] INFO  o.a.f.c.p.i.InterpolationConfigurationPlugin - Replaced value of configuration property 'registry.workspace.folder' for PID LuceneEObjectRegistryService~documentation
+2025-12-09 09:51:46.820 [CM Event Dispatcher (Fire ConfigurationEvent: pid=LuceneEObjectRegistryService~main)] INFO  o.a.f.c.p.i.InterpolationConfigurationPlugin - Replaced value of configuration property 'registry.workspace.folder' for PID LuceneEObjectRegistryService~main
+2025-12-09 09:51:46.966 [CM Configuration Updater (Update: pid=org.apache.felix.http~maHttp)] INFO  org.eclipse.jetty.server.Server - jetty-11.0.22; built: 2024-06-27T16:27:26.756Z; git: e711d4c7040cb1e61aa68cb248fa7280b734a3bb; jvm 21.0.9+10-Ubuntu-124.04
+2025-12-09 09:51:47.050 [CM Configuration Updater (Update: pid=org.apache.felix.http~maHttp)] INFO  o.e.j.s.s.DefaultSessionIdManager - Session workerName=node0
+2025-12-09 09:51:47.067 [CM Configuration Updater (Update: pid=org.apache.felix.http~maHttp)] INFO  o.e.j.server.handler.ContextHandler - Started o.e.j.s.ServletContextHandler@79f83ebc{/atlas,null,AVAILABLE}
+2025-12-09 09:51:47.079 [CM Configuration Updater (Update: pid=org.apache.felix.http~maHttp)] INFO  org.eclipse.jetty.server.Server - Started Server@3fa99b68{STARTING}[11.0.22,sto=0] @3168ms
+2025-12-09 09:51:47.121 [CM Configuration Updater (Update: pid=org.apache.felix.http~maHttp)] INFO  o.e.jetty.server.AbstractConnector - Started ServerConnector@75d4dc7d{HTTP/1.1, (http/1.1)}{0.0.0.0:8086}
+2025-12-09 09:51:47.122 [CM Configuration Updater (Update: pid=org.apache.felix.http~maHttp)] INFO  org.apache.felix.http - Started Jetty 11.0.22 at port(s) HTTP:8086 on context path /atlas [minThreads=8,maxThreads=200,acceptors=2,selectors=10]
+2025-12-09 09:51:47.318 [CM Event Dispatcher (Fire ConfigurationEvent: pid=ApicurioObjectStorage~atlas-approved)] INFO  o.a.f.c.p.i.InterpolationConfigurationPlugin - Replaced value of configuration property 'base.url' for PID ApicurioObjectStorage~atlas-approved
+2025-12-09 09:51:47.640 [CM Event Dispatcher (Fire ConfigurationEvent: pid=ApicurioObjectStorage~atlas-draft)] INFO  o.a.f.c.p.i.InterpolationConfigurationPlugin - Replaced value of configuration property 'base.url' for PID ApicurioObjectStorage~atlas-draft
+2025-12-09 09:51:47.656 [CM Event Dispatcher (Fire ConfigurationEvent: pid=ApicurioObjectStorage~atlas-release)] INFO  o.a.f.c.p.i.InterpolationConfigurationPlugin - Replaced value of configuration property 'base.url' for PID ApicurioObjectStorage~atlas-release
+2025-12-09 09:51:47.689 [CM Event Dispatcher (Fire ConfigurationEvent: pid=ApicurioObjectStorage~default-approved)] INFO  o.a.f.c.p.i.InterpolationConfigurationPlugin - Replaced value of configuration property 'base.url' for PID ApicurioObjectStorage~default-approved
+2025-12-09 09:51:47.703 [CM Event Dispatcher (Fire ConfigurationEvent: pid=ApicurioObjectStorage~default-draft)] INFO  o.a.f.c.p.i.InterpolationConfigurationPlugin - Replaced value of configuration property 'base.url' for PID ApicurioObjectStorage~default-draft
+2025-12-09 09:51:47.716 [CM Event Dispatcher (Fire ConfigurationEvent: pid=ApicurioObjectStorage~default-release)] INFO  o.a.f.c.p.i.InterpolationConfigurationPlugin - Replaced value of configuration property 'base.url' for PID ApicurioObjectStorage~default-release
+2025-12-09 09:51:47.731 [CM Event Dispatcher (Fire ConfigurationEvent: pid=FileObjectStorage~documentation)] INFO  o.a.f.c.p.i.InterpolationConfigurationPlugin - Replaced value of configuration property 'workspace.folder' for PID FileObjectStorage~documentation
+2025-12-09 09:59:42.696 [FelixStartLevel] INFO  o.a.a.t.b.i.TypedEventBusActivator - Aries Typed Event Bus Starting
+2025-12-09 09:59:42.721 [FelixStartLevel] INFO  o.a.a.t.b.i.TypedEventBusActivator - Aries Typed Event Bus Started
+2025-12-09 09:59:42.728 [FelixStartLevel] INFO  o.a.f.c.p.i.InterpolationConfigurationPlugin - Configured directory for secrets: /opt/git/model.atlas/org.eclipse.fennec.model.atlas.runtime/runtime/secrets
+2025-12-09 09:59:42.851 [FelixStartLevel] WARN  org.apache.felix.http - Jetty not started (HTTP and HTTPS disabled)
+2025-12-09 09:59:44.813 [CM Event Dispatcher (Fire ConfigurationEvent: pid=LuceneEObjectRegistryService~documentation)] INFO  o.a.f.c.p.i.InterpolationConfigurationPlugin - Replaced value of configuration property 'registry.workspace.folder' for PID LuceneEObjectRegistryService~documentation
+2025-12-09 09:59:44.814 [CM Event Dispatcher (Fire ConfigurationEvent: pid=LuceneEObjectRegistryService~main)] INFO  o.a.f.c.p.i.InterpolationConfigurationPlugin - Replaced value of configuration property 'registry.workspace.folder' for PID LuceneEObjectRegistryService~main
+2025-12-09 09:59:44.960 [CM Configuration Updater (Update: pid=org.apache.felix.http~maHttp)] INFO  org.eclipse.jetty.server.Server - jetty-11.0.22; built: 2024-06-27T16:27:26.756Z; git: e711d4c7040cb1e61aa68cb248fa7280b734a3bb; jvm 21.0.9+10-Ubuntu-124.04
+2025-12-09 09:59:45.037 [CM Configuration Updater (Update: pid=org.apache.felix.http~maHttp)] INFO  o.e.j.s.s.DefaultSessionIdManager - Session workerName=node0
+2025-12-09 09:59:45.055 [CM Configuration Updater (Update: pid=org.apache.felix.http~maHttp)] INFO  o.e.j.server.handler.ContextHandler - Started o.e.j.s.ServletContextHandler@2a841c38{/atlas,null,AVAILABLE}
+2025-12-09 09:59:45.069 [CM Configuration Updater (Update: pid=org.apache.felix.http~maHttp)] INFO  org.eclipse.jetty.server.Server - Started Server@628b1abf{STARTING}[11.0.22,sto=0] @3115ms
+2025-12-09 09:59:45.123 [CM Configuration Updater (Update: pid=org.apache.felix.http~maHttp)] INFO  o.e.jetty.server.AbstractConnector - Started ServerConnector@4509674c{HTTP/1.1, (http/1.1)}{0.0.0.0:8086}
+2025-12-09 09:59:45.124 [CM Configuration Updater (Update: pid=org.apache.felix.http~maHttp)] INFO  org.apache.felix.http - Started Jetty 11.0.22 at port(s) HTTP:8086 on context path /atlas [minThreads=8,maxThreads=200,acceptors=2,selectors=10]
+2025-12-09 09:59:45.160 [CM Event Dispatcher (Fire ConfigurationEvent: pid=ApicurioObjectStorage~atlas-approved)] INFO  o.a.f.c.p.i.InterpolationConfigurationPlugin - Replaced value of configuration property 'base.url' for PID ApicurioObjectStorage~atlas-approved
+2025-12-09 09:59:45.455 [CM Event Dispatcher (Fire ConfigurationEvent: pid=ApicurioObjectStorage~atlas-draft)] INFO  o.a.f.c.p.i.InterpolationConfigurationPlugin - Replaced value of configuration property 'base.url' for PID ApicurioObjectStorage~atlas-draft
+2025-12-09 09:59:45.470 [CM Event Dispatcher (Fire ConfigurationEvent: pid=ApicurioObjectStorage~atlas-release)] INFO  o.a.f.c.p.i.InterpolationConfigurationPlugin - Replaced value of configuration property 'base.url' for PID ApicurioObjectStorage~atlas-release
+2025-12-09 09:59:45.494 [CM Event Dispatcher (Fire ConfigurationEvent: pid=ApicurioObjectStorage~default-approved)] INFO  o.a.f.c.p.i.InterpolationConfigurationPlugin - Replaced value of configuration property 'base.url' for PID ApicurioObjectStorage~default-approved
+2025-12-09 09:59:45.513 [CM Event Dispatcher (Fire ConfigurationEvent: pid=ApicurioObjectStorage~default-draft)] INFO  o.a.f.c.p.i.InterpolationConfigurationPlugin - Replaced value of configuration property 'base.url' for PID ApicurioObjectStorage~default-draft
+2025-12-09 09:59:45.529 [CM Event Dispatcher (Fire ConfigurationEvent: pid=ApicurioObjectStorage~default-release)] INFO  o.a.f.c.p.i.InterpolationConfigurationPlugin - Replaced value of configuration property 'base.url' for PID ApicurioObjectStorage~default-release
+2025-12-09 09:59:45.542 [CM Event Dispatcher (Fire ConfigurationEvent: pid=FileObjectStorage~documentation)] INFO  o.a.f.c.p.i.InterpolationConfigurationPlugin - Replaced value of configuration property 'workspace.folder' for PID FileObjectStorage~documentation
+2025-12-09 10:00:53.278 [qtp1126353463-249] ERROR org.apache.felix.http - Exception while processing request to /rest/openapi.json
+jakarta.servlet.ServletException: java.lang.NullPointerException
+	at org.glassfish.jersey.servlet.WebComponent.serviceImpl(WebComponent.java:409)
+	at org.glassfish.jersey.servlet.WebComponent.service(WebComponent.java:346)
+	at org.glassfish.jersey.servlet.ServletContainer.service(ServletContainer.java:357)
+	at org.glassfish.jersey.servlet.ServletContainer.service(ServletContainer.java:311)
+	at org.eclipse.osgitech.rest.runtime.WhiteboardServletContainer.service(WhiteboardServletContainer.java:137)
+	at org.glassfish.jersey.servlet.ServletContainer.service(ServletContainer.java:205)
+	at org.apache.felix.http.base.internal.handler.ServletHandler.handle(ServletHandler.java:128)
+	at org.apache.felix.http.base.internal.dispatch.InvocationChain.doFilter(InvocationChain.java:86)
+	at org.apache.felix.http.base.internal.dispatch.Dispatcher$1.doFilter(Dispatcher.java:153)
+	at org.apache.felix.http.base.internal.whiteboard.WhiteboardManager.invokePreprocessors(WhiteboardManager.java:944)
+	at org.apache.felix.http.base.internal.dispatch.Dispatcher.dispatch(Dispatcher.java:95)
+	at org.apache.felix.http.base.internal.dispatch.DispatcherServlet.service(DispatcherServlet.java:49)
+	at jakarta.servlet.http.HttpServlet.service(HttpServlet.java:614)
+	at org.eclipse.jetty.servlet.ServletHolder.handle(ServletHolder.java:764)
+	at org.eclipse.jetty.servlet.ServletHandler.doHandle(ServletHandler.java:529)
+	at org.eclipse.jetty.server.handler.ScopedHandler.nextHandle(ScopedHandler.java:221)
+	at org.eclipse.jetty.server.session.SessionHandler.doHandle(SessionHandler.java:1580)
+	at org.eclipse.jetty.server.handler.ScopedHandler.nextHandle(ScopedHandler.java:221)
+	at org.eclipse.jetty.server.handler.ContextHandler.doHandle(ContextHandler.java:1381)
+	at org.eclipse.jetty.server.handler.ScopedHandler.nextScope(ScopedHandler.java:176)
+	at org.eclipse.jetty.servlet.ServletHandler.doScope(ServletHandler.java:484)
+	at org.eclipse.jetty.server.session.SessionHandler.doScope(SessionHandler.java:1553)
+	at org.eclipse.jetty.server.handler.ScopedHandler.nextScope(ScopedHandler.java:174)
+	at org.eclipse.jetty.server.handler.ContextHandler.doScope(ContextHandler.java:1303)
+	at org.eclipse.jetty.server.handler.ScopedHandler.handle(ScopedHandler.java:129)
+	at org.eclipse.jetty.server.handler.ContextHandlerCollection.handle(ContextHandlerCollection.java:149)
+	at org.eclipse.jetty.server.handler.HandlerWrapper.handle(HandlerWrapper.java:122)
+	at org.eclipse.jetty.server.Server.handle(Server.java:563)
+	at org.eclipse.jetty.server.HttpChannel$RequestDispatchable.dispatch(HttpChannel.java:1598)
+	at org.eclipse.jetty.server.HttpChannel.dispatch(HttpChannel.java:753)
+	at org.eclipse.jetty.server.HttpChannel.handle(HttpChannel.java:501)
+	at org.eclipse.jetty.server.HttpConnection.onFillable(HttpConnection.java:287)
+	at org.eclipse.jetty.io.AbstractConnection$ReadCallback.succeeded(AbstractConnection.java:314)
+	at org.eclipse.jetty.io.FillInterest.fillable(FillInterest.java:100)
+	at org.eclipse.jetty.io.SelectableChannelEndPoint$1.run(SelectableChannelEndPoint.java:53)
+	at org.eclipse.jetty.util.thread.QueuedThreadPool.runJob(QueuedThreadPool.java:969)
+	at org.eclipse.jetty.util.thread.QueuedThreadPool$Runner.doRunJob(QueuedThreadPool.java:1194)
+	at org.eclipse.jetty.util.thread.QueuedThreadPool$Runner.run(QueuedThreadPool.java:1149)
+	at java.base/java.lang.Thread.run(Thread.java:1583)
+Caused by: java.lang.NullPointerException: null
+	at java.base/java.util.Objects.requireNonNull(Objects.java:233)
+	at io.swagger.v3.core.util.AnnotationsUtils.getContent(AnnotationsUtils.java:1688)
+	at io.swagger.v3.jaxrs2.OperationParser.getApiResponses(OperationParser.java:94)
+	at io.swagger.v3.jaxrs2.Reader.setOperationObjectFromApiOperationAnnotation(Reader.java:1431)
+	at io.swagger.v3.jaxrs2.Reader.parseMethod(Reader.java:1109)
+	at io.swagger.v3.jaxrs2.Reader.parseMethod(Reader.java:960)
+	at io.swagger.v3.jaxrs2.Reader.read(Reader.java:506)
+	at io.swagger.v3.jaxrs2.Reader.read(Reader.java:203)
+	at io.swagger.v3.jaxrs2.Reader.read(Reader.java:232)
+	at io.swagger.v3.oas.integration.GenericOpenApiContext.read(GenericOpenApiContext.java:721)
+	at org.eclipse.fennec.model.atlas.rest.application.resource.openapi.OpenApiResource.getOpenApi(OpenApiResource.java:117)
+	at java.base/jdk.internal.reflect.DirectMethodHandleAccessor.invoke(DirectMethodHandleAccessor.java:103)
+	at java.base/java.lang.reflect.Method.invoke(Method.java:580)
+	at org.glassfish.jersey.server.model.internal.ResourceMethodInvocationHandlerFactory.lambda$static$0(ResourceMethodInvocationHandlerFactory.java:52)
+	at org.glassfish.jersey.server.model.internal.AbstractJavaResourceMethodDispatcher$1.run(AbstractJavaResourceMethodDispatcher.java:146)
+	at org.glassfish.jersey.server.model.internal.AbstractJavaResourceMethodDispatcher.invoke(AbstractJavaResourceMethodDispatcher.java:189)
+	at org.glassfish.jersey.server.model.internal.JavaResourceMethodDispatcherProvider$ResponseOutInvoker.doDispatch(JavaResourceMethodDispatcherProvider.java:176)
+	at org.glassfish.jersey.server.model.internal.AbstractJavaResourceMethodDispatcher.dispatch(AbstractJavaResourceMethodDispatcher.java:93)
+	at org.glassfish.jersey.server.model.ResourceMethodInvoker.invoke(ResourceMethodInvoker.java:478)
+	at org.glassfish.jersey.server.model.ResourceMethodInvoker.apply(ResourceMethodInvoker.java:400)
+	at org.glassfish.jersey.server.model.ResourceMethodInvoker.apply(ResourceMethodInvoker.java:81)
+	at org.glassfish.jersey.server.ServerRuntime$1.run(ServerRuntime.java:261)
+	at org.glassfish.jersey.internal.Errors$1.call(Errors.java:248)
+	at org.glassfish.jersey.internal.Errors$1.call(Errors.java:244)
+	at org.glassfish.jersey.internal.Errors.process(Errors.java:292)
+	at org.glassfish.jersey.internal.Errors.process(Errors.java:274)
+	at org.glassfish.jersey.internal.Errors.process(Errors.java:244)
+	at org.glassfish.jersey.process.internal.RequestScope.runInScope(RequestScope.java:265)
+	at org.glassfish.jersey.server.ServerRuntime.process(ServerRuntime.java:240)
+	at org.glassfish.jersey.server.ApplicationHandler.handle(ApplicationHandler.java:697)
+	at org.glassfish.jersey.servlet.WebComponent.serviceImpl(WebComponent.java:394)
+	... 38 common frames omitted
+2025-12-09 10:08:46.350 [FelixStartLevel] INFO  o.a.a.t.b.i.TypedEventBusActivator - Aries Typed Event Bus Starting
+2025-12-09 10:08:46.374 [FelixStartLevel] INFO  o.a.a.t.b.i.TypedEventBusActivator - Aries Typed Event Bus Started
+2025-12-09 10:08:46.380 [FelixStartLevel] INFO  o.a.f.c.p.i.InterpolationConfigurationPlugin - Configured directory for secrets: /opt/git/model.atlas/org.eclipse.fennec.model.atlas.runtime/runtime/secrets
+2025-12-09 10:08:46.468 [FelixStartLevel] WARN  org.apache.felix.http - Jetty not started (HTTP and HTTPS disabled)
+2025-12-09 10:08:48.381 [CM Event Dispatcher (Fire ConfigurationEvent: pid=LuceneEObjectRegistryService~documentation)] INFO  o.a.f.c.p.i.InterpolationConfigurationPlugin - Replaced value of configuration property 'registry.workspace.folder' for PID LuceneEObjectRegistryService~documentation
+2025-12-09 10:08:48.382 [CM Event Dispatcher (Fire ConfigurationEvent: pid=LuceneEObjectRegistryService~main)] INFO  o.a.f.c.p.i.InterpolationConfigurationPlugin - Replaced value of configuration property 'registry.workspace.folder' for PID LuceneEObjectRegistryService~main
+2025-12-09 10:08:48.512 [CM Configuration Updater (Update: pid=org.apache.felix.http~maHttp)] INFO  org.eclipse.jetty.server.Server - jetty-11.0.22; built: 2024-06-27T16:27:26.756Z; git: e711d4c7040cb1e61aa68cb248fa7280b734a3bb; jvm 21.0.9+10-Ubuntu-124.04
+2025-12-09 10:08:48.597 [CM Configuration Updater (Update: pid=org.apache.felix.http~maHttp)] INFO  o.e.j.s.s.DefaultSessionIdManager - Session workerName=node0
+2025-12-09 10:08:48.611 [CM Configuration Updater (Update: pid=org.apache.felix.http~maHttp)] INFO  o.e.j.server.handler.ContextHandler - Started o.e.j.s.ServletContextHandler@110eb6d7{/atlas,null,AVAILABLE}
+2025-12-09 10:08:48.623 [CM Configuration Updater (Update: pid=org.apache.felix.http~maHttp)] INFO  org.eclipse.jetty.server.Server - Started Server@3590412b{STARTING}[11.0.22,sto=0] @2912ms
+2025-12-09 10:08:48.679 [CM Configuration Updater (Update: pid=org.apache.felix.http~maHttp)] INFO  o.e.jetty.server.AbstractConnector - Started ServerConnector@4b714256{HTTP/1.1, (http/1.1)}{0.0.0.0:8086}
+2025-12-09 10:08:48.681 [CM Configuration Updater (Update: pid=org.apache.felix.http~maHttp)] INFO  org.apache.felix.http - Started Jetty 11.0.22 at port(s) HTTP:8086 on context path /atlas [minThreads=8,maxThreads=200,acceptors=2,selectors=10]
+2025-12-09 10:08:48.754 [CM Event Dispatcher (Fire ConfigurationEvent: pid=ApicurioObjectStorage~atlas-approved)] INFO  o.a.f.c.p.i.InterpolationConfigurationPlugin - Replaced value of configuration property 'base.url' for PID ApicurioObjectStorage~atlas-approved
+2025-12-09 10:08:49.016 [CM Event Dispatcher (Fire ConfigurationEvent: pid=ApicurioObjectStorage~atlas-draft)] INFO  o.a.f.c.p.i.InterpolationConfigurationPlugin - Replaced value of configuration property 'base.url' for PID ApicurioObjectStorage~atlas-draft
+2025-12-09 10:08:49.035 [CM Event Dispatcher (Fire ConfigurationEvent: pid=ApicurioObjectStorage~atlas-release)] INFO  o.a.f.c.p.i.InterpolationConfigurationPlugin - Replaced value of configuration property 'base.url' for PID ApicurioObjectStorage~atlas-release
+2025-12-09 10:08:49.065 [CM Event Dispatcher (Fire ConfigurationEvent: pid=ApicurioObjectStorage~default-approved)] INFO  o.a.f.c.p.i.InterpolationConfigurationPlugin - Replaced value of configuration property 'base.url' for PID ApicurioObjectStorage~default-approved
+2025-12-09 10:08:49.079 [CM Event Dispatcher (Fire ConfigurationEvent: pid=ApicurioObjectStorage~default-draft)] INFO  o.a.f.c.p.i.InterpolationConfigurationPlugin - Replaced value of configuration property 'base.url' for PID ApicurioObjectStorage~default-draft
+2025-12-09 10:08:49.089 [CM Event Dispatcher (Fire ConfigurationEvent: pid=ApicurioObjectStorage~default-release)] INFO  o.a.f.c.p.i.InterpolationConfigurationPlugin - Replaced value of configuration property 'base.url' for PID ApicurioObjectStorage~default-release
+2025-12-09 10:08:49.103 [CM Event Dispatcher (Fire ConfigurationEvent: pid=FileObjectStorage~documentation)] INFO  o.a.f.c.p.i.InterpolationConfigurationPlugin - Replaced value of configuration property 'workspace.folder' for PID FileObjectStorage~documentation
+2025-12-09 10:08:51.167 [qtp956726976-267] ERROR org.apache.felix.http - Exception while processing request to /rest/openapi.json
+jakarta.servlet.ServletException: java.lang.NullPointerException
+	at org.glassfish.jersey.servlet.WebComponent.serviceImpl(WebComponent.java:409)
+	at org.glassfish.jersey.servlet.WebComponent.service(WebComponent.java:346)
+	at org.glassfish.jersey.servlet.ServletContainer.service(ServletContainer.java:357)
+	at org.glassfish.jersey.servlet.ServletContainer.service(ServletContainer.java:311)
+	at org.eclipse.osgitech.rest.runtime.WhiteboardServletContainer.service(WhiteboardServletContainer.java:137)
+	at org.glassfish.jersey.servlet.ServletContainer.service(ServletContainer.java:205)
+	at org.apache.felix.http.base.internal.handler.ServletHandler.handle(ServletHandler.java:128)
+	at org.apache.felix.http.base.internal.dispatch.InvocationChain.doFilter(InvocationChain.java:86)
+	at org.apache.felix.http.base.internal.dispatch.Dispatcher$1.doFilter(Dispatcher.java:153)
+	at org.apache.felix.http.base.internal.whiteboard.WhiteboardManager.invokePreprocessors(WhiteboardManager.java:944)
+	at org.apache.felix.http.base.internal.dispatch.Dispatcher.dispatch(Dispatcher.java:95)
+	at org.apache.felix.http.base.internal.dispatch.DispatcherServlet.service(DispatcherServlet.java:49)
+	at jakarta.servlet.http.HttpServlet.service(HttpServlet.java:614)
+	at org.eclipse.jetty.servlet.ServletHolder.handle(ServletHolder.java:764)
+	at org.eclipse.jetty.servlet.ServletHandler.doHandle(ServletHandler.java:529)
+	at org.eclipse.jetty.server.handler.ScopedHandler.nextHandle(ScopedHandler.java:221)
+	at org.eclipse.jetty.server.session.SessionHandler.doHandle(SessionHandler.java:1580)
+	at org.eclipse.jetty.server.handler.ScopedHandler.nextHandle(ScopedHandler.java:221)
+	at org.eclipse.jetty.server.handler.ContextHandler.doHandle(ContextHandler.java:1381)
+	at org.eclipse.jetty.server.handler.ScopedHandler.nextScope(ScopedHandler.java:176)
+	at org.eclipse.jetty.servlet.ServletHandler.doScope(ServletHandler.java:484)
+	at org.eclipse.jetty.server.session.SessionHandler.doScope(SessionHandler.java:1553)
+	at org.eclipse.jetty.server.handler.ScopedHandler.nextScope(ScopedHandler.java:174)
+	at org.eclipse.jetty.server.handler.ContextHandler.doScope(ContextHandler.java:1303)
+	at org.eclipse.jetty.server.handler.ScopedHandler.handle(ScopedHandler.java:129)
+	at org.eclipse.jetty.server.handler.ContextHandlerCollection.handle(ContextHandlerCollection.java:149)
+	at org.eclipse.jetty.server.handler.HandlerWrapper.handle(HandlerWrapper.java:122)
+	at org.eclipse.jetty.server.Server.handle(Server.java:563)
+	at org.eclipse.jetty.server.HttpChannel$RequestDispatchable.dispatch(HttpChannel.java:1598)
+	at org.eclipse.jetty.server.HttpChannel.dispatch(HttpChannel.java:753)
+	at org.eclipse.jetty.server.HttpChannel.handle(HttpChannel.java:501)
+	at org.eclipse.jetty.server.HttpConnection.onFillable(HttpConnection.java:287)
+	at org.eclipse.jetty.io.AbstractConnection$ReadCallback.succeeded(AbstractConnection.java:314)
+	at org.eclipse.jetty.io.FillInterest.fillable(FillInterest.java:100)
+	at org.eclipse.jetty.io.SelectableChannelEndPoint$1.run(SelectableChannelEndPoint.java:53)
+	at org.eclipse.jetty.util.thread.QueuedThreadPool.runJob(QueuedThreadPool.java:969)
+	at org.eclipse.jetty.util.thread.QueuedThreadPool$Runner.doRunJob(QueuedThreadPool.java:1194)
+	at org.eclipse.jetty.util.thread.QueuedThreadPool$Runner.run(QueuedThreadPool.java:1149)
+	at java.base/java.lang.Thread.run(Thread.java:1583)
+Caused by: java.lang.NullPointerException: null
+	at java.base/java.util.Objects.requireNonNull(Objects.java:233)
+	at io.swagger.v3.core.util.AnnotationsUtils.getContent(AnnotationsUtils.java:1688)
+	at io.swagger.v3.jaxrs2.OperationParser.getApiResponses(OperationParser.java:94)
+	at io.swagger.v3.jaxrs2.Reader.setOperationObjectFromApiOperationAnnotation(Reader.java:1431)
+	at io.swagger.v3.jaxrs2.Reader.parseMethod(Reader.java:1109)
+	at io.swagger.v3.jaxrs2.Reader.parseMethod(Reader.java:960)
+	at io.swagger.v3.jaxrs2.Reader.read(Reader.java:506)
+	at io.swagger.v3.jaxrs2.Reader.read(Reader.java:203)
+	at io.swagger.v3.jaxrs2.Reader.read(Reader.java:232)
+	at io.swagger.v3.oas.integration.GenericOpenApiContext.read(GenericOpenApiContext.java:721)
+	at org.eclipse.fennec.model.atlas.rest.application.resource.openapi.OpenApiResource.getOpenApi(OpenApiResource.java:117)
+	at java.base/jdk.internal.reflect.DirectMethodHandleAccessor.invoke(DirectMethodHandleAccessor.java:103)
+	at java.base/java.lang.reflect.Method.invoke(Method.java:580)
+	at org.glassfish.jersey.server.model.internal.ResourceMethodInvocationHandlerFactory.lambda$static$0(ResourceMethodInvocationHandlerFactory.java:52)
+	at org.glassfish.jersey.server.model.internal.AbstractJavaResourceMethodDispatcher$1.run(AbstractJavaResourceMethodDispatcher.java:146)
+	at org.glassfish.jersey.server.model.internal.AbstractJavaResourceMethodDispatcher.invoke(AbstractJavaResourceMethodDispatcher.java:189)
+	at org.glassfish.jersey.server.model.internal.JavaResourceMethodDispatcherProvider$ResponseOutInvoker.doDispatch(JavaResourceMethodDispatcherProvider.java:176)
+	at org.glassfish.jersey.server.model.internal.AbstractJavaResourceMethodDispatcher.dispatch(AbstractJavaResourceMethodDispatcher.java:93)
+	at org.glassfish.jersey.server.model.ResourceMethodInvoker.invoke(ResourceMethodInvoker.java:478)
+	at org.glassfish.jersey.server.model.ResourceMethodInvoker.apply(ResourceMethodInvoker.java:400)
+	at org.glassfish.jersey.server.model.ResourceMethodInvoker.apply(ResourceMethodInvoker.java:81)
+	at org.glassfish.jersey.server.ServerRuntime$1.run(ServerRuntime.java:261)
+	at org.glassfish.jersey.internal.Errors$1.call(Errors.java:248)
+	at org.glassfish.jersey.internal.Errors$1.call(Errors.java:244)
+	at org.glassfish.jersey.internal.Errors.process(Errors.java:292)
+	at org.glassfish.jersey.internal.Errors.process(Errors.java:274)
+	at org.glassfish.jersey.internal.Errors.process(Errors.java:244)
+	at org.glassfish.jersey.process.internal.RequestScope.runInScope(RequestScope.java:265)
+	at org.glassfish.jersey.server.ServerRuntime.process(ServerRuntime.java:240)
+	at org.glassfish.jersey.server.ApplicationHandler.handle(ApplicationHandler.java:697)
+	at org.glassfish.jersey.servlet.WebComponent.serviceImpl(WebComponent.java:394)
+	... 38 common frames omitted

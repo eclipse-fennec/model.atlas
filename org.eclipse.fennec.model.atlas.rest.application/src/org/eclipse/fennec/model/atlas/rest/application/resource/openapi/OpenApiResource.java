@@ -218,7 +218,7 @@ public class OpenApiResource extends BaseOpenApiResource {
 			return;
 		}
 
-		List<Scope> scopes = scopeCollector.getScopes();
+		List<Scope> scopes = scopeCollector.getAllScopes();
 		if (scopes == null || scopes.isEmpty()) {
 			return;
 		}
@@ -228,6 +228,7 @@ public class OpenApiResource extends BaseOpenApiResource {
 		for (Scope scope : scopes) {
 			Map<String, Object> scopeData = new HashMap<>();
 			scopeData.put("name", scope.getName());
+			scopeData.put("type", scope.getType());
 			scopeData.put("description", scope.getDescription());
 			scopeData.put("parentScope", scope.getParentScope());
 			scopeData.put("finalStage", scope.getFinalStage());

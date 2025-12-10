@@ -67,6 +67,7 @@ import org.eclipse.fennec.model.atlas.mgmt.management.ObjectStatus;
  *   <li>{@link org.eclipse.fennec.model.atlas.mgmt.management.impl.ObjectMetadataImpl#getLastChangeReason <em>Last Change Reason</em>}</li>
  *   <li>{@link org.eclipse.fennec.model.atlas.mgmt.management.impl.ObjectMetadataImpl#getScope <em>Scope</em>}</li>
  *   <li>{@link org.eclipse.fennec.model.atlas.mgmt.management.impl.ObjectMetadataImpl#isIsReadOnly <em>Is Read Only</em>}</li>
+ *   <li>{@link org.eclipse.fennec.model.atlas.mgmt.management.impl.ObjectMetadataImpl#getRegistry <em>Registry</em>}</li>
  * </ul>
  *
  * @generated
@@ -531,6 +532,26 @@ public class ObjectMetadataImpl extends MinimalEObjectImpl.Container implements 
 	 * @ordered
 	 */
 	protected boolean isReadOnly = IS_READ_ONLY_EDEFAULT;
+
+	/**
+	 * The default value of the '{@link #getRegistry() <em>Registry</em>}' attribute.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @see #getRegistry()
+	 * @generated
+	 * @ordered
+	 */
+	protected static final String REGISTRY_EDEFAULT = null;
+
+	/**
+	 * The cached value of the '{@link #getRegistry() <em>Registry</em>}' attribute.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @see #getRegistry()
+	 * @generated
+	 * @ordered
+	 */
+	protected String registry = REGISTRY_EDEFAULT;
 
 	/**
 	 * <!-- begin-user-doc -->
@@ -1116,6 +1137,29 @@ public class ObjectMetadataImpl extends MinimalEObjectImpl.Container implements 
 	 * @generated
 	 */
 	@Override
+	public String getRegistry() {
+		return registry;
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
+	public void setRegistry(String newRegistry) {
+		String oldRegistry = registry;
+		registry = newRegistry;
+		if (eNotificationRequired())
+			eNotify(new ENotificationImpl(this, Notification.SET, ManagementPackage.OBJECT_METADATA__REGISTRY, oldRegistry, registry));
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
 	public NotificationChain eInverseRemove(InternalEObject otherEnd, int featureID, NotificationChain msgs) {
 		switch (featureID) {
 			case ManagementPackage.OBJECT_METADATA__PROPERTIES:
@@ -1182,6 +1226,8 @@ public class ObjectMetadataImpl extends MinimalEObjectImpl.Container implements 
 				return getScope();
 			case ManagementPackage.OBJECT_METADATA__IS_READ_ONLY:
 				return isIsReadOnly();
+			case ManagementPackage.OBJECT_METADATA__REGISTRY:
+				return getRegistry();
 		}
 		return super.eGet(featureID, resolve, coreType);
 	}
@@ -1265,6 +1311,9 @@ public class ObjectMetadataImpl extends MinimalEObjectImpl.Container implements 
 				return;
 			case ManagementPackage.OBJECT_METADATA__IS_READ_ONLY:
 				setIsReadOnly((Boolean)newValue);
+				return;
+			case ManagementPackage.OBJECT_METADATA__REGISTRY:
+				setRegistry((String)newValue);
 				return;
 		}
 		super.eSet(featureID, newValue);
@@ -1350,6 +1399,9 @@ public class ObjectMetadataImpl extends MinimalEObjectImpl.Container implements 
 			case ManagementPackage.OBJECT_METADATA__IS_READ_ONLY:
 				setIsReadOnly(IS_READ_ONLY_EDEFAULT);
 				return;
+			case ManagementPackage.OBJECT_METADATA__REGISTRY:
+				setRegistry(REGISTRY_EDEFAULT);
+				return;
 		}
 		super.eUnset(featureID);
 	}
@@ -1410,6 +1462,8 @@ public class ObjectMetadataImpl extends MinimalEObjectImpl.Container implements 
 				return SCOPE_EDEFAULT == null ? scope != null : !SCOPE_EDEFAULT.equals(scope);
 			case ManagementPackage.OBJECT_METADATA__IS_READ_ONLY:
 				return isReadOnly != IS_READ_ONLY_EDEFAULT;
+			case ManagementPackage.OBJECT_METADATA__REGISTRY:
+				return REGISTRY_EDEFAULT == null ? registry != null : !REGISTRY_EDEFAULT.equals(registry);
 		}
 		return super.eIsSet(featureID);
 	}
@@ -1468,6 +1522,8 @@ public class ObjectMetadataImpl extends MinimalEObjectImpl.Container implements 
 		result.append(scope);
 		result.append(", isReadOnly: ");
 		result.append(isReadOnly);
+		result.append(", registry: ");
+		result.append(registry);
 		result.append(')');
 		return result.toString();
 	}

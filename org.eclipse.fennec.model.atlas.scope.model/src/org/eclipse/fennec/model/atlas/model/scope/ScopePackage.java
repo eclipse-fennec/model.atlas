@@ -95,13 +95,22 @@ public interface ScopePackage extends org.eclipse.emf.ecore.EPackage {
 	int SCOPE__NAME = 0;
 
 	/**
+	 * The feature id for the '<em><b>Type</b></em>' attribute.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 * @ordered
+	 */
+	int SCOPE__TYPE = 1;
+
+	/**
 	 * The feature id for the '<em><b>Parent Scope</b></em>' attribute.
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
 	 * @generated
 	 * @ordered
 	 */
-	int SCOPE__PARENT_SCOPE = 1;
+	int SCOPE__PARENT_SCOPE = 2;
 
 	/**
 	 * The feature id for the '<em><b>Description</b></em>' attribute.
@@ -110,7 +119,7 @@ public interface ScopePackage extends org.eclipse.emf.ecore.EPackage {
 	 * @generated
 	 * @ordered
 	 */
-	int SCOPE__DESCRIPTION = 2;
+	int SCOPE__DESCRIPTION = 3;
 
 	/**
 	 * The feature id for the '<em><b>Links</b></em>' map.
@@ -119,7 +128,7 @@ public interface ScopePackage extends org.eclipse.emf.ecore.EPackage {
 	 * @generated
 	 * @ordered
 	 */
-	int SCOPE__LINKS = 3;
+	int SCOPE__LINKS = 4;
 
 	/**
 	 * The feature id for the '<em><b>Stages</b></em>' attribute list.
@@ -128,7 +137,7 @@ public interface ScopePackage extends org.eclipse.emf.ecore.EPackage {
 	 * @generated
 	 * @ordered
 	 */
-	int SCOPE__STAGES = 4;
+	int SCOPE__STAGES = 5;
 
 	/**
 	 * The feature id for the '<em><b>Final Stage</b></em>' attribute.
@@ -137,7 +146,7 @@ public interface ScopePackage extends org.eclipse.emf.ecore.EPackage {
 	 * @generated
 	 * @ordered
 	 */
-	int SCOPE__FINAL_STAGE = 5;
+	int SCOPE__FINAL_STAGE = 6;
 
 	/**
 	 * The feature id for the '<em><b>Writable Stages</b></em>' attribute list.
@@ -146,7 +155,7 @@ public interface ScopePackage extends org.eclipse.emf.ecore.EPackage {
 	 * @generated
 	 * @ordered
 	 */
-	int SCOPE__WRITABLE_STAGES = 6;
+	int SCOPE__WRITABLE_STAGES = 7;
 
 	/**
 	 * The number of structural features of the '<em>Scope</em>' class.
@@ -155,7 +164,7 @@ public interface ScopePackage extends org.eclipse.emf.ecore.EPackage {
 	 * @generated
 	 * @ordered
 	 */
-	int SCOPE_FEATURE_COUNT = 7;
+	int SCOPE_FEATURE_COUNT = 8;
 
 	/**
 	 * The number of operations of the '<em>Scope</em>' class.
@@ -316,6 +325,17 @@ public interface ScopePackage extends org.eclipse.emf.ecore.EPackage {
 	 * @generated
 	 */
 	EAttribute getScope_Name();
+
+	/**
+	 * Returns the meta object for the attribute '{@link org.eclipse.fennec.model.atlas.model.scope.Scope#getType <em>Type</em>}'.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @return the meta object for the attribute '<em>Type</em>'.
+	 * @see org.eclipse.fennec.model.atlas.model.scope.Scope#getType()
+	 * @see #getScope()
+	 * @generated
+	 */
+	EAttribute getScope_Type();
 
 	/**
 	 * Returns the meta object for the attribute '{@link org.eclipse.fennec.model.atlas.model.scope.Scope#getParentScope <em>Parent Scope</em>}'.
@@ -510,6 +530,14 @@ public interface ScopePackage extends org.eclipse.emf.ecore.EPackage {
 		 * @generated
 		 */
 		EAttribute SCOPE__NAME = eINSTANCE.getScope_Name();
+
+		/**
+		 * The meta object literal for the '<em><b>Type</b></em>' attribute feature.
+		 * <!-- begin-user-doc -->
+		 * <!-- end-user-doc -->
+		 * @generated
+		 */
+		EAttribute SCOPE__TYPE = eINSTANCE.getScope_Type();
 
 		/**
 		 * The meta object literal for the '<em><b>Parent Scope</b></em>' attribute feature.

@@ -82,6 +82,7 @@ public class SchemaPackagesResource {
 	private ManagementFactory mgmtFactory;
 
 	private final List<String> supportedMediaTypes;
+	private final String registry = "schema";
 
 	@Context
 	private HttpHeaders headers;
@@ -139,7 +140,7 @@ public class SchemaPackagesResource {
 		if(workflowService == null) {
 			return Response.status(Response.Status.NO_CONTENT).build();
 		}
-		List<ObjectMetadata> objectsMetadata = workflowService.listInFinalStage();
+		List<ObjectMetadata> objectsMetadata = workflowService.listInFinalStageForRegistry(registry);
 		ObjectMetadataContainer container = mgmtFactory.createObjectMetadataContainer();
 		container.getMetadata().addAll(objectsMetadata);		
 		return Response.status(Response.Status.OK).entity(container).build();
@@ -206,14 +207,14 @@ public class SchemaPackagesResource {
 		try {
 			if(nsUri != null) {
 				String encodedUri = encodePackageNsURI(nsUri);
-				ObjectMetadata metadata = workflowService.getFromStage(stageName, encodedUri);
+				ObjectMetadata metadata = workflowService.getFromStageForRegistry(stageName, registry, encodedUri);
 				if(metadata == null) {
 					return Response.status(Response.Status.NO_CONTENT).build();
 				} else {
 					return Response.status(Response.Status.OK).entity(metadata).build();
 				}
 			} else if(name != null) {
-				List<ObjectMetadata> objectsMetadata = workflowService.listInStageByName(stageName, name);
+				List<ObjectMetadata> objectsMetadata = workflowService.listInStageForRegistryByName(stageName, registry, name);
 				if(objectsMetadata.isEmpty()) {
 					return Response.status(Response.Status.NO_CONTENT).build();
 				}
@@ -221,8 +222,7 @@ public class SchemaPackagesResource {
 				container.getMetadata().addAll(objectsMetadata);		
 				return Response.status(Response.Status.OK).entity(container).build();
 			} else {
-				//				TODO: missing search by name
-				List<ObjectMetadata> objectsMetadata = workflowService.listInStage(stageName);
+				List<ObjectMetadata> objectsMetadata = workflowService.listInStageForRegistry(stageName, registry);
 				if(objectsMetadata.isEmpty()) {
 					return Response.status(Response.Status.NO_CONTENT).build();
 				}
@@ -293,7 +293,7 @@ public class SchemaPackagesResource {
 		try {
 			String encodedNsURI = encodePackageNsURI(nsUri);
 			//			Check uniqueness across visibility chain
-			if(workflowService.getFromStage(stageName, encodedNsURI) != null) {
+			if(workflowService.getFromStageForRegistry(stageName, registry, encodedNsURI) != null) {
 				return Response.status(Response.Status.CONFLICT).build();
 			}
 			//			Create package and return metadata with Location header
@@ -307,7 +307,7 @@ public class SchemaPackagesResource {
 			metadata.setObjectType(EcoreUtil.getURI(ePackage.eClass()).toString());
 			metadata.getProperties().put("nsUri", nsUri);
 
-			metadata = workflowService.uploadToStage(stageName, ePackage, metadata).getValue();
+			metadata = workflowService.uploadToStageForRegistry(stageName, registry, ePackage, metadata).getValue();
 
 			return Response
 					.status(Response.Status.OK)
@@ -362,7 +362,7 @@ public class SchemaPackagesResource {
 		}
 		try {
 			String encodedNsUri = encodePackageNsURI(nsUri);			
-			EPackage ePackage = workflowService.getContentFromStage(stageName, encodedNsUri);
+			EPackage ePackage = workflowService.getContentFromStageForRegistry(stageName, registry, encodedNsUri);
 			if(ePackage == null) {
 				return Response.status(Response.Status.NO_CONTENT).build();
 			}
@@ -428,7 +428,7 @@ public class SchemaPackagesResource {
 				return Response.status(Response.Status.FORBIDDEN).build();
 			}
 			String encodedNsUri = encodePackageNsURI(nsUri);
-			ObjectMetadata existingMetadata = workflowService.getFromStage(stageName, encodedNsUri);
+			ObjectMetadata existingMetadata = workflowService.getFromStageForRegistry(stageName, registry, encodedNsUri);
 			if(existingMetadata == null) {
 				return Response.status(Response.Status.NO_CONTENT).build();
 			}
@@ -437,7 +437,7 @@ public class SchemaPackagesResource {
 				return Response.status(Response.Status.FORBIDDEN).build();
 			}
 
-			ObjectMetadata metadata = workflowService.updateInStage(stageName, ePackage, encodedNsUri, version).getValue();			
+			ObjectMetadata metadata = workflowService.updateInStageForRegistry(stageName, registry, ePackage, encodedNsUri, version).getValue();			
 			return Response.status(Response.Status.OK).entity(metadata).build();
 
 		} catch(Exception e) {
@@ -488,7 +488,7 @@ public class SchemaPackagesResource {
 				return Response.status(Response.Status.FORBIDDEN).build();
 			}
 			String encodedNsUri = encodePackageNsURI(nsUri);
-			ObjectMetadata existingMetadata = workflowService.getFromStage(stageName, encodedNsUri);
+			ObjectMetadata existingMetadata = workflowService.getFromStageForRegistry(stageName, registry, encodedNsUri);
 			if(existingMetadata == null) {
 				return Response.status(Response.Status.NO_CONTENT).build();
 			} 
@@ -496,7 +496,7 @@ public class SchemaPackagesResource {
 				return Response.status(Response.Status.FORBIDDEN).build();
 			}
 
-			boolean deleted = workflowService.deleteFromStage(stageName, encodedNsUri).getValue();	
+			boolean deleted = workflowService.deleteFromStageForRegistry(stageName, registry, encodedNsUri).getValue();	
 			if(deleted) return Response.status(Response.Status.OK).build();
 			return Response.status(Response.Status.INTERNAL_SERVER_ERROR).build();
 
@@ -556,7 +556,7 @@ public class SchemaPackagesResource {
 		}
 		try {
 			String encodedNsUri = encodePackageNsURI(transitionRequest.getObjectId());
-			ObjectMetadata existingMetadata = workflowService.getFromStage(stageName, encodedNsUri);
+			ObjectMetadata existingMetadata = workflowService.getFromStageForRegistry(stageName, registry, encodedNsUri);
 			if(existingMetadata == null) {
 				return Response.status(Response.Status.NO_CONTENT).build();
 			}
@@ -566,13 +566,11 @@ public class SchemaPackagesResource {
 			if(!workflowService.isTransitionAllowed(stageName, transitionRequest.getTargetStage())) {
 				return Response.status(Response.Status.BAD_REQUEST).build();
 			}
-			ObjectMetadata metadata = workflowService.transitionToStage(encodedNsUri, stageName, transitionRequest.getTargetStage());
+			ObjectMetadata metadata = workflowService.transitionToStageForRegistry(encodedNsUri, stageName, transitionRequest.getTargetStage(), registry);
 			return Response.status(Response.Status.OK).entity(metadata).build();
 		} catch(Exception e) {
 			return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity(e.getMessage()).build();
 		}
-
-
 	}
 
 	/**
@@ -604,7 +602,7 @@ public class SchemaPackagesResource {
 	}
 
 	private Scope getScopeByScopeName(String scope) {
-		return scopeCollector.getScopeByName(scope);
+		return scopeCollector.getSchemaWorkflowScopeByName(scope);
 	}
 
 	private String encodePackageNsURI(String nsUri) throws UnsupportedEncodingException {
