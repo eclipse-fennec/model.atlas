@@ -16,7 +16,7 @@
 	"EObjectWorkflowService~default": {
 		"workflow.id": "default-workflow",
 		"scope": "default",
-		"description": "Test package workflow",
+		"description": "default package workflow",
 		"parent.scope": "atlas",
 		"parentWorkflowService.target": "(scope=atlas)",
 		"delete.after.transition": true,

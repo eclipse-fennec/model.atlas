@@ -1,0 +1,28 @@
+{
+	":configurator:resource-version": 1,
+	":configurator:version": "1.0.0",
+	"EObjectWorkflowService~atlas": {
+		"workflow.id": "atlas-workflow",
+		"scope": "atlas",
+		"description": "Atlas workflow",
+		"parent.scope": "",
+		"parentWorkflowService.target": "(scope=no-inject)",
+		"delete.after.transition": true,
+		"stages": ["release"],
+		"final.stage": "release",
+		"writable.stages": ["release"],
+		"registryService.target": "(registry=main)"
+	},
+	"EObjectWorkflowService~default": {
+		"workflow.id": "default-workflow",
+		"scope": "default",
+		"description": "default package workflow",
+		"parent.scope": "atlas",
+		"parentWorkflowService.target": "(scope=atlas)",
+		"delete.after.transition": true,
+		"stages": ["draft", "approved", "release"],
+		"final.stage": "release",
+		"writable.stages": ["draft", "approved", "release"],
+		"registryService.target": "(registry=main)"
+	}
+}

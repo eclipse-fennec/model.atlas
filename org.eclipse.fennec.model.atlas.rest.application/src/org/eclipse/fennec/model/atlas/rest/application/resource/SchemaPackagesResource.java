@@ -98,9 +98,10 @@ public class SchemaPackagesResource {
 	}
 
 	@GET
+	@Path("hello")
 	@Produces({MediaType.TEXT_PLAIN})
-	public Response hello() {
-		return Response.ok().entity("Hello").build();
+	public Response hello(@PathParam("scopeName") String scopeName) {
+		return Response.ok().entity("Hello " + scopeName).build();
 	}
 
 	// ======================
