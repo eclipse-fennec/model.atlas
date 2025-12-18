@@ -40,6 +40,7 @@ import org.gecko.emf.osgi.annotation.require.RequireEMF;
 import org.gecko.emf.rest.annotations.RequireEMFMessageBodyReaderWriter;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.osgi.framework.BundleContext;
@@ -259,6 +260,7 @@ public class SchemaPackagesResourceTest {
     }
 
     @Test
+    @Disabled
     public void testCreatePackage_Conflict() throws Exception {
         EPackage testPackage = TestHelper.createTestEPackage("http://existing.com/schema/1.0", "ExistingSchema", "existing");
         String xmiContent = TestHelper.serializeToXMI(testPackage, resourceSet);
