@@ -116,7 +116,7 @@ Resource for managing schemas within a scope.
   - `name` (string): Search by package name (supports wildcards, e.g., `name=*Billing*`).
 - **Response (200 OK):** `application/json` (A list of `SchemaPackage` metadata objects, or a single object if `nsUri` is used).
 
-#### `POST /{scopeName}/schema/stages/{stageName}`
+#### `PUT /{scopeName}/schema/stages/{stageName}`
 
 - **Action:** Create a new `SchemaPackage` in the specified stage. The package content is sent as the request body.
 - Query Parameters:

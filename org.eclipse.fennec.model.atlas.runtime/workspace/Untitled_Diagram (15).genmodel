@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<genmodel:GenModel xmi:version="2.0" xmlns:xmi="http://www.omg.org/XMI" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xmlns:ecore="http://www.eclipse.org/emf/2002/Ecore" xmlns:genmodel="http://www.eclipse.org/uml2/2.2.0/GenModel"
+    modelDirectory="/org.eclipse.fennec.model.atlas.runtime/src" modelPluginID="org.eclipse.fennec.model.atlas.runtime"
+    modelName="Untitled_Diagram (15)" rootExtendsClass="org.eclipse.emf.ecore.impl.MinimalEObjectImpl$Container"
+    importerID="org.eclipse.uml2.uml.ecore.importer" complianceLevel="21.0" copyrightFields="false"
+    operationReflection="true" importOrganizing="true">
+  <genAnnotations source="http://www.eclipse.org/emf/2002/GenModel/importer/org.eclipse.uml2.uml.ecore.importer">
+    <details key="OPPOSITE_ROLE_NAMES" value="IGNORE"/>
+    <details key="DUPLICATE_FEATURES" value="DISCARD"/>
+    <details key="ANNOTATION_DETAILS" value="PROCESS"/>
+    <details key="PROPERTY_DEFAULT_EXPRESSIONS" value="IGNORE"/>
+    <details key="DUPLICATE_FEATURE_INHERITANCE" value="DISCARD"/>
+    <details key="COMMENTS" value="PROCESS"/>
+    <details key="DERIVED_FEATURES" value="PROCESS"/>
+    <details key="SUPER_CLASS_ORDER" value="PROCESS"/>
+    <details key="DUPLICATE_OPERATION_INHERITANCE" value="DISCARD"/>
+    <details key="REDEFINING_OPERATIONS" value="REPORT"/>
+    <details key="INVARIANT_CONSTRAINTS" value="PROCESS"/>
+    <details key="UNION_PROPERTIES" value="REPORT"/>
+    <details key="DUPLICATE_OPERATIONS" value="DISCARD"/>
+    <details key="NON_API_INVARIANTS" value="IGNORE"/>
+    <details key="CAMEL_CASE_NAMES" value="IGNORE"/>
+    <details key="SUBSETTING_PROPERTIES" value="REPORT"/>
+    <details key="OPERATION_BODIES" value="IGNORE"/>
+    <details key="ECORE_TAGGED_VALUES" value="PROCESS"/>
+    <details key="UNTYPED_PROPERTIES" value="REPORT"/>
+    <details key="REDEFINING_PROPERTIES" value="REPORT"/>
+    <details key="INVOCATION_DELEGATES" value="IGNORE"/>
+    <details key="VALIDATION_DELEGATES" value="IGNORE"/>
+  </genAnnotations>
+  <foreignModel>Untitled_Diagram%20(15).uml</foreignModel>
+  <genPackages xsi:type="genmodel:GenPackage" prefix="UntitledDiagram" disposableProviderFactory="true"
+      ecorePackage="UntitledDiagram.ecore#/">
+    <nestedGenPackages xsi:type="genmodel:GenPackage" prefix="TestPackage" disposableProviderFactory="true"
+        ecorePackage="UntitledDiagram.ecore#//testPackage">
+      <genClasses xsi:type="genmodel:GenClass" ecoreClass="UntitledDiagram.ecore#//testPackage/NeueKlasse">
+        <genFeatures xsi:type="genmodel:GenFeature" createChild="false" ecoreFeature="ecore:EAttribute UntitledDiagram.ecore#//testPackage/NeueKlasse/attribut"/>
+        <genOperations xsi:type="genmodel:GenOperation" ecoreOperation="UntitledDiagram.ecore#//testPackage/NeueKlasse/operation"/>
+      </genClasses>
+      <genClasses xsi:type="genmodel:GenClass" image="false" ecoreClass="UntitledDiagram.ecore#//testPackage/NeuesInterface">
+        <genOperations xsi:type="genmodel:GenOperation" ecoreOperation="UntitledDiagram.ecore#//testPackage/NeuesInterface/operation"/>
+      </genClasses>
+    </nestedGenPackages>
+  </genPackages>
+  <genPackages xsi:type="genmodel:GenPackage" prefix="PrimitiveTypes" disposableProviderFactory="true"
+      ecorePackage="PrimitiveTypes.ecore#/">
+    <genDataTypes xsi:type="genmodel:GenDataType" ecoreDataType="PrimitiveTypes.ecore#//Boolean"/>
+    <genDataTypes xsi:type="genmodel:GenDataType" ecoreDataType="PrimitiveTypes.ecore#//Integer"/>
+    <genDataTypes xsi:type="genmodel:GenDataType" ecoreDataType="PrimitiveTypes.ecore#//Real"/>
+    <genDataTypes xsi:type="genmodel:GenDataType" ecoreDataType="PrimitiveTypes.ecore#//UnlimitedNatural"/>
+    <genDataTypes xsi:type="genmodel:GenDataType" ecoreDataType="PrimitiveTypes.ecore#//String"/>
+  </genPackages>
+</genmodel:GenModel>

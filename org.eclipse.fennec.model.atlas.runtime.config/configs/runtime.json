@@ -2,13 +2,6 @@
 	":configurator:resource-version": 1,
 	":configurator:symbolicname": "org.civitas.meter.runtime",
 	":configurator:version": "0.0.0",
-	"org.apache.felix.http~atlasHtpp": {
-		"org.osgi.service.http.port": "8080",
-		"org.osgi.service.http.host": "0.0.0.0",
-		"org.apache.felix.http.context_path": "atlas/",
-		"org.apache.felix.http.name": "atlas",
-		"org.apache.felix.http.runtime.init.id": "atlasHtpp"
-	},
 	"JakartarsServletWhiteboardRuntimeComponent~atlasRest": {
 		"jersey.jaxrs.whiteboard.name": "atlasRest",
 		"jersey.context.path": "rest",
