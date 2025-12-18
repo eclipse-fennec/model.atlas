@@ -63,7 +63,6 @@ import org.testcontainers.containers.GenericContainer;
 @ExtendWith(BundleContextExtension.class)
 @ExtendWith(ServiceExtension.class)
 @ExtendWith(ConfigurationExtension.class)
-@Disabled
 public class EObjectApicurioStorageServiceTest {
 
 	@InjectBundleContext

@@ -253,9 +253,9 @@ public class SchemaPackagesResource {
 	    String resolvedVersion = resolveAndValidateVersion(version, validatedNsUri);
 	    String encodedNsURI = encodePackageNsURI(validatedNsUri);
 	    // Check uniqueness across visibility chain
-//	    if (workflowService.getFromStage(stageName, encodedNsURI) != null) {
-//		return Response.status(Response.Status.CONFLICT).build();
-//	    }
+	    if (workflowService.getFromStage(stageName, encodedNsURI) != null) {
+		return Response.status(Response.Status.CONFLICT).build();
+	    }
 	    // Create package and return metadata with Location header
 	    ObjectMetadata metadata = mgmtFactory.createObjectMetadata();
 	    metadata.setObjectId(encodedNsURI);
