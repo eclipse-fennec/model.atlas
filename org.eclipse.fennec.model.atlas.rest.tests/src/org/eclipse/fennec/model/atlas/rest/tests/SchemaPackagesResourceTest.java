@@ -87,7 +87,7 @@ public class SchemaPackagesResourceTest {
 
     private static final String BASE_URL = "http://localhost:8185/rest";
     private static final String TEST_SCOPE_NAME = "test-scope";
-    private static final String TEST_PACKAGE_NSURI = "http://test.example.com/schema/1.0";
+    private static final String TEST_PACKAGE_NSURI = "http://test.example.com/schema/1.1";
     private static final String TEST_PACKAGE_NAME = "TestSchema";
     private static final String TEST_STAGE_DRAFT = "draft";
     private static final String TEST_STAGE_APPROVED = "approved";
