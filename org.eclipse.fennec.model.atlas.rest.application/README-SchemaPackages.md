@@ -214,6 +214,7 @@ Content-Type: application/json | application/xml | application/ecore+xml
 - `nsUri` (string, required): The namespace URI of the package
 - `name` (string, optional): Human-readable name
 - `version` (string, optional): Package version
+- `override` (boolean, optional): If a Package already exists, just update it with similar bahviour to . 
 
 **Request Body**: EPackage content in the specified format
 
@@ -285,8 +286,7 @@ Accept: application/json | application/xml | application/ecore+xml | application
 - **200 OK**: Package content retrieved successfully
   - Body: EPackage in requested format
   - `Content-Type` header matches requested format
-- **204 No Content**: Package metadata exists but no content
-- **404 Not Found**: Package not found in visibility chain
+- **204 Not Found**: Package not found in visibility chain
 - **406 Not Acceptable**: Requested format not supported
 - **500 Internal Server Error**: Server error
 
@@ -333,9 +333,10 @@ Content-Type: application/json | application/xml | application/ecore+xml
 **Response**:
 - **200 OK**: Package updated successfully
   - Body: Updated `ObjectMetadata`
+- **204 No Content**: Package not found
 - **400 Bad Request**: Invalid package data
 - **403 Forbidden**: Stage is read-only OR package is from parent scope
-- **404 Not Found**: Scope, stage, or package not found
+- **404 Not Found**: Scope or stage not found
 - **500 Internal Server Error**: Server error
 
 **Example**:
@@ -377,7 +378,7 @@ DELETE /{scopeName}/schema/stages/{stageName}?nsUri={encodedNsUri}
 - Cannot delete if package doesn't exist locally
 
 **Response**:
-- **204 No Content**: Package deleted successfully
+- **200 OK**: Package deleted successfully
 - **403 Forbidden**: Stage is read-only OR package is from parent scope
 - **404 Not Found**: Package not found
 - **500 Internal Server Error**: Server error
