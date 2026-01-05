@@ -310,7 +310,7 @@ public class SchemaPackagesResource {
 			metadata = workflowService.uploadToStageForRegistry(stageName, registry, ePackage, metadata).getValue();
 
 			return Response
-					.status(Response.Status.OK)
+					.status(Response.Status.CREATED)
 					.header("Location", "/".concat(scopeName).concat("/schemas/stages/").concat(stageName).concat("?nsUri=").concat(encodedNsURI))
 					.entity(metadata)
 					.build();

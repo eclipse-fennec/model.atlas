@@ -13,25 +13,37 @@
  */
 package org.eclipse.fennec.model.atlas.rest.application.resource;
 
+import static java.util.Objects.requireNonNull;
+
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.eclipse.emf.common.util.URI;
+import org.eclipse.emf.ecore.EClass;
 import org.eclipse.emf.ecore.EObject;
+import org.eclipse.emf.ecore.resource.ResourceSet;
+import org.eclipse.emf.ecore.util.EcoreUtil;
 import org.eclipse.fennec.model.atlas.mediatypes.api.SupportedMediatype;
 import org.eclipse.fennec.model.atlas.mgmt.management.ManagementFactory;
 import org.eclipse.fennec.model.atlas.mgmt.management.ObjectMetadata;
 import org.eclipse.fennec.model.atlas.mgmt.management.ObjectMetadataContainer;
 import org.eclipse.fennec.model.atlas.model.scope.Scope;
 import org.eclipse.fennec.model.atlas.model.scope.StageTransition;
+import org.eclipse.fennec.model.atlas.rest.application.resource.ObjectRegistryResource.ObjectRegistryServiceConfig;
 import org.eclipse.fennec.model.atlas.runtime.RequireRuntime;
 import org.eclipse.fennec.model.atlas.scope.ScopeCollector;
 import org.eclipse.fennec.model.atlas.wf.workflowapi.EObjectWorkflowService;
 import org.osgi.service.component.annotations.Activate;
 import org.osgi.service.component.annotations.Component;
+import org.osgi.service.component.annotations.ConfigurationPolicy;
 import org.osgi.service.component.annotations.Reference;
 import org.osgi.service.component.annotations.ServiceScope;
 import org.osgi.service.jakartars.whiteboard.propertytypes.JakartarsName;
 import org.osgi.service.jakartars.whiteboard.propertytypes.JakartarsResource;
+import org.osgi.service.metatype.annotations.AttributeDefinition;
+import org.osgi.service.metatype.annotations.Designate;
+import org.osgi.service.metatype.annotations.ObjectClassDefinition;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -66,10 +78,35 @@ import jakarta.ws.rs.core.Response.Status;
 @RequireRuntime
 @JakartarsResource()
 @JakartarsName("ObjectRegistryResource")
-@Component(name = "ObjectRegistryResource", service = ObjectRegistryResource.class, scope = ServiceScope.PROTOTYPE)
+@Component(name = "ObjectRegistryResource", service = ObjectRegistryResource.class, scope = ServiceScope.PROTOTYPE, configurationPid = "ObjectRegistryResource", configurationPolicy = ConfigurationPolicy.REQUIRE)
 @Path("/{scopeName}/registries/{registryName}")
 @Tag(name = "Storage Management", description = "CRUD operations for storage objects with schema conformance")
+@Designate(ocd = ObjectRegistryServiceConfig.class, factory = true)
 public class ObjectRegistryResource {
+	
+	@ObjectClassDefinition(
+			name = "Object Registry Resource Configuration",
+			description = "Configuration for the ObjectRegistryResource"
+			)
+	public @interface ObjectRegistryServiceConfig {
+
+		@AttributeDefinition(
+				name = "ResourceSet Target Filter", 
+				description = "Target filter for the ResourceSet reference",
+				required = true
+				)
+		String resourceSet_target();
+
+		@AttributeDefinition(
+				name = "Root EClass URI", 
+				description = "The URI of the EClass the provided objects should be compliant with.",
+				required = true
+				)
+		String root_eclass_uri();
+	}
+	
+	@Reference
+	ResourceSet resourceSet;
 
 	@Reference
 	private ScopeCollector scopeCollector;
@@ -84,9 +121,19 @@ public class ObjectRegistryResource {
 
 	@QueryParam("mediaType")
 	private String mediaType;
+
+	private EClass rootEClass;
 	
 	@Activate
-	public ObjectRegistryResource(@Reference SupportedMediatype types) {
+	public ObjectRegistryResource(@Reference SupportedMediatype types, ObjectRegistryServiceConfig config) {		
+		requireNonNull(config.root_eclass_uri(), "A root.eclass.uri property must be specified");
+		EObject eObject = resourceSet.getEObject(URI.createURI(config.root_eclass_uri()), true);
+		requireNonNull(eObject, String.format("EObject corresponding to uri %s not found in ResourceSet %s", config.root_eclass_uri(), config.resourceSet_target()));
+		if(eObject instanceof EClass eClass) {
+			rootEClass = eClass;
+		} else {
+			throw new IllegalArgumentException(String.format("EObject corresponding to uri %s is not of type EClass", config.root_eclass_uri()));
+		}
 		supportedMediaTypes = new ArrayList<>(types.getSupportedMediaTypes());
 		supportedMediaTypes.add(MediaType.APPLICATION_XML);
 		supportedMediaTypes.add("application/xmi");
@@ -226,13 +273,14 @@ public class ObjectRegistryResource {
 	 * @param object the storage object content
 	 * @return StorageObjectMetadata
 	 */
+	@SuppressWarnings("unchecked")
 	@POST
 	@Path("/stages/{stageName}/{objectId}")
 	@Consumes
 	@Produces
 	@Operation(
 			summary = "Create an object in the specified registry of the specified scope",
-			description = "Create a storage object. The object must conform to the schema specified by schemaNsUri. " +
+			description = "Create a storage object. The object must conform to a schema known to the ModelAtlas." +
 					"Returns 201 Created for new objects, 200 OK for updates.",
 			responses = {
 					@ApiResponse(
@@ -240,7 +288,7 @@ public class ObjectRegistryResource {
 							description = "Object created successfully",
 							content = @Content(mediaType = MediaType.APPLICATION_JSON)
 					),
-					@ApiResponse(responseCode = "400", description = "Invalid object data, missing schemaNsUri, schema not found, or validation failed"),
+					@ApiResponse(responseCode = "400", description = "Schema not found, or validation failed"),
 					@ApiResponse(responseCode = "409", description = "Object with same id already exists"),
 					@ApiResponse(responseCode = "415", description = "Unsupported media type"),
 					@ApiResponse(responseCode = "500", description = "Internal server error")
@@ -254,22 +302,46 @@ public class ObjectRegistryResource {
 			@Parameter(description = "The stage name", required = true)
 			@PathParam("stageName") String stageName,
 			@Parameter(description = "The object identifier", required = true)
-			@PathParam("objectId") String objectId,
-			@Parameter(description = "The namespace URI of the schema this object must conform to", required = true)
-			@QueryParam("schemaNsUri") String schemaNsUri,
+			@QueryParam("objectId") String objectId,
+			@Parameter(description = "Human-readable name for the object")
+			@QueryParam("name") String name,
+			@Parameter(description = "Object version")
+			@QueryParam("version") String version,
 			@RequestBody(description = "The storage object content", required = true,
 			content = @Content(schema = @Schema(implementation = EObject.class)))
 			EObject object) {
-		// TODO: Implement logic to:
-		// 1. Find schema by schemaNsUri using Schema API logic
-		// 2. Validate object against schema
-		// 3. Store object if valid
-		// 4. Return 201 Created or 200 OK with metadata
 		
 		checkContentType();
 		
-		
-		return Response.status(Response.Status.NOT_IMPLEMENTED).build();
+		if(!object.eClass().equals(rootEClass)) {
+			Response.status(Response.Status.BAD_REQUEST).build();
+		}
+		EObjectWorkflowService<EObject> workflowService = (EObjectWorkflowService<EObject>) getObjectRegistryServiceByScope(scopeName);
+		if(workflowService == null) {
+			return Response.status(Response.Status.NO_CONTENT).build();
+		}
+		try {
+			if(workflowService.getFromStageForRegistry(stageName, registryName, objectId) != null) {
+				return Response.status(Response.Status.CONFLICT).build();
+			}
+			ObjectMetadata metadata = mgmtFactory.createObjectMetadata();
+			metadata.setObjectId(objectId);
+			metadata.setObjectName(name);
+			metadata.setUploadTime(Instant.now());
+			metadata.setRole(stageName);
+			metadata.setScope(scopeName);
+			metadata.setVersion(version);
+			metadata.setObjectType(EcoreUtil.getURI(object.eClass()).toString());
+
+			metadata = workflowService.uploadToStageForRegistry(stageName, registryName, object, metadata).getValue();
+			return Response
+					.status(Response.Status.CREATED)
+					.header("Location", "/".concat(scopeName).concat("/registries/").concat(registryName).concat("/stages/").concat(stageName).concat("?objectId=").concat(objectId))
+					.entity(metadata)
+					.build();
+		} catch(Exception e) {
+			return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity(e.getMessage()).build();
+		}
 	}
 
 	/**
@@ -335,6 +407,7 @@ public class ObjectRegistryResource {
 	 * @param objectId the object identifier
 	 * @return Storage object content in requested format
 	 */
+	@SuppressWarnings("unchecked")
 	@PUT
 	@Path("/stages/{stageName}/content")
 	@Produces
@@ -348,6 +421,7 @@ public class ObjectRegistryResource {
 							description = "Object content updated successfully"
 					),
 					@ApiResponse(responseCode = "204", description = "Scope, Registry, Stage or Object not found"),
+					@ApiResponse(responseCode = "400", description = "If updated object is not compliant with schema"),
 					@ApiResponse(responseCode = "403", description = "Stage is read-only or Package is only present in a parent scope final stage and so it's read-only"),
 					@ApiResponse(responseCode = "415", description = "Requested format not supported"),
 					@ApiResponse(responseCode = "500", description = "Internal server error")
@@ -364,8 +438,6 @@ public class ObjectRegistryResource {
 			@QueryParam("version") String version,
 			@Parameter(description = "The object identifier", required = true)
 			@QueryParam("objectId") String objectId,
-			@Parameter(description = "The namespace URI of the schema this object must conform to", required = true)
-			@QueryParam("schemaNsUri") String schemaNsUri,
 			@RequestBody(description = "The new object content", required = true,
 			content = @Content(schema = @Schema(implementation = EObject.class)))
 			EObject eObject) {
