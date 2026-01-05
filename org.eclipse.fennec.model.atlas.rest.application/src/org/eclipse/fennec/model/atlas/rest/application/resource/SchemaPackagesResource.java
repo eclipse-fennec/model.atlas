@@ -161,7 +161,8 @@ public class SchemaPackagesResource {
 	    + "Respects hierarchical visibility when nsUri is specified. "
 	    + "A name filter with wildcard can be provided, but be aware that no wildcard as first character is supported nor case-sensitive searches.", responses = {
 		    @ApiResponse(responseCode = "200", description = "Packages retrieved successfully", content = @Content(mediaType = MediaType.APPLICATION_JSON)),
-		    @ApiResponse(responseCode = "204", description = "Scope, stage, or package not found"),
+		    @ApiResponse(responseCode = "204", description = "Package not found"),
+		    @ApiResponse(responseCode = "404", description = "Scope or stage not found"),
 		    @ApiResponse(responseCode = "500", description = "Internal server error") })
     public Response listPackagesInStage(
 	    @Parameter(description = "The scope name", required = true) @PathParam("scopeName") String scopeName,
@@ -171,7 +172,7 @@ public class SchemaPackagesResource {
 
 	EObjectWorkflowService<?> workflowService = getEObjectWorkflowServiceByScope(scopeName);
 	if (workflowService == null) {
-	    return Response.status(Response.Status.NO_CONTENT).build();
+	    return Response.status(Response.Status.NOT_FOUND).build();
 	}
 	try {
 	    if (nsUri != null) {
@@ -229,6 +230,7 @@ public class SchemaPackagesResource {
 	    + "If version is not provided, it will be extracted from the nsURI. If provided, it must be semantically compatible with the URI version.", responses = {
 	    @ApiResponse(responseCode = "201", description = "Package created successfully", content = @Content(mediaType = MediaType.APPLICATION_JSON)),
 	    @ApiResponse(responseCode = "400", description = "Invalid package data, missing required parameters, nsUri mismatch, or version incompatibility"),
+	    @ApiResponse(responseCode = "404", description = "Scope or stage not found"),
 	    @ApiResponse(responseCode = "409", description = "Package with nsUri already exists"),
 	    @ApiResponse(responseCode = "415", description = "Unsupported media type"),
 	    @ApiResponse(responseCode = "500", description = "Internal server error") })
@@ -238,6 +240,7 @@ public class SchemaPackagesResource {
 	    @Parameter(description = "The namespace URI of the package. If not provided, uses the EPackage's nsURI. If provided, must match the EPackage's nsURI.", required = false) @QueryParam("nsUri") String nsUri,
 	    @Parameter(description = "Human-readable name for the package") @QueryParam("name") String name,
 	    @Parameter(description = "Package version. If not provided, will be extracted from the nsURI. If provided, must be semantically compatible with the URI version.", required = false) @QueryParam("version") String version,
+	    @Parameter(description = "Override option. If true and a Package with the same uri already exists, it updates it. ", required = false) @QueryParam("override") boolean override,
 	    @RequestBody(description = "The schema package content", required = true, content = @Content(schema = @Schema(implementation = EPackage.class))) EPackage ePackage) {
 
 	checkContentType();
@@ -253,8 +256,20 @@ public class SchemaPackagesResource {
 	    String resolvedVersion = resolveAndValidateVersion(version, validatedNsUri);
 	    String encodedNsURI = encodePackageNsURI(validatedNsUri);
 	    // Check uniqueness across visibility chain
-	    if (workflowService.getFromStage(stageName, encodedNsURI) != null) {
-		return Response.status(Response.Status.CONFLICT).build();
+	    ObjectMetadata existingMetadata = workflowService.getFromStage(stageName, encodedNsURI);
+	    if (existingMetadata != null) {
+	    	if(!override) {
+	    		return Response.status(Response.Status.CONFLICT).build();
+	    	} else {
+	    		if (existingMetadata.isIsReadOnly()) {
+	    			return Response.status(Response.Status.FORBIDDEN).build();
+	    		    }
+	    		    ObjectMetadata metadata = workflowService.updateInStage(stageName, ePackage, encodedNsURI, resolvedVersion)
+	    			    .getValue();
+	    		    return Response.status(Response.Status.OK).header("Location", "/".concat(scopeName)
+	    				    .concat("/schemas/stages/").concat(stageName).concat("?nsUri=").concat(encodedNsURI))
+	    				    .entity(metadata).build();
+	    	}		
 	    }
 	    // Create package and return metadata with Location header
 	    ObjectMetadata metadata = mgmtFactory.createObjectMetadata();
@@ -292,7 +307,8 @@ public class SchemaPackagesResource {
     @Operation(summary = "Get package content", description = "Retrieve the content of a SchemaPackage in the requested format. "
 	    + "Respects hierarchical visibility.", responses = {
 		    @ApiResponse(responseCode = "200", description = "Package content retrieved successfully"),
-		    @ApiResponse(responseCode = "204", description = "Scope or Package not found"),
+		    @ApiResponse(responseCode = "204", description = "Package not found"),
+		    @ApiResponse(responseCode = "404", description = "Scope or stage not found"),
 		    @ApiResponse(responseCode = "406", description = "Requested format not supported"),
 		    @ApiResponse(responseCode = "500", description = "Internal server error") })
     public Response getPackageContent(
@@ -305,7 +321,7 @@ public class SchemaPackagesResource {
 	EObjectWorkflowService<EPackage> workflowService = (EObjectWorkflowService<EPackage>) getEObjectWorkflowServiceByScope(
 		scopeName);
 	if (workflowService == null) {
-	    return Response.status(Response.Status.NO_CONTENT).build();
+	    return Response.status(Response.Status.NOT_FOUND).build();
 	}
 	try {
 	    nsUri = URI.decode(nsUri);
@@ -343,7 +359,8 @@ public class SchemaPackagesResource {
 		    @ApiResponse(responseCode = "200", description = "Package updated successfully", content = @Content(mediaType = MediaType.APPLICATION_JSON)),
 		    @ApiResponse(responseCode = "400", description = "Invalid package data, nsUri mismatch, or version incompatibility"),
 		    @ApiResponse(responseCode = "403", description = "Stage is read-only or Package is only present in a parent scope final stage and so it's read-only"),
-		    @ApiResponse(responseCode = "204", description = "Workflow, Scope or Package not found"),
+		    @ApiResponse(responseCode = "404", description = "Scope or stage not found"),
+		    @ApiResponse(responseCode = "204", description = "Package not found"),
 		    @ApiResponse(responseCode = "500", description = "Internal server error") })
     public Response updatePackageContent(
 	    @Parameter(description = "The scope name", required = true) @PathParam("scopeName") String scopeName,
@@ -358,7 +375,7 @@ public class SchemaPackagesResource {
 		scopeName);
 	Scope scope = getScopeByScopeName(scopeName);
 	if (workflowService == null || scope == null) {
-	    return Response.status(Response.Status.NO_CONTENT).build();
+	    return Response.status(Response.Status.NOT_FOUND).build();
 	}
 	try {
 	    if (!scope.getWritableStages().contains(stageName)) {
@@ -401,7 +418,8 @@ public class SchemaPackagesResource {
 	    + "Fails if the stage is read-only.", responses = {
 		    @ApiResponse(responseCode = "200", description = "Package deleted successfully"),
 		    @ApiResponse(responseCode = "403", description = "Stage is read-only or Package is only present in a parent scope final stage and so it's read-only"),
-		    @ApiResponse(responseCode = "204", description = "Scope or Package not found"),
+		    @ApiResponse(responseCode = "404", description = "Scope or stage not found"),
+		    @ApiResponse(responseCode = "204", description = "Package not found"),
 		    @ApiResponse(responseCode = "500", description = "Internal server error") })
     public Response deletePackage(
 	    @Parameter(description = "The scope name", required = true) @PathParam("scopeName") String scopeName,
@@ -412,7 +430,7 @@ public class SchemaPackagesResource {
 		scopeName);
 	Scope scope = getScopeByScopeName(scopeName);
 	if (workflowService == null || scope == null) {
-	    return Response.status(Response.Status.NO_CONTENT).build();
+	    return Response.status(Response.Status.NOT_FOUND).build();
 	}
 	try {
 	    if (!scope.getWritableStages().contains(stageName)) {
@@ -459,7 +477,8 @@ public class SchemaPackagesResource {
 	    + "Validates that the transition is allowed based on stage rules.", responses = {
 		    @ApiResponse(responseCode = "200", description = "Package transitioned successfully", content = @Content(mediaType = MediaType.APPLICATION_JSON)),
 		    @ApiResponse(responseCode = "400", description = "Invalid transition or missing parameters"),
-		    @ApiResponse(responseCode = "204", description = "Scope not found, or Package not found in source stage"),
+		    @ApiResponse(responseCode = "404", description = "Scope or stage not found"),
+		    @ApiResponse(responseCode = "204", description = "Package not found in source stage"),
 		    @ApiResponse(responseCode = "500", description = "Internal server error") })
     public Response transitionPackage(
 	    @Parameter(description = "The scope name", required = true) @PathParam("scopeName") String scopeName,
@@ -471,7 +490,7 @@ public class SchemaPackagesResource {
 	EObjectWorkflowService<EPackage> workflowService = (EObjectWorkflowService<EPackage>) getEObjectWorkflowServiceByScope(
 		scopeName);
 	if (workflowService == null) {
-	    return Response.status(Response.Status.NO_CONTENT).build();
+	    return Response.status(Response.Status.NOT_FOUND).build();
 	}
 	try {
 	    String encodedNsUri = encodePackageNsURI(transitionRequest.getObjectId());
