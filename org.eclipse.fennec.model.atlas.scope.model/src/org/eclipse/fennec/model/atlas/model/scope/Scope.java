@@ -37,6 +37,7 @@ import org.osgi.annotation.versioning.ProviderType;
  *   <li>{@link org.eclipse.fennec.model.atlas.model.scope.Scope#getStages <em>Stages</em>}</li>
  *   <li>{@link org.eclipse.fennec.model.atlas.model.scope.Scope#getFinalStage <em>Final Stage</em>}</li>
  *   <li>{@link org.eclipse.fennec.model.atlas.model.scope.Scope#getWritableStages <em>Writable Stages</em>}</li>
+ *   <li>{@link org.eclipse.fennec.model.atlas.model.scope.Scope#getRegistries <em>Registries</em>}</li>
  * </ul>
  *
  * @see org.eclipse.fennec.model.atlas.model.scope.ScopePackage#getScope()
@@ -203,5 +204,17 @@ public interface Scope extends EObject {
 	 * @generated
 	 */
 	EList<String> getWritableStages();
+
+	/**
+	 * Returns the value of the '<em><b>Registries</b></em>' attribute list.
+	 * The list contents are of type {@link java.lang.String}.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @return the value of the '<em>Registries</em>' attribute list.
+	 * @see org.eclipse.fennec.model.atlas.model.scope.ScopePackage#getScope_Registries()
+	 * @model
+	 * @generated
+	 */
+	EList<String> getRegistries();
 
 } // Scope

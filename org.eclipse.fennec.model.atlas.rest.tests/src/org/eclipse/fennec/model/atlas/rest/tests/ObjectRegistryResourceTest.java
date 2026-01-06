@@ -19,7 +19,6 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.time.Instant;
-import java.util.Collections;
 import java.util.Dictionary;
 import java.util.Hashtable;
 import java.util.List;
@@ -35,6 +34,7 @@ import org.eclipse.fennec.model.atlas.model.scope.ScopeFactory;
 import org.eclipse.fennec.model.atlas.model.scope.StageTransition;
 import org.eclipse.fennec.model.atlas.rest.tests.helper.ResourceAware;
 import org.eclipse.fennec.model.atlas.rest.tests.helper.TestHelper;
+import org.eclipse.fennec.model.atlas.schema.registry.api.SchemaRegistryService;
 import org.eclipse.fennec.model.atlas.scope.ScopeCollector;
 import org.eclipse.fennec.model.atlas.wf.workflowapi.EObjectWorkflowService;
 import org.gecko.emf.osgi.annotation.require.RequireEMF;
@@ -103,6 +103,8 @@ public class ObjectRegistryResourceTest {
     private Client restClient;
     private MockScopeCollector mockScopeCollector;
     private ServiceRegistration<ScopeCollector> mockScopeCollectorRegistration;
+    private MockSchemaRegistryService mockSchemaRegistryService;
+    private ServiceRegistration<SchemaRegistryService> mockSchemaRegistryServiceRegistration;
 
     @BeforeEach
     public void setup(@InjectBundleContext BundleContext context) throws Exception {
@@ -112,13 +114,25 @@ public class ObjectRegistryResourceTest {
         // Create and register mock ScopeCollector
         mockScopeCollector = new MockScopeCollector();
 
-        Dictionary<String, Object> serviceProps = new Hashtable<>();
-        serviceProps.put("service.ranking", Integer.MAX_VALUE);
+        Dictionary<String, Object> scopeProps = new Hashtable<>();
+        scopeProps.put("service.ranking", Integer.MAX_VALUE);
 
         mockScopeCollectorRegistration = context.registerService(
                 ScopeCollector.class,
                 mockScopeCollector,
-                serviceProps);
+                scopeProps);
+
+        // Create and register mock SchemaRegistryService
+        mockSchemaRegistryService = new MockSchemaRegistryService(resourceSet);
+
+        Dictionary<String, Object> registryProps = new Hashtable<>();
+        registryProps.put("registry.name", TEST_REGISTRY_NAME);
+        registryProps.put("service.ranking", Integer.MAX_VALUE);
+
+        mockSchemaRegistryServiceRegistration = context.registerService(
+                SchemaRegistryService.class,
+                mockSchemaRegistryService,
+                registryProps);
 
         // Small delay to allow service registration to propagate
         Thread.sleep(200);
@@ -140,10 +154,15 @@ public class ObjectRegistryResourceTest {
         if (nonNull(mockScopeCollectorRegistration)) {
             mockScopeCollectorRegistration.unregister();
             mockScopeCollectorRegistration = null;
-
-            // Small delay to allow service unregistration to propagate
-            Thread.sleep(200);
         }
+
+        if (nonNull(mockSchemaRegistryServiceRegistration)) {
+            mockSchemaRegistryServiceRegistration.unregister();
+            mockSchemaRegistryServiceRegistration = null;
+        }
+
+        // Small delay to allow service unregistration to propagate
+        Thread.sleep(200);
 
         if (nonNull(restClient)) {
             restClient.close();
@@ -180,7 +199,7 @@ public class ObjectRegistryResourceTest {
                 .request("application/json")
                 .get();
 
-        assertEquals(204, response.getStatus(), "Should return HTTP 204 No Content");
+        assertEquals(404, response.getStatus(), "Should return HTTP 404 No Content");
     }
 
     @Test
@@ -258,6 +277,186 @@ public class ObjectRegistryResourceTest {
         assertEquals(204, response.getStatus(), "Should return HTTP 204 No Content");
     }
 
+    // ========== Create Object Tests ==========
+
+    @Test
+    public void testCreateObject_Success() throws Exception {
+        EPackage newObject = TestHelper.createTestEPackage("http://test.com/newobject/1.0", "NewObject", "test");
+        String xmiContent = TestHelper.serializeToXMI(newObject, resourceSet);
+
+        Response response = restClient
+                .target(BASE_URL)
+                .path(TEST_SCOPE_NAME)
+                .path("registries")
+                .path(TEST_REGISTRY_NAME)
+                .path("stages")
+                .path(TEST_STAGE_DRAFT)
+                .path("new-object-id")
+                .queryParam("name", "NewObject")
+                .queryParam("version", "1.0.0")
+                .request("application/xmi")
+                .post(Entity.entity(xmiContent, "application/xmi"));
+
+        assertEquals(201, response.getStatus(), "Should return HTTP 201 Created");
+
+        String responseContent = response.readEntity(String.class);
+        assertNotNull(responseContent, "Should return metadata");
+        assertTrue(responseContent.contains("objectId"), "Response should contain objectId");
+    }
+
+    @Test
+    public void testCreateObject_IncompatibleEClass() throws Exception {
+        // Create an EObject that is NOT an EPackage (e.g., EClass)
+        org.eclipse.emf.ecore.EcoreFactory ecoreFactory = org.eclipse.emf.ecore.EcoreFactory.eINSTANCE;
+        org.eclipse.emf.ecore.EClass incompatibleObject = ecoreFactory.createEClass();
+        incompatibleObject.setName("IncompatibleClass");
+
+        String xmiContent = TestHelper.serializeToXMI(incompatibleObject, resourceSet);
+
+        Response response = restClient
+                .target(BASE_URL)
+                .path(TEST_SCOPE_NAME)
+                .path("registries")
+                .path(TEST_REGISTRY_NAME)
+                .path("stages")
+                .path(TEST_STAGE_DRAFT)
+                .path("incompatible-object-id")
+                .queryParam("name", "IncompatibleObject")
+                .queryParam("version", "1.0.0")
+                .request("application/xmi")
+                .post(Entity.entity(xmiContent, "application/xmi"));
+
+        assertEquals(400, response.getStatus(), "Should return HTTP 400 Bad Request for incompatible EClass");
+
+        String responseContent = response.readEntity(String.class);
+        assertNotNull(responseContent, "Should return error message");
+        assertTrue(responseContent.contains("not compatible"), "Error message should mention incompatibility");
+    }
+
+    @Test
+    public void testCreateObject_UnknownRegistry() throws Exception {
+        EPackage newObject = TestHelper.createTestEPackage("http://test.com/object/1.0", "TestObject", "test");
+        String xmiContent = TestHelper.serializeToXMI(newObject, resourceSet);
+
+        Response response = restClient
+                .target(BASE_URL)
+                .path(TEST_SCOPE_NAME)
+                .path("registries")
+                .path("unknown-registry")
+                .path("stages")
+                .path(TEST_STAGE_DRAFT)
+                .path("test-object-id")
+                .queryParam("name", "TestObject")
+                .queryParam("version", "1.0.0")
+                .request("application/xmi")
+                .post(Entity.entity(xmiContent, "application/xmi"));
+
+        assertEquals(400, response.getStatus(), "Should return HTTP 400 Bad Request for unknown registry");
+
+        String responseContent = response.readEntity(String.class);
+        assertNotNull(responseContent, "Should return error message");
+        assertTrue(responseContent.contains("Unknown") || responseContent.contains("registry"),
+                "Error message should mention unknown registry");
+    }
+
+    @Test
+    public void testCreateObject_Conflict() throws Exception {
+        EPackage newObject = TestHelper.createTestEPackage("http://test.com/object/1.0", "TestObject", "test");
+        String xmiContent = TestHelper.serializeToXMI(newObject, resourceSet);
+
+        Response response = restClient
+                .target(BASE_URL)
+                .path(TEST_SCOPE_NAME)
+                .path("registries")
+                .path(TEST_REGISTRY_NAME)
+                .path("stages")
+                .path(TEST_STAGE_DRAFT)
+                .path(TEST_OBJECT_ID)
+                .queryParam("name", "TestObject")
+                .queryParam("version", "1.0.0")
+                .request("application/xmi")
+                .post(Entity.entity(xmiContent, "application/xmi"));
+
+        assertEquals(409, response.getStatus(), "Should return HTTP 409 Conflict for duplicate object ID");
+    }
+
+    @Test
+    public void testCreateObject_WithOverrideSuccess() throws Exception {
+        // Use an existing object ID with override=true
+        EPackage updatedObject = TestHelper.createTestEPackage("http://test.com/object/1.0", "UpdatedTestObject", "upd");
+        String xmiContent = TestHelper.serializeToXMI(updatedObject, resourceSet);
+
+        Response response = restClient
+                .target(BASE_URL)
+                .path(TEST_SCOPE_NAME)
+                .path("registries")
+                .path(TEST_REGISTRY_NAME)
+                .path("stages")
+                .path(TEST_STAGE_DRAFT)
+                .path(TEST_OBJECT_ID)
+                .queryParam("name", "UpdatedTestObject")
+                .queryParam("version", "1.1.0")
+                .queryParam("override", "true")
+                .request("application/xmi")
+                .post(Entity.entity(xmiContent, "application/xmi"));
+
+        assertEquals(200, response.getStatus(), "Should return HTTP 200 OK when override is true and object exists");
+
+        String responseContent = response.readEntity(String.class);
+        assertNotNull(responseContent, "Should return updated metadata");
+        assertTrue(responseContent.contains("objectId"), "Response should contain objectId");
+    }
+
+    @Test
+    public void testCreateObject_WithOverrideFalseConflict() throws Exception {
+        // Use an existing object ID with override=false
+        EPackage testObject = TestHelper.createTestEPackage("http://test.com/object/1.0", "TestObject", "test");
+        String xmiContent = TestHelper.serializeToXMI(testObject, resourceSet);
+
+        Response response = restClient
+                .target(BASE_URL)
+                .path(TEST_SCOPE_NAME)
+                .path("registries")
+                .path(TEST_REGISTRY_NAME)
+                .path("stages")
+                .path(TEST_STAGE_DRAFT)
+                .path(TEST_OBJECT_ID)
+                .queryParam("name", "TestObject")
+                .queryParam("version", "1.0.0")
+                .queryParam("override", "false")
+                .request("application/xmi")
+                .post(Entity.entity(xmiContent, "application/xmi"));
+
+        assertEquals(409, response.getStatus(), "Should return HTTP 409 Conflict when override is false and object exists");
+    }
+
+    @Test
+    public void testCreateObject_WithOverrideNewObject() throws Exception {
+        // Use a non-existing object ID with override=true (should create new)
+        EPackage newObject = TestHelper.createTestEPackage("http://test.com/newobject/1.0", "NewObject", "new");
+        String xmiContent = TestHelper.serializeToXMI(newObject, resourceSet);
+
+        Response response = restClient
+                .target(BASE_URL)
+                .path(TEST_SCOPE_NAME)
+                .path("registries")
+                .path(TEST_REGISTRY_NAME)
+                .path("stages")
+                .path(TEST_STAGE_DRAFT)
+                .path("new-object-id")
+                .queryParam("name", "NewObject")
+                .queryParam("version", "1.0.0")
+                .queryParam("override", "true")
+                .request("application/xmi")
+                .post(Entity.entity(xmiContent, "application/xmi"));
+
+        assertEquals(201, response.getStatus(), "Should return HTTP 201 Created when override is true and object doesn't exist");
+
+        String responseContent = response.readEntity(String.class);
+        assertNotNull(responseContent, "Should return metadata");
+        assertTrue(responseContent.contains("objectId"), "Response should contain objectId");
+    }
+
     // ========== Get Object Content Tests ==========
 
     @Test
@@ -314,15 +513,14 @@ public class ObjectRegistryResourceTest {
                 .path("content")
                 .queryParam("objectId", TEST_OBJECT_ID)
                 .queryParam("version", "1.1.0")
-                .queryParam("schemaNsUri", "http://test.com/object/1.0")
                 .request("application/xmi")
                 .put(Entity.entity(xmiContent, "application/xmi"));
 
-        System.out.println("DEBUG testUpdateObjectContent_Success - Response status: " + response.getStatus());
-        String responseContent = response.readEntity(String.class);
-        System.out.println("DEBUG testUpdateObjectContent_Success - Response content: " + responseContent);
-
         assertEquals(200, response.getStatus(), "Should return HTTP 200 OK");
+
+        String responseContent = response.readEntity(String.class);
+        assertNotNull(responseContent, "Should return updated metadata");
+        assertTrue(responseContent.contains("objectId"), "Response should contain objectId");
     }
 
     @Test
@@ -340,11 +538,10 @@ public class ObjectRegistryResourceTest {
                 .path("content")
                 .queryParam("objectId", TEST_OBJECT_ID)
                 .queryParam("version", "1.1.0")
-                .queryParam("schemaNsUri", "http://test.com/object/1.0")
                 .request("application/xmi")
                 .put(Entity.entity(xmiContent, "application/xmi"));
 
-        assertEquals(403, response.getStatus(), "Should return HTTP 403 Forbidden");
+        assertEquals(403, response.getStatus(), "Should return HTTP 403 Forbidden for read-only stage");
     }
 
     @Test
@@ -362,11 +559,10 @@ public class ObjectRegistryResourceTest {
                 .path("content")
                 .queryParam("objectId", "non-existent-object")
                 .queryParam("version", "1.0.0")
-                .queryParam("schemaNsUri", "http://test.com/object/1.0")
                 .request("application/xmi")
                 .put(Entity.entity(xmiContent, "application/xmi"));
 
-        assertEquals(204, response.getStatus(), "Should return HTTP 204 No Content");
+        assertEquals(204, response.getStatus(), "Should return HTTP 204 No Content when object not found");
     }
 
     // ========== Delete Object Tests ==========
@@ -441,11 +637,11 @@ public class ObjectRegistryResourceTest {
                 .request("application/xmi")
                 .post(Entity.entity(xmiContent, "application/xmi"));
 
-        System.out.println("DEBUG testTransitionObject_Success - Response status: " + response.getStatus());
-        String responseContent = response.readEntity(String.class);
-        System.out.println("DEBUG testTransitionObject_Success - Response content: " + responseContent);
-
         assertEquals(200, response.getStatus(), "Should return HTTP 200 OK");
+
+        String responseContent = response.readEntity(String.class);
+        assertNotNull(responseContent, "Should return transition metadata");
+        assertTrue(responseContent.contains("objectId"), "Response should contain objectId");
     }
 
     @Test
@@ -604,7 +800,7 @@ public class ObjectRegistryResourceTest {
         private final Scope mockScope = createMockScope();
 
         @Override
-        public EObjectWorkflowService<?> getObjectRegistryServiceByScope(String scopeName) {
+        public EObjectWorkflowService<?> getWorkflowServiceByScope(String scopeName) {
             if (TEST_SCOPE_NAME.equals(scopeName)) {
                 return mockWorkflowService;
             }
@@ -612,31 +808,11 @@ public class ObjectRegistryResourceTest {
         }
 
         @Override
-        public Scope getObjectRegistryScopeByName(String name) {
+        public Scope getWorkflowScopeByName(String name) {
             if (TEST_SCOPE_NAME.equals(name)) {
                 return mockScope;
             }
             return null;
-        }
-
-        @Override
-        public List<Scope> getObjectRegistryScopes() {
-            return List.of(mockScope);
-        }
-
-        @Override
-        public EObjectWorkflowService<?> getWorkflowServiceByScope(String scopeName) {
-            return null;
-        }
-
-        @Override
-        public Scope getSchemaWorkflowScopeByName(String name) {
-            return null;
-        }
-
-        @Override
-        public List<Scope> getSchemaWorkflowScopes() {
-            return Collections.emptyList();
         }
 
         @Override
@@ -650,6 +826,7 @@ public class ObjectRegistryResourceTest {
             scope.setFinalStage(TEST_STAGE_RELEASE);
             scope.getStages().addAll(List.of(TEST_STAGE_DRAFT, TEST_STAGE_APPROVED, TEST_STAGE_RELEASE));
             scope.getWritableStages().addAll(List.of(TEST_STAGE_DRAFT, TEST_STAGE_APPROVED));
+            scope.getRegistries().add(TEST_REGISTRY_NAME);
             return scope;
         }
     }
@@ -669,8 +846,15 @@ public class ObjectRegistryResourceTest {
 
         @Override
         public ObjectMetadata getFromStageForRegistry(String stage, String registry, String objectId) {
+            // Return null for non-existent objects (including new objects to be created)
+            if (objectId.equals("non-existent-object") ||
+                objectId.equals("new-object-id") ||
+                objectId.equals("incompatible-object-id")) {
+                return null;
+            }
 
-            if (objectId.equals("non-existent-object")) {
+            // Only TEST_OBJECT_ID and sensor-object-456 exist
+            if (!objectId.equals(TEST_OBJECT_ID) && !objectId.equals("sensor-object-456")) {
                 return null;
             }
 
@@ -690,8 +874,15 @@ public class ObjectRegistryResourceTest {
 
         @Override
         public EObject getContentFromStageForRegistry(String stage, String registry, String objectId) {
+            // Return null for non-existent objects
+            if (objectId.equals("non-existent-object") ||
+                objectId.equals("new-object-id") ||
+                objectId.equals("incompatible-object-id")) {
+                return null;
+            }
 
-            if (objectId.equals("non-existent-object")) {
+            // Only TEST_OBJECT_ID and sensor-object-456 have content
+            if (!objectId.equals(TEST_OBJECT_ID) && !objectId.equals("sensor-object-456")) {
                 return null;
             }
 
@@ -700,8 +891,11 @@ public class ObjectRegistryResourceTest {
 
         @Override
         public Promise<ObjectMetadata> updateInStageForRegistry(String stage, String registry, EObject updatedObject, String objectId, String updatedVersion) {
-
-            if (objectId.equals("non-existent-object")) {
+            // Only allow updates for existing objects
+            if (objectId.equals("non-existent-object") ||
+                objectId.equals("new-object-id") ||
+                objectId.equals("incompatible-object-id") ||
+                (!objectId.equals(TEST_OBJECT_ID) && !objectId.equals("sensor-object-456"))) {
                 return Promises.resolved(null);
             }
 
@@ -716,7 +910,10 @@ public class ObjectRegistryResourceTest {
 
         @Override
         public Promise<Boolean> deleteFromStageForRegistry(String stage, String registry, String objectId) {
-            return Promises.resolved(!objectId.equals("non-existent-object"));
+            // Only allow deletion of existing objects
+            return Promises.resolved(
+                objectId.equals(TEST_OBJECT_ID) || objectId.equals("sensor-object-456")
+            );
         }
 
         @Override
@@ -737,6 +934,14 @@ public class ObjectRegistryResourceTest {
 
         @Override
         public ObjectMetadata transitionToStageForRegistry(String objectId, String fromStage, String toStage, String registry) {
+            // Only allow transitions for existing objects
+            if (objectId.equals("non-existent-object") ||
+                objectId.equals("new-object-id") ||
+                objectId.equals("incompatible-object-id") ||
+                (!objectId.equals(TEST_OBJECT_ID) && !objectId.equals("sensor-object-456"))) {
+                return null;
+            }
+
             ObjectMetadata metadata = ManagementFactory.eINSTANCE.createObjectMetadata();
             metadata.setObjectId(objectId);
             metadata.setRole(toStage);
@@ -801,6 +1006,49 @@ public class ObjectRegistryResourceTest {
             return List.of();
         }
 
-        
+
+    }
+
+    /**
+     * Mock implementation of SchemaRegistryService for testing.
+     */
+    public static class MockSchemaRegistryService implements SchemaRegistryService {
+
+        private final ResourceSet resourceSet;
+        private final org.eclipse.emf.ecore.EClass ePackageEClass;
+
+        public MockSchemaRegistryService(ResourceSet resourceSet) {
+            this.resourceSet = resourceSet;
+            // Get EPackage EClass from Ecore
+            this.ePackageEClass = (org.eclipse.emf.ecore.EClass) resourceSet.getEObject(
+                org.eclipse.emf.common.util.URI.createURI("http://www.eclipse.org/emf/2002/Ecore#//EPackage"),
+                true
+            );
+        }
+
+        @Override
+        public org.eclipse.emf.ecore.EClass getRootEClass() {
+            return ePackageEClass;
+        }
+
+        @Override
+        public String getRegistryName() {
+            return TEST_REGISTRY_NAME;
+        }
+
+        @Override
+        public boolean isCompatible(org.eclipse.emf.ecore.EClass eClass) {
+            // EPackage is compatible with itself or any subtype
+            return eClass.equals(ePackageEClass) || eClass.getEAllSuperTypes().contains(ePackageEClass);
+        }
+
+		/* 
+		 * (non-Javadoc)
+		 * @see org.eclipse.fennec.model.atlas.schema.registry.api.SchemaRegistryService#getSchemaUri()
+		 */
+		@Override
+		public String getSchemaUri() {
+			return "http://www.eclipse.org/emf/2002/Ecore";
+		}
     }
 }

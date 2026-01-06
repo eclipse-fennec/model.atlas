@@ -315,9 +315,10 @@ public class EObjectWorkflowServiceImpl<T extends EObject> implements EObjectWor
 	 */
 	@Override
 	public List<ObjectMetadata> listInFinalStageForRegistry(String registry) {
+		WorkflowServiceHelper.requireTrue(WorkflowServiceHelper.isRegistryAllowed(config,registry), String.format("Registry %s is not supported from WorkflowService", registry));
 		List<ObjectMetadata> metadata = new LinkedList<>();
 		try {			
-			List<ObjectMetadata> localMetadata = requireNonNullElse(registryService.findByScopeAndRole(config.scope(), config.final_stage()), List.of());
+			List<ObjectMetadata> localMetadata = requireNonNullElse(registryService.findByScopeRegistryAndRole(config.scope(), registry, config.final_stage()), List.of());
 			metadata.addAll(localMetadata);			 
 		} catch (Exception e) {
 			logger.log(Level.WARNING, "Error listing objects via registry, falling back to storage query", e);

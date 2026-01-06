@@ -158,13 +158,22 @@ public interface ScopePackage extends org.eclipse.emf.ecore.EPackage {
 	int SCOPE__WRITABLE_STAGES = 7;
 
 	/**
+	 * The feature id for the '<em><b>Registries</b></em>' attribute list.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 * @ordered
+	 */
+	int SCOPE__REGISTRIES = 8;
+
+	/**
 	 * The number of structural features of the '<em>Scope</em>' class.
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
 	 * @generated
 	 * @ordered
 	 */
-	int SCOPE_FEATURE_COUNT = 8;
+	int SCOPE_FEATURE_COUNT = 9;
 
 	/**
 	 * The number of operations of the '<em>Scope</em>' class.
@@ -404,6 +413,17 @@ public interface ScopePackage extends org.eclipse.emf.ecore.EPackage {
 	EAttribute getScope_WritableStages();
 
 	/**
+	 * Returns the meta object for the attribute list '{@link org.eclipse.fennec.model.atlas.model.scope.Scope#getRegistries <em>Registries</em>}'.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @return the meta object for the attribute list '<em>Registries</em>'.
+	 * @see org.eclipse.fennec.model.atlas.model.scope.Scope#getRegistries()
+	 * @see #getScope()
+	 * @generated
+	 */
+	EAttribute getScope_Registries();
+
+	/**
 	 * Returns the meta object for class '{@link java.util.Map.Entry <em>Links Map</em>}'.
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
@@ -586,6 +606,14 @@ public interface ScopePackage extends org.eclipse.emf.ecore.EPackage {
 		 * @generated
 		 */
 		EAttribute SCOPE__WRITABLE_STAGES = eINSTANCE.getScope_WritableStages();
+
+		/**
+		 * The meta object literal for the '<em><b>Registries</b></em>' attribute list feature.
+		 * <!-- begin-user-doc -->
+		 * <!-- end-user-doc -->
+		 * @generated
+		 */
+		EAttribute SCOPE__REGISTRIES = eINSTANCE.getScope_Registries();
 
 		/**
 		 * The meta object literal for the '{@link org.eclipse.fennec.model.atlas.model.scope.impl.LinksMapImpl <em>Links Map</em>}' class.

@@ -51,6 +51,7 @@ import org.eclipse.fennec.model.atlas.model.scope.ScopePackage;
  *   <li>{@link org.eclipse.fennec.model.atlas.model.scope.impl.ScopeImpl#getStages <em>Stages</em>}</li>
  *   <li>{@link org.eclipse.fennec.model.atlas.model.scope.impl.ScopeImpl#getFinalStage <em>Final Stage</em>}</li>
  *   <li>{@link org.eclipse.fennec.model.atlas.model.scope.impl.ScopeImpl#getWritableStages <em>Writable Stages</em>}</li>
+ *   <li>{@link org.eclipse.fennec.model.atlas.model.scope.impl.ScopeImpl#getRegistries <em>Registries</em>}</li>
  * </ul>
  *
  * @generated
@@ -185,6 +186,16 @@ public class ScopeImpl extends MinimalEObjectImpl.Container implements Scope {
 	 * @ordered
 	 */
 	protected EList<String> writableStages;
+
+	/**
+	 * The cached value of the '{@link #getRegistries() <em>Registries</em>}' attribute list.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @see #getRegistries()
+	 * @generated
+	 * @ordered
+	 */
+	protected EList<String> registries;
 
 	/**
 	 * <!-- begin-user-doc -->
@@ -365,6 +376,19 @@ public class ScopeImpl extends MinimalEObjectImpl.Container implements Scope {
 	 * @generated
 	 */
 	@Override
+	public EList<String> getRegistries() {
+		if (registries == null) {
+			registries = new EDataTypeUniqueEList<String>(String.class, this, ScopePackage.SCOPE__REGISTRIES);
+		}
+		return registries;
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
 	public NotificationChain eInverseRemove(InternalEObject otherEnd, int featureID, NotificationChain msgs) {
 		switch (featureID) {
 			case ScopePackage.SCOPE__LINKS:
@@ -398,6 +422,8 @@ public class ScopeImpl extends MinimalEObjectImpl.Container implements Scope {
 				return getFinalStage();
 			case ScopePackage.SCOPE__WRITABLE_STAGES:
 				return getWritableStages();
+			case ScopePackage.SCOPE__REGISTRIES:
+				return getRegistries();
 		}
 		return super.eGet(featureID, resolve, coreType);
 	}
@@ -437,6 +463,10 @@ public class ScopeImpl extends MinimalEObjectImpl.Container implements Scope {
 				getWritableStages().clear();
 				getWritableStages().addAll((Collection<? extends String>)newValue);
 				return;
+			case ScopePackage.SCOPE__REGISTRIES:
+				getRegistries().clear();
+				getRegistries().addAll((Collection<? extends String>)newValue);
+				return;
 		}
 		super.eSet(featureID, newValue);
 	}
@@ -473,6 +503,9 @@ public class ScopeImpl extends MinimalEObjectImpl.Container implements Scope {
 			case ScopePackage.SCOPE__WRITABLE_STAGES:
 				getWritableStages().clear();
 				return;
+			case ScopePackage.SCOPE__REGISTRIES:
+				getRegistries().clear();
+				return;
 		}
 		super.eUnset(featureID);
 	}
@@ -501,6 +534,8 @@ public class ScopeImpl extends MinimalEObjectImpl.Container implements Scope {
 				return FINAL_STAGE_EDEFAULT == null ? finalStage != null : !FINAL_STAGE_EDEFAULT.equals(finalStage);
 			case ScopePackage.SCOPE__WRITABLE_STAGES:
 				return writableStages != null && !writableStages.isEmpty();
+			case ScopePackage.SCOPE__REGISTRIES:
+				return registries != null && !registries.isEmpty();
 		}
 		return super.eIsSet(featureID);
 	}
@@ -529,6 +564,8 @@ public class ScopeImpl extends MinimalEObjectImpl.Container implements Scope {
 		result.append(finalStage);
 		result.append(", writableStages: ");
 		result.append(writableStages);
+		result.append(", registries: ");
+		result.append(registries);
 		result.append(')');
 		return result.toString();
 	}

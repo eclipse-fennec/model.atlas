@@ -17,6 +17,7 @@
       <genFeatures createChild="false" ecoreFeature="ecore:EAttribute scope.ecore#//Scope/stages"/>
       <genFeatures createChild="false" ecoreFeature="ecore:EAttribute scope.ecore#//Scope/finalStage"/>
       <genFeatures createChild="false" ecoreFeature="ecore:EAttribute scope.ecore#//Scope/writableStages"/>
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute scope.ecore#//Scope/registries"/>
     </genClasses>
     <genClasses ecoreClass="scope.ecore#//LinksMap">
       <genFeatures createChild="false" ecoreFeature="ecore:EAttribute scope.ecore#//LinksMap/key"/>

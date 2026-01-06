@@ -219,6 +219,16 @@ public class ScopePackageImpl extends EPackageImpl implements ScopePackage {
 	 * @generated
 	 */
 	@Override
+	public EAttribute getScope_Registries() {
+		return (EAttribute)scopeEClass.getEStructuralFeatures().get(8);
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
 	public EClass getLinksMap() {
 		return linksMapEClass;
 	}
@@ -331,6 +341,7 @@ public class ScopePackageImpl extends EPackageImpl implements ScopePackage {
 		createEAttribute(scopeEClass, SCOPE__STAGES);
 		createEAttribute(scopeEClass, SCOPE__FINAL_STAGE);
 		createEAttribute(scopeEClass, SCOPE__WRITABLE_STAGES);
+		createEAttribute(scopeEClass, SCOPE__REGISTRIES);
 
 		linksMapEClass = createEClass(LINKS_MAP);
 		createEAttribute(linksMapEClass, LINKS_MAP__KEY);
@@ -383,6 +394,7 @@ public class ScopePackageImpl extends EPackageImpl implements ScopePackage {
 		initEAttribute(getScope_Stages(), ecorePackage.getEString(), "stages", null, 0, -1, Scope.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_UNSETTABLE, !IS_ID, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
 		initEAttribute(getScope_FinalStage(), ecorePackage.getEString(), "finalStage", null, 0, 1, Scope.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_UNSETTABLE, !IS_ID, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
 		initEAttribute(getScope_WritableStages(), ecorePackage.getEString(), "writableStages", null, 0, -1, Scope.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_UNSETTABLE, !IS_ID, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
+		initEAttribute(getScope_Registries(), ecorePackage.getEString(), "registries", null, 0, -1, Scope.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_UNSETTABLE, !IS_ID, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
 
 		initEClass(linksMapEClass, Map.Entry.class, "LinksMap", !IS_ABSTRACT, !IS_INTERFACE, !IS_GENERATED_INSTANCE_CLASS);
 		initEAttribute(getLinksMap_Key(), ecorePackage.getEString(), "key", null, 0, 1, Map.Entry.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_UNSETTABLE, !IS_ID, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);

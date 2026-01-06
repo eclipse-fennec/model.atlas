@@ -90,7 +90,7 @@ public class ScopesResource {
 	 * @return Scope object
 	 */
 	@GET
-	@Path("/{workflowScopeName}")
+	@Path("/{scopeName}")
 	@Produces({ MediaType.APPLICATION_JSON })
 	@Operation(
 		summary = "Get workflow scope metadata",
@@ -107,35 +107,12 @@ public class ScopesResource {
 	)
 	public Response getWorkflowScope(
 		@Parameter(description = "The name of the workflow scope", required = true)
-		@PathParam("workflowScopeName") String workflowScopeName) {
+		@PathParam("scopeName") String scopeName) {
 		
-		Scope scope = scopeCollector.getSchemaWorkflowScopeByName(workflowScopeName);
+		Scope scope = scopeCollector.getWorkflowScopeByName(scopeName);
 		if(scope == null) return Response.status(Response.Status.NO_CONTENT).build();
 		return Response.status(Response.Status.OK).entity(scope).build();
 	}
 	
-	@GET
-	@Path("/{registryScopeName}")
-	@Produces({ MediaType.APPLICATION_JSON })
-	@Operation(
-		summary = "Get registry scope metadata",
-		description = "Retrieve metadata for a specific registry scope by name",
-		responses = {
-			@ApiResponse(
-				responseCode = "200",
-				description = "Scope found",
-				content = @Content(mediaType = MediaType.APPLICATION_JSON)
-			),
-			@ApiResponse(responseCode = "404", description = "Scope not found"),
-			@ApiResponse(responseCode = "500", description = "Internal server error")
-		}
-	)
-	public Response getRegistryScope(
-		@Parameter(description = "The name of the registry scope", required = true)
-		@PathParam("registryScopeName") String registryScopeName) {
-		
-		Scope scope = scopeCollector.getObjectRegistryScopeByName(registryScopeName);
-		if(scope == null) return Response.status(Response.Status.NO_CONTENT).build();
-		return Response.status(Response.Status.OK).entity(scope).build();
-	}
+	
 }

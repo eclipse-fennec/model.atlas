@@ -20,7 +20,6 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.time.Instant;
 import java.util.Base64;
-import java.util.Collections;
 import java.util.Dictionary;
 import java.util.Hashtable;
 import java.util.List;
@@ -178,7 +177,7 @@ public class SchemaPackagesResourceTest {
                 .request("application/json")
                 .get();
 
-        assertEquals(204, response.getStatus(), "Should return HTTP 204 No Content");
+        assertEquals(404, response.getStatus(), "Should return HTTP 404 Not Found");
     }
 
     @Test
@@ -256,7 +255,7 @@ public class SchemaPackagesResourceTest {
         String responseContent = response.readEntity(String.class);
         System.out.println("DEBUG testCreatePackage_Success - Response content: " + responseContent);
 
-        assertEquals(200, response.getStatus(), "Should return HTTP 200 OK");
+        assertEquals(201, response.getStatus(), "Should return HTTP 201 OK");
         assertNotNull(responseContent, "Should return content");
     }
 
@@ -297,6 +296,300 @@ public class SchemaPackagesResourceTest {
                 .post(Entity.entity(xmiContent, "application/xmi"));
 
         assertEquals(404, response.getStatus(), "Should return HTTP 404 Not Found");
+    }
+
+    @Test
+    public void testCreatePackage_WithOverrideSuccess() throws Exception {
+        // Use an existing package URI
+        EPackage updatedPackage = TestHelper.createTestEPackage(TEST_PACKAGE_NSURI, "UpdatedTestSchema", "upd");
+        String xmiContent = TestHelper.serializeToXMI(updatedPackage, resourceSet);
+
+        Response response = restClient
+                .target(BASE_URL)
+                .path(TEST_SCOPE_NAME)
+                .path("schema")
+                .path("stages")
+                .path(TEST_STAGE_DRAFT)
+                .queryParam("nsUri", TEST_PACKAGE_NSURI)
+                .queryParam("name", "UpdatedTestSchema")
+                .queryParam("version", "1.1.0")
+                .queryParam("override", true)
+                .request("application/xmi")
+                .post(Entity.entity(xmiContent, "application/xmi"));
+
+        assertEquals(200, response.getStatus(), "Should return HTTP 200 OK when override is true and package exists");
+
+        String responseContent = response.readEntity(String.class);
+        assertNotNull(responseContent, "Should return updated metadata");
+        assertTrue(responseContent.contains("objectId"), "Response should contain objectId");
+    }
+
+    @Test
+    public void testCreatePackage_WithOverrideFalseConflict() throws Exception {
+        // Use an existing package URI with override=false
+        EPackage testPackage = TestHelper.createTestEPackage(TEST_PACKAGE_NSURI, TEST_PACKAGE_NAME, "test");
+        String xmiContent = TestHelper.serializeToXMI(testPackage, resourceSet);
+
+        Response response = restClient
+                .target(BASE_URL)
+                .path(TEST_SCOPE_NAME)
+                .path("schema")
+                .path("stages")
+                .path(TEST_STAGE_DRAFT)
+                .queryParam("nsUri", TEST_PACKAGE_NSURI)
+                .queryParam("name", TEST_PACKAGE_NAME)
+                .queryParam("version", "1.1.0")
+                .queryParam("override", "false")
+                .request("application/xmi")
+                .post(Entity.entity(xmiContent, "application/xmi"));
+
+        assertEquals(409, response.getStatus(), "Should return HTTP 409 Conflict when override is false and package exists");
+    }
+
+    @Test
+    public void testCreatePackage_WithOverrideNewPackage() throws Exception {
+        // Use a non-existing package URI with override=true (should create new)
+        EPackage newPackage = TestHelper.createTestEPackage("http://non-existent.com/schema/1.0", "new-package", "new");
+        String xmiContent = TestHelper.serializeToXMI(newPackage, resourceSet);
+
+        Response response = restClient
+                .target(BASE_URL)
+                .path(TEST_SCOPE_NAME)
+                .path("schema")
+                .path("stages")
+                .path(TEST_STAGE_DRAFT)
+                .queryParam("nsUri", "http://non-existent.com/schema/1.0")
+                .queryParam("name", "new-package")
+                .queryParam("version", "1.0.0")
+                .queryParam("override", "true")
+                .request("application/xmi")
+                .post(Entity.entity(xmiContent, "application/xmi"));
+
+        assertEquals(201, response.getStatus(), "Should return HTTP 201 Created when override is true and package doesn't exist");
+
+        String responseContent = response.readEntity(String.class);
+        assertNotNull(responseContent, "Should return metadata");
+    }
+
+    // ========== Version Validation Tests ==========
+
+    @Test
+    public void testCreatePackage_InvalidVersionFormat() throws Exception {
+        EPackage testPackage = TestHelper.createTestEPackage("http://test.com/schema/1.0", "TestPackage", "test");
+        String xmiContent = TestHelper.serializeToXMI(testPackage, resourceSet);
+
+        Response response = restClient
+                .target(BASE_URL)
+                .path(TEST_SCOPE_NAME)
+                .path("schema")
+                .path("stages")
+                .path(TEST_STAGE_DRAFT)
+                .queryParam("nsUri", "http://test.com/schema/1.0")
+                .queryParam("name", "TestPackage")
+                .queryParam("version", "invalid-version-format")
+                .request("application/xmi")
+                .post(Entity.entity(xmiContent, "application/xmi"));
+
+        assertEquals(400, response.getStatus(), "Should return HTTP 400 Bad Request for invalid version format");
+
+        String responseContent = response.readEntity(String.class);
+        assertTrue(responseContent.contains("Invalid version"), "Error message should mention invalid version");
+    }
+
+    @Test
+    public void testCreatePackage_VersionIncompatibleMajor() throws Exception {
+        // URI has version 2.0, param has version 1.0 (different major)
+        EPackage testPackage = TestHelper.createTestEPackage("http://test.com/schema/2.0", "TestPackage", "test");
+        String xmiContent = TestHelper.serializeToXMI(testPackage, resourceSet);
+
+        Response response = restClient
+                .target(BASE_URL)
+                .path(TEST_SCOPE_NAME)
+                .path("schema")
+                .path("stages")
+                .path(TEST_STAGE_DRAFT)
+                .queryParam("nsUri", "http://test.com/schema/2.0")
+                .queryParam("name", "TestPackage")
+                .queryParam("version", "1.0.0")
+                .request("application/xmi")
+                .post(Entity.entity(xmiContent, "application/xmi"));
+
+        assertEquals(400, response.getStatus(), "Should return HTTP 400 Bad Request for incompatible major version");
+
+        String responseContent = response.readEntity(String.class);
+        assertTrue(responseContent.contains("not compatible"), "Error message should mention version incompatibility");
+    }
+
+    @Test
+    public void testCreatePackage_VersionIncompatibleLowerUri() throws Exception {
+        // URI has version 1.0.0, param has version 1.5.0 (URI version is lower)
+        EPackage testPackage = TestHelper.createTestEPackage("http://test.com/schema/1.0.0", "TestPackage", "test");
+        String xmiContent = TestHelper.serializeToXMI(testPackage, resourceSet);
+
+        Response response = restClient
+                .target(BASE_URL)
+                .path(TEST_SCOPE_NAME)
+                .path("schema")
+                .path("stages")
+                .path(TEST_STAGE_DRAFT)
+                .queryParam("nsUri", "http://test.com/schema/1.0.0")
+                .queryParam("name", "TestPackage")
+                .queryParam("version", "1.5.0")
+                .request("application/xmi")
+                .post(Entity.entity(xmiContent, "application/xmi"));
+
+        assertEquals(400, response.getStatus(), "Should return HTTP 400 Bad Request when URI version is lower than param");
+
+        String responseContent = response.readEntity(String.class);
+        assertTrue(responseContent.contains("not compatible"), "Error message should mention version incompatibility");
+    }
+
+    @Test
+    public void testCreatePackage_VersionExtractedFromUri() throws Exception {
+        // No version param provided, should extract from URI
+        EPackage testPackage = TestHelper.createTestEPackage("http://test.com/schema/1.5.3", "TestPackage", "test");
+        String xmiContent = TestHelper.serializeToXMI(testPackage, resourceSet);
+
+        Response response = restClient
+                .target(BASE_URL)
+                .path(TEST_SCOPE_NAME)
+                .path("schema")
+                .path("stages")
+                .path(TEST_STAGE_DRAFT)
+                .queryParam("nsUri", "http://test.com/schema/1.5.3")
+                .queryParam("name", "TestPackage")
+                // No version parameter
+                .request("application/xmi")
+                .post(Entity.entity(xmiContent, "application/xmi"));
+
+        assertEquals(201, response.getStatus(), "Should return HTTP 201 Created and extract version from URI");
+
+        String responseContent = response.readEntity(String.class);
+        assertNotNull(responseContent, "Should return metadata");
+        // The version should have been extracted from URI
+    }
+
+    @Test
+    public void testCreatePackage_VersionCompatibleSameMajor() throws Exception {
+        // URI has version 1.5.0, param has version 1.2.0 (compatible - same major, URI >= param)
+        EPackage testPackage = TestHelper.createTestEPackage("http://test.com/schema/1.5.0", "TestPackage", "test");
+        String xmiContent = TestHelper.serializeToXMI(testPackage, resourceSet);
+
+        Response response = restClient
+                .target(BASE_URL)
+                .path(TEST_SCOPE_NAME)
+                .path("schema")
+                .path("stages")
+                .path(TEST_STAGE_DRAFT)
+                .queryParam("nsUri", "http://test.com/schema/1.5.0")
+                .queryParam("name", "TestPackage")
+                .queryParam("version", "1.2.0")
+                .request("application/xmi")
+                .post(Entity.entity(xmiContent, "application/xmi"));
+
+        assertEquals(201, response.getStatus(), "Should return HTTP 201 Created for compatible versions");
+
+        String responseContent = response.readEntity(String.class);
+        assertNotNull(responseContent, "Should return metadata");
+    }
+
+    @Test
+    public void testCreatePackage_VersionCompatibleExactMatch() throws Exception {
+        // URI and param have exact same version
+        EPackage testPackage = TestHelper.createTestEPackage("http://test.com/schema/1.2.3", "TestPackage", "test");
+        String xmiContent = TestHelper.serializeToXMI(testPackage, resourceSet);
+
+        Response response = restClient
+                .target(BASE_URL)
+                .path(TEST_SCOPE_NAME)
+                .path("schema")
+                .path("stages")
+                .path(TEST_STAGE_DRAFT)
+                .queryParam("nsUri", "http://test.com/schema/1.2.3")
+                .queryParam("name", "TestPackage")
+                .queryParam("version", "1.2.3")
+                .request("application/xmi")
+                .post(Entity.entity(xmiContent, "application/xmi"));
+
+        assertEquals(201, response.getStatus(), "Should return HTTP 201 Created for exact version match");
+
+        String responseContent = response.readEntity(String.class);
+        assertNotNull(responseContent, "Should return metadata");
+    }
+
+    // ========== NsUri Validation Tests ==========
+
+    @Test
+    public void testCreatePackage_NsUriMismatch() throws Exception {
+        // Query param nsUri doesn't match EPackage's actual nsURI
+        EPackage testPackage = TestHelper.createTestEPackage("http://actual.com/schema/1.0", "TestPackage", "test");
+        String xmiContent = TestHelper.serializeToXMI(testPackage, resourceSet);
+
+        Response response = restClient
+                .target(BASE_URL)
+                .path(TEST_SCOPE_NAME)
+                .path("schema")
+                .path("stages")
+                .path(TEST_STAGE_DRAFT)
+                .queryParam("nsUri", "http://wrong.com/schema/1.0") // Mismatch!
+                .queryParam("name", "TestPackage")
+                .queryParam("version", "1.0.0")
+                .request("application/xmi")
+                .post(Entity.entity(xmiContent, "application/xmi"));
+
+        assertEquals(400, response.getStatus(), "Should return HTTP 400 Bad Request for nsUri mismatch");
+
+        String responseContent = response.readEntity(String.class);
+        assertTrue(responseContent.contains("does not match"), "Error message should mention nsUri mismatch");
+    }
+
+    @Test
+    public void testCreatePackage_NoNsUriInEPackage() throws Exception {
+        // EPackage doesn't have nsURI set
+        EPackage testPackage = TestHelper.createTestEPackage(null, "TestPackage", "test");
+        testPackage.setNsURI(null); // Explicitly set to null
+        String xmiContent = TestHelper.serializeToXMI(testPackage, resourceSet);
+
+        Response response = restClient
+                .target(BASE_URL)
+                .path(TEST_SCOPE_NAME)
+                .path("schema")
+                .path("stages")
+                .path(TEST_STAGE_DRAFT)
+                .queryParam("nsUri", "http://test.com/schema/1.0")
+                .queryParam("name", "TestPackage")
+                .queryParam("version", "1.0.0")
+                .request("application/xmi")
+                .post(Entity.entity(xmiContent, "application/xmi"));
+
+        assertEquals(400, response.getStatus(), "Should return HTTP 400 Bad Request when EPackage has no nsURI");
+
+        String responseContent = response.readEntity(String.class);
+        assertTrue(responseContent.contains("non-empty nsURI"), "Error message should mention missing nsURI");
+    }
+
+    @Test
+    public void testCreatePackage_NoNsUriParam() throws Exception {
+        // No nsUri query param provided, should use EPackage's nsURI
+        EPackage testPackage = TestHelper.createTestEPackage("http://test.com/schema/1.0", "TestPackage", "test");
+        String xmiContent = TestHelper.serializeToXMI(testPackage, resourceSet);
+
+        Response response = restClient
+                .target(BASE_URL)
+                .path(TEST_SCOPE_NAME)
+                .path("schema")
+                .path("stages")
+                .path(TEST_STAGE_DRAFT)
+                // No nsUri parameter
+                .queryParam("name", "TestPackage")
+                .queryParam("version", "1.0.0")
+                .request("application/xmi")
+                .post(Entity.entity(xmiContent, "application/xmi"));
+
+        assertEquals(201, response.getStatus(), "Should return HTTP 201 Created when nsUri is taken from EPackage");
+
+        String responseContent = response.readEntity(String.class);
+        assertNotNull(responseContent, "Should return metadata");
     }
 
     // ========== Get Package Content Tests ==========
@@ -692,34 +985,11 @@ public class SchemaPackagesResourceTest {
         }
 
         @Override
-        public Scope getSchemaWorkflowScopeByName(String name) {
+        public Scope getWorkflowScopeByName(String name) {
             if (TEST_SCOPE_NAME.equals(name)) {
                 return mockScope;
             }
             return null;
-        }
-
-        @Override
-        public List<Scope> getSchemaWorkflowScopes() {
-            return List.of(mockScope);
-        }
-        
-        /* 
-         * (non-Javadoc)
-         * @see org.eclipse.fennec.model.atlas.scope.ScopeCollector#getObjectRegistryScopes()
-         */
-        @Override
-        public List<Scope> getObjectRegistryScopes() {
-        	return Collections.emptyList();
-        }
-        
-        /* 
-         * (non-Javadoc)
-         * @see org.eclipse.fennec.model.atlas.scope.ScopeCollector#getObjectRegistryScopeByName(java.lang.String)
-         */
-        @Override
-        public Scope getObjectRegistryScopeByName(String name) {
-        	return null;
         }
         
         @Override
@@ -755,25 +1025,21 @@ public class SchemaPackagesResourceTest {
         public ObjectMetadata getFromStageForRegistry(String stage, String registry, String objectId) {
             String decodedId = new String(Base64.getUrlDecoder().decode(objectId));
 
-            if (decodedId.equals("http://non-existent.com/schema/1.0")) {
-                return null;
-            }
-
-            if (decodedId.equals("http://existing.com/schema/1.0")) {
+            // List of existing packages that should return metadata
+            if (decodedId.equals(TEST_PACKAGE_NSURI) ||
+                decodedId.equals("http://existing.com/schema/1.0") ||
+                decodedId.equals("http://sensor.example.com/model/1.0")) {
                 ObjectMetadata metadata = ManagementFactory.eINSTANCE.createObjectMetadata();
                 metadata.setObjectId(objectId);
                 metadata.setRole(stage);
                 metadata.setRegistry(registry);
+                metadata.setUploadTime(Instant.now());
+                metadata.setIsReadOnly(false);
                 return metadata;
             }
 
-            ObjectMetadata metadata = ManagementFactory.eINSTANCE.createObjectMetadata();
-            metadata.setObjectId(objectId);
-            metadata.setRole(stage);
-            metadata.setRegistry(registry);
-            metadata.setUploadTime(Instant.now());
-            metadata.setIsReadOnly(false);
-            return metadata;
+            // All other packages don't exist (return null)
+            return null;
         }
 
         @Override
@@ -785,34 +1051,52 @@ public class SchemaPackagesResourceTest {
         public EPackage getContentFromStageForRegistry(String stage, String registry, String objectId) {
             String decodedId = new String(Base64.getUrlDecoder().decode(objectId));
 
-            if (decodedId.equals("http://non-existent.com/schema/1.0")) {
-                return null;
+            // Only return content for existing packages
+            if (decodedId.equals(TEST_PACKAGE_NSURI)) {
+                return TestHelper.createTestEPackage(decodedId, "TestPackage", "test");
+            }
+            if (decodedId.equals("http://existing.com/schema/1.0")) {
+                return TestHelper.createTestEPackage(decodedId, "ExistingPackage", "existing");
+            }
+            if (decodedId.equals("http://sensor.example.com/model/1.0")) {
+                return TestHelper.createTestEPackage(decodedId, "SensorModel", "sensor");
             }
 
-            return TestHelper.createTestEPackage(decodedId, "TestPackage", "test");
+            // All other packages don't exist
+            return null;
         }
 
         @Override
         public Promise<ObjectMetadata> updateInStageForRegistry(String stage, String registry, EPackage updatedObject, String objectId, String updatedVersion) {
             String decodedId = new String(Base64.getUrlDecoder().decode(objectId));
 
-            if (decodedId.equals("http://non-existent.com/schema/1.0")) {
-                return Promises.resolved(null);
+            // Only allow updates for existing packages
+            if (decodedId.equals(TEST_PACKAGE_NSURI) ||
+                decodedId.equals("http://existing.com/schema/1.0") ||
+                decodedId.equals("http://sensor.example.com/model/1.0")) {
+                ObjectMetadata metadata = ManagementFactory.eINSTANCE.createObjectMetadata();
+                metadata.setObjectId(objectId);
+                metadata.setRole(stage);
+                metadata.setRegistry(registry);
+                metadata.setVersion(updatedVersion);
+                metadata.setLastChangeTime(Instant.now());
+                return Promises.resolved(metadata);
             }
 
-            ObjectMetadata metadata = ManagementFactory.eINSTANCE.createObjectMetadata();
-            metadata.setObjectId(objectId);
-            metadata.setRole(stage);
-            metadata.setRegistry(registry);
-            metadata.setVersion(updatedVersion);
-            metadata.setLastChangeTime(Instant.now());
-            return Promises.resolved(metadata);
+            // Package doesn't exist, return null
+            return Promises.resolved(null);
         }
 
         @Override
         public Promise<Boolean> deleteFromStageForRegistry(String stage, String registry, String objectId) {
             String decodedId = new String(Base64.getUrlDecoder().decode(objectId));
-            return Promises.resolved(!decodedId.equals("http://non-existent.com/schema/1.0"));
+
+            // Only allow deletion of existing packages
+            return Promises.resolved(
+                decodedId.equals(TEST_PACKAGE_NSURI) ||
+                decodedId.equals("http://existing.com/schema/1.0") ||
+                decodedId.equals("http://sensor.example.com/model/1.0")
+            );
         }
 
         @Override
@@ -834,12 +1118,22 @@ public class SchemaPackagesResourceTest {
 
         @Override
         public ObjectMetadata transitionToStageForRegistry(String objectId, String fromStage, String toStage, String registry) {
-            ObjectMetadata metadata = ManagementFactory.eINSTANCE.createObjectMetadata();
-            metadata.setObjectId(objectId);
-            metadata.setRole(toStage);
-            metadata.setRegistry(registry);
-            metadata.setLastChangeTime(Instant.now());
-            return metadata;
+            String decodedId = new String(Base64.getUrlDecoder().decode(objectId));
+
+            // Only allow transitions for existing packages
+            if (decodedId.equals(TEST_PACKAGE_NSURI) ||
+                decodedId.equals("http://existing.com/schema/1.0") ||
+                decodedId.equals("http://sensor.example.com/model/1.0")) {
+                ObjectMetadata metadata = ManagementFactory.eINSTANCE.createObjectMetadata();
+                metadata.setObjectId(objectId);
+                metadata.setRole(toStage);
+                metadata.setRegistry(registry);
+                metadata.setLastChangeTime(Instant.now());
+                return metadata;
+            }
+
+            // Package doesn't exist
+            return null;
         }
 
         @Override

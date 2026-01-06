@@ -135,7 +135,7 @@ public class SchemaPackagesResource {
 							description = "Packages retrieved successfully",
 							content = @Content(schema = @Schema( type = "array", implementation = ObjectMetadata.class))
 							),
-					@ApiResponse(responseCode = "204", description = "Scope not found"),
+					@ApiResponse(responseCode = "404", description = "Scope not found or registry 'schema' not part of the scope registries"),
 					@ApiResponse(responseCode = "500", description = "Internal server error")
 			}
 			)
@@ -147,7 +147,7 @@ public class SchemaPackagesResource {
 
 		EObjectWorkflowService<?> workflowService = getEObjectWorkflowServiceByScope(scopeName);
 		if(workflowService == null) {
-			return Response.status(Response.Status.NO_CONTENT).build();
+			return Response.status(Response.Status.NOT_FOUND).build();
 		}
 		List<ObjectMetadata> objectsMetadata = workflowService.listInFinalStageForRegistry(registry);
 		ObjectMetadataContainer container = mgmtFactory.createObjectMetadataContainer();
@@ -207,7 +207,7 @@ public class SchemaPackagesResource {
 			@PathParam("stageName") String stageName,
 			@Parameter(description = "Exact namespace URI of the package to retrieve")
 			@QueryParam("nsUri") String nsUri,
-			@Parameter(description = "Package name filter (supports wildcards, e.g., *Billing*)")
+			@Parameter(description = "Package name filter (supports wildcards, e.g., Billing*)")
 			@QueryParam("name") String name) {
 
 		EObjectWorkflowService<?> workflowService = getEObjectWorkflowServiceByScope(scopeName);
@@ -273,6 +273,11 @@ public class SchemaPackagesResource {
 							description = "Package created successfully",
 							content = @Content(schema = @Schema(implementation = ObjectMetadata.class))
 							),
+					@ApiResponse(
+							responseCode = "200",
+							description = "Object updated successfully",
+							content = @Content(schema = @Schema(implementation = ObjectMetadata.class))
+					),
 					@ApiResponse(responseCode = "400", description = "Invalid package data or missing required parameters"),
 					@ApiResponse(responseCode = "404", description = "Scope or stage not found"),
 					@ApiResponse(responseCode = "409", description = "Package with nsUri already exists and override option was not set to true"),
@@ -338,6 +343,9 @@ public class SchemaPackagesResource {
 					.header("Location", "/".concat(scopeName).concat("/schemas/stages/").concat(stageName).concat("?nsUri=").concat(encodedNsURI))
 					.entity(metadata)
 					.build();
+		} catch (WebApplicationException e) {
+			// WebApplicationException already has the correct status code, rethrow it
+			throw e;
 		} catch (Exception e) {
 			return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity(e.getMessage()).build();
 		}
@@ -467,9 +475,12 @@ public class SchemaPackagesResource {
 				return Response.status(Response.Status.FORBIDDEN).build();
 			}
 
-			ObjectMetadata metadata = workflowService.updateInStageForRegistry(stageName, registry, ePackage, encodedNsUri, resolvedVersion).getValue();			
+			ObjectMetadata metadata = workflowService.updateInStageForRegistry(stageName, registry, ePackage, encodedNsUri, resolvedVersion).getValue();
 			return Response.status(Response.Status.OK).entity(metadata).build();
 
+		} catch (WebApplicationException e) {
+			// WebApplicationException already has the correct status code, rethrow it
+			throw e;
 		} catch(Exception e) {
 			return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity(e.getMessage()).build();
 		}
@@ -637,7 +648,7 @@ public class SchemaPackagesResource {
 			}
 
 			private Scope getScopeByScopeName(String scope) {
-				return scopeCollector.getSchemaWorkflowScopeByName(scope);
+				return scopeCollector.getWorkflowScopeByName(scope);
 			}
 
 			private String encodePackageNsURI(String nsUri) throws UnsupportedEncodingException {
