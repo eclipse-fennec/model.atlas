@@ -69,6 +69,7 @@ slf4j.runpath:  \
 	bnd.identity;id='jakarta.servlet-api'
 
 
+
 -runbundles: \
 	com.fasterxml.jackson.core.jackson-annotations;version='[2.20.0,2.20.1)';startlevel=1000,\
 	com.fasterxml.jackson.core.jackson-core;version='[2.19.2,2.19.3)';startlevel=1001,\

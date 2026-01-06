@@ -4,11 +4,13 @@
 
 
 -runproperties.local: \
-	base.path=${.},\
-	logback.configurationFile=file:${.}/runtime/etc/logback.xml,\
-	gecko.log.dir=${.}/runtime/logs,\
-	org.apache.felix.configadmin.plugin.interpolation.secretsdir=${.}/runtime/secrets,\
-	data=${.}/runtime/data/
-	
+    base.path=${.},\
+    logback.configurationFile=file:${.}/runtime/etc/logback.xml,\
+    gecko.log.dir=${.}/runtime/logs,\
+    org.apache.felix.configadmin.plugin.interpolation.secretsdir=${.}/runtime/secrets,\
+    data=${.}/runtime/data/,\
+    APICURIO_HOST=localhost,\
+    APICURIO_PORT=8081
+
 -runtrace: true
 -resolve: never

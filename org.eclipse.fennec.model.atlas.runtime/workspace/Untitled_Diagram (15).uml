@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<uml:Model xmi:version="20131001" xmlns:xmi="http://www.omg.org/spec/XMI/20131001" xmlns:uml="http://www.eclipse.org/uml2/5.0.0/UML" xmi:id="b81aa9e7-cfef-4e2a-969c-c5c9f032ae06_model" name="Untitled Diagram">
+  <packagedElement xmi:type="uml:Package" xmi:id="b807ac37-e11d-4f99-8af3-d36dc3a9a475" name="testPackage" URI="http://civitas.org/model/test">
+    <packagedElement xmi:type="uml:Class" xmi:id="5825c200-7637-48ad-8ac7-5da16c12dbca" name="NeueKlasse">
+      <eAnnotations xmi:id="f3a33820-a27d-4ac4-b5ca-3672fa1f77dd" source="nodeLayout">
+        <details xmi:id="481a7cd8-515c-4fe4-bc88-9ca50d10927d" key="x" value="401"/>
+        <details xmi:id="7ede1c32-b7bd-4616-bdb6-b0edf9e18176" key="y" value="297.5"/>
+      </eAnnotations>
+      <ownedAttribute xmi:id="1b868496-b3bc-4318-8f86-01e8a27568ba" name="attribut" visibility="private">
+        <type xmi:type="uml:PrimitiveType" href="http://www.omg.org/spec/UML/20131001/PrimitiveTypes.xmi#String"/>
+      </ownedAttribute>
+      <ownedOperation xmi:id="41f7f5b7-9192-4c50-aafc-325161750e3c" name="operation" visibility="public">
+        <ownedParameter xmi:id="41f7f5b7-9192-4c50-aafc-325161750e3c_return" direction="return">
+          <type xmi:type="uml:PrimitiveType" href="http://www.omg.org/spec/UML/20131001/PrimitiveTypes.xmi#String"/>
+        </ownedParameter>
+      </ownedOperation>
+    </packagedElement>
+    <packagedElement xmi:type="uml:Interface" xmi:id="97a6e9b6-5a82-4d02-9547-4f7696cf49d2" name="NeuesInterface">
+      <eAnnotations xmi:id="e04669e5-6bf4-49ee-a187-cb4df04aab8c" source="nodeLayout">
+        <details xmi:id="63404236-c1b6-4267-b24d-3db798c392a2" key="x" value="611.5"/>
+        <details xmi:id="bd7bd9d8-846a-45ee-b179-ff67382359dd" key="y" value="254.25"/>
+      </eAnnotations>
+      <ownedOperation xmi:id="c9c3c444-4e0f-40f7-9629-a5a5302363cd" name="operation" visibility="public">
+        <ownedParameter xmi:id="c9c3c444-4e0f-40f7-9629-a5a5302363cd_return" direction="return">
+          <type xmi:type="uml:PrimitiveType" href="http://www.omg.org/spec/UML/20131001/PrimitiveTypes.xmi#String"/>
+        </ownedParameter>
+      </ownedOperation>
+    </packagedElement>
+    <packagedElement xmi:type="uml:Association" xmi:id="8ba27ee8-6723-4fb3-bd7d-a10ff4ed7420">
+      <memberEnd xmi:id="8ba27ee8-6723-4fb3-bd7d-a10ff4ed7420_source" type="5825c200-7637-48ad-8ac7-5da16c12dbca">
+      </memberEnd>
+      <memberEnd xmi:id="8ba27ee8-6723-4fb3-bd7d-a10ff4ed7420_target" type="97a6e9b6-5a82-4d02-9547-4f7696cf49d2">
+      </memberEnd>
+    </packagedElement>
+  </packagedElement>
+</uml:Model>

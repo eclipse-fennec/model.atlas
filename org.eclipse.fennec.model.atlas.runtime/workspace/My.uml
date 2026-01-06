@@ -1,6 +1,16 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<uml:Model xmi:version="20131001" xmlns:xmi="http://www.omg.org/spec/XMI/20131001" xmlns:uml="http://www.eclipse.org/uml2/5.0.0/UML" xmi:id="_d3tb4KqJEfCipqbqSKZbYg">
-  <packagedElement xmi:type="uml:Class" xmi:id="_mTbD8KqJEfCipqbqSKZbYg" name="Baum">
-    <ownedAttribute xmi:id="_uto3MKqJEfCipqbqSKZbYg" name="testAttribute"/>
+<uml:Model xmi:version="20131001" xmlns:xmi="http://www.omg.org/spec/XMI/20131001" xmlns:uml="http://www.eclipse.org/uml2/5.0.0/UML" xmi:id="_d3tb4KqJEfCipqbqSKZbYg" name="myTestModel" URI="http://test/test/myuml/1.0.0">
+  <eAnnotations xmi:id="_M-2MwNpqEfCiHN98aJd3ew" source="test">
+    <details xmi:id="_P_7_MNpqEfCiHN98aJd3ew" key="test" value="test"/>
+  </eAnnotations>
+  <packagedElement xmi:type="uml:Package" xmi:id="_CTZLQNtdEfC5eJPJ8CCQdw" name="thePackage" URI="http://test/test/myuml">
+    <packagedElement xmi:type="uml:Class" xmi:id="_mTbD8KqJEfCipqbqSKZbYg" name="Baum">
+      <ownedAttribute xmi:id="_uto3MKqJEfCipqbqSKZbYg" name="forest" type="_SQTJUNtcEfC5eJPJ8CCQdw"/>
+    </packagedElement>
+    <packagedElement xmi:type="uml:Class" xmi:id="_SQTJUNtcEfC5eJPJ8CCQdw" name="Wald">
+      <ownedAttribute xmi:id="_dwhEMNtcEfC5eJPJ8CCQdw" name="trees" type="_mTbD8KqJEfCipqbqSKZbYg">
+        <upperValue xmi:type="uml:LiteralUnlimitedNatural" xmi:id="_e6lqoNtcEfC5eJPJ8CCQdw" value="*"/>
+      </ownedAttribute>
+    </packagedElement>
   </packagedElement>
 </uml:Model>

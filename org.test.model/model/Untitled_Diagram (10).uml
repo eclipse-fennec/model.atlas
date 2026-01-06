@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xmi:XMI 
+    xmi:version="20131001"
+    xmlns:xmi="http://www.omg.org/spec/XMI" 
+    xmlns:uml="http://www.omg.org/spec/UML/20161101">
+  <uml:Model xmi:id="c9b5a6d9-1c53-4a0e-840d-674f6e94d047_model" name="Untitled Diagram">
+    <packagedElement xmi:type="uml:Enumeration" xmi:id="2a6f1dd5-edc7-46ef-9d42-f1d2c2cbb4d4" name="NeueAufzählung">
+      <ownedLiteral xmi:type="uml:EnumerationLiteral" xmi:id="b1773588-ab5f-43e4-b0e6-ed7521835888" name="WERT1"/>
+      <ownedLiteral xmi:type="uml:EnumerationLiteral" xmi:id="f5833c96-2cfa-4b16-af92-81112a2a0b26" name="WERT2"/>
+    </packagedElement>
+    <packagedElement xmi:type="uml:Enumeration" xmi:id="ccfc977d-33d2-4c28-96ea-95f71e7751a9" name="NeueAufzählung2">
+      <ownedLiteral xmi:type="uml:EnumerationLiteral" xmi:id="d7bcb9e7-c2ba-4705-b637-c35126ead02a" name="WERT1"/>
+      <ownedLiteral xmi:type="uml:EnumerationLiteral" xmi:id="bcd1d125-27de-4b99-ab3c-8010520a736d" name="WERT2"/>
+    </packagedElement>
+    <packagedElement xmi:type="uml:InterfaceRealization" xmi:id="11b3ae9c-33f4-4b02-ac14-84a85382d9b7" implementingClassifier="2a6f1dd5-edc7-46ef-9d42-f1d2c2cbb4d4" contract="ccfc977d-33d2-4c28-96ea-95f71e7751a9"/>
+  </uml:Model>
+  <xmi:Extension extender="civitas-uml-modeler">
+    <diagram id="c9b5a6d9-1c53-4a0e-840d-674f6e94d047" name="Untitled Diagram">
+      <nodeLayout elementId="2a6f1dd5-edc7-46ef-9d42-f1d2c2cbb4d4" x="312" y="222.5"/>
+      <nodeLayout elementId="ccfc977d-33d2-4c28-96ea-95f71e7751a9" x="93" y="219.75"/>
+    </diagram>
+  </xmi:Extension>
+</xmi:XMI>

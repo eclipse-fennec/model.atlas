@@ -1,9 +1,6 @@
 -library: enableOSGi-Test
 
--runrequires: \
-	bnd.identity;id='org.eclipse.fennec.model.atlas.workflow.tests',\
-	bnd.identity;id='org.apache.felix.gogo.command',\
-	bnd.identity;id='org.apache.felix.gogo.shell'
+-runrequires: bnd.identity;id='org.eclipse.fennec.model.atlas.workflow.tests'
 
 -runbundles.test: \
 	org.eclipse.fennec.model.atlas.workflow.tests;version=snapshot

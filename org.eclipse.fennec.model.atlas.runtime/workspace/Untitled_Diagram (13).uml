@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<uml:Model xmi:version="20131001" xmlns:xmi="http://www.omg.org/spec/XMI/20131001" xmlns:uml="http://www.eclipse.org/uml2/5.0.0/UML" xmi:id="464e5f66-cd47-4a1c-9b0d-339e22cf3d13_model" name="Untitled Diagram">
+  <packagedElement xmi:type="uml:Package" xmi:id="4676e3dc-d2fb-4f9e-933f-0603869f3870" name="testPackage" URI="http://civitas.org/model/test">
+    <packagedElement xmi:type="uml:Class" xmi:id="70981c83-e8d8-4180-b83f-eed2f341a336" name="TestKlasse">
+      <eAnnotations xmi:id="78984019-6160-4ba9-8029-d4a7b312b33d" source="nodeLayout">
+        <details xmi:id="f4c95988-9aea-4a55-9a09-759b1d04f9c8" key="x" value="215.39689922480625"/>
+        <details xmi:id="c77d8910-6c6b-4fa4-bc67-82247900fa0a" key="y" value="208.4496124031008"/>
+      </eAnnotations>
+      <ownedAttribute xmi:id="afcf938d-f948-4cb6-9b6f-969e52ebd176" name="attribut" visibility="private">
+        <type xmi:type="uml:PrimitiveType" href="http://www.omg.org/spec/UML/20131001/PrimitiveTypes.xmi#String"/>
+      </ownedAttribute>
+      <ownedOperation xmi:id="52c89290-8c23-4e82-9167-91dfc58aadbb" name="operation" visibility="public">
+        <ownedParameter xmi:id="52c89290-8c23-4e82-9167-91dfc58aadbb_return" direction="return">
+          <type xmi:type="uml:PrimitiveType" href="http://www.omg.org/spec/UML/20131001/PrimitiveTypes.xmi#String"/>
+        </ownedParameter>
+      </ownedOperation>
+    </packagedElement>
+    <packagedElement xmi:type="uml:Association" xmi:id="4595b21e-0980-4b53-b68b-9821d81a8d4d">
+      <memberEnd xmi:id="4595b21e-0980-4b53-b68b-9821d81a8d4d_source" type="70981c83-e8d8-4180-b83f-eed2f341a336">
+      </memberEnd>
+      <memberEnd xmi:id="4595b21e-0980-4b53-b68b-9821d81a8d4d_target" type="a4b928fc-f171-4abd-8441-3bdbadb48a98">
+      </memberEnd>
+    </packagedElement>
+    <packagedElement xmi:type="uml:Association" xmi:id="714dcbd6-9b4b-4c39-bf92-f88ebc7eefb3">
+      <memberEnd xmi:id="714dcbd6-9b4b-4c39-bf92-f88ebc7eefb3_source" type="70981c83-e8d8-4180-b83f-eed2f341a336">
+      </memberEnd>
+      <memberEnd xmi:id="714dcbd6-9b4b-4c39-bf92-f88ebc7eefb3_target" type="b208fc9a-5e0c-4c6e-8fe9-f926923b7692">
+      </memberEnd>
+    </packagedElement>
+  </packagedElement>
+</uml:Model>
