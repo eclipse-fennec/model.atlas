@@ -24,7 +24,6 @@ import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import java.util.stream.Collectors;
 
 import org.eclipse.emf.ecore.EObject;
 import org.eclipse.emf.ecore.util.EcoreUtil;
@@ -118,7 +117,8 @@ public abstract class AbstractEObjectStorageService implements EObjectStorageSer
     protected EObjectRegistryService<EObject> registryService;
     
     // Storage role for this instance (set during activation)
-    protected String storageRole;
+//    protected String storageRole;
+    protected String storageType;
     
     /**
      * Called during activation to create the storage helper.
@@ -151,7 +151,7 @@ public abstract class AbstractEObjectStorageService implements EObjectStorageSer
 	 * 
 	 * @return the storage role, may be null if no role is configured
 	 */
-	protected abstract String getStorageRole();
+	protected abstract String getStorageType();
 
 	/**
      * Common activation logic for storage services.
@@ -167,9 +167,9 @@ public abstract class AbstractEObjectStorageService implements EObjectStorageSer
         LOGGER.info("Activating " + getClass().getSimpleName() + " with backend type: " + getBackendType());
         
         // Initialize storage role
-        this.storageRole = getStorageRole();
-        requireNonNull(storageRole, "Storage role from getStorageRole() must not be null");
-        LOGGER.info("Storage role configured: " + storageRole);
+        this.storageType = getStorageType();
+        requireNonNull(storageType, "Storage type from getStorageType() must not be null");
+        LOGGER.info("Storage type configured: " + storageType);
         
         String threadFactory = getBackendType() + "-worker-";
         AtomicLong threadCount = new AtomicLong(0);
@@ -264,8 +264,12 @@ public abstract class AbstractEObjectStorageService implements EObjectStorageSer
         LOGGER.info("Storage service deactivated: " + getClass().getSimpleName());
     }
 
+    /* 
+     * (non-Javadoc)
+     * @see org.eclipse.fennec.model.atlas.mgmt.api.EObjectStorageService#storeObject(java.lang.String, java.lang.String, java.lang.String, java.lang.String, org.eclipse.emf.ecore.EObject, org.eclipse.fennec.model.atlas.mgmt.management.ObjectMetadata)
+     */
     @Override
-    public Promise<ObjectMetadata> storeObject(String objectId, EObject object, ObjectMetadata metadata) {
+    public Promise<ObjectMetadata> storeObject(String scope, String registry, String stage, String objectId, EObject object, ObjectMetadata metadata) {
         return promiseFactory.submit(() -> {
             try {
                 // Use provided objectId or generate one
@@ -274,7 +278,9 @@ public abstract class AbstractEObjectStorageService implements EObjectStorageSer
                 // Ensure the objectId, role, and objectType are set in metadata
                 if (metadata != null) {
                     metadata.setObjectId(storageId); // Always set the objectId in the caller's metadata
-                    metadata.setRole(storageRole);
+                    metadata.setScope(scope);
+                    metadata.setRegistry(registry);
+                    metadata.setRole(stage);
                     // Set the objectType if not already set
                     if (metadata.getObjectType() == null && object != null) {
                         metadata.setObjectType(EcoreUtil.getURI(object.eClass()).toString());
@@ -308,8 +314,12 @@ public abstract class AbstractEObjectStorageService implements EObjectStorageSer
         });
     }
 
+    /* 
+     * (non-Javadoc)
+     * @see org.eclipse.fennec.model.atlas.mgmt.api.EObjectStorageService#retrieveObject(java.lang.String, java.lang.String, java.lang.String, java.lang.String)
+     */
     @Override
-    public Promise<EObject> retrieveObject(String objectId) {
+    public Promise<EObject> retrieveObject(String scope, String registry, String stage, String objectId) {
         return promiseFactory.submit(() -> {
             try {
                 return storageHelper.loadEObject(objectId);
@@ -320,8 +330,12 @@ public abstract class AbstractEObjectStorageService implements EObjectStorageSer
         });
     }
 
+    /* 
+     * (non-Javadoc)
+     * @see org.eclipse.fennec.model.atlas.mgmt.api.EObjectStorageService#retrieveMetadata(java.lang.String, java.lang.String, java.lang.String, java.lang.String)
+     */
     @Override
-    public Promise<ObjectMetadata> retrieveMetadata(String objectId) {
+    public Promise<ObjectMetadata> retrieveMetadata(String scope, String registry, String stage, String objectId) {
         return promiseFactory.submit(() -> {
             try {
                 return storageHelper.loadMetadata(objectId);
@@ -332,8 +346,12 @@ public abstract class AbstractEObjectStorageService implements EObjectStorageSer
         });
     }
 
+    /* 
+     * (non-Javadoc)
+     * @see org.eclipse.fennec.model.atlas.mgmt.api.EObjectStorageService#deleteObject(java.lang.String, java.lang.String, java.lang.String, java.lang.String)
+     */
     @Override
-    public Promise<Boolean> deleteObject(String objectId) {
+    public Promise<Boolean> deleteObject(String scope, String registry, String stage, String objectId) {
         return promiseFactory.submit(() -> {
             try {
                 boolean deleted = storageHelper.deleteObject(objectId);
@@ -353,8 +371,12 @@ public abstract class AbstractEObjectStorageService implements EObjectStorageSer
         });
     }
 
+    /* 
+     * (non-Javadoc)
+     * @see org.eclipse.fennec.model.atlas.mgmt.api.EObjectStorageService#listObjectIds(java.lang.String, java.lang.String, java.lang.String)
+     */
     @Override
-    public Promise<List<String>> listObjectIds() {
+    public Promise<List<String>> listObjectIds(String scope, String registry, String stage) {
         return promiseFactory.submit(() -> {
             try {
                 return storageHelper.listObjectIds();
@@ -365,6 +387,10 @@ public abstract class AbstractEObjectStorageService implements EObjectStorageSer
         });
     }
 
+    /* 
+     * (non-Javadoc)
+     * @see org.eclipse.fennec.model.atlas.mgmt.api.EObjectStorageService#queryObjects(java.lang.String, java.lang.String, java.lang.String, org.eclipse.fennec.model.atlas.mgmt.management.ObjectQuery)
+     */
     @Override
     public Promise<List<ObjectMetadata>> queryObjects(ObjectQuery query) {
         // If registry service is available, delegate to it for fast indexed queries
@@ -392,8 +418,12 @@ public abstract class AbstractEObjectStorageService implements EObjectStorageSer
             
             try {
                 // Use registry service methods based on query parameters
-            	if(query.getRole() != null && query.getScope() != null && query.getName() != null) {
+            	if(query.getRole() != null && query.getScope() != null && query.getRegistry() != null && query.getName() != null) {
+            		results = registryService.findByScopeRegistryRoleAndName(query.getScope(), query.getRegistry(), query.getRole(), query.getName());
+            	} else if(query.getRole() != null && query.getScope() != null && query.getName() != null) {
             		results = registryService.findByScopeRoleAndName(query.getScope(), query.getRole(), query.getName());
+            	} else if (query.getRole() != null && query.getScope() != null && query.getRegistry() != null) {
+            		results = registryService.findByScopeRegistryAndRole(query.getScope(), query.getRegistry(), query.getRole());
             	} else if (query.getRole() != null && query.getScope() != null) {
             		results = registryService.findByScopeAndRole(query.getRole(), query.getScope());
             	} else if (query.getStatus() != null && query.getObjectType() != null) {
@@ -411,12 +441,7 @@ public abstract class AbstractEObjectStorageService implements EObjectStorageSer
                     return scanStorageDirectly(query).getValue();
                 }
                 
-                // Filter results by storage role to only return objects from this storage
-                if (storageRole != null) {
-                    results = results.stream()
-                            .filter(metadata -> storageRole.equals(metadata.getRole()))
-                            .collect(Collectors.toList());
-                }
+           
                 
                 LOGGER.info("Registry query completed: " + results.size() + " objects found");
                 return results;
@@ -527,8 +552,12 @@ public abstract class AbstractEObjectStorageService implements EObjectStorageSer
         return true; // All specified criteria match
     }
     
+	/* 
+	 * (non-Javadoc)
+	 * @see org.eclipse.fennec.model.atlas.mgmt.api.EObjectStorageService#updateMetadata(java.lang.String, java.lang.String, java.lang.String, java.lang.String, org.eclipse.fennec.model.atlas.mgmt.management.ObjectMetadata)
+	 */
 	@Override
-	public Promise<Boolean> updateMetadata(String objectId, ObjectMetadata metadata) {
+	public Promise<Boolean> updateMetadata(String scope, String registry, String stage, String objectId, ObjectMetadata metadata) {
         return promiseFactory.submit(() -> {
             try {
                 if (objectId == null || objectId.isEmpty()) {
@@ -556,7 +585,9 @@ public abstract class AbstractEObjectStorageService implements EObjectStorageSer
                 mergeMetadataUpdates(metadataCopy, metadata);
                 
                 // Ensure the role and objectId are set correctly
-                metadataCopy.setRole(storageRole);
+                metadataCopy.setRole(stage);
+                metadataCopy.setScope(scope);
+                metadataCopy.setRegistry(registry);
                 metadataCopy.setObjectId(objectId);
                 
                 // Save merged metadata
@@ -577,8 +608,12 @@ public abstract class AbstractEObjectStorageService implements EObjectStorageSer
         });
 	}
 
+	/* 
+	 * (non-Javadoc)
+	 * @see org.eclipse.fennec.model.atlas.mgmt.api.EObjectStorageService#updateStatus(java.lang.String, java.lang.String, java.lang.String, java.lang.String, org.eclipse.fennec.model.atlas.mgmt.management.ObjectStatus, java.lang.String)
+	 */
 	@Override
-	public Promise<Boolean> updateStatus(String objectId, ObjectStatus newStatus, String changeUser) {
+	public Promise<Boolean> updateStatus(String scope, String registry, String stage, String objectId, ObjectStatus newStatus, String changeUser) {
         return promiseFactory.submit(() -> {
             try {
                 if (objectId == null || objectId.isEmpty()) {
@@ -619,8 +654,12 @@ public abstract class AbstractEObjectStorageService implements EObjectStorageSer
         });
 	}
 
+	/* 
+	 * (non-Javadoc)
+	 * @see org.eclipse.fennec.model.atlas.mgmt.api.EObjectStorageService#exists(java.lang.String, java.lang.String, java.lang.String, java.lang.String)
+	 */
 	@Override
-	public Boolean exists(String objectId) {
+	public Boolean exists(String scope, String registry, String stage, String objectId) {
         try {
             if (objectId == null || objectId.isEmpty()) {
                 return false;
@@ -634,6 +673,10 @@ public abstract class AbstractEObjectStorageService implements EObjectStorageSer
         }
 	}
 
+	/* 
+	 * (non-Javadoc)
+	 * @see org.eclipse.fennec.model.atlas.mgmt.api.EObjectStorageService#getObjectCount(java.lang.String, java.lang.String, java.lang.String)
+	 */
 	@Override
 	public long getObjectCount() {
         try {

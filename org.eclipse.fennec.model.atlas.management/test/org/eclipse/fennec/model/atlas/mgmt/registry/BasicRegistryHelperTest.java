@@ -239,19 +239,19 @@ class BasicRegistryHelperTest {
         registryHelper.updateIndex("approved-obj", approved);
         
         // Test finding specific name+role combination
-        Optional<String> draftResult = registryHelper.findByObjectNameAndRole("PackageName", "draft");
+        Optional<String> draftResult = registryHelper.findByObjectNameAndStage("PackageName", "draft");
         assertTrue(draftResult.isPresent());
         assertEquals("draft-obj", draftResult.get());
         
-        Optional<String> approvedResult = registryHelper.findByObjectNameAndRole("PackageName", "approved");
+        Optional<String> approvedResult = registryHelper.findByObjectNameAndStage("PackageName", "approved");
         assertTrue(approvedResult.isPresent());
         assertEquals("approved-obj", approvedResult.get());
         
         // Test non-existent combinations
-        Optional<String> nonExistentName = registryHelper.findByObjectNameAndRole("NonExistent", "draft");
+        Optional<String> nonExistentName = registryHelper.findByObjectNameAndStage("NonExistent", "draft");
         assertFalse(nonExistentName.isPresent());
         
-        Optional<String> nonExistentRole = registryHelper.findByObjectNameAndRole("PackageName", "production");
+        Optional<String> nonExistentRole = registryHelper.findByObjectNameAndStage("PackageName", "production");
         assertFalse(nonExistentRole.isPresent());
     }
 
@@ -259,9 +259,9 @@ class BasicRegistryHelperTest {
     void testFindByObjectNameAndRoleValidation() {
         // Test null validation
         assertThrows(NullPointerException.class, () -> 
-            registryHelper.findByObjectNameAndRole(null, "draft"));
+            registryHelper.findByObjectNameAndStage(null, "draft"));
         assertThrows(NullPointerException.class, () -> 
-            registryHelper.findByObjectNameAndRole("PackageName", null));
+            registryHelper.findByObjectNameAndStage("PackageName", null));
     }
 
     @Test

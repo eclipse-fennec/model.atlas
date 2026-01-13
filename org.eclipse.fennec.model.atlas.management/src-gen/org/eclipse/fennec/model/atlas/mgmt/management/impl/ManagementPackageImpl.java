@@ -422,7 +422,7 @@ public class ManagementPackageImpl extends EPackageImpl implements ManagementPac
 	 * @generated
 	 */
 	@Override
-	public EAttribute getObjectMetadata_Role() {
+	public EAttribute getObjectMetadata_Stage() {
 		return (EAttribute)objectMetadataEClass.getEStructuralFeatures().get(20);
 	}
 
@@ -876,7 +876,7 @@ public class ManagementPackageImpl extends EPackageImpl implements ManagementPac
 		createEReference(objectMetadataEClass, OBJECT_METADATA__OBJECT_REF);
 		createEAttribute(objectMetadataEClass, OBJECT_METADATA__OBJECT_ID);
 		createEAttribute(objectMetadataEClass, OBJECT_METADATA__OBJECT_NAME);
-		createEAttribute(objectMetadataEClass, OBJECT_METADATA__ROLE);
+		createEAttribute(objectMetadataEClass, OBJECT_METADATA__STAGE);
 		createEAttribute(objectMetadataEClass, OBJECT_METADATA__LAST_CHANGE_REASON);
 		createEAttribute(objectMetadataEClass, OBJECT_METADATA__SCOPE);
 		createEAttribute(objectMetadataEClass, OBJECT_METADATA__IS_READ_ONLY);
@@ -981,7 +981,7 @@ public class ManagementPackageImpl extends EPackageImpl implements ManagementPac
 		initEReference(getObjectMetadata_ObjectRef(), ecorePackage.getEObject(), null, "objectRef", null, 0, 1, ObjectMetadata.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_COMPOSITE, IS_RESOLVE_PROXIES, !IS_UNSETTABLE, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
 		initEAttribute(getObjectMetadata_ObjectId(), ecorePackage.getEString(), "objectId", null, 1, 1, ObjectMetadata.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_UNSETTABLE, IS_ID, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
 		initEAttribute(getObjectMetadata_ObjectName(), ecorePackage.getEString(), "objectName", null, 0, 1, ObjectMetadata.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_UNSETTABLE, !IS_ID, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
-		initEAttribute(getObjectMetadata_Role(), ecorePackage.getEString(), "role", null, 1, 1, ObjectMetadata.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_UNSETTABLE, !IS_ID, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
+		initEAttribute(getObjectMetadata_Stage(), ecorePackage.getEString(), "stage", null, 1, 1, ObjectMetadata.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_UNSETTABLE, !IS_ID, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
 		initEAttribute(getObjectMetadata_LastChangeReason(), ecorePackage.getEString(), "lastChangeReason", null, 0, 1, ObjectMetadata.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_UNSETTABLE, !IS_ID, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
 		initEAttribute(getObjectMetadata_Scope(), ecorePackage.getEString(), "scope", null, 1, 1, ObjectMetadata.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_UNSETTABLE, !IS_ID, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
 		initEAttribute(getObjectMetadata_IsReadOnly(), ecorePackage.getEBoolean(), "isReadOnly", null, 0, 1, ObjectMetadata.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_UNSETTABLE, !IS_ID, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
@@ -1210,10 +1210,10 @@ public class ManagementPackageImpl extends EPackageImpl implements ManagementPac
 			   "documentation", "Human-readable object name"
 		   });
 		addAnnotation
-		  (getObjectMetadata_Role(),
+		  (getObjectMetadata_Stage(),
 		   source,
 		   new String[] {
-			   "documentation", "Storage role (draft, approved, documentation) - indicates which storage backend this metadata represents"
+			   "documentation", "The stage to which this metadata belongs (e.g. draft, approved, released, etc.)"
 		   });
 		addAnnotation
 		  (getObjectMetadata_LastChangeReason(),

@@ -72,33 +72,58 @@
     <genClasses image="false" ecoreClass="management-api.ecore#//EObjectStorageService">
       <genTypeParameters ecoreTypeParameter="management-api.ecore#//EObjectStorageService/T"/>
       <genOperations ecoreOperation="management-api.ecore#//EObjectStorageService/storeObject">
+        <genParameters ecoreParameter="management-api.ecore#//EObjectStorageService/storeObject/scope"/>
+        <genParameters ecoreParameter="management-api.ecore#//EObjectStorageService/storeObject/registry"/>
+        <genParameters ecoreParameter="management-api.ecore#//EObjectStorageService/storeObject/stage"/>
         <genParameters ecoreParameter="management-api.ecore#//EObjectStorageService/storeObject/objectId"/>
         <genParameters ecoreParameter="management-api.ecore#//EObjectStorageService/storeObject/object"/>
         <genParameters ecoreParameter="management-api.ecore#//EObjectStorageService/storeObject/metadata"/>
       </genOperations>
       <genOperations ecoreOperation="management-api.ecore#//EObjectStorageService/retrieveObject">
+        <genParameters ecoreParameter="management-api.ecore#//EObjectStorageService/retrieveObject/scope"/>
+        <genParameters ecoreParameter="management-api.ecore#//EObjectStorageService/retrieveObject/registry"/>
+        <genParameters ecoreParameter="management-api.ecore#//EObjectStorageService/retrieveObject/stage"/>
         <genParameters ecoreParameter="management-api.ecore#//EObjectStorageService/retrieveObject/objectId"/>
       </genOperations>
       <genOperations ecoreOperation="management-api.ecore#//EObjectStorageService/retrieveMetadata">
+        <genParameters ecoreParameter="management-api.ecore#//EObjectStorageService/retrieveMetadata/scope"/>
+        <genParameters ecoreParameter="management-api.ecore#//EObjectStorageService/retrieveMetadata/registry"/>
+        <genParameters ecoreParameter="management-api.ecore#//EObjectStorageService/retrieveMetadata/stage"/>
         <genParameters ecoreParameter="management-api.ecore#//EObjectStorageService/retrieveMetadata/objectId"/>
       </genOperations>
       <genOperations ecoreOperation="management-api.ecore#//EObjectStorageService/deleteObject">
+        <genParameters ecoreParameter="management-api.ecore#//EObjectStorageService/deleteObject/scope"/>
+        <genParameters ecoreParameter="management-api.ecore#//EObjectStorageService/deleteObject/registry"/>
+        <genParameters ecoreParameter="management-api.ecore#//EObjectStorageService/deleteObject/stage"/>
         <genParameters ecoreParameter="management-api.ecore#//EObjectStorageService/deleteObject/objectId"/>
       </genOperations>
-      <genOperations ecoreOperation="management-api.ecore#//EObjectStorageService/listObjectIds"/>
+      <genOperations ecoreOperation="management-api.ecore#//EObjectStorageService/listObjectIds">
+        <genParameters ecoreParameter="management-api.ecore#//EObjectStorageService/listObjectIds/scope"/>
+        <genParameters ecoreParameter="management-api.ecore#//EObjectStorageService/listObjectIds/registry"/>
+        <genParameters ecoreParameter="management-api.ecore#//EObjectStorageService/listObjectIds/stage"/>
+      </genOperations>
       <genOperations ecoreOperation="management-api.ecore#//EObjectStorageService/queryObjects">
         <genParameters ecoreParameter="management-api.ecore#//EObjectStorageService/queryObjects/query"/>
       </genOperations>
       <genOperations ecoreOperation="management-api.ecore#//EObjectStorageService/updateMetadata">
+        <genParameters ecoreParameter="management-api.ecore#//EObjectStorageService/updateMetadata/scope"/>
+        <genParameters ecoreParameter="management-api.ecore#//EObjectStorageService/updateMetadata/registry"/>
+        <genParameters ecoreParameter="management-api.ecore#//EObjectStorageService/updateMetadata/stage"/>
         <genParameters ecoreParameter="management-api.ecore#//EObjectStorageService/updateMetadata/objectId"/>
         <genParameters ecoreParameter="management-api.ecore#//EObjectStorageService/updateMetadata/metadata"/>
       </genOperations>
       <genOperations ecoreOperation="management-api.ecore#//EObjectStorageService/updateStatus">
+        <genParameters ecoreParameter="management-api.ecore#//EObjectStorageService/updateStatus/scope"/>
+        <genParameters ecoreParameter="management-api.ecore#//EObjectStorageService/updateStatus/registry"/>
+        <genParameters ecoreParameter="management-api.ecore#//EObjectStorageService/updateStatus/stage"/>
         <genParameters ecoreParameter="management-api.ecore#//EObjectStorageService/updateStatus/objectId"/>
         <genParameters ecoreParameter="management-api.ecore#//EObjectStorageService/updateStatus/newStatus"/>
         <genParameters ecoreParameter="management-api.ecore#//EObjectStorageService/updateStatus/changeUser"/>
       </genOperations>
       <genOperations ecoreOperation="management-api.ecore#//EObjectStorageService/exists">
+        <genParameters ecoreParameter="management-api.ecore#//EObjectStorageService/exists/scope"/>
+        <genParameters ecoreParameter="management-api.ecore#//EObjectStorageService/exists/registry"/>
+        <genParameters ecoreParameter="management-api.ecore#//EObjectStorageService/exists/stage"/>
         <genParameters ecoreParameter="management-api.ecore#//EObjectStorageService/exists/objectId"/>
       </genOperations>
       <genOperations ecoreOperation="management-api.ecore#//EObjectStorageService/getObjectCount"/>
@@ -112,12 +137,9 @@
       <genOperations ecoreOperation="management-api.ecore#//EObjectRegistryService/findByObjectName">
         <genParameters ecoreParameter="management-api.ecore#//EObjectRegistryService/findByObjectName/objectName"/>
       </genOperations>
-      <genOperations ecoreOperation="management-api.ecore#//EObjectRegistryService/findByObjectNameAndRole">
-        <genParameters ecoreParameter="management-api.ecore#//EObjectRegistryService/findByObjectNameAndRole/objectName"/>
-        <genParameters ecoreParameter="management-api.ecore#//EObjectRegistryService/findByObjectNameAndRole/role"/>
-      </genOperations>
-      <genOperations ecoreOperation="management-api.ecore#//EObjectRegistryService/findByRole">
-        <genParameters ecoreParameter="management-api.ecore#//EObjectRegistryService/findByRole/role"/>
+      <genOperations ecoreOperation="management-api.ecore#//EObjectRegistryService/findByObjectNameAndStage">
+        <genParameters ecoreParameter="management-api.ecore#//EObjectRegistryService/findByObjectNameAndStage/objectName"/>
+        <genParameters ecoreParameter="management-api.ecore#//EObjectRegistryService/findByObjectNameAndStage/stage"/>
       </genOperations>
       <genOperations ecoreOperation="management-api.ecore#//EObjectRegistryService/findByStatus">
         <genParameters ecoreParameter="management-api.ecore#//EObjectRegistryService/findByStatus/status"/>
@@ -150,43 +172,37 @@
         <genParameters ecoreParameter="management-api.ecore#//EObjectRegistryService/removeFromCache/objectId"/>
       </genOperations>
       <genOperations ecoreOperation="management-api.ecore#//EObjectRegistryService/getRegistryStatistics"/>
-      <genOperations ecoreOperation="management-api.ecore#//EObjectRegistryService/findByScopeAndRole">
-        <genParameters ecoreParameter="management-api.ecore#//EObjectRegistryService/findByScopeAndRole/scope"/>
-        <genParameters ecoreParameter="management-api.ecore#//EObjectRegistryService/findByScopeAndRole/role"/>
+      <genOperations ecoreOperation="management-api.ecore#//EObjectRegistryService/findByScopeAndStage">
+        <genParameters ecoreParameter="management-api.ecore#//EObjectRegistryService/findByScopeAndStage/scope"/>
+        <genParameters ecoreParameter="management-api.ecore#//EObjectRegistryService/findByScopeAndStage/stage"/>
       </genOperations>
-      <genOperations ecoreOperation="management-api.ecore#//EObjectRegistryService/findByScopeRoleAndName">
-        <genParameters ecoreParameter="management-api.ecore#//EObjectRegistryService/findByScopeRoleAndName/scope"/>
-        <genParameters ecoreParameter="management-api.ecore#//EObjectRegistryService/findByScopeRoleAndName/role"/>
-        <genParameters ecoreParameter="management-api.ecore#//EObjectRegistryService/findByScopeRoleAndName/name"/>
+      <genOperations ecoreOperation="management-api.ecore#//EObjectRegistryService/findByScopeStageAndName">
+        <genParameters ecoreParameter="management-api.ecore#//EObjectRegistryService/findByScopeStageAndName/scope"/>
+        <genParameters ecoreParameter="management-api.ecore#//EObjectRegistryService/findByScopeStageAndName/stage"/>
+        <genParameters ecoreParameter="management-api.ecore#//EObjectRegistryService/findByScopeStageAndName/name"/>
       </genOperations>
-      <genOperations ecoreOperation="management-api.ecore#//EObjectRegistryService/findByScopeRegistryAndRole">
-        <genParameters ecoreParameter="management-api.ecore#//EObjectRegistryService/findByScopeRegistryAndRole/scope"/>
-        <genParameters ecoreParameter="management-api.ecore#//EObjectRegistryService/findByScopeRegistryAndRole/registry"/>
-        <genParameters ecoreParameter="management-api.ecore#//EObjectRegistryService/findByScopeRegistryAndRole/role"/>
+      <genOperations ecoreOperation="management-api.ecore#//EObjectRegistryService/findByScopeRegistryAndStage">
+        <genParameters ecoreParameter="management-api.ecore#//EObjectRegistryService/findByScopeRegistryAndStage/scope"/>
+        <genParameters ecoreParameter="management-api.ecore#//EObjectRegistryService/findByScopeRegistryAndStage/registry"/>
+        <genParameters ecoreParameter="management-api.ecore#//EObjectRegistryService/findByScopeRegistryAndStage/stage"/>
       </genOperations>
-      <genOperations ecoreOperation="management-api.ecore#//EObjectRegistryService/findByScopeRegistryRoleAndName">
-        <genParameters ecoreParameter="management-api.ecore#//EObjectRegistryService/findByScopeRegistryRoleAndName/scope"/>
-        <genParameters ecoreParameter="management-api.ecore#//EObjectRegistryService/findByScopeRegistryRoleAndName/registry"/>
-        <genParameters ecoreParameter="management-api.ecore#//EObjectRegistryService/findByScopeRegistryRoleAndName/role"/>
-        <genParameters ecoreParameter="management-api.ecore#//EObjectRegistryService/findByScopeRegistryRoleAndName/name"/>
+      <genOperations ecoreOperation="management-api.ecore#//EObjectRegistryService/findByScopeRegistryStageAndName">
+        <genParameters ecoreParameter="management-api.ecore#//EObjectRegistryService/findByScopeRegistryStageAndName/scope"/>
+        <genParameters ecoreParameter="management-api.ecore#//EObjectRegistryService/findByScopeRegistryStageAndName/registry"/>
+        <genParameters ecoreParameter="management-api.ecore#//EObjectRegistryService/findByScopeRegistryStageAndName/stage"/>
+        <genParameters ecoreParameter="management-api.ecore#//EObjectRegistryService/findByScopeRegistryStageAndName/name"/>
       </genOperations>
     </genClasses>
     <genClasses image="false" ecoreClass="management-api.ecore#//StorageRegistry">
-      <genOperations ecoreOperation="management-api.ecore#//StorageRegistry/getStorageByRole">
-        <genParameters ecoreParameter="management-api.ecore#//StorageRegistry/getStorageByRole/role"/>
-      </genOperations>
       <genOperations ecoreOperation="management-api.ecore#//StorageRegistry/getAllStorages"/>
-      <genOperations ecoreOperation="management-api.ecore#//StorageRegistry/getAvailableRoles"/>
-      <genOperations ecoreOperation="management-api.ecore#//StorageRegistry/updateGovernanceDocumentationId">
-        <genParameters ecoreParameter="management-api.ecore#//StorageRegistry/updateGovernanceDocumentationId/role"/>
-        <genParameters ecoreParameter="management-api.ecore#//StorageRegistry/updateGovernanceDocumentationId/objectName"/>
-        <genParameters ecoreParameter="management-api.ecore#//StorageRegistry/updateGovernanceDocumentationId/newDocumentationId"/>
-        <genParameters ecoreParameter="management-api.ecore#//StorageRegistry/updateGovernanceDocumentationId/reason"/>
-      </genOperations>
-      <genOperations ecoreOperation="management-api.ecore#//StorageRegistry/searchMetadataAcrossRoles">
-        <genParameters ecoreParameter="management-api.ecore#//StorageRegistry/searchMetadataAcrossRoles/query"/>
+      <genOperations ecoreOperation="management-api.ecore#//StorageRegistry/searchMetadataAcrossTypes">
+        <genParameters ecoreParameter="management-api.ecore#//StorageRegistry/searchMetadataAcrossTypes/query"/>
       </genOperations>
       <genOperations ecoreOperation="management-api.ecore#//StorageRegistry/getStorageStatistics"/>
+      <genOperations ecoreOperation="management-api.ecore#//StorageRegistry/getStorageByType">
+        <genParameters ecoreParameter="management-api.ecore#//StorageRegistry/getStorageByType/type"/>
+      </genOperations>
+      <genOperations ecoreOperation="management-api.ecore#//StorageRegistry/getAvailableTypes"/>
     </genClasses>
   </genPackages>
 </genmodel:GenModel>

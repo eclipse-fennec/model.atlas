@@ -109,23 +109,23 @@ public class BasicRegistryHelper extends AbstractRegistryHelper {
     }
     
     @Override
-    public List<String> findByRole(String role) throws IOException {
-        Objects.requireNonNull(role, "Role cannot be null");
+    public List<String> findByStage(String stage) throws IOException {
+        Objects.requireNonNull(stage, "Stage cannot be null");
         
         return metadataById.entrySet().stream()
-            .filter(entry -> role.equals(entry.getValue().getRole()))
+            .filter(entry -> stage.equals(entry.getValue().getStage()))
             .map(Map.Entry::getKey)
             .collect(Collectors.toList());
     }
     
     @Override
-    public Optional<String> findByObjectNameAndRole(String objectName, String role) throws IOException {
+    public Optional<String> findByObjectNameAndStage(String objectName, String stage) throws IOException {
         Objects.requireNonNull(objectName, "Object name cannot be null");
-        Objects.requireNonNull(role, "Role cannot be null");
+        Objects.requireNonNull(stage, "stage cannot be null");
         
         return metadataById.entrySet().stream()
             .filter(entry -> objectName.equals(entry.getValue().getObjectName()) && 
-                           role.equals(entry.getValue().getRole()))
+            		stage.equals(entry.getValue().getStage()))
             .map(Map.Entry::getKey)
             .findFirst();
     }
@@ -169,13 +169,13 @@ public class BasicRegistryHelper extends AbstractRegistryHelper {
             ));
         stats.put("statusDistribution", statusCounts);
         
-        // Role distribution
-        Map<String, Long> roleCounts = metadataById.values().stream()
+        // Stage distribution
+        Map<String, Long> stageCounts = metadataById.values().stream()
             .collect(Collectors.groupingBy(
-                metadata -> metadata.getRole() != null ? metadata.getRole() : "unknown",
+                metadata -> metadata.getStage() != null ? metadata.getStage() : "unknown",
                 Collectors.counting()
             ));
-        stats.put("roleDistribution", roleCounts);
+        stats.put("stageDistribution", stageCounts);
         
         return stats;
     }

@@ -13,6 +13,7 @@
  */
 package org.eclipse.fennec.model.atlas.wf.workflowapi.impl;
 
+import org.eclipse.emf.ecore.EAttribute;
 import org.eclipse.emf.ecore.EClass;
 import org.eclipse.emf.ecore.EGenericType;
 import org.eclipse.emf.ecore.EOperation;
@@ -24,6 +25,10 @@ import org.eclipse.emf.ecore.impl.EPackageImpl;
 import org.eclipse.fennec.model.atlas.mgmt.management.ManagementPackage;
 
 import org.eclipse.fennec.model.atlas.wf.workflowapi.EObjectWorkflowService;
+import org.eclipse.fennec.model.atlas.wf.workflowapi.RegistryService;
+import org.eclipse.fennec.model.atlas.wf.workflowapi.ScopeService;
+import org.eclipse.fennec.model.atlas.wf.workflowapi.Stage;
+import org.eclipse.fennec.model.atlas.wf.workflowapi.StageService;
 import org.eclipse.fennec.model.atlas.wf.workflowapi.WorkflowApiFactory;
 import org.eclipse.fennec.model.atlas.wf.workflowapi.WorkflowApiPackage;
 
@@ -40,6 +45,34 @@ public class WorkflowApiPackageImpl extends EPackageImpl implements WorkflowApiP
 	 * @generated
 	 */
 	private EClass eObjectWorkflowServiceEClass = null;
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	private EClass stageServiceEClass = null;
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	private EClass registryServiceEClass = null;
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	private EClass scopeServiceEClass = null;
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	private EClass stageEClass = null;
 
 	/**
 	 * Creates an instance of the model <b>Package</b>, registered with
@@ -230,6 +263,376 @@ public class WorkflowApiPackageImpl extends EPackageImpl implements WorkflowApiP
 	 * @generated
 	 */
 	@Override
+	public EClass getStageService() {
+		return stageServiceEClass;
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
+	public EOperation getStageService__GetStageName() {
+		return stageServiceEClass.getEOperations().get(0);
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
+	public EOperation getStageService__IsWritable() {
+		return stageServiceEClass.getEOperations().get(1);
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
+	public EOperation getStageService__IsFinalStage() {
+		return stageServiceEClass.getEOperations().get(2);
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
+	public EClass getRegistryService() {
+		return registryServiceEClass;
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
+	public EOperation getRegistryService__UploadToStage__String_String_EObject_ObjectMetadata() {
+		return registryServiceEClass.getEOperations().get(0);
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
+	public EOperation getRegistryService__GetMetadataFromStage__String_String_String() {
+		return registryServiceEClass.getEOperations().get(1);
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
+	public EOperation getRegistryService__GetMetadataFromFinalStage__String_String() {
+		return registryServiceEClass.getEOperations().get(2);
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
+	public EOperation getRegistryService__GetContentFromStage__String_String_String() {
+		return registryServiceEClass.getEOperations().get(3);
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
+	public EOperation getRegistryService__UpdateInStage__String_String_EObject_String_String() {
+		return registryServiceEClass.getEOperations().get(4);
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
+	public EOperation getRegistryService__DeleteFromStage__String_String_String() {
+		return registryServiceEClass.getEOperations().get(5);
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
+	public EOperation getRegistryService__ListInStage__String_String() {
+		return registryServiceEClass.getEOperations().get(6);
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
+	public EOperation getRegistryService__ListInStageByName__String_String_String() {
+		return registryServiceEClass.getEOperations().get(7);
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
+	public EOperation getRegistryService__ListInFinalStage__String() {
+		return registryServiceEClass.getEOperations().get(8);
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
+	public EOperation getRegistryService__TransitionToStage__String_String_String_String() {
+		return registryServiceEClass.getEOperations().get(9);
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
+	public EOperation getRegistryService__GetRegistryName() {
+		return registryServiceEClass.getEOperations().get(10);
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
+	public EOperation getRegistryService__IsValidStage__String() {
+		return registryServiceEClass.getEOperations().get(11);
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
+	public EOperation getRegistryService__IsWritableStage__String() {
+		return registryServiceEClass.getEOperations().get(12);
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
+	public EOperation getRegistryService__IsFinalStageWritable() {
+		return registryServiceEClass.getEOperations().get(13);
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
+	public EOperation getRegistryService__IsTransitionAllowed__String_String() {
+		return registryServiceEClass.getEOperations().get(14);
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
+	public EClass getScopeService() {
+		return scopeServiceEClass;
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
+	public EOperation getScopeService__UploadToStageForRegistry__String_String_EObject_ObjectMetadata() {
+		return scopeServiceEClass.getEOperations().get(0);
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
+	public EOperation getScopeService__GetMetadataFromStageForRegistry__String_String_String() {
+		return scopeServiceEClass.getEOperations().get(1);
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
+	public EOperation getScopeService__GetMetadataFromFinalStageForRegistry__String_String() {
+		return scopeServiceEClass.getEOperations().get(2);
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
+	public EOperation getScopeService__GetContentFromStageForRegistry__String_String_String() {
+		return scopeServiceEClass.getEOperations().get(3);
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
+	public EOperation getScopeService__UpdateInStageForRegistry__String_String_EObject_String_String() {
+		return scopeServiceEClass.getEOperations().get(4);
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
+	public EOperation getScopeService__DeleteFromStageForRegistry__String_String_String() {
+		return scopeServiceEClass.getEOperations().get(5);
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
+	public EOperation getScopeService__ListInStageForRegistry__String_String() {
+		return scopeServiceEClass.getEOperations().get(6);
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
+	public EOperation getScopeService__ListInStageForRegistryByName__String_String_String() {
+		return scopeServiceEClass.getEOperations().get(7);
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
+	public EOperation getScopeService__ListInFinalStageForRegistry__String() {
+		return scopeServiceEClass.getEOperations().get(8);
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
+	public EOperation getScopeService__TransitionToStageForRegistry__String_String_String_String() {
+		return scopeServiceEClass.getEOperations().get(9);
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
+	public EOperation getScopeService__IsValidRegistry__String() {
+		return scopeServiceEClass.getEOperations().get(10);
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
+	public EOperation getScopeService__GetAllRegistries() {
+		return scopeServiceEClass.getEOperations().get(11);
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
+	public EClass getStage() {
+		return stageEClass;
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
+	public EAttribute getStage_Name() {
+		return (EAttribute)stageEClass.getEStructuralFeatures().get(0);
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
+	public EAttribute getStage_Writable() {
+		return (EAttribute)stageEClass.getEStructuralFeatures().get(1);
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
+	public EAttribute getStage_Final() {
+		return (EAttribute)stageEClass.getEStructuralFeatures().get(2);
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
 	public WorkflowApiFactory getWorkflowApiFactory() {
 		return (WorkflowApiFactory)getEFactoryInstance();
 	}
@@ -265,6 +668,47 @@ public class WorkflowApiPackageImpl extends EPackageImpl implements WorkflowApiP
 		createEOperation(eObjectWorkflowServiceEClass, EOBJECT_WORKFLOW_SERVICE___LIST_IN_FINAL_STAGE_FOR_REGISTRY__STRING);
 		createEOperation(eObjectWorkflowServiceEClass, EOBJECT_WORKFLOW_SERVICE___TRANSITION_TO_STAGE_FOR_REGISTRY__STRING_STRING_STRING_STRING);
 		createEOperation(eObjectWorkflowServiceEClass, EOBJECT_WORKFLOW_SERVICE___IS_TRANSITION_ALLOWED__STRING_STRING);
+
+		stageServiceEClass = createEClass(STAGE_SERVICE);
+		createEOperation(stageServiceEClass, STAGE_SERVICE___GET_STAGE_NAME);
+		createEOperation(stageServiceEClass, STAGE_SERVICE___IS_WRITABLE);
+		createEOperation(stageServiceEClass, STAGE_SERVICE___IS_FINAL_STAGE);
+
+		registryServiceEClass = createEClass(REGISTRY_SERVICE);
+		createEOperation(registryServiceEClass, REGISTRY_SERVICE___UPLOAD_TO_STAGE__STRING_STRING_EOBJECT_OBJECTMETADATA);
+		createEOperation(registryServiceEClass, REGISTRY_SERVICE___GET_METADATA_FROM_STAGE__STRING_STRING_STRING);
+		createEOperation(registryServiceEClass, REGISTRY_SERVICE___GET_METADATA_FROM_FINAL_STAGE__STRING_STRING);
+		createEOperation(registryServiceEClass, REGISTRY_SERVICE___GET_CONTENT_FROM_STAGE__STRING_STRING_STRING);
+		createEOperation(registryServiceEClass, REGISTRY_SERVICE___UPDATE_IN_STAGE__STRING_STRING_EOBJECT_STRING_STRING);
+		createEOperation(registryServiceEClass, REGISTRY_SERVICE___DELETE_FROM_STAGE__STRING_STRING_STRING);
+		createEOperation(registryServiceEClass, REGISTRY_SERVICE___LIST_IN_STAGE__STRING_STRING);
+		createEOperation(registryServiceEClass, REGISTRY_SERVICE___LIST_IN_STAGE_BY_NAME__STRING_STRING_STRING);
+		createEOperation(registryServiceEClass, REGISTRY_SERVICE___LIST_IN_FINAL_STAGE__STRING);
+		createEOperation(registryServiceEClass, REGISTRY_SERVICE___TRANSITION_TO_STAGE__STRING_STRING_STRING_STRING);
+		createEOperation(registryServiceEClass, REGISTRY_SERVICE___GET_REGISTRY_NAME);
+		createEOperation(registryServiceEClass, REGISTRY_SERVICE___IS_VALID_STAGE__STRING);
+		createEOperation(registryServiceEClass, REGISTRY_SERVICE___IS_WRITABLE_STAGE__STRING);
+		createEOperation(registryServiceEClass, REGISTRY_SERVICE___IS_FINAL_STAGE_WRITABLE);
+		createEOperation(registryServiceEClass, REGISTRY_SERVICE___IS_TRANSITION_ALLOWED__STRING_STRING);
+
+		scopeServiceEClass = createEClass(SCOPE_SERVICE);
+		createEOperation(scopeServiceEClass, SCOPE_SERVICE___UPLOAD_TO_STAGE_FOR_REGISTRY__STRING_STRING_EOBJECT_OBJECTMETADATA);
+		createEOperation(scopeServiceEClass, SCOPE_SERVICE___GET_METADATA_FROM_STAGE_FOR_REGISTRY__STRING_STRING_STRING);
+		createEOperation(scopeServiceEClass, SCOPE_SERVICE___GET_METADATA_FROM_FINAL_STAGE_FOR_REGISTRY__STRING_STRING);
+		createEOperation(scopeServiceEClass, SCOPE_SERVICE___GET_CONTENT_FROM_STAGE_FOR_REGISTRY__STRING_STRING_STRING);
+		createEOperation(scopeServiceEClass, SCOPE_SERVICE___UPDATE_IN_STAGE_FOR_REGISTRY__STRING_STRING_EOBJECT_STRING_STRING);
+		createEOperation(scopeServiceEClass, SCOPE_SERVICE___DELETE_FROM_STAGE_FOR_REGISTRY__STRING_STRING_STRING);
+		createEOperation(scopeServiceEClass, SCOPE_SERVICE___LIST_IN_STAGE_FOR_REGISTRY__STRING_STRING);
+		createEOperation(scopeServiceEClass, SCOPE_SERVICE___LIST_IN_STAGE_FOR_REGISTRY_BY_NAME__STRING_STRING_STRING);
+		createEOperation(scopeServiceEClass, SCOPE_SERVICE___LIST_IN_FINAL_STAGE_FOR_REGISTRY__STRING);
+		createEOperation(scopeServiceEClass, SCOPE_SERVICE___TRANSITION_TO_STAGE_FOR_REGISTRY__STRING_STRING_STRING_STRING);
+		createEOperation(scopeServiceEClass, SCOPE_SERVICE___IS_VALID_REGISTRY__STRING);
+		createEOperation(scopeServiceEClass, SCOPE_SERVICE___GET_ALL_REGISTRIES);
+
+		stageEClass = createEClass(STAGE);
+		createEAttribute(stageEClass, STAGE__NAME);
+		createEAttribute(stageEClass, STAGE__WRITABLE);
+		createEAttribute(stageEClass, STAGE__FINAL);
 	}
 
 	/**
@@ -295,10 +739,16 @@ public class WorkflowApiPackageImpl extends EPackageImpl implements WorkflowApiP
 
 		// Create type parameters
 		ETypeParameter eObjectWorkflowServiceEClass_T = addETypeParameter(eObjectWorkflowServiceEClass, "T");
+		ETypeParameter registryServiceEClass_T = addETypeParameter(registryServiceEClass, "T");
+		ETypeParameter scopeServiceEClass_T = addETypeParameter(scopeServiceEClass, "T");
 
 		// Set bounds for type parameters
 		EGenericType g1 = createEGenericType(ecorePackage.getEObject());
 		eObjectWorkflowServiceEClass_T.getEBounds().add(g1);
+		g1 = createEGenericType(ecorePackage.getEObject());
+		registryServiceEClass_T.getEBounds().add(g1);
+		g1 = createEGenericType(ecorePackage.getEObject());
+		scopeServiceEClass_T.getEBounds().add(g1);
 
 		// Add supertypes to classes
 
@@ -386,6 +836,202 @@ public class WorkflowApiPackageImpl extends EPackageImpl implements WorkflowApiP
 		op = initEOperation(getEObjectWorkflowService__IsTransitionAllowed__String_String(), ecorePackage.getEBoolean(), "isTransitionAllowed", 0, 1, IS_UNIQUE, IS_ORDERED);
 		addEParameter(op, ecorePackage.getEString(), "fromStage", 0, 1, IS_UNIQUE, IS_ORDERED);
 		addEParameter(op, ecorePackage.getEString(), "toStage", 0, 1, IS_UNIQUE, IS_ORDERED);
+
+		initEClass(stageServiceEClass, StageService.class, "StageService", !IS_ABSTRACT, !IS_INTERFACE, IS_GENERATED_INSTANCE_CLASS);
+
+		initEOperation(getStageService__GetStageName(), ecorePackage.getEString(), "getStageName", 0, 1, IS_UNIQUE, IS_ORDERED);
+
+		initEOperation(getStageService__IsWritable(), ecorePackage.getEBoolean(), "isWritable", 0, 1, IS_UNIQUE, IS_ORDERED);
+
+		initEOperation(getStageService__IsFinalStage(), ecorePackage.getEBoolean(), "isFinalStage", 0, 1, IS_UNIQUE, IS_ORDERED);
+
+		initEClass(registryServiceEClass, RegistryService.class, "RegistryService", !IS_ABSTRACT, !IS_INTERFACE, IS_GENERATED_INSTANCE_CLASS);
+
+		op = initEOperation(getRegistryService__UploadToStage__String_String_EObject_ObjectMetadata(), null, "uploadToStage", 0, 1, IS_UNIQUE, IS_ORDERED);
+		addEParameter(op, ecorePackage.getEString(), "scope", 0, 1, IS_UNIQUE, IS_ORDERED);
+		addEParameter(op, ecorePackage.getEString(), "stage", 0, 1, IS_UNIQUE, IS_ORDERED);
+		g1 = createEGenericType(eObjectWorkflowServiceEClass_T);
+		addEParameter(op, g1, "object", 1, 1, IS_UNIQUE, IS_ORDERED);
+		addEParameter(op, theManagementPackage.getObjectMetadata(), "metadata", 1, 1, IS_UNIQUE, IS_ORDERED);
+		g1 = createEGenericType(theManagementPackage.getPromise());
+		g2 = createEGenericType(theManagementPackage.getObjectMetadata());
+		g1.getETypeArguments().add(g2);
+		initEOperation(op, g1);
+
+		op = initEOperation(getRegistryService__GetMetadataFromStage__String_String_String(), theManagementPackage.getObjectMetadata(), "getMetadataFromStage", 0, 1, IS_UNIQUE, IS_ORDERED);
+		addEParameter(op, ecorePackage.getEString(), "scope", 0, 1, IS_UNIQUE, IS_ORDERED);
+		addEParameter(op, ecorePackage.getEString(), "stage", 0, 1, IS_UNIQUE, IS_ORDERED);
+		addEParameter(op, ecorePackage.getEString(), "objectId", 1, 1, IS_UNIQUE, IS_ORDERED);
+
+		op = initEOperation(getRegistryService__GetMetadataFromFinalStage__String_String(), theManagementPackage.getObjectMetadata(), "getMetadataFromFinalStage", 0, 1, IS_UNIQUE, IS_ORDERED);
+		addEParameter(op, ecorePackage.getEString(), "scope", 0, 1, IS_UNIQUE, IS_ORDERED);
+		addEParameter(op, ecorePackage.getEString(), "objectId", 1, 1, IS_UNIQUE, IS_ORDERED);
+
+		op = initEOperation(getRegistryService__GetContentFromStage__String_String_String(), null, "getContentFromStage", 0, 1, IS_UNIQUE, IS_ORDERED);
+		addEParameter(op, ecorePackage.getEString(), "scope", 0, 1, IS_UNIQUE, IS_ORDERED);
+		addEParameter(op, ecorePackage.getEString(), "stage", 0, 1, IS_UNIQUE, IS_ORDERED);
+		addEParameter(op, ecorePackage.getEString(), "objectId", 1, 1, IS_UNIQUE, IS_ORDERED);
+		g1 = createEGenericType(eObjectWorkflowServiceEClass_T);
+		initEOperation(op, g1);
+
+		op = initEOperation(getRegistryService__UpdateInStage__String_String_EObject_String_String(), null, "updateInStage", 0, 1, IS_UNIQUE, IS_ORDERED);
+		addEParameter(op, ecorePackage.getEString(), "scope", 0, 1, IS_UNIQUE, IS_ORDERED);
+		addEParameter(op, ecorePackage.getEString(), "stage", 0, 1, IS_UNIQUE, IS_ORDERED);
+		g1 = createEGenericType(eObjectWorkflowServiceEClass_T);
+		addEParameter(op, g1, "updatedObject", 1, 1, IS_UNIQUE, IS_ORDERED);
+		addEParameter(op, ecorePackage.getEString(), "objectId", 1, 1, IS_UNIQUE, IS_ORDERED);
+		addEParameter(op, ecorePackage.getEString(), "version", 1, 1, IS_UNIQUE, IS_ORDERED);
+		g1 = createEGenericType(theManagementPackage.getPromise());
+		g2 = createEGenericType(theManagementPackage.getObjectMetadata());
+		g1.getETypeArguments().add(g2);
+		initEOperation(op, g1);
+
+		op = initEOperation(getRegistryService__DeleteFromStage__String_String_String(), null, "deleteFromStage", 0, 1, IS_UNIQUE, IS_ORDERED);
+		addEParameter(op, ecorePackage.getEString(), "scope", 0, 1, IS_UNIQUE, IS_ORDERED);
+		addEParameter(op, ecorePackage.getEString(), "stage", 0, 1, IS_UNIQUE, IS_ORDERED);
+		addEParameter(op, ecorePackage.getEString(), "objectId", 1, 1, IS_UNIQUE, IS_ORDERED);
+		g1 = createEGenericType(theManagementPackage.getPromise());
+		g2 = createEGenericType(ecorePackage.getEBooleanObject());
+		g1.getETypeArguments().add(g2);
+		initEOperation(op, g1);
+
+		op = initEOperation(getRegistryService__ListInStage__String_String(), null, "listInStage", 0, 1, IS_UNIQUE, IS_ORDERED);
+		addEParameter(op, ecorePackage.getEString(), "scope", 0, 1, IS_UNIQUE, IS_ORDERED);
+		addEParameter(op, ecorePackage.getEString(), "stage", 0, 1, IS_UNIQUE, IS_ORDERED);
+		g1 = createEGenericType(theManagementPackage.getList());
+		g2 = createEGenericType(theManagementPackage.getObjectMetadata());
+		g1.getETypeArguments().add(g2);
+		initEOperation(op, g1);
+
+		op = initEOperation(getRegistryService__ListInStageByName__String_String_String(), null, "listInStageByName", 0, 1, IS_UNIQUE, IS_ORDERED);
+		addEParameter(op, ecorePackage.getEString(), "scope", 0, 1, IS_UNIQUE, IS_ORDERED);
+		addEParameter(op, ecorePackage.getEString(), "stage", 0, 1, IS_UNIQUE, IS_ORDERED);
+		addEParameter(op, ecorePackage.getEString(), "name", 0, 1, IS_UNIQUE, IS_ORDERED);
+		g1 = createEGenericType(theManagementPackage.getList());
+		g2 = createEGenericType(theManagementPackage.getObjectMetadata());
+		g1.getETypeArguments().add(g2);
+		initEOperation(op, g1);
+
+		op = initEOperation(getRegistryService__ListInFinalStage__String(), null, "listInFinalStage", 0, 1, IS_UNIQUE, IS_ORDERED);
+		addEParameter(op, ecorePackage.getEString(), "scope", 0, 1, IS_UNIQUE, IS_ORDERED);
+		g1 = createEGenericType(theManagementPackage.getList());
+		g2 = createEGenericType(theManagementPackage.getObjectMetadata());
+		g1.getETypeArguments().add(g2);
+		initEOperation(op, g1);
+
+		op = initEOperation(getRegistryService__TransitionToStage__String_String_String_String(), theManagementPackage.getObjectMetadata(), "transitionToStage", 0, 1, IS_UNIQUE, IS_ORDERED);
+		addEParameter(op, ecorePackage.getEString(), "scope", 0, 1, IS_UNIQUE, IS_ORDERED);
+		addEParameter(op, ecorePackage.getEString(), "objectId", 1, 1, IS_UNIQUE, IS_ORDERED);
+		addEParameter(op, ecorePackage.getEString(), "fromStage", 0, 1, IS_UNIQUE, IS_ORDERED);
+		addEParameter(op, ecorePackage.getEString(), "toStage", 0, 1, IS_UNIQUE, IS_ORDERED);
+
+		initEOperation(getRegistryService__GetRegistryName(), ecorePackage.getEString(), "getRegistryName", 0, 1, IS_UNIQUE, IS_ORDERED);
+
+		op = initEOperation(getRegistryService__IsValidStage__String(), ecorePackage.getEBoolean(), "isValidStage", 0, 1, IS_UNIQUE, IS_ORDERED);
+		addEParameter(op, ecorePackage.getEString(), "stageName", 0, 1, IS_UNIQUE, IS_ORDERED);
+
+		op = initEOperation(getRegistryService__IsWritableStage__String(), ecorePackage.getEBoolean(), "isWritableStage", 0, 1, IS_UNIQUE, IS_ORDERED);
+		addEParameter(op, ecorePackage.getEString(), "stageName", 0, 1, IS_UNIQUE, IS_ORDERED);
+
+		initEOperation(getRegistryService__IsFinalStageWritable(), ecorePackage.getEBoolean(), "isFinalStageWritable", 0, 1, IS_UNIQUE, IS_ORDERED);
+
+		op = initEOperation(getRegistryService__IsTransitionAllowed__String_String(), ecorePackage.getEBoolean(), "isTransitionAllowed", 0, 1, IS_UNIQUE, IS_ORDERED);
+		addEParameter(op, ecorePackage.getEString(), "fromStage", 0, 1, IS_UNIQUE, IS_ORDERED);
+		addEParameter(op, ecorePackage.getEString(), "toStage", 0, 1, IS_UNIQUE, IS_ORDERED);
+
+		initEClass(scopeServiceEClass, ScopeService.class, "ScopeService", !IS_ABSTRACT, !IS_INTERFACE, IS_GENERATED_INSTANCE_CLASS);
+
+		op = initEOperation(getScopeService__UploadToStageForRegistry__String_String_EObject_ObjectMetadata(), null, "uploadToStageForRegistry", 0, 1, IS_UNIQUE, IS_ORDERED);
+		addEParameter(op, ecorePackage.getEString(), "registry", 0, 1, IS_UNIQUE, IS_ORDERED);
+		addEParameter(op, ecorePackage.getEString(), "stage", 0, 1, IS_UNIQUE, IS_ORDERED);
+		g1 = createEGenericType(eObjectWorkflowServiceEClass_T);
+		addEParameter(op, g1, "object", 1, 1, IS_UNIQUE, IS_ORDERED);
+		addEParameter(op, theManagementPackage.getObjectMetadata(), "metadata", 1, 1, IS_UNIQUE, IS_ORDERED);
+		g1 = createEGenericType(theManagementPackage.getPromise());
+		g2 = createEGenericType(theManagementPackage.getObjectMetadata());
+		g1.getETypeArguments().add(g2);
+		initEOperation(op, g1);
+
+		op = initEOperation(getScopeService__GetMetadataFromStageForRegistry__String_String_String(), theManagementPackage.getObjectMetadata(), "getMetadataFromStageForRegistry", 0, 1, IS_UNIQUE, IS_ORDERED);
+		addEParameter(op, ecorePackage.getEString(), "registry", 0, 1, IS_UNIQUE, IS_ORDERED);
+		addEParameter(op, ecorePackage.getEString(), "stage", 0, 1, IS_UNIQUE, IS_ORDERED);
+		addEParameter(op, ecorePackage.getEString(), "objectId", 1, 1, IS_UNIQUE, IS_ORDERED);
+
+		op = initEOperation(getScopeService__GetMetadataFromFinalStageForRegistry__String_String(), theManagementPackage.getObjectMetadata(), "getMetadataFromFinalStageForRegistry", 0, 1, IS_UNIQUE, IS_ORDERED);
+		addEParameter(op, ecorePackage.getEString(), "registry", 0, 1, IS_UNIQUE, IS_ORDERED);
+		addEParameter(op, ecorePackage.getEString(), "objectId", 1, 1, IS_UNIQUE, IS_ORDERED);
+
+		op = initEOperation(getScopeService__GetContentFromStageForRegistry__String_String_String(), null, "getContentFromStageForRegistry", 0, 1, IS_UNIQUE, IS_ORDERED);
+		addEParameter(op, ecorePackage.getEString(), "registry", 0, 1, IS_UNIQUE, IS_ORDERED);
+		addEParameter(op, ecorePackage.getEString(), "stage", 0, 1, IS_UNIQUE, IS_ORDERED);
+		addEParameter(op, ecorePackage.getEString(), "objectId", 1, 1, IS_UNIQUE, IS_ORDERED);
+		g1 = createEGenericType(eObjectWorkflowServiceEClass_T);
+		initEOperation(op, g1);
+
+		op = initEOperation(getScopeService__UpdateInStageForRegistry__String_String_EObject_String_String(), null, "updateInStageForRegistry", 0, 1, IS_UNIQUE, IS_ORDERED);
+		addEParameter(op, ecorePackage.getEString(), "registry", 0, 1, IS_UNIQUE, IS_ORDERED);
+		addEParameter(op, ecorePackage.getEString(), "stage", 0, 1, IS_UNIQUE, IS_ORDERED);
+		g1 = createEGenericType(eObjectWorkflowServiceEClass_T);
+		addEParameter(op, g1, "updatedObject", 1, 1, IS_UNIQUE, IS_ORDERED);
+		addEParameter(op, ecorePackage.getEString(), "objectId", 1, 1, IS_UNIQUE, IS_ORDERED);
+		addEParameter(op, ecorePackage.getEString(), "version", 1, 1, IS_UNIQUE, IS_ORDERED);
+		g1 = createEGenericType(theManagementPackage.getPromise());
+		g2 = createEGenericType(theManagementPackage.getObjectMetadata());
+		g1.getETypeArguments().add(g2);
+		initEOperation(op, g1);
+
+		op = initEOperation(getScopeService__DeleteFromStageForRegistry__String_String_String(), null, "deleteFromStageForRegistry", 0, 1, IS_UNIQUE, IS_ORDERED);
+		addEParameter(op, ecorePackage.getEString(), "registry", 0, 1, IS_UNIQUE, IS_ORDERED);
+		addEParameter(op, ecorePackage.getEString(), "stage", 0, 1, IS_UNIQUE, IS_ORDERED);
+		addEParameter(op, ecorePackage.getEString(), "objectId", 1, 1, IS_UNIQUE, IS_ORDERED);
+		g1 = createEGenericType(theManagementPackage.getPromise());
+		g2 = createEGenericType(ecorePackage.getEBooleanObject());
+		g1.getETypeArguments().add(g2);
+		initEOperation(op, g1);
+
+		op = initEOperation(getScopeService__ListInStageForRegistry__String_String(), null, "listInStageForRegistry", 0, 1, IS_UNIQUE, IS_ORDERED);
+		addEParameter(op, ecorePackage.getEString(), "registry", 0, 1, IS_UNIQUE, IS_ORDERED);
+		addEParameter(op, ecorePackage.getEString(), "stage", 0, 1, IS_UNIQUE, IS_ORDERED);
+		g1 = createEGenericType(theManagementPackage.getList());
+		g2 = createEGenericType(theManagementPackage.getObjectMetadata());
+		g1.getETypeArguments().add(g2);
+		initEOperation(op, g1);
+
+		op = initEOperation(getScopeService__ListInStageForRegistryByName__String_String_String(), null, "listInStageForRegistryByName", 0, 1, IS_UNIQUE, IS_ORDERED);
+		addEParameter(op, ecorePackage.getEString(), "registry", 0, 1, IS_UNIQUE, IS_ORDERED);
+		addEParameter(op, ecorePackage.getEString(), "stage", 0, 1, IS_UNIQUE, IS_ORDERED);
+		addEParameter(op, ecorePackage.getEString(), "name", 0, 1, IS_UNIQUE, IS_ORDERED);
+		g1 = createEGenericType(theManagementPackage.getList());
+		g2 = createEGenericType(theManagementPackage.getObjectMetadata());
+		g1.getETypeArguments().add(g2);
+		initEOperation(op, g1);
+
+		op = initEOperation(getScopeService__ListInFinalStageForRegistry__String(), null, "listInFinalStageForRegistry", 0, 1, IS_UNIQUE, IS_ORDERED);
+		addEParameter(op, ecorePackage.getEString(), "registry", 0, 1, IS_UNIQUE, IS_ORDERED);
+		g1 = createEGenericType(theManagementPackage.getList());
+		g2 = createEGenericType(theManagementPackage.getObjectMetadata());
+		g1.getETypeArguments().add(g2);
+		initEOperation(op, g1);
+
+		op = initEOperation(getScopeService__TransitionToStageForRegistry__String_String_String_String(), theManagementPackage.getObjectMetadata(), "transitionToStageForRegistry", 0, 1, IS_UNIQUE, IS_ORDERED);
+		addEParameter(op, ecorePackage.getEString(), "registry", 0, 1, IS_UNIQUE, IS_ORDERED);
+		addEParameter(op, ecorePackage.getEString(), "objectId", 1, 1, IS_UNIQUE, IS_ORDERED);
+		addEParameter(op, ecorePackage.getEString(), "fromStage", 0, 1, IS_UNIQUE, IS_ORDERED);
+		addEParameter(op, ecorePackage.getEString(), "toStage", 0, 1, IS_UNIQUE, IS_ORDERED);
+
+		op = initEOperation(getScopeService__IsValidRegistry__String(), ecorePackage.getEBoolean(), "isValidRegistry", 0, 1, IS_UNIQUE, IS_ORDERED);
+		addEParameter(op, ecorePackage.getEString(), "registryName", 0, 1, IS_UNIQUE, IS_ORDERED);
+
+		op = initEOperation(getScopeService__GetAllRegistries(), null, "getAllRegistries", 0, 1, IS_UNIQUE, IS_ORDERED);
+		g1 = createEGenericType(theManagementPackage.getList());
+		g2 = createEGenericType(ecorePackage.getEString());
+		g1.getETypeArguments().add(g2);
+		initEOperation(op, g1);
+
+		initEClass(stageEClass, Stage.class, "Stage", !IS_ABSTRACT, !IS_INTERFACE, IS_GENERATED_INSTANCE_CLASS);
+		initEAttribute(getStage_Name(), ecorePackage.getEString(), "name", null, 0, 1, Stage.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_UNSETTABLE, !IS_ID, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
+		initEAttribute(getStage_Writable(), ecorePackage.getEBoolean(), "writable", null, 0, 1, Stage.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_UNSETTABLE, !IS_ID, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
+		initEAttribute(getStage_Final(), ecorePackage.getEBoolean(), "final", null, 0, 1, Stage.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_UNSETTABLE, !IS_ID, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
 
 		// Create resource
 		createResource(eNS_URI);

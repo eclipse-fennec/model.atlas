@@ -83,6 +83,30 @@ public class WorkflowApiSwitch<T1> extends Switch<T1> {
 				if (result == null) result = defaultCase(theEObject);
 				return result;
 			}
+			case WorkflowApiPackage.STAGE_SERVICE: {
+				StageService stageService = (StageService)theEObject;
+				T1 result = caseStageService(stageService);
+				if (result == null) result = defaultCase(theEObject);
+				return result;
+			}
+			case WorkflowApiPackage.REGISTRY_SERVICE: {
+				RegistryService<?> registryService = (RegistryService<?>)theEObject;
+				T1 result = caseRegistryService(registryService);
+				if (result == null) result = defaultCase(theEObject);
+				return result;
+			}
+			case WorkflowApiPackage.SCOPE_SERVICE: {
+				ScopeService<?> scopeService = (ScopeService<?>)theEObject;
+				T1 result = caseScopeService(scopeService);
+				if (result == null) result = defaultCase(theEObject);
+				return result;
+			}
+			case WorkflowApiPackage.STAGE: {
+				Stage stage = (Stage)theEObject;
+				T1 result = caseStage(stage);
+				if (result == null) result = defaultCase(theEObject);
+				return result;
+			}
 			default: return defaultCase(theEObject);
 		}
 	}
@@ -99,6 +123,66 @@ public class WorkflowApiSwitch<T1> extends Switch<T1> {
 	 * @generated
 	 */
 	public <T extends EObject> T1 caseEObjectWorkflowService(EObjectWorkflowService<T> object) {
+		return null;
+	}
+
+	/**
+	 * Returns the result of interpreting the object as an instance of '<em>Stage Service</em>'.
+	 * <!-- begin-user-doc -->
+	 * This implementation returns null;
+	 * returning a non-null result will terminate the switch.
+	 * <!-- end-user-doc -->
+	 * @param object the target of the switch.
+	 * @return the result of interpreting the object as an instance of '<em>Stage Service</em>'.
+	 * @see #doSwitch(org.eclipse.emf.ecore.EObject) doSwitch(EObject)
+	 * @generated
+	 */
+	public T1 caseStageService(StageService object) {
+		return null;
+	}
+
+	/**
+	 * Returns the result of interpreting the object as an instance of '<em>Registry Service</em>'.
+	 * <!-- begin-user-doc -->
+	 * This implementation returns null;
+	 * returning a non-null result will terminate the switch.
+	 * <!-- end-user-doc -->
+	 * @param object the target of the switch.
+	 * @return the result of interpreting the object as an instance of '<em>Registry Service</em>'.
+	 * @see #doSwitch(org.eclipse.emf.ecore.EObject) doSwitch(EObject)
+	 * @generated
+	 */
+	public <T extends EObject> T1 caseRegistryService(RegistryService<T> object) {
+		return null;
+	}
+
+	/**
+	 * Returns the result of interpreting the object as an instance of '<em>Scope Service</em>'.
+	 * <!-- begin-user-doc -->
+	 * This implementation returns null;
+	 * returning a non-null result will terminate the switch.
+	 * <!-- end-user-doc -->
+	 * @param object the target of the switch.
+	 * @return the result of interpreting the object as an instance of '<em>Scope Service</em>'.
+	 * @see #doSwitch(org.eclipse.emf.ecore.EObject) doSwitch(EObject)
+	 * @generated
+	 */
+	public <T extends EObject> T1 caseScopeService(ScopeService<T> object) {
+		return null;
+	}
+
+	/**
+	 * Returns the result of interpreting the object as an instance of '<em>Stage</em>'.
+	 * <!-- begin-user-doc -->
+	 * This implementation returns null;
+	 * returning a non-null result will terminate the switch.
+	 * <!-- end-user-doc -->
+	 * @param object the target of the switch.
+	 * @return the result of interpreting the object as an instance of '<em>Stage</em>'.
+	 * @see #doSwitch(org.eclipse.emf.ecore.EObject) doSwitch(EObject)
+	 * @generated
+	 */
+	public T1 caseStage(Stage object) {
 		return null;
 	}
 

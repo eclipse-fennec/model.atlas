@@ -96,10 +96,10 @@ public class LuceneRegistryAdvancedTest {
             registryService.findByRole(null), "findByRole should reject null role");
 
         assertThrows(NullPointerException.class, () -> 
-            registryService.findByObjectNameAndRole(null, "role"), "findByObjectNameAndRole should reject null objectName");
+            registryService.findByObjectNameAndStage(null, "role"), "findByObjectNameAndRole should reject null objectName");
 
         assertThrows(NullPointerException.class, () -> 
-            registryService.findByObjectNameAndRole("name", null), "findByObjectNameAndRole should reject null role");
+            registryService.findByObjectNameAndStage("name", null), "findByObjectNameAndRole should reject null role");
 
         assertThrows(NullPointerException.class, () -> 
             registryService.findByFingerprint(null), "findByFingerprint should reject null fingerprint");

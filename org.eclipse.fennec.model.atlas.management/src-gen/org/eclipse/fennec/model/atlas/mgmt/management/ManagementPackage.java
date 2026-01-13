@@ -267,13 +267,13 @@ public interface ManagementPackage extends org.eclipse.emf.ecore.EPackage {
 	int OBJECT_METADATA__OBJECT_NAME = 19;
 
 	/**
-	 * The feature id for the '<em><b>Role</b></em>' attribute.
+	 * The feature id for the '<em><b>Stage</b></em>' attribute.
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
 	 * @generated
 	 * @ordered
 	 */
-	int OBJECT_METADATA__ROLE = 20;
+	int OBJECT_METADATA__STAGE = 20;
 
 	/**
 	 * The feature id for the '<em><b>Last Change Reason</b></em>' attribute.
@@ -970,15 +970,15 @@ public interface ManagementPackage extends org.eclipse.emf.ecore.EPackage {
 	EAttribute getObjectMetadata_ObjectName();
 
 	/**
-	 * Returns the meta object for the attribute '{@link org.eclipse.fennec.model.atlas.mgmt.management.ObjectMetadata#getRole <em>Role</em>}'.
+	 * Returns the meta object for the attribute '{@link org.eclipse.fennec.model.atlas.mgmt.management.ObjectMetadata#getStage <em>Stage</em>}'.
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
-	 * @return the meta object for the attribute '<em>Role</em>'.
-	 * @see org.eclipse.fennec.model.atlas.mgmt.management.ObjectMetadata#getRole()
+	 * @return the meta object for the attribute '<em>Stage</em>'.
+	 * @see org.eclipse.fennec.model.atlas.mgmt.management.ObjectMetadata#getStage()
 	 * @see #getObjectMetadata()
 	 * @generated
 	 */
-	EAttribute getObjectMetadata_Role();
+	EAttribute getObjectMetadata_Stage();
 
 	/**
 	 * Returns the meta object for the attribute '{@link org.eclipse.fennec.model.atlas.mgmt.management.ObjectMetadata#getLastChangeReason <em>Last Change Reason</em>}'.
@@ -1612,12 +1612,12 @@ public interface ManagementPackage extends org.eclipse.emf.ecore.EPackage {
 		EAttribute OBJECT_METADATA__OBJECT_NAME = eINSTANCE.getObjectMetadata_ObjectName();
 
 		/**
-		 * The meta object literal for the '<em><b>Role</b></em>' attribute feature.
+		 * The meta object literal for the '<em><b>Stage</b></em>' attribute feature.
 		 * <!-- begin-user-doc -->
 		 * <!-- end-user-doc -->
 		 * @generated
 		 */
-		EAttribute OBJECT_METADATA__ROLE = eINSTANCE.getObjectMetadata_Role();
+		EAttribute OBJECT_METADATA__STAGE = eINSTANCE.getObjectMetadata_Stage();
 
 		/**
 		 * The meta object literal for the '<em><b>Last Change Reason</b></em>' attribute feature.

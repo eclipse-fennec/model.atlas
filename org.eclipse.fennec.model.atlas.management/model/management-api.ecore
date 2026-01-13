@@ -188,6 +188,9 @@
       <eGenericType eClassifier="ecore:EDataType management.ecore#//Promise">
         <eTypeArguments eClassifier="ecore:EClass management.ecore#//ObjectMetadata"/>
       </eGenericType>
+      <eParameters name="scope" lowerBound="1" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+      <eParameters name="registry" lowerBound="1" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+      <eParameters name="stage" lowerBound="1" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
       <eParameters name="objectId" lowerBound="1" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
       <eParameters name="object" lowerBound="1">
         <eGenericType eTypeParameter="#//EObjectStorageService/T"/>
@@ -201,6 +204,9 @@
       <eGenericType eClassifier="ecore:EDataType management.ecore#//Promise">
         <eTypeArguments eTypeParameter="#//EObjectStorageService/T"/>
       </eGenericType>
+      <eParameters name="scope" lowerBound="1" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+      <eParameters name="registry" lowerBound="1" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+      <eParameters name="stage" lowerBound="1" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
       <eParameters name="objectId" lowerBound="1" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
     </eOperations>
     <eOperations name="retrieveMetadata">
@@ -210,6 +216,9 @@
       <eGenericType eClassifier="ecore:EDataType management.ecore#//Promise">
         <eTypeArguments eClassifier="ecore:EClass management.ecore#//ObjectMetadata"/>
       </eGenericType>
+      <eParameters name="scope" lowerBound="1" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+      <eParameters name="registry" lowerBound="1" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+      <eParameters name="stage" lowerBound="1" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
       <eParameters name="objectId" lowerBound="1" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
     </eOperations>
     <eOperations name="deleteObject">
@@ -219,6 +228,9 @@
       <eGenericType eClassifier="ecore:EDataType management.ecore#//Promise">
         <eTypeArguments eClassifier="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EBooleanObject"/>
       </eGenericType>
+      <eParameters name="scope" lowerBound="1" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+      <eParameters name="registry" lowerBound="1" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+      <eParameters name="stage" lowerBound="1" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
       <eParameters name="objectId" lowerBound="1" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
     </eOperations>
     <eOperations name="listObjectIds">
@@ -230,6 +242,9 @@
           <eTypeArguments eClassifier="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
         </eTypeArguments>
       </eGenericType>
+      <eParameters name="scope" lowerBound="1" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+      <eParameters name="registry" lowerBound="1" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+      <eParameters name="stage" lowerBound="1" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
     </eOperations>
     <eOperations name="queryObjects">
       <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
@@ -249,6 +264,9 @@
       <eGenericType eClassifier="ecore:EDataType management.ecore#//Promise">
         <eTypeArguments eClassifier="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EBooleanObject"/>
       </eGenericType>
+      <eParameters name="scope" lowerBound="1" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+      <eParameters name="registry" lowerBound="1" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+      <eParameters name="stage" lowerBound="1" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
       <eParameters name="objectId" lowerBound="1" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
       <eParameters name="metadata" lowerBound="1" eType="ecore:EClass management.ecore#//ObjectMetadata"/>
     </eOperations>
@@ -259,6 +277,9 @@
       <eGenericType eClassifier="ecore:EDataType management.ecore#//Promise">
         <eTypeArguments eClassifier="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EBooleanObject"/>
       </eGenericType>
+      <eParameters name="scope" lowerBound="1" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+      <eParameters name="registry" lowerBound="1" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+      <eParameters name="stage" lowerBound="1" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
       <eParameters name="objectId" lowerBound="1" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
       <eParameters name="newStatus" lowerBound="1" eType="ecore:EEnum management.ecore#//ObjectStatus"/>
       <eParameters name="changeUser" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
@@ -267,6 +288,9 @@
       <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
         <details key="documentation" value="Check if object exists without loading it. More efficient than retrieveObject() when only existence check is needed."/>
       </eAnnotations>
+      <eParameters name="scope" lowerBound="1" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+      <eParameters name="registry" lowerBound="1" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+      <eParameters name="stage" lowerBound="1" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
       <eParameters name="objectId" lowerBound="1" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
     </eOperations>
     <eOperations name="getObjectCount" lowerBound="1" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//ELong">
@@ -306,7 +330,7 @@
       </eGenericType>
       <eParameters name="objectName" lowerBound="1" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
     </eOperations>
-    <eOperations name="findByObjectNameAndRole">
+    <eOperations name="findByObjectNameAndStage">
       <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
         <details key="documentation" value="Find metadata for specific logical object and storage role. Returns Optional.empty() if not found for the specific objectName and role combination."/>
       </eAnnotations>
@@ -314,16 +338,7 @@
         <eTypeArguments eClassifier="ecore:EClass management.ecore#//ObjectMetadata"/>
       </eGenericType>
       <eParameters name="objectName" lowerBound="1" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
-      <eParameters name="role" lowerBound="1" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
-    </eOperations>
-    <eOperations name="findByRole">
-      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
-        <details key="documentation" value="Find all objects with the specified storage role (draft, approved, documentation) across all logical objects. Useful for role-based workflows."/>
-      </eAnnotations>
-      <eGenericType eClassifier="ecore:EDataType management.ecore#//List">
-        <eTypeArguments eClassifier="ecore:EClass management.ecore#//ObjectMetadata"/>
-      </eGenericType>
-      <eParameters name="role" lowerBound="1" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+      <eParameters name="stage" lowerBound="1" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
     </eOperations>
     <eOperations name="findByStatus">
       <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
@@ -421,7 +436,7 @@
         </eTypeArguments>
       </eGenericType>
     </eOperations>
-    <eOperations name="findByScopeAndRole">
+    <eOperations name="findByScopeAndStage">
       <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
         <details key="documentation" value="Find all objects with the specified storage role (draft, approved, documentation) and the specified scope (the tenant) across all logical objects."/>
       </eAnnotations>
@@ -429,9 +444,9 @@
         <eTypeArguments eClassifier="ecore:EClass management.ecore#//ObjectMetadata"/>
       </eGenericType>
       <eParameters name="scope" lowerBound="1" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
-      <eParameters name="role" lowerBound="1" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+      <eParameters name="stage" lowerBound="1" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
     </eOperations>
-    <eOperations name="findByScopeRoleAndName">
+    <eOperations name="findByScopeStageAndName">
       <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
         <details key="documentation" value="Find all objects with the specified storage role (draft, approved, documentation) and the specified scope (the tenant) across all logical objects, and whose name matches the given filter. "/>
       </eAnnotations>
@@ -439,10 +454,10 @@
         <eTypeArguments eClassifier="ecore:EClass management.ecore#//ObjectMetadata"/>
       </eGenericType>
       <eParameters name="scope" lowerBound="1" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
-      <eParameters name="role" lowerBound="1" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+      <eParameters name="stage" lowerBound="1" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
       <eParameters name="name" lowerBound="1" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
     </eOperations>
-    <eOperations name="findByScopeRegistryAndRole">
+    <eOperations name="findByScopeRegistryAndStage">
       <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
         <details key="documentation" value="Find all objects with the specified storage role (draft, approved, documentation), the specified scope (the tenant) and the specified registry across all logical objects."/>
       </eAnnotations>
@@ -451,9 +466,9 @@
       </eGenericType>
       <eParameters name="scope" lowerBound="1" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
       <eParameters name="registry" lowerBound="1" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
-      <eParameters name="role" lowerBound="1" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+      <eParameters name="stage" lowerBound="1" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
     </eOperations>
-    <eOperations name="findByScopeRegistryRoleAndName">
+    <eOperations name="findByScopeRegistryStageAndName">
       <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
         <details key="documentation" value="Find all objects with the specified storage role (draft, approved, documentation), the specified scope (the tenant) and the specified registry across all logical objects that matches the given name filter."/>
       </eAnnotations>
@@ -462,7 +477,7 @@
       </eGenericType>
       <eParameters name="scope" lowerBound="1" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
       <eParameters name="registry" lowerBound="1" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
-      <eParameters name="role" lowerBound="1" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+      <eParameters name="stage" lowerBound="1" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
       <eParameters name="name" lowerBound="1" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
     </eOperations>
   </eClassifiers>
@@ -470,15 +485,6 @@
     <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
       <details key="documentation" value="Registry service for role-based storage service discovery and governance documentation lifecycle management. Provides centralized access to all storage services by role (draft, approved, release, documentation, archived) and handles bi-directional governance documentation references across storage tiers."/>
     </eAnnotations>
-    <eOperations name="getStorageByRole">
-      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
-        <details key="documentation" value="Get storage service by role name. Returns the storage service configured for the specified role (e.g. 'draft', 'approved', 'release', 'documentation'). Returns null if no storage service is registered for the given role."/>
-      </eAnnotations>
-      <eGenericType eClassifier="#//EObjectStorageService">
-        <eTypeArguments eClassifier="ecore:EClass http://www.eclipse.org/emf/2002/Ecore#//EObject"/>
-      </eGenericType>
-      <eParameters name="role" lowerBound="1" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
-    </eOperations>
     <eOperations name="getAllStorages" upperBound="-1">
       <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
         <details key="documentation" value="Get all registered storage services. Returns a list of all storage services across all roles, useful for bulk operations and system health checks."/>
@@ -487,23 +493,9 @@
         <eTypeArguments eClassifier="ecore:EClass http://www.eclipse.org/emf/2002/Ecore#//EObject"/>
       </eGenericType>
     </eOperations>
-    <eOperations name="getAvailableRoles" upperBound="-1" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString">
+    <eOperations name="searchMetadataAcrossTypes" upperBound="-1" eType="ecore:EClass management.ecore#//ObjectMetadata">
       <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
-        <details key="documentation" value="Get set of all available storage roles. Returns the role names of all registered storage services (e.g. ['draft', 'approved', 'release', 'documentation'])."/>
-      </eAnnotations>
-    </eOperations>
-    <eOperations name="updateGovernanceDocumentationId" lowerBound="1" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EInt">
-      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
-        <details key="documentation" value="Update governance documentation ID for all active objects with the specified object name in a specific storage role. This maintains bi-directional references between ObjectMetadata and GovernanceDocumentation for objects in the specified role only. Active objects (DRAFT, APPROVED, DEPLOYED) are updated with the new documentation ID, while archived objects preserve their historical references for audit trail."/>
-      </eAnnotations>
-      <eParameters name="role" lowerBound="1" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
-      <eParameters name="objectName" lowerBound="1" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
-      <eParameters name="newDocumentationId" lowerBound="1" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
-      <eParameters name="reason" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
-    </eOperations>
-    <eOperations name="searchMetadataAcrossRoles" upperBound="-1" eType="ecore:EClass management.ecore#//ObjectMetadata">
-      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
-        <details key="documentation" value="Search metadata across all storage roles using a query. Aggregates results from all registered storage services, useful for cross-role object discovery and lifecycle analysis."/>
+        <details key="documentation" value="Search metadata across all storage types using a query. Aggregates results from all registered storage services, useful for cross-type object discovery and lifecycle analysis."/>
       </eAnnotations>
       <eParameters name="query" lowerBound="1" eType="ecore:EClass management.ecore#//ObjectQuery"/>
     </eOperations>
@@ -515,6 +507,20 @@
         <eTypeArguments eClassifier="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
         <eTypeArguments eClassifier="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EJavaObject"/>
       </eGenericType>
+    </eOperations>
+    <eOperations name="getStorageByType">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="Get storage service by type (in the sense that the storage.type config property, e.g. apicurio, file, minio, etc).  Returns null if no storage service is registered for the given type."/>
+      </eAnnotations>
+      <eGenericType eClassifier="#//EObjectStorageService">
+        <eTypeArguments eClassifier="ecore:EClass http://www.eclipse.org/emf/2002/Ecore#//EObject"/>
+      </eGenericType>
+      <eParameters name="type" lowerBound="1" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    </eOperations>
+    <eOperations name="getAvailableTypes" upperBound="-1" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="Get set of all available storage types. Returns the type names of all registered storage services (e.g. ['apicurio', 'file', 'minio'])."/>
+      </eAnnotations>
     </eOperations>
   </eClassifiers>
 </ecore:EPackage>

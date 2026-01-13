@@ -665,6 +665,10 @@ public class BasicEObjectRegistryService<T extends EObject> implements EObjectRe
         }
     }
 
+	/* 
+	 * (non-Javadoc)
+	 * @see org.eclipse.fennec.model.atlas.mgmt.api.EObjectRegistryService#findByObjectName(java.lang.String)
+	 */
 	@Override
 	public List<ObjectMetadata> findByObjectName(String objectName) {
 		requireNonNull(objectName, "Object name must not be null");
@@ -679,62 +683,55 @@ public class BasicEObjectRegistryService<T extends EObject> implements EObjectRe
 		}
 	}
 
+	/* 
+	 * (non-Javadoc)
+	 * @see org.eclipse.fennec.model.atlas.mgmt.api.EObjectRegistryService#findByObjectNameAndStage(java.lang.String, java.lang.String)
+	 */
 	@Override
-	public Optional<ObjectMetadata> findByObjectNameAndRole(String objectName, String role) {
+	public Optional<ObjectMetadata> findByObjectNameAndStage(String objectName, String stage) {
 		requireNonNull(objectName, "Object name must not be null");
-		requireNonNull(role, "Role must not be null");
+		requireNonNull(stage, "Stage must not be null");
 		
 		cacheLock.readLock().lock();
 		try {
 			return metadataById.values().stream()
-				.filter(metadata -> objectName.equals(metadata.getObjectName()) && role.equals(metadata.getRole()))
+				.filter(metadata -> objectName.equals(metadata.getObjectName()) && stage.equals(metadata.getStage()))
 				.findFirst();
 		} finally {
 			cacheLock.readLock().unlock();
 		}
 	}
 
-	@Override
-	public List<ObjectMetadata> findByRole(String role) {
-		requireNonNull(role, "Role must not be null");
-		
-		cacheLock.readLock().lock();
-		try {
-			return metadataById.values().stream()
-				.filter(metadata -> role.equals(metadata.getRole()))
-				.collect(Collectors.toList());
-		} finally {
-			cacheLock.readLock().unlock();
-		}
-	}
 	
+
 	/* 
 	 * (non-Javadoc)
-	 * @see org.eclipse.fennec.model.atlas.mgmt.api.EObjectRegistryService#findByScopeAndRole(java.lang.String, java.lang.String)
+	 * @see org.eclipse.fennec.model.atlas.mgmt.api.EObjectRegistryService#findByScopeAndStage(java.lang.String, java.lang.String)
 	 */
 	@Override
-	public List<ObjectMetadata> findByScopeAndRole(String scope, String role) {
+	public List<ObjectMetadata> findByScopeAndStage(String scope, String stage) {
 		requireNonNull(scope, "Scope must not be null");
-		requireNonNull(role, "Role must not be null");
+		requireNonNull(stage, "Stage must not be null");
 		
 		cacheLock.readLock().lock();
 		try {
 			return metadataById.values().stream()
-				.filter(metadata -> role.equals(metadata.getRole()) && scope.equals(metadata.getScope()))
+				.filter(metadata -> stage.equals(metadata.getStage()) && scope.equals(metadata.getScope()))
 				.collect(Collectors.toList());
 		} finally {
 			cacheLock.readLock().unlock();
 		}
 	}
 
+	
 	/* 
 	 * (non-Javadoc)
-	 * @see org.eclipse.fennec.model.atlas.mgmt.api.EObjectRegistryService#findByScopeRoleAndName(java.lang.String, java.lang.String, java.lang.String)
+	 * @see org.eclipse.fennec.model.atlas.mgmt.api.EObjectRegistryService#findByScopeStageAndName(java.lang.String, java.lang.String, java.lang.String)
 	 */
 	@Override
-	public List<ObjectMetadata> findByScopeRoleAndName(String scope, String role, String name) {
+	public List<ObjectMetadata> findByScopeStageAndName(String scope, String stage, String name) {
 		requireNonNull(scope, "Scope must not be null");
-		requireNonNull(role, "Role must not be null");
+		requireNonNull(stage, "Stage must not be null");
 		requireNonNull(name, "Name must not be null");
 		
 //		name can also contain * for wildcard search
@@ -744,11 +741,11 @@ public class BasicEObjectRegistryService<T extends EObject> implements EObjectRe
 		try {
 			if(isExact) {
 				return metadataById.values().stream()
-						.filter(metadata -> role.equals(metadata.getRole()) && scope.equals(metadata.getScope()) && name.equals(metadata.getObjectName()))
+						.filter(metadata -> stage.equals(metadata.getStage()) && scope.equals(metadata.getScope()) && name.equals(metadata.getObjectName()))
 						.collect(Collectors.toList());
 			} else {
 				return metadataById.values().stream()
-						.filter(metadata -> role.equals(metadata.getRole()) && scope.equals(metadata.getScope()) && metadata.getObjectName().contains(nameFilter))
+						.filter(metadata -> stage.equals(metadata.getStage()) && scope.equals(metadata.getScope()) && metadata.getObjectName().contains(nameFilter))
 						.collect(Collectors.toList());
 			}
 			
@@ -757,36 +754,38 @@ public class BasicEObjectRegistryService<T extends EObject> implements EObjectRe
 		}
 	}
 
+	
 	/* 
 	 * (non-Javadoc)
-	 * @see org.eclipse.fennec.model.atlas.mgmt.api.EObjectRegistryService#findByScopeRegistryAndRole(java.lang.String, java.lang.String, java.lang.String)
+	 * @see org.eclipse.fennec.model.atlas.mgmt.api.EObjectRegistryService#findByScopeRegistryAndStage(java.lang.String, java.lang.String, java.lang.String)
 	 */
 	@Override
-	public List<ObjectMetadata> findByScopeRegistryAndRole(String scope, String registry, String role) {
+	public List<ObjectMetadata> findByScopeRegistryAndStage(String scope, String registry, String stage) {
 		requireNonNull(scope, "Scope must not be null");
 		requireNonNull(registry, "Registry must not be null");
-		requireNonNull(role, "Role must not be null");
+		requireNonNull(stage, "Stage must not be null");
 		
 		cacheLock.readLock().lock();
 		try {
 			return metadataById.values().stream()
-				.filter(metadata -> role.equals(metadata.getRole()) && scope.equals(metadata.getScope()) && registry.equals(metadata.getRegistry()))
+				.filter(metadata -> stage.equals(metadata.getStage()) && scope.equals(metadata.getScope()) && registry.equals(metadata.getRegistry()))
 				.collect(Collectors.toList());
 		} finally {
 			cacheLock.readLock().unlock();
 		}
 	}
 
+	
 	/* 
 	 * (non-Javadoc)
-	 * @see org.eclipse.fennec.model.atlas.mgmt.api.EObjectRegistryService#findByScopeRegistryRoleAndName(java.lang.String, java.lang.String, java.lang.String, java.lang.String)
+	 * @see org.eclipse.fennec.model.atlas.mgmt.api.EObjectRegistryService#findByScopeRegistryStageAndName(java.lang.String, java.lang.String, java.lang.String, java.lang.String)
 	 */
 	@Override
-	public List<ObjectMetadata> findByScopeRegistryRoleAndName(String scope, String registry, String role,
+	public List<ObjectMetadata> findByScopeRegistryStageAndName(String scope, String registry, String stage,
 			String name) {
 		requireNonNull(scope, "Scope must not be null");
 		requireNonNull(registry, "Registry must not be null");
-		requireNonNull(role, "Role must not be null");
+		requireNonNull(stage, "Stage must not be null");
 		requireNonNull(name, "Name must not be null");
 		
 //		name can also contain * for wildcard search
@@ -796,11 +795,11 @@ public class BasicEObjectRegistryService<T extends EObject> implements EObjectRe
 		try {
 			if(isExact) {
 				return metadataById.values().stream()
-						.filter(metadata -> role.equals(metadata.getRole()) && scope.equals(metadata.getScope()) && registry.equals(metadata.getRegistry()) && name.equals(metadata.getObjectName()))
+						.filter(metadata -> stage.equals(metadata.getStage()) && scope.equals(metadata.getScope()) && registry.equals(metadata.getRegistry()) && name.equals(metadata.getObjectName()))
 						.collect(Collectors.toList());
 			} else {
 				return metadataById.values().stream()
-						.filter(metadata -> role.equals(metadata.getRole()) && scope.equals(metadata.getScope()) && registry.equals(metadata.getRegistry()) && metadata.getObjectName().contains(nameFilter))
+						.filter(metadata -> stage.equals(metadata.getStage()) && scope.equals(metadata.getScope()) && registry.equals(metadata.getRegistry()) && metadata.getObjectName().contains(nameFilter))
 						.collect(Collectors.toList());
 			}
 			

@@ -307,7 +307,7 @@ public class LuceneRegistryHelper extends AbstractRegistryHelper {
     }
     
     @Override
-    public Optional<String> findByObjectNameAndRole(String objectName, String role) throws IOException {
+    public Optional<String> findByObjectNameAndStage(String objectName, String role) throws IOException {
         String query = "(" + FIELD_OBJECT_NAME + ":\"" + objectName + "\" AND " + FIELD_ROLE + ":" + role + ")";
         List<String> results = searchObjectIds(query, 1);
         return results.isEmpty() ? Optional.empty() : Optional.of(results.get(0));

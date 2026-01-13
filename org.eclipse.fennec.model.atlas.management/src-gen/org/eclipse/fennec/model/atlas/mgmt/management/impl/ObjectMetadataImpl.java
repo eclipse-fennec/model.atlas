@@ -63,7 +63,7 @@ import org.eclipse.fennec.model.atlas.mgmt.management.ObjectStatus;
  *   <li>{@link org.eclipse.fennec.model.atlas.mgmt.management.impl.ObjectMetadataImpl#getObjectRef <em>Object Ref</em>}</li>
  *   <li>{@link org.eclipse.fennec.model.atlas.mgmt.management.impl.ObjectMetadataImpl#getObjectId <em>Object Id</em>}</li>
  *   <li>{@link org.eclipse.fennec.model.atlas.mgmt.management.impl.ObjectMetadataImpl#getObjectName <em>Object Name</em>}</li>
- *   <li>{@link org.eclipse.fennec.model.atlas.mgmt.management.impl.ObjectMetadataImpl#getRole <em>Role</em>}</li>
+ *   <li>{@link org.eclipse.fennec.model.atlas.mgmt.management.impl.ObjectMetadataImpl#getStage <em>Stage</em>}</li>
  *   <li>{@link org.eclipse.fennec.model.atlas.mgmt.management.impl.ObjectMetadataImpl#getLastChangeReason <em>Last Change Reason</em>}</li>
  *   <li>{@link org.eclipse.fennec.model.atlas.mgmt.management.impl.ObjectMetadataImpl#getScope <em>Scope</em>}</li>
  *   <li>{@link org.eclipse.fennec.model.atlas.mgmt.management.impl.ObjectMetadataImpl#isIsReadOnly <em>Is Read Only</em>}</li>
@@ -454,24 +454,24 @@ public class ObjectMetadataImpl extends MinimalEObjectImpl.Container implements 
 	protected String objectName = OBJECT_NAME_EDEFAULT;
 
 	/**
-	 * The default value of the '{@link #getRole() <em>Role</em>}' attribute.
+	 * The default value of the '{@link #getStage() <em>Stage</em>}' attribute.
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
-	 * @see #getRole()
+	 * @see #getStage()
 	 * @generated
 	 * @ordered
 	 */
-	protected static final String ROLE_EDEFAULT = null;
+	protected static final String STAGE_EDEFAULT = null;
 
 	/**
-	 * The cached value of the '{@link #getRole() <em>Role</em>}' attribute.
+	 * The cached value of the '{@link #getStage() <em>Stage</em>}' attribute.
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
-	 * @see #getRole()
+	 * @see #getStage()
 	 * @generated
 	 * @ordered
 	 */
-	protected String role = ROLE_EDEFAULT;
+	protected String stage = STAGE_EDEFAULT;
 
 	/**
 	 * The default value of the '{@link #getLastChangeReason() <em>Last Change Reason</em>}' attribute.
@@ -1045,8 +1045,8 @@ public class ObjectMetadataImpl extends MinimalEObjectImpl.Container implements 
 	 * @generated
 	 */
 	@Override
-	public String getRole() {
-		return role;
+	public String getStage() {
+		return stage;
 	}
 
 	/**
@@ -1055,11 +1055,11 @@ public class ObjectMetadataImpl extends MinimalEObjectImpl.Container implements 
 	 * @generated
 	 */
 	@Override
-	public void setRole(String newRole) {
-		String oldRole = role;
-		role = newRole;
+	public void setStage(String newStage) {
+		String oldStage = stage;
+		stage = newStage;
 		if (eNotificationRequired())
-			eNotify(new ENotificationImpl(this, Notification.SET, ManagementPackage.OBJECT_METADATA__ROLE, oldRole, role));
+			eNotify(new ENotificationImpl(this, Notification.SET, ManagementPackage.OBJECT_METADATA__STAGE, oldStage, stage));
 	}
 
 	/**
@@ -1218,8 +1218,8 @@ public class ObjectMetadataImpl extends MinimalEObjectImpl.Container implements 
 				return getObjectId();
 			case ManagementPackage.OBJECT_METADATA__OBJECT_NAME:
 				return getObjectName();
-			case ManagementPackage.OBJECT_METADATA__ROLE:
-				return getRole();
+			case ManagementPackage.OBJECT_METADATA__STAGE:
+				return getStage();
 			case ManagementPackage.OBJECT_METADATA__LAST_CHANGE_REASON:
 				return getLastChangeReason();
 			case ManagementPackage.OBJECT_METADATA__SCOPE:
@@ -1300,8 +1300,8 @@ public class ObjectMetadataImpl extends MinimalEObjectImpl.Container implements 
 			case ManagementPackage.OBJECT_METADATA__OBJECT_NAME:
 				setObjectName((String)newValue);
 				return;
-			case ManagementPackage.OBJECT_METADATA__ROLE:
-				setRole((String)newValue);
+			case ManagementPackage.OBJECT_METADATA__STAGE:
+				setStage((String)newValue);
 				return;
 			case ManagementPackage.OBJECT_METADATA__LAST_CHANGE_REASON:
 				setLastChangeReason((String)newValue);
@@ -1387,8 +1387,8 @@ public class ObjectMetadataImpl extends MinimalEObjectImpl.Container implements 
 			case ManagementPackage.OBJECT_METADATA__OBJECT_NAME:
 				setObjectName(OBJECT_NAME_EDEFAULT);
 				return;
-			case ManagementPackage.OBJECT_METADATA__ROLE:
-				setRole(ROLE_EDEFAULT);
+			case ManagementPackage.OBJECT_METADATA__STAGE:
+				setStage(STAGE_EDEFAULT);
 				return;
 			case ManagementPackage.OBJECT_METADATA__LAST_CHANGE_REASON:
 				setLastChangeReason(LAST_CHANGE_REASON_EDEFAULT);
@@ -1454,8 +1454,8 @@ public class ObjectMetadataImpl extends MinimalEObjectImpl.Container implements 
 				return OBJECT_ID_EDEFAULT == null ? objectId != null : !OBJECT_ID_EDEFAULT.equals(objectId);
 			case ManagementPackage.OBJECT_METADATA__OBJECT_NAME:
 				return OBJECT_NAME_EDEFAULT == null ? objectName != null : !OBJECT_NAME_EDEFAULT.equals(objectName);
-			case ManagementPackage.OBJECT_METADATA__ROLE:
-				return ROLE_EDEFAULT == null ? role != null : !ROLE_EDEFAULT.equals(role);
+			case ManagementPackage.OBJECT_METADATA__STAGE:
+				return STAGE_EDEFAULT == null ? stage != null : !STAGE_EDEFAULT.equals(stage);
 			case ManagementPackage.OBJECT_METADATA__LAST_CHANGE_REASON:
 				return LAST_CHANGE_REASON_EDEFAULT == null ? lastChangeReason != null : !LAST_CHANGE_REASON_EDEFAULT.equals(lastChangeReason);
 			case ManagementPackage.OBJECT_METADATA__SCOPE:
@@ -1514,8 +1514,8 @@ public class ObjectMetadataImpl extends MinimalEObjectImpl.Container implements 
 		result.append(objectId);
 		result.append(", objectName: ");
 		result.append(objectName);
-		result.append(", role: ");
-		result.append(role);
+		result.append(", stage: ");
+		result.append(stage);
 		result.append(", lastChangeReason: ");
 		result.append(lastChangeReason);
 		result.append(", scope: ");

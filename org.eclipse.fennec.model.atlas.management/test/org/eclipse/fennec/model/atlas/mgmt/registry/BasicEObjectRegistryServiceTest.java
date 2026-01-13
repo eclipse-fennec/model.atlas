@@ -536,32 +536,32 @@ public class BasicEObjectRegistryServiceTest {
         registryService.updateCache(documentationVersion);
 
         // Test finding specific objectName and role combination
-        Optional<ObjectMetadata> draftResult = registryService.findByObjectNameAndRole("PackageName", "draft");
+        Optional<ObjectMetadata> draftResult = registryService.findByObjectNameAndStage("PackageName", "draft");
         assertTrue(draftResult.isPresent());
         assertEquals("pkg-draft", draftResult.get().getObjectId());
         assertEquals("draft", draftResult.get().getRole());
 
-        Optional<ObjectMetadata> approvedResult = registryService.findByObjectNameAndRole("PackageName", "approved");
+        Optional<ObjectMetadata> approvedResult = registryService.findByObjectNameAndStage("PackageName", "approved");
         assertTrue(approvedResult.isPresent());
         assertEquals("pkg-approved", approvedResult.get().getObjectId());
         assertEquals("approved", approvedResult.get().getRole());
 
-        Optional<ObjectMetadata> documentationResult = registryService.findByObjectNameAndRole("PackageName", "documentation");
+        Optional<ObjectMetadata> documentationResult = registryService.findByObjectNameAndStage("PackageName", "documentation");
         assertTrue(documentationResult.isPresent());
         assertEquals("pkg-docs", documentationResult.get().getObjectId());
         assertEquals("documentation", documentationResult.get().getRole());
 
         // Test non-existent objectName
-        Optional<ObjectMetadata> nonExistentName = registryService.findByObjectNameAndRole("NonExistentPackage", "draft");
+        Optional<ObjectMetadata> nonExistentName = registryService.findByObjectNameAndStage("NonExistentPackage", "draft");
         assertFalse(nonExistentName.isPresent());
 
         // Test non-existent role for existing objectName
-        Optional<ObjectMetadata> nonExistentRole = registryService.findByObjectNameAndRole("PackageName", "production");
+        Optional<ObjectMetadata> nonExistentRole = registryService.findByObjectNameAndStage("PackageName", "production");
         assertFalse(nonExistentRole.isPresent());
 
         // Test null inputs
-        assertThrows(NullPointerException.class, () -> registryService.findByObjectNameAndRole(null, "draft"));
-        assertThrows(NullPointerException.class, () -> registryService.findByObjectNameAndRole("PackageName", null));
+        assertThrows(NullPointerException.class, () -> registryService.findByObjectNameAndStage(null, "draft"));
+        assertThrows(NullPointerException.class, () -> registryService.findByObjectNameAndStage("PackageName", null));
     }
 
     @Test

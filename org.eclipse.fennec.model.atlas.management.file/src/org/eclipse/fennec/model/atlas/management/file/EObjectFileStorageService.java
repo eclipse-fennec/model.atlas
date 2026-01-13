@@ -196,7 +196,7 @@ public class EObjectFileStorageService extends AbstractEObjectStorageService {
      * @see org.gecko.mac.mgmt.storage.AbstractEObjectStorageService#getStorageRole()
      */
     @Override
-    protected String getStorageRole() {
+    protected String getStorageType() {
         return storageRole;
     }
 

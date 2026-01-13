@@ -46,7 +46,7 @@ import org.osgi.util.promise.PromiseFactory;
  * <ul>
  * <li>When registry service is available, queries are delegated to registry for fast lookup</li>
  * <li>When registry service is unavailable, queries fall back to direct storage scanning</li>
- * <li>Registry results are properly filtered by storage role</li>
+ * <li>Registry results are properly filtered by storage type</li>
  * <li>Query parameters are mapped to appropriate registry methods</li>
  * <li>Fallback behavior works when registry queries fail</li>
  * </ul>
@@ -71,8 +71,8 @@ class AbstractEObjectStorageServiceQueryDelegationTest {
         storageService = new TestableAbstractEObjectStorageService();
         storageService.setPromiseFactory(promiseFactory);
         storageService.setStorageHelper(storageHelper);
-        storageService.setStorageRole("draft");
-        
+        storageService.setStorageType("file");
+
         // Use EMF factory to create real instances
         managementFactory = ManagementFactory.eINSTANCE;
     }
@@ -87,8 +87,8 @@ class AbstractEObjectStorageServiceQueryDelegationTest {
         statusAndTypeQuery.setStatus(ObjectStatus.DRAFT);
         statusAndTypeQuery.setObjectType("EPackage");
         
-        ObjectMetadata metadata1 = createTestMetadata("obj1", "draft", ObjectStatus.DRAFT, "EPackage");
-        ObjectMetadata metadata2 = createTestMetadata("obj2", "draft", ObjectStatus.DRAFT, "EPackage");
+        ObjectMetadata metadata1 = createTestMetadata("obj1", "file", ObjectStatus.DRAFT, "EPackage");
+        ObjectMetadata metadata2 = createTestMetadata("obj2", "file", ObjectStatus.DRAFT, "EPackage");
         List<ObjectMetadata> registryResults = Arrays.asList(metadata1, metadata2);
         
         when(registryService.findByStatusAndType(ObjectStatus.DRAFT, "EPackage"))
@@ -116,7 +116,7 @@ class AbstractEObjectStorageServiceQueryDelegationTest {
         statusOnlyQuery.setStatus(ObjectStatus.APPROVED);
         // objectType remains null by default
         
-        ObjectMetadata metadata = createTestMetadata("obj1", "draft", ObjectStatus.APPROVED, "Route");
+        ObjectMetadata metadata = createTestMetadata("obj1", "file", ObjectStatus.APPROVED, "Route");
         when(registryService.findByStatus(ObjectStatus.APPROVED))
             .thenReturn(Arrays.asList(metadata));
         
@@ -141,7 +141,7 @@ class AbstractEObjectStorageServiceQueryDelegationTest {
         typeQuery.setObjectType("Route");
         // status defaults to DRAFT (first enum value in EMF)
         
-        ObjectMetadata metadata = createTestMetadata("obj1", "draft", ObjectStatus.DRAFT, "Route");
+        ObjectMetadata metadata = createTestMetadata("obj1", "file", ObjectStatus.DRAFT, "Route");
         when(registryService.findByStatusAndType(ObjectStatus.DRAFT, "Route"))
             .thenReturn(Arrays.asList(metadata));
         
@@ -201,30 +201,30 @@ class AbstractEObjectStorageServiceQueryDelegationTest {
     }
 
     @Test
-    void testQueryRoleFiltering() throws Exception {
-        // Given: Registry returns results from multiple roles, but we only want our role
+    void testQueryStorageTypeFiltering() throws Exception {
+        // Given: Registry returns results from multiple storage types, but we only want our storage type
         storageService.setRegistryService(registryService);
-        storageService.setStorageRole("approved");
-        
+        storageService.setStorageType("minio");
+
         // Create fresh query for this test
-        ObjectQuery roleFilterQuery = managementFactory.createObjectQuery();
-        roleFilterQuery.setStatus(ObjectStatus.APPROVED);
-        
-        ObjectMetadata draftMetadata = createTestMetadata("obj1", "draft", ObjectStatus.APPROVED, "EPackage");
-        ObjectMetadata approvedMetadata = createTestMetadata("obj2", "approved", ObjectStatus.APPROVED, "EPackage");
-        ObjectMetadata releaseMetadata = createTestMetadata("obj3", "release", ObjectStatus.APPROVED, "EPackage");
-        
+        ObjectQuery typeFilterQuery = managementFactory.createObjectQuery();
+        typeFilterQuery.setStatus(ObjectStatus.APPROVED);
+
+        ObjectMetadata fileMetadata = createTestMetadata("obj1", "file", ObjectStatus.APPROVED, "EPackage");
+        ObjectMetadata minioMetadata = createTestMetadata("obj2", "minio", ObjectStatus.APPROVED, "EPackage");
+        ObjectMetadata apicurioMetadata = createTestMetadata("obj3", "apicurio", ObjectStatus.APPROVED, "EPackage");
+
         when(registryService.findByStatus(ObjectStatus.APPROVED))
-            .thenReturn(Arrays.asList(draftMetadata, approvedMetadata, releaseMetadata));
-        
+            .thenReturn(Arrays.asList(fileMetadata, minioMetadata, apicurioMetadata));
+
         // When: Query is executed
-        Promise<List<ObjectMetadata>> resultPromise = storageService.queryObjects(roleFilterQuery);
+        Promise<List<ObjectMetadata>> resultPromise = storageService.queryObjects(typeFilterQuery);
         List<ObjectMetadata> results = resultPromise.getValue();
-        
-        // Then: Only objects from our storage role are returned
+
+        // Then: Only objects from our storage type are returned
         assertEquals(1, results.size());
         assertEquals("obj2", results.get(0).getObjectId());
-        assertEquals("approved", results.get(0).getRole());
+        assertEquals("minio", results.get(0).getRole());
     }
 
     @Test
@@ -258,20 +258,20 @@ class AbstractEObjectStorageServiceQueryDelegationTest {
     private void setupStorageHelperForDirectScan() throws Exception {
         // Setup storage helper to return test objects
         when(storageHelper.listObjectIds()).thenReturn(Arrays.asList("obj1", "obj2"));
-        
-        ObjectMetadata metadata1 = createTestMetadata("obj1", "draft", ObjectStatus.DRAFT, "EPackage");
+
+        ObjectMetadata metadata1 = createTestMetadata("obj1", "file", ObjectStatus.DRAFT, "EPackage");
         metadata1.setUploadUser("user1");
-        ObjectMetadata metadata2 = createTestMetadata("obj2", "draft", ObjectStatus.APPROVED, "Route");
+        ObjectMetadata metadata2 = createTestMetadata("obj2", "file", ObjectStatus.APPROVED, "Route");
         metadata2.setUploadUser("user2");
-        
+
         when(storageHelper.loadMetadata("obj1")).thenReturn(metadata1);
         when(storageHelper.loadMetadata("obj2")).thenReturn(metadata2);
     }
 
-    private ObjectMetadata createTestMetadata(String objectId, String role, ObjectStatus status, String objectType) {
+    private ObjectMetadata createTestMetadata(String objectId, String storageType, ObjectStatus status, String objectType) {
         ObjectMetadata metadata = managementFactory.createObjectMetadata();
         metadata.setObjectId(objectId);
-        metadata.setRole(role);
+        metadata.setRole(storageType);
         metadata.setStatus(status);
         metadata.setObjectType(objectType);
         return metadata;
@@ -283,7 +283,7 @@ class AbstractEObjectStorageServiceQueryDelegationTest {
     private static class TestableAbstractEObjectStorageService extends AbstractEObjectStorageService {
         
         private EObjectRegistryService<EObject> testRegistryService;
-        private String testStorageRole = "test";
+        private String testStorageType = "test";
         
         @Override
         protected AbstractStorageHelper createStorageHelper() throws Exception {
@@ -301,8 +301,8 @@ class AbstractEObjectStorageServiceQueryDelegationTest {
         }
         
         @Override
-        protected String getStorageRole() {
-            return testStorageRole;
+        protected String getStorageType() {
+            return testStorageType;
         }
         
         // Helper methods for test setup
@@ -319,9 +319,9 @@ class AbstractEObjectStorageServiceQueryDelegationTest {
             this.registryService = registryService;
         }
         
-        void setStorageRole(String storageRole) {
-            this.testStorageRole = storageRole;
-            this.storageRole = storageRole;
+        void setStorageType(String storageType) {
+            this.testStorageType = storageType;
+            this.storageType = storageType;
         }
     }
 }

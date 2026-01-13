@@ -166,7 +166,7 @@ public class LuceneRegistryServiceTest {
         assertEquals(1, documentationObjects.size(), "Should find 1 documentation object");
 
         // Test specific object lookups
-        Optional<ObjectMetadata> fileDraft = registryService.findByObjectNameAndRole("FileDraft", "draft");
+        Optional<ObjectMetadata> fileDraft = registryService.findByObjectNameAndStage("FileDraft", "draft");
         assertTrue(fileDraft.isPresent(), "Should find file draft object");
         assertEquals("file-draft-1", fileDraft.get().getObjectId());
 
@@ -359,15 +359,15 @@ public class LuceneRegistryServiceTest {
         assertEquals(2, commonPackages.size(), "Should find 2 CommonPackage objects with different roles");
 
         // Test combined objectName and role queries
-        Optional<ObjectMetadata> sensorDraft = registryService.findByObjectNameAndRole("SensorModel", "draft");
+        Optional<ObjectMetadata> sensorDraft = registryService.findByObjectNameAndStage("SensorModel", "draft");
         assertTrue(sensorDraft.isPresent(), "Should find SensorModel draft");
         assertEquals("obj-1", sensorDraft.get().getObjectId());
 
-        Optional<ObjectMetadata> sensorApproved = registryService.findByObjectNameAndRole("SensorModel", "approved");
+        Optional<ObjectMetadata> sensorApproved = registryService.findByObjectNameAndStage("SensorModel", "approved");
         assertTrue(sensorApproved.isPresent(), "Should find SensorModel approved");
         assertEquals("obj-2", sensorApproved.get().getObjectId());
 
-        Optional<ObjectMetadata> packageDoc = registryService.findByObjectNameAndRole("CommonPackage", "documentation");
+        Optional<ObjectMetadata> packageDoc = registryService.findByObjectNameAndStage("CommonPackage", "documentation");
         assertTrue(packageDoc.isEmpty(), "Should not find CommonPackage documentation (doesn't exist)");
 
         // Test role queries return correct role values

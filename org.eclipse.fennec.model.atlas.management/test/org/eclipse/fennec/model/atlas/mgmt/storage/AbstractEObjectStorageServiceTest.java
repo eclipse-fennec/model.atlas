@@ -54,13 +54,13 @@ import org.osgi.util.promise.Promise;
 /**
  * Unit tests for AbstractEObjectStorageService.
  * 
- * <p>These tests validate the Template Method pattern implementation, role-based functionality,
+ * <p>These tests validate the Template Method pattern implementation, type-based functionality,
  * shared registry integration, and the complete Promise-based API without requiring OSGi or 
  * file system resources.</p>
  * 
  * <h3>Test Coverage</h3>
  * <ul>
- * <li><strong>Role Management</strong> - Tests automatic role setting in storeObject and updateMetadata</li>
+ * <li><strong>Type Management</strong> - Tests automatic type setting in storeObject and updateMetadata</li>
  * <li><strong>Template Methods</strong> - Tests abstract method requirements and lifecycle</li>
  * <li><strong>Registry Integration</strong> - Tests shared registry synchronization</li>
  * <li><strong>Activation/Deactivation</strong> - Tests service lifecycle management</li>
@@ -70,6 +70,10 @@ import org.osgi.util.promise.Promise;
  */
 @ExtendWith(MockitoExtension.class)
 public class AbstractEObjectStorageServiceTest {
+
+    private static final String TEST_SCOPE = "test-scope";
+    private static final String TEST_REGISTRY = "test-registry";
+    private static final String TEST_STAGE = "test-stage";
 
     @Mock
     private AbstractStorageHelper mockStorageHelper;
@@ -84,14 +88,14 @@ public class AbstractEObjectStorageServiceTest {
 
     // Test implementation of AbstractEObjectStorageService
     private static class TestableAbstractEObjectStorageService extends AbstractEObjectStorageService {
-        private String testStorageRole;
+        private String testStorageType;
         private AbstractStorageHelper testStorageHelper;
         private EObjectRegistryService<EObject> testRegistryService;
 
-        public TestableAbstractEObjectStorageService(String storageRole, 
+        public TestableAbstractEObjectStorageService(String storageType, 
                 AbstractStorageHelper storageHelper, 
                 EObjectRegistryService<EObject> registryService) {
-            this.testStorageRole = storageRole;
+            this.testStorageType = storageType;
             this.testStorageHelper = storageHelper;
             this.testRegistryService = registryService;
         }
@@ -107,8 +111,8 @@ public class AbstractEObjectStorageServiceTest {
         }
 
         @Override
-        protected String getStorageRole() {
-            return testStorageRole;
+        protected String getStorageType() {
+            return testStorageType;
         }
 
         @Override
@@ -119,32 +123,32 @@ public class AbstractEObjectStorageServiceTest {
 
     @BeforeEach
     public void setUp() throws Exception {
-        storageService = new TestableAbstractEObjectStorageService("test-role", mockStorageHelper, mockRegistryService);
+        storageService = new TestableAbstractEObjectStorageService("file", mockStorageHelper, mockRegistryService);
         storageService.bctx = mockBundleContext;
     }
 
     @Test
-    public void testActivationWithValidRole() throws Exception {
+    public void testActivationWithValidType() throws Exception {
         // Test successful activation
         assertDoesNotThrow(() -> storageService.activateStorageService());
 
-        // Verify role was set
-        assertEquals("test-role", storageService.storageRole);
+        // Verify type was set
+        assertEquals("file", storageService.storageType);
         assertNotNull(storageService.promiseFactory);
         assertNotNull(storageService.storageHelper);
         assertNotNull(storageService.registryService);
     }
 
     @Test
-    public void testActivationWithNullRole() {
-        // Create service with null role
-        TestableAbstractEObjectStorageService nullRoleService = new TestableAbstractEObjectStorageService(
+    public void testActivationWithNullType() {
+        // Create service with null type
+        TestableAbstractEObjectStorageService nullTypeService = new TestableAbstractEObjectStorageService(
             null, mockStorageHelper, mockRegistryService);
-        nullRoleService.bctx = mockBundleContext;
+        nullTypeService.bctx = mockBundleContext;
 
-        // Test activation failure with null role
+        // Test activation failure with null type
         Exception exception = assertThrows(NullPointerException.class, 
-            () -> nullRoleService.activateStorageService());
+            () -> nullTypeService.activateStorageService());
         
         assertTrue(exception.getMessage().contains("Storage role from getStorageRole() must not be null"));
     }
@@ -153,7 +157,7 @@ public class AbstractEObjectStorageServiceTest {
     public void testActivationWithNullRegistryService() {
         // Create service with null registry service
         TestableAbstractEObjectStorageService nullRegistryService = new TestableAbstractEObjectStorageService(
-            "test-role", mockStorageHelper, null);
+            "file", mockStorageHelper, null);
         nullRegistryService.bctx = mockBundleContext;
 
         // Test activation failure with null registry service
@@ -164,7 +168,7 @@ public class AbstractEObjectStorageServiceTest {
     }
 
     @Test
-    public void testStoreObjectWithRoleAutoSetting() throws Exception {
+    public void testStoreObjectWithTypeAutoSetting() throws Exception {
         // Setup
         storageService.activateStorageService();
         EPackage testPackage = EcoreFactory.eINSTANCE.createEPackage();
@@ -175,18 +179,18 @@ public class AbstractEObjectStorageServiceTest {
         metadata.setVersion("1.0.0");
         metadata.setUploadUser("testUser");
         metadata.setStatus(ObjectStatus.DRAFT);
-        // Note: role is not set initially
+        // Note: type is not set initially
 
         doNothing().when(mockStorageHelper).saveEObject(any(), any(), any());
         doNothing().when(mockStorageHelper).saveMetadata(any(), any());
         when(mockStorageHelper.getFileExtension(any())).thenReturn("ecore");
 
         // Execute
-        Promise<ObjectMetadata> result = storageService.storeObject("test-id", testPackage, metadata);
+        Promise<ObjectMetadata> result = storageService.storeObject(TEST_SCOPE, TEST_REGISTRY, TEST_STAGE, "test-id", testPackage, metadata);
         metadata = result.getValue();
 
-        // Verify role was automatically set
-        assertEquals("test-role", metadata.getRole());
+        // Verify type was automatically set
+        assertEquals("file", metadata.getRole());
         assertEquals("test-id", metadata.getObjectId());
 
         // Verify storage helper was called
@@ -212,7 +216,7 @@ public class AbstractEObjectStorageServiceTest {
         when(mockStorageHelper.getFileExtension(any())).thenReturn("ecore");
 
         // Execute with null objectId (should generate UUID)
-        Promise<ObjectMetadata> result = storageService.storeObject(null, testPackage, metadata);
+        Promise<ObjectMetadata> result = storageService.storeObject(TEST_SCOPE, TEST_REGISTRY, TEST_STAGE, null, testPackage, metadata);
         metadata = result.getValue();
         String objectId = metadata.getObjectId();
        
@@ -220,8 +224,8 @@ public class AbstractEObjectStorageServiceTest {
         assertNotNull(objectId);
         assertDoesNotThrow(() -> UUID.fromString(objectId));
 
-        // Verify role was set
-        assertEquals("test-role", metadata.getRole());
+        // Verify type was set
+        assertEquals("file", metadata.getRole());
 
         // Verify storage operations
         verify(mockStorageHelper).saveEObject(eq(objectId), eq(testPackage), eq(metadata));
@@ -246,7 +250,7 @@ public class AbstractEObjectStorageServiceTest {
         when(mockStorageHelper.getFileExtension(any())).thenReturn("ecore");
 
         // Execute with null objectId (should generate UUID and set it in metadata)
-        storageService.storeObject(null, testPackage, metadata).getValue();
+        storageService.storeObject(TEST_SCOPE, TEST_REGISTRY, TEST_STAGE, null, testPackage, metadata).getValue();
         String returnedObjectId = metadata.getObjectId();
 
         // Verify the caller's metadata object now has the objectId set
@@ -256,8 +260,8 @@ public class AbstractEObjectStorageServiceTest {
         // Verify it's a valid UUID
         assertDoesNotThrow(() -> UUID.fromString(metadata.getObjectId()));
         
-        // Verify role was also set
-        assertEquals("test-role", metadata.getRole());
+        // Verify type was also set
+        assertEquals("file", metadata.getRole());
     }
 
     @Test
@@ -279,7 +283,7 @@ public class AbstractEObjectStorageServiceTest {
 
         // Execute with provided objectId
         String providedObjectId = "my-custom-object-id";
-        Promise<ObjectMetadata> result = storageService.storeObject(providedObjectId, testPackage, metadata);
+        Promise<ObjectMetadata> result = storageService.storeObject(TEST_SCOPE, TEST_REGISTRY, TEST_STAGE, providedObjectId, testPackage, metadata);
         metadata = result.getValue();
         String returnedObjectId = metadata.getObjectId();
 
@@ -287,12 +291,12 @@ public class AbstractEObjectStorageServiceTest {
         assertEquals(providedObjectId, metadata.getObjectId(), "Metadata should have the provided objectId");
         assertEquals(providedObjectId, returnedObjectId, "Returned objectId should match provided objectId");
         
-        // Verify role was also set
-        assertEquals("test-role", metadata.getRole());
+        // Verify type was also set
+        assertEquals("file", metadata.getRole());
     }
 
     @Test
-    public void testUpdateMetadataWithRoleAutoSetting() throws Exception {
+    public void testUpdateMetadataWithTypeAutoSetting() throws Exception {
         // Setup
         storageService.activateStorageService();
         
@@ -303,24 +307,24 @@ public class AbstractEObjectStorageServiceTest {
         existingMetadata.setVersion("1.0.0");
         existingMetadata.setUploadUser("original-user");
         existingMetadata.setStatus(ObjectStatus.DRAFT);
-        existingMetadata.setRole("original-role");
+        existingMetadata.setRole("original-type");
         
         ObjectMetadata updateMetadata = ManagementFactory.eINSTANCE.createObjectMetadata();
         updateMetadata.setObjectName("UpdatedPackage");
         updateMetadata.setVersion("2.0.0");
         updateMetadata.setStatus(ObjectStatus.APPROVED);
-        // Note: role is not set initially
+        // Note: type is not set initially
 
         when(mockStorageHelper.objectExists("test-id")).thenReturn(true);
         when(mockStorageHelper.loadMetadata("test-id")).thenReturn(existingMetadata);
         doNothing().when(mockStorageHelper).saveMetadata(any(), any());
 
         // Execute
-        Promise<Boolean> result = storageService.updateMetadata("test-id", updateMetadata);
+        Promise<Boolean> result = storageService.updateMetadata(TEST_SCOPE, TEST_REGISTRY, TEST_STAGE, "test-id", updateMetadata);
         Boolean success = result.getValue();
 
         // Verify original metadata was NOT modified (copy-based approach)
-        assertEquals("original-role", existingMetadata.getRole(), "Original metadata should not be modified");
+        assertEquals("original-type", existingMetadata.getRole(), "Original metadata should not be modified");
         assertTrue(success);
 
         // Verify storage operations
@@ -343,7 +347,7 @@ public class AbstractEObjectStorageServiceTest {
         when(mockStorageHelper.objectExists("non-existent")).thenReturn(false);
 
         // Execute
-        Promise<Boolean> result = storageService.updateMetadata("non-existent", updateMetadata);
+        Promise<Boolean> result = storageService.updateMetadata(TEST_SCOPE, TEST_REGISTRY, TEST_STAGE, "non-existent", updateMetadata);
         Boolean success = result.getValue();
 
         // Verify
@@ -356,7 +360,7 @@ public class AbstractEObjectStorageServiceTest {
     }
 
     @Test
-    public void testUpdateStatusWithRolePreservation() throws Exception {
+    public void testUpdateStatusWithTypePreservation() throws Exception {
         // Setup
         storageService.activateStorageService();
         
@@ -364,14 +368,14 @@ public class AbstractEObjectStorageServiceTest {
         existingMetadata.setObjectId("test-id");
         existingMetadata.setObjectName("TestPackage");
         existingMetadata.setStatus(ObjectStatus.DRAFT);
-        existingMetadata.setRole("existing-role"); // Pre-existing role
+        existingMetadata.setRole("existing-type"); // Pre-existing type
 
         when(mockStorageHelper.objectExists("test-id")).thenReturn(true);
         when(mockStorageHelper.loadMetadata("test-id")).thenReturn(existingMetadata);
         doNothing().when(mockStorageHelper).saveMetadata(any(), any());
 
         // Execute
-        Promise<Boolean> result = storageService.updateStatus("test-id", ObjectStatus.APPROVED, "reviewer");
+        Promise<Boolean> result = storageService.updateStatus(TEST_SCOPE, TEST_REGISTRY, TEST_STAGE, "test-id", ObjectStatus.APPROVED, "reviewer");
         Boolean success = result.getValue();
 
         // Verify
@@ -380,8 +384,8 @@ public class AbstractEObjectStorageServiceTest {
         assertEquals("reviewer", existingMetadata.getLastChangeUser());
         assertNotNull(existingMetadata.getLastChangeTime());
         
-        // Verify the existing role was preserved (not overwritten)
-        assertEquals("existing-role", existingMetadata.getRole());
+        // Verify the existing type was preserved (not overwritten)
+        assertEquals("existing-type", existingMetadata.getRole());
 
         // Verify operations
         verify(mockStorageHelper).saveMetadata("test-id", existingMetadata);
@@ -395,7 +399,7 @@ public class AbstractEObjectStorageServiceTest {
         when(mockStorageHelper.deleteObject("test-id")).thenReturn(true);
 
         // Execute
-        Promise<Boolean> result = storageService.deleteObject("test-id");
+        Promise<Boolean> result = storageService.deleteObject(TEST_SCOPE, TEST_REGISTRY, TEST_STAGE, "test-id");
         Boolean success = result.getValue();
 
         // Verify
@@ -416,7 +420,7 @@ public class AbstractEObjectStorageServiceTest {
         when(mockStorageHelper.deleteObject("test-id")).thenReturn(false);
 
         // Execute
-        Promise<Boolean> result = storageService.deleteObject("test-id");
+        Promise<Boolean> result = storageService.deleteObject(TEST_SCOPE, TEST_REGISTRY, TEST_STAGE, "test-id");
         Boolean success = result.getValue();
 
         // Verify
@@ -436,7 +440,7 @@ public class AbstractEObjectStorageServiceTest {
         when(mockStorageHelper.loadEObject("test-id")).thenReturn(testPackage);
 
         // Execute
-        Promise<EObject> result = storageService.retrieveObject("test-id");
+        Promise<EObject> result = storageService.retrieveObject(TEST_SCOPE, TEST_REGISTRY, TEST_STAGE, "test-id");
         EObject retrieved = result.getValue();
 
         // Verify
@@ -459,7 +463,7 @@ public class AbstractEObjectStorageServiceTest {
         when(mockStorageHelper.loadMetadata("test-id")).thenReturn(metadata);
 
         // Execute
-        Promise<ObjectMetadata> result = storageService.retrieveMetadata("test-id");
+        Promise<ObjectMetadata> result = storageService.retrieveMetadata(TEST_SCOPE, TEST_REGISTRY, TEST_STAGE, "test-id");
         ObjectMetadata retrieved = result.getValue();
 
         // Verify
@@ -479,7 +483,7 @@ public class AbstractEObjectStorageServiceTest {
         when(mockStorageHelper.listObjectIds()).thenReturn(expectedIds);
 
         // Execute
-        Promise<List<String>> result = storageService.listObjectIds();
+        Promise<List<String>> result = storageService.listObjectIds(TEST_SCOPE, TEST_REGISTRY, TEST_STAGE);
         List<String> ids = result.getValue();
 
         // Verify
@@ -495,7 +499,7 @@ public class AbstractEObjectStorageServiceTest {
         when(mockStorageHelper.objectExists("existing-id")).thenReturn(true);
 
         // Execute
-        Boolean exists = storageService.exists("existing-id");
+        Boolean exists = storageService.exists(TEST_SCOPE, TEST_REGISTRY, TEST_STAGE, "existing-id");
 
         // Verify
         assertTrue(exists);
@@ -510,7 +514,7 @@ public class AbstractEObjectStorageServiceTest {
         when(mockStorageHelper.objectExists("non-existent")).thenReturn(false);
 
         // Execute
-        Boolean exists = storageService.exists("non-existent");
+        Boolean exists = storageService.exists(TEST_SCOPE, TEST_REGISTRY, TEST_STAGE, "non-existent");
 
         // Verify
         assertFalse(exists);
@@ -587,15 +591,15 @@ public class AbstractEObjectStorageServiceTest {
         doThrow(new RuntimeException("Storage error")).when(mockStorageHelper).saveEObject(any(), any(), any());
 
         // Execute and verify exception is propagated
-        Promise<ObjectMetadata> result = storageService.storeObject("test-id", testPackage, metadata);
+        Promise<ObjectMetadata> result = storageService.storeObject(TEST_SCOPE, TEST_REGISTRY, TEST_STAGE, "test-id", testPackage, metadata);
         // Verify the promise failed and contains the expected exception
         Throwable failure = result.getFailure();
         assertNotNull(failure, "Promise should have failed");
         assertTrue(failure instanceof RuntimeException);
         assertTrue(failure.getMessage().contains("Failed to store object"));
         
-        // Verify role was still set even though the operation failed
-        assertEquals("test-role", metadata.getRole());
+        // Verify type was still set even though the operation failed
+        assertEquals("file", metadata.getRole());
     }
 
     @Test
@@ -608,7 +612,7 @@ public class AbstractEObjectStorageServiceTest {
         metadata.setStatus(ObjectStatus.DRAFT);
         
         // Try to save metadata with null objectId - should fail in Promise
-        Promise<Boolean> result = storageService.updateMetadata(null, metadata);
+        Promise<Boolean> result = storageService.updateMetadata(TEST_SCOPE, TEST_REGISTRY, TEST_STAGE, null, metadata);
         
         // Verify the promise failed with appropriate exception
         Throwable failure = result.getFailure();
@@ -628,7 +632,7 @@ public class AbstractEObjectStorageServiceTest {
         metadata.setStatus(ObjectStatus.DRAFT);
         
         // Try to save metadata with empty objectId - should fail in Promise
-        Promise<Boolean> result = storageService.updateMetadata("", metadata);
+        Promise<Boolean> result = storageService.updateMetadata(TEST_SCOPE, TEST_REGISTRY, TEST_STAGE, "", metadata);
         
         // Verify the promise failed with appropriate exception
         Throwable failure = result.getFailure();
@@ -644,7 +648,7 @@ public class AbstractEObjectStorageServiceTest {
         storageService.activateStorageService();
         
         // Try to save null metadata - should fail in Promise
-        Promise<Boolean> result = storageService.updateMetadata("test-id", null);
+        Promise<Boolean> result = storageService.updateMetadata(TEST_SCOPE, TEST_REGISTRY, TEST_STAGE, "test-id", null);
         
         // Verify the promise failed with appropriate exception
         Throwable failure = result.getFailure();
@@ -667,7 +671,7 @@ public class AbstractEObjectStorageServiceTest {
         existingMetadata.setUploadUser("original-user");
         existingMetadata.setUploadTime(Instant.now().minusSeconds(3600)); // 1 hour ago
         existingMetadata.setStatus(ObjectStatus.DRAFT);
-        existingMetadata.setRole("original-role");
+        existingMetadata.setRole("original-type");
         existingMetadata.getProperties().put("original.prop", "original-value");
         
         // Create update metadata with changes to both mutable and immutable fields
@@ -680,7 +684,7 @@ public class AbstractEObjectStorageServiceTest {
         // Try to change immutable fields (should be ignored)
         updateMetadata.setUploadUser("hacker-user"); // Should be ignored
         updateMetadata.setUploadTime(Instant.now()); // Should be ignored
-        updateMetadata.setRole("hacker-role"); // Should be ignored
+        updateMetadata.setRole("hacker-type"); // Should be ignored
         updateMetadata.getProperties().put("new.prop", "new-value");
         
         // Mock storage helper
@@ -689,7 +693,7 @@ public class AbstractEObjectStorageServiceTest {
         doNothing().when(mockStorageHelper).saveMetadata(any(), any());
         
         // Execute update
-        Promise<Boolean> result = storageService.updateMetadata("test-id", updateMetadata);
+        Promise<Boolean> result = storageService.updateMetadata(TEST_SCOPE, TEST_REGISTRY, TEST_STAGE, "test-id", updateMetadata);
         Boolean success = result.getValue();
         
         // Verify update succeeded
@@ -699,7 +703,7 @@ public class AbstractEObjectStorageServiceTest {
         assertEquals("OriginalName", existingMetadata.getObjectName(), "Original metadata should not be modified");
         assertEquals("1.0.0", existingMetadata.getVersion(), "Original metadata should not be modified");
         assertEquals(ObjectStatus.DRAFT, existingMetadata.getStatus(), "Original metadata should not be modified");
-        assertEquals("original-role", existingMetadata.getRole(), "Original metadata should not be modified");
+        assertEquals("original-type", existingMetadata.getRole(), "Original metadata should not be modified");
         assertEquals("original-user", existingMetadata.getUploadUser(), "Original metadata should not be modified");
         assertNull(existingMetadata.getReviewUser(), "Original metadata should not be modified");
         assertNull(existingMetadata.getLastChangeTime(), "Original metadata should not be modified");
@@ -739,7 +743,7 @@ public class AbstractEObjectStorageServiceTest {
         doNothing().when(mockStorageHelper).saveMetadata(any(), any());
         
         // Execute partial update
-        Promise<Boolean> result = storageService.updateMetadata("test-id", updateMetadata);
+        Promise<Boolean> result = storageService.updateMetadata(TEST_SCOPE, TEST_REGISTRY, TEST_STAGE, "test-id", updateMetadata);
         Boolean success = result.getValue();
         
         // Verify update succeeded
@@ -778,7 +782,7 @@ public class AbstractEObjectStorageServiceTest {
         doNothing().when(mockStorageHelper).saveMetadata(any(), any());
         
         // Execute update
-        Promise<Boolean> result = storageService.updateMetadata("test-id", updateMetadata);
+        Promise<Boolean> result = storageService.updateMetadata(TEST_SCOPE, TEST_REGISTRY, TEST_STAGE, "test-id", updateMetadata);
         Boolean success = result.getValue();
         
         // Verify update succeeded
@@ -810,7 +814,7 @@ public class AbstractEObjectStorageServiceTest {
         when(mockStorageHelper.getFileExtension(any())).thenReturn("ecore");
 
         // Execute
-        Promise<ObjectMetadata> result = storageService.storeObject("test-id", testPackage, metadata);
+        Promise<ObjectMetadata> result = storageService.storeObject(TEST_SCOPE, TEST_REGISTRY, TEST_STAGE, "test-id", testPackage, metadata);
         metadata = result.getValue();
         String objectId = metadata.getObjectId();
         
@@ -843,7 +847,7 @@ public class AbstractEObjectStorageServiceTest {
         when(mockStorageHelper.getFileExtension(any())).thenReturn("ecore");
 
         // Execute
-        Promise<ObjectMetadata> result = storageService.storeObject("test-id", testPackage, metadata);
+        Promise<ObjectMetadata> result = storageService.storeObject(TEST_SCOPE, TEST_REGISTRY, TEST_STAGE, "test-id", testPackage, metadata);
         result.getValue();
 
         // Verify custom objectType was preserved

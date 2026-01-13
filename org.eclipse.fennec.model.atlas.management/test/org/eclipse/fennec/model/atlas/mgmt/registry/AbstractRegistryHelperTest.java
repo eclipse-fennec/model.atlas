@@ -117,7 +117,7 @@ class AbstractRegistryHelperTest {
         assertNotNull(byRole);
         assertTrue(byRole.contains("draft-obj"));
         
-        Optional<String> byNameAndRole = registryHelper.findByObjectNameAndRole("Package1", "draft");
+        Optional<String> byNameAndRole = registryHelper.findByObjectNameAndStage("Package1", "draft");
         assertTrue(byNameAndRole.isPresent());
         assertEquals("draft-obj", byNameAndRole.get());
         
@@ -196,9 +196,9 @@ class AbstractRegistryHelperTest {
         assertThrows(NullPointerException.class, () -> 
             registryHelper.findByRole(null));
         assertThrows(NullPointerException.class, () -> 
-            registryHelper.findByObjectNameAndRole(null, "role"));
+            registryHelper.findByObjectNameAndStage(null, "role"));
         assertThrows(NullPointerException.class, () -> 
-            registryHelper.findByObjectNameAndRole("name", null));
+            registryHelper.findByObjectNameAndStage("name", null));
         
         // Test null validation for exists
         assertThrows(NullPointerException.class, () -> 
@@ -240,7 +240,7 @@ class AbstractRegistryHelperTest {
         List<String> emptyRole = registryHelper.findByRole("non-existent");
         assertTrue(emptyRole.isEmpty());
         
-        Optional<String> emptyNameRole = registryHelper.findByObjectNameAndRole("NonExistent", "non-existent");
+        Optional<String> emptyNameRole = registryHelper.findByObjectNameAndStage("NonExistent", "non-existent");
         assertFalse(emptyNameRole.isPresent());
         
         List<String> emptySearch = registryHelper.searchObjectIds("query", 10);
@@ -393,7 +393,7 @@ class AbstractRegistryHelperTest {
         }
         
         @Override
-        public Optional<String> findByObjectNameAndRole(String objectName, String role) throws IOException {
+        public Optional<String> findByObjectNameAndStage(String objectName, String role) throws IOException {
             if (throwIOException) {
                 throw new IOException("Test IOException");
             }
