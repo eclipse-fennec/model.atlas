@@ -127,7 +127,7 @@ public class EObjectWorkflowServiceImpl<T extends EObject> implements EObjectWor
 			validateInput(stage, registry);
 
 			metadata.setLastChangeTime(Instant.now());
-			metadata.setRole(stage);
+			metadata.setStage(stage);
 			metadata.setRegistry(registry);
 			metadata.setScope(config.scope());
 
@@ -138,7 +138,7 @@ public class EObjectWorkflowServiceImpl<T extends EObject> implements EObjectWor
 				logger.severe(String.format("Cannot retrieve EObjectStorageService for %s. Object %s cannot be saved", stage, metadata.getObjectId()));
 				return null;
 			}
-			ObjectMetadata objectMetadata = WorkflowServiceHelper.getPromiseValue(storageService.storeObject(metadata.getObjectId(), object, metadata));
+			ObjectMetadata objectMetadata = WorkflowServiceHelper.getPromiseValue(storageService.storeObject(config.scope(), registry, stage, metadata.getObjectId(), object, metadata));
 			return objectMetadata;
 		});
 	}
@@ -153,7 +153,7 @@ public class EObjectWorkflowServiceImpl<T extends EObject> implements EObjectWor
 		validateInput(stage, registry);
 		EObjectStorageService<T> storageService = getStorageService(stage, registry);
 		if(storageService != null) {
-			ObjectMetadata localMetadata = WorkflowServiceHelper.getPromiseValue(storageService.retrieveMetadata(objectId));
+			ObjectMetadata localMetadata = WorkflowServiceHelper.getPromiseValue(storageService.retrieveMetadata(config.scope(), registry, stage, objectId));
 			if(localMetadata == null && parentWorkflowService != null) {
 				logger.warning(String.format("Object %s not found for scope '%s', registry '%s' and stage '%s'. Looking in the parent scope '%s', registry '%s' and final stage", objectId, config.scope(), registry, stage, config.parent_scope(), registry));
 				//				we might want to set a read-only flag on the parent metadata here
@@ -188,7 +188,7 @@ public class EObjectWorkflowServiceImpl<T extends EObject> implements EObjectWor
 		requireNonNull(objectId, "Object ID cannot be null");
 		validateInput(stage, registry);
 		EObjectStorageService<T> storageService = getStorageService(stage, registry);
-		if(storageService != null) return WorkflowServiceHelper.getPromiseValue(storageService.retrieveObject(objectId));
+		if(storageService != null) return WorkflowServiceHelper.getPromiseValue(storageService.retrieveObject(config.scope(), registry, stage, objectId));
 		return null;
 	}
 
@@ -212,14 +212,14 @@ public class EObjectWorkflowServiceImpl<T extends EObject> implements EObjectWor
 			}
 
 			// Get current metadata
-			ObjectMetadata metadata = WorkflowServiceHelper.getPromiseValue(storageService.retrieveMetadata(objectId));		
+			ObjectMetadata metadata = WorkflowServiceHelper.getPromiseValue(storageService.retrieveMetadata(config.scope(), registry, stage, objectId));		
 			metadata.setLastChangeTime(Instant.now());
-			metadata.setRole(stage);
+			metadata.setStage(stage);
 			metadata.setRegistry(registry);
 			metadata.setVersion(updatedVersion);
 
 			// Update the object in draft storage
-			metadata = WorkflowServiceHelper.getPromiseValue(storageService.storeObject(objectId, updatedObject, metadata));
+			metadata = WorkflowServiceHelper.getPromiseValue(storageService.storeObject(config.scope(), registry, stage, objectId, updatedObject, metadata));
 			return metadata;
 		});
 	}
@@ -241,13 +241,13 @@ public class EObjectWorkflowServiceImpl<T extends EObject> implements EObjectWor
 			}
 
 			// Verify it exists
-			ObjectMetadata metadata = WorkflowServiceHelper.getPromiseValue(storageService.retrieveMetadata(objectId));
+			ObjectMetadata metadata = WorkflowServiceHelper.getPromiseValue(storageService.retrieveMetadata(config.scope(), registry, stage, objectId));
 			if(metadata == null) {
 				throw new IllegalStateException(String.format("Cannot delete object %s for scope '%s', registry '%s' and stage '%s' because no metadata has been found for it", objectId, config.scope(), registry, stage));
 			}
 
 			// Delete from draft storage
-			boolean deleted = WorkflowServiceHelper.getPromiseValue(storageService.deleteObject(objectId));
+			boolean deleted = WorkflowServiceHelper.getPromiseValue(storageService.deleteObject(config.scope(), registry, stage, objectId));
 
 			// Remove from registry
 			if (deleted) {
@@ -267,7 +267,7 @@ public class EObjectWorkflowServiceImpl<T extends EObject> implements EObjectWor
 		validateInput(stage, registry);
 		if(stage.equals(config.final_stage())) return listInFinalStageForRegistry(registry);		
 		try {
-			return requireNonNullElse(registryService.findByScopeAndRole(config.scope(), stage), List.of());
+			return requireNonNullElse(registryService.findByScopeRegistryAndStage(config.scope(), registry, stage), List.of());
 		} catch (Exception e) {
 			logger.log(Level.WARNING, "Error listing objects via registry, falling back to storage query", e);
 			try {
@@ -276,7 +276,7 @@ public class EObjectWorkflowServiceImpl<T extends EObject> implements EObjectWor
 					logger.severe(String.format("Cannot retrieve EObjectStorageService for scope '%s', registry '%s' and stage '%s'. Cannot list objects.", config.scope(), registry, stage));
 					return List.of();
 				}
-				return requireNonNullElse(WorkflowServiceHelper.getPromiseValue(storageService.queryObjects(WorkflowServiceHelper.createQuery(Map.of(ManagementPackage.Literals.OBJECT_QUERY__ROLE, stage, ManagementPackage.Literals.OBJECT_QUERY__SCOPE, config.scope(), ManagementPackage.Literals.OBJECT_QUERY__REGISTRY, registry)))), List.of());
+				return requireNonNullElse(WorkflowServiceHelper.getPromiseValue(storageService.queryObjects(WorkflowServiceHelper.createQuery(Map.of(ManagementPackage.Literals.OBJECT_QUERY__STAGE, stage, ManagementPackage.Literals.OBJECT_QUERY__SCOPE, config.scope(), ManagementPackage.Literals.OBJECT_QUERY__REGISTRY, registry)))), List.of());
 			} catch (Exception ex) {
 				logger.log(Level.WARNING, "Error listing objects, returning empty list", ex);
 				return List.of();
@@ -292,7 +292,7 @@ public class EObjectWorkflowServiceImpl<T extends EObject> implements EObjectWor
 	public List<ObjectMetadata> listInStageForRegistryByName(String stage, String registry, String name) {
 		validateInput(stage, registry);
 		try {
-			return requireNonNullElse(registryService.findByScopeRoleAndName(config.scope(), stage, name), List.of());
+			return requireNonNullElse(registryService.findByScopeRegistryStageAndName(config.scope(), registry, stage, name), List.of());
 		} catch (Exception e) {
 			logger.log(Level.WARNING, "Error listing objects via registry, falling back to storage query", e);
 			try {
@@ -301,7 +301,7 @@ public class EObjectWorkflowServiceImpl<T extends EObject> implements EObjectWor
 					logger.severe(String.format("Cannot retrieve EObjectStorageService for scope '%s', registry '%s' and stage '%s'. Cannot list objects.", config.scope(), registry, stage));
 					return List.of();
 				}
-				return requireNonNullElse(WorkflowServiceHelper.getPromiseValue(storageService.queryObjects(WorkflowServiceHelper.createQuery(Map.of(ManagementPackage.Literals.OBJECT_QUERY__ROLE, stage, ManagementPackage.Literals.OBJECT_QUERY__SCOPE, config.scope(), ManagementPackage.Literals.OBJECT_QUERY__REGISTRY, registry, ManagementPackage.Literals.OBJECT_QUERY__NAME, name)))), List.of());
+				return requireNonNullElse(WorkflowServiceHelper.getPromiseValue(storageService.queryObjects(WorkflowServiceHelper.createQuery(Map.of(ManagementPackage.Literals.OBJECT_QUERY__STAGE, stage, ManagementPackage.Literals.OBJECT_QUERY__SCOPE, config.scope(), ManagementPackage.Literals.OBJECT_QUERY__REGISTRY, registry, ManagementPackage.Literals.OBJECT_QUERY__NAME, name)))), List.of());
 			} catch (Exception ex) {
 				logger.log(Level.WARNING, "Error listing objects, returning empty list", ex);
 				return List.of();
@@ -318,7 +318,7 @@ public class EObjectWorkflowServiceImpl<T extends EObject> implements EObjectWor
 		WorkflowServiceHelper.requireTrue(WorkflowServiceHelper.isRegistryAllowed(config,registry), String.format("Registry %s is not supported from WorkflowService", registry));
 		List<ObjectMetadata> metadata = new LinkedList<>();
 		try {			
-			List<ObjectMetadata> localMetadata = requireNonNullElse(registryService.findByScopeRegistryAndRole(config.scope(), registry, config.final_stage()), List.of());
+			List<ObjectMetadata> localMetadata = requireNonNullElse(registryService.findByScopeRegistryAndStage(config.scope(), registry, config.final_stage()), List.of());
 			metadata.addAll(localMetadata);			 
 		} catch (Exception e) {
 			logger.log(Level.WARNING, "Error listing objects via registry, falling back to storage query", e);
@@ -328,7 +328,7 @@ public class EObjectWorkflowServiceImpl<T extends EObject> implements EObjectWor
 					logger.severe(String.format("Cannot retrieve EObjectStorageService for scope '%s', registry '%s' and stage '%s'. Cannot list objects.", config.scope(), registry, config.final_stage()));		
 					return Collections.emptyList();
 				}
-				List<ObjectMetadata> localMetadata =  requireNonNullElse(WorkflowServiceHelper.getPromiseValue(storageService.queryObjects(WorkflowServiceHelper.createQuery(Map.of(ManagementPackage.Literals.OBJECT_QUERY__ROLE, config.final_stage(), ManagementPackage.Literals.OBJECT_QUERY__SCOPE, config.scope(), ManagementPackage.Literals.OBJECT_QUERY__REGISTRY, registry)))), List.of());
+				List<ObjectMetadata> localMetadata =  requireNonNullElse(WorkflowServiceHelper.getPromiseValue(storageService.queryObjects(WorkflowServiceHelper.createQuery(Map.of(ManagementPackage.Literals.OBJECT_QUERY__STAGE, config.final_stage(), ManagementPackage.Literals.OBJECT_QUERY__SCOPE, config.scope(), ManagementPackage.Literals.OBJECT_QUERY__REGISTRY, registry)))), List.of());
 				metadata.addAll(localMetadata);			
 			} catch (Exception ex) {
 				logger.log(Level.WARNING, "Error listing objects, returning empty list", ex);
@@ -361,8 +361,8 @@ public class EObjectWorkflowServiceImpl<T extends EObject> implements EObjectWor
 		}
 		//        String sourceId = buildObjectId(fromStage, nsUri);
 
-		T object =  WorkflowServiceHelper.getPromiseValue(sourceStorage.retrieveObject(objectId));
-		ObjectMetadata metadata = WorkflowServiceHelper.getPromiseValue(sourceStorage.retrieveMetadata(objectId));
+		T object =  WorkflowServiceHelper.getPromiseValue(sourceStorage.retrieveObject(config.scope(), registry, fromStage, objectId));
+		ObjectMetadata metadata = WorkflowServiceHelper.getPromiseValue(sourceStorage.retrieveMetadata(config.scope(), registry, fromStage, objectId));
 
 		if (object == null || metadata == null) {
 			throw new IllegalArgumentException("Object not found in stage " + fromStage + ": " + objectId);
@@ -370,7 +370,7 @@ public class EObjectWorkflowServiceImpl<T extends EObject> implements EObjectWor
 
 		// Update metadata for new stage
 		metadata.setLastChangeTime(Instant.now());
-		metadata.setRole(toStage);
+		metadata.setStage(toStage);
 
 		// Store in target stage
 		EObjectStorageService<T> targetStorage = getStorageService(toStage, registry);
@@ -382,10 +382,10 @@ public class EObjectWorkflowServiceImpl<T extends EObject> implements EObjectWor
 		// Delete from source stage (if configured). If the registry is shared though, this will cause to remove also the newly created metadata,
 		// so we have to do it before storing the object in the target stage
 		if (config.delete_after_transition()) {
-			WorkflowServiceHelper.getPromiseValue(sourceStorage.deleteObject(objectId));
+			WorkflowServiceHelper.getPromiseValue(sourceStorage.deleteObject(config.scope(), registry, fromStage, objectId));
 		}
 
-		WorkflowServiceHelper.getPromiseValue(targetStorage.storeObject(objectId, object, metadata));	
+		WorkflowServiceHelper.getPromiseValue(targetStorage.storeObject(config.scope(), registry, toStage, objectId, object, metadata));	
 
 		return metadata;
 	}

@@ -74,7 +74,7 @@
 //    	// Verify that the registry is properly injected
 //        assertNotNull(storageRegistry, "StorageRegistry should be injected");    	
 //        // Verify that all expected storage services are registered
-//        EList<String> availableRoles = storageRegistry.getAvailableRoles();
+//        EList<String> availableRoles = storageRegistry.getAvailableTypes();
 //        
 //        // We expect at least the roles configured in StorageRegistrySetup
 //        assertTrue(availableRoles.size() >= 3, "Should have at least 3 storage roles");
@@ -83,20 +83,6 @@
 //        assertTrue(availableRoles.contains("documentation"), "Should have documentation storage");
 //    }
 //
-//    @Test
-//    @StorageRegistrySetup
-//    void testGetStorageByRole(@InjectService StorageRegistry storageRegistry) {
-//    	// Verify that the registry is properly injected
-//        assertNotNull(storageRegistry, "StorageRegistry should be injected");
-//        // Test retrieving storage services by role
-//        EObjectStorageService<EObject> draftStorage = storageRegistry.getStorageByRole("draft");
-//        EObjectStorageService<EObject> releaseStorage = storageRegistry.getStorageByRole("release");
-//        EObjectStorageService<EObject> documentationStorage = storageRegistry.getStorageByRole("documentation");
-//
-//        assertNotNull(draftStorage, "Draft storage should be available");
-//        assertNotNull(releaseStorage, "Release storage should be available");
-//        assertNotNull(documentationStorage, "Documentation storage should be available");
-//    }
 //
 //    @Test
 //    @StorageRegistrySetup

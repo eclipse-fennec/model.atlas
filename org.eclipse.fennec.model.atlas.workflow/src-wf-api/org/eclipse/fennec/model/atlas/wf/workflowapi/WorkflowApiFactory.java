@@ -14,7 +14,6 @@
 package org.eclipse.fennec.model.atlas.wf.workflowapi;
 
 import org.eclipse.emf.ecore.EFactory;
-import org.eclipse.emf.ecore.EObject;
 
 import org.osgi.annotation.versioning.ProviderType;
 
@@ -35,33 +34,6 @@ public interface WorkflowApiFactory extends EFactory {
 	 * @generated
 	 */
 	WorkflowApiFactory eINSTANCE = org.eclipse.fennec.model.atlas.wf.workflowapi.impl.WorkflowApiFactoryImpl.init();
-
-	/**
-	 * Returns a new object of class '<em>Stage Service</em>'.
-	 * <!-- begin-user-doc -->
-	 * <!-- end-user-doc -->
-	 * @return a new object of class '<em>Stage Service</em>'.
-	 * @generated
-	 */
-	StageService createStageService();
-
-	/**
-	 * Returns a new object of class '<em>Registry Service</em>'.
-	 * <!-- begin-user-doc -->
-	 * <!-- end-user-doc -->
-	 * @return a new object of class '<em>Registry Service</em>'.
-	 * @generated
-	 */
-	<T extends EObject> RegistryService<T> createRegistryService();
-
-	/**
-	 * Returns a new object of class '<em>Scope Service</em>'.
-	 * <!-- begin-user-doc -->
-	 * <!-- end-user-doc -->
-	 * @return a new object of class '<em>Scope Service</em>'.
-	 * @generated
-	 */
-	<T extends EObject> ScopeService<T> createScopeService();
 
 	/**
 	 * Returns a new object of class '<em>Stage</em>'.

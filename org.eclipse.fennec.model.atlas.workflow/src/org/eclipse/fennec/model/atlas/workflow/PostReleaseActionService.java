@@ -45,13 +45,16 @@ public interface PostReleaseActionService {
      * all necessary post-release actions asynchronously. The implementation should
      * be resilient to failures and not affect the main release workflow.</p>
      * 
+     * @param scope the scope of the released object
+     * @param registry the registry of the released object
+     * @param stage the released stage
      * @param objectId the ID of the released object
      * @param objectType the type of the released object (e.g., "EPackage", "Route")
      * @param releaseUser the user who released the object
      * @param releaseNotes optional release notes
      * @return Promise that resolves when all post-release actions are complete
      */
-    Promise<Void> executePostReleaseActions(String objectId, String objectType, String releaseUser, String releaseNotes);
+    Promise<Void> executePostReleaseActions(String scope, String registry, String stage, String objectId, String objectType, String releaseUser, String releaseNotes);
     
     /**
      * Executes post-unrelease actions when an object is removed from production.
@@ -59,13 +62,16 @@ public interface PostReleaseActionService {
      * <p>This method should reverse the post-release actions, such as unregistering
      * EPackages from the OSGi EMF registry or removing from external systems.</p>
      * 
+     * @param scope the scope of the released object
+     * @param registry the registry of the released object
+     * @param stage the released stage
      * @param objectId the ID of the object being unreleaseed
      * @param objectType the type of the object
      * @param unreleaseUser the user performing the unrelease action
      * @param unreleaseReason the reason for unreleasing
      * @return Promise that resolves when all post-unrelease actions are complete
      */
-    Promise<Void> executePostUnreleaseActions(String objectId, String objectType, String unreleaseUser, String unreleaseReason);
+    Promise<Void> executePostUnreleaseActions(String scope, String registry, String stage, String objectId, String objectType, String unreleaseUser, String unreleaseReason);
     
     /**
      * Checks if post-release actions are supported for the given object type.

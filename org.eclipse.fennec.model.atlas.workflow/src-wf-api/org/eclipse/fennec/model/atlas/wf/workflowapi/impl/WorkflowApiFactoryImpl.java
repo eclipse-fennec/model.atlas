@@ -67,46 +67,10 @@ public class WorkflowApiFactoryImpl extends EFactoryImpl implements WorkflowApiF
 	@Override
 	public EObject create(EClass eClass) {
 		switch (eClass.getClassifierID()) {
-			case WorkflowApiPackage.STAGE_SERVICE: return (EObject)createStageService();
-			case WorkflowApiPackage.REGISTRY_SERVICE: return (EObject)createRegistryService();
-			case WorkflowApiPackage.SCOPE_SERVICE: return (EObject)createScopeService();
 			case WorkflowApiPackage.STAGE: return (EObject)createStage();
 			default:
 				throw new IllegalArgumentException("The class '" + eClass.getName() + "' is not a valid classifier");
 		}
-	}
-
-	/**
-	 * <!-- begin-user-doc -->
-	 * <!-- end-user-doc -->
-	 * @generated
-	 */
-	@Override
-	public StageService createStageService() {
-		StageServiceImpl stageService = new StageServiceImpl();
-		return stageService;
-	}
-
-	/**
-	 * <!-- begin-user-doc -->
-	 * <!-- end-user-doc -->
-	 * @generated
-	 */
-	@Override
-	public <T extends EObject> RegistryService<T> createRegistryService() {
-		RegistryServiceImpl<T> registryService = new RegistryServiceImpl<T>();
-		return registryService;
-	}
-
-	/**
-	 * <!-- begin-user-doc -->
-	 * <!-- end-user-doc -->
-	 * @generated
-	 */
-	@Override
-	public <T extends EObject> ScopeService<T> createScopeService() {
-		ScopeServiceImpl<T> scopeService = new ScopeServiceImpl<T>();
-		return scopeService;
 	}
 
 	/**

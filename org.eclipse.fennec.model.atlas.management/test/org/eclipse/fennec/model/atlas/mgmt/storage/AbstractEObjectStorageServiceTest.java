@@ -111,7 +111,7 @@ public class AbstractEObjectStorageServiceTest {
         }
 
         @Override
-        protected String getStorageType() {
+        public String getStorageType() {
             return testStorageType;
         }
 
@@ -150,7 +150,7 @@ public class AbstractEObjectStorageServiceTest {
         Exception exception = assertThrows(NullPointerException.class, 
             () -> nullTypeService.activateStorageService());
         
-        assertTrue(exception.getMessage().contains("Storage role from getStorageRole() must not be null"));
+        assertTrue(exception.getMessage().contains("Storage type from getStorageType() must not be null"));
     }
 
     @Test
@@ -189,8 +189,10 @@ public class AbstractEObjectStorageServiceTest {
         Promise<ObjectMetadata> result = storageService.storeObject(TEST_SCOPE, TEST_REGISTRY, TEST_STAGE, "test-id", testPackage, metadata);
         metadata = result.getValue();
 
-        // Verify type was automatically set
-        assertEquals("file", metadata.getRole());
+        // Verify scope,registry and stage was automatically set
+        assertEquals(TEST_SCOPE, metadata.getScope());
+        assertEquals(TEST_REGISTRY, metadata.getRegistry());
+        assertEquals(TEST_STAGE, metadata.getStage());
         assertEquals("test-id", metadata.getObjectId());
 
         // Verify storage helper was called
@@ -224,8 +226,8 @@ public class AbstractEObjectStorageServiceTest {
         assertNotNull(objectId);
         assertDoesNotThrow(() -> UUID.fromString(objectId));
 
-        // Verify type was set
-        assertEquals("file", metadata.getRole());
+        // Verify stage was set
+        assertEquals(TEST_STAGE, metadata.getStage());
 
         // Verify storage operations
         verify(mockStorageHelper).saveEObject(eq(objectId), eq(testPackage), eq(metadata));
@@ -260,8 +262,8 @@ public class AbstractEObjectStorageServiceTest {
         // Verify it's a valid UUID
         assertDoesNotThrow(() -> UUID.fromString(metadata.getObjectId()));
         
-        // Verify type was also set
-        assertEquals("file", metadata.getRole());
+        // Verify stage was also set
+        assertEquals(TEST_STAGE, metadata.getStage());
     }
 
     @Test
@@ -291,8 +293,8 @@ public class AbstractEObjectStorageServiceTest {
         assertEquals(providedObjectId, metadata.getObjectId(), "Metadata should have the provided objectId");
         assertEquals(providedObjectId, returnedObjectId, "Returned objectId should match provided objectId");
         
-        // Verify type was also set
-        assertEquals("file", metadata.getRole());
+        // Verify stage was also set
+        assertEquals(TEST_STAGE, metadata.getStage());
     }
 
     @Test
@@ -307,7 +309,7 @@ public class AbstractEObjectStorageServiceTest {
         existingMetadata.setVersion("1.0.0");
         existingMetadata.setUploadUser("original-user");
         existingMetadata.setStatus(ObjectStatus.DRAFT);
-        existingMetadata.setRole("original-type");
+        existingMetadata.setStage("original-type");
         
         ObjectMetadata updateMetadata = ManagementFactory.eINSTANCE.createObjectMetadata();
         updateMetadata.setObjectName("UpdatedPackage");
@@ -324,7 +326,7 @@ public class AbstractEObjectStorageServiceTest {
         Boolean success = result.getValue();
 
         // Verify original metadata was NOT modified (copy-based approach)
-        assertEquals("original-type", existingMetadata.getRole(), "Original metadata should not be modified");
+        assertEquals("original-type", existingMetadata.getStage(), "Original metadata should not be modified");
         assertTrue(success);
 
         // Verify storage operations
@@ -368,7 +370,7 @@ public class AbstractEObjectStorageServiceTest {
         existingMetadata.setObjectId("test-id");
         existingMetadata.setObjectName("TestPackage");
         existingMetadata.setStatus(ObjectStatus.DRAFT);
-        existingMetadata.setRole("existing-type"); // Pre-existing type
+        existingMetadata.setStage("existing-type"); // Pre-existing type
 
         when(mockStorageHelper.objectExists("test-id")).thenReturn(true);
         when(mockStorageHelper.loadMetadata("test-id")).thenReturn(existingMetadata);
@@ -385,7 +387,7 @@ public class AbstractEObjectStorageServiceTest {
         assertNotNull(existingMetadata.getLastChangeTime());
         
         // Verify the existing type was preserved (not overwritten)
-        assertEquals("existing-type", existingMetadata.getRole());
+        assertEquals("existing-type", existingMetadata.getStage());
 
         // Verify operations
         verify(mockStorageHelper).saveMetadata("test-id", existingMetadata);
@@ -598,8 +600,8 @@ public class AbstractEObjectStorageServiceTest {
         assertTrue(failure instanceof RuntimeException);
         assertTrue(failure.getMessage().contains("Failed to store object"));
         
-        // Verify type was still set even though the operation failed
-        assertEquals("file", metadata.getRole());
+        // Verify stage was still set even though the operation failed
+        assertEquals(TEST_STAGE, metadata.getStage());
     }
 
     @Test
@@ -671,7 +673,7 @@ public class AbstractEObjectStorageServiceTest {
         existingMetadata.setUploadUser("original-user");
         existingMetadata.setUploadTime(Instant.now().minusSeconds(3600)); // 1 hour ago
         existingMetadata.setStatus(ObjectStatus.DRAFT);
-        existingMetadata.setRole("original-type");
+        existingMetadata.setStage("original-type");
         existingMetadata.getProperties().put("original.prop", "original-value");
         
         // Create update metadata with changes to both mutable and immutable fields
@@ -684,7 +686,7 @@ public class AbstractEObjectStorageServiceTest {
         // Try to change immutable fields (should be ignored)
         updateMetadata.setUploadUser("hacker-user"); // Should be ignored
         updateMetadata.setUploadTime(Instant.now()); // Should be ignored
-        updateMetadata.setRole("hacker-type"); // Should be ignored
+        updateMetadata.setStage("hacker-type"); // Should be ignored
         updateMetadata.getProperties().put("new.prop", "new-value");
         
         // Mock storage helper
@@ -703,7 +705,7 @@ public class AbstractEObjectStorageServiceTest {
         assertEquals("OriginalName", existingMetadata.getObjectName(), "Original metadata should not be modified");
         assertEquals("1.0.0", existingMetadata.getVersion(), "Original metadata should not be modified");
         assertEquals(ObjectStatus.DRAFT, existingMetadata.getStatus(), "Original metadata should not be modified");
-        assertEquals("original-type", existingMetadata.getRole(), "Original metadata should not be modified");
+        assertEquals("original-type", existingMetadata.getStage(), "Original metadata should not be modified");
         assertEquals("original-user", existingMetadata.getUploadUser(), "Original metadata should not be modified");
         assertNull(existingMetadata.getReviewUser(), "Original metadata should not be modified");
         assertNull(existingMetadata.getLastChangeTime(), "Original metadata should not be modified");

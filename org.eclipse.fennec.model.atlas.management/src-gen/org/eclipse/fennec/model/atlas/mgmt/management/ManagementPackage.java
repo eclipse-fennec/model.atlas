@@ -422,13 +422,13 @@ public interface ManagementPackage extends org.eclipse.emf.ecore.EPackage {
 	int OBJECT_QUERY__STATUS = 3;
 
 	/**
-	 * The feature id for the '<em><b>Role</b></em>' attribute.
+	 * The feature id for the '<em><b>Stage</b></em>' attribute.
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
 	 * @generated
 	 * @ordered
 	 */
-	int OBJECT_QUERY__ROLE = 4;
+	int OBJECT_QUERY__STAGE = 4;
 
 	/**
 	 * The feature id for the '<em><b>Scope</b></em>' attribute.
@@ -1113,15 +1113,15 @@ public interface ManagementPackage extends org.eclipse.emf.ecore.EPackage {
 	EAttribute getObjectQuery_Status();
 
 	/**
-	 * Returns the meta object for the attribute '{@link org.eclipse.fennec.model.atlas.mgmt.management.ObjectQuery#getRole <em>Role</em>}'.
+	 * Returns the meta object for the attribute '{@link org.eclipse.fennec.model.atlas.mgmt.management.ObjectQuery#getStage <em>Stage</em>}'.
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
-	 * @return the meta object for the attribute '<em>Role</em>'.
-	 * @see org.eclipse.fennec.model.atlas.mgmt.management.ObjectQuery#getRole()
+	 * @return the meta object for the attribute '<em>Stage</em>'.
+	 * @see org.eclipse.fennec.model.atlas.mgmt.management.ObjectQuery#getStage()
 	 * @see #getObjectQuery()
 	 * @generated
 	 */
-	EAttribute getObjectQuery_Role();
+	EAttribute getObjectQuery_Stage();
 
 	/**
 	 * Returns the meta object for the attribute '{@link org.eclipse.fennec.model.atlas.mgmt.management.ObjectQuery#getScope <em>Scope</em>}'.
@@ -1720,12 +1720,12 @@ public interface ManagementPackage extends org.eclipse.emf.ecore.EPackage {
 		EAttribute OBJECT_QUERY__STATUS = eINSTANCE.getObjectQuery_Status();
 
 		/**
-		 * The meta object literal for the '<em><b>Role</b></em>' attribute feature.
+		 * The meta object literal for the '<em><b>Stage</b></em>' attribute feature.
 		 * <!-- begin-user-doc -->
 		 * <!-- end-user-doc -->
 		 * @generated
 		 */
-		EAttribute OBJECT_QUERY__ROLE = eINSTANCE.getObjectQuery_Role();
+		EAttribute OBJECT_QUERY__STAGE = eINSTANCE.getObjectQuery_Stage();
 
 		/**
 		 * The meta object literal for the '<em><b>Scope</b></em>' attribute feature.

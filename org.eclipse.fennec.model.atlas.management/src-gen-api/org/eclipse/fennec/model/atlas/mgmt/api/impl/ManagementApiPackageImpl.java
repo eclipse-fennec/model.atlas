@@ -422,6 +422,16 @@ public class ManagementApiPackageImpl extends EPackageImpl implements Management
 	 * @generated
 	 */
 	@Override
+	public EOperation getEObjectStorageService__GetStorageType() {
+		return eObjectStorageServiceEClass.getEOperations().get(11);
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
 	public EClass getEObjectRegistryService() {
 		return eObjectRegistryServiceEClass;
 	}
@@ -725,6 +735,7 @@ public class ManagementApiPackageImpl extends EPackageImpl implements Management
 		createEOperation(eObjectStorageServiceEClass, EOBJECT_STORAGE_SERVICE___EXISTS__STRING_STRING_STRING_STRING);
 		createEOperation(eObjectStorageServiceEClass, EOBJECT_STORAGE_SERVICE___GET_OBJECT_COUNT);
 		createEOperation(eObjectStorageServiceEClass, EOBJECT_STORAGE_SERVICE___GET_BACKEND_TYPE);
+		createEOperation(eObjectStorageServiceEClass, EOBJECT_STORAGE_SERVICE___GET_STORAGE_TYPE);
 
 		eObjectRegistryServiceEClass = createEClass(EOBJECT_REGISTRY_SERVICE);
 		createEOperation(eObjectRegistryServiceEClass, EOBJECT_REGISTRY_SERVICE___GET_METADATA__STRING);
@@ -1014,6 +1025,8 @@ public class ManagementApiPackageImpl extends EPackageImpl implements Management
 		initEOperation(getEObjectStorageService__GetObjectCount(), ecorePackage.getELong(), "getObjectCount", 1, 1, IS_UNIQUE, IS_ORDERED);
 
 		initEOperation(getEObjectStorageService__GetBackendType(), theManagementPackage.getStorageBackendType(), "getBackendType", 1, 1, IS_UNIQUE, IS_ORDERED);
+
+		initEOperation(getEObjectStorageService__GetStorageType(), ecorePackage.getEString(), "getStorageType", 1, 1, IS_UNIQUE, IS_ORDERED);
 
 		initEClass(eObjectRegistryServiceEClass, EObjectRegistryService.class, "EObjectRegistryService", IS_ABSTRACT, IS_INTERFACE, IS_GENERATED_INSTANCE_CLASS);
 

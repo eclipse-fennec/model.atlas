@@ -23,7 +23,8 @@ import org.osgi.service.metatype.annotations.ObjectClassDefinition;
  */
 @ObjectClassDefinition(name = "Registry Service Configuration")
 public @interface RegistryServiceConfig {
-    @AttributeDefinition(name = "Registry Name")
+    
+	@AttributeDefinition(name = "Registry Name")
     String registry_name();
 
     @AttributeDefinition(name = "Stage Storage Mappings",
@@ -37,16 +38,13 @@ public @interface RegistryServiceConfig {
     @AttributeDefinition(name = "Delete After Transition", 
     		description = "Whether to remove an object from a stage after a transition to another stage")
     boolean delete_after_transition() default false;
-
-//    @AttributeDefinition(name = "Stage Service Target Filter", 
-//    		description = "The tatrget filter for the stageService injected reference")
-//    String stageService_target() default "(stage.name=*)";
     
     @AttributeDefinition(name = "Storage Service Target Filter", 
     		description = "The tatrget filter for the storageService injected reference")
     String storageService_target() default "(storage.type=*)";
     
     @AttributeDefinition(name = "Stages", 
-    		description = "The stages associated with this RegistryService. Should be an array of complex objects of type StageService")
+    		description = "The stages associated with this RegistryService. "
+    				+ "Should be an array of complex objects of type Stage (e.g. {\"name\": \"draft\", \"writable\": true, \"final\": false})")
     String[] stages();
 }

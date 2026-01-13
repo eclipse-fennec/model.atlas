@@ -116,8 +116,7 @@ public abstract class AbstractEObjectStorageService implements EObjectStorageSer
     // Registry service (always uses shared registry)
     protected EObjectRegistryService<EObject> registryService;
     
-    // Storage role for this instance (set during activation)
-//    protected String storageRole;
+    // Storage type for this instance (set during activation)
     protected String storageType;
     
     /**
@@ -141,17 +140,6 @@ public abstract class AbstractEObjectStorageService implements EObjectStorageSer
 	 * @return the storage backend type, must not be null
 	 */
 	public abstract StorageBackendType getBackendType();
-
-	/**
-	 * Returns the storage role for this storage implementation.
-	 * 
-	 * <p>The storage role identifies the purpose of this storage instance within
-	 * the object lifecycle (draft, approved, documentation, etc.). This role is
-	 * automatically set in object metadata to enable role-based queries and workflows.</p>
-	 * 
-	 * @return the storage role, may be null if no role is configured
-	 */
-	protected abstract String getStorageType();
 
 	/**
      * Common activation logic for storage services.
@@ -280,7 +268,7 @@ public abstract class AbstractEObjectStorageService implements EObjectStorageSer
                     metadata.setObjectId(storageId); // Always set the objectId in the caller's metadata
                     metadata.setScope(scope);
                     metadata.setRegistry(registry);
-                    metadata.setRole(stage);
+                    metadata.setStage(stage);
                     // Set the objectType if not already set
                     if (metadata.getObjectType() == null && object != null) {
                         metadata.setObjectType(EcoreUtil.getURI(object.eClass()).toString());
@@ -418,14 +406,14 @@ public abstract class AbstractEObjectStorageService implements EObjectStorageSer
             
             try {
                 // Use registry service methods based on query parameters
-            	if(query.getRole() != null && query.getScope() != null && query.getRegistry() != null && query.getName() != null) {
-            		results = registryService.findByScopeRegistryRoleAndName(query.getScope(), query.getRegistry(), query.getRole(), query.getName());
-            	} else if(query.getRole() != null && query.getScope() != null && query.getName() != null) {
-            		results = registryService.findByScopeRoleAndName(query.getScope(), query.getRole(), query.getName());
-            	} else if (query.getRole() != null && query.getScope() != null && query.getRegistry() != null) {
-            		results = registryService.findByScopeRegistryAndRole(query.getScope(), query.getRegistry(), query.getRole());
-            	} else if (query.getRole() != null && query.getScope() != null) {
-            		results = registryService.findByScopeAndRole(query.getRole(), query.getScope());
+            	if(query.getStage() != null && query.getScope() != null && query.getRegistry() != null && query.getName() != null) {
+            		results = registryService.findByScopeRegistryStageAndName(query.getScope(), query.getRegistry(), query.getStage(), query.getName());
+            	} else if(query.getStage() != null && query.getScope() != null && query.getName() != null) {
+            		results = registryService.findByScopeStageAndName(query.getScope(), query.getStage(), query.getName());
+            	} else if (query.getStage() != null && query.getScope() != null && query.getRegistry() != null) {
+            		results = registryService.findByScopeRegistryAndStage(query.getScope(), query.getRegistry(), query.getStage());
+            	} else if (query.getStage() != null && query.getScope() != null) {
+            		results = registryService.findByScopeAndStage(query.getStage(), query.getScope());
             	} else if (query.getStatus() != null && query.getObjectType() != null) {
                     // Most specific query - status + type
                     results = registryService.findByStatusAndType(query.getStatus(), query.getObjectType());
@@ -584,8 +572,8 @@ public abstract class AbstractEObjectStorageService implements EObjectStorageSer
                 // Merge updates while preserving immutable fields
                 mergeMetadataUpdates(metadataCopy, metadata);
                 
-                // Ensure the role and objectId are set correctly
-                metadataCopy.setRole(stage);
+                // Ensure the scope,registry,stage and objectId are set correctly
+                metadataCopy.setStage(stage);
                 metadataCopy.setScope(scope);
                 metadataCopy.setRegistry(registry);
                 metadataCopy.setObjectId(objectId);

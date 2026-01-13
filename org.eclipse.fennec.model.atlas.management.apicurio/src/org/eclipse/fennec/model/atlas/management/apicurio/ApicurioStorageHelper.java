@@ -74,9 +74,9 @@ public class ApicurioStorageHelper extends AbstractStorageHelper {
 		super(resourceSet);
 		this.registry = registry;
 		this.config = config;
-		this.apicurioGroupId = config.storage_scope().concat("-").concat(config.storage_registry()).concat("-").concat(config.storage_role());
+//		this.apicurioGroupId = config.storage_scope().concat("-").concat(config.storage_registry()).concat("-").concat(config.storage_role());
 		this.apicurioURL = constructApicurioURL(config.base_url(), apicurioGroupId);
-		this.storageRole = config.storage_role();
+//		this.storageRole = config.storage_role();
 		
 		updateRegistryCache();
 

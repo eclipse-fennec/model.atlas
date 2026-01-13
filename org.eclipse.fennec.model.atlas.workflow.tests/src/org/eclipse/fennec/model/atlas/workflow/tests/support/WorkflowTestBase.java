@@ -52,9 +52,9 @@ public abstract class WorkflowTestBase {
         
         // Configure mock behavior
         PromiseFactory promiseFactory = new PromiseFactory(null);
-        when(mockPostReleaseActionService.executePostReleaseActions(anyString(), anyString(), anyString(), anyString()))
+        when(mockPostReleaseActionService.executePostReleaseActions(anyString(), anyString(), anyString(), anyString(), anyString(), anyString(), anyString()))
             .thenReturn(promiseFactory.resolved(null));
-        when(mockPostReleaseActionService.executePostUnreleaseActions(anyString(), anyString(), anyString(), anyString()))
+        when(mockPostReleaseActionService.executePostUnreleaseActions(anyString(), anyString(), anyString(), anyString(), anyString(), anyString(), anyString()))
             .thenReturn(promiseFactory.resolved(null));
         when(mockPostReleaseActionService.supportsObjectType(anyString()))
             .thenReturn(true);

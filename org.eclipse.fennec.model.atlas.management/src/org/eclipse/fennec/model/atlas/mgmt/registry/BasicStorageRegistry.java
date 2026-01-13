@@ -129,7 +129,7 @@ public class BasicStorageRegistry implements StorageRegistry {
 	 */
 	@Override
 	public EList<String> getAvailableTypes() {
-		return new BasicEList<>(typesByStorage.values());
+		return new BasicEList<>(typesByStorage.values().stream().distinct().toList());
 	}
 
     /* 

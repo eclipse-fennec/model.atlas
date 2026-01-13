@@ -163,4 +163,15 @@ public interface EObjectStorageService<T extends EObject> {
 	 */
 	StorageBackendType getBackendType();
 
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * <!-- begin-model-doc -->
+	 * Get the storage  type (e.g. file, apicurio, etc). The one set via the config property storage.type
+	 * <!-- end-model-doc -->
+	 * @model kind="operation" required="true"
+	 * @generated
+	 */
+	String getStorageType();
+
 } // EObjectStorageService

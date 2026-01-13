@@ -36,7 +36,7 @@ import org.eclipse.fennec.model.atlas.mgmt.management.ObjectStatus;
  *   <li>{@link org.eclipse.fennec.model.atlas.mgmt.management.impl.ObjectQueryImpl#getSourceChannel <em>Source Channel</em>}</li>
  *   <li>{@link org.eclipse.fennec.model.atlas.mgmt.management.impl.ObjectQueryImpl#getObjectType <em>Object Type</em>}</li>
  *   <li>{@link org.eclipse.fennec.model.atlas.mgmt.management.impl.ObjectQueryImpl#getStatus <em>Status</em>}</li>
- *   <li>{@link org.eclipse.fennec.model.atlas.mgmt.management.impl.ObjectQueryImpl#getRole <em>Role</em>}</li>
+ *   <li>{@link org.eclipse.fennec.model.atlas.mgmt.management.impl.ObjectQueryImpl#getStage <em>Stage</em>}</li>
  *   <li>{@link org.eclipse.fennec.model.atlas.mgmt.management.impl.ObjectQueryImpl#getScope <em>Scope</em>}</li>
  *   <li>{@link org.eclipse.fennec.model.atlas.mgmt.management.impl.ObjectQueryImpl#getName <em>Name</em>}</li>
  *   <li>{@link org.eclipse.fennec.model.atlas.mgmt.management.impl.ObjectQueryImpl#getRegistry <em>Registry</em>}</li>
@@ -126,24 +126,24 @@ public class ObjectQueryImpl extends MinimalEObjectImpl.Container implements Obj
 	protected ObjectStatus status = STATUS_EDEFAULT;
 
 	/**
-	 * The default value of the '{@link #getRole() <em>Role</em>}' attribute.
+	 * The default value of the '{@link #getStage() <em>Stage</em>}' attribute.
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
-	 * @see #getRole()
+	 * @see #getStage()
 	 * @generated
 	 * @ordered
 	 */
-	protected static final String ROLE_EDEFAULT = null;
+	protected static final String STAGE_EDEFAULT = null;
 
 	/**
-	 * The cached value of the '{@link #getRole() <em>Role</em>}' attribute.
+	 * The cached value of the '{@link #getStage() <em>Stage</em>}' attribute.
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
-	 * @see #getRole()
+	 * @see #getStage()
 	 * @generated
 	 * @ordered
 	 */
-	protected String role = ROLE_EDEFAULT;
+	protected String stage = STAGE_EDEFAULT;
 
 	/**
 	 * The default value of the '{@link #getScope() <em>Scope</em>}' attribute.
@@ -322,8 +322,8 @@ public class ObjectQueryImpl extends MinimalEObjectImpl.Container implements Obj
 	 * @generated
 	 */
 	@Override
-	public String getRole() {
-		return role;
+	public String getStage() {
+		return stage;
 	}
 
 	/**
@@ -332,11 +332,11 @@ public class ObjectQueryImpl extends MinimalEObjectImpl.Container implements Obj
 	 * @generated
 	 */
 	@Override
-	public void setRole(String newRole) {
-		String oldRole = role;
-		role = newRole;
+	public void setStage(String newStage) {
+		String oldStage = stage;
+		stage = newStage;
 		if (eNotificationRequired())
-			eNotify(new ENotificationImpl(this, Notification.SET, ManagementPackage.OBJECT_QUERY__ROLE, oldRole, role));
+			eNotify(new ENotificationImpl(this, Notification.SET, ManagementPackage.OBJECT_QUERY__STAGE, oldStage, stage));
 	}
 
 	/**
@@ -424,8 +424,8 @@ public class ObjectQueryImpl extends MinimalEObjectImpl.Container implements Obj
 				return getObjectType();
 			case ManagementPackage.OBJECT_QUERY__STATUS:
 				return getStatus();
-			case ManagementPackage.OBJECT_QUERY__ROLE:
-				return getRole();
+			case ManagementPackage.OBJECT_QUERY__STAGE:
+				return getStage();
 			case ManagementPackage.OBJECT_QUERY__SCOPE:
 				return getScope();
 			case ManagementPackage.OBJECT_QUERY__NAME:
@@ -456,8 +456,8 @@ public class ObjectQueryImpl extends MinimalEObjectImpl.Container implements Obj
 			case ManagementPackage.OBJECT_QUERY__STATUS:
 				setStatus((ObjectStatus)newValue);
 				return;
-			case ManagementPackage.OBJECT_QUERY__ROLE:
-				setRole((String)newValue);
+			case ManagementPackage.OBJECT_QUERY__STAGE:
+				setStage((String)newValue);
 				return;
 			case ManagementPackage.OBJECT_QUERY__SCOPE:
 				setScope((String)newValue);
@@ -492,8 +492,8 @@ public class ObjectQueryImpl extends MinimalEObjectImpl.Container implements Obj
 			case ManagementPackage.OBJECT_QUERY__STATUS:
 				setStatus(STATUS_EDEFAULT);
 				return;
-			case ManagementPackage.OBJECT_QUERY__ROLE:
-				setRole(ROLE_EDEFAULT);
+			case ManagementPackage.OBJECT_QUERY__STAGE:
+				setStage(STAGE_EDEFAULT);
 				return;
 			case ManagementPackage.OBJECT_QUERY__SCOPE:
 				setScope(SCOPE_EDEFAULT);
@@ -524,8 +524,8 @@ public class ObjectQueryImpl extends MinimalEObjectImpl.Container implements Obj
 				return OBJECT_TYPE_EDEFAULT == null ? objectType != null : !OBJECT_TYPE_EDEFAULT.equals(objectType);
 			case ManagementPackage.OBJECT_QUERY__STATUS:
 				return status != STATUS_EDEFAULT;
-			case ManagementPackage.OBJECT_QUERY__ROLE:
-				return ROLE_EDEFAULT == null ? role != null : !ROLE_EDEFAULT.equals(role);
+			case ManagementPackage.OBJECT_QUERY__STAGE:
+				return STAGE_EDEFAULT == null ? stage != null : !STAGE_EDEFAULT.equals(stage);
 			case ManagementPackage.OBJECT_QUERY__SCOPE:
 				return SCOPE_EDEFAULT == null ? scope != null : !SCOPE_EDEFAULT.equals(scope);
 			case ManagementPackage.OBJECT_QUERY__NAME:
@@ -554,8 +554,8 @@ public class ObjectQueryImpl extends MinimalEObjectImpl.Container implements Obj
 		result.append(objectType);
 		result.append(", status: ");
 		result.append(status);
-		result.append(", role: ");
-		result.append(role);
+		result.append(", stage: ");
+		result.append(stage);
 		result.append(", scope: ");
 		result.append(scope);
 		result.append(", name: ");

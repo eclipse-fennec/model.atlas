@@ -303,6 +303,11 @@
         <details key="documentation" value="Get the storage backend type (FILE, MINIO, GIT) for debugging and monitoring purposes"/>
       </eAnnotations>
     </eOperations>
+    <eOperations name="getStorageType" lowerBound="1" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="Get the storage  type (e.g. file, apicurio, etc). The one set via the config property storage.type"/>
+      </eAnnotations>
+    </eOperations>
   </eClassifiers>
   <eClassifiers xsi:type="ecore:EClass" name="EObjectRegistryService" abstract="true"
       interface="true">

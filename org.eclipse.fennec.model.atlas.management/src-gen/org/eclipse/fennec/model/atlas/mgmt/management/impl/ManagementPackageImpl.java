@@ -552,7 +552,7 @@ public class ManagementPackageImpl extends EPackageImpl implements ManagementPac
 	 * @generated
 	 */
 	@Override
-	public EAttribute getObjectQuery_Role() {
+	public EAttribute getObjectQuery_Stage() {
 		return (EAttribute)objectQueryEClass.getEStructuralFeatures().get(4);
 	}
 
@@ -891,7 +891,7 @@ public class ManagementPackageImpl extends EPackageImpl implements ManagementPac
 		createEAttribute(objectQueryEClass, OBJECT_QUERY__SOURCE_CHANNEL);
 		createEAttribute(objectQueryEClass, OBJECT_QUERY__OBJECT_TYPE);
 		createEAttribute(objectQueryEClass, OBJECT_QUERY__STATUS);
-		createEAttribute(objectQueryEClass, OBJECT_QUERY__ROLE);
+		createEAttribute(objectQueryEClass, OBJECT_QUERY__STAGE);
 		createEAttribute(objectQueryEClass, OBJECT_QUERY__SCOPE);
 		createEAttribute(objectQueryEClass, OBJECT_QUERY__NAME);
 		createEAttribute(objectQueryEClass, OBJECT_QUERY__REGISTRY);
@@ -996,7 +996,7 @@ public class ManagementPackageImpl extends EPackageImpl implements ManagementPac
 		initEAttribute(getObjectQuery_SourceChannel(), ecorePackage.getEString(), "sourceChannel", null, 0, 1, ObjectQuery.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_UNSETTABLE, !IS_ID, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
 		initEAttribute(getObjectQuery_ObjectType(), ecorePackage.getEString(), "objectType", null, 0, 1, ObjectQuery.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_UNSETTABLE, !IS_ID, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
 		initEAttribute(getObjectQuery_Status(), this.getObjectStatus(), "status", null, 0, 1, ObjectQuery.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_UNSETTABLE, !IS_ID, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
-		initEAttribute(getObjectQuery_Role(), ecorePackage.getEString(), "role", null, 0, 1, ObjectQuery.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_UNSETTABLE, !IS_ID, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
+		initEAttribute(getObjectQuery_Stage(), ecorePackage.getEString(), "stage", null, 0, 1, ObjectQuery.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_UNSETTABLE, !IS_ID, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
 		initEAttribute(getObjectQuery_Scope(), ecorePackage.getEString(), "scope", null, 0, 1, ObjectQuery.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_UNSETTABLE, !IS_ID, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
 		initEAttribute(getObjectQuery_Name(), ecorePackage.getEString(), "name", null, 0, 1, ObjectQuery.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_UNSETTABLE, !IS_ID, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
 		initEAttribute(getObjectQuery_Registry(), ecorePackage.getEString(), "registry", null, 0, 1, ObjectQuery.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_UNSETTABLE, !IS_ID, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
@@ -1288,7 +1288,7 @@ public class ManagementPackageImpl extends EPackageImpl implements ManagementPac
 			   "documentation", "Filter by object status"
 		   });
 		addAnnotation
-		  (getObjectQuery_Role(),
+		  (getObjectQuery_Stage(),
 		   source,
 		   new String[] {
 			   "documentation", "Filter by object role"

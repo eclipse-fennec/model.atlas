@@ -34,7 +34,7 @@ import org.osgi.util.promise.Promise;
  *
  *
  * @see org.eclipse.fennec.model.atlas.wf.workflowapi.WorkflowApiPackage#getRegistryService()
- * @model
+ * @model interface="true" abstract="true"
  * @generated
  */
 @ProviderType

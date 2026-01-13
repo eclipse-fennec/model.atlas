@@ -24,8 +24,10 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Function;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.stream.Collectors;
 
 import org.eclipse.emf.ecore.EObject;
 import org.eclipse.fennec.model.atlas.mgmt.api.EObjectRegistryService;
@@ -34,19 +36,17 @@ import org.eclipse.fennec.model.atlas.mgmt.management.ManagementPackage;
 import org.eclipse.fennec.model.atlas.mgmt.management.ObjectMetadata;
 import org.eclipse.fennec.model.atlas.wf.workflowapi.RegistryService;
 import org.eclipse.fennec.model.atlas.wf.workflowapi.Stage;
-import org.eclipse.fennec.model.atlas.wf.workflowapi.StageService;
 import org.eclipse.fennec.model.atlas.wf.workflowapi.WorkflowApiFactory;
 import org.osgi.service.component.annotations.Activate;
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.ConfigurationPolicy;
 import org.osgi.service.component.annotations.Reference;
 import org.osgi.service.metatype.annotations.Designate;
-import org.osgi.util.converter.Converter;
-import org.osgi.util.converter.Converters;
 import org.osgi.util.promise.Promise;
 import org.osgi.util.promise.PromiseFactory;
-import tools.jackson.databind.ObjectMapper;
+
 import tools.jackson.core.type.TypeReference;
+import tools.jackson.databind.ObjectMapper;
 
 /**
  * 
@@ -63,7 +63,6 @@ public class RegistryServiceImpl<T extends EObject> implements RegistryService<T
 	private static final Logger LOGGER = Logger.getLogger(RegistryServiceImpl.class.getName());
 
 	//	private List<StageService> stageService;
-	private List<EObjectStorageService<T>> storageService;
 	private RegistryServiceConfig config;
 	private final Map<String, Set<String>> transitionsMap;
 	private final Map<String, EObjectStorageService<T>> storageMap;
@@ -73,22 +72,14 @@ public class RegistryServiceImpl<T extends EObject> implements RegistryService<T
 
 	@Activate
 	public RegistryServiceImpl(
-			//			@Reference(name = "stageService") List<StageService> stageService,
 			@Reference(name = "storageService") List<EObjectStorageService<T>> storageService,
 			RegistryServiceConfig config) {		
-		//		this.stageService = stageService;
-		this.storageService = storageService;
 		this.config = config;
 		this.transitionsMap = parseTransitionsMap(config.workflow_transitions());
 		this.storageMap = parseStageStorageMappings(config.stage_storage_mappings(), storageService);
 		this.stages = parseStages(config.stages());
 		validateStages();
 	}
-
-
-	
-
-
 
 	/* 
 	 * (non-Javadoc)
@@ -110,7 +101,7 @@ public class RegistryServiceImpl<T extends EObject> implements RegistryService<T
 			requireNonNull(metadata.getObjectName());
 
 			EObjectStorageService<T> storageService = storageMap.get(stage);
-			ObjectMetadata objectMetadata = WorkflowServiceHelper.getPromiseValue(storageService.storeObject(metadata.getObjectId(), object, metadata));
+			ObjectMetadata objectMetadata = WorkflowServiceHelper.getPromiseValue(storageService.storeObject(scope, config.registry_name(), stage, metadata.getObjectId(), object, metadata));
 			return objectMetadata;
 		});
 	}
@@ -124,7 +115,7 @@ public class RegistryServiceImpl<T extends EObject> implements RegistryService<T
 		requireNonNull(objectId, "Object ID cannot be null");
 		validateStage(stage);
 		EObjectStorageService<T> storageService = storageMap.get(stage);
-		ObjectMetadata metadata = WorkflowServiceHelper.getPromiseValue(storageService.retrieveMetadata(objectId));
+		ObjectMetadata metadata = WorkflowServiceHelper.getPromiseValue(storageService.retrieveMetadata(scope, config.registry_name(), stage, objectId));
 		if(!isWritableStage(stage)) metadata.setIsReadOnly(true);
 		return metadata;
 	}
@@ -148,7 +139,7 @@ public class RegistryServiceImpl<T extends EObject> implements RegistryService<T
 		requireNonNull(objectId, "Object ID cannot be null");
 		validateStage(stage);
 		EObjectStorageService<T> storageService = storageMap.get(stage);
-		return WorkflowServiceHelper.getPromiseValue(storageService.retrieveObject(objectId));
+		return WorkflowServiceHelper.getPromiseValue(storageService.retrieveObject(scope, config.registry_name(), stage, objectId));
 	}
 
 	/* 
@@ -168,7 +159,7 @@ public class RegistryServiceImpl<T extends EObject> implements RegistryService<T
 
 
 			// Get current metadata
-			ObjectMetadata metadata = WorkflowServiceHelper.getPromiseValue(storageService.retrieveMetadata(objectId));		
+			ObjectMetadata metadata = WorkflowServiceHelper.getPromiseValue(storageService.retrieveMetadata(scope, config.registry_name(), stage, objectId));		
 			metadata.setLastChangeTime(Instant.now());
 			metadata.setStage(stage);
 			metadata.setScope(scope);
@@ -176,7 +167,7 @@ public class RegistryServiceImpl<T extends EObject> implements RegistryService<T
 			metadata.setVersion(version);
 
 			// Update the object in draft storage
-			metadata = WorkflowServiceHelper.getPromiseValue(storageService.storeObject(objectId, updatedObject, metadata));
+			metadata = WorkflowServiceHelper.getPromiseValue(storageService.storeObject(scope, config.registry_name(), stage, objectId, updatedObject, metadata));
 			return metadata;
 		});
 	}
@@ -196,13 +187,13 @@ public class RegistryServiceImpl<T extends EObject> implements RegistryService<T
 			EObjectStorageService<T> storageService = storageMap.get(stage);
 
 			// Verify it exists
-			ObjectMetadata metadata = WorkflowServiceHelper.getPromiseValue(storageService.retrieveMetadata(objectId));
+			ObjectMetadata metadata = WorkflowServiceHelper.getPromiseValue(storageService.retrieveMetadata(scope, config.registry_name(), stage, objectId));
 			if(metadata == null) {
 				throw new IllegalStateException(String.format("Cannot delete object %s for scope '%s', registry '%s' and stage '%s' because no metadata has been found for it", objectId, scope, config.registry_name(), stage));
 			}
 
 			// Delete from draft storage
-			boolean deleted = WorkflowServiceHelper.getPromiseValue(storageService.deleteObject(objectId));
+			boolean deleted = WorkflowServiceHelper.getPromiseValue(storageService.deleteObject(scope, config.registry_name(), stage, objectId));
 
 			// Remove from registry
 			if (deleted) {
@@ -220,13 +211,13 @@ public class RegistryServiceImpl<T extends EObject> implements RegistryService<T
 	@Override
 	public List<ObjectMetadata> listInStage(String scope, String stage) {
 		validateStage(stage);
-		if(stages.stream().filter(s -> stage.equals(s.getName()) && s.isFinal()).findFirst().orElseGet(null) != null) return listInFinalStage(scope);		
+		if(stages.stream().filter(s -> stage.equals(s.getName()) && s.isFinal()).findFirst().orElse(null) != null) return listInFinalStage(scope);		
 		try {
-			return requireNonNullElse(registryService.findByScopeRegistryAndRole(scope, config.registry_name(), stage), List.of());
+			return requireNonNullElse(registryService.findByScopeRegistryAndStage(scope, config.registry_name(), stage), List.of());
 		} catch (Exception e) {
 			LOGGER.log(Level.WARNING, "Error listing objects via registry, falling back to storage query", e);
 			EObjectStorageService<T> storageService = storageMap.get(stage);
-			return requireNonNullElse(WorkflowServiceHelper.getPromiseValue(storageService.queryObjects(WorkflowServiceHelper.createQuery(Map.of(ManagementPackage.Literals.OBJECT_QUERY__ROLE, stage, ManagementPackage.Literals.OBJECT_QUERY__SCOPE, scope, ManagementPackage.Literals.OBJECT_QUERY__REGISTRY, config.registry_name())))), List.of());
+			return requireNonNullElse(WorkflowServiceHelper.getPromiseValue(storageService.queryObjects(WorkflowServiceHelper.createQuery(Map.of(ManagementPackage.Literals.OBJECT_QUERY__STAGE, stage, ManagementPackage.Literals.OBJECT_QUERY__SCOPE, scope, ManagementPackage.Literals.OBJECT_QUERY__REGISTRY, config.registry_name())))), List.of());
 		}
 	}
 
@@ -238,11 +229,11 @@ public class RegistryServiceImpl<T extends EObject> implements RegistryService<T
 	public List<ObjectMetadata> listInStageByName(String scope, String stage, String name) {
 		validateStage(stage);
 		try {
-			return requireNonNullElse(registryService.findByScopeRegistryRoleAndName(scope, config.registry_name(), stage, name), List.of());
+			return requireNonNullElse(registryService.findByScopeRegistryStageAndName(scope, config.registry_name(), stage, name), List.of());
 		} catch (Exception e) {
 			LOGGER.log(Level.WARNING, "Error listing objects via registry, falling back to storage query", e);
 			EObjectStorageService<T> storageService = storageMap.get(stage);				
-			return requireNonNullElse(WorkflowServiceHelper.getPromiseValue(storageService.queryObjects(WorkflowServiceHelper.createQuery(Map.of(ManagementPackage.Literals.OBJECT_QUERY__ROLE, stage, ManagementPackage.Literals.OBJECT_QUERY__SCOPE, scope, ManagementPackage.Literals.OBJECT_QUERY__REGISTRY, config.registry_name(), ManagementPackage.Literals.OBJECT_QUERY__NAME, name)))), List.of());
+			return requireNonNullElse(WorkflowServiceHelper.getPromiseValue(storageService.queryObjects(WorkflowServiceHelper.createQuery(Map.of(ManagementPackage.Literals.OBJECT_QUERY__STAGE, stage, ManagementPackage.Literals.OBJECT_QUERY__SCOPE, scope, ManagementPackage.Literals.OBJECT_QUERY__REGISTRY, config.registry_name(), ManagementPackage.Literals.OBJECT_QUERY__NAME, name)))), List.of());
 		}
 	}
 
@@ -255,12 +246,12 @@ public class RegistryServiceImpl<T extends EObject> implements RegistryService<T
 		List<ObjectMetadata> metadata = new LinkedList<>();
 		Stage finalStage = stages.stream().filter(s -> s.isFinal()).findFirst().get();
 		try {			
-			List<ObjectMetadata> localMetadata = requireNonNullElse(registryService.findByScopeRegistryAndRole(scope, config.registry_name(), finalStage.getName()), List.of());
+			List<ObjectMetadata> localMetadata = requireNonNullElse(registryService.findByScopeRegistryAndStage(scope, config.registry_name(), finalStage.getName()), List.of());
 			metadata.addAll(localMetadata);			 
 		} catch (Exception e) {
 			LOGGER.log(Level.WARNING, "Error listing objects via registry, falling back to storage query", e);
 			EObjectStorageService<T> storageService = storageMap.get(finalStage.getName());
-			List<ObjectMetadata> localMetadata =  requireNonNullElse(WorkflowServiceHelper.getPromiseValue(storageService.queryObjects(WorkflowServiceHelper.createQuery(Map.of(ManagementPackage.Literals.OBJECT_QUERY__ROLE, finalStage.getName(), ManagementPackage.Literals.OBJECT_QUERY__SCOPE, scope, ManagementPackage.Literals.OBJECT_QUERY__REGISTRY, config.registry_name())))), List.of());
+			List<ObjectMetadata> localMetadata =  requireNonNullElse(WorkflowServiceHelper.getPromiseValue(storageService.queryObjects(WorkflowServiceHelper.createQuery(Map.of(ManagementPackage.Literals.OBJECT_QUERY__STAGE, finalStage.getName(), ManagementPackage.Literals.OBJECT_QUERY__SCOPE, scope, ManagementPackage.Literals.OBJECT_QUERY__REGISTRY, config.registry_name())))), List.of());
 			metadata.addAll(localMetadata);			
 		}
 		return metadata;
@@ -274,8 +265,8 @@ public class RegistryServiceImpl<T extends EObject> implements RegistryService<T
 	public ObjectMetadata transitionToStage(String scope, String objectId, String fromStage, String toStage) {
 		validateTransition(fromStage, toStage);
 		EObjectStorageService<T> sourceStorage = storageMap.get(fromStage);
-		T object =  WorkflowServiceHelper.getPromiseValue(sourceStorage.retrieveObject(objectId));
-		ObjectMetadata metadata = WorkflowServiceHelper.getPromiseValue(sourceStorage.retrieveMetadata(objectId));
+		T object =  WorkflowServiceHelper.getPromiseValue(sourceStorage.retrieveObject(scope, config.registry_name(), fromStage, objectId));
+		ObjectMetadata metadata = WorkflowServiceHelper.getPromiseValue(sourceStorage.retrieveMetadata(scope, config.registry_name(), fromStage, objectId));
 
 		if (object == null || metadata == null) {
 			throw new IllegalArgumentException("Object not found in stage " + fromStage + ": " + objectId);
@@ -290,9 +281,9 @@ public class RegistryServiceImpl<T extends EObject> implements RegistryService<T
 		// Delete from source stage (if configured). If the registry is shared though, this will cause to remove also the newly created metadata,
 		// so we have to do it before storing the object in the target stage
 		if (config.delete_after_transition()) {
-			WorkflowServiceHelper.getPromiseValue(sourceStorage.deleteObject(objectId));
+			WorkflowServiceHelper.getPromiseValue(sourceStorage.deleteObject(scope, config.registry_name(), fromStage, objectId));
 		}
-		WorkflowServiceHelper.getPromiseValue(targetStorage.storeObject(objectId, object, metadata));	
+		WorkflowServiceHelper.getPromiseValue(targetStorage.storeObject(scope, config.registry_name(), toStage, objectId, object, metadata));	
 		return metadata;
 	}
 
@@ -362,26 +353,26 @@ public class RegistryServiceImpl<T extends EObject> implements RegistryService<T
 			List<EObjectStorageService<T>> storageServices) {
 		Map<String, EObjectStorageService<T>> map = new HashMap<>();
 
-		// Build storageType -> service lookup
-		//		Map<String, EObjectStorageService<T>> storageByType = storageServices.stream()
-		//				.collect(Collectors.toMap(
-		//						s -> s.getStorageType(),  // Assumes storage services expose their type
-		//						Function.identity()
-		//						));
-		//
-		//		// Parse stage:storageType mappings
-		//		for (String mapping : mappings) {
-		//			String[] parts = mapping.split(":");
-		//			if(parts.length != 2) {
-		//				throw new IllegalArgumentException(String.format("Storage mapping property %s is not properly formatted. Expected format 'stage:storageType'", mapping));
-		//			}
-		//			String stageName = parts[0].trim();
-		//			String storageType = parts[1].trim();
-		//			EObjectStorageService<T> storage = storageByType.get(storageType);
-		//			if (storage != null) {
-		//				map.put(stageName, storage);
-		//			}
-		//		}
+		//		 Build storageType -> service lookup
+		Map<String, EObjectStorageService<T>> storageByType = storageServices.stream()
+				.collect(Collectors.toMap(
+						s -> s.getStorageType(),  
+						Function.identity()
+						));
+
+		// Parse stage:storageType mappings
+		for (String mapping : mappings) {
+			String[] parts = mapping.split(":");
+			if(parts.length != 2) {
+				throw new IllegalArgumentException(String.format("Storage mapping property %s is not properly formatted. Expected format 'stage:storageType'", mapping));
+			}
+			String stageName = parts[0].trim();
+			String storageType = parts[1].trim();
+			EObjectStorageService<T> storage = storageByType.get(storageType);
+			if (storage != null) {
+				map.put(stageName, storage);
+			}
+		}
 		return map;
 	}
 
@@ -389,9 +380,9 @@ public class RegistryServiceImpl<T extends EObject> implements RegistryService<T
 		List<Stage> stageServices = new ArrayList<>(stages.length);
 		for(String stage : stages) {
 			ObjectMapper mapper = new ObjectMapper();
-	        
-	        Map<String, Object> map = mapper.readValue(stage, new TypeReference<Map<String, Object>>(){});
-	        
+
+			Map<String, Object> map = mapper.readValue(stage, new TypeReference<Map<String, Object>>(){});
+
 			Stage stageService = WorkflowApiFactory.eINSTANCE.createStage();
 			stageService.setName((String) map.get("name"));
 			stageService.setWritable((boolean) map.get("writable"));
@@ -400,7 +391,7 @@ public class RegistryServiceImpl<T extends EObject> implements RegistryService<T
 		}
 		return stageServices;
 	}
-	
+
 	private void validateStages() {
 		if(stages.stream().filter(s -> s.isFinal()).count() != 1) {
 			throw new IllegalArgumentException("Exactly 1 final stage must be provided!");

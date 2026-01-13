@@ -194,11 +194,11 @@ class BasicRegistryHelperTest {
     void testFindByRole() throws IOException {
         // Create test objects with different roles
         ObjectMetadata draft = createTestMetadata("draft-obj", "Package1", "1.0.0", ObjectStatus.DRAFT);
-        draft.setRole("draft");
+        draft.setStage("draft");
         ObjectMetadata approved = createTestMetadata("approved-obj", "Package2", "1.0.0", ObjectStatus.APPROVED);
-        approved.setRole("approved");
+        approved.setStage("approved");
         ObjectMetadata documentation = createTestMetadata("doc-obj", "Package3", "1.0.0", ObjectStatus.DEPLOYED);
-        documentation.setRole("documentation");
+        documentation.setStage("documentation");
         
         // Add to index
         registryHelper.updateIndex("draft-obj", draft);
@@ -206,16 +206,16 @@ class BasicRegistryHelperTest {
         registryHelper.updateIndex("doc-obj", documentation);
         
         // Test finding by role
-        List<String> draftObjects = registryHelper.findByRole("draft");
+        List<String> draftObjects = registryHelper.findByStage("draft");
         assertEquals(1, draftObjects.size());
         assertTrue(draftObjects.contains("draft-obj"));
         
-        List<String> approvedObjects = registryHelper.findByRole("approved");
+        List<String> approvedObjects = registryHelper.findByStage("approved");
         assertEquals(1, approvedObjects.size());
         assertTrue(approvedObjects.contains("approved-obj"));
         
         // Test non-existent role
-        List<String> productionObjects = registryHelper.findByRole("production");
+        List<String> productionObjects = registryHelper.findByStage("production");
         assertEquals(0, productionObjects.size());
     }
 
@@ -223,16 +223,16 @@ class BasicRegistryHelperTest {
     void testFindByRoleValidation() {
         // Test null role validation
         assertThrows(NullPointerException.class, () -> 
-            registryHelper.findByRole(null));
+            registryHelper.findByStage(null));
     }
 
     @Test
     void testFindByObjectNameAndRole() throws IOException {
         // Create test objects with same name but different roles
         ObjectMetadata draft = createTestMetadata("draft-obj", "PackageName", "1.0.0", ObjectStatus.DRAFT);
-        draft.setRole("draft");
+        draft.setStage("draft");
         ObjectMetadata approved = createTestMetadata("approved-obj", "PackageName", "2.0.0", ObjectStatus.APPROVED);
-        approved.setRole("approved");
+        approved.setStage("approved");
         
         // Add to index
         registryHelper.updateIndex("draft-obj", draft);
@@ -347,9 +347,9 @@ class BasicRegistryHelperTest {
     void testGetRegistryStatistics() throws IOException {
         // Add test data
         ObjectMetadata draft = createTestMetadata("draft-obj", "Package1", "1.0.0", ObjectStatus.DRAFT);
-        draft.setRole("draft");
+        draft.setStage("draft");
         ObjectMetadata approved = createTestMetadata("approved-obj", "Package2", "1.0.0", ObjectStatus.APPROVED);
-        approved.setRole("approved");
+        approved.setStage("approved");
         
         registryHelper.updateIndex("draft-obj", draft);
         registryHelper.updateIndex("approved-obj", approved);
@@ -367,7 +367,7 @@ class BasicRegistryHelperTest {
         assertEquals(2L, statsMap.get("totalObjects"));
         assertTrue(statsMap.get("initialized") instanceof Boolean);
         assertTrue(statsMap.containsKey("statusDistribution"));
-        assertTrue(statsMap.containsKey("roleDistribution"));
+        assertTrue(statsMap.containsKey("stageDistribution"));
     }
 
     @Test

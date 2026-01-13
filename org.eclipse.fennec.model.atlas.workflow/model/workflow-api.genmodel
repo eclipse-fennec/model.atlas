@@ -68,11 +68,6 @@
         <genParameters ecoreParameter="workflow-api.ecore#//EObjectWorkflowService/isTransitionAllowed/toStage"/>
       </genOperations>
     </genClasses>
-    <genClasses ecoreClass="workflow-api.ecore#//StageService">
-      <genOperations ecoreOperation="workflow-api.ecore#//StageService/getStageName"/>
-      <genOperations ecoreOperation="workflow-api.ecore#//StageService/isWritable"/>
-      <genOperations ecoreOperation="workflow-api.ecore#//StageService/isFinalStage"/>
-    </genClasses>
     <genClasses ecoreClass="workflow-api.ecore#//RegistryService">
       <genTypeParameters ecoreTypeParameter="workflow-api.ecore#//RegistryService/T"/>
       <genOperations ecoreOperation="workflow-api.ecore#//RegistryService/uploadToStage">

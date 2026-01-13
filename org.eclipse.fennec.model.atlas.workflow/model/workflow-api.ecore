@@ -133,15 +133,7 @@
       <eParameters name="toStage" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
     </eOperations>
   </eClassifiers>
-  <eClassifiers xsi:type="ecore:EClass" name="StageService">
-    <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
-      <details key="documentation" value="Represents a single stage in a workflow with its configuration and validation logic."/>
-    </eAnnotations>
-    <eOperations name="getStageName" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
-    <eOperations name="isWritable" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EBoolean"/>
-    <eOperations name="isFinalStage" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EBoolean"/>
-  </eClassifiers>
-  <eClassifiers xsi:type="ecore:EClass" name="RegistryService">
+  <eClassifiers xsi:type="ecore:EClass" name="RegistryService" abstract="true" interface="true">
     <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
       <details key="documentation" value="Manages stage validation and storage operations for a specific registry type (scope-agnostic, can serve multiple scopes)."/>
     </eAnnotations>
@@ -264,7 +256,7 @@
       <eParameters name="toStage" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
     </eOperations>
   </eClassifiers>
-  <eClassifiers xsi:type="ecore:EClass" name="ScopeService">
+  <eClassifiers xsi:type="ecore:EClass" name="ScopeService" abstract="true" interface="true">
     <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
       <details key="documentation" value="Orchestrates all data operations for this scope by validating and delegating to RegistryService."/>
     </eAnnotations>

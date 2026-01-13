@@ -224,7 +224,7 @@ class AbstractEObjectStorageServiceQueryDelegationTest {
         // Then: Only objects from our storage type are returned
         assertEquals(1, results.size());
         assertEquals("obj2", results.get(0).getObjectId());
-        assertEquals("minio", results.get(0).getRole());
+        assertEquals("minio", results.get(0).getStage());
     }
 
     @Test
@@ -268,10 +268,10 @@ class AbstractEObjectStorageServiceQueryDelegationTest {
         when(storageHelper.loadMetadata("obj2")).thenReturn(metadata2);
     }
 
-    private ObjectMetadata createTestMetadata(String objectId, String storageType, ObjectStatus status, String objectType) {
+    private ObjectMetadata createTestMetadata(String objectId, String stage, ObjectStatus status, String objectType) {
         ObjectMetadata metadata = managementFactory.createObjectMetadata();
         metadata.setObjectId(objectId);
-        metadata.setRole(storageType);
+        metadata.setStage(stage);
         metadata.setStatus(status);
         metadata.setObjectType(objectType);
         return metadata;
@@ -301,7 +301,7 @@ class AbstractEObjectStorageServiceQueryDelegationTest {
         }
         
         @Override
-        protected String getStorageType() {
+        public String getStorageType() {
             return testStorageType;
         }
         

@@ -83,12 +83,6 @@ public class WorkflowApiSwitch<T1> extends Switch<T1> {
 				if (result == null) result = defaultCase(theEObject);
 				return result;
 			}
-			case WorkflowApiPackage.STAGE_SERVICE: {
-				StageService stageService = (StageService)theEObject;
-				T1 result = caseStageService(stageService);
-				if (result == null) result = defaultCase(theEObject);
-				return result;
-			}
 			case WorkflowApiPackage.REGISTRY_SERVICE: {
 				RegistryService<?> registryService = (RegistryService<?>)theEObject;
 				T1 result = caseRegistryService(registryService);
@@ -123,21 +117,6 @@ public class WorkflowApiSwitch<T1> extends Switch<T1> {
 	 * @generated
 	 */
 	public <T extends EObject> T1 caseEObjectWorkflowService(EObjectWorkflowService<T> object) {
-		return null;
-	}
-
-	/**
-	 * Returns the result of interpreting the object as an instance of '<em>Stage Service</em>'.
-	 * <!-- begin-user-doc -->
-	 * This implementation returns null;
-	 * returning a non-null result will terminate the switch.
-	 * <!-- end-user-doc -->
-	 * @param object the target of the switch.
-	 * @return the result of interpreting the object as an instance of '<em>Stage Service</em>'.
-	 * @see #doSwitch(org.eclipse.emf.ecore.EObject) doSwitch(EObject)
-	 * @generated
-	 */
-	public T1 caseStageService(StageService object) {
 		return null;
 	}
 

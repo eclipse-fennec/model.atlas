@@ -28,7 +28,6 @@ import org.eclipse.fennec.model.atlas.wf.workflowapi.EObjectWorkflowService;
 import org.eclipse.fennec.model.atlas.wf.workflowapi.RegistryService;
 import org.eclipse.fennec.model.atlas.wf.workflowapi.ScopeService;
 import org.eclipse.fennec.model.atlas.wf.workflowapi.Stage;
-import org.eclipse.fennec.model.atlas.wf.workflowapi.StageService;
 import org.eclipse.fennec.model.atlas.wf.workflowapi.WorkflowApiFactory;
 import org.eclipse.fennec.model.atlas.wf.workflowapi.WorkflowApiPackage;
 
@@ -45,13 +44,6 @@ public class WorkflowApiPackageImpl extends EPackageImpl implements WorkflowApiP
 	 * @generated
 	 */
 	private EClass eObjectWorkflowServiceEClass = null;
-
-	/**
-	 * <!-- begin-user-doc -->
-	 * <!-- end-user-doc -->
-	 * @generated
-	 */
-	private EClass stageServiceEClass = null;
 
 	/**
 	 * <!-- begin-user-doc -->
@@ -255,46 +247,6 @@ public class WorkflowApiPackageImpl extends EPackageImpl implements WorkflowApiP
 	@Override
 	public EOperation getEObjectWorkflowService__IsTransitionAllowed__String_String() {
 		return eObjectWorkflowServiceEClass.getEOperations().get(10);
-	}
-
-	/**
-	 * <!-- begin-user-doc -->
-	 * <!-- end-user-doc -->
-	 * @generated
-	 */
-	@Override
-	public EClass getStageService() {
-		return stageServiceEClass;
-	}
-
-	/**
-	 * <!-- begin-user-doc -->
-	 * <!-- end-user-doc -->
-	 * @generated
-	 */
-	@Override
-	public EOperation getStageService__GetStageName() {
-		return stageServiceEClass.getEOperations().get(0);
-	}
-
-	/**
-	 * <!-- begin-user-doc -->
-	 * <!-- end-user-doc -->
-	 * @generated
-	 */
-	@Override
-	public EOperation getStageService__IsWritable() {
-		return stageServiceEClass.getEOperations().get(1);
-	}
-
-	/**
-	 * <!-- begin-user-doc -->
-	 * <!-- end-user-doc -->
-	 * @generated
-	 */
-	@Override
-	public EOperation getStageService__IsFinalStage() {
-		return stageServiceEClass.getEOperations().get(2);
 	}
 
 	/**
@@ -669,11 +621,6 @@ public class WorkflowApiPackageImpl extends EPackageImpl implements WorkflowApiP
 		createEOperation(eObjectWorkflowServiceEClass, EOBJECT_WORKFLOW_SERVICE___TRANSITION_TO_STAGE_FOR_REGISTRY__STRING_STRING_STRING_STRING);
 		createEOperation(eObjectWorkflowServiceEClass, EOBJECT_WORKFLOW_SERVICE___IS_TRANSITION_ALLOWED__STRING_STRING);
 
-		stageServiceEClass = createEClass(STAGE_SERVICE);
-		createEOperation(stageServiceEClass, STAGE_SERVICE___GET_STAGE_NAME);
-		createEOperation(stageServiceEClass, STAGE_SERVICE___IS_WRITABLE);
-		createEOperation(stageServiceEClass, STAGE_SERVICE___IS_FINAL_STAGE);
-
 		registryServiceEClass = createEClass(REGISTRY_SERVICE);
 		createEOperation(registryServiceEClass, REGISTRY_SERVICE___UPLOAD_TO_STAGE__STRING_STRING_EOBJECT_OBJECTMETADATA);
 		createEOperation(registryServiceEClass, REGISTRY_SERVICE___GET_METADATA_FROM_STAGE__STRING_STRING_STRING);
@@ -837,15 +784,7 @@ public class WorkflowApiPackageImpl extends EPackageImpl implements WorkflowApiP
 		addEParameter(op, ecorePackage.getEString(), "fromStage", 0, 1, IS_UNIQUE, IS_ORDERED);
 		addEParameter(op, ecorePackage.getEString(), "toStage", 0, 1, IS_UNIQUE, IS_ORDERED);
 
-		initEClass(stageServiceEClass, StageService.class, "StageService", !IS_ABSTRACT, !IS_INTERFACE, IS_GENERATED_INSTANCE_CLASS);
-
-		initEOperation(getStageService__GetStageName(), ecorePackage.getEString(), "getStageName", 0, 1, IS_UNIQUE, IS_ORDERED);
-
-		initEOperation(getStageService__IsWritable(), ecorePackage.getEBoolean(), "isWritable", 0, 1, IS_UNIQUE, IS_ORDERED);
-
-		initEOperation(getStageService__IsFinalStage(), ecorePackage.getEBoolean(), "isFinalStage", 0, 1, IS_UNIQUE, IS_ORDERED);
-
-		initEClass(registryServiceEClass, RegistryService.class, "RegistryService", !IS_ABSTRACT, !IS_INTERFACE, IS_GENERATED_INSTANCE_CLASS);
+		initEClass(registryServiceEClass, RegistryService.class, "RegistryService", IS_ABSTRACT, IS_INTERFACE, IS_GENERATED_INSTANCE_CLASS);
 
 		op = initEOperation(getRegistryService__UploadToStage__String_String_EObject_ObjectMetadata(), null, "uploadToStage", 0, 1, IS_UNIQUE, IS_ORDERED);
 		addEParameter(op, ecorePackage.getEString(), "scope", 0, 1, IS_UNIQUE, IS_ORDERED);
@@ -939,7 +878,7 @@ public class WorkflowApiPackageImpl extends EPackageImpl implements WorkflowApiP
 		addEParameter(op, ecorePackage.getEString(), "fromStage", 0, 1, IS_UNIQUE, IS_ORDERED);
 		addEParameter(op, ecorePackage.getEString(), "toStage", 0, 1, IS_UNIQUE, IS_ORDERED);
 
-		initEClass(scopeServiceEClass, ScopeService.class, "ScopeService", !IS_ABSTRACT, !IS_INTERFACE, IS_GENERATED_INSTANCE_CLASS);
+		initEClass(scopeServiceEClass, ScopeService.class, "ScopeService", IS_ABSTRACT, IS_INTERFACE, IS_GENERATED_INSTANCE_CLASS);
 
 		op = initEOperation(getScopeService__UploadToStageForRegistry__String_String_EObject_ObjectMetadata(), null, "uploadToStageForRegistry", 0, 1, IS_UNIQUE, IS_ORDERED);
 		addEParameter(op, ecorePackage.getEString(), "registry", 0, 1, IS_UNIQUE, IS_ORDERED);

@@ -373,13 +373,22 @@ public interface ManagementApiPackage extends org.eclipse.emf.ecore.EPackage {
 	int EOBJECT_STORAGE_SERVICE___GET_BACKEND_TYPE = 10;
 
 	/**
+	 * The operation id for the '<em>Get Storage Type</em>' operation.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 * @ordered
+	 */
+	int EOBJECT_STORAGE_SERVICE___GET_STORAGE_TYPE = 11;
+
+	/**
 	 * The number of operations of the '<em>EObject Storage Service</em>' class.
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
 	 * @generated
 	 * @ordered
 	 */
-	int EOBJECT_STORAGE_SERVICE_OPERATION_COUNT = 11;
+	int EOBJECT_STORAGE_SERVICE_OPERATION_COUNT = 12;
 
 	/**
 	 * The meta object id for the '{@link org.eclipse.fennec.model.atlas.mgmt.api.EObjectRegistryService <em>EObject Registry Service</em>}' class.
@@ -926,6 +935,16 @@ public interface ManagementApiPackage extends org.eclipse.emf.ecore.EPackage {
 	EOperation getEObjectStorageService__GetBackendType();
 
 	/**
+	 * Returns the meta object for the '{@link org.eclipse.fennec.model.atlas.mgmt.api.EObjectStorageService#getStorageType() <em>Get Storage Type</em>}' operation.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @return the meta object for the '<em>Get Storage Type</em>' operation.
+	 * @see org.eclipse.fennec.model.atlas.mgmt.api.EObjectStorageService#getStorageType()
+	 * @generated
+	 */
+	EOperation getEObjectStorageService__GetStorageType();
+
+	/**
 	 * Returns the meta object for class '{@link org.eclipse.fennec.model.atlas.mgmt.api.EObjectRegistryService <em>EObject Registry Service</em>}'.
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
@@ -1427,6 +1446,14 @@ public interface ManagementApiPackage extends org.eclipse.emf.ecore.EPackage {
 		 * @generated
 		 */
 		EOperation EOBJECT_STORAGE_SERVICE___GET_BACKEND_TYPE = eINSTANCE.getEObjectStorageService__GetBackendType();
+
+		/**
+		 * The meta object literal for the '<em><b>Get Storage Type</b></em>' operation.
+		 * <!-- begin-user-doc -->
+		 * <!-- end-user-doc -->
+		 * @generated
+		 */
+		EOperation EOBJECT_STORAGE_SERVICE___GET_STORAGE_TYPE = eINSTANCE.getEObjectStorageService__GetStorageType();
 
 		/**
 		 * The meta object literal for the '{@link org.eclipse.fennec.model.atlas.mgmt.api.EObjectRegistryService <em>EObject Registry Service</em>}' class.

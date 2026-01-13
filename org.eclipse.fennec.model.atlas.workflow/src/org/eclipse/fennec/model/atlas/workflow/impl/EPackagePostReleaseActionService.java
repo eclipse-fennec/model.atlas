@@ -56,7 +56,7 @@ import org.osgi.util.promise.PromiseFactory;
  * @author Mark Hoffmann
  * @since 1.0.0
  */
-@Component(service = PostReleaseActionService.class, immediate = true)
+@Component(name = "EPackagePostReleaseActionService", service = PostReleaseActionService.class, immediate = true)
 public class EPackagePostReleaseActionService implements PostReleaseActionService {
     
     private static final Logger logger = Logger.getLogger(EPackagePostReleaseActionService.class.getName());
@@ -64,14 +64,15 @@ public class EPackagePostReleaseActionService implements PostReleaseActionServic
     @Reference
     private DynamicEPackageRegistrationService registrationService;
     
-    @Reference(target = "(storage.role=release)")
+//    TODO: This has to be configurable with a storage.type, not a storage.role
+    @Reference(target = "(scope=no-inject)")
     private EObjectStorageService<EPackage> releaseStorage;
     
     private final PromiseFactory promiseFactory = new PromiseFactory(null);
     private final Map<String, PostReleaseActionInfoImpl> actionHistory = new ConcurrentHashMap<>();
     
     @Override
-    public Promise<Void> executePostReleaseActions(String objectId, String objectType, String releaseUser, String releaseNotes) {
+    public Promise<Void> executePostReleaseActions(String scope, String registry, String stage, String objectId, String objectType, String releaseUser, String releaseNotes) {
         requireNonNull(objectId, "Object ID cannot be null");
         requireNonNull(objectType, "Object type cannot be null");
         requireNonNull(releaseUser, "Release user cannot be null");
@@ -93,7 +94,7 @@ public class EPackagePostReleaseActionService implements PostReleaseActionServic
                 actionHistory.put(objectId, actionInfo);
                 
                 // 1. Load the released EPackage
-                EPackage ePackage = loadEPackage(objectId);
+                EPackage ePackage = loadEPackage(scope, registry, stage, objectId);
                 if (ePackage == null) {
                     String error = "Failed to load EPackage from release storage: " + objectId;
                     actionInfo.markFailed(error);
@@ -103,7 +104,7 @@ public class EPackagePostReleaseActionService implements PostReleaseActionServic
                 }
                 
                 // 2. Extract metadata for registration
-                ObjectMetadata metadata = getPromiseValue(releaseStorage.retrieveMetadata(objectId));
+                ObjectMetadata metadata = getPromiseValue(releaseStorage.retrieveMetadata(scope, registry, stage, objectId));
                 String fileExtension = extractFileExtension(metadata, ePackage);
                 String version = extractVersion(metadata, ePackage);
                 
@@ -143,7 +144,7 @@ public class EPackagePostReleaseActionService implements PostReleaseActionServic
     }
     
     @Override
-    public Promise<Void> executePostUnreleaseActions(String objectId, String objectType, String unreleaseUser, String unreleaseReason) {
+    public Promise<Void> executePostUnreleaseActions(String scope, String registry, String stage, String objectId, String objectType, String unreleaseUser, String unreleaseReason) {
         requireNonNull(objectId, "Object ID cannot be null");
         requireNonNull(objectType, "Object type cannot be null");
         requireNonNull(unreleaseUser, "Unrelease user cannot be null");
@@ -178,7 +179,7 @@ public class EPackagePostReleaseActionService implements PostReleaseActionServic
                 // If we couldn't get it from history, try to load the EPackage
                 if (namespaceURI == null) {
                     try {
-                        EPackage ePackage = loadEPackage(objectId);
+                        EPackage ePackage = loadEPackage(scope, registry, stage, objectId);
                         if (ePackage != null) {
                             namespaceURI = ePackage.getNsURI();
                         }
@@ -227,9 +228,9 @@ public class EPackagePostReleaseActionService implements PostReleaseActionServic
     
     // Private helper methods
     
-    private EPackage loadEPackage(String objectId) {
+    private EPackage loadEPackage(String scope, String registry, String stage, String objectId) {
         try {
-            return getPromiseValue(releaseStorage.retrieveObject(objectId));
+            return getPromiseValue(releaseStorage.retrieveObject(scope, registry, stage, objectId));
         } catch (Exception e) {
             logger.log(Level.WARNING, "Failed to load EPackage: " + objectId, e);
             return null;

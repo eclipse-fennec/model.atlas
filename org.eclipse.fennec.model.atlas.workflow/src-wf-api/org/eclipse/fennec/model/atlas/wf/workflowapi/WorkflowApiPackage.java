@@ -201,69 +201,14 @@ public interface WorkflowApiPackage extends org.eclipse.emf.ecore.EPackage {
 	int EOBJECT_WORKFLOW_SERVICE_OPERATION_COUNT = 11;
 
 	/**
-	 * The meta object id for the '{@link org.eclipse.fennec.model.atlas.wf.workflowapi.impl.StageServiceImpl <em>Stage Service</em>}' class.
+	 * The meta object id for the '{@link org.eclipse.fennec.model.atlas.wf.workflowapi.RegistryService <em>Registry Service</em>}' class.
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
-	 * @see org.eclipse.fennec.model.atlas.wf.workflowapi.impl.StageServiceImpl
-	 * @see org.eclipse.fennec.model.atlas.wf.workflowapi.impl.WorkflowApiPackageImpl#getStageService()
-	 * @generated
-	 */
-	int STAGE_SERVICE = 1;
-
-	/**
-	 * The number of structural features of the '<em>Stage Service</em>' class.
-	 * <!-- begin-user-doc -->
-	 * <!-- end-user-doc -->
-	 * @generated
-	 * @ordered
-	 */
-	int STAGE_SERVICE_FEATURE_COUNT = 0;
-
-	/**
-	 * The operation id for the '<em>Get Stage Name</em>' operation.
-	 * <!-- begin-user-doc -->
-	 * <!-- end-user-doc -->
-	 * @generated
-	 * @ordered
-	 */
-	int STAGE_SERVICE___GET_STAGE_NAME = 0;
-
-	/**
-	 * The operation id for the '<em>Is Writable</em>' operation.
-	 * <!-- begin-user-doc -->
-	 * <!-- end-user-doc -->
-	 * @generated
-	 * @ordered
-	 */
-	int STAGE_SERVICE___IS_WRITABLE = 1;
-
-	/**
-	 * The operation id for the '<em>Is Final Stage</em>' operation.
-	 * <!-- begin-user-doc -->
-	 * <!-- end-user-doc -->
-	 * @generated
-	 * @ordered
-	 */
-	int STAGE_SERVICE___IS_FINAL_STAGE = 2;
-
-	/**
-	 * The number of operations of the '<em>Stage Service</em>' class.
-	 * <!-- begin-user-doc -->
-	 * <!-- end-user-doc -->
-	 * @generated
-	 * @ordered
-	 */
-	int STAGE_SERVICE_OPERATION_COUNT = 3;
-
-	/**
-	 * The meta object id for the '{@link org.eclipse.fennec.model.atlas.wf.workflowapi.impl.RegistryServiceImpl <em>Registry Service</em>}' class.
-	 * <!-- begin-user-doc -->
-	 * <!-- end-user-doc -->
-	 * @see org.eclipse.fennec.model.atlas.wf.workflowapi.impl.RegistryServiceImpl
+	 * @see org.eclipse.fennec.model.atlas.wf.workflowapi.RegistryService
 	 * @see org.eclipse.fennec.model.atlas.wf.workflowapi.impl.WorkflowApiPackageImpl#getRegistryService()
 	 * @generated
 	 */
-	int REGISTRY_SERVICE = 2;
+	int REGISTRY_SERVICE = 1;
 
 	/**
 	 * The number of structural features of the '<em>Registry Service</em>' class.
@@ -419,14 +364,14 @@ public interface WorkflowApiPackage extends org.eclipse.emf.ecore.EPackage {
 	int REGISTRY_SERVICE_OPERATION_COUNT = 15;
 
 	/**
-	 * The meta object id for the '{@link org.eclipse.fennec.model.atlas.wf.workflowapi.impl.ScopeServiceImpl <em>Scope Service</em>}' class.
+	 * The meta object id for the '{@link org.eclipse.fennec.model.atlas.wf.workflowapi.ScopeService <em>Scope Service</em>}' class.
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
-	 * @see org.eclipse.fennec.model.atlas.wf.workflowapi.impl.ScopeServiceImpl
+	 * @see org.eclipse.fennec.model.atlas.wf.workflowapi.ScopeService
 	 * @see org.eclipse.fennec.model.atlas.wf.workflowapi.impl.WorkflowApiPackageImpl#getScopeService()
 	 * @generated
 	 */
-	int SCOPE_SERVICE = 3;
+	int SCOPE_SERVICE = 2;
 
 	/**
 	 * The number of structural features of the '<em>Scope Service</em>' class.
@@ -562,7 +507,7 @@ public interface WorkflowApiPackage extends org.eclipse.emf.ecore.EPackage {
 	 * @see org.eclipse.fennec.model.atlas.wf.workflowapi.impl.WorkflowApiPackageImpl#getStage()
 	 * @generated
 	 */
-	int STAGE = 4;
+	int STAGE = 3;
 
 	/**
 	 * The feature id for the '<em><b>Name</b></em>' attribute.
@@ -729,46 +674,6 @@ public interface WorkflowApiPackage extends org.eclipse.emf.ecore.EPackage {
 	 * @generated
 	 */
 	EOperation getEObjectWorkflowService__IsTransitionAllowed__String_String();
-
-	/**
-	 * Returns the meta object for class '{@link org.eclipse.fennec.model.atlas.wf.workflowapi.StageService <em>Stage Service</em>}'.
-	 * <!-- begin-user-doc -->
-	 * <!-- end-user-doc -->
-	 * @return the meta object for class '<em>Stage Service</em>'.
-	 * @see org.eclipse.fennec.model.atlas.wf.workflowapi.StageService
-	 * @generated
-	 */
-	EClass getStageService();
-
-	/**
-	 * Returns the meta object for the '{@link org.eclipse.fennec.model.atlas.wf.workflowapi.StageService#getStageName() <em>Get Stage Name</em>}' operation.
-	 * <!-- begin-user-doc -->
-	 * <!-- end-user-doc -->
-	 * @return the meta object for the '<em>Get Stage Name</em>' operation.
-	 * @see org.eclipse.fennec.model.atlas.wf.workflowapi.StageService#getStageName()
-	 * @generated
-	 */
-	EOperation getStageService__GetStageName();
-
-	/**
-	 * Returns the meta object for the '{@link org.eclipse.fennec.model.atlas.wf.workflowapi.StageService#isWritable() <em>Is Writable</em>}' operation.
-	 * <!-- begin-user-doc -->
-	 * <!-- end-user-doc -->
-	 * @return the meta object for the '<em>Is Writable</em>' operation.
-	 * @see org.eclipse.fennec.model.atlas.wf.workflowapi.StageService#isWritable()
-	 * @generated
-	 */
-	EOperation getStageService__IsWritable();
-
-	/**
-	 * Returns the meta object for the '{@link org.eclipse.fennec.model.atlas.wf.workflowapi.StageService#isFinalStage() <em>Is Final Stage</em>}' operation.
-	 * <!-- begin-user-doc -->
-	 * <!-- end-user-doc -->
-	 * @return the meta object for the '<em>Is Final Stage</em>' operation.
-	 * @see org.eclipse.fennec.model.atlas.wf.workflowapi.StageService#isFinalStage()
-	 * @generated
-	 */
-	EOperation getStageService__IsFinalStage();
 
 	/**
 	 * Returns the meta object for class '{@link org.eclipse.fennec.model.atlas.wf.workflowapi.RegistryService <em>Registry Service</em>}'.
@@ -1225,44 +1130,10 @@ public interface WorkflowApiPackage extends org.eclipse.emf.ecore.EPackage {
 		EOperation EOBJECT_WORKFLOW_SERVICE___IS_TRANSITION_ALLOWED__STRING_STRING = eINSTANCE.getEObjectWorkflowService__IsTransitionAllowed__String_String();
 
 		/**
-		 * The meta object literal for the '{@link org.eclipse.fennec.model.atlas.wf.workflowapi.impl.StageServiceImpl <em>Stage Service</em>}' class.
+		 * The meta object literal for the '{@link org.eclipse.fennec.model.atlas.wf.workflowapi.RegistryService <em>Registry Service</em>}' class.
 		 * <!-- begin-user-doc -->
 		 * <!-- end-user-doc -->
-		 * @see org.eclipse.fennec.model.atlas.wf.workflowapi.impl.StageServiceImpl
-		 * @see org.eclipse.fennec.model.atlas.wf.workflowapi.impl.WorkflowApiPackageImpl#getStageService()
-		 * @generated
-		 */
-		EClass STAGE_SERVICE = eINSTANCE.getStageService();
-
-		/**
-		 * The meta object literal for the '<em><b>Get Stage Name</b></em>' operation.
-		 * <!-- begin-user-doc -->
-		 * <!-- end-user-doc -->
-		 * @generated
-		 */
-		EOperation STAGE_SERVICE___GET_STAGE_NAME = eINSTANCE.getStageService__GetStageName();
-
-		/**
-		 * The meta object literal for the '<em><b>Is Writable</b></em>' operation.
-		 * <!-- begin-user-doc -->
-		 * <!-- end-user-doc -->
-		 * @generated
-		 */
-		EOperation STAGE_SERVICE___IS_WRITABLE = eINSTANCE.getStageService__IsWritable();
-
-		/**
-		 * The meta object literal for the '<em><b>Is Final Stage</b></em>' operation.
-		 * <!-- begin-user-doc -->
-		 * <!-- end-user-doc -->
-		 * @generated
-		 */
-		EOperation STAGE_SERVICE___IS_FINAL_STAGE = eINSTANCE.getStageService__IsFinalStage();
-
-		/**
-		 * The meta object literal for the '{@link org.eclipse.fennec.model.atlas.wf.workflowapi.impl.RegistryServiceImpl <em>Registry Service</em>}' class.
-		 * <!-- begin-user-doc -->
-		 * <!-- end-user-doc -->
-		 * @see org.eclipse.fennec.model.atlas.wf.workflowapi.impl.RegistryServiceImpl
+		 * @see org.eclipse.fennec.model.atlas.wf.workflowapi.RegistryService
 		 * @see org.eclipse.fennec.model.atlas.wf.workflowapi.impl.WorkflowApiPackageImpl#getRegistryService()
 		 * @generated
 		 */
@@ -1389,10 +1260,10 @@ public interface WorkflowApiPackage extends org.eclipse.emf.ecore.EPackage {
 		EOperation REGISTRY_SERVICE___IS_TRANSITION_ALLOWED__STRING_STRING = eINSTANCE.getRegistryService__IsTransitionAllowed__String_String();
 
 		/**
-		 * The meta object literal for the '{@link org.eclipse.fennec.model.atlas.wf.workflowapi.impl.ScopeServiceImpl <em>Scope Service</em>}' class.
+		 * The meta object literal for the '{@link org.eclipse.fennec.model.atlas.wf.workflowapi.ScopeService <em>Scope Service</em>}' class.
 		 * <!-- begin-user-doc -->
 		 * <!-- end-user-doc -->
-		 * @see org.eclipse.fennec.model.atlas.wf.workflowapi.impl.ScopeServiceImpl
+		 * @see org.eclipse.fennec.model.atlas.wf.workflowapi.ScopeService
 		 * @see org.eclipse.fennec.model.atlas.wf.workflowapi.impl.WorkflowApiPackageImpl#getScopeService()
 		 * @generated
 		 */
