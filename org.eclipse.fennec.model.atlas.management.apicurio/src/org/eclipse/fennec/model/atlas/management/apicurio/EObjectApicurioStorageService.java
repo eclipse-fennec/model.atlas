@@ -64,7 +64,13 @@ public class EObjectApicurioStorageService extends AbstractEObjectStorageService
 				name = "Base Apicurio URL",
 				description = "Base Apicurio URL for REST requests"
 				)
-		String base_url() default "http://localhost:8080/apis/registry/v3/";	
+		String base_url() default "http://localhost:8080/apis/registry/v3/";
+		
+		@AttributeDefinition(
+				name = "Storage Type",
+				description = "The storage type. Can be useful when multiple storage with the same storage.backend property exist, to differentiate them."
+				)
+		String storage_type() default "apicurio";
 	}
 
 	public static final String PID = "ApicurioObjectStorage";
@@ -76,7 +82,7 @@ public class EObjectApicurioStorageService extends AbstractEObjectStorageService
 	public void activate(BundleContext bundleContext, Config config) throws Exception {
 		this.bctx = bundleContext;
 		this.config = config;
-		
+		storageType = config.storage_type();
 		// Call parent activation
 		activateStorageService();
 	}
@@ -123,6 +129,6 @@ public class EObjectApicurioStorageService extends AbstractEObjectStorageService
 	 */
 	@Override
 	public String getStorageType() {
-		return "apicurio";
+		return storageType;
 	}	
 }

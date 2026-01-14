@@ -126,6 +126,24 @@ public interface MgmtApicurioFactory extends EFactory {
 	SearchedVersion createSearchedVersion();
 
 	/**
+	 * Returns a new object of class '<em>Group</em>'.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @return a new object of class '<em>Group</em>'.
+	 * @generated
+	 */
+	Group createGroup();
+
+	/**
+	 * Returns a new object of class '<em>Search Group Response</em>'.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @return a new object of class '<em>Search Group Response</em>'.
+	 * @generated
+	 */
+	SearchGroupResponse createSearchGroupResponse();
+
+	/**
 	 * Returns the package supported by this factory.
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->

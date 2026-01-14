@@ -41,6 +41,10 @@ public class AbstractStorageHelperTest {
     
     private TestableStorageHelper helper;
     private ResourceSet resourceSet;
+    private static final String TEST_SCOPE = "test_scope";
+    private static final String TEST_REGISTRY = "test_registry";
+    private static final String TEST_STAGE = "test_stage";
+    
     
     /**
      * Testable implementation of AbstractStorageHelper for unit testing.
@@ -56,7 +60,7 @@ public class AbstractStorageHelperTest {
         }
         
         @Override
-        protected URI createStorageURI(String path) {
+        protected URI createStorageURI(String scope, String registry, String stage, String path) {
             return URI.createURI("test://" + path);
         }
         
@@ -66,23 +70,23 @@ public class AbstractStorageHelperTest {
         }
         
         @Override
-        protected boolean storageExists(String path) throws IOException {
+        protected boolean storageExists(String scope, String registry, String stage, String path) throws IOException {
             // Return true if it's a metadata path and we want to simulate metadata existence
             return path.endsWith(".metadata.xmi") && metadataExists;
         }
         
         @Override
-        protected String findObjectPath(String objectId) throws IOException {
+        protected String findObjectPath(String scope, String registry, String stage, String objectId) throws IOException {
             return objectPathToReturn;
         }
         
         @Override
-        public boolean deleteObject(String objectId) throws IOException {
+        public boolean deleteObject(String scope, String registry, String stage, String objectId) throws IOException {
             return false; // Simplified for testing
         }
         
         @Override
-        public List<String> listObjectIds() throws IOException {
+        public List<String> listObjectIds(String scope, String registry, String stage) throws IOException {
             return List.of(); // Simplified for testing
         }
         
@@ -94,6 +98,16 @@ public class AbstractStorageHelperTest {
         public void setObjectPathToReturn(String path) {
             this.objectPathToReturn = path;
         }
+
+		/* 
+		 * (non-Javadoc)
+		 * @see org.eclipse.fennec.model.atlas.mgmt.storage.AbstractStorageHelper#loadAllStoredMetadata()
+		 */
+		@Override
+		protected List<ObjectMetadata> loadAllStoredMetadata() throws IOException {
+			// TODO Auto-generated method stub
+			return null;
+		}
     }
     
     @BeforeEach
@@ -189,13 +203,13 @@ public class AbstractStorageHelperTest {
     
     @Test
     public void testBuildObjectPath() {
-        String objectPath = helper.buildObjectPath("test-id", ".ecore");
-        assertEquals("test-id.ecore", objectPath);
+        String objectPath = helper.buildObjectPath(TEST_SCOPE, TEST_REGISTRY, TEST_STAGE, "test-id", ".ecore");
+        assertEquals(TEST_SCOPE.concat("_").concat(TEST_REGISTRY).concat("_").concat(TEST_STAGE).concat("_test-id.ecore"), objectPath);
     }
     
     @Test
     public void testBuildMetadataPath() {
-        String metadataPath = helper.buildMetadataPath("test-id");
+        String metadataPath = helper.buildMetadataPath(TEST_SCOPE, TEST_REGISTRY, TEST_STAGE, "test-id");
         assertEquals("test-id.metadata.xmi", metadataPath);
     }
     
@@ -231,7 +245,7 @@ public class AbstractStorageHelperTest {
         helper.setMetadataExists(true);
         helper.setObjectPathToReturn(null); // Object file doesn't exist
         
-        boolean exists = helper.objectExists("test-object");
+        boolean exists = helper.objectExists(TEST_SCOPE, TEST_REGISTRY, TEST_STAGE, "test-object");
         assertTrue(exists, "Should return true when metadata exists");
     }
     
@@ -241,7 +255,7 @@ public class AbstractStorageHelperTest {
         helper.setMetadataExists(false);
         helper.setObjectPathToReturn("test-object.ecore"); // Object file exists
         
-        boolean exists = helper.objectExists("test-object");
+        boolean exists = helper.objectExists(TEST_SCOPE, TEST_REGISTRY, TEST_STAGE, "test-object");
         assertTrue(exists, "Should return true when object file exists");
     }
     
@@ -251,7 +265,7 @@ public class AbstractStorageHelperTest {
         helper.setMetadataExists(true);
         helper.setObjectPathToReturn("test-object.xmi");
         
-        boolean exists = helper.objectExists("test-object");
+        boolean exists = helper.objectExists(TEST_SCOPE, TEST_REGISTRY, TEST_STAGE, "test-object");
         assertTrue(exists, "Should return true when both metadata and object exist");
     }
     
@@ -261,7 +275,7 @@ public class AbstractStorageHelperTest {
         helper.setMetadataExists(false);
         helper.setObjectPathToReturn(null);
         
-        boolean exists = helper.objectExists("test-object");
+        boolean exists = helper.objectExists(TEST_SCOPE, TEST_REGISTRY, TEST_STAGE, "test-object");
         assertFalse(exists, "Should return false when nothing exists");
     }
     
@@ -271,7 +285,7 @@ public class AbstractStorageHelperTest {
         helper.setMetadataExists(true);
         helper.setObjectPathToReturn("some-path");
         
-        boolean exists = helper.objectExists(null);
+        boolean exists = helper.objectExists(TEST_SCOPE, TEST_REGISTRY, TEST_STAGE, null);
         assertFalse(exists, "Should return false for null object ID");
     }
     
@@ -281,7 +295,7 @@ public class AbstractStorageHelperTest {
         helper.setMetadataExists(true);
         helper.setObjectPathToReturn("some-path");
         
-        boolean exists = helper.objectExists("");
+        boolean exists = helper.objectExists(TEST_SCOPE, TEST_REGISTRY, TEST_STAGE, "");
         assertFalse(exists, "Should return false for empty object ID");
     }
 }

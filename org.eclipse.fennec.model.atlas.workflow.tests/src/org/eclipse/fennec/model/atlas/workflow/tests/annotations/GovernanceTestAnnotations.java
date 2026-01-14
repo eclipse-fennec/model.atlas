@@ -77,8 +77,8 @@ public class GovernanceTestAnnotations {
     public static final String PID_INITIALIZER = "GovernanceInitializerComponent";
     
     @WithFactoryConfiguration(factoryPid = PID_INITIALIZER, name = "initializer", location = "?", properties = {
-            @Property(key = "draftStorage.target", value = "(storage.role=draft)"),
-            @Property(key = "releaseStorage.target", value = "(storage.role=release)")
+            @Property(key = "draftStorage.target", value = "(storage.type=file)"),
+            @Property(key = "releaseStorage.target", value = "(storage.type=file)")
         })
     @FullWorkflowWithDocumentationSetup
     public @interface InitializerConfigurationSetup{}
@@ -138,37 +138,22 @@ public class GovernanceTestAnnotations {
     public @interface DocumentationRegistryConfiguration {}
 
     /**
-     * Role-based storage setup for governance workflows.
-     * 
+     * Type-based storage setup for governance workflows.
+     *
      * <p>This setup creates the required storage infrastructure:</p>
      * <ul>
-     * <li>Draft storage with role "draft" (uses main registry)</li>
-     * <li>Release storage with role "release" (uses main registry)</li>
-     * <li>Documentation storage with role "documentation" (uses separate documentation registry)</li>
+     * <li>File storage with type "file" (uses main registry)</li>
      * <li>Main registry for managed objects (EPackages, Routes, etc.)</li>
      * <li>Separate documentation registry for governance documentation objects</li>
      * </ul>
      */
     @RegistryConfiguration
     @DocumentationRegistryConfiguration
-    @WithFactoryConfiguration(factoryPid = PID_FILE_STORAGE, name = "draft", location = "?", properties = {
-        @Property(key = "workspace.folder", value = "%s/draft-storage", templateArguments = {
+    @WithFactoryConfiguration(factoryPid = PID_FILE_STORAGE, name = "file-storage", location = "?", properties = {
+        @Property(key = "workspace.folder", value = "%s/file-storage", templateArguments = {
             @TemplateArgument(source = ValueSource.SystemProperty, value = PROP_TEMP_DIR)
         }),
-        @Property(key = "storage.role", value = "draft")
-    })
-    @WithFactoryConfiguration(factoryPid = PID_FILE_STORAGE, name = "release", location = "?", properties = {
-        @Property(key = "workspace.folder", value = "%s/release-storage", templateArguments = {
-            @TemplateArgument(source = ValueSource.SystemProperty, value = PROP_TEMP_DIR)
-        }),
-        @Property(key = "storage.role", value = "release")
-    })
-    @WithFactoryConfiguration(factoryPid = PID_FILE_STORAGE, name = "documentation", location = "?", properties = {
-        @Property(key = "workspace.folder", value = "%s/documentation-storage", templateArguments = {
-            @TemplateArgument(source = ValueSource.SystemProperty, value = PROP_TEMP_DIR)
-        }),
-        @Property(key = "storage.role", value = "documentation"),
-        @Property(key = "registry.target", value = "(registry=documentation)")
+        @Property(key = "storage.type", value = "file")
     })
     @Retention(RetentionPolicy.RUNTIME)
     public @interface WorkflowStorageSetup {}
@@ -176,19 +161,19 @@ public class GovernanceTestAnnotations {
     @WorkflowStorageSetup
     @WithFactoryConfiguration(factoryPid = PID_STORAGE_REGISTRY, name = "workflow", location = "?", properties = {
             @Property(key = "storage.registry.name", value = "basic"),
-            @Property(key = "storage.target", value = "(|(storage.role=documentation)(storage.role=release)(storage.role=draft))"),
-            @Property(key = "storage.cardinality.minimum", scalar = Scalar.Integer, value = "3")
+            @Property(key = "storage.target", value = "(storage.type=file)"),
+            @Property(key = "storage.cardinality.minimum", scalar = Scalar.Integer, value = "1")
         })
     @Retention(RetentionPolicy.RUNTIME)
     @RequireTypedEvent
     public @interface StorageRegistrySetup {}
     
     @RegistryConfiguration
-    @WithFactoryConfiguration(factoryPid = PID_FILE_STORAGE, name = "release", location = "?", properties = {
-        @Property(key = "workspace.folder", value = "%s/release-storage", templateArguments = {
+    @WithFactoryConfiguration(factoryPid = PID_FILE_STORAGE, name = "file-storage", location = "?", properties = {
+        @Property(key = "workspace.folder", value = "%s/file-storage", templateArguments = {
             @TemplateArgument(source = ValueSource.SystemProperty, value = PROP_TEMP_DIR)
         }),
-        @Property(key = "storage.role", value = "release")
+        @Property(key = "storage.type", value = "file")
     })
     @Retention(RetentionPolicy.RUNTIME)
     @RequireTypedEvent
@@ -196,13 +181,13 @@ public class GovernanceTestAnnotations {
     
     /**
      * Creates a documentation-specific file storage service for testing.
-     * This storage service is configured with the "documentation" role.
+     * This storage service is configured with the "file" type.
      */
 	@WithFactoryConfiguration(factoryPid = PID_FILE_STORAGE, name = "documentationStorage", location = "?", properties = {
 	        @Property(key = "workspace.folder", value = "%s", templateArguments = {
 	            @TemplateArgument(source = ValueSource.SystemProperty, value = PROP_TEMP_DIR)
 	        }),
-	        @Property(key = "storage.role", value = "documentation"),
+	        @Property(key = "storage.type", value = "file"),
 	        @Property(key = "registry.target", value = "(registry=documentation)")
 	    })
     @Target({ElementType.TYPE, ElementType.METHOD})
@@ -223,14 +208,14 @@ public class GovernanceTestAnnotations {
     }
     
     /**
-     * Creates a documentation-specific file storage service for testing.
-     * This storage service is configured with the "documentation" role.
+     * Creates a compliance-specific file storage service for testing.
+     * This storage service is configured with the "file" type.
      */
     @WithFactoryConfiguration(factoryPid = PID_FILE_STORAGE, name = "complianceStorage", location = "?", properties = {
-    		@Property(key = "workspace.folder", value = "%s/draft-storage", templateArguments = {
+    		@Property(key = "workspace.folder", value = "%s/file-storage", templateArguments = {
     				@TemplateArgument(source = ValueSource.SystemProperty, value = PROP_TEMP_DIR)
     		}),
-    		@Property(key = "storage.role", value = "draft")
+    		@Property(key = "storage.type", value = "file")
     })
     @Target({ElementType.TYPE, ElementType.METHOD})
     @Retention(RetentionPolicy.RUNTIME)
@@ -308,8 +293,8 @@ public class GovernanceTestAnnotations {
      */
     @WithFactoryConfiguration(factoryPid = PID_WORKFLOW_SERVICE, name = "governance-gated-workflow", location = "?", properties = {
         @Property(key = "workflow.id", value = "governance-gated-test-workflow"),
-        @Property(key = "draft.storage.filter", value = "(storage.role=draft)"),
-        @Property(key = "approved.storage.filter", value = "(storage.role=release)"),
+        @Property(key = "draft.storage.filter", value = "(storage.type=file)"),
+        @Property(key = "approved.storage.filter", value = "(storage.type=file)"),
         @Property(key = "archive.drafts.on.approval", value = "true"),
         @Property(key = "enable.auto.rollback", value = "true"),
         @Property(key = "transaction.timeout.ms", value = "30000"),
@@ -422,8 +407,8 @@ public class GovernanceTestAnnotations {
      */
     @WithFactoryConfiguration(factoryPid = PID_WORKFLOW_SERVICE, name = "state-transition-workflow", location = "?", properties = {
         @Property(key = "workflow.id", value = "state-transition-test-workflow"),
-        @Property(key = "draft.storage.filter", value = "(storage.role=draft)"),
-        @Property(key = "approved.storage.filter", value = "(storage.role=release)"),
+        @Property(key = "draft.storage.filter", value = "(storage.type=file)"),
+        @Property(key = "approved.storage.filter", value = "(storage.type=file)"),
         @Property(key = "archive.drafts.on.approval", value = "true"),
         @Property(key = "enable.auto.rollback", value = "true"),
         @Property(key = "transaction.timeout.ms", value = "30000"),

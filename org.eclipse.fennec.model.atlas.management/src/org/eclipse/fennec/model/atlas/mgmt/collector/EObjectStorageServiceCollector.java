@@ -26,7 +26,7 @@ import org.osgi.service.component.annotations.ReferencePolicyOption;
 
 /**
  * Collector service that tracks all registered EObjectStorageService instances
- * and provides lookup by scope and storage role.
+ * and provides lookup by type
  *
  * <p>Storage services register with:
  * <ul>
@@ -59,50 +59,41 @@ public class EObjectStorageServiceCollector {
 
 	private static final Logger LOGGER = Logger.getLogger(EObjectStorageServiceCollector.class.getName());
 
-	// Map: "scope:registry:role" -> StorageService
+	// Map: "backendType:type" -> StorageService
 	private final Map<String, EObjectStorageService<?>> storageByKey = new ConcurrentHashMap<>();
 
-
 	/**
-	 * Get a storage service by scope, registry and role.
-	 *
-	 * @param scope the scope/tenant name (e.g., "my-tenant", "global")
-	 * @param registry the registry name (e.g., "schema", "configuration")
-	 * @param role the storage role (e.g., "draft", "release", "archive")
-	 * @return the storage service for the specified scope, registry and role, or null if not found
+	 * @param backendType the backend type of the storage (e.g. apicurio, file, etc)
+	 * @param type the type of the storage (e.g. apicurio, file, etc)
+	 * @return the storage service for the specified backendType/type pair
 	 */
-	public EObjectStorageService<?> getStorage(String scope, String registry, String role) {
-		if (scope == null || scope.isEmpty()) {
-			LOGGER.warning("Attempted to get storage with null or empty scope");
+	public EObjectStorageService<?> getStorage(String backendType, String type) {
+		if (backendType == null || backendType.isEmpty()) {
+			LOGGER.warning("Attempted to get storage with null or empty backendType");
 			return null;
 		}
-		if (registry == null || registry.isEmpty()) {
-			LOGGER.warning("Attempted to get storage with null or empty registry");
+		if (type == null || type.isEmpty()) {
+			LOGGER.warning("Attempted to get storage with null or empty type");
 			return null;
 		}
-		if (role == null || role.isEmpty()) {
-			LOGGER.warning("Attempted to get storage with null or empty role");
-			return null;
-		}
-		String key = buildKey(scope, registry, role);
+		String key = buildKey(backendType, type);
 		return storageByKey.getOrDefault(key, null);
 	}
 
 
 
 	/**
-	 * Check if a storage service exists for the specified scope, registry and role.
+	 * Check if a storage service exists for the specified backednType/type pair
 	 *
-	 * @param scope the scope name
-	 * @param registry the registry name
-	 * @param role the storage role to check
-	 * @return true if a storage service exists for this scope, registry and role
+	 * @param backendType the backend type of the storage (e.g. apicurio, file, etc)
+	 * @param type the type of the storage (e.g. apicurio, file, etc)
+	 * @return true if a storage service exists for this backednType/type pair
 	 */
-	public boolean hasStorage(String scope, String registry, String role) {
-		if (scope == null || registry == null || role == null) {
+	public boolean hasStorage(String backendType, String type) {
+		if (backendType == null || type == null) {
 			return false;
 		}
-		String key = buildKey(scope, registry, role);
+		String key = buildKey(backendType, type);
 		return storageByKey.containsKey(key);
 	}
 
@@ -116,15 +107,12 @@ public class EObjectStorageServiceCollector {
 	}
 
 	/**
-	 * Build a key for storage lookup.
-	 *
-	 * @param scope the scope name
-	 * @param registry the registry name
-	 * @param role the role name
-	 * @return the composite key "scope:registry:role"
+	 * @param backendType
+	 * @param type
+	 * @return the composite key "backendType:type"
 	 */
-	private String buildKey(String scope, String registry, String role) {
-		return scope + ":" + registry + ":" + role;
+	private String buildKey(String backendType, String type) {
+		return backendType + ":" + type;
 	}
 
 	/**
@@ -139,38 +127,32 @@ public class EObjectStorageServiceCollector {
 			policyOption = ReferencePolicyOption.GREEDY
 			)
 	public void bindStorageService(EObjectStorageService<?> storageService, Map<String, Object> properties) {
-		Object roleObj = properties.get("storage.role");
-		Object scopeObj = properties.get("storage.scope");
-		Object registryObj = properties.get("storage.registry");
+		Object storageBackendType = properties.get("storage.backend");
+		Object storageType = properties.get("storage.type");
 
-		if (roleObj == null || roleObj.toString().isEmpty()) {
-			LOGGER.warning("EObjectStorageService registered without or empty 'storage.role' property - ignoring");
+		if (storageBackendType == null || storageBackendType.toString().isEmpty()) {
+			LOGGER.warning("EObjectStorageService registered without or empty 'storage.backend' property - ignoring");
 			return;
 		}
-		if (scopeObj == null || scopeObj.toString().isEmpty()) {
-			LOGGER.warning("EObjectStorageService registered without or empty 'storage.scope' property - ignoring");
+		if (storageType == null || storageType.toString().isEmpty()) {
+			LOGGER.warning("EObjectStorageService registered without or empty 'storage.type' property - ignoring");
 			return;
 		}
-		if (registryObj == null || registryObj.toString().isEmpty()) {
-			LOGGER.warning("EObjectStorageService registered without or empty 'storage.registry' property - ignoring");
-			return;
-		}
+		
+		String backendType = storageBackendType.toString();
+		String type = storageType.toString();
 
-		String role = roleObj.toString();
-		String scope = scopeObj.toString();
-		String registry = registryObj.toString();
-
-		// Scope-specific storage
-		String key = buildKey(scope, registry, role);
+		// type-specific storage
+		String key = buildKey(backendType, type);
 
 		EObjectStorageService<?> existing = storageByKey.put(key, storageService);
 		if (existing != null) {
 			LOGGER.warning(String.format(
-					"Multiple EObjectStorageService instances registered for scope '%s', role '%s' - overwriting",
-					scope, role
+					"Multiple EObjectStorageService instances registered for backendType '%s', type '%s' - overwriting",
+					backendType, type
 					));
 		} else {
-			LOGGER.info(String.format("Registered EObjectStorageService for scope '%s', registry '%s' and role '%s'", scope, registry, role));
+			LOGGER.info(String.format("Registered EObjectStorageService for backendType '%s', type '%s'", backendType, type));
 		}
 	}
 
@@ -181,23 +163,21 @@ public class EObjectStorageServiceCollector {
 	 * @param properties the service properties
 	 */
 	public void unbindStorageService(EObjectStorageService<?> storageService, Map<String, Object> properties) {
-		Object roleObj = properties.get("storage.role");
-		Object scopeObj = properties.get("storage.scope");
-		Object registryObj = properties.get("storage.registry");
+		Object storageBackendType = properties.get("storage.backend");
+		Object storageType = properties.get("storage.type");
 
-		if (roleObj == null || scopeObj == null || registryObj == null) {
+		if (storageBackendType == null || storageType == null) {
 			return;
 		}
 
-		String role = roleObj.toString();
-		String scope = scopeObj.toString();
-		String registry = registryObj.toString();
+		String backendType = storageBackendType.toString();
+		String type = storageType.toString();
 
-		String key = buildKey(scope, registry, role);
+		String key = buildKey(backendType, type);
 
 		boolean removed = storageByKey.remove(key, storageService);
 		if (removed) {
-			LOGGER.info(String.format("Unregistered EObjectStorageService for scope '%s', registry '%s' and role '%s'", scope, registry, role));
+			LOGGER.info(String.format("Unregistered EObjectStorageService for backendType '%s', type '%s'", backendType, type));
 		}
 	}
 

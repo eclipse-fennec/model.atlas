@@ -23,15 +23,12 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.io.File;
 import java.nio.file.Path;
 import java.time.Instant;
-import java.util.Dictionary;
-import java.util.Hashtable;
 import java.util.List;
 
 import org.eclipse.emf.ecore.EObject;
 import org.eclipse.emf.ecore.EPackage;
 import org.eclipse.emf.ecore.EcoreFactory;
 import org.eclipse.fennec.model.atlas.management.file.tests.annotations.FileTestAnnotations;
-import org.eclipse.fennec.model.atlas.management.file.tests.annotations.FileTestAnnotations.CustomRoleFileStorageSetup;
 import org.eclipse.fennec.model.atlas.management.file.tests.annotations.FileTestAnnotations.DefaultFileStorageSetup;
 import org.eclipse.fennec.model.atlas.management.lucene.tests.annotations.LuceneTestAnnotations.RegistryConfiguration;
 import org.eclipse.fennec.model.atlas.mgmt.api.EObjectRegistryService;
@@ -45,11 +42,8 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.io.TempDir;
 import org.osgi.framework.BundleContext;
-import org.osgi.service.cm.Configuration;
 import org.osgi.test.common.annotation.InjectBundleContext;
 import org.osgi.test.common.annotation.InjectService;
-import org.osgi.test.common.annotation.config.InjectConfiguration;
-import org.osgi.test.common.annotation.config.WithFactoryConfiguration;
 import org.osgi.test.common.service.ServiceAware;
 import org.osgi.test.junit5.cm.ConfigurationExtension;
 import org.osgi.test.junit5.context.BundleContextExtension;
@@ -63,6 +57,10 @@ import org.osgi.util.promise.Promise;
 @ExtendWith(ServiceExtension.class)
 @ExtendWith(ConfigurationExtension.class)
 public class EObjectFileStorageServiceTest {
+	
+	private static final String TEST_SCOPE = "test_scope";
+	private static final String TEST_REGISTRY = "test_registry";
+	private static final String TEST_STAGE = "test_stage";
 
 	@InjectBundleContext
 	BundleContext context;
@@ -124,7 +122,7 @@ public class EObjectFileStorageServiceTest {
 		metadata.getProperties().put("file.extension", ".ecore");
 
 		// Store the package
-		Promise<ObjectMetadata> storePromise = storageService.storeObject("test-id-123", testPackage, metadata);
+		Promise<ObjectMetadata> storePromise = storageService.storeObject(TEST_SCOPE, TEST_REGISTRY, TEST_STAGE, "test-id-123", testPackage, metadata);
 		storePromise.getValue(); String storageId = metadata.getObjectId();
 
 		assertNotNull(storageId);
@@ -137,7 +135,7 @@ public class EObjectFileStorageServiceTest {
 		assertTrue(metadataFile.exists(), "Metadata file should exist");
 
 		// Retrieve the package
-		Promise<EObject> retrievePromise = storageService.retrieveObject(storageId);
+		Promise<EObject> retrievePromise = storageService.retrieveObject(TEST_SCOPE, TEST_REGISTRY, TEST_STAGE, storageId);
 		EPackage retrievedPackage = (EPackage) retrievePromise.getValue();
 
 		assertNotEquals(testPackage, retrievedPackage);
@@ -147,7 +145,7 @@ public class EObjectFileStorageServiceTest {
 		assertEquals("http://test/1.0", retrievedPackage.getNsURI());
 
 		// Retrieve metadata
-		Promise<ObjectMetadata> metadataPromise = storageService.retrieveMetadata(storageId);
+		Promise<ObjectMetadata> metadataPromise = storageService.retrieveMetadata(TEST_SCOPE, TEST_REGISTRY, TEST_STAGE, storageId);
 		ObjectMetadata retrievedMetadata = metadataPromise.getValue();
 
 		assertNotNull(retrievedMetadata);
@@ -180,12 +178,12 @@ public class EObjectFileStorageServiceTest {
 			metadata.setUploadTime(Instant.now());
 			metadata.getProperties().put("file.extension", ".ecore");
 
-			Promise<ObjectMetadata> storePromise = storageService.storeObject("test-pkg-" + i, pkg, metadata);
+			Promise<ObjectMetadata> storePromise = storageService.storeObject(TEST_SCOPE, TEST_REGISTRY, TEST_STAGE, "test-pkg-" + i, pkg, metadata);
 			storePromise.getValue();
 		}
 
 		// List all object IDs
-		Promise<List<String>> listPromise = storageService.listObjectIds();
+		Promise<List<String>> listPromise = storageService.listObjectIds(TEST_SCOPE, TEST_REGISTRY, TEST_STAGE);
 		List<String> objectIds = listPromise.getValue();
 
 		assertNotNull(objectIds);
@@ -215,7 +213,7 @@ public class EObjectFileStorageServiceTest {
 		metadata.setUploadUser("testUser");
 		metadata.getProperties().put("file.extension", ".ecore");
 
-		Promise<ObjectMetadata> storePromise = storageService.storeObject("delete-test-id", testPackage, metadata);
+		Promise<ObjectMetadata> storePromise = storageService.storeObject(TEST_SCOPE, TEST_REGISTRY, TEST_STAGE, "delete-test-id", testPackage, metadata);
 		storePromise.getValue(); String storageId = metadata.getObjectId();
 
 		// Verify files exist
@@ -225,7 +223,7 @@ public class EObjectFileStorageServiceTest {
 		assertTrue(metadataFile.exists());
 
 		// Delete the object
-		Promise<Boolean> deletePromise = storageService.deleteObject(storageId);
+		Promise<Boolean> deletePromise = storageService.deleteObject(TEST_SCOPE, TEST_REGISTRY, TEST_STAGE, storageId);
 		Boolean deleted = deletePromise.getValue();
 
 		assertTrue(deleted);
@@ -233,7 +231,7 @@ public class EObjectFileStorageServiceTest {
 		assertFalse(metadataFile.exists(), "Metadata file should be deleted");
 
 		// Try to retrieve deleted object
-		Promise<EObject> retrievePromise = storageService.retrieveObject(storageId);
+		Promise<EObject> retrievePromise = storageService.retrieveObject(TEST_SCOPE, TEST_REGISTRY, TEST_STAGE, storageId);
 		EObject retrievedPackage = retrievePromise.getValue();
 		assertNull(retrievedPackage, "Should not find deleted package");
 
@@ -241,7 +239,7 @@ public class EObjectFileStorageServiceTest {
 
 	@SuppressWarnings({"rawtypes", "unchecked"})
 	@Test
-	@CustomRoleFileStorageSetup
+	@DefaultFileStorageSetup
 	public void testAutoGeneratedId(
 			@InjectService(cardinality = 0, filter = "(storage.backend=file)")
 			ServiceAware<EObjectStorageService> serviceAware) throws Exception {
@@ -258,19 +256,14 @@ public class EObjectFileStorageServiceTest {
 		metadata.setUploadUser("testUser");
 		metadata.getProperties().put("file.extension", ".ecore");
 
-		Promise<ObjectMetadata> storePromise = storageService.storeObject(null, testPackage, metadata);
+		Promise<ObjectMetadata> storePromise = storageService.storeObject(TEST_SCOPE, TEST_REGISTRY, TEST_STAGE, null, testPackage, metadata);
 		storePromise.getValue(); String storageId = metadata.getObjectId();
 
 		assertNotNull(storageId);
 		assertFalse(storageId.isEmpty());
 
-		// Verify role was set correctly
-		Promise<ObjectMetadata> metadataPromise = storageService.retrieveMetadata(storageId);
-		ObjectMetadata retrievedMetadata = metadataPromise.getValue();
-		assertEquals("custom-role", retrievedMetadata.getRole());
-
 		// Should be able to retrieve with auto-generated ID
-		Promise<EObject> retrievePromise = storageService.retrieveObject(storageId);
+		Promise<EObject> retrievePromise = storageService.retrieveObject(TEST_SCOPE, TEST_REGISTRY, TEST_STAGE, storageId);
 		EPackage retrievedPackage = (EPackage) retrievePromise.getValue();
 
 		assertNotNull(retrievedPackage);
@@ -280,7 +273,7 @@ public class EObjectFileStorageServiceTest {
 
 	@SuppressWarnings({"rawtypes", "unchecked"})
 	@Test
-	@CustomRoleFileStorageSetup
+	@DefaultFileStorageSetup
 	public void testCustomFileExtension(
 			@InjectService(cardinality = 0, filter = "(storage.backend=file)")
 			ServiceAware<EObjectStorageService> serviceAware) throws Exception {
@@ -297,17 +290,13 @@ public class EObjectFileStorageServiceTest {
 		metadata1.setUploadUser("testUser");
 		metadata1.getProperties().put("file.extension", "ecore"); // without dot
 
-		Promise<ObjectMetadata> storePromise1 = storageService.storeObject("custom-ext-1", testPackage1, metadata1);
+		Promise<ObjectMetadata> storePromise1 = storageService.storeObject(TEST_SCOPE, TEST_REGISTRY, TEST_STAGE, "custom-ext-1", testPackage1, metadata1);
 		storePromise1.getValue();
 		String storageId1 = metadata1.getObjectId();
 
 		// Verify file with .ecore extension exists
 		File ecoreFile = new File(tempDir.toFile(), storageId1 + ".ecore");
 		assertTrue(ecoreFile.exists(), "File with .ecore extension should exist");
-		
-		Promise<ObjectMetadata> storeMetadata1Promise = storageService.retrieveMetadata(storageId1);
-		ObjectMetadata storeMetadata1 = storeMetadata1Promise.getValue();
-		assertEquals("custom-role", storeMetadata1.getRole());
 
 		// Test with default extension (no property set)
 		EPackage testPackage2 = EcoreFactory.eINSTANCE.createEPackage();
@@ -317,7 +306,7 @@ public class EObjectFileStorageServiceTest {
 		metadata2.setUploadUser("testUser");
 		// No file.extension property set - should use default .xmi
 
-		Promise<ObjectMetadata> storePromise2 = storageService.storeObject("default-ext", testPackage2, metadata2);
+		Promise<ObjectMetadata> storePromise2 = storageService.storeObject(TEST_SCOPE, TEST_REGISTRY, TEST_STAGE, "default-ext", testPackage2, metadata2);
 		storePromise2.getValue();
 		String storageId2 = metadata2.getObjectId();
 
@@ -325,19 +314,14 @@ public class EObjectFileStorageServiceTest {
 		File xmiFile = new File(tempDir.toFile(), storageId2 + ".xmi");
 		assertTrue(xmiFile.exists(), "File with .xmi extension should exist");
 
-		// Verify role is set correctly for second object too
-		Promise<ObjectMetadata> storeMetadata2Promise = storageService.retrieveMetadata(storageId2);
-		ObjectMetadata storeMetadata2 = storeMetadata2Promise.getValue();
-		assertEquals("custom-role", storeMetadata2.getRole());
-
 		// Verify both can be retrieved
-		Promise<EObject> retrievePromise1 = storageService.retrieveObject(storageId1);
+		Promise<EObject> retrievePromise1 = storageService.retrieveObject(TEST_SCOPE, TEST_REGISTRY, TEST_STAGE, storageId1);
 		EObject retrieved1 = retrievePromise1.getValue();
 		assertNotNull(retrieved1);
 		assertTrue(retrieved1 instanceof EPackage);
 		assertEquals("CustomExtTest1", ((EPackage) retrieved1).getName());
 
-		Promise<EObject> retrievePromise2 = storageService.retrieveObject(storageId2);
+		Promise<EObject> retrievePromise2 = storageService.retrieveObject(TEST_SCOPE, TEST_REGISTRY, TEST_STAGE, storageId2);
 		EObject retrieved2 = retrievePromise2.getValue();
 		assertNotNull(retrieved2);
 		assertTrue(retrieved2 instanceof EPackage);
@@ -347,7 +331,7 @@ public class EObjectFileStorageServiceTest {
 
 	@SuppressWarnings({"rawtypes", "unchecked"})
 	@Test
-	@CustomRoleFileStorageSetup
+	@DefaultFileStorageSetup
 	public void testContentType(
 			@InjectService(cardinality = 0, filter = "(storage.backend=file)")
 			ServiceAware<EObjectStorageService> serviceAware) throws Exception {
@@ -368,20 +352,15 @@ public class EObjectFileStorageServiceTest {
 		metadata.getProperties().put("file.extension", ".ecore");
 		metadata.getProperties().put("content.type", "org.eclipse.emf.ecore");
 
-		Promise<ObjectMetadata> storePromise = storageService.storeObject("content-type-test", testPackage, metadata);
+		Promise<ObjectMetadata> storePromise = storageService.storeObject(TEST_SCOPE, TEST_REGISTRY, TEST_STAGE, "content-type-test", testPackage, metadata);
 		storePromise.getValue(); String storageId = metadata.getObjectId();
 
 		// Verify file exists
 		File ecoreFile = new File(tempDir.toFile(), storageId + ".ecore");
 		assertTrue(ecoreFile.exists(), "File with .ecore extension should exist");
 
-		// Verify role was set correctly
-		Promise<ObjectMetadata> metadataPromise = storageService.retrieveMetadata(storageId);
-		ObjectMetadata retrievedMetadata = metadataPromise.getValue();
-		assertEquals("custom-role", retrievedMetadata.getRole());
-
 		// Retrieve and verify
-		Promise<EObject> retrievePromise = storageService.retrieveObject(storageId);
+		Promise<EObject> retrievePromise = storageService.retrieveObject(TEST_SCOPE, TEST_REGISTRY, TEST_STAGE, storageId);
 		EObject retrieved = retrievePromise.getValue();
 		assertNotNull(retrieved);
 		assertTrue(retrieved instanceof EPackage);
@@ -391,7 +370,7 @@ public class EObjectFileStorageServiceTest {
 
 	@SuppressWarnings({"rawtypes", "unchecked"})
 	@Test
-	@CustomRoleFileStorageSetup
+	@DefaultFileStorageSetup
 	public void testUpdateMetadata(
 			@InjectService(cardinality = 0, filter = "(storage.backend=file)")
 			ServiceAware<EObjectStorageService> serviceAware) throws Exception {
@@ -412,7 +391,7 @@ public class EObjectFileStorageServiceTest {
 		metadata.setUploadTime(Instant.now());
 		metadata.getProperties().put("file.extension", ".ecore");
 
-		Promise<ObjectMetadata> storePromise = storageService.storeObject("update-metadata-test", testPackage, metadata);
+		Promise<ObjectMetadata> storePromise = storageService.storeObject(TEST_SCOPE, TEST_REGISTRY, TEST_STAGE, "update-metadata-test", testPackage, metadata);
 		storePromise.getValue(); String storageId = metadata.getObjectId();
 
 		// Create updated metadata
@@ -429,16 +408,15 @@ public class EObjectFileStorageServiceTest {
 		updatedMetadata.getProperties().put("custom.property", "customValue");
 
 		// Update metadata
-		Promise<Boolean> updatePromise = storageService.updateMetadata(storageId, updatedMetadata);
+		Promise<Boolean> updatePromise = storageService.updateMetadata(TEST_SCOPE, TEST_REGISTRY, TEST_STAGE, storageId, updatedMetadata);
 		Boolean updateResult = updatePromise.getValue();
 		assertTrue(updateResult, "Metadata update should succeed");
 
 		// Retrieve and verify updated metadata
-		Promise<ObjectMetadata> retrievePromise = storageService.retrieveMetadata(storageId);
+		Promise<ObjectMetadata> retrievePromise = storageService.retrieveMetadata(TEST_SCOPE, TEST_REGISTRY, TEST_STAGE, storageId);
 		ObjectMetadata retrievedMetadata = retrievePromise.getValue();
 
 		assertNotNull(retrievedMetadata);
-		assertEquals("custom-role", retrievedMetadata.getRole());
 		assertEquals("originalUser", retrievedMetadata.getUploadUser(), "Upload user should be immutable and preserved");
 		assertEquals("updatedChannel", retrievedMetadata.getSourceChannel());
 		assertEquals("updatedHash", retrievedMetadata.getContentHash());
@@ -447,7 +425,7 @@ public class EObjectFileStorageServiceTest {
 		assertEquals("customValue", retrievedMetadata.getProperties().get("custom.property"));
 
 		// Verify object itself is unchanged
-		Promise<EObject> objectPromise = storageService.retrieveObject(storageId);
+		Promise<EObject> objectPromise = storageService.retrieveObject(TEST_SCOPE, TEST_REGISTRY, TEST_STAGE, storageId);
 		EPackage retrievedPackage = (EPackage) objectPromise.getValue();
 		assertNotNull(retrievedPackage);
 		assertEquals("UpdateMetadataTest", retrievedPackage.getName());
@@ -456,7 +434,7 @@ public class EObjectFileStorageServiceTest {
 
 	@SuppressWarnings({"rawtypes", "unchecked"})
 	@Test
-	@CustomRoleFileStorageSetup
+	@DefaultFileStorageSetup
 	public void testUpdateStatus(
 			@InjectService(cardinality = 0, filter = "(storage.backend=file)")
 			ServiceAware<EObjectStorageService> serviceAware) throws Exception {
@@ -478,11 +456,11 @@ public class EObjectFileStorageServiceTest {
 		metadata.setStatus(ObjectStatus.DRAFT);
 		metadata.getProperties().put("file.extension", ".ecore");
 
-		Promise<ObjectMetadata> storePromise = storageService.storeObject("update-status-test", testPackage, metadata);
+		Promise<ObjectMetadata> storePromise = storageService.storeObject(TEST_SCOPE, TEST_REGISTRY, TEST_STAGE, "update-status-test", testPackage, metadata);
 		storePromise.getValue(); String storageId = metadata.getObjectId();
 
 		// Verify initial status
-		Promise<ObjectMetadata> initialPromise = storageService.retrieveMetadata(storageId);
+		Promise<ObjectMetadata> initialPromise = storageService.retrieveMetadata(TEST_SCOPE, TEST_REGISTRY, TEST_STAGE, storageId);
 		ObjectMetadata initialMetadata = initialPromise.getValue();
 		assertEquals(ObjectStatus.DRAFT, initialMetadata.getStatus());
 		assertNull(initialMetadata.getLastChangeUser());
@@ -490,30 +468,29 @@ public class EObjectFileStorageServiceTest {
 
 		// Update status to APPROVED with change user
 		Instant beforeUpdate = Instant.now();
-		Promise<Boolean> updatePromise = storageService.updateStatus(storageId, ObjectStatus.APPROVED, "approverUser");
+		Promise<Boolean> updatePromise = storageService.updateStatus(TEST_SCOPE, TEST_REGISTRY, TEST_STAGE, storageId, ObjectStatus.APPROVED, "approverUser");
 		Boolean updateResult = updatePromise.getValue();
 		assertTrue(updateResult, "Status update should succeed");
 		Instant afterUpdate = Instant.now();
 
 		// Verify status update
-		Promise<ObjectMetadata> updatedPromise = storageService.retrieveMetadata(storageId);
+		Promise<ObjectMetadata> updatedPromise = storageService.retrieveMetadata(TEST_SCOPE, TEST_REGISTRY, TEST_STAGE, storageId);
 		ObjectMetadata updatedMetadata = updatedPromise.getValue();
 
 		assertNotNull(updatedMetadata);
 		assertEquals(ObjectStatus.APPROVED, updatedMetadata.getStatus());
-		assertEquals("custom-role", updatedMetadata.getRole());
 		assertEquals("approverUser", updatedMetadata.getLastChangeUser());
 		assertNotNull(updatedMetadata.getLastChangeTime());
 		assertTrue(updatedMetadata.getLastChangeTime().isAfter(beforeUpdate) || updatedMetadata.getLastChangeTime().equals(beforeUpdate));
 		assertTrue(updatedMetadata.getLastChangeTime().isBefore(afterUpdate) || updatedMetadata.getLastChangeTime().equals(afterUpdate));
 
 		// Update status again without change user
-		Promise<Boolean> updatePromise2 = storageService.updateStatus(storageId, ObjectStatus.DEPLOYED, null);
+		Promise<Boolean> updatePromise2 = storageService.updateStatus(TEST_SCOPE, TEST_REGISTRY, TEST_STAGE, storageId, ObjectStatus.DEPLOYED, null);
 		Boolean updateResult2 = updatePromise2.getValue();
 		assertTrue(updateResult2, "Second status update should succeed");
 
 		// Verify second status update
-		Promise<ObjectMetadata> finalPromise = storageService.retrieveMetadata(storageId);
+		Promise<ObjectMetadata> finalPromise = storageService.retrieveMetadata(TEST_SCOPE, TEST_REGISTRY, TEST_STAGE, storageId);
 		ObjectMetadata finalMetadata = finalPromise.getValue();
 
 		assertEquals(ObjectStatus.DEPLOYED, finalMetadata.getStatus());
@@ -525,7 +502,7 @@ public class EObjectFileStorageServiceTest {
 
 	@SuppressWarnings({"rawtypes", "unchecked"})
 	@Test
-	@CustomRoleFileStorageSetup
+	@DefaultFileStorageSetup
 	public void testExists(
 			@InjectService(cardinality = 0, filter = "(storage.backend=file)")
 			ServiceAware<EObjectStorageService> serviceAware) throws Exception {
@@ -535,7 +512,7 @@ public class EObjectFileStorageServiceTest {
 		assertNotNull(storageService, "Storage service should be available");
 
 		// Test non-existent object
-		Boolean existsBefore = storageService.exists("non-existent-id");
+		Boolean existsBefore = storageService.exists(TEST_SCOPE, TEST_REGISTRY, TEST_STAGE, "non-existent-id");
 		assertFalse(existsBefore, "Non-existent object should not exist");
 
 		// Store an object
@@ -550,33 +527,33 @@ public class EObjectFileStorageServiceTest {
 		metadata.setUploadTime(Instant.now());
 		metadata.getProperties().put("file.extension", ".ecore");
 
-		Promise<ObjectMetadata> storePromise = storageService.storeObject("exists-test-id", testPackage, metadata);
+		Promise<ObjectMetadata> storePromise = storageService.storeObject(TEST_SCOPE, TEST_REGISTRY, TEST_STAGE, "exists-test-id", testPackage, metadata);
 		storePromise.getValue(); String storageId = metadata.getObjectId();
 
 		// Test existing object
-		Boolean existsAfter = storageService.exists(storageId);
+		Boolean existsAfter = storageService.exists(TEST_SCOPE, TEST_REGISTRY, TEST_STAGE, storageId);
 		assertTrue(existsAfter, "Stored object should exist");
 
 		// Delete the object
-		Promise<Boolean> deletePromise = storageService.deleteObject(storageId);
+		Promise<Boolean> deletePromise = storageService.deleteObject(TEST_SCOPE, TEST_REGISTRY, TEST_STAGE, storageId);
 		deletePromise.getValue();
 
 		// Test after deletion
-		Boolean existsAfterDelete = storageService.exists(storageId);
+		Boolean existsAfterDelete = storageService.exists(TEST_SCOPE, TEST_REGISTRY, TEST_STAGE, storageId);
 		assertFalse(existsAfterDelete, "Deleted object should not exist");
 
 		// Test with null and empty IDs
-		Boolean existsNull = storageService.exists(null);
+		Boolean existsNull = storageService.exists(TEST_SCOPE, TEST_REGISTRY, TEST_STAGE, null);
 		assertFalse(existsNull, "Null ID should return false");
 
-		Boolean existsEmpty = storageService.exists("");
+		Boolean existsEmpty = storageService.exists(TEST_SCOPE, TEST_REGISTRY, TEST_STAGE, "");
 		assertFalse(existsEmpty, "Empty ID should return false");
 
 	}
 
 	@SuppressWarnings({"rawtypes", "unchecked"})
 	@Test
-	@CustomRoleFileStorageSetup
+	@DefaultFileStorageSetup
 	public void testGetObjectCount(
 			@InjectService(cardinality = 0, filter = "(storage.backend=file)")
 			ServiceAware<EObjectStorageService> serviceAware) throws Exception {
@@ -602,7 +579,7 @@ public class EObjectFileStorageServiceTest {
 			metadata.setUploadTime(Instant.now());
 			metadata.getProperties().put("file.extension", ".ecore");
 
-			Promise<ObjectMetadata> storePromise = storageService.storeObject("count-test-" + i, pkg, metadata);
+			Promise<ObjectMetadata> storePromise = storageService.storeObject(TEST_SCOPE, TEST_REGISTRY, TEST_STAGE, "count-test-" + i, pkg, metadata);
 			storePromise.getValue();
 		}
 
@@ -617,9 +594,9 @@ public class EObjectFileStorageServiceTest {
 		assertTrue(metadataFile3.exists(), "Metadata file 3 should exist before deletion");
 
 		// Delete 2 objects
-		Promise<Boolean> deletePromise1 = storageService.deleteObject("count-test-1");
+		Promise<Boolean> deletePromise1 = storageService.deleteObject(TEST_SCOPE, TEST_REGISTRY, TEST_STAGE, "count-test-1");
 		deletePromise1.getValue();
-		Promise<Boolean> deletePromise2 = storageService.deleteObject("count-test-3");
+		Promise<Boolean> deletePromise2 = storageService.deleteObject(TEST_SCOPE, TEST_REGISTRY, TEST_STAGE, "count-test-3");
 		deletePromise2.getValue();
 
 		// Verify metadata files are deleted
@@ -627,9 +604,9 @@ public class EObjectFileStorageServiceTest {
 		assertFalse(metadataFile3.exists(), "Metadata file 3 should be deleted");
 
 		// Verify metadata retrieval fails for deleted objects
-		Promise<ObjectMetadata> metadataPromise1 = storageService.retrieveMetadata("count-test-1");
+		Promise<ObjectMetadata> metadataPromise1 = storageService.retrieveMetadata(TEST_SCOPE, TEST_REGISTRY, TEST_STAGE, "count-test-1");
 		assertNull(metadataPromise1.getValue(), "Should not retrieve metadata for deleted object 1");
-		Promise<ObjectMetadata> metadataPromise3 = storageService.retrieveMetadata("count-test-3");
+		Promise<ObjectMetadata> metadataPromise3 = storageService.retrieveMetadata(TEST_SCOPE, TEST_REGISTRY, TEST_STAGE, "count-test-3");
 		assertNull(metadataPromise3.getValue(), "Should not retrieve metadata for deleted object 3");
 
 		// Count after deleting 2 objects
@@ -637,7 +614,7 @@ public class EObjectFileStorageServiceTest {
 		assertEquals(3, countAfterDelete, "Object count should be 3 after deleting 2 objects");
 
 		// Verify count matches listObjectIds size
-		Promise<List<String>> listPromise = storageService.listObjectIds();
+		Promise<List<String>> listPromise = storageService.listObjectIds(TEST_SCOPE, TEST_REGISTRY, TEST_STAGE);
 		List<String> objectIds = listPromise.getValue();
 		assertEquals(countAfterDelete, objectIds.size(), "Object count should match listObjectIds size");
 
@@ -645,7 +622,7 @@ public class EObjectFileStorageServiceTest {
 
 	@SuppressWarnings({"rawtypes", "unchecked"})
 	@Test
-	@CustomRoleFileStorageSetup
+	@DefaultFileStorageSetup
 	public void testUpdateMetadataErrorHandling(
 			@InjectService(cardinality = 0, filter = "(storage.backend=file)")
 			ServiceAware<EObjectStorageService> serviceAware) throws Exception {
@@ -662,7 +639,7 @@ public class EObjectFileStorageServiceTest {
 		metadata.setObjectType("EPackage");
 		metadata.setUploadTime(Instant.now());
 
-		Promise<Boolean> updatePromise = storageService.updateMetadata("non-existent-id", metadata);
+		Promise<Boolean> updatePromise = storageService.updateMetadata(TEST_SCOPE, TEST_REGISTRY, TEST_STAGE, "non-existent-id", metadata);
 		Boolean updateResult = updatePromise.getValue();
 		assertFalse(updateResult, "Updating metadata for non-existent object should return false");
 
@@ -670,7 +647,7 @@ public class EObjectFileStorageServiceTest {
 
 	@SuppressWarnings({"rawtypes", "unchecked"})
 	@Test
-	@CustomRoleFileStorageSetup
+	@DefaultFileStorageSetup
 	public void testUpdateStatusErrorHandling(
 			@InjectService(cardinality = 0, filter = "(storage.backend=file)")
 			ServiceAware<EObjectStorageService> serviceAware) throws Exception {
@@ -680,229 +657,14 @@ public class EObjectFileStorageServiceTest {
 		assertNotNull(storageService, "Storage service should be available");
 
 		// Test updating status for non-existent object
-		Promise<Boolean> updatePromise = storageService.updateStatus("non-existent-id", ObjectStatus.APPROVED, "testUser");
+		Promise<Boolean> updatePromise = storageService.updateStatus(TEST_SCOPE, TEST_REGISTRY, TEST_STAGE, "non-existent-id", ObjectStatus.APPROVED, "testUser");
 		Boolean updateResult = updatePromise.getValue();
 		assertFalse(updateResult, "Updating status for non-existent object should return false");
 
 		// Clean up configuration
 	}
 
-	@SuppressWarnings({"rawtypes", "unchecked"})
-	@Test
-	@CustomRoleFileStorageSetup
-	public void testRoleFunctionality(
-			@InjectService(cardinality = 0, filter = "(storage.backend=file)")
-			ServiceAware<EObjectStorageService> serviceAware) throws Exception {
-		assertNotNull(serviceAware);
-
-		EObjectStorageService<EObject> storageService = (EObjectStorageService<EObject>) serviceAware.waitForService(5000L);
-		assertNotNull(storageService, "Storage service should be available");
-
-		// Create test EPackage
-		EPackage testPackage = EcoreFactory.eINSTANCE.createEPackage();
-		testPackage.setName("RoleTestPackage");
-		testPackage.setNsPrefix("roletest");
-		testPackage.setNsURI("http://roletest.example.com");
-
-		// Create metadata without role set
-		ObjectMetadata metadata = ManagementFactory.eINSTANCE.createObjectMetadata();
-		metadata.setObjectName("RoleTestPackage");
-		metadata.setVersion("1.0.0");
-		metadata.setStatus(ObjectStatus.DRAFT);
-		metadata.setUploadUser("roleTestUser");
-		metadata.setUploadTime(Instant.now());
-		metadata.setSourceChannel("ROLE_TEST");
-		// Note: role is intentionally not set to test automatic role setting
-
-		// Test storeObject with automatic role setting
-		Promise<ObjectMetadata> storePromise = storageService.storeObject("role-test-id", testPackage, metadata);
-		assertNull(storePromise.getFailure(), "Store operation should succeed");
-		storePromise.getValue();
-		String objectId = metadata.getObjectId();
-		assertEquals("role-test-id", objectId);
-
-		// Verify role was automatically set based on status
-		assertEquals("custom-role", metadata.getRole(), "Role should be automatically set during storeObject");
-
-		// Verify the object was actually stored and can be retrieved
-		Promise<EObject> retrievePromise = storageService.retrieveObject("role-test-id");
-		assertNull(retrievePromise.getFailure(), "Retrieve operation should succeed");
-		EObject retrievedObject = retrievePromise.getValue();
-		assertNotNull(retrievedObject);
-		assertTrue(retrievedObject instanceof EPackage);
-		assertEquals("RoleTestPackage", ((EPackage) retrievedObject).getName());
-
-		// Verify metadata can be retrieved and has the correct role
-		Promise<ObjectMetadata> metadataPromise = storageService.retrieveMetadata("role-test-id");
-		assertNull(metadataPromise.getFailure(), "Metadata retrieve should succeed");
-		ObjectMetadata retrievedMetadata = metadataPromise.getValue();
-		assertNotNull(retrievedMetadata);
-		assertEquals("custom-role", retrievedMetadata.getRole(), "Retrieved metadata should have the correct role");
-
-		// Test updateMetadata with automatic role setting
-		ObjectMetadata updatedMetadata = ManagementFactory.eINSTANCE.createObjectMetadata();
-		updatedMetadata.setObjectName("UpdatedRoleTestPackage");
-		updatedMetadata.setVersion("2.0.0");
-		updatedMetadata.setStatus(ObjectStatus.APPROVED);
-		updatedMetadata.setUploadUser("roleTestUser");
-		updatedMetadata.setUploadTime(Instant.now());
-		updatedMetadata.setSourceChannel("ROLE_TEST");
-		// Note: role is intentionally not set to test automatic role setting
-
-		Promise<Boolean> updatePromise = storageService.updateMetadata("role-test-id", updatedMetadata);
-		assertNull(updatePromise.getFailure(), "Update metadata operation should succeed");
-		Boolean updateResult = updatePromise.getValue();
-		assertTrue(updateResult, "Update metadata should return true");
-
-		// Verify original metadata object was NOT modified (copy-based approach)
-		assertNull(updatedMetadata.getRole(), "Original metadata object should not be modified");
-
-		// Verify the updated metadata was actually saved
-		Promise<ObjectMetadata> updatedMetadataPromise = storageService.retrieveMetadata("role-test-id");
-		assertNull(updatedMetadataPromise.getFailure(), "Updated metadata retrieve should succeed");
-		ObjectMetadata finalMetadata = updatedMetadataPromise.getValue();
-		assertNotNull(finalMetadata);
-		assertEquals("UpdatedRoleTestPackage", finalMetadata.getObjectName());
-		assertEquals("2.0.0", finalMetadata.getVersion());
-		assertEquals(ObjectStatus.APPROVED, finalMetadata.getStatus());
-		assertEquals("custom-role", finalMetadata.getRole(), "Final metadata should have the correct role");
-
-		// Test role override: storage service role should override metadata role
-		EPackage overrideTestPackage = EcoreFactory.eINSTANCE.createEPackage();
-		overrideTestPackage.setName("RoleOverrideTest");
-		
-		ObjectMetadata metadataWithPresetRole = ManagementFactory.eINSTANCE.createObjectMetadata();
-		metadataWithPresetRole.setObjectName("RoleOverrideTest");
-		metadataWithPresetRole.setVersion("1.0.0");
-		metadataWithPresetRole.setStatus(ObjectStatus.DRAFT);
-		metadataWithPresetRole.setUploadUser("overrideTestUser");
-		metadataWithPresetRole.setUploadTime(Instant.now());
-		metadataWithPresetRole.setSourceChannel("OVERRIDE_TEST");
-		// Explicitly set a different role that should be overridden
-		metadataWithPresetRole.setRole("wrong-role");
-		
-		Promise<ObjectMetadata> overrideStorePromise = storageService.storeObject("role-override-test", overrideTestPackage, metadataWithPresetRole);
-		assertNull(overrideStorePromise.getFailure(), "Override store operation should succeed");
-		overrideStorePromise.getValue();
-		String overrideObjectId = metadataWithPresetRole.getObjectId();
-		assertEquals("role-override-test", overrideObjectId);
-		
-		// Verify the storage service role overrode the preset role
-		assertEquals("custom-role", metadataWithPresetRole.getRole(), "Storage service role should override preset role in metadata");
-		
-		// Verify the stored metadata also has the correct role
-		Promise<ObjectMetadata> overrideMetadataPromise = storageService.retrieveMetadata("role-override-test");
-		assertNull(overrideMetadataPromise.getFailure(), "Override metadata retrieve should succeed");
-		ObjectMetadata overrideRetrievedMetadata = overrideMetadataPromise.getValue();
-		assertNotNull(overrideRetrievedMetadata);
-		assertEquals("custom-role", overrideRetrievedMetadata.getRole(), "Retrieved metadata should have storage service role, not preset role");
-
-	}
-
-	@SuppressWarnings({"rawtypes", "unchecked"})
-	@Test
-	@RegistryConfiguration
-	public void testDifferentStorageRoles(
-			@InjectService(cardinality = 0, filter = "(storage.backend=file)")
-			ServiceAware<EObjectStorageService> serviceAware,
-			@InjectConfiguration(withFactoryConfig = @WithFactoryConfiguration(
-					factoryPid = "FileObjectStorage",
-					location = "?",
-					name = "test2"))
-			Configuration config
-	) throws Exception {
-		assertNotNull(serviceAware);
-		assertNotNull(config);
-		assertTrue(serviceAware.isEmpty());
-
-		Dictionary<String, Object> props = new Hashtable<>();
-		props.put("workspace.folder", tempDir.toString());
-		props.put("storage.role", "approved");
-		config.update(props);
-
-		EObjectStorageService<EObject> storageService = (EObjectStorageService<EObject>) serviceAware.waitForService(5000L);
-		assertNotNull(storageService, "Storage service should be available");
-
-		// Create test object and metadata
-		EPackage testPackage = EcoreFactory.eINSTANCE.createEPackage();
-		testPackage.setName("ApprovedTestPackage");
-
-		ObjectMetadata metadata = ManagementFactory.eINSTANCE.createObjectMetadata();
-		metadata.setObjectName("ApprovedTestPackage");
-		metadata.setVersion("1.0.0");
-		metadata.setStatus(ObjectStatus.APPROVED);
-		metadata.setUploadUser("approvedUser");
-		metadata.setUploadTime(Instant.now());
-		metadata.setSourceChannel("APPROVED_TEST");
-
-		// Store object
-		Promise<ObjectMetadata> storePromise = storageService.storeObject("approved-test-id", testPackage, metadata);
-		assertNull(storePromise.getFailure(), "Store operation should succeed");
-		
-		// Verify the configured storage role was set
-		assertEquals("approved", metadata.getRole(), "Role should be set to configured storage_role 'approved'");
-
-		// Clean up configuration
-		config.delete();
-		Thread.sleep(500);
-		assertTrue(serviceAware.isEmpty());
-	}
-
-	@SuppressWarnings({"rawtypes", "unchecked"})
-	@Test
-	@RegistryConfiguration
-	public void testServiceActivationWithDefaultRole(
-			@InjectService(cardinality = 0, filter = "(storage.backend=file)")
-			ServiceAware<EObjectStorageService> serviceAware,
-			@InjectService(cardinality = 0, filter = "(registry.type=shared)")
-			ServiceAware<EObjectRegistryService> registryAware,
-			@InjectConfiguration(withFactoryConfig = @WithFactoryConfiguration(
-					factoryPid = "FileObjectStorage",
-					location = "?",
-					name = "defaultRoleTest")) Configuration config
-			) throws Exception {
-		assertNotNull(serviceAware);
-		assertNotNull(registryAware);
-		assertNotNull(config);
-		assertTrue(serviceAware.isEmpty());
-
-		// Registry service should be available (configured by annotation)
-		EObjectRegistryService<EObject> registryService = (EObjectRegistryService<EObject>) registryAware.waitForService(5000L);
-		assertNotNull(registryService, "Registry service should be available");
-
-		// Test configuration without explicit storage_role - should use default "draft"
-		Dictionary<String, Object> props = new Hashtable<>();
-		props.put("workspace.folder", tempDir.toString());
-		// Note: storage_role is intentionally omitted to test default value
-		config.update(props);
-
-		// Service should activate with default role
-		EObjectStorageService<EObject> storageService = (EObjectStorageService<EObject>) serviceAware.waitForService(5000L);
-		assertNotNull(storageService, "Service should activate with default storage_role");
-
-		// Test that default role is used
-		EPackage testPackage = EcoreFactory.eINSTANCE.createEPackage();
-		testPackage.setName("DefaultRoleTest");
-
-		ObjectMetadata metadata = ManagementFactory.eINSTANCE.createObjectMetadata();
-		metadata.setUploadUser("defaultUser");
-		metadata.setSourceChannel("DEFAULT_TEST");
-		metadata.getProperties().put("file.extension", ".ecore");
-
-		Promise<ObjectMetadata> storePromise = storageService.storeObject("default-role-test", testPackage, metadata);
-		storePromise.getValue();
-		String objectId = metadata.getObjectId();
-		assertEquals("default-role-test", objectId);
-
-		// Verify default role "draft" was set
-		assertEquals("draft", metadata.getRole(), "Should use default role 'draft' when not explicitly configured");
-
-		// Clean up
-		config.delete();
-		Thread.sleep(500);
-		assertTrue(serviceAware.isEmpty());
-	}
-
+	
 	/**
 	 * Integration test for storage-registry interaction.
 	 * 
@@ -942,7 +704,7 @@ public class EObjectFileStorageServiceTest {
 		draftMetadata.setSourceChannel("TEST");
 		
 		// Store object with DRAFT status
-		storageService.storeObject("registry-test-draft", testPackage, draftMetadata).getValue();
+		storageService.storeObject(TEST_SCOPE, TEST_REGISTRY, TEST_STAGE, "registry-test-draft", testPackage, draftMetadata).getValue();
 		String draftObjectId = draftMetadata.getObjectId();
 		assertNotNull(draftObjectId, "Draft object ID should not be null");
 		
@@ -958,7 +720,7 @@ public class EObjectFileStorageServiceTest {
 		// Update object to APPROVED status
 		draftMetadata.setStatus(ObjectStatus.APPROVED);
 		draftMetadata.setLastChangeTime(Instant.now());
-		storageService.updateMetadata(draftObjectId, draftMetadata).getValue();
+		storageService.updateMetadata(TEST_SCOPE, TEST_REGISTRY, TEST_STAGE, draftObjectId, draftMetadata).getValue();
 		
 		// Wait a moment for registry update (if async)
 		Thread.sleep(100);
@@ -989,7 +751,7 @@ public class EObjectFileStorageServiceTest {
 		rejectedMetadata.setUploadTime(Instant.now());
 		rejectedMetadata.setSourceChannel("TEST");
 		
-		storageService.storeObject("registry-test-rejected", rejectedPackage, rejectedMetadata).getValue();
+		storageService.storeObject(TEST_SCOPE, TEST_REGISTRY, TEST_STAGE, "registry-test-rejected", rejectedPackage, rejectedMetadata).getValue();
 		String rejectedObjectId = rejectedMetadata.getObjectId();
 		assertNotNull(rejectedObjectId, "Rejected object ID should not be null");
 		
@@ -1003,7 +765,7 @@ public class EObjectFileStorageServiceTest {
 				  "Registry should find the stored rejected object by status");
 		
 		// Clean up
-		storageService.deleteObject(draftObjectId);
-		storageService.deleteObject(rejectedObjectId);
+		storageService.deleteObject(TEST_SCOPE, TEST_REGISTRY, TEST_STAGE, draftObjectId);
+		storageService.deleteObject(TEST_SCOPE, TEST_REGISTRY, TEST_STAGE, rejectedObjectId);
 	}
 }

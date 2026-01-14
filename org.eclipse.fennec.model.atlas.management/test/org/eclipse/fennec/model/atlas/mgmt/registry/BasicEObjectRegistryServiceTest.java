@@ -70,11 +70,12 @@ public class BasicEObjectRegistryServiceTest {
     private PromiseFactory mockPromiseFactory;
 
     private BasicEObjectRegistryService<EObject> registryService;
+  
 
     @BeforeEach
     public void setUp() throws Exception {
         // Set up mock storage helper to return empty lists initially
-        when(mockStorageHelper.listObjectIds()).thenReturn(new ArrayList<>());
+        when(mockStorageHelper.loadAllMetadata()).thenReturn(new ArrayList<>());
         
         // Create registry service with mocked dependencies
         registryService = new BasicEObjectRegistryService<>(mockStorageHelper, mockPromiseFactory);
@@ -83,16 +84,14 @@ public class BasicEObjectRegistryServiceTest {
     @Test
     public void testCacheInitializationWithExistingObjects() throws Exception {
         // Prepare test data
-        List<String> existingIds = List.of("obj1", "obj2", "obj3");
+        
         ObjectMetadata metadata1 = createTestMetadata("obj1", "Package1", "1.0.0", ObjectStatus.DRAFT);
         ObjectMetadata metadata2 = createTestMetadata("obj2", "Package2", "2.0.0", ObjectStatus.APPROVED);
         ObjectMetadata metadata3 = createTestMetadata("obj3", "Package3", "1.1.0", ObjectStatus.DRAFT);
+        List<ObjectMetadata> existingMetadatas = List.of(metadata1, metadata2, metadata3);
 
         // Mock storage helper responses
-        when(mockStorageHelper.listObjectIds()).thenReturn(existingIds);
-        when(mockStorageHelper.loadMetadata("obj1")).thenReturn(metadata1);
-        when(mockStorageHelper.loadMetadata("obj2")).thenReturn(metadata2);
-        when(mockStorageHelper.loadMetadata("obj3")).thenReturn(metadata3);
+        when(mockStorageHelper.loadAllMetadata()).thenReturn(existingMetadatas);
 
         // Create new registry service (this triggers cache initialization)
         registryService = new BasicEObjectRegistryService<>(mockStorageHelper, mockPromiseFactory);

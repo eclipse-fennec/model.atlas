@@ -175,12 +175,12 @@ public abstract class AbstractStorageHelper implements AutoCloseable {
      * The storage-specific implementation handles the actual writing.
      * Returns the storage id
      */
-    public void saveEObject(String objectId, EObject object, ObjectMetadata metadata) throws IOException {
+    public void saveEObject(String scope, String registry, String stage, String objectId, EObject object, ObjectMetadata metadata) throws IOException {
         String fileExtension = getFileExtension(metadata);
         String contentType = getContentType(metadata);
         
-        String objectPath = buildObjectPath(objectId, fileExtension);
-        URI objectUri = createStorageURI(objectPath);
+        String objectPath = buildObjectPath(scope, registry, stage, objectId, fileExtension);
+        URI objectUri = createStorageURI(scope, registry, stage, objectPath);
         
         ResourceOperation objectOp = createResource(objectUri, contentType);
         try {
@@ -197,11 +197,11 @@ public abstract class AbstractStorageHelper implements AutoCloseable {
     /**
      * Serializes metadata to storage as XMI.
      */
-    public void saveMetadata(String objectId, ObjectMetadata metadata) throws IOException {
+    public void saveMetadata(String scope, String registry, String stage, String objectId, ObjectMetadata metadata) throws IOException {
         
         validateMetadata(objectId, metadata);
-        String metadataPath = buildMetadataPath(objectId);
-        URI metadataUri = createStorageURI(metadataPath);
+        String metadataPath = buildMetadataPath(scope, registry, stage, objectId);
+        URI metadataUri = createStorageURI(scope, registry, stage, metadataPath);
         
         ResourceOperation metadataOp = createResource(metadataUri, null);
         try {
@@ -239,13 +239,13 @@ public abstract class AbstractStorageHelper implements AutoCloseable {
     /**
      * Loads an EObject from storage, automatically detecting the file extension.
      */
-    public EObject loadEObject(String objectId) throws IOException {
-        String objectPath = findObjectPath(objectId);
+    public EObject loadEObject(String scope, String registry, String stage, String objectId) throws IOException {
+        String objectPath = findObjectPath(scope, registry, stage, objectId);
         if (objectPath == null) {
             return null;
         }
         
-        URI objectUri = createStorageURI(objectPath);
+        URI objectUri = createStorageURI(scope, registry, stage, objectPath);
         ResourceOperation operation = loadResource(objectUri);
         try {
             if (operation.getResource().getContents().isEmpty()) {
@@ -257,22 +257,26 @@ public abstract class AbstractStorageHelper implements AutoCloseable {
         }
     }
     
+    public List<ObjectMetadata> loadAllMetadata() throws IOException {
+    	return loadAllStoredMetadata();
+    }
+    
     /**
      * Loads metadata from storage.
      */
-    public ObjectMetadata loadMetadata(String objectId) throws IOException {
+    public ObjectMetadata loadMetadata(String scope, String registry, String stage, String objectId) throws IOException {
         Objects.requireNonNull(objectId, "Cannot load metadata - objectId cannot be null");
         
         if (objectId.isEmpty()) {
             throw new IllegalArgumentException("Cannot load metadata - objectId cannot be empty");
         }
         
-        String metadataPath = buildMetadataPath(objectId);
-        if (!storageExists(metadataPath)) {
+        String metadataPath = buildMetadataPath(scope, registry, stage, objectId);
+        if (!storageExists(scope, registry, stage, metadataPath)) {
             return null;
         }
         
-        URI metadataUri = createStorageURI(metadataPath);
+        URI metadataUri = createStorageURI(scope, registry, stage, metadataPath);
         ResourceOperation operation = loadResource(metadataUri);
         try {
             if (operation.getResource().getContents().isEmpty()) {
@@ -309,14 +313,14 @@ public abstract class AbstractStorageHelper implements AutoCloseable {
     /**
      * Builds the storage path for an object with the given extension.
      */
-    protected String buildObjectPath(String objectId, String extension) {
-        return objectId + extension;
+    protected String buildObjectPath(String scope, String registry, String stage, String objectId, String extension) {
+        return scope + "_" + registry + "_" + stage + "_" + objectId + extension;
     }
     
     /**
      * Builds the storage path for metadata.
      */
-    protected String buildMetadataPath(String objectId) {
+    protected String buildMetadataPath(String scope, String registry, String stage, String objectId) {
         return objectId + METADATA_EXTENSION;
     }
     
@@ -327,7 +331,7 @@ public abstract class AbstractStorageHelper implements AutoCloseable {
      * Creates a storage-appropriate URI for the given path.
      * File storage uses file:// URIs, S3 storage might use s3:// or custom schemes.
      */
-    protected abstract URI createStorageURI(String path);
+    protected abstract URI createStorageURI(String scope, String registry, String stage, String path);
     
     /**
      * Persists a resource to the storage backend.
@@ -340,42 +344,49 @@ public abstract class AbstractStorageHelper implements AutoCloseable {
     /**
      * Checks if a resource exists in storage.
      */
-    protected abstract boolean storageExists(String path) throws IOException;
+    protected abstract boolean storageExists(String scope, String registry, String stage, String path) throws IOException;
     
     /**
      * Finds the storage path for an object, regardless of extension.
      * Returns null if no object found.
      */
-    protected abstract String findObjectPath(String objectId) throws IOException;
+    protected abstract String findObjectPath(String scope, String registry, String stage, String objectId) throws IOException;
+    
+    /**
+     * This is needed for initial indexing of existing objects
+     * @return a list of all ObjectMetadata that are stored in the storage 
+     * @throws IOException
+     */
+    protected abstract List<ObjectMetadata> loadAllStoredMetadata() throws IOException;
     
     /**
      * Deletes all storage resources associated with an object ID.
      * Should delete both the object and metadata files.
      */
-    public abstract boolean deleteObject(String objectId) throws IOException;
+    public abstract boolean deleteObject(String scope, String registry, String stage, String objectId) throws IOException;
     
     /**
      * Lists all object IDs in storage.
      */
-    public abstract List<String> listObjectIds() throws IOException;
+    public abstract List<String> listObjectIds(String scope, String registry, String stage) throws IOException;
     
     /**
      * Checks if an object exists in storage.
      * This method checks for the existence of either the object file or metadata.
      */
-    public boolean objectExists(String objectId) throws IOException {
+    public boolean objectExists(String scope, String registry, String stage, String objectId) throws IOException {
         if (objectId == null || objectId.isEmpty()) {
             return false;
         }
         
         // Check if metadata exists (most reliable indicator)
-        String metadataPath = buildMetadataPath(objectId);
-        if (storageExists(metadataPath)) {
+        String metadataPath = buildMetadataPath(scope, registry, stage, objectId);
+        if (storageExists(scope, registry, stage, metadataPath)) {
             return true;
         }
         
         // Fallback: check if object file exists with any extension
-        String objectPath = findObjectPath(objectId);
+        String objectPath = findObjectPath(scope, registry, stage, objectId);
         return objectPath != null;
     }
     

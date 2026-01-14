@@ -181,8 +181,8 @@ public class AbstractEObjectStorageServiceTest {
         metadata.setStatus(ObjectStatus.DRAFT);
         // Note: type is not set initially
 
-        doNothing().when(mockStorageHelper).saveEObject(any(), any(), any());
-        doNothing().when(mockStorageHelper).saveMetadata(any(), any());
+        doNothing().when(mockStorageHelper).saveEObject(any(), any(), any(), any(), any(), any());
+        doNothing().when(mockStorageHelper).saveMetadata(any(), any(), any(), any(), any());
         when(mockStorageHelper.getFileExtension(any())).thenReturn("ecore");
 
         // Execute
@@ -196,8 +196,8 @@ public class AbstractEObjectStorageServiceTest {
         assertEquals("test-id", metadata.getObjectId());
 
         // Verify storage helper was called
-        verify(mockStorageHelper).saveEObject("test-id", testPackage, metadata);
-        verify(mockStorageHelper).saveMetadata("test-id", metadata);
+        verify(mockStorageHelper).saveEObject(TEST_SCOPE, TEST_REGISTRY, TEST_STAGE, "test-id", testPackage, metadata);
+        verify(mockStorageHelper).saveMetadata(TEST_SCOPE, TEST_REGISTRY, TEST_STAGE, "test-id", metadata);
 
         // Verify registry was updated
         verify(mockRegistryService).updateCache(any(ObjectMetadata.class));
@@ -213,8 +213,8 @@ public class AbstractEObjectStorageServiceTest {
         metadata.setObjectName("TestPackage");
         metadata.setStatus(ObjectStatus.DRAFT);
 
-        doNothing().when(mockStorageHelper).saveEObject(any(), any(), any());
-        doNothing().when(mockStorageHelper).saveMetadata(any(), any());
+        doNothing().when(mockStorageHelper).saveEObject(any(), any(), any(), any(), any(), any());
+        doNothing().when(mockStorageHelper).saveMetadata(any(), any(), any(), any(), any());
         when(mockStorageHelper.getFileExtension(any())).thenReturn("ecore");
 
         // Execute with null objectId (should generate UUID)
@@ -230,8 +230,8 @@ public class AbstractEObjectStorageServiceTest {
         assertEquals(TEST_STAGE, metadata.getStage());
 
         // Verify storage operations
-        verify(mockStorageHelper).saveEObject(eq(objectId), eq(testPackage), eq(metadata));
-        verify(mockStorageHelper).saveMetadata(eq(objectId), eq(metadata));
+        verify(mockStorageHelper).saveEObject(eq(TEST_SCOPE), eq(TEST_REGISTRY), eq(TEST_STAGE), eq(objectId), eq(testPackage), eq(metadata));
+        verify(mockStorageHelper).saveMetadata(eq(TEST_SCOPE), eq(TEST_REGISTRY), eq(TEST_STAGE), eq(objectId), eq(metadata));
     }
 
     @Test
@@ -247,8 +247,8 @@ public class AbstractEObjectStorageServiceTest {
         // Explicitly verify objectId is null initially
         assertNull(metadata.getObjectId(), "ObjectId should be null initially");
 
-        doNothing().when(mockStorageHelper).saveEObject(any(), any(), any());
-        doNothing().when(mockStorageHelper).saveMetadata(any(), any());
+        doNothing().when(mockStorageHelper).saveEObject(any(), any(), any(), any(), any(), any());
+        doNothing().when(mockStorageHelper).saveMetadata(any(), any(), any(), any(), any());
         when(mockStorageHelper.getFileExtension(any())).thenReturn("ecore");
 
         // Execute with null objectId (should generate UUID and set it in metadata)
@@ -279,8 +279,8 @@ public class AbstractEObjectStorageServiceTest {
         // Don't set objectId in metadata initially
         assertNull(metadata.getObjectId(), "ObjectId should be null initially");
 
-        doNothing().when(mockStorageHelper).saveEObject(any(), any(), any());
-        doNothing().when(mockStorageHelper).saveMetadata(any(), any());
+        doNothing().when(mockStorageHelper).saveEObject(any(), any(), any(), any(), any(), any());
+        doNothing().when(mockStorageHelper).saveMetadata(any(), any(), any(), any(), any());
         when(mockStorageHelper.getFileExtension(any())).thenReturn("ecore");
 
         // Execute with provided objectId
@@ -317,9 +317,9 @@ public class AbstractEObjectStorageServiceTest {
         updateMetadata.setStatus(ObjectStatus.APPROVED);
         // Note: type is not set initially
 
-        when(mockStorageHelper.objectExists("test-id")).thenReturn(true);
-        when(mockStorageHelper.loadMetadata("test-id")).thenReturn(existingMetadata);
-        doNothing().when(mockStorageHelper).saveMetadata(any(), any());
+        when(mockStorageHelper.objectExists(any(), any(), any(), eq("test-id"))).thenReturn(true);
+        when(mockStorageHelper.loadMetadata(any(), any(), any(), eq("test-id"))).thenReturn(existingMetadata);
+        doNothing().when(mockStorageHelper).saveMetadata(any(), any(), any(), any(), any());
 
         // Execute
         Promise<Boolean> result = storageService.updateMetadata(TEST_SCOPE, TEST_REGISTRY, TEST_STAGE, "test-id", updateMetadata);
@@ -330,9 +330,9 @@ public class AbstractEObjectStorageServiceTest {
         assertTrue(success);
 
         // Verify storage operations
-        verify(mockStorageHelper).objectExists("test-id");
-        verify(mockStorageHelper).loadMetadata("test-id");
-        verify(mockStorageHelper).saveMetadata(eq("test-id"), any(ObjectMetadata.class));
+        verify(mockStorageHelper).objectExists(TEST_SCOPE, TEST_REGISTRY, TEST_STAGE, "test-id");
+        verify(mockStorageHelper).loadMetadata(TEST_SCOPE, TEST_REGISTRY, TEST_STAGE, "test-id");
+        verify(mockStorageHelper).saveMetadata(eq(TEST_SCOPE), eq(TEST_REGISTRY), eq(TEST_STAGE), eq("test-id"), any(ObjectMetadata.class));
 
         // Verify registry was updated
         verify(mockRegistryService).updateCache(any(ObjectMetadata.class));
@@ -346,7 +346,7 @@ public class AbstractEObjectStorageServiceTest {
         ObjectMetadata updateMetadata = ManagementFactory.eINSTANCE.createObjectMetadata();
         updateMetadata.setObjectName("NonExistent");
 
-        when(mockStorageHelper.objectExists("non-existent")).thenReturn(false);
+        when(mockStorageHelper.objectExists(TEST_SCOPE, TEST_REGISTRY, TEST_STAGE, "non-existent")).thenReturn(false);
 
         // Execute
         Promise<Boolean> result = storageService.updateMetadata(TEST_SCOPE, TEST_REGISTRY, TEST_STAGE, "non-existent", updateMetadata);
@@ -356,8 +356,8 @@ public class AbstractEObjectStorageServiceTest {
         assertFalse(success);
 
         // Verify no load or save operations were attempted
-        verify(mockStorageHelper, never()).loadMetadata(any());
-        verify(mockStorageHelper, never()).saveMetadata(any(), any());
+        verify(mockStorageHelper, never()).loadMetadata(any(), any(), any(), any());
+        verify(mockStorageHelper, never()).saveMetadata(any(), any(), any(), any(), any());
         verify(mockRegistryService, never()).updateCache(any());
     }
 
@@ -372,9 +372,9 @@ public class AbstractEObjectStorageServiceTest {
         existingMetadata.setStatus(ObjectStatus.DRAFT);
         existingMetadata.setStage("existing-type"); // Pre-existing type
 
-        when(mockStorageHelper.objectExists("test-id")).thenReturn(true);
-        when(mockStorageHelper.loadMetadata("test-id")).thenReturn(existingMetadata);
-        doNothing().when(mockStorageHelper).saveMetadata(any(), any());
+        when(mockStorageHelper.objectExists(TEST_SCOPE, TEST_REGISTRY, TEST_STAGE, "test-id")).thenReturn(true);
+        when(mockStorageHelper.loadMetadata(TEST_SCOPE, TEST_REGISTRY, TEST_STAGE, "test-id")).thenReturn(existingMetadata);
+        doNothing().when(mockStorageHelper).saveMetadata(any(), any(), any(), any(), any());
 
         // Execute
         Promise<Boolean> result = storageService.updateStatus(TEST_SCOPE, TEST_REGISTRY, TEST_STAGE, "test-id", ObjectStatus.APPROVED, "reviewer");
@@ -390,7 +390,7 @@ public class AbstractEObjectStorageServiceTest {
         assertEquals("existing-type", existingMetadata.getStage());
 
         // Verify operations
-        verify(mockStorageHelper).saveMetadata("test-id", existingMetadata);
+        verify(mockStorageHelper).saveMetadata(TEST_SCOPE, TEST_REGISTRY, TEST_STAGE, "test-id", existingMetadata);
     }
 
     @Test
@@ -398,7 +398,7 @@ public class AbstractEObjectStorageServiceTest {
         // Setup
         storageService.activateStorageService();
 
-        when(mockStorageHelper.deleteObject("test-id")).thenReturn(true);
+        when(mockStorageHelper.deleteObject(TEST_SCOPE, TEST_REGISTRY, TEST_STAGE, "test-id")).thenReturn(true);
 
         // Execute
         Promise<Boolean> result = storageService.deleteObject(TEST_SCOPE, TEST_REGISTRY, TEST_STAGE, "test-id");
@@ -408,7 +408,7 @@ public class AbstractEObjectStorageServiceTest {
         assertTrue(success);
 
         // Verify storage deletion
-        verify(mockStorageHelper).deleteObject("test-id");
+        verify(mockStorageHelper).deleteObject(TEST_SCOPE, TEST_REGISTRY, TEST_STAGE, "test-id");
 
         // Verify registry cleanup
         verify(mockRegistryService).removeFromCache("test-id");
@@ -419,7 +419,7 @@ public class AbstractEObjectStorageServiceTest {
         // Setup
         storageService.activateStorageService();
 
-        when(mockStorageHelper.deleteObject("test-id")).thenReturn(false);
+        when(mockStorageHelper.deleteObject(TEST_SCOPE, TEST_REGISTRY, TEST_STAGE, "test-id")).thenReturn(false);
 
         // Execute
         Promise<Boolean> result = storageService.deleteObject(TEST_SCOPE, TEST_REGISTRY, TEST_STAGE, "test-id");
@@ -439,7 +439,7 @@ public class AbstractEObjectStorageServiceTest {
         EPackage testPackage = EcoreFactory.eINSTANCE.createEPackage();
         testPackage.setName("RetrievedPackage");
 
-        when(mockStorageHelper.loadEObject("test-id")).thenReturn(testPackage);
+        when(mockStorageHelper.loadEObject(TEST_SCOPE, TEST_REGISTRY, TEST_STAGE, "test-id")).thenReturn(testPackage);
 
         // Execute
         Promise<EObject> result = storageService.retrieveObject(TEST_SCOPE, TEST_REGISTRY, TEST_STAGE, "test-id");
@@ -450,7 +450,7 @@ public class AbstractEObjectStorageServiceTest {
         assertTrue(retrieved instanceof EPackage);
         assertEquals("RetrievedPackage", ((EPackage) retrieved).getName());
 
-        verify(mockStorageHelper).loadEObject("test-id");
+        verify(mockStorageHelper).loadEObject(TEST_SCOPE, TEST_REGISTRY, TEST_STAGE, "test-id");
     }
 
     @Test
@@ -462,7 +462,7 @@ public class AbstractEObjectStorageServiceTest {
         metadata.setObjectId("test-id");
         metadata.setObjectName("TestPackage");
 
-        when(mockStorageHelper.loadMetadata("test-id")).thenReturn(metadata);
+        when(mockStorageHelper.loadMetadata(TEST_SCOPE, TEST_REGISTRY, TEST_STAGE, "test-id")).thenReturn(metadata);
 
         // Execute
         Promise<ObjectMetadata> result = storageService.retrieveMetadata(TEST_SCOPE, TEST_REGISTRY, TEST_STAGE, "test-id");
@@ -473,7 +473,7 @@ public class AbstractEObjectStorageServiceTest {
         assertEquals("test-id", retrieved.getObjectId());
         assertEquals("TestPackage", retrieved.getObjectName());
 
-        verify(mockStorageHelper).loadMetadata("test-id");
+        verify(mockStorageHelper).loadMetadata(TEST_SCOPE, TEST_REGISTRY, TEST_STAGE, "test-id");
     }
 
     @Test
@@ -482,7 +482,7 @@ public class AbstractEObjectStorageServiceTest {
         storageService.activateStorageService();
         List<String> expectedIds = List.of("id1", "id2", "id3");
 
-        when(mockStorageHelper.listObjectIds()).thenReturn(expectedIds);
+        when(mockStorageHelper.listObjectIds(TEST_SCOPE, TEST_REGISTRY, TEST_STAGE)).thenReturn(expectedIds);
 
         // Execute
         Promise<List<String>> result = storageService.listObjectIds(TEST_SCOPE, TEST_REGISTRY, TEST_STAGE);
@@ -490,7 +490,7 @@ public class AbstractEObjectStorageServiceTest {
 
         // Verify
         assertEquals(expectedIds, ids);
-        verify(mockStorageHelper).listObjectIds();
+        verify(mockStorageHelper).listObjectIds(TEST_SCOPE, TEST_REGISTRY, TEST_STAGE);
     }
 
     @Test
@@ -498,14 +498,14 @@ public class AbstractEObjectStorageServiceTest {
         // Setup
         storageService.activateStorageService();
 
-        when(mockStorageHelper.objectExists("existing-id")).thenReturn(true);
+        when(mockStorageHelper.objectExists(TEST_SCOPE, TEST_REGISTRY, TEST_STAGE, "existing-id")).thenReturn(true);
 
         // Execute
         Boolean exists = storageService.exists(TEST_SCOPE, TEST_REGISTRY, TEST_STAGE, "existing-id");
 
         // Verify
         assertTrue(exists);
-        verify(mockStorageHelper).objectExists("existing-id");
+        verify(mockStorageHelper).objectExists(TEST_SCOPE, TEST_REGISTRY, TEST_STAGE, "existing-id");
     }
 
     @Test
@@ -513,56 +513,41 @@ public class AbstractEObjectStorageServiceTest {
         // Setup
         storageService.activateStorageService();
 
-        when(mockStorageHelper.objectExists("non-existent")).thenReturn(false);
+        when(mockStorageHelper.objectExists(TEST_SCOPE, TEST_REGISTRY, TEST_STAGE, "non-existent")).thenReturn(false);
 
         // Execute
         Boolean exists = storageService.exists(TEST_SCOPE, TEST_REGISTRY, TEST_STAGE, "non-existent");
 
         // Verify
         assertFalse(exists);
-        verify(mockStorageHelper).objectExists("non-existent");
+        verify(mockStorageHelper).objectExists(TEST_SCOPE, TEST_REGISTRY, TEST_STAGE, "non-existent");
     }
 
     @Test
     public void testGetObjectCount() throws Exception {
         // Setup
         storageService.activateStorageService();
-        List<String> objectIds = List.of("id1", "id2", "id3", "id4", "id5");
+        ObjectMetadata m1 = createTestMetadata("id1", "test-obj-1");
+        ObjectMetadata m2 = createTestMetadata("id2", "test-obj-2");
+        ObjectMetadata m3 = createTestMetadata("id3", "test-obj-3");
 
-        when(mockStorageHelper.listObjectIds()).thenReturn(objectIds);
+        when(mockStorageHelper.loadAllStoredMetadata()).thenReturn(List.of(m1, m2, m3));
 
         // Execute
         long count = storageService.getObjectCount();
 
         // Verify
-        assertEquals(5L, count);
-        verify(mockStorageHelper).listObjectIds();
+        assertEquals(3L, count);
+        verify(mockStorageHelper).loadAllStoredMetadata();
     }
 
     @Test
-    public void testQueryObjects() throws Exception {
+    public void testNullQueryObject() throws Exception {
         // Setup
         storageService.activateStorageService();
         
-        ObjectMetadata metadata1 = createTestMetadata("id1", "Package1");
-        ObjectMetadata metadata2 = createTestMetadata("id2", "Package2");
-        
-        when(mockStorageHelper.listObjectIds()).thenReturn(List.of("id1", "id2"));
-        when(mockStorageHelper.loadMetadata("id1")).thenReturn(metadata1);
-        when(mockStorageHelper.loadMetadata("id2")).thenReturn(metadata2);
-
         // Execute
-        Promise<List<ObjectMetadata>> result = storageService.queryObjects(null);
-        List<ObjectMetadata> metadataList = result.getValue();
-
-        // Verify
-        assertEquals(2, metadataList.size());
-        assertEquals("id1", metadataList.get(0).getObjectId());
-        assertEquals("id2", metadataList.get(1).getObjectId());
-
-        verify(mockStorageHelper).listObjectIds();
-        verify(mockStorageHelper).loadMetadata("id1");
-        verify(mockStorageHelper).loadMetadata("id2");
+        assertThrows(IllegalArgumentException.class, () -> storageService.queryObjects(null), "With a null QueryObject we should get an IllegalArgumentException");
     }
 
     @Test
@@ -590,7 +575,7 @@ public class AbstractEObjectStorageServiceTest {
         metadata.setStatus(ObjectStatus.DRAFT);
 
         // Mock storage helper to throw exception
-        doThrow(new RuntimeException("Storage error")).when(mockStorageHelper).saveEObject(any(), any(), any());
+        doThrow(new RuntimeException("Storage error")).when(mockStorageHelper).saveEObject(any(), any(), any(), any(), any(), any());
 
         // Execute and verify exception is propagated
         Promise<ObjectMetadata> result = storageService.storeObject(TEST_SCOPE, TEST_REGISTRY, TEST_STAGE, "test-id", testPackage, metadata);
@@ -690,9 +675,9 @@ public class AbstractEObjectStorageServiceTest {
         updateMetadata.getProperties().put("new.prop", "new-value");
         
         // Mock storage helper
-        when(mockStorageHelper.objectExists("test-id")).thenReturn(true);
-        when(mockStorageHelper.loadMetadata("test-id")).thenReturn(existingMetadata);
-        doNothing().when(mockStorageHelper).saveMetadata(any(), any());
+        when(mockStorageHelper.objectExists(TEST_SCOPE, TEST_REGISTRY, TEST_STAGE, "test-id")).thenReturn(true);
+        when(mockStorageHelper.loadMetadata(TEST_SCOPE, TEST_REGISTRY, TEST_STAGE, "test-id")).thenReturn(existingMetadata);
+        doNothing().when(mockStorageHelper).saveMetadata(any(), any(), any(), any(), any());
         
         // Execute update
         Promise<Boolean> result = storageService.updateMetadata(TEST_SCOPE, TEST_REGISTRY, TEST_STAGE, "test-id", updateMetadata);
@@ -714,9 +699,9 @@ public class AbstractEObjectStorageServiceTest {
         // We can't directly check the copy since it's created internally, but we can verify the save call
         
         // Verify storage operations
-        verify(mockStorageHelper).objectExists("test-id");
-        verify(mockStorageHelper).loadMetadata("test-id");
-        verify(mockStorageHelper).saveMetadata(eq("test-id"), any(ObjectMetadata.class));
+        verify(mockStorageHelper).objectExists(TEST_SCOPE, TEST_REGISTRY, TEST_STAGE, "test-id");
+        verify(mockStorageHelper).loadMetadata(TEST_SCOPE, TEST_REGISTRY, TEST_STAGE, "test-id");
+        verify(mockStorageHelper).saveMetadata(eq(TEST_SCOPE), eq(TEST_REGISTRY), eq(TEST_STAGE), eq("test-id"), any(ObjectMetadata.class));
         verify(mockRegistryService).updateCache(any(ObjectMetadata.class));
     }
     
@@ -740,9 +725,9 @@ public class AbstractEObjectStorageServiceTest {
         // Note: objectName and version are NOT set in update
         
         // Mock storage helper
-        when(mockStorageHelper.objectExists("test-id")).thenReturn(true);
-        when(mockStorageHelper.loadMetadata("test-id")).thenReturn(existingMetadata);
-        doNothing().when(mockStorageHelper).saveMetadata(any(), any());
+        when(mockStorageHelper.objectExists(TEST_SCOPE, TEST_REGISTRY, TEST_STAGE, "test-id")).thenReturn(true);
+        when(mockStorageHelper.loadMetadata(TEST_SCOPE, TEST_REGISTRY, TEST_STAGE, "test-id")).thenReturn(existingMetadata);
+        doNothing().when(mockStorageHelper).saveMetadata(any(), any(), any(), any(), any());
         
         // Execute partial update
         Promise<Boolean> result = storageService.updateMetadata(TEST_SCOPE, TEST_REGISTRY, TEST_STAGE, "test-id", updateMetadata);
@@ -779,9 +764,9 @@ public class AbstractEObjectStorageServiceTest {
         // properties is null (default)
         
         // Mock storage helper
-        when(mockStorageHelper.objectExists("test-id")).thenReturn(true);
-        when(mockStorageHelper.loadMetadata("test-id")).thenReturn(existingMetadata);
-        doNothing().when(mockStorageHelper).saveMetadata(any(), any());
+        when(mockStorageHelper.objectExists(TEST_SCOPE, TEST_REGISTRY, TEST_STAGE, "test-id")).thenReturn(true);
+        when(mockStorageHelper.loadMetadata(TEST_SCOPE, TEST_REGISTRY, TEST_STAGE, "test-id")).thenReturn(existingMetadata);
+        doNothing().when(mockStorageHelper).saveMetadata(any(), any(), any(), any(), any());
         
         // Execute update
         Promise<Boolean> result = storageService.updateMetadata(TEST_SCOPE, TEST_REGISTRY, TEST_STAGE, "test-id", updateMetadata);
@@ -811,8 +796,8 @@ public class AbstractEObjectStorageServiceTest {
         // Note: objectType is not set initially
         assertNull(metadata.getObjectType(), "ObjectType should be null initially");
 
-        doNothing().when(mockStorageHelper).saveEObject(any(), any(), any());
-        doNothing().when(mockStorageHelper).saveMetadata(any(), any());
+        doNothing().when(mockStorageHelper).saveEObject(any(), any(), any(), any(), any(), any());
+        doNothing().when(mockStorageHelper).saveMetadata(any(), any(), any(), any(), any());
         when(mockStorageHelper.getFileExtension(any())).thenReturn("ecore");
 
         // Execute
@@ -844,8 +829,8 @@ public class AbstractEObjectStorageServiceTest {
         metadata.setStatus(ObjectStatus.DRAFT);
         metadata.setObjectType("CustomEPackage"); // Pre-set custom type
 
-        doNothing().when(mockStorageHelper).saveEObject(any(), any(), any());
-        doNothing().when(mockStorageHelper).saveMetadata(any(), any());
+        doNothing().when(mockStorageHelper).saveEObject(any(), any(), any(), any(), any(), any());
+        doNothing().when(mockStorageHelper).saveMetadata(any(), any(), any(), any(), any());
         when(mockStorageHelper.getFileExtension(any())).thenReturn("ecore");
 
         // Execute

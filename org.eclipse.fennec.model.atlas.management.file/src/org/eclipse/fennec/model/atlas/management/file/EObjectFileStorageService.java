@@ -117,24 +117,12 @@ public class EObjectFileStorageService extends AbstractEObjectStorageService {
             description = "Folder path for storing objects and metadata"
         )
         String workspace_folder() default "/tmp/epackage-storage";
-        
-        @AttributeDefinition(
-				name = "Storage Scope",
-				description = "Scope of this storage service (default, atlas, etc.)."
-				)
-		String storage_scope() default "default";
 
 		@AttributeDefinition(
-				name = "Storage Role",
-				description = "Role of this storage service (draft, approved, documentation, etc.)"
+				name = "Storage Type",
+				description = "Type of this storage service (file, apicurio, minio, etc.)"
 				)
-		String storage_role() default "draft";
-		
-		@AttributeDefinition(
-				name = "Storage Registry",
-				description = "Registry of this storage service (schema, configuration, script, etc.)"
-				)
-		String storage_registry() default "schema";
+		String storage_type() default "file";
     }
 
     public static final String PID = "FileObjectStorage";
@@ -146,26 +134,26 @@ public class EObjectFileStorageService extends AbstractEObjectStorageService {
     private EObjectRegistryService<EObject> registry;
     
     private Path workspacePath;
-    private String storageRole;
-    
+    private String storageType;
+
     @Activate
     public void activate(BundleContext bundleContext, Config config) throws Exception {
         this.bctx = bundleContext;
         this.workspacePath = Paths.get(config.workspace_folder());
-        this.storageRole = config.storage_role();
-        
+        this.storageType = config.storage_type();
+
         // Create workspace directory
         try {
             Files.createDirectories(workspacePath);
-            LOGGER.info("File storage service activated with workspace: " + workspacePath  + " and role: " + storageRole);
+            LOGGER.info("File storage service activated with workspace: " + workspacePath  + " and type: " + storageType);
         } catch (IOException e) {
             LOGGER.log(Level.SEVERE, "Failed to create workspace directory", e);
             throw new RuntimeException("Cannot initialize file storage workspace", e);
         }
-        
+
         // Call parent activation
         activateStorageService();
-        
+
     }
     
     @Deactivate
@@ -191,13 +179,14 @@ public class EObjectFileStorageService extends AbstractEObjectStorageService {
     	return registry;
     }
     
+ 
     /* 
      * (non-Javadoc)
-     * @see org.gecko.mac.mgmt.storage.AbstractEObjectStorageService#getStorageRole()
+     * @see org.eclipse.fennec.model.atlas.mgmt.api.EObjectStorageService#getStorageType()
      */
     @Override
-    protected String getStorageType() {
-        return storageRole;
+    public String getStorageType() {
+        return storageType;
     }
 
     /* 
@@ -207,7 +196,7 @@ public class EObjectFileStorageService extends AbstractEObjectStorageService {
     @Override
     protected AbstractStorageHelper createStorageHelper() throws Exception {
         LOGGER.info("Creating file storage helper");
-        return new FileStorageHelper(resourceSet, workspacePath);
+        return new FileStorageHelper(resourceSet, workspacePath, registry);
     }
 
 }

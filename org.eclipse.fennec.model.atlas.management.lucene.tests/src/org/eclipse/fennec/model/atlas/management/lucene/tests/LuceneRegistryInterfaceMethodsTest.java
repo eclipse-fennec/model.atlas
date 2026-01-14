@@ -381,7 +381,7 @@ public class LuceneRegistryInterfaceMethodsTest {
 
     // ===== Helper Methods =====
 
-    private ObjectMetadata createTestMetadata(String objectId, String objectName, String version, ObjectStatus status, String role) {
+    private ObjectMetadata createTestMetadata(String objectId, String objectName, String version, ObjectStatus status, String stage) {
         ObjectMetadata metadata = ManagementFactory.eINSTANCE.createObjectMetadata();
         metadata.setObjectId(objectId);
         metadata.setObjectName(objectName);
@@ -392,7 +392,7 @@ public class LuceneRegistryInterfaceMethodsTest {
         metadata.setUploadUser("test-user");
         metadata.setSourceChannel("TEST_CHANNEL");
         metadata.setLastChangeTime(Instant.now());
-        metadata.setRole(role);
+        metadata.setStage(stage);
         return metadata;
     }
 }

@@ -29,8 +29,10 @@ import org.eclipse.fennec.model.atlas.mgmt.mgmtapicurio.ArtifactType;
 import org.eclipse.fennec.model.atlas.mgmt.mgmtapicurio.Content;
 import org.eclipse.fennec.model.atlas.mgmt.mgmtapicurio.CreateArtifact;
 import org.eclipse.fennec.model.atlas.mgmt.mgmtapicurio.CreateArtifactVersion;
+import org.eclipse.fennec.model.atlas.mgmt.mgmtapicurio.Group;
 import org.eclipse.fennec.model.atlas.mgmt.mgmtapicurio.MgmtApicurioFactory;
 import org.eclipse.fennec.model.atlas.mgmt.mgmtapicurio.MgmtApicurioPackage;
+import org.eclipse.fennec.model.atlas.mgmt.mgmtapicurio.SearchGroupResponse;
 import org.eclipse.fennec.model.atlas.mgmt.mgmtapicurio.SearchResponse;
 import org.eclipse.fennec.model.atlas.mgmt.mgmtapicurio.SearchVersionResponse;
 import org.eclipse.fennec.model.atlas.mgmt.mgmtapicurio.SearchedArtifact;
@@ -121,6 +123,20 @@ public class MgmtApicurioPackageImpl extends EPackageImpl implements MgmtApicuri
 	 * @generated
 	 */
 	private EClass searchedVersionEClass = null;
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	private EClass groupEClass = null;
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	private EClass searchGroupResponseEClass = null;
 
 	/**
 	 * <!-- begin-user-doc -->
@@ -662,6 +678,116 @@ public class MgmtApicurioPackageImpl extends EPackageImpl implements MgmtApicuri
 	 * @generated
 	 */
 	@Override
+	public EClass getGroup() {
+		return groupEClass;
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
+	public EAttribute getGroup_GroupId() {
+		return (EAttribute)groupEClass.getEStructuralFeatures().get(0);
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
+	public EAttribute getGroup_CreatedOn() {
+		return (EAttribute)groupEClass.getEStructuralFeatures().get(1);
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
+	public EAttribute getGroup_Owner() {
+		return (EAttribute)groupEClass.getEStructuralFeatures().get(2);
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
+	public EAttribute getGroup_ModifiedOn() {
+		return (EAttribute)groupEClass.getEStructuralFeatures().get(3);
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
+	public EAttribute getGroup_ModifiedBy() {
+		return (EAttribute)groupEClass.getEStructuralFeatures().get(4);
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
+	public EAttribute getGroup_Description() {
+		return (EAttribute)groupEClass.getEStructuralFeatures().get(5);
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
+	public EReference getGroup_Labels() {
+		return (EReference)groupEClass.getEStructuralFeatures().get(6);
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
+	public EClass getSearchGroupResponse() {
+		return searchGroupResponseEClass;
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
+	public EReference getSearchGroupResponse_Groups() {
+		return (EReference)searchGroupResponseEClass.getEStructuralFeatures().get(0);
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
+	public EAttribute getSearchGroupResponse_Count() {
+		return (EAttribute)searchGroupResponseEClass.getEStructuralFeatures().get(1);
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
 	public EEnum getArtifactType() {
 		return artifactTypeEEnum;
 	}
@@ -762,6 +888,19 @@ public class MgmtApicurioPackageImpl extends EPackageImpl implements MgmtApicuri
 		createEAttribute(searchedVersionEClass, SEARCHED_VERSION__CONTENT_ID);
 		createEAttribute(searchedVersionEClass, SEARCHED_VERSION__STATE);
 
+		groupEClass = createEClass(GROUP);
+		createEAttribute(groupEClass, GROUP__GROUP_ID);
+		createEAttribute(groupEClass, GROUP__CREATED_ON);
+		createEAttribute(groupEClass, GROUP__OWNER);
+		createEAttribute(groupEClass, GROUP__MODIFIED_ON);
+		createEAttribute(groupEClass, GROUP__MODIFIED_BY);
+		createEAttribute(groupEClass, GROUP__DESCRIPTION);
+		createEReference(groupEClass, GROUP__LABELS);
+
+		searchGroupResponseEClass = createEClass(SEARCH_GROUP_RESPONSE);
+		createEReference(searchGroupResponseEClass, SEARCH_GROUP_RESPONSE__GROUPS);
+		createEAttribute(searchGroupResponseEClass, SEARCH_GROUP_RESPONSE__COUNT);
+
 		// Create enums
 		artifactTypeEEnum = createEEnum(ARTIFACT_TYPE);
 		versionStateTypeEEnum = createEEnum(VERSION_STATE_TYPE);
@@ -857,6 +996,19 @@ public class MgmtApicurioPackageImpl extends EPackageImpl implements MgmtApicuri
 		initEAttribute(getSearchedVersion_Version(), ecorePackage.getEString(), "version", null, 1, 1, SearchedVersion.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_UNSETTABLE, !IS_ID, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
 		initEAttribute(getSearchedVersion_ContentId(), ecorePackage.getEString(), "contentId", null, 1, 1, SearchedVersion.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_UNSETTABLE, !IS_ID, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
 		initEAttribute(getSearchedVersion_State(), this.getVersionStateType(), "state", null, 1, 1, SearchedVersion.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_UNSETTABLE, !IS_ID, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
+
+		initEClass(groupEClass, Group.class, "Group", !IS_ABSTRACT, !IS_INTERFACE, IS_GENERATED_INSTANCE_CLASS);
+		initEAttribute(getGroup_GroupId(), ecorePackage.getEString(), "groupId", null, 1, 1, Group.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_UNSETTABLE, !IS_ID, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
+		initEAttribute(getGroup_CreatedOn(), ecorePackage.getEString(), "createdOn", null, 1, 1, Group.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_UNSETTABLE, !IS_ID, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
+		initEAttribute(getGroup_Owner(), ecorePackage.getEString(), "owner", null, 1, 1, Group.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_UNSETTABLE, !IS_ID, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
+		initEAttribute(getGroup_ModifiedOn(), ecorePackage.getEString(), "modifiedOn", null, 1, 1, Group.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_UNSETTABLE, !IS_ID, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
+		initEAttribute(getGroup_ModifiedBy(), ecorePackage.getEString(), "modifiedBy", null, 1, 1, Group.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_UNSETTABLE, !IS_ID, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
+		initEAttribute(getGroup_Description(), ecorePackage.getEString(), "description", null, 0, 1, Group.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_UNSETTABLE, !IS_ID, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
+		initEReference(getGroup_Labels(), this.getLabels(), null, "labels", null, 0, -1, Group.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, IS_COMPOSITE, !IS_RESOLVE_PROXIES, !IS_UNSETTABLE, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
+
+		initEClass(searchGroupResponseEClass, SearchGroupResponse.class, "SearchGroupResponse", !IS_ABSTRACT, !IS_INTERFACE, IS_GENERATED_INSTANCE_CLASS);
+		initEReference(getSearchGroupResponse_Groups(), this.getGroup(), null, "groups", null, 0, -1, SearchGroupResponse.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, IS_COMPOSITE, !IS_RESOLVE_PROXIES, !IS_UNSETTABLE, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
+		initEAttribute(getSearchGroupResponse_Count(), ecorePackage.getEInt(), "count", null, 1, 1, SearchGroupResponse.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_UNSETTABLE, !IS_ID, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
 
 		// Initialize enums and add enum literals
 		initEEnum(artifactTypeEEnum, ArtifactType.class, "ArtifactType");
@@ -983,6 +1135,12 @@ public class MgmtApicurioPackageImpl extends EPackageImpl implements MgmtApicuri
 		   });
 		addAnnotation
 		  (getSearchVersionResponse_Count(),
+		   source,
+		   new String[] {
+			   "documentation", "The total number of artifacts that matched the query that produced the result set (may be more than the number of artifacts in the result set)."
+		   });
+		addAnnotation
+		  (getSearchGroupResponse_Count(),
 		   source,
 		   new String[] {
 			   "documentation", "The total number of artifacts that matched the query that produced the result set (may be more than the number of artifacts in the result set)."

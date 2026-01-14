@@ -81,6 +81,8 @@ public class MgmtApicurioFactoryImpl extends EFactoryImpl implements MgmtApicuri
 			case MgmtApicurioPackage.LABELS: return (EObject)createLabels();
 			case MgmtApicurioPackage.SEARCH_VERSION_RESPONSE: return createSearchVersionResponse();
 			case MgmtApicurioPackage.SEARCHED_VERSION: return createSearchedVersion();
+			case MgmtApicurioPackage.GROUP: return createGroup();
+			case MgmtApicurioPackage.SEARCH_GROUP_RESPONSE: return createSearchGroupResponse();
 			default:
 				throw new IllegalArgumentException("The class '" + eClass.getName() + "' is not a valid classifier");
 		}
@@ -238,6 +240,28 @@ public class MgmtApicurioFactoryImpl extends EFactoryImpl implements MgmtApicuri
 	public SearchedVersion createSearchedVersion() {
 		SearchedVersionImpl searchedVersion = new SearchedVersionImpl();
 		return searchedVersion;
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
+	public Group createGroup() {
+		GroupImpl group = new GroupImpl();
+		return group;
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
+	public SearchGroupResponse createSearchGroupResponse() {
+		SearchGroupResponseImpl searchGroupResponse = new SearchGroupResponseImpl();
+		return searchGroupResponse;
 	}
 
 	/**
