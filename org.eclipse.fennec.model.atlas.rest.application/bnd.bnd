@@ -28,8 +28,6 @@
 	org.eclipse.fennec.model.atlas.management;version=snapshot,\
 	org.osgi.util.promise,\
 	org.eclipse.fennec.model.atlas.workflow;version=snapshot,\
-	org.eclipse.fennec.model.atlas.scope;version=snapshot,\
-	org.eclipse.fennec.model.atlas.scope.model;version=snapshot,\
 	org.eclipse.fennec.model.atlas.schema.registry.api
 
 #-includeresource.swagger: \

@@ -16,8 +16,6 @@ package org.eclipse.fennec.model.atlas.rest.application.resource;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 
 import org.eclipse.emf.ecore.EObject;
 import org.eclipse.emf.ecore.resource.ResourceSet;
@@ -26,17 +24,15 @@ import org.eclipse.fennec.model.atlas.mediatypes.api.SupportedMediatype;
 import org.eclipse.fennec.model.atlas.mgmt.management.ManagementFactory;
 import org.eclipse.fennec.model.atlas.mgmt.management.ObjectMetadata;
 import org.eclipse.fennec.model.atlas.mgmt.management.ObjectMetadataContainer;
-import org.eclipse.fennec.model.atlas.model.scope.Scope;
-import org.eclipse.fennec.model.atlas.model.scope.StageTransition;
+import org.eclipse.fennec.model.atlas.rest.model.StageTransitionRequest;
 import org.eclipse.fennec.model.atlas.runtime.RequireRuntime;
-import org.eclipse.fennec.model.atlas.schema.registry.api.SchemaRegistryService;
-import org.eclipse.fennec.model.atlas.scope.ScopeCollector;
-import org.eclipse.fennec.model.atlas.wf.workflowapi.EObjectWorkflowService;
+import org.eclipse.fennec.model.atlas.wf.workflowapi.RegistryService;
+import org.eclipse.fennec.model.atlas.wf.workflowapi.ScopeService;
+import org.eclipse.fennec.model.atlas.workflow.RegistryServiceCollector;
+import org.eclipse.fennec.model.atlas.workflow.ScopeServiceCollector;
 import org.osgi.service.component.annotations.Activate;
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
-import org.osgi.service.component.annotations.ReferenceCardinality;
-import org.osgi.service.component.annotations.ReferencePolicy;
 import org.osgi.service.component.annotations.ServiceScope;
 import org.osgi.service.jakartars.whiteboard.propertytypes.JakartarsName;
 import org.osgi.service.jakartars.whiteboard.propertytypes.JakartarsResource;
@@ -84,7 +80,10 @@ public class ObjectRegistryResource {
 	ResourceSet resourceSet;
 
 	@Reference
-	private ScopeCollector scopeCollector;
+	private ScopeServiceCollector scopeCollector;
+	
+	@Reference
+	private RegistryServiceCollector registryCollector;
 	
 	@Reference
 	private ManagementFactory mgmtFactory;
@@ -104,28 +103,6 @@ public class ObjectRegistryResource {
 		supportedMediaTypes.add("application/xmi");
 		supportedMediaTypes.add("application/uml");
 	}
-
-	// Track all SchemaRegistryService instances by registry name
-    private Map<String, SchemaRegistryService> schemaRegistries = new ConcurrentHashMap<>();
-
-    @Reference(
-        cardinality = ReferenceCardinality.MULTIPLE,
-        policy = ReferencePolicy.DYNAMIC
-    )
-    public void bindSchemaRegistry(SchemaRegistryService service, Map<String, Object> props) {
-        String registryName = service.getRegistryName();
-        if (registryName != null) {
-            schemaRegistries.put(registryName, service);
-        }
-    }
-
-    public void unbindSchemaRegistry(SchemaRegistryService service, Map<String, Object> props) {
-        String registryName = service.getRegistryName();
-        if (registryName != null) {
-            schemaRegistries.remove(registryName);
-        }
-    }
-
 
 
 	// ======================
@@ -151,7 +128,7 @@ public class ObjectRegistryResource {
 							description = "Objects retrieved successfully",
 							content = @Content(schema = @Schema( type = "array", implementation = ObjectMetadata.class))
 							),
-					@ApiResponse(responseCode = "404", description = "Scope not found"),
+					@ApiResponse(responseCode = "400", description = "Scope not available, registry not available for scope, stage not available for registry or not a valid stage"),
 					@ApiResponse(responseCode = "500", description = "Internal server error")
 			}
 			)
@@ -163,15 +140,17 @@ public class ObjectRegistryResource {
 		
 		checkContentType();
 
-		EObjectWorkflowService<?> workflowService = getObjectRegistryServiceByScope(scopeName);
-		if(workflowService == null) {
-			return Response.status(Response.Status.NOT_FOUND).build();
+		ScopeService<?> scopeService = getScopeServiceByScopeName(scopeName);
+		if(scopeService == null) {
+			return Response.status(Response.Status.BAD_REQUEST).entity(String.format("No ScopeService for scope %s was found.", scopeName)).build();
 		}
 		try {
-			List<ObjectMetadata> objectsMetadata = workflowService.listInFinalStageForRegistry(registryName);
+			List<ObjectMetadata> objectsMetadata = scopeService.listInFinalStageForRegistry(registryName);
 			ObjectMetadataContainer container = mgmtFactory.createObjectMetadataContainer();
 			container.getMetadata().addAll(objectsMetadata);		
 			return Response.status(Response.Status.OK).entity(container).build();
+		} catch (IllegalArgumentException e) {
+			return Response.status(Response.Status.BAD_REQUEST).entity(e.getMessage()).build();
 		} catch (Exception e) {
 			return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity(e.getMessage()).build();
 		}
@@ -202,7 +181,7 @@ public class ObjectRegistryResource {
 							content = @Content(schema =  @Schema(implementation = ObjectMetadata.class))
 					),
 					@ApiResponse(responseCode = "204", description = "Stored object not found, or registry or stage not available for the scope"),
-					@ApiResponse(responseCode = "404", description = "Scope not found"),
+					@ApiResponse(responseCode = "400", description = "Scope not available, registry not available for scope, stage not available for registry or not a valid stage"),
 					@ApiResponse(responseCode = "500", description = "Internal server error")
 			}
 	)
@@ -218,20 +197,20 @@ public class ObjectRegistryResource {
 			@Parameter(description = "Object name filter (supports wildcards, e.g., Billing*)")
 			@QueryParam("name") String name) {
 		
-		EObjectWorkflowService<?> workflowService = getObjectRegistryServiceByScope(scopeName);
-		if(workflowService == null) {
-			return Response.status(Response.Status.NOT_FOUND).build();
+		ScopeService<?> scopeService = getScopeServiceByScopeName(scopeName);
+		if(scopeService == null) {
+			return Response.status(Response.Status.BAD_REQUEST).entity(String.format("No ScopeService for scope %s was found.", scopeName)).build();
 		}
 		try {
 			if(objectId != null) {
-				ObjectMetadata metadata = workflowService.getFromStageForRegistry(stageName, registryName, objectId);
+				ObjectMetadata metadata = scopeService.getMetadataFromStageForRegistry(registryName, stageName, objectId);
 				if(metadata == null) {
-					return Response.status(Response.Status.NO_CONTENT).build();
+					return Response.status(Response.Status.NO_CONTENT).entity(String.format("Obejct %s not found neither scope '%s', registry '%s' and stage '%s' nor in parent hierarchy", objectId, scopeName, registryName, stageName)).build();
 				} else {
 					return Response.status(Response.Status.OK).entity(metadata).build();
 				}
 			} else if(name != null) {
-				List<ObjectMetadata> objectsMetadata = workflowService.listInStageForRegistryByName(stageName, registryName, name);
+				List<ObjectMetadata> objectsMetadata = scopeService.listInStageForRegistryByName(registryName, stageName, name);
 				if(objectsMetadata.isEmpty()) {
 					return Response.status(Response.Status.NO_CONTENT).build();
 				}
@@ -239,7 +218,7 @@ public class ObjectRegistryResource {
 				container.getMetadata().addAll(objectsMetadata);		
 				return Response.status(Response.Status.OK).entity(container).build();
 			} else {
-				List<ObjectMetadata> objectsMetadata = workflowService.listInStageForRegistry(stageName, registryName);
+				List<ObjectMetadata> objectsMetadata = scopeService.listInStageForRegistry(registryName, stageName);
 				if(objectsMetadata.isEmpty()) {
 					return Response.status(Response.Status.NO_CONTENT).build();
 				}
@@ -248,6 +227,8 @@ public class ObjectRegistryResource {
 				return Response.status(Response.Status.OK).entity(container).build();
 			}
 
+		} catch (IllegalArgumentException e) {
+			return Response.status(Response.Status.BAD_REQUEST).entity(e.getMessage()).build();
 		} catch (Exception e) {
 			return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity(e.getMessage()).build();
 		}
@@ -285,8 +266,7 @@ public class ObjectRegistryResource {
 							description = "Object updated successfully",
 							content = @Content(schema = @Schema(implementation = ObjectMetadata.class))
 					),
-					@ApiResponse(responseCode = "400", description = "Schema not found, or validation failed"),
-					@ApiResponse(responseCode = "404", description = "Scope not found"),
+					@ApiResponse(responseCode = "400", description = "Schema not found, validation failed, scope not available, registry not available for scope, stage not available for registry or not a valid stage "),
 					@ApiResponse(responseCode = "409", description = "Object with same id already exists and override option not set to true"),
 					@ApiResponse(responseCode = "415", description = "Unsupported media type"),
 					@ApiResponse(responseCode = "500", description = "Internal server error")
@@ -314,36 +294,39 @@ public class ObjectRegistryResource {
 		checkContentType();
 		
 		// Get schema registry for validation
-        SchemaRegistryService schemaRegistry = schemaRegistries.get(registryName);
-        if (schemaRegistry == null) {
+        RegistryService<?> registryService = getRegistryServiceByRegistryName(registryName);
+        if (registryService == null) {
             return Response.status(Status.BAD_REQUEST)
                 .entity("Unknown or unconfigured registry: " + registryName)
                 .build();
         }
 
         // Validate object type
-        if (!schemaRegistry.isCompatible(object.eClass())) {
+        if (!registryService.isEClassCompatibleWithRegistry(object.eClass())) {
             return Response.status(Status.BAD_REQUEST)
                 .entity(String.format(
                     "Object type %s not compatible with registry %s (expects %s)",
                     EcoreUtil.getURI(object.eClass()),
                     registryName,
-                    EcoreUtil.getURI(schemaRegistry.getRootEClass())
+                    EcoreUtil.getURI(registryService.getRootEClass())
                 ))
                 .build();
         }
 
-		EObjectWorkflowService<EObject> workflowService = (EObjectWorkflowService<EObject>) getObjectRegistryServiceByScope(scopeName);
-		if(workflowService == null) {
-			return Response.status(Response.Status.NOT_FOUND).build();
+        ScopeService<EObject> scopeService = (ScopeService<EObject>) getScopeServiceByScopeName(scopeName);
+		if(scopeService == null) {
+			return Response.status(Response.Status.BAD_REQUEST).entity(String.format("No ScopeService for scope %s was found.", scopeName)).build();
 		}
 		try {
-			ObjectMetadata existingMetadata = workflowService.getFromStageForRegistry(stageName, registryName, objectId);
+			ObjectMetadata existingMetadata = scopeService.getMetadataFromStageForRegistry(registryName, stageName, objectId);
 			if(existingMetadata != null) {
 				if(!override) {
-					return Response.status(Response.Status.CONFLICT).build();
+					return Response.status(Response.Status.CONFLICT).entity(String.format("Object %s already exists and override flag is false. Cannot update object.", objectId)).build();
 				} else {
-					ObjectMetadata metadata = workflowService.updateInStageForRegistry(stageName, registryName, object, objectId, version)
+					if (existingMetadata.isIsReadOnly()) {
+						return Response.status(Response.Status.FORBIDDEN).entity(String.format("Object %s is read-only. Cannot update it.", objectId)).build();
+					}
+					ObjectMetadata metadata = scopeService.updateInStageForRegistry(registryName, stageName, object, objectId, version)
 		    			    .getValue();
 		    		    return Response.status(Response.Status.OK)
 		    		    		.header("Location", "/".concat(scopeName).concat("/registries/").concat(registryName).concat("/stages/").concat(stageName).concat("?objectId=").concat(objectId))
@@ -355,12 +338,13 @@ public class ObjectRegistryResource {
 			metadata.setObjectId(objectId);
 			metadata.setObjectName(name);
 			metadata.setUploadTime(Instant.now());
-			metadata.setRole(stageName);
+			metadata.setStage(stageName);
 			metadata.setScope(scopeName);
+			metadata.setRegistry(registryName);
 			metadata.setVersion(version);
 			metadata.setObjectType(EcoreUtil.getURI(object.eClass()).toString());
 
-			metadata = workflowService.uploadToStageForRegistry(stageName, registryName, object, metadata).getValue();
+			metadata = scopeService.uploadToStageForRegistry(registryName, stageName, object, metadata).getValue();
 			return Response
 					.status(Response.Status.CREATED)
 					.header("Location", "/".concat(scopeName).concat("/registries/").concat(registryName).concat("/stages/").concat(stageName).concat("?objectId=").concat(objectId))
@@ -369,6 +353,8 @@ public class ObjectRegistryResource {
 		} catch (WebApplicationException e) {
 			// WebApplicationException already has the correct status code, rethrow it
 			throw e;
+		} catch (IllegalArgumentException e) {
+			return Response.status(Response.Status.BAD_REQUEST).entity(e.getMessage()).build();
 		} catch(Exception e) {
 			return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity(e.getMessage()).build();
 		}
@@ -396,7 +382,7 @@ public class ObjectRegistryResource {
 							description = "Object content retrieved successfully"
 					),
 					@ApiResponse(responseCode = "204", description = "Object not found"),
-					@ApiResponse(responseCode = "404", description = "Scope not found"),
+					@ApiResponse(responseCode = "400", description = "Scope not available, registry not available for scope, stage not available for registry or not a valid stage"),
 					@ApiResponse(responseCode = "406", description = "Requested format not supported"),
 					@ApiResponse(responseCode = "500", description = "Internal server error")
 			}
@@ -412,17 +398,19 @@ public class ObjectRegistryResource {
 			@QueryParam("objectId") String objectId) {
 		checkContentType();
 		
-		EObjectWorkflowService<?> workflowService = getObjectRegistryServiceByScope(scopeName);
-		if(workflowService == null) {
-			return Response.status(Response.Status.NOT_FOUND).build();
+		ScopeService<?> scopeService = getScopeServiceByScopeName(scopeName);
+		if(scopeService == null) {
+			return Response.status(Response.Status.BAD_REQUEST).entity(String.format("No ScopeService for scope %s was found.", scopeName)).build();
 		}
 		try {
-			EObject eObject = workflowService.getContentFromStageForRegistry(stageName, registryName, objectId);
+			EObject eObject = scopeService.getContentFromStageForRegistry(registryName, stageName, objectId);
 			if(eObject == null) {
-				return Response.status(Response.Status.NO_CONTENT).build();
+				return Response.status(Response.Status.NO_CONTENT).entity(String.format("Obejct %s not found neither scope '%s', registry '%s' and stage '%s' nor in parent hierarchy", objectId, scopeName, registryName, stageName)).build();
 			}
 			return Response.status(Response.Status.OK).entity(eObject).build();
 
+		} catch (IllegalArgumentException e) {
+			return Response.status(Response.Status.BAD_REQUEST).entity(e.getMessage()).build();
 		} catch(Exception e) {
 			return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity(e.getMessage()).build();
 		}		
@@ -452,9 +440,8 @@ public class ObjectRegistryResource {
 							description = "Object content updated successfully"
 					),
 					@ApiResponse(responseCode = "204", description = "Object not found"),
-					@ApiResponse(responseCode = "400", description = "If updated object is not compliant with schema"),
-					@ApiResponse(responseCode = "404", description = "Scope not found"),
-					@ApiResponse(responseCode = "403", description = "Stage is read-only or Package is only present in a parent scope final stage and so it's read-only"),
+					@ApiResponse(responseCode = "400", description = "If updated object is not compliant with schema, scope not available, registry not available for scope, stage not available for registry or not a valid writable stage"),
+					@ApiResponse(responseCode = "403", description = "The requested object is read-only (e.g. if it is only available in a parent scope)"),
 					@ApiResponse(responseCode = "415", description = "Requested format not supported"),
 					@ApiResponse(responseCode = "500", description = "Internal server error")
 			}
@@ -477,46 +464,45 @@ public class ObjectRegistryResource {
 		checkContentType();
 		
 		// Get schema registry for validation
-        SchemaRegistryService schemaRegistry = schemaRegistries.get(registryName);
-        if (schemaRegistry == null) {
+        RegistryService<?> registryService = getRegistryServiceByRegistryName(registryName);
+        if (registryService == null) {
             return Response.status(Status.BAD_REQUEST)
                 .entity("Unknown or unconfigured registry: " + registryName)
                 .build();
         }
 
         // Validate object type
-        if (!schemaRegistry.isCompatible(eObject.eClass())) {
+        if (!registryService.isEClassCompatibleWithRegistry(eObject.eClass())) {
             return Response.status(Status.BAD_REQUEST)
                 .entity(String.format(
                     "Object type %s not compatible with registry %s (expects %s)",
                     EcoreUtil.getURI(eObject.eClass()),
                     registryName,
-                    EcoreUtil.getURI(schemaRegistry.getRootEClass())
+                    EcoreUtil.getURI(registryService.getRootEClass())
                 ))
                 .build();
         }
 		
-		EObjectWorkflowService<EObject> workflowService = (EObjectWorkflowService<EObject>) getObjectRegistryServiceByScope(scopeName);
-		Scope scope = getScopeByScopeName(scopeName);
-		if(workflowService == null || scope == null) {
-			return Response.status(Response.Status.NOT_FOUND).build();
+        ScopeService<EObject> scopeService = (ScopeService<EObject>) getScopeServiceByScopeName(scopeName);
+		if(scopeService == null) {
+			return Response.status(Response.Status.BAD_REQUEST).entity(String.format("No ScopeService for scope %s was found.", scopeName)).build();
 		}
-		try {			
-			if(!scope.getWritableStages().contains(stageName)) {
-				return Response.status(Response.Status.FORBIDDEN).build();
-			}
-			ObjectMetadata existingMetadata = workflowService.getFromStageForRegistry(stageName, registryName, objectId);
+		
+		try {					
+			ObjectMetadata existingMetadata = scopeService.getMetadataFromStageForRegistry(registryName, stageName, objectId);
 			if(existingMetadata == null) {
-				return Response.status(Response.Status.NO_CONTENT).build();
+				return Response.status(Response.Status.NO_CONTENT).entity(String.format("Obejct %s not found neither scope '%s', registry '%s' and stage '%s' nor in parent hierarchy", objectId, scopeName, registryName, stageName)).build();
 			}
 			//			We might want to check if the metadata is read only (e.g. if it was retrieved from a parent final stage
 			if(existingMetadata.isIsReadOnly()) {
-				return Response.status(Response.Status.FORBIDDEN).build();
+				return Response.status(Response.Status.FORBIDDEN).entity(String.format("Object %s is in read-only state",  objectId)).build();
 			}
 
-			ObjectMetadata metadata = workflowService.updateInStageForRegistry(stageName, registryName, eObject, objectId, version).getValue();			
+			ObjectMetadata metadata = scopeService.updateInStageForRegistry(registryName, stageName, eObject, objectId, version).getValue();			
 			return Response.status(Response.Status.OK).entity(metadata).build();
 
+		} catch (IllegalArgumentException e) {
+			return Response.status(Response.Status.BAD_REQUEST).entity(e.getMessage()).build();
 		} catch(Exception e) {
 			return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity(e.getMessage()).build();
 		}
@@ -544,7 +530,7 @@ public class ObjectRegistryResource {
 							description = "Object deleted successfully"
 					),
 					@ApiResponse(responseCode = "403", description = "Stage is read-only or Object is only present in a parent scope final stage and so it's read-only"),
-					@ApiResponse(responseCode = "404", description = "Scope not found"),
+					@ApiResponse(responseCode = "400", description = "Scope not available, registry not available for scope, stage not available for registry or not a valid stage"),
 					@ApiResponse(responseCode = "204", description = "Object not found"),
 					@ApiResponse(responseCode = "500", description = "Internal server error")
 			}
@@ -559,27 +545,24 @@ public class ObjectRegistryResource {
 			@Parameter(description = "The object identifier", required = true)
 			@QueryParam("objectId") String objectId) {
 
-		EObjectWorkflowService<?> workflowService =  getObjectRegistryServiceByScope(scopeName);
-		Scope scope = getScopeByScopeName(scopeName);
-		if(workflowService == null || scope == null) {
-			return Response.status(Response.Status.NOT_FOUND).build();
+		ScopeService<?> scopeService = getScopeServiceByScopeName(scopeName);
+		if(scopeService == null) {
+			return Response.status(Response.Status.BAD_REQUEST).entity(String.format("No ScopeService for scope %s was found.", scopeName)).build();
 		}
-		try {			
-			if(!scope.getWritableStages().contains(stageName)) {
-				return Response.status(Response.Status.FORBIDDEN).build();
-			}
-			ObjectMetadata existingMetadata = workflowService.getFromStageForRegistry(stageName, registryName, objectId);
+		try {					
+			ObjectMetadata existingMetadata = scopeService.getMetadataFromStageForRegistry(registryName, stageName, objectId);
 			if(existingMetadata == null) {
-				return Response.status(Response.Status.NO_CONTENT).build();
+				return Response.status(Response.Status.NO_CONTENT).entity(String.format("Obejct %s not found neither scope '%s', registry '%s' and stage '%s' nor in parent hierarchy", objectId, scopeName, registryName, stageName)).build();
 			} 
 			if(existingMetadata.isIsReadOnly()) {
-				return Response.status(Response.Status.FORBIDDEN).build();
+				return Response.status(Response.Status.FORBIDDEN).entity(String.format("Object %s is in read-only state",  objectId)).build();
 			}
 
-			boolean deleted = workflowService.deleteFromStageForRegistry(stageName, registryName, objectId).getValue();	
+			boolean deleted = scopeService.deleteFromStageForRegistry(registryName, stageName, objectId).getValue();	
 			if(deleted) return Response.status(Response.Status.OK).build();
-			return Response.status(Response.Status.INTERNAL_SERVER_ERROR).build();
-
+			return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity(String.format("Object %s deletion failed but causes are unknown", objectId)).build();
+		} catch (IllegalArgumentException e) {
+			return Response.status(Response.Status.BAD_REQUEST).entity(e.getMessage()).build();
 		} catch(Exception e) {
 			return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity(e.getMessage()).build();
 		}
@@ -608,8 +591,8 @@ public class ObjectRegistryResource {
 									description = "Object transitioned successfully",
 									content = @Content(schema = @Schema(implementation = ObjectMetadata.class))
 									),
-							@ApiResponse(responseCode = "400", description = "Invalid transition or missing parameters"),
-							@ApiResponse(responseCode = "404", description = "Scope not found"),
+							@ApiResponse(responseCode = "400", description = "Invalid transition, missing parameters, scope not available, registry not available for scope, stage not available for registry or not a valid stage"),
+							@ApiResponse(responseCode = "403", description = "Stage is read-only or Object is only present in a parent scope final stage and so it's read-only"),
 							@ApiResponse(responseCode = "204", description = "Object not found in source stage"),
 							@ApiResponse(responseCode = "500", description = "Internal server error")
 			}
@@ -624,29 +607,28 @@ public class ObjectRegistryResource {
 			@RequestBody(
 					description = "Transition request with objectId and targetStage", 
 					required = true, 
-					content = @Content(schema = @Schema(implementation = StageTransition.class)))
-			StageTransition transitionRequest) {
+					content = @Content(schema = @Schema(implementation = StageTransitionRequest.class)))
+			StageTransitionRequest transitionRequest) {
 		
 		checkContentType();
 		
-		EObjectWorkflowService<?> workflowService = getObjectRegistryServiceByScope(scopeName);
-		if(workflowService == null) {
-			return Response.status(Response.Status.NOT_FOUND).build();
+		ScopeService<?> scopeService = getScopeServiceByScopeName(scopeName);
+		if(scopeService == null) {
+			return Response.status(Response.Status.BAD_REQUEST).entity(String.format("No ScopeService for scope %s was found.", scopeName)).build();
 		}
 		try {
 			String objectId = transitionRequest.getObjectId();
-			ObjectMetadata existingMetadata = workflowService.getFromStageForRegistry(stageName, registryName, objectId);
+			ObjectMetadata existingMetadata = scopeService.getMetadataFromStageForRegistry(registryName, stageName, objectId);
 			if(existingMetadata == null) {
-				return Response.status(Response.Status.NO_CONTENT).build();
+				return Response.status(Response.Status.NO_CONTENT).entity(String.format("Obejct %s not found neither scope '%s', registry '%s' and stage '%s' nor in parent hierarchy" , objectId, scopeName, registryName, stageName)).build();
 			}
 			if(existingMetadata.isIsReadOnly()) {
-				return Response.status(Response.Status.BAD_REQUEST).build();
+				return Response.status(Response.Status.FORBIDDEN).entity(String.format("Object %s is in read-only state",  objectId)).build();
 			}
-			if(!workflowService.isTransitionAllowed(stageName, transitionRequest.getTargetStage())) {
-				return Response.status(Response.Status.BAD_REQUEST).build();
-			}
-			ObjectMetadata metadata = workflowService.transitionToStageForRegistry(objectId, stageName, transitionRequest.getTargetStage(), registryName);
+			ObjectMetadata metadata = scopeService.transitionToStageForRegistry(registryName, objectId, stageName, transitionRequest.getTargetStage());
 			return Response.status(Response.Status.OK).entity(metadata).build();
+		} catch (IllegalArgumentException e) {
+			return Response.status(Response.Status.BAD_REQUEST).entity(e.getMessage()).build();
 		} catch(Exception e) {
 			return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity(e.getMessage()).build();
 		}
@@ -676,13 +658,11 @@ public class ObjectRegistryResource {
 		throw new WebApplicationException(Status.UNSUPPORTED_MEDIA_TYPE);
 	}
 
-	private EObjectWorkflowService<?> getObjectRegistryServiceByScope(String scope) {
-		return scopeCollector.getWorkflowServiceByScope(scope);
-	}
-
-	private Scope getScopeByScopeName(String scope) {
-		return scopeCollector.getWorkflowScopeByName(scope);
-	}
-
+	private ScopeService<?> getScopeServiceByScopeName(String scopeName) {
+		return scopeCollector.getScopeServiceByScopeName(scopeName);
+	}	
 	
+	private RegistryService<?> getRegistryServiceByRegistryName(String registryName) {
+		return registryCollector.getRegistryServiceByRegistryName(registryName);
+	}
 }

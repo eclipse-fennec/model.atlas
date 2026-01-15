@@ -15,6 +15,7 @@ package org.eclipse.fennec.model.atlas.wf.workflowapi;
 
 import java.util.List;
 
+import org.eclipse.emf.ecore.EClass;
 import org.eclipse.emf.ecore.EObject;
 
 import org.eclipse.fennec.model.atlas.mgmt.management.ObjectMetadata;
@@ -188,5 +189,29 @@ public interface RegistryService<T extends EObject> {
 	 * @generated
 	 */
 	boolean isTransitionAllowed(String fromStage, String toStage);
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @model kind="operation"
+	 * @generated
+	 */
+	Registry getRegistry();
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @model
+	 * @generated
+	 */
+	boolean isEClassCompatibleWithRegistry(EClass eClass);
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @model kind="operation"
+	 * @generated
+	 */
+	EClass getRootEClass();
 
 } // RegistryService

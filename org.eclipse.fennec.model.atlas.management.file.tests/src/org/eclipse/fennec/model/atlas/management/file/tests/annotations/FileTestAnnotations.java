@@ -17,7 +17,6 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 
 import org.eclipse.fennec.model.atlas.management.lucene.tests.annotations.LuceneTestAnnotations;
-import org.eclipse.fennec.model.atlas.management.lucene.tests.annotations.LuceneTestAnnotations.RegistryConfiguration;
 import org.osgi.test.common.annotation.Property;
 import org.osgi.test.common.annotation.Property.TemplateArgument;
 import org.osgi.test.common.annotation.Property.ValueSource;
@@ -77,40 +76,4 @@ public class FileTestAnnotations extends LuceneTestAnnotations {
     @Retention(RetentionPolicy.RUNTIME)
     public @interface DefaultFileStorageSetup {}
 
-
-    /**
-     * Multiple file storage instances with different roles.
-     * 
-     * <p>This setup creates three file storage instances:</p>
-     * <ul>
-     * <li>Draft storage with role "draft"</li>
-     * <li>Approved storage with role "approved"</li>
-     * <li>Documentation storage with role "documentation"</li>
-     * </ul>
-     * 
-     * <p>Useful for testing multi-role scenarios and cross-storage queries.</p>
-     */
-//    @RegistryConfiguration
-//    @WithFactoryConfiguration(factoryPid = PID_FILE_STORAGE, name = "test", location = "?", properties = {
-//        @Property(key = "workspace.folder", value = "%s/draft-storage", templateArguments = {
-//            @TemplateArgument(source = ValueSource.SystemProperty, value = PROP_TEMP_DIR)
-//        }),
-//        @Property(key = "storage.type", value = "file")
-//    })
-//    @WithFactoryConfiguration(factoryPid = PID_FILE_STORAGE, name = "approved", location = "?", properties = {
-//        @Property(key = "workspace.folder", value = "%s/approved-storage", templateArguments = {
-//            @TemplateArgument(source = ValueSource.SystemProperty, value = PROP_TEMP_DIR),
-//            @TemplateArgument(source = ValueSource.TestMethod)
-//        }),
-//        @Property(key = "storage.role", value = "approved")
-//    })
-//    @WithFactoryConfiguration(factoryPid = PID_FILE_STORAGE, name = "documentation", location = "?", properties = {
-//        @Property(key = "workspace.folder", value = "%s/documentation-storage", templateArguments = {
-//            @TemplateArgument(source = ValueSource.SystemProperty, value = PROP_TEMP_DIR),
-//            @TemplateArgument(source = ValueSource.TestMethod)
-//        }),
-//        @Property(key = "storage.role", value = "documentation")
-//    })
-//    @Retention(RetentionPolicy.RUNTIME)
-//    public @interface MultiRoleFileStorageSetup {}
 }

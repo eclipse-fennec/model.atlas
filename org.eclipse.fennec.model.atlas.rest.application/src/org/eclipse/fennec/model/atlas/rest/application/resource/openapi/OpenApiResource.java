@@ -21,8 +21,8 @@ import java.util.Optional;
 import java.util.Set;
 
 import org.eclipse.fennec.model.atlas.mediatypes.api.SupportedMediatype;
-import org.eclipse.fennec.model.atlas.model.scope.Scope;
-import org.eclipse.fennec.model.atlas.scope.ScopeCollector;
+import org.eclipse.fennec.model.atlas.wf.workflowapi.Scope;
+import org.eclipse.fennec.model.atlas.workflow.ScopeServiceCollector;
 import org.osgi.service.component.annotations.Activate;
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
@@ -68,7 +68,7 @@ public class OpenApiResource extends BaseOpenApiResource {
 	private ServletConfig config;
 
 	@Reference
-	ScopeCollector scopeCollector;
+	ScopeServiceCollector scopeCollector;
 
 	private final List<String> supportedMediaTypes;
 
@@ -228,20 +228,12 @@ public class OpenApiResource extends BaseOpenApiResource {
 		for (Scope scope : scopes) {
 			Map<String, Object> scopeData = new HashMap<>();
 			scopeData.put("name", scope.getName());
-			scopeData.put("type", scope.getType());
 			scopeData.put("description", scope.getDescription());
 			scopeData.put("parentScope", scope.getParentScope());
-			scopeData.put("finalStage", scope.getFinalStage());
 
 			// Convert EList to regular List for JSON serialization
-			if (scope.getStages() != null && !scope.getStages().isEmpty()) {
-				scopeData.put("stages", new ArrayList<>(scope.getStages()));
-			}
-			if (scope.getWritableStages() != null && !scope.getWritableStages().isEmpty()) {
-				scopeData.put("writableStages", new ArrayList<>(scope.getWritableStages()));
-			}
-			if (scope.getLinks() != null && !scope.getLinks().isEmpty()) {
-				scopeData.put("links", new HashMap<>(scope.getLinks().map()));
+			if (scope.getRegistries() != null && !scope.getRegistries().isEmpty()) {
+				scopeData.put("registries", new ArrayList<>(scope.getRegistries().stream().map(r -> r.getName()).toList()));
 			}
 
 			scopesData.add(scopeData);
@@ -280,14 +272,8 @@ public class OpenApiResource extends BaseOpenApiResource {
 			if (scope.getParentScope() != null && !scope.getParentScope().isEmpty()) {
 				scopeDescription.append("  - Parent Scope: ").append(scope.getParentScope()).append("\n");
 			}
-			if (scope.getStages() != null && !scope.getStages().isEmpty()) {
-				scopeDescription.append("  - Stages: ").append(String.join(", ", scope.getStages())).append("\n");
-			}
-			if (scope.getFinalStage() != null && !scope.getFinalStage().isEmpty()) {
-				scopeDescription.append("  - Final Stage: ").append(scope.getFinalStage()).append("\n");
-			}
-			if (scope.getWritableStages() != null && !scope.getWritableStages().isEmpty()) {
-				scopeDescription.append("  - Writable Stages: ").append(String.join(", ", scope.getWritableStages())).append("\n");
+			if (scope.getRegistries() != null && !scope.getRegistries().isEmpty()) {
+				scopeDescription.append("  - Registries: ").append(String.join(", ", scope.getRegistries().stream().map(r -> r.getName()).toList())).append("\n");
 			}
 		}
 

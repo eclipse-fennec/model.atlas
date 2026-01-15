@@ -165,4 +165,12 @@ public interface ScopeService<T extends EObject> {
 	 */
 	List<String> getAllRegistries();
 
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @model kind="operation"
+	 * @generated
+	 */
+	Scope getScope();
+
 } // ScopeService

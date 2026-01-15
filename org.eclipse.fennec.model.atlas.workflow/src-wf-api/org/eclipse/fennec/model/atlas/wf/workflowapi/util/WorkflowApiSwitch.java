@@ -101,6 +101,24 @@ public class WorkflowApiSwitch<T1> extends Switch<T1> {
 				if (result == null) result = defaultCase(theEObject);
 				return result;
 			}
+			case WorkflowApiPackage.REGISTRY: {
+				Registry registry = (Registry)theEObject;
+				T1 result = caseRegistry(registry);
+				if (result == null) result = defaultCase(theEObject);
+				return result;
+			}
+			case WorkflowApiPackage.SCOPE: {
+				Scope scope = (Scope)theEObject;
+				T1 result = caseScope(scope);
+				if (result == null) result = defaultCase(theEObject);
+				return result;
+			}
+			case WorkflowApiPackage.STAGE_TRANSITION: {
+				StageTransition stageTransition = (StageTransition)theEObject;
+				T1 result = caseStageTransition(stageTransition);
+				if (result == null) result = defaultCase(theEObject);
+				return result;
+			}
 			default: return defaultCase(theEObject);
 		}
 	}
@@ -162,6 +180,51 @@ public class WorkflowApiSwitch<T1> extends Switch<T1> {
 	 * @generated
 	 */
 	public T1 caseStage(Stage object) {
+		return null;
+	}
+
+	/**
+	 * Returns the result of interpreting the object as an instance of '<em>Registry</em>'.
+	 * <!-- begin-user-doc -->
+	 * This implementation returns null;
+	 * returning a non-null result will terminate the switch.
+	 * <!-- end-user-doc -->
+	 * @param object the target of the switch.
+	 * @return the result of interpreting the object as an instance of '<em>Registry</em>'.
+	 * @see #doSwitch(org.eclipse.emf.ecore.EObject) doSwitch(EObject)
+	 * @generated
+	 */
+	public T1 caseRegistry(Registry object) {
+		return null;
+	}
+
+	/**
+	 * Returns the result of interpreting the object as an instance of '<em>Scope</em>'.
+	 * <!-- begin-user-doc -->
+	 * This implementation returns null;
+	 * returning a non-null result will terminate the switch.
+	 * <!-- end-user-doc -->
+	 * @param object the target of the switch.
+	 * @return the result of interpreting the object as an instance of '<em>Scope</em>'.
+	 * @see #doSwitch(org.eclipse.emf.ecore.EObject) doSwitch(EObject)
+	 * @generated
+	 */
+	public T1 caseScope(Scope object) {
+		return null;
+	}
+
+	/**
+	 * Returns the result of interpreting the object as an instance of '<em>Stage Transition</em>'.
+	 * <!-- begin-user-doc -->
+	 * This implementation returns null;
+	 * returning a non-null result will terminate the switch.
+	 * <!-- end-user-doc -->
+	 * @param object the target of the switch.
+	 * @return the result of interpreting the object as an instance of '<em>Stage Transition</em>'.
+	 * @see #doSwitch(org.eclipse.emf.ecore.EObject) doSwitch(EObject)
+	 * @generated
+	 */
+	public T1 caseStageTransition(StageTransition object) {
 		return null;
 	}
 

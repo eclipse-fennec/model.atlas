@@ -204,7 +204,7 @@ public class AbstractStorageHelperTest {
     @Test
     public void testBuildObjectPath() {
         String objectPath = helper.buildObjectPath(TEST_SCOPE, TEST_REGISTRY, TEST_STAGE, "test-id", ".ecore");
-        assertEquals(TEST_SCOPE.concat("_").concat(TEST_REGISTRY).concat("_").concat(TEST_STAGE).concat("_test-id.ecore"), objectPath);
+        assertEquals("test-id.ecore", objectPath);
     }
     
     @Test

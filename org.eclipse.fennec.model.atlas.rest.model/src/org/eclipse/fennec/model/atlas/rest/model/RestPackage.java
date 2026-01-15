@@ -265,6 +265,89 @@ public interface RestPackage extends org.eclipse.emf.ecore.EPackage {
 	 */
 	int ERROR_RESPONSE_OPERATION_COUNT = 0;
 
+	/**
+	 * The meta object id for the '{@link org.eclipse.fennec.model.atlas.rest.model.impl.StageTransitionRequestImpl <em>Stage Transition Request</em>}' class.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @see org.eclipse.fennec.model.atlas.rest.model.impl.StageTransitionRequestImpl
+	 * @see org.eclipse.fennec.model.atlas.rest.model.impl.RestPackageImpl#getStageTransitionRequest()
+	 * @generated
+	 */
+	int STAGE_TRANSITION_REQUEST = 3;
+
+	/**
+	 * The feature id for the '<em><b>Object Id</b></em>' attribute.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 * @ordered
+	 */
+	int STAGE_TRANSITION_REQUEST__OBJECT_ID = 0;
+
+	/**
+	 * The feature id for the '<em><b>Target Stage</b></em>' attribute.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 * @ordered
+	 */
+	int STAGE_TRANSITION_REQUEST__TARGET_STAGE = 1;
+
+	/**
+	 * The number of structural features of the '<em>Stage Transition Request</em>' class.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 * @ordered
+	 */
+	int STAGE_TRANSITION_REQUEST_FEATURE_COUNT = 2;
+
+	/**
+	 * The number of operations of the '<em>Stage Transition Request</em>' class.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 * @ordered
+	 */
+	int STAGE_TRANSITION_REQUEST_OPERATION_COUNT = 0;
+
+	/**
+	 * The meta object id for the '{@link org.eclipse.fennec.model.atlas.rest.model.impl.ScopeListResponseImpl <em>Scope List Response</em>}' class.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @see org.eclipse.fennec.model.atlas.rest.model.impl.ScopeListResponseImpl
+	 * @see org.eclipse.fennec.model.atlas.rest.model.impl.RestPackageImpl#getScopeListResponse()
+	 * @generated
+	 */
+	int SCOPE_LIST_RESPONSE = 4;
+
+	/**
+	 * The feature id for the '<em><b>Scopes</b></em>' containment reference list.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 * @ordered
+	 */
+	int SCOPE_LIST_RESPONSE__SCOPES = 0;
+
+	/**
+	 * The number of structural features of the '<em>Scope List Response</em>' class.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 * @ordered
+	 */
+	int SCOPE_LIST_RESPONSE_FEATURE_COUNT = 1;
+
+	/**
+	 * The number of operations of the '<em>Scope List Response</em>' class.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 * @ordered
+	 */
+	int SCOPE_LIST_RESPONSE_OPERATION_COUNT = 0;
+
 
 	/**
 	 * Returns the meta object for class '{@link org.eclipse.fennec.model.atlas.rest.model.EPackageInfo <em>EPackage Info</em>}'.
@@ -429,6 +512,59 @@ public interface RestPackage extends org.eclipse.emf.ecore.EPackage {
 	EAttribute getErrorResponse_Timestamp();
 
 	/**
+	 * Returns the meta object for class '{@link org.eclipse.fennec.model.atlas.rest.model.StageTransitionRequest <em>Stage Transition Request</em>}'.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @return the meta object for class '<em>Stage Transition Request</em>'.
+	 * @see org.eclipse.fennec.model.atlas.rest.model.StageTransitionRequest
+	 * @generated
+	 */
+	EClass getStageTransitionRequest();
+
+	/**
+	 * Returns the meta object for the attribute '{@link org.eclipse.fennec.model.atlas.rest.model.StageTransitionRequest#getObjectId <em>Object Id</em>}'.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @return the meta object for the attribute '<em>Object Id</em>'.
+	 * @see org.eclipse.fennec.model.atlas.rest.model.StageTransitionRequest#getObjectId()
+	 * @see #getStageTransitionRequest()
+	 * @generated
+	 */
+	EAttribute getStageTransitionRequest_ObjectId();
+
+	/**
+	 * Returns the meta object for the attribute '{@link org.eclipse.fennec.model.atlas.rest.model.StageTransitionRequest#getTargetStage <em>Target Stage</em>}'.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @return the meta object for the attribute '<em>Target Stage</em>'.
+	 * @see org.eclipse.fennec.model.atlas.rest.model.StageTransitionRequest#getTargetStage()
+	 * @see #getStageTransitionRequest()
+	 * @generated
+	 */
+	EAttribute getStageTransitionRequest_TargetStage();
+
+	/**
+	 * Returns the meta object for class '{@link org.eclipse.fennec.model.atlas.rest.model.ScopeListResponse <em>Scope List Response</em>}'.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @return the meta object for class '<em>Scope List Response</em>'.
+	 * @see org.eclipse.fennec.model.atlas.rest.model.ScopeListResponse
+	 * @generated
+	 */
+	EClass getScopeListResponse();
+
+	/**
+	 * Returns the meta object for the containment reference list '{@link org.eclipse.fennec.model.atlas.rest.model.ScopeListResponse#getScopes <em>Scopes</em>}'.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @return the meta object for the containment reference list '<em>Scopes</em>'.
+	 * @see org.eclipse.fennec.model.atlas.rest.model.ScopeListResponse#getScopes()
+	 * @see #getScopeListResponse()
+	 * @generated
+	 */
+	EReference getScopeListResponse_Scopes();
+
+	/**
 	 * Returns the factory that creates the instances of the model.
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
@@ -576,6 +712,50 @@ public interface RestPackage extends org.eclipse.emf.ecore.EPackage {
 		 * @generated
 		 */
 		EAttribute ERROR_RESPONSE__TIMESTAMP = eINSTANCE.getErrorResponse_Timestamp();
+
+		/**
+		 * The meta object literal for the '{@link org.eclipse.fennec.model.atlas.rest.model.impl.StageTransitionRequestImpl <em>Stage Transition Request</em>}' class.
+		 * <!-- begin-user-doc -->
+		 * <!-- end-user-doc -->
+		 * @see org.eclipse.fennec.model.atlas.rest.model.impl.StageTransitionRequestImpl
+		 * @see org.eclipse.fennec.model.atlas.rest.model.impl.RestPackageImpl#getStageTransitionRequest()
+		 * @generated
+		 */
+		EClass STAGE_TRANSITION_REQUEST = eINSTANCE.getStageTransitionRequest();
+
+		/**
+		 * The meta object literal for the '<em><b>Object Id</b></em>' attribute feature.
+		 * <!-- begin-user-doc -->
+		 * <!-- end-user-doc -->
+		 * @generated
+		 */
+		EAttribute STAGE_TRANSITION_REQUEST__OBJECT_ID = eINSTANCE.getStageTransitionRequest_ObjectId();
+
+		/**
+		 * The meta object literal for the '<em><b>Target Stage</b></em>' attribute feature.
+		 * <!-- begin-user-doc -->
+		 * <!-- end-user-doc -->
+		 * @generated
+		 */
+		EAttribute STAGE_TRANSITION_REQUEST__TARGET_STAGE = eINSTANCE.getStageTransitionRequest_TargetStage();
+
+		/**
+		 * The meta object literal for the '{@link org.eclipse.fennec.model.atlas.rest.model.impl.ScopeListResponseImpl <em>Scope List Response</em>}' class.
+		 * <!-- begin-user-doc -->
+		 * <!-- end-user-doc -->
+		 * @see org.eclipse.fennec.model.atlas.rest.model.impl.ScopeListResponseImpl
+		 * @see org.eclipse.fennec.model.atlas.rest.model.impl.RestPackageImpl#getScopeListResponse()
+		 * @generated
+		 */
+		EClass SCOPE_LIST_RESPONSE = eINSTANCE.getScopeListResponse();
+
+		/**
+		 * The meta object literal for the '<em><b>Scopes</b></em>' containment reference list feature.
+		 * <!-- begin-user-doc -->
+		 * <!-- end-user-doc -->
+		 * @generated
+		 */
+		EReference SCOPE_LIST_RESPONSE__SCOPES = eINSTANCE.getScopeListResponse_Scopes();
 
 	}
 

@@ -20,11 +20,17 @@ import org.eclipse.emf.ecore.EReference;
 
 import org.eclipse.emf.ecore.impl.EPackageImpl;
 
+import org.eclipse.fennec.model.atlas.mgmt.management.ManagementPackage;
+
 import org.eclipse.fennec.model.atlas.rest.model.EPackageInfo;
 import org.eclipse.fennec.model.atlas.rest.model.EPackageListResponse;
 import org.eclipse.fennec.model.atlas.rest.model.ErrorResponse;
 import org.eclipse.fennec.model.atlas.rest.model.RestFactory;
 import org.eclipse.fennec.model.atlas.rest.model.RestPackage;
+import org.eclipse.fennec.model.atlas.rest.model.ScopeListResponse;
+import org.eclipse.fennec.model.atlas.rest.model.StageTransitionRequest;
+
+import org.eclipse.fennec.model.atlas.wf.workflowapi.WorkflowApiPackage;
 
 /**
  * <!-- begin-user-doc -->
@@ -53,6 +59,20 @@ public class RestPackageImpl extends EPackageImpl implements RestPackage {
 	 * @generated
 	 */
 	private EClass errorResponseEClass = null;
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	private EClass stageTransitionRequestEClass = null;
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	private EClass scopeListResponseEClass = null;
 
 	/**
 	 * Creates an instance of the model <b>Package</b>, registered with
@@ -99,6 +119,10 @@ public class RestPackageImpl extends EPackageImpl implements RestPackage {
 		RestPackageImpl theRestPackage = registeredRestPackage instanceof RestPackageImpl ? (RestPackageImpl)registeredRestPackage : new RestPackageImpl();
 
 		isInited = true;
+
+		// Initialize simple dependencies
+		ManagementPackage.eINSTANCE.eClass();
+		WorkflowApiPackage.eINSTANCE.eClass();
 
 		// Create package meta-data objects
 		theRestPackage.createPackageContents();
@@ -270,6 +294,56 @@ public class RestPackageImpl extends EPackageImpl implements RestPackage {
 	 * @generated
 	 */
 	@Override
+	public EClass getStageTransitionRequest() {
+		return stageTransitionRequestEClass;
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
+	public EAttribute getStageTransitionRequest_ObjectId() {
+		return (EAttribute)stageTransitionRequestEClass.getEStructuralFeatures().get(0);
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
+	public EAttribute getStageTransitionRequest_TargetStage() {
+		return (EAttribute)stageTransitionRequestEClass.getEStructuralFeatures().get(1);
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
+	public EClass getScopeListResponse() {
+		return scopeListResponseEClass;
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
+	public EReference getScopeListResponse_Scopes() {
+		return (EReference)scopeListResponseEClass.getEStructuralFeatures().get(0);
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
 	public RestFactory getRestFactory() {
 		return (RestFactory)getEFactoryInstance();
 	}
@@ -310,6 +384,13 @@ public class RestPackageImpl extends EPackageImpl implements RestPackage {
 		createEAttribute(errorResponseEClass, ERROR_RESPONSE__MESSAGE);
 		createEAttribute(errorResponseEClass, ERROR_RESPONSE__CODE);
 		createEAttribute(errorResponseEClass, ERROR_RESPONSE__TIMESTAMP);
+
+		stageTransitionRequestEClass = createEClass(STAGE_TRANSITION_REQUEST);
+		createEAttribute(stageTransitionRequestEClass, STAGE_TRANSITION_REQUEST__OBJECT_ID);
+		createEAttribute(stageTransitionRequestEClass, STAGE_TRANSITION_REQUEST__TARGET_STAGE);
+
+		scopeListResponseEClass = createEClass(SCOPE_LIST_RESPONSE);
+		createEReference(scopeListResponseEClass, SCOPE_LIST_RESPONSE__SCOPES);
 	}
 
 	/**
@@ -335,6 +416,9 @@ public class RestPackageImpl extends EPackageImpl implements RestPackage {
 		setNsPrefix(eNS_PREFIX);
 		setNsURI(eNS_URI);
 
+		// Obtain other dependent packages
+		WorkflowApiPackage theWorkflowApiPackage = (WorkflowApiPackage)EPackage.Registry.INSTANCE.getEPackage(WorkflowApiPackage.eNS_URI);
+
 		// Create type parameters
 
 		// Set bounds for type parameters
@@ -359,6 +443,13 @@ public class RestPackageImpl extends EPackageImpl implements RestPackage {
 		initEAttribute(getErrorResponse_Message(), ecorePackage.getEString(), "message", null, 0, 1, ErrorResponse.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_UNSETTABLE, !IS_ID, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
 		initEAttribute(getErrorResponse_Code(), ecorePackage.getEString(), "code", null, 0, 1, ErrorResponse.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_UNSETTABLE, !IS_ID, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
 		initEAttribute(getErrorResponse_Timestamp(), ecorePackage.getEDate(), "timestamp", null, 0, 1, ErrorResponse.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_UNSETTABLE, !IS_ID, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
+
+		initEClass(stageTransitionRequestEClass, StageTransitionRequest.class, "StageTransitionRequest", !IS_ABSTRACT, !IS_INTERFACE, IS_GENERATED_INSTANCE_CLASS);
+		initEAttribute(getStageTransitionRequest_ObjectId(), ecorePackage.getEString(), "objectId", null, 0, 1, StageTransitionRequest.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_UNSETTABLE, !IS_ID, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
+		initEAttribute(getStageTransitionRequest_TargetStage(), ecorePackage.getEString(), "targetStage", null, 0, 1, StageTransitionRequest.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_UNSETTABLE, !IS_ID, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
+
+		initEClass(scopeListResponseEClass, ScopeListResponse.class, "ScopeListResponse", !IS_ABSTRACT, !IS_INTERFACE, IS_GENERATED_INSTANCE_CLASS);
+		initEReference(getScopeListResponse_Scopes(), theWorkflowApiPackage.getScope(), null, "scopes", null, 0, -1, ScopeListResponse.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, IS_COMPOSITE, !IS_RESOLVE_PROXIES, !IS_UNSETTABLE, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
 
 		// Create resource
 		createResource(eNS_URI);

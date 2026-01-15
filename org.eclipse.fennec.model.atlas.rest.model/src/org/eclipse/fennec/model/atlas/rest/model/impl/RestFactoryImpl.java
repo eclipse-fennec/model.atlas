@@ -70,6 +70,8 @@ public class RestFactoryImpl extends EFactoryImpl implements RestFactory {
 			case RestPackage.EPACKAGE_INFO: return createEPackageInfo();
 			case RestPackage.EPACKAGE_LIST_RESPONSE: return createEPackageListResponse();
 			case RestPackage.ERROR_RESPONSE: return createErrorResponse();
+			case RestPackage.STAGE_TRANSITION_REQUEST: return createStageTransitionRequest();
+			case RestPackage.SCOPE_LIST_RESPONSE: return createScopeListResponse();
 			default:
 				throw new IllegalArgumentException("The class '" + eClass.getName() + "' is not a valid classifier");
 		}
@@ -106,6 +108,28 @@ public class RestFactoryImpl extends EFactoryImpl implements RestFactory {
 	public ErrorResponse createErrorResponse() {
 		ErrorResponseImpl errorResponse = new ErrorResponseImpl();
 		return errorResponse;
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
+	public StageTransitionRequest createStageTransitionRequest() {
+		StageTransitionRequestImpl stageTransitionRequest = new StageTransitionRequestImpl();
+		return stageTransitionRequest;
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
+	public ScopeListResponse createScopeListResponse() {
+		ScopeListResponseImpl scopeListResponse = new ScopeListResponseImpl();
+		return scopeListResponse;
 	}
 
 	/**

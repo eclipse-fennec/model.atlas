@@ -18,6 +18,7 @@ import org.eclipse.emf.ecore.EClass;
 import org.eclipse.emf.ecore.EGenericType;
 import org.eclipse.emf.ecore.EOperation;
 import org.eclipse.emf.ecore.EPackage;
+import org.eclipse.emf.ecore.EReference;
 import org.eclipse.emf.ecore.ETypeParameter;
 
 import org.eclipse.emf.ecore.impl.EPackageImpl;
@@ -26,8 +27,10 @@ import org.eclipse.fennec.model.atlas.mgmt.management.ManagementPackage;
 
 import org.eclipse.fennec.model.atlas.wf.workflowapi.EObjectWorkflowService;
 import org.eclipse.fennec.model.atlas.wf.workflowapi.RegistryService;
+import org.eclipse.fennec.model.atlas.wf.workflowapi.Scope;
 import org.eclipse.fennec.model.atlas.wf.workflowapi.ScopeService;
 import org.eclipse.fennec.model.atlas.wf.workflowapi.Stage;
+import org.eclipse.fennec.model.atlas.wf.workflowapi.StageTransition;
 import org.eclipse.fennec.model.atlas.wf.workflowapi.WorkflowApiFactory;
 import org.eclipse.fennec.model.atlas.wf.workflowapi.WorkflowApiPackage;
 
@@ -65,6 +68,27 @@ public class WorkflowApiPackageImpl extends EPackageImpl implements WorkflowApiP
 	 * @generated
 	 */
 	private EClass stageEClass = null;
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	private EClass registryEClass = null;
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	private EClass scopeEClass = null;
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	private EClass stageTransitionEClass = null;
 
 	/**
 	 * Creates an instance of the model <b>Package</b>, registered with
@@ -415,6 +439,36 @@ public class WorkflowApiPackageImpl extends EPackageImpl implements WorkflowApiP
 	 * @generated
 	 */
 	@Override
+	public EOperation getRegistryService__GetRegistry() {
+		return registryServiceEClass.getEOperations().get(15);
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
+	public EOperation getRegistryService__IsEClassCompatibleWithRegistry__EClass() {
+		return registryServiceEClass.getEOperations().get(16);
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
+	public EOperation getRegistryService__GetRootEClass() {
+		return registryServiceEClass.getEOperations().get(17);
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
 	public EClass getScopeService() {
 		return scopeServiceEClass;
 	}
@@ -545,6 +599,16 @@ public class WorkflowApiPackageImpl extends EPackageImpl implements WorkflowApiP
 	 * @generated
 	 */
 	@Override
+	public EOperation getScopeService__GetScope() {
+		return scopeServiceEClass.getEOperations().get(12);
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
 	public EClass getStage() {
 		return stageEClass;
 	}
@@ -577,6 +641,136 @@ public class WorkflowApiPackageImpl extends EPackageImpl implements WorkflowApiP
 	@Override
 	public EAttribute getStage_Final() {
 		return (EAttribute)stageEClass.getEStructuralFeatures().get(2);
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
+	public EClass getRegistry() {
+		return registryEClass;
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
+	public EAttribute getRegistry_Name() {
+		return (EAttribute)registryEClass.getEStructuralFeatures().get(0);
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
+	public EAttribute getRegistry_Description() {
+		return (EAttribute)registryEClass.getEStructuralFeatures().get(1);
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
+	public EReference getRegistry_Stages() {
+		return (EReference)registryEClass.getEStructuralFeatures().get(2);
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
+	public EReference getRegistry_AllowedTransitions() {
+		return (EReference)registryEClass.getEStructuralFeatures().get(3);
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
+	public EClass getScope() {
+		return scopeEClass;
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
+	public EAttribute getScope_Name() {
+		return (EAttribute)scopeEClass.getEStructuralFeatures().get(0);
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
+	public EAttribute getScope_Description() {
+		return (EAttribute)scopeEClass.getEStructuralFeatures().get(1);
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
+	public EAttribute getScope_ParentScope() {
+		return (EAttribute)scopeEClass.getEStructuralFeatures().get(2);
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
+	public EReference getScope_Registries() {
+		return (EReference)scopeEClass.getEStructuralFeatures().get(3);
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
+	public EClass getStageTransition() {
+		return stageTransitionEClass;
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
+	public EAttribute getStageTransition_FromStage() {
+		return (EAttribute)stageTransitionEClass.getEStructuralFeatures().get(0);
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
+	public EAttribute getStageTransition_ToStage() {
+		return (EAttribute)stageTransitionEClass.getEStructuralFeatures().get(1);
 	}
 
 	/**
@@ -637,6 +831,9 @@ public class WorkflowApiPackageImpl extends EPackageImpl implements WorkflowApiP
 		createEOperation(registryServiceEClass, REGISTRY_SERVICE___IS_WRITABLE_STAGE__STRING);
 		createEOperation(registryServiceEClass, REGISTRY_SERVICE___IS_FINAL_STAGE_WRITABLE);
 		createEOperation(registryServiceEClass, REGISTRY_SERVICE___IS_TRANSITION_ALLOWED__STRING_STRING);
+		createEOperation(registryServiceEClass, REGISTRY_SERVICE___GET_REGISTRY);
+		createEOperation(registryServiceEClass, REGISTRY_SERVICE___IS_ECLASS_COMPATIBLE_WITH_REGISTRY__ECLASS);
+		createEOperation(registryServiceEClass, REGISTRY_SERVICE___GET_ROOT_ECLASS);
 
 		scopeServiceEClass = createEClass(SCOPE_SERVICE);
 		createEOperation(scopeServiceEClass, SCOPE_SERVICE___UPLOAD_TO_STAGE_FOR_REGISTRY__STRING_STRING_EOBJECT_OBJECTMETADATA);
@@ -651,11 +848,28 @@ public class WorkflowApiPackageImpl extends EPackageImpl implements WorkflowApiP
 		createEOperation(scopeServiceEClass, SCOPE_SERVICE___TRANSITION_TO_STAGE_FOR_REGISTRY__STRING_STRING_STRING_STRING);
 		createEOperation(scopeServiceEClass, SCOPE_SERVICE___IS_VALID_REGISTRY__STRING);
 		createEOperation(scopeServiceEClass, SCOPE_SERVICE___GET_ALL_REGISTRIES);
+		createEOperation(scopeServiceEClass, SCOPE_SERVICE___GET_SCOPE);
 
 		stageEClass = createEClass(STAGE);
 		createEAttribute(stageEClass, STAGE__NAME);
 		createEAttribute(stageEClass, STAGE__WRITABLE);
 		createEAttribute(stageEClass, STAGE__FINAL);
+
+		registryEClass = createEClass(REGISTRY);
+		createEAttribute(registryEClass, REGISTRY__NAME);
+		createEAttribute(registryEClass, REGISTRY__DESCRIPTION);
+		createEReference(registryEClass, REGISTRY__STAGES);
+		createEReference(registryEClass, REGISTRY__ALLOWED_TRANSITIONS);
+
+		scopeEClass = createEClass(SCOPE);
+		createEAttribute(scopeEClass, SCOPE__NAME);
+		createEAttribute(scopeEClass, SCOPE__DESCRIPTION);
+		createEAttribute(scopeEClass, SCOPE__PARENT_SCOPE);
+		createEReference(scopeEClass, SCOPE__REGISTRIES);
+
+		stageTransitionEClass = createEClass(STAGE_TRANSITION);
+		createEAttribute(stageTransitionEClass, STAGE_TRANSITION__FROM_STAGE);
+		createEAttribute(stageTransitionEClass, STAGE_TRANSITION__TO_STAGE);
 	}
 
 	/**
@@ -878,6 +1092,13 @@ public class WorkflowApiPackageImpl extends EPackageImpl implements WorkflowApiP
 		addEParameter(op, ecorePackage.getEString(), "fromStage", 0, 1, IS_UNIQUE, IS_ORDERED);
 		addEParameter(op, ecorePackage.getEString(), "toStage", 0, 1, IS_UNIQUE, IS_ORDERED);
 
+		initEOperation(getRegistryService__GetRegistry(), this.getRegistry(), "getRegistry", 0, 1, IS_UNIQUE, IS_ORDERED);
+
+		op = initEOperation(getRegistryService__IsEClassCompatibleWithRegistry__EClass(), ecorePackage.getEBoolean(), "isEClassCompatibleWithRegistry", 0, 1, IS_UNIQUE, IS_ORDERED);
+		addEParameter(op, ecorePackage.getEClass(), "eClass", 0, 1, IS_UNIQUE, IS_ORDERED);
+
+		initEOperation(getRegistryService__GetRootEClass(), ecorePackage.getEClass(), "getRootEClass", 0, 1, IS_UNIQUE, IS_ORDERED);
+
 		initEClass(scopeServiceEClass, ScopeService.class, "ScopeService", IS_ABSTRACT, IS_INTERFACE, IS_GENERATED_INSTANCE_CLASS);
 
 		op = initEOperation(getScopeService__UploadToStageForRegistry__String_String_EObject_ObjectMetadata(), null, "uploadToStageForRegistry", 0, 1, IS_UNIQUE, IS_ORDERED);
@@ -967,10 +1188,28 @@ public class WorkflowApiPackageImpl extends EPackageImpl implements WorkflowApiP
 		g1.getETypeArguments().add(g2);
 		initEOperation(op, g1);
 
+		initEOperation(getScopeService__GetScope(), this.getScope(), "getScope", 0, 1, IS_UNIQUE, IS_ORDERED);
+
 		initEClass(stageEClass, Stage.class, "Stage", !IS_ABSTRACT, !IS_INTERFACE, IS_GENERATED_INSTANCE_CLASS);
 		initEAttribute(getStage_Name(), ecorePackage.getEString(), "name", null, 0, 1, Stage.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_UNSETTABLE, !IS_ID, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
 		initEAttribute(getStage_Writable(), ecorePackage.getEBoolean(), "writable", null, 0, 1, Stage.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_UNSETTABLE, !IS_ID, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
 		initEAttribute(getStage_Final(), ecorePackage.getEBoolean(), "final", null, 0, 1, Stage.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_UNSETTABLE, !IS_ID, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
+
+		initEClass(registryEClass, org.eclipse.fennec.model.atlas.wf.workflowapi.Registry.class, "Registry", !IS_ABSTRACT, !IS_INTERFACE, IS_GENERATED_INSTANCE_CLASS);
+		initEAttribute(getRegistry_Name(), ecorePackage.getEString(), "name", null, 0, 1, org.eclipse.fennec.model.atlas.wf.workflowapi.Registry.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_UNSETTABLE, !IS_ID, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
+		initEAttribute(getRegistry_Description(), ecorePackage.getEString(), "description", null, 0, 1, org.eclipse.fennec.model.atlas.wf.workflowapi.Registry.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_UNSETTABLE, !IS_ID, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
+		initEReference(getRegistry_Stages(), this.getStage(), null, "stages", null, 0, -1, org.eclipse.fennec.model.atlas.wf.workflowapi.Registry.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, IS_COMPOSITE, !IS_RESOLVE_PROXIES, !IS_UNSETTABLE, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
+		initEReference(getRegistry_AllowedTransitions(), this.getStageTransition(), null, "allowedTransitions", null, 0, -1, org.eclipse.fennec.model.atlas.wf.workflowapi.Registry.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, IS_COMPOSITE, !IS_RESOLVE_PROXIES, !IS_UNSETTABLE, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
+
+		initEClass(scopeEClass, Scope.class, "Scope", !IS_ABSTRACT, !IS_INTERFACE, IS_GENERATED_INSTANCE_CLASS);
+		initEAttribute(getScope_Name(), ecorePackage.getEString(), "name", null, 0, 1, Scope.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_UNSETTABLE, !IS_ID, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
+		initEAttribute(getScope_Description(), ecorePackage.getEString(), "description", null, 0, 1, Scope.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_UNSETTABLE, !IS_ID, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
+		initEAttribute(getScope_ParentScope(), ecorePackage.getEString(), "parentScope", null, 0, 1, Scope.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_UNSETTABLE, !IS_ID, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
+		initEReference(getScope_Registries(), this.getRegistry(), null, "registries", null, 0, -1, Scope.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, IS_COMPOSITE, !IS_RESOLVE_PROXIES, !IS_UNSETTABLE, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
+
+		initEClass(stageTransitionEClass, StageTransition.class, "StageTransition", !IS_ABSTRACT, !IS_INTERFACE, IS_GENERATED_INSTANCE_CLASS);
+		initEAttribute(getStageTransition_FromStage(), ecorePackage.getEString(), "fromStage", null, 0, 1, StageTransition.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_UNSETTABLE, !IS_ID, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
+		initEAttribute(getStageTransition_ToStage(), ecorePackage.getEString(), "toStage", null, 0, 1, StageTransition.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_UNSETTABLE, !IS_ID, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
 
 		// Create resource
 		createResource(eNS_URI);

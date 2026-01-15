@@ -253,7 +253,7 @@ class ResourceSetConcurrencyTest {
         assertEquals(expectedOperations, successCount.get(), "All metadata operations should succeed");
         
         // Verify metadata files were created
-        long metadataFileCount = Files.list(tempDir)
+        long metadataFileCount = Files.list(tempDir.resolve(TEST_SCOPE).resolve(TEST_REGISTRY).resolve(TEST_STAGE))
                                      .filter(p -> p.getFileName().toString().endsWith(".metadata.xmi"))
                                      .count();
         assertEquals(expectedOperations, metadataFileCount, "All metadata files should be created");
@@ -304,7 +304,7 @@ class ResourceSetConcurrencyTest {
                                 String existingFile = existingId + ".ecore";
                                 URI existingUri = URI.createFileURI(tempDir.resolve(existingFile).toString());
                                 
-                                if (Files.exists(tempDir.resolve(existingFile))) {
+                                if (Files.exists(tempDir.resolve(TEST_SCOPE).resolve(TEST_REGISTRY).resolve(TEST_STAGE).resolve(existingFile))) {
                                     ResourceOperation op = helper.loadResource(existingUri);
                                     if (op.getResource() != null) {
                                         loadOps.incrementAndGet();

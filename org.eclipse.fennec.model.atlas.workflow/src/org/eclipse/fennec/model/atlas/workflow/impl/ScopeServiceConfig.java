@@ -24,14 +24,33 @@ import org.osgi.service.metatype.annotations.ObjectClassDefinition;
 @ObjectClassDefinition(name = "Scope Service Configuration")
 public @interface ScopeServiceConfig {
 	
-    @AttributeDefinition(name = "Scope Name")
+    @AttributeDefinition(
+    		name = "Scope Name", 
+    		description = "A meaningflu name for the scope", 
+    		required = true)
     String scope_name();
+    
+    @AttributeDefinition(
+			name = "Scope Description", 
+			description = "A description for the scope", 
+			required = false, 
+			defaultValue = "")
+    String scope_description() default "";
 
-    @AttributeDefinition(name = "Parent Scope Name")
+    @AttributeDefinition(
+    		name = "Parent Scope Name", 
+    		description = "The parent scope name. This is used when performing hierarchical lookup of objects", 
+    		required = false,
+    		defaultValue = "atlas")
     String scope_parent() default "atlas";
 
-    @AttributeDefinition(name = "Registry Service Target Filter")
-    String registryService_target() default "(registry.name=*)";
+    @AttributeDefinition(
+    		name = "Registry Service Target Filter", 
+    		description = "The target filter for the injected list of RegistryService. If not provided no RegistryService will be associated with this scope "
+    				+ "and no operation will be possible for the scope.", 
+    		required = false, 
+    		defaultValue = "(scope=no-inject)")
+    String registryService_target() default "(scope=no-inject)";
 
    
     

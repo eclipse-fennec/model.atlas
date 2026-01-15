@@ -19,23 +19,27 @@ import static java.util.Objects.requireNonNullElse;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
+import java.util.concurrent.Executors;
 import java.util.function.Function;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
+import org.eclipse.emf.common.util.URI;
+import org.eclipse.emf.ecore.EClass;
 import org.eclipse.emf.ecore.EObject;
+import org.eclipse.emf.ecore.resource.ResourceSet;
 import org.eclipse.fennec.model.atlas.mgmt.api.EObjectRegistryService;
 import org.eclipse.fennec.model.atlas.mgmt.api.EObjectStorageService;
 import org.eclipse.fennec.model.atlas.mgmt.management.ManagementPackage;
 import org.eclipse.fennec.model.atlas.mgmt.management.ObjectMetadata;
+import org.eclipse.fennec.model.atlas.wf.workflowapi.Registry;
 import org.eclipse.fennec.model.atlas.wf.workflowapi.RegistryService;
 import org.eclipse.fennec.model.atlas.wf.workflowapi.Stage;
+import org.eclipse.fennec.model.atlas.wf.workflowapi.StageTransition;
 import org.eclipse.fennec.model.atlas.wf.workflowapi.WorkflowApiFactory;
 import org.osgi.service.component.annotations.Activate;
 import org.osgi.service.component.annotations.Component;
@@ -62,24 +66,34 @@ public class RegistryServiceImpl<T extends EObject> implements RegistryService<T
 
 	private static final Logger LOGGER = Logger.getLogger(RegistryServiceImpl.class.getName());
 
-	//	private List<StageService> stageService;
 	private RegistryServiceConfig config;
-	private final Map<String, Set<String>> transitionsMap;
+	private final List<StageTransition> allowedTransitionsList;
 	private final Map<String, EObjectStorageService<T>> storageMap;
 	private final List<Stage> stages;
-	private final PromiseFactory promiseFactory = new PromiseFactory(null);
+	private final Registry registryObject;
+	private final PromiseFactory promiseFactory = new PromiseFactory(Executors.newCachedThreadPool());
+	private final EClass rootEClass;
 
 
 	@Activate
 	public RegistryServiceImpl(
 			@Reference(name = "storageService") List<EObjectStorageService<T>> storageService,
+			@Reference(name = "resourceSet") ResourceSet resourceSet,			
 			RegistryServiceConfig config) {		
 		this.config = config;
-		this.transitionsMap = parseTransitionsMap(config.workflow_transitions());
+		this.allowedTransitionsList = parseTransitionsIntoList(config.workflow_transitions());
 		this.storageMap = parseStageStorageMappings(config.stage_storage_mappings(), storageService);
 		this.stages = parseStages(config.stages());
 		validateStages();
+		this.registryObject = createRegistryObject();
+		EObject eObject = resourceSet.getEObject(URI.createURI(config.root_eclass_uri()), false);
+		if(eObject != null && eObject instanceof EClass eClass) {
+			rootEClass = eClass;
+		} else {
+			throw new IllegalArgumentException(String.format("The provided root.eclass.uri %s does not match to any known EClass", config.root_eclass_uri()));
+		}
 	}
+
 
 	/* 
 	 * (non-Javadoc)
@@ -329,23 +343,59 @@ public class RegistryServiceImpl<T extends EObject> implements RegistryService<T
 	 */
 	@Override
 	public boolean isTransitionAllowed(String fromStage, String toStage) {
-		if(!transitionsMap.containsKey(fromStage)) return false;
-		return transitionsMap.get(fromStage).contains(toStage);
+		return allowedTransitionsList.stream().filter(t -> fromStage.equals(t.getFromStage()) && toStage.equals(t.getToStage())).findFirst().isPresent();
 	}
-
-	private Map<String, Set<String>> parseTransitionsMap(String[] workflow_transitions) {
-		Map<String, Set<String>> transitionsMap = new HashMap<>();
+	
+	/* 
+	 * (non-Javadoc)
+	 * @see org.eclipse.fennec.model.atlas.wf.workflowapi.RegistryService#isEClassCompatibleWithRegistry(org.eclipse.emf.ecore.EClass)
+	 */
+	@Override
+	public boolean isEClassCompatibleWithRegistry(EClass eClass) {
+		return eClass.equals(rootEClass)
+	              || eClass.getEAllSuperTypes().contains(rootEClass);
+	}
+	
+	/* 
+	 * (non-Javadoc)
+	 * @see org.eclipse.fennec.model.atlas.wf.workflowapi.RegistryService#getRootEClass()
+	 */
+	@Override
+	public EClass getRootEClass() {
+		return rootEClass;
+	}
+	
+	/* 
+	 * (non-Javadoc)
+	 * @see org.eclipse.fennec.model.atlas.wf.workflowapi.RegistryService#getRegistry()
+	 */
+	@Override
+	public Registry getRegistry() {
+		return registryObject;
+	}
+	
+	private Registry createRegistryObject() {
+		Registry registry = WorkflowApiFactory.eINSTANCE.createRegistry();
+		registry.setName(config.registry_name());
+		registry.setDescription(config.registry_description());
+		registry.getAllowedTransitions().addAll(allowedTransitionsList);
+		registry.getStages().addAll(stages);
+		return registry;
+	}
+	
+	private List<StageTransition> parseTransitionsIntoList(String[] workflow_transitions) {
+		List<StageTransition> transitionsList = new LinkedList<>();
 		for(String transition : workflow_transitions) {
 			String[] transitionSplit = transition.split(":");
 			if(transitionSplit.length != 2) {
 				throw new IllegalArgumentException(String.format("Transition property %s is not properly formatted. Expected format 'fromStage:toStage'", transition));
 			}
-			if(!transitionsMap.containsKey(transitionSplit[0])) {
-				transitionsMap.put(transitionSplit[0], new HashSet<String>());
-			}
-			transitionsMap.get(transitionSplit[0]).add(transitionSplit[1]);
+			StageTransition stageTransition = WorkflowApiFactory.eINSTANCE.createStageTransition();
+			stageTransition.setFromStage(transitionSplit[0]);
+			stageTransition.setToStage(transitionSplit[1]);
+			transitionsList.add(stageTransition);
 		}
-		return transitionsMap;
+		return transitionsList;
 	}
 
 	private Map<String, EObjectStorageService<T>> parseStageStorageMappings(
@@ -420,7 +470,7 @@ public class RegistryServiceImpl<T extends EObject> implements RegistryService<T
 	private void validateTransition(String fromStage, String toStage) {
 		validateWritableStage(fromStage);
 		validateWritableStage(toStage);
-		if(!transitionsMap.get(fromStage).contains(toStage)) {
+		if(!isTransitionAllowed(fromStage, toStage)) {
 			throw new IllegalArgumentException(String.format("Transition from stage %s to stage %s is not allowed in registry %s", fromStage, toStage, config.registry_name()));
 		}
 	}

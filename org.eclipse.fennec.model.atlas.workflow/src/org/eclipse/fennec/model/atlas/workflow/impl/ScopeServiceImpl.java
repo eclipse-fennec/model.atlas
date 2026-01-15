@@ -18,7 +18,9 @@ import java.util.List;
 import org.eclipse.emf.ecore.EObject;
 import org.eclipse.fennec.model.atlas.mgmt.management.ObjectMetadata;
 import org.eclipse.fennec.model.atlas.wf.workflowapi.RegistryService;
+import org.eclipse.fennec.model.atlas.wf.workflowapi.Scope;
 import org.eclipse.fennec.model.atlas.wf.workflowapi.ScopeService;
+import org.eclipse.fennec.model.atlas.wf.workflowapi.WorkflowApiFactory;
 import org.osgi.service.component.annotations.Activate;
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.ConfigurationPolicy;
@@ -38,6 +40,8 @@ public class ScopeServiceImpl<T extends EObject> implements ScopeService<T> {
 	private List<RegistryService<T>> registryService;
 	private ScopeServiceConfig config;
 
+	private final Scope scopeObject;
+	
 	@Activate
 	public ScopeServiceImpl(
 			@Reference(name = "registryService") List<RegistryService<T>> registryService,
@@ -45,6 +49,7 @@ public class ScopeServiceImpl<T extends EObject> implements ScopeService<T> {
 			) {
 		this.registryService = registryService;
 		this.config = config;
+		this.scopeObject = createScopeObject();
 	}
 
 	/* 
@@ -184,6 +189,24 @@ public class ScopeServiceImpl<T extends EObject> implements ScopeService<T> {
 		return registryService.stream().map(r -> r.getRegistryName()).toList();
 	}
 	
+	/* 
+	 * (non-Javadoc)
+	 * @see org.eclipse.fennec.model.atlas.wf.workflowapi.ScopeService#getScope()
+	 */
+	@Override
+	public Scope getScope() {
+		return scopeObject;
+	}
+	
+	private Scope createScopeObject() {
+		Scope scope = WorkflowApiFactory.eINSTANCE.createScope();
+		scope.setName(config.scope_name());
+		scope.setDescription(config.scope_description());
+		scope.setParentScope(config.scope_parent());
+		registryService.forEach(rs -> scope.getRegistries().add(rs.getRegistry()));
+		return scope;
+	}
+	
 	private RegistryService<T> getRegistryService(String registryName) {
 		return registryService.stream().filter(r -> registryName.equals(r.getRegistryName())).findAny().get();
 	}
@@ -197,5 +220,7 @@ public class ScopeServiceImpl<T extends EObject> implements ScopeService<T> {
 		}
 		return;
 	}
+
+	
 
 }

@@ -18,25 +18,20 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import java.time.Instant;
 import java.util.Dictionary;
 import java.util.Hashtable;
-import java.util.List;
 import java.util.concurrent.TimeUnit;
 
-import org.eclipse.emf.ecore.EObject;
 import org.eclipse.emf.ecore.EPackage;
 import org.eclipse.emf.ecore.resource.ResourceSet;
-import org.eclipse.fennec.model.atlas.mgmt.management.ManagementFactory;
-import org.eclipse.fennec.model.atlas.mgmt.management.ObjectMetadata;
-import org.eclipse.fennec.model.atlas.model.scope.Scope;
-import org.eclipse.fennec.model.atlas.model.scope.ScopeFactory;
-import org.eclipse.fennec.model.atlas.model.scope.StageTransition;
+import org.eclipse.fennec.model.atlas.rest.model.RestFactory;
+import org.eclipse.fennec.model.atlas.rest.model.StageTransitionRequest;
+import org.eclipse.fennec.model.atlas.rest.tests.helper.MockTestHelper.MockRegistryServiceCollector;
+import org.eclipse.fennec.model.atlas.rest.tests.helper.MockTestHelper.MockScopeServiceCollector;
 import org.eclipse.fennec.model.atlas.rest.tests.helper.ResourceAware;
 import org.eclipse.fennec.model.atlas.rest.tests.helper.TestHelper;
-import org.eclipse.fennec.model.atlas.schema.registry.api.SchemaRegistryService;
-import org.eclipse.fennec.model.atlas.scope.ScopeCollector;
-import org.eclipse.fennec.model.atlas.wf.workflowapi.EObjectWorkflowService;
+import org.eclipse.fennec.model.atlas.workflow.RegistryServiceCollector;
+import org.eclipse.fennec.model.atlas.workflow.ScopeServiceCollector;
 import org.gecko.emf.osgi.annotation.require.RequireEMF;
 import org.gecko.emf.rest.annotations.RequireEMFMessageBodyReaderWriter;
 import org.junit.jupiter.api.AfterEach;
@@ -51,8 +46,6 @@ import org.osgi.test.common.annotation.InjectBundleContext;
 import org.osgi.test.common.annotation.InjectService;
 import org.osgi.test.junit5.context.BundleContextExtension;
 import org.osgi.test.junit5.service.ServiceExtension;
-import org.osgi.util.promise.Promise;
-import org.osgi.util.promise.Promises;
 
 import jakarta.ws.rs.client.Client;
 import jakarta.ws.rs.client.ClientBuilder;
@@ -101,10 +94,10 @@ public class ObjectRegistryResourceTest {
     ClientBuilder clientBuilder;
 
     private Client restClient;
-    private MockScopeCollector mockScopeCollector;
-    private ServiceRegistration<ScopeCollector> mockScopeCollectorRegistration;
-    private MockSchemaRegistryService mockSchemaRegistryService;
-    private ServiceRegistration<SchemaRegistryService> mockSchemaRegistryServiceRegistration;
+    private MockScopeServiceCollector mockScopeCollector;
+    private ServiceRegistration<ScopeServiceCollector> mockScopeCollectorRegistration;
+    private MockRegistryServiceCollector mockRegistryCollector;
+    private ServiceRegistration<RegistryServiceCollector> mockRegistryCollectorRegistration;
 
     @BeforeEach
     public void setup(@InjectBundleContext BundleContext context) throws Exception {
@@ -112,27 +105,20 @@ public class ObjectRegistryResourceTest {
         restClient = clientBuilder.build();
 
         // Create and register mock ScopeCollector
-        mockScopeCollector = new MockScopeCollector();
-
         Dictionary<String, Object> scopeProps = new Hashtable<>();
         scopeProps.put("service.ranking", Integer.MAX_VALUE);
-
+        
+        mockScopeCollector = new MockScopeServiceCollector();
         mockScopeCollectorRegistration = context.registerService(
-                ScopeCollector.class,
+                ScopeServiceCollector.class,
                 mockScopeCollector,
                 scopeProps);
-
-        // Create and register mock SchemaRegistryService
-        mockSchemaRegistryService = new MockSchemaRegistryService(resourceSet);
-
-        Dictionary<String, Object> registryProps = new Hashtable<>();
-        registryProps.put("registry.name", TEST_REGISTRY_NAME);
-        registryProps.put("service.ranking", Integer.MAX_VALUE);
-
-        mockSchemaRegistryServiceRegistration = context.registerService(
-                SchemaRegistryService.class,
-                mockSchemaRegistryService,
-                registryProps);
+        
+        mockRegistryCollector = new MockRegistryServiceCollector();
+        mockRegistryCollectorRegistration = context.registerService(
+                RegistryServiceCollector.class,
+                mockRegistryCollector,
+                scopeProps);
 
         // Small delay to allow service registration to propagate
         Thread.sleep(200);
@@ -156,9 +142,9 @@ public class ObjectRegistryResourceTest {
             mockScopeCollectorRegistration = null;
         }
 
-        if (nonNull(mockSchemaRegistryServiceRegistration)) {
-            mockSchemaRegistryServiceRegistration.unregister();
-            mockSchemaRegistryServiceRegistration = null;
+        if (nonNull(mockRegistryCollectorRegistration)) {
+            mockRegistryCollectorRegistration.unregister();
+            mockRegistryCollectorRegistration = null;
         }
 
         // Small delay to allow service unregistration to propagate
@@ -199,7 +185,7 @@ public class ObjectRegistryResourceTest {
                 .request("application/json")
                 .get();
 
-        assertEquals(404, response.getStatus(), "Should return HTTP 404 No Content");
+        assertEquals(400, response.getStatus(), "Should return HTTP 400 Bad Request");
     }
 
     @Test
@@ -619,7 +605,7 @@ public class ObjectRegistryResourceTest {
 
     @Test
     public void testTransitionObject_Success() throws Exception {
-        StageTransition transition = ScopeFactory.eINSTANCE.createStageTransition();
+        StageTransitionRequest transition = RestFactory.eINSTANCE.createStageTransitionRequest();
         transition.setObjectId(TEST_OBJECT_ID);
         transition.setTargetStage(TEST_STAGE_APPROVED);
 
@@ -646,7 +632,7 @@ public class ObjectRegistryResourceTest {
 
     @Test
     public void testTransitionObject_InvalidTransition() throws Exception {
-        StageTransition transition = ScopeFactory.eINSTANCE.createStageTransition();
+    	StageTransitionRequest transition = RestFactory.eINSTANCE.createStageTransitionRequest();
         transition.setObjectId(TEST_OBJECT_ID);
         transition.setTargetStage(TEST_STAGE_RELEASE); // Invalid: skipping approved stage
 
@@ -669,7 +655,7 @@ public class ObjectRegistryResourceTest {
 
     @Test
     public void testTransitionObject_NotFound() throws Exception {
-        StageTransition transition = ScopeFactory.eINSTANCE.createStageTransition();
+    	StageTransitionRequest transition = RestFactory.eINSTANCE.createStageTransitionRequest();
         transition.setObjectId("non-existent-object");
         transition.setTargetStage(TEST_STAGE_APPROVED);
 
@@ -789,266 +775,5 @@ public class ObjectRegistryResourceTest {
         assertTrue(responseContent.contains("objectId"), "Response should contain objectId");
     }
 
-    // ========== Mock Service Implementation ==========
-
-    /**
-     * Mock implementation of ScopeCollector for testing.
-     */
-    public static class MockScopeCollector extends ScopeCollector {
-
-        private final MockEObjectWorkflowService mockWorkflowService = new MockEObjectWorkflowService();
-        private final Scope mockScope = createMockScope();
-
-        @Override
-        public EObjectWorkflowService<?> getWorkflowServiceByScope(String scopeName) {
-            if (TEST_SCOPE_NAME.equals(scopeName)) {
-                return mockWorkflowService;
-            }
-            return null;
-        }
-
-        @Override
-        public Scope getWorkflowScopeByName(String name) {
-            if (TEST_SCOPE_NAME.equals(name)) {
-                return mockScope;
-            }
-            return null;
-        }
-
-        @Override
-        public List<Scope> getAllScopes() {
-            return List.of(mockScope);
-        }
-
-        private Scope createMockScope() {
-            Scope scope = ScopeFactory.eINSTANCE.createScope();
-            scope.setName(TEST_SCOPE_NAME);
-            scope.setFinalStage(TEST_STAGE_RELEASE);
-            scope.getStages().addAll(List.of(TEST_STAGE_DRAFT, TEST_STAGE_APPROVED, TEST_STAGE_RELEASE));
-            scope.getWritableStages().addAll(List.of(TEST_STAGE_DRAFT, TEST_STAGE_APPROVED));
-            scope.getRegistries().add(TEST_REGISTRY_NAME);
-            return scope;
-        }
-    }
-
-    /**
-     * Mock implementation of EObjectWorkflowService for testing.
-     */
-    public static class MockEObjectWorkflowService implements EObjectWorkflowService<EObject> {
-
-        @Override
-        public Promise<ObjectMetadata> uploadToStageForRegistry(String stage, String registry, EObject object, ObjectMetadata metadata) {
-            metadata.setRole(stage);
-            metadata.setRegistry(registry);
-            metadata.setUploadTime(Instant.now());
-            return Promises.resolved(metadata);
-        }
-
-        @Override
-        public ObjectMetadata getFromStageForRegistry(String stage, String registry, String objectId) {
-            // Return null for non-existent objects (including new objects to be created)
-            if (objectId.equals("non-existent-object") ||
-                objectId.equals("new-object-id") ||
-                objectId.equals("incompatible-object-id")) {
-                return null;
-            }
-
-            // Only TEST_OBJECT_ID and sensor-object-456 exist
-            if (!objectId.equals(TEST_OBJECT_ID) && !objectId.equals("sensor-object-456")) {
-                return null;
-            }
-
-            ObjectMetadata metadata = ManagementFactory.eINSTANCE.createObjectMetadata();
-            metadata.setObjectId(objectId);
-            metadata.setRole(stage);
-            metadata.setRegistry(registry);
-            metadata.setUploadTime(Instant.now());
-            metadata.setIsReadOnly(false);
-            return metadata;
-        }
-
-        @Override
-        public ObjectMetadata getFromFinalStageForRegistry(String registry, String objectId) {
-            return getFromStageForRegistry(TEST_STAGE_RELEASE, registry, objectId);
-        }
-
-        @Override
-        public EObject getContentFromStageForRegistry(String stage, String registry, String objectId) {
-            // Return null for non-existent objects
-            if (objectId.equals("non-existent-object") ||
-                objectId.equals("new-object-id") ||
-                objectId.equals("incompatible-object-id")) {
-                return null;
-            }
-
-            // Only TEST_OBJECT_ID and sensor-object-456 have content
-            if (!objectId.equals(TEST_OBJECT_ID) && !objectId.equals("sensor-object-456")) {
-                return null;
-            }
-
-            return TestHelper.createTestEPackage("http://test.com/object/1.0", "TestObject", "test");
-        }
-
-        @Override
-        public Promise<ObjectMetadata> updateInStageForRegistry(String stage, String registry, EObject updatedObject, String objectId, String updatedVersion) {
-            // Only allow updates for existing objects
-            if (objectId.equals("non-existent-object") ||
-                objectId.equals("new-object-id") ||
-                objectId.equals("incompatible-object-id") ||
-                (!objectId.equals(TEST_OBJECT_ID) && !objectId.equals("sensor-object-456"))) {
-                return Promises.resolved(null);
-            }
-
-            ObjectMetadata metadata = ManagementFactory.eINSTANCE.createObjectMetadata();
-            metadata.setObjectId(objectId);
-            metadata.setRole(stage);
-            metadata.setRegistry(registry);
-            metadata.setVersion(updatedVersion);
-            metadata.setLastChangeTime(Instant.now());
-            return Promises.resolved(metadata);
-        }
-
-        @Override
-        public Promise<Boolean> deleteFromStageForRegistry(String stage, String registry, String objectId) {
-            // Only allow deletion of existing objects
-            return Promises.resolved(
-                objectId.equals(TEST_OBJECT_ID) || objectId.equals("sensor-object-456")
-            );
-        }
-
-        @Override
-        public List<ObjectMetadata> listInStageForRegistry(String stage, String registry) {
-            ObjectMetadata metadata = ManagementFactory.eINSTANCE.createObjectMetadata();
-            metadata.setObjectId(TEST_OBJECT_ID);
-            metadata.setRole(stage);
-            metadata.setRegistry(registry);
-            metadata.setObjectName(TEST_OBJECT_NAME);
-            metadata.setUploadTime(Instant.now());
-            return List.of(metadata);
-        }
-
-        @Override
-        public List<ObjectMetadata> listInFinalStageForRegistry(String registry) {
-            return listInStageForRegistry(TEST_STAGE_RELEASE, registry);
-        }
-
-        @Override
-        public ObjectMetadata transitionToStageForRegistry(String objectId, String fromStage, String toStage, String registry) {
-            // Only allow transitions for existing objects
-            if (objectId.equals("non-existent-object") ||
-                objectId.equals("new-object-id") ||
-                objectId.equals("incompatible-object-id") ||
-                (!objectId.equals(TEST_OBJECT_ID) && !objectId.equals("sensor-object-456"))) {
-                return null;
-            }
-
-            ObjectMetadata metadata = ManagementFactory.eINSTANCE.createObjectMetadata();
-            metadata.setObjectId(objectId);
-            metadata.setRole(toStage);
-            metadata.setRegistry(registry);
-            metadata.setLastChangeTime(Instant.now());
-            return metadata;
-        }
-
-        @Override
-        public boolean isTransitionAllowed(String fromStage, String toStage) {
-            // Allow draft -> approved and approved -> release
-            if (TEST_STAGE_DRAFT.equals(fromStage) && TEST_STAGE_APPROVED.equals(toStage)) {
-                return true;
-            }
-            if (TEST_STAGE_APPROVED.equals(fromStage) && TEST_STAGE_RELEASE.equals(toStage)) {
-                return true;
-            }
-            // Disallow skipping stages (e.g., draft -> release)
-            return false;
-        }
-
-        @Override
-        public List<ObjectMetadata> listInStageForRegistryByName(String stage, String registry, String name) {
-            // Support wildcard search with * character (only trailing wildcards like "Prefix*")
-            boolean isWildcard = name.contains("*");
-            String nameFilter = isWildcard ? name.replace("*", "") : name;
-
-            // Create test metadata that matches the filter
-            if (TEST_OBJECT_NAME.equals(name) || (isWildcard && TEST_OBJECT_NAME.startsWith(nameFilter))) {
-                ObjectMetadata metadata = ManagementFactory.eINSTANCE.createObjectMetadata();
-                metadata.setObjectId(TEST_OBJECT_ID);
-                metadata.setRole(stage);
-                metadata.setRegistry(registry);
-                metadata.setObjectName(TEST_OBJECT_NAME);
-                metadata.setUploadTime(Instant.now());
-                return List.of(metadata);
-            }
-
-            // Match for Test* wildcard
-            if (isWildcard && TEST_OBJECT_NAME.startsWith(nameFilter)) {
-                ObjectMetadata metadata = ManagementFactory.eINSTANCE.createObjectMetadata();
-                metadata.setObjectId(TEST_OBJECT_ID);
-                metadata.setRole(stage);
-                metadata.setRegistry(registry);
-                metadata.setObjectName(TEST_OBJECT_NAME);
-                metadata.setUploadTime(Instant.now());
-                return List.of(metadata);
-            }
-
-            // If looking for SensorData, return a matching object
-            if ("SensorData".equals(name) || (isWildcard && "SensorData".startsWith(nameFilter))) {
-                ObjectMetadata sensorMetadata = ManagementFactory.eINSTANCE.createObjectMetadata();
-                sensorMetadata.setObjectId("sensor-object-456");
-                sensorMetadata.setRole(stage);
-                sensorMetadata.setRegistry(registry);
-                sensorMetadata.setObjectName("SensorData");
-                sensorMetadata.setUploadTime(Instant.now());
-                return List.of(sensorMetadata);
-            }
-
-            // Return empty list if no match
-            return List.of();
-        }
-
-
-    }
-
-    /**
-     * Mock implementation of SchemaRegistryService for testing.
-     */
-    public static class MockSchemaRegistryService implements SchemaRegistryService {
-
-        private final ResourceSet resourceSet;
-        private final org.eclipse.emf.ecore.EClass ePackageEClass;
-
-        public MockSchemaRegistryService(ResourceSet resourceSet) {
-            this.resourceSet = resourceSet;
-            // Get EPackage EClass from Ecore
-            this.ePackageEClass = (org.eclipse.emf.ecore.EClass) resourceSet.getEObject(
-                org.eclipse.emf.common.util.URI.createURI("http://www.eclipse.org/emf/2002/Ecore#//EPackage"),
-                true
-            );
-        }
-
-        @Override
-        public org.eclipse.emf.ecore.EClass getRootEClass() {
-            return ePackageEClass;
-        }
-
-        @Override
-        public String getRegistryName() {
-            return TEST_REGISTRY_NAME;
-        }
-
-        @Override
-        public boolean isCompatible(org.eclipse.emf.ecore.EClass eClass) {
-            // EPackage is compatible with itself or any subtype
-            return eClass.equals(ePackageEClass) || eClass.getEAllSuperTypes().contains(ePackageEClass);
-        }
-
-		/* 
-		 * (non-Javadoc)
-		 * @see org.eclipse.fennec.model.atlas.schema.registry.api.SchemaRegistryService#getSchemaUri()
-		 */
-		@Override
-		public String getSchemaUri() {
-			return "http://www.eclipse.org/emf/2002/Ecore";
-		}
-    }
+   
 }

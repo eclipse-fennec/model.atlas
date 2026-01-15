@@ -314,7 +314,7 @@ public abstract class AbstractStorageHelper implements AutoCloseable {
      * Builds the storage path for an object with the given extension.
      */
     protected String buildObjectPath(String scope, String registry, String stage, String objectId, String extension) {
-        return scope + "_" + registry + "_" + stage + "_" + objectId + extension;
+        return objectId + extension;
     }
     
     /**

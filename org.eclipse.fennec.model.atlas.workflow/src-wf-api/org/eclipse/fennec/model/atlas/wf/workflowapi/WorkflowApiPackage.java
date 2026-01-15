@@ -17,6 +17,7 @@ package org.eclipse.fennec.model.atlas.wf.workflowapi;
 import org.eclipse.emf.ecore.EAttribute;
 import org.eclipse.emf.ecore.EClass;
 import org.eclipse.emf.ecore.EOperation;
+import org.eclipse.emf.ecore.EReference;
 
 import org.gecko.emf.osgi.annotation.provide.EPackage;
 
@@ -355,13 +356,40 @@ public interface WorkflowApiPackage extends org.eclipse.emf.ecore.EPackage {
 	int REGISTRY_SERVICE___IS_TRANSITION_ALLOWED__STRING_STRING = 14;
 
 	/**
+	 * The operation id for the '<em>Get Registry</em>' operation.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 * @ordered
+	 */
+	int REGISTRY_SERVICE___GET_REGISTRY = 15;
+
+	/**
+	 * The operation id for the '<em>Is EClass Compatible With Registry</em>' operation.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 * @ordered
+	 */
+	int REGISTRY_SERVICE___IS_ECLASS_COMPATIBLE_WITH_REGISTRY__ECLASS = 16;
+
+	/**
+	 * The operation id for the '<em>Get Root EClass</em>' operation.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 * @ordered
+	 */
+	int REGISTRY_SERVICE___GET_ROOT_ECLASS = 17;
+
+	/**
 	 * The number of operations of the '<em>Registry Service</em>' class.
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
 	 * @generated
 	 * @ordered
 	 */
-	int REGISTRY_SERVICE_OPERATION_COUNT = 15;
+	int REGISTRY_SERVICE_OPERATION_COUNT = 18;
 
 	/**
 	 * The meta object id for the '{@link org.eclipse.fennec.model.atlas.wf.workflowapi.ScopeService <em>Scope Service</em>}' class.
@@ -491,13 +519,22 @@ public interface WorkflowApiPackage extends org.eclipse.emf.ecore.EPackage {
 	int SCOPE_SERVICE___GET_ALL_REGISTRIES = 11;
 
 	/**
+	 * The operation id for the '<em>Get Scope</em>' operation.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 * @ordered
+	 */
+	int SCOPE_SERVICE___GET_SCOPE = 12;
+
+	/**
 	 * The number of operations of the '<em>Scope Service</em>' class.
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
 	 * @generated
 	 * @ordered
 	 */
-	int SCOPE_SERVICE_OPERATION_COUNT = 12;
+	int SCOPE_SERVICE_OPERATION_COUNT = 13;
 
 	/**
 	 * The meta object id for the '{@link org.eclipse.fennec.model.atlas.wf.workflowapi.impl.StageImpl <em>Stage</em>}' class.
@@ -553,6 +590,180 @@ public interface WorkflowApiPackage extends org.eclipse.emf.ecore.EPackage {
 	 * @ordered
 	 */
 	int STAGE_OPERATION_COUNT = 0;
+
+	/**
+	 * The meta object id for the '{@link org.eclipse.fennec.model.atlas.wf.workflowapi.impl.RegistryImpl <em>Registry</em>}' class.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @see org.eclipse.fennec.model.atlas.wf.workflowapi.impl.RegistryImpl
+	 * @see org.eclipse.fennec.model.atlas.wf.workflowapi.impl.WorkflowApiPackageImpl#getRegistry()
+	 * @generated
+	 */
+	int REGISTRY = 4;
+
+	/**
+	 * The feature id for the '<em><b>Name</b></em>' attribute.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 * @ordered
+	 */
+	int REGISTRY__NAME = 0;
+
+	/**
+	 * The feature id for the '<em><b>Description</b></em>' attribute.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 * @ordered
+	 */
+	int REGISTRY__DESCRIPTION = 1;
+
+	/**
+	 * The feature id for the '<em><b>Stages</b></em>' containment reference list.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 * @ordered
+	 */
+	int REGISTRY__STAGES = 2;
+
+	/**
+	 * The feature id for the '<em><b>Allowed Transitions</b></em>' containment reference list.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 * @ordered
+	 */
+	int REGISTRY__ALLOWED_TRANSITIONS = 3;
+
+	/**
+	 * The number of structural features of the '<em>Registry</em>' class.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 * @ordered
+	 */
+	int REGISTRY_FEATURE_COUNT = 4;
+
+	/**
+	 * The number of operations of the '<em>Registry</em>' class.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 * @ordered
+	 */
+	int REGISTRY_OPERATION_COUNT = 0;
+
+	/**
+	 * The meta object id for the '{@link org.eclipse.fennec.model.atlas.wf.workflowapi.impl.ScopeImpl <em>Scope</em>}' class.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @see org.eclipse.fennec.model.atlas.wf.workflowapi.impl.ScopeImpl
+	 * @see org.eclipse.fennec.model.atlas.wf.workflowapi.impl.WorkflowApiPackageImpl#getScope()
+	 * @generated
+	 */
+	int SCOPE = 5;
+
+	/**
+	 * The feature id for the '<em><b>Name</b></em>' attribute.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 * @ordered
+	 */
+	int SCOPE__NAME = 0;
+
+	/**
+	 * The feature id for the '<em><b>Description</b></em>' attribute.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 * @ordered
+	 */
+	int SCOPE__DESCRIPTION = 1;
+
+	/**
+	 * The feature id for the '<em><b>Parent Scope</b></em>' attribute.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 * @ordered
+	 */
+	int SCOPE__PARENT_SCOPE = 2;
+
+	/**
+	 * The feature id for the '<em><b>Registries</b></em>' containment reference list.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 * @ordered
+	 */
+	int SCOPE__REGISTRIES = 3;
+
+	/**
+	 * The number of structural features of the '<em>Scope</em>' class.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 * @ordered
+	 */
+	int SCOPE_FEATURE_COUNT = 4;
+
+	/**
+	 * The number of operations of the '<em>Scope</em>' class.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 * @ordered
+	 */
+	int SCOPE_OPERATION_COUNT = 0;
+
+	/**
+	 * The meta object id for the '{@link org.eclipse.fennec.model.atlas.wf.workflowapi.impl.StageTransitionImpl <em>Stage Transition</em>}' class.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @see org.eclipse.fennec.model.atlas.wf.workflowapi.impl.StageTransitionImpl
+	 * @see org.eclipse.fennec.model.atlas.wf.workflowapi.impl.WorkflowApiPackageImpl#getStageTransition()
+	 * @generated
+	 */
+	int STAGE_TRANSITION = 6;
+
+	/**
+	 * The feature id for the '<em><b>From Stage</b></em>' attribute.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 * @ordered
+	 */
+	int STAGE_TRANSITION__FROM_STAGE = 0;
+
+	/**
+	 * The feature id for the '<em><b>To Stage</b></em>' attribute.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 * @ordered
+	 */
+	int STAGE_TRANSITION__TO_STAGE = 1;
+
+	/**
+	 * The number of structural features of the '<em>Stage Transition</em>' class.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 * @ordered
+	 */
+	int STAGE_TRANSITION_FEATURE_COUNT = 2;
+
+	/**
+	 * The number of operations of the '<em>Stage Transition</em>' class.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 * @ordered
+	 */
+	int STAGE_TRANSITION_OPERATION_COUNT = 0;
 
 
 	/**
@@ -836,6 +1047,36 @@ public interface WorkflowApiPackage extends org.eclipse.emf.ecore.EPackage {
 	EOperation getRegistryService__IsTransitionAllowed__String_String();
 
 	/**
+	 * Returns the meta object for the '{@link org.eclipse.fennec.model.atlas.wf.workflowapi.RegistryService#getRegistry() <em>Get Registry</em>}' operation.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @return the meta object for the '<em>Get Registry</em>' operation.
+	 * @see org.eclipse.fennec.model.atlas.wf.workflowapi.RegistryService#getRegistry()
+	 * @generated
+	 */
+	EOperation getRegistryService__GetRegistry();
+
+	/**
+	 * Returns the meta object for the '{@link org.eclipse.fennec.model.atlas.wf.workflowapi.RegistryService#isEClassCompatibleWithRegistry(org.eclipse.emf.ecore.EClass) <em>Is EClass Compatible With Registry</em>}' operation.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @return the meta object for the '<em>Is EClass Compatible With Registry</em>' operation.
+	 * @see org.eclipse.fennec.model.atlas.wf.workflowapi.RegistryService#isEClassCompatibleWithRegistry(org.eclipse.emf.ecore.EClass)
+	 * @generated
+	 */
+	EOperation getRegistryService__IsEClassCompatibleWithRegistry__EClass();
+
+	/**
+	 * Returns the meta object for the '{@link org.eclipse.fennec.model.atlas.wf.workflowapi.RegistryService#getRootEClass() <em>Get Root EClass</em>}' operation.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @return the meta object for the '<em>Get Root EClass</em>' operation.
+	 * @see org.eclipse.fennec.model.atlas.wf.workflowapi.RegistryService#getRootEClass()
+	 * @generated
+	 */
+	EOperation getRegistryService__GetRootEClass();
+
+	/**
 	 * Returns the meta object for class '{@link org.eclipse.fennec.model.atlas.wf.workflowapi.ScopeService <em>Scope Service</em>}'.
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
@@ -966,6 +1207,16 @@ public interface WorkflowApiPackage extends org.eclipse.emf.ecore.EPackage {
 	EOperation getScopeService__GetAllRegistries();
 
 	/**
+	 * Returns the meta object for the '{@link org.eclipse.fennec.model.atlas.wf.workflowapi.ScopeService#getScope() <em>Get Scope</em>}' operation.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @return the meta object for the '<em>Get Scope</em>' operation.
+	 * @see org.eclipse.fennec.model.atlas.wf.workflowapi.ScopeService#getScope()
+	 * @generated
+	 */
+	EOperation getScopeService__GetScope();
+
+	/**
 	 * Returns the meta object for class '{@link org.eclipse.fennec.model.atlas.wf.workflowapi.Stage <em>Stage</em>}'.
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
@@ -1007,6 +1258,146 @@ public interface WorkflowApiPackage extends org.eclipse.emf.ecore.EPackage {
 	 * @generated
 	 */
 	EAttribute getStage_Final();
+
+	/**
+	 * Returns the meta object for class '{@link org.eclipse.fennec.model.atlas.wf.workflowapi.Registry <em>Registry</em>}'.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @return the meta object for class '<em>Registry</em>'.
+	 * @see org.eclipse.fennec.model.atlas.wf.workflowapi.Registry
+	 * @generated
+	 */
+	EClass getRegistry();
+
+	/**
+	 * Returns the meta object for the attribute '{@link org.eclipse.fennec.model.atlas.wf.workflowapi.Registry#getName <em>Name</em>}'.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @return the meta object for the attribute '<em>Name</em>'.
+	 * @see org.eclipse.fennec.model.atlas.wf.workflowapi.Registry#getName()
+	 * @see #getRegistry()
+	 * @generated
+	 */
+	EAttribute getRegistry_Name();
+
+	/**
+	 * Returns the meta object for the attribute '{@link org.eclipse.fennec.model.atlas.wf.workflowapi.Registry#getDescription <em>Description</em>}'.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @return the meta object for the attribute '<em>Description</em>'.
+	 * @see org.eclipse.fennec.model.atlas.wf.workflowapi.Registry#getDescription()
+	 * @see #getRegistry()
+	 * @generated
+	 */
+	EAttribute getRegistry_Description();
+
+	/**
+	 * Returns the meta object for the containment reference list '{@link org.eclipse.fennec.model.atlas.wf.workflowapi.Registry#getStages <em>Stages</em>}'.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @return the meta object for the containment reference list '<em>Stages</em>'.
+	 * @see org.eclipse.fennec.model.atlas.wf.workflowapi.Registry#getStages()
+	 * @see #getRegistry()
+	 * @generated
+	 */
+	EReference getRegistry_Stages();
+
+	/**
+	 * Returns the meta object for the containment reference list '{@link org.eclipse.fennec.model.atlas.wf.workflowapi.Registry#getAllowedTransitions <em>Allowed Transitions</em>}'.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @return the meta object for the containment reference list '<em>Allowed Transitions</em>'.
+	 * @see org.eclipse.fennec.model.atlas.wf.workflowapi.Registry#getAllowedTransitions()
+	 * @see #getRegistry()
+	 * @generated
+	 */
+	EReference getRegistry_AllowedTransitions();
+
+	/**
+	 * Returns the meta object for class '{@link org.eclipse.fennec.model.atlas.wf.workflowapi.Scope <em>Scope</em>}'.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @return the meta object for class '<em>Scope</em>'.
+	 * @see org.eclipse.fennec.model.atlas.wf.workflowapi.Scope
+	 * @generated
+	 */
+	EClass getScope();
+
+	/**
+	 * Returns the meta object for the attribute '{@link org.eclipse.fennec.model.atlas.wf.workflowapi.Scope#getName <em>Name</em>}'.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @return the meta object for the attribute '<em>Name</em>'.
+	 * @see org.eclipse.fennec.model.atlas.wf.workflowapi.Scope#getName()
+	 * @see #getScope()
+	 * @generated
+	 */
+	EAttribute getScope_Name();
+
+	/**
+	 * Returns the meta object for the attribute '{@link org.eclipse.fennec.model.atlas.wf.workflowapi.Scope#getDescription <em>Description</em>}'.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @return the meta object for the attribute '<em>Description</em>'.
+	 * @see org.eclipse.fennec.model.atlas.wf.workflowapi.Scope#getDescription()
+	 * @see #getScope()
+	 * @generated
+	 */
+	EAttribute getScope_Description();
+
+	/**
+	 * Returns the meta object for the attribute '{@link org.eclipse.fennec.model.atlas.wf.workflowapi.Scope#getParentScope <em>Parent Scope</em>}'.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @return the meta object for the attribute '<em>Parent Scope</em>'.
+	 * @see org.eclipse.fennec.model.atlas.wf.workflowapi.Scope#getParentScope()
+	 * @see #getScope()
+	 * @generated
+	 */
+	EAttribute getScope_ParentScope();
+
+	/**
+	 * Returns the meta object for the containment reference list '{@link org.eclipse.fennec.model.atlas.wf.workflowapi.Scope#getRegistries <em>Registries</em>}'.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @return the meta object for the containment reference list '<em>Registries</em>'.
+	 * @see org.eclipse.fennec.model.atlas.wf.workflowapi.Scope#getRegistries()
+	 * @see #getScope()
+	 * @generated
+	 */
+	EReference getScope_Registries();
+
+	/**
+	 * Returns the meta object for class '{@link org.eclipse.fennec.model.atlas.wf.workflowapi.StageTransition <em>Stage Transition</em>}'.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @return the meta object for class '<em>Stage Transition</em>'.
+	 * @see org.eclipse.fennec.model.atlas.wf.workflowapi.StageTransition
+	 * @generated
+	 */
+	EClass getStageTransition();
+
+	/**
+	 * Returns the meta object for the attribute '{@link org.eclipse.fennec.model.atlas.wf.workflowapi.StageTransition#getFromStage <em>From Stage</em>}'.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @return the meta object for the attribute '<em>From Stage</em>'.
+	 * @see org.eclipse.fennec.model.atlas.wf.workflowapi.StageTransition#getFromStage()
+	 * @see #getStageTransition()
+	 * @generated
+	 */
+	EAttribute getStageTransition_FromStage();
+
+	/**
+	 * Returns the meta object for the attribute '{@link org.eclipse.fennec.model.atlas.wf.workflowapi.StageTransition#getToStage <em>To Stage</em>}'.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @return the meta object for the attribute '<em>To Stage</em>'.
+	 * @see org.eclipse.fennec.model.atlas.wf.workflowapi.StageTransition#getToStage()
+	 * @see #getStageTransition()
+	 * @generated
+	 */
+	EAttribute getStageTransition_ToStage();
 
 	/**
 	 * Returns the factory that creates the instances of the model.
@@ -1260,6 +1651,30 @@ public interface WorkflowApiPackage extends org.eclipse.emf.ecore.EPackage {
 		EOperation REGISTRY_SERVICE___IS_TRANSITION_ALLOWED__STRING_STRING = eINSTANCE.getRegistryService__IsTransitionAllowed__String_String();
 
 		/**
+		 * The meta object literal for the '<em><b>Get Registry</b></em>' operation.
+		 * <!-- begin-user-doc -->
+		 * <!-- end-user-doc -->
+		 * @generated
+		 */
+		EOperation REGISTRY_SERVICE___GET_REGISTRY = eINSTANCE.getRegistryService__GetRegistry();
+
+		/**
+		 * The meta object literal for the '<em><b>Is EClass Compatible With Registry</b></em>' operation.
+		 * <!-- begin-user-doc -->
+		 * <!-- end-user-doc -->
+		 * @generated
+		 */
+		EOperation REGISTRY_SERVICE___IS_ECLASS_COMPATIBLE_WITH_REGISTRY__ECLASS = eINSTANCE.getRegistryService__IsEClassCompatibleWithRegistry__EClass();
+
+		/**
+		 * The meta object literal for the '<em><b>Get Root EClass</b></em>' operation.
+		 * <!-- begin-user-doc -->
+		 * <!-- end-user-doc -->
+		 * @generated
+		 */
+		EOperation REGISTRY_SERVICE___GET_ROOT_ECLASS = eINSTANCE.getRegistryService__GetRootEClass();
+
+		/**
 		 * The meta object literal for the '{@link org.eclipse.fennec.model.atlas.wf.workflowapi.ScopeService <em>Scope Service</em>}' class.
 		 * <!-- begin-user-doc -->
 		 * <!-- end-user-doc -->
@@ -1366,6 +1781,14 @@ public interface WorkflowApiPackage extends org.eclipse.emf.ecore.EPackage {
 		EOperation SCOPE_SERVICE___GET_ALL_REGISTRIES = eINSTANCE.getScopeService__GetAllRegistries();
 
 		/**
+		 * The meta object literal for the '<em><b>Get Scope</b></em>' operation.
+		 * <!-- begin-user-doc -->
+		 * <!-- end-user-doc -->
+		 * @generated
+		 */
+		EOperation SCOPE_SERVICE___GET_SCOPE = eINSTANCE.getScopeService__GetScope();
+
+		/**
 		 * The meta object literal for the '{@link org.eclipse.fennec.model.atlas.wf.workflowapi.impl.StageImpl <em>Stage</em>}' class.
 		 * <!-- begin-user-doc -->
 		 * <!-- end-user-doc -->
@@ -1398,6 +1821,116 @@ public interface WorkflowApiPackage extends org.eclipse.emf.ecore.EPackage {
 		 * @generated
 		 */
 		EAttribute STAGE__FINAL = eINSTANCE.getStage_Final();
+
+		/**
+		 * The meta object literal for the '{@link org.eclipse.fennec.model.atlas.wf.workflowapi.impl.RegistryImpl <em>Registry</em>}' class.
+		 * <!-- begin-user-doc -->
+		 * <!-- end-user-doc -->
+		 * @see org.eclipse.fennec.model.atlas.wf.workflowapi.impl.RegistryImpl
+		 * @see org.eclipse.fennec.model.atlas.wf.workflowapi.impl.WorkflowApiPackageImpl#getRegistry()
+		 * @generated
+		 */
+		EClass REGISTRY = eINSTANCE.getRegistry();
+
+		/**
+		 * The meta object literal for the '<em><b>Name</b></em>' attribute feature.
+		 * <!-- begin-user-doc -->
+		 * <!-- end-user-doc -->
+		 * @generated
+		 */
+		EAttribute REGISTRY__NAME = eINSTANCE.getRegistry_Name();
+
+		/**
+		 * The meta object literal for the '<em><b>Description</b></em>' attribute feature.
+		 * <!-- begin-user-doc -->
+		 * <!-- end-user-doc -->
+		 * @generated
+		 */
+		EAttribute REGISTRY__DESCRIPTION = eINSTANCE.getRegistry_Description();
+
+		/**
+		 * The meta object literal for the '<em><b>Stages</b></em>' containment reference list feature.
+		 * <!-- begin-user-doc -->
+		 * <!-- end-user-doc -->
+		 * @generated
+		 */
+		EReference REGISTRY__STAGES = eINSTANCE.getRegistry_Stages();
+
+		/**
+		 * The meta object literal for the '<em><b>Allowed Transitions</b></em>' containment reference list feature.
+		 * <!-- begin-user-doc -->
+		 * <!-- end-user-doc -->
+		 * @generated
+		 */
+		EReference REGISTRY__ALLOWED_TRANSITIONS = eINSTANCE.getRegistry_AllowedTransitions();
+
+		/**
+		 * The meta object literal for the '{@link org.eclipse.fennec.model.atlas.wf.workflowapi.impl.ScopeImpl <em>Scope</em>}' class.
+		 * <!-- begin-user-doc -->
+		 * <!-- end-user-doc -->
+		 * @see org.eclipse.fennec.model.atlas.wf.workflowapi.impl.ScopeImpl
+		 * @see org.eclipse.fennec.model.atlas.wf.workflowapi.impl.WorkflowApiPackageImpl#getScope()
+		 * @generated
+		 */
+		EClass SCOPE = eINSTANCE.getScope();
+
+		/**
+		 * The meta object literal for the '<em><b>Name</b></em>' attribute feature.
+		 * <!-- begin-user-doc -->
+		 * <!-- end-user-doc -->
+		 * @generated
+		 */
+		EAttribute SCOPE__NAME = eINSTANCE.getScope_Name();
+
+		/**
+		 * The meta object literal for the '<em><b>Description</b></em>' attribute feature.
+		 * <!-- begin-user-doc -->
+		 * <!-- end-user-doc -->
+		 * @generated
+		 */
+		EAttribute SCOPE__DESCRIPTION = eINSTANCE.getScope_Description();
+
+		/**
+		 * The meta object literal for the '<em><b>Parent Scope</b></em>' attribute feature.
+		 * <!-- begin-user-doc -->
+		 * <!-- end-user-doc -->
+		 * @generated
+		 */
+		EAttribute SCOPE__PARENT_SCOPE = eINSTANCE.getScope_ParentScope();
+
+		/**
+		 * The meta object literal for the '<em><b>Registries</b></em>' containment reference list feature.
+		 * <!-- begin-user-doc -->
+		 * <!-- end-user-doc -->
+		 * @generated
+		 */
+		EReference SCOPE__REGISTRIES = eINSTANCE.getScope_Registries();
+
+		/**
+		 * The meta object literal for the '{@link org.eclipse.fennec.model.atlas.wf.workflowapi.impl.StageTransitionImpl <em>Stage Transition</em>}' class.
+		 * <!-- begin-user-doc -->
+		 * <!-- end-user-doc -->
+		 * @see org.eclipse.fennec.model.atlas.wf.workflowapi.impl.StageTransitionImpl
+		 * @see org.eclipse.fennec.model.atlas.wf.workflowapi.impl.WorkflowApiPackageImpl#getStageTransition()
+		 * @generated
+		 */
+		EClass STAGE_TRANSITION = eINSTANCE.getStageTransition();
+
+		/**
+		 * The meta object literal for the '<em><b>From Stage</b></em>' attribute feature.
+		 * <!-- begin-user-doc -->
+		 * <!-- end-user-doc -->
+		 * @generated
+		 */
+		EAttribute STAGE_TRANSITION__FROM_STAGE = eINSTANCE.getStageTransition_FromStage();
+
+		/**
+		 * The meta object literal for the '<em><b>To Stage</b></em>' attribute feature.
+		 * <!-- begin-user-doc -->
+		 * <!-- end-user-doc -->
+		 * @generated
+		 */
+		EAttribute STAGE_TRANSITION__TO_STAGE = eINSTANCE.getStageTransition_ToStage();
 
 	}
 

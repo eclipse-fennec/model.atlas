@@ -68,6 +68,9 @@ public class WorkflowApiFactoryImpl extends EFactoryImpl implements WorkflowApiF
 	public EObject create(EClass eClass) {
 		switch (eClass.getClassifierID()) {
 			case WorkflowApiPackage.STAGE: return (EObject)createStage();
+			case WorkflowApiPackage.REGISTRY: return (EObject)createRegistry();
+			case WorkflowApiPackage.SCOPE: return (EObject)createScope();
+			case WorkflowApiPackage.STAGE_TRANSITION: return (EObject)createStageTransition();
 			default:
 				throw new IllegalArgumentException("The class '" + eClass.getName() + "' is not a valid classifier");
 		}
@@ -82,6 +85,39 @@ public class WorkflowApiFactoryImpl extends EFactoryImpl implements WorkflowApiF
 	public Stage createStage() {
 		StageImpl stage = new StageImpl();
 		return stage;
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
+	public Registry createRegistry() {
+		RegistryImpl registry = new RegistryImpl();
+		return registry;
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
+	public Scope createScope() {
+		ScopeImpl scope = new ScopeImpl();
+		return scope;
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
+	public StageTransition createStageTransition() {
+		StageTransitionImpl stageTransition = new StageTransitionImpl();
+		return stageTransition;
 	}
 
 	/**

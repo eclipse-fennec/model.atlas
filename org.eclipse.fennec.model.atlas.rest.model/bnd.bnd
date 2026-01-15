@@ -2,7 +2,9 @@
 
 -buildpath: \
 	org.osgi.annotation.versioning,\
-	org.osgi.annotation.bundle
+	org.osgi.annotation.bundle,\
+	org.eclipse.fennec.model.atlas.workflow;version=snapshot,\
+	org.eclipse.fennec.model.atlas.management;version=snapshot
 
 # Generate OSGi-compatible EMF code from genmodel
 -generate:\

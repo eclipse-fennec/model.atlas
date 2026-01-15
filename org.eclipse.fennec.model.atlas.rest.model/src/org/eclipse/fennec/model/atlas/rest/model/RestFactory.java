@@ -63,6 +63,24 @@ public interface RestFactory extends EFactory {
 	ErrorResponse createErrorResponse();
 
 	/**
+	 * Returns a new object of class '<em>Stage Transition Request</em>'.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @return a new object of class '<em>Stage Transition Request</em>'.
+	 * @generated
+	 */
+	StageTransitionRequest createStageTransitionRequest();
+
+	/**
+	 * Returns a new object of class '<em>Scope List Response</em>'.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @return a new object of class '<em>Scope List Response</em>'.
+	 * @generated
+	 */
+	ScopeListResponse createScopeListResponse();
+
+	/**
 	 * Returns the package supported by this factory.
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->

@@ -120,7 +120,7 @@ public class DataIntegrityValidationIntegrationTest {
 
 		// === PHASE 2: Corrupt the metadata file ===
 
-		Path metadataFile = tempDir.resolve(objectId + ".metadata.xmi");
+		Path metadataFile = tempDir.resolve(TEST_SCOPE).resolve(TEST_REGISTRY).resolve(TEST_STAGE).resolve(objectId + ".metadata.xmi");
 		assertTrue(Files.exists(metadataFile), "Metadata file should exist");
 
 		// Read the original metadata file content
@@ -192,7 +192,7 @@ public class DataIntegrityValidationIntegrationTest {
 
 		// === PHASE 2: Corrupt the metadata file by removing objectId ===
 
-		Path metadataFile = tempDir.resolve(objectId + ".metadata.xmi");
+		Path metadataFile = tempDir.resolve(TEST_SCOPE).resolve(TEST_REGISTRY).resolve(TEST_STAGE).resolve(objectId + ".metadata.xmi");
 		assertTrue(Files.exists(metadataFile), "Metadata file should exist");
 
 		// Read and corrupt the content by removing the objectId attribute
@@ -259,7 +259,7 @@ public class DataIntegrityValidationIntegrationTest {
 
 		// === PHASE 2: Completely corrupt the metadata file ===
 
-		Path metadataFile = tempDir.resolve(objectId + ".metadata.xmi");
+		Path metadataFile = tempDir.resolve(TEST_SCOPE).resolve(TEST_REGISTRY).resolve(TEST_STAGE).resolve(objectId + ".metadata.xmi");
 		assertTrue(Files.exists(metadataFile), "Metadata file should exist");
 
 		// Write completely invalid content

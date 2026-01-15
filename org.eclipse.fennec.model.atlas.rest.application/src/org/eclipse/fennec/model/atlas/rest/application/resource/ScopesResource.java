@@ -15,11 +15,11 @@ package org.eclipse.fennec.model.atlas.rest.application.resource;
 
 import java.util.List;
 
-import org.eclipse.fennec.model.atlas.model.scope.Scope;
-import org.eclipse.fennec.model.atlas.model.scope.ScopeContainer;
-import org.eclipse.fennec.model.atlas.model.scope.ScopeFactory;
+import org.eclipse.fennec.model.atlas.rest.model.RestFactory;
+import org.eclipse.fennec.model.atlas.rest.model.ScopeListResponse;
 import org.eclipse.fennec.model.atlas.runtime.RequireRuntime;
-import org.eclipse.fennec.model.atlas.scope.ScopeCollector;
+import org.eclipse.fennec.model.atlas.wf.workflowapi.Scope;
+import org.eclipse.fennec.model.atlas.workflow.ScopeServiceCollector;
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
 import org.osgi.service.component.annotations.ServiceScope;
@@ -29,6 +29,7 @@ import org.osgi.service.jakartars.whiteboard.propertytypes.JakartarsResource;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.ws.rs.GET;
@@ -54,7 +55,7 @@ import jakarta.ws.rs.core.Response;
 public class ScopesResource {
 
 	 @Reference
-	 private ScopeCollector scopeCollector;
+	 private ScopeServiceCollector scopeCollector;
 
 	/**
 	 * List all configured scopes.
@@ -70,15 +71,13 @@ public class ScopesResource {
 			@ApiResponse(
 				responseCode = "200",
 				description = "Scopes retrieved successfully",
-				content = @Content(mediaType = MediaType.APPLICATION_JSON)
+				content = @Content(mediaType = MediaType.APPLICATION_JSON, schema = @Schema(implementation = ScopeListResponse.class))
 			),
-			@ApiResponse(responseCode = "500", description = "Internal server error")
 		}
 	)
-	public Response listScopes() {
-		
+	public Response listScopes() {		
 		List<Scope> scopes = scopeCollector.getAllScopes();
-		ScopeContainer container = ScopeFactory.eINSTANCE.createScopeContainer();
+		ScopeListResponse container = RestFactory.eINSTANCE.createScopeListResponse();
 		container.getScopes().addAll(scopes);
 		return Response.status(Response.Status.OK).entity(container).build();
 	}
@@ -99,20 +98,16 @@ public class ScopesResource {
 			@ApiResponse(
 				responseCode = "200",
 				description = "Scope found",
-				content = @Content(mediaType = MediaType.APPLICATION_JSON)
+						content = @Content(mediaType = MediaType.APPLICATION_JSON, schema = @Schema(implementation = Scope.class))
 			),
-			@ApiResponse(responseCode = "404", description = "Scope not found"),
-			@ApiResponse(responseCode = "500", description = "Internal server error")
+			@ApiResponse(responseCode = "204", description = "Scope not found"),
 		}
 	)
-	public Response getWorkflowScope(
+	public Response getScopeByName(
 		@Parameter(description = "The name of the workflow scope", required = true)
-		@PathParam("scopeName") String scopeName) {
-		
-		Scope scope = scopeCollector.getWorkflowScopeByName(scopeName);
-		if(scope == null) return Response.status(Response.Status.NO_CONTENT).build();
+		@PathParam("scopeName") String scopeName) {	
+		Scope scope = scopeCollector.getScopeByName(scopeName);
+		if(scope == null) return Response.status(Response.Status.NO_CONTENT).entity(String.format("No scope with name %s was found.", scopeName)).build();
 		return Response.status(Response.Status.OK).entity(scope).build();
 	}
-	
-	
 }

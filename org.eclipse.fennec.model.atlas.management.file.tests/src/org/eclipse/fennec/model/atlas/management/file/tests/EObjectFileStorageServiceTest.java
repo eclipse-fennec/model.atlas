@@ -129,8 +129,8 @@ public class EObjectFileStorageServiceTest {
 		assertEquals("test-id-123", storageId);
 
 		// Verify files were created
-		File ecoreFile = new File(tempDir.toFile(), storageId + ".ecore");
-		File metadataFile = new File(tempDir.toFile(), storageId + ".metadata.xmi");
+		File ecoreFile = new File(tempDir.resolve(TEST_SCOPE).resolve(TEST_REGISTRY).resolve(TEST_STAGE).toFile(), storageId + ".ecore");
+		File metadataFile = new File(tempDir.resolve(TEST_SCOPE).resolve(TEST_REGISTRY).resolve(TEST_STAGE).toFile(), storageId + ".metadata.xmi");
 		assertTrue(ecoreFile.exists(), "Ecore file should exist");
 		assertTrue(metadataFile.exists(), "Metadata file should exist");
 
@@ -217,8 +217,8 @@ public class EObjectFileStorageServiceTest {
 		storePromise.getValue(); String storageId = metadata.getObjectId();
 
 		// Verify files exist
-		File ecoreFile = new File(tempDir.toFile(), storageId + ".ecore");
-		File metadataFile = new File(tempDir.toFile(), storageId + ".metadata.xmi");
+		File ecoreFile = new File(tempDir.resolve(TEST_SCOPE).resolve(TEST_REGISTRY).resolve(TEST_STAGE).toFile(), storageId + ".ecore");
+		File metadataFile = new File(tempDir.resolve(TEST_SCOPE).resolve(TEST_REGISTRY).resolve(TEST_STAGE).toFile(), storageId + ".metadata.xmi");
 		assertTrue(ecoreFile.exists());
 		assertTrue(metadataFile.exists());
 
@@ -295,7 +295,7 @@ public class EObjectFileStorageServiceTest {
 		String storageId1 = metadata1.getObjectId();
 
 		// Verify file with .ecore extension exists
-		File ecoreFile = new File(tempDir.toFile(), storageId1 + ".ecore");
+		File ecoreFile = new File(tempDir.resolve(TEST_SCOPE).resolve(TEST_REGISTRY).resolve(TEST_STAGE).toFile(), storageId1 + ".ecore");
 		assertTrue(ecoreFile.exists(), "File with .ecore extension should exist");
 
 		// Test with default extension (no property set)
@@ -311,7 +311,7 @@ public class EObjectFileStorageServiceTest {
 		String storageId2 = metadata2.getObjectId();
 
 		// Verify file with .xmi extension exists
-		File xmiFile = new File(tempDir.toFile(), storageId2 + ".xmi");
+		File xmiFile = new File(tempDir.resolve(TEST_SCOPE).resolve(TEST_REGISTRY).resolve(TEST_STAGE).toFile(), storageId2 + ".xmi");
 		assertTrue(xmiFile.exists(), "File with .xmi extension should exist");
 
 		// Verify both can be retrieved
@@ -356,7 +356,7 @@ public class EObjectFileStorageServiceTest {
 		storePromise.getValue(); String storageId = metadata.getObjectId();
 
 		// Verify file exists
-		File ecoreFile = new File(tempDir.toFile(), storageId + ".ecore");
+		File ecoreFile = new File(tempDir.resolve(TEST_SCOPE).resolve(TEST_REGISTRY).resolve(TEST_STAGE).toFile(), storageId + ".ecore");
 		assertTrue(ecoreFile.exists(), "File with .ecore extension should exist");
 
 		// Retrieve and verify
@@ -588,8 +588,8 @@ public class EObjectFileStorageServiceTest {
 		assertEquals(5, countAfterStore, "Object count should be 5 after storing 5 objects");
 
 		// Verify metadata files exist before deletion
-		File metadataFile1 = new File(tempDir.toFile(), "count-test-1.metadata.xmi");
-		File metadataFile3 = new File(tempDir.toFile(), "count-test-3.metadata.xmi");
+		File metadataFile1 = new File(tempDir.resolve(TEST_SCOPE).resolve(TEST_REGISTRY).resolve(TEST_STAGE).toFile(), "count-test-1.metadata.xmi");
+		File metadataFile3 = new File(tempDir.resolve(TEST_SCOPE).resolve(TEST_REGISTRY).resolve(TEST_STAGE).toFile(), "count-test-3.metadata.xmi");
 		assertTrue(metadataFile1.exists(), "Metadata file 1 should exist before deletion");
 		assertTrue(metadataFile3.exists(), "Metadata file 3 should exist before deletion");
 
