@@ -399,7 +399,7 @@ public class ApicurioStorageHelper extends AbstractStorageHelper {
 	URI contentUri = URI.createURI(artifactId);
 	ResourceOperation contentRes = createResource(contentUri, contentType);
 	contentRes.getResource().getContents().add(content);
-	ResourceOperation objectOp = createResource(URI.createURI(apicurioURL.concat("?ifExists=CREATE_VERSION")),
+	ResourceOperation objectOp = createResource(URI.createURI(apicurioURL.concat("?ifExists=FIND_OR_CREATE_VERSION")),
 		"application/json");
 
 	try (ByteArrayOutputStream baos = new ByteArrayOutputStream()) {

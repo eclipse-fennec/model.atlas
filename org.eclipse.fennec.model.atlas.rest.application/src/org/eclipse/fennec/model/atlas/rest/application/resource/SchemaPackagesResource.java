@@ -240,7 +240,7 @@ public class SchemaPackagesResource {
 	    @Parameter(description = "The namespace URI of the package. If not provided, uses the EPackage's nsURI. If provided, must match the EPackage's nsURI.", required = false) @QueryParam("nsUri") String nsUri,
 	    @Parameter(description = "Human-readable name for the package") @QueryParam("name") String name,
 	    @Parameter(description = "Package version. If not provided, will be extracted from the nsURI. If provided, must be semantically compatible with the URI version.", required = false) @QueryParam("version") String version,
-	    @Parameter(description = "Override option. If true and a Package with the same uri already exists, it updates it. ", required = false) @QueryParam("override") boolean override,
+	    @Parameter(description = "Overwrite option. If true and a Package with the same uri already exists, it updates it. ", required = false) @QueryParam("overwrite") boolean overwrite,
 	    @RequestBody(description = "The schema package content", required = true, content = @Content(schema = @Schema(implementation = EPackage.class))) EPackage ePackage) {
 
 	checkContentType();
@@ -258,7 +258,7 @@ public class SchemaPackagesResource {
 	    // Check uniqueness across visibility chain
 	    ObjectMetadata existingMetadata = workflowService.getFromStage(stageName, encodedNsURI);
 	    if (existingMetadata != null) {
-	    	if(!override) {
+	    	if(!overwrite) {
 	    		return Response.status(Response.Status.CONFLICT).build();
 	    	} else {
 	    		if (existingMetadata.isIsReadOnly()) {

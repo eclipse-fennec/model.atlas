@@ -283,13 +283,22 @@ public interface ManagementApiPackage extends org.eclipse.emf.ecore.EPackage {
 	int EOBJECT_STORAGE_SERVICE___STORE_OBJECT__STRING_EOBJECT_OBJECTMETADATA = 0;
 
 	/**
+	 * The operation id for the '<em>Update Object</em>' operation.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 * @ordered
+	 */
+	int EOBJECT_STORAGE_SERVICE___UPDATE_OBJECT__STRING_EOBJECT_OBJECTMETADATA = 1;
+
+	/**
 	 * The operation id for the '<em>Retrieve Object</em>' operation.
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
 	 * @generated
 	 * @ordered
 	 */
-	int EOBJECT_STORAGE_SERVICE___RETRIEVE_OBJECT__STRING = 1;
+	int EOBJECT_STORAGE_SERVICE___RETRIEVE_OBJECT__STRING = 2;
 
 	/**
 	 * The operation id for the '<em>Retrieve Metadata</em>' operation.
@@ -298,7 +307,7 @@ public interface ManagementApiPackage extends org.eclipse.emf.ecore.EPackage {
 	 * @generated
 	 * @ordered
 	 */
-	int EOBJECT_STORAGE_SERVICE___RETRIEVE_METADATA__STRING = 2;
+	int EOBJECT_STORAGE_SERVICE___RETRIEVE_METADATA__STRING = 3;
 
 	/**
 	 * The operation id for the '<em>Delete Object</em>' operation.
@@ -307,7 +316,7 @@ public interface ManagementApiPackage extends org.eclipse.emf.ecore.EPackage {
 	 * @generated
 	 * @ordered
 	 */
-	int EOBJECT_STORAGE_SERVICE___DELETE_OBJECT__STRING = 3;
+	int EOBJECT_STORAGE_SERVICE___DELETE_OBJECT__STRING = 4;
 
 	/**
 	 * The operation id for the '<em>List Object Ids</em>' operation.
@@ -316,7 +325,7 @@ public interface ManagementApiPackage extends org.eclipse.emf.ecore.EPackage {
 	 * @generated
 	 * @ordered
 	 */
-	int EOBJECT_STORAGE_SERVICE___LIST_OBJECT_IDS = 4;
+	int EOBJECT_STORAGE_SERVICE___LIST_OBJECT_IDS = 5;
 
 	/**
 	 * The operation id for the '<em>Query Objects</em>' operation.
@@ -325,7 +334,7 @@ public interface ManagementApiPackage extends org.eclipse.emf.ecore.EPackage {
 	 * @generated
 	 * @ordered
 	 */
-	int EOBJECT_STORAGE_SERVICE___QUERY_OBJECTS__OBJECTQUERY = 5;
+	int EOBJECT_STORAGE_SERVICE___QUERY_OBJECTS__OBJECTQUERY = 6;
 
 	/**
 	 * The operation id for the '<em>Update Metadata</em>' operation.
@@ -334,7 +343,7 @@ public interface ManagementApiPackage extends org.eclipse.emf.ecore.EPackage {
 	 * @generated
 	 * @ordered
 	 */
-	int EOBJECT_STORAGE_SERVICE___UPDATE_METADATA__STRING_OBJECTMETADATA = 6;
+	int EOBJECT_STORAGE_SERVICE___UPDATE_METADATA__STRING_OBJECTMETADATA = 7;
 
 	/**
 	 * The operation id for the '<em>Update Status</em>' operation.
@@ -343,7 +352,7 @@ public interface ManagementApiPackage extends org.eclipse.emf.ecore.EPackage {
 	 * @generated
 	 * @ordered
 	 */
-	int EOBJECT_STORAGE_SERVICE___UPDATE_STATUS__STRING_OBJECTSTATUS_STRING = 7;
+	int EOBJECT_STORAGE_SERVICE___UPDATE_STATUS__STRING_OBJECTSTATUS_STRING = 8;
 
 	/**
 	 * The operation id for the '<em>Exists</em>' operation.
@@ -352,7 +361,7 @@ public interface ManagementApiPackage extends org.eclipse.emf.ecore.EPackage {
 	 * @generated
 	 * @ordered
 	 */
-	int EOBJECT_STORAGE_SERVICE___EXISTS__STRING = 8;
+	int EOBJECT_STORAGE_SERVICE___EXISTS__STRING = 9;
 
 	/**
 	 * The operation id for the '<em>Get Object Count</em>' operation.
@@ -361,7 +370,7 @@ public interface ManagementApiPackage extends org.eclipse.emf.ecore.EPackage {
 	 * @generated
 	 * @ordered
 	 */
-	int EOBJECT_STORAGE_SERVICE___GET_OBJECT_COUNT = 9;
+	int EOBJECT_STORAGE_SERVICE___GET_OBJECT_COUNT = 10;
 
 	/**
 	 * The operation id for the '<em>Get Backend Type</em>' operation.
@@ -370,7 +379,7 @@ public interface ManagementApiPackage extends org.eclipse.emf.ecore.EPackage {
 	 * @generated
 	 * @ordered
 	 */
-	int EOBJECT_STORAGE_SERVICE___GET_BACKEND_TYPE = 10;
+	int EOBJECT_STORAGE_SERVICE___GET_BACKEND_TYPE = 11;
 
 	/**
 	 * The number of operations of the '<em>EObject Storage Service</em>' class.
@@ -379,7 +388,7 @@ public interface ManagementApiPackage extends org.eclipse.emf.ecore.EPackage {
 	 * @generated
 	 * @ordered
 	 */
-	int EOBJECT_STORAGE_SERVICE_OPERATION_COUNT = 11;
+	int EOBJECT_STORAGE_SERVICE_OPERATION_COUNT = 12;
 
 	/**
 	 * The meta object id for the '{@link org.eclipse.fennec.model.atlas.mgmt.api.EObjectRegistryService <em>EObject Registry Service</em>}' class.
@@ -824,6 +833,16 @@ public interface ManagementApiPackage extends org.eclipse.emf.ecore.EPackage {
 	 * @generated
 	 */
 	EOperation getEObjectStorageService__StoreObject__String_EObject_ObjectMetadata();
+
+	/**
+	 * Returns the meta object for the '{@link org.eclipse.fennec.model.atlas.mgmt.api.EObjectStorageService#updateObject(java.lang.String, org.eclipse.emf.ecore.EObject, org.eclipse.fennec.model.atlas.mgmt.management.ObjectMetadata) <em>Update Object</em>}' operation.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @return the meta object for the '<em>Update Object</em>' operation.
+	 * @see org.eclipse.fennec.model.atlas.mgmt.api.EObjectStorageService#updateObject(java.lang.String, org.eclipse.emf.ecore.EObject, org.eclipse.fennec.model.atlas.mgmt.management.ObjectMetadata)
+	 * @generated
+	 */
+	EOperation getEObjectStorageService__UpdateObject__String_EObject_ObjectMetadata();
 
 	/**
 	 * Returns the meta object for the '{@link org.eclipse.fennec.model.atlas.mgmt.api.EObjectStorageService#retrieveObject(java.lang.String) <em>Retrieve Object</em>}' operation.
@@ -1347,6 +1366,14 @@ public interface ManagementApiPackage extends org.eclipse.emf.ecore.EPackage {
 		 * @generated
 		 */
 		EOperation EOBJECT_STORAGE_SERVICE___STORE_OBJECT__STRING_EOBJECT_OBJECTMETADATA = eINSTANCE.getEObjectStorageService__StoreObject__String_EObject_ObjectMetadata();
+
+		/**
+		 * The meta object literal for the '<em><b>Update Object</b></em>' operation.
+		 * <!-- begin-user-doc -->
+		 * <!-- end-user-doc -->
+		 * @generated
+		 */
+		EOperation EOBJECT_STORAGE_SERVICE___UPDATE_OBJECT__STRING_EOBJECT_OBJECTMETADATA = eINSTANCE.getEObjectStorageService__UpdateObject__String_EObject_ObjectMetadata();
 
 		/**
 		 * The meta object literal for the '<em><b>Retrieve Object</b></em>' operation.

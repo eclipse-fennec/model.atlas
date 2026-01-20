@@ -270,7 +270,7 @@ public abstract class AbstractEObjectStorageService implements EObjectStorageSer
             try {
                 // Use provided objectId or generate one
                 String storageId = (objectId != null && !objectId.isEmpty()) ? objectId : UUID.randomUUID().toString();
-                
+
                 // Ensure the objectId, role, and objectType are set in metadata
                 if (metadata != null) {
                     metadata.setObjectId(storageId); // Always set the objectId in the caller's metadata
@@ -280,11 +280,11 @@ public abstract class AbstractEObjectStorageService implements EObjectStorageSer
                         metadata.setObjectType(EcoreUtil.getURI(object.eClass()).toString());
                     }
                 }
-                
+
                 // Use helper to save both object and metadata
                 storageHelper.saveEObject(storageId, object, metadata);
                 storageHelper.saveMetadata(storageId, metadata);
-                
+
                 // Update registry cache if available
                 if (registryService != null) {
                     ObjectMetadata metadataCopy = EcoreUtil.copy(metadata);
@@ -295,17 +295,35 @@ public abstract class AbstractEObjectStorageService implements EObjectStorageSer
                     }
                     registryService.updateCache(metadataCopy);
                 }
-                
+
                 String fileExtension = storageHelper.getFileExtension(metadata);
                 LOGGER.info("Stored EObject with ID: " + storageId + " and extension: " + fileExtension);
                 return metadata;
-                
+
             } catch (Exception e) {
                 LOGGER.log(Level.SEVERE, "Failed to store object", e);
                 e.printStackTrace(System.out);
                 throw new RuntimeException("Failed to store object", e);
             }
         });
+    }
+
+    /**
+     * Updates an existing object in storage.
+     *
+     * <p>Default implementation delegates to {@link #storeObject(String, EObject, ObjectMetadata)}.
+     * Storage backends that require special handling for updates (e.g., Apicurio which needs
+     * delete-then-create) should override this method.</p>
+     *
+     * @param objectId the object identifier
+     * @param object   the updated EObject
+     * @param metadata the updated metadata
+     * @return promise with the updated metadata
+     */
+    @Override
+    public Promise<ObjectMetadata> updateObject(String objectId, EObject object, ObjectMetadata metadata) {
+        // Default: just delegate to storeObject (works for file-based storage)
+        return storeObject(objectId, object, metadata);
     }
 
     @Override

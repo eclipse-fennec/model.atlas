@@ -178,15 +178,15 @@ public abstract class AbstractStorageHelper implements AutoCloseable {
     public void saveEObject(String objectId, EObject object, ObjectMetadata metadata) throws IOException {
         String fileExtension = getFileExtension(metadata);
         String contentType = getContentType(metadata);
-        
+
         String objectPath = buildObjectPath(objectId, fileExtension);
         URI objectUri = createStorageURI(objectPath);
-        
+
         ResourceOperation objectOp = createResource(objectUri, contentType);
         try {
             objectOp.getResource().getContents().add(object);
             objectOp.getResource().save(Collections.emptyMap());
-            
+
             // Let storage implementation handle the actual persistence
             persistResource(objectPath, objectOp.getResource());
         } finally {

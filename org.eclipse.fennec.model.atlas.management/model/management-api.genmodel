@@ -76,6 +76,11 @@
         <genParameters ecoreParameter="management-api.ecore#//EObjectStorageService/storeObject/object"/>
         <genParameters ecoreParameter="management-api.ecore#//EObjectStorageService/storeObject/metadata"/>
       </genOperations>
+      <genOperations ecoreOperation="management-api.ecore#//EObjectStorageService/updateObject">
+        <genParameters ecoreParameter="management-api.ecore#//EObjectStorageService/updateObject/objectId"/>
+        <genParameters ecoreParameter="management-api.ecore#//EObjectStorageService/updateObject/object"/>
+        <genParameters ecoreParameter="management-api.ecore#//EObjectStorageService/updateObject/metadata"/>
+      </genOperations>
       <genOperations ecoreOperation="management-api.ecore#//EObjectStorageService/retrieveObject">
         <genParameters ecoreParameter="management-api.ecore#//EObjectStorageService/retrieveObject/objectId"/>
       </genOperations>

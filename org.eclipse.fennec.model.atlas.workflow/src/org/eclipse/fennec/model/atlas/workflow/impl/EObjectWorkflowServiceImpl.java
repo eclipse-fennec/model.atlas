@@ -202,7 +202,7 @@ public class EObjectWorkflowServiceImpl<T extends EObject> implements EObjectWor
 		return null;
 	}
 
-	/* 
+	/*
 	 * (non-Javadoc)
 	 * @see org.eclipse.fennec.model.atlas.wf.workflowapi.EObjectWorkflowService#updateInStage(java.lang.String, org.eclipse.emf.ecore.EObject, java.lang.String, java.lang.String)
 	 */
@@ -213,7 +213,7 @@ public class EObjectWorkflowServiceImpl<T extends EObject> implements EObjectWor
 			requireNonNull(updatedObject, "Updated object cannot be null");
 			requireTrue(isStageAllowed(stage), String.format("Stage %s is not supported from WorkflowService", stage));
 			requireTrue(isStageWritable(stage), String.format("Stage %s is not writable for this WorkflowService", stage));
-			
+
 			EObjectStorageService<T> storageService = getStorageByStage(stage);
 			if(storageService == null) {
 				logger.severe(String.format("Cannot retrieve EObjectStorageService for %s. Object %s cannot be updated", stage, objectId));
@@ -221,13 +221,13 @@ public class EObjectWorkflowServiceImpl<T extends EObject> implements EObjectWor
 			}
 
 			// Get current metadata
-			ObjectMetadata metadata = getPromiseValue(storageService.retrieveMetadata(objectId));		
+			ObjectMetadata metadata = getPromiseValue(storageService.retrieveMetadata(objectId));
 			metadata.setLastChangeTime(Instant.now());
 			metadata.setRole(stage);
 			metadata.setVersion(updatedVersion);
-			
-			// Update the object in draft storage
-			metadata = getPromiseValue(storageService.storeObject(objectId, updatedObject, metadata));
+
+			// Update the object in storage using updateObject (handles delete+create for Apicurio)
+			metadata = getPromiseValue(storageService.updateObject(objectId, updatedObject, metadata));
 			return metadata;
 		});
 	}

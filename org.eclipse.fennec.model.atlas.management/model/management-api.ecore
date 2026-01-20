@@ -194,6 +194,19 @@
       </eParameters>
       <eParameters name="metadata" lowerBound="1" eType="ecore:EClass management.ecore#//ObjectMetadata"/>
     </eOperations>
+    <eOperations name="updateObject">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="Update an existing object in storage. For backends that don't support in-place updates (e.g., Apicurio), this may perform delete-then-create. Default implementation delegates to storeObject."/>
+      </eAnnotations>
+      <eGenericType eClassifier="ecore:EDataType management.ecore#//Promise">
+        <eTypeArguments eClassifier="ecore:EClass management.ecore#//ObjectMetadata"/>
+      </eGenericType>
+      <eParameters name="objectId" lowerBound="1" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+      <eParameters name="object" lowerBound="1">
+        <eGenericType eTypeParameter="#//EObjectStorageService/T"/>
+      </eParameters>
+      <eParameters name="metadata" lowerBound="1" eType="ecore:EClass management.ecore#//ObjectMetadata"/>
+    </eOperations>
     <eOperations name="retrieveObject">
       <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
         <details key="documentation" value="Retrieve object by ID"/>
