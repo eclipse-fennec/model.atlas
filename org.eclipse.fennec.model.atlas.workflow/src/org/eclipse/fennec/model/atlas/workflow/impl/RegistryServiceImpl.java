@@ -112,8 +112,6 @@ public class RegistryServiceImpl<T extends EObject> implements RegistryService<T
 			metadata.setRegistry(config.registry_name());
 			metadata.setScope(scope);
 
-			requireNonNull(metadata.getObjectName());
-
 			EObjectStorageService<T> storageService = storageMap.get(stage);
 			ObjectMetadata objectMetadata = WorkflowServiceHelper.getPromiseValue(storageService.storeObject(scope, config.registry_name(), stage, metadata.getObjectId(), object, metadata));
 			return objectMetadata;

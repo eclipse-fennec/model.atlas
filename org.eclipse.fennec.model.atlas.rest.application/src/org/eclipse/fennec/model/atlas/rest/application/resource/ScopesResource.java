@@ -90,7 +90,7 @@ public class ScopesResource {
 	 */
 	@GET
 	@Path("/{scopeName}")
-	@Produces({ MediaType.APPLICATION_JSON })
+	@Produces({ MediaType.APPLICATION_JSON, MediaType.TEXT_PLAIN })
 	@Operation(
 		summary = "Get workflow scope metadata",
 		description = "Retrieve metadata for a specific workflow scope by name",
@@ -100,14 +100,14 @@ public class ScopesResource {
 				description = "Scope found",
 						content = @Content(mediaType = MediaType.APPLICATION_JSON, schema = @Schema(implementation = Scope.class))
 			),
-			@ApiResponse(responseCode = "204", description = "Scope not found"),
+			@ApiResponse(responseCode = "404", description = "Scope not found"),
 		}
 	)
 	public Response getScopeByName(
 		@Parameter(description = "The name of the workflow scope", required = true)
 		@PathParam("scopeName") String scopeName) {	
 		Scope scope = scopeCollector.getScopeByName(scopeName);
-		if(scope == null) return Response.status(Response.Status.NO_CONTENT).entity(String.format("No scope with name %s was found.", scopeName)).build();
+		if(scope == null) return Response.status(Response.Status.NOT_FOUND).entity(String.format("No scope with name %s was found.", scopeName)).build();
 		return Response.status(Response.Status.OK).entity(scope).build();
 	}
 }

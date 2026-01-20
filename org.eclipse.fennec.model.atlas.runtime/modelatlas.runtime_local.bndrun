@@ -1,4 +1,6 @@
--include: modelatlas.runtime_base.bndrun
+-include: \
+	modelatlas.runtime_base.bndrun,\
+	secrets.bndrun
 
 -runbundles.local: org.eclipse.fennec.model.atlas.runtime.config.local
 
@@ -8,9 +10,8 @@
     logback.configurationFile=file:${.}/runtime/etc/logback.xml,\
     gecko.log.dir=${.}/runtime/logs,\
     org.apache.felix.configadmin.plugin.interpolation.secretsdir=${.}/runtime/secrets,\
-    data=${.}/runtime/data/,\
-    APICURIO_HOST=localhost,\
-    APICURIO_PORT=8081
+    data=${.}/runtime/data/
+    
 
 -runtrace: true
 -resolve: never

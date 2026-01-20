@@ -73,7 +73,7 @@ import jakarta.ws.rs.core.Response.Status;
 @JakartarsResource()
 @JakartarsName("SchemaPackagesResource")
 @Component(name = "SchemaPackagesResource", service = SchemaPackagesResource.class, scope = ServiceScope.PROTOTYPE)
-@Path("/{scopeName}/schemas")
+@Path("/{scopeName}/schema")
 @Tag(name = "Schema Management", description = "CRUD operations for schema packages")
 public class SchemaPackagesResource {
 
@@ -124,6 +124,7 @@ public class SchemaPackagesResource {
 	@Produces
 	@Operation(summary = "List released packages in scope", description = "List all packages in the final stage for this scope, including packages from parent scopes", responses = {
 			@ApiResponse(responseCode = "200", description = "Packages retrieved successfully", content = @Content(mediaType = MediaType.APPLICATION_JSON)),
+			@ApiResponse(responseCode = "204", description = "No Package found in scope final stage, nor in the parent final stage"),
 			@ApiResponse(responseCode = "400", description = "Scope not available, schema registry not available for scope, stage not available for registry or not a valid stage"),
 			@ApiResponse(responseCode = "500", description = "Internal server error") })
 	public Response listReleasedPackages(
@@ -137,6 +138,7 @@ public class SchemaPackagesResource {
 		}
 		try {
 			List<ObjectMetadata> objectsMetadata = scopeService.listInFinalStageForRegistry(REGISTRY_NAME);
+			if(objectsMetadata.isEmpty()) return Response.status(Response.Status.NO_CONTENT).build();
 			ObjectMetadataContainer container = mgmtFactory.createObjectMetadataContainer();
 			container.getMetadata().addAll(objectsMetadata);		
 			return Response.status(Response.Status.OK).entity(container).build();
@@ -465,7 +467,7 @@ public class SchemaPackagesResource {
 	@Produces
 	@Operation(summary = "Transition package between stages", description = "Move a package from the current stage to a target stage. "
 			+ "Validates that the transition is allowed based on stage rules.", responses = {
-					@ApiResponse(responseCode = "200", description = "Package transitioned successfully", content = @Content(mediaType = MediaType.APPLICATION_JSON)),
+					@ApiResponse(responseCode = "200", description = "Package transitioned successfully", content = @Content(schema = @Schema(implementation = ObjectMetadata.class))),
 					@ApiResponse(responseCode = "400", description = "Invalid transition, missing parameters, scope not available, schema registry not available for scope, stage not available for registry or not a valid stage"),
 					@ApiResponse(responseCode = "403", description = "Stage is read-only or Object is only present in a parent scope final stage and so it's read-only"),
 					@ApiResponse(responseCode = "204", description = "Package not found in source stage"),
@@ -473,7 +475,7 @@ public class SchemaPackagesResource {
 	public Response transitionPackage(
 			@Parameter(description = "The scope name", required = true) @PathParam("scopeName") String scopeName,
 			@Parameter(description = "The source stage name", required = true) @PathParam("stageName") String stageName,
-			@RequestBody(description = "Transition request with objectId and targetStage", required = true, content = @Content(schema = @Schema(implementation = StageTransitionRequest.class))) StageTransitionRequest transitionRequest) {
+			@RequestBody(description = "Transition request with objectId and targetStage", required = true, content = @Content()) StageTransitionRequest transitionRequest) {
 
 		checkContentType();
 

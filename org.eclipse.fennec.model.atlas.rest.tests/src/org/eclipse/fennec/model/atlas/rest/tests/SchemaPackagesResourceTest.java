@@ -147,7 +147,7 @@ public class SchemaPackagesResourceTest {
         Response response = restClient
                 .target(BASE_URL)
                 .path(TEST_SCOPE_NAME)
-                .path("schemas")
+                .path("schema")
                 .request("application/json")
                 .get();
 
@@ -163,7 +163,7 @@ public class SchemaPackagesResourceTest {
         Response response = restClient
                 .target(BASE_URL)
                 .path("non-existent-scope")
-                .path("schemas")
+                .path("schema")
                 .request("application/json")
                 .get();
 
@@ -175,7 +175,7 @@ public class SchemaPackagesResourceTest {
         Response response = restClient
                 .target(BASE_URL)
                 .path(TEST_SCOPE_NAME)
-                .path("schemas")
+                .path("schema")
                 .path("stages")
                 .path(TEST_STAGE_DRAFT)
                 .request("application/json")
@@ -193,7 +193,7 @@ public class SchemaPackagesResourceTest {
         Response response = restClient
                 .target(BASE_URL)
                 .path(TEST_SCOPE_NAME)
-                .path("schemas")
+                .path("schema")
                 .path("stages")
                 .path(TEST_STAGE_DRAFT)
                 .queryParam("nsUri", TEST_PACKAGE_NSURI)
@@ -212,7 +212,7 @@ public class SchemaPackagesResourceTest {
         Response response = restClient
                 .target(BASE_URL)
                 .path(TEST_SCOPE_NAME)
-                .path("schemas")
+                .path("schema")
                 .path("stages")
                 .path(TEST_STAGE_DRAFT)
                 .queryParam("nsUri", "http://non-existent.com/schema/1.0")
@@ -232,7 +232,7 @@ public class SchemaPackagesResourceTest {
         Response response = restClient
                 .target(BASE_URL)
                 .path(TEST_SCOPE_NAME)
-                .path("schemas")
+                .path("schema")
                 .path("stages")
                 .path(TEST_STAGE_DRAFT)
                 .queryParam("nsUri", "http://non-existent.com/schema/1.0")
@@ -257,7 +257,7 @@ public class SchemaPackagesResourceTest {
         Response response = restClient
                 .target(BASE_URL)
                 .path("non-existent-scope")
-                .path("schemas")
+                .path("schema")
                 .path("stages")
                 .path(TEST_STAGE_DRAFT)
                 .queryParam("nsUri", TEST_PACKAGE_NSURI)
@@ -278,7 +278,7 @@ public class SchemaPackagesResourceTest {
         Response response = restClient
                 .target(BASE_URL)
                 .path(TEST_SCOPE_NAME)
-                .path("schemas")
+                .path("schema")
                 .path("stages")
                 .path(TEST_STAGE_DRAFT)
                 .queryParam("nsUri", TEST_PACKAGE_NSURI)
@@ -302,7 +302,7 @@ public class SchemaPackagesResourceTest {
         Response response = restClient
                 .target(BASE_URL)
                 .path(TEST_SCOPE_NAME)
-                .path("schemas")
+                .path("schema")
                 .path("stages")
                 .path(TEST_STAGE_DRAFT)
                 .queryParam("nsUri", "http://existing.com/schema/1.0")
@@ -329,7 +329,7 @@ public class SchemaPackagesResourceTest {
         Response response = restClient
                 .target(BASE_URL)
                 .path(TEST_SCOPE_NAME)
-                .path("schemas")
+                .path("schema")
                 .path("stages")
                 .path(TEST_STAGE_DRAFT)
                 .queryParam("nsUri", "http://readonly.com/schema/1.0")
@@ -354,7 +354,7 @@ public class SchemaPackagesResourceTest {
         Response response = restClient
                 .target(BASE_URL)
                 .path(TEST_SCOPE_NAME)
-                .path("schemas")
+                .path("schema")
                 .path("stages")
                 .path(TEST_STAGE_DRAFT)
                 .queryParam("nsUri", "http://new-package.com/schema/1.0")
@@ -379,7 +379,7 @@ public class SchemaPackagesResourceTest {
         Response response = restClient
                 .target(BASE_URL)
                 .path(TEST_SCOPE_NAME)
-                .path("schemas")
+                .path("schema")
                 .path("stages")
                 .path(TEST_STAGE_DRAFT)
                 .path("content")
@@ -398,7 +398,7 @@ public class SchemaPackagesResourceTest {
         Response response = restClient
                 .target(BASE_URL)
                 .path(TEST_SCOPE_NAME)
-                .path("schemas")
+                .path("schema")
                 .path("stages")
                 .path(TEST_STAGE_DRAFT)
                 .path("content")
@@ -419,7 +419,7 @@ public class SchemaPackagesResourceTest {
         Response response = restClient
                 .target(BASE_URL)
                 .path(TEST_SCOPE_NAME)
-                .path("schemas")
+                .path("schema")
                 .path("stages")
                 .path(TEST_STAGE_DRAFT)
                 .path("content")
@@ -443,7 +443,7 @@ public class SchemaPackagesResourceTest {
         Response response = restClient
                 .target(BASE_URL)
                 .path(TEST_SCOPE_NAME)
-                .path("schemas")
+                .path("schema")
                 .path("stages")
                 .path("readonly-stage")
                 .path("content")
@@ -463,7 +463,7 @@ public class SchemaPackagesResourceTest {
         Response response = restClient
                 .target(BASE_URL)
                 .path(TEST_SCOPE_NAME)
-                .path("schemas")
+                .path("schema")
                 .path("stages")
                 .path(TEST_STAGE_DRAFT)
                 .path("content")
@@ -482,7 +482,7 @@ public class SchemaPackagesResourceTest {
         Response response = restClient
                 .target(BASE_URL)
                 .path(TEST_SCOPE_NAME)
-                .path("schemas")
+                .path("schema")
                 .path("stages")
                 .path(TEST_STAGE_DRAFT)
                 .queryParam("nsUri", TEST_PACKAGE_NSURI)
@@ -497,7 +497,7 @@ public class SchemaPackagesResourceTest {
         Response response = restClient
                 .target(BASE_URL)
                 .path(TEST_SCOPE_NAME)
-                .path("schemas")
+                .path("schema")
                 .path("stages")
                 .path("readonly-stage")
                 .queryParam("nsUri", TEST_PACKAGE_NSURI)
@@ -512,7 +512,7 @@ public class SchemaPackagesResourceTest {
         Response response = restClient
                 .target(BASE_URL)
                 .path(TEST_SCOPE_NAME)
-                .path("schemas")
+                .path("schema")
                 .path("stages")
                 .path(TEST_STAGE_DRAFT)
                 .queryParam("nsUri", "http://non-existent.com/schema/1.0")
@@ -535,7 +535,7 @@ public class SchemaPackagesResourceTest {
         Response response = restClient
                 .target(BASE_URL)
                 .path(TEST_SCOPE_NAME)
-                .path("schemas")
+                .path("schema")
                 .path("stages")
                 .path(TEST_STAGE_DRAFT)
                 .path("actions")
@@ -561,7 +561,7 @@ public class SchemaPackagesResourceTest {
         Response response = restClient
                 .target(BASE_URL)
                 .path(TEST_SCOPE_NAME)
-                .path("schemas")
+                .path("schema")
                 .path("stages")
                 .path(TEST_STAGE_DRAFT)
                 .path("actions")
@@ -583,7 +583,7 @@ public class SchemaPackagesResourceTest {
         Response response = restClient
                 .target(BASE_URL)
                 .path(TEST_SCOPE_NAME)
-                .path("schemas")
+                .path("schema")
                 .path("stages")
                 .path(TEST_STAGE_DRAFT)
                 .path("actions")
@@ -601,7 +601,7 @@ public class SchemaPackagesResourceTest {
         Response response = restClient
                 .target(BASE_URL)
                 .path(TEST_SCOPE_NAME)
-                .path("schemas")
+                .path("schema")
                 .path("stages")
                 .path(TEST_STAGE_DRAFT)
                 .queryParam("name", TEST_PACKAGE_NAME)
@@ -621,7 +621,7 @@ public class SchemaPackagesResourceTest {
         Response response = restClient
                 .target(BASE_URL)
                 .path(TEST_SCOPE_NAME)
-                .path("schemas")
+                .path("schema")
                 .path("stages")
                 .path(TEST_STAGE_DRAFT)
                 .queryParam("name", "Test*")
@@ -640,7 +640,7 @@ public class SchemaPackagesResourceTest {
         Response response = restClient
                 .target(BASE_URL)
                 .path(TEST_SCOPE_NAME)
-                .path("schemas")
+                .path("schema")
                 .path("stages")
                 .path(TEST_STAGE_DRAFT)
                 .queryParam("name", "TestSchema*")
@@ -659,7 +659,7 @@ public class SchemaPackagesResourceTest {
         Response response = restClient
                 .target(BASE_URL)
                 .path(TEST_SCOPE_NAME)
-                .path("schemas")
+                .path("schema")
                 .path("stages")
                 .path(TEST_STAGE_DRAFT)
                 .queryParam("name", "NonExistentPackage")
@@ -674,7 +674,7 @@ public class SchemaPackagesResourceTest {
         Response response = restClient
                 .target(BASE_URL)
                 .path(TEST_SCOPE_NAME)
-                .path("schemas")
+                .path("schema")
                 .path("stages")
                 .path(TEST_STAGE_DRAFT)
                 .queryParam("name", "SensorModel")
@@ -693,7 +693,7 @@ public class SchemaPackagesResourceTest {
         Response response = restClient
                 .target(BASE_URL)
                 .path(TEST_SCOPE_NAME)
-                .path("schemas")
+                .path("schema")
                 .path("stages")
                 .path(TEST_STAGE_DRAFT)
                 .queryParam("nsUri", TEST_PACKAGE_NSURI)
@@ -713,7 +713,7 @@ public class SchemaPackagesResourceTest {
         Response response = restClient
                 .target(BASE_URL)
                 .path(TEST_SCOPE_NAME)
-                .path("schemas")
+                .path("schema")
                 .path("stages")
                 .path(TEST_STAGE_DRAFT)
                 .queryParam("name", "SensorModel*")
@@ -732,7 +732,7 @@ public class SchemaPackagesResourceTest {
         Response response = restClient
                 .target(BASE_URL)
                 .path(TEST_SCOPE_NAME)
-                .path("schemas")
+                .path("schema")
                 .path("stages")
                 .path(TEST_STAGE_APPROVED)
                 .queryParam("name", TEST_PACKAGE_NAME)

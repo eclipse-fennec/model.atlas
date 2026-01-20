@@ -31,6 +31,7 @@ import org.eclipse.emf.ecore.EObject;
 import org.eclipse.emf.ecore.resource.Resource;
 import org.eclipse.emf.ecore.resource.ResourceSet;
 import org.eclipse.emf.ecore.util.EcoreUtil;
+import org.eclipse.fennec.codec.options.CodecResourceOptions;
 import org.eclipse.fennec.model.atlas.management.apicurio.EObjectApicurioStorageService.Config;
 import org.eclipse.fennec.model.atlas.mgmt.api.EObjectRegistryService;
 import org.eclipse.fennec.model.atlas.mgmt.management.ObjectMetadata;
@@ -273,8 +274,9 @@ public class ApicurioStorageHelper extends AbstractStorageHelper {
 			SearchResponse artifactResponse = (SearchResponse) sendGETRequest(uri, MgmtApicurioPackage.Literals.SEARCH_RESPONSE, "application/json");
 			for(SearchedArtifact artifact : artifactResponse.getArtifacts()) {
 				if(artifact.getArtifactId().endsWith(METADATA_EXTENSION)) {
-					ObjectMetadata metadata = loadMetadata(scope, registry, stage, artifact.getArtifactId());
-					storedMetadata.add(metadata);
+					ObjectMetadata metadata = loadMetadata(scope, registry, stage, artifact.getArtifactId().replaceFirst(METADATA_EXTENSION, ""));
+					if(metadata != null) storedMetadata.add(metadata);
+					else LOGGER.warning(String.format("Loaded null metadata from apicurio for artifact id %s that was supposed to be in group %s", artifact.getArtifactId().replaceFirst(METADATA_EXTENSION, ""), scope.concat("-"+registry).concat("-"+stage)));
 				}
 			}
 		}
@@ -294,6 +296,7 @@ public class ApicurioStorageHelper extends AbstractStorageHelper {
 		try {
 			Map<String, Object> options = new HashMap<>();
 			options.put(EMFJs.OPTION_ROOT_ELEMENT, expectedResponseEClass);
+			options.put(CodecResourceOptions.CODEC_ROOT_OBJECT, expectedResponseEClass);
 			options.put(EMFUriHandlerConstants.OPTION_HTTP_METHOD, "GET");
 			searchOp.getResource().load(options);
 			if (!searchOp.getResource().getContents().isEmpty()) {

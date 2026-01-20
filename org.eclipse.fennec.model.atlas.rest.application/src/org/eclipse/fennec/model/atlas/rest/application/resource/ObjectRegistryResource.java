@@ -129,6 +129,7 @@ public class ObjectRegistryResource {
 							content = @Content(schema = @Schema( type = "array", implementation = ObjectMetadata.class))
 							),
 					@ApiResponse(responseCode = "400", description = "Scope not available, registry not available for scope, stage not available for registry or not a valid stage"),
+					@ApiResponse(responseCode = "204", description = "No object found in scope final stage, nor in the parent final stage"),
 					@ApiResponse(responseCode = "500", description = "Internal server error")
 			}
 			)
@@ -146,6 +147,7 @@ public class ObjectRegistryResource {
 		}
 		try {
 			List<ObjectMetadata> objectsMetadata = scopeService.listInFinalStageForRegistry(registryName);
+			if(objectsMetadata.isEmpty()) return Response.status(Response.Status.NO_CONTENT).build();
 			ObjectMetadataContainer container = mgmtFactory.createObjectMetadataContainer();
 			container.getMetadata().addAll(objectsMetadata);		
 			return Response.status(Response.Status.OK).entity(container).build();
