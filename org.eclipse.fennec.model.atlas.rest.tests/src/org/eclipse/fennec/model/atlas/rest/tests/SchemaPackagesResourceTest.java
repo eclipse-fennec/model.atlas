@@ -280,7 +280,7 @@ public class SchemaPackagesResourceTest {
     // ========== Override Parameter Tests ==========
 
     @Test
-    public void testCreatePackage_Conflict_WithoutOverride() throws Exception {
+    public void testCreatePackage_Conflict_WithoutOverwrite() throws Exception {
         EPackage testPackage = TestHelper.createTestEPackage("http://existing.com/schema/1.0", "ExistingSchema", "existing");
         String xmiContent = TestHelper.serializeToXMI(testPackage, resourceSet);
 
@@ -292,19 +292,19 @@ public class SchemaPackagesResourceTest {
                 .path(TEST_STAGE_DRAFT)
                 .queryParam("nsUri", "http://existing.com/schema/1.0")
                 .queryParam("name", "ExistingSchema")
-                .queryParam("override", false)
+                .queryParam("overwrite", false)
                 .request("application/xmi")
                 .post(Entity.entity(xmiContent, "application/xmi"));
 
-        System.out.println("DEBUG testCreatePackage_Conflict_WithoutOverride - Response status: " + response.getStatus());
+        System.out.println("DEBUG testCreatePackage_Conflict_WithoutOverwrite - Response status: " + response.getStatus());
         String responseContent = response.readEntity(String.class);
-        System.out.println("DEBUG testCreatePackage_Conflict_WithoutOverride - Response content: " + responseContent);
+        System.out.println("DEBUG testCreatePackage_Conflict_WithoutOverwrite - Response content: " + responseContent);
 
-        assertEquals(409, response.getStatus(), "Should return HTTP 409 Conflict when override is false and package exists");
+        assertEquals(409, response.getStatus(), "Should return HTTP 409 Conflict when Overwrite is false and package exists");
     }
 
     @Test
-    public void testCreatePackage_WithOverride_Success() throws Exception {
+    public void testCreatePackage_WithOverwrite_Success() throws Exception {
         EPackage testPackage = TestHelper.createTestEPackage("http://existing.com/schema/1.0", "UpdatedExistingSchema", "existing");
         String xmiContent = TestHelper.serializeToXMI(testPackage, resourceSet);
 
@@ -317,21 +317,21 @@ public class SchemaPackagesResourceTest {
                 .queryParam("nsUri", "http://existing.com/schema/1.0")
                 .queryParam("name", "UpdatedExistingSchema")
                 .queryParam("version", "1.0.0")
-                .queryParam("override", true)
+                .queryParam("overwrite", true)
                 .request("application/xmi")
                 .post(Entity.entity(xmiContent, "application/xmi"));
 
-        System.out.println("DEBUG testCreatePackage_WithOverride_Success - Response status: " + response.getStatus());
+        System.out.println("DEBUG testCreatePackage_WithOverwrite_Success - Response status: " + response.getStatus());
         String responseContent = response.readEntity(String.class);
-        System.out.println("DEBUG testCreatePackage_WithOverride_Success - Response content: " + responseContent);
+        System.out.println("DEBUG testCreatePackage_WithOverwrite_Success - Response content: " + responseContent);
 
-        assertEquals(200, response.getStatus(), "Should return HTTP 200 OK when override is true and package exists and is writable");
+        assertEquals(200, response.getStatus(), "Should return HTTP 200 OK when Overwrite is true and package exists and is writable");
         assertNotNull(responseContent, "Should return updated metadata");
         assertTrue(responseContent.contains("objectId"), "Response should contain objectId");
     }
 
     @Test
-    public void testCreatePackage_WithOverride_ReadOnly() throws Exception {
+    public void testCreatePackage_WithOverwrite_ReadOnly() throws Exception {
         EPackage testPackage = TestHelper.createTestEPackage("http://readonly.com/schema/1.0", "ReadOnlySchema", "readonly");
         String xmiContent = TestHelper.serializeToXMI(testPackage, resourceSet);
 
@@ -344,19 +344,19 @@ public class SchemaPackagesResourceTest {
                 .queryParam("nsUri", "http://readonly.com/schema/1.0")
                 .queryParam("name", "ReadOnlySchema")
                 .queryParam("version", "1.0.0")
-                .queryParam("override", true)
+                .queryParam("overwrite", true)
                 .request("application/xmi")
                 .post(Entity.entity(xmiContent, "application/xmi"));
 
-        System.out.println("DEBUG testCreatePackage_WithOverride_ReadOnly - Response status: " + response.getStatus());
+        System.out.println("DEBUG testCreatePackage_WithOverwrite_ReadOnly - Response status: " + response.getStatus());
         String responseContent = response.readEntity(String.class);
-        System.out.println("DEBUG testCreatePackage_WithOverride_ReadOnly - Response content: " + responseContent);
+        System.out.println("DEBUG testCreatePackage_WithOverwrite_ReadOnly - Response content: " + responseContent);
 
-        assertEquals(403, response.getStatus(), "Should return HTTP 403 Forbidden when override is true but package is read-only");
+        assertEquals(403, response.getStatus(), "Should return HTTP 403 Forbidden when Overwrite is true but package is read-only");
     }
 
     @Test
-    public void testCreatePackage_WithOverride_NewPackage() throws Exception {
+    public void testCreatePackage_WithOverwrite_NewPackage() throws Exception {
         EPackage testPackage = TestHelper.createTestEPackage("http://new-package.com/schema/1.0", "NewPackage", "new");
         String xmiContent = TestHelper.serializeToXMI(testPackage, resourceSet);
 
@@ -369,15 +369,15 @@ public class SchemaPackagesResourceTest {
                 .queryParam("nsUri", "http://new-package.com/schema/1.0")
                 .queryParam("name", "NewPackage")
                 .queryParam("version", "1.0.0")
-                .queryParam("override", true)
+                .queryParam("overwrite", true)
                 .request("application/xmi")
                 .post(Entity.entity(xmiContent, "application/xmi"));
 
         System.out.println("DEBUG testCreatePackage_WithOverride_NewPackage - Response status: " + response.getStatus());
         String responseContent = response.readEntity(String.class);
-        System.out.println("DEBUG testCreatePackage_WithOverride_NewPackage - Response content: " + responseContent);
+        System.out.println("DEBUG testCreatePackage_WithOverwrite_NewPackage - Response content: " + responseContent);
 
-        assertEquals(200, response.getStatus(), "Should return HTTP 200 OK when override is true for new package (behaves like normal create)");
+        assertEquals(200, response.getStatus(), "Should return HTTP 200 OK when Overwrite is true for new package (behaves like normal create)");
         assertNotNull(responseContent, "Should return created metadata");
     }
 
