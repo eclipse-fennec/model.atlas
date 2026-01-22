@@ -305,6 +305,9 @@ public class ObjectRegistryResource {
 
         // Validate object type
         if (!registryService.isEClassCompatibleWithRegistry(object.eClass())) {
+        	System.out.println(EcoreUtil.getURI(object.eClass()));
+        	System.out.println(EcoreUtil.getURI(registryService.getRootEClass()));
+        	
             return Response.status(Status.BAD_REQUEST)
                 .entity(String.format(
                     "Object type %s not compatible with registry %s (expects %s)",

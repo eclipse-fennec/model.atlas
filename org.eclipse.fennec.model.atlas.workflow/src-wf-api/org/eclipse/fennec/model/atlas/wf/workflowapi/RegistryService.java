@@ -214,4 +214,20 @@ public interface RegistryService<T extends EObject> {
 	 */
 	EClass getRootEClass();
 
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @model dataType="org.eclipse.fennec.model.atlas.mgmt.management.Void"
+	 * @generated
+	 */
+	Void activate(String scope);
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @model dataType="org.eclipse.fennec.model.atlas.mgmt.management.Void"
+	 * @generated
+	 */
+	Void deactivate(String scope);
+
 } // RegistryService

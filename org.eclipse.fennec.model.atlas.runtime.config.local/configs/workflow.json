@@ -1,23 +1,27 @@
 {
 	":configurator:resource-version": 1,
 	":configurator:version": "1.0.0",
+	"EPackagePostReleaseActionService": {
+		"releaseStorage.target": "(storage.type=apicurio)"
+	},
 	"ScopeService~atlas": {
 		"scope.name": "atlas",
 		"scope.description": "Atlas scope. The parent of all other scopes.",
 		"parent.scope": "",
 		"registryService.target": "(|(registry.name=schema)(registry.name=person))",
-		"registryService.cardinality.minimum:int": 2
+		"registryService.cardinality.minimum:int": 1
 	},
 	"ScopeService~civitas": {
 		"scope.name": "civitas",
 		"scope.description": "Civitas Scope",
 		"parent.scope": "atlas",
-		"registryService.target": "(|(registry.name=schema)(registry.name=person))",
-		"registryService.cardinality.minimum:int": 2
+		"registryService.target": "(|(registry.name=schema)(registry.name=sensor))",
+		"registryService.cardinality.minimum:int": 1
 	},
 	"RegistryService~schema": {
 		"registry.name": "schema",
 		"registry.description": "The schema registry to store EPackage objects",
+		"postReleaseActionService.target": "(component.name=EPackagePostReleaseActionService)",
 		"stage.storage.mappings": [
 			"draft:apicurio",
 			"approved:apicurio",
@@ -50,8 +54,8 @@
 		"root.eclass.uri": "http://www.eclipse.org/emf/2002/Ecore#//EPackage",
 		"resourceSet.target": "(emf.name=ecore)"
 		},
-		"RegistryService~person": {
-		"registry.name": "person",
+		"RegistryService~sensor": {
+		"registry.name": "sensor",
 		"registry.description": "The person registry to store Person objects",
 		"stage.storage.mappings": [
 			"draft:file",
@@ -81,8 +85,8 @@
 				"writable": true,
 				"final": true
 			}],
-		"schema.uri": "http://gecko.org/example/model/basic",
-		"root.eclass.uri": "http://gecko.org/example/model/basic#//Person",
-		"resourceSet.target": "(emf.name=basic)"
+		"schema.uri": "http://gecko.org/example/model/sensor",
+		"root.eclass.uri": "http://gecko.org/example/model/sensor#//Sensor",
+		"resourceSet.target": "(emf.name=sensor)"
 		}
 	}

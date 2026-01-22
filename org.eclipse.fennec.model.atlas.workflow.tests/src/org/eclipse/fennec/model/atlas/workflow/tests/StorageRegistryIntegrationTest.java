@@ -28,7 +28,7 @@ import org.eclipse.fennec.model.atlas.mgmt.management.ManagementFactory;
 import org.eclipse.fennec.model.atlas.mgmt.management.ObjectMetadata;
 import org.eclipse.fennec.model.atlas.mgmt.management.ObjectQuery;
 import org.eclipse.fennec.model.atlas.mgmt.management.ObjectStatus;
-import org.eclipse.fennec.model.atlas.workflow.tests.annotations.GovernanceTestAnnotations.StorageRegistrySetup;
+import org.eclipse.fennec.model.atlas.workflow.tests.annotations.TestAnnotations.StorageRegistrySetup;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -70,7 +70,7 @@ class StorageRegistryIntegrationTest {
 
     @Test
     @StorageRegistrySetup
-    void testStorageServiceDiscovery(@InjectService StorageRegistry storageRegistry) {
+    void testStorageServiceDiscovery(@InjectService(timeout = 5000l) StorageRegistry storageRegistry) {
     	// Verify that the registry is properly injected
         assertNotNull(storageRegistry, "StorageRegistry should be injected");
         // Verify that all expected storage services are registered

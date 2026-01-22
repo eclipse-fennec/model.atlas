@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012 - 2025 Data In Motion and others.
+* Copyright (c) 2012 - 2025 Data In Motion and others.
  * All rights reserved. 
  * 
  * This program and the accompanying materials are made
@@ -14,7 +14,6 @@
 package org.eclipse.fennec.model.atlas.workflow.impl;
 
 import java.lang.reflect.InvocationTargetException;
-import java.util.List;
 import java.util.Map;
 
 import org.eclipse.emf.ecore.EStructuralFeature;
@@ -34,24 +33,6 @@ public class WorkflowServiceHelper {
 	public static void requireTrue(boolean value, String message) {
 		if(value) return;
 		throw new IllegalStateException(message);
-	}
-	
-	public static boolean areStagesSubsequent(WorkflowServiceConfig config, String fromStage, String toStage) {
-		int fromIndex = List.of(config.stages()).indexOf(fromStage);
-		int toIndex = List.of(config.stages()).indexOf(toStage);
-		return (toIndex - fromIndex) == 1;
-	}
-	
-	public static boolean isStageAllowed(WorkflowServiceConfig config, String stage) {
-		return List.of(config.stages()).contains(stage);
-	}
-	
-	public static boolean isStageWritable(WorkflowServiceConfig config, String stage) {
-		return List.of(config.writable_stages()).contains(stage);
-	}
-	
-	public static boolean isRegistryAllowed(WorkflowServiceConfig config, String registry) {
-		return List.of(config.registries()).contains(registry);
 	}
 
 	/**

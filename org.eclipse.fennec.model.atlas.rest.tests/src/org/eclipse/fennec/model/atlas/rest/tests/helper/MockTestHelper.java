@@ -260,6 +260,8 @@ public class MockTestHelper {
         	transition.setToStage(toStage);
         	return transition;
         }
+
+		
     	
     }
     
@@ -611,6 +613,28 @@ public class MockTestHelper {
 		@Override
 		public EClass getRootEClass() {
 			return EcorePackage.Literals.EPACKAGE;
+		}
+
+		
+
+		/* 
+		 * (non-Javadoc)
+		 * @see org.eclipse.fennec.model.atlas.wf.workflowapi.RegistryService#activate(java.lang.String)
+		 */
+		@Override
+		public Void activate(String scope) {
+			// TODO Auto-generated method stub
+			return null;
+		}
+
+		/* 
+		 * (non-Javadoc)
+		 * @see org.eclipse.fennec.model.atlas.wf.workflowapi.RegistryService#deactivate(java.lang.String)
+		 */
+		@Override
+		public Void deactivate(String scope) {
+			// TODO Auto-generated method stub
+			return null;
 		}	
     }
 

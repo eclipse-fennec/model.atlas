@@ -383,13 +383,31 @@ public interface WorkflowApiPackage extends org.eclipse.emf.ecore.EPackage {
 	int REGISTRY_SERVICE___GET_ROOT_ECLASS = 17;
 
 	/**
+	 * The operation id for the '<em>Activate</em>' operation.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 * @ordered
+	 */
+	int REGISTRY_SERVICE___ACTIVATE__STRING = 18;
+
+	/**
+	 * The operation id for the '<em>Deactivate</em>' operation.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 * @ordered
+	 */
+	int REGISTRY_SERVICE___DEACTIVATE__STRING = 19;
+
+	/**
 	 * The number of operations of the '<em>Registry Service</em>' class.
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
 	 * @generated
 	 * @ordered
 	 */
-	int REGISTRY_SERVICE_OPERATION_COUNT = 18;
+	int REGISTRY_SERVICE_OPERATION_COUNT = 20;
 
 	/**
 	 * The meta object id for the '{@link org.eclipse.fennec.model.atlas.wf.workflowapi.ScopeService <em>Scope Service</em>}' class.
@@ -1077,6 +1095,26 @@ public interface WorkflowApiPackage extends org.eclipse.emf.ecore.EPackage {
 	EOperation getRegistryService__GetRootEClass();
 
 	/**
+	 * Returns the meta object for the '{@link org.eclipse.fennec.model.atlas.wf.workflowapi.RegistryService#activate(java.lang.String) <em>Activate</em>}' operation.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @return the meta object for the '<em>Activate</em>' operation.
+	 * @see org.eclipse.fennec.model.atlas.wf.workflowapi.RegistryService#activate(java.lang.String)
+	 * @generated
+	 */
+	EOperation getRegistryService__Activate__String();
+
+	/**
+	 * Returns the meta object for the '{@link org.eclipse.fennec.model.atlas.wf.workflowapi.RegistryService#deactivate(java.lang.String) <em>Deactivate</em>}' operation.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @return the meta object for the '<em>Deactivate</em>' operation.
+	 * @see org.eclipse.fennec.model.atlas.wf.workflowapi.RegistryService#deactivate(java.lang.String)
+	 * @generated
+	 */
+	EOperation getRegistryService__Deactivate__String();
+
+	/**
 	 * Returns the meta object for class '{@link org.eclipse.fennec.model.atlas.wf.workflowapi.ScopeService <em>Scope Service</em>}'.
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
@@ -1673,6 +1711,22 @@ public interface WorkflowApiPackage extends org.eclipse.emf.ecore.EPackage {
 		 * @generated
 		 */
 		EOperation REGISTRY_SERVICE___GET_ROOT_ECLASS = eINSTANCE.getRegistryService__GetRootEClass();
+
+		/**
+		 * The meta object literal for the '<em><b>Activate</b></em>' operation.
+		 * <!-- begin-user-doc -->
+		 * <!-- end-user-doc -->
+		 * @generated
+		 */
+		EOperation REGISTRY_SERVICE___ACTIVATE__STRING = eINSTANCE.getRegistryService__Activate__String();
+
+		/**
+		 * The meta object literal for the '<em><b>Deactivate</b></em>' operation.
+		 * <!-- begin-user-doc -->
+		 * <!-- end-user-doc -->
+		 * @generated
+		 */
+		EOperation REGISTRY_SERVICE___DEACTIVATE__STRING = eINSTANCE.getRegistryService__Deactivate__String();
 
 		/**
 		 * The meta object literal for the '{@link org.eclipse.fennec.model.atlas.wf.workflowapi.ScopeService <em>Scope Service</em>}' class.

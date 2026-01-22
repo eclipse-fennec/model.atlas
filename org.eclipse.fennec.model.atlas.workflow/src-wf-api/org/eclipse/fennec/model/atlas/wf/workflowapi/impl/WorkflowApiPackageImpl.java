@@ -469,6 +469,26 @@ public class WorkflowApiPackageImpl extends EPackageImpl implements WorkflowApiP
 	 * @generated
 	 */
 	@Override
+	public EOperation getRegistryService__Activate__String() {
+		return registryServiceEClass.getEOperations().get(18);
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
+	public EOperation getRegistryService__Deactivate__String() {
+		return registryServiceEClass.getEOperations().get(19);
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
 	public EClass getScopeService() {
 		return scopeServiceEClass;
 	}
@@ -834,6 +854,8 @@ public class WorkflowApiPackageImpl extends EPackageImpl implements WorkflowApiP
 		createEOperation(registryServiceEClass, REGISTRY_SERVICE___GET_REGISTRY);
 		createEOperation(registryServiceEClass, REGISTRY_SERVICE___IS_ECLASS_COMPATIBLE_WITH_REGISTRY__ECLASS);
 		createEOperation(registryServiceEClass, REGISTRY_SERVICE___GET_ROOT_ECLASS);
+		createEOperation(registryServiceEClass, REGISTRY_SERVICE___ACTIVATE__STRING);
+		createEOperation(registryServiceEClass, REGISTRY_SERVICE___DEACTIVATE__STRING);
 
 		scopeServiceEClass = createEClass(SCOPE_SERVICE);
 		createEOperation(scopeServiceEClass, SCOPE_SERVICE___UPLOAD_TO_STAGE_FOR_REGISTRY__STRING_STRING_EOBJECT_OBJECTMETADATA);
@@ -1098,6 +1120,12 @@ public class WorkflowApiPackageImpl extends EPackageImpl implements WorkflowApiP
 		addEParameter(op, ecorePackage.getEClass(), "eClass", 0, 1, IS_UNIQUE, IS_ORDERED);
 
 		initEOperation(getRegistryService__GetRootEClass(), ecorePackage.getEClass(), "getRootEClass", 0, 1, IS_UNIQUE, IS_ORDERED);
+
+		op = initEOperation(getRegistryService__Activate__String(), theManagementPackage.getVoid(), "activate", 0, 1, IS_UNIQUE, IS_ORDERED);
+		addEParameter(op, ecorePackage.getEString(), "scope", 0, 1, IS_UNIQUE, IS_ORDERED);
+
+		op = initEOperation(getRegistryService__Deactivate__String(), theManagementPackage.getVoid(), "deactivate", 0, 1, IS_UNIQUE, IS_ORDERED);
+		addEParameter(op, ecorePackage.getEString(), "scope", 0, 1, IS_UNIQUE, IS_ORDERED);
 
 		initEClass(scopeServiceEClass, ScopeService.class, "ScopeService", IS_ABSTRACT, IS_INTERFACE, IS_GENERATED_INSTANCE_CLASS);
 

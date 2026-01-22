@@ -183,7 +183,7 @@ public class ScopesResourceTest {
                 .request("application/json")
                 .get();
 
-        assertEquals(204, response.getStatus(), "Should return HTTP 204 No Content for non-existent scope");
+        assertEquals(404, response.getStatus(), "Should return HTTP 404 Not Found for non-existent scope");
     }
 
     @Test
@@ -212,8 +212,8 @@ public class ScopesResourceTest {
                 .request("application/json")
                 .get();
 
-        assertEquals(204, response.getStatus(),
-                "Should return HTTP 204 No Content for non-existent scope with special characters");
+        assertEquals(404, response.getStatus(),
+                "Should return HTTP 404 Not Found for non-existent scope with special characters");
     }
 
     // ========== Content Type Tests ==========
@@ -263,8 +263,8 @@ public class ScopesResourceTest {
                 .request("application/json")
                 .get();
 
-        assertEquals(204, response.getStatus(),
-                "Scope lookup should be case-sensitive and return 204 for wrong case");
+        assertEquals(404, response.getStatus(),
+                "Scope lookup should be case-sensitive and return 404 for wrong case");
     }
 
     @Test
@@ -276,7 +276,7 @@ public class ScopesResourceTest {
                 .request("application/json")
                 .get();
 
-        assertEquals(204, response.getStatus(),
-                "Scope lookup should be case-sensitive and return 204 for mixed case");
+        assertEquals(404, response.getStatus(),
+                "Scope lookup should be case-sensitive and return 404 for mixed case");
     }
 }

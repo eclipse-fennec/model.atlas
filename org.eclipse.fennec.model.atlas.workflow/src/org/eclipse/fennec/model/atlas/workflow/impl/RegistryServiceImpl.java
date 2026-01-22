@@ -32,6 +32,7 @@ import org.eclipse.emf.common.util.URI;
 import org.eclipse.emf.ecore.EClass;
 import org.eclipse.emf.ecore.EObject;
 import org.eclipse.emf.ecore.resource.ResourceSet;
+import org.eclipse.emf.ecore.util.EcoreUtil;
 import org.eclipse.fennec.model.atlas.mgmt.api.EObjectRegistryService;
 import org.eclipse.fennec.model.atlas.mgmt.api.EObjectStorageService;
 import org.eclipse.fennec.model.atlas.mgmt.management.ManagementPackage;
@@ -41,10 +42,12 @@ import org.eclipse.fennec.model.atlas.wf.workflowapi.RegistryService;
 import org.eclipse.fennec.model.atlas.wf.workflowapi.Stage;
 import org.eclipse.fennec.model.atlas.wf.workflowapi.StageTransition;
 import org.eclipse.fennec.model.atlas.wf.workflowapi.WorkflowApiFactory;
+import org.eclipse.fennec.model.atlas.workflow.PostReleaseActionService;
 import org.osgi.service.component.annotations.Activate;
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.ConfigurationPolicy;
 import org.osgi.service.component.annotations.Reference;
+import org.osgi.service.component.annotations.ReferenceCardinality;
 import org.osgi.service.metatype.annotations.Designate;
 import org.osgi.util.promise.Promise;
 import org.osgi.util.promise.PromiseFactory;
@@ -74,12 +77,16 @@ public class RegistryServiceImpl<T extends EObject> implements RegistryService<T
 	private final PromiseFactory promiseFactory = new PromiseFactory(Executors.newCachedThreadPool());
 	private final EClass rootEClass;
 
+	private PostReleaseActionService postReleaseActionService;
+
 
 	@Activate
 	public RegistryServiceImpl(
 			@Reference(name = "storageService") List<EObjectStorageService<T>> storageService,
 			@Reference(name = "resourceSet") ResourceSet resourceSet,			
+			@Reference(name = "postReleaseActionService", cardinality = ReferenceCardinality.OPTIONAL) PostReleaseActionService postReleaseActionService,
 			RegistryServiceConfig config) {		
+		this.postReleaseActionService = postReleaseActionService;
 		this.config = config;
 		this.allowedTransitionsList = parseTransitionsIntoList(config.workflow_transitions());
 		this.storageMap = parseStageStorageMappings(config.stage_storage_mappings(), storageService);
@@ -92,6 +99,31 @@ public class RegistryServiceImpl<T extends EObject> implements RegistryService<T
 		} else {
 			throw new IllegalArgumentException(String.format("The provided root.eclass.uri %s does not match to any known EClass", config.root_eclass_uri()));
 		}
+	}
+	
+	/* 
+	 * (non-Javadoc)
+	 * @see org.eclipse.fennec.model.atlas.wf.workflowapi.RegistryService#activate(java.lang.String)
+	 */
+	@Override
+	public Void activate(String scope) {
+		if(postReleaseActionService != null && postReleaseActionService.requiresStartupInitialization()) {
+			listInFinalStage(scope).forEach(m -> postReleaseActionService.executeStartupInitialization(scope, getRegistryName(), getFinalStageName(), m.getObjectId(), m.getObjectType()));
+		}
+		return null;
+	}
+
+
+	/* 
+	 * (non-Javadoc)
+	 * @see org.eclipse.fennec.model.atlas.wf.workflowapi.RegistryService#deactivate(java.lang.String)
+	 */
+	@Override
+	public Void deactivate(String scope) {
+		if(postReleaseActionService != null && postReleaseActionService.requiresCleanup()) {
+			listInFinalStage(scope).forEach(m -> postReleaseActionService.executeCleanupAction(scope, getRegistryName(), getFinalStageName(), m.getObjectId(), m.getObjectType()));
+		}
+		return null;
 	}
 
 
@@ -114,6 +146,9 @@ public class RegistryServiceImpl<T extends EObject> implements RegistryService<T
 
 			EObjectStorageService<T> storageService = storageMap.get(stage);
 			ObjectMetadata objectMetadata = WorkflowServiceHelper.getPromiseValue(storageService.storeObject(scope, config.registry_name(), stage, metadata.getObjectId(), object, metadata));
+			if(postReleaseActionService != null && isFinalStage(stage)) {
+				postReleaseActionService.executePostReleaseActions(scope, getRegistryName(), stage, metadata.getObjectId(), metadata.getObjectType(), "Automatic post release", "Automatic post release action");
+			}
 			return objectMetadata;
 		});
 	}
@@ -165,7 +200,8 @@ public class RegistryServiceImpl<T extends EObject> implements RegistryService<T
 		return promiseFactory.submit(() -> {
 			requireNonNull(objectId, "Object ID cannot be null");
 			requireNonNull(updatedObject, "Updated object cannot be null");
-			validateWritableStage(stage);
+			validateUpdatableStage(stage);
+			
 
 			EObjectStorageService<T> storageService = storageMap.get(stage);
 
@@ -210,6 +246,9 @@ public class RegistryServiceImpl<T extends EObject> implements RegistryService<T
 			// Remove from registry
 			if (deleted) {
 				registryService.removeFromCache(objectId);
+				if(postReleaseActionService != null && isFinalStage(stage)) {
+					postReleaseActionService.executePostUnreleaseActions(scope, getRegistryName(), stage, metadata.getObjectId(), metadata.getObjectType(), "Automatic post unelease", "Automatic post unrelease action");
+				}
 			}
 
 			return deleted;
@@ -294,8 +333,14 @@ public class RegistryServiceImpl<T extends EObject> implements RegistryService<T
 		// so we have to do it before storing the object in the target stage
 		if (config.delete_after_transition()) {
 			WorkflowServiceHelper.getPromiseValue(sourceStorage.deleteObject(scope, config.registry_name(), fromStage, objectId));
+			if(postReleaseActionService != null && isFinalStage(fromStage)) {
+				postReleaseActionService.executePostUnreleaseActions(scope, getRegistryName(), fromStage, metadata.getObjectId(), metadata.getObjectType(), "Automatic post unelease", "Automatic post unrelease action");
+			}
 		}
 		WorkflowServiceHelper.getPromiseValue(targetStorage.storeObject(scope, config.registry_name(), toStage, objectId, object, metadata));	
+		if(postReleaseActionService != null && isFinalStage(toStage)) {
+			postReleaseActionService.executePostReleaseActions(scope, getRegistryName(), toStage, metadata.getObjectId(), metadata.getObjectType(), "Automatic post release", "Automatic post release action");
+		}
 		return metadata;
 	}
 
@@ -350,7 +395,7 @@ public class RegistryServiceImpl<T extends EObject> implements RegistryService<T
 	 */
 	@Override
 	public boolean isEClassCompatibleWithRegistry(EClass eClass) {
-		return eClass.equals(rootEClass)
+		return EcoreUtil.getURI(eClass).equals(EcoreUtil.getURI(rootEClass))
 	              || eClass.getEAllSuperTypes().contains(rootEClass);
 	}
 	
@@ -445,6 +490,10 @@ public class RegistryServiceImpl<T extends EObject> implements RegistryService<T
 			throw new IllegalArgumentException("Exactly 1 final stage must be provided!");
 		}
 	}
+	
+	private boolean isFinalStage(String stageName) {
+		return stages.stream().filter(s -> stageName.equals(s.getName()) && s.isFinal()).findFirst().isPresent();
+	}
 
 
 	private void validateStage(String stageName) {
@@ -455,6 +504,13 @@ public class RegistryServiceImpl<T extends EObject> implements RegistryService<T
 			throw new IllegalArgumentException(String.format("Stage %s is not a valid stage for the registry %s", stageName, config.registry_name()));
 		}
 		return;
+	}
+	
+	private void validateUpdatableStage(String stageName) {
+		validateWritableStage(stageName);
+		if(isFinalStage(stageName)) {
+			throw new IllegalArgumentException(String.format("Stage %s is final for the registry %s. Objects in the final stage cannot be updated.", stageName, config.registry_name()));
+		}
 	}
 
 	private void validateWritableStage(String stageName) {
@@ -472,4 +528,11 @@ public class RegistryServiceImpl<T extends EObject> implements RegistryService<T
 			throw new IllegalArgumentException(String.format("Transition from stage %s to stage %s is not allowed in registry %s", fromStage, toStage, config.registry_name()));
 		}
 	}
+	
+	private String getFinalStageName() {
+		 return stages.stream().filter(s -> s.isFinal()).findFirst().get().getName();
+	}
+
+
+
 }

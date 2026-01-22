@@ -14,6 +14,9 @@
 package org.eclipse.fennec.model.atlas.workflow.impl;
 
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.logging.Logger;
 
 import org.eclipse.emf.ecore.EObject;
 import org.eclipse.fennec.model.atlas.mgmt.management.ObjectMetadata;
@@ -25,6 +28,9 @@ import org.osgi.service.component.annotations.Activate;
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.ConfigurationPolicy;
 import org.osgi.service.component.annotations.Reference;
+import org.osgi.service.component.annotations.ReferenceCardinality;
+import org.osgi.service.component.annotations.ReferencePolicy;
+import org.osgi.service.component.annotations.ReferencePolicyOption;
 import org.osgi.service.metatype.annotations.Designate;
 import org.osgi.util.promise.Promise;
 
@@ -37,19 +43,38 @@ import org.osgi.util.promise.Promise;
 @Designate(ocd = ScopeServiceConfig.class)
 public class ScopeServiceImpl<T extends EObject> implements ScopeService<T> {
 
-	private List<RegistryService<T>> registryService;
+	private static final Logger LOGGER = Logger.getLogger(ScopeServiceImpl.class.getName());
+	private Map<String, RegistryService<T>> registryServiceMap = new ConcurrentHashMap<>();
 	private ScopeServiceConfig config;
 
-	private final Scope scopeObject;
+	private Scope scopeObject;
 	
 	@Activate
-	public ScopeServiceImpl(
-			@Reference(name = "registryService") List<RegistryService<T>> registryService,
-			ScopeServiceConfig config
-			) {
-		this.registryService = registryService;
+	public ScopeServiceImpl(ScopeServiceConfig config) {
 		this.config = config;
-		this.scopeObject = createScopeObject();
+	}
+	
+	@Reference(name = "registryService", policy = ReferencePolicy.DYNAMIC, policyOption = ReferencePolicyOption.GREEDY, cardinality = ReferenceCardinality.MULTIPLE)
+	public void bindRegistryService(RegistryService<T> registryService, Map<String, Object> properties) {
+		if(!properties.containsKey("registry.name") || ((String) properties.get("registry.name")).isEmpty()) {
+			LOGGER.severe(String.format("Cannot store RegistryService with registry.name property not set or empty"));
+			return;
+		}
+		String registryName = (String) properties.get("registry.name");
+		registryServiceMap.put(registryName, registryService);
+		createScopeObject();
+		registryService.activate(config.scope_name());
+	}
+	
+	public void unbindRegistryService(RegistryService<T> registryService, Map<String, Object> properties) {
+		if(!properties.containsKey("registry.name") || ((String) properties.get("registry.name")).isEmpty()) {
+			LOGGER.severe(String.format("Cannot store RegistryService with registry.name property not set or empty"));
+			return;
+		}
+		String registryName = (String) properties.get("registry.name");
+		registryServiceMap.remove(registryName);
+		createScopeObject();
+		registryService.deactivate(config.scope_name());
 	}
 
 	/* 
@@ -177,7 +202,7 @@ public class ScopeServiceImpl<T extends EObject> implements ScopeService<T> {
 	 */
 	@Override
 	public boolean isValidRegistry(String registryName) {
-		return registryService.stream().filter(r -> registryName.equals(r.getRegistryName())).findAny().isPresent();
+		return registryServiceMap.containsKey(registryName);
 	}
 
 	/* 
@@ -186,7 +211,7 @@ public class ScopeServiceImpl<T extends EObject> implements ScopeService<T> {
 	 */
 	@Override
 	public List<String> getAllRegistries() {
-		return registryService.stream().map(r -> r.getRegistryName()).toList();
+		return registryServiceMap.keySet().stream().toList();
 	}
 	
 	/* 
@@ -203,12 +228,12 @@ public class ScopeServiceImpl<T extends EObject> implements ScopeService<T> {
 		scope.setName(config.scope_name());
 		scope.setDescription(config.scope_description());
 		scope.setParentScope(config.scope_parent());
-		registryService.forEach(rs -> scope.getRegistries().add(rs.getRegistry()));
+		registryServiceMap.forEach((regName, reg) -> scope.getRegistries().add(reg.getRegistry()));
 		return scope;
 	}
 	
 	private RegistryService<T> getRegistryService(String registryName) {
-		return registryService.stream().filter(r -> registryName.equals(r.getRegistryName())).findAny().get();
+		return registryServiceMap.getOrDefault(registryName, null);
 	}
 	
 	private void validateRegistry(String registryName) {
@@ -220,7 +245,4 @@ public class ScopeServiceImpl<T extends EObject> implements ScopeService<T> {
 		}
 		return;
 	}
-
-	
-
 }

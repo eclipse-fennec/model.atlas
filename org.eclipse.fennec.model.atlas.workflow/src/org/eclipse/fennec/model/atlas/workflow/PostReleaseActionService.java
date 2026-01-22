@@ -13,6 +13,8 @@
  */
 package org.eclipse.fennec.model.atlas.workflow;
 
+import java.time.Instant;
+
 import org.osgi.util.promise.Promise;
 
 /**
@@ -89,6 +91,47 @@ public interface PostReleaseActionService {
      */
     PostReleaseActionInfo getLastActionInfo(String objectId);
     
+                                                                                                                        
+    /**
+     * Executes initialization at startup. This might be needed in case some post release actions need to be re-run every time the app starts up
+     * (like the EPackage registration)
+     * 
+     * @param scope
+     * @param registry
+     * @param stage
+     * @param objectId
+     * @param objectType
+     * @return
+     */
+    Promise<Void> executeStartupInitialization(String scope, String registry, String stage, String objectId, String objectType);                                                                                                                                                     
+                                                                                                                                                                                                 
+                                                                                                                   
+    /**
+     * Method to check from the outside whether this PostReReleaseActionService requires some initialization at startup
+     * @return
+     */
+    boolean requiresStartupInitialization(); 
+    
+    /**
+     * Executes cleanup action. This might be needed in case some post unrelease actions need to be re-run every time the registry is gone
+     * (like the EPackage registration)
+     * 
+     * @param scope
+     * @param registry
+     * @param stage
+     * @param objectId
+     * @param objectType
+     * @return
+     */
+    Promise<Void> executeCleanupAction(String scope, String registry, String stage, String objectId, String objectType);                                                                                                                                                     
+                                                                                                                                                                                                 
+                                                                                                                   
+    /**
+     * Method to check from the outside whether this PostReReleaseActionService requires some cleanup action 
+     * @return
+     */
+    boolean requiresCleanup(); 
+    
     /**
      * Information about post-release action execution.
      */
@@ -102,7 +145,7 @@ public interface PostReleaseActionService {
         /**
          * @return the timestamp when actions were executed
          */
-        java.time.Instant getExecutionTime();
+        Instant getExecutionTime();
         
         /**
          * @return true if all actions completed successfully
