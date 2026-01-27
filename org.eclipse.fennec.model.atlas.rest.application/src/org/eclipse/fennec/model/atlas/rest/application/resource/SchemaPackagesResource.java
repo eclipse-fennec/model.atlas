@@ -130,9 +130,6 @@ public class SchemaPackagesResource {
 	checkContentType();
 
 	EObjectWorkflowService<?> workflowService = getEObjectWorkflowServiceByScope(scopeName);
-	if (workflowService == null) {
-	    return Response.status(Response.Status.NO_CONTENT).build();
-	}
 	List<ObjectMetadata> objectsMetadata = workflowService.listInFinalStage();
 	ObjectMetadataContainer container = mgmtFactory.createObjectMetadataContainer();
 	container.getMetadata().addAll(objectsMetadata);
@@ -171,9 +168,6 @@ public class SchemaPackagesResource {
 	    @Parameter(description = "Package name filter (supports wildcards, e.g., *Billing*)") @QueryParam("name") String name) {
 
 	EObjectWorkflowService<?> workflowService = getEObjectWorkflowServiceByScope(scopeName);
-	if (workflowService == null) {
-	    return Response.status(Response.Status.NOT_FOUND).build();
-	}
 	try {
 	    if (nsUri != null) {
 		String encodedUri = encodePackageNsURI(nsUri);
@@ -247,9 +241,6 @@ public class SchemaPackagesResource {
 
 	EObjectWorkflowService<EPackage> workflowService = (EObjectWorkflowService<EPackage>) getEObjectWorkflowServiceByScope(
 		scopeName);
-	if (workflowService == null) {
-	    return Response.status(Response.Status.NOT_FOUND).build();
-	}
 
 	try {
 	    String validatedNsUri = validateAndResolveNsUri(nsUri, ePackage);
@@ -320,9 +311,6 @@ public class SchemaPackagesResource {
 
 	EObjectWorkflowService<EPackage> workflowService = (EObjectWorkflowService<EPackage>) getEObjectWorkflowServiceByScope(
 		scopeName);
-	if (workflowService == null) {
-	    return Response.status(Response.Status.NOT_FOUND).build();
-	}
 	try {
 	    nsUri = URI.decode(nsUri);
 	    String encodedNsUri = encodePackageNsURI(nsUri);
@@ -374,7 +362,7 @@ public class SchemaPackagesResource {
 	EObjectWorkflowService<EPackage> workflowService = (EObjectWorkflowService<EPackage>) getEObjectWorkflowServiceByScope(
 		scopeName);
 	Scope scope = getScopeByScopeName(scopeName);
-	if (workflowService == null || scope == null) {
+	if (scope == null) {
 	    return Response.status(Response.Status.NOT_FOUND).build();
 	}
 	try {
@@ -429,8 +417,8 @@ public class SchemaPackagesResource {
 	EObjectWorkflowService<EPackage> workflowService = (EObjectWorkflowService<EPackage>) getEObjectWorkflowServiceByScope(
 		scopeName);
 	Scope scope = getScopeByScopeName(scopeName);
-	if (workflowService == null || scope == null) {
-	    return Response.status(Response.Status.NOT_FOUND).build();
+	if (scope == null) {
+	    return Response.status(Response.Status.NOT_FOUND).entity(scope).build();
 	}
 	try {
 	    if (!scope.getWritableStages().contains(stageName)) {
@@ -489,9 +477,6 @@ public class SchemaPackagesResource {
 
 	EObjectWorkflowService<EPackage> workflowService = (EObjectWorkflowService<EPackage>) getEObjectWorkflowServiceByScope(
 		scopeName);
-	if (workflowService == null) {
-	    return Response.status(Response.Status.NOT_FOUND).build();
-	}
 	try {
 	    String encodedNsUri = encodePackageNsURI(transitionRequest.getObjectId());
 	    ObjectMetadata existingMetadata = workflowService.getFromStage(stageName, encodedNsUri);
@@ -539,7 +524,11 @@ public class SchemaPackagesResource {
     }
 
     private EObjectWorkflowService<?> getEObjectWorkflowServiceByScope(String scope) {
-	return scopeCollector.getWorkflowServiceByScope(scope);
+	EObjectWorkflowService<?> workflowService = scopeCollector.getWorkflowServiceByScope(scope);
+	if (workflowService == null) {
+	    throw new WebApplicationException(Response.status(Response.Status.NOT_FOUND).entity("Scope [" + scope + "] not found.").build()); 
+	}
+	return workflowService;
     }
 
     private Scope getScopeByScopeName(String scope) {
