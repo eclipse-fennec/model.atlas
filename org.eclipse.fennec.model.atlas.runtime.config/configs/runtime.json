@@ -5,7 +5,7 @@
 	"JakartarsServletWhiteboardRuntimeComponent~atlasRest": {
 		"jersey.jaxrs.whiteboard.name": "atlasRest",
 		"jersey.context.path": "rest",
-		"osgi.http.whiteboard.target": "(id=atlasHtpp)"
+		"osgi.http.whiteboard.target": "(id=atlasHttp)"
 	},
 	"ModelDocumentationProvider~docProvider" : {
 		"output.root.folder" : "./data/model/documentation/",
@@ -15,5 +15,16 @@
 		"output.html.folder" : "html",
 		"output.html.mermaid.folder" : "html_mermaid",
 		"output.package.hash.code.folder": "epackage_hash_code"
+	},
+	"org.apache.felix.hc.core.impl.servlet.HealthCheckExecutorServlet~atlas": {
+		"osgi.http.whiteboard.servlet.pattern": "/health/*",
+		"osgi.http.whiteboard.target": "(id=atlasHttp)",
+		"hc.tags": ["atlas"],
+		"format": "json",
+		"includeExecutionResult": true,
+		"httpStatus.ok": 200,
+		"httpStatus.warn": 200,
+		"httpStatus.critical": 503,
+		"httpStatus.temporarilyUnavailable": 503
 	}
 }

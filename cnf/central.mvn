@@ -44,6 +44,11 @@ org.apache.felix:org.apache.felix.framework.security:2.8.3
 org.apache.felix:org.apache.felix.inventory:2.0.0
 org.apache.felix:org.apache.felix.log:1.3.0
 
+# Felix Health Check
+org.apache.felix:org.apache.felix.healthcheck.api:2.0.4
+org.apache.felix:org.apache.felix.healthcheck.core:2.0.14
+org.apache.felix:org.apache.felix.healthcheck.generalchecks:2.0.8
+
 org.apache.aries.typedevent:org.apache.aries.typedevent.bus:1.0.1
 org.apache.aries.component-dsl:org.apache.aries.component-dsl.component-dsl:1.2.2
 
@@ -119,6 +124,7 @@ ch.qos.logback:logback-core:1.5.3
 ch.qos.logback:logback-classic:1.5.3
 
 org.bndtools:org.bndtools.templates.osgi:7.0.0
+biz.aQute:biz.aQute.gogo.commands.provider:1.10.0
 
 #org.eclipse.fennec.emf:org.eclipse.fennec.emf.osgi.bnd.library.workspace:1.0.0-SNAPSHOT
 #org.eclipse.osgi-technology.rest:org.eclipse.osgitech.rest.bnd.library:1.2.3
@@ -134,8 +140,8 @@ tools.jackson.dataformat:jackson-dataformat-properties:3.0.1
 tools.jackson.dataformat:jackson-dataformat-yaml:3.0.1
 com.fasterxml.jackson.core:jackson-annotations:2.20
 
-org.eclipse.osgi-technology.scheduler:api:0.0.1-SNAPSHOT
-org.eclipse.osgi-technology.scheduler:basic:0.0.1-SNAPSHOT
+#org.eclipse.osgi-technology.scheduler:api:0.0.1-SNAPSHOT
+#org.eclipse.osgi-technology.scheduler:basic:0.0.1-SNAPSHOT
 
 # MinIO dependencies
 io.minio:minio:8.5.12
