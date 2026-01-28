@@ -134,9 +134,6 @@ tools.jackson.dataformat:jackson-dataformat-properties:3.0.1
 tools.jackson.dataformat:jackson-dataformat-yaml:3.0.1
 com.fasterxml.jackson.core:jackson-annotations:2.20
 
-org.eclipse.osgi-technology.scheduler:api:0.0.1-SNAPSHOT
-org.eclipse.osgi-technology.scheduler:basic:0.0.1-SNAPSHOT
-
 # MinIO dependencies
 io.minio:minio:8.5.12
 com.squareup.okhttp3:okhttp:4.12.0

@@ -322,7 +322,7 @@ public class ManagementApiPackageImpl extends EPackageImpl implements Management
 	 * @generated
 	 */
 	@Override
-	public EOperation getEObjectStorageService__RetrieveObject__String_String_String_String() {
+	public EOperation getEObjectStorageService__UpdateObject__String_EObject_ObjectMetadata() {
 		return eObjectStorageServiceEClass.getEOperations().get(1);
 	}
 
@@ -332,7 +332,7 @@ public class ManagementApiPackageImpl extends EPackageImpl implements Management
 	 * @generated
 	 */
 	@Override
-	public EOperation getEObjectStorageService__RetrieveMetadata__String_String_String_String() {
+	public EOperation getEObjectStorageService__RetrieveObject__String_String_String_String() {
 		return eObjectStorageServiceEClass.getEOperations().get(2);
 	}
 
@@ -342,7 +342,7 @@ public class ManagementApiPackageImpl extends EPackageImpl implements Management
 	 * @generated
 	 */
 	@Override
-	public EOperation getEObjectStorageService__DeleteObject__String_String_String_String() {
+	public EOperation getEObjectStorageService__RetrieveMetadata__String_String_String_String() {
 		return eObjectStorageServiceEClass.getEOperations().get(3);
 	}
 
@@ -352,7 +352,7 @@ public class ManagementApiPackageImpl extends EPackageImpl implements Management
 	 * @generated
 	 */
 	@Override
-	public EOperation getEObjectStorageService__ListObjectIds__String_String_String() {
+	public EOperation getEObjectStorageService__DeleteObject__String_String_String_String() {
 		return eObjectStorageServiceEClass.getEOperations().get(4);
 	}
 
@@ -362,7 +362,7 @@ public class ManagementApiPackageImpl extends EPackageImpl implements Management
 	 * @generated
 	 */
 	@Override
-	public EOperation getEObjectStorageService__QueryObjects__ObjectQuery() {
+	public EOperation getEObjectStorageService__ListObjectIds__String_String_String() {
 		return eObjectStorageServiceEClass.getEOperations().get(5);
 	}
 
@@ -372,7 +372,7 @@ public class ManagementApiPackageImpl extends EPackageImpl implements Management
 	 * @generated
 	 */
 	@Override
-	public EOperation getEObjectStorageService__UpdateMetadata__String_String_String_String_ObjectMetadata() {
+	public EOperation getEObjectStorageService__QueryObjects__ObjectQuery() {
 		return eObjectStorageServiceEClass.getEOperations().get(6);
 	}
 
@@ -382,7 +382,7 @@ public class ManagementApiPackageImpl extends EPackageImpl implements Management
 	 * @generated
 	 */
 	@Override
-	public EOperation getEObjectStorageService__UpdateStatus__String_String_String_String_ObjectStatus_String() {
+	public EOperation getEObjectStorageService__UpdateMetadata__String_String_String_String_ObjectMetadata() {
 		return eObjectStorageServiceEClass.getEOperations().get(7);
 	}
 
@@ -392,7 +392,7 @@ public class ManagementApiPackageImpl extends EPackageImpl implements Management
 	 * @generated
 	 */
 	@Override
-	public EOperation getEObjectStorageService__Exists__String_String_String_String() {
+	public EOperation getEObjectStorageService__UpdateStatus__String_String_String_String_ObjectStatus_String() {
 		return eObjectStorageServiceEClass.getEOperations().get(8);
 	}
 
@@ -402,7 +402,7 @@ public class ManagementApiPackageImpl extends EPackageImpl implements Management
 	 * @generated
 	 */
 	@Override
-	public EOperation getEObjectStorageService__GetObjectCount() {
+	public EOperation getEObjectStorageService__Exists__String_String_String_String() {
 		return eObjectStorageServiceEClass.getEOperations().get(9);
 	}
 
@@ -412,7 +412,7 @@ public class ManagementApiPackageImpl extends EPackageImpl implements Management
 	 * @generated
 	 */
 	@Override
-	public EOperation getEObjectStorageService__GetBackendType() {
+	public EOperation getEObjectStorageService__GetObjectCount() {
 		return eObjectStorageServiceEClass.getEOperations().get(10);
 	}
 
@@ -422,8 +422,18 @@ public class ManagementApiPackageImpl extends EPackageImpl implements Management
 	 * @generated
 	 */
 	@Override
-	public EOperation getEObjectStorageService__GetStorageType() {
+	public EOperation getEObjectStorageService__GetBackendType() {
 		return eObjectStorageServiceEClass.getEOperations().get(11);
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
+	public EOperation getEObjectStorageService__GetStorageType() {
+		return eObjectStorageServiceEClass.getEOperations().get(12);
 	}
 
 	/**
@@ -725,6 +735,7 @@ public class ManagementApiPackageImpl extends EPackageImpl implements Management
 
 		eObjectStorageServiceEClass = createEClass(EOBJECT_STORAGE_SERVICE);
 		createEOperation(eObjectStorageServiceEClass, EOBJECT_STORAGE_SERVICE___STORE_OBJECT__STRING_STRING_STRING_STRING_EOBJECT_OBJECTMETADATA);
+		createEOperation(eObjectStorageServiceEClass, EOBJECT_STORAGE_SERVICE___UPDATE_OBJECT__STRING_EOBJECT_OBJECTMETADATA);
 		createEOperation(eObjectStorageServiceEClass, EOBJECT_STORAGE_SERVICE___RETRIEVE_OBJECT__STRING_STRING_STRING_STRING);
 		createEOperation(eObjectStorageServiceEClass, EOBJECT_STORAGE_SERVICE___RETRIEVE_METADATA__STRING_STRING_STRING_STRING);
 		createEOperation(eObjectStorageServiceEClass, EOBJECT_STORAGE_SERVICE___DELETE_OBJECT__STRING_STRING_STRING_STRING);
@@ -934,6 +945,16 @@ public class ManagementApiPackageImpl extends EPackageImpl implements Management
 		addEParameter(op, ecorePackage.getEString(), "scope", 1, 1, IS_UNIQUE, IS_ORDERED);
 		addEParameter(op, ecorePackage.getEString(), "registry", 1, 1, IS_UNIQUE, IS_ORDERED);
 		addEParameter(op, ecorePackage.getEString(), "stage", 1, 1, IS_UNIQUE, IS_ORDERED);
+		addEParameter(op, ecorePackage.getEString(), "objectId", 1, 1, IS_UNIQUE, IS_ORDERED);
+		g1 = createEGenericType(eObjectStorageServiceEClass_T);
+		addEParameter(op, g1, "object", 1, 1, IS_UNIQUE, IS_ORDERED);
+		addEParameter(op, theManagementPackage.getObjectMetadata(), "metadata", 1, 1, IS_UNIQUE, IS_ORDERED);
+		g1 = createEGenericType(theManagementPackage.getPromise());
+		g2 = createEGenericType(theManagementPackage.getObjectMetadata());
+		g1.getETypeArguments().add(g2);
+		initEOperation(op, g1);
+
+		op = initEOperation(getEObjectStorageService__UpdateObject__String_EObject_ObjectMetadata(), null, "updateObject", 0, 1, IS_UNIQUE, IS_ORDERED);
 		addEParameter(op, ecorePackage.getEString(), "objectId", 1, 1, IS_UNIQUE, IS_ORDERED);
 		g1 = createEGenericType(eObjectStorageServiceEClass_T);
 		addEParameter(op, g1, "object", 1, 1, IS_UNIQUE, IS_ORDERED);

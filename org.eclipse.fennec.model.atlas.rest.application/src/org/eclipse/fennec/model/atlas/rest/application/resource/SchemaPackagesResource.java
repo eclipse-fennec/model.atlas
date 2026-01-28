@@ -133,9 +133,6 @@ public class SchemaPackagesResource {
 		checkContentType();
 
 		ScopeService<?> scopeService = getScopeServiceByScopeName(scopeName);
-		if(scopeService == null) {
-			return Response.status(Response.Status.BAD_REQUEST).entity(String.format("No ScopeService for scope %s was found.", scopeName)).build();
-		}
 		try {
 			List<ObjectMetadata> objectsMetadata = scopeService.listInFinalStageForRegistry(REGISTRY_NAME);
 			if(objectsMetadata.isEmpty()) return Response.status(Response.Status.NO_CONTENT).build();
@@ -181,9 +178,6 @@ public class SchemaPackagesResource {
 			@Parameter(description = "Package name filter (supports wildcards, e.g., *Billing*)") @QueryParam("name") String name) {
 
 		ScopeService<?> scopeService = getScopeServiceByScopeName(scopeName);
-		if(scopeService == null) {
-			return Response.status(Response.Status.BAD_REQUEST).entity(String.format("No ScopeService for scope %s was found.", scopeName)).build();
-		}
 		try {
 			if (nsUri != null) {
 				String encodedUri = encodePackageNsURI(nsUri);
@@ -250,15 +244,12 @@ public class SchemaPackagesResource {
 			@Parameter(description = "The namespace URI of the package. If not provided, uses the EPackage's nsURI. If provided, must match the EPackage's nsURI.", required = false) @QueryParam("nsUri") String nsUri,
 			@Parameter(description = "Human-readable name for the package") @QueryParam("name") String name,
 			@Parameter(description = "Package version. If not provided, will be extracted from the nsURI. If provided, must be semantically compatible with the URI version.", required = false) @QueryParam("version") String version,
-			@Parameter(description = "Override option. If true and a Package with the same uri already exists, it updates it. ", required = false) @QueryParam("override") boolean override,
+			@Parameter(description = "Overwrite option. If true and a Package with the same uri already exists, it updates it. ", required = false) @QueryParam("overwrite") boolean overwrite,
 			@RequestBody(description = "The schema package content", required = true, content = @Content(schema = @Schema(implementation = EPackage.class))) EPackage ePackage) {
 
 		checkContentType();
 
 		ScopeService<EObject> scopeService = (ScopeService<EObject>) getScopeServiceByScopeName(scopeName);
-		if(scopeService == null) {
-			return Response.status(Response.Status.BAD_REQUEST).entity(String.format("No ScopeService for scope %s was found.", scopeName)).build();
-		}
 
 		try {
 			String validatedNsUri = validateAndResolveNsUri(nsUri, ePackage);
@@ -267,8 +258,8 @@ public class SchemaPackagesResource {
 			// Check uniqueness across visibility chain
 			ObjectMetadata existingMetadata = scopeService.getMetadataFromStageForRegistry(REGISTRY_NAME, stageName, encodedNsURI);
 			if (existingMetadata != null) {
-				if(!override) {
-					return Response.status(Response.Status.CONFLICT).entity(String.format("Schema %s already exists and override flag is false. Cannot update object.", nsUri)).build();
+				if(!overwrite) {
+					return Response.status(Response.Status.CONFLICT).entity(String.format("Schema %s already exists and overwrite flag is false. Cannot update object.", nsUri)).build();
 				} else {
 					if (existingMetadata.isIsReadOnly()) {
 						return Response.status(Response.Status.FORBIDDEN).entity(String.format("Schema %s is read-only. Cannot update it.", nsUri)).build();
@@ -333,9 +324,6 @@ public class SchemaPackagesResource {
 		checkContentType();
 
 		ScopeService<?> scopeService = getScopeServiceByScopeName(scopeName);
-		if(scopeService == null) {
-			return Response.status(Response.Status.BAD_REQUEST).entity(String.format("No ScopeService for scope %s was found.", scopeName)).build();
-		}
 		try {
 			nsUri = URI.decode(nsUri);
 			String encodedNsUri = encodePackageNsURI(nsUri);
@@ -387,9 +375,6 @@ public class SchemaPackagesResource {
 		checkContentType();
 
 		ScopeService<EObject> scopeService = (ScopeService<EObject>) getScopeServiceByScopeName(scopeName);
-		if(scopeService == null) {
-			return Response.status(Response.Status.BAD_REQUEST).entity(String.format("No ScopeService for scope %s was found.", scopeName)).build();
-		}
 		try {
 			String validatedNsUri = validateAndResolveNsUri(nsUri, ePackage);
 			String resolvedVersion = resolveAndValidateVersion(version, validatedNsUri);
@@ -434,9 +419,6 @@ public class SchemaPackagesResource {
 			@Parameter(description = "The namespace URI of the package to delete", required = true) @QueryParam("nsUri") String nsUri) {
 
 		ScopeService<?> scopeService = getScopeServiceByScopeName(scopeName);
-		if(scopeService == null) {
-			return Response.status(Response.Status.BAD_REQUEST).entity(String.format("No ScopeService for scope %s was found.", scopeName)).build();
-		}
 		try {
 			String encodedNsUri = encodePackageNsURI(nsUri);
 			ObjectMetadata existingMetadata = scopeService.getMetadataFromStageForRegistry(REGISTRY_NAME, stageName, encodedNsUri);
@@ -480,9 +462,6 @@ public class SchemaPackagesResource {
 		checkContentType();
 
 		ScopeService<?> scopeService = getScopeServiceByScopeName(scopeName);
-		if(scopeService == null) {
-			return Response.status(Response.Status.BAD_REQUEST).entity(String.format("No ScopeService for scope %s was found.", scopeName)).build();
-		}
 		try {
 			String encodedNsUri = encodePackageNsURI(transitionRequest.getObjectId());
 			ObjectMetadata existingMetadata = scopeService.getMetadataFromStageForRegistry(REGISTRY_NAME, stageName, encodedNsUri);
@@ -528,7 +507,11 @@ public class SchemaPackagesResource {
 	}
 
 	private ScopeService<?> getScopeServiceByScopeName(String scopeName) {
-		return scopeCollector.getScopeServiceByScopeName(scopeName);
+		ScopeService<?> scopeService = scopeCollector.getScopeServiceByScopeName(scopeName);
+		if (scopeService == null) {
+			throw new WebApplicationException(Response.status(Response.Status.BAD_REQUEST).entity("Scope [" + scopeName + "] not found.").build());
+		}
+		return scopeService;
 	}	
 
 	private String encodePackageNsURI(String nsUri) throws UnsupportedEncodingException {

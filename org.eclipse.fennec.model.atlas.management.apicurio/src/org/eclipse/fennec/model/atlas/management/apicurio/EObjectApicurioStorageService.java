@@ -113,7 +113,7 @@ public class EObjectApicurioStorageService extends AbstractEObjectStorageService
 		return StorageBackendType.APICURIO;
 	}
 
-	/* 
+	/*
 	 * (non-Javadoc)
 	 * @see org.eclipse.fennec.model.atlas.mgmt.storage.AbstractEObjectStorageService#getRegistryService()
 	 */
@@ -122,13 +122,36 @@ public class EObjectApicurioStorageService extends AbstractEObjectStorageService
 		return registry;
 	}
 
+	/**
+	 * Updates an existing object in Apicurio storage.
+	 *
+	 * <p>Apicurio v3 doesn't support in-place content updates, so this method
+	 * deletes the existing artifact first, then creates a new one.</p>
+	 *
+	 * @param objectId the object identifier
+	 * @param object   the updated EObject
+	 * @param metadata the updated metadata (must contain scope, registry, stage)
+	 * @return promise with the updated metadata
+	 */
+	@Override
+	public org.osgi.util.promise.Promise<org.eclipse.fennec.model.atlas.mgmt.management.ObjectMetadata> updateObject(
+			String objectId, org.eclipse.emf.ecore.EObject object,
+			org.eclipse.fennec.model.atlas.mgmt.management.ObjectMetadata metadata) {
+		// Apicurio v3 has no replace option, so we delete + create
+		// Get scope, registry, stage from metadata
+		String scope = metadata.getScope();
+		String registry = metadata.getRegistry();
+		String stage = metadata.getStage();
+		deleteObject(scope, registry, stage, objectId);
+		return storeObject(scope, registry, stage, objectId, object, metadata);
+	}
 
-	/* 
+	/*
 	 * (non-Javadoc)
 	 * @see org.eclipse.fennec.model.atlas.mgmt.api.EObjectStorageService#getStorageType()
 	 */
 	@Override
 	public String getStorageType() {
 		return storageType;
-	}	
+	}
 }

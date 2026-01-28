@@ -57,6 +57,17 @@ public interface EObjectStorageService<T extends EObject> {
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
 	 * <!-- begin-model-doc -->
+	 * Update an existing object in storage. For backends that don't support in-place updates (e.g., Apicurio), this may perform delete-then-create. Default implementation delegates to storeObject.
+	 * <!-- end-model-doc -->
+	 * @model dataType="org.eclipse.fennec.model.atlas.mgmt.management.Promise&lt;org.eclipse.fennec.model.atlas.mgmt.management.ObjectMetadata&gt;" objectIdRequired="true" objectRequired="true" metadataRequired="true"
+	 * @generated
+	 */
+	Promise<ObjectMetadata> updateObject(String objectId, T object, ObjectMetadata metadata);
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * <!-- begin-model-doc -->
 	 * Retrieve object by ID
 	 * <!-- end-model-doc -->
 	 * @model dataType="org.eclipse.fennec.model.atlas.mgmt.management.Promise&lt;T&gt;" scopeRequired="true" registryRequired="true" stageRequired="true" objectIdRequired="true"

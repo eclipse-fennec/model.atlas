@@ -697,12 +697,12 @@ public class RegistryServiceIntegrationTest {
 			Promise<ObjectMetadata> metadataPromise = promiseFactory.resolved(currentMetadata);
 			when(mockStorageService.retrieveMetadata(anyString(), anyString(), anyString(), anyString())).thenReturn(metadataPromise);
 
-			// Mock storeObject for the update
+			// Mock updateObject for the update
 			ObjectMetadata resultMetadata = ManagementFactory.eINSTANCE.createObjectMetadata();
 			resultMetadata.setObjectId("test-id");
 			resultMetadata.setVersion("2.0");
-			Promise<ObjectMetadata> storePromise = promiseFactory.resolved(resultMetadata);
-			when(mockStorageService.storeObject(anyString(), anyString(), anyString(), anyString(), any(), any())).thenReturn(storePromise);
+			Promise<ObjectMetadata> updatePromise = promiseFactory.resolved(resultMetadata);
+			when(mockStorageService.updateObject(anyString(), any(), any())).thenReturn(updatePromise);
 
 			// Update object
 			Promise<ObjectMetadata> result = registryService.updateInStage(
@@ -716,7 +716,7 @@ public class RegistryServiceIntegrationTest {
 
 			// Verify both calls
 			verify(mockStorageService).retrieveMetadata(SCOPE_NAME, REGISTRY_NAME, "draft", "test-id");
-			verify(mockStorageService).storeObject(eq(SCOPE_NAME), eq(REGISTRY_NAME), eq("draft"), eq("test-id"), any(), any());
+			verify(mockStorageService).updateObject(eq("test-id"), any(), any());
 		}
 
 		@SuppressWarnings({ "unchecked", "rawtypes" })

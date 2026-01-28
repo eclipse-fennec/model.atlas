@@ -239,7 +239,7 @@ public abstract class AbstractEObjectStorageService implements EObjectStorageSer
 
 	/**
 	 * Common deactivation logic for storage services.
-	 * 
+	 *
 	 * <p>This method should be called from the subclass @Deactivate method.
 	 * It performs cleanup and releases resources.</p>
 	 */
@@ -301,7 +301,26 @@ public abstract class AbstractEObjectStorageService implements EObjectStorageSer
 		});
 	}
 
-	/* 
+	/**
+	 * Updates an existing object in storage.
+	 *
+	 * <p>Default implementation delegates to {@link #storeObject(String, String, String, String, EObject, ObjectMetadata)}.
+	 * Storage backends that require special handling for updates (e.g., Apicurio which needs
+	 * delete-then-create) should override this method.</p>
+	 *
+	 * @param objectId the object identifier
+	 * @param object   the updated EObject
+	 * @param metadata the updated metadata (must contain scope, registry, stage)
+	 * @return promise with the updated metadata
+	 */
+	@Override
+	public Promise<ObjectMetadata> updateObject(String objectId, EObject object, ObjectMetadata metadata) {
+		// Default: just delegate to storeObject (works for file-based storage)
+		// Metadata must contain scope, registry, stage
+		return storeObject(metadata.getScope(), metadata.getRegistry(), metadata.getStage(), objectId, object, metadata);
+	}
+
+	/*
 	 * (non-Javadoc)
 	 * @see org.eclipse.fennec.model.atlas.mgmt.api.EObjectStorageService#retrieveObject(java.lang.String, java.lang.String, java.lang.String, java.lang.String)
 	 */
