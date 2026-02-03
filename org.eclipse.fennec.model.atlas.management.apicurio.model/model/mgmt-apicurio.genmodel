@@ -83,5 +83,18 @@
       <genFeatures createChild="false" ecoreFeature="ecore:EAttribute mgmt-apicurio.ecore#//SearchedVersion/contentId"/>
       <genFeatures createChild="false" ecoreFeature="ecore:EAttribute mgmt-apicurio.ecore#//SearchedVersion/state"/>
     </genClasses>
+    <genClasses ecoreClass="mgmt-apicurio.ecore#//Group">
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute mgmt-apicurio.ecore#//Group/groupId"/>
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute mgmt-apicurio.ecore#//Group/createdOn"/>
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute mgmt-apicurio.ecore#//Group/owner"/>
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute mgmt-apicurio.ecore#//Group/modifiedOn"/>
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute mgmt-apicurio.ecore#//Group/modifiedBy"/>
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute mgmt-apicurio.ecore#//Group/description"/>
+      <genFeatures property="None" children="true" createChild="true" ecoreFeature="ecore:EReference mgmt-apicurio.ecore#//Group/labels"/>
+    </genClasses>
+    <genClasses ecoreClass="mgmt-apicurio.ecore#//SearchGroupResponse">
+      <genFeatures property="None" children="true" createChild="true" ecoreFeature="ecore:EReference mgmt-apicurio.ecore#//SearchGroupResponse/groups"/>
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute mgmt-apicurio.ecore#//SearchGroupResponse/count"/>
+    </genClasses>
   </genPackages>
 </genmodel:GenModel>

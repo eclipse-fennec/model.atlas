@@ -13,7 +13,9 @@
       "Read(//n/git/datainmotion/model-atlas-cloud/org.gecko.mac.golf.equipment.model/**)",
       "Bash(cat:*)",
       "WebFetch(domain:raw.githubusercontent.com)",
-      "WebFetch(domain:github.com)"
+      "WebFetch(domain:github.com)",
+      "Bash(find:*)",
+      "Bash(git merge:*)"
     ],
     "deny": [],
     "ask": []

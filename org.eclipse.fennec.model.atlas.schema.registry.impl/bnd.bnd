@@ -1,0 +1,2 @@
+-library: enable-emf
+-buildpath: org.eclipse.fennec.model.atlas.schema.registry.api;version=snapshot

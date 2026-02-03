@@ -43,111 +43,111 @@ public interface EObjectWorkflowService<T extends EObject> {
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
 	 * <!-- begin-model-doc -->
-	 * Upload an EObject to a certain stage (draft, review, etc); returns promise with uploaded ObjectMetadata.
+	 * Upload an EObject to a certain stage (draft, review, etc) for a certain registry (schema, configuration, script, etc); returns promise with uploaded ObjectMetadata.
 	 * <!-- end-model-doc -->
 	 * @model dataType="org.eclipse.fennec.model.atlas.mgmt.management.Promise&lt;org.eclipse.fennec.model.atlas.mgmt.management.ObjectMetadata&gt;" objectRequired="true" metadataRequired="true"
 	 * @generated
 	 */
-	Promise<ObjectMetadata> uploadToStage(String stage, T object, ObjectMetadata metadata);
+	Promise<ObjectMetadata> uploadToStageForRegistry(String stage, String registry, T object, ObjectMetadata metadata);
 
 	/**
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
 	 * <!-- begin-model-doc -->
-	 * Get object registration by ID from a certain stage. If nothing is found in that stage, the parents release stages are also inspected. 
+	 * Get object registration by ID from a certain stage and a certain registry. If nothing is found in that stage/registry, the parents final stage of the same registry are also inspected. 
 	 * <!-- end-model-doc -->
 	 * @model objectIdRequired="true"
 	 * @generated
 	 */
-	ObjectMetadata getFromStage(String stage, String objectId);
+	ObjectMetadata getFromStageForRegistry(String stage, String registry, String objectId);
 
 	/**
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
 	 * <!-- begin-model-doc -->
-	 * Get object registration by ID from the final stage of a workflow. If nothing is found in that stage, the parents final stages are also inspected. 
+	 * Get object registration by ID from the final stage of a workflow and the specified registry. If nothing is found in that stage, the parents final stage of the same registry are also inspected. 
 	 * <!-- end-model-doc -->
 	 * @model objectIdRequired="true"
 	 * @generated
 	 */
-	ObjectMetadata getFromFinalStage(String objectId);
+	ObjectMetadata getFromFinalStageForRegistry(String registry, String objectId);
 
 	/**
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
 	 * <!-- begin-model-doc -->
-	 * Get the actual EObject content by ID for a certain stage. If nothing is found, the parents release stages are also inspected.
+	 * Get the actual EObject content by ID for a certain stage and registry. If nothing is found, the parents final stage of the same registry are also inspected.
 	 * <!-- end-model-doc -->
 	 * @model objectIdRequired="true"
 	 * @generated
 	 */
-	T getContentFromStage(String stage, String objectId);
+	T getContentFromStageForRegistry(String stage, String registry, String objectId);
 
 	/**
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
 	 * <!-- begin-model-doc -->
-	 * Update an existing object. Returned updated ObjectMetadata.
+	 * Update an existing object in a certain stage and registry. Returned updated ObjectMetadata.
 	 * <!-- end-model-doc -->
 	 * @model dataType="org.eclipse.fennec.model.atlas.mgmt.management.Promise&lt;org.eclipse.fennec.model.atlas.mgmt.management.ObjectMetadata&gt;" updatedObjectRequired="true" objectIdRequired="true" versionRequired="true"
 	 * @generated
 	 */
-	Promise<ObjectMetadata> updateInStage(String stage, T updatedObject, String objectId, String version);
+	Promise<ObjectMetadata> updateInStageForRegistry(String stage, String registry, T updatedObject, String objectId, String version);
 
 	/**
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
 	 * <!-- begin-model-doc -->
-	 * Delete an object
+	 * Delete an object from a certain registry and stage. Returns whether the deletion was successfull.
 	 * <!-- end-model-doc -->
 	 * @model dataType="org.eclipse.fennec.model.atlas.mgmt.management.Promise&lt;org.eclipse.emf.ecore.EBooleanObject&gt;" objectIdRequired="true"
 	 * @generated
 	 */
-	Promise<Boolean> deleteFromStage(String stage, String objectId);
+	Promise<Boolean> deleteFromStageForRegistry(String stage, String registry, String objectId);
 
 	/**
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
 	 * <!-- begin-model-doc -->
-	 * List all objects in a certain stage of the workflow
+	 * List all objects in a certain stage and registry of the workflow
 	 * <!-- end-model-doc -->
 	 * @model dataType="org.eclipse.fennec.model.atlas.mgmt.management.List&lt;org.eclipse.fennec.model.atlas.mgmt.management.ObjectMetadata&gt;" many="false"
 	 * @generated
 	 */
-	List<ObjectMetadata> listInStage(String stage);
+	List<ObjectMetadata> listInStageForRegistry(String stage, String registry);
 
 	/**
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
 	 * <!-- begin-model-doc -->
-	 * List all objects with a matching name filter in a certain stage of the workflow
+	 * List all objects with a matching name filter in a certain stage and registry of the workflow
 	 * <!-- end-model-doc -->
 	 * @model dataType="org.eclipse.fennec.model.atlas.mgmt.management.List&lt;org.eclipse.fennec.model.atlas.mgmt.management.ObjectMetadata&gt;" many="false"
 	 * @generated
 	 */
-	List<ObjectMetadata> listInStageByName(String stage, String name);
+	List<ObjectMetadata> listInStageForRegistryByName(String stage, String registry, String name);
 
 	/**
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
 	 * <!-- begin-model-doc -->
-	 * List all objects in the final stage of the workflow
+	 * List all objects in the final stage and for the specified registry of the workflow
 	 * <!-- end-model-doc -->
 	 * @model dataType="org.eclipse.fennec.model.atlas.mgmt.management.List&lt;org.eclipse.fennec.model.atlas.mgmt.management.ObjectMetadata&gt;" many="false"
 	 * @generated
 	 */
-	List<ObjectMetadata> listInFinalStage();
+	List<ObjectMetadata> listInFinalStageForRegistry(String registry);
 
 	/**
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
 	 * <!-- begin-model-doc -->
-	 * Performs a transition of an EObject from one stage to another, if allowed.
+	 * Performs a transition of an EObject from one stage to another of a certain registry, if allowed.
 	 * <!-- end-model-doc -->
 	 * @model objectIdRequired="true"
 	 * @generated
 	 */
-	ObjectMetadata transitionToStage(String objectId, String fromStage, String toStage);
+	ObjectMetadata transitionToStageForRegistry(String objectId, String fromStage, String toStage, String registry);
 
 	/**
 	 * <!-- begin-user-doc -->

@@ -37,7 +37,6 @@ import org.eclipse.fennec.model.atlas.mgmt.management.ObjectMetadata;
 import org.eclipse.fennec.model.atlas.mgmt.management.ObjectStatus;
 import org.eclipse.fennec.model.atlas.mgmt.management.StorageBackendType;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.io.TempDir;
@@ -45,6 +44,7 @@ import org.osgi.framework.BundleContext;
 import org.osgi.service.cm.Configuration;
 import org.osgi.test.common.annotation.InjectBundleContext;
 import org.osgi.test.common.annotation.InjectService;
+import org.osgi.test.common.annotation.Property;
 import org.osgi.test.common.annotation.config.InjectConfiguration;
 import org.osgi.test.common.annotation.config.WithFactoryConfiguration;
 import org.osgi.test.common.service.ServiceAware;
@@ -75,8 +75,10 @@ public class EObjectApicurioStorageServiceTest {
 	private static final String APICURIO_ENV_DELETION_ARTIFACT = "APICURIO_REST_DELETION_ARTIFACT_ENABLED";
 	private static final int APICURIO_EXPOSED_PORT = 8080;
 	private static final String APICURIO_BASE_URL = "http://localhost:%d/apis/registry/v3/";
-
-
+	private static final String TEST_SCOPE = "test_scope";
+	private static final String TEST_REGISTRY = "test_registry";
+	private static final String TEST_STAGE = "test_stage";
+	
 	@BeforeEach
 	public void before(@InjectBundleContext BundleContext ctx) {
 		assertNotNull(context, "BundleContext should not be null");
@@ -86,11 +88,15 @@ public class EObjectApicurioStorageServiceTest {
 		System.setProperty("tempDir", tempDir.toString());
 	}
 
+
 	@SuppressWarnings({ "unchecked", "rawtypes" })
 	@RegistryConfiguration
 	@Test
 	public void testServiceActivation(
-			@InjectConfiguration(withFactoryConfig = @WithFactoryConfiguration(factoryPid = "ApicurioObjectStorage", name = "test", location = "?")) Configuration configuration,
+			@InjectConfiguration(withFactoryConfig = @WithFactoryConfiguration(factoryPid = "ApicurioObjectStorage", name = "test", location = "?", 
+					properties = {
+							@Property(key = "storage.type", value = "apicurio")
+					})) Configuration configuration,
 			@InjectService(cardinality = 0, filter = "(storage.backend=apicurio)") ServiceAware<EObjectStorageService> serviceAware) throws Exception {
 
 		try (GenericContainer<?> container = new GenericContainer<>(APICURIO_DOCKER_IMAGE)) {
@@ -124,7 +130,10 @@ public class EObjectApicurioStorageServiceTest {
 	@RegistryConfiguration
 	@Test
 	public void testStoreAndRetrieveEPackageInJson(
-			@InjectConfiguration(withFactoryConfig = @WithFactoryConfiguration(factoryPid = "ApicurioObjectStorage", name = "test", location = "?")) Configuration configuration,
+			@InjectConfiguration(withFactoryConfig = @WithFactoryConfiguration(factoryPid = "ApicurioObjectStorage", name = "test", location = "?", 
+					properties = {
+							@Property(key = "storage.type", value = "apicurio")
+					})) Configuration configuration,
 			@InjectService(cardinality = 0, filter = "(storage.backend=apicurio)") ServiceAware<EObjectStorageService> serviceAware) throws Exception {
 
 		try (GenericContainer<?> container = new GenericContainer<>(APICURIO_DOCKER_IMAGE)) {
@@ -166,7 +175,7 @@ public class EObjectApicurioStorageServiceTest {
 			metadata.getProperties().put("content.type", "application/json");
 
 			// Store the package
-			storageService.storeObject("default:draft:test-id-123.json", testPackage, metadata).getValue();
+			storageService.storeObject(TEST_SCOPE, TEST_REGISTRY, TEST_STAGE, "default:draft:test-id-123.json", testPackage, metadata).getValue();
 			String storageId = metadata.getObjectId();
 
 			assertNotNull(storageId);
@@ -175,7 +184,7 @@ public class EObjectApicurioStorageServiceTest {
 			// Verify artifacts were created
 			//
 			//		// Retrieve the package
-			Promise<EObject> retrievePromise = storageService.retrieveObject(storageId);
+			Promise<EObject> retrievePromise = storageService.retrieveObject(TEST_SCOPE, TEST_REGISTRY, TEST_STAGE,storageId);
 			EPackage retrievedPackage = (EPackage) retrievePromise.getValue();
 
 			assertNotEquals(testPackage, retrievedPackage);
@@ -185,7 +194,7 @@ public class EObjectApicurioStorageServiceTest {
 			assertEquals("http://test/1.0", retrievedPackage.getNsURI());
 			//
 			//		// Retrieve metadata
-			Promise<ObjectMetadata> metadataPromise = storageService.retrieveMetadata(storageId);
+			Promise<ObjectMetadata> metadataPromise = storageService.retrieveMetadata(TEST_SCOPE, TEST_REGISTRY, TEST_STAGE,storageId);
 			ObjectMetadata retrievedMetadata = metadataPromise.getValue();
 
 			assertNotNull(retrievedMetadata);
@@ -194,7 +203,7 @@ public class EObjectApicurioStorageServiceTest {
 			assertEquals("testhash123", retrievedMetadata.getContentHash());
 
 			//Cleanup
-			Promise<Boolean> deletePromise = storageService.deleteObject(storageId);
+			Promise<Boolean> deletePromise = storageService.deleteObject(TEST_SCOPE, TEST_REGISTRY, TEST_STAGE, storageId);
 			Boolean deleted = deletePromise.getValue();
 			assertTrue(deleted);
 
@@ -202,12 +211,14 @@ public class EObjectApicurioStorageServiceTest {
 		} 
 
 	}
-
 	@SuppressWarnings({ "unchecked", "rawtypes" })
 	@RegistryConfiguration
 	@Test
 	public void testExists(
-			@InjectConfiguration(withFactoryConfig = @WithFactoryConfiguration(factoryPid = "ApicurioObjectStorage", name = "test", location = "?")) Configuration configuration,
+			@InjectConfiguration(withFactoryConfig = @WithFactoryConfiguration(factoryPid = "ApicurioObjectStorage", name = "test", location = "?", 
+					properties = {
+							@Property(key = "storage.type", value = "apicurio")
+					})) Configuration configuration,
 			@InjectService(cardinality = 0, filter = "(storage.backend=apicurio)") ServiceAware<EObjectStorageService> serviceAware) throws Exception {
 
 		try (GenericContainer<?> container = new GenericContainer<>(APICURIO_DOCKER_IMAGE)) {
@@ -229,7 +240,7 @@ public class EObjectApicurioStorageServiceTest {
 			assertNotNull(storageService, "Storage service should be available");
 
 			// Test non-existent object
-			Boolean existsBefore = storageService.exists("non-existent-id");
+			Boolean existsBefore = storageService.exists(TEST_SCOPE, TEST_REGISTRY, TEST_STAGE,"non-existent-id");
 			assertFalse(existsBefore, "Non-existent object should not exist");
 
 			// Store an object
@@ -244,27 +255,27 @@ public class EObjectApicurioStorageServiceTest {
 			metadata.setUploadTime(Instant.now());
 			metadata.getProperties().put("file.extension", ".json");
 
-			storageService.storeObject("exists-test-id", testPackage, metadata).getValue();
+			storageService.storeObject(TEST_SCOPE, TEST_REGISTRY, TEST_STAGE,"exists-test-id", testPackage, metadata).getValue();
 			String storageId = metadata.getObjectId();
 
 			// Test existing object
-			Boolean existsAfter = storageService.exists(storageId);
+			Boolean existsAfter = storageService.exists(TEST_SCOPE, TEST_REGISTRY, TEST_STAGE,storageId);
 			assertTrue(existsAfter, "Stored object should exist");
 
 			// Delete the object
-			Promise<Boolean> deletePromise = storageService.deleteObject(storageId);
+			Promise<Boolean> deletePromise = storageService.deleteObject(TEST_SCOPE, TEST_REGISTRY, TEST_STAGE,storageId);
 			Boolean deleted = deletePromise.getValue();
 			assertTrue(deleted);
 
 			// Test after deletion
-			Boolean existsAfterDelete = storageService.exists(storageId);
+			Boolean existsAfterDelete = storageService.exists(TEST_SCOPE, TEST_REGISTRY, TEST_STAGE,storageId);
 			assertFalse(existsAfterDelete, "Deleted object should not exist");
 
 			// Test with null and empty IDs
-			Boolean existsNull = storageService.exists(null);
+			Boolean existsNull = storageService.exists(TEST_SCOPE, TEST_REGISTRY, TEST_STAGE,null);
 			assertFalse(existsNull, "Null ID should return false");
 
-			Boolean existsEmpty = storageService.exists("");
+			Boolean existsEmpty = storageService.exists(TEST_SCOPE, TEST_REGISTRY, TEST_STAGE,"");
 			assertFalse(existsEmpty, "Empty ID should return false");
 
 			container.stop();
@@ -276,7 +287,10 @@ public class EObjectApicurioStorageServiceTest {
 	@RegistryConfiguration
 	@Test
 	public void testDeleteObject(
-			@InjectConfiguration(withFactoryConfig = @WithFactoryConfiguration(factoryPid = "ApicurioObjectStorage", name = "test", location = "?")) Configuration configuration,
+			@InjectConfiguration(withFactoryConfig = @WithFactoryConfiguration(factoryPid = "ApicurioObjectStorage", name = "test", location = "?", 
+					properties = {
+							@Property(key = "storage.type", value = "apicurio")
+					})) Configuration configuration,
 			@InjectService(cardinality = 0, filter = "(storage.backend=apicurio)") ServiceAware<EObjectStorageService> serviceAware) throws Exception {
 
 		try (GenericContainer<?> container = new GenericContainer<>(APICURIO_DOCKER_IMAGE)) {
@@ -306,18 +320,18 @@ public class EObjectApicurioStorageServiceTest {
 			metadata.setUploadUser("testUser");
 			metadata.getProperties().put("file.extension", ".xmi");
 
-			storageService.storeObject("delete-test-id", testPackage, metadata).getValue();
+			storageService.storeObject(TEST_SCOPE, TEST_REGISTRY, TEST_STAGE,"delete-test-id", testPackage, metadata).getValue();
 			String storageId = metadata.getObjectId();
 
 
 			// Delete the object
-			Promise<Boolean> deletePromise = storageService.deleteObject(storageId);
+			Promise<Boolean> deletePromise = storageService.deleteObject(TEST_SCOPE, TEST_REGISTRY, TEST_STAGE,storageId);
 			Boolean deleted = deletePromise.getValue();
 
 			assertTrue(deleted);
 
 			// Try to retrieve deleted object
-			Promise<EObject> retrievePromise = storageService.retrieveObject(storageId);
+			Promise<EObject> retrievePromise = storageService.retrieveObject(TEST_SCOPE, TEST_REGISTRY, TEST_STAGE,storageId);
 			EObject retrievedPackage = retrievePromise.getValue();
 			assertNull(retrievedPackage, "Should not find deleted package");
 
@@ -329,7 +343,10 @@ public class EObjectApicurioStorageServiceTest {
 	@RegistryConfiguration
 	@Test
 	public void testListObjectIds(
-			@InjectConfiguration(withFactoryConfig = @WithFactoryConfiguration(factoryPid = "ApicurioObjectStorage", name = "test", location = "?")) Configuration configuration,
+			@InjectConfiguration(withFactoryConfig = @WithFactoryConfiguration(factoryPid = "ApicurioObjectStorage", name = "test", location = "?", 
+					properties = {
+							@Property(key = "storage.type", value = "apicurio")
+					})) Configuration configuration,
 			@InjectService(cardinality = 0, filter = "(storage.backend=apicurio)") ServiceAware<EObjectStorageService> serviceAware) throws Exception {
 
 		try (GenericContainer<?> container = new GenericContainer<>(APICURIO_DOCKER_IMAGE)) {
@@ -362,11 +379,11 @@ public class EObjectApicurioStorageServiceTest {
 				metadata.setUploadTime(Instant.now());
 				metadata.getProperties().put("file.extension", ".xmi");
 
-				storageService.storeObject("test-pkg-" + i, pkg, metadata).getValue();
+				storageService.storeObject(TEST_SCOPE, TEST_REGISTRY, TEST_STAGE,"test-pkg-" + i, pkg, metadata).getValue();
 			}
 
 			// List all object IDs
-			Promise<List<String>> listPromise = storageService.listObjectIds();
+			Promise<List<String>> listPromise = storageService.listObjectIds(TEST_SCOPE, TEST_REGISTRY, TEST_STAGE);
 			List<String> objectIds = listPromise.getValue();
 
 			assertNotNull(objectIds);
@@ -376,15 +393,15 @@ public class EObjectApicurioStorageServiceTest {
 			assertTrue(objectIds.contains("test-pkg-2"));
 
 			//		Cleanup
-			Promise<Boolean> deletePromise = storageService.deleteObject("test-pkg-0");
+			Promise<Boolean> deletePromise = storageService.deleteObject(TEST_SCOPE, TEST_REGISTRY, TEST_STAGE,"test-pkg-0");
 			Boolean deleted = deletePromise.getValue();
 			assertTrue(deleted);
 
-			deletePromise = storageService.deleteObject("test-pkg-1");
+			deletePromise = storageService.deleteObject(TEST_SCOPE, TEST_REGISTRY, TEST_STAGE,"test-pkg-1");
 			deleted = deletePromise.getValue();
 			assertTrue(deleted);
 
-			deletePromise = storageService.deleteObject("test-pkg-2");
+			deletePromise = storageService.deleteObject(TEST_SCOPE, TEST_REGISTRY, TEST_STAGE,"test-pkg-2");
 			deleted = deletePromise.getValue();
 			assertTrue(deleted);
 
@@ -396,7 +413,10 @@ public class EObjectApicurioStorageServiceTest {
 	@RegistryConfiguration
 	@Test
 	public void testAutoGeneratedId(
-			@InjectConfiguration(withFactoryConfig = @WithFactoryConfiguration(factoryPid = "ApicurioObjectStorage", name = "test", location = "?")) Configuration configuration,
+			@InjectConfiguration(withFactoryConfig = @WithFactoryConfiguration(factoryPid = "ApicurioObjectStorage", name = "test", location = "?", 
+					properties = {
+							@Property(key = "storage.type", value = "apicurio")
+					})) Configuration configuration,
 			@InjectService(cardinality = 0, filter = "(storage.backend=apicurio)") ServiceAware<EObjectStorageService> serviceAware) throws Exception {
 
 		try (GenericContainer<?> container = new GenericContainer<>(APICURIO_DOCKER_IMAGE)) {
@@ -426,21 +446,21 @@ public class EObjectApicurioStorageServiceTest {
 			metadata.getProperties().put("file.extension", ".json");
 			metadata.getProperties().put("content.type", "application/json");
 
-			storageService.storeObject(null, testPackage, metadata).getValue();
+			storageService.storeObject(TEST_SCOPE, TEST_REGISTRY, TEST_STAGE,null, testPackage, metadata).getValue();
 			String storageId = metadata.getObjectId();
 
 			assertNotNull(storageId);
 			assertFalse(storageId.isEmpty());
 
 			// Should be able to retrieve with auto-generated ID
-			Promise<EObject> retrievePromise = storageService.retrieveObject(storageId);
+			Promise<EObject> retrievePromise = storageService.retrieveObject(TEST_SCOPE, TEST_REGISTRY, TEST_STAGE,storageId);
 			EPackage retrievedPackage = (EPackage) retrievePromise.getValue();
 
 			assertNotNull(retrievedPackage);
 			assertEquals("AutoIdTest", retrievedPackage.getName());
 
 			//		Cleanup
-			Promise<Boolean> deletePromise = storageService.deleteObject(storageId);
+			Promise<Boolean> deletePromise = storageService.deleteObject(TEST_SCOPE, TEST_REGISTRY, TEST_STAGE,storageId);
 			Boolean deleted = deletePromise.getValue();
 			assertTrue(deleted);
 
@@ -452,7 +472,10 @@ public class EObjectApicurioStorageServiceTest {
 	@RegistryConfiguration
 	@Test
 	public void testCustomFileExtension(
-			@InjectConfiguration(withFactoryConfig = @WithFactoryConfiguration(factoryPid = "ApicurioObjectStorage", name = "test", location = "?")) Configuration configuration,
+			@InjectConfiguration(withFactoryConfig = @WithFactoryConfiguration(factoryPid = "ApicurioObjectStorage", name = "test", location = "?", 
+					properties = {
+							@Property(key = "storage.type", value = "apicurio")
+					})) Configuration configuration,
 			@InjectService(cardinality = 0, filter = "(storage.backend=apicurio)") ServiceAware<EObjectStorageService> serviceAware) throws Exception {
 
 		try (GenericContainer<?> container = new GenericContainer<>(APICURIO_DOCKER_IMAGE)) {
@@ -482,11 +505,11 @@ public class EObjectApicurioStorageServiceTest {
 			metadata1.getProperties().put("file.extension", "json"); // without dot
 			metadata1.setObjectRef(testPackage1);
 
-			storageService.storeObject("custom-ext-1", testPackage1, metadata1).getValue();
+			storageService.storeObject(TEST_SCOPE, TEST_REGISTRY, TEST_STAGE,"custom-ext-1", testPackage1, metadata1).getValue();
 			String storageId1 = metadata1.getObjectId();
 
 			// Verify file with .json extension exists
-			assertTrue(storageService.exists(storageId1), "Artifact should exist");
+			assertTrue(storageService.exists(TEST_SCOPE, TEST_REGISTRY, TEST_STAGE,storageId1), "Artifact should exist");
 
 			// Test with default extension (no property set)
 			EPackage testPackage2 = EcoreFactory.eINSTANCE.createEPackage();
@@ -497,31 +520,31 @@ public class EObjectApicurioStorageServiceTest {
 			metadata2.setObjectRef(testPackage2);
 			// No file.extension property set - should use default .xmi
 
-			storageService.storeObject("default-ext", testPackage2, metadata2).getValue();
+			storageService.storeObject(TEST_SCOPE, TEST_REGISTRY, TEST_STAGE,"default-ext", testPackage2, metadata2).getValue();
 			String storageId2 = metadata2.getObjectId();
 
 			// Verify file with .xmi extension exists
-			assertTrue(storageService.exists(storageId2), "Artifact should exist");
+			assertTrue(storageService.exists(TEST_SCOPE, TEST_REGISTRY, TEST_STAGE,storageId2), "Artifact should exist");
 
 			// Verify both can be retrieved
-			Promise<EObject> retrievePromise1 = storageService.retrieveObject(storageId1);
+			Promise<EObject> retrievePromise1 = storageService.retrieveObject(TEST_SCOPE, TEST_REGISTRY, TEST_STAGE,storageId1);
 			EObject retrieved1 = retrievePromise1.getValue();
 			assertNotNull(retrieved1);
 			assertTrue(retrieved1 instanceof EPackage);
 			assertEquals("CustomExtTest1", ((EPackage) retrieved1).getName());
 
-			Promise<EObject> retrievePromise2 = storageService.retrieveObject(storageId2);
+			Promise<EObject> retrievePromise2 = storageService.retrieveObject(TEST_SCOPE, TEST_REGISTRY, TEST_STAGE,storageId2);
 			EObject retrieved2 = retrievePromise2.getValue();
 			assertNotNull(retrieved2);
 			assertTrue(retrieved2 instanceof EPackage);
 			assertEquals("DefaultExtTest", ((EPackage) retrieved2).getName());
 
 			//		Cleanup
-			Promise<Boolean> deletePromise = storageService.deleteObject(storageId1);
+			Promise<Boolean> deletePromise = storageService.deleteObject(TEST_SCOPE, TEST_REGISTRY, TEST_STAGE,storageId1);
 			Boolean deleted = deletePromise.getValue();
 			assertTrue(deleted);
 
-			deletePromise = storageService.deleteObject(storageId2);
+			deletePromise = storageService.deleteObject(TEST_SCOPE, TEST_REGISTRY, TEST_STAGE,storageId2);
 			deleted = deletePromise.getValue();
 			assertTrue(deleted);
 
@@ -535,7 +558,10 @@ public class EObjectApicurioStorageServiceTest {
 	@RegistryConfiguration
 	@Test
 	public void testContentType(
-			@InjectConfiguration(withFactoryConfig = @WithFactoryConfiguration(factoryPid = "ApicurioObjectStorage", name = "test", location = "?")) Configuration configuration,
+			@InjectConfiguration(withFactoryConfig = @WithFactoryConfiguration(factoryPid = "ApicurioObjectStorage", name = "test", location = "?", 
+					properties = {
+							@Property(key = "storage.type", value = "apicurio")
+					})) Configuration configuration,
 			@InjectService(cardinality = 0, filter = "(storage.backend=apicurio)") ServiceAware<EObjectStorageService> serviceAware) throws Exception {
 
 		try (GenericContainer<?> container = new GenericContainer<>(APICURIO_DOCKER_IMAGE)) {
@@ -569,21 +595,21 @@ public class EObjectApicurioStorageServiceTest {
 			metadata.getProperties().put("content.type", "application/xml");
 			metadata.setObjectRef(testPackage);
 
-			storageService.storeObject("content-type-test", testPackage, metadata).getValue();
+			storageService.storeObject(TEST_SCOPE, TEST_REGISTRY, TEST_STAGE,"content-type-test", testPackage, metadata).getValue();
 			String storageId = metadata.getObjectId();
 
 			// Verify file exists
-			assertTrue(storageService.exists(storageId));
+			assertTrue(storageService.exists(TEST_SCOPE, TEST_REGISTRY, TEST_STAGE,storageId));
 
 			// Retrieve and verify
-			Promise<EObject> retrievePromise = storageService.retrieveObject(storageId);
+			Promise<EObject> retrievePromise = storageService.retrieveObject(TEST_SCOPE, TEST_REGISTRY, TEST_STAGE,storageId);
 			EObject retrieved = retrievePromise.getValue();
 			assertNotNull(retrieved);
 			assertTrue(retrieved instanceof EPackage);
 			assertEquals("ContentTypeTest", ((EPackage) retrieved).getName());
 
 			//Cleanup
-			Promise<Boolean> deletePromise = storageService.deleteObject(storageId);
+			Promise<Boolean> deletePromise = storageService.deleteObject(TEST_SCOPE, TEST_REGISTRY, TEST_STAGE,storageId);
 			Boolean deleted = deletePromise.getValue();
 			assertTrue(deleted);
 
@@ -595,7 +621,10 @@ public class EObjectApicurioStorageServiceTest {
 	@RegistryConfiguration
 	@Test
 	public void testUpdateMetadata(
-			@InjectConfiguration(withFactoryConfig = @WithFactoryConfiguration(factoryPid = "ApicurioObjectStorage", name = "test", location = "?")) Configuration configuration,
+			@InjectConfiguration(withFactoryConfig = @WithFactoryConfiguration(factoryPid = "ApicurioObjectStorage", name = "test", location = "?", 
+					properties = {
+							@Property(key = "storage.type", value = "apicurio")
+					})) Configuration configuration,
 			@InjectService(cardinality = 0, filter = "(storage.backend=apicurio)") ServiceAware<EObjectStorageService> serviceAware) throws Exception {
 
 		try (GenericContainer<?> container = new GenericContainer<>(APICURIO_DOCKER_IMAGE)) {
@@ -627,7 +656,7 @@ public class EObjectApicurioStorageServiceTest {
 			metadata.setUploadTime(Instant.now());
 			metadata.getProperties().put("file.extension", ".ecore");
 
-			storageService.storeObject("update-metadata-test", testPackage, metadata).getValue();
+			storageService.storeObject(TEST_SCOPE, TEST_REGISTRY, TEST_STAGE,"update-metadata-test", testPackage, metadata).getValue();
 			String storageId = metadata.getObjectId();
 
 			// Create updated metadata
@@ -643,12 +672,12 @@ public class EObjectApicurioStorageServiceTest {
 			updatedMetadata.getProperties().put("custom.property", "customValue");
 
 			// Update metadata
-			Promise<Boolean> updatePromise = storageService.updateMetadata(storageId, updatedMetadata);
+			Promise<Boolean> updatePromise = storageService.updateMetadata(TEST_SCOPE, TEST_REGISTRY, TEST_STAGE,storageId, updatedMetadata);
 			Boolean updateResult = updatePromise.getValue();
 			assertTrue(updateResult, "Metadata update should succeed");
 
 			// Retrieve and verify updated metadata
-			Promise<ObjectMetadata> retrievePromise = storageService.retrieveMetadata(storageId);
+			Promise<ObjectMetadata> retrievePromise = storageService.retrieveMetadata(TEST_SCOPE, TEST_REGISTRY, TEST_STAGE,storageId);
 			ObjectMetadata retrievedMetadata = retrievePromise.getValue();
 
 			assertNotNull(retrievedMetadata);
@@ -660,13 +689,13 @@ public class EObjectApicurioStorageServiceTest {
 			assertEquals("customValue", retrievedMetadata.getProperties().get("custom.property"));
 
 			// Verify object itself is unchanged
-			Promise<EObject> objectPromise = storageService.retrieveObject(storageId);
+			Promise<EObject> objectPromise = storageService.retrieveObject(TEST_SCOPE, TEST_REGISTRY, TEST_STAGE,storageId);
 			EPackage retrievedPackage = (EPackage) objectPromise.getValue();
 			assertNotNull(retrievedPackage);
 			assertEquals("UpdateMetadataTest", retrievedPackage.getName());
 
 			//Cleanup
-			Promise<Boolean> deletePromise = storageService.deleteObject(storageId);
+			Promise<Boolean> deletePromise = storageService.deleteObject(TEST_SCOPE, TEST_REGISTRY, TEST_STAGE,storageId);
 			Boolean deleted = deletePromise.getValue();
 			assertTrue(deleted);
 
@@ -678,7 +707,10 @@ public class EObjectApicurioStorageServiceTest {
 	@RegistryConfiguration
 	@Test
 	public void testUpdateStatus(
-			@InjectConfiguration(withFactoryConfig = @WithFactoryConfiguration(factoryPid = "ApicurioObjectStorage", name = "test", location = "?")) Configuration configuration,
+			@InjectConfiguration(withFactoryConfig = @WithFactoryConfiguration(factoryPid = "ApicurioObjectStorage", name = "test", location = "?", 
+					properties = {
+							@Property(key = "storage.type", value = "apicurio")
+					})) Configuration configuration,
 			@InjectService(cardinality = 0, filter = "(storage.backend=apicurio)") ServiceAware<EObjectStorageService> serviceAware) throws Exception {
 
 		try (GenericContainer<?> container = new GenericContainer<>(APICURIO_DOCKER_IMAGE)) {
@@ -713,11 +745,11 @@ public class EObjectApicurioStorageServiceTest {
 			metadata.getProperties().put("file.extension", ".ecore");
 			metadata.setObjectRef(testPackage);
 
-			storageService.storeObject("update-status-test", testPackage, metadata).getValue();
+			storageService.storeObject(TEST_SCOPE, TEST_REGISTRY, TEST_STAGE,"update-status-test", testPackage, metadata).getValue();
 			String storageId = metadata.getObjectId();
 
 			// Verify initial status
-			Promise<ObjectMetadata> initialPromise = storageService.retrieveMetadata(storageId);
+			Promise<ObjectMetadata> initialPromise = storageService.retrieveMetadata(TEST_SCOPE, TEST_REGISTRY, TEST_STAGE,storageId);
 			ObjectMetadata initialMetadata = initialPromise.getValue();
 			assertEquals(ObjectStatus.DRAFT, initialMetadata.getStatus());
 			assertNull(initialMetadata.getLastChangeUser());
@@ -725,13 +757,13 @@ public class EObjectApicurioStorageServiceTest {
 
 			// Update status to APPROVED with change user
 			Instant beforeUpdate = Instant.now();
-			Promise<Boolean> updatePromise = storageService.updateStatus(storageId, ObjectStatus.APPROVED, "approverUser");
+			Promise<Boolean> updatePromise = storageService.updateStatus(TEST_SCOPE, TEST_REGISTRY, TEST_STAGE,storageId, ObjectStatus.APPROVED, "approverUser");
 			Boolean updateResult = updatePromise.getValue();
 			assertTrue(updateResult, "Status update should succeed");
 			Instant afterUpdate = Instant.now();
 
 			// Verify status update
-			Promise<ObjectMetadata> updatedPromise = storageService.retrieveMetadata(storageId);
+			Promise<ObjectMetadata> updatedPromise = storageService.retrieveMetadata(TEST_SCOPE, TEST_REGISTRY, TEST_STAGE,storageId);
 			ObjectMetadata updatedMetadata = updatedPromise.getValue();
 
 			assertNotNull(updatedMetadata);
@@ -742,12 +774,12 @@ public class EObjectApicurioStorageServiceTest {
 			assertTrue(updatedMetadata.getLastChangeTime().isBefore(afterUpdate) || updatedMetadata.getLastChangeTime().equals(afterUpdate));
 
 			// Update status again without change user
-			Promise<Boolean> updatePromise2 = storageService.updateStatus(storageId, ObjectStatus.DEPLOYED, null);
+			Promise<Boolean> updatePromise2 = storageService.updateStatus(TEST_SCOPE, TEST_REGISTRY, TEST_STAGE,storageId, ObjectStatus.DEPLOYED, null);
 			Boolean updateResult2 = updatePromise2.getValue();
 			assertTrue(updateResult2, "Second status update should succeed");
 
 			// Verify second status update
-			Promise<ObjectMetadata> finalPromise = storageService.retrieveMetadata(storageId);
+			Promise<ObjectMetadata> finalPromise = storageService.retrieveMetadata(TEST_SCOPE, TEST_REGISTRY, TEST_STAGE,storageId);
 			ObjectMetadata finalMetadata = finalPromise.getValue();
 
 			assertEquals(ObjectStatus.DEPLOYED, finalMetadata.getStatus());
@@ -756,7 +788,7 @@ public class EObjectApicurioStorageServiceTest {
 			assertNotNull(finalMetadata.getLastChangeTime());
 
 			//Cleanup
-			Promise<Boolean> deletePromise = storageService.deleteObject(storageId);
+			Promise<Boolean> deletePromise = storageService.deleteObject(TEST_SCOPE, TEST_REGISTRY, TEST_STAGE,storageId);
 			Boolean deleted = deletePromise.getValue();
 			assertTrue(deleted);
 
@@ -768,7 +800,10 @@ public class EObjectApicurioStorageServiceTest {
 	@RegistryConfiguration
 	@Test
 	public void testGetObjectCount(
-			@InjectConfiguration(withFactoryConfig = @WithFactoryConfiguration(factoryPid = "ApicurioObjectStorage", name = "test", location = "?")) Configuration configuration,
+			@InjectConfiguration(withFactoryConfig = @WithFactoryConfiguration(factoryPid = "ApicurioObjectStorage", name = "test", location = "?", 
+					properties = {
+							@Property(key = "storage.type", value = "apicurio")
+					})) Configuration configuration,
 			@InjectService(cardinality = 0, filter = "(storage.backend=apicurio)") ServiceAware<EObjectStorageService> serviceAware) throws Exception {
 
 		try (GenericContainer<?> container = new GenericContainer<>(APICURIO_DOCKER_IMAGE)) {
@@ -807,7 +842,7 @@ public class EObjectApicurioStorageServiceTest {
 				metadata.getProperties().put("file.extension", ".ecore");
 				metadata.setObjectRef(pkg);
 
-				storageService.storeObject("count-test-" + i, pkg, metadata).getValue();
+				storageService.storeObject(TEST_SCOPE, TEST_REGISTRY, TEST_STAGE,"count-test-" + i, pkg, metadata).getValue();
 			}
 
 			// Count after storing 5 objects
@@ -815,16 +850,16 @@ public class EObjectApicurioStorageServiceTest {
 			assertEquals(5, countAfterStore, "Object count should be 5 after storing 5 objects");
 
 			// Delete 2 objects
-			Promise<Boolean> deletePromise1 = storageService.deleteObject("count-test-1");
+			Promise<Boolean> deletePromise1 = storageService.deleteObject(TEST_SCOPE, TEST_REGISTRY, TEST_STAGE,"count-test-1");
 			deletePromise1.getValue();
-			Promise<Boolean> deletePromise2 = storageService.deleteObject("count-test-3");
+			Promise<Boolean> deletePromise2 = storageService.deleteObject(TEST_SCOPE, TEST_REGISTRY, TEST_STAGE,"count-test-3");
 			deletePromise2.getValue();
 
 
 			// Verify metadata retrieval fails for deleted objects
-			Promise<ObjectMetadata> metadataPromise1 = storageService.retrieveMetadata("count-test-1");
+			Promise<ObjectMetadata> metadataPromise1 = storageService.retrieveMetadata(TEST_SCOPE, TEST_REGISTRY, TEST_STAGE,"count-test-1");
 			assertNull(metadataPromise1.getValue(), "Should not retrieve metadata for deleted object 1");
-			Promise<ObjectMetadata> metadataPromise3 = storageService.retrieveMetadata("count-test-3");
+			Promise<ObjectMetadata> metadataPromise3 = storageService.retrieveMetadata(TEST_SCOPE, TEST_REGISTRY, TEST_STAGE,"count-test-3");
 			assertNull(metadataPromise3.getValue(), "Should not retrieve metadata for deleted object 3");
 
 			// Count after deleting 2 objects
@@ -832,20 +867,20 @@ public class EObjectApicurioStorageServiceTest {
 			assertEquals(3, countAfterDelete, "Object count should be 3 after deleting 2 objects");
 
 			// Verify count matches listObjectIds size
-			Promise<List<String>> listPromise = storageService.listObjectIds();
+			Promise<List<String>> listPromise = storageService.listObjectIds(TEST_SCOPE, TEST_REGISTRY, TEST_STAGE);
 			List<String> objectIds = listPromise.getValue();
 			assertEquals(countAfterDelete, objectIds.size(), "Object count should match listObjectIds size");
 
 			//Cleanup
-			Promise<Boolean> deletePromise = storageService.deleteObject("count-test-0");
+			Promise<Boolean> deletePromise = storageService.deleteObject(TEST_SCOPE, TEST_REGISTRY, TEST_STAGE,"count-test-0");
 			Boolean deleted = deletePromise.getValue();
 			assertTrue(deleted);
 
-			deletePromise = storageService.deleteObject("count-test-2");
+			deletePromise = storageService.deleteObject(TEST_SCOPE, TEST_REGISTRY, TEST_STAGE,"count-test-2");
 			deleted = deletePromise.getValue();
 			assertTrue(deleted);
 
-			deletePromise = storageService.deleteObject("count-test-4");
+			deletePromise = storageService.deleteObject(TEST_SCOPE, TEST_REGISTRY, TEST_STAGE,"count-test-4");
 			deleted = deletePromise.getValue();
 			assertTrue(deleted);
 
@@ -858,7 +893,10 @@ public class EObjectApicurioStorageServiceTest {
 	@Test
 	@RegistryConfiguration
 	public void testUpdateMetadataErrorHandling(
-			@InjectConfiguration(withFactoryConfig = @WithFactoryConfiguration(factoryPid = "ApicurioObjectStorage", name = "test", location = "?")) Configuration configuration,
+			@InjectConfiguration(withFactoryConfig = @WithFactoryConfiguration(factoryPid = "ApicurioObjectStorage", name = "test", location = "?", 
+					properties = {
+							@Property(key = "storage.type", value = "apicurio")
+					})) Configuration configuration,
 			@InjectService(cardinality = 0, filter = "(storage.backend=apicurio)") ServiceAware<EObjectStorageService> serviceAware) throws Exception {
 
 		try (GenericContainer<?> container = new GenericContainer<>(APICURIO_DOCKER_IMAGE)) {
@@ -887,7 +925,7 @@ public class EObjectApicurioStorageServiceTest {
 			metadata.setObjectType("EPackage");
 			metadata.setUploadTime(Instant.now());
 
-			Promise<Boolean> updatePromise = storageService.updateMetadata("non-existent-id", metadata);
+			Promise<Boolean> updatePromise = storageService.updateMetadata(TEST_SCOPE, TEST_REGISTRY, TEST_STAGE,"non-existent-id", metadata);
 			Boolean updateResult = updatePromise.getValue();
 			assertFalse(updateResult, "Updating metadata for non-existent object should return false");
 
@@ -899,7 +937,10 @@ public class EObjectApicurioStorageServiceTest {
 	@Test
 	@RegistryConfiguration
 	public void testUpdateStatusErrorHandling(
-			@InjectConfiguration(withFactoryConfig = @WithFactoryConfiguration(factoryPid = "ApicurioObjectStorage", name = "test", location = "?")) Configuration configuration,
+			@InjectConfiguration(withFactoryConfig = @WithFactoryConfiguration(factoryPid = "ApicurioObjectStorage", name = "test", location = "?", 
+					properties = {
+							@Property(key = "storage.type", value = "apicurio")
+					})) Configuration configuration,
 			@InjectService(cardinality = 0, filter = "(storage.backend=apicurio)") ServiceAware<EObjectStorageService> serviceAware) throws Exception {
 
 		try (GenericContainer<?> container = new GenericContainer<>(APICURIO_DOCKER_IMAGE)) {
@@ -920,7 +961,7 @@ public class EObjectApicurioStorageServiceTest {
 			EObjectStorageService<EObject> storageService = (EObjectStorageService<EObject>) serviceAware.waitForService(5000l);
 			assertNotNull(storageService, "Storage service should be available");
 			// Test updating status for non-existent object
-			Promise<Boolean> updatePromise = storageService.updateStatus("non-existent-id", ObjectStatus.APPROVED, "testUser");
+			Promise<Boolean> updatePromise = storageService.updateStatus(TEST_SCOPE, TEST_REGISTRY, TEST_STAGE,"non-existent-id", ObjectStatus.APPROVED, "testUser");
 			Boolean updateResult = updatePromise.getValue();
 			assertFalse(updateResult, "Updating status for non-existent object should return false");
 
@@ -928,289 +969,6 @@ public class EObjectApicurioStorageServiceTest {
 		}
 	}
 
-	@SuppressWarnings({"rawtypes", "unchecked"})
-	@Test
-	@RegistryConfiguration
-	public void testRoleFunctionality(
-			@InjectConfiguration(withFactoryConfig = @WithFactoryConfiguration(factoryPid = "ApicurioObjectStorage", name = "test", location = "?")) Configuration configuration,
-			@InjectService(cardinality = 0, filter = "(storage.backend=apicurio)") ServiceAware<EObjectStorageService> serviceAware) throws Exception {
-
-		try (GenericContainer<?> container = new GenericContainer<>(APICURIO_DOCKER_IMAGE)) {
-
-			container.withEnv(APICURIO_ENV_DELETION_ARTIFACT, "true")
-			.withExposedPorts(APICURIO_EXPOSED_PORT);
-
-			container.start();
-
-			int mappedPort = container.getMappedPort(8080);
-			Dictionary<String, Object> serviceProperties = new Hashtable<>();
-			serviceProperties.put("base.url", String.format(APICURIO_BASE_URL, mappedPort));
-			serviceProperties.put("storage.role", "custom-role");
-			configuration.update(serviceProperties);
-
-			Thread.sleep(3000);
-
-			// Storage service should be available (which implies registry is also working)
-			EObjectStorageService<EObject> storageService = (EObjectStorageService<EObject>) serviceAware.waitForService(5000l);
-			assertNotNull(storageService, "Storage service should be available");
-
-			// Create test EPackage
-			EPackage testPackage = EcoreFactory.eINSTANCE.createEPackage();
-			testPackage.setName("RoleTestPackage");
-			testPackage.setNsPrefix("roletest");
-			testPackage.setNsURI("http://roletest.example.com");
-
-			// Create metadata without role set
-			ObjectMetadata metadata = ManagementFactory.eINSTANCE.createObjectMetadata();
-			metadata.setObjectName("RoleTestPackage");
-			metadata.setVersion("1.0.0");
-			metadata.setStatus(ObjectStatus.DRAFT);
-			metadata.setUploadUser("roleTestUser");
-			metadata.setUploadTime(Instant.now());
-			metadata.setSourceChannel("ROLE_TEST");
-			// Note: role is intentionally not set to test automatic role setting
-			metadata.setObjectRef(testPackage);
-
-			// Test storeObject with automatic role setting
-			Promise<ObjectMetadata> storePromise = storageService.storeObject("role-test-id", testPackage, metadata);
-			assertNull(storePromise.getFailure(), "Store operation should succeed");
-			storePromise.getValue();
-			String objectId = metadata.getObjectId();
-			assertEquals("role-test-id", objectId);
-
-			// Verify role was automatically set based on status
-			assertEquals("custom-role", metadata.getRole(), "Role should be automatically set during storeObject");
-
-			// Verify the object was actually stored and can be retrieved
-			Promise<EObject> retrievePromise = storageService.retrieveObject("role-test-id");
-			assertNull(retrievePromise.getFailure(), "Retrieve operation should succeed");
-			EObject retrievedObject = retrievePromise.getValue();
-			assertNotNull(retrievedObject);
-			assertTrue(retrievedObject instanceof EPackage);
-			assertEquals("RoleTestPackage", ((EPackage) retrievedObject).getName());
-
-			// Verify metadata can be retrieved and has the correct role
-			Promise<ObjectMetadata> metadataPromise = storageService.retrieveMetadata("role-test-id");
-			assertNull(metadataPromise.getFailure(), "Metadata retrieve should succeed");
-			ObjectMetadata retrievedMetadata = metadataPromise.getValue();
-			assertNotNull(retrievedMetadata);
-			assertEquals("custom-role", retrievedMetadata.getRole(), "Retrieved metadata should have the correct role");
-
-			// Test updateMetadata with automatic role setting
-			ObjectMetadata updatedMetadata = ManagementFactory.eINSTANCE.createObjectMetadata();
-			updatedMetadata.setObjectName("UpdatedRoleTestPackage");
-			updatedMetadata.setVersion("2.0.0");
-			updatedMetadata.setStatus(ObjectStatus.APPROVED);
-			updatedMetadata.setUploadUser("roleTestUser");
-			updatedMetadata.setUploadTime(Instant.now());
-			updatedMetadata.setSourceChannel("ROLE_TEST");
-			// Note: role is intentionally not set to test automatic role setting
-
-			Promise<Boolean> updatePromise = storageService.updateMetadata("role-test-id", updatedMetadata);
-			assertNull(updatePromise.getFailure(), "Update metadata operation should succeed");
-			Boolean updateResult = updatePromise.getValue();
-			assertTrue(updateResult, "Update metadata should return true");
-
-			// Verify original metadata object was NOT modified (copy-based approach)
-			assertNull(updatedMetadata.getRole(), "Original metadata object should not be modified");
-
-			// Verify the updated metadata was actually saved
-			Promise<ObjectMetadata> updatedMetadataPromise = storageService.retrieveMetadata("role-test-id");
-			assertNull(updatedMetadataPromise.getFailure(), "Updated metadata retrieve should succeed");
-			ObjectMetadata finalMetadata = updatedMetadataPromise.getValue();
-			assertNotNull(finalMetadata);
-			assertEquals("UpdatedRoleTestPackage", finalMetadata.getObjectName());
-			assertEquals("2.0.0", finalMetadata.getVersion());
-			assertEquals(ObjectStatus.APPROVED, finalMetadata.getStatus());
-			assertEquals("custom-role", finalMetadata.getRole(), "Final metadata should have the correct role");
-
-			// Test role override: storage service role should override metadata role
-			EPackage overrideTestPackage = EcoreFactory.eINSTANCE.createEPackage();
-			overrideTestPackage.setName("RoleOverrideTest");
-
-			ObjectMetadata metadataWithPresetRole = ManagementFactory.eINSTANCE.createObjectMetadata();
-			metadataWithPresetRole.setObjectName("RoleOverrideTest");
-			metadataWithPresetRole.setVersion("1.0.0");
-			metadataWithPresetRole.setStatus(ObjectStatus.DRAFT);
-			metadataWithPresetRole.setUploadUser("overrideTestUser");
-			metadataWithPresetRole.setUploadTime(Instant.now());
-			metadataWithPresetRole.setSourceChannel("OVERRIDE_TEST");
-			// Explicitly set a different role that should be overridden
-			metadataWithPresetRole.setRole("wrong-role");
-			metadataWithPresetRole.setObjectRef(overrideTestPackage);
-
-			Promise<ObjectMetadata> overrideStorePromise = storageService.storeObject("role-override-test", overrideTestPackage, metadataWithPresetRole);
-			assertNull(overrideStorePromise.getFailure(), "Override store operation should succeed");
-			overrideStorePromise.getValue();
-			String overrideObjectId = metadataWithPresetRole.getObjectId();
-			assertEquals("role-override-test", overrideObjectId);
-
-			// Verify the storage service role overrode the preset role
-			assertEquals("custom-role", metadataWithPresetRole.getRole(), "Storage service role should override preset role in metadata");
-
-			// Verify the stored metadata also has the correct role
-			Promise<ObjectMetadata> overrideMetadataPromise = storageService.retrieveMetadata("role-override-test");
-			assertNull(overrideMetadataPromise.getFailure(), "Override metadata retrieve should succeed");
-			ObjectMetadata overrideRetrievedMetadata = overrideMetadataPromise.getValue();
-			assertNotNull(overrideRetrievedMetadata);
-			assertEquals("custom-role", overrideRetrievedMetadata.getRole(), "Retrieved metadata should have storage service role, not preset role");
-
-			//		Cleanup
-			Promise<Boolean> deletePromise = storageService.deleteObject(objectId);
-			Boolean deleted = deletePromise.getValue();
-			assertTrue(deleted);
-
-			deletePromise = storageService.deleteObject(overrideObjectId);
-			deleted = deletePromise.getValue();
-			assertTrue(deleted);
-
-			container.stop();
-		}
-	}
-
-	@SuppressWarnings({"rawtypes", "unchecked"})
-	@Test
-	@RegistryConfiguration
-	public void testDifferentStorageRoles(
-			@InjectService(cardinality = 0, filter = "(storage.backend=apicurio)")
-			ServiceAware<EObjectStorageService> serviceAware,
-			@InjectConfiguration(withFactoryConfig = @WithFactoryConfiguration(
-					factoryPid = "ApicurioObjectStorage",
-					location = "?",
-					name = "test2"))
-			Configuration config
-			) throws Exception {
-		assertNotNull(serviceAware);
-		assertNotNull(config);
-		assertTrue(serviceAware.isEmpty());
-
-		try (GenericContainer<?> container = new GenericContainer<>(APICURIO_DOCKER_IMAGE)) {
-
-			container.withEnv(APICURIO_ENV_DELETION_ARTIFACT, "true")
-			.withExposedPorts(APICURIO_EXPOSED_PORT);
-
-			container.start();
-
-			int mappedPort = container.getMappedPort(8080);
-			Dictionary<String, Object> serviceProperties = new Hashtable<>();
-			serviceProperties.put("base.url", String.format(APICURIO_BASE_URL, mappedPort));
-			serviceProperties.put("workspace.folder", tempDir.toString());
-			serviceProperties.put("storage.role", "approved");
-			config.update(serviceProperties);
-
-			Thread.sleep(3000);
-
-			// Storage service should be available (which implies registry is also working)
-			EObjectStorageService<EObject> storageService = (EObjectStorageService<EObject>) serviceAware.waitForService(5000l);
-			assertNotNull(storageService, "Storage service should be available");
-
-
-			// Create test object and metadata
-			EPackage testPackage = EcoreFactory.eINSTANCE.createEPackage();
-			testPackage.setName("ApprovedTestPackage");
-
-			ObjectMetadata metadata = ManagementFactory.eINSTANCE.createObjectMetadata();
-			metadata.setObjectName("ApprovedTestPackage");
-			metadata.setVersion("1.0.0");
-			metadata.setStatus(ObjectStatus.APPROVED);
-			metadata.setUploadUser("approvedUser");
-			metadata.setUploadTime(Instant.now());
-			metadata.setSourceChannel("APPROVED_TEST");
-			metadata.setObjectRef(testPackage);
-
-			// Store object
-			Promise<ObjectMetadata> storePromise = storageService.storeObject("approved-test-id", testPackage, metadata);
-			assertNull(storePromise.getFailure(), "Store operation should succeed");
-
-			// Verify the configured storage role was set
-			assertEquals("approved", metadata.getRole(), "Role should be set to configured storage_role 'approved'");
-
-			//		Cleanup Apicurio
-			Promise<Boolean> deletePromise = storageService.deleteObject("approved-test-id");
-			Boolean deleted = deletePromise.getValue();
-			assertTrue(deleted);
-
-			// Clean up configuration
-			config.delete();
-			Thread.sleep(500);
-			assertTrue(serviceAware.isEmpty());
-
-			container.stop();
-		}
-	}
-
-	@SuppressWarnings({"rawtypes", "unchecked"})
-	@Test
-	@RegistryConfiguration
-	public void testServiceActivationWithDefaultRole(
-			@InjectService(cardinality = 0, filter = "(storage.backend=apicurio)")
-			ServiceAware<EObjectStorageService> serviceAware,
-			@InjectService(cardinality = 0, filter = "(registry.type=shared)")
-			ServiceAware<EObjectRegistryService> registryAware,
-			@InjectConfiguration(withFactoryConfig = @WithFactoryConfiguration(
-					factoryPid = "ApicurioObjectStorage",
-					location = "?",
-					name = "defaultRoleTest")) Configuration config
-			) throws Exception {
-		assertNotNull(serviceAware);
-		assertNotNull(registryAware);
-		assertNotNull(config);
-		assertTrue(serviceAware.isEmpty());
-
-		try (GenericContainer<?> container = new GenericContainer<>(APICURIO_DOCKER_IMAGE)) {
-
-			container.withEnv(APICURIO_ENV_DELETION_ARTIFACT, "true")
-			.withExposedPorts(APICURIO_EXPOSED_PORT);
-
-			container.start();
-
-			int mappedPort = container.getMappedPort(8080);
-			Dictionary<String, Object> serviceProperties = new Hashtable<>();
-			serviceProperties.put("base.url", String.format(APICURIO_BASE_URL, mappedPort));			
-			serviceProperties.put("workspace.folder", tempDir.toString());
-			config.update(serviceProperties);
-
-			Thread.sleep(3000);
-
-			// Storage service should be available (which implies registry is also working)
-			EObjectStorageService<EObject> storageService = (EObjectStorageService<EObject>) serviceAware.waitForService(5000l);
-			assertNotNull(storageService, "Storage service should be available");
-
-			// Registry service should be available (configured by annotation)
-			EObjectRegistryService<EObject> registryService = (EObjectRegistryService<EObject>) registryAware.waitForService(5000L);
-			assertNotNull(registryService, "Registry service should be available");
-
-
-			// Test that default role is used
-			EPackage testPackage = EcoreFactory.eINSTANCE.createEPackage();
-			testPackage.setName("DefaultRoleTest");
-
-			ObjectMetadata metadata = ManagementFactory.eINSTANCE.createObjectMetadata();
-			metadata.setUploadUser("defaultUser");
-			metadata.setSourceChannel("DEFAULT_TEST");
-			metadata.getProperties().put("file.extension", ".ecore");
-			metadata.setObjectRef(testPackage);
-
-			storageService.storeObject("default-role-test", testPackage, metadata).getValue();
-			String objectId = metadata.getObjectId();
-			assertEquals("default-role-test", objectId);
-
-			// Verify default role "draft" was set
-			assertEquals("draft", metadata.getRole(), "Should use default role 'draft' when not explicitly configured");
-
-			//		Cleanup Apicurio
-			Promise<Boolean> deletePromise = storageService.deleteObject(objectId);
-			Boolean deleted = deletePromise.getValue();
-			assertTrue(deleted);
-
-			// Clean up
-			config.delete();
-			Thread.sleep(500);
-			assertTrue(serviceAware.isEmpty());
-
-			container.stop();
-		}
-	}
 
 	/**
 	 * Integration test for storage-registry interaction.
@@ -1226,7 +984,10 @@ public class EObjectApicurioStorageServiceTest {
 			ServiceAware<EObjectStorageService> serviceAware,
 			@InjectService(cardinality = 0, filter = "(registry.type=shared)")
 			ServiceAware<EObjectRegistryService> registryAware,
-			@InjectConfiguration(withFactoryConfig = @WithFactoryConfiguration(factoryPid = "ApicurioObjectStorage", name = "test", location = "?")) Configuration configuration
+			@InjectConfiguration(withFactoryConfig = @WithFactoryConfiguration(factoryPid = "ApicurioObjectStorage", name = "test", location = "?", 
+			properties = {
+					@Property(key = "storage.type", value = "apicurio")
+			})) Configuration configuration
 			) throws Exception {
 
 		try (GenericContainer<?> container = new GenericContainer<>(APICURIO_DOCKER_IMAGE)) {
@@ -1270,7 +1031,7 @@ public class EObjectApicurioStorageServiceTest {
 			draftMetadata.setObjectRef(testPackage);
 
 			// Store object with DRAFT status
-			storageService.storeObject("registry-test-draft", testPackage, draftMetadata).getValue();
+			storageService.storeObject(TEST_SCOPE, TEST_REGISTRY, TEST_STAGE, "registry-test-draft", testPackage, draftMetadata).getValue();
 			String draftObjectId = draftMetadata.getObjectId();
 			assertNotNull(draftObjectId, "Draft object ID should not be null");
 
@@ -1288,7 +1049,7 @@ public class EObjectApicurioStorageServiceTest {
 			draftMetadata.setLastChangeTime(Instant.now());
 			//		We have to update the version if we want the update to succeed in Apicurio
 			draftMetadata.setVersion("1.1.0");
-			assertTrue(storageService.updateMetadata(draftObjectId, draftMetadata).getValue(), "Metadata should be updated");
+			assertTrue(storageService.updateMetadata(TEST_SCOPE, TEST_REGISTRY, TEST_STAGE, draftObjectId, draftMetadata).getValue(), "Metadata should be updated");
 
 			// Wait a moment for registry update (if async)
 			Thread.sleep(100);
@@ -1320,7 +1081,7 @@ public class EObjectApicurioStorageServiceTest {
 			rejectedMetadata.setSourceChannel("TEST");
 			rejectedMetadata.setObjectRef(rejectedPackage);
 
-			storageService.storeObject("registry-test-rejected", rejectedPackage, rejectedMetadata).getValue();
+			storageService.storeObject(TEST_SCOPE, TEST_REGISTRY, TEST_STAGE, "registry-test-rejected", rejectedPackage, rejectedMetadata).getValue();
 			String rejectedObjectId = rejectedMetadata.getObjectId();
 			assertNotNull(rejectedObjectId, "Rejected object ID should not be null");
 
@@ -1334,8 +1095,8 @@ public class EObjectApicurioStorageServiceTest {
 					"Registry should find the stored rejected object by status");
 
 			// Clean up
-			storageService.deleteObject(draftObjectId).getValue();
-			storageService.deleteObject(rejectedObjectId).getValue();
+			storageService.deleteObject(TEST_SCOPE, TEST_REGISTRY, TEST_STAGE,draftObjectId).getValue();
+			storageService.deleteObject(TEST_SCOPE, TEST_REGISTRY, TEST_STAGE,rejectedObjectId).getValue();
 
 			container.stop();
 		}

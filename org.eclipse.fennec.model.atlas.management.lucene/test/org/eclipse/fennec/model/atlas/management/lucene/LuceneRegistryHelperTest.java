@@ -445,8 +445,8 @@ class LuceneRegistryHelperTest {
     }
 
     @Test
-    void testSearchByRole() throws Exception {
-        // Create objects with different roles
+    void testSearchBystage() throws Exception {
+        // Create objects with different stages
         ObjectMetadata draftMetadata = createTestMetadata("user1", "AI_GENERATOR", "EPackage", "draft");
         ObjectMetadata approvedMetadata = createTestMetadata("user2", "MANUAL_UPLOAD", "Route", "approved");
         ObjectMetadata documentationMetadata = createTestMetadata("user3", "AI_GENERATOR", "SensorModel", "documentation");
@@ -455,25 +455,25 @@ class LuceneRegistryHelperTest {
         helper.updateIndex("approved-obj", approvedMetadata);
         helper.updateIndex("doc-obj", documentationMetadata);
         
-        // Test search by role: draft
-        List<String> draftResults = helper.searchObjectIds("role:draft", 10);
+        // Test search by stage: draft
+        List<String> draftResults = helper.searchObjectIds("stage:draft", 10);
         assertEquals(1, draftResults.size());
         assertEquals("draft-obj", draftResults.get(0));
         
-        // Test search by role: approved
-        List<String> approvedResults = helper.searchObjectIds("role:approved", 10);
+        // Test search by stage: approved
+        List<String> approvedResults = helper.searchObjectIds("stage:approved", 10);
         assertEquals(1, approvedResults.size());
         assertEquals("approved-obj", approvedResults.get(0));
         
-        // Test search by role: documentation
-        List<String> docResults = helper.searchObjectIds("role:documentation", 10);
+        // Test search by stage: documentation
+        List<String> docResults = helper.searchObjectIds("stage:documentation", 10);
         assertEquals(1, docResults.size());
         assertEquals("doc-obj", docResults.get(0));
     }
 
     @Test
-    void testSearchByObjectNameAndRole() throws Exception {
-        // Create multiple objects with same name but different roles
+    void testSearchByObjectNameAndstage() throws Exception {
+        // Create multiple objects with same name but different stages
         String objectName = "sensor-model-v1";
         ObjectMetadata draftMetadata = createTestMetadata("user1", "AI_GENERATOR", "SensorModel", "draft");
         draftMetadata.setObjectName(objectName);
@@ -483,12 +483,12 @@ class LuceneRegistryHelperTest {
         helper.updateIndex("sensor-draft", draftMetadata);
         helper.updateIndex("sensor-approved", approvedMetadata);
         
-        // Test search by objectName and role
-        List<String> draftResults = helper.searchObjectIds("(objectName:\"" + objectName + "\" AND role:draft)", 10);
+        // Test search by objectName and stage
+        List<String> draftResults = helper.searchObjectIds("(objectName:\"" + objectName + "\" AND stage:draft)", 10);
         assertEquals(1, draftResults.size());
         assertEquals("sensor-draft", draftResults.get(0));
         
-        List<String> approvedResults = helper.searchObjectIds("(objectName:\"" + objectName + "\" AND role:approved)", 10);
+        List<String> approvedResults = helper.searchObjectIds("(objectName:\"" + objectName + "\" AND stage:approved)", 10);
         assertEquals(1, approvedResults.size());
         assertEquals("sensor-approved", approvedResults.get(0));
         
@@ -500,27 +500,27 @@ class LuceneRegistryHelperTest {
     }
 
     @Test
-    void testRoleFieldExactMatch() throws Exception {
-        // Create objects with roles that might have partial matches
+    void teststageFieldExactMatch() throws Exception {
+        // Create objects with stages that might have partial matches
         ObjectMetadata draftMetadata = createTestMetadata("user1", "AI_GENERATOR", "EPackage", "draft");
         ObjectMetadata draftDocumentationMetadata = createTestMetadata("user2", "MANUAL_UPLOAD", "Route", "draft-documentation");
         
         helper.updateIndex("draft-obj", draftMetadata);
         helper.updateIndex("draft-doc-obj", draftDocumentationMetadata);
         
-        // Search for exact role match "draft" - should only find draft object, not draft-documentation
-        List<String> exactDraftResults = helper.searchObjectIds("role:draft", 10);
+        // Search for exact stage match "draft" - should only find draft object, not draft-documentation
+        List<String> exactDraftResults = helper.searchObjectIds("stage:draft", 10);
         assertEquals(1, exactDraftResults.size());
         assertEquals("draft-obj", exactDraftResults.get(0));
         
-        // Search for exact role match "draft-documentation"
-        List<String> draftDocResults = helper.searchObjectIds("role:draft-documentation", 10);
+        // Search for exact stage match "draft-documentation"
+        List<String> draftDocResults = helper.searchObjectIds("stage:draft-documentation", 10);
         assertEquals(1, draftDocResults.size());
         assertEquals("draft-doc-obj", draftDocResults.get(0));
     }
 
     @Test
-    void testRoleWithOtherFieldCombinations() throws Exception {
+    void teststageWithOtherFieldCombinations() throws Exception {
         // Create objects for combination testing
         ObjectMetadata epackageDraft = createTestMetadata("alice", "AI_GENERATOR", "EPackage", "draft");
         ObjectMetadata epackageApproved = createTestMetadata("alice", "AI_GENERATOR", "EPackage", "approved");
@@ -530,19 +530,19 @@ class LuceneRegistryHelperTest {
         helper.updateIndex("epackage-approved", epackageApproved);
         helper.updateIndex("route-draft", routeDraft);
         
-        // Test role + objectType combination
-        List<String> epackageDraftResults = helper.searchObjectIds("role:draft AND objectType:EPackage", 10);
+        // Test stage + objectType combination
+        List<String> epackageDraftResults = helper.searchObjectIds("stage:draft AND objectType:EPackage", 10);
         assertEquals(1, epackageDraftResults.size());
         assertEquals("epackage-draft", epackageDraftResults.get(0));
         
-        // Test role + uploadUser combination
-        List<String> aliceDraftResults = helper.searchObjectIds("role:draft AND uploadUser:alice", 10);
+        // Test stage + uploadUser combination
+        List<String> aliceDraftResults = helper.searchObjectIds("stage:draft AND uploadUser:alice", 10);
         assertEquals(2, aliceDraftResults.size());
         assertTrue(aliceDraftResults.contains("epackage-draft"));
         assertTrue(aliceDraftResults.contains("route-draft"));
         
-        // Test role + sourceChannel combination
-        List<String> aiDraftResults = helper.searchObjectIds("role:draft AND sourceChannel:AI_GENERATOR", 10);
+        // Test stage + sourceChannel combination
+        List<String> aiDraftResults = helper.searchObjectIds("stage:draft AND sourceChannel:AI_GENERATOR", 10);
         assertEquals(1, aiDraftResults.size());
         assertEquals("epackage-draft", aiDraftResults.get(0));
     }
@@ -551,10 +551,10 @@ class LuceneRegistryHelperTest {
      * Creates test metadata with the specified parameters.
      */
     private ObjectMetadata createTestMetadata(String user, String channel, String type) {
-        return createTestMetadata(user, channel, type, "draft"); // Default role
+        return createTestMetadata(user, channel, type, "draft"); // Default stage
     }
 
-    private ObjectMetadata createTestMetadata(String user, String channel, String type, String role) {
+    private ObjectMetadata createTestMetadata(String user, String channel, String type, String stage) {
         ObjectMetadata metadata = factory.createObjectMetadata();
         metadata.setObjectId("obj-" + System.nanoTime()); // Ensure unique object ID
         metadata.setUploadUser(user);
@@ -562,8 +562,8 @@ class LuceneRegistryHelperTest {
         metadata.setSourceChannel(channel);
         metadata.setObjectType(type);
         metadata.setContentHash("test-hash-" + System.nanoTime());
-        metadata.setRole(role);
-        metadata.setObjectName(type.toLowerCase() + "-" + role + "-" + System.nanoTime()); // Unique name per role
+        metadata.setStage(stage);
+        metadata.setObjectName(type.toLowerCase() + "-" + stage + "-" + System.nanoTime()); // Unique name per stage
         return metadata;
     }
 }

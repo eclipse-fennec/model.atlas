@@ -36,6 +36,42 @@ public interface WorkflowApiFactory extends EFactory {
 	WorkflowApiFactory eINSTANCE = org.eclipse.fennec.model.atlas.wf.workflowapi.impl.WorkflowApiFactoryImpl.init();
 
 	/**
+	 * Returns a new object of class '<em>Stage</em>'.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @return a new object of class '<em>Stage</em>'.
+	 * @generated
+	 */
+	Stage createStage();
+
+	/**
+	 * Returns a new object of class '<em>Registry</em>'.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @return a new object of class '<em>Registry</em>'.
+	 * @generated
+	 */
+	Registry createRegistry();
+
+	/**
+	 * Returns a new object of class '<em>Scope</em>'.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @return a new object of class '<em>Scope</em>'.
+	 * @generated
+	 */
+	Scope createScope();
+
+	/**
+	 * Returns a new object of class '<em>Stage Transition</em>'.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @return a new object of class '<em>Stage Transition</em>'.
+	 * @generated
+	 */
+	StageTransition createStageTransition();
+
+	/**
 	 * Returns the package supported by this factory.
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->

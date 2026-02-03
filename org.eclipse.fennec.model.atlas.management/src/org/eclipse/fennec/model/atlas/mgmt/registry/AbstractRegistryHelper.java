@@ -110,23 +110,23 @@ public abstract class AbstractRegistryHelper implements AutoCloseable {
     public abstract List<String> findByObjectName(String objectName) throws IOException;
     
     /**
-     * Find objects by role.
+     * Find objects by stage.
      * 
-     * @param role the role to search for
+     * @param stage the stage to search for
      * @return list of matching object IDs
      * @throws IOException if search fails
      */
-    public abstract List<String> findByRole(String role) throws IOException;
+    public abstract List<String> findByStage(String stage) throws IOException;
     
     /**
-     * Find a single object by object name and role.
+     * Find a single object by object name and stage.
      * 
      * @param objectName the object name
-     * @param role the role
+     * @param stage the stage
      * @return the matching object ID, if found
      * @throws IOException if search fails
      */
-    public abstract Optional<String> findByObjectNameAndRole(String objectName, String role) throws IOException;
+    public abstract Optional<String> findByObjectNameAndStage(String objectName, String stage) throws IOException;
     
     /**
      * Get all object IDs in the registry.

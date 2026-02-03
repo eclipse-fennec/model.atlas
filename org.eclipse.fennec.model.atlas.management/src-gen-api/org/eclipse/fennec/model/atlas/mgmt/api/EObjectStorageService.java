@@ -48,10 +48,10 @@ public interface EObjectStorageService<T extends EObject> {
 	 * <!-- begin-model-doc -->
 	 * Store object with metadata, returns promise with storage ID
 	 * <!-- end-model-doc -->
-	 * @model dataType="org.eclipse.fennec.model.atlas.mgmt.management.Promise&lt;org.eclipse.fennec.model.atlas.mgmt.management.ObjectMetadata&gt;" objectIdRequired="true" objectRequired="true" metadataRequired="true"
+	 * @model dataType="org.eclipse.fennec.model.atlas.mgmt.management.Promise&lt;org.eclipse.fennec.model.atlas.mgmt.management.ObjectMetadata&gt;" scopeRequired="true" registryRequired="true" stageRequired="true" objectIdRequired="true" objectRequired="true" metadataRequired="true"
 	 * @generated
 	 */
-	Promise<ObjectMetadata> storeObject(String objectId, T object, ObjectMetadata metadata);
+	Promise<ObjectMetadata> storeObject(String scope, String registry, String stage, String objectId, T object, ObjectMetadata metadata);
 
 	/**
 	 * <!-- begin-user-doc -->
@@ -70,10 +70,10 @@ public interface EObjectStorageService<T extends EObject> {
 	 * <!-- begin-model-doc -->
 	 * Retrieve object by ID
 	 * <!-- end-model-doc -->
-	 * @model dataType="org.eclipse.fennec.model.atlas.mgmt.management.Promise&lt;T&gt;" objectIdRequired="true"
+	 * @model dataType="org.eclipse.fennec.model.atlas.mgmt.management.Promise&lt;T&gt;" scopeRequired="true" registryRequired="true" stageRequired="true" objectIdRequired="true"
 	 * @generated
 	 */
-	Promise<T> retrieveObject(String objectId);
+	Promise<T> retrieveObject(String scope, String registry, String stage, String objectId);
 
 	/**
 	 * <!-- begin-user-doc -->
@@ -81,10 +81,10 @@ public interface EObjectStorageService<T extends EObject> {
 	 * <!-- begin-model-doc -->
 	 * Retrieve metadata by object ID
 	 * <!-- end-model-doc -->
-	 * @model dataType="org.eclipse.fennec.model.atlas.mgmt.management.Promise&lt;org.eclipse.fennec.model.atlas.mgmt.management.ObjectMetadata&gt;" objectIdRequired="true"
+	 * @model dataType="org.eclipse.fennec.model.atlas.mgmt.management.Promise&lt;org.eclipse.fennec.model.atlas.mgmt.management.ObjectMetadata&gt;" scopeRequired="true" registryRequired="true" stageRequired="true" objectIdRequired="true"
 	 * @generated
 	 */
-	Promise<ObjectMetadata> retrieveMetadata(String objectId);
+	Promise<ObjectMetadata> retrieveMetadata(String scope, String registry, String stage, String objectId);
 
 	/**
 	 * <!-- begin-user-doc -->
@@ -92,10 +92,10 @@ public interface EObjectStorageService<T extends EObject> {
 	 * <!-- begin-model-doc -->
 	 * Delete object by ID, returns promise with success flag
 	 * <!-- end-model-doc -->
-	 * @model dataType="org.eclipse.fennec.model.atlas.mgmt.management.Promise&lt;org.eclipse.emf.ecore.EBooleanObject&gt;" objectIdRequired="true"
+	 * @model dataType="org.eclipse.fennec.model.atlas.mgmt.management.Promise&lt;org.eclipse.emf.ecore.EBooleanObject&gt;" scopeRequired="true" registryRequired="true" stageRequired="true" objectIdRequired="true"
 	 * @generated
 	 */
-	Promise<Boolean> deleteObject(String objectId);
+	Promise<Boolean> deleteObject(String scope, String registry, String stage, String objectId);
 
 	/**
 	 * <!-- begin-user-doc -->
@@ -103,10 +103,10 @@ public interface EObjectStorageService<T extends EObject> {
 	 * <!-- begin-model-doc -->
 	 * List all object IDs
 	 * <!-- end-model-doc -->
-	 * @model dataType="org.eclipse.fennec.model.atlas.mgmt.management.Promise&lt;org.eclipse.fennec.model.atlas.mgmt.management.List&lt;org.eclipse.emf.ecore.EString&gt;&gt;"
+	 * @model dataType="org.eclipse.fennec.model.atlas.mgmt.management.Promise&lt;org.eclipse.fennec.model.atlas.mgmt.management.List&lt;org.eclipse.emf.ecore.EString&gt;&gt;" scopeRequired="true" registryRequired="true" stageRequired="true"
 	 * @generated
 	 */
-	Promise<List<String>> listObjectIds();
+	Promise<List<String>> listObjectIds(String scope, String registry, String stage);
 
 	/**
 	 * <!-- begin-user-doc -->
@@ -125,10 +125,10 @@ public interface EObjectStorageService<T extends EObject> {
 	 * <!-- begin-model-doc -->
 	 * Update metadata for existing object without changing the object itself. Useful for workflow state transitions, review annotations, and compliance updates.
 	 * <!-- end-model-doc -->
-	 * @model dataType="org.eclipse.fennec.model.atlas.mgmt.management.Promise&lt;org.eclipse.emf.ecore.EBooleanObject&gt;" objectIdRequired="true" metadataRequired="true"
+	 * @model dataType="org.eclipse.fennec.model.atlas.mgmt.management.Promise&lt;org.eclipse.emf.ecore.EBooleanObject&gt;" scopeRequired="true" registryRequired="true" stageRequired="true" objectIdRequired="true" metadataRequired="true"
 	 * @generated
 	 */
-	Promise<Boolean> updateMetadata(String objectId, ObjectMetadata metadata);
+	Promise<Boolean> updateMetadata(String scope, String registry, String stage, String objectId, ObjectMetadata metadata);
 
 	/**
 	 * <!-- begin-user-doc -->
@@ -136,10 +136,10 @@ public interface EObjectStorageService<T extends EObject> {
 	 * <!-- begin-model-doc -->
 	 * Convenience method to update only the lifecycle status of an object. Automatically sets lastChangeTime and can optionally set lastChangeUser.
 	 * <!-- end-model-doc -->
-	 * @model dataType="org.eclipse.fennec.model.atlas.mgmt.management.Promise&lt;org.eclipse.emf.ecore.EBooleanObject&gt;" objectIdRequired="true" newStatusRequired="true"
+	 * @model dataType="org.eclipse.fennec.model.atlas.mgmt.management.Promise&lt;org.eclipse.emf.ecore.EBooleanObject&gt;" scopeRequired="true" registryRequired="true" stageRequired="true" objectIdRequired="true" newStatusRequired="true"
 	 * @generated
 	 */
-	Promise<Boolean> updateStatus(String objectId, ObjectStatus newStatus, String changeUser);
+	Promise<Boolean> updateStatus(String scope, String registry, String stage, String objectId, ObjectStatus newStatus, String changeUser);
 
 	/**
 	 * <!-- begin-user-doc -->
@@ -147,10 +147,10 @@ public interface EObjectStorageService<T extends EObject> {
 	 * <!-- begin-model-doc -->
 	 * Check if object exists without loading it. More efficient than retrieveObject() when only existence check is needed.
 	 * <!-- end-model-doc -->
-	 * @model required="true" objectIdRequired="true"
+	 * @model required="true" scopeRequired="true" registryRequired="true" stageRequired="true" objectIdRequired="true"
 	 * @generated
 	 */
-	Boolean exists(String objectId);
+	Boolean exists(String scope, String registry, String stage, String objectId);
 
 	/**
 	 * <!-- begin-user-doc -->
@@ -173,5 +173,16 @@ public interface EObjectStorageService<T extends EObject> {
 	 * @generated
 	 */
 	StorageBackendType getBackendType();
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * <!-- begin-model-doc -->
+	 * Get the storage  type (e.g. file, apicurio, etc). The one set via the config property storage.type
+	 * <!-- end-model-doc -->
+	 * @model kind="operation" required="true"
+	 * @generated
+	 */
+	String getStorageType();
 
 } // EObjectStorageService

@@ -1,214 +1,287 @@
-# Model Atlas API Specification
+# Model Atlas Schema API Specification
 
 ## 1. Core Concepts
 
 ### Model Atlas
 
-A central registry for data schemas (EPackages). It acts  as a canonical source of truth in a distributed system, storing all  models as Ecore and allowing them to be retrieved in various formats  (XSD, JSON Schema, etc.).
+A central registry for data schemas (EPackages). It acts as a canonical source of truth in a distributed system, storing all models as Ecore and allowing them to be retrieved in various formats (JSON, XML, XMI, etc.).
 
 ### Scope
 
-A "tenant" or logical partition within the registry. Scopes are hierarchical.
+A "tenant" or logical partition within the registry. Scopes are hierarchical and contain one or more registries.
 
-- `atlas`: A special, read-only  "system" scope that contains common base models (like Ecore itself). It  is the default parent for any scope that does not specify one.
+- `atlas`: A special, read-only "system" scope that contains common base models (like Ecore itself). It is the default parent for any scope that does not specify one.
 - **Custom Scopes:** (e.g., `my-tenant`, `global-corporate`). These are the primary partitions for schemas.
+
+### Registry
+
+A logical grouping within a scope that defines its own workflow stages and transitions. The `SchemaPackagesResource` uses a fixed registry named `"schema"` for all operations.
 
 ### Stage
 
-A lifecycle state for a `SchemaPackage` within a scope. Examples: `Draft`, `Review`, `Released`.
+A lifecycle state for a schema within a registry. Examples: `draft`, `review`, `approved`, `release`.
 
-- Stages have a defined order (e.g., `Draft` -> `Review` -> `Released`).
-- Actions (like `PUT`, `DELETE`) can be restricted based on stage (e.g., no `PUT` to a `Released` package).
+- Each stage has a `writable` flag indicating if modifications are allowed.
+- Each stage has a `final` flag indicating if it's the released/published stage.
+- Transitions between stages are explicitly configured via `allowedTransitions`.
 
-### `nsUri`
+### `nsUri` / `objectId`
 
-The `nsUri` (Namespace URI) of an EPackage is the primary business key. **All package lookups are based on `nsUri`, not a system ID.**
+The `nsUri` (Namespace URI) of an EPackage is the primary business key. It is URL-encoded and used as the `objectId` for storage and retrieval. **All package lookups are based on the encoded `nsUri`.**
 
 ### Scope Configuration (Backend)
 
-In the Model Atlas backend (which is based on OSGi), new `Scopes` are provisioned as OSGi Services utilizing the OSGi Configurator Specification.
-
-The configuration for a scope service must define its `name` and may optionally define its `parentScope`. If no `parentScope` is specified, it will default to the `atlas` scope. This hierarchy is then exposed through the REST API, particularly in the hierarchical search logic.
+Scopes and registries are configured via JSON configuration files (`workflow.json`). See [README-SchemaPackages.md](README-SchemaPackages.md) for configuration details.
 
 ### Hierarchical Visibility and Uniqueness
 
-The hierarchy of scopes (defined by `parentScope`) is a fundamental concept that governs visibility and uniqueness.
+The hierarchy of scopes (defined by `parentScope`) governs visibility and uniqueness.
 
-1. **Uniqueness (Write-Time):** A `nsUri` must be unique within its "visibility chain". When creating a new package (e.g., in `my-tenant/Draft`), the system will check if that `nsUri` already exists in *any* stage of `my-tenant` OR in the *Released* stage of any parent scope (`global-corporate`, `atlas`, etc.). If a conflict is found, the creation (`POST`) will be rejected with `409 Conflict`.
-2. **Visibility (Read-Time):** Any query for a package by its `nsUri` (e.g., `GET ...?nsUri=...`) will also search this chain. The system will first look in the specified scope and stage (e.g., `my-tenant/Draft`). If not found, it will proceed to check the `Released` stage of the parent scope (`global-corporate/Released`), and so on up to `atlas/Released`.
+1. **Uniqueness (Write-Time):** When creating a new package, the system checks if that `nsUri` already exists in the current scope/stage. If a conflict is found and `override=false`, the creation will be rejected with `409 Conflict`.
 
-This ensures that released packages from parent scopes are "known" and resolvable from all child scopes. When a parent package is  returned from a child scope query, it will be marked as read-only (`isReadOnly: true`) and its `sourceScope` property will indicate its origin.
+2. **Visibility (Read-Time):** Any query for a package by its `objectId` (encoded `nsUri`) will search the hierarchy. The system first looks in the specified scope and stage. If not found, it proceeds to check the final stage of the parent scope, and so on up to `atlas`.
 
-## Resource Models (JSON)
+When a parent package is returned from a child scope query, it will be marked as read-only (`isReadOnly: true`).
+
+## 2. Resource Models (JSON)
 
 ### Scope
 
-```
+```json
 {
   "name": "my-tenant",
-  "parentScope": "atlas",
   "description": "Primary scope for MyTenant application.",
-  "links": {
-    "self": "/scopes/my-tenant",
-    "schemas": "/my-tenant/schema"
-  }
+  "parentScope": "atlas",
+  "registries": [
+    {
+      "name": "schema",
+      "description": "Schema registry for EMF models",
+      "stages": [
+        { "name": "draft", "writable": true, "final": false },
+        { "name": "approved", "writable": true, "final": false },
+        { "name": "release", "writable": false, "final": true }
+      ],
+      "allowedTransitions": [
+        { "fromStage": "draft", "toStage": "approved" },
+        { "fromStage": "approved", "toStage": "release" }
+      ]
+    }
+  ]
 }
 ```
 
-​    
+### ObjectMetadata (SchemaPackage metadata)
 
-### SchemaPackage
-
-```
+```json
 {
+  "objectId": "aHR0cDovL2V4YW1wbGUuY29tL3NjaGVtYXMvYmlsbGluZy92MQ==",
+  "objectName": "Billing",
   "scope": "my-tenant",
-  "name": "Billing",
-  "nsUri": "http://example.com/schemas/billing/v1",
-  "stage": "Draft",
+  "registry": "schema",
+  "stage": "draft",
   "version": "1.0.0",
-  "description": "Billing schema, v1.",
-  "createdAt": "2023-10-27T10:00:00Z",
-  "updatedAt": "2023-10-27T10:00:00Z",
   "isReadOnly": false,
-  "sourceScope": "my-tenant",
-  "links": {
-    "self": "/my-tenant/schema/stages/Draft?nsUri=http%3A%2F%2Fexample.com%2Fschemas%2Fbilling%2Fv1",
-    "content": "/my-tenant/schema/stages/Draft/content?nsUri=http%3A%2F%2Fexample.com%2Fschemas%2Fbilling%2Fv1",
-    "transition": "/my-tenant/schema/stages/Draft/actions/transition"
-  }
+  "uploadTime": "2023-10-27T10:00:00Z",
+  "lastChangeTime": "2023-10-27T10:00:00Z"
 }
 ```
 
-​    
+- `objectId`: URL-encoded `nsUri` of the EPackage
+- `isReadOnly`: `true` when the package is resolved from a parent scope
 
-- `isReadOnly` / `sourceScope`: Used when a package is resolved from a parent scope.
+### ObjectMetadataContainer
 
-## API Endpoints
+```json
+{
+  "metadata": [
+    { /* ObjectMetadata */ },
+    { /* ObjectMetadata */ }
+  ]
+}
+```
 
-### 1. Scopes
+## 3. API Endpoints
+
+### 3.1 Scopes
 
 Resource for discovering available scopes.
 
 #### `GET /scopes`
 
 - **Action:** List all configured scopes.
-- **Response (200 OK):** `application/json` (A list of `Scope` objects).
+- **Response:**
+  - `200 OK`: `application/json` - `ScopeListResponse` containing list of `Scope` objects
 
 #### `GET /scopes/{scopeName}`
 
 - **Action:** Get metadata for a specific scope.
-- **Response (200 OK):** `application/json` (A single `Scope` object).
+- **Response:**
+  - `200 OK`: `application/json` - Single `Scope` object
+  - `404 Not Found`: Scope does not exist
 
-### 2. SchemaPackages
+---
 
-Resource for managing schemas within a scope.
+### 3.2 SchemaPackages
+
+Resource for managing schemas within a scope. All endpoints use the fixed registry name `"schema"`.
+
+**Base Path:** `/{scopeName}/schema`
 
 #### `GET /{scopeName}/schema`
 
-- **Action:** List all packages in the *final/released* stage for this scope. This endpoint respects the "Hierarchical  Visibility" rule, including packages from parent scopes' released  stages.
-- **Response (200 OK):** `application/json` (A list of `SchemaPackage` metadata objects)
+- **Action:** List all packages in the *final/released* stage for this scope. Respects hierarchical visibility, including packages from parent scopes' final stages.
+- **Response:**
+  - `200 OK`: `application/json` - `ObjectMetadataContainer` with list of `ObjectMetadata`
+  - `204 No Content`: No schemas found
+  - `400 Bad Request`: Scope not available
+  - `500 Internal Server Error`: Unexpected error
 
 #### `GET /{scopeName}/schema/stages/{stageName}`
 
 - **Action:** List all packages within a *specific stage* of a scope.
-- Query Parameters:
-  - `nsUri` (string): Find a single  package by its exact namespace URI. This lookup respects the  "Hierarchical Visibility" rule, searching the current stage and then  parent's released stages. If present, this returns a single `SchemaPackage` metadata object (or 404).
-  - `name` (string): Search by package name (supports wildcards, e.g., `name=*Billing*`).
-- **Response (200 OK):** `application/json` (A list of `SchemaPackage` metadata objects, or a single object if `nsUri` is used).
+- **Query Parameters:**
+  - `objectId` (string, optional): Find a single package by its exact object ID (URL-encoded nsUri). Respects hierarchical visibility. Returns single `ObjectMetadata` or `204 No Content`.
+  - `name` (string, optional): Search by package name. Supports trailing wildcards (e.g., `name=Billing*`). **Note:** Leading wildcards are NOT supported. Returns list within local scope only (no hierarchy).
+- **Response:**
+  - `200 OK`: `application/json` - `ObjectMetadataContainer` or single `ObjectMetadata` (if `objectId` specified)
+  - `204 No Content`: No matching schemas found
+  - `400 Bad Request`: Scope not available, stage not valid
+  - `500 Internal Server Error`: Unexpected error
 
-#### `PUT /{scopeName}/schema/stages/{stageName}`
+#### `POST /{scopeName}/schema/stages/{stageName}/{objectId}`
 
-- **Action:** Create a new `SchemaPackage` in the specified stage. The package content is sent as the request body.
-- Query Parameters:
-  - `nsUri` (string, required): The namespace URI of the package being created.
-  - `name` (string, optional): A human-readable name for the package.
-  - `version` (string, optional): The package version.
-- **Request Body:** The raw schema file (e.g., `application/ecore+xml`, `application/xml`).
-- **Content-Type Header:** Must specify the format of the schema being uploaded.
-- Logic:
-  1. Server checks for uniqueness based on the `nsUri` (see "Hierarchical Visibility and Uniqueness").
-  2. If `nsUri` exists, return `409 Conflict`.
-  3. If not, create the new package.
-- Response (201 Created):
-  - `Location` Header: `/{scopeName}/schema/stages/{stageName}?nsUri={encodedNsUri}`
-  - Body: The `SchemaPackage` metadata (JSON).
-- **Error Response (409 Conflict):** If `nsUri` already exists.
+- **Action:** Create a new schema package or update an existing one in the specified stage.
+- **Path Parameters:**
+  - `objectId` (required): URL-encoded `nsUri` of the package
+- **Query Parameters:**
+  - `name` (string, optional): Human-readable name for the package
+  - `version` (string, optional): Package version
+  - `override` (boolean, optional): If `true`, update existing package. If `false` (default), return conflict if exists.
+- **Request Body:** The EPackage content
+- **Content-Type Header:** `application/json`, `application/xml`, or `application/ecore+xml`
+- **Logic:**
+  1. Check if package exists in visibility chain
+  2. If exists and `override=false`: Return `409 Conflict`
+  3. If exists and `override=true`: Update if not read-only
+  4. If read-only: Return `403 Forbidden`
+  5. If new: Create package
+- **Response:**
+  - `201 Created`: Package created successfully
+    - `Location` header: `/{scopeName}/schema/stages/{stageName}?objectId={objectId}`
+    - Body: `ObjectMetadata`
+  - `200 OK`: Package updated successfully (when `override=true`)
+  - `400 Bad Request`: Scope not available, stage not valid, or invalid package data
+  - `403 Forbidden`: Package is read-only (from parent scope)
+  - `409 Conflict`: Package exists and `override=false`
+  - `500 Internal Server Error`: Unexpected error
 
 #### `GET /{scopeName}/schema/stages/{stageName}/content`
 
-- **Action:** Get the *content* of a `SchemaPackage` in a specific format.
-- Query Parameters:
-  - `nsUri` (string, required): The namespace URI of the package to retrieve.
-- **Accept Header:** The client specifies the desired format (e.g., `application/ecore+xml`, `application/schema+json`).
-- Logic:
-  1. Server finds the package by `nsUri` (respecting "Hierarchical Visibility").
-  2. Server transforms the canonical Ecore model into the requested format.
-- Response (200 OK):
-  - Body: The raw schema file (e.g., `application/schema+json`).
-  - `Content-Type` Header: Reflects the format being returned.
-- **Error Response (406 Not Acceptable):** If the requested format is not supported.
+- **Action:** Get the *content* of a schema package.
+- **Query Parameters:**
+  - `objectId` (string, required): URL-encoded `nsUri` of the package
+- **Accept Header:** Desired format (`application/json`, `application/xml`, `application/ecore+xml`, `application/schema+json`)
+- **Logic:** Finds package respecting hierarchical visibility and returns content in requested format.
+- **Response:**
+  - `200 OK`: Package content in requested format
+  - `204 No Content`: Package not found
+  - `400 Bad Request`: Scope not available, stage not valid
+  - `500 Internal Server Error`: Unexpected error
 
 #### `PUT /{scopeName}/schema/stages/{stageName}/content`
 
-- **Action:** Update (i.e., replace) the content of an existing `SchemaPackage`.
-- Query Parameters:
-  - `nsUri` (string, required): The namespace URI of the package to update.
-- **Request Body:** The *new* raw schema file.
-- **Content-Type Header:** Must specify the format of the schema being uploaded.
-- Logic:
-  - Fails with `403 Forbidden` (or `405 Method Not Allowed`) if the stage is read-only (e.g., `Released`).
-- **Response (200 OK):** Body: The updated `SchemaPackage` metadata (JSON).
+- **Action:** Update the content of an existing schema package.
+- **Query Parameters:**
+  - `objectId` (string, required): URL-encoded `nsUri` of the package
+  - `version` (string, optional): New version string
+- **Request Body:** The updated EPackage content
+- **Content-Type Header:** `application/json`, `application/xml`, or `application/ecore+xml`
+- **Logic:**
+  1. Find existing package metadata
+  2. Verify package is not read-only
+  3. Update content
+- **Response:**
+  - `200 OK`: Package updated successfully - Body: `ObjectMetadata`
+  - `204 No Content`: Package not found
+  - `400 Bad Request`: Scope not available, stage not valid
+  - `403 Forbidden`: Package is read-only (from parent scope)
+  - `500 Internal Server Error`: Unexpected error
 
 #### `DELETE /{scopeName}/schema/stages/{stageName}`
 
-- **Action:** Delete a `SchemaPackage`.
-- Query Parameters:
-  - `nsUri` (string, required): The namespace URI of the package to delete.
-- Logic:
-  - Fails with `403 Forbidden` if the stage is read-only.
-- **Response (204 No Content):**
+- **Action:** Delete a schema package.
+- **Query Parameters:**
+  - `objectId` (string, required): URL-encoded `nsUri` of the package to delete
+- **Logic:**
+  1. Find package metadata
+  2. Verify package is not read-only
+  3. Delete package
+- **Response:**
+  - `200 OK`: Package deleted successfully
+  - `204 No Content`: Package not found
+  - `400 Bad Request`: Scope not available, stage not valid
+  - `403 Forbidden`: Package is read-only (from parent scope)
+  - `500 Internal Server Error`: Unexpected error
 
-### 3. Lifecycle Actions
+---
 
-This endpoint manages the movement of a package between stages.
+### 3.3 Lifecycle Actions
+
+Endpoint for moving packages between stages.
 
 #### `POST /{scopeName}/schema/stages/{stageName}/actions/transition`
 
-- **Action:** Move a package to a different stage. The `{stageName}` in the URL represents the *source* stage.
-
-- **Query Parameters:**
-
-  - (None)
-
+- **Action:** Move a package from the current stage (`{stageName}`) to a target stage.
 - **Request Body:** `application/json`
 
-  ```
-  {
-    "nsUri": "http://example.com/schemas/billing/v1",
-    "targetStage": "Review"
-  }
-  ```
-
-  ​    
-
-- `nsUri` (string, required): The namespace URI of the package to transition.
-- `targetStage` (string, required): The name of the stage to move the package to.
-
-**Logic:**
-
-1. Server identifies the package by `nsUri` from the request body.
-2. Server verifies the package is currently in the `{stageName}` specified in the URL.
-3. Server checks its internal rules to see if a transition from `{stageName}` (the source) to `targetStage` is allowed.
-4. If the transition is not allowed, it returns a `400 Bad Request` error.
-5. If allowed, the package's `stage` property is updated.
-
-**Response (200 OK):** Body: The updated `SchemaPackage` metadata (JSON), now showing the new `stage`.
-
-**Error Response (400 Bad Request):** If the transition is not valid.
-
-```
+```json
 {
-  "error": "InvalidTransition",
-  "message": "Transition from 'Draft' to 'Released' is not allowed. Must pass 'Review' stage."
+  "objectId": "aHR0cDovL2V4YW1wbGUuY29tL3NjaGVtYXMvYmlsbGluZy92MQ==",
+  "targetStage": "approved"
 }
 ```
+
+- `objectId` (string, required): URL-encoded `nsUri` of the package
+- `targetStage` (string, required): Target stage name
+
+- **Logic:**
+  1. Find package in source stage
+  2. Verify package is not read-only
+  3. Verify transition is allowed (check `allowedTransitions`)
+  4. Move package to target stage
+- **Response:**
+  - `200 OK`: Transition successful - Body: Updated `ObjectMetadata` with new stage
+  - `204 No Content`: Package not found in source stage
+  - `400 Bad Request`: Invalid transition, missing parameters, or scope/stage not available
+  - `403 Forbidden`: Package is read-only (from parent scope)
+  - `500 Internal Server Error`: Unexpected error
+
+**Error Response Example (400 Bad Request):**
+```json
+{
+  "error": "Transition from 'draft' to 'release' is not allowed."
+}
+```
+
+---
+
+## 4. HTTP Status Code Summary
+
+| Code | Meaning | When Used |
+|------|---------|-----------|
+| 200 OK | Success | GET, PUT, POST (update/transition) successful |
+| 201 Created | Resource created | POST (create) successful |
+| 204 No Content | Not found / Empty | Resource not found, or list is empty |
+| 400 Bad Request | Invalid request | Scope not available, invalid stage, invalid transition |
+| 403 Forbidden | Operation not allowed | Resource is read-only (from parent scope) |
+| 404 Not Found | Scope not found | Only for `/scopes/{scopeName}` endpoint |
+| 409 Conflict | Resource exists | Package exists and override flag is false |
+| 500 Internal Server Error | Server error | Unexpected errors |
+
+---
+
+## 5. Related Documentation
+
+- [README-Scopes.md](README-Scopes.md) - Scopes API documentation
+- [README-SchemaPackages.md](README-SchemaPackages.md) - Detailed Schema Packages API documentation
+- [Model Atlas Object API Specification.md](Model%20Atlas%20Object%20API%20Specification.md) - Object Storage API specification

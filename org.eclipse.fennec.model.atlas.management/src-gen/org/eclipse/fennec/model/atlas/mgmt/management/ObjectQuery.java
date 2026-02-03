@@ -34,9 +34,10 @@ import org.osgi.annotation.versioning.ProviderType;
  *   <li>{@link org.eclipse.fennec.model.atlas.mgmt.management.ObjectQuery#getSourceChannel <em>Source Channel</em>}</li>
  *   <li>{@link org.eclipse.fennec.model.atlas.mgmt.management.ObjectQuery#getObjectType <em>Object Type</em>}</li>
  *   <li>{@link org.eclipse.fennec.model.atlas.mgmt.management.ObjectQuery#getStatus <em>Status</em>}</li>
- *   <li>{@link org.eclipse.fennec.model.atlas.mgmt.management.ObjectQuery#getRole <em>Role</em>}</li>
+ *   <li>{@link org.eclipse.fennec.model.atlas.mgmt.management.ObjectQuery#getStage <em>Stage</em>}</li>
  *   <li>{@link org.eclipse.fennec.model.atlas.mgmt.management.ObjectQuery#getScope <em>Scope</em>}</li>
  *   <li>{@link org.eclipse.fennec.model.atlas.mgmt.management.ObjectQuery#getName <em>Name</em>}</li>
+ *   <li>{@link org.eclipse.fennec.model.atlas.mgmt.management.ObjectQuery#getRegistry <em>Registry</em>}</li>
  * </ul>
  *
  * @see org.eclipse.fennec.model.atlas.mgmt.management.ManagementPackage#getObjectQuery()
@@ -149,29 +150,29 @@ public interface ObjectQuery extends EObject {
 	void setStatus(ObjectStatus value);
 
 	/**
-	 * Returns the value of the '<em><b>Role</b></em>' attribute.
+	 * Returns the value of the '<em><b>Stage</b></em>' attribute.
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
 	 * <!-- begin-model-doc -->
 	 * Filter by object role
 	 * <!-- end-model-doc -->
-	 * @return the value of the '<em>Role</em>' attribute.
-	 * @see #setRole(String)
-	 * @see org.eclipse.fennec.model.atlas.mgmt.management.ManagementPackage#getObjectQuery_Role()
+	 * @return the value of the '<em>Stage</em>' attribute.
+	 * @see #setStage(String)
+	 * @see org.eclipse.fennec.model.atlas.mgmt.management.ManagementPackage#getObjectQuery_Stage()
 	 * @model
 	 * @generated
 	 */
-	String getRole();
+	String getStage();
 
 	/**
-	 * Sets the value of the '{@link org.eclipse.fennec.model.atlas.mgmt.management.ObjectQuery#getRole <em>Role</em>}' attribute.
+	 * Sets the value of the '{@link org.eclipse.fennec.model.atlas.mgmt.management.ObjectQuery#getStage <em>Stage</em>}' attribute.
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
-	 * @param value the new value of the '<em>Role</em>' attribute.
-	 * @see #getRole()
+	 * @param value the new value of the '<em>Stage</em>' attribute.
+	 * @see #getStage()
 	 * @generated
 	 */
-	void setRole(String value);
+	void setStage(String value);
 
 	/**
 	 * Returns the value of the '<em><b>Scope</b></em>' attribute.
@@ -222,5 +223,30 @@ public interface ObjectQuery extends EObject {
 	 * @generated
 	 */
 	void setName(String value);
+
+	/**
+	 * Returns the value of the '<em><b>Registry</b></em>' attribute.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * <!-- begin-model-doc -->
+	 * Filter by object scope
+	 * <!-- end-model-doc -->
+	 * @return the value of the '<em>Registry</em>' attribute.
+	 * @see #setRegistry(String)
+	 * @see org.eclipse.fennec.model.atlas.mgmt.management.ManagementPackage#getObjectQuery_Registry()
+	 * @model
+	 * @generated
+	 */
+	String getRegistry();
+
+	/**
+	 * Sets the value of the '{@link org.eclipse.fennec.model.atlas.mgmt.management.ObjectQuery#getRegistry <em>Registry</em>}' attribute.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @param value the new value of the '<em>Registry</em>' attribute.
+	 * @see #getRegistry()
+	 * @generated
+	 */
+	void setRegistry(String value);
 
 } // ObjectQuery

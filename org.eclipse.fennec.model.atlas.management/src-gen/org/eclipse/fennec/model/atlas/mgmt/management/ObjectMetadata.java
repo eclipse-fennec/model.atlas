@@ -54,10 +54,11 @@ import org.osgi.annotation.versioning.ProviderType;
  *   <li>{@link org.eclipse.fennec.model.atlas.mgmt.management.ObjectMetadata#getObjectRef <em>Object Ref</em>}</li>
  *   <li>{@link org.eclipse.fennec.model.atlas.mgmt.management.ObjectMetadata#getObjectId <em>Object Id</em>}</li>
  *   <li>{@link org.eclipse.fennec.model.atlas.mgmt.management.ObjectMetadata#getObjectName <em>Object Name</em>}</li>
- *   <li>{@link org.eclipse.fennec.model.atlas.mgmt.management.ObjectMetadata#getRole <em>Role</em>}</li>
+ *   <li>{@link org.eclipse.fennec.model.atlas.mgmt.management.ObjectMetadata#getStage <em>Stage</em>}</li>
  *   <li>{@link org.eclipse.fennec.model.atlas.mgmt.management.ObjectMetadata#getLastChangeReason <em>Last Change Reason</em>}</li>
  *   <li>{@link org.eclipse.fennec.model.atlas.mgmt.management.ObjectMetadata#getScope <em>Scope</em>}</li>
  *   <li>{@link org.eclipse.fennec.model.atlas.mgmt.management.ObjectMetadata#isIsReadOnly <em>Is Read Only</em>}</li>
+ *   <li>{@link org.eclipse.fennec.model.atlas.mgmt.management.ObjectMetadata#getRegistry <em>Registry</em>}</li>
  * </ul>
  *
  * @see org.eclipse.fennec.model.atlas.mgmt.management.ManagementPackage#getObjectMetadata()
@@ -562,29 +563,29 @@ public interface ObjectMetadata extends EObject {
 	void setObjectName(String value);
 
 	/**
-	 * Returns the value of the '<em><b>Role</b></em>' attribute.
+	 * Returns the value of the '<em><b>Stage</b></em>' attribute.
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
 	 * <!-- begin-model-doc -->
-	 * Storage role (draft, approved, documentation) - indicates which storage backend this metadata represents
+	 * The stage to which this metadata belongs (e.g. draft, approved, released, etc.)
 	 * <!-- end-model-doc -->
-	 * @return the value of the '<em>Role</em>' attribute.
-	 * @see #setRole(String)
-	 * @see org.eclipse.fennec.model.atlas.mgmt.management.ManagementPackage#getObjectMetadata_Role()
+	 * @return the value of the '<em>Stage</em>' attribute.
+	 * @see #setStage(String)
+	 * @see org.eclipse.fennec.model.atlas.mgmt.management.ManagementPackage#getObjectMetadata_Stage()
 	 * @model required="true"
 	 * @generated
 	 */
-	String getRole();
+	String getStage();
 
 	/**
-	 * Sets the value of the '{@link org.eclipse.fennec.model.atlas.mgmt.management.ObjectMetadata#getRole <em>Role</em>}' attribute.
+	 * Sets the value of the '{@link org.eclipse.fennec.model.atlas.mgmt.management.ObjectMetadata#getStage <em>Stage</em>}' attribute.
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
-	 * @param value the new value of the '<em>Role</em>' attribute.
-	 * @see #getRole()
+	 * @param value the new value of the '<em>Stage</em>' attribute.
+	 * @see #getStage()
 	 * @generated
 	 */
-	void setRole(String value);
+	void setStage(String value);
 
 	/**
 	 * Returns the value of the '<em><b>Last Change Reason</b></em>' attribute.
@@ -621,7 +622,7 @@ public interface ObjectMetadata extends EObject {
 	 * @return the value of the '<em>Scope</em>' attribute.
 	 * @see #setScope(String)
 	 * @see org.eclipse.fennec.model.atlas.mgmt.management.ManagementPackage#getObjectMetadata_Scope()
-	 * @model
+	 * @model required="true"
 	 * @generated
 	 */
 	String getScope();
@@ -660,5 +661,30 @@ public interface ObjectMetadata extends EObject {
 	 * @generated
 	 */
 	void setIsReadOnly(boolean value);
+
+	/**
+	 * Returns the value of the '<em><b>Registry</b></em>' attribute.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * <!-- begin-model-doc -->
+	 * The registry to which this metadata belongs (e.g. schema, configuration, script, etc.)
+	 * <!-- end-model-doc -->
+	 * @return the value of the '<em>Registry</em>' attribute.
+	 * @see #setRegistry(String)
+	 * @see org.eclipse.fennec.model.atlas.mgmt.management.ManagementPackage#getObjectMetadata_Registry()
+	 * @model required="true"
+	 * @generated
+	 */
+	String getRegistry();
+
+	/**
+	 * Sets the value of the '{@link org.eclipse.fennec.model.atlas.mgmt.management.ObjectMetadata#getRegistry <em>Registry</em>}' attribute.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @param value the new value of the '<em>Registry</em>' attribute.
+	 * @see #getRegistry()
+	 * @generated
+	 */
+	void setRegistry(String value);
 
 } // ObjectMetadata

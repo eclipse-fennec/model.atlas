@@ -44,17 +44,6 @@ public interface StorageRegistry {
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
 	 * <!-- begin-model-doc -->
-	 * Get storage service by role name. Returns the storage service configured for the specified role (e.g. 'draft', 'approved', 'release', 'documentation'). Returns null if no storage service is registered for the given role.
-	 * <!-- end-model-doc -->
-	 * @model roleRequired="true"
-	 * @generated
-	 */
-	EObjectStorageService<EObject> getStorageByRole(String role);
-
-	/**
-	 * <!-- begin-user-doc -->
-	 * <!-- end-user-doc -->
-	 * <!-- begin-model-doc -->
 	 * Get all registered storage services. Returns a list of all storage services across all roles, useful for bulk operations and system health checks.
 	 * <!-- end-model-doc -->
 	 * @model kind="operation"
@@ -66,34 +55,12 @@ public interface StorageRegistry {
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
 	 * <!-- begin-model-doc -->
-	 * Get set of all available storage roles. Returns the role names of all registered storage services (e.g. ['draft', 'approved', 'release', 'documentation']).
-	 * <!-- end-model-doc -->
-	 * @model kind="operation"
-	 * @generated
-	 */
-	EList<String> getAvailableRoles();
-
-	/**
-	 * <!-- begin-user-doc -->
-	 * <!-- end-user-doc -->
-	 * <!-- begin-model-doc -->
-	 * Update governance documentation ID for all active objects with the specified object name in a specific storage role. This maintains bi-directional references between ObjectMetadata and GovernanceDocumentation for objects in the specified role only. Active objects (DRAFT, APPROVED, DEPLOYED) are updated with the new documentation ID, while archived objects preserve their historical references for audit trail.
-	 * <!-- end-model-doc -->
-	 * @model required="true" roleRequired="true" objectNameRequired="true" newDocumentationIdRequired="true"
-	 * @generated
-	 */
-	int updateGovernanceDocumentationId(String role, String objectName, String newDocumentationId, String reason);
-
-	/**
-	 * <!-- begin-user-doc -->
-	 * <!-- end-user-doc -->
-	 * <!-- begin-model-doc -->
-	 * Search metadata across all storage roles using a query. Aggregates results from all registered storage services, useful for cross-role object discovery and lifecycle analysis.
+	 * Search metadata across all storage types using a query. Aggregates results from all registered storage services, useful for cross-type object discovery and lifecycle analysis.
 	 * <!-- end-model-doc -->
 	 * @model queryRequired="true"
 	 * @generated
 	 */
-	EList<ObjectMetadata> searchMetadataAcrossRoles(ObjectQuery query);
+	EList<ObjectMetadata> searchMetadataAcrossTypes(ObjectQuery query);
 
 	/**
 	 * <!-- begin-user-doc -->
@@ -105,5 +72,27 @@ public interface StorageRegistry {
 	 * @generated
 	 */
 	Map<String, Object> getStorageStatistics();
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * <!-- begin-model-doc -->
+	 * Get storage service by type (in the sense that the storage.type config property, e.g. apicurio, file, minio, etc).  Returns null if no storage service is registered for the given type.
+	 * <!-- end-model-doc -->
+	 * @model typeRequired="true"
+	 * @generated
+	 */
+	EObjectStorageService<EObject> getStorageByType(String type);
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * <!-- begin-model-doc -->
+	 * Get set of all available storage types. Returns the type names of all registered storage services (e.g. ['apicurio', 'file', 'minio']).
+	 * <!-- end-model-doc -->
+	 * @model kind="operation"
+	 * @generated
+	 */
+	EList<String> getAvailableTypes();
 
 } // StorageRegistry

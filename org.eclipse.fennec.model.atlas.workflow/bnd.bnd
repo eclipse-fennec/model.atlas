@@ -28,7 +28,13 @@ src=${^src},src-wf-api
 	org.osgi.util.function;version=latest,\
 	org.osgi.service.component;version=latest,\
 	org.osgi.service.typedevent;version=latest,\
-	org.eclipse.fennec.model.atlas.management;version=snapshot
+	org.eclipse.fennec.model.atlas.management;version=snapshot,\
+	osgi.cmpn,\
+	org.osgi.util.converter,\
+	tools.jackson.core.jackson-databind,\
+	tools.jackson.core.jackson-core
+
+
 
 Bundle-Version: 1.0.0.SNAPSHOT
 

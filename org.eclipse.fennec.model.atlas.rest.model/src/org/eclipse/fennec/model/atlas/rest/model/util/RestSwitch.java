@@ -95,6 +95,18 @@ public class RestSwitch<T> extends Switch<T> {
 				if (result == null) result = defaultCase(theEObject);
 				return result;
 			}
+			case RestPackage.STAGE_TRANSITION_REQUEST: {
+				StageTransitionRequest stageTransitionRequest = (StageTransitionRequest)theEObject;
+				T result = caseStageTransitionRequest(stageTransitionRequest);
+				if (result == null) result = defaultCase(theEObject);
+				return result;
+			}
+			case RestPackage.SCOPE_LIST_RESPONSE: {
+				ScopeListResponse scopeListResponse = (ScopeListResponse)theEObject;
+				T result = caseScopeListResponse(scopeListResponse);
+				if (result == null) result = defaultCase(theEObject);
+				return result;
+			}
 			default: return defaultCase(theEObject);
 		}
 	}
@@ -141,6 +153,36 @@ public class RestSwitch<T> extends Switch<T> {
 	 * @generated
 	 */
 	public T caseErrorResponse(ErrorResponse object) {
+		return null;
+	}
+
+	/**
+	 * Returns the result of interpreting the object as an instance of '<em>Stage Transition Request</em>'.
+	 * <!-- begin-user-doc -->
+	 * This implementation returns null;
+	 * returning a non-null result will terminate the switch.
+	 * <!-- end-user-doc -->
+	 * @param object the target of the switch.
+	 * @return the result of interpreting the object as an instance of '<em>Stage Transition Request</em>'.
+	 * @see #doSwitch(org.eclipse.emf.ecore.EObject) doSwitch(EObject)
+	 * @generated
+	 */
+	public T caseStageTransitionRequest(StageTransitionRequest object) {
+		return null;
+	}
+
+	/**
+	 * Returns the result of interpreting the object as an instance of '<em>Scope List Response</em>'.
+	 * <!-- begin-user-doc -->
+	 * This implementation returns null;
+	 * returning a non-null result will terminate the switch.
+	 * <!-- end-user-doc -->
+	 * @param object the target of the switch.
+	 * @return the result of interpreting the object as an instance of '<em>Scope List Response</em>'.
+	 * @see #doSwitch(org.eclipse.emf.ecore.EObject) doSwitch(EObject)
+	 * @generated
+	 */
+	public T caseScopeListResponse(ScopeListResponse object) {
 		return null;
 	}
 

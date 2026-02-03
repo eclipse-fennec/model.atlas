@@ -17,32 +17,32 @@ The **ScopesResource** provides a RESTful HTTP API for discovering and retrievin
 ### Component Dependencies
 
 ```
-┌────────────────────────────┐
-│    ScopesResource          │
-│  (JAX-RS REST Endpoint)    │
-└─────────────┬──────────────┘
+┌──────────────────────────────┐
+│      ScopesResource          │
+│  (JAX-RS REST Endpoint)      │
+└─────────────┬────────────────┘
               │
               │
-        ┌─────▼─────┐
-        │  Scope    │
-        │ Collector │
-        └─────┬─────┘
+   ┌──────────▼───────────────┐
+   │  ScopeServiceCollector   │
+   └──────────┬───────────────┘
               │
               │
-   ┌──────────▼────────────────┐
-   │  EObjectWorkflowService   │
-   │  (OSGi Dynamic Services)  │
-   └───────────────────────────┘
+   ┌──────────▼───────────────┐
+   │      ScopeService        │
+   │  (OSGi Dynamic Services) │
+   └──────────────────────────┘
 ```
 
 ### Integration Points
 
-#### **ScopeCollector**
-The `ScopeCollector` dynamically tracks all registered `EObjectWorkflowService` instances and constructs `Scope` objects from their OSGi configuration properties.
+#### **ScopeServiceCollector**
+The `ScopeServiceCollector` dynamically tracks all registered `ScopeService` instances and constructs `Scope` objects from their OSGi configuration properties.
 
 **Key Methods:**
-- `getScopes()`: Returns list of all configured scopes
+- `getAllScopes()`: Returns list of all configured scopes
 - `getScopeByName(String name)`: Retrieves specific scope metadata
+- `getScopeServiceByScopeName(String name)`: Retrieves the ScopeService for a specific scope
 
 #### **Scope Model**
 Each scope contains the following metadata:
@@ -50,12 +50,36 @@ Each scope contains the following metadata:
 | Field | Type | Description |
 |-------|------|-------------|
 | `name` | String | Unique identifier for the scope (e.g., "my-tenant", "global") |
-| `parentScope` | String | Name of parent scope (empty for root scopes) |
 | `description` | String | Human-readable description of the scope's purpose |
-| `stages` | List<String> | All workflow stages configured for this scope |
-| `finalStage` | String | The final/released stage (used for hierarchical lookups) |
-| `writableStages` | List<String> | Stages that allow modifications (create/update/delete) |
-| `links` | Map<String, String> | Optional links to related resources (e.g., documentation) |
+| `parentScope` | String | Name of parent scope (null/empty for root scopes) |
+| `registries` | List<Registry> | List of registries available in this scope |
+
+#### **Registry Model**
+Each registry within a scope contains:
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `name` | String | Unique identifier for the registry (e.g., "schema", "configurations") |
+| `description` | String | Human-readable description of the registry's purpose |
+| `stages` | List<Stage> | Workflow stages configured for this registry |
+| `allowedTransitions` | List<StageTransition> | Valid transitions between stages |
+
+#### **Stage Model**
+Each stage within a registry contains:
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `name` | String | Stage identifier (e.g., "draft", "approved", "release") |
+| `writable` | boolean | Whether objects can be created/modified in this stage |
+| `final` | boolean | Whether this is the final/released stage (used for hierarchical lookups) |
+
+#### **StageTransition Model**
+Each allowed transition between stages:
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `fromStage` | String | Source stage name |
+| `toStage` | String | Target stage name |
 
 ## Resource Path Structure
 
@@ -88,32 +112,71 @@ curl -X GET https://api.example.com/scopes \
   "scopes": [
     {
       "name": "atlas",
-      "parentScope": "",
       "description": "System-level scope containing read-only base schemas",
-      "stages": ["release"],
-      "finalStage": "release",
-      "writableStages": [],
-      "links": {}
+      "parentScope": null,
+      "registries": [
+        {
+          "name": "schema",
+          "description": "Schema registry",
+          "stages": [
+            { "name": "release", "writable": false, "final": true }
+          ],
+          "allowedTransitions": []
+        }
+      ]
     },
     {
       "name": "global-corporate",
-      "parentScope": "atlas",
       "description": "Corporate-wide shared schemas",
-      "stages": ["draft", "approved", "release"],
-      "finalStage": "release",
-      "writableStages": ["draft", "approved"],
-      "links": {
-        "documentation": "https://wiki.example.com/global-corporate"
-      }
+      "parentScope": "atlas",
+      "registries": [
+        {
+          "name": "schema",
+          "description": "Schema registry",
+          "stages": [
+            { "name": "draft", "writable": true, "final": false },
+            { "name": "approved", "writable": true, "final": false },
+            { "name": "release", "writable": false, "final": true }
+          ],
+          "allowedTransitions": [
+            { "fromStage": "draft", "toStage": "approved" },
+            { "fromStage": "approved", "toStage": "release" }
+          ]
+        }
+      ]
     },
     {
       "name": "my-tenant",
-      "parentScope": "global-corporate",
       "description": "Tenant-specific schema workspace",
-      "stages": ["draft", "review", "approved", "release"],
-      "finalStage": "release",
-      "writableStages": ["draft", "review", "approved"],
-      "links": {}
+      "parentScope": "global-corporate",
+      "registries": [
+        {
+          "name": "schema",
+          "description": "Schema registry",
+          "stages": [
+            { "name": "draft", "writable": true, "final": false },
+            { "name": "review", "writable": true, "final": false },
+            { "name": "approved", "writable": true, "final": false },
+            { "name": "release", "writable": false, "final": true }
+          ],
+          "allowedTransitions": [
+            { "fromStage": "draft", "toStage": "review" },
+            { "fromStage": "review", "toStage": "approved" },
+            { "fromStage": "approved", "toStage": "release" }
+          ]
+        },
+        {
+          "name": "configurations",
+          "description": "Configuration objects registry",
+          "stages": [
+            { "name": "draft", "writable": true, "final": false },
+            { "name": "release", "writable": false, "final": true }
+          ],
+          "allowedTransitions": [
+            { "fromStage": "draft", "toStage": "release" }
+          ]
+        }
+      ]
     }
   ]
 }
@@ -135,7 +198,7 @@ Accept: application/json
 
 **Response**:
 - **200 OK**: Returns `Scope` object with metadata
-- **204 No Content**: Scope not found (no scope with that name exists)
+- **404 Not Found**: Scope not found (no scope with that name exists)
 - **500 Internal Server Error**: Server error
 
 **Example Request**:
@@ -148,15 +211,36 @@ curl -X GET https://api.example.com/scopes/my-tenant \
 ```json
 {
   "name": "my-tenant",
-  "parentScope": "global-corporate",
   "description": "Tenant-specific schema workspace for customer ABC",
-  "stages": ["draft", "review", "approved", "release"],
-  "finalStage": "release",
-  "writableStages": ["draft", "review", "approved"],
-  "links": {
-    "schemas": "/my-tenant/schema",
-    "documentation": "https://docs.example.com/my-tenant"
-  }
+  "parentScope": "global-corporate",
+  "registries": [
+    {
+      "name": "schema",
+      "description": "Schema registry for EMF models",
+      "stages": [
+        { "name": "draft", "writable": true, "final": false },
+        { "name": "review", "writable": true, "final": false },
+        { "name": "approved", "writable": true, "final": false },
+        { "name": "release", "writable": false, "final": true }
+      ],
+      "allowedTransitions": [
+        { "fromStage": "draft", "toStage": "review" },
+        { "fromStage": "review", "toStage": "approved" },
+        { "fromStage": "approved", "toStage": "release" }
+      ]
+    },
+    {
+      "name": "configurations",
+      "description": "Configuration objects registry",
+      "stages": [
+        { "name": "draft", "writable": true, "final": false },
+        { "name": "release", "writable": false, "final": true }
+      ],
+      "allowedTransitions": [
+        { "fromStage": "draft", "toStage": "release" }
+      ]
+    }
+  ]
 }
 ```
 
@@ -201,57 +285,90 @@ atlas (root)
 
 ### Stage Configuration
 
-Each scope defines its own workflow stages that control the lifecycle of schemas within that scope.
+Each **registry** within a scope defines its own workflow stages that control the lifecycle of objects within that registry. Different registries can have different workflow configurations.
 
 **Common Stage Patterns**:
 
 #### Simple (2-stage)
 ```json
 {
-  "stages": ["draft", "release"],
-  "finalStage": "release",
-  "writableStages": ["draft"]
+  "name": "configurations",
+  "stages": [
+    { "name": "draft", "writable": true, "final": false },
+    { "name": "release", "writable": false, "final": true }
+  ],
+  "allowedTransitions": [
+    { "fromStage": "draft", "toStage": "release" }
+  ]
 }
 ```
-- **draft**: Work in progress
-- **release**: Published and available to child scopes
+- **draft**: Work in progress (writable)
+- **release**: Published and available to child scopes (read-only, final)
 
 #### Standard (3-stage)
 ```json
 {
-  "stages": ["draft", "approved", "release"],
-  "finalStage": "release",
-  "writableStages": ["draft", "approved"]
+  "name": "schema",
+  "stages": [
+    { "name": "draft", "writable": true, "final": false },
+    { "name": "approved", "writable": true, "final": false },
+    { "name": "release", "writable": false, "final": true }
+  ],
+  "allowedTransitions": [
+    { "fromStage": "draft", "toStage": "approved" },
+    { "fromStage": "approved", "toStage": "release" }
+  ]
 }
 ```
-- **draft**: Initial development
-- **approved**: Reviewed and approved
-- **release**: Published (read-only)
+- **draft**: Initial development (writable)
+- **approved**: Reviewed and approved (writable)
+- **release**: Published (read-only, final)
 
 #### Complex (4+ stages)
 ```json
 {
-  "stages": ["draft", "review", "approved", "staging", "production"],
-  "finalStage": "production",
-  "writableStages": ["draft", "review", "approved", "staging"]
+  "name": "enterprise-models",
+  "stages": [
+    { "name": "draft", "writable": true, "final": false },
+    { "name": "review", "writable": true, "final": false },
+    { "name": "approved", "writable": true, "final": false },
+    { "name": "staging", "writable": true, "final": false },
+    { "name": "production", "writable": false, "final": true }
+  ],
+  "allowedTransitions": [
+    { "fromStage": "draft", "toStage": "review" },
+    { "fromStage": "review", "toStage": "approved" },
+    { "fromStage": "approved", "toStage": "staging" },
+    { "fromStage": "staging", "toStage": "production" }
+  ]
 }
 ```
 
 ### Stage Properties
 
-**`stages`**: All available stages in order
-- Defines the complete workflow
-- Order matters for transition validation
+Each **Stage** has the following properties:
 
-**`finalStage`**: The published/released stage
-- Used for hierarchical lookups (children see parent's final stage)
-- Typically the last stage in the workflow
-- Usually read-only
+**`name`**: Stage identifier
+- Defines the stage name used in API paths
+- Must be unique within the registry
 
-**`writableStages`**: Stages that allow modifications
-- Controls which stages accept PUT/DELETE/POST operations
-- Final stages typically excluded for safety
-- Can be customized per organizational policy
+**`writable`**: Whether objects can be modified in this stage
+- `true`: Allows PUT/DELETE/POST operations
+- `false`: Read-only stage (no modifications allowed)
+
+**`final`**: Whether this is the final/released stage
+- `true`: Used for hierarchical lookups (children see parent's final stage)
+- `false`: Regular workflow stage
+- Typically only one stage should be marked as final
+
+### Allowed Transitions
+
+Each **StageTransition** defines a valid transition path:
+
+**`fromStage`**: Source stage name
+**`toStage`**: Target stage name
+
+Transitions are explicitly defined - objects can only move between stages if a matching transition exists.
 
 ---
 
@@ -262,18 +379,12 @@ Each scope defines its own workflow stages that control the lifecycle of schemas
 Scopes are defined via OSGi Config Admin factory configurations:
 
 ```properties
-# File: EObjectWorkflowService~my-tenant.cfg
+# File: ScopeService~my-tenant.cfg
 
 # Scope Identity
 scope=my-tenant
 description=Tenant-specific schema workspace
 parent.scope=global-corporate
-parentWorkflowService.target=(scope=global-corporate)
-
-# Workflow Stages
-stages=["draft", "review", "approved", "release"]
-writable.stages=["draft", "review", "approved"]
-final.stage=release
 
 # Policies
 delete.after.transition=true
@@ -281,33 +392,64 @@ delete.after.transition=true
 
 **Required Properties**:
 - `scope`: Unique scope identifier
-- `stages`: Array of stage names
-- `final.stage`: Final/released stage name
 
 **Optional Properties**:
 - `description`: Human-readable description
 - `parent.scope`: Parent scope name (empty for root)
-- `parentWorkflowService.target`: OSGi filter for parent service
-- `writable.stages`: Writable stages (defaults to all stages)
 - `delete.after.transition`: Delete from source after transition
+
+**Note**: Registry configurations (including stages and transitions) are defined separately in the workflow configuration files.
 
 ### Storage Backend Configuration
 
-Each stage requires a corresponding storage backend:
+Storage backends are configured once per storage type, and registries map stages to storage types. Multiple stages can share the same storage backend.
 
-```properties
-# File: FileObjectStorage~my-tenant-draft.cfg
-workspace.folder=/data/scopes/my-tenant/draft
-storage.scope=my-tenant
-storage.role=draft
-
-# File: FileObjectStorage~my-tenant-release.cfg
-workspace.folder=/data/scopes/my-tenant/release
-storage.scope=my-tenant
-storage.role=release
+**Storage Configuration** (storage.json):
+```json
+{
+  "ApicurioObjectStorage~apicurio": {
+    "base.url": "http://localhost:8081/apis/registry/v3/",
+    "storage.type": "apicurio",
+    "registry.target": "(registry=main)"
+  },
+  "FileObjectStorage~file": {
+    "workspace.folder": "/data/storage",
+    "storage.type": "file",
+    "registry.target": "(registry=main)"
+  }
+}
 ```
 
-The `storage.role` must match a stage name in the scope's `stages` configuration.
+**Registry Configuration** (workflow.json):
+```json
+{
+  "RegistryService~schema": {
+    "registry.name": "schema",
+    "registry.description": "The schema registry to store EPackage objects",
+    "stage.storage.mappings": [
+      "draft:apicurio",
+      "approved:apicurio",
+      "release:apicurio"
+    ],
+    "workflow.transitions": [
+      "draft:approved",
+      "approved:release"
+    ],
+    "stages": [
+      { "name": "draft", "writable": true, "final": false },
+      { "name": "approved", "writable": true, "final": false },
+      { "name": "release", "writable": false, "final": true }
+    ],
+    "storageService.target": "(storage.type=apicurio)"
+  }
+}
+```
+
+**Key Configuration Properties**:
+- `storage.type`: Identifies the storage backend type
+- `stage.storage.mappings`: Maps each stage to a storage type (format: `"stage:storageType"`)
+- `storageService.target`: OSGi filter to select the storage service
+- `workflow.transitions`: Defines allowed stage transitions (format: `"fromStage:toStage"`)
 
 ---
 
@@ -343,7 +485,15 @@ curl -X GET https://api.example.com/scopes/my-tenant
 {
   "name": "my-tenant",
   "parentScope": "global-corporate",  ← Parent scope
-  ...
+  "registries": [
+    {
+      "name": "schema",
+      "stages": [
+        { "name": "release", "writable": false, "final": true }  ← Final stage visible to children
+      ],
+      ...
+    }
+  ]
 }
 
 # Get parent metadata
@@ -353,8 +503,7 @@ curl -X GET https://api.example.com/scopes/global-corporate
 {
   "name": "global-corporate",
   "parentScope": "atlas",  ← Grandparent scope
-  "finalStage": "release",  ← my-tenant can see schemas from this stage
-  ...
+  "registries": [...]  ← Each registry has its own final stage
 }
 ```
 
@@ -370,16 +519,30 @@ curl -X GET https://api.example.com/scopes/global-corporate
 # Get scope configuration
 curl -X GET https://api.example.com/scopes/my-tenant
 
-# Response shows available stages:
+# Response shows available stages per registry:
 {
-  "stages": ["draft", "review", "approved", "release"],
-  "writableStages": ["draft", "review", "approved"]
+  "registries": [
+    {
+      "name": "schema",
+      "stages": [
+        { "name": "draft", "writable": true, "final": false },
+        { "name": "review", "writable": true, "final": false },
+        { "name": "approved", "writable": true, "final": false },
+        { "name": "release", "writable": false, "final": true }
+      ],
+      "allowedTransitions": [
+        { "fromStage": "draft", "toStage": "review" },
+        { "fromStage": "review", "toStage": "approved" },
+        { "fromStage": "approved", "toStage": "release" }
+      ]
+    }
+  ]
 }
 
-# Now client knows:
-# - Can create in: draft, review, approved
-# - Can transition to: draft → review → approved → release
-# - Cannot modify: release (not in writableStages)
+# Now client knows for the "schema" registry:
+# - Can create in: draft, review, approved (writable: true)
+# - Can transition: draft → review → approved → release
+# - Cannot modify: release (writable: false)
 ```
 
 **Use Case**: Client-side validation before attempting schema operations.
@@ -413,7 +576,7 @@ curl -X GET https://api.example.com/scopes
 | Code | Meaning | When Used |
 |------|---------|-----------|
 | 200 OK | Success | Scope(s) retrieved successfully |
-| 204 No Content | Not found | Scope with given name doesn't exist |
+| 404 Not Found | Not found | Scope with given name doesn't exist |
 | 500 Internal Server Error | Server error | Unexpected errors, exceptions |
 
 ### Common Error Scenarios
@@ -423,10 +586,10 @@ curl -X GET https://api.example.com/scopes
 ```bash
 GET /scopes/non-existent-scope
 
-→ 204 No Content
+→ 404 Not Found
 ```
 
-**Reason**: No `EObjectWorkflowService` registered with `scope=non-existent-scope`
+**Reason**: No `ScopeService` registered with `scope=non-existent-scope`
 
 **Solution**: Check OSGi Config Admin for scope configurations
 
@@ -443,9 +606,9 @@ GET /scopes
 }
 ```
 
-**Reason**: No `EObjectWorkflowService` instances registered
+**Reason**: No `ScopeService` instances registered
 
-**Solution**: Verify workflow services are started and configured
+**Solution**: Verify scope services are started and configured
 
 ---
 
@@ -454,14 +617,29 @@ GET /scopes
 ### JavaScript/TypeScript Client
 
 ```typescript
+interface StageTransition {
+  fromStage: string;
+  toStage: string;
+}
+
+interface Stage {
+  name: string;
+  writable: boolean;
+  final: boolean;
+}
+
+interface Registry {
+  name: string;
+  description: string;
+  stages: Stage[];
+  allowedTransitions: StageTransition[];
+}
+
 interface Scope {
   name: string;
-  parentScope: string;
   description: string;
-  stages: string[];
-  finalStage: string;
-  writableStages: string[];
-  links: Record<string, string>;
+  parentScope: string | null;
+  registries: Registry[];
 }
 
 interface ScopeContainer {
@@ -483,7 +661,7 @@ async function getScope(scopeName: string): Promise<Scope | null> {
     headers: { 'Accept': 'application/json' }
   });
 
-  if (response.status === 204) {
+  if (response.status === 404) {
     return null; // Scope not found
   }
 
@@ -505,6 +683,19 @@ async function buildScopeHierarchy(): Promise<Map<string, Scope[]>> {
 
   return hierarchy;
 }
+
+// Get final stage for a specific registry
+function getFinalStage(scope: Scope, registryName: string): Stage | undefined {
+  const registry = scope.registries.find(r => r.name === registryName);
+  return registry?.stages.find(s => s.final);
+}
+
+// Check if a transition is allowed
+function isTransitionAllowed(registry: Registry, fromStage: string, toStage: string): boolean {
+  return registry.allowedTransitions.some(
+    t => t.fromStage === fromStage && t.toStage === toStage
+  );
+}
 ```
 
 ### Python Client
@@ -512,16 +703,59 @@ async function buildScopeHierarchy(): Promise<Map<string, Scope[]>> {
 ```python
 import requests
 from typing import List, Dict, Optional
+from dataclasses import dataclass
+
+@dataclass
+class StageTransition:
+    from_stage: str
+    to_stage: str
+
+    @classmethod
+    def from_dict(cls, data: dict) -> 'StageTransition':
+        return cls(data['fromStage'], data['toStage'])
+
+@dataclass
+class Stage:
+    name: str
+    writable: bool
+    final: bool
+
+    @classmethod
+    def from_dict(cls, data: dict) -> 'Stage':
+        return cls(data['name'], data['writable'], data['final'])
+
+@dataclass
+class Registry:
+    name: str
+    description: str
+    stages: List[Stage]
+    allowed_transitions: List[StageTransition]
+
+    @classmethod
+    def from_dict(cls, data: dict) -> 'Registry':
+        return cls(
+            name=data['name'],
+            description=data.get('description', ''),
+            stages=[Stage.from_dict(s) for s in data.get('stages', [])],
+            allowed_transitions=[StageTransition.from_dict(t) for t in data.get('allowedTransitions', [])]
+        )
+
+    def get_final_stage(self) -> Optional[Stage]:
+        return next((s for s in self.stages if s.final), None)
+
+    def is_transition_allowed(self, from_stage: str, to_stage: str) -> bool:
+        return any(t.from_stage == from_stage and t.to_stage == to_stage
+                   for t in self.allowed_transitions)
 
 class Scope:
     def __init__(self, data: dict):
         self.name = data['name']
-        self.parent_scope = data.get('parentScope', '')
         self.description = data.get('description', '')
-        self.stages = data.get('stages', [])
-        self.final_stage = data.get('finalStage', '')
-        self.writable_stages = data.get('writableStages', [])
-        self.links = data.get('links', {})
+        self.parent_scope = data.get('parentScope')
+        self.registries = [Registry.from_dict(r) for r in data.get('registries', [])]
+
+    def get_registry(self, name: str) -> Optional[Registry]:
+        return next((r for r in self.registries if r.name == name), None)
 
 class ScopesClient:
     def __init__(self, base_url: str):
@@ -540,7 +774,7 @@ class ScopesClient:
         """Get metadata for a specific scope."""
         response = self.session.get(f"{self.base_url}/scopes/{scope_name}")
 
-        if response.status_code == 204:
+        if response.status_code == 404:
             return None  # Scope not found
 
         response.raise_for_status()
@@ -565,12 +799,18 @@ client = ScopesClient("https://api.example.com")
 # List all scopes
 scopes = client.list_scopes()
 for scope in scopes:
-    print(f"{scope.name}: {len(scope.stages)} stages")
+    print(f"{scope.name}: {len(scope.registries)} registries")
+    for registry in scope.registries:
+        final = registry.get_final_stage()
+        print(f"  - {registry.name}: {len(registry.stages)} stages, final={final.name if final else 'N/A'}")
 
-# Get specific scope
+# Get specific scope and registry info
 my_scope = client.get_scope("my-tenant")
 if my_scope:
-    print(f"Writable stages: {', '.join(my_scope.writable_stages)}")
+    schema_registry = my_scope.get_registry("schema")
+    if schema_registry:
+        writable = [s.name for s in schema_registry.stages if s.writable]
+        print(f"Writable stages: {', '.join(writable)}")
 
 # Get full hierarchy
 hierarchy = client.get_hierarchy("my-tenant")
@@ -607,12 +847,22 @@ class ScopeCache {
 
 ### 2. **Validate Stage Names Client-Side**
 
-Before attempting schema operations, validate stage names against scope configuration:
+Before attempting schema operations, validate stage names against scope and registry configuration:
 
 ```typescript
-async function canCreateInStage(scopeName: string, stageName: string): Promise<boolean> {
+async function canCreateInStage(
+  scopeName: string,
+  registryName: string,
+  stageName: string
+): Promise<boolean> {
   const scope = await getScope(scopeName);
-  return scope?.writableStages.includes(stageName) ?? false;
+  if (!scope) return false;
+
+  const registry = scope.registries.find(r => r.name === registryName);
+  if (!registry) return false;
+
+  const stage = registry.stages.find(s => s.name === stageName);
+  return stage?.writable ?? false;
 }
 ```
 
@@ -638,7 +888,7 @@ function buildScopeTree(scopes: Scope[]): TreeNode[] {
 
 ### 4. **Handle Scope Not Found Gracefully**
 
-The API returns 204 No Content (not 404) when a scope doesn't exist:
+The API returns 404 Not Found when a scope doesn't exist:
 
 ```typescript
 const scope = await getScope("unknown");
@@ -667,25 +917,25 @@ The resource is annotated with Swagger/OpenAPI v3 annotations for automatic API 
 
 ### No scopes returned
 
-**Cause**: No `EObjectWorkflowService` instances registered
+**Cause**: No `ScopeService` instances registered
 
 **Solution**:
-1. Check OSGi Config Admin for workflow service configurations
-2. Verify services are started: `scr:list | grep EObjectWorkflowService`
+1. Check OSGi Config Admin for scope service configurations
+2. Verify services are started: `scr:list | grep ScopeService`
 3. Check for configuration errors in logs
 4. Ensure `scope` property is set in each configuration
 
 ---
 
-### Scope not found (204)
+### Scope not found (404)
 
-**Cause**: No workflow service with matching `scope` property
+**Cause**: No scope service with matching `scope` property
 
 **Solution**:
 1. List all scopes to see available names
 2. Check for typos in scope name (case-sensitive)
-3. Verify workflow service configuration exists
-4. Check `ScopeCollector` has bound the service
+3. Verify scope service configuration exists
+4. Check `ScopeServiceCollector` has bound the service
 
 ---
 
@@ -704,7 +954,7 @@ The resource is annotated with Swagger/OpenAPI v3 annotations for automatic API 
 
 - [SchemaPackagesResource Documentation](README-SchemaPackages.md) - Schema CRUD operations
 - [Model Atlas API Specification](Model%20Atlas%20API%20Specification.md) - Complete API spec
-- [EObjectWorkflowService README](../org.eclipse.fennec.model.atlas.workflow/README.md) - Workflow service details
+- [ScopeService README](../org.eclipse.fennec.model.atlas.workflow/README.md) - Scope service details
 - [CLAUDE.md](../CLAUDE.md) - Project overview and build instructions
 
 ---
@@ -713,4 +963,4 @@ The resource is annotated with Swagger/OpenAPI v3 annotations for automatic API 
 
 Eclipse Public License 2.0 (EPL-2.0)
 
-Copyright (c) 2012 - 2025 Data In Motion and others.
+Copyright (c) 2012 - 2026 Data In Motion and others.

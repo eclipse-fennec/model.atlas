@@ -17,7 +17,6 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 
 import org.eclipse.fennec.model.atlas.management.lucene.tests.annotations.LuceneTestAnnotations;
-import org.eclipse.fennec.model.atlas.management.lucene.tests.annotations.LuceneTestAnnotations.RegistryConfiguration;
 import org.osgi.test.common.annotation.Property;
 import org.osgi.test.common.annotation.Property.TemplateArgument;
 import org.osgi.test.common.annotation.Property.ValueSource;
@@ -55,6 +54,7 @@ public class FileTestAnnotations extends LuceneTestAnnotations {
         @Property(key = "workspace.folder", value = "%s", templateArguments = {
             @TemplateArgument(source = ValueSource.SystemProperty, value = PROP_TEMP_DIR)
         }),
+        @Property(key = "storage.type", value = "file")
     })
     @Retention(RetentionPolicy.RUNTIME)
     public @interface FileStorageConfiguration {
@@ -76,55 +76,4 @@ public class FileTestAnnotations extends LuceneTestAnnotations {
     @Retention(RetentionPolicy.RUNTIME)
     public @interface DefaultFileStorageSetup {}
 
-    /**
-     * File storage configuration with custom role.
-     * 
-     * <p>Creates a FileObjectStorage instance with a custom storage role.
-     * Useful for testing role-specific functionality.</p>
-     */
-    @WithFactoryConfiguration(factoryPid = PID_FILE_STORAGE, name = "custom-role", location = "?", properties = {
-        @Property(key = "workspace.folder", value = "%s", templateArguments = {
-            @TemplateArgument(source = ValueSource.SystemProperty, value = PROP_TEMP_DIR)
-        }),
-        @Property(key = "storage.role", value = "custom-role")
-    })
-    @RegistryConfiguration
-    @Retention(RetentionPolicy.RUNTIME)
-    public @interface CustomRoleFileStorageSetup {}
-
-    /**
-     * Multiple file storage instances with different roles.
-     * 
-     * <p>This setup creates three file storage instances:</p>
-     * <ul>
-     * <li>Draft storage with role "draft"</li>
-     * <li>Approved storage with role "approved"</li>
-     * <li>Documentation storage with role "documentation"</li>
-     * </ul>
-     * 
-     * <p>Useful for testing multi-role scenarios and cross-storage queries.</p>
-     */
-    @RegistryConfiguration
-    @WithFactoryConfiguration(factoryPid = PID_FILE_STORAGE, name = "draft", location = "?", properties = {
-        @Property(key = "workspace.folder", value = "%s/draft-storage", templateArguments = {
-            @TemplateArgument(source = ValueSource.SystemProperty, value = PROP_TEMP_DIR)
-        }),
-        @Property(key = "storage.role", value = "draft")
-    })
-    @WithFactoryConfiguration(factoryPid = PID_FILE_STORAGE, name = "approved", location = "?", properties = {
-        @Property(key = "workspace.folder", value = "%s/approved-storage", templateArguments = {
-            @TemplateArgument(source = ValueSource.SystemProperty, value = PROP_TEMP_DIR),
-            @TemplateArgument(source = ValueSource.TestMethod)
-        }),
-        @Property(key = "storage.role", value = "approved")
-    })
-    @WithFactoryConfiguration(factoryPid = PID_FILE_STORAGE, name = "documentation", location = "?", properties = {
-        @Property(key = "workspace.folder", value = "%s/documentation-storage", templateArguments = {
-            @TemplateArgument(source = ValueSource.SystemProperty, value = PROP_TEMP_DIR),
-            @TemplateArgument(source = ValueSource.TestMethod)
-        }),
-        @Property(key = "storage.role", value = "documentation")
-    })
-    @Retention(RetentionPolicy.RUNTIME)
-    public @interface MultiRoleFileStorageSetup {}
 }

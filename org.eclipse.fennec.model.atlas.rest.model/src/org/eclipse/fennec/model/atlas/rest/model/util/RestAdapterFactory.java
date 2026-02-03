@@ -91,6 +91,14 @@ public class RestAdapterFactory extends AdapterFactoryImpl {
 				return createErrorResponseAdapter();
 			}
 			@Override
+			public Adapter caseStageTransitionRequest(StageTransitionRequest object) {
+				return createStageTransitionRequestAdapter();
+			}
+			@Override
+			public Adapter caseScopeListResponse(ScopeListResponse object) {
+				return createScopeListResponseAdapter();
+			}
+			@Override
 			public Adapter defaultCase(EObject object) {
 				return createEObjectAdapter();
 			}
@@ -149,6 +157,34 @@ public class RestAdapterFactory extends AdapterFactoryImpl {
 	 * @generated
 	 */
 	public Adapter createErrorResponseAdapter() {
+		return null;
+	}
+
+	/**
+	 * Creates a new adapter for an object of class '{@link org.eclipse.fennec.model.atlas.rest.model.StageTransitionRequest <em>Stage Transition Request</em>}'.
+	 * <!-- begin-user-doc -->
+	 * This default implementation returns null so that we can easily ignore cases;
+	 * it's useful to ignore a case when inheritance will catch all the cases anyway.
+	 * <!-- end-user-doc -->
+	 * @return the new adapter.
+	 * @see org.eclipse.fennec.model.atlas.rest.model.StageTransitionRequest
+	 * @generated
+	 */
+	public Adapter createStageTransitionRequestAdapter() {
+		return null;
+	}
+
+	/**
+	 * Creates a new adapter for an object of class '{@link org.eclipse.fennec.model.atlas.rest.model.ScopeListResponse <em>Scope List Response</em>}'.
+	 * <!-- begin-user-doc -->
+	 * This default implementation returns null so that we can easily ignore cases;
+	 * it's useful to ignore a case when inheritance will catch all the cases anyway.
+	 * <!-- end-user-doc -->
+	 * @return the new adapter.
+	 * @see org.eclipse.fennec.model.atlas.rest.model.ScopeListResponse
+	 * @generated
+	 */
+	public Adapter createScopeListResponseAdapter() {
 		return null;
 	}
 

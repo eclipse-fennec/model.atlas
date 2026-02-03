@@ -61,216 +61,220 @@ import org.osgi.util.promise.Promise;
 @ExtendWith(ConfigurationExtension.class)
 public class DataIntegrityValidationIntegrationTest {
 
-    @TempDir
-    Path tempDir;
+	private static final String TEST_SCOPE = "test_scope";
+	private static final String TEST_REGISTRY = "test_registry";
+	private static final String TEST_STAGE = "test_stage";
 
-    @BeforeEach
-    void setUp() {
-        // Set system property for template argument resolution
-        System.setProperty("tempDir", tempDir.toString());
-    }
+	@TempDir
+	Path tempDir;
 
-    /**
-     * Tests that loading metadata with corrupted objectId throws appropriate exception.
-     * 
-     * <p>This test:</p>
-     * <ol>
-     * <li>Stores a valid object with metadata</li>
-     * <li>Manually corrupts the metadata file by changing the objectId</li>
-     * <li>Attempts to retrieve the metadata</li>
-     * <li>Verifies that data integrity violation is detected and exception thrown</li>
-     * </ol>
-     */
-    @SuppressWarnings({ "rawtypes", "unchecked" })
+	@BeforeEach
+	void setUp() {
+		// Set system property for template argument resolution
+		System.setProperty("tempDir", tempDir.toString());
+	}
+
+	/**
+	 * Tests that loading metadata with corrupted objectId throws appropriate exception.
+	 * 
+	 * <p>This test:</p>
+	 * <ol>
+	 * <li>Stores a valid object with metadata</li>
+	 * <li>Manually corrupts the metadata file by changing the objectId</li>
+	 * <li>Attempts to retrieve the metadata</li>
+	 * <li>Verifies that data integrity violation is detected and exception thrown</li>
+	 * </ol>
+	 */
+	@SuppressWarnings({ "rawtypes", "unchecked" })
 	@Test
-    @DefaultFileStorageSetup
-    public void testLoadMetadataWithCorruptedObjectIdThrowsException(
-            @InjectService(cardinality = 0, filter = "(storage.backend=file)")
-            ServiceAware<EObjectStorageService> serviceAware) throws Exception {
-        
-        EObjectStorageService<EObject> storageService = (EObjectStorageService<EObject>) serviceAware.waitForService(5000L);
-        assertNotNull(storageService, "Storage service should be available");
+	@DefaultFileStorageSetup
+	public void testLoadMetadataWithCorruptedObjectIdThrowsException(
+			@InjectService(cardinality = 0, filter = "(storage.backend=file)")
+			ServiceAware<EObjectStorageService> serviceAware) throws Exception {
 
-        // === PHASE 1: Store valid object ===
-        
-        EPackage testPackage = EcoreFactory.eINSTANCE.createEPackage();
-        testPackage.setName("CorruptionTestPackage");
-        testPackage.setNsPrefix("corruption");
-        testPackage.setNsURI("http://corruption.test/1.0");
+		EObjectStorageService<EObject> storageService = (EObjectStorageService<EObject>) serviceAware.waitForService(5000L);
+		assertNotNull(storageService, "Storage service should be available");
 
-        ObjectMetadata metadata = ManagementFactory.eINSTANCE.createObjectMetadata();
-        metadata.setObjectName("CorruptionTestPackage");
-        metadata.setVersion("1.0.0");
-        metadata.setUploadUser("corruption-test-user");
-        metadata.setSourceChannel("CORRUPTION_TEST");
-        metadata.setStatus(ObjectStatus.DRAFT);
-        metadata.setUploadTime(Instant.now());
-        
-        String objectId = "corruption-test-object";
-        Promise<ObjectMetadata> storePromise = storageService.storeObject(objectId, testPackage, metadata);
-        storePromise.getValue();
-        String storedObjectId = metadata.getObjectId();
-        
-        // Verify object was stored successfully
-        assertTrue(storageService.exists(storedObjectId), "Object should exist after storage");
-        
-        // === PHASE 2: Corrupt the metadata file ===
-        
-        Path metadataFile = tempDir.resolve(objectId + ".metadata.xmi");
-        assertTrue(Files.exists(metadataFile), "Metadata file should exist");
-        
-        // Read the original metadata file content
-        String originalContent = Files.readString(metadataFile);
-        
-        // Corrupt the content by changing the objectId in the XMI
-        String corruptedContent = originalContent.replace(
-            "objectId=\"" + objectId + "\"",
-            "objectId=\"corrupted-different-id\""
-        );
-        
-        // Verify we actually changed something
-        assertTrue(!originalContent.equals(corruptedContent), "Content should be different after corruption");
-        
-        // Write the corrupted content back to the file
-        Files.writeString(metadataFile, corruptedContent);
-        
-        // === PHASE 3: Attempt to load corrupted metadata ===
-        
-        Promise<ObjectMetadata> retrievePromise = storageService.retrieveMetadata(objectId);
-        
-        // Verify the promise failed with data integrity violation
-        Throwable failure = retrievePromise.getFailure();
-        assertNotNull(failure, "Promise should have failed due to data integrity violation");
-        assertTrue(failure instanceof RuntimeException, "Should be RuntimeException wrapper");
-        assertTrue(failure.getCause() instanceof IllegalStateException, "Should have IllegalStateException cause");
-        assertTrue(failure.getCause().getMessage().contains("Data integrity violation"), 
-                  "Should mention data integrity violation");
-        assertTrue(failure.getCause().getMessage().contains("does not match requested objectId"), 
-                  "Should mention objectId mismatch");
-    }
+		// === PHASE 1: Store valid object ===
 
-    /**
-     * Tests that loading metadata with missing objectId throws appropriate exception.
-     * 
-     * <p>This test:</p>
-     * <ol>
-     * <li>Stores a valid object with metadata</li>
-     * <li>Manually corrupts the metadata file by removing the objectId attribute</li>
-     * <li>Attempts to retrieve the metadata</li>
-     * <li>Verifies that data integrity violation is detected and exception thrown</li>
-     * </ol>
-     */
-    @SuppressWarnings({ "rawtypes", "unchecked" })
-    @Test
-    @DefaultFileStorageSetup
-    public void testLoadMetadataWithMissingObjectIdThrowsException(
-            @InjectService(cardinality = 0, filter = "(storage.backend=file)")
-            ServiceAware<EObjectStorageService> serviceAware) throws Exception {
-        
-        EObjectStorageService<EObject> storageService = (EObjectStorageService<EObject>) serviceAware.waitForService(5000L);
-        assertNotNull(storageService, "Storage service should be available");
+		EPackage testPackage = EcoreFactory.eINSTANCE.createEPackage();
+		testPackage.setName("CorruptionTestPackage");
+		testPackage.setNsPrefix("corruption");
+		testPackage.setNsURI("http://corruption.test/1.0");
 
-        // === PHASE 1: Store valid object ===
-        
-        EPackage testPackage = EcoreFactory.eINSTANCE.createEPackage();
-        testPackage.setName("MissingIdTestPackage");
+		ObjectMetadata metadata = ManagementFactory.eINSTANCE.createObjectMetadata();
+		metadata.setObjectName("CorruptionTestPackage");
+		metadata.setVersion("1.0.0");
+		metadata.setUploadUser("corruption-test-user");
+		metadata.setSourceChannel("CORRUPTION_TEST");
+		metadata.setStatus(ObjectStatus.DRAFT);
+		metadata.setUploadTime(Instant.now());
 
-        ObjectMetadata metadata = ManagementFactory.eINSTANCE.createObjectMetadata();
-        metadata.setObjectName("MissingIdTestPackage");
-        metadata.setVersion("1.0.0");
-        metadata.setUploadUser("missing-id-test-user");
-        metadata.setStatus(ObjectStatus.DRAFT);
-        metadata.setUploadTime(Instant.now());
-        
-        String objectId = "missing-id-test-object";
-        Promise<ObjectMetadata> storePromise = storageService.storeObject(objectId, testPackage, metadata);
-        storePromise.getValue();
-        
-        // === PHASE 2: Corrupt the metadata file by removing objectId ===
-        
-        Path metadataFile = tempDir.resolve(objectId + ".metadata.xmi");
-        assertTrue(Files.exists(metadataFile), "Metadata file should exist");
-        
-        // Read and corrupt the content by removing the objectId attribute
-        String originalContent = Files.readString(metadataFile);
-        String corruptedContent = originalContent.replaceAll("objectId=\"[^\"]*\"\\s*", "");
-        
-        // Verify we actually changed something
-        assertTrue(!originalContent.equals(corruptedContent), "Content should be different after corruption");
-        
-        // Write the corrupted content back
-        Files.writeString(metadataFile, corruptedContent);
-        
-        // === PHASE 3: Attempt to load corrupted metadata ===
-        
-        Promise<ObjectMetadata> retrievePromise = storageService.retrieveMetadata(objectId);
-        
-        // Verify the promise failed with data integrity violation
-        Throwable failure = retrievePromise.getFailure();
-        assertNotNull(failure, "Promise should have failed due to missing objectId");
-        assertTrue(failure instanceof RuntimeException, "Should be RuntimeException wrapper");
-        assertTrue(failure.getCause() instanceof IllegalStateException, "Should have IllegalStateException cause");
-        assertTrue(failure.getCause().getMessage().contains("Data integrity violation"), 
-                  "Should mention data integrity violation");
-        assertTrue(failure.getCause().getMessage().contains("has no objectId set"), 
-                  "Should mention missing objectId");
-    }
+		String objectId = "corruption-test-object";
+		Promise<ObjectMetadata> storePromise = storageService.storeObject(TEST_SCOPE, TEST_REGISTRY, TEST_STAGE, objectId, testPackage, metadata);
+		storePromise.getValue();
+		String storedObjectId = metadata.getObjectId();
 
-    /**
-     * Tests that loading completely corrupted metadata file throws appropriate exception.
-     * 
-     * <p>This test:</p>
-     * <ol>
-     * <li>Stores a valid object with metadata</li>
-     * <li>Completely corrupts the metadata file with invalid XMI content</li>
-     * <li>Attempts to retrieve the metadata</li>
-     * <li>Verifies that parsing fails gracefully with appropriate exception</li>
-     * </ol>
-     */
-    @SuppressWarnings({ "rawtypes", "unchecked" })
-    @Test
-    @DefaultFileStorageSetup
-    public void testLoadCompletelyCorruptedMetadataThrowsException(
-            @InjectService(cardinality = 0, filter = "(storage.backend=file)")
-            ServiceAware<EObjectStorageService> serviceAware) throws Exception {
-        
-        EObjectStorageService<EObject> storageService = (EObjectStorageService<EObject>) serviceAware.waitForService(5000L);
-        assertNotNull(storageService, "Storage service should be available");
+		// Verify object was stored successfully
+		assertTrue(storageService.exists(TEST_SCOPE, TEST_REGISTRY, TEST_STAGE, storedObjectId), "Object should exist after storage");
 
-        // === PHASE 1: Store valid object ===
-        
-        EPackage testPackage = EcoreFactory.eINSTANCE.createEPackage();
-        testPackage.setName("CorruptedFileTestPackage");
+		// === PHASE 2: Corrupt the metadata file ===
 
-        ObjectMetadata metadata = ManagementFactory.eINSTANCE.createObjectMetadata();
-        metadata.setObjectName("CorruptedFileTestPackage");
-        metadata.setVersion("1.0.0");
-        metadata.setUploadUser("corrupted-file-test-user");
-        metadata.setStatus(ObjectStatus.DRAFT);
-        metadata.setUploadTime(Instant.now());
-        
-        String objectId = "corrupted-file-test-object";
-        Promise<ObjectMetadata> storePromise = storageService.storeObject(objectId, testPackage, metadata);
-        storePromise.getValue();
-        
-        // === PHASE 2: Completely corrupt the metadata file ===
-        
-        Path metadataFile = tempDir.resolve(objectId + ".metadata.xmi");
-        assertTrue(Files.exists(metadataFile), "Metadata file should exist");
-        
-        // Write completely invalid content
-        String corruptedContent = "This is not valid XMI content at all! <invalid><xml>corrupted</broken>";
-        Files.writeString(metadataFile, corruptedContent);
-        
-        // === PHASE 3: Attempt to load corrupted metadata ===
-        
-        Promise<ObjectMetadata> retrievePromise = storageService.retrieveMetadata(objectId);
-        
-        // Verify the promise failed due to parsing error
-        Throwable failure = retrievePromise.getFailure();
-        assertNotNull(failure, "Promise should have failed due to corrupted file");
-        assertTrue(failure instanceof RuntimeException, "Should be RuntimeException wrapper");
-        // The specific exception type may vary depending on EMF's parsing behavior
-        // but it should indicate a parsing or IO problem
-    }
+		Path metadataFile = tempDir.resolve(TEST_SCOPE).resolve(TEST_REGISTRY).resolve(TEST_STAGE).resolve(objectId + ".metadata.xmi");
+		assertTrue(Files.exists(metadataFile), "Metadata file should exist");
+
+		// Read the original metadata file content
+		String originalContent = Files.readString(metadataFile);
+
+		// Corrupt the content by changing the objectId in the XMI
+		String corruptedContent = originalContent.replace(
+				"objectId=\"" + objectId + "\"",
+				"objectId=\"corrupted-different-id\""
+				);
+
+		// Verify we actually changed something
+		assertTrue(!originalContent.equals(corruptedContent), "Content should be different after corruption");
+
+		// Write the corrupted content back to the file
+		Files.writeString(metadataFile, corruptedContent);
+
+		// === PHASE 3: Attempt to load corrupted metadata ===
+
+		Promise<ObjectMetadata> retrievePromise = storageService.retrieveMetadata(TEST_SCOPE, TEST_REGISTRY, TEST_STAGE, objectId);
+
+		// Verify the promise failed with data integrity violation
+		Throwable failure = retrievePromise.getFailure();
+		assertNotNull(failure, "Promise should have failed due to data integrity violation");
+		assertTrue(failure instanceof RuntimeException, "Should be RuntimeException wrapper");
+		assertTrue(failure.getCause() instanceof IllegalStateException, "Should have IllegalStateException cause");
+		assertTrue(failure.getCause().getMessage().contains("Data integrity violation"), 
+				"Should mention data integrity violation");
+		assertTrue(failure.getCause().getMessage().contains("does not match requested objectId"), 
+				"Should mention objectId mismatch");
+	}
+
+	/**
+	 * Tests that loading metadata with missing objectId throws appropriate exception.
+	 * 
+	 * <p>This test:</p>
+	 * <ol>
+	 * <li>Stores a valid object with metadata</li>
+	 * <li>Manually corrupts the metadata file by removing the objectId attribute</li>
+	 * <li>Attempts to retrieve the metadata</li>
+	 * <li>Verifies that data integrity violation is detected and exception thrown</li>
+	 * </ol>
+	 */
+	@SuppressWarnings({ "rawtypes", "unchecked" })
+	@Test
+	@DefaultFileStorageSetup
+	public void testLoadMetadataWithMissingObjectIdThrowsException(
+			@InjectService(cardinality = 0, filter = "(storage.backend=file)")
+			ServiceAware<EObjectStorageService> serviceAware) throws Exception {
+
+		EObjectStorageService<EObject> storageService = (EObjectStorageService<EObject>) serviceAware.waitForService(5000L);
+		assertNotNull(storageService, "Storage service should be available");
+
+		// === PHASE 1: Store valid object ===
+
+		EPackage testPackage = EcoreFactory.eINSTANCE.createEPackage();
+		testPackage.setName("MissingIdTestPackage");
+
+		ObjectMetadata metadata = ManagementFactory.eINSTANCE.createObjectMetadata();
+		metadata.setObjectName("MissingIdTestPackage");
+		metadata.setVersion("1.0.0");
+		metadata.setUploadUser("missing-id-test-user");
+		metadata.setStatus(ObjectStatus.DRAFT);
+		metadata.setUploadTime(Instant.now());
+
+		String objectId = "missing-id-test-object";
+		Promise<ObjectMetadata> storePromise = storageService.storeObject(TEST_SCOPE, TEST_REGISTRY, TEST_STAGE, objectId, testPackage, metadata);
+		storePromise.getValue();
+
+		// === PHASE 2: Corrupt the metadata file by removing objectId ===
+
+		Path metadataFile = tempDir.resolve(TEST_SCOPE).resolve(TEST_REGISTRY).resolve(TEST_STAGE).resolve(objectId + ".metadata.xmi");
+		assertTrue(Files.exists(metadataFile), "Metadata file should exist");
+
+		// Read and corrupt the content by removing the objectId attribute
+		String originalContent = Files.readString(metadataFile);
+		String corruptedContent = originalContent.replaceAll("objectId=\"[^\"]*\"\\s*", "");
+
+		// Verify we actually changed something
+		assertTrue(!originalContent.equals(corruptedContent), "Content should be different after corruption");
+
+		// Write the corrupted content back
+		Files.writeString(metadataFile, corruptedContent);
+
+		// === PHASE 3: Attempt to load corrupted metadata ===
+
+		Promise<ObjectMetadata> retrievePromise = storageService.retrieveMetadata(TEST_SCOPE, TEST_REGISTRY, TEST_STAGE, objectId);
+
+		// Verify the promise failed with data integrity violation
+		Throwable failure = retrievePromise.getFailure();
+		assertNotNull(failure, "Promise should have failed due to missing objectId");
+		assertTrue(failure instanceof RuntimeException, "Should be RuntimeException wrapper");
+		assertTrue(failure.getCause() instanceof IllegalStateException, "Should have IllegalStateException cause");
+		assertTrue(failure.getCause().getMessage().contains("Data integrity violation"), 
+				"Should mention data integrity violation");
+		assertTrue(failure.getCause().getMessage().contains("has no objectId set"), 
+				"Should mention missing objectId");
+	}
+
+	/**
+	 * Tests that loading completely corrupted metadata file throws appropriate exception.
+	 * 
+	 * <p>This test:</p>
+	 * <ol>
+	 * <li>Stores a valid object with metadata</li>
+	 * <li>Completely corrupts the metadata file with invalid XMI content</li>
+	 * <li>Attempts to retrieve the metadata</li>
+	 * <li>Verifies that parsing fails gracefully with appropriate exception</li>
+	 * </ol>
+	 */
+	@SuppressWarnings({ "rawtypes", "unchecked" })
+	@Test
+	@DefaultFileStorageSetup
+	public void testLoadCompletelyCorruptedMetadataThrowsException(
+			@InjectService(cardinality = 0, filter = "(storage.backend=file)")
+			ServiceAware<EObjectStorageService> serviceAware) throws Exception {
+
+		EObjectStorageService<EObject> storageService = (EObjectStorageService<EObject>) serviceAware.waitForService(5000L);
+		assertNotNull(storageService, "Storage service should be available");
+
+		// === PHASE 1: Store valid object ===
+
+		EPackage testPackage = EcoreFactory.eINSTANCE.createEPackage();
+		testPackage.setName("CorruptedFileTestPackage");
+
+		ObjectMetadata metadata = ManagementFactory.eINSTANCE.createObjectMetadata();
+		metadata.setObjectName("CorruptedFileTestPackage");
+		metadata.setVersion("1.0.0");
+		metadata.setUploadUser("corrupted-file-test-user");
+		metadata.setStatus(ObjectStatus.DRAFT);
+		metadata.setUploadTime(Instant.now());
+
+		String objectId = "corrupted-file-test-object";
+		Promise<ObjectMetadata> storePromise = storageService.storeObject(TEST_SCOPE, TEST_REGISTRY, TEST_STAGE, objectId, testPackage, metadata);
+		storePromise.getValue();
+
+		// === PHASE 2: Completely corrupt the metadata file ===
+
+		Path metadataFile = tempDir.resolve(TEST_SCOPE).resolve(TEST_REGISTRY).resolve(TEST_STAGE).resolve(objectId + ".metadata.xmi");
+		assertTrue(Files.exists(metadataFile), "Metadata file should exist");
+
+		// Write completely invalid content
+		String corruptedContent = "This is not valid XMI content at all! <invalid><xml>corrupted</broken>";
+		Files.writeString(metadataFile, corruptedContent);
+
+		// === PHASE 3: Attempt to load corrupted metadata ===
+
+		Promise<ObjectMetadata> retrievePromise = storageService.retrieveMetadata(TEST_SCOPE, TEST_REGISTRY, TEST_STAGE, objectId);
+
+		// Verify the promise failed due to parsing error
+		Throwable failure = retrievePromise.getFailure();
+		assertNotNull(failure, "Promise should have failed due to corrupted file");
+		assertTrue(failure instanceof RuntimeException, "Should be RuntimeException wrapper");
+		// The specific exception type may vary depending on EMF's parsing behavior
+		// but it should indicate a parsing or IO problem
+	}
 }

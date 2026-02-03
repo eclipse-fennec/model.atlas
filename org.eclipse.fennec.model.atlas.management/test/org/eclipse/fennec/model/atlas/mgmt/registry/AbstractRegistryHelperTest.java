@@ -23,7 +23,9 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.io.IOException;
 import java.time.Instant;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 import org.eclipse.fennec.model.atlas.mgmt.management.ManagementFactory;
 import org.eclipse.fennec.model.atlas.mgmt.management.ObjectMetadata;
@@ -97,9 +99,9 @@ class AbstractRegistryHelperTest {
     void testSearchOperationsContract() throws IOException {
         // Add test data
         ObjectMetadata draft = createTestMetadata("draft-obj", "Package1", "1.0.0", ObjectStatus.DRAFT);
-        draft.setRole("draft");
+        draft.setStage("draft");
         ObjectMetadata approved = createTestMetadata("approved-obj", "Package2", "2.0.0", ObjectStatus.APPROVED);
-        approved.setRole("approved");
+        approved.setStage("approved");
         
         registryHelper.updateIndex("draft-obj", draft);
         registryHelper.updateIndex("approved-obj", approved);
@@ -113,11 +115,11 @@ class AbstractRegistryHelperTest {
         assertNotNull(byObjectName);
         assertTrue(byObjectName.contains("draft-obj"));
         
-        List<String> byRole = registryHelper.findByRole("draft");
-        assertNotNull(byRole);
-        assertTrue(byRole.contains("draft-obj"));
+        List<String> byStage = registryHelper.findByStage("draft");
+        assertNotNull(byStage);
+        assertTrue(byStage.contains("draft-obj"));
         
-        Optional<String> byNameAndRole = registryHelper.findByObjectNameAndRole("Package1", "draft");
+        Optional<String> byNameAndRole = registryHelper.findByObjectNameAndStage("Package1", "draft");
         assertTrue(byNameAndRole.isPresent());
         assertEquals("draft-obj", byNameAndRole.get());
         
@@ -194,11 +196,11 @@ class AbstractRegistryHelperTest {
         assertThrows(NullPointerException.class, () -> 
             registryHelper.findByObjectName(null));
         assertThrows(NullPointerException.class, () -> 
-            registryHelper.findByRole(null));
+            registryHelper.findByStage(null));
         assertThrows(NullPointerException.class, () -> 
-            registryHelper.findByObjectNameAndRole(null, "role"));
+            registryHelper.findByObjectNameAndStage(null, "role"));
         assertThrows(NullPointerException.class, () -> 
-            registryHelper.findByObjectNameAndRole("name", null));
+            registryHelper.findByObjectNameAndStage("name", null));
         
         // Test null validation for exists
         assertThrows(NullPointerException.class, () -> 
@@ -237,10 +239,10 @@ class AbstractRegistryHelperTest {
         List<String> emptyName = registryHelper.findByObjectName("NonExistent");
         assertTrue(emptyName.isEmpty());
         
-        List<String> emptyRole = registryHelper.findByRole("non-existent");
+        List<String> emptyRole = registryHelper.findByStage("non-existent");
         assertTrue(emptyRole.isEmpty());
         
-        Optional<String> emptyNameRole = registryHelper.findByObjectNameAndRole("NonExistent", "non-existent");
+        Optional<String> emptyNameRole = registryHelper.findByObjectNameAndStage("NonExistent", "non-existent");
         assertFalse(emptyNameRole.isPresent());
         
         List<String> emptySearch = registryHelper.searchObjectIds("query", 10);
@@ -276,8 +278,7 @@ class AbstractRegistryHelperTest {
             AbstractRegistryHelper.class.getDeclaredMethod("searchObjectIds", String.class, int.class);
             AbstractRegistryHelper.class.getDeclaredMethod("findByStatus", ObjectStatus.class);
             AbstractRegistryHelper.class.getDeclaredMethod("findByObjectName", String.class);
-            AbstractRegistryHelper.class.getDeclaredMethod("findByRole", String.class);
-            AbstractRegistryHelper.class.getDeclaredMethod("findByObjectNameAndRole", String.class, String.class);
+            AbstractRegistryHelper.class.getDeclaredMethod("findByObjectNameAndStage", String.class, String.class);
             AbstractRegistryHelper.class.getDeclaredMethod("getAllObjectIds");
             AbstractRegistryHelper.class.getDeclaredMethod("getObjectCount");
             AbstractRegistryHelper.class.getDeclaredMethod("exists", String.class);
@@ -353,7 +354,7 @@ class AbstractRegistryHelperTest {
             List<String> allIds = getAllObjectIds();
             return allIds.stream()
                 .limit(maxResults > 0 ? maxResults : Integer.MAX_VALUE)
-                .collect(java.util.stream.Collectors.toList());
+                .collect(Collectors.toList());
         }
         
         @Override
@@ -364,8 +365,8 @@ class AbstractRegistryHelperTest {
             java.util.Objects.requireNonNull(status, "Status cannot be null");
             return data.entrySet().stream()
                 .filter(entry -> status.equals(entry.getValue().getStatus()))
-                .map(java.util.Map.Entry::getKey)
-                .collect(java.util.stream.Collectors.toList());
+                .map(Map.Entry::getKey)
+                .collect(Collectors.toList());
         }
         
         @Override
@@ -376,33 +377,33 @@ class AbstractRegistryHelperTest {
             java.util.Objects.requireNonNull(objectName, "Object name cannot be null");
             return data.entrySet().stream()
                 .filter(entry -> objectName.equals(entry.getValue().getObjectName()))
-                .map(java.util.Map.Entry::getKey)
-                .collect(java.util.stream.Collectors.toList());
+                .map(Map.Entry::getKey)
+                .collect(Collectors.toList());
         }
         
         @Override
-        public List<String> findByRole(String role) throws IOException {
+        public List<String> findByStage(String stage) throws IOException {
             if (throwIOException) {
                 throw new IOException("Test IOException");
             }
-            java.util.Objects.requireNonNull(role, "Role cannot be null");
+            java.util.Objects.requireNonNull(stage, "Stage cannot be null");
             return data.entrySet().stream()
-                .filter(entry -> role.equals(entry.getValue().getRole()))
-                .map(java.util.Map.Entry::getKey)
-                .collect(java.util.stream.Collectors.toList());
+                .filter(entry -> stage.equals(entry.getValue().getStage()))
+                .map(Map.Entry::getKey)
+                .collect(Collectors.toList());
         }
         
         @Override
-        public Optional<String> findByObjectNameAndRole(String objectName, String role) throws IOException {
+        public Optional<String> findByObjectNameAndStage(String objectName, String stage) throws IOException {
             if (throwIOException) {
                 throw new IOException("Test IOException");
             }
             java.util.Objects.requireNonNull(objectName, "Object name cannot be null");
-            java.util.Objects.requireNonNull(role, "Role cannot be null");
+            java.util.Objects.requireNonNull(stage, "Stage cannot be null");
             return data.entrySet().stream()
                 .filter(entry -> objectName.equals(entry.getValue().getObjectName()) && 
-                               role.equals(entry.getValue().getRole()))
-                .map(java.util.Map.Entry::getKey)
+                               stage.equals(entry.getValue().getStage()))
+                .map(Map.Entry::getKey)
                 .findFirst();
         }
         
