@@ -138,7 +138,7 @@ public class SchemaPackagesResource {
 			if(objectsMetadata.isEmpty()) return Response.status(Response.Status.NO_CONTENT).build();
 			ObjectMetadataContainer container = mgmtFactory.createObjectMetadataContainer();
 			container.getMetadata().addAll(objectsMetadata);		
-			return Response.status(Response.Status.OK).entity(container).build();
+			return Response.status(Response.Status.OK).entity(container).header("Content-Type", mediaType).build();
 		} catch (IllegalArgumentException e) {
 			return Response.status(Response.Status.BAD_REQUEST).entity(e.getMessage()).build();
 		} catch (Exception e) {
@@ -194,7 +194,7 @@ public class SchemaPackagesResource {
 				}
 				ObjectMetadataContainer container = mgmtFactory.createObjectMetadataContainer();
 				container.getMetadata().addAll(objectsMetadata);
-				return Response.status(Response.Status.OK).entity(container).build();
+				return Response.status(Response.Status.OK).entity(container).header("Content-Type", mediaType).build();
 			} else {
 				List<ObjectMetadata> objectsMetadata = scopeService.listInStageForRegistry(REGISTRY_NAME, stageName);
 				if (objectsMetadata.isEmpty()) {
@@ -202,7 +202,7 @@ public class SchemaPackagesResource {
 				}
 				ObjectMetadataContainer container = mgmtFactory.createObjectMetadataContainer();
 				container.getMetadata().addAll(objectsMetadata);
-				return Response.status(Response.Status.OK).entity(container).build();
+				return Response.status(Response.Status.OK).entity(container).header("Content-Type", mediaType).build();
 			}
 		} catch (IllegalArgumentException e) {
 			return Response.status(Response.Status.BAD_REQUEST).entity(e.getMessage()).build();
@@ -268,7 +268,7 @@ public class SchemaPackagesResource {
 							.getValue();
 					return Response.status(Response.Status.OK).header("Location", "/".concat(scopeName)
 							.concat("/schemas/stages/").concat(stageName).concat("?nsUri=").concat(encodedNsURI))
-							.entity(metadata).build();
+							.entity(metadata).header("Content-Type", mediaType).build();
 				}		
 			}
 			// Create package and return metadata with Location header
@@ -287,7 +287,7 @@ public class SchemaPackagesResource {
 
 			return Response.status(Response.Status.OK).header("Location", "/".concat(scopeName)
 					.concat("/schemas/stages/").concat(stageName).concat("?nsUri=").concat(encodedNsURI))
-					.entity(metadata).build();
+					.entity(metadata).header("Content-Type", mediaType).build();
 		} catch (IllegalArgumentException e) {
 			return Response.status(Response.Status.BAD_REQUEST).entity(e.getMessage()).build();
 		} catch (WebApplicationException e) {
@@ -331,7 +331,7 @@ public class SchemaPackagesResource {
 			if (ePackage == null) {
 				return Response.status(Response.Status.NO_CONTENT).build();
 			}
-			return Response.status(Response.Status.OK).entity(ePackage).build();
+			return Response.status(Response.Status.OK).entity(ePackage).header("Content-Type", mediaType).build();
 
 		} catch (IllegalArgumentException e) {
 			return Response.status(Response.Status.BAD_REQUEST).entity(e.getMessage()).build();
@@ -391,7 +391,7 @@ public class SchemaPackagesResource {
 
 			ObjectMetadata metadata = scopeService.updateInStageForRegistry(REGISTRY_NAME, stageName, ePackage, encodedNsUri, resolvedVersion)
 					.getValue();
-			return Response.status(Response.Status.OK).entity(metadata).build();
+			return Response.status(Response.Status.OK).entity(metadata).header("Content-Type", mediaType).build();
 
 		} catch (IllegalArgumentException e) {
 			return Response.status(Response.Status.BAD_REQUEST).entity(e.getMessage()).build();
@@ -472,7 +472,7 @@ public class SchemaPackagesResource {
 				return Response.status(Response.Status.FORBIDDEN).entity(String.format("Schema %s is in read-only state",  transitionRequest.getObjectId())).build();
 			}
 			ObjectMetadata metadata = scopeService.transitionToStageForRegistry(REGISTRY_NAME, encodedNsUri, stageName, transitionRequest.getTargetStage()); 
-			return Response.status(Response.Status.OK).entity(metadata).build();
+			return Response.status(Response.Status.OK).entity(metadata).header("Content-Type", mediaType).build();
 		} catch (IllegalArgumentException e) {
 			return Response.status(Response.Status.BAD_REQUEST).entity(e.getMessage()).build();
 		} catch (Exception e) {

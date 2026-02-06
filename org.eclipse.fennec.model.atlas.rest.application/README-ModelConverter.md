@@ -56,11 +56,6 @@ Accept: <output-format>
 - `Content-Type`: The format of the input EPackage (e.g., `application/json`, `application/xmi`)
 - `Accept`: The desired output format (e.g., `application/xml`, `application/json`)
 
-**Query Parameters**:
-| Parameter | Type | Required | Description |
-|-----------|------|----------|-------------|
-| `mediaType` | String | No | Intended to override the output format (see [Implementation Notes](#open-question-mediatype-query-parameter) for current limitations) |
-
 **Request Body**: The EPackage content in the format specified by `Content-Type`
 
 **Response**:
@@ -115,17 +110,6 @@ Accept: application/json
     nsPrefix="mp"/>
 ```
 
-### Using mediaType Query Parameter (see Implementation Notes)
-
-```http
-POST /rest/convert?mediaType=application/json
-Content-Type: application/xmi
-
-<EPackage content here>
-```
-
-**Note:** This feature may not work as expected. See [Implementation Notes](#open-question-mediatype-query-parameter).
-
 ## Error Handling
 
 | Status Code | Condition |
@@ -133,31 +117,3 @@ Content-Type: application/xmi
 | 200 OK | Conversion successful |
 | 415 Unsupported Media Type | The requested output format is not supported |
 | 500 Internal Server Error | Conversion failed due to internal error |
-
-## Implementation Notes
-
-### Open Question: `mediaType` Query Parameter
-
-The code currently includes a `@QueryParam("mediaType")` field that is validated in `checkContentType()`, but **the actual response content type may not be affected by this parameter**.
-
-**Current behavior:**
-1. If `mediaType` query param is provided, it's validated against supported types
-2. If invalid, a 415 error is thrown
-3. However, the response is built without explicitly setting the content type:
-   ```java
-   return Response.status(Response.Status.OK).entity(ePackage).build();
-   ```
-
-**The issue:** The JAX-RS framework determines the output format via content negotiation based on the `Accept` header, not the `mediaType` field. So while the query param is validated, it may not actually override the output format.
-
-**Options to consider:**
-1. **Remove the query parameter** - Rely solely on the `Accept` header for content negotiation (standard HTTP approach)
-2. **Fix the implementation** - Explicitly set the response content type using the `mediaType` value:
-   ```java
-   return Response.status(Response.Status.OK)
-       .type(mediaType)
-       .entity(ePackage)
-       .build();
-   ```
-
-Until this is resolved, clients should use the `Accept` header for specifying the desired output format.

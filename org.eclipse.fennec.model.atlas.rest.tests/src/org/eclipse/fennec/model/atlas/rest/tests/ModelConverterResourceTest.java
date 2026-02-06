@@ -199,30 +199,6 @@ public class ModelConverterResourceTest {
         assertTrue(responseContent.contains("JsonToXmiPackage"), "Package name should be preserved in XMI output");
     }
 
-    // ========== MediaType Query Parameter Tests ==========
-
-    @Test
-    public void testConvertPackage_WithMediaTypeQueryParam_Success() throws IOException {
-        // Given: An EPackage in XMI format
-        String nsUri = TestHelper.generateUniqueNsUri("queryParamTest");
-        EPackage testPackage = TestHelper.createTestEPackage(nsUri, "QueryParamPackage", "qp");
-        String xmiContent = TestHelper.serializeToXMI(testPackage, resourceSet);
-
-        // When: POST with XMI content type and mediaType query parameter for JSON
-        Response response = restClient
-                .target(BASE_URL)
-                .queryParam("mediaType", MediaType.APPLICATION_JSON)
-                .request()
-                .post(Entity.entity(xmiContent, "application/xmi"));
-
-        // Then: Should return 200 OK with JSON content
-        assertEquals(200, response.getStatus(), "Should return HTTP 200 OK");
-
-        String responseContent = response.readEntity(String.class);
-        assertNotNull(responseContent, "Response content should not be null");
-        assertTrue(responseContent.contains(nsUri), "NsURI should be preserved in JSON output");
-    }
-
     // ========== Complex EPackage Conversion Tests ==========
 
     @Test
@@ -250,16 +226,15 @@ public class ModelConverterResourceTest {
     // ========== Unsupported Media Type Tests ==========
 
     @Test
-    public void testConvertPackage_UnsupportedMediaType_Returns415() {
+    public void testConvertPackage_UnsupportedAcceptHeader_Returns415() {
         // Given: An EPackage in JSON format
         String nsUri = TestHelper.generateUniqueNsUri("unsupportedTest");
         String jsonEPackage = createJsonEPackage(nsUri, "UnsupportedPackage", "us");
 
-        // When: POST with mediaType query parameter for unsupported type
+        // When: POST with unsupported Accept header
         Response response = restClient
                 .target(BASE_URL)
-                .queryParam("mediaType", "application/unsupported-type")
-                .request()
+                .request("application/unsupported-type")
                 .post(Entity.json(jsonEPackage));
 
         // Then: Should return 415 Unsupported Media Type

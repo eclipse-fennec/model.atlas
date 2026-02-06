@@ -34,7 +34,6 @@ import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.POST;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.Produces;
-import jakarta.ws.rs.QueryParam;
 import jakarta.ws.rs.WebApplicationException;
 import jakarta.ws.rs.core.Context;
 import jakarta.ws.rs.core.HttpHeaders;
@@ -60,11 +59,8 @@ public class ModelConverterResource {
 	@Context
 	private HttpHeaders headers;
 
-	@QueryParam("mediaType")
-	private String mediaType;
-	
 	@Activate
-	public ModelConverterResource(@Reference SupportedMediatype types) {		
+	public ModelConverterResource(@Reference SupportedMediatype types) {
 		supportedMediaTypes = new ArrayList<>(types.getSupportedMediaTypes());
 		supportedMediaTypes.add(MediaType.APPLICATION_XML);
 		supportedMediaTypes.add("application/xmi");
@@ -91,26 +87,21 @@ public class ModelConverterResource {
 	}
 	
 	/**
-	 * Check and set the content type based on Accept header or mediaType query
-	 * parameter.
+	 * Check that the Accept header contains a supported media type.
 	 */
 	private void checkContentType() {
-		if (mediaType != null) {
-			if (supportedMediaTypes.contains(mediaType)) {
+		List<MediaType> acceptableMediaTypes = headers.getAcceptableMediaTypes();
+		for (MediaType acceptedMediaType : acceptableMediaTypes) {
+			String accept = acceptedMediaType.getType() + "/" + acceptedMediaType.getSubtype();
+			if (supportedMediaTypes.contains(accept)) {
 				return;
 			}
-		} else {
-			List<MediaType> acceptableMediaTypes = headers.getAcceptableMediaTypes();
-			for (MediaType acceptedMediaType : acceptableMediaTypes) {
-				String accept = acceptedMediaType.getType() + "/" + acceptedMediaType.getSubtype();
-				if (supportedMediaTypes.contains(accept)) {
-					mediaType = accept;
-					return;
-				}
+		}
+		// Wildcard accepts anything, default to JSON
+		for (MediaType acceptedMediaType : acceptableMediaTypes) {
+			if (acceptedMediaType.isWildcardType() || acceptedMediaType.isWildcardSubtype()) {
+				return;
 			}
-			// Default to JSON
-			mediaType = MediaType.APPLICATION_JSON;
-			return;
 		}
 		throw new WebApplicationException(Status.UNSUPPORTED_MEDIA_TYPE);
 	}
