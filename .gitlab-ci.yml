@@ -25,12 +25,8 @@ license-check:
   image: apache/skywalking-eyes:latest
   script:
     - license-eye header check
-  rules:
-    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
-    - if: $CI_COMMIT_BRANCH == "main"
-    - if: $CI_COMMIT_BRANCH == "snapshot"
 
-# Build Job
+    # Build Job
 build:
   stage: build
   image: eclipse-temurin:21-jdk
