@@ -34,6 +34,15 @@ license-check:
 build:
   stage: build
   image: eclipse-temurin:21-jdk
+  services:
+    - docker:dind
+  variables:
+    # Docker-in-Docker configuration for Testcontainers
+    DOCKER_HOST: tcp://docker:2375
+    DOCKER_TLS_CERTDIR: ""
+    # Testcontainers configuration
+    TESTCONTAINERS_HOST_OVERRIDE: docker
+    TESTCONTAINERS_RYUK_DISABLED: "true"
   <<: *gradle-cache
   before_script:
     - chmod +x ./gradlew
