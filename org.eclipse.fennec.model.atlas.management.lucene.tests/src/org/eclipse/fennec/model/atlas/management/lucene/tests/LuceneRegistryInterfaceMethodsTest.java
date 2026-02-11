@@ -22,6 +22,8 @@ import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 
 import org.eclipse.fennec.model.atlas.management.lucene.tests.annotations.LuceneTestAnnotations;
 import org.eclipse.fennec.model.atlas.management.lucene.tests.annotations.LuceneTestAnnotations.RegistryConfiguration;
@@ -69,7 +71,8 @@ public class LuceneRegistryInterfaceMethodsTest {
 
     @AfterEach
     void tearDown() throws InterruptedException {
-        wait(3000);
+        CountDownLatch latch = new CountDownLatch(1);
+        latch.await(3, TimeUnit.SECONDS);
     }
 
     @SuppressWarnings({ "rawtypes", "unchecked" })
