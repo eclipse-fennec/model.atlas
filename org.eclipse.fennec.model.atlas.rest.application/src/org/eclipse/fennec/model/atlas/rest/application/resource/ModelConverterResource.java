@@ -13,7 +13,6 @@
  */
 package org.eclipse.fennec.model.atlas.rest.application.resource;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import org.eclipse.emf.ecore.EPackage;
@@ -63,10 +62,7 @@ public class ModelConverterResource {
 
 	@Activate
 	public ModelConverterResource(@Reference SupportedMediatype types) {
-		supportedMediaTypes = new ArrayList<>(types.getSupportedMediaTypes());
-		supportedMediaTypes.add(MediaType.APPLICATION_XML);
-		supportedMediaTypes.add("application/xmi");
-		supportedMediaTypes.add("application/uml");
+	    supportedMediaTypes = types.getSupportedMediaTypes();
 	}
 	
 	@POST

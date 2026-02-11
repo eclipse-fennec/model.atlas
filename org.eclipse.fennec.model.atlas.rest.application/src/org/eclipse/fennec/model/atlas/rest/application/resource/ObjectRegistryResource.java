@@ -14,7 +14,6 @@
 package org.eclipse.fennec.model.atlas.rest.application.resource;
 
 import java.time.Instant;
-import java.util.ArrayList;
 import java.util.List;
 
 import org.eclipse.emf.ecore.EObject;
@@ -98,10 +97,7 @@ public class ObjectRegistryResource {
 	
 	@Activate
 	public ObjectRegistryResource(@Reference SupportedMediatype types) {		
-		supportedMediaTypes = new ArrayList<>(types.getSupportedMediaTypes());
-		supportedMediaTypes.add(MediaType.APPLICATION_XML);
-		supportedMediaTypes.add("application/xmi");
-		supportedMediaTypes.add("application/uml");
+	    supportedMediaTypes = types.getSupportedMediaTypes();
 	}
 
 
