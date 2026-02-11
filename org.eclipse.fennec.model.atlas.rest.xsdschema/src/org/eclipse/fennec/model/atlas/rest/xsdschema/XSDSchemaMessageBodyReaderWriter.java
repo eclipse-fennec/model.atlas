@@ -56,7 +56,7 @@ import jakarta.ws.rs.ext.Provider;
  * @since 24 Oct 2025
  */
 @Component(service = { MessageBodyReader.class,
-    MessageBodyWriter.class }, enabled = true, scope = ServiceScope.SINGLETON)
+        MessageBodyWriter.class }, enabled = true, scope = ServiceScope.SINGLETON)
 @JakartarsExtension
 @JakartarsName("XSDSchemaMessagebodyReaderWriter")
 @JakartarsApplicationSelect("(|(emf=true)(" + JakartarsWhiteboardConstants.JAKARTA_RS_NAME + "=.default))")
@@ -65,89 +65,90 @@ import jakarta.ws.rs.ext.Provider;
 @Consumes("application/schema+xml")
 public class XSDSchemaMessageBodyReaderWriter implements MessageBodyReader<EPackage>, MessageBodyWriter<EPackage> {
 
-  @Reference(scope = ReferenceScope.PROTOTYPE_REQUIRED)
-  private ComponentServiceObjects<ResourceSet> resourceSetFactory;
+    @Reference(scope = ReferenceScope.PROTOTYPE_REQUIRED)
+    private ComponentServiceObjects<ResourceSet> resourceSetFactory;
 
-  /*
-   * (non-Javadoc)
-   * 
-   * @see jakarta.ws.rs.ext.MessageBodyWriter#isWriteable(java.lang.Class,
-   * java.lang.reflect.Type, java.lang.annotation.Annotation[],
-   * jakarta.ws.rs.core.MediaType)
-   */
-  @Override
-  public boolean isWriteable(Class<?> type, Type genericType, Annotation[] annotations, MediaType mediaType) {
-    return EPackage.class.isAssignableFrom(type) && "application/schema+xml".equals(mediaType.toString());
-  }
-
-  /*
-   * (non-Javadoc)
-   * 
-   * @see jakarta.ws.rs.ext.MessageBodyWriter#writeTo(java.lang.Object,
-   * java.lang.Class, java.lang.reflect.Type, java.lang.annotation.Annotation[],
-   * jakarta.ws.rs.core.MediaType, jakarta.ws.rs.core.MultivaluedMap,
-   * java.io.OutputStream)
-   */
-  @Override
-  public void writeTo(EPackage t, Class<?> type, Type genericType, Annotation[] annotations, MediaType mediaType,
-      MultivaluedMap<String, Object> httpHeaders, OutputStream entityStream)
-      throws IOException, WebApplicationException {
-    EcoreXMLSchemaBuilder schemaBuilder = new EcoreXMLSchemaBuilder();
-
-    Collection<EObject> collection = schemaBuilder.generate(t);
-    String fileName = t.getName() + ".xsd";
-    httpHeaders.put(HttpHeaders.CONTENT_DISPOSITION, List.of("attachment; filename=" + fileName));
-    ResourceSet resourceSet = resourceSetFactory.getService();
-    try {
-      Resource resource = resourceSet.createResource(URI.createURI(fileName));
-      resource.getContents().addAll(collection);
-      resource.save(entityStream, null);
-      resource.getContents().clear();
-    } finally {
-      resourceSetFactory.ungetService(resourceSet);
+    /*
+     * (non-Javadoc)
+     * 
+     * @see jakarta.ws.rs.ext.MessageBodyWriter#isWriteable(java.lang.Class,
+     * java.lang.reflect.Type, java.lang.annotation.Annotation[],
+     * jakarta.ws.rs.core.MediaType)
+     */
+    @Override
+    public boolean isWriteable(Class<?> type, Type genericType, Annotation[] annotations, MediaType mediaType) {
+        return EPackage.class.isAssignableFrom(type) && "application/schema+xml".equals(mediaType.toString());
     }
-  }
 
-  /*
-   * (non-Javadoc)
-   * 
-   * @see jakarta.ws.rs.ext.MessageBodyReader#isReadable(java.lang.Class,
-   * java.lang.reflect.Type, java.lang.annotation.Annotation[],
-   * jakarta.ws.rs.core.MediaType)
-   */
-  @Override
-  public boolean isReadable(Class<?> type, Type genericType, Annotation[] annotations, MediaType mediaType) {
+    /*
+     * (non-Javadoc)
+     * 
+     * @see jakarta.ws.rs.ext.MessageBodyWriter#writeTo(java.lang.Object,
+     * java.lang.Class, java.lang.reflect.Type, java.lang.annotation.Annotation[],
+     * jakarta.ws.rs.core.MediaType, jakarta.ws.rs.core.MultivaluedMap,
+     * java.io.OutputStream)
+     */
+    @Override
+    public void writeTo(EPackage t, Class<?> type, Type genericType, Annotation[] annotations, MediaType mediaType,
+            MultivaluedMap<String, Object> httpHeaders, OutputStream entityStream)
+            throws IOException, WebApplicationException {
+        EcoreXMLSchemaBuilder schemaBuilder = new EcoreXMLSchemaBuilder();
 
-    return isWriteable(type, genericType, annotations, mediaType);
-  }
-
-  /*
-   * (non-Javadoc)
-   * 
-   * @see jakarta.ws.rs.ext.MessageBodyReader#readFrom(java.lang.Class,
-   * java.lang.reflect.Type, java.lang.annotation.Annotation[],
-   * jakarta.ws.rs.core.MediaType, jakarta.ws.rs.core.MultivaluedMap,
-   * java.io.InputStream)
-   */
-  @Override
-  public EPackage readFrom(Class<EPackage> type, Type genericType, Annotation[] annotations, MediaType mediaType,
-      MultivaluedMap<String, String> httpHeaders, InputStream entityStream)
-      throws IOException, WebApplicationException {
-    ResourceSet resourceSet = resourceSetFactory.getService();
-    try {
-      Resource resource = resourceSet.createResource(URI.createURI("temp.xsd"));
-      resource.load(entityStream, null);
-      XSDSchema schema = resource.getContents().isEmpty() ? null : (XSDSchema) resource.getContents().remove(0);
-      if (schema == null) {
-        return null;
-      }
-      XSDEcoreBuilder ecoreBuilder = new XSDEcoreBuilder(new BasicExtendedMetaData(resourceSet.getPackageRegistry()));
-      ecoreBuilder.generate(schema);
-      Collection<EPackage> values = ecoreBuilder.getTargetNamespaceToEPackageMap().values();
-      return values.iterator().next();
-    } finally {
-      resourceSetFactory.ungetService(resourceSet);
+        Collection<EObject> collection = schemaBuilder.generate(t);
+        String fileName = t.getName() + ".xsd";
+        httpHeaders.put(HttpHeaders.CONTENT_DISPOSITION, List.of("attachment; filename=" + fileName));
+        ResourceSet resourceSet = resourceSetFactory.getService();
+        try {
+            Resource resource = resourceSet.createResource(URI.createURI(fileName));
+            resource.getContents().addAll(collection);
+            resource.save(entityStream, null);
+            resource.getContents().clear();
+        } finally {
+            resourceSetFactory.ungetService(resourceSet);
+        }
     }
-  }
+
+    /*
+     * (non-Javadoc)
+     * 
+     * @see jakarta.ws.rs.ext.MessageBodyReader#isReadable(java.lang.Class,
+     * java.lang.reflect.Type, java.lang.annotation.Annotation[],
+     * jakarta.ws.rs.core.MediaType)
+     */
+    @Override
+    public boolean isReadable(Class<?> type, Type genericType, Annotation[] annotations, MediaType mediaType) {
+
+        return isWriteable(type, genericType, annotations, mediaType);
+    }
+
+    /*
+     * (non-Javadoc)
+     * 
+     * @see jakarta.ws.rs.ext.MessageBodyReader#readFrom(java.lang.Class,
+     * java.lang.reflect.Type, java.lang.annotation.Annotation[],
+     * jakarta.ws.rs.core.MediaType, jakarta.ws.rs.core.MultivaluedMap,
+     * java.io.InputStream)
+     */
+    @Override
+    public EPackage readFrom(Class<EPackage> type, Type genericType, Annotation[] annotations, MediaType mediaType,
+            MultivaluedMap<String, String> httpHeaders, InputStream entityStream)
+            throws IOException, WebApplicationException {
+        ResourceSet resourceSet = resourceSetFactory.getService();
+        try {
+            Resource resource = resourceSet.createResource(URI.createURI("temp.xsd"));
+            resource.load(entityStream, null);
+            XSDSchema schema = resource.getContents().isEmpty() ? null : (XSDSchema) resource.getContents().remove(0);
+            if (schema == null) {
+                return null;
+            }
+            XSDEcoreBuilder ecoreBuilder = new XSDEcoreBuilder(
+                    new BasicExtendedMetaData(resourceSet.getPackageRegistry()));
+            ecoreBuilder.generate(schema);
+            Collection<EPackage> values = ecoreBuilder.getTargetNamespaceToEPackageMap().values();
+            return values.iterator().next();
+        } finally {
+            resourceSetFactory.ungetService(resourceSet);
+        }
+    }
 
 }

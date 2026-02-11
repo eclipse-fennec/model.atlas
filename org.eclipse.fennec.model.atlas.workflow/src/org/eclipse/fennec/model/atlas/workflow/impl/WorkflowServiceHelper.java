@@ -27,31 +27,31 @@ import org.osgi.util.promise.Promise;
  * @since Dec 9, 2025
  */
 public class WorkflowServiceHelper {
-	
-	private static final ManagementFactory managementFactory = ManagementFactory.eINSTANCE;
-	
-	public static void requireTrue(boolean value, String message) {
-		if(value) return;
-		throw new IllegalStateException(message);
-	}
 
-	/**
-	 * Helper method to unwrap Promise results with proper exception handling
-	 */
-	public static <R> R getPromiseValue(Promise<R> promise) {
-		try {
-			return promise.getValue();
-		} catch (InvocationTargetException | InterruptedException e) {
-			throw new RuntimeException("Promise execution failed", e);
-		}
-	}
+    private static final ManagementFactory managementFactory = ManagementFactory.eINSTANCE;
 
+    public static void requireTrue(boolean value, String message) {
+        if (value)
+            return;
+        throw new IllegalStateException(message);
+    }
 
-	public static ObjectQuery createQuery(Map<EStructuralFeature, Object> queryValueMap) {
-		ObjectQuery query = managementFactory.createObjectQuery();
-		queryValueMap.forEach((k,v) -> {
-			query.eSet(k, v);
-		});
-		return query;
-	}
+    /**
+     * Helper method to unwrap Promise results with proper exception handling
+     */
+    public static <R> R getPromiseValue(Promise<R> promise) {
+        try {
+            return promise.getValue();
+        } catch (InvocationTargetException | InterruptedException e) {
+            throw new RuntimeException("Promise execution failed", e);
+        }
+    }
+
+    public static ObjectQuery createQuery(Map<EStructuralFeature, Object> queryValueMap) {
+        ObjectQuery query = managementFactory.createObjectQuery();
+        queryValueMap.forEach((k, v) -> {
+            query.eSet(k, v);
+        });
+        return query;
+    }
 }

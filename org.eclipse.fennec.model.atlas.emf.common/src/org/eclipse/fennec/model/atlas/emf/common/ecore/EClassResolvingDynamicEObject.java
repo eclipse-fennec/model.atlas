@@ -18,35 +18,37 @@ import org.eclipse.emf.ecore.impl.DynamicEObjectImpl;
 import org.eclipse.emf.ecore.util.EcoreUtil;
 
 /**
- * This implementation of a {@link DynamicEObjectImpl}, can handle EClasses, that become proxies 
- * due to a reload of their EPackage.
+ * This implementation of a {@link DynamicEObjectImpl}, can handle EClasses,
+ * that become proxies due to a reload of their EPackage.
  * 
  * @author Juergen Albert
  * @since 20 Feb 2025
  */
 public class EClassResolvingDynamicEObject extends DynamicEObjectImpl {
-	
-	/**
-	 * Creates a new instance.
-	 * @param eClass
-	 */
-	public EClassResolvingDynamicEObject(EClass eClass) {
-		super(eClass);
-	}
-	
-	public EClassResolvingDynamicEObject() {
-		super();
-	}
 
-	/* 
-	 * (non-Javadoc)
-	 * @see org.eclipse.emf.ecore.impl.DynamicEObjectImpl#eClass()
-	 */
-	@Override
-	public EClass eClass() {
-		if(eClass.eIsProxy()) {
-			eClass = (EClass) EcoreUtil.resolve(eClass, this);
-		}
-		return eClass;
-	}
+    /**
+     * Creates a new instance.
+     * 
+     * @param eClass
+     */
+    public EClassResolvingDynamicEObject(EClass eClass) {
+        super(eClass);
+    }
+
+    public EClassResolvingDynamicEObject() {
+        super();
+    }
+
+    /*
+     * (non-Javadoc)
+     * 
+     * @see org.eclipse.emf.ecore.impl.DynamicEObjectImpl#eClass()
+     */
+    @Override
+    public EClass eClass() {
+        if (eClass.eIsProxy()) {
+            eClass = (EClass) EcoreUtil.resolve(eClass, this);
+        }
+        return eClass;
+    }
 }

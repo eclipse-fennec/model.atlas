@@ -38,24 +38,35 @@ import org.mockito.junit.jupiter.MockitoExtension;
 /**
  * Unit tests for AbstractRegistryHelper interface contract.
  * 
- * <p>These tests validate the abstract registry helper interface through
- * a concrete test implementation, ensuring all registry operations work
- * correctly and enforce proper input validation.</p>
+ * <p>
+ * These tests validate the abstract registry helper interface through a
+ * concrete test implementation, ensuring all registry operations work correctly
+ * and enforce proper input validation.
+ * </p>
  * 
  * <h3>Test Coverage</h3>
  * <ul>
- * <li><strong>Interface Contract</strong> - Tests all abstract methods are properly defined</li>
- * <li><strong>Initialization</strong> - Tests registry startup and readiness</li>
- * <li><strong>Index Operations</strong> - updateIndex, removeFromIndex with validation</li>
- * <li><strong>Search Methods</strong> - All find* methods with comprehensive scenarios</li>
- * <li><strong>Statistics</strong> - Registry statistics and type information</li>
- * <li><strong>Lifecycle</strong> - AutoCloseable contract and resource cleanup</li>
- * <li><strong>Error Handling</strong> - Input validation and IOException handling</li>
+ * <li><strong>Interface Contract</strong> - Tests all abstract methods are
+ * properly defined</li>
+ * <li><strong>Initialization</strong> - Tests registry startup and
+ * readiness</li>
+ * <li><strong>Index Operations</strong> - updateIndex, removeFromIndex with
+ * validation</li>
+ * <li><strong>Search Methods</strong> - All find* methods with comprehensive
+ * scenarios</li>
+ * <li><strong>Statistics</strong> - Registry statistics and type
+ * information</li>
+ * <li><strong>Lifecycle</strong> - AutoCloseable contract and resource
+ * cleanup</li>
+ * <li><strong>Error Handling</strong> - Input validation and IOException
+ * handling</li>
  * </ul>
  * 
  * <h3>Implementation Strategy</h3>
- * <p>Uses a concrete test implementation of AbstractRegistryHelper to validate
- * the interface contract without depending on specific registry implementations.</p>
+ * <p>
+ * Uses a concrete test implementation of AbstractRegistryHelper to validate the
+ * interface contract without depending on specific registry implementations.
+ * </p>
  */
 @ExtendWith(MockitoExtension.class)
 class AbstractRegistryHelperTest {
@@ -75,7 +86,7 @@ class AbstractRegistryHelperTest {
         try (TestRegistryHelper newHelper = new TestRegistryHelper()) {
             // Should be able to initialize without errors
             assertDoesNotThrow(() -> newHelper.initialize());
-            
+
             // Should be marked as initialized
             assertTrue(newHelper.isInitialized());
             assertEquals("test-registry", newHelper.getRegistryType());
@@ -85,11 +96,11 @@ class AbstractRegistryHelperTest {
     @Test
     void testIndexOperationsContract() throws IOException {
         ObjectMetadata metadata = createTestMetadata("test-obj", "TestPackage", "1.0.0", ObjectStatus.DRAFT);
-        
+
         // Test updateIndex
         assertDoesNotThrow(() -> registryHelper.updateIndex("test-obj", metadata));
         assertTrue(registryHelper.exists("test-obj"));
-        
+
         // Test removeFromIndex
         assertDoesNotThrow(() -> registryHelper.removeFromIndex("test-obj"));
         assertFalse(registryHelper.exists("test-obj"));
@@ -102,30 +113,30 @@ class AbstractRegistryHelperTest {
         draft.setStage("draft");
         ObjectMetadata approved = createTestMetadata("approved-obj", "Package2", "2.0.0", ObjectStatus.APPROVED);
         approved.setStage("approved");
-        
+
         registryHelper.updateIndex("draft-obj", draft);
         registryHelper.updateIndex("approved-obj", approved);
-        
+
         // Test search operations return expected types
         List<String> byStatus = registryHelper.findByStatus(ObjectStatus.DRAFT);
         assertNotNull(byStatus);
         assertTrue(byStatus.contains("draft-obj"));
-        
+
         List<String> byObjectName = registryHelper.findByObjectName("Package1");
         assertNotNull(byObjectName);
         assertTrue(byObjectName.contains("draft-obj"));
-        
+
         List<String> byStage = registryHelper.findByStage("draft");
         assertNotNull(byStage);
         assertTrue(byStage.contains("draft-obj"));
-        
+
         Optional<String> byNameAndRole = registryHelper.findByObjectNameAndStage("Package1", "draft");
         assertTrue(byNameAndRole.isPresent());
         assertEquals("draft-obj", byNameAndRole.get());
-        
+
         List<String> searchResults = registryHelper.searchObjectIds("test query", 10);
         assertNotNull(searchResults);
-        
+
         List<String> allIds = registryHelper.getAllObjectIds();
         assertNotNull(allIds);
         assertEquals(2, allIds.size());
@@ -136,15 +147,15 @@ class AbstractRegistryHelperTest {
         // Add test data
         registryHelper.updateIndex("test1", createTestMetadata("test1", "Package1", "1.0.0", ObjectStatus.DRAFT));
         registryHelper.updateIndex("test2", createTestMetadata("test2", "Package2", "2.0.0", ObjectStatus.APPROVED));
-        
+
         // Test count operation
         long count = registryHelper.getObjectCount();
         assertEquals(2, count);
-        
+
         // Test statistics operation
         Object stats = registryHelper.getRegistryStatistics();
         assertNotNull(stats);
-        
+
         // Test registry type
         String registryType = registryHelper.getRegistryType();
         assertNotNull(registryType);
@@ -155,10 +166,10 @@ class AbstractRegistryHelperTest {
     void testRebuildIndexContract() throws IOException {
         // Add test data
         registryHelper.updateIndex("test1", createTestMetadata("test1", "Package1", "1.0.0", ObjectStatus.DRAFT));
-        
+
         // Rebuild should not throw exception
         assertDoesNotThrow(() -> registryHelper.rebuildIndex());
-        
+
         // Data should still be accessible after rebuild
         assertTrue(registryHelper.exists("test1"));
     }
@@ -168,10 +179,10 @@ class AbstractRegistryHelperTest {
         // Add test data
         registryHelper.updateIndex("test1", createTestMetadata("test1", "Package1", "1.0.0", ObjectStatus.DRAFT));
         assertTrue(registryHelper.exists("test1"));
-        
+
         // Close should not throw exception
         assertDoesNotThrow(() -> registryHelper.close());
-        
+
         // Verify close behavior (implementation-specific)
         assertTrue(registryHelper.isClosed());
     }
@@ -179,32 +190,23 @@ class AbstractRegistryHelperTest {
     @Test
     void testInputValidationContract() {
         ObjectMetadata metadata = createTestMetadata("test-obj", "TestPackage", "1.0.0", ObjectStatus.DRAFT);
-        
+
         // Test null validation for updateIndex
-        assertThrows(NullPointerException.class, () -> 
-            registryHelper.updateIndex(null, metadata));
-        assertThrows(NullPointerException.class, () -> 
-            registryHelper.updateIndex("test-obj", null));
-        
+        assertThrows(NullPointerException.class, () -> registryHelper.updateIndex(null, metadata));
+        assertThrows(NullPointerException.class, () -> registryHelper.updateIndex("test-obj", null));
+
         // Test null validation for removeFromIndex
-        assertThrows(NullPointerException.class, () -> 
-            registryHelper.removeFromIndex(null));
-        
+        assertThrows(NullPointerException.class, () -> registryHelper.removeFromIndex(null));
+
         // Test null validation for search operations
-        assertThrows(NullPointerException.class, () -> 
-            registryHelper.findByStatus(null));
-        assertThrows(NullPointerException.class, () -> 
-            registryHelper.findByObjectName(null));
-        assertThrows(NullPointerException.class, () -> 
-            registryHelper.findByStage(null));
-        assertThrows(NullPointerException.class, () -> 
-            registryHelper.findByObjectNameAndStage(null, "role"));
-        assertThrows(NullPointerException.class, () -> 
-            registryHelper.findByObjectNameAndStage("name", null));
-        
+        assertThrows(NullPointerException.class, () -> registryHelper.findByStatus(null));
+        assertThrows(NullPointerException.class, () -> registryHelper.findByObjectName(null));
+        assertThrows(NullPointerException.class, () -> registryHelper.findByStage(null));
+        assertThrows(NullPointerException.class, () -> registryHelper.findByObjectNameAndStage(null, "role"));
+        assertThrows(NullPointerException.class, () -> registryHelper.findByObjectNameAndStage("name", null));
+
         // Test null validation for exists
-        assertThrows(NullPointerException.class, () -> 
-            registryHelper.exists(null));
+        assertThrows(NullPointerException.class, () -> registryHelper.exists(null));
     }
 
     @Test
@@ -212,9 +214,9 @@ class AbstractRegistryHelperTest {
         try (TestRegistryHelper faultyHelper = new TestRegistryHelper(true)) { // Enable IOExceptions
             // Initialize should handle IOException
             assertThrows(IOException.class, () -> faultyHelper.initialize());
-            
+
             ObjectMetadata metadata = createTestMetadata("test-obj", "TestPackage", "1.0.0", ObjectStatus.DRAFT);
-            
+
             // Operations should propagate IOException
             assertThrows(IOException.class, () -> faultyHelper.updateIndex("test-obj", metadata));
             assertThrows(IOException.class, () -> faultyHelper.removeFromIndex("test-obj"));
@@ -232,22 +234,22 @@ class AbstractRegistryHelperTest {
         // Test operations on empty registry
         assertEquals(0, registryHelper.getObjectCount());
         assertFalse(registryHelper.exists("non-existent"));
-        
+
         List<String> emptyStatus = registryHelper.findByStatus(ObjectStatus.DRAFT);
         assertTrue(emptyStatus.isEmpty());
-        
+
         List<String> emptyName = registryHelper.findByObjectName("NonExistent");
         assertTrue(emptyName.isEmpty());
-        
+
         List<String> emptyRole = registryHelper.findByStage("non-existent");
         assertTrue(emptyRole.isEmpty());
-        
+
         Optional<String> emptyNameRole = registryHelper.findByObjectNameAndStage("NonExistent", "non-existent");
         assertFalse(emptyNameRole.isPresent());
-        
+
         List<String> emptySearch = registryHelper.searchObjectIds("query", 10);
         assertTrue(emptySearch.isEmpty());
-        
+
         List<String> emptyAll = registryHelper.getAllObjectIds();
         assertTrue(emptyAll.isEmpty());
     }
@@ -259,11 +261,11 @@ class AbstractRegistryHelperTest {
             ObjectMetadata metadata = createTestMetadata("obj" + i, "Package" + i, "1.0.0", ObjectStatus.DRAFT);
             registryHelper.updateIndex("obj" + i, metadata);
         }
-        
+
         // Test search with limits
         List<String> limitedResults = registryHelper.searchObjectIds("test", 3);
         assertTrue(limitedResults.size() <= 3);
-        
+
         List<String> unlimitedResults = registryHelper.searchObjectIds("test", 0);
         assertEquals(5, unlimitedResults.size());
     }
@@ -302,23 +304,24 @@ class AbstractRegistryHelperTest {
     }
 
     /**
-     * Concrete test implementation of AbstractRegistryHelper for testing the interface contract.
+     * Concrete test implementation of AbstractRegistryHelper for testing the
+     * interface contract.
      */
     private static class TestRegistryHelper extends AbstractRegistryHelper {
-        
+
         private final java.util.Map<String, ObjectMetadata> data = new java.util.concurrent.ConcurrentHashMap<>();
         private boolean initialized = false;
         private boolean closed = false;
         private final boolean throwIOException;
-        
+
         public TestRegistryHelper() {
             this(false);
         }
-        
+
         public TestRegistryHelper(boolean throwIOException) {
             this.throwIOException = throwIOException;
         }
-        
+
         @Override
         public void initialize() throws IOException {
             if (throwIOException) {
@@ -326,7 +329,7 @@ class AbstractRegistryHelperTest {
             }
             initialized = true;
         }
-        
+
         @Override
         public void updateIndex(String objectId, ObjectMetadata metadata) throws IOException {
             if (throwIOException) {
@@ -336,7 +339,7 @@ class AbstractRegistryHelperTest {
             java.util.Objects.requireNonNull(metadata, "Metadata cannot be null");
             data.put(objectId, metadata);
         }
-        
+
         @Override
         public void removeFromIndex(String objectId) throws IOException {
             if (throwIOException) {
@@ -345,54 +348,46 @@ class AbstractRegistryHelperTest {
             java.util.Objects.requireNonNull(objectId, "Object ID cannot be null");
             data.remove(objectId);
         }
-        
+
         @Override
         public List<String> searchObjectIds(String query, int maxResults) throws IOException {
             if (throwIOException) {
                 throw new IOException("Test IOException");
             }
             List<String> allIds = getAllObjectIds();
-            return allIds.stream()
-                .limit(maxResults > 0 ? maxResults : Integer.MAX_VALUE)
-                .collect(Collectors.toList());
+            return allIds.stream().limit(maxResults > 0 ? maxResults : Integer.MAX_VALUE).collect(Collectors.toList());
         }
-        
+
         @Override
         public List<String> findByStatus(ObjectStatus status) throws IOException {
             if (throwIOException) {
                 throw new IOException("Test IOException");
             }
             java.util.Objects.requireNonNull(status, "Status cannot be null");
-            return data.entrySet().stream()
-                .filter(entry -> status.equals(entry.getValue().getStatus()))
-                .map(Map.Entry::getKey)
-                .collect(Collectors.toList());
+            return data.entrySet().stream().filter(entry -> status.equals(entry.getValue().getStatus()))
+                    .map(Map.Entry::getKey).collect(Collectors.toList());
         }
-        
+
         @Override
         public List<String> findByObjectName(String objectName) throws IOException {
             if (throwIOException) {
                 throw new IOException("Test IOException");
             }
             java.util.Objects.requireNonNull(objectName, "Object name cannot be null");
-            return data.entrySet().stream()
-                .filter(entry -> objectName.equals(entry.getValue().getObjectName()))
-                .map(Map.Entry::getKey)
-                .collect(Collectors.toList());
+            return data.entrySet().stream().filter(entry -> objectName.equals(entry.getValue().getObjectName()))
+                    .map(Map.Entry::getKey).collect(Collectors.toList());
         }
-        
+
         @Override
         public List<String> findByStage(String stage) throws IOException {
             if (throwIOException) {
                 throw new IOException("Test IOException");
             }
             java.util.Objects.requireNonNull(stage, "Stage cannot be null");
-            return data.entrySet().stream()
-                .filter(entry -> stage.equals(entry.getValue().getStage()))
-                .map(Map.Entry::getKey)
-                .collect(Collectors.toList());
+            return data.entrySet().stream().filter(entry -> stage.equals(entry.getValue().getStage()))
+                    .map(Map.Entry::getKey).collect(Collectors.toList());
         }
-        
+
         @Override
         public Optional<String> findByObjectNameAndStage(String objectName, String stage) throws IOException {
             if (throwIOException) {
@@ -400,13 +395,10 @@ class AbstractRegistryHelperTest {
             }
             java.util.Objects.requireNonNull(objectName, "Object name cannot be null");
             java.util.Objects.requireNonNull(stage, "Stage cannot be null");
-            return data.entrySet().stream()
-                .filter(entry -> objectName.equals(entry.getValue().getObjectName()) && 
-                               stage.equals(entry.getValue().getStage()))
-                .map(Map.Entry::getKey)
-                .findFirst();
+            return data.entrySet().stream().filter(entry -> objectName.equals(entry.getValue().getObjectName())
+                    && stage.equals(entry.getValue().getStage())).map(Map.Entry::getKey).findFirst();
         }
-        
+
         @Override
         public List<String> getAllObjectIds() throws IOException {
             if (throwIOException) {
@@ -414,7 +406,7 @@ class AbstractRegistryHelperTest {
             }
             return List.copyOf(data.keySet());
         }
-        
+
         @Override
         public long getObjectCount() throws IOException {
             if (throwIOException) {
@@ -422,7 +414,7 @@ class AbstractRegistryHelperTest {
             }
             return data.size();
         }
-        
+
         @Override
         public boolean exists(String objectId) throws IOException {
             if (throwIOException) {
@@ -431,7 +423,7 @@ class AbstractRegistryHelperTest {
             java.util.Objects.requireNonNull(objectId, "Object ID cannot be null");
             return data.containsKey(objectId);
         }
-        
+
         @Override
         public void rebuildIndex() throws IOException {
             if (throwIOException) {
@@ -439,7 +431,7 @@ class AbstractRegistryHelperTest {
             }
             // Test implementation - no-op
         }
-        
+
         @Override
         public Object getRegistryStatistics() throws IOException {
             if (throwIOException) {
@@ -451,23 +443,23 @@ class AbstractRegistryHelperTest {
             stats.put("initialized", initialized);
             return stats;
         }
-        
+
         @Override
         public String getRegistryType() {
             return "test-registry";
         }
-        
+
         @Override
         public void close() throws Exception {
             super.close();
             data.clear();
             closed = true;
         }
-        
+
         public boolean isInitialized() {
             return initialized;
         }
-        
+
         public boolean isClosed() {
             return closed;
         }

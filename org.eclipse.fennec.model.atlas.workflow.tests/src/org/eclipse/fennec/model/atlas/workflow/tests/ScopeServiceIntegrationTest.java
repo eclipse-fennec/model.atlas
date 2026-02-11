@@ -85,7 +85,7 @@ public class ScopeServiceIntegrationTest {
     BundleContext bundleContext;
 
     @SuppressWarnings("rawtypes")
-	private ServiceRegistration<RegistryService> mockRegistryRegistration;
+    private ServiceRegistration<RegistryService> mockRegistryRegistration;
     private RegistryService<EObject> mockRegistryService;
     private PromiseFactory promiseFactory;
 
@@ -106,11 +106,8 @@ public class ScopeServiceIntegrationTest {
         properties.put("registry.name", REGISTRY_NAME);
         properties.put("service.ranking", Integer.valueOf(1000)); // High ranking
 
-        mockRegistryRegistration = bundleContext.registerService(
-            RegistryService.class,
-            mockRegistryService,
-            properties
-        );
+        mockRegistryRegistration = bundleContext.registerService(RegistryService.class, mockRegistryService,
+                properties);
     }
 
     @AfterEach
@@ -132,13 +129,12 @@ public class ScopeServiceIntegrationTest {
         @Test
         @DisplayName("Should delegate upload to RegistryService with correct scope")
         @WithFactoryConfiguration(factoryPid = "ScopeService", name = "test-scope", location = "?", properties = {
-            @Property(key = "scope.name", value = SCOPE_NAME),
-            @Property(key = "scope.parent", value = ""),
-            @Property(key = "registryService.target", value = "(registry.name=" + REGISTRY_NAME + ")")
-        })
+                @Property(key = "scope.name", value = SCOPE_NAME), @Property(key = "scope.parent", value = ""),
+                @Property(key = "registryService.target", value = "(registry.name=" + REGISTRY_NAME + ")") })
         void shouldDelegateUploadWithCorrectScope(
-                @InjectService(cardinality = 0, filter = "(scope.name=" + SCOPE_NAME + ")")
-                ServiceAware<ScopeService> scopeAware) throws InterruptedException, InvocationTargetException {
+                @InjectService(cardinality = 0, filter = "(scope.name=" + SCOPE_NAME
+                        + ")") ServiceAware<ScopeService> scopeAware)
+                throws InterruptedException, InvocationTargetException {
 
             // Wait for service
             ScopeService<EObject> scopeService = scopeAware.waitForService(5000);
@@ -152,12 +148,11 @@ public class ScopeServiceIntegrationTest {
 
             Promise<ObjectMetadata> expectedPromise = promiseFactory.resolved(resultMetadata);
             when(mockRegistryService.uploadToStage(eq(SCOPE_NAME), eq(STAGE_NAME), any(), any()))
-                .thenReturn(expectedPromise);
+                    .thenReturn(expectedPromise);
 
             // Act
-            Promise<ObjectMetadata> result = scopeService.uploadToStageForRegistry(
-                REGISTRY_NAME, STAGE_NAME, testObject, metadata
-            );
+            Promise<ObjectMetadata> result = scopeService.uploadToStageForRegistry(REGISTRY_NAME, STAGE_NAME,
+                    testObject, metadata);
 
             // Assert
             assertNotNull(result);
@@ -171,13 +166,12 @@ public class ScopeServiceIntegrationTest {
         @Test
         @DisplayName("Should delegate getMetadataFromStage to RegistryService")
         @WithFactoryConfiguration(factoryPid = "ScopeService", name = "test-scope", location = "?", properties = {
-            @Property(key = "scope.name", value = SCOPE_NAME),
-            @Property(key = "scope.parent", value = ""),
-            @Property(key = "registryService.target", value = "(registry.name=" + REGISTRY_NAME + ")")
-        })
+                @Property(key = "scope.name", value = SCOPE_NAME), @Property(key = "scope.parent", value = ""),
+                @Property(key = "registryService.target", value = "(registry.name=" + REGISTRY_NAME + ")") })
         void shouldDelegateGetMetadata(
-                @InjectService(cardinality = 0, filter = "(scope.name=" + SCOPE_NAME + ")")
-                ServiceAware<ScopeService> scopeAware) throws InterruptedException, InvocationTargetException {
+                @InjectService(cardinality = 0, filter = "(scope.name=" + SCOPE_NAME
+                        + ")") ServiceAware<ScopeService> scopeAware)
+                throws InterruptedException, InvocationTargetException {
 
             ScopeService<EObject> scopeService = scopeAware.waitForService(5000);
             assertNotNull(scopeService);
@@ -185,12 +179,10 @@ public class ScopeServiceIntegrationTest {
             ObjectMetadata expectedMetadata = ManagementFactory.eINSTANCE.createObjectMetadata();
             expectedMetadata.setObjectId(OBJECT_ID);
             when(mockRegistryService.getMetadataFromStage(SCOPE_NAME, STAGE_NAME, OBJECT_ID))
-                .thenReturn(expectedMetadata);
+                    .thenReturn(expectedMetadata);
 
             // Act
-            ObjectMetadata result = scopeService.getMetadataFromStageForRegistry(
-                REGISTRY_NAME, STAGE_NAME, OBJECT_ID
-            );
+            ObjectMetadata result = scopeService.getMetadataFromStageForRegistry(REGISTRY_NAME, STAGE_NAME, OBJECT_ID);
 
             // Assert
             assertEquals(expectedMetadata, result);
@@ -201,13 +193,12 @@ public class ScopeServiceIntegrationTest {
         @Test
         @DisplayName("Should delegate transition to RegistryService")
         @WithFactoryConfiguration(factoryPid = "ScopeService", name = "test-scope", location = "?", properties = {
-            @Property(key = "scope.name", value = SCOPE_NAME),
-            @Property(key = "scope.parent", value = ""),
-            @Property(key = "registryService.target", value = "(registry.name=" + REGISTRY_NAME + ")")
-        })
+                @Property(key = "scope.name", value = SCOPE_NAME), @Property(key = "scope.parent", value = ""),
+                @Property(key = "registryService.target", value = "(registry.name=" + REGISTRY_NAME + ")") })
         void shouldDelegateTransition(
-                @InjectService(cardinality = 0, filter = "(scope.name=" + SCOPE_NAME + ")")
-                ServiceAware<ScopeService> scopeAware) throws InterruptedException, InvocationTargetException {
+                @InjectService(cardinality = 0, filter = "(scope.name=" + SCOPE_NAME
+                        + ")") ServiceAware<ScopeService> scopeAware)
+                throws InterruptedException, InvocationTargetException {
 
             ScopeService<EObject> scopeService = scopeAware.waitForService(5000);
             assertNotNull(scopeService);
@@ -217,12 +208,11 @@ public class ScopeServiceIntegrationTest {
             ObjectMetadata resultMetadata = ManagementFactory.eINSTANCE.createObjectMetadata();
 
             when(mockRegistryService.transitionToStage(SCOPE_NAME, OBJECT_ID, fromStage, toStage))
-                .thenReturn(resultMetadata);
+                    .thenReturn(resultMetadata);
 
             // Act
-            ObjectMetadata result = scopeService.transitionToStageForRegistry(
-                REGISTRY_NAME, OBJECT_ID, fromStage, toStage
-            );
+            ObjectMetadata result = scopeService.transitionToStageForRegistry(REGISTRY_NAME, OBJECT_ID, fromStage,
+                    toStage);
 
             // Assert
             assertEquals(resultMetadata, result);
@@ -238,13 +228,12 @@ public class ScopeServiceIntegrationTest {
         @Test
         @DisplayName("Should validate existing registry")
         @WithFactoryConfiguration(factoryPid = "ScopeService", name = "test-scope", location = "?", properties = {
-            @Property(key = "scope.name", value = SCOPE_NAME),
-            @Property(key = "scope.parent", value = ""),
-            @Property(key = "registryService.target", value = "(registry.name=" + REGISTRY_NAME + ")")
-        })
+                @Property(key = "scope.name", value = SCOPE_NAME), @Property(key = "scope.parent", value = ""),
+                @Property(key = "registryService.target", value = "(registry.name=" + REGISTRY_NAME + ")") })
         void shouldValidateExistingRegistry(
-                @InjectService(cardinality = 0, filter = "(scope.name=" + SCOPE_NAME + ")")
-                ServiceAware<ScopeService> scopeAware) throws InterruptedException, InvocationTargetException {
+                @InjectService(cardinality = 0, filter = "(scope.name=" + SCOPE_NAME
+                        + ")") ServiceAware<ScopeService> scopeAware)
+                throws InterruptedException, InvocationTargetException {
 
             ScopeService<EObject> scopeService = scopeAware.waitForService(5000);
             assertNotNull(scopeService);
@@ -256,13 +245,12 @@ public class ScopeServiceIntegrationTest {
         @Test
         @DisplayName("Should return all registry names")
         @WithFactoryConfiguration(factoryPid = "ScopeService", name = "test-scope", location = "?", properties = {
-            @Property(key = "scope.name", value = SCOPE_NAME),
-            @Property(key = "scope.parent", value = ""),
-            @Property(key = "registryService.target", value = "(registry.name=" + REGISTRY_NAME + ")")
-        })
+                @Property(key = "scope.name", value = SCOPE_NAME), @Property(key = "scope.parent", value = ""),
+                @Property(key = "registryService.target", value = "(registry.name=" + REGISTRY_NAME + ")") })
         void shouldReturnAllRegistryNames(
-                @InjectService(cardinality = 0, filter = "(scope.name=" + SCOPE_NAME + ")")
-                ServiceAware<ScopeService> scopeAware) throws InterruptedException, InvocationTargetException {
+                @InjectService(cardinality = 0, filter = "(scope.name=" + SCOPE_NAME
+                        + ")") ServiceAware<ScopeService> scopeAware)
+                throws InterruptedException, InvocationTargetException {
 
             ScopeService<EObject> scopeService = scopeAware.waitForService(5000);
             assertNotNull(scopeService);
@@ -277,13 +265,12 @@ public class ScopeServiceIntegrationTest {
         @Test
         @DisplayName("Should throw exception for invalid registry")
         @WithFactoryConfiguration(factoryPid = "ScopeService", name = "test-scope", location = "?", properties = {
-            @Property(key = "scope.name", value = SCOPE_NAME),
-            @Property(key = "scope.parent", value = ""),
-            @Property(key = "registryService.target", value = "(registry.name=" + REGISTRY_NAME + ")")
-        })
+                @Property(key = "scope.name", value = SCOPE_NAME), @Property(key = "scope.parent", value = ""),
+                @Property(key = "registryService.target", value = "(registry.name=" + REGISTRY_NAME + ")") })
         void shouldThrowExceptionForInvalidRegistry(
-                @InjectService(cardinality = 0, filter = "(scope.name=" + SCOPE_NAME + ")")
-                ServiceAware<ScopeService> scopeAware) throws InterruptedException, InvocationTargetException {
+                @InjectService(cardinality = 0, filter = "(scope.name=" + SCOPE_NAME
+                        + ")") ServiceAware<ScopeService> scopeAware)
+                throws InterruptedException, InvocationTargetException {
 
             ScopeService<EObject> scopeService = scopeAware.waitForService(5000);
             assertNotNull(scopeService);
@@ -291,10 +278,8 @@ public class ScopeServiceIntegrationTest {
             EObject testObject = EcoreFactory.eINSTANCE.createEClass();
             ObjectMetadata metadata = ManagementFactory.eINSTANCE.createObjectMetadata();
 
-            IllegalArgumentException exception = assertThrows(
-                IllegalArgumentException.class,
-                () -> scopeService.uploadToStageForRegistry("invalid-registry", STAGE_NAME, testObject, metadata)
-            );
+            IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
+                    () -> scopeService.uploadToStageForRegistry("invalid-registry", STAGE_NAME, testObject, metadata));
 
             assertTrue(exception.getMessage().contains("not a valid registry"));
         }
@@ -308,31 +293,28 @@ public class ScopeServiceIntegrationTest {
         @Test
         @DisplayName("Should fallback to parent scope when metadata not found")
         @WithFactoryConfiguration(factoryPid = "ScopeService", name = "test-scope-with-parent", location = "?", properties = {
-            @Property(key = "scope.name", value = SCOPE_NAME),
-            @Property(key = "scope.parent", value = PARENT_SCOPE_NAME),
-            @Property(key = "registryService.target", value = "(registry.name=" + REGISTRY_NAME + ")")
-        })
+                @Property(key = "scope.name", value = SCOPE_NAME),
+                @Property(key = "scope.parent", value = PARENT_SCOPE_NAME),
+                @Property(key = "registryService.target", value = "(registry.name=" + REGISTRY_NAME + ")") })
         void shouldFallbackToParentScope(
-                @InjectService(cardinality = 0, filter = "(scope.name=" + SCOPE_NAME + ")")
-                ServiceAware<ScopeService> scopeAware) throws InterruptedException, InvocationTargetException {
+                @InjectService(cardinality = 0, filter = "(scope.name=" + SCOPE_NAME
+                        + ")") ServiceAware<ScopeService> scopeAware)
+                throws InterruptedException, InvocationTargetException {
 
             ScopeService<EObject> scopeService = scopeAware.waitForService(5000);
             assertNotNull(scopeService);
 
             // Current scope returns null
-            when(mockRegistryService.getMetadataFromStage(SCOPE_NAME, STAGE_NAME, OBJECT_ID))
-                .thenReturn(null);
+            when(mockRegistryService.getMetadataFromStage(SCOPE_NAME, STAGE_NAME, OBJECT_ID)).thenReturn(null);
 
             // Parent scope returns metadata
             ObjectMetadata parentMetadata = ManagementFactory.eINSTANCE.createObjectMetadata();
             parentMetadata.setObjectId(OBJECT_ID);
             when(mockRegistryService.getMetadataFromFinalStage(PARENT_SCOPE_NAME, OBJECT_ID))
-                .thenReturn(parentMetadata);
+                    .thenReturn(parentMetadata);
 
             // Act
-            ObjectMetadata result = scopeService.getMetadataFromStageForRegistry(
-                REGISTRY_NAME, STAGE_NAME, OBJECT_ID
-            );
+            ObjectMetadata result = scopeService.getMetadataFromStageForRegistry(REGISTRY_NAME, STAGE_NAME, OBJECT_ID);
 
             // Assert
             assertNotNull(result);
@@ -347,13 +329,13 @@ public class ScopeServiceIntegrationTest {
         @Test
         @DisplayName("Should include parent metadata in listInFinalStage")
         @WithFactoryConfiguration(factoryPid = "ScopeService", name = "test-scope-with-parent", location = "?", properties = {
-            @Property(key = "scope.name", value = SCOPE_NAME),
-            @Property(key = "scope.parent", value = PARENT_SCOPE_NAME),
-            @Property(key = "registryService.target", value = "(registry.name=" + REGISTRY_NAME + ")")
-        })
+                @Property(key = "scope.name", value = SCOPE_NAME),
+                @Property(key = "scope.parent", value = PARENT_SCOPE_NAME),
+                @Property(key = "registryService.target", value = "(registry.name=" + REGISTRY_NAME + ")") })
         void shouldIncludeParentMetadataInList(
-                @InjectService(cardinality = 0, filter = "(scope.name=" + SCOPE_NAME + ")")
-                ServiceAware<ScopeService> scopeAware) throws InterruptedException, InvocationTargetException {
+                @InjectService(cardinality = 0, filter = "(scope.name=" + SCOPE_NAME
+                        + ")") ServiceAware<ScopeService> scopeAware)
+                throws InterruptedException, InvocationTargetException {
 
             ScopeService<EObject> scopeService = scopeAware.waitForService(5000);
             assertNotNull(scopeService);
@@ -363,10 +345,10 @@ public class ScopeServiceIntegrationTest {
 
             ObjectMetadata parentMetadata = ManagementFactory.eINSTANCE.createObjectMetadata();
             parentMetadata.setObjectId("parent-object");
-            
+
             when(mockRegistryService.listInFinalStage(anyString())).thenAnswer(invocation -> {
                 String argument = invocation.getArgument(0);
-                
+
                 if (argument.equals(SCOPE_NAME)) {
                     return new ArrayList<>(List.of(scopedMetadata));
                 } else if (argument.equals(PARENT_SCOPE_NAME)) {
@@ -396,13 +378,12 @@ public class ScopeServiceIntegrationTest {
         @Test
         @DisplayName("Should delegate listInStage to RegistryService")
         @WithFactoryConfiguration(factoryPid = "ScopeService", name = "test-scope", location = "?", properties = {
-            @Property(key = "scope.name", value = SCOPE_NAME),
-            @Property(key = "scope.parent", value = ""),
-            @Property(key = "registryService.target", value = "(registry.name=" + REGISTRY_NAME + ")")
-        })
+                @Property(key = "scope.name", value = SCOPE_NAME), @Property(key = "scope.parent", value = ""),
+                @Property(key = "registryService.target", value = "(registry.name=" + REGISTRY_NAME + ")") })
         void shouldDelegateListInStage(
-                @InjectService(cardinality = 0, filter = "(scope.name=" + SCOPE_NAME + ")")
-                ServiceAware<ScopeService> scopeAware) throws InterruptedException, InvocationTargetException {
+                @InjectService(cardinality = 0, filter = "(scope.name=" + SCOPE_NAME
+                        + ")") ServiceAware<ScopeService> scopeAware)
+                throws InterruptedException, InvocationTargetException {
 
             ScopeService<EObject> scopeService = scopeAware.waitForService(5000);
             assertNotNull(scopeService);
@@ -411,8 +392,7 @@ public class ScopeServiceIntegrationTest {
             ObjectMetadata metadata2 = ManagementFactory.eINSTANCE.createObjectMetadata();
             List<ObjectMetadata> expectedList = Arrays.asList(metadata1, metadata2);
 
-            when(mockRegistryService.listInStage(SCOPE_NAME, STAGE_NAME))
-                .thenReturn(expectedList);
+            when(mockRegistryService.listInStage(SCOPE_NAME, STAGE_NAME)).thenReturn(expectedList);
 
             // Act
             List<ObjectMetadata> result = scopeService.listInStageForRegistry(REGISTRY_NAME, STAGE_NAME);
@@ -426,25 +406,21 @@ public class ScopeServiceIntegrationTest {
         @Test
         @DisplayName("Should delegate delete to RegistryService")
         @WithFactoryConfiguration(factoryPid = "ScopeService", name = "test-scope", location = "?", properties = {
-            @Property(key = "scope.name", value = SCOPE_NAME),
-            @Property(key = "scope.parent", value = ""),
-            @Property(key = "registryService.target", value = "(registry.name=" + REGISTRY_NAME + ")")
-        })
+                @Property(key = "scope.name", value = SCOPE_NAME), @Property(key = "scope.parent", value = ""),
+                @Property(key = "registryService.target", value = "(registry.name=" + REGISTRY_NAME + ")") })
         void shouldDelegateDelete(
-                @InjectService(cardinality = 0, filter = "(scope.name=" + SCOPE_NAME + ")")
-                ServiceAware<ScopeService> scopeAware) throws InterruptedException, InvocationTargetException {
+                @InjectService(cardinality = 0, filter = "(scope.name=" + SCOPE_NAME
+                        + ")") ServiceAware<ScopeService> scopeAware)
+                throws InterruptedException, InvocationTargetException {
 
             ScopeService<EObject> scopeService = scopeAware.waitForService(5000);
             assertNotNull(scopeService);
 
             Promise<Boolean> expectedPromise = promiseFactory.resolved(true);
-            when(mockRegistryService.deleteFromStage(SCOPE_NAME, STAGE_NAME, OBJECT_ID))
-                .thenReturn(expectedPromise);
+            when(mockRegistryService.deleteFromStage(SCOPE_NAME, STAGE_NAME, OBJECT_ID)).thenReturn(expectedPromise);
 
             // Act
-            Promise<Boolean> result = scopeService.deleteFromStageForRegistry(
-                REGISTRY_NAME, STAGE_NAME, OBJECT_ID
-            );
+            Promise<Boolean> result = scopeService.deleteFromStageForRegistry(REGISTRY_NAME, STAGE_NAME, OBJECT_ID);
 
             // Assert
             assertNotNull(result);

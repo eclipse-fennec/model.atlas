@@ -40,8 +40,8 @@ import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 
 /**
- * REST API for Scope discovery and management.
- * Provides endpoints to list and retrieve scope metadata.
+ * REST API for Scope discovery and management. Provides endpoints to list and
+ * retrieve scope metadata.
  *
  * @author Data In Motion
  * @since 1.0
@@ -54,60 +54,43 @@ import jakarta.ws.rs.core.Response;
 @Tag(name = "Scope Management", description = "Discovery and management of Model Atlas scopes")
 public class ScopesResource {
 
-	 @Reference
-	 private ScopeServiceCollector scopeCollector;
+    @Reference
+    private ScopeServiceCollector scopeCollector;
 
-	/**
-	 * List all configured scopes.
-	 *
-	 * @return List of Scope objects
-	 */
-	@GET
-	@Produces({ MediaType.APPLICATION_JSON })
-	@Operation(
-		summary = "List all scopes",
-		description = "Get a list of all configured scopes in the Model Atlas",
-		responses = {
-			@ApiResponse(
-				responseCode = "200",
-				description = "Scopes retrieved successfully",
-				content = @Content(mediaType = MediaType.APPLICATION_JSON, schema = @Schema(implementation = ScopeListResponse.class))
-			),
-		}
-	)
-	public Response listScopes() {		
-		List<Scope> scopes = scopeCollector.getAllScopes();
-		ScopeListResponse container = RestFactory.eINSTANCE.createScopeListResponse();
-		container.getScopes().addAll(scopes);
-		return Response.status(Response.Status.OK).entity(container).build();
-	}
+    /**
+     * List all configured scopes.
+     *
+     * @return List of Scope objects
+     */
+    @GET
+    @Produces({ MediaType.APPLICATION_JSON })
+    @Operation(summary = "List all scopes", description = "Get a list of all configured scopes in the Model Atlas", responses = {
+            @ApiResponse(responseCode = "200", description = "Scopes retrieved successfully", content = @Content(mediaType = MediaType.APPLICATION_JSON, schema = @Schema(implementation = ScopeListResponse.class))), })
+    public Response listScopes() {
+        List<Scope> scopes = scopeCollector.getAllScopes();
+        ScopeListResponse container = RestFactory.eINSTANCE.createScopeListResponse();
+        container.getScopes().addAll(scopes);
+        return Response.status(Response.Status.OK).entity(container).build();
+    }
 
-	/**
-	 * Get metadata for a specific scope.
-	 *
-	 * @param scopeName the name of the scope
-	 * @return Scope object
-	 */
-	@GET
-	@Path("/{scopeName}")
-	@Produces({ MediaType.APPLICATION_JSON, MediaType.TEXT_PLAIN })
-	@Operation(
-		summary = "Get workflow scope metadata",
-		description = "Retrieve metadata for a specific workflow scope by name",
-		responses = {
-			@ApiResponse(
-				responseCode = "200",
-				description = "Scope found",
-						content = @Content(mediaType = MediaType.APPLICATION_JSON, schema = @Schema(implementation = Scope.class))
-			),
-			@ApiResponse(responseCode = "404", description = "Scope not found"),
-		}
-	)
-	public Response getScopeByName(
-		@Parameter(description = "The name of the workflow scope", required = true)
-		@PathParam("scopeName") String scopeName) {	
-		Scope scope = scopeCollector.getScopeByName(scopeName);
-		if(scope == null) return Response.status(Response.Status.NOT_FOUND).entity(String.format("No scope with name %s was found.", scopeName)).build();
-		return Response.status(Response.Status.OK).entity(scope).build();
-	}
+    /**
+     * Get metadata for a specific scope.
+     *
+     * @param scopeName the name of the scope
+     * @return Scope object
+     */
+    @GET
+    @Path("/{scopeName}")
+    @Produces({ MediaType.APPLICATION_JSON, MediaType.TEXT_PLAIN })
+    @Operation(summary = "Get workflow scope metadata", description = "Retrieve metadata for a specific workflow scope by name", responses = {
+            @ApiResponse(responseCode = "200", description = "Scope found", content = @Content(mediaType = MediaType.APPLICATION_JSON, schema = @Schema(implementation = Scope.class))),
+            @ApiResponse(responseCode = "404", description = "Scope not found"), })
+    public Response getScopeByName(
+            @Parameter(description = "The name of the workflow scope", required = true) @PathParam("scopeName") String scopeName) {
+        Scope scope = scopeCollector.getScopeByName(scopeName);
+        if (scope == null)
+            return Response.status(Response.Status.NOT_FOUND)
+                    .entity(String.format("No scope with name %s was found.", scopeName)).build();
+        return Response.status(Response.Status.OK).entity(scope).build();
+    }
 }

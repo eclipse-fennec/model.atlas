@@ -46,33 +46,35 @@ import org.osgi.util.promise.PromiseFactory;
 /**
  * Unit tests for BasicStorageRegistry.
  * 
- * <p>Tests the storage registry functionality including service registration,
+ * <p>
+ * Tests the storage registry functionality including service registration,
  * role-based discovery, cross-storage operations, and statistics collection
- * using mocked storage services.</p>
+ * using mocked storage services.
+ * </p>
  */
 @ExtendWith(MockitoExtension.class)
 class BasicStorageRegistryTest {
 
     @Mock
     private EObjectStorageService<EObject> fileStorage;
-    
+
     @Mock
     private EObjectStorageService<EObject> minioStorage;
-    
+
     private BasicStorageRegistry registry;
     private ManagementFactory managementFactory;
     private PromiseFactory promiseFactory;
-    
+
     @BeforeEach
     void setUp() {
         registry = new BasicStorageRegistry();
         managementFactory = ManagementFactory.eINSTANCE;
         promiseFactory = new PromiseFactory(Executors.newCachedThreadPool());
-        
+
         // Inject the ManagementFactory (in real OSGi this would be done by DS)
         registry.managementFactory = managementFactory;
     }
-    
+
     @Test
     void testAddStorageService() {
         // Given: Storage service with type property
@@ -87,7 +89,7 @@ class BasicStorageRegistryTest {
         assertEquals(fileStorage, registry.getStorageByType("file"));
         assertEquals(minioStorage, registry.getStorageByType("minio"));
     }
-    
+
     @Test
     void testAddStorageServiceWithoutType() {
         // Given: Storage service without type property
@@ -100,7 +102,7 @@ class BasicStorageRegistryTest {
         assertNull(registry.getStorageByType("file"));
         assertTrue(registry.getAvailableTypes().isEmpty());
     }
-    
+
     @Test
     void testRemoveStorageService() {
         // Given: Registered storage service
@@ -115,7 +117,7 @@ class BasicStorageRegistryTest {
         assertNull(registry.getStorageByType("file"));
         assertTrue(registry.getAvailableTypes().isEmpty());
     }
-    
+
     @Test
     void testGetStorageByType() {
         // Given: Multiple registered storage services
@@ -127,7 +129,7 @@ class BasicStorageRegistryTest {
         assertEquals(minioStorage, registry.getStorageByType("minio"));
         assertNull(registry.getStorageByType("apicurio"));
     }
-    
+
     @Test
     void testGetAllStorages() {
         // Given: Multiple registered storage services
@@ -142,7 +144,7 @@ class BasicStorageRegistryTest {
         assertTrue(allStorages.contains(fileStorage));
         assertTrue(allStorages.contains(minioStorage));
     }
-    
+
     @Test
     void testGetAvailableTypes() {
         // Given: Multiple registered storage services
@@ -157,50 +159,49 @@ class BasicStorageRegistryTest {
         assertTrue(types.contains("file"));
         assertTrue(types.contains("minio"));
     }
- 
-    
+
     @Test
     void testSearchMetadataAcrossTypes() throws Exception {
         // Given: Registered storage services
         registry.addStorageService(fileStorage, createTypeProperties("file"));
         registry.addStorageService(minioStorage, createTypeProperties("minio"));
-        
+
         // Mock search results
         ObjectMetadata draftResult = createTestMetadata("obj1", ObjectStatus.DRAFT, "TestPackage");
         ObjectMetadata approvedResult = createTestMetadata("obj2", ObjectStatus.APPROVED, "TestPackage");
-        
+
         Promise<List<ObjectMetadata>> draftPromise = promiseFactory.resolved(Arrays.asList(draftResult));
         Promise<List<ObjectMetadata>> approvedPromise = promiseFactory.resolved(Arrays.asList(approvedResult));
-        
+
         when(fileStorage.queryObjects(any(ObjectQuery.class))).thenReturn(draftPromise);
         when(minioStorage.queryObjects(any(ObjectQuery.class))).thenReturn(approvedPromise);
-        
+
         // When: Searching across all types
         ObjectQuery query = managementFactory.createObjectQuery();
         query.setStatus(ObjectStatus.DRAFT); // Will match both due to EMF enum default behavior
-        
+
         EList<ObjectMetadata> results = registry.searchMetadataAcrossTypes(query);
-        
+
         // Then: Results from all storages are aggregated
         assertEquals(2, results.size());
         assertTrue(results.stream().anyMatch(m -> "obj1".equals(m.getObjectId())));
         assertTrue(results.stream().anyMatch(m -> "obj2".equals(m.getObjectId())));
     }
-    
+
     @Test
     void testGetStorageStatistics() {
         // Given: Registered storage services with mock statistics
         registry.addStorageService(fileStorage, createTypeProperties("file"));
         registry.addStorageService(minioStorage, createTypeProperties("minio"));
-        
+
         when(fileStorage.getObjectCount()).thenReturn(5L);
         when(fileStorage.getBackendType()).thenReturn(StorageBackendType.FILE);
         when(minioStorage.getObjectCount()).thenReturn(3L);
         when(minioStorage.getBackendType()).thenReturn(StorageBackendType.MINIO);
-        
+
         // When: Getting storage statistics
         Map<String, Object> statistics = registry.getStorageStatistics();
-        
+
         // Then: Statistics are aggregated correctly
         assertEquals(8, statistics.get("totalObjectCount"));
         assertEquals(2, statistics.get("typeCount"));
@@ -223,7 +224,7 @@ class BasicStorageRegistryTest {
         assertEquals(3L, minioStats.get("objectCount"));
         assertEquals("MINIO", minioStats.get("backendType"));
     }
-    
+
     @Test
     void testStorageServiceReplacement() {
         // Given: Storage service registered for a type
@@ -237,13 +238,13 @@ class BasicStorageRegistryTest {
         assertEquals(minioStorage, registry.getStorageByType("file"));
         assertEquals(1, registry.getAvailableTypes().size());
     }
-    
+
     private Map<String, Object> createTypeProperties(String type) {
         Map<String, Object> properties = new HashMap<>();
         properties.put("storage.type", type);
         return properties;
     }
-    
+
     private ObjectMetadata createTestMetadata(String objectId, ObjectStatus status, String objectType) {
         ObjectMetadata metadata = managementFactory.createObjectMetadata();
         metadata.setObjectId(objectId);

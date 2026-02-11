@@ -27,30 +27,28 @@ import org.osgi.service.component.annotations.Reference;
  *
  * @since 1.0
  */
-@Component(service = HealthCheck.class, property = {
-	HealthCheck.NAME + "=Media Types",
-	HealthCheck.TAGS + "=atlas,readiness"
-})
+@Component(service = HealthCheck.class, property = { HealthCheck.NAME + "=Media Types",
+        HealthCheck.TAGS + "=atlas,readiness" })
 public class MediaTypesHealthCheck implements HealthCheck {
 
-	@Reference
-	private SupportedMediatype supportedMediatype;
+    @Reference
+    private SupportedMediatype supportedMediatype;
 
-	@Override
-	public Result execute() {
-		FormattingResultLog log = new FormattingResultLog();
+    @Override
+    public Result execute() {
+        FormattingResultLog log = new FormattingResultLog();
 
-		if (supportedMediatype == null) {
-			log.critical("SupportedMediatype service not available");
-		} else {
-			List<String> types = supportedMediatype.getSupportedMediaTypes();
-			if (types != null && !types.isEmpty()) {
-				log.info("Supporting {} media types", types.size());
-			} else {
-				log.warn("No media types available");
-			}
-		}
+        if (supportedMediatype == null) {
+            log.critical("SupportedMediatype service not available");
+        } else {
+            List<String> types = supportedMediatype.getSupportedMediaTypes();
+            if (types != null && !types.isEmpty()) {
+                log.info("Supporting {} media types", types.size());
+            } else {
+                log.warn("No media types available");
+            }
+        }
 
-		return new Result(log);
-	}
+        return new Result(log);
+    }
 }

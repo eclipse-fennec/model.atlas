@@ -59,9 +59,11 @@ import org.osgi.test.junit5.service.ServiceExtension;
 /**
  * Integration test for post-release EPackage registration functionality.
  * 
- * <p>This test verifies that when a post-release action is triggered for an EPackage,
- * it gets automatically registered in the OSGi EMF registry and becomes available
- * as an OSGi service.</p>
+ * <p>
+ * This test verifies that when a post-release action is triggered for an
+ * EPackage, it gets automatically registered in the OSGi EMF registry and
+ * becomes available as an OSGi service.
+ * </p>
  * 
  * @author Mark Hoffmann
  * @since 1.0.0
@@ -71,115 +73,95 @@ import org.osgi.test.junit5.service.ServiceExtension;
 @ExtendWith(MockitoExtension.class)
 @RequireConfigurationAdmin
 public class PostReleaseEPackageRegistrationIntegrationTest {
-	
+
     @TempDir
     Path tempDir;
-    
+
     @InjectBundleContext
     BundleContext bundleContext;
-    
+
     private static final String TEST_SCOPE = "test-scope";
     private static final String TEST_REGISTRY = "test-registry";
     private static final String TEST_STAGE = "release";
-    
-    
+
     @BeforeEach
     void setUp() {
         // Set system property for template argument resolution
         System.setProperty(TestAnnotations.PROP_TEMP_DIR, tempDir.toString());
-        
-	
+
     }
-    
+
     @AfterEach
     void tearDown() {
-    	
+
     }
-    
+
     @SuppressWarnings({ "rawtypes", "unchecked" })
-	@Test
+    @Test
     @PostActionStorageSetup
     public void testEPackageRegistrationAfterPostReleaseAction(
-            @InjectService(filter = "(storage.type=file)")
-            EObjectStorageService approvedStorage,
+            @InjectService(filter = "(storage.type=file)") EObjectStorageService approvedStorage,
             @InjectService PostReleaseActionService postReleaseActionService,
-            @InjectService(cardinality = 0, filter = "(emf.name=TestSensorModel)")
-            ServiceAware<EPackage> ePackageServiceAware) throws Exception {
-    	
-    	
-        
+            @InjectService(cardinality = 0, filter = "(emf.name=TestSensorModel)") ServiceAware<EPackage> ePackageServiceAware)
+            throws Exception {
+
         // 1. Create a test EPackage
         EPackage testPackage = createTestEPackage();
         String objectId = "test-epackage-registration-" + System.currentTimeMillis();
-        
-        // 2. Create metadata and store EPackage directly in approved storage (simulating released object)
+
+        // 2. Create metadata and store EPackage directly in approved storage
+        // (simulating released object)
         ObjectMetadata metadata = createTestMetadata(objectId);
         approvedStorage.storeObject(TEST_SCOPE, TEST_REGISTRY, TEST_STAGE, objectId, testPackage, metadata).getValue();
         String storageId = metadata.getObjectId();
         assertNotNull(storageId);
-        
+
         // 3. Verify EPackage is not yet available as OSGi service
-        assertTrue(ePackageServiceAware.isEmpty(), 
-                  "EPackage should not be available as OSGi service before post-release action");
-        
+        assertTrue(ePackageServiceAware.isEmpty(),
+                "EPackage should not be available as OSGi service before post-release action");
+
         // 4. Trigger post-release action
-        postReleaseActionService.executePostReleaseActions(
-        	TEST_SCOPE, 
-        	TEST_REGISTRY, 
-        	TEST_STAGE,
-            objectId, 
-            EcoreUtil.getURI(EcorePackage.Literals.EPACKAGE).toString(), 
-            "integration-test-user", 
-            "Test post-release action for EPackage registration"
-        ).getValue(); // Wait for completion
-        
+        postReleaseActionService.executePostReleaseActions(TEST_SCOPE, TEST_REGISTRY, TEST_STAGE, objectId,
+                EcoreUtil.getURI(EcorePackage.Literals.EPACKAGE).toString(), "integration-test-user",
+                "Test post-release action for EPackage registration").getValue(); // Wait for completion
+
         // 5. Wait for EPackage to become available as OSGi service
         EPackage registeredPackage = ePackageServiceAware.waitForService(5000L);
-        assertNotNull(registeredPackage, 
-                     "EPackage should be available as OSGi service after post-release action");
-        
+        assertNotNull(registeredPackage, "EPackage should be available as OSGi service after post-release action");
+
         // 6. Verify the registered EPackage has expected properties
         assertEquals(testPackage.getName(), registeredPackage.getName());
         assertEquals(testPackage.getNsURI(), registeredPackage.getNsURI());
         assertEquals(testPackage.getNsPrefix(), registeredPackage.getNsPrefix());
         assertEquals(1, registeredPackage.getEClassifiers().size());
         assertEquals("Sensor", registeredPackage.getEClassifiers().get(0).getName());
-        
+
         // 7. Test unregistration via post-unrelease action
-        postReleaseActionService.executePostUnreleaseActions(
-        	TEST_SCOPE, 
-            TEST_REGISTRY, 
-            TEST_STAGE,
-            objectId,
-            EcoreUtil.getURI(EcorePackage.Literals.EPACKAGE).toString(), 
-            "integration-test-user",
-            "Test cleanup"
-        ).getValue(); // Wait for completion
-        
+        postReleaseActionService.executePostUnreleaseActions(TEST_SCOPE, TEST_REGISTRY, TEST_STAGE, objectId,
+                EcoreUtil.getURI(EcorePackage.Literals.EPACKAGE).toString(), "integration-test-user", "Test cleanup")
+                .getValue(); // Wait for completion
+
         // 8. Verify EPackage is no longer available as OSGi service
-        assertTrue(ePackageServiceAware.isEmpty(), 
-                  "EPackage should no longer be available as OSGi service after post-unrelease action");
+        assertTrue(ePackageServiceAware.isEmpty(),
+                "EPackage should no longer be available as OSGi service after post-unrelease action");
     }
-    
+
     @SuppressWarnings({ "rawtypes", "unchecked" })
     @Test
     @PostActionStorageSetup
     public void testEPackageRegistrationWithConfigurationEvents(
-            @InjectService(filter = "(storage.type=file)")
-            EObjectStorageService approvedStorage,
+            @InjectService(filter = "(storage.type=file)") EObjectStorageService approvedStorage,
             @InjectService PostReleaseActionService postReleaseActionService,
-            @InjectService(cardinality = 0, filter = "(emf.name=TestSensorModel)")
-            ServiceAware<EPackage> ePackageServiceAware,
-            @InjectService(cardinality = 0, filter = "(emf.name=TestSensorModel)")
-            ServiceAware<ResourceSet> resourceSetServiceAware,
+            @InjectService(cardinality = 0, filter = "(emf.name=TestSensorModel)") ServiceAware<EPackage> ePackageServiceAware,
+            @InjectService(cardinality = 0, filter = "(emf.name=TestSensorModel)") ServiceAware<ResourceSet> resourceSetServiceAware,
             @InjectService TypedEventBus typedEventBus) throws Exception {
-        
+
         // Event capture setup with CountDownLatches for synchronization
         final List<String> capturedEvents = new ArrayList<>();
         final List<String[]> capturedEventData = new ArrayList<>();
         final CountDownLatch addEventLatch = new CountDownLatch(1);
         final CountDownLatch removeEventLatch = new CountDownLatch(1);
-        
+
         TypedEventHandler<String[]> eventHandler = new TypedEventHandler<String[]>() {
             @Override
             public void notify(String topic, String[] data) {
@@ -187,7 +169,7 @@ public class PostReleaseEPackageRegistrationIntegrationTest {
                     capturedEvents.add(topic);
                     capturedEventData.add(data.clone());
                 }
-                
+
                 // Signal when specific events are received
                 if ("configuration/ADD/SouthboundMappingService".equals(topic)) {
                     addEventLatch.countDown();
@@ -196,113 +178,102 @@ public class PostReleaseEPackageRegistrationIntegrationTest {
                 }
             }
         };
-        
+
         // Register event handler for configuration events
         Dictionary<String, Object> eventProps = new Hashtable<>();
-        eventProps.put("event.topics", new String[] {
-            "configuration/ADD/SouthboundMappingService",
-            "configuration/REMOVE/SouthboundMappingService"
-        });
-        ServiceRegistration<TypedEventHandler> eventRegistration = 
-        			bundleContext.registerService(TypedEventHandler.class, eventHandler, eventProps);
+        eventProps.put("event.topics", new String[] { "configuration/ADD/SouthboundMappingService",
+                "configuration/REMOVE/SouthboundMappingService" });
+        ServiceRegistration<TypedEventHandler> eventRegistration = bundleContext
+                .registerService(TypedEventHandler.class, eventHandler, eventProps);
         try {
             // 1. Create a test EPackage
             EPackage testPackage = createTestEPackage();
             String objectId = "test-epackage-config-events-" + System.currentTimeMillis();
             String expectedNsURI = testPackage.getNsURI();
             String expectedModelName = testPackage.getName();
-            
-            // 2. Create metadata and store EPackage directly in approved storage (simulating released object)
+
+            // 2. Create metadata and store EPackage directly in approved storage
+            // (simulating released object)
             ObjectMetadata metadata = createTestMetadata(objectId);
-            approvedStorage.storeObject(TEST_SCOPE, TEST_REGISTRY, TEST_STAGE, objectId, testPackage, metadata).getValue();
+            approvedStorage.storeObject(TEST_SCOPE, TEST_REGISTRY, TEST_STAGE, objectId, testPackage, metadata)
+                    .getValue();
             String storageId = metadata.getObjectId();
             assertNotNull(storageId);
-            
+
             // 3. Verify EPackage is not yet available as OSGi service
-            assertTrue(ePackageServiceAware.isEmpty(), 
-                      "EPackage should not be available as OSGi service before post-release action");
-            
+            assertTrue(ePackageServiceAware.isEmpty(),
+                    "EPackage should not be available as OSGi service before post-release action");
+
             // 4. Trigger post-release action
-            postReleaseActionService.executePostReleaseActions(
-            		TEST_SCOPE, 
-                    TEST_REGISTRY, 
-                    TEST_STAGE,
-                    objectId,
-                    EcoreUtil.getURI(EcorePackage.Literals.EPACKAGE).toString(),  
-                "integration-test-user", 
-                "Test post-release action for EPackage registration with events"
-            ).getValue(); // Wait for completion
-            
+            postReleaseActionService.executePostReleaseActions(TEST_SCOPE, TEST_REGISTRY, TEST_STAGE, objectId,
+                    EcoreUtil.getURI(EcorePackage.Literals.EPACKAGE).toString(), "integration-test-user",
+                    "Test post-release action for EPackage registration with events").getValue(); // Wait for completion
+
             // 5. Wait for EPackage to become available as OSGi service
             EPackage registeredPackage = ePackageServiceAware.waitForService(5000L);
-            assertNotNull(registeredPackage, 
-                         "EPackage should be available as OSGi service after post-release action");
-            
+            assertNotNull(registeredPackage, "EPackage should be available as OSGi service after post-release action");
+
             // 6. Verify the registered EPackage has expected properties
             assertEquals(testPackage.getName(), registeredPackage.getName());
             assertEquals(testPackage.getNsURI(), registeredPackage.getNsURI());
             assertEquals(testPackage.getNsPrefix(), registeredPackage.getNsPrefix());
             assertEquals(1, registeredPackage.getEClassifiers().size());
             assertEquals("Sensor", registeredPackage.getEClassifiers().get(0).getName());
-            
-            // 7. Wait for ResourceSet with matching emf.model property to trigger ADD configuration event
+
+            // 7. Wait for ResourceSet with matching emf.model property to trigger ADD
+            // configuration event
             ResourceSet resourceSet = resourceSetServiceAware.waitForService(5000L);
-            
+
             if (resourceSet == null) {
                 // Skip the configuration event test if ResourceSet not available
                 assertTrue(registeredPackage != null, "EPackage should still be registered");
                 return; // Early return to skip the event testing
             }
-            
+
             assertNotNull(resourceSet, "ResourceSet with emf.name=TestSensorModel should be available");
-            
+
             // 8. Wait for ADD configuration event using CountDownLatch
             boolean addEventReceived = addEventLatch.await(5, TimeUnit.SECONDS);
-            
+
             assertTrue(addEventReceived, "ADD configuration event should have been sent within 5 seconds");
-            
+
             // Find the ADD event data
             int addEventIndex = capturedEvents.indexOf("configuration/ADD/SouthboundMappingService");
             if (addEventIndex >= 0) {
                 String[] addEventData = capturedEventData.get(addEventIndex);
                 assertEquals(2, addEventData.length, "ADD event should have 2 data elements");
-                
+
                 String expectedConfigKey = "sthbnd.mapping.codec.typeMap." + expectedModelName;
                 String expectedConfigValue = expectedNsURI + "#//" + expectedModelName + "Sensor";
-                
+
                 assertEquals(expectedConfigKey, addEventData[0], "Configuration key should match");
                 assertEquals(expectedConfigValue, addEventData[1], "Configuration value should match");
             }
-            
-            // 10. Test unregistration via post-unrelease action (should trigger REMOVE event)
-            postReleaseActionService.executePostUnreleaseActions(
-            		TEST_SCOPE, 
-                    TEST_REGISTRY, 
-                    TEST_STAGE,
-                    objectId,
-                    EcoreUtil.getURI(EcorePackage.Literals.EPACKAGE).toString(), 
-                "integration-test-user",
-                "Test cleanup with REMOVE event"
-            ).getValue(); // Wait for completion
-            
+
+            // 10. Test unregistration via post-unrelease action (should trigger REMOVE
+            // event)
+            postReleaseActionService.executePostUnreleaseActions(TEST_SCOPE, TEST_REGISTRY, TEST_STAGE, objectId,
+                    EcoreUtil.getURI(EcorePackage.Literals.EPACKAGE).toString(), "integration-test-user",
+                    "Test cleanup with REMOVE event").getValue(); // Wait for completion
+
             // 11. Wait for REMOVE configuration event using CountDownLatch
             boolean removeEventReceived = removeEventLatch.await(5, TimeUnit.SECONDS);
             assertTrue(removeEventReceived, "REMOVE configuration event should have been sent within 5 seconds");
-            
+
             // Find the REMOVE event data
             int removeEventIndex = capturedEvents.lastIndexOf("configuration/REMOVE/SouthboundMappingService");
             if (removeEventIndex >= 0) {
                 String[] removeEventData = capturedEventData.get(removeEventIndex);
                 assertEquals(1, removeEventData.length, "REMOVE event should have 1 data element");
-                
+
                 String expectedConfigKey = "sthbnd.mapping.codec.typeMap." + expectedModelName;
                 assertEquals(expectedConfigKey, removeEventData[0], "Configuration key should match for removal");
             }
-            
+
             // 13. Verify EPackage is no longer available as OSGi service
-            assertTrue(ePackageServiceAware.isEmpty(), 
-                      "EPackage should no longer be available as OSGi service after post-unrelease action");
-                      
+            assertTrue(ePackageServiceAware.isEmpty(),
+                    "EPackage should no longer be available as OSGi service after post-unrelease action");
+
         } finally {
             // Cleanup event handler
             if (eventRegistration != null) {
@@ -310,33 +281,34 @@ public class PostReleaseEPackageRegistrationIntegrationTest {
             }
         }
     }
-    
+
     @Test
     @PostActionStorageSetup
     public void testPostReleaseActionServiceSupportsEPackage(
             @InjectService PostReleaseActionService postReleaseActionService) throws Exception {
-        
+
         // Verify the service can handle EPackage objects
-        // In a real scenario, there might be multiple implementations for different object types
+        // In a real scenario, there might be multiple implementations for different
+        // object types
         // We just test that our post-release action service is available and functional
         assertNotNull(postReleaseActionService, "PostReleaseActionService should be available");
         assertTrue(postReleaseActionService.supportsObjectType(EcorePackage.Literals.EPACKAGE.getName()));
     }
-    
+
     private EPackage createTestEPackage() {
         EPackage ePackage = EcoreFactory.eINSTANCE.createEPackage();
         ePackage.setName("TestSensorModel");
         ePackage.setNsPrefix("testsensor");
         ePackage.setNsURI("http://test.sensor.example.com/1.0");
-        
+
         // Add a simple EClass to make it more realistic
         EClass sensorClass = EcoreFactory.eINSTANCE.createEClass();
         sensorClass.setName("Sensor");
         ePackage.getEClassifiers().add(sensorClass);
-        
+
         return ePackage;
     }
-    
+
     private ObjectMetadata createTestMetadata(String objectId) {
         ObjectMetadata metadata = ManagementFactory.eINSTANCE.createObjectMetadata();
         metadata.setObjectId(objectId);
@@ -347,11 +319,11 @@ public class PostReleaseEPackageRegistrationIntegrationTest {
         metadata.setSourceChannel("MANUAL_UPLOAD");
         metadata.setObjectType("EPackage");
         metadata.setContentHash("test-hash-" + System.currentTimeMillis());
-        
+
         // Add file extension and version properties for registration
         metadata.getProperties().put("file.extension", "testsensor");
         metadata.getProperties().put("version", "1.0");
-        
+
         return metadata;
     }
 }

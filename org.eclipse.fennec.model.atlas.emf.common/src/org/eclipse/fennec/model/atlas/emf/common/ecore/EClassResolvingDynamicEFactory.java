@@ -18,26 +18,27 @@ import org.eclipse.emf.ecore.EObject;
 import org.eclipse.emf.ecore.impl.EFactoryImpl;
 
 /**
- * A Factory that creates DynamicEObjects, that will resolve their EClass if it was unloaded. 
- * This can happen, when we reload the EPackage it was created from in the background.
+ * A Factory that creates DynamicEObjects, that will resolve their EClass if it
+ * was unloaded. This can happen, when we reload the EPackage it was created
+ * from in the background.
  * 
  * @author Juergen Albert
  * @since 20 Feb 2025
  */
 public class EClassResolvingDynamicEFactory extends EFactoryImpl {
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see
-	 * org.eclipse.emf.ecore.impl.EFactoryImpl#basicCreate(org.eclipse.emf.ecore.
-	 * EClass)
-	 */
-	@Override
-	protected EObject basicCreate(EClass eClass) {
-		return eClass.getInstanceClassName() == "java.util.Map$Entry"
-				? new EClassResolvingDynamicEObject.BasicEMapEntry<String, String>(eClass)
-				: new EClassResolvingDynamicEObject(eClass);
-	}
+    /*
+     * (non-Javadoc)
+     * 
+     * @see
+     * org.eclipse.emf.ecore.impl.EFactoryImpl#basicCreate(org.eclipse.emf.ecore.
+     * EClass)
+     */
+    @Override
+    protected EObject basicCreate(EClass eClass) {
+        return eClass.getInstanceClassName() == "java.util.Map$Entry"
+                ? new EClassResolvingDynamicEObject.BasicEMapEntry<String, String>(eClass)
+                : new EClassResolvingDynamicEObject(eClass);
+    }
 
 }

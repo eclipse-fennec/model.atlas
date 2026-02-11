@@ -22,10 +22,13 @@ import org.osgi.test.common.annotation.Property.ValueSource;
 import org.osgi.test.common.annotation.config.WithFactoryConfiguration;
 
 /**
- * Test configuration annotations for Model Atlas Cloud management file storage tests.
+ * Test configuration annotations for Model Atlas Cloud management file storage
+ * tests.
  * 
- * <p>These annotations provide predefined OSGi configurations for integration tests,
- * reducing boilerplate code and ensuring consistent test setups.</p>
+ * <p>
+ * These annotations provide predefined OSGi configurations for integration
+ * tests, reducing boilerplate code and ensuring consistent test setups.
+ * </p>
  * 
  * @author Mark Hoffmann
  * @since 1.0.0
@@ -33,16 +36,18 @@ import org.osgi.test.common.annotation.config.WithFactoryConfiguration;
 public class LuceneTestAnnotations {
 
     public static final String PROP_TEMP_DIR = "tempDir";
-    
+
     /**
      * Shared Lucene Registry Service PID (not factory).
      */
     public static final String PID_SHARED_REGISTRY = "LuceneEObjectRegistryService";
-    
+
     /**
      * Basic shared registry configuration.
      * 
-     * <p>This annotation configures a LuceneEObjectRegistryService instance with:</p>
+     * <p>
+     * This annotation configures a LuceneEObjectRegistryService instance with:
+     * </p>
      * <ul>
      * <li>Storage backend tracking enabled</li>
      * <li>Debug logging enabled for troubleshooting</li>
@@ -50,28 +55,26 @@ public class LuceneTestAnnotations {
      * </ul>
      */
     @WithFactoryConfiguration(factoryPid = PID_SHARED_REGISTRY, name = "shared-registry", location = "?", properties = {
-        @Property(key = "registry.workspace.folder", value = "%s/shared-registry", templateArguments = {
-            @TemplateArgument(source = ValueSource.SystemProperty, value = PROP_TEMP_DIR)
-        }),
-        @Property(key = "storage.backend.tracking", value = "true"),
-        @Property(key = "initial.index.capacity", value = "1000"),
-        @Property(key = "enable.debug.logging", value = "true")
-    })
+            @Property(key = "registry.workspace.folder", value = "%s/shared-registry", templateArguments = {
+                    @TemplateArgument(source = ValueSource.SystemProperty, value = PROP_TEMP_DIR) }),
+            @Property(key = "storage.backend.tracking", value = "true"),
+            @Property(key = "initial.index.capacity", value = "1000"),
+            @Property(key = "enable.debug.logging", value = "true") })
     @Retention(RetentionPolicy.RUNTIME)
-    public @interface RegistryConfiguration {}
-    
+    public @interface RegistryConfiguration {
+    }
+
     /**
      * Advanced test registry configuration with different name to avoid conflicts.
      */
     @WithFactoryConfiguration(factoryPid = PID_SHARED_REGISTRY, name = "advanced-test-registry", location = "?", properties = {
-        @Property(key = "registry.workspace.folder", value = "%s/advanced-registry", templateArguments = {
-            @TemplateArgument(source = ValueSource.SystemProperty, value = PROP_TEMP_DIR)
-        }),
-        @Property(key = "storage.backend.tracking", value = "true"),
-        @Property(key = "initial.index.capacity", value = "1000"),
-        @Property(key = "enable.debug.logging", value = "true")
-    })
+            @Property(key = "registry.workspace.folder", value = "%s/advanced-registry", templateArguments = {
+                    @TemplateArgument(source = ValueSource.SystemProperty, value = PROP_TEMP_DIR) }),
+            @Property(key = "storage.backend.tracking", value = "true"),
+            @Property(key = "initial.index.capacity", value = "1000"),
+            @Property(key = "enable.debug.logging", value = "true") })
     @Retention(RetentionPolicy.RUNTIME)
-    public @interface AdvancedRegistryConfiguration {}
+    public @interface AdvancedRegistryConfiguration {
+    }
 
-  }
+}

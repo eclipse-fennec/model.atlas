@@ -23,10 +23,13 @@ import org.osgi.test.common.annotation.Property.ValueSource;
 import org.osgi.test.common.annotation.config.WithFactoryConfiguration;
 
 /**
- * Test configuration annotations for Model Atlas Cloud management file storage tests.
+ * Test configuration annotations for Model Atlas Cloud management file storage
+ * tests.
  * 
- * <p>These annotations provide predefined OSGi configurations for integration tests,
- * reducing boilerplate code and ensuring consistent test setups.</p>
+ * <p>
+ * These annotations provide predefined OSGi configurations for integration
+ * tests, reducing boilerplate code and ensuring consistent test setups.
+ * </p>
  * 
  * @author Mark Hoffmann
  * @since 1.0.0
@@ -34,7 +37,7 @@ import org.osgi.test.common.annotation.config.WithFactoryConfiguration;
 public class FileTestAnnotations extends LuceneTestAnnotations {
 
     public static final String PROP_TEMP_DIR = "tempDir";
-    
+
     /**
      * File Object Storage Service factory PID.
      */
@@ -43,7 +46,9 @@ public class FileTestAnnotations extends LuceneTestAnnotations {
     /**
      * File storage configuration with specified role.
      * 
-     * <p>This annotation configures a FileObjectStorage instance with:</p>
+     * <p>
+     * This annotation configures a FileObjectStorage instance with:
+     * </p>
      * <ul>
      * <li>Workspace folder based on system property and test method name</li>
      * <li>Lucene indexing enabled</li>
@@ -51,11 +56,9 @@ public class FileTestAnnotations extends LuceneTestAnnotations {
      * </ul>
      */
     @WithFactoryConfiguration(factoryPid = PID_FILE_STORAGE, name = "test", location = "?", properties = {
-        @Property(key = "workspace.folder", value = "%s", templateArguments = {
-            @TemplateArgument(source = ValueSource.SystemProperty, value = PROP_TEMP_DIR)
-        }),
-        @Property(key = "storage.type", value = "file")
-    })
+            @Property(key = "workspace.folder", value = "%s", templateArguments = {
+                    @TemplateArgument(source = ValueSource.SystemProperty, value = PROP_TEMP_DIR) }),
+            @Property(key = "storage.type", value = "file") })
     @Retention(RetentionPolicy.RUNTIME)
     public @interface FileStorageConfiguration {
     }
@@ -63,17 +66,23 @@ public class FileTestAnnotations extends LuceneTestAnnotations {
     /**
      * Complete test setup with both shared registry and file storage.
      * 
-     * <p>This meta-annotation combines:</p>
+     * <p>
+     * This meta-annotation combines:
+     * </p>
      * <ul>
      * <li>{@link SharedRegistryConfiguration} - Shared registry service</li>
      * <li>{@link FileStorageConfiguration} - File storage service</li>
      * </ul>
      * 
-     * <p>Use this annotation for tests that need both services configured and working together.</p>
+     * <p>
+     * Use this annotation for tests that need both services configured and working
+     * together.
+     * </p>
      */
     @RegistryConfiguration
     @FileStorageConfiguration
     @Retention(RetentionPolicy.RUNTIME)
-    public @interface DefaultFileStorageSetup {}
+    public @interface DefaultFileStorageSetup {
+    }
 
 }

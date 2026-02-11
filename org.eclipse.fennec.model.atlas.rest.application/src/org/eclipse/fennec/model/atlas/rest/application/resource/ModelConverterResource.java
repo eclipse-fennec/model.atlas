@@ -55,52 +55,51 @@ import jakarta.ws.rs.core.Response.Status;
 @Tag(name = "Model Converter Resource", description = "CRUD operations for converting models on the fly from one format to another")
 public class ModelConverterResource {
 
-	private final List<String> supportedMediaTypes;
+    private final List<String> supportedMediaTypes;
 
-	@Context
-	private HttpHeaders headers;
+    @Context
+    private HttpHeaders headers;
 
-	@Activate
-	public ModelConverterResource(@Reference SupportedMediatype types) {
-	    supportedMediaTypes = types.getSupportedMediaTypes();
-	}
-	
-	@POST
-	@Consumes
-	@Produces
-	@Operation(summary = "Converts the schema to another format", description = "Converts the provided schema into the same schema but in the format specified by the Accept header",
-			responses = {
-					@ApiResponse(responseCode = "200", description = "Package converted successfully", content = @Content(schema = @Schema(implementation = EPackage.class))),
-					@ApiResponse(responseCode = "415", description = "Unsupported media type"),
-					@ApiResponse(responseCode = "500", description = "Internal server error") })
-	public Response convertPackage(
-			@RequestBody(description = "The schema package content", required = true, content = @Content(schema = @Schema(implementation = EPackage.class))) EPackage ePackage) {
+    @Activate
+    public ModelConverterResource(@Reference SupportedMediatype types) {
+        supportedMediaTypes = types.getSupportedMediaTypes();
+    }
 
-		checkContentType();
-		try {
-			return Response.status(Response.Status.OK).entity(ePackage).build();
-		} catch(Exception e) {
-			return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity(e.getMessage()).build();
-		}	
-	}
-	
-	/**
-	 * Check that the Accept header contains a supported media type.
-	 */
-	private void checkContentType() {
-		List<MediaType> acceptableMediaTypes = headers.getAcceptableMediaTypes();
-		for (MediaType acceptedMediaType : acceptableMediaTypes) {
-			String accept = acceptedMediaType.getType() + "/" + acceptedMediaType.getSubtype();
-			if (supportedMediaTypes.contains(accept)) {
-				return;
-			}
-		}
-		// Wildcard accepts anything, default to JSON
-		for (MediaType acceptedMediaType : acceptableMediaTypes) {
-			if (acceptedMediaType.isWildcardType() || acceptedMediaType.isWildcardSubtype()) {
-				return;
-			}
-		}
-		throw new WebApplicationException(Status.UNSUPPORTED_MEDIA_TYPE);
-	}
+    @POST
+    @Consumes
+    @Produces
+    @Operation(summary = "Converts the schema to another format", description = "Converts the provided schema into the same schema but in the format specified by the Accept header", responses = {
+            @ApiResponse(responseCode = "200", description = "Package converted successfully", content = @Content(schema = @Schema(implementation = EPackage.class))),
+            @ApiResponse(responseCode = "415", description = "Unsupported media type"),
+            @ApiResponse(responseCode = "500", description = "Internal server error") })
+    public Response convertPackage(
+            @RequestBody(description = "The schema package content", required = true, content = @Content(schema = @Schema(implementation = EPackage.class))) EPackage ePackage) {
+
+        checkContentType();
+        try {
+            return Response.status(Response.Status.OK).entity(ePackage).build();
+        } catch (Exception e) {
+            return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity(e.getMessage()).build();
+        }
+    }
+
+    /**
+     * Check that the Accept header contains a supported media type.
+     */
+    private void checkContentType() {
+        List<MediaType> acceptableMediaTypes = headers.getAcceptableMediaTypes();
+        for (MediaType acceptedMediaType : acceptableMediaTypes) {
+            String accept = acceptedMediaType.getType() + "/" + acceptedMediaType.getSubtype();
+            if (supportedMediaTypes.contains(accept)) {
+                return;
+            }
+        }
+        // Wildcard accepts anything, default to JSON
+        for (MediaType acceptedMediaType : acceptableMediaTypes) {
+            if (acceptedMediaType.isWildcardType() || acceptedMediaType.isWildcardSubtype()) {
+                return;
+            }
+        }
+        throw new WebApplicationException(Status.UNSUPPORTED_MEDIA_TYPE);
+    }
 }

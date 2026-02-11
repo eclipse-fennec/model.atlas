@@ -32,29 +32,33 @@ import org.eclipse.fennec.model.atlas.mgmt.management.ManagementPackage;
 import org.eclipse.fennec.model.atlas.mgmt.management.ObjectMetadata;
 
 /**
- * Abstract base class for EMF object storage operations.
- * Provides shared functionality for resource management, metadata handling, and EMF serialization.
- * Storage-specific implementations should extend this class and implement the abstract methods.
+ * Abstract base class for EMF object storage operations. Provides shared
+ * functionality for resource management, metadata handling, and EMF
+ * serialization. Storage-specific implementations should extend this class and
+ * implement the abstract methods.
  * 
- * <p>This class implements AutoCloseable to ensure proper resource cleanup. Subclasses should
- * implement {@link #closeStorageResources()} to clean up storage-specific resources.</p>
+ * <p>
+ * This class implements AutoCloseable to ensure proper resource cleanup.
+ * Subclasses should implement {@link #closeStorageResources()} to clean up
+ * storage-specific resources.
+ * </p>
  */
 public abstract class AbstractStorageHelper implements AutoCloseable {
-    
+
     private static final Logger LOGGER = Logger.getLogger(AbstractStorageHelper.class.getName());
     protected static final String DEFAULT_EXTENSION = ".xmi";
     protected static final String DEFAULT_CONTENT_TYPE = "application/xml";
     protected static final String METADATA_EXTENSION = ".metadata.xmi";
     protected static final String FILE_EXTENSION_PROPERTY = "file.extension";
     protected static final String CONTENT_TYPE_PROPERTY = "content.type";
-    
+
     protected final ResourceSet resourceSet;
-    
+
     public AbstractStorageHelper(ResourceSet resourceSet) {
         this.resourceSet = resourceSet;
         setupConversionDelegates();
     }
-    
+
     /**
      * Sets up EMF conversion delegates for custom data types.
      */
@@ -64,23 +68,23 @@ public abstract class AbstractStorageHelper implements AutoCloseable {
         EcoreUtil.setConversionDelegates(ManagementPackage.eINSTANCE, List.of(Instant.class.getName()));
         ConversionDelegate.Factory.Registry.INSTANCE.put(Instant.class.getName(), conversionFactory);
     }
-    
+
     /**
      * Creates a resource with proper content type handling and cleanup.
      */
     public static class ResourceOperation {
         private final Resource resource;
         private final ResourceSet resourceSet;
-        
+
         public ResourceOperation(Resource resource, ResourceSet resourceSet) {
             this.resource = resource;
             this.resourceSet = resourceSet;
         }
-        
+
         public Resource getResource() {
             return resource;
         }
-        
+
         /**
          * Cleans up the resource from the ResourceSet and unloads it.
          */
@@ -95,15 +99,16 @@ public abstract class AbstractStorageHelper implements AutoCloseable {
 //                    resource.unload();
                 }
             } catch (Exception e) {
-                String resourceUri = (resource != null && resource.getURI() != null) ? resource.getURI().toString() : "unknown";
+                String resourceUri = (resource != null && resource.getURI() != null) ? resource.getURI().toString()
+                        : "unknown";
                 LOGGER.log(Level.WARNING, "Failed to cleanup resource: " + resourceUri, e);
             }
         }
     }
-    
+
     /**
-     * Determines the file extension from metadata properties.
-     * Handles both extensions with and without leading dots.
+     * Determines the file extension from metadata properties. Handles both
+     * extensions with and without leading dots.
      */
     public String getFileExtension(ObjectMetadata metadata) {
         if (metadata.getProperties() != null && metadata.getProperties().containsKey(FILE_EXTENSION_PROPERTY)) {
@@ -114,7 +119,7 @@ public abstract class AbstractStorageHelper implements AutoCloseable {
         }
         return DEFAULT_EXTENSION;
     }
-    
+
     /**
      * Gets the content type from metadata properties.
      */
@@ -124,20 +129,20 @@ public abstract class AbstractStorageHelper implements AutoCloseable {
         }
         return DEFAULT_CONTENT_TYPE;
     }
-    
+
     /**
-     * Creates a resource with proper content type and factory selection.
-     * Handles content type-specific resource factories and fallbacks.
+     * Creates a resource with proper content type and factory selection. Handles
+     * content type-specific resource factories and fallbacks.
      */
     public ResourceOperation createResource(URI uri, String contentType) {
         Resource resource = null;
-        
+
         try {
             synchronized (resourceSet) {
                 if (contentType != null) {
                     // When content type is specified, use it to get the appropriate factory
                     Resource.Factory factory = (Resource.Factory) resourceSet.getResourceFactoryRegistry()
-                        .getContentTypeToFactoryMap().get(contentType);
+                            .getContentTypeToFactoryMap().get(contentType);
                     if (factory != null) {
                         resource = factory.createResource(uri);
                         if (resource != null && !resourceSet.getResources().contains(resource)) {
@@ -155,10 +160,10 @@ public abstract class AbstractStorageHelper implements AutoCloseable {
         } catch (Exception e) {
             LOGGER.log(Level.WARNING, "Failed to create resource: " + uri, e);
         }
-        
+
         return new ResourceOperation(resource, resourceSet);
     }
-    
+
     /**
      * Loads a resource and returns a ResourceOperation for cleanup.
      */
@@ -169,13 +174,13 @@ public abstract class AbstractStorageHelper implements AutoCloseable {
         }
         return new ResourceOperation(resource, resourceSet);
     }
-    
+
     /**
-     * Serializes an EObject to storage using EMF resources.
-     * The storage-specific implementation handles the actual writing.
-     * Returns the storage id
+     * Serializes an EObject to storage using EMF resources. The storage-specific
+     * implementation handles the actual writing. Returns the storage id
      */
-    public void saveEObject(String scope, String registry, String stage, String objectId, EObject object, ObjectMetadata metadata) throws IOException {
+    public void saveEObject(String scope, String registry, String stage, String objectId, EObject object,
+            ObjectMetadata metadata) throws IOException {
         String fileExtension = getFileExtension(metadata);
         String contentType = getContentType(metadata);
 
@@ -193,49 +198,50 @@ public abstract class AbstractStorageHelper implements AutoCloseable {
             objectOp.cleanup();
         }
     }
-    
+
     /**
      * Serializes metadata to storage as XMI.
      */
-    public void saveMetadata(String scope, String registry, String stage, String objectId, ObjectMetadata metadata) throws IOException {
-        
+    public void saveMetadata(String scope, String registry, String stage, String objectId, ObjectMetadata metadata)
+            throws IOException {
+
         validateMetadata(objectId, metadata);
         String metadataPath = buildMetadataPath(scope, registry, stage, objectId);
         URI metadataUri = createStorageURI(scope, registry, stage, metadataPath);
-        
+
         ResourceOperation metadataOp = createResource(metadataUri, null);
         try {
             metadataOp.getResource().getContents().add(metadata);
             metadataOp.getResource().save(Collections.emptyMap());
-            
+
             // Let storage implementation handle the actual persistence
             persistResource(metadataPath, metadataOp.getResource());
         } finally {
             metadataOp.cleanup();
         }
     }
-    
+
     protected void validateMetadata(String objectId, ObjectMetadata metadata) {
-    	Objects.requireNonNull(objectId, "Cannot save metadata - objectId cannot be null");
+        Objects.requireNonNull(objectId, "Cannot save metadata - objectId cannot be null");
         Objects.requireNonNull(metadata, "Cannot save metadata - metadata cannot be null");
-        
+
         if (objectId.isEmpty()) {
             throw new IllegalArgumentException("Cannot save metadata - objectId cannot be empty");
         }
-        
+
         // CRITICAL: Ensure metadata always has objectId before persistence
         if (Objects.isNull(metadata.getObjectId()) || metadata.getObjectId().isEmpty()) {
             metadata.setObjectId(objectId);
             LOGGER.fine("Set objectId in metadata before saving: " + objectId);
         }
-        
+
         // Validate that objectId matches the storage path
         if (!Objects.equals(objectId, metadata.getObjectId())) {
-            throw new IllegalStateException("Metadata objectId (" + metadata.getObjectId() + 
-                                          ") does not match storage objectId (" + objectId + ")");
+            throw new IllegalStateException("Metadata objectId (" + metadata.getObjectId()
+                    + ") does not match storage objectId (" + objectId + ")");
         }
     }
-    
+
     /**
      * Loads an EObject from storage, automatically detecting the file extension.
      */
@@ -244,7 +250,7 @@ public abstract class AbstractStorageHelper implements AutoCloseable {
         if (objectPath == null) {
             return null;
         }
-        
+
         URI objectUri = createStorageURI(scope, registry, stage, objectPath);
         ResourceOperation operation = loadResource(objectUri);
         try {
@@ -256,26 +262,27 @@ public abstract class AbstractStorageHelper implements AutoCloseable {
             operation.cleanup();
         }
     }
-    
+
     public List<ObjectMetadata> loadAllMetadata() throws IOException {
-    	return loadAllStoredMetadata();
+        return loadAllStoredMetadata();
     }
-    
+
     /**
      * Loads metadata from storage.
      */
-    public ObjectMetadata loadMetadata(String scope, String registry, String stage, String objectId) throws IOException {
+    public ObjectMetadata loadMetadata(String scope, String registry, String stage, String objectId)
+            throws IOException {
         Objects.requireNonNull(objectId, "Cannot load metadata - objectId cannot be null");
-        
+
         if (objectId.isEmpty()) {
             throw new IllegalArgumentException("Cannot load metadata - objectId cannot be empty");
         }
-        
+
         String metadataPath = buildMetadataPath(scope, registry, stage, objectId);
         if (!storageExists(scope, registry, stage, metadataPath)) {
             return null;
         }
-        
+
         URI metadataUri = createStorageURI(scope, registry, stage, metadataPath);
         ResourceOperation operation = loadResource(metadataUri);
         try {
@@ -283,131 +290,138 @@ public abstract class AbstractStorageHelper implements AutoCloseable {
                 return null;
             }
             EObject eObject = operation.getResource().getContents().get(0);
-            
-            // Resolve all proxies to ensure containment references (like properties EMap) are properly loaded
+
+            // Resolve all proxies to ensure containment references (like properties EMap)
+            // are properly loaded
             ObjectMetadata metadata = (ObjectMetadata) eObject;
-            
-           checkMetadataConsistency(objectId, metadata);
-            
+
+            checkMetadataConsistency(objectId, metadata);
+
             return metadata;
         } finally {
             operation.cleanup();
         }
     }
-    
+
     protected void checkMetadataConsistency(String objectId, ObjectMetadata metadata) {
-    	 // CRITICAL: Validate data integrity - metadata must have objectId
+        // CRITICAL: Validate data integrity - metadata must have objectId
         if (Objects.isNull(metadata.getObjectId()) || metadata.getObjectId().isEmpty()) {
-            throw new IllegalStateException("Data integrity violation: loaded metadata for objectId '" + 
-                                          objectId + "' has no objectId set. This indicates a fundamental storage error.");
+            throw new IllegalStateException("Data integrity violation: loaded metadata for objectId '" + objectId
+                    + "' has no objectId set. This indicates a fundamental storage error.");
         }
-        
+
         // Validate that the loaded objectId matches the requested objectId
         if (!Objects.equals(objectId, metadata.getObjectId())) {
-            throw new IllegalStateException("Data integrity violation: loaded metadata objectId '" + 
-                                          metadata.getObjectId() + "' does not match requested objectId '" + objectId + "'");
+            throw new IllegalStateException("Data integrity violation: loaded metadata objectId '"
+                    + metadata.getObjectId() + "' does not match requested objectId '" + objectId + "'");
         }
-        
+
     }
-    
+
     /**
      * Builds the storage path for an object with the given extension.
      */
     protected String buildObjectPath(String scope, String registry, String stage, String objectId, String extension) {
         return objectId + extension;
     }
-    
+
     /**
      * Builds the storage path for metadata.
      */
     protected String buildMetadataPath(String scope, String registry, String stage, String objectId) {
         return objectId + METADATA_EXTENSION;
     }
-    
-    
+
     // Abstract methods to be implemented by storage-specific classes
-    
+
     /**
-     * Creates a storage-appropriate URI for the given path.
-     * File storage uses file:// URIs, S3 storage might use s3:// or custom schemes.
+     * Creates a storage-appropriate URI for the given path. File storage uses
+     * file:// URIs, S3 storage might use s3:// or custom schemes.
      */
     protected abstract URI createStorageURI(String scope, String registry, String stage, String path);
-    
+
     /**
-     * Persists a resource to the storage backend.
-     * This is called after EMF serialization to handle storage-specific operations.
+     * Persists a resource to the storage backend. This is called after EMF
+     * serialization to handle storage-specific operations.
      */
     protected abstract void persistResource(String path, Resource resource) throws IOException;
-    
-    
-    
+
     /**
      * Checks if a resource exists in storage.
      */
-    protected abstract boolean storageExists(String scope, String registry, String stage, String path) throws IOException;
-    
+    protected abstract boolean storageExists(String scope, String registry, String stage, String path)
+            throws IOException;
+
     /**
-     * Finds the storage path for an object, regardless of extension.
-     * Returns null if no object found.
+     * Finds the storage path for an object, regardless of extension. Returns null
+     * if no object found.
      */
-    protected abstract String findObjectPath(String scope, String registry, String stage, String objectId) throws IOException;
-    
+    protected abstract String findObjectPath(String scope, String registry, String stage, String objectId)
+            throws IOException;
+
     /**
      * This is needed for initial indexing of existing objects
-     * @return a list of all ObjectMetadata that are stored in the storage 
+     * 
+     * @return a list of all ObjectMetadata that are stored in the storage
      * @throws IOException
      */
     protected abstract List<ObjectMetadata> loadAllStoredMetadata() throws IOException;
-    
+
     /**
-     * Deletes all storage resources associated with an object ID.
-     * Should delete both the object and metadata files.
+     * Deletes all storage resources associated with an object ID. Should delete
+     * both the object and metadata files.
      */
-    public abstract boolean deleteObject(String scope, String registry, String stage, String objectId) throws IOException;
-    
+    public abstract boolean deleteObject(String scope, String registry, String stage, String objectId)
+            throws IOException;
+
     /**
      * Lists all object IDs in storage.
      */
     public abstract List<String> listObjectIds(String scope, String registry, String stage) throws IOException;
-    
+
     /**
-     * Checks if an object exists in storage.
-     * This method checks for the existence of either the object file or metadata.
+     * Checks if an object exists in storage. This method checks for the existence
+     * of either the object file or metadata.
      */
     public boolean objectExists(String scope, String registry, String stage, String objectId) throws IOException {
         if (objectId == null || objectId.isEmpty()) {
             return false;
         }
-        
+
         // Check if metadata exists (most reliable indicator)
         String metadataPath = buildMetadataPath(scope, registry, stage, objectId);
         if (storageExists(scope, registry, stage, metadataPath)) {
             return true;
         }
-        
+
         // Fallback: check if object file exists with any extension
         String objectPath = findObjectPath(scope, registry, stage, objectId);
         return objectPath != null;
     }
-    
+
     /**
-     * Template method for subclasses to clean up storage-specific resources.
-     * Called during close() to allow storage implementations to cleanup
-     * their specific resources (connections, indexes, file handles, etc.).
+     * Template method for subclasses to clean up storage-specific resources. Called
+     * during close() to allow storage implementations to cleanup their specific
+     * resources (connections, indexes, file handles, etc.).
      * 
-     * <p>Default implementation does nothing. Override only if storage-specific cleanup is needed.</p>
+     * <p>
+     * Default implementation does nothing. Override only if storage-specific
+     * cleanup is needed.
+     * </p>
      * 
      * @throws Exception if cleanup fails
      */
     protected void closeStorageResources() throws Exception {
         // Default implementation - no cleanup needed
     }
-    
+
     /**
-     * Closes the storage helper and releases any resources.
-     * Implements AutoCloseable contract for proper resource management.
+     * Closes the storage helper and releases any resources. Implements
+     * AutoCloseable contract for proper resource management.
      * 
-     * <p>This method:</p>
+     * <p>
+     * This method:
+     * </p>
      * <ul>
      * <li>Calls {@link #closeStorageResources()} for subclass-specific cleanup</li>
      * <li>Unloads and clears all EMF resources from the ResourceSet</li>
@@ -417,7 +431,7 @@ public abstract class AbstractStorageHelper implements AutoCloseable {
     @Override
     public void close() throws Exception {
         LOGGER.info("Closing storage helper: " + getClass().getSimpleName());
-        
+
         try {
             // First, let subclasses clean up their specific resources
             closeStorageResources();
@@ -425,7 +439,7 @@ public abstract class AbstractStorageHelper implements AutoCloseable {
             LOGGER.log(Level.SEVERE, "Failed to close storage-specific resources", e);
             // Continue with ResourceSet cleanup even if storage cleanup fails
         }
-        
+
         try {
             // Clean up EMF ResourceSet
             synchronized (resourceSet) {

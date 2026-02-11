@@ -17,10 +17,9 @@ import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.ConfigurationPolicy;
 import org.osgi.service.http.whiteboard.propertytypes.HttpWhiteboardResource;
 
-@HttpWhiteboardResource(pattern =  "to_be_defined_by_configuration", prefix = "/swagger-api")
+@HttpWhiteboardResource(pattern = "to_be_defined_by_configuration", prefix = "/swagger-api")
 @Component(name = SwaggerResources.COMPONENT_NAME, service = SwaggerResources.class, configurationPolicy = ConfigurationPolicy.REQUIRE)
 public class SwaggerResources {
-	
-	public static final String COMPONENT_NAME = "SwaggerResources";
-}
 
+    public static final String COMPONENT_NAME = "SwaggerResources";
+}

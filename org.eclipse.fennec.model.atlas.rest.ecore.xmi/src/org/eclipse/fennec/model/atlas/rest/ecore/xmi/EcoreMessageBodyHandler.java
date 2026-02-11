@@ -65,145 +65,145 @@ import jakarta.ws.rs.ext.MessageBodyWriter;
  */
 @Component(service = { MessageBodyReader.class, MessageBodyWriter.class }, scope = ServiceScope.PROTOTYPE)
 @JakartarsExtension
-@JakartarsApplicationSelect("(|(emf=true)("+ JakartarsWhiteboardConstants.JAKARTA_RS_NAME + "=.default))")
+@JakartarsApplicationSelect("(|(emf=true)(" + JakartarsWhiteboardConstants.JAKARTA_RS_NAME + "=.default))")
 @JakartarsName("EcoreMessageBodyHandler")
 @Consumes({ "application/xmi", "application/xml" })
 @Produces({ "application/xmi", "application/xml" })
 public class EcoreMessageBodyHandler implements MessageBodyReader<EPackage>, MessageBodyWriter<EPackage> {
 
-  private static final Logger logger = Logger.getLogger(EcoreMessageBodyHandler.class.getName());
+    private static final Logger logger = Logger.getLogger(EcoreMessageBodyHandler.class.getName());
 
-  @Reference(scope = ReferenceScope.PROTOTYPE_REQUIRED)
-  private ComponentServiceObjects<ResourceSet> resourceSetFactory;
+    @Reference(scope = ReferenceScope.PROTOTYPE_REQUIRED)
+    private ComponentServiceObjects<ResourceSet> resourceSetFactory;
 
-  // ========== MessageBodyReader Implementation ==========
+    // ========== MessageBodyReader Implementation ==========
 
-  @Override
-  public boolean isReadable(Class<?> type, Type genericType, Annotation[] annotations, MediaType mediaType) {
-    // Support EObject and its subclasses for XMI content types
-    boolean isEObject = EPackage.class.isAssignableFrom(type);
-    boolean isXMI = isXMI(mediaType);
+    @Override
+    public boolean isReadable(Class<?> type, Type genericType, Annotation[] annotations, MediaType mediaType) {
+        // Support EObject and its subclasses for XMI content types
+        boolean isEObject = EPackage.class.isAssignableFrom(type);
+        boolean isXMI = isXMI(mediaType);
 
-    logger.log(Level.FINE, "isReadable check: type={0}, mediaType={1}, result={2}",
-        new Object[] { type.getSimpleName(), mediaType, isEObject && isXMI });
+        logger.log(Level.FINE, "isReadable check: type={0}, mediaType={1}, result={2}",
+                new Object[] { type.getSimpleName(), mediaType, isEObject && isXMI });
 
-    return isEObject && isXMI;
-  }
+        return isEObject && isXMI;
+    }
 
-  /**
-   * @param mediaType
-   * @return
-   */
-  private boolean isXMI(MediaType mediaType) {
-    return "application".equals(mediaType.getType())
-        && ("xmi".equals(mediaType.getSubtype()) || "xml".equals(mediaType.getSubtype()));
-  }
+    /**
+     * @param mediaType
+     * @return
+     */
+    private boolean isXMI(MediaType mediaType) {
+        return "application".equals(mediaType.getType())
+                && ("xmi".equals(mediaType.getSubtype()) || "xml".equals(mediaType.getSubtype()));
+    }
 
-  @Override
-  public EPackage readFrom(Class<EPackage> type, Type genericType, Annotation[] annotations, MediaType mediaType,
-      MultivaluedMap<String, String> httpHeaders, InputStream entityStream)
-      throws IOException, WebApplicationException {
+    @Override
+    public EPackage readFrom(Class<EPackage> type, Type genericType, Annotation[] annotations, MediaType mediaType,
+            MultivaluedMap<String, String> httpHeaders, InputStream entityStream)
+            throws IOException, WebApplicationException {
 
-    logger.log(Level.INFO, "Reading EObject from XMI: type={0}, mediaType={1}",
-        new Object[] { type.getSimpleName(), mediaType });
+        logger.log(Level.INFO, "Reading EObject from XMI: type={0}, mediaType={1}",
+                new Object[] { type.getSimpleName(), mediaType });
 
-    ResourceSet resourceSet = resourceSetFactory.getService();
-    try {
+        ResourceSet resourceSet = resourceSetFactory.getService();
+        try {
 
-      // Use ABSOLUTE URI to prevent "resolve against non-hierarchical or relative
-      // base" error
-      URI absoluteURI = URI.createURI("temp://governance/" + System.currentTimeMillis() + ".xmi");
-      Resource resource = resourceSet.createResource(absoluteURI);
+            // Use ABSOLUTE URI to prevent "resolve against non-hierarchical or relative
+            // base" error
+            URI absoluteURI = URI.createURI("temp://governance/" + System.currentTimeMillis() + ".xmi");
+            Resource resource = resourceSet.createResource(absoluteURI);
 
-      // Configure XMI loading options for robust parsing
-      Map<Object, Object> options = new HashMap<>();
+            // Configure XMI loading options for robust parsing
+            Map<Object, Object> options = new HashMap<>();
 
-      // Additional XMI loading options for robust parsing
-      options.put(XMLResource.OPTION_DEFER_ATTACHMENT, Boolean.TRUE);
-      options.put(XMLResource.OPTION_DEFER_IDREF_RESOLUTION, Boolean.TRUE);
-      options.put(XMLResource.OPTION_LAX_FEATURE_PROCESSING, Boolean.TRUE);
-      options.put(XMLResource.OPTION_RECORD_UNKNOWN_FEATURE, Boolean.TRUE);
+            // Additional XMI loading options for robust parsing
+            options.put(XMLResource.OPTION_DEFER_ATTACHMENT, Boolean.TRUE);
+            options.put(XMLResource.OPTION_DEFER_IDREF_RESOLUTION, Boolean.TRUE);
+            options.put(XMLResource.OPTION_LAX_FEATURE_PROCESSING, Boolean.TRUE);
+            options.put(XMLResource.OPTION_RECORD_UNKNOWN_FEATURE, Boolean.TRUE);
 
-      // Load the XMI content
-      resource.load(entityStream, options);
+            // Load the XMI content
+            resource.load(entityStream, options);
 
-      // Check for loading errors
-      if (!resource.getErrors().isEmpty()) {
-        StringBuilder errorMsg = new StringBuilder("XMI loading errors: ");
-        for (Resource.Diagnostic error : resource.getErrors()) {
-          errorMsg.append(error.getMessage()).append("; ");
+            // Check for loading errors
+            if (!resource.getErrors().isEmpty()) {
+                StringBuilder errorMsg = new StringBuilder("XMI loading errors: ");
+                for (Resource.Diagnostic error : resource.getErrors()) {
+                    errorMsg.append(error.getMessage()).append("; ");
+                }
+                logger.log(Level.SEVERE, errorMsg.toString());
+                throw new IOException("XMI loading failed: " + errorMsg.toString());
+            }
+
+            // Get the root EObject
+            if (resource.getContents().isEmpty()) {
+                throw new IOException("No content found in XMI resource");
+            }
+
+            EObject rootObject = resource.getContents().get(0);
+            logger.log(Level.INFO, "Successfully loaded EObject: {0}", rootObject.getClass().getSimpleName());
+
+            return (EPackage) rootObject;
+
+        } catch (Exception e) {
+            logger.log(Level.SEVERE, "Error deserializing XMI content", e);
+
+            String errorText = String.format("[%s] Error de-serializing incoming data: %s", genericType.getTypeName(),
+                    e.getMessage());
+            Response errorResponse = Response.serverError().entity(errorText).type(MediaType.TEXT_PLAIN).build();
+            throw new WebApplicationException(e, errorResponse);
+        } finally {
+            resourceSetFactory.ungetService(resourceSet);
         }
-        logger.log(Level.SEVERE, errorMsg.toString());
-        throw new IOException("XMI loading failed: " + errorMsg.toString());
-      }
-
-      // Get the root EObject
-      if (resource.getContents().isEmpty()) {
-        throw new IOException("No content found in XMI resource");
-      }
-
-      EObject rootObject = resource.getContents().get(0);
-      logger.log(Level.INFO, "Successfully loaded EObject: {0}", rootObject.getClass().getSimpleName());
-
-      return (EPackage) rootObject;
-
-    } catch (Exception e) {
-      logger.log(Level.SEVERE, "Error deserializing XMI content", e);
-
-      String errorText = String.format("[%s] Error de-serializing incoming data: %s", genericType.getTypeName(),
-          e.getMessage());
-      Response errorResponse = Response.serverError().entity(errorText).type(MediaType.TEXT_PLAIN).build();
-      throw new WebApplicationException(e, errorResponse);
-    } finally {
-      resourceSetFactory.ungetService(resourceSet);
     }
-  }
 
-  // ========== MessageBodyWriter Implementation ==========
+    // ========== MessageBodyWriter Implementation ==========
 
-  @Override
-  public boolean isWriteable(Class<?> type, Type genericType, Annotation[] annotations, MediaType mediaType) {
-    return isReadable(type, genericType, annotations, mediaType);
-  }
-
-  @Override
-  public void writeTo(EPackage eObject, Class<?> type, Type genericType, Annotation[] annotations, MediaType mediaType,
-      MultivaluedMap<String, Object> httpHeaders, OutputStream entityStream)
-      throws IOException, WebApplicationException {
-
-    logger.log(Level.INFO, "Writing EObject to XMI: type={0}, mediaType={1}",
-        new Object[] { eObject.getClass().getSimpleName(), mediaType });
-
-    ResourceSet resourceSet = resourceSetFactory.getService();
-    try {
-
-      // Use ABSOLUTE URI for consistent behavior
-      String fileName = eObject.getName() + (isXMI(mediaType) ? ".xmi" : ".xml");
-      httpHeaders.put(HttpHeaders.CONTENT_DISPOSITION, List.of("attachment; filename=" + fileName));
-      URI absoluteURI = URI.createURI(fileName);
-      Resource resource = resourceSet.createResource(absoluteURI);
-      resource.getContents().add(eObject);
-
-      // Configure XMI saving options
-      Map<Object, Object> options = new HashMap<>();
-      options.put(XMLResource.OPTION_ENCODING, "UTF-8");
-      options.put(XMLResource.OPTION_XML_VERSION, "1.0");
-      options.put(XMLResource.OPTION_DECLARE_XML, Boolean.TRUE);
-
-      // Save to output stream
-      resource.save(entityStream, options);
-
-      logger.log(Level.INFO, "Successfully serialized EObject to XMI");
-
-    } catch (Exception e) {
-      logger.log(Level.SEVERE, "Error serializing EObject to XMI", e);
-
-      String errorText = String.format("Error serializing [%s] to XMI: %s", eObject.getClass().getSimpleName(),
-          e.getMessage());
-      Response errorResponse = Response.serverError().entity(errorText).type(MediaType.TEXT_PLAIN).build();
-      throw new WebApplicationException(e, errorResponse);
-    } finally {
-      resourceSetFactory.ungetService(resourceSet);
+    @Override
+    public boolean isWriteable(Class<?> type, Type genericType, Annotation[] annotations, MediaType mediaType) {
+        return isReadable(type, genericType, annotations, mediaType);
     }
-  }
+
+    @Override
+    public void writeTo(EPackage eObject, Class<?> type, Type genericType, Annotation[] annotations,
+            MediaType mediaType, MultivaluedMap<String, Object> httpHeaders, OutputStream entityStream)
+            throws IOException, WebApplicationException {
+
+        logger.log(Level.INFO, "Writing EObject to XMI: type={0}, mediaType={1}",
+                new Object[] { eObject.getClass().getSimpleName(), mediaType });
+
+        ResourceSet resourceSet = resourceSetFactory.getService();
+        try {
+
+            // Use ABSOLUTE URI for consistent behavior
+            String fileName = eObject.getName() + (isXMI(mediaType) ? ".xmi" : ".xml");
+            httpHeaders.put(HttpHeaders.CONTENT_DISPOSITION, List.of("attachment; filename=" + fileName));
+            URI absoluteURI = URI.createURI(fileName);
+            Resource resource = resourceSet.createResource(absoluteURI);
+            resource.getContents().add(eObject);
+
+            // Configure XMI saving options
+            Map<Object, Object> options = new HashMap<>();
+            options.put(XMLResource.OPTION_ENCODING, "UTF-8");
+            options.put(XMLResource.OPTION_XML_VERSION, "1.0");
+            options.put(XMLResource.OPTION_DECLARE_XML, Boolean.TRUE);
+
+            // Save to output stream
+            resource.save(entityStream, options);
+
+            logger.log(Level.INFO, "Successfully serialized EObject to XMI");
+
+        } catch (Exception e) {
+            logger.log(Level.SEVERE, "Error serializing EObject to XMI", e);
+
+            String errorText = String.format("Error serializing [%s] to XMI: %s", eObject.getClass().getSimpleName(),
+                    e.getMessage());
+            Response errorResponse = Response.serverError().entity(errorText).type(MediaType.TEXT_PLAIN).build();
+            throw new WebApplicationException(e, errorResponse);
+        } finally {
+            resourceSetFactory.ungetService(resourceSet);
+        }
+    }
 }

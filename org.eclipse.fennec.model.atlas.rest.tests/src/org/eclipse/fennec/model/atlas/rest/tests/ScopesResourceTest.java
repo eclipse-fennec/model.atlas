@@ -48,7 +48,9 @@ import jakarta.ws.rs.core.Response;
 /**
  * Integration tests for ScopesResource REST endpoints.
  *
- * <p>Tests cover:</p>
+ * <p>
+ * Tests cover:
+ * </p>
  * <ul>
  * <li>Listing all available scopes</li>
  * <li>Retrieving a specific scope by name</li>
@@ -86,9 +88,7 @@ public class ScopesResourceTest {
         serviceProps.put("service.ranking", Integer.MAX_VALUE);
 
         mockScopeCollector = new MockScopeServiceCollector();
-        mockScopeCollectorRegistration = context.registerService(
-                ScopeServiceCollector.class,
-                mockScopeCollector,
+        mockScopeCollectorRegistration = context.registerService(ScopeServiceCollector.class, mockScopeCollector,
                 serviceProps);
 
         // Small delay to allow service registration to propagate
@@ -98,9 +98,8 @@ public class ScopesResourceTest {
         ResourceAware resourceAware = ResourceAware.create(context, "ScopesResource");
         boolean resourceReady = resourceAware.waitForResource(15, TimeUnit.SECONDS);
 
-        assertTrue(resourceReady,
-                "ScopesResource should be registered within 15 seconds. " +
-                "Check that the resource is properly configured and the Jakarta REST runtime is working.");
+        assertTrue(resourceReady, "ScopesResource should be registered within 15 seconds. "
+                + "Check that the resource is properly configured and the Jakarta REST runtime is working.");
     }
 
     @AfterEach
@@ -123,11 +122,7 @@ public class ScopesResourceTest {
 
     @Test
     public void testListScopes_Success() {
-        Response response = restClient
-                .target(BASE_URL)
-                .path("scopes")
-                .request("application/json")
-                .get();
+        Response response = restClient.target(BASE_URL).path("scopes").request("application/json").get();
 
         assertEquals(200, response.getStatus(), "Should return HTTP 200 OK");
 
@@ -139,11 +134,7 @@ public class ScopesResourceTest {
 
     @Test
     public void testListScopes_ContainsScopeDetails() {
-        Response response = restClient
-                .target(BASE_URL)
-                .path("scopes")
-                .request("application/json")
-                .get();
+        Response response = restClient.target(BASE_URL).path("scopes").request("application/json").get();
 
         assertEquals(200, response.getStatus(), "Should return HTTP 200 OK");
 
@@ -157,11 +148,7 @@ public class ScopesResourceTest {
 
     @Test
     public void testListScopes_ReturnsNonEmptyList() {
-        Response response = restClient
-                .target(BASE_URL)
-                .path("scopes")
-                .request("application/json")
-                .get();
+        Response response = restClient.target(BASE_URL).path("scopes").request("application/json").get();
 
         assertEquals(200, response.getStatus(), "Should return HTTP 200 OK");
 
@@ -176,12 +163,8 @@ public class ScopesResourceTest {
 
     @Test
     public void testGetScope_NotFound() {
-        Response response = restClient
-                .target(BASE_URL)
-                .path("scopes")
-                .path("non-existent-scope")
-                .request("application/json")
-                .get();
+        Response response = restClient.target(BASE_URL).path("scopes").path("non-existent-scope")
+                .request("application/json").get();
 
         assertEquals(404, response.getStatus(), "Should return HTTP 404 Not Found for non-existent scope");
     }
@@ -190,27 +173,17 @@ public class ScopesResourceTest {
     public void testGetScope_EmptyName() {
         // Note: This tests behavior with an empty path segment
         // The behavior depends on how the REST framework handles empty path params
-        Response response = restClient
-                .target(BASE_URL)
-                .path("scopes")
-                .path("")
-                .request("application/json")
-                .get();
+        Response response = restClient.target(BASE_URL).path("scopes").path("").request("application/json").get();
 
         // Empty path segment typically results in listing all scopes (same as /scopes/)
         int status = response.getStatus();
-        assertTrue(status == 200,
-                "Empty scope name should return 200 (dwfault to the all scope endpoint)");
+        assertTrue(status == 200, "Empty scope name should return 200 (dwfault to the all scope endpoint)");
     }
 
     @Test
     public void testGetScope_WithSpecialCharacters() {
-        Response response = restClient
-                .target(BASE_URL)
-                .path("scopes")
-                .path("scope-with-special-chars!@#")
-                .request("application/json")
-                .get();
+        Response response = restClient.target(BASE_URL).path("scopes").path("scope-with-special-chars!@#")
+                .request("application/json").get();
 
         assertEquals(404, response.getStatus(),
                 "Should return HTTP 404 Not Found for non-existent scope with special characters");
@@ -220,35 +193,25 @@ public class ScopesResourceTest {
 
     @Test
     public void testListScopes_AcceptsJsonContentType() {
-        Response response = restClient
-                .target(BASE_URL)
-                .path("scopes")
-                .request("application/json")
-                .get();
+        Response response = restClient.target(BASE_URL).path("scopes").request("application/json").get();
 
         assertEquals(200, response.getStatus(), "Should accept application/json content type");
 
         String contentType = response.getHeaderString("Content-Type");
         assertNotNull(contentType, "Response should have Content-Type header");
-        assertTrue(contentType.contains("application/json"),
-                "Response Content-Type should be application/json");
+        assertTrue(contentType.contains("application/json"), "Response Content-Type should be application/json");
     }
 
     @Test
     public void testGetScope_AcceptsJsonContentType() {
-        Response response = restClient
-                .target(BASE_URL)
-                .path("scopes")
-                .path(TEST_SCOPE_NAME)
-                .request("application/json")
+        Response response = restClient.target(BASE_URL).path("scopes").path(TEST_SCOPE_NAME).request("application/json")
                 .get();
 
         assertEquals(200, response.getStatus(), "Should accept application/json content type");
 
         String contentType = response.getHeaderString("Content-Type");
         assertNotNull(contentType, "Response should have Content-Type header");
-        assertTrue(contentType.contains("application/json"),
-                "Response Content-Type should be application/json");
+        assertTrue(contentType.contains("application/json"), "Response Content-Type should be application/json");
     }
 
     // ========== Case Sensitivity Tests ==========
@@ -256,27 +219,18 @@ public class ScopesResourceTest {
     @Test
     public void testGetScope_CaseSensitive() {
         // Test that scope names are case-sensitive
-        Response response = restClient
-                .target(BASE_URL)
-                .path("scopes")
-                .path("TEST-SCOPE") // Uppercase version of test-scope
-                .request("application/json")
-                .get();
+        Response response = restClient.target(BASE_URL).path("scopes").path("TEST-SCOPE") // Uppercase version of
+                                                                                          // test-scope
+                .request("application/json").get();
 
-        assertEquals(404, response.getStatus(),
-                "Scope lookup should be case-sensitive and return 404 for wrong case");
+        assertEquals(404, response.getStatus(), "Scope lookup should be case-sensitive and return 404 for wrong case");
     }
 
     @Test
     public void testGetScope_MixedCase() {
-        Response response = restClient
-                .target(BASE_URL)
-                .path("scopes")
-                .path("Test-Scope") // Mixed case
-                .request("application/json")
-                .get();
+        Response response = restClient.target(BASE_URL).path("scopes").path("Test-Scope") // Mixed case
+                .request("application/json").get();
 
-        assertEquals(404, response.getStatus(),
-                "Scope lookup should be case-sensitive and return 404 for mixed case");
+        assertEquals(404, response.getStatus(), "Scope lookup should be case-sensitive and return 404 for mixed case");
     }
 }

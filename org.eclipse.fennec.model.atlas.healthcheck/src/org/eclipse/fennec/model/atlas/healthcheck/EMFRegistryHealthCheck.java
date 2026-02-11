@@ -27,31 +27,28 @@ import org.osgi.service.component.annotations.ServiceScope;
  *
  * @since 1.0
  */
-@Component(scope = ServiceScope.PROTOTYPE,
-	property = {
-        	HealthCheck.NAME + "=EMF Registry",
-        	HealthCheck.TAGS + "=atlas,readiness"
-})
+@Component(scope = ServiceScope.PROTOTYPE, property = { HealthCheck.NAME + "=EMF Registry",
+        HealthCheck.TAGS + "=atlas,readiness" })
 public class EMFRegistryHealthCheck implements HealthCheck {
 
-	@Reference(cardinality = ReferenceCardinality.OPTIONAL)
-	private ResourceSet resourceSet;
+    @Reference(cardinality = ReferenceCardinality.OPTIONAL)
+    private ResourceSet resourceSet;
 
-	@Override
-	public Result execute() {
-		FormattingResultLog log = new FormattingResultLog();
+    @Override
+    public Result execute() {
+        FormattingResultLog log = new FormattingResultLog();
 
-		if (resourceSet == null) {
-			log.critical("ResourceSet service not available");
-		} else {
-			int packageCount = resourceSet.getPackageRegistry().size();
-			if (packageCount > 0) {
-				log.info("EMF Registry contains {} EPackages", packageCount);
-			} else {
-				log.warn("EMF Registry is empty - no EPackages registered");
-			}
-		}
+        if (resourceSet == null) {
+            log.critical("ResourceSet service not available");
+        } else {
+            int packageCount = resourceSet.getPackageRegistry().size();
+            if (packageCount > 0) {
+                log.info("EMF Registry contains {} EPackages", packageCount);
+            } else {
+                log.warn("EMF Registry is empty - no EPackages registered");
+            }
+        }
 
-		return new Result(log);
-	}
+        return new Result(log);
+    }
 }

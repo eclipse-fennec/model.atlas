@@ -23,16 +23,14 @@ import org.osgi.service.component.annotations.Component;
  *
  * @since 1.0
  */
-@Component(service = HealthCheck.class, property = {
-	HealthCheck.NAME + "=Liveness",
-	HealthCheck.TAGS + "=atlas,liveness"
-})
+@Component(service = HealthCheck.class, property = { HealthCheck.NAME + "=Liveness",
+        HealthCheck.TAGS + "=atlas,liveness" })
 public class LivenessHealthCheck implements HealthCheck {
 
-	@Override
-	public Result execute() {
-		FormattingResultLog log = new FormattingResultLog();
-		log.info("Model Atlas is alive");
-		return new Result(log);
-	}
+    @Override
+    public Result execute() {
+        FormattingResultLog log = new FormattingResultLog();
+        log.info("Model Atlas is alive");
+        return new Result(log);
+    }
 }

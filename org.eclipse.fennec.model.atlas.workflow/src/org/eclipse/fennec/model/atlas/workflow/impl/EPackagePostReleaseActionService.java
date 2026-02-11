@@ -37,19 +37,27 @@ import org.osgi.util.promise.Promise;
 import org.osgi.util.promise.PromiseFactory;
 
 /**
- * Implementation of {@link PostReleaseActionService} specialized for EPackage objects.
+ * Implementation of {@link PostReleaseActionService} specialized for EPackage
+ * objects.
  * 
- * <p>This service performs the following post-release actions for EPackages:</p>
+ * <p>
+ * This service performs the following post-release actions for EPackages:
+ * </p>
  * <ul>
- * <li>Registers the EPackage in the OSGi EMF registry using {@link DynamicEPackageRegistrationService}</li>
+ * <li>Registers the EPackage in the OSGi EMF registry using
+ * {@link DynamicEPackageRegistrationService}</li>
  * <li>Makes the EPackage available to other EMF components</li>
  * <li>Tracks registration status for audit purposes</li>
  * </ul>
  * 
- * <p>The service supports reversible operations, allowing EPackages to be unregistered
- * when they are removed from production.</p>
+ * <p>
+ * The service supports reversible operations, allowing EPackages to be
+ * unregistered when they are removed from production.
+ * </p>
  * 
- * <p><strong>Configuration:</strong></p>
+ * <p>
+ * <strong>Configuration:</strong>
+ * </p>
  * <ul>
  * <li>Automatic file extension detection from EPackage metadata</li>
  * <li>Version extraction from ObjectMetadata properties</li>
@@ -61,48 +69,54 @@ import org.osgi.util.promise.PromiseFactory;
  */
 @Component(name = "EPackagePostReleaseActionService", service = PostReleaseActionService.class, configurationPid = "EPackagePostReleaseActionService", configurationPolicy = ConfigurationPolicy.REQUIRE)
 public class EPackagePostReleaseActionService implements PostReleaseActionService {
-    
+
     private static final Logger logger = Logger.getLogger(EPackagePostReleaseActionService.class.getName());
-    
+
     @Reference
     private DynamicEPackageRegistrationService registrationService;
-    
+
     private EObjectStorageService<EPackage> releaseStorage;
-    
+
     private final PromiseFactory promiseFactory = new PromiseFactory(null);
     private final Map<String, PostReleaseActionInfoImpl> actionHistory = new ConcurrentHashMap<>();
-    
+
     @Activate
-    public EPackagePostReleaseActionService(@Reference(name = "releaseStorage", target = "(scope=no-inject)") EObjectStorageService<EPackage> releaseStorage) {
-		this.releaseStorage = releaseStorage;    	
+    public EPackagePostReleaseActionService(
+            @Reference(name = "releaseStorage", target = "(scope=no-inject)") EObjectStorageService<EPackage> releaseStorage) {
+        this.releaseStorage = releaseStorage;
     }
-    
-    /* 
+
+    /*
      * (non-Javadoc)
-     * @see org.eclipse.fennec.model.atlas.workflow.PostReleaseActionService#executePostReleaseActions(java.lang.String, java.lang.String, java.lang.String, java.lang.String, java.lang.String, java.lang.String, java.lang.String)
+     * 
+     * @see org.eclipse.fennec.model.atlas.workflow.PostReleaseActionService#
+     * executePostReleaseActions(java.lang.String, java.lang.String,
+     * java.lang.String, java.lang.String, java.lang.String, java.lang.String,
+     * java.lang.String)
      */
     @Override
-    public Promise<Void> executePostReleaseActions(String scope, String registry, String stage, String objectId, String objectType, String releaseUser, String releaseNotes) {
+    public Promise<Void> executePostReleaseActions(String scope, String registry, String stage, String objectId,
+            String objectType, String releaseUser, String releaseNotes) {
         requireNonNull(objectId, "Object ID cannot be null");
         requireNonNull(objectType, "Object type cannot be null");
         requireNonNull(releaseUser, "Release user cannot be null");
-        
+
         // Only handle EPackage objects
         if (!EcoreUtil.getURI(EcorePackage.Literals.EPACKAGE).toString().equals(objectType)) {
             logger.fine("Skipping post-release actions for non-EPackage object: " + objectType);
             return promiseFactory.resolved(null);
         }
-        
+
         logger.info("Executing post-release actions for EPackage: " + objectId);
-        
+
         Deferred<Void> deferred = promiseFactory.deferred();
-        
+
         // Execute asynchronously to avoid blocking the release workflow
         executeAsync(() -> {
             try {
                 PostReleaseActionInfoImpl actionInfo = new PostReleaseActionInfoImpl(objectId, releaseUser);
                 actionHistory.put(objectId, actionInfo);
-                
+
                 // 1. Load the released EPackage
                 EPackage ePackage = loadEPackage(scope, registry, stage, objectId);
                 if (ePackage == null) {
@@ -112,12 +126,13 @@ public class EPackagePostReleaseActionService implements PostReleaseActionServic
                     deferred.fail(new IllegalStateException(error));
                     return;
                 }
-                
+
                 // 2. Extract metadata for registration
-                ObjectMetadata metadata = getPromiseValue(releaseStorage.retrieveMetadata(scope, registry, stage, objectId));
+                ObjectMetadata metadata = getPromiseValue(
+                        releaseStorage.retrieveMetadata(scope, registry, stage, objectId));
                 String fileExtension = extractFileExtension(metadata, ePackage);
                 String version = extractVersion(metadata, ePackage);
-                
+
                 // 3. Register EPackage in OSGi EMF registry
                 boolean registered = registrationService.registerEPackage(ePackage, fileExtension, version);
                 if (!registered) {
@@ -127,58 +142,63 @@ public class EPackagePostReleaseActionService implements PostReleaseActionServic
                     deferred.fail(new IllegalStateException(error));
                     return;
                 }
-                
+
                 // 4. Mark as successful
-                String details = String.format("Registered EPackage: nsURI=%s, name=%s, version=%s, fileExt=%s", 
-                                              ePackage.getNsURI(), ePackage.getName(), version, fileExtension);
+                String details = String.format("Registered EPackage: nsURI=%s, name=%s, version=%s, fileExt=%s",
+                        ePackage.getNsURI(), ePackage.getName(), version, fileExtension);
                 actionInfo.markSuccessful(details);
-                
-                logger.info("Successfully completed post-release actions for EPackage: " + objectId + 
-                           " (nsURI: " + ePackage.getNsURI() + ")");
+
+                logger.info("Successfully completed post-release actions for EPackage: " + objectId + " (nsURI: "
+                        + ePackage.getNsURI() + ")");
                 deferred.resolve(null);
-                
+
             } catch (Exception e) {
                 String error = "Post-release actions failed for EPackage: " + objectId;
                 logger.log(Level.SEVERE, error, e);
-                
+
                 PostReleaseActionInfoImpl actionInfo = actionHistory.get(objectId);
                 if (actionInfo != null) {
                     actionInfo.markFailed(error + ": " + e.getMessage());
                 }
-                
+
                 deferred.fail(e);
             }
         });
-        
+
         return deferred.getPromise();
     }
-    
-    /* 
+
+    /*
      * (non-Javadoc)
-     * @see org.eclipse.fennec.model.atlas.workflow.PostReleaseActionService#executePostUnreleaseActions(java.lang.String, java.lang.String, java.lang.String, java.lang.String, java.lang.String, java.lang.String, java.lang.String)
+     * 
+     * @see org.eclipse.fennec.model.atlas.workflow.PostReleaseActionService#
+     * executePostUnreleaseActions(java.lang.String, java.lang.String,
+     * java.lang.String, java.lang.String, java.lang.String, java.lang.String,
+     * java.lang.String)
      */
     @Override
-    public Promise<Void> executePostUnreleaseActions(String scope, String registry, String stage, String objectId, String objectType, String unreleaseUser, String unreleaseReason) {
+    public Promise<Void> executePostUnreleaseActions(String scope, String registry, String stage, String objectId,
+            String objectType, String unreleaseUser, String unreleaseReason) {
         requireNonNull(objectId, "Object ID cannot be null");
         requireNonNull(objectType, "Object type cannot be null");
         requireNonNull(unreleaseUser, "Unrelease user cannot be null");
-        
+
         // Only handle EPackage objects
         if (!EcoreUtil.getURI(EcorePackage.Literals.EPACKAGE).toString().equals(objectType)) {
             logger.fine("Skipping post-unrelease actions for non-EPackage object: " + objectType);
             return promiseFactory.resolved(null);
         }
-        
+
         logger.info("Executing post-unrelease actions for EPackage: " + objectId);
-        
+
         Deferred<Void> deferred = promiseFactory.deferred();
-        
+
         executeAsync(() -> {
             try {
                 // Find the EPackage namespace URI from action history or try to load it
                 PostReleaseActionInfoImpl actionInfo = actionHistory.get(objectId);
                 String namespaceURI = null;
-                
+
                 if (actionInfo != null && actionInfo.isSuccessful()) {
                     // Try to extract namespace URI from action details
                     String details = actionInfo.getActionDetails();
@@ -190,7 +210,7 @@ public class EPackagePostReleaseActionService implements PostReleaseActionServic
                         }
                     }
                 }
-                
+
                 // If we couldn't get it from history, try to load the EPackage
                 if (namespaceURI == null) {
                     try {
@@ -202,13 +222,13 @@ public class EPackagePostReleaseActionService implements PostReleaseActionServic
                         logger.log(Level.WARNING, "Could not load EPackage for unregistration: " + objectId, e);
                     }
                 }
-                
+
                 if (namespaceURI == null) {
                     logger.warning("Cannot determine namespace URI for EPackage unregistration: " + objectId);
                     deferred.resolve(null); // Don't fail the unrelease process
                     return;
                 }
-                
+
                 // Unregister the EPackage
                 boolean unregistered = registrationService.unregisterEPackage(namespaceURI);
                 if (unregistered) {
@@ -216,80 +236,95 @@ public class EPackagePostReleaseActionService implements PostReleaseActionServic
                 } else {
                     logger.warning("EPackage was not registered or unregistration failed: " + namespaceURI);
                 }
-                
+
                 // Remove from action history
                 actionHistory.remove(objectId);
-                
+
                 deferred.resolve(null);
-                
+
             } catch (Exception e) {
                 logger.log(Level.WARNING, "Post-unrelease actions failed for EPackage: " + objectId, e);
                 deferred.resolve(null); // Don't fail the unrelease process
             }
         });
-        
+
         return deferred.getPromise();
     }
-    
-    /* 
+
+    /*
      * (non-Javadoc)
-     * @see org.eclipse.fennec.model.atlas.workflow.PostReleaseActionService#supportsObjectType(java.lang.String)
+     * 
+     * @see org.eclipse.fennec.model.atlas.workflow.PostReleaseActionService#
+     * supportsObjectType(java.lang.String)
      */
     @Override
     public boolean supportsObjectType(String objectType) {
         return "EPackage".equals(objectType);
     }
-    
-    /* 
+
+    /*
      * (non-Javadoc)
-     * @see org.eclipse.fennec.model.atlas.workflow.PostReleaseActionService#getLastActionInfo(java.lang.String)
+     * 
+     * @see org.eclipse.fennec.model.atlas.workflow.PostReleaseActionService#
+     * getLastActionInfo(java.lang.String)
      */
     @Override
     public PostReleaseActionInfo getLastActionInfo(String objectId) {
         return actionHistory.get(objectId);
     }
-    
 
-	/* 
-	 * (non-Javadoc)
-	 * @see org.eclipse.fennec.model.atlas.workflow.PostReleaseActionService#executeStartupInitialization(java.lang.String, java.lang.String, java.lang.String, java.lang.String, java.lang.String)
-	 */
-	@Override
-	public Promise<Void> executeStartupInitialization(String scope, String registry, String stage, String objectId,
-			String objectType) {
-		return executePostReleaseActions(scope, registry, stage, objectId, objectType, "automatic post release", "automatic post release action");
-	}
+    /*
+     * (non-Javadoc)
+     * 
+     * @see org.eclipse.fennec.model.atlas.workflow.PostReleaseActionService#
+     * executeStartupInitialization(java.lang.String, java.lang.String,
+     * java.lang.String, java.lang.String, java.lang.String)
+     */
+    @Override
+    public Promise<Void> executeStartupInitialization(String scope, String registry, String stage, String objectId,
+            String objectType) {
+        return executePostReleaseActions(scope, registry, stage, objectId, objectType, "automatic post release",
+                "automatic post release action");
+    }
 
-	/* 
-	 * (non-Javadoc)
-	 * @see org.eclipse.fennec.model.atlas.workflow.PostReleaseActionService#requiresStartupInitialization()
-	 */
-	@Override
-	public boolean requiresStartupInitialization() {
-		return true;
-	}
-	
-	/* 
-	 * (non-Javadoc)
-	 * @see org.eclipse.fennec.model.atlas.workflow.PostReleaseActionService#executeCleanupAction(java.lang.String, java.lang.String, java.lang.String, java.lang.String, java.lang.String)
-	 */
-	@Override
-	public Promise<Void> executeCleanupAction(String scope, String registry, String stage, String objectId,
-			String objectType) {
-		return executePostUnreleaseActions(scope, registry, stage, objectId, objectType, "automatic post unrelease", "automatic post unrelease action");
-	}
+    /*
+     * (non-Javadoc)
+     * 
+     * @see org.eclipse.fennec.model.atlas.workflow.PostReleaseActionService#
+     * requiresStartupInitialization()
+     */
+    @Override
+    public boolean requiresStartupInitialization() {
+        return true;
+    }
 
-	/* 
-	 * (non-Javadoc)
-	 * @see org.eclipse.fennec.model.atlas.workflow.PostReleaseActionService#requiresCleanup()
-	 */
-	@Override
-	public boolean requiresCleanup() {
-		return true;
-	}
-    
+    /*
+     * (non-Javadoc)
+     * 
+     * @see org.eclipse.fennec.model.atlas.workflow.PostReleaseActionService#
+     * executeCleanupAction(java.lang.String, java.lang.String, java.lang.String,
+     * java.lang.String, java.lang.String)
+     */
+    @Override
+    public Promise<Void> executeCleanupAction(String scope, String registry, String stage, String objectId,
+            String objectType) {
+        return executePostUnreleaseActions(scope, registry, stage, objectId, objectType, "automatic post unrelease",
+                "automatic post unrelease action");
+    }
+
+    /*
+     * (non-Javadoc)
+     * 
+     * @see org.eclipse.fennec.model.atlas.workflow.PostReleaseActionService#
+     * requiresCleanup()
+     */
+    @Override
+    public boolean requiresCleanup() {
+        return true;
+    }
+
     // Private helper methods
-    
+
     private EPackage loadEPackage(String scope, String registry, String stage, String objectId) {
         try {
             return getPromiseValue(releaseStorage.retrieveObject(scope, registry, stage, objectId));
@@ -298,7 +333,7 @@ public class EPackagePostReleaseActionService implements PostReleaseActionServic
             return null;
         }
     }
-    
+
     private String extractFileExtension(ObjectMetadata metadata, EPackage ePackage) {
         // Try to get from metadata properties first
         if (metadata.getProperties() != null) {
@@ -307,12 +342,12 @@ public class EPackagePostReleaseActionService implements PostReleaseActionServic
                 return fileExt.startsWith(".") ? fileExt.substring(1) : fileExt;
             }
         }
-        
+
         // Fall back to EPackage name or default
         String name = ePackage.getName();
         return (name != null && !name.isEmpty()) ? name.toLowerCase() : "ecore";
     }
-    
+
     private String extractVersion(ObjectMetadata metadata, EPackage ePackage) {
         // Try to get from metadata properties first
         if (metadata.getProperties() != null) {
@@ -321,23 +356,23 @@ public class EPackagePostReleaseActionService implements PostReleaseActionServic
                 return version;
             }
         }
-        
+
         // Try to extract from EPackage name if it contains version info
         String name = ePackage.getName();
         if (name != null && name.matches(".*[vV]\\d+.*")) {
             // Simple extraction of version pattern
             return "1.0"; // Could be more sophisticated
         }
-        
+
         return "1.0";
     }
-    
+
     private void executeAsync(Runnable task) {
         // Use a simple async execution - in a real implementation you might want
         // to use a proper thread pool or OSGi's async capabilities
         new Thread(task, "PostReleaseAction-" + System.currentTimeMillis()).start();
     }
-    
+
     private static <T> T getPromiseValue(Promise<T> promise) {
         try {
             return promise.getValue();
@@ -345,7 +380,7 @@ public class EPackagePostReleaseActionService implements PostReleaseActionServic
             throw new RuntimeException("Promise failed", e);
         }
     }
-    
+
     // Implementation of PostReleaseActionInfo
     private static class PostReleaseActionInfoImpl implements PostReleaseActionInfo {
         private final String objectId;
@@ -354,57 +389,55 @@ public class EPackagePostReleaseActionService implements PostReleaseActionServic
         private boolean successful;
         private String errorMessage;
         private String actionDetails;
-        
+
         public PostReleaseActionInfoImpl(String objectId, String executionUser) {
             this.objectId = objectId;
             this.executionUser = executionUser;
             this.executionTime = Instant.now();
             this.successful = false;
         }
-        
+
         public void markSuccessful(String details) {
             this.successful = true;
             this.actionDetails = details;
             this.errorMessage = null;
         }
-        
+
         public void markFailed(String error) {
             this.successful = false;
             this.errorMessage = error;
             this.actionDetails = null;
         }
-        
+
         @Override
         public String getObjectId() {
             return objectId;
         }
-        
+
         @Override
         public Instant getExecutionTime() {
             return executionTime;
         }
-        
+
         @Override
         public boolean isSuccessful() {
             return successful;
         }
-        
+
         @Override
         public String getErrorMessage() {
             return errorMessage;
         }
-        
+
         @Override
         public String getExecutionUser() {
             return executionUser;
         }
-        
+
         @Override
         public String getActionDetails() {
             return actionDetails;
         }
     }
-
-
 
 }

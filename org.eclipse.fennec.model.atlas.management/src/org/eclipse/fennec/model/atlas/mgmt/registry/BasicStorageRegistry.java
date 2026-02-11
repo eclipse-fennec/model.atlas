@@ -40,26 +40,39 @@ import org.osgi.service.component.annotations.ReferencePolicy;
 import org.osgi.util.promise.Promise;
 
 /**
- * Basic implementation of StorageRegistry that provides centralized access to all storage services
- * by role and handles governance documentation ID lifecycle management.
+ * Basic implementation of StorageRegistry that provides centralized access to
+ * all storage services by role and handles governance documentation ID
+ * lifecycle management.
  * 
- * <p>This implementation maintains a registry of all EObjectStorageService instances in the system,
- * organized by their storage role configuration. It provides role-based service discovery and
- * handles cross-storage operations like governance documentation ID updates.</p>
+ * <p>
+ * This implementation maintains a registry of all EObjectStorageService
+ * instances in the system, organized by their storage role configuration. It
+ * provides role-based service discovery and handles cross-storage operations
+ * like governance documentation ID updates.
+ * </p>
  * 
  * <h3>Features</h3>
  * <ul>
- * <li><strong>Role-based Discovery</strong> - Find storage services by role name (draft, approved, release, documentation, archived)</li>
- * <li><strong>Dynamic Service Registration</strong> - Automatically tracks storage services as they come and go</li>
- * <li><strong>Cross-storage Operations</strong> - Update governance documentation IDs across all relevant storage services</li>
- * <li><strong>Aggregated Queries</strong> - Search metadata across all storage services in a single operation</li>
- * <li><strong>Statistics Collection</strong> - Gather comprehensive statistics from all registered storage services</li>
- * <li><strong>Thread Safety</strong> - Concurrent access to storage service registry</li>
+ * <li><strong>Role-based Discovery</strong> - Find storage services by role
+ * name (draft, approved, release, documentation, archived)</li>
+ * <li><strong>Dynamic Service Registration</strong> - Automatically tracks
+ * storage services as they come and go</li>
+ * <li><strong>Cross-storage Operations</strong> - Update governance
+ * documentation IDs across all relevant storage services</li>
+ * <li><strong>Aggregated Queries</strong> - Search metadata across all storage
+ * services in a single operation</li>
+ * <li><strong>Statistics Collection</strong> - Gather comprehensive statistics
+ * from all registered storage services</li>
+ * <li><strong>Thread Safety</strong> - Concurrent access to storage service
+ * registry</li>
  * </ul>
  * 
  * <h3>Storage Role Configuration</h3>
- * <p>Storage services are identified by their role through OSGi service properties. The expected
- * property key is {@code storage.role} with values like:</p>
+ * <p>
+ * Storage services are identified by their role through OSGi service
+ * properties. The expected property key is {@code storage.role} with values
+ * like:
+ * </p>
  * <ul>
  * <li>{@code draft} - Draft storage for objects under development</li>
  * <li>{@code approved} - Approved storage for objects pending release</li>
@@ -71,11 +84,11 @@ import org.osgi.util.promise.Promise;
  * @author Mark Hoffmann
  * @since 1.0
  */
-@Component(name="BasicStorageRegistry", configurationPolicy = ConfigurationPolicy.REQUIRE)
+@Component(name = "BasicStorageRegistry", configurationPolicy = ConfigurationPolicy.REQUIRE)
 public class BasicStorageRegistry implements StorageRegistry {
 
     private static final Logger logger = Logger.getLogger(BasicStorageRegistry.class.getName());
-    
+
     private final Map<String, EObjectStorageService<EObject>> storagesByType = new ConcurrentHashMap<>();
     private final Map<EObjectStorageService<EObject>, String> typesByStorage = new ConcurrentHashMap<>();
 
@@ -84,13 +97,13 @@ public class BasicStorageRegistry implements StorageRegistry {
 
     @Reference(name = "storage", cardinality = ReferenceCardinality.MULTIPLE, policy = ReferencePolicy.DYNAMIC)
     void addStorageService(EObjectStorageService<EObject> storageService, Map<String, Object> properties) {
-        String type = (String) properties.get("storage.type");        
+        String type = (String) properties.get("storage.type");
         if (type != null) {
             storagesByType.put(type, storageService);
             typesByStorage.put(storageService, type);
             logger.log(Level.INFO, "Registered storage service for type: {0}", type);
         } else {
-            logger.log(Level.WARNING, "Storage service registered without type property, ignoring: {0}", 
+            logger.log(Level.WARNING, "Storage service registered without type property, ignoring: {0}",
                     storageService.getClass().getName());
         }
     }
@@ -103,54 +116,60 @@ public class BasicStorageRegistry implements StorageRegistry {
         }
     }
 
-  
-    /* 
+    /*
      * (non-Javadoc)
+     * 
      * @see org.eclipse.fennec.model.atlas.mgmt.api.StorageRegistry#getAllStorages()
      */
     @Override
     public EList<EObjectStorageService<EObject>> getAllStorages() {
         return new BasicEList<>(storagesByType.values());
     }
-    
-    /* 
-	 * (non-Javadoc)
-	 * @see org.eclipse.fennec.model.atlas.mgmt.api.StorageRegistry#getStorageByType(java.lang.String)
-	 */
-	@Override
-	public EObjectStorageService<EObject> getStorageByType(String type) {
-		requireNonNull(type, "Type cannot be null!");
-		return storagesByType.get(type);
-	}
 
-	/* 
-	 * (non-Javadoc)
-	 * @see org.eclipse.fennec.model.atlas.mgmt.api.StorageRegistry#getAvailableTypes()
-	 */
-	@Override
-	public EList<String> getAvailableTypes() {
-		return new BasicEList<>(typesByStorage.values().stream().distinct().toList());
-	}
-
-    /* 
+    /*
      * (non-Javadoc)
-     * @see org.eclipse.fennec.model.atlas.mgmt.api.StorageRegistry#searchMetadataAcrossTypes(org.eclipse.fennec.model.atlas.mgmt.management.ObjectQuery)
+     * 
+     * @see
+     * org.eclipse.fennec.model.atlas.mgmt.api.StorageRegistry#getStorageByType(java
+     * .lang.String)
+     */
+    @Override
+    public EObjectStorageService<EObject> getStorageByType(String type) {
+        requireNonNull(type, "Type cannot be null!");
+        return storagesByType.get(type);
+    }
+
+    /*
+     * (non-Javadoc)
+     * 
+     * @see
+     * org.eclipse.fennec.model.atlas.mgmt.api.StorageRegistry#getAvailableTypes()
+     */
+    @Override
+    public EList<String> getAvailableTypes() {
+        return new BasicEList<>(typesByStorage.values().stream().distinct().toList());
+    }
+
+    /*
+     * (non-Javadoc)
+     * 
+     * @see org.eclipse.fennec.model.atlas.mgmt.api.StorageRegistry#
+     * searchMetadataAcrossTypes(org.eclipse.fennec.model.atlas.mgmt.management.
+     * ObjectQuery)
      */
     @Override
     public EList<ObjectMetadata> searchMetadataAcrossTypes(ObjectQuery query) {
         requireNonNull(query, "Query cannot be null");
 
-        List<ObjectMetadata> allResults = storagesByType.values().stream()
-                .flatMap(storage -> {
-                    try {
-                        Promise<List<ObjectMetadata>> promise = storage.queryObjects(query);
-                        return promise.getValue().stream();
-                    } catch (Exception e) {
-                        logger.log(Level.WARNING, "Failed to query storage service", e);
-                        return Stream.empty();
-                    }
-                })
-                .collect(Collectors.toList());
+        List<ObjectMetadata> allResults = storagesByType.values().stream().flatMap(storage -> {
+            try {
+                Promise<List<ObjectMetadata>> promise = storage.queryObjects(query);
+                return promise.getValue().stream();
+            } catch (Exception e) {
+                logger.log(Level.WARNING, "Failed to query storage service", e);
+                return Stream.empty();
+            }
+        }).collect(Collectors.toList());
 
         return new BasicEList<>(allResults);
     }
@@ -170,7 +189,7 @@ public class BasicStorageRegistry implements StorageRegistry {
                 long objectCount = storage.getObjectCount();
                 typeStats.put("objectCount", objectCount);
                 typeStats.put("backendType", storage.getBackendType().toString());
-                
+
                 totalObjectCount += objectCount;
                 typeStatistics.put(type, typeStats);
             } catch (Exception e) {
