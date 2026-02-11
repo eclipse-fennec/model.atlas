@@ -74,10 +74,7 @@ public class OpenApiResource extends BaseOpenApiResource {
 
 	@Activate
 	public OpenApiResource(@Reference SupportedMediatype types) {
-		supportedMediaTypes = new ArrayList<>(types.getSupportedMediaTypes());
-		supportedMediaTypes.add(MediaType.APPLICATION_XML);
-		supportedMediaTypes.add("application/xmi");
-		supportedMediaTypes.add("application/uml");
+	    supportedMediaTypes = types.getSupportedMediaTypes();
 	}
 	
 	@GET

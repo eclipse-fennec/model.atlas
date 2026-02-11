@@ -62,7 +62,7 @@ public class ScopeServiceImpl<T extends EObject> implements ScopeService<T> {
 		}
 		String registryName = (String) properties.get("registry.name");
 		registryServiceMap.put(registryName, registryService);
-		createScopeObject();
+		scopeObject = createScopeObject();
 		registryService.activate(config.scope_name());
 	}
 	
