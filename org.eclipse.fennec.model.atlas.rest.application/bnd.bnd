@@ -28,8 +28,7 @@
 	org.eclipse.fennec.model.atlas.management;version=snapshot,\
 	org.osgi.util.promise,\
 	org.eclipse.fennec.model.atlas.workflow;version=snapshot,\
-	org.eclipse.fennec.model.atlas.scope;version=snapshot,\
-	org.eclipse.fennec.model.atlas.scope.model;version=snapshot
+	org.eclipse.fennec.model.atlas.schema.registry.api
 
 #-includeresource.swagger: \
 #	swagger-api=@https://github.com/swagger-api/swagger-ui/archive/refs/tags/v3.52.3.zip!/swagger-ui-3.52.3/dist/(*);rename:=$1,\

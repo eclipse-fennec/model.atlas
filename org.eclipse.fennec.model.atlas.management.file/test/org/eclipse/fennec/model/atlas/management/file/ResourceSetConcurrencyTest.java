@@ -17,6 +17,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.mock;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -29,11 +30,13 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.eclipse.emf.common.util.URI;
+import org.eclipse.emf.ecore.EObject;
 import org.eclipse.emf.ecore.EPackage;
 import org.eclipse.emf.ecore.EcoreFactory;
 import org.eclipse.emf.ecore.resource.ResourceSet;
 import org.eclipse.emf.ecore.resource.impl.ResourceSetImpl;
 import org.eclipse.emf.ecore.xmi.impl.XMIResourceFactoryImpl;
+import org.eclipse.fennec.model.atlas.mgmt.api.EObjectRegistryService;
 import org.eclipse.fennec.model.atlas.mgmt.management.ManagementFactory;
 import org.eclipse.fennec.model.atlas.mgmt.management.ManagementPackage;
 import org.eclipse.fennec.model.atlas.mgmt.management.ObjectMetadata;
@@ -58,8 +61,15 @@ class ResourceSetConcurrencyTest {
     private ResourceSet sharedResourceSet;
     private FileStorageHelper helper;
     private ManagementFactory factory;
+    
+    private EObjectRegistryService<EObject> mockRegistry;
+    
+    private static final String TEST_SCOPE = "test_scope";
+    private static final String TEST_REGISTRY = "test_registry";
+    private static final String TEST_STAGE = "test_stage";
 
-    @BeforeEach
+    @SuppressWarnings("unchecked")
+	@BeforeEach
     void setUp() throws IOException {
         // Create shared ResourceSet (simulates OSGi shared service)
         sharedResourceSet = new ResourceSetImpl();
@@ -68,7 +78,11 @@ class ResourceSetConcurrencyTest {
         sharedResourceSet.getPackageRegistry().put(ManagementPackage.eNS_URI, ManagementPackage.eINSTANCE);
         
         factory = ManagementFactory.eINSTANCE;
-        helper = new FileStorageHelper(sharedResourceSet, tempDir);
+     // Create mock registry - it will be called during FileStorageHelper construction
+        mockRegistry = mock(EObjectRegistryService.class);
+        
+        helper = new FileStorageHelper(sharedResourceSet, tempDir, mockRegistry);
+
     }
 
     @AfterEach
@@ -199,10 +213,10 @@ class ResourceSetConcurrencyTest {
                             metadata.getProperties().put("thread-id", String.valueOf(threadId));
                             metadata.getProperties().put("operation-id", String.valueOf(i));
                             
-                            helper.saveMetadata(objectId, metadata);
+                            helper.saveMetadata(TEST_SCOPE, TEST_REGISTRY, TEST_STAGE, objectId, metadata);
                             
                             // Load metadata (uses ResourceSet)
-                            ObjectMetadata loaded = helper.loadMetadata(objectId);
+                            ObjectMetadata loaded = helper.loadMetadata(TEST_SCOPE, TEST_REGISTRY, TEST_STAGE, objectId);
                             assertNotNull(loaded);
                             assertEquals("user-" + threadId, loaded.getUploadUser());
                             assertEquals("CONCURRENCY_TEST", loaded.getSourceChannel());
@@ -239,7 +253,7 @@ class ResourceSetConcurrencyTest {
         assertEquals(expectedOperations, successCount.get(), "All metadata operations should succeed");
         
         // Verify metadata files were created
-        long metadataFileCount = Files.list(tempDir)
+        long metadataFileCount = Files.list(tempDir.resolve(TEST_SCOPE).resolve(TEST_REGISTRY).resolve(TEST_STAGE))
                                      .filter(p -> p.getFileName().toString().endsWith(".metadata.xmi"))
                                      .count();
         assertEquals(expectedOperations, metadataFileCount, "All metadata files should be created");
@@ -290,7 +304,7 @@ class ResourceSetConcurrencyTest {
                                 String existingFile = existingId + ".ecore";
                                 URI existingUri = URI.createFileURI(tempDir.resolve(existingFile).toString());
                                 
-                                if (Files.exists(tempDir.resolve(existingFile))) {
+                                if (Files.exists(tempDir.resolve(TEST_SCOPE).resolve(TEST_REGISTRY).resolve(TEST_STAGE).resolve(existingFile))) {
                                     ResourceOperation op = helper.loadResource(existingUri);
                                     if (op.getResource() != null) {
                                         loadOps.incrementAndGet();
@@ -307,8 +321,8 @@ class ResourceSetConcurrencyTest {
                                 metadata.setObjectType("Mixed");
                                 metadata.setContentHash("mixed-hash-" + threadId + "-" + i);
                                 
-                                helper.saveMetadata(objectId, metadata);
-                                ObjectMetadata loaded = helper.loadMetadata(objectId);
+                                helper.saveMetadata(TEST_SCOPE, TEST_REGISTRY, TEST_STAGE, objectId, metadata);
+                                ObjectMetadata loaded = helper.loadMetadata(TEST_SCOPE, TEST_REGISTRY, TEST_STAGE, objectId);
                                 
                                 if (loaded != null && "MIXED_TEST".equals(loaded.getSourceChannel())) {
                                     metadataOps.incrementAndGet();

@@ -19,48 +19,46 @@ The **SchemaPackagesResource** provides a RESTful HTTP API for managing EMF EPac
 ### Component Dependencies
 
 ```
-┌────────────────────────────┐
-│  SchemaPackagesResource    │
-│  (JAX-RS REST Endpoint)    │
-└─────────┬──────────┬───────┘
-          │          │
-          │          │
-    ┌─────▼─────┐  ┌▼─────────────────────┐
-    │  Scope    │  │  EObjectWorkflow     │
-    │ Collector │  │  Service             │
-    └───────────┘  └──────────────────────┘
-          │                   │
-          │                   │
-    ┌─────▼───────────────────▼──────┐
-    │  Workflow Service Registry     │
-    │  (OSGi Dynamic Services)       │
-    └────────────────────────────────┘
+┌─────────────────────────────────┐
+│    SchemaPackagesResource       │
+│    (JAX-RS REST Endpoint)       │
+└─────────────────┬───────────────┘
+                  │
+                  │
+   ┌──────────────▼──────────────┐
+   │   ScopeServiceCollector     │
+   └──────────────┬──────────────┘
+                  │
+                  │
+   ┌──────────────▼──────────────┐
+   │        ScopeService         │
+   │   (OSGi Dynamic Services)   │
+   └─────────────────────────────┘
 ```
 
 ### Integration Points
 
-#### **ScopeCollector**
-The `ScopeCollector` dynamically tracks all registered `EObjectWorkflowService` instances and constructs `Scope` objects from their OSGi configuration properties.
+#### **ScopeServiceCollector**
+The `ScopeServiceCollector` dynamically tracks all registered `ScopeService` instances and constructs `Scope` objects from their OSGi configuration properties.
 
 **Key Methods:**
-- `getWorkflowServiceByScope(String scopeName)`: Retrieves the workflow service for a specific scope
+- `getScopeServiceByScopeName(String scopeName)`: Retrieves the scope service for a specific scope
 - `getScopeByName(String name)`: Retrieves scope metadata
-- `getScopes()`: Lists all available scopes
+- `getAllScopes()`: Lists all available scopes
 
-#### **EObjectWorkflowService**
-Provides the underlying workflow operations for schema management within a scope.
+#### **ScopeService**
+Provides the underlying workflow operations for schema management within a scope. The `SchemaPackagesResource` uses a fixed registry name of `"schema"` for all schema-related operations.
 
 **Used Operations:**
-- `listInFinalStage()`: List schemas in the final/released stage (with hierarchy)
-- `listInStage(String stage)`: List schemas in a specific stage
-- `listInStageByName(String stage, String name)`: List schemas filtered by name (supports wildcards, scope-specific)
-- `getFromStage(String stage, String objectId)`: Retrieve schema metadata
-- `getContentFromStage(String stage, String objectId)`: Retrieve actual EPackage content
-- `uploadToStage(String stage, EPackage object, ObjectMetadata metadata)`: Create new schema
-- `updateInStage(String stage, EPackage object, String objectId)`: Update existing schema
-- `deleteFromStage(String stage, String objectId)`: Delete schema
-- `transitionToStage(String objectId, String fromStage, String toStage)`: Move between stages
-- `isTransitionAllowed(String fromStage, String toStage)`: Validate transitions
+- `listInFinalStageForRegistry(String registryName)`: List schemas in the final/released stage (with hierarchy)
+- `listInStageForRegistry(String registryName, String stage)`: List schemas in a specific stage
+- `listInStageForRegistryByName(String registryName, String stage, String name)`: List schemas filtered by name (supports wildcards, scope-specific)
+- `getMetadataFromStageForRegistry(String registryName, String stage, String objectId)`: Retrieve schema metadata
+- `getContentFromStageForRegistry(String registryName, String stage, String objectId)`: Retrieve actual EPackage content
+- `uploadToStageForRegistry(String registryName, String stage, EObject object, ObjectMetadata metadata)`: Create new schema
+- `updateInStageForRegistry(String registryName, String stage, EObject object, String objectId, String version)`: Update existing schema
+- `deleteFromStageForRegistry(String registryName, String stage, String objectId)`: Delete schema
+- `transitionToStageForRegistry(String registryName, String objectId, String fromStage, String toStage)`: Move between stages
 
 ## API Specification Compliance
 
@@ -112,7 +110,9 @@ Accept: application/json
 
 **Response**:
 - **200 OK**: Returns `ObjectMetadataContainer` with list of `ObjectMetadata`
-- **404 Not Found**: Scope does not exist
+- **204 No Content**: No schemas found in the final stage
+- **400 Bad Request**: Scope does not exist or is not configured
+- **500 Internal Server Error**: Server error
 
 **Example**:
 ```bash
@@ -176,7 +176,9 @@ Accept: application/json
 **Response**:
 - **200 OK**: Returns `ObjectMetadataContainer` with list of `ObjectMetadata`
 - **204 No Content**: No packages match the filter criteria
-- **404 Not Found**: Scope or stage does not exist
+- **204 No Content**: No schemas found matching the criteria
+- **400 Bad Request**: Scope not available, stage not valid, or invalid parameters
+- **500 Internal Server Error**: Server error
 
 **Example**:
 ```bash
@@ -230,7 +232,9 @@ Content-Type: application/json | application/xml | application/ecore+xml
   - `Location` header: `/{scopeName}/schema/stages/{stageName}?nsUri={encodedNsUri}`
   - Body: `ObjectMetadata` with created package info
 - **400 Bad Request**: Invalid package data or missing `nsUri`
-- **404 Not Found**: Scope or stage does not exist
+- **204 No Content**: No schemas found matching the criteria
+- **400 Bad Request**: Scope not available, stage not valid, or invalid parameters
+- **500 Internal Server Error**: Server error
 - **409 Conflict**: Package with `nsUri` already exists in visibility chain
 - **415 Unsupported Media Type**: Invalid Content-Type
 - **500 Internal Server Error**: Server error
@@ -336,7 +340,9 @@ Content-Type: application/json | application/xml | application/ecore+xml
 - **204 No Content**: Package not found
 - **400 Bad Request**: Invalid package data
 - **403 Forbidden**: Stage is read-only OR package is from parent scope
-- **404 Not Found**: Scope or stage not found
+- **400 Bad Request**: Scope not available, stage not valid, or schema validation failed
+- **409 Conflict**: Schema already exists and override flag is false
+- **500 Internal Server Error**: Server error
 - **500 Internal Server Error**: Server error
 
 **Example**:
@@ -380,7 +386,9 @@ DELETE /{scopeName}/schema/stages/{stageName}?nsUri={encodedNsUri}
 **Response**:
 - **200 OK**: Package deleted successfully
 - **403 Forbidden**: Stage is read-only OR package is from parent scope
-- **404 Not Found**: Package not found
+- **204 No Content**: Package not found
+- **400 Bad Request**: Scope not available or stage not valid
+- **500 Internal Server Error**: Server error
 - **500 Internal Server Error**: Server error
 
 **Example**:
@@ -424,7 +432,9 @@ Content-Type: application/json
 - **200 OK**: Package transitioned successfully
   - Body: Updated `ObjectMetadata` with new stage
 - **400 Bad Request**: Invalid transition or missing parameters
-- **404 Not Found**: Package not found in source stage
+- **204 No Content**: Package not found
+- **400 Bad Request**: Scope not available or stage not valid
+- **500 Internal Server Error**: Server error in source stage
 - **500 Internal Server Error**: Server error
 
 **Example**:
@@ -648,11 +658,10 @@ curl -X GET "https://api.example.com/my-tenant/schema/stages/draft?name=Billing*
 |------|---------|-----------|
 | 200 OK | Success | GET, PUT, POST (transition) successful |
 | 201 Created | Resource created | POST (create package) successful |
-| 204 No Content | Success, no body | DELETE successful, or GET content with no data |
-| 400 Bad Request | Invalid request | Invalid transition, missing required parameters |
-| 403 Forbidden | Operation not allowed | Stage is read-only, package is from parent scope |
-| 404 Not Found | Resource not found | Scope, stage, or package doesn't exist |
-| 409 Conflict | Resource already exists | `nsUri` exists in visibility chain during creation |
+| 204 No Content | Not found / Empty | Package not found, or list is empty |
+| 400 Bad Request | Invalid request | Scope not available, invalid stage, invalid transition, missing required parameters |
+| 403 Forbidden | Operation not allowed | Package is read-only (from parent scope) |
+| 409 Conflict | Resource already exists | Package with `nsUri` already exists and override flag is false |
 | 415 Unsupported Media Type | Invalid Content-Type | Unsupported format in POST/PUT |
 | 500 Internal Server Error | Server error | Unexpected errors, exceptions |
 
@@ -712,50 +721,89 @@ POST /my-tenant/schema/stages/draft/actions/transition
 
 ## Configuration Requirements
 
-### Scope/Workflow Service Configuration
+### Scope Service Configuration
 
-Each scope requires an `EObjectWorkflowService` instance configured via OSGi Config Admin:
+Scopes are configured in `workflow.json`. Each scope requires a `ScopeService` instance:
 
-```properties
-# Scope identity
-scope=my-tenant
-description=Primary tenant workspace
-parent.scope=global-corporate
-parentWorkflowService.target=(scope=global-corporate)
-
-# Workflow stages
-stages=["draft", "review", "approved", "release"]
-writable.stages=["draft", "review", "approved"]
-final.stage=release
-
-# Policies
-delete.after.transition=true
+```json
+{
+  "ScopeService~my-tenant": {
+    "scope.name": "my-tenant",
+    "scope.description": "Primary tenant workspace",
+    "parent.scope": "atlas",
+    "registryService.target": "(|(registry.name=schema)(registry.name=configurations))",
+    "registryService.cardinality.minimum:int": 1
+  }
+}
 ```
 
-**Key Properties for API**:
-- `scope`: Scope identifier (used in URL paths)
-- `stages`: All valid stage names
-- `writable_stages`: Stages that allow PUT/DELETE
-- `final.stage`: Stage used for hierarchical lookup
+**Key Properties**:
+- `scope.name`: Scope identifier (used in URL paths)
+- `scope.description`: Human-readable description
 - `parent.scope`: Parent scope for hierarchy (empty string for root)
+- `registryService.target`: OSGi filter to select which registries are available in this scope
+
+### Registry Service Configuration
+
+Registries define the stages and workflow transitions. The `SchemaPackagesResource` uses a registry named `"schema"`:
+
+```json
+{
+  "RegistryService~schema": {
+    "registry.name": "schema",
+    "registry.description": "The schema registry to store EPackage objects",
+    "stage.storage.mappings": [
+      "draft:apicurio",
+      "approved:apicurio",
+      "release:apicurio"
+    ],
+    "workflow.transitions": [
+      "draft:approved",
+      "approved:release"
+    ],
+    "stages": [
+      { "name": "draft", "writable": true, "final": false },
+      { "name": "approved", "writable": true, "final": false },
+      { "name": "release", "writable": false, "final": true }
+    ],
+    "delete.after.transition": true,
+    "storageService.target": "(storage.type=apicurio)",
+    "schema.uri": "http://www.eclipse.org/emf/2002/Ecore",
+    "root.eclass.uri": "http://www.eclipse.org/emf/2002/Ecore#//EPackage"
+  }
+}
+```
+
+**Key Properties**:
+- `registry.name`: Registry identifier
+- `stages`: Stage definitions with `writable` and `final` flags
+- `workflow.transitions`: Allowed transitions (format: `"fromStage:toStage"`)
+- `stage.storage.mappings`: Maps stages to storage types (format: `"stage:storageType"`)
+- `storageService.target`: OSGi filter to select the storage service
 
 ### Storage Backend Configuration
 
-Each stage requires a storage backend:
+Storage backends are configured once per type in `storage.json`. Multiple stages can share the same storage:
 
-```properties
-# Draft storage
-workspace.folder=/data/my-tenant/draft
-storage.scope=my-tenant
-storage.role=draft
-
-# Release storage
-workspace.folder=/data/my-tenant/release
-storage.scope=my-tenant
-storage.role=release
+```json
+{
+  "ApicurioObjectStorage~apicurio": {
+    "base.url": "http://localhost:8081/apis/registry/v3/",
+    "storage.type": "apicurio",
+    "registry.target": "(registry=main)"
+  },
+  "FileObjectStorage~file": {
+    "workspace.folder": "/data/storage",
+    "storage.type": "file",
+    "registry.target": "(registry=main)"
+  }
+}
 ```
 
-The `storage.role` must match a configured stage name.
+**Key Properties**:
+- `storage.type`: Identifies the storage backend (referenced in `stage.storage.mappings`)
+- `workspace.folder` (FileObjectStorage): Root folder for file-based storage
+- `base.url` (ApicurioObjectStorage): Apicurio Registry API URL
 
 ---
 
@@ -880,7 +928,7 @@ curl -X GET "https://api.example.com/child-tenant/schema" \
 
 - All `nsUri` parameters are validated and encoded
 - Stage names validated against configured stages
-- Scope names validated via `ScopeCollector`
+- Scope names validated via `ScopeServiceCollector`
 
 ---
 
@@ -919,18 +967,18 @@ Tests cover:
 
 ## Troubleshooting
 
-### "Scope not found" (404)
+### "Scope not found" (400 Bad Request)
 
-**Cause**: No `EObjectWorkflowService` registered for the scope
+**Cause**: No `ScopeService` registered for the scope
 
 **Solution**:
 1. Verify scope configuration exists
 2. Check OSGi Config Admin
-3. Verify `ScopeCollector` has bound the service
+3. Verify `ScopeServiceCollector` has bound the service
 
 ```bash
 # Check logs for:
-Cannot store EObjectWorkflowService with scope property not set or empty
+Cannot store ScopeService with scope property not set or empty
 ```
 
 ---
@@ -1000,7 +1048,7 @@ GET /my-tenant/schema/stages/draft?name=Billing*
 ## Related Documentation
 
 - [Model Atlas API Specification](Model%20Atlas%20API%20Specification.md) - Complete API spec
-- [EObjectWorkflowService README](../org.eclipse.fennec.model.atlas.workflow/README.md) - Workflow service details
+- [ScopeService README](../org.eclipse.fennec.model.atlas.workflow/README.md) - Scope service details
 - [CLAUDE.md](../CLAUDE.md) - Project overview and build instructions
 
 ---
@@ -1009,4 +1057,4 @@ GET /my-tenant/schema/stages/draft?name=Billing*
 
 Eclipse Public License 2.0 (EPL-2.0)
 
-Copyright (c) 2012 - 2025 Data In Motion and others.
+Copyright (c) 2012 - 2026 Data In Motion and others.

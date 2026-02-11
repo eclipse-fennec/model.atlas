@@ -18,18 +18,21 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.mock;
 
 import java.io.File;
 import java.nio.file.Path;
 import java.time.Instant;
 import java.util.List;
 
+import org.eclipse.emf.ecore.EObject;
 import org.eclipse.emf.ecore.EPackage;
 import org.eclipse.emf.ecore.EcoreFactory;
 import org.eclipse.emf.ecore.EcorePackage;
 import org.eclipse.emf.ecore.resource.ResourceSet;
 import org.eclipse.emf.ecore.resource.impl.ResourceSetImpl;
 import org.eclipse.emf.ecore.xmi.impl.XMIResourceFactoryImpl;
+import org.eclipse.fennec.model.atlas.mgmt.api.EObjectRegistryService;
 import org.eclipse.fennec.model.atlas.mgmt.management.ManagementFactory;
 import org.eclipse.fennec.model.atlas.mgmt.management.ManagementPackage;
 import org.eclipse.fennec.model.atlas.mgmt.management.ObjectMetadata;
@@ -46,10 +49,16 @@ public class FileStorageHelperTest {
     @TempDir
     Path tempDir;
     
+    private EObjectRegistryService<EObject> mockRegistry;
+    
     private FileStorageHelper helper;
     private ResourceSet resourceSet;
+    private static final String TEST_SCOPE = "test_scope";
+    private static final String TEST_REGISTRY = "test_registry";
+    private static final String TEST_STAGE = "test_stage";
     
-    @BeforeEach
+    @SuppressWarnings("unchecked")
+	@BeforeEach
     public void setup() {
         resourceSet = new ResourceSetImpl();
         
@@ -61,7 +70,10 @@ public class FileStorageHelperTest {
         resourceSet.getResourceFactoryRegistry().getExtensionToFactoryMap().put("xmi", new XMIResourceFactoryImpl());
         resourceSet.getResourceFactoryRegistry().getExtensionToFactoryMap().put("ecore", new XMIResourceFactoryImpl());
         
-        helper = new FileStorageHelper(resourceSet, tempDir);
+        // Create mock registry - it will be called during FileStorageHelper construction
+        mockRegistry = mock(EObjectRegistryService.class);
+        
+        helper = new FileStorageHelper(resourceSet, tempDir, mockRegistry);
     }
     
     @AfterEach
@@ -86,14 +98,14 @@ public class FileStorageHelperTest {
         metadata.getProperties().put("file.extension", ".ecore");
         
         // Save
-        helper.saveEObject("test-id", testPackage, metadata);
+        helper.saveEObject(TEST_SCOPE, TEST_REGISTRY, TEST_STAGE, "test-id", testPackage, metadata);
         
         // Verify file exists
-        File ecoreFile = new File(tempDir.toFile(), "test-id.ecore");
+        File ecoreFile = new File(tempDir.resolve(TEST_SCOPE).resolve(TEST_REGISTRY).resolve(TEST_STAGE).toFile(), "test-id.ecore");
         assertTrue(ecoreFile.exists());
         
         // Load
-        EPackage loaded = (EPackage) helper.loadEObject("test-id");
+        EPackage loaded = (EPackage) helper.loadEObject(TEST_SCOPE, TEST_REGISTRY, TEST_STAGE, "test-id");
         assertNotNull(loaded);
         assertEquals("TestPackage", loaded.getName());
         assertEquals("test", loaded.getNsPrefix());
@@ -110,14 +122,14 @@ public class FileStorageHelperTest {
         metadata.setContentHash("testhash123");
         
         // Save
-        helper.saveMetadata("meta-test", metadata);
+        helper.saveMetadata(TEST_SCOPE, TEST_REGISTRY, TEST_STAGE, "meta-test", metadata);
         
         // Verify file exists
-        File metadataFile = new File(tempDir.toFile(), "meta-test.metadata.xmi");
+        File metadataFile = new File(tempDir.resolve(TEST_SCOPE).resolve(TEST_REGISTRY).resolve(TEST_STAGE).toFile(), "meta-test.metadata.xmi");
         assertTrue(metadataFile.exists());
         
         // Load
-        ObjectMetadata loaded = helper.loadMetadata("meta-test");
+        ObjectMetadata loaded = helper.loadMetadata(TEST_SCOPE, TEST_REGISTRY, TEST_STAGE, "meta-test");
         assertNotNull(loaded);
         assertEquals("testUser", loaded.getUploadUser());
         assertEquals("testChannel", loaded.getSourceChannel());
@@ -137,10 +149,10 @@ public class FileStorageHelperTest {
         ObjectMetadata metadata = ManagementFactory.eINSTANCE.createObjectMetadata();
         metadata.getProperties().put("file.extension", ".ecore");
         
-        helper.saveEObject("filesystem-test", testPackage, metadata);
+        helper.saveEObject(TEST_SCOPE, TEST_REGISTRY, TEST_STAGE, "filesystem-test", testPackage, metadata);
         
         // Verify actual file exists on filesystem
-        File ecoreFile = new File(tempDir.toFile(), "filesystem-test.ecore");
+        File ecoreFile = new File(tempDir.resolve(TEST_SCOPE).resolve(TEST_REGISTRY).resolve(TEST_STAGE).toFile(), "filesystem-test.ecore");
         assertTrue(ecoreFile.exists(), "Ecore file should exist on filesystem");
         assertTrue(ecoreFile.length() > 0, "Ecore file should have content");
     }
@@ -155,17 +167,17 @@ public class FileStorageHelperTest {
         metadata.setUploadUser("testUser");
         metadata.getProperties().put("file.extension", ".ecore");
         
-        helper.saveEObject("delete-test", testPackage, metadata);
-        helper.saveMetadata("delete-test", metadata);
+        helper.saveEObject(TEST_SCOPE, TEST_REGISTRY, TEST_STAGE, "delete-test", testPackage, metadata);
+        helper.saveMetadata(TEST_SCOPE, TEST_REGISTRY, TEST_STAGE, "delete-test", metadata);
         
         // Verify files exist
-        File ecoreFile = new File(tempDir.toFile(), "delete-test.ecore");
-        File metadataFile = new File(tempDir.toFile(), "delete-test.metadata.xmi");
+        File ecoreFile = new File(tempDir.resolve(TEST_SCOPE).resolve(TEST_REGISTRY).resolve(TEST_STAGE).toFile(), "delete-test.ecore");
+        File metadataFile = new File(tempDir.resolve(TEST_SCOPE).resolve(TEST_REGISTRY).resolve(TEST_STAGE).toFile(), "delete-test.metadata.xmi");
         assertTrue(ecoreFile.exists());
         assertTrue(metadataFile.exists());
         
         // Delete
-        boolean deleted = helper.deleteObject("delete-test");
+        boolean deleted = helper.deleteObject(TEST_SCOPE, TEST_REGISTRY, TEST_STAGE, "delete-test");
         assertTrue(deleted);
         
         // Verify files are gone
@@ -184,11 +196,11 @@ public class FileStorageHelperTest {
             metadata.setUploadUser("testUser");
             metadata.getProperties().put("file.extension", ".ecore");
             
-            helper.saveEObject("test-pkg-" + i, pkg, metadata);
+            helper.saveEObject(TEST_SCOPE, TEST_REGISTRY, TEST_STAGE, "test-pkg-" + i, pkg, metadata);
         }
         
         // List object IDs
-        List<String> objectIds = helper.listObjectIds();
+        List<String> objectIds = helper.listObjectIds(TEST_SCOPE, TEST_REGISTRY, TEST_STAGE);
         
         assertEquals(3, objectIds.size());
         assertTrue(objectIds.contains("test-pkg-0"));
@@ -206,7 +218,7 @@ public class FileStorageHelperTest {
         metadata.getProperties().put("file.extension", ".ecore");
         
         // Save object
-        helper.saveEObject("cleanup-test", testPackage, metadata);
+        helper.saveEObject(TEST_SCOPE, TEST_REGISTRY, TEST_STAGE, "cleanup-test", testPackage, metadata);
         
         // ResourceSet should not contain any resources after the operation
         // (they should have been cleaned up)
@@ -216,13 +228,13 @@ public class FileStorageHelperTest {
     
     @Test
     public void testLoadNonExistentObject() throws Exception {
-        EPackage loaded = (EPackage) helper.loadEObject("non-existent");
+        EPackage loaded = (EPackage) helper.loadEObject(TEST_SCOPE, TEST_REGISTRY, TEST_STAGE, "non-existent");
         assertNull(loaded);
     }
     
     @Test
     public void testLoadNonExistentMetadata() throws Exception {
-        ObjectMetadata loaded = helper.loadMetadata("non-existent");
+        ObjectMetadata loaded = helper.loadMetadata(TEST_SCOPE, TEST_REGISTRY, TEST_STAGE, "non-existent");
         assertNull(loaded);
     }
 }

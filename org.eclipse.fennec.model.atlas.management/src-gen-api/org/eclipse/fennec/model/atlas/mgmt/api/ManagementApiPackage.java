@@ -280,7 +280,7 @@ public interface ManagementApiPackage extends org.eclipse.emf.ecore.EPackage {
 	 * @generated
 	 * @ordered
 	 */
-	int EOBJECT_STORAGE_SERVICE___STORE_OBJECT__STRING_EOBJECT_OBJECTMETADATA = 0;
+	int EOBJECT_STORAGE_SERVICE___STORE_OBJECT__STRING_STRING_STRING_STRING_EOBJECT_OBJECTMETADATA = 0;
 
 	/**
 	 * The operation id for the '<em>Update Object</em>' operation.
@@ -298,7 +298,7 @@ public interface ManagementApiPackage extends org.eclipse.emf.ecore.EPackage {
 	 * @generated
 	 * @ordered
 	 */
-	int EOBJECT_STORAGE_SERVICE___RETRIEVE_OBJECT__STRING = 2;
+	int EOBJECT_STORAGE_SERVICE___RETRIEVE_OBJECT__STRING_STRING_STRING_STRING = 2;
 
 	/**
 	 * The operation id for the '<em>Retrieve Metadata</em>' operation.
@@ -307,7 +307,7 @@ public interface ManagementApiPackage extends org.eclipse.emf.ecore.EPackage {
 	 * @generated
 	 * @ordered
 	 */
-	int EOBJECT_STORAGE_SERVICE___RETRIEVE_METADATA__STRING = 3;
+	int EOBJECT_STORAGE_SERVICE___RETRIEVE_METADATA__STRING_STRING_STRING_STRING = 3;
 
 	/**
 	 * The operation id for the '<em>Delete Object</em>' operation.
@@ -316,7 +316,7 @@ public interface ManagementApiPackage extends org.eclipse.emf.ecore.EPackage {
 	 * @generated
 	 * @ordered
 	 */
-	int EOBJECT_STORAGE_SERVICE___DELETE_OBJECT__STRING = 4;
+	int EOBJECT_STORAGE_SERVICE___DELETE_OBJECT__STRING_STRING_STRING_STRING = 4;
 
 	/**
 	 * The operation id for the '<em>List Object Ids</em>' operation.
@@ -325,7 +325,7 @@ public interface ManagementApiPackage extends org.eclipse.emf.ecore.EPackage {
 	 * @generated
 	 * @ordered
 	 */
-	int EOBJECT_STORAGE_SERVICE___LIST_OBJECT_IDS = 5;
+	int EOBJECT_STORAGE_SERVICE___LIST_OBJECT_IDS__STRING_STRING_STRING = 5;
 
 	/**
 	 * The operation id for the '<em>Query Objects</em>' operation.
@@ -343,7 +343,7 @@ public interface ManagementApiPackage extends org.eclipse.emf.ecore.EPackage {
 	 * @generated
 	 * @ordered
 	 */
-	int EOBJECT_STORAGE_SERVICE___UPDATE_METADATA__STRING_OBJECTMETADATA = 7;
+	int EOBJECT_STORAGE_SERVICE___UPDATE_METADATA__STRING_STRING_STRING_STRING_OBJECTMETADATA = 7;
 
 	/**
 	 * The operation id for the '<em>Update Status</em>' operation.
@@ -352,7 +352,7 @@ public interface ManagementApiPackage extends org.eclipse.emf.ecore.EPackage {
 	 * @generated
 	 * @ordered
 	 */
-	int EOBJECT_STORAGE_SERVICE___UPDATE_STATUS__STRING_OBJECTSTATUS_STRING = 8;
+	int EOBJECT_STORAGE_SERVICE___UPDATE_STATUS__STRING_STRING_STRING_STRING_OBJECTSTATUS_STRING = 8;
 
 	/**
 	 * The operation id for the '<em>Exists</em>' operation.
@@ -361,7 +361,7 @@ public interface ManagementApiPackage extends org.eclipse.emf.ecore.EPackage {
 	 * @generated
 	 * @ordered
 	 */
-	int EOBJECT_STORAGE_SERVICE___EXISTS__STRING = 9;
+	int EOBJECT_STORAGE_SERVICE___EXISTS__STRING_STRING_STRING_STRING = 9;
 
 	/**
 	 * The operation id for the '<em>Get Object Count</em>' operation.
@@ -382,13 +382,22 @@ public interface ManagementApiPackage extends org.eclipse.emf.ecore.EPackage {
 	int EOBJECT_STORAGE_SERVICE___GET_BACKEND_TYPE = 11;
 
 	/**
+	 * The operation id for the '<em>Get Storage Type</em>' operation.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 * @ordered
+	 */
+	int EOBJECT_STORAGE_SERVICE___GET_STORAGE_TYPE = 12;
+
+	/**
 	 * The number of operations of the '<em>EObject Storage Service</em>' class.
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
 	 * @generated
 	 * @ordered
 	 */
-	int EOBJECT_STORAGE_SERVICE_OPERATION_COUNT = 12;
+	int EOBJECT_STORAGE_SERVICE_OPERATION_COUNT = 13;
 
 	/**
 	 * The meta object id for the '{@link org.eclipse.fennec.model.atlas.mgmt.api.EObjectRegistryService <em>EObject Registry Service</em>}' class.
@@ -428,22 +437,13 @@ public interface ManagementApiPackage extends org.eclipse.emf.ecore.EPackage {
 	int EOBJECT_REGISTRY_SERVICE___FIND_BY_OBJECT_NAME__STRING = 1;
 
 	/**
-	 * The operation id for the '<em>Find By Object Name And Role</em>' operation.
+	 * The operation id for the '<em>Find By Object Name And Stage</em>' operation.
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
 	 * @generated
 	 * @ordered
 	 */
-	int EOBJECT_REGISTRY_SERVICE___FIND_BY_OBJECT_NAME_AND_ROLE__STRING_STRING = 2;
-
-	/**
-	 * The operation id for the '<em>Find By Role</em>' operation.
-	 * <!-- begin-user-doc -->
-	 * <!-- end-user-doc -->
-	 * @generated
-	 * @ordered
-	 */
-	int EOBJECT_REGISTRY_SERVICE___FIND_BY_ROLE__STRING = 3;
+	int EOBJECT_REGISTRY_SERVICE___FIND_BY_OBJECT_NAME_AND_STAGE__STRING_STRING = 2;
 
 	/**
 	 * The operation id for the '<em>Find By Status</em>' operation.
@@ -452,7 +452,7 @@ public interface ManagementApiPackage extends org.eclipse.emf.ecore.EPackage {
 	 * @generated
 	 * @ordered
 	 */
-	int EOBJECT_REGISTRY_SERVICE___FIND_BY_STATUS__OBJECTSTATUS = 4;
+	int EOBJECT_REGISTRY_SERVICE___FIND_BY_STATUS__OBJECTSTATUS = 3;
 
 	/**
 	 * The operation id for the '<em>Find Pending Approval</em>' operation.
@@ -461,7 +461,7 @@ public interface ManagementApiPackage extends org.eclipse.emf.ecore.EPackage {
 	 * @generated
 	 * @ordered
 	 */
-	int EOBJECT_REGISTRY_SERVICE___FIND_PENDING_APPROVAL = 5;
+	int EOBJECT_REGISTRY_SERVICE___FIND_PENDING_APPROVAL = 4;
 
 	/**
 	 * The operation id for the '<em>Find By Version</em>' operation.
@@ -470,7 +470,7 @@ public interface ManagementApiPackage extends org.eclipse.emf.ecore.EPackage {
 	 * @generated
 	 * @ordered
 	 */
-	int EOBJECT_REGISTRY_SERVICE___FIND_BY_VERSION__STRING = 6;
+	int EOBJECT_REGISTRY_SERVICE___FIND_BY_VERSION__STRING = 5;
 
 	/**
 	 * The operation id for the '<em>Find By Version Pattern</em>' operation.
@@ -479,7 +479,7 @@ public interface ManagementApiPackage extends org.eclipse.emf.ecore.EPackage {
 	 * @generated
 	 * @ordered
 	 */
-	int EOBJECT_REGISTRY_SERVICE___FIND_BY_VERSION_PATTERN__STRING = 7;
+	int EOBJECT_REGISTRY_SERVICE___FIND_BY_VERSION_PATTERN__STRING = 6;
 
 	/**
 	 * The operation id for the '<em>Find By Fingerprint</em>' operation.
@@ -488,7 +488,7 @@ public interface ManagementApiPackage extends org.eclipse.emf.ecore.EPackage {
 	 * @generated
 	 * @ordered
 	 */
-	int EOBJECT_REGISTRY_SERVICE___FIND_BY_FINGERPRINT__STRING = 8;
+	int EOBJECT_REGISTRY_SERVICE___FIND_BY_FINGERPRINT__STRING = 7;
 
 	/**
 	 * The operation id for the '<em>Find By Object Type</em>' operation.
@@ -497,7 +497,7 @@ public interface ManagementApiPackage extends org.eclipse.emf.ecore.EPackage {
 	 * @generated
 	 * @ordered
 	 */
-	int EOBJECT_REGISTRY_SERVICE___FIND_BY_OBJECT_TYPE__STRING = 9;
+	int EOBJECT_REGISTRY_SERVICE___FIND_BY_OBJECT_TYPE__STRING = 8;
 
 	/**
 	 * The operation id for the '<em>Find By Status And Type</em>' operation.
@@ -506,7 +506,7 @@ public interface ManagementApiPackage extends org.eclipse.emf.ecore.EPackage {
 	 * @generated
 	 * @ordered
 	 */
-	int EOBJECT_REGISTRY_SERVICE___FIND_BY_STATUS_AND_TYPE__OBJECTSTATUS_STRING = 10;
+	int EOBJECT_REGISTRY_SERVICE___FIND_BY_STATUS_AND_TYPE__OBJECTSTATUS_STRING = 9;
 
 	/**
 	 * The operation id for the '<em>Find Recently Modified</em>' operation.
@@ -515,7 +515,7 @@ public interface ManagementApiPackage extends org.eclipse.emf.ecore.EPackage {
 	 * @generated
 	 * @ordered
 	 */
-	int EOBJECT_REGISTRY_SERVICE___FIND_RECENTLY_MODIFIED__INSTANT_INT = 11;
+	int EOBJECT_REGISTRY_SERVICE___FIND_RECENTLY_MODIFIED__INSTANT_INT = 10;
 
 	/**
 	 * The operation id for the '<em>Update Cache</em>' operation.
@@ -524,7 +524,7 @@ public interface ManagementApiPackage extends org.eclipse.emf.ecore.EPackage {
 	 * @generated
 	 * @ordered
 	 */
-	int EOBJECT_REGISTRY_SERVICE___UPDATE_CACHE__OBJECTMETADATA = 12;
+	int EOBJECT_REGISTRY_SERVICE___UPDATE_CACHE__OBJECTMETADATA = 11;
 
 	/**
 	 * The operation id for the '<em>Remove From Cache</em>' operation.
@@ -533,7 +533,7 @@ public interface ManagementApiPackage extends org.eclipse.emf.ecore.EPackage {
 	 * @generated
 	 * @ordered
 	 */
-	int EOBJECT_REGISTRY_SERVICE___REMOVE_FROM_CACHE__STRING = 13;
+	int EOBJECT_REGISTRY_SERVICE___REMOVE_FROM_CACHE__STRING = 12;
 
 	/**
 	 * The operation id for the '<em>Get Registry Statistics</em>' operation.
@@ -542,25 +542,43 @@ public interface ManagementApiPackage extends org.eclipse.emf.ecore.EPackage {
 	 * @generated
 	 * @ordered
 	 */
-	int EOBJECT_REGISTRY_SERVICE___GET_REGISTRY_STATISTICS = 14;
+	int EOBJECT_REGISTRY_SERVICE___GET_REGISTRY_STATISTICS = 13;
 
 	/**
-	 * The operation id for the '<em>Find By Scope And Role</em>' operation.
+	 * The operation id for the '<em>Find By Scope And Stage</em>' operation.
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
 	 * @generated
 	 * @ordered
 	 */
-	int EOBJECT_REGISTRY_SERVICE___FIND_BY_SCOPE_AND_ROLE__STRING_STRING = 15;
+	int EOBJECT_REGISTRY_SERVICE___FIND_BY_SCOPE_AND_STAGE__STRING_STRING = 14;
 
 	/**
-	 * The operation id for the '<em>Find By Scope Role And Name</em>' operation.
+	 * The operation id for the '<em>Find By Scope Stage And Name</em>' operation.
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
 	 * @generated
 	 * @ordered
 	 */
-	int EOBJECT_REGISTRY_SERVICE___FIND_BY_SCOPE_ROLE_AND_NAME__STRING_STRING_STRING = 16;
+	int EOBJECT_REGISTRY_SERVICE___FIND_BY_SCOPE_STAGE_AND_NAME__STRING_STRING_STRING = 15;
+
+	/**
+	 * The operation id for the '<em>Find By Scope Registry And Stage</em>' operation.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 * @ordered
+	 */
+	int EOBJECT_REGISTRY_SERVICE___FIND_BY_SCOPE_REGISTRY_AND_STAGE__STRING_STRING_STRING = 16;
+
+	/**
+	 * The operation id for the '<em>Find By Scope Registry Stage And Name</em>' operation.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 * @ordered
+	 */
+	int EOBJECT_REGISTRY_SERVICE___FIND_BY_SCOPE_REGISTRY_STAGE_AND_NAME__STRING_STRING_STRING_STRING = 17;
 
 	/**
 	 * The number of operations of the '<em>EObject Registry Service</em>' class.
@@ -569,7 +587,7 @@ public interface ManagementApiPackage extends org.eclipse.emf.ecore.EPackage {
 	 * @generated
 	 * @ordered
 	 */
-	int EOBJECT_REGISTRY_SERVICE_OPERATION_COUNT = 17;
+	int EOBJECT_REGISTRY_SERVICE_OPERATION_COUNT = 18;
 
 	/**
 	 * The meta object id for the '{@link org.eclipse.fennec.model.atlas.mgmt.api.StorageRegistry <em>Storage Registry</em>}' class.
@@ -591,49 +609,22 @@ public interface ManagementApiPackage extends org.eclipse.emf.ecore.EPackage {
 	int STORAGE_REGISTRY_FEATURE_COUNT = 0;
 
 	/**
-	 * The operation id for the '<em>Get Storage By Role</em>' operation.
-	 * <!-- begin-user-doc -->
-	 * <!-- end-user-doc -->
-	 * @generated
-	 * @ordered
-	 */
-	int STORAGE_REGISTRY___GET_STORAGE_BY_ROLE__STRING = 0;
-
-	/**
 	 * The operation id for the '<em>Get All Storages</em>' operation.
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
 	 * @generated
 	 * @ordered
 	 */
-	int STORAGE_REGISTRY___GET_ALL_STORAGES = 1;
+	int STORAGE_REGISTRY___GET_ALL_STORAGES = 0;
 
 	/**
-	 * The operation id for the '<em>Get Available Roles</em>' operation.
+	 * The operation id for the '<em>Search Metadata Across Types</em>' operation.
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
 	 * @generated
 	 * @ordered
 	 */
-	int STORAGE_REGISTRY___GET_AVAILABLE_ROLES = 2;
-
-	/**
-	 * The operation id for the '<em>Update Governance Documentation Id</em>' operation.
-	 * <!-- begin-user-doc -->
-	 * <!-- end-user-doc -->
-	 * @generated
-	 * @ordered
-	 */
-	int STORAGE_REGISTRY___UPDATE_GOVERNANCE_DOCUMENTATION_ID__STRING_STRING_STRING_STRING = 3;
-
-	/**
-	 * The operation id for the '<em>Search Metadata Across Roles</em>' operation.
-	 * <!-- begin-user-doc -->
-	 * <!-- end-user-doc -->
-	 * @generated
-	 * @ordered
-	 */
-	int STORAGE_REGISTRY___SEARCH_METADATA_ACROSS_ROLES__OBJECTQUERY = 4;
+	int STORAGE_REGISTRY___SEARCH_METADATA_ACROSS_TYPES__OBJECTQUERY = 1;
 
 	/**
 	 * The operation id for the '<em>Get Storage Statistics</em>' operation.
@@ -642,7 +633,25 @@ public interface ManagementApiPackage extends org.eclipse.emf.ecore.EPackage {
 	 * @generated
 	 * @ordered
 	 */
-	int STORAGE_REGISTRY___GET_STORAGE_STATISTICS = 5;
+	int STORAGE_REGISTRY___GET_STORAGE_STATISTICS = 2;
+
+	/**
+	 * The operation id for the '<em>Get Storage By Type</em>' operation.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 * @ordered
+	 */
+	int STORAGE_REGISTRY___GET_STORAGE_BY_TYPE__STRING = 3;
+
+	/**
+	 * The operation id for the '<em>Get Available Types</em>' operation.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 * @ordered
+	 */
+	int STORAGE_REGISTRY___GET_AVAILABLE_TYPES = 4;
 
 	/**
 	 * The number of operations of the '<em>Storage Registry</em>' class.
@@ -651,7 +660,7 @@ public interface ManagementApiPackage extends org.eclipse.emf.ecore.EPackage {
 	 * @generated
 	 * @ordered
 	 */
-	int STORAGE_REGISTRY_OPERATION_COUNT = 6;
+	int STORAGE_REGISTRY_OPERATION_COUNT = 5;
 
 
 	/**
@@ -825,14 +834,14 @@ public interface ManagementApiPackage extends org.eclipse.emf.ecore.EPackage {
 	EClass getEObjectStorageService();
 
 	/**
-	 * Returns the meta object for the '{@link org.eclipse.fennec.model.atlas.mgmt.api.EObjectStorageService#storeObject(java.lang.String, org.eclipse.emf.ecore.EObject, org.eclipse.fennec.model.atlas.mgmt.management.ObjectMetadata) <em>Store Object</em>}' operation.
+	 * Returns the meta object for the '{@link org.eclipse.fennec.model.atlas.mgmt.api.EObjectStorageService#storeObject(java.lang.String, java.lang.String, java.lang.String, java.lang.String, org.eclipse.emf.ecore.EObject, org.eclipse.fennec.model.atlas.mgmt.management.ObjectMetadata) <em>Store Object</em>}' operation.
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
 	 * @return the meta object for the '<em>Store Object</em>' operation.
-	 * @see org.eclipse.fennec.model.atlas.mgmt.api.EObjectStorageService#storeObject(java.lang.String, org.eclipse.emf.ecore.EObject, org.eclipse.fennec.model.atlas.mgmt.management.ObjectMetadata)
+	 * @see org.eclipse.fennec.model.atlas.mgmt.api.EObjectStorageService#storeObject(java.lang.String, java.lang.String, java.lang.String, java.lang.String, org.eclipse.emf.ecore.EObject, org.eclipse.fennec.model.atlas.mgmt.management.ObjectMetadata)
 	 * @generated
 	 */
-	EOperation getEObjectStorageService__StoreObject__String_EObject_ObjectMetadata();
+	EOperation getEObjectStorageService__StoreObject__String_String_String_String_EObject_ObjectMetadata();
 
 	/**
 	 * Returns the meta object for the '{@link org.eclipse.fennec.model.atlas.mgmt.api.EObjectStorageService#updateObject(java.lang.String, org.eclipse.emf.ecore.EObject, org.eclipse.fennec.model.atlas.mgmt.management.ObjectMetadata) <em>Update Object</em>}' operation.
@@ -845,44 +854,44 @@ public interface ManagementApiPackage extends org.eclipse.emf.ecore.EPackage {
 	EOperation getEObjectStorageService__UpdateObject__String_EObject_ObjectMetadata();
 
 	/**
-	 * Returns the meta object for the '{@link org.eclipse.fennec.model.atlas.mgmt.api.EObjectStorageService#retrieveObject(java.lang.String) <em>Retrieve Object</em>}' operation.
+	 * Returns the meta object for the '{@link org.eclipse.fennec.model.atlas.mgmt.api.EObjectStorageService#retrieveObject(java.lang.String, java.lang.String, java.lang.String, java.lang.String) <em>Retrieve Object</em>}' operation.
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
 	 * @return the meta object for the '<em>Retrieve Object</em>' operation.
-	 * @see org.eclipse.fennec.model.atlas.mgmt.api.EObjectStorageService#retrieveObject(java.lang.String)
+	 * @see org.eclipse.fennec.model.atlas.mgmt.api.EObjectStorageService#retrieveObject(java.lang.String, java.lang.String, java.lang.String, java.lang.String)
 	 * @generated
 	 */
-	EOperation getEObjectStorageService__RetrieveObject__String();
+	EOperation getEObjectStorageService__RetrieveObject__String_String_String_String();
 
 	/**
-	 * Returns the meta object for the '{@link org.eclipse.fennec.model.atlas.mgmt.api.EObjectStorageService#retrieveMetadata(java.lang.String) <em>Retrieve Metadata</em>}' operation.
+	 * Returns the meta object for the '{@link org.eclipse.fennec.model.atlas.mgmt.api.EObjectStorageService#retrieveMetadata(java.lang.String, java.lang.String, java.lang.String, java.lang.String) <em>Retrieve Metadata</em>}' operation.
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
 	 * @return the meta object for the '<em>Retrieve Metadata</em>' operation.
-	 * @see org.eclipse.fennec.model.atlas.mgmt.api.EObjectStorageService#retrieveMetadata(java.lang.String)
+	 * @see org.eclipse.fennec.model.atlas.mgmt.api.EObjectStorageService#retrieveMetadata(java.lang.String, java.lang.String, java.lang.String, java.lang.String)
 	 * @generated
 	 */
-	EOperation getEObjectStorageService__RetrieveMetadata__String();
+	EOperation getEObjectStorageService__RetrieveMetadata__String_String_String_String();
 
 	/**
-	 * Returns the meta object for the '{@link org.eclipse.fennec.model.atlas.mgmt.api.EObjectStorageService#deleteObject(java.lang.String) <em>Delete Object</em>}' operation.
+	 * Returns the meta object for the '{@link org.eclipse.fennec.model.atlas.mgmt.api.EObjectStorageService#deleteObject(java.lang.String, java.lang.String, java.lang.String, java.lang.String) <em>Delete Object</em>}' operation.
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
 	 * @return the meta object for the '<em>Delete Object</em>' operation.
-	 * @see org.eclipse.fennec.model.atlas.mgmt.api.EObjectStorageService#deleteObject(java.lang.String)
+	 * @see org.eclipse.fennec.model.atlas.mgmt.api.EObjectStorageService#deleteObject(java.lang.String, java.lang.String, java.lang.String, java.lang.String)
 	 * @generated
 	 */
-	EOperation getEObjectStorageService__DeleteObject__String();
+	EOperation getEObjectStorageService__DeleteObject__String_String_String_String();
 
 	/**
-	 * Returns the meta object for the '{@link org.eclipse.fennec.model.atlas.mgmt.api.EObjectStorageService#listObjectIds() <em>List Object Ids</em>}' operation.
+	 * Returns the meta object for the '{@link org.eclipse.fennec.model.atlas.mgmt.api.EObjectStorageService#listObjectIds(java.lang.String, java.lang.String, java.lang.String) <em>List Object Ids</em>}' operation.
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
 	 * @return the meta object for the '<em>List Object Ids</em>' operation.
-	 * @see org.eclipse.fennec.model.atlas.mgmt.api.EObjectStorageService#listObjectIds()
+	 * @see org.eclipse.fennec.model.atlas.mgmt.api.EObjectStorageService#listObjectIds(java.lang.String, java.lang.String, java.lang.String)
 	 * @generated
 	 */
-	EOperation getEObjectStorageService__ListObjectIds();
+	EOperation getEObjectStorageService__ListObjectIds__String_String_String();
 
 	/**
 	 * Returns the meta object for the '{@link org.eclipse.fennec.model.atlas.mgmt.api.EObjectStorageService#queryObjects(org.eclipse.fennec.model.atlas.mgmt.management.ObjectQuery) <em>Query Objects</em>}' operation.
@@ -895,34 +904,34 @@ public interface ManagementApiPackage extends org.eclipse.emf.ecore.EPackage {
 	EOperation getEObjectStorageService__QueryObjects__ObjectQuery();
 
 	/**
-	 * Returns the meta object for the '{@link org.eclipse.fennec.model.atlas.mgmt.api.EObjectStorageService#updateMetadata(java.lang.String, org.eclipse.fennec.model.atlas.mgmt.management.ObjectMetadata) <em>Update Metadata</em>}' operation.
+	 * Returns the meta object for the '{@link org.eclipse.fennec.model.atlas.mgmt.api.EObjectStorageService#updateMetadata(java.lang.String, java.lang.String, java.lang.String, java.lang.String, org.eclipse.fennec.model.atlas.mgmt.management.ObjectMetadata) <em>Update Metadata</em>}' operation.
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
 	 * @return the meta object for the '<em>Update Metadata</em>' operation.
-	 * @see org.eclipse.fennec.model.atlas.mgmt.api.EObjectStorageService#updateMetadata(java.lang.String, org.eclipse.fennec.model.atlas.mgmt.management.ObjectMetadata)
+	 * @see org.eclipse.fennec.model.atlas.mgmt.api.EObjectStorageService#updateMetadata(java.lang.String, java.lang.String, java.lang.String, java.lang.String, org.eclipse.fennec.model.atlas.mgmt.management.ObjectMetadata)
 	 * @generated
 	 */
-	EOperation getEObjectStorageService__UpdateMetadata__String_ObjectMetadata();
+	EOperation getEObjectStorageService__UpdateMetadata__String_String_String_String_ObjectMetadata();
 
 	/**
-	 * Returns the meta object for the '{@link org.eclipse.fennec.model.atlas.mgmt.api.EObjectStorageService#updateStatus(java.lang.String, org.eclipse.fennec.model.atlas.mgmt.management.ObjectStatus, java.lang.String) <em>Update Status</em>}' operation.
+	 * Returns the meta object for the '{@link org.eclipse.fennec.model.atlas.mgmt.api.EObjectStorageService#updateStatus(java.lang.String, java.lang.String, java.lang.String, java.lang.String, org.eclipse.fennec.model.atlas.mgmt.management.ObjectStatus, java.lang.String) <em>Update Status</em>}' operation.
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
 	 * @return the meta object for the '<em>Update Status</em>' operation.
-	 * @see org.eclipse.fennec.model.atlas.mgmt.api.EObjectStorageService#updateStatus(java.lang.String, org.eclipse.fennec.model.atlas.mgmt.management.ObjectStatus, java.lang.String)
+	 * @see org.eclipse.fennec.model.atlas.mgmt.api.EObjectStorageService#updateStatus(java.lang.String, java.lang.String, java.lang.String, java.lang.String, org.eclipse.fennec.model.atlas.mgmt.management.ObjectStatus, java.lang.String)
 	 * @generated
 	 */
-	EOperation getEObjectStorageService__UpdateStatus__String_ObjectStatus_String();
+	EOperation getEObjectStorageService__UpdateStatus__String_String_String_String_ObjectStatus_String();
 
 	/**
-	 * Returns the meta object for the '{@link org.eclipse.fennec.model.atlas.mgmt.api.EObjectStorageService#exists(java.lang.String) <em>Exists</em>}' operation.
+	 * Returns the meta object for the '{@link org.eclipse.fennec.model.atlas.mgmt.api.EObjectStorageService#exists(java.lang.String, java.lang.String, java.lang.String, java.lang.String) <em>Exists</em>}' operation.
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
 	 * @return the meta object for the '<em>Exists</em>' operation.
-	 * @see org.eclipse.fennec.model.atlas.mgmt.api.EObjectStorageService#exists(java.lang.String)
+	 * @see org.eclipse.fennec.model.atlas.mgmt.api.EObjectStorageService#exists(java.lang.String, java.lang.String, java.lang.String, java.lang.String)
 	 * @generated
 	 */
-	EOperation getEObjectStorageService__Exists__String();
+	EOperation getEObjectStorageService__Exists__String_String_String_String();
 
 	/**
 	 * Returns the meta object for the '{@link org.eclipse.fennec.model.atlas.mgmt.api.EObjectStorageService#getObjectCount() <em>Get Object Count</em>}' operation.
@@ -943,6 +952,16 @@ public interface ManagementApiPackage extends org.eclipse.emf.ecore.EPackage {
 	 * @generated
 	 */
 	EOperation getEObjectStorageService__GetBackendType();
+
+	/**
+	 * Returns the meta object for the '{@link org.eclipse.fennec.model.atlas.mgmt.api.EObjectStorageService#getStorageType() <em>Get Storage Type</em>}' operation.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @return the meta object for the '<em>Get Storage Type</em>' operation.
+	 * @see org.eclipse.fennec.model.atlas.mgmt.api.EObjectStorageService#getStorageType()
+	 * @generated
+	 */
+	EOperation getEObjectStorageService__GetStorageType();
 
 	/**
 	 * Returns the meta object for class '{@link org.eclipse.fennec.model.atlas.mgmt.api.EObjectRegistryService <em>EObject Registry Service</em>}'.
@@ -975,24 +994,14 @@ public interface ManagementApiPackage extends org.eclipse.emf.ecore.EPackage {
 	EOperation getEObjectRegistryService__FindByObjectName__String();
 
 	/**
-	 * Returns the meta object for the '{@link org.eclipse.fennec.model.atlas.mgmt.api.EObjectRegistryService#findByObjectNameAndRole(java.lang.String, java.lang.String) <em>Find By Object Name And Role</em>}' operation.
+	 * Returns the meta object for the '{@link org.eclipse.fennec.model.atlas.mgmt.api.EObjectRegistryService#findByObjectNameAndStage(java.lang.String, java.lang.String) <em>Find By Object Name And Stage</em>}' operation.
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
-	 * @return the meta object for the '<em>Find By Object Name And Role</em>' operation.
-	 * @see org.eclipse.fennec.model.atlas.mgmt.api.EObjectRegistryService#findByObjectNameAndRole(java.lang.String, java.lang.String)
+	 * @return the meta object for the '<em>Find By Object Name And Stage</em>' operation.
+	 * @see org.eclipse.fennec.model.atlas.mgmt.api.EObjectRegistryService#findByObjectNameAndStage(java.lang.String, java.lang.String)
 	 * @generated
 	 */
-	EOperation getEObjectRegistryService__FindByObjectNameAndRole__String_String();
-
-	/**
-	 * Returns the meta object for the '{@link org.eclipse.fennec.model.atlas.mgmt.api.EObjectRegistryService#findByRole(java.lang.String) <em>Find By Role</em>}' operation.
-	 * <!-- begin-user-doc -->
-	 * <!-- end-user-doc -->
-	 * @return the meta object for the '<em>Find By Role</em>' operation.
-	 * @see org.eclipse.fennec.model.atlas.mgmt.api.EObjectRegistryService#findByRole(java.lang.String)
-	 * @generated
-	 */
-	EOperation getEObjectRegistryService__FindByRole__String();
+	EOperation getEObjectRegistryService__FindByObjectNameAndStage__String_String();
 
 	/**
 	 * Returns the meta object for the '{@link org.eclipse.fennec.model.atlas.mgmt.api.EObjectRegistryService#findByStatus(org.eclipse.fennec.model.atlas.mgmt.management.ObjectStatus) <em>Find By Status</em>}' operation.
@@ -1105,24 +1114,44 @@ public interface ManagementApiPackage extends org.eclipse.emf.ecore.EPackage {
 	EOperation getEObjectRegistryService__GetRegistryStatistics();
 
 	/**
-	 * Returns the meta object for the '{@link org.eclipse.fennec.model.atlas.mgmt.api.EObjectRegistryService#findByScopeAndRole(java.lang.String, java.lang.String) <em>Find By Scope And Role</em>}' operation.
+	 * Returns the meta object for the '{@link org.eclipse.fennec.model.atlas.mgmt.api.EObjectRegistryService#findByScopeAndStage(java.lang.String, java.lang.String) <em>Find By Scope And Stage</em>}' operation.
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
-	 * @return the meta object for the '<em>Find By Scope And Role</em>' operation.
-	 * @see org.eclipse.fennec.model.atlas.mgmt.api.EObjectRegistryService#findByScopeAndRole(java.lang.String, java.lang.String)
+	 * @return the meta object for the '<em>Find By Scope And Stage</em>' operation.
+	 * @see org.eclipse.fennec.model.atlas.mgmt.api.EObjectRegistryService#findByScopeAndStage(java.lang.String, java.lang.String)
 	 * @generated
 	 */
-	EOperation getEObjectRegistryService__FindByScopeAndRole__String_String();
+	EOperation getEObjectRegistryService__FindByScopeAndStage__String_String();
 
 	/**
-	 * Returns the meta object for the '{@link org.eclipse.fennec.model.atlas.mgmt.api.EObjectRegistryService#findByScopeRoleAndName(java.lang.String, java.lang.String, java.lang.String) <em>Find By Scope Role And Name</em>}' operation.
+	 * Returns the meta object for the '{@link org.eclipse.fennec.model.atlas.mgmt.api.EObjectRegistryService#findByScopeStageAndName(java.lang.String, java.lang.String, java.lang.String) <em>Find By Scope Stage And Name</em>}' operation.
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
-	 * @return the meta object for the '<em>Find By Scope Role And Name</em>' operation.
-	 * @see org.eclipse.fennec.model.atlas.mgmt.api.EObjectRegistryService#findByScopeRoleAndName(java.lang.String, java.lang.String, java.lang.String)
+	 * @return the meta object for the '<em>Find By Scope Stage And Name</em>' operation.
+	 * @see org.eclipse.fennec.model.atlas.mgmt.api.EObjectRegistryService#findByScopeStageAndName(java.lang.String, java.lang.String, java.lang.String)
 	 * @generated
 	 */
-	EOperation getEObjectRegistryService__FindByScopeRoleAndName__String_String_String();
+	EOperation getEObjectRegistryService__FindByScopeStageAndName__String_String_String();
+
+	/**
+	 * Returns the meta object for the '{@link org.eclipse.fennec.model.atlas.mgmt.api.EObjectRegistryService#findByScopeRegistryAndStage(java.lang.String, java.lang.String, java.lang.String) <em>Find By Scope Registry And Stage</em>}' operation.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @return the meta object for the '<em>Find By Scope Registry And Stage</em>' operation.
+	 * @see org.eclipse.fennec.model.atlas.mgmt.api.EObjectRegistryService#findByScopeRegistryAndStage(java.lang.String, java.lang.String, java.lang.String)
+	 * @generated
+	 */
+	EOperation getEObjectRegistryService__FindByScopeRegistryAndStage__String_String_String();
+
+	/**
+	 * Returns the meta object for the '{@link org.eclipse.fennec.model.atlas.mgmt.api.EObjectRegistryService#findByScopeRegistryStageAndName(java.lang.String, java.lang.String, java.lang.String, java.lang.String) <em>Find By Scope Registry Stage And Name</em>}' operation.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @return the meta object for the '<em>Find By Scope Registry Stage And Name</em>' operation.
+	 * @see org.eclipse.fennec.model.atlas.mgmt.api.EObjectRegistryService#findByScopeRegistryStageAndName(java.lang.String, java.lang.String, java.lang.String, java.lang.String)
+	 * @generated
+	 */
+	EOperation getEObjectRegistryService__FindByScopeRegistryStageAndName__String_String_String_String();
 
 	/**
 	 * Returns the meta object for class '{@link org.eclipse.fennec.model.atlas.mgmt.api.StorageRegistry <em>Storage Registry</em>}'.
@@ -1135,16 +1164,6 @@ public interface ManagementApiPackage extends org.eclipse.emf.ecore.EPackage {
 	EClass getStorageRegistry();
 
 	/**
-	 * Returns the meta object for the '{@link org.eclipse.fennec.model.atlas.mgmt.api.StorageRegistry#getStorageByRole(java.lang.String) <em>Get Storage By Role</em>}' operation.
-	 * <!-- begin-user-doc -->
-	 * <!-- end-user-doc -->
-	 * @return the meta object for the '<em>Get Storage By Role</em>' operation.
-	 * @see org.eclipse.fennec.model.atlas.mgmt.api.StorageRegistry#getStorageByRole(java.lang.String)
-	 * @generated
-	 */
-	EOperation getStorageRegistry__GetStorageByRole__String();
-
-	/**
 	 * Returns the meta object for the '{@link org.eclipse.fennec.model.atlas.mgmt.api.StorageRegistry#getAllStorages() <em>Get All Storages</em>}' operation.
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
@@ -1155,34 +1174,14 @@ public interface ManagementApiPackage extends org.eclipse.emf.ecore.EPackage {
 	EOperation getStorageRegistry__GetAllStorages();
 
 	/**
-	 * Returns the meta object for the '{@link org.eclipse.fennec.model.atlas.mgmt.api.StorageRegistry#getAvailableRoles() <em>Get Available Roles</em>}' operation.
+	 * Returns the meta object for the '{@link org.eclipse.fennec.model.atlas.mgmt.api.StorageRegistry#searchMetadataAcrossTypes(org.eclipse.fennec.model.atlas.mgmt.management.ObjectQuery) <em>Search Metadata Across Types</em>}' operation.
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
-	 * @return the meta object for the '<em>Get Available Roles</em>' operation.
-	 * @see org.eclipse.fennec.model.atlas.mgmt.api.StorageRegistry#getAvailableRoles()
+	 * @return the meta object for the '<em>Search Metadata Across Types</em>' operation.
+	 * @see org.eclipse.fennec.model.atlas.mgmt.api.StorageRegistry#searchMetadataAcrossTypes(org.eclipse.fennec.model.atlas.mgmt.management.ObjectQuery)
 	 * @generated
 	 */
-	EOperation getStorageRegistry__GetAvailableRoles();
-
-	/**
-	 * Returns the meta object for the '{@link org.eclipse.fennec.model.atlas.mgmt.api.StorageRegistry#updateGovernanceDocumentationId(java.lang.String, java.lang.String, java.lang.String, java.lang.String) <em>Update Governance Documentation Id</em>}' operation.
-	 * <!-- begin-user-doc -->
-	 * <!-- end-user-doc -->
-	 * @return the meta object for the '<em>Update Governance Documentation Id</em>' operation.
-	 * @see org.eclipse.fennec.model.atlas.mgmt.api.StorageRegistry#updateGovernanceDocumentationId(java.lang.String, java.lang.String, java.lang.String, java.lang.String)
-	 * @generated
-	 */
-	EOperation getStorageRegistry__UpdateGovernanceDocumentationId__String_String_String_String();
-
-	/**
-	 * Returns the meta object for the '{@link org.eclipse.fennec.model.atlas.mgmt.api.StorageRegistry#searchMetadataAcrossRoles(org.eclipse.fennec.model.atlas.mgmt.management.ObjectQuery) <em>Search Metadata Across Roles</em>}' operation.
-	 * <!-- begin-user-doc -->
-	 * <!-- end-user-doc -->
-	 * @return the meta object for the '<em>Search Metadata Across Roles</em>' operation.
-	 * @see org.eclipse.fennec.model.atlas.mgmt.api.StorageRegistry#searchMetadataAcrossRoles(org.eclipse.fennec.model.atlas.mgmt.management.ObjectQuery)
-	 * @generated
-	 */
-	EOperation getStorageRegistry__SearchMetadataAcrossRoles__ObjectQuery();
+	EOperation getStorageRegistry__SearchMetadataAcrossTypes__ObjectQuery();
 
 	/**
 	 * Returns the meta object for the '{@link org.eclipse.fennec.model.atlas.mgmt.api.StorageRegistry#getStorageStatistics() <em>Get Storage Statistics</em>}' operation.
@@ -1193,6 +1192,26 @@ public interface ManagementApiPackage extends org.eclipse.emf.ecore.EPackage {
 	 * @generated
 	 */
 	EOperation getStorageRegistry__GetStorageStatistics();
+
+	/**
+	 * Returns the meta object for the '{@link org.eclipse.fennec.model.atlas.mgmt.api.StorageRegistry#getStorageByType(java.lang.String) <em>Get Storage By Type</em>}' operation.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @return the meta object for the '<em>Get Storage By Type</em>' operation.
+	 * @see org.eclipse.fennec.model.atlas.mgmt.api.StorageRegistry#getStorageByType(java.lang.String)
+	 * @generated
+	 */
+	EOperation getStorageRegistry__GetStorageByType__String();
+
+	/**
+	 * Returns the meta object for the '{@link org.eclipse.fennec.model.atlas.mgmt.api.StorageRegistry#getAvailableTypes() <em>Get Available Types</em>}' operation.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @return the meta object for the '<em>Get Available Types</em>' operation.
+	 * @see org.eclipse.fennec.model.atlas.mgmt.api.StorageRegistry#getAvailableTypes()
+	 * @generated
+	 */
+	EOperation getStorageRegistry__GetAvailableTypes();
 
 	/**
 	 * Returns the factory that creates the instances of the model.
@@ -1365,7 +1384,7 @@ public interface ManagementApiPackage extends org.eclipse.emf.ecore.EPackage {
 		 * <!-- end-user-doc -->
 		 * @generated
 		 */
-		EOperation EOBJECT_STORAGE_SERVICE___STORE_OBJECT__STRING_EOBJECT_OBJECTMETADATA = eINSTANCE.getEObjectStorageService__StoreObject__String_EObject_ObjectMetadata();
+		EOperation EOBJECT_STORAGE_SERVICE___STORE_OBJECT__STRING_STRING_STRING_STRING_EOBJECT_OBJECTMETADATA = eINSTANCE.getEObjectStorageService__StoreObject__String_String_String_String_EObject_ObjectMetadata();
 
 		/**
 		 * The meta object literal for the '<em><b>Update Object</b></em>' operation.
@@ -1381,7 +1400,7 @@ public interface ManagementApiPackage extends org.eclipse.emf.ecore.EPackage {
 		 * <!-- end-user-doc -->
 		 * @generated
 		 */
-		EOperation EOBJECT_STORAGE_SERVICE___RETRIEVE_OBJECT__STRING = eINSTANCE.getEObjectStorageService__RetrieveObject__String();
+		EOperation EOBJECT_STORAGE_SERVICE___RETRIEVE_OBJECT__STRING_STRING_STRING_STRING = eINSTANCE.getEObjectStorageService__RetrieveObject__String_String_String_String();
 
 		/**
 		 * The meta object literal for the '<em><b>Retrieve Metadata</b></em>' operation.
@@ -1389,7 +1408,7 @@ public interface ManagementApiPackage extends org.eclipse.emf.ecore.EPackage {
 		 * <!-- end-user-doc -->
 		 * @generated
 		 */
-		EOperation EOBJECT_STORAGE_SERVICE___RETRIEVE_METADATA__STRING = eINSTANCE.getEObjectStorageService__RetrieveMetadata__String();
+		EOperation EOBJECT_STORAGE_SERVICE___RETRIEVE_METADATA__STRING_STRING_STRING_STRING = eINSTANCE.getEObjectStorageService__RetrieveMetadata__String_String_String_String();
 
 		/**
 		 * The meta object literal for the '<em><b>Delete Object</b></em>' operation.
@@ -1397,7 +1416,7 @@ public interface ManagementApiPackage extends org.eclipse.emf.ecore.EPackage {
 		 * <!-- end-user-doc -->
 		 * @generated
 		 */
-		EOperation EOBJECT_STORAGE_SERVICE___DELETE_OBJECT__STRING = eINSTANCE.getEObjectStorageService__DeleteObject__String();
+		EOperation EOBJECT_STORAGE_SERVICE___DELETE_OBJECT__STRING_STRING_STRING_STRING = eINSTANCE.getEObjectStorageService__DeleteObject__String_String_String_String();
 
 		/**
 		 * The meta object literal for the '<em><b>List Object Ids</b></em>' operation.
@@ -1405,7 +1424,7 @@ public interface ManagementApiPackage extends org.eclipse.emf.ecore.EPackage {
 		 * <!-- end-user-doc -->
 		 * @generated
 		 */
-		EOperation EOBJECT_STORAGE_SERVICE___LIST_OBJECT_IDS = eINSTANCE.getEObjectStorageService__ListObjectIds();
+		EOperation EOBJECT_STORAGE_SERVICE___LIST_OBJECT_IDS__STRING_STRING_STRING = eINSTANCE.getEObjectStorageService__ListObjectIds__String_String_String();
 
 		/**
 		 * The meta object literal for the '<em><b>Query Objects</b></em>' operation.
@@ -1421,7 +1440,7 @@ public interface ManagementApiPackage extends org.eclipse.emf.ecore.EPackage {
 		 * <!-- end-user-doc -->
 		 * @generated
 		 */
-		EOperation EOBJECT_STORAGE_SERVICE___UPDATE_METADATA__STRING_OBJECTMETADATA = eINSTANCE.getEObjectStorageService__UpdateMetadata__String_ObjectMetadata();
+		EOperation EOBJECT_STORAGE_SERVICE___UPDATE_METADATA__STRING_STRING_STRING_STRING_OBJECTMETADATA = eINSTANCE.getEObjectStorageService__UpdateMetadata__String_String_String_String_ObjectMetadata();
 
 		/**
 		 * The meta object literal for the '<em><b>Update Status</b></em>' operation.
@@ -1429,7 +1448,7 @@ public interface ManagementApiPackage extends org.eclipse.emf.ecore.EPackage {
 		 * <!-- end-user-doc -->
 		 * @generated
 		 */
-		EOperation EOBJECT_STORAGE_SERVICE___UPDATE_STATUS__STRING_OBJECTSTATUS_STRING = eINSTANCE.getEObjectStorageService__UpdateStatus__String_ObjectStatus_String();
+		EOperation EOBJECT_STORAGE_SERVICE___UPDATE_STATUS__STRING_STRING_STRING_STRING_OBJECTSTATUS_STRING = eINSTANCE.getEObjectStorageService__UpdateStatus__String_String_String_String_ObjectStatus_String();
 
 		/**
 		 * The meta object literal for the '<em><b>Exists</b></em>' operation.
@@ -1437,7 +1456,7 @@ public interface ManagementApiPackage extends org.eclipse.emf.ecore.EPackage {
 		 * <!-- end-user-doc -->
 		 * @generated
 		 */
-		EOperation EOBJECT_STORAGE_SERVICE___EXISTS__STRING = eINSTANCE.getEObjectStorageService__Exists__String();
+		EOperation EOBJECT_STORAGE_SERVICE___EXISTS__STRING_STRING_STRING_STRING = eINSTANCE.getEObjectStorageService__Exists__String_String_String_String();
 
 		/**
 		 * The meta object literal for the '<em><b>Get Object Count</b></em>' operation.
@@ -1454,6 +1473,14 @@ public interface ManagementApiPackage extends org.eclipse.emf.ecore.EPackage {
 		 * @generated
 		 */
 		EOperation EOBJECT_STORAGE_SERVICE___GET_BACKEND_TYPE = eINSTANCE.getEObjectStorageService__GetBackendType();
+
+		/**
+		 * The meta object literal for the '<em><b>Get Storage Type</b></em>' operation.
+		 * <!-- begin-user-doc -->
+		 * <!-- end-user-doc -->
+		 * @generated
+		 */
+		EOperation EOBJECT_STORAGE_SERVICE___GET_STORAGE_TYPE = eINSTANCE.getEObjectStorageService__GetStorageType();
 
 		/**
 		 * The meta object literal for the '{@link org.eclipse.fennec.model.atlas.mgmt.api.EObjectRegistryService <em>EObject Registry Service</em>}' class.
@@ -1482,20 +1509,12 @@ public interface ManagementApiPackage extends org.eclipse.emf.ecore.EPackage {
 		EOperation EOBJECT_REGISTRY_SERVICE___FIND_BY_OBJECT_NAME__STRING = eINSTANCE.getEObjectRegistryService__FindByObjectName__String();
 
 		/**
-		 * The meta object literal for the '<em><b>Find By Object Name And Role</b></em>' operation.
+		 * The meta object literal for the '<em><b>Find By Object Name And Stage</b></em>' operation.
 		 * <!-- begin-user-doc -->
 		 * <!-- end-user-doc -->
 		 * @generated
 		 */
-		EOperation EOBJECT_REGISTRY_SERVICE___FIND_BY_OBJECT_NAME_AND_ROLE__STRING_STRING = eINSTANCE.getEObjectRegistryService__FindByObjectNameAndRole__String_String();
-
-		/**
-		 * The meta object literal for the '<em><b>Find By Role</b></em>' operation.
-		 * <!-- begin-user-doc -->
-		 * <!-- end-user-doc -->
-		 * @generated
-		 */
-		EOperation EOBJECT_REGISTRY_SERVICE___FIND_BY_ROLE__STRING = eINSTANCE.getEObjectRegistryService__FindByRole__String();
+		EOperation EOBJECT_REGISTRY_SERVICE___FIND_BY_OBJECT_NAME_AND_STAGE__STRING_STRING = eINSTANCE.getEObjectRegistryService__FindByObjectNameAndStage__String_String();
 
 		/**
 		 * The meta object literal for the '<em><b>Find By Status</b></em>' operation.
@@ -1586,20 +1605,36 @@ public interface ManagementApiPackage extends org.eclipse.emf.ecore.EPackage {
 		EOperation EOBJECT_REGISTRY_SERVICE___GET_REGISTRY_STATISTICS = eINSTANCE.getEObjectRegistryService__GetRegistryStatistics();
 
 		/**
-		 * The meta object literal for the '<em><b>Find By Scope And Role</b></em>' operation.
+		 * The meta object literal for the '<em><b>Find By Scope And Stage</b></em>' operation.
 		 * <!-- begin-user-doc -->
 		 * <!-- end-user-doc -->
 		 * @generated
 		 */
-		EOperation EOBJECT_REGISTRY_SERVICE___FIND_BY_SCOPE_AND_ROLE__STRING_STRING = eINSTANCE.getEObjectRegistryService__FindByScopeAndRole__String_String();
+		EOperation EOBJECT_REGISTRY_SERVICE___FIND_BY_SCOPE_AND_STAGE__STRING_STRING = eINSTANCE.getEObjectRegistryService__FindByScopeAndStage__String_String();
 
 		/**
-		 * The meta object literal for the '<em><b>Find By Scope Role And Name</b></em>' operation.
+		 * The meta object literal for the '<em><b>Find By Scope Stage And Name</b></em>' operation.
 		 * <!-- begin-user-doc -->
 		 * <!-- end-user-doc -->
 		 * @generated
 		 */
-		EOperation EOBJECT_REGISTRY_SERVICE___FIND_BY_SCOPE_ROLE_AND_NAME__STRING_STRING_STRING = eINSTANCE.getEObjectRegistryService__FindByScopeRoleAndName__String_String_String();
+		EOperation EOBJECT_REGISTRY_SERVICE___FIND_BY_SCOPE_STAGE_AND_NAME__STRING_STRING_STRING = eINSTANCE.getEObjectRegistryService__FindByScopeStageAndName__String_String_String();
+
+		/**
+		 * The meta object literal for the '<em><b>Find By Scope Registry And Stage</b></em>' operation.
+		 * <!-- begin-user-doc -->
+		 * <!-- end-user-doc -->
+		 * @generated
+		 */
+		EOperation EOBJECT_REGISTRY_SERVICE___FIND_BY_SCOPE_REGISTRY_AND_STAGE__STRING_STRING_STRING = eINSTANCE.getEObjectRegistryService__FindByScopeRegistryAndStage__String_String_String();
+
+		/**
+		 * The meta object literal for the '<em><b>Find By Scope Registry Stage And Name</b></em>' operation.
+		 * <!-- begin-user-doc -->
+		 * <!-- end-user-doc -->
+		 * @generated
+		 */
+		EOperation EOBJECT_REGISTRY_SERVICE___FIND_BY_SCOPE_REGISTRY_STAGE_AND_NAME__STRING_STRING_STRING_STRING = eINSTANCE.getEObjectRegistryService__FindByScopeRegistryStageAndName__String_String_String_String();
 
 		/**
 		 * The meta object literal for the '{@link org.eclipse.fennec.model.atlas.mgmt.api.StorageRegistry <em>Storage Registry</em>}' class.
@@ -1612,14 +1647,6 @@ public interface ManagementApiPackage extends org.eclipse.emf.ecore.EPackage {
 		EClass STORAGE_REGISTRY = eINSTANCE.getStorageRegistry();
 
 		/**
-		 * The meta object literal for the '<em><b>Get Storage By Role</b></em>' operation.
-		 * <!-- begin-user-doc -->
-		 * <!-- end-user-doc -->
-		 * @generated
-		 */
-		EOperation STORAGE_REGISTRY___GET_STORAGE_BY_ROLE__STRING = eINSTANCE.getStorageRegistry__GetStorageByRole__String();
-
-		/**
 		 * The meta object literal for the '<em><b>Get All Storages</b></em>' operation.
 		 * <!-- begin-user-doc -->
 		 * <!-- end-user-doc -->
@@ -1628,28 +1655,12 @@ public interface ManagementApiPackage extends org.eclipse.emf.ecore.EPackage {
 		EOperation STORAGE_REGISTRY___GET_ALL_STORAGES = eINSTANCE.getStorageRegistry__GetAllStorages();
 
 		/**
-		 * The meta object literal for the '<em><b>Get Available Roles</b></em>' operation.
+		 * The meta object literal for the '<em><b>Search Metadata Across Types</b></em>' operation.
 		 * <!-- begin-user-doc -->
 		 * <!-- end-user-doc -->
 		 * @generated
 		 */
-		EOperation STORAGE_REGISTRY___GET_AVAILABLE_ROLES = eINSTANCE.getStorageRegistry__GetAvailableRoles();
-
-		/**
-		 * The meta object literal for the '<em><b>Update Governance Documentation Id</b></em>' operation.
-		 * <!-- begin-user-doc -->
-		 * <!-- end-user-doc -->
-		 * @generated
-		 */
-		EOperation STORAGE_REGISTRY___UPDATE_GOVERNANCE_DOCUMENTATION_ID__STRING_STRING_STRING_STRING = eINSTANCE.getStorageRegistry__UpdateGovernanceDocumentationId__String_String_String_String();
-
-		/**
-		 * The meta object literal for the '<em><b>Search Metadata Across Roles</b></em>' operation.
-		 * <!-- begin-user-doc -->
-		 * <!-- end-user-doc -->
-		 * @generated
-		 */
-		EOperation STORAGE_REGISTRY___SEARCH_METADATA_ACROSS_ROLES__OBJECTQUERY = eINSTANCE.getStorageRegistry__SearchMetadataAcrossRoles__ObjectQuery();
+		EOperation STORAGE_REGISTRY___SEARCH_METADATA_ACROSS_TYPES__OBJECTQUERY = eINSTANCE.getStorageRegistry__SearchMetadataAcrossTypes__ObjectQuery();
 
 		/**
 		 * The meta object literal for the '<em><b>Get Storage Statistics</b></em>' operation.
@@ -1658,6 +1669,22 @@ public interface ManagementApiPackage extends org.eclipse.emf.ecore.EPackage {
 		 * @generated
 		 */
 		EOperation STORAGE_REGISTRY___GET_STORAGE_STATISTICS = eINSTANCE.getStorageRegistry__GetStorageStatistics();
+
+		/**
+		 * The meta object literal for the '<em><b>Get Storage By Type</b></em>' operation.
+		 * <!-- begin-user-doc -->
+		 * <!-- end-user-doc -->
+		 * @generated
+		 */
+		EOperation STORAGE_REGISTRY___GET_STORAGE_BY_TYPE__STRING = eINSTANCE.getStorageRegistry__GetStorageByType__String();
+
+		/**
+		 * The meta object literal for the '<em><b>Get Available Types</b></em>' operation.
+		 * <!-- begin-user-doc -->
+		 * <!-- end-user-doc -->
+		 * @generated
+		 */
+		EOperation STORAGE_REGISTRY___GET_AVAILABLE_TYPES = eINSTANCE.getStorageRegistry__GetAvailableTypes();
 
 	}
 

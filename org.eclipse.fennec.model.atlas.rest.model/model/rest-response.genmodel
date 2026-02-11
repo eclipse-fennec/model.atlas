@@ -4,10 +4,11 @@
     modelDirectory="/org.eclipse.fennec.model.atlas.rest.model/src" modelPluginID="org.eclipse.fennec.model.atlas.rest.model"
     modelName="rest-response" rootExtendsClass="org.eclipse.emf.ecore.impl.MinimalEObjectImpl$Container"
     importerID="org.eclipse.emf.importer.ecore" complianceLevel="17.0" suppressGenModelAnnotations="false"
-    copyrightFields="false" operationReflection="true" importOrganizing="true" oSGiCompatible="true">
+    copyrightFields="false" usedGenPackages="../../org.eclipse.fennec.model.atlas.management/model/management.genmodel#//management ../../org.eclipse.fennec.model.atlas.workflow/model/workflow-api.genmodel#//workflowapi"
+    operationReflection="true" importOrganizing="true" oSGiCompatible="true">
   <foreignModel>rest-response.ecore</foreignModel>
-  <genPackages prefix="Rest" basePackage="org.eclipse.fennec.model.atlas.rest" resource="XMI" disposableProviderFactory="true"
-      ecorePackage="rest-response.ecore#/">
+  <genPackages prefix="Rest" basePackage="org.eclipse.fennec.model.atlas.rest" resource="XMI"
+      disposableProviderFactory="true" ecorePackage="rest-response.ecore#/">
     <genClasses ecoreClass="rest-response.ecore#//EPackageInfo">
       <genFeatures createChild="false" ecoreFeature="ecore:EAttribute rest-response.ecore#//EPackageInfo/name"/>
       <genFeatures createChild="false" ecoreFeature="ecore:EAttribute rest-response.ecore#//EPackageInfo/nsURI"/>
@@ -25,6 +26,13 @@
       <genFeatures createChild="false" ecoreFeature="ecore:EAttribute rest-response.ecore#//ErrorResponse/message"/>
       <genFeatures createChild="false" ecoreFeature="ecore:EAttribute rest-response.ecore#//ErrorResponse/code"/>
       <genFeatures createChild="false" ecoreFeature="ecore:EAttribute rest-response.ecore#//ErrorResponse/timestamp"/>
+    </genClasses>
+    <genClasses ecoreClass="rest-response.ecore#//StageTransitionRequest">
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute rest-response.ecore#//StageTransitionRequest/objectId"/>
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute rest-response.ecore#//StageTransitionRequest/targetStage"/>
+    </genClasses>
+    <genClasses ecoreClass="rest-response.ecore#//ScopeListResponse">
+      <genFeatures property="None" children="true" createChild="true" ecoreFeature="ecore:EReference rest-response.ecore#//ScopeListResponse/scopes"/>
     </genClasses>
   </genPackages>
 </genmodel:GenModel>

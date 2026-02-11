@@ -65,28 +65,12 @@ public class EObjectApicurioStorageService extends AbstractEObjectStorageService
 				description = "Base Apicurio URL for REST requests"
 				)
 		String base_url() default "http://localhost:8080/apis/registry/v3/";
-
-		@AttributeDefinition(
-				name = "Artifact Group Id",
-				description = "Artifact Group Id to identify under which group the artifacts should be stored in the Apicurio Registry. The final group id will be then a combination of this and the stage"
-				)
-		String artifact_group_id() default "default";
 		
 		@AttributeDefinition(
-				name = "Storage Scope",
-				description = "Scope of this storage service (default, atlas, etc.). In case of apicurio this is the same as the artifact.group.id"
+				name = "Storage Type",
+				description = "The storage type. Can be useful when multiple storage with the same storage.backend property exist, to differentiate them."
 				)
-		String storage_scope() default "default";
-
-		@AttributeDefinition(
-				name = "Storage Role",
-				description = "Role of this storage service (draft, approved, documentation, etc.)"
-				)
-		String storage_role() default "draft";
-		
-		
-		
-		
+		String storage_type() default "apicurio";
 	}
 
 	public static final String PID = "ApicurioObjectStorage";
@@ -98,7 +82,7 @@ public class EObjectApicurioStorageService extends AbstractEObjectStorageService
 	public void activate(BundleContext bundleContext, Config config) throws Exception {
 		this.bctx = bundleContext;
 		this.config = config;
-		
+		storageType = config.storage_type();
 		// Call parent activation
 		activateStorageService();
 	}
@@ -129,15 +113,6 @@ public class EObjectApicurioStorageService extends AbstractEObjectStorageService
 		return StorageBackendType.APICURIO;
 	}
 
-	/* 
-	 * (non-Javadoc)
-	 * @see org.eclipse.fennec.model.atlas.mgmt.storage.AbstractEObjectStorageService#getStorageRole()
-	 */
-	@Override
-	protected String getStorageRole() {
-		return config.storage_role();
-	}
-
 	/*
 	 * (non-Javadoc)
 	 * @see org.eclipse.fennec.model.atlas.mgmt.storage.AbstractEObjectStorageService#getRegistryService()
@@ -155,7 +130,7 @@ public class EObjectApicurioStorageService extends AbstractEObjectStorageService
 	 *
 	 * @param objectId the object identifier
 	 * @param object   the updated EObject
-	 * @param metadata the updated metadata
+	 * @param metadata the updated metadata (must contain scope, registry, stage)
 	 * @return promise with the updated metadata
 	 */
 	@Override
@@ -163,8 +138,20 @@ public class EObjectApicurioStorageService extends AbstractEObjectStorageService
 			String objectId, org.eclipse.emf.ecore.EObject object,
 			org.eclipse.fennec.model.atlas.mgmt.management.ObjectMetadata metadata) {
 		// Apicurio v3 has no replace option, so we delete + create
-		deleteObject(objectId);
-		return storeObject(objectId, object, metadata);
+		// Get scope, registry, stage from metadata
+		String scope = metadata.getScope();
+		String registry = metadata.getRegistry();
+		String stage = metadata.getStage();
+		deleteObject(scope, registry, stage, objectId);
+		return storeObject(scope, registry, stage, objectId, object, metadata);
 	}
 
+	/*
+	 * (non-Javadoc)
+	 * @see org.eclipse.fennec.model.atlas.mgmt.api.EObjectStorageService#getStorageType()
+	 */
+	@Override
+	public String getStorageType() {
+		return storageType;
+	}
 }

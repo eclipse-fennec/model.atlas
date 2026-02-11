@@ -119,12 +119,12 @@ org.osgi:osgi.cmpn:7.0.0
 
 #log
 org.slf4j:slf4j-api:2.0.11
+org.slf4j:slf4j-simple:2.0.11
 org.slf4j:jul-to-slf4j:2.0.11
 ch.qos.logback:logback-core:1.5.3
 ch.qos.logback:logback-classic:1.5.3
 
 org.bndtools:org.bndtools.templates.osgi:7.0.0
-biz.aQute:biz.aQute.gogo.commands.provider:1.10.0
 
 #org.eclipse.fennec.emf:org.eclipse.fennec.emf.osgi.bnd.library.workspace:1.0.0-SNAPSHOT
 #org.eclipse.osgi-technology.rest:org.eclipse.osgitech.rest.bnd.library:1.2.3
@@ -139,9 +139,6 @@ tools.jackson.core:jackson-databind:3.0.1
 tools.jackson.dataformat:jackson-dataformat-properties:3.0.1
 tools.jackson.dataformat:jackson-dataformat-yaml:3.0.1
 com.fasterxml.jackson.core:jackson-annotations:2.20
-
-#org.eclipse.osgi-technology.scheduler:api:0.0.1-SNAPSHOT
-#org.eclipse.osgi-technology.scheduler:basic:0.0.1-SNAPSHOT
 
 # MinIO dependencies
 io.minio:minio:8.5.12
@@ -221,3 +218,6 @@ org.eclipse.daanse:org.eclipse.daanse.tooling.testcontainers.core:0.0.1-SNAPSHOT
 net.java.dev.jna:jna:5.18.1
 org.apache.commons:commons-compress:1.28.0
 org.apache.commons:commons-lang3:3.20.0
+
+#Example Model
+org.geckoprojects.emf:org.gecko.emf.osgi.example.model.basic:6.3.1

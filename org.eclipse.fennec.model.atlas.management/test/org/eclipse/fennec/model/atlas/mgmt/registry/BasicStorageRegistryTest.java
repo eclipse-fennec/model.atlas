@@ -18,9 +18,6 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.time.Instant;
@@ -57,13 +54,10 @@ import org.osgi.util.promise.PromiseFactory;
 class BasicStorageRegistryTest {
 
     @Mock
-    private EObjectStorageService<EObject> draftStorage;
+    private EObjectStorageService<EObject> fileStorage;
     
     @Mock
-    private EObjectStorageService<EObject> approvedStorage;
-    
-    @Mock
-    private EObjectStorageService<EObject> documentationStorage;
+    private EObjectStorageService<EObject> minioStorage;
     
     private BasicStorageRegistry registry;
     private ManagementFactory managementFactory;
@@ -81,125 +75,95 @@ class BasicStorageRegistryTest {
     
     @Test
     void testAddStorageService() {
-        // Given: Storage service with role property
-        Map<String, Object> draftProperties = createRoleProperties("draft");
-        Map<String, Object> approvedProperties = createRoleProperties("approved");
-        
+        // Given: Storage service with type property
+        Map<String, Object> fileProperties = createTypeProperties("file");
+        Map<String, Object> minioProperties = createTypeProperties("minio");
+
         // When: Adding storage services
-        registry.addStorageService(draftStorage, draftProperties);
-        registry.addStorageService(approvedStorage, approvedProperties);
-        
-        // Then: Services are registered by role
-        assertEquals(draftStorage, registry.getStorageByRole("draft"));
-        assertEquals(approvedStorage, registry.getStorageByRole("approved"));
+        registry.addStorageService(fileStorage, fileProperties);
+        registry.addStorageService(minioStorage, minioProperties);
+
+        // Then: Services are registered by type
+        assertEquals(fileStorage, registry.getStorageByType("file"));
+        assertEquals(minioStorage, registry.getStorageByType("minio"));
     }
     
     @Test
-    void testAddStorageServiceWithoutRole() {
-        // Given: Storage service without role property
+    void testAddStorageServiceWithoutType() {
+        // Given: Storage service without type property
         Map<String, Object> emptyProperties = new HashMap<>();
-        
-        // When: Adding storage service without role
-        registry.addStorageService(draftStorage, emptyProperties);
-        
+
+        // When: Adding storage service without type
+        registry.addStorageService(fileStorage, emptyProperties);
+
         // Then: Service is not registered
-        assertNull(registry.getStorageByRole("draft"));
-        assertTrue(registry.getAvailableRoles().isEmpty());
+        assertNull(registry.getStorageByType("file"));
+        assertTrue(registry.getAvailableTypes().isEmpty());
     }
     
     @Test
     void testRemoveStorageService() {
         // Given: Registered storage service
-        Map<String, Object> draftProperties = createRoleProperties("draft");
-        registry.addStorageService(draftStorage, draftProperties);
-        assertEquals(draftStorage, registry.getStorageByRole("draft"));
-        
+        Map<String, Object> fileProperties = createTypeProperties("file");
+        registry.addStorageService(fileStorage, fileProperties);
+        assertEquals(fileStorage, registry.getStorageByType("file"));
+
         // When: Removing storage service
-        registry.removeStorageService(draftStorage);
-        
+        registry.removeStorageService(fileStorage);
+
         // Then: Service is no longer registered
-        assertNull(registry.getStorageByRole("draft"));
-        assertTrue(registry.getAvailableRoles().isEmpty());
+        assertNull(registry.getStorageByType("file"));
+        assertTrue(registry.getAvailableTypes().isEmpty());
     }
     
     @Test
-    void testGetStorageByRole() {
+    void testGetStorageByType() {
         // Given: Multiple registered storage services
-        registry.addStorageService(draftStorage, createRoleProperties("draft"));
-        registry.addStorageService(approvedStorage, createRoleProperties("approved"));
-        
-        // When/Then: Retrieving by role
-        assertEquals(draftStorage, registry.getStorageByRole("draft"));
-        assertEquals(approvedStorage, registry.getStorageByRole("approved"));
-        assertNull(registry.getStorageByRole("nonexistent"));
+        registry.addStorageService(fileStorage, createTypeProperties("file"));
+        registry.addStorageService(minioStorage, createTypeProperties("minio"));
+
+        // When/Then: Retrieving by type
+        assertEquals(fileStorage, registry.getStorageByType("file"));
+        assertEquals(minioStorage, registry.getStorageByType("minio"));
+        assertNull(registry.getStorageByType("apicurio"));
     }
     
     @Test
     void testGetAllStorages() {
         // Given: Multiple registered storage services
-        registry.addStorageService(draftStorage, createRoleProperties("draft"));
-        registry.addStorageService(approvedStorage, createRoleProperties("approved"));
-        
+        registry.addStorageService(fileStorage, createTypeProperties("file"));
+        registry.addStorageService(minioStorage, createTypeProperties("minio"));
+
         // When: Getting all storages
         EList<EObjectStorageService<EObject>> allStorages = registry.getAllStorages();
-        
+
         // Then: All registered services are returned
         assertEquals(2, allStorages.size());
-        assertTrue(allStorages.contains(draftStorage));
-        assertTrue(allStorages.contains(approvedStorage));
+        assertTrue(allStorages.contains(fileStorage));
+        assertTrue(allStorages.contains(minioStorage));
     }
     
     @Test
-    void testGetAvailableRoles() {
+    void testGetAvailableTypes() {
         // Given: Multiple registered storage services
-        registry.addStorageService(draftStorage, createRoleProperties("draft"));
-        registry.addStorageService(approvedStorage, createRoleProperties("approved"));
-        
-        // When: Getting available roles
-        EList<String> roles = registry.getAvailableRoles();
-        
-        // Then: All roles are returned
-        assertEquals(2, roles.size());
-        assertTrue(roles.contains("draft"));
-        assertTrue(roles.contains("approved"));
+        registry.addStorageService(fileStorage, createTypeProperties("file"));
+        registry.addStorageService(minioStorage, createTypeProperties("minio"));
+
+        // When: Getting available types
+        EList<String> types = registry.getAvailableTypes();
+
+        // Then: All types are returned
+        assertEquals(2, types.size());
+        assertTrue(types.contains("file"));
+        assertTrue(types.contains("minio"));
     }
+ 
     
     @Test
-    void testUpdateGovernanceDocumentationId() throws Exception {
-        // Given: Registered storage services with objects
-        registry.addStorageService(draftStorage, createRoleProperties("draft"));
-        registry.addStorageService(approvedStorage, createRoleProperties("approved"));
-        
-        // Mock objects in draft storage
-        ObjectMetadata draftMetadata1 = createTestMetadata("obj1", ObjectStatus.DRAFT, "TestPackage");
-        ObjectMetadata draftMetadata2 = createTestMetadata("obj2", ObjectStatus.DRAFT, "TestPackage");
-        
-        // Setup mock responses for draft storage - updateGovernanceDocumentationId uses listObjectIds + retrieveMetadata
-        Promise<List<String>> objectIdsPromise = promiseFactory.resolved(Arrays.asList("obj1", "obj2"));
-        Promise<ObjectMetadata> metadata1Promise = promiseFactory.resolved(draftMetadata1);
-        Promise<ObjectMetadata> metadata2Promise = promiseFactory.resolved(draftMetadata2);
-        Promise<Boolean> updatePromise = promiseFactory.resolved(true);
-        
-        when(draftStorage.listObjectIds()).thenReturn(objectIdsPromise);
-        when(draftStorage.retrieveMetadata("obj1")).thenReturn(metadata1Promise);
-        when(draftStorage.retrieveMetadata("obj2")).thenReturn(metadata2Promise);
-        when(draftStorage.updateMetadata(any(String.class), any(ObjectMetadata.class))).thenReturn(updatePromise);
-        
-        // When: Updating governance documentation ID for draft role
-        int updatedCount = registry.updateGovernanceDocumentationId("draft", "TestPackage", "gov-doc-123", "Test update");
-        
-        // Then: Only objects in draft role are updated
-        assertEquals(2, updatedCount);
-        verify(draftStorage).updateMetadata(eq("obj1"), any(ObjectMetadata.class));
-        verify(draftStorage).updateMetadata(eq("obj2"), any(ObjectMetadata.class));
-        verify(approvedStorage, never()).updateMetadata(any(String.class), any(ObjectMetadata.class));
-    }
-    
-    @Test
-    void testSearchMetadataAcrossRoles() throws Exception {
+    void testSearchMetadataAcrossTypes() throws Exception {
         // Given: Registered storage services
-        registry.addStorageService(draftStorage, createRoleProperties("draft"));
-        registry.addStorageService(approvedStorage, createRoleProperties("approved"));
+        registry.addStorageService(fileStorage, createTypeProperties("file"));
+        registry.addStorageService(minioStorage, createTypeProperties("minio"));
         
         // Mock search results
         ObjectMetadata draftResult = createTestMetadata("obj1", ObjectStatus.DRAFT, "TestPackage");
@@ -208,14 +172,14 @@ class BasicStorageRegistryTest {
         Promise<List<ObjectMetadata>> draftPromise = promiseFactory.resolved(Arrays.asList(draftResult));
         Promise<List<ObjectMetadata>> approvedPromise = promiseFactory.resolved(Arrays.asList(approvedResult));
         
-        when(draftStorage.queryObjects(any(ObjectQuery.class))).thenReturn(draftPromise);
-        when(approvedStorage.queryObjects(any(ObjectQuery.class))).thenReturn(approvedPromise);
+        when(fileStorage.queryObjects(any(ObjectQuery.class))).thenReturn(draftPromise);
+        when(minioStorage.queryObjects(any(ObjectQuery.class))).thenReturn(approvedPromise);
         
-        // When: Searching across all roles
+        // When: Searching across all types
         ObjectQuery query = managementFactory.createObjectQuery();
         query.setStatus(ObjectStatus.DRAFT); // Will match both due to EMF enum default behavior
         
-        EList<ObjectMetadata> results = registry.searchMetadataAcrossRoles(query);
+        EList<ObjectMetadata> results = registry.searchMetadataAcrossTypes(query);
         
         // Then: Results from all storages are aggregated
         assertEquals(2, results.size());
@@ -226,57 +190,57 @@ class BasicStorageRegistryTest {
     @Test
     void testGetStorageStatistics() {
         // Given: Registered storage services with mock statistics
-        registry.addStorageService(draftStorage, createRoleProperties("draft"));
-        registry.addStorageService(approvedStorage, createRoleProperties("approved"));
+        registry.addStorageService(fileStorage, createTypeProperties("file"));
+        registry.addStorageService(minioStorage, createTypeProperties("minio"));
         
-        when(draftStorage.getObjectCount()).thenReturn(5L);
-        when(draftStorage.getBackendType()).thenReturn(StorageBackendType.FILE);
-        when(approvedStorage.getObjectCount()).thenReturn(3L);
-        when(approvedStorage.getBackendType()).thenReturn(StorageBackendType.MINIO);
+        when(fileStorage.getObjectCount()).thenReturn(5L);
+        when(fileStorage.getBackendType()).thenReturn(StorageBackendType.FILE);
+        when(minioStorage.getObjectCount()).thenReturn(3L);
+        when(minioStorage.getBackendType()).thenReturn(StorageBackendType.MINIO);
         
         // When: Getting storage statistics
         Map<String, Object> statistics = registry.getStorageStatistics();
         
         // Then: Statistics are aggregated correctly
         assertEquals(8, statistics.get("totalObjectCount"));
-        assertEquals(2, statistics.get("roleCount"));
-        
+        assertEquals(2, statistics.get("typeCount"));
+
         @SuppressWarnings("unchecked")
-        EList<String> availableRoles = (EList<String>) statistics.get("availableRoles");
-        assertEquals(2, availableRoles.size());
-        
+        EList<String> availableTypes = (EList<String>) statistics.get("availableTypes");
+        assertEquals(2, availableTypes.size());
+
         @SuppressWarnings("unchecked")
-        Map<String, Object> roleStatistics = (Map<String, Object>) statistics.get("roleStatistics");
-        assertNotNull(roleStatistics);
-        
+        Map<String, Object> typeStatistics = (Map<String, Object>) statistics.get("typeStatistics");
+        assertNotNull(typeStatistics);
+
         @SuppressWarnings("unchecked")
-        Map<String, Object> draftStats = (Map<String, Object>) roleStatistics.get("draft");
-        assertEquals(5L, draftStats.get("objectCount"));
-        assertEquals("FILE", draftStats.get("backendType"));
-        
+        Map<String, Object> fileStats = (Map<String, Object>) typeStatistics.get("file");
+        assertEquals(5L, fileStats.get("objectCount"));
+        assertEquals("FILE", fileStats.get("backendType"));
+
         @SuppressWarnings("unchecked")
-        Map<String, Object> approvedStats = (Map<String, Object>) roleStatistics.get("approved");
-        assertEquals(3L, approvedStats.get("objectCount"));
-        assertEquals("MINIO", approvedStats.get("backendType"));
+        Map<String, Object> minioStats = (Map<String, Object>) typeStatistics.get("minio");
+        assertEquals(3L, minioStats.get("objectCount"));
+        assertEquals("MINIO", minioStats.get("backendType"));
     }
     
     @Test
     void testStorageServiceReplacement() {
-        // Given: Storage service registered for a role
-        registry.addStorageService(draftStorage, createRoleProperties("draft"));
-        assertEquals(draftStorage, registry.getStorageByRole("draft"));
-        
-        // When: Another storage service is registered for the same role
-        registry.addStorageService(approvedStorage, createRoleProperties("draft"));
-        
+        // Given: Storage service registered for a type
+        registry.addStorageService(fileStorage, createTypeProperties("file"));
+        assertEquals(fileStorage, registry.getStorageByType("file"));
+
+        // When: Another storage service is registered for the same type
+        registry.addStorageService(minioStorage, createTypeProperties("file"));
+
         // Then: The new service replaces the old one
-        assertEquals(approvedStorage, registry.getStorageByRole("draft"));
-        assertEquals(1, registry.getAvailableRoles().size());
+        assertEquals(minioStorage, registry.getStorageByType("file"));
+        assertEquals(1, registry.getAvailableTypes().size());
     }
     
-    private Map<String, Object> createRoleProperties(String role) {
+    private Map<String, Object> createTypeProperties(String type) {
         Map<String, Object> properties = new HashMap<>();
-        properties.put("storage.role", role);
+        properties.put("storage.type", type);
         return properties;
     }
     

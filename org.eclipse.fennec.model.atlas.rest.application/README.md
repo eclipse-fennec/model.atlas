@@ -14,29 +14,32 @@ This application enables dynamic schema lifecycle management with:
 ## Architecture
 
 ```
-┌─────────────────────────────────────────────────────────┐
-│         Model Atlas REST Application                    │
-│  (Jakarta RS / JAX-RS Whiteboard)                       │
-└───────┬─────────────────────────┬───────────────────────┘
-        │                         │
-   ┌────▼────────────┐      ┌────▼────────────────┐
-   │ ScopesResource  │      │ SchemaPackages      │
-   │                 │      │ Resource            │
-   └────┬────────────┘      └────┬────────────────┘
-        │                        │
-        │    ┌───────────────────┴────────┐
-        │    │                            │
-   ┌────▼────▼─────┐           ┌─────────▼──────────┐
-   │ ScopeCollector │           │ EObjectWorkflow    │
-   │                │           │ Service            │
-   └────────────────┘           └────────────────────┘
-                                         │
-                      ┌──────────────────┼──────────────────┐
-                      │                  │                  │
-               ┌──────▼──────┐   ┌──────▼──────┐   ┌──────▼──────┐
-               │  Registry   │   │  Storage    │   │   QVT       │
-               │  Service    │   │  Service    │   │  Transform  │
-               └─────────────┘   └─────────────┘   └─────────────┘
+┌─────────────────────────────────────────────────────────────────────┐
+│              Model Atlas REST Application                           │
+│           (Jakarta RS / JAX-RS Whiteboard)                          │
+└──────┬─────────────────────────┬────────────────────────┬───────────┘
+       │                         │                        │
+  ┌────▼────────────┐    ┌───────▼────────────┐   ┌──────▼──────────────┐
+  │ ScopesResource  │    │ SchemaPackages     │   │ ObjectRegistry      │
+  │                 │    │ Resource           │   │ Resource            │
+  └────┬────────────┘    └───────┬────────────┘   └──────┬──────────────┘
+       │                         │                       │
+       │         ┌───────────────┴───────────────────────┘
+       │         │
+  ┌────▼─────────▼────────────┐
+  │  ScopeServiceCollector    │
+  └────────────┬──────────────┘
+               │
+  ┌────────────▼──────────────┐
+  │       ScopeService        │
+  └────────────┬──────────────┘
+               │
+     ┌─────────┼─────────┐
+     │         │         │
+┌────▼────┐ ┌──▼───┐ ┌───▼───┐
+│Registry │ │Stage │ │Storage│
+│ Service │ │Service│ │Service│
+└─────────┘ └──────┘ └───────┘
 ```
 
 ## API Resources
@@ -83,6 +86,29 @@ Provides full CRUD operations for EMF EPackages (schemas) with stage-based lifec
 - Multi-stage approval workflows
 - Cross-scope schema sharing
 - Schema versioning and lifecycle management
+
+---
+
+### 3. Object Storage API
+**Base Path**: `/{scopeName}/registries/{registryName}`
+
+Provides full CRUD operations for storage objects with schema validation and stage-based lifecycle management.
+
+**Documentation**: [README-ObjectStorage.md](README-ObjectStorage.md)
+
+**Key Operations**:
+- Create objects in specific stages with schema validation
+- Update and delete objects
+- Retrieve objects in multiple formats
+- Transition objects between stages
+- List objects with filtering (by objectId or name)
+
+**Use Cases**:
+- Configuration management
+- Data model storage
+- Multi-stage approval workflows
+- Cross-scope object sharing
+- Schema-validated object storage
 
 ---
 
@@ -292,7 +318,7 @@ The REST application requires the following OSGi services to be configured:
 
 #### Workflow Services (Scopes)
 ```properties
-# File: EObjectWorkflowService~my-tenant.cfg
+# File: ScopeService~my-tenant.cfg
 scope=my-tenant
 description=Tenant workspace
 parent.scope=global
@@ -379,7 +405,7 @@ Comprehensive tests are available in the test bundles:
 ### Input Validation
 - All nsUri parameters are validated and encoded
 - Stage names validated against configured stages
-- Scope names validated via ScopeCollector
+- Scope names validated via ScopeServiceCollector
 
 **Read more**: [README-SchemaPackages.md - Security](README-SchemaPackages.md#security-considerations)
 
@@ -431,8 +457,10 @@ Comprehensive tests are available in the test bundles:
 
 - **[README-Scopes.md](README-Scopes.md)** - Scopes API documentation
 - **[README-SchemaPackages.md](README-SchemaPackages.md)** - Schema Packages API documentation
+- **[README-ObjectStorage.md](README-ObjectStorage.md)** - Object Storage API documentation
 - **[Model Atlas API Specification.md](Model%20Atlas%20API%20Specification.md)** - Complete API specification
-- **[EObjectWorkflowService README](../org.eclipse.fennec.model.atlas.workflow/README.md)** - Workflow service details
+- **[Model Atlas Object API Specification.md](Model%20Atlas%20Object%20API%20Specification.md)** - Object Storage API specification
+- **[ScopeService README](../org.eclipse.fennec.model.atlas.workflow/README.md)** - Scope service details
 - **[CLAUDE.md](../CLAUDE.md)** - Project overview and development guide
 
 ---
@@ -451,6 +479,6 @@ Contributions are welcome! Please follow the Eclipse contribution guidelines.
 
 Eclipse Public License 2.0 (EPL-2.0)
 
-Copyright (c) 2012 - 2025 Data In Motion and others.
+Copyright (c) 2012 - 2026 Data In Motion and others.
 
 All rights reserved. This program and the accompanying materials are made available under the terms of the Eclipse Public License 2.0 which is available at https://www.eclipse.org/legal/epl-2.0/

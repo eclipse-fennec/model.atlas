@@ -125,6 +125,14 @@ public class MgmtApicurioAdapterFactory extends AdapterFactoryImpl {
 				return createSearchedVersionAdapter();
 			}
 			@Override
+			public Adapter caseGroup(Group object) {
+				return createGroupAdapter();
+			}
+			@Override
+			public Adapter caseSearchGroupResponse(SearchGroupResponse object) {
+				return createSearchGroupResponseAdapter();
+			}
+			@Override
 			public Adapter defaultCase(EObject object) {
 				return createEObjectAdapter();
 			}
@@ -295,6 +303,34 @@ public class MgmtApicurioAdapterFactory extends AdapterFactoryImpl {
 	 * @generated
 	 */
 	public Adapter createSearchedVersionAdapter() {
+		return null;
+	}
+
+	/**
+	 * Creates a new adapter for an object of class '{@link org.eclipse.fennec.model.atlas.mgmt.mgmtapicurio.Group <em>Group</em>}'.
+	 * <!-- begin-user-doc -->
+	 * This default implementation returns null so that we can easily ignore cases;
+	 * it's useful to ignore a case when inheritance will catch all the cases anyway.
+	 * <!-- end-user-doc -->
+	 * @return the new adapter.
+	 * @see org.eclipse.fennec.model.atlas.mgmt.mgmtapicurio.Group
+	 * @generated
+	 */
+	public Adapter createGroupAdapter() {
+		return null;
+	}
+
+	/**
+	 * Creates a new adapter for an object of class '{@link org.eclipse.fennec.model.atlas.mgmt.mgmtapicurio.SearchGroupResponse <em>Search Group Response</em>}'.
+	 * <!-- begin-user-doc -->
+	 * This default implementation returns null so that we can easily ignore cases;
+	 * it's useful to ignore a case when inheritance will catch all the cases anyway.
+	 * <!-- end-user-doc -->
+	 * @return the new adapter.
+	 * @see org.eclipse.fennec.model.atlas.mgmt.mgmtapicurio.SearchGroupResponse
+	 * @generated
+	 */
+	public Adapter createSearchGroupResponseAdapter() {
 		return null;
 	}
 

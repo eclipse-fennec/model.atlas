@@ -14,7 +14,6 @@
 package org.eclipse.fennec.model.atlas.rest.application.resource;
 
 import java.io.OutputStream;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -25,19 +24,16 @@ import org.eclipse.emf.ecore.EClassifier;
 import org.eclipse.emf.ecore.EPackage;
 import org.eclipse.emf.ecore.resource.ResourceSet;
 import org.eclipse.emf.ecore.util.EcoreUtil;
-import org.gecko.emf.util.documentation.generators.apis.EcoreToDocumentationOptions;
-import org.osgi.service.cm.ConfigurationException;
-import org.osgi.service.component.annotations.Activate;
-import org.osgi.service.component.annotations.Component;
-import org.osgi.service.component.annotations.Modified;
-import org.osgi.service.component.annotations.Reference;
-import org.osgi.service.component.annotations.ServiceScope;
-import org.osgi.service.jakartars.whiteboard.propertytypes.JakartarsResource;
-
 import org.eclipse.fennec.model.atlas.mediatypes.api.SupportedMediatype;
 import org.eclipse.fennec.model.atlas.model.documentation.provider.ModelDocumentationConstants;
 import org.eclipse.fennec.model.atlas.model.documentation.provider.ModelDocumentationProvider;
 import org.eclipse.fennec.model.atlas.runtime.RequireRuntime;
+import org.gecko.emf.util.documentation.generators.apis.EcoreToDocumentationOptions;
+import org.osgi.service.cm.ConfigurationException;
+import org.osgi.service.component.annotations.Activate;
+import org.osgi.service.component.annotations.Modified;
+import org.osgi.service.component.annotations.Reference;
+import org.osgi.service.jakartars.whiteboard.propertytypes.JakartarsResource;
 
 import io.swagger.v3.oas.annotations.Operation;
 import jakarta.ws.rs.GET;
@@ -62,7 +58,7 @@ import jakarta.ws.rs.core.Response.Status;
  */
 @RequireRuntime
 @JakartarsResource
-@Component(service = AllModelsResource.class, scope = ServiceScope.PROTOTYPE)
+//@Component(service = AllModelsResource.class, scope = ServiceScope.PROTOTYPE)
 @Path("/models")
 public class AllModelsResource {
 
@@ -73,9 +69,7 @@ public class AllModelsResource {
 
   @Activate
   public AllModelsResource(@Reference SupportedMediatype types) {
-    supportedMediaType = new ArrayList<>(types.getSupportedMediaTypes());
-    supportedMediaType.add("application/schema+xml");
-    supportedMediaType.add("application/schema+json");
+      supportedMediaType = types.getSupportedMediaTypes();
   }
 
   @QueryParam("mediaType")

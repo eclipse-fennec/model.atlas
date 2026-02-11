@@ -32,13 +32,13 @@ import org.eclipse.emf.ecore.EPackage;
 import org.eclipse.emf.ecore.EcoreFactory;
 import org.eclipse.emf.ecore.EcorePackage;
 import org.eclipse.emf.ecore.resource.ResourceSet;
+import org.eclipse.emf.ecore.util.EcoreUtil;
 import org.eclipse.fennec.model.atlas.mgmt.api.EObjectStorageService;
 import org.eclipse.fennec.model.atlas.mgmt.management.ManagementFactory;
 import org.eclipse.fennec.model.atlas.mgmt.management.ObjectMetadata;
 import org.eclipse.fennec.model.atlas.workflow.PostReleaseActionService;
-import org.eclipse.fennec.model.atlas.workflow.tests.annotations.GovernanceTestAnnotations;
-import org.eclipse.fennec.model.atlas.workflow.tests.annotations.GovernanceTestAnnotations.GovernanceGatedWorkflowSetup;
-import org.eclipse.fennec.model.atlas.workflow.tests.annotations.GovernanceTestAnnotations.PostActionStorageSetup;
+import org.eclipse.fennec.model.atlas.workflow.tests.annotations.TestAnnotations;
+import org.eclipse.fennec.model.atlas.workflow.tests.annotations.TestAnnotations.PostActionStorageSetup;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -78,11 +78,15 @@ public class PostReleaseEPackageRegistrationIntegrationTest {
     @InjectBundleContext
     BundleContext bundleContext;
     
+    private static final String TEST_SCOPE = "test-scope";
+    private static final String TEST_REGISTRY = "test-registry";
+    private static final String TEST_STAGE = "release";
+    
     
     @BeforeEach
     void setUp() {
         // Set system property for template argument resolution
-        System.setProperty(GovernanceTestAnnotations.PROP_TEMP_DIR, tempDir.toString());
+        System.setProperty(TestAnnotations.PROP_TEMP_DIR, tempDir.toString());
         
 	
     }
@@ -96,7 +100,7 @@ public class PostReleaseEPackageRegistrationIntegrationTest {
 	@Test
     @PostActionStorageSetup
     public void testEPackageRegistrationAfterPostReleaseAction(
-            @InjectService(filter = "(storage.role=release)")
+            @InjectService(filter = "(storage.type=file)")
             EObjectStorageService approvedStorage,
             @InjectService PostReleaseActionService postReleaseActionService,
             @InjectService(cardinality = 0, filter = "(emf.name=TestSensorModel)")
@@ -110,7 +114,7 @@ public class PostReleaseEPackageRegistrationIntegrationTest {
         
         // 2. Create metadata and store EPackage directly in approved storage (simulating released object)
         ObjectMetadata metadata = createTestMetadata(objectId);
-        approvedStorage.storeObject(objectId, testPackage, metadata).getValue();
+        approvedStorage.storeObject(TEST_SCOPE, TEST_REGISTRY, TEST_STAGE, objectId, testPackage, metadata).getValue();
         String storageId = metadata.getObjectId();
         assertNotNull(storageId);
         
@@ -120,8 +124,11 @@ public class PostReleaseEPackageRegistrationIntegrationTest {
         
         // 4. Trigger post-release action
         postReleaseActionService.executePostReleaseActions(
+        	TEST_SCOPE, 
+        	TEST_REGISTRY, 
+        	TEST_STAGE,
             objectId, 
-            "EPackage", 
+            EcoreUtil.getURI(EcorePackage.Literals.EPACKAGE).toString(), 
             "integration-test-user", 
             "Test post-release action for EPackage registration"
         ).getValue(); // Wait for completion
@@ -140,8 +147,11 @@ public class PostReleaseEPackageRegistrationIntegrationTest {
         
         // 7. Test unregistration via post-unrelease action
         postReleaseActionService.executePostUnreleaseActions(
+        	TEST_SCOPE, 
+            TEST_REGISTRY, 
+            TEST_STAGE,
             objectId,
-            "EPackage", 
+            EcoreUtil.getURI(EcorePackage.Literals.EPACKAGE).toString(), 
             "integration-test-user",
             "Test cleanup"
         ).getValue(); // Wait for completion
@@ -155,7 +165,7 @@ public class PostReleaseEPackageRegistrationIntegrationTest {
     @Test
     @PostActionStorageSetup
     public void testEPackageRegistrationWithConfigurationEvents(
-            @InjectService(filter = "(storage.role=release)")
+            @InjectService(filter = "(storage.type=file)")
             EObjectStorageService approvedStorage,
             @InjectService PostReleaseActionService postReleaseActionService,
             @InjectService(cardinality = 0, filter = "(emf.name=TestSensorModel)")
@@ -204,7 +214,7 @@ public class PostReleaseEPackageRegistrationIntegrationTest {
             
             // 2. Create metadata and store EPackage directly in approved storage (simulating released object)
             ObjectMetadata metadata = createTestMetadata(objectId);
-            approvedStorage.storeObject(objectId, testPackage, metadata).getValue();
+            approvedStorage.storeObject(TEST_SCOPE, TEST_REGISTRY, TEST_STAGE, objectId, testPackage, metadata).getValue();
             String storageId = metadata.getObjectId();
             assertNotNull(storageId);
             
@@ -214,8 +224,11 @@ public class PostReleaseEPackageRegistrationIntegrationTest {
             
             // 4. Trigger post-release action
             postReleaseActionService.executePostReleaseActions(
-                objectId, 
-                "EPackage", 
+            		TEST_SCOPE, 
+                    TEST_REGISTRY, 
+                    TEST_STAGE,
+                    objectId,
+                    EcoreUtil.getURI(EcorePackage.Literals.EPACKAGE).toString(),  
                 "integration-test-user", 
                 "Test post-release action for EPackage registration with events"
             ).getValue(); // Wait for completion
@@ -263,8 +276,11 @@ public class PostReleaseEPackageRegistrationIntegrationTest {
             
             // 10. Test unregistration via post-unrelease action (should trigger REMOVE event)
             postReleaseActionService.executePostUnreleaseActions(
-                objectId,
-                "EPackage", 
+            		TEST_SCOPE, 
+                    TEST_REGISTRY, 
+                    TEST_STAGE,
+                    objectId,
+                    EcoreUtil.getURI(EcorePackage.Literals.EPACKAGE).toString(), 
                 "integration-test-user",
                 "Test cleanup with REMOVE event"
             ).getValue(); // Wait for completion
@@ -296,7 +312,7 @@ public class PostReleaseEPackageRegistrationIntegrationTest {
     }
     
     @Test
-    @GovernanceGatedWorkflowSetup
+    @PostActionStorageSetup
     public void testPostReleaseActionServiceSupportsEPackage(
             @InjectService PostReleaseActionService postReleaseActionService) throws Exception {
         

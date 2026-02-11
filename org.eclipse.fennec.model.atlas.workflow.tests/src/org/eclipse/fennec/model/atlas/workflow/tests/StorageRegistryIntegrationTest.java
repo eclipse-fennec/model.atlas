@@ -28,7 +28,7 @@ import org.eclipse.fennec.model.atlas.mgmt.management.ManagementFactory;
 import org.eclipse.fennec.model.atlas.mgmt.management.ObjectMetadata;
 import org.eclipse.fennec.model.atlas.mgmt.management.ObjectQuery;
 import org.eclipse.fennec.model.atlas.mgmt.management.ObjectStatus;
-import org.eclipse.fennec.model.atlas.workflow.tests.annotations.GovernanceTestAnnotations.StorageRegistrySetup;
+import org.eclipse.fennec.model.atlas.workflow.tests.annotations.TestAnnotations.StorageRegistrySetup;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -70,33 +70,17 @@ class StorageRegistryIntegrationTest {
 
     @Test
     @StorageRegistrySetup
-    void testStorageServiceDiscovery(@InjectService StorageRegistry storageRegistry) {
-    	// Verify that the registry is properly injected
-        assertNotNull(storageRegistry, "StorageRegistry should be injected");    	
-        // Verify that all expected storage services are registered
-        EList<String> availableRoles = storageRegistry.getAvailableRoles();
-        
-        // We expect at least the roles configured in StorageRegistrySetup
-        assertTrue(availableRoles.size() >= 3, "Should have at least 3 storage roles");
-        assertTrue(availableRoles.contains("draft"), "Should have draft storage");
-        assertTrue(availableRoles.contains("release"), "Should have release storage");
-        assertTrue(availableRoles.contains("documentation"), "Should have documentation storage");
-    }
-
-    @Test
-    @StorageRegistrySetup
-    void testGetStorageByRole(@InjectService StorageRegistry storageRegistry) {
+    void testStorageServiceDiscovery(@InjectService(timeout = 5000l) StorageRegistry storageRegistry) {
     	// Verify that the registry is properly injected
         assertNotNull(storageRegistry, "StorageRegistry should be injected");
-        // Test retrieving storage services by role
-        EObjectStorageService<EObject> draftStorage = storageRegistry.getStorageByRole("draft");
-        EObjectStorageService<EObject> releaseStorage = storageRegistry.getStorageByRole("release");
-        EObjectStorageService<EObject> documentationStorage = storageRegistry.getStorageByRole("documentation");
+        // Verify that all expected storage services are registered
+        EList<String> availableTypes = storageRegistry.getAvailableTypes();
 
-        assertNotNull(draftStorage, "Draft storage should be available");
-        assertNotNull(releaseStorage, "Release storage should be available");
-        assertNotNull(documentationStorage, "Documentation storage should be available");
+        // We expect at least the file storage type configured in StorageRegistrySetup
+        assertTrue(availableTypes.size() >= 1, "Should have at least 1 storage type");
+        assertTrue(availableTypes.contains("file"), "Should have file storage type");
     }
+
 
     @Test
     @StorageRegistrySetup
@@ -105,8 +89,8 @@ class StorageRegistryIntegrationTest {
         assertNotNull(storageRegistry, "StorageRegistry should be injected");
         // Test getting all registered storage services
         EList<EObjectStorageService<EObject>> allStorages = storageRegistry.getAllStorages();
-        
-        assertTrue(allStorages.size() >= 3, "Should have at least 3 storage services");
+
+        assertTrue(allStorages.size() == 1, "Should have 1 storage service");
     }
 
     @Test
@@ -116,16 +100,16 @@ class StorageRegistryIntegrationTest {
         assertNotNull(storageRegistry, "StorageRegistry should be injected");
         // Test getting storage statistics
         Map<String, Object> statistics = storageRegistry.getStorageStatistics();
-        
+
         assertNotNull(statistics);
         assertTrue(statistics.containsKey("totalObjectCount"));
-        assertTrue(statistics.containsKey("roleCount"));
-        assertTrue(statistics.containsKey("roleStatistics"));
-        assertTrue(statistics.containsKey("availableRoles"));
-        
-        // Verify that we have the expected number of roles
-        Integer roleCount = (Integer) statistics.get("roleCount");
-        assertTrue(roleCount >= 3, "Should have at least 3 roles in statistics");
+        assertTrue(statistics.containsKey("typeCount"));
+        assertTrue(statistics.containsKey("typeStatistics"));
+        assertTrue(statistics.containsKey("availableTypes"));
+
+        // Verify that we have the expected number of types
+        Integer typeCount = (Integer) statistics.get("typeCount");
+        assertTrue(typeCount == 1, "Should have 1 type in statistics");
     }
 
     @Test
@@ -133,88 +117,38 @@ class StorageRegistryIntegrationTest {
     void testCrossStorageSearch(@InjectService StorageRegistry storageRegistry) throws Exception {
     	// Verify that the registry is properly injected
         assertNotNull(storageRegistry, "StorageRegistry should be injected");
-        // Store a test object in draft storage to verify cross-storage search
-        EObjectStorageService<EObject> draftStorage = storageRegistry.getStorageByRole("draft");
-        assertNotNull(draftStorage);
+        // Store a test object in file storage to verify cross-storage search
+        EObjectStorageService<EObject> fileStorage = storageRegistry.getStorageByType("file");
+        assertNotNull(fileStorage);
 
         // Create test metadata
         ObjectMetadata testMetadata = createTestMetadata("test-object-1", ObjectStatus.DRAFT, "TestPackage");
-        
+
         // Store a simple EObject (we'll use ObjectMetadata itself as the EObject for simplicity)
-        draftStorage.storeObject("test-object-1", testMetadata, testMetadata).getValue();
+        // Using default scope, registry, and stage for testing
+        fileStorage.storeObject("default", "test-registry", "draft", "test-object-1", testMetadata, testMetadata).getValue();
         String objectId = testMetadata.getObjectId();
         assertNotNull(objectId);
 
         // Now test cross-storage search
         ObjectQuery query = managementFactory.createObjectQuery();
         query.setStatus(ObjectStatus.DRAFT);
-        
-        EList<ObjectMetadata> searchResults = storageRegistry.searchMetadataAcrossRoles(query);
-        
+
+        EList<ObjectMetadata> searchResults = storageRegistry.searchMetadataAcrossTypes(query);
+
         // Should find at least our test object
         assertTrue(searchResults.size() >= 1, "Should find at least the test object");
-        
+
         // Verify our test object is in the results
         boolean foundTestObject = searchResults.stream()
                 .anyMatch(metadata -> "test-object-1".equals(metadata.getObjectId()));
         assertTrue(foundTestObject, "Should find our test object in cross-storage search");
-        
+
         // Clean up
-        draftStorage.deleteObject(objectId);
+        fileStorage.deleteObject("default", "test-registry", "draft", objectId);
     }
 
-    @Test
-    @StorageRegistrySetup
-    void testUpdateGovernanceDocumentationId(@InjectService StorageRegistry storageRegistry) throws Exception {
-    	// Verify that the registry is properly injected
-        assertNotNull(storageRegistry, "StorageRegistry should be injected");
-        // Store test objects in multiple storage services
-        EObjectStorageService<EObject> draftStorage = storageRegistry.getStorageByRole("draft");
-        EObjectStorageService<EObject> releaseStorage = storageRegistry.getStorageByRole("release");
-        
-        assertNotNull(draftStorage);
-        assertNotNull(releaseStorage);
-
-        // Create test objects with the same object type but different statuses
-        ObjectMetadata draftMetadata = createTestMetadata("draft-obj", ObjectStatus.DRAFT, "TestPackage");
-        ObjectMetadata releaseMetadata = createTestMetadata("release-obj", ObjectStatus.APPROVED, "TestPackage");
-        
-        // Create simple test EObjects (using metadata as EObject for simplicity in this test)
-        EObject testDraftObject = managementFactory.createObjectMetadata();
-        EObject testReleaseObject = managementFactory.createObjectMetadata();
-        
-        // Store objects
-        draftStorage.storeObject("draft-obj", testDraftObject, draftMetadata).getValue();
-        releaseStorage.storeObject("release-obj", testReleaseObject, releaseMetadata).getValue();
-        
-        String draftId = draftMetadata.getObjectId();
-        String releaseId = releaseMetadata.getObjectId();
-        
-        // Update governance documentation ID for draft role only
-        int draftUpdatedCount = storageRegistry.updateGovernanceDocumentationId(
-            "draft", "TestPackage", "gov-doc-456", "Integration test update"
-        );
-        
-        // Update governance documentation ID for release role only
-        int releaseUpdatedCount = storageRegistry.updateGovernanceDocumentationId(
-            "release", "TestPackage", "gov-doc-789", "Integration test update"
-        );
-        
-        // Should have updated one object in each storage
-        assertEquals(1, draftUpdatedCount, "Should have updated 1 object in draft storage");
-        assertEquals(1, releaseUpdatedCount, "Should have updated 1 object in release storage");
-        
-        // Verify the governance documentation IDs were set correctly (different per role)
-        ObjectMetadata updatedDraftMetadata = draftStorage.retrieveMetadata(draftId).getValue();
-        ObjectMetadata updatedReleaseMetadata = releaseStorage.retrieveMetadata(releaseId).getValue();
-        
-        assertEquals("gov-doc-456", updatedDraftMetadata.getGovernanceDocumentationId());
-        assertEquals("gov-doc-789", updatedReleaseMetadata.getGovernanceDocumentationId());
-        
-        // Clean up
-        draftStorage.deleteObject(draftId);
-        releaseStorage.deleteObject(releaseId);
-    }
+ 
 
     @Test
     @StorageRegistrySetup
@@ -222,18 +156,15 @@ class StorageRegistryIntegrationTest {
     	// Verify that the registry is properly injected
         assertNotNull(storageRegistry, "StorageRegistry should be injected");
         // Verify that storage services have proper backend types configured
-        EObjectStorageService<EObject> draftStorage = storageRegistry.getStorageByRole("draft");
-        EObjectStorageService<EObject> releaseStorage = storageRegistry.getStorageByRole("release");
-        EObjectStorageService<EObject> documentationStorage = storageRegistry.getStorageByRole("documentation");
+        EObjectStorageService<EObject> fileStorage = storageRegistry.getStorageByType("file");
 
-        assertNotNull(draftStorage.getBackendType());
-        assertNotNull(releaseStorage.getBackendType());
-        assertNotNull(documentationStorage.getBackendType());
-        
-        // All should be FILE backend for this test setup
-        assertEquals("FILE", draftStorage.getBackendType().toString());
-        assertEquals("FILE", releaseStorage.getBackendType().toString());
-        assertEquals("FILE", documentationStorage.getBackendType().toString());
+        assertNotNull(fileStorage);
+        assertNotNull(fileStorage.getBackendType());
+        assertNotNull(fileStorage.getStorageType());
+
+        // Should be FILE backend for this test setup
+        assertEquals("FILE", fileStorage.getBackendType().toString());
+        assertEquals("file", fileStorage.getStorageType());
     }
 
     private ObjectMetadata createTestMetadata(String objectId, ObjectStatus status, String objectType) {

@@ -18,24 +18,18 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import java.time.Instant;
-import java.util.Base64;
 import java.util.Dictionary;
 import java.util.Hashtable;
-import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import org.eclipse.emf.ecore.EPackage;
 import org.eclipse.emf.ecore.resource.ResourceSet;
-import org.eclipse.fennec.model.atlas.mgmt.management.ManagementFactory;
-import org.eclipse.fennec.model.atlas.mgmt.management.ObjectMetadata;
-import org.eclipse.fennec.model.atlas.model.scope.Scope;
-import org.eclipse.fennec.model.atlas.model.scope.ScopeFactory;
-import org.eclipse.fennec.model.atlas.model.scope.StageTransition;
+import org.eclipse.fennec.model.atlas.rest.model.RestFactory;
+import org.eclipse.fennec.model.atlas.rest.model.StageTransitionRequest;
+import org.eclipse.fennec.model.atlas.rest.tests.helper.MockTestHelper.MockScopeServiceCollector;
 import org.eclipse.fennec.model.atlas.rest.tests.helper.ResourceAware;
 import org.eclipse.fennec.model.atlas.rest.tests.helper.TestHelper;
-import org.eclipse.fennec.model.atlas.scope.ScopeCollector;
-import org.eclipse.fennec.model.atlas.wf.workflowapi.EObjectWorkflowService;
+import org.eclipse.fennec.model.atlas.workflow.ScopeServiceCollector;
 import org.gecko.emf.osgi.annotation.require.RequireEMF;
 import org.gecko.emf.rest.annotations.RequireEMFMessageBodyReaderWriter;
 import org.junit.jupiter.api.AfterEach;
@@ -50,8 +44,6 @@ import org.osgi.test.common.annotation.InjectBundleContext;
 import org.osgi.test.common.annotation.InjectService;
 import org.osgi.test.junit5.context.BundleContextExtension;
 import org.osgi.test.junit5.service.ServiceExtension;
-import org.osgi.util.promise.Promise;
-import org.osgi.util.promise.Promises;
 
 import jakarta.ws.rs.client.Client;
 import jakarta.ws.rs.client.ClientBuilder;
@@ -99,8 +91,8 @@ public class SchemaPackagesResourceTest {
     ClientBuilder clientBuilder;
 
     private Client restClient;
-    private MockScopeCollector mockScopeCollector;
-    private ServiceRegistration<ScopeCollector> mockScopeCollectorRegistration;
+    private MockScopeServiceCollector mockScopeCollector;
+    private ServiceRegistration<ScopeServiceCollector> mockScopeCollectorRegistration;
 
     @BeforeEach
     public void setup(@InjectBundleContext BundleContext context) throws Exception {
@@ -108,13 +100,12 @@ public class SchemaPackagesResourceTest {
         restClient = clientBuilder.build();
 
         // Create and register mock ScopeCollector
-        mockScopeCollector = new MockScopeCollector();
-
         Dictionary<String, Object> serviceProps = new Hashtable<>();
         serviceProps.put("service.ranking", Integer.MAX_VALUE);
 
+        mockScopeCollector = new MockScopeServiceCollector();
         mockScopeCollectorRegistration = context.registerService(
-                ScopeCollector.class,
+                ScopeServiceCollector.class,
                 mockScopeCollector,
                 serviceProps);
 
@@ -176,7 +167,7 @@ public class SchemaPackagesResourceTest {
                 .request("application/json")
                 .get();
 
-        assertEquals(204, response.getStatus(), "Should return HTTP 204 No Content");
+        assertEquals(400, response.getStatus(), "Should return HTTP 400 Bad Request");
     }
 
     @Test
@@ -274,14 +265,14 @@ public class SchemaPackagesResourceTest {
                 .request("application/xmi")
                 .post(Entity.entity(xmiContent, "application/xmi"));
 
-        assertEquals(404, response.getStatus(), "Should return HTTP 404 Not Found");
+        assertEquals(400, response.getStatus(), "Should return HTTP 400 Bad Request");
     }
 
-    // ========== Override Parameter Tests ==========
+    // ========== Overwrite Parameter Tests ==========
 
     @Test
     public void testCreatePackage_Conflict_WithoutOverwrite() throws Exception {
-        EPackage testPackage = TestHelper.createTestEPackage("http://existing.com/schema/1.0", "ExistingSchema", "existing");
+        EPackage testPackage = TestHelper.createTestEPackage(TEST_PACKAGE_NSURI, "ExistingSchema", "existing");
         String xmiContent = TestHelper.serializeToXMI(testPackage, resourceSet);
 
         Response response = restClient
@@ -290,7 +281,7 @@ public class SchemaPackagesResourceTest {
                 .path("schema")
                 .path("stages")
                 .path(TEST_STAGE_DRAFT)
-                .queryParam("nsUri", "http://existing.com/schema/1.0")
+                .queryParam("nsUri", TEST_PACKAGE_NSURI)
                 .queryParam("name", "ExistingSchema")
                 .queryParam("overwrite", false)
                 .request("application/xmi")
@@ -373,7 +364,7 @@ public class SchemaPackagesResourceTest {
                 .request("application/xmi")
                 .post(Entity.entity(xmiContent, "application/xmi"));
 
-        System.out.println("DEBUG testCreatePackage_WithOverride_NewPackage - Response status: " + response.getStatus());
+        System.out.println("DEBUG testCreatePackage_WithOverwrite_NewPackage - Response status: " + response.getStatus());
         String responseContent = response.readEntity(String.class);
         System.out.println("DEBUG testCreatePackage_WithOverwrite_NewPackage - Response content: " + responseContent);
 
@@ -535,7 +526,7 @@ public class SchemaPackagesResourceTest {
 
     @Test
     public void testTransitionPackage_Success() throws Exception {
-        StageTransition transition = ScopeFactory.eINSTANCE.createStageTransition();
+    	StageTransitionRequest transition = RestFactory.eINSTANCE.createStageTransitionRequest();
         transition.setObjectId(TEST_PACKAGE_NSURI);
         transition.setTargetStage(TEST_STAGE_APPROVED);
 
@@ -561,7 +552,7 @@ public class SchemaPackagesResourceTest {
 
     @Test
     public void testTransitionPackage_InvalidTransition() throws Exception {
-        StageTransition transition = ScopeFactory.eINSTANCE.createStageTransition();
+    	StageTransitionRequest transition = RestFactory.eINSTANCE.createStageTransitionRequest();
         transition.setObjectId(TEST_PACKAGE_NSURI);
         transition.setTargetStage(TEST_STAGE_RELEASE); // Invalid: skipping approved stage
 
@@ -583,7 +574,7 @@ public class SchemaPackagesResourceTest {
 
     @Test
     public void testTransitionPackage_NotFound() throws Exception {
-        StageTransition transition = ScopeFactory.eINSTANCE.createStageTransition();
+    	StageTransitionRequest transition = RestFactory.eINSTANCE.createStageTransitionRequest();
         transition.setObjectId("http://non-existent.com/schema/1.0");
         transition.setTargetStage(TEST_STAGE_APPROVED);
 
@@ -725,7 +716,7 @@ public class SchemaPackagesResourceTest {
                 .path("schema")
                 .path("stages")
                 .path(TEST_STAGE_DRAFT)
-                .queryParam("name", "Sensor*")
+                .queryParam("name", "SensorModel*")
                 .request("application/json")
                 .get();
 
@@ -755,213 +746,157 @@ public class SchemaPackagesResourceTest {
         assertTrue(responseContent.contains("objectId"), "Response should contain objectId");
     }
 
-    // ========== Mock Service Implementation ==========
+    // ========== MediaType Query Parameter Tests ==========
 
-    /**
-     * Mock implementation of ScopeCollector for testing.
-     */
-    public static class MockScopeCollector extends ScopeCollector {
+    @Test
+    public void testListReleasedPackages_WithMediaTypeQueryParam() {
+        Response response = restClient
+                .target(BASE_URL)
+                .path(TEST_SCOPE_NAME)
+                .path("schema")
+                .queryParam("mediaType", "application/xml")
+                .request("application/json")
+                .get();
 
-        private final MockEObjectWorkflowService mockWorkflowService = new MockEObjectWorkflowService();
-        private final Scope mockScope = createMockScope();
-
-        @Override
-        public EObjectWorkflowService<?> getWorkflowServiceByScope(String scopeName) {
-            if (TEST_SCOPE_NAME.equals(scopeName)) {
-                return mockWorkflowService;
-            }
-            return null;
-        }
-
-        @Override
-        public Scope getScopeByName(String name) {
-            if (TEST_SCOPE_NAME.equals(name)) {
-                return mockScope;
-            }
-            return null;
-        }
-
-        @Override
-        public List<Scope> getScopes() {
-            return List.of(mockScope);
-        }
-
-        private Scope createMockScope() {
-            Scope scope = ScopeFactory.eINSTANCE.createScope();
-            scope.setName(TEST_SCOPE_NAME);
-            scope.setFinalStage(TEST_STAGE_RELEASE);
-            scope.getStages().addAll(List.of(TEST_STAGE_DRAFT, TEST_STAGE_APPROVED, TEST_STAGE_RELEASE));
-            scope.getWritableStages().addAll(List.of(TEST_STAGE_DRAFT, TEST_STAGE_APPROVED));
-            return scope;
-        }
+        assertEquals(200, response.getStatus(), "Should return HTTP 200 OK");
+        assertEquals("application/xml", response.getHeaderString("Content-Type"),
+                "Content-Type header should be set to mediaType query parameter value");
     }
 
-    /**
-     * Mock implementation of EObjectWorkflowService for testing.
-     */
-    public static class MockEObjectWorkflowService implements EObjectWorkflowService<EPackage> {
+    @Test
+    public void testListReleasedPackages_WithUnsupportedMediaTypeQueryParam() {
+        Response response = restClient
+                .target(BASE_URL)
+                .path(TEST_SCOPE_NAME)
+                .path("schema")
+                .queryParam("mediaType", "application/unsupported")
+                .request("application/json")
+                .get();
 
-        @Override
-        public Promise<ObjectMetadata> uploadToStage(String stage, EPackage object, ObjectMetadata metadata) {
-            metadata.setRole(stage);
-            metadata.setUploadTime(Instant.now());
-            return Promises.resolved(metadata);
-        }
+        assertEquals(415, response.getStatus(), "Should return HTTP 415 Unsupported Media Type");
+    }
 
-        @Override
-        public ObjectMetadata getFromStage(String stage, String objectId) {
-            String decodedId = new String(Base64.getUrlDecoder().decode(objectId));
+    @Test
+    public void testListPackagesInStage_WithMediaTypeQueryParam() {
+        Response response = restClient
+                .target(BASE_URL)
+                .path(TEST_SCOPE_NAME)
+                .path("schema")
+                .path("stages")
+                .path(TEST_STAGE_DRAFT)
+                .queryParam("mediaType", "application/xml")
+                .request("application/json")
+                .get();
 
-            if (decodedId.equals("http://non-existent.com/schema/1.0")) {
-                return null;
-            }
+        assertEquals(200, response.getStatus(), "Should return HTTP 200 OK");
+        assertEquals("application/xml", response.getHeaderString("Content-Type"),
+                "Content-Type header should be set to mediaType query parameter value");
+    }
 
-            if (decodedId.equals("http://existing.com/schema/1.0")) {
-                ObjectMetadata metadata = ManagementFactory.eINSTANCE.createObjectMetadata();
-                metadata.setObjectId(objectId);
-                metadata.setRole(stage);
-                return metadata;
-            }
+    @Test
+    public void testGetPackageContent_WithMediaTypeQueryParam() {
+        Response response = restClient
+                .target(BASE_URL)
+                .path(TEST_SCOPE_NAME)
+                .path("schema")
+                .path("stages")
+                .path(TEST_STAGE_DRAFT)
+                .path("content")
+                .queryParam("nsUri", TEST_PACKAGE_NSURI)
+                .queryParam("mediaType", "application/xml")
+                .request("application/json")
+                .get();
 
-            // Read-only package for testing override with read-only scenario
-            if (decodedId.equals("http://readonly.com/schema/1.0")) {
-                ObjectMetadata metadata = ManagementFactory.eINSTANCE.createObjectMetadata();
-                metadata.setObjectId(objectId);
-                metadata.setRole(stage);
-                metadata.setUploadTime(Instant.now());
-                metadata.setIsReadOnly(true);
-                return metadata;
-            }
+        assertEquals(200, response.getStatus(), "Should return HTTP 200 OK");
+        assertEquals("application/xml", response.getHeaderString("Content-Type"),
+                "Content-Type header should be set to mediaType query parameter value");
+    }
 
-            ObjectMetadata metadata = ManagementFactory.eINSTANCE.createObjectMetadata();
-            metadata.setObjectId(objectId);
-            metadata.setRole(stage);
-            metadata.setUploadTime(Instant.now());
-            metadata.setIsReadOnly(false);
-            return metadata;
-        }
+    @Test
+    public void testGetPackageContent_WithUnsupportedMediaTypeQueryParam() {
+        Response response = restClient
+                .target(BASE_URL)
+                .path(TEST_SCOPE_NAME)
+                .path("schema")
+                .path("stages")
+                .path(TEST_STAGE_DRAFT)
+                .path("content")
+                .queryParam("nsUri", TEST_PACKAGE_NSURI)
+                .queryParam("mediaType", "application/unsupported")
+                .request("application/json")
+                .get();
 
-        @Override
-        public ObjectMetadata getFromFinalStage(String objectId) {
-            return getFromStage(TEST_STAGE_RELEASE, objectId);
-        }
+        assertEquals(415, response.getStatus(), "Should return HTTP 415 Unsupported Media Type");
+    }
 
-        @Override
-        public EPackage getContentFromStage(String stage, String objectId) {
-            String decodedId = new String(Base64.getUrlDecoder().decode(objectId));
+    @Test
+    public void testCreatePackage_WithMediaTypeQueryParam() throws Exception {
+        EPackage testPackage = TestHelper.createTestEPackage("http://mediatype.com/schema/1.0", "MediaTypePackage", "mt");
+        String xmiContent = TestHelper.serializeToXMI(testPackage, resourceSet);
 
-            if (decodedId.equals("http://non-existent.com/schema/1.0")) {
-                return null;
-            }
+        Response response = restClient
+                .target(BASE_URL)
+                .path(TEST_SCOPE_NAME)
+                .path("schema")
+                .path("stages")
+                .path(TEST_STAGE_DRAFT)
+                .queryParam("nsUri", "http://mediatype.com/schema/1.0")
+                .queryParam("name", "MediaTypePackage")
+                .queryParam("version", "1.0.0")
+                .queryParam("mediaType", "application/xml")
+                .request("application/xmi")
+                .post(Entity.entity(xmiContent, "application/xmi"));
 
-            return TestHelper.createTestEPackage(decodedId, "TestPackage", "test");
-        }
+        assertEquals(200, response.getStatus(), "Should return HTTP 200 OK");
+        assertEquals("application/xml", response.getHeaderString("Content-Type"),
+                "Content-Type header should be set to mediaType query parameter value");
+    }
 
-        @Override
-        public Promise<ObjectMetadata> updateInStage(String stage, EPackage updatedObject, String objectId, String updatedVersion) {
-            String decodedId = new String(Base64.getUrlDecoder().decode(objectId));
+    @Test
+    public void testUpdatePackageContent_WithMediaTypeQueryParam() throws Exception {
+        EPackage updatedPackage = TestHelper.createTestEPackage(TEST_PACKAGE_NSURI, "UpdatedSchema", "test");
+        String xmiContent = TestHelper.serializeToXMI(updatedPackage, resourceSet);
 
-            if (decodedId.equals("http://non-existent.com/schema/1.0")) {
-                return Promises.resolved(null);
-            }
+        Response response = restClient
+                .target(BASE_URL)
+                .path(TEST_SCOPE_NAME)
+                .path("schema")
+                .path("stages")
+                .path(TEST_STAGE_DRAFT)
+                .path("content")
+                .queryParam("nsUri", TEST_PACKAGE_NSURI)
+                .queryParam("version", "1.1.0")
+                .queryParam("mediaType", "application/xml")
+                .request("application/xmi")
+                .put(Entity.entity(xmiContent, "application/xmi"));
 
-            ObjectMetadata metadata = ManagementFactory.eINSTANCE.createObjectMetadata();
-            metadata.setObjectId(objectId);
-            metadata.setRole(stage);
-            metadata.setVersion(updatedVersion);
-            metadata.setLastChangeTime(Instant.now());
-            return Promises.resolved(metadata);
-        }
+        assertEquals(200, response.getStatus(), "Should return HTTP 200 OK");
+        assertEquals("application/xml", response.getHeaderString("Content-Type"),
+                "Content-Type header should be set to mediaType query parameter value");
+    }
 
-        @Override
-        public Promise<Boolean> deleteFromStage(String stage, String objectId) {
-            String decodedId = new String(Base64.getUrlDecoder().decode(objectId));
-            return Promises.resolved(!decodedId.equals("http://non-existent.com/schema/1.0"));
-        }
+    @Test
+    public void testTransitionPackage_WithMediaTypeQueryParam() throws Exception {
+        StageTransitionRequest transition = RestFactory.eINSTANCE.createStageTransitionRequest();
+        transition.setObjectId(TEST_PACKAGE_NSURI);
+        transition.setTargetStage(TEST_STAGE_APPROVED);
 
-        @Override
-        public List<ObjectMetadata> listInStage(String stage) {
-            ObjectMetadata metadata = ManagementFactory.eINSTANCE.createObjectMetadata();
-            String encodedNsUri = Base64.getUrlEncoder().encodeToString(TEST_PACKAGE_NSURI.getBytes());
-            metadata.setObjectId(encodedNsUri);
-            metadata.setRole(stage);
-            metadata.setObjectName(TEST_PACKAGE_NAME);
-            metadata.setUploadTime(Instant.now());
-            return List.of(metadata);
-        }
+        String xmiContent = TestHelper.serializeToXMI(transition, resourceSet);
 
-        @Override
-        public List<ObjectMetadata> listInFinalStage() {
-            return listInStage(TEST_STAGE_RELEASE);
-        }
+        Response response = restClient
+                .target(BASE_URL)
+                .path(TEST_SCOPE_NAME)
+                .path("schema")
+                .path("stages")
+                .path(TEST_STAGE_DRAFT)
+                .path("actions")
+                .path("transition")
+                .queryParam("mediaType", "application/xml")
+                .request("application/xmi")
+                .post(Entity.entity(xmiContent, "application/xmi"));
 
-        @Override
-        public ObjectMetadata transitionToStage(String objectId, String fromStage, String toStage) {
-            ObjectMetadata metadata = ManagementFactory.eINSTANCE.createObjectMetadata();
-            metadata.setObjectId(objectId);
-            metadata.setRole(toStage);
-            metadata.setLastChangeTime(Instant.now());
-            return metadata;
-        }
-
-        @Override
-        public boolean isTransitionAllowed(String fromStage, String toStage) {
-            // Allow draft -> approved and approved -> release
-            if (TEST_STAGE_DRAFT.equals(fromStage) && TEST_STAGE_APPROVED.equals(toStage)) {
-                return true;
-            }
-            if (TEST_STAGE_APPROVED.equals(fromStage) && TEST_STAGE_RELEASE.equals(toStage)) {
-                return true;
-            }
-            // Disallow skipping stages (e.g., draft -> release)
-            return false;
-        }
-
-		/*
-		 * (non-Javadoc)
-		 * @see org.eclipse.fennec.model.atlas.wf.workflowapi.EObjectWorkflowService#listInStageByName(java.lang.String, java.lang.String)
-		 */
-		@Override
-		public List<ObjectMetadata> listInStageByName(String stage, String name) {
-			// Support wildcard search with * character (only trailing wildcards like "Prefix*")
-			boolean isWildcard = name.contains("*");
-			String nameFilter = isWildcard ? name.replace("*", "") : name;
-
-			// Create test metadata that matches the filter
-			if ("TestSchema".equals(name) || (isWildcard && TEST_PACKAGE_NAME.startsWith(nameFilter))) {
-				ObjectMetadata metadata = ManagementFactory.eINSTANCE.createObjectMetadata();
-				String encodedNsUri = Base64.getUrlEncoder().encodeToString(TEST_PACKAGE_NSURI.getBytes());
-				metadata.setObjectId(encodedNsUri);
-				metadata.setRole(stage);
-				metadata.setObjectName(TEST_PACKAGE_NAME);
-				metadata.setUploadTime(Instant.now());
-				return List.of(metadata);
-			}
-
-			// Match for Test* wildcard
-			if (isWildcard && TEST_PACKAGE_NAME.startsWith(nameFilter)) {
-				ObjectMetadata metadata = ManagementFactory.eINSTANCE.createObjectMetadata();
-				String encodedNsUri = Base64.getUrlEncoder().encodeToString(TEST_PACKAGE_NSURI.getBytes());
-				metadata.setObjectId(encodedNsUri);
-				metadata.setRole(stage);
-				metadata.setObjectName(TEST_PACKAGE_NAME);
-				metadata.setUploadTime(Instant.now());
-				return List.of(metadata);
-			}
-
-			// If looking for SensorModel, return a matching object
-			if ("SensorModel".equals(name) || (isWildcard && "SensorModel".startsWith(nameFilter))) {
-				ObjectMetadata sensorMetadata = ManagementFactory.eINSTANCE.createObjectMetadata();
-				String encodedSensorNsUri = Base64.getUrlEncoder().encodeToString("http://test.example.com/sensor/1.0".getBytes());
-				sensorMetadata.setObjectId(encodedSensorNsUri);
-				sensorMetadata.setRole(stage);
-				sensorMetadata.setObjectName("SensorModel");
-				sensorMetadata.setUploadTime(Instant.now());
-				return List.of(sensorMetadata);
-			}
-
-			// Return empty list if no match
-			return List.of();
-		}
+        assertEquals(200, response.getStatus(), "Should return HTTP 200 OK");
+        assertEquals("application/xml", response.getHeaderString("Content-Type"),
+                "Content-Type header should be set to mediaType query parameter value");
     }
 }

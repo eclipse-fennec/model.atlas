@@ -23,11 +23,14 @@ import java.util.logging.Logger;
 
 import org.eclipse.emf.ecore.EPackage;
 import org.eclipse.emf.ecore.EcorePackage;
+import org.eclipse.emf.ecore.util.EcoreUtil;
 import org.eclipse.fennec.model.atlas.mgmt.api.EObjectStorageService;
 import org.eclipse.fennec.model.atlas.mgmt.management.ObjectMetadata;
 import org.eclipse.fennec.model.atlas.workflow.PostReleaseActionService;
 import org.eclipse.fennec.model.atlas.workflow.registration.DynamicEPackageRegistrationService;
+import org.osgi.service.component.annotations.Activate;
 import org.osgi.service.component.annotations.Component;
+import org.osgi.service.component.annotations.ConfigurationPolicy;
 import org.osgi.service.component.annotations.Reference;
 import org.osgi.util.promise.Deferred;
 import org.osgi.util.promise.Promise;
@@ -56,7 +59,7 @@ import org.osgi.util.promise.PromiseFactory;
  * @author Mark Hoffmann
  * @since 1.0.0
  */
-@Component(service = PostReleaseActionService.class, immediate = true)
+@Component(name = "EPackagePostReleaseActionService", service = PostReleaseActionService.class, configurationPid = "EPackagePostReleaseActionService", configurationPolicy = ConfigurationPolicy.REQUIRE)
 public class EPackagePostReleaseActionService implements PostReleaseActionService {
     
     private static final Logger logger = Logger.getLogger(EPackagePostReleaseActionService.class.getName());
@@ -64,20 +67,28 @@ public class EPackagePostReleaseActionService implements PostReleaseActionServic
     @Reference
     private DynamicEPackageRegistrationService registrationService;
     
-    @Reference(target = "(storage.role=release)")
     private EObjectStorageService<EPackage> releaseStorage;
     
     private final PromiseFactory promiseFactory = new PromiseFactory(null);
     private final Map<String, PostReleaseActionInfoImpl> actionHistory = new ConcurrentHashMap<>();
     
+    @Activate
+    public EPackagePostReleaseActionService(@Reference(name = "releaseStorage", target = "(scope=no-inject)") EObjectStorageService<EPackage> releaseStorage) {
+		this.releaseStorage = releaseStorage;    	
+    }
+    
+    /* 
+     * (non-Javadoc)
+     * @see org.eclipse.fennec.model.atlas.workflow.PostReleaseActionService#executePostReleaseActions(java.lang.String, java.lang.String, java.lang.String, java.lang.String, java.lang.String, java.lang.String, java.lang.String)
+     */
     @Override
-    public Promise<Void> executePostReleaseActions(String objectId, String objectType, String releaseUser, String releaseNotes) {
+    public Promise<Void> executePostReleaseActions(String scope, String registry, String stage, String objectId, String objectType, String releaseUser, String releaseNotes) {
         requireNonNull(objectId, "Object ID cannot be null");
         requireNonNull(objectType, "Object type cannot be null");
         requireNonNull(releaseUser, "Release user cannot be null");
         
         // Only handle EPackage objects
-        if (!EcorePackage.Literals.EPACKAGE.getName().equals(objectType)) {
+        if (!EcoreUtil.getURI(EcorePackage.Literals.EPACKAGE).toString().equals(objectType)) {
             logger.fine("Skipping post-release actions for non-EPackage object: " + objectType);
             return promiseFactory.resolved(null);
         }
@@ -93,7 +104,7 @@ public class EPackagePostReleaseActionService implements PostReleaseActionServic
                 actionHistory.put(objectId, actionInfo);
                 
                 // 1. Load the released EPackage
-                EPackage ePackage = loadEPackage(objectId);
+                EPackage ePackage = loadEPackage(scope, registry, stage, objectId);
                 if (ePackage == null) {
                     String error = "Failed to load EPackage from release storage: " + objectId;
                     actionInfo.markFailed(error);
@@ -103,7 +114,7 @@ public class EPackagePostReleaseActionService implements PostReleaseActionServic
                 }
                 
                 // 2. Extract metadata for registration
-                ObjectMetadata metadata = getPromiseValue(releaseStorage.retrieveMetadata(objectId));
+                ObjectMetadata metadata = getPromiseValue(releaseStorage.retrieveMetadata(scope, registry, stage, objectId));
                 String fileExtension = extractFileExtension(metadata, ePackage);
                 String version = extractVersion(metadata, ePackage);
                 
@@ -142,14 +153,19 @@ public class EPackagePostReleaseActionService implements PostReleaseActionServic
         return deferred.getPromise();
     }
     
+    /* 
+     * (non-Javadoc)
+     * @see org.eclipse.fennec.model.atlas.workflow.PostReleaseActionService#executePostUnreleaseActions(java.lang.String, java.lang.String, java.lang.String, java.lang.String, java.lang.String, java.lang.String, java.lang.String)
+     */
     @Override
-    public Promise<Void> executePostUnreleaseActions(String objectId, String objectType, String unreleaseUser, String unreleaseReason) {
+    public Promise<Void> executePostUnreleaseActions(String scope, String registry, String stage, String objectId, String objectType, String unreleaseUser, String unreleaseReason) {
         requireNonNull(objectId, "Object ID cannot be null");
         requireNonNull(objectType, "Object type cannot be null");
         requireNonNull(unreleaseUser, "Unrelease user cannot be null");
         
         // Only handle EPackage objects
-        if (!"EPackage".equals(objectType)) {
+        if (!EcoreUtil.getURI(EcorePackage.Literals.EPACKAGE).toString().equals(objectType)) {
+            logger.fine("Skipping post-unrelease actions for non-EPackage object: " + objectType);
             return promiseFactory.resolved(null);
         }
         
@@ -178,7 +194,7 @@ public class EPackagePostReleaseActionService implements PostReleaseActionServic
                 // If we couldn't get it from history, try to load the EPackage
                 if (namespaceURI == null) {
                     try {
-                        EPackage ePackage = loadEPackage(objectId);
+                        EPackage ePackage = loadEPackage(scope, registry, stage, objectId);
                         if (ePackage != null) {
                             namespaceURI = ePackage.getNsURI();
                         }
@@ -215,21 +231,68 @@ public class EPackagePostReleaseActionService implements PostReleaseActionServic
         return deferred.getPromise();
     }
     
+    /* 
+     * (non-Javadoc)
+     * @see org.eclipse.fennec.model.atlas.workflow.PostReleaseActionService#supportsObjectType(java.lang.String)
+     */
     @Override
     public boolean supportsObjectType(String objectType) {
         return "EPackage".equals(objectType);
     }
     
+    /* 
+     * (non-Javadoc)
+     * @see org.eclipse.fennec.model.atlas.workflow.PostReleaseActionService#getLastActionInfo(java.lang.String)
+     */
     @Override
     public PostReleaseActionInfo getLastActionInfo(String objectId) {
         return actionHistory.get(objectId);
     }
     
+
+	/* 
+	 * (non-Javadoc)
+	 * @see org.eclipse.fennec.model.atlas.workflow.PostReleaseActionService#executeStartupInitialization(java.lang.String, java.lang.String, java.lang.String, java.lang.String, java.lang.String)
+	 */
+	@Override
+	public Promise<Void> executeStartupInitialization(String scope, String registry, String stage, String objectId,
+			String objectType) {
+		return executePostReleaseActions(scope, registry, stage, objectId, objectType, "automatic post release", "automatic post release action");
+	}
+
+	/* 
+	 * (non-Javadoc)
+	 * @see org.eclipse.fennec.model.atlas.workflow.PostReleaseActionService#requiresStartupInitialization()
+	 */
+	@Override
+	public boolean requiresStartupInitialization() {
+		return true;
+	}
+	
+	/* 
+	 * (non-Javadoc)
+	 * @see org.eclipse.fennec.model.atlas.workflow.PostReleaseActionService#executeCleanupAction(java.lang.String, java.lang.String, java.lang.String, java.lang.String, java.lang.String)
+	 */
+	@Override
+	public Promise<Void> executeCleanupAction(String scope, String registry, String stage, String objectId,
+			String objectType) {
+		return executePostUnreleaseActions(scope, registry, stage, objectId, objectType, "automatic post unrelease", "automatic post unrelease action");
+	}
+
+	/* 
+	 * (non-Javadoc)
+	 * @see org.eclipse.fennec.model.atlas.workflow.PostReleaseActionService#requiresCleanup()
+	 */
+	@Override
+	public boolean requiresCleanup() {
+		return true;
+	}
+    
     // Private helper methods
     
-    private EPackage loadEPackage(String objectId) {
+    private EPackage loadEPackage(String scope, String registry, String stage, String objectId) {
         try {
-            return getPromiseValue(releaseStorage.retrieveObject(objectId));
+            return getPromiseValue(releaseStorage.retrieveObject(scope, registry, stage, objectId));
         } catch (Exception e) {
             logger.log(Level.WARNING, "Failed to load EPackage: " + objectId, e);
             return null;
@@ -341,4 +404,7 @@ public class EPackagePostReleaseActionService implements PostReleaseActionServic
             return actionDetails;
         }
     }
+
+
+
 }

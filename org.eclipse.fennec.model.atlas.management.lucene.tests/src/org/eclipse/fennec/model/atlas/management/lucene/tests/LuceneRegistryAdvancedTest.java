@@ -23,6 +23,8 @@ import java.nio.file.Path;
 import java.time.Instant;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 
 import org.eclipse.fennec.model.atlas.management.lucene.tests.annotations.LuceneTestAnnotations;
 import org.eclipse.fennec.model.atlas.management.lucene.tests.annotations.LuceneTestAnnotations.RegistryConfiguration;
@@ -30,6 +32,7 @@ import org.eclipse.fennec.model.atlas.mgmt.api.EObjectRegistryService;
 import org.eclipse.fennec.model.atlas.mgmt.management.ManagementFactory;
 import org.eclipse.fennec.model.atlas.mgmt.management.ObjectMetadata;
 import org.eclipse.fennec.model.atlas.mgmt.management.ObjectStatus;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -66,6 +69,12 @@ public class LuceneRegistryAdvancedTest {
         System.setProperty(LuceneTestAnnotations.PROP_TEMP_DIR, tempDir.toString());
     }
 
+    @AfterEach
+    void tearDown() throws InterruptedException {
+        CountDownLatch latch = new CountDownLatch(1);
+        latch.await(3, TimeUnit.SECONDS);
+    }
+
     // ===== Error Handling & Edge Cases Tests =====
 
     @SuppressWarnings("rawtypes")
@@ -93,13 +102,10 @@ public class LuceneRegistryAdvancedTest {
             registryService.findByObjectName(null), "findByObjectName should reject null objectName");
 
         assertThrows(NullPointerException.class, () -> 
-            registryService.findByRole(null), "findByRole should reject null role");
+            registryService.findByObjectNameAndStage(null, "stage"), "findByObjectNameAndStage should reject null objectName");
 
         assertThrows(NullPointerException.class, () -> 
-            registryService.findByObjectNameAndRole(null, "role"), "findByObjectNameAndRole should reject null objectName");
-
-        assertThrows(NullPointerException.class, () -> 
-            registryService.findByObjectNameAndRole("name", null), "findByObjectNameAndRole should reject null role");
+            registryService.findByObjectNameAndStage("name", null), "findByObjectNameAndStage should reject null role");
 
         assertThrows(NullPointerException.class, () -> 
             registryService.findByFingerprint(null), "findByFingerprint should reject null fingerprint");
@@ -139,9 +145,6 @@ public class LuceneRegistryAdvancedTest {
 
         assertTrue(registryService.findByObjectName("NonExistentName").isEmpty(), 
                   "Should return empty list for non-existent object name");
-
-        assertTrue(registryService.findByRole("non-existent-role").isEmpty(), 
-                  "Should return empty list for non-existent role");
 
         assertFalse(registryService.findByFingerprint("non-existent-fp").isPresent(), 
                    "Should return empty Optional for non-existent fingerprint");
@@ -187,9 +190,6 @@ public class LuceneRegistryAdvancedTest {
         // Test special characters in search strings
         assertTrue(registryService.findByObjectName("").isEmpty(), 
                   "Should handle empty object name gracefully");
-
-        assertTrue(registryService.findByRole("").isEmpty(), 
-                  "Should handle empty role gracefully");
 
         assertFalse(registryService.findByFingerprint("").isPresent(), 
                   "Should handle empty fingerprint gracefully");
@@ -331,19 +331,6 @@ public class LuceneRegistryAdvancedTest {
         List<ObjectMetadata> sensors = registryService.findByObjectType("SensorModel");
         assertEquals(500, sensors.size(), "Should find 500 SensorModel objects (50% of dataset)");
 
-        // Test role distribution
-        List<ObjectMetadata> draftRole = registryService.findByRole("draft");
-        assertTrue(draftRole.size() > 300 && draftRole.size() < 350, 
-                  "Should find ~333 objects with draft role (33% of dataset), found: " + draftRole.size());
-        
-        List<ObjectMetadata> approvedRole = registryService.findByRole("approved");
-        assertTrue(approvedRole.size() > 300 && approvedRole.size() < 350, 
-                  "Should find ~333 objects with approved role (33% of dataset), found: " + approvedRole.size());
-        
-        List<ObjectMetadata> docRole = registryService.findByRole("documentation");
-        assertTrue(docRole.size() > 300 && docRole.size() < 350, 
-                  "Should find ~334 objects with documentation role (33% of dataset), found: " + docRole.size());
-
         // Test statistics accuracy
         Map<String, Object> stats = (Map<String, Object>) registryService.getRegistryStatistics().getValue();
         assertNotNull(stats);
@@ -467,7 +454,7 @@ public class LuceneRegistryAdvancedTest {
         assertEquals("LuceneTestPackage", retrieved.getObjectName());
         assertEquals("1.0.0", retrieved.getVersion());
         assertEquals(ObjectStatus.DRAFT, retrieved.getStatus());
-        assertEquals("draft", retrieved.getRole());
+        assertEquals("draft", retrieved.getStage());
         
         // Verify the object is also findable through indexed searches
         List<ObjectMetadata> byName = registryService.findByObjectName("LuceneTestPackage");
@@ -477,7 +464,7 @@ public class LuceneRegistryAdvancedTest {
 
     // ===== Helper Methods =====
 
-    private ObjectMetadata createTestMetadata(String objectId, String objectName, String version, ObjectStatus status, String role) {
+    private ObjectMetadata createTestMetadata(String objectId, String objectName, String version, ObjectStatus status, String stage) {
         ObjectMetadata metadata = ManagementFactory.eINSTANCE.createObjectMetadata();
         metadata.setObjectId(objectId);
         metadata.setObjectName(objectName);
@@ -488,7 +475,7 @@ public class LuceneRegistryAdvancedTest {
         metadata.setUploadUser("test-user");
         metadata.setSourceChannel("TEST_CHANNEL");
         metadata.setLastChangeTime(Instant.now());
-        metadata.setRole(role);
+        metadata.setStage(stage);
         return metadata;
     }
 }

@@ -898,6 +898,143 @@ public interface MgmtApicurioPackage extends org.eclipse.emf.ecore.EPackage {
 	int SEARCHED_VERSION_OPERATION_COUNT = ARTIFACT_OPERATION_COUNT + 0;
 
 	/**
+	 * The meta object id for the '{@link org.eclipse.fennec.model.atlas.mgmt.mgmtapicurio.impl.GroupImpl <em>Group</em>}' class.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @see org.eclipse.fennec.model.atlas.mgmt.mgmtapicurio.impl.GroupImpl
+	 * @see org.eclipse.fennec.model.atlas.mgmt.mgmtapicurio.impl.MgmtApicurioPackageImpl#getGroup()
+	 * @generated
+	 */
+	int GROUP = 11;
+
+	/**
+	 * The feature id for the '<em><b>Group Id</b></em>' attribute.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 * @ordered
+	 */
+	int GROUP__GROUP_ID = 0;
+
+	/**
+	 * The feature id for the '<em><b>Created On</b></em>' attribute.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 * @ordered
+	 */
+	int GROUP__CREATED_ON = 1;
+
+	/**
+	 * The feature id for the '<em><b>Owner</b></em>' attribute.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 * @ordered
+	 */
+	int GROUP__OWNER = 2;
+
+	/**
+	 * The feature id for the '<em><b>Modified On</b></em>' attribute.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 * @ordered
+	 */
+	int GROUP__MODIFIED_ON = 3;
+
+	/**
+	 * The feature id for the '<em><b>Modified By</b></em>' attribute.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 * @ordered
+	 */
+	int GROUP__MODIFIED_BY = 4;
+
+	/**
+	 * The feature id for the '<em><b>Description</b></em>' attribute.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 * @ordered
+	 */
+	int GROUP__DESCRIPTION = 5;
+
+	/**
+	 * The feature id for the '<em><b>Labels</b></em>' map.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 * @ordered
+	 */
+	int GROUP__LABELS = 6;
+
+	/**
+	 * The number of structural features of the '<em>Group</em>' class.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 * @ordered
+	 */
+	int GROUP_FEATURE_COUNT = 7;
+
+	/**
+	 * The number of operations of the '<em>Group</em>' class.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 * @ordered
+	 */
+	int GROUP_OPERATION_COUNT = 0;
+
+	/**
+	 * The meta object id for the '{@link org.eclipse.fennec.model.atlas.mgmt.mgmtapicurio.impl.SearchGroupResponseImpl <em>Search Group Response</em>}' class.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @see org.eclipse.fennec.model.atlas.mgmt.mgmtapicurio.impl.SearchGroupResponseImpl
+	 * @see org.eclipse.fennec.model.atlas.mgmt.mgmtapicurio.impl.MgmtApicurioPackageImpl#getSearchGroupResponse()
+	 * @generated
+	 */
+	int SEARCH_GROUP_RESPONSE = 12;
+
+	/**
+	 * The feature id for the '<em><b>Groups</b></em>' containment reference list.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 * @ordered
+	 */
+	int SEARCH_GROUP_RESPONSE__GROUPS = 0;
+
+	/**
+	 * The feature id for the '<em><b>Count</b></em>' attribute.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 * @ordered
+	 */
+	int SEARCH_GROUP_RESPONSE__COUNT = 1;
+
+	/**
+	 * The number of structural features of the '<em>Search Group Response</em>' class.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 * @ordered
+	 */
+	int SEARCH_GROUP_RESPONSE_FEATURE_COUNT = 2;
+
+	/**
+	 * The number of operations of the '<em>Search Group Response</em>' class.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 * @ordered
+	 */
+	int SEARCH_GROUP_RESPONSE_OPERATION_COUNT = 0;
+
+	/**
 	 * The meta object id for the '{@link org.eclipse.fennec.model.atlas.mgmt.mgmtapicurio.ArtifactType <em>Artifact Type</em>}' enum.
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
@@ -905,7 +1042,7 @@ public interface MgmtApicurioPackage extends org.eclipse.emf.ecore.EPackage {
 	 * @see org.eclipse.fennec.model.atlas.mgmt.mgmtapicurio.impl.MgmtApicurioPackageImpl#getArtifactType()
 	 * @generated
 	 */
-	int ARTIFACT_TYPE = 11;
+	int ARTIFACT_TYPE = 13;
 
 	/**
 	 * The meta object id for the '{@link org.eclipse.fennec.model.atlas.mgmt.mgmtapicurio.VersionStateType <em>Version State Type</em>}' enum.
@@ -915,7 +1052,7 @@ public interface MgmtApicurioPackage extends org.eclipse.emf.ecore.EPackage {
 	 * @see org.eclipse.fennec.model.atlas.mgmt.mgmtapicurio.impl.MgmtApicurioPackageImpl#getVersionStateType()
 	 * @generated
 	 */
-	int VERSION_STATE_TYPE = 12;
+	int VERSION_STATE_TYPE = 14;
 
 
 	/**
@@ -1416,6 +1553,125 @@ public interface MgmtApicurioPackage extends org.eclipse.emf.ecore.EPackage {
 	EAttribute getSearchedVersion_State();
 
 	/**
+	 * Returns the meta object for class '{@link org.eclipse.fennec.model.atlas.mgmt.mgmtapicurio.Group <em>Group</em>}'.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @return the meta object for class '<em>Group</em>'.
+	 * @see org.eclipse.fennec.model.atlas.mgmt.mgmtapicurio.Group
+	 * @generated
+	 */
+	EClass getGroup();
+
+	/**
+	 * Returns the meta object for the attribute '{@link org.eclipse.fennec.model.atlas.mgmt.mgmtapicurio.Group#getGroupId <em>Group Id</em>}'.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @return the meta object for the attribute '<em>Group Id</em>'.
+	 * @see org.eclipse.fennec.model.atlas.mgmt.mgmtapicurio.Group#getGroupId()
+	 * @see #getGroup()
+	 * @generated
+	 */
+	EAttribute getGroup_GroupId();
+
+	/**
+	 * Returns the meta object for the attribute '{@link org.eclipse.fennec.model.atlas.mgmt.mgmtapicurio.Group#getCreatedOn <em>Created On</em>}'.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @return the meta object for the attribute '<em>Created On</em>'.
+	 * @see org.eclipse.fennec.model.atlas.mgmt.mgmtapicurio.Group#getCreatedOn()
+	 * @see #getGroup()
+	 * @generated
+	 */
+	EAttribute getGroup_CreatedOn();
+
+	/**
+	 * Returns the meta object for the attribute '{@link org.eclipse.fennec.model.atlas.mgmt.mgmtapicurio.Group#getOwner <em>Owner</em>}'.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @return the meta object for the attribute '<em>Owner</em>'.
+	 * @see org.eclipse.fennec.model.atlas.mgmt.mgmtapicurio.Group#getOwner()
+	 * @see #getGroup()
+	 * @generated
+	 */
+	EAttribute getGroup_Owner();
+
+	/**
+	 * Returns the meta object for the attribute '{@link org.eclipse.fennec.model.atlas.mgmt.mgmtapicurio.Group#getModifiedOn <em>Modified On</em>}'.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @return the meta object for the attribute '<em>Modified On</em>'.
+	 * @see org.eclipse.fennec.model.atlas.mgmt.mgmtapicurio.Group#getModifiedOn()
+	 * @see #getGroup()
+	 * @generated
+	 */
+	EAttribute getGroup_ModifiedOn();
+
+	/**
+	 * Returns the meta object for the attribute '{@link org.eclipse.fennec.model.atlas.mgmt.mgmtapicurio.Group#getModifiedBy <em>Modified By</em>}'.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @return the meta object for the attribute '<em>Modified By</em>'.
+	 * @see org.eclipse.fennec.model.atlas.mgmt.mgmtapicurio.Group#getModifiedBy()
+	 * @see #getGroup()
+	 * @generated
+	 */
+	EAttribute getGroup_ModifiedBy();
+
+	/**
+	 * Returns the meta object for the attribute '{@link org.eclipse.fennec.model.atlas.mgmt.mgmtapicurio.Group#getDescription <em>Description</em>}'.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @return the meta object for the attribute '<em>Description</em>'.
+	 * @see org.eclipse.fennec.model.atlas.mgmt.mgmtapicurio.Group#getDescription()
+	 * @see #getGroup()
+	 * @generated
+	 */
+	EAttribute getGroup_Description();
+
+	/**
+	 * Returns the meta object for the map '{@link org.eclipse.fennec.model.atlas.mgmt.mgmtapicurio.Group#getLabels <em>Labels</em>}'.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @return the meta object for the map '<em>Labels</em>'.
+	 * @see org.eclipse.fennec.model.atlas.mgmt.mgmtapicurio.Group#getLabels()
+	 * @see #getGroup()
+	 * @generated
+	 */
+	EReference getGroup_Labels();
+
+	/**
+	 * Returns the meta object for class '{@link org.eclipse.fennec.model.atlas.mgmt.mgmtapicurio.SearchGroupResponse <em>Search Group Response</em>}'.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @return the meta object for class '<em>Search Group Response</em>'.
+	 * @see org.eclipse.fennec.model.atlas.mgmt.mgmtapicurio.SearchGroupResponse
+	 * @generated
+	 */
+	EClass getSearchGroupResponse();
+
+	/**
+	 * Returns the meta object for the containment reference list '{@link org.eclipse.fennec.model.atlas.mgmt.mgmtapicurio.SearchGroupResponse#getGroups <em>Groups</em>}'.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @return the meta object for the containment reference list '<em>Groups</em>'.
+	 * @see org.eclipse.fennec.model.atlas.mgmt.mgmtapicurio.SearchGroupResponse#getGroups()
+	 * @see #getSearchGroupResponse()
+	 * @generated
+	 */
+	EReference getSearchGroupResponse_Groups();
+
+	/**
+	 * Returns the meta object for the attribute '{@link org.eclipse.fennec.model.atlas.mgmt.mgmtapicurio.SearchGroupResponse#getCount <em>Count</em>}'.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @return the meta object for the attribute '<em>Count</em>'.
+	 * @see org.eclipse.fennec.model.atlas.mgmt.mgmtapicurio.SearchGroupResponse#getCount()
+	 * @see #getSearchGroupResponse()
+	 * @generated
+	 */
+	EAttribute getSearchGroupResponse_Count();
+
+	/**
 	 * Returns the meta object for enum '{@link org.eclipse.fennec.model.atlas.mgmt.mgmtapicurio.ArtifactType <em>Artifact Type</em>}'.
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
@@ -1847,6 +2103,98 @@ public interface MgmtApicurioPackage extends org.eclipse.emf.ecore.EPackage {
 		 * @generated
 		 */
 		EAttribute SEARCHED_VERSION__STATE = eINSTANCE.getSearchedVersion_State();
+
+		/**
+		 * The meta object literal for the '{@link org.eclipse.fennec.model.atlas.mgmt.mgmtapicurio.impl.GroupImpl <em>Group</em>}' class.
+		 * <!-- begin-user-doc -->
+		 * <!-- end-user-doc -->
+		 * @see org.eclipse.fennec.model.atlas.mgmt.mgmtapicurio.impl.GroupImpl
+		 * @see org.eclipse.fennec.model.atlas.mgmt.mgmtapicurio.impl.MgmtApicurioPackageImpl#getGroup()
+		 * @generated
+		 */
+		EClass GROUP = eINSTANCE.getGroup();
+
+		/**
+		 * The meta object literal for the '<em><b>Group Id</b></em>' attribute feature.
+		 * <!-- begin-user-doc -->
+		 * <!-- end-user-doc -->
+		 * @generated
+		 */
+		EAttribute GROUP__GROUP_ID = eINSTANCE.getGroup_GroupId();
+
+		/**
+		 * The meta object literal for the '<em><b>Created On</b></em>' attribute feature.
+		 * <!-- begin-user-doc -->
+		 * <!-- end-user-doc -->
+		 * @generated
+		 */
+		EAttribute GROUP__CREATED_ON = eINSTANCE.getGroup_CreatedOn();
+
+		/**
+		 * The meta object literal for the '<em><b>Owner</b></em>' attribute feature.
+		 * <!-- begin-user-doc -->
+		 * <!-- end-user-doc -->
+		 * @generated
+		 */
+		EAttribute GROUP__OWNER = eINSTANCE.getGroup_Owner();
+
+		/**
+		 * The meta object literal for the '<em><b>Modified On</b></em>' attribute feature.
+		 * <!-- begin-user-doc -->
+		 * <!-- end-user-doc -->
+		 * @generated
+		 */
+		EAttribute GROUP__MODIFIED_ON = eINSTANCE.getGroup_ModifiedOn();
+
+		/**
+		 * The meta object literal for the '<em><b>Modified By</b></em>' attribute feature.
+		 * <!-- begin-user-doc -->
+		 * <!-- end-user-doc -->
+		 * @generated
+		 */
+		EAttribute GROUP__MODIFIED_BY = eINSTANCE.getGroup_ModifiedBy();
+
+		/**
+		 * The meta object literal for the '<em><b>Description</b></em>' attribute feature.
+		 * <!-- begin-user-doc -->
+		 * <!-- end-user-doc -->
+		 * @generated
+		 */
+		EAttribute GROUP__DESCRIPTION = eINSTANCE.getGroup_Description();
+
+		/**
+		 * The meta object literal for the '<em><b>Labels</b></em>' map feature.
+		 * <!-- begin-user-doc -->
+		 * <!-- end-user-doc -->
+		 * @generated
+		 */
+		EReference GROUP__LABELS = eINSTANCE.getGroup_Labels();
+
+		/**
+		 * The meta object literal for the '{@link org.eclipse.fennec.model.atlas.mgmt.mgmtapicurio.impl.SearchGroupResponseImpl <em>Search Group Response</em>}' class.
+		 * <!-- begin-user-doc -->
+		 * <!-- end-user-doc -->
+		 * @see org.eclipse.fennec.model.atlas.mgmt.mgmtapicurio.impl.SearchGroupResponseImpl
+		 * @see org.eclipse.fennec.model.atlas.mgmt.mgmtapicurio.impl.MgmtApicurioPackageImpl#getSearchGroupResponse()
+		 * @generated
+		 */
+		EClass SEARCH_GROUP_RESPONSE = eINSTANCE.getSearchGroupResponse();
+
+		/**
+		 * The meta object literal for the '<em><b>Groups</b></em>' containment reference list feature.
+		 * <!-- begin-user-doc -->
+		 * <!-- end-user-doc -->
+		 * @generated
+		 */
+		EReference SEARCH_GROUP_RESPONSE__GROUPS = eINSTANCE.getSearchGroupResponse_Groups();
+
+		/**
+		 * The meta object literal for the '<em><b>Count</b></em>' attribute feature.
+		 * <!-- begin-user-doc -->
+		 * <!-- end-user-doc -->
+		 * @generated
+		 */
+		EAttribute SEARCH_GROUP_RESPONSE__COUNT = eINSTANCE.getSearchGroupResponse_Count();
 
 		/**
 		 * The meta object literal for the '{@link org.eclipse.fennec.model.atlas.mgmt.mgmtapicurio.ArtifactType <em>Artifact Type</em>}' enum.

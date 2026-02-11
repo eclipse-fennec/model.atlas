@@ -73,6 +73,10 @@ import org.osgi.util.promise.Promise;
 @ExtendWith(ServiceExtension.class)
 @ExtendWith(ConfigurationExtension.class)
 public class MetadataLifecycleIntegrationTest {
+	
+	private static final String TEST_SCOPE = "test_scope";
+	private static final String TEST_REGISTRY = "test_registry";
+	private static final String TEST_STAGE = "test_stage";
 
     @TempDir
     Path tempDir;
@@ -130,18 +134,17 @@ public class MetadataLifecycleIntegrationTest {
         // === PHASE 2: Store with provided objectId ===
         
         String providedObjectId = "provided-id-12345";
-        Promise<ObjectMetadata> storePromise = storageService.storeObject(providedObjectId, testPackage, originalMetadata);
+        Promise<ObjectMetadata> storePromise = storageService.storeObject(TEST_SCOPE, TEST_REGISTRY, TEST_STAGE, providedObjectId, testPackage, originalMetadata);
         storePromise.getValue();
         String returnedObjectId = originalMetadata.getObjectId();
         
         // Verify store operation results
         assertEquals(providedObjectId, returnedObjectId, "Should return the provided objectId");
         assertEquals(providedObjectId, originalMetadata.getObjectId(), "ObjectId should be set in caller's metadata");
-        assertNotNull(originalMetadata.getRole(), "Role should be set automatically");
         
         // === PHASE 3: Retrieve and verify complete metadata integrity ===
         
-        Promise<ObjectMetadata> retrievePromise = storageService.retrieveMetadata(providedObjectId);
+        Promise<ObjectMetadata> retrievePromise = storageService.retrieveMetadata(TEST_SCOPE, TEST_REGISTRY, TEST_STAGE, providedObjectId);
         ObjectMetadata retrievedMetadata = retrievePromise.getValue();
         
         // Verify core identification fields
@@ -155,9 +158,8 @@ public class MetadataLifecycleIntegrationTest {
         assertEquals("INTEGRATION_TEST", retrievedMetadata.getSourceChannel(), "Source channel should be preserved");
         assertEquals("provided-hash-123", retrievedMetadata.getContentHash(), "Content hash should be preserved");
         
-        // Verify status and role
+        // Verify status 
         assertEquals(ObjectStatus.DRAFT, retrievedMetadata.getStatus(), "Status should be preserved");
-        assertNotNull(retrievedMetadata.getRole(), "Role should be preserved");
         
         // Verify timestamp preservation
         assertNotNull(retrievedMetadata.getUploadTime(), "Upload time should be preserved");
@@ -170,7 +172,7 @@ public class MetadataLifecycleIntegrationTest {
         assertEquals(".ecore", retrievedMetadata.getProperties().get("file.extension"), "File extension should be preserved");
         
         // Verify object content is also retrievable
-        Promise<EObject> objectPromise = storageService.retrieveObject(providedObjectId);
+        Promise<EObject> objectPromise = storageService.retrieveObject(TEST_SCOPE, TEST_REGISTRY, TEST_STAGE, providedObjectId);
         EObject retrievedObject = objectPromise.getValue();
         assertNotNull(retrievedObject, "Object content should be retrievable");
         assertTrue(retrievedObject instanceof EPackage, "Retrieved object should be EPackage");
@@ -218,7 +220,7 @@ public class MetadataLifecycleIntegrationTest {
         
         // === PHASE 2: Store with auto-generated objectId ===
         
-        Promise<ObjectMetadata> storePromise = storageService.storeObject(null, testPackage, originalMetadata);
+        Promise<ObjectMetadata> storePromise = storageService.storeObject(TEST_SCOPE, TEST_REGISTRY, TEST_STAGE, null, testPackage, originalMetadata);
         storePromise.getValue();
         String generatedObjectId = originalMetadata.getObjectId();
         
@@ -231,7 +233,7 @@ public class MetadataLifecycleIntegrationTest {
         
         // === PHASE 3: Retrieve and verify metadata with generated objectId ===
         
-        Promise<ObjectMetadata> retrievePromise = storageService.retrieveMetadata(generatedObjectId);
+        Promise<ObjectMetadata> retrievePromise = storageService.retrieveMetadata(TEST_SCOPE, TEST_REGISTRY, TEST_STAGE, generatedObjectId);
         ObjectMetadata retrievedMetadata = retrievePromise.getValue();
         
         assertNotNull(retrievedMetadata, "Retrieved metadata should not be null");
@@ -248,15 +250,15 @@ public class MetadataLifecycleIntegrationTest {
         secondMetadata.setUploadUser("second-user");
         secondMetadata.setStatus(ObjectStatus.DRAFT);
         
-        storageService.storeObject(null, testPackage, secondMetadata).getValue();
+        storageService.storeObject(TEST_SCOPE, TEST_REGISTRY, TEST_STAGE, null, testPackage, secondMetadata).getValue();
         String secondGeneratedId = secondMetadata.getObjectId();
         
         assertNotEquals(generatedObjectId, secondGeneratedId, "Multiple generated IDs should be unique");
         assertEquals(secondGeneratedId, secondMetadata.getObjectId(), "Second metadata should have its generated ID");
         
         // Verify both objects are independently retrievable
-        assertTrue(storageService.exists(generatedObjectId), "First generated object should exist");
-        assertTrue(storageService.exists(secondGeneratedId), "Second generated object should exist");
+        assertTrue(storageService.exists(TEST_SCOPE, TEST_REGISTRY, TEST_STAGE, generatedObjectId), "First generated object should exist");
+        assertTrue(storageService.exists(TEST_SCOPE, TEST_REGISTRY, TEST_STAGE, secondGeneratedId), "Second generated object should exist");
     }
 
     /**
@@ -293,11 +295,11 @@ public class MetadataLifecycleIntegrationTest {
         initialMetadata.setUploadTime(Instant.now());
         
         String objectId = "update-test-id";
-        Promise<ObjectMetadata> storePromise = storageService.storeObject(objectId, testPackage, initialMetadata);
+        Promise<ObjectMetadata> storePromise = storageService.storeObject(TEST_SCOPE, TEST_REGISTRY, TEST_STAGE, objectId, testPackage, initialMetadata);
         storePromise.getValue();
         
         // Verify initial state
-        Promise<ObjectMetadata> initialRetrievePromise = storageService.retrieveMetadata(objectId);
+        Promise<ObjectMetadata> initialRetrievePromise = storageService.retrieveMetadata(TEST_SCOPE, TEST_REGISTRY, TEST_STAGE, objectId);
         ObjectMetadata initialRetrievedMetadata = initialRetrievePromise.getValue();
         assertNull(initialRetrievedMetadata.getLastChangeTime(), "LastChangeTime should be null initially");
         assertNull(initialRetrievedMetadata.getReviewUser(), "ReviewUser should be null initially");
@@ -314,7 +316,7 @@ public class MetadataLifecycleIntegrationTest {
         updateMetadata.setReviewReason("Updated for testing");
         updateMetadata.getProperties().put("update.note", "Modified during test");
         
-        Promise<Boolean> updatePromise = storageService.updateMetadata(objectId, updateMetadata);
+        Promise<Boolean> updatePromise = storageService.updateMetadata(TEST_SCOPE, TEST_REGISTRY, TEST_STAGE, objectId, updateMetadata);
         Boolean updateResult = updatePromise.getValue();
         Instant afterUpdate = Instant.now();
         
@@ -323,7 +325,7 @@ public class MetadataLifecycleIntegrationTest {
         
         // === PHASE 3: Verify update results and timestamp accuracy ===
         
-        Promise<ObjectMetadata> updatedRetrievePromise = storageService.retrieveMetadata(objectId);
+        Promise<ObjectMetadata> updatedRetrievePromise = storageService.retrieveMetadata(TEST_SCOPE, TEST_REGISTRY, TEST_STAGE, objectId);
         ObjectMetadata updatedMetadata = updatedRetrievePromise.getValue();
         
         // Verify immutable fields are preserved
@@ -382,43 +384,43 @@ public class MetadataLifecycleIntegrationTest {
         metadata.setUploadTime(Instant.now());
         
         String objectId = "delete-test-id";
-        Promise<ObjectMetadata> storePromise = storageService.storeObject(objectId, testPackage, metadata);
+        Promise<ObjectMetadata> storePromise = storageService.storeObject(TEST_SCOPE, TEST_REGISTRY, TEST_STAGE, objectId, testPackage, metadata);
         storePromise.getValue();
         
         // === PHASE 2: Verify object exists before deletion ===
         
-        assertTrue(storageService.exists(objectId), "Object should exist before deletion");
+        assertTrue(storageService.exists(TEST_SCOPE, TEST_REGISTRY, TEST_STAGE, objectId), "Object should exist before deletion");
         
-        Promise<ObjectMetadata> beforeDeletePromise = storageService.retrieveMetadata(objectId);
+        Promise<ObjectMetadata> beforeDeletePromise = storageService.retrieveMetadata(TEST_SCOPE, TEST_REGISTRY, TEST_STAGE, objectId);
         ObjectMetadata beforeDeleteMetadata = beforeDeletePromise.getValue();
         assertNotNull(beforeDeleteMetadata, "Metadata should be retrievable before deletion");
         
-        Promise<EObject> beforeDeleteObjectPromise = storageService.retrieveObject(objectId);
+        Promise<EObject> beforeDeleteObjectPromise = storageService.retrieveObject(TEST_SCOPE, TEST_REGISTRY, TEST_STAGE, objectId);
         EObject beforeDeleteObject = beforeDeleteObjectPromise.getValue();
         assertNotNull(beforeDeleteObject, "Object content should be retrievable before deletion");
         
         // === PHASE 3: Delete object and verify cleanup ===
         
-        Promise<Boolean> deletePromise = storageService.deleteObject(objectId);
+        Promise<Boolean> deletePromise = storageService.deleteObject(TEST_SCOPE, TEST_REGISTRY, TEST_STAGE, objectId);
         Boolean deleteResult = deletePromise.getValue();
         
         assertTrue(deleteResult, "Delete operation should succeed");
         
         // === PHASE 4: Verify complete cleanup ===
         
-        assertFalse(storageService.exists(objectId), "Object should not exist after deletion");
+        assertFalse(storageService.exists(TEST_SCOPE, TEST_REGISTRY, TEST_STAGE, objectId), "Object should not exist after deletion");
         
-        Promise<ObjectMetadata> afterDeletePromise = storageService.retrieveMetadata(objectId);
+        Promise<ObjectMetadata> afterDeletePromise = storageService.retrieveMetadata(TEST_SCOPE, TEST_REGISTRY, TEST_STAGE, objectId);
         ObjectMetadata afterDeleteMetadata = afterDeletePromise.getValue();
         assertNull(afterDeleteMetadata, "Metadata should not be retrievable after deletion");
         
-        Promise<EObject> afterDeleteObjectPromise = storageService.retrieveObject(objectId);
+        Promise<EObject> afterDeleteObjectPromise = storageService.retrieveObject(TEST_SCOPE, TEST_REGISTRY, TEST_STAGE, objectId);
         EObject afterDeleteObject = afterDeleteObjectPromise.getValue();
         assertNull(afterDeleteObject, "Object content should not be retrievable after deletion");
         
         // === PHASE 5: Verify delete on non-existent object ===
         
-        Promise<Boolean> nonExistentDeletePromise = storageService.deleteObject("non-existent-id");
+        Promise<Boolean> nonExistentDeletePromise = storageService.deleteObject(TEST_SCOPE, TEST_REGISTRY, TEST_STAGE, "non-existent-id");
         Boolean nonExistentDeleteResult = nonExistentDeletePromise.getValue();
         assertFalse(nonExistentDeleteResult, "Delete of non-existent object should return false");
     }

@@ -357,72 +357,34 @@ public class LuceneEObjectRegistryService<T extends EObject> implements EObjectR
 				.toList();
 	}
 
-	/**
-	 * Find objects by storage role (e.g., "draft", "approved", "documentation").
-	 * Uses the ObjectMetadata role field directly.
-	 * 
-	 * @param role the storage role to search for
-	 * @return list of metadata for objects with the specified role
-	 */
-	public List<ObjectMetadata> findByStorageRole(String role) {
-		requireNonNull(role, "Storage role cannot be null");
-
-		// Delegate to the standard findByRole method which uses the ObjectMetadata role field
-		return findByRole(role);
-	}
+	
 
 	/**
 	 * Find objects by both storage backend and role.
 	 * 
 	 * @param backend the storage backend
-	 * @param role the storage role
+	 * @param stage the storage stage
 	 * @return list of metadata for objects matching both criteria
 	 */
-	public List<ObjectMetadata> findByStorageBackendAndRole(String backend, String role) {
+	public List<ObjectMetadata> findByStorageBackendAndStage(String backend, String stage) {
 		requireNonNull(backend, "Storage backend cannot be null");
-		requireNonNull(role, "Storage role cannot be null");
+		requireNonNull(stage, "Storage stage cannot be null");
 
 		try {
 			String query = "(properties:storage.backend\\:" + backend + 
-					" AND " + LuceneRegistryHelper.FIELD_ROLE + ":" + role + ")";
+					" AND " + LuceneRegistryHelper.FIELD_STAGE + ":" + stage + ")";
 			List<String> objectIds = luceneHelper.searchObjectIds(query, Integer.MAX_VALUE);
 			return loadMetadataList(objectIds);
 		} catch (Exception e) {
-			LOGGER.log(Level.SEVERE, "Error in Lucene search by backend and role: " + backend + ", " + role, e);
+			LOGGER.log(Level.SEVERE, "Error in Lucene search by backend and role: " + backend + ", " + stage, e);
 		}
 		// Fallback to cache scan
 		return metadataCache.values().stream()
 				.filter(metadata -> backend.equals(extractStorageBackend(metadata)) &&
-						role.equals(metadata.getRole()))
+						stage.equals(metadata.getStage()))
 				.toList();
 	}
 
-	/**
-	 * Find all draft objects across all storage backends.
-	 * 
-	 * @return list of all draft objects
-	 */
-	public List<ObjectMetadata> findAllDrafts() {
-		return findByRole("draft");
-	}
-
-	/**
-	 * Find all approved objects across all storage backends.
-	 * 
-	 * @return list of all approved objects
-	 */
-	public List<ObjectMetadata> findAllApproved() {
-		return findByRole("approved");
-	}
-
-	/**
-	 * Find all documentation objects across all storage backends.
-	 * 
-	 * @return list of all documentation objects
-	 */
-	public List<ObjectMetadata> findAllDocumentation() {
-		return findByRole("documentation");
-	}
 
 	/**
 	 * Get a summary of objects by storage backend and role.
@@ -491,14 +453,14 @@ public class LuceneEObjectRegistryService<T extends EObject> implements EObjectR
 	 * @see org.eclipse.fennec.model.atlas.mgmt.api.EObjectRegistryService#findByScopeAndRole(java.lang.String, java.lang.String)
 	 */
 	@Override
-	public List<ObjectMetadata> findByScopeAndRole(String scope, String role) {
+	public List<ObjectMetadata> findByScopeAndStage(String scope, String stage) {
 		requireNonNull(scope, "Scope cannot be null");
-		requireNonNull(role, "Role cannot be null");
+		requireNonNull(stage, "Stage cannot be null");
 
 		try {
 			// Use Lucene for efficient search
 			String query = LuceneRegistryHelper.FIELD_SCOPE + ":" + scope + 
-					" AND " + LuceneRegistryHelper.FIELD_ROLE + ":" + role;
+					" AND " + LuceneRegistryHelper.FIELD_STAGE + ":" + stage;
 			List<String> objectIds = luceneHelper.searchObjectIds(query, Integer.MAX_VALUE);
 			List<ObjectMetadata> luceneResults = loadMetadataList(objectIds);
 
@@ -508,14 +470,14 @@ public class LuceneEObjectRegistryService<T extends EObject> implements EObjectR
 			}
 
 			// If Lucene returns empty but cache has objects, fall back to cache scan
-			logDebug("Lucene search returned empty results, falling back to cache scan for role: " + role);
+			logDebug(String.format("Lucene search returned empty results, falling back to cache scan for scope %s and stage %s", scope, stage));
 		} catch (Exception e) {
-			LOGGER.log(Level.SEVERE, "Error in Lucene search by role: " + role, e);
+			LOGGER.log(Level.SEVERE, String.format("Error in Lucene search by scope %s and stage %s", scope, stage), e);
 			// Fall back to cache scan
 		}
 		// Fallback to in-memory cache scan
 		return metadataCache.values().stream()
-				.filter(metadata -> role.equals(metadata.getRole()) && scope.equals(metadata.getScope()))
+				.filter(metadata -> stage.equals(metadata.getStage()) && scope.equals(metadata.getScope()))
 				.toList();
 	}
 
@@ -565,11 +527,11 @@ public class LuceneEObjectRegistryService<T extends EObject> implements EObjectR
 	 * Create a storage identifier string for the given metadata.
 	 * 
 	 * @param metadata the object metadata
-	 * @return storage identifier in format "backend:role" or just "role" if no backend
+	 * @return storage identifier in format "backend:stage" or just "stage" if no backend
 	 */
 	private String createStorageIdentifier(ObjectMetadata metadata) {
 		String backend = extractStorageBackend(metadata);
-		String role = metadata.getRole() != null ? metadata.getRole() : "unknown";
+		String role = metadata.getStage() != null ? metadata.getStage() : "unknown";
 
 		if ("unknown".equals(backend)) {
 			return role;
@@ -615,14 +577,14 @@ public class LuceneEObjectRegistryService<T extends EObject> implements EObjectR
 	}
 
 	@Override
-	public Optional<ObjectMetadata> findByObjectNameAndRole(String objectName, String role) {
+	public Optional<ObjectMetadata> findByObjectNameAndStage(String objectName, String stage) {
 		requireNonNull(objectName, "Object name cannot be null");
-		requireNonNull(role, "Role cannot be null");
+		requireNonNull(stage, "Stage cannot be null");
 
 		try {
 			// Use Lucene for efficient objectName and role search
 			String query = "(" + LuceneRegistryHelper.FIELD_OBJECT_NAME + ":\"" + objectName + 
-					"\" AND " + LuceneRegistryHelper.FIELD_ROLE + ":" + role + ")";
+					"\" AND " + LuceneRegistryHelper.FIELD_STAGE + ":" + stage + ")";
 			List<String> objectIds = luceneHelper.searchObjectIds(query, 1);
 			if (!objectIds.isEmpty()) {
 				ObjectMetadata metadata = metadataCache.get(objectIds.get(0));
@@ -633,47 +595,22 @@ public class LuceneEObjectRegistryService<T extends EObject> implements EObjectR
 
 			// If Lucene returns empty and cache has objects, fall back to cache scan
 			if (objectIds.isEmpty() && !metadataCache.isEmpty()) {
-				logDebug("Lucene search returned empty results, falling back to cache scan for objectName: " + objectName + ", role: " + role);
+				logDebug(String.format("Lucene search returned empty results, falling back to cache scan for objectName %s and stage %s", objectName, stage));
 			} else if (objectIds.isEmpty()) {
 				return Optional.empty();
 			}
 		} catch (Exception e) {
-			LOGGER.log(Level.SEVERE, "Error in Lucene search by objectName and role: " + objectName + ", " + role, e);
+			LOGGER.log(Level.SEVERE, String.format("Error in Lucene search by objectName %s and stage %s", objectName, stage), e);
 			// Fall back to cache scan
 		}
 		// Fallback to in-memory cache scan
 		return metadataCache.values().stream()
-				.filter(metadata -> objectName.equals(metadata.getObjectName()) && role.equals(metadata.getRole()))
+				.filter(metadata -> objectName.equals(metadata.getObjectName()) && stage.equals(metadata.getStage()))
 				.findFirst();
 
 	}
 
-	@Override
-	public List<ObjectMetadata> findByRole(String role) {
-		requireNonNull(role, "Role cannot be null");
 
-		try {
-			// Use Lucene for efficient role-based search
-			String query = LuceneRegistryHelper.FIELD_ROLE + ":" + role;
-			List<String> objectIds = luceneHelper.searchObjectIds(query, Integer.MAX_VALUE);
-			List<ObjectMetadata> luceneResults = loadMetadataList(objectIds);
-
-			// If Lucene returns results or cache is empty, use Lucene results
-			if (!luceneResults.isEmpty() || metadataCache.isEmpty()) {
-				return luceneResults;
-			}
-
-			// If Lucene returns empty but cache has objects, fall back to cache scan
-			logDebug("Lucene search returned empty results, falling back to cache scan for role: " + role);
-		} catch (Exception e) {
-			LOGGER.log(Level.SEVERE, "Error in Lucene search by role: " + role, e);
-			// Fall back to cache scan
-		}
-		// Fallback to in-memory cache scan
-		return metadataCache.values().stream()
-				.filter(metadata -> role.equals(metadata.getRole()))
-				.toList();
-	}
 
 	// Existing interface methods
 
@@ -754,21 +691,26 @@ public class LuceneEObjectRegistryService<T extends EObject> implements EObjectR
 		}
 	}
 
+
 	/* 
 	 * (non-Javadoc)
-	 * @see org.eclipse.fennec.model.atlas.mgmt.api.EObjectRegistryService#findByScopeRoleAndName(java.lang.String, java.lang.String, java.lang.String)
+	 * @see org.eclipse.fennec.model.atlas.mgmt.api.EObjectRegistryService#findByScopeStageAndName(java.lang.String, java.lang.String, java.lang.String)
+	 */
+	/* 
+	 * (non-Javadoc)
+	 * @see org.eclipse.fennec.model.atlas.mgmt.api.EObjectRegistryService#findByScopeStageAndName(java.lang.String, java.lang.String, java.lang.String)
 	 */
 	@Override
-	public List<ObjectMetadata> findByScopeRoleAndName(String scope, String role, String objectName) {
+	public List<ObjectMetadata> findByScopeStageAndName(String scope, String stage, String objectName) {
 		requireNonNull(objectName, "Object name cannot be null");
-		requireNonNull(role, "Role cannot be null");
+		requireNonNull(stage, "Stage cannot be null");
 		requireNonNull(scope, "Scope cannot be null");
 
 		try {
 			// Use Lucene for efficient objectName and role search
 			if(!objectName.contains("*")) objectName = "\"" + objectName + "\""; //if is an exact match we add the "", otherwise not
 			String query = "(" + LuceneRegistryHelper.FIELD_OBJECT_NAME + ":" + objectName + 
-					" AND " + LuceneRegistryHelper.FIELD_ROLE + ":" + role + 
+					" AND " + LuceneRegistryHelper.FIELD_STAGE + ":" + stage + 
 					" AND " + LuceneRegistryHelper.FIELD_SCOPE + ":" + scope + ")";
 			List<String> objectIds = luceneHelper.searchObjectIds(query, Integer.MAX_VALUE);
 			List<ObjectMetadata> luceneResults = loadMetadataList(objectIds);
@@ -778,17 +720,100 @@ public class LuceneEObjectRegistryService<T extends EObject> implements EObjectR
 			}
 
 			// If Lucene returns empty but cache has objects, fall back to cache scan
-			logDebug("Lucene search returned empty results, falling back to cache scan for role: " + role);
+			logDebug(String.format("Lucene search returned empty results, falling back to cache scan for scope %s, stage %s and objectName %s", scope, stage, objectName));
 		} catch (Exception e) {
-			LOGGER.log(Level.SEVERE, "Error in Lucene search by role: " + role, e);
+			LOGGER.log(Level.SEVERE, String.format("Error in Lucene search by scope %s, stage %s and objectName %s", scope, stage, objectName), e);
 			// Fall back to cache scan
 		}
 		// Fallback to in-memory cache scan
 		//		name can also contain * for wildcard search
 		String nameFilter = objectName.contains("*") ? objectName.replaceAll("\\*", "") : objectName;
+		boolean isExact = !objectName.contains("*");
 		return metadataCache.values().stream()
-				.filter(metadata -> role.equals(metadata.getRole()) && scope.equals(metadata.getScope()) && metadata.getObjectName().contains(nameFilter))
+				.filter(metadata -> stage.equals(metadata.getStage()) && scope.equals(metadata.getScope()) && (isExact ? nameFilter.equals(metadata.getObjectName()) : metadata.getObjectName().contains(nameFilter)))
 				.toList();
+	}
+
+	
+	/* 
+	 * (non-Javadoc)
+	 * @see org.eclipse.fennec.model.atlas.mgmt.api.EObjectRegistryService#findByScopeRegistryAndStage(java.lang.String, java.lang.String, java.lang.String)
+	 */
+	@Override
+	public List<ObjectMetadata> findByScopeRegistryAndStage(String scope, String registry, String stage) {
+		requireNonNull(scope, "Scope cannot be null");
+		requireNonNull(registry, "Registry cannot be null");
+		requireNonNull(stage, "Stage cannot be null");
+
+		try {
+			// Use Lucene for efficient search
+			String query = LuceneRegistryHelper.FIELD_SCOPE + ":" + scope + 
+					" AND " + LuceneRegistryHelper.FIELD_STAGE + ":" + stage + 
+					" AND " + LuceneRegistryHelper.FIELD_REGISTRY + ":" + registry;
+			List<String> objectIds = luceneHelper.searchObjectIds(query, Integer.MAX_VALUE);
+			List<ObjectMetadata> luceneResults = loadMetadataList(objectIds);
+
+			// If Lucene returns results or cache is empty, use Lucene results
+			if (!luceneResults.isEmpty() || metadataCache.isEmpty()) {
+				return luceneResults;
+			}
+
+			// If Lucene returns empty but cache has objects, fall back to cache scan
+			logDebug(String.format("Lucene search returned empty results, falling back to cache scan for scope %s, registry %s and stage %s", scope, registry, stage));
+		} catch (Exception e) {
+			LOGGER.log(Level.SEVERE, String.format("Error in Lucene search by scope %s, registry %s and stage %s", scope, registry, stage), e);
+			// Fall back to cache scan
+		}
+		// Fallback to in-memory cache scan
+		return metadataCache.values().stream()
+				.filter(metadata -> stage.equals(metadata.getStage()) && scope.equals(metadata.getScope()) && registry.equals(metadata.getRegistry()))
+				.toList();
+	}
+
+	
+	@Override
+	public List<ObjectMetadata> findByScopeRegistryStageAndName(String scope, String registry, String stage,
+			String objectName) {
+		requireNonNull(objectName, "Object name cannot be null");
+		requireNonNull(stage, "Stage cannot be null");
+		requireNonNull(registry, "Registry cannot be null");
+		requireNonNull(scope, "Scope cannot be null");
+
+		try {
+			// Use Lucene for efficient objectName and role search
+			if(!objectName.contains("*")) objectName = "\"" + objectName + "\""; //if is an exact match we add the "", otherwise not
+			String query = "(" + LuceneRegistryHelper.FIELD_OBJECT_NAME + ":" + objectName + 
+					" AND " + LuceneRegistryHelper.FIELD_STAGE + ":" + stage + 
+					" AND " + LuceneRegistryHelper.FIELD_SCOPE + ":" + scope + 
+					" AND " + LuceneRegistryHelper.FIELD_REGISTRY + ":" + registry + 
+					")";
+			List<String> objectIds = luceneHelper.searchObjectIds(query, Integer.MAX_VALUE);
+			List<ObjectMetadata> luceneResults = loadMetadataList(objectIds);
+			// If Lucene returns results or cache is empty, use Lucene results
+			if (!luceneResults.isEmpty() || metadataCache.isEmpty()) {
+				return luceneResults;
+			}
+
+			// If Lucene returns empty but cache has objects, fall back to cache scan
+			logDebug(String.format("Lucene search returned empty results, falling back to cache scan for scope %s, registry %s, stage %s and objectName %s", scope, registry, stage, objectName));
+		} catch (Exception e) {
+			LOGGER.log(Level.SEVERE, String.format("Error in Lucene search by scope %s, registry %s, stage %s and objectName %s", scope, registry, stage, objectName), e);
+			// Fall back to cache scan
+		}
+		// Fallback to in-memory cache scan
+		//		name can also contain * for wildcard search
+		boolean isExact = !objectName.contains("*");
+		String nameFilter = objectName.contains("*") ? objectName.replaceAll("\\*", "") : objectName;
+		if(isExact) {
+			return metadataCache.values().stream()
+					.filter(metadata -> stage.equals(metadata.getStage()) && scope.equals(metadata.getScope()) && registry.equals(metadata.getRegistry()) && nameFilter.equals(metadata.getObjectName()))
+					.toList();
+		} else {
+			return metadataCache.values().stream()
+					.filter(metadata -> stage.equals(metadata.getStage()) && scope.equals(metadata.getScope()) && registry.equals(metadata.getRegistry()) && metadata.getObjectName().contains(nameFilter))
+					.toList();
+		}
+		
 	}
 
 

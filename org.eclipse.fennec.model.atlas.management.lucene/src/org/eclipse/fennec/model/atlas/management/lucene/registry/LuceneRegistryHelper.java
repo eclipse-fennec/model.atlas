@@ -47,7 +47,6 @@ import org.apache.lucene.search.ScoreDoc;
 import org.apache.lucene.search.SearcherManager;
 import org.apache.lucene.search.TermQuery;
 import org.apache.lucene.search.TopDocs;
-import org.apache.lucene.search.WildcardQuery;
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.FSDirectory;
 import org.eclipse.emf.common.util.URI;
@@ -109,9 +108,10 @@ public class LuceneRegistryHelper extends AbstractRegistryHelper {
     public static final String FIELD_REVIEW_REASON = "reviewReason";
     public static final String FIELD_STATUS = "status";
     public static final String FIELD_OBJECT_NAME = "objectName";
-    public static final String FIELD_ROLE = "role";
     public static final String FIELD_PROPERTIES = "properties";
     public static final String FIELD_SCOPE = "scope";
+    public static final String FIELD_REGISTRY = "registry";
+    public static final String FIELD_STAGE = "stage";
     
     // Additional fields for advanced querying
     public static final String FIELD_LAST_CHANGE_USER = "lastChangeUser";
@@ -300,14 +300,14 @@ public class LuceneRegistryHelper extends AbstractRegistryHelper {
     }
     
     @Override
-    public List<String> findByRole(String role) throws IOException {
-        String query = FIELD_ROLE + ":" + role;
+    public List<String> findByStage(String stage) throws IOException {
+        String query = FIELD_STAGE + ":" + stage;
         return searchObjectIds(query, Integer.MAX_VALUE);
     }
     
     @Override
-    public Optional<String> findByObjectNameAndRole(String objectName, String role) throws IOException {
-        String query = "(" + FIELD_OBJECT_NAME + ":\"" + objectName + "\" AND " + FIELD_ROLE + ":" + role + ")";
+    public Optional<String> findByObjectNameAndStage(String objectName, String role) throws IOException {
+        String query = "(" + FIELD_OBJECT_NAME + ":\"" + objectName + "\" AND " + FIELD_STAGE + ":" + role + ")";
         List<String> results = searchObjectIds(query, 1);
         return results.isEmpty() ? Optional.empty() : Optional.of(results.get(0));
     }
@@ -536,10 +536,11 @@ public class LuceneRegistryHelper extends AbstractRegistryHelper {
             doc.add(new StringField(FIELD_STATUS, metadata.getStatus().getLiteral(), Field.Store.YES));
         }
         
-        // Object name and role, scope
+        // Object name, stage, scope, registry
         addFieldIfNotNull(doc, FIELD_OBJECT_NAME, metadata.getObjectName(), true);
-        addFieldIfNotNull(doc, FIELD_ROLE, metadata.getRole(), false);
+        addFieldIfNotNull(doc, FIELD_STAGE, metadata.getStage(), false);
         addFieldIfNotNull(doc, FIELD_SCOPE, metadata.getScope(), false);
+        addFieldIfNotNull(doc, FIELD_REGISTRY, metadata.getRegistry(), false);
         
         // Additional metadata fields - following LuceneFileStorageHelper pattern
         addFieldIfNotNull(doc, FIELD_GENERATION_TRIGGER_FINGERPRINT, metadata.getGenerationTriggerFingerprint(), false);
@@ -629,7 +630,7 @@ public class LuceneRegistryHelper extends AbstractRegistryHelper {
                 FIELD_STATUS,
                 FIELD_OBJECT_REF,
                 FIELD_OBJECT_METADATA_ID,
-                FIELD_ROLE,
+                FIELD_STAGE,
                 FIELD_SCOPE
             );
             
