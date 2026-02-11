@@ -74,7 +74,7 @@ public class EObjectApicurioStorageServiceTest {
 	private static final String APICURIO_DOCKER_IMAGE = "apicurio/apicurio-registry:latest-release";
 	private static final String APICURIO_ENV_DELETION_ARTIFACT = "APICURIO_REST_DELETION_ARTIFACT_ENABLED";
 	private static final int APICURIO_EXPOSED_PORT = 8080;
-	private static final String APICURIO_BASE_URL = "http://localhost:%d/apis/registry/v3/";
+	private static final String APICURIO_BASE_URL = "http://%s:%d/apis/registry/v3/";
 	private static final String TEST_SCOPE = "test_scope";
 	private static final String TEST_REGISTRY = "test_registry";
 	private static final String TEST_STAGE = "test_stage";
@@ -108,7 +108,7 @@ public class EObjectApicurioStorageServiceTest {
 
 			int mappedPort = container.getMappedPort(8080);
 			Dictionary<String, Object> serviceProperties = new Hashtable<>();
-			serviceProperties.put("base.url", String.format(APICURIO_BASE_URL, mappedPort));
+			serviceProperties.put("base.url", String.format(APICURIO_BASE_URL, container.getHost(), mappedPort));
 			configuration.update(serviceProperties);
 
 			Thread.sleep(3000);
@@ -145,7 +145,7 @@ public class EObjectApicurioStorageServiceTest {
 
 			int mappedPort = container.getMappedPort(8080);
 			Dictionary<String, Object> serviceProperties = new Hashtable<>();
-			serviceProperties.put("base.url", String.format(APICURIO_BASE_URL, mappedPort));
+			serviceProperties.put("base.url", String.format(APICURIO_BASE_URL, container.getHost(), mappedPort));
 			configuration.update(serviceProperties);
 
 			Thread.sleep(3000);
@@ -230,7 +230,7 @@ public class EObjectApicurioStorageServiceTest {
 
 			int mappedPort = container.getMappedPort(8080);
 			Dictionary<String, Object> serviceProperties = new Hashtable<>();
-			serviceProperties.put("base.url", String.format(APICURIO_BASE_URL, mappedPort));
+			serviceProperties.put("base.url", String.format(APICURIO_BASE_URL, container.getHost(), mappedPort));
 			configuration.update(serviceProperties);
 
 			Thread.sleep(3000);
@@ -302,7 +302,7 @@ public class EObjectApicurioStorageServiceTest {
 
 			int mappedPort = container.getMappedPort(8080);
 			Dictionary<String, Object> serviceProperties = new Hashtable<>();
-			serviceProperties.put("base.url", String.format(APICURIO_BASE_URL, mappedPort));
+			serviceProperties.put("base.url", String.format(APICURIO_BASE_URL, container.getHost(), mappedPort));
 			configuration.update(serviceProperties);
 
 			Thread.sleep(3000);
@@ -358,7 +358,7 @@ public class EObjectApicurioStorageServiceTest {
 
 			int mappedPort = container.getMappedPort(8080);
 			Dictionary<String, Object> serviceProperties = new Hashtable<>();
-			serviceProperties.put("base.url", String.format(APICURIO_BASE_URL, mappedPort));
+			serviceProperties.put("base.url", String.format(APICURIO_BASE_URL, container.getHost(), mappedPort));
 			configuration.update(serviceProperties);
 
 			Thread.sleep(3000);
@@ -428,7 +428,7 @@ public class EObjectApicurioStorageServiceTest {
 
 			int mappedPort = container.getMappedPort(8080);
 			Dictionary<String, Object> serviceProperties = new Hashtable<>();
-			serviceProperties.put("base.url", String.format(APICURIO_BASE_URL, mappedPort));
+			serviceProperties.put("base.url", String.format(APICURIO_BASE_URL, container.getHost(), mappedPort));
 			configuration.update(serviceProperties);
 
 			Thread.sleep(3000);
@@ -487,7 +487,7 @@ public class EObjectApicurioStorageServiceTest {
 
 			int mappedPort = container.getMappedPort(8080);
 			Dictionary<String, Object> serviceProperties = new Hashtable<>();
-			serviceProperties.put("base.url", String.format(APICURIO_BASE_URL, mappedPort));
+			serviceProperties.put("base.url", String.format(APICURIO_BASE_URL, container.getHost(), mappedPort));
 			configuration.update(serviceProperties);
 
 			Thread.sleep(3000);
@@ -573,7 +573,7 @@ public class EObjectApicurioStorageServiceTest {
 
 			int mappedPort = container.getMappedPort(8080);
 			Dictionary<String, Object> serviceProperties = new Hashtable<>();
-			serviceProperties.put("base.url", String.format(APICURIO_BASE_URL, mappedPort));
+			serviceProperties.put("base.url", String.format(APICURIO_BASE_URL, container.getHost(), mappedPort));
 			configuration.update(serviceProperties);
 
 			Thread.sleep(3000);
@@ -636,7 +636,7 @@ public class EObjectApicurioStorageServiceTest {
 
 			int mappedPort = container.getMappedPort(8080);
 			Dictionary<String, Object> serviceProperties = new Hashtable<>();
-			serviceProperties.put("base.url", String.format(APICURIO_BASE_URL, mappedPort));
+			serviceProperties.put("base.url", String.format(APICURIO_BASE_URL, container.getHost(), mappedPort));
 			configuration.update(serviceProperties);
 
 			Thread.sleep(3000);
@@ -722,7 +722,7 @@ public class EObjectApicurioStorageServiceTest {
 
 			int mappedPort = container.getMappedPort(8080);
 			Dictionary<String, Object> serviceProperties = new Hashtable<>();
-			serviceProperties.put("base.url", String.format(APICURIO_BASE_URL, mappedPort));
+			serviceProperties.put("base.url", String.format(APICURIO_BASE_URL, container.getHost(), mappedPort));
 			configuration.update(serviceProperties);
 
 			Thread.sleep(3000);
@@ -815,7 +815,7 @@ public class EObjectApicurioStorageServiceTest {
 
 			int mappedPort = container.getMappedPort(8080);
 			Dictionary<String, Object> serviceProperties = new Hashtable<>();
-			serviceProperties.put("base.url", String.format(APICURIO_BASE_URL, mappedPort));
+			serviceProperties.put("base.url", String.format(APICURIO_BASE_URL, container.getHost(), mappedPort));
 			configuration.update(serviceProperties);
 
 			Thread.sleep(3000);
@@ -908,7 +908,7 @@ public class EObjectApicurioStorageServiceTest {
 
 			int mappedPort = container.getMappedPort(8080);
 			Dictionary<String, Object> serviceProperties = new Hashtable<>();
-			serviceProperties.put("base.url", String.format(APICURIO_BASE_URL, mappedPort));
+			serviceProperties.put("base.url", String.format(APICURIO_BASE_URL, container.getHost(), mappedPort));
 			configuration.update(serviceProperties);
 
 			Thread.sleep(3000);
@@ -952,7 +952,7 @@ public class EObjectApicurioStorageServiceTest {
 
 			int mappedPort = container.getMappedPort(8080);
 			Dictionary<String, Object> serviceProperties = new Hashtable<>();
-			serviceProperties.put("base.url", String.format(APICURIO_BASE_URL, mappedPort));
+			serviceProperties.put("base.url", String.format(APICURIO_BASE_URL, container.getHost(), mappedPort));
 			configuration.update(serviceProperties);
 
 			Thread.sleep(3000);
@@ -999,7 +999,7 @@ public class EObjectApicurioStorageServiceTest {
 
 			int mappedPort = container.getMappedPort(8080);
 			Dictionary<String, Object> serviceProperties = new Hashtable<>();
-			serviceProperties.put("base.url", String.format(APICURIO_BASE_URL, mappedPort));			
+			serviceProperties.put("base.url", String.format(APICURIO_BASE_URL, container.getHost(), mappedPort));			
 			serviceProperties.put("workspace.folder", tempDir.toString());
 			configuration.update(serviceProperties);
 

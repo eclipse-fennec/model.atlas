@@ -22,13 +22,11 @@ variables:
 # License Check Job
 license-check:
   stage: license
-  image: apache/skywalking-eyes:latest
+  image:
+    name: apache/skywalking-eyes:latest
+    entrypoint: [""]
   script:
-    - license-eye header check
-  rules:
-    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
-    - if: $CI_COMMIT_BRANCH == "main"
-    - if: $CI_COMMIT_BRANCH == "snapshot"
+    - /bin/license-eye header check
 
 # Build Job
 build:
