@@ -45,8 +45,10 @@ import org.junit.jupiter.api.io.TempDir;
 /**
  * Integration tests for Lucene index maintenance and concurrent access.
  * 
- * <p>Tests index rebuild operations, concurrent access scenarios,
- * and error recovery mechanisms.</p>
+ * <p>
+ * Tests index rebuild operations, concurrent access scenarios, and error
+ * recovery mechanisms.
+ * </p>
  */
 class LuceneIndexMaintenanceTest {
 
@@ -63,9 +65,9 @@ class LuceneIndexMaintenanceTest {
         resourceSet = new ResourceSetImpl();
         resourceSet.getResourceFactoryRegistry().getExtensionToFactoryMap().put("xmi", new XMIResourceFactoryImpl());
         resourceSet.getPackageRegistry().put(ManagementPackage.eNS_URI, ManagementPackage.eINSTANCE);
-        
+
         factory = ManagementFactory.eINSTANCE;
-        
+
         // Create helper with temp directory
         helper = new LuceneRegistryHelper(tempDir);
         helper.initialize();
@@ -85,24 +87,25 @@ class LuceneIndexMaintenanceTest {
             ObjectMetadata metadata = createTestMetadata("user" + i, "AI_GENERATOR", "EPackage");
             helper.updateIndex("rebuild-obj-" + i, metadata);
         }
-        
+
         // Verify objects are initially indexed
         List<String> initialResults = helper.searchObjectIds("*:*", 10);
         assertEquals(5, initialResults.size(), "Should have 5 objects initially");
-        
+
         // Manually trigger rebuild (clears index but preserves directory structure)
         helper.rebuildIndex();
-        
-        // After rebuild index should be empty (since we cleared it but didn't re-add metadata files)
+
+        // After rebuild index should be empty (since we cleared it but didn't re-add
+        // metadata files)
         List<String> afterRebuild = helper.searchObjectIds("*:*", 10);
         assertEquals(0, afterRebuild.size(), "Index should be empty after rebuild with no metadata files");
-        
+
         // Re-add objects to test rebuild functionality
         for (int i = 1; i <= 3; i++) {
             ObjectMetadata metadata = createTestMetadata("user" + i, "AI_GENERATOR", "EPackage");
             helper.updateIndex("rebuild-obj-" + i, metadata);
         }
-        
+
         // Verify re-added objects are searchable
         List<String> finalResults = helper.searchObjectIds("*:*", 10);
         assertEquals(3, finalResults.size(), "Should have 3 objects after re-adding");
@@ -112,29 +115,28 @@ class LuceneIndexMaintenanceTest {
     void testManualIndexRebuild() throws Exception {
         // Add some objects normally
         for (int i = 1; i <= 6; i++) {
-            ObjectMetadata metadata = createTestMetadata("user" + i, 
-                i <= 3 ? "AI_GENERATOR" : "MANUAL_UPLOAD", 
-                i <= 3 ? "EPackage" : "Route");
+            ObjectMetadata metadata = createTestMetadata("user" + i, i <= 3 ? "AI_GENERATOR" : "MANUAL_UPLOAD",
+                    i <= 3 ? "EPackage" : "Route");
             helper.updateIndex("manual-obj-" + i, metadata);
         }
-        
+
         // Verify all objects are indexed initially
         List<String> beforeRebuild = helper.searchObjectIds("*:*", 10);
         assertEquals(6, beforeRebuild.size());
-        
+
         // Perform manual rebuild (clears index)
         helper.rebuildIndex();
-        
+
         // After rebuild, index should be empty
         List<String> afterRebuild = helper.searchObjectIds("*:*", 10);
         assertEquals(0, afterRebuild.size(), "Index should be empty after rebuild");
-        
+
         // Re-add some objects to verify rebuild works
         for (int i = 1; i <= 3; i++) {
             ObjectMetadata metadata = createTestMetadata("user" + i, "MANUAL_UPLOAD", "Route");
             helper.updateIndex("manual-obj-" + i, metadata);
         }
-        
+
         // Verify specific searches work for re-added objects
         List<String> manualResults = helper.searchObjectIds("sourceChannel:MANUAL_UPLOAD", 10);
         assertEquals(3, manualResults.size());
@@ -156,11 +158,11 @@ class LuceneIndexMaintenanceTest {
             executor.submit(() -> {
                 try {
                     startLatch.await(); // Wait for all threads to be ready
-                    
+
                     for (int i = 0; i < objectsPerThread; i++) {
                         String objectId = "thread-" + threadId + "-obj-" + i;
                         ObjectMetadata metadata = createTestMetadata("user-" + threadId, "AI_GENERATOR", "EPackage");
-                        
+
                         helper.updateIndex(objectId, metadata);
                         successCount.incrementAndGet();
                     }
@@ -175,10 +177,10 @@ class LuceneIndexMaintenanceTest {
 
         // Start all threads simultaneously
         startLatch.countDown();
-        
+
         // Wait for completion
         assertTrue(completeLatch.await(30, TimeUnit.SECONDS), "All threads should complete within 30 seconds");
-        
+
         executor.shutdown();
         assertTrue(executor.awaitTermination(5, TimeUnit.SECONDS), "Executor should terminate");
 
@@ -202,7 +204,7 @@ class LuceneIndexMaintenanceTest {
         int writerThreads = 3;
         int readerThreads = 5;
         int operationsPerThread = 10;
-        
+
         ExecutorService executor = Executors.newFixedThreadPool(writerThreads + readerThreads);
         CountDownLatch startLatch = new CountDownLatch(1);
         CountDownLatch completeLatch = new CountDownLatch(writerThreads + readerThreads);
@@ -216,14 +218,14 @@ class LuceneIndexMaintenanceTest {
             executor.submit(() -> {
                 try {
                     startLatch.await();
-                    
+
                     for (int i = 0; i < operationsPerThread; i++) {
                         String objectId = "concurrent-write-" + threadId + "-" + i;
                         ObjectMetadata metadata = createTestMetadata("writer" + threadId, "AI_GENERATOR", "EPackage");
-                        
+
                         helper.updateIndex(objectId, metadata);
                         writeSuccessCount.incrementAndGet();
-                        
+
                         Thread.sleep(10); // Small delay to allow interleaving
                     }
                 } catch (Exception e) {
@@ -240,14 +242,14 @@ class LuceneIndexMaintenanceTest {
             executor.submit(() -> {
                 try {
                     startLatch.await();
-                    
+
                     for (int i = 0; i < operationsPerThread; i++) {
                         // Search for existing data using analyzed field for wildcard
                         List<String> results = helper.searchObjectIds("uploadUser_text:initialUser*", 20);
                         if (!results.isEmpty()) {
                             readSuccessCount.incrementAndGet();
                         }
-                        
+
                         Thread.sleep(5); // Small delay
                     }
                 } catch (Exception e) {
@@ -261,10 +263,10 @@ class LuceneIndexMaintenanceTest {
 
         // Start all operations
         startLatch.countDown();
-        
+
         // Wait for completion
         assertTrue(completeLatch.await(60, TimeUnit.SECONDS), "All operations should complete");
-        
+
         executor.shutdown();
 
         // Verify results
@@ -274,8 +276,8 @@ class LuceneIndexMaintenanceTest {
 
         // Final verification - search should find all objects
         List<String> finalResults = helper.searchObjectIds("*:*", 100);
-        assertTrue(finalResults.size() >= 10 + (writerThreads * operationsPerThread), 
-                  "Should find at least initial + new objects");
+        assertTrue(finalResults.size() >= 10 + (writerThreads * operationsPerThread),
+                "Should find at least initial + new objects");
     }
 
     @Disabled("This test was never working, not even in the model atlas cloud. I think we are not actuyll simulating a corruption. We need to investigate")
@@ -293,21 +295,18 @@ class LuceneIndexMaintenanceTest {
 
         // Close helper and corrupt index files
         helper.close();
-        
+
         Path indexPath = tempDir.resolve(".lucene-index");
         if (Files.exists(indexPath)) {
             // Delete some index files to simulate corruption
-            Files.walk(indexPath)
-                .filter(Files::isRegularFile)
-                .findFirst()
-                .ifPresent(file -> {
-                    try {
-                        Files.delete(file);
-                    } catch (IOException e) {
-                        // Ignore for test
-                    	fail();
-                    }
-                });
+            Files.walk(indexPath).filter(Files::isRegularFile).findFirst().ifPresent(file -> {
+                try {
+                    Files.delete(file);
+                } catch (IOException e) {
+                    // Ignore for test
+                    fail();
+                }
+            });
         }
 
         // Recreate helper - should handle corruption gracefully
@@ -320,11 +319,11 @@ class LuceneIndexMaintenanceTest {
         // This tests that corruption doesn't crash the system
         List<String> afterRecovery = helper.searchObjectIds("*:*", 10);
         assertEquals(0, afterRecovery.size(), "Index should be empty after corruption recovery");
-        
+
         // Test that new operations work after recovery
         ObjectMetadata newMetadata = createTestMetadata("recoveryUser", "AI_GENERATOR", "EPackage");
         helper.updateIndex("recovery-test", newMetadata);
-        
+
         List<String> afterNewData = helper.searchObjectIds("uploadUser:recoveryUser", 10);
         assertEquals(1, afterNewData.size(), "New data should be indexable after recovery");
     }
@@ -366,13 +365,12 @@ class LuceneIndexMaintenanceTest {
     @Test
     void testLargeDatasetIndexing() throws Exception {
         int objectCount = 100;
-        
+
         // Create large dataset
         for (int i = 0; i < objectCount; i++) {
-            ObjectMetadata metadata = createTestMetadata(
-                "largeTestUser" + (i % 10), // 10 different users
-                i % 2 == 0 ? "AI_GENERATOR" : "MANUAL_UPLOAD", // Alternate source channels
-                i % 3 == 0 ? "EPackage" : (i % 3 == 1 ? "Route" : "SensorModel") // 3 different types
+            ObjectMetadata metadata = createTestMetadata("largeTestUser" + (i % 10), // 10 different users
+                    i % 2 == 0 ? "AI_GENERATOR" : "MANUAL_UPLOAD", // Alternate source channels
+                    i % 3 == 0 ? "EPackage" : (i % 3 == 1 ? "Route" : "SensorModel") // 3 different types
             );
             helper.updateIndex("large-dataset-" + i, metadata);
         }

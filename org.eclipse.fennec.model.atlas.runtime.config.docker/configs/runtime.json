@@ -7,6 +7,6 @@
 		"org.osgi.service.http.host": "0.0.0.0",
 		"org.apache.felix.http.context_path": "atlas/",
 		"org.apache.felix.http.name": "atlas",
-		"org.apache.felix.http.runtime.init.id": "atlasHtpp"
+		"org.apache.felix.http.runtime.init.id": "atlasHttp"
 	}
 }

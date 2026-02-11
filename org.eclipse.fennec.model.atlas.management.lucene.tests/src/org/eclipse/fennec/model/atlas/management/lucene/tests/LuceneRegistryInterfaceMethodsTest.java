@@ -44,15 +44,21 @@ import org.osgi.test.junit5.service.ServiceExtension;
 /**
  * Integration tests for missing LuceneEObjectRegistryService interface methods.
  * 
- * <p>This test class focuses on interface methods that weren't covered in the main
- * LuceneRegistryServiceTest, providing comprehensive coverage of:</p>
+ * <p>
+ * This test class focuses on interface methods that weren't covered in the main
+ * LuceneRegistryServiceTest, providing comprehensive coverage of:
+ * </p>
  * 
  * <ul>
- * <li><strong>Version Operations</strong> - findByVersion, findByVersionPattern</li>
- * <li><strong>Fingerprint Queries</strong> - findByFingerprint for AI generation tracking</li>
+ * <li><strong>Version Operations</strong> - findByVersion,
+ * findByVersionPattern</li>
+ * <li><strong>Fingerprint Queries</strong> - findByFingerprint for AI
+ * generation tracking</li>
  * <li><strong>Approval Workflow</strong> - findPendingApproval delegation</li>
- * <li><strong>Time-based Queries</strong> - findRecentlyModified with sorting and limits</li>
- * <li><strong>Type and Status Combinations</strong> - complex query scenarios</li>
+ * <li><strong>Time-based Queries</strong> - findRecentlyModified with sorting
+ * and limits</li>
+ * <li><strong>Type and Status Combinations</strong> - complex query
+ * scenarios</li>
  * </ul>
  */
 @ExtendWith(BundleContextExtension.class)
@@ -62,7 +68,7 @@ public class LuceneRegistryInterfaceMethodsTest {
 
     @TempDir
     static Path tempDir;
-    
+
     @BeforeEach
     void setUp() {
         // Set system property for @RegistryConfiguration annotation
@@ -79,15 +85,14 @@ public class LuceneRegistryInterfaceMethodsTest {
     @Test
     @RegistryConfiguration
     public void testFindByVersion(
-        @InjectService(filter = "(registry.type=shared)")
-        EObjectRegistryService registryService
-    ) throws Exception {
-        
+            @InjectService(filter = "(registry.type=shared)") EObjectRegistryService registryService) throws Exception {
+
         // Create test objects with different versions
         ObjectMetadata v1_0_0 = createTestMetadata("pkg-1", "TestPackage", "1.0.0", ObjectStatus.APPROVED, "approved");
         ObjectMetadata v1_0_1 = createTestMetadata("pkg-2", "TestPackage", "1.0.1", ObjectStatus.APPROVED, "approved");
         ObjectMetadata v2_0_0 = createTestMetadata("pkg-3", "TestPackage", "2.0.0", ObjectStatus.DRAFT, "draft");
-        ObjectMetadata v1_0_0_dup = createTestMetadata("pkg-4", "AnotherPackage", "1.0.0", ObjectStatus.APPROVED, "approved");
+        ObjectMetadata v1_0_0_dup = createTestMetadata("pkg-4", "AnotherPackage", "1.0.0", ObjectStatus.APPROVED,
+                "approved");
 
         // Update registry
         registryService.updateCache(v1_0_0);
@@ -117,10 +122,8 @@ public class LuceneRegistryInterfaceMethodsTest {
     @Test
     @RegistryConfiguration
     public void testFindByVersionPattern(
-        @InjectService(filter = "(registry.type=shared)")
-        EObjectRegistryService registryService
-    ) throws Exception {
-        
+            @InjectService(filter = "(registry.type=shared)") EObjectRegistryService registryService) throws Exception {
+
         // Create test objects with various version patterns
         ObjectMetadata v1_0_0 = createTestMetadata("pkg-1", "TestPackage", "1.0.0", ObjectStatus.APPROVED, "approved");
         ObjectMetadata v1_0_1 = createTestMetadata("pkg-2", "TestPackage", "1.0.1", ObjectStatus.APPROVED, "approved");
@@ -162,20 +165,22 @@ public class LuceneRegistryInterfaceMethodsTest {
     @Test
     @RegistryConfiguration
     public void testFindByFingerprint(
-        @InjectService(filter = "(registry.type=shared)")
-        EObjectRegistryService registryService
-    ) throws Exception {
-        
-        // Create test objects with generation trigger fingerprints (AI generation use case)
-        ObjectMetadata aiGenerated1 = createTestMetadata("ai-pkg-1", "AIGeneratedPackage1", "1.0.0", ObjectStatus.DRAFT, "draft");
+            @InjectService(filter = "(registry.type=shared)") EObjectRegistryService registryService) throws Exception {
+
+        // Create test objects with generation trigger fingerprints (AI generation use
+        // case)
+        ObjectMetadata aiGenerated1 = createTestMetadata("ai-pkg-1", "AIGeneratedPackage1", "1.0.0", ObjectStatus.DRAFT,
+                "draft");
         aiGenerated1.setGenerationTriggerFingerprint("fp_abc123def456");
         aiGenerated1.setSourceChannel("AI_GENERATOR");
 
-        ObjectMetadata aiGenerated2 = createTestMetadata("ai-pkg-2", "AIGeneratedPackage2", "1.0.0", ObjectStatus.DRAFT, "draft");
+        ObjectMetadata aiGenerated2 = createTestMetadata("ai-pkg-2", "AIGeneratedPackage2", "1.0.0", ObjectStatus.DRAFT,
+                "draft");
         aiGenerated2.setGenerationTriggerFingerprint("fp_xyz789abc123");
         aiGenerated2.setSourceChannel("AI_GENERATOR");
 
-        ObjectMetadata manual = createTestMetadata("manual-pkg", "ManualPackage", "1.0.0", ObjectStatus.APPROVED, "approved");
+        ObjectMetadata manual = createTestMetadata("manual-pkg", "ManualPackage", "1.0.0", ObjectStatus.APPROVED,
+                "approved");
         // No fingerprint for manually created packages
 
         // Update registry
@@ -197,7 +202,7 @@ public class LuceneRegistryInterfaceMethodsTest {
         Optional<ObjectMetadata> notFound = registryService.findByFingerprint("fp_nonexistent");
         assertFalse(notFound.isPresent(), "Should not find package with non-existent fingerprint");
 
-        // Test empty string fingerprint 
+        // Test empty string fingerprint
         Optional<ObjectMetadata> emptyFingerprint = registryService.findByFingerprint("");
         assertFalse(emptyFingerprint.isPresent(), "Should not find package with empty fingerprint");
     }
@@ -206,15 +211,15 @@ public class LuceneRegistryInterfaceMethodsTest {
     @Test
     @RegistryConfiguration
     public void testFindPendingApproval(
-        @InjectService(filter = "(registry.type=shared)")
-        EObjectRegistryService registryService
-    ) throws Exception {
-        
+            @InjectService(filter = "(registry.type=shared)") EObjectRegistryService registryService) throws Exception {
+
         // Create test objects with different statuses
         ObjectMetadata draft1 = createTestMetadata("draft-1", "DraftPackage1", "1.0.0", ObjectStatus.DRAFT, "draft");
         ObjectMetadata draft2 = createTestMetadata("draft-2", "DraftPackage2", "1.0.0", ObjectStatus.DRAFT, "draft");
-        ObjectMetadata approved = createTestMetadata("approved-1", "ApprovedPackage", "1.0.0", ObjectStatus.APPROVED, "approved");
-        ObjectMetadata rejected = createTestMetadata("rejected-1", "RejectedPackage", "1.0.0", ObjectStatus.REJECTED, "rejected");
+        ObjectMetadata approved = createTestMetadata("approved-1", "ApprovedPackage", "1.0.0", ObjectStatus.APPROVED,
+                "approved");
+        ObjectMetadata rejected = createTestMetadata("rejected-1", "RejectedPackage", "1.0.0", ObjectStatus.REJECTED,
+                "rejected");
 
         // Update registry
         registryService.updateCache(draft1);
@@ -226,10 +231,11 @@ public class LuceneRegistryInterfaceMethodsTest {
         List<ObjectMetadata> pendingApproval = registryService.findPendingApproval();
         assertEquals(2, pendingApproval.size(), "Should find 2 objects pending approval");
         assertTrue(pendingApproval.stream().allMatch(m -> ObjectStatus.DRAFT.equals(m.getStatus())));
-        
+
         // Verify it's the same as calling findByStatus(DRAFT) directly
         List<ObjectMetadata> draftStatus = registryService.findByStatus(ObjectStatus.DRAFT);
-        assertEquals(pendingApproval.size(), draftStatus.size(), "findPendingApproval should equal findByStatus(DRAFT)");
+        assertEquals(pendingApproval.size(), draftStatus.size(),
+                "findPendingApproval should equal findByStatus(DRAFT)");
         assertTrue(pendingApproval.containsAll(draftStatus), "Results should be identical");
     }
 
@@ -237,17 +243,16 @@ public class LuceneRegistryInterfaceMethodsTest {
     @Test
     @RegistryConfiguration
     public void testFindRecentlyModified(
-        @InjectService(filter = "(registry.type=shared)")
-        EObjectRegistryService registryService
-    ) throws Exception {
-        
+            @InjectService(filter = "(registry.type=shared)") EObjectRegistryService registryService) throws Exception {
+
         Instant now = Instant.now();
-        
+
         // Create test objects with different modification times
         ObjectMetadata recent1 = createTestMetadata("recent-1", "RecentPackage1", "1.0.0", ObjectStatus.DRAFT, "draft");
         recent1.setLastChangeTime(now.minus(1, ChronoUnit.HOURS));
 
-        ObjectMetadata recent2 = createTestMetadata("recent-2", "RecentPackage2", "1.0.0", ObjectStatus.APPROVED, "approved");
+        ObjectMetadata recent2 = createTestMetadata("recent-2", "RecentPackage2", "1.0.0", ObjectStatus.APPROVED,
+                "approved");
         recent2.setLastChangeTime(now.minus(30, ChronoUnit.MINUTES));
 
         ObjectMetadata recent3 = createTestMetadata("recent-3", "RecentPackage3", "1.0.0", ObjectStatus.DRAFT, "draft");
@@ -269,10 +274,10 @@ public class LuceneRegistryInterfaceMethodsTest {
         // Test recently modified within last 2 hours
         Instant sinceTime = now.minus(2, ChronoUnit.HOURS);
         List<ObjectMetadata> recentlyModified = registryService.findRecentlyModified(sinceTime, 10);
-        
+
         assertEquals(3, recentlyModified.size(), "Should find 3 recently modified objects");
-        assertTrue(recentlyModified.stream().allMatch(m -> 
-            m.getLastChangeTime() != null && m.getLastChangeTime().isAfter(sinceTime)));
+        assertTrue(recentlyModified.stream()
+                .allMatch(m -> m.getLastChangeTime() != null && m.getLastChangeTime().isAfter(sinceTime)));
 
         // Verify sorting (most recent first)
         assertEquals("recent-3", recentlyModified.get(0).getObjectId(), "Most recent should be first");
@@ -295,21 +300,23 @@ public class LuceneRegistryInterfaceMethodsTest {
     @Test
     @RegistryConfiguration
     public void testFindByStatusAndType(
-        @InjectService(filter = "(registry.type=shared)")
-        EObjectRegistryService registryService
-    ) throws Exception {
-        
+            @InjectService(filter = "(registry.type=shared)") EObjectRegistryService registryService) throws Exception {
+
         // Create test objects with different types and statuses
-        ObjectMetadata draftPackage = createTestMetadata("draft-pkg", "DraftPackage", "1.0.0", ObjectStatus.DRAFT, "draft");
+        ObjectMetadata draftPackage = createTestMetadata("draft-pkg", "DraftPackage", "1.0.0", ObjectStatus.DRAFT,
+                "draft");
         draftPackage.setObjectType("EPackage");
 
-        ObjectMetadata draftRoute = createTestMetadata("draft-route", "DraftRoute", "1.0.0", ObjectStatus.DRAFT, "draft");
+        ObjectMetadata draftRoute = createTestMetadata("draft-route", "DraftRoute", "1.0.0", ObjectStatus.DRAFT,
+                "draft");
         draftRoute.setObjectType("Route");
 
-        ObjectMetadata approvedPackage = createTestMetadata("approved-pkg", "ApprovedPackage", "1.0.0", ObjectStatus.APPROVED, "approved");
+        ObjectMetadata approvedPackage = createTestMetadata("approved-pkg", "ApprovedPackage", "1.0.0",
+                ObjectStatus.APPROVED, "approved");
         approvedPackage.setObjectType("EPackage");
 
-        ObjectMetadata approvedRoute = createTestMetadata("approved-route", "ApprovedRoute", "1.0.0", ObjectStatus.APPROVED, "approved");
+        ObjectMetadata approvedRoute = createTestMetadata("approved-route", "ApprovedRoute", "1.0.0",
+                ObjectStatus.APPROVED, "approved");
         approvedRoute.setObjectType("Route");
 
         // Update registry
@@ -347,10 +354,8 @@ public class LuceneRegistryInterfaceMethodsTest {
     @Test
     @RegistryConfiguration
     public void testFindByObjectType(
-        @InjectService(filter = "(registry.type=shared)")
-        EObjectRegistryService registryService
-    ) throws Exception {
-        
+            @InjectService(filter = "(registry.type=shared)") EObjectRegistryService registryService) throws Exception {
+
         // Create test objects with different types
         ObjectMetadata package1 = createTestMetadata("pkg-1", "Package1", "1.0.0", ObjectStatus.DRAFT, "draft");
         package1.setObjectType("EPackage");
@@ -390,7 +395,8 @@ public class LuceneRegistryInterfaceMethodsTest {
 
     // ===== Helper Methods =====
 
-    private ObjectMetadata createTestMetadata(String objectId, String objectName, String version, ObjectStatus status, String stage) {
+    private ObjectMetadata createTestMetadata(String objectId, String objectName, String version, ObjectStatus status,
+            String stage) {
         ObjectMetadata metadata = ManagementFactory.eINSTANCE.createObjectMetadata();
         metadata.setObjectId(objectId);
         metadata.setObjectName(objectName);

@@ -91,10 +91,11 @@ public class EObjectApicurioStorageServiceTest {
 
         // Set system property for template argument resolution of RegistryConfiguration
         System.setProperty("tempDir", tempDir.toString());
-        
+
         container = new GenericContainer<>(APICURIO_DOCKER_IMAGE);
 
-        configureApiCurioTestContainer(container);;
+        configureApiCurioTestContainer(container);
+        ;
 
         container.start();
 
@@ -172,8 +173,8 @@ public class EObjectApicurioStorageServiceTest {
         metadata.getProperties().put("content.type", "application/json");
 
         // Store the package
-        storageService.storeObject(TEST_SCOPE, TEST_REGISTRY, TEST_STAGE, "default:draft:test-id-123.json",
-                testPackage, metadata).getValue();
+        storageService.storeObject(TEST_SCOPE, TEST_REGISTRY, TEST_STAGE, "default:draft:test-id-123.json", testPackage,
+                metadata).getValue();
         String storageId = metadata.getObjectId();
 
         assertNotNull(storageId);
@@ -193,8 +194,8 @@ public class EObjectApicurioStorageServiceTest {
         assertEquals("http://test/1.0", retrievedPackage.getNsURI());
         //
         // // Retrieve metadata
-        Promise<ObjectMetadata> metadataPromise = storageService.retrieveMetadata(TEST_SCOPE, TEST_REGISTRY,
-                TEST_STAGE, storageId);
+        Promise<ObjectMetadata> metadataPromise = storageService.retrieveMetadata(TEST_SCOPE, TEST_REGISTRY, TEST_STAGE,
+                storageId);
         ObjectMetadata retrievedMetadata = metadataPromise.getValue();
 
         assertNotNull(retrievedMetadata);
@@ -203,8 +204,7 @@ public class EObjectApicurioStorageServiceTest {
         assertEquals("testhash123", retrievedMetadata.getContentHash());
 
         // Cleanup
-        Promise<Boolean> deletePromise = storageService.deleteObject(TEST_SCOPE, TEST_REGISTRY, TEST_STAGE,
-                storageId);
+        Promise<Boolean> deletePromise = storageService.deleteObject(TEST_SCOPE, TEST_REGISTRY, TEST_STAGE, storageId);
         Boolean deleted = deletePromise.getValue();
         assertTrue(deleted);
     }
@@ -255,8 +255,7 @@ public class EObjectApicurioStorageServiceTest {
         assertTrue(existsAfter, "Stored object should exist");
 
         // Delete the object
-        Promise<Boolean> deletePromise = storageService.deleteObject(TEST_SCOPE, TEST_REGISTRY, TEST_STAGE,
-                storageId);
+        Promise<Boolean> deletePromise = storageService.deleteObject(TEST_SCOPE, TEST_REGISTRY, TEST_STAGE, storageId);
         Boolean deleted = deletePromise.getValue();
         assertTrue(deleted);
 
@@ -307,8 +306,7 @@ public class EObjectApicurioStorageServiceTest {
         String storageId = metadata.getObjectId();
 
         // Delete the object
-        Promise<Boolean> deletePromise = storageService.deleteObject(TEST_SCOPE, TEST_REGISTRY, TEST_STAGE,
-                storageId);
+        Promise<Boolean> deletePromise = storageService.deleteObject(TEST_SCOPE, TEST_REGISTRY, TEST_STAGE, storageId);
         Boolean deleted = deletePromise.getValue();
 
         assertTrue(deleted);
@@ -428,8 +426,7 @@ public class EObjectApicurioStorageServiceTest {
         assertEquals("AutoIdTest", retrievedPackage.getName());
 
         // Cleanup
-        Promise<Boolean> deletePromise = storageService.deleteObject(TEST_SCOPE, TEST_REGISTRY, TEST_STAGE,
-                storageId);
+        Promise<Boolean> deletePromise = storageService.deleteObject(TEST_SCOPE, TEST_REGISTRY, TEST_STAGE, storageId);
         Boolean deleted = deletePromise.getValue();
         assertTrue(deleted);
     }
@@ -469,8 +466,7 @@ public class EObjectApicurioStorageServiceTest {
         String storageId1 = metadata1.getObjectId();
 
         // Verify file with .json extension exists
-        assertTrue(storageService.exists(TEST_SCOPE, TEST_REGISTRY, TEST_STAGE, storageId1),
-                "Artifact should exist");
+        assertTrue(storageService.exists(TEST_SCOPE, TEST_REGISTRY, TEST_STAGE, storageId1), "Artifact should exist");
 
         // Test with default extension (no property set)
         EPackage testPackage2 = EcoreFactory.eINSTANCE.createEPackage();
@@ -486,8 +482,7 @@ public class EObjectApicurioStorageServiceTest {
         String storageId2 = metadata2.getObjectId();
 
         // Verify file with .xmi extension exists
-        assertTrue(storageService.exists(TEST_SCOPE, TEST_REGISTRY, TEST_STAGE, storageId2),
-                "Artifact should exist");
+        assertTrue(storageService.exists(TEST_SCOPE, TEST_REGISTRY, TEST_STAGE, storageId2), "Artifact should exist");
 
         // Verify both can be retrieved
         Promise<EObject> retrievePromise1 = storageService.retrieveObject(TEST_SCOPE, TEST_REGISTRY, TEST_STAGE,
@@ -505,8 +500,7 @@ public class EObjectApicurioStorageServiceTest {
         assertEquals("DefaultExtTest", ((EPackage) retrieved2).getName());
 
         // Cleanup
-        Promise<Boolean> deletePromise = storageService.deleteObject(TEST_SCOPE, TEST_REGISTRY, TEST_STAGE,
-                storageId1);
+        Promise<Boolean> deletePromise = storageService.deleteObject(TEST_SCOPE, TEST_REGISTRY, TEST_STAGE, storageId1);
         Boolean deleted = deletePromise.getValue();
         assertTrue(deleted);
 
@@ -549,8 +543,7 @@ public class EObjectApicurioStorageServiceTest {
         metadata.getProperties().put("content.type", "application/xml");
         metadata.setObjectRef(testPackage);
 
-        storageService
-                .storeObject(TEST_SCOPE, TEST_REGISTRY, TEST_STAGE, "content-type-test", testPackage, metadata)
+        storageService.storeObject(TEST_SCOPE, TEST_REGISTRY, TEST_STAGE, "content-type-test", testPackage, metadata)
                 .getValue();
         String storageId = metadata.getObjectId();
 
@@ -566,8 +559,7 @@ public class EObjectApicurioStorageServiceTest {
         assertEquals("ContentTypeTest", ((EPackage) retrieved).getName());
 
         // Cleanup
-        Promise<Boolean> deletePromise = storageService.deleteObject(TEST_SCOPE, TEST_REGISTRY, TEST_STAGE,
-                storageId);
+        Promise<Boolean> deletePromise = storageService.deleteObject(TEST_SCOPE, TEST_REGISTRY, TEST_STAGE, storageId);
         Boolean deleted = deletePromise.getValue();
         assertTrue(deleted);
     }
@@ -604,8 +596,7 @@ public class EObjectApicurioStorageServiceTest {
         metadata.setUploadTime(Instant.now());
         metadata.getProperties().put("file.extension", ".ecore");
 
-        storageService
-                .storeObject(TEST_SCOPE, TEST_REGISTRY, TEST_STAGE, "update-metadata-test", testPackage, metadata)
+        storageService.storeObject(TEST_SCOPE, TEST_REGISTRY, TEST_STAGE, "update-metadata-test", testPackage, metadata)
                 .getValue();
         String storageId = metadata.getObjectId();
 
@@ -622,14 +613,14 @@ public class EObjectApicurioStorageServiceTest {
         updatedMetadata.getProperties().put("custom.property", "customValue");
 
         // Update metadata
-        Promise<Boolean> updatePromise = storageService.updateMetadata(TEST_SCOPE, TEST_REGISTRY, TEST_STAGE,
-                storageId, updatedMetadata);
+        Promise<Boolean> updatePromise = storageService.updateMetadata(TEST_SCOPE, TEST_REGISTRY, TEST_STAGE, storageId,
+                updatedMetadata);
         Boolean updateResult = updatePromise.getValue();
         assertTrue(updateResult, "Metadata update should succeed");
 
         // Retrieve and verify updated metadata
-        Promise<ObjectMetadata> retrievePromise = storageService.retrieveMetadata(TEST_SCOPE, TEST_REGISTRY,
-                TEST_STAGE, storageId);
+        Promise<ObjectMetadata> retrievePromise = storageService.retrieveMetadata(TEST_SCOPE, TEST_REGISTRY, TEST_STAGE,
+                storageId);
         ObjectMetadata retrievedMetadata = retrievePromise.getValue();
 
         assertNotNull(retrievedMetadata);
@@ -649,8 +640,7 @@ public class EObjectApicurioStorageServiceTest {
         assertEquals("UpdateMetadataTest", retrievedPackage.getName());
 
         // Cleanup
-        Promise<Boolean> deletePromise = storageService.deleteObject(TEST_SCOPE, TEST_REGISTRY, TEST_STAGE,
-                storageId);
+        Promise<Boolean> deletePromise = storageService.deleteObject(TEST_SCOPE, TEST_REGISTRY, TEST_STAGE, storageId);
         Boolean deleted = deletePromise.getValue();
         assertTrue(deleted);
     }
@@ -690,14 +680,13 @@ public class EObjectApicurioStorageServiceTest {
         metadata.getProperties().put("file.extension", ".ecore");
         metadata.setObjectRef(testPackage);
 
-        storageService
-                .storeObject(TEST_SCOPE, TEST_REGISTRY, TEST_STAGE, "update-status-test", testPackage, metadata)
+        storageService.storeObject(TEST_SCOPE, TEST_REGISTRY, TEST_STAGE, "update-status-test", testPackage, metadata)
                 .getValue();
         String storageId = metadata.getObjectId();
 
         // Verify initial status
-        Promise<ObjectMetadata> initialPromise = storageService.retrieveMetadata(TEST_SCOPE, TEST_REGISTRY,
-                TEST_STAGE, storageId);
+        Promise<ObjectMetadata> initialPromise = storageService.retrieveMetadata(TEST_SCOPE, TEST_REGISTRY, TEST_STAGE,
+                storageId);
         ObjectMetadata initialMetadata = initialPromise.getValue();
         assertEquals(ObjectStatus.DRAFT, initialMetadata.getStatus());
         assertNull(initialMetadata.getLastChangeUser());
@@ -705,15 +694,15 @@ public class EObjectApicurioStorageServiceTest {
 
         // Update status to APPROVED with change user
         Instant beforeUpdate = Instant.now();
-        Promise<Boolean> updatePromise = storageService.updateStatus(TEST_SCOPE, TEST_REGISTRY, TEST_STAGE,
-                storageId, ObjectStatus.APPROVED, "approverUser");
+        Promise<Boolean> updatePromise = storageService.updateStatus(TEST_SCOPE, TEST_REGISTRY, TEST_STAGE, storageId,
+                ObjectStatus.APPROVED, "approverUser");
         Boolean updateResult = updatePromise.getValue();
         assertTrue(updateResult, "Status update should succeed");
         Instant afterUpdate = Instant.now();
 
         // Verify status update
-        Promise<ObjectMetadata> updatedPromise = storageService.retrieveMetadata(TEST_SCOPE, TEST_REGISTRY,
-                TEST_STAGE, storageId);
+        Promise<ObjectMetadata> updatedPromise = storageService.retrieveMetadata(TEST_SCOPE, TEST_REGISTRY, TEST_STAGE,
+                storageId);
         ObjectMetadata updatedMetadata = updatedPromise.getValue();
 
         assertNotNull(updatedMetadata);
@@ -726,14 +715,14 @@ public class EObjectApicurioStorageServiceTest {
                 || updatedMetadata.getLastChangeTime().equals(afterUpdate));
 
         // Update status again without change user
-        Promise<Boolean> updatePromise2 = storageService.updateStatus(TEST_SCOPE, TEST_REGISTRY, TEST_STAGE,
-                storageId, ObjectStatus.DEPLOYED, null);
+        Promise<Boolean> updatePromise2 = storageService.updateStatus(TEST_SCOPE, TEST_REGISTRY, TEST_STAGE, storageId,
+                ObjectStatus.DEPLOYED, null);
         Boolean updateResult2 = updatePromise2.getValue();
         assertTrue(updateResult2, "Second status update should succeed");
 
         // Verify second status update
-        Promise<ObjectMetadata> finalPromise = storageService.retrieveMetadata(TEST_SCOPE, TEST_REGISTRY,
-                TEST_STAGE, storageId);
+        Promise<ObjectMetadata> finalPromise = storageService.retrieveMetadata(TEST_SCOPE, TEST_REGISTRY, TEST_STAGE,
+                storageId);
         ObjectMetadata finalMetadata = finalPromise.getValue();
 
         assertEquals(ObjectStatus.DEPLOYED, finalMetadata.getStatus());
@@ -742,8 +731,7 @@ public class EObjectApicurioStorageServiceTest {
         assertNotNull(finalMetadata.getLastChangeTime());
 
         // Cleanup
-        Promise<Boolean> deletePromise = storageService.deleteObject(TEST_SCOPE, TEST_REGISTRY, TEST_STAGE,
-                storageId);
+        Promise<Boolean> deletePromise = storageService.deleteObject(TEST_SCOPE, TEST_REGISTRY, TEST_STAGE, storageId);
         Boolean deleted = deletePromise.getValue();
         assertTrue(deleted);
     }
@@ -949,8 +937,9 @@ public class EObjectApicurioStorageServiceTest {
         draftMetadata.setObjectRef(testPackage);
 
         // Store object with DRAFT status
-        storageService.storeObject(TEST_SCOPE, TEST_REGISTRY, TEST_STAGE, "registry-test-draft", testPackage,
-                draftMetadata).getValue();
+        storageService
+                .storeObject(TEST_SCOPE, TEST_REGISTRY, TEST_STAGE, "registry-test-draft", testPackage, draftMetadata)
+                .getValue();
         String draftObjectId = draftMetadata.getObjectId();
         assertNotNull(draftObjectId, "Draft object ID should not be null");
 
@@ -968,9 +957,8 @@ public class EObjectApicurioStorageServiceTest {
         draftMetadata.setLastChangeTime(Instant.now());
         // We have to update the version if we want the update to succeed in Apicurio
         draftMetadata.setVersion("1.1.0");
-        assertTrue(storageService
-                .updateMetadata(TEST_SCOPE, TEST_REGISTRY, TEST_STAGE, draftObjectId, draftMetadata).getValue(),
-                "Metadata should be updated");
+        assertTrue(storageService.updateMetadata(TEST_SCOPE, TEST_REGISTRY, TEST_STAGE, draftObjectId, draftMetadata)
+                .getValue(), "Metadata should be updated");
 
         // Wait a moment for registry update (if async)
         Thread.sleep(100);
@@ -1022,9 +1010,7 @@ public class EObjectApicurioStorageServiceTest {
     }
 
     private void configureApiCurioTestContainer(GenericContainer<?> container) {
-        container
-            .withEnv(APICURIO_ENV_DELETION_ARTIFACT, "true")
-            .withExposedPorts(APICURIO_EXPOSED_PORT)
-            .waitingFor(Wait.forHttp(APICURIO_BASE_PATH));
+        container.withEnv(APICURIO_ENV_DELETION_ARTIFACT, "true").withExposedPorts(APICURIO_EXPOSED_PORT)
+                .waitingFor(Wait.forHttp(APICURIO_BASE_PATH));
     }
 }

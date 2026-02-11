@@ -18,75 +18,74 @@ import org.eclipse.emf.ecore.EFactory;
 import org.osgi.annotation.versioning.ProviderType;
 
 /**
- * <!-- begin-user-doc -->
- * The <b>Factory</b> for the model.
- * It provides a create method for each non-abstract class of the model.
- * <!-- end-user-doc -->
+ * <!-- begin-user-doc --> The <b>Factory</b> for the model. It provides a
+ * create method for each non-abstract class of the model. <!-- end-user-doc -->
+ * 
  * @see org.eclipse.fennec.model.atlas.rest.model.RestPackage
  * @generated
  */
 @ProviderType
 public interface RestFactory extends EFactory {
-	/**
-	 * The singleton instance of the factory.
-	 * <!-- begin-user-doc -->
-	 * <!-- end-user-doc -->
-	 * @generated
-	 */
-	RestFactory eINSTANCE = org.eclipse.fennec.model.atlas.rest.model.impl.RestFactoryImpl.init();
+    /**
+     * The singleton instance of the factory. <!-- begin-user-doc --> <!--
+     * end-user-doc -->
+     * 
+     * @generated
+     */
+    RestFactory eINSTANCE = org.eclipse.fennec.model.atlas.rest.model.impl.RestFactoryImpl.init();
 
-	/**
-	 * Returns a new object of class '<em>EPackage Info</em>'.
-	 * <!-- begin-user-doc -->
-	 * <!-- end-user-doc -->
-	 * @return a new object of class '<em>EPackage Info</em>'.
-	 * @generated
-	 */
-	EPackageInfo createEPackageInfo();
+    /**
+     * Returns a new object of class '<em>EPackage Info</em>'. <!-- begin-user-doc
+     * --> <!-- end-user-doc -->
+     * 
+     * @return a new object of class '<em>EPackage Info</em>'.
+     * @generated
+     */
+    EPackageInfo createEPackageInfo();
 
-	/**
-	 * Returns a new object of class '<em>EPackage List Response</em>'.
-	 * <!-- begin-user-doc -->
-	 * <!-- end-user-doc -->
-	 * @return a new object of class '<em>EPackage List Response</em>'.
-	 * @generated
-	 */
-	EPackageListResponse createEPackageListResponse();
+    /**
+     * Returns a new object of class '<em>EPackage List Response</em>'. <!--
+     * begin-user-doc --> <!-- end-user-doc -->
+     * 
+     * @return a new object of class '<em>EPackage List Response</em>'.
+     * @generated
+     */
+    EPackageListResponse createEPackageListResponse();
 
-	/**
-	 * Returns a new object of class '<em>Error Response</em>'.
-	 * <!-- begin-user-doc -->
-	 * <!-- end-user-doc -->
-	 * @return a new object of class '<em>Error Response</em>'.
-	 * @generated
-	 */
-	ErrorResponse createErrorResponse();
+    /**
+     * Returns a new object of class '<em>Error Response</em>'. <!-- begin-user-doc
+     * --> <!-- end-user-doc -->
+     * 
+     * @return a new object of class '<em>Error Response</em>'.
+     * @generated
+     */
+    ErrorResponse createErrorResponse();
 
-	/**
-	 * Returns a new object of class '<em>Stage Transition Request</em>'.
-	 * <!-- begin-user-doc -->
-	 * <!-- end-user-doc -->
-	 * @return a new object of class '<em>Stage Transition Request</em>'.
-	 * @generated
-	 */
-	StageTransitionRequest createStageTransitionRequest();
+    /**
+     * Returns a new object of class '<em>Stage Transition Request</em>'. <!--
+     * begin-user-doc --> <!-- end-user-doc -->
+     * 
+     * @return a new object of class '<em>Stage Transition Request</em>'.
+     * @generated
+     */
+    StageTransitionRequest createStageTransitionRequest();
 
-	/**
-	 * Returns a new object of class '<em>Scope List Response</em>'.
-	 * <!-- begin-user-doc -->
-	 * <!-- end-user-doc -->
-	 * @return a new object of class '<em>Scope List Response</em>'.
-	 * @generated
-	 */
-	ScopeListResponse createScopeListResponse();
+    /**
+     * Returns a new object of class '<em>Scope List Response</em>'. <!--
+     * begin-user-doc --> <!-- end-user-doc -->
+     * 
+     * @return a new object of class '<em>Scope List Response</em>'.
+     * @generated
+     */
+    ScopeListResponse createScopeListResponse();
 
-	/**
-	 * Returns the package supported by this factory.
-	 * <!-- begin-user-doc -->
-	 * <!-- end-user-doc -->
-	 * @return the package supported by this factory.
-	 * @generated
-	 */
-	RestPackage getRestPackage();
+    /**
+     * Returns the package supported by this factory. <!-- begin-user-doc --> <!--
+     * end-user-doc -->
+     * 
+     * @return the package supported by this factory.
+     * @generated
+     */
+    RestPackage getRestPackage();
 
-} //RestFactory
+} // RestFactory

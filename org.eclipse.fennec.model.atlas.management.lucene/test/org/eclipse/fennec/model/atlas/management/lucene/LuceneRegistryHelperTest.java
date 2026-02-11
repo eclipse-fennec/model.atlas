@@ -39,8 +39,10 @@ import org.junit.jupiter.api.io.TempDir;
 /**
  * Unit tests for LuceneRegistryHelper.
  * 
- * <p>Tests the Lucene indexing functionality including document creation,
- * index updates, search operations, and index maintenance.</p>
+ * <p>
+ * Tests the Lucene indexing functionality including document creation, index
+ * updates, search operations, and index maintenance.
+ * </p>
  */
 class LuceneRegistryHelperTest {
 
@@ -57,9 +59,9 @@ class LuceneRegistryHelperTest {
         resourceSet = new ResourceSetImpl();
         resourceSet.getResourceFactoryRegistry().getExtensionToFactoryMap().put("xmi", new XMIResourceFactoryImpl());
         resourceSet.getPackageRegistry().put(ManagementPackage.eNS_URI, ManagementPackage.eINSTANCE);
-        
+
         factory = ManagementFactory.eINSTANCE;
-        
+
         // Create helper with temp directory
         helper = new LuceneRegistryHelper(tempDir);
         helper.initialize();
@@ -84,10 +86,10 @@ class LuceneRegistryHelperTest {
     void testSaveAndIndexMetadata() throws Exception {
         // Create test metadata
         ObjectMetadata metadata = createTestMetadata("testUser", "AI_GENERATOR", "EPackage");
-        
+
         // Update index (registry helper only handles indexing, not file storage)
         helper.updateIndex("test-obj-1", metadata);
-        
+
         // Search for the indexed object
         List<String> results = helper.searchObjectIds("uploadUser:testUser", 10);
         assertEquals(1, results.size(), "Should find one object");
@@ -100,27 +102,27 @@ class LuceneRegistryHelperTest {
         ObjectMetadata metadata1 = createTestMetadata("alice", "AI_GENERATOR", "EPackage");
         ObjectMetadata metadata2 = createTestMetadata("bob", "MANUAL_UPLOAD", "Route");
         ObjectMetadata metadata3 = createTestMetadata("charlie", "AI_GENERATOR", "SensorModel");
-        
+
         helper.updateIndex("obj-1", metadata1);
         helper.updateIndex("obj-2", metadata2);
         helper.updateIndex("obj-3", metadata3);
-        
+
         // Test search by upload user
         List<String> userResults = helper.searchObjectIds("uploadUser:alice", 10);
         assertEquals(1, userResults.size());
         assertEquals("obj-1", userResults.get(0));
-        
+
         // Test search by source channel
         List<String> channelResults = helper.searchObjectIds("sourceChannel:AI_GENERATOR", 10);
         assertEquals(2, channelResults.size());
         assertTrue(channelResults.contains("obj-1"));
         assertTrue(channelResults.contains("obj-3"));
-        
+
         // Test search by object type
         List<String> typeResults = helper.searchObjectIds("objectType:Route", 10);
         assertEquals(1, typeResults.size());
         assertEquals("obj-2", typeResults.get(0));
-        
+
         // Test combined search
         List<String> combinedResults = helper.searchObjectIds("sourceChannel:AI_GENERATOR AND objectType:EPackage", 10);
         assertEquals(1, combinedResults.size());
@@ -132,20 +134,20 @@ class LuceneRegistryHelperTest {
         Instant now = Instant.now();
         Instant past = now.minus(1, ChronoUnit.HOURS);
         Instant future = now.plus(1, ChronoUnit.HOURS);
-        
+
         // Create metadata with specific timestamps
         ObjectMetadata oldMetadata = createTestMetadata("user1", "AI_GENERATOR", "EPackage");
         oldMetadata.setUploadTime(past);
-        
+
         ObjectMetadata newMetadata = createTestMetadata("user2", "AI_GENERATOR", "EPackage");
         newMetadata.setUploadTime(now);
-        
+
         helper.updateIndex("old-obj", oldMetadata);
         helper.updateIndex("new-obj", newMetadata);
-        
+
         // Search for objects uploaded in the last 30 minutes
         Instant thirtyMinutesAgo = now.minus(30, ChronoUnit.MINUTES);
-        
+
         List<String> recentResults = helper.searchByUploadTimeRange(thirtyMinutesAgo, future, 10);
         assertEquals(1, recentResults.size());
         assertEquals("new-obj", recentResults.get(0));
@@ -158,14 +160,14 @@ class LuceneRegistryHelperTest {
         metadata.getProperties().put("version", "1.0");
         metadata.getProperties().put("namespace", "sensors");
         metadata.getProperties().put("author", "system");
-        
+
         helper.updateIndex("prop-obj", metadata);
-        
+
         // Search by property value
         List<String> versionResults = helper.searchObjectIds("properties:version\\:1.0", 10);
         assertEquals(1, versionResults.size());
         assertEquals("prop-obj", versionResults.get(0));
-        
+
         // Search by property namespace
         List<String> namespaceResults = helper.searchObjectIds("properties:namespace\\:sensors", 10);
         assertEquals(1, namespaceResults.size());
@@ -177,14 +179,14 @@ class LuceneRegistryHelperTest {
         // Create and save metadata
         ObjectMetadata metadata = createTestMetadata("deleteUser", "AI_GENERATOR", "EPackage");
         helper.updateIndex("delete-obj", metadata);
-        
+
         // Verify it's indexed
         List<String> beforeDelete = helper.searchObjectIds("uploadUser:deleteUser", 10);
         assertEquals(1, beforeDelete.size());
-        
+
         // Remove from index (registry helpers don't handle file deletion)
         helper.removeFromIndex("delete-obj");
-        
+
         // Verify it's removed from index
         List<String> afterDelete = helper.searchObjectIds("uploadUser:deleteUser", 10);
         assertEquals(0, afterDelete.size(), "Object should not be found after deletion");
@@ -195,16 +197,16 @@ class LuceneRegistryHelperTest {
         // Create some metadata files manually (simulate existing files)
         ObjectMetadata metadata1 = createTestMetadata("rebuild1", "AI_GENERATOR", "EPackage");
         ObjectMetadata metadata2 = createTestMetadata("rebuild2", "MANUAL_UPLOAD", "Route");
-        
+
         // Add metadata directly to index to simulate existing data
         helper.updateIndex("rebuild-obj-1", metadata1);
         helper.updateIndex("rebuild-obj-2", metadata2);
-        
+
         // Close and recreate helper to trigger rebuild
         helper.close();
         helper = new LuceneRegistryHelper(tempDir);
         helper.initialize();
-        
+
         // Verify both objects are indexed after rebuild
         List<String> results = helper.searchObjectIds("uploadUser:rebuild1 OR uploadUser:rebuild2", 10);
         assertEquals(2, results.size());
@@ -217,7 +219,7 @@ class LuceneRegistryHelperTest {
         // Search for non-existent user
         List<String> results = helper.searchObjectIds("uploadUser:nonexistent", 10);
         assertTrue(results.isEmpty(), "Should return empty results for non-existent user");
-        
+
         // Search with invalid field
         List<String> invalidResults = helper.searchObjectIds("invalidField:value", 10);
         assertTrue(invalidResults.isEmpty(), "Should return empty results for invalid field");
@@ -237,19 +239,19 @@ class LuceneRegistryHelperTest {
         // Create initial metadata
         ObjectMetadata initialMetadata = createTestMetadata("updateUser", "AI_GENERATOR", "EPackage");
         helper.updateIndex("update-obj", initialMetadata);
-        
+
         // Verify initial indexing
         List<String> initialResults = helper.searchObjectIds("uploadUser:updateUser", 10);
         assertEquals(1, initialResults.size());
-        
+
         // Update metadata
         ObjectMetadata updatedMetadata = createTestMetadata("updatedUser", "MANUAL_UPLOAD", "Route");
         helper.updateIndex("update-obj", updatedMetadata);
-        
+
         // Verify old data is not found
         List<String> oldResults = helper.searchObjectIds("uploadUser:updateUser", 10);
         assertEquals(0, oldResults.size(), "Old data should not be found");
-        
+
         // Verify new data is found
         List<String> newResults = helper.searchObjectIds("uploadUser:updatedUser", 10);
         assertEquals(1, newResults.size());
@@ -262,7 +264,7 @@ class LuceneRegistryHelperTest {
         helper.updateIndex("list-obj-1", createTestMetadata("user1", "AI_GENERATOR", "EPackage"));
         helper.updateIndex("list-obj-2", createTestMetadata("user2", "MANUAL_UPLOAD", "Route"));
         helper.updateIndex("list-obj-3", createTestMetadata("user3", "AI_GENERATOR", "SensorModel"));
-        
+
         // List all object IDs
         List<String> allIds = helper.getAllObjectIds();
         assertEquals(3, allIds.size());
@@ -276,7 +278,7 @@ class LuceneRegistryHelperTest {
         // Create metadata with special characters
         ObjectMetadata metadata = createTestMetadata("user@domain.com", "AI_GENERATOR", "EPackage");
         helper.updateIndex("special-obj", metadata);
-        
+
         // Search should handle special characters properly
         // Note: @ character doesn't need escaping in Lucene
         List<String> results = helper.searchObjectIds("uploadUser:user@domain.com", 10);
@@ -289,7 +291,7 @@ class LuceneRegistryHelperTest {
         Instant now = Instant.now();
         Instant complianceTime = now.minus(30, ChronoUnit.MINUTES);
         Instant lastChangeTime = now.minus(15, ChronoUnit.MINUTES);
-        
+
         // Create metadata with new fields
         ObjectMetadata metadata = createTestMetadata("newFieldUser", "AI_GENERATOR", "EPackage");
         metadata.setReviewUser("reviewer");
@@ -301,24 +303,24 @@ class LuceneRegistryHelperTest {
         metadata.setGovernanceDocumentationId("gov-doc-789");
         metadata.setLastChangeUser("admin");
         metadata.setLastChangeTime(lastChangeTime);
-        
+
         helper.updateIndex("new-fields-obj", metadata);
-        
+
         // Test search by generation trigger fingerprint
         List<String> fingerprintResults = helper.searchObjectIds("generationTriggerFingerprint:fp-abc123def456", 10);
         assertEquals(1, fingerprintResults.size());
         assertEquals("new-fields-obj", fingerprintResults.get(0));
-        
+
         // Test search by compliance status
         List<String> complianceResults = helper.searchObjectIds("complianceStatus:COMPLIANT", 10);
         assertEquals(1, complianceResults.size());
         assertEquals("new-fields-obj", complianceResults.get(0));
-        
+
         // Test search by governance documentation ID
         List<String> govResults = helper.searchObjectIds("governanceDocumentationId:gov-doc-789", 10);
         assertEquals(1, govResults.size());
         assertEquals("new-fields-obj", govResults.get(0));
-        
+
         // Test search by last change user
         List<String> lastChangeResults = helper.searchObjectIds("lastChangeUser:admin", 10);
         assertEquals(1, lastChangeResults.size());
@@ -331,25 +333,25 @@ class LuceneRegistryHelperTest {
         Instant past = now.minus(2, ChronoUnit.HOURS);
         Instant recent = now.minus(30, ChronoUnit.MINUTES);
         Instant future = now.plus(1, ChronoUnit.HOURS);
-        
+
         // Create metadata with different compliance check times
         ObjectMetadata oldCompliance = createTestMetadata("user1", "AI_GENERATOR", "EPackage");
         oldCompliance.setComplianceCheckTime(past);
         oldCompliance.setComplianceStatus("NON_COMPLIANT");
-        
+
         ObjectMetadata recentCompliance = createTestMetadata("user2", "AI_GENERATOR", "EPackage");
         recentCompliance.setComplianceCheckTime(recent);
         recentCompliance.setComplianceStatus("COMPLIANT");
-        
+
         helper.updateIndex("old-compliance", oldCompliance);
         helper.updateIndex("recent-compliance", recentCompliance);
-        
+
         // Search for objects with compliance check in last hour
         Instant oneHourAgo = now.minus(1, ChronoUnit.HOURS);
         List<String> recentResults = helper.searchByComplianceCheckTimeRange(oneHourAgo, future, 10);
         assertEquals(1, recentResults.size());
         assertEquals("recent-compliance", recentResults.get(0));
-        
+
         // Search for all compliance checks
         List<String> allResults = helper.searchByComplianceCheckTimeRange(past.minus(1, ChronoUnit.HOURS), future, 10);
         assertEquals(2, allResults.size());
@@ -363,19 +365,19 @@ class LuceneRegistryHelperTest {
         Instant past = now.minus(2, ChronoUnit.HOURS);
         Instant recent = now.minus(10, ChronoUnit.MINUTES);
         Instant future = now.plus(1, ChronoUnit.HOURS);
-        
+
         // Create metadata with different last change times
         ObjectMetadata oldChange = createTestMetadata("user1", "AI_GENERATOR", "EPackage");
         oldChange.setLastChangeUser("editor1");
         oldChange.setLastChangeTime(past);
-        
+
         ObjectMetadata recentChange = createTestMetadata("user2", "AI_GENERATOR", "EPackage");
         recentChange.setLastChangeUser("editor2");
         recentChange.setLastChangeTime(recent);
-        
+
         helper.updateIndex("old-change", oldChange);
         helper.updateIndex("recent-change", recentChange);
-        
+
         // Search for objects changed in last 30 minutes
         Instant thirtyMinutesAgo = now.minus(30, ChronoUnit.MINUTES);
         List<String> recentResults = helper.searchByLastChangeTimeRange(thirtyMinutesAgo, future, 10);
@@ -390,24 +392,24 @@ class LuceneRegistryHelperTest {
         compliantObj.setComplianceStatus("COMPLIANT");
         compliantObj.setLastChangeUser("admin");
         compliantObj.setGenerationTriggerFingerprint("fp-sensors-123");
-        
+
         ObjectMetadata nonCompliantObj = createTestMetadata("user2", "AI_GENERATOR", "EPackage");
         nonCompliantObj.setComplianceStatus("NON_COMPLIANT");
         nonCompliantObj.setLastChangeUser("reviewer");
         nonCompliantObj.setGenerationTriggerFingerprint("fp-routes-456");
-        
+
         helper.updateIndex("compliant-obj", compliantObj);
         helper.updateIndex("non-compliant-obj", nonCompliantObj);
-        
+
         // Search for compliant objects by admin
-        List<String> adminCompliantResults = helper.searchObjectIds(
-            "complianceStatus:COMPLIANT AND lastChangeUser:admin", 10);
+        List<String> adminCompliantResults = helper
+                .searchObjectIds("complianceStatus:COMPLIANT AND lastChangeUser:admin", 10);
         assertEquals(1, adminCompliantResults.size());
         assertEquals("compliant-obj", adminCompliantResults.get(0));
-        
+
         // Search for any AI-generated objects with compliance status
         List<String> aiComplianceResults = helper.searchObjectIds(
-            "sourceChannel:AI_GENERATOR AND (complianceStatus:COMPLIANT OR complianceStatus:NON_COMPLIANT)", 10);
+                "sourceChannel:AI_GENERATOR AND (complianceStatus:COMPLIANT OR complianceStatus:NON_COMPLIANT)", 10);
         assertEquals(2, aiComplianceResults.size());
         assertTrue(aiComplianceResults.contains("compliant-obj"));
         assertTrue(aiComplianceResults.contains("non-compliant-obj"));
@@ -421,24 +423,24 @@ class LuceneRegistryHelperTest {
         metadata.setComplianceStatus("PENDING");
         metadata.setLastChangeUser("system");
         metadata.setLastChangeTime(Instant.now());
-        
+
         // Add metadata directly to index to simulate existing data
         helper.updateIndex("rebuild-new-fields", metadata);
-        
+
         // Close and recreate helper to trigger rebuild
         helper.close();
         helper = new LuceneRegistryHelper(tempDir);
         helper.initialize();
-        
+
         // Verify new fields are indexed after rebuild
         List<String> fingerprintResults = helper.searchObjectIds("generationTriggerFingerprint:fp-rebuild-test", 10);
         assertEquals(1, fingerprintResults.size());
         assertEquals("rebuild-new-fields", fingerprintResults.get(0));
-        
+
         List<String> complianceResults = helper.searchObjectIds("complianceStatus:PENDING", 10);
         assertEquals(1, complianceResults.size());
         assertEquals("rebuild-new-fields", complianceResults.get(0));
-        
+
         List<String> lastChangeResults = helper.searchObjectIds("lastChangeUser:system", 10);
         assertEquals(1, lastChangeResults.size());
         assertEquals("rebuild-new-fields", lastChangeResults.get(0));
@@ -449,22 +451,23 @@ class LuceneRegistryHelperTest {
         // Create objects with different stages
         ObjectMetadata draftMetadata = createTestMetadata("user1", "AI_GENERATOR", "EPackage", "draft");
         ObjectMetadata approvedMetadata = createTestMetadata("user2", "MANUAL_UPLOAD", "Route", "approved");
-        ObjectMetadata documentationMetadata = createTestMetadata("user3", "AI_GENERATOR", "SensorModel", "documentation");
-        
+        ObjectMetadata documentationMetadata = createTestMetadata("user3", "AI_GENERATOR", "SensorModel",
+                "documentation");
+
         helper.updateIndex("draft-obj", draftMetadata);
         helper.updateIndex("approved-obj", approvedMetadata);
         helper.updateIndex("doc-obj", documentationMetadata);
-        
+
         // Test search by stage: draft
         List<String> draftResults = helper.searchObjectIds("stage:draft", 10);
         assertEquals(1, draftResults.size());
         assertEquals("draft-obj", draftResults.get(0));
-        
+
         // Test search by stage: approved
         List<String> approvedResults = helper.searchObjectIds("stage:approved", 10);
         assertEquals(1, approvedResults.size());
         assertEquals("approved-obj", approvedResults.get(0));
-        
+
         // Test search by stage: documentation
         List<String> docResults = helper.searchObjectIds("stage:documentation", 10);
         assertEquals(1, docResults.size());
@@ -479,19 +482,20 @@ class LuceneRegistryHelperTest {
         draftMetadata.setObjectName(objectName);
         ObjectMetadata approvedMetadata = createTestMetadata("user2", "MANUAL_UPLOAD", "SensorModel", "approved");
         approvedMetadata.setObjectName(objectName);
-        
+
         helper.updateIndex("sensor-draft", draftMetadata);
         helper.updateIndex("sensor-approved", approvedMetadata);
-        
+
         // Test search by objectName and stage
         List<String> draftResults = helper.searchObjectIds("(objectName:\"" + objectName + "\" AND stage:draft)", 10);
         assertEquals(1, draftResults.size());
         assertEquals("sensor-draft", draftResults.get(0));
-        
-        List<String> approvedResults = helper.searchObjectIds("(objectName:\"" + objectName + "\" AND stage:approved)", 10);
+
+        List<String> approvedResults = helper.searchObjectIds("(objectName:\"" + objectName + "\" AND stage:approved)",
+                10);
         assertEquals(1, approvedResults.size());
         assertEquals("sensor-approved", approvedResults.get(0));
-        
+
         // Test search by objectName only (should find both)
         List<String> nameResults = helper.searchObjectIds("objectName:\"" + objectName + "\"", 10);
         assertEquals(2, nameResults.size());
@@ -503,16 +507,18 @@ class LuceneRegistryHelperTest {
     void teststageFieldExactMatch() throws Exception {
         // Create objects with stages that might have partial matches
         ObjectMetadata draftMetadata = createTestMetadata("user1", "AI_GENERATOR", "EPackage", "draft");
-        ObjectMetadata draftDocumentationMetadata = createTestMetadata("user2", "MANUAL_UPLOAD", "Route", "draft-documentation");
-        
+        ObjectMetadata draftDocumentationMetadata = createTestMetadata("user2", "MANUAL_UPLOAD", "Route",
+                "draft-documentation");
+
         helper.updateIndex("draft-obj", draftMetadata);
         helper.updateIndex("draft-doc-obj", draftDocumentationMetadata);
-        
-        // Search for exact stage match "draft" - should only find draft object, not draft-documentation
+
+        // Search for exact stage match "draft" - should only find draft object, not
+        // draft-documentation
         List<String> exactDraftResults = helper.searchObjectIds("stage:draft", 10);
         assertEquals(1, exactDraftResults.size());
         assertEquals("draft-obj", exactDraftResults.get(0));
-        
+
         // Search for exact stage match "draft-documentation"
         List<String> draftDocResults = helper.searchObjectIds("stage:draft-documentation", 10);
         assertEquals(1, draftDocResults.size());
@@ -525,22 +531,22 @@ class LuceneRegistryHelperTest {
         ObjectMetadata epackageDraft = createTestMetadata("alice", "AI_GENERATOR", "EPackage", "draft");
         ObjectMetadata epackageApproved = createTestMetadata("alice", "AI_GENERATOR", "EPackage", "approved");
         ObjectMetadata routeDraft = createTestMetadata("alice", "MANUAL_UPLOAD", "Route", "draft");
-        
+
         helper.updateIndex("epackage-draft", epackageDraft);
         helper.updateIndex("epackage-approved", epackageApproved);
         helper.updateIndex("route-draft", routeDraft);
-        
+
         // Test stage + objectType combination
         List<String> epackageDraftResults = helper.searchObjectIds("stage:draft AND objectType:EPackage", 10);
         assertEquals(1, epackageDraftResults.size());
         assertEquals("epackage-draft", epackageDraftResults.get(0));
-        
+
         // Test stage + uploadUser combination
         List<String> aliceDraftResults = helper.searchObjectIds("stage:draft AND uploadUser:alice", 10);
         assertEquals(2, aliceDraftResults.size());
         assertTrue(aliceDraftResults.contains("epackage-draft"));
         assertTrue(aliceDraftResults.contains("route-draft"));
-        
+
         // Test stage + sourceChannel combination
         List<String> aiDraftResults = helper.searchObjectIds("stage:draft AND sourceChannel:AI_GENERATOR", 10);
         assertEquals(1, aiDraftResults.size());

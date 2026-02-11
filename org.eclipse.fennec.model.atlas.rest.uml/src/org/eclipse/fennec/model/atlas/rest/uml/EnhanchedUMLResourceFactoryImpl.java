@@ -26,21 +26,23 @@ import org.gecko.emf.osgi.constants.EMFNamespaces;
  * @since Nov 13, 2025
  */
 public class EnhanchedUMLResourceFactoryImpl extends UMLResourceFactoryImpl {
-	
-	public EnhanchedUMLResourceFactoryImpl() {
-		super();
-	}
-	
-	/**
-	 * A method providing the Properties the services around this ResourceFactory should be registered with.
-	 * @generated
-	 */
-	public Map<String, Object> getServiceProperties() {
-		Map<String, Object> properties = new HashMap<String, Object>();
-		properties.put(EMFNamespaces.EMF_CONFIGURATOR_NAME, UMLPackage.eNAME);
-		properties.put(EMFNamespaces.EMF_MODEL_FILE_EXT, "uml");
-		properties.put(EMFNamespaces.EMF_MODEL_VERSION, "1.0");
-		return properties;
-	}
+
+    public EnhanchedUMLResourceFactoryImpl() {
+        super();
+    }
+
+    /**
+     * A method providing the Properties the services around this ResourceFactory
+     * should be registered with.
+     * 
+     * @generated
+     */
+    public Map<String, Object> getServiceProperties() {
+        Map<String, Object> properties = new HashMap<String, Object>();
+        properties.put(EMFNamespaces.EMF_CONFIGURATOR_NAME, UMLPackage.eNAME);
+        properties.put(EMFNamespaces.EMF_MODEL_FILE_EXT, "uml");
+        properties.put(EMFNamespaces.EMF_MODEL_VERSION, "1.0");
+        return properties;
+    }
 
 }

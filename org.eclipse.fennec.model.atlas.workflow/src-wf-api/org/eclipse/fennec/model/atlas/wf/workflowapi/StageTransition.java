@@ -16,16 +16,17 @@ package org.eclipse.fennec.model.atlas.wf.workflowapi;
 import org.osgi.annotation.versioning.ProviderType;
 
 /**
- * <!-- begin-user-doc -->
- * A representation of the model object '<em><b>Stage Transition</b></em>'.
- * <!-- end-user-doc -->
+ * <!-- begin-user-doc --> A representation of the model object '<em><b>Stage
+ * Transition</b></em>'. <!-- end-user-doc -->
  *
  * <p>
  * The following features are supported:
  * </p>
  * <ul>
- *   <li>{@link org.eclipse.fennec.model.atlas.wf.workflowapi.StageTransition#getFromStage <em>From Stage</em>}</li>
- *   <li>{@link org.eclipse.fennec.model.atlas.wf.workflowapi.StageTransition#getToStage <em>To Stage</em>}</li>
+ * <li>{@link org.eclipse.fennec.model.atlas.wf.workflowapi.StageTransition#getFromStage
+ * <em>From Stage</em>}</li>
+ * <li>{@link org.eclipse.fennec.model.atlas.wf.workflowapi.StageTransition#getToStage
+ * <em>To Stage</em>}</li>
  * </ul>
  *
  * @see org.eclipse.fennec.model.atlas.wf.workflowapi.WorkflowApiPackage#getStageTransition()
@@ -34,48 +35,51 @@ import org.osgi.annotation.versioning.ProviderType;
  */
 @ProviderType
 public interface StageTransition {
-	/**
-	 * Returns the value of the '<em><b>From Stage</b></em>' attribute.
-	 * <!-- begin-user-doc -->
-	 * <!-- end-user-doc -->
-	 * @return the value of the '<em>From Stage</em>' attribute.
-	 * @see #setFromStage(String)
-	 * @see org.eclipse.fennec.model.atlas.wf.workflowapi.WorkflowApiPackage#getStageTransition_FromStage()
-	 * @model
-	 * @generated
-	 */
-	String getFromStage();
+    /**
+     * Returns the value of the '<em><b>From Stage</b></em>' attribute. <!--
+     * begin-user-doc --> <!-- end-user-doc -->
+     * 
+     * @return the value of the '<em>From Stage</em>' attribute.
+     * @see #setFromStage(String)
+     * @see org.eclipse.fennec.model.atlas.wf.workflowapi.WorkflowApiPackage#getStageTransition_FromStage()
+     * @model
+     * @generated
+     */
+    String getFromStage();
 
-	/**
-	 * Sets the value of the '{@link org.eclipse.fennec.model.atlas.wf.workflowapi.StageTransition#getFromStage <em>From Stage</em>}' attribute.
-	 * <!-- begin-user-doc -->
-	 * <!-- end-user-doc -->
-	 * @param value the new value of the '<em>From Stage</em>' attribute.
-	 * @see #getFromStage()
-	 * @generated
-	 */
-	void setFromStage(String value);
+    /**
+     * Sets the value of the
+     * '{@link org.eclipse.fennec.model.atlas.wf.workflowapi.StageTransition#getFromStage
+     * <em>From Stage</em>}' attribute. <!-- begin-user-doc --> <!-- end-user-doc
+     * -->
+     * 
+     * @param value the new value of the '<em>From Stage</em>' attribute.
+     * @see #getFromStage()
+     * @generated
+     */
+    void setFromStage(String value);
 
-	/**
-	 * Returns the value of the '<em><b>To Stage</b></em>' attribute.
-	 * <!-- begin-user-doc -->
-	 * <!-- end-user-doc -->
-	 * @return the value of the '<em>To Stage</em>' attribute.
-	 * @see #setToStage(String)
-	 * @see org.eclipse.fennec.model.atlas.wf.workflowapi.WorkflowApiPackage#getStageTransition_ToStage()
-	 * @model
-	 * @generated
-	 */
-	String getToStage();
+    /**
+     * Returns the value of the '<em><b>To Stage</b></em>' attribute. <!--
+     * begin-user-doc --> <!-- end-user-doc -->
+     * 
+     * @return the value of the '<em>To Stage</em>' attribute.
+     * @see #setToStage(String)
+     * @see org.eclipse.fennec.model.atlas.wf.workflowapi.WorkflowApiPackage#getStageTransition_ToStage()
+     * @model
+     * @generated
+     */
+    String getToStage();
 
-	/**
-	 * Sets the value of the '{@link org.eclipse.fennec.model.atlas.wf.workflowapi.StageTransition#getToStage <em>To Stage</em>}' attribute.
-	 * <!-- begin-user-doc -->
-	 * <!-- end-user-doc -->
-	 * @param value the new value of the '<em>To Stage</em>' attribute.
-	 * @see #getToStage()
-	 * @generated
-	 */
-	void setToStage(String value);
+    /**
+     * Sets the value of the
+     * '{@link org.eclipse.fennec.model.atlas.wf.workflowapi.StageTransition#getToStage
+     * <em>To Stage</em>}' attribute. <!-- begin-user-doc --> <!-- end-user-doc -->
+     * 
+     * @param value the new value of the '<em>To Stage</em>' attribute.
+     * @see #getToStage()
+     * @generated
+     */
+    void setToStage(String value);
 
 } // StageTransition

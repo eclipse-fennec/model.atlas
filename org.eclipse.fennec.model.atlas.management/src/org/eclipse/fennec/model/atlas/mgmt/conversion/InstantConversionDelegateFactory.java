@@ -24,14 +24,14 @@ import org.eclipse.emf.ecore.EDataType.Internal.ConversionDelegate.Factory;
  * @since 09.10.2025
  */
 public class InstantConversionDelegateFactory implements Factory {
-	
-	@Override
-	public ConversionDelegate createConversionDelegate(EDataType eDataType) {
-		// Check if this is the Instant data type
-		if ("java.time.Instant".equals(eDataType.getInstanceClassName())) {
-			return new InstantConversionDelegate();
-		}
-		return null;
-	}
+
+    @Override
+    public ConversionDelegate createConversionDelegate(EDataType eDataType) {
+        // Check if this is the Instant data type
+        if ("java.time.Instant".equals(eDataType.getInstanceClassName())) {
+            return new InstantConversionDelegate();
+        }
+        return null;
+    }
 
 }

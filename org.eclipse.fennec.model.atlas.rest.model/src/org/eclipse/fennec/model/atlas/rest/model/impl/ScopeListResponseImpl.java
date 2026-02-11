@@ -33,133 +33,133 @@ import org.eclipse.fennec.model.atlas.rest.model.ScopeListResponse;
 import org.eclipse.fennec.model.atlas.wf.workflowapi.Scope;
 
 /**
- * <!-- begin-user-doc -->
- * An implementation of the model object '<em><b>Scope List Response</b></em>'.
- * <!-- end-user-doc -->
+ * <!-- begin-user-doc --> An implementation of the model object '<em><b>Scope
+ * List Response</b></em>'. <!-- end-user-doc -->
  * <p>
  * The following features are implemented:
  * </p>
  * <ul>
- *   <li>{@link org.eclipse.fennec.model.atlas.rest.model.impl.ScopeListResponseImpl#getScopes <em>Scopes</em>}</li>
+ * <li>{@link org.eclipse.fennec.model.atlas.rest.model.impl.ScopeListResponseImpl#getScopes
+ * <em>Scopes</em>}</li>
  * </ul>
  *
  * @generated
  */
 public class ScopeListResponseImpl extends MinimalEObjectImpl.Container implements ScopeListResponse {
-	/**
-	 * The cached value of the '{@link #getScopes() <em>Scopes</em>}' containment reference list.
-	 * <!-- begin-user-doc -->
-	 * <!-- end-user-doc -->
-	 * @see #getScopes()
-	 * @generated
-	 * @ordered
-	 */
-	protected EList<Scope> scopes;
+    /**
+     * The cached value of the '{@link #getScopes() <em>Scopes</em>}' containment
+     * reference list. <!-- begin-user-doc --> <!-- end-user-doc -->
+     * 
+     * @see #getScopes()
+     * @generated
+     * @ordered
+     */
+    protected EList<Scope> scopes;
 
-	/**
-	 * <!-- begin-user-doc -->
-	 * <!-- end-user-doc -->
-	 * @generated
-	 */
-	protected ScopeListResponseImpl() {
-		super();
-	}
+    /**
+     * <!-- begin-user-doc --> <!-- end-user-doc -->
+     * 
+     * @generated
+     */
+    protected ScopeListResponseImpl() {
+        super();
+    }
 
-	/**
-	 * <!-- begin-user-doc -->
-	 * <!-- end-user-doc -->
-	 * @generated
-	 */
-	@Override
-	protected EClass eStaticClass() {
-		return RestPackage.Literals.SCOPE_LIST_RESPONSE;
-	}
+    /**
+     * <!-- begin-user-doc --> <!-- end-user-doc -->
+     * 
+     * @generated
+     */
+    @Override
+    protected EClass eStaticClass() {
+        return RestPackage.Literals.SCOPE_LIST_RESPONSE;
+    }
 
-	/**
-	 * <!-- begin-user-doc -->
-	 * <!-- end-user-doc -->
-	 * @generated
-	 */
-	@Override
-	public EList<Scope> getScopes() {
-		if (scopes == null) {
-			scopes = new EObjectContainmentEList<Scope>(Scope.class, this, RestPackage.SCOPE_LIST_RESPONSE__SCOPES);
-		}
-		return scopes;
-	}
+    /**
+     * <!-- begin-user-doc --> <!-- end-user-doc -->
+     * 
+     * @generated
+     */
+    @Override
+    public EList<Scope> getScopes() {
+        if (scopes == null) {
+            scopes = new EObjectContainmentEList<Scope>(Scope.class, this, RestPackage.SCOPE_LIST_RESPONSE__SCOPES);
+        }
+        return scopes;
+    }
 
-	/**
-	 * <!-- begin-user-doc -->
-	 * <!-- end-user-doc -->
-	 * @generated
-	 */
-	@Override
-	public NotificationChain eInverseRemove(InternalEObject otherEnd, int featureID, NotificationChain msgs) {
-		switch (featureID) {
-			case RestPackage.SCOPE_LIST_RESPONSE__SCOPES:
-				return ((InternalEList<?>)getScopes()).basicRemove(otherEnd, msgs);
-		}
-		return super.eInverseRemove(otherEnd, featureID, msgs);
-	}
+    /**
+     * <!-- begin-user-doc --> <!-- end-user-doc -->
+     * 
+     * @generated
+     */
+    @Override
+    public NotificationChain eInverseRemove(InternalEObject otherEnd, int featureID, NotificationChain msgs) {
+        switch (featureID) {
+        case RestPackage.SCOPE_LIST_RESPONSE__SCOPES:
+            return ((InternalEList<?>) getScopes()).basicRemove(otherEnd, msgs);
+        }
+        return super.eInverseRemove(otherEnd, featureID, msgs);
+    }
 
-	/**
-	 * <!-- begin-user-doc -->
-	 * <!-- end-user-doc -->
-	 * @generated
-	 */
-	@Override
-	public Object eGet(int featureID, boolean resolve, boolean coreType) {
-		switch (featureID) {
-			case RestPackage.SCOPE_LIST_RESPONSE__SCOPES:
-				return getScopes();
-		}
-		return super.eGet(featureID, resolve, coreType);
-	}
+    /**
+     * <!-- begin-user-doc --> <!-- end-user-doc -->
+     * 
+     * @generated
+     */
+    @Override
+    public Object eGet(int featureID, boolean resolve, boolean coreType) {
+        switch (featureID) {
+        case RestPackage.SCOPE_LIST_RESPONSE__SCOPES:
+            return getScopes();
+        }
+        return super.eGet(featureID, resolve, coreType);
+    }
 
-	/**
-	 * <!-- begin-user-doc -->
-	 * <!-- end-user-doc -->
-	 * @generated
-	 */
-	@SuppressWarnings("unchecked")
-	@Override
-	public void eSet(int featureID, Object newValue) {
-		switch (featureID) {
-			case RestPackage.SCOPE_LIST_RESPONSE__SCOPES:
-				getScopes().clear();
-				getScopes().addAll((Collection<? extends Scope>)newValue);
-				return;
-		}
-		super.eSet(featureID, newValue);
-	}
+    /**
+     * <!-- begin-user-doc --> <!-- end-user-doc -->
+     * 
+     * @generated
+     */
+    @SuppressWarnings("unchecked")
+    @Override
+    public void eSet(int featureID, Object newValue) {
+        switch (featureID) {
+        case RestPackage.SCOPE_LIST_RESPONSE__SCOPES:
+            getScopes().clear();
+            getScopes().addAll((Collection<? extends Scope>) newValue);
+            return;
+        }
+        super.eSet(featureID, newValue);
+    }
 
-	/**
-	 * <!-- begin-user-doc -->
-	 * <!-- end-user-doc -->
-	 * @generated
-	 */
-	@Override
-	public void eUnset(int featureID) {
-		switch (featureID) {
-			case RestPackage.SCOPE_LIST_RESPONSE__SCOPES:
-				getScopes().clear();
-				return;
-		}
-		super.eUnset(featureID);
-	}
+    /**
+     * <!-- begin-user-doc --> <!-- end-user-doc -->
+     * 
+     * @generated
+     */
+    @Override
+    public void eUnset(int featureID) {
+        switch (featureID) {
+        case RestPackage.SCOPE_LIST_RESPONSE__SCOPES:
+            getScopes().clear();
+            return;
+        }
+        super.eUnset(featureID);
+    }
 
-	/**
-	 * <!-- begin-user-doc -->
-	 * <!-- end-user-doc -->
-	 * @generated
-	 */
-	@Override
-	public boolean eIsSet(int featureID) {
-		switch (featureID) {
-			case RestPackage.SCOPE_LIST_RESPONSE__SCOPES:
-				return scopes != null && !scopes.isEmpty();
-		}
-		return super.eIsSet(featureID);
-	}
+    /**
+     * <!-- begin-user-doc --> <!-- end-user-doc -->
+     * 
+     * @generated
+     */
+    @Override
+    public boolean eIsSet(int featureID) {
+        switch (featureID) {
+        case RestPackage.SCOPE_LIST_RESPONSE__SCOPES:
+            return scopes != null && !scopes.isEmpty();
+        }
+        return super.eIsSet(featureID);
+    }
 
-} //ScopeListResponseImpl
+} // ScopeListResponseImpl

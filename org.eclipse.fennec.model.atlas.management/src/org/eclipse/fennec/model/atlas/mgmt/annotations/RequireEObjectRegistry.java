@@ -28,12 +28,10 @@ import org.osgi.annotation.bundle.Requirement;
  */
 @Documented
 @Retention(RetentionPolicy.CLASS)
-@Target({
-		ElementType.TYPE, ElementType.PACKAGE
-})
+@Target({ ElementType.TYPE, ElementType.PACKAGE })
 @Requirement(namespace = MacCapabilityConstants.NAMESPACE_MAC_MANAGEMENT, //
-		name = MacCapabilityConstants.CAP_EOBJECT_REGISTRY, //
-		version = MacCapabilityConstants.VERSION_MANAGEMENT)
+        name = MacCapabilityConstants.CAP_EOBJECT_REGISTRY, //
+        version = MacCapabilityConstants.VERSION_MANAGEMENT)
 public @interface RequireEObjectRegistry {
 
 }

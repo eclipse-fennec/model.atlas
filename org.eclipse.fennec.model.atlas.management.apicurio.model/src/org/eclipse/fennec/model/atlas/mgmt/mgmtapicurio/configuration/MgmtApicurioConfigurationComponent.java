@@ -39,116 +39,130 @@ import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Deactivate;
 
 import org.osgi.service.condition.Condition;
+
 /**
- * The <b>PackageConfiguration</b> for the model.
- * The package will be registered into a OSGi base model registry.
+ * The <b>PackageConfiguration</b> for the model. The package will be registered
+ * into a OSGi base model registry.
  * 
  * @generated
  */
 @Component(name = "MgmtApicurioConfigurator")
-@Capability( namespace = "osgi.service", attribute = { "objectClass:List<String>=\"org.eclipse.fennec.model.atlas.mgmt.mgmtapicurio.util.MgmtApicurioResourceFactoryImpl, org.eclipse.emf.ecore.resource.Resource$Factory\"" , "uses:=\"org.eclipse.emf.ecore.resource,org.eclipse.fennec.model.atlas.mgmt.mgmtapicurio.util\"" })
-@Capability( namespace = "osgi.service", attribute = { "objectClass:List<String>=\"org.eclipse.fennec.model.atlas.mgmt.mgmtapicurio.MgmtApicurioFactory, org.eclipse.emf.ecore.EFactory\"" , "uses:=\"org.eclipse.emf.ecore,org.eclipse.fennec.model.atlas.mgmt.mgmtapicurio\"" })
-@Capability( namespace = "osgi.service", attribute = { "objectClass:List<String>=\"org.eclipse.fennec.model.atlas.mgmt.mgmtapicurio.MgmtApicurioPackage, org.eclipse.emf.ecore.EPackage\"" , "uses:=\"org.eclipse.emf.ecore,org.eclipse.fennec.model.atlas.mgmt.mgmtapicurio\"" })
-@Capability( namespace = "osgi.service", attribute = { "objectClass:List<String>=\"org.gecko.emf.osgi.configurator.EPackageConfigurator\"" , "uses:=\"org.eclipse.emf.ecore,org.eclipse.fennec.model.atlas.mgmt.mgmtapicurio\"" })
-@Capability( namespace = "osgi.service", attribute = { "objectClass:List<String>=\"org.osgi.service.condition.Condition\"" , "uses:=org.osgi.service.condition" })
+@Capability(namespace = "osgi.service", attribute = {
+        "objectClass:List<String>=\"org.eclipse.fennec.model.atlas.mgmt.mgmtapicurio.util.MgmtApicurioResourceFactoryImpl, org.eclipse.emf.ecore.resource.Resource$Factory\"",
+        "uses:=\"org.eclipse.emf.ecore.resource,org.eclipse.fennec.model.atlas.mgmt.mgmtapicurio.util\"" })
+@Capability(namespace = "osgi.service", attribute = {
+        "objectClass:List<String>=\"org.eclipse.fennec.model.atlas.mgmt.mgmtapicurio.MgmtApicurioFactory, org.eclipse.emf.ecore.EFactory\"",
+        "uses:=\"org.eclipse.emf.ecore,org.eclipse.fennec.model.atlas.mgmt.mgmtapicurio\"" })
+@Capability(namespace = "osgi.service", attribute = {
+        "objectClass:List<String>=\"org.eclipse.fennec.model.atlas.mgmt.mgmtapicurio.MgmtApicurioPackage, org.eclipse.emf.ecore.EPackage\"",
+        "uses:=\"org.eclipse.emf.ecore,org.eclipse.fennec.model.atlas.mgmt.mgmtapicurio\"" })
+@Capability(namespace = "osgi.service", attribute = {
+        "objectClass:List<String>=\"org.gecko.emf.osgi.configurator.EPackageConfigurator\"",
+        "uses:=\"org.eclipse.emf.ecore,org.eclipse.fennec.model.atlas.mgmt.mgmtapicurio\"" })
+@Capability(namespace = "osgi.service", attribute = {
+        "objectClass:List<String>=\"org.osgi.service.condition.Condition\"", "uses:=org.osgi.service.condition" })
 public class MgmtApicurioConfigurationComponent {
-	
-	private ServiceRegistration<?> packageRegistration = null;
-	private ServiceRegistration<EPackageConfigurator> ePackageConfiguratorRegistration = null;
-	private ServiceRegistration<?> eFactoryRegistration = null;
-	private ServiceRegistration<?> conditionRegistration = null;
-	private ServiceRegistration<?> resourceFactoryRegistration = null;
 
-	/**
-	 * Activates the Configuration Component.
-	 *
-	 * @generated
-	 */
-	@Activate
-	public void activate(BundleContext ctx) {
-		MgmtApicurioPackage ePackage = MgmtApicurioPackageImpl.eINSTANCE;
-		
-		
-		MgmtApicurioEPackageConfigurator packageConfigurator = registerEPackageConfiguratorService(ePackage, ctx);
-		registerResourceFactoryService(ctx);
-		registerEPackageService(ePackage, packageConfigurator, ctx);
-		registerEFactoryService(ePackage, packageConfigurator, ctx);
-		registerConditionService(packageConfigurator, ctx);
-	}
-	
-	/**
-	 * Registers the MgmtApicurioEPackageConfigurator as a service.
-	 *
-	 * @generated
-	 */
-	private MgmtApicurioEPackageConfigurator registerEPackageConfiguratorService(MgmtApicurioPackage ePackage, BundleContext ctx){
-		MgmtApicurioEPackageConfigurator packageConfigurator = new MgmtApicurioEPackageConfigurator(ePackage);
-		// register the EPackageConfigurator
-		Hashtable<String, Object> properties = new Hashtable<String, Object>();
-		properties.putAll(packageConfigurator.getServiceProperties());
-		ePackageConfiguratorRegistration = ctx.registerService(EPackageConfigurator.class, packageConfigurator, properties);
+    private ServiceRegistration<?> packageRegistration = null;
+    private ServiceRegistration<EPackageConfigurator> ePackageConfiguratorRegistration = null;
+    private ServiceRegistration<?> eFactoryRegistration = null;
+    private ServiceRegistration<?> conditionRegistration = null;
+    private ServiceRegistration<?> resourceFactoryRegistration = null;
 
-		return packageConfigurator;
-	}
+    /**
+     * Activates the Configuration Component.
+     *
+     * @generated
+     */
+    @Activate
+    public void activate(BundleContext ctx) {
+        MgmtApicurioPackage ePackage = MgmtApicurioPackageImpl.eINSTANCE;
 
-	/**
-	 * Registers the MgmtApicurioResourceFactoryImpl as a service.
-	 *
-	 * @generated
-	 */
-	private void registerResourceFactoryService(BundleContext ctx){
-		MgmtApicurioResourceFactoryImpl factory = new MgmtApicurioResourceFactoryImpl();
-		Hashtable<String, Object> properties = new Hashtable<String, Object>();
-		properties.putAll(factory.getServiceProperties());
-		String[] serviceClasses = new String[] {MgmtApicurioResourceFactoryImpl.class.getName(), Factory.class.getName()};
-		resourceFactoryRegistration = ctx.registerService(serviceClasses, factory, properties);
-	}
+        MgmtApicurioEPackageConfigurator packageConfigurator = registerEPackageConfiguratorService(ePackage, ctx);
+        registerResourceFactoryService(ctx);
+        registerEPackageService(ePackage, packageConfigurator, ctx);
+        registerEFactoryService(ePackage, packageConfigurator, ctx);
+        registerConditionService(packageConfigurator, ctx);
+    }
 
-	/**
-	 * Registers the MgmtApicurioPackage as a service.
-	 *
-	 * @generated
-	 */
-	private void registerEPackageService(MgmtApicurioPackage ePackage, MgmtApicurioEPackageConfigurator packageConfigurator, BundleContext ctx){
-		Hashtable<String, Object> properties = new Hashtable<String, Object>();
-		properties.putAll(packageConfigurator.getServiceProperties());
-		String[] serviceClasses = new String[] {MgmtApicurioPackage.class.getName(), EPackage.class.getName()};
-		packageRegistration = ctx.registerService(serviceClasses, ePackage, properties);
-	}
+    /**
+     * Registers the MgmtApicurioEPackageConfigurator as a service.
+     *
+     * @generated
+     */
+    private MgmtApicurioEPackageConfigurator registerEPackageConfiguratorService(MgmtApicurioPackage ePackage,
+            BundleContext ctx) {
+        MgmtApicurioEPackageConfigurator packageConfigurator = new MgmtApicurioEPackageConfigurator(ePackage);
+        // register the EPackageConfigurator
+        Hashtable<String, Object> properties = new Hashtable<String, Object>();
+        properties.putAll(packageConfigurator.getServiceProperties());
+        ePackageConfiguratorRegistration = ctx.registerService(EPackageConfigurator.class, packageConfigurator,
+                properties);
 
-	/**
-	 * Registers the MgmtApicurioFactory as a service.
-	 *
-	 * @generated
-	 */
-	private void registerEFactoryService(MgmtApicurioPackage ePackage, MgmtApicurioEPackageConfigurator packageConfigurator, BundleContext ctx){
-		Hashtable<String, Object> properties = new Hashtable<String, Object>();
-		properties.putAll(packageConfigurator.getServiceProperties());
-		String[] serviceClasses = new String[] {MgmtApicurioFactory.class.getName(), EFactory.class.getName()};
-		eFactoryRegistration = ctx.registerService(serviceClasses, ePackage.getMgmtApicurioFactory(), properties);
-	}
+        return packageConfigurator;
+    }
 
-	private void registerConditionService(MgmtApicurioEPackageConfigurator packageConfigurator, BundleContext ctx){
-		// register the EPackage
-		Hashtable<String, Object> properties = new Hashtable<String, Object>();
-		properties.putAll(packageConfigurator.getServiceProperties());
-		properties.put(Condition.CONDITION_ID, MgmtApicurioPackage.eNS_URI);
-		conditionRegistration = ctx.registerService(Condition.class, Condition.INSTANCE, properties);
-	}
+    /**
+     * Registers the MgmtApicurioResourceFactoryImpl as a service.
+     *
+     * @generated
+     */
+    private void registerResourceFactoryService(BundleContext ctx) {
+        MgmtApicurioResourceFactoryImpl factory = new MgmtApicurioResourceFactoryImpl();
+        Hashtable<String, Object> properties = new Hashtable<String, Object>();
+        properties.putAll(factory.getServiceProperties());
+        String[] serviceClasses = new String[] { MgmtApicurioResourceFactoryImpl.class.getName(),
+                Factory.class.getName() };
+        resourceFactoryRegistration = ctx.registerService(serviceClasses, factory, properties);
+    }
 
-	/**
-	 * Deactivates and unregisters everything.
-	 *
-	 * @generated
-	 */
-	@Deactivate
-	public void deactivate() {
-		conditionRegistration.unregister();
-		eFactoryRegistration.unregister();
-		packageRegistration.unregister();
-		resourceFactoryRegistration.unregister();
+    /**
+     * Registers the MgmtApicurioPackage as a service.
+     *
+     * @generated
+     */
+    private void registerEPackageService(MgmtApicurioPackage ePackage,
+            MgmtApicurioEPackageConfigurator packageConfigurator, BundleContext ctx) {
+        Hashtable<String, Object> properties = new Hashtable<String, Object>();
+        properties.putAll(packageConfigurator.getServiceProperties());
+        String[] serviceClasses = new String[] { MgmtApicurioPackage.class.getName(), EPackage.class.getName() };
+        packageRegistration = ctx.registerService(serviceClasses, ePackage, properties);
+    }
 
-		ePackageConfiguratorRegistration.unregister();
-		EPackage.Registry.INSTANCE.remove(MgmtApicurioPackage.eNS_URI);
-	}
+    /**
+     * Registers the MgmtApicurioFactory as a service.
+     *
+     * @generated
+     */
+    private void registerEFactoryService(MgmtApicurioPackage ePackage,
+            MgmtApicurioEPackageConfigurator packageConfigurator, BundleContext ctx) {
+        Hashtable<String, Object> properties = new Hashtable<String, Object>();
+        properties.putAll(packageConfigurator.getServiceProperties());
+        String[] serviceClasses = new String[] { MgmtApicurioFactory.class.getName(), EFactory.class.getName() };
+        eFactoryRegistration = ctx.registerService(serviceClasses, ePackage.getMgmtApicurioFactory(), properties);
+    }
+
+    private void registerConditionService(MgmtApicurioEPackageConfigurator packageConfigurator, BundleContext ctx) {
+        // register the EPackage
+        Hashtable<String, Object> properties = new Hashtable<String, Object>();
+        properties.putAll(packageConfigurator.getServiceProperties());
+        properties.put(Condition.CONDITION_ID, MgmtApicurioPackage.eNS_URI);
+        conditionRegistration = ctx.registerService(Condition.class, Condition.INSTANCE, properties);
+    }
+
+    /**
+     * Deactivates and unregisters everything.
+     *
+     * @generated
+     */
+    @Deactivate
+    public void deactivate() {
+        conditionRegistration.unregister();
+        eFactoryRegistration.unregister();
+        packageRegistration.unregister();
+        resourceFactoryRegistration.unregister();
+
+        ePackageConfiguratorRegistration.unregister();
+        EPackage.Registry.INSTANCE.remove(MgmtApicurioPackage.eNS_URI);
+    }
 }

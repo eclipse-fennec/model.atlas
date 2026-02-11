@@ -48,7 +48,9 @@ import jakarta.ws.rs.core.Response;
 /**
  * Integration tests for ModelConverterResource REST endpoints.
  *
- * <p>Tests cover:</p>
+ * <p>
+ * Tests cover:
+ * </p>
  * <ul>
  * <li>Converting EPackage from JSON to XML</li>
  * <li>Converting EPackage from XML to JSON</li>
@@ -92,10 +94,9 @@ public class ModelConverterResourceTest {
 
         // Small delay to allow service registration to propagate
         Thread.sleep(200);
-        
-        assertTrue(resourceReady,
-                "ModelConverterResource should be registered within " + TIMEOUT_SECONDS + " seconds. " +
-                "Check that the resource is properly configured and the Jakarta REST runtime is working.");
+
+        assertTrue(resourceReady, "ModelConverterResource should be registered within " + TIMEOUT_SECONDS + " seconds. "
+                + "Check that the resource is properly configured and the Jakarta REST runtime is working.");
     }
 
     @AfterEach
@@ -115,9 +116,7 @@ public class ModelConverterResourceTest {
         String jsonEPackage = createJsonEPackage(nsUri, "JsonToXmlPackage", "j2x");
 
         // When: POST with JSON content type and Accept XML
-        Response response = restClient
-                .target(BASE_URL)
-                .request(MediaType.APPLICATION_XML)
+        Response response = restClient.target(BASE_URL).request(MediaType.APPLICATION_XML)
                 .post(Entity.json(jsonEPackage));
 
         // Then: Should return 200 OK with XML content
@@ -139,9 +138,7 @@ public class ModelConverterResourceTest {
         String xmiContent = TestHelper.serializeToXMI(testPackage, resourceSet);
 
         // When: POST with XMI content type and Accept JSON
-        Response response = restClient
-                .target(BASE_URL)
-                .request(MediaType.APPLICATION_JSON)
+        Response response = restClient.target(BASE_URL).request(MediaType.APPLICATION_JSON)
                 .post(Entity.entity(xmiContent, "application/xmi"));
 
         // Then: Should return 200 OK with JSON content
@@ -163,9 +160,7 @@ public class ModelConverterResourceTest {
         String xmiContent = TestHelper.serializeToXMI(testPackage, resourceSet);
 
         // When: POST with XMI content type and Accept JSON
-        Response response = restClient
-                .target(BASE_URL)
-                .request(MediaType.APPLICATION_JSON)
+        Response response = restClient.target(BASE_URL).request(MediaType.APPLICATION_JSON)
                 .post(Entity.entity(xmiContent, "application/xmi"));
 
         // Then: Should return 200 OK
@@ -185,10 +180,7 @@ public class ModelConverterResourceTest {
         String jsonEPackage = createJsonEPackage(nsUri, "JsonToXmiPackage", "j2xmi");
 
         // When: POST with JSON content type and Accept XMI
-        Response response = restClient
-                .target(BASE_URL)
-                .request("application/xmi")
-                .post(Entity.json(jsonEPackage));
+        Response response = restClient.target(BASE_URL).request("application/xmi").post(Entity.json(jsonEPackage));
 
         // Then: Should return 200 OK
         assertEquals(200, response.getStatus(), "Should return HTTP 200 OK");
@@ -209,9 +201,7 @@ public class ModelConverterResourceTest {
         String xmiContent = TestHelper.serializeToXMI(complexPackage, resourceSet);
 
         // When: Convert from XMI to JSON
-        Response response = restClient
-                .target(BASE_URL)
-                .request(MediaType.APPLICATION_JSON)
+        Response response = restClient.target(BASE_URL).request(MediaType.APPLICATION_JSON)
                 .post(Entity.entity(xmiContent, "application/xmi"));
 
         // Then: Should preserve the package structure
@@ -232,9 +222,7 @@ public class ModelConverterResourceTest {
         String jsonEPackage = createJsonEPackage(nsUri, "UnsupportedPackage", "us");
 
         // When: POST with unsupported Accept header
-        Response response = restClient
-                .target(BASE_URL)
-                .request("application/unsupported-type")
+        Response response = restClient.target(BASE_URL).request("application/unsupported-type")
                 .post(Entity.json(jsonEPackage));
 
         // Then: Should return 415 Unsupported Media Type
@@ -250,9 +238,7 @@ public class ModelConverterResourceTest {
         String jsonEPackage = createJsonEPackage(nsUri, "JsonToJsonPackage", "j2j");
 
         // When: POST with JSON content type and Accept JSON (same format)
-        Response response = restClient
-                .target(BASE_URL)
-                .request(MediaType.APPLICATION_JSON)
+        Response response = restClient.target(BASE_URL).request(MediaType.APPLICATION_JSON)
                 .post(Entity.json(jsonEPackage));
 
         // Then: Should return 200 OK
@@ -273,9 +259,7 @@ public class ModelConverterResourceTest {
         String xmiContent = TestHelper.serializeToXMI(testPackage, resourceSet);
 
         // When: POST with XMI content type and wildcard Accept header
-        Response response = restClient
-                .target(BASE_URL)
-                .request(MediaType.WILDCARD)
+        Response response = restClient.target(BASE_URL).request(MediaType.WILDCARD)
                 .post(Entity.entity(xmiContent, "application/xmi"));
 
         // Then: Should return 200 OK (defaults to JSON)
@@ -294,9 +278,7 @@ public class ModelConverterResourceTest {
         String jsonEPackage = createJsonEPackage(nsUri, "ContentTypePackage", "ct");
 
         // When: POST requesting XML
-        Response response = restClient
-                .target(BASE_URL)
-                .request(MediaType.APPLICATION_XML)
+        Response response = restClient.target(BASE_URL).request(MediaType.APPLICATION_XML)
                 .post(Entity.json(jsonEPackage));
 
         // Then: Response Content-Type should be XML
@@ -311,9 +293,7 @@ public class ModelConverterResourceTest {
     // ========== Helper Methods ==========
 
     private String createJsonEPackage(String nsUri, String name, String nsPrefix) {
-        return String.format(
-            "{\"eClass\":\"http://www.eclipse.org/emf/2002/Ecore#//EPackage\"," +
-            "\"name\":\"%s\",\"nsURI\":\"%s\",\"nsPrefix\":\"%s\"}",
-            name, nsUri, nsPrefix);
+        return String.format("{\"eClass\":\"http://www.eclipse.org/emf/2002/Ecore#//EPackage\","
+                + "\"name\":\"%s\",\"nsURI\":\"%s\",\"nsPrefix\":\"%s\"}", name, nsUri, nsPrefix);
     }
 }

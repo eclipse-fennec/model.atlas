@@ -48,288 +48,288 @@ import jakarta.ws.rs.ext.MessageBodyReader;
 import jakarta.ws.rs.ext.MessageBodyWriter;
 
 /**
- * Direct unit tests for the JsonSchemaMessageBodyReaderWriter.
- * Tests both reading (JSON Schema -> EPackage) and writing (EPackage -> JSON Schema)
+ * Direct unit tests for the JsonSchemaMessageBodyReaderWriter. Tests both
+ * reading (JSON Schema -> EPackage) and writing (EPackage -> JSON Schema)
  * without going through the full REST endpoint.
  */
 @ExtendWith(BundleContextExtension.class)
 @ExtendWith(ServiceExtension.class)
 public class JsonSchemaMessageBodyReaderWriterTest {
 
-	private static final String JSON_SCHEMA_MEDIA_TYPE = "application/schema+json";
+    private static final String JSON_SCHEMA_MEDIA_TYPE = "application/schema+json";
 
-	@SuppressWarnings("rawtypes")
-	@InjectService List<MessageBodyWriter> messageBodyWriter;
-	
-	MessageBodyReader<EPackage> reader;	
-	MessageBodyWriter<EPackage> writer;
+    @SuppressWarnings("rawtypes")
+    @InjectService
+    List<MessageBodyWriter> messageBodyWriter;
 
-	@SuppressWarnings({ "rawtypes", "unchecked" })
-	@BeforeEach
-	void setUp(
-			@InjectBundleContext BundleContext context
-	) throws Exception {
-		
-		Collection<ServiceReference<MessageBodyReader>> readerReferences = context.getServiceReferences(MessageBodyReader.class, "(component.name=JSONSchemaMessagebodyReaderWriter)");
-		assertThat(readerReferences).isNotEmpty();
-		
-		Collection<ServiceReference<MessageBodyWriter>> writerReferences = context.getServiceReferences(MessageBodyWriter.class, "(component.name=JSONSchemaMessagebodyReaderWriter)");
-		assertThat(writerReferences).isNotEmpty();
-		
-		
-		reader = (MessageBodyReader<EPackage>) context.getService(readerReferences.iterator().next());
-		writer = (MessageBodyWriter<EPackage>) context.getService(writerReferences.iterator().next());
-		
-		assertNotNull(reader, "JsonSchemaMessageBodyReader service should be available");
-		assertNotNull(writer, "JsonSchemaMessageBodyWriter service should be available");
-	}
+    MessageBodyReader<EPackage> reader;
+    MessageBodyWriter<EPackage> writer;
 
-	// ============ WRITER TESTS ============
+    @SuppressWarnings({ "rawtypes", "unchecked" })
+    @BeforeEach
+    void setUp(@InjectBundleContext BundleContext context) throws Exception {
 
-	@Test
-	void testIsWriteable_WithEPackageAndJsonSchemaMediaType_ReturnsTrue() {
-		// Given: EPackage class and JSON Schema media type
-		MediaType mediaType = MediaType.valueOf(JSON_SCHEMA_MEDIA_TYPE);
+        Collection<ServiceReference<MessageBodyReader>> readerReferences = context
+                .getServiceReferences(MessageBodyReader.class, "(component.name=JSONSchemaMessagebodyReaderWriter)");
+        assertThat(readerReferences).isNotEmpty();
 
-		// When: Check if writable
-		boolean writable = writer.isWriteable(EPackage.class, EPackage.class, null, mediaType);
+        Collection<ServiceReference<MessageBodyWriter>> writerReferences = context
+                .getServiceReferences(MessageBodyWriter.class, "(component.name=JSONSchemaMessagebodyReaderWriter)");
+        assertThat(writerReferences).isNotEmpty();
 
-		// Then: Should return true
-		assertTrue(writable, "Should be writable for EPackage with application/schema+json");
-	}
+        reader = (MessageBodyReader<EPackage>) context.getService(readerReferences.iterator().next());
+        writer = (MessageBodyWriter<EPackage>) context.getService(writerReferences.iterator().next());
 
-	@Test
-	void testIsWriteable_WithWrongMediaType_ReturnsFalse() {
-		// Given: EPackage class but wrong media type
-		MediaType mediaType = MediaType.APPLICATION_JSON_TYPE;
+        assertNotNull(reader, "JsonSchemaMessageBodyReader service should be available");
+        assertNotNull(writer, "JsonSchemaMessageBodyWriter service should be available");
+    }
 
-		// When: Check if writable
-		boolean writable = writer.isWriteable(EPackage.class, EPackage.class, null, mediaType);
+    // ============ WRITER TESTS ============
 
-		// Then: Should return false
-		assertFalse(writable, "Should not be writable for EPackage with application/json");
-	}
+    @Test
+    void testIsWriteable_WithEPackageAndJsonSchemaMediaType_ReturnsTrue() {
+        // Given: EPackage class and JSON Schema media type
+        MediaType mediaType = MediaType.valueOf(JSON_SCHEMA_MEDIA_TYPE);
 
-	@Test
-	void testIsWriteable_WithWrongClass_ReturnsFalse() {
-		// Given: Non-EPackage class
-		MediaType mediaType = MediaType.valueOf(JSON_SCHEMA_MEDIA_TYPE);
+        // When: Check if writable
+        boolean writable = writer.isWriteable(EPackage.class, EPackage.class, null, mediaType);
 
-		// When: Check if writable
-		boolean writable = writer.isWriteable(String.class, String.class, null, mediaType);
+        // Then: Should return true
+        assertTrue(writable, "Should be writable for EPackage with application/schema+json");
+    }
 
-		// Then: Should return false
-		assertFalse(writable, "Should not be writable for non-EPackage class");
-	}
+    @Test
+    void testIsWriteable_WithWrongMediaType_ReturnsFalse() {
+        // Given: EPackage class but wrong media type
+        MediaType mediaType = MediaType.APPLICATION_JSON_TYPE;
 
-	@Test
-	void testWriteTo_SimpleEPackage_ProducesValidJsonSchema() throws Exception {
-		// Given: A simple EPackage
-		EPackage ePackage = createSimpleTestEPackage();
+        // When: Check if writable
+        boolean writable = writer.isWriteable(EPackage.class, EPackage.class, null, mediaType);
 
-		// When: Write to output stream
-		ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-		MediaType mediaType = MediaType.valueOf(JSON_SCHEMA_MEDIA_TYPE);
+        // Then: Should return false
+        assertFalse(writable, "Should not be writable for EPackage with application/json");
+    }
 
-		writer.writeTo(ePackage, EPackage.class, EPackage.class, null, mediaType, null, outputStream);
+    @Test
+    void testIsWriteable_WithWrongClass_ReturnsFalse() {
+        // Given: Non-EPackage class
+        MediaType mediaType = MediaType.valueOf(JSON_SCHEMA_MEDIA_TYPE);
 
-		// Then: Should produce valid JSON Schema
-		String jsonSchema = outputStream.toString("UTF-8");
-		assertNotNull(jsonSchema, "JSON Schema should not be null");
-		assertFalse(jsonSchema.isEmpty(), "JSON Schema should not be empty");
+        // When: Check if writable
+        boolean writable = writer.isWriteable(String.class, String.class, null, mediaType);
 
-		// Verify it contains expected JSON Schema elements
-		assertTrue(jsonSchema.contains("\"definitions\""), "JSON Schema should contain definitions");
-		assertTrue(jsonSchema.contains("SimpleTestPackage"), "JSON Schema should contain package name");
-		assertTrue(jsonSchema.contains("Person"), "JSON Schema should contain Person class");
-	}
+        // Then: Should return false
+        assertFalse(writable, "Should not be writable for non-EPackage class");
+    }
 
-	@Test
-	void testWriteTo_ComplexEPackage_WithAttributes_ProducesJsonSchema() throws Exception {
-		// Given: A complex EPackage with classes and attributes
-		EPackage ePackage = createComplexTestEPackage();
+    @Test
+    void testWriteTo_SimpleEPackage_ProducesValidJsonSchema() throws Exception {
+        // Given: A simple EPackage
+        EPackage ePackage = createSimpleTestEPackage();
 
-		// When: Write to output stream
-		ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-		MediaType mediaType = MediaType.valueOf(JSON_SCHEMA_MEDIA_TYPE);
+        // When: Write to output stream
+        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+        MediaType mediaType = MediaType.valueOf(JSON_SCHEMA_MEDIA_TYPE);
 
-		writer.writeTo(ePackage, EPackage.class, EPackage.class, null, mediaType, null, outputStream);
+        writer.writeTo(ePackage, EPackage.class, EPackage.class, null, mediaType, null, outputStream);
 
-		// Then: Should produce valid JSON Schema
-		String jsonSchema = outputStream.toString("UTF-8");
-		assertNotNull(jsonSchema, "JSON Schema should not be null");
-		assertFalse(jsonSchema.isEmpty(), "JSON Schema should not be empty");
+        // Then: Should produce valid JSON Schema
+        String jsonSchema = outputStream.toString("UTF-8");
+        assertNotNull(jsonSchema, "JSON Schema should not be null");
+        assertFalse(jsonSchema.isEmpty(), "JSON Schema should not be empty");
 
-		// Verify it contains the complex structure
-		assertTrue(jsonSchema.contains("Company"), "JSON Schema should contain Company class");
-		assertTrue(jsonSchema.contains("Employee"), "JSON Schema should contain Employee class");
-		assertTrue(jsonSchema.contains("name"), "JSON Schema should contain name attribute");
-	}
+        // Verify it contains expected JSON Schema elements
+        assertTrue(jsonSchema.contains("\"definitions\""), "JSON Schema should contain definitions");
+        assertTrue(jsonSchema.contains("SimpleTestPackage"), "JSON Schema should contain package name");
+        assertTrue(jsonSchema.contains("Person"), "JSON Schema should contain Person class");
+    }
 
-	// ============ READER TESTS ============
+    @Test
+    void testWriteTo_ComplexEPackage_WithAttributes_ProducesJsonSchema() throws Exception {
+        // Given: A complex EPackage with classes and attributes
+        EPackage ePackage = createComplexTestEPackage();
 
-	@Test
-	void testIsReadable_WithEPackageAndJsonSchemaMediaType_ReturnsTrue() {
-		// Given: EPackage class and JSON Schema media type
-		MediaType mediaType = MediaType.valueOf(JSON_SCHEMA_MEDIA_TYPE);
+        // When: Write to output stream
+        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+        MediaType mediaType = MediaType.valueOf(JSON_SCHEMA_MEDIA_TYPE);
 
-		// When: Check if readable
-		boolean readable = reader.isReadable(EPackage.class, EPackage.class, null, mediaType);
+        writer.writeTo(ePackage, EPackage.class, EPackage.class, null, mediaType, null, outputStream);
 
-		// Then: Should return true
-		assertTrue(readable, "Should be readable for EPackage with application/schema+json");
-	}
+        // Then: Should produce valid JSON Schema
+        String jsonSchema = outputStream.toString("UTF-8");
+        assertNotNull(jsonSchema, "JSON Schema should not be null");
+        assertFalse(jsonSchema.isEmpty(), "JSON Schema should not be empty");
 
-	@Test
-	void testIsReadable_WithWrongMediaType_ReturnsFalse() {
-		// Given: EPackage class but wrong media type
-		MediaType mediaType = MediaType.APPLICATION_JSON_TYPE;
+        // Verify it contains the complex structure
+        assertTrue(jsonSchema.contains("Company"), "JSON Schema should contain Company class");
+        assertTrue(jsonSchema.contains("Employee"), "JSON Schema should contain Employee class");
+        assertTrue(jsonSchema.contains("name"), "JSON Schema should contain name attribute");
+    }
 
-		// When: Check if readable
-		boolean readable = reader.isReadable(EPackage.class, EPackage.class, null, mediaType);
+    // ============ READER TESTS ============
 
-		// Then: Should return false
-		assertFalse(readable, "Should not be readable for EPackage with application/json");
-	}
+    @Test
+    void testIsReadable_WithEPackageAndJsonSchemaMediaType_ReturnsTrue() {
+        // Given: EPackage class and JSON Schema media type
+        MediaType mediaType = MediaType.valueOf(JSON_SCHEMA_MEDIA_TYPE);
 
-	@Test
-	void testReadFrom_SimpleJsonSchema_ProducesEPackage() throws Exception {
-		// Given: A simple JSON Schema
-		String jsonSchema = createSimpleJsonSchema();
-		InputStream inputStream = new ByteArrayInputStream(jsonSchema.getBytes("UTF-8"));
-		MediaType mediaType = MediaType.valueOf(JSON_SCHEMA_MEDIA_TYPE);
+        // When: Check if readable
+        boolean readable = reader.isReadable(EPackage.class, EPackage.class, null, mediaType);
 
-		// When: Read from input stream
-		EPackage ePackage = reader.readFrom(EPackage.class, EPackage.class, null, mediaType, null, inputStream);
+        // Then: Should return true
+        assertTrue(readable, "Should be readable for EPackage with application/schema+json");
+    }
 
-		// Then: Should produce valid EPackage
-		assertNotNull(ePackage, "EPackage should not be null");
-		assertNotNull(ePackage.getName(), "EPackage name should not be null");
-		assertFalse(ePackage.getEClassifiers().isEmpty(), "EPackage should have classifiers");
-	}
+    @Test
+    void testIsReadable_WithWrongMediaType_ReturnsFalse() {
+        // Given: EPackage class but wrong media type
+        MediaType mediaType = MediaType.APPLICATION_JSON_TYPE;
 
-	@Test
-	void testReadFrom_ComplexJsonSchemaFile_ProducesEPackage() throws Exception {
-		// Given: A complex JSON Schema from file
-		String jsonSchema = loadJsonSchemaFromFile("test-data/simple-person.schema.json");
-		InputStream inputStream = new ByteArrayInputStream(jsonSchema.getBytes("UTF-8"));
-		MediaType mediaType = MediaType.valueOf(JSON_SCHEMA_MEDIA_TYPE);
+        // When: Check if readable
+        boolean readable = reader.isReadable(EPackage.class, EPackage.class, null, mediaType);
 
-		// When: Read from input stream
-		EPackage ePackage = reader.readFrom(EPackage.class, EPackage.class, null, mediaType, null, inputStream);
+        // Then: Should return false
+        assertFalse(readable, "Should not be readable for EPackage with application/json");
+    }
 
-		// Then: Should produce valid EPackage
-		assertNotNull(ePackage, "EPackage should not be null");
-		assertNotNull(ePackage.getName(), "EPackage should have a name");
-	}
+    @Test
+    void testReadFrom_SimpleJsonSchema_ProducesEPackage() throws Exception {
+        // Given: A simple JSON Schema
+        String jsonSchema = createSimpleJsonSchema();
+        InputStream inputStream = new ByteArrayInputStream(jsonSchema.getBytes("UTF-8"));
+        MediaType mediaType = MediaType.valueOf(JSON_SCHEMA_MEDIA_TYPE);
 
-	// ============ ROUND-TRIP TESTS ============
+        // When: Read from input stream
+        EPackage ePackage = reader.readFrom(EPackage.class, EPackage.class, null, mediaType, null, inputStream);
 
-	@Test
-	void testRoundTrip_WriteAndRead_PreservesEPackageStructure() throws Exception {
-		// Given: An EPackage
-		EPackage originalPackage = createComplexTestEPackage();
-		String originalNsUri = originalPackage.getNsURI();
-		String originalName = originalPackage.getName();
-		int originalClassifierCount = originalPackage.getEClassifiers().size();
+        // Then: Should produce valid EPackage
+        assertNotNull(ePackage, "EPackage should not be null");
+        assertNotNull(ePackage.getName(), "EPackage name should not be null");
+        assertFalse(ePackage.getEClassifiers().isEmpty(), "EPackage should have classifiers");
+    }
 
-		// When: Write to JSON Schema and read back
-		ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-		MediaType mediaType = MediaType.valueOf(JSON_SCHEMA_MEDIA_TYPE);
+    @Test
+    void testReadFrom_ComplexJsonSchemaFile_ProducesEPackage() throws Exception {
+        // Given: A complex JSON Schema from file
+        String jsonSchema = loadJsonSchemaFromFile("test-data/simple-person.schema.json");
+        InputStream inputStream = new ByteArrayInputStream(jsonSchema.getBytes("UTF-8"));
+        MediaType mediaType = MediaType.valueOf(JSON_SCHEMA_MEDIA_TYPE);
 
-		writer.writeTo(originalPackage, EPackage.class, EPackage.class, null, mediaType, null, outputStream);
+        // When: Read from input stream
+        EPackage ePackage = reader.readFrom(EPackage.class, EPackage.class, null, mediaType, null, inputStream);
 
-		String jsonSchema = outputStream.toString("UTF-8");
-		InputStream inputStream = new ByteArrayInputStream(jsonSchema.getBytes("UTF-8"));
+        // Then: Should produce valid EPackage
+        assertNotNull(ePackage, "EPackage should not be null");
+        assertNotNull(ePackage.getName(), "EPackage should have a name");
+    }
 
-		EPackage roundTripPackage = reader.readFrom(EPackage.class, EPackage.class, null, mediaType, null, inputStream);
+    // ============ ROUND-TRIP TESTS ============
 
-		// Then: Should preserve the structure
-		assertNotNull(roundTripPackage, "Round-trip EPackage should not be null");
-		assertEquals(originalNsUri, roundTripPackage.getNsURI(), "NsURI should be preserved");
-		assertEquals(originalName, roundTripPackage.getName(), "Name should be preserved");
-		assertEquals(originalClassifierCount, roundTripPackage.getEClassifiers().size(),
-			"Number of classifiers should be preserved");
-	}
+    @Test
+    void testRoundTrip_WriteAndRead_PreservesEPackageStructure() throws Exception {
+        // Given: An EPackage
+        EPackage originalPackage = createComplexTestEPackage();
+        String originalNsUri = originalPackage.getNsURI();
+        String originalName = originalPackage.getName();
+        int originalClassifierCount = originalPackage.getEClassifiers().size();
 
-	// ============ HELPER METHODS ============
+        // When: Write to JSON Schema and read back
+        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+        MediaType mediaType = MediaType.valueOf(JSON_SCHEMA_MEDIA_TYPE);
 
-	private EPackage createSimpleTestEPackage() {
-		EPackage ePackage = EcoreFactory.eINSTANCE.createEPackage();
-		ePackage.setNsURI("http://test.eclipse.fennec/simple/1.0");
-		ePackage.setName("SimpleTestPackage");
-		ePackage.setNsPrefix("simple");
+        writer.writeTo(originalPackage, EPackage.class, EPackage.class, null, mediaType, null, outputStream);
 
-		// Create a simple EClass
-		EClass personClass = EcoreFactory.eINSTANCE.createEClass();
-		personClass.setName("Person");
+        String jsonSchema = outputStream.toString("UTF-8");
+        InputStream inputStream = new ByteArrayInputStream(jsonSchema.getBytes("UTF-8"));
 
-		ePackage.getEClassifiers().add(personClass);
+        EPackage roundTripPackage = reader.readFrom(EPackage.class, EPackage.class, null, mediaType, null, inputStream);
 
-		return ePackage;
-	}
+        // Then: Should preserve the structure
+        assertNotNull(roundTripPackage, "Round-trip EPackage should not be null");
+        assertEquals(originalNsUri, roundTripPackage.getNsURI(), "NsURI should be preserved");
+        assertEquals(originalName, roundTripPackage.getName(), "Name should be preserved");
+        assertEquals(originalClassifierCount, roundTripPackage.getEClassifiers().size(),
+                "Number of classifiers should be preserved");
+    }
 
-	private EPackage createComplexTestEPackage() {
-		EPackage ePackage = EcoreFactory.eINSTANCE.createEPackage();
-		ePackage.setNsURI("http://test.eclipse.fennec/complex/1.0");
-		ePackage.setName("ComplexTestPackage");
-		ePackage.setNsPrefix("complex");
+    // ============ HELPER METHODS ============
 
-		// Create Company class
-		EClass companyClass = EcoreFactory.eINSTANCE.createEClass();
-		companyClass.setName("Company");
+    private EPackage createSimpleTestEPackage() {
+        EPackage ePackage = EcoreFactory.eINSTANCE.createEPackage();
+        ePackage.setNsURI("http://test.eclipse.fennec/simple/1.0");
+        ePackage.setName("SimpleTestPackage");
+        ePackage.setNsPrefix("simple");
 
-		var companyNameAttr = EcoreFactory.eINSTANCE.createEAttribute();
-		companyNameAttr.setName("name");
-		companyNameAttr.setEType(EcorePackage.Literals.ESTRING);
-		companyClass.getEStructuralFeatures().add(companyNameAttr);
+        // Create a simple EClass
+        EClass personClass = EcoreFactory.eINSTANCE.createEClass();
+        personClass.setName("Person");
 
-		// Create Employee class
-		EClass employeeClass = EcoreFactory.eINSTANCE.createEClass();
-		employeeClass.setName("Employee");
+        ePackage.getEClassifiers().add(personClass);
 
-		var employeeNameAttr = EcoreFactory.eINSTANCE.createEAttribute();
-		employeeNameAttr.setName("name");
-		employeeNameAttr.setEType(EcorePackage.Literals.ESTRING);
-		employeeClass.getEStructuralFeatures().add(employeeNameAttr);
+        return ePackage;
+    }
 
-		var employeeIdAttr = EcoreFactory.eINSTANCE.createEAttribute();
-		employeeIdAttr.setName("employeeId");
-		employeeIdAttr.setEType(EcorePackage.Literals.EINT);
-		employeeClass.getEStructuralFeatures().add(employeeIdAttr);
+    private EPackage createComplexTestEPackage() {
+        EPackage ePackage = EcoreFactory.eINSTANCE.createEPackage();
+        ePackage.setNsURI("http://test.eclipse.fennec/complex/1.0");
+        ePackage.setName("ComplexTestPackage");
+        ePackage.setNsPrefix("complex");
 
-		ePackage.getEClassifiers().add(companyClass);
-		ePackage.getEClassifiers().add(employeeClass);
+        // Create Company class
+        EClass companyClass = EcoreFactory.eINSTANCE.createEClass();
+        companyClass.setName("Company");
 
-		return ePackage;
-	}
+        var companyNameAttr = EcoreFactory.eINSTANCE.createEAttribute();
+        companyNameAttr.setName("name");
+        companyNameAttr.setEType(EcorePackage.Literals.ESTRING);
+        companyClass.getEStructuralFeatures().add(companyNameAttr);
 
-	private String createSimpleJsonSchema() {
-		return """
-		{
-		  "$schema": "https://json-schema.org/draft/2020-12/schema",
-		  "$id": "http://test.eclipse.fennec/simple/1.0",
-		  "title": "Simple Test Schema",
-		  "type": "object",
-		  "definitions": {
-		    "Person": {
-		      "type": "object",
-		      "properties": {
-		        "name": { "type": "string" },
-		        "age": { "type": "integer" }
-		      }
-		    }
-		  }
-		}
-		""";
-	}
+        // Create Employee class
+        EClass employeeClass = EcoreFactory.eINSTANCE.createEClass();
+        employeeClass.setName("Employee");
 
-	private String loadJsonSchemaFromFile(String filePath) throws IOException {
-		Path path = Paths.get(filePath);
-		if (!Files.exists(path)) {
-			// If file doesn't exist, return a simple schema
-			return createSimpleJsonSchema();
-		}
-		return Files.readString(path);
-	}
+        var employeeNameAttr = EcoreFactory.eINSTANCE.createEAttribute();
+        employeeNameAttr.setName("name");
+        employeeNameAttr.setEType(EcorePackage.Literals.ESTRING);
+        employeeClass.getEStructuralFeatures().add(employeeNameAttr);
+
+        var employeeIdAttr = EcoreFactory.eINSTANCE.createEAttribute();
+        employeeIdAttr.setName("employeeId");
+        employeeIdAttr.setEType(EcorePackage.Literals.EINT);
+        employeeClass.getEStructuralFeatures().add(employeeIdAttr);
+
+        ePackage.getEClassifiers().add(companyClass);
+        ePackage.getEClassifiers().add(employeeClass);
+
+        return ePackage;
+    }
+
+    private String createSimpleJsonSchema() {
+        return """
+                {
+                  "$schema": "https://json-schema.org/draft/2020-12/schema",
+                  "$id": "http://test.eclipse.fennec/simple/1.0",
+                  "title": "Simple Test Schema",
+                  "type": "object",
+                  "definitions": {
+                    "Person": {
+                      "type": "object",
+                      "properties": {
+                        "name": { "type": "string" },
+                        "age": { "type": "integer" }
+                      }
+                    }
+                  }
+                }
+                """;
+    }
+
+    private String loadJsonSchemaFromFile(String filePath) throws IOException {
+        Path path = Paths.get(filePath);
+        if (!Files.exists(path)) {
+            // If file doesn't exist, return a simple schema
+            return createSimpleJsonSchema();
+        }
+        return Files.readString(path);
+    }
 }

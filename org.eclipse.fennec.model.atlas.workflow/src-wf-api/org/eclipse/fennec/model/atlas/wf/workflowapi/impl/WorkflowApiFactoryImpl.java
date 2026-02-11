@@ -24,121 +24,125 @@ import org.eclipse.emf.ecore.plugin.EcorePlugin;
 import org.eclipse.fennec.model.atlas.wf.workflowapi.*;
 
 /**
- * <!-- begin-user-doc -->
- * An implementation of the model <b>Factory</b>.
- * <!-- end-user-doc -->
+ * <!-- begin-user-doc --> An implementation of the model <b>Factory</b>. <!--
+ * end-user-doc -->
+ * 
  * @generated
  */
 public class WorkflowApiFactoryImpl extends EFactoryImpl implements WorkflowApiFactory {
-	/**
-	 * Creates the default factory implementation.
-	 * <!-- begin-user-doc -->
-	 * <!-- end-user-doc -->
-	 * @generated
-	 */
-	public static WorkflowApiFactory init() {
-		try {
-			WorkflowApiFactory theWorkflowApiFactory = (WorkflowApiFactory)EPackage.Registry.INSTANCE.getEFactory(WorkflowApiPackage.eNS_URI);
-			if (theWorkflowApiFactory != null) {
-				return theWorkflowApiFactory;
-			}
-		}
-		catch (Exception exception) {
-			EcorePlugin.INSTANCE.log(exception);
-		}
-		return new WorkflowApiFactoryImpl();
-	}
+    /**
+     * Creates the default factory implementation. <!-- begin-user-doc --> <!--
+     * end-user-doc -->
+     * 
+     * @generated
+     */
+    public static WorkflowApiFactory init() {
+        try {
+            WorkflowApiFactory theWorkflowApiFactory = (WorkflowApiFactory) EPackage.Registry.INSTANCE
+                    .getEFactory(WorkflowApiPackage.eNS_URI);
+            if (theWorkflowApiFactory != null) {
+                return theWorkflowApiFactory;
+            }
+        } catch (Exception exception) {
+            EcorePlugin.INSTANCE.log(exception);
+        }
+        return new WorkflowApiFactoryImpl();
+    }
 
-	/**
-	 * Creates an instance of the factory.
-	 * <!-- begin-user-doc -->
-	 * <!-- end-user-doc -->
-	 * @generated
-	 */
-	public WorkflowApiFactoryImpl() {
-		super();
-	}
+    /**
+     * Creates an instance of the factory. <!-- begin-user-doc --> <!-- end-user-doc
+     * -->
+     * 
+     * @generated
+     */
+    public WorkflowApiFactoryImpl() {
+        super();
+    }
 
-	/**
-	 * <!-- begin-user-doc -->
-	 * <!-- end-user-doc -->
-	 * @generated
-	 */
-	@Override
-	public EObject create(EClass eClass) {
-		switch (eClass.getClassifierID()) {
-			case WorkflowApiPackage.STAGE: return (EObject)createStage();
-			case WorkflowApiPackage.REGISTRY: return (EObject)createRegistry();
-			case WorkflowApiPackage.SCOPE: return (EObject)createScope();
-			case WorkflowApiPackage.STAGE_TRANSITION: return (EObject)createStageTransition();
-			default:
-				throw new IllegalArgumentException("The class '" + eClass.getName() + "' is not a valid classifier");
-		}
-	}
+    /**
+     * <!-- begin-user-doc --> <!-- end-user-doc -->
+     * 
+     * @generated
+     */
+    @Override
+    public EObject create(EClass eClass) {
+        switch (eClass.getClassifierID()) {
+        case WorkflowApiPackage.STAGE:
+            return (EObject) createStage();
+        case WorkflowApiPackage.REGISTRY:
+            return (EObject) createRegistry();
+        case WorkflowApiPackage.SCOPE:
+            return (EObject) createScope();
+        case WorkflowApiPackage.STAGE_TRANSITION:
+            return (EObject) createStageTransition();
+        default:
+            throw new IllegalArgumentException("The class '" + eClass.getName() + "' is not a valid classifier");
+        }
+    }
 
-	/**
-	 * <!-- begin-user-doc -->
-	 * <!-- end-user-doc -->
-	 * @generated
-	 */
-	@Override
-	public Stage createStage() {
-		StageImpl stage = new StageImpl();
-		return stage;
-	}
+    /**
+     * <!-- begin-user-doc --> <!-- end-user-doc -->
+     * 
+     * @generated
+     */
+    @Override
+    public Stage createStage() {
+        StageImpl stage = new StageImpl();
+        return stage;
+    }
 
-	/**
-	 * <!-- begin-user-doc -->
-	 * <!-- end-user-doc -->
-	 * @generated
-	 */
-	@Override
-	public Registry createRegistry() {
-		RegistryImpl registry = new RegistryImpl();
-		return registry;
-	}
+    /**
+     * <!-- begin-user-doc --> <!-- end-user-doc -->
+     * 
+     * @generated
+     */
+    @Override
+    public Registry createRegistry() {
+        RegistryImpl registry = new RegistryImpl();
+        return registry;
+    }
 
-	/**
-	 * <!-- begin-user-doc -->
-	 * <!-- end-user-doc -->
-	 * @generated
-	 */
-	@Override
-	public Scope createScope() {
-		ScopeImpl scope = new ScopeImpl();
-		return scope;
-	}
+    /**
+     * <!-- begin-user-doc --> <!-- end-user-doc -->
+     * 
+     * @generated
+     */
+    @Override
+    public Scope createScope() {
+        ScopeImpl scope = new ScopeImpl();
+        return scope;
+    }
 
-	/**
-	 * <!-- begin-user-doc -->
-	 * <!-- end-user-doc -->
-	 * @generated
-	 */
-	@Override
-	public StageTransition createStageTransition() {
-		StageTransitionImpl stageTransition = new StageTransitionImpl();
-		return stageTransition;
-	}
+    /**
+     * <!-- begin-user-doc --> <!-- end-user-doc -->
+     * 
+     * @generated
+     */
+    @Override
+    public StageTransition createStageTransition() {
+        StageTransitionImpl stageTransition = new StageTransitionImpl();
+        return stageTransition;
+    }
 
-	/**
-	 * <!-- begin-user-doc -->
-	 * <!-- end-user-doc -->
-	 * @generated
-	 */
-	@Override
-	public WorkflowApiPackage getWorkflowApiPackage() {
-		return (WorkflowApiPackage)getEPackage();
-	}
+    /**
+     * <!-- begin-user-doc --> <!-- end-user-doc -->
+     * 
+     * @generated
+     */
+    @Override
+    public WorkflowApiPackage getWorkflowApiPackage() {
+        return (WorkflowApiPackage) getEPackage();
+    }
 
-	/**
-	 * <!-- begin-user-doc -->
-	 * <!-- end-user-doc -->
-	 * @deprecated
-	 * @generated
-	 */
-	@Deprecated
-	public static WorkflowApiPackage getPackage() {
-		return WorkflowApiPackage.eINSTANCE;
-	}
+    /**
+     * <!-- begin-user-doc --> <!-- end-user-doc -->
+     * 
+     * @deprecated
+     * @generated
+     */
+    @Deprecated
+    public static WorkflowApiPackage getPackage() {
+        return WorkflowApiPackage.eINSTANCE;
+    }
 
-} //WorkflowApiFactoryImpl
+} // WorkflowApiFactoryImpl

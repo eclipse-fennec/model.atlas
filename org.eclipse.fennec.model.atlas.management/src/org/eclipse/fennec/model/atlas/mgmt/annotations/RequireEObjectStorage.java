@@ -24,21 +24,20 @@ import org.osgi.annotation.bundle.Requirement;
 /**
  * Meta annotation requiring file-based storage capabilities.
  * 
- * <p>This annotation declares an OSGi requirement for file-based
- * EObject storage services with Lucene indexing and role-based
- * workspace isolation.</p>
+ * <p>
+ * This annotation declares an OSGi requirement for file-based EObject storage
+ * services with Lucene indexing and role-based workspace isolation.
+ * </p>
  * 
  * @author Mark Hoffmann
  * @since 1.0.0
  */
 @Documented
 @Retention(RetentionPolicy.CLASS)
-@Target({
-    ElementType.TYPE, ElementType.PACKAGE
-})
+@Target({ ElementType.TYPE, ElementType.PACKAGE })
 @Requirement(namespace = "mac.management", //
-    name = "EObjectStorage", //
-    version = "1.0")
+        name = "EObjectStorage", //
+        version = "1.0")
 public @interface RequireEObjectStorage {
 
 }

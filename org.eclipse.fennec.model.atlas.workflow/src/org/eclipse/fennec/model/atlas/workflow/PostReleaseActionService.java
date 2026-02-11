@@ -18,11 +18,14 @@ import java.time.Instant;
 import org.osgi.util.promise.Promise;
 
 /**
- * Service interface for executing post-release actions after successful object release.
+ * Service interface for executing post-release actions after successful object
+ * release.
  * 
- * <p>This service is responsible for performing actions that should happen after
- * an object has been successfully released to production storage. Common post-release
- * actions include:</p>
+ * <p>
+ * This service is responsible for performing actions that should happen after
+ * an object has been successfully released to production storage. Common
+ * post-release actions include:
+ * </p>
  * 
  * <ul>
  * <li>EPackage registration in the OSGi EMF registry</li>
@@ -32,49 +35,58 @@ import org.osgi.util.promise.Promise;
  * <li>Audit trail creation</li>
  * </ul>
  * 
- * <p>The service uses asynchronous operations to avoid blocking the release workflow
- * and provides proper error handling for post-release failures.</p>
+ * <p>
+ * The service uses asynchronous operations to avoid blocking the release
+ * workflow and provides proper error handling for post-release failures.
+ * </p>
  * 
  * @author Mark Hoffmann
  * @since 1.0.0
  */
 public interface PostReleaseActionService {
-    
+
     /**
      * Executes post-release actions for a released object.
      * 
-     * <p>This method is called after successful object release and should perform
-     * all necessary post-release actions asynchronously. The implementation should
-     * be resilient to failures and not affect the main release workflow.</p>
+     * <p>
+     * This method is called after successful object release and should perform all
+     * necessary post-release actions asynchronously. The implementation should be
+     * resilient to failures and not affect the main release workflow.
+     * </p>
      * 
-     * @param scope the scope of the released object
-     * @param registry the registry of the released object
-     * @param stage the released stage
-     * @param objectId the ID of the released object
-     * @param objectType the type of the released object (e.g., "EPackage", "Route")
-     * @param releaseUser the user who released the object
+     * @param scope        the scope of the released object
+     * @param registry     the registry of the released object
+     * @param stage        the released stage
+     * @param objectId     the ID of the released object
+     * @param objectType   the type of the released object (e.g., "EPackage",
+     *                     "Route")
+     * @param releaseUser  the user who released the object
      * @param releaseNotes optional release notes
      * @return Promise that resolves when all post-release actions are complete
      */
-    Promise<Void> executePostReleaseActions(String scope, String registry, String stage, String objectId, String objectType, String releaseUser, String releaseNotes);
-    
+    Promise<Void> executePostReleaseActions(String scope, String registry, String stage, String objectId,
+            String objectType, String releaseUser, String releaseNotes);
+
     /**
      * Executes post-unrelease actions when an object is removed from production.
      * 
-     * <p>This method should reverse the post-release actions, such as unregistering
-     * EPackages from the OSGi EMF registry or removing from external systems.</p>
+     * <p>
+     * This method should reverse the post-release actions, such as unregistering
+     * EPackages from the OSGi EMF registry or removing from external systems.
+     * </p>
      * 
-     * @param scope the scope of the released object
-     * @param registry the registry of the released object
-     * @param stage the released stage
-     * @param objectId the ID of the object being unreleaseed
-     * @param objectType the type of the object
-     * @param unreleaseUser the user performing the unrelease action
+     * @param scope           the scope of the released object
+     * @param registry        the registry of the released object
+     * @param stage           the released stage
+     * @param objectId        the ID of the object being unreleaseed
+     * @param objectType      the type of the object
+     * @param unreleaseUser   the user performing the unrelease action
      * @param unreleaseReason the reason for unreleasing
      * @return Promise that resolves when all post-unrelease actions are complete
      */
-    Promise<Void> executePostUnreleaseActions(String scope, String registry, String stage, String objectId, String objectType, String unreleaseUser, String unreleaseReason);
-    
+    Promise<Void> executePostUnreleaseActions(String scope, String registry, String stage, String objectId,
+            String objectType, String unreleaseUser, String unreleaseReason);
+
     /**
      * Checks if post-release actions are supported for the given object type.
      * 
@@ -82,19 +94,21 @@ public interface PostReleaseActionService {
      * @return true if post-release actions are supported, false otherwise
      */
     boolean supportsObjectType(String objectType);
-    
+
     /**
-     * Returns information about the last post-release action execution for an object.
+     * Returns information about the last post-release action execution for an
+     * object.
      * 
      * @param objectId the object ID to check
-     * @return information about the last execution, or null if no actions were executed
+     * @return information about the last execution, or null if no actions were
+     *         executed
      */
     PostReleaseActionInfo getLastActionInfo(String objectId);
-    
-                                                                                                                        
+
     /**
-     * Executes initialization at startup. This might be needed in case some post release actions need to be re-run every time the app starts up
-     * (like the EPackage registration)
+     * Executes initialization at startup. This might be needed in case some post
+     * release actions need to be re-run every time the app starts up (like the
+     * EPackage registration)
      * 
      * @param scope
      * @param registry
@@ -103,18 +117,21 @@ public interface PostReleaseActionService {
      * @param objectType
      * @return
      */
-    Promise<Void> executeStartupInitialization(String scope, String registry, String stage, String objectId, String objectType);                                                                                                                                                     
-                                                                                                                                                                                                 
-                                                                                                                   
+    Promise<Void> executeStartupInitialization(String scope, String registry, String stage, String objectId,
+            String objectType);
+
     /**
-     * Method to check from the outside whether this PostReReleaseActionService requires some initialization at startup
+     * Method to check from the outside whether this PostReReleaseActionService
+     * requires some initialization at startup
+     * 
      * @return
      */
-    boolean requiresStartupInitialization(); 
-    
+    boolean requiresStartupInitialization();
+
     /**
-     * Executes cleanup action. This might be needed in case some post unrelease actions need to be re-run every time the registry is gone
-     * (like the EPackage registration)
+     * Executes cleanup action. This might be needed in case some post unrelease
+     * actions need to be re-run every time the registry is gone (like the EPackage
+     * registration)
      * 
      * @param scope
      * @param registry
@@ -123,45 +140,46 @@ public interface PostReleaseActionService {
      * @param objectType
      * @return
      */
-    Promise<Void> executeCleanupAction(String scope, String registry, String stage, String objectId, String objectType);                                                                                                                                                     
-                                                                                                                                                                                                 
-                                                                                                                   
+    Promise<Void> executeCleanupAction(String scope, String registry, String stage, String objectId, String objectType);
+
     /**
-     * Method to check from the outside whether this PostReReleaseActionService requires some cleanup action 
+     * Method to check from the outside whether this PostReReleaseActionService
+     * requires some cleanup action
+     * 
      * @return
      */
-    boolean requiresCleanup(); 
-    
+    boolean requiresCleanup();
+
     /**
      * Information about post-release action execution.
      */
     interface PostReleaseActionInfo {
-        
+
         /**
          * @return the object ID
          */
         String getObjectId();
-        
+
         /**
          * @return the timestamp when actions were executed
          */
         Instant getExecutionTime();
-        
+
         /**
          * @return true if all actions completed successfully
          */
         boolean isSuccessful();
-        
+
         /**
          * @return error message if actions failed, null otherwise
          */
         String getErrorMessage();
-        
+
         /**
          * @return the user who triggered the actions
          */
         String getExecutionUser();
-        
+
         /**
          * @return details about which actions were performed
          */

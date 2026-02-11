@@ -39,116 +39,130 @@ import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Deactivate;
 
 import org.osgi.service.condition.Condition;
+
 /**
- * The <b>PackageConfiguration</b> for the model.
- * The package will be registered into a OSGi base model registry.
+ * The <b>PackageConfiguration</b> for the model. The package will be registered
+ * into a OSGi base model registry.
  * 
  * @generated
  */
 @Component(name = "WorkflowApiConfigurator")
-@Capability( namespace = "osgi.service", attribute = { "objectClass:List<String>=\"org.eclipse.fennec.model.atlas.wf.workflowapi.util.WorkflowApiResourceFactoryImpl, org.eclipse.emf.ecore.resource.Resource$Factory\"" , "uses:=\"org.eclipse.emf.ecore.resource,org.eclipse.fennec.model.atlas.wf.workflowapi.util\"" })
-@Capability( namespace = "osgi.service", attribute = { "objectClass:List<String>=\"org.eclipse.fennec.model.atlas.wf.workflowapi.WorkflowApiFactory, org.eclipse.emf.ecore.EFactory\"" , "uses:=\"org.eclipse.emf.ecore,org.eclipse.fennec.model.atlas.wf.workflowapi\"" })
-@Capability( namespace = "osgi.service", attribute = { "objectClass:List<String>=\"org.eclipse.fennec.model.atlas.wf.workflowapi.WorkflowApiPackage, org.eclipse.emf.ecore.EPackage\"" , "uses:=\"org.eclipse.emf.ecore,org.eclipse.fennec.model.atlas.wf.workflowapi\"" })
-@Capability( namespace = "osgi.service", attribute = { "objectClass:List<String>=\"org.gecko.emf.osgi.configurator.EPackageConfigurator\"" , "uses:=\"org.eclipse.emf.ecore,org.eclipse.fennec.model.atlas.wf.workflowapi\"" })
-@Capability( namespace = "osgi.service", attribute = { "objectClass:List<String>=\"org.osgi.service.condition.Condition\"" , "uses:=org.osgi.service.condition" })
+@Capability(namespace = "osgi.service", attribute = {
+        "objectClass:List<String>=\"org.eclipse.fennec.model.atlas.wf.workflowapi.util.WorkflowApiResourceFactoryImpl, org.eclipse.emf.ecore.resource.Resource$Factory\"",
+        "uses:=\"org.eclipse.emf.ecore.resource,org.eclipse.fennec.model.atlas.wf.workflowapi.util\"" })
+@Capability(namespace = "osgi.service", attribute = {
+        "objectClass:List<String>=\"org.eclipse.fennec.model.atlas.wf.workflowapi.WorkflowApiFactory, org.eclipse.emf.ecore.EFactory\"",
+        "uses:=\"org.eclipse.emf.ecore,org.eclipse.fennec.model.atlas.wf.workflowapi\"" })
+@Capability(namespace = "osgi.service", attribute = {
+        "objectClass:List<String>=\"org.eclipse.fennec.model.atlas.wf.workflowapi.WorkflowApiPackage, org.eclipse.emf.ecore.EPackage\"",
+        "uses:=\"org.eclipse.emf.ecore,org.eclipse.fennec.model.atlas.wf.workflowapi\"" })
+@Capability(namespace = "osgi.service", attribute = {
+        "objectClass:List<String>=\"org.gecko.emf.osgi.configurator.EPackageConfigurator\"",
+        "uses:=\"org.eclipse.emf.ecore,org.eclipse.fennec.model.atlas.wf.workflowapi\"" })
+@Capability(namespace = "osgi.service", attribute = {
+        "objectClass:List<String>=\"org.osgi.service.condition.Condition\"", "uses:=org.osgi.service.condition" })
 public class WorkflowApiConfigurationComponent {
-	
-	private ServiceRegistration<?> packageRegistration = null;
-	private ServiceRegistration<EPackageConfigurator> ePackageConfiguratorRegistration = null;
-	private ServiceRegistration<?> eFactoryRegistration = null;
-	private ServiceRegistration<?> conditionRegistration = null;
-	private ServiceRegistration<?> resourceFactoryRegistration = null;
 
-	/**
-	 * Activates the Configuration Component.
-	 *
-	 * @generated
-	 */
-	@Activate
-	public void activate(BundleContext ctx) {
-		WorkflowApiPackage ePackage = WorkflowApiPackageImpl.eINSTANCE;
-		
-		
-		WorkflowApiEPackageConfigurator packageConfigurator = registerEPackageConfiguratorService(ePackage, ctx);
-		registerResourceFactoryService(ctx);
-		registerEPackageService(ePackage, packageConfigurator, ctx);
-		registerEFactoryService(ePackage, packageConfigurator, ctx);
-		registerConditionService(packageConfigurator, ctx);
-	}
-	
-	/**
-	 * Registers the WorkflowApiEPackageConfigurator as a service.
-	 *
-	 * @generated
-	 */
-	private WorkflowApiEPackageConfigurator registerEPackageConfiguratorService(WorkflowApiPackage ePackage, BundleContext ctx){
-		WorkflowApiEPackageConfigurator packageConfigurator = new WorkflowApiEPackageConfigurator(ePackage);
-		// register the EPackageConfigurator
-		Hashtable<String, Object> properties = new Hashtable<String, Object>();
-		properties.putAll(packageConfigurator.getServiceProperties());
-		ePackageConfiguratorRegistration = ctx.registerService(EPackageConfigurator.class, packageConfigurator, properties);
+    private ServiceRegistration<?> packageRegistration = null;
+    private ServiceRegistration<EPackageConfigurator> ePackageConfiguratorRegistration = null;
+    private ServiceRegistration<?> eFactoryRegistration = null;
+    private ServiceRegistration<?> conditionRegistration = null;
+    private ServiceRegistration<?> resourceFactoryRegistration = null;
 
-		return packageConfigurator;
-	}
+    /**
+     * Activates the Configuration Component.
+     *
+     * @generated
+     */
+    @Activate
+    public void activate(BundleContext ctx) {
+        WorkflowApiPackage ePackage = WorkflowApiPackageImpl.eINSTANCE;
 
-	/**
-	 * Registers the WorkflowApiResourceFactoryImpl as a service.
-	 *
-	 * @generated
-	 */
-	private void registerResourceFactoryService(BundleContext ctx){
-		WorkflowApiResourceFactoryImpl factory = new WorkflowApiResourceFactoryImpl();
-		Hashtable<String, Object> properties = new Hashtable<String, Object>();
-		properties.putAll(factory.getServiceProperties());
-		String[] serviceClasses = new String[] {WorkflowApiResourceFactoryImpl.class.getName(), Factory.class.getName()};
-		resourceFactoryRegistration = ctx.registerService(serviceClasses, factory, properties);
-	}
+        WorkflowApiEPackageConfigurator packageConfigurator = registerEPackageConfiguratorService(ePackage, ctx);
+        registerResourceFactoryService(ctx);
+        registerEPackageService(ePackage, packageConfigurator, ctx);
+        registerEFactoryService(ePackage, packageConfigurator, ctx);
+        registerConditionService(packageConfigurator, ctx);
+    }
 
-	/**
-	 * Registers the WorkflowApiPackage as a service.
-	 *
-	 * @generated
-	 */
-	private void registerEPackageService(WorkflowApiPackage ePackage, WorkflowApiEPackageConfigurator packageConfigurator, BundleContext ctx){
-		Hashtable<String, Object> properties = new Hashtable<String, Object>();
-		properties.putAll(packageConfigurator.getServiceProperties());
-		String[] serviceClasses = new String[] {WorkflowApiPackage.class.getName(), EPackage.class.getName()};
-		packageRegistration = ctx.registerService(serviceClasses, ePackage, properties);
-	}
+    /**
+     * Registers the WorkflowApiEPackageConfigurator as a service.
+     *
+     * @generated
+     */
+    private WorkflowApiEPackageConfigurator registerEPackageConfiguratorService(WorkflowApiPackage ePackage,
+            BundleContext ctx) {
+        WorkflowApiEPackageConfigurator packageConfigurator = new WorkflowApiEPackageConfigurator(ePackage);
+        // register the EPackageConfigurator
+        Hashtable<String, Object> properties = new Hashtable<String, Object>();
+        properties.putAll(packageConfigurator.getServiceProperties());
+        ePackageConfiguratorRegistration = ctx.registerService(EPackageConfigurator.class, packageConfigurator,
+                properties);
 
-	/**
-	 * Registers the WorkflowApiFactory as a service.
-	 *
-	 * @generated
-	 */
-	private void registerEFactoryService(WorkflowApiPackage ePackage, WorkflowApiEPackageConfigurator packageConfigurator, BundleContext ctx){
-		Hashtable<String, Object> properties = new Hashtable<String, Object>();
-		properties.putAll(packageConfigurator.getServiceProperties());
-		String[] serviceClasses = new String[] {WorkflowApiFactory.class.getName(), EFactory.class.getName()};
-		eFactoryRegistration = ctx.registerService(serviceClasses, ePackage.getWorkflowApiFactory(), properties);
-	}
+        return packageConfigurator;
+    }
 
-	private void registerConditionService(WorkflowApiEPackageConfigurator packageConfigurator, BundleContext ctx){
-		// register the EPackage
-		Hashtable<String, Object> properties = new Hashtable<String, Object>();
-		properties.putAll(packageConfigurator.getServiceProperties());
-		properties.put(Condition.CONDITION_ID, WorkflowApiPackage.eNS_URI);
-		conditionRegistration = ctx.registerService(Condition.class, Condition.INSTANCE, properties);
-	}
+    /**
+     * Registers the WorkflowApiResourceFactoryImpl as a service.
+     *
+     * @generated
+     */
+    private void registerResourceFactoryService(BundleContext ctx) {
+        WorkflowApiResourceFactoryImpl factory = new WorkflowApiResourceFactoryImpl();
+        Hashtable<String, Object> properties = new Hashtable<String, Object>();
+        properties.putAll(factory.getServiceProperties());
+        String[] serviceClasses = new String[] { WorkflowApiResourceFactoryImpl.class.getName(),
+                Factory.class.getName() };
+        resourceFactoryRegistration = ctx.registerService(serviceClasses, factory, properties);
+    }
 
-	/**
-	 * Deactivates and unregisters everything.
-	 *
-	 * @generated
-	 */
-	@Deactivate
-	public void deactivate() {
-		conditionRegistration.unregister();
-		eFactoryRegistration.unregister();
-		packageRegistration.unregister();
-		resourceFactoryRegistration.unregister();
+    /**
+     * Registers the WorkflowApiPackage as a service.
+     *
+     * @generated
+     */
+    private void registerEPackageService(WorkflowApiPackage ePackage,
+            WorkflowApiEPackageConfigurator packageConfigurator, BundleContext ctx) {
+        Hashtable<String, Object> properties = new Hashtable<String, Object>();
+        properties.putAll(packageConfigurator.getServiceProperties());
+        String[] serviceClasses = new String[] { WorkflowApiPackage.class.getName(), EPackage.class.getName() };
+        packageRegistration = ctx.registerService(serviceClasses, ePackage, properties);
+    }
 
-		ePackageConfiguratorRegistration.unregister();
-		EPackage.Registry.INSTANCE.remove(WorkflowApiPackage.eNS_URI);
-	}
+    /**
+     * Registers the WorkflowApiFactory as a service.
+     *
+     * @generated
+     */
+    private void registerEFactoryService(WorkflowApiPackage ePackage,
+            WorkflowApiEPackageConfigurator packageConfigurator, BundleContext ctx) {
+        Hashtable<String, Object> properties = new Hashtable<String, Object>();
+        properties.putAll(packageConfigurator.getServiceProperties());
+        String[] serviceClasses = new String[] { WorkflowApiFactory.class.getName(), EFactory.class.getName() };
+        eFactoryRegistration = ctx.registerService(serviceClasses, ePackage.getWorkflowApiFactory(), properties);
+    }
+
+    private void registerConditionService(WorkflowApiEPackageConfigurator packageConfigurator, BundleContext ctx) {
+        // register the EPackage
+        Hashtable<String, Object> properties = new Hashtable<String, Object>();
+        properties.putAll(packageConfigurator.getServiceProperties());
+        properties.put(Condition.CONDITION_ID, WorkflowApiPackage.eNS_URI);
+        conditionRegistration = ctx.registerService(Condition.class, Condition.INSTANCE, properties);
+    }
+
+    /**
+     * Deactivates and unregisters everything.
+     *
+     * @generated
+     */
+    @Deactivate
+    public void deactivate() {
+        conditionRegistration.unregister();
+        eFactoryRegistration.unregister();
+        packageRegistration.unregister();
+        resourceFactoryRegistration.unregister();
+
+        ePackageConfiguratorRegistration.unregister();
+        EPackage.Registry.INSTANCE.remove(WorkflowApiPackage.eNS_URI);
+    }
 }

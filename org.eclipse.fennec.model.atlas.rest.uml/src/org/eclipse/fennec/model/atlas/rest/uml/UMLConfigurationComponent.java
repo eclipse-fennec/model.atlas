@@ -35,70 +35,74 @@ import org.osgi.service.condition.Condition;
  */
 @Component(immediate = true, name = "UMLConfigurationComponent")
 public class UMLConfigurationComponent {
-	
-	private ServiceRegistration<?> ePackageConfiguratorRegistration = null;
-	private ServiceRegistration<?> resourceFactoryRegistration = null;
-	private ServiceRegistration<?> packageRegistration = null;
-	private ServiceRegistration<?> eFactoryRegistration = null;
-	private ServiceRegistration<?> conditionRegistration = null;
-	
-	@Activate
-	public void activate(BundleContext ctx) {
-		UMLPackage ePackage = UMLPackage.eINSTANCE;
-		UMLEPackageConfigurator packageConfigurator = registerEPackageConfiguratorService(ePackage, ctx);
-		registerResourceFactoryService(ctx);
-		registerEPackageService(ePackage, packageConfigurator, ctx);
-		registerEFactoryService(ePackage, packageConfigurator, ctx);
-		registerConditionService(packageConfigurator, ctx);
-	}
-	
-	@Deactivate
-	public void deactivate() {
-		ePackageConfiguratorRegistration.unregister();
-		resourceFactoryRegistration.unregister();
-		packageRegistration.unregister();
-		eFactoryRegistration.unregister();
-		conditionRegistration.unregister();
-	}
-	
-	private void registerResourceFactoryService(BundleContext ctx){
-		EnhanchedUMLResourceFactoryImpl factory = new EnhanchedUMLResourceFactoryImpl();
-		Hashtable<String, Object> properties = new Hashtable<String, Object>();
-		properties.putAll(factory.getServiceProperties());
-		String[] serviceClasses = new String[] {EnhanchedUMLResourceFactoryImpl.class.getName(), Factory.class.getName()};
-		resourceFactoryRegistration = ctx.registerService(serviceClasses, factory, properties);
-	}
-	
-	private UMLEPackageConfigurator registerEPackageConfiguratorService(UMLPackage ePackage, BundleContext ctx){
-		UMLEPackageConfigurator packageConfigurator = new UMLEPackageConfigurator(ePackage);
-		// register the EPackageConfigurator
-		Hashtable<String, Object> properties = new Hashtable<String, Object>();
-		properties.putAll(packageConfigurator.getServiceProperties());
-		ePackageConfiguratorRegistration = ctx.registerService(EPackageConfigurator.class, packageConfigurator, properties);
 
-		return packageConfigurator;
-	}
-	
-	private void registerEPackageService(UMLPackage ePackage, UMLEPackageConfigurator packageConfigurator, BundleContext ctx){
-		Hashtable<String, Object> properties = new Hashtable<String, Object>();
-		properties.putAll(packageConfigurator.getServiceProperties());
-		String[] serviceClasses = new String[] {UMLPackage.class.getName(), EPackage.class.getName()};
-		packageRegistration = ctx.registerService(serviceClasses, ePackage, properties);
-	}
-	
-	private void registerEFactoryService(UMLPackage ePackage, UMLEPackageConfigurator packageConfigurator, BundleContext ctx){
-		Hashtable<String, Object> properties = new Hashtable<String, Object>();
-		properties.putAll(packageConfigurator.getServiceProperties());
-		String[] serviceClasses = new String[] {UMLFactory.class.getName(), EFactory.class.getName()};
-		eFactoryRegistration = ctx.registerService(serviceClasses, ePackage.getUMLFactory(), properties);
-	}
-	
-	private void registerConditionService(UMLEPackageConfigurator packageConfigurator, BundleContext ctx){
-		// register the EPackage
-		Hashtable<String, Object> properties = new Hashtable<String, Object>();
-		properties.putAll(packageConfigurator.getServiceProperties());
-		properties.put(Condition.CONDITION_ID, UMLPackage.eNS_URI);
-		conditionRegistration = ctx.registerService(Condition.class, Condition.INSTANCE, properties);
-	}
+    private ServiceRegistration<?> ePackageConfiguratorRegistration = null;
+    private ServiceRegistration<?> resourceFactoryRegistration = null;
+    private ServiceRegistration<?> packageRegistration = null;
+    private ServiceRegistration<?> eFactoryRegistration = null;
+    private ServiceRegistration<?> conditionRegistration = null;
+
+    @Activate
+    public void activate(BundleContext ctx) {
+        UMLPackage ePackage = UMLPackage.eINSTANCE;
+        UMLEPackageConfigurator packageConfigurator = registerEPackageConfiguratorService(ePackage, ctx);
+        registerResourceFactoryService(ctx);
+        registerEPackageService(ePackage, packageConfigurator, ctx);
+        registerEFactoryService(ePackage, packageConfigurator, ctx);
+        registerConditionService(packageConfigurator, ctx);
+    }
+
+    @Deactivate
+    public void deactivate() {
+        ePackageConfiguratorRegistration.unregister();
+        resourceFactoryRegistration.unregister();
+        packageRegistration.unregister();
+        eFactoryRegistration.unregister();
+        conditionRegistration.unregister();
+    }
+
+    private void registerResourceFactoryService(BundleContext ctx) {
+        EnhanchedUMLResourceFactoryImpl factory = new EnhanchedUMLResourceFactoryImpl();
+        Hashtable<String, Object> properties = new Hashtable<String, Object>();
+        properties.putAll(factory.getServiceProperties());
+        String[] serviceClasses = new String[] { EnhanchedUMLResourceFactoryImpl.class.getName(),
+                Factory.class.getName() };
+        resourceFactoryRegistration = ctx.registerService(serviceClasses, factory, properties);
+    }
+
+    private UMLEPackageConfigurator registerEPackageConfiguratorService(UMLPackage ePackage, BundleContext ctx) {
+        UMLEPackageConfigurator packageConfigurator = new UMLEPackageConfigurator(ePackage);
+        // register the EPackageConfigurator
+        Hashtable<String, Object> properties = new Hashtable<String, Object>();
+        properties.putAll(packageConfigurator.getServiceProperties());
+        ePackageConfiguratorRegistration = ctx.registerService(EPackageConfigurator.class, packageConfigurator,
+                properties);
+
+        return packageConfigurator;
+    }
+
+    private void registerEPackageService(UMLPackage ePackage, UMLEPackageConfigurator packageConfigurator,
+            BundleContext ctx) {
+        Hashtable<String, Object> properties = new Hashtable<String, Object>();
+        properties.putAll(packageConfigurator.getServiceProperties());
+        String[] serviceClasses = new String[] { UMLPackage.class.getName(), EPackage.class.getName() };
+        packageRegistration = ctx.registerService(serviceClasses, ePackage, properties);
+    }
+
+    private void registerEFactoryService(UMLPackage ePackage, UMLEPackageConfigurator packageConfigurator,
+            BundleContext ctx) {
+        Hashtable<String, Object> properties = new Hashtable<String, Object>();
+        properties.putAll(packageConfigurator.getServiceProperties());
+        String[] serviceClasses = new String[] { UMLFactory.class.getName(), EFactory.class.getName() };
+        eFactoryRegistration = ctx.registerService(serviceClasses, ePackage.getUMLFactory(), properties);
+    }
+
+    private void registerConditionService(UMLEPackageConfigurator packageConfigurator, BundleContext ctx) {
+        // register the EPackage
+        Hashtable<String, Object> properties = new Hashtable<String, Object>();
+        properties.putAll(packageConfigurator.getServiceProperties());
+        properties.put(Condition.CONDITION_ID, UMLPackage.eNS_URI);
+        conditionRegistration = ctx.registerService(Condition.class, Condition.INSTANCE, properties);
+    }
 
 }

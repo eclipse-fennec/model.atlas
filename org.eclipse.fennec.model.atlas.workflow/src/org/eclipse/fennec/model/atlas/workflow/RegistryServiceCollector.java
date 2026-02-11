@@ -32,32 +32,33 @@ import org.osgi.service.component.annotations.ReferencePolicyOption;
 @Component(immediate = true, name = "RegistryServiceCollector", service = RegistryServiceCollector.class)
 public class RegistryServiceCollector {
 
-	private static final Logger LOGGER = Logger.getLogger(RegistryServiceCollector.class.getName());
+    private static final Logger LOGGER = Logger.getLogger(RegistryServiceCollector.class.getName());
 
-	private Map<String, RegistryService<?>> registryServiceMap = new ConcurrentHashMap<>();
+    private Map<String, RegistryService<?>> registryServiceMap = new ConcurrentHashMap<>();
 
-	public RegistryService<?> getRegistryServiceByRegistryName(String registryName) {
-		return registryServiceMap.getOrDefault(registryName, null);
-	}
+    public RegistryService<?> getRegistryServiceByRegistryName(String registryName) {
+        return registryServiceMap.getOrDefault(registryName, null);
+    }
 
-	@Reference(policy = ReferencePolicy.DYNAMIC, policyOption = ReferencePolicyOption.GREEDY, cardinality = ReferenceCardinality.MULTIPLE)
-	public void bindRegistryService(RegistryService<?> registryService, Map<String, Object> properties) {
-		if(!properties.containsKey("registry.name") || ((String) properties.get("registry.name")).isEmpty()) {
-			LOGGER.severe(String.format("Cannot store RegistryService with registry.name property not set or empty"));
-			return;
-		}
-		String registryName = (String) properties.get("registry.name");
-		if(registryServiceMap.containsKey(registryName)) {
-			LOGGER.warning(String.format("RegistryService with name %s already existed. This will override it", registryName));
-		}
-		registryServiceMap.put(registryName, registryService);
-	}
-	
-	public void unbindRegistryService(RegistryService<?> registryService, Map<String, Object> properties) {
-		if(!properties.containsKey("registry.name") || ((String) properties.get("registry.name")).isEmpty()) {
-			return;
-		}
-		String registryName = (String) properties.get("registry.name");
-		registryServiceMap.remove(registryName);
-	}
+    @Reference(policy = ReferencePolicy.DYNAMIC, policyOption = ReferencePolicyOption.GREEDY, cardinality = ReferenceCardinality.MULTIPLE)
+    public void bindRegistryService(RegistryService<?> registryService, Map<String, Object> properties) {
+        if (!properties.containsKey("registry.name") || ((String) properties.get("registry.name")).isEmpty()) {
+            LOGGER.severe(String.format("Cannot store RegistryService with registry.name property not set or empty"));
+            return;
+        }
+        String registryName = (String) properties.get("registry.name");
+        if (registryServiceMap.containsKey(registryName)) {
+            LOGGER.warning(
+                    String.format("RegistryService with name %s already existed. This will override it", registryName));
+        }
+        registryServiceMap.put(registryName, registryService);
+    }
+
+    public void unbindRegistryService(RegistryService<?> registryService, Map<String, Object> properties) {
+        if (!properties.containsKey("registry.name") || ((String) properties.get("registry.name")).isEmpty()) {
+            return;
+        }
+        String registryName = (String) properties.get("registry.name");
+        registryServiceMap.remove(registryName);
+    }
 }

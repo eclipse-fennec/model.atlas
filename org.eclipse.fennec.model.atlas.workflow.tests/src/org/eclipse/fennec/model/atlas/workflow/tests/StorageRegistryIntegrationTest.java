@@ -40,8 +40,10 @@ import org.osgi.test.junit5.service.ServiceExtension;
 /**
  * Integration test for StorageRegistry with real storage services.
  * 
- * <p>This test verifies that the StorageRegistry correctly discovers and manages
- * storage services in a real OSGi environment with file-based storage backends.</p>
+ * <p>
+ * This test verifies that the StorageRegistry correctly discovers and manages
+ * storage services in a real OSGi environment with file-based storage backends.
+ * </p>
  */
 @ExtendWith(BundleContextExtension.class)
 @ExtendWith(ServiceExtension.class)
@@ -56,9 +58,9 @@ class StorageRegistryIntegrationTest {
     void setUp() {
         // Set temp directory system property for OSGi test configurations
         System.setProperty("tempDir", tempDir.toString());
-        
+
         managementFactory = ManagementFactory.eINSTANCE;
-        
+
     }
 
     @Test
@@ -71,7 +73,7 @@ class StorageRegistryIntegrationTest {
     @Test
     @StorageRegistrySetup
     void testStorageServiceDiscovery(@InjectService(timeout = 5000l) StorageRegistry storageRegistry) {
-    	// Verify that the registry is properly injected
+        // Verify that the registry is properly injected
         assertNotNull(storageRegistry, "StorageRegistry should be injected");
         // Verify that all expected storage services are registered
         EList<String> availableTypes = storageRegistry.getAvailableTypes();
@@ -81,11 +83,10 @@ class StorageRegistryIntegrationTest {
         assertTrue(availableTypes.contains("file"), "Should have file storage type");
     }
 
-
     @Test
     @StorageRegistrySetup
     void testGetAllStorages(@InjectService StorageRegistry storageRegistry) {
-    	// Verify that the registry is properly injected
+        // Verify that the registry is properly injected
         assertNotNull(storageRegistry, "StorageRegistry should be injected");
         // Test getting all registered storage services
         EList<EObjectStorageService<EObject>> allStorages = storageRegistry.getAllStorages();
@@ -96,7 +97,7 @@ class StorageRegistryIntegrationTest {
     @Test
     @StorageRegistrySetup
     void testStorageStatistics(@InjectService StorageRegistry storageRegistry) {
-    	// Verify that the registry is properly injected
+        // Verify that the registry is properly injected
         assertNotNull(storageRegistry, "StorageRegistry should be injected");
         // Test getting storage statistics
         Map<String, Object> statistics = storageRegistry.getStorageStatistics();
@@ -115,7 +116,7 @@ class StorageRegistryIntegrationTest {
     @Test
     @StorageRegistrySetup
     void testCrossStorageSearch(@InjectService StorageRegistry storageRegistry) throws Exception {
-    	// Verify that the registry is properly injected
+        // Verify that the registry is properly injected
         assertNotNull(storageRegistry, "StorageRegistry should be injected");
         // Store a test object in file storage to verify cross-storage search
         EObjectStorageService<EObject> fileStorage = storageRegistry.getStorageByType("file");
@@ -124,9 +125,11 @@ class StorageRegistryIntegrationTest {
         // Create test metadata
         ObjectMetadata testMetadata = createTestMetadata("test-object-1", ObjectStatus.DRAFT, "TestPackage");
 
-        // Store a simple EObject (we'll use ObjectMetadata itself as the EObject for simplicity)
+        // Store a simple EObject (we'll use ObjectMetadata itself as the EObject for
+        // simplicity)
         // Using default scope, registry, and stage for testing
-        fileStorage.storeObject("default", "test-registry", "draft", "test-object-1", testMetadata, testMetadata).getValue();
+        fileStorage.storeObject("default", "test-registry", "draft", "test-object-1", testMetadata, testMetadata)
+                .getValue();
         String objectId = testMetadata.getObjectId();
         assertNotNull(objectId);
 
@@ -148,12 +151,10 @@ class StorageRegistryIntegrationTest {
         fileStorage.deleteObject("default", "test-registry", "draft", objectId);
     }
 
- 
-
     @Test
     @StorageRegistrySetup
     void testStorageBackendTypes(@InjectService StorageRegistry storageRegistry) {
-    	// Verify that the registry is properly injected
+        // Verify that the registry is properly injected
         assertNotNull(storageRegistry, "StorageRegistry should be injected");
         // Verify that storage services have proper backend types configured
         EObjectStorageService<EObject> fileStorage = storageRegistry.getStorageByType("file");

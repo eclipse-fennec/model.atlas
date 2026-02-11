@@ -27,45 +27,47 @@ import org.eclipse.fennec.model.atlas.mgmt.api.ManagementApiPackage;
 import org.gecko.emf.osgi.constants.EMFNamespaces;
 
 /**
- * <!-- begin-user-doc -->
- * The <b>Resource Factory</b> associated with the package.
- * <!-- end-user-doc -->
+ * <!-- begin-user-doc --> The <b>Resource Factory</b> associated with the
+ * package. <!-- end-user-doc -->
+ * 
  * @see org.eclipse.fennec.model.atlas.mgmt.api.util.ManagementApiResourceImpl
  * @generated
  */
 public class ManagementApiResourceFactoryImpl extends ResourceFactoryImpl {
-	/**
-	 * Creates an instance of the resource factory.
-	 * <!-- begin-user-doc -->
-	 * <!-- end-user-doc -->
-	 * @generated
-	 */
-	public ManagementApiResourceFactoryImpl() {
-		super();
-	}
+    /**
+     * Creates an instance of the resource factory. <!-- begin-user-doc --> <!--
+     * end-user-doc -->
+     * 
+     * @generated
+     */
+    public ManagementApiResourceFactoryImpl() {
+        super();
+    }
 
-	/**
-	 * Creates an instance of the resource.
-	 * <!-- begin-user-doc -->
-	 * <!-- end-user-doc -->
-	 * @generated
-	 */
-	@Override
-	public Resource createResource(URI uri) {
-		Resource result = new ManagementApiResourceImpl(uri);
-		return result;
-	}
+    /**
+     * Creates an instance of the resource. <!-- begin-user-doc --> <!--
+     * end-user-doc -->
+     * 
+     * @generated
+     */
+    @Override
+    public Resource createResource(URI uri) {
+        Resource result = new ManagementApiResourceImpl(uri);
+        return result;
+    }
 
-	/**
-	 * A method providing the Properties the services around this ResourceFactory should be registered with.
-	 * @generated
-	 */
-	public Map<String, Object> getServiceProperties() {
-		Map<String, Object> properties = new HashMap<String, Object>();
-		properties.put(EMFNamespaces.EMF_CONFIGURATOR_NAME, ManagementApiPackage.eNAME);
-		properties.put(EMFNamespaces.EMF_MODEL_FILE_EXT, "managementapi");
-		properties.put(EMFNamespaces.EMF_MODEL_VERSION, "1.0");
-		return properties;
-	}
+    /**
+     * A method providing the Properties the services around this ResourceFactory
+     * should be registered with.
+     * 
+     * @generated
+     */
+    public Map<String, Object> getServiceProperties() {
+        Map<String, Object> properties = new HashMap<String, Object>();
+        properties.put(EMFNamespaces.EMF_CONFIGURATOR_NAME, ManagementApiPackage.eNAME);
+        properties.put(EMFNamespaces.EMF_MODEL_FILE_EXT, "managementapi");
+        properties.put(EMFNamespaces.EMF_MODEL_VERSION, "1.0");
+        return properties;
+    }
 
-} //ManagementApiResourceFactoryImpl
+} // ManagementApiResourceFactoryImpl

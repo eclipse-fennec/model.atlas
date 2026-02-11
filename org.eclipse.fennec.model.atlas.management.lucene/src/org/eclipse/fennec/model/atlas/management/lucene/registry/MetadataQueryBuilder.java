@@ -20,29 +20,24 @@ import java.util.List;
 /**
  * Builder for creating Lucene query strings from metadata search criteria.
  * 
- * <p>This utility class provides a fluent API for building complex Lucene queries
+ * <p>
+ * This utility class provides a fluent API for building complex Lucene queries
  * to search ObjectMetadata fields efficiently. It handles proper escaping and
- * formatting of different field types.</p>
+ * formatting of different field types.
+ * </p>
  * 
  * <h3>Usage Examples</h3>
+ * 
  * <pre>{@code
  * // Simple user search
- * String query = MetadataQueryBuilder.create()
- *     .uploadUser("john")
- *     .build();
+ * String query = MetadataQueryBuilder.create().uploadUser("john").build();
  * 
  * // Complex query with multiple criteria
- * String query = MetadataQueryBuilder.create()
- *     .objectType("EPackage")
- *     .sourceChannel("AI_GENERATOR")
- *     .uploadTimeRange(start, end)
- *     .property("version", "1.0")
- *     .build();
+ * String query = MetadataQueryBuilder.create().objectType("EPackage").sourceChannel("AI_GENERATOR")
+ *         .uploadTimeRange(start, end).property("version", "1.0").build();
  * 
  * // Text search across multiple fields
- * String query = MetadataQueryBuilder.create()
- *     .anyField("sensor")
- *     .build();
+ * String query = MetadataQueryBuilder.create().anyField("sensor").build();
  * }</pre>
  * 
  * @author Mark Hoffmann
@@ -78,8 +73,8 @@ public class MetadataQueryBuilder {
     }
 
     /**
-     * Adds a condition for upload user.
-     * Note: This field uses exact match (StringField), so no escaping is applied.
+     * Adds a condition for upload user. Note: This field uses exact match
+     * (StringField), so no escaping is applied.
      * 
      * @param user the upload user to search for
      * @return this builder for method chaining
@@ -92,8 +87,8 @@ public class MetadataQueryBuilder {
     }
 
     /**
-     * Adds a condition for review user.
-     * Note: This field uses exact match (StringField), so no escaping is applied.
+     * Adds a condition for review user. Note: This field uses exact match
+     * (StringField), so no escaping is applied.
      * 
      * @param user the review user to search for
      * @return this builder for method chaining
@@ -119,17 +114,17 @@ public class MetadataQueryBuilder {
     }
 
     /**
-     * Adds a condition for any user (upload, review, or last change).
-     * Note: User fields use exact match (StringField), so no escaping is applied.
+     * Adds a condition for any user (upload, review, or last change). Note: User
+     * fields use exact match (StringField), so no escaping is applied.
      * 
      * @param user the user to search for
      * @return this builder for method chaining
      */
     public MetadataQueryBuilder anyUser(String user) {
         if (user != null && !user.isEmpty()) {
-            conditions.add("(" + LuceneRegistryHelper.FIELD_UPLOAD_USER + ":" + user + 
-                          " OR " + LuceneRegistryHelper.FIELD_REVIEW_USER + ":" + user +
-                          " OR " + LuceneRegistryHelper.FIELD_LAST_CHANGE_USER + ":" + user + ")");
+            conditions.add("(" + LuceneRegistryHelper.FIELD_UPLOAD_USER + ":" + user + " OR "
+                    + LuceneRegistryHelper.FIELD_REVIEW_USER + ":" + user + " OR "
+                    + LuceneRegistryHelper.FIELD_LAST_CHANGE_USER + ":" + user + ")");
         }
         return this;
     }
@@ -174,12 +169,12 @@ public class MetadataQueryBuilder {
     }
 
     /**
-     * Adds a condition for upload time range.
-     * Note: For optimal performance, use LuceneRegistryHelper.searchByUploadTimeRange() directly
-     * instead of building string queries for time ranges.
+     * Adds a condition for upload time range. Note: For optimal performance, use
+     * LuceneRegistryHelper.searchByUploadTimeRange() directly instead of building
+     * string queries for time ranges.
      * 
      * @param start the start time (inclusive)
-     * @param end the end time (inclusive)
+     * @param end   the end time (inclusive)
      * @return this builder for method chaining
      */
     public MetadataQueryBuilder uploadTimeRange(Instant start, Instant end) {
@@ -223,7 +218,7 @@ public class MetadataQueryBuilder {
      * Adds a condition for review time range.
      * 
      * @param start the start time (inclusive)
-     * @param end the end time (inclusive)
+     * @param end   the end time (inclusive)
      * @return this builder for method chaining
      */
     public MetadataQueryBuilder reviewTimeRange(Instant start, Instant end) {
@@ -239,14 +234,15 @@ public class MetadataQueryBuilder {
      * Adds a condition for compliance check time range.
      * 
      * @param start the start time (inclusive)
-     * @param end the end time (inclusive)
+     * @param end   the end time (inclusive)
      * @return this builder for method chaining
      */
     public MetadataQueryBuilder complianceCheckTimeRange(Instant start, Instant end) {
         if (start != null && end != null) {
             long startMillis = start.toEpochMilli();
             long endMillis = end.toEpochMilli();
-            conditions.add(LuceneRegistryHelper.FIELD_COMPLIANCE_CHECK_TIME + ":[" + startMillis + " TO " + endMillis + "]");
+            conditions.add(
+                    LuceneRegistryHelper.FIELD_COMPLIANCE_CHECK_TIME + ":[" + startMillis + " TO " + endMillis + "]");
         }
         return this;
     }
@@ -255,7 +251,7 @@ public class MetadataQueryBuilder {
      * Adds a condition for last change time range.
      * 
      * @param start the start time (inclusive)
-     * @param end the end time (inclusive)
+     * @param end   the end time (inclusive)
      * @return this builder for method chaining
      */
     public MetadataQueryBuilder lastChangeTimeRange(Instant start, Instant end) {
@@ -268,8 +264,8 @@ public class MetadataQueryBuilder {
     }
 
     /**
-     * Adds a condition for generation trigger fingerprint.
-     * Note: This field uses exact match (StringField), so no escaping is applied.
+     * Adds a condition for generation trigger fingerprint. Note: This field uses
+     * exact match (StringField), so no escaping is applied.
      * 
      * @param fingerprint the JSON fingerprint that triggered generation
      * @return this builder for method chaining
@@ -296,8 +292,8 @@ public class MetadataQueryBuilder {
     }
 
     /**
-     * Adds a condition for governance documentation ID.
-     * Note: This field uses exact match (StringField), so no escaping is applied.
+     * Adds a condition for governance documentation ID. Note: This field uses exact
+     * match (StringField), so no escaping is applied.
      * 
      * @param documentationId the governance documentation reference
      * @return this builder for method chaining
@@ -311,8 +307,8 @@ public class MetadataQueryBuilder {
     }
 
     /**
-     * Adds a condition for last change user.
-     * Note: This field uses exact match (StringField), so no escaping is applied.
+     * Adds a condition for last change user. Note: This field uses exact match
+     * (StringField), so no escaping is applied.
      * 
      * @param user the user who last modified the object
      * @return this builder for method chaining
@@ -327,14 +323,13 @@ public class MetadataQueryBuilder {
     /**
      * Adds a condition for custom property.
      * 
-     * @param key the property key
+     * @param key   the property key
      * @param value the property value
      * @return this builder for method chaining
      */
     public MetadataQueryBuilder property(String key, String value) {
         if (key != null && !key.isEmpty() && value != null && !value.isEmpty()) {
-            conditions.add(LuceneRegistryHelper.FIELD_PROPERTIES + ":" + 
-                          escapeValue(key + ":" + value));
+            conditions.add(LuceneRegistryHelper.FIELD_PROPERTIES + ":" + escapeValue(key + ":" + value));
         }
         return this;
     }
@@ -353,8 +348,8 @@ public class MetadataQueryBuilder {
     }
 
     /**
-     * Adds a text search condition that searches across multiple fields.
-     * Note: User fields use exact match, while other fields use analyzed search.
+     * Adds a text search condition that searches across multiple fields. Note: User
+     * fields use exact match, while other fields use analyzed search.
      * 
      * @param text the text to search for
      * @return this builder for method chaining
@@ -362,17 +357,16 @@ public class MetadataQueryBuilder {
     public MetadataQueryBuilder anyField(String text) {
         if (text != null && !text.isEmpty()) {
             String escapedText = escapeValue(text);
-            conditions.add("(" +
-                LuceneRegistryHelper.FIELD_UPLOAD_USER + ":" + text + " OR " + // Exact match for user fields
-                LuceneRegistryHelper.FIELD_SOURCE_CHANNEL + ":" + escapedText + " OR " +
-                LuceneRegistryHelper.FIELD_OBJECT_TYPE + ":" + escapedText + " OR " +
-                LuceneRegistryHelper.FIELD_OBJECT_NAME + ":" + escapedText + " OR " +
-                LuceneRegistryHelper.FIELD_REVIEW_USER + ":" + text + " OR " + // Exact match for user fields
-                LuceneRegistryHelper.FIELD_REVIEW_REASON + ":" + escapedText + " OR " +
-                LuceneRegistryHelper.FIELD_COMPLIANCE_STATUS + ":" + escapedText + " OR " +
-                LuceneRegistryHelper.FIELD_LAST_CHANGE_USER + ":" + text + " OR " + // Exact match for user fields
-                LuceneRegistryHelper.FIELD_PROPERTIES + ":" + escapedText +
-                ")");
+            conditions.add("(" + LuceneRegistryHelper.FIELD_UPLOAD_USER + ":" + text + " OR " + // Exact match for user
+                                                                                                // fields
+                    LuceneRegistryHelper.FIELD_SOURCE_CHANNEL + ":" + escapedText + " OR "
+                    + LuceneRegistryHelper.FIELD_OBJECT_TYPE + ":" + escapedText + " OR "
+                    + LuceneRegistryHelper.FIELD_OBJECT_NAME + ":" + escapedText + " OR "
+                    + LuceneRegistryHelper.FIELD_REVIEW_USER + ":" + text + " OR " + // Exact match for user fields
+                    LuceneRegistryHelper.FIELD_REVIEW_REASON + ":" + escapedText + " OR "
+                    + LuceneRegistryHelper.FIELD_COMPLIANCE_STATUS + ":" + escapedText + " OR "
+                    + LuceneRegistryHelper.FIELD_LAST_CHANGE_USER + ":" + text + " OR " + // Exact match for user fields
+                    LuceneRegistryHelper.FIELD_PROPERTIES + ":" + escapedText + ")");
         }
         return this;
     }
@@ -391,8 +385,8 @@ public class MetadataQueryBuilder {
     }
 
     /**
-     * Adds a wildcard search condition for upload user.
-     * Uses the analyzed field for wildcard matching.
+     * Adds a wildcard search condition for upload user. Uses the analyzed field for
+     * wildcard matching.
      * 
      * @param pattern the wildcard pattern (e.g., "user*", "*admin")
      * @return this builder for method chaining
@@ -405,8 +399,8 @@ public class MetadataQueryBuilder {
     }
 
     /**
-     * Adds a wildcard search condition for review user.
-     * Uses the analyzed field for wildcard matching.
+     * Adds a wildcard search condition for review user. Uses the analyzed field for
+     * wildcard matching.
      * 
      * @param pattern the wildcard pattern (e.g., "user*", "*admin")
      * @return this builder for method chaining
@@ -419,8 +413,8 @@ public class MetadataQueryBuilder {
     }
 
     /**
-     * Adds a wildcard search condition for last change user.
-     * Uses the analyzed field for wildcard matching.
+     * Adds a wildcard search condition for last change user. Uses the analyzed
+     * field for wildcard matching.
      * 
      * @param pattern the wildcard pattern (e.g., "user*", "*admin")
      * @return this builder for method chaining
@@ -433,10 +427,10 @@ public class MetadataQueryBuilder {
     }
 
     /**
-     * Adds a fuzzy search condition for upload user.
-     * Uses the analyzed field for fuzzy matching.
+     * Adds a fuzzy search condition for upload user. Uses the analyzed field for
+     * fuzzy matching.
      * 
-     * @param user the user name for fuzzy search
+     * @param user     the user name for fuzzy search
      * @param maxEdits the maximum edit distance (1 or 2)
      * @return this builder for method chaining
      */
@@ -448,10 +442,10 @@ public class MetadataQueryBuilder {
     }
 
     /**
-     * Adds a fuzzy search condition for review user.
-     * Uses the analyzed field for fuzzy matching.
+     * Adds a fuzzy search condition for review user. Uses the analyzed field for
+     * fuzzy matching.
      * 
-     * @param user the user name for fuzzy search
+     * @param user     the user name for fuzzy search
      * @param maxEdits the maximum edit distance (1 or 2)
      * @return this builder for method chaining
      */
@@ -463,10 +457,10 @@ public class MetadataQueryBuilder {
     }
 
     /**
-     * Adds a fuzzy search condition for last change user.
-     * Uses the analyzed field for fuzzy matching.
+     * Adds a fuzzy search condition for last change user. Uses the analyzed field
+     * for fuzzy matching.
      * 
-     * @param user the user name for fuzzy search
+     * @param user     the user name for fuzzy search
      * @param maxEdits the maximum edit distance (1 or 2)
      * @return this builder for method chaining
      */
@@ -504,7 +498,8 @@ public class MetadataQueryBuilder {
     }
 
     /**
-     * Adds a wildcard condition for object version (e.g., "1.*" for all 1.x versions).
+     * Adds a wildcard condition for object version (e.g., "1.*" for all 1.x
+     * versions).
      * 
      * @param pattern the version pattern with wildcards (e.g., "1.*", "2.0.*")
      * @return this builder for method chaining
@@ -566,7 +561,7 @@ public class MetadataQueryBuilder {
         if (conditions.isEmpty()) {
             return "*:*"; // Match all documents
         }
-        
+
         String operator = useOr ? " OR " : " AND ";
         return String.join(operator, conditions);
     }
@@ -581,30 +576,18 @@ public class MetadataQueryBuilder {
         if (value == null) {
             return "";
         }
-        
+
         // Escape special Lucene characters
-        String escaped = value
-            .replace("\\", "\\\\")
-            .replace("\"", "\\\"")
-            .replace("(", "\\(")
-            .replace(")", "\\)")
-            .replace("[", "\\[")
-            .replace("]", "\\]")
-            .replace("{", "\\{")
-            .replace("}", "\\}")
-            .replace("~", "\\~")
-            .replace("*", "\\*")
-            .replace("?", "\\?")
-            .replace(":", "\\:")
-            .replace("^", "\\^")
-            .replace("-", "\\-")
-            .replace("+", "\\+");
-        
+        String escaped = value.replace("\\", "\\\\").replace("\"", "\\\"").replace("(", "\\(").replace(")", "\\)")
+                .replace("[", "\\[").replace("]", "\\]").replace("{", "\\{").replace("}", "\\}").replace("~", "\\~")
+                .replace("*", "\\*").replace("?", "\\?").replace(":", "\\:").replace("^", "\\^").replace("-", "\\-")
+                .replace("+", "\\+");
+
         // Quote if contains spaces
         if (escaped.contains(" ")) {
             return "\"" + escaped + "\"";
         }
-        
+
         return escaped;
     }
 }

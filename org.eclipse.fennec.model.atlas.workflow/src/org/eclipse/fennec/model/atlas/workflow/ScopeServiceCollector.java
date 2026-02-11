@@ -33,45 +33,46 @@ import org.osgi.service.component.annotations.ReferencePolicyOption;
  */
 @Component(immediate = true, name = "ScopeServiceCollector", service = ScopeServiceCollector.class)
 public class ScopeServiceCollector {
-	
-	private static final Logger LOGGER = Logger.getLogger(ScopeServiceCollector.class.getName());
-	
-	private Map<String, ScopeService<?>> scopeServiceMap = new ConcurrentHashMap<>();
-	
-	public ScopeService<?> getScopeServiceByScopeName(String scopeName) {
-		return scopeServiceMap.getOrDefault(scopeName, null);
-	}
-	
-	public Scope getScopeByName(String scopeName) {
-		if(scopeServiceMap.containsKey(scopeName)) {
-			return scopeServiceMap.get(scopeName).getScope();
-		}
-		return null;
-	}
-	
-	public List<Scope> getAllScopes() {
-		return scopeServiceMap.values().stream().map(s -> s.getScope()).toList();
-	}
-	
-	@Reference(policy = ReferencePolicy.DYNAMIC, policyOption = ReferencePolicyOption.GREEDY, cardinality = ReferenceCardinality.MULTIPLE)
-	public void bindScopeService(ScopeService<?> scopeService, Map<String, Object> properties) {
-		if(!properties.containsKey("scope.name") || ((String) properties.get("scope.name")).isEmpty()) {
-			LOGGER.severe(String.format("Cannot store ScopeService with scope.name property not set or empty"));
-			return;
-		}
-		String scopeName = (String) properties.get("scope.name");
-		if(scopeServiceMap.containsKey(scopeName)) {
-			LOGGER.warning(String.format("ScopeService with name %s already existed. This will override it", scopeName));
-		}
-		scopeServiceMap.put(scopeName, scopeService);
-	}
-	
-	public void unbindScopeService(ScopeService<?> scopeService, Map<String, Object> properties) {
-		if(!properties.containsKey("scope.name") || ((String) properties.get("scope.name")).isEmpty()) {
-			return;
-		}
-		String scopeName = (String) properties.get("scope.name");
-		scopeServiceMap.remove(scopeName);
-	}
+
+    private static final Logger LOGGER = Logger.getLogger(ScopeServiceCollector.class.getName());
+
+    private Map<String, ScopeService<?>> scopeServiceMap = new ConcurrentHashMap<>();
+
+    public ScopeService<?> getScopeServiceByScopeName(String scopeName) {
+        return scopeServiceMap.getOrDefault(scopeName, null);
+    }
+
+    public Scope getScopeByName(String scopeName) {
+        if (scopeServiceMap.containsKey(scopeName)) {
+            return scopeServiceMap.get(scopeName).getScope();
+        }
+        return null;
+    }
+
+    public List<Scope> getAllScopes() {
+        return scopeServiceMap.values().stream().map(s -> s.getScope()).toList();
+    }
+
+    @Reference(policy = ReferencePolicy.DYNAMIC, policyOption = ReferencePolicyOption.GREEDY, cardinality = ReferenceCardinality.MULTIPLE)
+    public void bindScopeService(ScopeService<?> scopeService, Map<String, Object> properties) {
+        if (!properties.containsKey("scope.name") || ((String) properties.get("scope.name")).isEmpty()) {
+            LOGGER.severe(String.format("Cannot store ScopeService with scope.name property not set or empty"));
+            return;
+        }
+        String scopeName = (String) properties.get("scope.name");
+        if (scopeServiceMap.containsKey(scopeName)) {
+            LOGGER.warning(
+                    String.format("ScopeService with name %s already existed. This will override it", scopeName));
+        }
+        scopeServiceMap.put(scopeName, scopeService);
+    }
+
+    public void unbindScopeService(ScopeService<?> scopeService, Map<String, Object> properties) {
+        if (!properties.containsKey("scope.name") || ((String) properties.get("scope.name")).isEmpty()) {
+            return;
+        }
+        String scopeName = (String) properties.get("scope.name");
+        scopeServiceMap.remove(scopeName);
+    }
 
 }

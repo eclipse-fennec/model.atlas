@@ -49,9 +49,11 @@ import org.junit.jupiter.api.io.TempDir;
 /**
  * Unit test for ResourceSet concurrency in FileStorageHelper.
  * 
- * <p>This test verifies that the synchronized ResourceSet access in AbstractStorageHelper
- * prevents ConcurrentModificationException when multiple threads access the same
- * ResourceSet simultaneously.</p>
+ * <p>
+ * This test verifies that the synchronized ResourceSet access in
+ * AbstractStorageHelper prevents ConcurrentModificationException when multiple
+ * threads access the same ResourceSet simultaneously.
+ * </p>
  */
 class ResourceSetConcurrencyTest {
 
@@ -61,26 +63,29 @@ class ResourceSetConcurrencyTest {
     private ResourceSet sharedResourceSet;
     private FileStorageHelper helper;
     private ManagementFactory factory;
-    
+
     private EObjectRegistryService<EObject> mockRegistry;
-    
+
     private static final String TEST_SCOPE = "test_scope";
     private static final String TEST_REGISTRY = "test_registry";
     private static final String TEST_STAGE = "test_stage";
 
     @SuppressWarnings("unchecked")
-	@BeforeEach
+    @BeforeEach
     void setUp() throws IOException {
         // Create shared ResourceSet (simulates OSGi shared service)
         sharedResourceSet = new ResourceSetImpl();
-        sharedResourceSet.getResourceFactoryRegistry().getExtensionToFactoryMap().put("xmi", new XMIResourceFactoryImpl());
-        sharedResourceSet.getResourceFactoryRegistry().getExtensionToFactoryMap().put("ecore", new XMIResourceFactoryImpl());
+        sharedResourceSet.getResourceFactoryRegistry().getExtensionToFactoryMap().put("xmi",
+                new XMIResourceFactoryImpl());
+        sharedResourceSet.getResourceFactoryRegistry().getExtensionToFactoryMap().put("ecore",
+                new XMIResourceFactoryImpl());
         sharedResourceSet.getPackageRegistry().put(ManagementPackage.eNS_URI, ManagementPackage.eINSTANCE);
-        
+
         factory = ManagementFactory.eINSTANCE;
-     // Create mock registry - it will be called during FileStorageHelper construction
+        // Create mock registry - it will be called during FileStorageHelper
+        // construction
         mockRegistry = mock(EObjectRegistryService.class);
-        
+
         helper = new FileStorageHelper(sharedResourceSet, tempDir, mockRegistry);
 
     }
@@ -96,11 +101,11 @@ class ResourceSetConcurrencyTest {
     void testConcurrentResourceSetAccess() throws Exception {
         int threadCount = 20;
         int operationsPerThread = 50;
-        
+
         ExecutorService executor = Executors.newFixedThreadPool(threadCount);
         CountDownLatch startLatch = new CountDownLatch(1);
         CountDownLatch completeLatch = new CountDownLatch(threadCount);
-        
+
         AtomicInteger successCount = new AtomicInteger(0);
         AtomicInteger errorCount = new AtomicInteger(0);
 
@@ -110,36 +115,36 @@ class ResourceSetConcurrencyTest {
             executor.submit(() -> {
                 try {
                     startLatch.await(); // Wait for all threads to be ready
-                    
+
                     for (int i = 0; i < operationsPerThread; i++) {
                         // Create unique file paths to avoid file conflicts
                         String objectId = "thread-" + threadId + "-obj-" + i;
                         String fileName = objectId + ".ecore";
                         URI fileUri = URI.createFileURI(tempDir.resolve(fileName).toString());
-                        
+
                         // Test concurrent ResourceSet operations
                         try {
                             // 1. Create resource (modifies ResourceSet)
                             ResourceOperation createOp = helper.createResource(fileUri, "org.eclipse.emf.ecore");
-                            
+
                             // 2. Add content and save
                             EPackage ePackage = EcoreFactory.eINSTANCE.createEPackage();
                             ePackage.setName("TestPackage" + threadId + "_" + i);
                             ePackage.setNsURI("test://thread" + threadId + "/obj" + i);
                             ePackage.setNsPrefix("t" + threadId + "o" + i);
-                            
+
                             createOp.getResource().getContents().add(ePackage);
                             createOp.getResource().save(null);
                             createOp.cleanup(); // Modifies ResourceSet
-                            
+
                             // 3. Load resource (accesses ResourceSet)
                             ResourceOperation loadOp = helper.loadResource(fileUri);
                             assertNotNull(loadOp.getResource());
                             assertFalse(loadOp.getResource().getContents().isEmpty());
                             loadOp.cleanup(); // Modifies ResourceSet
-                            
+
                             successCount.incrementAndGet();
-                            
+
                         } catch (Exception e) {
                             errorCount.incrementAndGet();
                             e.printStackTrace();
@@ -156,28 +161,24 @@ class ResourceSetConcurrencyTest {
 
         // Start all threads simultaneously for maximum concurrency stress
         startLatch.countDown();
-        
+
         // Wait for completion
-        assertTrue(completeLatch.await(60, TimeUnit.SECONDS), 
-                  "All threads should complete within 60 seconds");
-        
+        assertTrue(completeLatch.await(60, TimeUnit.SECONDS), "All threads should complete within 60 seconds");
+
         executor.shutdown();
-        assertTrue(executor.awaitTermination(10, TimeUnit.SECONDS), 
-                  "Executor should terminate cleanly");
+        assertTrue(executor.awaitTermination(10, TimeUnit.SECONDS), "Executor should terminate cleanly");
 
         // Verify results
         int expectedOperations = threadCount * operationsPerThread;
         System.out.println("ResourceSet concurrency test results:");
         System.out.println("  Successful operations: " + successCount.get() + "/" + expectedOperations);
         System.out.println("  Errors: " + errorCount.get());
-        
+
         assertEquals(0, errorCount.get(), "No ConcurrentModificationException or other errors should occur");
         assertEquals(expectedOperations, successCount.get(), "All operations should succeed");
-        
+
         // Verify files were created
-        long fileCount = Files.list(tempDir)
-                             .filter(p -> p.getFileName().toString().endsWith(".ecore"))
-                             .count();
+        long fileCount = Files.list(tempDir).filter(p -> p.getFileName().toString().endsWith(".ecore")).count();
         assertEquals(expectedOperations, fileCount, "All files should be created");
     }
 
@@ -185,11 +186,11 @@ class ResourceSetConcurrencyTest {
     void testConcurrentMetadataOperations() throws Exception {
         int threadCount = 15;
         int operationsPerThread = 30;
-        
+
         ExecutorService executor = Executors.newFixedThreadPool(threadCount);
         CountDownLatch startLatch = new CountDownLatch(1);
         CountDownLatch completeLatch = new CountDownLatch(threadCount);
-        
+
         AtomicInteger successCount = new AtomicInteger(0);
         AtomicInteger errorCount = new AtomicInteger(0);
 
@@ -198,10 +199,10 @@ class ResourceSetConcurrencyTest {
             executor.submit(() -> {
                 try {
                     startLatch.await();
-                    
+
                     for (int i = 0; i < operationsPerThread; i++) {
                         String objectId = "meta-thread-" + threadId + "-obj-" + i;
-                        
+
                         try {
                             // Save metadata (uses ResourceSet)
                             ObjectMetadata metadata = factory.createObjectMetadata();
@@ -212,17 +213,18 @@ class ResourceSetConcurrencyTest {
                             metadata.setContentHash("hash-" + threadId + "-" + i);
                             metadata.getProperties().put("thread-id", String.valueOf(threadId));
                             metadata.getProperties().put("operation-id", String.valueOf(i));
-                            
+
                             helper.saveMetadata(TEST_SCOPE, TEST_REGISTRY, TEST_STAGE, objectId, metadata);
-                            
+
                             // Load metadata (uses ResourceSet)
-                            ObjectMetadata loaded = helper.loadMetadata(TEST_SCOPE, TEST_REGISTRY, TEST_STAGE, objectId);
+                            ObjectMetadata loaded = helper.loadMetadata(TEST_SCOPE, TEST_REGISTRY, TEST_STAGE,
+                                    objectId);
                             assertNotNull(loaded);
                             assertEquals("user-" + threadId, loaded.getUploadUser());
                             assertEquals("CONCURRENCY_TEST", loaded.getSourceChannel());
-                            
+
                             successCount.incrementAndGet();
-                            
+
                         } catch (Exception e) {
                             errorCount.incrementAndGet();
                             e.printStackTrace();
@@ -238,9 +240,9 @@ class ResourceSetConcurrencyTest {
         }
 
         startLatch.countDown();
-        assertTrue(completeLatch.await(45, TimeUnit.SECONDS), 
-                  "Metadata concurrency test should complete within 45 seconds");
-        
+        assertTrue(completeLatch.await(45, TimeUnit.SECONDS),
+                "Metadata concurrency test should complete within 45 seconds");
+
         executor.shutdown();
         assertTrue(executor.awaitTermination(10, TimeUnit.SECONDS));
 
@@ -248,14 +250,13 @@ class ResourceSetConcurrencyTest {
         System.out.println("Metadata concurrency test results:");
         System.out.println("  Successful operations: " + successCount.get() + "/" + expectedOperations);
         System.out.println("  Errors: " + errorCount.get());
-        
+
         assertEquals(0, errorCount.get(), "No errors should occur in metadata operations");
         assertEquals(expectedOperations, successCount.get(), "All metadata operations should succeed");
-        
+
         // Verify metadata files were created
         long metadataFileCount = Files.list(tempDir.resolve(TEST_SCOPE).resolve(TEST_REGISTRY).resolve(TEST_STAGE))
-                                     .filter(p -> p.getFileName().toString().endsWith(".metadata.xmi"))
-                                     .count();
+                .filter(p -> p.getFileName().toString().endsWith(".metadata.xmi")).count();
         assertEquals(expectedOperations, metadataFileCount, "All metadata files should be created");
     }
 
@@ -263,11 +264,11 @@ class ResourceSetConcurrencyTest {
     void testMixedConcurrentOperations() throws Exception {
         int threadCount = 10;
         int operationsPerThread = 20;
-        
+
         ExecutorService executor = Executors.newFixedThreadPool(threadCount);
         CountDownLatch startLatch = new CountDownLatch(1);
         CountDownLatch completeLatch = new CountDownLatch(threadCount);
-        
+
         AtomicInteger createOps = new AtomicInteger(0);
         AtomicInteger loadOps = new AtomicInteger(0);
         AtomicInteger metadataOps = new AtomicInteger(0);
@@ -278,40 +279,41 @@ class ResourceSetConcurrencyTest {
             executor.submit(() -> {
                 try {
                     startLatch.await();
-                    
+
                     for (int i = 0; i < operationsPerThread; i++) {
                         String objectId = "mixed-thread-" + threadId + "-obj-" + i;
-                        
+
                         try {
                             // Mixed operations that all use ResourceSet
                             if (i % 3 == 0) {
                                 // Create and save EPackage
                                 String fileName = objectId + ".ecore";
                                 URI fileUri = URI.createFileURI(tempDir.resolve(fileName).toString());
-                                
+
                                 ResourceOperation op = helper.createResource(fileUri, null);
                                 EPackage pkg = EcoreFactory.eINSTANCE.createEPackage();
                                 pkg.setName("Mixed" + threadId + "_" + i);
                                 op.getResource().getContents().add(pkg);
                                 op.getResource().save(null);
                                 op.cleanup();
-                                
+
                                 createOps.incrementAndGet();
-                                
+
                             } else if (i % 3 == 1) {
                                 // Try to load existing file (may fail if not created yet - that's ok)
                                 String existingId = "mixed-thread-" + threadId + "-obj-" + (i - 1);
                                 String existingFile = existingId + ".ecore";
                                 URI existingUri = URI.createFileURI(tempDir.resolve(existingFile).toString());
-                                
-                                if (Files.exists(tempDir.resolve(TEST_SCOPE).resolve(TEST_REGISTRY).resolve(TEST_STAGE).resolve(existingFile))) {
+
+                                if (Files.exists(tempDir.resolve(TEST_SCOPE).resolve(TEST_REGISTRY).resolve(TEST_STAGE)
+                                        .resolve(existingFile))) {
                                     ResourceOperation op = helper.loadResource(existingUri);
                                     if (op.getResource() != null) {
                                         loadOps.incrementAndGet();
                                     }
                                     op.cleanup();
                                 }
-                                
+
                             } else {
                                 // Metadata operations
                                 ObjectMetadata metadata = factory.createObjectMetadata();
@@ -320,10 +322,11 @@ class ResourceSetConcurrencyTest {
                                 metadata.setSourceChannel("MIXED_TEST");
                                 metadata.setObjectType("Mixed");
                                 metadata.setContentHash("mixed-hash-" + threadId + "-" + i);
-                                
+
                                 helper.saveMetadata(TEST_SCOPE, TEST_REGISTRY, TEST_STAGE, objectId, metadata);
-                                ObjectMetadata loaded = helper.loadMetadata(TEST_SCOPE, TEST_REGISTRY, TEST_STAGE, objectId);
-                                
+                                ObjectMetadata loaded = helper.loadMetadata(TEST_SCOPE, TEST_REGISTRY, TEST_STAGE,
+                                        objectId);
+
                                 if (loaded != null && "MIXED_TEST".equals(loaded.getSourceChannel())) {
                                     metadataOps.incrementAndGet();
                                 }
@@ -343,9 +346,9 @@ class ResourceSetConcurrencyTest {
         }
 
         startLatch.countDown();
-        assertTrue(completeLatch.await(30, TimeUnit.SECONDS), 
-                  "Mixed operations test should complete within 30 seconds");
-        
+        assertTrue(completeLatch.await(30, TimeUnit.SECONDS),
+                "Mixed operations test should complete within 30 seconds");
+
         executor.shutdown();
         assertTrue(executor.awaitTermination(10, TimeUnit.SECONDS));
 
@@ -354,14 +357,17 @@ class ResourceSetConcurrencyTest {
         System.out.println("  Load operations: " + loadOps.get());
         System.out.println("  Metadata operations: " + metadataOps.get());
         System.out.println("  Errors: " + errors.get());
-        
-        // We expect some errors due to files not existing, but no ConcurrentModificationException
+
+        // We expect some errors due to files not existing, but no
+        // ConcurrentModificationException
         assertTrue(createOps.get() > 0, "Should have some successful create operations");
         assertTrue(metadataOps.get() > 0, "Should have some successful metadata operations");
-        
-        // The key assertion: if synchronization works, we won't get fatal ResourceSet errors
-        // that crash threads. Some operations may fail due to missing files, but that's expected.
-        assertTrue(createOps.get() + loadOps.get() + metadataOps.get() > 0, 
-                  "Should have successful operations without ResourceSet corruption");
+
+        // The key assertion: if synchronization works, we won't get fatal ResourceSet
+        // errors
+        // that crash threads. Some operations may fail due to missing files, but that's
+        // expected.
+        assertTrue(createOps.get() + loadOps.get() + metadataOps.get() > 0,
+                "Should have successful operations without ResourceSet corruption");
     }
 }

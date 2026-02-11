@@ -14,8 +14,10 @@
 /**
  * Collector services that track and provide access to management services.
  *
- * <p>This package contains OSGi whiteboard pattern collectors that dynamically
- * track service instances and provide convenient lookup mechanisms.</p>
+ * <p>
+ * This package contains OSGi whiteboard pattern collectors that dynamically
+ * track service instances and provide convenient lookup mechanisms.
+ * </p>
  *
  * @since 1.0
  */
