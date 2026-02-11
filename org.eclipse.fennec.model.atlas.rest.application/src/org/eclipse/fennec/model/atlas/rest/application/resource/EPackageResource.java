@@ -13,7 +13,6 @@
  */
 package org.eclipse.fennec.model.atlas.rest.application.resource;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -25,9 +24,7 @@ import org.eclipse.fennec.model.atlas.rest.model.RestFactory;
 import org.eclipse.fennec.model.atlas.runtime.RequireRuntime;
 import org.eclipse.fennec.model.atlas.service.EPackageService;
 import org.osgi.service.component.annotations.Activate;
-import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
-import org.osgi.service.component.annotations.ServiceScope;
 import org.osgi.service.jakartars.whiteboard.propertytypes.JakartarsName;
 import org.osgi.service.jakartars.whiteboard.propertytypes.JakartarsResource;
 
@@ -84,10 +81,7 @@ public class EPackageResource {
 
 	@Activate
 	public EPackageResource(@Reference SupportedMediatype types) {
-		supportedMediaTypes = new ArrayList<>(types.getSupportedMediaTypes());
-		supportedMediaTypes.add(MediaType.APPLICATION_XML);
-		supportedMediaTypes.add("application/xmi");
-		supportedMediaTypes.add("application/uml");
+	    supportedMediaTypes = types.getSupportedMediaTypes();
 	}
 
 	/**

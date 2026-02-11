@@ -746,6 +746,157 @@ public class SchemaPackagesResourceTest {
         assertTrue(responseContent.contains("objectId"), "Response should contain objectId");
     }
 
-  
+    // ========== MediaType Query Parameter Tests ==========
 
+    @Test
+    public void testListReleasedPackages_WithMediaTypeQueryParam() {
+        Response response = restClient
+                .target(BASE_URL)
+                .path(TEST_SCOPE_NAME)
+                .path("schema")
+                .queryParam("mediaType", "application/xml")
+                .request("application/json")
+                .get();
+
+        assertEquals(200, response.getStatus(), "Should return HTTP 200 OK");
+        assertEquals("application/xml", response.getHeaderString("Content-Type"),
+                "Content-Type header should be set to mediaType query parameter value");
+    }
+
+    @Test
+    public void testListReleasedPackages_WithUnsupportedMediaTypeQueryParam() {
+        Response response = restClient
+                .target(BASE_URL)
+                .path(TEST_SCOPE_NAME)
+                .path("schema")
+                .queryParam("mediaType", "application/unsupported")
+                .request("application/json")
+                .get();
+
+        assertEquals(415, response.getStatus(), "Should return HTTP 415 Unsupported Media Type");
+    }
+
+    @Test
+    public void testListPackagesInStage_WithMediaTypeQueryParam() {
+        Response response = restClient
+                .target(BASE_URL)
+                .path(TEST_SCOPE_NAME)
+                .path("schema")
+                .path("stages")
+                .path(TEST_STAGE_DRAFT)
+                .queryParam("mediaType", "application/xml")
+                .request("application/json")
+                .get();
+
+        assertEquals(200, response.getStatus(), "Should return HTTP 200 OK");
+        assertEquals("application/xml", response.getHeaderString("Content-Type"),
+                "Content-Type header should be set to mediaType query parameter value");
+    }
+
+    @Test
+    public void testGetPackageContent_WithMediaTypeQueryParam() {
+        Response response = restClient
+                .target(BASE_URL)
+                .path(TEST_SCOPE_NAME)
+                .path("schema")
+                .path("stages")
+                .path(TEST_STAGE_DRAFT)
+                .path("content")
+                .queryParam("nsUri", TEST_PACKAGE_NSURI)
+                .queryParam("mediaType", "application/xml")
+                .request("application/json")
+                .get();
+
+        assertEquals(200, response.getStatus(), "Should return HTTP 200 OK");
+        assertEquals("application/xml", response.getHeaderString("Content-Type"),
+                "Content-Type header should be set to mediaType query parameter value");
+    }
+
+    @Test
+    public void testGetPackageContent_WithUnsupportedMediaTypeQueryParam() {
+        Response response = restClient
+                .target(BASE_URL)
+                .path(TEST_SCOPE_NAME)
+                .path("schema")
+                .path("stages")
+                .path(TEST_STAGE_DRAFT)
+                .path("content")
+                .queryParam("nsUri", TEST_PACKAGE_NSURI)
+                .queryParam("mediaType", "application/unsupported")
+                .request("application/json")
+                .get();
+
+        assertEquals(415, response.getStatus(), "Should return HTTP 415 Unsupported Media Type");
+    }
+
+    @Test
+    public void testCreatePackage_WithMediaTypeQueryParam() throws Exception {
+        EPackage testPackage = TestHelper.createTestEPackage("http://mediatype.com/schema/1.0", "MediaTypePackage", "mt");
+        String xmiContent = TestHelper.serializeToXMI(testPackage, resourceSet);
+
+        Response response = restClient
+                .target(BASE_URL)
+                .path(TEST_SCOPE_NAME)
+                .path("schema")
+                .path("stages")
+                .path(TEST_STAGE_DRAFT)
+                .queryParam("nsUri", "http://mediatype.com/schema/1.0")
+                .queryParam("name", "MediaTypePackage")
+                .queryParam("version", "1.0.0")
+                .queryParam("mediaType", "application/xml")
+                .request("application/xmi")
+                .post(Entity.entity(xmiContent, "application/xmi"));
+
+        assertEquals(200, response.getStatus(), "Should return HTTP 200 OK");
+        assertEquals("application/xml", response.getHeaderString("Content-Type"),
+                "Content-Type header should be set to mediaType query parameter value");
+    }
+
+    @Test
+    public void testUpdatePackageContent_WithMediaTypeQueryParam() throws Exception {
+        EPackage updatedPackage = TestHelper.createTestEPackage(TEST_PACKAGE_NSURI, "UpdatedSchema", "test");
+        String xmiContent = TestHelper.serializeToXMI(updatedPackage, resourceSet);
+
+        Response response = restClient
+                .target(BASE_URL)
+                .path(TEST_SCOPE_NAME)
+                .path("schema")
+                .path("stages")
+                .path(TEST_STAGE_DRAFT)
+                .path("content")
+                .queryParam("nsUri", TEST_PACKAGE_NSURI)
+                .queryParam("version", "1.1.0")
+                .queryParam("mediaType", "application/xml")
+                .request("application/xmi")
+                .put(Entity.entity(xmiContent, "application/xmi"));
+
+        assertEquals(200, response.getStatus(), "Should return HTTP 200 OK");
+        assertEquals("application/xml", response.getHeaderString("Content-Type"),
+                "Content-Type header should be set to mediaType query parameter value");
+    }
+
+    @Test
+    public void testTransitionPackage_WithMediaTypeQueryParam() throws Exception {
+        StageTransitionRequest transition = RestFactory.eINSTANCE.createStageTransitionRequest();
+        transition.setObjectId(TEST_PACKAGE_NSURI);
+        transition.setTargetStage(TEST_STAGE_APPROVED);
+
+        String xmiContent = TestHelper.serializeToXMI(transition, resourceSet);
+
+        Response response = restClient
+                .target(BASE_URL)
+                .path(TEST_SCOPE_NAME)
+                .path("schema")
+                .path("stages")
+                .path(TEST_STAGE_DRAFT)
+                .path("actions")
+                .path("transition")
+                .queryParam("mediaType", "application/xml")
+                .request("application/xmi")
+                .post(Entity.entity(xmiContent, "application/xmi"));
+
+        assertEquals(200, response.getStatus(), "Should return HTTP 200 OK");
+        assertEquals("application/xml", response.getHeaderString("Content-Type"),
+                "Content-Type header should be set to mediaType query parameter value");
+    }
 }

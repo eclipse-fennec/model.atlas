@@ -14,7 +14,6 @@
 package org.eclipse.fennec.model.atlas.rest.application.resource;
 
 import java.time.Instant;
-import java.util.ArrayList;
 import java.util.List;
 
 import org.eclipse.emf.ecore.EObject;
@@ -98,10 +97,7 @@ public class ObjectRegistryResource {
 	
 	@Activate
 	public ObjectRegistryResource(@Reference SupportedMediatype types) {		
-		supportedMediaTypes = new ArrayList<>(types.getSupportedMediaTypes());
-		supportedMediaTypes.add(MediaType.APPLICATION_XML);
-		supportedMediaTypes.add("application/xmi");
-		supportedMediaTypes.add("application/uml");
+	    supportedMediaTypes = types.getSupportedMediaTypes();
 	}
 
 
@@ -149,8 +145,8 @@ public class ObjectRegistryResource {
 			List<ObjectMetadata> objectsMetadata = scopeService.listInFinalStageForRegistry(registryName);
 			if(objectsMetadata.isEmpty()) return Response.status(Response.Status.NO_CONTENT).build();
 			ObjectMetadataContainer container = mgmtFactory.createObjectMetadataContainer();
-			container.getMetadata().addAll(objectsMetadata);		
-			return Response.status(Response.Status.OK).entity(container).build();
+			container.getMetadata().addAll(objectsMetadata);	
+			return Response.status(Response.Status.OK).entity(container).header("Content-Type", mediaType).build();
 		} catch (IllegalArgumentException e) {
 			return Response.status(Response.Status.BAD_REQUEST).entity(e.getMessage()).build();
 		} catch (Exception e) {
@@ -209,7 +205,7 @@ public class ObjectRegistryResource {
 				if(metadata == null) {
 					return Response.status(Response.Status.NO_CONTENT).entity(String.format("Obejct %s not found neither scope '%s', registry '%s' and stage '%s' nor in parent hierarchy", objectId, scopeName, registryName, stageName)).build();
 				} else {
-					return Response.status(Response.Status.OK).entity(metadata).build();
+					return Response.status(Response.Status.OK).entity(metadata).header("Content-Type", mediaType).build();
 				}
 			} else if(name != null) {
 				List<ObjectMetadata> objectsMetadata = scopeService.listInStageForRegistryByName(registryName, stageName, name);
@@ -218,7 +214,7 @@ public class ObjectRegistryResource {
 				}
 				ObjectMetadataContainer container = mgmtFactory.createObjectMetadataContainer();
 				container.getMetadata().addAll(objectsMetadata);		
-				return Response.status(Response.Status.OK).entity(container).build();
+				return Response.status(Response.Status.OK).entity(container).header("Content-Type", mediaType).build();
 			} else {
 				List<ObjectMetadata> objectsMetadata = scopeService.listInStageForRegistry(registryName, stageName);
 				if(objectsMetadata.isEmpty()) {
@@ -226,7 +222,7 @@ public class ObjectRegistryResource {
 				}
 				ObjectMetadataContainer container = mgmtFactory.createObjectMetadataContainer();
 				container.getMetadata().addAll(objectsMetadata);		
-				return Response.status(Response.Status.OK).entity(container).build();
+				return Response.status(Response.Status.OK).entity(container).header("Content-Type", mediaType).build();
 			}
 
 		} catch (IllegalArgumentException e) {
@@ -304,10 +300,7 @@ public class ObjectRegistryResource {
         }
 
         // Validate object type
-        if (!registryService.isEClassCompatibleWithRegistry(object.eClass())) {
-        	System.out.println(EcoreUtil.getURI(object.eClass()));
-        	System.out.println(EcoreUtil.getURI(registryService.getRootEClass()));
-        	
+        if (!registryService.isEClassCompatibleWithRegistry(object.eClass())) {        	
             return Response.status(Status.BAD_REQUEST)
                 .entity(String.format(
                     "Object type %s not compatible with registry %s (expects %s)",
@@ -336,7 +329,7 @@ public class ObjectRegistryResource {
 		    		    return Response.status(Response.Status.OK)
 		    		    		.header("Location", "/".concat(scopeName).concat("/registries/").concat(registryName).concat("/stages/").concat(stageName).concat("?objectId=").concat(objectId))
 		    				    .entity(metadata)
-		    				    .build();
+		    				    .header("Content-Type", mediaType).build();
 				}				
 			}
 			ObjectMetadata metadata = mgmtFactory.createObjectMetadata();
@@ -354,7 +347,7 @@ public class ObjectRegistryResource {
 					.status(Response.Status.CREATED)
 					.header("Location", "/".concat(scopeName).concat("/registries/").concat(registryName).concat("/stages/").concat(stageName).concat("?objectId=").concat(objectId))
 					.entity(metadata)
-					.build();
+					.header("Content-Type", mediaType).build();
 		} catch (WebApplicationException e) {
 			// WebApplicationException already has the correct status code, rethrow it
 			throw e;
@@ -412,7 +405,7 @@ public class ObjectRegistryResource {
 			if(eObject == null) {
 				return Response.status(Response.Status.NO_CONTENT).entity(String.format("Obejct %s not found neither scope '%s', registry '%s' and stage '%s' nor in parent hierarchy", objectId, scopeName, registryName, stageName)).build();
 			}
-			return Response.status(Response.Status.OK).entity(eObject).build();
+			return Response.status(Response.Status.OK).entity(eObject).header("Content-Type", mediaType).build();
 
 		} catch (IllegalArgumentException e) {
 			return Response.status(Response.Status.BAD_REQUEST).entity(e.getMessage()).build();
@@ -504,7 +497,7 @@ public class ObjectRegistryResource {
 			}
 
 			ObjectMetadata metadata = scopeService.updateInStageForRegistry(registryName, stageName, eObject, objectId, version).getValue();			
-			return Response.status(Response.Status.OK).entity(metadata).build();
+			return Response.status(Response.Status.OK).entity(metadata).header("Content-Type", mediaType).build();
 
 		} catch (IllegalArgumentException e) {
 			return Response.status(Response.Status.BAD_REQUEST).entity(e.getMessage()).build();
@@ -631,7 +624,7 @@ public class ObjectRegistryResource {
 				return Response.status(Response.Status.FORBIDDEN).entity(String.format("Object %s is in read-only state",  objectId)).build();
 			}
 			ObjectMetadata metadata = scopeService.transitionToStageForRegistry(registryName, objectId, stageName, transitionRequest.getTargetStage());
-			return Response.status(Response.Status.OK).entity(metadata).build();
+			return Response.status(Response.Status.OK).entity(metadata).header("Content-Type", mediaType).build();
 		} catch (IllegalArgumentException e) {
 			return Response.status(Response.Status.BAD_REQUEST).entity(e.getMessage()).build();
 		} catch(Exception e) {

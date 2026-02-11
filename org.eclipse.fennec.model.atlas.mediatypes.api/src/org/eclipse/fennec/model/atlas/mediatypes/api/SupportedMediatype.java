@@ -27,9 +27,10 @@ import org.osgi.annotation.versioning.ProviderType;
 @ProviderType
 public interface SupportedMediatype {
 
-	/**
-	 * @return a List of the supported MediaTypes
-	 */
-	List<String> getSupportedMediaTypes();
+    /**
+     * @return a List of the supported MediaTypes. You will receive a copy that can
+     *         be modified to your hearts content.
+     */
+    List<String> getSupportedMediaTypes();
 
 }

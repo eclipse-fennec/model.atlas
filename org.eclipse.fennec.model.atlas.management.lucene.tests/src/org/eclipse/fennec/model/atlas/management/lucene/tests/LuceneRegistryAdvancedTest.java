@@ -23,6 +23,8 @@ import java.nio.file.Path;
 import java.time.Instant;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 
 import org.eclipse.fennec.model.atlas.management.lucene.tests.annotations.LuceneTestAnnotations;
 import org.eclipse.fennec.model.atlas.management.lucene.tests.annotations.LuceneTestAnnotations.RegistryConfiguration;
@@ -30,6 +32,7 @@ import org.eclipse.fennec.model.atlas.mgmt.api.EObjectRegistryService;
 import org.eclipse.fennec.model.atlas.mgmt.management.ManagementFactory;
 import org.eclipse.fennec.model.atlas.mgmt.management.ObjectMetadata;
 import org.eclipse.fennec.model.atlas.mgmt.management.ObjectStatus;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -64,6 +67,12 @@ public class LuceneRegistryAdvancedTest {
     void setUp() {
         // Set system property for configurations that might need it
         System.setProperty(LuceneTestAnnotations.PROP_TEMP_DIR, tempDir.toString());
+    }
+
+    @AfterEach
+    void tearDown() throws InterruptedException {
+        CountDownLatch latch = new CountDownLatch(1);
+        latch.await(3, TimeUnit.SECONDS);
     }
 
     // ===== Error Handling & Edge Cases Tests =====

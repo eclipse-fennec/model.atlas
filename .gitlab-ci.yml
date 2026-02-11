@@ -46,7 +46,7 @@ build:
     - chmod +x ./gradlew
     - ./gradlew --no-daemon --version
   script:
-    - ./gradlew build --info --stacktrace
+    - ./gradlew build
     - ./gradlew org.eclipse.fennec.model.atlas.runtime:resolve.modelatlas.runtime_base --info
     - ./gradlew org.eclipse.fennec.model.atlas.runtime:export.modelatlas.runtime_docker --info
   artifacts:
