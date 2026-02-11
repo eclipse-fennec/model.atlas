@@ -44,6 +44,11 @@ org.apache.felix:org.apache.felix.framework.security:2.8.3
 org.apache.felix:org.apache.felix.inventory:2.0.0
 org.apache.felix:org.apache.felix.log:1.3.0
 
+# Felix Health Check
+org.apache.felix:org.apache.felix.healthcheck.api:2.0.4
+org.apache.felix:org.apache.felix.healthcheck.core:2.0.14
+org.apache.felix:org.apache.felix.healthcheck.generalchecks:2.0.8
+
 org.apache.aries.typedevent:org.apache.aries.typedevent.bus:1.0.1
 org.apache.aries.component-dsl:org.apache.aries.component-dsl.component-dsl:1.2.2
 
