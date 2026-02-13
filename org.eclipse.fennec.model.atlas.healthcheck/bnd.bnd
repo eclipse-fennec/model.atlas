@@ -4,4 +4,5 @@
 -buildpath: \
 	org.osgi.service.component.annotations,\
 	org.apache.felix.healthcheck.api,\
-	org.eclipse.fennec.model.atlas.mediatypes.api;version=latest
+	org.eclipse.fennec.model.atlas.mediatypes.api;version=latest,\
+	org.apache.felix.healthcheck.core

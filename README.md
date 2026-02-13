@@ -9,11 +9,11 @@ Model Atlas provides health check endpoints using [Apache Felix Health Checks](h
 
 | Endpoint | Description |
 |----------|-------------|
-| `/health` | Returns all health checks with the `atlas` tag |
-| `/health.json` | Returns health status in JSON format |
-| `/health.html` | Returns health status as HTML page |
-| `/health?tags=liveness` | Returns only liveness checks |
-| `/health?tags=readiness` | Returns only readiness checks |
+| `/atlas/system/health` | Returns all health checks with the `atlas` tag |
+| `/atlas/system/health.json` | Returns health status in JSON format |
+| `/atlas/system/health.html` | Returns health status as HTML page |
+| `/atlas/system/health?tags=liveness` | Returns only liveness checks |
+| `/atlas/system/health?tags=readiness` | Returns only readiness checks |
 
 ### Available Health Checks
 
@@ -30,14 +30,14 @@ Configure your Kubernetes deployment to use the health endpoints:
 ```yaml
 livenessProbe:
   httpGet:
-    path: /atlas/health?tags=liveness
+    path: /atlas/system/health?tags=liveness
     port: 8086
   initialDelaySeconds: 30
   periodSeconds: 10
 
 readinessProbe:
   httpGet:
-    path: /atlas/health?tags=readiness
+    path: /atlas/system/health?tags=readiness
     port: 8086
   initialDelaySeconds: 10
   periodSeconds: 5
