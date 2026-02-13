@@ -2,7 +2,7 @@
 	":configurator:resource-version": 1,
 	":configurator:version": "1.0.0",
 	"LuceneEObjectRegistryService~main": {
-		"registry.workspace.folder": "$[env:STORAGE_ROOT;default=$[prop:STORAGE_ROOT;default=/tmp/mac]]/main-registry",
+		"registry.workspace.folder": "$[env:STORAGE_ROOT;default=$[prop:STORAGE_ROOT;default=/tmp/modelatlas]]/main-registry",
 		"registry": "main",
 		"storage.backend.tracking": "true",
 		"initial.index.capacity": "1000",
