@@ -29,9 +29,9 @@ import org.eclipse.emf.mapping.ecore2xml.Ecore2XMLRegistry;
 import org.eclipse.emf.mapping.ecore2xml.impl.Ecore2XMLRegistryImpl;
 import org.eclipse.emf.mapping.ecore2xml.util.Ecore2XMLResource;
 import org.eclipse.uml2.uml.UMLPackage;
-import org.eclipse.uml2.uml.resource.UML212UMLResourceHandler;
 import org.eclipse.uml2.uml.resource.UML212UMLExtendedMetaData;
 import org.eclipse.uml2.uml.resource.UML212UMLResource;
+import org.eclipse.uml2.uml.resource.UML212UMLResourceHandler;
 import org.eclipse.uml2.uml.resource.UML22UMLResource;
 import org.eclipse.uml2.uml.resource.UMLResource;
 

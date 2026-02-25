@@ -18,8 +18,8 @@ import java.util.Map;
 import java.util.Objects;
 
 import org.eclipse.emf.ecore.EPackage;
-import org.gecko.emf.osgi.configurator.EPackageConfigurator;
-import org.gecko.emf.osgi.constants.EMFNamespaces;
+import org.eclipse.fennec.emf.osgi.configurator.EPackageConfigurator;
+import org.eclipse.fennec.emf.osgi.constants.EMFNamespaces;
 
 /**
  * Dynamic EPackage configurator for runtime registration of released EPackages.
@@ -100,7 +100,7 @@ public class DynamicEPackageConfigurator implements EPackageConfigurator {
      */
     public Map<String, Object> getServiceProperties() {
         Map<String, Object> properties = new HashMap<>();
-        properties.put(EMFNamespaces.EMF_MODEL_NAME, ePackage.getName());
+        properties.put(EMFNamespaces.EMF_NAME, ePackage.getName());
         properties.put(EMFNamespaces.EMF_MODEL_NSURI, ePackage.getNsURI());
         properties.put(EMFNamespaces.EMF_MODEL_FILE_EXT, fileExtension);
         properties.put(EMFNamespaces.EMF_MODEL_VERSION, version);

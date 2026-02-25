@@ -19,7 +19,6 @@ import java.util.concurrent.CopyOnWriteArrayList;
 
 import org.eclipse.emf.ecore.resource.ResourceSet;
 import org.eclipse.fennec.model.atlas.mediatypes.api.SupportedMediatype;
-import org.gecko.emf.osgi.ResourceSetFactory;
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
 import org.osgi.service.component.annotations.ReferencePolicyOption;
@@ -30,10 +29,8 @@ public class SupportedMediatypesImpl implements SupportedMediatype {
 
     private List<String> mediaTypes = new CopyOnWriteArrayList<>();
 
-    @Reference(updated = "bindResourceSetFactory", policyOption = ReferencePolicyOption.GREEDY)
-    void bindResourceSetFactory(ResourceSetFactory rsFactory) {
-        ResourceSet set = rsFactory.createResourceSet();
-
+    @Reference(updated = "bindResourceSet", policyOption = ReferencePolicyOption.GREEDY)
+    void bindResourceSet(ResourceSet set) {
         synchronized (mediaTypes) {
 
             mediaTypes.clear();

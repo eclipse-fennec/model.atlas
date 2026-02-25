@@ -13,12 +13,11 @@
  */
 package org.eclipse.uml2.uml.internal.operations;
 
-import org.eclipse.emf.ecore.ENamedElement;
 import org.eclipse.emf.common.util.EList;
 import org.eclipse.emf.ecore.EAnnotation;
+import org.eclipse.emf.ecore.ENamedElement;
 import org.eclipse.emf.ecore.EObject;
 import org.eclipse.emf.ecore.EPackage;
-
 import org.eclipse.uml2.uml.NamedElement;
 import org.eclipse.uml2.uml.ProfileApplication;
 

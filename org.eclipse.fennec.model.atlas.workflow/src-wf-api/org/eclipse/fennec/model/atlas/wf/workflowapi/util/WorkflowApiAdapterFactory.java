@@ -23,231 +23,217 @@ import org.eclipse.emf.ecore.EObject;
 import org.eclipse.fennec.model.atlas.wf.workflowapi.*;
 
 /**
- * <!-- begin-user-doc --> The <b>Adapter Factory</b> for the model. It provides
- * an adapter <code>createXXX</code> method for each class of the model. <!--
- * end-user-doc -->
- * 
+ * <!-- begin-user-doc -->
+ * The <b>Adapter Factory</b> for the model.
+ * It provides an adapter <code>createXXX</code> method for each class of the model.
+ * <!-- end-user-doc -->
  * @see org.eclipse.fennec.model.atlas.wf.workflowapi.WorkflowApiPackage
  * @generated
  */
 public class WorkflowApiAdapterFactory extends AdapterFactoryImpl {
-    /**
-     * The cached model package. <!-- begin-user-doc --> <!-- end-user-doc -->
-     * 
-     * @generated
-     */
-    protected static WorkflowApiPackage modelPackage;
+	/**
+	 * The cached model package.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	protected static WorkflowApiPackage modelPackage;
 
-    /**
-     * Creates an instance of the adapter factory. <!-- begin-user-doc --> <!--
-     * end-user-doc -->
-     * 
-     * @generated
-     */
-    public WorkflowApiAdapterFactory() {
-        if (modelPackage == null) {
-            modelPackage = WorkflowApiPackage.eINSTANCE;
-        }
-    }
+	/**
+	 * Creates an instance of the adapter factory.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	public WorkflowApiAdapterFactory() {
+		if (modelPackage == null) {
+			modelPackage = WorkflowApiPackage.eINSTANCE;
+		}
+	}
 
-    /**
-     * Returns whether this factory is applicable for the type of the object. <!--
-     * begin-user-doc --> This implementation returns <code>true</code> if the
-     * object is either the model's package or is an instance object of the model.
-     * <!-- end-user-doc -->
-     * 
-     * @return whether this factory is applicable for the type of the object.
-     * @generated
-     */
-    @Override
-    public boolean isFactoryForType(Object object) {
-        if (object == modelPackage) {
-            return true;
-        }
-        if (object instanceof EObject) {
-            return ((EObject) object).eClass().getEPackage() == modelPackage;
-        }
-        return false;
-    }
+	/**
+	 * Returns whether this factory is applicable for the type of the object.
+	 * <!-- begin-user-doc -->
+	 * This implementation returns <code>true</code> if the object is either the model's package or is an instance object of the model.
+	 * <!-- end-user-doc -->
+	 * @return whether this factory is applicable for the type of the object.
+	 * @generated
+	 */
+	@Override
+	public boolean isFactoryForType(Object object) {
+		if (object == modelPackage) {
+			return true;
+		}
+		if (object instanceof EObject) {
+			return ((EObject)object).eClass().getEPackage() == modelPackage;
+		}
+		return false;
+	}
 
-    /**
-     * The switch that delegates to the <code>createXXX</code> methods. <!--
-     * begin-user-doc --> <!-- end-user-doc -->
-     * 
-     * @generated
-     */
-    protected WorkflowApiSwitch<Adapter> modelSwitch = new WorkflowApiSwitch<Adapter>() {
-        @Override
-        public <T extends EObject> Adapter caseEObjectWorkflowService(EObjectWorkflowService<T> object) {
-            return createEObjectWorkflowServiceAdapter();
-        }
+	/**
+	 * The switch that delegates to the <code>createXXX</code> methods.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	protected WorkflowApiSwitch<Adapter> modelSwitch =
+		new WorkflowApiSwitch<Adapter>() {
+			@Override
+			public <T extends EObject> Adapter caseEObjectWorkflowService(EObjectWorkflowService<T> object) {
+				return createEObjectWorkflowServiceAdapter();
+			}
+			@Override
+			public <T extends EObject> Adapter caseRegistryService(RegistryService<T> object) {
+				return createRegistryServiceAdapter();
+			}
+			@Override
+			public <T extends EObject> Adapter caseScopeService(ScopeService<T> object) {
+				return createScopeServiceAdapter();
+			}
+			@Override
+			public Adapter caseStage(Stage object) {
+				return createStageAdapter();
+			}
+			@Override
+			public Adapter caseRegistry(Registry object) {
+				return createRegistryAdapter();
+			}
+			@Override
+			public Adapter caseScope(Scope object) {
+				return createScopeAdapter();
+			}
+			@Override
+			public Adapter caseStageTransition(StageTransition object) {
+				return createStageTransitionAdapter();
+			}
+			@Override
+			public Adapter defaultCase(EObject object) {
+				return createEObjectAdapter();
+			}
+		};
 
-        @Override
-        public <T extends EObject> Adapter caseRegistryService(RegistryService<T> object) {
-            return createRegistryServiceAdapter();
-        }
+	/**
+	 * Creates an adapter for the <code>target</code>.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @param target the object to adapt.
+	 * @return the adapter for the <code>target</code>.
+	 * @generated
+	 */
+	@Override
+	public Adapter createAdapter(Notifier target) {
+		return modelSwitch.doSwitch((EObject)target);
+	}
 
-        @Override
-        public <T extends EObject> Adapter caseScopeService(ScopeService<T> object) {
-            return createScopeServiceAdapter();
-        }
 
-        @Override
-        public Adapter caseStage(Stage object) {
-            return createStageAdapter();
-        }
+	/**
+	 * Creates a new adapter for an object of class '{@link org.eclipse.fennec.model.atlas.wf.workflowapi.EObjectWorkflowService <em>EObject Workflow Service</em>}'.
+	 * <!-- begin-user-doc -->
+	 * This default implementation returns null so that we can easily ignore cases;
+	 * it's useful to ignore a case when inheritance will catch all the cases anyway.
+	 * <!-- end-user-doc -->
+	 * @return the new adapter.
+	 * @see org.eclipse.fennec.model.atlas.wf.workflowapi.EObjectWorkflowService
+	 * @generated
+	 */
+	public Adapter createEObjectWorkflowServiceAdapter() {
+		return null;
+	}
 
-        @Override
-        public Adapter caseRegistry(Registry object) {
-            return createRegistryAdapter();
-        }
+	/**
+	 * Creates a new adapter for an object of class '{@link org.eclipse.fennec.model.atlas.wf.workflowapi.RegistryService <em>Registry Service</em>}'.
+	 * <!-- begin-user-doc -->
+	 * This default implementation returns null so that we can easily ignore cases;
+	 * it's useful to ignore a case when inheritance will catch all the cases anyway.
+	 * <!-- end-user-doc -->
+	 * @return the new adapter.
+	 * @see org.eclipse.fennec.model.atlas.wf.workflowapi.RegistryService
+	 * @generated
+	 */
+	public Adapter createRegistryServiceAdapter() {
+		return null;
+	}
 
-        @Override
-        public Adapter caseScope(Scope object) {
-            return createScopeAdapter();
-        }
+	/**
+	 * Creates a new adapter for an object of class '{@link org.eclipse.fennec.model.atlas.wf.workflowapi.ScopeService <em>Scope Service</em>}'.
+	 * <!-- begin-user-doc -->
+	 * This default implementation returns null so that we can easily ignore cases;
+	 * it's useful to ignore a case when inheritance will catch all the cases anyway.
+	 * <!-- end-user-doc -->
+	 * @return the new adapter.
+	 * @see org.eclipse.fennec.model.atlas.wf.workflowapi.ScopeService
+	 * @generated
+	 */
+	public Adapter createScopeServiceAdapter() {
+		return null;
+	}
 
-        @Override
-        public Adapter caseStageTransition(StageTransition object) {
-            return createStageTransitionAdapter();
-        }
+	/**
+	 * Creates a new adapter for an object of class '{@link org.eclipse.fennec.model.atlas.wf.workflowapi.Stage <em>Stage</em>}'.
+	 * <!-- begin-user-doc -->
+	 * This default implementation returns null so that we can easily ignore cases;
+	 * it's useful to ignore a case when inheritance will catch all the cases anyway.
+	 * <!-- end-user-doc -->
+	 * @return the new adapter.
+	 * @see org.eclipse.fennec.model.atlas.wf.workflowapi.Stage
+	 * @generated
+	 */
+	public Adapter createStageAdapter() {
+		return null;
+	}
 
-        @Override
-        public Adapter defaultCase(EObject object) {
-            return createEObjectAdapter();
-        }
-    };
+	/**
+	 * Creates a new adapter for an object of class '{@link org.eclipse.fennec.model.atlas.wf.workflowapi.Registry <em>Registry</em>}'.
+	 * <!-- begin-user-doc -->
+	 * This default implementation returns null so that we can easily ignore cases;
+	 * it's useful to ignore a case when inheritance will catch all the cases anyway.
+	 * <!-- end-user-doc -->
+	 * @return the new adapter.
+	 * @see org.eclipse.fennec.model.atlas.wf.workflowapi.Registry
+	 * @generated
+	 */
+	public Adapter createRegistryAdapter() {
+		return null;
+	}
 
-    /**
-     * Creates an adapter for the <code>target</code>. <!-- begin-user-doc --> <!--
-     * end-user-doc -->
-     * 
-     * @param target the object to adapt.
-     * @return the adapter for the <code>target</code>.
-     * @generated
-     */
-    @Override
-    public Adapter createAdapter(Notifier target) {
-        return modelSwitch.doSwitch((EObject) target);
-    }
+	/**
+	 * Creates a new adapter for an object of class '{@link org.eclipse.fennec.model.atlas.wf.workflowapi.Scope <em>Scope</em>}'.
+	 * <!-- begin-user-doc -->
+	 * This default implementation returns null so that we can easily ignore cases;
+	 * it's useful to ignore a case when inheritance will catch all the cases anyway.
+	 * <!-- end-user-doc -->
+	 * @return the new adapter.
+	 * @see org.eclipse.fennec.model.atlas.wf.workflowapi.Scope
+	 * @generated
+	 */
+	public Adapter createScopeAdapter() {
+		return null;
+	}
 
-    /**
-     * Creates a new adapter for an object of class
-     * '{@link org.eclipse.fennec.model.atlas.wf.workflowapi.EObjectWorkflowService
-     * <em>EObject Workflow Service</em>}'. <!-- begin-user-doc --> This default
-     * implementation returns null so that we can easily ignore cases; it's useful
-     * to ignore a case when inheritance will catch all the cases anyway. <!--
-     * end-user-doc -->
-     * 
-     * @return the new adapter.
-     * @see org.eclipse.fennec.model.atlas.wf.workflowapi.EObjectWorkflowService
-     * @generated
-     */
-    public Adapter createEObjectWorkflowServiceAdapter() {
-        return null;
-    }
+	/**
+	 * Creates a new adapter for an object of class '{@link org.eclipse.fennec.model.atlas.wf.workflowapi.StageTransition <em>Stage Transition</em>}'.
+	 * <!-- begin-user-doc -->
+	 * This default implementation returns null so that we can easily ignore cases;
+	 * it's useful to ignore a case when inheritance will catch all the cases anyway.
+	 * <!-- end-user-doc -->
+	 * @return the new adapter.
+	 * @see org.eclipse.fennec.model.atlas.wf.workflowapi.StageTransition
+	 * @generated
+	 */
+	public Adapter createStageTransitionAdapter() {
+		return null;
+	}
 
-    /**
-     * Creates a new adapter for an object of class
-     * '{@link org.eclipse.fennec.model.atlas.wf.workflowapi.RegistryService
-     * <em>Registry Service</em>}'. <!-- begin-user-doc --> This default
-     * implementation returns null so that we can easily ignore cases; it's useful
-     * to ignore a case when inheritance will catch all the cases anyway. <!--
-     * end-user-doc -->
-     * 
-     * @return the new adapter.
-     * @see org.eclipse.fennec.model.atlas.wf.workflowapi.RegistryService
-     * @generated
-     */
-    public Adapter createRegistryServiceAdapter() {
-        return null;
-    }
+	/**
+	 * Creates a new adapter for the default case.
+	 * <!-- begin-user-doc -->
+	 * This default implementation returns null.
+	 * <!-- end-user-doc -->
+	 * @return the new adapter.
+	 * @generated
+	 */
+	public Adapter createEObjectAdapter() {
+		return null;
+	}
 
-    /**
-     * Creates a new adapter for an object of class
-     * '{@link org.eclipse.fennec.model.atlas.wf.workflowapi.ScopeService <em>Scope
-     * Service</em>}'. <!-- begin-user-doc --> This default implementation returns
-     * null so that we can easily ignore cases; it's useful to ignore a case when
-     * inheritance will catch all the cases anyway. <!-- end-user-doc -->
-     * 
-     * @return the new adapter.
-     * @see org.eclipse.fennec.model.atlas.wf.workflowapi.ScopeService
-     * @generated
-     */
-    public Adapter createScopeServiceAdapter() {
-        return null;
-    }
-
-    /**
-     * Creates a new adapter for an object of class
-     * '{@link org.eclipse.fennec.model.atlas.wf.workflowapi.Stage <em>Stage</em>}'.
-     * <!-- begin-user-doc --> This default implementation returns null so that we
-     * can easily ignore cases; it's useful to ignore a case when inheritance will
-     * catch all the cases anyway. <!-- end-user-doc -->
-     * 
-     * @return the new adapter.
-     * @see org.eclipse.fennec.model.atlas.wf.workflowapi.Stage
-     * @generated
-     */
-    public Adapter createStageAdapter() {
-        return null;
-    }
-
-    /**
-     * Creates a new adapter for an object of class
-     * '{@link org.eclipse.fennec.model.atlas.wf.workflowapi.Registry
-     * <em>Registry</em>}'. <!-- begin-user-doc --> This default implementation
-     * returns null so that we can easily ignore cases; it's useful to ignore a case
-     * when inheritance will catch all the cases anyway. <!-- end-user-doc -->
-     * 
-     * @return the new adapter.
-     * @see org.eclipse.fennec.model.atlas.wf.workflowapi.Registry
-     * @generated
-     */
-    public Adapter createRegistryAdapter() {
-        return null;
-    }
-
-    /**
-     * Creates a new adapter for an object of class
-     * '{@link org.eclipse.fennec.model.atlas.wf.workflowapi.Scope <em>Scope</em>}'.
-     * <!-- begin-user-doc --> This default implementation returns null so that we
-     * can easily ignore cases; it's useful to ignore a case when inheritance will
-     * catch all the cases anyway. <!-- end-user-doc -->
-     * 
-     * @return the new adapter.
-     * @see org.eclipse.fennec.model.atlas.wf.workflowapi.Scope
-     * @generated
-     */
-    public Adapter createScopeAdapter() {
-        return null;
-    }
-
-    /**
-     * Creates a new adapter for an object of class
-     * '{@link org.eclipse.fennec.model.atlas.wf.workflowapi.StageTransition
-     * <em>Stage Transition</em>}'. <!-- begin-user-doc --> This default
-     * implementation returns null so that we can easily ignore cases; it's useful
-     * to ignore a case when inheritance will catch all the cases anyway. <!--
-     * end-user-doc -->
-     * 
-     * @return the new adapter.
-     * @see org.eclipse.fennec.model.atlas.wf.workflowapi.StageTransition
-     * @generated
-     */
-    public Adapter createStageTransitionAdapter() {
-        return null;
-    }
-
-    /**
-     * Creates a new adapter for the default case. <!-- begin-user-doc --> This
-     * default implementation returns null. <!-- end-user-doc -->
-     * 
-     * @return the new adapter.
-     * @generated
-     */
-    public Adapter createEObjectAdapter() {
-        return null;
-    }
-
-} // WorkflowApiAdapterFactory
+} //WorkflowApiAdapterFactory

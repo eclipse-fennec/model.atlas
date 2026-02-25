@@ -23,7 +23,7 @@ import java.util.logging.Logger;
 import org.eclipse.emf.ecore.EFactory;
 import org.eclipse.emf.ecore.EPackage;
 import org.eclipse.emf.ecore.resource.ResourceSet;
-import org.gecko.emf.osgi.configurator.EPackageConfigurator;
+import org.eclipse.fennec.emf.osgi.configurator.EPackageConfigurator;
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.Filter;
 import org.osgi.framework.FrameworkUtil;

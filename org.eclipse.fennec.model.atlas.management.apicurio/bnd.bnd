@@ -1,6 +1,6 @@
 -workingset: Workflow
 -library: \
-	enable-emf
+	enableEMF
 	
 -buildpath: \
 	org.osgi.framework;version=latest,\

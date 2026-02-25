@@ -15,6 +15,7 @@ package org.eclipse.uml2.uml.internal.operations;
 
 import java.util.Iterator;
 import java.util.Map;
+
 import org.eclipse.emf.common.util.BasicDiagnostic;
 import org.eclipse.emf.common.util.Diagnostic;
 import org.eclipse.emf.common.util.DiagnosticChain;
@@ -26,7 +27,6 @@ import org.eclipse.uml2.uml.NamedElement;
 import org.eclipse.uml2.uml.Namespace;
 import org.eclipse.uml2.uml.Parameter;
 import org.eclipse.uml2.uml.ParameterDirectionKind;
-
 import org.eclipse.uml2.uml.Type;
 import org.eclipse.uml2.uml.util.UMLValidator;
 

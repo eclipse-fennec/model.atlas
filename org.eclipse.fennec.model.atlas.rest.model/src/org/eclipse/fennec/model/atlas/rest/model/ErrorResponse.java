@@ -20,19 +20,17 @@ import org.eclipse.emf.ecore.EObject;
 import org.osgi.annotation.versioning.ProviderType;
 
 /**
- * <!-- begin-user-doc --> A representation of the model object '<em><b>Error
- * Response</b></em>'. <!-- end-user-doc -->
+ * <!-- begin-user-doc -->
+ * A representation of the model object '<em><b>Error Response</b></em>'.
+ * <!-- end-user-doc -->
  *
  * <p>
  * The following features are supported:
  * </p>
  * <ul>
- * <li>{@link org.eclipse.fennec.model.atlas.rest.model.ErrorResponse#getMessage
- * <em>Message</em>}</li>
- * <li>{@link org.eclipse.fennec.model.atlas.rest.model.ErrorResponse#getCode
- * <em>Code</em>}</li>
- * <li>{@link org.eclipse.fennec.model.atlas.rest.model.ErrorResponse#getTimestamp
- * <em>Timestamp</em>}</li>
+ *   <li>{@link org.eclipse.fennec.model.atlas.rest.model.ErrorResponse#getMessage <em>Message</em>}</li>
+ *   <li>{@link org.eclipse.fennec.model.atlas.rest.model.ErrorResponse#getCode <em>Code</em>}</li>
+ *   <li>{@link org.eclipse.fennec.model.atlas.rest.model.ErrorResponse#getTimestamp <em>Timestamp</em>}</li>
  * </ul>
  *
  * @see org.eclipse.fennec.model.atlas.rest.model.RestPackage#getErrorResponse()
@@ -41,73 +39,70 @@ import org.osgi.annotation.versioning.ProviderType;
  */
 @ProviderType
 public interface ErrorResponse extends EObject {
-    /**
-     * Returns the value of the '<em><b>Message</b></em>' attribute. <!--
-     * begin-user-doc --> <!-- end-user-doc -->
-     * 
-     * @return the value of the '<em>Message</em>' attribute.
-     * @see #setMessage(String)
-     * @see org.eclipse.fennec.model.atlas.rest.model.RestPackage#getErrorResponse_Message()
-     * @model
-     * @generated
-     */
-    String getMessage();
+	/**
+	 * Returns the value of the '<em><b>Message</b></em>' attribute.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @return the value of the '<em>Message</em>' attribute.
+	 * @see #setMessage(String)
+	 * @see org.eclipse.fennec.model.atlas.rest.model.RestPackage#getErrorResponse_Message()
+	 * @model
+	 * @generated
+	 */
+	String getMessage();
 
-    /**
-     * Sets the value of the
-     * '{@link org.eclipse.fennec.model.atlas.rest.model.ErrorResponse#getMessage
-     * <em>Message</em>}' attribute. <!-- begin-user-doc --> <!-- end-user-doc -->
-     * 
-     * @param value the new value of the '<em>Message</em>' attribute.
-     * @see #getMessage()
-     * @generated
-     */
-    void setMessage(String value);
+	/**
+	 * Sets the value of the '{@link org.eclipse.fennec.model.atlas.rest.model.ErrorResponse#getMessage <em>Message</em>}' attribute.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @param value the new value of the '<em>Message</em>' attribute.
+	 * @see #getMessage()
+	 * @generated
+	 */
+	void setMessage(String value);
 
-    /**
-     * Returns the value of the '<em><b>Code</b></em>' attribute. <!--
-     * begin-user-doc --> <!-- end-user-doc -->
-     * 
-     * @return the value of the '<em>Code</em>' attribute.
-     * @see #setCode(String)
-     * @see org.eclipse.fennec.model.atlas.rest.model.RestPackage#getErrorResponse_Code()
-     * @model
-     * @generated
-     */
-    String getCode();
+	/**
+	 * Returns the value of the '<em><b>Code</b></em>' attribute.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @return the value of the '<em>Code</em>' attribute.
+	 * @see #setCode(String)
+	 * @see org.eclipse.fennec.model.atlas.rest.model.RestPackage#getErrorResponse_Code()
+	 * @model
+	 * @generated
+	 */
+	String getCode();
 
-    /**
-     * Sets the value of the
-     * '{@link org.eclipse.fennec.model.atlas.rest.model.ErrorResponse#getCode
-     * <em>Code</em>}' attribute. <!-- begin-user-doc --> <!-- end-user-doc -->
-     * 
-     * @param value the new value of the '<em>Code</em>' attribute.
-     * @see #getCode()
-     * @generated
-     */
-    void setCode(String value);
+	/**
+	 * Sets the value of the '{@link org.eclipse.fennec.model.atlas.rest.model.ErrorResponse#getCode <em>Code</em>}' attribute.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @param value the new value of the '<em>Code</em>' attribute.
+	 * @see #getCode()
+	 * @generated
+	 */
+	void setCode(String value);
 
-    /**
-     * Returns the value of the '<em><b>Timestamp</b></em>' attribute. <!--
-     * begin-user-doc --> <!-- end-user-doc -->
-     * 
-     * @return the value of the '<em>Timestamp</em>' attribute.
-     * @see #setTimestamp(Date)
-     * @see org.eclipse.fennec.model.atlas.rest.model.RestPackage#getErrorResponse_Timestamp()
-     * @model
-     * @generated
-     */
-    Date getTimestamp();
+	/**
+	 * Returns the value of the '<em><b>Timestamp</b></em>' attribute.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @return the value of the '<em>Timestamp</em>' attribute.
+	 * @see #setTimestamp(Date)
+	 * @see org.eclipse.fennec.model.atlas.rest.model.RestPackage#getErrorResponse_Timestamp()
+	 * @model
+	 * @generated
+	 */
+	Date getTimestamp();
 
-    /**
-     * Sets the value of the
-     * '{@link org.eclipse.fennec.model.atlas.rest.model.ErrorResponse#getTimestamp
-     * <em>Timestamp</em>}' attribute. <!-- begin-user-doc --> <!-- end-user-doc -->
-     * 
-     * @param value the new value of the '<em>Timestamp</em>' attribute.
-     * @see #getTimestamp()
-     * @generated
-     */
-    void setTimestamp(Date value);
+	/**
+	 * Sets the value of the '{@link org.eclipse.fennec.model.atlas.rest.model.ErrorResponse#getTimestamp <em>Timestamp</em>}' attribute.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @param value the new value of the '<em>Timestamp</em>' attribute.
+	 * @see #getTimestamp()
+	 * @generated
+	 */
+	void setTimestamp(Date value);
 
 } // ErrorResponse

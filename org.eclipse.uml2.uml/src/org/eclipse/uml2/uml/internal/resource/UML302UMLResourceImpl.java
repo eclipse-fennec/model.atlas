@@ -12,10 +12,9 @@
  */
 package org.eclipse.uml2.uml.internal.resource;
 
-import org.eclipse.uml2.uml.resource.UML302UMLResource;
-
 import org.eclipse.emf.common.util.URI;
 import org.eclipse.emf.ecore.xmi.XMLLoad;
+import org.eclipse.uml2.uml.resource.UML302UMLResource;
 
 public class UML302UMLResourceImpl
 		extends UMLResourceImpl

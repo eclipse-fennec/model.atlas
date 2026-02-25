@@ -22,15 +22,15 @@ import org.eclipse.fennec.model.atlas.wf.workflowapi.Scope;
 import org.osgi.annotation.versioning.ProviderType;
 
 /**
- * <!-- begin-user-doc --> A representation of the model object '<em><b>Scope
- * List Response</b></em>'. <!-- end-user-doc -->
+ * <!-- begin-user-doc -->
+ * A representation of the model object '<em><b>Scope List Response</b></em>'.
+ * <!-- end-user-doc -->
  *
  * <p>
  * The following features are supported:
  * </p>
  * <ul>
- * <li>{@link org.eclipse.fennec.model.atlas.rest.model.ScopeListResponse#getScopes
- * <em>Scopes</em>}</li>
+ *   <li>{@link org.eclipse.fennec.model.atlas.rest.model.ScopeListResponse#getScopes <em>Scopes</em>}</li>
  * </ul>
  *
  * @see org.eclipse.fennec.model.atlas.rest.model.RestPackage#getScopeListResponse()
@@ -39,17 +39,16 @@ import org.osgi.annotation.versioning.ProviderType;
  */
 @ProviderType
 public interface ScopeListResponse extends EObject {
-    /**
-     * Returns the value of the '<em><b>Scopes</b></em>' containment reference list.
-     * The list contents are of type
-     * {@link org.eclipse.fennec.model.atlas.wf.workflowapi.Scope}. <!--
-     * begin-user-doc --> <!-- end-user-doc -->
-     * 
-     * @return the value of the '<em>Scopes</em>' containment reference list.
-     * @see org.eclipse.fennec.model.atlas.rest.model.RestPackage#getScopeListResponse_Scopes()
-     * @model containment="true"
-     * @generated
-     */
-    EList<Scope> getScopes();
+	/**
+	 * Returns the value of the '<em><b>Scopes</b></em>' containment reference list.
+	 * The list contents are of type {@link org.eclipse.fennec.model.atlas.wf.workflowapi.Scope}.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @return the value of the '<em>Scopes</em>' containment reference list.
+	 * @see org.eclipse.fennec.model.atlas.rest.model.RestPackage#getScopeListResponse_Scopes()
+	 * @model containment="true"
+	 * @generated
+	 */
+	EList<Scope> getScopes();
 
 } // ScopeListResponse

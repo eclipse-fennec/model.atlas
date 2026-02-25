@@ -27,11 +27,11 @@ import java.util.logging.Logger;
 import org.eclipse.emf.ecore.EPackage;
 import org.eclipse.emf.ecore.impl.EPackageRegistryImpl;
 import org.eclipse.emf.ecore.resource.ResourceSet;
+import org.eclipse.fennec.emf.osgi.configurator.EPackageConfigurator;
+import org.eclipse.fennec.emf.osgi.constants.EMFNamespaces;
 import org.eclipse.fennec.model.atlas.emf.common.configurator.DynamicEPackageConfigurator;
 import org.eclipse.fennec.model.atlas.emf.common.ecore.EClassResolvingDynamicEFactory;
 import org.eclipse.fennec.model.atlas.service.EPackageService;
-import org.gecko.emf.osgi.configurator.EPackageConfigurator;
-import org.gecko.emf.osgi.constants.EMFNamespaces;
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.ServiceRegistration;
 import org.osgi.service.component.annotations.Activate;
@@ -233,7 +233,7 @@ public class EPackageServiceImpl implements EPackageService {
      */
     private Hashtable<String, String> createServiceProperties(EPackage ePackage) {
         Hashtable<String, String> properties = new Hashtable<>();
-        properties.put(EMFNamespaces.EMF_MODEL_NAME, ePackage.getName() != null ? ePackage.getName() : "unknown");
+        properties.put(EMFNamespaces.EMF_NAME, ePackage.getName() != null ? ePackage.getName() : "unknown");
         properties.put(EMFNamespaces.EMF_MODEL_NSURI, ePackage.getNsURI());
         properties.put(EMFNamespaces.EMF_MODEL_REGISTRATION, EMFNamespaces.MODEL_REGISTRATION_DYNAMIC);
         return properties;

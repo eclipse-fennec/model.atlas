@@ -16,8 +16,8 @@ package org.eclipse.fennec.model.atlas.workflow.tests.annotations;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 
+import org.eclipse.fennec.emf.osgi.annotation.require.RequireEMF;
 import org.eclipse.fennec.model.atlas.mgmt.annotations.MacCapabilityConstants;
-import org.gecko.emf.osgi.annotation.require.RequireEMF;
 import org.osgi.annotation.bundle.Requirement;
 import org.osgi.service.cm.annotations.RequireConfigurationAdmin;
 import org.osgi.service.typedevent.annotations.RequireTypedEvent;

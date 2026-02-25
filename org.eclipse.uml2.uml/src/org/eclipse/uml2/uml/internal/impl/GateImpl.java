@@ -17,10 +17,8 @@ import java.lang.reflect.InvocationTargetException;
 import java.util.Map;
 
 import org.eclipse.emf.common.util.DiagnosticChain;
-
 import org.eclipse.emf.common.util.EList;
 import org.eclipse.emf.ecore.EClass;
-
 import org.eclipse.uml2.common.util.UML2Util;
 import org.eclipse.uml2.uml.Gate;
 import org.eclipse.uml2.uml.InteractionOperand;
@@ -29,7 +27,6 @@ import org.eclipse.uml2.uml.NamedElement;
 import org.eclipse.uml2.uml.Namespace;
 import org.eclipse.uml2.uml.Stereotype;
 import org.eclipse.uml2.uml.UMLPackage;
-
 import org.eclipse.uml2.uml.internal.operations.GateOperations;
 
 /**

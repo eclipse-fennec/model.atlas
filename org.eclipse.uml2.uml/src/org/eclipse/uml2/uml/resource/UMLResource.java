@@ -15,7 +15,6 @@
 package org.eclipse.uml2.uml.resource;
 
 import org.eclipse.emf.ecore.resource.Resource;
-
 import org.eclipse.emf.ecore.xmi.XMIResource;
 import org.eclipse.uml2.uml.internal.resource.UMLResourceFactoryImpl;
 

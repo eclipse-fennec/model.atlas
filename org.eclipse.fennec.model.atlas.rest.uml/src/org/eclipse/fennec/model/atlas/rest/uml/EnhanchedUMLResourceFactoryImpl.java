@@ -16,9 +16,9 @@ package org.eclipse.fennec.model.atlas.rest.uml;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.eclipse.fennec.emf.osgi.constants.EMFNamespaces;
 import org.eclipse.uml2.uml.UMLPackage;
 import org.eclipse.uml2.uml.internal.resource.UMLResourceFactoryImpl;
-import org.gecko.emf.osgi.constants.EMFNamespaces;
 
 /**
  * 

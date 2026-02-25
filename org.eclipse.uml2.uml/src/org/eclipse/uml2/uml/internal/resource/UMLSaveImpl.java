@@ -15,15 +15,14 @@ package org.eclipse.uml2.uml.internal.resource;
 
 import java.util.Map;
 
-import org.eclipse.uml2.uml.EnumerationLiteral;
-import org.eclipse.uml2.uml.UMLPackage;
-
 import org.eclipse.emf.ecore.EObject;
 import org.eclipse.emf.ecore.EStructuralFeature;
 import org.eclipse.emf.ecore.util.ExtendedMetaData;
 import org.eclipse.emf.ecore.xmi.XMLHelper;
 import org.eclipse.emf.ecore.xmi.XMLResource;
 import org.eclipse.emf.ecore.xmi.impl.XMISaveImpl;
+import org.eclipse.uml2.uml.EnumerationLiteral;
+import org.eclipse.uml2.uml.UMLPackage;
 
 
 public class UMLSaveImpl

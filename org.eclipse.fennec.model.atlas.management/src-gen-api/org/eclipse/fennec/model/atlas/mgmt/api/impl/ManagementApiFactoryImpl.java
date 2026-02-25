@@ -24,73 +24,73 @@ import org.eclipse.emf.ecore.plugin.EcorePlugin;
 import org.eclipse.fennec.model.atlas.mgmt.api.*;
 
 /**
- * <!-- begin-user-doc --> An implementation of the model <b>Factory</b>. <!--
- * end-user-doc -->
- * 
+ * <!-- begin-user-doc -->
+ * An implementation of the model <b>Factory</b>.
+ * <!-- end-user-doc -->
  * @generated
  */
 public class ManagementApiFactoryImpl extends EFactoryImpl implements ManagementApiFactory {
-    /**
-     * Creates the default factory implementation. <!-- begin-user-doc --> <!--
-     * end-user-doc -->
-     * 
-     * @generated
-     */
-    public static ManagementApiFactory init() {
-        try {
-            ManagementApiFactory theManagementApiFactory = (ManagementApiFactory) EPackage.Registry.INSTANCE
-                    .getEFactory(ManagementApiPackage.eNS_URI);
-            if (theManagementApiFactory != null) {
-                return theManagementApiFactory;
-            }
-        } catch (Exception exception) {
-            EcorePlugin.INSTANCE.log(exception);
-        }
-        return new ManagementApiFactoryImpl();
-    }
+	/**
+	 * Creates the default factory implementation.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	public static ManagementApiFactory init() {
+		try {
+			ManagementApiFactory theManagementApiFactory = (ManagementApiFactory)EPackage.Registry.INSTANCE.getEFactory(ManagementApiPackage.eNS_URI);
+			if (theManagementApiFactory != null) {
+				return theManagementApiFactory;
+			}
+		}
+		catch (Exception exception) {
+			EcorePlugin.INSTANCE.log(exception);
+		}
+		return new ManagementApiFactoryImpl();
+	}
 
-    /**
-     * Creates an instance of the factory. <!-- begin-user-doc --> <!-- end-user-doc
-     * -->
-     * 
-     * @generated
-     */
-    public ManagementApiFactoryImpl() {
-        super();
-    }
+	/**
+	 * Creates an instance of the factory.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	public ManagementApiFactoryImpl() {
+		super();
+	}
 
-    /**
-     * <!-- begin-user-doc --> <!-- end-user-doc -->
-     * 
-     * @generated
-     */
-    @Override
-    public EObject create(EClass eClass) {
-        switch (eClass.getClassifierID()) {
-        default:
-            throw new IllegalArgumentException("The class '" + eClass.getName() + "' is not a valid classifier");
-        }
-    }
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
+	public EObject create(EClass eClass) {
+		switch (eClass.getClassifierID()) {
+			default:
+				throw new IllegalArgumentException("The class '" + eClass.getName() + "' is not a valid classifier");
+		}
+	}
 
-    /**
-     * <!-- begin-user-doc --> <!-- end-user-doc -->
-     * 
-     * @generated
-     */
-    @Override
-    public ManagementApiPackage getManagementApiPackage() {
-        return (ManagementApiPackage) getEPackage();
-    }
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
+	public ManagementApiPackage getManagementApiPackage() {
+		return (ManagementApiPackage)getEPackage();
+	}
 
-    /**
-     * <!-- begin-user-doc --> <!-- end-user-doc -->
-     * 
-     * @deprecated
-     * @generated
-     */
-    @Deprecated
-    public static ManagementApiPackage getPackage() {
-        return ManagementApiPackage.eINSTANCE;
-    }
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @deprecated
+	 * @generated
+	 */
+	@Deprecated
+	public static ManagementApiPackage getPackage() {
+		return ManagementApiPackage.eINSTANCE;
+	}
 
-} // ManagementApiFactoryImpl
+} //ManagementApiFactoryImpl

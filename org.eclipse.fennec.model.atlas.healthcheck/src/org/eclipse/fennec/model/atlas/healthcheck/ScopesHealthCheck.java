@@ -13,39 +13,41 @@
  */
 package org.eclipse.fennec.model.atlas.healthcheck;
 
+import java.util.List;
+
 import org.apache.felix.hc.api.FormattingResultLog;
 import org.apache.felix.hc.api.HealthCheck;
 import org.apache.felix.hc.api.Result;
-import org.eclipse.emf.ecore.resource.ResourceSet;
+import org.eclipse.fennec.model.atlas.mediatypes.api.SupportedMediatype;
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
 import org.osgi.service.component.annotations.ReferenceCardinality;
-import org.osgi.service.component.annotations.ServiceScope;
+import org.eclipse.fennec.model.atlas.wf.workflowapi.ScopeService;
 
 /**
- * Health check that verifies the EMF Registry has EPackages registered.
+ * Health check that verifies media type codecs are available.
  *
  * @since 1.0
  */
-@Component(scope = ServiceScope.PROTOTYPE, property = { HealthCheck.NAME + "=EMF Registry",
+@Component(service = HealthCheck.class, property = { HealthCheck.NAME + "=Scopes And Registries",
         HealthCheck.TAGS + "=atlas,readiness" })
-public class EMFRegistryHealthCheck implements HealthCheck {
+public class ScopesHealthCheck implements HealthCheck {
 
     @Reference(cardinality = ReferenceCardinality.OPTIONAL)
-    private ResourceSet resourceSet;
+    private ScopeService<?> scopesService;
 
     @Override
     public Result execute() {
         FormattingResultLog log = new FormattingResultLog();
 
-        if (resourceSet == null) {
-            log.critical("ResourceSet service not available");
+        if (scopesService == null) {
+            log.critical("No ScopeService found");
         } else {
-            int packageCount = resourceSet.getPackageRegistry().size();
-            if (packageCount > 0) {
-                log.info("EMF Registry contains {} EPackages", packageCount);
+            List<String> registries = scopesService.getAllRegistries();
+            if (registries != null && !registries.isEmpty()) {
+                registries.forEach(s -> log.info("{} available", s));
             } else {
-                log.warn("EMF Registry is empty - no EPackages registered");
+                log.warn("No Regsitries available");
             }
         }
 

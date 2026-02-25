@@ -18,9 +18,7 @@ import java.util.Map;
 import org.eclipse.emf.common.util.BasicDiagnostic;
 import org.eclipse.emf.common.util.Diagnostic;
 import org.eclipse.emf.common.util.DiagnosticChain;
-
 import org.eclipse.uml2.uml.Clause;
-
 import org.eclipse.uml2.uml.util.UMLValidator;
 
 /**
