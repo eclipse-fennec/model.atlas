@@ -15,7 +15,7 @@
 		"scope.name": "civitas",
 		"scope.description": "Civitas Scope",
 		"parent.scope": "atlas",
-		"registryService.target": "(|(registry.name=schema)(registry.name=sensor))",
+		"registryService.target": "(|(registry.name=schema)(registry.name=default))",
 		"registryService.cardinality.minimum:int": 1
 	},
 	"RegistryService~schema": {
@@ -53,9 +53,9 @@
 		"schema.uri": "http://www.eclipse.org/emf/2002/Ecore",
 		"root.eclass.uri": "http://www.eclipse.org/emf/2002/Ecore#//EPackage",
 		"resourceSet.target": "(emf.name=ecore)"
-		},
-		"RegistryService~sensor": {
-		"registry.name": "sensor",
+	},
+	"RegistryService~default": {
+		"registry.name": "default",
 		"registry.description": "The person registry to store Person objects",
 		"stage.storage.mappings": [
 			"draft:file",
@@ -67,7 +67,7 @@
 			"approved:release"
 		],
 		"delete.after.transition": true,
-		"storageService.target": "(storage.type=file)",
+		"storageService.target": "(storage.type=apicurio)",
 		"storageService.cardinality.minimum:int": 1,
 		"stages": [
 			{
@@ -85,8 +85,8 @@
 				"writable": true,
 				"final": true
 			}],
-		"schema.uri": "http://gecko.org/example/model/sensor",
-		"root.eclass.uri": "http://gecko.org/example/model/sensor#//Sensor",
-		"resourceSet.target": "(emf.name=sensor)"
+		"schema.uri": "http://www.eclipse.org/emf/2002/Ecore",
+		"root.eclass.uri": "http://www.eclipse.org/emf/2002/Ecore#//EObject",
+		"resourceSet.target": "(emf.name=ecore)"
 		}
 	}

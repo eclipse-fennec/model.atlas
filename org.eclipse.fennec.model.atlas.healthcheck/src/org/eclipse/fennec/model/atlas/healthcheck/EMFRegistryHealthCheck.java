@@ -13,6 +13,8 @@
  */
 package org.eclipse.fennec.model.atlas.healthcheck;
 
+import java.util.concurrent.atomic.AtomicInteger;
+
 import org.apache.felix.hc.api.FormattingResultLog;
 import org.apache.felix.hc.api.HealthCheck;
 import org.apache.felix.hc.api.Result;
@@ -41,9 +43,10 @@ public class EMFRegistryHealthCheck implements HealthCheck {
         if (resourceSet == null) {
             log.critical("ResourceSet service not available");
         } else {
-            int packageCount = resourceSet.getPackageRegistry().size();
-            if (packageCount > 0) {
-                log.info("EMF Registry contains {} EPackages", packageCount);
+            AtomicInteger packageCount = new AtomicInteger(0);
+            resourceSet.getPackageRegistry().forEach((k,v) -> packageCount.incrementAndGet());
+            if (packageCount.get() > 0) {
+                log.info("EMF Registry contains {} EPackages", packageCount.get());
             } else {
                 log.warn("EMF Registry is empty - no EPackages registered");
             }

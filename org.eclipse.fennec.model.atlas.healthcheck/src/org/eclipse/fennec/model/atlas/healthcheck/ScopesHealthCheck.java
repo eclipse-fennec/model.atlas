@@ -18,14 +18,13 @@ import java.util.List;
 import org.apache.felix.hc.api.FormattingResultLog;
 import org.apache.felix.hc.api.HealthCheck;
 import org.apache.felix.hc.api.Result;
-import org.eclipse.fennec.model.atlas.mediatypes.api.SupportedMediatype;
+import org.eclipse.fennec.model.atlas.wf.workflowapi.ScopeService;
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
 import org.osgi.service.component.annotations.ReferenceCardinality;
-import org.eclipse.fennec.model.atlas.wf.workflowapi.ScopeService;
 
 /**
- * Health check that verifies media type codecs are available.
+ * Health check that verifies available scopes.
  *
  * @since 1.0
  */
@@ -33,21 +32,24 @@ import org.eclipse.fennec.model.atlas.wf.workflowapi.ScopeService;
         HealthCheck.TAGS + "=atlas,readiness" })
 public class ScopesHealthCheck implements HealthCheck {
 
-    @Reference(cardinality = ReferenceCardinality.OPTIONAL)
-    private ScopeService<?> scopesService;
+    @Reference(cardinality = ReferenceCardinality.MULTIPLE)
+    private List<ScopeService<?>> scopesServices;
 
     @Override
     public Result execute() {
         FormattingResultLog log = new FormattingResultLog();
 
-        if (scopesService == null) {
-            log.critical("No ScopeService found");
+        if (scopesServices == null || scopesServices.isEmpty()) {
+            log.critical("No ScopeServices found");
         } else {
-            List<String> registries = scopesService.getAllRegistries();
-            if (registries != null && !registries.isEmpty()) {
-                registries.forEach(s -> log.info("{} available", s));
-            } else {
-                log.warn("No Regsitries available");
+            for (ScopeService<?> scopeService : scopesServices) {
+                String scopeName = scopeService.getScope().getName();
+                List<String> registries = scopeService.getAllRegistries();
+                if (registries != null && !registries.isEmpty()) {
+                    registries.forEach(s -> log.info("scope: {} with Registry {} available",scopeName,  s));
+                } else {
+                    log.warn("No Regsitries available");
+                }
             }
         }
 
