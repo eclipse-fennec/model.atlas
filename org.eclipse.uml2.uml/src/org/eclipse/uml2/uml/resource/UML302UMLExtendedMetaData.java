@@ -16,13 +16,12 @@ package org.eclipse.uml2.uml.resource;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.eclipse.uml2.uml.UMLPackage;
-
 import org.eclipse.emf.common.util.URI;
 import org.eclipse.emf.ecore.EClassifier;
 import org.eclipse.emf.ecore.EPackage;
 import org.eclipse.emf.mapping.ecore2xml.Ecore2XMLRegistry;
 import org.eclipse.emf.mapping.ecore2xml.util.Ecore2XMLExtendedMetaData;
+import org.eclipse.uml2.uml.UMLPackage;
 
 public class UML302UMLExtendedMetaData
 		extends Ecore2XMLExtendedMetaData {

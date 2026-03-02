@@ -1,4 +1,4 @@
--library: enable-emf
+-library: enableEMF
 
 Bundle-Version: 5.7.0.SNAPSHOT
 

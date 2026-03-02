@@ -56,23 +56,13 @@ public class ScopeServiceImpl<T extends EObject> implements ScopeService<T> {
 
     @Reference(name = "registryService", policy = ReferencePolicy.DYNAMIC, policyOption = ReferencePolicyOption.GREEDY, cardinality = ReferenceCardinality.MULTIPLE)
     public void bindRegistryService(RegistryService<T> registryService, Map<String, Object> properties) {
-        if (!properties.containsKey("registry.name") || ((String) properties.get("registry.name")).isEmpty()) {
-            LOGGER.severe(String.format("Cannot store RegistryService with registry.name property not set or empty"));
-            return;
-        }
-        String registryName = (String) properties.get("registry.name");
-        registryServiceMap.put(registryName, registryService);
+        registryServiceMap.put(registryService.getRegistryName(), registryService);
         scopeObject = createScopeObject();
         registryService.activate(config.scope_name());
     }
 
     public void unbindRegistryService(RegistryService<T> registryService, Map<String, Object> properties) {
-        if (!properties.containsKey("registry.name") || ((String) properties.get("registry.name")).isEmpty()) {
-            LOGGER.severe(String.format("Cannot store RegistryService with registry.name property not set or empty"));
-            return;
-        }
-        String registryName = (String) properties.get("registry.name");
-        registryServiceMap.remove(registryName);
+        registryServiceMap.remove(registryService.getRegistryName());
         createScopeObject();
         registryService.deactivate(config.scope_name());
     }

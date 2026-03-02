@@ -1,4 +1,4 @@
--library: enable-emf
+-library: enableEMF
 -buildpath: \
 	jakarta.ws.rs-api,\
 	org.osgi.service.jakartars,\

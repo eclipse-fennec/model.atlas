@@ -15,7 +15,6 @@ package org.eclipse.uml2.uml.internal.operations;
 
 import org.eclipse.emf.common.util.ECollections;
 import org.eclipse.emf.common.util.EList;
-
 import org.eclipse.emf.common.util.UniqueEList;
 import org.eclipse.uml2.uml.Element;
 import org.eclipse.uml2.uml.ParameterableElement;

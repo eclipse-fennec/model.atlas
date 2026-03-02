@@ -12,12 +12,11 @@
  */
 package org.eclipse.uml2.uml.internal.resource;
 
-import org.eclipse.uml2.uml.resource.XMI222UMLResource;
-
 import org.eclipse.emf.common.util.URI;
 import org.eclipse.emf.ecore.xmi.XMLHelper;
 import org.eclipse.emf.ecore.xmi.XMLLoad;
 import org.eclipse.emf.ecore.xmi.XMLSave;
+import org.eclipse.uml2.uml.resource.XMI222UMLResource;
 
 /**
  * Resource that converts .xmi models.

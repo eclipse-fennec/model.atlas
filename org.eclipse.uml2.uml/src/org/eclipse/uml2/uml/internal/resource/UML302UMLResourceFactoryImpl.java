@@ -15,12 +15,6 @@ package org.eclipse.uml2.uml.internal.resource;
 
 import java.util.Map;
 
-import org.eclipse.uml2.uml.UMLPackage;
-import org.eclipse.uml2.uml.resource.UML302UMLExtendedMetaData;
-import org.eclipse.uml2.uml.resource.UML302UMLResource;
-import org.eclipse.uml2.uml.resource.UML302UMLResourceHandler;
-import org.eclipse.uml2.uml.resource.UMLResource;
-
 import org.eclipse.emf.common.util.URI;
 import org.eclipse.emf.ecore.EPackage;
 import org.eclipse.emf.ecore.impl.EPackageRegistryImpl;
@@ -34,6 +28,11 @@ import org.eclipse.emf.mapping.ecore2xml.Ecore2XMLPackage;
 import org.eclipse.emf.mapping.ecore2xml.Ecore2XMLRegistry;
 import org.eclipse.emf.mapping.ecore2xml.impl.Ecore2XMLRegistryImpl;
 import org.eclipse.emf.mapping.ecore2xml.util.Ecore2XMLResource;
+import org.eclipse.uml2.uml.UMLPackage;
+import org.eclipse.uml2.uml.resource.UML302UMLExtendedMetaData;
+import org.eclipse.uml2.uml.resource.UML302UMLResource;
+import org.eclipse.uml2.uml.resource.UML302UMLResourceHandler;
+import org.eclipse.uml2.uml.resource.UMLResource;
 
 /**
  * Resource factory that converts .uml models.

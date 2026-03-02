@@ -20,14 +20,11 @@ import org.eclipse.emf.common.util.BasicDiagnostic;
 import org.eclipse.emf.common.util.Diagnostic;
 import org.eclipse.emf.common.util.DiagnosticChain;
 import org.eclipse.emf.ecore.util.InternalEList;
-
 import org.eclipse.uml2.uml.Association;
 import org.eclipse.uml2.uml.Connector;
 import org.eclipse.uml2.uml.ConnectorEnd;
 import org.eclipse.uml2.uml.Element;
-
 import org.eclipse.uml2.uml.Property;
-
 import org.eclipse.uml2.uml.util.UMLValidator;
 
 /**

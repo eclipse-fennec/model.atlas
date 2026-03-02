@@ -22,255 +22,275 @@ import org.eclipse.emf.common.util.Enumerator;
 import org.osgi.annotation.versioning.ProviderType;
 
 /**
- * <!-- begin-user-doc --> A representation of the literals of the enumeration
- * '<em><b>Storage Backend Type</b></em>', and utility methods for working with
- * them. <!-- end-user-doc --> <!-- begin-model-doc --> Storage backend types
+ * <!-- begin-user-doc -->
+ * A representation of the literals of the enumeration '<em><b>Storage Backend Type</b></em>',
+ * and utility methods for working with them.
+ * <!-- end-user-doc -->
+ * <!-- begin-model-doc -->
+ * Storage backend types
  * <!-- end-model-doc -->
- * 
  * @see org.eclipse.fennec.model.atlas.mgmt.management.ManagementPackage#getStorageBackendType()
  * @model
  * @generated
  */
 @ProviderType
 public enum StorageBackendType implements Enumerator {
-    /**
-     * The '<em><b>FILE</b></em>' literal object. <!-- begin-user-doc --> <!--
-     * end-user-doc --> <!-- begin-model-doc --> File object storage backend <!--
-     * end-model-doc -->
-     * 
-     * @see #FILE_VALUE
-     * @generated
-     * @ordered
-     */
-    FILE(0, "FILE", "FILE"),
+	/**
+	 * The '<em><b>FILE</b></em>' literal object.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * <!-- begin-model-doc -->
+	 * File object storage backend
+	 * <!-- end-model-doc -->
+	 * @see #FILE_VALUE
+	 * @generated
+	 * @ordered
+	 */
+	FILE(0, "FILE", "FILE"),
 
-    /**
-     * The '<em><b>MINIO</b></em>' literal object. <!-- begin-user-doc --> <!--
-     * end-user-doc --> <!-- begin-model-doc --> MinIO object storage backend <!--
-     * end-model-doc -->
-     * 
-     * @see #MINIO_VALUE
-     * @generated
-     * @ordered
-     */
-    MINIO(1, "MINIO", "MINIO"),
+	/**
+	 * The '<em><b>MINIO</b></em>' literal object.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * <!-- begin-model-doc -->
+	 * MinIO object storage backend
+	 * <!-- end-model-doc -->
+	 * @see #MINIO_VALUE
+	 * @generated
+	 * @ordered
+	 */
+	MINIO(1, "MINIO", "MINIO"),
 
-    /**
-     * The '<em><b>GIT</b></em>' literal object. <!-- begin-user-doc --> <!--
-     * end-user-doc --> <!-- begin-model-doc --> Git-based storage backend <!--
-     * end-model-doc -->
-     * 
-     * @see #GIT_VALUE
-     * @generated
-     * @ordered
-     */
-    GIT(2, "GIT", "GIT"),
+	/**
+	 * The '<em><b>GIT</b></em>' literal object.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * <!-- begin-model-doc -->
+	 * Git-based storage backend
+	 * <!-- end-model-doc -->
+	 * @see #GIT_VALUE
+	 * @generated
+	 * @ordered
+	 */
+	GIT(2, "GIT", "GIT"),
 
-    /**
-     * The '<em><b>APICURIO</b></em>' literal object. <!-- begin-user-doc --> <!--
-     * end-user-doc --> <!-- begin-model-doc --> Apicurio-based storage backend <!--
-     * end-model-doc -->
-     * 
-     * @see #APICURIO_VALUE
-     * @generated
-     * @ordered
-     */
-    APICURIO(3, "APICURIO", "APICURIO");
+	/**
+	 * The '<em><b>APICURIO</b></em>' literal object.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * <!-- begin-model-doc -->
+	 * Apicurio-based storage backend
+	 * <!-- end-model-doc -->
+	 * @see #APICURIO_VALUE
+	 * @generated
+	 * @ordered
+	 */
+	APICURIO(3, "APICURIO", "APICURIO");
 
-    /**
-     * The '<em><b>FILE</b></em>' literal value. <!-- begin-user-doc --> <!--
-     * end-user-doc --> <!-- begin-model-doc --> File object storage backend <!--
-     * end-model-doc -->
-     * 
-     * @see #FILE
-     * @model
-     * @generated
-     * @ordered
-     */
-    public static final int FILE_VALUE = 0;
+	/**
+	 * The '<em><b>FILE</b></em>' literal value.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * <!-- begin-model-doc -->
+	 * File object storage backend
+	 * <!-- end-model-doc -->
+	 * @see #FILE
+	 * @model
+	 * @generated
+	 * @ordered
+	 */
+	public static final int FILE_VALUE = 0;
 
-    /**
-     * The '<em><b>MINIO</b></em>' literal value. <!-- begin-user-doc --> <!--
-     * end-user-doc --> <!-- begin-model-doc --> MinIO object storage backend <!--
-     * end-model-doc -->
-     * 
-     * @see #MINIO
-     * @model
-     * @generated
-     * @ordered
-     */
-    public static final int MINIO_VALUE = 1;
+	/**
+	 * The '<em><b>MINIO</b></em>' literal value.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * <!-- begin-model-doc -->
+	 * MinIO object storage backend
+	 * <!-- end-model-doc -->
+	 * @see #MINIO
+	 * @model
+	 * @generated
+	 * @ordered
+	 */
+	public static final int MINIO_VALUE = 1;
 
-    /**
-     * The '<em><b>GIT</b></em>' literal value. <!-- begin-user-doc --> <!--
-     * end-user-doc --> <!-- begin-model-doc --> Git-based storage backend <!--
-     * end-model-doc -->
-     * 
-     * @see #GIT
-     * @model
-     * @generated
-     * @ordered
-     */
-    public static final int GIT_VALUE = 2;
+	/**
+	 * The '<em><b>GIT</b></em>' literal value.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * <!-- begin-model-doc -->
+	 * Git-based storage backend
+	 * <!-- end-model-doc -->
+	 * @see #GIT
+	 * @model
+	 * @generated
+	 * @ordered
+	 */
+	public static final int GIT_VALUE = 2;
 
-    /**
-     * The '<em><b>APICURIO</b></em>' literal value. <!-- begin-user-doc --> <!--
-     * end-user-doc --> <!-- begin-model-doc --> Apicurio-based storage backend <!--
-     * end-model-doc -->
-     * 
-     * @see #APICURIO
-     * @model
-     * @generated
-     * @ordered
-     */
-    public static final int APICURIO_VALUE = 3;
+	/**
+	 * The '<em><b>APICURIO</b></em>' literal value.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * <!-- begin-model-doc -->
+	 * Apicurio-based storage backend
+	 * <!-- end-model-doc -->
+	 * @see #APICURIO
+	 * @model
+	 * @generated
+	 * @ordered
+	 */
+	public static final int APICURIO_VALUE = 3;
 
-    /**
-     * An array of all the '<em><b>Storage Backend Type</b></em>' enumerators. <!--
-     * begin-user-doc --> <!-- end-user-doc -->
-     * 
-     * @generated
-     */
-    private static final StorageBackendType[] VALUES_ARRAY = new StorageBackendType[] { FILE, MINIO, GIT, APICURIO, };
+	/**
+	 * An array of all the '<em><b>Storage Backend Type</b></em>' enumerators.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	private static final StorageBackendType[] VALUES_ARRAY =
+		new StorageBackendType[] {
+			FILE,
+			MINIO,
+			GIT,
+			APICURIO,
+		};
 
-    /**
-     * A public read-only list of all the '<em><b>Storage Backend Type</b></em>'
-     * enumerators. <!-- begin-user-doc --> <!-- end-user-doc -->
-     * 
-     * @generated
-     */
-    public static final List<StorageBackendType> VALUES = Collections.unmodifiableList(Arrays.asList(VALUES_ARRAY));
+	/**
+	 * A public read-only list of all the '<em><b>Storage Backend Type</b></em>' enumerators.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	public static final List<StorageBackendType> VALUES = Collections.unmodifiableList(Arrays.asList(VALUES_ARRAY));
 
-    /**
-     * Returns the '<em><b>Storage Backend Type</b></em>' literal with the specified
-     * literal value. <!-- begin-user-doc --> <!-- end-user-doc -->
-     * 
-     * @param literal the literal.
-     * @return the matching enumerator or <code>null</code>.
-     * @generated
-     */
-    public static StorageBackendType get(String literal) {
-        for (int i = 0; i < VALUES_ARRAY.length; ++i) {
-            StorageBackendType result = VALUES_ARRAY[i];
-            if (result.toString().equals(literal)) {
-                return result;
-            }
-        }
-        return null;
-    }
+	/**
+	 * Returns the '<em><b>Storage Backend Type</b></em>' literal with the specified literal value.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @param literal the literal.
+	 * @return the matching enumerator or <code>null</code>.
+	 * @generated
+	 */
+	public static StorageBackendType get(String literal) {
+		for (int i = 0; i < VALUES_ARRAY.length; ++i) {
+			StorageBackendType result = VALUES_ARRAY[i];
+			if (result.toString().equals(literal)) {
+				return result;
+			}
+		}
+		return null;
+	}
 
-    /**
-     * Returns the '<em><b>Storage Backend Type</b></em>' literal with the specified
-     * name. <!-- begin-user-doc --> <!-- end-user-doc -->
-     * 
-     * @param name the name.
-     * @return the matching enumerator or <code>null</code>.
-     * @generated
-     */
-    public static StorageBackendType getByName(String name) {
-        for (int i = 0; i < VALUES_ARRAY.length; ++i) {
-            StorageBackendType result = VALUES_ARRAY[i];
-            if (result.getName().equals(name)) {
-                return result;
-            }
-        }
-        return null;
-    }
+	/**
+	 * Returns the '<em><b>Storage Backend Type</b></em>' literal with the specified name.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @param name the name.
+	 * @return the matching enumerator or <code>null</code>.
+	 * @generated
+	 */
+	public static StorageBackendType getByName(String name) {
+		for (int i = 0; i < VALUES_ARRAY.length; ++i) {
+			StorageBackendType result = VALUES_ARRAY[i];
+			if (result.getName().equals(name)) {
+				return result;
+			}
+		}
+		return null;
+	}
 
-    /**
-     * Returns the '<em><b>Storage Backend Type</b></em>' literal with the specified
-     * integer value. <!-- begin-user-doc --> <!-- end-user-doc -->
-     * 
-     * @param value the integer value.
-     * @return the matching enumerator or <code>null</code>.
-     * @generated
-     */
-    public static StorageBackendType get(int value) {
-        switch (value) {
-        case FILE_VALUE:
-            return FILE;
-        case MINIO_VALUE:
-            return MINIO;
-        case GIT_VALUE:
-            return GIT;
-        case APICURIO_VALUE:
-            return APICURIO;
-        }
-        return null;
-    }
+	/**
+	 * Returns the '<em><b>Storage Backend Type</b></em>' literal with the specified integer value.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @param value the integer value.
+	 * @return the matching enumerator or <code>null</code>.
+	 * @generated
+	 */
+	public static StorageBackendType get(int value) {
+		switch (value) {
+			case FILE_VALUE: return FILE;
+			case MINIO_VALUE: return MINIO;
+			case GIT_VALUE: return GIT;
+			case APICURIO_VALUE: return APICURIO;
+		}
+		return null;
+	}
 
-    /**
-     * <!-- begin-user-doc --> <!-- end-user-doc -->
-     * 
-     * @generated
-     */
-    private final int value;
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	private final int value;
 
-    /**
-     * <!-- begin-user-doc --> <!-- end-user-doc -->
-     * 
-     * @generated
-     */
-    private final String name;
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	private final String name;
 
-    /**
-     * <!-- begin-user-doc --> <!-- end-user-doc -->
-     * 
-     * @generated
-     */
-    private final String literal;
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	private final String literal;
 
-    /**
-     * Only this class can construct instances. <!-- begin-user-doc --> <!--
-     * end-user-doc -->
-     * 
-     * @generated
-     */
-    private StorageBackendType(int value, String name, String literal) {
-        this.value = value;
-        this.name = name;
-        this.literal = literal;
-    }
+	/**
+	 * Only this class can construct instances.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	private StorageBackendType(int value, String name, String literal) {
+		this.value = value;
+		this.name = name;
+		this.literal = literal;
+	}
 
-    /**
-     * <!-- begin-user-doc --> <!-- end-user-doc -->
-     * 
-     * @generated
-     */
-    @Override
-    public int getValue() {
-        return value;
-    }
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
+	public int getValue() {
+	  return value;
+	}
 
-    /**
-     * <!-- begin-user-doc --> <!-- end-user-doc -->
-     * 
-     * @generated
-     */
-    @Override
-    public String getName() {
-        return name;
-    }
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
+	public String getName() {
+	  return name;
+	}
 
-    /**
-     * <!-- begin-user-doc --> <!-- end-user-doc -->
-     * 
-     * @generated
-     */
-    @Override
-    public String getLiteral() {
-        return literal;
-    }
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
+	public String getLiteral() {
+	  return literal;
+	}
 
-    /**
-     * Returns the literal value of the enumerator, which is its string
-     * representation. <!-- begin-user-doc --> <!-- end-user-doc -->
-     * 
-     * @generated
-     */
-    @Override
-    public String toString() {
-        return literal;
-    }
-
-} // StorageBackendType
+	/**
+	 * Returns the literal value of the enumerator, which is its string representation.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
+	public String toString() {
+		return literal;
+	}
+	
+} //StorageBackendType

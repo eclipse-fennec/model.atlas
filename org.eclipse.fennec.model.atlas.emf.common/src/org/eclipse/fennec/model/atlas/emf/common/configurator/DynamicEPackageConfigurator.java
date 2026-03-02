@@ -17,7 +17,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import org.eclipse.emf.ecore.EPackage;
-import org.gecko.emf.osgi.configurator.EPackageConfigurator;
+import org.eclipse.fennec.emf.osgi.configurator.EPackageConfigurator;
 
 public class DynamicEPackageConfigurator implements EPackageConfigurator {
 

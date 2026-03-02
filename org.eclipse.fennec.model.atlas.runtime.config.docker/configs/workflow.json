@@ -1,88 +1,94 @@
 {
-	":configurator:resource-version": 1,
-	":configurator:version": "1.0.0",
-	"ScopeService~atlas": {
-		"scope.name": "atlas",
-		"scope.description": "Atlas scope. The parent of all other scopes.",
-		"parent.scope": "",
-		"registryService.target": "(|(registry.name=schema)(registry.name=person))",
-		"registryService.cardinality.minimum:int": 2
-	},
-	"ScopeService~default": {
-		"scope.name": "default",
-		"scope.description": "Default Scope",
-		"parent.scope": "atlas",
-		"registryService.target": "(|(registry.name=schema)(registry.name=person))",
-		"registryService.cardinality.minimum:int": 2
-	},
-	"RegistryService~schema": {
-		"registry.name": "schema",
-		"registry.description": "The schema registry to store EPackage objects",
-		"stage.storage.mappings": [
-			"draft:apicurio",
-			"approved:apicurio",
-			"release:apicurio"
-		],
-		"workflow.transitions": [
-			"draft:approved",
-			"approved:release"
-		],
-		"delete.after.transition": true,
-		"storageService.target": "(storage.type=apicurio)",
-		"storageService.cardinality.minimum:int": 1,
-		"stages": [
-			{
-				"name": "draft",
-				"writable": true,
-				"final": false
-			},
-			{
-				"name": "approved",
-				"writable": true,
-				"final": false
-			},
-			{
-				"name": "release",
-				"writable": true,
-				"final": true
-			}],
-		"schema.uri": "http://www.eclipse.org/emf/2002/Ecore",
-		"root.eclass.uri": "http://www.eclipse.org/emf/2002/Ecore#//EPackage",
-		"resourceSet.target": "(emf.name=ecore)"
-		},
-		"RegistryService~person": {
-		"registry.name": "person",
-		"registry.description": "The person registry to store Person objects",
-		"stage.storage.mappings": [
-			"draft:file",
-			"approved:file",
-			"release:file"
-		],
-		"workflow.transitions": [
-			"draft:approved",
-			"approved:release"
-		],
-		"delete.after.transition": true,
-		"storageService.target": "(storage.type=file)",
-		"storageService.cardinality.minimum:int": 1,
-		"stages": [
-			{
-				"name": "draft",
-				"writable": true,
-				"final": false
-			},
-			{
-				"name": "approved",
-				"writable": true,
-				"final": false
-			},
-			{
-				"name": "release",
-				"writable": true,
-				"final": true
-			}],
-		"schema.uri": "http://gecko.org/example/model/basic",
-		"root.eclass.uri": "http://gecko.org/example/model/basic#//Person",
-		"resourceSet.target": "(emf.name=basic)"
-		}
-	}
+    ":configurator:resource-version": 1,
+    ":configurator:version": "1.0.0",
+    "EPackagePostReleaseActionService": {
+        "releaseStorage.target": "(storage.type=apicurio)"
+    },
+    "ScopeService~atlas": {
+        "scope.name": "atlas",
+        "scope.description": "Atlas scope. The parent of all other scopes.",
+        "parent.scope": "",
+        "registryService.target": "(|(registry.name=schema)(registry.name=default))",
+        "registryService.cardinality.minimum:int": 1
+    },
+    "ScopeService~civitas": {
+        "scope.name": "civitas",
+        "scope.description": "Civitas Scope",
+        "parent.scope": "atlas",
+        "registryService.target": "(|(registry.name=schema)(registry.name=default))",
+        "registryService.cardinality.minimum:int": 1
+    },
+    "RegistryService~schema": {
+        "registry.name": "schema",
+        "registry.description": "The schema registry to store EPackage objects",
+        "postReleaseActionService.target": "(component.name=EPackagePostReleaseActionService)",
+        "stage.storage.mappings": [
+            "draft:apicurio",
+            "approved:apicurio",
+            "release:apicurio"
+        ],
+        "workflow.transitions": [
+            "draft:approved",
+            "approved:release"
+        ],
+        "delete.after.transition": true,
+        "storageService.target": "(storage.type=apicurio)",
+        "storageService.cardinality.minimum:int": 1,
+        "stages": [
+            {
+                "name": "draft",
+                "writable": true,
+                "final": false
+            },
+            {
+                "name": "approved",
+                "writable": true,
+                "final": false
+            },
+            {
+                "name": "release",
+                "writable": true,
+                "final": true
+            }
+        ],
+        "schema.uri": "http://www.eclipse.org/emf/2002/Ecore",
+        "root.eclass.uri": "http://www.eclipse.org/emf/2002/Ecore#//EPackage",
+        "resourceSet.target": "(emf.name=ecore)"
+    },
+    "RegistryService~default": {
+        "registry.name": "default",
+        "registry.description": "The person registry to store Person objects",
+        "stage.storage.mappings": [
+            "draft:file",
+            "approved:file",
+            "release:file"
+        ],
+        "workflow.transitions": [
+            "draft:approved",
+            "approved:release"
+        ],
+        "delete.after.transition": true,
+        "storageService.target": "(storage.type=apicurio)",
+        "storageService.cardinality.minimum:int": 1,
+        "stages": [
+            {
+                "name": "draft",
+                "writable": true,
+                "final": false
+            },
+            {
+                "name": "approved",
+                "writable": true,
+                "final": false
+            },
+            {
+                "name": "release",
+                "writable": true,
+                "final": true
+            }
+        ],
+        "schema.uri": "http://www.eclipse.org/emf/2002/Ecore",
+        "root.eclass.uri": "http://www.eclipse.org/emf/2002/Ecore#//EObject",
+        "resourceSet.target": "(emf.name=ecore)"
+    }
+}

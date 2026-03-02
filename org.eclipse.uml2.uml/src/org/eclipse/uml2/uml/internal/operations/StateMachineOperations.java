@@ -20,13 +20,11 @@ import org.eclipse.emf.common.util.Diagnostic;
 import org.eclipse.emf.common.util.DiagnosticChain;
 import org.eclipse.emf.common.util.EList;
 import org.eclipse.emf.common.util.UniqueEList;
-
 import org.eclipse.uml2.uml.BehavioredClassifier;
 import org.eclipse.uml2.uml.RedefinableElement;
 import org.eclipse.uml2.uml.Region;
 import org.eclipse.uml2.uml.State;
 import org.eclipse.uml2.uml.StateMachine;
-
 import org.eclipse.uml2.uml.Vertex;
 import org.eclipse.uml2.uml.util.UMLValidator;
 

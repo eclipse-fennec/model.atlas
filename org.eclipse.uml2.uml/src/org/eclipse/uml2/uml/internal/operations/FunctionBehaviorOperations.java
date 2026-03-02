@@ -18,12 +18,10 @@ import java.util.Map;
 import org.eclipse.emf.common.util.BasicDiagnostic;
 import org.eclipse.emf.common.util.Diagnostic;
 import org.eclipse.emf.common.util.DiagnosticChain;
-
 import org.eclipse.uml2.uml.DataType;
 import org.eclipse.uml2.uml.FunctionBehavior;
 import org.eclipse.uml2.uml.Property;
 import org.eclipse.uml2.uml.Type;
-
 import org.eclipse.uml2.uml.util.UMLValidator;
 
 /**
