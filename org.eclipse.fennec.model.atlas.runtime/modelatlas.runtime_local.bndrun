@@ -10,7 +10,7 @@
     gecko.log.dir=${.}/runtime/logs,\
     org.apache.felix.configadmin.plugin.interpolation.secretsdir=${.}/runtime/secrets,\
     data=${.}/runtime/data/,\
-    APICURIO_PORT=8081
+    APICURIO_PORT=8087
     
 
 -runtrace: true

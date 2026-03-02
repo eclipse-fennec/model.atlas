@@ -14,11 +14,15 @@
 package org.eclipse.fennec.model.atlas.healthcheck;
 
 import java.util.List;
+import java.util.StringJoiner;
 
 import org.apache.felix.hc.api.FormattingResultLog;
 import org.apache.felix.hc.api.HealthCheck;
 import org.apache.felix.hc.api.Result;
+import org.eclipse.fennec.model.atlas.wf.workflowapi.Registry;
+import org.eclipse.fennec.model.atlas.wf.workflowapi.Scope;
 import org.eclipse.fennec.model.atlas.wf.workflowapi.ScopeService;
+import org.eclipse.fennec.model.atlas.wf.workflowapi.Stage;
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
 import org.osgi.service.component.annotations.ReferenceCardinality;
@@ -43,10 +47,14 @@ public class ScopesHealthCheck implements HealthCheck {
             log.critical("No ScopeServices found");
         } else {
             for (ScopeService<?> scopeService : scopesServices) {
-                String scopeName = scopeService.getScope().getName();
-                List<String> registries = scopeService.getAllRegistries();
+                Scope scope = scopeService.getScope();
+                List<Registry> registries = scope.getRegistries();
                 if (registries != null && !registries.isEmpty()) {
-                    registries.forEach(s -> log.info("scope: {} with Registry {} available",scopeName,  s));
+                    registries.forEach(r -> {
+                	StringJoiner stages = new StringJoiner(", ");
+                	r.getStages().stream().map(Stage::getName).forEach(stages::add);
+                	log.info("scope: {} with Registry {}  - description {} - and stages {} available", scope.getName(), r.getName(), r.getDescription(), stages);
+                    });
                 } else {
                     log.warn("No Regsitries available");
                 }
