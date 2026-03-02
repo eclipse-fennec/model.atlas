@@ -26,5 +26,16 @@
 		"httpStatus.warn": 200,
 		"httpStatus.critical": 503,
 		"httpStatus.temporarilyUnavailable": 503
+	},
+//	"org.apache.felix.hc.generalchecks.DsComponentsCheck" : {
+//	   "components.list" : [
+//	           "ScopeService"
+//	       ]
+//	   },
+	"org.apache.felix.hc.generalchecks.ServicesCheck" : {
+	   "services.list" : [
+               "(scope.name=civitas)",
+               "(scope.name=atlas)"
+           ]
 	}
 }

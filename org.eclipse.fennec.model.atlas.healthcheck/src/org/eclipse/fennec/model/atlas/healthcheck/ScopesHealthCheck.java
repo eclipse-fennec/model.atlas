@@ -53,7 +53,7 @@ public class ScopesHealthCheck implements HealthCheck {
                     registries.forEach(r -> {
                 	StringJoiner stages = new StringJoiner(", ");
                 	r.getStages().stream().map(Stage::getName).forEach(stages::add);
-                	log.info("scope: {} with Registry {}  - description {} - and stages {} available", scope.getName(), r.getName(), r.getDescription(), stages);
+                	log.info("scope: {} with Registry: {} Description: {} and Stages : {} available", scope.getName(), r.getName(), r.getDescription(), stages);
                     });
                 } else {
                     log.warn("No Regsitries available");
