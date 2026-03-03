@@ -17,7 +17,6 @@ import org.eclipse.emf.common.util.URI;
 import org.eclipse.emf.ecore.xmi.XMLHelper;
 import org.eclipse.emf.ecore.xmi.XMLLoad;
 import org.eclipse.emf.ecore.xmi.XMLSave;
-
 import org.eclipse.uml2.uml.resource.CMOF202UMLResource;
 
 public class CMOF202UMLResourceImpl

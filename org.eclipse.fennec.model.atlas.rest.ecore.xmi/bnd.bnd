@@ -1,4 +1,4 @@
--library: enable-emf
+-library: enableEMF
 -buildpath: \
 	org.osgi.service.component,\
 	org.osgi.service.jakartars,\

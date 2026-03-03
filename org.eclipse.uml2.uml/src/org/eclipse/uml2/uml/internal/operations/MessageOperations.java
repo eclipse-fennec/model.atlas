@@ -20,7 +20,6 @@ import org.eclipse.emf.common.util.Diagnostic;
 import org.eclipse.emf.common.util.DiagnosticChain;
 import org.eclipse.emf.common.util.EList;
 import org.eclipse.emf.common.util.UniqueEList;
-
 import org.eclipse.uml2.uml.Expression;
 import org.eclipse.uml2.uml.Message;
 import org.eclipse.uml2.uml.MessageKind;
@@ -33,7 +32,6 @@ import org.eclipse.uml2.uml.Type;
 import org.eclipse.uml2.uml.UMLPackage;
 import org.eclipse.uml2.uml.UMLPlugin;
 import org.eclipse.uml2.uml.ValueSpecification;
-
 import org.eclipse.uml2.uml.util.UMLValidator;
 
 /**

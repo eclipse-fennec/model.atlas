@@ -17,9 +17,9 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.eclipse.emf.ecore.EPackage.Registry;
+import org.eclipse.fennec.emf.osgi.configurator.EPackageConfigurator;
+import org.eclipse.fennec.emf.osgi.constants.EMFNamespaces;
 import org.eclipse.uml2.uml.UMLPackage;
-import org.gecko.emf.osgi.configurator.EPackageConfigurator;
-import org.gecko.emf.osgi.constants.EMFNamespaces;
 
 /**
  * 
@@ -62,7 +62,7 @@ public class UMLEPackageConfigurator implements EPackageConfigurator {
 
     public Map<String, Object> getServiceProperties() {
         Map<String, Object> properties = new HashMap<String, Object>();
-        properties.put(EMFNamespaces.EMF_MODEL_NAME, UMLPackage.eNAME);
+        properties.put(EMFNamespaces.EMF_NAME, UMLPackage.eNAME);
         properties.put(EMFNamespaces.EMF_MODEL_NSURI, UMLPackage.eNS_URI);
         properties.put(EMFNamespaces.EMF_MODEL_REGISTRATION, EMFNamespaces.MODEL_REGISTRATION_PROVIDED);
         properties.put(EMFNamespaces.EMF_MODEL_FILE_EXT, "uml");

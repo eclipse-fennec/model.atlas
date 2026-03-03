@@ -20,6 +20,8 @@ import org.eclipse.emf.ecore.EPackage;
 
 import org.eclipse.emf.ecore.resource.Resource.Factory;
 
+import org.eclipse.fennec.emf.osgi.configurator.EPackageConfigurator;
+
 import org.eclipse.fennec.model.atlas.rest.model.RestFactory;
 import org.eclipse.fennec.model.atlas.rest.model.RestPackage;
 
@@ -27,11 +29,11 @@ import org.eclipse.fennec.model.atlas.rest.model.impl.RestPackageImpl;
 
 import org.eclipse.fennec.model.atlas.rest.model.util.RestResourceFactoryImpl;
 
-import org.gecko.emf.osgi.configurator.EPackageConfigurator;
-
 import org.osgi.annotation.bundle.Capability;
 
+import org.osgi.framework.Bundle;
 import org.osgi.framework.BundleContext;
+import org.osgi.framework.BundleException;
 import org.osgi.framework.ServiceRegistration;
 
 import org.osgi.service.component.annotations.Activate;
@@ -39,128 +41,142 @@ import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Deactivate;
 
 import org.osgi.service.condition.Condition;
-
 /**
- * The <b>PackageConfiguration</b> for the model. The package will be registered
- * into a OSGi base model registry.
+ * The <b>PackageConfiguration</b> for the model.
+ * The package will be registered into a OSGi base model registry.
  * 
  * @generated
  */
 @Component(name = "RestConfigurator")
-@Capability(namespace = "osgi.service", attribute = {
-        "objectClass:List<String>=\"org.eclipse.fennec.model.atlas.rest.model.util.RestResourceFactoryImpl, org.eclipse.emf.ecore.resource.Resource$Factory\"",
-        "uses:=\"org.eclipse.emf.ecore.resource,org.eclipse.fennec.model.atlas.rest.model.util\"" })
-@Capability(namespace = "osgi.service", attribute = {
-        "objectClass:List<String>=\"org.eclipse.fennec.model.atlas.rest.model.RestFactory, org.eclipse.emf.ecore.EFactory\"",
-        "uses:=\"org.eclipse.emf.ecore,org.eclipse.fennec.model.atlas.rest.model\"" })
-@Capability(namespace = "osgi.service", attribute = {
-        "objectClass:List<String>=\"org.eclipse.fennec.model.atlas.rest.model.RestPackage, org.eclipse.emf.ecore.EPackage\"",
-        "uses:=\"org.eclipse.emf.ecore,org.eclipse.fennec.model.atlas.rest.model\"" })
-@Capability(namespace = "osgi.service", attribute = {
-        "objectClass:List<String>=\"org.gecko.emf.osgi.configurator.EPackageConfigurator\"",
-        "uses:=\"org.eclipse.emf.ecore,org.eclipse.fennec.model.atlas.rest.model\"" })
-@Capability(namespace = "osgi.service", attribute = {
-        "objectClass:List<String>=\"org.osgi.service.condition.Condition\"", "uses:=org.osgi.service.condition" })
+@Capability( namespace = "osgi.service", attribute = { "objectClass:List<String>=\"org.eclipse.fennec.model.atlas.rest.model.util.RestResourceFactoryImpl, org.eclipse.emf.ecore.resource.Resource$Factory\"" , "uses:=\"org.eclipse.emf.ecore.resource,org.eclipse.fennec.model.atlas.rest.model.util\"" })
+@Capability( namespace = "osgi.service", attribute = { "objectClass:List<String>=\"org.eclipse.fennec.model.atlas.rest.model.RestFactory, org.eclipse.emf.ecore.EFactory\"" , "uses:=\"org.eclipse.emf.ecore,org.eclipse.fennec.model.atlas.rest.model\"" })
+@Capability( namespace = "osgi.service", attribute = { "objectClass:List<String>=\"org.eclipse.fennec.model.atlas.rest.model.RestPackage, org.eclipse.emf.ecore.EPackage\"" , "uses:=\"org.eclipse.emf.ecore,org.eclipse.fennec.model.atlas.rest.model\"" })
+@Capability( namespace = "osgi.service", attribute = { "objectClass:List<String>=\"org.eclipse.fennec.emf.osgi.configurator.EPackageConfigurator\"" , "uses:=\"org.eclipse.emf.ecore,org.eclipse.fennec.model.atlas.rest.model\"" })
+@Capability( namespace = "osgi.service", attribute = { "objectClass:List<String>=\"org.osgi.service.condition.Condition\"" , "uses:=org.osgi.service.condition" })
 public class RestConfigurationComponent {
+	
+	private ServiceRegistration<?> packageRegistration = null;
+	private ServiceRegistration<EPackageConfigurator> ePackageConfiguratorRegistration = null;
+	private ServiceRegistration<?> eFactoryRegistration = null;
+	private ServiceRegistration<?> conditionRegistration = null;
+	private ServiceRegistration<?> resourceFactoryRegistration = null;
 
-    private ServiceRegistration<?> packageRegistration = null;
-    private ServiceRegistration<EPackageConfigurator> ePackageConfiguratorRegistration = null;
-    private ServiceRegistration<?> eFactoryRegistration = null;
-    private ServiceRegistration<?> conditionRegistration = null;
-    private ServiceRegistration<?> resourceFactoryRegistration = null;
+	/**
+	 * Activates the Configuration Component.
+	 *
+	 * @generated
+	 */
+	@Activate
+	public void activate(BundleContext ctx) {
+	
+		checkEMFEcore(ctx);
+		RestPackage ePackage = RestPackageImpl.eINSTANCE;
+		
+		if(!EPackage.Registry.INSTANCE.containsKey(RestPackage.eNS_URI)){
+			EPackage.Registry.INSTANCE.put(RestPackage.eNS_URI, ePackage);
+		}
+		
+		RestEPackageConfigurator packageConfigurator = registerEPackageConfiguratorService(ePackage, ctx);
+		registerResourceFactoryService(ctx);
+		registerEPackageService(ePackage, packageConfigurator, ctx);
+		registerEFactoryService(ePackage, packageConfigurator, ctx);
+		registerConditionService(packageConfigurator, ctx);
+	}
+	
+	/**
+	 * We have to make sure that org.eclipse.emf.ecore is started, so we don't run 
+	 * into start order issues due to the use of static access in EMF 
+	 * @param ctx the {@link BundleContext} to use
+	 */
+	private void checkEMFEcore(BundleContext ctx) {
+		Bundle[] bundles = ctx.getBundles();
+		
+		for(Bundle bundle : bundles) {
+			if("org.eclipse.emf.ecore".equals(bundle.getSymbolicName())) {
+				try {
+					bundle.start();
+				} catch (BundleException e) {
+					System.err.println("Could not start Bundle org.eclipse.emf.ecore, something seems seriously wrong: " + e.getMessage());
+					e.printStackTrace();
+				}
+				break;
+			}
+		}
+	}
+	
+	/**
+	 * Registers the RestEPackageConfigurator as a service.
+	 *
+	 * @generated
+	 */
+	private RestEPackageConfigurator registerEPackageConfiguratorService(RestPackage ePackage, BundleContext ctx){
+		RestEPackageConfigurator packageConfigurator = new RestEPackageConfigurator(ePackage);
+		// register the EPackageConfigurator
+		Hashtable<String, Object> properties = new Hashtable<String, Object>();
+		properties.putAll(packageConfigurator.getServiceProperties());
+		ePackageConfiguratorRegistration = ctx.registerService(EPackageConfigurator.class, packageConfigurator, properties);
 
-    /**
-     * Activates the Configuration Component.
-     *
-     * @generated
-     */
-    @Activate
-    public void activate(BundleContext ctx) {
-        RestPackage ePackage = RestPackageImpl.eINSTANCE;
+		return packageConfigurator;
+	}
 
-        RestEPackageConfigurator packageConfigurator = registerEPackageConfiguratorService(ePackage, ctx);
-        registerResourceFactoryService(ctx);
-        registerEPackageService(ePackage, packageConfigurator, ctx);
-        registerEFactoryService(ePackage, packageConfigurator, ctx);
-        registerConditionService(packageConfigurator, ctx);
-    }
+	/**
+	 * Registers the RestResourceFactoryImpl as a service.
+	 *
+	 * @generated
+	 */
+	private void registerResourceFactoryService(BundleContext ctx){
+		RestResourceFactoryImpl factory = new RestResourceFactoryImpl();
+		Hashtable<String, Object> properties = new Hashtable<String, Object>();
+		properties.putAll(factory.getServiceProperties());
+		String[] serviceClasses = new String[] {RestResourceFactoryImpl.class.getName(), Factory.class.getName()};
+		resourceFactoryRegistration = ctx.registerService(serviceClasses, factory, properties);
+	}
 
-    /**
-     * Registers the RestEPackageConfigurator as a service.
-     *
-     * @generated
-     */
-    private RestEPackageConfigurator registerEPackageConfiguratorService(RestPackage ePackage, BundleContext ctx) {
-        RestEPackageConfigurator packageConfigurator = new RestEPackageConfigurator(ePackage);
-        // register the EPackageConfigurator
-        Hashtable<String, Object> properties = new Hashtable<String, Object>();
-        properties.putAll(packageConfigurator.getServiceProperties());
-        ePackageConfiguratorRegistration = ctx.registerService(EPackageConfigurator.class, packageConfigurator,
-                properties);
+	/**
+	 * Registers the RestPackage as a service.
+	 *
+	 * @generated
+	 */
+	private void registerEPackageService(RestPackage ePackage, RestEPackageConfigurator packageConfigurator, BundleContext ctx){
+		Hashtable<String, Object> properties = new Hashtable<String, Object>();
+		properties.putAll(packageConfigurator.getServiceProperties());
+		String[] serviceClasses = new String[] {RestPackage.class.getName(), EPackage.class.getName()};
+		packageRegistration = ctx.registerService(serviceClasses, ePackage, properties);
+	}
 
-        return packageConfigurator;
-    }
+	/**
+	 * Registers the RestFactory as a service.
+	 *
+	 * @generated
+	 */
+	private void registerEFactoryService(RestPackage ePackage, RestEPackageConfigurator packageConfigurator, BundleContext ctx){
+		Hashtable<String, Object> properties = new Hashtable<String, Object>();
+		properties.putAll(packageConfigurator.getServiceProperties());
+		String[] serviceClasses = new String[] {RestFactory.class.getName(), EFactory.class.getName()};
+		eFactoryRegistration = ctx.registerService(serviceClasses, ePackage.getRestFactory(), properties);
+	}
 
-    /**
-     * Registers the RestResourceFactoryImpl as a service.
-     *
-     * @generated
-     */
-    private void registerResourceFactoryService(BundleContext ctx) {
-        RestResourceFactoryImpl factory = new RestResourceFactoryImpl();
-        Hashtable<String, Object> properties = new Hashtable<String, Object>();
-        properties.putAll(factory.getServiceProperties());
-        String[] serviceClasses = new String[] { RestResourceFactoryImpl.class.getName(), Factory.class.getName() };
-        resourceFactoryRegistration = ctx.registerService(serviceClasses, factory, properties);
-    }
+	private void registerConditionService(RestEPackageConfigurator packageConfigurator, BundleContext ctx){
+		// register the EPackage
+		Hashtable<String, Object> properties = new Hashtable<String, Object>();
+		properties.putAll(packageConfigurator.getServiceProperties());
+		properties.put(Condition.CONDITION_ID, RestPackage.eNS_URI);
+		conditionRegistration = ctx.registerService(Condition.class, Condition.INSTANCE, properties);
+	}
 
-    /**
-     * Registers the RestPackage as a service.
-     *
-     * @generated
-     */
-    private void registerEPackageService(RestPackage ePackage, RestEPackageConfigurator packageConfigurator,
-            BundleContext ctx) {
-        Hashtable<String, Object> properties = new Hashtable<String, Object>();
-        properties.putAll(packageConfigurator.getServiceProperties());
-        String[] serviceClasses = new String[] { RestPackage.class.getName(), EPackage.class.getName() };
-        packageRegistration = ctx.registerService(serviceClasses, ePackage, properties);
-    }
+	/**
+	 * Deactivates and unregisters everything.
+	 *
+	 * @generated
+	 */
+	@Deactivate
+	public void deactivate() {
+		conditionRegistration.unregister();
+		eFactoryRegistration.unregister();
+		packageRegistration.unregister();
+		resourceFactoryRegistration.unregister();
 
-    /**
-     * Registers the RestFactory as a service.
-     *
-     * @generated
-     */
-    private void registerEFactoryService(RestPackage ePackage, RestEPackageConfigurator packageConfigurator,
-            BundleContext ctx) {
-        Hashtable<String, Object> properties = new Hashtable<String, Object>();
-        properties.putAll(packageConfigurator.getServiceProperties());
-        String[] serviceClasses = new String[] { RestFactory.class.getName(), EFactory.class.getName() };
-        eFactoryRegistration = ctx.registerService(serviceClasses, ePackage.getRestFactory(), properties);
-    }
-
-    private void registerConditionService(RestEPackageConfigurator packageConfigurator, BundleContext ctx) {
-        // register the EPackage
-        Hashtable<String, Object> properties = new Hashtable<String, Object>();
-        properties.putAll(packageConfigurator.getServiceProperties());
-        properties.put(Condition.CONDITION_ID, RestPackage.eNS_URI);
-        conditionRegistration = ctx.registerService(Condition.class, Condition.INSTANCE, properties);
-    }
-
-    /**
-     * Deactivates and unregisters everything.
-     *
-     * @generated
-     */
-    @Deactivate
-    public void deactivate() {
-        conditionRegistration.unregister();
-        eFactoryRegistration.unregister();
-        packageRegistration.unregister();
-        resourceFactoryRegistration.unregister();
-
-        ePackageConfiguratorRegistration.unregister();
-        EPackage.Registry.INSTANCE.remove(RestPackage.eNS_URI);
-    }
+		ePackageConfiguratorRegistration.unregister();
+		EPackage.Registry.INSTANCE.remove(RestPackage.eNS_URI);
+	}
 }

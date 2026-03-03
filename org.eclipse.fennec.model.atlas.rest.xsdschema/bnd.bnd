@@ -1,4 +1,4 @@
--library: enable-emf
+-library: enableEMF
 
 -buildpath: \
 	jakarta.ws.rs-api;version='2.1.6',\

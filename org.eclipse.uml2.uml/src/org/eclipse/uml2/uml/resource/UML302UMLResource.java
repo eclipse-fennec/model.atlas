@@ -12,9 +12,8 @@
  */
 package org.eclipse.uml2.uml.resource;
 
-import org.eclipse.uml2.uml.internal.resource.UML302UMLResourceFactoryImpl;
-
 import org.eclipse.emf.ecore.resource.Resource;
+import org.eclipse.uml2.uml.internal.resource.UML302UMLResourceFactoryImpl;
 
 /**
  * UML resource required for model migration.

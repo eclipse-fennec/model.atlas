@@ -19,23 +19,19 @@ import org.eclipse.emf.common.util.BasicDiagnostic;
 import org.eclipse.emf.common.util.Diagnostic;
 import org.eclipse.emf.common.util.DiagnosticChain;
 import org.eclipse.emf.common.util.ECollections;
-import org.eclipse.emf.common.util.UniqueEList;
-
 import org.eclipse.emf.common.util.EList;
-
+import org.eclipse.emf.common.util.UniqueEList;
 import org.eclipse.emf.ecore.EClass;
-
 import org.eclipse.uml2.uml.AggregationKind;
 import org.eclipse.uml2.uml.Classifier;
 import org.eclipse.uml2.uml.Extension;
-import org.eclipse.uml2.uml.Image;
 import org.eclipse.uml2.uml.ExtensionEnd;
+import org.eclipse.uml2.uml.Image;
 import org.eclipse.uml2.uml.Profile;
 import org.eclipse.uml2.uml.Property;
 import org.eclipse.uml2.uml.Stereotype;
 import org.eclipse.uml2.uml.Type;
 import org.eclipse.uml2.uml.UMLPackage;
-
 import org.eclipse.uml2.uml.util.UMLValidator;
 
 /**

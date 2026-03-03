@@ -19,12 +19,10 @@ import org.eclipse.emf.common.util.BasicDiagnostic;
 import org.eclipse.emf.common.util.Diagnostic;
 import org.eclipse.emf.common.util.DiagnosticChain;
 import org.eclipse.emf.common.util.ECollections;
-import org.eclipse.emf.common.util.UniqueEList;
-
 import org.eclipse.emf.common.util.EList;
+import org.eclipse.emf.common.util.UniqueEList;
 import org.eclipse.uml2.uml.InputPin;
 import org.eclipse.uml2.uml.LinkEndCreationData;
-
 import org.eclipse.uml2.uml.util.UMLValidator;
 
 /**

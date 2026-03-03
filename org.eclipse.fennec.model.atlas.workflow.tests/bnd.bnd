@@ -7,7 +7,7 @@ Test-Cases: ${classes;HIERARCHY_INDIRECTLY_ANNOTATED;org.junit.platform.commons.
 
 -library: \
 	enableOSGi-Test,\
-	enable-emf
+	enableEMF
 
 # Issue31 related	
 #-includeresource: \
@@ -21,7 +21,8 @@ Test-Cases: ${classes;HIERARCHY_INDIRECTLY_ANNOTATED;org.junit.platform.commons.
 	org.osgi.service.typedevent;version=latest,\
 	org.eclipse.fennec.model.atlas.management;version=snapshot,\
 	org.eclipse.fennec.model.atlas.workflow;version=snapshot,\
-	org.osgi.test.junit5.cm
+	org.osgi.test.junit5.cm,\
+	org.eclipse.fennec.emf.osgi.component
 # Issue 31 related
 #	org.gecko.mac.lorawan.model;version=snapshot,\
 #	org.eclipse.fennec.codec.info

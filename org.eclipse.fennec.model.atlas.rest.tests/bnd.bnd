@@ -5,7 +5,7 @@ Test-Cases: ${classes;HIERARCHY_INDIRECTLY_ANNOTATED;org.junit.platform.commons.
 
 -library: \
 	enableOSGi-Test,\
-	enable-emf
+	enableEMF
 
 -buildpath: \
 	org.osgi.framework;version=latest,\
@@ -14,7 +14,6 @@ Test-Cases: ${classes;HIERARCHY_INDIRECTLY_ANNOTATED;org.junit.platform.commons.
 	org.osgi.service.component;version=latest,\
 	org.osgi.service.jakartars;version=latest,\
 	jakarta.ws.rs-api;version=latest,\
-	org.gecko.emf.osgi.api;version=latest,\
 	org.gecko.emf.rest.jakartars;version=latest,\
 	org.eclipse.fennec.model.atlas;version=latest,\
 	org.eclipse.fennec.model.atlas.rest.application;version=latest,\

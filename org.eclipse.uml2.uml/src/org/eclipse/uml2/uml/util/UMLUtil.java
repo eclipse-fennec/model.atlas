@@ -113,7 +113,6 @@ import org.eclipse.uml2.uml.OpaqueBehavior;
 import org.eclipse.uml2.uml.OpaqueExpression;
 import org.eclipse.uml2.uml.Operation;
 import org.eclipse.uml2.uml.OperationOwner;
-import org.eclipse.uml2.uml.Package;
 import org.eclipse.uml2.uml.PackageMerge;
 import org.eclipse.uml2.uml.Parameter;
 import org.eclipse.uml2.uml.ParameterDirectionKind;
@@ -155,7 +154,6 @@ import org.eclipse.uml2.uml.resource.XMI222UMLResource;
 import org.eclipse.uml2.uml.resource.XMI242UMLResource;
 import org.eclipse.uml2.uml.resource.XMI2UMLExtendedMetaData;
 import org.eclipse.uml2.uml.resource.XMI2UMLResource;
-import org.eclipse.uml2.uml.util.UMLUtil.StereotypeApplicationStorage;
 import org.eclipse.uml2.uml.util.UMLUtil.StereotypeApplicationStorage.ContainedByElement;
 import org.eclipse.uml2.uml.util.UMLUtil.StereotypeApplicationStorage.Registry;
 

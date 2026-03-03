@@ -32,6 +32,7 @@ import org.eclipse.emf.ecore.resource.Resource;
 import org.eclipse.emf.ecore.resource.ResourceSet;
 import org.eclipse.emf.ecore.util.EcoreUtil;
 import org.eclipse.fennec.codec.options.CodecResourceOptions;
+import org.eclipse.fennec.emf.osgi.constants.EMFUriHandlerConstants;
 import org.eclipse.fennec.model.atlas.management.apicurio.EObjectApicurioStorageService.Config;
 import org.eclipse.fennec.model.atlas.mgmt.api.EObjectRegistryService;
 import org.eclipse.fennec.model.atlas.mgmt.management.ObjectMetadata;
@@ -50,7 +51,6 @@ import org.eclipse.fennec.model.atlas.mgmt.mgmtapicurio.SearchedVersion;
 import org.eclipse.fennec.model.atlas.mgmt.mgmtapicurio.Version;
 import org.eclipse.fennec.model.atlas.mgmt.storage.AbstractStorageHelper;
 import org.gecko.emf.json.constants.EMFJs;
-import org.gecko.emf.osgi.constants.EMFUriHandlerConstants;
 
 /**
  * 

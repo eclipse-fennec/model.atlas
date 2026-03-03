@@ -20,9 +20,8 @@ import org.eclipse.emf.common.util.BasicDiagnostic;
 import org.eclipse.emf.common.util.Diagnostic;
 import org.eclipse.emf.common.util.DiagnosticChain;
 import org.eclipse.emf.common.util.ECollections;
-import org.eclipse.emf.common.util.UniqueEList;
-
 import org.eclipse.emf.common.util.EList;
+import org.eclipse.emf.common.util.UniqueEList;
 import org.eclipse.emf.ecore.EObject;
 import org.eclipse.emf.ecore.EStructuralFeature;
 import org.eclipse.uml2.uml.AggregationKind;
@@ -31,7 +30,6 @@ import org.eclipse.uml2.uml.CommunicationPath;
 import org.eclipse.uml2.uml.Node;
 import org.eclipse.uml2.uml.Property;
 import org.eclipse.uml2.uml.UMLPackage;
-
 import org.eclipse.uml2.uml.util.UMLValidator;
 
 /**

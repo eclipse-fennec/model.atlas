@@ -18,29 +18,30 @@ import org.eclipse.emf.ecore.EFactory;
 import org.osgi.annotation.versioning.ProviderType;
 
 /**
- * <!-- begin-user-doc --> The <b>Factory</b> for the model. It provides a
- * create method for each non-abstract class of the model. <!-- end-user-doc -->
- * 
+ * <!-- begin-user-doc -->
+ * The <b>Factory</b> for the model.
+ * It provides a create method for each non-abstract class of the model.
+ * <!-- end-user-doc -->
  * @see org.eclipse.fennec.model.atlas.mgmt.api.ManagementApiPackage
  * @generated
  */
 @ProviderType
 public interface ManagementApiFactory extends EFactory {
-    /**
-     * The singleton instance of the factory. <!-- begin-user-doc --> <!--
-     * end-user-doc -->
-     * 
-     * @generated
-     */
-    ManagementApiFactory eINSTANCE = org.eclipse.fennec.model.atlas.mgmt.api.impl.ManagementApiFactoryImpl.init();
+	/**
+	 * The singleton instance of the factory.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	ManagementApiFactory eINSTANCE = org.eclipse.fennec.model.atlas.mgmt.api.impl.ManagementApiFactoryImpl.init();
 
-    /**
-     * Returns the package supported by this factory. <!-- begin-user-doc --> <!--
-     * end-user-doc -->
-     * 
-     * @return the package supported by this factory.
-     * @generated
-     */
-    ManagementApiPackage getManagementApiPackage();
+	/**
+	 * Returns the package supported by this factory.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @return the package supported by this factory.
+	 * @generated
+	 */
+	ManagementApiPackage getManagementApiPackage();
 
-} // ManagementApiFactory
+} //ManagementApiFactory

@@ -12,9 +12,8 @@
  */
 package org.eclipse.uml2.uml.resource;
 
-import org.eclipse.uml2.uml.internal.resource.XMI222UMLResourceFactoryImpl;
-
 import org.eclipse.emf.ecore.resource.Resource;
+import org.eclipse.uml2.uml.internal.resource.XMI222UMLResourceFactoryImpl;
 
 /**
  * XMI resource required for model migration.

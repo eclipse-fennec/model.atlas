@@ -14,7 +14,6 @@
 package org.eclipse.uml2.uml.internal.operations;
 
 import org.eclipse.emf.common.util.EList;
-
 import org.eclipse.uml2.uml.DataType;
 import org.eclipse.uml2.uml.Operation;
 import org.eclipse.uml2.uml.Property;
