@@ -348,6 +348,49 @@ registry.type=shared
 
 ## Error Handling
 
+### Global Exception Mapper
+
+All unhandled exceptions are caught by the `ModelAtlasExceptionMapper`, which ensures that no internal implementation details, stack traces, or raw exception messages are leaked to API consumers (TR-03187 W-19 conformance).
+
+Error responses use a structured JSON format:
+```json
+{
+  "message": "An internal server error occurred",
+  "code": "500",
+  "timestamp": "2026-03-10T12:00:00.000+00:00"
+}
+```
+
+- **Client errors (4xx)**: The original error message is preserved (e.g. "Scope [foo] not found.").
+- **Server errors (5xx)**: A generic `"An internal server error occurred"` message is returned. The full exception is logged server-side at `SEVERE` level.
+
+### Debug Stack Traces
+
+For troubleshooting in non-production environments, stack traces can be included in error responses by setting the `MODELATLAS_DEBUG_STACKTRACE` environment variable:
+
+```bash
+# Include full stack traces in HTTP error responses
+export MODELATLAS_DEBUG_STACKTRACE=true
+```
+
+**Docker Compose example:**
+```yaml
+services:
+  modelatlas:
+    image: modelatlas:latest
+    environment:
+      - MODELATLAS_DEBUG_STACKTRACE=true
+    ports:
+      - "8185:8185"
+```
+
+**Docker run example:**
+```bash
+docker run -e MODELATLAS_DEBUG_STACKTRACE=true -p 8185:8185 modelatlas:latest
+```
+
+> **Warning**: Never enable `MODELATLAS_DEBUG_STACKTRACE` in production. Stack traces can expose internal class names, library versions, and file paths.
+
 ### Common HTTP Status Codes
 
 | Code | Meaning | Common Causes |
