@@ -22,12 +22,12 @@ import org.eclipse.uml2.uml.internal.resource.UMLResourceFactoryImpl;
 
 /**
  * 
- * @author ilenia
+ * @author Ilenia Salvadori
  * @since Nov 13, 2025
  */
-public class EnhanchedUMLResourceFactoryImpl extends UMLResourceFactoryImpl {
+public class EnhancedUMLResourceFactoryImpl extends UMLResourceFactoryImpl {
 
-    public EnhanchedUMLResourceFactoryImpl() {
+    public EnhancedUMLResourceFactoryImpl() {
         super();
     }
 
