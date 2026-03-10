@@ -1,11 +1,7 @@
+-include: modelatlas.runtime_base.bndrun
 -buildpath: \
 	org.osgi.annotation.versioning,\
 	org.osgi.annotation.bundle,\
-	org.apache.felix.cm.json,\
-	org.gecko.emf.osgi.component,\
-	org.apache.felix.configadmin,\
-	org.eclipse.fennec.qvt.api,\
-	org.eclipse.fennec.qvt.component,\
 	org.gecko.emf.util.annotations,\
 	org.osgi.service.http.whiteboard,\
 	org.osgi.service.jakartars

@@ -43,10 +43,9 @@ public class EMFRegistryHealthCheck implements HealthCheck {
         if (resourceSet == null) {
             log.critical("ResourceSet service not available");
         } else {
-            AtomicInteger packageCount = new AtomicInteger(0);
-            resourceSet.getPackageRegistry().forEach((k,v) -> packageCount.incrementAndGet());
-            if (packageCount.get() > 0) {
-                log.info("EMF Registry contains {} EPackages", packageCount.get());
+            int size = resourceSet.getPackageRegistry().size();
+            if (size > 0) {
+                log.info("EMF Registry contains {} EPackages", size);
             } else {
                 log.warn("EMF Registry is empty - no EPackages registered");
             }
