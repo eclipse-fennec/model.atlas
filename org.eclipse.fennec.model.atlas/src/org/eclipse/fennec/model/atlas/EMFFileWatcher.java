@@ -47,10 +47,7 @@ import org.eclipse.emf.ecore.impl.EPackageRegistryImpl;
 import org.eclipse.emf.ecore.resource.Resource;
 import org.eclipse.emf.ecore.resource.ResourceSet;
 import org.eclipse.emf.ecore.util.EcoreUtil;
-import org.eclipse.fennec.codec.configurator.CodecModuleConfigurator;
-import org.eclipse.fennec.codec.options.CodecModelInfoOptions;
-import org.eclipse.fennec.codec.options.CodecModuleOptions;
-import org.eclipse.fennec.codec.options.CodecResourceOptions;
+import org.eclipse.fennec.codec.resource.CodecResource;
 import org.eclipse.fennec.emf.osgi.configurator.EPackageConfigurator;
 import org.eclipse.fennec.emf.osgi.constants.EMFNamespaces;
 import org.eclipse.fennec.model.atlas.emf.common.configurator.DynamicEPackageConfigurator;
@@ -68,7 +65,6 @@ import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.ConfigurationPolicy;
 import org.osgi.service.component.annotations.Deactivate;
 import org.osgi.service.component.annotations.Reference;
-import org.osgi.service.component.annotations.ReferenceCardinality;
 import org.osgi.service.component.annotations.ReferenceScope;
 import org.osgi.util.tracker.ServiceTracker;
 import org.osgi.util.tracker.ServiceTrackerCustomizer;
@@ -110,9 +106,8 @@ public class EMFFileWatcher implements FileSystemWatcherListener {
     @SuppressWarnings("unchecked")
     @Activate
     public EMFFileWatcher(
-            @Reference(cardinality = ReferenceCardinality.MANDATORY, target = "(test=test)") CodecModuleConfigurator codecModuleConfigurator,
-            @Reference(scope = ReferenceScope.PROTOTYPE_REQUIRED, target = "(" + EMFNamespaces.EMF_CONFIGURATOR_NAME
-                    + "=CodecJson)") ResourceSet resourceSet,
+            @Reference(scope = ReferenceScope.PROTOTYPE_REQUIRED, target = "(" + EMFNamespaces.EMF_MODEL_FILE_EXT
+                    + "=jsonschema)") ResourceSet resourceSet,
             @Reference ConfigurationAdmin configAdmin, BundleContext bundleContext) {
         this.resourceSet = resourceSet;
         this.configAdmin = configAdmin;
@@ -236,16 +231,9 @@ public class EMFFileWatcher implements FileSystemWatcherListener {
     }
 
     public Resource loadJsonschema(String pathToJsonschemaFile) {
-        Resource resource = resourceSet.createResource(URI.createURI(pathToJsonschemaFile), "application/json");
+        Resource resource = resourceSet.createResource(URI.createURI(pathToJsonschemaFile), "application/schema+json");
         Map<String, Object> options = new HashMap<>();
-        options.put(CodecResourceOptions.CODEC_ROOT_OBJECT, EcorePackage.Literals.EPACKAGE);
-        options.put(CodecModuleOptions.CODEC_MODULE_SERIALIZE_TYPE, false);
-        options.put(CodecModuleOptions.CODEC_MODULE_SERIALIZE_EMPTY_VALUE, true);
-        options.put(CodecModuleOptions.CODEC_MODULE_SERIALIZE_NULL_VALUE, true);
-        Map<String, Object> classOptions = new HashMap<>();
-        classOptions.put(CodecModelInfoOptions.CODEC_EXTRAS,
-                Map.of("jsonschema", "true", "jsonschema.feature.key", "definitions"));
-        options.put(CodecResourceOptions.CODEC_OPTIONS, Map.of(EcorePackage.Literals.EPACKAGE, classOptions));
+        options.put(CodecResource.CODEC_ROOT_TYPE, EcorePackage.Literals.EPACKAGE);
         try {
             resource.load(options);
             ByteArrayOutputStream baos = new ByteArrayOutputStream();

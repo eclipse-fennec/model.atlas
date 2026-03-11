@@ -11,9 +11,9 @@ org.geckoprojects.emf.utils:org.gecko.emf.util.jakartars.bnd.library.workspace:2
 org.geckoprojects.camel:org.eclipse.fennec.camel.workspace.library:1.0.0-SNAPSHOT
 org.geckoprojects.qvto:org.eclipse.fennec.qvt.bnd.library.workspace:2.1.0-SNAPSHOT
 
-org.eclipse.fennec.bnd:org.eclipse.fennec.bnd.library:0.0.3-SNAPSHOT
-org.eclipse.fennec.bnd:org.eclipse.fennec.jacoco.bnd.library:0.0.3-SNAPSHOT
-org.eclipse.fennec.bnd:org.eclipse.fennec.osgitest.bnd.library:0.0.3-SNAPSHOT
+org.eclipse.fennec.bnd:org.eclipse.fennec.bnd.library:0.0.8
+org.eclipse.fennec.bnd:org.eclipse.fennec.jacoco.bnd.library:0.0.8
+org.eclipse.fennec.bnd:org.eclipse.fennec.osgitest.bnd.library:0.0.8
 
 org.geckoprojects.fennec.persistence:org.gecko.fennec.persistence.workspace.library:1.0.0-SNAPSHOT
 
