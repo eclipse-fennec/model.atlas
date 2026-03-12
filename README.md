@@ -1,5 +1,78 @@
-# model.atlas
-Fennec Model Atlas
+# Fennec Model Atlas
+
+A dynamic EMF model management system providing a RESTful API for managing and transforming EMF models at runtime.
+
+## Docker
+
+Model Atlas is available as a Docker image in two variants, each tailored to a different storage backend.
+
+### Image Variants
+
+| Variant | Image Tag | Description |
+|---------|-----------|-------------|
+| **Apicurio** | `eclipsefennec/model.atlas:apicurio-latest` | Uses [Apicurio Registry](https://www.apicur.io/registry/) for model storage with a full workflow (draft, approved, release stages) |
+| **File** | `eclipsefennec/model.atlas:file-latest` | Uses local file-based storage, no external dependencies required |
+
+Both variants are also available on GHCR as `ghcr.io/eclipse-fennec/model.atlas`.
+
+Snapshot builds from the `snapshot` branch are tagged as `apicurio-snapshot` and `file-snapshot`. Version-specific tags (e.g. `apicurio-0.0.1`) are also published.
+
+### Quick Start (File variant)
+
+```bash
+docker run -d -p 8080:8080 eclipsefennec/model.atlas:file-latest
+```
+
+### Quick Start (Apicurio variant)
+
+The Apicurio variant requires a running Apicurio Registry. Use the provided Docker Compose file:
+
+```bash
+docker compose -f docker/dockercompose/docker-compose-apicurio.yml up -d
+```
+
+This starts Model Atlas together with Apicurio Registry and its UI:
+
+| Service | URL |
+|---------|-----|
+| Model Atlas | http://localhost:8080 |
+| Apicurio Registry API | http://localhost:8081 |
+| Apicurio Registry UI | http://localhost:8888 |
+
+### Environment Variables
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `APICURIO_HOST` | `localhost` | Hostname of the Apicurio Registry (Apicurio variant only) |
+| `APICURIO_PORT` | `8081` | Port of the Apicurio Registry (Apicurio variant only) |
+| `STORAGE_ROOT` | `/tmp/mac` | Root directory for file-based storage (File variant only) |
+
+### Docker Compose Files
+
+Pre-configured compose files are available in `docker/dockercompose/`:
+
+| File | Description |
+|------|-------------|
+| `docker-compose-apicurio.yml` | Model Atlas with Apicurio Registry and UI |
+| `docker-compose-file.yml` | Model Atlas with file-based storage (standalone) |
+
+### Building Locally
+
+```bash
+# Build the project
+./gradlew build -x test -x testOSGi
+
+# Export the runtime JARs
+./gradlew org.eclipse.fennec.model.atlas.runtime:export.modelatlas.runtime_docker_apicurio
+./gradlew org.eclipse.fennec.model.atlas.runtime:export.modelatlas.runtime_docker_file
+
+# Prepare and build Docker images
+./gradlew docker:modelatlas_apicurio:prepareDocker
+./gradlew docker:modelatlas_file:prepareDocker
+
+docker build -t eclipsefennec/model.atlas:apicurio-snapshot docker/modelatlas_apicurio/
+docker build -t eclipsefennec/model.atlas:file-snapshot docker/modelatlas_file/
+```
 
 ## Health Checks
 
@@ -31,14 +104,14 @@ Configure your Kubernetes deployment to use the health endpoints:
 livenessProbe:
   httpGet:
     path: /atlas/system/health?tags=liveness
-    port: 8086
+    port: 8080
   initialDelaySeconds: 30
   periodSeconds: 10
 
 readinessProbe:
   httpGet:
     path: /atlas/system/health?tags=readiness
-    port: 8086
+    port: 8080
   initialDelaySeconds: 10
   periodSeconds: 5
 ```
