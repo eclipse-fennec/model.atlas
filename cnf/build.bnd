@@ -1,3 +1,4 @@
+-include: ../gradle.properties
 Bundle-Developers: \
     jalbert; \
         email="j.albert@datainmotion.com"; \
@@ -57,7 +58,7 @@ maven-central: true
 javac.source: 21
 javac.target: 21
 
--require-bnd "(version>=7.1.0)"
+-require-bnd: "(version>=${bnd_version})"
 
 #-jpms-module-info:
 
