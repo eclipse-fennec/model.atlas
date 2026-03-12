@@ -46,7 +46,6 @@ import jakarta.ws.rs.WebApplicationException;
 import jakarta.ws.rs.core.HttpHeaders;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.MultivaluedMap;
-import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.ext.MessageBodyReader;
 import jakarta.ws.rs.ext.MessageBodyWriter;
 
@@ -146,14 +145,6 @@ public class EcoreMessageBodyHandler implements MessageBodyReader<EPackage>, Mes
             logger.log(Level.INFO, "Successfully loaded EObject: {0}", rootObject.getClass().getSimpleName());
 
             return (EPackage) rootObject;
-
-        } catch (Exception e) {
-            logger.log(Level.SEVERE, "Error deserializing XMI content", e);
-
-            String errorText = String.format("[%s] Error de-serializing incoming data: %s", genericType.getTypeName(),
-                    e.getMessage());
-            Response errorResponse = Response.serverError().entity(errorText).type(MediaType.TEXT_PLAIN).build();
-            throw new WebApplicationException(e, errorResponse);
         } finally {
             resourceSetFactory.ungetService(resourceSet);
         }
@@ -195,13 +186,6 @@ public class EcoreMessageBodyHandler implements MessageBodyReader<EPackage>, Mes
 
             logger.log(Level.INFO, "Successfully serialized EObject to XMI");
 
-        } catch (Exception e) {
-            logger.log(Level.SEVERE, "Error serializing EObject to XMI", e);
-
-            String errorText = String.format("Error serializing [%s] to XMI: %s", eObject.getClass().getSimpleName(),
-                    e.getMessage());
-            Response errorResponse = Response.serverError().entity(errorText).type(MediaType.TEXT_PLAIN).build();
-            throw new WebApplicationException(e, errorResponse);
         } finally {
             resourceSetFactory.ungetService(resourceSet);
         }
