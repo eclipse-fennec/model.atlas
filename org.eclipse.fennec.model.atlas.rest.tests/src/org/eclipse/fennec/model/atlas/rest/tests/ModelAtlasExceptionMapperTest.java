@@ -123,11 +123,11 @@ public class ModelAtlasExceptionMapperTest {
 	@Test
 	public void testErrorResponse_HasStructuredFormat() {
 		Response response = restClient.target(BASE_URL)
-				.path("non-existent-scope").path("schema")
+				.path(ThrowingScopeServiceCollector.THROWING_SCOPE).path("schema")
 				.request("application/json")
 				.get();
 
-		assertEquals(400, response.getStatus(), "Should return HTTP 400 Bad Request");
+		assertEquals(500, response.getStatus(), "Should return HTTP 400 Bad Request");
 
 		String body = response.readEntity(String.class);
 		assertNotNull(body, "Response body should not be null");
