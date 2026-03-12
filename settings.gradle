@@ -13,11 +13,10 @@ pluginManagement {
     }
     mavenCentral()
     gradlePluginPortal()
-    rootProject.name="org.gecko.civitas"
+    rootProject.name="org.eclipse.fennec.model.atlas"
   }
 }
 plugins {
   id 'biz.aQute.bnd.workspace'
 }
-include ":docker:dataatlas"
 include ":docker:modelatlas"
