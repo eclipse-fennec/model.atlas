@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<uml:Model xmi:version="20131001" xmlns:xmi="http://www.omg.org/spec/XMI/20131001" xmlns:uml="http://www.eclipse.org/uml2/5.0.0/UML" xmi:id="f8e2991d-7ac8-4d3e-af80-a2bf0c9d6d4f_model" name="Untitled Diagram" URI="http://civitas.org/model/ef1af3c7-0554-4625-b3b2-7f874e9396b2/1.0">
+  <packagedElement xmi:type="uml:Class" xmi:id="ff3a0692-41a2-465d-9f09-f3d175d74f83" name="NeueKlasse">
+    <ownedAttribute xmi:id="9b345da3-b00d-4cfa-ae26-3a848a8c1f7d" name="attribut" visibility="private">
+      <type xmi:type="uml:PrimitiveType" href="http://www.omg.org/spec/UML/20131001/PrimitiveTypes.xmi#String"/>
+    </ownedAttribute>
+    <ownedAttribute xmi:id="_J6G1UByVEfG0BOcDLsG-Ww" type="ff3a0692-41a2-465d-9f09-f3d175d74f83"/>
+    <ownedOperation xmi:id="0c31268d-bf6a-4aee-be4d-544015c71c73" name="operation" visibility="public">
+      <ownedParameter xmi:id="0c31268d-bf6a-4aee-be4d-544015c71c73_return" direction="return">
+        <type xmi:type="uml:PrimitiveType" href="http://www.omg.org/spec/UML/20131001/PrimitiveTypes.xmi#String"/>
+      </ownedParameter>
+    </ownedOperation>
+  </packagedElement>
+  <packagedElement xmi:type="uml:Interface" xmi:id="4bb61fd9-8487-4fa6-94d6-a7109cd0f37a" name="NeuesInterface">
+    <ownedOperation xmi:id="dc364c93-2011-489d-b0d3-8e5be9e7fa22" name="operation" visibility="public">
+      <ownedParameter xmi:id="dc364c93-2011-489d-b0d3-8e5be9e7fa22_return" direction="return">
+        <type xmi:type="uml:PrimitiveType" href="http://www.omg.org/spec/UML/20131001/PrimitiveTypes.xmi#String"/>
+      </ownedParameter>
+    </ownedOperation>
+  </packagedElement>
+  <packagedElement xmi:type="uml:Association" xmi:id="8bc43627-30da-4e12-882e-e8feed31562c"/>
+</uml:Model>

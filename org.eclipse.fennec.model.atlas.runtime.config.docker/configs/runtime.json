@@ -1,6 +1,6 @@
 {
 	":configurator:resource-version": 1,
-	":configurator:symbolicname": "org.civitas.meter.runtime",
+	":configurator:symbolicname": "org.eclipse.model.atlas.docker.runtime",
 	":configurator:version": "0.0.0",
 	"org.apache.felix.http~atlasHtpp": {
 		"org.osgi.service.http.port": "8080",
