@@ -21,3 +21,16 @@ plugins {
 }
 include ":docker:modelatlas_apicurio"
 include ":docker:modelatlas_file"
+
+// Exclude non-standard projects from Gradle build
+def excludedProjects = [
+  'docs',  // documentation, not build targets
+] as Set
+
+gradle.beforeProject { project ->
+  if (project.name in excludedProjects) {
+    project.tasks.configureEach { task ->
+      task.enabled = false
+    }
+  }
+}
