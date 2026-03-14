@@ -2,6 +2,8 @@
 
 A dynamic EMF model management system providing a RESTful API for managing and transforming EMF models at runtime.
 
+For the full user documentation covering the REST API, core concepts, configuration, and workflows, see the **[User Guide](docs/user-guide.md)**.
+
 ## Docker
 
 Model Atlas is available as a Docker image in two variants, each tailored to a different storage backend.
