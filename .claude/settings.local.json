@@ -17,7 +17,8 @@
       "Bash(find:*)",
       "Bash(git merge:*)",
       "Bash(curl:*)",
-      "WebSearch"
+      "WebSearch",
+      "Bash(ls -1d /opt/git/fennec-model.atlas/org.eclipse.fennec.model.atlas* | sort)"
     ],
     "deny": [],
     "ask": []
