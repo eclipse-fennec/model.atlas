@@ -14,6 +14,7 @@ org.geckoprojects.qvto:org.eclipse.fennec.qvt.bnd.library.workspace:2.1.0-SNAPSH
 org.eclipse.fennec.bnd:org.eclipse.fennec.bnd.library:0.0.8
 org.eclipse.fennec.bnd:org.eclipse.fennec.jacoco.bnd.library:0.0.8
 org.eclipse.fennec.bnd:org.eclipse.fennec.osgitest.bnd.library:0.0.8
+org.eclipse.fennec.m2x:org.eclipse.fennec.m2x.library.workspace:0.1.0-SNAPSHOT
 
 org.geckoprojects.fennec.persistence:org.gecko.fennec.persistence.workspace.library:1.0.0-SNAPSHOT
 

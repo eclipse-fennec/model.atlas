@@ -1,0 +1,34 @@
+info:
+  name: Simple DataGen
+  type: http
+  seq: 1
+
+http:
+  method: POST
+  url: "{{baseUrl}}/datagen/"
+  headers:
+    - name: Accept
+      value: application/xmi
+      disabled: true
+  body:
+    type: xml
+    data: |-
+      <?xml version="1.0" encoding="UTF-8"?>
+      <datagen:DataGenConfig xmi:version="2.0"
+          xmlns:xmi="http://www.omg.org/XMI"
+          xmlns:datagen="http://www.gme.org/datagen/1.0"
+          name="person-gen"
+          locale="de"
+          seed="42">
+        <classConfigs contextClass="Person" instanceCount="25">
+          <attributeGens featureName="firstName" generatorKey="faker.person.firstName"/>
+          <attributeGens featureName="lastName" generatorKey="faker.person.lastName"/>
+        </classConfigs>
+      </datagen:DataGenConfig>
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

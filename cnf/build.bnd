@@ -36,6 +36,7 @@ Bundle-Developers: \
 	fennec,\
 	fennecTest,\
 	fennecEMF,\
+	fennecM2X,\
 	fennecQVT,\
 	geckoEMFUtil,\
 	geckoMessaging,\
@@ -87,4 +88,5 @@ required_bnd_version: ${versionmask;===;${bnd_version}}
 		name = Temp; \
 		pretty = true; \
 		local = ${build}/cache/temp
+		
 		

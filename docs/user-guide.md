@@ -18,6 +18,7 @@ Fennec Model Atlas is a dynamic EMF model management system that provides a REST
   - [Schema Packages API](#schema-packages-api)
   - [Object Storage API](#object-storage-api)
   - [Model Converter API](#model-converter-api)
+  - [Data Generation API](#data-generation-api)
   - [Content Negotiation](#content-negotiation)
   - [Error Handling](#error-handling)
 - [Workflows](#workflows)
@@ -313,6 +314,36 @@ Convert EMF models between different serialization formats.
 
 > Full endpoint documentation: [README-ModelConverter.md](../org.eclipse.fennec.model.atlas.rest.application/README-ModelConverter.md)
 
+### Data Generation API
+
+**Base path**: `/datagen`
+
+Generate fake test data for any registered EMF model. Send a `DataGenConfig` as XMI and receive a `DataGenResult` containing the generated EObject instances. The response format is controlled by the `Accept` header (`application/xmi` or `application/json`).
+
+```bash
+# Generate 5 Person instances with German locale (JSON response)
+curl -X POST http://localhost:8086/atlas/rest/datagen \
+  -H "Content-Type: application/xmi" \
+  -H "Accept: application/json" \
+  -d '<?xml version="1.0" encoding="UTF-8"?>
+<datagen:DataGenConfig xmi:version="2.0"
+    xmlns:xmi="http://www.omg.org/XMI"
+    xmlns:datagen="http://www.gme.org/datagen/1.0"
+    name="person-gen"
+    locale="de"
+    seed="42">
+  <classConfigs contextClass="Person" instanceCount="5">
+    <attributeGens featureName="firstName" generatorKey="faker.person.firstName"/>
+    <attributeGens featureName="lastName" generatorKey="faker.person.lastName"/>
+  </classConfigs>
+</datagen:DataGenConfig>'
+```
+
+The referenced EClasses (e.g. `Person`) must be registered in the runtime via loaded EPackages. If a class is not found, the endpoint returns `400 Bad Request` with the missing class names.
+
+> Full endpoint documentation and more examples: [DataGen REST README](../org.eclipse.fennec.model.atlas.datagen.rest/README.md)
+> Service and configuration model reference: [DataGen Service README](../org.eclipse.fennec.model.atlas.datagen/README.md)
+
 ### Content Negotiation
 
 Use the `Content-Type` and `Accept` headers to control serialization formats.
@@ -584,6 +615,10 @@ Storage backends are configured independently and referenced by `storage.type`:
 ### Specifications
 - [Model Atlas API Specification](../org.eclipse.fennec.model.atlas.rest.application/Model%20Atlas%20API%20Specification.md) - Core API design, visibility rules, conventions
 - [Model Atlas Object API Specification](../org.eclipse.fennec.model.atlas.rest.application/Model%20Atlas%20Object%20API%20Specification.md) - Object Storage API design
+
+### Data Generation
+- [DataGen Service](../org.eclipse.fennec.model.atlas.datagen/README.md) - Fake data generation for EMF models using Datafaker
+- [DataGen REST API](../org.eclipse.fennec.model.atlas.datagen.rest/README.md) - REST endpoint with XMI examples
 
 ### Internal Components
 - [Workflow / ScopeService](../org.eclipse.fennec.model.atlas.workflow/README.md) - Workflow service internals and configuration

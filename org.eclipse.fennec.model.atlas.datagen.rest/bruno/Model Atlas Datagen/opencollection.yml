@@ -1,0 +1,35 @@
+opencollection: 1.0.0
+
+info:
+  name: Model Atlas Datagen
+config:
+  proxy:
+    inherit: true
+    config:
+      protocol: http
+      hostname: ""
+      port: ""
+      auth:
+        username: ""
+        password: ""
+      bypassProxy: ""
+
+request:
+  headers:
+    - name: Content-Type
+      value: application/xmi
+    - name: Accept
+      value: application/json
+  variables:
+    - name: baseUrl
+      value: http://localhost:8086/atlas/rest
+bundled: false
+extensions:
+  bruno:
+    ignore:
+      - node_modules
+      - .git
+    presets:
+      request:
+        type: http
+        url: http://localhost:8086/atlas/rest

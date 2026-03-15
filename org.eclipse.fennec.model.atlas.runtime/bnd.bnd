@@ -1,3 +1,4 @@
+-library: enableOCL
 -include: modelatlas.runtime_base.bndrun
 -buildpath: \
 	org.osgi.annotation.versioning,\
