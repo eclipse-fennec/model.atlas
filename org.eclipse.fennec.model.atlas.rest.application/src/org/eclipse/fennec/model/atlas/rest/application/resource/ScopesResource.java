@@ -63,7 +63,7 @@ public class ScopesResource {
      * @return List of Scope objects
      */
     @GET
-    @Produces({ MediaType.APPLICATION_JSON })
+    @Produces({ MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML })
     @Operation(summary = "List all scopes", description = "Get a list of all configured scopes in the Model Atlas", responses = {
             @ApiResponse(responseCode = "200", description = "Scopes retrieved successfully", content = @Content(mediaType = MediaType.APPLICATION_JSON, schema = @Schema(implementation = ScopeListResponse.class))), })
     public Response listScopes() {
@@ -81,7 +81,7 @@ public class ScopesResource {
      */
     @GET
     @Path("/{scopeName}")
-    @Produces({ MediaType.APPLICATION_JSON, MediaType.TEXT_PLAIN })
+    @Produces({ MediaType.APPLICATION_JSON, MediaType.TEXT_PLAIN, MediaType.APPLICATION_XML })
     @Operation(summary = "Get workflow scope metadata", description = "Retrieve metadata for a specific workflow scope by name", responses = {
             @ApiResponse(responseCode = "200", description = "Scope found", content = @Content(mediaType = MediaType.APPLICATION_JSON, schema = @Schema(implementation = Scope.class))),
             @ApiResponse(responseCode = "404", description = "Scope not found"), })
