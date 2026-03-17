@@ -1,0 +1,100 @@
+{
+    ":configurator:resource-version": 1,
+    ":configurator:symbolicname": "org.eclipse.fennec.model.atlas.docker.jena",
+    ":configurator:version": "1.0.0",
+    "org.apache.felix.http~atlasHttp": {
+        "org.osgi.service.http.port": "8080",
+        "org.osgi.service.http.host": "0.0.0.0",
+        "org.apache.felix.http.context_path": "atlas/",
+        "org.apache.felix.http.name": "atlas",
+        "org.apache.felix.http.runtime.init.id": "atlasHttp"
+    },
+    "FileObjectStorage~file": {
+        "workspace.folder": "$[env:STORAGE_ROOT;default=/opt/modelatlas/runtime/data]",
+        "storage.type": "file",
+        "registry.target": "(registry=main)"
+    },
+    "EPackagePostReleaseActionService": {
+        "releaseStorage.target": "(storage.type=file)"
+    },
+    "ScopeService~atlas": {
+        "scope.name": "atlas",
+        "scope.description": "Atlas scope. The parent of all other scopes.",
+        "parent.scope": "",
+        "registryService.target": "(|(registry.name=schema)(registry.name=workspace))",
+        "registryService.cardinality.minimum:int": 1
+    },
+    "ScopeService~jena": {
+        "scope.name": "jena",
+        "scope.description": "City Jena Scope",
+        "parent.scope": "atlas",
+        "registryService.target": "(|(registry.name=schema)(registry.name=workspace))",
+        "registryService.cardinality.minimum:int": 1
+    },
+    "RegistryService~schema": {
+        "registry.name": "schema",
+        "registry.description": "The schema registry to store EPackage objects",
+        "postReleaseActionService.target": "(component.name=EPackagePostReleaseActionService)",
+        "stage.storage.mappings": [
+            "draft:file",
+            "approved:file",
+            "release:file"
+        ],
+        "workflow.transitions": [
+            "draft:approved",
+            "approved:release"
+        ],
+        "delete.after.transition": true,
+        "storageService.target": "(storage.type=file)",
+        "storageService.cardinality.minimum:int": 1,
+        "stages": [
+            {
+                "name": "draft",
+                "writable": true,
+                "final": false
+            },
+            {
+                "name": "approved",
+                "writable": true,
+                "final": false
+            },
+            {
+                "name": "release",
+                "writable": true,
+                "final": true
+            }
+        ],
+        "schema.uri": "http://www.eclipse.org/emf/2002/Ecore",
+        "root.eclass.uri": "http://www.eclipse.org/emf/2002/Ecore#//EPackage",
+        "resourceSet.target": "(emf.name=ecore)"
+    },
+    "RegistryService~workspace": {
+        "registry.name": "workspace",
+        "registry.description": "The general registry to store EObjects",
+        "stage.storage.mappings": [
+            "draft:file",
+            "release:file"
+        ],
+        "workflow.transitions": [
+            "draft:release"
+        ],
+        "delete.after.transition": true,
+        "storageService.target": "(storage.type=file)",
+        "storageService.cardinality.minimum:int": 1,
+        "stages": [
+            {
+                "name": "draft",
+                "writable": true,
+                "final": false
+            },
+            {
+                "name": "release",
+                "writable": true,
+                "final": true
+            }
+        ],
+        "schema.uri": "http://www.eclipse.org/emf/2002/Ecore",
+        "root.eclass.uri": "http://www.eclipse.org/emf/2002/Ecore#//EObject",
+        "resourceSet.target": "(emf.name=ecore)"
+    }
+}

@@ -1,0 +1,15 @@
+services:
+  model-atlas:
+    image: eclipsefennec/model.atlas:jena-snapshot
+    ports:
+      - "8080:8080"
+    environment:
+      - STORAGE_ROOT=/opt/modelatlas/runtime/data
+    volumes:
+      - ./configs:/opt/modelatlas/runtime/load:ro
+      - atlas-data:/opt/modelatlas/runtime/data
+      - atlas-log:/opt/modelatlas/runtime/log
+
+volumes:
+  atlas-data:
+  atlas-log:
