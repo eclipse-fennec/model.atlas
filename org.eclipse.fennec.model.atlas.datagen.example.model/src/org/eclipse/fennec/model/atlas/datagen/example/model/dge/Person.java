@@ -25,7 +25,8 @@ import org.osgi.annotation.versioning.ProviderType;
  * </ul>
  *
  * @see org.eclipse.fennec.model.atlas.datagen.example.model.dge.DGPackage#getPerson()
- * @model
+ * @model annotation="http://www.eclipse.org/fennec/m2x/ocl/1.0 ValidPhoneNumber='self.phone.matches(\'^\\\\d{10}$\')'"
+ *        annotation="http://www.eclipse.org/emf/2002/Ecore constraints='ValidPhoneNumber'"
  * @generated
  */
 @ProviderType

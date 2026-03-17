@@ -10,7 +10,16 @@
     <details key="basePackage" value="org.eclipse.fennec.model.atlas.datagen.example.model"/>
     <details key="resource" value="XMI"/>
   </eAnnotations>
+  <eAnnotations source="http://www.eclipse.org/emf/2002/Ecore">
+    <details key="validationDelegates" value="http://www.eclipse.org/fennec/m2x/ocl/1.0"/>
+  </eAnnotations>
   <eClassifiers xsi:type="ecore:EClass" name="Person">
+    <eAnnotations source="http://www.eclipse.org/fennec/m2x/ocl/1.0">
+      <details key="ValidPhoneNumber" value="self.phone.matches('^\\d{10}$')"/>
+    </eAnnotations>
+    <eAnnotations source="http://www.eclipse.org/emf/2002/Ecore">
+      <details key="constraints" value="ValidPhoneNumber"/>
+    </eAnnotations>
     <eStructuralFeatures xsi:type="ecore:EAttribute" name="firstName" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
     <eStructuralFeatures xsi:type="ecore:EAttribute" name="lastName" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
     <eStructuralFeatures xsi:type="ecore:EAttribute" name="email" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>

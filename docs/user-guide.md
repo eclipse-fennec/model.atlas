@@ -18,6 +18,7 @@ Fennec Model Atlas is a dynamic EMF model management system that provides a REST
   - [Schema Packages API](#schema-packages-api)
   - [Object Storage API](#object-storage-api)
   - [Model Converter API](#model-converter-api)
+  - [Object Validation API](#object-validation-api)
   - [Data Generation API](#data-generation-api)
   - [Content Negotiation](#content-negotiation)
   - [Error Handling](#error-handling)
@@ -313,6 +314,93 @@ Objects are validated against the registry's configured schema (`root.eclass.uri
 Convert EMF models between different serialization formats.
 
 > Full endpoint documentation: [README-ModelConverter.md](../org.eclipse.fennec.model.atlas.rest.application/README-ModelConverter.md)
+
+### Object Validation API
+
+**Base path**: `/validate`
+
+Validate an EObject instance against its schema constraints, including any OCL constraints defined in the model. The endpoint runs EMF's `Diagnostician` on the submitted object and returns a structured diagnostic report.
+
+```bash
+# Validate a Person object (JSON request, JSON response)
+curl -X POST http://localhost:8080/rest/validate \
+  -H "Content-Type: application/json" \
+  -H "Accept: application/json" \
+  -d '{
+    "eClass": "https://dg.de/1.0#//Person",
+    "firstName": "Jane",
+    "lastName": "Doe",
+    "email": "jane.doe@example.com",
+    "phone": "0301234567",
+    "jobTitle": "Engineer"
+  }'
+
+# Validate using XMI format
+curl -X POST http://localhost:8080/rest/validate \
+  -H "Content-Type: application/xmi" \
+  -H "Accept: application/xmi" \
+  -d '<?xml version="1.0" encoding="UTF-8"?>
+<dge:Person xmi:version="2.0"
+    xmlns:xmi="http://www.omg.org/XMI"
+    xmlns:dge="https://dg.de/1.0"
+    firstName="Jane"
+    lastName="Doe"
+    phone="0301234567"/>'
+
+# Override response format via query parameter
+curl -X POST "http://localhost:8080/rest/validate?mediaType=application/json" \
+  -H "Content-Type: application/xmi" \
+  -d @person.xmi
+```
+
+**Response**
+
+The endpoint always returns `200 OK` with a `Diagnostic` object describing the validation result. The diagnostic has a tree structure: a root entry with a `type` summarizing the overall result, and `children` containing one entry per constraint violation.
+
+A valid object returns a diagnostic with type `OK` and no children:
+
+```json
+{
+  "type": "OK",
+  "message": "Diagnosis of Person",
+  "children": []
+}
+```
+
+An invalid object (e.g., a `phone` value that violates the `ValidPhoneNumber` OCL constraint `self.phone.matches('^\\d{10}$')`) returns child diagnostics with type `ERROR`:
+
+```json
+{
+  "type": "ERROR",
+  "message": "Diagnosis of Person",
+  "children": [
+    {
+      "type": "ERROR",
+      "message": "The 'ValidPhoneNumber' constraint is violated",
+      "source": "org.eclipse.emf.ecore",
+      "children": []
+    }
+  ]
+}
+```
+
+**Diagnostic types:**
+
+| Type | Meaning |
+|------|---------|
+| `OK` | Validation passed with no issues |
+| `INFO` | Informational message |
+| `WARNING` | Non-critical issue detected |
+| `ERROR` | Constraint violation or structural error |
+| `CANCEL` | Validation was cancelled |
+
+**Error responses:**
+
+| Code | Condition |
+|------|-----------|
+| 200 | Validation was performed (check diagnostic `type` for the result) |
+| 415 | Unsupported `mediaType` query parameter value |
+| 500 | Internal server error (e.g., request body could not be deserialized) |
 
 ### Data Generation API
 
@@ -611,6 +699,7 @@ Storage backends are configured independently and referenced by `storage.type`:
 - [Schema Packages API](../org.eclipse.fennec.model.atlas.rest.application/README-SchemaPackages.md) - Full SchemaPackagesResource documentation
 - [Object Storage API](../org.eclipse.fennec.model.atlas.rest.application/README-ObjectStorage.md) - Full ObjectRegistryResource documentation
 - [Model Converter API](../org.eclipse.fennec.model.atlas.rest.application/README-ModelConverter.md) - Format conversion endpoints
+- [Object Validation API](#object-validation-api) - Validate EObjects against schema and OCL constraints
 
 ### Specifications
 - [Model Atlas API Specification](../org.eclipse.fennec.model.atlas.rest.application/Model%20Atlas%20API%20Specification.md) - Core API design, visibility rules, conventions

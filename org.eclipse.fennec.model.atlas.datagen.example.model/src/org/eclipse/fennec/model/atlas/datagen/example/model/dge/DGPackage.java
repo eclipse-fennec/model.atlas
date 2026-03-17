@@ -27,6 +27,7 @@ import org.osgi.annotation.versioning.ProviderType;
  * @model kind="package"
  *        annotation="Version value='1.0'"
  *        annotation="http://www.eclipse.org/emf/2002/GenModel complianceLevel='17.0' oSGiCompatible='true' basePackage='org.eclipse.fennec.model.atlas.datagen.example.model' resource='XMI'"
+ *        annotation="http://www.eclipse.org/emf/2002/Ecore validationDelegates='http://www.eclipse.org/fennec/m2x/ocl/1.0'"
  * @generated
  */
 @ProviderType

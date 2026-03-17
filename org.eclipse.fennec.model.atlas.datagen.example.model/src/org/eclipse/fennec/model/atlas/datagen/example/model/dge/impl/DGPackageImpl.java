@@ -6,6 +6,7 @@ import org.eclipse.emf.ecore.EAttribute;
 import org.eclipse.emf.ecore.EClass;
 import org.eclipse.emf.ecore.EPackage;
 import org.eclipse.emf.ecore.EReference;
+import org.eclipse.emf.ecore.EValidator;
 
 import org.eclipse.emf.ecore.impl.EPackageImpl;
 
@@ -14,6 +15,8 @@ import org.eclipse.fennec.model.atlas.datagen.example.model.dge.Company;
 import org.eclipse.fennec.model.atlas.datagen.example.model.dge.DGFactory;
 import org.eclipse.fennec.model.atlas.datagen.example.model.dge.DGPackage;
 import org.eclipse.fennec.model.atlas.datagen.example.model.dge.Person;
+
+import org.eclipse.fennec.model.atlas.datagen.example.model.dge.util.DGValidator;
 
 /**
  * <!-- begin-user-doc -->
@@ -94,6 +97,16 @@ public class DGPackageImpl extends EPackageImpl implements DGPackage {
 
 		// Initialize created meta-data
 		theDGPackage.initializePackageContents();
+
+		// Register package validator
+		EValidator.Registry.INSTANCE.put
+			(theDGPackage,
+			 new EValidator.Descriptor() {
+				 @Override
+				 public EValidator getEValidator() {
+					 return DGValidator.INSTANCE;
+				 }
+			 });
 
 		// Mark meta-data to indicate it can't be changed
 		theDGPackage.freeze();
@@ -405,6 +418,10 @@ public class DGPackageImpl extends EPackageImpl implements DGPackage {
 		createVersionAnnotations();
 		// http://www.eclipse.org/emf/2002/GenModel
 		createGenModelAnnotations();
+		// http://www.eclipse.org/emf/2002/Ecore
+		createEcoreAnnotations();
+		// http://www.eclipse.org/fennec/m2x/ocl/1.0
+		create_1Annotations();
 	}
 
 	/**
@@ -439,6 +456,44 @@ public class DGPackageImpl extends EPackageImpl implements DGPackage {
 			   "oSGiCompatible", "true",
 			   "basePackage", "org.eclipse.fennec.model.atlas.datagen.example.model",
 			   "resource", "XMI"
+		   });
+	}
+
+	/**
+	 * Initializes the annotations for <b>http://www.eclipse.org/emf/2002/Ecore</b>.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	protected void createEcoreAnnotations() {
+		String source = "http://www.eclipse.org/emf/2002/Ecore";
+		addAnnotation
+		  (this,
+		   source,
+		   new String[] {
+			   "validationDelegates", "http://www.eclipse.org/fennec/m2x/ocl/1.0"
+		   });
+		addAnnotation
+		  (personEClass,
+		   source,
+		   new String[] {
+			   "constraints", "ValidPhoneNumber"
+		   });
+	}
+
+	/**
+	 * Initializes the annotations for <b>http://www.eclipse.org/fennec/m2x/ocl/1.0</b>.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	protected void create_1Annotations() {
+		String source = "http://www.eclipse.org/fennec/m2x/ocl/1.0";
+		addAnnotation
+		  (personEClass,
+		   source,
+		   new String[] {
+			   "ValidPhoneNumber", "self.phone.matches(\'^\\\\d{10}$\')"
 		   });
 	}
 

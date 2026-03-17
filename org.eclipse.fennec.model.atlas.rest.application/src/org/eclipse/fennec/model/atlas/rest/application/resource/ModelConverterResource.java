@@ -78,6 +78,10 @@ public class ModelConverterResource {
         checkContentType();
         try {
             return Response.status(Response.Status.OK).entity(ePackage).build();
+            
+    	} catch (WebApplicationException e) {
+			// WebApplicationException already has the correct status code, rethrow it
+			throw e;
         } catch (Exception e) {
             return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity(e.getMessage()).build();
         }

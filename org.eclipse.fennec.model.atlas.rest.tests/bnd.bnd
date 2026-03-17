@@ -27,7 +27,8 @@ Test-Cases: ${classes;HIERARCHY_INDIRECTLY_ANNOTATED;org.junit.platform.commons.
 	org.eclipse.fennec.model.atlas.workflow,\
 	org.eclipse.fennec.model.atlas.management,\
 	org.eclipse.uml2.uml,\
-	org.eclipse.fennec.model.atlas.schema.registry.api
+	org.eclipse.fennec.model.atlas.schema.registry.api,\
+	org.eclipse.fennec.m2x.ocl.api
 
 Private-Package: org.eclipse.fennec.model.atlas.rest.tests,\
 	org.eclipse.fennec.model.atlas.rest.tests.helper
