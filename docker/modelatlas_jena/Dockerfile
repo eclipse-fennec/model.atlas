@@ -51,7 +51,7 @@ EXPOSE 8080
 WORKDIR ${APP_HOME}
 
 ENTRYPOINT ["java", \
-    "-Dgosh.args=--nointeractive", \
+    "-Dgosh.args=--noshutdown",\
     "-Ddata=/opt/modelatlas/runtime/data", \
     "-Datlas.log.dir=/opt/modelatlas/runtime/log", \
     "-Dlogback.configurationFile=file:/opt/modelatlas/runtime/etc/logback.xml", \
