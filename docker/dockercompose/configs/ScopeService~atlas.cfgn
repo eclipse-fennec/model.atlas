@@ -1,0 +1,7 @@
+{
+    "scope.name": "atlas",
+    "scope.description": "Atlas scope. The parent of all other scopes.",
+    "parent.scope": "",
+    "registryService.target": "(|(registry.name=schema)(registry.name=workspace))",
+    "registryService.cardinality.minimum:int": 1
+}

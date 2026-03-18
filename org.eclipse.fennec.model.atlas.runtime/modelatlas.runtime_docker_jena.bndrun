@@ -1,4 +1,4 @@
--include: modelatlas.runtime_docker_file.bndrun
+-include: modelatlas.runtime_docker.bndrun
 
 -runbundles.docker.jena: org.apache.felix.fileinstall;version='[3.7.4,3.7.5)';startlevel=1036
 

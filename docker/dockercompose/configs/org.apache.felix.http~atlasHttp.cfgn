@@ -1,0 +1,7 @@
+{
+    "org.osgi.service.http.port": "8080",
+    "org.osgi.service.http.host": "0.0.0.0",
+    "org.apache.felix.http.context_path": "atlas/",
+    "org.apache.felix.http.name": "atlas",
+    "org.apache.felix.http.runtime.init.id": "atlasHttp"
+}

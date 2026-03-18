@@ -1,0 +1,5 @@
+{
+    "workspace.folder": "$[env:STORAGE_ROOT;default=/opt/modelatlas/runtime/data]",
+    "storage.type": "file",
+    "registry.target": "(registry=main)"
+}
