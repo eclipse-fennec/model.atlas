@@ -1,7 +1,3 @@
 -include: modelatlas.runtime_docker.bndrun
 
--runbundles.docker.jena: org.apache.felix.fileinstall;version='[3.7.4,3.7.5)';startlevel=1036
-
--runproperties.docker.jena: \
-	felix.fileinstall.dir=/opt/modelatlas/runtime/load,\
-	felix.fileinstall.poll=2000
+-runproperties.docker.jena: configurator.initial=file:///opt/modelatlas/runtime/load/jena.json

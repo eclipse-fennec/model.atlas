@@ -1,7 +1,0 @@
-{
-    "scope.name": "jena",
-    "scope.description": "City Jena Scope",
-    "parent.scope": "atlas",
-    "registryService.target": "(|(registry.name=schema)(registry.name=workspace))",
-    "registryService.cardinality.minimum:int": 1
-}

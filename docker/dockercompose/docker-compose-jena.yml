@@ -10,7 +10,7 @@ services:
       - STORAGE_ROOT=/opt/modelatlas/runtime/data
       - ATLAS_HTTP_PORT=8080
     volumes:
-      - ./org.eclipse.fennec.model.atlas.runtime.config.local.jena.jar:/opt/modelatlas/runtime/load/jena-config.jar
+      - ./configs:/opt/modelatlas/runtime/load:ro
       - atlas-data:/opt/modelatlas/runtime/data
       - atlas-log:/opt/modelatlas/runtime/log
 
