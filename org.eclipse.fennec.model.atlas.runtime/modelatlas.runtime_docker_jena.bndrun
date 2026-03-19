@@ -4,6 +4,4 @@
 
 -runproperties.docker.jena: \
 	felix.fileinstall.dir=/opt/modelatlas/runtime/load,\
-	felix.fileinstall.poll=2000,\
-	felix.fileinstall.filter=.*\\.json,\
-	felix.fileinstall.bundles.new.start=false
+	felix.fileinstall.poll=2000
