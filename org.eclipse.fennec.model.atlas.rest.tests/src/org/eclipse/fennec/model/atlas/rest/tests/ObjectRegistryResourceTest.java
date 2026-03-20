@@ -422,7 +422,7 @@ public class ObjectRegistryResourceTest {
                 .path(TEST_REGISTRY_NAME).path("stages").path(TEST_STAGE_DRAFT).queryParam("objectId", TEST_OBJECT_ID)
                 .request().delete();
 
-        assertEquals(200, response.getStatus(), "Should return HTTP 200 OK");
+        assertEquals(204, response.getStatus(), "Should return HTTP 204 No Content");
     }
 
     @Test
@@ -660,5 +660,190 @@ public class ObjectRegistryResourceTest {
         assertEquals(200, response.getStatus(), "Should return HTTP 200 OK");
         assertEquals("application/xml", response.getHeaderString("Content-Type"),
                 "Content-Type header should be set to mediaType query parameter value");
+    }
+
+    // ========== ETag Tests ==========
+
+    @Test
+    public void testGetObjectMetadata_ReturnsETag() {
+        Response response = restClient.target(BASE_URL).path(TEST_SCOPE_NAME).path("registries")
+                .path(TEST_REGISTRY_NAME).path("stages").path(TEST_STAGE_DRAFT).queryParam("objectId", TEST_OBJECT_ID)
+                .request("application/json").get();
+
+        assertEquals(200, response.getStatus(), "Should return HTTP 200 OK");
+        assertNotNull(response.getHeaderString("ETag"), "Response should contain ETag header");
+    }
+
+    @Test
+    public void testGetObjectContent_ReturnsETag() {
+        Response response = restClient.target(BASE_URL).path(TEST_SCOPE_NAME).path("registries")
+                .path(TEST_REGISTRY_NAME).path("stages").path(TEST_STAGE_DRAFT).path("content")
+                .queryParam("objectId", TEST_OBJECT_ID).request("application/json").get();
+
+        assertEquals(200, response.getStatus(), "Should return HTTP 200 OK");
+        assertNotNull(response.getHeaderString("ETag"), "Response should contain ETag header");
+    }
+
+    @Test
+    public void testCreateObject_ReturnsETag() throws Exception {
+        EPackage newObject = TestHelper.createTestEPackage("http://test.com/etag/1.0", "ETagObject", "etag");
+        String xmiContent = TestHelper.serializeToXMI(newObject, resourceSet);
+
+        Response response = restClient.target(BASE_URL).path(TEST_SCOPE_NAME).path("registries")
+                .path(TEST_REGISTRY_NAME).path("stages").path(TEST_STAGE_DRAFT).path("etag-object-id")
+                .queryParam("name", "ETagObject").queryParam("version", "1.0.0").request("application/xmi")
+                .post(Entity.entity(xmiContent, "application/xmi"));
+
+        assertEquals(201, response.getStatus(), "Should return HTTP 201 Created");
+        assertNotNull(response.getHeaderString("ETag"), "Created response should contain ETag header");
+    }
+
+    // ========== If-None-Match (Conditional GET) Tests ==========
+
+    @Test
+    public void testGetObjectMetadata_IfNoneMatchHit_Returns304() {
+        // First request to get the ETag
+        Response firstResponse = restClient.target(BASE_URL).path(TEST_SCOPE_NAME).path("registries")
+                .path(TEST_REGISTRY_NAME).path("stages").path(TEST_STAGE_DRAFT).queryParam("objectId", TEST_OBJECT_ID)
+                .request("application/json").get();
+
+        assertEquals(200, firstResponse.getStatus());
+        String etag = firstResponse.getHeaderString("ETag");
+        assertNotNull(etag, "First response should contain ETag");
+
+        // Second request with If-None-Match
+        Response secondResponse = restClient.target(BASE_URL).path(TEST_SCOPE_NAME).path("registries")
+                .path(TEST_REGISTRY_NAME).path("stages").path(TEST_STAGE_DRAFT).queryParam("objectId", TEST_OBJECT_ID)
+                .request("application/json").header("If-None-Match", etag).get();
+
+        assertEquals(304, secondResponse.getStatus(), "Should return HTTP 304 Not Modified when ETag matches");
+    }
+
+    @Test
+    public void testGetObjectMetadata_IfNoneMatchMiss_Returns200() {
+        Response response = restClient.target(BASE_URL).path(TEST_SCOPE_NAME).path("registries")
+                .path(TEST_REGISTRY_NAME).path("stages").path(TEST_STAGE_DRAFT).queryParam("objectId", TEST_OBJECT_ID)
+                .request("application/json").header("If-None-Match", "\"stale-etag-value\"").get();
+
+        assertEquals(200, response.getStatus(), "Should return HTTP 200 OK when ETag doesn't match");
+    }
+
+    // ========== If-Match (Optimistic Locking) Tests ==========
+
+    @Test
+    public void testUpdateObjectContent_IfMatchSuccess() throws Exception {
+        // First get the current ETag
+        Response getResponse = restClient.target(BASE_URL).path(TEST_SCOPE_NAME).path("registries")
+                .path(TEST_REGISTRY_NAME).path("stages").path(TEST_STAGE_DRAFT).queryParam("objectId", TEST_OBJECT_ID)
+                .request("application/json").get();
+        String etag = getResponse.getHeaderString("ETag");
+        assertNotNull(etag, "Should have ETag");
+
+        // Update with matching If-Match
+        EPackage updatedObject = TestHelper.createTestEPackage("http://test.com/ifmatch/1.0", "IfMatchObject", "im");
+        String xmiContent = TestHelper.serializeToXMI(updatedObject, resourceSet);
+
+        Response response = restClient.target(BASE_URL).path(TEST_SCOPE_NAME).path("registries")
+                .path(TEST_REGISTRY_NAME).path("stages").path(TEST_STAGE_DRAFT).path("content")
+                .queryParam("objectId", TEST_OBJECT_ID).queryParam("version", "1.1.0").request("application/xmi")
+                .header("If-Match", etag).put(Entity.entity(xmiContent, "application/xmi"));
+
+        assertEquals(200, response.getStatus(), "Should return HTTP 200 OK when If-Match matches");
+        assertNotNull(response.getHeaderString("ETag"), "Updated response should contain new ETag");
+    }
+
+    @Test
+    public void testUpdateObjectContent_IfMatchFail_Returns412() throws Exception {
+        EPackage updatedObject = TestHelper.createTestEPackage("http://test.com/ifmatch/1.0", "IfMatchObject", "im");
+        String xmiContent = TestHelper.serializeToXMI(updatedObject, resourceSet);
+
+        Response response = restClient.target(BASE_URL).path(TEST_SCOPE_NAME).path("registries")
+                .path(TEST_REGISTRY_NAME).path("stages").path(TEST_STAGE_DRAFT).path("content")
+                .queryParam("objectId", TEST_OBJECT_ID).queryParam("version", "1.1.0").request("application/xmi")
+                .header("If-Match", "\"stale-etag-value\"").put(Entity.entity(xmiContent, "application/xmi"));
+
+        assertEquals(412, response.getStatus(), "Should return HTTP 412 Precondition Failed when ETag doesn't match");
+    }
+
+    @Test
+    public void testUpdateObjectContent_NoIfMatch_StillWorks() throws Exception {
+        EPackage updatedObject = TestHelper.createTestEPackage("http://test.com/noifmatch/1.0", "NoIfMatch", "nim");
+        String xmiContent = TestHelper.serializeToXMI(updatedObject, resourceSet);
+
+        Response response = restClient.target(BASE_URL).path(TEST_SCOPE_NAME).path("registries")
+                .path(TEST_REGISTRY_NAME).path("stages").path(TEST_STAGE_DRAFT).path("content")
+                .queryParam("objectId", TEST_OBJECT_ID).queryParam("version", "1.1.0").request("application/xmi")
+                .put(Entity.entity(xmiContent, "application/xmi"));
+
+        assertEquals(200, response.getStatus(), "Should return HTTP 200 OK without If-Match (backward compatible)");
+    }
+
+    // ========== Content-Aware Skip Tests ==========
+
+    @Test
+    public void testUpdateObjectContent_IdenticalContent_SkipsUpdate() throws Exception {
+        // Use the same content that the mock returns for TEST_OBJECT_ID
+        EPackage sameObject = TestHelper.createTestEPackage("http://test.com/object/1.0", "TestObject", "test");
+        String xmiContent = TestHelper.serializeToXMI(sameObject, resourceSet);
+
+        Response response = restClient.target(BASE_URL).path(TEST_SCOPE_NAME).path("registries")
+                .path(TEST_REGISTRY_NAME).path("stages").path(TEST_STAGE_DRAFT).path("content")
+                .queryParam("objectId", TEST_OBJECT_ID).queryParam("version", "1.0.0").request("application/xmi")
+                .put(Entity.entity(xmiContent, "application/xmi"));
+
+        assertEquals(200, response.getStatus(), "Should return HTTP 200 OK for identical content");
+        assertNotNull(response.getHeaderString("ETag"), "Response should contain ETag");
+    }
+
+    // ========== Delete Idempotency Tests ==========
+
+    @Test
+    public void testDeleteObject_AlreadyDeleted_Returns204() {
+        Response response = restClient.target(BASE_URL).path(TEST_SCOPE_NAME).path("registries")
+                .path(TEST_REGISTRY_NAME).path("stages").path(TEST_STAGE_DRAFT)
+                .queryParam("objectId", "non-existent-object").request().delete();
+
+        assertEquals(204, response.getStatus(), "Should return HTTP 204 No Content for already-deleted resource");
+    }
+
+    @Test
+    public void testDeleteObject_Success_Returns204() {
+        Response response = restClient.target(BASE_URL).path(TEST_SCOPE_NAME).path("registries")
+                .path(TEST_REGISTRY_NAME).path("stages").path(TEST_STAGE_DRAFT).queryParam("objectId", TEST_OBJECT_ID)
+                .request().delete();
+
+        assertEquals(204, response.getStatus(), "Should return HTTP 204 No Content on successful deletion");
+    }
+
+    @Test
+    public void testDeleteObject_IfMatchFail_Returns412() {
+        Response response = restClient.target(BASE_URL).path(TEST_SCOPE_NAME).path("registries")
+                .path(TEST_REGISTRY_NAME).path("stages").path(TEST_STAGE_DRAFT).queryParam("objectId", TEST_OBJECT_ID)
+                .request().header("If-Match", "\"stale-etag-value\"").delete();
+
+        assertEquals(412, response.getStatus(),
+                "Should return HTTP 412 Precondition Failed when If-Match doesn't match on delete");
+    }
+
+    // ========== Transition Idempotency Tests ==========
+
+    @Test
+    public void testTransitionObject_AlreadyTransitioned_Returns200() throws Exception {
+        // Transition from approved to release, but the object is already in release
+        // (mock returns metadata for TEST_OBJECT_ID in all stages including release)
+        StageTransitionRequest transition = RestFactory.eINSTANCE.createStageTransitionRequest();
+        transition.setObjectId(TEST_OBJECT_ID);
+        transition.setTargetStage(TEST_STAGE_APPROVED);
+
+        String xmiContent = TestHelper.serializeToXMI(transition, resourceSet);
+
+        // Request transition from a stage where the object doesn't exist,
+        // but exists in the target stage — should be treated as already transitioned
+        Response response = restClient.target(BASE_URL).path(TEST_SCOPE_NAME).path("registries")
+                .path(TEST_REGISTRY_NAME).path("stages").path(TEST_STAGE_DRAFT).path("actions").path("transition")
+                .request("application/xmi").post(Entity.entity(xmiContent, "application/xmi"));
+
+        // Since the mock returns the object in both source and target, transition succeeds normally
+        assertEquals(200, response.getStatus(), "Should return HTTP 200 OK");
     }
 }

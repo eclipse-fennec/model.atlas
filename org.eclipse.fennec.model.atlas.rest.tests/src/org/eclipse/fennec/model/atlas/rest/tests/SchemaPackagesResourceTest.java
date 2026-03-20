@@ -211,7 +211,7 @@ public class SchemaPackagesResourceTest {
         String responseContent = response.readEntity(String.class);
         System.out.println("DEBUG testCreatePackage_Success - Response content: " + responseContent);
 
-        assertEquals(200, response.getStatus(), "Should return HTTP 200 OK");
+        assertEquals(201, response.getStatus(), "Should return HTTP 201 Created");
         assertNotNull(responseContent, "Should return content");
     }
 
@@ -264,8 +264,8 @@ public class SchemaPackagesResourceTest {
         String responseContent = response.readEntity(String.class);
         System.out.println("DEBUG testCreatePackage_WithOverwrite_Success - Response content: " + responseContent);
 
-        assertEquals(200, response.getStatus(),
-                "Should return HTTP 200 OK when Overwrite is true and package exists and is writable");
+        assertEquals(201, response.getStatus(),
+                "Should return HTTP 201 Added when Overwrite is true and package exists and is writable");
         assertNotNull(responseContent, "Should return updated metadata");
         assertTrue(responseContent.contains("objectId"), "Response should contain objectId");
     }
@@ -304,8 +304,8 @@ public class SchemaPackagesResourceTest {
         String responseContent = response.readEntity(String.class);
         System.out.println("DEBUG testCreatePackage_WithOverwrite_NewPackage - Response content: " + responseContent);
 
-        assertEquals(200, response.getStatus(),
-                "Should return HTTP 200 OK when Overwrite is true for new package (behaves like normal create)");
+        assertEquals(201, response.getStatus(),
+                "Should return HTTP 201 Created when Overwrite is true for new package (behaves like normal create)");
         assertNotNull(responseContent, "Should return created metadata");
     }
 
@@ -385,7 +385,7 @@ public class SchemaPackagesResourceTest {
         Response response = restClient.target(BASE_URL).path(TEST_SCOPE_NAME).path("schema").path("stages")
                 .path(TEST_STAGE_DRAFT).queryParam("nsUri", TEST_PACKAGE_NSURI).request().delete();
 
-        assertEquals(200, response.getStatus(), "Should return HTTP 200 OK");
+        assertEquals(204, response.getStatus(), "Should return HTTP 204 No Content");
     }
 
     @Test
@@ -613,7 +613,7 @@ public class SchemaPackagesResourceTest {
                 .queryParam("mediaType", "application/xml").request("application/xmi")
                 .post(Entity.entity(xmiContent, "application/xmi"));
 
-        assertEquals(200, response.getStatus(), "Should return HTTP 200 OK");
+        assertEquals(201, response.getStatus(), "Should return HTTP 201 Created");
         assertEquals("application/xml", response.getHeaderString("Content-Type"),
                 "Content-Type header should be set to mediaType query parameter value");
     }
@@ -648,5 +648,138 @@ public class SchemaPackagesResourceTest {
         assertEquals(200, response.getStatus(), "Should return HTTP 200 OK");
         assertEquals("application/xml", response.getHeaderString("Content-Type"),
                 "Content-Type header should be set to mediaType query parameter value");
+    }
+
+    // ========== ETag Tests ==========
+
+    @Test
+    public void testListPackagesInStage_WithNsUri_ReturnsETag() {
+        Response response = restClient.target(BASE_URL).path(TEST_SCOPE_NAME).path("schema").path("stages")
+                .path(TEST_STAGE_DRAFT).queryParam("nsUri", TEST_PACKAGE_NSURI).request("application/json").get();
+
+        assertEquals(200, response.getStatus(), "Should return HTTP 200 OK");
+        assertNotNull(response.getHeaderString("ETag"), "Response should contain ETag header");
+    }
+
+    @Test
+    public void testGetPackageContent_ReturnsETag() {
+        Response response = restClient.target(BASE_URL).path(TEST_SCOPE_NAME).path("schema").path("stages")
+                .path(TEST_STAGE_DRAFT).path("content").queryParam("nsUri", TEST_PACKAGE_NSURI)
+                .request("application/json").get();
+
+        assertEquals(200, response.getStatus(), "Should return HTTP 200 OK");
+        assertNotNull(response.getHeaderString("ETag"), "Response should contain ETag header");
+    }
+
+    @Test
+    public void testCreatePackage_ReturnsETag() throws Exception {
+        EPackage testPackage = TestHelper.createTestEPackage("http://etag-test.com/schema/1.0", "ETagPackage", "etag");
+        String xmiContent = TestHelper.serializeToXMI(testPackage, resourceSet);
+
+        Response response = restClient.target(BASE_URL).path(TEST_SCOPE_NAME).path("schema").path("stages")
+                .path(TEST_STAGE_DRAFT).queryParam("nsUri", "http://etag-test.com/schema/1.0")
+                .queryParam("name", "ETagPackage").queryParam("version", "1.0.0").request("application/xmi")
+                .post(Entity.entity(xmiContent, "application/xmi"));
+
+        assertEquals(201, response.getStatus(), "Should return HTTP 201 Created");
+        assertNotNull(response.getHeaderString("ETag"), "Created response should contain ETag header");
+    }
+
+    // ========== If-None-Match (Conditional GET) Tests ==========
+
+    @Test
+    public void testListPackagesInStage_IfNoneMatchHit_Returns304() {
+        // First request to get the ETag
+        Response firstResponse = restClient.target(BASE_URL).path(TEST_SCOPE_NAME).path("schema").path("stages")
+                .path(TEST_STAGE_DRAFT).queryParam("nsUri", TEST_PACKAGE_NSURI).request("application/json").get();
+
+        assertEquals(200, firstResponse.getStatus());
+        String etag = firstResponse.getHeaderString("ETag");
+        assertNotNull(etag, "First response should contain ETag");
+
+        // Second request with If-None-Match
+        Response secondResponse = restClient.target(BASE_URL).path(TEST_SCOPE_NAME).path("schema").path("stages")
+                .path(TEST_STAGE_DRAFT).queryParam("nsUri", TEST_PACKAGE_NSURI).request("application/json")
+                .header("If-None-Match", etag).get();
+
+        assertEquals(304, secondResponse.getStatus(), "Should return HTTP 304 Not Modified when ETag matches");
+    }
+
+    @Test
+    public void testListPackagesInStage_IfNoneMatchMiss_Returns200() {
+        Response response = restClient.target(BASE_URL).path(TEST_SCOPE_NAME).path("schema").path("stages")
+                .path(TEST_STAGE_DRAFT).queryParam("nsUri", TEST_PACKAGE_NSURI).request("application/json")
+                .header("If-None-Match", "\"stale-etag-value\"").get();
+
+        assertEquals(200, response.getStatus(), "Should return HTTP 200 OK when ETag doesn't match");
+    }
+
+    // ========== If-Match (Optimistic Locking) Tests ==========
+
+    @Test
+    public void testUpdatePackageContent_IfMatchSuccess() throws Exception {
+        // First get the current ETag
+        Response getResponse = restClient.target(BASE_URL).path(TEST_SCOPE_NAME).path("schema").path("stages")
+                .path(TEST_STAGE_DRAFT).queryParam("nsUri", TEST_PACKAGE_NSURI).request("application/json").get();
+        String etag = getResponse.getHeaderString("ETag");
+        assertNotNull(etag, "Should have ETag");
+
+        // Update with matching If-Match
+        EPackage updatedPackage = TestHelper.createTestEPackage(TEST_PACKAGE_NSURI, "IfMatchUpdated", "im");
+        String xmiContent = TestHelper.serializeToXMI(updatedPackage, resourceSet);
+
+        Response response = restClient.target(BASE_URL).path(TEST_SCOPE_NAME).path("schema").path("stages")
+                .path(TEST_STAGE_DRAFT).path("content").queryParam("nsUri", TEST_PACKAGE_NSURI)
+                .queryParam("version", "1.1.0").request("application/xmi").header("If-Match", etag)
+                .put(Entity.entity(xmiContent, "application/xmi"));
+
+        assertEquals(200, response.getStatus(), "Should return HTTP 200 OK when If-Match matches");
+        assertNotNull(response.getHeaderString("ETag"), "Updated response should contain new ETag");
+    }
+
+    @Test
+    public void testUpdatePackageContent_IfMatchFail_Returns412() throws Exception {
+        EPackage updatedPackage = TestHelper.createTestEPackage(TEST_PACKAGE_NSURI, "IfMatchFail", "imf");
+        String xmiContent = TestHelper.serializeToXMI(updatedPackage, resourceSet);
+
+        Response response = restClient.target(BASE_URL).path(TEST_SCOPE_NAME).path("schema").path("stages")
+                .path(TEST_STAGE_DRAFT).path("content").queryParam("nsUri", TEST_PACKAGE_NSURI)
+                .queryParam("version", "1.1.0").request("application/xmi")
+                .header("If-Match", "\"stale-etag-value\"").put(Entity.entity(xmiContent, "application/xmi"));
+
+        assertEquals(412, response.getStatus(), "Should return HTTP 412 Precondition Failed when ETag doesn't match");
+    }
+
+    @Test
+    public void testUpdatePackageContent_NoIfMatch_StillWorks() throws Exception {
+        EPackage updatedPackage = TestHelper.createTestEPackage(TEST_PACKAGE_NSURI, "NoIfMatch", "nim");
+        String xmiContent = TestHelper.serializeToXMI(updatedPackage, resourceSet);
+
+        Response response = restClient.target(BASE_URL).path(TEST_SCOPE_NAME).path("schema").path("stages")
+                .path(TEST_STAGE_DRAFT).path("content").queryParam("nsUri", TEST_PACKAGE_NSURI)
+                .queryParam("version", "1.1.0").request("application/xmi")
+                .put(Entity.entity(xmiContent, "application/xmi"));
+
+        assertEquals(200, response.getStatus(), "Should return HTTP 200 OK without If-Match (backward compatible)");
+    }
+
+    // ========== Delete Idempotency Tests ==========
+
+    @Test
+    public void testDeletePackage_AlreadyDeleted_Returns204() {
+        Response response = restClient.target(BASE_URL).path(TEST_SCOPE_NAME).path("schema").path("stages")
+                .path(TEST_STAGE_DRAFT).queryParam("nsUri", "http://non-existent.com/schema/1.0").request().delete();
+
+        assertEquals(204, response.getStatus(), "Should return HTTP 204 No Content for already-deleted resource");
+    }
+
+    @Test
+    public void testDeletePackage_IfMatchFail_Returns412() {
+        Response response = restClient.target(BASE_URL).path(TEST_SCOPE_NAME).path("schema").path("stages")
+                .path(TEST_STAGE_DRAFT).queryParam("nsUri", TEST_PACKAGE_NSURI).request()
+                .header("If-Match", "\"stale-etag-value\"").delete();
+
+        assertEquals(412, response.getStatus(),
+                "Should return HTTP 412 Precondition Failed when If-Match doesn't match on delete");
     }
 }

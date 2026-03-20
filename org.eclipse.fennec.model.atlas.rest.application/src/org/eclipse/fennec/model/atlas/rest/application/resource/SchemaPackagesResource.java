@@ -26,6 +26,7 @@ import org.eclipse.fennec.model.atlas.mediatypes.api.SupportedMediatype;
 import org.eclipse.fennec.model.atlas.mgmt.management.ManagementFactory;
 import org.eclipse.fennec.model.atlas.mgmt.management.ObjectMetadata;
 import org.eclipse.fennec.model.atlas.mgmt.management.ObjectMetadataContainer;
+import org.eclipse.fennec.model.atlas.mgmt.storage.AbstractEObjectStorageService;
 import org.eclipse.fennec.model.atlas.rest.model.StageTransitionRequest;
 import org.eclipse.fennec.model.atlas.runtime.RequireRuntime;
 import org.eclipse.fennec.model.atlas.wf.workflowapi.ScopeService;
@@ -56,6 +57,7 @@ import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.QueryParam;
 import jakarta.ws.rs.WebApplicationException;
 import jakarta.ws.rs.core.Context;
+import jakarta.ws.rs.core.EntityTag;
 import jakarta.ws.rs.core.HttpHeaders;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
@@ -183,7 +185,10 @@ public class SchemaPackagesResource {
                 if (metadata == null) {
                     return Response.status(Response.Status.NO_CONTENT).build();
                 } else {
-                    return Response.status(Response.Status.OK).entity(metadata).build();
+                    Response.ResponseBuilder rb = Response.status(Response.Status.OK).entity(metadata)
+                            .header("Content-Type", mediaType);
+                    addETagHeader(rb, metadata);
+                    return evaluateConditionalGet(rb, metadata);
                 }
             } else if (name != null) {
                 List<ObjectMetadata> objectsMetadata = scopeService.listInStageForRegistryByName(REGISTRY_NAME,
@@ -272,11 +277,13 @@ public class SchemaPackagesResource {
                     ObjectMetadata metadata = scopeService
                             .updateInStageForRegistry(REGISTRY_NAME, stageName, ePackage, encodedNsURI, resolvedVersion)
                             .getValue();
-                    return Response.status(Response.Status.OK)
+                    Response.ResponseBuilder rb = Response.status(Response.Status.OK)
                             .header("Location",
                                     "/".concat(scopeName).concat("/schemas/stages/").concat(stageName).concat("?nsUri=")
                                             .concat(encodedNsURI))
-                            .entity(metadata).header("Content-Type", mediaType).build();
+                            .entity(metadata).header("Content-Type", mediaType);
+                    addETagHeader(rb, metadata);
+                    return rb.build();
                 }
             }
             // Create package and return metadata with Location header
@@ -293,10 +300,12 @@ public class SchemaPackagesResource {
 
             metadata = scopeService.uploadToStageForRegistry(REGISTRY_NAME, stageName, ePackage, metadata).getValue();
 
-            return Response.status(Response.Status.OK)
+            Response.ResponseBuilder rb = Response.status(Response.Status.CREATED)
                     .header("Location", "/".concat(scopeName).concat("/schemas/stages/").concat(stageName)
                             .concat("?nsUri=").concat(encodedNsURI))
-                    .entity(metadata).header("Content-Type", mediaType).build();
+                    .entity(metadata).header("Content-Type", mediaType);
+            addETagHeader(rb, metadata);
+            return rb.build();
         } catch (IllegalArgumentException e) {
             return Response.status(Response.Status.BAD_REQUEST).entity(e.getMessage()).build();
         } catch (WebApplicationException e) {
@@ -336,12 +345,20 @@ public class SchemaPackagesResource {
         try {
             nsUri = URI.decode(nsUri);
             String encodedNsUri = encodePackageNsURI(nsUri);
+            ObjectMetadata contentMetadata = scopeService.getMetadataFromStageForRegistry(REGISTRY_NAME, stageName,
+                    encodedNsUri);
             EPackage ePackage = (EPackage) scopeService.getContentFromStageForRegistry(REGISTRY_NAME, stageName,
                     encodedNsUri);
             if (ePackage == null) {
                 return Response.status(Response.Status.NO_CONTENT).build();
             }
-            return Response.status(Response.Status.OK).entity(ePackage).header("Content-Type", mediaType).build();
+            Response.ResponseBuilder rb = Response.status(Response.Status.OK).entity(ePackage)
+                    .header("Content-Type", mediaType);
+            if (contentMetadata != null) {
+                addETagHeader(rb, contentMetadata);
+                return evaluateConditionalGet(rb, contentMetadata);
+            }
+            return rb.build();
 
         } catch (IllegalArgumentException e) {
             return Response.status(Response.Status.BAD_REQUEST).entity(e.getMessage()).build();
@@ -401,10 +418,28 @@ public class SchemaPackagesResource {
                         .entity(String.format("Schema %s is in read-only state", nsUri)).build();
             }
 
+            // If-Match validation (optimistic locking via ETag)
+            Response preconditionResponse = checkIfMatch(existingMetadata);
+            if (preconditionResponse != null) {
+                return preconditionResponse;
+            }
+
+            // Content-aware skip: if content hasn't changed, skip the update
+            String newContentHash = AbstractEObjectStorageService.computeContentHash(ePackage);
+            if (newContentHash != null && newContentHash.equals(existingMetadata.getContentHash())) {
+                Response.ResponseBuilder rb = Response.status(Response.Status.OK)
+                        .entity(existingMetadata).header("Content-Type", mediaType);
+                addETagHeader(rb, existingMetadata);
+                return rb.build();
+            }
+
             ObjectMetadata metadata = scopeService
                     .updateInStageForRegistry(REGISTRY_NAME, stageName, ePackage, encodedNsUri, resolvedVersion)
                     .getValue();
-            return Response.status(Response.Status.OK).entity(metadata).header("Content-Type", mediaType).build();
+            Response.ResponseBuilder rb = Response.status(Response.Status.OK)
+                    .entity(metadata).header("Content-Type", mediaType);
+            addETagHeader(rb, metadata);
+            return rb.build();
 
         } catch (IllegalArgumentException e) {
             return Response.status(Response.Status.BAD_REQUEST).entity(e.getMessage()).build();
@@ -442,10 +477,17 @@ public class SchemaPackagesResource {
                 return Response.status(Response.Status.FORBIDDEN)
                         .entity(String.format("Schema %s is in read-only state", nsUri)).build();
             }
+
+            // If-Match validation (optimistic locking via ETag)
+            Response preconditionResponse = checkIfMatch(existingMetadata);
+            if (preconditionResponse != null) {
+                return preconditionResponse;
+            }
+
             boolean deleted = scopeService.deleteFromStageForRegistry(REGISTRY_NAME, stageName, encodedNsUri)
                     .getValue();
             if (deleted)
-                return Response.status(Response.Status.OK).build();
+                return Response.noContent().build();
             return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
                     .entity(String.format("Schema %s deletion failed but causes are unknown", nsUri)).build();
 
@@ -481,9 +523,17 @@ public class SchemaPackagesResource {
         ScopeService<?> scopeService = getScopeServiceByScopeName(scopeName);
         try {
             String encodedNsUri = encodePackageNsURI(transitionRequest.getObjectId());
+            String targetStage = transitionRequest.getTargetStage();
             ObjectMetadata existingMetadata = scopeService.getMetadataFromStageForRegistry(REGISTRY_NAME, stageName,
                     encodedNsUri);
             if (existingMetadata == null) {
+                // Package not in source stage — check if already in target (idempotent retry)
+                ObjectMetadata targetMetadata = scopeService.getMetadataFromStageForRegistry(REGISTRY_NAME, targetStage,
+                        encodedNsUri);
+                if (targetMetadata != null) {
+                    return Response.status(Response.Status.OK).entity(targetMetadata)
+                            .header("Content-Type", mediaType).build();
+                }
                 return Response.status(Response.Status.NO_CONTENT).build();
             }
             if (existingMetadata.isIsReadOnly()) {
@@ -492,7 +542,7 @@ public class SchemaPackagesResource {
                         .build();
             }
             ObjectMetadata metadata = scopeService.transitionToStageForRegistry(REGISTRY_NAME, encodedNsUri, stageName,
-                    transitionRequest.getTargetStage());
+                    targetStage);
             return Response.status(Response.Status.OK).entity(metadata).header("Content-Type", mediaType).build();
         } catch (IllegalArgumentException e) {
             return Response.status(Response.Status.BAD_REQUEST).entity(e.getMessage()).build();
@@ -525,6 +575,52 @@ public class SchemaPackagesResource {
             return;
         }
         throw new WebApplicationException(Status.UNSUPPORTED_MEDIA_TYPE);
+    }
+
+    /**
+     * Adds an ETag header to the response if the metadata contains a content hash.
+     */
+    private void addETagHeader(Response.ResponseBuilder rb, ObjectMetadata metadata) {
+        if (metadata != null && metadata.getContentHash() != null) {
+            rb.tag(new EntityTag(metadata.getContentHash()));
+        }
+    }
+
+    /**
+     * Checks the If-Match header against the current content hash.
+     * Returns a 412 Precondition Failed response if the ETag doesn't match,
+     * or null if the precondition is satisfied (or no If-Match header was sent).
+     */
+    private Response checkIfMatch(ObjectMetadata metadata) {
+        String ifMatch = headers.getHeaderString("If-Match");
+        if (ifMatch == null) {
+            return null;
+        }
+        String currentHash = metadata.getContentHash();
+        if (currentHash == null) {
+            return null;
+        }
+        String cleanedIfMatch = ifMatch.replace("\"", "");
+        if (!cleanedIfMatch.equals(currentHash)) {
+            return Response.status(Response.Status.PRECONDITION_FAILED)
+                    .entity("Resource has been modified. ETag mismatch.").build();
+        }
+        return null;
+    }
+
+    /**
+     * Evaluates If-None-Match for conditional GET requests.
+     * Returns a 304 Not Modified if the ETag matches, otherwise builds the response normally.
+     */
+    private Response evaluateConditionalGet(Response.ResponseBuilder rb, ObjectMetadata metadata) {
+        String ifNoneMatch = headers.getHeaderString("If-None-Match");
+        if (ifNoneMatch != null && metadata.getContentHash() != null) {
+            String cleanedIfNoneMatch = ifNoneMatch.replace("\"", "");
+            if (cleanedIfNoneMatch.equals(metadata.getContentHash())) {
+                return Response.notModified(new EntityTag(metadata.getContentHash())).build();
+            }
+        }
+        return rb.build();
     }
 
     private ScopeService<?> getScopeServiceByScopeName(String scopeName) {

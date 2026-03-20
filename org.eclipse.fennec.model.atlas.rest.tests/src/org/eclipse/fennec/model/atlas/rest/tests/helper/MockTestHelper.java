@@ -22,6 +22,7 @@ import org.eclipse.emf.ecore.EObject;
 import org.eclipse.emf.ecore.EcorePackage;
 import org.eclipse.fennec.model.atlas.mgmt.management.ManagementFactory;
 import org.eclipse.fennec.model.atlas.mgmt.management.ObjectMetadata;
+import org.eclipse.fennec.model.atlas.mgmt.storage.AbstractEObjectStorageService;
 import org.eclipse.fennec.model.atlas.wf.workflowapi.Registry;
 import org.eclipse.fennec.model.atlas.wf.workflowapi.RegistryService;
 import org.eclipse.fennec.model.atlas.wf.workflowapi.Scope;
@@ -348,6 +349,13 @@ public class MockTestHelper {
             metadata.setRegistry(TEST_REGISTRY_NAME);
             metadata.setScope(scope);
             metadata.setUploadTime(Instant.now());
+            // Compute contentHash for ETag support
+            if (object != null) {
+                String hash = AbstractEObjectStorageService.computeContentHash(object);
+                if (hash != null) {
+                    metadata.setContentHash(hash);
+                }
+            }
             return Promises.resolved(metadata);
         }
 
@@ -379,6 +387,14 @@ public class MockTestHelper {
             metadata.setRegistry(TEST_REGISTRY_NAME);
             metadata.setScope(scope);
             metadata.setUploadTime(Instant.now());
+            // Compute and set contentHash for ETag support
+            EObject content = getContentFromStage(scope, stage, objectId);
+            if (content != null) {
+                String hash = AbstractEObjectStorageService.computeContentHash(content);
+                if (hash != null) {
+                    metadata.setContentHash(hash);
+                }
+            }
             if ("readonly-stage".equals(stage) || objectId
                     .equals(new String(Base64.getUrlEncoder().encode("http://readonly.com/schema/1.0".getBytes()))))
                 metadata.setIsReadOnly(true);
@@ -435,7 +451,8 @@ public class MockTestHelper {
             // Only allow updates for existing objects
             if (objectId.equals("non-existent-object") || objectId.equals("new-object-id")
                     || objectId.equals("incompatible-object-id")
-                    || (!objectId.equals(TEST_OBJECT_ID) && !objectId.equals("sensor-object-456"))) {
+                    || (!objectId.equals(TEST_OBJECT_ID) && !objectId.equals("sensor-object-456")
+                            && !objectId.equals(new String(Base64.getUrlEncoder().encode(TEST_PACKAGE_NSURI.getBytes()))))) {
                 return Promises.resolved(null);
             }
 
@@ -446,6 +463,13 @@ public class MockTestHelper {
             metadata.setScope(scope);
             metadata.setVersion(version);
             metadata.setLastChangeTime(Instant.now());
+            // Compute contentHash for the updated object
+            if (updatedObject != null) {
+                String hash = AbstractEObjectStorageService.computeContentHash(updatedObject);
+                if (hash != null) {
+                    metadata.setContentHash(hash);
+                }
+            }
             return Promises.resolved(metadata);
         }
 
@@ -585,7 +609,8 @@ public class MockTestHelper {
             // Only allow transitions for existing objects
             if (objectId.equals("non-existent-object") || objectId.equals("new-object-id")
                     || objectId.equals("incompatible-object-id")
-                    || (!objectId.equals(TEST_OBJECT_ID) && !objectId.equals("sensor-object-456"))) {
+                    || (!objectId.equals(TEST_OBJECT_ID) && !objectId.equals("sensor-object-456")
+                            && !objectId.equals(new String(Base64.getUrlEncoder().encode(TEST_PACKAGE_NSURI.getBytes()))))) {
                 return null;
             }
 
