@@ -39,9 +39,11 @@ pipeline  {
                 }
             }
         }
-        stage('Snapshot branch release') {
+        stage('Other branch release') {
             when { 
-                branch 'snapshot'
+                not {
+                    branch 'main'
+                }
             }
             steps  {
                 script {
@@ -71,11 +73,14 @@ pipeline  {
             }
         }
         stage('Docker image build'){
+            when { 
+                branch 'main' 
+            }
             steps  {
                 echo "I am building and publishing a docker image on branch: ${env.GIT_BRANCH}"
                 
                 step([$class: 'DockerBuilderPublisher',
-                      dockerFileDirectory: 'docker/modelatlas',
+                      dockerFileDirectory: 'docker/modelatlas_apicurio',
                             cloud: 'docker',
                             tagsString: 'devel.data-in-motion.biz:6000/fennec/modelatlas:latest',
                             pushOnSuccess: true,
