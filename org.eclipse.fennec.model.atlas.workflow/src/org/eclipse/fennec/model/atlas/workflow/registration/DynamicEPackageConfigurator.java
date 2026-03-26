@@ -104,6 +104,7 @@ public class DynamicEPackageConfigurator implements EPackageConfigurator {
         properties.put(EMFNamespaces.EMF_MODEL_NSURI, ePackage.getNsURI());
         properties.put(EMFNamespaces.EMF_MODEL_FILE_EXT, fileExtension);
         properties.put(EMFNamespaces.EMF_MODEL_VERSION, version);
+        properties.put(EMFNamespaces.EMF_MODEL_SCOPE, EMFNamespaces.EMF_MODEL_SCOPE_RESOURCE_SET);
         properties.put("dynamic.registration", Boolean.TRUE);
         properties.put("epackage.source", "workflow.release");
         return properties;
