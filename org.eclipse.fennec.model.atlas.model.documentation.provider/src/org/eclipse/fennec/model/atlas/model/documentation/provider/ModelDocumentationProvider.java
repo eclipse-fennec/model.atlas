@@ -51,6 +51,8 @@ import org.osgi.service.metatype.annotations.Designate;
 @Designate(ocd = ModelDocumentationProviderConfig.class)
 public class ModelDocumentationProvider {
 
+    private static final System.Logger LOG = System.getLogger(ModelDocumentationProvider.class.getName());
+
     @Reference(target = "(component.name=EcoreToHtmlComponent)")
     EcoreToDocumentationService ecoreToHtmlComponent;
 
@@ -80,14 +82,14 @@ public class ModelDocumentationProvider {
                 return true;
             }
         } catch (IOException e) {
-            e.printStackTrace();
+            LOG.log(System.Logger.Level.ERROR, "Failed to read hash code file", e);
             return true;
         }
         return false;
     }
 
     public Map<String, String> generateAllPackageDocumentation(EPackage ePackage) {
-        System.out.println("Generating Package Docs for " + ePackage.getName());
+        LOG.log(System.Logger.Level.INFO, "Generating Package Docs for " + ePackage.getName());
         generateAllMarkdownDocumentation(ePackage);
         generateAllHtmlDocumentation(ePackage);
         updateHashCodeFile(ePackage);
@@ -133,7 +135,7 @@ public class ModelDocumentationProvider {
                 return os;
             }
         } catch (IOException e) {
-            e.printStackTrace();
+            LOG.log(System.Logger.Level.ERROR, "Failed to generate documentation for EPackage", e);
         }
         return os;
     }
@@ -154,7 +156,7 @@ public class ModelDocumentationProvider {
                 return os;
             }
         } catch (IOException e) {
-            e.printStackTrace();
+            LOG.log(System.Logger.Level.ERROR, "Failed to generate documentation for EClass", e);
         }
         return os;
     }
@@ -200,7 +202,7 @@ public class ModelDocumentationProvider {
                 }
             }
         } catch (IOException e) {
-            e.printStackTrace();
+            LOG.log(System.Logger.Level.ERROR, "Failed to retrieve documentation file", e);
         }
         return null;
     }
@@ -215,11 +217,11 @@ public class ModelDocumentationProvider {
                 Files.createFile(hashCodeFilePath);
             }
             try (BufferedWriter bw = new BufferedWriter(new FileWriter(hashCodeFile))) {
-                System.out.println("Hash code " + ePackage.hashCode());
+                LOG.log(System.Logger.Level.DEBUG, "Hash code " + ePackage.hashCode());
                 bw.write(String.valueOf(ePackage.hashCode()));
             }
         } catch (IOException e) {
-            e.printStackTrace();
+            LOG.log(System.Logger.Level.ERROR, "Failed to update hash code file", e);
         }
     }
 
