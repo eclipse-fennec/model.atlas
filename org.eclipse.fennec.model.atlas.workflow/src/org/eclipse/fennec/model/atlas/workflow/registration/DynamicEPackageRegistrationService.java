@@ -20,8 +20,10 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import org.eclipse.emf.common.util.URI;
 import org.eclipse.emf.ecore.EFactory;
 import org.eclipse.emf.ecore.EPackage;
+import org.eclipse.emf.ecore.resource.Resource;
 import org.eclipse.emf.ecore.resource.ResourceSet;
 import org.eclipse.fennec.emf.osgi.configurator.EPackageConfigurator;
 import org.osgi.framework.BundleContext;
@@ -194,7 +196,11 @@ public class DynamicEPackageRegistrationService {
 
         try {
             logger.info("Registering EPackage: " + nsURI + " (name=" + ePackage.getName() + ")");
-
+            
+            Resource eResource = ePackage.eResource();
+            if(eResource.getResourceSet() != null) eResource.getResourceSet().getResources().remove(eResource);
+            eResource.setURI(URI.createURI(ePackage.getNsURI()));
+            
             // Create configurator
             DynamicEPackageConfigurator configurator = new DynamicEPackageConfigurator(ePackage, fileExtension,
                     version);
