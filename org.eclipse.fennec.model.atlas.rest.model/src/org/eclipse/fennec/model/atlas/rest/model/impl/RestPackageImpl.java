@@ -15,6 +15,7 @@ package org.eclipse.fennec.model.atlas.rest.model.impl;
 
 import org.eclipse.emf.ecore.EAttribute;
 import org.eclipse.emf.ecore.EClass;
+import org.eclipse.emf.ecore.EEnum;
 import org.eclipse.emf.ecore.EPackage;
 import org.eclipse.emf.ecore.EReference;
 
@@ -22,6 +23,8 @@ import org.eclipse.emf.ecore.impl.EPackageImpl;
 
 import org.eclipse.fennec.model.atlas.mgmt.management.ManagementPackage;
 
+import org.eclipse.fennec.model.atlas.rest.model.Diagnostic;
+import org.eclipse.fennec.model.atlas.rest.model.DiagnosticType;
 import org.eclipse.fennec.model.atlas.rest.model.EPackageInfo;
 import org.eclipse.fennec.model.atlas.rest.model.EPackageListResponse;
 import org.eclipse.fennec.model.atlas.rest.model.ErrorResponse;
@@ -73,6 +76,20 @@ public class RestPackageImpl extends EPackageImpl implements RestPackage {
 	 * @generated
 	 */
 	private EClass scopeListResponseEClass = null;
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	private EClass diagnosticEClass = null;
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	private EEnum diagnosticTypeEEnum = null;
 
 	/**
 	 * Creates an instance of the model <b>Package</b>, registered with
@@ -344,6 +361,86 @@ public class RestPackageImpl extends EPackageImpl implements RestPackage {
 	 * @generated
 	 */
 	@Override
+	public EClass getDiagnostic() {
+		return diagnosticEClass;
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
+	public EAttribute getDiagnostic_Message() {
+		return (EAttribute)diagnosticEClass.getEStructuralFeatures().get(0);
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
+	public EAttribute getDiagnostic_Source() {
+		return (EAttribute)diagnosticEClass.getEStructuralFeatures().get(1);
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
+	public EAttribute getDiagnostic_Type() {
+		return (EAttribute)diagnosticEClass.getEStructuralFeatures().get(2);
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
+	public EReference getDiagnostic_Children() {
+		return (EReference)diagnosticEClass.getEStructuralFeatures().get(3);
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
+	public EAttribute getDiagnostic_ExceptionMsg() {
+		return (EAttribute)diagnosticEClass.getEStructuralFeatures().get(4);
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
+	public EAttribute getDiagnostic_Data() {
+		return (EAttribute)diagnosticEClass.getEStructuralFeatures().get(5);
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
+	public EEnum getDiagnosticType() {
+		return diagnosticTypeEEnum;
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
 	public RestFactory getRestFactory() {
 		return (RestFactory)getEFactoryInstance();
 	}
@@ -391,6 +488,17 @@ public class RestPackageImpl extends EPackageImpl implements RestPackage {
 
 		scopeListResponseEClass = createEClass(SCOPE_LIST_RESPONSE);
 		createEReference(scopeListResponseEClass, SCOPE_LIST_RESPONSE__SCOPES);
+
+		diagnosticEClass = createEClass(DIAGNOSTIC);
+		createEAttribute(diagnosticEClass, DIAGNOSTIC__MESSAGE);
+		createEAttribute(diagnosticEClass, DIAGNOSTIC__SOURCE);
+		createEAttribute(diagnosticEClass, DIAGNOSTIC__TYPE);
+		createEReference(diagnosticEClass, DIAGNOSTIC__CHILDREN);
+		createEAttribute(diagnosticEClass, DIAGNOSTIC__EXCEPTION_MSG);
+		createEAttribute(diagnosticEClass, DIAGNOSTIC__DATA);
+
+		// Create enums
+		diagnosticTypeEEnum = createEEnum(DIAGNOSTIC_TYPE);
 	}
 
 	/**
@@ -450,6 +558,22 @@ public class RestPackageImpl extends EPackageImpl implements RestPackage {
 
 		initEClass(scopeListResponseEClass, ScopeListResponse.class, "ScopeListResponse", !IS_ABSTRACT, !IS_INTERFACE, IS_GENERATED_INSTANCE_CLASS);
 		initEReference(getScopeListResponse_Scopes(), theWorkflowApiPackage.getScope(), null, "scopes", null, 0, -1, ScopeListResponse.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, IS_COMPOSITE, !IS_RESOLVE_PROXIES, !IS_UNSETTABLE, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
+
+		initEClass(diagnosticEClass, Diagnostic.class, "Diagnostic", !IS_ABSTRACT, !IS_INTERFACE, IS_GENERATED_INSTANCE_CLASS);
+		initEAttribute(getDiagnostic_Message(), ecorePackage.getEString(), "message", null, 0, 1, Diagnostic.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_UNSETTABLE, !IS_ID, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
+		initEAttribute(getDiagnostic_Source(), ecorePackage.getEString(), "source", null, 0, 1, Diagnostic.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_UNSETTABLE, !IS_ID, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
+		initEAttribute(getDiagnostic_Type(), this.getDiagnosticType(), "type", null, 0, 1, Diagnostic.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_UNSETTABLE, !IS_ID, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
+		initEReference(getDiagnostic_Children(), this.getDiagnostic(), null, "children", null, 0, -1, Diagnostic.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, IS_COMPOSITE, !IS_RESOLVE_PROXIES, !IS_UNSETTABLE, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
+		initEAttribute(getDiagnostic_ExceptionMsg(), ecorePackage.getEString(), "exceptionMsg", null, 0, 1, Diagnostic.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_UNSETTABLE, !IS_ID, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
+		initEAttribute(getDiagnostic_Data(), ecorePackage.getEString(), "data", null, 0, -1, Diagnostic.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_UNSETTABLE, !IS_ID, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
+
+		// Initialize enums and add enum literals
+		initEEnum(diagnosticTypeEEnum, DiagnosticType.class, "DiagnosticType");
+		addEEnumLiteral(diagnosticTypeEEnum, DiagnosticType.OK);
+		addEEnumLiteral(diagnosticTypeEEnum, DiagnosticType.INFO);
+		addEEnumLiteral(diagnosticTypeEEnum, DiagnosticType.WARNING);
+		addEEnumLiteral(diagnosticTypeEEnum, DiagnosticType.ERROR);
+		addEEnumLiteral(diagnosticTypeEEnum, DiagnosticType.CANCEL);
 
 		// Create resource
 		createResource(eNS_URI);

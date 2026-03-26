@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012 - 2026 Data In Motion and others.
+ * Copyright (c) 2012 - 2025 Data In Motion and others.
  * All rights reserved.
  * 
  * This program and the accompanying materials are made
@@ -11,7 +11,7 @@
  * Contributors:
  *     Data In Motion - initial API and implementation
  */
-package org.eclipse.fennec.model.atlas.diagnostic.model.diagnostic.impl;
+package org.eclipse.fennec.model.atlas.rest.model.impl;
 
 import java.util.Collection;
 
@@ -30,9 +30,9 @@ import org.eclipse.emf.ecore.util.EDataTypeUniqueEList;
 import org.eclipse.emf.ecore.util.EObjectContainmentEList;
 import org.eclipse.emf.ecore.util.InternalEList;
 
-import org.eclipse.fennec.model.atlas.diagnostic.model.diagnostic.Diagnostic;
-import org.eclipse.fennec.model.atlas.diagnostic.model.diagnostic.DiagnosticPackage;
-import org.eclipse.fennec.model.atlas.diagnostic.model.diagnostic.DiagnosticType;
+import org.eclipse.fennec.model.atlas.rest.model.Diagnostic;
+import org.eclipse.fennec.model.atlas.rest.model.DiagnosticType;
+import org.eclipse.fennec.model.atlas.rest.model.RestPackage;
 
 /**
  * <!-- begin-user-doc -->
@@ -42,12 +42,12 @@ import org.eclipse.fennec.model.atlas.diagnostic.model.diagnostic.DiagnosticType
  * The following features are implemented:
  * </p>
  * <ul>
- *   <li>{@link org.eclipse.fennec.model.atlas.diagnostic.model.diagnostic.impl.DiagnosticImpl#getMessage <em>Message</em>}</li>
- *   <li>{@link org.eclipse.fennec.model.atlas.diagnostic.model.diagnostic.impl.DiagnosticImpl#getSource <em>Source</em>}</li>
- *   <li>{@link org.eclipse.fennec.model.atlas.diagnostic.model.diagnostic.impl.DiagnosticImpl#getType <em>Type</em>}</li>
- *   <li>{@link org.eclipse.fennec.model.atlas.diagnostic.model.diagnostic.impl.DiagnosticImpl#getChildren <em>Children</em>}</li>
- *   <li>{@link org.eclipse.fennec.model.atlas.diagnostic.model.diagnostic.impl.DiagnosticImpl#getExceptionMsg <em>Exception Msg</em>}</li>
- *   <li>{@link org.eclipse.fennec.model.atlas.diagnostic.model.diagnostic.impl.DiagnosticImpl#getData <em>Data</em>}</li>
+ *   <li>{@link org.eclipse.fennec.model.atlas.rest.model.impl.DiagnosticImpl#getMessage <em>Message</em>}</li>
+ *   <li>{@link org.eclipse.fennec.model.atlas.rest.model.impl.DiagnosticImpl#getSource <em>Source</em>}</li>
+ *   <li>{@link org.eclipse.fennec.model.atlas.rest.model.impl.DiagnosticImpl#getType <em>Type</em>}</li>
+ *   <li>{@link org.eclipse.fennec.model.atlas.rest.model.impl.DiagnosticImpl#getChildren <em>Children</em>}</li>
+ *   <li>{@link org.eclipse.fennec.model.atlas.rest.model.impl.DiagnosticImpl#getExceptionMsg <em>Exception Msg</em>}</li>
+ *   <li>{@link org.eclipse.fennec.model.atlas.rest.model.impl.DiagnosticImpl#getData <em>Data</em>}</li>
  * </ul>
  *
  * @generated
@@ -169,7 +169,7 @@ public class DiagnosticImpl extends MinimalEObjectImpl.Container implements Diag
 	 */
 	@Override
 	protected EClass eStaticClass() {
-		return DiagnosticPackage.Literals.DIAGNOSTIC;
+		return RestPackage.Literals.DIAGNOSTIC;
 	}
 
 	/**
@@ -192,7 +192,7 @@ public class DiagnosticImpl extends MinimalEObjectImpl.Container implements Diag
 		String oldMessage = message;
 		message = newMessage;
 		if (eNotificationRequired())
-			eNotify(new ENotificationImpl(this, Notification.SET, DiagnosticPackage.DIAGNOSTIC__MESSAGE, oldMessage, message));
+			eNotify(new ENotificationImpl(this, Notification.SET, RestPackage.DIAGNOSTIC__MESSAGE, oldMessage, message));
 	}
 
 	/**
@@ -215,7 +215,7 @@ public class DiagnosticImpl extends MinimalEObjectImpl.Container implements Diag
 		String oldSource = source;
 		source = newSource;
 		if (eNotificationRequired())
-			eNotify(new ENotificationImpl(this, Notification.SET, DiagnosticPackage.DIAGNOSTIC__SOURCE, oldSource, source));
+			eNotify(new ENotificationImpl(this, Notification.SET, RestPackage.DIAGNOSTIC__SOURCE, oldSource, source));
 	}
 
 	/**
@@ -238,7 +238,7 @@ public class DiagnosticImpl extends MinimalEObjectImpl.Container implements Diag
 		DiagnosticType oldType = type;
 		type = newType == null ? TYPE_EDEFAULT : newType;
 		if (eNotificationRequired())
-			eNotify(new ENotificationImpl(this, Notification.SET, DiagnosticPackage.DIAGNOSTIC__TYPE, oldType, type));
+			eNotify(new ENotificationImpl(this, Notification.SET, RestPackage.DIAGNOSTIC__TYPE, oldType, type));
 	}
 
 	/**
@@ -249,7 +249,7 @@ public class DiagnosticImpl extends MinimalEObjectImpl.Container implements Diag
 	@Override
 	public EList<Diagnostic> getChildren() {
 		if (children == null) {
-			children = new EObjectContainmentEList<Diagnostic>(Diagnostic.class, this, DiagnosticPackage.DIAGNOSTIC__CHILDREN);
+			children = new EObjectContainmentEList<Diagnostic>(Diagnostic.class, this, RestPackage.DIAGNOSTIC__CHILDREN);
 		}
 		return children;
 	}
@@ -274,7 +274,7 @@ public class DiagnosticImpl extends MinimalEObjectImpl.Container implements Diag
 		String oldExceptionMsg = exceptionMsg;
 		exceptionMsg = newExceptionMsg;
 		if (eNotificationRequired())
-			eNotify(new ENotificationImpl(this, Notification.SET, DiagnosticPackage.DIAGNOSTIC__EXCEPTION_MSG, oldExceptionMsg, exceptionMsg));
+			eNotify(new ENotificationImpl(this, Notification.SET, RestPackage.DIAGNOSTIC__EXCEPTION_MSG, oldExceptionMsg, exceptionMsg));
 	}
 
 	/**
@@ -285,7 +285,7 @@ public class DiagnosticImpl extends MinimalEObjectImpl.Container implements Diag
 	@Override
 	public EList<String> getData() {
 		if (data == null) {
-			data = new EDataTypeUniqueEList<String>(String.class, this, DiagnosticPackage.DIAGNOSTIC__DATA);
+			data = new EDataTypeUniqueEList<String>(String.class, this, RestPackage.DIAGNOSTIC__DATA);
 		}
 		return data;
 	}
@@ -298,7 +298,7 @@ public class DiagnosticImpl extends MinimalEObjectImpl.Container implements Diag
 	@Override
 	public NotificationChain eInverseRemove(InternalEObject otherEnd, int featureID, NotificationChain msgs) {
 		switch (featureID) {
-			case DiagnosticPackage.DIAGNOSTIC__CHILDREN:
+			case RestPackage.DIAGNOSTIC__CHILDREN:
 				return ((InternalEList<?>)getChildren()).basicRemove(otherEnd, msgs);
 		}
 		return super.eInverseRemove(otherEnd, featureID, msgs);
@@ -312,17 +312,17 @@ public class DiagnosticImpl extends MinimalEObjectImpl.Container implements Diag
 	@Override
 	public Object eGet(int featureID, boolean resolve, boolean coreType) {
 		switch (featureID) {
-			case DiagnosticPackage.DIAGNOSTIC__MESSAGE:
+			case RestPackage.DIAGNOSTIC__MESSAGE:
 				return getMessage();
-			case DiagnosticPackage.DIAGNOSTIC__SOURCE:
+			case RestPackage.DIAGNOSTIC__SOURCE:
 				return getSource();
-			case DiagnosticPackage.DIAGNOSTIC__TYPE:
+			case RestPackage.DIAGNOSTIC__TYPE:
 				return getType();
-			case DiagnosticPackage.DIAGNOSTIC__CHILDREN:
+			case RestPackage.DIAGNOSTIC__CHILDREN:
 				return getChildren();
-			case DiagnosticPackage.DIAGNOSTIC__EXCEPTION_MSG:
+			case RestPackage.DIAGNOSTIC__EXCEPTION_MSG:
 				return getExceptionMsg();
-			case DiagnosticPackage.DIAGNOSTIC__DATA:
+			case RestPackage.DIAGNOSTIC__DATA:
 				return getData();
 		}
 		return super.eGet(featureID, resolve, coreType);
@@ -337,23 +337,23 @@ public class DiagnosticImpl extends MinimalEObjectImpl.Container implements Diag
 	@Override
 	public void eSet(int featureID, Object newValue) {
 		switch (featureID) {
-			case DiagnosticPackage.DIAGNOSTIC__MESSAGE:
+			case RestPackage.DIAGNOSTIC__MESSAGE:
 				setMessage((String)newValue);
 				return;
-			case DiagnosticPackage.DIAGNOSTIC__SOURCE:
+			case RestPackage.DIAGNOSTIC__SOURCE:
 				setSource((String)newValue);
 				return;
-			case DiagnosticPackage.DIAGNOSTIC__TYPE:
+			case RestPackage.DIAGNOSTIC__TYPE:
 				setType((DiagnosticType)newValue);
 				return;
-			case DiagnosticPackage.DIAGNOSTIC__CHILDREN:
+			case RestPackage.DIAGNOSTIC__CHILDREN:
 				getChildren().clear();
 				getChildren().addAll((Collection<? extends Diagnostic>)newValue);
 				return;
-			case DiagnosticPackage.DIAGNOSTIC__EXCEPTION_MSG:
+			case RestPackage.DIAGNOSTIC__EXCEPTION_MSG:
 				setExceptionMsg((String)newValue);
 				return;
-			case DiagnosticPackage.DIAGNOSTIC__DATA:
+			case RestPackage.DIAGNOSTIC__DATA:
 				getData().clear();
 				getData().addAll((Collection<? extends String>)newValue);
 				return;
@@ -369,22 +369,22 @@ public class DiagnosticImpl extends MinimalEObjectImpl.Container implements Diag
 	@Override
 	public void eUnset(int featureID) {
 		switch (featureID) {
-			case DiagnosticPackage.DIAGNOSTIC__MESSAGE:
+			case RestPackage.DIAGNOSTIC__MESSAGE:
 				setMessage(MESSAGE_EDEFAULT);
 				return;
-			case DiagnosticPackage.DIAGNOSTIC__SOURCE:
+			case RestPackage.DIAGNOSTIC__SOURCE:
 				setSource(SOURCE_EDEFAULT);
 				return;
-			case DiagnosticPackage.DIAGNOSTIC__TYPE:
+			case RestPackage.DIAGNOSTIC__TYPE:
 				setType(TYPE_EDEFAULT);
 				return;
-			case DiagnosticPackage.DIAGNOSTIC__CHILDREN:
+			case RestPackage.DIAGNOSTIC__CHILDREN:
 				getChildren().clear();
 				return;
-			case DiagnosticPackage.DIAGNOSTIC__EXCEPTION_MSG:
+			case RestPackage.DIAGNOSTIC__EXCEPTION_MSG:
 				setExceptionMsg(EXCEPTION_MSG_EDEFAULT);
 				return;
-			case DiagnosticPackage.DIAGNOSTIC__DATA:
+			case RestPackage.DIAGNOSTIC__DATA:
 				getData().clear();
 				return;
 		}
@@ -399,17 +399,17 @@ public class DiagnosticImpl extends MinimalEObjectImpl.Container implements Diag
 	@Override
 	public boolean eIsSet(int featureID) {
 		switch (featureID) {
-			case DiagnosticPackage.DIAGNOSTIC__MESSAGE:
+			case RestPackage.DIAGNOSTIC__MESSAGE:
 				return MESSAGE_EDEFAULT == null ? message != null : !MESSAGE_EDEFAULT.equals(message);
-			case DiagnosticPackage.DIAGNOSTIC__SOURCE:
+			case RestPackage.DIAGNOSTIC__SOURCE:
 				return SOURCE_EDEFAULT == null ? source != null : !SOURCE_EDEFAULT.equals(source);
-			case DiagnosticPackage.DIAGNOSTIC__TYPE:
+			case RestPackage.DIAGNOSTIC__TYPE:
 				return type != TYPE_EDEFAULT;
-			case DiagnosticPackage.DIAGNOSTIC__CHILDREN:
+			case RestPackage.DIAGNOSTIC__CHILDREN:
 				return children != null && !children.isEmpty();
-			case DiagnosticPackage.DIAGNOSTIC__EXCEPTION_MSG:
+			case RestPackage.DIAGNOSTIC__EXCEPTION_MSG:
 				return EXCEPTION_MSG_EDEFAULT == null ? exceptionMsg != null : !EXCEPTION_MSG_EDEFAULT.equals(exceptionMsg);
-			case DiagnosticPackage.DIAGNOSTIC__DATA:
+			case RestPackage.DIAGNOSTIC__DATA:
 				return data != null && !data.isEmpty();
 		}
 		return super.eIsSet(featureID);

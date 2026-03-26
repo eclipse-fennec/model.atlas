@@ -9,6 +9,13 @@
   <foreignModel>rest-response.ecore</foreignModel>
   <genPackages prefix="Rest" basePackage="org.eclipse.fennec.model.atlas.rest" resource="XMI"
       disposableProviderFactory="true" ecorePackage="rest-response.ecore#/">
+    <genEnums typeSafeEnumCompatible="false" ecoreEnum="rest-response.ecore#//DiagnosticType">
+      <genEnumLiterals ecoreEnumLiteral="rest-response.ecore#//DiagnosticType/OK"/>
+      <genEnumLiterals ecoreEnumLiteral="rest-response.ecore#//DiagnosticType/INFO"/>
+      <genEnumLiterals ecoreEnumLiteral="rest-response.ecore#//DiagnosticType/WARNING"/>
+      <genEnumLiterals ecoreEnumLiteral="rest-response.ecore#//DiagnosticType/ERROR"/>
+      <genEnumLiterals ecoreEnumLiteral="rest-response.ecore#//DiagnosticType/CANCEL"/>
+    </genEnums>
     <genClasses ecoreClass="rest-response.ecore#//EPackageInfo">
       <genFeatures createChild="false" ecoreFeature="ecore:EAttribute rest-response.ecore#//EPackageInfo/name"/>
       <genFeatures createChild="false" ecoreFeature="ecore:EAttribute rest-response.ecore#//EPackageInfo/nsURI"/>
@@ -33,6 +40,14 @@
     </genClasses>
     <genClasses ecoreClass="rest-response.ecore#//ScopeListResponse">
       <genFeatures property="None" children="true" createChild="true" ecoreFeature="ecore:EReference rest-response.ecore#//ScopeListResponse/scopes"/>
+    </genClasses>
+    <genClasses ecoreClass="rest-response.ecore#//Diagnostic">
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute rest-response.ecore#//Diagnostic/message"/>
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute rest-response.ecore#//Diagnostic/source"/>
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute rest-response.ecore#//Diagnostic/type"/>
+      <genFeatures property="None" children="true" createChild="true" ecoreFeature="ecore:EReference rest-response.ecore#//Diagnostic/children"/>
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute rest-response.ecore#//Diagnostic/exceptionMsg"/>
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute rest-response.ecore#//Diagnostic/data"/>
     </genClasses>
   </genPackages>
 </genmodel:GenModel>

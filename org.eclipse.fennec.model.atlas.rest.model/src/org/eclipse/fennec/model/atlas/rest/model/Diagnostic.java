@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012 - 2026 Data In Motion and others.
+ * Copyright (c) 2012 - 2025 Data In Motion and others.
  * All rights reserved.
  * 
  * This program and the accompanying materials are made
@@ -11,7 +11,7 @@
  * Contributors:
  *     Data In Motion - initial API and implementation
  */
-package org.eclipse.fennec.model.atlas.diagnostic.model.diagnostic;
+package org.eclipse.fennec.model.atlas.rest.model;
 
 import org.eclipse.emf.common.util.EList;
 
@@ -28,15 +28,15 @@ import org.osgi.annotation.versioning.ProviderType;
  * The following features are supported:
  * </p>
  * <ul>
- *   <li>{@link org.eclipse.fennec.model.atlas.diagnostic.model.diagnostic.Diagnostic#getMessage <em>Message</em>}</li>
- *   <li>{@link org.eclipse.fennec.model.atlas.diagnostic.model.diagnostic.Diagnostic#getSource <em>Source</em>}</li>
- *   <li>{@link org.eclipse.fennec.model.atlas.diagnostic.model.diagnostic.Diagnostic#getType <em>Type</em>}</li>
- *   <li>{@link org.eclipse.fennec.model.atlas.diagnostic.model.diagnostic.Diagnostic#getChildren <em>Children</em>}</li>
- *   <li>{@link org.eclipse.fennec.model.atlas.diagnostic.model.diagnostic.Diagnostic#getExceptionMsg <em>Exception Msg</em>}</li>
- *   <li>{@link org.eclipse.fennec.model.atlas.diagnostic.model.diagnostic.Diagnostic#getData <em>Data</em>}</li>
+ *   <li>{@link org.eclipse.fennec.model.atlas.rest.model.Diagnostic#getMessage <em>Message</em>}</li>
+ *   <li>{@link org.eclipse.fennec.model.atlas.rest.model.Diagnostic#getSource <em>Source</em>}</li>
+ *   <li>{@link org.eclipse.fennec.model.atlas.rest.model.Diagnostic#getType <em>Type</em>}</li>
+ *   <li>{@link org.eclipse.fennec.model.atlas.rest.model.Diagnostic#getChildren <em>Children</em>}</li>
+ *   <li>{@link org.eclipse.fennec.model.atlas.rest.model.Diagnostic#getExceptionMsg <em>Exception Msg</em>}</li>
+ *   <li>{@link org.eclipse.fennec.model.atlas.rest.model.Diagnostic#getData <em>Data</em>}</li>
  * </ul>
  *
- * @see org.eclipse.fennec.model.atlas.diagnostic.model.diagnostic.DiagnosticPackage#getDiagnostic()
+ * @see org.eclipse.fennec.model.atlas.rest.model.RestPackage#getDiagnostic()
  * @model
  * @generated
  */
@@ -48,14 +48,14 @@ public interface Diagnostic extends EObject {
 	 * <!-- end-user-doc -->
 	 * @return the value of the '<em>Message</em>' attribute.
 	 * @see #setMessage(String)
-	 * @see org.eclipse.fennec.model.atlas.diagnostic.model.diagnostic.DiagnosticPackage#getDiagnostic_Message()
+	 * @see org.eclipse.fennec.model.atlas.rest.model.RestPackage#getDiagnostic_Message()
 	 * @model
 	 * @generated
 	 */
 	String getMessage();
 
 	/**
-	 * Sets the value of the '{@link org.eclipse.fennec.model.atlas.diagnostic.model.diagnostic.Diagnostic#getMessage <em>Message</em>}' attribute.
+	 * Sets the value of the '{@link org.eclipse.fennec.model.atlas.rest.model.Diagnostic#getMessage <em>Message</em>}' attribute.
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
 	 * @param value the new value of the '<em>Message</em>' attribute.
@@ -70,14 +70,14 @@ public interface Diagnostic extends EObject {
 	 * <!-- end-user-doc -->
 	 * @return the value of the '<em>Source</em>' attribute.
 	 * @see #setSource(String)
-	 * @see org.eclipse.fennec.model.atlas.diagnostic.model.diagnostic.DiagnosticPackage#getDiagnostic_Source()
+	 * @see org.eclipse.fennec.model.atlas.rest.model.RestPackage#getDiagnostic_Source()
 	 * @model
 	 * @generated
 	 */
 	String getSource();
 
 	/**
-	 * Sets the value of the '{@link org.eclipse.fennec.model.atlas.diagnostic.model.diagnostic.Diagnostic#getSource <em>Source</em>}' attribute.
+	 * Sets the value of the '{@link org.eclipse.fennec.model.atlas.rest.model.Diagnostic#getSource <em>Source</em>}' attribute.
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
 	 * @param value the new value of the '<em>Source</em>' attribute.
@@ -88,24 +88,24 @@ public interface Diagnostic extends EObject {
 
 	/**
 	 * Returns the value of the '<em><b>Type</b></em>' attribute.
-	 * The literals are from the enumeration {@link org.eclipse.fennec.model.atlas.diagnostic.model.diagnostic.DiagnosticType}.
+	 * The literals are from the enumeration {@link org.eclipse.fennec.model.atlas.rest.model.DiagnosticType}.
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
 	 * @return the value of the '<em>Type</em>' attribute.
-	 * @see org.eclipse.fennec.model.atlas.diagnostic.model.diagnostic.DiagnosticType
+	 * @see org.eclipse.fennec.model.atlas.rest.model.DiagnosticType
 	 * @see #setType(DiagnosticType)
-	 * @see org.eclipse.fennec.model.atlas.diagnostic.model.diagnostic.DiagnosticPackage#getDiagnostic_Type()
+	 * @see org.eclipse.fennec.model.atlas.rest.model.RestPackage#getDiagnostic_Type()
 	 * @model
 	 * @generated
 	 */
 	DiagnosticType getType();
 
 	/**
-	 * Sets the value of the '{@link org.eclipse.fennec.model.atlas.diagnostic.model.diagnostic.Diagnostic#getType <em>Type</em>}' attribute.
+	 * Sets the value of the '{@link org.eclipse.fennec.model.atlas.rest.model.Diagnostic#getType <em>Type</em>}' attribute.
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
 	 * @param value the new value of the '<em>Type</em>' attribute.
-	 * @see org.eclipse.fennec.model.atlas.diagnostic.model.diagnostic.DiagnosticType
+	 * @see org.eclipse.fennec.model.atlas.rest.model.DiagnosticType
 	 * @see #getType()
 	 * @generated
 	 */
@@ -113,11 +113,11 @@ public interface Diagnostic extends EObject {
 
 	/**
 	 * Returns the value of the '<em><b>Children</b></em>' containment reference list.
-	 * The list contents are of type {@link org.eclipse.fennec.model.atlas.diagnostic.model.diagnostic.Diagnostic}.
+	 * The list contents are of type {@link org.eclipse.fennec.model.atlas.rest.model.Diagnostic}.
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
 	 * @return the value of the '<em>Children</em>' containment reference list.
-	 * @see org.eclipse.fennec.model.atlas.diagnostic.model.diagnostic.DiagnosticPackage#getDiagnostic_Children()
+	 * @see org.eclipse.fennec.model.atlas.rest.model.RestPackage#getDiagnostic_Children()
 	 * @model containment="true"
 	 * @generated
 	 */
@@ -129,14 +129,14 @@ public interface Diagnostic extends EObject {
 	 * <!-- end-user-doc -->
 	 * @return the value of the '<em>Exception Msg</em>' attribute.
 	 * @see #setExceptionMsg(String)
-	 * @see org.eclipse.fennec.model.atlas.diagnostic.model.diagnostic.DiagnosticPackage#getDiagnostic_ExceptionMsg()
+	 * @see org.eclipse.fennec.model.atlas.rest.model.RestPackage#getDiagnostic_ExceptionMsg()
 	 * @model
 	 * @generated
 	 */
 	String getExceptionMsg();
 
 	/**
-	 * Sets the value of the '{@link org.eclipse.fennec.model.atlas.diagnostic.model.diagnostic.Diagnostic#getExceptionMsg <em>Exception Msg</em>}' attribute.
+	 * Sets the value of the '{@link org.eclipse.fennec.model.atlas.rest.model.Diagnostic#getExceptionMsg <em>Exception Msg</em>}' attribute.
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
 	 * @param value the new value of the '<em>Exception Msg</em>' attribute.
@@ -151,7 +151,7 @@ public interface Diagnostic extends EObject {
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
 	 * @return the value of the '<em>Data</em>' attribute list.
-	 * @see org.eclipse.fennec.model.atlas.diagnostic.model.diagnostic.DiagnosticPackage#getDiagnostic_Data()
+	 * @see org.eclipse.fennec.model.atlas.rest.model.RestPackage#getDiagnostic_Data()
 	 * @model
 	 * @generated
 	 */

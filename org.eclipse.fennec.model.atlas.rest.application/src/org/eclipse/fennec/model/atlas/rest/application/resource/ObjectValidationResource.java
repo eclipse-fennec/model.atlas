@@ -17,9 +17,9 @@ import org.eclipse.emf.common.util.Diagnostic;
 import org.eclipse.emf.ecore.EObject;
 import org.eclipse.emf.ecore.util.Diagnostician;
 import org.eclipse.fennec.m2x.ocl.api.OclEngine;
-import org.eclipse.fennec.model.atlas.diagnostic.model.diagnostic.DiagnosticFactory;
-import org.eclipse.fennec.model.atlas.diagnostic.model.diagnostic.DiagnosticType;
 import org.eclipse.fennec.model.atlas.mediatypes.api.SupportedMediatype;
+import org.eclipse.fennec.model.atlas.rest.model.DiagnosticType;
+import org.eclipse.fennec.model.atlas.rest.model.RestFactory;
 import org.eclipse.fennec.model.atlas.runtime.RequireRuntime;
 import org.osgi.service.component.annotations.Activate;
 import org.osgi.service.component.annotations.Component;
@@ -82,7 +82,7 @@ public class ObjectValidationResource {
 	@Operation(summary = "Validates the object against its schema", description = "Validates the object against its schema. Returns the validation errors, or 200, if the validation succeded", responses = {
 			@ApiResponse(responseCode = "200", description = "Object validation was performed. A Response with the list of errors/warnings is returned."
 					+ " The list might be empty, if the valudation did not encounter any issue", 
-					content = @Content(schema = @Schema(implementation = org.eclipse.fennec.model.atlas.diagnostic.model.diagnostic.Diagnostic.class))),
+					content = @Content(schema = @Schema(implementation = org.eclipse.fennec.model.atlas.rest.model.Diagnostic.class))),
 			@ApiResponse(responseCode = "415", description = "Unsupported media type"),
 			@ApiResponse(responseCode = "500", description = "Internal server error") })
 	public Response validate(
@@ -90,7 +90,7 @@ public class ObjectValidationResource {
 		try {
 			checkContentType();
 			Diagnostic emfDiagnostic = Diagnostician.INSTANCE.validate(eObject);			
-			org.eclipse.fennec.model.atlas.diagnostic.model.diagnostic.Diagnostic diagnostic = getDiagnostics(emfDiagnostic);
+			org.eclipse.fennec.model.atlas.rest.model.Diagnostic diagnostic = getDiagnostics(emfDiagnostic);
 			return Response.status(Response.Status.OK).entity(diagnostic).header("Content-Type", mediaType).build();
 
 		} catch (WebApplicationException e) {
@@ -101,8 +101,8 @@ public class ObjectValidationResource {
 		}
 	}
 
-	private org.eclipse.fennec.model.atlas.diagnostic.model.diagnostic.Diagnostic getDiagnostics(Diagnostic emfDiagnostic) {
-		org.eclipse.fennec.model.atlas.diagnostic.model.diagnostic.Diagnostic diagnostic = DiagnosticFactory.eINSTANCE.createDiagnostic();
+	private org.eclipse.fennec.model.atlas.rest.model.Diagnostic getDiagnostics(Diagnostic emfDiagnostic) {
+		org.eclipse.fennec.model.atlas.rest.model.Diagnostic diagnostic = RestFactory.eINSTANCE.createDiagnostic();
 		diagnostic.setType(getDiagnosticType(emfDiagnostic.getSeverity()));
 		diagnostic.setMessage(emfDiagnostic.getMessage());
 		diagnostic.setSource(emfDiagnostic.getSource());

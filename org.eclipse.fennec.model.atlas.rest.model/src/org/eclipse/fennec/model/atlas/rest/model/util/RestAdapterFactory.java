@@ -99,6 +99,10 @@ public class RestAdapterFactory extends AdapterFactoryImpl {
 				return createScopeListResponseAdapter();
 			}
 			@Override
+			public Adapter caseDiagnostic(Diagnostic object) {
+				return createDiagnosticAdapter();
+			}
+			@Override
 			public Adapter defaultCase(EObject object) {
 				return createEObjectAdapter();
 			}
@@ -185,6 +189,20 @@ public class RestAdapterFactory extends AdapterFactoryImpl {
 	 * @generated
 	 */
 	public Adapter createScopeListResponseAdapter() {
+		return null;
+	}
+
+	/**
+	 * Creates a new adapter for an object of class '{@link org.eclipse.fennec.model.atlas.rest.model.Diagnostic <em>Diagnostic</em>}'.
+	 * <!-- begin-user-doc -->
+	 * This default implementation returns null so that we can easily ignore cases;
+	 * it's useful to ignore a case when inheritance will catch all the cases anyway.
+	 * <!-- end-user-doc -->
+	 * @return the new adapter.
+	 * @see org.eclipse.fennec.model.atlas.rest.model.Diagnostic
+	 * @generated
+	 */
+	public Adapter createDiagnosticAdapter() {
 		return null;
 	}
 

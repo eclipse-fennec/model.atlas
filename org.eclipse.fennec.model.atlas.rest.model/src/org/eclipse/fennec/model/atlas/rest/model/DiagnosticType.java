@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012 - 2026 Data In Motion and others.
+ * Copyright (c) 2012 - 2025 Data In Motion and others.
  * All rights reserved.
  * 
  * This program and the accompanying materials are made
@@ -11,7 +11,7 @@
  * Contributors:
  *     Data In Motion - initial API and implementation
  */
-package org.eclipse.fennec.model.atlas.diagnostic.model.diagnostic;
+package org.eclipse.fennec.model.atlas.rest.model;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -23,10 +23,10 @@ import org.osgi.annotation.versioning.ProviderType;
 
 /**
  * <!-- begin-user-doc -->
- * A representation of the literals of the enumeration '<em><b>Type</b></em>',
+ * A representation of the literals of the enumeration '<em><b>Diagnostic Type</b></em>',
  * and utility methods for working with them.
  * <!-- end-user-doc -->
- * @see org.eclipse.fennec.model.atlas.diagnostic.model.diagnostic.DiagnosticPackage#getDiagnosticType()
+ * @see org.eclipse.fennec.model.atlas.rest.model.RestPackage#getDiagnosticType()
  * @model
  * @generated
  */
@@ -138,7 +138,7 @@ public enum DiagnosticType implements Enumerator {
 	public static final int CANCEL_VALUE = 4;
 
 	/**
-	 * An array of all the '<em><b>Type</b></em>' enumerators.
+	 * An array of all the '<em><b>Diagnostic Type</b></em>' enumerators.
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
 	 * @generated
@@ -153,7 +153,7 @@ public enum DiagnosticType implements Enumerator {
 		};
 
 	/**
-	 * A public read-only list of all the '<em><b>Type</b></em>' enumerators.
+	 * A public read-only list of all the '<em><b>Diagnostic Type</b></em>' enumerators.
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
 	 * @generated
@@ -161,7 +161,7 @@ public enum DiagnosticType implements Enumerator {
 	public static final List<DiagnosticType> VALUES = Collections.unmodifiableList(Arrays.asList(VALUES_ARRAY));
 
 	/**
-	 * Returns the '<em><b>Type</b></em>' literal with the specified literal value.
+	 * Returns the '<em><b>Diagnostic Type</b></em>' literal with the specified literal value.
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
 	 * @param literal the literal.
@@ -179,7 +179,7 @@ public enum DiagnosticType implements Enumerator {
 	}
 
 	/**
-	 * Returns the '<em><b>Type</b></em>' literal with the specified name.
+	 * Returns the '<em><b>Diagnostic Type</b></em>' literal with the specified name.
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
 	 * @param name the name.
@@ -197,7 +197,7 @@ public enum DiagnosticType implements Enumerator {
 	}
 
 	/**
-	 * Returns the '<em><b>Type</b></em>' literal with the specified integer value.
+	 * Returns the '<em><b>Diagnostic Type</b></em>' literal with the specified integer value.
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
 	 * @param value the integer value.

@@ -32,4 +32,20 @@
         eType="ecore:EClass ../../org.eclipse.fennec.model.atlas.workflow/model/workflow-api.ecore#//Scope"
         containment="true"/>
   </eClassifiers>
+  <eClassifiers xsi:type="ecore:EClass" name="Diagnostic">
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="message" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="source" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="type" eType="#//DiagnosticType"/>
+    <eStructuralFeatures xsi:type="ecore:EReference" name="children" upperBound="-1"
+        eType="#//Diagnostic" containment="true"/>
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="exceptionMsg" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="data" upperBound="-1" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+  </eClassifiers>
+  <eClassifiers xsi:type="ecore:EEnum" name="DiagnosticType">
+    <eLiterals name="OK"/>
+    <eLiterals name="INFO" value="1"/>
+    <eLiterals name="WARNING" value="2"/>
+    <eLiterals name="ERROR" value="3"/>
+    <eLiterals name="CANCEL" value="4"/>
+  </eClassifiers>
 </ecore:EPackage>

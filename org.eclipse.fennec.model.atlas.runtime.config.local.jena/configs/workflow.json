@@ -29,7 +29,9 @@
         ],
         "workflow.transitions": [
             "draft:approved",
-            "approved:release"
+            "approved:release",
+            "release:draft",
+            "approved:draft"
         ],
         "delete.after.transition": true,
         "storageService.target": "(storage.type=file)",
