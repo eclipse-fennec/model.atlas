@@ -1,33 +1,31 @@
 -library: enableEMF
 
 -buildpath: \
-	jakarta.ws.rs-api;version='2.1.6',\
-	org.osgi.service.component.annotations,\
+	jakarta.ws.rs-api;version=latest,\
+	org.apache.felix.http.servlet-api;version=latest,\
+	org.osgi.util.promise;version=latest,\
+	org.osgi.service.component;version=latest,\
+	org.osgi.service.component.annotations;version=latest,\
+	org.osgi.service.cm;version=latest,\
+	org.osgi.service.jakartars;version=latest,\
+	org.osgi.service.http.whiteboard;version=latest,\
 	org.gecko.emf.util.annotations,\
-	org.osgi.service.cm,\
 	io.swagger.core.v3.swagger-core.jakarta;version=latest,\
 	io.swagger.core.v3.swagger-jaxrs2.jakarta;version=latest,\
-	io.swagger.core.v3.swagger-annotations,\
-	io.swagger.core.v3.swagger-integration.jakarta,\
-	io.swagger.core.v3.swagger-models.jakarta,\
-	com.fasterxml.jackson.core.jackson-core,\
-	com.fasterxml.jackson.core.jackson-databind,\
-	org.osgi.service.http.whiteboard,\
-	org.gecko.emf.json,\
-	org.gecko.emf.repository.api,\
-	org.gecko.emf.mongo.api,\
-	org.gecko.emf.util.documentation.generators.apis,\
-	org.eclipse.fennec.model.atlas.model.documentation.provider;version=latest,\
-	org.eclipse.fennec.model.atlas.mediatypes.api,\
-	org.eclipse.fennec.model.atlas.runtime,\
-	org.eclipse.fennec.model.atlas;version=latest,\
+	io.swagger.core.v3.swagger-annotations;version=latest,\
+	io.swagger.core.v3.swagger-integration.jakarta;version=latest,\
+	io.swagger.core.v3.swagger-models.jakarta;version=latest,\
+	com.fasterxml.jackson.core.jackson-core;version=latest,\
+	com.fasterxml.jackson.core.jackson-databind;version=latest,\
+	org.eclipse.fennec.m2x.ocl.api;version=latest,\
+	org.eclipse.fennec.m2x.ocl.model;version=latest,\
+	org.gecko.emf.json;version=latest,\
+	org.gecko.emf.util.documentation.generators.apis;version=latest,\
+	org.eclipse.fennec.model.atlas.model.documentation.provider;version=snapshot,\
+	org.eclipse.fennec.model.atlas.mediatypes.api;version=snapshot,\
+	org.eclipse.fennec.model.atlas.runtime;version=snapshot,\
+	org.eclipse.fennec.model.atlas;version=snapshot,\
 	org.eclipse.fennec.model.atlas.rest.model;version=snapshot,\
-	org.osgi.service.jakartars,\
-	org.apache.felix.http.servlet-api,\
-	org.osgi.service.component,\
 	org.eclipse.fennec.model.atlas.management;version=snapshot,\
-	org.osgi.util.promise,\
 	org.eclipse.fennec.model.atlas.workflow;version=snapshot,\
-	org.eclipse.fennec.model.atlas.schema.registry.api,\
-	org.eclipse.fennec.m2x.ocl.api,\
-	org.eclipse.fennec.m2x.ocl.model
+	org.eclipse.fennec.model.atlas.schema.registry.api;version=snapshot,\
