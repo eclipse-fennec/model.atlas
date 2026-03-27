@@ -14,6 +14,7 @@
 package org.eclipse.fennec.model.atlas.rest.tests;
 
 import static java.util.Objects.nonNull;
+import static org.eclipse.fennec.model.atlas.rest.tests.helper.MockTestHelper.UNASSIGNED_REGISTRY_NAME;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -36,6 +37,7 @@ import org.eclipse.fennec.model.atlas.workflow.ScopeServiceCollector;
 import org.gecko.emf.rest.annotations.RequireEMFMessageBodyReaderWriter;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.osgi.framework.BundleContext;
@@ -556,6 +558,110 @@ public class ObjectRegistryResourceTest {
         String responseContent = response.readEntity(String.class);
         assertNotNull(responseContent, "Should return content");
         assertTrue(responseContent.contains("objectId"), "Response should contain objectId");
+    }
+
+    // ========== Unassigned Registry Tests ==========
+
+    /**
+     * Tests that accessing a registry which exists globally but is NOT configured
+     * for the given scope returns an error. Currently the REST resource does not
+     * validate via {@code ScopeService#isValidRegistry(String)}, so this test is
+     * expected to FAIL until that check is added.
+     */
+    // TODO: Fix via ContainerRequestFilter that validates registry assignment per scope
+    @Disabled("Requires ContainerRequestFilter for scope-registry validation")
+    @Test
+    public void testListReleasedObjects_UnassignedRegistry() {
+        Response response = restClient.target(BASE_URL).path(TEST_SCOPE_NAME).path("registries")
+                .path(UNASSIGNED_REGISTRY_NAME).request("application/json").get();
+
+        assertEquals(400, response.getStatus(),
+                "Should return HTTP 400 Bad Request for a registry not assigned to the scope");
+    }
+
+    // TODO: Fix via ContainerRequestFilter that validates registry assignment per scope
+    @Disabled("Requires ContainerRequestFilter for scope-registry validation")
+    @Test
+    public void testListObjectsInStage_UnassignedRegistry() {
+        Response response = restClient.target(BASE_URL).path(TEST_SCOPE_NAME).path("registries")
+                .path(UNASSIGNED_REGISTRY_NAME).path("stages").path(TEST_STAGE_DRAFT).request("application/json").get();
+
+        assertEquals(400, response.getStatus(),
+                "Should return HTTP 400 Bad Request for a registry not assigned to the scope");
+    }
+
+    // TODO: Fix via ContainerRequestFilter that validates registry assignment per scope
+    @Disabled("Requires ContainerRequestFilter for scope-registry validation")
+    @Test
+    public void testCreateObject_UnassignedRegistry() throws Exception {
+        EPackage newObject = TestHelper.createTestEPackage("http://test.com/object/1.0", "TestObject", "test");
+        String xmiContent = TestHelper.serializeToXMI(newObject, resourceSet);
+
+        Response response = restClient.target(BASE_URL).path(TEST_SCOPE_NAME).path("registries")
+                .path(UNASSIGNED_REGISTRY_NAME).path("stages").path(TEST_STAGE_DRAFT).path("test-object-id")
+                .queryParam("name", "TestObject").queryParam("version", "1.0.0").request("application/xmi")
+                .post(Entity.entity(xmiContent, "application/xmi"));
+
+        assertEquals(400, response.getStatus(),
+                "Should return HTTP 400 Bad Request for a registry not assigned to the scope");
+    }
+
+    // TODO: Fix via ContainerRequestFilter that validates registry assignment per scope
+    @Disabled("Requires ContainerRequestFilter for scope-registry validation")
+    @Test
+    public void testGetObjectContent_UnassignedRegistry() {
+        Response response = restClient.target(BASE_URL).path(TEST_SCOPE_NAME).path("registries")
+                .path(UNASSIGNED_REGISTRY_NAME).path("stages").path(TEST_STAGE_DRAFT).path("content")
+                .queryParam("objectId", TEST_OBJECT_ID).request("application/json").get();
+
+        assertEquals(400, response.getStatus(),
+                "Should return HTTP 400 Bad Request for a registry not assigned to the scope");
+    }
+
+    // TODO: Fix via ContainerRequestFilter that validates registry assignment per scope
+    @Disabled("Requires ContainerRequestFilter for scope-registry validation")
+    @Test
+    public void testUpdateObjectContent_UnassignedRegistry() throws Exception {
+        EPackage updatedObject = TestHelper.createTestEPackage("http://test.com/object/1.0", "UpdatedObject", "test");
+        String xmiContent = TestHelper.serializeToXMI(updatedObject, resourceSet);
+
+        Response response = restClient.target(BASE_URL).path(TEST_SCOPE_NAME).path("registries")
+                .path(UNASSIGNED_REGISTRY_NAME).path("stages").path(TEST_STAGE_DRAFT).path("content")
+                .queryParam("objectId", TEST_OBJECT_ID).queryParam("version", "1.1.0").request("application/xmi")
+                .put(Entity.entity(xmiContent, "application/xmi"));
+
+        assertEquals(400, response.getStatus(),
+                "Should return HTTP 400 Bad Request for a registry not assigned to the scope");
+    }
+
+    // TODO: Fix via ContainerRequestFilter that validates registry assignment per scope
+    @Disabled("Requires ContainerRequestFilter for scope-registry validation")
+    @Test
+    public void testDeleteObject_UnassignedRegistry() {
+        Response response = restClient.target(BASE_URL).path(TEST_SCOPE_NAME).path("registries")
+                .path(UNASSIGNED_REGISTRY_NAME).path("stages").path(TEST_STAGE_DRAFT)
+                .queryParam("objectId", TEST_OBJECT_ID).request().delete();
+
+        assertEquals(400, response.getStatus(),
+                "Should return HTTP 400 Bad Request for a registry not assigned to the scope");
+    }
+
+    // TODO: Fix via ContainerRequestFilter that validates registry assignment per scope
+    @Disabled("Requires ContainerRequestFilter for scope-registry validation")
+    @Test
+    public void testTransitionObject_UnassignedRegistry() throws Exception {
+        StageTransitionRequest transition = RestFactory.eINSTANCE.createStageTransitionRequest();
+        transition.setObjectId(TEST_OBJECT_ID);
+        transition.setTargetStage(TEST_STAGE_APPROVED);
+
+        String xmiContent = TestHelper.serializeToXMI(transition, resourceSet);
+
+        Response response = restClient.target(BASE_URL).path(TEST_SCOPE_NAME).path("registries")
+                .path(UNASSIGNED_REGISTRY_NAME).path("stages").path(TEST_STAGE_DRAFT).path("actions").path("transition")
+                .request("application/xmi").post(Entity.entity(xmiContent, "application/xmi"));
+
+        assertEquals(400, response.getStatus(),
+                "Should return HTTP 400 Bad Request for a registry not assigned to the scope");
     }
 
     // ========== MediaType Query Parameter Tests ==========
