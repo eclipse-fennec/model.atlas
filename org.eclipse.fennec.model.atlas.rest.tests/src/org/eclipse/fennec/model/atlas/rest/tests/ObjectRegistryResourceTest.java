@@ -37,7 +37,6 @@ import org.eclipse.fennec.model.atlas.workflow.ScopeServiceCollector;
 import org.gecko.emf.rest.annotations.RequireEMFMessageBodyReaderWriter;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.osgi.framework.BundleContext;
@@ -564,12 +563,9 @@ public class ObjectRegistryResourceTest {
 
     /**
      * Tests that accessing a registry which exists globally but is NOT configured
-     * for the given scope returns an error. Currently the REST resource does not
-     * validate via {@code ScopeService#isValidRegistry(String)}, so this test is
-     * expected to FAIL until that check is added.
+     * for the given scope returns HTTP 400. Validated by the
+     * {@code ModelAtlasRequestFilter} via {@code ScopeService#isValidRegistry(String)}.
      */
-    // TODO: Fix via ContainerRequestFilter that validates registry assignment per scope
-    @Disabled("Requires ContainerRequestFilter for scope-registry validation")
     @Test
     public void testListReleasedObjects_UnassignedRegistry() {
         Response response = restClient.target(BASE_URL).path(TEST_SCOPE_NAME).path("registries")
@@ -579,8 +575,6 @@ public class ObjectRegistryResourceTest {
                 "Should return HTTP 400 Bad Request for a registry not assigned to the scope");
     }
 
-    // TODO: Fix via ContainerRequestFilter that validates registry assignment per scope
-    @Disabled("Requires ContainerRequestFilter for scope-registry validation")
     @Test
     public void testListObjectsInStage_UnassignedRegistry() {
         Response response = restClient.target(BASE_URL).path(TEST_SCOPE_NAME).path("registries")
@@ -590,8 +584,6 @@ public class ObjectRegistryResourceTest {
                 "Should return HTTP 400 Bad Request for a registry not assigned to the scope");
     }
 
-    // TODO: Fix via ContainerRequestFilter that validates registry assignment per scope
-    @Disabled("Requires ContainerRequestFilter for scope-registry validation")
     @Test
     public void testCreateObject_UnassignedRegistry() throws Exception {
         EPackage newObject = TestHelper.createTestEPackage("http://test.com/object/1.0", "TestObject", "test");
@@ -606,8 +598,6 @@ public class ObjectRegistryResourceTest {
                 "Should return HTTP 400 Bad Request for a registry not assigned to the scope");
     }
 
-    // TODO: Fix via ContainerRequestFilter that validates registry assignment per scope
-    @Disabled("Requires ContainerRequestFilter for scope-registry validation")
     @Test
     public void testGetObjectContent_UnassignedRegistry() {
         Response response = restClient.target(BASE_URL).path(TEST_SCOPE_NAME).path("registries")
@@ -618,8 +608,6 @@ public class ObjectRegistryResourceTest {
                 "Should return HTTP 400 Bad Request for a registry not assigned to the scope");
     }
 
-    // TODO: Fix via ContainerRequestFilter that validates registry assignment per scope
-    @Disabled("Requires ContainerRequestFilter for scope-registry validation")
     @Test
     public void testUpdateObjectContent_UnassignedRegistry() throws Exception {
         EPackage updatedObject = TestHelper.createTestEPackage("http://test.com/object/1.0", "UpdatedObject", "test");
@@ -634,8 +622,6 @@ public class ObjectRegistryResourceTest {
                 "Should return HTTP 400 Bad Request for a registry not assigned to the scope");
     }
 
-    // TODO: Fix via ContainerRequestFilter that validates registry assignment per scope
-    @Disabled("Requires ContainerRequestFilter for scope-registry validation")
     @Test
     public void testDeleteObject_UnassignedRegistry() {
         Response response = restClient.target(BASE_URL).path(TEST_SCOPE_NAME).path("registries")
@@ -646,8 +632,6 @@ public class ObjectRegistryResourceTest {
                 "Should return HTTP 400 Bad Request for a registry not assigned to the scope");
     }
 
-    // TODO: Fix via ContainerRequestFilter that validates registry assignment per scope
-    @Disabled("Requires ContainerRequestFilter for scope-registry validation")
     @Test
     public void testTransitionObject_UnassignedRegistry() throws Exception {
         StageTransitionRequest transition = RestFactory.eINSTANCE.createStageTransitionRequest();
