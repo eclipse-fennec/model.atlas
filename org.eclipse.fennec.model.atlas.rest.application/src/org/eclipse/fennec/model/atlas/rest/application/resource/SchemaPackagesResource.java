@@ -54,6 +54,7 @@ import jakarta.ws.rs.PathParam;
 import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.QueryParam;
 import jakarta.ws.rs.WebApplicationException;
+import jakarta.ws.rs.container.ContainerRequestContext;
 import jakarta.ws.rs.core.Context;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
@@ -81,7 +82,7 @@ public class SchemaPackagesResource {
     private ManagementFactory mgmtFactory;
 
     @Context
-    private jakarta.ws.rs.container.ContainerRequestContext requestContext;
+    private ContainerRequestContext requestContext;
 
     private static final String REGISTRY_NAME = "schema";
 
