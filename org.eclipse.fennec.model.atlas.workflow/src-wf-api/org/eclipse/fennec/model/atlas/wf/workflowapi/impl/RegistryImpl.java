@@ -43,6 +43,7 @@ import org.eclipse.fennec.model.atlas.wf.workflowapi.WorkflowApiPackage;
  * <ul>
  *   <li>{@link org.eclipse.fennec.model.atlas.wf.workflowapi.impl.RegistryImpl#getName <em>Name</em>}</li>
  *   <li>{@link org.eclipse.fennec.model.atlas.wf.workflowapi.impl.RegistryImpl#getDescription <em>Description</em>}</li>
+ *   <li>{@link org.eclipse.fennec.model.atlas.wf.workflowapi.impl.RegistryImpl#isSchemaRegistry <em>Schema Registry</em>}</li>
  *   <li>{@link org.eclipse.fennec.model.atlas.wf.workflowapi.impl.RegistryImpl#getStages <em>Stages</em>}</li>
  *   <li>{@link org.eclipse.fennec.model.atlas.wf.workflowapi.impl.RegistryImpl#getAllowedTransitions <em>Allowed Transitions</em>}</li>
  * </ul>
@@ -89,6 +90,26 @@ public class RegistryImpl extends MinimalEObjectImpl.Container implements Regist
 	 * @ordered
 	 */
 	protected String description = DESCRIPTION_EDEFAULT;
+
+	/**
+	 * The default value of the '{@link #isSchemaRegistry() <em>Schema Registry</em>}' attribute.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @see #isSchemaRegistry()
+	 * @generated
+	 * @ordered
+	 */
+	protected static final boolean SCHEMA_REGISTRY_EDEFAULT = false;
+
+	/**
+	 * The cached value of the '{@link #isSchemaRegistry() <em>Schema Registry</em>}' attribute.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @see #isSchemaRegistry()
+	 * @generated
+	 * @ordered
+	 */
+	protected boolean schemaRegistry = SCHEMA_REGISTRY_EDEFAULT;
 
 	/**
 	 * The cached value of the '{@link #getStages() <em>Stages</em>}' containment reference list.
@@ -175,6 +196,26 @@ public class RegistryImpl extends MinimalEObjectImpl.Container implements Regist
 	 * @generated
 	 */
 	@Override
+	public boolean isSchemaRegistry() {
+		return schemaRegistry;
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
+	public void setSchemaRegistry(boolean newSchemaRegistry) {
+		schemaRegistry = newSchemaRegistry;
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
 	public List<Stage> getStages() {
 		if (stages == null) {
 			stages = new BasicInternalEList<Stage>(Stage.class);
@@ -223,6 +264,8 @@ public class RegistryImpl extends MinimalEObjectImpl.Container implements Regist
 				return getName();
 			case WorkflowApiPackage.REGISTRY__DESCRIPTION:
 				return getDescription();
+			case WorkflowApiPackage.REGISTRY__SCHEMA_REGISTRY:
+				return isSchemaRegistry();
 			case WorkflowApiPackage.REGISTRY__STAGES:
 				return getStages();
 			case WorkflowApiPackage.REGISTRY__ALLOWED_TRANSITIONS:
@@ -245,6 +288,9 @@ public class RegistryImpl extends MinimalEObjectImpl.Container implements Regist
 				return;
 			case WorkflowApiPackage.REGISTRY__DESCRIPTION:
 				setDescription((String)newValue);
+				return;
+			case WorkflowApiPackage.REGISTRY__SCHEMA_REGISTRY:
+				setSchemaRegistry((Boolean)newValue);
 				return;
 			case WorkflowApiPackage.REGISTRY__STAGES:
 				getStages().clear();
@@ -272,6 +318,9 @@ public class RegistryImpl extends MinimalEObjectImpl.Container implements Regist
 			case WorkflowApiPackage.REGISTRY__DESCRIPTION:
 				setDescription(DESCRIPTION_EDEFAULT);
 				return;
+			case WorkflowApiPackage.REGISTRY__SCHEMA_REGISTRY:
+				setSchemaRegistry(SCHEMA_REGISTRY_EDEFAULT);
+				return;
 			case WorkflowApiPackage.REGISTRY__STAGES:
 				getStages().clear();
 				return;
@@ -294,6 +343,8 @@ public class RegistryImpl extends MinimalEObjectImpl.Container implements Regist
 				return NAME_EDEFAULT == null ? name != null : !NAME_EDEFAULT.equals(name);
 			case WorkflowApiPackage.REGISTRY__DESCRIPTION:
 				return DESCRIPTION_EDEFAULT == null ? description != null : !DESCRIPTION_EDEFAULT.equals(description);
+			case WorkflowApiPackage.REGISTRY__SCHEMA_REGISTRY:
+				return schemaRegistry != SCHEMA_REGISTRY_EDEFAULT;
 			case WorkflowApiPackage.REGISTRY__STAGES:
 				return stages != null && !stages.isEmpty();
 			case WorkflowApiPackage.REGISTRY__ALLOWED_TRANSITIONS:
@@ -316,6 +367,8 @@ public class RegistryImpl extends MinimalEObjectImpl.Container implements Regist
 		result.append(name);
 		result.append(", description: ");
 		result.append(description);
+		result.append(", schemaRegistry: ");
+		result.append(schemaRegistry);
 		result.append(')');
 		return result.toString();
 	}

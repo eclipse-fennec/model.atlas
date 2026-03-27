@@ -210,6 +210,7 @@
     <genClasses ecoreClass="workflow-api.ecore#//Registry">
       <genFeatures createChild="false" ecoreFeature="ecore:EAttribute workflow-api.ecore#//Registry/name"/>
       <genFeatures createChild="false" ecoreFeature="ecore:EAttribute workflow-api.ecore#//Registry/description"/>
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute workflow-api.ecore#//Registry/schemaRegistry"/>
       <genFeatures property="None" children="true" createChild="true" ecoreFeature="ecore:EReference workflow-api.ecore#//Registry/stages"/>
       <genFeatures property="None" children="true" createChild="true" ecoreFeature="ecore:EReference workflow-api.ecore#//Registry/allowedTransitions"/>
     </genClasses>
