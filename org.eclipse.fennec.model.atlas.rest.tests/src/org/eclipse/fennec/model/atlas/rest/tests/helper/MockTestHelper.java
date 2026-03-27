@@ -248,7 +248,7 @@ public class MockTestHelper {
          */
         @Override
         public boolean isValidRegistry(String registryName) {
-            return TEST_REGISTRY_NAME.equals(registryName);
+            return TEST_REGISTRY_NAME.equals(registryName) || "schema".equals(registryName);
         }
 
         /*

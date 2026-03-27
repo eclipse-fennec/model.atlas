@@ -43,7 +43,7 @@ import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.core.Response.Status;
 
 /**
- * 
+ *
  * @author ilenia
  * @since Feb 5, 2026
  */
