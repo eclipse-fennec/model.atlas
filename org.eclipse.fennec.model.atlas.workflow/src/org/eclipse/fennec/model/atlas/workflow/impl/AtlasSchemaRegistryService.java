@@ -47,7 +47,7 @@ import org.osgi.util.promise.Promise;
 property = {
 		"registry.name="+WorkflowConstants.ATLAS_SCHEMA_REGISTRY_NAME, 
 		"registry.description=Atlas Schema Registry, where all the system schemas are managed.",
-		"schema.registry=true"
+		"schema.registry:Boolean=true"
 		})
 public class AtlasSchemaRegistryService implements RegistryService<EPackage> {
 	

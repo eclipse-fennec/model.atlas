@@ -49,7 +49,7 @@ public class ScopeServiceImpl<T extends EObject> implements ScopeService<T> {
 
     private Scope scopeObject;
     
-    @Reference(target = "(registry.name=atlas-schema-registry)")
+    @Reference(target = "(registry.name="+ WorkflowConstants.ATLAS_SCHEMA_REGISTRY_NAME +")")
 	RegistryService<EPackage> atlasSchemaRegistryService;
     
 
