@@ -135,8 +135,7 @@ public class EObjectApicurioStorageService extends AbstractEObjectStorageService
         String scope = metadata.getScope();
         String registry = metadata.getRegistry();
         String stage = metadata.getStage();
-        deleteObject(scope, registry, stage, objectId);
-        return storeObject(scope, registry, stage, objectId, object, metadata);
+        return deleteObject(scope, registry, stage, objectId).then(s -> storeObject(scope, registry, stage, objectId, object, metadata));
     }
 
     /*
