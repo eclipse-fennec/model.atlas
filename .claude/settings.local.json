@@ -11,7 +11,13 @@
       "Bash(done)",
       "Read(//n/git/datainmotion/model-atlas-cloud/org.gecko.mac.governance.rest.tests/**)",
       "Read(//n/git/datainmotion/model-atlas-cloud/org.gecko.mac.golf.equipment.model/**)",
-      "Bash(cat:*)"
+      "Bash(cat:*)",
+      "WebFetch(domain:raw.githubusercontent.com)",
+      "WebFetch(domain:github.com)",
+      "Bash(find:*)",
+      "Bash(git merge:*)",
+      "Bash(curl:*)",
+      "WebSearch"
     ],
     "deny": [],
     "ask": []

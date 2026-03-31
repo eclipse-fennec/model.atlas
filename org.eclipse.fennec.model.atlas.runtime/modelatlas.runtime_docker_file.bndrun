@@ -1,0 +1,3 @@
+-include: modelatlas.runtime_docker.bndrun
+
+-runbundles.docker.file: org.eclipse.fennec.model.atlas.runtime.config.docker.file

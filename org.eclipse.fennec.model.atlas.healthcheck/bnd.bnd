@@ -1,0 +1,9 @@
+-library: enableEMF
+-workingset: atlas
+
+-buildpath: \
+	org.osgi.service.component.annotations,\
+	org.apache.felix.healthcheck.api,\
+	org.eclipse.fennec.model.atlas.mediatypes.api;version=latest,\
+	org.apache.felix.healthcheck.core,\
+	org.eclipse.fennec.model.atlas.workflow

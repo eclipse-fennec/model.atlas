@@ -14,7 +14,6 @@
 package org.eclipse.uml2.uml.internal.impl;
 
 import org.eclipse.emf.ecore.EClass;
-
 import org.eclipse.uml2.uml.DataStoreNode;
 import org.eclipse.uml2.uml.UMLPackage;
 

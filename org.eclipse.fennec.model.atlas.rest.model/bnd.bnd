@@ -1,13 +1,15 @@
--library: enable-emf
+-library: enableEMF
 
 -buildpath: \
 	org.osgi.annotation.versioning,\
-	org.osgi.annotation.bundle
+	org.osgi.annotation.bundle,\
+	org.eclipse.fennec.model.atlas.workflow;version=snapshot,\
+	org.eclipse.fennec.model.atlas.management;version=snapshot
 
 # Generate OSGi-compatible EMF code from genmodel
 -generate:\
 	model/rest-response.genmodel;\
-		generate=geckoEMF;\
+		generate=fennecEMF;\
 		genmodel=model/rest-response.genmodel;\
 		output=src
 

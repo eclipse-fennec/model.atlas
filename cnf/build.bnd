@@ -1,3 +1,4 @@
+-include: ${workspace}/gradle.properties
 Bundle-Developers: \
     jalbert; \
         email="j.albert@datainmotion.com"; \
@@ -34,18 +35,19 @@ Bundle-Developers: \
 -library: \
 	fennec,\
 	fennecTest,\
-	geckoEMF,\
+	fennecEMF,\
 	fennecQVT,\
 	geckoEMFUtil,\
 	geckoMessaging,\
 	geckoEMFRepository,\
-	jakartaREST
+	jakartaREST,\
+	geckoLibraries
 
 # Needed because we enabled library 'gecko-dimc'
 # Activate baselining
 github-project: model.atlas
 github-orga: eclipse-fennec
-dimcBaselining: true
+fennec-baselining: false
 base-version: 0.0.1
 maven-central: true
 
@@ -55,8 +57,8 @@ maven-central: true
 
 javac.source: 21
 javac.target: 21
-
--require-bnd "(version>=7.1.0)"
+required_bnd_version: ${versionmask;===;${bnd_version}}
+-require-bnd: "(version>=${required_bnd_version})"
 
 #-jpms-module-info:
 

@@ -17,9 +17,9 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.eclipse.emf.ecore.EPackage.Registry;
+import org.eclipse.fennec.emf.osgi.configurator.EPackageConfigurator;
+import org.eclipse.fennec.emf.osgi.constants.EMFNamespaces;
 import org.eclipse.uml2.uml.UMLPackage;
-import org.gecko.emf.osgi.configurator.EPackageConfigurator;
-import org.gecko.emf.osgi.constants.EMFNamespaces;
 
 /**
  * 
@@ -27,41 +27,47 @@ import org.gecko.emf.osgi.constants.EMFNamespaces;
  * @since Nov 13, 2025
  */
 public class UMLEPackageConfigurator implements EPackageConfigurator {
-	
-	private UMLPackage ePackage;
-	
-	protected UMLEPackageConfigurator(UMLPackage ePackage){
-		this.ePackage = ePackage;
-	}
 
-	/* 
-	 * (non-Javadoc)
-	 * @see org.gecko.emf.osgi.configurator.EPackageConfigurator#configureEPackage(org.eclipse.emf.ecore.EPackage.Registry)
-	 */
-	@Override
-	public void configureEPackage(Registry registry) {
-		registry.put(UMLPackage.eNS_URI, ePackage);
+    private UMLPackage ePackage;
 
-	}
+    protected UMLEPackageConfigurator(UMLPackage ePackage) {
+        this.ePackage = ePackage;
+    }
 
-	/* 
-	 * (non-Javadoc)
-	 * @see org.gecko.emf.osgi.configurator.EPackageConfigurator#unconfigureEPackage(org.eclipse.emf.ecore.EPackage.Registry)
-	 */
-	@Override
-	public void unconfigureEPackage(Registry registry) {
-		registry.remove(UMLPackage.eNS_URI);
+    /*
+     * (non-Javadoc)
+     * 
+     * @see
+     * org.gecko.emf.osgi.configurator.EPackageConfigurator#configureEPackage(org.
+     * eclipse.emf.ecore.EPackage.Registry)
+     */
+    @Override
+    public void configureEPackage(Registry registry) {
+        registry.put(UMLPackage.eNS_URI, ePackage);
 
-	}
-	
-	public Map<String, Object> getServiceProperties() {
-		Map<String, Object> properties = new HashMap<String, Object>();
-		properties.put(EMFNamespaces.EMF_MODEL_NAME, UMLPackage.eNAME);
-		properties.put(EMFNamespaces.EMF_MODEL_NSURI, UMLPackage.eNS_URI);
-		properties.put(EMFNamespaces.EMF_MODEL_REGISTRATION, EMFNamespaces.MODEL_REGISTRATION_PROVIDED);
-		properties.put(EMFNamespaces.EMF_MODEL_FILE_EXT, "uml");
-		properties.put(EMFNamespaces.EMF_MODEL_VERSION, "1.0");
-		return properties;
-	}
+    }
+
+    /*
+     * (non-Javadoc)
+     * 
+     * @see
+     * org.gecko.emf.osgi.configurator.EPackageConfigurator#unconfigureEPackage(org.
+     * eclipse.emf.ecore.EPackage.Registry)
+     */
+    @Override
+    public void unconfigureEPackage(Registry registry) {
+        registry.remove(UMLPackage.eNS_URI);
+
+    }
+
+    public Map<String, Object> getServiceProperties() {
+        Map<String, Object> properties = new HashMap<String, Object>();
+        properties.put(EMFNamespaces.EMF_NAME, UMLPackage.eNAME);
+        properties.put(EMFNamespaces.EMF_MODEL_NSURI, UMLPackage.eNS_URI);
+        properties.put(EMFNamespaces.EMF_MODEL_REGISTRATION, EMFNamespaces.MODEL_REGISTRATION_PROVIDED);
+        properties.put(EMFNamespaces.EMF_MODEL_FILE_EXT, "uml");
+        properties.put(EMFNamespaces.EMF_MODEL_VERSION, "1.0");
+        return properties;
+    }
 
 }

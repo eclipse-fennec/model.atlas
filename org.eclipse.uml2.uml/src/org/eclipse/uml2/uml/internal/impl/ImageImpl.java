@@ -16,12 +16,9 @@ package org.eclipse.uml2.uml.internal.impl;
 import java.util.Collection;
 
 import org.eclipse.emf.common.notify.Notification;
-
 import org.eclipse.emf.ecore.EAnnotation;
 import org.eclipse.emf.ecore.EClass;
-
 import org.eclipse.emf.ecore.impl.ENotificationImpl;
-
 import org.eclipse.uml2.uml.Comment;
 import org.eclipse.uml2.uml.Image;
 import org.eclipse.uml2.uml.UMLPackage;

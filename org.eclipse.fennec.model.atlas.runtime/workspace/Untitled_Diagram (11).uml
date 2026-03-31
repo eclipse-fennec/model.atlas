@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<uml:Model xmi:version="20131001" xmlns:xmi="http://www.omg.org/spec/XMI/20131001" xmlns:uml="http://www.eclipse.org/uml2/5.0.0/UML" xmi:id="4158259c-8a96-4daf-b789-db70029b8f5d_model" name="Untitled Diagram">
+  <packagedElement xmi:type="uml:Package" xmi:id="_ca6qcNpwEfCiHN98aJd3ew" name="testPackage" URI="http://civitas.org/test/package">
+    <packagedElement xmi:type="uml:Interface" xmi:id="d6b594b3-ed8a-46b7-8abb-094ce579f743" name="NeuesInterface">
+      <eAnnotations xmi:id="_ULntwNpwEfCiHN98aJd3ew" source="nodeLayout">
+        <details xmi:id="_ULntwdpwEfCiHN98aJd3ew" key="x" value="385"/>
+        <details xmi:id="_ULntwtpwEfCiHN98aJd3ew" key="y" value="172"/>
+      </eAnnotations>
+      <ownedOperation xmi:id="bcd4e02b-003e-4fa9-b04e-871a1fe7fdb9" name="operation" visibility="public">
+        <ownedParameter xmi:id="bcd4e02b-003e-4fa9-b04e-871a1fe7fdb9_return" direction="return">
+          <type xmi:type="uml:PrimitiveType" href="http://www.omg.org/spec/UML/20131001/PrimitiveTypes.xmi#String"/>
+        </ownedParameter>
+      </ownedOperation>
+    </packagedElement>
+    <packagedElement xmi:type="uml:Class" xmi:id="ab01fc1e-92d0-472c-8157-90a6445f249e" name="NeueKlasse">
+      <eAnnotations xmi:id="_BBpzQNpwEfCiHN98aJd3ew" source="nodeLayout">
+        <details xmi:id="_GTijoNpwEfCiHN98aJd3ew" key="x" value="225"/>
+        <details xmi:id="_IU5-cNpwEfCiHN98aJd3ew" key="y" value="63.25"/>
+      </eAnnotations>
+      <ownedAttribute xmi:id="06f06686-c7d0-49c5-9b82-44a842c28691" name="attribut" visibility="private">
+        <type xmi:type="uml:PrimitiveType" href="http://www.omg.org/spec/UML/20131001/PrimitiveTypes.xmi#String"/>
+      </ownedAttribute>
+      <ownedOperation xmi:id="abde7b7f-d36e-44d4-87ad-610301ff5d39" name="operation" visibility="public">
+        <ownedParameter xmi:id="abde7b7f-d36e-44d4-87ad-610301ff5d39_return" direction="return">
+          <type xmi:type="uml:PrimitiveType" href="http://www.omg.org/spec/UML/20131001/PrimitiveTypes.xmi#String"/>
+        </ownedParameter>
+      </ownedOperation>
+    </packagedElement>
+    <packagedElement xmi:type="uml:Association" xmi:id="3641215d-b7bb-4552-b712-af8b315ad1a6">
+      <memberEnd href=""/>
+      <memberEnd href=""/>
+    </packagedElement>
+  </packagedElement>
+</uml:Model>

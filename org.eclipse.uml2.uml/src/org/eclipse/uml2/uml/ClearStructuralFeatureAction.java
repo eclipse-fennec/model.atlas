@@ -15,6 +15,7 @@
 package org.eclipse.uml2.uml;
 
 import java.util.Map;
+
 import org.eclipse.emf.common.util.DiagnosticChain;
 
 /**

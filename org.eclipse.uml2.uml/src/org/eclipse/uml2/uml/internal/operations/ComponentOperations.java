@@ -14,25 +14,25 @@
 package org.eclipse.uml2.uml.internal.operations;
 
 import java.util.Map;
+
 import org.eclipse.emf.common.util.BasicDiagnostic;
 import org.eclipse.emf.common.util.Diagnostic;
 import org.eclipse.emf.common.util.DiagnosticChain;
 import org.eclipse.emf.common.util.EList;
-
 import org.eclipse.emf.common.util.UniqueEList;
 import org.eclipse.emf.ecore.InternalEObject;
 import org.eclipse.emf.ecore.util.InternalEList;
 import org.eclipse.uml2.common.util.UnionEObjectEList;
 import org.eclipse.uml2.uml.Classifier;
 import org.eclipse.uml2.uml.Component;
+import org.eclipse.uml2.uml.ComponentRealization;
 import org.eclipse.uml2.uml.EncapsulatedClassifier;
 import org.eclipse.uml2.uml.Enumeration;
-import org.eclipse.uml2.uml.ComponentRealization;
 import org.eclipse.uml2.uml.Interface;
-import org.eclipse.uml2.uml.PrimitiveType;
-import org.eclipse.uml2.uml.util.UMLValidator;
 import org.eclipse.uml2.uml.Port;
+import org.eclipse.uml2.uml.PrimitiveType;
 import org.eclipse.uml2.uml.UMLPackage;
+import org.eclipse.uml2.uml.util.UMLValidator;
 
 /**
  * <!-- begin-user-doc -->

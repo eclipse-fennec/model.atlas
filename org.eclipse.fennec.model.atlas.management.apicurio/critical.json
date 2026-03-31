@@ -1,0 +1,65 @@
+{
+    "overallResult": "CRITICAL",
+    "results": [
+        {
+            "name": "ApiCurio Storage",
+            "status": "CRITICAL",
+            "timeInMs": 0,
+            "finishedAt": "2026-02-13T12:25:04.450",
+            "tags": [
+                "atlas,readiness,apicurio"
+            ],
+            "messages": [
+                {
+                    "status": "CRITICAL",
+                    "message": "No ApiCurioStorage available"
+                }
+            ]
+        },
+        {
+            "name": "EMF Registry",
+            "status": "OK",
+            "timeInMs": 0,
+            "finishedAt": "2026-02-13T12:25:04.450",
+            "tags": [
+                "atlas,readiness"
+            ],
+            "messages": [
+                {
+                    "status": "OK",
+                    "message": "EMF Registry contains 12 EPackages"
+                }
+            ]
+        },
+        {
+            "name": "Liveness",
+            "status": "OK",
+            "timeInMs": 0,
+            "finishedAt": "2026-02-13T12:25:04.450",
+            "tags": [
+                "atlas,liveness"
+            ],
+            "messages": [
+                {
+                    "status": "OK",
+                    "message": "Model Atlas is alive"
+                }
+            ]
+        },
+        {
+            "name": "Media Types",
+            "status": "OK",
+            "timeInMs": 0,
+            "finishedAt": "2026-02-13T12:25:04.450",
+            "tags": [
+                "atlas,readiness"
+            ],
+            "messages": [
+                {
+                    "status": "OK",
+                    "message": "Supporting 18 media types"
+                }
+            ]
+        }
+    ]
+}

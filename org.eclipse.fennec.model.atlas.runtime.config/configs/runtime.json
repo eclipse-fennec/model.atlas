@@ -2,25 +2,10 @@
 	":configurator:resource-version": 1,
 	":configurator:symbolicname": "org.civitas.meter.runtime",
 	":configurator:version": "0.0.0",
-	"org.apache.felix.http~maHttp": {
-		"org.osgi.service.http.port": "8080",
-		"org.osgi.service.http.host": "0.0.0.0",
-		"org.apache.felix.http.context_path": "atlas/",
-		"org.apache.felix.http.name": "atlas",
-		"org.apache.felix.http.runtime.init.id": "maHttp"
-	},
-	"GeckoGraphQLWhiteboard~login": {
-		"osgi.http.whiteboard.target": "(id=maHttp)",
-		"osgi.http.whiteboard.servlet.pattern": "/graphql/*",
-		"osgi.graphql.response.header.Access-Control-Allow-Origin": "http://localhost:8005",
-		"osgi.graphql.response.header.Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
-		"osgi.graphql.response.header.Access-Control-Allow-Credentials": "true",
-		"osgi.graphql.response.header.Access-Control-Allow-Headers": "Origin, X-Requested-With, Content-Type, Accept, authorization"
-	},
-	"JakartarsServletWhiteboardRuntimeComponent~maRest": {
-		"jersey.jaxrs.whiteboard.name": "meterRest",
+	"JakartarsServletWhiteboardRuntimeComponent~atlasRest": {
+		"jersey.jaxrs.whiteboard.name": "atlasRest",
 		"jersey.context.path": "rest",
-		"osgi.http.whiteboard.target": "(id=maHttp)"
+		"osgi.http.whiteboard.target": "(id=atlasHttp)"
 	},
 	"ModelDocumentationProvider~docProvider" : {
 		"output.root.folder" : "./data/model/documentation/",
@@ -30,5 +15,27 @@
 		"output.html.folder" : "html",
 		"output.html.mermaid.folder" : "html_mermaid",
 		"output.package.hash.code.folder": "epackage_hash_code"
+	},
+	"org.apache.felix.hc.core.impl.servlet.HealthCheckExecutorServlet~atlas": {
+		"osgi.http.whiteboard.servlet.pattern": "/health/*",
+		"osgi.http.whiteboard.target": "(id=atlasHttp)",
+		"hc.tags": ["atlas"],
+		"format": "json",
+		"includeExecutionResult": true,
+		"httpStatus.ok": 200,
+		"httpStatus.warn": 200,
+		"httpStatus.critical": 503,
+		"httpStatus.temporarilyUnavailable": 503
+	},
+//	"org.apache.felix.hc.generalchecks.DsComponentsCheck" : {
+//	   "components.list" : [
+//	           "ScopeService"
+//	       ]
+//	   },
+	"org.apache.felix.hc.generalchecks.ServicesCheck" : {
+	   "services.list" : [
+               "(scope.name=civitas)",
+               "(scope.name=atlas)"
+           ]
 	}
 }

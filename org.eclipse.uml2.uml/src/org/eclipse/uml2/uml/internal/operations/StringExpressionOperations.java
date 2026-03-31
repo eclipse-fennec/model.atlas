@@ -19,10 +19,8 @@ import org.eclipse.emf.common.util.BasicDiagnostic;
 import org.eclipse.emf.common.util.Diagnostic;
 import org.eclipse.emf.common.util.DiagnosticChain;
 import org.eclipse.emf.common.util.EList;
-
 import org.eclipse.uml2.uml.StringExpression;
 import org.eclipse.uml2.uml.ValueSpecification;
-
 import org.eclipse.uml2.uml.util.UMLValidator;
 
 /**

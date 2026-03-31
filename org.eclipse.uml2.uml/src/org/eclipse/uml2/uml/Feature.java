@@ -16,7 +16,6 @@
 package org.eclipse.uml2.uml;
 
 import org.eclipse.emf.common.util.EList;
-
 import org.eclipse.emf.ecore.EClass;
 
 /**

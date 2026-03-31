@@ -20,7 +20,6 @@ import org.eclipse.uml2.uml.ConnectableElement;
 import org.eclipse.uml2.uml.Feature;
 import org.eclipse.uml2.uml.Property;
 import org.eclipse.uml2.uml.StructuredClassifier;
-
 import org.eclipse.uml2.uml.Type;
 
 /**

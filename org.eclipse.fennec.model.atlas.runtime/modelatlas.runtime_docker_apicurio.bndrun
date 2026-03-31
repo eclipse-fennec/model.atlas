@@ -1,0 +1,10 @@
+-include: modelatlas.runtime_docker.bndrun
+
+-runbundles.docker.apicurio: org.eclipse.fennec.model.atlas.runtime.config.docker.apicurio
+-runrequires: bnd.identity;id='org.eclipse.fennec.model.atlas.management.apicurio'
+
+-runbundles.apicurio: \
+	org.eclipse.fennec.model.atlas.management;version=snapshot;startlevel=2011,\
+	org.eclipse.fennec.model.atlas.management.apicurio;version=snapshot;startlevel=2012,\
+	org.eclipse.fennec.model.atlas.management.apicurio.model;version=snapshot;startlevel=2013
+	

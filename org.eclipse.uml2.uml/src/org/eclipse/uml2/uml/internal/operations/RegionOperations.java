@@ -20,7 +20,6 @@ import org.eclipse.emf.common.util.Diagnostic;
 import org.eclipse.emf.common.util.DiagnosticChain;
 import org.eclipse.emf.common.util.EList;
 import org.eclipse.emf.common.util.UniqueEList;
-
 import org.eclipse.uml2.uml.BehavioredClassifier;
 import org.eclipse.uml2.uml.Classifier;
 import org.eclipse.uml2.uml.ProtocolStateMachine;
@@ -33,7 +32,6 @@ import org.eclipse.uml2.uml.StateMachine;
 import org.eclipse.uml2.uml.Transition;
 import org.eclipse.uml2.uml.UMLPlugin;
 import org.eclipse.uml2.uml.Vertex;
-
 import org.eclipse.uml2.uml.util.UMLValidator;
 
 /**

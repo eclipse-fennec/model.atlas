@@ -48,283 +48,283 @@ import jakarta.ws.rs.ext.MessageBodyReader;
 import jakarta.ws.rs.ext.MessageBodyWriter;
 
 /**
- * Direct unit tests for the UMLMessageBodyReaderWriter.
- * Tests both reading (UML -> EPackage) and writing (EPackage -> UML)
- * without going through the full REST endpoint.
+ * Direct unit tests for the UMLMessageBodyReaderWriter. Tests both reading (UML
+ * -> EPackage) and writing (EPackage -> UML) without going through the full
+ * REST endpoint.
  */
 @ExtendWith(BundleContextExtension.class)
 @ExtendWith(ServiceExtension.class)
 public class UMLMessageBodyReaderWriterTest {
 
-	private static final String MEDIA_TYPE = "application/uml";
+    private static final String MEDIA_TYPE = "application/uml";
 
-	@SuppressWarnings("rawtypes")
-	@InjectService List<MessageBodyWriter> messageBodyWriter;
-	
-	MessageBodyReader<EPackage> reader;	
-	MessageBodyWriter<EPackage> writer;
+    @SuppressWarnings("rawtypes")
+    @InjectService
+    List<MessageBodyWriter> messageBodyWriter;
 
-	@SuppressWarnings({ "rawtypes", "unchecked" })
-	@BeforeEach
-	void setUp(
-			@InjectBundleContext BundleContext context
-	) throws Exception {
-		
-		Collection<ServiceReference<MessageBodyReader>> readerReferences = context.getServiceReferences(MessageBodyReader.class, "(component.name=UMLMessageBodyReaderWriter)");
-		assertThat(readerReferences).isNotEmpty();
-		
-		Collection<ServiceReference<MessageBodyWriter>> writerReferences = context.getServiceReferences(MessageBodyWriter.class, "(component.name=UMLMessageBodyReaderWriter)");
-		assertThat(writerReferences).isNotEmpty();
-		
-		
-		reader = (MessageBodyReader<EPackage>) context.getService(readerReferences.iterator().next());
-		writer = (MessageBodyWriter<EPackage>) context.getService(writerReferences.iterator().next());
-		
-		assertNotNull(reader, "UMLMessageBodyReaderWriter service should be available");
-		assertNotNull(writer, "UMLMessageBodyReaderWriter service should be available");
-	}
+    MessageBodyReader<EPackage> reader;
+    MessageBodyWriter<EPackage> writer;
 
-	// ============ WRITER TESTS ============
+    @SuppressWarnings({ "rawtypes", "unchecked" })
+    @BeforeEach
+    void setUp(@InjectBundleContext BundleContext context) throws Exception {
 
-	@Test
-	void testIsWriteable_WithEPackageAndUMLMediaType_ReturnsTrue() {
-		// Given: EPackage class and UML media type
-		MediaType mediaType = MediaType.valueOf(MEDIA_TYPE);
+        Collection<ServiceReference<MessageBodyReader>> readerReferences = context
+                .getServiceReferences(MessageBodyReader.class, "(component.name=UMLMessageBodyReaderWriter)");
+        assertThat(readerReferences).isNotEmpty();
 
-		// When: Check if writable
-		boolean writable = writer.isWriteable(EPackage.class, EPackage.class, null, mediaType);
+        Collection<ServiceReference<MessageBodyWriter>> writerReferences = context
+                .getServiceReferences(MessageBodyWriter.class, "(component.name=UMLMessageBodyReaderWriter)");
+        assertThat(writerReferences).isNotEmpty();
 
-		// Then: Should return true
-		assertTrue(writable, "Should be writable for EPackage with application/uml");
-	}
+        reader = (MessageBodyReader<EPackage>) context.getService(readerReferences.iterator().next());
+        writer = (MessageBodyWriter<EPackage>) context.getService(writerReferences.iterator().next());
 
-	@Test
-	void testIsWriteable_WithWrongMediaType_ReturnsFalse() {
-		// Given: EPackage class but wrong media type
-		MediaType mediaType = MediaType.APPLICATION_JSON_TYPE;
+        assertNotNull(reader, "UMLMessageBodyReaderWriter service should be available");
+        assertNotNull(writer, "UMLMessageBodyReaderWriter service should be available");
+    }
 
-		// When: Check if writable
-		boolean writable = writer.isWriteable(EPackage.class, EPackage.class, null, mediaType);
+    // ============ WRITER TESTS ============
 
-		// Then: Should return false
-		assertFalse(writable, "Should not be writable for EPackage with application/json");
-	}
+    @Test
+    void testIsWriteable_WithEPackageAndUMLMediaType_ReturnsTrue() {
+        // Given: EPackage class and UML media type
+        MediaType mediaType = MediaType.valueOf(MEDIA_TYPE);
 
-	@Test
-	void testIsWriteable_WithWrongClass_ReturnsFalse() {
-		// Given: Non-EPackage class
-		MediaType mediaType = MediaType.valueOf(MEDIA_TYPE);
+        // When: Check if writable
+        boolean writable = writer.isWriteable(EPackage.class, EPackage.class, null, mediaType);
 
-		// When: Check if writable
-		boolean writable = writer.isWriteable(String.class, String.class, null, mediaType);
+        // Then: Should return true
+        assertTrue(writable, "Should be writable for EPackage with application/uml");
+    }
 
-		// Then: Should return false
-		assertFalse(writable, "Should not be writable for non-EPackage class");
-	}
+    @Test
+    void testIsWriteable_WithWrongMediaType_ReturnsFalse() {
+        // Given: EPackage class but wrong media type
+        MediaType mediaType = MediaType.APPLICATION_JSON_TYPE;
 
-	@Test
-	void testWriteTo_SimpleEPackage_ProducesValidUMLPackage() throws Exception {
-		// Given: A simple EPackage
-		EPackage ePackage = createSimpleTestEPackage();
+        // When: Check if writable
+        boolean writable = writer.isWriteable(EPackage.class, EPackage.class, null, mediaType);
 
-		// When: Write to output stream
-		ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-		MediaType mediaType = MediaType.valueOf(MEDIA_TYPE);
+        // Then: Should return false
+        assertFalse(writable, "Should not be writable for EPackage with application/json");
+    }
 
-		writer.writeTo(ePackage, EPackage.class, EPackage.class, null, mediaType, null, outputStream);
+    @Test
+    void testIsWriteable_WithWrongClass_ReturnsFalse() {
+        // Given: Non-EPackage class
+        MediaType mediaType = MediaType.valueOf(MEDIA_TYPE);
 
-		// Then: Should produce valid UML XML
-		String umlXml = outputStream.toString("UTF-8");
-		assertNotNull(umlXml, "UML XML should not be null");
-		assertFalse(umlXml.isEmpty(), "UML XML should not be empty");
+        // When: Check if writable
+        boolean writable = writer.isWriteable(String.class, String.class, null, mediaType);
 
-		// Verify it contains expected UML elements
-		assertTrue(umlXml.contains("<?xml"), "UML should be valid XML");
-		assertTrue(umlXml.contains("uml:"), "UML should contain UML namespace");
-		assertTrue(umlXml.contains("packagedElement"), "UML should contain packaged elements");
-	}
+        // Then: Should return false
+        assertFalse(writable, "Should not be writable for non-EPackage class");
+    }
 
-	@Test
-	void testWriteTo_ComplexEPackage_WithAttributes_ProducesUML() throws Exception {
-		// Given: A complex EPackage with classes and attributes
-		EPackage ePackage = createComplexTestEPackage();
+    @Test
+    void testWriteTo_SimpleEPackage_ProducesValidUMLPackage() throws Exception {
+        // Given: A simple EPackage
+        EPackage ePackage = createSimpleTestEPackage();
 
-		// When: Write to output stream
-		ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-		MediaType mediaType = MediaType.valueOf(MEDIA_TYPE);
+        // When: Write to output stream
+        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+        MediaType mediaType = MediaType.valueOf(MEDIA_TYPE);
 
-		writer.writeTo(ePackage, EPackage.class, EPackage.class, null, mediaType, null, outputStream);
+        writer.writeTo(ePackage, EPackage.class, EPackage.class, null, mediaType, null, outputStream);
 
-		// Then: Should produce valid UML XML
-		String umlXml = outputStream.toString("UTF-8");
-		assertNotNull(umlXml, "UML XML should not be null");
-		assertFalse(umlXml.isEmpty(), "UML XML should not be empty");
+        // Then: Should produce valid UML XML
+        String umlXml = outputStream.toString("UTF-8");
+        assertNotNull(umlXml, "UML XML should not be null");
+        assertFalse(umlXml.isEmpty(), "UML XML should not be empty");
 
-		// Verify it contains the complex structure
-		assertTrue(umlXml.contains("<?xml"), "UML should be valid XML");
-		assertTrue(umlXml.contains("uml:"), "UML should contain UML namespace");
-	}
+        // Verify it contains expected UML elements
+        assertTrue(umlXml.contains("<?xml"), "UML should be valid XML");
+        assertTrue(umlXml.contains("uml:"), "UML should contain UML namespace");
+        assertTrue(umlXml.contains("packagedElement"), "UML should contain packaged elements");
+    }
 
-	// ============ READER TESTS ============
+    @Test
+    void testWriteTo_ComplexEPackage_WithAttributes_ProducesUML() throws Exception {
+        // Given: A complex EPackage with classes and attributes
+        EPackage ePackage = createComplexTestEPackage();
 
-	@Test
-	void testIsReadable_WithEPackageAndUMLMediaType_ReturnsTrue() {
-		// Given: EPackage class and UML media type
-		MediaType mediaType = MediaType.valueOf(MEDIA_TYPE);
+        // When: Write to output stream
+        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+        MediaType mediaType = MediaType.valueOf(MEDIA_TYPE);
 
-		// When: Check if readable
-		boolean readable = reader.isReadable(EPackage.class, EPackage.class, null, mediaType);
+        writer.writeTo(ePackage, EPackage.class, EPackage.class, null, mediaType, null, outputStream);
 
-		// Then: Should return true
-		assertTrue(readable, "Should be readable for EPackage with application/uml");
-	}
+        // Then: Should produce valid UML XML
+        String umlXml = outputStream.toString("UTF-8");
+        assertNotNull(umlXml, "UML XML should not be null");
+        assertFalse(umlXml.isEmpty(), "UML XML should not be empty");
 
-	@Test
-	void testIsReadable_WithWrongMediaType_ReturnsFalse() {
-		// Given: EPackage class but wrong media type
-		MediaType mediaType = MediaType.APPLICATION_JSON_TYPE;
+        // Verify it contains the complex structure
+        assertTrue(umlXml.contains("<?xml"), "UML should be valid XML");
+        assertTrue(umlXml.contains("uml:"), "UML should contain UML namespace");
+    }
 
-		// When: Check if readable
-		boolean readable = reader.isReadable(EPackage.class, EPackage.class, null, mediaType);
+    // ============ READER TESTS ============
 
-		// Then: Should return false
-		assertFalse(readable, "Should not be readable for EPackage with application/json");
-	}
+    @Test
+    void testIsReadable_WithEPackageAndUMLMediaType_ReturnsTrue() {
+        // Given: EPackage class and UML media type
+        MediaType mediaType = MediaType.valueOf(MEDIA_TYPE);
 
-	@Test
-	void testReadFrom_SimpleUML_ProducesEPackage() throws Exception {
-		// Given: A simple UML XML
-		String umlXml = createSimpleUML();
-		InputStream inputStream = new ByteArrayInputStream(umlXml.getBytes("UTF-8"));
-		MediaType mediaType = MediaType.valueOf(MEDIA_TYPE);
+        // When: Check if readable
+        boolean readable = reader.isReadable(EPackage.class, EPackage.class, null, mediaType);
 
-		// When: Read from input stream
-		EPackage ePackage = reader.readFrom(EPackage.class, EPackage.class, null, mediaType, null, inputStream);
+        // Then: Should return true
+        assertTrue(readable, "Should be readable for EPackage with application/uml");
+    }
 
-		// Then: Should produce valid EPackage
-		assertNotNull(ePackage, "EPackage should not be null");
-		assertNotNull(ePackage.getName(), "EPackage name should not be null");
-		assertFalse(ePackage.getEClassifiers().isEmpty(), "EPackage should have classifiers");
-	}
+    @Test
+    void testIsReadable_WithWrongMediaType_ReturnsFalse() {
+        // Given: EPackage class but wrong media type
+        MediaType mediaType = MediaType.APPLICATION_JSON_TYPE;
 
-	@Test
-	void testReadFrom_ComplexUMLFile_ProducesEPackage() throws Exception {
-		// Given: A complex UML from file
-		String umlXml = loadUMLFromFile("test-data/simple-model.uml");
-		InputStream inputStream = new ByteArrayInputStream(umlXml.getBytes("UTF-8"));
-		MediaType mediaType = MediaType.valueOf(MEDIA_TYPE);
+        // When: Check if readable
+        boolean readable = reader.isReadable(EPackage.class, EPackage.class, null, mediaType);
 
-		// When: Read from input stream
-		EPackage ePackage = reader.readFrom(EPackage.class, EPackage.class, null, mediaType, null, inputStream);
+        // Then: Should return false
+        assertFalse(readable, "Should not be readable for EPackage with application/json");
+    }
 
-		// Then: Should produce valid EPackage
-		assertNotNull(ePackage, "EPackage should not be null");
-		assertNotNull(ePackage.getName(), "EPackage should have a name");
-	}
+    @Test
+    void testReadFrom_SimpleUML_ProducesEPackage() throws Exception {
+        // Given: A simple UML XML
+        String umlXml = createSimpleUML();
+        InputStream inputStream = new ByteArrayInputStream(umlXml.getBytes("UTF-8"));
+        MediaType mediaType = MediaType.valueOf(MEDIA_TYPE);
 
-	// ============ ROUND-TRIP TESTS ============
+        // When: Read from input stream
+        EPackage ePackage = reader.readFrom(EPackage.class, EPackage.class, null, mediaType, null, inputStream);
 
-	@Test
-	void testRoundTrip_WriteAndRead_PreservesEPackageStructure() throws Exception {
-		// Given: An EPackage
-		EPackage originalPackage = createComplexTestEPackage();
-		String originalNsUri = originalPackage.getNsURI();
-		String originalName = originalPackage.getName();
-		int originalClassifierCount = originalPackage.getEClassifiers().size();
+        // Then: Should produce valid EPackage
+        assertNotNull(ePackage, "EPackage should not be null");
+        assertNotNull(ePackage.getName(), "EPackage name should not be null");
+        assertFalse(ePackage.getEClassifiers().isEmpty(), "EPackage should have classifiers");
+    }
 
-		// When: Write to UML and read back
-		ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-		MediaType mediaType = MediaType.valueOf(MEDIA_TYPE);
+    @Test
+    void testReadFrom_ComplexUMLFile_ProducesEPackage() throws Exception {
+        // Given: A complex UML from file
+        String umlXml = loadUMLFromFile("test-data/simple-model.uml");
+        InputStream inputStream = new ByteArrayInputStream(umlXml.getBytes("UTF-8"));
+        MediaType mediaType = MediaType.valueOf(MEDIA_TYPE);
 
-		writer.writeTo(originalPackage, EPackage.class, EPackage.class, null, mediaType, null, outputStream);
+        // When: Read from input stream
+        EPackage ePackage = reader.readFrom(EPackage.class, EPackage.class, null, mediaType, null, inputStream);
 
-		String umlXml = outputStream.toString("UTF-8");
-		InputStream inputStream = new ByteArrayInputStream(umlXml.getBytes("UTF-8"));
+        // Then: Should produce valid EPackage
+        assertNotNull(ePackage, "EPackage should not be null");
+        assertNotNull(ePackage.getName(), "EPackage should have a name");
+    }
 
-		EPackage roundTripPackage = reader.readFrom(EPackage.class, EPackage.class, null, mediaType, null, inputStream);
+    // ============ ROUND-TRIP TESTS ============
 
-		// Then: Should preserve the structure
-		assertNotNull(roundTripPackage, "Round-trip EPackage should not be null");
-		assertEquals(originalNsUri, roundTripPackage.getNsURI(), "NsURI should be preserved");
-		assertEquals(originalName, roundTripPackage.getName(), "Name should be preserved");
-		assertEquals(originalClassifierCount, roundTripPackage.getEClassifiers().size(),
-			"Number of classifiers should be preserved");
-	}
+    @Test
+    void testRoundTrip_WriteAndRead_PreservesEPackageStructure() throws Exception {
+        // Given: An EPackage
+        EPackage originalPackage = createComplexTestEPackage();
+        String originalNsUri = originalPackage.getNsURI();
+        String originalName = originalPackage.getName();
+        int originalClassifierCount = originalPackage.getEClassifiers().size();
 
-	// ============ HELPER METHODS ============
+        // When: Write to UML and read back
+        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+        MediaType mediaType = MediaType.valueOf(MEDIA_TYPE);
 
-	private EPackage createSimpleTestEPackage() {
-		EPackage ePackage = EcoreFactory.eINSTANCE.createEPackage();
-		ePackage.setNsURI("http://test.eclipse.fennec/simple/1.0");
-		ePackage.setName("SimpleTestPackage");
-		ePackage.setNsPrefix("simple");
+        writer.writeTo(originalPackage, EPackage.class, EPackage.class, null, mediaType, null, outputStream);
 
-		// Create a simple EClass
-		EClass personClass = EcoreFactory.eINSTANCE.createEClass();
-		personClass.setName("Person");
+        String umlXml = outputStream.toString("UTF-8");
+        InputStream inputStream = new ByteArrayInputStream(umlXml.getBytes("UTF-8"));
 
-		ePackage.getEClassifiers().add(personClass);
+        EPackage roundTripPackage = reader.readFrom(EPackage.class, EPackage.class, null, mediaType, null, inputStream);
 
-		return ePackage;
-	}
+        // Then: Should preserve the structure
+        assertNotNull(roundTripPackage, "Round-trip EPackage should not be null");
+        assertEquals(originalNsUri, roundTripPackage.getNsURI(), "NsURI should be preserved");
+        assertEquals(originalName, roundTripPackage.getName(), "Name should be preserved");
+        assertEquals(originalClassifierCount, roundTripPackage.getEClassifiers().size(),
+                "Number of classifiers should be preserved");
+    }
 
-	private EPackage createComplexTestEPackage() {
-		EPackage ePackage = EcoreFactory.eINSTANCE.createEPackage();
-		ePackage.setNsURI("http://test.eclipse.fennec/complex/1.0");
-		ePackage.setName("ComplexTestPackage");
-		ePackage.setNsPrefix("complex");
+    // ============ HELPER METHODS ============
 
-		// Create Company class
-		EClass companyClass = EcoreFactory.eINSTANCE.createEClass();
-		companyClass.setName("Company");
+    private EPackage createSimpleTestEPackage() {
+        EPackage ePackage = EcoreFactory.eINSTANCE.createEPackage();
+        ePackage.setNsURI("http://test.eclipse.fennec/simple/1.0");
+        ePackage.setName("SimpleTestPackage");
+        ePackage.setNsPrefix("simple");
 
-		var companyNameAttr = EcoreFactory.eINSTANCE.createEAttribute();
-		companyNameAttr.setName("name");
-		companyNameAttr.setEType(EcorePackage.Literals.ESTRING);
-		companyClass.getEStructuralFeatures().add(companyNameAttr);
+        // Create a simple EClass
+        EClass personClass = EcoreFactory.eINSTANCE.createEClass();
+        personClass.setName("Person");
 
-		// Create Employee class
-		EClass employeeClass = EcoreFactory.eINSTANCE.createEClass();
-		employeeClass.setName("Employee");
+        ePackage.getEClassifiers().add(personClass);
 
-		var employeeNameAttr = EcoreFactory.eINSTANCE.createEAttribute();
-		employeeNameAttr.setName("name");
-		employeeNameAttr.setEType(EcorePackage.Literals.ESTRING);
-		employeeClass.getEStructuralFeatures().add(employeeNameAttr);
+        return ePackage;
+    }
 
-		var employeeIdAttr = EcoreFactory.eINSTANCE.createEAttribute();
-		employeeIdAttr.setName("employeeId");
-		employeeIdAttr.setEType(EcorePackage.Literals.EINT);
-		employeeClass.getEStructuralFeatures().add(employeeIdAttr);
+    private EPackage createComplexTestEPackage() {
+        EPackage ePackage = EcoreFactory.eINSTANCE.createEPackage();
+        ePackage.setNsURI("http://test.eclipse.fennec/complex/1.0");
+        ePackage.setName("ComplexTestPackage");
+        ePackage.setNsPrefix("complex");
 
-		ePackage.getEClassifiers().add(companyClass);
-		ePackage.getEClassifiers().add(employeeClass);
+        // Create Company class
+        EClass companyClass = EcoreFactory.eINSTANCE.createEClass();
+        companyClass.setName("Company");
 
-		return ePackage;
-	}
+        var companyNameAttr = EcoreFactory.eINSTANCE.createEAttribute();
+        companyNameAttr.setName("name");
+        companyNameAttr.setEType(EcorePackage.Literals.ESTRING);
+        companyClass.getEStructuralFeatures().add(companyNameAttr);
 
-	private String createSimpleUML() {
-		return """
-		<?xml version="1.0" encoding="UTF-8"?>
-		<uml:Model xmi:version="2.0" xmlns:xmi="http://www.omg.org/XMI" xmlns:uml="http://www.eclipse.org/uml2/5.0.0/UML" xmi:id="_test_model" name="SimpleTestPackage">
-		  <packagedElement xmi:type="uml:Class" xmi:id="_person_class" name="Person">
-		    <ownedAttribute xmi:id="_person_name" name="name">
-		      <type xmi:type="uml:PrimitiveType" href="pathmap://UML_LIBRARIES/UMLPrimitiveTypes.library.uml#String"/>
-		    </ownedAttribute>
-		    <ownedAttribute xmi:id="_person_age" name="age">
-		      <type xmi:type="uml:PrimitiveType" href="pathmap://UML_LIBRARIES/UMLPrimitiveTypes.library.uml#Integer"/>
-		    </ownedAttribute>
-		  </packagedElement>
-		</uml:Model>
-		""";
-	}
+        // Create Employee class
+        EClass employeeClass = EcoreFactory.eINSTANCE.createEClass();
+        employeeClass.setName("Employee");
 
-	private String loadUMLFromFile(String filePath) throws IOException {
-		Path path = Paths.get(filePath);
-		if (!Files.exists(path)) {
-			// If file doesn't exist, return a simple UML
-			return createSimpleUML();
-		}
-		return Files.readString(path);
-	}
+        var employeeNameAttr = EcoreFactory.eINSTANCE.createEAttribute();
+        employeeNameAttr.setName("name");
+        employeeNameAttr.setEType(EcorePackage.Literals.ESTRING);
+        employeeClass.getEStructuralFeatures().add(employeeNameAttr);
+
+        var employeeIdAttr = EcoreFactory.eINSTANCE.createEAttribute();
+        employeeIdAttr.setName("employeeId");
+        employeeIdAttr.setEType(EcorePackage.Literals.EINT);
+        employeeClass.getEStructuralFeatures().add(employeeIdAttr);
+
+        ePackage.getEClassifiers().add(companyClass);
+        ePackage.getEClassifiers().add(employeeClass);
+
+        return ePackage;
+    }
+
+    private String createSimpleUML() {
+        return """
+                <?xml version="1.0" encoding="UTF-8"?>
+                <uml:Model xmi:version="2.0" xmlns:xmi="http://www.omg.org/XMI" xmlns:uml="http://www.eclipse.org/uml2/5.0.0/UML" xmi:id="_test_model" name="SimpleTestPackage">
+                  <packagedElement xmi:type="uml:Class" xmi:id="_person_class" name="Person">
+                    <ownedAttribute xmi:id="_person_name" name="name">
+                      <type xmi:type="uml:PrimitiveType" href="pathmap://UML_LIBRARIES/UMLPrimitiveTypes.library.uml#String"/>
+                    </ownedAttribute>
+                    <ownedAttribute xmi:id="_person_age" name="age">
+                      <type xmi:type="uml:PrimitiveType" href="pathmap://UML_LIBRARIES/UMLPrimitiveTypes.library.uml#Integer"/>
+                    </ownedAttribute>
+                  </packagedElement>
+                </uml:Model>
+                """;
+    }
+
+    private String loadUMLFromFile(String filePath) throws IOException {
+        Path path = Paths.get(filePath);
+        if (!Files.exists(path)) {
+            // If file doesn't exist, return a simple UML
+            return createSimpleUML();
+        }
+        return Files.readString(path);
+    }
 }

@@ -20,34 +20,41 @@ import org.osgi.framework.PrototypeServiceFactory;
 import org.osgi.framework.ServiceRegistration;
 
 /**
- * A {@link PrototypeServiceFactory} that provides a Copy of the provided {@link EObject}
+ * A {@link PrototypeServiceFactory} that provides a Copy of the provided
+ * {@link EObject}
+ * 
  * @author Juergen Albert
  * @since 13 Jan 2025
  */
 public class PrototypeEObjectServiceFactory<S extends EObject> implements PrototypeServiceFactory<S> {
 
-	
-	private S eObject;
+    private S eObject;
 
-	public PrototypeEObjectServiceFactory(S eObject) {
-		this.eObject = eObject;
-	}
-	
-	/* 
-	 * (non-Javadoc)
-	 * @see org.osgi.framework.PrototypeServiceFactory#getService(org.osgi.framework.Bundle, org.osgi.framework.ServiceRegistration)
-	 */
-	@Override
-	public S getService(Bundle bundle, ServiceRegistration<S> registration) {
-		return (S) EcoreUtil.copy(eObject);
-	}
+    public PrototypeEObjectServiceFactory(S eObject) {
+        this.eObject = eObject;
+    }
 
-	/* 
-	 * (non-Javadoc)
-	 * @see org.osgi.framework.PrototypeServiceFactory#ungetService(org.osgi.framework.Bundle, org.osgi.framework.ServiceRegistration, java.lang.Object)
-	 */
-	@Override
-	public void ungetService(Bundle bundle, ServiceRegistration<S> registration, S service) {
-	}
+    /*
+     * (non-Javadoc)
+     * 
+     * @see
+     * org.osgi.framework.PrototypeServiceFactory#getService(org.osgi.framework.
+     * Bundle, org.osgi.framework.ServiceRegistration)
+     */
+    @Override
+    public S getService(Bundle bundle, ServiceRegistration<S> registration) {
+        return (S) EcoreUtil.copy(eObject);
+    }
+
+    /*
+     * (non-Javadoc)
+     * 
+     * @see
+     * org.osgi.framework.PrototypeServiceFactory#ungetService(org.osgi.framework.
+     * Bundle, org.osgi.framework.ServiceRegistration, java.lang.Object)
+     */
+    @Override
+    public void ungetService(Bundle bundle, ServiceRegistration<S> registration, S service) {
+    }
 
 }

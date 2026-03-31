@@ -14,7 +14,6 @@
 package org.eclipse.uml2.uml.internal.operations;
 
 import org.eclipse.emf.common.util.EList;
-
 import org.eclipse.uml2.uml.EncapsulatedClassifier;
 import org.eclipse.uml2.uml.Port;
 

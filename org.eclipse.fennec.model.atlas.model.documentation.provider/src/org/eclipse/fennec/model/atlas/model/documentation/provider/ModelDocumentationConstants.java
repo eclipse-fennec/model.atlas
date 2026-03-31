@@ -19,17 +19,17 @@ package org.eclipse.fennec.model.atlas.model.documentation.provider;
  * @since Dec 16, 2022
  */
 public interface ModelDocumentationConstants {
-	
-	String PROPERTY_HTML_FILE = "html.file";
-	String PROPERTY_HTML_MERMAID_FILE = "html.mermaid.file";
-	String PROPERTY_HTML_PLANTUML_FILE = "html.plantuml.file";
-	String HTML_FILE_EXTENSION = ".html";
-	
-	String PROPERTY_MD_FILE = "md.file";
-	String PROPERTY_MD_MERMAID_FILE = "md.mermaid.file";
-	String PROPERTY_MD_PLANTUML_FILE = "md.plantuml.file";
-	String MD_FILE_EXTENSION = ".md";
-	
-	String PROPERTY_HASH_CODE_FILE = "package.hash.code.file";
-	String TXT_FILE_EXTENSION = ".txt";
+
+    String PROPERTY_HTML_FILE = "html.file";
+    String PROPERTY_HTML_MERMAID_FILE = "html.mermaid.file";
+    String PROPERTY_HTML_PLANTUML_FILE = "html.plantuml.file";
+    String HTML_FILE_EXTENSION = ".html";
+
+    String PROPERTY_MD_FILE = "md.file";
+    String PROPERTY_MD_MERMAID_FILE = "md.mermaid.file";
+    String PROPERTY_MD_PLANTUML_FILE = "md.plantuml.file";
+    String MD_FILE_EXTENSION = ".md";
+
+    String PROPERTY_HASH_CODE_FILE = "package.hash.code.file";
+    String TXT_FILE_EXTENSION = ".txt";
 }

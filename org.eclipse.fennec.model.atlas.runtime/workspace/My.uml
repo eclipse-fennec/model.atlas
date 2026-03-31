@@ -1,6 +1,26 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<uml:Model xmi:version="20131001" xmlns:xmi="http://www.omg.org/spec/XMI/20131001" xmlns:uml="http://www.eclipse.org/uml2/5.0.0/UML" xmi:id="_d3tb4KqJEfCipqbqSKZbYg">
-  <packagedElement xmi:type="uml:Class" xmi:id="_mTbD8KqJEfCipqbqSKZbYg" name="Baum">
-    <ownedAttribute xmi:id="_uto3MKqJEfCipqbqSKZbYg" name="testAttribute"/>
+<uml:Model xmi:version="20131001" xmlns:xmi="http://www.omg.org/spec/XMI/20131001" xmlns:uml="http://www.eclipse.org/uml2/5.0.0/UML" xmi:id="4fe74f85-c895-42aa-8a5f-913055749c9e_model" name="Test Diagram">
+  <packagedElement xmi:type="uml:Package" xmi:id="5d34c4e6-e304-41e5-adc5-bb842e6e0879" name="test-diagram" URI="http://civitas.org/model/test-diagram">
+    <packagedElement xmi:type="uml:Class" xmi:id="28c24ad0-8a54-4059-b38e-d64727592980" name="NeueKlasse">
+      <ownedAttribute xmi:id="1ec89173-19a9-4c0a-aa32-be977d3ec74e" name="attribut" visibility="private">
+        <type xmi:type="uml:PrimitiveType" href="http://www.omg.org/spec/UML/20131001/PrimitiveTypes.xmi#String"/>
+      </ownedAttribute>
+      <ownedOperation xmi:id="9a83bdef-057a-4d30-bc12-c20332aadad1" name="operation" visibility="public">
+        <ownedParameter xmi:id="9a83bdef-057a-4d30-bc12-c20332aadad1_return" direction="return">
+          <type xmi:type="uml:PrimitiveType" href="http://www.omg.org/spec/UML/20131001/PrimitiveTypes.xmi#String"/>
+        </ownedParameter>
+      </ownedOperation>
+    </packagedElement>
+    <packagedElement xmi:type="uml:Interface" xmi:id="ff76ff12-e5ae-4cb9-84dd-433bb43711a2" name="NeuesInterface">
+      <ownedOperation xmi:id="c82644a5-3ddf-44b1-a13c-76744874ecfa" name="operation" visibility="public">
+        <ownedParameter xmi:id="c82644a5-3ddf-44b1-a13c-76744874ecfa_return" direction="return">
+          <type xmi:type="uml:PrimitiveType" href="http://www.omg.org/spec/UML/20131001/PrimitiveTypes.xmi#String"/>
+        </ownedParameter>
+      </ownedOperation>
+    </packagedElement>
+    <packagedElement xmi:type="uml:Association" xmi:id="d2642d85-a335-4f07-8553-2fea5c333d51">
+      <memberEnd href=""/>
+      <memberEnd href=""/>
+    </packagedElement>
   </packagedElement>
 </uml:Model>

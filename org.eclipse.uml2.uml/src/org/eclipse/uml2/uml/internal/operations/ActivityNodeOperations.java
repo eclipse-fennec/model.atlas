@@ -15,9 +15,8 @@ package org.eclipse.uml2.uml.internal.operations;
 
 import org.eclipse.uml2.uml.Activity;
 import org.eclipse.uml2.uml.ActivityNode;
-import org.eclipse.uml2.uml.StructuredActivityNode;
-
 import org.eclipse.uml2.uml.RedefinableElement;
+import org.eclipse.uml2.uml.StructuredActivityNode;
 
 /**
  * <!-- begin-user-doc -->

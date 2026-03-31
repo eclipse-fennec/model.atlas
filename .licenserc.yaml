@@ -30,6 +30,7 @@ header:
     - '**/*.jsonschema'	
     - '**/*.yaml'
     - '**/*.json'
+    - '**/*.bak'
     - '**/*.conf'
     - '**/*.ecore'
     - '**/*.genmodel'

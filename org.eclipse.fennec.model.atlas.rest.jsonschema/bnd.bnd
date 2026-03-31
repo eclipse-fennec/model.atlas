@@ -1,9 +1,11 @@
--library: enable-emf
+-library: enableEMF
 
 -buildpath: \
 	jakarta.ws.rs-api;version='2.1.6',\
 	org.osgi.service.component.annotations,\
 	org.gecko.emf.rest.jakartars;version=latest,\
-	org.eclipse.fennec.codec.constants,\
 	org.osgi.service.jakartars,\
-	org.osgi.service.component
+	org.osgi.service.component,\
+	org.eclipse.fennec.codec.constants,\
+	org.eclipse.fennec.codec.jsonschema,\
+	org.gecko.emf.osgi.component.minimal

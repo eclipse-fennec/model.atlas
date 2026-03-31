@@ -17,11 +17,9 @@ package org.eclipse.uml2.uml.internal.operations;
 import org.eclipse.emf.common.util.ECollections;
 import org.eclipse.emf.common.util.EList;
 import org.eclipse.emf.common.util.UniqueEList;
-
 import org.eclipse.emf.ecore.EClass;
 import org.eclipse.emf.ecore.EObject;
 import org.eclipse.emf.ecore.EStructuralFeature;
-
 import org.eclipse.uml2.uml.AggregationKind;
 import org.eclipse.uml2.uml.Artifact;
 import org.eclipse.uml2.uml.Association;
@@ -35,7 +33,6 @@ import org.eclipse.uml2.uml.Signal;
 import org.eclipse.uml2.uml.StructuredClassifier;
 import org.eclipse.uml2.uml.Type;
 import org.eclipse.uml2.uml.UMLPackage;
-
 import org.eclipse.uml2.uml.util.UMLSwitch;
 
 /**

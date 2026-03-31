@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="[4] org.gecko.mac.governance.tests;1.0.0.202510221636-SNAPSHOT" tests="1" skipped="0" failures="0" errors="0" time="0.17" hostname="markdell" timestamp="2025-10-22T18:36:26">
+<properties>
+<property name="file.encoding" value="UTF-8"/>
+<property name="file.separator" value="/"/>
+<property name="java.class.path" value="/devel/git/model-atlas-cloud/cnf/cache/7.1.0/bnd-cache/biz.aQute.launcher/biz.aQute.launcher.pre.jar"/>
+<property name="java.class.version" value="65.0"/>
+<property name="java.home" value="/usr/lib/jvm/java-21-openjdk-amd64"/>
+<property name="java.io.tmpdir" value="/tmp"/>
+<property name="java.library.path" value="/usr/java/packages/lib:/usr/lib/x86_64-linux-gnu/jni:/lib/x86_64-linux-gnu:/usr/lib/x86_64-linux-gnu:/usr/lib/jni:/lib:/usr/lib"/>
+<property name="java.runtime.name" value="OpenJDK Runtime Environment"/>
+<property name="java.runtime.version" value="21.0.8+9-Ubuntu-0ubuntu124.04.1"/>
+<property name="java.specification.name" value="Java Platform API Specification"/>
+<property name="java.specification.vendor" value="Oracle Corporation"/>
+<property name="java.specification.version" value="21"/>
+<property name="java.vendor" value="Ubuntu"/>
+<property name="java.vendor.url" value="https://ubuntu.com/"/>
+<property name="java.vendor.url.bug" value="https://bugs.launchpad.net/ubuntu/+source/openjdk-21"/>
+<property name="java.version" value="21.0.8"/>
+<property name="java.version.date" value="2025-07-15"/>
+<property name="java.vm.compressedOopsMode" value="Zero based"/>
+<property name="java.vm.info" value="mixed mode, sharing"/>
+<property name="java.vm.name" value="OpenJDK 64-Bit Server VM"/>
+<property name="java.vm.specification.name" value="Java Virtual Machine Specification"/>
+<property name="java.vm.specification.vendor" value="Oracle Corporation"/>
+<property name="java.vm.specification.version" value="21"/>
+<property name="java.vm.vendor" value="Ubuntu"/>
+<property name="java.vm.version" value="21.0.8+9-Ubuntu-0ubuntu124.04.1"/>
+<property name="jdk.debug" value="release"/>
+<property name="launch.activation.eager" value="false"/>
+<property name="launch.activators" value=""/>
+<property name="launch.bundles" value="/home/mark/.m2/repository/org/junit/jupiter/junit-jupiter-api/5.10.3/junit-jupiter-api-5.10.3.jar,/home/mark/.m2/repository/org/junit/jupiter/junit-jupiter-params/5.10.3/junit-jupiter-params-5.10.3.jar,/home/mark/.m2/repository/org/junit/platform/junit-platform-commons/1.10.3/junit-platform-commons-1.10.3.jar,/devel/git/model-atlas-cloud/org.gecko.mac.governance.tests/generated/org.gecko.mac.governance.tests.jar,/home/mark/.m2/repository/org/opentest4j/opentest4j/1.3.0/opentest4j-1.3.0.jar,/home/mark/.m2/repository/org/osgi/org.osgi.test.common/1.3.0/org.osgi.test.common-1.3.0.jar,/home/mark/.m2/repository/org/osgi/org.osgi.test.junit5/1.3.0/org.osgi.test.junit5-1.3.0.jar,/home/mark/.m2/repository/org/junit/platform/junit-platform-engine/1.10.3/junit-platform-engine-1.10.3.jar,/home/mark/.m2/repository/org/assertj/assertj-core/3.26.3/assertj-core-3.26.3.jar,/home/mark/.m2/repository/org/apiguardian/apiguardian-api/1.1.2/apiguardian-api-1.1.2.jar,/home/mark/.m2/repository/org/junit/jupiter/junit-jupiter-engine/5.10.3/junit-jupiter-engine-5.10.3.jar,/home/mark/.m2/repository/org/mockito/mockito-core/4.11.0/mockito-core-4.11.0.jar,/home/mark/.m2/repository/org/mockito/mockito-junit-jupiter/4.11.0/mockito-junit-jupiter-4.11.0.jar,/home/mark/.m2/repository/net/bytebuddy/byte-buddy/1.14.18/byte-buddy-1.14.18.jar,/home/mark/.m2/repository/org/objenesis/objenesis/3.3/objenesis-3.3.jar,/home/mark/.m2/repository/org/osgi/org.osgi.test.assertj.framework/1.3.0/org.osgi.test.assertj.framework-1.3.0.jar,/home/mark/.m2/repository/net/bytebuddy/byte-buddy-agent/1.14.18/byte-buddy-agent-1.14.18.jar,/devel/git/model-atlas-cloud/cnf/cache/7.1.0/bnd-cache/biz.aQute.tester.junit-platform/biz.aQute.tester.junit-platform-7.1.0.jar,/home/mark/.m2/repository/org/junit/platform/junit-platform-launcher/1.10.3/junit-platform-launcher-1.10.3.jar"/>
+<property name="launch.embedded" value="false"/>
+<property name="launch.framework.restart" value="false"/>
+<property name="launch.framework.restart.count" value="0"/>
+<property name="launch.keep" value="false"/>
+<property name="launch.name" value="test.bndrun"/>
+<property name="launch.noreferences" value="false"/>
+<property name="launch.notificationPort" value="39051"/>
+<property name="launch.services" value="true"/>
+<property name="launch.system.packages" value="sun.misc,sun.reflect,org.jacoco.agent;version=&quot;0.8.13&quot;,org.osgi.dto;version=&quot;1.1.1&quot;,org.osgi.framework;version=&quot;1.10&quot;,org.osgi.framework.connect;uses:=&quot;org.osgi.framework,org.osgi.framework.launch&quot;;version=&quot;1.0&quot;,org.osgi.framework.dto;uses:=&quot;org.osgi.dto&quot;;version=&quot;1.8&quot;,org.osgi.framework.hooks.bundle;uses:=&quot;org.osgi.framework&quot;;version=&quot;1.1&quot;,org.osgi.framework.hooks.resolver;uses:=&quot;org.osgi.framework.wiring&quot;;version=&quot;1.0&quot;,org.osgi.framework.hooks.service;uses:=&quot;org.osgi.framework&quot;;version=&quot;1.1&quot;,org.osgi.framework.hooks.weaving;uses:=&quot;org.osgi.framework.wiring&quot;;version=&quot;1.1&quot;,org.osgi.framework.launch;uses:=&quot;org.osgi.framework&quot;;version=&quot;1.2&quot;,org.osgi.framework.namespace;uses:=&quot;org.osgi.resource&quot;;version=&quot;1.2&quot;,org.osgi.framework.startlevel;uses:=&quot;org.osgi.framework&quot;;version=&quot;1.0&quot;,org.osgi.framework.startlevel.dto;uses:=&quot;org.osgi.dto&quot;;version=&quot;1.0&quot;,org.osgi.framework.wiring;uses:=&quot;org.osgi.framework,org.osgi.resource&quot;;version=&quot;1.2&quot;,org.osgi.framework.wiring.dto;uses:=&quot;org.osgi.dto,org.osgi.resource.dto&quot;;version=&quot;1.3&quot;,org.osgi.resource;version=&quot;1.0.1&quot;,org.osgi.resource.dto;uses:=&quot;org.osgi.dto&quot;;version=&quot;1.0.1&quot;,org.osgi.service.condition;version=&quot;1.0&quot;,org.osgi.service.packageadmin;uses:=&quot;org.osgi.framework&quot;;version=&quot;1.2.1&quot;,org.osgi.service.resolver;uses:=&quot;org.osgi.resource&quot;;version=&quot;1.1.1&quot;,org.osgi.service.startlevel;uses:=&quot;org.osgi.framework&quot;;version=&quot;1.1.1&quot;,org.osgi.service.url;version=&quot;1.0.1&quot;,org.osgi.util.tracker;uses:=&quot;org.osgi.framework&quot;;version=&quot;1.5.3&quot;"/>
+<property name="launch.timeout" value="0"/>
+<property name="launch.trace" value="false"/>
+<property name="launcher.properties" value="/devel/git/model-atlas-cloud/org.gecko.mac.governance.tests/generated/launch2192194817221960424.properties"/>
+<property name="launcher.runpath" value="/home/mark/.m2/repository/org/jacoco/org.jacoco.agent/0.8.13/org.jacoco.agent-0.8.13.jar,/home/mark/.m2/repository/org/jacoco/org.jacoco.agent/0.8.13/org.jacoco.agent-0.8.13-runtime.jar,/home/mark/.m2/repository/org/apache/felix/org.apache.felix.framework/7.0.5/+org.apache.felix.framework-7.0.5.jar,/devel/git/model-atlas-cloud/cnf/cache/7.1.0/bnd-cache/biz.aQute.launcher/biz.aQute.launcher-7.1.0.jar"/>
+<property name="line.separator" value="
+"/>
+<property name="native.encoding" value="UTF-8"/>
+<property name="os.arch" value="amd64"/>
+<property name="os.name" value="Linux"/>
+<property name="os.version" value="6.14.0-33-generic"/>
+<property name="path.separator" value=":"/>
+<property name="stderr.encoding" value="UTF-8"/>
+<property name="stdout.encoding" value="UTF-8"/>
+<property name="sun.arch.data.model" value="64"/>
+<property name="sun.boot.library.path" value="/usr/lib/jvm/java-21-openjdk-amd64/lib"/>
+<property name="sun.cpu.endian" value="little"/>
+<property name="sun.io.unicode.encoding" value="UnicodeLittle"/>
+<property name="sun.java.command" value="aQute.launcher.pre.EmbeddedLauncher"/>
+<property name="sun.java.launcher" value="SUN_STANDARD"/>
+<property name="sun.jnu.encoding" value="UTF-8"/>
+<property name="sun.management.compiler" value="HotSpot 64-Bit Tiered Compilers"/>
+<property name="tester.trace" value="true"/>
+<property name="user.country" value="DE"/>
+<property name="user.dir" value="/devel/git/model-atlas-cloud/org.gecko.mac.governance.tests"/>
+<property name="user.home" value="/home/mark"/>
+<property name="user.language" value="de"/>
+<property name="user.name" value="mark"/>
+<property name="user.timezone" value="Europe/Berlin"/>
+</properties>
+<testcase name="test()" classname="org.gecko.mac.governance.tests.ExampleTest" time="0.056">
+</testcase>
+</testsuite>

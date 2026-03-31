@@ -1,0 +1,107 @@
+# GitLab CI/CD Pipeline for Fennec Model Atlas
+# Mirrors the GitHub Actions workflows (license.yml and build.yml)
+
+stages:
+  - license
+  - build
+  - docker
+
+variables:
+  LC_ALL: en_US.UTF-8
+  GRADLE_OPTS: "-Dorg.gradle.parallel=true"
+  GRADLE_USER_HOME: "$CI_PROJECT_DIR/.gradle"
+
+# Cache Gradle dependencies between jobs
+.gradle-cache: &gradle-cache
+  cache:
+    key: "$CI_COMMIT_REF_SLUG"
+    paths:
+      - .gradle/wrapper
+      - .gradle/caches
+
+# License Check Job
+license-check:
+  stage: license
+  image:
+    name: apache/skywalking-eyes:latest
+    entrypoint: [""]
+  script:
+    - /bin/license-eye header check
+
+# Build Job
+build:
+  stage: build
+  image: eclipse-temurin:21-jdk
+  services:
+    - docker:dind
+  variables:
+    # Docker-in-Docker configuration for Testcontainers
+    DOCKER_HOST: tcp://docker:2375
+    DOCKER_TLS_CERTDIR: ""
+    # Testcontainers configuration
+    TESTCONTAINERS_HOST_OVERRIDE: docker
+    TESTCONTAINERS_RYUK_DISABLED: "true"
+  <<: *gradle-cache
+  before_script:
+    - chmod +x ./gradlew
+    - ./gradlew --no-daemon --version
+  script:
+    - ./gradlew build
+    - ./gradlew org.eclipse.fennec.model.atlas.runtime:resolve.modelatlas.runtime_base --info
+    - ./gradlew org.eclipse.fennec.model.atlas.runtime:export.modelatlas.runtime_docker_apicurio --info
+    - ./gradlew org.eclipse.fennec.model.atlas.runtime:export.modelatlas.runtime_docker_file --info
+  artifacts:
+    when: always
+    paths:
+      - "**/generated/distributions/executable/modelatlas.runtime_docker_apicurio.jar"
+      - "**/generated/distributions/executable/modelatlas.runtime_docker_file.jar"
+    reports:
+      junit:
+        - "**/test-reports/*/TEST-*.xml"
+    expire_in: 1 week
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+    - if: $CI_COMMIT_BRANCH
+
+# Docker Build Jobs (build only, no push — pushing is handled by GitHub Actions)
+docker-build-apicurio:
+  stage: docker
+  image: docker:latest
+  services:
+    - docker:dind
+  needs:
+    - job: build
+      artifacts: true
+  before_script:
+    - docker info
+    # Prepare Apicurio docker context
+    - mkdir -p docker/modelatlas_apicurio/content/runtime
+    - mv **/generated/distributions/executable/modelatlas.runtime_docker_apicurio.jar docker/modelatlas_apicurio/content/modelatlas.runtime_docker.jar || true
+    - cp -rf org.eclipse.fennec.model.atlas.runtime/runtime/* docker/modelatlas_apicurio/content/runtime/
+    - ls -lR docker/modelatlas_apicurio/content
+  script:
+    - docker build -t fennec/model.atlas:apicurio-${CI_COMMIT_REF_SLUG} docker/modelatlas_apicurio/
+  rules:
+    - if: $CI_COMMIT_BRANCH == "main"
+    - if: $CI_COMMIT_BRANCH == "snapshot"
+
+docker-build-file:
+  stage: docker
+  image: docker:latest
+  services:
+    - docker:dind
+  needs:
+    - job: build
+      artifacts: true
+  before_script:
+    - docker info
+    # Prepare File docker context
+    - mkdir -p docker/modelatlas_file/content/runtime
+    - mv **/generated/distributions/executable/modelatlas.runtime_docker_file.jar docker/modelatlas_file/content/modelatlas.runtime_docker.jar || true
+    - cp -rf org.eclipse.fennec.model.atlas.runtime/runtime/* docker/modelatlas_file/content/runtime/
+    - ls -lR docker/modelatlas_file/content
+  script:
+    - docker build -t fennec/model.atlas:file-${CI_COMMIT_REF_SLUG} docker/modelatlas_file/
+  rules:
+    - if: $CI_COMMIT_BRANCH == "main"
+    - if: $CI_COMMIT_BRANCH == "snapshot"

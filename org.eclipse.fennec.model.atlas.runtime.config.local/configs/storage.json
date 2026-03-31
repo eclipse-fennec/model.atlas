@@ -1,0 +1,14 @@
+{
+	":configurator:resource-version": 1,
+	":configurator:version": "1.0.0",
+	"ApicurioObjectStorage~apicurio": {
+		"base.url": "http://$[env:APICURIO_HOST;default=$[prop:APICURIO_HOST;default=localhost]]:$[env:APICURIO_PORT;default=$[prop:APICURIO_PORT;default=8081]]/apis/registry/v3/",
+		"storage.type": "apicurio",
+		"registry.target": "(registry=main)"
+	},
+	"FileObjectStorage~file": {
+		"workspace.folder": "$[env:STORAGE_ROOT;default=$[prop:STORAGE_ROOT;default=/tmp/mac]]",
+		"storage.type": "file",
+		"registry.target": "(registry=main)"
+	}
+}

@@ -18,25 +18,25 @@ import org.osgi.service.metatype.annotations.ObjectClassDefinition;
 
 @ObjectClassDefinition
 public @interface ModelDocumentationProviderConfig {
-	
-	@AttributeDefinition(description = "The root folder where the documentation folders are going to be placed")
-	String output_root_folder();
-	
-	@AttributeDefinition(description = "The output folder for md class overview documents")
-	String output_md_folder();
-	
-	@AttributeDefinition(description = "The output folder for md documents with mermaid class diagrams")
-	String output_md_mermaid_folder();
-	
-	@AttributeDefinition(description = "The output folder for md documents with plantuml class diagrams")
-	String output_md_plantuml_folder();
-	
-	@AttributeDefinition(description = "The output folder for html class overview documents")
-	String output_html_folder();
-	
-	@AttributeDefinition(description = "The output folder for html documents with mermaid class diagrams")
-	String output_html_mermaid_folder();	
-	
-	@AttributeDefinition(description = "The output folder to store the hash codes of epackages")
-	String output_package_hash_code_folder();	
+
+    @AttributeDefinition(description = "The root folder where the documentation folders are going to be placed")
+    String output_root_folder();
+
+    @AttributeDefinition(description = "The output folder for md class overview documents")
+    String output_md_folder();
+
+    @AttributeDefinition(description = "The output folder for md documents with mermaid class diagrams")
+    String output_md_mermaid_folder();
+
+    @AttributeDefinition(description = "The output folder for md documents with plantuml class diagrams")
+    String output_md_plantuml_folder();
+
+    @AttributeDefinition(description = "The output folder for html class overview documents")
+    String output_html_folder();
+
+    @AttributeDefinition(description = "The output folder for html documents with mermaid class diagrams")
+    String output_html_mermaid_folder();
+
+    @AttributeDefinition(description = "The output folder to store the hash codes of epackages")
+    String output_package_hash_code_folder();
 }
