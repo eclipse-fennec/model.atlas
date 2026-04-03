@@ -198,13 +198,13 @@ public class ObjectValidationResourceTest {
 	}
 
 	@Test
-	public void testValidate_DefaultsToJsonWhenNoMatchingAcceptHeader() throws Exception {
+	public void testValidate_RejectsUnsupportedAcceptHeader() throws Exception {
 		EPackage validPackage = TestHelper.createTestEPackage("http://test.com/def/1.0", "DefPackage", "def");
 		String xmiContent = TestHelper.serializeToXMI(validPackage, resourceSet);
 
 		Response response = restClient.target(BASE_URL).path("validate").request("text/plain")
 				.post(Entity.entity(xmiContent, "application/xmi"));
 
-		assertEquals(200, response.getStatus(), "Should return HTTP 200 OK when defaulting to JSON");
+		assertEquals(406, response.getStatus(), "Should return HTTP 406 Not Acceptable for unsupported Accept header");
 	}
 }
