@@ -39,7 +39,7 @@ public interface ClassGenConfig extends EObject {
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
 	 * <!-- begin-model-doc -->
-	 * Vollqualifizierter Name der Ziel-EClass (z.B. organization.Employee).
+	 * Vollqualifizierter Name der EClass, also die EClass-URI.
 	 * <!-- end-model-doc -->
 	 * @return the value of the '<em>Context Class</em>' attribute.
 	 * @see #setContextClass(String)

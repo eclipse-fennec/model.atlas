@@ -5,6 +5,12 @@ import java.util.Map;
 /**
  * Maps datagen generatorKey format (e.g. "faker.person.firstName")
  * to Datafaker expression format (e.g. "#{Name.first_name}").
+ *
+ * Resolution order:
+ * 1. Direct expression pass-through (starts with "#{")
+ * 2. Explicit map lookup by generatorKey
+ * 3. Lucene fuzzy search using featureName + EClass context
+ * 4. Convention-based fallback
  */
 public class GeneratorKeyMapper {
 
@@ -17,6 +23,7 @@ public class GeneratorKeyMapper {
 			Map.entry("faker.person.suffix", "#{Name.suffix}"),
 			Map.entry("faker.person.title", "#{Name.title}"),
 			Map.entry("faker.person.username", "#{Name.username}"),
+			Map.entry("faker.person.jobTitle", "#{Job.title}"),
 			// Address
 			Map.entry("faker.address.street", "#{Address.street_address}"),
 			Map.entry("faker.address.streetName", "#{Address.street_name}"),
@@ -157,6 +164,8 @@ public class GeneratorKeyMapper {
 			Map.entry("faker.computer.type", "#{Computer.type}")
 	);
 
+	private static final ExpressionIndex EXPRESSION_INDEX = new ExpressionIndex(KEY_TO_EXPRESSION);
+
 	/**
 	 * Maps a generatorKey to a Datafaker expression.
 	 * If the key starts with "#{", it is already an expression and returned as-is.
@@ -180,6 +189,29 @@ public class GeneratorKeyMapper {
 		}
 		// Convention-based fallback: faker.category.method -> #{Category.method}
 		return convertByConvention(generatorKey);
+	}
+
+	/**
+	 * Resolves a Datafaker expression using the feature name and EClass context.
+	 * Used as fallback when no explicit generatorKey is configured.
+	 *
+	 * Resolution order:
+	 * 1. Lucene fuzzy search with featureName + eClassName context
+	 * 2. Returns null if no match found (caller should handle)
+	 *
+	 * @param featureName the EMF attribute name (e.g. "jobTitle", "firstName")
+	 * @param eClassName the containing EClass name (e.g. "Person", "CompanyPerson")
+	 * @return the matched Datafaker expression, or null if no match
+	 */
+	public static String resolveByFeature(String featureName, String eClassName) {
+		return EXPRESSION_INDEX.findExpression(featureName, eClassName);
+	}
+
+	/**
+	 * Returns the expression index (for testing).
+	 */
+	static ExpressionIndex getExpressionIndex() {
+		return EXPRESSION_INDEX;
 	}
 
 	/**

@@ -3,7 +3,7 @@
 	":configurator:symbolicname": "org.civitas.meter.runtime",
 	":configurator:version": "0.0.0",
 	"org.apache.felix.http~atlasHttp": {
-		"org.osgi.service.http.port": "$[env:ATLAS_HTTP_PORT;default=8086]",
+		"org.osgi.service.http.port": "8086",
 		"org.osgi.service.http.host": "0.0.0.0",
 		"org.apache.felix.http.context_path": "atlas/",
 		"org.apache.felix.http.name": "atlas",

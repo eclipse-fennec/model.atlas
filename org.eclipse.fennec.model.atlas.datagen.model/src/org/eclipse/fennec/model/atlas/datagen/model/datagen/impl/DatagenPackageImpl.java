@@ -764,7 +764,7 @@ public class DatagenPackageImpl extends EPackageImpl implements DatagenPackage {
 		  (getClassGenConfig_ContextClass(),
 		   source,
 		   new String[] {
-			   "documentation", "Vollqualifizierter Name der Ziel-EClass (z.B. organization.Employee)."
+			   "documentation", "Vollqualifizierter Name der EClass, also die EClass-URI."
 		   });
 		addAnnotation
 		  (getClassGenConfig_InstanceCount(),

@@ -29,6 +29,10 @@ import org.junit.jupiter.api.Test;
 
 class DataGenServiceTest {
 
+	private static final String TEST_NS_URI = "http://test.example.com/testmodel/1.0";
+	private static final String PERSON_URI = TEST_NS_URI + "#//Person";
+	private static final String ADDRESS_URI = TEST_NS_URI + "#//Address";
+
 	private DataGenServiceImpl service;
 	private EPackage testPackage;
 	private EClass personClass;
@@ -48,10 +52,10 @@ class DataGenServiceTest {
 
 		Map<String, List<EObject>> result = service.generate(config, List.of(testPackage));
 
-		assertTrue(result.containsKey("Person"));
-		assertEquals(5, result.get("Person").size());
+		assertTrue(result.containsKey(PERSON_URI));
+		assertEquals(5, result.get(PERSON_URI).size());
 
-		EObject firstPerson = result.get("Person").get(0);
+		EObject firstPerson = result.get(PERSON_URI).get(0);
 		assertNotNull(firstPerson.eGet(personClass.getEStructuralFeature("firstName")));
 		assertNotNull(firstPerson.eGet(personClass.getEStructuralFeature("lastName")));
 	}
@@ -64,8 +68,8 @@ class DataGenServiceTest {
 		Map<String, List<EObject>> result1 = service.generate(config, List.of(testPackage));
 		Map<String, List<EObject>> result2 = service.generate(config, List.of(testPackage));
 
-		EObject person1 = result1.get("Person").get(0);
-		EObject person2 = result2.get("Person").get(0);
+		EObject person1 = result1.get(PERSON_URI).get(0);
+		EObject person2 = result2.get(PERSON_URI).get(0);
 
 		EAttribute firstNameAttr = (EAttribute) personClass.getEStructuralFeature("firstName");
 		assertEquals(person1.eGet(firstNameAttr), person2.eGet(firstNameAttr));
@@ -78,7 +82,7 @@ class DataGenServiceTest {
 		config.setLocale("de");
 
 		ClassGenConfig classConfig = DatagenFactory.eINSTANCE.createClassGenConfig();
-		classConfig.setContextClass("Person");
+		classConfig.setContextClass(PERSON_URI);
 		classConfig.setInstanceCount(3);
 
 		AttributeGenConfig attrConfig = DatagenFactory.eINSTANCE.createAttributeGenConfig();
@@ -91,7 +95,7 @@ class DataGenServiceTest {
 
 		Map<String, List<EObject>> result = service.generate(config, List.of(testPackage));
 
-		for (EObject person : result.get("Person")) {
+		for (EObject person : result.get(PERSON_URI)) {
 			assertEquals("FixedName", person.eGet(personClass.getEStructuralFeature("firstName")));
 		}
 	}
@@ -104,7 +108,7 @@ class DataGenServiceTest {
 		config.setSeed(42);
 
 		ClassGenConfig classConfig = DatagenFactory.eINSTANCE.createClassGenConfig();
-		classConfig.setContextClass("Person");
+		classConfig.setContextClass(PERSON_URI);
 		classConfig.setInstanceCount(1);
 
 		AttributeGenConfig attrConfig = DatagenFactory.eINSTANCE.createAttributeGenConfig();
@@ -116,7 +120,7 @@ class DataGenServiceTest {
 		config.getClassConfigs().add(classConfig);
 
 		Map<String, List<EObject>> result = service.generate(config, List.of(testPackage));
-		String value = (String) result.get("Person").get(0).eGet(personClass.getEStructuralFeature("firstName"));
+		String value = (String) result.get(PERSON_URI).get(0).eGet(personClass.getEStructuralFeature("firstName"));
 		assertNotNull(value);
 		assertTrue(value.contains(" "), "Template should produce a value with a space: " + value);
 	}
@@ -129,7 +133,7 @@ class DataGenServiceTest {
 		config.setSeed(123);
 
 		ClassGenConfig classConfig = DatagenFactory.eINSTANCE.createClassGenConfig();
-		classConfig.setContextClass("Person");
+		classConfig.setContextClass(PERSON_URI);
 		classConfig.setInstanceCount(10);
 
 		AttributeGenConfig attrConfig = DatagenFactory.eINSTANCE.createAttributeGenConfig();
@@ -142,7 +146,7 @@ class DataGenServiceTest {
 
 		Map<String, List<EObject>> result = service.generate(config, List.of(testPackage));
 		Set<Object> values = new HashSet<>();
-		for (EObject person : result.get("Person")) {
+		for (EObject person : result.get(PERSON_URI)) {
 			Object val = person.eGet(personClass.getEStructuralFeature("firstName"));
 			assertTrue(values.add(val), "Duplicate value found: " + val);
 		}
@@ -154,11 +158,11 @@ class DataGenServiceTest {
 
 		Map<String, List<EObject>> result = service.generate(config, List.of(testPackage));
 
-		assertEquals(3, result.get("Person").size());
-		assertEquals(5, result.get("Address").size());
+		assertEquals(3, result.get(PERSON_URI).size());
+		assertEquals(5, result.get(ADDRESS_URI).size());
 
 		EReference addressRef = (EReference) personClass.getEStructuralFeature("address");
-		for (EObject person : result.get("Person")) {
+		for (EObject person : result.get(PERSON_URI)) {
 			EObject addr = (EObject) person.eGet(addressRef);
 			assertNotNull(addr, "Person should have an address assigned");
 		}
@@ -171,7 +175,7 @@ class DataGenServiceTest {
 		Map<String, List<EObject>> result = service.generate(config, List.of(testPackage));
 
 		EReference addressRef = (EReference) personClass.getEStructuralFeature("address");
-		for (EObject person : result.get("Person")) {
+		for (EObject person : result.get(PERSON_URI)) {
 			Object addr = person.eGet(addressRef);
 			assertTrue(addr == null, "Person should not have an address with NONE strategy");
 		}
@@ -184,7 +188,7 @@ class DataGenServiceTest {
 
 		Map<String, List<EObject>> result = service.generate(config, List.of(testPackage));
 
-		assertFalse(result.containsKey("Person"));
+		assertFalse(result.containsKey(PERSON_URI));
 	}
 
 	@Test
@@ -193,7 +197,7 @@ class DataGenServiceTest {
 		config.setName("test");
 
 		ClassGenConfig classConfig = DatagenFactory.eINSTANCE.createClassGenConfig();
-		classConfig.setContextClass("NonExistentClass");
+		classConfig.setContextClass(TEST_NS_URI + "#//NonExistentClass");
 		classConfig.setInstanceCount(1);
 		config.getClassConfigs().add(classConfig);
 
@@ -218,7 +222,7 @@ class DataGenServiceTest {
 		config.setSeed(42);
 
 		ClassGenConfig classConfig = DatagenFactory.eINSTANCE.createClassGenConfig();
-		classConfig.setContextClass("Address");
+		classConfig.setContextClass(ADDRESS_URI);
 		classConfig.setInstanceCount(1);
 
 		AttributeGenConfig attrConfig = DatagenFactory.eINSTANCE.createAttributeGenConfig();
@@ -229,7 +233,7 @@ class DataGenServiceTest {
 		config.getClassConfigs().add(classConfig);
 
 		Map<String, List<EObject>> result = service.generate(config, List.of(testPackage));
-		String city = (String) result.get("Address").get(0).eGet(addressClass.getEStructuralFeature("city"));
+		String city = (String) result.get(ADDRESS_URI).get(0).eGet(addressClass.getEStructuralFeature("city"));
 		assertNotNull(city);
 		assertFalse(city.isBlank());
 	}
@@ -241,8 +245,8 @@ class DataGenServiceTest {
 		Map<String, List<EObject>> result = service.generate(config, List.of(testPackage));
 
 		EReference addressRef = (EReference) personClass.getEStructuralFeature("address");
-		List<EObject> addresses = result.get("Address");
-		List<EObject> persons = result.get("Person");
+		List<EObject> addresses = result.get(ADDRESS_URI);
+		List<EObject> persons = result.get(PERSON_URI);
 
 		// Round-robin should cycle through addresses: person0->addr0, person1->addr1, person2->addr2
 		for (int i = 0; i < persons.size(); i++) {
@@ -260,9 +264,9 @@ class DataGenServiceTest {
 		Map<String, List<EObject>> result = service.generate(config, List.of(testPackage));
 
 		EReference addressRef = (EReference) personClass.getEStructuralFeature("address");
-		EObject firstAddress = result.get("Address").get(0);
+		EObject firstAddress = result.get(ADDRESS_URI).get(0);
 
-		for (EObject person : result.get("Person")) {
+		for (EObject person : result.get(PERSON_URI)) {
 			EObject addr = (EObject) person.eGet(addressRef);
 			assertNotNull(addr, "Person should have an address with FIRST strategy");
 			assertEquals(firstAddress, addr, "FIRST strategy should always assign the first address");
@@ -278,7 +282,7 @@ class DataGenServiceTest {
 		config.setSeed(42);
 
 		ClassGenConfig addressConfig = DatagenFactory.eINSTANCE.createClassGenConfig();
-		addressConfig.setContextClass("Address");
+		addressConfig.setContextClass(ADDRESS_URI);
 		addressConfig.setInstanceCount(5);
 		AttributeGenConfig cityGen = DatagenFactory.eINSTANCE.createAttributeGenConfig();
 		cityGen.setFeatureName("city");
@@ -287,7 +291,7 @@ class DataGenServiceTest {
 		config.getClassConfigs().add(addressConfig);
 
 		ClassGenConfig personConfig = DatagenFactory.eINSTANCE.createClassGenConfig();
-		personConfig.setContextClass("Person");
+		personConfig.setContextClass(PERSON_URI);
 		personConfig.setInstanceCount(2);
 		AttributeGenConfig nameGen = DatagenFactory.eINSTANCE.createAttributeGenConfig();
 		nameGen.setFeatureName("firstName");
@@ -306,7 +310,7 @@ class DataGenServiceTest {
 		Map<String, List<EObject>> result = service.generate(config, List.of(testPackage));
 
 		EReference addressesRef = (EReference) personClass.getEStructuralFeature("addresses");
-		for (EObject person : result.get("Person")) {
+		for (EObject person : result.get(PERSON_URI)) {
 			List<EObject> addrs = (List<EObject>) person.eGet(addressesRef);
 			assertTrue(addrs.size() >= 2 && addrs.size() <= 3,
 					"Many-ref should have 2-3 addresses, got " + addrs.size());
@@ -321,7 +325,7 @@ class DataGenServiceTest {
 		config.setSeed(42);
 
 		ClassGenConfig addressConfig = DatagenFactory.eINSTANCE.createClassGenConfig();
-		addressConfig.setContextClass("Address");
+		addressConfig.setContextClass(ADDRESS_URI);
 		addressConfig.setInstanceCount(3);
 		AttributeGenConfig cityGen = DatagenFactory.eINSTANCE.createAttributeGenConfig();
 		cityGen.setFeatureName("city");
@@ -330,13 +334,13 @@ class DataGenServiceTest {
 		config.getClassConfigs().add(addressConfig);
 
 		ClassGenConfig personConfig = DatagenFactory.eINSTANCE.createClassGenConfig();
-		personConfig.setContextClass("Person");
+		personConfig.setContextClass(PERSON_URI);
 		personConfig.setInstanceCount(2);
 
 		ReferenceGenConfig refConfig = DatagenFactory.eINSTANCE.createReferenceGenConfig();
 		refConfig.setFeatureName("address");
 		refConfig.setStrategy(ReferenceStrategy.RANDOM);
-		refConfig.setTargetClassFilter("Address");
+		refConfig.setTargetClassFilter(ADDRESS_URI);
 		refConfig.setMinCount(1);
 		refConfig.setMaxCount(1);
 		personConfig.getReferenceGens().add(refConfig);
@@ -346,7 +350,7 @@ class DataGenServiceTest {
 		Map<String, List<EObject>> result = service.generate(config, List.of(testPackage));
 
 		EReference addressRef = (EReference) personClass.getEStructuralFeature("address");
-		for (EObject person : result.get("Person")) {
+		for (EObject person : result.get(PERSON_URI)) {
 			EObject addr = (EObject) person.eGet(addressRef);
 			assertNotNull(addr, "Should find address with matching filter");
 		}
@@ -360,18 +364,18 @@ class DataGenServiceTest {
 		config.setSeed(42);
 
 		ClassGenConfig addressConfig = DatagenFactory.eINSTANCE.createClassGenConfig();
-		addressConfig.setContextClass("Address");
+		addressConfig.setContextClass(ADDRESS_URI);
 		addressConfig.setInstanceCount(3);
 		config.getClassConfigs().add(addressConfig);
 
 		ClassGenConfig personConfig = DatagenFactory.eINSTANCE.createClassGenConfig();
-		personConfig.setContextClass("Person");
+		personConfig.setContextClass(PERSON_URI);
 		personConfig.setInstanceCount(2);
 
 		ReferenceGenConfig refConfig = DatagenFactory.eINSTANCE.createReferenceGenConfig();
 		refConfig.setFeatureName("address");
 		refConfig.setStrategy(ReferenceStrategy.RANDOM);
-		refConfig.setTargetClassFilter("NonExistent");
+		refConfig.setTargetClassFilter(TEST_NS_URI + "#//NonExistent");
 		refConfig.setMinCount(1);
 		refConfig.setMaxCount(1);
 		personConfig.getReferenceGens().add(refConfig);
@@ -381,7 +385,7 @@ class DataGenServiceTest {
 		Map<String, List<EObject>> result = service.generate(config, List.of(testPackage));
 
 		EReference addressRef = (EReference) personClass.getEStructuralFeature("address");
-		for (EObject person : result.get("Person")) {
+		for (EObject person : result.get(PERSON_URI)) {
 			Object addr = person.eGet(addressRef);
 			assertTrue(addr == null, "Non-matching filter should leave reference empty");
 		}
@@ -395,7 +399,7 @@ class DataGenServiceTest {
 		config.setSeed(123);
 
 		ClassGenConfig classConfig = DatagenFactory.eINSTANCE.createClassGenConfig();
-		classConfig.setContextClass("Person");
+		classConfig.setContextClass(PERSON_URI);
 		classConfig.setInstanceCount(20);
 
 		AttributeGenConfig attrConfig = DatagenFactory.eINSTANCE.createAttributeGenConfig();
@@ -409,7 +413,7 @@ class DataGenServiceTest {
 		Map<String, List<EObject>> result = service.generate(config, List.of(testPackage));
 
 		Set<Object> allValues = new HashSet<>();
-		for (EObject person : result.get("Person")) {
+		for (EObject person : result.get(PERSON_URI)) {
 			Object val = person.eGet(personClass.getEStructuralFeature("firstName"));
 			assertTrue(allValues.add(val), "Duplicate value across instances: " + val);
 		}
@@ -425,12 +429,12 @@ class DataGenServiceTest {
 		config.setSeed(42);
 
 		ClassGenConfig addressConfig = DatagenFactory.eINSTANCE.createClassGenConfig();
-		addressConfig.setContextClass("Address");
+		addressConfig.setContextClass(ADDRESS_URI);
 		addressConfig.setInstanceCount(4);
 		config.getClassConfigs().add(addressConfig);
 
 		ClassGenConfig personConfig = DatagenFactory.eINSTANCE.createClassGenConfig();
-		personConfig.setContextClass("Person");
+		personConfig.setContextClass(PERSON_URI);
 		personConfig.setInstanceCount(2);
 
 		ReferenceGenConfig refConfig = DatagenFactory.eINSTANCE.createReferenceGenConfig();
@@ -444,8 +448,8 @@ class DataGenServiceTest {
 
 		Map<String, List<EObject>> result = service.generate(config, List.of(testPackage));
 
-		List<EObject> addresses = result.get("Address");
-		List<EObject> persons = result.get("Person");
+		List<EObject> addresses = result.get(ADDRESS_URI);
+		List<EObject> persons = result.get(PERSON_URI);
 
 		// Person 0 should get addr[0], addr[1]; Person 1 should get addr[2], addr[3]
 		List<EObject> p0Addrs = (List<EObject>) persons.get(0).eGet(personClass.getEStructuralFeature("addresses"));
@@ -468,7 +472,7 @@ class DataGenServiceTest {
 		config.setSeed(42);
 
 		ClassGenConfig classConfig = DatagenFactory.eINSTANCE.createClassGenConfig();
-		classConfig.setContextClass("Person");
+		classConfig.setContextClass(PERSON_URI);
 		classConfig.setInstanceCount(5);
 
 		AttributeGenConfig firstNameGen = DatagenFactory.eINSTANCE.createAttributeGenConfig();
@@ -493,7 +497,7 @@ class DataGenServiceTest {
 
 		// Address class config
 		ClassGenConfig addressConfig = DatagenFactory.eINSTANCE.createClassGenConfig();
-		addressConfig.setContextClass("Address");
+		addressConfig.setContextClass(ADDRESS_URI);
 		addressConfig.setInstanceCount(5);
 
 		AttributeGenConfig cityGen = DatagenFactory.eINSTANCE.createAttributeGenConfig();
@@ -505,7 +509,7 @@ class DataGenServiceTest {
 
 		// Person class config with reference to Address
 		ClassGenConfig personConfig = DatagenFactory.eINSTANCE.createClassGenConfig();
-		personConfig.setContextClass("Person");
+		personConfig.setContextClass(PERSON_URI);
 		personConfig.setInstanceCount(3);
 
 		AttributeGenConfig nameGen = DatagenFactory.eINSTANCE.createAttributeGenConfig();

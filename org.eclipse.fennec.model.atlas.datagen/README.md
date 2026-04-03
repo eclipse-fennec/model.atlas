@@ -12,11 +12,13 @@ The DataGen Service takes a configuration model (`DataGenConfig`) that describes
 DataGenService (Interface)
   └── DataGenServiceImpl (@Component, scope=PROTOTYPE)
         └── GeneratorKeyMapper (internal)
+              └── ExpressionIndex (Lucene fuzzy search)
 ```
 
 - **`DataGenService`** — exported API interface
 - **`DataGenServiceImpl`** — prototype-scoped OSGi DS component
 - **`GeneratorKeyMapper`** — maps `faker.*` keys to Datafaker `#{...}` expressions
+- **`ExpressionIndex`** — in-memory Lucene index for fuzzy expression matching by feature name
 
 ## Usage
 
@@ -81,7 +83,7 @@ The configuration is defined by the `datagen.ecore` model in `org.eclipse.fennec
 | Field | Type | Default | Description |
 |-------|------|---------|-------------|
 | `featureName` | String | required | Name of the attribute in the EClass |
-| `generatorKey` | String | required | Generator key (e.g. `faker.person.firstName`) or Datafaker expression (e.g. `#{Name.first_name}`) |
+| `generatorKey` | String | optional | Generator key (e.g. `faker.person.firstName`) or Datafaker expression (e.g. `#{Name.first_name}`). If omitted, the feature name is used for automatic fuzzy matching (see below). |
 | `staticValue` | String | - | Fixed value (overrides generatorKey) |
 | `template` | String | - | Template with `#{key}` placeholders |
 | `unique` | boolean | `false` | Ensure unique values across all instances |
@@ -130,6 +132,40 @@ Direct Datafaker expressions are also supported as generator keys (e.g. `#{Addre
 
 Unknown keys are converted by convention: `faker.superhero.name` becomes `#{Superhero.name}`.
 
+## Expression Resolution
+
+When a `generatorKey` is provided, it is resolved through the explicit mapping or convention-based fallback as described above. When no `generatorKey` is set, the service uses **Lucene-based fuzzy matching** to automatically find the best Datafaker expression.
+
+### Resolution Order
+
+1. **`generatorKey` set** — direct map lookup, then convention-based fallback (`faker.category.method` → `#{Category.method}`)
+2. **`generatorKey` not set** — Lucene fuzzy search using the `featureName` and the containing EClass name as context
+3. **No match found** — error with a descriptive message
+
+### Automatic Fuzzy Matching
+
+The `ExpressionIndex` builds an in-memory Lucene index from all known generator key mappings at startup. When no `generatorKey` is configured for an attribute, the feature name is used as the primary search term and the EClass name provides disambiguation context.
+
+**How it works:**
+- The feature name (e.g. `jobTitle`) is split into terms (`job`, `title`) and matched via `FuzzyQuery` (MUST)
+- The EClass name (e.g. `CompanyEmployee`) is split into terms (`Company`, `Employee`) and used as boost (SHOULD)
+- The best-scoring Datafaker expression is returned
+
+**Examples:**
+
+| EClass | Feature Name | Resolved Expression | Why |
+|--------|-------------|-------------------|-----|
+| `Person` | `firstName` | `#{Name.first_name}` | "first" + "name" match directly |
+| `Person` | `jobTitle` | `#{Job.title}` | "job" + "title" match Job.title |
+| `ShippingAddress` | `city` | `#{Address.city}` | "city" matches, "Address" in class name boosts |
+| `AnimalProfile` | `name` | `#{Animal.name}` | "Animal" in class name disambiguates |
+| `Company` | `name` | `#{Company.name}` | "Company" matches company category |
+| `BookCatalogEntry` | `title` | `#{Book.title}` | "Book" in class name disambiguates |
+| `JobApplicant` | `title` | `#{Job.title}` | "Job" in class name disambiguates |
+| `SpaceExploration` | `planet` | `#{Space.planet}` | "Space" + "planet" match directly |
+
+**Limitations:** For genuinely ambiguous cases (e.g. feature `name` on EClass `CompanyPerson`, or `title` without a clear category signal in the class name), the fuzzy match may not pick the intended expression. In these cases, use an explicit `generatorKey` for deterministic results.
+
 ## Generation Process
 
 1. **Phase 1 — Instances & Attributes**: For each enabled `ClassGenConfig`, creates `instanceCount` EObject instances and fills attributes using Datafaker
@@ -141,6 +177,7 @@ For each attribute, the first matching rule applies:
 1. `staticValue` — fixed value, used as-is
 2. `template` — template with `#{key}` placeholders resolved via Datafaker
 3. `generatorKey` — mapped to Datafaker expression and evaluated
+4. **Fuzzy fallback** — feature name + EClass name resolved via Lucene index
 
 ## License
 

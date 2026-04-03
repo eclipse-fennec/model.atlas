@@ -34,6 +34,7 @@ class GeneratorKeyMapperTest {
 		assertEquals("#{Food.ingredient}", GeneratorKeyMapper.toExpression("faker.food.ingredient"));
 		// Job
 		assertEquals("#{Job.title}", GeneratorKeyMapper.toExpression("faker.job.title"));
+		assertEquals("#{Job.title}", GeneratorKeyMapper.toExpression("faker.person.jobTitle"));
 		// Country
 		assertEquals("#{Country.name}", GeneratorKeyMapper.toExpression("faker.country.name"));
 		// Space

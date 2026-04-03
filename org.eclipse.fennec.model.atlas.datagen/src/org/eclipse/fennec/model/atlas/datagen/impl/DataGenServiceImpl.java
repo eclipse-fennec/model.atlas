@@ -118,7 +118,7 @@ public class DataGenServiceImpl implements DataGenService {
 			Set<String> usedForFeature = attrConfig.isUnique()
 					? uniqueValues.computeIfAbsent(attrConfig.getFeatureName(), k -> new HashSet<>())
 					: null;
-			Object value = generateAttributeValue(eAttr, attrConfig, faker, index, usedForFeature);
+			Object value = generateAttributeValue(eAttr, attrConfig, eClass, faker, index, usedForFeature);
 			if (value != null) {
 				instance.eSet(eAttr, value);
 			}
@@ -126,7 +126,7 @@ public class DataGenServiceImpl implements DataGenService {
 	}
 
 	private Object generateAttributeValue(EAttribute eAttr, AttributeGenConfig attrConfig,
-			Faker faker, int index, Set<String> usedForFeature) {
+			EClass eClass, Faker faker, int index, Set<String> usedForFeature) {
 		// Static value takes precedence
 		if (attrConfig.getStaticValue() != null && !attrConfig.getStaticValue().isBlank()) {
 			return convertToType(attrConfig.getStaticValue(), eAttr.getEAttributeType());
@@ -139,7 +139,7 @@ public class DataGenServiceImpl implements DataGenService {
 		}
 
 		// Generator key -> Datafaker expression
-		String expression = GeneratorKeyMapper.toExpression(attrConfig.getGeneratorKey());
+		String expression = resolveExpression(attrConfig, eAttr, eClass);
 		int maxAttempts = attrConfig.isUnique() ? 1000 : 1;
 
 		for (int attempt = 0; attempt < maxAttempts; attempt++) {
@@ -150,6 +150,25 @@ public class DataGenServiceImpl implements DataGenService {
 		}
 		throw new IllegalStateException("Could not generate unique value for "
 				+ attrConfig.getFeatureName() + " after 1000 attempts");
+	}
+
+	/**
+	 * Resolves the Datafaker expression for an attribute config.
+	 * If a generatorKey is set, uses direct mapping. Otherwise falls back
+	 * to Lucene fuzzy search using the feature name and EClass context.
+	 */
+	private String resolveExpression(AttributeGenConfig attrConfig, EAttribute eAttr, EClass eClass) {
+		String generatorKey = attrConfig.getGeneratorKey();
+		if (generatorKey != null && !generatorKey.isBlank()) {
+			return GeneratorKeyMapper.toExpression(generatorKey);
+		}
+		// No generatorKey set — try Lucene fuzzy match using feature name + EClass context
+		String fuzzyMatch = GeneratorKeyMapper.resolveByFeature(eAttr.getName(), eClass.getName());
+		if (fuzzyMatch != null) {
+			return fuzzyMatch;
+		}
+		throw new IllegalArgumentException("No generatorKey configured and no fuzzy match found for feature '"
+				+ eAttr.getName() + "' on EClass '" + eClass.getName() + "'");
 	}
 
 	/**
@@ -288,18 +307,22 @@ public class DataGenServiceImpl implements DataGenService {
 	private Map<String, EClass> buildClassLookup(List<EPackage> packages) {
 		Map<String, EClass> lookup = new HashMap<>();
 		for (EPackage pkg : packages) {
-			for (EClassifier classifier : pkg.getEClassifiers()) {
-				if (classifier instanceof EClass eClass) {
-					// Register with simple name and with package.name
-					lookup.put(eClass.getName(), eClass);
-					lookup.put(pkg.getName() + "." + eClass.getName(), eClass);
-				}
-			}
-			// Recurse into subpackages
-			for (EPackage sub : pkg.getESubpackages()) {
-				buildClassLookup(List.of(sub)).forEach(lookup::put);
-			}
+			buildClassLookupRecursive(pkg, pkg, "", lookup);
 		}
 		return lookup;
+	}
+
+	private void buildClassLookupRecursive(EPackage rootPkg, EPackage currentPkg,
+			String pathPrefix, Map<String, EClass> lookup) {
+		for (EClassifier classifier : currentPkg.getEClassifiers()) {
+			if (classifier instanceof EClass eClass) {
+				String uri = rootPkg.getNsURI() + "#//" + pathPrefix + eClass.getName();
+				lookup.put(uri, eClass);
+			}
+		}
+		for (EPackage sub : currentPkg.getESubpackages()) {
+			buildClassLookupRecursive(rootPkg, sub,
+					pathPrefix + sub.getName() + "/", lookup);
+		}
 	}
 }

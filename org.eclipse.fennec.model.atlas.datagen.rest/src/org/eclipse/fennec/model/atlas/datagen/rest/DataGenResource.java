@@ -69,6 +69,12 @@ public class DataGenResource {
 	 *
 	 * @throws IllegalArgumentException if a referenced EClass cannot be found in any registered package
 	 */
+	/**
+	 * Resolves the EPackages needed for the given config by parsing the EClass URIs
+	 * from contextClass attributes. The URI format is {@code nsURI#//ClassName}.
+	 *
+	 * @throws IllegalArgumentException if a referenced EClass cannot be found
+	 */
 	private List<EPackage> resolvePackages(DataGenConfig config) {
 		EPackage.Registry registry = resourceSet.getPackageRegistry();
 		List<EPackage> packages = new ArrayList<>();
@@ -78,24 +84,29 @@ public class DataGenResource {
 			if (!classConfig.isEnabled()) {
 				continue;
 			}
-			String className = classConfig.getContextClass();
-			boolean found = false;
-
-			for (Object value : registry.values()) {
-				EPackage pkg = value instanceof EPackage ep ? ep : ((EPackage.Descriptor) value).getEPackage();
-				if (pkg == null) {
-					continue;
-				}
-				if (findClassInPackage(pkg, className) != null) {
-					if (!packages.contains(pkg)) {
-						packages.add(pkg);
-					}
-					found = true;
-					break;
-				}
+			String eClassUri = classConfig.getContextClass();
+			int fragmentIndex = eClassUri.indexOf('#');
+			if (fragmentIndex < 0) {
+				missingClasses.add(eClassUri);
+				continue;
 			}
-			if (!found) {
-				missingClasses.add(className);
+			String nsUri = eClassUri.substring(0, fragmentIndex);
+			String fragment = eClassUri.substring(fragmentIndex + 3); // skip #//
+
+			EPackage pkg = registry.getEPackage(nsUri);
+			if (pkg == null) {
+				missingClasses.add(eClassUri);
+				continue;
+			}
+
+			EClassifier classifier = findClassByFragment(pkg, fragment);
+			if (classifier == null) {
+				missingClasses.add(eClassUri);
+				continue;
+			}
+
+			if (!packages.contains(pkg)) {
+				packages.add(pkg);
 			}
 		}
 
@@ -107,22 +118,16 @@ public class DataGenResource {
 		return packages;
 	}
 
-	private EClassifier findClassInPackage(EPackage pkg, String className) {
-		// Check simple name
-		EClassifier classifier = pkg.getEClassifier(className);
-		if (classifier != null) {
-			return classifier;
+	private EClassifier findClassByFragment(EPackage pkg, String fragment) {
+		int slashIndex = fragment.indexOf('/');
+		if (slashIndex < 0) {
+			return pkg.getEClassifier(fragment);
 		}
-		// Check qualified name (package.ClassName)
-		String qualifiedName = pkg.getName() + "." + className;
-		if (qualifiedName.equals(className)) {
-			return null; // already checked
-		}
-		// Check subpackages
+		String subPkgName = fragment.substring(0, slashIndex);
+		String rest = fragment.substring(slashIndex + 1);
 		for (EPackage sub : pkg.getESubpackages()) {
-			classifier = findClassInPackage(sub, className);
-			if (classifier != null) {
-				return classifier;
+			if (sub.getName().equals(subPkgName)) {
+				return findClassByFragment(sub, rest);
 			}
 		}
 		return null;

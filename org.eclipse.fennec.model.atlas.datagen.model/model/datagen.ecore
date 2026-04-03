@@ -87,7 +87,7 @@
     <eStructuralFeatures xsi:type="ecore:EAttribute" name="contextClass" lowerBound="1"
         eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString">
       <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
-        <details key="documentation" value="Vollqualifizierter Name der Ziel-EClass (z.B. organization.Employee)."/>
+        <details key="documentation" value="Vollqualifizierter Name der EClass, also die EClass-URI."/>
       </eAnnotations>
     </eStructuralFeatures>
     <eStructuralFeatures xsi:type="ecore:EAttribute" name="instanceCount" lowerBound="1"
