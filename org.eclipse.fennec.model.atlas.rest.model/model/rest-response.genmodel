@@ -49,5 +49,8 @@
       <genFeatures createChild="false" ecoreFeature="ecore:EAttribute rest-response.ecore#//Diagnostic/exceptionMsg"/>
       <genFeatures createChild="false" ecoreFeature="ecore:EAttribute rest-response.ecore#//Diagnostic/data"/>
     </genClasses>
+    <genClasses ecoreClass="rest-response.ecore#//Container">
+      <genFeatures property="None" children="true" createChild="true" ecoreFeature="ecore:EReference rest-response.ecore#//Container/elements"/>
+    </genClasses>
   </genPackages>
 </genmodel:GenModel>

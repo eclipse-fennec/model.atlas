@@ -89,6 +89,13 @@ public class RestPackageImpl extends EPackageImpl implements RestPackage {
 	 * <!-- end-user-doc -->
 	 * @generated
 	 */
+	private EClass containerEClass = null;
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
 	private EEnum diagnosticTypeEEnum = null;
 
 	/**
@@ -431,6 +438,26 @@ public class RestPackageImpl extends EPackageImpl implements RestPackage {
 	 * @generated
 	 */
 	@Override
+	public EClass getContainer() {
+		return containerEClass;
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
+	public EReference getContainer_Elements() {
+		return (EReference)containerEClass.getEStructuralFeatures().get(0);
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
 	public EEnum getDiagnosticType() {
 		return diagnosticTypeEEnum;
 	}
@@ -496,6 +523,9 @@ public class RestPackageImpl extends EPackageImpl implements RestPackage {
 		createEReference(diagnosticEClass, DIAGNOSTIC__CHILDREN);
 		createEAttribute(diagnosticEClass, DIAGNOSTIC__EXCEPTION_MSG);
 		createEAttribute(diagnosticEClass, DIAGNOSTIC__DATA);
+
+		containerEClass = createEClass(CONTAINER);
+		createEReference(containerEClass, CONTAINER__ELEMENTS);
 
 		// Create enums
 		diagnosticTypeEEnum = createEEnum(DIAGNOSTIC_TYPE);
@@ -566,6 +596,9 @@ public class RestPackageImpl extends EPackageImpl implements RestPackage {
 		initEReference(getDiagnostic_Children(), this.getDiagnostic(), null, "children", null, 0, -1, Diagnostic.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, IS_COMPOSITE, !IS_RESOLVE_PROXIES, !IS_UNSETTABLE, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
 		initEAttribute(getDiagnostic_ExceptionMsg(), ecorePackage.getEString(), "exceptionMsg", null, 0, 1, Diagnostic.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_UNSETTABLE, !IS_ID, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
 		initEAttribute(getDiagnostic_Data(), ecorePackage.getEString(), "data", null, 0, -1, Diagnostic.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_UNSETTABLE, !IS_ID, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
+
+		initEClass(containerEClass, org.eclipse.fennec.model.atlas.rest.model.Container.class, "Container", !IS_ABSTRACT, !IS_INTERFACE, IS_GENERATED_INSTANCE_CLASS);
+		initEReference(getContainer_Elements(), ecorePackage.getEObject(), null, "elements", null, 0, -1, org.eclipse.fennec.model.atlas.rest.model.Container.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, IS_COMPOSITE, !IS_RESOLVE_PROXIES, !IS_UNSETTABLE, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
 
 		// Initialize enums and add enum literals
 		initEEnum(diagnosticTypeEEnum, DiagnosticType.class, "DiagnosticType");

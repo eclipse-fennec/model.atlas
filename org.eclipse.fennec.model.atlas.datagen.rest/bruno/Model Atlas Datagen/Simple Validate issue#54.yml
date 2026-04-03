@@ -1,0 +1,21 @@
+info:
+  name: Simple Validate issue#54
+  type: http
+  seq: 4
+
+http:
+  method: POST
+  url: "{{baseUrl}}/validate/"
+  headers:
+    - name: Accept
+      value: application/xmi
+  body:
+    type: xml
+    data: <?xml version="1.0" encoding="UTF-8"?> <dge:Person xmlns:xmi="http://www.omg.org/XMI" xmi:version="2.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:dge="https://dg.de/1.0" firstName="Markus" lastName="Hochstein" email="markus.hochstein@gmx.de" phone="abcddd"/>
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

@@ -74,6 +74,7 @@ public class RestFactoryImpl extends EFactoryImpl implements RestFactory {
 			case RestPackage.STAGE_TRANSITION_REQUEST: return createStageTransitionRequest();
 			case RestPackage.SCOPE_LIST_RESPONSE: return createScopeListResponse();
 			case RestPackage.DIAGNOSTIC: return createDiagnostic();
+			case RestPackage.CONTAINER: return createContainer();
 			default:
 				throw new IllegalArgumentException("The class '" + eClass.getName() + "' is not a valid classifier");
 		}
@@ -173,6 +174,17 @@ public class RestFactoryImpl extends EFactoryImpl implements RestFactory {
 	public Diagnostic createDiagnostic() {
 		DiagnosticImpl diagnostic = new DiagnosticImpl();
 		return diagnostic;
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
+	public org.eclipse.fennec.model.atlas.rest.model.Container createContainer() {
+		ContainerImpl container = new ContainerImpl();
+		return container;
 	}
 
 	/**

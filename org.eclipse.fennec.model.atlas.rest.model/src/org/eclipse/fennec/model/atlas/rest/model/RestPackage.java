@@ -432,6 +432,43 @@ public interface RestPackage extends org.eclipse.emf.ecore.EPackage {
 	int DIAGNOSTIC_OPERATION_COUNT = 0;
 
 	/**
+	 * The meta object id for the '{@link org.eclipse.fennec.model.atlas.rest.model.impl.ContainerImpl <em>Container</em>}' class.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @see org.eclipse.fennec.model.atlas.rest.model.impl.ContainerImpl
+	 * @see org.eclipse.fennec.model.atlas.rest.model.impl.RestPackageImpl#getContainer()
+	 * @generated
+	 */
+	int CONTAINER = 6;
+
+	/**
+	 * The feature id for the '<em><b>Elements</b></em>' containment reference list.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 * @ordered
+	 */
+	int CONTAINER__ELEMENTS = 0;
+
+	/**
+	 * The number of structural features of the '<em>Container</em>' class.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 * @ordered
+	 */
+	int CONTAINER_FEATURE_COUNT = 1;
+
+	/**
+	 * The number of operations of the '<em>Container</em>' class.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 * @ordered
+	 */
+	int CONTAINER_OPERATION_COUNT = 0;
+
+	/**
 	 * The meta object id for the '{@link org.eclipse.fennec.model.atlas.rest.model.DiagnosticType <em>Diagnostic Type</em>}' enum.
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
@@ -439,7 +476,7 @@ public interface RestPackage extends org.eclipse.emf.ecore.EPackage {
 	 * @see org.eclipse.fennec.model.atlas.rest.model.impl.RestPackageImpl#getDiagnosticType()
 	 * @generated
 	 */
-	int DIAGNOSTIC_TYPE = 6;
+	int DIAGNOSTIC_TYPE = 7;
 
 
 	/**
@@ -734,6 +771,27 @@ public interface RestPackage extends org.eclipse.emf.ecore.EPackage {
 	EAttribute getDiagnostic_Data();
 
 	/**
+	 * Returns the meta object for class '{@link org.eclipse.fennec.model.atlas.rest.model.Container <em>Container</em>}'.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @return the meta object for class '<em>Container</em>'.
+	 * @see org.eclipse.fennec.model.atlas.rest.model.Container
+	 * @generated
+	 */
+	EClass getContainer();
+
+	/**
+	 * Returns the meta object for the containment reference list '{@link org.eclipse.fennec.model.atlas.rest.model.Container#getElements <em>Elements</em>}'.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @return the meta object for the containment reference list '<em>Elements</em>'.
+	 * @see org.eclipse.fennec.model.atlas.rest.model.Container#getElements()
+	 * @see #getContainer()
+	 * @generated
+	 */
+	EReference getContainer_Elements();
+
+	/**
 	 * Returns the meta object for enum '{@link org.eclipse.fennec.model.atlas.rest.model.DiagnosticType <em>Diagnostic Type</em>}'.
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
@@ -993,6 +1051,24 @@ public interface RestPackage extends org.eclipse.emf.ecore.EPackage {
 		 * @generated
 		 */
 		EAttribute DIAGNOSTIC__DATA = eINSTANCE.getDiagnostic_Data();
+
+		/**
+		 * The meta object literal for the '{@link org.eclipse.fennec.model.atlas.rest.model.impl.ContainerImpl <em>Container</em>}' class.
+		 * <!-- begin-user-doc -->
+		 * <!-- end-user-doc -->
+		 * @see org.eclipse.fennec.model.atlas.rest.model.impl.ContainerImpl
+		 * @see org.eclipse.fennec.model.atlas.rest.model.impl.RestPackageImpl#getContainer()
+		 * @generated
+		 */
+		EClass CONTAINER = eINSTANCE.getContainer();
+
+		/**
+		 * The meta object literal for the '<em><b>Elements</b></em>' containment reference list feature.
+		 * <!-- begin-user-doc -->
+		 * <!-- end-user-doc -->
+		 * @generated
+		 */
+		EReference CONTAINER__ELEMENTS = eINSTANCE.getContainer_Elements();
 
 		/**
 		 * The meta object literal for the '{@link org.eclipse.fennec.model.atlas.rest.model.DiagnosticType <em>Diagnostic Type</em>}' enum.

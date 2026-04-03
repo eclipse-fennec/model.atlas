@@ -77,8 +77,8 @@ public class ObjectValidationResource {
 	}
 
 	@POST
-	@Consumes
-	@Produces
+	@Consumes("application/xmi")
+	@Produces({"application/xmi", MediaType.APPLICATION_JSON})
 	@Operation(summary = "Validates the object against its schema", description = "Validates the object against its schema. Returns the validation errors, or 200, if the validation succeded", responses = {
 			@ApiResponse(responseCode = "200", description = "Object validation was performed. A Response with the list of errors/warnings is returned."
 					+ " The list might be empty, if the valudation did not encounter any issue", 
