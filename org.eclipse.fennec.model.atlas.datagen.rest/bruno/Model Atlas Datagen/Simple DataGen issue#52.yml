@@ -9,7 +9,6 @@ http:
   headers:
     - name: Accept
       value: application/xmi
-      disabled: true
   body:
     type: xml
     data: |-

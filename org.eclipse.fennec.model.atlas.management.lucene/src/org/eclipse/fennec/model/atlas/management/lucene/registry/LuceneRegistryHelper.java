@@ -13,8 +13,10 @@
  */
 package org.eclipse.fennec.model.atlas.management.lucene.registry;
 
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.time.Instant;
 import java.util.ArrayList;
@@ -506,15 +508,32 @@ public class LuceneRegistryHelper extends AbstractRegistryHelper {
     public void close() throws Exception {
         super.close();
 
-        // Close Lucene-specific resources in proper order
+        // Close Lucene-specific resources in proper order.
+        // Each resource is closed independently to ensure best-effort cleanup,
+        // even if the underlying directory was already deleted (e.g. JUnit @TempDir
+        // cleanup running before OSGi service deactivation).
         if (searcherManager != null) {
-            searcherManager.close();
+            try {
+                searcherManager.close();
+            } catch (NoSuchFileException | FileNotFoundException e) {
+                LOGGER.fine("SearcherManager close skipped - index directory already removed");
+            }
         }
         if (indexWriter != null) {
-            indexWriter.close();
+            try {
+                if (indexWriter.isOpen()) {
+                    indexWriter.rollback();
+                }
+            } catch (NoSuchFileException | FileNotFoundException e) {
+                LOGGER.fine("IndexWriter rollback skipped - index directory already removed");
+            }
         }
         if (directory != null) {
-            directory.close();
+            try {
+                directory.close();
+            } catch (NoSuchFileException | FileNotFoundException e) {
+                LOGGER.fine("Directory close skipped - index directory already removed");
+            }
         }
         if (analyzer != null) {
             analyzer.close();
@@ -700,7 +719,7 @@ public class LuceneRegistryHelper extends AbstractRegistryHelper {
         String[] parts = isOrQuery ? queryString.split(" OR ") : queryString.split(" AND ");
 
         for (String part : parts) {
-            part = part.trim();
+            part = part.trim().replaceAll("^\\(+|\\)+$", "");
             if (part.contains(":")) {
                 String[] fieldValuePair = part.split(":", 2);
                 if (fieldValuePair.length == 2) {
