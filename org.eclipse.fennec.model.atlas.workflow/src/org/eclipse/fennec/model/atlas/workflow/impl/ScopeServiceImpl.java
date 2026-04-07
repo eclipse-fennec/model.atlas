@@ -16,14 +16,15 @@ package org.eclipse.fennec.model.atlas.workflow.impl;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.logging.Logger;
 
 import org.eclipse.emf.ecore.EObject;
+import org.eclipse.emf.ecore.EPackage;
 import org.eclipse.fennec.model.atlas.mgmt.management.ObjectMetadata;
 import org.eclipse.fennec.model.atlas.wf.workflowapi.RegistryService;
 import org.eclipse.fennec.model.atlas.wf.workflowapi.Scope;
 import org.eclipse.fennec.model.atlas.wf.workflowapi.ScopeService;
 import org.eclipse.fennec.model.atlas.wf.workflowapi.WorkflowApiFactory;
+import org.eclipse.fennec.model.atlas.workflow.WorkflowConstants;
 import org.osgi.service.component.annotations.Activate;
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.ConfigurationPolicy;
@@ -43,11 +44,14 @@ import org.osgi.util.promise.Promise;
 @Designate(ocd = ScopeServiceConfig.class)
 public class ScopeServiceImpl<T extends EObject> implements ScopeService<T> {
 
-    private static final Logger LOGGER = Logger.getLogger(ScopeServiceImpl.class.getName());
     private Map<String, RegistryService<T>> registryServiceMap = new ConcurrentHashMap<>();
     private ScopeServiceConfig config;
 
     private Scope scopeObject;
+    
+    @Reference(target = "(registry.name="+ WorkflowConstants.ATLAS_SCHEMA_REGISTRY_NAME +")")
+	RegistryService<EPackage> atlasSchemaRegistryService;
+    
 
     @Activate
     public ScopeServiceImpl(ScopeServiceConfig config) {
@@ -63,7 +67,7 @@ public class ScopeServiceImpl<T extends EObject> implements ScopeService<T> {
 
     public void unbindRegistryService(RegistryService<T> registryService, Map<String, Object> properties) {
         registryServiceMap.remove(registryService.getRegistryName());
-        createScopeObject();
+        scopeObject = createScopeObject();
         registryService.deactivate(config.scope_name());
     }
 
@@ -115,12 +119,20 @@ public class ScopeServiceImpl<T extends EObject> implements ScopeService<T> {
         validateRegistry(registry);
         ObjectMetadata scopedMetadata = getRegistryService(registry).getMetadataFromFinalStage(config.scope_name(),
                 objectId);
-        if (scopedMetadata == null && config.scope_parent() != null) {
-            ObjectMetadata parentScopeMetadata = getRegistryService(registry)
-                    .getMetadataFromFinalStage(config.scope_parent(), objectId);
-            if (parentScopeMetadata != null)
-                parentScopeMetadata.setIsReadOnly(true);
-            return parentScopeMetadata;
+        
+        if(scopedMetadata == null) {
+//          if parent scope is atlas and registry is schema registry -> go to atlas schema registry
+//          if parent scope is NOT atlas -> look into the parent registry (must have the same name as this registry)
+//          if parent scope is atlas and registry is NOT a schema registry -> no need to look into parent
+//          if parent scope is not set -> this cannot happen because the default is atlas
+        	ObjectMetadata parentScopeMetadata = null;
+        	if(WorkflowConstants.ATLAS_SCOPE_NAME.equals(config.scope_parent()) && getRegistryService(registry).getRegistry().isSchemaRegistry()) {
+        		parentScopeMetadata = atlasSchemaRegistryService.getMetadataFromFinalStage(config.scope_parent(), objectId);
+        	} else if (!WorkflowConstants.ATLAS_SCOPE_NAME.equals(config.scope_parent())) {
+        		parentScopeMetadata = getRegistryService(registry).getMetadataFromFinalStage(config.scope_parent(), objectId);
+        		if(parentScopeMetadata != null) parentScopeMetadata.setIsReadOnly(true);
+        	}
+        	return parentScopeMetadata;
         }
         return scopedMetadata;
     }
@@ -200,8 +212,16 @@ public class ScopeServiceImpl<T extends EObject> implements ScopeService<T> {
     public List<ObjectMetadata> listInFinalStageForRegistry(String registry) {
         validateRegistry(registry);
         List<ObjectMetadata> scopedMetadata = getRegistryService(registry).listInFinalStage(config.scope_name());
-        if (config.scope_parent() != null) {
-            scopedMetadata.addAll(getRegistryService(registry).listInFinalStage(config.scope_parent()));
+//        if parent scope is atlas and registry is schema registry -> go to atlas schema registry
+//        if parent scope is NOT atlas -> look into the parent registry (must have the same name as this registry)
+//        if parent scope is atlas and registry is NOT a schema registry -> no need to look into parent
+//        if parent scope is not set -> this cannot happen because the default is atlas
+        if(WorkflowConstants.ATLAS_SCOPE_NAME.equals(config.scope_parent()) && getRegistryService(registry).getRegistry().isSchemaRegistry()) {
+        	scopedMetadata.addAll(atlasSchemaRegistryService.listInFinalStage(config.scope_parent()));
+        } else if (!WorkflowConstants.ATLAS_SCOPE_NAME.equals(config.scope_parent())) {
+        	List<ObjectMetadata> parentMetadata = getRegistryService(registry).listInFinalStage(config.scope_parent());
+        	parentMetadata.forEach(pm -> pm.setIsReadOnly(true));
+            scopedMetadata.addAll(parentMetadata);
         }
         return scopedMetadata;
     }

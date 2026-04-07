@@ -28,6 +28,7 @@ import org.osgi.annotation.versioning.ProviderType;
  * <ul>
  *   <li>{@link org.eclipse.fennec.model.atlas.wf.workflowapi.Registry#getName <em>Name</em>}</li>
  *   <li>{@link org.eclipse.fennec.model.atlas.wf.workflowapi.Registry#getDescription <em>Description</em>}</li>
+ *   <li>{@link org.eclipse.fennec.model.atlas.wf.workflowapi.Registry#isSchemaRegistry <em>Schema Registry</em>}</li>
  *   <li>{@link org.eclipse.fennec.model.atlas.wf.workflowapi.Registry#getStages <em>Stages</em>}</li>
  *   <li>{@link org.eclipse.fennec.model.atlas.wf.workflowapi.Registry#getAllowedTransitions <em>Allowed Transitions</em>}</li>
  * </ul>
@@ -81,6 +82,31 @@ public interface Registry {
 	 * @generated
 	 */
 	void setDescription(String value);
+
+	/**
+	 * Returns the value of the '<em><b>Schema Registry</b></em>' attribute.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * <!-- begin-model-doc -->
+	 * Differentiate the schema registries from all the other kind of registries.
+	 * <!-- end-model-doc -->
+	 * @return the value of the '<em>Schema Registry</em>' attribute.
+	 * @see #setSchemaRegistry(boolean)
+	 * @see org.eclipse.fennec.model.atlas.wf.workflowapi.WorkflowApiPackage#getRegistry_SchemaRegistry()
+	 * @model
+	 * @generated
+	 */
+	boolean isSchemaRegistry();
+
+	/**
+	 * Sets the value of the '{@link org.eclipse.fennec.model.atlas.wf.workflowapi.Registry#isSchemaRegistry <em>Schema Registry</em>}' attribute.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @param value the new value of the '<em>Schema Registry</em>' attribute.
+	 * @see #isSchemaRegistry()
+	 * @generated
+	 */
+	void setSchemaRegistry(boolean value);
 
 	/**
 	 * Returns the value of the '<em><b>Stages</b></em>' containment reference list.

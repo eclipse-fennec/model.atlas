@@ -205,7 +205,7 @@ public class FileStorageHelper extends AbstractStorageHelper {
     }
 
     /**
-     * When the service comes up it should retrieve from apicurio the existing
+     * When the service comes up it should retrieve from the file system the existing
      * metadata and cache them in the registry
      * 
      * @throws IOException

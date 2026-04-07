@@ -699,8 +699,18 @@ public class WorkflowApiPackageImpl extends EPackageImpl implements WorkflowApiP
 	 * @generated
 	 */
 	@Override
+	public EAttribute getRegistry_SchemaRegistry() {
+		return (EAttribute)registryEClass.getEStructuralFeatures().get(2);
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
 	public EReference getRegistry_Stages() {
-		return (EReference)registryEClass.getEStructuralFeatures().get(2);
+		return (EReference)registryEClass.getEStructuralFeatures().get(3);
 	}
 
 	/**
@@ -710,7 +720,7 @@ public class WorkflowApiPackageImpl extends EPackageImpl implements WorkflowApiP
 	 */
 	@Override
 	public EReference getRegistry_AllowedTransitions() {
-		return (EReference)registryEClass.getEStructuralFeatures().get(3);
+		return (EReference)registryEClass.getEStructuralFeatures().get(4);
 	}
 
 	/**
@@ -880,6 +890,7 @@ public class WorkflowApiPackageImpl extends EPackageImpl implements WorkflowApiP
 		registryEClass = createEClass(REGISTRY);
 		createEAttribute(registryEClass, REGISTRY__NAME);
 		createEAttribute(registryEClass, REGISTRY__DESCRIPTION);
+		createEAttribute(registryEClass, REGISTRY__SCHEMA_REGISTRY);
 		createEReference(registryEClass, REGISTRY__STAGES);
 		createEReference(registryEClass, REGISTRY__ALLOWED_TRANSITIONS);
 
@@ -1226,6 +1237,7 @@ public class WorkflowApiPackageImpl extends EPackageImpl implements WorkflowApiP
 		initEClass(registryEClass, org.eclipse.fennec.model.atlas.wf.workflowapi.Registry.class, "Registry", !IS_ABSTRACT, !IS_INTERFACE, IS_GENERATED_INSTANCE_CLASS);
 		initEAttribute(getRegistry_Name(), ecorePackage.getEString(), "name", null, 0, 1, org.eclipse.fennec.model.atlas.wf.workflowapi.Registry.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_UNSETTABLE, !IS_ID, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
 		initEAttribute(getRegistry_Description(), ecorePackage.getEString(), "description", null, 0, 1, org.eclipse.fennec.model.atlas.wf.workflowapi.Registry.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_UNSETTABLE, !IS_ID, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
+		initEAttribute(getRegistry_SchemaRegistry(), ecorePackage.getEBoolean(), "schemaRegistry", null, 0, 1, org.eclipse.fennec.model.atlas.wf.workflowapi.Registry.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_UNSETTABLE, !IS_ID, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
 		initEReference(getRegistry_Stages(), this.getStage(), null, "stages", null, 0, -1, org.eclipse.fennec.model.atlas.wf.workflowapi.Registry.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, IS_COMPOSITE, !IS_RESOLVE_PROXIES, !IS_UNSETTABLE, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
 		initEReference(getRegistry_AllowedTransitions(), this.getStageTransition(), null, "allowedTransitions", null, 0, -1, org.eclipse.fennec.model.atlas.wf.workflowapi.Registry.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, IS_COMPOSITE, !IS_RESOLVE_PROXIES, !IS_UNSETTABLE, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
 

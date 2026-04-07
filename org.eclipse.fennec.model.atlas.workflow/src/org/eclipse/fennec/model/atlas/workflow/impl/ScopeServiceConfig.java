@@ -36,5 +36,6 @@ public @interface ScopeServiceConfig {
     @AttributeDefinition(name = "Registry Service Target Filter", description = "The target filter for the injected list of RegistryService. If not provided no RegistryService will be associated with this scope "
             + "and no operation will be possible for the scope.", required = false, defaultValue = "(scope=no-inject)")
     String registryService_target() default "(scope=no-inject)";
+    
 
 }
