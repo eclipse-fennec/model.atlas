@@ -120,6 +120,14 @@ atlas (system-level, read-only base schemas)
   +-- partner-external
 ```
 
+#### The Atlas Scope
+
+The **atlas** scope is a special built-in scope that serves as the root parent of all other scopes. It requires no configuration and is automatically available at startup. Key characteristics:
+
+- **Read-only**: No objects can be uploaded, updated, deleted, or transitioned within the atlas scope
+- **System schemas**: It exposes all EPackages that are already registered in the OSGi runtime (e.g., models from generated code or bundles) through its single registry, the **atlas-schema-registry**
+- **Implicit parent**: By default, every configured scope has `atlas` as its parent (either directly or through its ancestor chain), so system schemas are visible everywhere
+
 ### Registries
 
 A **Registry** is a named collection within a scope that stores a specific type of object. Each scope can have multiple registries with independent workflow configurations.
@@ -130,6 +138,23 @@ Common registries:
 - Custom registries for domain-specific data
 
 The registry name in the configuration directly determines the **URL path segment** under which it is accessible in the REST API. For example, a registry configured with `registry.name=products` is reachable at `/{scopeName}/registries/products/...`.
+
+#### Schema Registries and the `schema.registry` Property
+
+A registry can be marked as a **schema registry** by setting `schema.registry=true` in its configuration. Schema registries are registries whose objects are EPackage schema definitions. This flag has an important effect on hierarchical visibility:
+
+- When listing objects in the **final stage** of a schema registry, the system also includes schemas from the **atlas-schema-registry** (the atlas scope's built-in registry) if the scope's parent is `atlas`
+- This means that system EPackages (models from generated code or OSGi bundles) are automatically visible alongside user-managed schemas in every schema registry's final stage
+- These inherited system schemas appear as **read-only** and cannot be modified or deleted
+
+#### The Atlas Schema Registry
+
+The **atlas-schema-registry** is the built-in, read-only registry of the atlas scope. It:
+
+- Automatically tracks all EPackages registered in the OSGi static `EPackage.Registry` (e.g., models from generated EMF code)
+- Has a single stage: `released` (non-writable, final)
+- Rejects all write operations (`upload`, `update`, `delete`, `transition`) with `UnsupportedOperationException`
+- Uses Base64-encoded namespace URIs as object IDs
 
 ### Workflow Stages
 
@@ -160,6 +185,7 @@ Child scopes can see objects from parent scopes' **final stages**:
 - A child scope sees its own objects in all stages, plus parent objects in the final stage
 - Parent objects appear as **read-only** in child scopes (cannot be modified or deleted)
 - Parents cannot see children's objects; siblings cannot see each other's objects
+- **Schema registries** (`schema.registry=true`) additionally include system schemas from the atlas scope's `atlas-schema-registry` when listing objects in their final stage. This ensures that EPackages from generated code or OSGi bundles are visible to all schema registries without requiring explicit upload
 
 **Write-time uniqueness** (for schemas):
 - When creating a schema, the `nsUri` must be unique across the entire visibility chain (local scope all stages + all ancestor final stages)
@@ -588,7 +614,9 @@ Model Atlas is configured via OSGi Configuration Admin. Configuration files are 
 
 ### Scope Configuration
 
-Each scope is a factory configuration of `ScopeService`:
+The **atlas** scope and its **atlas-schema-registry** are built-in and require no configuration. They are automatically registered as OSGi services at startup.
+
+All other scopes are factory configurations of `ScopeService`. By default, `scope.parent` is `atlas`, so every scope inherits system schemas unless explicitly overridden:
 
 ```json
 {
@@ -602,12 +630,12 @@ Each scope is a factory configuration of `ScopeService`:
 }
 ```
 
-| Property | Required | Description |
-|----------|----------|-------------|
-| `scope.name` | yes | Unique scope identifier (used in URL paths) |
-| `scope.description` | no | Human-readable description |
-| `parent.scope` | no | Parent scope name (empty for root scopes) |
-| `registryService.target` | yes | OSGi filter selecting which registries belong to this scope |
+| Property | Required | Default | Description |
+|----------|----------|---------|-------------|
+| `scope.name` | yes | | Unique scope identifier (used in URL paths) |
+| `scope.description` | no | | Human-readable description |
+| `scope.parent` | no | `atlas` | Parent scope name for hierarchical lookup |
+| `registryService.target` | yes | | OSGi filter selecting which registries belong to this scope |
 
 ### Registry Configuration
 
@@ -643,6 +671,8 @@ Each registry is a factory configuration of `RegistryService`:
 | Property | Description |
 |----------|-------------|
 | `registry.name` | Registry identifier (becomes the URL path segment) |
+| `registry.description` | Human-readable description |
+| `schema.registry` | `true` if this registry manages EPackage schemas. When true, listing in the final stage also includes system schemas from the atlas-schema-registry (default: `false`) |
 | `stages` | Stage definitions with `writable` and `final` flags |
 | `workflow.transitions` | Allowed transitions, format: `"fromStage:toStage"` |
 | `stage.storage.mappings` | Maps stages to storage types, format: `"stage:storageType"` |

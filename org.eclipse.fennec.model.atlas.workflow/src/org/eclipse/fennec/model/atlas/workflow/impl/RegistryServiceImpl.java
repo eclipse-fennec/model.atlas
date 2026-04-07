@@ -516,6 +516,7 @@ public class RegistryServiceImpl<T extends EObject> implements RegistryService<T
         Registry registry = WorkflowApiFactory.eINSTANCE.createRegistry();
         registry.setName(config.registry_name());
         registry.setDescription(config.registry_description());
+        registry.setSchemaRegistry(config.schema_registry());
         registry.getAllowedTransitions().addAll(allowedTransitionsList);
         registry.getStages().addAll(stages);
         return registry;

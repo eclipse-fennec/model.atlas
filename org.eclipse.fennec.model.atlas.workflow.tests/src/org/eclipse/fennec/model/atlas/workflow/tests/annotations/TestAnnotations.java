@@ -185,4 +185,23 @@ public class TestAnnotations {
     @RequireTypedEvent
     public @interface PostActionStorageSetup {
     }
+    
+    @WorkflowStorageSetup
+    @WithFactoryConfiguration(factoryPid = "ScopeService", name = "jena-scope", location = "?", properties = {
+            @Property(key = "scope.name", value = "jena"),
+            @Property(key = "registryService.target", value = "(registry.name=jena-schema)"),
+            @Property(key = "registryService.cardinality.minimum", value = "1", scalar = Scalar.Integer)})
+    public @interface ScopeServiceSetup {
+    }
+    
+    @WithFactoryConfiguration(factoryPid = "RegistryService", name = "jena-schema-registry", location = "?", properties = {
+            @Property(key = "registry.name", value = "jena-schema"),
+            @Property(key = "schema.registry", value = "true", scalar = Scalar.Boolean),
+            @Property(key = "schema.uri", value = "http://www.eclipse.org/emf/2002/Ecore"),
+            @Property(key = "root.eclass.uri", value = "http://www.eclipse.org/emf/2002/Ecore#//EPackage"),
+            @Property(key = "resourceSet.target", value = "(emf.name=ecore)"),
+            @Property(key = "storageService.target", value = "(storage.type=file)" )})
+    public @interface SchemaRegistryServiceSetup {
+    	
+    }
 }

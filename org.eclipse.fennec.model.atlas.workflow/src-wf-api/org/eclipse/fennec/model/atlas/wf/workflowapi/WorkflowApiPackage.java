@@ -638,13 +638,22 @@ public interface WorkflowApiPackage extends org.eclipse.emf.ecore.EPackage {
 	int REGISTRY__DESCRIPTION = 1;
 
 	/**
+	 * The feature id for the '<em><b>Schema Registry</b></em>' attribute.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 * @ordered
+	 */
+	int REGISTRY__SCHEMA_REGISTRY = 2;
+
+	/**
 	 * The feature id for the '<em><b>Stages</b></em>' containment reference list.
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
 	 * @generated
 	 * @ordered
 	 */
-	int REGISTRY__STAGES = 2;
+	int REGISTRY__STAGES = 3;
 
 	/**
 	 * The feature id for the '<em><b>Allowed Transitions</b></em>' containment reference list.
@@ -653,7 +662,7 @@ public interface WorkflowApiPackage extends org.eclipse.emf.ecore.EPackage {
 	 * @generated
 	 * @ordered
 	 */
-	int REGISTRY__ALLOWED_TRANSITIONS = 3;
+	int REGISTRY__ALLOWED_TRANSITIONS = 4;
 
 	/**
 	 * The number of structural features of the '<em>Registry</em>' class.
@@ -662,7 +671,7 @@ public interface WorkflowApiPackage extends org.eclipse.emf.ecore.EPackage {
 	 * @generated
 	 * @ordered
 	 */
-	int REGISTRY_FEATURE_COUNT = 4;
+	int REGISTRY_FEATURE_COUNT = 5;
 
 	/**
 	 * The number of operations of the '<em>Registry</em>' class.
@@ -1330,6 +1339,17 @@ public interface WorkflowApiPackage extends org.eclipse.emf.ecore.EPackage {
 	EAttribute getRegistry_Description();
 
 	/**
+	 * Returns the meta object for the attribute '{@link org.eclipse.fennec.model.atlas.wf.workflowapi.Registry#isSchemaRegistry <em>Schema Registry</em>}'.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @return the meta object for the attribute '<em>Schema Registry</em>'.
+	 * @see org.eclipse.fennec.model.atlas.wf.workflowapi.Registry#isSchemaRegistry()
+	 * @see #getRegistry()
+	 * @generated
+	 */
+	EAttribute getRegistry_SchemaRegistry();
+
+	/**
 	 * Returns the meta object for the containment reference list '{@link org.eclipse.fennec.model.atlas.wf.workflowapi.Registry#getStages <em>Stages</em>}'.
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
@@ -1901,6 +1921,14 @@ public interface WorkflowApiPackage extends org.eclipse.emf.ecore.EPackage {
 		 * @generated
 		 */
 		EAttribute REGISTRY__DESCRIPTION = eINSTANCE.getRegistry_Description();
+
+		/**
+		 * The meta object literal for the '<em><b>Schema Registry</b></em>' attribute feature.
+		 * <!-- begin-user-doc -->
+		 * <!-- end-user-doc -->
+		 * @generated
+		 */
+		EAttribute REGISTRY__SCHEMA_REGISTRY = eINSTANCE.getRegistry_SchemaRegistry();
 
 		/**
 		 * The meta object literal for the '<em><b>Stages</b></em>' containment reference list feature.
