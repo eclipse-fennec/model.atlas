@@ -369,6 +369,19 @@ public class RegistryServiceImpl<T extends EObject> implements RegistryService<T
         }
         return metadata;
     }
+    
+    /* 
+	 * (non-Javadoc)
+	 * @see org.eclipse.fennec.model.atlas.wf.workflowapi.RegistryService#listAll(java.lang.String)
+	 */
+	@Override
+	public List<ObjectMetadata> listAll(String scope) {
+		List<ObjectMetadata> metadata = new LinkedList<>();
+		stages.forEach(stage -> {
+			metadata.addAll(listInStage(scope, stage.getName()));
+		});
+		return metadata;
+	}
 
     /*
      * (non-Javadoc)
@@ -633,5 +646,7 @@ public class RegistryServiceImpl<T extends EObject> implements RegistryService<T
     private String getFinalStageName() {
         return stages.stream().filter(s -> s.isFinal()).findFirst().get().getName();
     }
+
+	
 
 }

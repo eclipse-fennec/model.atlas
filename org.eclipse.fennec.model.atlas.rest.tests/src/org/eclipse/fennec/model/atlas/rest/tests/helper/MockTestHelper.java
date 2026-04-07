@@ -194,7 +194,18 @@ public class MockTestHelper {
 
         /*
          * (non-Javadoc)
-         * 
+         *
+         * @see org.eclipse.fennec.model.atlas.wf.workflowapi.ScopeService#
+         * listAllForRegistry(java.lang.String)
+         */
+        @Override
+        public List<ObjectMetadata> listAllForRegistry(String registry) {
+            return mockRegistryService.listAll(TEST_SCOPE_NAME);
+        }
+
+        /*
+         * (non-Javadoc)
+         *
          * @see org.eclipse.fennec.model.atlas.wf.workflowapi.ScopeService#
          * listInStageForRegistry(java.lang.String, java.lang.String)
          */
@@ -564,7 +575,7 @@ public class MockTestHelper {
 
         /*
          * (non-Javadoc)
-         * 
+         *
          * @see org.eclipse.fennec.model.atlas.wf.workflowapi.RegistryService#
          * listInFinalStage(java.lang.String)
          */
@@ -575,7 +586,34 @@ public class MockTestHelper {
 
         /*
          * (non-Javadoc)
-         * 
+         *
+         * @see org.eclipse.fennec.model.atlas.wf.workflowapi.RegistryService#
+         * listAll(java.lang.String)
+         */
+        @Override
+        public List<ObjectMetadata> listAll(String scope) {
+            ObjectMetadata draftMetadata = ManagementFactory.eINSTANCE.createObjectMetadata();
+            draftMetadata.setObjectId(TEST_OBJECT_ID);
+            draftMetadata.setStage(TEST_STAGE_DRAFT);
+            draftMetadata.setRegistry(TEST_REGISTRY_NAME);
+            draftMetadata.setScope(scope);
+            draftMetadata.setObjectName(TEST_OBJECT_NAME);
+            draftMetadata.setUploadTime(Instant.now());
+
+            ObjectMetadata approvedMetadata = ManagementFactory.eINSTANCE.createObjectMetadata();
+            approvedMetadata.setObjectId("sensor-object-456");
+            approvedMetadata.setStage(TEST_STAGE_APPROVED);
+            approvedMetadata.setRegistry(TEST_REGISTRY_NAME);
+            approvedMetadata.setScope(scope);
+            approvedMetadata.setObjectName("SensorData");
+            approvedMetadata.setUploadTime(Instant.now());
+
+            return List.of(draftMetadata, approvedMetadata);
+        }
+
+        /*
+         * (non-Javadoc)
+         *
          * @see org.eclipse.fennec.model.atlas.wf.workflowapi.RegistryService#
          * transitionToStage(java.lang.String, java.lang.String, java.lang.String,
          * java.lang.String)

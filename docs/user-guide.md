@@ -230,6 +230,9 @@ Manage EMF EPackage schemas with full CRUD and stage transitions. The Schema API
 # List all released schemas (includes parent scope schemas)
 curl http://localhost:8080/rest/my-tenant/schema
 
+# List all schemas across all stages (includes parent scope schemas)
+curl http://localhost:8080/rest/my-tenant/schema/all
+
 # List schemas in a specific stage
 curl http://localhost:8080/rest/my-tenant/schema/stages/draft
 
@@ -273,6 +276,9 @@ Manage arbitrary EObjects in named registries with schema validation.
 ```bash
 # List all released objects in a registry
 curl http://localhost:8080/rest/my-tenant/registries/configurations
+
+# List all objects across all stages in a registry (includes parent scope objects)
+curl http://localhost:8080/rest/my-tenant/registries/configurations/all
 
 # List objects in a specific stage
 curl http://localhost:8080/rest/my-tenant/registries/configurations/stages/draft
