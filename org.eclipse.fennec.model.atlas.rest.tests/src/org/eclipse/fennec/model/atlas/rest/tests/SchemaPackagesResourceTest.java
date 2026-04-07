@@ -139,6 +139,46 @@ public class SchemaPackagesResourceTest {
         }
     }
 
+    // ========== List All Packages Tests ==========
+
+    @Test
+    public void testListAllPackages_Success() {
+        Response response = restClient.target(BASE_URL).path(TEST_SCOPE_NAME).path("schema").path("all")
+                .request("application/json").get();
+
+        assertEquals(200, response.getStatus(), "Should return HTTP 200 OK");
+
+        String responseContent = response.readEntity(String.class);
+        assertNotNull(responseContent, "Should return content");
+        assertTrue(responseContent.contains("metadata"), "Response should contain metadata");
+    }
+
+    @Test
+    public void testListAllPackages_ScopeNotFound() {
+        Response response = restClient.target(BASE_URL).path("non-existent-scope").path("schema").path("all")
+                .request("application/json").get();
+
+        assertEquals(400, response.getStatus(), "Should return HTTP 400 Bad Request");
+    }
+
+    @Test
+    public void testListAllPackages_WithMediaTypeQueryParam() {
+        Response response = restClient.target(BASE_URL).path(TEST_SCOPE_NAME).path("schema").path("all")
+                .queryParam("mediaType", "application/xml").request("application/json").get();
+
+        assertEquals(200, response.getStatus(), "Should return HTTP 200 OK");
+        assertEquals("application/xml", response.getHeaderString("Content-Type"),
+                "Content-Type header should be set to mediaType query parameter value");
+    }
+
+    @Test
+    public void testListAllPackages_WithUnsupportedMediaTypeQueryParam() {
+        Response response = restClient.target(BASE_URL).path(TEST_SCOPE_NAME).path("schema").path("all")
+                .queryParam("mediaType", "application/unsupported").request("application/json").get();
+
+        assertEquals(415, response.getStatus(), "Should return HTTP 415 Unsupported Media Type");
+    }
+
     // ========== List Operations Tests ==========
 
     @Test

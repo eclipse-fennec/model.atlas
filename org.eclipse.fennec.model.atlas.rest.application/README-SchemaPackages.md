@@ -50,6 +50,7 @@ The `ScopeServiceCollector` dynamically tracks all registered `ScopeService` ins
 Provides the underlying workflow operations for schema management within a scope. The `SchemaPackagesResource` uses a fixed registry name of `"schema"` for all schema-related operations.
 
 **Used Operations:**
+- `listAllForRegistry(String registryName)`: List schemas across all stages (with hierarchy)
 - `listInFinalStageForRegistry(String registryName)`: List schemas in the final/released stage (with hierarchy)
 - `listInStageForRegistry(String registryName, String stage)`: List schemas in a specific stage
 - `listInStageForRegistryByName(String registryName, String stage, String name)`: List schemas filtered by name (supports wildcards, scope-specific)
@@ -150,7 +151,61 @@ curl -X GET https://api.example.com/my-tenant/schema \
 
 ---
 
-### 2. List Packages in Specific Stage
+### 2. List All Packages in Scope
+
+```http
+GET /{scopeName}/schema/all
+Accept: application/json
+```
+
+**Purpose**: List all packages across all stages for this scope, including packages from parent scopes. Unlike the released-only endpoint, this returns schemas from every stage (draft, approved, release, etc.).
+
+**Behavior**:
+- Calls `scopeService.listAllForRegistry("schema")` which collects objects from every configured stage
+- Includes objects from parent scopes as well
+- Useful for getting a complete overview of all schemas in a scope regardless of their lifecycle stage
+
+**Response**:
+- **200 OK**: Returns `ObjectMetadataContainer` with list of `ObjectMetadata`
+- **204 No Content**: No schemas found in any stage
+- **400 Bad Request**: Scope does not exist or is not configured
+- **500 Internal Server Error**: Server error
+
+**Example**:
+```bash
+curl -X GET https://api.example.com/my-tenant/schema/all \
+  -H "Accept: application/json"
+```
+
+**Example Response**:
+```json
+{
+  "metadata": [
+    {
+      "objectId": "http%3A%2F%2Fexample.com%2Fschemas%2Fbilling%2Fv1",
+      "objectName": "Billing",
+      "scope": "my-tenant",
+      "stage": "draft",
+      "version": "1.0.0",
+      "isReadOnly": false,
+      "uploadTime": "2023-10-27T10:00:00Z"
+    },
+    {
+      "objectId": "http%3A%2F%2Fexample.com%2Fschemas%2Fcommon%2Fv1",
+      "objectName": "CommonTypes",
+      "scope": "my-tenant",
+      "stage": "release",
+      "version": "2.0.0",
+      "isReadOnly": false,
+      "uploadTime": "2023-01-15T08:00:00Z"
+    }
+  ]
+}
+```
+
+---
+
+### 3. List Packages in Specific Stage
 
 **Spec Reference**: Section 2, `GET /{scopeName}/schema/stages/{stageName}`
 
@@ -201,7 +256,7 @@ curl -X GET "https://api.example.com/my-tenant/schema/stages/draft?name=Billing*
 
 ---
 
-### 3. Create Package
+### 4. Create Package
 
 **Spec Reference**: Section 2, `POST /{scopeName}/schema/stages/{stageName}`
 
@@ -267,7 +322,7 @@ curl -X POST "https://api.example.com/my-tenant/schema/stages/draft?nsUri=http%3
 
 ---
 
-### 4. Get Package Content
+### 5. Get Package Content
 
 **Spec Reference**: Section 2, `GET /{scopeName}/schema/stages/{stageName}/content`
 
@@ -307,7 +362,7 @@ curl -X GET "https://api.example.com/my-tenant/schema/stages/draft/content?nsUri
 
 ---
 
-### 5. Update Package Content
+### 6. Update Package Content
 
 **Spec Reference**: Section 2, `PUT /{scopeName}/schema/stages/{stageName}/content`
 
@@ -359,7 +414,7 @@ curl -X PUT "https://api.example.com/my-tenant/schema/stages/draft/content?nsUri
 
 ---
 
-### 6. Delete Package
+### 7. Delete Package
 
 **Spec Reference**: Section 2, `DELETE /{scopeName}/schema/stages/{stageName}`
 
@@ -398,7 +453,7 @@ curl -X DELETE "https://api.example.com/my-tenant/schema/stages/draft?nsUri=http
 
 ---
 
-### 7. Transition Package Between Stages
+### 8. Transition Package Between Stages
 
 **Spec Reference**: Section 3, `POST /{scopeName}/schema/stages/{stageName}/actions/transition`
 
