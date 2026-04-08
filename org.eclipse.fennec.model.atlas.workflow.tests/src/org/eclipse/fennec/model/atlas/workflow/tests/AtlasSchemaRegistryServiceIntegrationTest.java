@@ -19,8 +19,6 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import java.nio.file.Path;
-
 import org.eclipse.emf.ecore.EObject;
 import org.eclipse.emf.ecore.EPackage;
 import org.eclipse.emf.ecore.EcoreFactory;
@@ -32,17 +30,16 @@ import org.eclipse.fennec.model.atlas.wf.workflowapi.Registry;
 import org.eclipse.fennec.model.atlas.wf.workflowapi.RegistryService;
 import org.eclipse.fennec.model.atlas.wf.workflowapi.Stage;
 import org.eclipse.fennec.model.atlas.workflow.WorkflowConstants;
-import org.eclipse.fennec.model.atlas.workflow.tests.annotations.TestAnnotations;
 import org.eclipse.fennec.model.atlas.workflow.tests.annotations.TestAnnotations.RegistryConfiguration;
-import org.junit.jupiter.api.BeforeEach;
+import org.eclipse.fennec.model.atlas.workflow.tests.support.LuceneAwareTempDirExtension;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.junit.jupiter.api.io.TempDir;
 import org.osgi.service.cm.annotations.RequireConfigurationAdmin;
 import org.osgi.test.common.annotation.InjectService;
 import org.osgi.test.common.service.ServiceAware;
+import org.osgi.test.junit5.cm.ConfigurationExtension;
 import org.osgi.test.junit5.context.BundleContextExtension;
 import org.osgi.test.junit5.service.ServiceExtension;
 
@@ -57,20 +54,13 @@ import org.osgi.test.junit5.service.ServiceExtension;
  */
 @RequireEMF
 @RequireConfigurationAdmin
+@ExtendWith(LuceneAwareTempDirExtension.class)
 @ExtendWith(BundleContextExtension.class)
 @ExtendWith(ServiceExtension.class)
+@ExtendWith(ConfigurationExtension.class)
 @DisplayName("AtlasSchemaRegistryService OSGi Integration Tests")
 @SuppressWarnings({ "unchecked", "rawtypes", "restriction" })
 public class AtlasSchemaRegistryServiceIntegrationTest {
-
-	@TempDir
-	Path tempDir;
-
-	@BeforeEach
-	void setUp() {
-		// Set system property for template argument resolution
-		System.setProperty(TestAnnotations.PROP_TEMP_DIR, tempDir.toString());
-	}
 
 	@Nested
 	@DisplayName("Service Registration Tests")
