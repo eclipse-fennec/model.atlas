@@ -225,6 +225,20 @@ public class ScopeServiceImpl<T extends EObject> implements ScopeService<T> {
         }
         return scopedMetadata;
     }
+    
+	/* 
+	 * (non-Javadoc)
+	 * @see org.eclipse.fennec.model.atlas.wf.workflowapi.ScopeService#listAllForRegistry(java.lang.String)
+	 */
+	@Override
+	public List<ObjectMetadata> listAllForRegistry(String registry) {
+		validateRegistry(registry);
+        List<ObjectMetadata> scopedMetadata = getRegistryService(registry).listAll(config.scope_name());
+        if (config.scope_parent() != null) {
+            scopedMetadata.addAll(getRegistryService(registry).listAll(config.scope_parent()));
+        }
+        return scopedMetadata;
+	}
 
     /*
      * (non-Javadoc)
@@ -296,4 +310,6 @@ public class ScopeServiceImpl<T extends EObject> implements ScopeService<T> {
         }
         return;
     }
+
+
 }

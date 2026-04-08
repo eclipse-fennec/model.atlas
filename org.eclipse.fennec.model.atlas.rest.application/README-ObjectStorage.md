@@ -62,6 +62,7 @@ Provides schema validation and registry-specific operations.
 Provides the underlying workflow operations for object management within a scope.
 
 **Used Operations:**
+- `listAllForRegistry(String registryName)`: List objects across all stages (with hierarchy)
 - `listInFinalStageForRegistry(String registryName)`: List objects in the final/released stage (with hierarchy)
 - `listInStageForRegistry(String registryName, String stage)`: List objects in a specific stage
 - `listInStageForRegistryByName(String registryName, String stage, String name)`: List objects filtered by name (supports wildcards)
@@ -140,7 +141,63 @@ curl -X GET https://api.example.com/my-tenant/registries/configurations \
 
 ---
 
-### 2. List Objects in Specific Stage
+### 2. List All Objects in Scope
+
+```http
+GET /{scopeName}/registries/{registryName}/all
+Accept: application/json
+```
+
+**Purpose**: List all objects across all stages for this scope and registry, including objects from parent scopes. Unlike the released-only endpoint, this returns objects from every stage (draft, approved, release, etc.).
+
+**Behavior**:
+- Calls `scopeService.listAllForRegistry(registryName)` which collects objects from every configured stage
+- Includes objects from parent scopes as well
+- Useful for getting a complete overview of all objects in a registry regardless of their lifecycle stage
+
+**Response**:
+- **200 OK**: Returns `ObjectMetadataContainer` with list of `ObjectMetadata`
+- **204 No Content**: No objects found in any stage
+- **400 Bad Request**: Scope not available, registry not available for scope
+- **500 Internal Server Error**: Server error
+
+**Example**:
+```bash
+curl -X GET https://api.example.com/my-tenant/registries/configurations/all \
+  -H "Accept: application/json"
+```
+
+**Example Response**:
+```json
+{
+  "metadata": [
+    {
+      "objectId": "app-settings",
+      "objectName": "Application Settings",
+      "scope": "my-tenant",
+      "registry": "configurations",
+      "stage": "draft",
+      "version": "1.0.0",
+      "isReadOnly": false,
+      "uploadTime": "2023-10-27T10:00:00Z"
+    },
+    {
+      "objectId": "production-db-settings",
+      "objectName": "Production Database Settings",
+      "scope": "my-tenant",
+      "registry": "configurations",
+      "stage": "release",
+      "version": "2.0.0",
+      "isReadOnly": false,
+      "uploadTime": "2023-10-27T10:00:00Z"
+    }
+  ]
+}
+```
+
+---
+
+### 3. List Objects in Specific Stage
 
 ```http
 GET /{scopeName}/registries/{registryName}/stages/{stageName}
@@ -184,7 +241,7 @@ curl -X GET "https://api.example.com/my-tenant/registries/configurations/stages/
 
 ---
 
-### 3. Create/Update Object
+### 4. Create/Update Object
 
 ```http
 POST /{scopeName}/registries/{registryName}/stages/{stageName}/{objectId}
@@ -255,7 +312,7 @@ curl -X POST "https://api.example.com/my-tenant/registries/configurations/stages
 
 ---
 
-### 4. Get Object Content
+### 5. Get Object Content
 
 ```http
 GET /{scopeName}/registries/{registryName}/stages/{stageName}/content?objectId={objectId}
@@ -293,7 +350,7 @@ curl -X GET "https://api.example.com/my-tenant/registries/configurations/stages/
 
 ---
 
-### 5. Update Object Content
+### 6. Update Object Content
 
 ```http
 PUT /{scopeName}/registries/{registryName}/stages/{stageName}/content?objectId={objectId}
@@ -342,7 +399,7 @@ curl -X PUT "https://api.example.com/my-tenant/registries/configurations/stages/
 
 ---
 
-### 6. Delete Object
+### 7. Delete Object
 
 ```http
 DELETE /{scopeName}/registries/{registryName}/stages/{stageName}?objectId={objectId}
@@ -376,7 +433,7 @@ curl -X DELETE "https://api.example.com/my-tenant/registries/configurations/stag
 
 ---
 
-### 7. Transition Object Between Stages
+### 8. Transition Object Between Stages
 
 ```http
 POST /{scopeName}/registries/{registryName}/stages/{stageName}/actions/transition

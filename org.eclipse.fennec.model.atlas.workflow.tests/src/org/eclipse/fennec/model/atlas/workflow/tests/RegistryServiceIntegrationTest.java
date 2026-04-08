@@ -743,6 +743,91 @@ public class RegistryServiceIntegrationTest {
 
         @SuppressWarnings({ "unchecked", "rawtypes" })
         @Test
+        @DisplayName("Should list all objects across all stages")
+        @WithFactoryConfiguration(factoryPid = "RegistryService", name = "test-registry", location = "?", properties = {
+                @Property(key = "registry.name", value = REGISTRY_NAME),
+                @Property(key = "stages", type = Type.Array, value = {
+                        "{ \"name\" : \"draft\", \"writable\" : true, \"final\": false}",
+                        "{ \"name\" : \"approved\", \"writable\" : true, \"final\": false}",
+                        "{ \"name\" : \"release\", \"writable\" : false, \"final\": true}", }),
+                @Property(key = "workflow.transitions", type = Type.Array, value = { "draft:approved",
+                        "approved:release" }),
+                @Property(key = "stage.storage.mappings", type = Type.Array, value = { "draft:mock", "approved:mock",
+                        "release:mock" }),
+                @Property(key = "storageService.target", value = "(storage.type=mock)") })
+        void shouldListAllObjectsAcrossAllStages(
+                @InjectService(cardinality = 0, filter = "(registry.name=" + REGISTRY_NAME
+                        + ")") ServiceAware<RegistryService> registryAware)
+                throws InterruptedException, InvocationTargetException {
+
+            RegistryService<EObject> registryService = registryAware.waitForService(5000);
+            assertNotNull(registryService);
+
+            ObjectMetadata draftObj = ManagementFactory.eINSTANCE.createObjectMetadata();
+            draftObj.setObjectId("draft-obj");
+            draftObj.setStage("draft");
+
+            ObjectMetadata approvedObj = ManagementFactory.eINSTANCE.createObjectMetadata();
+            approvedObj.setObjectId("approved-obj");
+            approvedObj.setStage("approved");
+
+            ObjectMetadata releaseObj = ManagementFactory.eINSTANCE.createObjectMetadata();
+            releaseObj.setObjectId("release-obj");
+            releaseObj.setStage("release");
+
+            when(mockRegistryService.findByScopeRegistryAndStage(SCOPE_NAME, REGISTRY_NAME, "draft"))
+                    .thenReturn(java.util.Arrays.asList(draftObj));
+            when(mockRegistryService.findByScopeRegistryAndStage(SCOPE_NAME, REGISTRY_NAME, "approved"))
+                    .thenReturn(java.util.Arrays.asList(approvedObj));
+            when(mockRegistryService.findByScopeRegistryAndStage(SCOPE_NAME, REGISTRY_NAME, "release"))
+                    .thenReturn(java.util.Arrays.asList(releaseObj));
+
+            // List all objects across all stages
+            List<ObjectMetadata> result = registryService.listAll(SCOPE_NAME);
+
+            assertNotNull(result);
+            assertEquals(3, result.size());
+            assertTrue(result.stream().anyMatch(m -> "draft-obj".equals(m.getObjectId())));
+            assertTrue(result.stream().anyMatch(m -> "approved-obj".equals(m.getObjectId())));
+            assertTrue(result.stream().anyMatch(m -> "release-obj".equals(m.getObjectId())));
+
+            verify(mockRegistryService).findByScopeRegistryAndStage(SCOPE_NAME, REGISTRY_NAME, "draft");
+            verify(mockRegistryService).findByScopeRegistryAndStage(SCOPE_NAME, REGISTRY_NAME, "approved");
+            verify(mockRegistryService).findByScopeRegistryAndStage(SCOPE_NAME, REGISTRY_NAME, "release");
+        }
+
+        @SuppressWarnings({ "unchecked", "rawtypes" })
+        @Test
+        @DisplayName("Should return empty list when no objects in any stage")
+        @WithFactoryConfiguration(factoryPid = "RegistryService", name = "test-registry", location = "?", properties = {
+                @Property(key = "registry.name", value = REGISTRY_NAME),
+                @Property(key = "stages", type = Type.Array, value = {
+                        "{ \"name\" : \"draft\", \"writable\" : true, \"final\": false}",
+                        "{ \"name\" : \"release\", \"writable\" : false, \"final\": true}", }),
+                @Property(key = "workflow.transitions", type = Type.Array, value = { "draft:release" }),
+                @Property(key = "stage.storage.mappings", type = Type.Array, value = { "draft:mock", "release:mock" }),
+                @Property(key = "storageService.target", value = "(storage.type=mock)") })
+        void shouldReturnEmptyListWhenNoObjectsInAnyStage(
+                @InjectService(cardinality = 0, filter = "(registry.name=" + REGISTRY_NAME
+                        + ")") ServiceAware<RegistryService> registryAware)
+                throws InterruptedException, InvocationTargetException {
+
+            RegistryService<EObject> registryService = registryAware.waitForService(5000);
+            assertNotNull(registryService);
+
+            when(mockRegistryService.findByScopeRegistryAndStage(SCOPE_NAME, REGISTRY_NAME, "draft"))
+                    .thenReturn(List.of());
+            when(mockRegistryService.findByScopeRegistryAndStage(SCOPE_NAME, REGISTRY_NAME, "release"))
+                    .thenReturn(List.of());
+
+            List<ObjectMetadata> result = registryService.listAll(SCOPE_NAME);
+
+            assertNotNull(result);
+            assertTrue(result.isEmpty());
+        }
+
+        @SuppressWarnings({ "unchecked", "rawtypes" })
+        @Test
         @DisplayName("Should transition object between stages")
         @WithFactoryConfiguration(factoryPid = "RegistryService", name = "test-registry", location = "?", properties = {
                 @Property(key = "registry.name", value = REGISTRY_NAME),

@@ -114,6 +114,9 @@
       <genOperations ecoreOperation="workflow-api.ecore#//RegistryService/listInFinalStage">
         <genParameters ecoreParameter="workflow-api.ecore#//RegistryService/listInFinalStage/scope"/>
       </genOperations>
+      <genOperations ecoreOperation="workflow-api.ecore#//RegistryService/listAll">
+        <genParameters ecoreParameter="workflow-api.ecore#//RegistryService/listAll/scope"/>
+      </genOperations>
       <genOperations ecoreOperation="workflow-api.ecore#//RegistryService/transitionToStage">
         <genParameters ecoreParameter="workflow-api.ecore#//RegistryService/transitionToStage/scope"/>
         <genParameters ecoreParameter="workflow-api.ecore#//RegistryService/transitionToStage/objectId"/>
@@ -189,6 +192,9 @@
       </genOperations>
       <genOperations ecoreOperation="workflow-api.ecore#//ScopeService/listInFinalStageForRegistry">
         <genParameters ecoreParameter="workflow-api.ecore#//ScopeService/listInFinalStageForRegistry/registry"/>
+      </genOperations>
+      <genOperations ecoreOperation="workflow-api.ecore#//ScopeService/listAllForRegistry">
+        <genParameters ecoreParameter="workflow-api.ecore#//ScopeService/listAllForRegistry/registry"/>
       </genOperations>
       <genOperations ecoreOperation="workflow-api.ecore#//ScopeService/transitionToStageForRegistry">
         <genParameters ecoreParameter="workflow-api.ecore#//ScopeService/transitionToStageForRegistry/registry"/>

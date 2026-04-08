@@ -154,6 +154,57 @@ public class ObjectRegistryResourceTest {
         }
     }
 
+    // ========== List All Objects Tests ==========
+
+    @Test
+    public void testListAllObjects_Success() {
+        Response response = restClient.target(BASE_URL).path(TEST_SCOPE_NAME).path("registries")
+                .path(TEST_REGISTRY_NAME).path("all").request("application/json").get();
+
+        assertEquals(200, response.getStatus(), "Should return HTTP 200 OK");
+
+        String responseContent = response.readEntity(String.class);
+        assertNotNull(responseContent, "Should return content");
+        assertTrue(responseContent.contains("metadata"), "Response should contain metadata");
+    }
+
+    @Test
+    public void testListAllObjects_ScopeNotFound() {
+        Response response = restClient.target(BASE_URL).path("non-existent-scope").path("registries")
+                .path(TEST_REGISTRY_NAME).path("all").request("application/json").get();
+
+        assertEquals(400, response.getStatus(), "Should return HTTP 400 Bad Request");
+    }
+
+    @Test
+    public void testListAllObjects_UnassignedRegistry() {
+        Response response = restClient.target(BASE_URL).path(TEST_SCOPE_NAME).path("registries")
+                .path(UNASSIGNED_REGISTRY_NAME).path("all").request("application/json").get();
+
+        assertEquals(400, response.getStatus(),
+                "Should return HTTP 400 Bad Request for a registry not assigned to the scope");
+    }
+
+    @Test
+    public void testListAllObjects_WithMediaTypeQueryParam() {
+        Response response = restClient.target(BASE_URL).path(TEST_SCOPE_NAME).path("registries")
+                .path(TEST_REGISTRY_NAME).path("all").queryParam("mediaType", "application/xml")
+                .request("application/json").get();
+
+        assertEquals(200, response.getStatus(), "Should return HTTP 200 OK");
+        assertEquals("application/xml", response.getHeaderString("Content-Type"),
+                "Content-Type header should be set to mediaType query parameter value");
+    }
+
+    @Test
+    public void testListAllObjects_WithUnsupportedMediaTypeQueryParam() {
+        Response response = restClient.target(BASE_URL).path(TEST_SCOPE_NAME).path("registries")
+                .path(TEST_REGISTRY_NAME).path("all").queryParam("mediaType", "application/unsupported")
+                .request("application/json").get();
+
+        assertEquals(415, response.getStatus(), "Should return HTTP 415 Unsupported Media Type");
+    }
+
     // ========== List Operations Tests ==========
 
     @Test

@@ -142,6 +142,17 @@ public interface ScopeService<T extends EObject> {
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
 	 * <!-- begin-model-doc -->
+	 * List all objects in all stages and for the specified registry of the workflow
+	 * <!-- end-model-doc -->
+	 * @model dataType="org.eclipse.fennec.model.atlas.mgmt.management.List&lt;org.eclipse.fennec.model.atlas.mgmt.management.ObjectMetadata&gt;" many="false"
+	 * @generated
+	 */
+	List<ObjectMetadata> listAllForRegistry(String registry);
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * <!-- begin-model-doc -->
 	 * Performs a transition of an EObject from one stage to another of a certain registry, if allowed.
 	 * <!-- end-model-doc -->
 	 * @model objectIdRequired="true"
