@@ -98,12 +98,20 @@ public class ScopeServiceImpl<T extends EObject> implements ScopeService<T> {
         validateRegistry(registry);
         ObjectMetadata scopedMetadata = getRegistryService(registry).getMetadataFromStage(config.scope_name(), stage,
                 objectId);
-        if (scopedMetadata == null && config.scope_parent() != null) {
-            ObjectMetadata parentScopeMetadata = getRegistryService(registry)
-                    .getMetadataFromFinalStage(config.scope_parent(), objectId);
-            if (parentScopeMetadata != null)
-                parentScopeMetadata.setIsReadOnly(true);
-            return parentScopeMetadata;
+        
+        if(scopedMetadata == null) {
+//          if parent scope is atlas and registry is schema registry -> go to atlas schema registry
+//          if parent scope is NOT atlas -> look into the parent registry (must have the same name as this registry)
+//          if parent scope is atlas and registry is NOT a schema registry -> no need to look into parent
+//          if parent scope is not set -> this cannot happen because the default is atlas
+        	ObjectMetadata parentScopeMetadata = null;
+        	if(WorkflowConstants.ATLAS_SCOPE_NAME.equals(config.scope_parent()) && getRegistryService(registry).getRegistry().isSchemaRegistry()) {
+        		parentScopeMetadata = atlasSchemaRegistryService.getMetadataFromFinalStage(config.scope_parent(), objectId);
+        	} else if (!WorkflowConstants.ATLAS_SCOPE_NAME.equals(config.scope_parent())) {
+        		parentScopeMetadata = getRegistryService(registry).getMetadataFromFinalStage(config.scope_parent(), objectId);
+        		if(parentScopeMetadata != null) parentScopeMetadata.setIsReadOnly(true);
+        	}
+        	return parentScopeMetadata;
         }
         return scopedMetadata;
     }

@@ -14,12 +14,19 @@
 package org.eclipse.fennec.model.atlas.rest.tests.helper;
 
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.Base64;
 import java.util.List;
+import java.util.concurrent.ConcurrentHashMap;
 
 import org.eclipse.emf.ecore.EClass;
+import org.eclipse.emf.ecore.EClassifier;
 import org.eclipse.emf.ecore.EObject;
+import org.eclipse.emf.ecore.EPackage;
+import org.eclipse.emf.ecore.EStructuralFeature;
 import org.eclipse.emf.ecore.EcorePackage;
+import org.eclipse.fennec.model.atlas.management.lucene.epackage.EPackageLuceneIndex;
+import org.eclipse.fennec.model.atlas.management.lucene.epackage.EPackageSearchQuery;
 import org.eclipse.fennec.model.atlas.mgmt.management.ManagementFactory;
 import org.eclipse.fennec.model.atlas.mgmt.management.ObjectMetadata;
 import org.eclipse.fennec.model.atlas.wf.workflowapi.Registry;
@@ -727,6 +734,112 @@ public class MockTestHelper {
         public Void deactivate(String scope) {
             // TODO Auto-generated method stub
             return null;
+        }
+    }
+
+    /**
+     * Mock implementation of EPackageLuceneIndex for testing.
+     * Stores indexed entries in memory and performs basic filtering on search.
+     */
+    public static class MockEPackageLuceneIndex implements EPackageLuceneIndex {
+
+        private final ConcurrentHashMap<String, IndexEntry> entries = new ConcurrentHashMap<>();
+
+        private record IndexEntry(ObjectMetadata metadata, EPackage ePackage) {}
+
+        @Override
+        public void index(ObjectMetadata metadata, EPackage ePackage) {
+            entries.put(metadata.getObjectId(), new IndexEntry(metadata, ePackage));
+        }
+
+        @Override
+        public void remove(String objectId) {
+            entries.remove(objectId);
+        }
+
+        @Override
+        public SearchResult search(EPackageSearchQuery query) {
+            List<SearchHit> hits = new ArrayList<>();
+
+            for (IndexEntry entry : entries.values()) {
+                ObjectMetadata md = entry.metadata();
+                EPackage pkg = entry.ePackage();
+
+                // Scope filter
+                if (query.getScopes() != null && !query.getScopes().contains(md.getScope())) {
+                    continue;
+                }
+                // Stage filter
+                if (query.getStage() != null && !query.getStage().equals(md.getStage())) {
+                    continue;
+                }
+                // nsUri partial match
+                if (query.getNsUri() != null && (pkg.getNsURI() == null || !pkg.getNsURI().toLowerCase().contains(query.getNsUri().toLowerCase()))) {
+                    continue;
+                }
+                // nsUriExact
+                if (query.getNsUriExact() != null && !query.getNsUriExact().equals(pkg.getNsURI())) {
+                    continue;
+                }
+                // name partial match
+                if (query.getName() != null && (pkg.getName() == null || !pkg.getName().toLowerCase().contains(query.getName().toLowerCase()))) {
+                    continue;
+                }
+                // nsPrefix partial match
+                if (query.getNsPrefix() != null && (pkg.getNsPrefix() == null || !pkg.getNsPrefix().toLowerCase().contains(query.getNsPrefix().toLowerCase()))) {
+                    continue;
+                }
+                // classifier
+                if (query.getClassifier() != null && !hasClassifier(pkg, query.getClassifier())) {
+                    continue;
+                }
+                // featureName
+                if (query.getFeatureName() != null && !hasFeatureName(pkg, query.getFeatureName())) {
+                    continue;
+                }
+                // featureType
+                if (query.getFeatureType() != null && !hasFeatureType(pkg, query.getFeatureType())) {
+                    continue;
+                }
+
+                hits.add(new SearchHit(md.getObjectId(), md.getScope(), md.getStage()));
+            }
+
+            long totalHits = hits.size();
+            int fromIndex = Math.min(query.getOffset(), hits.size());
+            int toIndex = Math.min(query.getOffset() + query.getLimit(), hits.size());
+            List<SearchHit> pagedHits = hits.subList(fromIndex, toIndex);
+
+            return new SearchResult(new ArrayList<>(pagedHits), totalHits);
+        }
+
+        private boolean hasClassifier(EPackage pkg, String name) {
+            for (EClassifier c : pkg.getEClassifiers()) {
+                if (name.equalsIgnoreCase(c.getName())) return true;
+            }
+            return false;
+        }
+
+        private boolean hasFeatureName(EPackage pkg, String name) {
+            for (EClassifier c : pkg.getEClassifiers()) {
+                if (c instanceof EClass eClass) {
+                    for (EStructuralFeature f : eClass.getEStructuralFeatures()) {
+                        if (name.equalsIgnoreCase(f.getName())) return true;
+                    }
+                }
+            }
+            return false;
+        }
+
+        private boolean hasFeatureType(EPackage pkg, String typeName) {
+            for (EClassifier c : pkg.getEClassifiers()) {
+                if (c instanceof EClass eClass) {
+                    for (EStructuralFeature f : eClass.getEStructuralFeatures()) {
+                        if (f.getEType() != null && typeName.equalsIgnoreCase(f.getEType().getName())) return true;
+                    }
+                }
+            }
+            return false;
         }
     }
 

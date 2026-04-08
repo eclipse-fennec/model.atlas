@@ -25,7 +25,9 @@ import java.util.concurrent.TimeUnit;
 
 import org.eclipse.emf.ecore.resource.ResourceSet;
 import org.eclipse.fennec.emf.osgi.annotation.require.RequireEMF;
+import org.eclipse.fennec.model.atlas.rest.tests.helper.MockTestHelper.MockEPackageLuceneIndex;
 import org.eclipse.fennec.model.atlas.rest.tests.helper.MockTestHelper.MockScopeServiceCollector;
+import org.eclipse.fennec.model.atlas.management.lucene.epackage.EPackageLuceneIndex;
 import org.eclipse.fennec.model.atlas.rest.tests.helper.ResourceAware;
 import org.eclipse.fennec.model.atlas.rest.tests.helper.TestHelper;
 import org.eclipse.fennec.model.atlas.wf.workflowapi.ScopeService;
@@ -83,6 +85,8 @@ public class ModelAtlasExceptionMapperTest {
 
 	private Client restClient;
 	private ServiceRegistration<ScopeServiceCollector> mockScopeCollectorRegistration;
+	private MockEPackageLuceneIndex mockEPackageIndex;
+    private ServiceRegistration<EPackageLuceneIndex> mockEPackageIndexRegistration;
 
 	@BeforeEach
 	public void setup(@InjectBundleContext BundleContext context) throws Exception {
@@ -95,7 +99,15 @@ public class ModelAtlasExceptionMapperTest {
 		mockScopeCollectorRegistration = context.registerService(ScopeServiceCollector.class, mockCollector,
 				serviceProps);
 
-		Thread.sleep(200);
+		 // Register mock EPackageLuceneIndex
+        Dictionary<String, Object> indexProps = new Hashtable<>();
+        indexProps.put("service.ranking", Integer.MAX_VALUE);
+        mockEPackageIndex = new MockEPackageLuceneIndex();
+        mockEPackageIndexRegistration = context.registerService(EPackageLuceneIndex.class, mockEPackageIndex,
+                indexProps);
+
+        // Small delay to allow service registration to propagate
+        Thread.sleep(200);
 
 		TestHelper.ensureXMIFactory(resourceSet);
 
@@ -111,6 +123,11 @@ public class ModelAtlasExceptionMapperTest {
 			mockScopeCollectorRegistration = null;
 			Thread.sleep(200);
 		}
+		if (nonNull(mockEPackageIndexRegistration)) {
+            mockEPackageIndexRegistration.unregister();
+            mockEPackageIndexRegistration = null;
+            Thread.sleep(200);
+        }
 
 		if (nonNull(restClient)) {
 			restClient.close();

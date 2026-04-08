@@ -29,3 +29,4 @@
 	org.eclipse.fennec.model.atlas.management;version=snapshot,\
 	org.eclipse.fennec.model.atlas.workflow;version=snapshot,\
 	org.eclipse.fennec.model.atlas.schema.registry.api;version=snapshot,\
+	org.eclipse.fennec.model.atlas.management.lucene;version=snapshot

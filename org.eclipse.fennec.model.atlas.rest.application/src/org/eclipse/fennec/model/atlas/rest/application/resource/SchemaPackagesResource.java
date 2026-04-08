@@ -16,18 +16,26 @@ package org.eclipse.fennec.model.atlas.rest.application.resource;
 import java.io.UnsupportedEncodingException;
 import java.time.Instant;
 import java.util.Base64;
+import java.util.LinkedHashSet;
+import java.util.LinkedList;
 import java.util.List;
+import java.util.Set;
 
 import org.eclipse.emf.common.util.URI;
 import org.eclipse.emf.ecore.EObject;
 import org.eclipse.emf.ecore.EPackage;
 import org.eclipse.emf.ecore.util.EcoreUtil;
+import org.eclipse.fennec.model.atlas.management.lucene.epackage.EPackageLuceneIndex;
+import org.eclipse.fennec.model.atlas.management.lucene.epackage.EPackageLuceneIndex.SearchHit;
+import org.eclipse.fennec.model.atlas.management.lucene.epackage.EPackageLuceneIndex.SearchResult;
+import org.eclipse.fennec.model.atlas.management.lucene.epackage.EPackageSearchQuery;
 import org.eclipse.fennec.model.atlas.mgmt.management.ManagementFactory;
 import org.eclipse.fennec.model.atlas.mgmt.management.ObjectMetadata;
 import org.eclipse.fennec.model.atlas.mgmt.management.ObjectMetadataContainer;
 import org.eclipse.fennec.model.atlas.rest.application.filter.ModelAtlasRequestFilter;
 import org.eclipse.fennec.model.atlas.rest.model.StageTransitionRequest;
 import org.eclipse.fennec.model.atlas.runtime.RequireRuntime;
+import org.eclipse.fennec.model.atlas.wf.workflowapi.Scope;
 import org.eclipse.fennec.model.atlas.wf.workflowapi.ScopeService;
 import org.eclipse.fennec.model.atlas.workflow.ScopeServiceCollector;
 import org.osgi.framework.Version;
@@ -46,6 +54,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.DELETE;
+import jakarta.ws.rs.DefaultValue;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.POST;
 import jakarta.ws.rs.PUT;
@@ -80,6 +89,9 @@ public class SchemaPackagesResource {
 
     @Reference
     private ManagementFactory mgmtFactory;
+    
+    @Reference
+    EPackageLuceneIndex ePackageIndex;
 
     @Context
     private ContainerRequestContext requestContext;
@@ -257,6 +269,7 @@ public class SchemaPackagesResource {
                     ObjectMetadata metadata = scopeService
                             .updateInStageForRegistry(REGISTRY_NAME, stageName, ePackage, encodedNsURI, resolvedVersion)
                             .getValue();
+                    ePackageIndex.index(metadata, ePackage);
                     return Response.status(Response.Status.OK)
                             .header("Location",
                                     "/".concat(scopeName).concat("/schemas/stages/").concat(stageName).concat("?nsUri=")
@@ -277,6 +290,7 @@ public class SchemaPackagesResource {
             metadata.getProperties().put("nsUri", validatedNsUri);
 
             metadata = scopeService.uploadToStageForRegistry(REGISTRY_NAME, stageName, ePackage, metadata).getValue();
+            ePackageIndex.index(metadata, ePackage);
 
             return Response.status(Response.Status.OK)
                     .header("Location", "/".concat(scopeName).concat("/schemas/stages/").concat(stageName)
@@ -385,6 +399,7 @@ public class SchemaPackagesResource {
             ObjectMetadata metadata = scopeService
                     .updateInStageForRegistry(REGISTRY_NAME, stageName, ePackage, encodedNsUri, resolvedVersion)
                     .getValue();
+            ePackageIndex.index(metadata, ePackage);
             return Response.status(Response.Status.OK).entity(metadata).header("Content-Type", getResolvedMediaType()).build();
 
         } catch (IllegalArgumentException e) {
@@ -425,8 +440,11 @@ public class SchemaPackagesResource {
             }
             boolean deleted = scopeService.deleteFromStageForRegistry(REGISTRY_NAME, stageName, encodedNsUri)
                     .getValue();
-            if (deleted)
-                return Response.status(Response.Status.OK).build();
+            if (deleted) {
+            	ePackageIndex.remove(encodedNsUri);
+            	return Response.status(Response.Status.OK).build();
+            }
+               
             return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
                     .entity(String.format("Schema %s deletion failed but causes are unknown", nsUri)).build();
 
@@ -480,6 +498,106 @@ public class SchemaPackagesResource {
         }
 
     }
+    
+    @GET
+    @Path("/search")
+    @Produces
+    @Operation(summary = "Search packages across scope chain",
+        description = "Search for schema packages within the given scope and its "
+            + "parent scopes. Supports filtering by nsUri, name, prefix, "
+            + "classifier names, structural feature names and types. "
+            + "Returns ObjectMetadata with pagination.")
+    public Response searchPackages(
+        @PathParam("scopeName") String scopeName,
+        @QueryParam("nsUri") String nsUri,
+        @QueryParam("nsUriExact") String nsUriExact,
+        @QueryParam("name") String name,
+        @QueryParam("prefix") String prefix,
+        @QueryParam("classifier") String classifier,
+        @QueryParam("featureName") String featureName,
+        @QueryParam("featureType") String featureType,
+        @QueryParam("featureNameTypePair") String featureNameTypePair,
+        @QueryParam("stage") String stage,
+        @QueryParam("limit") @DefaultValue("50") int limit,
+        @QueryParam("offset") @DefaultValue("0") int offset) {
+
+        // 1. Resolve scope chain
+        Set<String> scopeChain = resolveScopeChain(scopeName);
+
+        // 2. Build search query
+        EPackageSearchQuery query = EPackageSearchQuery.create()
+            .scopes(scopeChain)
+            .stage(stage)
+            .nsUri(nsUri)
+            .nsUriExact(nsUriExact)
+            .name(name)
+            .nsPrefix(prefix)
+            .classifier(classifier)
+            .featureName(featureName)
+            .featureType(featureType)
+            .featureNameTypePair(featureNameTypePair)
+            .limit(limit)
+            .offset(offset)
+            .build();
+
+        // 3. Search EPackage index
+        SearchResult result = ePackageIndex.search(query);
+
+        if (result.hits().isEmpty()) {
+            return Response.noContent().build();
+        }
+
+        // 4. Retrieve ObjectMetadata for each hit using scope/stage from the index
+        List<ObjectMetadata> metadataList = resolveMetadata(result.hits(), scopeName);
+
+        // 5. Mark results from parent scopes as read-only
+        for (ObjectMetadata metadata : metadataList) {
+            if (!scopeName.equals(metadata.getScope())) {
+                metadata.setIsReadOnly(true);
+            }
+        }
+
+        // 6. Build response
+        ObjectMetadataContainer container = mgmtFactory.createObjectMetadataContainer();
+        container.getMetadata().addAll(metadataList);
+        return Response.ok(container)
+            .header("X-Total-Count", result.totalHits())
+            .header("X-Offset", offset)
+            .header("X-Limit", limit)
+            .build();
+    }
+    
+
+	/**
+	 * @param hits
+	 * @return
+	 */
+	private List<ObjectMetadata> resolveMetadata(List<SearchHit> hits, String scopeName) {
+		List<ObjectMetadata> allMetadata = new LinkedList<>();
+		hits.forEach(hit -> {
+			ScopeService<?> scopeService = getScopeServiceByScopeName(hit.scope());
+			ObjectMetadata metadata = scopeService.getMetadataFromStageForRegistry(REGISTRY_NAME, hit.stage(), hit.objectId());
+			if(metadata != null) {
+				if (!scopeName.equals(metadata.getScope())) {
+	                metadata.setIsReadOnly(true);
+	            }
+				allMetadata.add(metadata);
+			}
+		});
+		return allMetadata;
+	}
+
+	private Set<String> resolveScopeChain(String scopeName) {
+        Set<String> chain = new LinkedHashSet<>();
+        String current = scopeName;
+        while (current != null) {
+            chain.add(current);
+            Scope scope = scopeCollector.getScopeByName(current);
+            current = (scope != null) ? scope.getParentScope() : null;
+        }
+        return chain;
+    }
+    
 
     private String getResolvedMediaType() {
         return (String) requestContext.getProperty(ModelAtlasRequestFilter.RESOLVED_MEDIA_TYPE);
