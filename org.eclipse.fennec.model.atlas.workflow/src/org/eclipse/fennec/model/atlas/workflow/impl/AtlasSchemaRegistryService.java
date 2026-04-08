@@ -305,4 +305,13 @@ public class AtlasSchemaRegistryService implements RegistryService<EPackage> {
         return;
     }
 
+	/* 
+	 * (non-Javadoc)
+	 * @see org.eclipse.fennec.model.atlas.wf.workflowapi.RegistryService#listAll(java.lang.String)
+	 */
+	@Override
+	public List<ObjectMetadata> listAll(String scope) {
+		return listInFinalStage(scope);
+	}
+
 }

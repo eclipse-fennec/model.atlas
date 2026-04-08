@@ -391,6 +391,7 @@ public class ScopeServiceIntegrationTest {
         @SuppressWarnings({ "unchecked", "rawtypes" })
         @Test
         @DisplayName("Should include parent metadata in listAllForRegistry")
+		@RegistryConfiguration
         @WithFactoryConfiguration(factoryPid = "ScopeService", name = "test-scope-with-parent", location = "?", properties = {
                 @Property(key = "scope.name", value = SCOPE_NAME),
                 @Property(key = "scope.parent", value = PARENT_SCOPE_NAME),
@@ -471,6 +472,7 @@ public class ScopeServiceIntegrationTest {
         @SuppressWarnings({ "unchecked", "rawtypes" })
         @Test
         @DisplayName("Should delegate listAllForRegistry to RegistryService")
+        @RegistryConfiguration
         @WithFactoryConfiguration(factoryPid = "ScopeService", name = "test-scope", location = "?", properties = {
                 @Property(key = "scope.name", value = SCOPE_NAME), @Property(key = "scope.parent", value = ""),
                 @Property(key = "registryService.target", value = "(registry.name=" + REGISTRY_NAME + ")") })
@@ -505,6 +507,7 @@ public class ScopeServiceIntegrationTest {
         @SuppressWarnings({ "unchecked", "rawtypes" })
         @Test
         @DisplayName("Should throw exception for invalid registry in listAllForRegistry")
+        @RegistryConfiguration
         @WithFactoryConfiguration(factoryPid = "ScopeService", name = "test-scope", location = "?", properties = {
                 @Property(key = "scope.name", value = SCOPE_NAME), @Property(key = "scope.parent", value = ""),
                 @Property(key = "registryService.target", value = "(registry.name=" + REGISTRY_NAME + ")") })

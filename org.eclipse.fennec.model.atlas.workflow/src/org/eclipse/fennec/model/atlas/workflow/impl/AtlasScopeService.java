@@ -197,4 +197,14 @@ public class AtlasScopeService implements ScopeService<EPackage> {
         return;
     }
 
+	/* 
+	 * (non-Javadoc)
+	 * @see org.eclipse.fennec.model.atlas.wf.workflowapi.ScopeService#listAllForRegistry(java.lang.String)
+	 */
+	@Override
+	public List<ObjectMetadata> listAllForRegistry(String registry) {
+		validateRegistry(registry);
+		return atlasSchemaRegistryService.listAll(WorkflowConstants.ATLAS_SCOPE_NAME);
+	}
+
 }
