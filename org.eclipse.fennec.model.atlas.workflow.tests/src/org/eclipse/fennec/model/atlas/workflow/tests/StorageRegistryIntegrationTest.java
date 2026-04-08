@@ -17,7 +17,6 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import java.nio.file.Path;
 import java.util.Map;
 
 import org.eclipse.emf.common.util.EList;
@@ -29,38 +28,34 @@ import org.eclipse.fennec.model.atlas.mgmt.management.ObjectMetadata;
 import org.eclipse.fennec.model.atlas.mgmt.management.ObjectQuery;
 import org.eclipse.fennec.model.atlas.mgmt.management.ObjectStatus;
 import org.eclipse.fennec.model.atlas.workflow.tests.annotations.TestAnnotations.StorageRegistrySetup;
+import org.eclipse.fennec.model.atlas.workflow.tests.support.LuceneAwareTempDirExtension;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.junit.jupiter.api.io.TempDir;
 import org.osgi.test.common.annotation.InjectService;
+import org.osgi.test.junit5.cm.ConfigurationExtension;
 import org.osgi.test.junit5.context.BundleContextExtension;
 import org.osgi.test.junit5.service.ServiceExtension;
 
 /**
  * Integration test for StorageRegistry with real storage services.
- * 
+ *
  * <p>
  * This test verifies that the StorageRegistry correctly discovers and manages
  * storage services in a real OSGi environment with file-based storage backends.
  * </p>
  */
+@ExtendWith(LuceneAwareTempDirExtension.class)
 @ExtendWith(BundleContextExtension.class)
 @ExtendWith(ServiceExtension.class)
+@ExtendWith(ConfigurationExtension.class)
 class StorageRegistryIntegrationTest {
-
-    @TempDir
-    static Path tempDir;
 
     private ManagementFactory managementFactory;
 
     @BeforeEach
     void setUp() {
-        // Set temp directory system property for OSGi test configurations
-        System.setProperty("tempDir", tempDir.toString());
-
         managementFactory = ManagementFactory.eINSTANCE;
-
     }
 
     @Test

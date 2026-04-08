@@ -25,7 +25,6 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.lang.reflect.InvocationTargetException;
-import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Dictionary;
@@ -39,15 +38,14 @@ import org.eclipse.fennec.model.atlas.mgmt.management.ManagementFactory;
 import org.eclipse.fennec.model.atlas.mgmt.management.ObjectMetadata;
 import org.eclipse.fennec.model.atlas.wf.workflowapi.RegistryService;
 import org.eclipse.fennec.model.atlas.wf.workflowapi.ScopeService;
-import org.eclipse.fennec.model.atlas.workflow.tests.annotations.TestAnnotations;
 import org.eclipse.fennec.model.atlas.workflow.tests.annotations.TestAnnotations.RegistryConfiguration;
+import org.eclipse.fennec.model.atlas.workflow.tests.support.LuceneAwareTempDirExtension;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.junit.jupiter.api.io.TempDir;
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.ServiceRegistration;
 import org.osgi.service.cm.annotations.RequireConfigurationAdmin;
@@ -73,6 +71,7 @@ import org.osgi.util.promise.PromiseFactory;
  */
 @RequireEMF
 @RequireConfigurationAdmin
+@ExtendWith(LuceneAwareTempDirExtension.class)
 @ExtendWith(BundleContextExtension.class)
 @ExtendWith(ServiceExtension.class)
 @ExtendWith(ConfigurationExtension.class)
@@ -88,10 +87,6 @@ public class ScopeServiceIntegrationTest {
 	@InjectBundleContext
 	BundleContext bundleContext;
 
-	@TempDir
-	Path tempDir;
-
-
 	@SuppressWarnings("rawtypes")
 	private ServiceRegistration<RegistryService> mockRegistryRegistration;
 	private RegistryService<EObject> mockRegistryService;
@@ -99,9 +94,6 @@ public class ScopeServiceIntegrationTest {
 
 	@BeforeEach
 	void setUp() {
-		// Set system property for template argument resolution
-		System.setProperty(TestAnnotations.PROP_TEMP_DIR, tempDir.toString());
-
 		promiseFactory = new PromiseFactory(null);
 
 		// Create mock RegistryService
