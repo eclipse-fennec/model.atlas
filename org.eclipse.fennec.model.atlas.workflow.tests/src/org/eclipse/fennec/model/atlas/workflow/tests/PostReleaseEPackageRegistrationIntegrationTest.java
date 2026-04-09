@@ -17,7 +17,6 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import java.nio.file.Path;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
@@ -37,13 +36,10 @@ import org.eclipse.fennec.model.atlas.mgmt.api.EObjectStorageService;
 import org.eclipse.fennec.model.atlas.mgmt.management.ManagementFactory;
 import org.eclipse.fennec.model.atlas.mgmt.management.ObjectMetadata;
 import org.eclipse.fennec.model.atlas.workflow.PostReleaseActionService;
-import org.eclipse.fennec.model.atlas.workflow.tests.annotations.TestAnnotations;
 import org.eclipse.fennec.model.atlas.workflow.tests.annotations.TestAnnotations.PostActionStorageSetup;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
+import org.eclipse.fennec.model.atlas.workflow.tests.support.LuceneAwareTempDirExtension;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.junit.jupiter.api.io.TempDir;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.ServiceRegistration;
@@ -53,6 +49,7 @@ import org.osgi.service.typedevent.TypedEventHandler;
 import org.osgi.test.common.annotation.InjectBundleContext;
 import org.osgi.test.common.annotation.InjectService;
 import org.osgi.test.common.service.ServiceAware;
+import org.osgi.test.junit5.cm.ConfigurationExtension;
 import org.osgi.test.junit5.context.BundleContextExtension;
 import org.osgi.test.junit5.service.ServiceExtension;
 
@@ -68,14 +65,13 @@ import org.osgi.test.junit5.service.ServiceExtension;
  * @author Mark Hoffmann
  * @since 1.0.0
  */
+@ExtendWith(LuceneAwareTempDirExtension.class)
 @ExtendWith(BundleContextExtension.class)
 @ExtendWith(ServiceExtension.class)
+@ExtendWith(ConfigurationExtension.class)
 @ExtendWith(MockitoExtension.class)
 @RequireConfigurationAdmin
 public class PostReleaseEPackageRegistrationIntegrationTest {
-
-    @TempDir
-    Path tempDir;
 
     @InjectBundleContext
     BundleContext bundleContext;
@@ -83,18 +79,6 @@ public class PostReleaseEPackageRegistrationIntegrationTest {
     private static final String TEST_SCOPE = "test-scope";
     private static final String TEST_REGISTRY = "test-registry";
     private static final String TEST_STAGE = "release";
-
-    @BeforeEach
-    void setUp() {
-        // Set system property for template argument resolution
-        System.setProperty(TestAnnotations.PROP_TEMP_DIR, tempDir.toString());
-
-    }
-
-    @AfterEach
-    void tearDown() {
-
-    }
 
     @SuppressWarnings({ "rawtypes", "unchecked" })
     @Test

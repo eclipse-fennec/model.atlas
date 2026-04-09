@@ -106,6 +106,44 @@ public class SchemaPackagesResource {
     }
 
     // ======================
+    // All Schemas for Scope 
+    // ======================
+
+    /**
+     * List all packages in all the stages for this scope. Respects
+     * hierarchical visibility, including packages from parent scopes' released
+     * stages.
+     *
+     * @param scopeName the scope name
+     * @return List of SchemaPackage metadata objects
+     */
+    @GET
+    @Path("/all")
+    @Produces
+    @Operation(summary = "List all packages in scope", description = "List all packages in all the stages for this scope, including packages from parent scopes", responses = {
+            @ApiResponse(responseCode = "200", description = "Packages retrieved successfully", content = @Content(mediaType = MediaType.APPLICATION_JSON)),
+            @ApiResponse(responseCode = "204", description = "No Package found in scope final stage, nor in the parent final stage"),
+            @ApiResponse(responseCode = "400", description = "Scope not available, schema registry not available for scope, stage not available for registry or not a valid stage"),
+            @ApiResponse(responseCode = "500", description = "Internal server error") })
+    public Response listAllPackages(
+            @Parameter(description = "The scope name", required = true) @PathParam("scopeName") String scopeName) {
+
+        ScopeService<?> scopeService = getScopeServiceByScopeName(scopeName);
+        try {
+            List<ObjectMetadata> objectsMetadata = scopeService.listAllForRegistry(REGISTRY_NAME);
+            if (objectsMetadata.isEmpty())
+                return Response.status(Response.Status.NO_CONTENT).build();
+            ObjectMetadataContainer container = mgmtFactory.createObjectMetadataContainer();
+            container.getMetadata().addAll(objectsMetadata);
+            return Response.status(Response.Status.OK).entity(container).header("Content-Type", getResolvedMediaType()).build();
+        } catch (IllegalArgumentException e) {
+            return Response.status(Response.Status.BAD_REQUEST).entity(e.getMessage()).build();
+        } catch (Exception e) {
+            return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity(e.getMessage()).build();
+        }
+    }
+    
+    // ======================
     // Released Stage APIs (default)
     // ======================
 

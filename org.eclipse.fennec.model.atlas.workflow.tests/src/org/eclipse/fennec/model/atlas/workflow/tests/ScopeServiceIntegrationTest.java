@@ -25,7 +25,6 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.lang.reflect.InvocationTargetException;
-import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Dictionary;
@@ -39,15 +38,14 @@ import org.eclipse.fennec.model.atlas.mgmt.management.ManagementFactory;
 import org.eclipse.fennec.model.atlas.mgmt.management.ObjectMetadata;
 import org.eclipse.fennec.model.atlas.wf.workflowapi.RegistryService;
 import org.eclipse.fennec.model.atlas.wf.workflowapi.ScopeService;
-import org.eclipse.fennec.model.atlas.workflow.tests.annotations.TestAnnotations;
 import org.eclipse.fennec.model.atlas.workflow.tests.annotations.TestAnnotations.RegistryConfiguration;
+import org.eclipse.fennec.model.atlas.workflow.tests.support.LuceneAwareTempDirExtension;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.junit.jupiter.api.io.TempDir;
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.ServiceRegistration;
 import org.osgi.service.cm.annotations.RequireConfigurationAdmin;
@@ -73,6 +71,7 @@ import org.osgi.util.promise.PromiseFactory;
  */
 @RequireEMF
 @RequireConfigurationAdmin
+@ExtendWith(LuceneAwareTempDirExtension.class)
 @ExtendWith(BundleContextExtension.class)
 @ExtendWith(ServiceExtension.class)
 @ExtendWith(ConfigurationExtension.class)
@@ -88,10 +87,6 @@ public class ScopeServiceIntegrationTest {
 	@InjectBundleContext
 	BundleContext bundleContext;
 
-	@TempDir
-	Path tempDir;
-
-
 	@SuppressWarnings("rawtypes")
 	private ServiceRegistration<RegistryService> mockRegistryRegistration;
 	private RegistryService<EObject> mockRegistryService;
@@ -99,9 +94,6 @@ public class ScopeServiceIntegrationTest {
 
 	@BeforeEach
 	void setUp() {
-		// Set system property for template argument resolution
-		System.setProperty(TestAnnotations.PROP_TEMP_DIR, tempDir.toString());
-
 		promiseFactory = new PromiseFactory(null);
 
 		// Create mock RegistryService
@@ -384,10 +376,57 @@ public class ScopeServiceIntegrationTest {
 			assertTrue(result.stream().anyMatch(m -> "scoped-object".equals(m.getObjectId())));
 			assertTrue(result.stream().anyMatch(m -> "parent-object".equals(m.getObjectId())));
 
-			verify(mockRegistryService).listInFinalStage(SCOPE_NAME);
-			verify(mockRegistryService).listInFinalStage(PARENT_SCOPE_NAME);
-		}
-	}
+            verify(mockRegistryService).listInFinalStage(SCOPE_NAME);
+            verify(mockRegistryService).listInFinalStage(PARENT_SCOPE_NAME);
+        }
+
+        @SuppressWarnings({ "unchecked", "rawtypes" })
+        @Test
+        @DisplayName("Should include parent metadata in listAllForRegistry")
+		@RegistryConfiguration
+        @WithFactoryConfiguration(factoryPid = "ScopeService", name = "test-scope-with-parent", location = "?", properties = {
+                @Property(key = "scope.name", value = SCOPE_NAME),
+                @Property(key = "scope.parent", value = PARENT_SCOPE_NAME),
+                @Property(key = "registryService.target", value = "(registry.name=" + REGISTRY_NAME + ")") })
+        void shouldIncludeParentMetadataInListAll(
+                @InjectService(cardinality = 0, filter = "(scope.name=" + SCOPE_NAME
+                        + ")") ServiceAware<ScopeService> scopeAware)
+                throws InterruptedException, InvocationTargetException {
+
+            ScopeService<EObject> scopeService = scopeAware.waitForService(5000);
+            assertNotNull(scopeService);
+
+            ObjectMetadata scopedMetadata = ManagementFactory.eINSTANCE.createObjectMetadata();
+            scopedMetadata.setObjectId("scoped-object");
+            scopedMetadata.setStage("draft");
+
+            ObjectMetadata parentMetadata = ManagementFactory.eINSTANCE.createObjectMetadata();
+            parentMetadata.setObjectId("parent-object");
+            parentMetadata.setStage("release");
+
+            when(mockRegistryService.listAll(anyString())).thenAnswer(invocation -> {
+                String argument = invocation.getArgument(0);
+
+                if (argument.equals(SCOPE_NAME)) {
+                    return new ArrayList<>(List.of(scopedMetadata));
+                } else if (argument.equals(PARENT_SCOPE_NAME)) {
+                    return new ArrayList<>(List.of(parentMetadata));
+                }
+                throw new IllegalArgumentException("Unexpected argument: " + argument);
+            });
+
+            // Act
+            List<ObjectMetadata> result = scopeService.listAllForRegistry(REGISTRY_NAME);
+
+            // Assert
+            assertEquals(2, result.size());
+            assertTrue(result.stream().anyMatch(m -> "scoped-object".equals(m.getObjectId())));
+            assertTrue(result.stream().anyMatch(m -> "parent-object".equals(m.getObjectId())));
+
+            verify(mockRegistryService).listAll(SCOPE_NAME);
+            verify(mockRegistryService).listAll(PARENT_SCOPE_NAME);
+        }
+    }
 
 	@Nested
 	@DisplayName("List and Delete Operations Tests")
@@ -422,17 +461,73 @@ public class ScopeServiceIntegrationTest {
 			verify(mockRegistryService).listInStage(SCOPE_NAME, STAGE_NAME);
 		}
 
-		@SuppressWarnings({ "unchecked", "rawtypes" })
-		@Test
-		@DisplayName("Should delegate delete to RegistryService")
-		@RegistryConfiguration
-		@WithFactoryConfiguration(factoryPid = "ScopeService", name = "test-scope", location = "?", properties = {
-				@Property(key = "scope.name", value = SCOPE_NAME), @Property(key = "scope.parent", value = ""),
-				@Property(key = "registryService.target", value = "(registry.name=" + REGISTRY_NAME + ")") })
-		void shouldDelegateDelete(
-				@InjectService(cardinality = 0, filter = "(scope.name=" + SCOPE_NAME
-				+ ")") ServiceAware<ScopeService> scopeAware)
-						throws InterruptedException, InvocationTargetException {
+        @SuppressWarnings({ "unchecked", "rawtypes" })
+        @Test
+        @DisplayName("Should delegate listAllForRegistry to RegistryService")
+        @RegistryConfiguration
+        @WithFactoryConfiguration(factoryPid = "ScopeService", name = "test-scope", location = "?", properties = {
+                @Property(key = "scope.name", value = SCOPE_NAME), @Property(key = "scope.parent", value = ""),
+                @Property(key = "registryService.target", value = "(registry.name=" + REGISTRY_NAME + ")") })
+        void shouldDelegateListAll(
+                @InjectService(cardinality = 0, filter = "(scope.name=" + SCOPE_NAME
+                        + ")") ServiceAware<ScopeService> scopeAware)
+                throws InterruptedException, InvocationTargetException {
+
+            ScopeService<EObject> scopeService = scopeAware.waitForService(5000);
+            assertNotNull(scopeService);
+
+            ObjectMetadata metadata1 = ManagementFactory.eINSTANCE.createObjectMetadata();
+            metadata1.setObjectId("obj1");
+            metadata1.setStage("draft");
+            ObjectMetadata metadata2 = ManagementFactory.eINSTANCE.createObjectMetadata();
+            metadata2.setObjectId("obj2");
+            metadata2.setStage("approved");
+            List<ObjectMetadata> expectedList = new ArrayList<>(Arrays.asList(metadata1, metadata2));
+
+            when(mockRegistryService.listAll(SCOPE_NAME)).thenReturn(expectedList);
+
+            // Act
+            List<ObjectMetadata> result = scopeService.listAllForRegistry(REGISTRY_NAME);
+
+            // Assert
+            assertEquals(2, result.size());
+            assertTrue(result.stream().anyMatch(m -> "obj1".equals(m.getObjectId())));
+            assertTrue(result.stream().anyMatch(m -> "obj2".equals(m.getObjectId())));
+            verify(mockRegistryService).listAll(SCOPE_NAME);
+        }
+
+        @SuppressWarnings({ "unchecked", "rawtypes" })
+        @Test
+        @DisplayName("Should throw exception for invalid registry in listAllForRegistry")
+        @RegistryConfiguration
+        @WithFactoryConfiguration(factoryPid = "ScopeService", name = "test-scope", location = "?", properties = {
+                @Property(key = "scope.name", value = SCOPE_NAME), @Property(key = "scope.parent", value = ""),
+                @Property(key = "registryService.target", value = "(registry.name=" + REGISTRY_NAME + ")") })
+        void shouldThrowExceptionForInvalidRegistryInListAll(
+                @InjectService(cardinality = 0, filter = "(scope.name=" + SCOPE_NAME
+                        + ")") ServiceAware<ScopeService> scopeAware)
+                throws InterruptedException, InvocationTargetException {
+
+            ScopeService<EObject> scopeService = scopeAware.waitForService(5000);
+            assertNotNull(scopeService);
+
+            IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
+                    () -> scopeService.listAllForRegistry("invalid-registry"));
+
+            assertTrue(exception.getMessage().contains("not a valid registry"));
+        }
+
+        @SuppressWarnings({ "unchecked", "rawtypes" })
+        @Test
+        @DisplayName("Should delegate delete to RegistryService")
+        @RegistryConfiguration
+        @WithFactoryConfiguration(factoryPid = "ScopeService", name = "test-scope", location = "?", properties = {
+                @Property(key = "scope.name", value = SCOPE_NAME), @Property(key = "scope.parent", value = ""),
+                @Property(key = "registryService.target", value = "(registry.name=" + REGISTRY_NAME + ")") })
+        void shouldDelegateDelete(
+                @InjectService(cardinality = 0, filter = "(scope.name=" + SCOPE_NAME
+                        + ")") ServiceAware<ScopeService> scopeAware)
+                throws InterruptedException, InvocationTargetException {
 
 			ScopeService<EObject> scopeService = scopeAware.waitForService(5000);
 			assertNotNull(scopeService);
