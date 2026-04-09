@@ -38,6 +38,7 @@ import org.eclipse.fennec.model.atlas.mgmt.management.ManagementFactory;
 import org.eclipse.fennec.model.atlas.mgmt.management.ObjectMetadata;
 import org.eclipse.fennec.model.atlas.wf.workflowapi.RegistryService;
 import org.eclipse.fennec.model.atlas.wf.workflowapi.ScopeService;
+import org.eclipse.fennec.model.atlas.workflow.tests.annotations.TestAnnotations.EPackageLuceneIndexSetup;
 import org.eclipse.fennec.model.atlas.workflow.tests.annotations.TestAnnotations.RegistryConfiguration;
 import org.eclipse.fennec.model.atlas.workflow.tests.support.LuceneAwareTempDirExtension;
 import org.junit.jupiter.api.AfterEach;
@@ -132,6 +133,7 @@ public class ScopeServiceIntegrationTest {
 		@Test
 		@DisplayName("Should delegate upload to RegistryService with correct scope")
 		@RegistryConfiguration
+		@EPackageLuceneIndexSetup
 		@WithFactoryConfiguration(factoryPid = "ScopeService", name = "test-scope", location = "?", properties = {
 				@Property(key = "scope.name", value = SCOPE_NAME), @Property(key = "scope.parent", value = ""),
 				@Property(key = "registryService.target", value = "(registry.name=" + REGISTRY_NAME + ")") })
@@ -170,6 +172,7 @@ public class ScopeServiceIntegrationTest {
 		@Test
 		@DisplayName("Should delegate getMetadataFromStage to RegistryService")
 		@RegistryConfiguration
+		@EPackageLuceneIndexSetup
 		@WithFactoryConfiguration(factoryPid = "ScopeService", name = "test-scope", location = "?", properties = {
 				@Property(key = "scope.name", value = SCOPE_NAME), @Property(key = "scope.parent", value = ""),
 				@Property(key = "registryService.target", value = "(registry.name=" + REGISTRY_NAME + ")") })
@@ -198,6 +201,7 @@ public class ScopeServiceIntegrationTest {
 		@Test
 		@DisplayName("Should delegate transition to RegistryService")
 		@RegistryConfiguration
+		@EPackageLuceneIndexSetup
 		@WithFactoryConfiguration(factoryPid = "ScopeService", name = "test-scope", location = "?", properties = {
 				@Property(key = "scope.name", value = SCOPE_NAME), @Property(key = "scope.parent", value = ""),
 				@Property(key = "registryService.target", value = "(registry.name=" + REGISTRY_NAME + ")") })
@@ -234,6 +238,7 @@ public class ScopeServiceIntegrationTest {
 		@Test
 		@DisplayName("Should validate existing registry")
 		@RegistryConfiguration
+		@EPackageLuceneIndexSetup
 		@WithFactoryConfiguration(factoryPid = "ScopeService", name = "test-scope", location = "?", properties = {
 				@Property(key = "scope.name", value = SCOPE_NAME), @Property(key = "scope.parent", value = ""),
 				@Property(key = "registryService.target", value = "(registry.name=" + REGISTRY_NAME + ")") })
@@ -252,6 +257,7 @@ public class ScopeServiceIntegrationTest {
 		@Test
 		@DisplayName("Should return all registry names")
 		@RegistryConfiguration
+		@EPackageLuceneIndexSetup
 		@WithFactoryConfiguration(factoryPid = "ScopeService", name = "test-scope", location = "?", properties = {
 				@Property(key = "scope.name", value = SCOPE_NAME), @Property(key = "scope.parent", value = ""),
 				@Property(key = "registryService.target", value = "(registry.name=" + REGISTRY_NAME + ")") })
@@ -273,6 +279,7 @@ public class ScopeServiceIntegrationTest {
 		@Test
 		@DisplayName("Should throw exception for invalid registry")
 		@RegistryConfiguration
+		@EPackageLuceneIndexSetup
 		@WithFactoryConfiguration(factoryPid = "ScopeService", name = "test-scope", location = "?", properties = {
 				@Property(key = "scope.name", value = SCOPE_NAME), @Property(key = "scope.parent", value = ""),
 				@Property(key = "registryService.target", value = "(registry.name=" + REGISTRY_NAME + ")") })
@@ -302,6 +309,7 @@ public class ScopeServiceIntegrationTest {
 		@Test
 		@DisplayName("Should fallback to parent scope when metadata not found")
 		@RegistryConfiguration
+		@EPackageLuceneIndexSetup
 		@WithFactoryConfiguration(factoryPid = "ScopeService", name = "test-scope-with-parent", location = "?", properties = {
 				@Property(key = "scope.name", value = SCOPE_NAME),
 				@Property(key = "scope.parent", value = PARENT_SCOPE_NAME),
@@ -339,6 +347,7 @@ public class ScopeServiceIntegrationTest {
 		@Test
 		@DisplayName("Should include parent metadata in listInFinalStage")
 		@RegistryConfiguration
+		@EPackageLuceneIndexSetup
 		@WithFactoryConfiguration(factoryPid = "ScopeService", name = "test-scope-with-parent", location = "?", properties = {
 				@Property(key = "scope.name", value = SCOPE_NAME),
 				@Property(key = "scope.parent", value = PARENT_SCOPE_NAME),
@@ -384,6 +393,7 @@ public class ScopeServiceIntegrationTest {
         @Test
         @DisplayName("Should include parent metadata in listAllForRegistry")
 		@RegistryConfiguration
+		@EPackageLuceneIndexSetup
         @WithFactoryConfiguration(factoryPid = "ScopeService", name = "test-scope-with-parent", location = "?", properties = {
                 @Property(key = "scope.name", value = SCOPE_NAME),
                 @Property(key = "scope.parent", value = PARENT_SCOPE_NAME),
@@ -436,6 +446,7 @@ public class ScopeServiceIntegrationTest {
 		@Test
 		@DisplayName("Should delegate listInStage to RegistryService")
 		@RegistryConfiguration
+		@EPackageLuceneIndexSetup
 		@WithFactoryConfiguration(factoryPid = "ScopeService", name = "test-scope", location = "?", properties = {
 				@Property(key = "scope.name", value = SCOPE_NAME), @Property(key = "scope.parent", value = ""),
 				@Property(key = "registryService.target", value = "(registry.name=" + REGISTRY_NAME + ")") })
@@ -465,6 +476,7 @@ public class ScopeServiceIntegrationTest {
         @Test
         @DisplayName("Should delegate listAllForRegistry to RegistryService")
         @RegistryConfiguration
+        @EPackageLuceneIndexSetup
         @WithFactoryConfiguration(factoryPid = "ScopeService", name = "test-scope", location = "?", properties = {
                 @Property(key = "scope.name", value = SCOPE_NAME), @Property(key = "scope.parent", value = ""),
                 @Property(key = "registryService.target", value = "(registry.name=" + REGISTRY_NAME + ")") })
@@ -500,6 +512,7 @@ public class ScopeServiceIntegrationTest {
         @Test
         @DisplayName("Should throw exception for invalid registry in listAllForRegistry")
         @RegistryConfiguration
+        @EPackageLuceneIndexSetup
         @WithFactoryConfiguration(factoryPid = "ScopeService", name = "test-scope", location = "?", properties = {
                 @Property(key = "scope.name", value = SCOPE_NAME), @Property(key = "scope.parent", value = ""),
                 @Property(key = "registryService.target", value = "(registry.name=" + REGISTRY_NAME + ")") })
@@ -521,6 +534,7 @@ public class ScopeServiceIntegrationTest {
         @Test
         @DisplayName("Should delegate delete to RegistryService")
         @RegistryConfiguration
+        @EPackageLuceneIndexSetup
         @WithFactoryConfiguration(factoryPid = "ScopeService", name = "test-scope", location = "?", properties = {
                 @Property(key = "scope.name", value = SCOPE_NAME), @Property(key = "scope.parent", value = ""),
                 @Property(key = "registryService.target", value = "(registry.name=" + REGISTRY_NAME + ")") })

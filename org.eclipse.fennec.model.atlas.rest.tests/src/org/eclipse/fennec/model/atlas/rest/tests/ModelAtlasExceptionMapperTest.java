@@ -19,16 +19,18 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.io.IOException;
+import java.nio.file.Path;
 import java.util.Dictionary;
 import java.util.Hashtable;
 import java.util.concurrent.TimeUnit;
 
 import org.eclipse.emf.ecore.resource.ResourceSet;
 import org.eclipse.fennec.emf.osgi.annotation.require.RequireEMF;
-import org.eclipse.fennec.model.atlas.rest.tests.helper.MockTestHelper.MockEPackageLuceneIndex;
 import org.eclipse.fennec.model.atlas.rest.tests.helper.MockTestHelper.MockScopeServiceCollector;
-import org.eclipse.fennec.model.atlas.management.lucene.epackage.EPackageLuceneIndex;
 import org.eclipse.fennec.model.atlas.rest.tests.helper.ResourceAware;
+import org.eclipse.fennec.model.atlas.rest.tests.helper.TestAnnotations;
+import org.eclipse.fennec.model.atlas.rest.tests.helper.TestAnnotations.ParentScopeServiceSetup;
 import org.eclipse.fennec.model.atlas.rest.tests.helper.TestHelper;
 import org.eclipse.fennec.model.atlas.wf.workflowapi.ScopeService;
 import org.eclipse.fennec.model.atlas.workflow.ScopeServiceCollector;
@@ -37,6 +39,7 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.api.io.TempDir;
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.ServiceRegistration;
 import org.osgi.service.cm.annotations.RequireConfigurationAdmin;
@@ -75,21 +78,25 @@ import jakarta.ws.rs.core.Response;
 public class ModelAtlasExceptionMapperTest {
 
 	private static final String BASE_URL = "http://localhost:8185/rest";
-	private static final String TEST_SCOPE_NAME = "test-scope";
 
 	@InjectService(filter = "(emf.name=workflowapi)")
 	ResourceSet resourceSet;
+
+	@TempDir
+	Path tempDir;
 
 	@InjectService
 	ClientBuilder clientBuilder;
 
 	private Client restClient;
 	private ServiceRegistration<ScopeServiceCollector> mockScopeCollectorRegistration;
-	private MockEPackageLuceneIndex mockEPackageIndex;
-    private ServiceRegistration<EPackageLuceneIndex> mockEPackageIndexRegistration;
 
 	@BeforeEach
 	public void setup(@InjectBundleContext BundleContext context) throws Exception {
+
+		// Set system property for template argument resolution
+		System.setProperty(TestAnnotations.PROP_TEMP_DIR, tempDir.toString());
+
 		restClient = clientBuilder.build();
 
 		Dictionary<String, Object> serviceProps = new Hashtable<>();
@@ -99,18 +106,18 @@ public class ModelAtlasExceptionMapperTest {
 		mockScopeCollectorRegistration = context.registerService(ScopeServiceCollector.class, mockCollector,
 				serviceProps);
 
-		 // Register mock EPackageLuceneIndex
-        Dictionary<String, Object> indexProps = new Hashtable<>();
-        indexProps.put("service.ranking", Integer.MAX_VALUE);
-        mockEPackageIndex = new MockEPackageLuceneIndex();
-        mockEPackageIndexRegistration = context.registerService(EPackageLuceneIndex.class, mockEPackageIndex,
-                indexProps);
+		// Register mock EPackageLuceneIndex
+		Dictionary<String, Object> indexProps = new Hashtable<>();
+		indexProps.put("service.ranking", Integer.MAX_VALUE);
 
-        // Small delay to allow service registration to propagate
-        Thread.sleep(200);
+
+		// Small delay to allow service registration to propagate
+		Thread.sleep(200);
 
 		TestHelper.ensureXMIFactory(resourceSet);
+	}
 
+	private void ensureResourceAvailability(BundleContext context) throws InterruptedException {
 		ResourceAware resourceAware = ResourceAware.create(context, "SchemaPackagesResource");
 		assertTrue(resourceAware.waitForResource(15, TimeUnit.SECONDS),
 				"SchemaPackagesResource should be registered within 15 seconds.");
@@ -123,11 +130,7 @@ public class ModelAtlasExceptionMapperTest {
 			mockScopeCollectorRegistration = null;
 			Thread.sleep(200);
 		}
-		if (nonNull(mockEPackageIndexRegistration)) {
-            mockEPackageIndexRegistration.unregister();
-            mockEPackageIndexRegistration = null;
-            Thread.sleep(200);
-        }
+
 
 		if (nonNull(restClient)) {
 			restClient.close();
@@ -138,7 +141,10 @@ public class ModelAtlasExceptionMapperTest {
 	// ========== Structured ErrorResponse Format Tests ==========
 
 	@Test
-	public void testErrorResponse_HasStructuredFormat() {
+	@ParentScopeServiceSetup
+	public void testErrorResponse_HasStructuredFormat(@InjectBundleContext BundleContext context) throws InterruptedException, IOException {
+
+		ensureResourceAvailability(context);
 		Response response = restClient.target(BASE_URL)
 				.path(ThrowingScopeServiceCollector.THROWING_SCOPE).path("schema")
 				.request("application/json")
@@ -156,7 +162,10 @@ public class ModelAtlasExceptionMapperTest {
 	// ========== Client Error (4xx) Tests ==========
 
 	@Test
-	public void testClientError_PreservesMessage() {
+	@ParentScopeServiceSetup
+	public void testClientError_PreservesMessage(@InjectBundleContext BundleContext context) throws InterruptedException, IOException {
+
+		ensureResourceAvailability(context);
 		Response response = restClient.target(BASE_URL)
 				.path("non-existent-scope").path("schema")
 				.request("application/json")
@@ -170,9 +179,12 @@ public class ModelAtlasExceptionMapperTest {
 	}
 
 	@Test
-	public void testClientError_UnsupportedMediaType() {
+	@ParentScopeServiceSetup
+	public void testClientError_UnsupportedMediaType(@InjectBundleContext BundleContext context) throws InterruptedException, IOException {
+
+		ensureResourceAvailability(context);
 		Response response = restClient.target(BASE_URL)
-				.path(TEST_SCOPE_NAME).path("schema")
+				.path(TestAnnotations.TEST_SCOPE_NAME).path("schema")
 				.queryParam("mediaType", "application/unsupported")
 				.request("application/json")
 				.get();
@@ -188,7 +200,10 @@ public class ModelAtlasExceptionMapperTest {
 	// ========== Server Error (5xx) Tests ==========
 
 	@Test
-	public void testServerError_ReturnsGenericMessage() {
+	@ParentScopeServiceSetup
+	public void testServerError_ReturnsGenericMessage(@InjectBundleContext BundleContext context) throws InterruptedException, IOException {
+
+		ensureResourceAvailability(context);
 		Response response = restClient.target(BASE_URL)
 				.path("throw-runtime-exception").path("schema")
 				.request("application/json")
@@ -203,7 +218,10 @@ public class ModelAtlasExceptionMapperTest {
 	}
 
 	@Test
-	public void testServerError_DoesNotLeakExceptionMessage() {
+	@ParentScopeServiceSetup
+	public void testServerError_DoesNotLeakExceptionMessage(@InjectBundleContext BundleContext context) throws InterruptedException, IOException {
+
+		ensureResourceAvailability(context);
 		Response response = restClient.target(BASE_URL)
 				.path("throw-runtime-exception").path("schema")
 				.request("application/json")
@@ -217,7 +235,10 @@ public class ModelAtlasExceptionMapperTest {
 	}
 
 	@Test
-	public void testServerError_DoesNotLeakStackTrace() {
+	@ParentScopeServiceSetup
+	public void testServerError_DoesNotLeakStackTrace(@InjectBundleContext BundleContext context) throws InterruptedException, IOException {
+
+		ensureResourceAvailability(context);
 		Response response = restClient.target(BASE_URL)
 				.path("throw-runtime-exception").path("schema")
 				.request("application/json")
@@ -235,7 +256,10 @@ public class ModelAtlasExceptionMapperTest {
 	}
 
 	@Test
-	public void testServerError_HasStructuredFormat() {
+	@ParentScopeServiceSetup
+	public void testServerError_HasStructuredFormat(@InjectBundleContext BundleContext context) throws InterruptedException, IOException {
+
+		ensureResourceAvailability(context);
 		Response response = restClient.target(BASE_URL)
 				.path("throw-runtime-exception").path("schema")
 				.request("application/json")

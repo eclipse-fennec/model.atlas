@@ -16,6 +16,8 @@ Fennec Model Atlas is a dynamic EMF model management system that provides a REST
   - [Base URL and Swagger UI](#base-url-and-swagger-ui)
   - [Scopes API](#scopes-api)
   - [Schema Packages API](#schema-packages-api)
+    - [List All Packages](#list-all-packages)
+    - [Schema Search](#schema-search)
   - [Object Storage API](#object-storage-api)
   - [Model Converter API](#model-converter-api)
   - [Object Validation API](#object-validation-api)
@@ -256,9 +258,6 @@ Manage EMF EPackage schemas with full CRUD and stage transitions. The Schema API
 # List all released schemas (includes parent scope schemas)
 curl http://localhost:8080/rest/my-tenant/schema
 
-# List all schemas across all stages (includes parent scope schemas)
-curl http://localhost:8080/rest/my-tenant/schema/all
-
 # List schemas in a specific stage
 curl http://localhost:8080/rest/my-tenant/schema/stages/draft
 
@@ -292,6 +291,101 @@ curl -X POST "http://localhost:8080/rest/my-tenant/schema/stages/draft/actions/t
 ```
 
 > Full endpoint documentation: [README-SchemaPackages.md](../org.eclipse.fennec.model.atlas.rest.application/README-SchemaPackages.md)
+
+#### List All Packages
+
+**Endpoint**: `GET /{scopeName}/schema/all`
+
+List all schema packages across all stages for a scope, including packages from parent scopes' released stages. Unlike `GET /{scopeName}/schema` (which only returns packages in the final/released stage), this endpoint returns packages in every stage (draft, approved, release, etc.).
+
+```bash
+# List all schemas across all stages (includes parent scope schemas)
+curl http://localhost:8080/rest/my-tenant/schema/all
+```
+
+**Response** (`200 OK`): Returns an `ObjectMetadataContainer` with all packages. Returns `204 No Content` if no packages exist in any stage.
+
+#### Schema Search
+
+**Endpoint**: `GET /{scopeName}/schema/search`
+
+Search for schema packages across a scope and its entire parent chain using EPackage-specific filters. The search is powered by a dedicated Lucene index that indexes EPackage metadata (namespace URI, classifiers, structural features) at upload time.
+
+**Scope chain traversal**: The search automatically resolves the full scope hierarchy. For example, searching in scope `tenant-a` (with parent `division-x` and grandparent `atlas`) queries across all three scopes. Results from parent scopes are marked as read-only.
+
+**Query parameters:**
+
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `nsUri` | String | | Partial match on namespace URI (e.g., `sensors` matches `http://example.com/sensors/1.0`) |
+| `nsUriExact` | String | | Exact match on namespace URI |
+| `name` | String | | Partial match on package name |
+| `prefix` | String | | Partial match on namespace prefix |
+| `classifier` | String | | Full-text search on classifier names (EClass, EEnum, EDataType) |
+| `featureName` | String | | Full-text search on structural feature names (EAttribute, EReference) |
+| `featureType` | String | | Full-text search on structural feature type names (e.g., `EString`, `Person`) |
+| `featureNameTypePair` | String | | Full-text search on combined `name:type` pairs (e.g., `friend:Person`) |
+| `stage` | String | | Filter by stage. If omitted, searches across all stages |
+| `limit` | Integer | 50 | Maximum results (max 500) |
+| `offset` | Integer | 0 | Number of results to skip |
+
+All filter parameters are optional. When multiple filters are provided, they are combined with AND logic.
+
+**Response headers:**
+
+| Header | Description |
+|--------|-------------|
+| `X-Total-Count` | Total number of matching results (before pagination) |
+| `X-Offset` | Current offset |
+| `X-Limit` | Applied limit |
+
+**Examples:**
+
+```bash
+# Find all packages containing a "Customer" classifier
+curl "http://localhost:8080/rest/my-tenant/schema/search?classifier=Customer"
+
+# Search by partial namespace URI with pagination
+curl "http://localhost:8080/rest/my-tenant/schema/search?nsUri=sensors&limit=20&offset=0"
+
+# Find packages with a structural feature named "temperature"
+curl "http://localhost:8080/rest/my-tenant/schema/search?featureName=temperature"
+
+# Find packages referencing a "Person" type
+curl "http://localhost:8080/rest/my-tenant/schema/search?featureType=Person"
+
+# Precise search: packages with a feature named "friend" of type "Person"
+curl "http://localhost:8080/rest/my-tenant/schema/search?featureNameTypePair=friend:Person"
+
+# Combined filters: packages with prefix "sensors" containing a "Reading" classifier
+# that has an EString feature, in approved stage
+curl "http://localhost:8080/rest/my-tenant/schema/search?prefix=sensors&classifier=Reading&featureType=EString&stage=approved"
+```
+
+**Response** (`200 OK`):
+
+```json
+{
+  "containerId": "search-results",
+  "metadata": [
+    {
+      "objectId": "aHR0cDovL2V4YW1wbGUuY29tL3NlbnNvcnMvMS4w",
+      "objectName": "SensorModel",
+      "stage": "approved",
+      "scope": "tenant-a",
+      "version": "1.0.0",
+      "status": "APPROVED",
+      "properties": {
+        "nsUri": "http://example.com/sensors/1.0"
+      }
+    }
+  ]
+}
+```
+
+Returns `204 No Content` if no packages match, or `400 Bad Request` for invalid parameters.
+
+> For details on the indexing design and search field semantics, see the [EPackage Lucene Indexing design document](design/epackage-lucene-indexing_v2.md).
 
 ### Object Storage API
 

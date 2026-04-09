@@ -613,8 +613,10 @@ public class SchemaPackagesResource {
 	private List<ObjectMetadata> resolveMetadata(List<SearchHit> hits, String scopeName) {
 		List<ObjectMetadata> allMetadata = new LinkedList<>();
 		hits.forEach(hit -> {
+			
 			ScopeService<?> scopeService = getScopeServiceByScopeName(hit.scope());
-			ObjectMetadata metadata = scopeService.getMetadataFromStageForRegistry(REGISTRY_NAME, hit.stage(), hit.objectId());
+			ObjectMetadata metadata = scopeService.getMetadataFromStageForRegistry(hit.registry(), hit.stage(), hit.objectId());
+			
 			if(metadata != null) {
 				if (!scopeName.equals(metadata.getScope())) {
 	                metadata.setIsReadOnly(true);

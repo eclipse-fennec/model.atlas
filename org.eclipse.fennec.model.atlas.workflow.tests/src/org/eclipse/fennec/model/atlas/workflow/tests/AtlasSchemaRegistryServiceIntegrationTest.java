@@ -30,6 +30,7 @@ import org.eclipse.fennec.model.atlas.wf.workflowapi.Registry;
 import org.eclipse.fennec.model.atlas.wf.workflowapi.RegistryService;
 import org.eclipse.fennec.model.atlas.wf.workflowapi.Stage;
 import org.eclipse.fennec.model.atlas.workflow.WorkflowConstants;
+import org.eclipse.fennec.model.atlas.workflow.tests.annotations.TestAnnotations.EPackageLuceneIndexSetup;
 import org.eclipse.fennec.model.atlas.workflow.tests.annotations.TestAnnotations.RegistryConfiguration;
 import org.eclipse.fennec.model.atlas.workflow.tests.support.LuceneAwareTempDirExtension;
 import org.junit.jupiter.api.DisplayName;
@@ -69,6 +70,7 @@ public class AtlasSchemaRegistryServiceIntegrationTest {
 		@Test
 		@DisplayName("Should be registered as RegistryService with registry.name=atlas-schema-registry")
 		@RegistryConfiguration
+		@EPackageLuceneIndexSetup
 		void shouldBeRegisteredWithAtlasSchemaRegistryName(
 				@InjectService(cardinality = 0, filter = "(registry.name=" + WorkflowConstants.ATLAS_SCHEMA_REGISTRY_NAME + ")")
 				ServiceAware<RegistryService> registryAware)
@@ -81,6 +83,7 @@ public class AtlasSchemaRegistryServiceIntegrationTest {
 		@Test
 		@DisplayName("Should be registered with schema.registry=true")
 		@RegistryConfiguration
+		@EPackageLuceneIndexSetup
 		void shouldBeRegisteredAsSchemaRegistry(
 				@InjectService(cardinality = 0, filter = "(&(registry.name=" + WorkflowConstants.ATLAS_SCHEMA_REGISTRY_NAME + ")(schema.registry=true))")
 				ServiceAware<RegistryService> registryAware)
@@ -98,6 +101,7 @@ public class AtlasSchemaRegistryServiceIntegrationTest {
 		@Test
 		@DisplayName("Should return registry with correct name and description")
 		@RegistryConfiguration
+		@EPackageLuceneIndexSetup
 		void shouldReturnRegistryWithCorrectNameAndDescription(
 				@InjectService(cardinality = 0, filter = "(registry.name=" + WorkflowConstants.ATLAS_SCHEMA_REGISTRY_NAME + ")")
 				ServiceAware<RegistryService> registryAware)
@@ -115,6 +119,7 @@ public class AtlasSchemaRegistryServiceIntegrationTest {
 		@Test
 		@DisplayName("Should have single non-writable final stage named released")
 		@RegistryConfiguration
+		@EPackageLuceneIndexSetup
 		void shouldHaveSingleReleasedStage(
 				@InjectService(cardinality = 0, filter = "(registry.name=" + WorkflowConstants.ATLAS_SCHEMA_REGISTRY_NAME + ")")
 				ServiceAware<RegistryService> registryAware)
@@ -141,6 +146,7 @@ public class AtlasSchemaRegistryServiceIntegrationTest {
 		@Test
 		@DisplayName("Should throw UnsupportedOperationException on upload")
 		@RegistryConfiguration
+		@EPackageLuceneIndexSetup
 		void shouldThrowOnUpload(
 				@InjectService(cardinality = 0, filter = "(registry.name=" + WorkflowConstants.ATLAS_SCHEMA_REGISTRY_NAME + ")")
 				ServiceAware<RegistryService> registryAware)
@@ -160,6 +166,7 @@ public class AtlasSchemaRegistryServiceIntegrationTest {
 		@Test
 		@DisplayName("Should throw UnsupportedOperationException on update")
 		@RegistryConfiguration
+		@EPackageLuceneIndexSetup
 		void shouldThrowOnUpdate(
 				@InjectService(cardinality = 0, filter = "(registry.name=" + WorkflowConstants.ATLAS_SCHEMA_REGISTRY_NAME + ")")
 				ServiceAware<RegistryService> registryAware)
@@ -178,6 +185,7 @@ public class AtlasSchemaRegistryServiceIntegrationTest {
 		@Test
 		@DisplayName("Should throw UnsupportedOperationException on delete")
 		@RegistryConfiguration
+		@EPackageLuceneIndexSetup
 		void shouldThrowOnDelete(
 				@InjectService(cardinality = 0, filter = "(registry.name=" + WorkflowConstants.ATLAS_SCHEMA_REGISTRY_NAME + ")")
 				ServiceAware<RegistryService> registryAware)
@@ -194,6 +202,7 @@ public class AtlasSchemaRegistryServiceIntegrationTest {
 		@Test
 		@DisplayName("Should throw UnsupportedOperationException on transition")
 		@RegistryConfiguration
+		@EPackageLuceneIndexSetup
 		void shouldThrowOnTransition(
 				@InjectService(cardinality = 0, filter = "(registry.name=" + WorkflowConstants.ATLAS_SCHEMA_REGISTRY_NAME + ")")
 				ServiceAware<RegistryService> registryAware)
@@ -210,6 +219,7 @@ public class AtlasSchemaRegistryServiceIntegrationTest {
 		@Test
 		@DisplayName("Should report all stages as not writable")
 		@RegistryConfiguration
+		@EPackageLuceneIndexSetup
 		void shouldReportAllStagesNotWritable(
 				@InjectService(cardinality = 0, filter = "(registry.name=" + WorkflowConstants.ATLAS_SCHEMA_REGISTRY_NAME + ")")
 				ServiceAware<RegistryService> registryAware)
@@ -226,6 +236,7 @@ public class AtlasSchemaRegistryServiceIntegrationTest {
 		@Test
 		@DisplayName("Should not allow any transitions")
 		@RegistryConfiguration
+		@EPackageLuceneIndexSetup
 		void shouldNotAllowAnyTransitions(
 				@InjectService(cardinality = 0, filter = "(registry.name=" + WorkflowConstants.ATLAS_SCHEMA_REGISTRY_NAME + ")")
 				ServiceAware<RegistryService> registryAware)
@@ -247,6 +258,7 @@ public class AtlasSchemaRegistryServiceIntegrationTest {
 		@Test
 		@DisplayName("Should only validate released as valid stage")
 		@RegistryConfiguration
+		@EPackageLuceneIndexSetup
 		void shouldOnlyValidateReleasedAsValidStage(
 				@InjectService(cardinality = 0, filter = "(registry.name=" + WorkflowConstants.ATLAS_SCHEMA_REGISTRY_NAME + ")")
 				ServiceAware<RegistryService> registryAware)
@@ -264,6 +276,7 @@ public class AtlasSchemaRegistryServiceIntegrationTest {
 		@Test
 		@DisplayName("Should throw on operations with invalid stage")
 		@RegistryConfiguration
+		@EPackageLuceneIndexSetup
 		void shouldThrowOnOperationsWithInvalidStage(
 				@InjectService(cardinality = 0, filter = "(registry.name=" + WorkflowConstants.ATLAS_SCHEMA_REGISTRY_NAME + ")")
 				ServiceAware<RegistryService> registryAware)
@@ -290,6 +303,7 @@ public class AtlasSchemaRegistryServiceIntegrationTest {
 		@Test
 		@DisplayName("Should be compatible with EPackage EClass")
 		@RegistryConfiguration
+		@EPackageLuceneIndexSetup
 		void shouldBeCompatibleWithEPackage(
 				@InjectService(cardinality = 0, filter = "(registry.name=" + WorkflowConstants.ATLAS_SCHEMA_REGISTRY_NAME + ")")
 				ServiceAware<RegistryService> registryAware)
@@ -304,6 +318,7 @@ public class AtlasSchemaRegistryServiceIntegrationTest {
 		@Test
 		@DisplayName("Should not be compatible with non-EPackage EClass")
 		@RegistryConfiguration
+		@EPackageLuceneIndexSetup
 		void shouldNotBeCompatibleWithNonEPackage(
 				@InjectService(cardinality = 0, filter = "(registry.name=" + WorkflowConstants.ATLAS_SCHEMA_REGISTRY_NAME + ")")
 				ServiceAware<RegistryService> registryAware)
@@ -320,6 +335,7 @@ public class AtlasSchemaRegistryServiceIntegrationTest {
 		@Test
 		@DisplayName("Should return EPackage as root EClass")
 		@RegistryConfiguration
+		@EPackageLuceneIndexSetup
 		void shouldReturnEPackageAsRootEClass(
 				@InjectService(cardinality = 0, filter = "(registry.name=" + WorkflowConstants.ATLAS_SCHEMA_REGISTRY_NAME + ")")
 				ServiceAware<RegistryService> registryAware)
@@ -340,6 +356,7 @@ public class AtlasSchemaRegistryServiceIntegrationTest {
 		@Test
 		@DisplayName("Should return correct registry name")
 		@RegistryConfiguration
+		@EPackageLuceneIndexSetup
 		void shouldReturnCorrectRegistryName(
 				@InjectService(cardinality = 0, filter = "(registry.name=" + WorkflowConstants.ATLAS_SCHEMA_REGISTRY_NAME + ")")
 				ServiceAware<RegistryService> registryAware)

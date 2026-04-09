@@ -178,7 +178,7 @@ public class RegistryServiceImpl<T extends EObject> implements RegistryService<T
         EObjectStorageService<T> storageService = storageMap.get(stage);
         ObjectMetadata metadata = WorkflowServiceHelper
                 .getPromiseValue(storageService.retrieveMetadata(scope, config.registry_name(), stage, objectId));
-        if (!isWritableStage(stage))
+        if (!isWritableStage(stage) && metadata != null)
             metadata.setIsReadOnly(true);
         return metadata;
     }

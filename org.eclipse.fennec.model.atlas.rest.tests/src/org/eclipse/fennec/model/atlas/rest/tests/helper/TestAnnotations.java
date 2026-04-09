@@ -123,8 +123,8 @@ public class TestAnnotations {
 
 			@Property(key = "stages", type = Type.Array, value = {
 					"{ \"name\" : \"draft\", \"writable\" : true, \"final\": false}",
-					"{ \"name\" : \"approved\", \"writable\" : false, \"final\": false}",
-					"{ \"name\" : \"release\", \"writable\" : false, \"final\": true}", }),
+					"{ \"name\" : \"approved\", \"writable\" : true, \"final\": false}",
+					"{ \"name\" : \"release\", \"writable\" : true, \"final\": true}", }),
 			@Property(key = "workflow.transitions", type = Type.Array, value = { "draft:approved",
 			"approved:release" }),
 			@Property(key = "stage.storage.mappings", type = Type.Array, value = { "draft:file", "approved:file",
@@ -137,12 +137,14 @@ public class TestAnnotations {
 	@SchemaRegistryServiceSetup
 	@WithFactoryConfiguration(factoryPid = PID_SCOPE_SERVICE, name = TEST_SCOPE_NAME, location = "?", properties = {
 			@Property(key = "scope.name", value = TEST_SCOPE_NAME),
+			@Property(key = "scope.parent", value = TEST_PARENT_SCOPE_NAME),
 			@Property(key = "registryService.target", value = "(registry.name="+TEST_REGISTRY_NAME+")"),
 			@Property(key = "registryService.cardinality.minimum", value = "1", scalar = Scalar.Integer)})
 	@Retention(RetentionPolicy.RUNTIME)
 	public @interface ScopeServiceSetup {
 	}
 
+	@ScopeServiceSetup
 	@WithFactoryConfiguration(factoryPid = PID_SCOPE_SERVICE, name = TEST_PARENT_SCOPE_NAME, location = "?", properties = {
 			@Property(key = "scope.name", value = TEST_PARENT_SCOPE_NAME),
 			@Property(key = "registryService.target", value = "(registry.name="+TEST_REGISTRY_NAME+")"),

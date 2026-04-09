@@ -80,6 +80,7 @@ public class EPackageLuceneIndexImpl implements EPackageLuceneIndex, AutoCloseab
 	// Lucene field names
 	static final String FIELD_OBJECT_ID = "objectId";
 	static final String FIELD_SCOPE = "scope";
+	static final String FIELD_REGISTRY = "registry";
 	static final String FIELD_STAGE = "stage";
 	static final String FIELD_NSURI = "epackage_nsUri";
 	static final String FIELD_NSURI_ANALYZED = "epackage_nsUri_analyzed";
@@ -209,6 +210,7 @@ public class EPackageLuceneIndexImpl implements EPackageLuceneIndex, AutoCloseab
 					hits.add(new SearchHit(
 							doc.get(FIELD_OBJECT_ID),
 							doc.get(FIELD_SCOPE),
+							doc.get(FIELD_REGISTRY),
 							doc.get(FIELD_STAGE)));
 				}
 
@@ -264,6 +266,7 @@ public class EPackageLuceneIndexImpl implements EPackageLuceneIndex, AutoCloseab
 		// Correlation fields from ObjectMetadata
 		doc.add(new StringField(FIELD_OBJECT_ID, metadata.getObjectId(), Field.Store.YES));
 		addStringFieldIfNotNull(doc, FIELD_SCOPE, metadata.getScope());
+		addStringFieldIfNotNull(doc, FIELD_REGISTRY, metadata.getRegistry());
 		addStringFieldIfNotNull(doc, FIELD_STAGE, metadata.getStage());
 
 		// EPackage identity fields (dual indexed: exact + analyzed)

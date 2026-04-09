@@ -54,6 +54,6 @@ public interface EPackageLuceneIndex {
     /**
      * A single search hit with correlation fields.
      */
-    public record SearchHit(String objectId, String scope, String stage) {}
+    public record SearchHit(String objectId, String scope, String registry, String stage) {}
     
 }

@@ -28,6 +28,7 @@ import org.eclipse.fennec.model.atlas.wf.workflowapi.Registry;
 import org.eclipse.fennec.model.atlas.wf.workflowapi.Scope;
 import org.eclipse.fennec.model.atlas.wf.workflowapi.ScopeService;
 import org.eclipse.fennec.model.atlas.workflow.WorkflowConstants;
+import org.eclipse.fennec.model.atlas.workflow.tests.annotations.TestAnnotations.EPackageLuceneIndexSetup;
 import org.eclipse.fennec.model.atlas.workflow.tests.annotations.TestAnnotations.RegistryConfiguration;
 import org.eclipse.fennec.model.atlas.workflow.tests.support.LuceneAwareTempDirExtension;
 import org.junit.jupiter.api.DisplayName;
@@ -68,6 +69,7 @@ public class AtlasScopeServiceIntegrationTest {
 		@Test
 		@DisplayName("Should be registered as ScopeService with scope.name=atlas")
 		@RegistryConfiguration
+		@EPackageLuceneIndexSetup
 		void shouldBeRegisteredWithAtlasScopeName(
 				@InjectService(cardinality = 0, filter = "(scope.name=" + WorkflowConstants.ATLAS_SCOPE_NAME + ")")
 				ServiceAware<ScopeService> scopeAware)
@@ -86,6 +88,7 @@ public class AtlasScopeServiceIntegrationTest {
 		@Test
 		@DisplayName("Should return scope with name atlas")
 		@RegistryConfiguration
+		@EPackageLuceneIndexSetup
 		void shouldReturnScopeWithNameAtlas(
 				@InjectService(cardinality = 0, filter = "(scope.name=" + WorkflowConstants.ATLAS_SCOPE_NAME + ")")
 				ServiceAware<ScopeService> scopeAware)
@@ -103,6 +106,7 @@ public class AtlasScopeServiceIntegrationTest {
 		@Test
 		@DisplayName("Should have no parent scope")
 		@RegistryConfiguration
+		@EPackageLuceneIndexSetup
 		void shouldHaveNoParentScope(
 				@InjectService(cardinality = 0, filter = "(scope.name=" + WorkflowConstants.ATLAS_SCOPE_NAME + ")")
 				ServiceAware<ScopeService> scopeAware)
@@ -119,6 +123,7 @@ public class AtlasScopeServiceIntegrationTest {
 		@Test
 		@DisplayName("Should have atlas-schema-registry as only registry")
 		@RegistryConfiguration
+		@EPackageLuceneIndexSetup
 		void shouldHaveAtlasSchemaRegistryAsOnlyRegistry(
 				@InjectService(cardinality = 0, filter = "(scope.name=" + WorkflowConstants.ATLAS_SCOPE_NAME + ")")
 				ServiceAware<ScopeService> scopeAware)
@@ -143,6 +148,7 @@ public class AtlasScopeServiceIntegrationTest {
 		@Test
 		@DisplayName("Should only accept atlas-schema-registry as valid")
 		@RegistryConfiguration
+		@EPackageLuceneIndexSetup
 		void shouldOnlyAcceptAtlasSchemaRegistry(
 				@InjectService(cardinality = 0, filter = "(scope.name=" + WorkflowConstants.ATLAS_SCOPE_NAME + ")")
 				ServiceAware<ScopeService> scopeAware)
@@ -159,6 +165,7 @@ public class AtlasScopeServiceIntegrationTest {
 		@Test
 		@DisplayName("Should return only atlas-schema-registry in getAllRegistries")
 		@RegistryConfiguration
+		@EPackageLuceneIndexSetup
 		void shouldReturnOnlyAtlasSchemaRegistryInList(
 				@InjectService(cardinality = 0, filter = "(scope.name=" + WorkflowConstants.ATLAS_SCOPE_NAME + ")")
 				ServiceAware<ScopeService> scopeAware)
@@ -176,6 +183,7 @@ public class AtlasScopeServiceIntegrationTest {
 		@Test
 		@DisplayName("Should throw IllegalArgumentException for invalid registry operations")
 		@RegistryConfiguration
+		@EPackageLuceneIndexSetup
 		void shouldThrowForInvalidRegistryOperations(
 				@InjectService(cardinality = 0, filter = "(scope.name=" + WorkflowConstants.ATLAS_SCOPE_NAME + ")")
 				ServiceAware<ScopeService> scopeAware)
