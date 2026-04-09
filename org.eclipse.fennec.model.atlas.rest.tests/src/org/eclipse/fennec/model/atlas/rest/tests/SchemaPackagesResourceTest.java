@@ -18,26 +18,29 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import java.util.Dictionary;
-import java.util.Hashtable;
+import java.io.IOException;
+import java.nio.file.Path;
 import java.util.concurrent.TimeUnit;
 
+import org.eclipse.emf.ecore.EAttribute;
+import org.eclipse.emf.ecore.EClass;
 import org.eclipse.emf.ecore.EPackage;
 import org.eclipse.emf.ecore.resource.ResourceSet;
 import org.eclipse.fennec.emf.osgi.annotation.require.RequireEMF;
 import org.eclipse.fennec.model.atlas.rest.model.RestFactory;
 import org.eclipse.fennec.model.atlas.rest.model.StageTransitionRequest;
-import org.eclipse.fennec.model.atlas.rest.tests.helper.MockTestHelper.MockScopeServiceCollector;
 import org.eclipse.fennec.model.atlas.rest.tests.helper.ResourceAware;
+import org.eclipse.fennec.model.atlas.rest.tests.helper.TestAnnotations;
+import org.eclipse.fennec.model.atlas.rest.tests.helper.TestAnnotations.ParentScopeServiceSetup;
 import org.eclipse.fennec.model.atlas.rest.tests.helper.TestHelper;
-import org.eclipse.fennec.model.atlas.workflow.ScopeServiceCollector;
 import org.gecko.emf.rest.annotations.RequireEMFMessageBodyReaderWriter;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.api.io.TempDir;
 import org.osgi.framework.BundleContext;
-import org.osgi.framework.ServiceRegistration;
 import org.osgi.service.cm.annotations.RequireConfigurationAdmin;
 import org.osgi.service.jakartars.whiteboard.annotations.RequireJakartarsWhiteboard;
 import org.osgi.test.common.annotation.InjectBundleContext;
@@ -78,615 +81,1110 @@ import jakarta.ws.rs.core.Response;
 @ExtendWith(ServiceExtension.class)
 public class SchemaPackagesResourceTest {
 
-    private static final String BASE_URL = "http://localhost:8185/rest";
-    private static final String TEST_SCOPE_NAME = "test-scope";
-    private static final String TEST_PACKAGE_NSURI = "http://test.example.com/schema/1.1";
-    private static final String TEST_PACKAGE_NAME = "TestSchema";
-    private static final String TEST_STAGE_DRAFT = "draft";
-    private static final String TEST_STAGE_APPROVED = "approved";
-    private static final String TEST_STAGE_RELEASE = "release";
-
-    @InjectService(filter = "(emf.name=workflowapi)")
-    ResourceSet resourceSet;
-
-    @InjectService
-    ClientBuilder clientBuilder;
-
-    private Client restClient;
-    private MockScopeServiceCollector mockScopeCollector;
-    private ServiceRegistration<ScopeServiceCollector> mockScopeCollectorRegistration;
-
-    @BeforeEach
-    public void setup(@InjectBundleContext BundleContext context) throws Exception {
-        // Setup REST client
-        restClient = clientBuilder.build();
-
-        // Create and register mock ScopeCollector
-        Dictionary<String, Object> serviceProps = new Hashtable<>();
-        serviceProps.put("service.ranking", Integer.MAX_VALUE);
-
-        mockScopeCollector = new MockScopeServiceCollector();
-        mockScopeCollectorRegistration = context.registerService(ScopeServiceCollector.class, mockScopeCollector,
-                serviceProps);
-
-        // Small delay to allow service registration to propagate
-        Thread.sleep(200);
-
-        // Ensure XMI factory is registered
-        TestHelper.ensureXMIFactory(resourceSet);
-
-        // Wait for the SchemaPackagesResource to be registered in Jakarta REST runtime
-        ResourceAware resourceAware = ResourceAware.create(context, "SchemaPackagesResource");
-        boolean resourceReady = resourceAware.waitForResource(15, TimeUnit.SECONDS);
-
-        assertTrue(resourceReady, "SchemaPackagesResource should be registered within 15 seconds. "
-                + "Check that the resource is properly configured and the Jakarta REST runtime is working.");
-    }
-
-    @AfterEach
-    public void teardown(@InjectBundleContext BundleContext context) throws Exception {
-        if (nonNull(mockScopeCollectorRegistration)) {
-            mockScopeCollectorRegistration.unregister();
-            mockScopeCollectorRegistration = null;
-
-            // Small delay to allow service unregistration to propagate
-            Thread.sleep(200);
-        }
-
-        if (nonNull(restClient)) {
-            restClient.close();
-            restClient = null;
-        }
-    }
-
-    // ========== List All Packages Tests ==========
-
-    @Test
-    public void testListAllPackages_Success() {
-        Response response = restClient.target(BASE_URL).path(TEST_SCOPE_NAME).path("schema").path("all")
-                .request("application/json").get();
-
-        assertEquals(200, response.getStatus(), "Should return HTTP 200 OK");
-
-        String responseContent = response.readEntity(String.class);
-        assertNotNull(responseContent, "Should return content");
-        assertTrue(responseContent.contains("metadata"), "Response should contain metadata");
-    }
-
-    @Test
-    public void testListAllPackages_ScopeNotFound() {
-        Response response = restClient.target(BASE_URL).path("non-existent-scope").path("schema").path("all")
-                .request("application/json").get();
-
-        assertEquals(400, response.getStatus(), "Should return HTTP 400 Bad Request");
-    }
-
-    @Test
-    public void testListAllPackages_WithMediaTypeQueryParam() {
-        Response response = restClient.target(BASE_URL).path(TEST_SCOPE_NAME).path("schema").path("all")
-                .queryParam("mediaType", "application/xml").request("application/json").get();
-
-        assertEquals(200, response.getStatus(), "Should return HTTP 200 OK");
-        assertEquals("application/xml", response.getHeaderString("Content-Type"),
-                "Content-Type header should be set to mediaType query parameter value");
-    }
-
-    @Test
-    public void testListAllPackages_WithUnsupportedMediaTypeQueryParam() {
-        Response response = restClient.target(BASE_URL).path(TEST_SCOPE_NAME).path("schema").path("all")
-                .queryParam("mediaType", "application/unsupported").request("application/json").get();
-
-        assertEquals(415, response.getStatus(), "Should return HTTP 415 Unsupported Media Type");
-    }
-
-    // ========== List Operations Tests ==========
+	private static final String BASE_URL = "http://localhost:8185/rest";
+	private static final String TEST_PACKAGE_NSURI = "http://test.example.com/schema/1.1";
+	private static final String TEST_PACKAGE_NAME = "TestSchema";
+	private static final String TEST_STAGE_DRAFT = "draft";
+	private static final String TEST_STAGE_APPROVED = "approved";
+	private static final String TEST_STAGE_RELEASE = "release";
 
-    @Test
-    public void testListReleasedPackages_Success() {
-        Response response = restClient.target(BASE_URL).path(TEST_SCOPE_NAME).path("schema").request("application/json")
-                .get();
+	@InjectService(filter = "(emf.name=workflowapi)")
+	ResourceSet resourceSet;
 
-        assertEquals(200, response.getStatus(), "Should return HTTP 200 OK");
-
-        String responseContent = response.readEntity(String.class);
-        assertNotNull(responseContent, "Should return content");
-        assertTrue(responseContent.contains("metadata"), "Response should contain metadata");
-    }
-
-    @Test
-    public void testListReleasedPackages_ScopeNotFound() {
-        Response response = restClient.target(BASE_URL).path("non-existent-scope").path("schema")
-                .request("application/json").get();
-
-        assertEquals(400, response.getStatus(), "Should return HTTP 400 Bad Request");
-    }
-
-    @Test
-    public void testListPackagesInStage_Success() {
-        Response response = restClient.target(BASE_URL).path(TEST_SCOPE_NAME).path("schema").path("stages")
-                .path(TEST_STAGE_DRAFT).request("application/json").get();
-
-        assertEquals(200, response.getStatus(), "Should return HTTP 200 OK");
-
-        String responseContent = response.readEntity(String.class);
-        assertNotNull(responseContent, "Should return content");
-        assertTrue(responseContent.contains("metadata"), "Response should contain metadata");
-    }
-
-    @Test
-    public void testListPackagesInStage_WithNsUriFilter() {
-        Response response = restClient.target(BASE_URL).path(TEST_SCOPE_NAME).path("schema").path("stages")
-                .path(TEST_STAGE_DRAFT).queryParam("nsUri", TEST_PACKAGE_NSURI).request("application/json").get();
-
-        assertEquals(200, response.getStatus(), "Should return HTTP 200 OK");
-
-        String responseContent = response.readEntity(String.class);
-        assertNotNull(responseContent, "Should return content");
-        assertTrue(responseContent.contains("objectId"), "Response should contain objectId");
-    }
-
-    @Test
-    public void testListPackagesInStage_NotFound() {
-        Response response = restClient.target(BASE_URL).path(TEST_SCOPE_NAME).path("schema").path("stages")
-                .path(TEST_STAGE_DRAFT).queryParam("nsUri", "http://non-existent.com/schema/1.0")
-                .request("application/json").get();
-
-        assertEquals(204, response.getStatus(), "Should return HTTP 204 No Content");
-    }
-
-    // ========== Create Package Tests ==========
-
-    @Test
-    public void testCreatePackage_Success() throws Exception {
-        EPackage testPackage = TestHelper.createTestEPackage("http://non-existent.com/schema/1.0", "new-package",
-                "new");
-        String xmiContent = TestHelper.serializeToXMI(testPackage, resourceSet);
-
-        Response response = restClient.target(BASE_URL).path(TEST_SCOPE_NAME).path("schema").path("stages")
-                .path(TEST_STAGE_DRAFT).queryParam("nsUri", "http://non-existent.com/schema/1.0")
-                .queryParam("name", "new-package").queryParam("version", "1.0.0").request("application/xmi")
-                .post(Entity.entity(xmiContent, "application/xmi"));
-
-        System.out.println("DEBUG testCreatePackage_Success - Response status: " + response.getStatus());
-        String responseContent = response.readEntity(String.class);
-        System.out.println("DEBUG testCreatePackage_Success - Response content: " + responseContent);
-
-        assertEquals(200, response.getStatus(), "Should return HTTP 200 OK");
-        assertNotNull(responseContent, "Should return content");
-    }
-
-    @Test
-    public void testCreatePackage_ScopeNotFound() throws Exception {
-        EPackage testPackage = TestHelper.createTestEPackage(TEST_PACKAGE_NSURI, TEST_PACKAGE_NAME, "test");
-        String xmiContent = TestHelper.serializeToXMI(testPackage, resourceSet);
-
-        Response response = restClient.target(BASE_URL).path("non-existent-scope").path("schema").path("stages")
-                .path(TEST_STAGE_DRAFT).queryParam("nsUri", TEST_PACKAGE_NSURI).queryParam("name", TEST_PACKAGE_NAME)
-                .request("application/xmi").post(Entity.entity(xmiContent, "application/xmi"));
-
-        assertEquals(400, response.getStatus(), "Should return HTTP 400 Bad Request");
-    }
-
-    // ========== Overwrite Parameter Tests ==========
-
-    @Test
-    public void testCreatePackage_Conflict_WithoutOverwrite() throws Exception {
-        EPackage testPackage = TestHelper.createTestEPackage(TEST_PACKAGE_NSURI, "ExistingSchema", "existing");
-        String xmiContent = TestHelper.serializeToXMI(testPackage, resourceSet);
-
-        Response response = restClient.target(BASE_URL).path(TEST_SCOPE_NAME).path("schema").path("stages")
-                .path(TEST_STAGE_DRAFT).queryParam("nsUri", TEST_PACKAGE_NSURI).queryParam("name", "ExistingSchema")
-                .queryParam("overwrite", false).request("application/xmi")
-                .post(Entity.entity(xmiContent, "application/xmi"));
-
-        System.out.println(
-                "DEBUG testCreatePackage_Conflict_WithoutOverwrite - Response status: " + response.getStatus());
-        String responseContent = response.readEntity(String.class);
-        System.out.println("DEBUG testCreatePackage_Conflict_WithoutOverwrite - Response content: " + responseContent);
-
-        assertEquals(409, response.getStatus(),
-                "Should return HTTP 409 Conflict when Overwrite is false and package exists");
-    }
-
-    @Test
-    public void testCreatePackage_WithOverwrite_Success() throws Exception {
-        EPackage testPackage = TestHelper.createTestEPackage("http://existing.com/schema/1.0", "UpdatedExistingSchema",
-                "existing");
-        String xmiContent = TestHelper.serializeToXMI(testPackage, resourceSet);
-
-        Response response = restClient.target(BASE_URL).path(TEST_SCOPE_NAME).path("schema").path("stages")
-                .path(TEST_STAGE_DRAFT).queryParam("nsUri", "http://existing.com/schema/1.0")
-                .queryParam("name", "UpdatedExistingSchema").queryParam("version", "1.0.0")
-                .queryParam("overwrite", true).request("application/xmi")
-                .post(Entity.entity(xmiContent, "application/xmi"));
-
-        System.out.println("DEBUG testCreatePackage_WithOverwrite_Success - Response status: " + response.getStatus());
-        String responseContent = response.readEntity(String.class);
-        System.out.println("DEBUG testCreatePackage_WithOverwrite_Success - Response content: " + responseContent);
-
-        assertEquals(200, response.getStatus(),
-                "Should return HTTP 200 OK when Overwrite is true and package exists and is writable");
-        assertNotNull(responseContent, "Should return updated metadata");
-        assertTrue(responseContent.contains("objectId"), "Response should contain objectId");
-    }
-
-    @Test
-    public void testCreatePackage_WithOverwrite_ReadOnly() throws Exception {
-        EPackage testPackage = TestHelper.createTestEPackage("http://readonly.com/schema/1.0", "ReadOnlySchema",
-                "readonly");
-        String xmiContent = TestHelper.serializeToXMI(testPackage, resourceSet);
-
-        Response response = restClient.target(BASE_URL).path(TEST_SCOPE_NAME).path("schema").path("stages")
-                .path(TEST_STAGE_DRAFT).queryParam("nsUri", "http://readonly.com/schema/1.0")
-                .queryParam("name", "ReadOnlySchema").queryParam("version", "1.0.0").queryParam("overwrite", true)
-                .request("application/xmi").post(Entity.entity(xmiContent, "application/xmi"));
-
-        System.out.println("DEBUG testCreatePackage_WithOverwrite_ReadOnly - Response status: " + response.getStatus());
-        String responseContent = response.readEntity(String.class);
-        System.out.println("DEBUG testCreatePackage_WithOverwrite_ReadOnly - Response content: " + responseContent);
-
-        assertEquals(403, response.getStatus(),
-                "Should return HTTP 403 Forbidden when Overwrite is true but package is read-only");
-    }
-
-    @Test
-    public void testCreatePackage_WithOverwrite_NewPackage() throws Exception {
-        EPackage testPackage = TestHelper.createTestEPackage("http://new-package.com/schema/1.0", "NewPackage", "new");
-        String xmiContent = TestHelper.serializeToXMI(testPackage, resourceSet);
-
-        Response response = restClient.target(BASE_URL).path(TEST_SCOPE_NAME).path("schema").path("stages")
-                .path(TEST_STAGE_DRAFT).queryParam("nsUri", "http://new-package.com/schema/1.0")
-                .queryParam("name", "NewPackage").queryParam("version", "1.0.0").queryParam("overwrite", true)
-                .request("application/xmi").post(Entity.entity(xmiContent, "application/xmi"));
-
-        System.out
-                .println("DEBUG testCreatePackage_WithOverwrite_NewPackage - Response status: " + response.getStatus());
-        String responseContent = response.readEntity(String.class);
-        System.out.println("DEBUG testCreatePackage_WithOverwrite_NewPackage - Response content: " + responseContent);
-
-        assertEquals(200, response.getStatus(),
-                "Should return HTTP 200 OK when Overwrite is true for new package (behaves like normal create)");
-        assertNotNull(responseContent, "Should return created metadata");
-    }
-
-    // ========== Get Package Content Tests ==========
-
-    @Test
-    public void testGetPackageContent_Success() {
-        Response response = restClient.target(BASE_URL).path(TEST_SCOPE_NAME).path("schema").path("stages")
-                .path(TEST_STAGE_DRAFT).path("content").queryParam("nsUri", TEST_PACKAGE_NSURI)
-                .request("application/json").get();
-
-        assertEquals(200, response.getStatus(), "Should return HTTP 200 OK");
-
-        String responseContent = response.readEntity(String.class);
-        assertNotNull(responseContent, "Should return content");
-    }
-
-    @Test
-    public void testGetPackageContent_NotFound() {
-        Response response = restClient.target(BASE_URL).path(TEST_SCOPE_NAME).path("schema").path("stages")
-                .path(TEST_STAGE_DRAFT).path("content").queryParam("nsUri", "http://non-existent.com/schema/1.0")
-                .request("application/json").get();
-
-        assertEquals(204, response.getStatus(), "Should return HTTP 204 No Content");
-    }
-
-    // ========== Update Package Content Tests ==========
-
-    @Test
-    public void testUpdatePackageContent_Success() throws Exception {
-        EPackage updatedPackage = TestHelper.createTestEPackage(TEST_PACKAGE_NSURI, "UpdatedSchema", "test");
-        String xmiContent = TestHelper.serializeToXMI(updatedPackage, resourceSet);
-
-        Response response = restClient.target(BASE_URL).path(TEST_SCOPE_NAME).path("schema").path("stages")
-                .path(TEST_STAGE_DRAFT).path("content").queryParam("nsUri", TEST_PACKAGE_NSURI)
-                .queryParam("version", "1.1.0").request("application/xmi")
-                .put(Entity.entity(xmiContent, "application/xmi"));
-
-        System.out.println("DEBUG testUpdatePackageContent_Success - Response status: " + response.getStatus());
-        String responseContent = response.readEntity(String.class);
-        System.out.println("DEBUG testUpdatePackageContent_Success - Response content: " + responseContent);
-
-        assertEquals(200, response.getStatus(), "Should return HTTP 200 OK");
-    }
-
-    @Test
-    public void testUpdatePackageContent_ReadOnlyStage() throws Exception {
-        EPackage updatedPackage = TestHelper.createTestEPackage(TEST_PACKAGE_NSURI, "UpdatedSchema", "test");
-        String xmiContent = TestHelper.serializeToXMI(updatedPackage, resourceSet);
-
-        Response response = restClient.target(BASE_URL).path(TEST_SCOPE_NAME).path("schema").path("stages")
-                .path("readonly-stage").path("content").queryParam("nsUri", TEST_PACKAGE_NSURI)
-                .queryParam("version", "1.1.0").request("application/xmi")
-                .put(Entity.entity(xmiContent, "application/xmi"));
-
-        assertEquals(403, response.getStatus(), "Should return HTTP 403 Forbidden");
-    }
-
-    @Test
-    public void testUpdatePackageContent_NotFound() throws Exception {
-        EPackage updatedPackage = TestHelper.createTestEPackage("http://non-existent.com/schema/1.0", "NonExistent",
-                "ne");
-        String xmiContent = TestHelper.serializeToXMI(updatedPackage, resourceSet);
-
-        Response response = restClient.target(BASE_URL).path(TEST_SCOPE_NAME).path("schema").path("stages")
-                .path(TEST_STAGE_DRAFT).path("content").queryParam("nsUri", "http://non-existent.com/schema/1.0")
-                .queryParam("version", "1.0.0").request("application/xmi")
-                .put(Entity.entity(xmiContent, "application/xmi"));
-
-        assertEquals(204, response.getStatus(), "Should return HTTP 204 No Content");
-    }
-
-    // ========== Delete Package Tests ==========
-
-    @Test
-    public void testDeletePackage_Success() {
-        Response response = restClient.target(BASE_URL).path(TEST_SCOPE_NAME).path("schema").path("stages")
-                .path(TEST_STAGE_DRAFT).queryParam("nsUri", TEST_PACKAGE_NSURI).request().delete();
-
-        assertEquals(200, response.getStatus(), "Should return HTTP 200 OK");
-    }
-
-    @Test
-    public void testDeletePackage_ReadOnlyStage() {
-        Response response = restClient.target(BASE_URL).path(TEST_SCOPE_NAME).path("schema").path("stages")
-                .path("readonly-stage").queryParam("nsUri", TEST_PACKAGE_NSURI).request().delete();
-
-        assertEquals(403, response.getStatus(), "Should return HTTP 403 Forbidden");
-    }
-
-    @Test
-    public void testDeletePackage_NotFound() {
-        Response response = restClient.target(BASE_URL).path(TEST_SCOPE_NAME).path("schema").path("stages")
-                .path(TEST_STAGE_DRAFT).queryParam("nsUri", "http://non-existent.com/schema/1.0").request().delete();
-
-        assertEquals(204, response.getStatus(), "Should return HTTP 204 No Content");
-    }
-
-    // ========== Transition Tests ==========
-
-    @Test
-    public void testTransitionPackage_Success() throws Exception {
-        StageTransitionRequest transition = RestFactory.eINSTANCE.createStageTransitionRequest();
-        transition.setObjectId(TEST_PACKAGE_NSURI);
-        transition.setTargetStage(TEST_STAGE_APPROVED);
-
-        String xmiContent = TestHelper.serializeToXMI(transition, resourceSet);
-
-        Response response = restClient.target(BASE_URL).path(TEST_SCOPE_NAME).path("schema").path("stages")
-                .path(TEST_STAGE_DRAFT).path("actions").path("transition").request("application/xmi")
-                .post(Entity.entity(xmiContent, "application/xmi"));
-
-        System.out.println("DEBUG testTransitionPackage_Success - Response status: " + response.getStatus());
-        String responseContent = response.readEntity(String.class);
-        System.out.println("DEBUG testTransitionPackage_Success - Response content: " + responseContent);
-
-        assertEquals(200, response.getStatus(), "Should return HTTP 200 OK");
-    }
-
-    @Test
-    public void testTransitionPackage_InvalidTransition() throws Exception {
-        StageTransitionRequest transition = RestFactory.eINSTANCE.createStageTransitionRequest();
-        transition.setObjectId(TEST_PACKAGE_NSURI);
-        transition.setTargetStage(TEST_STAGE_RELEASE); // Invalid: skipping approved stage
-
-        String xmiContent = TestHelper.serializeToXMI(transition, resourceSet);
-
-        Response response = restClient.target(BASE_URL).path(TEST_SCOPE_NAME).path("schema").path("stages")
-                .path(TEST_STAGE_DRAFT).path("actions").path("transition").request("application/xmi")
-                .post(Entity.entity(xmiContent, "application/xmi"));
-
-        assertEquals(400, response.getStatus(), "Should return HTTP 400 Bad Request");
-    }
-
-    @Test
-    public void testTransitionPackage_NotFound() throws Exception {
-        StageTransitionRequest transition = RestFactory.eINSTANCE.createStageTransitionRequest();
-        transition.setObjectId("http://non-existent.com/schema/1.0");
-        transition.setTargetStage(TEST_STAGE_APPROVED);
-
-        String xmiContent = TestHelper.serializeToXMI(transition, resourceSet);
-
-        Response response = restClient.target(BASE_URL).path(TEST_SCOPE_NAME).path("schema").path("stages")
-                .path(TEST_STAGE_DRAFT).path("actions").path("transition").request("application/xmi")
-                .post(Entity.entity(xmiContent, "application/xmi"));
-
-        assertEquals(204, response.getStatus(), "Should return HTTP 204 No Content");
-    }
-
-    // ========== List Packages By Name Tests ==========
-
-    @Test
-    public void testListPackagesInStageByName_ExactMatch() {
-        Response response = restClient.target(BASE_URL).path(TEST_SCOPE_NAME).path("schema").path("stages")
-                .path(TEST_STAGE_DRAFT).queryParam("name", TEST_PACKAGE_NAME).request("application/json").get();
-
-        assertEquals(200, response.getStatus(), "Should return HTTP 200 OK");
-
-        String responseContent = response.readEntity(String.class);
-        assertNotNull(responseContent, "Should return content");
-        assertTrue(responseContent.contains("objectId"), "Response should contain objectId");
-        assertTrue(responseContent.contains(TEST_PACKAGE_NAME), "Response should contain the package name");
-    }
-
-    @Test
-    public void testListPackagesInStageByName_WildcardMatch() {
-        Response response = restClient.target(BASE_URL).path(TEST_SCOPE_NAME).path("schema").path("stages")
-                .path(TEST_STAGE_DRAFT).queryParam("name", "Test*").request("application/json").get();
-
-        assertEquals(200, response.getStatus(), "Should return HTTP 200 OK");
-
-        String responseContent = response.readEntity(String.class);
-        assertNotNull(responseContent, "Should return content");
-        assertTrue(responseContent.contains("objectId"), "Response should contain objectId");
-    }
-
-    @Test
-    public void testListPackagesInStageByName_PartialWildcardMatch() {
-        Response response = restClient.target(BASE_URL).path(TEST_SCOPE_NAME).path("schema").path("stages")
-                .path(TEST_STAGE_DRAFT).queryParam("name", "TestSchema*").request("application/json").get();
-
-        assertEquals(200, response.getStatus(), "Should return HTTP 200 OK");
-
-        String responseContent = response.readEntity(String.class);
-        assertNotNull(responseContent, "Should return content");
-        assertTrue(responseContent.contains("objectId"), "Response should contain objectId");
-    }
-
-    @Test
-    public void testListPackagesInStageByName_NotFound() {
-        Response response = restClient.target(BASE_URL).path(TEST_SCOPE_NAME).path("schema").path("stages")
-                .path(TEST_STAGE_DRAFT).queryParam("name", "NonExistentPackage").request("application/json").get();
-
-        assertEquals(204, response.getStatus(), "Should return HTTP 204 No Content when no packages match");
-    }
-
-    @Test
-    public void testListPackagesInStageByName_DifferentPackage() {
-        Response response = restClient.target(BASE_URL).path(TEST_SCOPE_NAME).path("schema").path("stages")
-                .path(TEST_STAGE_DRAFT).queryParam("name", "SensorModel").request("application/json").get();
-
-        assertEquals(200, response.getStatus(), "Should return HTTP 200 OK");
-
-        String responseContent = response.readEntity(String.class);
-        assertNotNull(responseContent, "Should return content");
-        assertTrue(responseContent.contains("SensorModel"), "Response should contain SensorModel");
-    }
-
-    @Test
-    public void testListPackagesInStageByName_CombinedWithNsUri() {
-        Response response = restClient.target(BASE_URL).path(TEST_SCOPE_NAME).path("schema").path("stages")
-                .path(TEST_STAGE_DRAFT).queryParam("nsUri", TEST_PACKAGE_NSURI).queryParam("name", TEST_PACKAGE_NAME)
-                .request("application/json").get();
-
-        assertEquals(200, response.getStatus(), "Should return HTTP 200 OK");
-
-        String responseContent = response.readEntity(String.class);
-        assertNotNull(responseContent, "Should return content");
-        assertTrue(responseContent.contains("objectId"), "Response should contain objectId");
-    }
-
-    @Test
-    public void testListPackagesInStageByName_PrefixWildcard() {
-        Response response = restClient.target(BASE_URL).path(TEST_SCOPE_NAME).path("schema").path("stages")
-                .path(TEST_STAGE_DRAFT).queryParam("name", "SensorModel*").request("application/json").get();
-
-        assertEquals(200, response.getStatus(), "Should return HTTP 200 OK");
-
-        String responseContent = response.readEntity(String.class);
-        assertNotNull(responseContent, "Should return content");
-        assertTrue(responseContent.contains("SensorModel"), "Response should contain SensorModel");
-    }
-
-    @Test
-    public void testListPackagesInStageByName_DifferentStage() {
-        Response response = restClient.target(BASE_URL).path(TEST_SCOPE_NAME).path("schema").path("stages")
-                .path(TEST_STAGE_APPROVED).queryParam("name", TEST_PACKAGE_NAME).request("application/json").get();
-
-        assertEquals(200, response.getStatus(), "Should return HTTP 200 OK");
-
-        String responseContent = response.readEntity(String.class);
-        assertNotNull(responseContent, "Should return content");
-        assertTrue(responseContent.contains("objectId"), "Response should contain objectId");
-    }
-
-    // ========== MediaType Query Parameter Tests ==========
-
-    @Test
-    public void testListReleasedPackages_WithMediaTypeQueryParam() {
-        Response response = restClient.target(BASE_URL).path(TEST_SCOPE_NAME).path("schema")
-                .queryParam("mediaType", "application/xml").request("application/json").get();
-
-        assertEquals(200, response.getStatus(), "Should return HTTP 200 OK");
-        assertEquals("application/xml", response.getHeaderString("Content-Type"),
-                "Content-Type header should be set to mediaType query parameter value");
-    }
-
-    @Test
-    public void testListReleasedPackages_WithUnsupportedMediaTypeQueryParam() {
-        Response response = restClient.target(BASE_URL).path(TEST_SCOPE_NAME).path("schema")
-                .queryParam("mediaType", "application/unsupported").request("application/json").get();
-
-        assertEquals(415, response.getStatus(), "Should return HTTP 415 Unsupported Media Type");
-    }
-
-    @Test
-    public void testListPackagesInStage_WithMediaTypeQueryParam() {
-        Response response = restClient.target(BASE_URL).path(TEST_SCOPE_NAME).path("schema").path("stages")
-                .path(TEST_STAGE_DRAFT).queryParam("mediaType", "application/xml").request("application/json").get();
-
-        assertEquals(200, response.getStatus(), "Should return HTTP 200 OK");
-        assertEquals("application/xml", response.getHeaderString("Content-Type"),
-                "Content-Type header should be set to mediaType query parameter value");
-    }
-
-    @Test
-    public void testGetPackageContent_WithMediaTypeQueryParam() {
-        Response response = restClient.target(BASE_URL).path(TEST_SCOPE_NAME).path("schema").path("stages")
-                .path(TEST_STAGE_DRAFT).path("content").queryParam("nsUri", TEST_PACKAGE_NSURI)
-                .queryParam("mediaType", "application/xml").request("application/json").get();
-
-        assertEquals(200, response.getStatus(), "Should return HTTP 200 OK");
-        assertEquals("application/xml", response.getHeaderString("Content-Type"),
-                "Content-Type header should be set to mediaType query parameter value");
-    }
-
-    @Test
-    public void testGetPackageContent_WithUnsupportedMediaTypeQueryParam() {
-        Response response = restClient.target(BASE_URL).path(TEST_SCOPE_NAME).path("schema").path("stages")
-                .path(TEST_STAGE_DRAFT).path("content").queryParam("nsUri", TEST_PACKAGE_NSURI)
-                .queryParam("mediaType", "application/unsupported").request("application/json").get();
-
-        assertEquals(415, response.getStatus(), "Should return HTTP 415 Unsupported Media Type");
-    }
-
-    @Test
-    public void testCreatePackage_WithMediaTypeQueryParam() throws Exception {
-        EPackage testPackage = TestHelper.createTestEPackage("http://mediatype.com/schema/1.0", "MediaTypePackage",
-                "mt");
-        String xmiContent = TestHelper.serializeToXMI(testPackage, resourceSet);
-
-        Response response = restClient.target(BASE_URL).path(TEST_SCOPE_NAME).path("schema").path("stages")
-                .path(TEST_STAGE_DRAFT).queryParam("nsUri", "http://mediatype.com/schema/1.0")
-                .queryParam("name", "MediaTypePackage").queryParam("version", "1.0.0")
-                .queryParam("mediaType", "application/xml").request("application/xmi")
-                .post(Entity.entity(xmiContent, "application/xmi"));
-
-        assertEquals(200, response.getStatus(), "Should return HTTP 200 OK");
-        assertEquals("application/xml", response.getHeaderString("Content-Type"),
-                "Content-Type header should be set to mediaType query parameter value");
-    }
-
-    @Test
-    public void testUpdatePackageContent_WithMediaTypeQueryParam() throws Exception {
-        EPackage updatedPackage = TestHelper.createTestEPackage(TEST_PACKAGE_NSURI, "UpdatedSchema", "test");
-        String xmiContent = TestHelper.serializeToXMI(updatedPackage, resourceSet);
-
-        Response response = restClient.target(BASE_URL).path(TEST_SCOPE_NAME).path("schema").path("stages")
-                .path(TEST_STAGE_DRAFT).path("content").queryParam("nsUri", TEST_PACKAGE_NSURI)
-                .queryParam("version", "1.1.0").queryParam("mediaType", "application/xml").request("application/xmi")
-                .put(Entity.entity(xmiContent, "application/xmi"));
-
-        assertEquals(200, response.getStatus(), "Should return HTTP 200 OK");
-        assertEquals("application/xml", response.getHeaderString("Content-Type"),
-                "Content-Type header should be set to mediaType query parameter value");
-    }
-
-    @Test
-    public void testTransitionPackage_WithMediaTypeQueryParam() throws Exception {
-        StageTransitionRequest transition = RestFactory.eINSTANCE.createStageTransitionRequest();
-        transition.setObjectId(TEST_PACKAGE_NSURI);
-        transition.setTargetStage(TEST_STAGE_APPROVED);
-
-        String xmiContent = TestHelper.serializeToXMI(transition, resourceSet);
-
-        Response response = restClient.target(BASE_URL).path(TEST_SCOPE_NAME).path("schema").path("stages")
-                .path(TEST_STAGE_DRAFT).path("actions").path("transition").queryParam("mediaType", "application/xml")
-                .request("application/xmi").post(Entity.entity(xmiContent, "application/xmi"));
-
-        assertEquals(200, response.getStatus(), "Should return HTTP 200 OK");
-        assertEquals("application/xml", response.getHeaderString("Content-Type"),
-                "Content-Type header should be set to mediaType query parameter value");
-    }
+	@InjectService
+	ClientBuilder clientBuilder;
+
+	@TempDir
+	Path tempDir;
+
+	private Client restClient;
+
+
+	@BeforeEach
+	public void setup(@InjectBundleContext BundleContext context) throws Exception {
+		// Set system property for template argument resolution
+		System.setProperty(TestAnnotations.PROP_TEMP_DIR, tempDir.toString());
+
+		// Setup REST client
+		restClient = clientBuilder.build();
+
+		// Ensure XMI factory is registered
+		TestHelper.ensureXMIFactory(resourceSet);
+
+
+	}
+
+	@AfterEach
+	public void teardown(@InjectBundleContext BundleContext context) throws Exception {
+
+		if (nonNull(restClient)) {
+			restClient.close();
+			restClient = null;
+		}
+	}
+
+	private void ensureResourceAvailability(BundleContext context) throws InterruptedException {
+		ResourceAware resourceAware = ResourceAware.create(context, "SchemaPackagesResource");
+		boolean resourceReady = resourceAware.waitForResource(15, TimeUnit.SECONDS);
+
+		assertTrue(resourceReady, "SchemaPackagesResource should be registered within 15 seconds. "
+				+ "Check that the resource is properly configured and the Jakarta REST runtime is working.");
+
+	}
+
+	// ========== List All Packages Tests ==========
+
+	@Test
+	@ParentScopeServiceSetup
+	public void testListAllPackages_Success(@InjectBundleContext BundleContext context) throws InterruptedException, IOException {
+
+		ensureResourceAvailability(context);
+		EPackage testPackage = TestHelper.createTestEPackage(TEST_PACKAGE_NSURI, TEST_PACKAGE_NAME, TEST_PACKAGE_NAME);
+		String xmiContent = TestHelper.serializeToXMI(testPackage, resourceSet);
+
+		Response response = restClient.target(BASE_URL).path(TestAnnotations.TEST_SCOPE_NAME).path("schema").path("stages")
+				.path(TEST_STAGE_DRAFT).queryParam("nsUri", TEST_PACKAGE_NSURI)
+				.queryParam("name", TEST_PACKAGE_NAME).request("application/xmi")
+				.post(Entity.entity(xmiContent, "application/xmi"));
+
+		assertEquals(200, response.getStatus(), "Should return HTTP 200 OK");
+		
+		response = restClient.target(BASE_URL).path(TestAnnotations.TEST_SCOPE_NAME).path("schema").path("all")
+				.request("application/json").get();
+
+		assertEquals(200, response.getStatus(), "Should return HTTP 200 OK");
+
+		String responseContent = response.readEntity(String.class);
+		assertNotNull(responseContent, "Should return content");
+		assertTrue(responseContent.contains("metadata"), "Response should contain metadata");
+	}
+
+	@Test
+	@ParentScopeServiceSetup
+	public void testListAllPackages_ScopeNotFound(@InjectBundleContext BundleContext context) throws InterruptedException, IOException {
+
+		ensureResourceAvailability(context);
+		Response response = restClient.target(BASE_URL).path("non-existent-scope").path("schema").path("all")
+				.request("application/json").get();
+
+		assertEquals(400, response.getStatus(), "Should return HTTP 400 Bad Request");
+	}
+
+	@Test
+	@ParentScopeServiceSetup
+	public void testListAllPackages_WithMediaTypeQueryParam(@InjectBundleContext BundleContext context) throws InterruptedException, IOException {
+
+		ensureResourceAvailability(context);
+		EPackage testPackage = TestHelper.createTestEPackage(TEST_PACKAGE_NSURI, TEST_PACKAGE_NAME, TEST_PACKAGE_NAME);
+		String xmiContent = TestHelper.serializeToXMI(testPackage, resourceSet);
+
+		Response response = restClient.target(BASE_URL).path(TestAnnotations.TEST_SCOPE_NAME).path("schema").path("stages")
+				.path(TEST_STAGE_DRAFT).queryParam("nsUri", TEST_PACKAGE_NSURI)
+				.queryParam("name", TEST_PACKAGE_NAME).request("application/xmi")
+				.post(Entity.entity(xmiContent, "application/xmi"));
+
+		assertEquals(200, response.getStatus(), "Should return HTTP 200 OK");
+		
+		response = restClient.target(BASE_URL).path(TestAnnotations.TEST_SCOPE_NAME).path("schema").path("all")
+				.queryParam("mediaType", "application/xml").request("application/json").get();
+
+		assertEquals(200, response.getStatus(), "Should return HTTP 200 OK");
+		assertEquals("application/xml", response.getHeaderString("Content-Type"),
+				"Content-Type header should be set to mediaType query parameter value");
+	}
+
+	@Test
+	@ParentScopeServiceSetup
+	public void testListAllPackages_WithUnsupportedMediaTypeQueryParam(@InjectBundleContext BundleContext context) throws InterruptedException, IOException {
+
+		ensureResourceAvailability(context);
+		Response response = restClient.target(BASE_URL).path(TestAnnotations.TEST_SCOPE_NAME).path("schema").path("all")
+				.queryParam("mediaType", "application/unsupported").request("application/json").get();
+
+		assertEquals(415, response.getStatus(), "Should return HTTP 415 Unsupported Media Type");
+	}
+
+
+	// ========== List Operations Tests ==========
+
+	@Test
+	@ParentScopeServiceSetup
+	public void testListReleasedPackages_Success(@InjectBundleContext BundleContext context) throws InterruptedException, IOException {
+
+		ensureResourceAvailability(context);
+		EPackage testPackage = TestHelper.createTestEPackage(TEST_PACKAGE_NSURI, TEST_PACKAGE_NAME, TEST_PACKAGE_NAME);
+		String xmiContent = TestHelper.serializeToXMI(testPackage, resourceSet);
+
+		Response response = restClient.target(BASE_URL).path(TestAnnotations.TEST_SCOPE_NAME).path("schema").path("stages")
+				.path(TEST_STAGE_RELEASE).queryParam("nsUri", TEST_PACKAGE_NSURI)
+				.queryParam("name", TEST_PACKAGE_NAME).request("application/xmi")
+				.post(Entity.entity(xmiContent, "application/xmi"));
+
+		assertEquals(200, response.getStatus(), "Should return HTTP 200 OK");
+
+		response = restClient.target(BASE_URL).path(TestAnnotations.TEST_SCOPE_NAME).path("schema").request("application/json")
+				.get();
+
+		assertEquals(200, response.getStatus(), "Should return HTTP 200 OK");
+
+		String responseContent = response.readEntity(String.class);
+		assertNotNull(responseContent, "Should return content");
+		assertTrue(responseContent.contains("metadata"), "Response should contain metadata");
+	}
+
+	@Test
+	@ParentScopeServiceSetup
+	public void testListReleasedPackages_ScopeNotFound(@InjectBundleContext BundleContext context) throws InterruptedException {
+		ensureResourceAvailability(context);
+		Response response = restClient.target(BASE_URL).path("non-existent-scope").path("schema")
+				.request("application/json").get();
+
+		assertEquals(400, response.getStatus(), "Should return HTTP 400 Bad Request");
+	}
+
+	@Test
+	@ParentScopeServiceSetup
+	public void testListPackagesInStage_Success(@InjectBundleContext BundleContext context) throws InterruptedException, IOException {
+		ensureResourceAvailability(context);
+		EPackage testPackage = TestHelper.createTestEPackage(TEST_PACKAGE_NSURI, TEST_PACKAGE_NAME, TEST_PACKAGE_NAME);
+		String xmiContent = TestHelper.serializeToXMI(testPackage, resourceSet);
+
+		Response response = restClient.target(BASE_URL).path(TestAnnotations.TEST_SCOPE_NAME).path("schema").path("stages")
+				.path(TEST_STAGE_DRAFT).queryParam("nsUri", TEST_PACKAGE_NSURI)
+				.queryParam("name", TEST_PACKAGE_NAME).request("application/xmi")
+				.post(Entity.entity(xmiContent, "application/xmi"));
+
+		assertEquals(200, response.getStatus(), "Should return HTTP 200 OK");
+
+		response = restClient.target(BASE_URL).path(TestAnnotations.TEST_SCOPE_NAME).path("schema").path("stages")
+				.path(TEST_STAGE_DRAFT).request("application/json").get();
+
+		assertEquals(200, response.getStatus(), "Should return HTTP 200 OK");
+
+		String responseContent = response.readEntity(String.class);
+		assertNotNull(responseContent, "Should return content");
+		assertTrue(responseContent.contains("metadata"), "Response should contain metadata");
+	}
+
+	@Test
+	@ParentScopeServiceSetup
+	public void testListPackagesInStage_WithNsUriFilter(@InjectBundleContext BundleContext context) throws InterruptedException, IOException {
+		ensureResourceAvailability(context);
+		EPackage testPackage = TestHelper.createTestEPackage(TEST_PACKAGE_NSURI, TEST_PACKAGE_NAME, TEST_PACKAGE_NAME);
+		String xmiContent = TestHelper.serializeToXMI(testPackage, resourceSet);
+
+		Response response = restClient.target(BASE_URL).path(TestAnnotations.TEST_SCOPE_NAME).path("schema").path("stages")
+				.path(TEST_STAGE_DRAFT).queryParam("nsUri", TEST_PACKAGE_NSURI)
+				.queryParam("name", TEST_PACKAGE_NAME).request("application/xmi")
+				.post(Entity.entity(xmiContent, "application/xmi"));
+
+		assertEquals(200, response.getStatus(), "Should return HTTP 200 OK");
+
+		response = restClient.target(BASE_URL).path(TestAnnotations.TEST_SCOPE_NAME).path("schema").path("stages")
+				.path(TEST_STAGE_DRAFT).queryParam("nsUri", TEST_PACKAGE_NSURI).request("application/json").get();
+
+		assertEquals(200, response.getStatus(), "Should return HTTP 200 OK");
+
+		String responseContent = response.readEntity(String.class);
+		assertNotNull(responseContent, "Should return content");
+		assertTrue(responseContent.contains("objectId"), "Response should contain objectId");
+	}
+
+	@Test
+	@ParentScopeServiceSetup
+	public void testListPackagesInStage_NotFound(@InjectBundleContext BundleContext context) throws InterruptedException, IOException {
+		ensureResourceAvailability(context);
+
+		Response response = restClient.target(BASE_URL).path(TestAnnotations.TEST_SCOPE_NAME).path("schema").path("stages")
+				.path(TEST_STAGE_DRAFT).queryParam("nsUri", "http://non-existent.com/schema/1.0")
+				.request("application/json").get();
+
+		assertEquals(204, response.getStatus(), "Should return HTTP 204 No Content");
+	}
+
+	// ========== Create Package Tests ==========
+
+	@Test
+	@ParentScopeServiceSetup
+	public void testCreatePackage_Success(@InjectBundleContext BundleContext context) throws Exception {
+		ensureResourceAvailability(context);
+		EPackage testPackage = TestHelper.createTestEPackage(TEST_PACKAGE_NSURI, TEST_PACKAGE_NAME, TEST_PACKAGE_NAME);
+		String xmiContent = TestHelper.serializeToXMI(testPackage, resourceSet);
+
+		Response response = restClient.target(BASE_URL).path(TestAnnotations.TEST_SCOPE_NAME).path("schema").path("stages")
+				.path(TEST_STAGE_DRAFT).queryParam("nsUri", TEST_PACKAGE_NSURI)
+				.queryParam("name", TEST_PACKAGE_NAME).request("application/xmi")
+				.post(Entity.entity(xmiContent, "application/xmi"));
+
+
+		System.out.println("DEBUG testCreatePackage_Success - Response status: " + response.getStatus());
+		String responseContent = response.readEntity(String.class);
+		System.out.println("DEBUG testCreatePackage_Success - Response content: " + responseContent);
+
+		assertEquals(200, response.getStatus(), "Should return HTTP 200 OK");
+		assertNotNull(responseContent, "Should return content");
+	}
+
+	@Test
+	@ParentScopeServiceSetup
+	public void testCreatePackage_ScopeNotFound(@InjectBundleContext BundleContext context) throws Exception {
+		ensureResourceAvailability(context);
+		EPackage testPackage = TestHelper.createTestEPackage(TEST_PACKAGE_NSURI, TEST_PACKAGE_NAME, TEST_PACKAGE_NAME);
+		String xmiContent = TestHelper.serializeToXMI(testPackage, resourceSet);
+
+		Response response = restClient.target(BASE_URL).path("non-existing-scope").path("schema").path("stages")
+				.path(TEST_STAGE_DRAFT).queryParam("nsUri", TEST_PACKAGE_NSURI)
+				.queryParam("name", TEST_PACKAGE_NAME).request("application/xmi")
+				.post(Entity.entity(xmiContent, "application/xmi"));
+
+
+		assertEquals(400, response.getStatus(), "Should return HTTP 400 Bad Request");
+	}
+
+	// ========== Overwrite Parameter Tests ==========
+
+	@Test
+	@ParentScopeServiceSetup
+	public void testCreatePackage_Conflict_WithoutOverwrite(@InjectBundleContext BundleContext context) throws Exception {
+		ensureResourceAvailability(context);
+		EPackage testPackage = TestHelper.createTestEPackage(TEST_PACKAGE_NSURI, TEST_PACKAGE_NAME, TEST_PACKAGE_NAME);
+		String xmiContent = TestHelper.serializeToXMI(testPackage, resourceSet);
+
+		Response response = restClient.target(BASE_URL).path(TestAnnotations.TEST_SCOPE_NAME).path("schema").path("stages")
+				.path(TEST_STAGE_DRAFT).queryParam("nsUri", TEST_PACKAGE_NSURI)
+				.queryParam("name", TEST_PACKAGE_NAME).request("application/xmi")
+				.post(Entity.entity(xmiContent, "application/xmi"));
+
+		response = restClient.target(BASE_URL).path(TestAnnotations.TEST_SCOPE_NAME).path("schema").path("stages")
+				.path(TEST_STAGE_DRAFT).queryParam("nsUri", TEST_PACKAGE_NSURI)
+				.queryParam("name", TEST_PACKAGE_NAME).request("application/xmi")
+				.post(Entity.entity(xmiContent, "application/xmi"));
+
+		assertEquals(409, response.getStatus(),
+				"Should return HTTP 409 Conflict when Overwrite is false and package exists");
+	}
+
+	@Test
+	@ParentScopeServiceSetup
+	public void testCreatePackage_WithOverwrite_Success(@InjectBundleContext BundleContext context) throws Exception {
+		ensureResourceAvailability(context);
+		EPackage testPackage = TestHelper.createTestEPackage(TEST_PACKAGE_NSURI, TEST_PACKAGE_NAME, TEST_PACKAGE_NAME);
+		String xmiContent = TestHelper.serializeToXMI(testPackage, resourceSet);
+
+		Response response = restClient.target(BASE_URL).path(TestAnnotations.TEST_SCOPE_NAME).path("schema").path("stages")
+				.path(TEST_STAGE_DRAFT).queryParam("nsUri", TEST_PACKAGE_NSURI)
+				.queryParam("name", TEST_PACKAGE_NAME).request("application/xmi")
+				.post(Entity.entity(xmiContent, "application/xmi"));
+
+		response = restClient.target(BASE_URL).path(TestAnnotations.TEST_SCOPE_NAME).path("schema").path("stages")
+				.path(TEST_STAGE_DRAFT).queryParam("nsUri", TEST_PACKAGE_NSURI)
+				.queryParam("name", TEST_PACKAGE_NAME)
+				.queryParam("overwrite", true).request("application/xmi")
+				.post(Entity.entity(xmiContent, "application/xmi"));
+
+		System.out.println("DEBUG testCreatePackage_WithOverwrite_Success - Response status: " + response.getStatus());
+		String responseContent = response.readEntity(String.class);
+		System.out.println("DEBUG testCreatePackage_WithOverwrite_Success - Response content: " + responseContent);
+
+		assertEquals(200, response.getStatus(),
+				"Should return HTTP 200 OK when Overwrite is true and package exists and is writable");
+		assertNotNull(responseContent, "Should return updated metadata");
+		assertTrue(responseContent.contains("objectId"), "Response should contain objectId");
+	}
+
+	@Test
+	@ParentScopeServiceSetup
+	public void testCreatePackage_WithOverwrite_ReadOnly(@InjectBundleContext BundleContext context) throws Exception {
+		ensureResourceAvailability(context);
+		EPackage testPackage = TestHelper.createTestEPackage(TEST_PACKAGE_NSURI, TEST_PACKAGE_NAME, TEST_PACKAGE_NAME);
+		String xmiContent = TestHelper.serializeToXMI(testPackage, resourceSet);
+
+		Response response = restClient.target(BASE_URL).path(TestAnnotations.TEST_PARENT_SCOPE_NAME).path("schema").path("stages")
+				.path(TEST_STAGE_RELEASE).queryParam("nsUri", TEST_PACKAGE_NSURI)
+				.queryParam("name", TEST_PACKAGE_NAME).request("application/xmi")
+				.post(Entity.entity(xmiContent, "application/xmi"));
+
+		assertEquals(200, response.getStatus(),
+				"Should return HTTP 200 OK");
+
+		response = restClient.target(BASE_URL).path(TestAnnotations.TEST_SCOPE_NAME).path("schema").path("stages")
+				.path(TEST_STAGE_DRAFT).queryParam("nsUri", TEST_PACKAGE_NSURI)
+				.queryParam("name", TEST_PACKAGE_NAME)
+				.queryParam("overwrite", true).request("application/xmi")
+				.post(Entity.entity(xmiContent, "application/xmi"));
+
+		System.out.println("DEBUG testCreatePackage_WithOverwrite_ReadOnly - Response status: " + response.getStatus());
+		String responseContent = response.readEntity(String.class);
+		System.out.println("DEBUG testCreatePackage_WithOverwrite_ReadOnly - Response content: " + responseContent);
+
+		assertEquals(403, response.getStatus(),
+				"Should return HTTP 403 Forbidden when Overwrite is true but package is read-only");
+	}
+
+	@Test
+	@ParentScopeServiceSetup
+	public void testCreatePackage_WithOverwrite_NewPackage(@InjectBundleContext BundleContext context) throws Exception {
+		ensureResourceAvailability(context);
+		EPackage testPackage = TestHelper.createTestEPackage(TEST_PACKAGE_NSURI, TEST_PACKAGE_NAME, TEST_PACKAGE_NAME);
+		String xmiContent = TestHelper.serializeToXMI(testPackage, resourceSet);
+
+		Response response = restClient.target(BASE_URL).path(TestAnnotations.TEST_PARENT_SCOPE_NAME).path("schema").path("stages")
+				.path(TEST_STAGE_RELEASE).queryParam("nsUri", TEST_PACKAGE_NSURI)
+				.queryParam("name", TEST_PACKAGE_NAME).queryParam("overwrite", true).request("application/xmi")
+				.post(Entity.entity(xmiContent, "application/xmi"));
+
+		System.out
+		.println("DEBUG testCreatePackage_WithOverwrite_NewPackage - Response status: " + response.getStatus());
+		String responseContent = response.readEntity(String.class);
+		System.out.println("DEBUG testCreatePackage_WithOverwrite_NewPackage - Response content: " + responseContent);
+
+		assertEquals(200, response.getStatus(),
+				"Should return HTTP 200 OK when Overwrite is true for new package (behaves like normal create)");
+		assertNotNull(responseContent, "Should return created metadata");
+	}
+
+	// ========== Get Package Content Tests ==========
+
+	@Test
+	@ParentScopeServiceSetup
+	public void testGetPackageContent_Success(@InjectBundleContext BundleContext context) throws Exception {
+		ensureResourceAvailability(context);
+		EPackage testPackage = TestHelper.createTestEPackage(TEST_PACKAGE_NSURI, TEST_PACKAGE_NAME, TEST_PACKAGE_NAME);
+		String xmiContent = TestHelper.serializeToXMI(testPackage, resourceSet);
+
+		Response response = restClient.target(BASE_URL).path(TestAnnotations.TEST_SCOPE_NAME).path("schema").path("stages")
+				.path(TEST_STAGE_DRAFT).queryParam("nsUri", TEST_PACKAGE_NSURI)
+				.queryParam("name", TEST_PACKAGE_NAME).request("application/xmi")
+				.post(Entity.entity(xmiContent, "application/xmi"));
+
+
+		response = restClient.target(BASE_URL).path(TestAnnotations.TEST_SCOPE_NAME).path("schema").path("stages")
+				.path(TEST_STAGE_DRAFT).path("content").queryParam("nsUri", TEST_PACKAGE_NSURI)
+				.request("application/json").get();
+
+		assertEquals(200, response.getStatus(), "Should return HTTP 200 OK");
+
+		String responseContent = response.readEntity(String.class);
+		assertNotNull(responseContent, "Should return content");
+	}
+
+	@Test
+	@ParentScopeServiceSetup
+	public void testGetPackageContent_NotFound(@InjectBundleContext BundleContext context) throws Exception {
+		ensureResourceAvailability(context);
+		Response response = restClient.target(BASE_URL).path(TestAnnotations.TEST_SCOPE_NAME).path("schema").path("stages")
+				.path(TEST_STAGE_DRAFT).path("content").queryParam("nsUri", "http://non-existent.com/schema/1.0")
+				.request("application/json").get();
+
+		assertEquals(204, response.getStatus(), "Should return HTTP 204 No Content");
+	}
+
+	// ========== Update Package Content Tests ==========
+
+	@Test
+	@ParentScopeServiceSetup
+	public void testUpdatePackageContent_Success(@InjectBundleContext BundleContext context) throws Exception {
+		ensureResourceAvailability(context);
+		EPackage testPackage = TestHelper.createTestEPackage(TEST_PACKAGE_NSURI, TEST_PACKAGE_NAME, TEST_PACKAGE_NAME);
+		String xmiContent = TestHelper.serializeToXMI(testPackage, resourceSet);
+
+		Response response = restClient.target(BASE_URL).path(TestAnnotations.TEST_SCOPE_NAME).path("schema").path("stages")
+				.path(TEST_STAGE_DRAFT).queryParam("nsUri", TEST_PACKAGE_NSURI)
+				.queryParam("name", TEST_PACKAGE_NAME).request("application/xmi")
+				.post(Entity.entity(xmiContent, "application/xmi"));
+
+		EPackage updatedPackage = TestHelper.createTestEPackage(TEST_PACKAGE_NSURI, "UpdatedSchema", "test");
+		xmiContent = TestHelper.serializeToXMI(updatedPackage, resourceSet);
+
+		response = restClient.target(BASE_URL).path(TestAnnotations.TEST_SCOPE_NAME).path("schema").path("stages")
+				.path(TEST_STAGE_DRAFT).path("content").queryParam("nsUri", TEST_PACKAGE_NSURI)
+				.queryParam("version", "1.1.0").request("application/xmi")
+				.put(Entity.entity(xmiContent, "application/xmi"));
+
+		System.out.println("DEBUG testUpdatePackageContent_Success - Response status: " + response.getStatus());
+		String responseContent = response.readEntity(String.class);
+		System.out.println("DEBUG testUpdatePackageContent_Success - Response content: " + responseContent);
+
+		assertEquals(200, response.getStatus(), "Should return HTTP 200 OK");
+	}
+
+	@Disabled("We have to verify the proper behaviour of non writable stages")
+	@Test
+	@ParentScopeServiceSetup
+	public void testUpdatePackageContent_ReadOnlyStage(@InjectBundleContext BundleContext context) throws Exception {
+		ensureResourceAvailability(context);
+		EPackage updatedPackage = TestHelper.createTestEPackage(TEST_PACKAGE_NSURI, "UpdatedSchema", "test");
+		String xmiContent = TestHelper.serializeToXMI(updatedPackage, resourceSet);
+
+		Response response = restClient.target(BASE_URL).path(TestAnnotations.TEST_SCOPE_NAME).path("schema").path("stages")
+				.path("readonly-stage").path("content").queryParam("nsUri", TEST_PACKAGE_NSURI)
+				.queryParam("version", "1.1.0").request("application/xmi")
+				.put(Entity.entity(xmiContent, "application/xmi"));
+
+		assertEquals(403, response.getStatus(), "Should return HTTP 403 Forbidden");
+	}
+
+	@Test
+	@ParentScopeServiceSetup
+	public void testUpdatePackageContent_NotFound(@InjectBundleContext BundleContext context) throws Exception {
+		ensureResourceAvailability(context);
+		EPackage updatedPackage = TestHelper.createTestEPackage("http://non-existent.com/schema/1.0", "NonExistent",
+				"ne");
+		String xmiContent = TestHelper.serializeToXMI(updatedPackage, resourceSet);
+
+		Response response = restClient.target(BASE_URL).path(TestAnnotations.TEST_SCOPE_NAME).path("schema").path("stages")
+				.path(TEST_STAGE_DRAFT).path("content").queryParam("nsUri", "http://non-existent.com/schema/1.0")
+				.queryParam("version", "1.0.0").request("application/xmi")
+				.put(Entity.entity(xmiContent, "application/xmi"));
+
+		assertEquals(204, response.getStatus(), "Should return HTTP 204 No Content");
+	}
+
+	// ========== Delete Package Tests ==========
+
+	@Test
+	@ParentScopeServiceSetup
+	public void testDeletePackage_Success(@InjectBundleContext BundleContext context) throws Exception {
+		ensureResourceAvailability(context);
+		EPackage testPackage = TestHelper.createTestEPackage(TEST_PACKAGE_NSURI, TEST_PACKAGE_NAME, TEST_PACKAGE_NAME);
+		String xmiContent = TestHelper.serializeToXMI(testPackage, resourceSet);
+
+		Response response = restClient.target(BASE_URL).path(TestAnnotations.TEST_SCOPE_NAME).path("schema").path("stages")
+				.path(TEST_STAGE_DRAFT).queryParam("nsUri", TEST_PACKAGE_NSURI)
+				.queryParam("name", TEST_PACKAGE_NAME).request("application/xmi")
+				.post(Entity.entity(xmiContent, "application/xmi"));
+
+		assertEquals(200, response.getStatus(), "Should return HTTP 200 OK");
+
+		response = restClient.target(BASE_URL).path(TestAnnotations.TEST_SCOPE_NAME).path("schema").path("stages")
+				.path(TEST_STAGE_DRAFT).queryParam("nsUri", TEST_PACKAGE_NSURI).request().delete();
+
+		assertEquals(200, response.getStatus(), "Should return HTTP 200 OK");
+	}
+
+	@Disabled("We have to verify the proper behaviour of non writable stages")
+	@Test
+	@ParentScopeServiceSetup
+	public void testDeletePackage_ReadOnlyStage(@InjectBundleContext BundleContext context) throws Exception {
+		ensureResourceAvailability(context);
+		Response response = restClient.target(BASE_URL).path(TestAnnotations.TEST_SCOPE_NAME).path("schema").path("stages")
+				.path("readonly-stage").queryParam("nsUri", TEST_PACKAGE_NSURI).request().delete();
+
+		assertEquals(403, response.getStatus(), "Should return HTTP 403 Forbidden");
+	}
+
+	@Test
+	@ParentScopeServiceSetup
+	public void testDeletePackage_NotFound(@InjectBundleContext BundleContext context) throws Exception {
+		ensureResourceAvailability(context);
+		Response response = restClient.target(BASE_URL).path(TestAnnotations.TEST_SCOPE_NAME).path("schema").path("stages")
+				.path(TEST_STAGE_DRAFT).queryParam("nsUri", "http://non-existent.com/schema/1.0").request().delete();
+
+		assertEquals(204, response.getStatus(), "Should return HTTP 204 No Content");
+	}
+
+	// ========== Transition Tests ==========
+
+	@Test
+	@ParentScopeServiceSetup
+	public void testTransitionPackage_Success(@InjectBundleContext BundleContext context) throws Exception {
+		ensureResourceAvailability(context);
+		EPackage testPackage = TestHelper.createTestEPackage(TEST_PACKAGE_NSURI, TEST_PACKAGE_NAME, TEST_PACKAGE_NAME);
+		String xmiContent = TestHelper.serializeToXMI(testPackage, resourceSet);
+
+		Response response = restClient.target(BASE_URL).path(TestAnnotations.TEST_SCOPE_NAME).path("schema").path("stages")
+				.path(TEST_STAGE_DRAFT).queryParam("nsUri", TEST_PACKAGE_NSURI)
+				.queryParam("name", TEST_PACKAGE_NAME).request("application/xmi")
+				.post(Entity.entity(xmiContent, "application/xmi"));
+
+		assertEquals(200, response.getStatus(), "Should return HTTP 200 OK");
+
+		StageTransitionRequest transition = RestFactory.eINSTANCE.createStageTransitionRequest();
+		transition.setObjectId(TEST_PACKAGE_NSURI);
+		transition.setTargetStage(TEST_STAGE_APPROVED);
+
+		xmiContent = TestHelper.serializeToXMI(transition, resourceSet);
+
+		response = restClient.target(BASE_URL).path(TestAnnotations.TEST_SCOPE_NAME).path("schema").path("stages")
+				.path(TEST_STAGE_DRAFT).path("actions").path("transition").request("application/xmi")
+				.post(Entity.entity(xmiContent, "application/xmi"));
+
+		System.out.println("DEBUG testTransitionPackage_Success - Response status: " + response.getStatus());
+		String responseContent = response.readEntity(String.class);
+		System.out.println("DEBUG testTransitionPackage_Success - Response content: " + responseContent);
+
+		assertEquals(200, response.getStatus(), "Should return HTTP 200 OK");
+	}
+
+	@Test
+	@ParentScopeServiceSetup
+	public void testTransitionPackage_InvalidTransition(@InjectBundleContext BundleContext context) throws Exception {
+		ensureResourceAvailability(context);
+		EPackage testPackage = TestHelper.createTestEPackage(TEST_PACKAGE_NSURI, TEST_PACKAGE_NAME, TEST_PACKAGE_NAME);
+		String xmiContent = TestHelper.serializeToXMI(testPackage, resourceSet);
+
+		Response response = restClient.target(BASE_URL).path(TestAnnotations.TEST_SCOPE_NAME).path("schema").path("stages")
+				.path(TEST_STAGE_DRAFT).queryParam("nsUri", TEST_PACKAGE_NSURI)
+				.queryParam("name", TEST_PACKAGE_NAME).request("application/xmi")
+				.post(Entity.entity(xmiContent, "application/xmi"));
+
+		assertEquals(200, response.getStatus(), "Should return HTTP 200 OK");
+
+		StageTransitionRequest transition = RestFactory.eINSTANCE.createStageTransitionRequest();
+		transition.setObjectId(TEST_PACKAGE_NSURI);
+		transition.setTargetStage(TEST_STAGE_RELEASE); // Invalid: skipping approved stage
+
+		xmiContent = TestHelper.serializeToXMI(transition, resourceSet);
+
+		response = restClient.target(BASE_URL).path(TestAnnotations.TEST_SCOPE_NAME).path("schema").path("stages")
+				.path(TEST_STAGE_DRAFT).path("actions").path("transition").request("application/xmi")
+				.post(Entity.entity(xmiContent, "application/xmi"));
+
+		assertEquals(400, response.getStatus(), "Should return HTTP 400 Bad Request");
+	}
+
+	@Test
+	@ParentScopeServiceSetup
+	public void testTransitionPackage_NotFound(@InjectBundleContext BundleContext context) throws Exception {
+		ensureResourceAvailability(context);
+		StageTransitionRequest transition = RestFactory.eINSTANCE.createStageTransitionRequest();
+		transition.setObjectId("http://non-existent.com/schema/1.0");
+		transition.setTargetStage(TEST_STAGE_APPROVED);
+
+		String xmiContent = TestHelper.serializeToXMI(transition, resourceSet);
+
+		Response response = restClient.target(BASE_URL).path(TestAnnotations.TEST_SCOPE_NAME).path("schema").path("stages")
+				.path(TEST_STAGE_DRAFT).path("actions").path("transition").request("application/xmi")
+				.post(Entity.entity(xmiContent, "application/xmi"));
+
+		assertEquals(204, response.getStatus(), "Should return HTTP 204 No Content");
+	}
+
+	// ========== List Packages By Name Tests ==========
+
+	@Test
+	@ParentScopeServiceSetup
+	public void testListPackagesInStageByName_ExactMatch(@InjectBundleContext BundleContext context) throws Exception {
+		ensureResourceAvailability(context);
+		EPackage testPackage = TestHelper.createTestEPackage(TEST_PACKAGE_NSURI, TEST_PACKAGE_NAME, TEST_PACKAGE_NAME);
+		String xmiContent = TestHelper.serializeToXMI(testPackage, resourceSet);
+
+		Response response = restClient.target(BASE_URL).path(TestAnnotations.TEST_SCOPE_NAME).path("schema").path("stages")
+				.path(TEST_STAGE_DRAFT).queryParam("nsUri", TEST_PACKAGE_NSURI)
+				.queryParam("name", TEST_PACKAGE_NAME).request("application/xmi")
+				.post(Entity.entity(xmiContent, "application/xmi"));
+
+		assertEquals(200, response.getStatus(), "Should return HTTP 200 OK");
+
+		response = restClient.target(BASE_URL).path(TestAnnotations.TEST_SCOPE_NAME).path("schema").path("stages")
+				.path(TEST_STAGE_DRAFT).queryParam("name", TEST_PACKAGE_NAME).request("application/json").get();
+
+		assertEquals(200, response.getStatus(), "Should return HTTP 200 OK");
+
+		String responseContent = response.readEntity(String.class);
+		assertNotNull(responseContent, "Should return content");
+		assertTrue(responseContent.contains("objectId"), "Response should contain objectId");
+		assertTrue(responseContent.contains(TEST_PACKAGE_NAME), "Response should contain the package name");
+	}
+
+	@Test
+	@ParentScopeServiceSetup
+	public void testListPackagesInStageByName_WildcardMatch(@InjectBundleContext BundleContext context) throws Exception {
+		ensureResourceAvailability(context);
+		EPackage testPackage = TestHelper.createTestEPackage(TEST_PACKAGE_NSURI, TEST_PACKAGE_NAME, TEST_PACKAGE_NAME);
+		String xmiContent = TestHelper.serializeToXMI(testPackage, resourceSet);
+
+		Response response = restClient.target(BASE_URL).path(TestAnnotations.TEST_SCOPE_NAME).path("schema").path("stages")
+				.path(TEST_STAGE_DRAFT).queryParam("nsUri", TEST_PACKAGE_NSURI)
+				.queryParam("name", TEST_PACKAGE_NAME).request("application/xmi")
+				.post(Entity.entity(xmiContent, "application/xmi"));
+
+		assertEquals(200, response.getStatus(), "Should return HTTP 200 OK");
+
+		response = restClient.target(BASE_URL).path(TestAnnotations.TEST_SCOPE_NAME).path("schema").path("stages")
+				.path(TEST_STAGE_DRAFT).queryParam("name", "Test*").request("application/json").get();
+
+		assertEquals(200, response.getStatus(), "Should return HTTP 200 OK");
+
+		String responseContent = response.readEntity(String.class);
+		assertNotNull(responseContent, "Should return content");
+		assertTrue(responseContent.contains("objectId"), "Response should contain objectId");
+	}
+
+	@Test
+	@ParentScopeServiceSetup
+	public void testListPackagesInStageByName_PartialWildcardMatch(@InjectBundleContext BundleContext context) throws Exception {
+		ensureResourceAvailability(context);
+		EPackage testPackage = TestHelper.createTestEPackage(TEST_PACKAGE_NSURI, TEST_PACKAGE_NAME, TEST_PACKAGE_NAME);
+		String xmiContent = TestHelper.serializeToXMI(testPackage, resourceSet);
+
+		Response response = restClient.target(BASE_URL).path(TestAnnotations.TEST_SCOPE_NAME).path("schema").path("stages")
+				.path(TEST_STAGE_DRAFT).queryParam("nsUri", TEST_PACKAGE_NSURI)
+				.queryParam("name", TEST_PACKAGE_NAME).request("application/xmi")
+				.post(Entity.entity(xmiContent, "application/xmi"));
+
+		assertEquals(200, response.getStatus(), "Should return HTTP 200 OK");
+
+		response = restClient.target(BASE_URL).path(TestAnnotations.TEST_SCOPE_NAME).path("schema").path("stages")
+				.path(TEST_STAGE_DRAFT).queryParam("name", "TestSchema*").request("application/json").get();
+
+		assertEquals(200, response.getStatus(), "Should return HTTP 200 OK");
+
+		String responseContent = response.readEntity(String.class);
+		assertNotNull(responseContent, "Should return content");
+		assertTrue(responseContent.contains("objectId"), "Response should contain objectId");
+	}
+
+	@Test
+	@ParentScopeServiceSetup
+	public void testListPackagesInStageByName_NotFound(@InjectBundleContext BundleContext context) throws Exception {
+		ensureResourceAvailability(context);
+		Response response = restClient.target(BASE_URL).path(TestAnnotations.TEST_SCOPE_NAME).path("schema").path("stages")
+				.path(TEST_STAGE_DRAFT).queryParam("name", "NonExistentPackage").request("application/json").get();
+
+		assertEquals(204, response.getStatus(), "Should return HTTP 204 No Content when no packages match");
+	}
+
+
+
+	@Test
+	@ParentScopeServiceSetup
+	public void testListPackagesInStageByName_CombinedWithNsUri(@InjectBundleContext BundleContext context) throws Exception {
+		ensureResourceAvailability(context);
+		EPackage testPackage = TestHelper.createTestEPackage(TEST_PACKAGE_NSURI, TEST_PACKAGE_NAME, TEST_PACKAGE_NAME);
+		String xmiContent = TestHelper.serializeToXMI(testPackage, resourceSet);
+
+		Response response = restClient.target(BASE_URL).path(TestAnnotations.TEST_SCOPE_NAME).path("schema").path("stages")
+				.path(TEST_STAGE_DRAFT).queryParam("nsUri", TEST_PACKAGE_NSURI)
+				.queryParam("name", TEST_PACKAGE_NAME).request("application/xmi")
+				.post(Entity.entity(xmiContent, "application/xmi"));
+
+		assertEquals(200, response.getStatus(), "Should return HTTP 200 OK");
+
+		response = restClient.target(BASE_URL).path(TestAnnotations.TEST_SCOPE_NAME).path("schema").path("stages")
+				.path(TEST_STAGE_DRAFT).queryParam("nsUri", TEST_PACKAGE_NSURI).queryParam("name", TEST_PACKAGE_NAME)
+				.request("application/json").get();
+
+		assertEquals(200, response.getStatus(), "Should return HTTP 200 OK");
+
+		String responseContent = response.readEntity(String.class);
+		assertNotNull(responseContent, "Should return content");
+		assertTrue(responseContent.contains("objectId"), "Response should contain objectId");
+	}
+
+
+
+	@Test
+	@ParentScopeServiceSetup
+	public void testListPackagesInStageByName_DifferentStage(@InjectBundleContext BundleContext context) throws Exception {
+		ensureResourceAvailability(context);
+		EPackage testPackage = TestHelper.createTestEPackage(TEST_PACKAGE_NSURI, TEST_PACKAGE_NAME, TEST_PACKAGE_NAME);
+		String xmiContent = TestHelper.serializeToXMI(testPackage, resourceSet);
+
+		Response response = restClient.target(BASE_URL).path(TestAnnotations.TEST_SCOPE_NAME).path("schema").path("stages")
+				.path(TEST_STAGE_APPROVED).queryParam("nsUri", TEST_PACKAGE_NSURI)
+				.queryParam("name", TEST_PACKAGE_NAME).request("application/xmi")
+				.post(Entity.entity(xmiContent, "application/xmi"));
+
+		assertEquals(200, response.getStatus(), "Should return HTTP 200 OK");
+
+		response = restClient.target(BASE_URL).path(TestAnnotations.TEST_SCOPE_NAME).path("schema").path("stages")
+				.path(TEST_STAGE_APPROVED).queryParam("name", TEST_PACKAGE_NAME).request("application/json").get();
+
+		assertEquals(200, response.getStatus(), "Should return HTTP 200 OK");
+
+		String responseContent = response.readEntity(String.class);
+		assertNotNull(responseContent, "Should return content");
+		assertTrue(responseContent.contains("objectId"), "Response should contain objectId");
+	}
+
+	// ========== MediaType Query Parameter Tests ==========
+
+	@Test
+	@ParentScopeServiceSetup
+	public void testListReleasedPackages_WithMediaTypeQueryParam(@InjectBundleContext BundleContext context) throws Exception {
+		ensureResourceAvailability(context);
+		EPackage testPackage = TestHelper.createTestEPackage(TEST_PACKAGE_NSURI, TEST_PACKAGE_NAME, TEST_PACKAGE_NAME);
+		String xmiContent = TestHelper.serializeToXMI(testPackage, resourceSet);
+
+		Response response = restClient.target(BASE_URL).path(TestAnnotations.TEST_SCOPE_NAME).path("schema").path("stages")
+				.path(TEST_STAGE_RELEASE).queryParam("nsUri", TEST_PACKAGE_NSURI)
+				.queryParam("name", TEST_PACKAGE_NAME).request("application/xmi")
+				.post(Entity.entity(xmiContent, "application/xmi"));
+
+		assertEquals(200, response.getStatus(), "Should return HTTP 200 OK");
+		response = restClient.target(BASE_URL).path(TestAnnotations.TEST_SCOPE_NAME).path("schema")
+				.queryParam("mediaType", "application/xml").request("application/json").get();
+
+		assertEquals(200, response.getStatus(), "Should return HTTP 200 OK");
+		assertEquals("application/xml", response.getHeaderString("Content-Type"),
+				"Content-Type header should be set to mediaType query parameter value");
+	}
+
+	@Test
+	@ParentScopeServiceSetup
+	public void testListReleasedPackages_WithUnsupportedMediaTypeQueryParam(@InjectBundleContext BundleContext context) throws Exception {
+		ensureResourceAvailability(context);
+		Response response = restClient.target(BASE_URL).path(TestAnnotations.TEST_SCOPE_NAME).path("schema")
+				.queryParam("mediaType", "application/unsupported").request("application/json").get();
+
+		assertEquals(415, response.getStatus(), "Should return HTTP 415 Unsupported Media Type");
+	}
+
+	@Test
+	@ParentScopeServiceSetup
+	public void testListPackagesInStage_WithMediaTypeQueryParam(@InjectBundleContext BundleContext context) throws Exception {
+		ensureResourceAvailability(context);
+		EPackage testPackage = TestHelper.createTestEPackage(TEST_PACKAGE_NSURI, TEST_PACKAGE_NAME, TEST_PACKAGE_NAME);
+		String xmiContent = TestHelper.serializeToXMI(testPackage, resourceSet);
+
+		Response response = restClient.target(BASE_URL).path(TestAnnotations.TEST_SCOPE_NAME).path("schema").path("stages")
+				.path(TEST_STAGE_DRAFT).queryParam("nsUri", TEST_PACKAGE_NSURI)
+				.queryParam("name", TEST_PACKAGE_NAME).request("application/xmi")
+				.post(Entity.entity(xmiContent, "application/xmi"));
+
+		assertEquals(200, response.getStatus(), "Should return HTTP 200 OK");
+
+		response = restClient.target(BASE_URL).path(TestAnnotations.TEST_SCOPE_NAME).path("schema").path("stages")
+				.path(TEST_STAGE_DRAFT).queryParam("mediaType", "application/xml").request("application/json").get();
+
+		assertEquals(200, response.getStatus(), "Should return HTTP 200 OK");
+		assertEquals("application/xml", response.getHeaderString("Content-Type"),
+				"Content-Type header should be set to mediaType query parameter value");
+	}
+
+	@Test
+	@ParentScopeServiceSetup
+	public void testGetPackageContent_WithMediaTypeQueryParam(@InjectBundleContext BundleContext context) throws Exception {
+		ensureResourceAvailability(context);
+		EPackage testPackage = TestHelper.createTestEPackage(TEST_PACKAGE_NSURI, TEST_PACKAGE_NAME, TEST_PACKAGE_NAME);
+		String xmiContent = TestHelper.serializeToXMI(testPackage, resourceSet);
+
+		Response response = restClient.target(BASE_URL).path(TestAnnotations.TEST_SCOPE_NAME).path("schema").path("stages")
+				.path(TEST_STAGE_DRAFT).queryParam("nsUri", TEST_PACKAGE_NSURI)
+				.queryParam("name", TEST_PACKAGE_NAME).request("application/xmi")
+				.post(Entity.entity(xmiContent, "application/xmi"));
+
+		assertEquals(200, response.getStatus(), "Should return HTTP 200 OK");
+
+		response = restClient.target(BASE_URL).path(TestAnnotations.TEST_SCOPE_NAME).path("schema").path("stages")
+				.path(TEST_STAGE_DRAFT).path("content").queryParam("nsUri", TEST_PACKAGE_NSURI)
+				.queryParam("mediaType", "application/xml").request("application/json").get();
+
+		assertEquals(200, response.getStatus(), "Should return HTTP 200 OK");
+		assertEquals("application/xml", response.getHeaderString("Content-Type"),
+				"Content-Type header should be set to mediaType query parameter value");
+	}
+
+	@Test
+	@ParentScopeServiceSetup
+	public void testGetPackageContent_WithUnsupportedMediaTypeQueryParam(@InjectBundleContext BundleContext context) throws Exception {
+		ensureResourceAvailability(context);
+		EPackage testPackage = TestHelper.createTestEPackage(TEST_PACKAGE_NSURI, TEST_PACKAGE_NAME, TEST_PACKAGE_NAME);
+		String xmiContent = TestHelper.serializeToXMI(testPackage, resourceSet);
+
+		Response response = restClient.target(BASE_URL).path(TestAnnotations.TEST_SCOPE_NAME).path("schema").path("stages")
+				.path(TEST_STAGE_DRAFT).queryParam("nsUri", TEST_PACKAGE_NSURI)
+				.queryParam("name", TEST_PACKAGE_NAME).request("application/xmi")
+				.post(Entity.entity(xmiContent, "application/xmi"));
+
+		assertEquals(200, response.getStatus(), "Should return HTTP 200 OK");
+
+		response = restClient.target(BASE_URL).path(TestAnnotations.TEST_SCOPE_NAME).path("schema").path("stages")
+				.path(TEST_STAGE_DRAFT).path("content").queryParam("nsUri", TEST_PACKAGE_NSURI)
+				.queryParam("mediaType", "application/unsupported").request("application/json").get();
+
+		assertEquals(415, response.getStatus(), "Should return HTTP 415 Unsupported Media Type");
+	}
+
+	@Test
+	@ParentScopeServiceSetup
+	public void testCreatePackage_WithMediaTypeQueryParam(@InjectBundleContext BundleContext context) throws Exception {
+		ensureResourceAvailability(context);
+		EPackage testPackage = TestHelper.createTestEPackage(TEST_PACKAGE_NSURI, TEST_PACKAGE_NAME, TEST_PACKAGE_NAME);
+		String xmiContent = TestHelper.serializeToXMI(testPackage, resourceSet);
+
+		Response response = restClient.target(BASE_URL).path(TestAnnotations.TEST_SCOPE_NAME).path("schema").path("stages")
+				.path(TEST_STAGE_DRAFT).queryParam("nsUri", TEST_PACKAGE_NSURI)
+				.queryParam("name", "MediaTypePackage").queryParam("version", "1.0.0")
+				.queryParam("mediaType", "application/xml").request("application/xmi")
+				.post(Entity.entity(xmiContent, "application/xmi"));
+
+		assertEquals(200, response.getStatus(), "Should return HTTP 200 OK");
+		assertEquals("application/xml", response.getHeaderString("Content-Type"),
+				"Content-Type header should be set to mediaType query parameter value");
+	}
+
+	@Test
+	@ParentScopeServiceSetup
+	public void testUpdatePackageContent_WithMediaTypeQueryParam(@InjectBundleContext BundleContext context) throws Exception {
+		ensureResourceAvailability(context);
+		EPackage testPackage = TestHelper.createTestEPackage(TEST_PACKAGE_NSURI, TEST_PACKAGE_NAME, TEST_PACKAGE_NAME);
+		String xmiContent = TestHelper.serializeToXMI(testPackage, resourceSet);
+
+		Response response = restClient.target(BASE_URL).path(TestAnnotations.TEST_SCOPE_NAME).path("schema").path("stages")
+				.path(TEST_STAGE_DRAFT).queryParam("nsUri", TEST_PACKAGE_NSURI)
+				.queryParam("name", TEST_PACKAGE_NAME).request("application/xmi")
+				.post(Entity.entity(xmiContent, "application/xmi"));
+
+		assertEquals(200, response.getStatus(), "Should return HTTP 200 OK");
+
+		EPackage updatedPackage = TestHelper.createTestEPackage(TEST_PACKAGE_NSURI, "UpdatedSchema", "test");
+		xmiContent = TestHelper.serializeToXMI(updatedPackage, resourceSet);
+
+		response = restClient.target(BASE_URL).path(TestAnnotations.TEST_SCOPE_NAME).path("schema").path("stages")
+				.path(TEST_STAGE_DRAFT).path("content").queryParam("nsUri", TEST_PACKAGE_NSURI)
+				.queryParam("version", "1.1.0").queryParam("mediaType", "application/xml").request("application/xmi")
+				.put(Entity.entity(xmiContent, "application/xmi"));
+
+		assertEquals(200, response.getStatus(), "Should return HTTP 200 OK");
+		assertEquals("application/xml", response.getHeaderString("Content-Type"),
+				"Content-Type header should be set to mediaType query parameter value");
+	}
+
+	@Test
+	@ParentScopeServiceSetup
+	public void testTransitionPackage_WithMediaTypeQueryParam(@InjectBundleContext BundleContext context) throws Exception {
+		ensureResourceAvailability(context);
+		EPackage testPackage = TestHelper.createTestEPackage(TEST_PACKAGE_NSURI, TEST_PACKAGE_NAME, TEST_PACKAGE_NAME);
+		String xmiContent = TestHelper.serializeToXMI(testPackage, resourceSet);
+
+		Response response = restClient.target(BASE_URL).path(TestAnnotations.TEST_SCOPE_NAME).path("schema").path("stages")
+				.path(TEST_STAGE_DRAFT).queryParam("nsUri", TEST_PACKAGE_NSURI)
+				.queryParam("name", TEST_PACKAGE_NAME).request("application/xmi")
+				.post(Entity.entity(xmiContent, "application/xmi"));
+
+		assertEquals(200, response.getStatus(), "Should return HTTP 200 OK");
+
+		StageTransitionRequest transition = RestFactory.eINSTANCE.createStageTransitionRequest();
+		transition.setObjectId(TEST_PACKAGE_NSURI);
+		transition.setTargetStage(TEST_STAGE_APPROVED);
+
+		xmiContent = TestHelper.serializeToXMI(transition, resourceSet);
+
+		response = restClient.target(BASE_URL).path(TestAnnotations.TEST_SCOPE_NAME).path("schema").path("stages")
+				.path(TEST_STAGE_DRAFT).path("actions").path("transition").queryParam("mediaType", "application/xml")
+				.request("application/xmi").post(Entity.entity(xmiContent, "application/xmi"));
+
+		assertEquals(200, response.getStatus(), "Should return HTTP 200 OK");
+		assertEquals("application/xml", response.getHeaderString("Content-Type"),
+				"Content-Type header should be set to mediaType query parameter value");
+	}
+
+	// ========== Search Endpoint Tests ==========
+
+	@Test
+	@ParentScopeServiceSetup
+	public void testSearchPackages_ReturnsResults(@InjectBundleContext BundleContext context) throws Exception {
+		ensureResourceAvailability(context);
+		EPackage testPackage = TestHelper.createTestEPackage(TEST_PACKAGE_NSURI, TEST_PACKAGE_NAME, TEST_PACKAGE_NAME);
+		String xmiContent = TestHelper.serializeToXMI(testPackage, resourceSet);
+
+		Response response = restClient.target(BASE_URL).path(TestAnnotations.TEST_SCOPE_NAME).path("schema").path("stages")
+				.path(TEST_STAGE_DRAFT).queryParam("nsUri", TEST_PACKAGE_NSURI)
+				.queryParam("name", TEST_PACKAGE_NAME).request("application/xmi")
+				.post(Entity.entity(xmiContent, "application/xmi"));
+
+		assertEquals(200, response.getStatus(), "Should return HTTP 200 OK");
+
+		response = restClient.target(BASE_URL).path(TestAnnotations.TEST_SCOPE_NAME).path("schema").path("search")
+				.queryParam("name", TEST_PACKAGE_NAME)
+				.request("application/json").get();
+
+		assertEquals(200, response.getStatus(), "Should return HTTP 200 OK");
+
+		String responseContent = response.readEntity(String.class);
+		assertNotNull(responseContent, "Should return content");
+		assertTrue(responseContent.contains("metadata"), "Response should contain metadata");
+
+		assertNotNull(response.getHeaderString("X-Total-Count"), "Should have X-Total-Count header");
+		assertNotNull(response.getHeaderString("X-Offset"), "Should have X-Offset header");
+		assertNotNull(response.getHeaderString("X-Limit"), "Should have X-Limit header");
+	}
+
+	@Test
+	@ParentScopeServiceSetup
+	public void testSearchPackages_ByNsUriPartialMatch(@InjectBundleContext BundleContext context) throws Exception {
+		ensureResourceAvailability(context);
+		EPackage testPackage = TestHelper.createTestEPackage(TEST_PACKAGE_NSURI, TEST_PACKAGE_NAME, TEST_PACKAGE_NAME);
+		String xmiContent = TestHelper.serializeToXMI(testPackage, resourceSet);
+
+		Response response = restClient.target(BASE_URL).path(TestAnnotations.TEST_SCOPE_NAME).path("schema").path("stages")
+				.path(TEST_STAGE_DRAFT).queryParam("nsUri", TEST_PACKAGE_NSURI)
+				.queryParam("name", TEST_PACKAGE_NAME).request("application/xmi")
+				.post(Entity.entity(xmiContent, "application/xmi"));
+
+		assertEquals(200, response.getStatus(), "Should return HTTP 200 OK");
+
+		response = restClient.target(BASE_URL).path(TestAnnotations.TEST_SCOPE_NAME).path("schema").path("search")
+				.queryParam("nsUri", "schema")
+				.request("application/json").get();
+
+		assertEquals(200, response.getStatus(), "Should return HTTP 200 OK");
+
+		String responseContent = response.readEntity(String.class);
+		assertTrue(responseContent.contains("metadata"), "Response should contain metadata");
+	}
+
+	@Test
+	@ParentScopeServiceSetup
+	public void testSearchPackages_ByClassifier(@InjectBundleContext BundleContext context) throws Exception {
+		ensureResourceAvailability(context);
+		EPackage testPackage = TestHelper.createTestEPackage(TEST_PACKAGE_NSURI, TEST_PACKAGE_NAME, TEST_PACKAGE_NAME);
+		EClass eClass = TestHelper.createTestEClass("Sensor");
+		testPackage.getEClassifiers().add(eClass);
+		String xmiContent = TestHelper.serializeToXMI(testPackage, resourceSet);
+
+		Response response = restClient.target(BASE_URL).path(TestAnnotations.TEST_SCOPE_NAME).path("schema").path("stages")
+				.path(TEST_STAGE_DRAFT).queryParam("nsUri", TEST_PACKAGE_NSURI)
+				.queryParam("name", TEST_PACKAGE_NAME).request("application/xmi")
+				.post(Entity.entity(xmiContent, "application/xmi"));
+
+		assertEquals(200, response.getStatus(), "Should return HTTP 200 OK");
+
+		response = restClient.target(BASE_URL).path(TestAnnotations.TEST_SCOPE_NAME).path("schema").path("search")
+				.queryParam("classifier", "Sensor")
+				.request("application/json").get();
+
+		assertEquals(200, response.getStatus(), "Should return HTTP 200 OK");
+	}
+
+	@Test
+	@ParentScopeServiceSetup
+	public void testSearchPackages_NoResults(@InjectBundleContext BundleContext context) throws Exception {
+		ensureResourceAvailability(context);
+		Response response = restClient.target(BASE_URL).path(TestAnnotations.TEST_SCOPE_NAME).path("schema").path("search")
+				.queryParam("classifier", "DoesNotExist")
+				.request("application/json").get();
+
+		assertEquals(204, response.getStatus(), "Should return HTTP 204 No Content when no matches");
+	}
+
+	@Test
+	@ParentScopeServiceSetup
+	public void testSearchPackages_Pagination(@InjectBundleContext BundleContext context) throws Exception {
+		ensureResourceAvailability(context);
+		// Index multiple packages
+		for (int i = 0; i < 5; i++) {
+			String uri = "http://test.example.com/schema"+i+"/1.1";
+			String name = "schema"+1;
+			EPackage testPackage = TestHelper.createTestEPackage(uri, name, name);
+			String xmiContent = TestHelper.serializeToXMI(testPackage, resourceSet);
+
+			Response response = restClient.target(BASE_URL).path(TestAnnotations.TEST_SCOPE_NAME).path("schema").path("stages")
+					.path(TEST_STAGE_DRAFT).queryParam("nsUri", uri)
+					.queryParam("name", name).request("application/xmi")
+					.post(Entity.entity(xmiContent, "application/xmi"));
+			assertEquals(200, response.getStatus(), "Should return HTTP 200 OK");
+		}
+
+		Response response = restClient.target(BASE_URL).path(TestAnnotations.TEST_SCOPE_NAME).path("schema").path("search")
+				.queryParam("nsUri", "test.example.com")
+				.queryParam("limit", 2)
+				.queryParam("offset", 0)
+				.request("application/json").get();
+
+		assertEquals(200, response.getStatus(), "Should return HTTP 200 OK");
+		assertEquals("5", response.getHeaderString("X-Total-Count"), "Should report total hits");
+		assertEquals("0", response.getHeaderString("X-Offset"), "Should report offset");
+		assertEquals("2", response.getHeaderString("X-Limit"), "Should report limit");
+	}
+
+	@Test
+	@ParentScopeServiceSetup
+	public void testSearchPackages_WithStageFilter(@InjectBundleContext BundleContext context) throws Exception {
+		ensureResourceAvailability(context);
+		String uri = "http://test.example.com/schema-draft/1.1";
+		String name = "schema-draft";
+		EPackage testPackage = TestHelper.createTestEPackage(uri, name, name);
+		String xmiContent = TestHelper.serializeToXMI(testPackage, resourceSet);
+
+		Response response = restClient.target(BASE_URL).path(TestAnnotations.TEST_SCOPE_NAME).path("schema").path("stages")
+				.path(TEST_STAGE_DRAFT).queryParam("nsUri", uri)
+				.queryParam("name", name).request("application/xmi")
+				.post(Entity.entity(xmiContent, "application/xmi"));
+		assertEquals(200, response.getStatus(), "Should return HTTP 200 OK");
+
+		uri = "http://test.example.com/schema-approved/1.1";
+		name = "schema-approved";
+		testPackage = TestHelper.createTestEPackage(uri, name, name);
+		xmiContent = TestHelper.serializeToXMI(testPackage, resourceSet);
+
+		response = restClient.target(BASE_URL).path(TestAnnotations.TEST_SCOPE_NAME).path("schema").path("stages")
+				.path(TEST_STAGE_APPROVED).queryParam("nsUri", uri)
+				.queryParam("name", name).request("application/xmi")
+				.post(Entity.entity(xmiContent, "application/xmi"));
+		assertEquals(200, response.getStatus(), "Should return HTTP 200 OK");
+
+		response = restClient.target(BASE_URL).path(TestAnnotations.TEST_SCOPE_NAME).path("schema").path("search")
+				.queryParam("stage", TEST_STAGE_DRAFT)
+				.request("application/json").get();
+
+		assertEquals(200, response.getStatus(), "Should return HTTP 200 OK");
+		assertEquals("1", response.getHeaderString("X-Total-Count"), "Should find only draft package");
+	}
+
+	@Test
+	@ParentScopeServiceSetup
+	public void testSearchPackages_ScopeNotFound(@InjectBundleContext BundleContext context) throws Exception {
+		ensureResourceAvailability(context);
+		Response response = restClient.target(BASE_URL).path("non-existent-scope").path("schema").path("search")
+				.queryParam("classifier", "Something")
+				.request("application/json").get();
+
+		assertEquals(400, response.getStatus(), "Should return HTTP 400 Bad Request for unknown scope");
+	}
+
+	@Test
+	@ParentScopeServiceSetup
+	public void testSearchPackages_ByFeatureName(@InjectBundleContext BundleContext context) throws Exception {
+		ensureResourceAvailability(context);
+		EPackage testPackage = TestHelper.createTestEPackage(TEST_PACKAGE_NSURI, TEST_PACKAGE_NAME, TEST_PACKAGE_NAME);
+		EClass eClass = TestHelper.createTestEClass("Sensor");
+		EAttribute eAtt = TestHelper.createTestEAttribute("temperature");
+		eClass.getEAttributes().add(eAtt);
+		testPackage.getEClassifiers().add(eClass);
+		String xmiContent = TestHelper.serializeToXMI(testPackage, resourceSet);
+
+		Response response = restClient.target(BASE_URL).path(TestAnnotations.TEST_SCOPE_NAME).path("schema").path("stages")
+				.path(TEST_STAGE_DRAFT).queryParam("nsUri", TEST_PACKAGE_NSURI)
+				.queryParam("name", TEST_PACKAGE_NAME).request("application/xmi")
+				.post(Entity.entity(xmiContent, "application/xmi"));
+
+		assertEquals(200, response.getStatus(), "Should return HTTP 200 OK");
+
+
+		response = restClient.target(BASE_URL).path(TestAnnotations.TEST_SCOPE_NAME).path("schema").path("search")
+				.queryParam("featureName", "temperature")
+				.request("application/json").get();
+
+		assertEquals(200, response.getStatus(), "Should return HTTP 200 OK");
+		assertEquals("1", response.getHeaderString("X-Total-Count"), "Should find the package");
+	}
+
+	@Test
+	@ParentScopeServiceSetup
+	public void testSearchPackages_ByFeatureType(@InjectBundleContext BundleContext context) throws Exception {
+		ensureResourceAvailability(context);
+		EPackage testPackage = TestHelper.createTestEPackage(TEST_PACKAGE_NSURI, TEST_PACKAGE_NAME, TEST_PACKAGE_NAME);
+		EClass eClass = TestHelper.createTestEClass("Sensor");
+		EAttribute eAtt = TestHelper.createTestEAttribute("temperature");
+		eClass.getEAttributes().add(eAtt);
+		testPackage.getEClassifiers().add(eClass);
+		String xmiContent = TestHelper.serializeToXMI(testPackage, resourceSet);
+
+		Response response = restClient.target(BASE_URL).path(TestAnnotations.TEST_SCOPE_NAME).path("schema").path("stages")
+				.path(TEST_STAGE_DRAFT).queryParam("nsUri", TEST_PACKAGE_NSURI)
+				.queryParam("name", TEST_PACKAGE_NAME).request("application/xmi")
+				.post(Entity.entity(xmiContent, "application/xmi"));
+
+		assertEquals(200, response.getStatus(), "Should return HTTP 200 OK");
+
+		response = restClient.target(BASE_URL).path(TestAnnotations.TEST_SCOPE_NAME).path("schema").path("search")
+				.queryParam("featureType", "EInt")
+				.request("application/json").get();
+
+		assertEquals(200, response.getStatus(), "Should return HTTP 200 OK");
+	}
+
 }

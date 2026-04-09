@@ -32,7 +32,8 @@ src=${^src},src-wf-api
 	osgi.cmpn,\
 	org.osgi.util.converter,\
 	tools.jackson.core.jackson-databind,\
-	tools.jackson.core.jackson-core
+	tools.jackson.core.jackson-core,\
+	org.eclipse.fennec.model.atlas.management.lucene;version=snapshot
 
 
 

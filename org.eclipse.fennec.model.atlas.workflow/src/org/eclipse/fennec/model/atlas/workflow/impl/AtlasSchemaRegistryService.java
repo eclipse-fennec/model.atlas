@@ -22,6 +22,7 @@ import org.eclipse.emf.ecore.EObject;
 import org.eclipse.emf.ecore.EPackage;
 import org.eclipse.emf.ecore.EcorePackage;
 import org.eclipse.emf.ecore.util.EcoreUtil;
+import org.eclipse.fennec.model.atlas.management.lucene.epackage.EPackageLuceneIndex;
 import org.eclipse.fennec.model.atlas.mgmt.api.EObjectRegistryService;
 import org.eclipse.fennec.model.atlas.mgmt.management.ManagementFactory;
 import org.eclipse.fennec.model.atlas.mgmt.management.ObjectMetadata;
@@ -56,24 +57,31 @@ public class AtlasSchemaRegistryService implements RegistryService<EPackage> {
     private EObjectRegistryService<EObject> registry;	
 	private EPackage.Registry staticPackageRegistry;
 
+	private EPackageLuceneIndex ePackageIndex;
+
 	@Activate
-	public AtlasSchemaRegistryService(@Reference(cardinality = ReferenceCardinality.MANDATORY) EObjectRegistryService<EObject> registry) {
+	public AtlasSchemaRegistryService(@Reference(cardinality = ReferenceCardinality.MANDATORY) EObjectRegistryService<EObject> registry, 
+			@Reference(cardinality = ReferenceCardinality.MANDATORY) EPackageLuceneIndex ePackageIndex) {
 		this.registry = registry;
+		this.ePackageIndex = ePackageIndex;
 		this.registryObject = createRegistryObject();
 	}
 	
 	@Reference(target = "(component.name=StaticEPackageRegistry)", policy = ReferencePolicy.DYNAMIC, policyOption = ReferencePolicyOption.GREEDY)
 	public void bindStaticEPackageRegistry(EPackage.Registry staticPackageRegistry) {
 		this.staticPackageRegistry = staticPackageRegistry;
-		staticPackageRegistry.values().stream().filter(v -> v instanceof EPackage).map(v -> (EPackage) v).forEach(v -> {
-			ObjectMetadata metadata = createMetadata(v);
-			registry.updateCache(metadata);			
+		staticPackageRegistry.values().stream().filter(v -> v instanceof EPackage).map(v -> (EPackage) v).forEach(ePackage -> {
+			ObjectMetadata metadata = createMetadata(ePackage);
+			registry.updateCache(metadata);	
+			ePackageIndex.index(metadata, ePackage);
 		});
 	}
 	
 	public void unbindStaticEPackageRegistry(EPackage.Registry staticPackageRegistry) {
-		staticPackageRegistry.values().stream().filter(v -> v instanceof EPackage).map(v -> (EPackage) v).forEach(v -> {
-			registry.removeFromCache(new String(Base64.getUrlEncoder().encode(v.getNsURI().getBytes())));
+		staticPackageRegistry.values().stream().filter(v -> v instanceof EPackage).map(v -> (EPackage) v).forEach(ePackage -> {
+			String objectId = new String(Base64.getUrlEncoder().encode(ePackage.getNsURI().getBytes()));
+			registry.removeFromCache(objectId);
+			ePackageIndex.remove(objectId);
 		});
 		this.staticPackageRegistry = null;
 	}

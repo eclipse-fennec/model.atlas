@@ -36,6 +36,7 @@ import org.eclipse.emf.ecore.EObject;
 import org.eclipse.emf.ecore.EPackage;
 import org.eclipse.emf.ecore.EcoreFactory;
 import org.eclipse.emf.ecore.EcorePackage;
+import org.eclipse.fennec.model.atlas.management.lucene.epackage.EPackageLuceneIndex;
 import org.eclipse.fennec.model.atlas.mgmt.api.EObjectRegistryService;
 import org.eclipse.fennec.model.atlas.mgmt.management.ManagementFactory;
 import org.eclipse.fennec.model.atlas.mgmt.management.ObjectMetadata;
@@ -62,12 +63,15 @@ public class AtlasSchemaRegistryServiceTest {
 
 	@Mock
 	private EObjectRegistryService<EObject> registryService;
+	
+	@Mock
+	private EPackageLuceneIndex ePackageIndex;
 
 	private AtlasSchemaRegistryService service;
 
 	@BeforeEach
 	void setUp() {
-		service = new AtlasSchemaRegistryService(registryService);
+		service = new AtlasSchemaRegistryService(registryService, ePackageIndex);
 	}
 
 	@Nested
