@@ -18,8 +18,6 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.Collections;
 
-import javax.imageio.plugins.tiff.ExifInteroperabilityTagSet;
-
 import org.eclipse.emf.common.util.URI;
 import org.eclipse.emf.ecore.EAttribute;
 import org.eclipse.emf.ecore.EClass;
@@ -30,6 +28,8 @@ import org.eclipse.emf.ecore.EcorePackage;
 import org.eclipse.emf.ecore.resource.Resource;
 import org.eclipse.emf.ecore.resource.ResourceSet;
 import org.eclipse.emf.ecore.xmi.impl.XMIResourceFactoryImpl;
+import org.eclipse.fennec.model.atlas.datagen.example.model.dge.DGFactory;
+import org.eclipse.fennec.model.atlas.datagen.example.model.dge.Person;
 
 /**
  * Helper utility for common test operations including XMI serialization and
@@ -119,6 +119,15 @@ public class TestHelper {
     	eAtt.setEType(EcorePackage.Literals.EINT);
     	return eAtt;
     }
+    
+    public static Person createTestObject() {
+		Person person = DGFactory.eINSTANCE.createPerson();
+		person.setFirstName("John");
+		person.setLastName("Doe");
+		person.setEmail("john.doe@gmail.com");
+		person.setJobTitle("Software Developer");
+		return person;
+	}
     
     
 

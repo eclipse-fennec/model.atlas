@@ -13,36 +13,21 @@
  */
 package org.eclipse.fennec.model.atlas.rest.tests;
 
-import static java.util.Objects.nonNull;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import java.util.Dictionary;
-import java.util.Hashtable;
-import java.util.concurrent.TimeUnit;
+import java.io.IOException;
 
-import org.eclipse.fennec.emf.osgi.annotation.require.RequireEMF;
-import org.eclipse.fennec.model.atlas.rest.tests.helper.MockTestHelper.MockScopeServiceCollector;
-import org.eclipse.fennec.model.atlas.rest.tests.helper.ResourceAware;
-import org.eclipse.fennec.model.atlas.workflow.ScopeServiceCollector;
-import org.gecko.emf.rest.annotations.RequireEMFMessageBodyReaderWriter;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
+import org.eclipse.fennec.model.atlas.rest.tests.helper.TestAnnotations;
+import org.eclipse.fennec.model.atlas.rest.tests.helper.TestAnnotations.ParentScopeServiceSetup;
+import org.eclipse.fennec.model.atlas.workflow.WorkflowConstants;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
 import org.osgi.framework.BundleContext;
-import org.osgi.framework.ServiceRegistration;
-import org.osgi.service.cm.annotations.RequireConfigurationAdmin;
-import org.osgi.service.jakartars.whiteboard.annotations.RequireJakartarsWhiteboard;
 import org.osgi.test.common.annotation.InjectBundleContext;
-import org.osgi.test.common.annotation.InjectService;
-import org.osgi.test.junit5.context.BundleContextExtension;
-import org.osgi.test.junit5.service.ServiceExtension;
 
-import jakarta.ws.rs.client.Client;
-import jakarta.ws.rs.client.ClientBuilder;
+import jakarta.ws.rs.client.WebTarget;
 import jakarta.ws.rs.core.Response;
 
 /**
@@ -60,177 +45,158 @@ import jakarta.ws.rs.core.Response;
  * @author Data In Motion
  * @since 1.0.0
  */
-@RequireEMF
-@RequireEMFMessageBodyReaderWriter
-@RequireJakartarsWhiteboard
-@RequireConfigurationAdmin
-@ExtendWith(BundleContextExtension.class)
-@ExtendWith(ServiceExtension.class)
-public class ScopesResourceTest {
 
-    private static final String BASE_URL = "http://localhost:8185/rest";
-    private static final String TEST_SCOPE_NAME = "test-scope";
+public class ScopesResourceTest extends AbstractRestTest{
 
-    @InjectService
-    ClientBuilder clientBuilder;
+	// ========== List All Scopes Tests ==========
 
-    private Client restClient;
-    private MockScopeServiceCollector mockScopeCollector;
-    private ServiceRegistration<ScopeServiceCollector> mockScopeCollectorRegistration;
+	@Test
+	@ParentScopeServiceSetup
+	public void testListScopes_Success(@InjectBundleContext BundleContext context) throws IOException, InterruptedException {
+		ensureResourceAvailability(context);
+		Response response = scopesTarget().request("application/json").get();
 
-    @BeforeEach
-    public void setup(@InjectBundleContext BundleContext context) throws Exception {
-        // Setup REST client
-        restClient = clientBuilder.build();
+		assertEquals(200, response.getStatus(), "Should return HTTP 200 OK");
 
-        // Create and register mock ScopeCollector
-        Dictionary<String, Object> serviceProps = new Hashtable<>();
-        serviceProps.put("service.ranking", Integer.MAX_VALUE);
+		String responseContent = response.readEntity(String.class);
+		assertNotNull(responseContent, "Should return content");
+		assertTrue(responseContent.contains("scopes"), "Response should contain scopes field");
+		assertTrue(responseContent.contains(TestAnnotations.TEST_SCOPE_NAME), "Response should contain the test scope name");
+		assertTrue(responseContent.contains(TestAnnotations.TEST_PARENT_SCOPE_NAME), "Response should contain the parent test scope name");
+		assertTrue(responseContent.contains(WorkflowConstants.ATLAS_SCOPE_NAME), "Response should contain the atlas scope name");
+	}
 
-        mockScopeCollector = new MockScopeServiceCollector();
-        mockScopeCollectorRegistration = context.registerService(ScopeServiceCollector.class, mockScopeCollector,
-                serviceProps);
+	@Test
+	@ParentScopeServiceSetup
+	public void testListScopes_ContainsScopeDetails(@InjectBundleContext BundleContext context) throws IOException, InterruptedException {
+		ensureResourceAvailability(context);
+		Response response = scopesTarget().request("application/json").get();
 
-        // Small delay to allow service registration to propagate
-        Thread.sleep(200);
+		assertEquals(200, response.getStatus(), "Should return HTTP 200 OK");
 
-        // Wait for the ScopesResource to be registered in Jakarta REST runtime
-        ResourceAware resourceAware = ResourceAware.create(context, "ScopesResource");
-        boolean resourceReady = resourceAware.waitForResource(15, TimeUnit.SECONDS);
+		String responseContent = response.readEntity(String.class);
+		assertNotNull(responseContent, "Should return content");
 
-        assertTrue(resourceReady, "ScopesResource should be registered within 15 seconds. "
-                + "Check that the resource is properly configured and the Jakarta REST runtime is working.");
-    }
+		// Verify scope structure contains expected fields
+		assertTrue(responseContent.contains("name"), "Response should contain name field");
+		assertTrue(responseContent.contains("registries"), "Response should contain registries field");
+	}
 
-    @AfterEach
-    public void teardown(@InjectBundleContext BundleContext context) throws Exception {
-        if (nonNull(mockScopeCollectorRegistration)) {
-            mockScopeCollectorRegistration.unregister();
-            mockScopeCollectorRegistration = null;
+	@Test
+	@ParentScopeServiceSetup
+	public void testListScopes_ReturnsNonEmptyList(@InjectBundleContext BundleContext context) throws IOException, InterruptedException {
+		ensureResourceAvailability(context);
+		Response response = scopesTarget().request("application/json").get();
 
-            // Small delay to allow service unregistration to propagate
-            Thread.sleep(200);
-        }
+		assertEquals(200, response.getStatus(), "Should return HTTP 200 OK");
 
-        if (nonNull(restClient)) {
-            restClient.close();
-            restClient = null;
-        }
-    }
+		String responseContent = response.readEntity(String.class);
+		assertNotNull(responseContent, "Should return content");
 
-    // ========== List All Scopes Tests ==========
+		// Verify scopes list is not empty (mock returns at least one scope)
+		assertFalse(responseContent.contains("\"scopes\":[]"), "Scopes list should not be empty");
+	}
 
-    @Test
-    public void testListScopes_Success() {
-        Response response = restClient.target(BASE_URL).path("scopes").request("application/json").get();
+	// ========== Get Specific Scope Tests ==========
 
-        assertEquals(200, response.getStatus(), "Should return HTTP 200 OK");
+	@Test
+	@ParentScopeServiceSetup
+	public void testGetScope_NotFound(@InjectBundleContext BundleContext context) throws IOException, InterruptedException {
+		ensureResourceAvailability(context);
+		Response response = scopesTarget().path("non-existent-scope")
+				.request("application/json").get();
 
-        String responseContent = response.readEntity(String.class);
-        assertNotNull(responseContent, "Should return content");
-        assertTrue(responseContent.contains("scopes"), "Response should contain scopes field");
-        assertTrue(responseContent.contains(TEST_SCOPE_NAME), "Response should contain the test scope name");
-    }
+		assertEquals(404, response.getStatus(), "Should return HTTP 404 Not Found for non-existent scope");
+	}
 
-    @Test
-    public void testListScopes_ContainsScopeDetails() {
-        Response response = restClient.target(BASE_URL).path("scopes").request("application/json").get();
+	@Test
+	@ParentScopeServiceSetup
+	public void testGetScope_EmptyName(@InjectBundleContext BundleContext context) throws IOException, InterruptedException {
+		ensureResourceAvailability(context);
+		// Note: This tests behavior with an empty path segment
+		// The behavior depends on how the REST framework handles empty path params
+		Response response = scopesTarget().path("").request("application/json").get();
 
-        assertEquals(200, response.getStatus(), "Should return HTTP 200 OK");
+		// Empty path segment typically results in listing all scopes (same as /scopes/)
+		int status = response.getStatus();
+		assertTrue(status == 200, "Empty scope name should return 200 (default to the all scope endpoint)");
+	}
 
-        String responseContent = response.readEntity(String.class);
-        assertNotNull(responseContent, "Should return content");
+	@Test
+	@ParentScopeServiceSetup
+	public void testGetScope_WithSpecialCharacters(@InjectBundleContext BundleContext context) throws IOException, InterruptedException {
+		ensureResourceAvailability(context);
+		Response response = scopesTarget().path("scope-with-special-chars!@#")
+				.request("application/json").get();
 
-        // Verify scope structure contains expected fields
-        assertTrue(responseContent.contains("name"), "Response should contain name field");
-        assertTrue(responseContent.contains("registries"), "Response should contain registries field");
-    }
+		assertEquals(404, response.getStatus(),
+				"Should return HTTP 404 Not Found for non-existent scope with special characters");
+	}
 
-    @Test
-    public void testListScopes_ReturnsNonEmptyList() {
-        Response response = restClient.target(BASE_URL).path("scopes").request("application/json").get();
+	// ========== Content Type Tests ==========
 
-        assertEquals(200, response.getStatus(), "Should return HTTP 200 OK");
+	@Test
+	@ParentScopeServiceSetup
+	public void testListScopes_AcceptsJsonContentType(@InjectBundleContext BundleContext context) throws IOException, InterruptedException {
+		ensureResourceAvailability(context);
+		Response response = scopesTarget().request("application/json").get();
 
-        String responseContent = response.readEntity(String.class);
-        assertNotNull(responseContent, "Should return content");
+		assertEquals(200, response.getStatus(), "Should accept application/json content type");
 
-        // Verify scopes list is not empty (mock returns at least one scope)
-        assertFalse(responseContent.contains("\"scopes\":[]"), "Scopes list should not be empty");
-    }
+		String contentType = response.getHeaderString("Content-Type");
+		assertNotNull(contentType, "Response should have Content-Type header");
+		assertTrue(contentType.contains("application/json"), "Response Content-Type should be application/json");
+	}
 
-    // ========== Get Specific Scope Tests ==========
+	@Test
+	@ParentScopeServiceSetup
+	public void testGetScope_AcceptsJsonContentType(@InjectBundleContext BundleContext context) throws IOException, InterruptedException {
+		ensureResourceAvailability(context);
+		Response response = scopesTarget().path(TestAnnotations.TEST_SCOPE_NAME).request("application/json")
+				.get();
 
-    @Test
-    public void testGetScope_NotFound() {
-        Response response = restClient.target(BASE_URL).path("scopes").path("non-existent-scope")
-                .request("application/json").get();
+		assertEquals(200, response.getStatus(), "Should accept application/json content type");
 
-        assertEquals(404, response.getStatus(), "Should return HTTP 404 Not Found for non-existent scope");
-    }
+		String contentType = response.getHeaderString("Content-Type");
+		assertNotNull(contentType, "Response should have Content-Type header");
+		assertTrue(contentType.contains("application/json"), "Response Content-Type should be application/json");
+	}
 
-    @Test
-    public void testGetScope_EmptyName() {
-        // Note: This tests behavior with an empty path segment
-        // The behavior depends on how the REST framework handles empty path params
-        Response response = restClient.target(BASE_URL).path("scopes").path("").request("application/json").get();
+	// ========== Case Sensitivity Tests ==========
 
-        // Empty path segment typically results in listing all scopes (same as /scopes/)
-        int status = response.getStatus();
-        assertTrue(status == 200, "Empty scope name should return 200 (dwfault to the all scope endpoint)");
-    }
+	@Test
+	@ParentScopeServiceSetup
+	public void testGetScope_CaseSensitive(@InjectBundleContext BundleContext context) throws IOException, InterruptedException {
+		ensureResourceAvailability(context);
+		// Test that scope names are case-sensitive
+		Response response = scopesTarget().path("TEST-SCOPE") // Uppercase version of
+				// test-scope
+				.request("application/json").get();
 
-    @Test
-    public void testGetScope_WithSpecialCharacters() {
-        Response response = restClient.target(BASE_URL).path("scopes").path("scope-with-special-chars!@#")
-                .request("application/json").get();
+		assertEquals(404, response.getStatus(), "Scope lookup should be case-sensitive and return 404 for wrong case");
+	}
 
-        assertEquals(404, response.getStatus(),
-                "Should return HTTP 404 Not Found for non-existent scope with special characters");
-    }
+	@Test
+	@ParentScopeServiceSetup
+	public void testGetScope_MixedCase(@InjectBundleContext BundleContext context) throws IOException, InterruptedException {
+		ensureResourceAvailability(context);
+		Response response = scopesTarget().path("Test-Scope") // Mixed case
+				.request("application/json").get();
 
-    // ========== Content Type Tests ==========
+		assertEquals(404, response.getStatus(), "Scope lookup should be case-sensitive and return 404 for mixed case");
+	}
 
-    @Test
-    public void testListScopes_AcceptsJsonContentType() {
-        Response response = restClient.target(BASE_URL).path("scopes").request("application/json").get();
+	/** /scopes */
+	private WebTarget scopesTarget() {
+		return baseTarget().path("scopes");
+	}
 
-        assertEquals(200, response.getStatus(), "Should accept application/json content type");
-
-        String contentType = response.getHeaderString("Content-Type");
-        assertNotNull(contentType, "Response should have Content-Type header");
-        assertTrue(contentType.contains("application/json"), "Response Content-Type should be application/json");
-    }
-
-    @Test
-    public void testGetScope_AcceptsJsonContentType() {
-        Response response = restClient.target(BASE_URL).path("scopes").path(TEST_SCOPE_NAME).request("application/json")
-                .get();
-
-        assertEquals(200, response.getStatus(), "Should accept application/json content type");
-
-        String contentType = response.getHeaderString("Content-Type");
-        assertNotNull(contentType, "Response should have Content-Type header");
-        assertTrue(contentType.contains("application/json"), "Response Content-Type should be application/json");
-    }
-
-    // ========== Case Sensitivity Tests ==========
-
-    @Test
-    public void testGetScope_CaseSensitive() {
-        // Test that scope names are case-sensitive
-        Response response = restClient.target(BASE_URL).path("scopes").path("TEST-SCOPE") // Uppercase version of
-                                                                                          // test-scope
-                .request("application/json").get();
-
-        assertEquals(404, response.getStatus(), "Scope lookup should be case-sensitive and return 404 for wrong case");
-    }
-
-    @Test
-    public void testGetScope_MixedCase() {
-        Response response = restClient.target(BASE_URL).path("scopes").path("Test-Scope") // Mixed case
-                .request("application/json").get();
-
-        assertEquals(404, response.getStatus(), "Scope lookup should be case-sensitive and return 404 for mixed case");
-    }
+	/*
+	 * (non-Javadoc)
+	 * @see org.eclipse.fennec.model.atlas.rest.tests.AbstractRestTest#getResourceName()
+	 */
+	@Override
+	String getResourceName() {
+		return "ScopesResource";
+	}
 }

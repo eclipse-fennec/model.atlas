@@ -13,44 +13,27 @@
  */
 package org.eclipse.fennec.model.atlas.rest.tests;
 
-import static java.util.Objects.nonNull;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.IOException;
-import java.nio.file.Path;
-import java.util.concurrent.TimeUnit;
 
 import org.eclipse.emf.ecore.EAttribute;
 import org.eclipse.emf.ecore.EClass;
 import org.eclipse.emf.ecore.EPackage;
-import org.eclipse.emf.ecore.resource.ResourceSet;
-import org.eclipse.fennec.emf.osgi.annotation.require.RequireEMF;
 import org.eclipse.fennec.model.atlas.rest.model.RestFactory;
 import org.eclipse.fennec.model.atlas.rest.model.StageTransitionRequest;
-import org.eclipse.fennec.model.atlas.rest.tests.helper.ResourceAware;
 import org.eclipse.fennec.model.atlas.rest.tests.helper.TestAnnotations;
 import org.eclipse.fennec.model.atlas.rest.tests.helper.TestAnnotations.ParentScopeServiceSetup;
 import org.eclipse.fennec.model.atlas.rest.tests.helper.TestHelper;
-import org.gecko.emf.rest.annotations.RequireEMFMessageBodyReaderWriter;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.junit.jupiter.api.io.TempDir;
 import org.osgi.framework.BundleContext;
-import org.osgi.service.cm.annotations.RequireConfigurationAdmin;
-import org.osgi.service.jakartars.whiteboard.annotations.RequireJakartarsWhiteboard;
 import org.osgi.test.common.annotation.InjectBundleContext;
-import org.osgi.test.common.annotation.InjectService;
-import org.osgi.test.junit5.context.BundleContextExtension;
-import org.osgi.test.junit5.service.ServiceExtension;
 
-import jakarta.ws.rs.client.Client;
-import jakarta.ws.rs.client.ClientBuilder;
 import jakarta.ws.rs.client.Entity;
+import jakarta.ws.rs.client.WebTarget;
 import jakarta.ws.rs.core.Response;
 
 /**
@@ -73,64 +56,11 @@ import jakarta.ws.rs.core.Response;
  * @author Data In Motion
  * @since 1.0.0
  */
-@RequireEMF
-@RequireEMFMessageBodyReaderWriter
-@RequireJakartarsWhiteboard
-@RequireConfigurationAdmin
-@ExtendWith(BundleContextExtension.class)
-@ExtendWith(ServiceExtension.class)
-public class SchemaPackagesResourceTest {
 
-	private static final String BASE_URL = "http://localhost:8185/rest";
+public class SchemaPackagesResourceTest extends AbstractRestTest {
+
 	private static final String TEST_PACKAGE_NSURI = "http://test.example.com/schema/1.1";
 	private static final String TEST_PACKAGE_NAME = "TestSchema";
-	private static final String TEST_STAGE_DRAFT = "draft";
-	private static final String TEST_STAGE_APPROVED = "approved";
-	private static final String TEST_STAGE_RELEASE = "release";
-
-	@InjectService(filter = "(emf.name=workflowapi)")
-	ResourceSet resourceSet;
-
-	@InjectService
-	ClientBuilder clientBuilder;
-
-	@TempDir
-	Path tempDir;
-
-	private Client restClient;
-
-
-	@BeforeEach
-	public void setup(@InjectBundleContext BundleContext context) throws Exception {
-		// Set system property for template argument resolution
-		System.setProperty(TestAnnotations.PROP_TEMP_DIR, tempDir.toString());
-
-		// Setup REST client
-		restClient = clientBuilder.build();
-
-		// Ensure XMI factory is registered
-		TestHelper.ensureXMIFactory(resourceSet);
-
-
-	}
-
-	@AfterEach
-	public void teardown(@InjectBundleContext BundleContext context) throws Exception {
-
-		if (nonNull(restClient)) {
-			restClient.close();
-			restClient = null;
-		}
-	}
-
-	private void ensureResourceAvailability(BundleContext context) throws InterruptedException {
-		ResourceAware resourceAware = ResourceAware.create(context, "SchemaPackagesResource");
-		boolean resourceReady = resourceAware.waitForResource(15, TimeUnit.SECONDS);
-
-		assertTrue(resourceReady, "SchemaPackagesResource should be registered within 15 seconds. "
-				+ "Check that the resource is properly configured and the Jakarta REST runtime is working.");
-
-	}
 
 	// ========== List All Packages Tests ==========
 
@@ -142,14 +72,13 @@ public class SchemaPackagesResourceTest {
 		EPackage testPackage = TestHelper.createTestEPackage(TEST_PACKAGE_NSURI, TEST_PACKAGE_NAME, TEST_PACKAGE_NAME);
 		String xmiContent = TestHelper.serializeToXMI(testPackage, resourceSet);
 
-		Response response = restClient.target(BASE_URL).path(TestAnnotations.TEST_SCOPE_NAME).path("schema").path("stages")
-				.path(TEST_STAGE_DRAFT).queryParam("nsUri", TEST_PACKAGE_NSURI)
+		Response response = schemaStageTarget(TestAnnotations.STAGE_DRAFT).queryParam("nsUri", TEST_PACKAGE_NSURI)
 				.queryParam("name", TEST_PACKAGE_NAME).request("application/xmi")
 				.post(Entity.entity(xmiContent, "application/xmi"));
 
 		assertEquals(200, response.getStatus(), "Should return HTTP 200 OK");
 		
-		response = restClient.target(BASE_URL).path(TestAnnotations.TEST_SCOPE_NAME).path("schema").path("all")
+		response = schemaTarget().path("all")
 				.request("application/json").get();
 
 		assertEquals(200, response.getStatus(), "Should return HTTP 200 OK");
@@ -164,7 +93,7 @@ public class SchemaPackagesResourceTest {
 	public void testListAllPackages_ScopeNotFound(@InjectBundleContext BundleContext context) throws InterruptedException, IOException {
 
 		ensureResourceAvailability(context);
-		Response response = restClient.target(BASE_URL).path("non-existent-scope").path("schema").path("all")
+		Response response = schemaTarget("non-existent-scope").path("all")
 				.request("application/json").get();
 
 		assertEquals(400, response.getStatus(), "Should return HTTP 400 Bad Request");
@@ -178,14 +107,13 @@ public class SchemaPackagesResourceTest {
 		EPackage testPackage = TestHelper.createTestEPackage(TEST_PACKAGE_NSURI, TEST_PACKAGE_NAME, TEST_PACKAGE_NAME);
 		String xmiContent = TestHelper.serializeToXMI(testPackage, resourceSet);
 
-		Response response = restClient.target(BASE_URL).path(TestAnnotations.TEST_SCOPE_NAME).path("schema").path("stages")
-				.path(TEST_STAGE_DRAFT).queryParam("nsUri", TEST_PACKAGE_NSURI)
+		Response response = schemaStageTarget(TestAnnotations.STAGE_DRAFT).queryParam("nsUri", TEST_PACKAGE_NSURI)
 				.queryParam("name", TEST_PACKAGE_NAME).request("application/xmi")
 				.post(Entity.entity(xmiContent, "application/xmi"));
 
 		assertEquals(200, response.getStatus(), "Should return HTTP 200 OK");
 		
-		response = restClient.target(BASE_URL).path(TestAnnotations.TEST_SCOPE_NAME).path("schema").path("all")
+		response = schemaTarget().path("all")
 				.queryParam("mediaType", "application/xml").request("application/json").get();
 
 		assertEquals(200, response.getStatus(), "Should return HTTP 200 OK");
@@ -198,7 +126,7 @@ public class SchemaPackagesResourceTest {
 	public void testListAllPackages_WithUnsupportedMediaTypeQueryParam(@InjectBundleContext BundleContext context) throws InterruptedException, IOException {
 
 		ensureResourceAvailability(context);
-		Response response = restClient.target(BASE_URL).path(TestAnnotations.TEST_SCOPE_NAME).path("schema").path("all")
+		Response response = schemaTarget().path("all")
 				.queryParam("mediaType", "application/unsupported").request("application/json").get();
 
 		assertEquals(415, response.getStatus(), "Should return HTTP 415 Unsupported Media Type");
@@ -215,14 +143,13 @@ public class SchemaPackagesResourceTest {
 		EPackage testPackage = TestHelper.createTestEPackage(TEST_PACKAGE_NSURI, TEST_PACKAGE_NAME, TEST_PACKAGE_NAME);
 		String xmiContent = TestHelper.serializeToXMI(testPackage, resourceSet);
 
-		Response response = restClient.target(BASE_URL).path(TestAnnotations.TEST_SCOPE_NAME).path("schema").path("stages")
-				.path(TEST_STAGE_RELEASE).queryParam("nsUri", TEST_PACKAGE_NSURI)
+		Response response = schemaStageTarget(TestAnnotations.STAGE_RELEASE).queryParam("nsUri", TEST_PACKAGE_NSURI)
 				.queryParam("name", TEST_PACKAGE_NAME).request("application/xmi")
 				.post(Entity.entity(xmiContent, "application/xmi"));
 
 		assertEquals(200, response.getStatus(), "Should return HTTP 200 OK");
 
-		response = restClient.target(BASE_URL).path(TestAnnotations.TEST_SCOPE_NAME).path("schema").request("application/json")
+		response = schemaTarget().request("application/json")
 				.get();
 
 		assertEquals(200, response.getStatus(), "Should return HTTP 200 OK");
@@ -236,7 +163,7 @@ public class SchemaPackagesResourceTest {
 	@ParentScopeServiceSetup
 	public void testListReleasedPackages_ScopeNotFound(@InjectBundleContext BundleContext context) throws InterruptedException {
 		ensureResourceAvailability(context);
-		Response response = restClient.target(BASE_URL).path("non-existent-scope").path("schema")
+		Response response = schemaTarget("non-existent-scope")
 				.request("application/json").get();
 
 		assertEquals(400, response.getStatus(), "Should return HTTP 400 Bad Request");
@@ -249,15 +176,13 @@ public class SchemaPackagesResourceTest {
 		EPackage testPackage = TestHelper.createTestEPackage(TEST_PACKAGE_NSURI, TEST_PACKAGE_NAME, TEST_PACKAGE_NAME);
 		String xmiContent = TestHelper.serializeToXMI(testPackage, resourceSet);
 
-		Response response = restClient.target(BASE_URL).path(TestAnnotations.TEST_SCOPE_NAME).path("schema").path("stages")
-				.path(TEST_STAGE_DRAFT).queryParam("nsUri", TEST_PACKAGE_NSURI)
+		Response response = schemaStageTarget(TestAnnotations.STAGE_DRAFT).queryParam("nsUri", TEST_PACKAGE_NSURI)
 				.queryParam("name", TEST_PACKAGE_NAME).request("application/xmi")
 				.post(Entity.entity(xmiContent, "application/xmi"));
 
 		assertEquals(200, response.getStatus(), "Should return HTTP 200 OK");
 
-		response = restClient.target(BASE_URL).path(TestAnnotations.TEST_SCOPE_NAME).path("schema").path("stages")
-				.path(TEST_STAGE_DRAFT).request("application/json").get();
+		response = schemaStageTarget(TestAnnotations.STAGE_DRAFT).request("application/json").get();
 
 		assertEquals(200, response.getStatus(), "Should return HTTP 200 OK");
 
@@ -273,15 +198,13 @@ public class SchemaPackagesResourceTest {
 		EPackage testPackage = TestHelper.createTestEPackage(TEST_PACKAGE_NSURI, TEST_PACKAGE_NAME, TEST_PACKAGE_NAME);
 		String xmiContent = TestHelper.serializeToXMI(testPackage, resourceSet);
 
-		Response response = restClient.target(BASE_URL).path(TestAnnotations.TEST_SCOPE_NAME).path("schema").path("stages")
-				.path(TEST_STAGE_DRAFT).queryParam("nsUri", TEST_PACKAGE_NSURI)
+		Response response = schemaStageTarget(TestAnnotations.STAGE_DRAFT).queryParam("nsUri", TEST_PACKAGE_NSURI)
 				.queryParam("name", TEST_PACKAGE_NAME).request("application/xmi")
 				.post(Entity.entity(xmiContent, "application/xmi"));
 
 		assertEquals(200, response.getStatus(), "Should return HTTP 200 OK");
 
-		response = restClient.target(BASE_URL).path(TestAnnotations.TEST_SCOPE_NAME).path("schema").path("stages")
-				.path(TEST_STAGE_DRAFT).queryParam("nsUri", TEST_PACKAGE_NSURI).request("application/json").get();
+		response = schemaStageTarget(TestAnnotations.STAGE_DRAFT).queryParam("nsUri", TEST_PACKAGE_NSURI).request("application/json").get();
 
 		assertEquals(200, response.getStatus(), "Should return HTTP 200 OK");
 
@@ -295,8 +218,7 @@ public class SchemaPackagesResourceTest {
 	public void testListPackagesInStage_NotFound(@InjectBundleContext BundleContext context) throws InterruptedException, IOException {
 		ensureResourceAvailability(context);
 
-		Response response = restClient.target(BASE_URL).path(TestAnnotations.TEST_SCOPE_NAME).path("schema").path("stages")
-				.path(TEST_STAGE_DRAFT).queryParam("nsUri", "http://non-existent.com/schema/1.0")
+		Response response = schemaStageTarget(TestAnnotations.STAGE_DRAFT).queryParam("nsUri", "http://non-existent.com/schema/1.0")
 				.request("application/json").get();
 
 		assertEquals(204, response.getStatus(), "Should return HTTP 204 No Content");
@@ -311,8 +233,7 @@ public class SchemaPackagesResourceTest {
 		EPackage testPackage = TestHelper.createTestEPackage(TEST_PACKAGE_NSURI, TEST_PACKAGE_NAME, TEST_PACKAGE_NAME);
 		String xmiContent = TestHelper.serializeToXMI(testPackage, resourceSet);
 
-		Response response = restClient.target(BASE_URL).path(TestAnnotations.TEST_SCOPE_NAME).path("schema").path("stages")
-				.path(TEST_STAGE_DRAFT).queryParam("nsUri", TEST_PACKAGE_NSURI)
+		Response response = schemaStageTarget(TestAnnotations.STAGE_DRAFT).queryParam("nsUri", TEST_PACKAGE_NSURI)
 				.queryParam("name", TEST_PACKAGE_NAME).request("application/xmi")
 				.post(Entity.entity(xmiContent, "application/xmi"));
 
@@ -332,8 +253,7 @@ public class SchemaPackagesResourceTest {
 		EPackage testPackage = TestHelper.createTestEPackage(TEST_PACKAGE_NSURI, TEST_PACKAGE_NAME, TEST_PACKAGE_NAME);
 		String xmiContent = TestHelper.serializeToXMI(testPackage, resourceSet);
 
-		Response response = restClient.target(BASE_URL).path("non-existing-scope").path("schema").path("stages")
-				.path(TEST_STAGE_DRAFT).queryParam("nsUri", TEST_PACKAGE_NSURI)
+		Response response = schemaStageTarget("non-existing-scope", TestAnnotations.STAGE_DRAFT).queryParam("nsUri", TEST_PACKAGE_NSURI)
 				.queryParam("name", TEST_PACKAGE_NAME).request("application/xmi")
 				.post(Entity.entity(xmiContent, "application/xmi"));
 
@@ -350,13 +270,11 @@ public class SchemaPackagesResourceTest {
 		EPackage testPackage = TestHelper.createTestEPackage(TEST_PACKAGE_NSURI, TEST_PACKAGE_NAME, TEST_PACKAGE_NAME);
 		String xmiContent = TestHelper.serializeToXMI(testPackage, resourceSet);
 
-		Response response = restClient.target(BASE_URL).path(TestAnnotations.TEST_SCOPE_NAME).path("schema").path("stages")
-				.path(TEST_STAGE_DRAFT).queryParam("nsUri", TEST_PACKAGE_NSURI)
+		Response response = schemaStageTarget(TestAnnotations.STAGE_DRAFT).queryParam("nsUri", TEST_PACKAGE_NSURI)
 				.queryParam("name", TEST_PACKAGE_NAME).request("application/xmi")
 				.post(Entity.entity(xmiContent, "application/xmi"));
 
-		response = restClient.target(BASE_URL).path(TestAnnotations.TEST_SCOPE_NAME).path("schema").path("stages")
-				.path(TEST_STAGE_DRAFT).queryParam("nsUri", TEST_PACKAGE_NSURI)
+		response = schemaStageTarget(TestAnnotations.STAGE_DRAFT).queryParam("nsUri", TEST_PACKAGE_NSURI)
 				.queryParam("name", TEST_PACKAGE_NAME).request("application/xmi")
 				.post(Entity.entity(xmiContent, "application/xmi"));
 
@@ -371,13 +289,11 @@ public class SchemaPackagesResourceTest {
 		EPackage testPackage = TestHelper.createTestEPackage(TEST_PACKAGE_NSURI, TEST_PACKAGE_NAME, TEST_PACKAGE_NAME);
 		String xmiContent = TestHelper.serializeToXMI(testPackage, resourceSet);
 
-		Response response = restClient.target(BASE_URL).path(TestAnnotations.TEST_SCOPE_NAME).path("schema").path("stages")
-				.path(TEST_STAGE_DRAFT).queryParam("nsUri", TEST_PACKAGE_NSURI)
+		Response response = schemaStageTarget(TestAnnotations.STAGE_DRAFT).queryParam("nsUri", TEST_PACKAGE_NSURI)
 				.queryParam("name", TEST_PACKAGE_NAME).request("application/xmi")
 				.post(Entity.entity(xmiContent, "application/xmi"));
 
-		response = restClient.target(BASE_URL).path(TestAnnotations.TEST_SCOPE_NAME).path("schema").path("stages")
-				.path(TEST_STAGE_DRAFT).queryParam("nsUri", TEST_PACKAGE_NSURI)
+		response = schemaStageTarget(TestAnnotations.STAGE_DRAFT).queryParam("nsUri", TEST_PACKAGE_NSURI)
 				.queryParam("name", TEST_PACKAGE_NAME)
 				.queryParam("overwrite", true).request("application/xmi")
 				.post(Entity.entity(xmiContent, "application/xmi"));
@@ -399,16 +315,14 @@ public class SchemaPackagesResourceTest {
 		EPackage testPackage = TestHelper.createTestEPackage(TEST_PACKAGE_NSURI, TEST_PACKAGE_NAME, TEST_PACKAGE_NAME);
 		String xmiContent = TestHelper.serializeToXMI(testPackage, resourceSet);
 
-		Response response = restClient.target(BASE_URL).path(TestAnnotations.TEST_PARENT_SCOPE_NAME).path("schema").path("stages")
-				.path(TEST_STAGE_RELEASE).queryParam("nsUri", TEST_PACKAGE_NSURI)
+		Response response = schemaStageTarget(TestAnnotations.TEST_PARENT_SCOPE_NAME, TestAnnotations.STAGE_RELEASE).queryParam("nsUri", TEST_PACKAGE_NSURI)
 				.queryParam("name", TEST_PACKAGE_NAME).request("application/xmi")
 				.post(Entity.entity(xmiContent, "application/xmi"));
 
 		assertEquals(200, response.getStatus(),
 				"Should return HTTP 200 OK");
 
-		response = restClient.target(BASE_URL).path(TestAnnotations.TEST_SCOPE_NAME).path("schema").path("stages")
-				.path(TEST_STAGE_DRAFT).queryParam("nsUri", TEST_PACKAGE_NSURI)
+		response = schemaStageTarget(TestAnnotations.STAGE_DRAFT).queryParam("nsUri", TEST_PACKAGE_NSURI)
 				.queryParam("name", TEST_PACKAGE_NAME)
 				.queryParam("overwrite", true).request("application/xmi")
 				.post(Entity.entity(xmiContent, "application/xmi"));
@@ -428,8 +342,7 @@ public class SchemaPackagesResourceTest {
 		EPackage testPackage = TestHelper.createTestEPackage(TEST_PACKAGE_NSURI, TEST_PACKAGE_NAME, TEST_PACKAGE_NAME);
 		String xmiContent = TestHelper.serializeToXMI(testPackage, resourceSet);
 
-		Response response = restClient.target(BASE_URL).path(TestAnnotations.TEST_PARENT_SCOPE_NAME).path("schema").path("stages")
-				.path(TEST_STAGE_RELEASE).queryParam("nsUri", TEST_PACKAGE_NSURI)
+		Response response = schemaStageTarget(TestAnnotations.TEST_PARENT_SCOPE_NAME, TestAnnotations.STAGE_RELEASE).queryParam("nsUri", TEST_PACKAGE_NSURI)
 				.queryParam("name", TEST_PACKAGE_NAME).queryParam("overwrite", true).request("application/xmi")
 				.post(Entity.entity(xmiContent, "application/xmi"));
 
@@ -452,14 +365,12 @@ public class SchemaPackagesResourceTest {
 		EPackage testPackage = TestHelper.createTestEPackage(TEST_PACKAGE_NSURI, TEST_PACKAGE_NAME, TEST_PACKAGE_NAME);
 		String xmiContent = TestHelper.serializeToXMI(testPackage, resourceSet);
 
-		Response response = restClient.target(BASE_URL).path(TestAnnotations.TEST_SCOPE_NAME).path("schema").path("stages")
-				.path(TEST_STAGE_DRAFT).queryParam("nsUri", TEST_PACKAGE_NSURI)
+		Response response = schemaStageTarget(TestAnnotations.STAGE_DRAFT).queryParam("nsUri", TEST_PACKAGE_NSURI)
 				.queryParam("name", TEST_PACKAGE_NAME).request("application/xmi")
 				.post(Entity.entity(xmiContent, "application/xmi"));
 
 
-		response = restClient.target(BASE_URL).path(TestAnnotations.TEST_SCOPE_NAME).path("schema").path("stages")
-				.path(TEST_STAGE_DRAFT).path("content").queryParam("nsUri", TEST_PACKAGE_NSURI)
+		response = schemaStageTarget(TestAnnotations.STAGE_DRAFT).path("content").queryParam("nsUri", TEST_PACKAGE_NSURI)
 				.request("application/json").get();
 
 		assertEquals(200, response.getStatus(), "Should return HTTP 200 OK");
@@ -472,8 +383,7 @@ public class SchemaPackagesResourceTest {
 	@ParentScopeServiceSetup
 	public void testGetPackageContent_NotFound(@InjectBundleContext BundleContext context) throws Exception {
 		ensureResourceAvailability(context);
-		Response response = restClient.target(BASE_URL).path(TestAnnotations.TEST_SCOPE_NAME).path("schema").path("stages")
-				.path(TEST_STAGE_DRAFT).path("content").queryParam("nsUri", "http://non-existent.com/schema/1.0")
+		Response response = schemaStageTarget(TestAnnotations.STAGE_DRAFT).path("content").queryParam("nsUri", "http://non-existent.com/schema/1.0")
 				.request("application/json").get();
 
 		assertEquals(204, response.getStatus(), "Should return HTTP 204 No Content");
@@ -488,16 +398,14 @@ public class SchemaPackagesResourceTest {
 		EPackage testPackage = TestHelper.createTestEPackage(TEST_PACKAGE_NSURI, TEST_PACKAGE_NAME, TEST_PACKAGE_NAME);
 		String xmiContent = TestHelper.serializeToXMI(testPackage, resourceSet);
 
-		Response response = restClient.target(BASE_URL).path(TestAnnotations.TEST_SCOPE_NAME).path("schema").path("stages")
-				.path(TEST_STAGE_DRAFT).queryParam("nsUri", TEST_PACKAGE_NSURI)
+		Response response = schemaStageTarget(TestAnnotations.STAGE_DRAFT).queryParam("nsUri", TEST_PACKAGE_NSURI)
 				.queryParam("name", TEST_PACKAGE_NAME).request("application/xmi")
 				.post(Entity.entity(xmiContent, "application/xmi"));
 
 		EPackage updatedPackage = TestHelper.createTestEPackage(TEST_PACKAGE_NSURI, "UpdatedSchema", "test");
 		xmiContent = TestHelper.serializeToXMI(updatedPackage, resourceSet);
 
-		response = restClient.target(BASE_URL).path(TestAnnotations.TEST_SCOPE_NAME).path("schema").path("stages")
-				.path(TEST_STAGE_DRAFT).path("content").queryParam("nsUri", TEST_PACKAGE_NSURI)
+		response = schemaStageTarget(TestAnnotations.STAGE_DRAFT).path("content").queryParam("nsUri", TEST_PACKAGE_NSURI)
 				.queryParam("version", "1.1.0").request("application/xmi")
 				.put(Entity.entity(xmiContent, "application/xmi"));
 
@@ -516,8 +424,7 @@ public class SchemaPackagesResourceTest {
 		EPackage updatedPackage = TestHelper.createTestEPackage(TEST_PACKAGE_NSURI, "UpdatedSchema", "test");
 		String xmiContent = TestHelper.serializeToXMI(updatedPackage, resourceSet);
 
-		Response response = restClient.target(BASE_URL).path(TestAnnotations.TEST_SCOPE_NAME).path("schema").path("stages")
-				.path("readonly-stage").path("content").queryParam("nsUri", TEST_PACKAGE_NSURI)
+		Response response = schemaStageTarget("readonly-stage").path("content").queryParam("nsUri", TEST_PACKAGE_NSURI)
 				.queryParam("version", "1.1.0").request("application/xmi")
 				.put(Entity.entity(xmiContent, "application/xmi"));
 
@@ -532,8 +439,7 @@ public class SchemaPackagesResourceTest {
 				"ne");
 		String xmiContent = TestHelper.serializeToXMI(updatedPackage, resourceSet);
 
-		Response response = restClient.target(BASE_URL).path(TestAnnotations.TEST_SCOPE_NAME).path("schema").path("stages")
-				.path(TEST_STAGE_DRAFT).path("content").queryParam("nsUri", "http://non-existent.com/schema/1.0")
+		Response response = schemaStageTarget(TestAnnotations.STAGE_DRAFT).path("content").queryParam("nsUri", "http://non-existent.com/schema/1.0")
 				.queryParam("version", "1.0.0").request("application/xmi")
 				.put(Entity.entity(xmiContent, "application/xmi"));
 
@@ -549,15 +455,13 @@ public class SchemaPackagesResourceTest {
 		EPackage testPackage = TestHelper.createTestEPackage(TEST_PACKAGE_NSURI, TEST_PACKAGE_NAME, TEST_PACKAGE_NAME);
 		String xmiContent = TestHelper.serializeToXMI(testPackage, resourceSet);
 
-		Response response = restClient.target(BASE_URL).path(TestAnnotations.TEST_SCOPE_NAME).path("schema").path("stages")
-				.path(TEST_STAGE_DRAFT).queryParam("nsUri", TEST_PACKAGE_NSURI)
+		Response response = schemaStageTarget(TestAnnotations.STAGE_DRAFT).queryParam("nsUri", TEST_PACKAGE_NSURI)
 				.queryParam("name", TEST_PACKAGE_NAME).request("application/xmi")
 				.post(Entity.entity(xmiContent, "application/xmi"));
 
 		assertEquals(200, response.getStatus(), "Should return HTTP 200 OK");
 
-		response = restClient.target(BASE_URL).path(TestAnnotations.TEST_SCOPE_NAME).path("schema").path("stages")
-				.path(TEST_STAGE_DRAFT).queryParam("nsUri", TEST_PACKAGE_NSURI).request().delete();
+		response = schemaStageTarget(TestAnnotations.STAGE_DRAFT).queryParam("nsUri", TEST_PACKAGE_NSURI).request().delete();
 
 		assertEquals(200, response.getStatus(), "Should return HTTP 200 OK");
 	}
@@ -567,8 +471,7 @@ public class SchemaPackagesResourceTest {
 	@ParentScopeServiceSetup
 	public void testDeletePackage_ReadOnlyStage(@InjectBundleContext BundleContext context) throws Exception {
 		ensureResourceAvailability(context);
-		Response response = restClient.target(BASE_URL).path(TestAnnotations.TEST_SCOPE_NAME).path("schema").path("stages")
-				.path("readonly-stage").queryParam("nsUri", TEST_PACKAGE_NSURI).request().delete();
+		Response response = schemaStageTarget("readonly-stage").queryParam("nsUri", TEST_PACKAGE_NSURI).request().delete();
 
 		assertEquals(403, response.getStatus(), "Should return HTTP 403 Forbidden");
 	}
@@ -577,8 +480,7 @@ public class SchemaPackagesResourceTest {
 	@ParentScopeServiceSetup
 	public void testDeletePackage_NotFound(@InjectBundleContext BundleContext context) throws Exception {
 		ensureResourceAvailability(context);
-		Response response = restClient.target(BASE_URL).path(TestAnnotations.TEST_SCOPE_NAME).path("schema").path("stages")
-				.path(TEST_STAGE_DRAFT).queryParam("nsUri", "http://non-existent.com/schema/1.0").request().delete();
+		Response response = schemaStageTarget(TestAnnotations.STAGE_DRAFT).queryParam("nsUri", "http://non-existent.com/schema/1.0").request().delete();
 
 		assertEquals(204, response.getStatus(), "Should return HTTP 204 No Content");
 	}
@@ -592,8 +494,7 @@ public class SchemaPackagesResourceTest {
 		EPackage testPackage = TestHelper.createTestEPackage(TEST_PACKAGE_NSURI, TEST_PACKAGE_NAME, TEST_PACKAGE_NAME);
 		String xmiContent = TestHelper.serializeToXMI(testPackage, resourceSet);
 
-		Response response = restClient.target(BASE_URL).path(TestAnnotations.TEST_SCOPE_NAME).path("schema").path("stages")
-				.path(TEST_STAGE_DRAFT).queryParam("nsUri", TEST_PACKAGE_NSURI)
+		Response response = schemaStageTarget(TestAnnotations.STAGE_DRAFT).queryParam("nsUri", TEST_PACKAGE_NSURI)
 				.queryParam("name", TEST_PACKAGE_NAME).request("application/xmi")
 				.post(Entity.entity(xmiContent, "application/xmi"));
 
@@ -601,12 +502,11 @@ public class SchemaPackagesResourceTest {
 
 		StageTransitionRequest transition = RestFactory.eINSTANCE.createStageTransitionRequest();
 		transition.setObjectId(TEST_PACKAGE_NSURI);
-		transition.setTargetStage(TEST_STAGE_APPROVED);
+		transition.setTargetStage(TestAnnotations.STAGE_APPROVED);
 
 		xmiContent = TestHelper.serializeToXMI(transition, resourceSet);
 
-		response = restClient.target(BASE_URL).path(TestAnnotations.TEST_SCOPE_NAME).path("schema").path("stages")
-				.path(TEST_STAGE_DRAFT).path("actions").path("transition").request("application/xmi")
+		response = schemaStageTarget(TestAnnotations.STAGE_DRAFT).path("actions").path("transition").request("application/xmi")
 				.post(Entity.entity(xmiContent, "application/xmi"));
 
 		System.out.println("DEBUG testTransitionPackage_Success - Response status: " + response.getStatus());
@@ -623,8 +523,7 @@ public class SchemaPackagesResourceTest {
 		EPackage testPackage = TestHelper.createTestEPackage(TEST_PACKAGE_NSURI, TEST_PACKAGE_NAME, TEST_PACKAGE_NAME);
 		String xmiContent = TestHelper.serializeToXMI(testPackage, resourceSet);
 
-		Response response = restClient.target(BASE_URL).path(TestAnnotations.TEST_SCOPE_NAME).path("schema").path("stages")
-				.path(TEST_STAGE_DRAFT).queryParam("nsUri", TEST_PACKAGE_NSURI)
+		Response response = schemaStageTarget(TestAnnotations.STAGE_DRAFT).queryParam("nsUri", TEST_PACKAGE_NSURI)
 				.queryParam("name", TEST_PACKAGE_NAME).request("application/xmi")
 				.post(Entity.entity(xmiContent, "application/xmi"));
 
@@ -632,12 +531,11 @@ public class SchemaPackagesResourceTest {
 
 		StageTransitionRequest transition = RestFactory.eINSTANCE.createStageTransitionRequest();
 		transition.setObjectId(TEST_PACKAGE_NSURI);
-		transition.setTargetStage(TEST_STAGE_RELEASE); // Invalid: skipping approved stage
+		transition.setTargetStage(TestAnnotations.STAGE_RELEASE); // Invalid: skipping approved stage
 
 		xmiContent = TestHelper.serializeToXMI(transition, resourceSet);
 
-		response = restClient.target(BASE_URL).path(TestAnnotations.TEST_SCOPE_NAME).path("schema").path("stages")
-				.path(TEST_STAGE_DRAFT).path("actions").path("transition").request("application/xmi")
+		response = schemaStageTarget(TestAnnotations.STAGE_DRAFT).path("actions").path("transition").request("application/xmi")
 				.post(Entity.entity(xmiContent, "application/xmi"));
 
 		assertEquals(400, response.getStatus(), "Should return HTTP 400 Bad Request");
@@ -649,12 +547,11 @@ public class SchemaPackagesResourceTest {
 		ensureResourceAvailability(context);
 		StageTransitionRequest transition = RestFactory.eINSTANCE.createStageTransitionRequest();
 		transition.setObjectId("http://non-existent.com/schema/1.0");
-		transition.setTargetStage(TEST_STAGE_APPROVED);
+		transition.setTargetStage(TestAnnotations.STAGE_APPROVED);
 
 		String xmiContent = TestHelper.serializeToXMI(transition, resourceSet);
 
-		Response response = restClient.target(BASE_URL).path(TestAnnotations.TEST_SCOPE_NAME).path("schema").path("stages")
-				.path(TEST_STAGE_DRAFT).path("actions").path("transition").request("application/xmi")
+		Response response = schemaStageTarget(TestAnnotations.STAGE_DRAFT).path("actions").path("transition").request("application/xmi")
 				.post(Entity.entity(xmiContent, "application/xmi"));
 
 		assertEquals(204, response.getStatus(), "Should return HTTP 204 No Content");
@@ -669,15 +566,13 @@ public class SchemaPackagesResourceTest {
 		EPackage testPackage = TestHelper.createTestEPackage(TEST_PACKAGE_NSURI, TEST_PACKAGE_NAME, TEST_PACKAGE_NAME);
 		String xmiContent = TestHelper.serializeToXMI(testPackage, resourceSet);
 
-		Response response = restClient.target(BASE_URL).path(TestAnnotations.TEST_SCOPE_NAME).path("schema").path("stages")
-				.path(TEST_STAGE_DRAFT).queryParam("nsUri", TEST_PACKAGE_NSURI)
+		Response response = schemaStageTarget(TestAnnotations.STAGE_DRAFT).queryParam("nsUri", TEST_PACKAGE_NSURI)
 				.queryParam("name", TEST_PACKAGE_NAME).request("application/xmi")
 				.post(Entity.entity(xmiContent, "application/xmi"));
 
 		assertEquals(200, response.getStatus(), "Should return HTTP 200 OK");
 
-		response = restClient.target(BASE_URL).path(TestAnnotations.TEST_SCOPE_NAME).path("schema").path("stages")
-				.path(TEST_STAGE_DRAFT).queryParam("name", TEST_PACKAGE_NAME).request("application/json").get();
+		response = schemaStageTarget(TestAnnotations.STAGE_DRAFT).queryParam("name", TEST_PACKAGE_NAME).request("application/json").get();
 
 		assertEquals(200, response.getStatus(), "Should return HTTP 200 OK");
 
@@ -694,15 +589,13 @@ public class SchemaPackagesResourceTest {
 		EPackage testPackage = TestHelper.createTestEPackage(TEST_PACKAGE_NSURI, TEST_PACKAGE_NAME, TEST_PACKAGE_NAME);
 		String xmiContent = TestHelper.serializeToXMI(testPackage, resourceSet);
 
-		Response response = restClient.target(BASE_URL).path(TestAnnotations.TEST_SCOPE_NAME).path("schema").path("stages")
-				.path(TEST_STAGE_DRAFT).queryParam("nsUri", TEST_PACKAGE_NSURI)
+		Response response = schemaStageTarget(TestAnnotations.STAGE_DRAFT).queryParam("nsUri", TEST_PACKAGE_NSURI)
 				.queryParam("name", TEST_PACKAGE_NAME).request("application/xmi")
 				.post(Entity.entity(xmiContent, "application/xmi"));
 
 		assertEquals(200, response.getStatus(), "Should return HTTP 200 OK");
 
-		response = restClient.target(BASE_URL).path(TestAnnotations.TEST_SCOPE_NAME).path("schema").path("stages")
-				.path(TEST_STAGE_DRAFT).queryParam("name", "Test*").request("application/json").get();
+		response = schemaStageTarget(TestAnnotations.STAGE_DRAFT).queryParam("name", "Test*").request("application/json").get();
 
 		assertEquals(200, response.getStatus(), "Should return HTTP 200 OK");
 
@@ -718,15 +611,13 @@ public class SchemaPackagesResourceTest {
 		EPackage testPackage = TestHelper.createTestEPackage(TEST_PACKAGE_NSURI, TEST_PACKAGE_NAME, TEST_PACKAGE_NAME);
 		String xmiContent = TestHelper.serializeToXMI(testPackage, resourceSet);
 
-		Response response = restClient.target(BASE_URL).path(TestAnnotations.TEST_SCOPE_NAME).path("schema").path("stages")
-				.path(TEST_STAGE_DRAFT).queryParam("nsUri", TEST_PACKAGE_NSURI)
+		Response response = schemaStageTarget(TestAnnotations.STAGE_DRAFT).queryParam("nsUri", TEST_PACKAGE_NSURI)
 				.queryParam("name", TEST_PACKAGE_NAME).request("application/xmi")
 				.post(Entity.entity(xmiContent, "application/xmi"));
 
 		assertEquals(200, response.getStatus(), "Should return HTTP 200 OK");
 
-		response = restClient.target(BASE_URL).path(TestAnnotations.TEST_SCOPE_NAME).path("schema").path("stages")
-				.path(TEST_STAGE_DRAFT).queryParam("name", "TestSchema*").request("application/json").get();
+		response = schemaStageTarget(TestAnnotations.STAGE_DRAFT).queryParam("name", "TestSchema*").request("application/json").get();
 
 		assertEquals(200, response.getStatus(), "Should return HTTP 200 OK");
 
@@ -739,8 +630,7 @@ public class SchemaPackagesResourceTest {
 	@ParentScopeServiceSetup
 	public void testListPackagesInStageByName_NotFound(@InjectBundleContext BundleContext context) throws Exception {
 		ensureResourceAvailability(context);
-		Response response = restClient.target(BASE_URL).path(TestAnnotations.TEST_SCOPE_NAME).path("schema").path("stages")
-				.path(TEST_STAGE_DRAFT).queryParam("name", "NonExistentPackage").request("application/json").get();
+		Response response = schemaStageTarget(TestAnnotations.STAGE_DRAFT).queryParam("name", "NonExistentPackage").request("application/json").get();
 
 		assertEquals(204, response.getStatus(), "Should return HTTP 204 No Content when no packages match");
 	}
@@ -754,15 +644,13 @@ public class SchemaPackagesResourceTest {
 		EPackage testPackage = TestHelper.createTestEPackage(TEST_PACKAGE_NSURI, TEST_PACKAGE_NAME, TEST_PACKAGE_NAME);
 		String xmiContent = TestHelper.serializeToXMI(testPackage, resourceSet);
 
-		Response response = restClient.target(BASE_URL).path(TestAnnotations.TEST_SCOPE_NAME).path("schema").path("stages")
-				.path(TEST_STAGE_DRAFT).queryParam("nsUri", TEST_PACKAGE_NSURI)
+		Response response = schemaStageTarget(TestAnnotations.STAGE_DRAFT).queryParam("nsUri", TEST_PACKAGE_NSURI)
 				.queryParam("name", TEST_PACKAGE_NAME).request("application/xmi")
 				.post(Entity.entity(xmiContent, "application/xmi"));
 
 		assertEquals(200, response.getStatus(), "Should return HTTP 200 OK");
 
-		response = restClient.target(BASE_URL).path(TestAnnotations.TEST_SCOPE_NAME).path("schema").path("stages")
-				.path(TEST_STAGE_DRAFT).queryParam("nsUri", TEST_PACKAGE_NSURI).queryParam("name", TEST_PACKAGE_NAME)
+		response = schemaStageTarget(TestAnnotations.STAGE_DRAFT).queryParam("nsUri", TEST_PACKAGE_NSURI).queryParam("name", TEST_PACKAGE_NAME)
 				.request("application/json").get();
 
 		assertEquals(200, response.getStatus(), "Should return HTTP 200 OK");
@@ -781,15 +669,13 @@ public class SchemaPackagesResourceTest {
 		EPackage testPackage = TestHelper.createTestEPackage(TEST_PACKAGE_NSURI, TEST_PACKAGE_NAME, TEST_PACKAGE_NAME);
 		String xmiContent = TestHelper.serializeToXMI(testPackage, resourceSet);
 
-		Response response = restClient.target(BASE_URL).path(TestAnnotations.TEST_SCOPE_NAME).path("schema").path("stages")
-				.path(TEST_STAGE_APPROVED).queryParam("nsUri", TEST_PACKAGE_NSURI)
+		Response response = schemaStageTarget(TestAnnotations.STAGE_APPROVED).queryParam("nsUri", TEST_PACKAGE_NSURI)
 				.queryParam("name", TEST_PACKAGE_NAME).request("application/xmi")
 				.post(Entity.entity(xmiContent, "application/xmi"));
 
 		assertEquals(200, response.getStatus(), "Should return HTTP 200 OK");
 
-		response = restClient.target(BASE_URL).path(TestAnnotations.TEST_SCOPE_NAME).path("schema").path("stages")
-				.path(TEST_STAGE_APPROVED).queryParam("name", TEST_PACKAGE_NAME).request("application/json").get();
+		response = schemaStageTarget(TestAnnotations.STAGE_APPROVED).queryParam("name", TEST_PACKAGE_NAME).request("application/json").get();
 
 		assertEquals(200, response.getStatus(), "Should return HTTP 200 OK");
 
@@ -807,13 +693,12 @@ public class SchemaPackagesResourceTest {
 		EPackage testPackage = TestHelper.createTestEPackage(TEST_PACKAGE_NSURI, TEST_PACKAGE_NAME, TEST_PACKAGE_NAME);
 		String xmiContent = TestHelper.serializeToXMI(testPackage, resourceSet);
 
-		Response response = restClient.target(BASE_URL).path(TestAnnotations.TEST_SCOPE_NAME).path("schema").path("stages")
-				.path(TEST_STAGE_RELEASE).queryParam("nsUri", TEST_PACKAGE_NSURI)
+		Response response = schemaStageTarget(TestAnnotations.STAGE_RELEASE).queryParam("nsUri", TEST_PACKAGE_NSURI)
 				.queryParam("name", TEST_PACKAGE_NAME).request("application/xmi")
 				.post(Entity.entity(xmiContent, "application/xmi"));
 
 		assertEquals(200, response.getStatus(), "Should return HTTP 200 OK");
-		response = restClient.target(BASE_URL).path(TestAnnotations.TEST_SCOPE_NAME).path("schema")
+		response = schemaTarget()
 				.queryParam("mediaType", "application/xml").request("application/json").get();
 
 		assertEquals(200, response.getStatus(), "Should return HTTP 200 OK");
@@ -825,7 +710,7 @@ public class SchemaPackagesResourceTest {
 	@ParentScopeServiceSetup
 	public void testListReleasedPackages_WithUnsupportedMediaTypeQueryParam(@InjectBundleContext BundleContext context) throws Exception {
 		ensureResourceAvailability(context);
-		Response response = restClient.target(BASE_URL).path(TestAnnotations.TEST_SCOPE_NAME).path("schema")
+		Response response = schemaTarget()
 				.queryParam("mediaType", "application/unsupported").request("application/json").get();
 
 		assertEquals(415, response.getStatus(), "Should return HTTP 415 Unsupported Media Type");
@@ -838,15 +723,13 @@ public class SchemaPackagesResourceTest {
 		EPackage testPackage = TestHelper.createTestEPackage(TEST_PACKAGE_NSURI, TEST_PACKAGE_NAME, TEST_PACKAGE_NAME);
 		String xmiContent = TestHelper.serializeToXMI(testPackage, resourceSet);
 
-		Response response = restClient.target(BASE_URL).path(TestAnnotations.TEST_SCOPE_NAME).path("schema").path("stages")
-				.path(TEST_STAGE_DRAFT).queryParam("nsUri", TEST_PACKAGE_NSURI)
+		Response response = schemaStageTarget(TestAnnotations.STAGE_DRAFT).queryParam("nsUri", TEST_PACKAGE_NSURI)
 				.queryParam("name", TEST_PACKAGE_NAME).request("application/xmi")
 				.post(Entity.entity(xmiContent, "application/xmi"));
 
 		assertEquals(200, response.getStatus(), "Should return HTTP 200 OK");
 
-		response = restClient.target(BASE_URL).path(TestAnnotations.TEST_SCOPE_NAME).path("schema").path("stages")
-				.path(TEST_STAGE_DRAFT).queryParam("mediaType", "application/xml").request("application/json").get();
+		response = schemaStageTarget(TestAnnotations.STAGE_DRAFT).queryParam("mediaType", "application/xml").request("application/json").get();
 
 		assertEquals(200, response.getStatus(), "Should return HTTP 200 OK");
 		assertEquals("application/xml", response.getHeaderString("Content-Type"),
@@ -860,15 +743,13 @@ public class SchemaPackagesResourceTest {
 		EPackage testPackage = TestHelper.createTestEPackage(TEST_PACKAGE_NSURI, TEST_PACKAGE_NAME, TEST_PACKAGE_NAME);
 		String xmiContent = TestHelper.serializeToXMI(testPackage, resourceSet);
 
-		Response response = restClient.target(BASE_URL).path(TestAnnotations.TEST_SCOPE_NAME).path("schema").path("stages")
-				.path(TEST_STAGE_DRAFT).queryParam("nsUri", TEST_PACKAGE_NSURI)
+		Response response = schemaStageTarget(TestAnnotations.STAGE_DRAFT).queryParam("nsUri", TEST_PACKAGE_NSURI)
 				.queryParam("name", TEST_PACKAGE_NAME).request("application/xmi")
 				.post(Entity.entity(xmiContent, "application/xmi"));
 
 		assertEquals(200, response.getStatus(), "Should return HTTP 200 OK");
 
-		response = restClient.target(BASE_URL).path(TestAnnotations.TEST_SCOPE_NAME).path("schema").path("stages")
-				.path(TEST_STAGE_DRAFT).path("content").queryParam("nsUri", TEST_PACKAGE_NSURI)
+		response = schemaStageTarget(TestAnnotations.STAGE_DRAFT).path("content").queryParam("nsUri", TEST_PACKAGE_NSURI)
 				.queryParam("mediaType", "application/xml").request("application/json").get();
 
 		assertEquals(200, response.getStatus(), "Should return HTTP 200 OK");
@@ -883,15 +764,13 @@ public class SchemaPackagesResourceTest {
 		EPackage testPackage = TestHelper.createTestEPackage(TEST_PACKAGE_NSURI, TEST_PACKAGE_NAME, TEST_PACKAGE_NAME);
 		String xmiContent = TestHelper.serializeToXMI(testPackage, resourceSet);
 
-		Response response = restClient.target(BASE_URL).path(TestAnnotations.TEST_SCOPE_NAME).path("schema").path("stages")
-				.path(TEST_STAGE_DRAFT).queryParam("nsUri", TEST_PACKAGE_NSURI)
+		Response response = schemaStageTarget(TestAnnotations.STAGE_DRAFT).queryParam("nsUri", TEST_PACKAGE_NSURI)
 				.queryParam("name", TEST_PACKAGE_NAME).request("application/xmi")
 				.post(Entity.entity(xmiContent, "application/xmi"));
 
 		assertEquals(200, response.getStatus(), "Should return HTTP 200 OK");
 
-		response = restClient.target(BASE_URL).path(TestAnnotations.TEST_SCOPE_NAME).path("schema").path("stages")
-				.path(TEST_STAGE_DRAFT).path("content").queryParam("nsUri", TEST_PACKAGE_NSURI)
+		response = schemaStageTarget(TestAnnotations.STAGE_DRAFT).path("content").queryParam("nsUri", TEST_PACKAGE_NSURI)
 				.queryParam("mediaType", "application/unsupported").request("application/json").get();
 
 		assertEquals(415, response.getStatus(), "Should return HTTP 415 Unsupported Media Type");
@@ -904,8 +783,7 @@ public class SchemaPackagesResourceTest {
 		EPackage testPackage = TestHelper.createTestEPackage(TEST_PACKAGE_NSURI, TEST_PACKAGE_NAME, TEST_PACKAGE_NAME);
 		String xmiContent = TestHelper.serializeToXMI(testPackage, resourceSet);
 
-		Response response = restClient.target(BASE_URL).path(TestAnnotations.TEST_SCOPE_NAME).path("schema").path("stages")
-				.path(TEST_STAGE_DRAFT).queryParam("nsUri", TEST_PACKAGE_NSURI)
+		Response response = schemaStageTarget(TestAnnotations.STAGE_DRAFT).queryParam("nsUri", TEST_PACKAGE_NSURI)
 				.queryParam("name", "MediaTypePackage").queryParam("version", "1.0.0")
 				.queryParam("mediaType", "application/xml").request("application/xmi")
 				.post(Entity.entity(xmiContent, "application/xmi"));
@@ -922,8 +800,7 @@ public class SchemaPackagesResourceTest {
 		EPackage testPackage = TestHelper.createTestEPackage(TEST_PACKAGE_NSURI, TEST_PACKAGE_NAME, TEST_PACKAGE_NAME);
 		String xmiContent = TestHelper.serializeToXMI(testPackage, resourceSet);
 
-		Response response = restClient.target(BASE_URL).path(TestAnnotations.TEST_SCOPE_NAME).path("schema").path("stages")
-				.path(TEST_STAGE_DRAFT).queryParam("nsUri", TEST_PACKAGE_NSURI)
+		Response response = schemaStageTarget(TestAnnotations.STAGE_DRAFT).queryParam("nsUri", TEST_PACKAGE_NSURI)
 				.queryParam("name", TEST_PACKAGE_NAME).request("application/xmi")
 				.post(Entity.entity(xmiContent, "application/xmi"));
 
@@ -932,8 +809,7 @@ public class SchemaPackagesResourceTest {
 		EPackage updatedPackage = TestHelper.createTestEPackage(TEST_PACKAGE_NSURI, "UpdatedSchema", "test");
 		xmiContent = TestHelper.serializeToXMI(updatedPackage, resourceSet);
 
-		response = restClient.target(BASE_URL).path(TestAnnotations.TEST_SCOPE_NAME).path("schema").path("stages")
-				.path(TEST_STAGE_DRAFT).path("content").queryParam("nsUri", TEST_PACKAGE_NSURI)
+		response = schemaStageTarget(TestAnnotations.STAGE_DRAFT).path("content").queryParam("nsUri", TEST_PACKAGE_NSURI)
 				.queryParam("version", "1.1.0").queryParam("mediaType", "application/xml").request("application/xmi")
 				.put(Entity.entity(xmiContent, "application/xmi"));
 
@@ -949,8 +825,7 @@ public class SchemaPackagesResourceTest {
 		EPackage testPackage = TestHelper.createTestEPackage(TEST_PACKAGE_NSURI, TEST_PACKAGE_NAME, TEST_PACKAGE_NAME);
 		String xmiContent = TestHelper.serializeToXMI(testPackage, resourceSet);
 
-		Response response = restClient.target(BASE_URL).path(TestAnnotations.TEST_SCOPE_NAME).path("schema").path("stages")
-				.path(TEST_STAGE_DRAFT).queryParam("nsUri", TEST_PACKAGE_NSURI)
+		Response response = schemaStageTarget(TestAnnotations.STAGE_DRAFT).queryParam("nsUri", TEST_PACKAGE_NSURI)
 				.queryParam("name", TEST_PACKAGE_NAME).request("application/xmi")
 				.post(Entity.entity(xmiContent, "application/xmi"));
 
@@ -958,12 +833,11 @@ public class SchemaPackagesResourceTest {
 
 		StageTransitionRequest transition = RestFactory.eINSTANCE.createStageTransitionRequest();
 		transition.setObjectId(TEST_PACKAGE_NSURI);
-		transition.setTargetStage(TEST_STAGE_APPROVED);
+		transition.setTargetStage(TestAnnotations.STAGE_APPROVED);
 
 		xmiContent = TestHelper.serializeToXMI(transition, resourceSet);
 
-		response = restClient.target(BASE_URL).path(TestAnnotations.TEST_SCOPE_NAME).path("schema").path("stages")
-				.path(TEST_STAGE_DRAFT).path("actions").path("transition").queryParam("mediaType", "application/xml")
+		response = schemaStageTarget(TestAnnotations.STAGE_DRAFT).path("actions").path("transition").queryParam("mediaType", "application/xml")
 				.request("application/xmi").post(Entity.entity(xmiContent, "application/xmi"));
 
 		assertEquals(200, response.getStatus(), "Should return HTTP 200 OK");
@@ -980,14 +854,13 @@ public class SchemaPackagesResourceTest {
 		EPackage testPackage = TestHelper.createTestEPackage(TEST_PACKAGE_NSURI, TEST_PACKAGE_NAME, TEST_PACKAGE_NAME);
 		String xmiContent = TestHelper.serializeToXMI(testPackage, resourceSet);
 
-		Response response = restClient.target(BASE_URL).path(TestAnnotations.TEST_SCOPE_NAME).path("schema").path("stages")
-				.path(TEST_STAGE_DRAFT).queryParam("nsUri", TEST_PACKAGE_NSURI)
+		Response response = schemaStageTarget(TestAnnotations.STAGE_DRAFT).queryParam("nsUri", TEST_PACKAGE_NSURI)
 				.queryParam("name", TEST_PACKAGE_NAME).request("application/xmi")
 				.post(Entity.entity(xmiContent, "application/xmi"));
 
 		assertEquals(200, response.getStatus(), "Should return HTTP 200 OK");
 
-		response = restClient.target(BASE_URL).path(TestAnnotations.TEST_SCOPE_NAME).path("schema").path("search")
+		response = schemaTarget().path("search")
 				.queryParam("name", TEST_PACKAGE_NAME)
 				.request("application/json").get();
 
@@ -1009,14 +882,13 @@ public class SchemaPackagesResourceTest {
 		EPackage testPackage = TestHelper.createTestEPackage(TEST_PACKAGE_NSURI, TEST_PACKAGE_NAME, TEST_PACKAGE_NAME);
 		String xmiContent = TestHelper.serializeToXMI(testPackage, resourceSet);
 
-		Response response = restClient.target(BASE_URL).path(TestAnnotations.TEST_SCOPE_NAME).path("schema").path("stages")
-				.path(TEST_STAGE_DRAFT).queryParam("nsUri", TEST_PACKAGE_NSURI)
+		Response response = schemaStageTarget(TestAnnotations.STAGE_DRAFT).queryParam("nsUri", TEST_PACKAGE_NSURI)
 				.queryParam("name", TEST_PACKAGE_NAME).request("application/xmi")
 				.post(Entity.entity(xmiContent, "application/xmi"));
 
 		assertEquals(200, response.getStatus(), "Should return HTTP 200 OK");
 
-		response = restClient.target(BASE_URL).path(TestAnnotations.TEST_SCOPE_NAME).path("schema").path("search")
+		response = schemaTarget().path("search")
 				.queryParam("nsUri", "schema")
 				.request("application/json").get();
 
@@ -1035,14 +907,13 @@ public class SchemaPackagesResourceTest {
 		testPackage.getEClassifiers().add(eClass);
 		String xmiContent = TestHelper.serializeToXMI(testPackage, resourceSet);
 
-		Response response = restClient.target(BASE_URL).path(TestAnnotations.TEST_SCOPE_NAME).path("schema").path("stages")
-				.path(TEST_STAGE_DRAFT).queryParam("nsUri", TEST_PACKAGE_NSURI)
+		Response response = schemaStageTarget(TestAnnotations.STAGE_DRAFT).queryParam("nsUri", TEST_PACKAGE_NSURI)
 				.queryParam("name", TEST_PACKAGE_NAME).request("application/xmi")
 				.post(Entity.entity(xmiContent, "application/xmi"));
 
 		assertEquals(200, response.getStatus(), "Should return HTTP 200 OK");
 
-		response = restClient.target(BASE_URL).path(TestAnnotations.TEST_SCOPE_NAME).path("schema").path("search")
+		response = schemaTarget().path("search")
 				.queryParam("classifier", "Sensor")
 				.request("application/json").get();
 
@@ -1053,7 +924,7 @@ public class SchemaPackagesResourceTest {
 	@ParentScopeServiceSetup
 	public void testSearchPackages_NoResults(@InjectBundleContext BundleContext context) throws Exception {
 		ensureResourceAvailability(context);
-		Response response = restClient.target(BASE_URL).path(TestAnnotations.TEST_SCOPE_NAME).path("schema").path("search")
+		Response response = schemaTarget().path("search")
 				.queryParam("classifier", "DoesNotExist")
 				.request("application/json").get();
 
@@ -1071,14 +942,13 @@ public class SchemaPackagesResourceTest {
 			EPackage testPackage = TestHelper.createTestEPackage(uri, name, name);
 			String xmiContent = TestHelper.serializeToXMI(testPackage, resourceSet);
 
-			Response response = restClient.target(BASE_URL).path(TestAnnotations.TEST_SCOPE_NAME).path("schema").path("stages")
-					.path(TEST_STAGE_DRAFT).queryParam("nsUri", uri)
+			Response response = schemaStageTarget(TestAnnotations.STAGE_DRAFT).queryParam("nsUri", uri)
 					.queryParam("name", name).request("application/xmi")
 					.post(Entity.entity(xmiContent, "application/xmi"));
 			assertEquals(200, response.getStatus(), "Should return HTTP 200 OK");
 		}
 
-		Response response = restClient.target(BASE_URL).path(TestAnnotations.TEST_SCOPE_NAME).path("schema").path("search")
+		Response response = schemaTarget().path("search")
 				.queryParam("nsUri", "test.example.com")
 				.queryParam("limit", 2)
 				.queryParam("offset", 0)
@@ -1099,8 +969,7 @@ public class SchemaPackagesResourceTest {
 		EPackage testPackage = TestHelper.createTestEPackage(uri, name, name);
 		String xmiContent = TestHelper.serializeToXMI(testPackage, resourceSet);
 
-		Response response = restClient.target(BASE_URL).path(TestAnnotations.TEST_SCOPE_NAME).path("schema").path("stages")
-				.path(TEST_STAGE_DRAFT).queryParam("nsUri", uri)
+		Response response = schemaStageTarget(TestAnnotations.STAGE_DRAFT).queryParam("nsUri", uri)
 				.queryParam("name", name).request("application/xmi")
 				.post(Entity.entity(xmiContent, "application/xmi"));
 		assertEquals(200, response.getStatus(), "Should return HTTP 200 OK");
@@ -1110,14 +979,13 @@ public class SchemaPackagesResourceTest {
 		testPackage = TestHelper.createTestEPackage(uri, name, name);
 		xmiContent = TestHelper.serializeToXMI(testPackage, resourceSet);
 
-		response = restClient.target(BASE_URL).path(TestAnnotations.TEST_SCOPE_NAME).path("schema").path("stages")
-				.path(TEST_STAGE_APPROVED).queryParam("nsUri", uri)
+		response = schemaStageTarget(TestAnnotations.STAGE_APPROVED).queryParam("nsUri", uri)
 				.queryParam("name", name).request("application/xmi")
 				.post(Entity.entity(xmiContent, "application/xmi"));
 		assertEquals(200, response.getStatus(), "Should return HTTP 200 OK");
 
-		response = restClient.target(BASE_URL).path(TestAnnotations.TEST_SCOPE_NAME).path("schema").path("search")
-				.queryParam("stage", TEST_STAGE_DRAFT)
+		response = schemaTarget().path("search")
+				.queryParam("stage", TestAnnotations.STAGE_DRAFT)
 				.request("application/json").get();
 
 		assertEquals(200, response.getStatus(), "Should return HTTP 200 OK");
@@ -1128,7 +996,7 @@ public class SchemaPackagesResourceTest {
 	@ParentScopeServiceSetup
 	public void testSearchPackages_ScopeNotFound(@InjectBundleContext BundleContext context) throws Exception {
 		ensureResourceAvailability(context);
-		Response response = restClient.target(BASE_URL).path("non-existent-scope").path("schema").path("search")
+		Response response = schemaTarget("non-existent-scope").path("search")
 				.queryParam("classifier", "Something")
 				.request("application/json").get();
 
@@ -1146,15 +1014,14 @@ public class SchemaPackagesResourceTest {
 		testPackage.getEClassifiers().add(eClass);
 		String xmiContent = TestHelper.serializeToXMI(testPackage, resourceSet);
 
-		Response response = restClient.target(BASE_URL).path(TestAnnotations.TEST_SCOPE_NAME).path("schema").path("stages")
-				.path(TEST_STAGE_DRAFT).queryParam("nsUri", TEST_PACKAGE_NSURI)
+		Response response = schemaStageTarget(TestAnnotations.STAGE_DRAFT).queryParam("nsUri", TEST_PACKAGE_NSURI)
 				.queryParam("name", TEST_PACKAGE_NAME).request("application/xmi")
 				.post(Entity.entity(xmiContent, "application/xmi"));
 
 		assertEquals(200, response.getStatus(), "Should return HTTP 200 OK");
 
 
-		response = restClient.target(BASE_URL).path(TestAnnotations.TEST_SCOPE_NAME).path("schema").path("search")
+		response = schemaTarget().path("search")
 				.queryParam("featureName", "temperature")
 				.request("application/json").get();
 
@@ -1173,18 +1040,46 @@ public class SchemaPackagesResourceTest {
 		testPackage.getEClassifiers().add(eClass);
 		String xmiContent = TestHelper.serializeToXMI(testPackage, resourceSet);
 
-		Response response = restClient.target(BASE_URL).path(TestAnnotations.TEST_SCOPE_NAME).path("schema").path("stages")
-				.path(TEST_STAGE_DRAFT).queryParam("nsUri", TEST_PACKAGE_NSURI)
+		Response response = schemaStageTarget(TestAnnotations.STAGE_DRAFT).queryParam("nsUri", TEST_PACKAGE_NSURI)
 				.queryParam("name", TEST_PACKAGE_NAME).request("application/xmi")
 				.post(Entity.entity(xmiContent, "application/xmi"));
 
 		assertEquals(200, response.getStatus(), "Should return HTTP 200 OK");
 
-		response = restClient.target(BASE_URL).path(TestAnnotations.TEST_SCOPE_NAME).path("schema").path("search")
+		response = schemaTarget().path("search")
 				.queryParam("featureType", "EInt")
 				.request("application/json").get();
 
 		assertEquals(200, response.getStatus(), "Should return HTTP 200 OK");
+	}
+
+	/** /{scope}/schema */
+	private WebTarget schemaTarget(String scope) {
+		return scopeTarget(scope).path("schema");
+	}
+
+	/** /{TEST_SCOPE_NAME}/schema */
+	private WebTarget schemaTarget() {
+		return schemaTarget(TestAnnotations.TEST_SCOPE_NAME);
+	}
+
+	/** /{scope}/schema/stages/{stage} */
+	private WebTarget schemaStageTarget(String scope, String stage) {
+		return schemaTarget(scope).path("stages").path(stage);
+	}
+
+	/** /{TEST_SCOPE_NAME}/schema/stages/{stage} */
+	private WebTarget schemaStageTarget(String stage) {
+		return schemaStageTarget(TestAnnotations.TEST_SCOPE_NAME, stage);
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * @see org.eclipse.fennec.model.atlas.rest.tests.AbstractRestTest#getResourceName()
+	 */
+	@Override
+	String getResourceName() {
+		return "SchemaPackagesResource";
 	}
 
 }
