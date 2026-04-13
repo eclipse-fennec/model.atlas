@@ -22,7 +22,8 @@ Test-Cases: ${classes;HIERARCHY_INDIRECTLY_ANNOTATED;org.junit.platform.commons.
 	org.eclipse.fennec.model.atlas.management;version=snapshot,\
 	org.eclipse.fennec.model.atlas.workflow;version=snapshot,\
 	org.osgi.test.junit5.cm,\
-	org.eclipse.fennec.emf.osgi.component
+	org.eclipse.fennec.emf.osgi.component,\
+	org.eclipse.fennec.model.atlas.tests.common;version=snapshot
 # Issue 31 related
 #	org.gecko.mac.lorawan.model;version=snapshot,\
 #	org.eclipse.fennec.codec.info

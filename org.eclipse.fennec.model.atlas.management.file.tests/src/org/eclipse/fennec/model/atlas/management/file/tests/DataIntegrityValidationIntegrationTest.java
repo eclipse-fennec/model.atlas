@@ -23,11 +23,12 @@ import java.time.Instant;
 import org.eclipse.emf.ecore.EObject;
 import org.eclipse.emf.ecore.EPackage;
 import org.eclipse.emf.ecore.EcoreFactory;
-import org.eclipse.fennec.model.atlas.management.file.tests.annotations.FileTestAnnotations.DefaultFileStorageSetup;
 import org.eclipse.fennec.model.atlas.mgmt.api.EObjectStorageService;
 import org.eclipse.fennec.model.atlas.mgmt.management.ManagementFactory;
 import org.eclipse.fennec.model.atlas.mgmt.management.ObjectMetadata;
 import org.eclipse.fennec.model.atlas.mgmt.management.ObjectStatus;
+import org.eclipse.fennec.model.atlas.tests.common.CommonTestAnnotations;
+import org.eclipse.fennec.model.atlas.tests.common.CommonTestAnnotations.StorageSetup;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -97,7 +98,7 @@ public class DataIntegrityValidationIntegrationTest {
      */
     @SuppressWarnings({ "rawtypes", "unchecked" })
     @Test
-    @DefaultFileStorageSetup
+    @StorageSetup
     public void testLoadMetadataWithCorruptedObjectIdThrowsException(
             @InjectService(cardinality = 0, filter = "(storage.backend=file)") ServiceAware<EObjectStorageService> serviceAware)
             throws Exception {
@@ -133,7 +134,7 @@ public class DataIntegrityValidationIntegrationTest {
 
         // === PHASE 2: Corrupt the metadata file ===
 
-        Path metadataFile = tempDir.resolve(TEST_SCOPE).resolve(TEST_REGISTRY).resolve(TEST_STAGE)
+        Path metadataFile = tempDir.resolve(CommonTestAnnotations.FILE_STORAGE_FOLDER).resolve(TEST_SCOPE).resolve(TEST_REGISTRY).resolve(TEST_STAGE)
                 .resolve(objectId + ".metadata.xmi");
         assertTrue(Files.exists(metadataFile), "Metadata file should exist");
 
@@ -184,7 +185,7 @@ public class DataIntegrityValidationIntegrationTest {
      */
     @SuppressWarnings({ "rawtypes", "unchecked" })
     @Test
-    @DefaultFileStorageSetup
+    @StorageSetup
     public void testLoadMetadataWithMissingObjectIdThrowsException(
             @InjectService(cardinality = 0, filter = "(storage.backend=file)") ServiceAware<EObjectStorageService> serviceAware)
             throws Exception {
@@ -212,7 +213,7 @@ public class DataIntegrityValidationIntegrationTest {
 
         // === PHASE 2: Corrupt the metadata file by removing objectId ===
 
-        Path metadataFile = tempDir.resolve(TEST_SCOPE).resolve(TEST_REGISTRY).resolve(TEST_STAGE)
+        Path metadataFile = tempDir.resolve(CommonTestAnnotations.FILE_STORAGE_FOLDER).resolve(TEST_SCOPE).resolve(TEST_REGISTRY).resolve(TEST_STAGE)
                 .resolve(objectId + ".metadata.xmi");
         assertTrue(Files.exists(metadataFile), "Metadata file should exist");
 
@@ -257,7 +258,7 @@ public class DataIntegrityValidationIntegrationTest {
      */
     @SuppressWarnings({ "rawtypes", "unchecked" })
     @Test
-    @DefaultFileStorageSetup
+    @StorageSetup
     public void testLoadCompletelyCorruptedMetadataThrowsException(
             @InjectService(cardinality = 0, filter = "(storage.backend=file)") ServiceAware<EObjectStorageService> serviceAware)
             throws Exception {
@@ -285,7 +286,7 @@ public class DataIntegrityValidationIntegrationTest {
 
         // === PHASE 2: Completely corrupt the metadata file ===
 
-        Path metadataFile = tempDir.resolve(TEST_SCOPE).resolve(TEST_REGISTRY).resolve(TEST_STAGE)
+        Path metadataFile = tempDir.resolve(CommonTestAnnotations.FILE_STORAGE_FOLDER).resolve(TEST_SCOPE).resolve(TEST_REGISTRY).resolve(TEST_STAGE)
                 .resolve(objectId + ".metadata.xmi");
         assertTrue(Files.exists(metadataFile), "Metadata file should exist");
 

@@ -1,0 +1,4 @@
+-library: enableEMF
+-buildpath: \
+	org.osgi.test.junit5,\
+	org.osgi.test.junit5.cm
