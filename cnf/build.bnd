@@ -52,7 +52,6 @@ base-version: 0.0.1
 maven-central: true
 
 # Maven Central Group-Id
-# For Geckoprojects the groupid must start with org.geckoprojects
 -groupid: org.eclipse.fennec.model.atlas
 
 javac.source: 21
