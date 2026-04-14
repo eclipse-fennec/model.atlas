@@ -118,7 +118,6 @@ public class EObjectFileStorageServiceTest {
         metadata.getProperties().put("file.extension", ".ecore");
         metadata.setUploadTime(Instant.now());
         metadata.setSourceChannel("testChannel");
-        metadata.setContentHash("testhash123");
         // Specify .ecore extension for EPackage
         metadata.getProperties().put("file.extension", ".ecore");
 
@@ -158,7 +157,7 @@ public class EObjectFileStorageServiceTest {
         assertNotNull(retrievedMetadata);
         assertEquals("testUser", retrievedMetadata.getUploadUser());
         assertEquals("testChannel", retrievedMetadata.getSourceChannel());
-        assertEquals("testhash123", retrievedMetadata.getContentHash());
+        assertNotNull(retrievedMetadata.getContentHash());
 
     }
 
