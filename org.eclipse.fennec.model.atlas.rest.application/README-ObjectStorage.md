@@ -12,6 +12,7 @@ The **ObjectRegistryResource** provides a RESTful HTTP API for managing storage 
 - **Stage-Based Lifecycle**: Manage objects through workflow stages (draft, review, release, etc.)
 - **Hierarchical Visibility**: Child scopes can access objects from parent scopes' final stages
 - **Content Negotiation**: Support for multiple formats (JSON, XML, XMI, UML)
+- **ETags and Conditional Requests**: Content-hash-based ETags, `If-Match` for optimistic concurrency, `If-None-Match` for conditional GETs
 - **Stage Transitions**: Move objects between workflow stages with validation
 
 ## Architecture
@@ -163,6 +164,8 @@ Accept: application/json
 
 **Response**:
 - **200 OK**: Returns `ObjectMetadataContainer` with list of `ObjectMetadata`, or single `ObjectMetadata` if objectId specified
+  - When returning a single object (via `objectId`): includes `ETag` header and supports `If-None-Match` for conditional GET (returns `304 Not Modified` if unchanged)
+- **304 Not Modified**: Content unchanged (single-object lookup with `If-None-Match`)
 - **204 No Content**: No objects match the filter criteria
 - **400 Bad Request**: Scope not available, registry not available, stage not valid
 - **500 Internal Server Error**: Server error
@@ -219,8 +222,10 @@ Content-Type: application/json | application/xml | application/xmi
 **Response**:
 - **201 Created**: Object created successfully
   - `Location` header: `/{scopeName}/registries/{registryName}/stages/{stageName}?objectId={objectId}`
+  - `ETag` header: SHA-256 content hash
   - Body: `ObjectMetadata` with created object info
 - **200 OK**: Object updated successfully (when override=true)
+  - `ETag` header: SHA-256 content hash
 - **400 Bad Request**: Invalid object data, schema validation failed, or registry/scope/stage not available
 - **403 Forbidden**: Object is read-only (from parent scope)
 - **409 Conflict**: Object with ID already exists and override flag is false
@@ -271,10 +276,15 @@ Accept: application/json | application/xml | application/xmi
 - Performs hierarchical lookup via `getContentFromStageForRegistry()`
 - Returns the EObject (serialized based on Accept header)
 
+**Request Headers**:
+- `If-None-Match` (optional): ETag value from a previous response. If the content has not changed, the server returns `304 Not Modified`.
+
 **Response**:
 - **200 OK**: Object content retrieved successfully
   - Body: Object content in requested format
   - `Content-Type` header matches requested format
+  - `ETag` header: SHA-256 content hash
+- **304 Not Modified**: Content unchanged (when `If-None-Match` matches current ETag)
 - **204 No Content**: Object not found in visibility chain
 - **400 Bad Request**: Scope, registry, or stage not available
 - **406 Not Acceptable**: Requested format not supported
@@ -289,6 +299,11 @@ curl -X GET "https://api.example.com/my-tenant/registries/configurations/stages/
 # Get as XML
 curl -X GET "https://api.example.com/my-tenant/registries/configurations/stages/draft/content?objectId=production-db-settings" \
   -H "Accept: application/xml"
+
+# Conditional GET — only download if changed
+curl -X GET "https://api.example.com/my-tenant/registries/configurations/stages/draft/content?objectId=production-db-settings" \
+  -H "Accept: application/json" \
+  -H 'If-None-Match: "a1b2c3d4e5f6..."'
 ```
 
 ---
@@ -309,29 +324,49 @@ Content-Type: application/json | application/xml | application/xmi
 
 **Request Body**: New object content
 
+**Request Headers**:
+- `If-Match` (optional): ETag value from a previous response. If the content has changed since the ETag was obtained, the server returns `412 Precondition Failed`. Omitting this header means no concurrency check (last-write-wins).
+
 **Behavior**:
 1. Validates that the registry is configured and available
 2. Validates that the object's EClass is compatible with the registry
 3. Retrieves existing metadata via `getMetadataFromStageForRegistry()` (hierarchical lookup)
 4. Checks if object is read-only (`isReadOnly` flag)
-5. Updates object via `updateInStageForRegistry()`
+5. If `If-Match` is provided, validates it against the current content hash
+6. If the new content is identical to the existing content (same hash), skips the write and returns the existing metadata (no timestamp change)
+7. Updates object via `updateInStageForRegistry()`
 
 **Protection Rules**:
 - Cannot update if object is from parent scope (read-only)
 - Cannot update if object doesn't exist
+- Cannot update if `If-Match` ETag does not match current content hash
 
 **Response**:
-- **200 OK**: Object updated successfully
+- **200 OK**: Object updated successfully (or content unchanged — idempotent skip)
   - Body: Updated `ObjectMetadata`
+  - `ETag` header: SHA-256 content hash of the (possibly unchanged) content
 - **204 No Content**: Object not found
 - **400 Bad Request**: Invalid object data or schema validation failed
 - **403 Forbidden**: Object is from parent scope (read-only)
+- **412 Precondition Failed**: `If-Match` ETag does not match current content (concurrent modification)
 - **500 Internal Server Error**: Server error
 
 **Example**:
 ```bash
+# Update without concurrency check (last-write-wins)
 curl -X PUT "https://api.example.com/my-tenant/registries/configurations/stages/draft/content?objectId=production-db-settings&version=1.1.0" \
   -H "Content-Type: application/json" \
+  -d '{
+    "host": "db-new.example.com",
+    "port": 5432,
+    "database": "production",
+    "poolSize": 10
+  }'
+
+# Update with optimistic concurrency check
+curl -X PUT "https://api.example.com/my-tenant/registries/configurations/stages/draft/content?objectId=production-db-settings&version=1.1.0" \
+  -H "Content-Type: application/json" \
+  -H 'If-Match: "a1b2c3d4e5f6..."' \
   -d '{
     "host": "db-new.example.com",
     "port": 5432,
@@ -353,25 +388,34 @@ DELETE /{scopeName}/registries/{registryName}/stages/{stageName}?objectId={objec
 **Query Parameters**:
 - `objectId` (required): The unique object identifier to delete
 
+**Request Headers**:
+- `If-Match` (optional): ETag value from a previous response. If the content has changed since the ETag was obtained, the server returns `412 Precondition Failed`. Omitting this header means no concurrency check.
+
 **Behavior**:
 1. Retrieves object metadata to verify existence
 2. Checks if object is read-only
-3. Deletes via `deleteFromStageForRegistry()`
+3. If `If-Match` is provided, validates it against the current content hash
+4. Deletes via `deleteFromStageForRegistry()`
 
 **Protection Rules**:
 - Cannot delete parent scope objects
-- Cannot delete if object doesn't exist locally
+- Cannot delete if `If-Match` ETag does not match current content hash
 
 **Response**:
-- **200 OK**: Object deleted successfully
-- **204 No Content**: Object not found
+- **204 No Content**: Object deleted successfully, or object was already absent (idempotent)
 - **403 Forbidden**: Object is from parent scope (read-only)
 - **400 Bad Request**: Scope, registry, or stage not available
+- **412 Precondition Failed**: `If-Match` ETag does not match current content (concurrent modification)
 - **500 Internal Server Error**: Server error
 
 **Example**:
 ```bash
+# Delete without concurrency check
 curl -X DELETE "https://api.example.com/my-tenant/registries/configurations/stages/draft?objectId=production-db-settings"
+
+# Delete with optimistic concurrency check
+curl -X DELETE "https://api.example.com/my-tenant/registries/configurations/stages/draft?objectId=production-db-settings" \
+  -H 'If-Match: "a1b2c3d4e5f6..."'
 ```
 
 ---
@@ -401,11 +445,12 @@ Content-Type: application/json
 1. Verifies object exists in source stage
 2. Checks if object is read-only (cannot transition parent objects)
 3. Performs transition via `transitionToStageForRegistry()`
+4. **Idempotent retry**: If the object is not found in the source stage but already exists in the target stage, returns `200 OK` with the metadata from the target stage (safe to retry)
 
 **Response**:
-- **200 OK**: Object transitioned successfully
+- **200 OK**: Object transitioned successfully (or already in target stage — idempotent)
   - Body: Updated `ObjectMetadata` with new stage
-- **204 No Content**: Object not found in source stage
+- **204 No Content**: Object not found in source stage (and not in target stage)
 - **400 Bad Request**: Invalid transition or missing parameters
 - **403 Forbidden**: Object is read-only (from parent scope)
 - **500 Internal Server Error**: Server error
@@ -541,10 +586,12 @@ curl -X GET "..." \
 |------|---------|-----------|
 | 200 OK | Success | GET, PUT, POST (transition/update) successful |
 | 201 Created | Resource created | POST (create object) successful |
-| 204 No Content | Not found | Object not found in the specified scope/registry/stage |
+| 204 No Content | Not found / deleted | Object not found, or DELETE successful (idempotent) |
+| 304 Not Modified | Content unchanged | Conditional GET with `If-None-Match` — ETag matches |
 | 400 Bad Request | Invalid request | Invalid parameters, schema validation failed, scope/registry/stage not available |
 | 403 Forbidden | Operation not allowed | Object is read-only (from parent scope) |
 | 409 Conflict | Resource already exists | Object with ID already exists and override flag is false |
+| 412 Precondition Failed | ETag mismatch | `If-Match` header does not match current content hash (concurrent modification) |
 | 415 Unsupported Media Type | Invalid Content-Type | Unsupported format in POST/PUT |
 | 500 Internal Server Error | Server error | Unexpected errors, exceptions |
 

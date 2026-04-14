@@ -11,6 +11,7 @@ The **SchemaPackagesResource** provides a RESTful HTTP API for managing EMF EPac
 - **Hierarchical Visibility**: Child scopes can access schemas from parent scopes' final stages
 - **Content Negotiation**: Support for multiple formats (JSON, XML, Ecore, JSON Schema)
 - **Stage Transitions**: Move schemas between workflow stages with validation
+- **ETags and Conditional Requests**: Content-hash-based ETags, `If-Match` for optimistic concurrency, `If-None-Match` for conditional GETs
 - **Uniqueness Validation**: Enforce unique `nsUri` across visibility chains
 - **Read-Only Protection**: Prevent modification of parent scope schemas and read-only stages
 
@@ -175,8 +176,9 @@ Accept: application/json
 
 **Response**:
 - **200 OK**: Returns `ObjectMetadataContainer` with list of `ObjectMetadata`
+  - When returning a single package (via `nsUri`): includes `ETag` header and supports `If-None-Match` for conditional GET (returns `304 Not Modified` if unchanged)
+- **304 Not Modified**: Content unchanged (single-package lookup with `If-None-Match`)
 - **204 No Content**: No packages match the filter criteria
-- **204 No Content**: No schemas found matching the criteria
 - **400 Bad Request**: Scope not available, stage not valid, or invalid parameters
 - **500 Internal Server Error**: Server error
 
@@ -230,7 +232,10 @@ Content-Type: application/json | application/xml | application/ecore+xml
 **Response**:
 - **201 Created**: Package created successfully
   - `Location` header: `/{scopeName}/schema/stages/{stageName}?nsUri={encodedNsUri}`
+  - `ETag` header: SHA-256 content hash
   - Body: `ObjectMetadata` with created package info
+- **200 OK**: Package updated (when `override=true` and package exists)
+  - `ETag` header: SHA-256 content hash
 - **400 Bad Request**: Invalid package data or missing `nsUri`
 - **204 No Content**: No schemas found matching the criteria
 - **400 Bad Request**: Scope not available, stage not valid, or invalid parameters
@@ -286,10 +291,15 @@ Accept: application/json | application/xml | application/ecore+xml | application
 - Performs hierarchical lookup via `getContentFromStage()`
 - Returns the EPackage object (serialized based on Accept header)
 
+**Request Headers**:
+- `If-None-Match` (optional): ETag value from a previous response. If the content has not changed, the server returns `304 Not Modified`.
+
 **Response**:
 - **200 OK**: Package content retrieved successfully
   - Body: EPackage in requested format
   - `Content-Type` header matches requested format
+  - `ETag` header: SHA-256 content hash
+- **304 Not Modified**: Content unchanged (when `If-None-Match` matches current ETag)
 - **204 Not Found**: Package not found in visibility chain
 - **406 Not Acceptable**: Requested format not supported
 - **500 Internal Server Error**: Server error
@@ -303,6 +313,11 @@ curl -X GET "https://api.example.com/my-tenant/schema/stages/draft/content?nsUri
 # Get as Ecore XML
 curl -X GET "https://api.example.com/my-tenant/schema/stages/draft/content?nsUri=http%3A%2F%2Fexample.com%2Fschemas%2Fbilling%2Fv1" \
   -H "Accept: application/ecore+xml"
+
+# Conditional GET — only download if changed
+curl -X GET "https://api.example.com/my-tenant/schema/stages/draft/content?nsUri=http%3A%2F%2Fexample.com%2Fschemas%2Fbilling%2Fv1" \
+  -H "Accept: application/json" \
+  -H 'If-None-Match: "a1b2c3d4e5f6..."'
 ```
 
 ---
@@ -323,32 +338,50 @@ Content-Type: application/json | application/xml | application/ecore+xml
 
 **Request Body**: New EPackage content
 
+**Request Headers**:
+- `If-Match` (optional): ETag value from a previous response. If the content has changed since the ETag was obtained, the server returns `412 Precondition Failed`. Omitting this header means no concurrency check (last-write-wins).
+
 **Behavior**:
 1. Checks if stage is writable (using `Scope.getWritableStages()`)
 2. Retrieves existing metadata via `getFromStage()` (hierarchical lookup)
 3. Checks if package is read-only (`isReadOnly` flag)
-4. Updates package via `updateInStage()`
+4. If `If-Match` is provided, validates it against the current content hash
+5. If the new content is identical to the existing content (same hash), skips the write and returns the existing metadata (no timestamp change)
+6. Updates package via `updateInStage()`
 
 **Protection Rules**:
 - Cannot update if stage is not in writable stages list
 - Cannot update if package is from parent scope (read-only)
 - Cannot update if package doesn't exist locally
+- Cannot update if `If-Match` ETag does not match current content hash
 
 **Response**:
-- **200 OK**: Package updated successfully
+- **200 OK**: Package updated successfully (or content unchanged — idempotent skip)
   - Body: Updated `ObjectMetadata`
+  - `ETag` header: SHA-256 content hash
 - **204 No Content**: Package not found
 - **400 Bad Request**: Invalid package data
 - **403 Forbidden**: Stage is read-only OR package is from parent scope
-- **400 Bad Request**: Scope not available, stage not valid, or schema validation failed
 - **409 Conflict**: Schema already exists and override flag is false
-- **500 Internal Server Error**: Server error
+- **412 Precondition Failed**: `If-Match` ETag does not match current content (concurrent modification)
 - **500 Internal Server Error**: Server error
 
 **Example**:
 ```bash
+# Update without concurrency check
 curl -X PUT "https://api.example.com/my-tenant/schema/stages/draft/content?nsUri=http%3A%2F%2Fexample.com%2Fschemas%2Fbilling%2Fv1" \
   -H "Content-Type: application/json" \
+  -d '{
+    "name": "billing",
+    "nsURI": "http://example.com/schemas/billing/v1",
+    "nsPrefix": "bill",
+    "eClassifiers": [...]
+  }'
+
+# Update with optimistic concurrency check
+curl -X PUT "https://api.example.com/my-tenant/schema/stages/draft/content?nsUri=http%3A%2F%2Fexample.com%2Fschemas%2Fbilling%2Fv1" \
+  -H "Content-Type: application/json" \
+  -H 'If-Match: "a1b2c3d4e5f6..."' \
   -d '{
     "name": "billing",
     "nsURI": "http://example.com/schemas/billing/v1",
@@ -372,28 +405,36 @@ DELETE /{scopeName}/schema/stages/{stageName}?nsUri={encodedNsUri}
 **Query Parameters**:
 - `nsUri` (required): The namespace URI of the package to delete
 
+**Request Headers**:
+- `If-Match` (optional): ETag value from a previous response. If the content has changed since the ETag was obtained, the server returns `412 Precondition Failed`. Omitting this header means no concurrency check.
+
 **Behavior**:
 1. Checks if stage is writable
 2. Retrieves package metadata to verify existence
 3. Checks if package is read-only
-4. Deletes via `deleteFromStage()`
+4. If `If-Match` is provided, validates it against the current content hash
+5. Deletes via `deleteFromStage()`
 
 **Protection Rules**:
 - Cannot delete from read-only stages
 - Cannot delete parent scope packages
-- Cannot delete if package doesn't exist locally
+- Cannot delete if `If-Match` ETag does not match current content hash
 
 **Response**:
-- **200 OK**: Package deleted successfully
+- **204 No Content**: Package deleted successfully, or package was already absent (idempotent)
 - **403 Forbidden**: Stage is read-only OR package is from parent scope
-- **204 No Content**: Package not found
 - **400 Bad Request**: Scope not available or stage not valid
-- **500 Internal Server Error**: Server error
+- **412 Precondition Failed**: `If-Match` ETag does not match current content (concurrent modification)
 - **500 Internal Server Error**: Server error
 
 **Example**:
 ```bash
+# Delete without concurrency check
 curl -X DELETE "https://api.example.com/my-tenant/schema/stages/draft?nsUri=http%3A%2F%2Fexample.com%2Fschemas%2Fbilling%2Fv1"
+
+# Delete with optimistic concurrency check
+curl -X DELETE "https://api.example.com/my-tenant/schema/stages/draft?nsUri=http%3A%2F%2Fexample.com%2Fschemas%2Fbilling%2Fv1" \
+  -H 'If-Match: "a1b2c3d4e5f6..."'
 ```
 
 ---
@@ -427,14 +468,13 @@ Content-Type: application/json
 3. Checks if package is read-only (cannot transition parent packages)
 4. Validates transition is allowed via `isTransitionAllowed()`
 5. Performs transition via `transitionToStage()`
+6. **Idempotent retry**: If the package is not found in the source stage but already exists in the target stage, returns `200 OK` with the metadata from the target stage (safe to retry)
 
 **Response**:
-- **200 OK**: Package transitioned successfully
+- **200 OK**: Package transitioned successfully (or already in target stage — idempotent)
   - Body: Updated `ObjectMetadata` with new stage
-- **400 Bad Request**: Invalid transition or missing parameters
-- **204 No Content**: Package not found
-- **400 Bad Request**: Scope not available or stage not valid
-- **500 Internal Server Error**: Server error in source stage
+- **204 No Content**: Package not found in source stage (and not in target stage)
+- **400 Bad Request**: Invalid transition, missing parameters, scope not available, or stage not valid
 - **500 Internal Server Error**: Server error
 
 **Example**:
@@ -656,12 +696,14 @@ curl -X GET "https://api.example.com/my-tenant/schema/stages/draft?name=Billing*
 
 | Code | Meaning | When Used |
 |------|---------|-----------|
-| 200 OK | Success | GET, PUT, POST (transition) successful |
+| 200 OK | Success | GET, PUT, POST (transition/update) successful |
 | 201 Created | Resource created | POST (create package) successful |
-| 204 No Content | Not found / Empty | Package not found, or list is empty |
+| 204 No Content | Not found / deleted | Package not found, list is empty, or DELETE successful (idempotent) |
+| 304 Not Modified | Content unchanged | Conditional GET with `If-None-Match` — ETag matches |
 | 400 Bad Request | Invalid request | Scope not available, invalid stage, invalid transition, missing required parameters |
 | 403 Forbidden | Operation not allowed | Package is read-only (from parent scope) |
 | 409 Conflict | Resource already exists | Package with `nsUri` already exists and override flag is false |
+| 412 Precondition Failed | ETag mismatch | `If-Match` header does not match current content hash (concurrent modification) |
 | 415 Unsupported Media Type | Invalid Content-Type | Unsupported format in POST/PUT |
 | 500 Internal Server Error | Server error | Unexpected errors, exceptions |
 
