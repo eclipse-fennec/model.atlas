@@ -132,7 +132,7 @@ public class EPackageStageActionServiceIntegrationTest {
     public void testRegistrationCarriesWorkflowProperties(
             @InjectService(filter = "(storage.type=file)") EObjectStorageService storage,
             @InjectService StageActionService stageActionService,
-            @InjectService(cardinality = 0, filter = "(&(emf.name=TestSensorModel)(workflow.scope=test-scope)(workflow.stage=release))") ServiceAware<EPackage> ePackageServiceAware)
+            @InjectService(cardinality = 0, filter = "(&(emf.name=TestSensorModel)(emf.model.scope=test-scope)(atlas.stage=release))") ServiceAware<EPackage> ePackageServiceAware)
             throws Exception {
 
         EPackage testPackage = createTestEPackage();
@@ -144,7 +144,7 @@ public class EPackageStageActionServiceIntegrationTest {
 
         EPackage registered = ePackageServiceAware.waitForService(5000L);
         assertNotNull(registered,
-                "EPackage should be registered with workflow.scope and workflow.stage properties");
+                "EPackage should be registered with emf.model.scope and atlas.stage properties");
         
         removeEPackage(objectId, stageActionService);
     }

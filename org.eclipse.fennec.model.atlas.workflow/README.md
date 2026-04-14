@@ -547,7 +547,7 @@ Ships as the default action for EMF schemas. When an `EPackage` object enters or
 - `EFactory`
 - `Condition` (with `osgi.condition.id = <nsURI>`)
 
-so the EPackage becomes immediately available to the EMF runtime and to any consumer filtering by `workflow.scope` / `workflow.stage` / `emf.name`. On `EXIT` the same services are unregistered.
+so the EPackage becomes immediately available to the EMF runtime and to any consumer filtering by `emf.model.scope` / `atlas.stage` / `emf.name`. On `EXIT` the same services are unregistered.
 
 Configuration PID: `EPackageStageActionService` (factory or singleton). Typical properties:
 

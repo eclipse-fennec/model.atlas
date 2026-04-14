@@ -20,6 +20,7 @@ import java.util.Objects;
 import org.eclipse.emf.ecore.EPackage;
 import org.eclipse.fennec.emf.osgi.configurator.EPackageConfigurator;
 import org.eclipse.fennec.emf.osgi.constants.EMFNamespaces;
+import org.eclipse.fennec.model.atlas.workflow.WorkflowConstants;
 
 /**
  * Dynamic EPackage configurator for runtime registration of released EPackages.
@@ -101,15 +102,9 @@ public class DynamicEPackageConfigurator implements EPackageConfigurator {
         properties.put(EMFNamespaces.EMF_MODEL_NSURI, ePackage.getNsURI());
         properties.put(EMFNamespaces.EMF_MODEL_FILE_EXT, fileExtension);
         properties.put(EMFNamespaces.EMF_MODEL_VERSION, version);
-        properties.put(EMFNamespaces.EMF_MODEL_SCOPE, EMFNamespaces.EMF_MODEL_SCOPE_RESOURCE_SET);
+        properties.put(EMFNamespaces.EMF_MODEL_SCOPE, scope);
+        properties.put(WorkflowConstants.ATLAS_EPACKAGE_REGISTRATION_STAGE_PROPERTY, stage); 
         properties.put("dynamic.registration", Boolean.TRUE);
-        properties.put("epackage.source", "workflow.release");
-        if (scope != null) {
-            properties.put("workflow.scope", scope);
-        }
-        if (stage != null) {
-            properties.put("workflow.stage", stage);
-        }
         return properties;
     }
 
