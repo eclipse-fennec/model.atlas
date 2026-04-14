@@ -44,6 +44,7 @@ public class MockTestHelper {
 
     private static final String TEST_SCOPE_NAME = "test-scope";
     private static final String TEST_REGISTRY_NAME = "test-registry";
+    public static final String UNASSIGNED_REGISTRY_NAME = "unassigned-registry";
     private static final String TEST_STAGE_DRAFT = "draft";
     private static final String TEST_STAGE_APPROVED = "approved";
     private static final String TEST_STAGE_RELEASE = "release";
@@ -95,10 +96,11 @@ public class MockTestHelper {
     public static class MockRegistryServiceCollector extends RegistryServiceCollector {
 
         private final MockRegistryService mockRegistryService = new MockRegistryService();
+        private final MockRegistryService unassignedRegistryService = new MockRegistryService();
 
         /*
          * (non-Javadoc)
-         * 
+         *
          * @see org.eclipse.fennec.model.atlas.workflow.RegistryServiceCollector#
          * getRegistryServiceByRegistryName(java.lang.String)
          */
@@ -106,6 +108,8 @@ public class MockTestHelper {
         public RegistryService<?> getRegistryServiceByRegistryName(String registryName) {
             if (TEST_REGISTRY_NAME.equals(registryName))
                 return mockRegistryService;
+            if (UNASSIGNED_REGISTRY_NAME.equals(registryName))
+                return unassignedRegistryService;
             return null;
         }
     }
@@ -245,7 +249,7 @@ public class MockTestHelper {
          */
         @Override
         public boolean isValidRegistry(String registryName) {
-            return TEST_REGISTRY_NAME.equals(registryName);
+            return TEST_REGISTRY_NAME.equals(registryName) || "schema".equals(registryName);
         }
 
         /*

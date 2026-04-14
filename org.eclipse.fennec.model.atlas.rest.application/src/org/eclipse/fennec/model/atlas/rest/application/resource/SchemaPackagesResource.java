@@ -22,17 +22,16 @@ import org.eclipse.emf.common.util.URI;
 import org.eclipse.emf.ecore.EObject;
 import org.eclipse.emf.ecore.EPackage;
 import org.eclipse.emf.ecore.util.EcoreUtil;
-import org.eclipse.fennec.model.atlas.mediatypes.api.SupportedMediatype;
 import org.eclipse.fennec.model.atlas.mgmt.management.ManagementFactory;
 import org.eclipse.fennec.model.atlas.mgmt.management.ObjectMetadata;
 import org.eclipse.fennec.model.atlas.mgmt.management.ObjectMetadataContainer;
 import org.eclipse.fennec.model.atlas.mgmt.storage.AbstractEObjectStorageService;
+import org.eclipse.fennec.model.atlas.rest.application.filter.ModelAtlasRequestFilter;
 import org.eclipse.fennec.model.atlas.rest.model.StageTransitionRequest;
 import org.eclipse.fennec.model.atlas.runtime.RequireRuntime;
 import org.eclipse.fennec.model.atlas.wf.workflowapi.ScopeService;
 import org.eclipse.fennec.model.atlas.workflow.ScopeServiceCollector;
 import org.osgi.framework.Version;
-import org.osgi.service.component.annotations.Activate;
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
 import org.osgi.service.component.annotations.ServiceScope;
@@ -56,6 +55,7 @@ import jakarta.ws.rs.PathParam;
 import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.QueryParam;
 import jakarta.ws.rs.WebApplicationException;
+import jakarta.ws.rs.container.ContainerRequestContext;
 import jakarta.ws.rs.core.Context;
 import jakarta.ws.rs.core.EntityTag;
 import jakarta.ws.rs.core.HttpHeaders;
@@ -84,20 +84,13 @@ public class SchemaPackagesResource {
     @Reference
     private ManagementFactory mgmtFactory;
 
-    private final List<String> supportedMediaTypes;
+    @Context
+    private ContainerRequestContext requestContext;
 
     @Context
     private HttpHeaders headers;
-
-    @QueryParam("mediaType")
-    private String mediaType;
-
+    
     private static final String REGISTRY_NAME = "schema";
-
-    @Activate
-    public SchemaPackagesResource(@Reference SupportedMediatype types) {
-        supportedMediaTypes = types.getSupportedMediaTypes();
-    }
 
     @GET
     @Path("hello")
@@ -128,8 +121,6 @@ public class SchemaPackagesResource {
     public Response listReleasedPackages(
             @Parameter(description = "The scope name", required = true) @PathParam("scopeName") String scopeName) {
 
-        checkContentType();
-
         ScopeService<?> scopeService = getScopeServiceByScopeName(scopeName);
         try {
             List<ObjectMetadata> objectsMetadata = scopeService.listInFinalStageForRegistry(REGISTRY_NAME);
@@ -137,7 +128,7 @@ public class SchemaPackagesResource {
                 return Response.status(Response.Status.NO_CONTENT).build();
             ObjectMetadataContainer container = mgmtFactory.createObjectMetadataContainer();
             container.getMetadata().addAll(objectsMetadata);
-            return Response.status(Response.Status.OK).entity(container).header("Content-Type", mediaType).build();
+            return Response.status(Response.Status.OK).entity(container).header("Content-Type", getResolvedMediaType()).build();
         } catch (IllegalArgumentException e) {
             return Response.status(Response.Status.BAD_REQUEST).entity(e.getMessage()).build();
         } catch (Exception e) {
@@ -186,7 +177,7 @@ public class SchemaPackagesResource {
                     return Response.status(Response.Status.NO_CONTENT).build();
                 } else {
                     Response.ResponseBuilder rb = Response.status(Response.Status.OK).entity(metadata)
-                            .header("Content-Type", mediaType);
+                            .header("Content-Type", getResolvedMediaType());
                     addETagHeader(rb, metadata);
                     return evaluateConditionalGet(rb, metadata);
                 }
@@ -198,7 +189,7 @@ public class SchemaPackagesResource {
                 }
                 ObjectMetadataContainer container = mgmtFactory.createObjectMetadataContainer();
                 container.getMetadata().addAll(objectsMetadata);
-                return Response.status(Response.Status.OK).entity(container).header("Content-Type", mediaType).build();
+                return Response.status(Response.Status.OK).entity(container).header("Content-Type", getResolvedMediaType()).build();
             } else {
                 List<ObjectMetadata> objectsMetadata = scopeService.listInStageForRegistry(REGISTRY_NAME, stageName);
                 if (objectsMetadata.isEmpty()) {
@@ -206,7 +197,7 @@ public class SchemaPackagesResource {
                 }
                 ObjectMetadataContainer container = mgmtFactory.createObjectMetadataContainer();
                 container.getMetadata().addAll(objectsMetadata);
-                return Response.status(Response.Status.OK).entity(container).header("Content-Type", mediaType).build();
+                return Response.status(Response.Status.OK).entity(container).header("Content-Type", getResolvedMediaType()).build();
             }
         } catch (IllegalArgumentException e) {
             return Response.status(Response.Status.BAD_REQUEST).entity(e.getMessage()).build();
@@ -251,8 +242,6 @@ public class SchemaPackagesResource {
             @Parameter(description = "Overwrite option. If true and a Package with the same uri already exists, it updates it. ", required = false) @QueryParam("overwrite") boolean overwrite,
             @RequestBody(description = "The schema package content", required = true, content = @Content(schema = @Schema(implementation = EPackage.class))) EPackage ePackage) {
 
-        checkContentType();
-
         ScopeService<EObject> scopeService = (ScopeService<EObject>) getScopeServiceByScopeName(scopeName);
 
         try {
@@ -281,7 +270,7 @@ public class SchemaPackagesResource {
                             .header("Location",
                                     "/".concat(scopeName).concat("/schemas/stages/").concat(stageName).concat("?nsUri=")
                                             .concat(encodedNsURI))
-                            .entity(metadata).header("Content-Type", mediaType);
+                            .entity(metadata).header("Content-Type", getResolvedMediaType());
                     addETagHeader(rb, metadata);
                     return rb.build();
                 }
@@ -303,7 +292,7 @@ public class SchemaPackagesResource {
             Response.ResponseBuilder rb = Response.status(Response.Status.CREATED)
                     .header("Location", "/".concat(scopeName).concat("/schemas/stages/").concat(stageName)
                             .concat("?nsUri=").concat(encodedNsURI))
-                    .entity(metadata).header("Content-Type", mediaType);
+                    .entity(metadata).header("Content-Type", getResolvedMediaType());
             addETagHeader(rb, metadata);
             return rb.build();
         } catch (IllegalArgumentException e) {
@@ -339,8 +328,6 @@ public class SchemaPackagesResource {
             @Parameter(description = "The stage name", required = true) @PathParam("stageName") String stageName,
             @Parameter(description = "The namespace URI of the package", required = true) @QueryParam("nsUri") String nsUri) {
 
-        checkContentType();
-
         ScopeService<?> scopeService = getScopeServiceByScopeName(scopeName);
         try {
             nsUri = URI.decode(nsUri);
@@ -353,7 +340,7 @@ public class SchemaPackagesResource {
                 return Response.status(Response.Status.NO_CONTENT).build();
             }
             Response.ResponseBuilder rb = Response.status(Response.Status.OK).entity(ePackage)
-                    .header("Content-Type", mediaType);
+                    .header("Content-Type", getResolvedMediaType());
             if (contentMetadata != null) {
                 addETagHeader(rb, contentMetadata);
                 return evaluateConditionalGet(rb, contentMetadata);
@@ -399,8 +386,6 @@ public class SchemaPackagesResource {
             @Parameter(description = "The namespace URI of the package. If not provided, uses the EPackage's nsURI. If provided, must match the EPackage's nsURI.", required = false) @QueryParam("nsUri") String nsUri,
             @RequestBody(description = "The new schema package content", required = true, content = @Content(schema = @Schema(implementation = EPackage.class))) EPackage ePackage) {
 
-        checkContentType();
-
         ScopeService<EObject> scopeService = (ScopeService<EObject>) getScopeServiceByScopeName(scopeName);
         try {
             String validatedNsUri = validateAndResolveNsUri(nsUri, ePackage);
@@ -428,7 +413,7 @@ public class SchemaPackagesResource {
             String newContentHash = AbstractEObjectStorageService.computeContentHash(ePackage);
             if (newContentHash != null && newContentHash.equals(existingMetadata.getContentHash())) {
                 Response.ResponseBuilder rb = Response.status(Response.Status.OK)
-                        .entity(existingMetadata).header("Content-Type", mediaType);
+                        .entity(existingMetadata).header("Content-Type", getResolvedMediaType());
                 addETagHeader(rb, existingMetadata);
                 return rb.build();
             }
@@ -437,7 +422,7 @@ public class SchemaPackagesResource {
                     .updateInStageForRegistry(REGISTRY_NAME, stageName, ePackage, encodedNsUri, resolvedVersion)
                     .getValue();
             Response.ResponseBuilder rb = Response.status(Response.Status.OK)
-                    .entity(metadata).header("Content-Type", mediaType);
+                    .entity(metadata).header("Content-Type", getResolvedMediaType());
             addETagHeader(rb, metadata);
             return rb.build();
 
@@ -518,8 +503,6 @@ public class SchemaPackagesResource {
             @Parameter(description = "The source stage name", required = true) @PathParam("stageName") String stageName,
             @RequestBody(description = "Transition request with objectId and targetStage", required = true, content = @Content()) StageTransitionRequest transitionRequest) {
 
-        checkContentType();
-
         ScopeService<?> scopeService = getScopeServiceByScopeName(scopeName);
         try {
             String encodedNsUri = encodePackageNsURI(transitionRequest.getObjectId());
@@ -532,7 +515,7 @@ public class SchemaPackagesResource {
                         encodedNsUri);
                 if (targetMetadata != null) {
                     return Response.status(Response.Status.OK).entity(targetMetadata)
-                            .header("Content-Type", mediaType).build();
+                            .header("Content-Type", getResolvedMediaType()).build();
                 }
                 return Response.status(Response.Status.NO_CONTENT).build();
             }
@@ -543,7 +526,7 @@ public class SchemaPackagesResource {
             }
             ObjectMetadata metadata = scopeService.transitionToStageForRegistry(REGISTRY_NAME, encodedNsUri, stageName,
                     targetStage);
-            return Response.status(Response.Status.OK).entity(metadata).header("Content-Type", mediaType).build();
+            return Response.status(Response.Status.OK).entity(metadata).header("Content-Type", getResolvedMediaType()).build();
         } catch (IllegalArgumentException e) {
             return Response.status(Response.Status.BAD_REQUEST).entity(e.getMessage()).build();
         } catch (Exception e) {
@@ -552,29 +535,8 @@ public class SchemaPackagesResource {
 
     }
 
-    /**
-     * Check and set the content type based on Accept header or mediaType query
-     * parameter.
-     */
-    private void checkContentType() {
-        if (mediaType != null) {
-            if (supportedMediaTypes.contains(mediaType)) {
-                return;
-            }
-        } else {
-            List<MediaType> acceptableMediaTypes = headers.getAcceptableMediaTypes();
-            for (MediaType acceptedMediaType : acceptableMediaTypes) {
-                String accept = acceptedMediaType.getType() + "/" + acceptedMediaType.getSubtype();
-                if (supportedMediaTypes.contains(accept)) {
-                    mediaType = accept;
-                    return;
-                }
-            }
-            // Default to JSON
-            mediaType = MediaType.APPLICATION_JSON;
-            return;
-        }
-        throw new WebApplicationException(Status.UNSUPPORTED_MEDIA_TYPE);
+    private String getResolvedMediaType() {
+        return (String) requestContext.getProperty(ModelAtlasRequestFilter.RESOLVED_MEDIA_TYPE);
     }
 
     /**
