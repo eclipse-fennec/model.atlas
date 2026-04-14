@@ -44,30 +44,27 @@ public class DynamicEPackageConfigurator implements EPackageConfigurator {
     private final EPackage ePackage;
     private final String fileExtension;
     private final String version;
+    private final String scope;
+    private final String stage;
 
     /**
      * Creates a new dynamic EPackage configurator.
-     * 
+     *
      * @param ePackage      the EPackage to register (must not be null)
      * @param fileExtension the file extension for this model (e.g., "ecore",
      *                      "sensors")
      * @param version       the version of the model (e.g., "1.0.0")
+     * @param scope         the workflow scope the EPackage belongs to
+     * @param stage         the workflow stage the EPackage was registered from
      * @throws NullPointerException if ePackage is null
      */
-    public DynamicEPackageConfigurator(EPackage ePackage, String fileExtension, String version) {
+    public DynamicEPackageConfigurator(EPackage ePackage, String fileExtension, String version, String scope,
+            String stage) {
         this.ePackage = Objects.requireNonNull(ePackage, "EPackage cannot be null");
         this.fileExtension = fileExtension != null ? fileExtension : "model";
         this.version = version != null ? version : "1.0";
-    }
-
-    /**
-     * Creates a new dynamic EPackage configurator with default file extension and
-     * version.
-     * 
-     * @param ePackage the EPackage to register (must not be null)
-     */
-    public DynamicEPackageConfigurator(EPackage ePackage) {
-        this(ePackage, null, null);
+        this.scope = scope;
+        this.stage = stage;
     }
 
     @Override
@@ -107,6 +104,12 @@ public class DynamicEPackageConfigurator implements EPackageConfigurator {
         properties.put(EMFNamespaces.EMF_MODEL_SCOPE, EMFNamespaces.EMF_MODEL_SCOPE_RESOURCE_SET);
         properties.put("dynamic.registration", Boolean.TRUE);
         properties.put("epackage.source", "workflow.release");
+        if (scope != null) {
+            properties.put("workflow.scope", scope);
+        }
+        if (stage != null) {
+            properties.put("workflow.stage", stage);
+        }
         return properties;
     }
 
