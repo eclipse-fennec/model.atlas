@@ -349,7 +349,6 @@ public abstract class AbstractEObjectStorageService implements EObjectStorageSer
 
             } catch (Exception e) {
                 LOGGER.log(Level.SEVERE, "Failed to store object", e);
-                e.printStackTrace(System.out);
                 throw new RuntimeException("Failed to store object", e);
             }
         });

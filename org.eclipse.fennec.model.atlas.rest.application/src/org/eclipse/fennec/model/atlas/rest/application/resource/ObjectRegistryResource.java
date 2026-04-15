@@ -19,17 +19,16 @@ import java.util.List;
 import org.eclipse.emf.ecore.EObject;
 import org.eclipse.emf.ecore.resource.ResourceSet;
 import org.eclipse.emf.ecore.util.EcoreUtil;
-import org.eclipse.fennec.model.atlas.mediatypes.api.SupportedMediatype;
 import org.eclipse.fennec.model.atlas.mgmt.management.ManagementFactory;
 import org.eclipse.fennec.model.atlas.mgmt.management.ObjectMetadata;
 import org.eclipse.fennec.model.atlas.mgmt.management.ObjectMetadataContainer;
+import org.eclipse.fennec.model.atlas.rest.application.filter.ModelAtlasRequestFilter;
 import org.eclipse.fennec.model.atlas.rest.model.StageTransitionRequest;
 import org.eclipse.fennec.model.atlas.runtime.RequireRuntime;
 import org.eclipse.fennec.model.atlas.wf.workflowapi.RegistryService;
 import org.eclipse.fennec.model.atlas.wf.workflowapi.ScopeService;
 import org.eclipse.fennec.model.atlas.workflow.RegistryServiceCollector;
 import org.eclipse.fennec.model.atlas.workflow.ScopeServiceCollector;
-import org.osgi.service.component.annotations.Activate;
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
 import org.osgi.service.component.annotations.ServiceScope;
@@ -54,8 +53,6 @@ import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.QueryParam;
 import jakarta.ws.rs.WebApplicationException;
 import jakarta.ws.rs.core.Context;
-import jakarta.ws.rs.core.HttpHeaders;
-import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.core.Response.Status;
 
@@ -86,18 +83,8 @@ public class ObjectRegistryResource {
     @Reference
     private ManagementFactory mgmtFactory;
 
-    private final List<String> supportedMediaTypes;
-
     @Context
-    private HttpHeaders headers;
-
-    @QueryParam("mediaType")
-    private String mediaType;
-
-    @Activate
-    public ObjectRegistryResource(@Reference SupportedMediatype types) {
-        supportedMediaTypes = types.getSupportedMediaTypes();
-    }
+    private jakarta.ws.rs.container.ContainerRequestContext requestContext;
 
     // ======================
     // Storage Objects
@@ -123,20 +110,14 @@ public class ObjectRegistryResource {
             @Parameter(description = "The scope name", required = true) @PathParam("scopeName") String scopeName,
             @Parameter(description = "The registry name", required = true) @PathParam("registryName") String registryName) {
 
-        checkContentType();
-
         ScopeService<?> scopeService = getScopeServiceByScopeName(scopeName);
-        if (scopeService == null) {
-            return Response.status(Response.Status.BAD_REQUEST)
-                    .entity(String.format("No ScopeService for scope %s was found.", scopeName)).build();
-        }
         try {
             List<ObjectMetadata> objectsMetadata = scopeService.listInFinalStageForRegistry(registryName);
             if (objectsMetadata.isEmpty())
                 return Response.status(Response.Status.NO_CONTENT).build();
             ObjectMetadataContainer container = mgmtFactory.createObjectMetadataContainer();
             container.getMetadata().addAll(objectsMetadata);
-            return Response.status(Response.Status.OK).entity(container).header("Content-Type", mediaType).build();
+            return Response.status(Response.Status.OK).entity(container).header("Content-Type", getResolvedMediaType()).build();
         } catch (IllegalArgumentException e) {
             return Response.status(Response.Status.BAD_REQUEST).entity(e.getMessage()).build();
         } catch (Exception e) {
@@ -172,10 +153,6 @@ public class ObjectRegistryResource {
             @Parameter(description = "Object name filter (supports wildcards, e.g., Billing*)") @QueryParam("name") String name) {
 
         ScopeService<?> scopeService = getScopeServiceByScopeName(scopeName);
-        if (scopeService == null) {
-            return Response.status(Response.Status.BAD_REQUEST)
-                    .entity(String.format("No ScopeService for scope %s was found.", scopeName)).build();
-        }
         try {
             if (objectId != null) {
                 ObjectMetadata metadata = scopeService.getMetadataFromStageForRegistry(registryName, stageName,
@@ -185,7 +162,7 @@ public class ObjectRegistryResource {
                             "Obejct %s not found neither scope '%s', registry '%s' and stage '%s' nor in parent hierarchy",
                             objectId, scopeName, registryName, stageName)).build();
                 } else {
-                    return Response.status(Response.Status.OK).entity(metadata).header("Content-Type", mediaType)
+                    return Response.status(Response.Status.OK).entity(metadata).header("Content-Type", getResolvedMediaType())
                             .build();
                 }
             } else if (name != null) {
@@ -196,7 +173,7 @@ public class ObjectRegistryResource {
                 }
                 ObjectMetadataContainer container = mgmtFactory.createObjectMetadataContainer();
                 container.getMetadata().addAll(objectsMetadata);
-                return Response.status(Response.Status.OK).entity(container).header("Content-Type", mediaType).build();
+                return Response.status(Response.Status.OK).entity(container).header("Content-Type", getResolvedMediaType()).build();
             } else {
                 List<ObjectMetadata> objectsMetadata = scopeService.listInStageForRegistry(registryName, stageName);
                 if (objectsMetadata.isEmpty()) {
@@ -204,7 +181,7 @@ public class ObjectRegistryResource {
                 }
                 ObjectMetadataContainer container = mgmtFactory.createObjectMetadataContainer();
                 container.getMetadata().addAll(objectsMetadata);
-                return Response.status(Response.Status.OK).entity(container).header("Content-Type", mediaType).build();
+                return Response.status(Response.Status.OK).entity(container).header("Content-Type", getResolvedMediaType()).build();
             }
 
         } catch (IllegalArgumentException e) {
@@ -250,8 +227,6 @@ public class ObjectRegistryResource {
             @Parameter(description = "Override option. If set to true and the object already exists, an update will be made. If set to false and the object already exists, it will result in a 409", required = false) @QueryParam("override") boolean override,
             @RequestBody(description = "The storage object content", required = true, content = @Content(schema = @Schema(implementation = EObject.class))) EObject object) {
 
-        checkContentType();
-
         // Get schema registry for validation
         RegistryService<?> registryService = getRegistryServiceByRegistryName(registryName);
         if (registryService == null) {
@@ -269,10 +244,6 @@ public class ObjectRegistryResource {
         }
 
         ScopeService<EObject> scopeService = (ScopeService<EObject>) getScopeServiceByScopeName(scopeName);
-        if (scopeService == null) {
-            return Response.status(Response.Status.BAD_REQUEST)
-                    .entity(String.format("No ScopeService for scope %s was found.", scopeName)).build();
-        }
         try {
             ObjectMetadata existingMetadata = scopeService.getMetadataFromStageForRegistry(registryName, stageName,
                     objectId);
@@ -294,7 +265,7 @@ public class ObjectRegistryResource {
                             .header("Location",
                                     "/".concat(scopeName).concat("/registries/").concat(registryName).concat("/stages/")
                                             .concat(stageName).concat("?objectId=").concat(objectId))
-                            .entity(metadata).header("Content-Type", mediaType).build();
+                            .entity(metadata).header("Content-Type", getResolvedMediaType()).build();
                 }
             }
             ObjectMetadata metadata = mgmtFactory.createObjectMetadata();
@@ -312,7 +283,7 @@ public class ObjectRegistryResource {
                     .header("Location",
                             "/".concat(scopeName).concat("/registries/").concat(registryName).concat("/stages/")
                                     .concat(stageName).concat("?objectId=").concat(objectId))
-                    .entity(metadata).header("Content-Type", mediaType).build();
+                    .entity(metadata).header("Content-Type", getResolvedMediaType()).build();
         } catch (WebApplicationException e) {
             // WebApplicationException already has the correct status code, rethrow it
             throw e;
@@ -347,13 +318,8 @@ public class ObjectRegistryResource {
             @Parameter(description = "The registry name", required = true) @PathParam("registryName") String registryName,
             @Parameter(description = "The stage name", required = true) @PathParam("stageName") String stageName,
             @Parameter(description = "The object identifier", required = true) @QueryParam("objectId") String objectId) {
-        checkContentType();
 
         ScopeService<?> scopeService = getScopeServiceByScopeName(scopeName);
-        if (scopeService == null) {
-            return Response.status(Response.Status.BAD_REQUEST)
-                    .entity(String.format("No ScopeService for scope %s was found.", scopeName)).build();
-        }
         try {
             EObject eObject = scopeService.getContentFromStageForRegistry(registryName, stageName, objectId);
             if (eObject == null) {
@@ -361,7 +327,7 @@ public class ObjectRegistryResource {
                         "Obejct %s not found neither scope '%s', registry '%s' and stage '%s' nor in parent hierarchy",
                         objectId, scopeName, registryName, stageName)).build();
             }
-            return Response.status(Response.Status.OK).entity(eObject).header("Content-Type", mediaType).build();
+            return Response.status(Response.Status.OK).entity(eObject).header("Content-Type", getResolvedMediaType()).build();
 
         } catch (IllegalArgumentException e) {
             return Response.status(Response.Status.BAD_REQUEST).entity(e.getMessage()).build();
@@ -400,8 +366,6 @@ public class ObjectRegistryResource {
             @Parameter(description = "The object identifier", required = true) @QueryParam("objectId") String objectId,
             @RequestBody(description = "The new object content", required = true, content = @Content(schema = @Schema(implementation = EObject.class))) EObject eObject) {
 
-        checkContentType();
-
         // Get schema registry for validation
         RegistryService<?> registryService = getRegistryServiceByRegistryName(registryName);
         if (registryService == null) {
@@ -419,11 +383,6 @@ public class ObjectRegistryResource {
         }
 
         ScopeService<EObject> scopeService = (ScopeService<EObject>) getScopeServiceByScopeName(scopeName);
-        if (scopeService == null) {
-            return Response.status(Response.Status.BAD_REQUEST)
-                    .entity(String.format("No ScopeService for scope %s was found.", scopeName)).build();
-        }
-
         try {
             ObjectMetadata existingMetadata = scopeService.getMetadataFromStageForRegistry(registryName, stageName,
                     objectId);
@@ -441,7 +400,7 @@ public class ObjectRegistryResource {
 
             ObjectMetadata metadata = scopeService
                     .updateInStageForRegistry(registryName, stageName, eObject, objectId, version).getValue();
-            return Response.status(Response.Status.OK).entity(metadata).header("Content-Type", mediaType).build();
+            return Response.status(Response.Status.OK).entity(metadata).header("Content-Type", getResolvedMediaType()).build();
 
         } catch (IllegalArgumentException e) {
             return Response.status(Response.Status.BAD_REQUEST).entity(e.getMessage()).build();
@@ -474,10 +433,6 @@ public class ObjectRegistryResource {
             @Parameter(description = "The object identifier", required = true) @QueryParam("objectId") String objectId) {
 
         ScopeService<?> scopeService = getScopeServiceByScopeName(scopeName);
-        if (scopeService == null) {
-            return Response.status(Response.Status.BAD_REQUEST)
-                    .entity(String.format("No ScopeService for scope %s was found.", scopeName)).build();
-        }
         try {
             ObjectMetadata existingMetadata = scopeService.getMetadataFromStageForRegistry(registryName, stageName,
                     objectId);
@@ -530,13 +485,7 @@ public class ObjectRegistryResource {
             @Parameter(description = "The source stage name", required = true) @PathParam("stageName") String stageName,
             @RequestBody(description = "Transition request with objectId and targetStage", required = true, content = @Content(schema = @Schema(implementation = StageTransitionRequest.class))) StageTransitionRequest transitionRequest) {
 
-        checkContentType();
-
         ScopeService<?> scopeService = getScopeServiceByScopeName(scopeName);
-        if (scopeService == null) {
-            return Response.status(Response.Status.BAD_REQUEST)
-                    .entity(String.format("No ScopeService for scope %s was found.", scopeName)).build();
-        }
         try {
             String objectId = transitionRequest.getObjectId();
             ObjectMetadata existingMetadata = scopeService.getMetadataFromStageForRegistry(registryName, stageName,
@@ -552,37 +501,12 @@ public class ObjectRegistryResource {
             }
             ObjectMetadata metadata = scopeService.transitionToStageForRegistry(registryName, objectId, stageName,
                     transitionRequest.getTargetStage());
-            return Response.status(Response.Status.OK).entity(metadata).header("Content-Type", mediaType).build();
+            return Response.status(Response.Status.OK).entity(metadata).header("Content-Type", getResolvedMediaType()).build();
         } catch (IllegalArgumentException e) {
             return Response.status(Response.Status.BAD_REQUEST).entity(e.getMessage()).build();
         } catch (Exception e) {
             return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity(e.getMessage()).build();
         }
-    }
-
-    /**
-     * Check and set the content type based on Accept header or mediaType query
-     * parameter.
-     */
-    private void checkContentType() {
-        if (mediaType != null) {
-            if (supportedMediaTypes.contains(mediaType)) {
-                return;
-            }
-        } else {
-            List<MediaType> acceptableMediaTypes = headers.getAcceptableMediaTypes();
-            for (MediaType acceptedMediaType : acceptableMediaTypes) {
-                String accept = acceptedMediaType.getType() + "/" + acceptedMediaType.getSubtype();
-                if (supportedMediaTypes.contains(accept)) {
-                    mediaType = accept;
-                    return;
-                }
-            }
-            // Default to JSON
-            mediaType = MediaType.APPLICATION_JSON;
-            return;
-        }
-        throw new WebApplicationException(Status.UNSUPPORTED_MEDIA_TYPE);
     }
 
     private ScopeService<?> getScopeServiceByScopeName(String scopeName) {
@@ -591,5 +515,9 @@ public class ObjectRegistryResource {
 
     private RegistryService<?> getRegistryServiceByRegistryName(String registryName) {
         return registryCollector.getRegistryServiceByRegistryName(registryName);
+    }
+
+    private String getResolvedMediaType() {
+        return (String) requestContext.getProperty(ModelAtlasRequestFilter.RESOLVED_MEDIA_TYPE);
     }
 }

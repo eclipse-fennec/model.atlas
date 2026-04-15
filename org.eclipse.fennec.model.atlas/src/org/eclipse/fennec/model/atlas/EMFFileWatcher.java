@@ -168,8 +168,7 @@ public class EMFFileWatcher implements FileSystemWatcherListener {
                 try {
                     t.delete();
                 } catch (IOException e) {
-                    // TODO Auto-generated catch block
-                    e.printStackTrace();
+                    LOG.log(Level.ERROR, "Failed to delete QVT configuration", e);
                 }
             });
             qvtConfigs.clear();
@@ -211,7 +210,7 @@ public class EMFFileWatcher implements FileSystemWatcherListener {
 
     private void createResource(List<String> uris, List<Resource> toHandle) {
         for (String uri : uris) {
-            System.out.println("Loading URI " + uri);
+            LOG.log(Level.INFO, "Loading URI " + uri);
             int index = uri.lastIndexOf('.');
             if (index != -1) {
                 String fileExtension = uri.substring(index + 1);
@@ -236,11 +235,10 @@ public class EMFFileWatcher implements FileSystemWatcherListener {
         options.put(CodecResource.CODEC_ROOT_TYPE, EcorePackage.Literals.EPACKAGE);
         try {
             resource.load(options);
-            ByteArrayOutputStream baos = new ByteArrayOutputStream();
-            Resource temp = resourceSet.createResource(URI.createURI("test.ecore"));
-            temp.getContents().add(EcoreUtil.copy(resource.getContents().get(0)));
-            temp.save(baos, null);
-            System.err.println(new String(baos.toByteArray()));
+            // ByteArrayOutputStream baos = new ByteArrayOutputStream();
+            // Resource temp = resourceSet.createResource(URI.createURI("test.ecore"));
+            // temp.getContents().add(EcoreUtil.copy(resource.getContents().get(0)));
+            // temp.save(baos, null);
         } catch (IOException e) {
             LOG.log(Level.ERROR, "Unable to load Resource for file " + resource.getURI().toString(), e);
         }

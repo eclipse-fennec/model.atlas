@@ -1,0 +1,5 @@
+services:
+  model-atlas:
+    image: eclipsefennec/model.atlas:file-snapshot
+    ports:
+      - "8080:8080"

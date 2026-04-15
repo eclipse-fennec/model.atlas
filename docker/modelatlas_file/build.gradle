@@ -14,8 +14,9 @@ task prepareDocker(){
 		stageDir.mkdirs()
 	     // copy all necessary files to  build/docker/ dir
     	copy {
-	        from new File("../../org.eclipse.fennec.model.atlas.runtime/generated/distributions/executable/modelatlas.runtime_docker.jar")
+	        from new File("../../org.eclipse.fennec.model.atlas.runtime/generated/distributions/executable/modelatlas.runtime_docker_file.jar")
 	        into stageDir
+	        rename 'modelatlas.runtime_docker_file.jar', 'modelatlas.runtime_docker.jar'
 	    }
 	    copy {
 	        from new File("../../org.eclipse.fennec.model.atlas.runtime/runtime/")

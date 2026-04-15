@@ -1,3 +1,4 @@
+-include: ${workspace}/gradle.properties
 Bundle-Developers: \
     jalbert; \
         email="j.albert@datainmotion.com"; \
@@ -47,18 +48,17 @@ Bundle-Developers: \
 # Activate baselining
 github-project: model.atlas
 github-orga: eclipse-fennec
-dimcBaselining: true
+fennec-baselining: false
 base-version: 0.0.1
 maven-central: true
 
 # Maven Central Group-Id
-# For Geckoprojects the groupid must start with org.geckoprojects
 -groupid: org.eclipse.fennec.model.atlas
 
 javac.source: 21
 javac.target: 21
-
--require-bnd "(version>=7.1.0)"
+required_bnd_version: ${versionmask;===;${bnd_version}}
+-require-bnd: "(version>=${required_bnd_version})"
 
 #-jpms-module-info:
 

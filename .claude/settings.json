@@ -1,0 +1,9 @@
+{
+  "mcpServers": {
+    "osgifx": {
+      "type": "http",
+      "url": "http://localhost:8080/mcp",
+      "disabled": false
+    }
+  }
+}

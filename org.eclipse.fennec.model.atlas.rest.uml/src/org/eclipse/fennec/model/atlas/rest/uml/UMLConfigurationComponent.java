@@ -62,10 +62,10 @@ public class UMLConfigurationComponent {
     }
 
     private void registerResourceFactoryService(BundleContext ctx) {
-        EnhanchedUMLResourceFactoryImpl factory = new EnhanchedUMLResourceFactoryImpl();
+        EnhancedUMLResourceFactoryImpl factory = new EnhancedUMLResourceFactoryImpl();
         Hashtable<String, Object> properties = new Hashtable<String, Object>();
         properties.putAll(factory.getServiceProperties());
-        String[] serviceClasses = new String[] { EnhanchedUMLResourceFactoryImpl.class.getName(),
+        String[] serviceClasses = new String[] { EnhancedUMLResourceFactoryImpl.class.getName(),
                 Factory.class.getName() };
         resourceFactoryRegistration = ctx.registerService(serviceClasses, factory, properties);
     }
