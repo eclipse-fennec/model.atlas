@@ -8,4 +8,5 @@
 	org.osgi.service.component,\
 	org.eclipse.fennec.codec.constants,\
 	org.eclipse.fennec.codec.jsonschema,\
-	org.gecko.emf.osgi.component.minimal
+	org.gecko.emf.osgi.component.minimal,\
+	org.eclipse.fennec.model.atlas.rest.common;version=snapshot

@@ -24,12 +24,12 @@ import org.eclipse.emf.common.util.URI;
 import org.eclipse.emf.ecore.EPackage;
 import org.eclipse.emf.ecore.resource.Resource;
 import org.eclipse.emf.ecore.resource.ResourceSet;
+import org.eclipse.fennec.model.atlas.rest.common.AbstractEPackageMessageBodyHandler;
 import org.eclipse.uml2.uml.Package;
 import org.eclipse.uml2.uml.util.UMLUtil;
 import org.osgi.service.component.ComponentServiceObjects;
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
-import org.osgi.service.component.annotations.ReferenceScope;
 import org.osgi.service.component.annotations.ServiceScope;
 import org.osgi.service.jakartars.whiteboard.JakartarsWhiteboardConstants;
 import org.osgi.service.jakartars.whiteboard.propertytypes.JakartarsApplicationSelect;
@@ -39,6 +39,8 @@ import org.osgi.service.jakartars.whiteboard.propertytypes.JakartarsName;
 import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.WebApplicationException;
+import jakarta.ws.rs.container.ContainerRequestContext;
+import jakarta.ws.rs.core.Context;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.MultivaluedMap;
 import jakarta.ws.rs.ext.MessageBodyReader;
@@ -53,10 +55,14 @@ import jakarta.ws.rs.ext.Provider;
 @Provider
 @Produces("application/uml")
 @Consumes("application/uml")
-public class UMLMessageBodyReaderWriter implements MessageBodyReader<EPackage>, MessageBodyWriter<EPackage> {
+public class UMLMessageBodyReaderWriter extends AbstractEPackageMessageBodyHandler {
+	
+	@Reference
+	private ComponentServiceObjects<ResourceSet> resourceSetFactory;
 
-    @Reference(scope = ReferenceScope.PROTOTYPE_REQUIRED)
-    private ComponentServiceObjects<ResourceSet> resourceSetFactory;
+	@Context
+	private ContainerRequestContext requestContext;
+
 
     /*
      * (non-Javadoc)
@@ -85,20 +91,21 @@ public class UMLMessageBodyReaderWriter implements MessageBodyReader<EPackage>, 
 
         String fileName = t.getName() + ".uml";
         Collection<Package> convertFromEcore = UMLUtil.convertFromEcore(t, null);
-        ResourceSet resourceSet = resourceSetFactory.getService();
+        ComponentServiceObjects<ResourceSet> factory = resolveResourceSetFactory(requestContext, resourceSetFactory);
+        ResourceSet resourceSet = factory.getService();
         try {
             Resource resource = resourceSet.createResource(URI.createURI(fileName));
             resource.getContents().addAll(convertFromEcore);
             resource.save(entityStream, null);
             resource.getContents().clear();
         } finally {
-            resourceSetFactory.ungetService(resourceSet);
+            factory.ungetService(resourceSet);
         }
     }
 
     /*
      * (non-Javadoc)
-     * 
+     *
      * @see jakarta.ws.rs.ext.MessageBodyReader#isReadable(java.lang.Class,
      * java.lang.reflect.Type, java.lang.annotation.Annotation[],
      * jakarta.ws.rs.core.MediaType)
@@ -120,7 +127,8 @@ public class UMLMessageBodyReaderWriter implements MessageBodyReader<EPackage>, 
     public EPackage readFrom(Class<EPackage> type, Type genericType, Annotation[] annotations, MediaType mediaType,
             MultivaluedMap<String, String> httpHeaders, InputStream entityStream)
             throws IOException, WebApplicationException {
-        ResourceSet resourceSet = resourceSetFactory.getService();
+    	ComponentServiceObjects<ResourceSet> factory = resolveResourceSetFactory(requestContext, resourceSetFactory);
+        ResourceSet resourceSet = factory.getService();
         try {
             Resource resource = resourceSet.createResource(URI.createURI("temp.uml"));
             resource.load(entityStream, null);
@@ -131,7 +139,7 @@ public class UMLMessageBodyReaderWriter implements MessageBodyReader<EPackage>, 
             Collection<EPackage> values = UMLUtil.convertToEcore(umlPackage, null);
             return values.iterator().next();
         } finally {
-            resourceSetFactory.ungetService(resourceSet);
+            factory.ungetService(resourceSet);
         }
     }
 }

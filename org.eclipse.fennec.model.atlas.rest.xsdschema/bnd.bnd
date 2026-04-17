@@ -7,4 +7,5 @@
 	org.eclipse.fennec.codec.constants,\
 	org.osgi.service.jakartars,\
 	org.eclipse.xsd;version=latest,\
-	org.osgi.service.component
+	org.osgi.service.component,\
+	org.eclipse.fennec.model.atlas.rest.common;version=snapshot

@@ -17,9 +17,13 @@ import java.io.IOException;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 
+import org.eclipse.emf.ecore.resource.ResourceSet;
 import org.eclipse.fennec.model.atlas.mediatypes.api.SupportedMediatype;
+import org.eclipse.fennec.model.atlas.rest.common.ModelAtlasRestConstants;
 import org.eclipse.fennec.model.atlas.wf.workflowapi.ScopeService;
+import org.eclipse.fennec.model.atlas.workflow.ResourceSetCollector;
 import org.eclipse.fennec.model.atlas.workflow.ScopeServiceCollector;
+import org.osgi.service.component.ComponentServiceObjects;
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
 import org.osgi.service.component.annotations.ReferencePolicy;
@@ -44,8 +48,9 @@ import jakarta.ws.rs.core.Response;
  *
  * <p>MediaType resolution: centralizes the duplicated {@code checkContentType()}
  * logic from scope-based resources. The resolved media type is set as a request
- * property ({@link #RESOLVED_MEDIA_TYPE}) for resources to use in responses.
- * Only applies to requests with a {@code scopeName} path parameter.
+ * property ({@link ModelAtlasRestConstants#RESOLVED_MEDIA_TYPE}) for resources
+ * to use in responses. Only applies to requests with a {@code scopeName} path
+ * parameter.
  *
  * <p>Paths starting with {@code /scopes/} are excluded from scope/registry
  * validation, as the {@code ScopesResource} handles scope lookup itself.
@@ -78,15 +83,11 @@ import jakarta.ws.rs.core.Response;
 @JakartarsName("ModelAtlasRequestFilter")
 public class ModelAtlasRequestFilter implements ContainerRequestFilter {
 
-	/**
-	 * Request property key for the resolved media type.
-	 */
-	public static final String RESOLVED_MEDIA_TYPE = "resolvedMediaType";
-
 	private static final String SCHEMA_REGISTRY_NAME = "schema";
 
 	private final AtomicReference<ScopeServiceCollector> scopeCollectorRef = new AtomicReference<>();
 	private final AtomicReference<SupportedMediatype> supportedMediatypeRef = new AtomicReference<>();
+	private final AtomicReference<ResourceSetCollector> resourceSetCollectorRef = new AtomicReference<>();
 
 	@Reference(policy = ReferencePolicy.DYNAMIC, policyOption = ReferencePolicyOption.GREEDY)
 	void bindScopeCollector(ScopeServiceCollector collector) {
@@ -104,6 +105,15 @@ public class ModelAtlasRequestFilter implements ContainerRequestFilter {
 
 	void unbindSupportedMediatype(SupportedMediatype mediatype) {
 		supportedMediatypeRef.compareAndSet(mediatype, null);
+	}
+
+	@Reference(policy = ReferencePolicy.DYNAMIC, policyOption = ReferencePolicyOption.GREEDY)
+	void bindResourceSetCollector(ResourceSetCollector collector) {
+		resourceSetCollectorRef.set(collector);
+	}
+
+	void unbindResourceSetCollector(ResourceSetCollector collector) {
+		resourceSetCollectorRef.compareAndSet(collector, null);
 	}
 
 	@Override
@@ -140,7 +150,38 @@ public class ModelAtlasRequestFilter implements ContainerRequestFilter {
 							.build());
 		}
 
+		resolveResourceSet(requestContext, scopeName, pathParams.getFirst("stageName"));
 		resolveMediaType(requestContext);
+	}
+
+	/**
+	 * Resolves the scope/stage-specific {@link ResourceSet} via the
+	 * {@link ResourceSetCollector} and stores its {@link ComponentServiceObjects}
+	 * as a request property. Fails the request with {@code 400 Bad Request} when
+	 * the path targets a stage for which no ResourceSet is currently registered,
+	 * to avoid exposing content through a ResourceSet the client is not entitled
+	 * to.
+	 */
+	private void resolveResourceSet(ContainerRequestContext requestContext, String scopeName, String stageName) {
+		if (stageName == null) {
+			return;
+		}
+		ResourceSetCollector collector = resourceSetCollectorRef.get();
+		if (collector == null) {
+			throw new WebApplicationException(
+					Response.status(Response.Status.SERVICE_UNAVAILABLE)
+							.entity("ResourceSetCollector not available")
+							.build());
+		}
+		ComponentServiceObjects<ResourceSet> cso = collector.getResourceSetObjects(scopeName, stageName);
+		if (cso == null) {
+			throw new WebApplicationException(
+					Response.status(Response.Status.BAD_REQUEST)
+							.entity(String.format("Resource Set for Stage [%s] and Scope [%s] not found.",
+									stageName, scopeName))
+							.build());
+		}
+		requestContext.setProperty(ModelAtlasRestConstants.RESOLVED_RESOURCE_SET_CSO, cso);
 	}
 
 	/**
@@ -190,7 +231,7 @@ public class ModelAtlasRequestFilter implements ContainerRequestFilter {
 
 		if (mediaTypeParam != null) {
 			if (supported.contains(mediaTypeParam)) {
-				requestContext.setProperty(RESOLVED_MEDIA_TYPE, mediaTypeParam);
+				requestContext.setProperty(ModelAtlasRestConstants.RESOLVED_MEDIA_TYPE, mediaTypeParam);
 				return;
 			}
 			throw new WebApplicationException(Response.Status.UNSUPPORTED_MEDIA_TYPE);
@@ -199,16 +240,16 @@ public class ModelAtlasRequestFilter implements ContainerRequestFilter {
 		List<MediaType> acceptableMediaTypes = requestContext.getAcceptableMediaTypes();
 		for (MediaType acceptedMediaType : acceptableMediaTypes) {
 			if (acceptedMediaType.isWildcardType() || acceptedMediaType.isWildcardSubtype()) {
-				requestContext.setProperty(RESOLVED_MEDIA_TYPE, MediaType.APPLICATION_JSON);
+				requestContext.setProperty(ModelAtlasRestConstants.RESOLVED_MEDIA_TYPE, MediaType.APPLICATION_JSON);
 				return;
 			}
 			String accept = acceptedMediaType.getType() + "/" + acceptedMediaType.getSubtype();
 			if (supported.contains(accept)) {
-				requestContext.setProperty(RESOLVED_MEDIA_TYPE, accept);
+				requestContext.setProperty(ModelAtlasRestConstants.RESOLVED_MEDIA_TYPE, accept);
 				return;
 			}
 		}
 
-		requestContext.setProperty(RESOLVED_MEDIA_TYPE, MediaType.APPLICATION_JSON);
+		requestContext.setProperty(ModelAtlasRestConstants.RESOLVED_MEDIA_TYPE, MediaType.APPLICATION_JSON);
 	}
 }

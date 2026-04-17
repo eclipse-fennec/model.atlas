@@ -225,6 +225,8 @@ public class SchemaRegistryChainConfigurator {
                 scopeName + "-" + stageName, "?");
         Hashtable<String, Object> props = new Hashtable<>();
         props.put("ePackageRegistry.target", parentTarget);
+        props.put("scope.name", scopeName);
+        props.put("stage.name", stageName);
         config.update(props);
         return config;
     }

@@ -1,0 +1,10 @@
+-library: enableEMF
+-buildpath: \
+	jakarta.ws.rs-api,\
+	org.osgi.service.component,\
+	org.osgi.service.component.annotations,\
+	org.osgi.annotation.bundle,\
+	org.osgi.annotation.versioning
+
+Bundle-Version: 1.0.0.SNAPSHOT
+-workingset: atlas

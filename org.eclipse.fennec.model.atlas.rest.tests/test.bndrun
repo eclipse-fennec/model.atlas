@@ -28,9 +28,8 @@
 	bnd.identity;id='org.eclipse.fennec.model.atlas.rest.tests',\
 	bnd.identity;id='org.eclipse.fennec.codec.jsonschema',\
 	bnd.identity;id='org.eclipse.fennec.model.atlas.rest.uml',\
-	bnd.identity;id='org.apache.felix.gogo.command',\
-	bnd.identity;id='org.apache.felix.gogo.shell',\
-	bnd.identity;id='org.eclipse.uml2.uml';version='[5.7.0,6.0.0)'
+	bnd.identity;id='org.eclipse.uml2.uml';version='[5.7.0,6.0.0)',\
+	bnd.identity;id='org.eclipse.fennec.emf.osgi.component'
 
 # Ensure clean environment
 -runkeep: false
@@ -142,7 +141,6 @@
 	tools.jackson.core.jackson-core;version='[3.0.1,3.0.2)',\
 	tools.jackson.core.jackson-databind;version='[3.0.1,3.0.2)',\
 	org.eclipse.fennec.emf.gecko.compatibility.api;version='[0.1.2,0.1.3)',\
-	org.eclipse.fennec.emf.osgi.component.minimal;version='[0.1.2,0.1.3)',\
 	org.eclipse.fennec.emf.osgi.model.info;version='[0.1.2,0.1.3)',\
 	slf4j.simple;version='[2.0.11,2.0.12)',\
 	assertj-core;version='[3.27.7,3.27.8)',\
@@ -164,4 +162,6 @@
 	net.bytebuddy.byte-buddy-agent;version='[1.18.4,1.18.5)',\
 	org.eclipse.fennec.model.atlas.tests.common;version=snapshot,\
 	org.mockito.mockito-core;version='[5.21.0,5.21.1)',\
-	org.objenesis;version='[3.5.0,3.5.1)'
+	org.objenesis;version='[3.5.0,3.5.1)',\
+	org.eclipse.fennec.model.atlas.rest.common;version=snapshot,\
+	org.eclipse.fennec.emf.osgi.component;version='[0.1.2,0.1.3)'

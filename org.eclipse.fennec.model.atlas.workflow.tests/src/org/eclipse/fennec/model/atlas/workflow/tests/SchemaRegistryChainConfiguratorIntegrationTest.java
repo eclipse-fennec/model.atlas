@@ -180,6 +180,26 @@ public class SchemaRegistryChainConfiguratorIntegrationTest {
 							+ CommonTestAnnotations.STAGE_DRAFT),
 					"ePackageConfigurator.target should filter on stage");
 		}
+
+		@Test
+		@DisplayName("Should tag ResourceSetFactory config with scope.name and stage.name")
+		@ParentScopeServiceSetup
+		void shouldTagResourceSetFactoryConfigWithScopeAndStage(
+				@InjectService(cardinality = 0, filter = "(scope.name=" + TestAnnotations.TEST_PARENT_SCOPE_NAME + ")")
+				ServiceAware<ScopeService> parentScopeAware) throws Exception {
+
+			assertNotNull(parentScopeAware.waitForService(5000));
+
+			Configuration rsfDraft = findConfiguration(RESOURCE_SET_FACTORY_FACTORY_PID,
+					TestAnnotations.TEST_PARENT_SCOPE_NAME + "-" + CommonTestAnnotations.STAGE_DRAFT);
+			assertNotNull(rsfDraft, "ResourceSetFactory for draft stage should exist");
+
+			Dictionary<String, Object> props = rsfDraft.getProperties();
+			assertEquals(TestAnnotations.TEST_PARENT_SCOPE_NAME, props.get("scope.name"),
+					"scope.name should be propagated to the ResourceSetFactory config");
+			assertEquals(CommonTestAnnotations.STAGE_DRAFT, props.get("stage.name"),
+					"stage.name should be propagated to the ResourceSetFactory config");
+		}
 	}
 
 	@Nested

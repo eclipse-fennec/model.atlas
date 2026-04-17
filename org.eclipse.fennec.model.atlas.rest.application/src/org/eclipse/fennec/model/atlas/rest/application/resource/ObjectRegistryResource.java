@@ -22,7 +22,7 @@ import org.eclipse.emf.ecore.util.EcoreUtil;
 import org.eclipse.fennec.model.atlas.mgmt.management.ManagementFactory;
 import org.eclipse.fennec.model.atlas.mgmt.management.ObjectMetadata;
 import org.eclipse.fennec.model.atlas.mgmt.management.ObjectMetadataContainer;
-import org.eclipse.fennec.model.atlas.rest.application.filter.ModelAtlasRequestFilter;
+import org.eclipse.fennec.model.atlas.rest.common.ModelAtlasRestConstants;
 import org.eclipse.fennec.model.atlas.rest.model.StageTransitionRequest;
 import org.eclipse.fennec.model.atlas.runtime.RequireRuntime;
 import org.eclipse.fennec.model.atlas.wf.workflowapi.RegistryService;
@@ -554,6 +554,6 @@ public class ObjectRegistryResource {
     }
 
     private String getResolvedMediaType() {
-        return (String) requestContext.getProperty(ModelAtlasRequestFilter.RESOLVED_MEDIA_TYPE);
+        return (String) requestContext.getProperty(ModelAtlasRestConstants.RESOLVED_MEDIA_TYPE);
     }
 }
