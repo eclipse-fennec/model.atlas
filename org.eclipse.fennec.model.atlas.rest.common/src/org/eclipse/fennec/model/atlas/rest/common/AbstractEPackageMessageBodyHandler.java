@@ -17,7 +17,9 @@ import org.eclipse.emf.ecore.EPackage;
 import org.eclipse.emf.ecore.resource.ResourceSet;
 import org.osgi.service.component.ComponentServiceObjects;
 
+import jakarta.inject.Provider;
 import jakarta.ws.rs.container.ContainerRequestContext;
+import jakarta.ws.rs.core.Context;
 import jakarta.ws.rs.ext.MessageBodyReader;
 import jakarta.ws.rs.ext.MessageBodyWriter;
 
@@ -49,16 +51,12 @@ import jakarta.ws.rs.ext.MessageBodyWriter;
 public abstract class AbstractEPackageMessageBodyHandler
         implements MessageBodyReader<EPackage>, MessageBodyWriter<EPackage> {
 
+    @Context
+    private Provider<ContainerRequestContext> requestContextProvider;
+
     @SuppressWarnings("unchecked")
-    protected ComponentServiceObjects<ResourceSet> resolveResourceSetFactory(
-            ContainerRequestContext requestContext,
-            ComponentServiceObjects<ResourceSet> fallback) {
-        if (requestContext != null) {
-            Object scoped = requestContext.getProperty(ModelAtlasRestConstants.RESOLVED_RESOURCE_SET_CSO);
-            if (scoped instanceof ComponentServiceObjects) {
-                return (ComponentServiceObjects<ResourceSet>) scoped;
-            }
-        }
-        return fallback;
+    protected ComponentServiceObjects<ResourceSet> getResourceSetFactory() {
+        return (ComponentServiceObjects<ResourceSet>)
+                requestContextProvider.get().getProperty(ModelAtlasRestConstants.RESOLVED_RESOURCE_SET_CSO);
     }
 }

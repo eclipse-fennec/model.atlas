@@ -111,6 +111,8 @@ public abstract class AbstractRestTest {
 
 		assertTrue(resourceReady, "ObjectRegistryResource should be registered within 15 seconds. "
 				+ "Check that the resource is properly configured and the Jakarta REST runtime is working.");
+		
+		Thread.sleep(2000); //give time to all the services to come up
 	}
 	
 	abstract String getResourceName();

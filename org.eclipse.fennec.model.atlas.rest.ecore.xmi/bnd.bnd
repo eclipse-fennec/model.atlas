@@ -3,4 +3,5 @@
 	org.osgi.service.component,\
 	org.osgi.service.jakartars,\
 	jakarta.ws.rs-api,\
-	org.eclipse.fennec.model.atlas.rest.common;version=snapshot
+	org.eclipse.fennec.model.atlas.rest.common;version=snapshot,\
+	jakarta.inject.jakarta.inject-api

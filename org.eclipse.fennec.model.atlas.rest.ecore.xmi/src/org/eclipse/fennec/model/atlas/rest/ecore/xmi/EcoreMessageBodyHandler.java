@@ -31,9 +31,7 @@ import org.eclipse.emf.ecore.resource.Resource;
 import org.eclipse.emf.ecore.resource.ResourceSet;
 import org.eclipse.emf.ecore.xmi.XMLResource;
 import org.eclipse.fennec.model.atlas.rest.common.AbstractEPackageMessageBodyHandler;
-import org.osgi.service.component.ComponentServiceObjects;
 import org.osgi.service.component.annotations.Component;
-import org.osgi.service.component.annotations.Reference;
 import org.osgi.service.component.annotations.ServiceScope;
 import org.osgi.service.jakartars.whiteboard.JakartarsWhiteboardConstants;
 import org.osgi.service.jakartars.whiteboard.propertytypes.JakartarsApplicationSelect;
@@ -43,8 +41,6 @@ import org.osgi.service.jakartars.whiteboard.propertytypes.JakartarsName;
 import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.WebApplicationException;
-import jakarta.ws.rs.container.ContainerRequestContext;
-import jakarta.ws.rs.core.Context;
 import jakarta.ws.rs.core.HttpHeaders;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.MultivaluedMap;
@@ -72,13 +68,6 @@ import jakarta.ws.rs.ext.MessageBodyWriter;
 @Produces({ "application/xmi", "application/xml" })
 public class EcoreMessageBodyHandler extends AbstractEPackageMessageBodyHandler {
 	
-	@Reference
-	private ComponentServiceObjects<ResourceSet> resourceSetFactory;
-
-	@Context
-	private ContainerRequestContext requestContext;
-
-
     private static final Logger logger = Logger.getLogger(EcoreMessageBodyHandler.class.getName());
 
     // ========== MessageBodyReader Implementation ==========
@@ -112,7 +101,7 @@ public class EcoreMessageBodyHandler extends AbstractEPackageMessageBodyHandler 
         logger.log(Level.INFO, "Reading EObject from XMI: type={0}, mediaType={1}",
                 new Object[] { type.getSimpleName(), mediaType });
 
-        ComponentServiceObjects<ResourceSet> factory = resolveResourceSetFactory(requestContext, resourceSetFactory);
+        var factory = getResourceSetFactory();
         ResourceSet resourceSet = factory.getService();
         try {
 
@@ -123,8 +112,6 @@ public class EcoreMessageBodyHandler extends AbstractEPackageMessageBodyHandler 
 
             // Configure XMI loading options for robust parsing
             Map<Object, Object> options = new HashMap<>();
-
-            // Additional XMI loading options for robust parsing
             options.put(XMLResource.OPTION_DEFER_ATTACHMENT, Boolean.TRUE);
             options.put(XMLResource.OPTION_DEFER_IDREF_RESOLUTION, Boolean.TRUE);
             options.put(XMLResource.OPTION_LAX_FEATURE_PROCESSING, Boolean.TRUE);
@@ -143,7 +130,6 @@ public class EcoreMessageBodyHandler extends AbstractEPackageMessageBodyHandler 
                 throw new IOException("XMI loading failed: " + errorMsg.toString());
             }
 
-            // Get the root EObject
             if (resource.getContents().isEmpty()) {
                 throw new IOException("No content found in XMI resource");
             }
@@ -171,25 +157,21 @@ public class EcoreMessageBodyHandler extends AbstractEPackageMessageBodyHandler 
 
         logger.log(Level.INFO, "Writing EObject to XMI: type={0}, mediaType={1}",
                 new Object[] { eObject.getClass().getSimpleName(), mediaType });
-
-        ComponentServiceObjects<ResourceSet> factory = resolveResourceSetFactory(requestContext, resourceSetFactory);
+        var factory = getResourceSetFactory();
         ResourceSet resourceSet = factory.getService();
         try {
 
-            // Use ABSOLUTE URI for consistent behavior
             String fileName = eObject.getName() + (isXMI(mediaType) ? ".xmi" : ".xml");
             httpHeaders.put(HttpHeaders.CONTENT_DISPOSITION, List.of("attachment; filename=" + fileName));
             URI absoluteURI = URI.createURI(fileName);
             Resource resource = resourceSet.createResource(absoluteURI);
             resource.getContents().add(eObject);
 
-            // Configure XMI saving options
             Map<Object, Object> options = new HashMap<>();
             options.put(XMLResource.OPTION_ENCODING, "UTF-8");
             options.put(XMLResource.OPTION_XML_VERSION, "1.0");
             options.put(XMLResource.OPTION_DECLARE_XML, Boolean.TRUE);
 
-            // Save to output stream
             resource.save(entityStream, options);
 
             logger.log(Level.INFO, "Successfully serialized EObject to XMI");
