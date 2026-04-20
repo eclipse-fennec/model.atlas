@@ -1,4 +1,14 @@
 /**
+ * Copyright (c) 2026 Contributors to the Eclipse Foundation.
+ * 
+ * This program and the accompanying materials are made
+ * available under the terms of the Eclipse Public License 2.0
+ * which is available at https://www.eclipse.org/legal/epl-2.0/
+ * 
+ * SPDX-License-Identifier: EPL-2.0
+ * 
+ * Contributors:
+ *   Data In Motion Consulting - initial implementation
  */
 package org.eclipse.fennec.model.atlas.validation.model.cocl.util;
 
@@ -68,8 +78,12 @@ public class COCLAdapterFactory extends AdapterFactoryImpl {
 	protected COCLSwitch<Adapter> modelSwitch =
 		new COCLSwitch<Adapter>() {
 			@Override
-			public Adapter caseExample(Example object) {
-				return createExampleAdapter();
+			public Adapter caseOclConstraint(OclConstraint object) {
+				return createOclConstraintAdapter();
+			}
+			@Override
+			public Adapter caseOclConstraintSet(OclConstraintSet object) {
+				return createOclConstraintSetAdapter();
 			}
 			@Override
 			public Adapter defaultCase(EObject object) {
@@ -92,16 +106,30 @@ public class COCLAdapterFactory extends AdapterFactoryImpl {
 
 
 	/**
-	 * Creates a new adapter for an object of class '{@link org.eclipse.fennec.model.atlas.validation.model.cocl.Example <em>Example</em>}'.
+	 * Creates a new adapter for an object of class '{@link org.eclipse.fennec.model.atlas.validation.model.cocl.OclConstraint <em>Ocl Constraint</em>}'.
 	 * <!-- begin-user-doc -->
 	 * This default implementation returns null so that we can easily ignore cases;
 	 * it's useful to ignore a case when inheritance will catch all the cases anyway.
 	 * <!-- end-user-doc -->
 	 * @return the new adapter.
-	 * @see org.eclipse.fennec.model.atlas.validation.model.cocl.Example
+	 * @see org.eclipse.fennec.model.atlas.validation.model.cocl.OclConstraint
 	 * @generated
 	 */
-	public Adapter createExampleAdapter() {
+	public Adapter createOclConstraintAdapter() {
+		return null;
+	}
+
+	/**
+	 * Creates a new adapter for an object of class '{@link org.eclipse.fennec.model.atlas.validation.model.cocl.OclConstraintSet <em>Ocl Constraint Set</em>}'.
+	 * <!-- begin-user-doc -->
+	 * This default implementation returns null so that we can easily ignore cases;
+	 * it's useful to ignore a case when inheritance will catch all the cases anyway.
+	 * <!-- end-user-doc -->
+	 * @return the new adapter.
+	 * @see org.eclipse.fennec.model.atlas.validation.model.cocl.OclConstraintSet
+	 * @generated
+	 */
+	public Adapter createOclConstraintSetAdapter() {
 		return null;
 	}
 

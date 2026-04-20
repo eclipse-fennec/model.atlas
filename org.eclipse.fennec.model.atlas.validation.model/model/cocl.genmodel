@@ -1,12 +1,43 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<genmodel:GenModel xmi:version="2.0" xmlns:xmi="http://www.omg.org/XMI" xmlns:genmodel="http://www.eclipse.org/emf/2002/GenModel"
+<genmodel:GenModel xmi:version="2.0" xmlns:xmi="http://www.omg.org/XMI" xmlns:ecore="http://www.eclipse.org/emf/2002/Ecore"
+    xmlns:genmodel="http://www.eclipse.org/emf/2002/GenModel" copyrightText="Copyright (c) 2026 Contributors to the Eclipse Foundation.&#xA;&#xA;This program and the accompanying materials are made&#xA;available under the terms of the Eclipse Public License 2.0&#xA;which is available at https://www.eclipse.org/legal/epl-2.0/&#xA;&#xA;SPDX-License-Identifier: EPL-2.0&#xA;&#xA;Contributors:&#xA;  Data In Motion Consulting - initial implementation"
     modelDirectory="/org.eclipse.fennec.model.atlas.validation.model/src" modelPluginID="org.eclipse.fennec.model.atlas.validation.model"
     modelName="cocl" rootExtendsClass="org.eclipse.emf.ecore.impl.MinimalEObjectImpl$Container"
-    importerID="org.eclipse.emf.importer.ecore" complianceLevel="17.0" suppressGenModelAnnotations="false"
+    importerID="org.eclipse.emf.importer.ecore" complianceLevel="21.0" suppressGenModelAnnotations="false"
     copyrightFields="false" operationReflection="true" importOrganizing="true" oSGiCompatible="true">
   <foreignModel>cocl.ecore</foreignModel>
-  <genPackages prefix="COCL" basePackage="org.eclipse.fennec.model.atlas.validation.model" resource="XMI"
-      disposableProviderFactory="true" ecorePackage="cocl.ecore#/">
-    <genClasses ecoreClass="cocl.ecore#//Example"/>
+  <genPackages prefix="COCL" basePackage="org.eclipse.fennec.model.atlas.validation.model"
+      resource="XMI" disposableProviderFactory="true" fileExtensions="cocl" ecorePackage="cocl.ecore#/">
+    <genEnums typeSafeEnumCompatible="false" ecoreEnum="cocl.ecore#//Severity">
+      <genEnumLiterals ecoreEnumLiteral="cocl.ecore#//Severity/TRACE"/>
+      <genEnumLiterals ecoreEnumLiteral="cocl.ecore#//Severity/INFO"/>
+      <genEnumLiterals ecoreEnumLiteral="cocl.ecore#//Severity/WARN"/>
+      <genEnumLiterals ecoreEnumLiteral="cocl.ecore#//Severity/ERROR"/>
+      <genEnumLiterals ecoreEnumLiteral="cocl.ecore#//Severity/FATAL"/>
+    </genEnums>
+    <genEnums typeSafeEnumCompatible="false" ecoreEnum="cocl.ecore#//OclRole">
+      <genEnumLiterals ecoreEnumLiteral="cocl.ecore#//OclRole/VALIDATION"/>
+      <genEnumLiterals ecoreEnumLiteral="cocl.ecore#//OclRole/DERIVED"/>
+      <genEnumLiterals ecoreEnumLiteral="cocl.ecore#//OclRole/REFERENCE_FILTER"/>
+    </genEnums>
+    <genClasses ecoreClass="cocl.ecore#//OclConstraint">
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute cocl.ecore#//OclConstraint/name"/>
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute cocl.ecore#//OclConstraint/description"/>
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute cocl.ecore#//OclConstraint/expression"/>
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute cocl.ecore#//OclConstraint/severity"/>
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute cocl.ecore#//OclConstraint/role"/>
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute cocl.ecore#//OclConstraint/contextClass"/>
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute cocl.ecore#//OclConstraint/featureName"/>
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute cocl.ecore#//OclConstraint/active"/>
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute cocl.ecore#//OclConstraint/overrides"/>
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute cocl.ecore#//OclConstraint/targetURIs"/>
+    </genClasses>
+    <genClasses ecoreClass="cocl.ecore#//OclConstraintSet">
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute cocl.ecore#//OclConstraintSet/name"/>
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute cocl.ecore#//OclConstraintSet/version"/>
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute cocl.ecore#//OclConstraintSet/description"/>
+      <genFeatures property="None" children="true" createChild="true" ecoreFeature="ecore:EReference cocl.ecore#//OclConstraintSet/constraints"/>
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute cocl.ecore#//OclConstraintSet/targetModelNsURIs"/>
+    </genClasses>
   </genPackages>
 </genmodel:GenModel>

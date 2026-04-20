@@ -29,6 +29,7 @@ import org.osgi.annotation.versioning.ProviderType;
  * <!-- end-model-doc -->
  * @see org.eclipse.fennec.model.atlas.datagen.model.datagen.DatagenFactory
  * @model kind="package"
+ *        annotation="http://www.eclipse.org/emf/2002/GenModel oSGiCompatible='true'"
  * @generated
  */
 @ProviderType

@@ -668,7 +668,8 @@ public class DatagenPackageImpl extends EPackageImpl implements DatagenPackage {
 		  (this,
 		   source,
 		   new String[] {
-			   "documentation", "Data Generator Metamodell zur Konfiguration automatischer Testdaten-Generierung fuer bestehende Metamodelle. Nutzt FakerJS als Datenquelle."
+			   "documentation", "Data Generator Metamodell zur Konfiguration automatischer Testdaten-Generierung fuer bestehende Metamodelle. Nutzt FakerJS als Datenquelle.",
+			   "oSGiCompatible", "true"
 		   });
 		addAnnotation
 		  (referenceStrategyEEnum,

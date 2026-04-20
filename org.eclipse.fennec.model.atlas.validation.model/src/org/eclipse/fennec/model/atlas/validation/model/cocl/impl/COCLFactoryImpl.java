@@ -1,8 +1,19 @@
 /**
+ * Copyright (c) 2026 Contributors to the Eclipse Foundation.
+ * 
+ * This program and the accompanying materials are made
+ * available under the terms of the Eclipse Public License 2.0
+ * which is available at https://www.eclipse.org/legal/epl-2.0/
+ * 
+ * SPDX-License-Identifier: EPL-2.0
+ * 
+ * Contributors:
+ *   Data In Motion Consulting - initial implementation
  */
 package org.eclipse.fennec.model.atlas.validation.model.cocl.impl;
 
 import org.eclipse.emf.ecore.EClass;
+import org.eclipse.emf.ecore.EDataType;
 import org.eclipse.emf.ecore.EObject;
 import org.eclipse.emf.ecore.EPackage;
 
@@ -56,7 +67,8 @@ public class COCLFactoryImpl extends EFactoryImpl implements COCLFactory {
 	@Override
 	public EObject create(EClass eClass) {
 		switch (eClass.getClassifierID()) {
-			case COCLPackage.EXAMPLE: return createExample();
+			case COCLPackage.OCL_CONSTRAINT: return createOclConstraint();
+			case COCLPackage.OCL_CONSTRAINT_SET: return createOclConstraintSet();
 			default:
 				throw new IllegalArgumentException("The class '" + eClass.getName() + "' is not a valid classifier");
 		}
@@ -68,9 +80,94 @@ public class COCLFactoryImpl extends EFactoryImpl implements COCLFactory {
 	 * @generated
 	 */
 	@Override
-	public Example createExample() {
-		ExampleImpl example = new ExampleImpl();
-		return example;
+	public Object createFromString(EDataType eDataType, String initialValue) {
+		switch (eDataType.getClassifierID()) {
+			case COCLPackage.SEVERITY:
+				return createSeverityFromString(eDataType, initialValue);
+			case COCLPackage.OCL_ROLE:
+				return createOclRoleFromString(eDataType, initialValue);
+			default:
+				throw new IllegalArgumentException("The datatype '" + eDataType.getName() + "' is not a valid classifier");
+		}
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
+	public String convertToString(EDataType eDataType, Object instanceValue) {
+		switch (eDataType.getClassifierID()) {
+			case COCLPackage.SEVERITY:
+				return convertSeverityToString(eDataType, instanceValue);
+			case COCLPackage.OCL_ROLE:
+				return convertOclRoleToString(eDataType, instanceValue);
+			default:
+				throw new IllegalArgumentException("The datatype '" + eDataType.getName() + "' is not a valid classifier");
+		}
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
+	public OclConstraint createOclConstraint() {
+		OclConstraintImpl oclConstraint = new OclConstraintImpl();
+		return oclConstraint;
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
+	public OclConstraintSet createOclConstraintSet() {
+		OclConstraintSetImpl oclConstraintSet = new OclConstraintSetImpl();
+		return oclConstraintSet;
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	public Severity createSeverityFromString(EDataType eDataType, String initialValue) {
+		Severity result = Severity.get(initialValue);
+		if (result == null) throw new IllegalArgumentException("The value '" + initialValue + "' is not a valid enumerator of '" + eDataType.getName() + "'");
+		return result;
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	public String convertSeverityToString(EDataType eDataType, Object instanceValue) {
+		return instanceValue == null ? null : instanceValue.toString();
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	public OclRole createOclRoleFromString(EDataType eDataType, String initialValue) {
+		OclRole result = OclRole.get(initialValue);
+		if (result == null) throw new IllegalArgumentException("The value '" + initialValue + "' is not a valid enumerator of '" + eDataType.getName() + "'");
+		return result;
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	public String convertOclRoleToString(EDataType eDataType, Object instanceValue) {
+		return instanceValue == null ? null : instanceValue.toString();
 	}
 
 	/**

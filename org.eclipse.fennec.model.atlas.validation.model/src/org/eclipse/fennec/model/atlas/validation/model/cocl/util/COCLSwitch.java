@@ -1,4 +1,14 @@
 /**
+ * Copyright (c) 2026 Contributors to the Eclipse Foundation.
+ * 
+ * This program and the accompanying materials are made
+ * available under the terms of the Eclipse Public License 2.0
+ * which is available at https://www.eclipse.org/legal/epl-2.0/
+ * 
+ * SPDX-License-Identifier: EPL-2.0
+ * 
+ * Contributors:
+ *   Data In Motion Consulting - initial implementation
  */
 package org.eclipse.fennec.model.atlas.validation.model.cocl.util;
 
@@ -66,9 +76,15 @@ public class COCLSwitch<T> extends Switch<T> {
 	@Override
 	protected T doSwitch(int classifierID, EObject theEObject) {
 		switch (classifierID) {
-			case COCLPackage.EXAMPLE: {
-				Example example = (Example)theEObject;
-				T result = caseExample(example);
+			case COCLPackage.OCL_CONSTRAINT: {
+				OclConstraint oclConstraint = (OclConstraint)theEObject;
+				T result = caseOclConstraint(oclConstraint);
+				if (result == null) result = defaultCase(theEObject);
+				return result;
+			}
+			case COCLPackage.OCL_CONSTRAINT_SET: {
+				OclConstraintSet oclConstraintSet = (OclConstraintSet)theEObject;
+				T result = caseOclConstraintSet(oclConstraintSet);
 				if (result == null) result = defaultCase(theEObject);
 				return result;
 			}
@@ -77,17 +93,32 @@ public class COCLSwitch<T> extends Switch<T> {
 	}
 
 	/**
-	 * Returns the result of interpreting the object as an instance of '<em>Example</em>'.
+	 * Returns the result of interpreting the object as an instance of '<em>Ocl Constraint</em>'.
 	 * <!-- begin-user-doc -->
 	 * This implementation returns null;
 	 * returning a non-null result will terminate the switch.
 	 * <!-- end-user-doc -->
 	 * @param object the target of the switch.
-	 * @return the result of interpreting the object as an instance of '<em>Example</em>'.
+	 * @return the result of interpreting the object as an instance of '<em>Ocl Constraint</em>'.
 	 * @see #doSwitch(org.eclipse.emf.ecore.EObject) doSwitch(EObject)
 	 * @generated
 	 */
-	public T caseExample(Example object) {
+	public T caseOclConstraint(OclConstraint object) {
+		return null;
+	}
+
+	/**
+	 * Returns the result of interpreting the object as an instance of '<em>Ocl Constraint Set</em>'.
+	 * <!-- begin-user-doc -->
+	 * This implementation returns null;
+	 * returning a non-null result will terminate the switch.
+	 * <!-- end-user-doc -->
+	 * @param object the target of the switch.
+	 * @return the result of interpreting the object as an instance of '<em>Ocl Constraint Set</em>'.
+	 * @see #doSwitch(org.eclipse.emf.ecore.EObject) doSwitch(EObject)
+	 * @generated
+	 */
+	public T caseOclConstraintSet(OclConstraintSet object) {
 		return null;
 	}
 
