@@ -4,7 +4,8 @@
     modelDirectory="/org.eclipse.fennec.model.atlas.validation.model/src" modelPluginID="org.eclipse.fennec.model.atlas.validation.model"
     modelName="cocl" rootExtendsClass="org.eclipse.emf.ecore.impl.MinimalEObjectImpl$Container"
     importerID="org.eclipse.emf.importer.ecore" complianceLevel="21.0" suppressGenModelAnnotations="false"
-    copyrightFields="false" operationReflection="true" importOrganizing="true" oSGiCompatible="true">
+    copyrightFields="false" usedGenPackages="../../org.eclipse.emf.ecore/model/Ecore.genmodel#//ecore"
+    operationReflection="true" importOrganizing="true" oSGiCompatible="true">
   <foreignModel>cocl.ecore</foreignModel>
   <genPackages prefix="COCL" basePackage="org.eclipse.fennec.model.atlas.validation.model"
       resource="XMI" disposableProviderFactory="true" fileExtensions="cocl" ecorePackage="cocl.ecore#/">
@@ -19,6 +20,7 @@
       <genEnumLiterals ecoreEnumLiteral="cocl.ecore#//OclRole/VALIDATION"/>
       <genEnumLiterals ecoreEnumLiteral="cocl.ecore#//OclRole/DERIVED"/>
       <genEnumLiterals ecoreEnumLiteral="cocl.ecore#//OclRole/REFERENCE_FILTER"/>
+      <genEnumLiterals ecoreEnumLiteral="cocl.ecore#//OclRole/OPERATION"/>
     </genEnums>
     <genClasses ecoreClass="cocl.ecore#//OclConstraint">
       <genFeatures createChild="false" ecoreFeature="ecore:EAttribute cocl.ecore#//OclConstraint/name"/>
@@ -38,6 +40,45 @@
       <genFeatures createChild="false" ecoreFeature="ecore:EAttribute cocl.ecore#//OclConstraintSet/description"/>
       <genFeatures property="None" children="true" createChild="true" ecoreFeature="ecore:EReference cocl.ecore#//OclConstraintSet/constraints"/>
       <genFeatures createChild="false" ecoreFeature="ecore:EAttribute cocl.ecore#//OclConstraintSet/targetModelNsURIs"/>
+    </genClasses>
+    <genClasses image="false" ecoreClass="cocl.ecore#//ValidationRequest">
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute cocl.ecore#//ValidationRequest/role"/>
+      <genFeatures property="None" children="true" createChild="true" ecoreFeature="ecore:EReference cocl.ecore#//ValidationRequest/validationObjects"/>
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute cocl.ecore#//ValidationRequest/coclId"/>
+    </genClasses>
+    <genClasses ecoreClass="cocl.ecore#//ValidationResponse">
+      <genFeatures property="None" children="true" createChild="true" ecoreFeature="ecore:EReference cocl.ecore#//ValidationResponse/results"/>
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute cocl.ecore#//ValidationResponse/role"/>
+    </genClasses>
+    <genClasses image="false" ecoreClass="cocl.ecore#//ValidationResult">
+      <genFeatures property="None" children="true" createChild="true" ecoreFeature="ecore:EReference cocl.ecore#//ValidationResult/diagnostics"/>
+    </genClasses>
+    <genClasses ecoreClass="cocl.ecore#//SimpleValidationResult">
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute cocl.ecore#//SimpleValidationResult/value"/>
+    </genClasses>
+    <genClasses ecoreClass="cocl.ecore#//EObjectValidationResult">
+      <genFeatures property="None" children="true" createChild="true" ecoreFeature="ecore:EReference cocl.ecore#//EObjectValidationResult/values"/>
+    </genClasses>
+    <genClasses ecoreClass="cocl.ecore#//DerivedValidationRequest">
+      <genFeatures notify="false" createChild="false" propertySortChoices="true" ecoreFeature="ecore:EReference cocl.ecore#//DerivedValidationRequest/derivedFeature"/>
+    </genClasses>
+    <genClasses ecoreClass="cocl.ecore#//OperationValidationRequest">
+      <genFeatures notify="false" createChild="false" propertySortChoices="true" ecoreFeature="ecore:EReference cocl.ecore#//OperationValidationRequest/operation"/>
+      <genFeatures property="None" children="true" createChild="true" ecoreFeature="ecore:EReference cocl.ecore#//OperationValidationRequest/parameters"/>
+    </genClasses>
+    <genClasses ecoreClass="cocl.ecore#//OperationRequestParameter">
+      <genFeatures notify="false" createChild="false" propertySortChoices="true" ecoreFeature="ecore:EReference cocl.ecore#//OperationRequestParameter/parameter"/>
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute cocl.ecore#//OperationRequestParameter/isNull"/>
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute cocl.ecore#//OperationRequestParameter/javaValue"/>
+      <genFeatures notify="false" createChild="false" propertySortChoices="true" ecoreFeature="ecore:EReference cocl.ecore#//OperationRequestParameter/eValue"/>
+    </genClasses>
+    <genClasses ecoreClass="cocl.ecore#//Diagnostic">
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute cocl.ecore#//Diagnostic/message"/>
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute cocl.ecore#//Diagnostic/source"/>
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute cocl.ecore#//Diagnostic/type"/>
+      <genFeatures property="None" children="true" createChild="true" ecoreFeature="ecore:EReference cocl.ecore#//Diagnostic/children"/>
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute cocl.ecore#//Diagnostic/exceptionMsg"/>
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute cocl.ecore#//Diagnostic/data"/>
     </genClasses>
   </genPackages>
 </genmodel:GenModel>

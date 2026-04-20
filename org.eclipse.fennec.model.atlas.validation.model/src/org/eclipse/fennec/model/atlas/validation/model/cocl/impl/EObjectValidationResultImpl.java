@@ -10,7 +10,7 @@
  * Contributors:
  *   Data In Motion Consulting - initial implementation
  */
-package org.eclipse.fennec.model.atlas.rest.model.impl;
+package org.eclipse.fennec.model.atlas.validation.model.cocl.impl;
 
 import java.util.Collection;
 
@@ -22,43 +22,42 @@ import org.eclipse.emf.ecore.EClass;
 import org.eclipse.emf.ecore.EObject;
 import org.eclipse.emf.ecore.InternalEObject;
 
-import org.eclipse.emf.ecore.impl.MinimalEObjectImpl;
-
 import org.eclipse.emf.ecore.util.EObjectContainmentEList;
 import org.eclipse.emf.ecore.util.InternalEList;
 
-import org.eclipse.fennec.model.atlas.rest.model.RestPackage;
+import org.eclipse.fennec.model.atlas.validation.model.cocl.COCLPackage;
+import org.eclipse.fennec.model.atlas.validation.model.cocl.EObjectValidationResult;
 
 /**
  * <!-- begin-user-doc -->
- * An implementation of the model object '<em><b>Container</b></em>'.
+ * An implementation of the model object '<em><b>EObject Validation Result</b></em>'.
  * <!-- end-user-doc -->
  * <p>
  * The following features are implemented:
  * </p>
  * <ul>
- *   <li>{@link org.eclipse.fennec.model.atlas.rest.model.impl.ContainerImpl#getElements <em>Elements</em>}</li>
+ *   <li>{@link org.eclipse.fennec.model.atlas.validation.model.cocl.impl.EObjectValidationResultImpl#getValues <em>Values</em>}</li>
  * </ul>
  *
  * @generated
  */
-public class ContainerImpl extends MinimalEObjectImpl.Container implements org.eclipse.fennec.model.atlas.rest.model.Container {
+public class EObjectValidationResultImpl extends ValidationResultImpl implements EObjectValidationResult {
 	/**
-	 * The cached value of the '{@link #getElements() <em>Elements</em>}' containment reference list.
+	 * The cached value of the '{@link #getValues() <em>Values</em>}' containment reference list.
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
-	 * @see #getElements()
+	 * @see #getValues()
 	 * @generated
 	 * @ordered
 	 */
-	protected EList<EObject> elements;
+	protected EList<EObject> values;
 
 	/**
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
 	 * @generated
 	 */
-	protected ContainerImpl() {
+	protected EObjectValidationResultImpl() {
 		super();
 	}
 
@@ -69,7 +68,7 @@ public class ContainerImpl extends MinimalEObjectImpl.Container implements org.e
 	 */
 	@Override
 	protected EClass eStaticClass() {
-		return RestPackage.Literals.CONTAINER;
+		return COCLPackage.Literals.EOBJECT_VALIDATION_RESULT;
 	}
 
 	/**
@@ -78,11 +77,11 @@ public class ContainerImpl extends MinimalEObjectImpl.Container implements org.e
 	 * @generated
 	 */
 	@Override
-	public EList<EObject> getElements() {
-		if (elements == null) {
-			elements = new EObjectContainmentEList<EObject>(EObject.class, this, RestPackage.CONTAINER__ELEMENTS);
+	public EList<EObject> getValues() {
+		if (values == null) {
+			values = new EObjectContainmentEList<EObject>(EObject.class, this, COCLPackage.EOBJECT_VALIDATION_RESULT__VALUES);
 		}
-		return elements;
+		return values;
 	}
 
 	/**
@@ -93,8 +92,8 @@ public class ContainerImpl extends MinimalEObjectImpl.Container implements org.e
 	@Override
 	public NotificationChain eInverseRemove(InternalEObject otherEnd, int featureID, NotificationChain msgs) {
 		switch (featureID) {
-			case RestPackage.CONTAINER__ELEMENTS:
-				return ((InternalEList<?>)getElements()).basicRemove(otherEnd, msgs);
+			case COCLPackage.EOBJECT_VALIDATION_RESULT__VALUES:
+				return ((InternalEList<?>)getValues()).basicRemove(otherEnd, msgs);
 		}
 		return super.eInverseRemove(otherEnd, featureID, msgs);
 	}
@@ -107,8 +106,8 @@ public class ContainerImpl extends MinimalEObjectImpl.Container implements org.e
 	@Override
 	public Object eGet(int featureID, boolean resolve, boolean coreType) {
 		switch (featureID) {
-			case RestPackage.CONTAINER__ELEMENTS:
-				return getElements();
+			case COCLPackage.EOBJECT_VALIDATION_RESULT__VALUES:
+				return getValues();
 		}
 		return super.eGet(featureID, resolve, coreType);
 	}
@@ -122,9 +121,9 @@ public class ContainerImpl extends MinimalEObjectImpl.Container implements org.e
 	@Override
 	public void eSet(int featureID, Object newValue) {
 		switch (featureID) {
-			case RestPackage.CONTAINER__ELEMENTS:
-				getElements().clear();
-				getElements().addAll((Collection<? extends EObject>)newValue);
+			case COCLPackage.EOBJECT_VALIDATION_RESULT__VALUES:
+				getValues().clear();
+				getValues().addAll((Collection<? extends EObject>)newValue);
 				return;
 		}
 		super.eSet(featureID, newValue);
@@ -138,8 +137,8 @@ public class ContainerImpl extends MinimalEObjectImpl.Container implements org.e
 	@Override
 	public void eUnset(int featureID) {
 		switch (featureID) {
-			case RestPackage.CONTAINER__ELEMENTS:
-				getElements().clear();
+			case COCLPackage.EOBJECT_VALIDATION_RESULT__VALUES:
+				getValues().clear();
 				return;
 		}
 		super.eUnset(featureID);
@@ -153,10 +152,10 @@ public class ContainerImpl extends MinimalEObjectImpl.Container implements org.e
 	@Override
 	public boolean eIsSet(int featureID) {
 		switch (featureID) {
-			case RestPackage.CONTAINER__ELEMENTS:
-				return elements != null && !elements.isEmpty();
+			case COCLPackage.EOBJECT_VALIDATION_RESULT__VALUES:
+				return values != null && !values.isEmpty();
 		}
 		return super.eIsSet(featureID);
 	}
 
-} //ContainerImpl
+} //EObjectValidationResultImpl

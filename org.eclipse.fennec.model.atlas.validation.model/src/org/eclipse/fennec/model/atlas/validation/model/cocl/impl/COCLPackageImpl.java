@@ -17,15 +17,25 @@ import org.eclipse.emf.ecore.EClass;
 import org.eclipse.emf.ecore.EEnum;
 import org.eclipse.emf.ecore.EPackage;
 import org.eclipse.emf.ecore.EReference;
+import org.eclipse.emf.ecore.EcorePackage;
 
 import org.eclipse.emf.ecore.impl.EPackageImpl;
 
 import org.eclipse.fennec.model.atlas.validation.model.cocl.COCLFactory;
 import org.eclipse.fennec.model.atlas.validation.model.cocl.COCLPackage;
+import org.eclipse.fennec.model.atlas.validation.model.cocl.DerivedValidationRequest;
+import org.eclipse.fennec.model.atlas.validation.model.cocl.Diagnostic;
+import org.eclipse.fennec.model.atlas.validation.model.cocl.EObjectValidationResult;
 import org.eclipse.fennec.model.atlas.validation.model.cocl.OclConstraint;
 import org.eclipse.fennec.model.atlas.validation.model.cocl.OclConstraintSet;
 import org.eclipse.fennec.model.atlas.validation.model.cocl.OclRole;
+import org.eclipse.fennec.model.atlas.validation.model.cocl.OperationRequestParameter;
+import org.eclipse.fennec.model.atlas.validation.model.cocl.OperationValidationRequest;
 import org.eclipse.fennec.model.atlas.validation.model.cocl.Severity;
+import org.eclipse.fennec.model.atlas.validation.model.cocl.SimpleValidationResult;
+import org.eclipse.fennec.model.atlas.validation.model.cocl.ValidationRequest;
+import org.eclipse.fennec.model.atlas.validation.model.cocl.ValidationResponse;
+import org.eclipse.fennec.model.atlas.validation.model.cocl.ValidationResult;
 
 /**
  * <!-- begin-user-doc -->
@@ -47,6 +57,69 @@ public class COCLPackageImpl extends EPackageImpl implements COCLPackage {
 	 * @generated
 	 */
 	private EClass oclConstraintSetEClass = null;
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	private EClass validationRequestEClass = null;
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	private EClass validationResponseEClass = null;
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	private EClass validationResultEClass = null;
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	private EClass simpleValidationResultEClass = null;
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	private EClass eObjectValidationResultEClass = null;
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	private EClass derivedValidationRequestEClass = null;
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	private EClass operationValidationRequestEClass = null;
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	private EClass operationRequestParameterEClass = null;
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	private EClass diagnosticEClass = null;
 
 	/**
 	 * <!-- begin-user-doc -->
@@ -107,6 +180,9 @@ public class COCLPackageImpl extends EPackageImpl implements COCLPackage {
 		COCLPackageImpl theCOCLPackage = registeredCOCLPackage instanceof COCLPackageImpl ? (COCLPackageImpl)registeredCOCLPackage : new COCLPackageImpl();
 
 		isInited = true;
+
+		// Initialize simple dependencies
+		EcorePackage.eINSTANCE.eClass();
 
 		// Create package meta-data objects
 		theCOCLPackage.createPackageContents();
@@ -298,6 +374,306 @@ public class COCLPackageImpl extends EPackageImpl implements COCLPackage {
 	 * @generated
 	 */
 	@Override
+	public EClass getValidationRequest() {
+		return validationRequestEClass;
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
+	public EAttribute getValidationRequest_Role() {
+		return (EAttribute)validationRequestEClass.getEStructuralFeatures().get(0);
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
+	public EReference getValidationRequest_ValidationObjects() {
+		return (EReference)validationRequestEClass.getEStructuralFeatures().get(1);
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
+	public EAttribute getValidationRequest_CoclId() {
+		return (EAttribute)validationRequestEClass.getEStructuralFeatures().get(2);
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
+	public EClass getValidationResponse() {
+		return validationResponseEClass;
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
+	public EReference getValidationResponse_Results() {
+		return (EReference)validationResponseEClass.getEStructuralFeatures().get(0);
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
+	public EAttribute getValidationResponse_Role() {
+		return (EAttribute)validationResponseEClass.getEStructuralFeatures().get(1);
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
+	public EClass getValidationResult() {
+		return validationResultEClass;
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
+	public EReference getValidationResult_Diagnostics() {
+		return (EReference)validationResultEClass.getEStructuralFeatures().get(0);
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
+	public EClass getSimpleValidationResult() {
+		return simpleValidationResultEClass;
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
+	public EAttribute getSimpleValidationResult_Value() {
+		return (EAttribute)simpleValidationResultEClass.getEStructuralFeatures().get(0);
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
+	public EClass getEObjectValidationResult() {
+		return eObjectValidationResultEClass;
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
+	public EReference getEObjectValidationResult_Values() {
+		return (EReference)eObjectValidationResultEClass.getEStructuralFeatures().get(0);
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
+	public EClass getDerivedValidationRequest() {
+		return derivedValidationRequestEClass;
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
+	public EReference getDerivedValidationRequest_DerivedFeature() {
+		return (EReference)derivedValidationRequestEClass.getEStructuralFeatures().get(0);
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
+	public EClass getOperationValidationRequest() {
+		return operationValidationRequestEClass;
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
+	public EReference getOperationValidationRequest_Operation() {
+		return (EReference)operationValidationRequestEClass.getEStructuralFeatures().get(0);
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
+	public EReference getOperationValidationRequest_Parameters() {
+		return (EReference)operationValidationRequestEClass.getEStructuralFeatures().get(1);
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
+	public EClass getOperationRequestParameter() {
+		return operationRequestParameterEClass;
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
+	public EReference getOperationRequestParameter_Parameter() {
+		return (EReference)operationRequestParameterEClass.getEStructuralFeatures().get(0);
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
+	public EAttribute getOperationRequestParameter_IsNull() {
+		return (EAttribute)operationRequestParameterEClass.getEStructuralFeatures().get(1);
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
+	public EAttribute getOperationRequestParameter_JavaValue() {
+		return (EAttribute)operationRequestParameterEClass.getEStructuralFeatures().get(2);
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
+	public EReference getOperationRequestParameter_EValue() {
+		return (EReference)operationRequestParameterEClass.getEStructuralFeatures().get(3);
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
+	public EClass getDiagnostic() {
+		return diagnosticEClass;
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
+	public EAttribute getDiagnostic_Message() {
+		return (EAttribute)diagnosticEClass.getEStructuralFeatures().get(0);
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
+	public EAttribute getDiagnostic_Source() {
+		return (EAttribute)diagnosticEClass.getEStructuralFeatures().get(1);
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
+	public EAttribute getDiagnostic_Type() {
+		return (EAttribute)diagnosticEClass.getEStructuralFeatures().get(2);
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
+	public EReference getDiagnostic_Children() {
+		return (EReference)diagnosticEClass.getEStructuralFeatures().get(3);
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
+	public EAttribute getDiagnostic_ExceptionMsg() {
+		return (EAttribute)diagnosticEClass.getEStructuralFeatures().get(4);
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
+	public EAttribute getDiagnostic_Data() {
+		return (EAttribute)diagnosticEClass.getEStructuralFeatures().get(5);
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
 	public EEnum getSeverity() {
 		return severityEEnum;
 	}
@@ -360,6 +736,45 @@ public class COCLPackageImpl extends EPackageImpl implements COCLPackage {
 		createEReference(oclConstraintSetEClass, OCL_CONSTRAINT_SET__CONSTRAINTS);
 		createEAttribute(oclConstraintSetEClass, OCL_CONSTRAINT_SET__TARGET_MODEL_NS_UR_IS);
 
+		validationRequestEClass = createEClass(VALIDATION_REQUEST);
+		createEAttribute(validationRequestEClass, VALIDATION_REQUEST__ROLE);
+		createEReference(validationRequestEClass, VALIDATION_REQUEST__VALIDATION_OBJECTS);
+		createEAttribute(validationRequestEClass, VALIDATION_REQUEST__COCL_ID);
+
+		validationResponseEClass = createEClass(VALIDATION_RESPONSE);
+		createEReference(validationResponseEClass, VALIDATION_RESPONSE__RESULTS);
+		createEAttribute(validationResponseEClass, VALIDATION_RESPONSE__ROLE);
+
+		validationResultEClass = createEClass(VALIDATION_RESULT);
+		createEReference(validationResultEClass, VALIDATION_RESULT__DIAGNOSTICS);
+
+		simpleValidationResultEClass = createEClass(SIMPLE_VALIDATION_RESULT);
+		createEAttribute(simpleValidationResultEClass, SIMPLE_VALIDATION_RESULT__VALUE);
+
+		eObjectValidationResultEClass = createEClass(EOBJECT_VALIDATION_RESULT);
+		createEReference(eObjectValidationResultEClass, EOBJECT_VALIDATION_RESULT__VALUES);
+
+		derivedValidationRequestEClass = createEClass(DERIVED_VALIDATION_REQUEST);
+		createEReference(derivedValidationRequestEClass, DERIVED_VALIDATION_REQUEST__DERIVED_FEATURE);
+
+		operationValidationRequestEClass = createEClass(OPERATION_VALIDATION_REQUEST);
+		createEReference(operationValidationRequestEClass, OPERATION_VALIDATION_REQUEST__OPERATION);
+		createEReference(operationValidationRequestEClass, OPERATION_VALIDATION_REQUEST__PARAMETERS);
+
+		operationRequestParameterEClass = createEClass(OPERATION_REQUEST_PARAMETER);
+		createEReference(operationRequestParameterEClass, OPERATION_REQUEST_PARAMETER__PARAMETER);
+		createEAttribute(operationRequestParameterEClass, OPERATION_REQUEST_PARAMETER__IS_NULL);
+		createEAttribute(operationRequestParameterEClass, OPERATION_REQUEST_PARAMETER__JAVA_VALUE);
+		createEReference(operationRequestParameterEClass, OPERATION_REQUEST_PARAMETER__EVALUE);
+
+		diagnosticEClass = createEClass(DIAGNOSTIC);
+		createEAttribute(diagnosticEClass, DIAGNOSTIC__MESSAGE);
+		createEAttribute(diagnosticEClass, DIAGNOSTIC__SOURCE);
+		createEAttribute(diagnosticEClass, DIAGNOSTIC__TYPE);
+		createEReference(diagnosticEClass, DIAGNOSTIC__CHILDREN);
+		createEAttribute(diagnosticEClass, DIAGNOSTIC__EXCEPTION_MSG);
+		createEAttribute(diagnosticEClass, DIAGNOSTIC__DATA);
+
 		// Create enums
 		severityEEnum = createEEnum(SEVERITY);
 		oclRoleEEnum = createEEnum(OCL_ROLE);
@@ -388,11 +803,18 @@ public class COCLPackageImpl extends EPackageImpl implements COCLPackage {
 		setNsPrefix(eNS_PREFIX);
 		setNsURI(eNS_URI);
 
+		// Obtain other dependent packages
+		EcorePackage theEcorePackage = (EcorePackage)EPackage.Registry.INSTANCE.getEPackage(EcorePackage.eNS_URI);
+
 		// Create type parameters
 
 		// Set bounds for type parameters
 
 		// Add supertypes to classes
+		simpleValidationResultEClass.getESuperTypes().add(this.getValidationResult());
+		eObjectValidationResultEClass.getESuperTypes().add(this.getValidationResult());
+		derivedValidationRequestEClass.getESuperTypes().add(this.getValidationRequest());
+		operationValidationRequestEClass.getESuperTypes().add(this.getValidationRequest());
 
 		// Initialize classes, features, and operations; add parameters
 		initEClass(oclConstraintEClass, OclConstraint.class, "OclConstraint", !IS_ABSTRACT, !IS_INTERFACE, IS_GENERATED_INSTANCE_CLASS);
@@ -415,6 +837,45 @@ public class COCLPackageImpl extends EPackageImpl implements COCLPackage {
 		getOclConstraintSet_Constraints().getEKeys().add(this.getOclConstraint_Name());
 		initEAttribute(getOclConstraintSet_TargetModelNsURIs(), ecorePackage.getEString(), "targetModelNsURIs", null, 0, -1, OclConstraintSet.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_UNSETTABLE, !IS_ID, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
 
+		initEClass(validationRequestEClass, ValidationRequest.class, "ValidationRequest", IS_ABSTRACT, !IS_INTERFACE, IS_GENERATED_INSTANCE_CLASS);
+		initEAttribute(getValidationRequest_Role(), this.getOclRole(), "role", null, 0, 1, ValidationRequest.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_UNSETTABLE, !IS_ID, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
+		initEReference(getValidationRequest_ValidationObjects(), theEcorePackage.getEObject(), null, "validationObjects", null, 0, -1, ValidationRequest.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, IS_COMPOSITE, !IS_RESOLVE_PROXIES, !IS_UNSETTABLE, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
+		initEAttribute(getValidationRequest_CoclId(), theEcorePackage.getEString(), "coclId", null, 0, 1, ValidationRequest.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_UNSETTABLE, !IS_ID, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
+
+		initEClass(validationResponseEClass, ValidationResponse.class, "ValidationResponse", !IS_ABSTRACT, !IS_INTERFACE, IS_GENERATED_INSTANCE_CLASS);
+		initEReference(getValidationResponse_Results(), this.getValidationResult(), null, "results", null, 0, -1, ValidationResponse.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, IS_COMPOSITE, !IS_RESOLVE_PROXIES, !IS_UNSETTABLE, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
+		initEAttribute(getValidationResponse_Role(), this.getOclRole(), "role", null, 0, 1, ValidationResponse.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_UNSETTABLE, !IS_ID, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
+
+		initEClass(validationResultEClass, ValidationResult.class, "ValidationResult", IS_ABSTRACT, !IS_INTERFACE, IS_GENERATED_INSTANCE_CLASS);
+		initEReference(getValidationResult_Diagnostics(), this.getDiagnostic(), null, "diagnostics", null, 0, -1, ValidationResult.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, IS_COMPOSITE, !IS_RESOLVE_PROXIES, !IS_UNSETTABLE, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
+
+		initEClass(simpleValidationResultEClass, SimpleValidationResult.class, "SimpleValidationResult", !IS_ABSTRACT, !IS_INTERFACE, IS_GENERATED_INSTANCE_CLASS);
+		initEAttribute(getSimpleValidationResult_Value(), ecorePackage.getEJavaObject(), "value", null, 0, 1, SimpleValidationResult.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_UNSETTABLE, !IS_ID, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
+
+		initEClass(eObjectValidationResultEClass, EObjectValidationResult.class, "EObjectValidationResult", !IS_ABSTRACT, !IS_INTERFACE, IS_GENERATED_INSTANCE_CLASS);
+		initEReference(getEObjectValidationResult_Values(), ecorePackage.getEObject(), null, "values", null, 0, -1, EObjectValidationResult.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, IS_COMPOSITE, !IS_RESOLVE_PROXIES, !IS_UNSETTABLE, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
+
+		initEClass(derivedValidationRequestEClass, DerivedValidationRequest.class, "DerivedValidationRequest", !IS_ABSTRACT, !IS_INTERFACE, IS_GENERATED_INSTANCE_CLASS);
+		initEReference(getDerivedValidationRequest_DerivedFeature(), theEcorePackage.getEStructuralFeature(), null, "derivedFeature", null, 1, -1, DerivedValidationRequest.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_COMPOSITE, IS_RESOLVE_PROXIES, !IS_UNSETTABLE, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
+
+		initEClass(operationValidationRequestEClass, OperationValidationRequest.class, "OperationValidationRequest", !IS_ABSTRACT, !IS_INTERFACE, IS_GENERATED_INSTANCE_CLASS);
+		initEReference(getOperationValidationRequest_Operation(), theEcorePackage.getEOperation(), null, "operation", null, 1, 1, OperationValidationRequest.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_COMPOSITE, IS_RESOLVE_PROXIES, !IS_UNSETTABLE, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
+		initEReference(getOperationValidationRequest_Parameters(), this.getOperationRequestParameter(), null, "parameters", null, 0, -1, OperationValidationRequest.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, IS_COMPOSITE, !IS_RESOLVE_PROXIES, !IS_UNSETTABLE, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
+
+		initEClass(operationRequestParameterEClass, OperationRequestParameter.class, "OperationRequestParameter", !IS_ABSTRACT, !IS_INTERFACE, IS_GENERATED_INSTANCE_CLASS);
+		initEReference(getOperationRequestParameter_Parameter(), theEcorePackage.getEParameter(), null, "parameter", null, 1, 1, OperationRequestParameter.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_COMPOSITE, IS_RESOLVE_PROXIES, !IS_UNSETTABLE, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
+		initEAttribute(getOperationRequestParameter_IsNull(), ecorePackage.getEBoolean(), "isNull", null, 0, 1, OperationRequestParameter.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_UNSETTABLE, !IS_ID, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
+		initEAttribute(getOperationRequestParameter_JavaValue(), ecorePackage.getEJavaObject(), "javaValue", null, 0, 1, OperationRequestParameter.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_UNSETTABLE, !IS_ID, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
+		initEReference(getOperationRequestParameter_EValue(), ecorePackage.getEObject(), null, "eValue", null, 0, 1, OperationRequestParameter.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_COMPOSITE, IS_RESOLVE_PROXIES, !IS_UNSETTABLE, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
+
+		initEClass(diagnosticEClass, Diagnostic.class, "Diagnostic", !IS_ABSTRACT, !IS_INTERFACE, IS_GENERATED_INSTANCE_CLASS);
+		initEAttribute(getDiagnostic_Message(), ecorePackage.getEString(), "message", null, 0, 1, Diagnostic.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_UNSETTABLE, !IS_ID, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
+		initEAttribute(getDiagnostic_Source(), ecorePackage.getEString(), "source", null, 0, 1, Diagnostic.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_UNSETTABLE, !IS_ID, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
+		initEAttribute(getDiagnostic_Type(), this.getSeverity(), "type", null, 0, 1, Diagnostic.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_UNSETTABLE, !IS_ID, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
+		initEReference(getDiagnostic_Children(), this.getDiagnostic(), null, "children", null, 0, -1, Diagnostic.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, IS_COMPOSITE, !IS_RESOLVE_PROXIES, !IS_UNSETTABLE, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
+		initEAttribute(getDiagnostic_ExceptionMsg(), ecorePackage.getEString(), "exceptionMsg", null, 0, 1, Diagnostic.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_UNSETTABLE, !IS_ID, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
+		initEAttribute(getDiagnostic_Data(), ecorePackage.getEString(), "data", null, 0, -1, Diagnostic.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_UNSETTABLE, !IS_ID, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
+
 		// Initialize enums and add enum literals
 		initEEnum(severityEEnum, Severity.class, "Severity");
 		addEEnumLiteral(severityEEnum, Severity.TRACE);
@@ -427,6 +888,7 @@ public class COCLPackageImpl extends EPackageImpl implements COCLPackage {
 		addEEnumLiteral(oclRoleEEnum, OclRole.VALIDATION);
 		addEEnumLiteral(oclRoleEEnum, OclRole.DERIVED);
 		addEEnumLiteral(oclRoleEEnum, OclRole.REFERENCE_FILTER);
+		addEEnumLiteral(oclRoleEEnum, OclRole.OPERATION);
 
 		// Create resource
 		createResource(eNS_URI);
@@ -515,6 +977,12 @@ public class COCLPackageImpl extends EPackageImpl implements COCLPackage {
 		   source,
 		   new String[] {
 			   "documentation", "OCL wird zur Filterung von Referenzzielen verwendet."
+		   });
+		addAnnotation
+		  (oclRoleEEnum.getELiterals().get(3),
+		   source,
+		   new String[] {
+			   "documentation", "OCL to execute an operation."
 		   });
 		addAnnotation
 		  (oclConstraintEClass,
@@ -617,6 +1085,102 @@ public class COCLPackageImpl extends EPackageImpl implements COCLPackage {
 		   source,
 		   new String[] {
 			   "documentation", "Liste von Namespace URIs der Zielmodelle, fuer die dieses Constraint-Set gilt."
+		   });
+		addAnnotation
+		  (validationRequestEClass,
+		   source,
+		   new String[] {
+			   "documentation", "Abstract validation request object"
+		   });
+		addAnnotation
+		  (getValidationRequest_ValidationObjects(),
+		   source,
+		   new String[] {
+			   "documentation", "Objects to be validated. Muli-valued for batch request"
+		   });
+		addAnnotation
+		  (getValidationRequest_CoclId(),
+		   source,
+		   new String[] {
+			   "documentation", "The id of the ocol file"
+		   });
+		addAnnotation
+		  (validationResponseEClass,
+		   source,
+		   new String[] {
+			   "documentation", "Validation response object, that i returned for all ValidationRequests"
+		   });
+		addAnnotation
+		  (getValidationResponse_Results(),
+		   source,
+		   new String[] {
+			   "documentation", "The resulting objects"
+		   });
+		addAnnotation
+		  (validationResultEClass,
+		   source,
+		   new String[] {
+			   "documentation", "Abstract validation result"
+		   });
+		addAnnotation
+		  (getValidationResult_Diagnostics(),
+		   source,
+		   new String[] {
+			   "documentation", "List of diagnostics to communicate"
+		   });
+		addAnnotation
+		  (simpleValidationResultEClass,
+		   source,
+		   new String[] {
+			   "documentation", "Validation result for simple java types"
+		   });
+		addAnnotation
+		  (getSimpleValidationResult_Value(),
+		   source,
+		   new String[] {
+			   "documentation", "The simple value to be returned"
+		   });
+		addAnnotation
+		  (eObjectValidationResultEClass,
+		   source,
+		   new String[] {
+			   "documentation", "Validation result for EMF EObjects"
+		   });
+		addAnnotation
+		  (getEObjectValidationResult_Values(),
+		   source,
+		   new String[] {
+			   "documentation", "The EObjects to be returned"
+		   });
+		addAnnotation
+		  (derivedValidationRequestEClass,
+		   source,
+		   new String[] {
+			   "documentation", "Validation request for derived field validation"
+		   });
+		addAnnotation
+		  (getDerivedValidationRequest_DerivedFeature(),
+		   source,
+		   new String[] {
+			   "documentation", "EstructuralFeature for the derived field to be validated"
+		   });
+		addAnnotation
+		  (operationValidationRequestEClass,
+		   source,
+		   new String[] {
+			   "documentation", "Validation request for operation validation"
+		   });
+		addAnnotation
+		  (getOperationValidationRequest_Operation(),
+		   source,
+		   new String[] {
+			   "documentation", "Operation to be executed"
+		   });
+		addAnnotation
+		  (operationRequestParameterEClass,
+		   source,
+		   new String[] {
+			   "documentation", "Operation request parameter object"
 		   });
 	}
 

@@ -10,7 +10,7 @@
  * Contributors:
  *   Data In Motion Consulting - initial implementation
  */
-package org.eclipse.fennec.model.atlas.rest.model;
+package org.eclipse.fennec.model.atlas.validation.model.cocl;
 
 import org.eclipse.emf.common.util.EList;
 
@@ -27,15 +27,15 @@ import org.osgi.annotation.versioning.ProviderType;
  * The following features are supported:
  * </p>
  * <ul>
- *   <li>{@link org.eclipse.fennec.model.atlas.rest.model.Diagnostic#getMessage <em>Message</em>}</li>
- *   <li>{@link org.eclipse.fennec.model.atlas.rest.model.Diagnostic#getSource <em>Source</em>}</li>
- *   <li>{@link org.eclipse.fennec.model.atlas.rest.model.Diagnostic#getType <em>Type</em>}</li>
- *   <li>{@link org.eclipse.fennec.model.atlas.rest.model.Diagnostic#getChildren <em>Children</em>}</li>
- *   <li>{@link org.eclipse.fennec.model.atlas.rest.model.Diagnostic#getExceptionMsg <em>Exception Msg</em>}</li>
- *   <li>{@link org.eclipse.fennec.model.atlas.rest.model.Diagnostic#getData <em>Data</em>}</li>
+ *   <li>{@link org.eclipse.fennec.model.atlas.validation.model.cocl.Diagnostic#getMessage <em>Message</em>}</li>
+ *   <li>{@link org.eclipse.fennec.model.atlas.validation.model.cocl.Diagnostic#getSource <em>Source</em>}</li>
+ *   <li>{@link org.eclipse.fennec.model.atlas.validation.model.cocl.Diagnostic#getType <em>Type</em>}</li>
+ *   <li>{@link org.eclipse.fennec.model.atlas.validation.model.cocl.Diagnostic#getChildren <em>Children</em>}</li>
+ *   <li>{@link org.eclipse.fennec.model.atlas.validation.model.cocl.Diagnostic#getExceptionMsg <em>Exception Msg</em>}</li>
+ *   <li>{@link org.eclipse.fennec.model.atlas.validation.model.cocl.Diagnostic#getData <em>Data</em>}</li>
  * </ul>
  *
- * @see org.eclipse.fennec.model.atlas.rest.model.RestPackage#getDiagnostic()
+ * @see org.eclipse.fennec.model.atlas.validation.model.cocl.COCLPackage#getDiagnostic()
  * @model
  * @generated
  */
@@ -47,14 +47,14 @@ public interface Diagnostic extends EObject {
 	 * <!-- end-user-doc -->
 	 * @return the value of the '<em>Message</em>' attribute.
 	 * @see #setMessage(String)
-	 * @see org.eclipse.fennec.model.atlas.rest.model.RestPackage#getDiagnostic_Message()
+	 * @see org.eclipse.fennec.model.atlas.validation.model.cocl.COCLPackage#getDiagnostic_Message()
 	 * @model
 	 * @generated
 	 */
 	String getMessage();
 
 	/**
-	 * Sets the value of the '{@link org.eclipse.fennec.model.atlas.rest.model.Diagnostic#getMessage <em>Message</em>}' attribute.
+	 * Sets the value of the '{@link org.eclipse.fennec.model.atlas.validation.model.cocl.Diagnostic#getMessage <em>Message</em>}' attribute.
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
 	 * @param value the new value of the '<em>Message</em>' attribute.
@@ -69,14 +69,14 @@ public interface Diagnostic extends EObject {
 	 * <!-- end-user-doc -->
 	 * @return the value of the '<em>Source</em>' attribute.
 	 * @see #setSource(String)
-	 * @see org.eclipse.fennec.model.atlas.rest.model.RestPackage#getDiagnostic_Source()
+	 * @see org.eclipse.fennec.model.atlas.validation.model.cocl.COCLPackage#getDiagnostic_Source()
 	 * @model
 	 * @generated
 	 */
 	String getSource();
 
 	/**
-	 * Sets the value of the '{@link org.eclipse.fennec.model.atlas.rest.model.Diagnostic#getSource <em>Source</em>}' attribute.
+	 * Sets the value of the '{@link org.eclipse.fennec.model.atlas.validation.model.cocl.Diagnostic#getSource <em>Source</em>}' attribute.
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
 	 * @param value the new value of the '<em>Source</em>' attribute.
@@ -87,36 +87,36 @@ public interface Diagnostic extends EObject {
 
 	/**
 	 * Returns the value of the '<em><b>Type</b></em>' attribute.
-	 * The literals are from the enumeration {@link org.eclipse.fennec.model.atlas.rest.model.DiagnosticType}.
+	 * The literals are from the enumeration {@link org.eclipse.fennec.model.atlas.validation.model.cocl.Severity}.
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
 	 * @return the value of the '<em>Type</em>' attribute.
-	 * @see org.eclipse.fennec.model.atlas.rest.model.DiagnosticType
-	 * @see #setType(DiagnosticType)
-	 * @see org.eclipse.fennec.model.atlas.rest.model.RestPackage#getDiagnostic_Type()
+	 * @see org.eclipse.fennec.model.atlas.validation.model.cocl.Severity
+	 * @see #setType(Severity)
+	 * @see org.eclipse.fennec.model.atlas.validation.model.cocl.COCLPackage#getDiagnostic_Type()
 	 * @model
 	 * @generated
 	 */
-	DiagnosticType getType();
+	Severity getType();
 
 	/**
-	 * Sets the value of the '{@link org.eclipse.fennec.model.atlas.rest.model.Diagnostic#getType <em>Type</em>}' attribute.
+	 * Sets the value of the '{@link org.eclipse.fennec.model.atlas.validation.model.cocl.Diagnostic#getType <em>Type</em>}' attribute.
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
 	 * @param value the new value of the '<em>Type</em>' attribute.
-	 * @see org.eclipse.fennec.model.atlas.rest.model.DiagnosticType
+	 * @see org.eclipse.fennec.model.atlas.validation.model.cocl.Severity
 	 * @see #getType()
 	 * @generated
 	 */
-	void setType(DiagnosticType value);
+	void setType(Severity value);
 
 	/**
 	 * Returns the value of the '<em><b>Children</b></em>' containment reference list.
-	 * The list contents are of type {@link org.eclipse.fennec.model.atlas.rest.model.Diagnostic}.
+	 * The list contents are of type {@link org.eclipse.fennec.model.atlas.validation.model.cocl.Diagnostic}.
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
 	 * @return the value of the '<em>Children</em>' containment reference list.
-	 * @see org.eclipse.fennec.model.atlas.rest.model.RestPackage#getDiagnostic_Children()
+	 * @see org.eclipse.fennec.model.atlas.validation.model.cocl.COCLPackage#getDiagnostic_Children()
 	 * @model containment="true"
 	 * @generated
 	 */
@@ -128,14 +128,14 @@ public interface Diagnostic extends EObject {
 	 * <!-- end-user-doc -->
 	 * @return the value of the '<em>Exception Msg</em>' attribute.
 	 * @see #setExceptionMsg(String)
-	 * @see org.eclipse.fennec.model.atlas.rest.model.RestPackage#getDiagnostic_ExceptionMsg()
+	 * @see org.eclipse.fennec.model.atlas.validation.model.cocl.COCLPackage#getDiagnostic_ExceptionMsg()
 	 * @model
 	 * @generated
 	 */
 	String getExceptionMsg();
 
 	/**
-	 * Sets the value of the '{@link org.eclipse.fennec.model.atlas.rest.model.Diagnostic#getExceptionMsg <em>Exception Msg</em>}' attribute.
+	 * Sets the value of the '{@link org.eclipse.fennec.model.atlas.validation.model.cocl.Diagnostic#getExceptionMsg <em>Exception Msg</em>}' attribute.
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
 	 * @param value the new value of the '<em>Exception Msg</em>' attribute.
@@ -150,7 +150,7 @@ public interface Diagnostic extends EObject {
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
 	 * @return the value of the '<em>Data</em>' attribute list.
-	 * @see org.eclipse.fennec.model.atlas.rest.model.RestPackage#getDiagnostic_Data()
+	 * @see org.eclipse.fennec.model.atlas.validation.model.cocl.COCLPackage#getDiagnostic_Data()
 	 * @model
 	 * @generated
 	 */

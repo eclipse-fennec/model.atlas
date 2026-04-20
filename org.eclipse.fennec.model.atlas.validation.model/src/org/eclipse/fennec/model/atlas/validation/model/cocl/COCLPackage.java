@@ -269,6 +269,519 @@ public interface COCLPackage extends org.eclipse.emf.ecore.EPackage {
 	int OCL_CONSTRAINT_SET_OPERATION_COUNT = 0;
 
 	/**
+	 * The meta object id for the '{@link org.eclipse.fennec.model.atlas.validation.model.cocl.impl.ValidationRequestImpl <em>Validation Request</em>}' class.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @see org.eclipse.fennec.model.atlas.validation.model.cocl.impl.ValidationRequestImpl
+	 * @see org.eclipse.fennec.model.atlas.validation.model.cocl.impl.COCLPackageImpl#getValidationRequest()
+	 * @generated
+	 */
+	int VALIDATION_REQUEST = 2;
+
+	/**
+	 * The feature id for the '<em><b>Role</b></em>' attribute.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 * @ordered
+	 */
+	int VALIDATION_REQUEST__ROLE = 0;
+
+	/**
+	 * The feature id for the '<em><b>Validation Objects</b></em>' containment reference list.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 * @ordered
+	 */
+	int VALIDATION_REQUEST__VALIDATION_OBJECTS = 1;
+
+	/**
+	 * The feature id for the '<em><b>Cocl Id</b></em>' attribute.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 * @ordered
+	 */
+	int VALIDATION_REQUEST__COCL_ID = 2;
+
+	/**
+	 * The number of structural features of the '<em>Validation Request</em>' class.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 * @ordered
+	 */
+	int VALIDATION_REQUEST_FEATURE_COUNT = 3;
+
+	/**
+	 * The number of operations of the '<em>Validation Request</em>' class.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 * @ordered
+	 */
+	int VALIDATION_REQUEST_OPERATION_COUNT = 0;
+
+	/**
+	 * The meta object id for the '{@link org.eclipse.fennec.model.atlas.validation.model.cocl.impl.ValidationResponseImpl <em>Validation Response</em>}' class.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @see org.eclipse.fennec.model.atlas.validation.model.cocl.impl.ValidationResponseImpl
+	 * @see org.eclipse.fennec.model.atlas.validation.model.cocl.impl.COCLPackageImpl#getValidationResponse()
+	 * @generated
+	 */
+	int VALIDATION_RESPONSE = 3;
+
+	/**
+	 * The feature id for the '<em><b>Results</b></em>' containment reference list.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 * @ordered
+	 */
+	int VALIDATION_RESPONSE__RESULTS = 0;
+
+	/**
+	 * The feature id for the '<em><b>Role</b></em>' attribute.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 * @ordered
+	 */
+	int VALIDATION_RESPONSE__ROLE = 1;
+
+	/**
+	 * The number of structural features of the '<em>Validation Response</em>' class.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 * @ordered
+	 */
+	int VALIDATION_RESPONSE_FEATURE_COUNT = 2;
+
+	/**
+	 * The number of operations of the '<em>Validation Response</em>' class.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 * @ordered
+	 */
+	int VALIDATION_RESPONSE_OPERATION_COUNT = 0;
+
+	/**
+	 * The meta object id for the '{@link org.eclipse.fennec.model.atlas.validation.model.cocl.impl.ValidationResultImpl <em>Validation Result</em>}' class.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @see org.eclipse.fennec.model.atlas.validation.model.cocl.impl.ValidationResultImpl
+	 * @see org.eclipse.fennec.model.atlas.validation.model.cocl.impl.COCLPackageImpl#getValidationResult()
+	 * @generated
+	 */
+	int VALIDATION_RESULT = 4;
+
+	/**
+	 * The feature id for the '<em><b>Diagnostics</b></em>' containment reference list.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 * @ordered
+	 */
+	int VALIDATION_RESULT__DIAGNOSTICS = 0;
+
+	/**
+	 * The number of structural features of the '<em>Validation Result</em>' class.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 * @ordered
+	 */
+	int VALIDATION_RESULT_FEATURE_COUNT = 1;
+
+	/**
+	 * The number of operations of the '<em>Validation Result</em>' class.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 * @ordered
+	 */
+	int VALIDATION_RESULT_OPERATION_COUNT = 0;
+
+	/**
+	 * The meta object id for the '{@link org.eclipse.fennec.model.atlas.validation.model.cocl.impl.SimpleValidationResultImpl <em>Simple Validation Result</em>}' class.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @see org.eclipse.fennec.model.atlas.validation.model.cocl.impl.SimpleValidationResultImpl
+	 * @see org.eclipse.fennec.model.atlas.validation.model.cocl.impl.COCLPackageImpl#getSimpleValidationResult()
+	 * @generated
+	 */
+	int SIMPLE_VALIDATION_RESULT = 5;
+
+	/**
+	 * The feature id for the '<em><b>Diagnostics</b></em>' containment reference list.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 * @ordered
+	 */
+	int SIMPLE_VALIDATION_RESULT__DIAGNOSTICS = VALIDATION_RESULT__DIAGNOSTICS;
+
+	/**
+	 * The feature id for the '<em><b>Value</b></em>' attribute.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 * @ordered
+	 */
+	int SIMPLE_VALIDATION_RESULT__VALUE = VALIDATION_RESULT_FEATURE_COUNT + 0;
+
+	/**
+	 * The number of structural features of the '<em>Simple Validation Result</em>' class.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 * @ordered
+	 */
+	int SIMPLE_VALIDATION_RESULT_FEATURE_COUNT = VALIDATION_RESULT_FEATURE_COUNT + 1;
+
+	/**
+	 * The number of operations of the '<em>Simple Validation Result</em>' class.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 * @ordered
+	 */
+	int SIMPLE_VALIDATION_RESULT_OPERATION_COUNT = VALIDATION_RESULT_OPERATION_COUNT + 0;
+
+	/**
+	 * The meta object id for the '{@link org.eclipse.fennec.model.atlas.validation.model.cocl.impl.EObjectValidationResultImpl <em>EObject Validation Result</em>}' class.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @see org.eclipse.fennec.model.atlas.validation.model.cocl.impl.EObjectValidationResultImpl
+	 * @see org.eclipse.fennec.model.atlas.validation.model.cocl.impl.COCLPackageImpl#getEObjectValidationResult()
+	 * @generated
+	 */
+	int EOBJECT_VALIDATION_RESULT = 6;
+
+	/**
+	 * The feature id for the '<em><b>Diagnostics</b></em>' containment reference list.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 * @ordered
+	 */
+	int EOBJECT_VALIDATION_RESULT__DIAGNOSTICS = VALIDATION_RESULT__DIAGNOSTICS;
+
+	/**
+	 * The feature id for the '<em><b>Values</b></em>' containment reference list.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 * @ordered
+	 */
+	int EOBJECT_VALIDATION_RESULT__VALUES = VALIDATION_RESULT_FEATURE_COUNT + 0;
+
+	/**
+	 * The number of structural features of the '<em>EObject Validation Result</em>' class.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 * @ordered
+	 */
+	int EOBJECT_VALIDATION_RESULT_FEATURE_COUNT = VALIDATION_RESULT_FEATURE_COUNT + 1;
+
+	/**
+	 * The number of operations of the '<em>EObject Validation Result</em>' class.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 * @ordered
+	 */
+	int EOBJECT_VALIDATION_RESULT_OPERATION_COUNT = VALIDATION_RESULT_OPERATION_COUNT + 0;
+
+	/**
+	 * The meta object id for the '{@link org.eclipse.fennec.model.atlas.validation.model.cocl.impl.DerivedValidationRequestImpl <em>Derived Validation Request</em>}' class.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @see org.eclipse.fennec.model.atlas.validation.model.cocl.impl.DerivedValidationRequestImpl
+	 * @see org.eclipse.fennec.model.atlas.validation.model.cocl.impl.COCLPackageImpl#getDerivedValidationRequest()
+	 * @generated
+	 */
+	int DERIVED_VALIDATION_REQUEST = 7;
+
+	/**
+	 * The feature id for the '<em><b>Role</b></em>' attribute.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 * @ordered
+	 */
+	int DERIVED_VALIDATION_REQUEST__ROLE = VALIDATION_REQUEST__ROLE;
+
+	/**
+	 * The feature id for the '<em><b>Validation Objects</b></em>' containment reference list.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 * @ordered
+	 */
+	int DERIVED_VALIDATION_REQUEST__VALIDATION_OBJECTS = VALIDATION_REQUEST__VALIDATION_OBJECTS;
+
+	/**
+	 * The feature id for the '<em><b>Cocl Id</b></em>' attribute.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 * @ordered
+	 */
+	int DERIVED_VALIDATION_REQUEST__COCL_ID = VALIDATION_REQUEST__COCL_ID;
+
+	/**
+	 * The feature id for the '<em><b>Derived Feature</b></em>' reference list.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 * @ordered
+	 */
+	int DERIVED_VALIDATION_REQUEST__DERIVED_FEATURE = VALIDATION_REQUEST_FEATURE_COUNT + 0;
+
+	/**
+	 * The number of structural features of the '<em>Derived Validation Request</em>' class.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 * @ordered
+	 */
+	int DERIVED_VALIDATION_REQUEST_FEATURE_COUNT = VALIDATION_REQUEST_FEATURE_COUNT + 1;
+
+	/**
+	 * The number of operations of the '<em>Derived Validation Request</em>' class.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 * @ordered
+	 */
+	int DERIVED_VALIDATION_REQUEST_OPERATION_COUNT = VALIDATION_REQUEST_OPERATION_COUNT + 0;
+
+	/**
+	 * The meta object id for the '{@link org.eclipse.fennec.model.atlas.validation.model.cocl.impl.OperationValidationRequestImpl <em>Operation Validation Request</em>}' class.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @see org.eclipse.fennec.model.atlas.validation.model.cocl.impl.OperationValidationRequestImpl
+	 * @see org.eclipse.fennec.model.atlas.validation.model.cocl.impl.COCLPackageImpl#getOperationValidationRequest()
+	 * @generated
+	 */
+	int OPERATION_VALIDATION_REQUEST = 8;
+
+	/**
+	 * The feature id for the '<em><b>Role</b></em>' attribute.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 * @ordered
+	 */
+	int OPERATION_VALIDATION_REQUEST__ROLE = VALIDATION_REQUEST__ROLE;
+
+	/**
+	 * The feature id for the '<em><b>Validation Objects</b></em>' containment reference list.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 * @ordered
+	 */
+	int OPERATION_VALIDATION_REQUEST__VALIDATION_OBJECTS = VALIDATION_REQUEST__VALIDATION_OBJECTS;
+
+	/**
+	 * The feature id for the '<em><b>Cocl Id</b></em>' attribute.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 * @ordered
+	 */
+	int OPERATION_VALIDATION_REQUEST__COCL_ID = VALIDATION_REQUEST__COCL_ID;
+
+	/**
+	 * The feature id for the '<em><b>Operation</b></em>' reference.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 * @ordered
+	 */
+	int OPERATION_VALIDATION_REQUEST__OPERATION = VALIDATION_REQUEST_FEATURE_COUNT + 0;
+
+	/**
+	 * The feature id for the '<em><b>Parameters</b></em>' containment reference list.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 * @ordered
+	 */
+	int OPERATION_VALIDATION_REQUEST__PARAMETERS = VALIDATION_REQUEST_FEATURE_COUNT + 1;
+
+	/**
+	 * The number of structural features of the '<em>Operation Validation Request</em>' class.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 * @ordered
+	 */
+	int OPERATION_VALIDATION_REQUEST_FEATURE_COUNT = VALIDATION_REQUEST_FEATURE_COUNT + 2;
+
+	/**
+	 * The number of operations of the '<em>Operation Validation Request</em>' class.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 * @ordered
+	 */
+	int OPERATION_VALIDATION_REQUEST_OPERATION_COUNT = VALIDATION_REQUEST_OPERATION_COUNT + 0;
+
+	/**
+	 * The meta object id for the '{@link org.eclipse.fennec.model.atlas.validation.model.cocl.impl.OperationRequestParameterImpl <em>Operation Request Parameter</em>}' class.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @see org.eclipse.fennec.model.atlas.validation.model.cocl.impl.OperationRequestParameterImpl
+	 * @see org.eclipse.fennec.model.atlas.validation.model.cocl.impl.COCLPackageImpl#getOperationRequestParameter()
+	 * @generated
+	 */
+	int OPERATION_REQUEST_PARAMETER = 9;
+
+	/**
+	 * The feature id for the '<em><b>Parameter</b></em>' reference.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 * @ordered
+	 */
+	int OPERATION_REQUEST_PARAMETER__PARAMETER = 0;
+
+	/**
+	 * The feature id for the '<em><b>Is Null</b></em>' attribute.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 * @ordered
+	 */
+	int OPERATION_REQUEST_PARAMETER__IS_NULL = 1;
+
+	/**
+	 * The feature id for the '<em><b>Java Value</b></em>' attribute.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 * @ordered
+	 */
+	int OPERATION_REQUEST_PARAMETER__JAVA_VALUE = 2;
+
+	/**
+	 * The feature id for the '<em><b>EValue</b></em>' reference.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 * @ordered
+	 */
+	int OPERATION_REQUEST_PARAMETER__EVALUE = 3;
+
+	/**
+	 * The number of structural features of the '<em>Operation Request Parameter</em>' class.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 * @ordered
+	 */
+	int OPERATION_REQUEST_PARAMETER_FEATURE_COUNT = 4;
+
+	/**
+	 * The number of operations of the '<em>Operation Request Parameter</em>' class.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 * @ordered
+	 */
+	int OPERATION_REQUEST_PARAMETER_OPERATION_COUNT = 0;
+
+	/**
+	 * The meta object id for the '{@link org.eclipse.fennec.model.atlas.validation.model.cocl.impl.DiagnosticImpl <em>Diagnostic</em>}' class.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @see org.eclipse.fennec.model.atlas.validation.model.cocl.impl.DiagnosticImpl
+	 * @see org.eclipse.fennec.model.atlas.validation.model.cocl.impl.COCLPackageImpl#getDiagnostic()
+	 * @generated
+	 */
+	int DIAGNOSTIC = 10;
+
+	/**
+	 * The feature id for the '<em><b>Message</b></em>' attribute.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 * @ordered
+	 */
+	int DIAGNOSTIC__MESSAGE = 0;
+
+	/**
+	 * The feature id for the '<em><b>Source</b></em>' attribute.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 * @ordered
+	 */
+	int DIAGNOSTIC__SOURCE = 1;
+
+	/**
+	 * The feature id for the '<em><b>Type</b></em>' attribute.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 * @ordered
+	 */
+	int DIAGNOSTIC__TYPE = 2;
+
+	/**
+	 * The feature id for the '<em><b>Children</b></em>' containment reference list.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 * @ordered
+	 */
+	int DIAGNOSTIC__CHILDREN = 3;
+
+	/**
+	 * The feature id for the '<em><b>Exception Msg</b></em>' attribute.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 * @ordered
+	 */
+	int DIAGNOSTIC__EXCEPTION_MSG = 4;
+
+	/**
+	 * The feature id for the '<em><b>Data</b></em>' attribute list.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 * @ordered
+	 */
+	int DIAGNOSTIC__DATA = 5;
+
+	/**
+	 * The number of structural features of the '<em>Diagnostic</em>' class.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 * @ordered
+	 */
+	int DIAGNOSTIC_FEATURE_COUNT = 6;
+
+	/**
+	 * The number of operations of the '<em>Diagnostic</em>' class.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 * @ordered
+	 */
+	int DIAGNOSTIC_OPERATION_COUNT = 0;
+
+	/**
 	 * The meta object id for the '{@link org.eclipse.fennec.model.atlas.validation.model.cocl.Severity <em>Severity</em>}' enum.
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
@@ -276,7 +789,7 @@ public interface COCLPackage extends org.eclipse.emf.ecore.EPackage {
 	 * @see org.eclipse.fennec.model.atlas.validation.model.cocl.impl.COCLPackageImpl#getSeverity()
 	 * @generated
 	 */
-	int SEVERITY = 2;
+	int SEVERITY = 11;
 
 	/**
 	 * The meta object id for the '{@link org.eclipse.fennec.model.atlas.validation.model.cocl.OclRole <em>Ocl Role</em>}' enum.
@@ -286,7 +799,7 @@ public interface COCLPackage extends org.eclipse.emf.ecore.EPackage {
 	 * @see org.eclipse.fennec.model.atlas.validation.model.cocl.impl.COCLPackageImpl#getOclRole()
 	 * @generated
 	 */
-	int OCL_ROLE = 3;
+	int OCL_ROLE = 12;
 
 
 	/**
@@ -475,6 +988,327 @@ public interface COCLPackage extends org.eclipse.emf.ecore.EPackage {
 	EAttribute getOclConstraintSet_TargetModelNsURIs();
 
 	/**
+	 * Returns the meta object for class '{@link org.eclipse.fennec.model.atlas.validation.model.cocl.ValidationRequest <em>Validation Request</em>}'.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @return the meta object for class '<em>Validation Request</em>'.
+	 * @see org.eclipse.fennec.model.atlas.validation.model.cocl.ValidationRequest
+	 * @generated
+	 */
+	EClass getValidationRequest();
+
+	/**
+	 * Returns the meta object for the attribute '{@link org.eclipse.fennec.model.atlas.validation.model.cocl.ValidationRequest#getRole <em>Role</em>}'.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @return the meta object for the attribute '<em>Role</em>'.
+	 * @see org.eclipse.fennec.model.atlas.validation.model.cocl.ValidationRequest#getRole()
+	 * @see #getValidationRequest()
+	 * @generated
+	 */
+	EAttribute getValidationRequest_Role();
+
+	/**
+	 * Returns the meta object for the containment reference list '{@link org.eclipse.fennec.model.atlas.validation.model.cocl.ValidationRequest#getValidationObjects <em>Validation Objects</em>}'.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @return the meta object for the containment reference list '<em>Validation Objects</em>'.
+	 * @see org.eclipse.fennec.model.atlas.validation.model.cocl.ValidationRequest#getValidationObjects()
+	 * @see #getValidationRequest()
+	 * @generated
+	 */
+	EReference getValidationRequest_ValidationObjects();
+
+	/**
+	 * Returns the meta object for the attribute '{@link org.eclipse.fennec.model.atlas.validation.model.cocl.ValidationRequest#getCoclId <em>Cocl Id</em>}'.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @return the meta object for the attribute '<em>Cocl Id</em>'.
+	 * @see org.eclipse.fennec.model.atlas.validation.model.cocl.ValidationRequest#getCoclId()
+	 * @see #getValidationRequest()
+	 * @generated
+	 */
+	EAttribute getValidationRequest_CoclId();
+
+	/**
+	 * Returns the meta object for class '{@link org.eclipse.fennec.model.atlas.validation.model.cocl.ValidationResponse <em>Validation Response</em>}'.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @return the meta object for class '<em>Validation Response</em>'.
+	 * @see org.eclipse.fennec.model.atlas.validation.model.cocl.ValidationResponse
+	 * @generated
+	 */
+	EClass getValidationResponse();
+
+	/**
+	 * Returns the meta object for the containment reference list '{@link org.eclipse.fennec.model.atlas.validation.model.cocl.ValidationResponse#getResults <em>Results</em>}'.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @return the meta object for the containment reference list '<em>Results</em>'.
+	 * @see org.eclipse.fennec.model.atlas.validation.model.cocl.ValidationResponse#getResults()
+	 * @see #getValidationResponse()
+	 * @generated
+	 */
+	EReference getValidationResponse_Results();
+
+	/**
+	 * Returns the meta object for the attribute '{@link org.eclipse.fennec.model.atlas.validation.model.cocl.ValidationResponse#getRole <em>Role</em>}'.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @return the meta object for the attribute '<em>Role</em>'.
+	 * @see org.eclipse.fennec.model.atlas.validation.model.cocl.ValidationResponse#getRole()
+	 * @see #getValidationResponse()
+	 * @generated
+	 */
+	EAttribute getValidationResponse_Role();
+
+	/**
+	 * Returns the meta object for class '{@link org.eclipse.fennec.model.atlas.validation.model.cocl.ValidationResult <em>Validation Result</em>}'.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @return the meta object for class '<em>Validation Result</em>'.
+	 * @see org.eclipse.fennec.model.atlas.validation.model.cocl.ValidationResult
+	 * @generated
+	 */
+	EClass getValidationResult();
+
+	/**
+	 * Returns the meta object for the containment reference list '{@link org.eclipse.fennec.model.atlas.validation.model.cocl.ValidationResult#getDiagnostics <em>Diagnostics</em>}'.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @return the meta object for the containment reference list '<em>Diagnostics</em>'.
+	 * @see org.eclipse.fennec.model.atlas.validation.model.cocl.ValidationResult#getDiagnostics()
+	 * @see #getValidationResult()
+	 * @generated
+	 */
+	EReference getValidationResult_Diagnostics();
+
+	/**
+	 * Returns the meta object for class '{@link org.eclipse.fennec.model.atlas.validation.model.cocl.SimpleValidationResult <em>Simple Validation Result</em>}'.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @return the meta object for class '<em>Simple Validation Result</em>'.
+	 * @see org.eclipse.fennec.model.atlas.validation.model.cocl.SimpleValidationResult
+	 * @generated
+	 */
+	EClass getSimpleValidationResult();
+
+	/**
+	 * Returns the meta object for the attribute '{@link org.eclipse.fennec.model.atlas.validation.model.cocl.SimpleValidationResult#getValue <em>Value</em>}'.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @return the meta object for the attribute '<em>Value</em>'.
+	 * @see org.eclipse.fennec.model.atlas.validation.model.cocl.SimpleValidationResult#getValue()
+	 * @see #getSimpleValidationResult()
+	 * @generated
+	 */
+	EAttribute getSimpleValidationResult_Value();
+
+	/**
+	 * Returns the meta object for class '{@link org.eclipse.fennec.model.atlas.validation.model.cocl.EObjectValidationResult <em>EObject Validation Result</em>}'.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @return the meta object for class '<em>EObject Validation Result</em>'.
+	 * @see org.eclipse.fennec.model.atlas.validation.model.cocl.EObjectValidationResult
+	 * @generated
+	 */
+	EClass getEObjectValidationResult();
+
+	/**
+	 * Returns the meta object for the containment reference list '{@link org.eclipse.fennec.model.atlas.validation.model.cocl.EObjectValidationResult#getValues <em>Values</em>}'.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @return the meta object for the containment reference list '<em>Values</em>'.
+	 * @see org.eclipse.fennec.model.atlas.validation.model.cocl.EObjectValidationResult#getValues()
+	 * @see #getEObjectValidationResult()
+	 * @generated
+	 */
+	EReference getEObjectValidationResult_Values();
+
+	/**
+	 * Returns the meta object for class '{@link org.eclipse.fennec.model.atlas.validation.model.cocl.DerivedValidationRequest <em>Derived Validation Request</em>}'.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @return the meta object for class '<em>Derived Validation Request</em>'.
+	 * @see org.eclipse.fennec.model.atlas.validation.model.cocl.DerivedValidationRequest
+	 * @generated
+	 */
+	EClass getDerivedValidationRequest();
+
+	/**
+	 * Returns the meta object for the reference list '{@link org.eclipse.fennec.model.atlas.validation.model.cocl.DerivedValidationRequest#getDerivedFeature <em>Derived Feature</em>}'.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @return the meta object for the reference list '<em>Derived Feature</em>'.
+	 * @see org.eclipse.fennec.model.atlas.validation.model.cocl.DerivedValidationRequest#getDerivedFeature()
+	 * @see #getDerivedValidationRequest()
+	 * @generated
+	 */
+	EReference getDerivedValidationRequest_DerivedFeature();
+
+	/**
+	 * Returns the meta object for class '{@link org.eclipse.fennec.model.atlas.validation.model.cocl.OperationValidationRequest <em>Operation Validation Request</em>}'.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @return the meta object for class '<em>Operation Validation Request</em>'.
+	 * @see org.eclipse.fennec.model.atlas.validation.model.cocl.OperationValidationRequest
+	 * @generated
+	 */
+	EClass getOperationValidationRequest();
+
+	/**
+	 * Returns the meta object for the reference '{@link org.eclipse.fennec.model.atlas.validation.model.cocl.OperationValidationRequest#getOperation <em>Operation</em>}'.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @return the meta object for the reference '<em>Operation</em>'.
+	 * @see org.eclipse.fennec.model.atlas.validation.model.cocl.OperationValidationRequest#getOperation()
+	 * @see #getOperationValidationRequest()
+	 * @generated
+	 */
+	EReference getOperationValidationRequest_Operation();
+
+	/**
+	 * Returns the meta object for the containment reference list '{@link org.eclipse.fennec.model.atlas.validation.model.cocl.OperationValidationRequest#getParameters <em>Parameters</em>}'.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @return the meta object for the containment reference list '<em>Parameters</em>'.
+	 * @see org.eclipse.fennec.model.atlas.validation.model.cocl.OperationValidationRequest#getParameters()
+	 * @see #getOperationValidationRequest()
+	 * @generated
+	 */
+	EReference getOperationValidationRequest_Parameters();
+
+	/**
+	 * Returns the meta object for class '{@link org.eclipse.fennec.model.atlas.validation.model.cocl.OperationRequestParameter <em>Operation Request Parameter</em>}'.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @return the meta object for class '<em>Operation Request Parameter</em>'.
+	 * @see org.eclipse.fennec.model.atlas.validation.model.cocl.OperationRequestParameter
+	 * @generated
+	 */
+	EClass getOperationRequestParameter();
+
+	/**
+	 * Returns the meta object for the reference '{@link org.eclipse.fennec.model.atlas.validation.model.cocl.OperationRequestParameter#getParameter <em>Parameter</em>}'.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @return the meta object for the reference '<em>Parameter</em>'.
+	 * @see org.eclipse.fennec.model.atlas.validation.model.cocl.OperationRequestParameter#getParameter()
+	 * @see #getOperationRequestParameter()
+	 * @generated
+	 */
+	EReference getOperationRequestParameter_Parameter();
+
+	/**
+	 * Returns the meta object for the attribute '{@link org.eclipse.fennec.model.atlas.validation.model.cocl.OperationRequestParameter#isIsNull <em>Is Null</em>}'.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @return the meta object for the attribute '<em>Is Null</em>'.
+	 * @see org.eclipse.fennec.model.atlas.validation.model.cocl.OperationRequestParameter#isIsNull()
+	 * @see #getOperationRequestParameter()
+	 * @generated
+	 */
+	EAttribute getOperationRequestParameter_IsNull();
+
+	/**
+	 * Returns the meta object for the attribute '{@link org.eclipse.fennec.model.atlas.validation.model.cocl.OperationRequestParameter#getJavaValue <em>Java Value</em>}'.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @return the meta object for the attribute '<em>Java Value</em>'.
+	 * @see org.eclipse.fennec.model.atlas.validation.model.cocl.OperationRequestParameter#getJavaValue()
+	 * @see #getOperationRequestParameter()
+	 * @generated
+	 */
+	EAttribute getOperationRequestParameter_JavaValue();
+
+	/**
+	 * Returns the meta object for the reference '{@link org.eclipse.fennec.model.atlas.validation.model.cocl.OperationRequestParameter#getEValue <em>EValue</em>}'.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @return the meta object for the reference '<em>EValue</em>'.
+	 * @see org.eclipse.fennec.model.atlas.validation.model.cocl.OperationRequestParameter#getEValue()
+	 * @see #getOperationRequestParameter()
+	 * @generated
+	 */
+	EReference getOperationRequestParameter_EValue();
+
+	/**
+	 * Returns the meta object for class '{@link org.eclipse.fennec.model.atlas.validation.model.cocl.Diagnostic <em>Diagnostic</em>}'.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @return the meta object for class '<em>Diagnostic</em>'.
+	 * @see org.eclipse.fennec.model.atlas.validation.model.cocl.Diagnostic
+	 * @generated
+	 */
+	EClass getDiagnostic();
+
+	/**
+	 * Returns the meta object for the attribute '{@link org.eclipse.fennec.model.atlas.validation.model.cocl.Diagnostic#getMessage <em>Message</em>}'.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @return the meta object for the attribute '<em>Message</em>'.
+	 * @see org.eclipse.fennec.model.atlas.validation.model.cocl.Diagnostic#getMessage()
+	 * @see #getDiagnostic()
+	 * @generated
+	 */
+	EAttribute getDiagnostic_Message();
+
+	/**
+	 * Returns the meta object for the attribute '{@link org.eclipse.fennec.model.atlas.validation.model.cocl.Diagnostic#getSource <em>Source</em>}'.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @return the meta object for the attribute '<em>Source</em>'.
+	 * @see org.eclipse.fennec.model.atlas.validation.model.cocl.Diagnostic#getSource()
+	 * @see #getDiagnostic()
+	 * @generated
+	 */
+	EAttribute getDiagnostic_Source();
+
+	/**
+	 * Returns the meta object for the attribute '{@link org.eclipse.fennec.model.atlas.validation.model.cocl.Diagnostic#getType <em>Type</em>}'.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @return the meta object for the attribute '<em>Type</em>'.
+	 * @see org.eclipse.fennec.model.atlas.validation.model.cocl.Diagnostic#getType()
+	 * @see #getDiagnostic()
+	 * @generated
+	 */
+	EAttribute getDiagnostic_Type();
+
+	/**
+	 * Returns the meta object for the containment reference list '{@link org.eclipse.fennec.model.atlas.validation.model.cocl.Diagnostic#getChildren <em>Children</em>}'.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @return the meta object for the containment reference list '<em>Children</em>'.
+	 * @see org.eclipse.fennec.model.atlas.validation.model.cocl.Diagnostic#getChildren()
+	 * @see #getDiagnostic()
+	 * @generated
+	 */
+	EReference getDiagnostic_Children();
+
+	/**
+	 * Returns the meta object for the attribute '{@link org.eclipse.fennec.model.atlas.validation.model.cocl.Diagnostic#getExceptionMsg <em>Exception Msg</em>}'.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @return the meta object for the attribute '<em>Exception Msg</em>'.
+	 * @see org.eclipse.fennec.model.atlas.validation.model.cocl.Diagnostic#getExceptionMsg()
+	 * @see #getDiagnostic()
+	 * @generated
+	 */
+	EAttribute getDiagnostic_ExceptionMsg();
+
+	/**
+	 * Returns the meta object for the attribute list '{@link org.eclipse.fennec.model.atlas.validation.model.cocl.Diagnostic#getData <em>Data</em>}'.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @return the meta object for the attribute list '<em>Data</em>'.
+	 * @see org.eclipse.fennec.model.atlas.validation.model.cocl.Diagnostic#getData()
+	 * @see #getDiagnostic()
+	 * @generated
+	 */
+	EAttribute getDiagnostic_Data();
+
+	/**
 	 * Returns the meta object for enum '{@link org.eclipse.fennec.model.atlas.validation.model.cocl.Severity <em>Severity</em>}'.
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
@@ -656,6 +1490,264 @@ public interface COCLPackage extends org.eclipse.emf.ecore.EPackage {
 		 * @generated
 		 */
 		EAttribute OCL_CONSTRAINT_SET__TARGET_MODEL_NS_UR_IS = eINSTANCE.getOclConstraintSet_TargetModelNsURIs();
+
+		/**
+		 * The meta object literal for the '{@link org.eclipse.fennec.model.atlas.validation.model.cocl.impl.ValidationRequestImpl <em>Validation Request</em>}' class.
+		 * <!-- begin-user-doc -->
+		 * <!-- end-user-doc -->
+		 * @see org.eclipse.fennec.model.atlas.validation.model.cocl.impl.ValidationRequestImpl
+		 * @see org.eclipse.fennec.model.atlas.validation.model.cocl.impl.COCLPackageImpl#getValidationRequest()
+		 * @generated
+		 */
+		EClass VALIDATION_REQUEST = eINSTANCE.getValidationRequest();
+
+		/**
+		 * The meta object literal for the '<em><b>Role</b></em>' attribute feature.
+		 * <!-- begin-user-doc -->
+		 * <!-- end-user-doc -->
+		 * @generated
+		 */
+		EAttribute VALIDATION_REQUEST__ROLE = eINSTANCE.getValidationRequest_Role();
+
+		/**
+		 * The meta object literal for the '<em><b>Validation Objects</b></em>' containment reference list feature.
+		 * <!-- begin-user-doc -->
+		 * <!-- end-user-doc -->
+		 * @generated
+		 */
+		EReference VALIDATION_REQUEST__VALIDATION_OBJECTS = eINSTANCE.getValidationRequest_ValidationObjects();
+
+		/**
+		 * The meta object literal for the '<em><b>Cocl Id</b></em>' attribute feature.
+		 * <!-- begin-user-doc -->
+		 * <!-- end-user-doc -->
+		 * @generated
+		 */
+		EAttribute VALIDATION_REQUEST__COCL_ID = eINSTANCE.getValidationRequest_CoclId();
+
+		/**
+		 * The meta object literal for the '{@link org.eclipse.fennec.model.atlas.validation.model.cocl.impl.ValidationResponseImpl <em>Validation Response</em>}' class.
+		 * <!-- begin-user-doc -->
+		 * <!-- end-user-doc -->
+		 * @see org.eclipse.fennec.model.atlas.validation.model.cocl.impl.ValidationResponseImpl
+		 * @see org.eclipse.fennec.model.atlas.validation.model.cocl.impl.COCLPackageImpl#getValidationResponse()
+		 * @generated
+		 */
+		EClass VALIDATION_RESPONSE = eINSTANCE.getValidationResponse();
+
+		/**
+		 * The meta object literal for the '<em><b>Results</b></em>' containment reference list feature.
+		 * <!-- begin-user-doc -->
+		 * <!-- end-user-doc -->
+		 * @generated
+		 */
+		EReference VALIDATION_RESPONSE__RESULTS = eINSTANCE.getValidationResponse_Results();
+
+		/**
+		 * The meta object literal for the '<em><b>Role</b></em>' attribute feature.
+		 * <!-- begin-user-doc -->
+		 * <!-- end-user-doc -->
+		 * @generated
+		 */
+		EAttribute VALIDATION_RESPONSE__ROLE = eINSTANCE.getValidationResponse_Role();
+
+		/**
+		 * The meta object literal for the '{@link org.eclipse.fennec.model.atlas.validation.model.cocl.impl.ValidationResultImpl <em>Validation Result</em>}' class.
+		 * <!-- begin-user-doc -->
+		 * <!-- end-user-doc -->
+		 * @see org.eclipse.fennec.model.atlas.validation.model.cocl.impl.ValidationResultImpl
+		 * @see org.eclipse.fennec.model.atlas.validation.model.cocl.impl.COCLPackageImpl#getValidationResult()
+		 * @generated
+		 */
+		EClass VALIDATION_RESULT = eINSTANCE.getValidationResult();
+
+		/**
+		 * The meta object literal for the '<em><b>Diagnostics</b></em>' containment reference list feature.
+		 * <!-- begin-user-doc -->
+		 * <!-- end-user-doc -->
+		 * @generated
+		 */
+		EReference VALIDATION_RESULT__DIAGNOSTICS = eINSTANCE.getValidationResult_Diagnostics();
+
+		/**
+		 * The meta object literal for the '{@link org.eclipse.fennec.model.atlas.validation.model.cocl.impl.SimpleValidationResultImpl <em>Simple Validation Result</em>}' class.
+		 * <!-- begin-user-doc -->
+		 * <!-- end-user-doc -->
+		 * @see org.eclipse.fennec.model.atlas.validation.model.cocl.impl.SimpleValidationResultImpl
+		 * @see org.eclipse.fennec.model.atlas.validation.model.cocl.impl.COCLPackageImpl#getSimpleValidationResult()
+		 * @generated
+		 */
+		EClass SIMPLE_VALIDATION_RESULT = eINSTANCE.getSimpleValidationResult();
+
+		/**
+		 * The meta object literal for the '<em><b>Value</b></em>' attribute feature.
+		 * <!-- begin-user-doc -->
+		 * <!-- end-user-doc -->
+		 * @generated
+		 */
+		EAttribute SIMPLE_VALIDATION_RESULT__VALUE = eINSTANCE.getSimpleValidationResult_Value();
+
+		/**
+		 * The meta object literal for the '{@link org.eclipse.fennec.model.atlas.validation.model.cocl.impl.EObjectValidationResultImpl <em>EObject Validation Result</em>}' class.
+		 * <!-- begin-user-doc -->
+		 * <!-- end-user-doc -->
+		 * @see org.eclipse.fennec.model.atlas.validation.model.cocl.impl.EObjectValidationResultImpl
+		 * @see org.eclipse.fennec.model.atlas.validation.model.cocl.impl.COCLPackageImpl#getEObjectValidationResult()
+		 * @generated
+		 */
+		EClass EOBJECT_VALIDATION_RESULT = eINSTANCE.getEObjectValidationResult();
+
+		/**
+		 * The meta object literal for the '<em><b>Values</b></em>' containment reference list feature.
+		 * <!-- begin-user-doc -->
+		 * <!-- end-user-doc -->
+		 * @generated
+		 */
+		EReference EOBJECT_VALIDATION_RESULT__VALUES = eINSTANCE.getEObjectValidationResult_Values();
+
+		/**
+		 * The meta object literal for the '{@link org.eclipse.fennec.model.atlas.validation.model.cocl.impl.DerivedValidationRequestImpl <em>Derived Validation Request</em>}' class.
+		 * <!-- begin-user-doc -->
+		 * <!-- end-user-doc -->
+		 * @see org.eclipse.fennec.model.atlas.validation.model.cocl.impl.DerivedValidationRequestImpl
+		 * @see org.eclipse.fennec.model.atlas.validation.model.cocl.impl.COCLPackageImpl#getDerivedValidationRequest()
+		 * @generated
+		 */
+		EClass DERIVED_VALIDATION_REQUEST = eINSTANCE.getDerivedValidationRequest();
+
+		/**
+		 * The meta object literal for the '<em><b>Derived Feature</b></em>' reference list feature.
+		 * <!-- begin-user-doc -->
+		 * <!-- end-user-doc -->
+		 * @generated
+		 */
+		EReference DERIVED_VALIDATION_REQUEST__DERIVED_FEATURE = eINSTANCE.getDerivedValidationRequest_DerivedFeature();
+
+		/**
+		 * The meta object literal for the '{@link org.eclipse.fennec.model.atlas.validation.model.cocl.impl.OperationValidationRequestImpl <em>Operation Validation Request</em>}' class.
+		 * <!-- begin-user-doc -->
+		 * <!-- end-user-doc -->
+		 * @see org.eclipse.fennec.model.atlas.validation.model.cocl.impl.OperationValidationRequestImpl
+		 * @see org.eclipse.fennec.model.atlas.validation.model.cocl.impl.COCLPackageImpl#getOperationValidationRequest()
+		 * @generated
+		 */
+		EClass OPERATION_VALIDATION_REQUEST = eINSTANCE.getOperationValidationRequest();
+
+		/**
+		 * The meta object literal for the '<em><b>Operation</b></em>' reference feature.
+		 * <!-- begin-user-doc -->
+		 * <!-- end-user-doc -->
+		 * @generated
+		 */
+		EReference OPERATION_VALIDATION_REQUEST__OPERATION = eINSTANCE.getOperationValidationRequest_Operation();
+
+		/**
+		 * The meta object literal for the '<em><b>Parameters</b></em>' containment reference list feature.
+		 * <!-- begin-user-doc -->
+		 * <!-- end-user-doc -->
+		 * @generated
+		 */
+		EReference OPERATION_VALIDATION_REQUEST__PARAMETERS = eINSTANCE.getOperationValidationRequest_Parameters();
+
+		/**
+		 * The meta object literal for the '{@link org.eclipse.fennec.model.atlas.validation.model.cocl.impl.OperationRequestParameterImpl <em>Operation Request Parameter</em>}' class.
+		 * <!-- begin-user-doc -->
+		 * <!-- end-user-doc -->
+		 * @see org.eclipse.fennec.model.atlas.validation.model.cocl.impl.OperationRequestParameterImpl
+		 * @see org.eclipse.fennec.model.atlas.validation.model.cocl.impl.COCLPackageImpl#getOperationRequestParameter()
+		 * @generated
+		 */
+		EClass OPERATION_REQUEST_PARAMETER = eINSTANCE.getOperationRequestParameter();
+
+		/**
+		 * The meta object literal for the '<em><b>Parameter</b></em>' reference feature.
+		 * <!-- begin-user-doc -->
+		 * <!-- end-user-doc -->
+		 * @generated
+		 */
+		EReference OPERATION_REQUEST_PARAMETER__PARAMETER = eINSTANCE.getOperationRequestParameter_Parameter();
+
+		/**
+		 * The meta object literal for the '<em><b>Is Null</b></em>' attribute feature.
+		 * <!-- begin-user-doc -->
+		 * <!-- end-user-doc -->
+		 * @generated
+		 */
+		EAttribute OPERATION_REQUEST_PARAMETER__IS_NULL = eINSTANCE.getOperationRequestParameter_IsNull();
+
+		/**
+		 * The meta object literal for the '<em><b>Java Value</b></em>' attribute feature.
+		 * <!-- begin-user-doc -->
+		 * <!-- end-user-doc -->
+		 * @generated
+		 */
+		EAttribute OPERATION_REQUEST_PARAMETER__JAVA_VALUE = eINSTANCE.getOperationRequestParameter_JavaValue();
+
+		/**
+		 * The meta object literal for the '<em><b>EValue</b></em>' reference feature.
+		 * <!-- begin-user-doc -->
+		 * <!-- end-user-doc -->
+		 * @generated
+		 */
+		EReference OPERATION_REQUEST_PARAMETER__EVALUE = eINSTANCE.getOperationRequestParameter_EValue();
+
+		/**
+		 * The meta object literal for the '{@link org.eclipse.fennec.model.atlas.validation.model.cocl.impl.DiagnosticImpl <em>Diagnostic</em>}' class.
+		 * <!-- begin-user-doc -->
+		 * <!-- end-user-doc -->
+		 * @see org.eclipse.fennec.model.atlas.validation.model.cocl.impl.DiagnosticImpl
+		 * @see org.eclipse.fennec.model.atlas.validation.model.cocl.impl.COCLPackageImpl#getDiagnostic()
+		 * @generated
+		 */
+		EClass DIAGNOSTIC = eINSTANCE.getDiagnostic();
+
+		/**
+		 * The meta object literal for the '<em><b>Message</b></em>' attribute feature.
+		 * <!-- begin-user-doc -->
+		 * <!-- end-user-doc -->
+		 * @generated
+		 */
+		EAttribute DIAGNOSTIC__MESSAGE = eINSTANCE.getDiagnostic_Message();
+
+		/**
+		 * The meta object literal for the '<em><b>Source</b></em>' attribute feature.
+		 * <!-- begin-user-doc -->
+		 * <!-- end-user-doc -->
+		 * @generated
+		 */
+		EAttribute DIAGNOSTIC__SOURCE = eINSTANCE.getDiagnostic_Source();
+
+		/**
+		 * The meta object literal for the '<em><b>Type</b></em>' attribute feature.
+		 * <!-- begin-user-doc -->
+		 * <!-- end-user-doc -->
+		 * @generated
+		 */
+		EAttribute DIAGNOSTIC__TYPE = eINSTANCE.getDiagnostic_Type();
+
+		/**
+		 * The meta object literal for the '<em><b>Children</b></em>' containment reference list feature.
+		 * <!-- begin-user-doc -->
+		 * <!-- end-user-doc -->
+		 * @generated
+		 */
+		EReference DIAGNOSTIC__CHILDREN = eINSTANCE.getDiagnostic_Children();
+
+		/**
+		 * The meta object literal for the '<em><b>Exception Msg</b></em>' attribute feature.
+		 * <!-- begin-user-doc -->
+		 * <!-- end-user-doc -->
+		 * @generated
+		 */
+		EAttribute DIAGNOSTIC__EXCEPTION_MSG = eINSTANCE.getDiagnostic_ExceptionMsg();
+
+		/**
+		 * The meta object literal for the '<em><b>Data</b></em>' attribute list feature.
+		 * <!-- begin-user-doc -->
+		 * <!-- end-user-doc -->
+		 * @generated
+		 */
+		EAttribute DIAGNOSTIC__DATA = eINSTANCE.getDiagnostic_Data();
 
 		/**
 		 * The meta object literal for the '{@link org.eclipse.fennec.model.atlas.validation.model.cocl.Severity <em>Severity</em>}' enum.

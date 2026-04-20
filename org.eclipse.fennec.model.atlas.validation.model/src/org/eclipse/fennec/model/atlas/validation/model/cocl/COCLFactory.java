@@ -53,6 +53,69 @@ public interface COCLFactory extends EFactory {
 	OclConstraintSet createOclConstraintSet();
 
 	/**
+	 * Returns a new object of class '<em>Validation Response</em>'.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @return a new object of class '<em>Validation Response</em>'.
+	 * @generated
+	 */
+	ValidationResponse createValidationResponse();
+
+	/**
+	 * Returns a new object of class '<em>Simple Validation Result</em>'.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @return a new object of class '<em>Simple Validation Result</em>'.
+	 * @generated
+	 */
+	SimpleValidationResult createSimpleValidationResult();
+
+	/**
+	 * Returns a new object of class '<em>EObject Validation Result</em>'.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @return a new object of class '<em>EObject Validation Result</em>'.
+	 * @generated
+	 */
+	EObjectValidationResult createEObjectValidationResult();
+
+	/**
+	 * Returns a new object of class '<em>Derived Validation Request</em>'.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @return a new object of class '<em>Derived Validation Request</em>'.
+	 * @generated
+	 */
+	DerivedValidationRequest createDerivedValidationRequest();
+
+	/**
+	 * Returns a new object of class '<em>Operation Validation Request</em>'.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @return a new object of class '<em>Operation Validation Request</em>'.
+	 * @generated
+	 */
+	OperationValidationRequest createOperationValidationRequest();
+
+	/**
+	 * Returns a new object of class '<em>Operation Request Parameter</em>'.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @return a new object of class '<em>Operation Request Parameter</em>'.
+	 * @generated
+	 */
+	OperationRequestParameter createOperationRequestParameter();
+
+	/**
+	 * Returns a new object of class '<em>Diagnostic</em>'.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @return a new object of class '<em>Diagnostic</em>'.
+	 * @generated
+	 */
+	Diagnostic createDiagnostic();
+
+	/**
 	 * Returns the package supported by this factory.
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->

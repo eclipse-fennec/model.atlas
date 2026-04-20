@@ -86,6 +86,42 @@ public class COCLAdapterFactory extends AdapterFactoryImpl {
 				return createOclConstraintSetAdapter();
 			}
 			@Override
+			public Adapter caseValidationRequest(ValidationRequest object) {
+				return createValidationRequestAdapter();
+			}
+			@Override
+			public Adapter caseValidationResponse(ValidationResponse object) {
+				return createValidationResponseAdapter();
+			}
+			@Override
+			public Adapter caseValidationResult(ValidationResult object) {
+				return createValidationResultAdapter();
+			}
+			@Override
+			public Adapter caseSimpleValidationResult(SimpleValidationResult object) {
+				return createSimpleValidationResultAdapter();
+			}
+			@Override
+			public Adapter caseEObjectValidationResult(EObjectValidationResult object) {
+				return createEObjectValidationResultAdapter();
+			}
+			@Override
+			public Adapter caseDerivedValidationRequest(DerivedValidationRequest object) {
+				return createDerivedValidationRequestAdapter();
+			}
+			@Override
+			public Adapter caseOperationValidationRequest(OperationValidationRequest object) {
+				return createOperationValidationRequestAdapter();
+			}
+			@Override
+			public Adapter caseOperationRequestParameter(OperationRequestParameter object) {
+				return createOperationRequestParameterAdapter();
+			}
+			@Override
+			public Adapter caseDiagnostic(Diagnostic object) {
+				return createDiagnosticAdapter();
+			}
+			@Override
 			public Adapter defaultCase(EObject object) {
 				return createEObjectAdapter();
 			}
@@ -130,6 +166,132 @@ public class COCLAdapterFactory extends AdapterFactoryImpl {
 	 * @generated
 	 */
 	public Adapter createOclConstraintSetAdapter() {
+		return null;
+	}
+
+	/**
+	 * Creates a new adapter for an object of class '{@link org.eclipse.fennec.model.atlas.validation.model.cocl.ValidationRequest <em>Validation Request</em>}'.
+	 * <!-- begin-user-doc -->
+	 * This default implementation returns null so that we can easily ignore cases;
+	 * it's useful to ignore a case when inheritance will catch all the cases anyway.
+	 * <!-- end-user-doc -->
+	 * @return the new adapter.
+	 * @see org.eclipse.fennec.model.atlas.validation.model.cocl.ValidationRequest
+	 * @generated
+	 */
+	public Adapter createValidationRequestAdapter() {
+		return null;
+	}
+
+	/**
+	 * Creates a new adapter for an object of class '{@link org.eclipse.fennec.model.atlas.validation.model.cocl.ValidationResponse <em>Validation Response</em>}'.
+	 * <!-- begin-user-doc -->
+	 * This default implementation returns null so that we can easily ignore cases;
+	 * it's useful to ignore a case when inheritance will catch all the cases anyway.
+	 * <!-- end-user-doc -->
+	 * @return the new adapter.
+	 * @see org.eclipse.fennec.model.atlas.validation.model.cocl.ValidationResponse
+	 * @generated
+	 */
+	public Adapter createValidationResponseAdapter() {
+		return null;
+	}
+
+	/**
+	 * Creates a new adapter for an object of class '{@link org.eclipse.fennec.model.atlas.validation.model.cocl.ValidationResult <em>Validation Result</em>}'.
+	 * <!-- begin-user-doc -->
+	 * This default implementation returns null so that we can easily ignore cases;
+	 * it's useful to ignore a case when inheritance will catch all the cases anyway.
+	 * <!-- end-user-doc -->
+	 * @return the new adapter.
+	 * @see org.eclipse.fennec.model.atlas.validation.model.cocl.ValidationResult
+	 * @generated
+	 */
+	public Adapter createValidationResultAdapter() {
+		return null;
+	}
+
+	/**
+	 * Creates a new adapter for an object of class '{@link org.eclipse.fennec.model.atlas.validation.model.cocl.SimpleValidationResult <em>Simple Validation Result</em>}'.
+	 * <!-- begin-user-doc -->
+	 * This default implementation returns null so that we can easily ignore cases;
+	 * it's useful to ignore a case when inheritance will catch all the cases anyway.
+	 * <!-- end-user-doc -->
+	 * @return the new adapter.
+	 * @see org.eclipse.fennec.model.atlas.validation.model.cocl.SimpleValidationResult
+	 * @generated
+	 */
+	public Adapter createSimpleValidationResultAdapter() {
+		return null;
+	}
+
+	/**
+	 * Creates a new adapter for an object of class '{@link org.eclipse.fennec.model.atlas.validation.model.cocl.EObjectValidationResult <em>EObject Validation Result</em>}'.
+	 * <!-- begin-user-doc -->
+	 * This default implementation returns null so that we can easily ignore cases;
+	 * it's useful to ignore a case when inheritance will catch all the cases anyway.
+	 * <!-- end-user-doc -->
+	 * @return the new adapter.
+	 * @see org.eclipse.fennec.model.atlas.validation.model.cocl.EObjectValidationResult
+	 * @generated
+	 */
+	public Adapter createEObjectValidationResultAdapter() {
+		return null;
+	}
+
+	/**
+	 * Creates a new adapter for an object of class '{@link org.eclipse.fennec.model.atlas.validation.model.cocl.DerivedValidationRequest <em>Derived Validation Request</em>}'.
+	 * <!-- begin-user-doc -->
+	 * This default implementation returns null so that we can easily ignore cases;
+	 * it's useful to ignore a case when inheritance will catch all the cases anyway.
+	 * <!-- end-user-doc -->
+	 * @return the new adapter.
+	 * @see org.eclipse.fennec.model.atlas.validation.model.cocl.DerivedValidationRequest
+	 * @generated
+	 */
+	public Adapter createDerivedValidationRequestAdapter() {
+		return null;
+	}
+
+	/**
+	 * Creates a new adapter for an object of class '{@link org.eclipse.fennec.model.atlas.validation.model.cocl.OperationValidationRequest <em>Operation Validation Request</em>}'.
+	 * <!-- begin-user-doc -->
+	 * This default implementation returns null so that we can easily ignore cases;
+	 * it's useful to ignore a case when inheritance will catch all the cases anyway.
+	 * <!-- end-user-doc -->
+	 * @return the new adapter.
+	 * @see org.eclipse.fennec.model.atlas.validation.model.cocl.OperationValidationRequest
+	 * @generated
+	 */
+	public Adapter createOperationValidationRequestAdapter() {
+		return null;
+	}
+
+	/**
+	 * Creates a new adapter for an object of class '{@link org.eclipse.fennec.model.atlas.validation.model.cocl.OperationRequestParameter <em>Operation Request Parameter</em>}'.
+	 * <!-- begin-user-doc -->
+	 * This default implementation returns null so that we can easily ignore cases;
+	 * it's useful to ignore a case when inheritance will catch all the cases anyway.
+	 * <!-- end-user-doc -->
+	 * @return the new adapter.
+	 * @see org.eclipse.fennec.model.atlas.validation.model.cocl.OperationRequestParameter
+	 * @generated
+	 */
+	public Adapter createOperationRequestParameterAdapter() {
+		return null;
+	}
+
+	/**
+	 * Creates a new adapter for an object of class '{@link org.eclipse.fennec.model.atlas.validation.model.cocl.Diagnostic <em>Diagnostic</em>}'.
+	 * <!-- begin-user-doc -->
+	 * This default implementation returns null so that we can easily ignore cases;
+	 * it's useful to ignore a case when inheritance will catch all the cases anyway.
+	 * <!-- end-user-doc -->
+	 * @return the new adapter.
+	 * @see org.eclipse.fennec.model.atlas.validation.model.cocl.Diagnostic
+	 * @generated
+	 */
+	public Adapter createDiagnosticAdapter() {
 		return null;
 	}
 

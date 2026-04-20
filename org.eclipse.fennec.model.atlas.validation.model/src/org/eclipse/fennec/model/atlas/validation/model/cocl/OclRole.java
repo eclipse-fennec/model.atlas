@@ -71,7 +71,20 @@ public enum OclRole implements Enumerator {
 	 * @generated
 	 * @ordered
 	 */
-	REFERENCE_FILTER(2, "REFERENCE_FILTER", "REFERENCE_FILTER");
+	REFERENCE_FILTER(2, "REFERENCE_FILTER", "REFERENCE_FILTER"),
+
+	/**
+	 * The '<em><b>OPERATION</b></em>' literal object.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * <!-- begin-model-doc -->
+	 * OCL to execute an operation.
+	 * <!-- end-model-doc -->
+	 * @see #OPERATION_VALUE
+	 * @generated
+	 * @ordered
+	 */
+	OPERATION(3, "OPERATION", "OPERATION");
 
 	/**
 	 * The '<em><b>VALIDATION</b></em>' literal value.
@@ -116,6 +129,20 @@ public enum OclRole implements Enumerator {
 	public static final int REFERENCE_FILTER_VALUE = 2;
 
 	/**
+	 * The '<em><b>OPERATION</b></em>' literal value.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * <!-- begin-model-doc -->
+	 * OCL to execute an operation.
+	 * <!-- end-model-doc -->
+	 * @see #OPERATION
+	 * @model
+	 * @generated
+	 * @ordered
+	 */
+	public static final int OPERATION_VALUE = 3;
+
+	/**
 	 * An array of all the '<em><b>Ocl Role</b></em>' enumerators.
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
@@ -126,6 +153,7 @@ public enum OclRole implements Enumerator {
 			VALIDATION,
 			DERIVED,
 			REFERENCE_FILTER,
+			OPERATION,
 		};
 
 	/**
@@ -185,6 +213,7 @@ public enum OclRole implements Enumerator {
 			case VALIDATION_VALUE: return VALIDATION;
 			case DERIVED_VALUE: return DERIVED;
 			case REFERENCE_FILTER_VALUE: return REFERENCE_FILTER;
+			case OPERATION_VALUE: return OPERATION;
 		}
 		return null;
 	}

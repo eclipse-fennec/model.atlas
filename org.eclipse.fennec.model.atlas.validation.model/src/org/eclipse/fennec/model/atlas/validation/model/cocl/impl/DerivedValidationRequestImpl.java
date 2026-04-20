@@ -10,55 +10,50 @@
  * Contributors:
  *   Data In Motion Consulting - initial implementation
  */
-package org.eclipse.fennec.model.atlas.rest.model.impl;
+package org.eclipse.fennec.model.atlas.validation.model.cocl.impl;
 
 import java.util.Collection;
-
-import org.eclipse.emf.common.notify.NotificationChain;
 
 import org.eclipse.emf.common.util.EList;
 
 import org.eclipse.emf.ecore.EClass;
-import org.eclipse.emf.ecore.EObject;
-import org.eclipse.emf.ecore.InternalEObject;
+import org.eclipse.emf.ecore.EStructuralFeature;
 
-import org.eclipse.emf.ecore.impl.MinimalEObjectImpl;
+import org.eclipse.emf.ecore.util.EObjectResolvingEList;
 
-import org.eclipse.emf.ecore.util.EObjectContainmentEList;
-import org.eclipse.emf.ecore.util.InternalEList;
-
-import org.eclipse.fennec.model.atlas.rest.model.RestPackage;
+import org.eclipse.fennec.model.atlas.validation.model.cocl.COCLPackage;
+import org.eclipse.fennec.model.atlas.validation.model.cocl.DerivedValidationRequest;
 
 /**
  * <!-- begin-user-doc -->
- * An implementation of the model object '<em><b>Container</b></em>'.
+ * An implementation of the model object '<em><b>Derived Validation Request</b></em>'.
  * <!-- end-user-doc -->
  * <p>
  * The following features are implemented:
  * </p>
  * <ul>
- *   <li>{@link org.eclipse.fennec.model.atlas.rest.model.impl.ContainerImpl#getElements <em>Elements</em>}</li>
+ *   <li>{@link org.eclipse.fennec.model.atlas.validation.model.cocl.impl.DerivedValidationRequestImpl#getDerivedFeature <em>Derived Feature</em>}</li>
  * </ul>
  *
  * @generated
  */
-public class ContainerImpl extends MinimalEObjectImpl.Container implements org.eclipse.fennec.model.atlas.rest.model.Container {
+public class DerivedValidationRequestImpl extends ValidationRequestImpl implements DerivedValidationRequest {
 	/**
-	 * The cached value of the '{@link #getElements() <em>Elements</em>}' containment reference list.
+	 * The cached value of the '{@link #getDerivedFeature() <em>Derived Feature</em>}' reference list.
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
-	 * @see #getElements()
+	 * @see #getDerivedFeature()
 	 * @generated
 	 * @ordered
 	 */
-	protected EList<EObject> elements;
+	protected EList<EStructuralFeature> derivedFeature;
 
 	/**
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
 	 * @generated
 	 */
-	protected ContainerImpl() {
+	protected DerivedValidationRequestImpl() {
 		super();
 	}
 
@@ -69,7 +64,7 @@ public class ContainerImpl extends MinimalEObjectImpl.Container implements org.e
 	 */
 	@Override
 	protected EClass eStaticClass() {
-		return RestPackage.Literals.CONTAINER;
+		return COCLPackage.Literals.DERIVED_VALIDATION_REQUEST;
 	}
 
 	/**
@@ -78,25 +73,11 @@ public class ContainerImpl extends MinimalEObjectImpl.Container implements org.e
 	 * @generated
 	 */
 	@Override
-	public EList<EObject> getElements() {
-		if (elements == null) {
-			elements = new EObjectContainmentEList<EObject>(EObject.class, this, RestPackage.CONTAINER__ELEMENTS);
+	public EList<EStructuralFeature> getDerivedFeature() {
+		if (derivedFeature == null) {
+			derivedFeature = new EObjectResolvingEList<EStructuralFeature>(EStructuralFeature.class, this, COCLPackage.DERIVED_VALIDATION_REQUEST__DERIVED_FEATURE);
 		}
-		return elements;
-	}
-
-	/**
-	 * <!-- begin-user-doc -->
-	 * <!-- end-user-doc -->
-	 * @generated
-	 */
-	@Override
-	public NotificationChain eInverseRemove(InternalEObject otherEnd, int featureID, NotificationChain msgs) {
-		switch (featureID) {
-			case RestPackage.CONTAINER__ELEMENTS:
-				return ((InternalEList<?>)getElements()).basicRemove(otherEnd, msgs);
-		}
-		return super.eInverseRemove(otherEnd, featureID, msgs);
+		return derivedFeature;
 	}
 
 	/**
@@ -107,8 +88,8 @@ public class ContainerImpl extends MinimalEObjectImpl.Container implements org.e
 	@Override
 	public Object eGet(int featureID, boolean resolve, boolean coreType) {
 		switch (featureID) {
-			case RestPackage.CONTAINER__ELEMENTS:
-				return getElements();
+			case COCLPackage.DERIVED_VALIDATION_REQUEST__DERIVED_FEATURE:
+				return getDerivedFeature();
 		}
 		return super.eGet(featureID, resolve, coreType);
 	}
@@ -122,9 +103,9 @@ public class ContainerImpl extends MinimalEObjectImpl.Container implements org.e
 	@Override
 	public void eSet(int featureID, Object newValue) {
 		switch (featureID) {
-			case RestPackage.CONTAINER__ELEMENTS:
-				getElements().clear();
-				getElements().addAll((Collection<? extends EObject>)newValue);
+			case COCLPackage.DERIVED_VALIDATION_REQUEST__DERIVED_FEATURE:
+				getDerivedFeature().clear();
+				getDerivedFeature().addAll((Collection<? extends EStructuralFeature>)newValue);
 				return;
 		}
 		super.eSet(featureID, newValue);
@@ -138,8 +119,8 @@ public class ContainerImpl extends MinimalEObjectImpl.Container implements org.e
 	@Override
 	public void eUnset(int featureID) {
 		switch (featureID) {
-			case RestPackage.CONTAINER__ELEMENTS:
-				getElements().clear();
+			case COCLPackage.DERIVED_VALIDATION_REQUEST__DERIVED_FEATURE:
+				getDerivedFeature().clear();
 				return;
 		}
 		super.eUnset(featureID);
@@ -153,10 +134,10 @@ public class ContainerImpl extends MinimalEObjectImpl.Container implements org.e
 	@Override
 	public boolean eIsSet(int featureID) {
 		switch (featureID) {
-			case RestPackage.CONTAINER__ELEMENTS:
-				return elements != null && !elements.isEmpty();
+			case COCLPackage.DERIVED_VALIDATION_REQUEST__DERIVED_FEATURE:
+				return derivedFeature != null && !derivedFeature.isEmpty();
 		}
 		return super.eIsSet(featureID);
 	}
 
-} //ContainerImpl
+} //DerivedValidationRequestImpl

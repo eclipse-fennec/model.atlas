@@ -88,6 +88,64 @@ public class COCLSwitch<T> extends Switch<T> {
 				if (result == null) result = defaultCase(theEObject);
 				return result;
 			}
+			case COCLPackage.VALIDATION_REQUEST: {
+				ValidationRequest validationRequest = (ValidationRequest)theEObject;
+				T result = caseValidationRequest(validationRequest);
+				if (result == null) result = defaultCase(theEObject);
+				return result;
+			}
+			case COCLPackage.VALIDATION_RESPONSE: {
+				ValidationResponse validationResponse = (ValidationResponse)theEObject;
+				T result = caseValidationResponse(validationResponse);
+				if (result == null) result = defaultCase(theEObject);
+				return result;
+			}
+			case COCLPackage.VALIDATION_RESULT: {
+				ValidationResult validationResult = (ValidationResult)theEObject;
+				T result = caseValidationResult(validationResult);
+				if (result == null) result = defaultCase(theEObject);
+				return result;
+			}
+			case COCLPackage.SIMPLE_VALIDATION_RESULT: {
+				SimpleValidationResult simpleValidationResult = (SimpleValidationResult)theEObject;
+				T result = caseSimpleValidationResult(simpleValidationResult);
+				if (result == null) result = caseValidationResult(simpleValidationResult);
+				if (result == null) result = defaultCase(theEObject);
+				return result;
+			}
+			case COCLPackage.EOBJECT_VALIDATION_RESULT: {
+				EObjectValidationResult eObjectValidationResult = (EObjectValidationResult)theEObject;
+				T result = caseEObjectValidationResult(eObjectValidationResult);
+				if (result == null) result = caseValidationResult(eObjectValidationResult);
+				if (result == null) result = defaultCase(theEObject);
+				return result;
+			}
+			case COCLPackage.DERIVED_VALIDATION_REQUEST: {
+				DerivedValidationRequest derivedValidationRequest = (DerivedValidationRequest)theEObject;
+				T result = caseDerivedValidationRequest(derivedValidationRequest);
+				if (result == null) result = caseValidationRequest(derivedValidationRequest);
+				if (result == null) result = defaultCase(theEObject);
+				return result;
+			}
+			case COCLPackage.OPERATION_VALIDATION_REQUEST: {
+				OperationValidationRequest operationValidationRequest = (OperationValidationRequest)theEObject;
+				T result = caseOperationValidationRequest(operationValidationRequest);
+				if (result == null) result = caseValidationRequest(operationValidationRequest);
+				if (result == null) result = defaultCase(theEObject);
+				return result;
+			}
+			case COCLPackage.OPERATION_REQUEST_PARAMETER: {
+				OperationRequestParameter operationRequestParameter = (OperationRequestParameter)theEObject;
+				T result = caseOperationRequestParameter(operationRequestParameter);
+				if (result == null) result = defaultCase(theEObject);
+				return result;
+			}
+			case COCLPackage.DIAGNOSTIC: {
+				Diagnostic diagnostic = (Diagnostic)theEObject;
+				T result = caseDiagnostic(diagnostic);
+				if (result == null) result = defaultCase(theEObject);
+				return result;
+			}
 			default: return defaultCase(theEObject);
 		}
 	}
@@ -119,6 +177,141 @@ public class COCLSwitch<T> extends Switch<T> {
 	 * @generated
 	 */
 	public T caseOclConstraintSet(OclConstraintSet object) {
+		return null;
+	}
+
+	/**
+	 * Returns the result of interpreting the object as an instance of '<em>Validation Request</em>'.
+	 * <!-- begin-user-doc -->
+	 * This implementation returns null;
+	 * returning a non-null result will terminate the switch.
+	 * <!-- end-user-doc -->
+	 * @param object the target of the switch.
+	 * @return the result of interpreting the object as an instance of '<em>Validation Request</em>'.
+	 * @see #doSwitch(org.eclipse.emf.ecore.EObject) doSwitch(EObject)
+	 * @generated
+	 */
+	public T caseValidationRequest(ValidationRequest object) {
+		return null;
+	}
+
+	/**
+	 * Returns the result of interpreting the object as an instance of '<em>Validation Response</em>'.
+	 * <!-- begin-user-doc -->
+	 * This implementation returns null;
+	 * returning a non-null result will terminate the switch.
+	 * <!-- end-user-doc -->
+	 * @param object the target of the switch.
+	 * @return the result of interpreting the object as an instance of '<em>Validation Response</em>'.
+	 * @see #doSwitch(org.eclipse.emf.ecore.EObject) doSwitch(EObject)
+	 * @generated
+	 */
+	public T caseValidationResponse(ValidationResponse object) {
+		return null;
+	}
+
+	/**
+	 * Returns the result of interpreting the object as an instance of '<em>Validation Result</em>'.
+	 * <!-- begin-user-doc -->
+	 * This implementation returns null;
+	 * returning a non-null result will terminate the switch.
+	 * <!-- end-user-doc -->
+	 * @param object the target of the switch.
+	 * @return the result of interpreting the object as an instance of '<em>Validation Result</em>'.
+	 * @see #doSwitch(org.eclipse.emf.ecore.EObject) doSwitch(EObject)
+	 * @generated
+	 */
+	public T caseValidationResult(ValidationResult object) {
+		return null;
+	}
+
+	/**
+	 * Returns the result of interpreting the object as an instance of '<em>Simple Validation Result</em>'.
+	 * <!-- begin-user-doc -->
+	 * This implementation returns null;
+	 * returning a non-null result will terminate the switch.
+	 * <!-- end-user-doc -->
+	 * @param object the target of the switch.
+	 * @return the result of interpreting the object as an instance of '<em>Simple Validation Result</em>'.
+	 * @see #doSwitch(org.eclipse.emf.ecore.EObject) doSwitch(EObject)
+	 * @generated
+	 */
+	public T caseSimpleValidationResult(SimpleValidationResult object) {
+		return null;
+	}
+
+	/**
+	 * Returns the result of interpreting the object as an instance of '<em>EObject Validation Result</em>'.
+	 * <!-- begin-user-doc -->
+	 * This implementation returns null;
+	 * returning a non-null result will terminate the switch.
+	 * <!-- end-user-doc -->
+	 * @param object the target of the switch.
+	 * @return the result of interpreting the object as an instance of '<em>EObject Validation Result</em>'.
+	 * @see #doSwitch(org.eclipse.emf.ecore.EObject) doSwitch(EObject)
+	 * @generated
+	 */
+	public T caseEObjectValidationResult(EObjectValidationResult object) {
+		return null;
+	}
+
+	/**
+	 * Returns the result of interpreting the object as an instance of '<em>Derived Validation Request</em>'.
+	 * <!-- begin-user-doc -->
+	 * This implementation returns null;
+	 * returning a non-null result will terminate the switch.
+	 * <!-- end-user-doc -->
+	 * @param object the target of the switch.
+	 * @return the result of interpreting the object as an instance of '<em>Derived Validation Request</em>'.
+	 * @see #doSwitch(org.eclipse.emf.ecore.EObject) doSwitch(EObject)
+	 * @generated
+	 */
+	public T caseDerivedValidationRequest(DerivedValidationRequest object) {
+		return null;
+	}
+
+	/**
+	 * Returns the result of interpreting the object as an instance of '<em>Operation Validation Request</em>'.
+	 * <!-- begin-user-doc -->
+	 * This implementation returns null;
+	 * returning a non-null result will terminate the switch.
+	 * <!-- end-user-doc -->
+	 * @param object the target of the switch.
+	 * @return the result of interpreting the object as an instance of '<em>Operation Validation Request</em>'.
+	 * @see #doSwitch(org.eclipse.emf.ecore.EObject) doSwitch(EObject)
+	 * @generated
+	 */
+	public T caseOperationValidationRequest(OperationValidationRequest object) {
+		return null;
+	}
+
+	/**
+	 * Returns the result of interpreting the object as an instance of '<em>Operation Request Parameter</em>'.
+	 * <!-- begin-user-doc -->
+	 * This implementation returns null;
+	 * returning a non-null result will terminate the switch.
+	 * <!-- end-user-doc -->
+	 * @param object the target of the switch.
+	 * @return the result of interpreting the object as an instance of '<em>Operation Request Parameter</em>'.
+	 * @see #doSwitch(org.eclipse.emf.ecore.EObject) doSwitch(EObject)
+	 * @generated
+	 */
+	public T caseOperationRequestParameter(OperationRequestParameter object) {
+		return null;
+	}
+
+	/**
+	 * Returns the result of interpreting the object as an instance of '<em>Diagnostic</em>'.
+	 * <!-- begin-user-doc -->
+	 * This implementation returns null;
+	 * returning a non-null result will terminate the switch.
+	 * <!-- end-user-doc -->
+	 * @param object the target of the switch.
+	 * @return the result of interpreting the object as an instance of '<em>Diagnostic</em>'.
+	 * @see #doSwitch(org.eclipse.emf.ecore.EObject) doSwitch(EObject)
+	 * @generated
+	 */
+	public T caseDiagnostic(Diagnostic object) {
 		return null;
 	}
 

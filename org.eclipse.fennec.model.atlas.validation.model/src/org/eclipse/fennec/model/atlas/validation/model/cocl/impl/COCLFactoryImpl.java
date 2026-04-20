@@ -69,6 +69,13 @@ public class COCLFactoryImpl extends EFactoryImpl implements COCLFactory {
 		switch (eClass.getClassifierID()) {
 			case COCLPackage.OCL_CONSTRAINT: return createOclConstraint();
 			case COCLPackage.OCL_CONSTRAINT_SET: return createOclConstraintSet();
+			case COCLPackage.VALIDATION_RESPONSE: return createValidationResponse();
+			case COCLPackage.SIMPLE_VALIDATION_RESULT: return createSimpleValidationResult();
+			case COCLPackage.EOBJECT_VALIDATION_RESULT: return createEObjectValidationResult();
+			case COCLPackage.DERIVED_VALIDATION_REQUEST: return createDerivedValidationRequest();
+			case COCLPackage.OPERATION_VALIDATION_REQUEST: return createOperationValidationRequest();
+			case COCLPackage.OPERATION_REQUEST_PARAMETER: return createOperationRequestParameter();
+			case COCLPackage.DIAGNOSTIC: return createDiagnostic();
 			default:
 				throw new IllegalArgumentException("The class '" + eClass.getName() + "' is not a valid classifier");
 		}
@@ -128,6 +135,83 @@ public class COCLFactoryImpl extends EFactoryImpl implements COCLFactory {
 	public OclConstraintSet createOclConstraintSet() {
 		OclConstraintSetImpl oclConstraintSet = new OclConstraintSetImpl();
 		return oclConstraintSet;
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
+	public ValidationResponse createValidationResponse() {
+		ValidationResponseImpl validationResponse = new ValidationResponseImpl();
+		return validationResponse;
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
+	public SimpleValidationResult createSimpleValidationResult() {
+		SimpleValidationResultImpl simpleValidationResult = new SimpleValidationResultImpl();
+		return simpleValidationResult;
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
+	public EObjectValidationResult createEObjectValidationResult() {
+		EObjectValidationResultImpl eObjectValidationResult = new EObjectValidationResultImpl();
+		return eObjectValidationResult;
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
+	public DerivedValidationRequest createDerivedValidationRequest() {
+		DerivedValidationRequestImpl derivedValidationRequest = new DerivedValidationRequestImpl();
+		return derivedValidationRequest;
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
+	public OperationValidationRequest createOperationValidationRequest() {
+		OperationValidationRequestImpl operationValidationRequest = new OperationValidationRequestImpl();
+		return operationValidationRequest;
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
+	public OperationRequestParameter createOperationRequestParameter() {
+		OperationRequestParameterImpl operationRequestParameter = new OperationRequestParameterImpl();
+		return operationRequestParameter;
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
+	public Diagnostic createDiagnostic() {
+		DiagnosticImpl diagnostic = new DiagnosticImpl();
+		return diagnostic;
 	}
 
 	/**
