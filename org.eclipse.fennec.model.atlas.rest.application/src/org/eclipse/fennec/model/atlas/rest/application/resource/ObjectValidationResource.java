@@ -158,7 +158,7 @@ public class ObjectValidationResource {
             if(!ValidationHelper.canEvaluateEObject(oclConstraintSet, eObject)) {
             	return Response.status(Response.Status.BAD_REQUEST).entity(String.format("OCLConstraintSet %s cannot handle EObject", oclId)).build();
             }
-			List<OclConstraint> constraints = ValidationHelper.filter(oclConstraintSet, c -> OclRole.VALIDATION.equals(c.getRole()));
+			List<OclConstraint> constraints = ValidationHelper.filter(oclConstraintSet, c -> c.isActive() && OclRole.VALIDATION.equals(c.getRole()));
 			
 			List<org.eclipse.fennec.model.atlas.validation.model.cocl.Diagnostic> diagnostics = new LinkedList<>();
 			for(OclConstraint constraint : constraints) {
