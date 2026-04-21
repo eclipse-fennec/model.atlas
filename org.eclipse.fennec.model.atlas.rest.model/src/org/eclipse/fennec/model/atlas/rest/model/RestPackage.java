@@ -15,7 +15,6 @@ package org.eclipse.fennec.model.atlas.rest.model;
 
 import org.eclipse.emf.ecore.EAttribute;
 import org.eclipse.emf.ecore.EClass;
-import org.eclipse.emf.ecore.EEnum;
 import org.eclipse.emf.ecore.EReference;
 
 import org.eclipse.fennec.emf.osgi.annotation.provide.EPackage;
@@ -350,88 +349,6 @@ public interface RestPackage extends org.eclipse.emf.ecore.EPackage {
 	int SCOPE_LIST_RESPONSE_OPERATION_COUNT = 0;
 
 	/**
-	 * The meta object id for the '{@link org.eclipse.fennec.model.atlas.rest.model.impl.DiagnosticImpl <em>Diagnostic</em>}' class.
-	 * <!-- begin-user-doc -->
-	 * <!-- end-user-doc -->
-	 * @see org.eclipse.fennec.model.atlas.rest.model.impl.DiagnosticImpl
-	 * @see org.eclipse.fennec.model.atlas.rest.model.impl.RestPackageImpl#getDiagnostic()
-	 * @generated
-	 */
-	int DIAGNOSTIC = 5;
-
-	/**
-	 * The feature id for the '<em><b>Message</b></em>' attribute.
-	 * <!-- begin-user-doc -->
-	 * <!-- end-user-doc -->
-	 * @generated
-	 * @ordered
-	 */
-	int DIAGNOSTIC__MESSAGE = 0;
-
-	/**
-	 * The feature id for the '<em><b>Source</b></em>' attribute.
-	 * <!-- begin-user-doc -->
-	 * <!-- end-user-doc -->
-	 * @generated
-	 * @ordered
-	 */
-	int DIAGNOSTIC__SOURCE = 1;
-
-	/**
-	 * The feature id for the '<em><b>Type</b></em>' attribute.
-	 * <!-- begin-user-doc -->
-	 * <!-- end-user-doc -->
-	 * @generated
-	 * @ordered
-	 */
-	int DIAGNOSTIC__TYPE = 2;
-
-	/**
-	 * The feature id for the '<em><b>Children</b></em>' containment reference list.
-	 * <!-- begin-user-doc -->
-	 * <!-- end-user-doc -->
-	 * @generated
-	 * @ordered
-	 */
-	int DIAGNOSTIC__CHILDREN = 3;
-
-	/**
-	 * The feature id for the '<em><b>Exception Msg</b></em>' attribute.
-	 * <!-- begin-user-doc -->
-	 * <!-- end-user-doc -->
-	 * @generated
-	 * @ordered
-	 */
-	int DIAGNOSTIC__EXCEPTION_MSG = 4;
-
-	/**
-	 * The feature id for the '<em><b>Data</b></em>' attribute list.
-	 * <!-- begin-user-doc -->
-	 * <!-- end-user-doc -->
-	 * @generated
-	 * @ordered
-	 */
-	int DIAGNOSTIC__DATA = 5;
-
-	/**
-	 * The number of structural features of the '<em>Diagnostic</em>' class.
-	 * <!-- begin-user-doc -->
-	 * <!-- end-user-doc -->
-	 * @generated
-	 * @ordered
-	 */
-	int DIAGNOSTIC_FEATURE_COUNT = 6;
-
-	/**
-	 * The number of operations of the '<em>Diagnostic</em>' class.
-	 * <!-- begin-user-doc -->
-	 * <!-- end-user-doc -->
-	 * @generated
-	 * @ordered
-	 */
-	int DIAGNOSTIC_OPERATION_COUNT = 0;
-
-	/**
 	 * The meta object id for the '{@link org.eclipse.fennec.model.atlas.rest.model.impl.ContainerImpl <em>Container</em>}' class.
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
@@ -439,7 +356,7 @@ public interface RestPackage extends org.eclipse.emf.ecore.EPackage {
 	 * @see org.eclipse.fennec.model.atlas.rest.model.impl.RestPackageImpl#getContainer()
 	 * @generated
 	 */
-	int CONTAINER = 6;
+	int CONTAINER = 5;
 
 	/**
 	 * The feature id for the '<em><b>Elements</b></em>' containment reference list.
@@ -467,16 +384,6 @@ public interface RestPackage extends org.eclipse.emf.ecore.EPackage {
 	 * @ordered
 	 */
 	int CONTAINER_OPERATION_COUNT = 0;
-
-	/**
-	 * The meta object id for the '{@link org.eclipse.fennec.model.atlas.rest.model.DiagnosticType <em>Diagnostic Type</em>}' enum.
-	 * <!-- begin-user-doc -->
-	 * <!-- end-user-doc -->
-	 * @see org.eclipse.fennec.model.atlas.rest.model.DiagnosticType
-	 * @see org.eclipse.fennec.model.atlas.rest.model.impl.RestPackageImpl#getDiagnosticType()
-	 * @generated
-	 */
-	int DIAGNOSTIC_TYPE = 7;
 
 
 	/**
@@ -695,82 +602,6 @@ public interface RestPackage extends org.eclipse.emf.ecore.EPackage {
 	EReference getScopeListResponse_Scopes();
 
 	/**
-	 * Returns the meta object for class '{@link org.eclipse.fennec.model.atlas.rest.model.Diagnostic <em>Diagnostic</em>}'.
-	 * <!-- begin-user-doc -->
-	 * <!-- end-user-doc -->
-	 * @return the meta object for class '<em>Diagnostic</em>'.
-	 * @see org.eclipse.fennec.model.atlas.rest.model.Diagnostic
-	 * @generated
-	 */
-	EClass getDiagnostic();
-
-	/**
-	 * Returns the meta object for the attribute '{@link org.eclipse.fennec.model.atlas.rest.model.Diagnostic#getMessage <em>Message</em>}'.
-	 * <!-- begin-user-doc -->
-	 * <!-- end-user-doc -->
-	 * @return the meta object for the attribute '<em>Message</em>'.
-	 * @see org.eclipse.fennec.model.atlas.rest.model.Diagnostic#getMessage()
-	 * @see #getDiagnostic()
-	 * @generated
-	 */
-	EAttribute getDiagnostic_Message();
-
-	/**
-	 * Returns the meta object for the attribute '{@link org.eclipse.fennec.model.atlas.rest.model.Diagnostic#getSource <em>Source</em>}'.
-	 * <!-- begin-user-doc -->
-	 * <!-- end-user-doc -->
-	 * @return the meta object for the attribute '<em>Source</em>'.
-	 * @see org.eclipse.fennec.model.atlas.rest.model.Diagnostic#getSource()
-	 * @see #getDiagnostic()
-	 * @generated
-	 */
-	EAttribute getDiagnostic_Source();
-
-	/**
-	 * Returns the meta object for the attribute '{@link org.eclipse.fennec.model.atlas.rest.model.Diagnostic#getType <em>Type</em>}'.
-	 * <!-- begin-user-doc -->
-	 * <!-- end-user-doc -->
-	 * @return the meta object for the attribute '<em>Type</em>'.
-	 * @see org.eclipse.fennec.model.atlas.rest.model.Diagnostic#getType()
-	 * @see #getDiagnostic()
-	 * @generated
-	 */
-	EAttribute getDiagnostic_Type();
-
-	/**
-	 * Returns the meta object for the containment reference list '{@link org.eclipse.fennec.model.atlas.rest.model.Diagnostic#getChildren <em>Children</em>}'.
-	 * <!-- begin-user-doc -->
-	 * <!-- end-user-doc -->
-	 * @return the meta object for the containment reference list '<em>Children</em>'.
-	 * @see org.eclipse.fennec.model.atlas.rest.model.Diagnostic#getChildren()
-	 * @see #getDiagnostic()
-	 * @generated
-	 */
-	EReference getDiagnostic_Children();
-
-	/**
-	 * Returns the meta object for the attribute '{@link org.eclipse.fennec.model.atlas.rest.model.Diagnostic#getExceptionMsg <em>Exception Msg</em>}'.
-	 * <!-- begin-user-doc -->
-	 * <!-- end-user-doc -->
-	 * @return the meta object for the attribute '<em>Exception Msg</em>'.
-	 * @see org.eclipse.fennec.model.atlas.rest.model.Diagnostic#getExceptionMsg()
-	 * @see #getDiagnostic()
-	 * @generated
-	 */
-	EAttribute getDiagnostic_ExceptionMsg();
-
-	/**
-	 * Returns the meta object for the attribute list '{@link org.eclipse.fennec.model.atlas.rest.model.Diagnostic#getData <em>Data</em>}'.
-	 * <!-- begin-user-doc -->
-	 * <!-- end-user-doc -->
-	 * @return the meta object for the attribute list '<em>Data</em>'.
-	 * @see org.eclipse.fennec.model.atlas.rest.model.Diagnostic#getData()
-	 * @see #getDiagnostic()
-	 * @generated
-	 */
-	EAttribute getDiagnostic_Data();
-
-	/**
 	 * Returns the meta object for class '{@link org.eclipse.fennec.model.atlas.rest.model.Container <em>Container</em>}'.
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
@@ -790,16 +621,6 @@ public interface RestPackage extends org.eclipse.emf.ecore.EPackage {
 	 * @generated
 	 */
 	EReference getContainer_Elements();
-
-	/**
-	 * Returns the meta object for enum '{@link org.eclipse.fennec.model.atlas.rest.model.DiagnosticType <em>Diagnostic Type</em>}'.
-	 * <!-- begin-user-doc -->
-	 * <!-- end-user-doc -->
-	 * @return the meta object for enum '<em>Diagnostic Type</em>'.
-	 * @see org.eclipse.fennec.model.atlas.rest.model.DiagnosticType
-	 * @generated
-	 */
-	EEnum getDiagnosticType();
 
 	/**
 	 * Returns the factory that creates the instances of the model.
@@ -995,64 +816,6 @@ public interface RestPackage extends org.eclipse.emf.ecore.EPackage {
 		EReference SCOPE_LIST_RESPONSE__SCOPES = eINSTANCE.getScopeListResponse_Scopes();
 
 		/**
-		 * The meta object literal for the '{@link org.eclipse.fennec.model.atlas.rest.model.impl.DiagnosticImpl <em>Diagnostic</em>}' class.
-		 * <!-- begin-user-doc -->
-		 * <!-- end-user-doc -->
-		 * @see org.eclipse.fennec.model.atlas.rest.model.impl.DiagnosticImpl
-		 * @see org.eclipse.fennec.model.atlas.rest.model.impl.RestPackageImpl#getDiagnostic()
-		 * @generated
-		 */
-		EClass DIAGNOSTIC = eINSTANCE.getDiagnostic();
-
-		/**
-		 * The meta object literal for the '<em><b>Message</b></em>' attribute feature.
-		 * <!-- begin-user-doc -->
-		 * <!-- end-user-doc -->
-		 * @generated
-		 */
-		EAttribute DIAGNOSTIC__MESSAGE = eINSTANCE.getDiagnostic_Message();
-
-		/**
-		 * The meta object literal for the '<em><b>Source</b></em>' attribute feature.
-		 * <!-- begin-user-doc -->
-		 * <!-- end-user-doc -->
-		 * @generated
-		 */
-		EAttribute DIAGNOSTIC__SOURCE = eINSTANCE.getDiagnostic_Source();
-
-		/**
-		 * The meta object literal for the '<em><b>Type</b></em>' attribute feature.
-		 * <!-- begin-user-doc -->
-		 * <!-- end-user-doc -->
-		 * @generated
-		 */
-		EAttribute DIAGNOSTIC__TYPE = eINSTANCE.getDiagnostic_Type();
-
-		/**
-		 * The meta object literal for the '<em><b>Children</b></em>' containment reference list feature.
-		 * <!-- begin-user-doc -->
-		 * <!-- end-user-doc -->
-		 * @generated
-		 */
-		EReference DIAGNOSTIC__CHILDREN = eINSTANCE.getDiagnostic_Children();
-
-		/**
-		 * The meta object literal for the '<em><b>Exception Msg</b></em>' attribute feature.
-		 * <!-- begin-user-doc -->
-		 * <!-- end-user-doc -->
-		 * @generated
-		 */
-		EAttribute DIAGNOSTIC__EXCEPTION_MSG = eINSTANCE.getDiagnostic_ExceptionMsg();
-
-		/**
-		 * The meta object literal for the '<em><b>Data</b></em>' attribute list feature.
-		 * <!-- begin-user-doc -->
-		 * <!-- end-user-doc -->
-		 * @generated
-		 */
-		EAttribute DIAGNOSTIC__DATA = eINSTANCE.getDiagnostic_Data();
-
-		/**
 		 * The meta object literal for the '{@link org.eclipse.fennec.model.atlas.rest.model.impl.ContainerImpl <em>Container</em>}' class.
 		 * <!-- begin-user-doc -->
 		 * <!-- end-user-doc -->
@@ -1069,16 +832,6 @@ public interface RestPackage extends org.eclipse.emf.ecore.EPackage {
 		 * @generated
 		 */
 		EReference CONTAINER__ELEMENTS = eINSTANCE.getContainer_Elements();
-
-		/**
-		 * The meta object literal for the '{@link org.eclipse.fennec.model.atlas.rest.model.DiagnosticType <em>Diagnostic Type</em>}' enum.
-		 * <!-- begin-user-doc -->
-		 * <!-- end-user-doc -->
-		 * @see org.eclipse.fennec.model.atlas.rest.model.DiagnosticType
-		 * @see org.eclipse.fennec.model.atlas.rest.model.impl.RestPackageImpl#getDiagnosticType()
-		 * @generated
-		 */
-		EEnum DIAGNOSTIC_TYPE = eINSTANCE.getDiagnosticType();
 
 	}
 

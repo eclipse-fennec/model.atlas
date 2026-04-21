@@ -13,7 +13,6 @@
 package org.eclipse.fennec.model.atlas.rest.model.impl;
 
 import org.eclipse.emf.ecore.EClass;
-import org.eclipse.emf.ecore.EDataType;
 import org.eclipse.emf.ecore.EObject;
 import org.eclipse.emf.ecore.EPackage;
 
@@ -72,40 +71,9 @@ public class RestFactoryImpl extends EFactoryImpl implements RestFactory {
 			case RestPackage.ERROR_RESPONSE: return createErrorResponse();
 			case RestPackage.STAGE_TRANSITION_REQUEST: return createStageTransitionRequest();
 			case RestPackage.SCOPE_LIST_RESPONSE: return createScopeListResponse();
-			case RestPackage.DIAGNOSTIC: return createDiagnostic();
 			case RestPackage.CONTAINER: return createContainer();
 			default:
 				throw new IllegalArgumentException("The class '" + eClass.getName() + "' is not a valid classifier");
-		}
-	}
-
-	/**
-	 * <!-- begin-user-doc -->
-	 * <!-- end-user-doc -->
-	 * @generated
-	 */
-	@Override
-	public Object createFromString(EDataType eDataType, String initialValue) {
-		switch (eDataType.getClassifierID()) {
-			case RestPackage.DIAGNOSTIC_TYPE:
-				return createDiagnosticTypeFromString(eDataType, initialValue);
-			default:
-				throw new IllegalArgumentException("The datatype '" + eDataType.getName() + "' is not a valid classifier");
-		}
-	}
-
-	/**
-	 * <!-- begin-user-doc -->
-	 * <!-- end-user-doc -->
-	 * @generated
-	 */
-	@Override
-	public String convertToString(EDataType eDataType, Object instanceValue) {
-		switch (eDataType.getClassifierID()) {
-			case RestPackage.DIAGNOSTIC_TYPE:
-				return convertDiagnosticTypeToString(eDataType, instanceValue);
-			default:
-				throw new IllegalArgumentException("The datatype '" + eDataType.getName() + "' is not a valid classifier");
 		}
 	}
 
@@ -170,40 +138,9 @@ public class RestFactoryImpl extends EFactoryImpl implements RestFactory {
 	 * @generated
 	 */
 	@Override
-	public Diagnostic createDiagnostic() {
-		DiagnosticImpl diagnostic = new DiagnosticImpl();
-		return diagnostic;
-	}
-
-	/**
-	 * <!-- begin-user-doc -->
-	 * <!-- end-user-doc -->
-	 * @generated
-	 */
-	@Override
 	public org.eclipse.fennec.model.atlas.rest.model.Container createContainer() {
 		ContainerImpl container = new ContainerImpl();
 		return container;
-	}
-
-	/**
-	 * <!-- begin-user-doc -->
-	 * <!-- end-user-doc -->
-	 * @generated
-	 */
-	public DiagnosticType createDiagnosticTypeFromString(EDataType eDataType, String initialValue) {
-		DiagnosticType result = DiagnosticType.get(initialValue);
-		if (result == null) throw new IllegalArgumentException("The value '" + initialValue + "' is not a valid enumerator of '" + eDataType.getName() + "'");
-		return result;
-	}
-
-	/**
-	 * <!-- begin-user-doc -->
-	 * <!-- end-user-doc -->
-	 * @generated
-	 */
-	public String convertDiagnosticTypeToString(EDataType eDataType, Object instanceValue) {
-		return instanceValue == null ? null : instanceValue.toString();
 	}
 
 	/**

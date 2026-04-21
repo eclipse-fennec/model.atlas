@@ -80,15 +80,6 @@ public interface RestFactory extends EFactory {
 	ScopeListResponse createScopeListResponse();
 
 	/**
-	 * Returns a new object of class '<em>Diagnostic</em>'.
-	 * <!-- begin-user-doc -->
-	 * <!-- end-user-doc -->
-	 * @return a new object of class '<em>Diagnostic</em>'.
-	 * @generated
-	 */
-	Diagnostic createDiagnostic();
-
-	/**
 	 * Returns a new object of class '<em>Container</em>'.
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
