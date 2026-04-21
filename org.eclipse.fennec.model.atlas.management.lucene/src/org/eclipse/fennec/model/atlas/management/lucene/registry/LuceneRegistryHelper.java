@@ -655,7 +655,7 @@ public class LuceneRegistryHelper extends AbstractRegistryHelper {
             // Set of fields that use StringField (exact match)
             Set<String> exactMatchFields = Set.of(FIELD_UPLOAD_USER, FIELD_REVIEW_USER, FIELD_LAST_CHANGE_USER,
                     FIELD_CONTENT_HASH, FIELD_GENERATION_TRIGGER_FINGERPRINT, FIELD_GOVERNANCE_DOCUMENTATION_ID,
-                    FIELD_STATUS, FIELD_OBJECT_REF, FIELD_OBJECT_METADATA_ID, FIELD_STAGE, FIELD_SCOPE);
+                    FIELD_STATUS, FIELD_OBJECT_REF, FIELD_OBJECT_METADATA_ID, FIELD_STAGE, FIELD_SCOPE, FIELD_REGISTRY);
 
             // Set of analyzed user fields for wildcard/fuzzy searches
             Set<String> analyzedUserFields = Set.of(FIELD_UPLOAD_USER_TEXT, FIELD_REVIEW_USER_TEXT,
