@@ -2,8 +2,8 @@
 	org.osgi.service.component.annotations;version=latest,\
 	org.eclipse.fennec.model.atlas.datagen;version=snapshot,\
 	org.eclipse.fennec.model.atlas.datagen.model;version=snapshot,\
-	org.eclipse.fennec.model.atlas.workflow,\
-	org.eclipse.fennec.model.atlas.management
+	org.eclipse.fennec.model.atlas.workflow;version=snapshot,\
+	org.eclipse.fennec.model.atlas.management;version=snapshot
 
 -library: enableJakartaREST,\
 	enableEMF
