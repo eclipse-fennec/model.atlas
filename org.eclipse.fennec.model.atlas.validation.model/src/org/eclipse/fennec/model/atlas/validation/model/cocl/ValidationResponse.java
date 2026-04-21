@@ -33,6 +33,7 @@ import org.osgi.annotation.versioning.ProviderType;
  * <ul>
  *   <li>{@link org.eclipse.fennec.model.atlas.validation.model.cocl.ValidationResponse#getResults <em>Results</em>}</li>
  *   <li>{@link org.eclipse.fennec.model.atlas.validation.model.cocl.ValidationResponse#getRole <em>Role</em>}</li>
+ *   <li>{@link org.eclipse.fennec.model.atlas.validation.model.cocl.ValidationResponse#getDiagnostics <em>Diagnostics</em>}</li>
  * </ul>
  *
  * @see org.eclipse.fennec.model.atlas.validation.model.cocl.COCLPackage#getValidationResponse()
@@ -80,5 +81,20 @@ public interface ValidationResponse extends EObject {
 	 * @generated
 	 */
 	void setRole(OclRole value);
+
+	/**
+	 * Returns the value of the '<em><b>Diagnostics</b></em>' containment reference list.
+	 * The list contents are of type {@link org.eclipse.fennec.model.atlas.validation.model.cocl.Diagnostic}.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * <!-- begin-model-doc -->
+	 * List of diagnostics to communicate
+	 * <!-- end-model-doc -->
+	 * @return the value of the '<em>Diagnostics</em>' containment reference list.
+	 * @see org.eclipse.fennec.model.atlas.validation.model.cocl.COCLPackage#getValidationResponse_Diagnostics()
+	 * @model containment="true"
+	 * @generated
+	 */
+	EList<Diagnostic> getDiagnostics();
 
 } // ValidationResponse

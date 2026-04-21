@@ -87,7 +87,7 @@ public interface ValidationRequest extends EObject {
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
 	 * <!-- begin-model-doc -->
-	 * The id of the ocol file
+	 * The id of the ocol object, which is usually the coc constraint set name
 	 * <!-- end-model-doc -->
 	 * @return the value of the '<em>Cocl Id</em>' attribute.
 	 * @see #setCoclId(String)

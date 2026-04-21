@@ -444,6 +444,16 @@ public class COCLPackageImpl extends EPackageImpl implements COCLPackage {
 	 * @generated
 	 */
 	@Override
+	public EReference getValidationResponse_Diagnostics() {
+		return (EReference)validationResponseEClass.getEStructuralFeatures().get(2);
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
 	public EClass getValidationResult() {
 		return validationResultEClass;
 	}
@@ -744,6 +754,7 @@ public class COCLPackageImpl extends EPackageImpl implements COCLPackage {
 		validationResponseEClass = createEClass(VALIDATION_RESPONSE);
 		createEReference(validationResponseEClass, VALIDATION_RESPONSE__RESULTS);
 		createEAttribute(validationResponseEClass, VALIDATION_RESPONSE__ROLE);
+		createEReference(validationResponseEClass, VALIDATION_RESPONSE__DIAGNOSTICS);
 
 		validationResultEClass = createEClass(VALIDATION_RESULT);
 		createEReference(validationResultEClass, VALIDATION_RESULT__DIAGNOSTICS);
@@ -845,6 +856,7 @@ public class COCLPackageImpl extends EPackageImpl implements COCLPackage {
 		initEClass(validationResponseEClass, ValidationResponse.class, "ValidationResponse", !IS_ABSTRACT, !IS_INTERFACE, IS_GENERATED_INSTANCE_CLASS);
 		initEReference(getValidationResponse_Results(), this.getValidationResult(), null, "results", null, 0, -1, ValidationResponse.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, IS_COMPOSITE, !IS_RESOLVE_PROXIES, !IS_UNSETTABLE, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
 		initEAttribute(getValidationResponse_Role(), this.getOclRole(), "role", null, 0, 1, ValidationResponse.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_UNSETTABLE, !IS_ID, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
+		initEReference(getValidationResponse_Diagnostics(), this.getDiagnostic(), null, "diagnostics", null, 0, -1, ValidationResponse.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, IS_COMPOSITE, !IS_RESOLVE_PROXIES, !IS_UNSETTABLE, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
 
 		initEClass(validationResultEClass, ValidationResult.class, "ValidationResult", IS_ABSTRACT, !IS_INTERFACE, IS_GENERATED_INSTANCE_CLASS);
 		initEReference(getValidationResult_Diagnostics(), this.getDiagnostic(), null, "diagnostics", null, 0, -1, ValidationResult.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, IS_COMPOSITE, !IS_RESOLVE_PROXIES, !IS_UNSETTABLE, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
@@ -853,7 +865,7 @@ public class COCLPackageImpl extends EPackageImpl implements COCLPackage {
 		initEAttribute(getSimpleValidationResult_Value(), ecorePackage.getEJavaObject(), "value", null, 0, 1, SimpleValidationResult.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_UNSETTABLE, !IS_ID, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
 
 		initEClass(eObjectValidationResultEClass, EObjectValidationResult.class, "EObjectValidationResult", !IS_ABSTRACT, !IS_INTERFACE, IS_GENERATED_INSTANCE_CLASS);
-		initEReference(getEObjectValidationResult_Values(), ecorePackage.getEObject(), null, "values", null, 0, -1, EObjectValidationResult.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, IS_COMPOSITE, !IS_RESOLVE_PROXIES, !IS_UNSETTABLE, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
+		initEReference(getEObjectValidationResult_Values(), this.getValidationResult(), null, "values", null, 0, -1, EObjectValidationResult.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, IS_COMPOSITE, !IS_RESOLVE_PROXIES, !IS_UNSETTABLE, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
 
 		initEClass(derivedValidationRequestEClass, DerivedValidationRequest.class, "DerivedValidationRequest", !IS_ABSTRACT, !IS_INTERFACE, IS_GENERATED_INSTANCE_CLASS);
 		initEReference(getDerivedValidationRequest_DerivedFeature(), theEcorePackage.getEStructuralFeature(), null, "derivedFeature", null, 1, -1, DerivedValidationRequest.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_COMPOSITE, IS_RESOLVE_PROXIES, !IS_UNSETTABLE, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
@@ -866,7 +878,7 @@ public class COCLPackageImpl extends EPackageImpl implements COCLPackage {
 		initEReference(getOperationRequestParameter_Parameter(), theEcorePackage.getEParameter(), null, "parameter", null, 1, 1, OperationRequestParameter.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_COMPOSITE, IS_RESOLVE_PROXIES, !IS_UNSETTABLE, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
 		initEAttribute(getOperationRequestParameter_IsNull(), ecorePackage.getEBoolean(), "isNull", null, 0, 1, OperationRequestParameter.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_UNSETTABLE, !IS_ID, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
 		initEAttribute(getOperationRequestParameter_JavaValue(), ecorePackage.getEJavaObject(), "javaValue", null, 0, 1, OperationRequestParameter.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_UNSETTABLE, !IS_ID, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
-		initEReference(getOperationRequestParameter_EValue(), ecorePackage.getEObject(), null, "eValue", null, 0, 1, OperationRequestParameter.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_COMPOSITE, IS_RESOLVE_PROXIES, !IS_UNSETTABLE, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
+		initEReference(getOperationRequestParameter_EValue(), ecorePackage.getEObject(), null, "eValue", null, 0, 1, OperationRequestParameter.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, IS_COMPOSITE, !IS_RESOLVE_PROXIES, !IS_UNSETTABLE, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
 
 		initEClass(diagnosticEClass, Diagnostic.class, "Diagnostic", !IS_ABSTRACT, !IS_INTERFACE, IS_GENERATED_INSTANCE_CLASS);
 		initEAttribute(getDiagnostic_Message(), ecorePackage.getEString(), "message", null, 0, 1, Diagnostic.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_UNSETTABLE, !IS_ID, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
@@ -1102,7 +1114,7 @@ public class COCLPackageImpl extends EPackageImpl implements COCLPackage {
 		  (getValidationRequest_CoclId(),
 		   source,
 		   new String[] {
-			   "documentation", "The id of the ocol file"
+			   "documentation", "The id of the ocol object, which is usually the coc constraint set name"
 		   });
 		addAnnotation
 		  (validationResponseEClass,
@@ -1115,6 +1127,12 @@ public class COCLPackageImpl extends EPackageImpl implements COCLPackage {
 		   source,
 		   new String[] {
 			   "documentation", "The resulting objects"
+		   });
+		addAnnotation
+		  (getValidationResponse_Diagnostics(),
+		   source,
+		   new String[] {
+			   "documentation", "List of diagnostics to communicate"
 		   });
 		addAnnotation
 		  (validationResultEClass,

@@ -29,6 +29,7 @@ import org.eclipse.emf.ecore.util.EObjectContainmentEList;
 import org.eclipse.emf.ecore.util.InternalEList;
 
 import org.eclipse.fennec.model.atlas.validation.model.cocl.COCLPackage;
+import org.eclipse.fennec.model.atlas.validation.model.cocl.Diagnostic;
 import org.eclipse.fennec.model.atlas.validation.model.cocl.OclRole;
 import org.eclipse.fennec.model.atlas.validation.model.cocl.ValidationResponse;
 import org.eclipse.fennec.model.atlas.validation.model.cocl.ValidationResult;
@@ -43,6 +44,7 @@ import org.eclipse.fennec.model.atlas.validation.model.cocl.ValidationResult;
  * <ul>
  *   <li>{@link org.eclipse.fennec.model.atlas.validation.model.cocl.impl.ValidationResponseImpl#getResults <em>Results</em>}</li>
  *   <li>{@link org.eclipse.fennec.model.atlas.validation.model.cocl.impl.ValidationResponseImpl#getRole <em>Role</em>}</li>
+ *   <li>{@link org.eclipse.fennec.model.atlas.validation.model.cocl.impl.ValidationResponseImpl#getDiagnostics <em>Diagnostics</em>}</li>
  * </ul>
  *
  * @generated
@@ -77,6 +79,16 @@ public class ValidationResponseImpl extends MinimalEObjectImpl.Container impleme
 	 * @ordered
 	 */
 	protected OclRole role = ROLE_EDEFAULT;
+
+	/**
+	 * The cached value of the '{@link #getDiagnostics() <em>Diagnostics</em>}' containment reference list.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @see #getDiagnostics()
+	 * @generated
+	 * @ordered
+	 */
+	protected EList<Diagnostic> diagnostics;
 
 	/**
 	 * <!-- begin-user-doc -->
@@ -139,10 +151,25 @@ public class ValidationResponseImpl extends MinimalEObjectImpl.Container impleme
 	 * @generated
 	 */
 	@Override
+	public EList<Diagnostic> getDiagnostics() {
+		if (diagnostics == null) {
+			diagnostics = new EObjectContainmentEList<Diagnostic>(Diagnostic.class, this, COCLPackage.VALIDATION_RESPONSE__DIAGNOSTICS);
+		}
+		return diagnostics;
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
 	public NotificationChain eInverseRemove(InternalEObject otherEnd, int featureID, NotificationChain msgs) {
 		switch (featureID) {
 			case COCLPackage.VALIDATION_RESPONSE__RESULTS:
 				return ((InternalEList<?>)getResults()).basicRemove(otherEnd, msgs);
+			case COCLPackage.VALIDATION_RESPONSE__DIAGNOSTICS:
+				return ((InternalEList<?>)getDiagnostics()).basicRemove(otherEnd, msgs);
 		}
 		return super.eInverseRemove(otherEnd, featureID, msgs);
 	}
@@ -159,6 +186,8 @@ public class ValidationResponseImpl extends MinimalEObjectImpl.Container impleme
 				return getResults();
 			case COCLPackage.VALIDATION_RESPONSE__ROLE:
 				return getRole();
+			case COCLPackage.VALIDATION_RESPONSE__DIAGNOSTICS:
+				return getDiagnostics();
 		}
 		return super.eGet(featureID, resolve, coreType);
 	}
@@ -179,6 +208,10 @@ public class ValidationResponseImpl extends MinimalEObjectImpl.Container impleme
 			case COCLPackage.VALIDATION_RESPONSE__ROLE:
 				setRole((OclRole)newValue);
 				return;
+			case COCLPackage.VALIDATION_RESPONSE__DIAGNOSTICS:
+				getDiagnostics().clear();
+				getDiagnostics().addAll((Collection<? extends Diagnostic>)newValue);
+				return;
 		}
 		super.eSet(featureID, newValue);
 	}
@@ -197,6 +230,9 @@ public class ValidationResponseImpl extends MinimalEObjectImpl.Container impleme
 			case COCLPackage.VALIDATION_RESPONSE__ROLE:
 				setRole(ROLE_EDEFAULT);
 				return;
+			case COCLPackage.VALIDATION_RESPONSE__DIAGNOSTICS:
+				getDiagnostics().clear();
+				return;
 		}
 		super.eUnset(featureID);
 	}
@@ -213,6 +249,8 @@ public class ValidationResponseImpl extends MinimalEObjectImpl.Container impleme
 				return results != null && !results.isEmpty();
 			case COCLPackage.VALIDATION_RESPONSE__ROLE:
 				return role != ROLE_EDEFAULT;
+			case COCLPackage.VALIDATION_RESPONSE__DIAGNOSTICS:
+				return diagnostics != null && !diagnostics.isEmpty();
 		}
 		return super.eIsSet(featureID);
 	}

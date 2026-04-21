@@ -49,6 +49,7 @@
     <genClasses ecoreClass="cocl.ecore#//ValidationResponse">
       <genFeatures property="None" children="true" createChild="true" ecoreFeature="ecore:EReference cocl.ecore#//ValidationResponse/results"/>
       <genFeatures createChild="false" ecoreFeature="ecore:EAttribute cocl.ecore#//ValidationResponse/role"/>
+      <genFeatures property="None" children="true" createChild="true" ecoreFeature="ecore:EReference cocl.ecore#//ValidationResponse/diagnostics"/>
     </genClasses>
     <genClasses image="false" ecoreClass="cocl.ecore#//ValidationResult">
       <genFeatures property="None" children="true" createChild="true" ecoreFeature="ecore:EReference cocl.ecore#//ValidationResult/diagnostics"/>

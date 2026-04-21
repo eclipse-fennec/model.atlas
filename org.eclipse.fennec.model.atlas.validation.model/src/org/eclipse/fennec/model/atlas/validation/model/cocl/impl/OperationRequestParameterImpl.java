@@ -13,6 +13,7 @@
 package org.eclipse.fennec.model.atlas.validation.model.cocl.impl;
 
 import org.eclipse.emf.common.notify.Notification;
+import org.eclipse.emf.common.notify.NotificationChain;
 
 import org.eclipse.emf.ecore.EClass;
 import org.eclipse.emf.ecore.EObject;
@@ -93,7 +94,7 @@ public class OperationRequestParameterImpl extends MinimalEObjectImpl.Container 
 	protected Object javaValue = JAVA_VALUE_EDEFAULT;
 
 	/**
-	 * The cached value of the '{@link #getEValue() <em>EValue</em>}' reference.
+	 * The cached value of the '{@link #getEValue() <em>EValue</em>}' containment reference.
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
 	 * @see #getEValue()
@@ -214,14 +215,6 @@ public class OperationRequestParameterImpl extends MinimalEObjectImpl.Container 
 	 */
 	@Override
 	public EObject getEValue() {
-		if (eValue != null && eValue.eIsProxy()) {
-			InternalEObject oldEValue = (InternalEObject)eValue;
-			eValue = eResolveProxy(oldEValue);
-			if (eValue != oldEValue) {
-				if (eNotificationRequired())
-					eNotify(new ENotificationImpl(this, Notification.RESOLVE, COCLPackage.OPERATION_REQUEST_PARAMETER__EVALUE, oldEValue, eValue));
-			}
-		}
 		return eValue;
 	}
 
@@ -230,8 +223,14 @@ public class OperationRequestParameterImpl extends MinimalEObjectImpl.Container 
 	 * <!-- end-user-doc -->
 	 * @generated
 	 */
-	public EObject basicGetEValue() {
-		return eValue;
+	public NotificationChain basicSetEValue(EObject newEValue, NotificationChain msgs) {
+		EObject oldEValue = eValue;
+		eValue = newEValue;
+		if (eNotificationRequired()) {
+			ENotificationImpl notification = new ENotificationImpl(this, Notification.SET, COCLPackage.OPERATION_REQUEST_PARAMETER__EVALUE, oldEValue, newEValue);
+			if (msgs == null) msgs = notification; else msgs.add(notification);
+		}
+		return msgs;
 	}
 
 	/**
@@ -241,10 +240,31 @@ public class OperationRequestParameterImpl extends MinimalEObjectImpl.Container 
 	 */
 	@Override
 	public void setEValue(EObject newEValue) {
-		EObject oldEValue = eValue;
-		eValue = newEValue;
-		if (eNotificationRequired())
-			eNotify(new ENotificationImpl(this, Notification.SET, COCLPackage.OPERATION_REQUEST_PARAMETER__EVALUE, oldEValue, eValue));
+		if (newEValue != eValue) {
+			NotificationChain msgs = null;
+			if (eValue != null)
+				msgs = ((InternalEObject)eValue).eInverseRemove(this, EOPPOSITE_FEATURE_BASE - COCLPackage.OPERATION_REQUEST_PARAMETER__EVALUE, null, msgs);
+			if (newEValue != null)
+				msgs = ((InternalEObject)newEValue).eInverseAdd(this, EOPPOSITE_FEATURE_BASE - COCLPackage.OPERATION_REQUEST_PARAMETER__EVALUE, null, msgs);
+			msgs = basicSetEValue(newEValue, msgs);
+			if (msgs != null) msgs.dispatch();
+		}
+		else if (eNotificationRequired())
+			eNotify(new ENotificationImpl(this, Notification.SET, COCLPackage.OPERATION_REQUEST_PARAMETER__EVALUE, newEValue, newEValue));
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
+	public NotificationChain eInverseRemove(InternalEObject otherEnd, int featureID, NotificationChain msgs) {
+		switch (featureID) {
+			case COCLPackage.OPERATION_REQUEST_PARAMETER__EVALUE:
+				return basicSetEValue(null, msgs);
+		}
+		return super.eInverseRemove(otherEnd, featureID, msgs);
 	}
 
 	/**
@@ -263,8 +283,7 @@ public class OperationRequestParameterImpl extends MinimalEObjectImpl.Container 
 			case COCLPackage.OPERATION_REQUEST_PARAMETER__JAVA_VALUE:
 				return getJavaValue();
 			case COCLPackage.OPERATION_REQUEST_PARAMETER__EVALUE:
-				if (resolve) return getEValue();
-				return basicGetEValue();
+				return getEValue();
 		}
 		return super.eGet(featureID, resolve, coreType);
 	}

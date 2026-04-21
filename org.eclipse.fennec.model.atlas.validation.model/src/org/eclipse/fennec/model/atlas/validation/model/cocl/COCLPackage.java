@@ -352,13 +352,22 @@ public interface COCLPackage extends org.eclipse.emf.ecore.EPackage {
 	int VALIDATION_RESPONSE__ROLE = 1;
 
 	/**
+	 * The feature id for the '<em><b>Diagnostics</b></em>' containment reference list.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 * @ordered
+	 */
+	int VALIDATION_RESPONSE__DIAGNOSTICS = 2;
+
+	/**
 	 * The number of structural features of the '<em>Validation Response</em>' class.
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
 	 * @generated
 	 * @ordered
 	 */
-	int VALIDATION_RESPONSE_FEATURE_COUNT = 2;
+	int VALIDATION_RESPONSE_FEATURE_COUNT = 3;
 
 	/**
 	 * The number of operations of the '<em>Validation Response</em>' class.
@@ -673,7 +682,7 @@ public interface COCLPackage extends org.eclipse.emf.ecore.EPackage {
 	int OPERATION_REQUEST_PARAMETER__JAVA_VALUE = 2;
 
 	/**
-	 * The feature id for the '<em><b>EValue</b></em>' reference.
+	 * The feature id for the '<em><b>EValue</b></em>' containment reference.
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
 	 * @generated
@@ -1063,6 +1072,17 @@ public interface COCLPackage extends org.eclipse.emf.ecore.EPackage {
 	EAttribute getValidationResponse_Role();
 
 	/**
+	 * Returns the meta object for the containment reference list '{@link org.eclipse.fennec.model.atlas.validation.model.cocl.ValidationResponse#getDiagnostics <em>Diagnostics</em>}'.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @return the meta object for the containment reference list '<em>Diagnostics</em>'.
+	 * @see org.eclipse.fennec.model.atlas.validation.model.cocl.ValidationResponse#getDiagnostics()
+	 * @see #getValidationResponse()
+	 * @generated
+	 */
+	EReference getValidationResponse_Diagnostics();
+
+	/**
 	 * Returns the meta object for class '{@link org.eclipse.fennec.model.atlas.validation.model.cocl.ValidationResult <em>Validation Result</em>}'.
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
@@ -1222,10 +1242,10 @@ public interface COCLPackage extends org.eclipse.emf.ecore.EPackage {
 	EAttribute getOperationRequestParameter_JavaValue();
 
 	/**
-	 * Returns the meta object for the reference '{@link org.eclipse.fennec.model.atlas.validation.model.cocl.OperationRequestParameter#getEValue <em>EValue</em>}'.
+	 * Returns the meta object for the containment reference '{@link org.eclipse.fennec.model.atlas.validation.model.cocl.OperationRequestParameter#getEValue <em>EValue</em>}'.
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
-	 * @return the meta object for the reference '<em>EValue</em>'.
+	 * @return the meta object for the containment reference '<em>EValue</em>'.
 	 * @see org.eclipse.fennec.model.atlas.validation.model.cocl.OperationRequestParameter#getEValue()
 	 * @see #getOperationRequestParameter()
 	 * @generated
@@ -1552,6 +1572,14 @@ public interface COCLPackage extends org.eclipse.emf.ecore.EPackage {
 		EAttribute VALIDATION_RESPONSE__ROLE = eINSTANCE.getValidationResponse_Role();
 
 		/**
+		 * The meta object literal for the '<em><b>Diagnostics</b></em>' containment reference list feature.
+		 * <!-- begin-user-doc -->
+		 * <!-- end-user-doc -->
+		 * @generated
+		 */
+		EReference VALIDATION_RESPONSE__DIAGNOSTICS = eINSTANCE.getValidationResponse_Diagnostics();
+
+		/**
 		 * The meta object literal for the '{@link org.eclipse.fennec.model.atlas.validation.model.cocl.impl.ValidationResultImpl <em>Validation Result</em>}' class.
 		 * <!-- begin-user-doc -->
 		 * <!-- end-user-doc -->
@@ -1684,7 +1712,7 @@ public interface COCLPackage extends org.eclipse.emf.ecore.EPackage {
 		EAttribute OPERATION_REQUEST_PARAMETER__JAVA_VALUE = eINSTANCE.getOperationRequestParameter_JavaValue();
 
 		/**
-		 * The meta object literal for the '<em><b>EValue</b></em>' reference feature.
+		 * The meta object literal for the '<em><b>EValue</b></em>' containment reference feature.
 		 * <!-- begin-user-doc -->
 		 * <!-- end-user-doc -->
 		 * @generated
