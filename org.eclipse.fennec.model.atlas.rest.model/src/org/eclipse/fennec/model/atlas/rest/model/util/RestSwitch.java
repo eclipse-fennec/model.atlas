@@ -106,12 +106,6 @@ public class RestSwitch<T> extends Switch<T> {
 				if (result == null) result = defaultCase(theEObject);
 				return result;
 			}
-			case RestPackage.DIAGNOSTIC: {
-				Diagnostic diagnostic = (Diagnostic)theEObject;
-				T result = caseDiagnostic(diagnostic);
-				if (result == null) result = defaultCase(theEObject);
-				return result;
-			}
 			case RestPackage.CONTAINER: {
 				Container container = (Container)theEObject;
 				T result = caseContainer(container);
@@ -194,21 +188,6 @@ public class RestSwitch<T> extends Switch<T> {
 	 * @generated
 	 */
 	public T caseScopeListResponse(ScopeListResponse object) {
-		return null;
-	}
-
-	/**
-	 * Returns the result of interpreting the object as an instance of '<em>Diagnostic</em>'.
-	 * <!-- begin-user-doc -->
-	 * This implementation returns null;
-	 * returning a non-null result will terminate the switch.
-	 * <!-- end-user-doc -->
-	 * @param object the target of the switch.
-	 * @return the result of interpreting the object as an instance of '<em>Diagnostic</em>'.
-	 * @see #doSwitch(org.eclipse.emf.ecore.EObject) doSwitch(EObject)
-	 * @generated
-	 */
-	public T caseDiagnostic(Diagnostic object) {
 		return null;
 	}
 
