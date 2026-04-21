@@ -865,7 +865,7 @@ public class COCLPackageImpl extends EPackageImpl implements COCLPackage {
 		initEAttribute(getSimpleValidationResult_Value(), ecorePackage.getEJavaObject(), "value", null, 0, 1, SimpleValidationResult.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_UNSETTABLE, !IS_ID, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
 
 		initEClass(eObjectValidationResultEClass, EObjectValidationResult.class, "EObjectValidationResult", !IS_ABSTRACT, !IS_INTERFACE, IS_GENERATED_INSTANCE_CLASS);
-		initEReference(getEObjectValidationResult_Values(), this.getValidationResult(), null, "values", null, 0, -1, EObjectValidationResult.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, IS_COMPOSITE, !IS_RESOLVE_PROXIES, !IS_UNSETTABLE, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
+		initEReference(getEObjectValidationResult_Values(), theEcorePackage.getEObject(), null, "values", null, 0, -1, EObjectValidationResult.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, IS_COMPOSITE, !IS_RESOLVE_PROXIES, !IS_UNSETTABLE, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
 
 		initEClass(derivedValidationRequestEClass, DerivedValidationRequest.class, "DerivedValidationRequest", !IS_ABSTRACT, !IS_INTERFACE, IS_GENERATED_INSTANCE_CLASS);
 		initEReference(getDerivedValidationRequest_DerivedFeature(), theEcorePackage.getEStructuralFeature(), null, "derivedFeature", null, 1, -1, DerivedValidationRequest.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_COMPOSITE, IS_RESOLVE_PROXIES, !IS_UNSETTABLE, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);

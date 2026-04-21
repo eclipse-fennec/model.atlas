@@ -202,6 +202,16 @@ public class DGPackageImpl extends EPackageImpl implements DGPackage {
 	 * @generated
 	 */
 	@Override
+	public EAttribute getPerson_FullName() {
+		return (EAttribute)personEClass.getEStructuralFeatures().get(7);
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
 	public EClass getAddress() {
 		return addressEClass;
 	}
@@ -343,6 +353,7 @@ public class DGPackageImpl extends EPackageImpl implements DGPackage {
 		createEAttribute(personEClass, PERSON__JOB_TITLE);
 		createEReference(personEClass, PERSON__ADDRESS);
 		createEReference(personEClass, PERSON__COMPANY);
+		createEAttribute(personEClass, PERSON__FULL_NAME);
 
 		addressEClass = createEClass(ADDRESS);
 		createEAttribute(addressEClass, ADDRESS__STREET);
@@ -396,6 +407,7 @@ public class DGPackageImpl extends EPackageImpl implements DGPackage {
 		initEAttribute(getPerson_JobTitle(), ecorePackage.getEString(), "jobTitle", null, 0, 1, Person.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_UNSETTABLE, !IS_ID, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
 		initEReference(getPerson_Address(), this.getAddress(), null, "address", null, 0, 1, Person.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_COMPOSITE, IS_RESOLVE_PROXIES, !IS_UNSETTABLE, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
 		initEReference(getPerson_Company(), this.getCompany(), null, "company", null, 0, 1, Person.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_COMPOSITE, IS_RESOLVE_PROXIES, !IS_UNSETTABLE, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
+		initEAttribute(getPerson_FullName(), ecorePackage.getEString(), "fullName", null, 0, 1, Person.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_UNSETTABLE, !IS_ID, IS_UNIQUE, IS_DERIVED, IS_ORDERED);
 
 		initEClass(addressEClass, Address.class, "Address", !IS_ABSTRACT, !IS_INTERFACE, IS_GENERATED_INSTANCE_CLASS);
 		initEAttribute(getAddress_Street(), ecorePackage.getEString(), "street", null, 0, 1, Address.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_UNSETTABLE, !IS_ID, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
@@ -494,6 +506,12 @@ public class DGPackageImpl extends EPackageImpl implements DGPackage {
 		   source,
 		   new String[] {
 			   "ValidPhoneNumber", "self.phone.matches(\'^\\\\d{10}$\')"
+		   });
+		addAnnotation
+		  (getPerson_FullName(),
+		   source,
+		   new String[] {
+			   "derivation", "self.firstName.concat(\' \').concat(self.lastName)"
 		   });
 	}
 

@@ -30,6 +30,7 @@ import org.eclipse.fennec.model.atlas.datagen.example.model.dge.Person;
  *   <li>{@link org.eclipse.fennec.model.atlas.datagen.example.model.dge.impl.PersonImpl#getJobTitle <em>Job Title</em>}</li>
  *   <li>{@link org.eclipse.fennec.model.atlas.datagen.example.model.dge.impl.PersonImpl#getAddress <em>Address</em>}</li>
  *   <li>{@link org.eclipse.fennec.model.atlas.datagen.example.model.dge.impl.PersonImpl#getCompany <em>Company</em>}</li>
+ *   <li>{@link org.eclipse.fennec.model.atlas.datagen.example.model.dge.impl.PersonImpl#getFullName <em>Full Name</em>}</li>
  * </ul>
  *
  * @generated
@@ -154,6 +155,26 @@ public class PersonImpl extends MinimalEObjectImpl.Container implements Person {
 	 * @ordered
 	 */
 	protected Company company;
+
+	/**
+	 * The default value of the '{@link #getFullName() <em>Full Name</em>}' attribute.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @see #getFullName()
+	 * @generated
+	 * @ordered
+	 */
+	protected static final String FULL_NAME_EDEFAULT = null;
+
+	/**
+	 * The cached value of the '{@link #getFullName() <em>Full Name</em>}' attribute.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @see #getFullName()
+	 * @generated
+	 * @ordered
+	 */
+	protected String fullName = FULL_NAME_EDEFAULT;
 
 	/**
 	 * <!-- begin-user-doc -->
@@ -375,6 +396,29 @@ public class PersonImpl extends MinimalEObjectImpl.Container implements Person {
 	 * @generated
 	 */
 	@Override
+	public String getFullName() {
+		return fullName;
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
+	public void setFullName(String newFullName) {
+		String oldFullName = fullName;
+		fullName = newFullName;
+		if (eNotificationRequired())
+			eNotify(new ENotificationImpl(this, Notification.SET, DGPackage.PERSON__FULL_NAME, oldFullName, fullName));
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
 	public Object eGet(int featureID, boolean resolve, boolean coreType) {
 		switch (featureID) {
 			case DGPackage.PERSON__FIRST_NAME:
@@ -393,6 +437,8 @@ public class PersonImpl extends MinimalEObjectImpl.Container implements Person {
 			case DGPackage.PERSON__COMPANY:
 				if (resolve) return getCompany();
 				return basicGetCompany();
+			case DGPackage.PERSON__FULL_NAME:
+				return getFullName();
 		}
 		return super.eGet(featureID, resolve, coreType);
 	}
@@ -425,6 +471,9 @@ public class PersonImpl extends MinimalEObjectImpl.Container implements Person {
 				return;
 			case DGPackage.PERSON__COMPANY:
 				setCompany((Company)newValue);
+				return;
+			case DGPackage.PERSON__FULL_NAME:
+				setFullName((String)newValue);
 				return;
 		}
 		super.eSet(featureID, newValue);
@@ -459,6 +508,9 @@ public class PersonImpl extends MinimalEObjectImpl.Container implements Person {
 			case DGPackage.PERSON__COMPANY:
 				setCompany((Company)null);
 				return;
+			case DGPackage.PERSON__FULL_NAME:
+				setFullName(FULL_NAME_EDEFAULT);
+				return;
 		}
 		super.eUnset(featureID);
 	}
@@ -485,6 +537,8 @@ public class PersonImpl extends MinimalEObjectImpl.Container implements Person {
 				return address != null;
 			case DGPackage.PERSON__COMPANY:
 				return company != null;
+			case DGPackage.PERSON__FULL_NAME:
+				return FULL_NAME_EDEFAULT == null ? fullName != null : !FULL_NAME_EDEFAULT.equals(fullName);
 		}
 		return super.eIsSet(featureID);
 	}
@@ -509,6 +563,8 @@ public class PersonImpl extends MinimalEObjectImpl.Container implements Person {
 		result.append(phone);
 		result.append(", jobTitle: ");
 		result.append(jobTitle);
+		result.append(", fullName: ");
+		result.append(fullName);
 		result.append(')');
 		return result.toString();
 	}

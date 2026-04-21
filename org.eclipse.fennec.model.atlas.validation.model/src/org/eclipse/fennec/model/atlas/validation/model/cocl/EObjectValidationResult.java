@@ -14,6 +14,8 @@ package org.eclipse.fennec.model.atlas.validation.model.cocl;
 
 import org.eclipse.emf.common.util.EList;
 
+import org.eclipse.emf.ecore.EObject;
+
 import org.osgi.annotation.versioning.ProviderType;
 
 /**
@@ -40,7 +42,7 @@ import org.osgi.annotation.versioning.ProviderType;
 public interface EObjectValidationResult extends ValidationResult {
 	/**
 	 * Returns the value of the '<em><b>Values</b></em>' containment reference list.
-	 * The list contents are of type {@link org.eclipse.fennec.model.atlas.validation.model.cocl.ValidationResult}.
+	 * The list contents are of type {@link org.eclipse.emf.ecore.EObject}.
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
 	 * <!-- begin-model-doc -->
@@ -51,6 +53,6 @@ public interface EObjectValidationResult extends ValidationResult {
 	 * @model containment="true"
 	 * @generated
 	 */
-	EList<ValidationResult> getValues();
+	EList<EObject> getValues();
 
 } // EObjectValidationResult

@@ -19,6 +19,7 @@ import org.eclipse.emf.common.util.Diagnostic;
 import org.eclipse.emf.common.util.URI;
 import org.eclipse.emf.ecore.EClassifier;
 import org.eclipse.emf.ecore.EObject;
+import org.eclipse.emf.ecore.EStructuralFeature;
 import org.eclipse.emf.ecore.resource.ResourceSet;
 import org.eclipse.emf.ecore.util.Diagnostician;
 import org.eclipse.fennec.m2x.model.ocl.OclExpression;
@@ -30,10 +31,14 @@ import org.eclipse.fennec.model.atlas.mediatypes.api.SupportedMediatype;
 import org.eclipse.fennec.model.atlas.runtime.RequireRuntime;
 import org.eclipse.fennec.model.atlas.validation.ValidationHelper;
 import org.eclipse.fennec.model.atlas.validation.model.cocl.COCLFactory;
+import org.eclipse.fennec.model.atlas.validation.model.cocl.DerivedValidationRequest;
+import org.eclipse.fennec.model.atlas.validation.model.cocl.EObjectValidationResult;
 import org.eclipse.fennec.model.atlas.validation.model.cocl.OclConstraint;
 import org.eclipse.fennec.model.atlas.validation.model.cocl.OclConstraintSet;
 import org.eclipse.fennec.model.atlas.validation.model.cocl.OclRole;
+import org.eclipse.fennec.model.atlas.validation.model.cocl.OperationValidationRequest;
 import org.eclipse.fennec.model.atlas.validation.model.cocl.Severity;
+import org.eclipse.fennec.model.atlas.validation.model.cocl.SimpleValidationResult;
 import org.eclipse.fennec.model.atlas.validation.model.cocl.ValidationResponse;
 import org.eclipse.fennec.model.atlas.wf.workflowapi.ScopeService;
 import org.eclipse.fennec.model.atlas.workflow.ScopeServiceCollector;
@@ -46,6 +51,7 @@ import org.osgi.service.jakartars.whiteboard.propertytypes.JakartarsName;
 import org.osgi.service.jakartars.whiteboard.propertytypes.JakartarsResource;
 
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.parameters.RequestBody;
@@ -191,6 +197,187 @@ public class ObjectValidationResource {
 		} catch (Exception e) {
 			return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity(e.getMessage()).build();
 		}
+	}
+	
+	@POST
+	@Path("/derived")
+	@Consumes({"application/xmi", "application/xml"})
+	@Produces({"application/xmi", MediaType.APPLICATION_JSON})
+	@Operation(summary = "Computes derived features for the provided EObject using either its model or the provided C-OCL id", description = "Computes derived features for the provided EObject using either its model or the provided C-OCL id.", 
+	responses = {
+			@ApiResponse(responseCode = "200", description = "Derived feature performed. A ValidationResponse with the corresponding results and diagnostics is returned.",
+					content = @Content(schema = @Schema(implementation = org.eclipse.fennec.model.atlas.validation.model.cocl.ValidationResponse.class))),
+			@ApiResponse(responseCode = "415", description = "Unsupported media type"),
+			@ApiResponse(responseCode = "404", description = "If no EObject or more than one EObject has to be validated or if the provided OCLConstraintSet cannot handle the provided EObject or if one or more feature in the request are not in the EObject EClass"),
+			@ApiResponse(responseCode = "500", description = "Internal server error") })
+	public Response deriveByOclId(
+			@Parameter(description = "The C-OCL id where to compute the derived expression from", required = false)
+			@QueryParam("oclId") String oclId,
+			@RequestBody(description = "The DerivedValidationRequest", required = true, 
+			content = @Content(schema = @Schema(implementation = org.eclipse.fennec.model.atlas.validation.model.cocl.DerivedValidationRequest.class))) DerivedValidationRequest validationRequest) {
+		try {
+			checkContentType();
+			if(validationRequest.getValidationObjects().isEmpty()) {
+				return Response.status(Response.Status.BAD_REQUEST).entity(String.format("No Object to be validated")).build();
+			}
+			if(validationRequest.getValidationObjects().size() > 1) {
+				return Response.status(Response.Status.BAD_REQUEST).entity(String.format("To validate more than one EObject, please use the derived/batch endpoint")).build();
+			}
+			EObject validatingObject = validationRequest.getValidationObjects().get(0);
+			List<EStructuralFeature> notMatchingFeatures = validationRequest.getDerivedFeature().stream().filter(f -> validatingObject.eClass().getEStructuralFeature(f.getName()) == null).toList();
+			if(!notMatchingFeatures.isEmpty()) {
+				return Response.status(Response.Status.BAD_REQUEST).entity(String.format("Feature(s) %s do not belong to EObject EClass %s", notMatchingFeatures.toString(), validatingObject.eClass().getName())).build();
+			}
+			ValidationResponse response = COCLFactory.eINSTANCE.createValidationResponse();
+			response.setRole(OclRole.DERIVED);
+			List<org.eclipse.fennec.model.atlas.validation.model.cocl.Diagnostic> diagnostics = new LinkedList<>();
+			if(oclId != null) {
+				ScopeService<?> scopeService = getScopeService();
+				if(scopeService == null) {
+					return Response.status(Response.Status.NOT_FOUND).entity("ScopeService not available").build();
+				}
+				EObject oclObject = scopeService.getContentFromStageForRegistry(JENA_OCL_REGISTRY_NAME, JENA_OCL_STAGE_NAME, oclId);
+	            if (oclObject == null || !(oclObject instanceof OclConstraintSet)) {
+	                return Response.status(Response.Status.BAD_REQUEST).entity(String.format("No OClConstraintSet with id %s found", oclId)).build();
+	            }
+	            OclConstraintSet oclConstraintSet = (OclConstraintSet) oclObject;
+	            if(!ValidationHelper.canEvaluateEObject(oclConstraintSet, validatingObject)) {
+	            	return Response.status(Response.Status.BAD_REQUEST).entity(String.format("OCLConstraintSet %s cannot handle EObject", oclId)).build();
+	            }
+	            for(EStructuralFeature feature : validationRequest.getDerivedFeature()) {
+	            	
+	            	List<OclConstraint> constraints = ValidationHelper.filter(oclConstraintSet, 
+							c -> c.isActive() && OclRole.DERIVED.equals(c.getRole()) && c.getFeatureName() != null && 
+									feature.getName().equals(c.getFeatureName()));
+	            	if(constraints.isEmpty()) {
+	            		diagnostics.add(getDiagnostic(feature, oclId));
+	            	} else {
+	            		OclConstraint constraint = constraints.get(0);
+	            		EClassifier source = (EClassifier) resourceSet.getEObject(URI.createURI(constraint.getContextClass()), false);
+						OclExpression expr = oclEngine.parse(constraint.getExpression(), source);
+						OclResult result = oclEngine.evaluateWithDiagnostics(
+							    expr,
+							    OclContext.of(validatingObject),
+							    OclEvaluationOptions.lenient()
+							);
+						
+						if(result.isSuccess()) {
+							diagnostics.add(getDiagnostic(Severity.INFO, feature.getName(), "Succesfully computed derived feature"));
+							try {
+								EObject eObjValue = result.getValueAs(EObject.class);
+								EObjectValidationResult eObjResult = COCLFactory.eINSTANCE.createEObjectValidationResult();
+								eObjResult.getValues().add(eObjValue);
+								eObjResult.getDiagnostics().addAll(diagnostics);
+								response.getResults().add(eObjResult);
+							} catch (ClassCastException e) {
+								Object objValue = result.getValueAs(Object.class);
+								SimpleValidationResult objResult = COCLFactory.eINSTANCE.createSimpleValidationResult();
+								objResult.setValue(objValue);
+								response.getResults().add(objResult);
+							}
+						} else {
+							diagnostics.addAll(getDiagnostics(result.diagnostics()));
+						}
+	            	}
+	            }
+			} else {
+				for(EStructuralFeature feature : validationRequest.getDerivedFeature()) {
+					Object value = validatingObject.eGet(feature);
+					diagnostics.add(getDiagnostic(Severity.INFO, feature.getName(), "Succesfully computed derived feature"));
+					SimpleValidationResult objResult = COCLFactory.eINSTANCE.createSimpleValidationResult();
+					objResult.setValue(value);
+					response.getResults().add(objResult);
+				}
+			}
+	        response.getDiagnostics().addAll(diagnostics);				
+			return Response.status(Response.Status.OK).entity(response).header("Content-Type", mediaType).build();
+
+		} catch (WebApplicationException e) {
+			// WebApplicationException already has the correct status code, rethrow it
+			throw e;
+		} catch (Exception e) {
+			return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity(e.getMessage()).build();
+		}
+	}
+	
+	@GET
+	@Path("/compute")
+	@Consumes("application/xmi")
+	@Produces({"application/xmi", MediaType.APPLICATION_JSON})
+	@Operation(summary = "Computes EOperation for the provided EObjects", description = "Computes EOperation for the provided EObjects.", 
+	responses = {
+			@ApiResponse(responseCode = "200", description = "EOperation performed. A ValidationResponse with the corresponding results and diagnostics is returned.",
+					content = @Content(schema = @Schema(implementation = org.eclipse.fennec.model.atlas.validation.model.cocl.ValidationResponse.class))),
+			@ApiResponse(responseCode = "415", description = "Unsupported media type"),
+			@ApiResponse(responseCode = "404", description = "OCLConstraintSet id was not found in C-OCL registry or OCLConstraintSet cannot handle the provided EObject"),
+			@ApiResponse(responseCode = "500", description = "Internal server error") })
+	public Response compute(
+			@PathParam("oclId") String oclId,
+			@RequestBody(description = "The OperationValidationRequest", required = true, 
+			content = @Content(schema = @Schema(implementation = org.eclipse.fennec.model.atlas.validation.model.cocl.OperationValidationRequest.class))) OperationValidationRequest validationRequest) {
+		try {
+			checkContentType();
+			ScopeService<?> scopeService = getScopeService();
+			if(scopeService == null) {
+				return Response.status(Response.Status.NOT_FOUND).entity("ScopeService not available").build();
+			}
+			EObject oclObject = scopeService.getContentFromStageForRegistry(JENA_OCL_REGISTRY_NAME, JENA_OCL_STAGE_NAME, oclId);
+            if (oclObject == null || !(oclObject instanceof OclConstraintSet)) {
+                return Response.status(Response.Status.BAD_REQUEST).entity(String.format("No OClConstraintSet with id %s found", oclId)).build();
+            }
+            OclConstraintSet oclConstraintSet = (OclConstraintSet) oclObject;
+            if(!ValidationHelper.canEvaluateEObject(oclConstraintSet, validationRequest)) {
+            	return Response.status(Response.Status.BAD_REQUEST).entity(String.format("OCLConstraintSet %s cannot handle EObject", oclId)).build();
+            }
+			List<OclConstraint> constraints = ValidationHelper.filter(oclConstraintSet, c -> c.isActive() && OclRole.DERIVED.equals(c.getRole()));
+			
+			List<org.eclipse.fennec.model.atlas.validation.model.cocl.Diagnostic> diagnostics = new LinkedList<>();
+			for(OclConstraint constraint : constraints) {
+				EClassifier source = (EClassifier) resourceSet.getEObject(URI.createURI(constraint.getContextClass()), false);
+				OclExpression expr = oclEngine.parse(constraint.getExpression(), source);
+				OclResult result = oclEngine.evaluateWithDiagnostics(
+					    expr,
+					    OclContext.of(validationRequest),
+					    OclEvaluationOptions.lenient()
+					);
+				if(result.isSuccess()) {
+					boolean isValid = result.getValueAs(Boolean.class);
+					if(!isValid) {
+						diagnostics.add(getDiagnostic(constraint));
+					}
+				} else {
+					diagnostics.addAll(getDiagnostics(result.diagnostics()));
+				}
+			}
+			Diagnostic emfDiagnostic = Diagnostician.INSTANCE.validate(validationRequest);			
+			diagnostics.add(getDiagnostics(emfDiagnostic));
+			ValidationResponse response = COCLFactory.eINSTANCE.createValidationResponse();
+			response.getDiagnostics().addAll(diagnostics);
+			response.setRole(OclRole.VALIDATION);
+			return Response.status(Response.Status.OK).entity(response).header("Content-Type", mediaType).build();
+
+		} catch (WebApplicationException e) {
+			// WebApplicationException already has the correct status code, rethrow it
+			throw e;
+		} catch (Exception e) {
+			return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity(e.getMessage()).build();
+		}
+	}
+	
+	private org.eclipse.fennec.model.atlas.validation.model.cocl.Diagnostic getDiagnostic(Severity severity, String source, String msg) {
+		org.eclipse.fennec.model.atlas.validation.model.cocl.Diagnostic diagnostic = COCLFactory.eINSTANCE.createDiagnostic();
+		diagnostic.setType(severity);
+		diagnostic.setSource(source);
+		diagnostic.setMessage(msg);
+		return diagnostic;
+	}
+
+	private org.eclipse.fennec.model.atlas.validation.model.cocl.Diagnostic getDiagnostic(EStructuralFeature feature, String oclId) {
+		org.eclipse.fennec.model.atlas.validation.model.cocl.Diagnostic diagnostic = COCLFactory.eINSTANCE.createDiagnostic();
+		diagnostic.setType(Severity.WARN);
+		diagnostic.setSource(feature.getName());
+		diagnostic.setMessage(String.format("No active DERIVED Constraint found in C-OCL %d for feature %s", oclId, feature.getName()));
+		return diagnostic;
 	}
 	
 	private org.eclipse.fennec.model.atlas.validation.model.cocl.Diagnostic getDiagnostic(OclConstraint constraint) {

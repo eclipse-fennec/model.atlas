@@ -139,13 +139,22 @@ public interface DGPackage extends org.eclipse.emf.ecore.EPackage {
 	int PERSON__COMPANY = 6;
 
 	/**
+	 * The feature id for the '<em><b>Full Name</b></em>' attribute.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 * @ordered
+	 */
+	int PERSON__FULL_NAME = 7;
+
+	/**
 	 * The number of structural features of the '<em>Person</em>' class.
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
 	 * @generated
 	 * @ordered
 	 */
-	int PERSON_FEATURE_COUNT = 7;
+	int PERSON_FEATURE_COUNT = 8;
 
 	/**
 	 * The number of operations of the '<em>Person</em>' class.
@@ -382,6 +391,17 @@ public interface DGPackage extends org.eclipse.emf.ecore.EPackage {
 	EReference getPerson_Company();
 
 	/**
+	 * Returns the meta object for the attribute '{@link org.eclipse.fennec.model.atlas.datagen.example.model.dge.Person#getFullName <em>Full Name</em>}'.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @return the meta object for the attribute '<em>Full Name</em>'.
+	 * @see org.eclipse.fennec.model.atlas.datagen.example.model.dge.Person#getFullName()
+	 * @see #getPerson()
+	 * @generated
+	 */
+	EAttribute getPerson_FullName();
+
+	/**
 	 * Returns the meta object for class '{@link org.eclipse.fennec.model.atlas.datagen.example.model.dge.Address <em>Address</em>}'.
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
@@ -588,6 +608,14 @@ public interface DGPackage extends org.eclipse.emf.ecore.EPackage {
 		 * @generated
 		 */
 		EReference PERSON__COMPANY = eINSTANCE.getPerson_Company();
+
+		/**
+		 * The meta object literal for the '<em><b>Full Name</b></em>' attribute feature.
+		 * <!-- begin-user-doc -->
+		 * <!-- end-user-doc -->
+		 * @generated
+		 */
+		EAttribute PERSON__FULL_NAME = eINSTANCE.getPerson_FullName();
 
 		/**
 		 * The meta object literal for the '{@link org.eclipse.fennec.model.atlas.datagen.example.model.dge.impl.AddressImpl <em>Address</em>}' class.

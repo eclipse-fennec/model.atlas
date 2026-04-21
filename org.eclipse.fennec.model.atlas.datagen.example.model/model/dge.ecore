@@ -27,6 +27,12 @@
     <eStructuralFeatures xsi:type="ecore:EAttribute" name="jobTitle" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
     <eStructuralFeatures xsi:type="ecore:EReference" name="address" eType="#//Address"/>
     <eStructuralFeatures xsi:type="ecore:EReference" name="company" eType="#//Company"/>
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="fullName" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"
+        derived="true">
+      <eAnnotations source="http://www.eclipse.org/fennec/m2x/ocl/1.0">
+        <details key="derivation" value="self.firstName.concat(' ').concat(self.lastName)"/>
+      </eAnnotations>
+    </eStructuralFeatures>
   </eClassifiers>
   <eClassifiers xsi:type="ecore:EClass" name="Address">
     <eStructuralFeatures xsi:type="ecore:EAttribute" name="street" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
