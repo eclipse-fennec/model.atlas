@@ -122,7 +122,9 @@ public class AtlasSchemaRegistryService implements RegistryService<EPackage> {
 	public EPackage getContentFromStage(String scope, String stage, String objectId) {
 		validateStage(stage);
 		if(staticPackageRegistry != null) {
-			return staticPackageRegistry.getEPackage(Base64.getUrlDecoder().decode(objectId).toString());
+			byte[] decodedBytes = Base64.getUrlDecoder().decode(objectId);
+			String originalNsUri = new String(decodedBytes);
+			return staticPackageRegistry.getEPackage(originalNsUri);
 		}
 		return null;
 	}
