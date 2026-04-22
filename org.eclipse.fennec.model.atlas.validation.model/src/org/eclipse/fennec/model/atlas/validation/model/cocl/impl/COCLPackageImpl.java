@@ -877,7 +877,7 @@ public class COCLPackageImpl extends EPackageImpl implements COCLPackage {
 		initEClass(operationRequestParameterEClass, OperationRequestParameter.class, "OperationRequestParameter", !IS_ABSTRACT, !IS_INTERFACE, IS_GENERATED_INSTANCE_CLASS);
 		initEReference(getOperationRequestParameter_Parameter(), theEcorePackage.getEParameter(), null, "parameter", null, 1, 1, OperationRequestParameter.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_COMPOSITE, IS_RESOLVE_PROXIES, !IS_UNSETTABLE, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
 		initEAttribute(getOperationRequestParameter_IsNull(), ecorePackage.getEBoolean(), "isNull", null, 0, 1, OperationRequestParameter.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_UNSETTABLE, !IS_ID, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
-		initEAttribute(getOperationRequestParameter_JavaValue(), ecorePackage.getEJavaObject(), "javaValue", null, 0, 1, OperationRequestParameter.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_UNSETTABLE, !IS_ID, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
+		initEAttribute(getOperationRequestParameter_JavaValue(), ecorePackage.getEString(), "javaValue", null, 0, 1, OperationRequestParameter.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_UNSETTABLE, !IS_ID, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
 		initEReference(getOperationRequestParameter_EValue(), ecorePackage.getEObject(), null, "eValue", null, 0, 1, OperationRequestParameter.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, IS_COMPOSITE, !IS_RESOLVE_PROXIES, !IS_UNSETTABLE, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
 
 		initEClass(diagnosticEClass, Diagnostic.class, "Diagnostic", !IS_ABSTRACT, !IS_INTERFACE, IS_GENERATED_INSTANCE_CLASS);
@@ -1199,6 +1199,12 @@ public class COCLPackageImpl extends EPackageImpl implements COCLPackage {
 		   source,
 		   new String[] {
 			   "documentation", "Operation request parameter object"
+		   });
+		addAnnotation
+		  (getOperationRequestParameter_JavaValue(),
+		   source,
+		   new String[] {
+			   "documentation", "We put the String representation here to not have issues via REST. Then we can construct the value back from the parameter type."
 		   });
 	}
 

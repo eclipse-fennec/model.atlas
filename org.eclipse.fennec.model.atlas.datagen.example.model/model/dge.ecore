@@ -12,6 +12,8 @@
   </eAnnotations>
   <eAnnotations source="http://www.eclipse.org/emf/2002/Ecore">
     <details key="validationDelegates" value="http://www.eclipse.org/fennec/m2x/ocl/1.0"/>
+    <details key="settingDelegates" value="http://www.eclipse.org/fennec/m2x/ocl/1.0"/>
+    <details key="invocationDelegates" value="http://www.eclipse.org/fennec/m2x/ocl/1.0"/>
   </eAnnotations>
   <eClassifiers xsi:type="ecore:EClass" name="Person">
     <eAnnotations source="http://www.eclipse.org/fennec/m2x/ocl/1.0">
@@ -28,7 +30,7 @@
     <eStructuralFeatures xsi:type="ecore:EReference" name="address" eType="#//Address"/>
     <eStructuralFeatures xsi:type="ecore:EReference" name="company" eType="#//Company"/>
     <eStructuralFeatures xsi:type="ecore:EAttribute" name="fullName" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"
-        derived="true">
+        changeable="false" volatile="true" transient="true" derived="true">
       <eAnnotations source="http://www.eclipse.org/fennec/m2x/ocl/1.0">
         <details key="derivation" value="self.firstName.concat(' ').concat(self.lastName)"/>
       </eAnnotations>
@@ -41,6 +43,17 @@
     <eStructuralFeatures xsi:type="ecore:EAttribute" name="country" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
   </eClassifiers>
   <eClassifiers xsi:type="ecore:EClass" name="Company">
+    <eOperations name="findEmployeesByNamePrefix" upperBound="-1" eType="#//Person">
+      <eAnnotations source="http://www.eclipse.org/fennec/m2x/ocl/1.0">
+        <details key="body" value="self.employees->select(e | e.firstName.startsWith(namePrefix))->asSequence()"/>
+      </eAnnotations>
+      <eParameters name="namePrefix" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    </eOperations>
+    <eOperations name="getTotalEmployees" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EInt">
+      <eAnnotations source="http://www.eclipse.org/fennec/m2x/ocl/1.0">
+        <details key="body" value="self.employees.size()"/>
+      </eAnnotations>
+    </eOperations>
     <eStructuralFeatures xsi:type="ecore:EAttribute" name="name" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
     <eStructuralFeatures xsi:type="ecore:EAttribute" name="industry" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
     <eStructuralFeatures xsi:type="ecore:EAttribute" name="url" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>

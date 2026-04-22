@@ -5,6 +5,7 @@ package org.eclipse.fennec.model.atlas.datagen.example.model.dge.impl;
 import org.eclipse.emf.common.notify.Notification;
 
 import org.eclipse.emf.ecore.EClass;
+import org.eclipse.emf.ecore.EStructuralFeature;
 import org.eclipse.emf.ecore.InternalEObject;
 
 import org.eclipse.emf.ecore.impl.ENotificationImpl;
@@ -157,24 +158,14 @@ public class PersonImpl extends MinimalEObjectImpl.Container implements Person {
 	protected Company company;
 
 	/**
-	 * The default value of the '{@link #getFullName() <em>Full Name</em>}' attribute.
+	 * The cached setting delegate for the '{@link #getFullName() <em>Full Name</em>}' attribute.
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
 	 * @see #getFullName()
 	 * @generated
 	 * @ordered
 	 */
-	protected static final String FULL_NAME_EDEFAULT = null;
-
-	/**
-	 * The cached value of the '{@link #getFullName() <em>Full Name</em>}' attribute.
-	 * <!-- begin-user-doc -->
-	 * <!-- end-user-doc -->
-	 * @see #getFullName()
-	 * @generated
-	 * @ordered
-	 */
-	protected String fullName = FULL_NAME_EDEFAULT;
+	protected EStructuralFeature.Internal.SettingDelegate FULL_NAME__ESETTING_DELEGATE = ((EStructuralFeature.Internal)DGPackage.Literals.PERSON__FULL_NAME).getSettingDelegate();
 
 	/**
 	 * <!-- begin-user-doc -->
@@ -397,20 +388,7 @@ public class PersonImpl extends MinimalEObjectImpl.Container implements Person {
 	 */
 	@Override
 	public String getFullName() {
-		return fullName;
-	}
-
-	/**
-	 * <!-- begin-user-doc -->
-	 * <!-- end-user-doc -->
-	 * @generated
-	 */
-	@Override
-	public void setFullName(String newFullName) {
-		String oldFullName = fullName;
-		fullName = newFullName;
-		if (eNotificationRequired())
-			eNotify(new ENotificationImpl(this, Notification.SET, DGPackage.PERSON__FULL_NAME, oldFullName, fullName));
+		return (String)FULL_NAME__ESETTING_DELEGATE.dynamicGet(this, null, 0, true, false);
 	}
 
 	/**
@@ -472,9 +450,6 @@ public class PersonImpl extends MinimalEObjectImpl.Container implements Person {
 			case DGPackage.PERSON__COMPANY:
 				setCompany((Company)newValue);
 				return;
-			case DGPackage.PERSON__FULL_NAME:
-				setFullName((String)newValue);
-				return;
 		}
 		super.eSet(featureID, newValue);
 	}
@@ -508,9 +483,6 @@ public class PersonImpl extends MinimalEObjectImpl.Container implements Person {
 			case DGPackage.PERSON__COMPANY:
 				setCompany((Company)null);
 				return;
-			case DGPackage.PERSON__FULL_NAME:
-				setFullName(FULL_NAME_EDEFAULT);
-				return;
 		}
 		super.eUnset(featureID);
 	}
@@ -538,7 +510,7 @@ public class PersonImpl extends MinimalEObjectImpl.Container implements Person {
 			case DGPackage.PERSON__COMPANY:
 				return company != null;
 			case DGPackage.PERSON__FULL_NAME:
-				return FULL_NAME_EDEFAULT == null ? fullName != null : !FULL_NAME_EDEFAULT.equals(fullName);
+				return FULL_NAME__ESETTING_DELEGATE.dynamicIsSet(this, null, 0);
 		}
 		return super.eIsSet(featureID);
 	}
@@ -563,8 +535,6 @@ public class PersonImpl extends MinimalEObjectImpl.Container implements Person {
 		result.append(phone);
 		result.append(", jobTitle: ");
 		result.append(jobTitle);
-		result.append(", fullName: ");
-		result.append(fullName);
 		result.append(')');
 		return result.toString();
 	}

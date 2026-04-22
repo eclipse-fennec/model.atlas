@@ -130,4 +130,21 @@ public interface Company extends EObject {
 	 */
 	EList<Person> getEmployees();
 
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @model annotation="http://www.eclipse.org/fennec/m2x/ocl/1.0 body='self.employees-&gt;select(e | e.firstName.startsWith(namePrefix))-&gt;asSequence()'"
+	 * @generated
+	 */
+	EList<Person> findEmployeesByNamePrefix(String namePrefix);
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @model kind="operation"
+	 *        annotation="http://www.eclipse.org/fennec/m2x/ocl/1.0 body='self.employees.size()'"
+	 * @generated
+	 */
+	int getTotalEmployees();
+
 } // Company

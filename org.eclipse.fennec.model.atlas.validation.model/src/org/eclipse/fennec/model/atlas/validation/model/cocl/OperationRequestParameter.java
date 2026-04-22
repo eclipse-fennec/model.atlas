@@ -90,13 +90,16 @@ public interface OperationRequestParameter extends EObject {
 	 * Returns the value of the '<em><b>Java Value</b></em>' attribute.
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
+	 * <!-- begin-model-doc -->
+	 * We put the String representation here to not have issues via REST. Then we can construct the value back from the parameter type.
+	 * <!-- end-model-doc -->
 	 * @return the value of the '<em>Java Value</em>' attribute.
-	 * @see #setJavaValue(Object)
+	 * @see #setJavaValue(String)
 	 * @see org.eclipse.fennec.model.atlas.validation.model.cocl.COCLPackage#getOperationRequestParameter_JavaValue()
 	 * @model
 	 * @generated
 	 */
-	Object getJavaValue();
+	String getJavaValue();
 
 	/**
 	 * Sets the value of the '{@link org.eclipse.fennec.model.atlas.validation.model.cocl.OperationRequestParameter#getJavaValue <em>Java Value</em>}' attribute.
@@ -106,7 +109,7 @@ public interface OperationRequestParameter extends EObject {
 	 * @see #getJavaValue()
 	 * @generated
 	 */
-	void setJavaValue(Object value);
+	void setJavaValue(String value);
 
 	/**
 	 * Returns the value of the '<em><b>EValue</b></em>' containment reference.

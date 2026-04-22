@@ -2,14 +2,19 @@
  */
 package org.eclipse.fennec.model.atlas.datagen.example.model.dge.impl;
 
+import java.lang.reflect.InvocationTargetException;
+
 import java.util.Collection;
 
 import org.eclipse.emf.common.notify.Notification;
 import org.eclipse.emf.common.notify.NotificationChain;
 
+import org.eclipse.emf.common.util.BasicEList;
 import org.eclipse.emf.common.util.EList;
+import org.eclipse.emf.common.util.WrappedException;
 
 import org.eclipse.emf.ecore.EClass;
+import org.eclipse.emf.ecore.EOperation;
 import org.eclipse.emf.ecore.InternalEObject;
 
 import org.eclipse.emf.ecore.impl.ENotificationImpl;
@@ -267,6 +272,57 @@ public class CompanyImpl extends MinimalEObjectImpl.Container implements Company
 	}
 
 	/**
+	 * The cached invocation delegate for the '{@link #findEmployeesByNamePrefix(java.lang.String) <em>Find Employees By Name Prefix</em>}' operation.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @see #findEmployeesByNamePrefix(java.lang.String)
+	 * @generated
+	 * @ordered
+	 */
+	protected static final EOperation.Internal.InvocationDelegate FIND_EMPLOYEES_BY_NAME_PREFIX_STRING__EINVOCATION_DELEGATE = ((EOperation.Internal)DGPackage.Literals.COMPANY___FIND_EMPLOYEES_BY_NAME_PREFIX__STRING).getInvocationDelegate();
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@SuppressWarnings("unchecked")
+	@Override
+	public EList<Person> findEmployeesByNamePrefix(String namePrefix) {
+		try {
+			return (EList<Person>)FIND_EMPLOYEES_BY_NAME_PREFIX_STRING__EINVOCATION_DELEGATE.dynamicInvoke(this, new BasicEList.UnmodifiableEList<Object>(1, new Object[]{namePrefix}));
+		}
+		catch (InvocationTargetException ite) {
+			throw new WrappedException(ite);
+		}
+	}
+
+	/**
+	 * The cached invocation delegate for the '{@link #getTotalEmployees() <em>Get Total Employees</em>}' operation.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @see #getTotalEmployees()
+	 * @generated
+	 * @ordered
+	 */
+	protected static final EOperation.Internal.InvocationDelegate GET_TOTAL_EMPLOYEES__EINVOCATION_DELEGATE = ((EOperation.Internal)DGPackage.Literals.COMPANY___GET_TOTAL_EMPLOYEES).getInvocationDelegate();
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
+	public int getTotalEmployees() {
+		try {
+			return (Integer)GET_TOTAL_EMPLOYEES__EINVOCATION_DELEGATE.dynamicInvoke(this, null);
+		}
+		catch (InvocationTargetException ite) {
+			throw new WrappedException(ite);
+		}
+	}
+
+	/**
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
 	 * @generated
@@ -378,6 +434,22 @@ public class CompanyImpl extends MinimalEObjectImpl.Container implements Company
 				return employees != null && !employees.isEmpty();
 		}
 		return super.eIsSet(featureID);
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
+	public Object eInvoke(int operationID, EList<?> arguments) throws InvocationTargetException {
+		switch (operationID) {
+			case DGPackage.COMPANY___FIND_EMPLOYEES_BY_NAME_PREFIX__STRING:
+				return findEmployeesByNamePrefix((String)arguments.get(0));
+			case DGPackage.COMPANY___GET_TOTAL_EMPLOYEES:
+				return getTotalEmployees();
+		}
+		return super.eInvoke(operationID, arguments);
 	}
 
 	/**

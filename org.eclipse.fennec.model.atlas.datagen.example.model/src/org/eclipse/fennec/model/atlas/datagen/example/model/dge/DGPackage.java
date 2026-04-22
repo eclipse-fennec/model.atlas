@@ -5,6 +5,7 @@ package org.eclipse.fennec.model.atlas.datagen.example.model.dge;
 
 import org.eclipse.emf.ecore.EAttribute;
 import org.eclipse.emf.ecore.EClass;
+import org.eclipse.emf.ecore.EOperation;
 import org.eclipse.emf.ecore.EReference;
 
 import org.eclipse.fennec.emf.osgi.annotation.provide.EPackage;
@@ -27,7 +28,7 @@ import org.osgi.annotation.versioning.ProviderType;
  * @model kind="package"
  *        annotation="Version value='1.0'"
  *        annotation="http://www.eclipse.org/emf/2002/GenModel complianceLevel='17.0' oSGiCompatible='true' basePackage='org.eclipse.fennec.model.atlas.datagen.example.model' resource='XMI'"
- *        annotation="http://www.eclipse.org/emf/2002/Ecore validationDelegates='http://www.eclipse.org/fennec/m2x/ocl/1.0'"
+ *        annotation="http://www.eclipse.org/emf/2002/Ecore validationDelegates='http://www.eclipse.org/fennec/m2x/ocl/1.0' settingDelegates='http://www.eclipse.org/fennec/m2x/ocl/1.0' invocationDelegates='http://www.eclipse.org/fennec/m2x/ocl/1.0'"
  * @generated
  */
 @ProviderType
@@ -294,13 +295,31 @@ public interface DGPackage extends org.eclipse.emf.ecore.EPackage {
 	int COMPANY_FEATURE_COUNT = 5;
 
 	/**
+	 * The operation id for the '<em>Find Employees By Name Prefix</em>' operation.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 * @ordered
+	 */
+	int COMPANY___FIND_EMPLOYEES_BY_NAME_PREFIX__STRING = 0;
+
+	/**
+	 * The operation id for the '<em>Get Total Employees</em>' operation.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 * @ordered
+	 */
+	int COMPANY___GET_TOTAL_EMPLOYEES = 1;
+
+	/**
 	 * The number of operations of the '<em>Company</em>' class.
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
 	 * @generated
 	 * @ordered
 	 */
-	int COMPANY_OPERATION_COUNT = 0;
+	int COMPANY_OPERATION_COUNT = 2;
 
 
 	/**
@@ -521,6 +540,26 @@ public interface DGPackage extends org.eclipse.emf.ecore.EPackage {
 	EReference getCompany_Employees();
 
 	/**
+	 * Returns the meta object for the '{@link org.eclipse.fennec.model.atlas.datagen.example.model.dge.Company#findEmployeesByNamePrefix(java.lang.String) <em>Find Employees By Name Prefix</em>}' operation.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @return the meta object for the '<em>Find Employees By Name Prefix</em>' operation.
+	 * @see org.eclipse.fennec.model.atlas.datagen.example.model.dge.Company#findEmployeesByNamePrefix(java.lang.String)
+	 * @generated
+	 */
+	EOperation getCompany__FindEmployeesByNamePrefix__String();
+
+	/**
+	 * Returns the meta object for the '{@link org.eclipse.fennec.model.atlas.datagen.example.model.dge.Company#getTotalEmployees() <em>Get Total Employees</em>}' operation.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @return the meta object for the '<em>Get Total Employees</em>' operation.
+	 * @see org.eclipse.fennec.model.atlas.datagen.example.model.dge.Company#getTotalEmployees()
+	 * @generated
+	 */
+	EOperation getCompany__GetTotalEmployees();
+
+	/**
 	 * Returns the factory that creates the instances of the model.
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
@@ -708,6 +747,22 @@ public interface DGPackage extends org.eclipse.emf.ecore.EPackage {
 		 * @generated
 		 */
 		EReference COMPANY__EMPLOYEES = eINSTANCE.getCompany_Employees();
+
+		/**
+		 * The meta object literal for the '<em><b>Find Employees By Name Prefix</b></em>' operation.
+		 * <!-- begin-user-doc -->
+		 * <!-- end-user-doc -->
+		 * @generated
+		 */
+		EOperation COMPANY___FIND_EMPLOYEES_BY_NAME_PREFIX__STRING = eINSTANCE.getCompany__FindEmployeesByNamePrefix__String();
+
+		/**
+		 * The meta object literal for the '<em><b>Get Total Employees</b></em>' operation.
+		 * <!-- begin-user-doc -->
+		 * <!-- end-user-doc -->
+		 * @generated
+		 */
+		EOperation COMPANY___GET_TOTAL_EMPLOYEES = eINSTANCE.getCompany__GetTotalEmployees();
 
 	}
 

@@ -29,7 +29,7 @@ import org.osgi.annotation.versioning.ProviderType;
  * <!-- end-model-doc -->
  * @see org.eclipse.fennec.model.atlas.datagen.model.datagen.DatagenFactory
  * @model kind="package"
- *        annotation="http://www.eclipse.org/emf/2002/GenModel oSGiCompatible='true'"
+ *        annotation="http://www.eclipse.org/emf/2002/GenModel oSGiCompatible='true' basePackage='org.eclipse.fennec.model.atlas.datagen.model' copyrightText='Copyright (c) 2026 Contributors to the Eclipse Foundation.\n\nThis program and the accompanying materials are made\navailable under the terms of the Eclipse Public License 2.0\nwhich is available at https://www.eclipse.org/legal/epl-2.0/\n\nSPDX-License-Identifier: EPL-2.0\n\nContributors:\n  Data In Motion Consulting - initial implementation' resource='XMI' fileExtensions='datagen'"
  * @generated
  */
 @ProviderType
