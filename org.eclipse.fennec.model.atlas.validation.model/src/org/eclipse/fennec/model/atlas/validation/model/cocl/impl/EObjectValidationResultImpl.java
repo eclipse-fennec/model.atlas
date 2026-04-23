@@ -19,6 +19,7 @@ import org.eclipse.emf.common.notify.NotificationChain;
 import org.eclipse.emf.common.util.EList;
 
 import org.eclipse.emf.ecore.EClass;
+import org.eclipse.emf.ecore.EObject;
 import org.eclipse.emf.ecore.InternalEObject;
 
 import org.eclipse.emf.ecore.util.EObjectContainmentEList;
@@ -26,7 +27,6 @@ import org.eclipse.emf.ecore.util.InternalEList;
 
 import org.eclipse.fennec.model.atlas.validation.model.cocl.COCLPackage;
 import org.eclipse.fennec.model.atlas.validation.model.cocl.EObjectValidationResult;
-import org.eclipse.fennec.model.atlas.validation.model.cocl.ValidationResult;
 
 /**
  * <!-- begin-user-doc -->
@@ -50,7 +50,7 @@ public class EObjectValidationResultImpl extends ValidationResultImpl implements
 	 * @generated
 	 * @ordered
 	 */
-	protected EList<ValidationResult> values;
+	protected EList<EObject> values;
 
 	/**
 	 * <!-- begin-user-doc -->
@@ -77,9 +77,9 @@ public class EObjectValidationResultImpl extends ValidationResultImpl implements
 	 * @generated
 	 */
 	@Override
-	public EList<ValidationResult> getValues() {
+	public EList<EObject> getValues() {
 		if (values == null) {
-			values = new EObjectContainmentEList<ValidationResult>(ValidationResult.class, this, COCLPackage.EOBJECT_VALIDATION_RESULT__VALUES);
+			values = new EObjectContainmentEList<EObject>(EObject.class, this, COCLPackage.EOBJECT_VALIDATION_RESULT__VALUES);
 		}
 		return values;
 	}
@@ -123,7 +123,7 @@ public class EObjectValidationResultImpl extends ValidationResultImpl implements
 		switch (featureID) {
 			case COCLPackage.EOBJECT_VALIDATION_RESULT__VALUES:
 				getValues().clear();
-				getValues().addAll((Collection<? extends ValidationResult>)newValue);
+				getValues().addAll((Collection<? extends EObject>)newValue);
 				return;
 		}
 		super.eSet(featureID, newValue);

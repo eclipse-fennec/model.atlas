@@ -22,6 +22,7 @@ import org.osgi.annotation.versioning.ProviderType;
  *   <li>{@link org.eclipse.fennec.model.atlas.datagen.example.model.dge.Company#getUrl <em>Url</em>}</li>
  *   <li>{@link org.eclipse.fennec.model.atlas.datagen.example.model.dge.Company#getAddress <em>Address</em>}</li>
  *   <li>{@link org.eclipse.fennec.model.atlas.datagen.example.model.dge.Company#getEmployees <em>Employees</em>}</li>
+ *   <li>{@link org.eclipse.fennec.model.atlas.datagen.example.model.dge.Company#getEmployeesNames <em>Employees Names</em>}</li>
  * </ul>
  *
  * @see org.eclipse.fennec.model.atlas.datagen.example.model.dge.DGPackage#getCompany()
@@ -129,5 +130,35 @@ public interface Company extends EObject {
 	 * @generated
 	 */
 	EList<Person> getEmployees();
+
+	/**
+	 * Returns the value of the '<em><b>Employees Names</b></em>' attribute list.
+	 * The list contents are of type {@link java.lang.String}.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @return the value of the '<em>Employees Names</em>' attribute list.
+	 * @see org.eclipse.fennec.model.atlas.datagen.example.model.dge.DGPackage#getCompany_EmployeesNames()
+	 * @model transient="true" changeable="false" volatile="true" derived="true"
+	 *        annotation="http://www.eclipse.org/fennec/m2x/ocl/1.0 derivation='self.employees-&gt;collect(e |  e.firstName.concat(\' \').concat(e.lastName))-&gt;asSequence()'"
+	 * @generated
+	 */
+	EList<String> getEmployeesNames();
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @model annotation="http://www.eclipse.org/fennec/m2x/ocl/1.0 body='self.employees-&gt;select(e | e.firstName.startsWith(namePrefix))-&gt;asSequence()'"
+	 * @generated
+	 */
+	EList<Person> findEmployeesByNamePrefix(String namePrefix);
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @model kind="operation"
+	 *        annotation="http://www.eclipse.org/fennec/m2x/ocl/1.0 body='self.employees.size()'"
+	 * @generated
+	 */
+	int getTotalEmployees();
 
 } // Company

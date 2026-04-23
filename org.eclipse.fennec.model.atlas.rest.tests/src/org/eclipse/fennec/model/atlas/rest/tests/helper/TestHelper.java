@@ -18,8 +18,6 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.Collections;
 
-import javax.imageio.plugins.tiff.ExifInteroperabilityTagSet;
-
 import org.eclipse.emf.common.util.URI;
 import org.eclipse.emf.ecore.EAttribute;
 import org.eclipse.emf.ecore.EClass;
@@ -53,6 +51,7 @@ public class TestHelper {
 
         // Serialize to byte array
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        
         resource.save(baos, Collections.emptyMap());
 
         // Clean up
@@ -106,21 +105,19 @@ public class TestHelper {
         ePackage.setNsPrefix(nsPrefix);
         return ePackage;
     }
-    
+
     public static EClass createTestEClass(String name) {
     	EClass eClass = EcoreFactory.eINSTANCE.createEClass();
         eClass.setName(name);
         return eClass;
     }
-    
+
     public static EAttribute createTestEAttribute(String name) {
     	EAttribute eAtt = EcoreFactory.eINSTANCE.createEAttribute();
     	eAtt.setName(name);
     	eAtt.setEType(EcorePackage.Literals.EINT);
     	return eAtt;
     }
-    
-    
 
     /**
      * Generates a unique namespace URI for testing purposes.

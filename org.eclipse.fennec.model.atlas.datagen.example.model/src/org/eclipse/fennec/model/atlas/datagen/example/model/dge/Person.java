@@ -22,6 +22,7 @@ import org.osgi.annotation.versioning.ProviderType;
  *   <li>{@link org.eclipse.fennec.model.atlas.datagen.example.model.dge.Person#getJobTitle <em>Job Title</em>}</li>
  *   <li>{@link org.eclipse.fennec.model.atlas.datagen.example.model.dge.Person#getAddress <em>Address</em>}</li>
  *   <li>{@link org.eclipse.fennec.model.atlas.datagen.example.model.dge.Person#getCompany <em>Company</em>}</li>
+ *   <li>{@link org.eclipse.fennec.model.atlas.datagen.example.model.dge.Person#getFullName <em>Full Name</em>}</li>
  * </ul>
  *
  * @see org.eclipse.fennec.model.atlas.datagen.example.model.dge.DGPackage#getPerson()
@@ -184,5 +185,17 @@ public interface Person extends EObject {
 	 * @generated
 	 */
 	void setCompany(Company value);
+
+	/**
+	 * Returns the value of the '<em><b>Full Name</b></em>' attribute.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @return the value of the '<em>Full Name</em>' attribute.
+	 * @see org.eclipse.fennec.model.atlas.datagen.example.model.dge.DGPackage#getPerson_FullName()
+	 * @model transient="true" changeable="false" volatile="true" derived="true"
+	 *        annotation="http://www.eclipse.org/fennec/m2x/ocl/1.0 derivation='self.firstName.concat(\' \').concat(self.lastName)'"
+	 * @generated
+	 */
+	String getFullName();
 
 } // Person
