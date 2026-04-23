@@ -30,6 +30,7 @@
       <genFeatures createChild="false" ecoreFeature="ecore:EAttribute dge.ecore#//Company/url"/>
       <genFeatures property="None" children="true" createChild="true" ecoreFeature="ecore:EReference dge.ecore#//Company/address"/>
       <genFeatures notify="false" createChild="false" propertySortChoices="true" ecoreFeature="ecore:EReference dge.ecore#//Company/employees"/>
+      <genFeatures property="Readonly" createChild="false" ecoreFeature="ecore:EAttribute dge.ecore#//Company/employeesNames"/>
       <genOperations ecoreOperation="dge.ecore#//Company/findEmployeesByNamePrefix">
         <genParameters ecoreParameter="dge.ecore#//Company/findEmployeesByNamePrefix/namePrefix"/>
       </genOperations>

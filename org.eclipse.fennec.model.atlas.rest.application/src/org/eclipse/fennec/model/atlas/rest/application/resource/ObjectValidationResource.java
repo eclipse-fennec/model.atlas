@@ -65,7 +65,6 @@ import io.swagger.v3.oas.annotations.parameters.RequestBody;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.ws.rs.Consumes;
-import jakarta.ws.rs.GET;
 import jakarta.ws.rs.POST;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.PathParam;
@@ -310,12 +309,22 @@ public class ObjectValidationResource {
 						
 					} else {
 						SimpleValidationResult simpleResult = COCLFactory.eINSTANCE.createSimpleValidationResult();
-						                                                                                                                         
-						if (eType instanceof EDataType eDataType) {           
-							simpleResult.setValue(eDataType.getEPackage().getEFactoryInstance().convertToString(eDataType, value));                                                                 
+						if (feature.isMany()) {
+							EList<Object> valueList = (EList<Object>) value;
+							if (eType instanceof EDataType eDataType) {
+								List<String> converted = new ArrayList<>(valueList.size());
+								for (Object v : valueList) {
+									converted.add(eDataType.getEPackage().getEFactoryInstance().convertToString(eDataType, v));
+								}
+								simpleResult.setValue(converted);
+							} else {
+								simpleResult.setValue(new ArrayList<>(valueList));
+							}
+						} else if (eType instanceof EDataType eDataType) {
+							simpleResult.setValue(eDataType.getEPackage().getEFactoryInstance().convertToString(eDataType, value));
 						} else {
-							simpleResult.setValue(value);                                                                                                                                           
-						}                                                                                                                                                                            
+							simpleResult.setValue(value);
+						}
 						response.getResults().add(simpleResult);
 					}
 				}
@@ -383,19 +392,30 @@ public class ObjectValidationResource {
 				}
 			}
 			Object result = validatingObject.eInvoke(objOperation, arguments);
-
-			if (result instanceof EObject eObjResult) {
+			if (result instanceof EList<?> eList) {
+				if (objOperation.getEType() instanceof EClass) {
+					@SuppressWarnings("unchecked")
+					EList<EObject> eObjList = (EList<EObject>) eList;
+					EObjectValidationResult eObjValidationResult = COCLFactory.eINSTANCE.createEObjectValidationResult();
+					eObjValidationResult.getValues().addAll(eObjList);
+					response.getResults().add(eObjValidationResult);
+				} else {
+					SimpleValidationResult simpleResult = COCLFactory.eINSTANCE.createSimpleValidationResult();
+					simpleResult.setValue(new ArrayList<>(eList));
+					response.getResults().add(simpleResult);
+				}
+			} else if (result instanceof EObject eObjResult) {
 				EObjectValidationResult eObjValidationResult = COCLFactory.eINSTANCE.createEObjectValidationResult();
 				eObjValidationResult.getValues().add(eObjResult);
 				response.getResults().add(eObjValidationResult);
 			} else {
 				SimpleValidationResult simpleResult = COCLFactory.eINSTANCE.createSimpleValidationResult();
-				EClassifier eType = objOperation.getEType();                                                                                                                                 
-				if (eType instanceof EDataType eDataType) {           
-					simpleResult.setValue(eDataType.getEPackage().getEFactoryInstance().convertToString(eDataType, result));                                                                 
+				EClassifier eType = objOperation.getEType();
+				if (eType instanceof EDataType eDataType) {
+					simpleResult.setValue(eDataType.getEPackage().getEFactoryInstance().convertToString(eDataType, result));
 				} else {
-					simpleResult.setValue(result);                                                                                                                                           
-				}                                                                                                                                                                            
+					simpleResult.setValue(result);
+				}
 				response.getResults().add(simpleResult);
 			}
 			return Response.status(Response.Status.OK).entity(response).header("Content-Type", mediaType).build();

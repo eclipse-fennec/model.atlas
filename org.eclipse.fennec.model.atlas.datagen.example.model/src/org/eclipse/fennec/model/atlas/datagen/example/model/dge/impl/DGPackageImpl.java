@@ -323,6 +323,16 @@ public class DGPackageImpl extends EPackageImpl implements DGPackage {
 	 * @generated
 	 */
 	@Override
+	public EAttribute getCompany_EmployeesNames() {
+		return (EAttribute)companyEClass.getEStructuralFeatures().get(5);
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
 	public EOperation getCompany__FindEmployeesByNamePrefix__String() {
 		return companyEClass.getEOperations().get(0);
 	}
@@ -388,6 +398,7 @@ public class DGPackageImpl extends EPackageImpl implements DGPackage {
 		createEAttribute(companyEClass, COMPANY__URL);
 		createEReference(companyEClass, COMPANY__ADDRESS);
 		createEReference(companyEClass, COMPANY__EMPLOYEES);
+		createEAttribute(companyEClass, COMPANY__EMPLOYEES_NAMES);
 		createEOperation(companyEClass, COMPANY___FIND_EMPLOYEES_BY_NAME_PREFIX__STRING);
 		createEOperation(companyEClass, COMPANY___GET_TOTAL_EMPLOYEES);
 	}
@@ -444,6 +455,7 @@ public class DGPackageImpl extends EPackageImpl implements DGPackage {
 		initEAttribute(getCompany_Url(), ecorePackage.getEString(), "url", null, 0, 1, Company.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_UNSETTABLE, !IS_ID, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
 		initEReference(getCompany_Address(), this.getAddress(), null, "address", null, 0, 1, Company.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, IS_COMPOSITE, !IS_RESOLVE_PROXIES, !IS_UNSETTABLE, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
 		initEReference(getCompany_Employees(), this.getPerson(), null, "employees", null, 0, -1, Company.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_COMPOSITE, IS_RESOLVE_PROXIES, !IS_UNSETTABLE, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
+		initEAttribute(getCompany_EmployeesNames(), ecorePackage.getEString(), "employeesNames", null, 0, -1, Company.class, IS_TRANSIENT, IS_VOLATILE, !IS_CHANGEABLE, !IS_UNSETTABLE, !IS_ID, IS_UNIQUE, IS_DERIVED, IS_ORDERED);
 
 		EOperation op = initEOperation(getCompany__FindEmployeesByNamePrefix__String(), this.getPerson(), "findEmployeesByNamePrefix", 0, -1, IS_UNIQUE, IS_ORDERED);
 		addEParameter(op, ecorePackage.getEString(), "namePrefix", 0, 1, IS_UNIQUE, IS_ORDERED);
@@ -554,6 +566,12 @@ public class DGPackageImpl extends EPackageImpl implements DGPackage {
 		   source,
 		   new String[] {
 			   "body", "self.employees.size()"
+		   });
+		addAnnotation
+		  (getCompany_EmployeesNames(),
+		   source,
+		   new String[] {
+			   "derivation", "self.employees->collect(e |  e.firstName.concat(\' \').concat(e.lastName))->asSequence()"
 		   });
 	}
 

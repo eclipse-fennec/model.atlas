@@ -31,6 +31,7 @@ import org.eclipse.emf.ecore.EObject;
 import org.eclipse.emf.ecore.EOperation;
 import org.eclipse.emf.ecore.EPackage;
 import org.eclipse.emf.ecore.EParameter;
+import org.eclipse.emf.ecore.EStructuralFeature;
 import org.eclipse.emf.ecore.EcoreFactory;
 import org.eclipse.emf.ecore.EcorePackage;
 import org.eclipse.emf.ecore.resource.Resource;
@@ -38,14 +39,14 @@ import org.eclipse.emf.ecore.resource.ResourceSet;
 import org.eclipse.emf.ecore.xmi.impl.XMIResourceImpl;
 import org.eclipse.fennec.emf.osgi.annotation.require.RequireEMF;
 import org.eclipse.fennec.m2x.ocl.api.OclEngine;
+import org.eclipse.fennec.model.atlas.datagen.example.model.dge.Address;
 import org.eclipse.fennec.model.atlas.datagen.example.model.dge.DGFactory;
 import org.eclipse.fennec.model.atlas.datagen.example.model.dge.DGPackage;
 import org.eclipse.fennec.model.atlas.rest.tests.helper.ResourceAware;
 import org.eclipse.fennec.model.atlas.rest.tests.helper.TestHelper;
-import org.eclipse.emf.ecore.EStructuralFeature;
-import org.eclipse.fennec.model.atlas.datagen.example.model.dge.Address;
 import org.eclipse.fennec.model.atlas.validation.model.cocl.COCLFactory;
 import org.eclipse.fennec.model.atlas.validation.model.cocl.DerivedValidationRequest;
+import org.eclipse.fennec.model.atlas.validation.model.cocl.OperationRequestParameter;
 import org.eclipse.fennec.model.atlas.validation.model.cocl.OperationValidationRequest;
 import org.gecko.emf.rest.annotations.RequireEMFMessageBodyReaderWriter;
 import org.junit.jupiter.api.AfterEach;
@@ -314,6 +315,22 @@ public class ObjectValidationResourceTest {
 		assertNotNull(response.readEntity(String.class), "Response body should not be null");
 	}
 
+	@Test
+	public void testCompute_ValidOperationWithParameters_Returns200() throws Exception {
+		EOperation op = companyOperation("findEmployeesByNamePrefix");
+		OperationValidationRequest request = buildComputeRequest(DGFactory.eINSTANCE.createCompany(), op);
+
+		OperationRequestParameter nameParam = COCLFactory.eINSTANCE.createOperationRequestParameter();
+		nameParam.setParameter(op.getEParameters().get(0));
+		nameParam.setJavaValue("A");
+		request.getParameters().add(nameParam);
+
+		Response response = postComputeRequest(request);
+
+		assertEquals(200, response.getStatus(), "Should return 200 when the operation with parameters is valid and invocation succeeds");
+		assertNotNull(response.readEntity(String.class), "Response body should not be null");
+	}
+
 	// ---- helpers ----
 
 	private EOperation companyOperation(String name) {
@@ -422,6 +439,26 @@ public class ObjectValidationResourceTest {
 		assertNotNull(response.readEntity(String.class), "Response body should not be null");
 	}
 
+	@Test
+	public void testDerive_ManyEObjectFeature_Returns200() throws Exception {
+		org.eclipse.fennec.model.atlas.datagen.example.model.dge.Company company = DGFactory.eINSTANCE.createCompany();
+		EStructuralFeature employeesFeature = DGPackage.eINSTANCE.getCompany().getEStructuralFeature("employees");
+		DerivedValidationRequest request = buildDeriveRequest(company, employeesFeature);
+		Response response = postDeriveRequest(request);
+		assertEquals(200, response.getStatus(), "Should return 200 for a many-valued EClass feature");
+		assertNotNull(response.readEntity(String.class), "Response body should not be null");
+	}
+
+	@Test
+	public void testDerive_ManyEDataTypeFeature_Returns200() throws Exception {
+		org.eclipse.fennec.model.atlas.datagen.example.model.dge.Company company = DGFactory.eINSTANCE.createCompany();
+		EStructuralFeature employeesNamesFeature = DGPackage.eINSTANCE.getCompany().getEStructuralFeature("employeesNames");
+		DerivedValidationRequest request = buildDeriveRequest(company, employeesNamesFeature);
+		Response response = postDeriveRequest(request);
+		assertEquals(200, response.getStatus(), "Should return 200 for a many-valued EDataType feature");
+		assertNotNull(response.readEntity(String.class), "Response body should not be null");
+	}
+
 	// ---- derive helpers ----
 
 	private DerivedValidationRequest buildDeriveRequest(EObject validationObject, EStructuralFeature... features) {
@@ -437,6 +474,7 @@ public class ObjectValidationResourceTest {
 
 	private Response postDeriveRequest(DerivedValidationRequest request) throws Exception {
 		String xmiContent = TestHelper.serializeToXMI(request, resourceSet);
+		System.out.println(xmiContent);
 		return restClient.target(BASE_URL).path("validate/derive")
 				.request("application/json")
 				.post(Entity.entity(xmiContent, "application/xmi"));

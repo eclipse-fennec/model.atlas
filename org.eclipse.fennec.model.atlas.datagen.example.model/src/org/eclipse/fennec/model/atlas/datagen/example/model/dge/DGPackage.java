@@ -286,13 +286,22 @@ public interface DGPackage extends org.eclipse.emf.ecore.EPackage {
 	int COMPANY__EMPLOYEES = 4;
 
 	/**
+	 * The feature id for the '<em><b>Employees Names</b></em>' attribute list.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 * @ordered
+	 */
+	int COMPANY__EMPLOYEES_NAMES = 5;
+
+	/**
 	 * The number of structural features of the '<em>Company</em>' class.
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
 	 * @generated
 	 * @ordered
 	 */
-	int COMPANY_FEATURE_COUNT = 5;
+	int COMPANY_FEATURE_COUNT = 6;
 
 	/**
 	 * The operation id for the '<em>Find Employees By Name Prefix</em>' operation.
@@ -540,6 +549,17 @@ public interface DGPackage extends org.eclipse.emf.ecore.EPackage {
 	EReference getCompany_Employees();
 
 	/**
+	 * Returns the meta object for the attribute list '{@link org.eclipse.fennec.model.atlas.datagen.example.model.dge.Company#getEmployeesNames <em>Employees Names</em>}'.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @return the meta object for the attribute list '<em>Employees Names</em>'.
+	 * @see org.eclipse.fennec.model.atlas.datagen.example.model.dge.Company#getEmployeesNames()
+	 * @see #getCompany()
+	 * @generated
+	 */
+	EAttribute getCompany_EmployeesNames();
+
+	/**
 	 * Returns the meta object for the '{@link org.eclipse.fennec.model.atlas.datagen.example.model.dge.Company#findEmployeesByNamePrefix(java.lang.String) <em>Find Employees By Name Prefix</em>}' operation.
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
@@ -747,6 +767,14 @@ public interface DGPackage extends org.eclipse.emf.ecore.EPackage {
 		 * @generated
 		 */
 		EReference COMPANY__EMPLOYEES = eINSTANCE.getCompany_Employees();
+
+		/**
+		 * The meta object literal for the '<em><b>Employees Names</b></em>' attribute list feature.
+		 * <!-- begin-user-doc -->
+		 * <!-- end-user-doc -->
+		 * @generated
+		 */
+		EAttribute COMPANY__EMPLOYEES_NAMES = eINSTANCE.getCompany_EmployeesNames();
 
 		/**
 		 * The meta object literal for the '<em><b>Find Employees By Name Prefix</b></em>' operation.

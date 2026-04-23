@@ -77,7 +77,7 @@ When no constraints are violated the diagnostic carries severity `INFO` and an e
 
 ## POST /validate/{oclId}
 
-Validates an EObject against both its EMF model constraints and an additional C-OCL constraint set stored in the `jena` scope registry.
+Validates an EObject against both its EMF model constraints and an additional C-OCL constraint set stored in the `jena` scope `cocl` registry (stage `release`).
 
 **Path parameter:** `oclId` — the identifier of the `OclConstraintSet` to apply
 
@@ -106,7 +106,8 @@ The request body is a `DerivedValidationRequest` containing:
 
 The response is a `ValidationResponse` with role `DERIVED`. Each requested feature produces one entry in `results`:
 - If the feature type is an `EClass` → `EObjectValidationResult` with the values list populated (supports multi-valued references)
-- If the feature type is an `EDataType` → `SimpleValidationResult` with the value serialized to its canonical string form via the EDataType factory
+- If the feature type is an `EDataType` and the feature is single-valued → `SimpleValidationResult` with the value serialized to its canonical string form via the EDataType factory
+- If the feature type is an `EDataType` and the feature is multi-valued → `SimpleValidationResult` with the value as a JSON array of strings, each element converted via the EDataType factory
 
 ### Constructing the request
 
@@ -126,7 +127,7 @@ The `dge` model defines `Person.fullName` as a derived `EString` feature (concat
   xmlns:ecore="http://www.eclipse.org/emf/2002/Ecore">
   <validationObjects xsi:type="dge:Person"
     firstName="Jane" lastName="Doe"/>
-  <derivedFeature href="https://dg.de/1.0#//Person/fullName"/>
+  <derivedFeature xsi:type="ecore:EAttribute" href="https://dg.de/1.0#//Person/fullName"/>
 </cocl:DerivedValidationRequest>
 ```
 
@@ -165,11 +166,12 @@ Accept: application/json
   xmlns:xmi="http://www.omg.org/XMI"
   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
   xmlns:cocl="http://www.gme.org/cocl/1.0"
-  xmlns:dge="https://dg.de/1.0">
+  xmlns:dge="https://dg.de/1.0"
+  xmlns:ecore="http://www.eclipse.org/emf/2002/Ecore">
   <validationObjects xsi:type="dge:Company" name="Acme">
     <address street="Main St" city="Springfield" zipCode="12345" country="US"/>
   </validationObjects>
-  <derivedFeature href="https://dg.de/1.0#//Company/address"/>
+  <derivedFeature xsi:type="ecore:EReference" href="https://dg.de/1.0#//Company/address"/>
 </cocl:DerivedValidationRequest>
 ```
 
@@ -202,6 +204,53 @@ Accept: application/json
 }
 ```
 
+**Example — compute the `employeesNames` derived attribute on a Company**
+
+`employeesNames` is a derived, multi-valued `EString` attribute on `Company`. It returns the full name (first + last) of every employee via the OCL expression `self.employees->collect(e | e.firstName.concat(' ').concat(e.lastName))`.
+
+```xml
+<?xml version="1.0" encoding="ASCII"?>
+<cocl:DerivedValidationRequest xmi:version="2.0"
+  xmlns:xmi="http://www.omg.org/XMI"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xmlns:cocl="http://www.gme.org/cocl/1.0"
+  xmlns:dge="https://dg.de/1.0"
+  xmlns:ecore="http://www.eclipse.org/emf/2002/Ecore">
+  <validationObjects xsi:type="dge:Company" name="Acme">
+    <employees firstName="Jane" lastName="Doe"/>
+    <employees firstName="John" lastName="Doe"/>
+  </validationObjects>
+  <derivedFeature xsi:type="ecore:EAttribute" href="https://dg.de/1.0#//Company/employeesNames"/>
+</cocl:DerivedValidationRequest>
+```
+
+```
+POST /validate/derive
+Content-Type: application/xmi
+Accept: application/json
+```
+
+**Response 200**
+
+```json
+{
+  "role": "DERIVED",
+  "results": [
+    {
+      "eClass": "SimpleValidationResult",
+      "value": ["Jane Doe", "John Doe"]
+    }
+  ],
+  "diagnostics": [
+    {
+      "type": "INFO",
+      "source": "employeesNames",
+      "message": "Succesfully computed derived feature"
+    }
+  ]
+}
+```
+
 **Error responses**
 
 | Code | Reason |
@@ -219,7 +268,7 @@ Invokes an `EOperation` on an EObject and returns the result.
 The request body is an `OperationValidationRequest` containing:
 - `validationObjects` — exactly one EObject on which to invoke the operation
 - `operation` — the `EOperation` to invoke, serialized as a **contained** element whose name must match an operation declared on the object's EClass; the signature (return type and parameter types) is validated before invocation
-- `parameters` — zero or more `OperationRequestParameter` entries supplying argument values; each parameter carries either a string value (`javaValue`), an EObject value (`eValue`), or a null flag (`isNull`). The `javaValue` is converted to the correct Java type on the server using the corresponding `EParameter`'s `EDataType` factory (`createFromString`)
+- `parameters` — zero or more `OperationRequestParameter` entries supplying argument values; each parameter carries either a Java primitive value (`javaValue`), an EObject value (`eValue`), or a null flag (`isNull`)
 
 The operation name is matched against the operations of the object's EClass. The signature (return type and each parameter type) must match exactly.
 
@@ -243,7 +292,11 @@ The `operation` element is containment: it is serialized inline. Its `eType` and
   xmlns:cocl="http://www.gme.org/cocl/1.0"
   xmlns:dge="https://dg.de/1.0"
   xmlns:ecore="http://www.eclipse.org/emf/2002/Ecore">
-  <validationObjects xsi:type="dge:Company" name="Acme"/>
+  <validationObjects xsi:type="dge:Company" name="Acme">
+    <employees firstName="Jane" lastName="Doe"/>
+    <employees firstName="John" lastName="Doe"/>
+    <employees firstName="Alice" lastName="Smith"/>
+  </validationObjects>
   <operation name="getTotalEmployees">
     <eType xsi:type="ecore:EDataType" href="http://www.eclipse.org/emf/2002/Ecore#//EInt"/>
   </operation>
@@ -264,14 +317,14 @@ Accept: application/json
   "results": [
     {
       "eClass": "SimpleValidationResult",
-      "value": "0"
+      "value": "3"
     }
   ],
   "diagnostics": []
 }
 ```
 
-The value `"0"` is the string form of the integer `0` (the company has no employees). The client reconstructs it with `EcorePackage.eINSTANCE.getEFactoryInstance().createFromString(EcorePackage.Literals.EINT, "0")`.
+The value `"3"` is the string form of the integer `3` (the company has three employees). The client reconstructs it with `EcorePackage.eINSTANCE.getEFactoryInstance().createFromString(EcorePackage.Literals.EINT, "3")`.
 
 **Example — invoke `findEmployeesByNamePrefix(namePrefix)` on a Company**
 
@@ -296,7 +349,7 @@ The value `"0"` is the string form of the integer `0` (the company has no employ
       <eType xsi:type="ecore:EDataType" href="http://www.eclipse.org/emf/2002/Ecore#//EString"/>
     </eParameters>
   </operation>
-  <parameters javaValue="D"/>
+  <parameters javaValue="J"/>
 </cocl:OperationValidationRequest>
 ```
 
