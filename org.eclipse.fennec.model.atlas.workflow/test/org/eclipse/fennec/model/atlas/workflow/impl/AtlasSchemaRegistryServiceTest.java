@@ -41,6 +41,7 @@ import org.eclipse.fennec.model.atlas.mgmt.api.EObjectRegistryService;
 import org.eclipse.fennec.model.atlas.mgmt.management.ManagementFactory;
 import org.eclipse.fennec.model.atlas.mgmt.management.ObjectMetadata;
 import org.eclipse.fennec.model.atlas.wf.workflowapi.Registry;
+import org.eclipse.fennec.model.atlas.wf.workflowapi.RegistryType;
 import org.eclipse.fennec.model.atlas.wf.workflowapi.Stage;
 import org.eclipse.fennec.model.atlas.workflow.WorkflowConstants;
 import org.junit.jupiter.api.BeforeEach;
@@ -90,7 +91,7 @@ public class AtlasSchemaRegistryServiceTest {
 		@DisplayName("Should create registry marked as schema registry")
 		void shouldCreateRegistryMarkedAsSchemaRegistry() {
 			Registry registry = service.getRegistry();
-			assertTrue(registry.isSchemaRegistry());
+			assertEquals(RegistryType.SCHEMA, registry.getType());
 		}
 
 		@Test

@@ -28,6 +28,7 @@ import org.eclipse.fennec.model.atlas.mgmt.management.ManagementFactory;
 import org.eclipse.fennec.model.atlas.mgmt.management.ObjectMetadata;
 import org.eclipse.fennec.model.atlas.wf.workflowapi.Registry;
 import org.eclipse.fennec.model.atlas.wf.workflowapi.RegistryService;
+import org.eclipse.fennec.model.atlas.wf.workflowapi.RegistryType;
 import org.eclipse.fennec.model.atlas.wf.workflowapi.Stage;
 import org.eclipse.fennec.model.atlas.wf.workflowapi.WorkflowApiFactory;
 import org.eclipse.fennec.model.atlas.workflow.WorkflowConstants;
@@ -46,9 +47,9 @@ import org.osgi.util.promise.Promise;
  */
 @Component(name = "AtlasSchemaRegistryService", immediate = true,
 property = {
-		"registry.name="+WorkflowConstants.ATLAS_SCHEMA_REGISTRY_NAME, 
+		"registry.name="+WorkflowConstants.ATLAS_SCHEMA_REGISTRY_NAME,
 		"registry.description=Atlas Schema Registry, where all the system schemas are managed.",
-		"schema.registry:Boolean=true"
+		"registry.type=SCHEMA"
 		})
 public class AtlasSchemaRegistryService implements RegistryService<EPackage> {
 	
@@ -282,7 +283,7 @@ public class AtlasSchemaRegistryService implements RegistryService<EPackage> {
         Registry registry = WorkflowApiFactory.eINSTANCE.createRegistry();
         registry.setName(WorkflowConstants.ATLAS_SCHEMA_REGISTRY_NAME);
         registry.setDescription("Atlas Schema Registry, where all the system schemas are managed.");
-        registry.setSchemaRegistry(true);
+        registry.setType(RegistryType.SCHEMA);
         
         Stage stage = WorkflowApiFactory.eINSTANCE.createStage();
         stage.setName(WorkflowConstants.ATLAS_SCHEMA_REGISTRY_STAGE_NAME);

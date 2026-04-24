@@ -20,7 +20,9 @@
       "WebSearch",
       "Bash(ls -1d /opt/git/fennec-model.atlas/org.eclipse.fennec.model.atlas* | sort)",
       "Bash(wc:*)",
-      "mcp__osgi-mcp-server__document_chunk_semantic_search"
+      "mcp__osgi-mcp-server__document_chunk_semantic_search",
+      "Bash(xargs ls *)",
+      "Bash(grep -E \"\\\\.\\(ecore|genmodel\\)$\")"
     ],
     "deny": [],
     "ask": []

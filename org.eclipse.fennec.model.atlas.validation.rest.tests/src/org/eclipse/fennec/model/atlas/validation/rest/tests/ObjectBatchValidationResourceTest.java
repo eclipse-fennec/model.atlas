@@ -11,7 +11,7 @@
  * Contributors:
  *     Data In Motion - initial API and implementation
  */
-package org.eclipse.fennec.model.atlas.rest.tests;
+package org.eclipse.fennec.model.atlas.validation.rest.tests;
 
 import static java.util.Objects.nonNull;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -29,10 +29,6 @@ import org.eclipse.fennec.model.atlas.datagen.example.model.dge.Company;
 import org.eclipse.fennec.model.atlas.datagen.example.model.dge.DGFactory;
 import org.eclipse.fennec.model.atlas.mgmt.management.ManagementFactory;
 import org.eclipse.fennec.model.atlas.mgmt.management.ObjectMetadata;
-import org.eclipse.fennec.model.atlas.rest.tests.helper.ResourceAware;
-import org.eclipse.fennec.model.atlas.rest.tests.helper.TestAnnotations;
-import org.eclipse.fennec.model.atlas.rest.tests.helper.TestAnnotations.JenaScopeServiceSetup;
-import org.eclipse.fennec.model.atlas.rest.tests.helper.TestHelper;
 import org.eclipse.fennec.model.atlas.validation.model.cocl.BatchValidationRequest;
 import org.eclipse.fennec.model.atlas.validation.model.cocl.COCLFactory;
 import org.eclipse.fennec.model.atlas.validation.model.cocl.COCLPackage;
@@ -40,6 +36,10 @@ import org.eclipse.fennec.model.atlas.validation.model.cocl.OclConstraint;
 import org.eclipse.fennec.model.atlas.validation.model.cocl.OclConstraintSet;
 import org.eclipse.fennec.model.atlas.validation.model.cocl.OclRole;
 import org.eclipse.fennec.model.atlas.validation.model.cocl.Severity;
+import org.eclipse.fennec.model.atlas.validation.rest.tests.helper.ResourceAware;
+import org.eclipse.fennec.model.atlas.validation.rest.tests.helper.TestAnnotations;
+import org.eclipse.fennec.model.atlas.validation.rest.tests.helper.TestAnnotations.JenaScopeServiceSetup;
+import org.eclipse.fennec.model.atlas.validation.rest.tests.helper.TestHelper;
 import org.eclipse.fennec.model.atlas.wf.workflowapi.ScopeService;
 import org.gecko.emf.rest.annotations.RequireEMFMessageBodyReaderWriter;
 import org.junit.jupiter.api.AfterEach;
@@ -415,15 +415,15 @@ public class ObjectBatchValidationResourceTest {
 
 	private Response postValidateRequest(BatchValidationRequest request) throws Exception {
 		String xmiContent = TestHelper.serializeToXMI(request, resourceSet);
-		return restClient.target(BASE_URL).path("validate/batch")
-				.request("application/json")
+		return restClient.target(BASE_URL).path("jena/release/validate/batch")
+				.request("application/xmi")
 				.post(Entity.entity(xmiContent, "application/xmi"));
 	}
 
 	private Response postFilterRequest(BatchValidationRequest request) throws Exception {
 		String xmiContent = TestHelper.serializeToXMI(request, resourceSet);
-		return restClient.target(BASE_URL).path("validate/batch/filter")
-				.request("application/json")
+		return restClient.target(BASE_URL).path("jena/release/validate/batch/filter")
+				.request("application/xmi")
 				.post(Entity.entity(xmiContent, "application/xmi"));
 	}
 }

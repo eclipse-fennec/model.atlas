@@ -12,7 +12,7 @@
         "registryService.cardinality.minimum:int": 1
     },
     "RegistryService~schema": {
-    	"schema.registry": true,
+        "registry.type": "SCHEMA",
         "registry.name": "schema",
         "registry.description": "The schema registry to store EPackage objects",
         "postReleaseActionService.target": "(component.name=EPackagePostReleaseActionService)",
@@ -110,6 +110,7 @@
         "resourceSet.target": "(emf.name=ecore)"
     },
     "RegistryService~ocl": {
+        "registry.type": "COCL",
         "registry.name": "cocl",
         "registry.description": "The cocl Registry to store OclConstraintSet objects",
         "stage.storage.mappings": [

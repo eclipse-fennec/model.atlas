@@ -1,10 +1,10 @@
 # Object Batch Validation Resource
 
-The Object Batch Validation Resource exposes endpoints for validating and filtering collections of EMF model objects (EObjects) against a C-OCL constraint set. All endpoints are rooted at `/validate/batch` and accept and produce `application/xmi` or `application/json`.
+The Object Batch Validation Resource exposes endpoints for validating and filtering collections of EMF model objects (EObjects) against a C-OCL constraint set. All endpoints are rooted at `/{scopeName}/{stageName}/validate/batch` and accept and produce `application/xmi` or `application/json`.
 
-The C-OCL constraint set is resolved at request time from the `jena` scope, `cocl` registry, `release` stage using the `coclId` supplied in the request body. The constraint set must be pre-loaded into that registry before any batch request is made.
+The C-OCL constraint set is resolved at request time using the `coclId` supplied in the request body. The service finds the registry of type `COCL` in the given scope and fetches the object from its final stage. The constraint set must be pre-loaded into that registry before any batch request is made.
 
-The examples below use the `dge` example model (namespace URI `https://dg.de/1.0`) which defines `Company`, `Person`, and `Address`.
+The examples below use scope `jena` and stage `release`, and the `dge` example model (namespace URI `https://dg.de/1.0`) which defines `Company`, `Person`, and `Address`.
 
 ---
 
@@ -12,20 +12,20 @@ The examples below use the `dge` example model (namespace URI `https://dg.de/1.0
 
 | Method | Path | Description |
 |--------|------|-------------|
-| `POST` | `/validate/batch` | Validate a collection of EObjects against their model constraints and a C-OCL constraint set |
-| `POST` | `/validate/batch/filter` | Filter a collection of EObjects using the REFERENCE_FILTER constraints in a C-OCL constraint set |
+| `POST` | `/{scopeName}/{stageName}/validate/batch` | Validate a collection of EObjects against their model constraints and a C-OCL constraint set |
+| `POST` | `/{scopeName}/{stageName}/validate/batch/filter` | Filter a collection of EObjects using the REFERENCE_FILTER constraints in a C-OCL constraint set |
 
 ### Optional query parameter
 
 Both endpoints accept an optional `mediaType` query parameter that overrides the `Accept` header to control the response content type:
 
 ```
-POST /validate/batch?mediaType=application/json
+POST /jena/release/validate/batch?mediaType=application/json
 ```
 
 ---
 
-## POST /validate/batch
+## POST /{scopeName}/{stageName}/validate/batch
 
 Validates each EObject in the collection against:
 1. The EMF model's own constraints (via `Diagnostician`)
@@ -65,7 +65,7 @@ Suppose the `cocl` registry at stage `release` contains an `OclConstraintSet` wi
 ```
 
 ```
-POST /validate/batch
+POST /jena/release/validate/batch
 Content-Type: application/xmi
 Accept: application/json
 ```
@@ -185,11 +185,11 @@ Here we use an inline `filterConstraint` to skip companies that have no address 
 
 ---
 
-## POST /validate/batch/filter
+## POST /{scopeName}/{stageName}/validate/batch/filter
 
 Evaluates every active `REFERENCE_FILTER` constraint in the referenced `OclConstraintSet` against each object. Objects that fail any filter constraint are excluded from the result; objects that pass all constraints are retained.
 
-**Request body:** `BatchValidationRequest` serialized as XMI (same structure as `/validate/batch`, `filterConstraint` field is ignored)
+**Request body:** `BatchValidationRequest` serialized as XMI (same structure as `/{scopeName}/{stageName}/validate/batch`, `filterConstraint` field is ignored)
 
 **Response:** `ValidationResponse` with `role: REFERENCE_FILTER` and one `EObjectValidationResult` entry per object in `results`. A retained object has a non-empty `values` list; a filtered-out object has an empty `values` list. Each result also carries a `diagnostics` list explaining the outcome for that object.
 
@@ -219,7 +219,7 @@ Evaluates every active `REFERENCE_FILTER` constraint in the referenced `OclConst
 ```
 
 ```
-POST /validate/batch/filter
+POST /jena/release/validate/batch/filter
 Content-Type: application/xmi
 Accept: application/json
 ```
@@ -292,13 +292,13 @@ When the referenced `OclConstraintSet` contains no active `REFERENCE_FILTER` con
 
 ## C-OCL Constraint Set format
 
-Both endpoints look up an `OclConstraintSet` by `coclId` from the `jena` scope → `cocl` registry → `release` stage. The constraint set must be uploaded before any batch request is made.
+Both endpoints resolve the `OclConstraintSet` identified by `coclId` at request time. The service finds the one registry of type `COCL` in the given scope and fetches the object from its final stage. The constraint set must be uploaded before any batch request is made.
 
 The relevant constraint roles are:
 
 | Role | Used by |
 |------|---------|
-| `VALIDATION` | `/validate/batch` — applied to each object (or each filtered object) |
-| `REFERENCE_FILTER` | `/validate/batch/filter` — determines which objects to retain; also used as the inline `filterConstraint` role in `/validate/batch` |
+| `VALIDATION` | `/{scopeName}/{stageName}/validate/batch` — applied to each object (or each filtered object) |
+| `REFERENCE_FILTER` | `/{scopeName}/{stageName}/validate/batch/filter` — determines which objects to retain; also used as the inline `filterConstraint` role in `/{scopeName}/{stageName}/validate/batch` |
 
 Only constraints with `active="true"` are evaluated.

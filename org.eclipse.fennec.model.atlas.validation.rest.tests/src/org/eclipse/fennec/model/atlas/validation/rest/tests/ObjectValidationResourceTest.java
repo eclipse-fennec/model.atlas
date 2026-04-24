@@ -11,7 +11,7 @@
  * Contributors:
  *     Data In Motion - initial API and implementation
  */
-package org.eclipse.fennec.model.atlas.rest.tests;
+package org.eclipse.fennec.model.atlas.validation.rest.tests;
 
 import static java.util.Objects.nonNull;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -42,8 +42,8 @@ import org.eclipse.fennec.m2x.ocl.api.OclEngine;
 import org.eclipse.fennec.model.atlas.datagen.example.model.dge.Address;
 import org.eclipse.fennec.model.atlas.datagen.example.model.dge.DGFactory;
 import org.eclipse.fennec.model.atlas.datagen.example.model.dge.DGPackage;
-import org.eclipse.fennec.model.atlas.rest.tests.helper.ResourceAware;
-import org.eclipse.fennec.model.atlas.rest.tests.helper.TestHelper;
+import org.eclipse.fennec.model.atlas.validation.rest.tests.helper.ResourceAware;
+import org.eclipse.fennec.model.atlas.validation.rest.tests.helper.TestHelper;
 import org.eclipse.fennec.model.atlas.validation.model.cocl.COCLFactory;
 import org.eclipse.fennec.model.atlas.validation.model.cocl.DerivedValidationRequest;
 import org.eclipse.fennec.model.atlas.validation.model.cocl.OperationRequestParameter;
@@ -173,7 +173,7 @@ public class ObjectValidationResourceTest {
 		EPackage validPackage = TestHelper.createTestEPackage("http://test.com/valid/1.0", "ValidPackage", "vp");
 		String xmiContent = TestHelper.serializeToXMI(validPackage, resourceSet);
 
-		Response response = restClient.target(BASE_URL).path("validate").request("application/xmi")
+		Response response = restClient.target(BASE_URL).path("jena/release/validate").request("application/xmi")
 				.post(Entity.entity(xmiContent, "application/xmi"));
 
 		assertEquals(200, response.getStatus(), "Should return HTTP 200 OK");
@@ -187,7 +187,7 @@ public class ObjectValidationResourceTest {
 		EPackage validPackage = TestHelper.createTestEPackage("http://test.com/diag/1.0", "DiagPackage", "dp");
 		String xmiContent = TestHelper.serializeToXMI(validPackage, resourceSet);
 
-		Response response = restClient.target(BASE_URL).path("validate").request("application/json")
+		Response response = restClient.target(BASE_URL).path("jena/release/validate").request("application/xmi")
 				.post(Entity.entity(xmiContent, "application/xmi"));
 
 		assertEquals(200, response.getStatus(), "Should return HTTP 200 OK");
@@ -205,7 +205,7 @@ public class ObjectValidationResourceTest {
 		EPackage validPackage = TestHelper.createTestEPackage("http://test.com/unsup/1.0", "UnsupPackage", "up");
 		String xmiContent = TestHelper.serializeToXMI(validPackage, resourceSet);
 
-		Response response = restClient.target(BASE_URL).path("validate")
+		Response response = restClient.target(BASE_URL).path("jena/release/validate")
 				.queryParam("mediaType", "application/unsupported").request("application/xmi")
 				.post(Entity.entity(xmiContent, "application/xmi"));
 
@@ -217,7 +217,7 @@ public class ObjectValidationResourceTest {
 		EPackage validPackage = TestHelper.createTestEPackage("http://test.com/mt/1.0", "MtPackage", "mt");
 		String xmiContent = TestHelper.serializeToXMI(validPackage, resourceSet);
 
-		Response response = restClient.target(BASE_URL).path("validate")
+		Response response = restClient.target(BASE_URL).path("jena/release/validate")
 				.queryParam("mediaType", "application/xml").request("application/xmi")
 				.post(Entity.entity(xmiContent, "application/xmi"));
 
@@ -231,7 +231,7 @@ public class ObjectValidationResourceTest {
 		EPackage validPackage = TestHelper.createTestEPackage("http://test.com/def/1.0", "DefPackage", "def");
 		String xmiContent = TestHelper.serializeToXMI(validPackage, resourceSet);
 
-		Response response = restClient.target(BASE_URL).path("validate").request("text/plain")
+		Response response = restClient.target(BASE_URL).path("jena/release/validate").request("text/plain")
 				.post(Entity.entity(xmiContent, "application/xmi"));
 
 		assertEquals(406, response.getStatus(), "Should return HTTP 406 Not Acceptable for unsupported Accept header");
@@ -387,8 +387,8 @@ public class ObjectValidationResourceTest {
 
 	private Response postComputeRequest(OperationValidationRequest request) throws Exception {
 		String xmiContent = TestHelper.serializeToXMI(request, resourceSet);
-		return restClient.target(BASE_URL).path("validate/compute")
-				.request("application/json")
+		return restClient.target(BASE_URL).path("jena/release/validate/compute")
+				.request("application/xmi")
 				.post(Entity.entity(xmiContent, "application/xmi"));
 	}
 
@@ -475,8 +475,8 @@ public class ObjectValidationResourceTest {
 	private Response postDeriveRequest(DerivedValidationRequest request) throws Exception {
 		String xmiContent = TestHelper.serializeToXMI(request, resourceSet);
 		System.out.println(xmiContent);
-		return restClient.target(BASE_URL).path("validate/derive")
-				.request("application/json")
+		return restClient.target(BASE_URL).path("jena/release/validate/derive")
+				.request("application/xmi")
 				.post(Entity.entity(xmiContent, "application/xmi"));
 	}
 }
