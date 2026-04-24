@@ -81,7 +81,7 @@ public class OperationRequestParameterImpl extends MinimalEObjectImpl.Container 
 	 * @generated
 	 * @ordered
 	 */
-	protected static final Object JAVA_VALUE_EDEFAULT = null;
+	protected static final String JAVA_VALUE_EDEFAULT = null;
 
 	/**
 	 * The cached value of the '{@link #getJavaValue() <em>Java Value</em>}' attribute.
@@ -91,7 +91,7 @@ public class OperationRequestParameterImpl extends MinimalEObjectImpl.Container 
 	 * @generated
 	 * @ordered
 	 */
-	protected Object javaValue = JAVA_VALUE_EDEFAULT;
+	protected String javaValue = JAVA_VALUE_EDEFAULT;
 
 	/**
 	 * The cached value of the '{@link #getEValue() <em>EValue</em>}' containment reference.
@@ -191,7 +191,7 @@ public class OperationRequestParameterImpl extends MinimalEObjectImpl.Container 
 	 * @generated
 	 */
 	@Override
-	public Object getJavaValue() {
+	public String getJavaValue() {
 		return javaValue;
 	}
 
@@ -201,8 +201,8 @@ public class OperationRequestParameterImpl extends MinimalEObjectImpl.Container 
 	 * @generated
 	 */
 	@Override
-	public void setJavaValue(Object newJavaValue) {
-		Object oldJavaValue = javaValue;
+	public void setJavaValue(String newJavaValue) {
+		String oldJavaValue = javaValue;
 		javaValue = newJavaValue;
 		if (eNotificationRequired())
 			eNotify(new ENotificationImpl(this, Notification.SET, COCLPackage.OPERATION_REQUEST_PARAMETER__JAVA_VALUE, oldJavaValue, javaValue));
@@ -303,7 +303,7 @@ public class OperationRequestParameterImpl extends MinimalEObjectImpl.Container 
 				setIsNull((Boolean)newValue);
 				return;
 			case COCLPackage.OPERATION_REQUEST_PARAMETER__JAVA_VALUE:
-				setJavaValue(newValue);
+				setJavaValue((String)newValue);
 				return;
 			case COCLPackage.OPERATION_REQUEST_PARAMETER__EVALUE:
 				setEValue((EObject)newValue);

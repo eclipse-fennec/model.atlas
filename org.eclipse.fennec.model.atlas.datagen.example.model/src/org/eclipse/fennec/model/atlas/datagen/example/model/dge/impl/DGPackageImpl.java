@@ -4,6 +4,7 @@ package org.eclipse.fennec.model.atlas.datagen.example.model.dge.impl;
 
 import org.eclipse.emf.ecore.EAttribute;
 import org.eclipse.emf.ecore.EClass;
+import org.eclipse.emf.ecore.EOperation;
 import org.eclipse.emf.ecore.EPackage;
 import org.eclipse.emf.ecore.EReference;
 import org.eclipse.emf.ecore.EValidator;
@@ -202,6 +203,16 @@ public class DGPackageImpl extends EPackageImpl implements DGPackage {
 	 * @generated
 	 */
 	@Override
+	public EAttribute getPerson_FullName() {
+		return (EAttribute)personEClass.getEStructuralFeatures().get(7);
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
 	public EClass getAddress() {
 		return addressEClass;
 	}
@@ -312,6 +323,36 @@ public class DGPackageImpl extends EPackageImpl implements DGPackage {
 	 * @generated
 	 */
 	@Override
+	public EAttribute getCompany_EmployeesNames() {
+		return (EAttribute)companyEClass.getEStructuralFeatures().get(5);
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
+	public EOperation getCompany__FindEmployeesByNamePrefix__String() {
+		return companyEClass.getEOperations().get(0);
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
+	public EOperation getCompany__GetTotalEmployees() {
+		return companyEClass.getEOperations().get(1);
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
 	public DGFactory getDGFactory() {
 		return (DGFactory)getEFactoryInstance();
 	}
@@ -343,6 +384,7 @@ public class DGPackageImpl extends EPackageImpl implements DGPackage {
 		createEAttribute(personEClass, PERSON__JOB_TITLE);
 		createEReference(personEClass, PERSON__ADDRESS);
 		createEReference(personEClass, PERSON__COMPANY);
+		createEAttribute(personEClass, PERSON__FULL_NAME);
 
 		addressEClass = createEClass(ADDRESS);
 		createEAttribute(addressEClass, ADDRESS__STREET);
@@ -356,6 +398,9 @@ public class DGPackageImpl extends EPackageImpl implements DGPackage {
 		createEAttribute(companyEClass, COMPANY__URL);
 		createEReference(companyEClass, COMPANY__ADDRESS);
 		createEReference(companyEClass, COMPANY__EMPLOYEES);
+		createEAttribute(companyEClass, COMPANY__EMPLOYEES_NAMES);
+		createEOperation(companyEClass, COMPANY___FIND_EMPLOYEES_BY_NAME_PREFIX__STRING);
+		createEOperation(companyEClass, COMPANY___GET_TOTAL_EMPLOYEES);
 	}
 
 	/**
@@ -396,6 +441,7 @@ public class DGPackageImpl extends EPackageImpl implements DGPackage {
 		initEAttribute(getPerson_JobTitle(), ecorePackage.getEString(), "jobTitle", null, 0, 1, Person.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_UNSETTABLE, !IS_ID, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
 		initEReference(getPerson_Address(), this.getAddress(), null, "address", null, 0, 1, Person.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_COMPOSITE, IS_RESOLVE_PROXIES, !IS_UNSETTABLE, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
 		initEReference(getPerson_Company(), this.getCompany(), null, "company", null, 0, 1, Person.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_COMPOSITE, IS_RESOLVE_PROXIES, !IS_UNSETTABLE, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
+		initEAttribute(getPerson_FullName(), ecorePackage.getEString(), "fullName", null, 0, 1, Person.class, IS_TRANSIENT, IS_VOLATILE, !IS_CHANGEABLE, !IS_UNSETTABLE, !IS_ID, IS_UNIQUE, IS_DERIVED, IS_ORDERED);
 
 		initEClass(addressEClass, Address.class, "Address", !IS_ABSTRACT, !IS_INTERFACE, IS_GENERATED_INSTANCE_CLASS);
 		initEAttribute(getAddress_Street(), ecorePackage.getEString(), "street", null, 0, 1, Address.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_UNSETTABLE, !IS_ID, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
@@ -409,6 +455,12 @@ public class DGPackageImpl extends EPackageImpl implements DGPackage {
 		initEAttribute(getCompany_Url(), ecorePackage.getEString(), "url", null, 0, 1, Company.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_UNSETTABLE, !IS_ID, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
 		initEReference(getCompany_Address(), this.getAddress(), null, "address", null, 0, 1, Company.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, IS_COMPOSITE, !IS_RESOLVE_PROXIES, !IS_UNSETTABLE, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
 		initEReference(getCompany_Employees(), this.getPerson(), null, "employees", null, 0, -1, Company.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_COMPOSITE, IS_RESOLVE_PROXIES, !IS_UNSETTABLE, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
+		initEAttribute(getCompany_EmployeesNames(), ecorePackage.getEString(), "employeesNames", null, 0, -1, Company.class, IS_TRANSIENT, IS_VOLATILE, !IS_CHANGEABLE, !IS_UNSETTABLE, !IS_ID, IS_UNIQUE, IS_DERIVED, IS_ORDERED);
+
+		EOperation op = initEOperation(getCompany__FindEmployeesByNamePrefix__String(), this.getPerson(), "findEmployeesByNamePrefix", 0, -1, IS_UNIQUE, IS_ORDERED);
+		addEParameter(op, ecorePackage.getEString(), "namePrefix", 0, 1, IS_UNIQUE, IS_ORDERED);
+
+		initEOperation(getCompany__GetTotalEmployees(), ecorePackage.getEInt(), "getTotalEmployees", 0, 1, IS_UNIQUE, IS_ORDERED);
 
 		// Create resource
 		createResource(eNS_URI);
@@ -471,7 +523,9 @@ public class DGPackageImpl extends EPackageImpl implements DGPackage {
 		  (this,
 		   source,
 		   new String[] {
-			   "validationDelegates", "http://www.eclipse.org/fennec/m2x/ocl/1.0"
+			   "validationDelegates", "http://www.eclipse.org/fennec/m2x/ocl/1.0",
+			   "settingDelegates", "http://www.eclipse.org/fennec/m2x/ocl/1.0",
+			   "invocationDelegates", "http://www.eclipse.org/fennec/m2x/ocl/1.0"
 		   });
 		addAnnotation
 		  (personEClass,
@@ -494,6 +548,30 @@ public class DGPackageImpl extends EPackageImpl implements DGPackage {
 		   source,
 		   new String[] {
 			   "ValidPhoneNumber", "self.phone.matches(\'^\\\\d{10}$\')"
+		   });
+		addAnnotation
+		  (getPerson_FullName(),
+		   source,
+		   new String[] {
+			   "derivation", "self.firstName.concat(\' \').concat(self.lastName)"
+		   });
+		addAnnotation
+		  (getCompany__FindEmployeesByNamePrefix__String(),
+		   source,
+		   new String[] {
+			   "body", "self.employees->select(e | e.firstName.startsWith(namePrefix))->asSequence()"
+		   });
+		addAnnotation
+		  (getCompany__GetTotalEmployees(),
+		   source,
+		   new String[] {
+			   "body", "self.employees.size()"
+		   });
+		addAnnotation
+		  (getCompany_EmployeesNames(),
+		   source,
+		   new String[] {
+			   "derivation", "self.employees->collect(e |  e.firstName.concat(\' \').concat(e.lastName))->asSequence()"
 		   });
 	}
 

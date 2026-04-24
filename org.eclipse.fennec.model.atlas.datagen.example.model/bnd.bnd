@@ -2,15 +2,14 @@
 -library: enableEMF
 -workingset: datagen
 
-# The code generation takes a bit of time and makes the build a bit slower.
-# It might be a good idea to put comments around it, when you don't need it
+# Code generation is disabled to preserve manual operation implementations in
+# CompanyImpl (getTotalEmployees, findEmployeesByNamePrefix). Re-enable temporarily
+# when the ecore/genmodel changes, then disable again after regenerating.
 -generate:\
 	model/dge.genmodel;\
 		generate=fennecEMF;\
 		genmodel=model/dge.genmodel;\
-		output=src
-# Add this attribute to find some logging information
-#		logfile=test.log;\
+		output=src\
 
 # If this is not done with a instruction namespace, bnd would think you like
 # to take full control over whats exported and imported and will ignore @Export

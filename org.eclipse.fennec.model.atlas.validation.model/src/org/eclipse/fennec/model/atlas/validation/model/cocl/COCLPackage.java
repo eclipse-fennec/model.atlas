@@ -791,6 +791,70 @@ public interface COCLPackage extends org.eclipse.emf.ecore.EPackage {
 	int DIAGNOSTIC_OPERATION_COUNT = 0;
 
 	/**
+	 * The meta object id for the '{@link org.eclipse.fennec.model.atlas.validation.model.cocl.impl.BatchValidationRequestImpl <em>Batch Validation Request</em>}' class.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @see org.eclipse.fennec.model.atlas.validation.model.cocl.impl.BatchValidationRequestImpl
+	 * @see org.eclipse.fennec.model.atlas.validation.model.cocl.impl.COCLPackageImpl#getBatchValidationRequest()
+	 * @generated
+	 */
+	int BATCH_VALIDATION_REQUEST = 11;
+
+	/**
+	 * The feature id for the '<em><b>Role</b></em>' attribute.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 * @ordered
+	 */
+	int BATCH_VALIDATION_REQUEST__ROLE = VALIDATION_REQUEST__ROLE;
+
+	/**
+	 * The feature id for the '<em><b>Validation Objects</b></em>' containment reference list.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 * @ordered
+	 */
+	int BATCH_VALIDATION_REQUEST__VALIDATION_OBJECTS = VALIDATION_REQUEST__VALIDATION_OBJECTS;
+
+	/**
+	 * The feature id for the '<em><b>Cocl Id</b></em>' attribute.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 * @ordered
+	 */
+	int BATCH_VALIDATION_REQUEST__COCL_ID = VALIDATION_REQUEST__COCL_ID;
+
+	/**
+	 * The feature id for the '<em><b>Filter Constraint</b></em>' containment reference.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 * @ordered
+	 */
+	int BATCH_VALIDATION_REQUEST__FILTER_CONSTRAINT = VALIDATION_REQUEST_FEATURE_COUNT + 0;
+
+	/**
+	 * The number of structural features of the '<em>Batch Validation Request</em>' class.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 * @ordered
+	 */
+	int BATCH_VALIDATION_REQUEST_FEATURE_COUNT = VALIDATION_REQUEST_FEATURE_COUNT + 1;
+
+	/**
+	 * The number of operations of the '<em>Batch Validation Request</em>' class.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 * @ordered
+	 */
+	int BATCH_VALIDATION_REQUEST_OPERATION_COUNT = VALIDATION_REQUEST_OPERATION_COUNT + 0;
+
+	/**
 	 * The meta object id for the '{@link org.eclipse.fennec.model.atlas.validation.model.cocl.Severity <em>Severity</em>}' enum.
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
@@ -798,7 +862,7 @@ public interface COCLPackage extends org.eclipse.emf.ecore.EPackage {
 	 * @see org.eclipse.fennec.model.atlas.validation.model.cocl.impl.COCLPackageImpl#getSeverity()
 	 * @generated
 	 */
-	int SEVERITY = 11;
+	int SEVERITY = 12;
 
 	/**
 	 * The meta object id for the '{@link org.eclipse.fennec.model.atlas.validation.model.cocl.OclRole <em>Ocl Role</em>}' enum.
@@ -808,7 +872,7 @@ public interface COCLPackage extends org.eclipse.emf.ecore.EPackage {
 	 * @see org.eclipse.fennec.model.atlas.validation.model.cocl.impl.COCLPackageImpl#getOclRole()
 	 * @generated
 	 */
-	int OCL_ROLE = 12;
+	int OCL_ROLE = 13;
 
 
 	/**
@@ -1329,6 +1393,27 @@ public interface COCLPackage extends org.eclipse.emf.ecore.EPackage {
 	EAttribute getDiagnostic_Data();
 
 	/**
+	 * Returns the meta object for class '{@link org.eclipse.fennec.model.atlas.validation.model.cocl.BatchValidationRequest <em>Batch Validation Request</em>}'.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @return the meta object for class '<em>Batch Validation Request</em>'.
+	 * @see org.eclipse.fennec.model.atlas.validation.model.cocl.BatchValidationRequest
+	 * @generated
+	 */
+	EClass getBatchValidationRequest();
+
+	/**
+	 * Returns the meta object for the containment reference '{@link org.eclipse.fennec.model.atlas.validation.model.cocl.BatchValidationRequest#getFilterConstraint <em>Filter Constraint</em>}'.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @return the meta object for the containment reference '<em>Filter Constraint</em>'.
+	 * @see org.eclipse.fennec.model.atlas.validation.model.cocl.BatchValidationRequest#getFilterConstraint()
+	 * @see #getBatchValidationRequest()
+	 * @generated
+	 */
+	EReference getBatchValidationRequest_FilterConstraint();
+
+	/**
 	 * Returns the meta object for enum '{@link org.eclipse.fennec.model.atlas.validation.model.cocl.Severity <em>Severity</em>}'.
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
@@ -1776,6 +1861,24 @@ public interface COCLPackage extends org.eclipse.emf.ecore.EPackage {
 		 * @generated
 		 */
 		EAttribute DIAGNOSTIC__DATA = eINSTANCE.getDiagnostic_Data();
+
+		/**
+		 * The meta object literal for the '{@link org.eclipse.fennec.model.atlas.validation.model.cocl.impl.BatchValidationRequestImpl <em>Batch Validation Request</em>}' class.
+		 * <!-- begin-user-doc -->
+		 * <!-- end-user-doc -->
+		 * @see org.eclipse.fennec.model.atlas.validation.model.cocl.impl.BatchValidationRequestImpl
+		 * @see org.eclipse.fennec.model.atlas.validation.model.cocl.impl.COCLPackageImpl#getBatchValidationRequest()
+		 * @generated
+		 */
+		EClass BATCH_VALIDATION_REQUEST = eINSTANCE.getBatchValidationRequest();
+
+		/**
+		 * The meta object literal for the '<em><b>Filter Constraint</b></em>' containment reference feature.
+		 * <!-- begin-user-doc -->
+		 * <!-- end-user-doc -->
+		 * @generated
+		 */
+		EReference BATCH_VALIDATION_REQUEST__FILTER_CONSTRAINT = eINSTANCE.getBatchValidationRequest_FilterConstraint();
 
 		/**
 		 * The meta object literal for the '{@link org.eclipse.fennec.model.atlas.validation.model.cocl.Severity <em>Severity</em>}' enum.

@@ -5,6 +5,7 @@ package org.eclipse.fennec.model.atlas.datagen.example.model.dge;
 
 import org.eclipse.emf.ecore.EAttribute;
 import org.eclipse.emf.ecore.EClass;
+import org.eclipse.emf.ecore.EOperation;
 import org.eclipse.emf.ecore.EReference;
 
 import org.eclipse.fennec.emf.osgi.annotation.provide.EPackage;
@@ -27,7 +28,7 @@ import org.osgi.annotation.versioning.ProviderType;
  * @model kind="package"
  *        annotation="Version value='1.0'"
  *        annotation="http://www.eclipse.org/emf/2002/GenModel complianceLevel='17.0' oSGiCompatible='true' basePackage='org.eclipse.fennec.model.atlas.datagen.example.model' resource='XMI'"
- *        annotation="http://www.eclipse.org/emf/2002/Ecore validationDelegates='http://www.eclipse.org/fennec/m2x/ocl/1.0'"
+ *        annotation="http://www.eclipse.org/emf/2002/Ecore validationDelegates='http://www.eclipse.org/fennec/m2x/ocl/1.0' settingDelegates='http://www.eclipse.org/fennec/m2x/ocl/1.0' invocationDelegates='http://www.eclipse.org/fennec/m2x/ocl/1.0'"
  * @generated
  */
 @ProviderType
@@ -139,13 +140,22 @@ public interface DGPackage extends org.eclipse.emf.ecore.EPackage {
 	int PERSON__COMPANY = 6;
 
 	/**
+	 * The feature id for the '<em><b>Full Name</b></em>' attribute.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 * @ordered
+	 */
+	int PERSON__FULL_NAME = 7;
+
+	/**
 	 * The number of structural features of the '<em>Person</em>' class.
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
 	 * @generated
 	 * @ordered
 	 */
-	int PERSON_FEATURE_COUNT = 7;
+	int PERSON_FEATURE_COUNT = 8;
 
 	/**
 	 * The number of operations of the '<em>Person</em>' class.
@@ -276,13 +286,40 @@ public interface DGPackage extends org.eclipse.emf.ecore.EPackage {
 	int COMPANY__EMPLOYEES = 4;
 
 	/**
+	 * The feature id for the '<em><b>Employees Names</b></em>' attribute list.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 * @ordered
+	 */
+	int COMPANY__EMPLOYEES_NAMES = 5;
+
+	/**
 	 * The number of structural features of the '<em>Company</em>' class.
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
 	 * @generated
 	 * @ordered
 	 */
-	int COMPANY_FEATURE_COUNT = 5;
+	int COMPANY_FEATURE_COUNT = 6;
+
+	/**
+	 * The operation id for the '<em>Find Employees By Name Prefix</em>' operation.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 * @ordered
+	 */
+	int COMPANY___FIND_EMPLOYEES_BY_NAME_PREFIX__STRING = 0;
+
+	/**
+	 * The operation id for the '<em>Get Total Employees</em>' operation.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 * @ordered
+	 */
+	int COMPANY___GET_TOTAL_EMPLOYEES = 1;
 
 	/**
 	 * The number of operations of the '<em>Company</em>' class.
@@ -291,7 +328,7 @@ public interface DGPackage extends org.eclipse.emf.ecore.EPackage {
 	 * @generated
 	 * @ordered
 	 */
-	int COMPANY_OPERATION_COUNT = 0;
+	int COMPANY_OPERATION_COUNT = 2;
 
 
 	/**
@@ -380,6 +417,17 @@ public interface DGPackage extends org.eclipse.emf.ecore.EPackage {
 	 * @generated
 	 */
 	EReference getPerson_Company();
+
+	/**
+	 * Returns the meta object for the attribute '{@link org.eclipse.fennec.model.atlas.datagen.example.model.dge.Person#getFullName <em>Full Name</em>}'.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @return the meta object for the attribute '<em>Full Name</em>'.
+	 * @see org.eclipse.fennec.model.atlas.datagen.example.model.dge.Person#getFullName()
+	 * @see #getPerson()
+	 * @generated
+	 */
+	EAttribute getPerson_FullName();
 
 	/**
 	 * Returns the meta object for class '{@link org.eclipse.fennec.model.atlas.datagen.example.model.dge.Address <em>Address</em>}'.
@@ -501,6 +549,37 @@ public interface DGPackage extends org.eclipse.emf.ecore.EPackage {
 	EReference getCompany_Employees();
 
 	/**
+	 * Returns the meta object for the attribute list '{@link org.eclipse.fennec.model.atlas.datagen.example.model.dge.Company#getEmployeesNames <em>Employees Names</em>}'.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @return the meta object for the attribute list '<em>Employees Names</em>'.
+	 * @see org.eclipse.fennec.model.atlas.datagen.example.model.dge.Company#getEmployeesNames()
+	 * @see #getCompany()
+	 * @generated
+	 */
+	EAttribute getCompany_EmployeesNames();
+
+	/**
+	 * Returns the meta object for the '{@link org.eclipse.fennec.model.atlas.datagen.example.model.dge.Company#findEmployeesByNamePrefix(java.lang.String) <em>Find Employees By Name Prefix</em>}' operation.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @return the meta object for the '<em>Find Employees By Name Prefix</em>' operation.
+	 * @see org.eclipse.fennec.model.atlas.datagen.example.model.dge.Company#findEmployeesByNamePrefix(java.lang.String)
+	 * @generated
+	 */
+	EOperation getCompany__FindEmployeesByNamePrefix__String();
+
+	/**
+	 * Returns the meta object for the '{@link org.eclipse.fennec.model.atlas.datagen.example.model.dge.Company#getTotalEmployees() <em>Get Total Employees</em>}' operation.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @return the meta object for the '<em>Get Total Employees</em>' operation.
+	 * @see org.eclipse.fennec.model.atlas.datagen.example.model.dge.Company#getTotalEmployees()
+	 * @generated
+	 */
+	EOperation getCompany__GetTotalEmployees();
+
+	/**
 	 * Returns the factory that creates the instances of the model.
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
@@ -588,6 +667,14 @@ public interface DGPackage extends org.eclipse.emf.ecore.EPackage {
 		 * @generated
 		 */
 		EReference PERSON__COMPANY = eINSTANCE.getPerson_Company();
+
+		/**
+		 * The meta object literal for the '<em><b>Full Name</b></em>' attribute feature.
+		 * <!-- begin-user-doc -->
+		 * <!-- end-user-doc -->
+		 * @generated
+		 */
+		EAttribute PERSON__FULL_NAME = eINSTANCE.getPerson_FullName();
 
 		/**
 		 * The meta object literal for the '{@link org.eclipse.fennec.model.atlas.datagen.example.model.dge.impl.AddressImpl <em>Address</em>}' class.
@@ -680,6 +767,30 @@ public interface DGPackage extends org.eclipse.emf.ecore.EPackage {
 		 * @generated
 		 */
 		EReference COMPANY__EMPLOYEES = eINSTANCE.getCompany_Employees();
+
+		/**
+		 * The meta object literal for the '<em><b>Employees Names</b></em>' attribute list feature.
+		 * <!-- begin-user-doc -->
+		 * <!-- end-user-doc -->
+		 * @generated
+		 */
+		EAttribute COMPANY__EMPLOYEES_NAMES = eINSTANCE.getCompany_EmployeesNames();
+
+		/**
+		 * The meta object literal for the '<em><b>Find Employees By Name Prefix</b></em>' operation.
+		 * <!-- begin-user-doc -->
+		 * <!-- end-user-doc -->
+		 * @generated
+		 */
+		EOperation COMPANY___FIND_EMPLOYEES_BY_NAME_PREFIX__STRING = eINSTANCE.getCompany__FindEmployeesByNamePrefix__String();
+
+		/**
+		 * The meta object literal for the '<em><b>Get Total Employees</b></em>' operation.
+		 * <!-- begin-user-doc -->
+		 * <!-- end-user-doc -->
+		 * @generated
+		 */
+		EOperation COMPANY___GET_TOTAL_EMPLOYEES = eINSTANCE.getCompany__GetTotalEmployees();
 
 	}
 

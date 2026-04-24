@@ -68,6 +68,10 @@ public class TestAnnotations {
 
 	public static final String TEST_PARENT_SCOPE_NAME = "test-parent-scope";
 
+	public static final String TEST_JENA_SCOPE_NAME = "jena";
+
+	public static final String TEST_COCL_REGISTRY_NAME = "cocl";
+
 	/**
 	 * Basic shared registry configuration.
 	 *
@@ -151,6 +155,31 @@ public class TestAnnotations {
 			@Property(key = "registryService.cardinality.minimum", value = "1", scalar = Scalar.Integer)})
 	@Retention(RetentionPolicy.RUNTIME)
 	public @interface ParentScopeServiceSetup {
+	}
+
+	@EPackageLuceneIndexSetup
+	@StorageSetup
+	@WithFactoryConfiguration(factoryPid = PID_REGISTRY_SERVICE, name = TEST_COCL_REGISTRY_NAME, location = "?", properties = {
+			@Property(key = "registry.name", value = TEST_COCL_REGISTRY_NAME),
+			@Property(key = "root.eclass.uri", value = "http://www.gme.org/cocl/1.0#//OclConstraintSet"),
+			@Property(key = "resourceSet.target", value = "(emf.name=cocl)"),
+			@Property(key = "storageService.target", value = "(storage.type=file)"),
+			@Property(key = "registry.target", value = "(registry=main)"),
+			@Property(key = "stages", type = Type.Array, value = {
+					"{ \"name\" : \"release\", \"writable\" : true, \"final\": true}" }),
+			@Property(key = "workflow.transitions", type = Type.Array, value = {}),
+			@Property(key = "stage.storage.mappings", type = Type.Array, value = { "release:file" }) })
+	@Retention(RetentionPolicy.RUNTIME)
+	public @interface CoclRegistryServiceSetup {
+	}
+
+	@CoclRegistryServiceSetup
+	@WithFactoryConfiguration(factoryPid = PID_SCOPE_SERVICE, name = TEST_JENA_SCOPE_NAME, location = "?", properties = {
+			@Property(key = "scope.name", value = TEST_JENA_SCOPE_NAME),
+			@Property(key = "registryService.target", value = "(registry.name="+TEST_COCL_REGISTRY_NAME+")"),
+			@Property(key = "registryService.cardinality.minimum", value = "1", scalar = Scalar.Integer)})
+	@Retention(RetentionPolicy.RUNTIME)
+	public @interface JenaScopeServiceSetup {
 	}
 
 

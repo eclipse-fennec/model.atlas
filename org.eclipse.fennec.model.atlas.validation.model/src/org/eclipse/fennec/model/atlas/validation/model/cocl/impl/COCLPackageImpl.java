@@ -21,6 +21,7 @@ import org.eclipse.emf.ecore.EcorePackage;
 
 import org.eclipse.emf.ecore.impl.EPackageImpl;
 
+import org.eclipse.fennec.model.atlas.validation.model.cocl.BatchValidationRequest;
 import org.eclipse.fennec.model.atlas.validation.model.cocl.COCLFactory;
 import org.eclipse.fennec.model.atlas.validation.model.cocl.COCLPackage;
 import org.eclipse.fennec.model.atlas.validation.model.cocl.DerivedValidationRequest;
@@ -120,6 +121,13 @@ public class COCLPackageImpl extends EPackageImpl implements COCLPackage {
 	 * @generated
 	 */
 	private EClass diagnosticEClass = null;
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	private EClass batchValidationRequestEClass = null;
 
 	/**
 	 * <!-- begin-user-doc -->
@@ -684,6 +692,26 @@ public class COCLPackageImpl extends EPackageImpl implements COCLPackage {
 	 * @generated
 	 */
 	@Override
+	public EClass getBatchValidationRequest() {
+		return batchValidationRequestEClass;
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
+	public EReference getBatchValidationRequest_FilterConstraint() {
+		return (EReference)batchValidationRequestEClass.getEStructuralFeatures().get(0);
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
 	public EEnum getSeverity() {
 		return severityEEnum;
 	}
@@ -786,6 +814,9 @@ public class COCLPackageImpl extends EPackageImpl implements COCLPackage {
 		createEAttribute(diagnosticEClass, DIAGNOSTIC__EXCEPTION_MSG);
 		createEAttribute(diagnosticEClass, DIAGNOSTIC__DATA);
 
+		batchValidationRequestEClass = createEClass(BATCH_VALIDATION_REQUEST);
+		createEReference(batchValidationRequestEClass, BATCH_VALIDATION_REQUEST__FILTER_CONSTRAINT);
+
 		// Create enums
 		severityEEnum = createEEnum(SEVERITY);
 		oclRoleEEnum = createEEnum(OCL_ROLE);
@@ -826,6 +857,7 @@ public class COCLPackageImpl extends EPackageImpl implements COCLPackage {
 		eObjectValidationResultEClass.getESuperTypes().add(this.getValidationResult());
 		derivedValidationRequestEClass.getESuperTypes().add(this.getValidationRequest());
 		operationValidationRequestEClass.getESuperTypes().add(this.getValidationRequest());
+		batchValidationRequestEClass.getESuperTypes().add(this.getValidationRequest());
 
 		// Initialize classes, features, and operations; add parameters
 		initEClass(oclConstraintEClass, OclConstraint.class, "OclConstraint", !IS_ABSTRACT, !IS_INTERFACE, IS_GENERATED_INSTANCE_CLASS);
@@ -865,7 +897,7 @@ public class COCLPackageImpl extends EPackageImpl implements COCLPackage {
 		initEAttribute(getSimpleValidationResult_Value(), ecorePackage.getEJavaObject(), "value", null, 0, 1, SimpleValidationResult.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_UNSETTABLE, !IS_ID, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
 
 		initEClass(eObjectValidationResultEClass, EObjectValidationResult.class, "EObjectValidationResult", !IS_ABSTRACT, !IS_INTERFACE, IS_GENERATED_INSTANCE_CLASS);
-		initEReference(getEObjectValidationResult_Values(), this.getValidationResult(), null, "values", null, 0, -1, EObjectValidationResult.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, IS_COMPOSITE, !IS_RESOLVE_PROXIES, !IS_UNSETTABLE, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
+		initEReference(getEObjectValidationResult_Values(), theEcorePackage.getEObject(), null, "values", null, 0, -1, EObjectValidationResult.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, IS_COMPOSITE, !IS_RESOLVE_PROXIES, !IS_UNSETTABLE, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
 
 		initEClass(derivedValidationRequestEClass, DerivedValidationRequest.class, "DerivedValidationRequest", !IS_ABSTRACT, !IS_INTERFACE, IS_GENERATED_INSTANCE_CLASS);
 		initEReference(getDerivedValidationRequest_DerivedFeature(), theEcorePackage.getEStructuralFeature(), null, "derivedFeature", null, 1, -1, DerivedValidationRequest.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_COMPOSITE, IS_RESOLVE_PROXIES, !IS_UNSETTABLE, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
@@ -877,7 +909,7 @@ public class COCLPackageImpl extends EPackageImpl implements COCLPackage {
 		initEClass(operationRequestParameterEClass, OperationRequestParameter.class, "OperationRequestParameter", !IS_ABSTRACT, !IS_INTERFACE, IS_GENERATED_INSTANCE_CLASS);
 		initEReference(getOperationRequestParameter_Parameter(), theEcorePackage.getEParameter(), null, "parameter", null, 1, 1, OperationRequestParameter.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_COMPOSITE, IS_RESOLVE_PROXIES, !IS_UNSETTABLE, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
 		initEAttribute(getOperationRequestParameter_IsNull(), ecorePackage.getEBoolean(), "isNull", null, 0, 1, OperationRequestParameter.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_UNSETTABLE, !IS_ID, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
-		initEAttribute(getOperationRequestParameter_JavaValue(), ecorePackage.getEJavaObject(), "javaValue", null, 0, 1, OperationRequestParameter.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_UNSETTABLE, !IS_ID, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
+		initEAttribute(getOperationRequestParameter_JavaValue(), ecorePackage.getEString(), "javaValue", null, 0, 1, OperationRequestParameter.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_UNSETTABLE, !IS_ID, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
 		initEReference(getOperationRequestParameter_EValue(), ecorePackage.getEObject(), null, "eValue", null, 0, 1, OperationRequestParameter.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, IS_COMPOSITE, !IS_RESOLVE_PROXIES, !IS_UNSETTABLE, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
 
 		initEClass(diagnosticEClass, Diagnostic.class, "Diagnostic", !IS_ABSTRACT, !IS_INTERFACE, IS_GENERATED_INSTANCE_CLASS);
@@ -887,6 +919,9 @@ public class COCLPackageImpl extends EPackageImpl implements COCLPackage {
 		initEReference(getDiagnostic_Children(), this.getDiagnostic(), null, "children", null, 0, -1, Diagnostic.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, IS_COMPOSITE, !IS_RESOLVE_PROXIES, !IS_UNSETTABLE, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
 		initEAttribute(getDiagnostic_ExceptionMsg(), ecorePackage.getEString(), "exceptionMsg", null, 0, 1, Diagnostic.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_UNSETTABLE, !IS_ID, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
 		initEAttribute(getDiagnostic_Data(), ecorePackage.getEString(), "data", null, 0, -1, Diagnostic.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_UNSETTABLE, !IS_ID, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
+
+		initEClass(batchValidationRequestEClass, BatchValidationRequest.class, "BatchValidationRequest", !IS_ABSTRACT, !IS_INTERFACE, IS_GENERATED_INSTANCE_CLASS);
+		initEReference(getBatchValidationRequest_FilterConstraint(), this.getOclConstraint(), null, "filterConstraint", null, 0, 1, BatchValidationRequest.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, IS_COMPOSITE, !IS_RESOLVE_PROXIES, !IS_UNSETTABLE, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
 
 		// Initialize enums and add enum literals
 		initEEnum(severityEEnum, Severity.class, "Severity");
@@ -1199,6 +1234,18 @@ public class COCLPackageImpl extends EPackageImpl implements COCLPackage {
 		   source,
 		   new String[] {
 			   "documentation", "Operation request parameter object"
+		   });
+		addAnnotation
+		  (getOperationRequestParameter_JavaValue(),
+		   source,
+		   new String[] {
+			   "documentation", "We put the String representation here to not have issues via REST. Then we can construct the value back from the parameter type."
+		   });
+		addAnnotation
+		  (getBatchValidationRequest_FilterConstraint(),
+		   source,
+		   new String[] {
+			   "documentation", "An optional OclConstraint representing a filter constraint. It has to be of role type REFERENCE_FILTER"
 		   });
 	}
 
