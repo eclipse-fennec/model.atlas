@@ -146,6 +146,13 @@ public class COCLSwitch<T> extends Switch<T> {
 				if (result == null) result = defaultCase(theEObject);
 				return result;
 			}
+			case COCLPackage.BATCH_VALIDATION_REQUEST: {
+				BatchValidationRequest batchValidationRequest = (BatchValidationRequest)theEObject;
+				T result = caseBatchValidationRequest(batchValidationRequest);
+				if (result == null) result = caseValidationRequest(batchValidationRequest);
+				if (result == null) result = defaultCase(theEObject);
+				return result;
+			}
 			default: return defaultCase(theEObject);
 		}
 	}
@@ -312,6 +319,21 @@ public class COCLSwitch<T> extends Switch<T> {
 	 * @generated
 	 */
 	public T caseDiagnostic(Diagnostic object) {
+		return null;
+	}
+
+	/**
+	 * Returns the result of interpreting the object as an instance of '<em>Batch Validation Request</em>'.
+	 * <!-- begin-user-doc -->
+	 * This implementation returns null;
+	 * returning a non-null result will terminate the switch.
+	 * <!-- end-user-doc -->
+	 * @param object the target of the switch.
+	 * @return the result of interpreting the object as an instance of '<em>Batch Validation Request</em>'.
+	 * @see #doSwitch(org.eclipse.emf.ecore.EObject) doSwitch(EObject)
+	 * @generated
+	 */
+	public T caseBatchValidationRequest(BatchValidationRequest object) {
 		return null;
 	}
 

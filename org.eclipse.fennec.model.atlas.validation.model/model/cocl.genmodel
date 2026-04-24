@@ -81,5 +81,8 @@
       <genFeatures createChild="false" ecoreFeature="ecore:EAttribute cocl.ecore#//Diagnostic/exceptionMsg"/>
       <genFeatures createChild="false" ecoreFeature="ecore:EAttribute cocl.ecore#//Diagnostic/data"/>
     </genClasses>
+    <genClasses ecoreClass="cocl.ecore#//BatchValidationRequest">
+      <genFeatures property="None" children="true" createChild="true" ecoreFeature="ecore:EReference cocl.ecore#//BatchValidationRequest/filterConstraint"/>
+    </genClasses>
   </genPackages>
 </genmodel:GenModel>

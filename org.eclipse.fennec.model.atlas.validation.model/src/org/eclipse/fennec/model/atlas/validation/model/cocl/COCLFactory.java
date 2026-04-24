@@ -116,6 +116,15 @@ public interface COCLFactory extends EFactory {
 	Diagnostic createDiagnostic();
 
 	/**
+	 * Returns a new object of class '<em>Batch Validation Request</em>'.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @return a new object of class '<em>Batch Validation Request</em>'.
+	 * @generated
+	 */
+	BatchValidationRequest createBatchValidationRequest();
+
+	/**
 	 * Returns the package supported by this factory.
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->

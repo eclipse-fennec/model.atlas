@@ -32,7 +32,8 @@ Test-Cases: ${classes;HIERARCHY_INDIRECTLY_ANNOTATED;org.junit.platform.commons.
 	org.eclipse.fennec.model.atlas.management.lucene,\
 	org.osgi.test.junit5.cm,\
 	org.eclipse.fennec.model.atlas.validation.model;version=snapshot,\
-	org.eclipse.fennec.model.atlas.datagen.example.model;version=snapshot
+	org.eclipse.fennec.model.atlas.datagen.example.model;version=snapshot,\
+	org.gecko.emf.util.common
 
 Private-Package: org.eclipse.fennec.model.atlas.rest.tests,\
 	org.eclipse.fennec.model.atlas.rest.tests.helper

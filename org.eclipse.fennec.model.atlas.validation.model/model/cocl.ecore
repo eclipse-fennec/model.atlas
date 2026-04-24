@@ -278,4 +278,12 @@
     <eStructuralFeatures xsi:type="ecore:EAttribute" name="exceptionMsg" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
     <eStructuralFeatures xsi:type="ecore:EAttribute" name="data" upperBound="-1" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
   </eClassifiers>
+  <eClassifiers xsi:type="ecore:EClass" name="BatchValidationRequest" eSuperTypes="#//ValidationRequest">
+    <eStructuralFeatures xsi:type="ecore:EReference" name="filterConstraint" eType="#//OclConstraint"
+        containment="true">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="An optional OclConstraint representing a filter constraint. It has to be of role type REFERENCE_FILTER"/>
+      </eAnnotations>
+    </eStructuralFeatures>
+  </eClassifiers>
 </ecore:EPackage>
