@@ -4,4 +4,4 @@
 #org.eclipse.daanse:org.eclipse.daanse.jdbc.db.importer.csv:0.0.1-SNAPSHOT
 #org.eclipse.daanse:org.eclipse.daanse.io.fs.watcher.api:0.0.1-SNAPSHOT
 #org.eclipse.daanse:org.eclipse.daanse.io.fs.watcher.watchservice:0.0.1-SNAPSHOT
-de.siegmar:fastcsv:3.4.0
+de.siegmar:fastcsv:4.2.0

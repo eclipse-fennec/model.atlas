@@ -1,2 +1,4 @@
 -library: enableEMF
+-workingset: validation
+
 -buildpath: org.eclipse.fennec.model.atlas.validation.model;version=snapshot
