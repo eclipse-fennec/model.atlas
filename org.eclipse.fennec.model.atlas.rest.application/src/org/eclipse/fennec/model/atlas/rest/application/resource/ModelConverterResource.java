@@ -51,7 +51,7 @@ import jakarta.ws.rs.core.Response.Status;
 @JakartarsResource()
 @JakartarsName("ModelConverterResource")
 @Component(name = "ModelConverterResource", service = ModelConverterResource.class, scope = ServiceScope.PROTOTYPE)
-@Path("/convert")
+@Path("/{scopeName}/stages/{stageName}/convert")
 @Tag(name = "Model Converter Resource", description = "CRUD operations for converting models on the fly from one format to another")
 public class ModelConverterResource {
 

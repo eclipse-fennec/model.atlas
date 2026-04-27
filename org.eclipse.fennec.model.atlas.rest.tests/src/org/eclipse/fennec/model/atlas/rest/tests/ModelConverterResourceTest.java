@@ -17,9 +17,9 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import java.io.IOException;
-
 import org.eclipse.emf.ecore.EPackage;
+import org.eclipse.fennec.model.atlas.rest.tests.helper.TestAnnotations;
+import org.eclipse.fennec.model.atlas.rest.tests.helper.TestAnnotations.ParentScopeServiceSetup;
 import org.eclipse.fennec.model.atlas.rest.tests.helper.TestHelper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -50,13 +50,13 @@ import jakarta.ws.rs.core.Response;
 
 public class ModelConverterResourceTest extends AbstractRestTest{
 
-    private static final String CONVERT_BASE_URL = BASE_URL.concat("/convert");
+    private static final String CONVERT_BASE_URL = BASE_URL.concat("/").concat(TestAnnotations.TEST_SCOPE_NAME.concat("/stages/").concat(TestAnnotations.STAGE_RELEASE).concat("/convert"));
 
 
     @BeforeEach
     public void setup(@InjectBundleContext BundleContext context) throws Exception {
     	super.setup(context);
-    	ensureResourceAvailability(context);
+    	
     }
 
 
@@ -64,7 +64,9 @@ public class ModelConverterResourceTest extends AbstractRestTest{
     // ========== JSON to XML Conversion Tests ==========
 
     @Test
-    public void testConvertPackage_JsonToXml_Success() {
+    @ParentScopeServiceSetup
+    public void testConvertPackage_JsonToXml_Success(@InjectBundleContext BundleContext context) throws Exception {
+    	ensureResourceAvailability(context);
         // Given: An EPackage in JSON format
         String nsUri = TestHelper.generateUniqueNsUri("jsonToXmlTest");
         String jsonEPackage = createJsonEPackage(nsUri, "JsonToXmlPackage", "j2x");
@@ -85,7 +87,9 @@ public class ModelConverterResourceTest extends AbstractRestTest{
     // ========== XML to JSON Conversion Tests ==========
 
     @Test
-    public void testConvertPackage_XmlToJson_Success() throws IOException {
+    @ParentScopeServiceSetup
+    public void testConvertPackage_XmlToJson_Success(@InjectBundleContext BundleContext context) throws Exception {
+    	ensureResourceAvailability(context);
         // Given: An EPackage in XMI format
         String nsUri = TestHelper.generateUniqueNsUri("xmlToJsonTest");
         EPackage testPackage = TestHelper.createTestEPackage(nsUri, "XmlToJsonPackage", "x2j");
@@ -107,7 +111,9 @@ public class ModelConverterResourceTest extends AbstractRestTest{
     // ========== XMI to JSON Conversion Tests ==========
 
     @Test
-    public void testConvertPackage_XmiToJson_Success() throws IOException {
+    @ParentScopeServiceSetup
+    public void testConvertPackage_XmiToJson_Success(@InjectBundleContext BundleContext context) throws Exception {
+    	ensureResourceAvailability(context);
         // Given: An EPackage in XMI format
         String nsUri = TestHelper.generateUniqueNsUri("xmiToJsonTest");
         EPackage testPackage = TestHelper.createTestEPackage(nsUri, "XmiToJsonPackage", "xmi2j");
@@ -128,7 +134,9 @@ public class ModelConverterResourceTest extends AbstractRestTest{
     // ========== JSON to XMI Conversion Tests ==========
 
     @Test
-    public void testConvertPackage_JsonToXmi_Success() {
+    @ParentScopeServiceSetup
+    public void testConvertPackage_JsonToXmi_Success(@InjectBundleContext BundleContext context) throws Exception {
+    	ensureResourceAvailability(context);
         // Given: An EPackage in JSON format
         String nsUri = TestHelper.generateUniqueNsUri("jsonToXmiTest");
         String jsonEPackage = createJsonEPackage(nsUri, "JsonToXmiPackage", "j2xmi");
@@ -148,7 +156,9 @@ public class ModelConverterResourceTest extends AbstractRestTest{
     // ========== Complex EPackage Conversion Tests ==========
 
     @Test
-    public void testConvertPackage_ComplexPackage_PreservesStructure() throws IOException {
+    @ParentScopeServiceSetup
+    public void testConvertPackage_ComplexPackage_PreservesStructure(@InjectBundleContext BundleContext context) throws Exception {
+    	ensureResourceAvailability(context);
         // Given: A complex EPackage with classes and attributes
         String nsUri = TestHelper.generateUniqueNsUri("complexConvertTest");
         EPackage complexPackage = TestHelper.createTestEPackage(nsUri, "ComplexPackage", "complex");
@@ -170,7 +180,9 @@ public class ModelConverterResourceTest extends AbstractRestTest{
     // ========== Unsupported Media Type Tests ==========
 
     @Test
-    public void testConvertPackage_UnsupportedAcceptHeader_Returns415() {
+    @ParentScopeServiceSetup
+    public void testConvertPackage_UnsupportedAcceptHeader_Returns415(@InjectBundleContext BundleContext context) throws Exception {
+    	ensureResourceAvailability(context);
         // Given: An EPackage in JSON format
         String nsUri = TestHelper.generateUniqueNsUri("unsupportedTest");
         String jsonEPackage = createJsonEPackage(nsUri, "UnsupportedPackage", "us");
@@ -186,7 +198,12 @@ public class ModelConverterResourceTest extends AbstractRestTest{
     // ========== Same Format Conversion Tests ==========
 
     @Test
-    public void testConvertPackage_JsonToJson_Success() {
+    @ParentScopeServiceSetup
+    public void testConvertPackage_JsonToJson_Success(@InjectBundleContext BundleContext context) throws Exception {
+    	ensureResourceAvailability(context);
+    	
+    	Thread.sleep(5000);
+    	
         // Given: An EPackage in JSON format
         String nsUri = TestHelper.generateUniqueNsUri("jsonToJsonTest");
         String jsonEPackage = createJsonEPackage(nsUri, "JsonToJsonPackage", "j2j");
@@ -206,7 +223,9 @@ public class ModelConverterResourceTest extends AbstractRestTest{
     // ========== Default Media Type Tests ==========
 
     @Test
-    public void testConvertPackage_NoAcceptHeader_DefaultsToJson() throws IOException {
+    @ParentScopeServiceSetup
+    public void testConvertPackage_NoAcceptHeader_DefaultsToJson(@InjectBundleContext BundleContext context) throws Exception {
+    	ensureResourceAvailability(context);
         // Given: An EPackage in XMI format
         String nsUri = TestHelper.generateUniqueNsUri("defaultMediaTypeTest");
         EPackage testPackage = TestHelper.createTestEPackage(nsUri, "DefaultMediaTypePackage", "dmt");
@@ -226,7 +245,9 @@ public class ModelConverterResourceTest extends AbstractRestTest{
     // ========== Content Type Header Tests ==========
 
     @Test
-    public void testConvertPackage_ResponseContentTypeMatches() {
+    @ParentScopeServiceSetup
+    public void testConvertPackage_ResponseContentTypeMatches(@InjectBundleContext BundleContext context) throws Exception {
+    	ensureResourceAvailability(context);
         // Given: An EPackage in JSON format
         String nsUri = TestHelper.generateUniqueNsUri("contentTypeTest");
         String jsonEPackage = createJsonEPackage(nsUri, "ContentTypePackage", "ct");
