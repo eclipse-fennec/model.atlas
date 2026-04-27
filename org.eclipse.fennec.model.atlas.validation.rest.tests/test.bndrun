@@ -14,7 +14,7 @@
 	bnd.identity;id='org.eclipse.fennec.model.atlas.validation.rest',\
 	bnd.identity;id='org.apache.aries.typedevent.bus',\
 	bnd.identity;id='org.eclipse.fennec.model.atlas.mediatypes.impl',\
-	bnd.identity;id='org.apache.felix.configurator'
+	bnd.identity;id='org.eclipse.fennec.m2x.ocl.engine'
 	
 -runbundles.test: \
 	org.eclipse.fennec.model.atlas.validation.rest.tests;version=snapshot
@@ -104,4 +104,7 @@
 	org.apache.aries.component-dsl.component-dsl;version='[1.2.2,1.2.3)',\
 	org.apache.aries.typedevent.bus;version='[1.0.1,1.0.2)',\
 	org.eclipse.fennec.model.atlas.mediatypes.impl;version=snapshot,\
-	org.eclipse.parsson.jakarta.json;version='[1.1.7,1.1.8)'
+	org.eclipse.parsson.jakarta.json;version='[1.1.7,1.1.8)',\
+	org.antlr.antlr4-runtime;version='[4.13.2,4.13.3)',\
+	org.eclipse.fennec.m2x.ocl.engine;version='[0.1.0,0.1.1)',\
+	org.eclipse.fennec.m2x.ocl.parser;version='[0.1.0,0.1.1)'
