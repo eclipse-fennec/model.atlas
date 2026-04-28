@@ -1,0 +1,12 @@
+-library: enableEMF
+-buildpath: \
+	org.osgi.service.jakartars,\
+	jakarta.ws.rs-api,\
+	org.eclipse.fennec.data.atlas.mapping.model;version=snapshot,\
+	com.h2database,\
+	io.swagger.core.v3.swagger-annotations,\
+	org.eclipse.fennec.model.atlas.mediatypes.api,\
+	org.osgi.service.jdbc,\
+	org.eclipse.fennec.data.atlas.jpa.datasource;version=snapshot,\
+	org.gecko.emf.rest.jakartars,\
+	org.osgi.util.promise

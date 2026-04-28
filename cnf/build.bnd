@@ -42,7 +42,8 @@ Bundle-Developers: \
 	geckoMessaging,\
 	geckoEMFRepository,\
 	jakartaREST,\
-	geckoLibraries
+	geckoLibraries,\
+	fennecPersistence
 
 # Needed because we enabled library 'gecko-dimc'
 # Activate baselining

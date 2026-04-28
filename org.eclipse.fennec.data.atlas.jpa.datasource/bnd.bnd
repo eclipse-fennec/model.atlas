@@ -1,0 +1,9 @@
+Bundle-Version: 1.0.0.SNAPSHOT
+
+-buildpath: \
+	org.osgi.service.cm;version=latest,\
+	org.osgi.service.component.annotations;version=latest,\
+	org.osgi.framework;version=latest,\
+	org.eclipse.fennec.data.atlas.mapping.model;version=snapshot,\
+	org.osgi.util.promise,\
+	org.osgi.util.tracker

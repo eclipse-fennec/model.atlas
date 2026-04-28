@@ -1,0 +1,6 @@
+-library: enableEMF
+
+
+-buildpath: \
+	org.eclipse.daanse.io.fs.watcher.api,\
+	org.eclipse.fennec.data.atlas.mapping.model

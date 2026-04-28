@@ -20,7 +20,14 @@
       "WebSearch",
       "Bash(ls -1d /opt/git/fennec-model.atlas/org.eclipse.fennec.model.atlas* | sort)",
       "Bash(wc:*)",
-      "mcp__osgi-mcp-server__document_chunk_semantic_search"
+      "mcp__osgi-mcp-server__document_chunk_semantic_search",
+      "Bash(gh issue *)",
+      "WebFetch(domain:api.github.com)",
+      "mcp__osgi-mcp-server__document_names_search",
+      "mcp__osgi-mcp-server__document_chunk_text_search",
+      "Bash(unzip -p /opt/git/model.atlas/org.eclipse.fennec.data.atlas.mapping.model/generated/org.eclipse.fennec.data.atlas.mapping.model.jar META-INF/MANIFEST.MF)",
+      "Bash(unzip -p /opt/git/model.atlas/org.eclipse.fennec.data.atlas.jpa.rest/generated/org.eclipse.fennec.data.atlas.jpa.rest.jar META-INF/MANIFEST.MF)",
+      "Bash(unzip *)"
     ],
     "deny": [],
     "ask": []
