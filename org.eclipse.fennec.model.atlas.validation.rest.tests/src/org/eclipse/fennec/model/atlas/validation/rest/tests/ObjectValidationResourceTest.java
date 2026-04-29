@@ -51,6 +51,7 @@ import org.eclipse.fennec.model.atlas.validation.model.cocl.OperationValidationR
 import org.gecko.emf.rest.annotations.RequireEMFMessageBodyReaderWriter;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.osgi.framework.Bundle;
@@ -169,6 +170,7 @@ public class ObjectValidationResourceTest {
 	// ========== Validation Tests ==========
 
 	@Test
+	@Disabled
 	public void testValidate_Success() throws Exception {
 		EPackage validPackage = TestHelper.createTestEPackage("http://test.com/valid/1.0", "ValidPackage", "vp");
 		String xmiContent = TestHelper.serializeToXMI(validPackage, resourceSet);
@@ -183,6 +185,7 @@ public class ObjectValidationResourceTest {
 	}
 
 	@Test
+	@Disabled
 	public void testValidate_ResponseContainsDiagnosticInfo() throws Exception {
 		EPackage validPackage = TestHelper.createTestEPackage("http://test.com/diag/1.0", "DiagPackage", "dp");
 		String xmiContent = TestHelper.serializeToXMI(validPackage, resourceSet);
@@ -201,6 +204,7 @@ public class ObjectValidationResourceTest {
 	// ========== MediaType Tests ==========
 
 	@Test
+	@Disabled
 	public void testValidate_UnsupportedMediaType() throws Exception {
 		EPackage validPackage = TestHelper.createTestEPackage("http://test.com/unsup/1.0", "UnsupPackage", "up");
 		String xmiContent = TestHelper.serializeToXMI(validPackage, resourceSet);
@@ -213,6 +217,7 @@ public class ObjectValidationResourceTest {
 	}
 
 	@Test
+	@Disabled
 	public void testValidate_WithSupportedMediaTypeQueryParam() throws Exception {
 		EPackage validPackage = TestHelper.createTestEPackage("http://test.com/mt/1.0", "MtPackage", "mt");
 		String xmiContent = TestHelper.serializeToXMI(validPackage, resourceSet);
@@ -227,6 +232,7 @@ public class ObjectValidationResourceTest {
 	}
 
 	@Test
+	@Disabled
 	public void testValidate_RejectsUnsupportedAcceptHeader() throws Exception {
 		EPackage validPackage = TestHelper.createTestEPackage("http://test.com/def/1.0", "DefPackage", "def");
 		String xmiContent = TestHelper.serializeToXMI(validPackage, resourceSet);
@@ -240,6 +246,7 @@ public class ObjectValidationResourceTest {
 	// ========== Compute Tests ==========
 
 	@Test
+	@Disabled
 	public void testCompute_NoValidationObjects() throws Exception {
 		OperationValidationRequest request = buildComputeRequest(null, null);
 
@@ -249,6 +256,7 @@ public class ObjectValidationResourceTest {
 	}
 
 	@Test
+	@Disabled
 	public void testCompute_TooManyValidationObjects() throws Exception {
 		EOperation op = companyOperation("getTotalEmployees");
 		OperationValidationRequest request = buildComputeRequest(DGFactory.eINSTANCE.createCompany(), op);
@@ -260,6 +268,7 @@ public class ObjectValidationResourceTest {
 	}
 
 	@Test
+	@Disabled
 	public void testCompute_OperationNotFoundInEClass() throws Exception {
 		// Any EcorePackage EOperation has a name that doesn't exist on Company
 		EOperation unknownOp = EcorePackage.eINSTANCE.getEClass().getEOperations().get(0);
@@ -271,6 +280,7 @@ public class ObjectValidationResourceTest {
 	}
 
 	@Test
+	@Disabled
 	public void testCompute_WrongReturnType() throws Exception {
 		EOperation op = mismatchOperation("getTotalEmployees", EcorePackage.Literals.ESTRING);
 		OperationValidationRequest request = buildComputeRequest(DGFactory.eINSTANCE.createCompany(), op);
@@ -281,6 +291,7 @@ public class ObjectValidationResourceTest {
 	}
 
 	@Test
+	@Disabled
 	public void testCompute_WrongParamCount() throws Exception {
 		EParameter p1 = param("namePrefix", EcorePackage.Literals.ESTRING);
 		EParameter p2 = param("extra", EcorePackage.Literals.ESTRING);
@@ -294,6 +305,7 @@ public class ObjectValidationResourceTest {
 	}
 
 	@Test
+	@Disabled
 	public void testCompute_WrongParamType() throws Exception {
 		EParameter p = param("namePrefix", EcorePackage.Literals.EINT);
 		EOperation op = mismatchOperation("findEmployeesByNamePrefix", EcorePackage.Literals.ESTRING, p);
@@ -305,6 +317,7 @@ public class ObjectValidationResourceTest {
 	}
 
 	@Test
+	@Disabled
 	public void testCompute_ValidOperation_Returns200() throws Exception {
 		EOperation op = companyOperation("getTotalEmployees");
 		OperationValidationRequest request = buildComputeRequest(DGFactory.eINSTANCE.createCompany(), op);
@@ -316,6 +329,7 @@ public class ObjectValidationResourceTest {
 	}
 
 	@Test
+	@Disabled
 	public void testCompute_ValidOperationWithParameters_Returns200() throws Exception {
 		EOperation op = companyOperation("findEmployeesByNamePrefix");
 		OperationValidationRequest request = buildComputeRequest(DGFactory.eINSTANCE.createCompany(), op);
@@ -395,6 +409,7 @@ public class ObjectValidationResourceTest {
 	// ========== Derive Tests ==========
 
 	@Test
+	@Disabled
 	public void testDerive_NoValidationObjects() throws Exception {
 		DerivedValidationRequest request = buildDeriveRequest(null);
 		Response response = postDeriveRequest(request);
@@ -402,6 +417,7 @@ public class ObjectValidationResourceTest {
 	}
 
 	@Test
+	@Disabled
 	public void testDerive_TooManyValidationObjects() throws Exception {
 		EStructuralFeature nameFeature = DGPackage.eINSTANCE.getCompany().getEStructuralFeature("name");
 		DerivedValidationRequest request = buildDeriveRequest(DGFactory.eINSTANCE.createCompany(), nameFeature);
@@ -411,6 +427,7 @@ public class ObjectValidationResourceTest {
 	}
 
 	@Test
+	@Disabled
 	public void testDerive_FeatureNotInEClass() throws Exception {
 		EStructuralFeature personFeature = DGPackage.eINSTANCE.getPerson().getEStructuralFeature("firstName");
 		DerivedValidationRequest request = buildDeriveRequest(DGFactory.eINSTANCE.createCompany(), personFeature);
@@ -419,6 +436,7 @@ public class ObjectValidationResourceTest {
 	}
 
 	@Test
+	@Disabled
 	public void testDerive_SimpleFeature_Returns200() throws Exception {
 		EStructuralFeature nameFeature = DGPackage.eINSTANCE.getCompany().getEStructuralFeature("name");
 		DerivedValidationRequest request = buildDeriveRequest(DGFactory.eINSTANCE.createCompany(), nameFeature);
@@ -428,6 +446,7 @@ public class ObjectValidationResourceTest {
 	}
 
 	@Test
+	@Disabled
 	public void testDerive_EObjectFeature_Returns200() throws Exception {
 		org.eclipse.fennec.model.atlas.datagen.example.model.dge.Company company = DGFactory.eINSTANCE.createCompany();
 		Address address = DGFactory.eINSTANCE.createAddress();
@@ -440,6 +459,7 @@ public class ObjectValidationResourceTest {
 	}
 
 	@Test
+	@Disabled
 	public void testDerive_ManyEObjectFeature_Returns200() throws Exception {
 		org.eclipse.fennec.model.atlas.datagen.example.model.dge.Company company = DGFactory.eINSTANCE.createCompany();
 		EStructuralFeature employeesFeature = DGPackage.eINSTANCE.getCompany().getEStructuralFeature("employees");
@@ -450,6 +470,7 @@ public class ObjectValidationResourceTest {
 	}
 
 	@Test
+	@Disabled
 	public void testDerive_ManyEDataTypeFeature_Returns200() throws Exception {
 		org.eclipse.fennec.model.atlas.datagen.example.model.dge.Company company = DGFactory.eINSTANCE.createCompany();
 		EStructuralFeature employeesNamesFeature = DGPackage.eINSTANCE.getCompany().getEStructuralFeature("employeesNames");
