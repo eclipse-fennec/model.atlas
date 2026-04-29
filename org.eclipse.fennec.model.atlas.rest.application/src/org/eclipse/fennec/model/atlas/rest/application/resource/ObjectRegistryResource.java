@@ -22,6 +22,7 @@ import org.eclipse.emf.ecore.util.EcoreUtil;
 import org.eclipse.fennec.model.atlas.mgmt.management.ManagementFactory;
 import org.eclipse.fennec.model.atlas.mgmt.management.ObjectMetadata;
 import org.eclipse.fennec.model.atlas.mgmt.management.ObjectMetadataContainer;
+import org.eclipse.fennec.model.atlas.mgmt.storage.AbstractEObjectStorageService;
 import org.eclipse.fennec.model.atlas.rest.application.filter.ModelAtlasRequestFilter;
 import org.eclipse.fennec.model.atlas.rest.model.StageTransitionRequest;
 import org.eclipse.fennec.model.atlas.runtime.RequireRuntime;
@@ -53,6 +54,8 @@ import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.QueryParam;
 import jakarta.ws.rs.WebApplicationException;
 import jakarta.ws.rs.core.Context;
+import jakarta.ws.rs.core.EntityTag;
+import jakarta.ws.rs.core.HttpHeaders;
 import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.core.Response.Status;
 
@@ -83,6 +86,9 @@ public class ObjectRegistryResource {
     @Reference
     private ManagementFactory mgmtFactory;
 
+    @Context
+    private HttpHeaders headers;
+    
     @Context
     private jakarta.ws.rs.container.ContainerRequestContext requestContext;
 
@@ -162,8 +168,10 @@ public class ObjectRegistryResource {
                             "Obejct %s not found neither scope '%s', registry '%s' and stage '%s' nor in parent hierarchy",
                             objectId, scopeName, registryName, stageName)).build();
                 } else {
-                    return Response.status(Response.Status.OK).entity(metadata).header("Content-Type", getResolvedMediaType())
-                            .build();
+                    Response.ResponseBuilder rb = Response.status(Response.Status.OK).entity(metadata)
+                            .header("Content-Type", getResolvedMediaType());
+                    addETagHeader(rb, metadata);
+                    return evaluateConditionalGet(rb, metadata);
                 }
             } else if (name != null) {
                 List<ObjectMetadata> objectsMetadata = scopeService.listInStageForRegistryByName(registryName,
@@ -261,11 +269,13 @@ public class ObjectRegistryResource {
                     }
                     ObjectMetadata metadata = scopeService
                             .updateInStageForRegistry(registryName, stageName, object, objectId, version).getValue();
-                    return Response.status(Response.Status.OK)
+                    Response.ResponseBuilder rb = Response.status(Response.Status.OK)
                             .header("Location",
                                     "/".concat(scopeName).concat("/registries/").concat(registryName).concat("/stages/")
                                             .concat(stageName).concat("?objectId=").concat(objectId))
-                            .entity(metadata).header("Content-Type", getResolvedMediaType()).build();
+                            .entity(metadata).header("Content-Type", getResolvedMediaType());
+                    addETagHeader(rb, metadata);
+                    return rb.build();
                 }
             }
             ObjectMetadata metadata = mgmtFactory.createObjectMetadata();
@@ -279,11 +289,13 @@ public class ObjectRegistryResource {
             metadata.setObjectType(EcoreUtil.getURI(object.eClass()).toString());
 
             metadata = scopeService.uploadToStageForRegistry(registryName, stageName, object, metadata).getValue();
-            return Response.status(Response.Status.CREATED)
+            Response.ResponseBuilder rb = Response.status(Response.Status.CREATED)
                     .header("Location",
                             "/".concat(scopeName).concat("/registries/").concat(registryName).concat("/stages/")
                                     .concat(stageName).concat("?objectId=").concat(objectId))
-                    .entity(metadata).header("Content-Type", getResolvedMediaType()).build();
+                    .entity(metadata).header("Content-Type", getResolvedMediaType());
+            addETagHeader(rb, metadata);
+            return rb.build();
         } catch (WebApplicationException e) {
             // WebApplicationException already has the correct status code, rethrow it
             throw e;
@@ -321,13 +333,20 @@ public class ObjectRegistryResource {
 
         ScopeService<?> scopeService = getScopeServiceByScopeName(scopeName);
         try {
+            ObjectMetadata contentMetadata = scopeService.getMetadataFromStageForRegistry(registryName, stageName, objectId);
             EObject eObject = scopeService.getContentFromStageForRegistry(registryName, stageName, objectId);
             if (eObject == null) {
                 return Response.status(Response.Status.NO_CONTENT).entity(String.format(
                         "Obejct %s not found neither scope '%s', registry '%s' and stage '%s' nor in parent hierarchy",
                         objectId, scopeName, registryName, stageName)).build();
             }
-            return Response.status(Response.Status.OK).entity(eObject).header("Content-Type", getResolvedMediaType()).build();
+            Response.ResponseBuilder rb = Response.status(Response.Status.OK).entity(eObject)
+                    .header("Content-Type", getResolvedMediaType());
+            if (contentMetadata != null) {
+                addETagHeader(rb, contentMetadata);
+                return evaluateConditionalGet(rb, contentMetadata);
+            }
+            return rb.build();
 
         } catch (IllegalArgumentException e) {
             return Response.status(Response.Status.BAD_REQUEST).entity(e.getMessage()).build();
@@ -398,9 +417,27 @@ public class ObjectRegistryResource {
                         .entity(String.format("Object %s is in read-only state", objectId)).build();
             }
 
+            // If-Match validation (optimistic locking via ETag)
+            Response preconditionResponse = checkIfMatch(existingMetadata);
+            if (preconditionResponse != null) {
+                return preconditionResponse;
+            }
+
+            // Content-aware skip: if content hasn't changed, skip the update
+            String newContentHash = AbstractEObjectStorageService.computeContentHash(eObject);
+            if (newContentHash != null && newContentHash.equals(existingMetadata.getContentHash())) {
+                Response.ResponseBuilder rb = Response.status(Response.Status.OK)
+                        .entity(existingMetadata).header("Content-Type", getResolvedMediaType());
+                addETagHeader(rb, existingMetadata);
+                return rb.build();
+            }
+
             ObjectMetadata metadata = scopeService
                     .updateInStageForRegistry(registryName, stageName, eObject, objectId, version).getValue();
-            return Response.status(Response.Status.OK).entity(metadata).header("Content-Type", getResolvedMediaType()).build();
+            Response.ResponseBuilder rb = Response.status(Response.Status.OK)
+                    .entity(metadata).header("Content-Type", getResolvedMediaType());
+            addETagHeader(rb, metadata);
+            return rb.build();
 
         } catch (IllegalArgumentException e) {
             return Response.status(Response.Status.BAD_REQUEST).entity(e.getMessage()).build();
@@ -446,9 +483,15 @@ public class ObjectRegistryResource {
                         .entity(String.format("Object %s is in read-only state", objectId)).build();
             }
 
+            // If-Match validation (optimistic locking via ETag)
+            Response preconditionResponse = checkIfMatch(existingMetadata);
+            if (preconditionResponse != null) {
+                return preconditionResponse;
+            }
+
             boolean deleted = scopeService.deleteFromStageForRegistry(registryName, stageName, objectId).getValue();
             if (deleted)
-                return Response.status(Response.Status.OK).build();
+                return Response.noContent().build();
             return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
                     .entity(String.format("Object %s deletion failed but causes are unknown", objectId)).build();
         } catch (IllegalArgumentException e) {
@@ -488,9 +531,17 @@ public class ObjectRegistryResource {
         ScopeService<?> scopeService = getScopeServiceByScopeName(scopeName);
         try {
             String objectId = transitionRequest.getObjectId();
+            String targetStage = transitionRequest.getTargetStage();
             ObjectMetadata existingMetadata = scopeService.getMetadataFromStageForRegistry(registryName, stageName,
                     objectId);
             if (existingMetadata == null) {
+                // Object not in source stage — check if already in target (idempotent retry)
+                ObjectMetadata targetMetadata = scopeService.getMetadataFromStageForRegistry(registryName, targetStage,
+                        objectId);
+                if (targetMetadata != null) {
+                    return Response.status(Response.Status.OK).entity(targetMetadata)
+                            .header("Content-Type", getResolvedMediaType()).build();
+                }
                 return Response.status(Response.Status.NO_CONTENT).entity(String.format(
                         "Obejct %s not found neither scope '%s', registry '%s' and stage '%s' nor in parent hierarchy",
                         objectId, scopeName, registryName, stageName)).build();
@@ -500,13 +551,59 @@ public class ObjectRegistryResource {
                         .entity(String.format("Object %s is in read-only state", objectId)).build();
             }
             ObjectMetadata metadata = scopeService.transitionToStageForRegistry(registryName, objectId, stageName,
-                    transitionRequest.getTargetStage());
+                    targetStage);
             return Response.status(Response.Status.OK).entity(metadata).header("Content-Type", getResolvedMediaType()).build();
         } catch (IllegalArgumentException e) {
             return Response.status(Response.Status.BAD_REQUEST).entity(e.getMessage()).build();
         } catch (Exception e) {
             return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity(e.getMessage()).build();
         }
+    }
+
+    /**
+     * Adds an ETag header to the response if the metadata contains a content hash.
+     */
+    private void addETagHeader(Response.ResponseBuilder rb, ObjectMetadata metadata) {
+        if (metadata != null && metadata.getContentHash() != null) {
+            rb.tag(new EntityTag(metadata.getContentHash()));
+        }
+    }
+
+    /**
+     * Checks the If-Match header against the current content hash.
+     * Returns a 412 Precondition Failed response if the ETag doesn't match,
+     * or null if the precondition is satisfied (or no If-Match header was sent).
+     */
+    private Response checkIfMatch(ObjectMetadata metadata) {
+        String ifMatch = headers.getHeaderString("If-Match");
+        if (ifMatch == null) {
+            return null; // No precondition — proceed normally
+        }
+        String currentHash = metadata.getContentHash();
+        if (currentHash == null) {
+            return null; // No hash stored yet — cannot validate, proceed
+        }
+        String cleanedIfMatch = ifMatch.replace("\"", "");
+        if (!cleanedIfMatch.equals(currentHash)) {
+            return Response.status(Response.Status.PRECONDITION_FAILED)
+                    .entity("Resource has been modified. ETag mismatch.").build();
+        }
+        return null;
+    }
+
+    /**
+     * Evaluates If-None-Match for conditional GET requests.
+     * Returns a 304 Not Modified if the ETag matches, otherwise builds the response normally.
+     */
+    private Response evaluateConditionalGet(Response.ResponseBuilder rb, ObjectMetadata metadata) {
+        String ifNoneMatch = headers.getHeaderString("If-None-Match");
+        if (ifNoneMatch != null && metadata.getContentHash() != null) {
+            String cleanedIfNoneMatch = ifNoneMatch.replace("\"", "");
+            if (cleanedIfNoneMatch.equals(metadata.getContentHash())) {
+                return Response.notModified(new EntityTag(metadata.getContentHash())).build();
+            }
+        }
+        return rb.build();
     }
 
     private ScopeService<?> getScopeServiceByScopeName(String scopeName) {

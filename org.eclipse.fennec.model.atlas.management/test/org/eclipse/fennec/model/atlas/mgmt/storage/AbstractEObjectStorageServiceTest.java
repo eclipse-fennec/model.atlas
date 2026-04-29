@@ -877,6 +877,83 @@ public class AbstractEObjectStorageServiceTest {
                 .updateCache(argThat(cachedMetadata -> "CustomEPackage".equals(cachedMetadata.getObjectType())));
     }
 
+    // ========== Content Hash Tests ==========
+
+    @Test
+    public void testComputeContentHash_ReturnsDeterministicHash() {
+        EPackage testPackage = EcoreFactory.eINSTANCE.createEPackage();
+        testPackage.setName("TestPackage");
+        testPackage.setNsURI("http://test.com/1.0");
+        testPackage.setNsPrefix("test");
+
+        String hash1 = AbstractEObjectStorageService.computeContentHash(testPackage);
+        String hash2 = AbstractEObjectStorageService.computeContentHash(testPackage);
+
+        assertNotNull(hash1, "Hash should not be null");
+        assertNotNull(hash2, "Hash should not be null");
+        assertEquals(hash1, hash2, "Same content should produce same hash");
+    }
+
+    @Test
+    public void testComputeContentHash_DifferentContentProducesDifferentHash() {
+        EPackage package1 = EcoreFactory.eINSTANCE.createEPackage();
+        package1.setName("Package1");
+        package1.setNsURI("http://test1.com/1.0");
+        package1.setNsPrefix("p1");
+
+        EPackage package2 = EcoreFactory.eINSTANCE.createEPackage();
+        package2.setName("Package2");
+        package2.setNsURI("http://test2.com/1.0");
+        package2.setNsPrefix("p2");
+
+        String hash1 = AbstractEObjectStorageService.computeContentHash(package1);
+        String hash2 = AbstractEObjectStorageService.computeContentHash(package2);
+
+        assertNotNull(hash1);
+        assertNotNull(hash2);
+        assertFalse(hash1.equals(hash2), "Different content should produce different hashes");
+    }
+
+    @Test
+    public void testComputeContentHash_NullReturnsNull() {
+        String hash = AbstractEObjectStorageService.computeContentHash(null);
+        assertNull(hash, "Null object should return null hash");
+    }
+
+    @Test
+    public void testStoreObject_SetsContentHash() throws Exception {
+        storageService.activateStorageService();
+        EPackage testPackage = EcoreFactory.eINSTANCE.createEPackage();
+        testPackage.setName("TestPackage");
+
+        ObjectMetadata metadata = ManagementFactory.eINSTANCE.createObjectMetadata();
+        metadata.setObjectName("TestPackage");
+        metadata.setStatus(ObjectStatus.DRAFT);
+
+        doNothing().when(mockStorageHelper).saveEObject(any(), any(), any(), any(), any(), any());
+        doNothing().when(mockStorageHelper).saveMetadata(any(), any(), any(), any(), any());
+        when(mockStorageHelper.getFileExtension(any())).thenReturn("ecore");
+
+        Promise<ObjectMetadata> result = storageService.storeObject(TEST_SCOPE, TEST_REGISTRY, TEST_STAGE, "test-id",
+                testPackage, metadata);
+        metadata = result.getValue();
+
+        assertNotNull(metadata.getContentHash(), "ContentHash should be set after storing object");
+        assertEquals(64, metadata.getContentHash().length(), "SHA-256 hash should be 64 hex characters");
+    }
+
+    @Test
+    public void testComputeContentHash_IsValidSha256Hex() {
+        EPackage testPackage = EcoreFactory.eINSTANCE.createEPackage();
+        testPackage.setName("TestPackage");
+
+        String hash = AbstractEObjectStorageService.computeContentHash(testPackage);
+
+        assertNotNull(hash);
+        assertEquals(64, hash.length(), "SHA-256 produces 64 hex characters");
+        assertTrue(hash.matches("[0-9a-f]+"), "Hash should be lowercase hex");
+    }
+
     // Helper method
     private ObjectMetadata createTestMetadata(String objectId, String objectName) {
         ObjectMetadata metadata = ManagementFactory.eINSTANCE.createObjectMetadata();

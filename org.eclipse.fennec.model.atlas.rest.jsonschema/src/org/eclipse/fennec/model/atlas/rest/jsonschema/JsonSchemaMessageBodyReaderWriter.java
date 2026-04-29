@@ -22,10 +22,9 @@ import java.util.Map;
 
 import org.eclipse.emf.common.util.URI;
 import org.eclipse.emf.ecore.EPackage;
-import org.eclipse.emf.ecore.EcorePackage;
 import org.eclipse.emf.ecore.resource.Resource;
 import org.eclipse.emf.ecore.resource.ResourceSet;
-import org.eclipse.fennec.codec.options.CodecOptionsBuilder;
+import org.eclipse.fennec.codec.jsonschema.v2.constants.CodecJsonSchemaOptions;
 import org.gecko.emf.osgi.constants.EMFNamespaces;
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
@@ -59,10 +58,7 @@ import jakarta.ws.rs.ext.Provider;
 @Consumes("application/schema+json")
 public class JsonSchemaMessageBodyReaderWriter implements MessageBodyReader<EPackage>, MessageBodyWriter<EPackage> {
 
-    private static final Map<String, Object> OPTIONS = CodecOptionsBuilder.create()
-            .rootObject(EcorePackage.Literals.EPACKAGE).serializeType(false).serializeEmptyValue(true)
-            .serializeNullValue(true).forClass(EcorePackage.Literals.EPACKAGE)
-            .withExtraProperties(Map.of("jsonschema", "true", "jsonschema.feature.key", "definitions")).build();
+    private static final Map<String, Object> OPTIONS = Map.ofEntries(Map.entry(CodecJsonSchemaOptions.OPTION_SCHEMA_FEATURE, "definitions"));
 
     // We need to inject this and not the resource factory because we might have
     // conflicts with the json resource. (see codec documentation!)

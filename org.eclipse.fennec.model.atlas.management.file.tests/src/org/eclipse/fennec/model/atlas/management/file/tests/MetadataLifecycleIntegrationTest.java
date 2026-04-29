@@ -131,7 +131,6 @@ public class MetadataLifecycleIntegrationTest {
         originalMetadata.setUploadUser("test-user");
         originalMetadata.setSourceChannel("INTEGRATION_TEST");
         originalMetadata.setStatus(ObjectStatus.DRAFT);
-        originalMetadata.setContentHash("provided-hash-123");
 
         Instant beforeStore = Instant.now();
         originalMetadata.setUploadTime(beforeStore);
@@ -168,7 +167,6 @@ public class MetadataLifecycleIntegrationTest {
         // Verify user and source fields
         assertEquals("test-user", retrievedMetadata.getUploadUser(), "Upload user should be preserved");
         assertEquals("INTEGRATION_TEST", retrievedMetadata.getSourceChannel(), "Source channel should be preserved");
-        assertEquals("provided-hash-123", retrievedMetadata.getContentHash(), "Content hash should be preserved");
 
         // Verify status
         assertEquals(ObjectStatus.DRAFT, retrievedMetadata.getStatus(), "Status should be preserved");

@@ -1,0 +1,8 @@
+-include: modelatlas.runtime_local.bndrun
+
+-runbundles.osgifx: \
+    com.osgifx.console.agent;version='[3.0.0,3.0.1)'
+
+-resolve: never
+-runproperties.osgifx:\
+    osgi.fx.agent.socket.port=0.0.0.0:2000
