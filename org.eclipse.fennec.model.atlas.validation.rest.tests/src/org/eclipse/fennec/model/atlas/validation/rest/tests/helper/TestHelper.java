@@ -17,6 +17,7 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.Collections;
+import java.util.UUID;
 
 import org.eclipse.emf.common.util.URI;
 import org.eclipse.emf.ecore.EAttribute;
@@ -46,7 +47,7 @@ public class TestHelper {
      */
     public static String serializeToXMI(EObject eObject, ResourceSet resourceSet) throws IOException {
         // Create a temporary resource
-        Resource resource = resourceSet.createResource(URI.createURI("temp://test.xmi"));
+        Resource resource = resourceSet.createResource(URI.createURI(UUID.randomUUID().toString().concat(".xmi")));
         resource.getContents().add(eObject);
 
         // Serialize to byte array
@@ -71,7 +72,7 @@ public class TestHelper {
      */
     public static EObject deserializeFromXMI(String xmiContent, ResourceSet resourceSet) throws IOException {
         // Create a temporary resource
-        Resource resource = resourceSet.createResource(URI.createURI("temp://test.xmi"));
+        Resource resource = resourceSet.createResource(URI.createURI(UUID.randomUUID().toString().concat(".xmi")));
 
         // Load from byte array
         ByteArrayInputStream bais = new ByteArrayInputStream(xmiContent.getBytes("UTF-8"));

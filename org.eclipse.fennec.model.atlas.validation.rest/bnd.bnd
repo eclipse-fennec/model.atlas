@@ -9,5 +9,4 @@
 -library: enableJakartaREST,\
 	enableEMF
 
-Bundle-Version: 1.0.0.SNAPSHOT
 Private-Package: org.eclipse.fennec.model.atlas.validation.rest
