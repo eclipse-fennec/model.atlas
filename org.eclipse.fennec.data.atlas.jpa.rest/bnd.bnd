@@ -11,4 +11,5 @@
 	org.gecko.emf.rest.jakartars,\
 	org.osgi.util.promise,\
 	org.gecko.emf.json,\
-	org.osgi.service.servlet
+	org.osgi.service.servlet,\
+	jakarta.persistence-api
