@@ -75,11 +75,12 @@ public class JpaMappingWatcherTests {
     private final List<Path> createdFiles = new ArrayList<>();
 
     @AfterEach
-    void cleanUp() throws IOException {
+    void cleanUp() throws IOException, InterruptedException {
         for (Path file : createdFiles) {
             Files.deleteIfExists(file);
         }
         createdFiles.clear();
+        Thread.sleep(2000); //give time to cleanup services
     }
 
     @Test
@@ -161,7 +162,7 @@ public class JpaMappingWatcherTests {
             if (aware.isEmpty()) {
                 return true;
             }
-            Thread.sleep(100);
+            Thread.sleep(500);
         }
         return aware.isEmpty();
     }

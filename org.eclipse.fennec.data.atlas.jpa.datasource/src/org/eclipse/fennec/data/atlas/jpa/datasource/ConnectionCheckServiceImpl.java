@@ -74,7 +74,7 @@ public class ConnectionCheckServiceImpl implements ConnectionCheckService {
 	@Override
 	public Promise<Boolean> checkConnection(DataSourceConfig dataSourceConfig) {
 		
-		Dictionary<String, Object> properties = DataSourceConfigHelper.buildProperties(dataSourceConfig);
+		Dictionary<String, Object> properties = DataSourceConfigHelper.buildProperties(dataSourceConfig, null);
 		uuid = UUID.randomUUID();
 		properties.put("uuid", uuid.toString());
 		Deferred<Boolean> deferred = pf.deferred();
@@ -107,9 +107,9 @@ public class ConnectionCheckServiceImpl implements ConnectionCheckService {
 		Deferred<Boolean> deferred = pf.deferred();
 		Filter filter = null;
 		try {
-			filter = createFilter("(name=" + dataSourceName + ")");
+			filter = createFilter("(" + DataSourceConfigHelper.DATA_SOURCE_NAME + "=" + dataSourceName + ")");
 		} catch(InvalidSyntaxException e) {
-			deferred.fail(new ConnectionCheckException(String.format("Filter %s to look for DataSource has wrong syntax", "(name=" + dataSourceName + ")"), e));
+			deferred.fail(new ConnectionCheckException(String.format("Filter %s to look for DataSource has wrong syntax", "(" + DataSourceConfigHelper.DATA_SOURCE_NAME + "=" + dataSourceName + ")"), e));
 		}
 		if(filter != null) {
 			startTrackerForFilter(filter, deferred);
@@ -141,7 +141,7 @@ public class ConnectionCheckServiceImpl implements ConnectionCheckService {
 			}
 		};
 
-		tracker.open();
+		tracker.open(true);
 
 	}
 

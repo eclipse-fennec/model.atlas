@@ -12,7 +12,8 @@ Test-Cases: ${classes;HIERARCHY_INDIRECTLY_ANNOTATED;org.junit.platform.commons.
 	org.osgi.service.jakartars,\
 	org.osgi.util.tracker,\
 	org.gecko.emf.rest.jakartars,\
-	osgi.cmpn
+	osgi.cmpn,\
+	org.osgi.test.junit5.cm
 	
 Private-Package: \
 	org.eclipse.fennec.data.atlas.jpa.rest.tests,\
@@ -25,3 +26,8 @@ Bundle-Version: 1.0.0.SNAPSHOT
 
 -includeresource: \
 	OSGI-INF/configurator/=configs/
+	data/=data/
+	
+Require-Capability: \
+	osgi.extender;filter:='(osgi.extender=osgi.configurator)',\
+	osgi.implementation;filter:='(&(osgi.implementation=osgi.cm)(version>=1.6.0)(!(version>=2.0.0)))'

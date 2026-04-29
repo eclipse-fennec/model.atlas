@@ -71,7 +71,7 @@ public class DataSourceConfigHandler {
             } else {
                 Configuration cfg = nameToConfig.get(newName);
                 if (cfg != null) {
-                    cfg.update(DataSourceConfigHelper.buildProperties(ds));
+                    cfg.update(DataSourceConfigHelper.buildProperties(ds, config.getName()));
                 } else {
                     cfg = DataSourceConfigHelper.createH2Config(configAdmin, newName, ds);
                     serviceIdToName.put(serviceId, newName);

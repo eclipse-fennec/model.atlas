@@ -33,10 +33,11 @@ public class DataSourceConfigHelper {
 	private static final String PROP_USERNAME = "username";
 	private static final String PROP_PASSWORD = ".password";
 	private static final String JDBC_H2_PREFIX = "jdbc:h2:";
+	public static final String DATA_SOURCE_NAME = "data.source.name";
 
 	public static Configuration createH2Config(ConfigurationAdmin configAdmin, String name, DataSourceConfig ds) throws IOException {
 		Configuration cfg = configAdmin.getFactoryConfiguration(H2_PID, name, "?");
-		cfg.update(buildProperties(ds));
+		cfg.update(buildProperties(ds, name));
 		return cfg;
 	}
 	
@@ -46,8 +47,9 @@ public class DataSourceConfigHelper {
 		return cfg;
 	}
 
-	public static Dictionary<String, Object> buildProperties(DataSourceConfig ds) {
+	public static Dictionary<String, Object> buildProperties(DataSourceConfig ds, String dataSourceName) {
 		Dictionary<String, Object> properties = new Hashtable<>();
+		if(dataSourceName != null) properties.put(DATA_SOURCE_NAME, dataSourceName);
 		String jdbcUrl = ds.getJdbcUrl();
 		if (jdbcUrl != null) {
 			String identifier = jdbcUrl.startsWith(JDBC_H2_PREFIX)

@@ -4,13 +4,13 @@ import org.eclipse.fennec.data.atlas.jpa.datasource.api.ConnectionCheckService;
 import org.eclipse.fennec.data.atlas.mapping.model.jpamapping.DataSourceConfig;
 import org.eclipse.fennec.data.atlas.mapping.model.jpamapping.JpaMappingConfig;
 import org.eclipse.fennec.data.atlas.mapping.model.jpamapping.SqlDialect;
-import org.gecko.emf.rest.annotations.RequireEMFMessageBodyReaderWriter;
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
 import org.osgi.service.component.annotations.ServiceScope;
 import org.osgi.service.jakartars.whiteboard.propertytypes.JakartarsName;
 import org.osgi.service.jakartars.whiteboard.propertytypes.JakartarsResource;
 import org.osgi.util.promise.Promise;
+import org.osgi.util.promise.TimeoutException;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -27,7 +27,7 @@ import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.core.Response.Status;
 
-@RequireEMFMessageBodyReaderWriter
+@RequireRuntime
 @JakartarsResource()
 @JakartarsName("JpaMappingResource")
 @Component(name = "JpaMappingResource", service = JpaMappingResource.class, scope = ServiceScope.PROTOTYPE)
@@ -80,13 +80,15 @@ public class JpaMappingResource {
         Promise<Boolean> promise = connectionCheckService.checkConnection(ds);
         try {
         	Throwable t = promise.timeout(5000).getFailure();
-        	if(t != null) {
+        	if (t instanceof TimeoutException) {
+        		return Response.status(Status.REQUEST_TIMEOUT).entity("Timeout of 5 sec has been reached but no result from the connection test was returned").build();
+        	} else if (t != null) {
         		return Response.status(Status.BAD_REQUEST).entity(t.getMessage()).build();
         	} else {
         		return Response.ok().build();
         	}
         } catch(InterruptedException e) {
-        	return Response.status(Status.REQUEST_TIMEOUT).entity("Timeout of 5 sec has been reached but no result from the connection test was returned").build();
+        	return Response.status(Status.INTERNAL_SERVER_ERROR).entity("Thread was interrupted while waiting for connection test result").build();
         }
               
     }
@@ -103,13 +105,15 @@ public class JpaMappingResource {
     	Promise<Boolean> promise = connectionCheckService.checkConnection(dataSourceName);
         try {
         	Throwable t = promise.timeout(5000).getFailure();
-        	if(t != null) {
+        	if (t instanceof TimeoutException) {
+        		return Response.status(Status.REQUEST_TIMEOUT).entity("Timeout of 5 sec has been reached but no result from the connection test was returned").build();
+        	} else if (t != null) {
         		return Response.status(Status.BAD_REQUEST).entity(t.getMessage()).build();
         	} else {
         		return Response.ok().build();
         	}
         } catch(InterruptedException e) {
-        	return Response.status(Status.REQUEST_TIMEOUT).entity("Timeout of 5 sec has been reached but no result from the connection test was returned").build();
+        	return Response.status(Status.INTERNAL_SERVER_ERROR).entity("Thread was interrupted while waiting for connection test result").build();
         }
               
     }

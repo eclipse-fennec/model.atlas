@@ -9,4 +9,6 @@
 	org.osgi.service.jdbc,\
 	org.eclipse.fennec.data.atlas.jpa.datasource;version=snapshot,\
 	org.gecko.emf.rest.jakartars,\
-	org.osgi.util.promise
+	org.osgi.util.promise,\
+	org.gecko.emf.json,\
+	org.osgi.service.servlet
