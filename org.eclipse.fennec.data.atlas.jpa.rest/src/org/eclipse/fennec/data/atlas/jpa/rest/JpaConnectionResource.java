@@ -29,10 +29,10 @@ import jakarta.ws.rs.core.Response.Status;
 
 @RequireRuntime
 @JakartarsResource()
-@JakartarsName("JpaMappingResource")
-@Component(name = "JpaMappingResource", service = JpaMappingResource.class, scope = ServiceScope.PROTOTYPE)
+@JakartarsName("JpaConnectionResource")
+@Component(name = "JpaConnectionResource", service = JpaConnectionResource.class, scope = ServiceScope.PROTOTYPE)
 @Path("/jpa")
-public class JpaMappingResource {
+public class JpaConnectionResource {
 	
 	@Reference
 	ConnectionCheckService connectionCheckService;
