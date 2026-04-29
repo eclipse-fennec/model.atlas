@@ -12,7 +12,9 @@
 package org.eclipse.fennec.model.atlas.rest.application.resource;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 
 import org.eclipse.emf.common.util.BasicEList;
@@ -44,6 +46,7 @@ import org.eclipse.fennec.model.atlas.validation.model.cocl.OclConstraint;
 import org.eclipse.fennec.model.atlas.validation.model.cocl.OclConstraintSet;
 import org.eclipse.fennec.model.atlas.validation.model.cocl.OclRole;
 import org.eclipse.fennec.model.atlas.validation.model.cocl.OperationRequestParameter;
+import org.eclipse.fennec.model.atlas.validation.model.cocl.OperationReturnType;
 import org.eclipse.fennec.model.atlas.validation.model.cocl.OperationValidationRequest;
 import org.eclipse.fennec.model.atlas.validation.model.cocl.Severity;
 import org.eclipse.fennec.model.atlas.validation.model.cocl.SimpleValidationResult;
@@ -272,44 +275,117 @@ public class ObjectValidationResource {
 			content = @Content(schema = @Schema(implementation = OperationValidationRequest.class))) OperationValidationRequest validationRequest) {
 		try {
 			checkContentType();
-			EObject validatingObject = requireSingleObject(validationRequest.getValidationObjects());
-			EOperation validatingOperation = validationRequest.getOperation();
-			if (validatingOperation == null) {
-				throw badRequest("No EOperation to use for validation");
-			}
-			EOperation objOperation = validatingObject.eClass().getEOperations().stream()
-					.filter(o -> o.getName().equals(validatingOperation.getName())).findFirst().orElse(null);
-			if (objOperation == null) {
-				throw badRequest(String.format("EOperation %s do not belong to EObject EClass %s", validatingOperation.getName(), validatingObject.eClass().getName()));
-			}
-			checkOperationSignature(validatingOperation, objOperation);
-			if (validationRequest.getParameters().size() != validatingOperation.getEParameters().size()) {
-				throw badRequest(String.format("Number of Parameters provided does not match number of EOperation parameters. Expected %d but was %d",
-						validatingOperation.getEParameters().size(), validationRequest.getParameters().size()));
-			}
-			BasicEList<Object> arguments = new BasicEList<>();
-			List<EParameter> eParams = objOperation.getEParameters();
-			for (int i = 0; i < validationRequest.getParameters().size(); i++) {
-				OperationRequestParameter param = validationRequest.getParameters().get(i);
-				if (param.isIsNull()) {
-					arguments.add(null);
-				} else if (param.getEValue() != null) {
-					arguments.add(param.getEValue());
-				} else {
-					EDataType eDataType = (EDataType) eParams.get(i).getEType();
-					arguments.add(eDataType.getEPackage().getEFactoryInstance().createFromString(eDataType, param.getJavaValue()));
+			CheckedValidationRequest checkRequest = checkRequest(validationRequest);
+			EObject validatingObject = checkRequest.validatingEObject;
+			boolean withCOCL = checkRequest.withCOCL;
+			
+			if(withCOCL) {
+				OclConstraintSet oclConstraintSet = resolveConstraintSet(validationRequest.getCoclId(), validatingObject);
+				String operationName = validationRequest.getOperationName();
+				List<String> operationParamNames = validationRequest.getParameters().stream().map(p -> p.getParameterName()).toList();
+				List<OclConstraint> constraints = ValidationHelper.filter(oclConstraintSet,
+						c -> c.isActive() && 
+						OclRole.OPERATION.equals(c.getRole()) && 
+						operationName.equals(c.getOperationName()) &&
+						checkOperationParamNames(operationParamNames, c.getOperationParameterNames()));
+				if(constraints.isEmpty()) {
+					throw badRequest(String.format("No active OclConstrait of type OPERATION with operation name %s and a matching list of parameter names has been found in COCLConstraintSet %s", operationName, validationRequest.getCoclId()));
 				}
+				ValidationResponse response = COCLFactory.eINSTANCE.createValidationResponse();
+				response.setRole(OclRole.OPERATION);
+				OclConstraint oclOperation = constraints.get(0);
+				Map<String, Object> variables = createOperationVariableMap(validationRequest.getParameters());
+				OclResult result = evaluateConstraint(oclOperation, validatingObject, variables);
+				
+				if(result.isSuccess()) {
+					ValidationResult validationResult = toValidationResult(result.value(), oclOperation.getOperationReturnType());
+					response.getResults().add(validationResult);
+				} else {
+					response.getDiagnostics().addAll(getDiagnostics(result.diagnostics()));
+				}
+				return Response.status(Response.Status.OK).entity(response).header("Content-Type", mediaType).build();
+			} else {
+				EOperation validatingOperation = validationRequest.getOperation();				
+				EOperation objOperation = validatingObject.eClass().getEOperations().stream()
+						.filter(o -> o.getName().equals(validatingOperation.getName())).findFirst().orElse(null);
+				if (objOperation == null) {
+					throw badRequest(String.format("EOperation %s do not belong to EObject EClass %s", validatingOperation.getName(), validatingObject.eClass().getName()));
+				}
+				checkOperationSignature(validatingOperation, objOperation);
+				if (validationRequest.getParameters().size() != validatingOperation.getEParameters().size()) {
+					throw badRequest(String.format("Number of Parameters provided does not match number of EOperation parameters. Expected %d but was %d",
+							validatingOperation.getEParameters().size(), validationRequest.getParameters().size()));
+				}
+				BasicEList<Object> arguments = new BasicEList<>();
+				List<EParameter> eParams = objOperation.getEParameters();
+				for (int i = 0; i < validationRequest.getParameters().size(); i++) {
+					OperationRequestParameter param = validationRequest.getParameters().get(i);
+					if (param.isIsNull()) {
+						arguments.add(null);
+					} else if (param.getEValue() != null) {
+						arguments.add(param.getEValue());
+					} else {
+						EDataType eDataType = (EDataType) eParams.get(i).getEType();
+						arguments.add(eDataType.getEPackage().getEFactoryInstance().createFromString(eDataType, param.getJavaValue()));
+					}
+				}
+				Object result = validatingObject.eInvoke(objOperation, arguments);
+				ValidationResponse response = COCLFactory.eINSTANCE.createValidationResponse();
+				response.setRole(OclRole.OPERATION);
+				response.getResults().add(toValidationResult(result, objOperation.getEType(), result instanceof EList<?>));
+				return Response.status(Response.Status.OK).entity(response).header("Content-Type", mediaType).build();
 			}
-			Object result = validatingObject.eInvoke(objOperation, arguments);
-			ValidationResponse response = COCLFactory.eINSTANCE.createValidationResponse();
-			response.setRole(OclRole.OPERATION);
-			response.getResults().add(toValidationResult(result, objOperation.getEType(), result instanceof EList<?>));
-			return Response.status(Response.Status.OK).entity(response).header("Content-Type", mediaType).build();
+			
+			
 		} catch (WebApplicationException e) {
 			throw e;
 		} catch (Exception e) {
 			return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity(e.getMessage()).build();
 		}
+	}
+
+	/**
+	 * @param parameters
+	 * @return
+	 */
+	private Map<String, Object> createOperationVariableMap(EList<OperationRequestParameter> parameters) {
+		Map<String, Object> variables = new HashMap<>(parameters.size());
+		parameters.forEach(p -> {
+			variables.put(p.getParameterName(), p.isIsNull() ? null : p.getJavaValue() != null ? p.getJavaValue() : p.getEValue());
+		});
+		return variables;
+	}
+
+	private boolean checkOperationParamNames(List<String> requestParamNames, List<String> oclParamNames) {
+		if(requestParamNames.size() != oclParamNames.size()) return false;
+		for(int i = 0; i < requestParamNames.size(); i++) {
+			if(!requestParamNames.get(i).equals(oclParamNames.get(i))) return false;
+		}
+		return true;
+	}
+	
+	private CheckedValidationRequest checkRequest(OperationValidationRequest validationRequest) {
+		
+		EObject validatingEObject = requireSingleObject(validationRequest.getValidationObjects());
+		
+//		1. Check whether we have a C-OCL id or not
+		if(validationRequest.getCoclId() != null) {
+//			1.a with COCL we need an operation name
+			if(validationRequest.getOperationName() == null || validationRequest.getOperationName().isBlank()) {
+				throw badRequest("When a COCL id is provided, an operationName must be provided as well");
+			}
+			return new CheckedValidationRequest(true, validatingEObject);
+		} else {
+//			1.b if NO C-OCL id is provided, then we must have an operation
+			if(validationRequest.getOperation() == null) {
+				throw badRequest("When NO COCL id is provided, an operation reference must be provided as well");
+			}
+			return new CheckedValidationRequest(false, validatingEObject);
+		}
+	}
+	
+	private record CheckedValidationRequest(boolean withCOCL, EObject validatingEObject) {
+		
 	}
 
 	// ---- guard helpers ----
@@ -354,8 +430,51 @@ public class ObjectValidationResource {
 		OclExpression expr = oclEngine.parse(constraint.getExpression(), source);
 		return oclEngine.evaluateWithDiagnostics(expr, OclContext.of(target), OclEvaluationOptions.lenient());
 	}
+	
+	private OclResult evaluateConstraint(OclConstraint constraint, EObject target, Map<String, Object> variables) throws OclParseException {
+		EClassifier source = (EClassifier) resourceSet.getEObject(URI.createURI(constraint.getContextClass()), false);
+		OclExpression expr = oclEngine.parse(constraint.getExpression(), source);
+		return oclEngine.evaluateWithDiagnostics(expr, OclContext.of(target, variables), OclEvaluationOptions.lenient());
+	}
 
 	// ---- result-building helper ----
+	
+	@SuppressWarnings("unchecked")
+	private ValidationResult toValidationResult(Object value, OperationReturnType returnType) {
+		if(OperationReturnType.EOBJECT.equals(returnType)) {
+			if(value instanceof EList list) {
+				EObjectValidationResult r = COCLFactory.eINSTANCE.createEObjectValidationResult();
+				r.getValues().addAll((EList<EObject>) list);
+				return r;
+			} else if(value instanceof List list) {
+				EObjectValidationResult r = COCLFactory.eINSTANCE.createEObjectValidationResult();
+				r.getValues().addAll((List<EObject>) list);
+				return r;
+			}
+			
+			else {
+				EObjectValidationResult r = COCLFactory.eINSTANCE.createEObjectValidationResult();
+				r.getValues().add((EObject) value);
+				return r;
+			}
+		} else {
+			if(value instanceof EList list) {
+				SimpleValidationResult r = COCLFactory.eINSTANCE.createSimpleValidationResult();
+				r.setValue(new ArrayList<>(list));
+				return r;
+			} else if(value instanceof List list) {
+				SimpleValidationResult r = COCLFactory.eINSTANCE.createSimpleValidationResult();
+				r.setValue(new ArrayList<>(list));
+				return r;
+			}
+			
+			else {
+				SimpleValidationResult r = COCLFactory.eINSTANCE.createSimpleValidationResult();
+				r.setValue(value.toString());
+				return r;
+			}
+		}	
+	}
 
 	@SuppressWarnings("unchecked")
 	private ValidationResult toValidationResult(Object value, EClassifier eType, boolean isMany) {

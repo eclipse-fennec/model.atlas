@@ -31,6 +31,7 @@ import org.eclipse.fennec.model.atlas.validation.model.cocl.OclConstraint;
 import org.eclipse.fennec.model.atlas.validation.model.cocl.OclConstraintSet;
 import org.eclipse.fennec.model.atlas.validation.model.cocl.OclRole;
 import org.eclipse.fennec.model.atlas.validation.model.cocl.OperationRequestParameter;
+import org.eclipse.fennec.model.atlas.validation.model.cocl.OperationReturnType;
 import org.eclipse.fennec.model.atlas.validation.model.cocl.OperationValidationRequest;
 import org.eclipse.fennec.model.atlas.validation.model.cocl.Severity;
 import org.eclipse.fennec.model.atlas.validation.model.cocl.SimpleValidationResult;
@@ -142,6 +143,13 @@ public class COCLPackageImpl extends EPackageImpl implements COCLPackage {
 	 * @generated
 	 */
 	private EEnum oclRoleEEnum = null;
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	private EEnum operationReturnTypeEEnum = null;
 
 	/**
 	 * Creates an instance of the model <b>Package</b>, registered with
@@ -314,6 +322,36 @@ public class COCLPackageImpl extends EPackageImpl implements COCLPackage {
 	@Override
 	public EAttribute getOclConstraint_TargetURIs() {
 		return (EAttribute)oclConstraintEClass.getEStructuralFeatures().get(9);
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
+	public EAttribute getOclConstraint_OperationName() {
+		return (EAttribute)oclConstraintEClass.getEStructuralFeatures().get(10);
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
+	public EAttribute getOclConstraint_OperationParameterNames() {
+		return (EAttribute)oclConstraintEClass.getEStructuralFeatures().get(11);
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
+	public EAttribute getOclConstraint_OperationReturnType() {
+		return (EAttribute)oclConstraintEClass.getEStructuralFeatures().get(12);
 	}
 
 	/**
@@ -572,6 +610,16 @@ public class COCLPackageImpl extends EPackageImpl implements COCLPackage {
 	 * @generated
 	 */
 	@Override
+	public EAttribute getOperationValidationRequest_OperationName() {
+		return (EAttribute)operationValidationRequestEClass.getEStructuralFeatures().get(2);
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
 	public EClass getOperationRequestParameter() {
 		return operationRequestParameterEClass;
 	}
@@ -582,8 +630,18 @@ public class COCLPackageImpl extends EPackageImpl implements COCLPackage {
 	 * @generated
 	 */
 	@Override
+	public EAttribute getOperationRequestParameter_ParameterName() {
+		return (EAttribute)operationRequestParameterEClass.getEStructuralFeatures().get(0);
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
 	public EReference getOperationRequestParameter_Parameter() {
-		return (EReference)operationRequestParameterEClass.getEStructuralFeatures().get(0);
+		return (EReference)operationRequestParameterEClass.getEStructuralFeatures().get(1);
 	}
 
 	/**
@@ -593,16 +651,6 @@ public class COCLPackageImpl extends EPackageImpl implements COCLPackage {
 	 */
 	@Override
 	public EAttribute getOperationRequestParameter_IsNull() {
-		return (EAttribute)operationRequestParameterEClass.getEStructuralFeatures().get(1);
-	}
-
-	/**
-	 * <!-- begin-user-doc -->
-	 * <!-- end-user-doc -->
-	 * @generated
-	 */
-	@Override
-	public EAttribute getOperationRequestParameter_JavaValue() {
 		return (EAttribute)operationRequestParameterEClass.getEStructuralFeatures().get(2);
 	}
 
@@ -612,8 +660,18 @@ public class COCLPackageImpl extends EPackageImpl implements COCLPackage {
 	 * @generated
 	 */
 	@Override
+	public EAttribute getOperationRequestParameter_JavaValue() {
+		return (EAttribute)operationRequestParameterEClass.getEStructuralFeatures().get(3);
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
 	public EReference getOperationRequestParameter_EValue() {
-		return (EReference)operationRequestParameterEClass.getEStructuralFeatures().get(3);
+		return (EReference)operationRequestParameterEClass.getEStructuralFeatures().get(4);
 	}
 
 	/**
@@ -732,6 +790,16 @@ public class COCLPackageImpl extends EPackageImpl implements COCLPackage {
 	 * @generated
 	 */
 	@Override
+	public EEnum getOperationReturnType() {
+		return operationReturnTypeEEnum;
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
 	public COCLFactory getCOCLFactory() {
 		return (COCLFactory)getEFactoryInstance();
 	}
@@ -766,6 +834,9 @@ public class COCLPackageImpl extends EPackageImpl implements COCLPackage {
 		createEAttribute(oclConstraintEClass, OCL_CONSTRAINT__ACTIVE);
 		createEAttribute(oclConstraintEClass, OCL_CONSTRAINT__OVERRIDES);
 		createEAttribute(oclConstraintEClass, OCL_CONSTRAINT__TARGET_UR_IS);
+		createEAttribute(oclConstraintEClass, OCL_CONSTRAINT__OPERATION_NAME);
+		createEAttribute(oclConstraintEClass, OCL_CONSTRAINT__OPERATION_PARAMETER_NAMES);
+		createEAttribute(oclConstraintEClass, OCL_CONSTRAINT__OPERATION_RETURN_TYPE);
 
 		oclConstraintSetEClass = createEClass(OCL_CONSTRAINT_SET);
 		createEAttribute(oclConstraintSetEClass, OCL_CONSTRAINT_SET__NAME);
@@ -799,8 +870,10 @@ public class COCLPackageImpl extends EPackageImpl implements COCLPackage {
 		operationValidationRequestEClass = createEClass(OPERATION_VALIDATION_REQUEST);
 		createEReference(operationValidationRequestEClass, OPERATION_VALIDATION_REQUEST__OPERATION);
 		createEReference(operationValidationRequestEClass, OPERATION_VALIDATION_REQUEST__PARAMETERS);
+		createEAttribute(operationValidationRequestEClass, OPERATION_VALIDATION_REQUEST__OPERATION_NAME);
 
 		operationRequestParameterEClass = createEClass(OPERATION_REQUEST_PARAMETER);
+		createEAttribute(operationRequestParameterEClass, OPERATION_REQUEST_PARAMETER__PARAMETER_NAME);
 		createEReference(operationRequestParameterEClass, OPERATION_REQUEST_PARAMETER__PARAMETER);
 		createEAttribute(operationRequestParameterEClass, OPERATION_REQUEST_PARAMETER__IS_NULL);
 		createEAttribute(operationRequestParameterEClass, OPERATION_REQUEST_PARAMETER__JAVA_VALUE);
@@ -820,6 +893,7 @@ public class COCLPackageImpl extends EPackageImpl implements COCLPackage {
 		// Create enums
 		severityEEnum = createEEnum(SEVERITY);
 		oclRoleEEnum = createEEnum(OCL_ROLE);
+		operationReturnTypeEEnum = createEEnum(OPERATION_RETURN_TYPE);
 	}
 
 	/**
@@ -871,6 +945,9 @@ public class COCLPackageImpl extends EPackageImpl implements COCLPackage {
 		initEAttribute(getOclConstraint_Active(), ecorePackage.getEBoolean(), "active", "true", 1, 1, OclConstraint.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_UNSETTABLE, !IS_ID, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
 		initEAttribute(getOclConstraint_Overrides(), ecorePackage.getEBoolean(), "overrides", "false", 0, 1, OclConstraint.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_UNSETTABLE, !IS_ID, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
 		initEAttribute(getOclConstraint_TargetURIs(), ecorePackage.getEString(), "targetURIs", null, 0, -1, OclConstraint.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_UNSETTABLE, !IS_ID, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
+		initEAttribute(getOclConstraint_OperationName(), ecorePackage.getEString(), "operationName", null, 0, 1, OclConstraint.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_UNSETTABLE, !IS_ID, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
+		initEAttribute(getOclConstraint_OperationParameterNames(), ecorePackage.getEString(), "operationParameterNames", null, 0, -1, OclConstraint.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_UNSETTABLE, !IS_ID, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
+		initEAttribute(getOclConstraint_OperationReturnType(), this.getOperationReturnType(), "operationReturnType", null, 0, 1, OclConstraint.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_UNSETTABLE, !IS_ID, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
 
 		initEClass(oclConstraintSetEClass, OclConstraintSet.class, "OclConstraintSet", !IS_ABSTRACT, !IS_INTERFACE, IS_GENERATED_INSTANCE_CLASS);
 		initEAttribute(getOclConstraintSet_Name(), ecorePackage.getEString(), "name", null, 1, 1, OclConstraintSet.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_UNSETTABLE, IS_ID, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
@@ -903,11 +980,13 @@ public class COCLPackageImpl extends EPackageImpl implements COCLPackage {
 		initEReference(getDerivedValidationRequest_DerivedFeature(), theEcorePackage.getEStructuralFeature(), null, "derivedFeature", null, 1, -1, DerivedValidationRequest.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_COMPOSITE, IS_RESOLVE_PROXIES, !IS_UNSETTABLE, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
 
 		initEClass(operationValidationRequestEClass, OperationValidationRequest.class, "OperationValidationRequest", !IS_ABSTRACT, !IS_INTERFACE, IS_GENERATED_INSTANCE_CLASS);
-		initEReference(getOperationValidationRequest_Operation(), theEcorePackage.getEOperation(), null, "operation", null, 1, 1, OperationValidationRequest.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_COMPOSITE, IS_RESOLVE_PROXIES, !IS_UNSETTABLE, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
+		initEReference(getOperationValidationRequest_Operation(), theEcorePackage.getEOperation(), null, "operation", null, 0, 1, OperationValidationRequest.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_COMPOSITE, IS_RESOLVE_PROXIES, !IS_UNSETTABLE, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
 		initEReference(getOperationValidationRequest_Parameters(), this.getOperationRequestParameter(), null, "parameters", null, 0, -1, OperationValidationRequest.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, IS_COMPOSITE, !IS_RESOLVE_PROXIES, !IS_UNSETTABLE, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
+		initEAttribute(getOperationValidationRequest_OperationName(), ecorePackage.getEString(), "operationName", null, 0, 1, OperationValidationRequest.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_UNSETTABLE, !IS_ID, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
 
 		initEClass(operationRequestParameterEClass, OperationRequestParameter.class, "OperationRequestParameter", !IS_ABSTRACT, !IS_INTERFACE, IS_GENERATED_INSTANCE_CLASS);
-		initEReference(getOperationRequestParameter_Parameter(), theEcorePackage.getEParameter(), null, "parameter", null, 1, 1, OperationRequestParameter.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_COMPOSITE, IS_RESOLVE_PROXIES, !IS_UNSETTABLE, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
+		initEAttribute(getOperationRequestParameter_ParameterName(), ecorePackage.getEString(), "parameterName", null, 0, 1, OperationRequestParameter.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_UNSETTABLE, !IS_ID, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
+		initEReference(getOperationRequestParameter_Parameter(), theEcorePackage.getEParameter(), null, "parameter", null, 0, 1, OperationRequestParameter.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_COMPOSITE, IS_RESOLVE_PROXIES, !IS_UNSETTABLE, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
 		initEAttribute(getOperationRequestParameter_IsNull(), ecorePackage.getEBoolean(), "isNull", null, 0, 1, OperationRequestParameter.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_UNSETTABLE, !IS_ID, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
 		initEAttribute(getOperationRequestParameter_JavaValue(), ecorePackage.getEString(), "javaValue", null, 0, 1, OperationRequestParameter.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_UNSETTABLE, !IS_ID, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
 		initEReference(getOperationRequestParameter_EValue(), ecorePackage.getEObject(), null, "eValue", null, 0, 1, OperationRequestParameter.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, IS_COMPOSITE, !IS_RESOLVE_PROXIES, !IS_UNSETTABLE, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
@@ -936,6 +1015,10 @@ public class COCLPackageImpl extends EPackageImpl implements COCLPackage {
 		addEEnumLiteral(oclRoleEEnum, OclRole.DERIVED);
 		addEEnumLiteral(oclRoleEEnum, OclRole.REFERENCE_FILTER);
 		addEEnumLiteral(oclRoleEEnum, OclRole.OPERATION);
+
+		initEEnum(operationReturnTypeEEnum, OperationReturnType.class, "OperationReturnType");
+		addEEnumLiteral(operationReturnTypeEEnum, OperationReturnType.EOBJECT);
+		addEEnumLiteral(operationReturnTypeEEnum, OperationReturnType.JAVA_OBJECT);
 
 		// Create resource
 		createResource(eNS_URI);
@@ -1098,6 +1181,24 @@ public class COCLPackageImpl extends EPackageImpl implements COCLPackage {
 			   "documentation", "Optionale Liste von URIs konkreter EObjects, auf die sich der Constraint beschraenkt. Wenn leer, gilt der Constraint fuer alle Instanzen der contextClass."
 		   });
 		addAnnotation
+		  (getOclConstraint_OperationName(),
+		   source,
+		   new String[] {
+			   "documentation", "This is relevant only for constraint of type OPERATION, that has to specify the name of the operation here."
+		   });
+		addAnnotation
+		  (getOclConstraint_OperationParameterNames(),
+		   source,
+		   new String[] {
+			   "documentation", "This is relevant only for constraint of type OPERATION, that has to specify the list of operation parameter names here."
+		   });
+		addAnnotation
+		  (getOclConstraint_OperationReturnType(),
+		   source,
+		   new String[] {
+			   "documentation", "This is relevant only for constraint of type OPERATION. We have to know which kind of object is expected as return type to be able to create the right ValidationResult later on."
+		   });
+		addAnnotation
 		  (oclConstraintSetEClass,
 		   source,
 		   new String[] {
@@ -1227,13 +1328,37 @@ public class COCLPackageImpl extends EPackageImpl implements COCLPackage {
 		  (getOperationValidationRequest_Operation(),
 		   source,
 		   new String[] {
-			   "documentation", "Operation to be executed"
+			   "documentation", "Operation to be executed. This has to be provided by the client when no C-OCL id is provided, but an EOperation defined in the model has to be invoked."
+		   });
+		addAnnotation
+		  (getOperationValidationRequest_Parameters(),
+		   source,
+		   new String[] {
+			   "documentation", "Operation . This has to be provided by the client when no C-OCL id is provided, but an EOperation defined in the model has to be invoked."
+		   });
+		addAnnotation
+		  (getOperationValidationRequest_OperationName(),
+		   source,
+		   new String[] {
+			   "documentation", "When requesting an OperationValidation using a C-OCL id, the client has to provide an operationName, which then will be used to filter the right OPERATION Constraint from the C-OCL ConstraintSet."
 		   });
 		addAnnotation
 		  (operationRequestParameterEClass,
 		   source,
 		   new String[] {
 			   "documentation", "Operation request parameter object"
+		   });
+		addAnnotation
+		  (getOperationRequestParameter_ParameterName(),
+		   source,
+		   new String[] {
+			   "documentation", "When requesting an OperationValidation using a C-OCL id, the client has to provide the operation parameter names, which then will be used to filter the right OPERATION Constraint from the C-OCL ConstraintSet."
+		   });
+		addAnnotation
+		  (getOperationRequestParameter_Parameter(),
+		   source,
+		   new String[] {
+			   "documentation", "EParameter . This has to be provided by the client when no C-OCL id is provided, but an EOperation defined in the model has to be invoked."
 		   });
 		addAnnotation
 		  (getOperationRequestParameter_JavaValue(),

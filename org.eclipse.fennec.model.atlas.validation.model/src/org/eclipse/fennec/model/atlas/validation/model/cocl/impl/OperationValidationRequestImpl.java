@@ -42,6 +42,7 @@ import org.eclipse.fennec.model.atlas.validation.model.cocl.OperationValidationR
  * <ul>
  *   <li>{@link org.eclipse.fennec.model.atlas.validation.model.cocl.impl.OperationValidationRequestImpl#getOperation <em>Operation</em>}</li>
  *   <li>{@link org.eclipse.fennec.model.atlas.validation.model.cocl.impl.OperationValidationRequestImpl#getParameters <em>Parameters</em>}</li>
+ *   <li>{@link org.eclipse.fennec.model.atlas.validation.model.cocl.impl.OperationValidationRequestImpl#getOperationName <em>Operation Name</em>}</li>
  * </ul>
  *
  * @generated
@@ -66,6 +67,26 @@ public class OperationValidationRequestImpl extends ValidationRequestImpl implem
 	 * @ordered
 	 */
 	protected EList<OperationRequestParameter> parameters;
+
+	/**
+	 * The default value of the '{@link #getOperationName() <em>Operation Name</em>}' attribute.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @see #getOperationName()
+	 * @generated
+	 * @ordered
+	 */
+	protected static final String OPERATION_NAME_EDEFAULT = null;
+
+	/**
+	 * The cached value of the '{@link #getOperationName() <em>Operation Name</em>}' attribute.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @see #getOperationName()
+	 * @generated
+	 * @ordered
+	 */
+	protected String operationName = OPERATION_NAME_EDEFAULT;
 
 	/**
 	 * <!-- begin-user-doc -->
@@ -145,6 +166,29 @@ public class OperationValidationRequestImpl extends ValidationRequestImpl implem
 	 * @generated
 	 */
 	@Override
+	public String getOperationName() {
+		return operationName;
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
+	public void setOperationName(String newOperationName) {
+		String oldOperationName = operationName;
+		operationName = newOperationName;
+		if (eNotificationRequired())
+			eNotify(new ENotificationImpl(this, Notification.SET, COCLPackage.OPERATION_VALIDATION_REQUEST__OPERATION_NAME, oldOperationName, operationName));
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
 	public NotificationChain eInverseRemove(InternalEObject otherEnd, int featureID, NotificationChain msgs) {
 		switch (featureID) {
 			case COCLPackage.OPERATION_VALIDATION_REQUEST__PARAMETERS:
@@ -166,6 +210,8 @@ public class OperationValidationRequestImpl extends ValidationRequestImpl implem
 				return basicGetOperation();
 			case COCLPackage.OPERATION_VALIDATION_REQUEST__PARAMETERS:
 				return getParameters();
+			case COCLPackage.OPERATION_VALIDATION_REQUEST__OPERATION_NAME:
+				return getOperationName();
 		}
 		return super.eGet(featureID, resolve, coreType);
 	}
@@ -186,6 +232,9 @@ public class OperationValidationRequestImpl extends ValidationRequestImpl implem
 				getParameters().clear();
 				getParameters().addAll((Collection<? extends OperationRequestParameter>)newValue);
 				return;
+			case COCLPackage.OPERATION_VALIDATION_REQUEST__OPERATION_NAME:
+				setOperationName((String)newValue);
+				return;
 		}
 		super.eSet(featureID, newValue);
 	}
@@ -204,6 +253,9 @@ public class OperationValidationRequestImpl extends ValidationRequestImpl implem
 			case COCLPackage.OPERATION_VALIDATION_REQUEST__PARAMETERS:
 				getParameters().clear();
 				return;
+			case COCLPackage.OPERATION_VALIDATION_REQUEST__OPERATION_NAME:
+				setOperationName(OPERATION_NAME_EDEFAULT);
+				return;
 		}
 		super.eUnset(featureID);
 	}
@@ -220,8 +272,26 @@ public class OperationValidationRequestImpl extends ValidationRequestImpl implem
 				return operation != null;
 			case COCLPackage.OPERATION_VALIDATION_REQUEST__PARAMETERS:
 				return parameters != null && !parameters.isEmpty();
+			case COCLPackage.OPERATION_VALIDATION_REQUEST__OPERATION_NAME:
+				return OPERATION_NAME_EDEFAULT == null ? operationName != null : !OPERATION_NAME_EDEFAULT.equals(operationName);
 		}
 		return super.eIsSet(featureID);
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
+	public String toString() {
+		if (eIsProxy()) return super.toString();
+
+		StringBuilder result = new StringBuilder(super.toString());
+		result.append(" (operationName: ");
+		result.append(operationName);
+		result.append(')');
+		return result.toString();
 	}
 
 } //OperationValidationRequestImpl

@@ -178,13 +178,40 @@ public interface COCLPackage extends org.eclipse.emf.ecore.EPackage {
 	int OCL_CONSTRAINT__TARGET_UR_IS = 9;
 
 	/**
+	 * The feature id for the '<em><b>Operation Name</b></em>' attribute.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 * @ordered
+	 */
+	int OCL_CONSTRAINT__OPERATION_NAME = 10;
+
+	/**
+	 * The feature id for the '<em><b>Operation Parameter Names</b></em>' attribute list.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 * @ordered
+	 */
+	int OCL_CONSTRAINT__OPERATION_PARAMETER_NAMES = 11;
+
+	/**
+	 * The feature id for the '<em><b>Operation Return Type</b></em>' attribute.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 * @ordered
+	 */
+	int OCL_CONSTRAINT__OPERATION_RETURN_TYPE = 12;
+
+	/**
 	 * The number of structural features of the '<em>Ocl Constraint</em>' class.
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
 	 * @generated
 	 * @ordered
 	 */
-	int OCL_CONSTRAINT_FEATURE_COUNT = 10;
+	int OCL_CONSTRAINT_FEATURE_COUNT = 13;
 
 	/**
 	 * The number of operations of the '<em>Ocl Constraint</em>' class.
@@ -627,13 +654,22 @@ public interface COCLPackage extends org.eclipse.emf.ecore.EPackage {
 	int OPERATION_VALIDATION_REQUEST__PARAMETERS = VALIDATION_REQUEST_FEATURE_COUNT + 1;
 
 	/**
+	 * The feature id for the '<em><b>Operation Name</b></em>' attribute.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 * @ordered
+	 */
+	int OPERATION_VALIDATION_REQUEST__OPERATION_NAME = VALIDATION_REQUEST_FEATURE_COUNT + 2;
+
+	/**
 	 * The number of structural features of the '<em>Operation Validation Request</em>' class.
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
 	 * @generated
 	 * @ordered
 	 */
-	int OPERATION_VALIDATION_REQUEST_FEATURE_COUNT = VALIDATION_REQUEST_FEATURE_COUNT + 2;
+	int OPERATION_VALIDATION_REQUEST_FEATURE_COUNT = VALIDATION_REQUEST_FEATURE_COUNT + 3;
 
 	/**
 	 * The number of operations of the '<em>Operation Validation Request</em>' class.
@@ -655,13 +691,22 @@ public interface COCLPackage extends org.eclipse.emf.ecore.EPackage {
 	int OPERATION_REQUEST_PARAMETER = 9;
 
 	/**
+	 * The feature id for the '<em><b>Parameter Name</b></em>' attribute.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 * @ordered
+	 */
+	int OPERATION_REQUEST_PARAMETER__PARAMETER_NAME = 0;
+
+	/**
 	 * The feature id for the '<em><b>Parameter</b></em>' reference.
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
 	 * @generated
 	 * @ordered
 	 */
-	int OPERATION_REQUEST_PARAMETER__PARAMETER = 0;
+	int OPERATION_REQUEST_PARAMETER__PARAMETER = 1;
 
 	/**
 	 * The feature id for the '<em><b>Is Null</b></em>' attribute.
@@ -670,7 +715,7 @@ public interface COCLPackage extends org.eclipse.emf.ecore.EPackage {
 	 * @generated
 	 * @ordered
 	 */
-	int OPERATION_REQUEST_PARAMETER__IS_NULL = 1;
+	int OPERATION_REQUEST_PARAMETER__IS_NULL = 2;
 
 	/**
 	 * The feature id for the '<em><b>Java Value</b></em>' attribute.
@@ -679,7 +724,7 @@ public interface COCLPackage extends org.eclipse.emf.ecore.EPackage {
 	 * @generated
 	 * @ordered
 	 */
-	int OPERATION_REQUEST_PARAMETER__JAVA_VALUE = 2;
+	int OPERATION_REQUEST_PARAMETER__JAVA_VALUE = 3;
 
 	/**
 	 * The feature id for the '<em><b>EValue</b></em>' containment reference.
@@ -688,7 +733,7 @@ public interface COCLPackage extends org.eclipse.emf.ecore.EPackage {
 	 * @generated
 	 * @ordered
 	 */
-	int OPERATION_REQUEST_PARAMETER__EVALUE = 3;
+	int OPERATION_REQUEST_PARAMETER__EVALUE = 4;
 
 	/**
 	 * The number of structural features of the '<em>Operation Request Parameter</em>' class.
@@ -697,7 +742,7 @@ public interface COCLPackage extends org.eclipse.emf.ecore.EPackage {
 	 * @generated
 	 * @ordered
 	 */
-	int OPERATION_REQUEST_PARAMETER_FEATURE_COUNT = 4;
+	int OPERATION_REQUEST_PARAMETER_FEATURE_COUNT = 5;
 
 	/**
 	 * The number of operations of the '<em>Operation Request Parameter</em>' class.
@@ -874,6 +919,16 @@ public interface COCLPackage extends org.eclipse.emf.ecore.EPackage {
 	 */
 	int OCL_ROLE = 13;
 
+	/**
+	 * The meta object id for the '{@link org.eclipse.fennec.model.atlas.validation.model.cocl.OperationReturnType <em>Operation Return Type</em>}' enum.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @see org.eclipse.fennec.model.atlas.validation.model.cocl.OperationReturnType
+	 * @see org.eclipse.fennec.model.atlas.validation.model.cocl.impl.COCLPackageImpl#getOperationReturnType()
+	 * @generated
+	 */
+	int OPERATION_RETURN_TYPE = 14;
+
 
 	/**
 	 * Returns the meta object for class '{@link org.eclipse.fennec.model.atlas.validation.model.cocl.OclConstraint <em>Ocl Constraint</em>}'.
@@ -994,6 +1049,39 @@ public interface COCLPackage extends org.eclipse.emf.ecore.EPackage {
 	 * @generated
 	 */
 	EAttribute getOclConstraint_TargetURIs();
+
+	/**
+	 * Returns the meta object for the attribute '{@link org.eclipse.fennec.model.atlas.validation.model.cocl.OclConstraint#getOperationName <em>Operation Name</em>}'.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @return the meta object for the attribute '<em>Operation Name</em>'.
+	 * @see org.eclipse.fennec.model.atlas.validation.model.cocl.OclConstraint#getOperationName()
+	 * @see #getOclConstraint()
+	 * @generated
+	 */
+	EAttribute getOclConstraint_OperationName();
+
+	/**
+	 * Returns the meta object for the attribute list '{@link org.eclipse.fennec.model.atlas.validation.model.cocl.OclConstraint#getOperationParameterNames <em>Operation Parameter Names</em>}'.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @return the meta object for the attribute list '<em>Operation Parameter Names</em>'.
+	 * @see org.eclipse.fennec.model.atlas.validation.model.cocl.OclConstraint#getOperationParameterNames()
+	 * @see #getOclConstraint()
+	 * @generated
+	 */
+	EAttribute getOclConstraint_OperationParameterNames();
+
+	/**
+	 * Returns the meta object for the attribute '{@link org.eclipse.fennec.model.atlas.validation.model.cocl.OclConstraint#getOperationReturnType <em>Operation Return Type</em>}'.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @return the meta object for the attribute '<em>Operation Return Type</em>'.
+	 * @see org.eclipse.fennec.model.atlas.validation.model.cocl.OclConstraint#getOperationReturnType()
+	 * @see #getOclConstraint()
+	 * @generated
+	 */
+	EAttribute getOclConstraint_OperationReturnType();
 
 	/**
 	 * Returns the meta object for class '{@link org.eclipse.fennec.model.atlas.validation.model.cocl.OclConstraintSet <em>Ocl Constraint Set</em>}'.
@@ -1263,6 +1351,17 @@ public interface COCLPackage extends org.eclipse.emf.ecore.EPackage {
 	EReference getOperationValidationRequest_Parameters();
 
 	/**
+	 * Returns the meta object for the attribute '{@link org.eclipse.fennec.model.atlas.validation.model.cocl.OperationValidationRequest#getOperationName <em>Operation Name</em>}'.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @return the meta object for the attribute '<em>Operation Name</em>'.
+	 * @see org.eclipse.fennec.model.atlas.validation.model.cocl.OperationValidationRequest#getOperationName()
+	 * @see #getOperationValidationRequest()
+	 * @generated
+	 */
+	EAttribute getOperationValidationRequest_OperationName();
+
+	/**
 	 * Returns the meta object for class '{@link org.eclipse.fennec.model.atlas.validation.model.cocl.OperationRequestParameter <em>Operation Request Parameter</em>}'.
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
@@ -1271,6 +1370,17 @@ public interface COCLPackage extends org.eclipse.emf.ecore.EPackage {
 	 * @generated
 	 */
 	EClass getOperationRequestParameter();
+
+	/**
+	 * Returns the meta object for the attribute '{@link org.eclipse.fennec.model.atlas.validation.model.cocl.OperationRequestParameter#getParameterName <em>Parameter Name</em>}'.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @return the meta object for the attribute '<em>Parameter Name</em>'.
+	 * @see org.eclipse.fennec.model.atlas.validation.model.cocl.OperationRequestParameter#getParameterName()
+	 * @see #getOperationRequestParameter()
+	 * @generated
+	 */
+	EAttribute getOperationRequestParameter_ParameterName();
 
 	/**
 	 * Returns the meta object for the reference '{@link org.eclipse.fennec.model.atlas.validation.model.cocl.OperationRequestParameter#getParameter <em>Parameter</em>}'.
@@ -1434,6 +1544,16 @@ public interface COCLPackage extends org.eclipse.emf.ecore.EPackage {
 	EEnum getOclRole();
 
 	/**
+	 * Returns the meta object for enum '{@link org.eclipse.fennec.model.atlas.validation.model.cocl.OperationReturnType <em>Operation Return Type</em>}'.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @return the meta object for enum '<em>Operation Return Type</em>'.
+	 * @see org.eclipse.fennec.model.atlas.validation.model.cocl.OperationReturnType
+	 * @generated
+	 */
+	EEnum getOperationReturnType();
+
+	/**
 	 * Returns the factory that creates the instances of the model.
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
@@ -1545,6 +1665,30 @@ public interface COCLPackage extends org.eclipse.emf.ecore.EPackage {
 		 * @generated
 		 */
 		EAttribute OCL_CONSTRAINT__TARGET_UR_IS = eINSTANCE.getOclConstraint_TargetURIs();
+
+		/**
+		 * The meta object literal for the '<em><b>Operation Name</b></em>' attribute feature.
+		 * <!-- begin-user-doc -->
+		 * <!-- end-user-doc -->
+		 * @generated
+		 */
+		EAttribute OCL_CONSTRAINT__OPERATION_NAME = eINSTANCE.getOclConstraint_OperationName();
+
+		/**
+		 * The meta object literal for the '<em><b>Operation Parameter Names</b></em>' attribute list feature.
+		 * <!-- begin-user-doc -->
+		 * <!-- end-user-doc -->
+		 * @generated
+		 */
+		EAttribute OCL_CONSTRAINT__OPERATION_PARAMETER_NAMES = eINSTANCE.getOclConstraint_OperationParameterNames();
+
+		/**
+		 * The meta object literal for the '<em><b>Operation Return Type</b></em>' attribute feature.
+		 * <!-- begin-user-doc -->
+		 * <!-- end-user-doc -->
+		 * @generated
+		 */
+		EAttribute OCL_CONSTRAINT__OPERATION_RETURN_TYPE = eINSTANCE.getOclConstraint_OperationReturnType();
 
 		/**
 		 * The meta object literal for the '{@link org.eclipse.fennec.model.atlas.validation.model.cocl.impl.OclConstraintSetImpl <em>Ocl Constraint Set</em>}' class.
@@ -1763,6 +1907,14 @@ public interface COCLPackage extends org.eclipse.emf.ecore.EPackage {
 		EReference OPERATION_VALIDATION_REQUEST__PARAMETERS = eINSTANCE.getOperationValidationRequest_Parameters();
 
 		/**
+		 * The meta object literal for the '<em><b>Operation Name</b></em>' attribute feature.
+		 * <!-- begin-user-doc -->
+		 * <!-- end-user-doc -->
+		 * @generated
+		 */
+		EAttribute OPERATION_VALIDATION_REQUEST__OPERATION_NAME = eINSTANCE.getOperationValidationRequest_OperationName();
+
+		/**
 		 * The meta object literal for the '{@link org.eclipse.fennec.model.atlas.validation.model.cocl.impl.OperationRequestParameterImpl <em>Operation Request Parameter</em>}' class.
 		 * <!-- begin-user-doc -->
 		 * <!-- end-user-doc -->
@@ -1771,6 +1923,14 @@ public interface COCLPackage extends org.eclipse.emf.ecore.EPackage {
 		 * @generated
 		 */
 		EClass OPERATION_REQUEST_PARAMETER = eINSTANCE.getOperationRequestParameter();
+
+		/**
+		 * The meta object literal for the '<em><b>Parameter Name</b></em>' attribute feature.
+		 * <!-- begin-user-doc -->
+		 * <!-- end-user-doc -->
+		 * @generated
+		 */
+		EAttribute OPERATION_REQUEST_PARAMETER__PARAMETER_NAME = eINSTANCE.getOperationRequestParameter_ParameterName();
 
 		/**
 		 * The meta object literal for the '<em><b>Parameter</b></em>' reference feature.
@@ -1899,6 +2059,16 @@ public interface COCLPackage extends org.eclipse.emf.ecore.EPackage {
 		 * @generated
 		 */
 		EEnum OCL_ROLE = eINSTANCE.getOclRole();
+
+		/**
+		 * The meta object literal for the '{@link org.eclipse.fennec.model.atlas.validation.model.cocl.OperationReturnType <em>Operation Return Type</em>}' enum.
+		 * <!-- begin-user-doc -->
+		 * <!-- end-user-doc -->
+		 * @see org.eclipse.fennec.model.atlas.validation.model.cocl.OperationReturnType
+		 * @see org.eclipse.fennec.model.atlas.validation.model.cocl.impl.COCLPackageImpl#getOperationReturnType()
+		 * @generated
+		 */
+		EEnum OPERATION_RETURN_TYPE = eINSTANCE.getOperationReturnType();
 
 	}
 
