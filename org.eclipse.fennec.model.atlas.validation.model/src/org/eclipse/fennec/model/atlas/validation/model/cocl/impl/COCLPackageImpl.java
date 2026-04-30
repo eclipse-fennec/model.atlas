@@ -540,6 +540,16 @@ public class COCLPackageImpl extends EPackageImpl implements COCLPackage {
 	 * @generated
 	 */
 	@Override
+	public EAttribute getSimpleValidationResult_ValueJavaClassName() {
+		return (EAttribute)simpleValidationResultEClass.getEStructuralFeatures().get(1);
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
 	public EClass getEObjectValidationResult() {
 		return eObjectValidationResultEClass;
 	}
@@ -860,6 +870,7 @@ public class COCLPackageImpl extends EPackageImpl implements COCLPackage {
 
 		simpleValidationResultEClass = createEClass(SIMPLE_VALIDATION_RESULT);
 		createEAttribute(simpleValidationResultEClass, SIMPLE_VALIDATION_RESULT__VALUE);
+		createEAttribute(simpleValidationResultEClass, SIMPLE_VALIDATION_RESULT__VALUE_JAVA_CLASS_NAME);
 
 		eObjectValidationResultEClass = createEClass(EOBJECT_VALIDATION_RESULT);
 		createEReference(eObjectValidationResultEClass, EOBJECT_VALIDATION_RESULT__VALUES);
@@ -971,7 +982,8 @@ public class COCLPackageImpl extends EPackageImpl implements COCLPackage {
 		initEReference(getValidationResult_Diagnostics(), this.getDiagnostic(), null, "diagnostics", null, 0, -1, ValidationResult.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, IS_COMPOSITE, !IS_RESOLVE_PROXIES, !IS_UNSETTABLE, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
 
 		initEClass(simpleValidationResultEClass, SimpleValidationResult.class, "SimpleValidationResult", !IS_ABSTRACT, !IS_INTERFACE, IS_GENERATED_INSTANCE_CLASS);
-		initEAttribute(getSimpleValidationResult_Value(), ecorePackage.getEJavaObject(), "value", null, 0, 1, SimpleValidationResult.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_UNSETTABLE, !IS_ID, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
+		initEAttribute(getSimpleValidationResult_Value(), ecorePackage.getEString(), "value", null, 0, 1, SimpleValidationResult.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_UNSETTABLE, !IS_ID, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
+		initEAttribute(getSimpleValidationResult_ValueJavaClassName(), ecorePackage.getEString(), "valueJavaClassName", null, 0, 1, SimpleValidationResult.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_UNSETTABLE, !IS_ID, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
 
 		initEClass(eObjectValidationResultEClass, EObjectValidationResult.class, "EObjectValidationResult", !IS_ABSTRACT, !IS_INTERFACE, IS_GENERATED_INSTANCE_CLASS);
 		initEReference(getEObjectValidationResult_Values(), theEcorePackage.getEObject(), null, "values", null, 0, -1, EObjectValidationResult.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, IS_COMPOSITE, !IS_RESOLVE_PROXIES, !IS_UNSETTABLE, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);

@@ -471,13 +471,22 @@ public interface COCLPackage extends org.eclipse.emf.ecore.EPackage {
 	int SIMPLE_VALIDATION_RESULT__VALUE = VALIDATION_RESULT_FEATURE_COUNT + 0;
 
 	/**
+	 * The feature id for the '<em><b>Value Java Class Name</b></em>' attribute.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 * @ordered
+	 */
+	int SIMPLE_VALIDATION_RESULT__VALUE_JAVA_CLASS_NAME = VALIDATION_RESULT_FEATURE_COUNT + 1;
+
+	/**
 	 * The number of structural features of the '<em>Simple Validation Result</em>' class.
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
 	 * @generated
 	 * @ordered
 	 */
-	int SIMPLE_VALIDATION_RESULT_FEATURE_COUNT = VALIDATION_RESULT_FEATURE_COUNT + 1;
+	int SIMPLE_VALIDATION_RESULT_FEATURE_COUNT = VALIDATION_RESULT_FEATURE_COUNT + 2;
 
 	/**
 	 * The number of operations of the '<em>Simple Validation Result</em>' class.
@@ -1277,6 +1286,17 @@ public interface COCLPackage extends org.eclipse.emf.ecore.EPackage {
 	EAttribute getSimpleValidationResult_Value();
 
 	/**
+	 * Returns the meta object for the attribute '{@link org.eclipse.fennec.model.atlas.validation.model.cocl.SimpleValidationResult#getValueJavaClassName <em>Value Java Class Name</em>}'.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @return the meta object for the attribute '<em>Value Java Class Name</em>'.
+	 * @see org.eclipse.fennec.model.atlas.validation.model.cocl.SimpleValidationResult#getValueJavaClassName()
+	 * @see #getSimpleValidationResult()
+	 * @generated
+	 */
+	EAttribute getSimpleValidationResult_ValueJavaClassName();
+
+	/**
 	 * Returns the meta object for class '{@link org.eclipse.fennec.model.atlas.validation.model.cocl.EObjectValidationResult <em>EObject Validation Result</em>}'.
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
@@ -1843,6 +1863,14 @@ public interface COCLPackage extends org.eclipse.emf.ecore.EPackage {
 		 * @generated
 		 */
 		EAttribute SIMPLE_VALIDATION_RESULT__VALUE = eINSTANCE.getSimpleValidationResult_Value();
+
+		/**
+		 * The meta object literal for the '<em><b>Value Java Class Name</b></em>' attribute feature.
+		 * <!-- begin-user-doc -->
+		 * <!-- end-user-doc -->
+		 * @generated
+		 */
+		EAttribute SIMPLE_VALIDATION_RESULT__VALUE_JAVA_CLASS_NAME = eINSTANCE.getSimpleValidationResult_ValueJavaClassName();
 
 		/**
 		 * The meta object literal for the '{@link org.eclipse.fennec.model.atlas.validation.model.cocl.impl.EObjectValidationResultImpl <em>EObject Validation Result</em>}' class.

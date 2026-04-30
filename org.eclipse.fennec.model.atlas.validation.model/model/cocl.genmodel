@@ -63,6 +63,7 @@
     </genClasses>
     <genClasses ecoreClass="cocl.ecore#//SimpleValidationResult">
       <genFeatures createChild="false" ecoreFeature="ecore:EAttribute cocl.ecore#//SimpleValidationResult/value"/>
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute cocl.ecore#//SimpleValidationResult/valueJavaClassName"/>
     </genClasses>
     <genClasses ecoreClass="cocl.ecore#//EObjectValidationResult">
       <genFeatures property="None" children="true" createChild="true" ecoreFeature="ecore:EReference cocl.ecore#//EObjectValidationResult/values"/>

@@ -524,9 +524,11 @@ public class ValidationServiceImpl implements ValidationService {
 				for (Object v : list) {
 					converted.add(eDataType.getEPackage().getEFactoryInstance().convertToString(eDataType, v));
 				}
-				r.setValue(converted);
+				r.setValue(String.valueOf(converted));
+				r.setValueJavaClassName(value.getClass().getName());
 			} else {
-				r.setValue(new ArrayList<>(list));
+				r.setValue(String.valueOf(list));
+				r.setValueJavaClassName(value.getClass().getName());
 			}
 			return r;
 		}
@@ -539,8 +541,9 @@ public class ValidationServiceImpl implements ValidationService {
 		if (eType instanceof EDataType eDataType) {
 			r.setValue(eDataType.getEPackage().getEFactoryInstance().convertToString(eDataType, value));
 		} else {
-			r.setValue(value);
+			r.setValue(String.valueOf(value));
 		}
+		if(value != null) r.setValueJavaClassName(value.getClass().getName());
 		return r;
 	}
 	
@@ -563,21 +566,10 @@ public class ValidationServiceImpl implements ValidationService {
 				return r;
 			}
 		} else {
-			if(value instanceof EList list) {
-				SimpleValidationResult r = COCLFactory.eINSTANCE.createSimpleValidationResult();
-				r.setValue(new ArrayList<>(list));
-				return r;
-			} else if(value instanceof List list) {
-				SimpleValidationResult r = COCLFactory.eINSTANCE.createSimpleValidationResult();
-				r.setValue(new ArrayList<>(list));
-				return r;
-			}
-			
-			else {
-				SimpleValidationResult r = COCLFactory.eINSTANCE.createSimpleValidationResult();
-				r.setValue(value.toString());
-				return r;
-			}
+			SimpleValidationResult r = COCLFactory.eINSTANCE.createSimpleValidationResult();
+			r.setValue(String.valueOf(value));
+			if(value != null) r.setValueJavaClassName(value.getClass().getName());
+			return r;
 		}	
 	}
 
