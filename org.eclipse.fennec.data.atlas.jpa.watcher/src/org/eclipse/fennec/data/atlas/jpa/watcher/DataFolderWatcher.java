@@ -102,19 +102,21 @@ public class DataFolderWatcher implements FileSystemWatcherListener {
             jpaMappingWatcherConfig = configAdmin.getFactoryConfiguration(JPA_MAPPING_FILE_WATCHER_PID, matcherKey, "?");
             Dictionary<String, Object> jpaProps = new Hashtable<>();
             jpaProps.put(FileSystemWatcherWhiteboardConstants.FILESYSTEM_WATCHER_PATH, pathStr);
+            jpaProps.put("unitName", unitName);
             jpaMappingWatcherConfig.update(jpaProps);
 
             csvImporterConfig = configAdmin.getFactoryConfiguration(CSV_IMPORTER_PID, matcherKey, "?");
             Dictionary<String, Object> csvProps = new Hashtable<>();
             csvProps.put(FileSystemWatcherWhiteboardConstants.FILESYSTEM_WATCHER_PATH, pathStr);
             // The DataSource is named after the unit (set by DataSourceConfigHandler from JpaMappingConfig.getName())
-            csvProps.put(PROP_DATASOURCE_TARGET, "(name=" + unitName + ")");
+            csvProps.put(PROP_DATASOURCE_TARGET, "(unitName=" + unitName + ")");
+            csvProps.put("unitName", unitName);
             csvImporterConfig.update(csvProps);
 
             jpaModelSetupConfig = configAdmin.getFactoryConfiguration(JpaModelSetup.PID, matcherKey, "?");
             Dictionary<String, Object> setupProps = new Hashtable<>();
             setupProps.put("unitName", unitName);
-            setupProps.put("jpaMappingConfig.target", "(jpamapping.name=" + unitName + ")");
+            setupProps.put("jpaMappingConfig.target", "(unitName=" + unitName + ")");
             jpaModelSetupConfig.update(setupProps);
 
             LOG.log(Level.INFO, "DataFolderWatcher activated for unit ''{0}'' at {1}", unitName, pathStr);

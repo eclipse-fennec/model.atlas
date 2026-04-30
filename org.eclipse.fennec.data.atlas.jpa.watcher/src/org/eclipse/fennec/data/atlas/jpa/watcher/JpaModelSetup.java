@@ -152,7 +152,7 @@ public class JpaModelSetup {
                     "fennec.jpa.EMPersistenceUnit", unitName, "?");
             Dictionary<String, Object> puProps = new Hashtable<>();
             puProps.put("fennec.jpa.persistenceUnitName", unitName);
-            puProps.put("fennec.jpa.dataSource.target", "(name=" + unitName + ")");
+            puProps.put("fennec.jpa.dataSource.target", "(unitName=" + unitName + ")");
             puProps.put("fennec.jpa.mapping.target", "(" + PROP_EORM_MAPPING_NAME + "=" + unitName + ")");
             emPersistenceUnitConfig.update(puProps);
 

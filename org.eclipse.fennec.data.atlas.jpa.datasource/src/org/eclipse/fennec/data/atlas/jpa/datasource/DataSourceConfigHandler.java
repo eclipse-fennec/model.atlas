@@ -42,8 +42,9 @@ public class DataSourceConfigHandler {
         }
         Long serviceId = (Long) props.get("service.id");
         String name = config.getName();
+        String unitName = (String) props.get("unitName");
         try {
-            Configuration cfg = DataSourceConfigHelper.createH2Config(configAdmin, name, ds);
+            Configuration cfg = DataSourceConfigHelper.createH2Config(configAdmin, name, unitName, ds);
             serviceIdToName.put(serviceId, name);
             nameToConfig.put(name, cfg);
         } catch (IOException e) {
@@ -56,6 +57,7 @@ public class DataSourceConfigHandler {
         Long serviceId = (Long) props.get("service.id");
         String oldName = serviceIdToName.get(serviceId);
         String newName = config.getName();
+        String unitName = (String) props.get("unitName");
 
         if (ds == null || ds.getDialect() != SqlDialect.H2) {
             removeConfig(serviceId, oldName);
@@ -65,7 +67,7 @@ public class DataSourceConfigHandler {
         try {
             if (oldName != null && !oldName.equals(newName)) {
                 removeConfig(serviceId, oldName);
-                Configuration cfg = DataSourceConfigHelper.createH2Config(configAdmin, newName, ds);
+                Configuration cfg = DataSourceConfigHelper.createH2Config(configAdmin, newName, unitName, ds);
                 serviceIdToName.put(serviceId, newName);
                 nameToConfig.put(newName, cfg);
             } else {
@@ -73,7 +75,7 @@ public class DataSourceConfigHandler {
                 if (cfg != null) {
                     cfg.update(DataSourceConfigHelper.buildProperties(ds, config.getName()));
                 } else {
-                    cfg = DataSourceConfigHelper.createH2Config(configAdmin, newName, ds);
+                    cfg = DataSourceConfigHelper.createH2Config(configAdmin, newName, unitName, ds);
                     serviceIdToName.put(serviceId, newName);
                     nameToConfig.put(newName, cfg);
                 }

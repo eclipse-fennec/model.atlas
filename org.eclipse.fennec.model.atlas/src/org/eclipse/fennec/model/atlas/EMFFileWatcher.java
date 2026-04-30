@@ -13,7 +13,6 @@
  */
 package org.eclipse.fennec.model.atlas;
 
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.lang.System.Logger;
 import java.lang.System.Logger.Level;
@@ -47,7 +46,6 @@ import org.eclipse.emf.ecore.impl.EPackageRegistryImpl;
 import org.eclipse.emf.ecore.resource.Resource;
 import org.eclipse.emf.ecore.resource.ResourceSet;
 import org.eclipse.emf.ecore.util.EcoreUtil;
-import org.eclipse.fennec.codec.configurator.CodecModuleConfigurator;
 import org.eclipse.fennec.codec.options.CodecModelInfoOptions;
 import org.eclipse.fennec.codec.options.CodecModuleOptions;
 import org.eclipse.fennec.codec.options.CodecResourceOptions;
@@ -68,7 +66,6 @@ import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.ConfigurationPolicy;
 import org.osgi.service.component.annotations.Deactivate;
 import org.osgi.service.component.annotations.Reference;
-import org.osgi.service.component.annotations.ReferenceCardinality;
 import org.osgi.service.component.annotations.ReferenceScope;
 import org.osgi.util.tracker.ServiceTracker;
 import org.osgi.util.tracker.ServiceTrackerCustomizer;
@@ -110,9 +107,7 @@ public class EMFFileWatcher implements FileSystemWatcherListener {
     @SuppressWarnings("unchecked")
     @Activate
     public EMFFileWatcher(
-            @Reference(cardinality = ReferenceCardinality.MANDATORY, target = "(test=test)") CodecModuleConfigurator codecModuleConfigurator,
-            @Reference(scope = ReferenceScope.PROTOTYPE_REQUIRED, target = "(" + EMFNamespaces.EMF_CONFIGURATOR_NAME
-                    + "=CodecJson)") ResourceSet resourceSet,
+            @Reference(scope = ReferenceScope.PROTOTYPE_REQUIRED) ResourceSet resourceSet,
             @Reference ConfigurationAdmin configAdmin, BundleContext bundleContext) {
         this.resourceSet = resourceSet;
         this.configAdmin = configAdmin;

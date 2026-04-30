@@ -44,6 +44,7 @@ public class JpaMappingFileWatcher implements FileSystemWatcherListener {
     static final String PROP_NAME = "jpamapping.name";
     static final String PROP_TARGET_NS_URI = "jpamapping.targetNsUri";
     static final String PROP_FOLDER = "jpamapping.folder";
+    static final String PROP_UNIT_NAME = "unitName";
 
     private final BundleContext bundleContext;
     private final ResourceSet resourceSet;
@@ -54,11 +55,13 @@ public class JpaMappingFileWatcher implements FileSystemWatcherListener {
 
     private Timer timer = new Timer();
     private TimerTask pendingTask;
-
+    private String unitName;
+    
     @Activate
-    public JpaMappingFileWatcher(BundleContext bundleContext) {
+    public JpaMappingFileWatcher(BundleContext bundleContext, Map<String, Object> properties) {
         this.bundleContext = bundleContext;
         this.resourceSet = createResourceSet();
+        if(properties.containsKey("unitName")) this.unitName = (String) properties.get("unitName");
     }
 
     @Deactivate
@@ -161,7 +164,8 @@ public class JpaMappingFileWatcher implements FileSystemWatcherListener {
         props.put(PROP_NAME, config.getName() != null ? config.getName() : "");
         props.put(PROP_TARGET_NS_URI, config.getTargetModelNsUri() != null ? config.getTargetModelNsUri() : "");
         props.put(PROP_FOLDER, folderOf(uri));
-
+        props.put(PROP_UNIT_NAME, unitName);
+        
         ServiceRegistration<JpaMappingConfig> reg =
                 bundleContext.registerService(JpaMappingConfig.class, config, props);
         registrations.put(uri, reg);

@@ -35,9 +35,11 @@ public class DataSourceConfigHelper {
 	private static final String JDBC_H2_PREFIX = "jdbc:h2:";
 	public static final String DATA_SOURCE_NAME = "data.source.name";
 
-	public static Configuration createH2Config(ConfigurationAdmin configAdmin, String name, DataSourceConfig ds) throws IOException {
+	public static Configuration createH2Config(ConfigurationAdmin configAdmin, String name, String unitName, DataSourceConfig ds) throws IOException {
 		Configuration cfg = configAdmin.getFactoryConfiguration(H2_PID, name, "?");
-		cfg.update(buildProperties(ds, name));
+		Dictionary<String, Object> properties = buildProperties(ds, name);
+		properties.put("unitName", unitName);
+		cfg.update(properties);
 		return cfg;
 	}
 	
