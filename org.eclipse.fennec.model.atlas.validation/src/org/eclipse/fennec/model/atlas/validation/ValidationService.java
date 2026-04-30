@@ -36,7 +36,7 @@ public interface ValidationService {
 
     ValidationResponse derive(DerivedValidationRequest request, String oclId, String scopeName, ResourceSet resourceSet);
 
-    ValidationResponse compute(OperationValidationRequest request);
+    ValidationResponse compute(OperationValidationRequest request, String scopeName, ResourceSet resourceSet);
 
     ValidationResponse validateBatch(BatchValidationRequest request, String scopeName, ResourceSet resourceSet);
 

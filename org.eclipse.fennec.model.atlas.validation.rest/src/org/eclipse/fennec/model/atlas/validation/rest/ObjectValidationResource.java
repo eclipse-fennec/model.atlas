@@ -191,7 +191,7 @@ public class ObjectValidationResource {
 			content = @Content(schema = @Schema(implementation = OperationValidationRequest.class))) OperationValidationRequest validationRequest) {
 		try {
 			checkContentType();
-			ValidationResponse response = validationService.compute(validationRequest);
+			ValidationResponse response = validationService.compute(validationRequest, scopeName, resourceSet);
 			return Response.status(Response.Status.OK).entity(response).header("Content-Type", mediaType).build();
 		} catch (IllegalArgumentException e) {
 			return Response.status(Status.BAD_REQUEST).entity(e.getMessage()).build();

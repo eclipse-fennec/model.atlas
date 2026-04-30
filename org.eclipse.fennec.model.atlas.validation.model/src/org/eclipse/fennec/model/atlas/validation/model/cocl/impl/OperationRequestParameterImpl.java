@@ -34,6 +34,7 @@ import org.eclipse.fennec.model.atlas.validation.model.cocl.OperationRequestPara
  * The following features are implemented:
  * </p>
  * <ul>
+ *   <li>{@link org.eclipse.fennec.model.atlas.validation.model.cocl.impl.OperationRequestParameterImpl#getParameterName <em>Parameter Name</em>}</li>
  *   <li>{@link org.eclipse.fennec.model.atlas.validation.model.cocl.impl.OperationRequestParameterImpl#getParameter <em>Parameter</em>}</li>
  *   <li>{@link org.eclipse.fennec.model.atlas.validation.model.cocl.impl.OperationRequestParameterImpl#isIsNull <em>Is Null</em>}</li>
  *   <li>{@link org.eclipse.fennec.model.atlas.validation.model.cocl.impl.OperationRequestParameterImpl#getJavaValue <em>Java Value</em>}</li>
@@ -43,6 +44,26 @@ import org.eclipse.fennec.model.atlas.validation.model.cocl.OperationRequestPara
  * @generated
  */
 public class OperationRequestParameterImpl extends MinimalEObjectImpl.Container implements OperationRequestParameter {
+	/**
+	 * The default value of the '{@link #getParameterName() <em>Parameter Name</em>}' attribute.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @see #getParameterName()
+	 * @generated
+	 * @ordered
+	 */
+	protected static final String PARAMETER_NAME_EDEFAULT = null;
+
+	/**
+	 * The cached value of the '{@link #getParameterName() <em>Parameter Name</em>}' attribute.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @see #getParameterName()
+	 * @generated
+	 * @ordered
+	 */
+	protected String parameterName = PARAMETER_NAME_EDEFAULT;
+
 	/**
 	 * The cached value of the '{@link #getParameter() <em>Parameter</em>}' reference.
 	 * <!-- begin-user-doc -->
@@ -120,6 +141,29 @@ public class OperationRequestParameterImpl extends MinimalEObjectImpl.Container 
 	@Override
 	protected EClass eStaticClass() {
 		return COCLPackage.Literals.OPERATION_REQUEST_PARAMETER;
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
+	public String getParameterName() {
+		return parameterName;
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
+	public void setParameterName(String newParameterName) {
+		String oldParameterName = parameterName;
+		parameterName = newParameterName;
+		if (eNotificationRequired())
+			eNotify(new ENotificationImpl(this, Notification.SET, COCLPackage.OPERATION_REQUEST_PARAMETER__PARAMETER_NAME, oldParameterName, parameterName));
 	}
 
 	/**
@@ -275,6 +319,8 @@ public class OperationRequestParameterImpl extends MinimalEObjectImpl.Container 
 	@Override
 	public Object eGet(int featureID, boolean resolve, boolean coreType) {
 		switch (featureID) {
+			case COCLPackage.OPERATION_REQUEST_PARAMETER__PARAMETER_NAME:
+				return getParameterName();
 			case COCLPackage.OPERATION_REQUEST_PARAMETER__PARAMETER:
 				if (resolve) return getParameter();
 				return basicGetParameter();
@@ -296,6 +342,9 @@ public class OperationRequestParameterImpl extends MinimalEObjectImpl.Container 
 	@Override
 	public void eSet(int featureID, Object newValue) {
 		switch (featureID) {
+			case COCLPackage.OPERATION_REQUEST_PARAMETER__PARAMETER_NAME:
+				setParameterName((String)newValue);
+				return;
 			case COCLPackage.OPERATION_REQUEST_PARAMETER__PARAMETER:
 				setParameter((EParameter)newValue);
 				return;
@@ -320,6 +369,9 @@ public class OperationRequestParameterImpl extends MinimalEObjectImpl.Container 
 	@Override
 	public void eUnset(int featureID) {
 		switch (featureID) {
+			case COCLPackage.OPERATION_REQUEST_PARAMETER__PARAMETER_NAME:
+				setParameterName(PARAMETER_NAME_EDEFAULT);
+				return;
 			case COCLPackage.OPERATION_REQUEST_PARAMETER__PARAMETER:
 				setParameter((EParameter)null);
 				return;
@@ -344,6 +396,8 @@ public class OperationRequestParameterImpl extends MinimalEObjectImpl.Container 
 	@Override
 	public boolean eIsSet(int featureID) {
 		switch (featureID) {
+			case COCLPackage.OPERATION_REQUEST_PARAMETER__PARAMETER_NAME:
+				return PARAMETER_NAME_EDEFAULT == null ? parameterName != null : !PARAMETER_NAME_EDEFAULT.equals(parameterName);
 			case COCLPackage.OPERATION_REQUEST_PARAMETER__PARAMETER:
 				return parameter != null;
 			case COCLPackage.OPERATION_REQUEST_PARAMETER__IS_NULL:
@@ -366,7 +420,9 @@ public class OperationRequestParameterImpl extends MinimalEObjectImpl.Container 
 		if (eIsProxy()) return super.toString();
 
 		StringBuilder result = new StringBuilder(super.toString());
-		result.append(" (isNull: ");
+		result.append(" (parameterName: ");
+		result.append(parameterName);
+		result.append(", isNull: ");
 		result.append(isNull);
 		result.append(", javaValue: ");
 		result.append(javaValue);

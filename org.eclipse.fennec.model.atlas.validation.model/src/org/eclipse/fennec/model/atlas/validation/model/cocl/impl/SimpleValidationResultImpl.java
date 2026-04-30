@@ -30,6 +30,7 @@ import org.eclipse.fennec.model.atlas.validation.model.cocl.SimpleValidationResu
  * </p>
  * <ul>
  *   <li>{@link org.eclipse.fennec.model.atlas.validation.model.cocl.impl.SimpleValidationResultImpl#getValue <em>Value</em>}</li>
+ *   <li>{@link org.eclipse.fennec.model.atlas.validation.model.cocl.impl.SimpleValidationResultImpl#getValueJavaClassName <em>Value Java Class Name</em>}</li>
  * </ul>
  *
  * @generated
@@ -43,7 +44,7 @@ public class SimpleValidationResultImpl extends ValidationResultImpl implements 
 	 * @generated
 	 * @ordered
 	 */
-	protected static final Object VALUE_EDEFAULT = null;
+	protected static final String VALUE_EDEFAULT = null;
 
 	/**
 	 * The cached value of the '{@link #getValue() <em>Value</em>}' attribute.
@@ -53,7 +54,27 @@ public class SimpleValidationResultImpl extends ValidationResultImpl implements 
 	 * @generated
 	 * @ordered
 	 */
-	protected Object value = VALUE_EDEFAULT;
+	protected String value = VALUE_EDEFAULT;
+
+	/**
+	 * The default value of the '{@link #getValueJavaClassName() <em>Value Java Class Name</em>}' attribute.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @see #getValueJavaClassName()
+	 * @generated
+	 * @ordered
+	 */
+	protected static final String VALUE_JAVA_CLASS_NAME_EDEFAULT = null;
+
+	/**
+	 * The cached value of the '{@link #getValueJavaClassName() <em>Value Java Class Name</em>}' attribute.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @see #getValueJavaClassName()
+	 * @generated
+	 * @ordered
+	 */
+	protected String valueJavaClassName = VALUE_JAVA_CLASS_NAME_EDEFAULT;
 
 	/**
 	 * <!-- begin-user-doc -->
@@ -80,7 +101,7 @@ public class SimpleValidationResultImpl extends ValidationResultImpl implements 
 	 * @generated
 	 */
 	@Override
-	public Object getValue() {
+	public String getValue() {
 		return value;
 	}
 
@@ -90,11 +111,34 @@ public class SimpleValidationResultImpl extends ValidationResultImpl implements 
 	 * @generated
 	 */
 	@Override
-	public void setValue(Object newValue) {
-		Object oldValue = value;
+	public void setValue(String newValue) {
+		String oldValue = value;
 		value = newValue;
 		if (eNotificationRequired())
 			eNotify(new ENotificationImpl(this, Notification.SET, COCLPackage.SIMPLE_VALIDATION_RESULT__VALUE, oldValue, value));
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
+	public String getValueJavaClassName() {
+		return valueJavaClassName;
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
+	public void setValueJavaClassName(String newValueJavaClassName) {
+		String oldValueJavaClassName = valueJavaClassName;
+		valueJavaClassName = newValueJavaClassName;
+		if (eNotificationRequired())
+			eNotify(new ENotificationImpl(this, Notification.SET, COCLPackage.SIMPLE_VALIDATION_RESULT__VALUE_JAVA_CLASS_NAME, oldValueJavaClassName, valueJavaClassName));
 	}
 
 	/**
@@ -107,6 +151,8 @@ public class SimpleValidationResultImpl extends ValidationResultImpl implements 
 		switch (featureID) {
 			case COCLPackage.SIMPLE_VALIDATION_RESULT__VALUE:
 				return getValue();
+			case COCLPackage.SIMPLE_VALIDATION_RESULT__VALUE_JAVA_CLASS_NAME:
+				return getValueJavaClassName();
 		}
 		return super.eGet(featureID, resolve, coreType);
 	}
@@ -120,7 +166,10 @@ public class SimpleValidationResultImpl extends ValidationResultImpl implements 
 	public void eSet(int featureID, Object newValue) {
 		switch (featureID) {
 			case COCLPackage.SIMPLE_VALIDATION_RESULT__VALUE:
-				setValue(newValue);
+				setValue((String)newValue);
+				return;
+			case COCLPackage.SIMPLE_VALIDATION_RESULT__VALUE_JAVA_CLASS_NAME:
+				setValueJavaClassName((String)newValue);
 				return;
 		}
 		super.eSet(featureID, newValue);
@@ -137,6 +186,9 @@ public class SimpleValidationResultImpl extends ValidationResultImpl implements 
 			case COCLPackage.SIMPLE_VALIDATION_RESULT__VALUE:
 				setValue(VALUE_EDEFAULT);
 				return;
+			case COCLPackage.SIMPLE_VALIDATION_RESULT__VALUE_JAVA_CLASS_NAME:
+				setValueJavaClassName(VALUE_JAVA_CLASS_NAME_EDEFAULT);
+				return;
 		}
 		super.eUnset(featureID);
 	}
@@ -151,6 +203,8 @@ public class SimpleValidationResultImpl extends ValidationResultImpl implements 
 		switch (featureID) {
 			case COCLPackage.SIMPLE_VALIDATION_RESULT__VALUE:
 				return VALUE_EDEFAULT == null ? value != null : !VALUE_EDEFAULT.equals(value);
+			case COCLPackage.SIMPLE_VALIDATION_RESULT__VALUE_JAVA_CLASS_NAME:
+				return VALUE_JAVA_CLASS_NAME_EDEFAULT == null ? valueJavaClassName != null : !VALUE_JAVA_CLASS_NAME_EDEFAULT.equals(valueJavaClassName);
 		}
 		return super.eIsSet(featureID);
 	}
@@ -167,6 +221,8 @@ public class SimpleValidationResultImpl extends ValidationResultImpl implements 
 		StringBuilder result = new StringBuilder(super.toString());
 		result.append(" (value: ");
 		result.append(value);
+		result.append(", valueJavaClassName: ");
+		result.append(valueJavaClassName);
 		result.append(')');
 		return result.toString();
 	}

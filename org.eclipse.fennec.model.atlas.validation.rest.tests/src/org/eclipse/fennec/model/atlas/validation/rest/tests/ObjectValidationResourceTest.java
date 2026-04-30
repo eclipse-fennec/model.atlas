@@ -18,14 +18,13 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import java.lang.reflect.Proxy;
+import java.nio.file.Path;
 import java.util.ArrayList;
-import java.util.Dictionary;
-import java.util.Hashtable;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import org.eclipse.emf.common.util.URI;
+import org.eclipse.emf.ecore.EClass;
 import org.eclipse.emf.ecore.EClassifier;
 import org.eclipse.emf.ecore.EObject;
 import org.eclipse.emf.ecore.EOperation;
@@ -38,26 +37,32 @@ import org.eclipse.emf.ecore.resource.Resource;
 import org.eclipse.emf.ecore.resource.ResourceSet;
 import org.eclipse.emf.ecore.xmi.impl.XMIResourceImpl;
 import org.eclipse.fennec.emf.osgi.annotation.require.RequireEMF;
-import org.eclipse.fennec.m2x.ocl.api.OclEngine;
 import org.eclipse.fennec.model.atlas.datagen.example.model.dge.Address;
+import org.eclipse.fennec.model.atlas.datagen.example.model.dge.Company;
 import org.eclipse.fennec.model.atlas.datagen.example.model.dge.DGFactory;
 import org.eclipse.fennec.model.atlas.datagen.example.model.dge.DGPackage;
-import org.eclipse.fennec.model.atlas.validation.rest.tests.helper.ResourceAware;
-import org.eclipse.fennec.model.atlas.validation.rest.tests.helper.TestHelper;
 import org.eclipse.fennec.model.atlas.validation.model.cocl.COCLFactory;
 import org.eclipse.fennec.model.atlas.validation.model.cocl.DerivedValidationRequest;
+import org.eclipse.fennec.model.atlas.validation.model.cocl.OclConstraint;
+import org.eclipse.fennec.model.atlas.validation.model.cocl.OclConstraintSet;
+import org.eclipse.fennec.model.atlas.validation.model.cocl.OclRole;
 import org.eclipse.fennec.model.atlas.validation.model.cocl.OperationRequestParameter;
+import org.eclipse.fennec.model.atlas.validation.model.cocl.OperationReturnType;
 import org.eclipse.fennec.model.atlas.validation.model.cocl.OperationValidationRequest;
+import org.eclipse.fennec.model.atlas.validation.model.cocl.Severity;
+import org.eclipse.fennec.model.atlas.validation.rest.tests.helper.ResourceAware;
+import org.eclipse.fennec.model.atlas.validation.rest.tests.helper.TestAnnotations;
+import org.eclipse.fennec.model.atlas.validation.rest.tests.helper.TestAnnotations.JenaScopeServiceSetup;
+import org.eclipse.fennec.model.atlas.validation.rest.tests.helper.TestHelper;
+import org.eclipse.fennec.model.atlas.wf.workflowapi.ScopeService;
 import org.gecko.emf.rest.annotations.RequireEMFMessageBodyReaderWriter;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.osgi.framework.Bundle;
+import org.junit.jupiter.api.io.TempDir;
 import org.osgi.framework.BundleContext;
-import org.osgi.framework.PrototypeServiceFactory;
-import org.osgi.framework.ServiceRegistration;
 import org.osgi.service.cm.annotations.RequireConfigurationAdmin;
 import org.osgi.service.jakartars.whiteboard.annotations.RequireJakartarsWhiteboard;
 import org.osgi.test.common.annotation.InjectBundleContext;
@@ -71,17 +76,12 @@ import jakarta.ws.rs.client.Entity;
 import jakarta.ws.rs.core.Response;
 
 /**
- * Integration tests for ObjectValidationResource REST endpoint.
+ * Integration tests for ObjectValidationResource REST endpoints.
  *
  * <p>
- * Tests cover:
+ * Uses a real "jena" scope backed by a "cocl" registry. Tests that require an
+ * OclConstraintSet upload one via the ScopeService before issuing REST calls.
  * </p>
- * <ul>
- * <li>Validating a valid EObject returns 200 with diagnostic</li>
- * <li>Unsupported media type returns 415</li>
- * <li>Supported media type query parameter works correctly</li>
- * <li>Response contains diagnostic information</li>
- * </ul>
  *
  * @author ilenia
  * @since Mar 17, 2026
@@ -92,9 +92,11 @@ import jakarta.ws.rs.core.Response;
 @RequireConfigurationAdmin
 @ExtendWith(BundleContextExtension.class)
 @ExtendWith(ServiceExtension.class)
+@SuppressWarnings({"rawtypes"})
 public class ObjectValidationResourceTest {
 
 	private static final String BASE_URL = "http://localhost:8185/rest";
+	private static final String DGE_COMPANY_CLASS_URI = "https://dg.de/1.0#//Company";
 
 	@InjectService(filter = "(emf.name=workflowapi)")
 	ResourceSet resourceSet;
@@ -102,45 +104,18 @@ public class ObjectValidationResourceTest {
 	@InjectService
 	ClientBuilder clientBuilder;
 
+	@TempDir
+	Path tempDir;
+
 	private Client restClient;
-	private ServiceRegistration<OclEngine> mockOclEngineRegistration;
 	private final List<Resource> tempResources = new ArrayList<>();
 	private final List<String> tempPackageUris = new ArrayList<>();
 
 	@BeforeEach
-	public void setup(@InjectBundleContext BundleContext context) throws Exception {
+	public void setup() throws Exception {
+		System.setProperty(TestAnnotations.PROP_TEMP_DIR, tempDir.toString());
 		restClient = clientBuilder.build();
-
-		// Register mock OclEngine as PrototypeServiceFactory to satisfy PROTOTYPE_REQUIRED reference
-		Dictionary<String, Object> props = new Hashtable<>();
-		props.put("service.ranking", Integer.MAX_VALUE);
-
-		mockOclEngineRegistration = context.registerService(OclEngine.class,
-				new PrototypeServiceFactory<OclEngine>() {
-					@Override
-					public OclEngine getService(Bundle bundle, ServiceRegistration<OclEngine> registration) {
-						return (OclEngine) Proxy.newProxyInstance(OclEngine.class.getClassLoader(),
-								new Class[] { OclEngine.class }, (proxy, method, args) -> null);
-					}
-
-					@Override
-					public void ungetService(Bundle bundle, ServiceRegistration<OclEngine> registration,
-							OclEngine service) {
-					}
-				}, props);
-
-		// Small delay to allow service registration to propagate
-		Thread.sleep(200);
-
-		// Ensure XMI factory is registered
 		TestHelper.ensureXMIFactory(resourceSet);
-
-		// Wait for the ObjectValidationResource to be registered in Jakarta REST runtime
-		ResourceAware resourceAware = ResourceAware.create(context, "ObjectValidationResource");
-		boolean resourceReady = resourceAware.waitForResource(15, TimeUnit.SECONDS);
-
-		assertTrue(resourceReady, "ObjectValidationResource should be registered within 15 seconds. "
-				+ "Check that the resource is properly configured and the Jakarta REST runtime is working.");
 	}
 
 	@AfterEach
@@ -152,14 +127,6 @@ public class ObjectValidationResourceTest {
 			resourceSet.getPackageRegistry().remove(uri);
 		});
 		tempPackageUris.clear();
-
-		if (nonNull(mockOclEngineRegistration)) {
-			mockOclEngineRegistration.unregister();
-			mockOclEngineRegistration = null;
-		}
-
-		// Small delay to allow service unregistration to propagate
-		Thread.sleep(200);
 
 		if (nonNull(restClient)) {
 			restClient.close();
@@ -179,9 +146,7 @@ public class ObjectValidationResourceTest {
 				.post(Entity.entity(xmiContent, "application/xmi"));
 
 		assertEquals(200, response.getStatus(), "Should return HTTP 200 OK");
-
-		String responseContent = response.readEntity(String.class);
-		assertNotNull(responseContent, "Should return diagnostic content");
+		assertNotNull(response.readEntity(String.class), "Should return diagnostic content");
 	}
 
 	@Test
@@ -194,7 +159,6 @@ public class ObjectValidationResourceTest {
 				.post(Entity.entity(xmiContent, "application/xmi"));
 
 		assertEquals(200, response.getStatus(), "Should return HTTP 200 OK");
-
 		String responseContent = response.readEntity(String.class);
 		assertNotNull(responseContent, "Should return diagnostic content");
 		assertTrue(responseContent.contains("type") || responseContent.contains("message"),
@@ -243,7 +207,99 @@ public class ObjectValidationResourceTest {
 		assertEquals(406, response.getStatus(), "Should return HTTP 406 Not Acceptable for unsupported Accept header");
 	}
 
-	// ========== Compute Tests ==========
+	// ========== ValidateByOclId Tests ==========
+
+	@Test
+	@Disabled
+	@JenaScopeServiceSetup
+	public void testValidateByOclId_UnknownOclId_Returns400(
+			@InjectBundleContext BundleContext context,
+			@InjectService(filter = "(scope.name=jena)", timeout = 10000) ScopeService jenaScope)
+			throws Exception {
+		ensureResourceAvailability(context);
+
+		Company company = DGFactory.eINSTANCE.createCompany();
+		company.setName("Acme");
+		String xmiContent = TestHelper.serializeToXMI(company, resourceSet);
+
+		Response response = restClient.target(BASE_URL).path("jena/release/validate/non-existent-id")
+				.request("application/xmi")
+				.post(Entity.entity(xmiContent, "application/xmi"));
+
+		assertEquals(400, response.getStatus(), "Should return 400 when the OCL id is not found");
+	}
+
+	@Test
+	@Disabled
+	@JenaScopeServiceSetup
+	public void testValidateByOclId_ConstraintSetNotApplicable_Returns400(
+			@InjectBundleContext BundleContext context,
+			@InjectService(filter = "(scope.name=jena)", timeout = 10000) ScopeService jenaScope)
+			throws Exception {
+		ensureResourceAvailability(context);
+		String coclId = "validate-ocl-not-applicable";
+		TestHelper.uploadConstraintSet(jenaScope, coclId, buildValidationCoclSetForWrongModel(coclId));
+
+		Company company = DGFactory.eINSTANCE.createCompany();
+		company.setName("Acme");
+		String xmiContent = TestHelper.serializeToXMI(company, resourceSet);
+
+		Response response = restClient.target(BASE_URL).path("jena/release/validate/" + coclId)
+				.request("application/xmi")
+				.post(Entity.entity(xmiContent, "application/xmi"));
+
+		assertEquals(400, response.getStatus(), "Should return 400 when the constraint set is not applicable to the object's model");
+	}
+
+	@Test
+	@Disabled
+	@JenaScopeServiceSetup
+	public void testValidateByOclId_ValidObjectPassesConstraint_Returns200(
+			@InjectBundleContext BundleContext context,
+			@InjectService(filter = "(scope.name=jena)", timeout = 10000) ScopeService jenaScope)
+			throws Exception {
+		ensureResourceAvailability(context);
+		String coclId = "validate-ocl-pass";
+		TestHelper.uploadConstraintSet(jenaScope, coclId, buildValidationCoclSet(coclId));
+
+		Company company = DGFactory.eINSTANCE.createCompany();
+		company.setName("Acme");
+		String xmiContent = TestHelper.serializeToXMI(company, resourceSet);
+
+		Response response = restClient.target(BASE_URL).path("jena/release/validate/" + coclId)
+				.request("application/xmi")
+				.post(Entity.entity(xmiContent, "application/xmi"));
+
+		assertEquals(200, response.getStatus(), "Should return 200 when the object passes all constraints");
+		assertNotNull(response.readEntity(String.class), "Response body should not be null");
+	}
+
+	@Test
+	@Disabled
+	@JenaScopeServiceSetup
+	public void testValidateByOclId_ObjectFailsConstraint_Returns200WithDiagnostics(
+			@InjectBundleContext BundleContext context,
+			@InjectService(filter = "(scope.name=jena)", timeout = 10000) ScopeService jenaScope)
+			throws Exception {
+		ensureResourceAvailability(context);
+		String coclId = "validate-ocl-fail";
+		TestHelper.uploadConstraintSet(jenaScope, coclId, buildValidationCoclSet(coclId));
+
+		Company company = DGFactory.eINSTANCE.createCompany();
+		// name is null → constraint "self.name <> null" fails
+		String xmiContent = TestHelper.serializeToXMI(company, resourceSet);
+
+		Response response = restClient.target(BASE_URL).path("jena/release/validate/" + coclId)
+				.request("application/xmi")
+				.post(Entity.entity(xmiContent, "application/xmi"));
+
+		assertEquals(200, response.getStatus(), "Should return 200 even when constraints fail (errors are in diagnostics)");
+		String body = response.readEntity(String.class);
+		assertNotNull(body, "Response body should not be null");
+		assertTrue(body.contains("diagnostics"), "Response should contain diagnostics");
+	}
+
+	// ========== Compute Tests (no C-OCL) ==========
 
 	@Test
 	@Disabled
@@ -270,7 +326,6 @@ public class ObjectValidationResourceTest {
 	@Test
 	@Disabled
 	public void testCompute_OperationNotFoundInEClass() throws Exception {
-		// Any EcorePackage EOperation has a name that doesn't exist on Company
 		EOperation unknownOp = EcorePackage.eINSTANCE.getEClass().getEOperations().get(0);
 		OperationValidationRequest request = buildComputeRequest(DGFactory.eINSTANCE.createCompany(), unknownOp);
 
@@ -345,68 +400,73 @@ public class ObjectValidationResourceTest {
 		assertNotNull(response.readEntity(String.class), "Response body should not be null");
 	}
 
-	// ---- helpers ----
+	// ========== Compute with C-OCL Tests ==========
 
-	private EOperation companyOperation(String name) {
-		return DGPackage.eINSTANCE.getCompany().getEOperations().stream()
-				.filter(o -> name.equals(o.getName()))
-				.findFirst()
-				.orElseThrow(() -> new IllegalArgumentException("Operation not found: " + name));
-	}
+	@Test
+	@Disabled
+	@JenaScopeServiceSetup
+	public void testComputeWithCocl_MissingOperationName_Returns400(
+			@InjectBundleContext BundleContext context,
+			@InjectService(filter = "(scope.name=jena)", timeout = 10000) ScopeService jenaScope)
+			throws Exception {
+		ensureResourceAvailability(context);
+		String coclId = "compute-ocl-missing-name";
+		TestHelper.uploadConstraintSet(jenaScope, coclId, buildOperationCoclSet(coclId));
 
-	private EParameter param(String name, EClassifier type) {
-		EParameter p = EcoreFactory.eINSTANCE.createEParameter();
-		p.setName(name);
-		p.setEType(type);
-		return p;
-	}
-
-	/**
-	 * Creates an EOperation with the given name and signature backed by a
-	 * temporary resource so it can be serialized as a cross-reference in XMI.
-	 * The resource is registered for cleanup in teardown.
-	 */
-	private EOperation mismatchOperation(String name, EClassifier returnType, EParameter... params) {
-		String nsUri = "http://test.eclipse.fennec/mismatch/" + name + "/" + System.nanoTime();
-		EPackage pkg = EcoreFactory.eINSTANCE.createEPackage();
-		pkg.setNsURI(nsUri);
-		pkg.setName("mismatch");
-		pkg.setNsPrefix("mm");
-		org.eclipse.emf.ecore.EClass cls = EcoreFactory.eINSTANCE.createEClass();
-		cls.setName("Mismatch");
-		pkg.getEClassifiers().add(cls);
-		EOperation op = EcoreFactory.eINSTANCE.createEOperation();
-		op.setName(name);
-		op.setEType(returnType);
-		for (EParameter p : params) op.getEParameters().add(p);
-		cls.getEOperations().add(op);
-		Resource r = new XMIResourceImpl(URI.createURI(nsUri));
-		r.getContents().add(pkg);
-		resourceSet.getResources().add(r);
-		EPackage.Registry.INSTANCE.put(nsUri, pkg);
-		resourceSet.getPackageRegistry().put(nsUri, pkg);
-		tempResources.add(r);
-		tempPackageUris.add(nsUri);
-		return op;
-	}
-
-	private OperationValidationRequest buildComputeRequest(EObject validationObject, EOperation operation) {
 		OperationValidationRequest request = COCLFactory.eINSTANCE.createOperationValidationRequest();
-		request.setOperation(operation);
-		if (validationObject != null) {
-			request.getValidationObjects().add(validationObject);
-		}
-		return request;
+		request.getValidationObjects().add(DGFactory.eINSTANCE.createCompany());
+		request.setCoclId(coclId);
+		// operationName intentionally omitted
+
+		Response response = postComputeRequest(request);
+
+		assertEquals(400, response.getStatus(), "Should return 400 when coclId is set but operationName is blank");
 	}
 
-	private Response postComputeRequest(OperationValidationRequest request) throws Exception {
-		String xmiContent = TestHelper.serializeToXMI(request, resourceSet);
-		return restClient.target(BASE_URL).path("jena/release/validate/compute")
-				.request("application/xmi")
-				.post(Entity.entity(xmiContent, "application/xmi"));
+	@Test
+	@Disabled
+	@JenaScopeServiceSetup
+	public void testComputeWithCocl_NoMatchingOperationConstraint_Returns400(
+			@InjectBundleContext BundleContext context,
+			@InjectService(filter = "(scope.name=jena)", timeout = 10000) ScopeService jenaScope)
+			throws Exception {
+		ensureResourceAvailability(context);
+		String coclId = "compute-ocl-no-match";
+		TestHelper.uploadConstraintSet(jenaScope, coclId, buildOperationCoclSet(coclId));
+
+		OperationValidationRequest request = COCLFactory.eINSTANCE.createOperationValidationRequest();
+		request.getValidationObjects().add(DGFactory.eINSTANCE.createCompany());
+		request.setCoclId(coclId);
+		request.setOperationName("unknownOperation");
+
+		Response response = postComputeRequest(request);
+
+		assertEquals(400, response.getStatus(), "Should return 400 when no OPERATION constraint matches the requested name");
 	}
 
-	// ========== Derive Tests ==========
+	@Test
+	@Disabled
+	@JenaScopeServiceSetup
+	public void testComputeWithCocl_ValidOperation_Returns200(
+			@InjectBundleContext BundleContext context,
+			@InjectService(filter = "(scope.name=jena)", timeout = 10000) ScopeService jenaScope)
+			throws Exception {
+		ensureResourceAvailability(context);
+		String coclId = "compute-ocl-valid";
+		TestHelper.uploadConstraintSet(jenaScope, coclId, buildOperationCoclSet(coclId));
+
+		OperationValidationRequest request = COCLFactory.eINSTANCE.createOperationValidationRequest();
+		request.getValidationObjects().add(DGFactory.eINSTANCE.createCompany());
+		request.setCoclId(coclId);
+		request.setOperationName("getTotalEmployees");
+
+		Response response = postComputeRequest(request);
+
+		assertEquals(200, response.getStatus(), "Should return 200 when OPERATION constraint is found and evaluated");
+		assertNotNull(response.readEntity(String.class), "Response body should not be null");
+	}
+
+	// ========== Derive Tests (no C-OCL) ==========
 
 	@Test
 	@Disabled
@@ -448,7 +508,7 @@ public class ObjectValidationResourceTest {
 	@Test
 	@Disabled
 	public void testDerive_EObjectFeature_Returns200() throws Exception {
-		org.eclipse.fennec.model.atlas.datagen.example.model.dge.Company company = DGFactory.eINSTANCE.createCompany();
+		Company company = DGFactory.eINSTANCE.createCompany();
 		Address address = DGFactory.eINSTANCE.createAddress();
 		company.setAddress(address);
 		EStructuralFeature addressFeature = DGPackage.eINSTANCE.getCompany().getEStructuralFeature("address");
@@ -461,7 +521,7 @@ public class ObjectValidationResourceTest {
 	@Test
 	@Disabled
 	public void testDerive_ManyEObjectFeature_Returns200() throws Exception {
-		org.eclipse.fennec.model.atlas.datagen.example.model.dge.Company company = DGFactory.eINSTANCE.createCompany();
+		Company company = DGFactory.eINSTANCE.createCompany();
 		EStructuralFeature employeesFeature = DGPackage.eINSTANCE.getCompany().getEStructuralFeature("employees");
 		DerivedValidationRequest request = buildDeriveRequest(company, employeesFeature);
 		Response response = postDeriveRequest(request);
@@ -472,12 +532,186 @@ public class ObjectValidationResourceTest {
 	@Test
 	@Disabled
 	public void testDerive_ManyEDataTypeFeature_Returns200() throws Exception {
-		org.eclipse.fennec.model.atlas.datagen.example.model.dge.Company company = DGFactory.eINSTANCE.createCompany();
+		Company company = DGFactory.eINSTANCE.createCompany();
 		EStructuralFeature employeesNamesFeature = DGPackage.eINSTANCE.getCompany().getEStructuralFeature("employeesNames");
 		DerivedValidationRequest request = buildDeriveRequest(company, employeesNamesFeature);
 		Response response = postDeriveRequest(request);
 		assertEquals(200, response.getStatus(), "Should return 200 for a many-valued EDataType feature");
 		assertNotNull(response.readEntity(String.class), "Response body should not be null");
+	}
+
+	// ========== Derive with C-OCL Tests ==========
+
+	@Test
+	@Disabled
+	@JenaScopeServiceSetup
+	public void testDeriveWithCocl_NoMatchingDerivedConstraint_Returns200WithWarn(
+			@InjectBundleContext BundleContext context,
+			@InjectService(filter = "(scope.name=jena)", timeout = 10000) ScopeService jenaScope)
+			throws Exception {
+		ensureResourceAvailability(context);
+		String coclId = "derive-ocl-no-match";
+		TestHelper.uploadConstraintSet(jenaScope, coclId, buildEmptyDerivedCoclSet(coclId));
+
+		EStructuralFeature nameFeature = DGPackage.eINSTANCE.getCompany().getEStructuralFeature("name");
+		DerivedValidationRequest request = buildDeriveRequest(DGFactory.eINSTANCE.createCompany(), nameFeature);
+
+		Response response = postDeriveRequest(request, coclId);
+
+		assertEquals(200, response.getStatus(), "Should return 200 with WARN when no DERIVED constraint is found for the feature");
+		String body = response.readEntity(String.class);
+		assertNotNull(body, "Response body should not be null");
+		assertTrue(body.contains("diagnostics"), "Response should contain diagnostics");
+	}
+
+	@Test
+	@Disabled
+	@JenaScopeServiceSetup
+	public void testDeriveWithCocl_ValidDerivedConstraint_Returns200(
+			@InjectBundleContext BundleContext context,
+			@InjectService(filter = "(scope.name=jena)", timeout = 10000) ScopeService jenaScope)
+			throws Exception {
+		ensureResourceAvailability(context);
+		String coclId = "derive-ocl-valid";
+		TestHelper.uploadConstraintSet(jenaScope, coclId, buildDerivedCoclSet(coclId, "name", "self.name"));
+
+		Company company = DGFactory.eINSTANCE.createCompany();
+		company.setName("Acme");
+		EStructuralFeature nameFeature = DGPackage.eINSTANCE.getCompany().getEStructuralFeature("name");
+		DerivedValidationRequest request = buildDeriveRequest(company, nameFeature);
+
+		Response response = postDeriveRequest(request, coclId);
+
+		assertEquals(200, response.getStatus(), "Should return 200 when DERIVED constraint is found and evaluated");
+		assertNotNull(response.readEntity(String.class), "Response body should not be null");
+	}
+
+	// ---- helpers ----
+
+	private void ensureResourceAvailability(BundleContext context) throws InterruptedException {
+		ResourceAware resourceAware = ResourceAware.create(context, "ObjectValidationResource");
+		boolean resourceReady = resourceAware.waitForResource(15, TimeUnit.SECONDS);
+		assertTrue(resourceReady, "ObjectValidationResource should be registered within 15 seconds.");
+	}
+
+	// ---- constraint set builders ----
+
+	private OclConstraintSet buildValidationCoclSet(String id) {
+		OclConstraintSet set = COCLFactory.eINSTANCE.createOclConstraintSet();
+		set.setName(id);
+		OclConstraint constraint = COCLFactory.eINSTANCE.createOclConstraint();
+		constraint.setName("CompanyNameNotNull");
+		constraint.setContextClass(DGE_COMPANY_CLASS_URI);
+		constraint.setExpression("self.name <> null");
+		constraint.setRole(OclRole.VALIDATION);
+		constraint.setSeverity(Severity.ERROR);
+		constraint.setActive(true);
+		set.getConstraints().add(constraint);
+		return set;
+	}
+
+	private OclConstraintSet buildValidationCoclSetForWrongModel(String id) {
+		OclConstraintSet set = buildValidationCoclSet(id);
+		set.getTargetModelNsURIs().add("http://wrong.model/1.0");
+		return set;
+	}
+
+	private OclConstraintSet buildOperationCoclSet(String id) {
+		OclConstraintSet set = COCLFactory.eINSTANCE.createOclConstraintSet();
+		set.setName(id);
+		OclConstraint constraint = COCLFactory.eINSTANCE.createOclConstraint();
+		constraint.setName("GetTotalEmployees");
+		constraint.setContextClass(DGE_COMPANY_CLASS_URI);
+		constraint.setExpression("self.employees->size()");
+		constraint.setRole(OclRole.OPERATION);
+		constraint.setOperationName("getTotalEmployees");
+		constraint.setOperationReturnType(OperationReturnType.JAVA_OBJECT);
+		constraint.setSeverity(Severity.INFO);
+		constraint.setActive(true);
+		set.getConstraints().add(constraint);
+		return set;
+	}
+
+	private OclConstraintSet buildEmptyDerivedCoclSet(String id) {
+		OclConstraintSet set = COCLFactory.eINSTANCE.createOclConstraintSet();
+		set.setName(id);
+		return set;
+	}
+
+	private OclConstraintSet buildDerivedCoclSet(String id, String featureName, String expression) {
+		OclConstraintSet set = COCLFactory.eINSTANCE.createOclConstraintSet();
+		set.setName(id);
+		OclConstraint constraint = COCLFactory.eINSTANCE.createOclConstraint();
+		constraint.setName("DeriveFeature");
+		constraint.setContextClass(DGE_COMPANY_CLASS_URI);
+		constraint.setExpression(expression);
+		constraint.setRole(OclRole.DERIVED);
+		constraint.setFeatureName(featureName);
+		constraint.setSeverity(Severity.INFO);
+		constraint.setActive(true);
+		set.getConstraints().add(constraint);
+		return set;
+	}
+
+	// ---- compute helpers ----
+
+	private EOperation companyOperation(String name) {
+		return DGPackage.eINSTANCE.getCompany().getEOperations().stream()
+				.filter(o -> name.equals(o.getName()))
+				.findFirst()
+				.orElseThrow(() -> new IllegalArgumentException("Operation not found: " + name));
+	}
+
+	private EParameter param(String name, EClassifier type) {
+		EParameter p = EcoreFactory.eINSTANCE.createEParameter();
+		p.setName(name);
+		p.setEType(type);
+		return p;
+	}
+
+	/**
+	 * Creates an EOperation with the given name and signature backed by a
+	 * temporary resource so it can be serialized as a cross-reference in XMI.
+	 * The resource is registered for cleanup in teardown.
+	 */
+	private EOperation mismatchOperation(String name, EClassifier returnType, EParameter... params) {
+		String nsUri = "http://test.eclipse.fennec/mismatch/" + name + "/" + System.nanoTime();
+		EPackage pkg = EcoreFactory.eINSTANCE.createEPackage();
+		pkg.setNsURI(nsUri);
+		pkg.setName("mismatch");
+		pkg.setNsPrefix("mm");
+		EClass cls = EcoreFactory.eINSTANCE.createEClass();
+		cls.setName("Mismatch");
+		pkg.getEClassifiers().add(cls);
+		EOperation op = EcoreFactory.eINSTANCE.createEOperation();
+		op.setName(name);
+		op.setEType(returnType);
+		for (EParameter p : params) op.getEParameters().add(p);
+		cls.getEOperations().add(op);
+		Resource r = new XMIResourceImpl(URI.createURI(nsUri));
+		r.getContents().add(pkg);
+		resourceSet.getResources().add(r);
+		EPackage.Registry.INSTANCE.put(nsUri, pkg);
+		resourceSet.getPackageRegistry().put(nsUri, pkg);
+		tempResources.add(r);
+		tempPackageUris.add(nsUri);
+		return op;
+	}
+
+	private OperationValidationRequest buildComputeRequest(EObject validationObject, EOperation operation) {
+		OperationValidationRequest request = COCLFactory.eINSTANCE.createOperationValidationRequest();
+		request.setOperation(operation);
+		if (validationObject != null) {
+			request.getValidationObjects().add(validationObject);
+		}
+		return request;
+	}
+
+	private Response postComputeRequest(OperationValidationRequest request) throws Exception {
+		String xmiContent = TestHelper.serializeToXMI(request, resourceSet);
+		return restClient.target(BASE_URL).path("jena/release/validate/compute")
+				.request("application/xmi")
+				.post(Entity.entity(xmiContent, "application/xmi"));
 	}
 
 	// ---- derive helpers ----
@@ -497,6 +731,14 @@ public class ObjectValidationResourceTest {
 		String xmiContent = TestHelper.serializeToXMI(request, resourceSet);
 		System.out.println(xmiContent);
 		return restClient.target(BASE_URL).path("jena/release/validate/derive")
+				.request("application/xmi")
+				.post(Entity.entity(xmiContent, "application/xmi"));
+	}
+
+	private Response postDeriveRequest(DerivedValidationRequest request, String oclId) throws Exception {
+		String xmiContent = TestHelper.serializeToXMI(request, resourceSet);
+		return restClient.target(BASE_URL).path("jena/release/validate/derive")
+				.queryParam("oclId", oclId)
 				.request("application/xmi")
 				.post(Entity.entity(xmiContent, "application/xmi"));
 	}

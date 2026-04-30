@@ -14,8 +14,8 @@ The examples below use scope `jena` and stage `release`, and the `dge` example m
 |--------|------|-------------|
 | `POST` | `/{scopeName}/{stageName}/validate` | Validate an EObject against its EMF model constraints |
 | `POST` | `/{scopeName}/{stageName}/validate/{oclId}` | Validate an EObject against its model and a C-OCL constraint set |
-| `POST` | `/{scopeName}/{stageName}/validate/derive` | Compute one or more derived structural features of an EObject |
-| `POST` | `/{scopeName}/{stageName}/validate/compute` | Invoke an EOperation on an EObject |
+| `POST` | `/{scopeName}/{stageName}/validate/derive` | Compute one or more derived structural features of an EObject (optionally via C-OCL with `?oclId=`) |
+| `POST` | `/{scopeName}/{stageName}/validate/compute` | Invoke an EOperation on an EObject (optionally via C-OCL with `coclId` + `operationName`) |
 
 ### Optional query parameter
 
@@ -256,11 +256,97 @@ Accept: application/json
 }
 ```
 
+### Using C-OCL (`?oclId=`)
+
+When an `oclId` query parameter is supplied, derived values are computed from the OCL expressions stored in the referenced `OclConstraintSet` instead of calling `eGet` on the model object.
+
+The service looks up the constraint set in the `COCL` registry of the given scope. For each requested feature it searches the constraint set for an active constraint with:
+- `role="DERIVED"`
+- `featureName` equal to the feature's name
+
+If no matching `DERIVED` constraint is found for a feature, a diagnostic of severity `WARN` is added to the response but no error is raised — the feature is silently skipped.
+
+**Example — derive `name` via a C-OCL expression**
+
+Suppose the `cocl` registry at stage `release` contains an `OclConstraintSet` with id `company-derived` that declares:
+
+```xml
+<OclConstraintSet name="company-derived">
+  <constraints
+    name="DeriveName"
+    contextClass="https://dg.de/1.0#//Company"
+    expression="self.name.toUpperCase()"
+    role="DERIVED"
+    featureName="name"
+    active="true"/>
+</OclConstraintSet>
+```
+
+Request:
+
+```xml
+<?xml version="1.0" encoding="ASCII"?>
+<cocl:DerivedValidationRequest xmi:version="2.0"
+  xmlns:xmi="http://www.omg.org/XMI"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xmlns:cocl="http://www.gme.org/cocl/1.0"
+  xmlns:dge="https://dg.de/1.0"
+  xmlns:ecore="http://www.eclipse.org/emf/2002/Ecore">
+  <validationObjects xsi:type="dge:Company" name="acme"/>
+  <derivedFeature xsi:type="ecore:EAttribute" href="https://dg.de/1.0#//Company/name"/>
+</cocl:DerivedValidationRequest>
+```
+
+```
+POST /jena/release/validate/derive?oclId=company-derived
+Content-Type: application/xmi
+Accept: application/json
+```
+
+**Response 200**
+
+The OCL expression `self.name.toUpperCase()` is evaluated and the result is returned instead of the raw model value.
+
+```json
+{
+  "role": "DERIVED",
+  "results": [
+    {
+      "eClass": "SimpleValidationResult",
+      "value": "ACME"
+    }
+  ],
+  "diagnostics": [
+    {
+      "type": "INFO",
+      "source": "name",
+      "message": "Succesfully computed derived feature"
+    }
+  ]
+}
+```
+
+If the feature is present in the request but no active `DERIVED` constraint with a matching `featureName` exists in the constraint set, the response still returns 200 but the diagnostics carry a `WARN`:
+
+```json
+{
+  "role": "DERIVED",
+  "results": [],
+  "diagnostics": [
+    {
+      "type": "WARN",
+      "source": "name",
+      "message": "No active DERIVED Constraint found in C-OCL company-derived for feature name"
+    }
+  ]
+}
+```
+
 **Error responses**
 
 | Code | Reason |
 |------|--------|
-| 400 | No validation object provided, more than one provided, no derived features in request, or a requested feature does not belong to the object's EClass |
+| 400 | No validation object provided, more than one provided, no derived features in request, a requested feature does not belong to the object's EClass, or (when `oclId` is supplied) the constraint set is not applicable to the object's model |
 | 404 | The scope service or COCL registry is not available (only when `oclId` is supplied) |
 | 415 | Unsupported media type |
 | 500 | Unexpected server error |
@@ -377,10 +463,160 @@ The value `"3"` is the string form of the integer `3` (the company has three emp
 }
 ```
 
+### Using C-OCL (`coclId` + `operationName`)
+
+Instead of supplying an inline `operation` element, the client can reference an OCL expression stored in a C-OCL constraint set. In this mode:
+
+- Set `coclId` to the identifier of the `OclConstraintSet` in the scope's `COCL` registry.
+- Set `operationName` to the name of the logical operation to invoke.
+- Omit the `operation` field entirely.
+- Supply `parameters` as usual (using `parameterName` to match against the constraint's `operationParameterNames`).
+
+The service looks up the constraint set, then finds the first active constraint with:
+- `role="OPERATION"`
+- `operationName` equal to the request's `operationName`
+- `operationParameterNames` matching the names and order of the supplied `parameters`
+
+The OCL expression of that constraint is evaluated against the validation object. Variables named after each parameter are injected into the OCL evaluation context.
+
+The `operationReturnType` declared on the constraint controls how the result is wrapped:
+- `EOBJECT` → `EObjectValidationResult`
+- `JAVA_OBJECT` → `SimpleValidationResult`
+
+**Example — compute `getTotalEmployees` via C-OCL**
+
+Suppose the `cocl` registry at stage `release` contains an `OclConstraintSet` with id `company-ops` that declares:
+
+```xml
+<OclConstraintSet name="company-ops">
+  <constraints
+    name="GetTotalEmployees"
+    contextClass="https://dg.de/1.0#//Company"
+    expression="self.employees->size()"
+    role="OPERATION"
+    operationName="getTotalEmployees"
+    operationReturnType="JAVA_OBJECT"
+    active="true"/>
+</OclConstraintSet>
+```
+
+Request:
+
+```xml
+<?xml version="1.0" encoding="ASCII"?>
+<cocl:OperationValidationRequest xmi:version="2.0"
+  xmlns:xmi="http://www.omg.org/XMI"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xmlns:cocl="http://www.gme.org/cocl/1.0"
+  xmlns:dge="https://dg.de/1.0"
+  coclId="company-ops"
+  operationName="getTotalEmployees">
+  <validationObjects xsi:type="dge:Company" name="Acme">
+    <employees firstName="Jane" lastName="Doe"/>
+    <employees firstName="John" lastName="Doe"/>
+    <employees firstName="Alice" lastName="Smith"/>
+  </validationObjects>
+</cocl:OperationValidationRequest>
+```
+
+```
+POST /jena/release/validate/compute
+Content-Type: application/xmi
+Accept: application/json
+```
+
+**Response 200**
+
+```json
+{
+  "role": "OPERATION",
+  "results": [
+    {
+      "eClass": "SimpleValidationResult",
+      "value": "3"
+    }
+  ],
+  "diagnostics": []
+}
+```
+
+**Example — compute `findEmployeesByNamePrefix` via C-OCL with a parameter**
+
+```xml
+<OclConstraintSet name="company-ops">
+  <constraints
+    name="FindEmployeesByNamePrefix"
+    contextClass="https://dg.de/1.0#//Company"
+    expression="self.employees->select(e | e.firstName.startsWith(namePrefix))->asSequence()"
+    role="OPERATION"
+    operationName="findEmployeesByNamePrefix"
+    operationParameterNames="namePrefix"
+    operationReturnType="EOBJECT"
+    active="true"/>
+</OclConstraintSet>
+```
+
+Request:
+
+```xml
+<?xml version="1.0" encoding="ASCII"?>
+<cocl:OperationValidationRequest xmi:version="2.0"
+  xmlns:xmi="http://www.omg.org/XMI"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xmlns:cocl="http://www.gme.org/cocl/1.0"
+  xmlns:dge="https://dg.de/1.0"
+  coclId="company-ops"
+  operationName="findEmployeesByNamePrefix">
+  <validationObjects xsi:type="dge:Company" name="Acme">
+    <employees firstName="Jane" lastName="Doe"/>
+    <employees firstName="John" lastName="Doe"/>
+    <employees firstName="Alice" lastName="Smith"/>
+  </validationObjects>
+  <parameters parameterName="namePrefix" javaValue="J"/>
+</cocl:OperationValidationRequest>
+```
+
+**Response 200**
+
+```json
+{
+  "role": "OPERATION",
+  "results": [
+    {
+      "eClass": "EObjectValidationResult",
+      "values": [
+        { "eClass": "dge:Person", "firstName": "Jane", "lastName": "Doe" },
+        { "eClass": "dge:Person", "firstName": "John", "lastName": "Doe" }
+      ]
+    }
+  ],
+  "diagnostics": []
+}
+```
+
 **Error responses**
 
 | Code | Reason |
 |------|--------|
-| 400 | No validation object, more than one object, no operation provided, operation name not found in the object's EClass, return type mismatch, parameter count mismatch, parameter type mismatch, or argument count does not match parameter count |
+| 400 | No validation object, more than one object; or (without C-OCL) no `operation` provided, operation name not found in the object's EClass, return type mismatch, parameter count/type mismatch; or (with C-OCL) `operationName` is blank, no active `OPERATION` constraint matches the name and parameter list, or the constraint set is not applicable to the object's model |
+| 404 | The scope service or COCL registry is not available (only when `coclId` is supplied) |
 | 415 | Unsupported media type |
 | 500 | Unexpected server error |
+
+---
+
+## C-OCL Constraint Set format
+
+The `validate/{oclId}`, `derive?oclId=`, and `compute` (with `coclId`) endpoints all resolve an `OclConstraintSet` at request time. The service finds the one registry of type `COCL` in the given scope and fetches the object from its final stage.
+
+The constraint roles used by this resource are:
+
+| Role | Used by | Required fields |
+|------|---------|-----------------|
+| `VALIDATION` | `/{oclId}` — applied to the single object | `contextClass`, `expression` |
+| `DERIVED` | `derive?oclId=` — evaluated per requested feature | `contextClass`, `expression`, `featureName` |
+| `OPERATION` | `compute` (C-OCL mode) — invoked by `operationName` | `contextClass`, `expression`, `operationName`, `operationReturnType`; optionally `operationParameterNames` |
+
+Only constraints with `active="true"` are evaluated.
+
+If `targetModelNsURIs` is non-empty on the constraint set, the object's EPackage namespace URI must appear in that list; otherwise a 400 is returned. Leave `targetModelNsURIs` empty to accept objects from any model.

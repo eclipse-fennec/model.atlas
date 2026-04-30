@@ -19,7 +19,6 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.nio.file.Path;
-import java.time.Instant;
 import java.util.concurrent.TimeUnit;
 
 import org.eclipse.emf.ecore.EObject;
@@ -27,11 +26,8 @@ import org.eclipse.emf.ecore.resource.ResourceSet;
 import org.eclipse.fennec.emf.osgi.annotation.require.RequireEMF;
 import org.eclipse.fennec.model.atlas.datagen.example.model.dge.Company;
 import org.eclipse.fennec.model.atlas.datagen.example.model.dge.DGFactory;
-import org.eclipse.fennec.model.atlas.mgmt.management.ManagementFactory;
-import org.eclipse.fennec.model.atlas.mgmt.management.ObjectMetadata;
 import org.eclipse.fennec.model.atlas.validation.model.cocl.BatchValidationRequest;
 import org.eclipse.fennec.model.atlas.validation.model.cocl.COCLFactory;
-import org.eclipse.fennec.model.atlas.validation.model.cocl.COCLPackage;
 import org.eclipse.fennec.model.atlas.validation.model.cocl.OclConstraint;
 import org.eclipse.fennec.model.atlas.validation.model.cocl.OclConstraintSet;
 import org.eclipse.fennec.model.atlas.validation.model.cocl.OclRole;
@@ -403,16 +399,7 @@ public class ObjectBatchValidationResourceTest {
 
 	private void uploadConstraintSet(ScopeService<EObject> jenaScope, String id, OclConstraintSet constraintSet)
 			throws Exception {
-		ObjectMetadata metadata = ManagementFactory.eINSTANCE.createObjectMetadata();
-		metadata.setObjectId(id);
-		metadata.setObjectName(id);
-		metadata.setStage("release");
-		metadata.setRegistry(TestAnnotations.TEST_COCL_REGISTRY_NAME);
-		metadata.setVersion("1.0");
-		metadata.setObjectType(COCLPackage.eNS_URI.concat("#//").concat(COCLPackage.Literals.OCL_CONSTRAINT_SET.getName()));
-		metadata.setUploadTime(Instant.now());
-		jenaScope.uploadToStageForRegistry(
-				TestAnnotations.TEST_COCL_REGISTRY_NAME, "release", constraintSet, metadata).getValue();
+		TestHelper.uploadConstraintSet(jenaScope, id, constraintSet);
 	}
 
 	private OclConstraint filterConstraint(String expression) {

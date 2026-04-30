@@ -16,6 +16,7 @@ package org.eclipse.fennec.model.atlas.validation.rest.tests.helper;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.time.Instant;
 import java.util.Collections;
 import java.util.UUID;
 
@@ -29,6 +30,11 @@ import org.eclipse.emf.ecore.EcorePackage;
 import org.eclipse.emf.ecore.resource.Resource;
 import org.eclipse.emf.ecore.resource.ResourceSet;
 import org.eclipse.emf.ecore.xmi.impl.XMIResourceFactoryImpl;
+import org.eclipse.fennec.model.atlas.mgmt.management.ManagementFactory;
+import org.eclipse.fennec.model.atlas.mgmt.management.ObjectMetadata;
+import org.eclipse.fennec.model.atlas.validation.model.cocl.COCLPackage;
+import org.eclipse.fennec.model.atlas.validation.model.cocl.OclConstraintSet;
+import org.eclipse.fennec.model.atlas.wf.workflowapi.ScopeService;
 
 /**
  * Helper utility for common test operations including XMI serialization and
@@ -141,5 +147,27 @@ public class TestHelper {
             resourceSet.getResourceFactoryRegistry().getExtensionToFactoryMap().put("xmi",
                     new XMIResourceFactoryImpl());
         }
+    }
+
+    /**
+     * Uploads an OclConstraintSet to the "release" stage of the COCL registry in the given scope.
+     *
+     * @param jenaScope      the scope service to upload to
+     * @param id             the object id and name for the uploaded constraint set
+     * @param constraintSet  the constraint set to upload
+     */
+    @SuppressWarnings({"rawtypes", "unchecked"})
+    public static void uploadConstraintSet(ScopeService jenaScope, String id, OclConstraintSet constraintSet)
+            throws Exception {
+        ObjectMetadata metadata = ManagementFactory.eINSTANCE.createObjectMetadata();
+        metadata.setObjectId(id);
+        metadata.setObjectName(id);
+        metadata.setStage("release");
+        metadata.setRegistry(TestAnnotations.TEST_COCL_REGISTRY_NAME);
+        metadata.setVersion("1.0");
+        metadata.setObjectType(COCLPackage.eNS_URI.concat("#//").concat(COCLPackage.Literals.OCL_CONSTRAINT_SET.getName()));
+        metadata.setUploadTime(Instant.now());
+        jenaScope.uploadToStageForRegistry(
+                TestAnnotations.TEST_COCL_REGISTRY_NAME, "release", constraintSet, metadata).getValue();
     }
 }
