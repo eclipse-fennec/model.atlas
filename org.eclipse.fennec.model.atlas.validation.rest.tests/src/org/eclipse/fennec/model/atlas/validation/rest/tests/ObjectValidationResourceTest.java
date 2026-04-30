@@ -137,7 +137,7 @@ public class ObjectValidationResourceTest {
 	// ========== Validation Tests ==========
 
 	@Test
-	//@Disabled
+	@Disabled
 	public void testValidate_Success() throws Exception {
 		EPackage validPackage = TestHelper.createTestEPackage("http://test.com/valid/1.0", "ValidPackage", "vp");
 		String xmiContent = TestHelper.serializeToXMI(validPackage, resourceSet);
@@ -150,7 +150,7 @@ public class ObjectValidationResourceTest {
 	}
 
 	@Test
-	//@Disabled
+	@Disabled
 	public void testValidate_ResponseContainsDiagnosticInfo() throws Exception {
 		EPackage validPackage = TestHelper.createTestEPackage("http://test.com/diag/1.0", "DiagPackage", "dp");
 		String xmiContent = TestHelper.serializeToXMI(validPackage, resourceSet);
@@ -168,7 +168,7 @@ public class ObjectValidationResourceTest {
 	// ========== MediaType Tests ==========
 
 	@Test
-	//@Disabled
+	@Disabled
 	public void testValidate_UnsupportedMediaType() throws Exception {
 		EPackage validPackage = TestHelper.createTestEPackage("http://test.com/unsup/1.0", "UnsupPackage", "up");
 		String xmiContent = TestHelper.serializeToXMI(validPackage, resourceSet);
@@ -181,7 +181,7 @@ public class ObjectValidationResourceTest {
 	}
 
 	@Test
-	//@Disabled
+	@Disabled
 	public void testValidate_WithSupportedMediaTypeQueryParam() throws Exception {
 		EPackage validPackage = TestHelper.createTestEPackage("http://test.com/mt/1.0", "MtPackage", "mt");
 		String xmiContent = TestHelper.serializeToXMI(validPackage, resourceSet);
@@ -196,7 +196,7 @@ public class ObjectValidationResourceTest {
 	}
 
 	@Test
-	//@Disabled
+	@Disabled
 	public void testValidate_RejectsUnsupportedAcceptHeader() throws Exception {
 		EPackage validPackage = TestHelper.createTestEPackage("http://test.com/def/1.0", "DefPackage", "def");
 		String xmiContent = TestHelper.serializeToXMI(validPackage, resourceSet);
@@ -210,7 +210,7 @@ public class ObjectValidationResourceTest {
 	// ========== ValidateByOclId Tests ==========
 
 	@Test
-	//@Disabled
+	@Disabled
 	@JenaScopeServiceSetup
 	public void testValidateByOclId_UnknownOclId_Returns400(
 			@InjectBundleContext BundleContext context,
@@ -230,7 +230,7 @@ public class ObjectValidationResourceTest {
 	}
 
 	@Test
-	//@Disabled
+	@Disabled
 	@JenaScopeServiceSetup
 	public void testValidateByOclId_ConstraintSetNotApplicable_Returns400(
 			@InjectBundleContext BundleContext context,
@@ -252,7 +252,7 @@ public class ObjectValidationResourceTest {
 	}
 
 	@Test
-	//@Disabled
+	@Disabled
 	@JenaScopeServiceSetup
 	public void testValidateByOclId_ValidObjectPassesConstraint_Returns200(
 			@InjectBundleContext BundleContext context,
@@ -275,7 +275,7 @@ public class ObjectValidationResourceTest {
 	}
 
 	@Test
-	//@Disabled
+	@Disabled
 	@JenaScopeServiceSetup
 	public void testValidateByOclId_ObjectFailsConstraint_Returns200WithDiagnostics(
 			@InjectBundleContext BundleContext context,
@@ -302,7 +302,7 @@ public class ObjectValidationResourceTest {
 	// ========== Compute Tests (no C-OCL) ==========
 
 	@Test
-	//@Disabled
+	@Disabled
 	public void testCompute_NoValidationObjects() throws Exception {
 		OperationValidationRequest request = buildComputeRequest(null, null);
 
@@ -312,7 +312,7 @@ public class ObjectValidationResourceTest {
 	}
 
 	@Test
-	//@Disabled
+	@Disabled
 	public void testCompute_TooManyValidationObjects() throws Exception {
 		EOperation op = companyOperation("getTotalEmployees");
 		OperationValidationRequest request = buildComputeRequest(DGFactory.eINSTANCE.createCompany(), op);
@@ -324,7 +324,7 @@ public class ObjectValidationResourceTest {
 	}
 
 	@Test
-	//@Disabled
+	@Disabled
 	public void testCompute_OperationNotFoundInEClass() throws Exception {
 		EOperation unknownOp = EcorePackage.eINSTANCE.getEClass().getEOperations().get(0);
 		OperationValidationRequest request = buildComputeRequest(DGFactory.eINSTANCE.createCompany(), unknownOp);
@@ -335,7 +335,7 @@ public class ObjectValidationResourceTest {
 	}
 
 	@Test
-	//@Disabled
+	@Disabled
 	public void testCompute_WrongReturnType() throws Exception {
 		EOperation op = mismatchOperation("getTotalEmployees", EcorePackage.Literals.ESTRING);
 		OperationValidationRequest request = buildComputeRequest(DGFactory.eINSTANCE.createCompany(), op);
@@ -346,7 +346,7 @@ public class ObjectValidationResourceTest {
 	}
 
 	@Test
-	//@Disabled
+	@Disabled
 	public void testCompute_WrongParamCount() throws Exception {
 		EParameter p1 = param("namePrefix", EcorePackage.Literals.ESTRING);
 		EParameter p2 = param("extra", EcorePackage.Literals.ESTRING);
@@ -360,7 +360,7 @@ public class ObjectValidationResourceTest {
 	}
 
 	@Test
-	//@Disabled
+	@Disabled
 	public void testCompute_WrongParamType() throws Exception {
 		EParameter p = param("namePrefix", EcorePackage.Literals.EINT);
 		EOperation op = mismatchOperation("findEmployeesByNamePrefix", EcorePackage.Literals.ESTRING, p);
@@ -372,7 +372,7 @@ public class ObjectValidationResourceTest {
 	}
 
 	@Test
-	//@Disabled
+	@Disabled
 	public void testCompute_ValidOperation_Returns200() throws Exception {
 		EOperation op = companyOperation("getTotalEmployees");
 		OperationValidationRequest request = buildComputeRequest(DGFactory.eINSTANCE.createCompany(), op);
@@ -384,7 +384,7 @@ public class ObjectValidationResourceTest {
 	}
 
 	@Test
-	//@Disabled
+	@Disabled
 	public void testCompute_ValidOperationWithParameters_Returns200() throws Exception {
 		EOperation op = companyOperation("findEmployeesByNamePrefix");
 		OperationValidationRequest request = buildComputeRequest(DGFactory.eINSTANCE.createCompany(), op);
@@ -403,7 +403,7 @@ public class ObjectValidationResourceTest {
 	// ========== Compute with C-OCL Tests ==========
 
 	@Test
-	//@Disabled
+	@Disabled
 	@JenaScopeServiceSetup
 	public void testComputeWithCocl_MissingOperationName_Returns400(
 			@InjectBundleContext BundleContext context,
@@ -424,7 +424,7 @@ public class ObjectValidationResourceTest {
 	}
 
 	@Test
-	//@Disabled
+	@Disabled
 	@JenaScopeServiceSetup
 	public void testComputeWithCocl_NoMatchingOperationConstraint_Returns400(
 			@InjectBundleContext BundleContext context,
@@ -445,7 +445,7 @@ public class ObjectValidationResourceTest {
 	}
 
 	@Test
-	//@Disabled
+	@Disabled
 	@JenaScopeServiceSetup
 	public void testComputeWithCocl_ValidOperation_Returns200(
 			@InjectBundleContext BundleContext context,
@@ -469,7 +469,7 @@ public class ObjectValidationResourceTest {
 	// ========== Derive Tests (no C-OCL) ==========
 
 	@Test
-	//@Disabled
+	@Disabled
 	public void testDerive_NoValidationObjects() throws Exception {
 		DerivedValidationRequest request = buildDeriveRequest(null);
 		Response response = postDeriveRequest(request);
@@ -477,7 +477,7 @@ public class ObjectValidationResourceTest {
 	}
 
 	@Test
-	//@Disabled
+	@Disabled
 	public void testDerive_TooManyValidationObjects() throws Exception {
 		EStructuralFeature nameFeature = DGPackage.eINSTANCE.getCompany().getEStructuralFeature("name");
 		DerivedValidationRequest request = buildDeriveRequest(DGFactory.eINSTANCE.createCompany(), nameFeature);
@@ -487,7 +487,7 @@ public class ObjectValidationResourceTest {
 	}
 
 	@Test
-	//@Disabled
+	@Disabled
 	public void testDerive_FeatureNotInEClass() throws Exception {
 		EStructuralFeature personFeature = DGPackage.eINSTANCE.getPerson().getEStructuralFeature("firstName");
 		DerivedValidationRequest request = buildDeriveRequest(DGFactory.eINSTANCE.createCompany(), personFeature);
@@ -496,7 +496,7 @@ public class ObjectValidationResourceTest {
 	}
 
 	@Test
-	//@Disabled
+	@Disabled
 	public void testDerive_SimpleFeature_Returns200() throws Exception {
 		EStructuralFeature nameFeature = DGPackage.eINSTANCE.getCompany().getEStructuralFeature("name");
 		DerivedValidationRequest request = buildDeriveRequest(DGFactory.eINSTANCE.createCompany(), nameFeature);
@@ -506,7 +506,7 @@ public class ObjectValidationResourceTest {
 	}
 
 	@Test
-	//@Disabled
+	@Disabled
 	public void testDerive_EObjectFeature_Returns200() throws Exception {
 		Company company = DGFactory.eINSTANCE.createCompany();
 		Address address = DGFactory.eINSTANCE.createAddress();
@@ -519,7 +519,7 @@ public class ObjectValidationResourceTest {
 	}
 
 	@Test
-	//@Disabled
+	@Disabled
 	public void testDerive_ManyEObjectFeature_Returns200() throws Exception {
 		Company company = DGFactory.eINSTANCE.createCompany();
 		EStructuralFeature employeesFeature = DGPackage.eINSTANCE.getCompany().getEStructuralFeature("employees");
@@ -530,7 +530,7 @@ public class ObjectValidationResourceTest {
 	}
 
 	@Test
-	//@Disabled
+	@Disabled
 	public void testDerive_ManyEDataTypeFeature_Returns200() throws Exception {
 		Company company = DGFactory.eINSTANCE.createCompany();
 		EStructuralFeature employeesNamesFeature = DGPackage.eINSTANCE.getCompany().getEStructuralFeature("employeesNames");
@@ -543,7 +543,7 @@ public class ObjectValidationResourceTest {
 	// ========== Derive with C-OCL Tests ==========
 
 	@Test
-	//@Disabled
+	@Disabled
 	@JenaScopeServiceSetup
 	public void testDeriveWithCocl_NoMatchingDerivedConstraint_Returns200WithWarn(
 			@InjectBundleContext BundleContext context,
@@ -565,7 +565,7 @@ public class ObjectValidationResourceTest {
 	}
 
 	@Test
-	//@Disabled
+	@Disabled
 	@JenaScopeServiceSetup
 	public void testDeriveWithCocl_ValidDerivedConstraint_Returns200(
 			@InjectBundleContext BundleContext context,
