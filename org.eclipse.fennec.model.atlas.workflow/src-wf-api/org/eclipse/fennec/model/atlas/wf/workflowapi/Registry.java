@@ -28,7 +28,7 @@ import org.osgi.annotation.versioning.ProviderType;
  * <ul>
  *   <li>{@link org.eclipse.fennec.model.atlas.wf.workflowapi.Registry#getName <em>Name</em>}</li>
  *   <li>{@link org.eclipse.fennec.model.atlas.wf.workflowapi.Registry#getDescription <em>Description</em>}</li>
- *   <li>{@link org.eclipse.fennec.model.atlas.wf.workflowapi.Registry#isSchemaRegistry <em>Schema Registry</em>}</li>
+ *   <li>{@link org.eclipse.fennec.model.atlas.wf.workflowapi.Registry#getType <em>Type</em>}</li>
  *   <li>{@link org.eclipse.fennec.model.atlas.wf.workflowapi.Registry#getStages <em>Stages</em>}</li>
  *   <li>{@link org.eclipse.fennec.model.atlas.wf.workflowapi.Registry#getAllowedTransitions <em>Allowed Transitions</em>}</li>
  * </ul>
@@ -84,29 +84,33 @@ public interface Registry {
 	void setDescription(String value);
 
 	/**
-	 * Returns the value of the '<em><b>Schema Registry</b></em>' attribute.
+	 * Returns the value of the '<em><b>Type</b></em>' attribute.
+	 * The default value is <code>"OTHER"</code>.
+	 * The literals are from the enumeration {@link org.eclipse.fennec.model.atlas.wf.workflowapi.RegistryType}.
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
 	 * <!-- begin-model-doc -->
-	 * Differentiate the schema registries from all the other kind of registries.
+	 * Classifies the registry by its role. SCHEMA registries hold EPackage definitions, COCL registries hold OCL constraint sets, OTHER is the default for general-purpose registries.
 	 * <!-- end-model-doc -->
-	 * @return the value of the '<em>Schema Registry</em>' attribute.
-	 * @see #setSchemaRegistry(boolean)
-	 * @see org.eclipse.fennec.model.atlas.wf.workflowapi.WorkflowApiPackage#getRegistry_SchemaRegistry()
-	 * @model
+	 * @return the value of the '<em>Type</em>' attribute.
+	 * @see org.eclipse.fennec.model.atlas.wf.workflowapi.RegistryType
+	 * @see #setType(RegistryType)
+	 * @see org.eclipse.fennec.model.atlas.wf.workflowapi.WorkflowApiPackage#getRegistry_Type()
+	 * @model default="OTHER"
 	 * @generated
 	 */
-	boolean isSchemaRegistry();
+	RegistryType getType();
 
 	/**
-	 * Sets the value of the '{@link org.eclipse.fennec.model.atlas.wf.workflowapi.Registry#isSchemaRegistry <em>Schema Registry</em>}' attribute.
+	 * Sets the value of the '{@link org.eclipse.fennec.model.atlas.wf.workflowapi.Registry#getType <em>Type</em>}' attribute.
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
-	 * @param value the new value of the '<em>Schema Registry</em>' attribute.
-	 * @see #isSchemaRegistry()
+	 * @param value the new value of the '<em>Type</em>' attribute.
+	 * @see org.eclipse.fennec.model.atlas.wf.workflowapi.RegistryType
+	 * @see #getType()
 	 * @generated
 	 */
-	void setSchemaRegistry(boolean value);
+	void setType(RegistryType value);
 
 	/**
 	 * Returns the value of the '<em><b>Stages</b></em>' containment reference list.

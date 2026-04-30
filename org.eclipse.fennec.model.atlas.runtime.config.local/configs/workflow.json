@@ -19,6 +19,7 @@
         "registryService.cardinality.minimum:int": 1
     },
     "RegistryService~schema": {
+        "registry.type": "SCHEMA",
         "registry.name": "schema",
         "registry.description": "The schema registry to store EPackage objects",
         "postReleaseActionService.target": "(component.name=EPackagePostReleaseActionService)",

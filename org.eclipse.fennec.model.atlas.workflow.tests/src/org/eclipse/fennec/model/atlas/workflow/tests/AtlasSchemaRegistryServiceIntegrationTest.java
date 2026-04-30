@@ -28,6 +28,7 @@ import org.eclipse.fennec.model.atlas.mgmt.management.ManagementFactory;
 import org.eclipse.fennec.model.atlas.mgmt.management.ObjectMetadata;
 import org.eclipse.fennec.model.atlas.wf.workflowapi.Registry;
 import org.eclipse.fennec.model.atlas.wf.workflowapi.RegistryService;
+import org.eclipse.fennec.model.atlas.wf.workflowapi.RegistryType;
 import org.eclipse.fennec.model.atlas.wf.workflowapi.Stage;
 import org.eclipse.fennec.model.atlas.workflow.WorkflowConstants;
 import org.eclipse.fennec.model.atlas.workflow.tests.annotations.TestAnnotations.EPackageLuceneIndexSetup;
@@ -81,16 +82,16 @@ public class AtlasSchemaRegistryServiceIntegrationTest {
 		}
 
 		@Test
-		@DisplayName("Should be registered with schema.registry=true")
+		@DisplayName("Should be registered with registry.type=SCHEMA")
 		@RegistryConfiguration
 		@EPackageLuceneIndexSetup
 		void shouldBeRegisteredAsSchemaRegistry(
-				@InjectService(cardinality = 0, filter = "(&(registry.name=" + WorkflowConstants.ATLAS_SCHEMA_REGISTRY_NAME + ")(schema.registry=true))")
+				@InjectService(cardinality = 0, filter = "(&(registry.name=" + WorkflowConstants.ATLAS_SCHEMA_REGISTRY_NAME + ")(registry.type=SCHEMA))")
 				ServiceAware<RegistryService> registryAware)
 						throws InterruptedException {
 
 			RegistryService<EPackage> registryService = registryAware.waitForService(5000);
-			assertNotNull(registryService, "AtlasSchemaRegistryService should be registered with schema.registry=true");
+			assertNotNull(registryService, "AtlasSchemaRegistryService should be registered with registry.type=SCHEMA");
 		}
 	}
 
@@ -113,7 +114,7 @@ public class AtlasSchemaRegistryServiceIntegrationTest {
 			Registry registry = registryService.getRegistry();
 			assertNotNull(registry);
 			assertEquals(WorkflowConstants.ATLAS_SCHEMA_REGISTRY_NAME, registry.getName());
-			assertTrue(registry.isSchemaRegistry());
+			assertEquals(RegistryType.SCHEMA, registry.getType());
 		}
 
 		@Test

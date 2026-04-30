@@ -443,13 +443,15 @@ Convert EMF models between different serialization formats.
 
 ### Object Validation API
 
-**Base path**: `/validate`
+**Base path**: `/{scopeName}/{stageName}/validate`
 
 Validate an EObject instance against its schema constraints, including any OCL constraints defined in the model. The endpoint runs EMF's `Diagnostician` on the submitted object and returns a structured diagnostic report.
 
+`scopeName` identifies the scope whose C-OCL registry is used for OCL-based validation. `stageName` is captured for future scope-aware resource set resolution; currently the globally registered resource set is used.
+
 ```bash
 # Validate a Person object (JSON request, JSON response)
-curl -X POST http://localhost:8080/rest/validate \
+curl -X POST http://localhost:8080/rest/jena/release/validate \
   -H "Content-Type: application/json" \
   -H "Accept: application/json" \
   -d '{
@@ -462,7 +464,7 @@ curl -X POST http://localhost:8080/rest/validate \
   }'
 
 # Validate using XMI format
-curl -X POST http://localhost:8080/rest/validate \
+curl -X POST http://localhost:8080/rest/jena/release/validate \
   -H "Content-Type: application/xmi" \
   -H "Accept: application/xmi" \
   -d '<?xml version="1.0" encoding="UTF-8"?>
@@ -474,7 +476,7 @@ curl -X POST http://localhost:8080/rest/validate \
     phone="0301234567"/>'
 
 # Override response format via query parameter
-curl -X POST "http://localhost:8080/rest/validate?mediaType=application/json" \
+curl -X POST "http://localhost:8080/rest/jena/release/validate?mediaType=application/json" \
   -H "Content-Type: application/xmi" \
   -d @person.xmi
 ```
