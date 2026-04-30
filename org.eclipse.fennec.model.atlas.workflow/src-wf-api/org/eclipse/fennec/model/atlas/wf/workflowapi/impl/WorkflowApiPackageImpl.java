@@ -15,6 +15,7 @@ package org.eclipse.fennec.model.atlas.wf.workflowapi.impl;
 
 import org.eclipse.emf.ecore.EAttribute;
 import org.eclipse.emf.ecore.EClass;
+import org.eclipse.emf.ecore.EEnum;
 import org.eclipse.emf.ecore.EGenericType;
 import org.eclipse.emf.ecore.EOperation;
 import org.eclipse.emf.ecore.EPackage;
@@ -27,6 +28,7 @@ import org.eclipse.fennec.model.atlas.mgmt.management.ManagementPackage;
 
 import org.eclipse.fennec.model.atlas.wf.workflowapi.EObjectWorkflowService;
 import org.eclipse.fennec.model.atlas.wf.workflowapi.RegistryService;
+import org.eclipse.fennec.model.atlas.wf.workflowapi.RegistryType;
 import org.eclipse.fennec.model.atlas.wf.workflowapi.Scope;
 import org.eclipse.fennec.model.atlas.wf.workflowapi.ScopeService;
 import org.eclipse.fennec.model.atlas.wf.workflowapi.Stage;
@@ -89,6 +91,13 @@ public class WorkflowApiPackageImpl extends EPackageImpl implements WorkflowApiP
 	 * @generated
 	 */
 	private EClass stageTransitionEClass = null;
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	private EEnum registryTypeEEnum = null;
 
 	/**
 	 * Creates an instance of the model <b>Package</b>, registered with
@@ -719,7 +728,7 @@ public class WorkflowApiPackageImpl extends EPackageImpl implements WorkflowApiP
 	 * @generated
 	 */
 	@Override
-	public EAttribute getRegistry_SchemaRegistry() {
+	public EAttribute getRegistry_Type() {
 		return (EAttribute)registryEClass.getEStructuralFeatures().get(2);
 	}
 
@@ -829,6 +838,16 @@ public class WorkflowApiPackageImpl extends EPackageImpl implements WorkflowApiP
 	 * @generated
 	 */
 	@Override
+	public EEnum getRegistryType() {
+		return registryTypeEEnum;
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
 	public WorkflowApiFactory getWorkflowApiFactory() {
 		return (WorkflowApiFactory)getEFactoryInstance();
 	}
@@ -912,7 +931,7 @@ public class WorkflowApiPackageImpl extends EPackageImpl implements WorkflowApiP
 		registryEClass = createEClass(REGISTRY);
 		createEAttribute(registryEClass, REGISTRY__NAME);
 		createEAttribute(registryEClass, REGISTRY__DESCRIPTION);
-		createEAttribute(registryEClass, REGISTRY__SCHEMA_REGISTRY);
+		createEAttribute(registryEClass, REGISTRY__TYPE);
 		createEReference(registryEClass, REGISTRY__STAGES);
 		createEReference(registryEClass, REGISTRY__ALLOWED_TRANSITIONS);
 
@@ -925,6 +944,9 @@ public class WorkflowApiPackageImpl extends EPackageImpl implements WorkflowApiP
 		stageTransitionEClass = createEClass(STAGE_TRANSITION);
 		createEAttribute(stageTransitionEClass, STAGE_TRANSITION__FROM_STAGE);
 		createEAttribute(stageTransitionEClass, STAGE_TRANSITION__TO_STAGE);
+
+		// Create enums
+		registryTypeEEnum = createEEnum(REGISTRY_TYPE);
 	}
 
 	/**
@@ -1273,7 +1295,7 @@ public class WorkflowApiPackageImpl extends EPackageImpl implements WorkflowApiP
 		initEClass(registryEClass, org.eclipse.fennec.model.atlas.wf.workflowapi.Registry.class, "Registry", !IS_ABSTRACT, !IS_INTERFACE, IS_GENERATED_INSTANCE_CLASS);
 		initEAttribute(getRegistry_Name(), ecorePackage.getEString(), "name", null, 0, 1, org.eclipse.fennec.model.atlas.wf.workflowapi.Registry.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_UNSETTABLE, !IS_ID, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
 		initEAttribute(getRegistry_Description(), ecorePackage.getEString(), "description", null, 0, 1, org.eclipse.fennec.model.atlas.wf.workflowapi.Registry.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_UNSETTABLE, !IS_ID, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
-		initEAttribute(getRegistry_SchemaRegistry(), ecorePackage.getEBoolean(), "schemaRegistry", null, 0, 1, org.eclipse.fennec.model.atlas.wf.workflowapi.Registry.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_UNSETTABLE, !IS_ID, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
+		initEAttribute(getRegistry_Type(), this.getRegistryType(), "type", "OTHER", 0, 1, org.eclipse.fennec.model.atlas.wf.workflowapi.Registry.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_UNSETTABLE, !IS_ID, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
 		initEReference(getRegistry_Stages(), this.getStage(), null, "stages", null, 0, -1, org.eclipse.fennec.model.atlas.wf.workflowapi.Registry.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, IS_COMPOSITE, !IS_RESOLVE_PROXIES, !IS_UNSETTABLE, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
 		initEReference(getRegistry_AllowedTransitions(), this.getStageTransition(), null, "allowedTransitions", null, 0, -1, org.eclipse.fennec.model.atlas.wf.workflowapi.Registry.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, IS_COMPOSITE, !IS_RESOLVE_PROXIES, !IS_UNSETTABLE, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
 
@@ -1286,6 +1308,12 @@ public class WorkflowApiPackageImpl extends EPackageImpl implements WorkflowApiP
 		initEClass(stageTransitionEClass, StageTransition.class, "StageTransition", !IS_ABSTRACT, !IS_INTERFACE, IS_GENERATED_INSTANCE_CLASS);
 		initEAttribute(getStageTransition_FromStage(), ecorePackage.getEString(), "fromStage", null, 0, 1, StageTransition.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_UNSETTABLE, !IS_ID, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
 		initEAttribute(getStageTransition_ToStage(), ecorePackage.getEString(), "toStage", null, 0, 1, StageTransition.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_UNSETTABLE, !IS_ID, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
+
+		// Initialize enums and add enum literals
+		initEEnum(registryTypeEEnum, RegistryType.class, "RegistryType");
+		addEEnumLiteral(registryTypeEEnum, RegistryType.OTHER);
+		addEEnumLiteral(registryTypeEEnum, RegistryType.SCHEMA);
+		addEEnumLiteral(registryTypeEEnum, RegistryType.COCL);
 
 		// Create resource
 		createResource(eNS_URI);

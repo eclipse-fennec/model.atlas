@@ -25,6 +25,7 @@ import java.util.List;
 import org.eclipse.emf.ecore.EPackage;
 import org.eclipse.fennec.emf.osgi.annotation.require.RequireEMF;
 import org.eclipse.fennec.model.atlas.wf.workflowapi.Registry;
+import org.eclipse.fennec.model.atlas.wf.workflowapi.RegistryType;
 import org.eclipse.fennec.model.atlas.wf.workflowapi.Scope;
 import org.eclipse.fennec.model.atlas.wf.workflowapi.ScopeService;
 import org.eclipse.fennec.model.atlas.workflow.WorkflowConstants;
@@ -137,7 +138,7 @@ public class AtlasScopeServiceIntegrationTest {
 			assertEquals(1, scope.getRegistries().size());
 			Registry registry = scope.getRegistries().get(0);
 			assertEquals(WorkflowConstants.ATLAS_SCHEMA_REGISTRY_NAME, registry.getName());
-			assertTrue(registry.isSchemaRegistry());
+			assertEquals(RegistryType.SCHEMA, registry.getType());
 		}
 	}
 

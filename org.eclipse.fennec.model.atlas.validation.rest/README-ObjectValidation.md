@@ -1,8 +1,10 @@
 # Object Validation Resource
 
-The Object Validation Resource exposes endpoints for validating and computing derived properties of EMF model objects (EObjects). All endpoints are rooted at `/validate` and accept and produce `application/xmi` or `application/json`.
+The Object Validation Resource exposes endpoints for validating and computing derived properties of EMF model objects (EObjects). All endpoints are rooted at `/{scopeName}/{stageName}/validate` and accept and produce `application/xmi` or `application/json`.
 
-The examples below use the `dge` example model (namespace URI `https://dg.de/1.0`) which defines `Company`, `Person`, and `Address`.
+The `scopeName` and `stageName` path segments identify the scope and stage context for the request. `scopeName` determines which C-OCL registry is used for OCL-based validation (the service looks up the one registry of type `COCL` in that scope). `stageName` is captured for future scope-aware ResourceSet resolution; currently the globally registered ResourceSet is used for EClassifier resolution.
+
+The examples below use scope `jena` and stage `release`, and the `dge` example model (namespace URI `https://dg.de/1.0`) which defines `Company`, `Person`, and `Address`.
 
 ---
 
@@ -10,24 +12,24 @@ The examples below use the `dge` example model (namespace URI `https://dg.de/1.0
 
 | Method | Path | Description |
 |--------|------|-------------|
-| `POST` | `/validate` | Validate an EObject against its EMF model constraints |
-| `POST` | `/validate/{oclId}` | Validate an EObject against its model and a C-OCL constraint set |
-| `POST` | `/validate/derive` | Compute one or more derived structural features of an EObject |
-| `POST` | `/validate/compute` | Invoke an EOperation on an EObject |
+| `POST` | `/{scopeName}/{stageName}/validate` | Validate an EObject against its EMF model constraints |
+| `POST` | `/{scopeName}/{stageName}/validate/{oclId}` | Validate an EObject against its model and a C-OCL constraint set |
+| `POST` | `/{scopeName}/{stageName}/validate/derive` | Compute one or more derived structural features of an EObject |
+| `POST` | `/{scopeName}/{stageName}/validate/compute` | Invoke an EOperation on an EObject |
 
 ### Optional query parameter
 
 All endpoints accept an optional `mediaType` query parameter that overrides the `Accept` header to control the response content type:
 
 ```
-POST /validate?mediaType=application/xmi
+POST /jena/release/validate?mediaType=application/xmi
 ```
 
 ---
 
-## POST /validate
+## POST /{scopeName}/{stageName}/validate
 
-Validates an EObject against the constraints declared in its EMF model. Returns a `Diagnostic` describing the outcome.
+Validates an EObject against the constraints declared in its EMF model. Returns a `Diagnostic` describing the outcome. The scope and stage are accepted in the path but are not used by this endpoint.
 
 **Request body:** XMI-serialized EObject (`Content-Type: application/xmi`)
 
@@ -45,7 +47,7 @@ A `Person` in the `dge` model has a constraint `ValidPhoneNumber` requiring a 10
 ```
 
 ```
-POST /validate
+POST /jena/release/validate
 Content-Type: application/xmi
 Accept: application/json
 ```
@@ -75,11 +77,14 @@ When no constraints are violated the diagnostic carries severity `INFO` and an e
 
 ---
 
-## POST /validate/{oclId}
+## POST /{scopeName}/{stageName}/validate/{oclId}
 
-Validates an EObject against both its EMF model constraints and an additional C-OCL constraint set stored in the `jena` scope `cocl` registry (stage `release`).
+Validates an EObject against both its EMF model constraints and an additional C-OCL constraint set. The service resolves the constraint set by looking up the registry of type `COCL` in the given scope and fetching the object with id `oclId` from that registry's final stage.
 
-**Path parameter:** `oclId` — the identifier of the `OclConstraintSet` to apply
+**Path parameters:**
+- `scopeName` — the scope whose COCL registry is used
+- `stageName` — captured for future ResourceSet resolution (currently unused for this axis)
+- `oclId` — the identifier of the `OclConstraintSet` to apply
 
 **Request body:** XMI-serialized EObject
 
@@ -90,13 +95,13 @@ Validates an EObject against both its EMF model constraints and an additional C-
 | Code | Reason |
 |------|--------|
 | 400 | The `oclId` was not found, or the constraint set cannot handle the supplied EObject type |
-| 404 | The `jena` scope service is not available |
+| 404 | The scope service or COCL registry is not available |
 | 415 | Unsupported media type |
 | 500 | Unexpected server error |
 
 ---
 
-## POST /validate/derive
+## POST /{scopeName}/{stageName}/validate/derive
 
 Computes one or more structural features of an EObject using the EMF model's own implementation (e.g. derived attributes, references).
 
@@ -132,7 +137,7 @@ The `dge` model defines `Person.fullName` as a derived `EString` feature (concat
 ```
 
 ```
-POST /validate/derive
+POST /jena/release/validate/derive
 Content-Type: application/xmi
 Accept: application/json
 ```
@@ -225,7 +230,7 @@ Accept: application/json
 ```
 
 ```
-POST /validate/derive
+POST /jena/release/validate/derive
 Content-Type: application/xmi
 Accept: application/json
 ```
@@ -256,12 +261,13 @@ Accept: application/json
 | Code | Reason |
 |------|--------|
 | 400 | No validation object provided, more than one provided, no derived features in request, or a requested feature does not belong to the object's EClass |
+| 404 | The scope service or COCL registry is not available (only when `oclId` is supplied) |
 | 415 | Unsupported media type |
 | 500 | Unexpected server error |
 
 ---
 
-## POST /validate/compute
+## POST /{scopeName}/{stageName}/validate/compute
 
 Invokes an `EOperation` on an EObject and returns the result.
 
@@ -304,7 +310,7 @@ The `operation` element is containment: it is serialized inline. Its `eType` and
 ```
 
 ```
-POST /validate/compute
+POST /jena/release/validate/compute
 Content-Type: application/xmi
 Accept: application/json
 ```
