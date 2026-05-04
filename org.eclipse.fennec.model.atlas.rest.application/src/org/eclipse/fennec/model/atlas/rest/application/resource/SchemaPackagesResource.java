@@ -418,6 +418,9 @@ public class SchemaPackagesResource {
                 return rb.build();
             }
 
+            EcoreUtil.resolveAll(ePackage);
+            ePackage.eResource().setURI(URI.createURI(ePackage.getNsURI()));
+
             ObjectMetadata metadata = scopeService
                     .updateInStageForRegistry(REGISTRY_NAME, stageName, ePackage, encodedNsUri, resolvedVersion)
                     .getValue();
