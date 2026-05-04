@@ -35,20 +35,18 @@ import org.osgi.service.component.annotations.Deactivate;
 import org.osgi.service.component.annotations.Reference;
 
 /**
- * Watches a data folder and bootstraps the full pipeline for that unit:
- * an {@code EMFFileWatcher} to register .ecore models, a
- * {@code JpaMappingFileWatcher} to register .jpamapping configs (which in
- * turn trigger H2 DataSource creation via {@code DataSourceConfigHandler}),
- * and a CSV importer to load .csv data into that DataSource.
+ * Watches a data folder and bootstraps the full JPA pipeline for that unit:
+ * <ol>
+ *   <li>{@code EMFFileWatcher} — loads the .ecore model and registers the EPackage</li>
+ *   <li>{@code JpaMappingFileWatcher} — loads the .jpamapping and creates the DataSource</li>
+ *   <li>{@code JpaModelSetup} — builds the EntityMappings and starts the EclipseLink persistence unit</li>
+ *   <li>{@code JpaCsvImporter} — activates only once the EntityManagerFactory is ready, then
+ *       reads CSV files (using EClass feature names as column headers) and persists each row
+ *       via JPA so EclipseLink applies the jpamapping column-name translation automatically</li>
+ * </ol>
  *
- * <p>All three sub-component configs are created in {@link #handleBasePath}
- * and deleted on {@link #deactivate}. The sub-components manage their own
- * file-event handling within the folder.
- *
- * <p>The unit name is derived from the last segment of the watched folder
- * path and must match the {@code name} field of the .jpamapping file so
- * that the CSV importer can locate the correct DataSource via the filter
- * {@code (name=<unitName>)}.
+ * <p>The unit name is derived from the last segment of the watched folder path and must match
+ * the {@code name} attribute in the .jpamapping file.
  */
 @RequireConfigurationAdmin
 @Component(name = DataFolderWatcher.PID, configurationPolicy = ConfigurationPolicy.REQUIRE)
@@ -62,9 +60,6 @@ public class DataFolderWatcher implements FileSystemWatcherListener {
     // PIDs of the sub-components we configure dynamically
     private static final String EMF_FILE_WATCHER_PID = "EMFFileWatcher";
     private static final String JPA_MAPPING_FILE_WATCHER_PID = "JpaMappingFileWatcher";
-    private static final String CSV_IMPORTER_PID = "org.eclipse.daanse.jdbc.db.importer.csv.CsvDataImporter";
-
-    private static final String PROP_DATASOURCE_TARGET = "dataSource.target";
 
     @Reference
     private ConfigurationAdmin configAdmin;
@@ -73,18 +68,18 @@ public class DataFolderWatcher implements FileSystemWatcherListener {
     private String matcherKey;
     private Configuration emfWatcherConfig;
     private Configuration jpaMappingWatcherConfig;
-    private Configuration csvImporterConfig;
+    private Configuration jpaCsvImporterConfig;
     private Configuration jpaModelSetupConfig;
 
     @Deactivate
     void deactivate() {
         deleteConfig(emfWatcherConfig);
         deleteConfig(jpaMappingWatcherConfig);
-        deleteConfig(csvImporterConfig);
+        deleteConfig(jpaCsvImporterConfig);
         deleteConfig(jpaModelSetupConfig);
         emfWatcherConfig = null;
         jpaMappingWatcherConfig = null;
-        csvImporterConfig = null;
+        jpaCsvImporterConfig = null;
         jpaModelSetupConfig = null;
     }
 
@@ -105,18 +100,19 @@ public class DataFolderWatcher implements FileSystemWatcherListener {
             jpaProps.put("unitName", unitName);
             jpaMappingWatcherConfig.update(jpaProps);
 
-            csvImporterConfig = configAdmin.getFactoryConfiguration(CSV_IMPORTER_PID, matcherKey, "?");
+            jpaCsvImporterConfig = configAdmin.getFactoryConfiguration(JpaCsvImporter.PID, matcherKey, "?");
             Dictionary<String, Object> csvProps = new Hashtable<>();
             csvProps.put(FileSystemWatcherWhiteboardConstants.FILESYSTEM_WATCHER_PATH, pathStr);
-            // The DataSource is named after the unit (set by DataSourceConfigHandler from JpaMappingConfig.getName())
-            csvProps.put(PROP_DATASOURCE_TARGET, "(unitName=" + unitName + ")");
+            csvProps.put("dataSource.target", "(unitName=" + unitName + ")");
+            csvProps.put("jpaMappingConfig.target", "(unitName=" + unitName + ")");
             csvProps.put("unitName", unitName);
-            csvImporterConfig.update(csvProps);
+            jpaCsvImporterConfig.update(csvProps);
 
             jpaModelSetupConfig = configAdmin.getFactoryConfiguration(JpaModelSetup.PID, matcherKey, "?");
             Dictionary<String, Object> setupProps = new Hashtable<>();
             setupProps.put("unitName", unitName);
             setupProps.put("jpaMappingConfig.target", "(unitName=" + unitName + ")");
+            setupProps.put("dataSource.target", "(unitName=" + unitName + ")");
             jpaModelSetupConfig.update(setupProps);
 
             LOG.log(Level.INFO, "DataFolderWatcher activated for unit ''{0}'' at {1}", unitName, pathStr);
@@ -127,8 +123,7 @@ public class DataFolderWatcher implements FileSystemWatcherListener {
 
     @Override
     public void handleInitialPaths(List<Path> paths) {
-        // Sub-components (EMFFileWatcher, JpaMappingFileWatcher, CsvDataImporter)
-        // are each configured to watch the same folder and handle their own initial scan.
+        // Sub-components handle their own initial scan within the configured folder.
     }
 
     @Override

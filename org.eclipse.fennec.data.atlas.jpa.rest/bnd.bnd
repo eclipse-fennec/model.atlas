@@ -12,4 +12,5 @@
 	org.osgi.util.promise,\
 	org.gecko.emf.json,\
 	org.osgi.service.servlet,\
-	jakarta.persistence-api
+	jakarta.persistence-api,\
+	org.gecko.emf.util.model
