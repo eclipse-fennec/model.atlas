@@ -9,8 +9,5 @@
 	org.osgi.util.promise;version=latest,\
 	org.gecko.emf.util.documentation.generators.apis;version=latest,\
 	org.apache.felix.gogo.runtime;version=latest,\
-	org.eclipse.fennec.codec;version=latest,\
-	org.eclipse.fennec.codec.constants;version=latest,\
 	org.eclipse.fennec.model.atlas.emf.common;version=snapshot,\
-	org.eclipse.fennec.codec.constants;version=latest,\
 	org.eclipse.fennec.codec;version=latest

@@ -39,7 +39,6 @@ public class SupportedMediatypesImpl implements SupportedMediatype {
             mediaTypes.add("application/xmi");
             mediaTypes.add("application/uml");
             mediaTypes.add("application/schema+xml");
-            mediaTypes.add("application/schema+json");
         }
     }
 

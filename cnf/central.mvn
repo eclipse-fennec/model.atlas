@@ -134,12 +134,6 @@ commons-io:commons-io:2.20.0
 org.apache.commons:commons-csv:1.14.1
 commons-codec:commons-codec:1.19.0
 
-tools.jackson.core:jackson-core:3.0.1
-tools.jackson.core:jackson-databind:3.0.1
-tools.jackson.dataformat:jackson-dataformat-properties:3.0.1
-tools.jackson.dataformat:jackson-dataformat-yaml:3.0.1
-com.fasterxml.jackson.core:jackson-annotations:2.20
-
 # MinIO dependencies
 io.minio:minio:8.5.12
 com.squareup.okhttp3:okhttp:4.12.0
@@ -198,13 +192,7 @@ org.eclipse.emf:org.eclipse.emf.common:2.44.0
 
 
 # Codec
-org.geckoprojects.codec:org.eclipse.fennec.codec:1.1.0-SNAPSHOT
-org.geckoprojects.codec:org.eclipse.fennec.codec.json:1.1.0-SNAPSHOT
-org.geckoprojects.codec:org.eclipse.fennec.codec.jsonschema:1.1.0-SNAPSHOT
-org.geckoprojects.codec:org.eclipse.fennec.codec.csv:1.1.0-SNAPSHOT
-org.geckoprojects.codec:org.eclipse.fennec.codec.info:1.1.0-SNAPSHOT
-org.geckoprojects.codec:org.eclipse.fennec.codec.info.model:1.1.0-SNAPSHOT
-org.geckoprojects.codec:org.eclipse.fennec.codec.constants:1.1.0-SNAPSHOT
+org.eclipse.fennec.codec:org.eclipse.fennec.codec.workspace.library:0.1.0-SNAPSHOT
 
 
 #UML

@@ -10,9 +10,9 @@
 	org.osgi.service.cm;version=latest,\
 	org.eclipse.fennec.model.atlas.management;version=snapshot,\
 	org.eclipse.fennec.model.atlas.management.apicurio.model;version=snapshot,\
-	org.gecko.emf.json,\
-	org.eclipse.fennec.codec.constants,\
-	org.apache.felix.healthcheck.api
+	org.apache.felix.healthcheck.api,\
+	org.eclipse.fennec.codec.api;version=latest,\
+	org.eclipse.fennec.codec;version=latest
 
 Bundle-Name: MAC Management Apicurio Storage Implementation
 Bundle-Description: Apicurio-based storage implementation for EPackage workflow management

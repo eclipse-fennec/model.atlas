@@ -832,5 +832,5 @@ public class ObjectRegistryResourceTest extends AbstractRestTest{
 		return "ObjectRegistryResource";
 	}
 
-	
+
 }
