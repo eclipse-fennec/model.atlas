@@ -11,4 +11,4 @@
  */
 @org.osgi.annotation.bundle.Export
 @org.osgi.annotation.versioning.Version("1.0.0")
-package org.eclipse.fennec.model.atlas.management.lucene.tests.annotations;
+package org.eclipse.fennec.model.atlas.tests.common;

@@ -18,39 +18,27 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 import java.io.IOException;
-import java.nio.file.Path;
 import java.util.Dictionary;
 import java.util.Hashtable;
-import java.util.concurrent.TimeUnit;
 
-import org.eclipse.emf.ecore.resource.ResourceSet;
-import org.eclipse.fennec.emf.osgi.annotation.require.RequireEMF;
-import org.eclipse.fennec.model.atlas.rest.tests.helper.MockTestHelper.MockScopeServiceCollector;
-import org.eclipse.fennec.model.atlas.rest.tests.helper.ResourceAware;
 import org.eclipse.fennec.model.atlas.rest.tests.helper.TestAnnotations;
 import org.eclipse.fennec.model.atlas.rest.tests.helper.TestAnnotations.ParentScopeServiceSetup;
-import org.eclipse.fennec.model.atlas.rest.tests.helper.TestHelper;
 import org.eclipse.fennec.model.atlas.wf.workflowapi.ScopeService;
 import org.eclipse.fennec.model.atlas.workflow.ScopeServiceCollector;
-import org.gecko.emf.rest.annotations.RequireEMFMessageBodyReaderWriter;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.junit.jupiter.api.io.TempDir;
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.ServiceRegistration;
-import org.osgi.service.cm.annotations.RequireConfigurationAdmin;
-import org.osgi.service.jakartars.whiteboard.annotations.RequireJakartarsWhiteboard;
 import org.osgi.test.common.annotation.InjectBundleContext;
 import org.osgi.test.common.annotation.InjectService;
-import org.osgi.test.junit5.context.BundleContextExtension;
-import org.osgi.test.junit5.service.ServiceExtension;
+import org.osgi.test.common.service.ServiceAware;
 
-import jakarta.ws.rs.client.Client;
-import jakarta.ws.rs.client.ClientBuilder;
 import jakarta.ws.rs.core.Response;
 
 /**
@@ -69,60 +57,34 @@ import jakarta.ws.rs.core.Response;
  * @author Data In Motion
  * @since 1.0.0
  */
-@RequireEMF
-@RequireEMFMessageBodyReaderWriter
-@RequireJakartarsWhiteboard
-@RequireConfigurationAdmin
-@ExtendWith(BundleContextExtension.class)
-@ExtendWith(ServiceExtension.class)
-public class ModelAtlasExceptionMapperTest {
 
-	private static final String BASE_URL = "http://localhost:8185/rest";
+public class ModelAtlasExceptionMapperTest extends AbstractRestTest {
 
-	@InjectService(filter = "(emf.name=workflowapi)")
-	ResourceSet resourceSet;
-
-	@TempDir
-	Path tempDir;
-
-	@InjectService
-	ClientBuilder clientBuilder;
-
-	private Client restClient;
 	private ServiceRegistration<ScopeServiceCollector> mockScopeCollectorRegistration;
+	private static final String THROWING_SCOPE = "throw-runtime-exception";
+	private ScopeServiceCollector mockCollector;
 
 	@BeforeEach
 	public void setup(@InjectBundleContext BundleContext context) throws Exception {
 
-		// Set system property for template argument resolution
-		System.setProperty(TestAnnotations.PROP_TEMP_DIR, tempDir.toString());
-
-		restClient = clientBuilder.build();
+		super.setup(context);
 
 		Dictionary<String, Object> serviceProps = new Hashtable<>();
 		serviceProps.put("service.ranking", Integer.MAX_VALUE);
 
-		ThrowingScopeServiceCollector mockCollector = new ThrowingScopeServiceCollector();
+		mockCollector = mock(ScopeServiceCollector.class);
+		when(mockCollector.getScopeServiceByScopeName(eq(THROWING_SCOPE)))                                                                                                                                                                                                                               
+	      .thenThrow(new RuntimeException("Simulated internal failure"));      
+		
 		mockScopeCollectorRegistration = context.registerService(ScopeServiceCollector.class, mockCollector,
 				serviceProps);
-
-		// Register mock EPackageLuceneIndex
-		Dictionary<String, Object> indexProps = new Hashtable<>();
-		indexProps.put("service.ranking", Integer.MAX_VALUE);
 
 
 		// Small delay to allow service registration to propagate
 		Thread.sleep(200);
-
-		TestHelper.ensureXMIFactory(resourceSet);
 	}
 
-	private void ensureResourceAvailability(BundleContext context) throws InterruptedException {
-		ResourceAware resourceAware = ResourceAware.create(context, "SchemaPackagesResource");
-		assertTrue(resourceAware.waitForResource(15, TimeUnit.SECONDS),
-				"SchemaPackagesResource should be registered within 15 seconds.");
-	}
-
+	
 	@AfterEach
 	public void teardown() throws Exception {
 		if (nonNull(mockScopeCollectorRegistration)) {
@@ -130,12 +92,7 @@ public class ModelAtlasExceptionMapperTest {
 			mockScopeCollectorRegistration = null;
 			Thread.sleep(200);
 		}
-
-
-		if (nonNull(restClient)) {
-			restClient.close();
-			restClient = null;
-		}
+		super.teardown();
 	}
 
 	// ========== Structured ErrorResponse Format Tests ==========
@@ -145,12 +102,11 @@ public class ModelAtlasExceptionMapperTest {
 	public void testErrorResponse_HasStructuredFormat(@InjectBundleContext BundleContext context) throws InterruptedException, IOException {
 
 		ensureResourceAvailability(context);
-		Response response = restClient.target(BASE_URL)
-				.path(ThrowingScopeServiceCollector.THROWING_SCOPE).path("schema")
+		Response response = scopeTarget(THROWING_SCOPE).path("schema")
 				.request("application/json")
 				.get();
 
-		assertEquals(500, response.getStatus(), "Should return HTTP 400 Bad Request");
+		assertEquals(500, response.getStatus(), "Should return HTTP 500");
 
 		String body = response.readEntity(String.class);
 		assertNotNull(body, "Response body should not be null");
@@ -166,8 +122,7 @@ public class ModelAtlasExceptionMapperTest {
 	public void testClientError_PreservesMessage(@InjectBundleContext BundleContext context) throws InterruptedException, IOException {
 
 		ensureResourceAvailability(context);
-		Response response = restClient.target(BASE_URL)
-				.path("non-existent-scope").path("schema")
+		Response response = scopeTarget("non-existent-scope").path("schema")
 				.request("application/json")
 				.get();
 
@@ -178,13 +133,19 @@ public class ModelAtlasExceptionMapperTest {
 				"Client error response should preserve the scope name in the message");
 	}
 
+	@SuppressWarnings({ "rawtypes", "unchecked" })
 	@Test
 	@ParentScopeServiceSetup
-	public void testClientError_UnsupportedMediaType(@InjectBundleContext BundleContext context) throws InterruptedException, IOException {
+	public void testClientError_UnsupportedMediaType(@InjectBundleContext BundleContext context,
+			@InjectService(filter = "(scope.name="+ TestAnnotations.TEST_SCOPE_NAME +")") ServiceAware<ScopeService> scopeServiceAware) throws InterruptedException, IOException {
 
 		ensureResourceAvailability(context);
-		Response response = restClient.target(BASE_URL)
-				.path(TestAnnotations.TEST_SCOPE_NAME).path("schema")
+		ScopeService scopeService = scopeServiceAware.waitForService(2000);
+		assertNotNull(scopeService);
+		
+		when(mockCollector.getScopeServiceByScopeName(eq(TestAnnotations.TEST_SCOPE_NAME)))                                                                                                                                                                                                                               
+	      .thenReturn(scopeService);    
+		Response response = scopeTarget().path("schema")
 				.queryParam("mediaType", "application/unsupported")
 				.request("application/json")
 				.get();
@@ -204,8 +165,7 @@ public class ModelAtlasExceptionMapperTest {
 	public void testServerError_ReturnsGenericMessage(@InjectBundleContext BundleContext context) throws InterruptedException, IOException {
 
 		ensureResourceAvailability(context);
-		Response response = restClient.target(BASE_URL)
-				.path("throw-runtime-exception").path("schema")
+		Response response = scopeTarget("throw-runtime-exception").path("schema")
 				.request("application/json")
 				.get();
 
@@ -222,8 +182,7 @@ public class ModelAtlasExceptionMapperTest {
 	public void testServerError_DoesNotLeakExceptionMessage(@InjectBundleContext BundleContext context) throws InterruptedException, IOException {
 
 		ensureResourceAvailability(context);
-		Response response = restClient.target(BASE_URL)
-				.path("throw-runtime-exception").path("schema")
+		Response response = scopeTarget("throw-runtime-exception").path("schema")
 				.request("application/json")
 				.get();
 
@@ -239,8 +198,7 @@ public class ModelAtlasExceptionMapperTest {
 	public void testServerError_DoesNotLeakStackTrace(@InjectBundleContext BundleContext context) throws InterruptedException, IOException {
 
 		ensureResourceAvailability(context);
-		Response response = restClient.target(BASE_URL)
-				.path("throw-runtime-exception").path("schema")
+		Response response = scopeTarget("throw-runtime-exception").path("schema")
 				.request("application/json")
 				.get();
 
@@ -260,8 +218,7 @@ public class ModelAtlasExceptionMapperTest {
 	public void testServerError_HasStructuredFormat(@InjectBundleContext BundleContext context) throws InterruptedException, IOException {
 
 		ensureResourceAvailability(context);
-		Response response = restClient.target(BASE_URL)
-				.path("throw-runtime-exception").path("schema")
+		Response response = scopeTarget("throw-runtime-exception").path("schema")
 				.request("application/json")
 				.get();
 
@@ -274,22 +231,14 @@ public class ModelAtlasExceptionMapperTest {
 		assertTrue(body.contains("timestamp"), "ErrorResponse should contain 'timestamp' field");
 	}
 
-	// ========== Mock that throws RuntimeException for a specific scope ==========
 
-	/**
-	 * Extends MockScopeServiceCollector to throw a RuntimeException for a specific
-	 * scope name, simulating an unhandled server error.
+
+	/* 
+	 * (non-Javadoc)
+	 * @see org.eclipse.fennec.model.atlas.rest.tests.AbstractRestTest#getResourceName()
 	 */
-	private static class ThrowingScopeServiceCollector extends MockScopeServiceCollector {
-
-		private static final String THROWING_SCOPE = "throw-runtime-exception";
-
-		@Override
-		public ScopeService<?> getScopeServiceByScopeName(String scopeName) {
-			if (THROWING_SCOPE.equals(scopeName)) {
-				throw new RuntimeException("Simulated internal failure");
-			}
-			return super.getScopeServiceByScopeName(scopeName);
-		}
+	@Override
+	String getResourceName() {
+		return "SchemaPackagesResource";
 	}
 }

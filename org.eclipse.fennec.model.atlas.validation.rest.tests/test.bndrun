@@ -111,4 +111,5 @@
 	org.objectweb.asm.tree.analysis;version='[9.9.1,9.9.2)',\
 	org.objectweb.asm.util;version='[9.9.1,9.9.2)',\
 	slf4j.api;version='[2.0.16,2.0.17)',\
-	slf4j.simple;version='[2.0.16,2.0.17)'
+	slf4j.simple;version='[2.0.16,2.0.17)',\
+	org.eclipse.fennec.model.atlas.tests.common;version=snapshot
