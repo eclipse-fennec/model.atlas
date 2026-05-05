@@ -1,4 +1,4 @@
--workingset: Workflow
+-workingset: workflow
 
 -library: \
 	enableEMF

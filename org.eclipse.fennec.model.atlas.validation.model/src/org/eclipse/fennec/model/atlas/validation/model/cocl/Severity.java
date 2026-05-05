@@ -1,6 +1,5 @@
 /*
- * Copyright (c) 2012 - 2025 Data In Motion and others.
- * All rights reserved.
+ * Copyright (c) 2026 Contributors to the Eclipse Foundation.
  * 
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
@@ -9,9 +8,9 @@
  * SPDX-License-Identifier: EPL-2.0
  * 
  * Contributors:
- *     Data In Motion - initial API and implementation
+ *   Data In Motion Consulting - initial implementation
  */
-package org.eclipse.fennec.model.atlas.rest.model;
+package org.eclipse.fennec.model.atlas.validation.model.cocl;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -23,29 +22,38 @@ import org.osgi.annotation.versioning.ProviderType;
 
 /**
  * <!-- begin-user-doc -->
- * A representation of the literals of the enumeration '<em><b>Diagnostic Type</b></em>',
+ * A representation of the literals of the enumeration '<em><b>Severity</b></em>',
  * and utility methods for working with them.
  * <!-- end-user-doc -->
- * @see org.eclipse.fennec.model.atlas.rest.model.RestPackage#getDiagnosticType()
+ * <!-- begin-model-doc -->
+ * Schweregrad einer OCL-Constraint-Verletzung. Bestimmt die Darstellung in der Log-Tabelle und das Verhalten bei Validierungsfehlern.
+ * <!-- end-model-doc -->
+ * @see org.eclipse.fennec.model.atlas.validation.model.cocl.COCLPackage#getSeverity()
  * @model
  * @generated
  */
 @ProviderType
-public enum DiagnosticType implements Enumerator {
+public enum Severity implements Enumerator {
 	/**
-	 * The '<em><b>OK</b></em>' literal object.
+	 * The '<em><b>TRACE</b></em>' literal object.
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
-	 * @see #OK_VALUE
+	 * <!-- begin-model-doc -->
+	 * Rein diagnostisch, nicht standardmaessig sichtbar. Fuer Entwickler und Debugging-Zwecke.
+	 * <!-- end-model-doc -->
+	 * @see #TRACE_VALUE
 	 * @generated
 	 * @ordered
 	 */
-	OK(0, "OK", "OK"),
+	TRACE(0, "TRACE", "TRACE"),
 
 	/**
 	 * The '<em><b>INFO</b></em>' literal object.
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
+	 * <!-- begin-model-doc -->
+	 * Hinweis ohne Handlungsbedarf. Informiert den Nutzer ueber einen Zustand.
+	 * <!-- end-model-doc -->
 	 * @see #INFO_VALUE
 	 * @generated
 	 * @ordered
@@ -53,19 +61,25 @@ public enum DiagnosticType implements Enumerator {
 	INFO(1, "INFO", "INFO"),
 
 	/**
-	 * The '<em><b>WARNING</b></em>' literal object.
+	 * The '<em><b>WARN</b></em>' literal object.
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
-	 * @see #WARNING_VALUE
+	 * <!-- begin-model-doc -->
+	 * Potenzielles Problem, das geprueft werden sollte. Blockiert keine Aktionen.
+	 * <!-- end-model-doc -->
+	 * @see #WARN_VALUE
 	 * @generated
 	 * @ordered
 	 */
-	WARNING(2, "WARNING", "WARNING"),
+	WARN(2, "WARN", "WARN"),
 
 	/**
 	 * The '<em><b>ERROR</b></em>' literal object.
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
+	 * <!-- begin-model-doc -->
+	 * Fachlich ungueltiger Zustand. Die Instanz entspricht nicht den definierten Regeln.
+	 * <!-- end-model-doc -->
 	 * @see #ERROR_VALUE
 	 * @generated
 	 * @ordered
@@ -73,30 +87,39 @@ public enum DiagnosticType implements Enumerator {
 	ERROR(3, "ERROR", "ERROR"),
 
 	/**
-	 * The '<em><b>CANCEL</b></em>' literal object.
+	 * The '<em><b>FATAL</b></em>' literal object.
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
-	 * @see #CANCEL_VALUE
+	 * <!-- begin-model-doc -->
+	 * Kritischer Zustand. Weitere Verarbeitung sollte abgebrochen werden.
+	 * <!-- end-model-doc -->
+	 * @see #FATAL_VALUE
 	 * @generated
 	 * @ordered
 	 */
-	CANCEL(4, "CANCEL", "CANCEL");
+	FATAL(4, "FATAL", "FATAL");
 
 	/**
-	 * The '<em><b>OK</b></em>' literal value.
+	 * The '<em><b>TRACE</b></em>' literal value.
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
-	 * @see #OK
+	 * <!-- begin-model-doc -->
+	 * Rein diagnostisch, nicht standardmaessig sichtbar. Fuer Entwickler und Debugging-Zwecke.
+	 * <!-- end-model-doc -->
+	 * @see #TRACE
 	 * @model
 	 * @generated
 	 * @ordered
 	 */
-	public static final int OK_VALUE = 0;
+	public static final int TRACE_VALUE = 0;
 
 	/**
 	 * The '<em><b>INFO</b></em>' literal value.
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
+	 * <!-- begin-model-doc -->
+	 * Hinweis ohne Handlungsbedarf. Informiert den Nutzer ueber einen Zustand.
+	 * <!-- end-model-doc -->
 	 * @see #INFO
 	 * @model
 	 * @generated
@@ -105,20 +128,26 @@ public enum DiagnosticType implements Enumerator {
 	public static final int INFO_VALUE = 1;
 
 	/**
-	 * The '<em><b>WARNING</b></em>' literal value.
+	 * The '<em><b>WARN</b></em>' literal value.
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
-	 * @see #WARNING
+	 * <!-- begin-model-doc -->
+	 * Potenzielles Problem, das geprueft werden sollte. Blockiert keine Aktionen.
+	 * <!-- end-model-doc -->
+	 * @see #WARN
 	 * @model
 	 * @generated
 	 * @ordered
 	 */
-	public static final int WARNING_VALUE = 2;
+	public static final int WARN_VALUE = 2;
 
 	/**
 	 * The '<em><b>ERROR</b></em>' literal value.
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
+	 * <!-- begin-model-doc -->
+	 * Fachlich ungueltiger Zustand. Die Instanz entspricht nicht den definierten Regeln.
+	 * <!-- end-model-doc -->
 	 * @see #ERROR
 	 * @model
 	 * @generated
@@ -127,50 +156,53 @@ public enum DiagnosticType implements Enumerator {
 	public static final int ERROR_VALUE = 3;
 
 	/**
-	 * The '<em><b>CANCEL</b></em>' literal value.
+	 * The '<em><b>FATAL</b></em>' literal value.
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
-	 * @see #CANCEL
+	 * <!-- begin-model-doc -->
+	 * Kritischer Zustand. Weitere Verarbeitung sollte abgebrochen werden.
+	 * <!-- end-model-doc -->
+	 * @see #FATAL
 	 * @model
 	 * @generated
 	 * @ordered
 	 */
-	public static final int CANCEL_VALUE = 4;
+	public static final int FATAL_VALUE = 4;
 
 	/**
-	 * An array of all the '<em><b>Diagnostic Type</b></em>' enumerators.
+	 * An array of all the '<em><b>Severity</b></em>' enumerators.
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
 	 * @generated
 	 */
-	private static final DiagnosticType[] VALUES_ARRAY =
-		new DiagnosticType[] {
-			OK,
+	private static final Severity[] VALUES_ARRAY =
+		new Severity[] {
+			TRACE,
 			INFO,
-			WARNING,
+			WARN,
 			ERROR,
-			CANCEL,
+			FATAL,
 		};
 
 	/**
-	 * A public read-only list of all the '<em><b>Diagnostic Type</b></em>' enumerators.
+	 * A public read-only list of all the '<em><b>Severity</b></em>' enumerators.
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
 	 * @generated
 	 */
-	public static final List<DiagnosticType> VALUES = Collections.unmodifiableList(Arrays.asList(VALUES_ARRAY));
+	public static final List<Severity> VALUES = Collections.unmodifiableList(Arrays.asList(VALUES_ARRAY));
 
 	/**
-	 * Returns the '<em><b>Diagnostic Type</b></em>' literal with the specified literal value.
+	 * Returns the '<em><b>Severity</b></em>' literal with the specified literal value.
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
 	 * @param literal the literal.
 	 * @return the matching enumerator or <code>null</code>.
 	 * @generated
 	 */
-	public static DiagnosticType get(String literal) {
+	public static Severity get(String literal) {
 		for (int i = 0; i < VALUES_ARRAY.length; ++i) {
-			DiagnosticType result = VALUES_ARRAY[i];
+			Severity result = VALUES_ARRAY[i];
 			if (result.toString().equals(literal)) {
 				return result;
 			}
@@ -179,16 +211,16 @@ public enum DiagnosticType implements Enumerator {
 	}
 
 	/**
-	 * Returns the '<em><b>Diagnostic Type</b></em>' literal with the specified name.
+	 * Returns the '<em><b>Severity</b></em>' literal with the specified name.
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
 	 * @param name the name.
 	 * @return the matching enumerator or <code>null</code>.
 	 * @generated
 	 */
-	public static DiagnosticType getByName(String name) {
+	public static Severity getByName(String name) {
 		for (int i = 0; i < VALUES_ARRAY.length; ++i) {
-			DiagnosticType result = VALUES_ARRAY[i];
+			Severity result = VALUES_ARRAY[i];
 			if (result.getName().equals(name)) {
 				return result;
 			}
@@ -197,20 +229,20 @@ public enum DiagnosticType implements Enumerator {
 	}
 
 	/**
-	 * Returns the '<em><b>Diagnostic Type</b></em>' literal with the specified integer value.
+	 * Returns the '<em><b>Severity</b></em>' literal with the specified integer value.
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
 	 * @param value the integer value.
 	 * @return the matching enumerator or <code>null</code>.
 	 * @generated
 	 */
-	public static DiagnosticType get(int value) {
+	public static Severity get(int value) {
 		switch (value) {
-			case OK_VALUE: return OK;
+			case TRACE_VALUE: return TRACE;
 			case INFO_VALUE: return INFO;
-			case WARNING_VALUE: return WARNING;
+			case WARN_VALUE: return WARN;
 			case ERROR_VALUE: return ERROR;
-			case CANCEL_VALUE: return CANCEL;
+			case FATAL_VALUE: return FATAL;
 		}
 		return null;
 	}
@@ -242,7 +274,7 @@ public enum DiagnosticType implements Enumerator {
 	 * <!-- end-user-doc -->
 	 * @generated
 	 */
-	private DiagnosticType(int value, String name, String literal) {
+	private Severity(int value, String name, String literal) {
 		this.value = value;
 		this.name = name;
 		this.literal = literal;
@@ -289,4 +321,4 @@ public enum DiagnosticType implements Enumerator {
 		return literal;
 	}
 	
-} //DiagnosticType
+} //Severity

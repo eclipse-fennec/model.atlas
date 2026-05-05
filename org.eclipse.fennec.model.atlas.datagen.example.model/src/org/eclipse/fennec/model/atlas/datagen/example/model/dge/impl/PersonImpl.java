@@ -5,6 +5,7 @@ package org.eclipse.fennec.model.atlas.datagen.example.model.dge.impl;
 import org.eclipse.emf.common.notify.Notification;
 
 import org.eclipse.emf.ecore.EClass;
+import org.eclipse.emf.ecore.EStructuralFeature;
 import org.eclipse.emf.ecore.InternalEObject;
 
 import org.eclipse.emf.ecore.impl.ENotificationImpl;
@@ -30,6 +31,7 @@ import org.eclipse.fennec.model.atlas.datagen.example.model.dge.Person;
  *   <li>{@link org.eclipse.fennec.model.atlas.datagen.example.model.dge.impl.PersonImpl#getJobTitle <em>Job Title</em>}</li>
  *   <li>{@link org.eclipse.fennec.model.atlas.datagen.example.model.dge.impl.PersonImpl#getAddress <em>Address</em>}</li>
  *   <li>{@link org.eclipse.fennec.model.atlas.datagen.example.model.dge.impl.PersonImpl#getCompany <em>Company</em>}</li>
+ *   <li>{@link org.eclipse.fennec.model.atlas.datagen.example.model.dge.impl.PersonImpl#getFullName <em>Full Name</em>}</li>
  * </ul>
  *
  * @generated
@@ -154,6 +156,16 @@ public class PersonImpl extends MinimalEObjectImpl.Container implements Person {
 	 * @ordered
 	 */
 	protected Company company;
+
+	/**
+	 * The cached setting delegate for the '{@link #getFullName() <em>Full Name</em>}' attribute.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @see #getFullName()
+	 * @generated
+	 * @ordered
+	 */
+	protected EStructuralFeature.Internal.SettingDelegate FULL_NAME__ESETTING_DELEGATE = ((EStructuralFeature.Internal)DGPackage.Literals.PERSON__FULL_NAME).getSettingDelegate();
 
 	/**
 	 * <!-- begin-user-doc -->
@@ -375,6 +387,16 @@ public class PersonImpl extends MinimalEObjectImpl.Container implements Person {
 	 * @generated
 	 */
 	@Override
+	public String getFullName() {
+		return (String)FULL_NAME__ESETTING_DELEGATE.dynamicGet(this, null, 0, true, false);
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
 	public Object eGet(int featureID, boolean resolve, boolean coreType) {
 		switch (featureID) {
 			case DGPackage.PERSON__FIRST_NAME:
@@ -393,6 +415,8 @@ public class PersonImpl extends MinimalEObjectImpl.Container implements Person {
 			case DGPackage.PERSON__COMPANY:
 				if (resolve) return getCompany();
 				return basicGetCompany();
+			case DGPackage.PERSON__FULL_NAME:
+				return getFullName();
 		}
 		return super.eGet(featureID, resolve, coreType);
 	}
@@ -485,6 +509,8 @@ public class PersonImpl extends MinimalEObjectImpl.Container implements Person {
 				return address != null;
 			case DGPackage.PERSON__COMPANY:
 				return company != null;
+			case DGPackage.PERSON__FULL_NAME:
+				return FULL_NAME__ESETTING_DELEGATE.dynamicIsSet(this, null, 0);
 		}
 		return super.eIsSet(featureID);
 	}

@@ -759,9 +759,10 @@ public class LuceneEObjectRegistryService<T extends EObject> implements EObjectR
 
         try {
             // Use Lucene for efficient objectName and role search
+        	String objectNameSearch = objectName;
             if (!objectName.contains("*"))
-                objectName = "\"" + objectName + "\""; // if is an exact match we add the "", otherwise not
-            String query = "(" + LuceneRegistryHelper.FIELD_OBJECT_NAME + ":" + objectName + " AND "
+                objectNameSearch = "\"" + objectNameSearch + "\""; // if is an exact match we add the "", otherwise not
+            String query = "(" + LuceneRegistryHelper.FIELD_OBJECT_NAME + ":" + objectNameSearch + " AND "
                     + LuceneRegistryHelper.FIELD_STAGE + ":" + stage + " AND " + LuceneRegistryHelper.FIELD_SCOPE + ":"
                     + scope + " AND " + LuceneRegistryHelper.FIELD_REGISTRY + ":" + registry + ")";
             List<String> objectIds = luceneHelper.searchObjectIds(query, Integer.MAX_VALUE);
@@ -784,6 +785,7 @@ public class LuceneEObjectRegistryService<T extends EObject> implements EObjectR
         }
         // Fallback to in-memory cache scan
         // name can also contain * for wildcard search
+        
         boolean isExact = !objectName.contains("*");
         String nameFilter = objectName.contains("*") ? objectName.replaceAll("\\*", "") : objectName;
         if (isExact) {

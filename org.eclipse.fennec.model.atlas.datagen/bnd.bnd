@@ -1,6 +1,7 @@
 Bundle-Name: Eclipse Fennect Data Generation Service
 Bundle-Description: Service to generate data out of a config and a model
 
+-workingset: datagen
 -library: enableEMF
 
 -buildpath: \
