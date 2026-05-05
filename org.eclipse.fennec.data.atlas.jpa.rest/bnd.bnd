@@ -13,4 +13,5 @@
 	org.gecko.emf.json,\
 	org.osgi.service.servlet,\
 	jakarta.persistence-api,\
-	org.gecko.emf.util.model
+	org.gecko.emf.util.model,\
+	org.eclipse.daanse.jdbc.db.importer.csv

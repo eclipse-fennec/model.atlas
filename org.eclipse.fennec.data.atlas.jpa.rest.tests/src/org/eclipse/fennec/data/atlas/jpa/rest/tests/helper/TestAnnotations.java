@@ -32,15 +32,16 @@ import org.osgi.test.common.annotation.config.WithFactoryConfiguration;
 @RequireConfigurationAdmin
 public class TestAnnotations {
 	
-	public static final String JPA_MAPPING_PID = "JpaMappingFileWatcher";
-	private static final String PROP_DATA_FOLDER = "data-folder";
 	
-	@WithFactoryConfiguration(factoryPid = JPA_MAPPING_PID, name = "test", location = "?", properties = {
+	public static final String DATA_FOLDER_WATCHER_PID = "DataFolderWatcher";
+	public static final String PROP_DATA_FOLDER = "data-folder";
+	public static final String JPA_MAPPING_NAME = "demo-mapping";
+	
+	@WithFactoryConfiguration(factoryPid = DATA_FOLDER_WATCHER_PID, name = "test", location = "?", properties = {
 			@Property(key = "io.fs.watcher.path", value = "%s/", templateArguments = {
-					@TemplateArgument(source = ValueSource.SystemProperty, value = PROP_DATA_FOLDER) }),
-			@Property(key = "io.fs.watcher.pattern", value = ".*\\.jpamapping")})
+					@TemplateArgument(source = ValueSource.SystemProperty, value = PROP_DATA_FOLDER) })})
 	@Retention(RetentionPolicy.RUNTIME)
-	public @interface JpaMappingWatcherConfig {
+	public @interface DataFolderWatcherConfig {
 	}
 
 }

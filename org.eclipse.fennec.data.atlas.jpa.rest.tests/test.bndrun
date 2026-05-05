@@ -9,8 +9,21 @@
 	bnd.identity;id='org.apache.felix.gogo.shell',\
 	bnd.identity;id='org.eclipse.fennec.emf.osgi.component',\
 	bnd.identity;id='org.eclipse.fennec.data.atlas.jpa.mapping.watcher',\
-	bnd.identity;id='org.eclipse.daanse.io.fs.watcher.watchservice'
+	bnd.identity;id='org.eclipse.daanse.io.fs.watcher.watchservice',\
+	bnd.identity;id='org.eclipse.daanse.jdbc.db.impl',\
+	bnd.identity;id='org.eclipse.daanse.jdbc.db.importer.csv',\
+	bnd.identity;id='org.eclipse.fennec.data.atlas.jpa.datasource',\
+	bnd.identity;id='org.eclipse.fennec.data.atlas.jpa.watcher',\
+	bnd.identity;id='org.eclipse.fennec.model.atlas',\
+	bnd.identity;id='org.eclipse.daanse.jdbc.db.dialect.db.h2',\
+	bnd.identity;id='org.eclipse.persistence.jpa.jpql',\
+	bnd.identity;id='org.eclipse.fennec.data.atlas.mapping.model',\
+	bnd.identity;id='org.eclipse.fennec.persistence.eclipselink';version='[0.1.0,1.0.0)'
 	
+
+-runprovidedcapabilities: ${native_capability}
+
+-resolve.effective: active;skip:="osgi.service"
 
 
 -runfw: org.apache.felix.framework;version='[7.0.5,7.0.5]'
@@ -28,7 +41,6 @@
 # Ensure clean environment
 -runkeep: false
 
--resolve.effective: active
 
 -runbundles: \
 	com.h2database;version='[2.3.232,2.3.233)',\
@@ -107,19 +119,26 @@
 	junit-platform-engine;version='[1.14.2,1.14.3)',\
 	junit-platform-launcher;version='[1.14.2,1.14.3)',\
 	org.apache.felix.gogo.command;version='[1.1.2,1.1.3)',\
-	org.gecko.emf.osgi.component.minimal;version='[6.3.0,6.3.1)',\
 	org.eclipse.fennec.data.atlas.jpa.datasource;version=snapshot,\
 	org.apache.felix.http.jetty;version='[5.1.24,5.1.25)',\
 	org.osgi.test.junit5.cm;version='[1.3.0,1.3.1)',\
 	org.eclipse.daanse.io.fs.watcher.api;version='[0.0.1,0.0.2)',\
 	org.eclipse.daanse.io.fs.watcher.watchservice;version='[0.0.1,0.0.2)',\
-	org.eclipse.fennec.codec;version='[1.1.0,1.1.1)',\
-	org.eclipse.fennec.codec.constants;version='[1.1.0,1.1.1)',\
-	org.eclipse.fennec.codec.info;version='[1.1.0,1.1.1)',\
-	org.eclipse.fennec.codec.info.model;version='[1.1.0,1.1.1)',\
 	org.eclipse.fennec.data.atlas.jpa.mapping.watcher;version=snapshot,\
 	org.eclipse.fennec.model.atlas;version=snapshot,\
 	org.eclipse.fennec.model.atlas.emf.common;version=snapshot,\
 	org.gecko.emf.util.model;version='[2.2.2,2.2.3)',\
-	tools.jackson.core.jackson-core;version='[3.0.1,3.0.2)',\
-	tools.jackson.core.jackson-databind;version='[3.0.1,3.0.2)'
+	de.siegmar.fastcsv;version='[3.4.0,3.4.1)',\
+	jakarta.persistence-api;version='[3.2.0,3.2.1)',\
+	org.eclipse.daanse.jdbc.db.api;version='[0.0.1,0.0.2)',\
+	org.eclipse.daanse.jdbc.db.dialect.api;version='[0.0.1,0.0.2)',\
+	org.eclipse.daanse.jdbc.db.dialect.db.common;version='[0.0.1,0.0.2)',\
+	org.eclipse.daanse.jdbc.db.dialect.db.h2;version='[0.0.1,0.0.2)',\
+	org.eclipse.daanse.jdbc.db.impl;version='[0.0.1,0.0.2)',\
+	org.eclipse.daanse.jdbc.db.importer.csv;version='[0.0.1,0.0.2)',\
+	org.eclipse.daanse.jdbc.db.record;version='[0.0.1,0.0.2)',\
+	org.eclipse.fennec.data.atlas.jpa.watcher;version=snapshot,\
+	org.eclipse.persistence.jpa.jpql;version='[4.0.8,4.0.9)',\
+	org.eclipse.persistence.core;version='[4.0.8,4.0.9)',\
+	org.eclipse.persistence.jpa;version='[4.0.8,4.0.9)',\
+	org.eclipse.fennec.persistence.eclipselink;version='[0.1.0,0.1.1)'

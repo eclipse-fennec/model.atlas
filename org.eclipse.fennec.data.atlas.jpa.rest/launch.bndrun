@@ -79,11 +79,9 @@
 	io.swagger.core.v3.swagger-annotations;version='[2.2.28,2.2.29)',\
 	org.gecko.emf.rest.jakartars;version='[2.4.0,2.4.1)',\
 	org.eclipse.fennec.data.atlas.jpa.watcher;version=snapshot,\
-	de.siegmar.fastcsv;version='[3.4.0,3.4.1)',\
 	org.eclipse.fennec.model.atlas;version=snapshot,\
 	org.eclipse.fennec.model.atlas.emf.common;version=snapshot,\
 	jakarta.persistence-api;version='[3.2.0,3.2.1)',\
-	org.eclipse.fennec.persistence.eclipselink;version='[1.0.0,1.0.1)',\
 	org.eclipse.persistence.core;version='[4.0.8,4.0.9)',\
 	org.eclipse.persistence.jpa;version='[4.0.8,4.0.9)',\
 	org.eclipse.daanse.jdbc.db.dialect.api;version='[0.0.1,0.0.2)',\
@@ -92,7 +90,12 @@
 	org.eclipse.persistence.jpa.jpql;version='[4.0.8,4.0.9)',\
 	org.eclipse.daanse.jdbc.db.api;version='[0.0.1,0.0.2)',\
 	org.eclipse.daanse.jdbc.db.record;version='[0.0.1,0.0.2)',\
-	org.gecko.emf.util.model;version='[2.2.2,2.2.3)'
+	de.siegmar.fastcsv;version='[3.4.0,3.4.1)',\
+	org.eclipse.daanse.jdbc.db.importer.csv;version='[0.0.1,0.0.2)',\
+	org.eclipse.daanse.jdbc.db.impl;version='[0.0.1,0.0.2)',\
+	org.gecko.emf.util.model;version='[2.2.2,2.2.3)',\
+	org.eclipse.fennec.persistence.ecore;version='[1.0.0,1.0.1)',\
+	org.eclipse.fennec.persistence.eclipselink;version='[0.1.0,0.1.1)'
 
 -runrequires: \
 	osgi.identity;filter:='(osgi.identity=org.apache.felix.gogo.shell)',\
@@ -106,8 +109,11 @@
 	bnd.identity;id='org.eclipse.fennec.emf.osgi.component',\
 	bnd.identity;id='org.eclipse.fennec.data.atlas.jpa.watcher',\
 	bnd.identity;id='org.eclipse.fennec.model.atlas',\
-	bnd.identity;id='org.eclipse.fennec.persistence.eclipselink',\
 	bnd.identity;id='org.eclipse.daanse.jdbc.db.dialect.db.h2',\
-	bnd.identity;id='org.eclipse.persistence.jpa.jpql'
+	bnd.identity;id='org.eclipse.persistence.jpa.jpql',\
+	bnd.identity;id='org.eclipse.daanse.jdbc.db.importer.csv',\
+	bnd.identity;id='org.eclipse.daanse.jdbc.db.impl',\
+	bnd.identity;id='org.gecko.emf.util.model',\
+	bnd.identity;id='org.eclipse.fennec.persistence.eclipselink';version='[0.1.0,1.0.0)'
 -runfw: org.apache.felix.framework;version='[7.0.5,7.0.5]'
 -runee: JavaSE-21

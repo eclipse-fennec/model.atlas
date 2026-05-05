@@ -5,5 +5,4 @@
 	org.osgi.service.cm,\
 	org.eclipse.fennec.data.atlas.mapping.model,\
 	org.eclipse.fennec.persistence.orm,\
-	org.osgi.util.tracker,\
-	de.siegmar.fastcsv
+	org.osgi.util.tracker

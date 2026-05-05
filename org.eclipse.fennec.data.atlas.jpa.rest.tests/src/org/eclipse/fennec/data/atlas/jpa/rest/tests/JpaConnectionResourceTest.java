@@ -22,7 +22,8 @@ import java.util.concurrent.TimeUnit;
 
 import org.eclipse.emf.ecore.resource.ResourceSet;
 import org.eclipse.fennec.data.atlas.jpa.rest.tests.helper.ResourceAware;
-import org.eclipse.fennec.data.atlas.jpa.rest.tests.helper.TestAnnotations.JpaMappingWatcherConfig;
+import org.eclipse.fennec.data.atlas.jpa.rest.tests.helper.TestAnnotations;
+import org.eclipse.fennec.data.atlas.jpa.rest.tests.helper.TestAnnotations.DataFolderWatcherConfig;
 import org.eclipse.fennec.data.atlas.jpa.rest.tests.helper.TestHelper;
 import org.eclipse.fennec.data.atlas.mapping.model.jpamapping.JpaMappingConfig;
 import org.eclipse.fennec.emf.osgi.annotation.require.RequireEMF;
@@ -59,10 +60,9 @@ import jakarta.ws.rs.core.Response;
 @ExtendWith(BundleContextExtension.class)
 @ExtendWith(ServiceExtension.class)
 @ExtendWith(ConfigurationExtension.class)
-public class JpaMappingResourceTest {
+public class JpaConnectionResourceTest {
 
 	private static final String BASE_URL = "http://localhost:8185/rest/jpa";
-	private static final String DS_NAME = "dge-mapping";
 
 	private static final String XMI_NO_DATASOURCE = """
 			<?xml version="1.0" encoding="UTF-8"?>
@@ -136,14 +136,14 @@ public class JpaMappingResourceTest {
 	}
 
 	private void ensureResourceAvailability(BundleContext context) throws InterruptedException {
-		ResourceAware resourceAware = ResourceAware.create(context, "JpaMappingResource");
+		ResourceAware resourceAware = ResourceAware.create(context, "JpaConnectionResource");
 		boolean resourceReady = resourceAware.waitForResource(15, TimeUnit.SECONDS);
-		assertTrue(resourceReady, "JpaMappingResource should be registered within 15 seconds. "
+		assertTrue(resourceReady, "JpaConnectionResource should be registered within 15 seconds. "
 				+ "Check that the resource is properly configured and the Jakarta REST runtime is working.");
 	}
 
 	@Test
-	@JpaMappingWatcherConfig
+	@DataFolderWatcherConfig
 	public void testResourceAvailability(@InjectBundleContext BundleContext ctx) throws InterruptedException {
 		ensureResourceAvailability(ctx);
 	}
@@ -203,31 +203,31 @@ public class JpaMappingResourceTest {
 	}
 
 	@Test
-	@JpaMappingWatcherConfig
+	@DataFolderWatcherConfig
 	public void testConnectionByName(
 			@InjectBundleContext BundleContext ctx,
-			@InjectService(cardinality = 0, filter = "(jpamapping.name=" + DS_NAME + ")")
+			@InjectService(cardinality = 0, filter = "(jpamapping.name=" + TestAnnotations.JPA_MAPPING_NAME + ")")
 			ServiceAware<JpaMappingConfig> configAware) throws InterruptedException {
 		ensureResourceAvailability(ctx);
-		assertNotNull(configAware.waitForService(10_000), "JpaMappingConfig for " + DS_NAME + " should be registered");
+		assertNotNull(configAware.waitForService(10_000), "JpaMappingConfig for " + TestAnnotations.JPA_MAPPING_NAME + " should be registered");
 
-		Response response = restClient.target(BASE_URL + "/test/" + DS_NAME).request().get();
+		Response response = restClient.target(BASE_URL + "/test/" + TestAnnotations.JPA_MAPPING_NAME).request().get();
 
 		assertEquals(200, response.getStatus());
 	}
 	
 	@Test
-	@JpaMappingWatcherConfig
-	public void testConnectionByName_wrongName_shouldReturnNotFound(
+	@DataFolderWatcherConfig
+	public void testConnectionByName_wrongName_shouldReturnTimeout(
 			@InjectBundleContext BundleContext ctx,
-			@InjectService(cardinality = 0, filter = "(jpamapping.name=" + DS_NAME + ")")
+			@InjectService(cardinality = 0, filter = "(jpamapping.name=" + TestAnnotations.JPA_MAPPING_NAME + ")")
 			ServiceAware<JpaMappingConfig> configAware) throws InterruptedException {
 		ensureResourceAvailability(ctx);
-		assertNotNull(configAware.waitForService(10_000), "JpaMappingConfig for " + DS_NAME + " should be registered");
+		assertNotNull(configAware.waitForService(10_000), "JpaMappingConfig for " + TestAnnotations.JPA_MAPPING_NAME + " should be registered");
 
 		Response response = restClient.target(BASE_URL + "/test/" + "non-existing-data-source").request().get();
 
-		assertEquals(400, response.getStatus());
+		assertEquals(408, response.getStatus());
 	}
 
 }

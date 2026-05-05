@@ -16,21 +16,12 @@ package org.eclipse.fennec.data.atlas.jpa.watcher;
 import java.io.IOException;
 import java.lang.System.Logger;
 import java.lang.System.Logger.Level;
-import java.sql.Connection;
-import java.sql.SQLException;
-import java.sql.Statement;
 import java.util.Dictionary;
 import java.util.Hashtable;
-import java.util.LinkedHashSet;
-import java.util.Set;
-import java.util.stream.Collectors;
-
-import javax.sql.DataSource;
 
 import org.eclipse.emf.ecore.EPackage;
 import org.eclipse.fennec.data.atlas.mapping.model.converter.TableMappingConverter;
 import org.eclipse.fennec.data.atlas.mapping.model.jpamapping.JpaMappingConfig;
-import org.eclipse.fennec.data.atlas.mapping.model.jpamapping.TableMapping;
 import org.eclipse.fennec.emf.osgi.constants.EMFNamespaces;
 import org.eclipse.fennec.persistence.eorm.EntityMappings;
 import org.osgi.framework.BundleContext;
@@ -91,10 +82,6 @@ public class JpaModelSetup {
     @Reference(name = "jpaMappingConfig")
     private JpaMappingConfig jpaMappingConfig;
 
-    // Target is overridden at runtime via the config property dataSource.target
-    @Reference(name = "dataSource")
-    private DataSource dataSource;
-
     @Reference
     private ConfigurationAdmin configAdmin;
 
@@ -154,7 +141,6 @@ public class JpaModelSetup {
     }
 
     private void setupPersistence(EPackage ePackage) {
-        createSchemasIfNeeded();
         try {
             EntityMappings mappings = new TableMappingConverter().toEntityMappings(ePackage, jpaMappingConfig);
 
@@ -175,25 +161,6 @@ public class JpaModelSetup {
             LOG.log(Level.ERROR, "Failed to create EMPersistenceUnit config for unit " + unitName, e);
         } catch (Exception e) {
             LOG.log(Level.ERROR, "Failed to generate EntityMappings for unit " + unitName, e);
-        }
-    }
-
-    private void createSchemasIfNeeded() {
-        Set<String> schemas = jpaMappingConfig.getTableMappings().stream()
-                .map(TableMapping::getSchema)
-                .filter(s -> s != null && !s.isBlank())
-                .collect(Collectors.toCollection(LinkedHashSet::new));
-        if (schemas.isEmpty()) {
-            return;
-        }
-        try (Connection conn = dataSource.getConnection();
-             Statement stmt = conn.createStatement()) {
-            for (String schema : schemas) {
-                stmt.execute("CREATE SCHEMA IF NOT EXISTS " + schema.toUpperCase());
-                LOG.log(Level.INFO, "Ensured schema ''{0}'' exists for unit ''{1}''", schema.toUpperCase(), unitName);
-            }
-        } catch (SQLException e) {
-            LOG.log(Level.WARNING, "Could not create schemas for unit " + unitName + ": " + e.getMessage());
         }
     }
 

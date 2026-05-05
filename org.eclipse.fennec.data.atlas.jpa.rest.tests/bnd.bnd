@@ -9,6 +9,7 @@ Test-Cases: ${classes;HIERARCHY_INDIRECTLY_ANNOTATED;org.junit.platform.commons.
 	org.osgi.framework;version=latest,\
 	org.eclipse.fennec.data.atlas.mapping.model;version=snapshot,\
 	jakarta.ws.rs-api,\
+	jakarta.persistence-api,\
 	org.osgi.service.jakartars,\
 	org.osgi.util.tracker,\
 	org.gecko.emf.rest.jakartars,\
