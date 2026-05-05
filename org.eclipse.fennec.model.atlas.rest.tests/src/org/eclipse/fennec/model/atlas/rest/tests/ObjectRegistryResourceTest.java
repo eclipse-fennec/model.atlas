@@ -417,7 +417,7 @@ public class ObjectRegistryResourceTest extends AbstractRestTest{
 		Response response = stageTarget(TestAnnotations.STAGE_DRAFT)
 				.queryParam("objectId", TEST_OBJECT_ID).request().delete();
 
-		assertEquals(200, response.getStatus(), "Should return HTTP 200 OK");
+		assertEquals(204, response.getStatus(), "Should return HTTP 204 No Content");
 	}
 
 	@Disabled("We have to fix issue #64 first")
@@ -776,6 +776,161 @@ public class ObjectRegistryResourceTest extends AbstractRestTest{
 		assertEquals(200, response.getStatus(), "Should return HTTP 200 OK");
 		assertEquals("application/xml", response.getHeaderString("Content-Type"),
 				"Content-Type header should be set to mediaType query parameter value");
+	}
+
+	// ========== ETag / Idempotency Tests ==========
+
+	@Test
+	@ParentScopeServiceSetup
+	public void testGetObjectMetadata_IfNoneMatchHit_Returns304(@InjectBundleContext BundleContext context) throws IOException, InterruptedException {
+		ensureResourceAvailability(context);
+		uploadTestObject(TestAnnotations.STAGE_DRAFT);
+
+		Response firstResponse = stageTarget(TestAnnotations.STAGE_DRAFT)
+				.queryParam("objectId", TEST_OBJECT_ID).request("application/json").get();
+		assertEquals(200, firstResponse.getStatus());
+		String etag = firstResponse.getHeaderString("ETag");
+		assertNotNull(etag, "First response should contain ETag");
+
+		Response secondResponse = stageTarget(TestAnnotations.STAGE_DRAFT)
+				.queryParam("objectId", TEST_OBJECT_ID).request("application/json")
+				.header("If-None-Match", etag).get();
+		assertEquals(304, secondResponse.getStatus(), "Should return HTTP 304 Not Modified when ETag matches");
+	}
+
+	@Test
+	@ParentScopeServiceSetup
+	public void testGetObjectMetadata_IfNoneMatchMiss_Returns200(@InjectBundleContext BundleContext context) throws IOException, InterruptedException {
+		ensureResourceAvailability(context);
+		uploadTestObject(TestAnnotations.STAGE_DRAFT);
+
+		Response response = stageTarget(TestAnnotations.STAGE_DRAFT)
+				.queryParam("objectId", TEST_OBJECT_ID).request("application/json")
+				.header("If-None-Match", "\"stale-etag-value\"").get();
+		assertEquals(200, response.getStatus(), "Should return HTTP 200 OK when ETag doesn't match");
+	}
+
+	@Test
+	@ParentScopeServiceSetup
+	public void testUpdateObjectContent_IfMatchSuccess(@InjectBundleContext BundleContext context) throws IOException, InterruptedException {
+		ensureResourceAvailability(context);
+		uploadTestObject(TestAnnotations.STAGE_DRAFT);
+
+		Response getResponse = stageTarget(TestAnnotations.STAGE_DRAFT)
+				.queryParam("objectId", TEST_OBJECT_ID).request("application/json").get();
+		String etag = getResponse.getHeaderString("ETag");
+		assertNotNull(etag, "Should have ETag");
+
+		Person updatedPerson = TestHelper.createTestObject();
+		updatedPerson.setFirstName("Jane");
+		String xmiContent = TestHelper.serializeToXMI(updatedPerson, resourceSet);
+
+		Response response = stageTarget(TestAnnotations.STAGE_DRAFT).path("content")
+				.queryParam("objectId", TEST_OBJECT_ID).queryParam("version", "1.1.0")
+				.request("application/xmi").header("If-Match", etag)
+				.put(Entity.entity(xmiContent, "application/xmi"));
+
+		assertEquals(200, response.getStatus(), "Should return HTTP 200 OK when If-Match matches");
+		assertNotNull(response.getHeaderString("ETag"), "Updated response should contain new ETag");
+	}
+
+	@Test
+	@ParentScopeServiceSetup
+	public void testUpdateObjectContent_IfMatchFail_Returns412(@InjectBundleContext BundleContext context) throws IOException, InterruptedException {
+		ensureResourceAvailability(context);
+		uploadTestObject(TestAnnotations.STAGE_DRAFT);
+
+		Person updatedPerson = TestHelper.createTestObject();
+		String xmiContent = TestHelper.serializeToXMI(updatedPerson, resourceSet);
+
+		Response response = stageTarget(TestAnnotations.STAGE_DRAFT).path("content")
+				.queryParam("objectId", TEST_OBJECT_ID).queryParam("version", "1.1.0")
+				.request("application/xmi").header("If-Match", "\"stale-etag-value\"")
+				.put(Entity.entity(xmiContent, "application/xmi"));
+
+		assertEquals(412, response.getStatus(), "Should return HTTP 412 Precondition Failed when ETag doesn't match");
+	}
+
+	@Test
+	@ParentScopeServiceSetup
+	public void testUpdateObjectContent_NoIfMatch_StillWorks(@InjectBundleContext BundleContext context) throws IOException, InterruptedException {
+		ensureResourceAvailability(context);
+		uploadTestObject(TestAnnotations.STAGE_DRAFT);
+
+		Person updatedPerson = TestHelper.createTestObject();
+		updatedPerson.setFirstName("Jane");
+		String xmiContent = TestHelper.serializeToXMI(updatedPerson, resourceSet);
+
+		Response response = stageTarget(TestAnnotations.STAGE_DRAFT).path("content")
+				.queryParam("objectId", TEST_OBJECT_ID).queryParam("version", "1.1.0")
+				.request("application/xmi").put(Entity.entity(xmiContent, "application/xmi"));
+
+		assertEquals(200, response.getStatus(), "Should return HTTP 200 OK without If-Match (backward compatible)");
+	}
+
+	@Test
+	@ParentScopeServiceSetup
+	public void testUpdateObjectContent_IdenticalContent_SkipsUpdate(@InjectBundleContext BundleContext context) throws IOException, InterruptedException {
+		ensureResourceAvailability(context);
+		uploadTestObject(TestAnnotations.STAGE_DRAFT);
+
+		Person samePerson = TestHelper.createTestObject();
+		String xmiContent = TestHelper.serializeToXMI(samePerson, resourceSet);
+
+		Response response = stageTarget(TestAnnotations.STAGE_DRAFT).path("content")
+				.queryParam("objectId", TEST_OBJECT_ID).queryParam("version", "1.0.0")
+				.request("application/xmi").put(Entity.entity(xmiContent, "application/xmi"));
+
+		assertEquals(200, response.getStatus(), "Should return HTTP 200 OK for identical content");
+		assertNotNull(response.getHeaderString("ETag"), "Response should contain ETag");
+	}
+
+	@Test
+	@ParentScopeServiceSetup
+	public void testDeleteObject_AlreadyDeleted_Returns204(@InjectBundleContext BundleContext context) throws IOException, InterruptedException {
+		ensureResourceAvailability(context);
+
+		Response response = stageTarget(TestAnnotations.STAGE_DRAFT)
+				.queryParam("objectId", "non-existent-object").request().delete();
+
+		assertEquals(204, response.getStatus(), "Should return HTTP 204 No Content for already-deleted resource");
+	}
+
+	@Test
+	@ParentScopeServiceSetup
+	public void testDeleteObject_IfMatchFail_Returns412(@InjectBundleContext BundleContext context) throws IOException, InterruptedException {
+		ensureResourceAvailability(context);
+		uploadTestObject(TestAnnotations.STAGE_DRAFT);
+
+		Response response = stageTarget(TestAnnotations.STAGE_DRAFT)
+				.queryParam("objectId", TEST_OBJECT_ID).request()
+				.header("If-Match", "\"stale-etag-value\"").delete();
+
+		assertEquals(412, response.getStatus(),
+				"Should return HTTP 412 Precondition Failed when If-Match doesn't match on delete");
+	}
+
+	@Test
+	@ParentScopeServiceSetup
+	public void testTransitionObject_AlreadyTransitioned_Returns200(@InjectBundleContext BundleContext context) throws IOException, InterruptedException {
+		ensureResourceAvailability(context);
+		uploadTestObject(TestAnnotations.STAGE_DRAFT);
+
+		StageTransitionRequest transition = RestFactory.eINSTANCE.createStageTransitionRequest();
+		transition.setObjectId(TEST_OBJECT_ID);
+		transition.setTargetStage(TestAnnotations.STAGE_APPROVED);
+		String xmiContent = TestHelper.serializeToXMI(transition, resourceSet);
+
+		// First transition: draft → approved
+		Response firstTransition = stageTarget(TestAnnotations.STAGE_DRAFT).path("actions").path("transition")
+				.request("application/xmi").post(Entity.entity(xmiContent, "application/xmi"));
+		assertEquals(200, firstTransition.getStatus(), "First transition should succeed");
+
+		// Retry: object is no longer in draft but IS in approved — server returns 200 (idempotent)
+		Response retryResponse = stageTarget(TestAnnotations.STAGE_DRAFT).path("actions").path("transition")
+				.request("application/xmi").post(Entity.entity(xmiContent, "application/xmi"));
+		assertEquals(200, retryResponse.getStatus(),
+				"Should return HTTP 200 OK when object is already in target stage");
 	}
 
 	/** /{scope}/registries/{registry} */
