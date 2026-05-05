@@ -38,7 +38,8 @@ public class TestAnnotations {
 	@WithFactoryConfiguration(factoryPid = JPA_MAPPING_PID, name = "test", location = "?", properties = {
 			@Property(key = "io.fs.watcher.path", value = "%s/", templateArguments = {
 					@TemplateArgument(source = ValueSource.SystemProperty, value = PROP_DATA_FOLDER) }),
-			@Property(key = "io.fs.watcher.pattern", value = ".*\\.jpamapping")})
+			@Property(key = "io.fs.watcher.pattern", value = ".*\\.jpamapping"),
+			@Property(key = "unitName", value = "test")})
 	@Retention(RetentionPolicy.RUNTIME)
 	public @interface JpaMappingWatcherConfig {
 	}

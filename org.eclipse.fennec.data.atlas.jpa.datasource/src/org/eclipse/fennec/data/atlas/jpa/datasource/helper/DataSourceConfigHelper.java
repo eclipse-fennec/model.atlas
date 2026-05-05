@@ -38,7 +38,7 @@ public class DataSourceConfigHelper {
 	public static Configuration createH2Config(ConfigurationAdmin configAdmin, String name, String unitName, DataSourceConfig ds) throws IOException {
 		Configuration cfg = configAdmin.getFactoryConfiguration(H2_PID, name, "?");
 		Dictionary<String, Object> properties = buildProperties(ds, name);
-		properties.put("unitName", unitName);
+		if(unitName != null) properties.put("unitName", unitName);
 		cfg.update(properties);
 		return cfg;
 	}

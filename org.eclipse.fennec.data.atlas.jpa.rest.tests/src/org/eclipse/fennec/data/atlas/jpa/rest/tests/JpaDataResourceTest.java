@@ -106,7 +106,7 @@ public class JpaDataResourceTest {
 			@InjectBundleContext BundleContext ctx,
 			@InjectService(cardinality = 0, filter = "(jpamapping.name=" + TestAnnotations.JPA_MAPPING_NAME + ")")
 			ServiceAware<JpaMappingConfig> configAware,
-			@InjectService(cardinality = 0, filter = "(osgi.unit.name=data)")
+			@InjectService(cardinality = 0, filter = "(osgi.unit.name=" + TestAnnotations.JPA_MAPPING_NAME + ")")
 			ServiceAware<EntityManagerFactory> emfAware) throws InterruptedException {
 		ensureResourceAvailability(ctx);
 		assertNotNull(configAware.waitForService(10_000), "JpaMappingConfig for " + TestAnnotations.JPA_MAPPING_NAME + " should be registered");
@@ -126,7 +126,7 @@ public class JpaDataResourceTest {
 			@InjectBundleContext BundleContext ctx,
 			@InjectService(cardinality = 0, filter = "(jpamapping.name=" + TestAnnotations.JPA_MAPPING_NAME + ")")
 			ServiceAware<JpaMappingConfig> configAware,
-			@InjectService(cardinality = 0, filter = "(osgi.unit.name=data)")
+			@InjectService(cardinality = 0, filter = "(osgi.unit.name=" + TestAnnotations.JPA_MAPPING_NAME + ")")
 			ServiceAware<EntityManagerFactory> emfAware) throws InterruptedException {
 		ensureResourceAvailability(ctx);
 		assertNotNull(configAware.waitForService(10_000), "JpaMappingConfig for " + TestAnnotations.JPA_MAPPING_NAME + " should be registered");
@@ -146,7 +146,7 @@ public class JpaDataResourceTest {
 			@InjectBundleContext BundleContext ctx,
 			@InjectService(cardinality = 0, filter = "(jpamapping.name=" + TestAnnotations.JPA_MAPPING_NAME + ")")
 			ServiceAware<JpaMappingConfig> configAware,
-			@InjectService(cardinality = 0, filter = "(osgi.unit.name=data)")
+			@InjectService(cardinality = 0, filter = "(osgi.unit.name=" + TestAnnotations.JPA_MAPPING_NAME + ")")
 			ServiceAware<EntityManagerFactory> emfAware) throws InterruptedException {
 		ensureResourceAvailability(ctx);
 		assertNotNull(configAware.waitForService(10_000), "JpaMappingConfig for " + TestAnnotations.JPA_MAPPING_NAME + " should be registered");
@@ -163,7 +163,7 @@ public class JpaDataResourceTest {
 			@InjectBundleContext BundleContext ctx,
 			@InjectService(cardinality = 0, filter = "(jpamapping.name=" + TestAnnotations.JPA_MAPPING_NAME + ")")
 			ServiceAware<JpaMappingConfig> configAware,
-			@InjectService(cardinality = 0, filter = "(osgi.unit.name=data)")
+			@InjectService(cardinality = 0, filter = "(osgi.unit.name=" + TestAnnotations.JPA_MAPPING_NAME + ")")
 			ServiceAware<EntityManagerFactory> emfAware) throws InterruptedException {
 		ensureResourceAvailability(ctx);
 		assertNotNull(configAware.waitForService(10_000), "JpaMappingConfig for " + TestAnnotations.JPA_MAPPING_NAME + " should be registered");
@@ -201,7 +201,7 @@ public class JpaDataResourceTest {
 			@InjectBundleContext BundleContext ctx,
 			@InjectService(cardinality = 0, filter = "(jpamapping.name=" + TestAnnotations.JPA_MAPPING_NAME + ")")
 			ServiceAware<JpaMappingConfig> configAware,
-			@InjectService(cardinality = 0, filter = "(osgi.unit.name=data)")
+			@InjectService(cardinality = 0, filter = "(osgi.unit.name=" + TestAnnotations.JPA_MAPPING_NAME + ")")
 			ServiceAware<EntityManagerFactory> emfAware) throws InterruptedException {
 		ensureResourceAvailability(ctx);
 		assertNotNull(configAware.waitForService(10_000), "JpaMappingConfig for " + TestAnnotations.JPA_MAPPING_NAME + " should be registered");
@@ -221,7 +221,7 @@ public class JpaDataResourceTest {
 			@InjectBundleContext BundleContext ctx,
 			@InjectService(cardinality = 0, filter = "(jpamapping.name=" + TestAnnotations.JPA_MAPPING_NAME + ")")
 			ServiceAware<JpaMappingConfig> configAware,
-			@InjectService(cardinality = 0, filter = "(osgi.unit.name=data)")
+			@InjectService(cardinality = 0, filter = "(osgi.unit.name=" + TestAnnotations.JPA_MAPPING_NAME + ")")
 			ServiceAware<EntityManagerFactory> emfAware) throws InterruptedException {
 		ensureResourceAvailability(ctx);
 		assertNotNull(configAware.waitForService(10_000), "JpaMappingConfig for " + TestAnnotations.JPA_MAPPING_NAME + " should be registered");
@@ -241,7 +241,7 @@ public class JpaDataResourceTest {
 			@InjectBundleContext BundleContext ctx,
 			@InjectService(cardinality = 0, filter = "(jpamapping.name=" + TestAnnotations.JPA_MAPPING_NAME + ")")
 			ServiceAware<JpaMappingConfig> configAware,
-			@InjectService(cardinality = 0, filter = "(osgi.unit.name=data)")
+			@InjectService(cardinality = 0, filter = "(osgi.unit.name=" + TestAnnotations.JPA_MAPPING_NAME + ")")
 			ServiceAware<EntityManagerFactory> emfAware) throws InterruptedException {
 		ensureResourceAvailability(ctx);
 		assertNotNull(configAware.waitForService(10_000), "JpaMappingConfig for " + TestAnnotations.JPA_MAPPING_NAME + " should be registered");
@@ -258,7 +258,7 @@ public class JpaDataResourceTest {
 			@InjectBundleContext BundleContext ctx,
 			@InjectService(cardinality = 0, filter = "(jpamapping.name=" + TestAnnotations.JPA_MAPPING_NAME + ")")
 			ServiceAware<JpaMappingConfig> configAware,
-			@InjectService(cardinality = 0, filter = "(osgi.unit.name=data)")
+			@InjectService(cardinality = 0, filter = "(osgi.unit.name=" + TestAnnotations.JPA_MAPPING_NAME + ")")
 			ServiceAware<EntityManagerFactory> emfAware) throws InterruptedException {
 		ensureResourceAvailability(ctx);
 		assertNotNull(configAware.waitForService(10_000), "JpaMappingConfig for " + TestAnnotations.JPA_MAPPING_NAME + " should be registered");
@@ -278,7 +278,7 @@ public class JpaDataResourceTest {
 			@InjectBundleContext BundleContext ctx,
 			@InjectService(cardinality = 0, filter = "(jpamapping.name=" + TestAnnotations.JPA_MAPPING_NAME + ")")
 			ServiceAware<JpaMappingConfig> configAware,
-			@InjectService(cardinality = 0, filter = "(osgi.unit.name=data)")
+			@InjectService(cardinality = 0, filter = "(osgi.unit.name=" + TestAnnotations.JPA_MAPPING_NAME + ")")
 			ServiceAware<EntityManagerFactory> emfAware) throws InterruptedException {
 		ensureResourceAvailability(ctx);
 		assertNotNull(configAware.waitForService(10_000), "JpaMappingConfig for " + TestAnnotations.JPA_MAPPING_NAME + " should be registered");

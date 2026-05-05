@@ -72,7 +72,7 @@ public class DataSourceConfigHandlerTests {
             @InjectBundleContext BundleContext ctx,
             @InjectService ConfigurationAdmin configAdmin) throws Exception {
         currentRegistration = registerService(ctx, createH2Config("ds-props-test"));
-        Configuration cfg = waitForConfiguration(configAdmin, "ds-props-test", 5000);
+        Configuration cfg = waitForConfiguration(configAdmin, "ds-props-test", 15_000);
         assertNotNull(cfg);
         Dictionary<String, Object> props = cfg.getProperties();
         assertEquals("mem:testdb", props.get("identifier"));

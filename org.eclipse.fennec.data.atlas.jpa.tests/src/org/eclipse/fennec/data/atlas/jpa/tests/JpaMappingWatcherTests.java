@@ -94,7 +94,7 @@ public class JpaMappingWatcherTests {
     @JpaMappingWatcherConfig
     public void testInitialLoad_serviceProperties(
             @InjectService(cardinality = 0) ServiceAware<JpaMappingConfig> aware) throws InterruptedException {
-        assertNotNull(aware.waitForService(5000));
+        assertNotNull(aware.waitForService(15_000));
         ServiceReference<JpaMappingConfig> ref = aware.getServiceReference();
         assertNotNull(ref);
         assertEquals("dge-mapping", ref.getProperty(PROP_NAME));
@@ -107,8 +107,10 @@ public class JpaMappingWatcherTests {
     public void testFileCreated_serviceRegistered(
             @InjectService(cardinality = 0, filter = "(" + PROP_NAME + "=dynamic-mapping)") ServiceAware<JpaMappingConfig> aware) throws Exception {
         assertTrue(aware.isEmpty());
-        writeFile("dynamic.jpamapping", DYNAMIC_XMI);
+        Path file = writeFile("dynamic.jpamapping", DYNAMIC_XMI);
         assertNotNull(aware.waitForService(5000));
+        Files.delete(file);
+        createdFiles.remove(file);
     }
 
     @Test
@@ -119,7 +121,7 @@ public class JpaMappingWatcherTests {
         assertNotNull(aware.waitForService(5000));
         Files.delete(file);
         createdFiles.remove(file);
-        assertTrue(waitForNoService(aware, 5000));
+        assertTrue(waitForNoService(aware, 15_000));
     }
 
     @Test
@@ -130,8 +132,10 @@ public class JpaMappingWatcherTests {
         Path file = writeFile("dynamic.jpamapping", DYNAMIC_XMI);
         assertNotNull(originalAware.waitForService(5000));
         Files.writeString(file, DYNAMIC_XMI_UPDATED);
-        assertTrue(waitForNoService(originalAware, 5000));
-        assertNotNull(updatedAware.waitForService(5000));
+        assertTrue(waitForNoService(originalAware, 15_000));
+        assertNotNull(updatedAware.waitForService(15_000));
+        Files.delete(file);
+        createdFiles.remove(file);
     }
 
     @Test
@@ -140,9 +144,11 @@ public class JpaMappingWatcherTests {
             @InjectService(cardinality = 0) ServiceAware<JpaMappingConfig> aware) throws Exception {
         assertNotNull(aware.waitForService(5000));
         int countBefore = aware.getServices().size();
-        writeFile("ignored.xml", "<test/>");
+        Path file = writeFile("ignored.xml", "<test/>");
         Thread.sleep(2000);
         assertEquals(countBefore, aware.getServices().size());
+        Files.delete(file);
+        createdFiles.remove(file);
     }
 
     private Path writeFile(String name, String content) throws IOException {

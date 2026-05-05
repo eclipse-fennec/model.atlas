@@ -16,12 +16,17 @@ package org.eclipse.fennec.data.atlas.jpa.watcher;
 import java.io.IOException;
 import java.lang.System.Logger;
 import java.lang.System.Logger.Level;
+import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardWatchEventKinds;
 import java.nio.file.WatchEvent.Kind;
 import java.util.Dictionary;
 import java.util.Hashtable;
 import java.util.List;
+import java.util.Objects;
 import java.util.UUID;
+
+import javax.xml.parsers.DocumentBuilderFactory;
 
 import org.eclipse.daanse.io.fs.watcher.api.FileSystemWatcherListener;
 import org.eclipse.daanse.io.fs.watcher.api.FileSystemWatcherWhiteboardConstants;
@@ -41,14 +46,14 @@ import org.osgi.service.component.annotations.Reference;
  * turn trigger H2 DataSource creation via {@code DataSourceConfigHandler}),
  * and a CSV importer to load .csv data into that DataSource.
  *
- * <p>All three sub-component configs are created in {@link #handleBasePath}
- * and deleted on {@link #deactivate}. The sub-components manage their own
- * file-event handling within the folder.
+ * <p>All sub-component configs are created in {@link #setupPipeline} and
+ * deleted on {@link #deactivate}.
  *
- * <p>The unit name is derived from the last segment of the watched folder
- * path and must match the {@code name} field of the .jpamapping file so
- * that the CSV importer can locate the correct DataSource via the filter
- * {@code (unitName=<unitName>)}.
+ * <p>The unit name is read from the {@code name} attribute of the
+ * {@code .jpamapping} file found in the watched folder. If no such file is
+ * present when the folder is first registered, the pipeline is not started;
+ * it will be started automatically when a {@code .jpamapping} file is
+ * subsequently added to the folder.
  */
 @RequireConfigurationAdmin
 @Component(name = DataFolderWatcher.PID, configurationPolicy = ConfigurationPolicy.REQUIRE)
@@ -69,6 +74,7 @@ public class DataFolderWatcher implements FileSystemWatcherListener {
     @Reference
     private ConfigurationAdmin configAdmin;
 
+    private Path basePath;
     private String unitName;
     private String matcherKey;
     private Configuration emfWatcherConfig;
@@ -90,7 +96,35 @@ public class DataFolderWatcher implements FileSystemWatcherListener {
 
     @Override
     public void handleBasePath(Path basePath) {
-        unitName = basePath.getFileName().toString();
+        this.basePath = basePath;
+        String name = readUnitNameFromFolder(basePath);
+        if (name == null) {
+            LOG.log(Level.INFO, "No .jpamapping file in {0} — pipeline will start when one is added", basePath);
+            return;
+        }
+        setupPipeline(name);
+    }
+
+    @Override
+    public void handleInitialPaths(List<Path> paths) {
+        // Sub-components handle their own initial scan within the configured folder.
+    }
+
+    @Override
+    public void handlePathEvent(Path path, Kind<Path> kind) {
+        if (!path.toString().endsWith(".jpamapping") || emfWatcherConfig != null) {
+            return;
+        }
+        if (StandardWatchEventKinds.ENTRY_CREATE.equals(kind) || StandardWatchEventKinds.ENTRY_MODIFY.equals(kind)) {
+            String name = readNameAttribute(path);
+            if (name != null && !name.isBlank()) {
+                setupPipeline(name);
+            }
+        }
+    }
+
+    private void setupPipeline(String name) {
+        unitName = name;
         matcherKey = UUID.randomUUID().toString();
         String pathStr = basePath.toAbsolutePath().toString();
         try {
@@ -123,14 +157,32 @@ public class DataFolderWatcher implements FileSystemWatcherListener {
         }
     }
 
-    @Override
-    public void handleInitialPaths(List<Path> paths) {
-        // Sub-components handle their own initial scan within the configured folder.
+    private String readUnitNameFromFolder(Path folder) {
+        try (var stream = Files.list(folder)) {
+            return stream
+                    .filter(p -> p.toString().endsWith(".jpamapping"))
+                    .map(this::readNameAttribute)
+                    .filter(Objects::nonNull)
+                    .filter(n -> !n.isBlank())
+                    .findFirst()
+                    .orElse(null);
+        } catch (IOException e) {
+            LOG.log(Level.WARNING, "Failed to scan folder {0} for .jpamapping file", folder);
+            return null;
+        }
     }
 
-    @Override
-    public void handlePathEvent(Path path, Kind<Path> kind) {
-        // Sub-components handle their own file events.
+    private String readNameAttribute(Path file) {
+        try {
+            return DocumentBuilderFactory.newInstance()
+                    .newDocumentBuilder()
+                    .parse(file.toFile())
+                    .getDocumentElement()
+                    .getAttribute("name");
+        } catch (Exception e) {
+            LOG.log(Level.WARNING, "Failed to read name attribute from {0}: {1}", file, e.getMessage());
+            return null;
+        }
     }
 
     private void deleteConfig(Configuration config) {

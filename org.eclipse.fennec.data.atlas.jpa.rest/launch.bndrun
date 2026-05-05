@@ -65,7 +65,6 @@
 	org.eclipse.daanse.io.fs.watcher.api;version='[0.0.1,0.0.2)',\
 	org.eclipse.daanse.io.fs.watcher.watchservice;version='[0.0.1,0.0.2)',\
 	org.eclipse.fennec.data.atlas.jpa.datasource;version=snapshot,\
-	org.eclipse.fennec.data.atlas.jpa.mapping.watcher;version=snapshot,\
 	com.fasterxml.jackson.core.jackson-annotations;version='[2.20.0,2.20.1)',\
 	com.fasterxml.jackson.core.jackson-core;version='[2.19.2,2.19.3)',\
 	com.fasterxml.jackson.core.jackson-databind;version='[2.19.2,2.19.3)',\
@@ -104,7 +103,6 @@
 	bnd.identity;id='com.h2database',\
 	bnd.identity;id='org.eclipse.daanse.jdbc.datasource.h2',\
 	bnd.identity;id='org.eclipse.fennec.data.atlas.jpa.datasource',\
-	bnd.identity;id='org.eclipse.fennec.data.atlas.jpa.mapping.watcher',\
 	bnd.identity;id='org.eclipse.fennec.emf.osgi.component',\
 	bnd.identity;id='org.eclipse.fennec.data.atlas.jpa.watcher',\
 	bnd.identity;id='org.eclipse.fennec.model.atlas',\

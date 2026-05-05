@@ -1,4 +1,4 @@
-package org.eclipse.fennec.data.atlas.jpa.mapping.watcher;
+package org.eclipse.fennec.data.atlas.jpa.watcher;
 
 import java.io.IOException;
 import java.lang.System.Logger;

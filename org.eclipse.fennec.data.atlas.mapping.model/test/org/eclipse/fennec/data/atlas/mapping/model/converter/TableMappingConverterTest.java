@@ -3,19 +3,25 @@ package org.eclipse.fennec.data.atlas.mapping.model.converter;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 import java.util.List;
 
 import org.eclipse.emf.ecore.EcoreFactory;
 import org.eclipse.emf.ecore.EcorePackage;
+import org.eclipse.fennec.data.atlas.mapping.model.jpamapping.CascadeType;
 import org.eclipse.fennec.data.atlas.mapping.model.jpamapping.ColumnMapping;
 import org.eclipse.fennec.data.atlas.mapping.model.jpamapping.JPAMappingFactory;
+import org.eclipse.fennec.data.atlas.mapping.model.jpamapping.JoinMapping;
+import org.eclipse.fennec.data.atlas.mapping.model.jpamapping.JoinType;
 import org.eclipse.fennec.data.atlas.mapping.model.jpamapping.JpaMappingConfig;
 import org.eclipse.fennec.data.atlas.mapping.model.jpamapping.TableMapping;
 import org.eclipse.fennec.model.atlas.datagen.example.model.dge.DGPackage;
 import org.eclipse.fennec.persistence.eorm.Basic;
 import org.eclipse.fennec.persistence.eorm.Entity;
 import org.eclipse.fennec.persistence.eorm.EntityMappings;
+import org.eclipse.fennec.persistence.eorm.OneToMany;
+import org.eclipse.fennec.persistence.eorm.OneToOne;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -148,6 +154,52 @@ class TableMappingConverterTest {
         assertTrue(basicNames.contains("label"));
     }
 
+    @Test
+    void joinMappingOverridesJoinColumnName() {
+        TableMapping tm = tableMapping(DGE_NS + "#//Person", "PERSON");
+        tm.getJoinMappings().add(joinMapping("address", JoinType.FOREIGN_KEY, "address_id"));
+
+        EntityMappings result = converter.toEntityMappings(DGE, createConfig(DGE_NS,
+                tm,
+                tableMapping(DGE_NS + "#//Address", "ADDRESS")));
+
+        OneToOne o2o = findOneToOne(findEntity(result, "Person"), "address");
+        assertFalse(o2o.getJoinColumn().isEmpty(), "JoinColumn list should not be empty");
+        assertEquals("address_id", o2o.getJoinColumn().get(0).getName());
+        // ForeignKey must also be updated: processOneToOne() uses fk.getName() as the column name
+        assertNotNull(o2o.getForeignKey(), "ForeignKey should be set");
+        assertEquals("address_id", o2o.getForeignKey().getName());
+    }
+
+    @Test
+    void joinMappingSetsCascadeOnRelationship() {
+        TableMapping tm = tableMapping(DGE_NS + "#//Person", "PERSON");
+        tm.getJoinMappings().add(joinMapping("company", JoinType.FOREIGN_KEY, "company_id", CascadeType.PERSIST, CascadeType.MERGE));
+
+        EntityMappings result = converter.toEntityMappings(DGE, createConfig(DGE_NS,
+                tm,
+                tableMapping(DGE_NS + "#//Company", "COMPANY")));
+
+        OneToOne o2o = findOneToOne(findEntity(result, "Person"), "company");
+        assertNotNull(o2o.getCascade(), "Cascade should be set");
+        assertNotNull(o2o.getCascade().getCascadePersist(), "cascade-persist should be set");
+        assertNotNull(o2o.getCascade().getCascadeMerge(), "cascade-merge should be set");
+    }
+
+    @Test
+    void joinMappingOnOneToMany_switchesFromJoinTableToForeignKey() {
+        TableMapping tm = tableMapping(DGE_NS + "#//Company", "COMPANY");
+        tm.getJoinMappings().add(joinMapping("employees", JoinType.FOREIGN_KEY, "company_id"));
+
+        EntityMappings result = converter.toEntityMappings(DGE, createConfig(DGE_NS,
+                tm,
+                tableMapping(DGE_NS + "#//Person", "PERSON")));
+
+        OneToMany o2m = findOneToMany(findEntity(result, "Company"), "employees");
+        assertFalse(o2m.getJoinColumn().isEmpty(), "JoinColumn should have been added");
+        assertEquals("company_id", o2m.getJoinColumn().get(0).getName());
+    }
+
     // --- helpers ---
 
     private JpaMappingConfig createConfig(String nsUri, TableMapping... mappings) {
@@ -189,5 +241,31 @@ class TableMappingConverterTest {
                 .filter(b -> featureName.equals(b.getName()))
                 .findFirst()
                 .orElseThrow(() -> new AssertionError("No basic attribute named: " + featureName));
+    }
+
+    private OneToOne findOneToOne(Entity entity, String referenceName) {
+        return entity.getAttributes().getOneToOne().stream()
+                .filter(r -> referenceName.equals(r.getName()))
+                .findFirst()
+                .orElseThrow(() -> new AssertionError("No OneToOne named: " + referenceName));
+    }
+
+    private OneToMany findOneToMany(Entity entity, String referenceName) {
+        return entity.getAttributes().getOneToMany().stream()
+                .filter(r -> referenceName.equals(r.getName()))
+                .findFirst()
+                .orElseThrow(() -> new AssertionError("No OneToMany named: " + referenceName));
+    }
+
+    private JoinMapping joinMapping(String referenceName, JoinType joinType, String joinColumn,
+            CascadeType... cascadeTypes) {
+        JoinMapping jm = JPAMappingFactory.eINSTANCE.createJoinMapping();
+        jm.setReferenceName(referenceName);
+        jm.setJoinType(joinType);
+        if (joinColumn != null) {
+            jm.setJoinColumn(joinColumn);
+        }
+        jm.getCascadeType().addAll(List.of(cascadeTypes));
+        return jm;
     }
 }
