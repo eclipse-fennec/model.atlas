@@ -28,6 +28,7 @@ import org.eclipse.emf.ecore.util.EDataTypeUniqueEList;
 import org.eclipse.fennec.model.atlas.validation.model.cocl.COCLPackage;
 import org.eclipse.fennec.model.atlas.validation.model.cocl.OclConstraint;
 import org.eclipse.fennec.model.atlas.validation.model.cocl.OclRole;
+import org.eclipse.fennec.model.atlas.validation.model.cocl.OperationReturnType;
 import org.eclipse.fennec.model.atlas.validation.model.cocl.Severity;
 
 /**
@@ -48,6 +49,9 @@ import org.eclipse.fennec.model.atlas.validation.model.cocl.Severity;
  *   <li>{@link org.eclipse.fennec.model.atlas.validation.model.cocl.impl.OclConstraintImpl#isActive <em>Active</em>}</li>
  *   <li>{@link org.eclipse.fennec.model.atlas.validation.model.cocl.impl.OclConstraintImpl#isOverrides <em>Overrides</em>}</li>
  *   <li>{@link org.eclipse.fennec.model.atlas.validation.model.cocl.impl.OclConstraintImpl#getTargetURIs <em>Target UR Is</em>}</li>
+ *   <li>{@link org.eclipse.fennec.model.atlas.validation.model.cocl.impl.OclConstraintImpl#getOperationName <em>Operation Name</em>}</li>
+ *   <li>{@link org.eclipse.fennec.model.atlas.validation.model.cocl.impl.OclConstraintImpl#getOperationParameterNames <em>Operation Parameter Names</em>}</li>
+ *   <li>{@link org.eclipse.fennec.model.atlas.validation.model.cocl.impl.OclConstraintImpl#getOperationReturnType <em>Operation Return Type</em>}</li>
  * </ul>
  *
  * @generated
@@ -242,6 +246,56 @@ public class OclConstraintImpl extends MinimalEObjectImpl.Container implements O
 	 * @ordered
 	 */
 	protected EList<String> targetURIs;
+
+	/**
+	 * The default value of the '{@link #getOperationName() <em>Operation Name</em>}' attribute.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @see #getOperationName()
+	 * @generated
+	 * @ordered
+	 */
+	protected static final String OPERATION_NAME_EDEFAULT = null;
+
+	/**
+	 * The cached value of the '{@link #getOperationName() <em>Operation Name</em>}' attribute.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @see #getOperationName()
+	 * @generated
+	 * @ordered
+	 */
+	protected String operationName = OPERATION_NAME_EDEFAULT;
+
+	/**
+	 * The cached value of the '{@link #getOperationParameterNames() <em>Operation Parameter Names</em>}' attribute list.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @see #getOperationParameterNames()
+	 * @generated
+	 * @ordered
+	 */
+	protected EList<String> operationParameterNames;
+
+	/**
+	 * The default value of the '{@link #getOperationReturnType() <em>Operation Return Type</em>}' attribute.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @see #getOperationReturnType()
+	 * @generated
+	 * @ordered
+	 */
+	protected static final OperationReturnType OPERATION_RETURN_TYPE_EDEFAULT = OperationReturnType.EOBJECT;
+
+	/**
+	 * The cached value of the '{@link #getOperationReturnType() <em>Operation Return Type</em>}' attribute.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @see #getOperationReturnType()
+	 * @generated
+	 * @ordered
+	 */
+	protected OperationReturnType operationReturnType = OPERATION_RETURN_TYPE_EDEFAULT;
 
 	/**
 	 * <!-- begin-user-doc -->
@@ -488,6 +542,65 @@ public class OclConstraintImpl extends MinimalEObjectImpl.Container implements O
 	 * @generated
 	 */
 	@Override
+	public String getOperationName() {
+		return operationName;
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
+	public void setOperationName(String newOperationName) {
+		String oldOperationName = operationName;
+		operationName = newOperationName;
+		if (eNotificationRequired())
+			eNotify(new ENotificationImpl(this, Notification.SET, COCLPackage.OCL_CONSTRAINT__OPERATION_NAME, oldOperationName, operationName));
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
+	public EList<String> getOperationParameterNames() {
+		if (operationParameterNames == null) {
+			operationParameterNames = new EDataTypeUniqueEList<String>(String.class, this, COCLPackage.OCL_CONSTRAINT__OPERATION_PARAMETER_NAMES);
+		}
+		return operationParameterNames;
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
+	public OperationReturnType getOperationReturnType() {
+		return operationReturnType;
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
+	public void setOperationReturnType(OperationReturnType newOperationReturnType) {
+		OperationReturnType oldOperationReturnType = operationReturnType;
+		operationReturnType = newOperationReturnType == null ? OPERATION_RETURN_TYPE_EDEFAULT : newOperationReturnType;
+		if (eNotificationRequired())
+			eNotify(new ENotificationImpl(this, Notification.SET, COCLPackage.OCL_CONSTRAINT__OPERATION_RETURN_TYPE, oldOperationReturnType, operationReturnType));
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
 	public Object eGet(int featureID, boolean resolve, boolean coreType) {
 		switch (featureID) {
 			case COCLPackage.OCL_CONSTRAINT__NAME:
@@ -510,6 +623,12 @@ public class OclConstraintImpl extends MinimalEObjectImpl.Container implements O
 				return isOverrides();
 			case COCLPackage.OCL_CONSTRAINT__TARGET_UR_IS:
 				return getTargetURIs();
+			case COCLPackage.OCL_CONSTRAINT__OPERATION_NAME:
+				return getOperationName();
+			case COCLPackage.OCL_CONSTRAINT__OPERATION_PARAMETER_NAMES:
+				return getOperationParameterNames();
+			case COCLPackage.OCL_CONSTRAINT__OPERATION_RETURN_TYPE:
+				return getOperationReturnType();
 		}
 		return super.eGet(featureID, resolve, coreType);
 	}
@@ -554,6 +673,16 @@ public class OclConstraintImpl extends MinimalEObjectImpl.Container implements O
 				getTargetURIs().clear();
 				getTargetURIs().addAll((Collection<? extends String>)newValue);
 				return;
+			case COCLPackage.OCL_CONSTRAINT__OPERATION_NAME:
+				setOperationName((String)newValue);
+				return;
+			case COCLPackage.OCL_CONSTRAINT__OPERATION_PARAMETER_NAMES:
+				getOperationParameterNames().clear();
+				getOperationParameterNames().addAll((Collection<? extends String>)newValue);
+				return;
+			case COCLPackage.OCL_CONSTRAINT__OPERATION_RETURN_TYPE:
+				setOperationReturnType((OperationReturnType)newValue);
+				return;
 		}
 		super.eSet(featureID, newValue);
 	}
@@ -596,6 +725,15 @@ public class OclConstraintImpl extends MinimalEObjectImpl.Container implements O
 			case COCLPackage.OCL_CONSTRAINT__TARGET_UR_IS:
 				getTargetURIs().clear();
 				return;
+			case COCLPackage.OCL_CONSTRAINT__OPERATION_NAME:
+				setOperationName(OPERATION_NAME_EDEFAULT);
+				return;
+			case COCLPackage.OCL_CONSTRAINT__OPERATION_PARAMETER_NAMES:
+				getOperationParameterNames().clear();
+				return;
+			case COCLPackage.OCL_CONSTRAINT__OPERATION_RETURN_TYPE:
+				setOperationReturnType(OPERATION_RETURN_TYPE_EDEFAULT);
+				return;
 		}
 		super.eUnset(featureID);
 	}
@@ -628,6 +766,12 @@ public class OclConstraintImpl extends MinimalEObjectImpl.Container implements O
 				return overrides != OVERRIDES_EDEFAULT;
 			case COCLPackage.OCL_CONSTRAINT__TARGET_UR_IS:
 				return targetURIs != null && !targetURIs.isEmpty();
+			case COCLPackage.OCL_CONSTRAINT__OPERATION_NAME:
+				return OPERATION_NAME_EDEFAULT == null ? operationName != null : !OPERATION_NAME_EDEFAULT.equals(operationName);
+			case COCLPackage.OCL_CONSTRAINT__OPERATION_PARAMETER_NAMES:
+				return operationParameterNames != null && !operationParameterNames.isEmpty();
+			case COCLPackage.OCL_CONSTRAINT__OPERATION_RETURN_TYPE:
+				return operationReturnType != OPERATION_RETURN_TYPE_EDEFAULT;
 		}
 		return super.eIsSet(featureID);
 	}
@@ -662,6 +806,12 @@ public class OclConstraintImpl extends MinimalEObjectImpl.Container implements O
 		result.append(overrides);
 		result.append(", targetURIs: ");
 		result.append(targetURIs);
+		result.append(", operationName: ");
+		result.append(operationName);
+		result.append(", operationParameterNames: ");
+		result.append(operationParameterNames);
+		result.append(", operationReturnType: ");
+		result.append(operationReturnType);
 		result.append(')');
 		return result.toString();
 	}

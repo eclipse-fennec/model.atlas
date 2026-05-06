@@ -28,6 +28,7 @@ import org.osgi.annotation.versioning.ProviderType;
  * </p>
  * <ul>
  *   <li>{@link org.eclipse.fennec.model.atlas.validation.model.cocl.SimpleValidationResult#getValue <em>Value</em>}</li>
+ *   <li>{@link org.eclipse.fennec.model.atlas.validation.model.cocl.SimpleValidationResult#getValueJavaClassName <em>Value Java Class Name</em>}</li>
  * </ul>
  *
  * @see org.eclipse.fennec.model.atlas.validation.model.cocl.COCLPackage#getSimpleValidationResult()
@@ -44,12 +45,12 @@ public interface SimpleValidationResult extends ValidationResult {
 	 * The simple value to be returned
 	 * <!-- end-model-doc -->
 	 * @return the value of the '<em>Value</em>' attribute.
-	 * @see #setValue(Object)
+	 * @see #setValue(String)
 	 * @see org.eclipse.fennec.model.atlas.validation.model.cocl.COCLPackage#getSimpleValidationResult_Value()
 	 * @model
 	 * @generated
 	 */
-	Object getValue();
+	String getValue();
 
 	/**
 	 * Sets the value of the '{@link org.eclipse.fennec.model.atlas.validation.model.cocl.SimpleValidationResult#getValue <em>Value</em>}' attribute.
@@ -59,6 +60,28 @@ public interface SimpleValidationResult extends ValidationResult {
 	 * @see #getValue()
 	 * @generated
 	 */
-	void setValue(Object value);
+	void setValue(String value);
+
+	/**
+	 * Returns the value of the '<em><b>Value Java Class Name</b></em>' attribute.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @return the value of the '<em>Value Java Class Name</em>' attribute.
+	 * @see #setValueJavaClassName(String)
+	 * @see org.eclipse.fennec.model.atlas.validation.model.cocl.COCLPackage#getSimpleValidationResult_ValueJavaClassName()
+	 * @model
+	 * @generated
+	 */
+	String getValueJavaClassName();
+
+	/**
+	 * Sets the value of the '{@link org.eclipse.fennec.model.atlas.validation.model.cocl.SimpleValidationResult#getValueJavaClassName <em>Value Java Class Name</em>}' attribute.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @param value the new value of the '<em>Value Java Class Name</em>' attribute.
+	 * @see #getValueJavaClassName()
+	 * @generated
+	 */
+	void setValueJavaClassName(String value);
 
 } // SimpleValidationResult

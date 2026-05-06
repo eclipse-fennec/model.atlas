@@ -22,6 +22,10 @@
       <genEnumLiterals ecoreEnumLiteral="cocl.ecore#//OclRole/REFERENCE_FILTER"/>
       <genEnumLiterals ecoreEnumLiteral="cocl.ecore#//OclRole/OPERATION"/>
     </genEnums>
+    <genEnums typeSafeEnumCompatible="false" ecoreEnum="cocl.ecore#//OperationReturnType">
+      <genEnumLiterals ecoreEnumLiteral="cocl.ecore#//OperationReturnType/EOBJECT"/>
+      <genEnumLiterals ecoreEnumLiteral="cocl.ecore#//OperationReturnType/JAVA_OBJECT"/>
+    </genEnums>
     <genClasses ecoreClass="cocl.ecore#//OclConstraint">
       <genFeatures createChild="false" ecoreFeature="ecore:EAttribute cocl.ecore#//OclConstraint/name"/>
       <genFeatures createChild="false" ecoreFeature="ecore:EAttribute cocl.ecore#//OclConstraint/description"/>
@@ -33,6 +37,9 @@
       <genFeatures createChild="false" ecoreFeature="ecore:EAttribute cocl.ecore#//OclConstraint/active"/>
       <genFeatures createChild="false" ecoreFeature="ecore:EAttribute cocl.ecore#//OclConstraint/overrides"/>
       <genFeatures createChild="false" ecoreFeature="ecore:EAttribute cocl.ecore#//OclConstraint/targetURIs"/>
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute cocl.ecore#//OclConstraint/operationName"/>
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute cocl.ecore#//OclConstraint/operationParameterNames"/>
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute cocl.ecore#//OclConstraint/operationReturnType"/>
     </genClasses>
     <genClasses ecoreClass="cocl.ecore#//OclConstraintSet">
       <genFeatures createChild="false" ecoreFeature="ecore:EAttribute cocl.ecore#//OclConstraintSet/name"/>
@@ -56,6 +63,7 @@
     </genClasses>
     <genClasses ecoreClass="cocl.ecore#//SimpleValidationResult">
       <genFeatures createChild="false" ecoreFeature="ecore:EAttribute cocl.ecore#//SimpleValidationResult/value"/>
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute cocl.ecore#//SimpleValidationResult/valueJavaClassName"/>
     </genClasses>
     <genClasses ecoreClass="cocl.ecore#//EObjectValidationResult">
       <genFeatures property="None" children="true" createChild="true" ecoreFeature="ecore:EReference cocl.ecore#//EObjectValidationResult/values"/>
@@ -66,8 +74,10 @@
     <genClasses ecoreClass="cocl.ecore#//OperationValidationRequest">
       <genFeatures notify="false" createChild="false" propertySortChoices="true" ecoreFeature="ecore:EReference cocl.ecore#//OperationValidationRequest/operation"/>
       <genFeatures property="None" children="true" createChild="true" ecoreFeature="ecore:EReference cocl.ecore#//OperationValidationRequest/parameters"/>
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute cocl.ecore#//OperationValidationRequest/operationName"/>
     </genClasses>
     <genClasses ecoreClass="cocl.ecore#//OperationRequestParameter">
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute cocl.ecore#//OperationRequestParameter/parameterName"/>
       <genFeatures notify="false" createChild="false" propertySortChoices="true" ecoreFeature="ecore:EReference cocl.ecore#//OperationRequestParameter/parameter"/>
       <genFeatures createChild="false" ecoreFeature="ecore:EAttribute cocl.ecore#//OperationRequestParameter/isNull"/>
       <genFeatures createChild="false" ecoreFeature="ecore:EAttribute cocl.ecore#//OperationRequestParameter/javaValue"/>

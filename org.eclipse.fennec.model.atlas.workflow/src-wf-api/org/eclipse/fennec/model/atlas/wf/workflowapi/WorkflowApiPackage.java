@@ -16,6 +16,7 @@ package org.eclipse.fennec.model.atlas.wf.workflowapi;
 
 import org.eclipse.emf.ecore.EAttribute;
 import org.eclipse.emf.ecore.EClass;
+import org.eclipse.emf.ecore.EEnum;
 import org.eclipse.emf.ecore.EOperation;
 import org.eclipse.emf.ecore.EReference;
 
@@ -656,13 +657,13 @@ public interface WorkflowApiPackage extends org.eclipse.emf.ecore.EPackage {
 	int REGISTRY__DESCRIPTION = 1;
 
 	/**
-	 * The feature id for the '<em><b>Schema Registry</b></em>' attribute.
+	 * The feature id for the '<em><b>Type</b></em>' attribute.
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
 	 * @generated
 	 * @ordered
 	 */
-	int REGISTRY__SCHEMA_REGISTRY = 2;
+	int REGISTRY__TYPE = 2;
 
 	/**
 	 * The feature id for the '<em><b>Stages</b></em>' containment reference list.
@@ -809,6 +810,16 @@ public interface WorkflowApiPackage extends org.eclipse.emf.ecore.EPackage {
 	 * @ordered
 	 */
 	int STAGE_TRANSITION_OPERATION_COUNT = 0;
+
+	/**
+	 * The meta object id for the '{@link org.eclipse.fennec.model.atlas.wf.workflowapi.RegistryType <em>Registry Type</em>}' enum.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @see org.eclipse.fennec.model.atlas.wf.workflowapi.RegistryType
+	 * @see org.eclipse.fennec.model.atlas.wf.workflowapi.impl.WorkflowApiPackageImpl#getRegistryType()
+	 * @generated
+	 */
+	int REGISTRY_TYPE = 7;
 
 
 	/**
@@ -1377,15 +1388,15 @@ public interface WorkflowApiPackage extends org.eclipse.emf.ecore.EPackage {
 	EAttribute getRegistry_Description();
 
 	/**
-	 * Returns the meta object for the attribute '{@link org.eclipse.fennec.model.atlas.wf.workflowapi.Registry#isSchemaRegistry <em>Schema Registry</em>}'.
+	 * Returns the meta object for the attribute '{@link org.eclipse.fennec.model.atlas.wf.workflowapi.Registry#getType <em>Type</em>}'.
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
-	 * @return the meta object for the attribute '<em>Schema Registry</em>'.
-	 * @see org.eclipse.fennec.model.atlas.wf.workflowapi.Registry#isSchemaRegistry()
+	 * @return the meta object for the attribute '<em>Type</em>'.
+	 * @see org.eclipse.fennec.model.atlas.wf.workflowapi.Registry#getType()
 	 * @see #getRegistry()
 	 * @generated
 	 */
-	EAttribute getRegistry_SchemaRegistry();
+	EAttribute getRegistry_Type();
 
 	/**
 	 * Returns the meta object for the containment reference list '{@link org.eclipse.fennec.model.atlas.wf.workflowapi.Registry#getStages <em>Stages</em>}'.
@@ -1494,6 +1505,16 @@ public interface WorkflowApiPackage extends org.eclipse.emf.ecore.EPackage {
 	 * @generated
 	 */
 	EAttribute getStageTransition_ToStage();
+
+	/**
+	 * Returns the meta object for enum '{@link org.eclipse.fennec.model.atlas.wf.workflowapi.RegistryType <em>Registry Type</em>}'.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @return the meta object for enum '<em>Registry Type</em>'.
+	 * @see org.eclipse.fennec.model.atlas.wf.workflowapi.RegistryType
+	 * @generated
+	 */
+	EEnum getRegistryType();
 
 	/**
 	 * Returns the factory that creates the instances of the model.
@@ -1977,12 +1998,12 @@ public interface WorkflowApiPackage extends org.eclipse.emf.ecore.EPackage {
 		EAttribute REGISTRY__DESCRIPTION = eINSTANCE.getRegistry_Description();
 
 		/**
-		 * The meta object literal for the '<em><b>Schema Registry</b></em>' attribute feature.
+		 * The meta object literal for the '<em><b>Type</b></em>' attribute feature.
 		 * <!-- begin-user-doc -->
 		 * <!-- end-user-doc -->
 		 * @generated
 		 */
-		EAttribute REGISTRY__SCHEMA_REGISTRY = eINSTANCE.getRegistry_SchemaRegistry();
+		EAttribute REGISTRY__TYPE = eINSTANCE.getRegistry_Type();
 
 		/**
 		 * The meta object literal for the '<em><b>Stages</b></em>' containment reference list feature.
@@ -2067,6 +2088,16 @@ public interface WorkflowApiPackage extends org.eclipse.emf.ecore.EPackage {
 		 * @generated
 		 */
 		EAttribute STAGE_TRANSITION__TO_STAGE = eINSTANCE.getStageTransition_ToStage();
+
+		/**
+		 * The meta object literal for the '{@link org.eclipse.fennec.model.atlas.wf.workflowapi.RegistryType <em>Registry Type</em>}' enum.
+		 * <!-- begin-user-doc -->
+		 * <!-- end-user-doc -->
+		 * @see org.eclipse.fennec.model.atlas.wf.workflowapi.RegistryType
+		 * @see org.eclipse.fennec.model.atlas.wf.workflowapi.impl.WorkflowApiPackageImpl#getRegistryType()
+		 * @generated
+		 */
+		EEnum REGISTRY_TYPE = eINSTANCE.getRegistryType();
 
 	}
 

@@ -1,0 +1,243 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ecore:EPackage xmlns:xmi="http://www.omg.org/XMI" xmi:version="2.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:ecore="http://www.eclipse.org/emf/2002/Ecore" nsURI="http://www.gme.org/university2/1.0" nsPrefix="university2" name="university2">
+
+  <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+    <details key="documentation" value="Universitätsmodell mit OCL-Constraints auf Klassenebene. Demonstriert derive_, body_ und inv-Annotationen."/>
+  </eAnnotations>
+
+  <!-- ==================== Enums ==================== -->
+
+  <eClassifiers xsi:type="ecore:EEnum" name="Semester">
+    <eLiterals name="WINTER" value="0"/>
+    <eLiterals name="SUMMER" value="1"/>
+  </eClassifiers>
+
+  <eClassifiers xsi:type="ecore:EEnum" name="AcademicTitle">
+    <eLiterals name="NONE" value="0"/>
+    <eLiterals name="BACHELOR" value="1"/>
+    <eLiterals name="MASTER" value="2"/>
+    <eLiterals name="PHD" value="3"/>
+    <eLiterals name="PROFESSOR" value="4"/>
+  </eClassifiers>
+
+  <!-- ==================== University ==================== -->
+
+  <eClassifiers xsi:type="ecore:EClass" name="University">
+    <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+      <details key="documentation" value="Eine Universität mit Fakultäten, Studierenden und Kursen."/>
+    </eAnnotations>
+    <eAnnotations source="http://www.eclipse.org/emf/2002/OCL">
+      <details key="UniqueStudentIds" value="self.students->isUnique(s | s.studentId)"/>
+      <details key="UniqueCourseIds" value="self.courses->isUnique(c | c.courseId)"/>
+      <details key="derive_totalStudents" value="self.students->size()"/>
+      <details key="derive_totalCredits" value="self.courses->collect(c | c.credits)->sum()"/>
+      <details key="body_getStudentsByFaculty" value="self.students->select(s | s.faculty = faculty)"/>
+    </eAnnotations>
+
+    <eStructuralFeatures xsi:type="ecore:EAttribute" iD="true" lowerBound="1" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString" name="name"/>
+    <eStructuralFeatures xsi:type="ecore:EAttribute" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString" name="city"/>
+    <eStructuralFeatures xsi:type="ecore:EAttribute" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EInt" name="foundedYear"/>
+
+    <eStructuralFeatures xsi:type="ecore:EReference" containment="true" upperBound="-1" eType="#//Student" name="students"/>
+    <eStructuralFeatures xsi:type="ecore:EReference" containment="true" upperBound="-1" eType="#//Course" name="courses"/>
+    <eStructuralFeatures xsi:type="ecore:EReference" containment="true" upperBound="-1" eType="#//Professor" name="professors"/>
+
+    <eStructuralFeatures xsi:type="ecore:EAttribute" changeable="false" volatile="true" transient="true" derived="true" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EInt" name="totalStudents">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="Gesamtzahl der eingeschriebenen Studierenden."/>
+      </eAnnotations>
+    </eStructuralFeatures>
+
+    <eStructuralFeatures xsi:type="ecore:EAttribute" changeable="false" volatile="true" transient="true" derived="true" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EInt" name="totalCredits">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="Summe aller angebotenen Credits."/>
+      </eAnnotations>
+    </eStructuralFeatures>
+
+    <eOperations eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EList" name="getStudentsByFaculty">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="Gibt alle Studierenden einer bestimmten Fakultät zurück."/>
+      </eAnnotations>
+      <eParameters lowerBound="1" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString" name="faculty"/>
+    </eOperations>
+  </eClassifiers>
+
+  <!-- ==================== Student ==================== -->
+
+  <eClassifiers xsi:type="ecore:EClass" name="Student">
+    <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+      <details key="documentation" value="Ein Studierender mit Kursbelegungen und akademischem Fortschritt."/>
+    </eAnnotations>
+    <eAnnotations source="http://www.eclipse.org/emf/2002/OCL">
+      <details key="ValidCredits" value="self.earnedCredits >= 0"/>
+      <details key="MaxCourses" value="self.enrolledCourses->size() &lt;= 8"/>
+      <details key="ValidSemester" value="self.currentSemester >= 1"/>
+      <details key="CoursesAtOwnUni" value="self.enrolledCourses->forAll(c | self.oclContainer().courses->includes(c))"/>
+      <details key="CompletedAtOwnUni" value="self.completedCourses->forAll(c | self.oclContainer().courses->includes(c))"/>
+      <details key="NoDoubleEnrollment" value="self.enrolledCourses->excludesAll(self.completedCourses)"/>
+      <details key="derive_fullName" value="self.firstName.concat(' ').concat(self.lastName)"/>
+      <details key="derive_earnedCredits" value="self.completedCourses->collect(c | c.credits)->sum()"/>
+      <details key="derive_isGraduationReady" value="self.earnedCredits >= 180"/>
+      <details key="derive_remainingCredits" value="180 - self.earnedCredits"/>
+      <details key="body_getGrade" value="if self.earnedCredits >= 150 then 'excellent' else if self.earnedCredits >= 90 then 'good' else 'in progress' endif endif"/>
+      <details key="body_isEnrolledIn" value="self.enrolledCourses->exists(c | c.courseId = courseId)"/>
+    </eAnnotations>
+
+    <eStructuralFeatures xsi:type="ecore:EAttribute" iD="true" lowerBound="1" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString" name="studentId"/>
+    <eStructuralFeatures xsi:type="ecore:EAttribute" lowerBound="1" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString" name="firstName"/>
+    <eStructuralFeatures xsi:type="ecore:EAttribute" lowerBound="1" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString" name="lastName"/>
+    <eStructuralFeatures xsi:type="ecore:EAttribute" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString" name="email"/>
+    <eStructuralFeatures xsi:type="ecore:EAttribute" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString" name="faculty"/>
+    <eStructuralFeatures xsi:type="ecore:EAttribute" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EInt" defaultValueLiteral="1" name="currentSemester"/>
+    <eStructuralFeatures xsi:type="ecore:EAttribute" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EDate" name="enrollmentDate"/>
+
+    <eStructuralFeatures xsi:type="ecore:EReference" upperBound="-1" eType="#//Course" name="enrolledCourses"/>
+    <eStructuralFeatures xsi:type="ecore:EReference" upperBound="-1" eType="#//Course" name="completedCourses"/>
+
+    <eStructuralFeatures xsi:type="ecore:EAttribute" changeable="false" volatile="true" transient="true" derived="true" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString" name="fullName">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="Vor- und Nachname zusammen."/>
+      </eAnnotations>
+    </eStructuralFeatures>
+
+    <eStructuralFeatures xsi:type="ecore:EAttribute" changeable="false" volatile="true" transient="true" derived="true" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EInt" name="earnedCredits">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="Summe der Credits aus abgeschlossenen Kursen."/>
+      </eAnnotations>
+    </eStructuralFeatures>
+
+    <eStructuralFeatures xsi:type="ecore:EAttribute" changeable="false" volatile="true" transient="true" derived="true" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EBoolean" name="isGraduationReady">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="True wenn genug Credits für den Abschluss (>= 180)."/>
+      </eAnnotations>
+    </eStructuralFeatures>
+
+    <eStructuralFeatures xsi:type="ecore:EAttribute" changeable="false" volatile="true" transient="true" derived="true" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EInt" name="remainingCredits">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="Noch benötigte Credits bis zum Abschluss."/>
+      </eAnnotations>
+    </eStructuralFeatures>
+
+    <eOperations eType="http://www.eclipse.org/emf/2002/Ecore#//EString" name="getGrade">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="Berechnet den aktuellen Leistungsstand."/>
+      </eAnnotations>
+    </eOperations>
+
+    <eOperations eType="http://www.eclipse.org/emf/2002/Ecore#//EBoolean" name="isEnrolledIn">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="Prüft ob der Studierende in einem bestimmten Kurs eingeschrieben ist."/>
+      </eAnnotations>
+      <eParameters lowerBound="1" eType="http://www.eclipse.org/emf/2002/Ecore#//EString" name="courseId"/>
+    </eOperations>
+  </eClassifiers>
+
+  <!-- ==================== Course ==================== -->
+
+  <eClassifiers xsi:type="ecore:EClass" name="Course">
+    <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+      <details key="documentation" value="Ein Kurs mit Credits, Kapazität und zugewiesenem Professor."/>
+    </eAnnotations>
+    <eAnnotations source="http://www.eclipse.org/emf/2002/OCL">
+      <details key="ValidCredits" value="self.credits >= 1 and self.credits &lt;= 30"/>
+      <details key="CapacityPositive" value="self.maxCapacity > 0"/>
+      <details key="NotOverbooked" value="self.enrolledStudents->size() &lt;= self.maxCapacity"/>
+      <details key="derive_enrolledCount" value="self.enrolledStudents->size()"/>
+      <details key="derive_availableSlots" value="self.maxCapacity - self.enrolledStudents->size()"/>
+      <details key="derive_isFull" value="self.enrolledStudents->size() >= self.maxCapacity"/>
+      <details key="derive_displayName" value="self.courseId.concat(' - ').concat(self.title)"/>
+      <details key="body_hasCapacity" value="self.enrolledStudents->size() &lt; self.maxCapacity"/>
+    </eAnnotations>
+
+    <eStructuralFeatures xsi:type="ecore:EAttribute" iD="true" lowerBound="1" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString" name="courseId"/>
+    <eStructuralFeatures xsi:type="ecore:EAttribute" lowerBound="1" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString" name="title"/>
+    <eStructuralFeatures xsi:type="ecore:EAttribute" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString" name="description"/>
+    <eStructuralFeatures xsi:type="ecore:EAttribute" lowerBound="1" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EInt" defaultValueLiteral="5" name="credits"/>
+    <eStructuralFeatures xsi:type="ecore:EAttribute" lowerBound="1" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EInt" defaultValueLiteral="30" name="maxCapacity"/>
+    <eStructuralFeatures xsi:type="ecore:EAttribute" eType="#//Semester" name="semester"/>
+
+    <eStructuralFeatures xsi:type="ecore:EReference" eType="#//Professor" name="lecturer"/>
+    <eStructuralFeatures xsi:type="ecore:EReference" upperBound="-1" eType="#//Student" name="enrolledStudents"/>
+    <eStructuralFeatures xsi:type="ecore:EReference" upperBound="-1" eType="#//Course" name="prerequisites"/>
+
+    <eStructuralFeatures xsi:type="ecore:EAttribute" changeable="false" volatile="true" transient="true" derived="true" eType="http://www.eclipse.org/emf/2002/Ecore#//EInt" name="enrolledCount">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="Aktuelle Anzahl eingeschriebener Studierender."/>
+      </eAnnotations>
+    </eStructuralFeatures>
+
+    <eStructuralFeatures xsi:type="ecore:EAttribute" changeable="false" volatile="true" transient="true" derived="true" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EInt" name="availableSlots">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="Verbleibende freie Plätze."/>
+      </eAnnotations>
+    </eStructuralFeatures>
+
+    <eStructuralFeatures xsi:type="ecore:EAttribute" changeable="false" volatile="true" transient="true" derived="true" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EBoolean" name="isFull">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="True wenn keine Plätze mehr frei sind."/>
+      </eAnnotations>
+    </eStructuralFeatures>
+
+    <eStructuralFeatures xsi:type="ecore:EAttribute" changeable="false" volatile="true" transient="true" derived="true" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString" name="displayName">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="Anzeigename: courseId - title."/>
+      </eAnnotations>
+    </eStructuralFeatures>
+
+    <eOperations eType="http://www.eclipse.org/emf/2002/Ecore#//EBoolean" name="hasCapacity">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="Prüft ob noch Plätze frei sind."/>
+      </eAnnotations>
+    </eOperations>
+  </eClassifiers>
+
+  <!-- ==================== Professor ==================== -->
+
+  <eClassifiers xsi:type="ecore:EClass" name="Professor">
+    <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+      <details key="documentation" value="Ein Professor mit Lehrveranstaltungen und akademischem Titel."/>
+    </eAnnotations>
+    <eAnnotations source="http://www.eclipse.org/emf/2002/OCL">
+      <details key="MaxTeachingLoad" value="self.courses->size() &lt;= 5"/>
+      <details key="derive_fullTitle" value="if self.title = 'PROFESSOR' then 'Prof. '.concat(self.firstName).concat(' ').concat(self.lastName) else self.firstName.concat(' ').concat(self.lastName) endif"/>
+      <details key="derive_courseCount" value="self.courses->size()"/>
+      <details key="derive_totalStudents" value="self.courses->collect(c | c.enrolledStudents)->flatten()->asSet()->size()"/>
+      <details key="body_teachesSubject" value="self.courses->exists(c | c.title = subject)"/>
+    </eAnnotations>
+
+    <eStructuralFeatures xsi:type="ecore:EAttribute" iD="true" lowerBound="1" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString" name="staffId"/>
+    <eStructuralFeatures xsi:type="ecore:EAttribute" lowerBound="1" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString" name="firstName"/>
+    <eStructuralFeatures xsi:type="ecore:EAttribute" lowerBound="1" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString" name="lastName"/>
+    <eStructuralFeatures xsi:type="ecore:EAttribute" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString" name="email"/>
+    <eStructuralFeatures xsi:type="ecore:EAttribute" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString" name="department"/>
+    <eStructuralFeatures xsi:type="ecore:EAttribute" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString" defaultValueLiteral="NONE" name="title"/>
+
+    <eStructuralFeatures xsi:type="ecore:EReference" upperBound="-1" eType="#//Course" name="courses"/>
+
+    <eStructuralFeatures xsi:type="ecore:EAttribute" changeable="false" volatile="true" transient="true" derived="true" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString" name="fullTitle">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="Vollständiger Name mit akademischem Titel."/>
+      </eAnnotations>
+    </eStructuralFeatures>
+
+    <eStructuralFeatures xsi:type="ecore:EAttribute" changeable="false" volatile="true" transient="true" derived="true" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EInt" name="courseCount">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="Anzahl der gehaltenen Kurse."/>
+      </eAnnotations>
+    </eStructuralFeatures>
+
+    <eStructuralFeatures xsi:type="ecore:EAttribute" changeable="false" volatile="true" transient="true" derived="true" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EInt" name="totalStudents">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="Anzahl aller einzigartigen Studierenden über alle Kurse."/>
+      </eAnnotations>
+    </eStructuralFeatures>
+
+    <eOperations eType="http://www.eclipse.org/emf/2002/Ecore#//EBoolean" name="teachesSubject">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="Prüft ob der Professor ein bestimmtes Fach unterrichtet."/>
+      </eAnnotations>
+      <eParameters lowerBound="1" eType="http://www.eclipse.org/emf/2002/Ecore#//EString" name="subject"/>
+    </eOperations>
+  </eClassifiers>
+
+</ecore:EPackage>

@@ -1,2 +1,10 @@
 -library: enableEMF
--buildpath: org.eclipse.fennec.model.atlas.validation.model;version=snapshot
+
+-buildpath: \
+	org.eclipse.fennec.model.atlas.validation.model;version=snapshot,\
+	org.eclipse.fennec.model.atlas.workflow;version=snapshot,\
+	org.osgi.service.component.annotations;version=latest,\
+	org.eclipse.fennec.m2x.ocl.api,\
+	org.eclipse.fennec.m2x.ocl.model
+  
+

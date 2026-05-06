@@ -3,7 +3,7 @@ Bundle-Description: OSGi integration tests for file management and document stor
 
 Test-Cases: ${classes;HIERARCHY_INDIRECTLY_ANNOTATED;org.junit.platform.commons.annotation.Testable;CONCRETE}
 
--workingset: Workflow
+-workingset: workflow
 
 -library: \
 	enableOSGi-Test,\
@@ -19,7 +19,8 @@ Test-Cases: ${classes;HIERARCHY_INDIRECTLY_ANNOTATED;org.junit.platform.commons.
 	org.eclipse.fennec.model.atlas.management;version=snapshot,\
 	org.eclipse.fennec.model.atlas.management.lucene;version=snapshot,\
 	org.eclipse.fennec.model.atlas.management.lucene.tests;version=snapshot,\
-	org.eclipse.fennec.model.atlas.management.file;version=snapshot
+	org.eclipse.fennec.model.atlas.management.file;version=snapshot,\
+	org.eclipse.fennec.model.atlas.tests.common;version=snapshot
 	
 Bundle-Version: 1.0.0.SNAPSHOT
 

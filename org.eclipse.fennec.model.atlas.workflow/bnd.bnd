@@ -1,7 +1,7 @@
 Bundle-Name: Model Atlas - Workflow Framework
 Bundle-Description: Model workflow framework for handling the workflow of an eObject, such as the draft, approval and release workflows.
 
--workingset: Workflow
+-workingset: workflow
 # sets the usually required buildpath using the bnd library, you can extend it with the normal -buildpath to your liking
 -library: enableEMF
 

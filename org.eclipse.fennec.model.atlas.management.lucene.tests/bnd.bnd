@@ -2,7 +2,7 @@ Bundle-Name: Model Atlas Cloud - Lucene Management Tests
 Bundle-Description: OSGi integration tests for Lucene search integration and document indexing. Tests full-text search capabilities and index management.
 
 Test-Cases: ${classes;HIERARCHY_INDIRECTLY_ANNOTATED;org.junit.platform.commons.annotation.Testable;CONCRETE}
--workingset: Workflow
+-workingset: workflow
 -library: \
 	enableOSGi-Test,\
 	enableEMF
@@ -15,7 +15,7 @@ Test-Cases: ${classes;HIERARCHY_INDIRECTLY_ANNOTATED;org.junit.platform.commons.
 	org.osgi.service.cm;version=latest,\
 	org.osgi.test.junit5.cm;version=latest,\
 	org.eclipse.fennec.model.atlas.management;version=snapshot,\
-	
+	org.eclipse.fennec.model.atlas.tests.common;version=snapshot
 Bundle-Version: 1.0.0.SNAPSHOT
 
 -dependson: org.eclipse.fennec.model.atlas.management.lucene

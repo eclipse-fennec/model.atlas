@@ -31,7 +31,7 @@ import org.eclipse.emf.ecore.EObject;
 import org.eclipse.emf.ecore.resource.Resource;
 import org.eclipse.emf.ecore.resource.ResourceSet;
 import org.eclipse.emf.ecore.util.EcoreUtil;
-import org.eclipse.fennec.codec.options.CodecResourceOptions;
+import org.eclipse.fennec.codec.resource.CodecResource;
 import org.eclipse.fennec.emf.osgi.constants.EMFUriHandlerConstants;
 import org.eclipse.fennec.model.atlas.management.apicurio.EObjectApicurioStorageService.Config;
 import org.eclipse.fennec.model.atlas.mgmt.api.EObjectRegistryService;
@@ -50,7 +50,6 @@ import org.eclipse.fennec.model.atlas.mgmt.mgmtapicurio.SearchedArtifact;
 import org.eclipse.fennec.model.atlas.mgmt.mgmtapicurio.SearchedVersion;
 import org.eclipse.fennec.model.atlas.mgmt.mgmtapicurio.Version;
 import org.eclipse.fennec.model.atlas.mgmt.storage.AbstractStorageHelper;
-import org.gecko.emf.json.constants.EMFJs;
 
 /**
  * 
@@ -317,8 +316,7 @@ public class ApicurioStorageHelper extends AbstractStorageHelper {
         ResourceOperation searchOp = createResource(uri, mediaType);
         try {
             Map<String, Object> options = new HashMap<>();
-            options.put(EMFJs.OPTION_ROOT_ELEMENT, expectedResponseEClass);
-            options.put(CodecResourceOptions.CODEC_ROOT_OBJECT, expectedResponseEClass);
+            options.put(CodecResource.CODEC_ROOT_TYPE, expectedResponseEClass);
             options.put(EMFUriHandlerConstants.OPTION_HTTP_METHOD, "GET");
             searchOp.getResource().load(options);
             if (!searchOp.getResource().getContents().isEmpty()) {

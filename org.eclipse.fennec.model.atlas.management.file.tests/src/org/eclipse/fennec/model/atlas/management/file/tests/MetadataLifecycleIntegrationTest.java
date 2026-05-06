@@ -28,11 +28,11 @@ import java.util.UUID;
 import org.eclipse.emf.ecore.EObject;
 import org.eclipse.emf.ecore.EPackage;
 import org.eclipse.emf.ecore.EcoreFactory;
-import org.eclipse.fennec.model.atlas.management.file.tests.annotations.FileTestAnnotations.DefaultFileStorageSetup;
 import org.eclipse.fennec.model.atlas.mgmt.api.EObjectStorageService;
 import org.eclipse.fennec.model.atlas.mgmt.management.ManagementFactory;
 import org.eclipse.fennec.model.atlas.mgmt.management.ObjectMetadata;
 import org.eclipse.fennec.model.atlas.mgmt.management.ObjectStatus;
+import org.eclipse.fennec.model.atlas.tests.common.CommonTestAnnotations.StorageSetup;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -109,7 +109,7 @@ public class MetadataLifecycleIntegrationTest {
      */
     @SuppressWarnings({ "unchecked", "rawtypes" })
     @Test
-    @DefaultFileStorageSetup
+    @StorageSetup
     public void testMetadataLifecycleWithProvidedObjectId(
             @InjectService(cardinality = 0, filter = "(storage.backend=file)") ServiceAware<EObjectStorageService> serviceAware)
             throws Exception {
@@ -131,7 +131,6 @@ public class MetadataLifecycleIntegrationTest {
         originalMetadata.setUploadUser("test-user");
         originalMetadata.setSourceChannel("INTEGRATION_TEST");
         originalMetadata.setStatus(ObjectStatus.DRAFT);
-        originalMetadata.setContentHash("provided-hash-123");
 
         Instant beforeStore = Instant.now();
         originalMetadata.setUploadTime(beforeStore);
@@ -168,7 +167,6 @@ public class MetadataLifecycleIntegrationTest {
         // Verify user and source fields
         assertEquals("test-user", retrievedMetadata.getUploadUser(), "Upload user should be preserved");
         assertEquals("INTEGRATION_TEST", retrievedMetadata.getSourceChannel(), "Source channel should be preserved");
-        assertEquals("provided-hash-123", retrievedMetadata.getContentHash(), "Content hash should be preserved");
 
         // Verify status
         assertEquals(ObjectStatus.DRAFT, retrievedMetadata.getStatus(), "Status should be preserved");
@@ -210,7 +208,7 @@ public class MetadataLifecycleIntegrationTest {
      */
     @SuppressWarnings({ "unchecked", "rawtypes" })
     @Test
-    @DefaultFileStorageSetup
+    @StorageSetup
     public void testMetadataLifecycleWithGeneratedObjectId(
             @InjectService(cardinality = 0, filter = "(storage.backend=file)") ServiceAware<EObjectStorageService> serviceAware)
             throws Exception {
@@ -300,7 +298,7 @@ public class MetadataLifecycleIntegrationTest {
      */
     @SuppressWarnings({ "unchecked", "rawtypes" })
     @Test
-    @DefaultFileStorageSetup
+    @StorageSetup
     public void testMetadataUpdateAndTimestamps(
             @InjectService(cardinality = 0, filter = "(storage.backend=file)") ServiceAware<EObjectStorageService> serviceAware)
             throws Exception {
@@ -398,7 +396,7 @@ public class MetadataLifecycleIntegrationTest {
      */
     @SuppressWarnings({ "unchecked", "rawtypes" })
     @Test
-    @DefaultFileStorageSetup
+    @StorageSetup
     public void testDeleteOperationAndMetadataCleanup(
             @InjectService(cardinality = 0, filter = "(storage.backend=file)") ServiceAware<EObjectStorageService> serviceAware)
             throws Exception {

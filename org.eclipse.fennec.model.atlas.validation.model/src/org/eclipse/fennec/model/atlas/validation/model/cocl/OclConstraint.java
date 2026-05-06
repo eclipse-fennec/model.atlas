@@ -41,6 +41,9 @@ import org.osgi.annotation.versioning.ProviderType;
  *   <li>{@link org.eclipse.fennec.model.atlas.validation.model.cocl.OclConstraint#isActive <em>Active</em>}</li>
  *   <li>{@link org.eclipse.fennec.model.atlas.validation.model.cocl.OclConstraint#isOverrides <em>Overrides</em>}</li>
  *   <li>{@link org.eclipse.fennec.model.atlas.validation.model.cocl.OclConstraint#getTargetURIs <em>Target UR Is</em>}</li>
+ *   <li>{@link org.eclipse.fennec.model.atlas.validation.model.cocl.OclConstraint#getOperationName <em>Operation Name</em>}</li>
+ *   <li>{@link org.eclipse.fennec.model.atlas.validation.model.cocl.OclConstraint#getOperationParameterNames <em>Operation Parameter Names</em>}</li>
+ *   <li>{@link org.eclipse.fennec.model.atlas.validation.model.cocl.OclConstraint#getOperationReturnType <em>Operation Return Type</em>}</li>
  * </ul>
  *
  * @see org.eclipse.fennec.model.atlas.validation.model.cocl.COCLPackage#getOclConstraint()
@@ -298,5 +301,73 @@ public interface OclConstraint extends EObject {
 	 * @generated
 	 */
 	EList<String> getTargetURIs();
+
+	/**
+	 * Returns the value of the '<em><b>Operation Name</b></em>' attribute.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * <!-- begin-model-doc -->
+	 * This is relevant only for constraint of type OPERATION, that has to specify the name of the operation here.
+	 * <!-- end-model-doc -->
+	 * @return the value of the '<em>Operation Name</em>' attribute.
+	 * @see #setOperationName(String)
+	 * @see org.eclipse.fennec.model.atlas.validation.model.cocl.COCLPackage#getOclConstraint_OperationName()
+	 * @model
+	 * @generated
+	 */
+	String getOperationName();
+
+	/**
+	 * Sets the value of the '{@link org.eclipse.fennec.model.atlas.validation.model.cocl.OclConstraint#getOperationName <em>Operation Name</em>}' attribute.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @param value the new value of the '<em>Operation Name</em>' attribute.
+	 * @see #getOperationName()
+	 * @generated
+	 */
+	void setOperationName(String value);
+
+	/**
+	 * Returns the value of the '<em><b>Operation Parameter Names</b></em>' attribute list.
+	 * The list contents are of type {@link java.lang.String}.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * <!-- begin-model-doc -->
+	 * This is relevant only for constraint of type OPERATION, that has to specify the list of operation parameter names here.
+	 * <!-- end-model-doc -->
+	 * @return the value of the '<em>Operation Parameter Names</em>' attribute list.
+	 * @see org.eclipse.fennec.model.atlas.validation.model.cocl.COCLPackage#getOclConstraint_OperationParameterNames()
+	 * @model
+	 * @generated
+	 */
+	EList<String> getOperationParameterNames();
+
+	/**
+	 * Returns the value of the '<em><b>Operation Return Type</b></em>' attribute.
+	 * The literals are from the enumeration {@link org.eclipse.fennec.model.atlas.validation.model.cocl.OperationReturnType}.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * <!-- begin-model-doc -->
+	 * This is relevant only for constraint of type OPERATION. We have to know which kind of object is expected as return type to be able to create the right ValidationResult later on.
+	 * <!-- end-model-doc -->
+	 * @return the value of the '<em>Operation Return Type</em>' attribute.
+	 * @see org.eclipse.fennec.model.atlas.validation.model.cocl.OperationReturnType
+	 * @see #setOperationReturnType(OperationReturnType)
+	 * @see org.eclipse.fennec.model.atlas.validation.model.cocl.COCLPackage#getOclConstraint_OperationReturnType()
+	 * @model
+	 * @generated
+	 */
+	OperationReturnType getOperationReturnType();
+
+	/**
+	 * Sets the value of the '{@link org.eclipse.fennec.model.atlas.validation.model.cocl.OclConstraint#getOperationReturnType <em>Operation Return Type</em>}' attribute.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @param value the new value of the '<em>Operation Return Type</em>' attribute.
+	 * @see org.eclipse.fennec.model.atlas.validation.model.cocl.OperationReturnType
+	 * @see #getOperationReturnType()
+	 * @generated
+	 */
+	void setOperationReturnType(OperationReturnType value);
 
 } // OclConstraint

@@ -1,5 +1,6 @@
 # sets the usually required buildpath using the bnd library, you can extend it with the normal -buildpath to your liking
 -library: enableEMF
+-workingset: datagen
 
 # Code generation is disabled to preserve manual operation implementations in
 # CompanyImpl (getTotalEmployees, findEmployeesByNamePrefix). Re-enable temporarily

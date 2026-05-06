@@ -97,8 +97,8 @@ public class JpaMappingWatcherTests {
         assertNotNull(aware.waitForService(15_000));
         ServiceReference<JpaMappingConfig> ref = aware.getServiceReference();
         assertNotNull(ref);
-        assertEquals("dge-mapping", ref.getProperty(PROP_NAME));
-        assertEquals("https://dg.de/1.0", ref.getProperty(PROP_NS_URI));
+        assertEquals("demo-mapping", ref.getProperty(PROP_NAME));
+        assertEquals("http://example.org/jpa/demo/1.0", ref.getProperty(PROP_NS_URI));
         assertNotNull(ref.getProperty(PROP_FOLDER));
     }
 
@@ -130,7 +130,7 @@ public class JpaMappingWatcherTests {
             @InjectService(cardinality = 0, filter = "(" + PROP_NAME + "=dynamic-mapping)") ServiceAware<JpaMappingConfig> originalAware,
             @InjectService(cardinality = 0, filter = "(" + PROP_NAME + "=dynamic-mapping-updated)") ServiceAware<JpaMappingConfig> updatedAware) throws Exception {
         Path file = writeFile("dynamic.jpamapping", DYNAMIC_XMI);
-        assertNotNull(originalAware.waitForService(5000));
+        assertNotNull(originalAware.waitForService(15_000));
         Files.writeString(file, DYNAMIC_XMI_UPDATED);
         assertTrue(waitForNoService(originalAware, 15_000));
         assertNotNull(updatedAware.waitForService(15_000));

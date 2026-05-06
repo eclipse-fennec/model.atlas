@@ -8,6 +8,8 @@ Test-Cases: ${classes;HIERARCHY_INDIRECTLY_ANNOTATED;org.junit.platform.commons.
 -buildpath: \
 	org.osgi.framework;version=latest,\
 	org.eclipse.fennec.data.atlas.mapping.model;version=snapshot,\
+	org.eclipse.fennec.data.atlas.jpa.datasource;version=snapshot,\
+	org.eclipse.fennec.data.atlas.jpa.watcher;version=snapshot,\
 	osgi.cmpn,\
 	org.osgi.test.junit5.cm
 	

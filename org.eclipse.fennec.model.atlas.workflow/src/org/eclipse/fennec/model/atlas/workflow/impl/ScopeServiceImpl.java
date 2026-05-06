@@ -21,6 +21,7 @@ import org.eclipse.emf.ecore.EObject;
 import org.eclipse.emf.ecore.EPackage;
 import org.eclipse.fennec.model.atlas.mgmt.management.ObjectMetadata;
 import org.eclipse.fennec.model.atlas.wf.workflowapi.RegistryService;
+import org.eclipse.fennec.model.atlas.wf.workflowapi.RegistryType;
 import org.eclipse.fennec.model.atlas.wf.workflowapi.Scope;
 import org.eclipse.fennec.model.atlas.wf.workflowapi.ScopeService;
 import org.eclipse.fennec.model.atlas.wf.workflowapi.WorkflowApiFactory;
@@ -105,7 +106,7 @@ public class ScopeServiceImpl<T extends EObject> implements ScopeService<T> {
 			//          if parent scope is atlas and registry is NOT a schema registry -> no need to look into parent
 			//          if parent scope is not set -> this cannot happen because the default is atlas
 			ObjectMetadata parentScopeMetadata = null;
-			if(WorkflowConstants.ATLAS_SCOPE_NAME.equals(config.scope_parent()) && getRegistryService(registry).getRegistry().isSchemaRegistry()) {
+			if(WorkflowConstants.ATLAS_SCOPE_NAME.equals(config.scope_parent()) && RegistryType.SCHEMA == getRegistryService(registry).getRegistry().getType()) {
 				parentScopeMetadata = atlasSchemaRegistryService.getMetadataFromFinalStage(config.scope_parent(), objectId);
 			} else if (!WorkflowConstants.ATLAS_SCOPE_NAME.equals(config.scope_parent())) {
 				parentScopeMetadata = getRegistryService(registry).getMetadataFromFinalStage(config.scope_parent(), objectId);
@@ -134,7 +135,7 @@ public class ScopeServiceImpl<T extends EObject> implements ScopeService<T> {
 			//          if parent scope is atlas and registry is NOT a schema registry -> no need to look into parent
 			//          if parent scope is not set -> this cannot happen because the default is atlas
 			ObjectMetadata parentScopeMetadata = null;
-			if(WorkflowConstants.ATLAS_SCOPE_NAME.equals(config.scope_parent()) && getRegistryService(registry).getRegistry().isSchemaRegistry()) {
+			if(WorkflowConstants.ATLAS_SCOPE_NAME.equals(config.scope_parent()) && RegistryType.SCHEMA == getRegistryService(registry).getRegistry().getType()) {
 				parentScopeMetadata = atlasSchemaRegistryService.getMetadataFromFinalStage(config.scope_parent(), objectId);
 			} else if (!WorkflowConstants.ATLAS_SCOPE_NAME.equals(config.scope_parent())) {
 				parentScopeMetadata = getRegistryService(registry).getMetadataFromFinalStage(config.scope_parent(), objectId);
@@ -224,7 +225,7 @@ public class ScopeServiceImpl<T extends EObject> implements ScopeService<T> {
 		//        if parent scope is NOT atlas -> look into the parent registry (must have the same name as this registry)
 		//        if parent scope is atlas and registry is NOT a schema registry -> no need to look into parent
 		//        if parent scope is not set -> this cannot happen because the default is atlas
-		if(WorkflowConstants.ATLAS_SCOPE_NAME.equals(config.scope_parent()) && getRegistryService(registry).getRegistry().isSchemaRegistry()) {
+		if(WorkflowConstants.ATLAS_SCOPE_NAME.equals(config.scope_parent()) && RegistryType.SCHEMA == getRegistryService(registry).getRegistry().getType()) {
 			scopedMetadata.addAll(atlasSchemaRegistryService.listInFinalStage(config.scope_parent()));
 		} else if (!WorkflowConstants.ATLAS_SCOPE_NAME.equals(config.scope_parent())) {
 			List<ObjectMetadata> parentMetadata = getRegistryService(registry).listInFinalStage(config.scope_parent());
@@ -246,7 +247,7 @@ public class ScopeServiceImpl<T extends EObject> implements ScopeService<T> {
 		//      if parent scope is NOT atlas -> look into the parent registry (must have the same name as this registry)
 		//      if parent scope is atlas and registry is NOT a schema registry -> no need to look into parent
 		//      if parent scope is not set -> this cannot happen because the default is atlas
-		if(WorkflowConstants.ATLAS_SCOPE_NAME.equals(config.scope_parent()) && getRegistryService(registry).getRegistry().isSchemaRegistry()) {
+		if(WorkflowConstants.ATLAS_SCOPE_NAME.equals(config.scope_parent()) && RegistryType.SCHEMA == getRegistryService(registry).getRegistry().getType()) {
 			scopedMetadata.addAll(atlasSchemaRegistryService.listAll(config.scope_parent()));
 		} else if (!WorkflowConstants.ATLAS_SCOPE_NAME.equals(config.scope_parent())) {
 			List<ObjectMetadata> parentMetadata = getRegistryService(registry).listAll(config.scope_parent());

@@ -1,4 +1,4 @@
-Bundle-Version: 1.0.0.SNAPSHOT
+-library: enableEMF
 
 -buildpath: \
 	org.osgi.service.cm;version=latest,\

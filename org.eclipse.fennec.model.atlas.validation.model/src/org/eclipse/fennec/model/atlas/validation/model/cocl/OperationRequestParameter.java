@@ -30,6 +30,7 @@ import org.osgi.annotation.versioning.ProviderType;
  * The following features are supported:
  * </p>
  * <ul>
+ *   <li>{@link org.eclipse.fennec.model.atlas.validation.model.cocl.OperationRequestParameter#getParameterName <em>Parameter Name</em>}</li>
  *   <li>{@link org.eclipse.fennec.model.atlas.validation.model.cocl.OperationRequestParameter#getParameter <em>Parameter</em>}</li>
  *   <li>{@link org.eclipse.fennec.model.atlas.validation.model.cocl.OperationRequestParameter#isIsNull <em>Is Null</em>}</li>
  *   <li>{@link org.eclipse.fennec.model.atlas.validation.model.cocl.OperationRequestParameter#getJavaValue <em>Java Value</em>}</li>
@@ -43,13 +44,41 @@ import org.osgi.annotation.versioning.ProviderType;
 @ProviderType
 public interface OperationRequestParameter extends EObject {
 	/**
+	 * Returns the value of the '<em><b>Parameter Name</b></em>' attribute.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * <!-- begin-model-doc -->
+	 * When requesting an OperationValidation using a C-OCL id, the client has to provide the operation parameter names, which then will be used to filter the right OPERATION Constraint from the C-OCL ConstraintSet.
+	 * <!-- end-model-doc -->
+	 * @return the value of the '<em>Parameter Name</em>' attribute.
+	 * @see #setParameterName(String)
+	 * @see org.eclipse.fennec.model.atlas.validation.model.cocl.COCLPackage#getOperationRequestParameter_ParameterName()
+	 * @model
+	 * @generated
+	 */
+	String getParameterName();
+
+	/**
+	 * Sets the value of the '{@link org.eclipse.fennec.model.atlas.validation.model.cocl.OperationRequestParameter#getParameterName <em>Parameter Name</em>}' attribute.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @param value the new value of the '<em>Parameter Name</em>' attribute.
+	 * @see #getParameterName()
+	 * @generated
+	 */
+	void setParameterName(String value);
+
+	/**
 	 * Returns the value of the '<em><b>Parameter</b></em>' reference.
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
+	 * <!-- begin-model-doc -->
+	 * EParameter . This has to be provided by the client when no C-OCL id is provided, but an EOperation defined in the model has to be invoked.
+	 * <!-- end-model-doc -->
 	 * @return the value of the '<em>Parameter</em>' reference.
 	 * @see #setParameter(EParameter)
 	 * @see org.eclipse.fennec.model.atlas.validation.model.cocl.COCLPackage#getOperationRequestParameter_Parameter()
-	 * @model required="true"
+	 * @model
 	 * @generated
 	 */
 	EParameter getParameter();

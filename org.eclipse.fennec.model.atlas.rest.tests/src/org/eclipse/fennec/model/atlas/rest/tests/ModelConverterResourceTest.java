@@ -13,34 +13,19 @@
  */
 package org.eclipse.fennec.model.atlas.rest.tests;
 
-import static java.util.Objects.nonNull;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.IOException;
-import java.util.concurrent.TimeUnit;
 
 import org.eclipse.emf.ecore.EPackage;
-import org.eclipse.emf.ecore.resource.ResourceSet;
-import org.eclipse.fennec.emf.osgi.annotation.require.RequireEMF;
-import org.eclipse.fennec.model.atlas.rest.tests.helper.ResourceAware;
 import org.eclipse.fennec.model.atlas.rest.tests.helper.TestHelper;
-import org.gecko.emf.rest.annotations.RequireEMFMessageBodyReaderWriter;
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
 import org.osgi.framework.BundleContext;
-import org.osgi.service.cm.annotations.RequireConfigurationAdmin;
-import org.osgi.service.jakartars.whiteboard.annotations.RequireJakartarsWhiteboard;
 import org.osgi.test.common.annotation.InjectBundleContext;
-import org.osgi.test.common.annotation.InjectService;
-import org.osgi.test.junit5.context.BundleContextExtension;
-import org.osgi.test.junit5.service.ServiceExtension;
 
-import jakarta.ws.rs.client.Client;
-import jakarta.ws.rs.client.ClientBuilder;
 import jakarta.ws.rs.client.Entity;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
@@ -62,50 +47,19 @@ import jakarta.ws.rs.core.Response;
  * @author Data In Motion
  * @since 1.0.0
  */
-@RequireEMF
-@RequireEMFMessageBodyReaderWriter
-@RequireJakartarsWhiteboard
-@RequireConfigurationAdmin
-@ExtendWith(BundleContextExtension.class)
-@ExtendWith(ServiceExtension.class)
-public class ModelConverterResourceTest {
 
-    private static final String BASE_URL = "http://localhost:8185/rest/convert";
-    private static final int TIMEOUT_SECONDS = 15;
+public class ModelConverterResourceTest extends AbstractRestTest{
 
-    @InjectService
-    ClientBuilder clientBuilder;
+    private static final String CONVERT_BASE_URL = BASE_URL.concat("/convert");
 
-    @InjectService(filter = "(emf.name=workflowapi)")
-    ResourceSet resourceSet;
-
-    private Client restClient;
 
     @BeforeEach
     public void setup(@InjectBundleContext BundleContext context) throws Exception {
-        // Setup REST client
-        restClient = clientBuilder.build();
-
-        TestHelper.ensureXMIFactory(resourceSet);
-
-        // Wait for the ModelConverterResource to be registered in Jakarta REST runtime
-        ResourceAware resourceAware = ResourceAware.create(context, "ModelConverterResource");
-        boolean resourceReady = resourceAware.waitForResource(TIMEOUT_SECONDS, TimeUnit.SECONDS);
-
-        // Small delay to allow service registration to propagate
-        Thread.sleep(200);
-
-        assertTrue(resourceReady, "ModelConverterResource should be registered within " + TIMEOUT_SECONDS + " seconds. "
-                + "Check that the resource is properly configured and the Jakarta REST runtime is working.");
+    	super.setup(context);
+    	ensureResourceAvailability(context);
     }
 
-    @AfterEach
-    public void teardown() {
-        if (nonNull(restClient)) {
-            restClient.close();
-            restClient = null;
-        }
-    }
+
 
     // ========== JSON to XML Conversion Tests ==========
 
@@ -116,7 +70,7 @@ public class ModelConverterResourceTest {
         String jsonEPackage = createJsonEPackage(nsUri, "JsonToXmlPackage", "j2x");
 
         // When: POST with JSON content type and Accept XML
-        Response response = restClient.target(BASE_URL).request(MediaType.APPLICATION_XML)
+        Response response = restClient.target(CONVERT_BASE_URL).request(MediaType.APPLICATION_XML)
                 .post(Entity.json(jsonEPackage));
 
         // Then: Should return 200 OK with XML content
@@ -138,7 +92,7 @@ public class ModelConverterResourceTest {
         String xmiContent = TestHelper.serializeToXMI(testPackage, resourceSet);
 
         // When: POST with XMI content type and Accept JSON
-        Response response = restClient.target(BASE_URL).request(MediaType.APPLICATION_JSON)
+        Response response = restClient.target(CONVERT_BASE_URL).request(MediaType.APPLICATION_JSON)
                 .post(Entity.entity(xmiContent, "application/xmi"));
 
         // Then: Should return 200 OK with JSON content
@@ -160,7 +114,7 @@ public class ModelConverterResourceTest {
         String xmiContent = TestHelper.serializeToXMI(testPackage, resourceSet);
 
         // When: POST with XMI content type and Accept JSON
-        Response response = restClient.target(BASE_URL).request(MediaType.APPLICATION_JSON)
+        Response response = restClient.target(CONVERT_BASE_URL).request(MediaType.APPLICATION_JSON)
                 .post(Entity.entity(xmiContent, "application/xmi"));
 
         // Then: Should return 200 OK
@@ -180,7 +134,7 @@ public class ModelConverterResourceTest {
         String jsonEPackage = createJsonEPackage(nsUri, "JsonToXmiPackage", "j2xmi");
 
         // When: POST with JSON content type and Accept XMI
-        Response response = restClient.target(BASE_URL).request("application/xmi").post(Entity.json(jsonEPackage));
+        Response response = restClient.target(CONVERT_BASE_URL).request("application/xmi").post(Entity.json(jsonEPackage));
 
         // Then: Should return 200 OK
         assertEquals(200, response.getStatus(), "Should return HTTP 200 OK");
@@ -201,7 +155,7 @@ public class ModelConverterResourceTest {
         String xmiContent = TestHelper.serializeToXMI(complexPackage, resourceSet);
 
         // When: Convert from XMI to JSON
-        Response response = restClient.target(BASE_URL).request(MediaType.APPLICATION_JSON)
+        Response response = restClient.target(CONVERT_BASE_URL).request(MediaType.APPLICATION_JSON)
                 .post(Entity.entity(xmiContent, "application/xmi"));
 
         // Then: Should preserve the package structure
@@ -222,7 +176,7 @@ public class ModelConverterResourceTest {
         String jsonEPackage = createJsonEPackage(nsUri, "UnsupportedPackage", "us");
 
         // When: POST with unsupported Accept header
-        Response response = restClient.target(BASE_URL).request("application/unsupported-type")
+        Response response = restClient.target(CONVERT_BASE_URL).request("application/unsupported-type")
                 .post(Entity.json(jsonEPackage));
 
         // Then: Should return 415 Unsupported Media Type
@@ -238,7 +192,7 @@ public class ModelConverterResourceTest {
         String jsonEPackage = createJsonEPackage(nsUri, "JsonToJsonPackage", "j2j");
 
         // When: POST with JSON content type and Accept JSON (same format)
-        Response response = restClient.target(BASE_URL).request(MediaType.APPLICATION_JSON)
+        Response response = restClient.target(CONVERT_BASE_URL).request(MediaType.APPLICATION_JSON)
                 .post(Entity.json(jsonEPackage));
 
         // Then: Should return 200 OK
@@ -259,7 +213,7 @@ public class ModelConverterResourceTest {
         String xmiContent = TestHelper.serializeToXMI(testPackage, resourceSet);
 
         // When: POST with XMI content type and wildcard Accept header
-        Response response = restClient.target(BASE_URL).request(MediaType.WILDCARD)
+        Response response = restClient.target(CONVERT_BASE_URL).request(MediaType.WILDCARD)
                 .post(Entity.entity(xmiContent, "application/xmi"));
 
         // Then: Should return 200 OK (defaults to JSON)
@@ -278,7 +232,7 @@ public class ModelConverterResourceTest {
         String jsonEPackage = createJsonEPackage(nsUri, "ContentTypePackage", "ct");
 
         // When: POST requesting XML
-        Response response = restClient.target(BASE_URL).request(MediaType.APPLICATION_XML)
+        Response response = restClient.target(CONVERT_BASE_URL).request(MediaType.APPLICATION_XML)
                 .post(Entity.json(jsonEPackage));
 
         // Then: Response Content-Type should be XML
@@ -296,4 +250,13 @@ public class ModelConverterResourceTest {
         return String.format("{\"eClass\":\"http://www.eclipse.org/emf/2002/Ecore#//EPackage\","
                 + "\"name\":\"%s\",\"nsURI\":\"%s\",\"nsPrefix\":\"%s\"}", name, nsUri, nsPrefix);
     }
+
+	/* 
+	 * (non-Javadoc)
+	 * @see org.eclipse.fennec.model.atlas.rest.tests.AbstractRestTest#getResourceName()
+	 */
+	@Override
+	String getResourceName() {
+		return "ModelConverterResource";
+	}
 }

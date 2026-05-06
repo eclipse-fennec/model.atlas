@@ -20,6 +20,13 @@ jobs:
    build:
       name: Gradle Build
       runs-on: ubuntu-latest
+      env:
+        CS_PASSWORD: ${{secrets.CENTRAL_SONATYPE_TOKEN_PASSWORD}}
+        CS_USERNAME: ${{secrets.CENTRAL_SONATYPE_TOKEN_USERNAME}}
+        GPG_PASSPHRASE: ${{secrets.GPG_PASSPHRASE}}
+        GPG_KEY_ID: ${{secrets.GPG_KEY_ID}}
+        GPG_PRIVATE_KEY: ${{secrets.GPG_PRIVATE_KEY}}
+        DO_RELEASE: ${{ github.ref == 'refs/heads/main' && 'true' || 'false' }}
       steps:
       -  name: Git Checkout
          uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 #v5.0.0
@@ -39,7 +46,7 @@ jobs:
       -  name: Gradle version
          run: ./gradlew --no-daemon --version
       -  name: Build with Gradle
-         run: ./gradlew build --info --stacktrace
+         run: ./gradlew clean build --info --stacktrace
       -  name: Resolve ModelAtlas bndrun
          run: ./gradlew org.eclipse.fennec.model.atlas.runtime:resolve.modelatlas.runtime_base --info
       -  name: Export ModelAtlas Apicurio bndrun

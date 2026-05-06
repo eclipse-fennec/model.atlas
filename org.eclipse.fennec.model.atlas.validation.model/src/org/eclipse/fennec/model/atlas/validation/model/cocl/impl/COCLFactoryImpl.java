@@ -94,6 +94,8 @@ public class COCLFactoryImpl extends EFactoryImpl implements COCLFactory {
 				return createSeverityFromString(eDataType, initialValue);
 			case COCLPackage.OCL_ROLE:
 				return createOclRoleFromString(eDataType, initialValue);
+			case COCLPackage.OPERATION_RETURN_TYPE:
+				return createOperationReturnTypeFromString(eDataType, initialValue);
 			default:
 				throw new IllegalArgumentException("The datatype '" + eDataType.getName() + "' is not a valid classifier");
 		}
@@ -111,6 +113,8 @@ public class COCLFactoryImpl extends EFactoryImpl implements COCLFactory {
 				return convertSeverityToString(eDataType, instanceValue);
 			case COCLPackage.OCL_ROLE:
 				return convertOclRoleToString(eDataType, instanceValue);
+			case COCLPackage.OPERATION_RETURN_TYPE:
+				return convertOperationReturnTypeToString(eDataType, instanceValue);
 			default:
 				throw new IllegalArgumentException("The datatype '" + eDataType.getName() + "' is not a valid classifier");
 		}
@@ -263,6 +267,26 @@ public class COCLFactoryImpl extends EFactoryImpl implements COCLFactory {
 	 * @generated
 	 */
 	public String convertOclRoleToString(EDataType eDataType, Object instanceValue) {
+		return instanceValue == null ? null : instanceValue.toString();
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	public OperationReturnType createOperationReturnTypeFromString(EDataType eDataType, String initialValue) {
+		OperationReturnType result = OperationReturnType.get(initialValue);
+		if (result == null) throw new IllegalArgumentException("The value '" + initialValue + "' is not a valid enumerator of '" + eDataType.getName() + "'");
+		return result;
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	public String convertOperationReturnTypeToString(EDataType eDataType, Object instanceValue) {
 		return instanceValue == null ? null : instanceValue.toString();
 	}
 

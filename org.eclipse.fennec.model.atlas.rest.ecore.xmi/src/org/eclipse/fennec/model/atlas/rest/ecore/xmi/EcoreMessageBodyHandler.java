@@ -27,8 +27,10 @@ import java.util.logging.Logger;
 import org.eclipse.emf.common.util.URI;
 import org.eclipse.emf.ecore.EObject;
 import org.eclipse.emf.ecore.EPackage;
+import org.eclipse.emf.ecore.EcorePackage;
 import org.eclipse.emf.ecore.resource.Resource;
 import org.eclipse.emf.ecore.resource.ResourceSet;
+import org.eclipse.emf.ecore.util.EcoreUtil;
 import org.eclipse.emf.ecore.xmi.XMLResource;
 import org.osgi.service.component.ComponentServiceObjects;
 import org.osgi.service.component.annotations.Component;
@@ -143,7 +145,6 @@ public class EcoreMessageBodyHandler implements MessageBodyReader<EPackage>, Mes
 
             EObject rootObject = resource.getContents().get(0);
             logger.log(Level.INFO, "Successfully loaded EObject: {0}", rootObject.getClass().getSimpleName());
-
             return (EPackage) rootObject;
         } finally {
             resourceSetFactory.ungetService(resourceSet);
@@ -164,22 +165,20 @@ public class EcoreMessageBodyHandler implements MessageBodyReader<EPackage>, Mes
 
         logger.log(Level.INFO, "Writing EObject to XMI: type={0}, mediaType={1}",
                 new Object[] { eObject.getClass().getSimpleName(), mediaType });
-
         ResourceSet resourceSet = resourceSetFactory.getService();
         try {
 
             // Use ABSOLUTE URI for consistent behavior
-            String fileName = eObject.getName() + (isXMI(mediaType) ? ".xmi" : ".xml");
+            String fileName = eObject.getName() + (isXMI(mediaType) ? ".ecore" : ".xml");
             httpHeaders.put(HttpHeaders.CONTENT_DISPOSITION, List.of("attachment; filename=" + fileName));
             URI absoluteURI = URI.createURI(fileName);
-            Resource resource = resourceSet.createResource(absoluteURI);
+            Resource resource = resourceSet.createResource(absoluteURI, EcorePackage.eCONTENT_TYPE);
             resource.getContents().add(eObject);
-
             // Configure XMI saving options
             Map<Object, Object> options = new HashMap<>();
-            options.put(XMLResource.OPTION_ENCODING, "UTF-8");
-            options.put(XMLResource.OPTION_XML_VERSION, "1.0");
-            options.put(XMLResource.OPTION_DECLARE_XML, Boolean.TRUE);
+//            options.put(XMLResource.OPTION_ENCODING, "UTF-8");
+//            options.put(XMLResource.OPTION_XML_VERSION, "1.0");
+//            options.put(XMLResource.OPTION_DECLARE_XML, Boolean.TRUE);
 
             // Save to output stream
             resource.save(entityStream, options);
