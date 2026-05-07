@@ -6,7 +6,7 @@
     targetModelNsUri="http://example.org/jpa/demo/1.0">
   <dataSource
       driverClass="org.h2.Driver"
-      jdbcUrl="jdbc:h2:file:/home/ilenia/tests/jpa/demodb;DATABASE_TO_UPPER=FALSE"
+      jdbcUrl="jdbc:h2:mem:demodb;DATABASE_TO_UPPER=FALSE"
       username="sa"
       passwordRef="DB_PASSWORD"
       poolSize="5"
