@@ -110,6 +110,7 @@ public class DataFolderWatcherTests {
         Thread.sleep(2000);
         assertEquals(countBefore, aware.getServices().size());
     }
+   
 
     @Test
     public void testNoJpamappingInFolder_pipelineNotStarted(@TempDir Path tempDir,
@@ -142,7 +143,8 @@ public class DataFolderWatcherTests {
 
         assertTrue(aware.isEmpty());
 
-        Path file = tempDir.resolve("unit.jpamapping");
+        Files.createDirectories(tempDir.resolve("mapping"));
+        Path file = tempDir.resolve("mapping").resolve("unit.jpamapping");
         Files.writeString(file, JPAMAPPING_WATCHER_TEST);
         createdFiles.add(file);
 

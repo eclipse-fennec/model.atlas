@@ -27,7 +27,15 @@
       "mcp__osgi-mcp-server__document_chunk_text_search",
       "Bash(unzip -p /opt/git/model.atlas/org.eclipse.fennec.data.atlas.mapping.model/generated/org.eclipse.fennec.data.atlas.mapping.model.jar META-INF/MANIFEST.MF)",
       "Bash(unzip -p /opt/git/model.atlas/org.eclipse.fennec.data.atlas.jpa.rest/generated/org.eclipse.fennec.data.atlas.jpa.rest.jar META-INF/MANIFEST.MF)",
-      "Bash(unzip *)"
+      "Bash(unzip *)",
+      "Bash(xargs ls -la)",
+      "Bash(xargs -I{} sh -c 'jar tf {} 2>/dev/null | grep -q \"SchemaManager\\\\|SchemaGeneration\\\\|DynamicSchema\" && echo {}')",
+      "Read(//tmp/**)",
+      "Bash(jar xf *)",
+      "Bash(xargs -I{} sh -c 'jar tf {} 2>/dev/null | grep -q \"FileSystemWatcher\" && echo {}')",
+      "Bash(gh api *)",
+      "Bash(xargs -I{} sh -c 'jar tf \"{}\" 2>/dev/null | grep -l \"DynamicSchemaManager\" && echo \"{}\"')",
+      "Bash(xargs -I{} basename {})"
     ],
     "deny": [],
     "ask": []

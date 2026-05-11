@@ -86,6 +86,7 @@ public interface TableMapping extends EObject {
 
 	/**
 	 * Returns the value of the '<em><b>Schema</b></em>' attribute.
+	 * The default value is <code>"PUBLIC"</code>.
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
 	 * <!-- begin-model-doc -->
@@ -94,7 +95,7 @@ public interface TableMapping extends EObject {
 	 * @return the value of the '<em>Schema</em>' attribute.
 	 * @see #setSchema(String)
 	 * @see org.eclipse.fennec.data.atlas.mapping.model.jpamapping.JPAMappingPackage#getTableMapping_Schema()
-	 * @model
+	 * @model default="PUBLIC"
 	 * @generated
 	 */
 	String getSchema();

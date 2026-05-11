@@ -33,14 +33,18 @@ import org.osgi.test.common.annotation.config.WithFactoryConfiguration;
 public class TestAnnotations {
 	
 	public static final String DATA_FOLDER_WATCHER_PID = "DataFolderWatcher";
-	public static final String JPA_MAPPING_PID = "JpaMappingFileWatcher";
+	public static final String JPA_MAPPING_WATCHER_PID = "JpaMappingFileWatcher";
+	public static final String JPA_CSV_WATCHER_PID = "fennec.jpa.CsvDataLoader";
 	private static final String PROP_DATA_FOLDER = "data-folder";
-	
-	@WithFactoryConfiguration(factoryPid = JPA_MAPPING_PID, name = "test", location = "?", properties = {
+	private static final String PROP_MAPPING_FOLDER = "mapping-folder";
+	public static final String JPA_MAPPING_NAME = "demo-mapping";
+	public static final String TEMP_DIR = "tempDir";
+
+	@WithFactoryConfiguration(factoryPid = JPA_MAPPING_WATCHER_PID, name = "test", location = "?", properties = {
 			@Property(key = "io.fs.watcher.path", value = "%s/", templateArguments = {
-					@TemplateArgument(source = ValueSource.SystemProperty, value = PROP_DATA_FOLDER) }),
+					@TemplateArgument(source = ValueSource.SystemProperty, value = PROP_MAPPING_FOLDER) }),
 			@Property(key = "io.fs.watcher.pattern", value = ".*\\.jpamapping"),
-			@Property(key = "unitName", value = "test")})
+			@Property(key = "unitName", value = "demo-mapping")})
 	@Retention(RetentionPolicy.RUNTIME)
 	public @interface JpaMappingWatcherConfig {
 	}
@@ -51,5 +55,14 @@ public class TestAnnotations {
 	@Retention(RetentionPolicy.RUNTIME)
 	public @interface DataFolderWatcherConfig {
 	}
+	
+	@WithFactoryConfiguration(factoryPid = DATA_FOLDER_WATCHER_PID, name = "temp", location = "?", properties = {
+			@Property(key = "io.fs.watcher.path", value = "%s/", templateArguments = {
+					@TemplateArgument(source = ValueSource.SystemProperty, value = TEMP_DIR) })})
+	@Retention(RetentionPolicy.RUNTIME)
+	public @interface TempDataFolderWatcherConfig {
+	}
+	
+
 
 }

@@ -57,7 +57,7 @@ import org.osgi.service.component.annotations.Reference;
  */
 @RequireConfigurationAdmin
 @Component(name = DataFolderWatcher.PID, configurationPolicy = ConfigurationPolicy.REQUIRE)
-@FileSystemWatcherListenerProperties(recursive = false)
+@FileSystemWatcherListenerProperties(pattern = ".*.jpamapping", recursive = true)
 public class DataFolderWatcher implements FileSystemWatcherListener {
 
     private static final Logger LOG = System.getLogger(DataFolderWatcher.class.getName());
@@ -67,9 +67,10 @@ public class DataFolderWatcher implements FileSystemWatcherListener {
     // PIDs of the sub-components we configure dynamically
     private static final String EMF_FILE_WATCHER_PID = "EMFFileWatcher";
     private static final String JPA_MAPPING_FILE_WATCHER_PID = "JpaMappingFileWatcher";
-    private static final String CSV_IMPORTER_PID = "org.eclipse.daanse.jdbc.db.importer.csv.CsvDataImporter";
+    private static final String CSV_IMPORTER_PID = JpaCsvDataImporter.PID;
 
     private static final String PROP_DATASOURCE_TARGET = "dataSource.target";
+    private static final String PROP_ENTITY_MANAGER_FACTORY_TARGET = "entityManagerFactory.target";
 
     @Reference
     private ConfigurationAdmin configAdmin;
@@ -80,26 +81,26 @@ public class DataFolderWatcher implements FileSystemWatcherListener {
     private Configuration emfWatcherConfig;
     private Configuration jpaMappingWatcherConfig;
     private Configuration csvImporterConfig;
-    private Configuration jpaModelSetupConfig;
+    private Configuration jpaPersistenceUnitConfig;
 
     @Deactivate
     void deactivate() {
         deleteConfig(emfWatcherConfig);
         deleteConfig(jpaMappingWatcherConfig);
         deleteConfig(csvImporterConfig);
-        deleteConfig(jpaModelSetupConfig);
+        deleteConfig(jpaPersistenceUnitConfig);
         emfWatcherConfig = null;
         jpaMappingWatcherConfig = null;
         csvImporterConfig = null;
-        jpaModelSetupConfig = null;
+        jpaPersistenceUnitConfig = null;
     }
 
     @Override
     public void handleBasePath(Path basePath) {
         this.basePath = basePath;
-        String name = readUnitNameFromFolder(basePath);
+        String name = readUnitNameFromFolder(basePath.resolve("mapping"));
         if (name == null) {
-            LOG.log(Level.INFO, "No .jpamapping file in {0} — pipeline will start when one is added", basePath);
+            LOG.log(Level.INFO, "No .jpamapping file in {0}/mapping — pipeline will start when one is added", basePath);
             return;
         }
         setupPipeline(name);
@@ -126,34 +127,38 @@ public class DataFolderWatcher implements FileSystemWatcherListener {
     private void setupPipeline(String name) {
         unitName = name;
         matcherKey = UUID.randomUUID().toString();
-        String pathStr = basePath.toAbsolutePath().toString();
+        String mappingPath = basePath.resolve("mapping").toAbsolutePath().toString();
+        String dataPath    = basePath.resolve("data").toAbsolutePath().toString();
+
         try {
             emfWatcherConfig = configAdmin.getFactoryConfiguration(EMF_FILE_WATCHER_PID, matcherKey, "?");
             Dictionary<String, Object> emfProps = new Hashtable<>();
-            emfProps.put(FileSystemWatcherWhiteboardConstants.FILESYSTEM_WATCHER_PATH, pathStr);
+            emfProps.put(FileSystemWatcherWhiteboardConstants.FILESYSTEM_WATCHER_PATH, mappingPath);
             emfWatcherConfig.update(emfProps);
-
+            
             jpaMappingWatcherConfig = configAdmin.getFactoryConfiguration(JPA_MAPPING_FILE_WATCHER_PID, matcherKey, "?");
             Dictionary<String, Object> jpaProps = new Hashtable<>();
-            jpaProps.put(FileSystemWatcherWhiteboardConstants.FILESYSTEM_WATCHER_PATH, pathStr);
+            jpaProps.put(FileSystemWatcherWhiteboardConstants.FILESYSTEM_WATCHER_PATH, mappingPath);
             jpaProps.put("unitName", unitName);
             jpaMappingWatcherConfig.update(jpaProps);
 
             csvImporterConfig = configAdmin.getFactoryConfiguration(CSV_IMPORTER_PID, matcherKey, "?");
             Dictionary<String, Object> csvProps = new Hashtable<>();
-            csvProps.put(FileSystemWatcherWhiteboardConstants.FILESYSTEM_WATCHER_PATH, pathStr);
+            csvProps.put(FileSystemWatcherWhiteboardConstants.FILESYSTEM_WATCHER_PATH, dataPath);
             csvProps.put(PROP_DATASOURCE_TARGET, "(unitName=" + unitName + ")");
-            csvImporterConfig.update(csvProps);
+            csvProps.put(PROP_ENTITY_MANAGER_FACTORY_TARGET, "(osgi.unit.name=" + unitName + ")");
+            csvImporterConfig.update(csvProps);     
+           
 
-            jpaModelSetupConfig = configAdmin.getFactoryConfiguration(JpaModelSetup.PID, matcherKey, "?");
+            jpaPersistenceUnitConfig = configAdmin.getFactoryConfiguration(JpaPersistenceUnitConfigurator.PID, matcherKey, "?");
             Dictionary<String, Object> setupProps = new Hashtable<>();
             setupProps.put("unitName", unitName);
             setupProps.put("jpaMappingConfig.target", "(unitName=" + unitName + ")");
-            jpaModelSetupConfig.update(setupProps);
+            jpaPersistenceUnitConfig.update(setupProps);
 
-            LOG.log(Level.INFO, "DataFolderWatcher activated for unit ''{0}'' at {1}", unitName, pathStr);
+            LOG.log(Level.INFO, "DataFolderWatcher activated for unit ''{0}'' at {1}", unitName, basePath.toAbsolutePath().toString());
         } catch (IOException e) {
-            LOG.log(Level.ERROR, "Failed to create sub-component configs for folder " + basePath, e);
+            LOG.log(Level.ERROR, "Failed to create sub-component configs for folder " + basePath.toAbsolutePath().toString(), e);
         }
     }
 

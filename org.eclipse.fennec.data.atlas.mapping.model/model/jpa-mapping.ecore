@@ -88,7 +88,8 @@
         <details key="documentation" value="Name of the database table to which the EMF class is mapped."/>
       </eAnnotations>
     </eStructuralFeatures>
-    <eStructuralFeatures xsi:type="ecore:EAttribute" name="schema" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString">
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="schema" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"
+        defaultValueLiteral="PUBLIC">
       <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
         <details key="documentation" value="Optional database schema that qualifies the table name (e.g. 'public' in PostgreSQL). Leave empty to use the default schema."/>
       </eAnnotations>

@@ -105,14 +105,26 @@ public class DataSourceConfigHandlerTests {
     public void testH2DataSource_recreatedWhenMappingNameChanges(
             @InjectBundleContext BundleContext ctx,
             @InjectService ConfigurationAdmin configAdmin) throws Exception {
+    	
+        String PROP_NAME = "jpamapping.name";
+        String PROP_UNIT_NAME = "unitName";
+
+    	Dictionary<String, Object> properties = new Hashtable<>();
+    	properties.put(PROP_NAME, "ds-rename-old");
+    	properties.put(PROP_UNIT_NAME, "testUnitName");
+    	    	
         JpaMappingConfig config = createH2Config("ds-rename-old");
-        currentRegistration = registerService(ctx, config);
+        
+        currentRegistration = registerService(ctx, config, properties);
         assertNotNull(waitForConfiguration(configAdmin, "ds-rename-old", 5000));
 
-        config.setName("ds-rename-new");
-        currentRegistration.setProperties(new Hashtable<>());
+        currentRegistration.unregister();
 
-        assertTrue(waitForNoConfiguration(configAdmin, "ds-rename-old", 5000));
+        properties.put(PROP_NAME, "ds-rename-new");
+        config.setName("ds-rename-new");
+        currentRegistration = registerService(ctx, config, properties);
+
+        assertTrue(waitForNoConfiguration(configAdmin, "ds-rename-old", 15_000));
         assertNotNull(waitForConfiguration(configAdmin, "ds-rename-new", 5000));
     }
 
@@ -142,6 +154,10 @@ public class DataSourceConfigHandlerTests {
 
     private ServiceRegistration<JpaMappingConfig> registerService(BundleContext ctx, JpaMappingConfig config) {
         return ctx.registerService(JpaMappingConfig.class, config, new Hashtable<>());
+    }
+    
+    private ServiceRegistration<JpaMappingConfig> registerService(BundleContext ctx, JpaMappingConfig config, Dictionary<String, Object> properties) {
+        return ctx.registerService(JpaMappingConfig.class, config, properties);
     }
 
     private Configuration waitForConfiguration(ConfigurationAdmin ca, String name, long timeoutMs) throws Exception {

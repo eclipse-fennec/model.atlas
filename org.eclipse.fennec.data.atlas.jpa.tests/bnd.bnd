@@ -11,7 +11,9 @@ Test-Cases: ${classes;HIERARCHY_INDIRECTLY_ANNOTATED;org.junit.platform.commons.
 	org.eclipse.fennec.data.atlas.jpa.datasource;version=snapshot,\
 	org.eclipse.fennec.data.atlas.jpa.watcher;version=snapshot,\
 	osgi.cmpn,\
-	org.osgi.test.junit5.cm
+	org.osgi.test.junit5.cm,\
+	org.osgi.util.tracker,\
+	jakarta.persistence-api
 	
 Private-Package: \
 	org.eclipse.fennec.data.atlas.jpa.tests,\

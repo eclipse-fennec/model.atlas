@@ -10,7 +10,6 @@
 	bnd.identity;id='org.eclipse.fennec.emf.osgi.component',\
 	bnd.identity;id='org.eclipse.daanse.io.fs.watcher.watchservice',\
 	bnd.identity;id='org.eclipse.daanse.jdbc.db.impl',\
-	bnd.identity;id='org.eclipse.daanse.jdbc.db.importer.csv',\
 	bnd.identity;id='org.eclipse.fennec.data.atlas.jpa.datasource',\
 	bnd.identity;id='org.eclipse.fennec.data.atlas.jpa.watcher',\
 	bnd.identity;id='org.eclipse.fennec.model.atlas',\
@@ -37,7 +36,8 @@
 	geckotest=true,\
 	gecko.log.level=INFO,\
 	${if;${is;${driver};gradle};gosh.args=--nointeractive},\
-	data-folder=${.}/data/
+	data-folder=${.}/data/,\
+	jakarta.persistence.schema-generation.create-database-schemas=true
 	
 # Ensure clean environment
 -runkeep: false
@@ -123,14 +123,12 @@
 	org.eclipse.fennec.model.atlas;version=snapshot,\
 	org.eclipse.fennec.model.atlas.emf.common;version=snapshot,\
 	org.gecko.emf.util.model;version='[2.2.2,2.2.3)',\
-	de.siegmar.fastcsv;version='[3.4.0,3.4.1)',\
 	jakarta.persistence-api;version='[3.2.0,3.2.1)',\
 	org.eclipse.daanse.jdbc.db.api;version='[0.0.1,0.0.2)',\
 	org.eclipse.daanse.jdbc.db.dialect.api;version='[0.0.1,0.0.2)',\
 	org.eclipse.daanse.jdbc.db.dialect.db.common;version='[0.0.1,0.0.2)',\
 	org.eclipse.daanse.jdbc.db.dialect.db.h2;version='[0.0.1,0.0.2)',\
 	org.eclipse.daanse.jdbc.db.impl;version='[0.0.1,0.0.2)',\
-	org.eclipse.daanse.jdbc.db.importer.csv;version='[0.0.1,0.0.2)',\
 	org.eclipse.daanse.jdbc.db.record;version='[0.0.1,0.0.2)',\
 	org.eclipse.fennec.data.atlas.jpa.watcher;version=snapshot,\
 	org.eclipse.fennec.persistence.eclipselink;version='[0.1.0,0.1.1)',\
@@ -152,4 +150,5 @@
 	org.objectweb.asm.tree.analysis;version='[9.9.1,9.9.2)',\
 	org.objectweb.asm.util;version='[9.9.1,9.9.2)',\
 	tools.jackson.core.jackson-core;version='[3.1.0,3.1.1)',\
-	tools.jackson.core.jackson-databind;version='[3.1.0,3.1.1)'
+	tools.jackson.core.jackson-databind;version='[3.1.0,3.1.1)',\
+	de.siegmar.fastcsv;version='[3.4.0,3.4.1)'

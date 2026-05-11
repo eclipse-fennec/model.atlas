@@ -159,7 +159,7 @@ public class JpaMappingWatcherTests {
     }
 
     private Path dataFolder() {
-        return Path.of(System.getProperty("data-folder"));
+        return Path.of(System.getProperty("mapping-folder"));
     }
 
     private boolean waitForNoService(ServiceAware<?> aware, long timeoutMs) throws InterruptedException {

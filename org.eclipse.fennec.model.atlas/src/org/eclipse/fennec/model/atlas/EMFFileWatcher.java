@@ -270,6 +270,7 @@ public class EMFFileWatcher implements FileSystemWatcherListener {
     }
 
     private void handleEPackages(List<Resource> toHandle) {
+    	if(toHandle.isEmpty()) return;
         List<Metadata> metadataToHandle = new ArrayList<>();
         for (Resource resource : toHandle) {
             EObject eObject = resource.getContents().get(0);
@@ -294,6 +295,7 @@ public class EMFFileWatcher implements FileSystemWatcherListener {
             }
         }
         for (Resource resource : toHandle) {
+        	if(resource.getContents().isEmpty()) continue;
             EObject eObject = resource.getContents().get(0);
             if (eObject instanceof EPackage ePackage) {
                 resource.setURI(URI.createURI(ePackage.getNsURI()));

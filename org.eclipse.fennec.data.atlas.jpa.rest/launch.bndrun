@@ -82,8 +82,6 @@
 	org.eclipse.daanse.jdbc.db.api;version='[0.0.1,0.0.2)',\
 	org.eclipse.daanse.jdbc.db.record;version='[0.0.1,0.0.2)',\
 	de.siegmar.fastcsv;version='[3.4.0,3.4.1)',\
-	org.eclipse.daanse.jdbc.db.importer.csv;version='[0.0.1,0.0.2)',\
-	org.eclipse.daanse.jdbc.db.impl;version='[0.0.1,0.0.2)',\
 	org.gecko.emf.util.model;version='[2.2.2,2.2.3)',\
 	org.eclipse.fennec.persistence.eclipselink;version='[0.1.0,0.1.1)',\
 	com.fasterxml.jackson.core.jackson-annotations;version='[2.21.0,2.21.1)',\
@@ -119,11 +117,9 @@
 	bnd.identity;id='org.eclipse.fennec.model.atlas',\
 	bnd.identity;id='org.eclipse.daanse.jdbc.db.dialect.db.h2',\
 	bnd.identity;id='org.eclipse.persistence.jpa.jpql',\
-	bnd.identity;id='org.eclipse.daanse.jdbc.db.importer.csv',\
-	bnd.identity;id='org.eclipse.daanse.jdbc.db.impl',\
 	bnd.identity;id='org.gecko.emf.util.model',\
-	bnd.identity;id='org.eclipse.fennec.persistence.eclipselink';version='[0.1.0,1.0.0)',\
 	bnd.identity;id='org.eclipse.fennec.codec',\
-	bnd.identity;id='org.eclipse.fennec.codec.jsonschema'
+	bnd.identity;id='org.eclipse.fennec.codec.jsonschema',\
+	bnd.identity;id='org.eclipse.fennec.persistence.eclipselink'
 -runfw: org.apache.felix.framework;version='[7.0.5,7.0.5]'
 -runee: JavaSE-21

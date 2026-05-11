@@ -47,47 +47,18 @@ public class DataSourceConfigHandler {
             Configuration cfg = DataSourceConfigHelper.createH2Config(configAdmin, name, unitName, ds);
             serviceIdToName.put(serviceId, name);
             nameToConfig.put(name, cfg);
+            System.out.println("Registered DataSource for unitName " + unitName);
         } catch (IOException e) {
         	LOGGER.severe("Failed to create H2 DataSource config for '" + name + "': " + e.getMessage());
         }
     }
 
-    void modifiedJpaMappingConfig(JpaMappingConfig config, Map<String, Object> props) {
-        DataSourceConfig ds = config.getDataSource();
-        Long serviceId = (Long) props.get("service.id");
-        String oldName = serviceIdToName.get(serviceId);
-        String newName = config.getName();
-        String unitName = (String) props.get("unitName");
 
-        if (ds == null || ds.getDialect() != SqlDialect.H2) {
-            removeConfig(serviceId, oldName);
-            return;
-        }
-
-        try {
-            if (oldName != null && !oldName.equals(newName)) {
-                removeConfig(serviceId, oldName);
-                Configuration cfg = DataSourceConfigHelper.createH2Config(configAdmin, newName, unitName, ds);
-                serviceIdToName.put(serviceId, newName);
-                nameToConfig.put(newName, cfg);
-            } else {
-                Configuration cfg = nameToConfig.get(newName);
-                if (cfg != null) {
-                    cfg.update(DataSourceConfigHelper.buildProperties(ds, config.getName()));
-                } else {
-                    cfg = DataSourceConfigHelper.createH2Config(configAdmin, newName, unitName, ds);
-                    serviceIdToName.put(serviceId, newName);
-                    nameToConfig.put(newName, cfg);
-                }
-            }
-        } catch (IOException e) {
-        	LOGGER.severe("Failed to update H2 DataSource config for '" + newName + "': " + e.getMessage());
-        }
-    }
 
     void unbindJpaMappingConfig(JpaMappingConfig config, Map<String, Object> props) {
         Long serviceId = (Long) props.get("service.id");
         removeConfig(serviceId, serviceIdToName.get(serviceId));
+        System.out.println("Unregistered DataSource for unitName " + (String) props.get("unitName"));
     }
 
 

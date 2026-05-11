@@ -89,7 +89,7 @@ public class TableMappingImpl extends MinimalEObjectImpl.Container implements Ta
 	 * @generated
 	 * @ordered
 	 */
-	protected static final String SCHEMA_EDEFAULT = null;
+	protected static final String SCHEMA_EDEFAULT = "PUBLIC";
 
 	/**
 	 * The cached value of the '{@link #getSchema() <em>Schema</em>}' attribute.
