@@ -7,4 +7,6 @@
 	org.eclipse.fennec.persistence.orm,\
 	org.osgi.util.tracker,\
 	de.siegmar.fastcsv,\
-	jakarta.persistence-api
+	jakarta.persistence-api,\
+	org.eclipse.daanse.jdbc.datasource.h2,\
+	org.eclipse.daanse.jdbc.db.importer.csv

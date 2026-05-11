@@ -19,7 +19,7 @@ import org.eclipse.daanse.io.fs.watcher.api.propertytypes.FileSystemWatcherListe
 import org.eclipse.emf.common.util.URI;
 import org.eclipse.emf.ecore.resource.Resource;
 import org.eclipse.emf.ecore.resource.ResourceSet;
-import org.eclipse.fennec.data.atlas.mapping.model.jpamapping.JpaMappingConfig;
+import org.eclipse.fennec.persistence.eorm.EntityMappings;
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.ServiceRegistration;
 import org.osgi.service.component.annotations.Activate;
@@ -32,42 +32,41 @@ import org.osgi.service.metatype.annotations.AttributeDefinition;
 import org.osgi.service.metatype.annotations.Designate;
 import org.osgi.service.metatype.annotations.ObjectClassDefinition;
 
-@Designate(factory = true, ocd = JpaMappingFileWatcher.Config.class)
-@Component(name = JpaMappingFileWatcher.PID, scope = ServiceScope.SINGLETON,
+@Designate(factory = true, ocd = EormFileWatcher.Config.class)
+@Component(name = EormFileWatcher.PID, scope = ServiceScope.SINGLETON,
 service = FileSystemWatcherListener.class,
 configurationPolicy = ConfigurationPolicy.REQUIRE)
-@FileSystemWatcherListenerProperties(pattern = ".*.jpamapping", recursive = true)
-public class JpaMappingFileWatcher implements FileSystemWatcherListener {
+@FileSystemWatcherListenerProperties(pattern = ".*.eorm", recursive = true)
+public class EormFileWatcher implements FileSystemWatcherListener {
 
-    private static final Logger LOG = System.getLogger(JpaMappingFileWatcher.class.getName());
+    private static final Logger LOG = System.getLogger(EormFileWatcher.class.getName());
 
-    public static final String PID = "JpaMappingFileWatcher";
+    public static final String PID = WatcherConstants.PID_ENTITY_MAPPINGS_FILE_WATCHER;
 
-    static final String FILE_EXTENSION = "jpamapping";
-    static final String PROP_NAME = "jpamapping.name";
-    static final String PROP_TARGET_NS_URI = "jpamapping.targetNsUri";
-    static final String PROP_FOLDER = "jpamapping.folder";
-    static final String PROP_UNIT_NAME = "unitName";
+    static final String FILE_EXTENSION = "eorm";
+    static final String PROP_NAME = "eorm.name";
+    static final String PROP_TARGET_NS_URI = "eorm.targetNsUri";
+    static final String PROP_FOLDER = "eorm.folder";
 
     private final BundleContext bundleContext;
     
-    @Reference(target = "(emf.name=jpamapping)")
+    @Reference(target = "(emf.name=eorm)")
     private ResourceSet resourceSet;
     
     private final Lock lock = new ReentrantLock();
 
-    private final Map<String, ServiceRegistration<JpaMappingConfig>> registrations = new HashMap<>();
+    private final Map<String, ServiceRegistration<EntityMappings>> registrations = new HashMap<>();
 	private Config config;
 
 	  @ObjectClassDefinition
 	    public @interface Config {
 
-	        @AttributeDefinition(name = "Unit Name", required = true)
-	        String unitName() default "";
+	        @AttributeDefinition(name = "File Context Matcher", required = true)
+	        String fileContextMatcher() default "";
 	    }
-	
+
     @Activate
-    public JpaMappingFileWatcher(BundleContext bundleContext, Config config) {
+    public EormFileWatcher(BundleContext bundleContext, Config config) {
         this.bundleContext = bundleContext;
 		this.config = config;
     }
@@ -125,19 +124,19 @@ public class JpaMappingFileWatcher implements FileSystemWatcherListener {
                 LOG.log(Level.WARNING, "Empty resource loaded from {0}", uri);
                 return;
             }
-            if (resource.getContents().get(0) instanceof JpaMappingConfig config) {
+            if (resource.getContents().get(0) instanceof EntityMappings config) {
                 register(uri, config);
             } else {
                 resourceSet.getResources().remove(resource);
-                LOG.log(Level.WARNING, "Resource at {0} does not contain a JpaMappingConfig", uri);
+                LOG.log(Level.WARNING, "Resource at {0} does not contain a EntityMappings", uri);
             }
         } catch (IOException e) {
-            LOG.log(Level.ERROR, "Failed to load JpaMappingConfig from {0}", uri, e);
+            LOG.log(Level.ERROR, "Failed to load EntityMappings from {0}", uri, e);
         }
     }
 
-    private void register(String uri, JpaMappingConfig jpaMappingConfig) {
-        ServiceRegistration<JpaMappingConfig> existing = registrations.remove(uri);
+    private void register(String uri, EntityMappings jpaMappingConfig) {
+        ServiceRegistration<EntityMappings> existing = registrations.remove(uri);
         if (existing != null) {
             try {
                 existing.unregister();
@@ -146,23 +145,23 @@ public class JpaMappingFileWatcher implements FileSystemWatcherListener {
         }
         Hashtable<String, Object> props = new Hashtable<>();
         props.put(PROP_NAME, jpaMappingConfig.getName() != null ? jpaMappingConfig.getName() : "");
-        props.put(PROP_TARGET_NS_URI, jpaMappingConfig.getTargetModelNsUri() != null ? jpaMappingConfig.getTargetModelNsUri() : "");
+        props.put(PROP_TARGET_NS_URI, jpaMappingConfig.getPackage() != null ? jpaMappingConfig.getPackage() : "");
         props.put(PROP_FOLDER, folderOf(uri));
-        props.put(PROP_UNIT_NAME, config.unitName());
+        props.put(WatcherConstants.KEY_FILE_CONTEXT_MATCHER, config.fileContextMatcher());
 
-        ServiceRegistration<JpaMappingConfig> reg =
-                bundleContext.registerService(JpaMappingConfig.class, jpaMappingConfig, props);
+        ServiceRegistration<EntityMappings> reg =
+                bundleContext.registerService(EntityMappings.class, jpaMappingConfig, props);
         registrations.put(uri, reg);
-        LOG.log(Level.INFO, "Registered JpaMappingConfig ''{0}'' from {1}", jpaMappingConfig.getName(), uri);
-        System.out.println("Registered JpaMappingConfig for unitName " + config.unitName());
+        LOG.log(Level.INFO, "Registered EntityMappings ''{0}'' from {1}", jpaMappingConfig.getName(), uri);
+        System.out.println("Registered EntityMappings for fileContextMatcher " + config.fileContextMatcher());
     }
 
     private void unload(String uri) {
-        ServiceRegistration<JpaMappingConfig> reg = registrations.remove(uri);
+        ServiceRegistration<EntityMappings> reg = registrations.remove(uri);
         if (reg != null) {
             try {
                 reg.unregister();
-                System.out.println("Unregistered JpaMappingConfig for unitName " + config.unitName());
+                System.out.println("Unregistered EntityMappings for fileContextMatcher " + config.fileContextMatcher());
             } catch (IllegalStateException e) {
                 // already unregistered
             }
@@ -181,6 +180,4 @@ public class JpaMappingFileWatcher implements FileSystemWatcherListener {
         int last = uri.lastIndexOf('/');
         return last > 0 ? uri.substring(0, last) : uri;
     }
-
-
 }

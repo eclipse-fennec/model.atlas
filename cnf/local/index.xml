@@ -1,5 +1,5 @@
 <?xml version='1.0' encoding='UTF-8'?>
-<repository xmlns="http://www.osgi.org/xmlns/repository/v1.0.0" name="Local" increment="1778141911407">
+<repository xmlns="http://www.osgi.org/xmlns/repository/v1.0.0" name="Local" increment="1778497949157">
   <resource>
     <capability namespace="osgi.identity">
       <attribute name="license" value="Eclipse Public License 2.0"/>
@@ -128,7 +128,7 @@
   </resource>
   <resource>
     <capability namespace="osgi.identity">
-      <attribute name="license" value="&quot;EPL-2.0&quot;;link=&quot;https://opensource.org/licenses/EPL-2.0&quot;;description=&quot;Eclipse Public License, Version 2.0&quot;"/>
+      <attribute name="license" value="EPL-2.0;description=&quot;Eclipse Public License, Version 2.0&quot;;link=&quot;https://opensource.org/licenses/EPL-2.0&quot;"/>
       <attribute name="copyright" value="Copyright (c) Contributors to the Eclipse Foundation."/>
       <attribute name="osgi.identity" value="org.eclipse.daanse.io.fs.watcher.watchservice"/>
       <attribute name="documentation" value="https://www.daanse.org/org.eclipse.daanse.io.fs.watcher/org.eclipse.daanse.io.fs.watcher.watchservice"/>
@@ -145,10 +145,10 @@
       <attribute name="osgi.wiring.host" value="org.eclipse.daanse.io.fs.watcher.watchservice"/>
     </capability>
     <capability namespace="osgi.content">
-      <attribute name="size" value="17599" type="Long"/>
+      <attribute name="size" value="18034" type="Long"/>
       <attribute name="mime" value="application/vnd.osgi.bundle"/>
       <attribute name="url" value="org.eclipse.daanse.io.fs.watcher.watchservice/org.eclipse.daanse.io.fs.watcher.watchservice-0.0.1.jar"/>
-      <attribute name="osgi.content" value="B4D489F856742314C82300AE2D0B15E89C59963A1EBD7E6D067089B5EDF79E4D"/>
+      <attribute name="osgi.content" value="110081758ABDA02FE9DFABBC6E09D67B7E0158CDB06DCCB1E29CB5E2EF6F4DF2"/>
     </capability>
     <capability namespace="osgi.implementation">
       <attribute name="osgi.implementation" value="io.fs.watcher"/>

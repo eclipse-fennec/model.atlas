@@ -102,7 +102,9 @@
 	org.objectweb.asm.util;version='[9.9.1,9.9.2)',\
 	tools.jackson.core.jackson-core;version='[3.1.0,3.1.1)',\
 	tools.jackson.core.jackson-databind;version='[3.1.0,3.1.1)',\
-	org.eclipse.fennec.codec.jsonschema;version='[0.1.0,0.1.1)'
+	org.eclipse.fennec.codec.jsonschema;version='[0.1.0,0.1.1)',\
+	org.eclipse.daanse.jdbc.db.impl;version='[0.0.1,0.0.2)',\
+	org.eclipse.daanse.jdbc.db.importer.csv;version='[0.0.1,0.0.2)'
 
 -runrequires: \
 	osgi.identity;filter:='(osgi.identity=org.apache.felix.gogo.shell)',\
@@ -111,7 +113,6 @@
 	bnd.identity;id='org.eclipse.fennec.data.atlas.jpa.config.local',\
 	bnd.identity;id='com.h2database',\
 	bnd.identity;id='org.eclipse.daanse.jdbc.datasource.h2',\
-	bnd.identity;id='org.eclipse.fennec.data.atlas.jpa.datasource',\
 	bnd.identity;id='org.eclipse.fennec.emf.osgi.component',\
 	bnd.identity;id='org.eclipse.fennec.data.atlas.jpa.watcher',\
 	bnd.identity;id='org.eclipse.fennec.model.atlas',\
@@ -120,6 +121,10 @@
 	bnd.identity;id='org.gecko.emf.util.model',\
 	bnd.identity;id='org.eclipse.fennec.codec',\
 	bnd.identity;id='org.eclipse.fennec.codec.jsonschema',\
-	bnd.identity;id='org.eclipse.fennec.persistence.eclipselink'
+	bnd.identity;id='org.eclipse.fennec.persistence.eclipselink',\
+	bnd.identity;id='org.eclipse.daanse.io.fs.watcher.watchservice',\
+	bnd.identity;id='org.eclipse.daanse.jdbc.db.impl',\
+	bnd.identity;id='org.eclipse.daanse.jdbc.db.importer.csv',\
+	bnd.identity;id='org.eclipse.fennec.persistence.orm'
 -runfw: org.apache.felix.framework;version='[7.0.5,7.0.5]'
 -runee: JavaSE-21

@@ -23,14 +23,12 @@ import java.nio.file.WatchEvent.Kind;
 import java.util.Dictionary;
 import java.util.Hashtable;
 import java.util.List;
-import java.util.Objects;
 import java.util.UUID;
-
-import javax.xml.parsers.DocumentBuilderFactory;
 
 import org.eclipse.daanse.io.fs.watcher.api.FileSystemWatcherListener;
 import org.eclipse.daanse.io.fs.watcher.api.FileSystemWatcherWhiteboardConstants;
 import org.eclipse.daanse.io.fs.watcher.api.propertytypes.FileSystemWatcherListenerProperties;
+import org.eclipse.daanse.jdbc.datasource.h2.api.Constants;
 import org.osgi.service.cm.Configuration;
 import org.osgi.service.cm.ConfigurationAdmin;
 import org.osgi.service.cm.annotations.RequireConfigurationAdmin;
@@ -57,53 +55,49 @@ import org.osgi.service.component.annotations.Reference;
  */
 @RequireConfigurationAdmin
 @Component(name = DataFolderWatcher.PID, configurationPolicy = ConfigurationPolicy.REQUIRE)
-@FileSystemWatcherListenerProperties(pattern = ".*.jpamapping", recursive = true)
+@FileSystemWatcherListenerProperties(recursive = false)
 public class DataFolderWatcher implements FileSystemWatcherListener {
 
     private static final Logger LOG = System.getLogger(DataFolderWatcher.class.getName());
 
     public static final String PID = "DataFolderWatcher";
-
-    // PIDs of the sub-components we configure dynamically
-    private static final String EMF_FILE_WATCHER_PID = "EMFFileWatcher";
-    private static final String JPA_MAPPING_FILE_WATCHER_PID = "JpaMappingFileWatcher";
-    private static final String CSV_IMPORTER_PID = JpaCsvDataImporter.PID;
-
-    private static final String PROP_DATASOURCE_TARGET = "dataSource.target";
-    private static final String PROP_ENTITY_MANAGER_FACTORY_TARGET = "entityManagerFactory.target";
+	
 
     @Reference
     private ConfigurationAdmin configAdmin;
 
     private Path basePath;
-    private String unitName;
+//    private String unitName;
     private String matcherKey;
     private Configuration emfWatcherConfig;
-    private Configuration jpaMappingWatcherConfig;
+    private Configuration entityMappingsFileWatcherConfig;
     private Configuration csvImporterConfig;
     private Configuration jpaPersistenceUnitConfig;
+    private Configuration dataSourceConfig;
 
     @Deactivate
     void deactivate() {
         deleteConfig(emfWatcherConfig);
-        deleteConfig(jpaMappingWatcherConfig);
+        deleteConfig(entityMappingsFileWatcherConfig);
         deleteConfig(csvImporterConfig);
         deleteConfig(jpaPersistenceUnitConfig);
+        deleteConfig(dataSourceConfig);
         emfWatcherConfig = null;
-        jpaMappingWatcherConfig = null;
+        entityMappingsFileWatcherConfig = null;
         csvImporterConfig = null;
         jpaPersistenceUnitConfig = null;
+        dataSourceConfig = null;
     }
 
     @Override
     public void handleBasePath(Path basePath) {
         this.basePath = basePath;
-        String name = readUnitNameFromFolder(basePath.resolve("mapping"));
-        if (name == null) {
-            LOG.log(Level.INFO, "No .jpamapping file in {0}/mapping — pipeline will start when one is added", basePath);
+        Path eormFile = ensureEormFile(basePath.resolve("mapping"));
+        if (eormFile == null) {
+            LOG.log(Level.INFO, "No .eorm file in {0}/mapping — pipeline will start when one is added", basePath);
             return;
         }
-        setupPipeline(name);
+        setupPipeline();
     }
 
     @Override
@@ -113,82 +107,79 @@ public class DataFolderWatcher implements FileSystemWatcherListener {
 
     @Override
     public void handlePathEvent(Path path, Kind<Path> kind) {
-        if (!path.toString().endsWith(".jpamapping") || emfWatcherConfig != null) {
+        if (!path.toString().endsWith(".eorm") || emfWatcherConfig != null) {
             return;
         }
         if (StandardWatchEventKinds.ENTRY_CREATE.equals(kind) || StandardWatchEventKinds.ENTRY_MODIFY.equals(kind)) {
-            String name = readNameAttribute(path);
-            if (name != null && !name.isBlank()) {
-                setupPipeline(name);
+        	Path eormFile = ensureEormFile(basePath.resolve("mapping"));
+            if (eormFile == null) {
+                LOG.log(Level.INFO, "No .eorm file in {0}/mapping — pipeline will start when one is added", basePath);
+                return;
             }
+            setupPipeline();
         }
     }
 
-    private void setupPipeline(String name) {
-        unitName = name;
+    private void setupPipeline() {
         matcherKey = UUID.randomUUID().toString();
         String mappingPath = basePath.resolve("mapping").toAbsolutePath().toString();
         String dataPath    = basePath.resolve("data").toAbsolutePath().toString();
 
         try {
-            emfWatcherConfig = configAdmin.getFactoryConfiguration(EMF_FILE_WATCHER_PID, matcherKey, "?");
-            Dictionary<String, Object> emfProps = new Hashtable<>();
-            emfProps.put(FileSystemWatcherWhiteboardConstants.FILESYSTEM_WATCHER_PATH, mappingPath);
-            emfWatcherConfig.update(emfProps);
+        	dataSourceConfig = configAdmin.getFactoryConfiguration(WatcherConstants.PID_H2_DATA_SOURCE, matcherKey, "?");
+    		Dictionary<String, Object> properties = new Hashtable<>();
+    		properties.put(Constants.DATASOURCE_PROPERTY_IDENTIFIER, "./generated/tmp/databases/" + matcherKey);
+    		properties.put(Constants.DATASOURCE_PROPERTY_PLUGABLE_FILESYSTEM, Constants.OPTION_PLUGABLE_FILESYSTEM_FILE);
+    		properties.put(Constants.DATASOURCE_PROPERTY_DATABASE_TO_UPPER, false);
+    		properties.put(WatcherConstants.KEY_FILE_CONTEXT_MATCHER, matcherKey);
+    		dataSourceConfig.update(properties);
+        	
+            emfWatcherConfig = configAdmin.getFactoryConfiguration(WatcherConstants.PID_EMF_FILE_WATCHER, matcherKey, "?");
+            properties = new Hashtable<>();
+            properties.put(FileSystemWatcherWhiteboardConstants.FILESYSTEM_WATCHER_PATH, mappingPath);
+            properties.put(WatcherConstants.KEY_FILE_CONTEXT_MATCHER, matcherKey);
+            emfWatcherConfig.update(properties);
             
-            jpaMappingWatcherConfig = configAdmin.getFactoryConfiguration(JPA_MAPPING_FILE_WATCHER_PID, matcherKey, "?");
-            Dictionary<String, Object> jpaProps = new Hashtable<>();
-            jpaProps.put(FileSystemWatcherWhiteboardConstants.FILESYSTEM_WATCHER_PATH, mappingPath);
-            jpaProps.put("unitName", unitName);
-            jpaMappingWatcherConfig.update(jpaProps);
+            entityMappingsFileWatcherConfig = configAdmin.getFactoryConfiguration(WatcherConstants.PID_ENTITY_MAPPINGS_FILE_WATCHER, matcherKey, "?");
+            properties = new Hashtable<>();
+            properties.put(FileSystemWatcherWhiteboardConstants.FILESYSTEM_WATCHER_PATH, mappingPath);
+            properties.put(WatcherConstants.KEY_FILE_CONTEXT_MATCHER, matcherKey);
+            entityMappingsFileWatcherConfig.update(properties);
 
-            csvImporterConfig = configAdmin.getFactoryConfiguration(CSV_IMPORTER_PID, matcherKey, "?");
-            Dictionary<String, Object> csvProps = new Hashtable<>();
-            csvProps.put(FileSystemWatcherWhiteboardConstants.FILESYSTEM_WATCHER_PATH, dataPath);
-            csvProps.put(PROP_DATASOURCE_TARGET, "(unitName=" + unitName + ")");
-            csvProps.put(PROP_ENTITY_MANAGER_FACTORY_TARGET, "(osgi.unit.name=" + unitName + ")");
-            csvImporterConfig.update(csvProps);     
-           
+            csvImporterConfig = configAdmin.getFactoryConfiguration(WatcherConstants.PID_CSV_IMPORTER, matcherKey, "?");
+            properties = new Hashtable<>();
+            properties.put(FileSystemWatcherWhiteboardConstants.FILESYSTEM_WATCHER_PATH, dataPath);
+            properties.put(WatcherConstants.KEY_FILE_CONTEXT_MATCHER, matcherKey);
+            properties.put(WatcherConstants.PROP_DATASOURCE_TARGET, "(" + WatcherConstants.KEY_FILE_CONTEXT_MATCHER + "=" + matcherKey + ")");
+            properties.put(WatcherConstants.PROP_ENTITY_MANAGER_FACTORY_TARGET, "(osgi.unit.name=" + matcherKey + ")");
+            csvImporterConfig.update(properties);                
 
-            jpaPersistenceUnitConfig = configAdmin.getFactoryConfiguration(JpaPersistenceUnitConfigurator.PID, matcherKey, "?");
-            Dictionary<String, Object> setupProps = new Hashtable<>();
-            setupProps.put("unitName", unitName);
-            setupProps.put("jpaMappingConfig.target", "(unitName=" + unitName + ")");
-            jpaPersistenceUnitConfig.update(setupProps);
+            jpaPersistenceUnitConfig = configAdmin.getFactoryConfiguration(WatcherConstants.PID_PERSISTENCE_UNIT, matcherKey, "?");
+            properties = new Hashtable<>();
+            properties.put("fennec.jpa.persistenceUnitName", matcherKey);
+            properties.put("fennec.jpa.dataSource.target", "(" + WatcherConstants.KEY_FILE_CONTEXT_MATCHER + "=" + matcherKey + ")");
+            properties.put("fennec.jpa.mapping.target", "(" + WatcherConstants.PROP_EORM_MAPPING_NAME + "=" + matcherKey + ")");
+            jpaPersistenceUnitConfig.update(properties);
 
-            LOG.log(Level.INFO, "DataFolderWatcher activated for unit ''{0}'' at {1}", unitName, basePath.toAbsolutePath().toString());
+            LOG.log(Level.INFO, "DataFolderWatcher activated for unit ''{0}'' at {1}", matcherKey, basePath.toAbsolutePath().toString());
         } catch (IOException e) {
             LOG.log(Level.ERROR, "Failed to create sub-component configs for folder " + basePath.toAbsolutePath().toString(), e);
         }
     }
 
-    private String readUnitNameFromFolder(Path folder) {
+    private Path ensureEormFile(Path folder) {
         try (var stream = Files.list(folder)) {
             return stream
-                    .filter(p -> p.toString().endsWith(".jpamapping"))
-                    .map(this::readNameAttribute)
-                    .filter(Objects::nonNull)
-                    .filter(n -> !n.isBlank())
+                    .filter(p -> p.toString().endsWith(".eorm"))
                     .findFirst()
                     .orElse(null);
         } catch (IOException e) {
-            LOG.log(Level.WARNING, "Failed to scan folder {0} for .jpamapping file", folder);
+            LOG.log(Level.WARNING, "Failed to scan folder {0} for .eorm file", folder);
             return null;
         }
     }
 
-    private String readNameAttribute(Path file) {
-        try {
-            return DocumentBuilderFactory.newInstance()
-                    .newDocumentBuilder()
-                    .parse(file.toFile())
-                    .getDocumentElement()
-                    .getAttribute("name");
-        } catch (Exception e) {
-            LOG.log(Level.WARNING, "Failed to read name attribute from {0}: {1}", file, e.getMessage());
-            return null;
-        }
-    }
+
 
     private void deleteConfig(Configuration config) {
         if (config == null) {
