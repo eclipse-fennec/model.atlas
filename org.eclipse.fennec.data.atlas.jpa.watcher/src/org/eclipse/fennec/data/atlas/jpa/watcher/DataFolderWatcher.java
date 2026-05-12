@@ -25,10 +25,12 @@ import java.util.Hashtable;
 import java.util.List;
 import java.util.UUID;
 
+import org.eclipse.daanse.io.fs.watcher.api.EventKind;
 import org.eclipse.daanse.io.fs.watcher.api.FileSystemWatcherListener;
 import org.eclipse.daanse.io.fs.watcher.api.FileSystemWatcherWhiteboardConstants;
 import org.eclipse.daanse.io.fs.watcher.api.propertytypes.FileSystemWatcherListenerProperties;
 import org.eclipse.daanse.jdbc.datasource.h2.api.Constants;
+import org.eclipse.fennec.data.atlas.jpa.watcher.api.WatcherConstants;
 import org.osgi.service.cm.Configuration;
 import org.osgi.service.cm.ConfigurationAdmin;
 import org.osgi.service.cm.annotations.RequireConfigurationAdmin;
@@ -54,13 +56,12 @@ import org.osgi.service.component.annotations.Reference;
  * subsequently added to the folder.
  */
 @RequireConfigurationAdmin
-@Component(name = DataFolderWatcher.PID, configurationPolicy = ConfigurationPolicy.REQUIRE)
+@Component(name = WatcherConstants.PID_DATA_FOLDER_WATCHER, configurationPolicy = ConfigurationPolicy.REQUIRE)
 @FileSystemWatcherListenerProperties(recursive = false)
 public class DataFolderWatcher implements FileSystemWatcherListener {
 
     private static final Logger LOG = System.getLogger(DataFolderWatcher.class.getName());
 
-    public static final String PID = "DataFolderWatcher";
 	
 
     @Reference
@@ -137,18 +138,24 @@ public class DataFolderWatcher implements FileSystemWatcherListener {
             emfWatcherConfig = configAdmin.getFactoryConfiguration(WatcherConstants.PID_EMF_FILE_WATCHER, matcherKey, "?");
             properties = new Hashtable<>();
             properties.put(FileSystemWatcherWhiteboardConstants.FILESYSTEM_WATCHER_PATH, mappingPath);
+            properties.put(FileSystemWatcherWhiteboardConstants.FILESYSTEM_WATCHER_PATTERN, ".*\\.ecore");
             properties.put(WatcherConstants.KEY_FILE_CONTEXT_MATCHER, matcherKey);
             emfWatcherConfig.update(properties);
             
             entityMappingsFileWatcherConfig = configAdmin.getFactoryConfiguration(WatcherConstants.PID_ENTITY_MAPPINGS_FILE_WATCHER, matcherKey, "?");
             properties = new Hashtable<>();
             properties.put(FileSystemWatcherWhiteboardConstants.FILESYSTEM_WATCHER_PATH, mappingPath);
+            properties.put(FileSystemWatcherWhiteboardConstants.FILESYSTEM_WATCHER_PATTERN, ".*\\.eorm");
             properties.put(WatcherConstants.KEY_FILE_CONTEXT_MATCHER, matcherKey);
             entityMappingsFileWatcherConfig.update(properties);
 
             csvImporterConfig = configAdmin.getFactoryConfiguration(WatcherConstants.PID_CSV_IMPORTER, matcherKey, "?");
             properties = new Hashtable<>();
             properties.put(FileSystemWatcherWhiteboardConstants.FILESYSTEM_WATCHER_PATH, dataPath);
+            // The CSV importer component declares kinds=ENTRY_MODIFY by default; override here
+            // so CSV file creation and deletion also reach its handler.
+            properties.put(FileSystemWatcherWhiteboardConstants.FILESYSTEM_WATCHER_KINDS,
+                    new String[] { EventKind.ENTRY_CREATE.name(), EventKind.ENTRY_DELETE.name(), EventKind.ENTRY_MODIFY.name() });
             properties.put(WatcherConstants.KEY_FILE_CONTEXT_MATCHER, matcherKey);
             properties.put(WatcherConstants.PROP_DATASOURCE_TARGET, "(" + WatcherConstants.KEY_FILE_CONTEXT_MATCHER + "=" + matcherKey + ")");
             properties.put(WatcherConstants.PROP_ENTITY_MANAGER_FACTORY_TARGET, "(osgi.unit.name=" + matcherKey + ")");
@@ -186,7 +193,9 @@ public class DataFolderWatcher implements FileSystemWatcherListener {
             return;
         }
         try {
+        	System.out.println("Deleted config " + config.getPid());
             config.delete();
+            
         } catch (IOException e) {
             LOG.log(Level.WARNING, "Failed to delete sub-component configuration", e);
         }

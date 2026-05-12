@@ -1,65 +1,28 @@
 # JPA Integration — Overview
 
-This document covers the full JPA integration across all bundles: how a data folder
-on disk becomes a queryable REST endpoint backed by EclipseLink and H2.
+This document describes the JPA pipeline that turns a folder of `.ecore` /
+`.eorm` / `.csv` files on disk into a queryable REST endpoint backed by
+EclipseLink and H2.
 
-Bundles involved:
+The two components that live in **this** bundle are `DataFolderWatcher` and
+`EormFileWatcher`. Everything else (EMF model loading, H2 DataSource, CSV
+import, persistence unit) is delegated to existing components from
+`org.eclipse.fennec.model.atlas`, `org.eclipse.daanse.*` and
+`org.eclipse.fennec.persistence.*`. `DataFolderWatcher` wires them together
+via OSGi factory configurations.
+
+## Bundles involved
 
 | Bundle | Role |
 |--------|------|
-| `org.eclipse.fennec.data.atlas.jpa.watcher` | File watchers, internal CSV loader, persistence unit configurator |
-| `org.eclipse.fennec.data.atlas.jpa.datasource` | H2 DataSource creation from `JpaMappingConfig` |
-| `org.eclipse.fennec.data.atlas.mapping.model` | EMF metamodel: `JpaMappingConfig`, `TableMapping`, `ColumnMapping`, `JoinMapping` |
-| `org.eclipse.fennec.data.atlas.jpa.rest` | REST endpoints: data query and connection test |
+| `org.eclipse.fennec.data.atlas.jpa.watcher` | `DataFolderWatcher` (pipeline entry point), `EormFileWatcher` (registers `EntityMappings` services) |
 | `org.eclipse.fennec.model.atlas` | `EMFFileWatcher` — loads `.ecore` files and registers `EPackage` services |
-
----
-
-## Pipeline overview
-
-```
-<root>/
-├── mapping/
-│   ├── model.ecore          ← EMF metamodel (user-authored)
-│   └── mapping.jpamapping   ← JpaMappingConfig (user-authored)
-└── data/
-    ├── employees.csv        ← root data folder → default DB schema
-    ├── products.csv
-    └── finance/
-        └── invoices.csv     ← subfolder name → DB schema "finance"
-```
-
-```
-DataFolderWatcher  (jpa.watcher)
-  │
-  ├── creates ──► EMFFileWatcher           watches mapping/
-  │               └── registers EPackage (OSGi service)
-  │
-  ├── creates ──► JpaMappingFileWatcher    watches mapping/
-  │               └── registers JpaMappingConfig (OSGi service)
-  │                             │
-  │                             ▼
-  │               DataSourceConfigHandler  (jpa.datasource, always active)
-  │               └── creates daanse H2 DataSource config
-  │                   └── H2 DataSource (OSGi service, unitName=<name>)
-  │
-  ├── creates ──► JpaCsvDataImporter       watches data/
-  │               └── waits for DataSource + EntityManagerFactory
-  │                   then: DELETE + INSERT rows into existing tables
-  │
-  └── creates ──► JpaPersistenceUnitConfigurator
-                  └── waits for JpaMappingConfig + EPackage
-                      └── TableMappingConverter → EntityMappings (OSGi service)
-                          └── creates fennec.jpa.EMPersistenceUnit config
-                              └── EclipseLink EntityManagerFactory (OSGi service)
-                                  └── tables created/extended in H2
-                                        │
-                                        ▼
-                              GET /jpa/data/{eClassName}   (jpa.rest)
-                              GET /jpa/data/{eClassName}/{id}
-```
-
----
+| `org.eclipse.fennec.persistence.orm` | EORM EMF model: `EntityMappings`, `Entity`, `Id`, `Basic`, `Column`, … |
+| `org.eclipse.fennec.persistence.eclipselink` | `EntityMappingPersistenceUnitConfigurator` (`fennec.jpa.EMPersistenceUnit`) — builds the EclipseLink `EntityManagerFactory` from a registered `EntityMappings` + DataSource |
+| `org.eclipse.daanse.jdbc.datasource.h2` | H2 `DataSource` factory |
+| `org.eclipse.daanse.jdbc.db.importer.csv` | `CsvDataImporter` (`fennec.jpa.CsvDataLoader`) — watches a folder for `.csv` files and imports them |
+| `org.eclipse.daanse.io.fs.watcher.watchservice` | Filesystem watcher whiteboard delivering `handleBasePath` / `handleInitialPaths` / `handlePathEvent` to listeners |
+| `org.eclipse.fennec.data.atlas.jpa.rest` | `JpaDataResource` — REST endpoints for querying the loaded data |
 
 ## Data folder layout
 
@@ -67,115 +30,153 @@ DataFolderWatcher  (jpa.watcher)
 <root>/
 ├── mapping/
 │   ├── model.ecore           Required. EMF metamodel defining the EClasses.
-│   └── *.jpamapping          Required. JpaMappingConfig XMI document.
+│   └── *.eorm                Required. XMI document of EntityMappings (one or more).
 └── data/
     ├── <table>.csv           Optional. CSV files in the root → default schema.
     └── <schema>/
         └── <table>.csv       Optional. CSV files in subfolders → named schema.
 ```
 
-`DataFolderWatcher` points `EMFFileWatcher` and `JpaMappingFileWatcher` at
-`<root>/mapping/`, and `JpaCsvDataImporter` at `<root>/data/`.
+`DataFolderWatcher` points `EMFFileWatcher` and `EormFileWatcher` at
+`<root>/mapping/`, and the daanse `CsvDataImporter` at `<root>/data/`.
 
----
+CSV format (consumed by `CsvDataImporter`):
 
-## The `.jpamapping` file
+| Row | Content | Example |
+|-----|---------|---------|
+| 1 | Column names (must match the DB column names declared in the `.eorm`) | `id,first_name,salary` |
+| 2 | JDBC type names — used for `PreparedStatement` binding | `BIGINT,VARCHAR(255),DECIMAL(10,2)` |
+| 3+ | Data rows | `1,Ada,95000.00` |
 
-The `.jpamapping` file is an XMI document whose root element is a
-`JpaMappingConfig`. Minimum structure:
+Schema is derived from the CSV file's parent folder relative to the watched
+`data/` directory: files directly in `data/` are in the default schema; files
+in a subfolder use the subfolder name as the schema (e.g. `finance/invoices.csv`
+→ `finance.invoices`).
+
+## The `.eorm` file
+
+An `.eorm` is the XMI serialisation of a `org.eclipse.fennec.persistence.eorm.EntityMappings`
+(generated EMF model in `org.eclipse.fennec.persistence.orm`). Minimum structure:
 
 ```xml
-<jpamapping:JpaMappingConfig
-    xmlns:jpamapping="http://eclipse.org/fennec/data/atlas/jpamapping/1.0.0"
-    name="<unit-name>"
-    targetModelNsUri="<nsUri of model.ecore>">
+<eorm:EntityMappings xmi:version="2.0"
+    xmlns:xmi="http://www.omg.org/XMI"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xmlns:ecore="http://www.eclipse.org/emf/2002/Ecore"
+    xmlns:eorm="https://eclipse.org/fennec/persistence/eorm/1.0.0"
+    package="<nsUri of model.ecore>"
+    name="<unit-name>">
 
-  <dataSource driverClass="org.h2.Driver"
-              jdbcUrl="jdbc:h2:mem:<dbname>;DB_CLOSE_DELAY=-1"
-              username="sa"
-              passwordRef="DB_PASSWORD"
-              poolSize="5"
-              dialect="H2"/>
-
-  <!-- one TableMapping per EClass -->
-  <tableMappings
-      className="<nsUri>#//<EClassName>"
-      tableName="<table>"
-      schema="<schema>">
-    <columnMappings featureName="id"        columnName="id"         columnType="BIGINT"       nullable="false" primaryKey="true"/>
-    <columnMappings featureName="firstName" columnName="first_name" columnType="VARCHAR(255)"  nullable="false" primaryKey="false"/>
-    <!-- ... -->
-  </tableMappings>
-</jpamapping:JpaMappingConfig>
+  <entity access="FIELD" name="<EClassName>">
+    <accessibleObject xsi:type="eorm:EClassObject" name="<qualified-name>">
+      <eclass href="<nsUri>#//<EClassName>"/>
+    </accessibleObject>
+    <table name="<table>" schema="<schema?>"/>
+    <attributes>
+      <id name="<attr>"> <feature .../> <column .../> </id>
+      <basic name="<attr>" fetch="EAGER" optional="..."> <feature .../> <column .../> </basic>
+      <!-- … -->
+    </attributes>
+    <class xsi:type="ecore:EClass" href="<nsUri>#//<EClassName>"/>
+  </entity>
+  <!-- more entities -->
+</eorm:EntityMappings>
 ```
 
-### `JpaMappingConfig` attributes
+For the full attribute/column/relationship vocabulary, see the upstream model
+generated under `org.eclipse.fennec.persistence.orm/src-gen/.../eorm/` — this
+project doesn't add anything on top of it.
 
-| Attribute | Description |
-|-----------|-------------|
-| `name` | Unique identifier for the persistence unit. Used as `unitName` on all OSGi services in the pipeline. |
-| `targetModelNsUri` | Namespace URI of the EMF `EPackage` defined in `model.ecore`. |
-| `dataSource` | Contained `DataSourceConfig` (see below). |
-| `tableMappings` | List of `TableMapping` elements, one per EClass. |
+**Authoring gotchas** (learned the hard way during integration):
 
-### `DataSourceConfig` attributes
+- **Every `<id>` needs a sibling `<basic>` for the same attribute.** EclipseLink
+  treats the `<id>` as a read-only marker and looks for a separate non-read-only
+  mapping for the same column. Without it, EMF creation fails with
+  `EclipseLink-46: There should be one non-read-only mapping defined for the
+  primary key field …`. Same `<feature>` href and same `<column>` definition in
+  both elements.
+- **Every `href="<nsUri>#//<EClassName>/<attr>"` must resolve.** If you reference
+  an attribute that doesn't exist in the `.ecore`, `EcoreUtil.resolveAll` silently
+  leaves the proxy. EclipseLink then hits an NPE on `getEAttributeType()` deep in
+  `AttributeConfigurator`. Worth a startup-time validator pass.
+- **EReferences referenced from the `.eorm` must exist in the `.ecore`.** If you
+  declare `<oneToMany name="contracts">` against `Employee/contracts`, the ecore
+  must have an `EReference contracts`. Same proxy-resolution failure mode as above.
 
-| Attribute | Description |
-|-----------|-------------|
-| `driverClass` | JDBC driver class (only `org.h2.Driver` currently supported). |
-| `jdbcUrl` | JDBC connection URL (e.g. `jdbc:h2:mem:mydb;DB_CLOSE_DELAY=-1`). |
-| `username` | Database user name. |
-| `passwordRef` | Environment variable or secret key from which the password is resolved at runtime. |
-| `poolSize` | Maximum connections in the H2 connection pool. |
-| `dialect` | SQL dialect — only `H2` is currently supported. |
+## Pipeline overview
 
-### `TableMapping` attributes
+```
+DataFolderWatcher  (this bundle)
+  │
+  ├── creates ──► daanse H2 DataSource           file.context.matcher=<matcherKey>
+  │
+  ├── creates ──► EMFFileWatcher                 watches mapping/ (pattern: .*\.ecore)
+  │               └── registers EPackage         emf.nsURI=<targetModelNsUri>
+  │
+  ├── creates ──► EormFileWatcher  (this bundle) watches mapping/ (pattern: .*\.eorm)
+  │               └── once the matching EPackage is in the registry:
+  │                   EcoreUtil.resolveAll → registers EntityMappings
+  │                                          eorm.name=<name>
+  │                                          eorm.targetNsUri=<package>
+  │                                          file.context.matcher=<matcherKey>
+  │                                          fennec.jpa.orm.mapping.name=<matcherKey>
+  │
+  ├── creates ──► daanse CsvDataImporter         watches data/ (kinds: CREATE|MODIFY|DELETE)
+  │               targets the H2 DataSource by file.context.matcher
+  │               and the EntityManagerFactory by osgi.unit.name
+  │
+  └── creates ──► fennec.jpa.EMPersistenceUnit   targets DataSource by file.context.matcher
+                                                  and EntityMappings by fennec.jpa.orm.mapping.name
+                  └── EclipseLink configures dynamic types from the EntityMappings
+                      and registers EntityManagerFactory  osgi.unit.name=<matcherKey>
+                                                          │
+                                                          ▼
+                                          GET /jpa/data/{eClassName}   (jpa.rest)
+                                          GET /jpa/data/{eClassName}/{id}
+```
 
-| Attribute | Description |
-|-----------|-------------|
-| `className` | Full EMF URI of the EClass: `<nsUri>#//<ClassName>` |
-| `tableName` | Name of the DB table. |
-| `schema` | DB schema (default `PUBLIC`). |
-| `columnMappings` | List of `ColumnMapping` elements. |
-| `joinMappings` | List of `JoinMapping` elements for EReference → foreign-key mappings. |
+All five sub-configurations share a single random `matcherKey` (a UUID) — that's
+how the pipeline wires its own components together via OSGi targeted references
+without colliding with any other pipeline running in the same framework. On
+`DataFolderWatcher.deactivate()`, all five configurations are deleted, which
+tears the entire pipeline down.
 
-### `ColumnMapping` attributes
-
-| Attribute | Description |
-|-----------|-------------|
-| `featureName` | Name of the EMF `EAttribute` in the EClass. |
-| `columnName` | DB column name. |
-| `columnType` | SQL type, e.g. `BIGINT`, `VARCHAR(255)`, `DECIMAL(10,2)`. |
-| `nullable` | Whether the column accepts `NULL`. |
-| `primaryKey` | Marks this column as the table's primary key (`@Id` in JPA). |
-
----
-
-## Bundle components — `jpa.watcher`
+## Components owned by this bundle
 
 ### DataFolderWatcher
 
-PID: `DataFolderWatcher`  
+PID: `DataFolderWatcher`
 Configuration policy: **REQUIRE**
+`@FileSystemWatcherListenerProperties(recursive = false)`
 
 Entry point of the pipeline. Configured by a `FileSystemWatcher` pointing at a
 root directory that contains `mapping/` and `data/` subfolders.
 
-On activation it reads the `name` attribute from the `.jpamapping` file found in
-`<root>/mapping/` and calls `setupPipeline`. If no `.jpamapping` is present yet,
-the pipeline starts lazily when the file is created (`ENTRY_CREATE` event).
+On activation (`handleBasePath`) it scans `<root>/mapping/` for an `.eorm` file:
 
-`setupPipeline` uses `ConfigurationAdmin` to create four factory configurations:
+- If at least one is present, calls `setupPipeline()`.
+- Otherwise logs INFO and waits for an `.eorm` file to appear; on
+  `handlePathEvent(*, ENTRY_CREATE | ENTRY_MODIFY)` for an `.eorm`, the
+  pipeline is started lazily.
 
-| Factory PID | Watched path | Key properties |
-|-------------|-------------|----------------|
-| `EMFFileWatcher` | `<root>/mapping` | `io.fs.watcher.path` |
-| `JpaMappingFileWatcher` | `<root>/mapping` | `io.fs.watcher.path`, `unitName` |
-| `fennec.jpa.CsvDataLoader` | `<root>/data` | `io.fs.watcher.path`, `dataSource.target`, `entityManagerFactory.target` |
-| `JpaPersistenceUnitConfigurator` | — | `unitName`, `jpaMappingConfig.target` |
+`setupPipeline()` creates five factory configurations via `ConfigurationAdmin`:
 
-All four share the same random `matcherKey` as their factory instance name and
-are deleted together on deactivate.
+| Factory PID | Watched path / target | Key properties set |
+|-------------|----------------------|--------------------|
+| `daanse.jdbc.datasource.h2.DataSource` | file H2 under `./generated/tmp/databases/<matcherKey>` | `identifier`, `file.context.matcher`, `database.to.upper=false` |
+| `EMFFileWatcher` | `<root>/mapping` | `io.fs.watcher.path`, `io.fs.watcher.pattern=.*\.ecore`, `file.context.matcher` |
+| `JpaMappingFileWatcher` (`EormFileWatcher`) | `<root>/mapping` | `io.fs.watcher.path`, `io.fs.watcher.pattern=.*\.eorm`, `file_context_matcher` |
+| `fennec.jpa.CsvDataLoader` | `<root>/data` | `io.fs.watcher.path`, `io.fs.watcher.kinds=CREATE,DELETE,MODIFY`, `file.context.matcher`, `dataSource.target`, `entityManagerFactory.target` |
+| `fennec.jpa.EMPersistenceUnit` | — | `fennec.jpa.persistenceUnitName=<matcherKey>`, `fennec.jpa.dataSource.target`, `fennec.jpa.mapping.target` |
+
+Note the explicit `io.fs.watcher.pattern` overrides on the EMF and EORM
+watchers: the same `mapping/` folder holds both `.ecore` and `.eorm` files, and
+without a pattern the EMF watcher would also load `.eorm` files (whose resource
+factory is registered for the `eorm` extension), ending up with two
+`EntityMappings` services per file. Likewise the `io.fs.watcher.kinds` override
+on the CSV importer config: the component defaults to `ENTRY_MODIFY` only, so
+without the override `Files.delete` and initial-scan-created CSVs wouldn't
+reach `handlePathEvent`.
 
 **Required configuration property:**
 
@@ -183,198 +184,103 @@ are deleted together on deactivate.
 |----------|-------------|
 | `io.fs.watcher.path` | Absolute path of the data root folder (parent of `mapping/` and `data/`) |
 
----
+### EormFileWatcher
 
-### JpaMappingFileWatcher
-
-PID: `JpaMappingFileWatcher`  
+PID: `JpaMappingFileWatcher` (`WatcherConstants.PID_ENTITY_MAPPINGS_FILE_WATCHER` — the PID literal is unchanged from the old jpamapping watcher for backward compatibility).
 Configuration policy: **REQUIRE**
+`@FileSystemWatcherListenerProperties(pattern = ".*.eorm", recursive = true)`
 
-Watches a folder (recursively) for `*.jpamapping` files using the daanse
-filesystem-watcher whiteboard. Each file is loaded as an EMF resource and its
-root `JpaMappingConfig` is registered as an OSGi service with:
+Watches a folder for `.eorm` files, loads each into an EMF resource, and
+registers the resulting `EntityMappings` as an OSGi service.
 
-| Service property | Value source |
-|-----------------|--------------|
-| `jpamapping.name` | `JpaMappingConfig.name` |
-| `jpamapping.targetNsUri` | `JpaMappingConfig.targetModelNsUri` |
-| `jpamapping.folder` | Parent directory of the file |
-| `unitName` | From the component configuration |
+Because an `EntityMappings` references the user model via proxy URIs
+(`<eclass href="…#//Foo"/>`, `<feature href="…#//Foo/bar"/>`), proxy resolution
+needs the target `EPackage` to be reachable. The watcher handles this in two
+modes:
 
-On `ENTRY_MODIFY` the old service is unregistered and a new one is registered
-with the updated config. `DataSourceConfigHandler` and
-`JpaPersistenceUnitConfigurator` react to these service lifecycle events to
-tear down and rebuild the DataSource and persistence unit.
+1. **No entities** (e.g. minimal test fixtures, or eorms that don't reference an
+   EClass): `EcoreUtil.resolveAll(resource)` + register immediately.
+2. **Has entities**: open a `ServiceTracker` filtered by
+   `(&(objectClass=EPackage)(emf.nsURI=<package>))`. When the matching EPackage
+   service appears, call `EcoreUtil.resolveAll(mappings)` and register. If the
+   EPackage later goes away, the registered `EntityMappings` is unregistered.
 
----
+After registration, the loading resource is detached from the (shared) eorm
+`ResourceSet` (`resource.getContents().clear()` + `getResources().remove(...)`).
+The `EntityMappings` stays alive in our `registrations` map and in the OSGi
+registry, with its cross-references resolved against the global EPackage
+registry. Detaching keeps the resource set clean across many load/reload cycles.
 
-### StandaloneJpaMappingFileWatcher
+**Registered service properties:**
 
-PID: `StandaloneJpaMappingFileWatcher`  
-Configuration policy: **REQUIRE**
+| Property | Source |
+|----------|--------|
+| `eorm.name` | `EntityMappings.getName()` |
+| `eorm.targetNsUri` | `EntityMappings.getPackage()` |
+| `eorm.folder` | Parent directory of the file |
+| `file.context.matcher` | Component config (set by `DataFolderWatcher`) |
+| `fennec.jpa.orm.mapping.name` | Component config — same value as `file.context.matcher`; this is the property `EntityMappingPersistenceUnitConfigurator` filters on by default |
 
-A workaround alternative to `JpaMappingFileWatcher`. Uses its own dedicated
-`java.nio.file.WatchService` instance rather than the daanse whiteboard, to
-avoid a bug in the daanse watcher where two listeners watching the same
-directory share the same `WatchKey` map entry — causing `JpaCsvDataImporter`
-(which activates last) to silently overwrite the entry and drop all
-`.jpamapping` events.
+**Event semantics:**
 
-Registers and unregisters `JpaMappingConfig` services with the same properties
-as `JpaMappingFileWatcher`. Uses a virtual thread for the watch loop.
+| Event | Behaviour |
+|-------|-----------|
+| `ENTRY_CREATE` | Load + register |
+| `ENTRY_MODIFY` | Unload existing registration for the URI, then load + register again |
+| `ENTRY_DELETE` | Unload registration |
 
-Switch `DataFolderWatcher.JPA_MAPPING_FILE_WATCHER_PID` from
-`"JpaMappingFileWatcher"` to `StandaloneJpaMappingFileWatcher.PID` to activate
-this variant. Revert once the upstream daanse watcher bug is resolved.
-
----
-
-### JpaCsvDataImporter
-
-PID: `fennec.jpa.CsvDataLoader`  
-Configuration policy: **REQUIRE**
-
-Internal CSV data loader. Watches a folder for `*.csv` files and imports their
-rows into the H2 database. This is a **data-only** importer: table structure is
-owned by EclipseLink (via `JpaPersistenceUnitConfigurator`); this component only
-issues `DELETE` + `INSERT` statements.
-
-Two DS reference gates prevent activation before the infrastructure is ready:
-
-- `dataSource` (overridden via `dataSource.target`) — waits for the H2
-  `DataSource` registered by `DataSourceConfigHandler`.
-- `entityManagerFactory` (overridden via `entityManagerFactory.target`) — waits
-  for EclipseLink to finish creating tables and register the
-  `EntityManagerFactory`.
-
-On each `ENTRY_CREATE` or `ENTRY_MODIFY` event the component clears the
-corresponding table (`DELETE FROM <table>`) and re-imports all rows. On
-`ENTRY_DELETE` it clears the table. Referential integrity checks are suspended
-around the operation to allow importing tables with foreign keys in any order.
-
-**CSV format:**
-
-| Row | Content | Example |
-|-----|---------|---------|
-| 1 | Column names (used as field names by the CSV reader) | `id,first_name,salary` |
-| 2 | JDBC/SQL type specs — used for `PreparedStatement` binding | `BIGINT,VARCHAR(255),DECIMAL(10,2)` |
-| 3+ | Data rows | `1,Ada,95000.00` |
-
-Schema is derived from the CSV file's parent folder relative to the watched
-base path: files directly in the base path use no schema qualifier; files in a
-subfolder use the subfolder name as the schema (e.g. `finance/invoices.csv` →
-`finance.invoices`).
-
----
-
-### JpaPersistenceUnitConfigurator
-
-PID: `JpaPersistenceUnitConfigurator`  
-Configuration policy: **REQUIRE**
-
-Bridges the watcher pipeline to the JPA persistence layer. DS activates this
-component once the `JpaMappingConfig` service matching the configured
-`jpaMappingConfig.target` filter is registered.
-
-On activation it opens a `ServiceTracker` for the `EPackage` whose
-`emf.model.nsuri` matches `JpaMappingConfig.targetModelNsUri`. When the
-`EPackage` arrives:
-
-1. `TableMappingConverter` converts the `JpaMappingConfig` table and column
-   mappings into a `fennec.persistence.eorm.EntityMappings` object.
-2. The `EntityMappings` is registered as an OSGi service (property
-   `fennec.jpa.orm.mapping.name = <unitName>`).
-3. A `fennec.jpa.EMPersistenceUnit` factory configuration is created, wiring:
-   - DataSource: `(unitName=<unitName>)`
-   - Mapping: `(fennec.jpa.orm.mapping.name=<unitName>)`
-
-EclipseLink picks up the configuration, creates the `EntityManagerFactory`, and
-creates any missing tables via `DynamicSchemaManager.createTables`.
-
-When the `JpaMappingConfig` service is unregistered (e.g. on file modify), DS
-deactivates this component, which tears down the `EntityMappings` service and
-deletes the `fennec.jpa.EMPersistenceUnit` config. The component is then
-re-activated with the new `JpaMappingConfig`.
-
-**Required configuration properties:**
+**Required configuration property:**
 
 | Property | Description |
 |----------|-------------|
-| `unitName` | Persistence unit name |
-| `jpaMappingConfig.target` | OSGi filter selecting the correct `JpaMappingConfig` (e.g. `(unitName=demo)`) |
+| `file_context_matcher` | Opaque identifier (a UUID, when created by `DataFolderWatcher`) used to link this watcher's `EntityMappings` to the other components in the same pipeline |
 
----
+## External components
 
-## Bundle components — `jpa.datasource`
+This bundle does **not** define the components below — they're documented here
+because `DataFolderWatcher` configures them and they're load-bearing for the
+end-to-end flow.
 
-### DataSourceConfigHandler
+### `EMFFileWatcher` (`org.eclipse.fennec.model.atlas`)
 
-PID: `DataSourceConfigHandler`  
-Always active (immediate DS component).
+Loads `.ecore` (and other EMF) files, registers each top-level `EPackage` as an
+OSGi service, and stores it in `EPackageRegistryImpl.INSTANCE` so other
+`ResourceSet`s can resolve proxies against it. We restrict it to `.ecore` here
+via `io.fs.watcher.pattern=.*\.ecore`.
 
-Listens for `JpaMappingConfig` service registrations. For each config with
-`dialect=H2`, reads the embedded `DataSourceConfig` and creates a factory
-configuration for `daanse.jdbc.datasource.h2.DataSource` with:
+### `daanse.jdbc.datasource.h2.DataSource` (`org.eclipse.daanse.jdbc.datasource.h2`)
 
-| Config property | Source |
-|-----------------|--------|
-| `identifier` | JDBC URL stripped of the `jdbc:h2:` prefix |
-| `username` | `DataSourceConfig.username` |
-| `.password` | `DataSourceConfig.passwordRef` (resolved from environment) |
-| `unitName` | `unitName` service property of the `JpaMappingConfig` |
+Standard daanse factory that registers a `javax.sql.DataSource` from an H2 URL
+described by the supplied `identifier` and filesystem mode. Config properties
+flow through to OSGi service properties, including our `file.context.matcher`.
 
-The resulting H2 `DataSource` OSGi service carries `unitName=<name>`, which is
-the filter used by `JpaCsvDataImporter` and `JpaPersistenceUnitConfigurator` to
-locate the right DataSource.
+### `fennec.jpa.CsvDataLoader` (`org.eclipse.daanse.jdbc.db.importer.csv`)
 
-When the `JpaMappingConfig` service disappears the corresponding DataSource
-configuration is deleted and the DataSource service goes away.
+Watches a folder for `.csv` files. On `ENTRY_CREATE` / `ENTRY_MODIFY` it
+**drops** the existing table (if any), **creates** the table from the CSV header
++ types row, and inserts all data rows. On `ENTRY_DELETE` it drops the table.
+Schema is derived from the file's parent folder relative to the watched root.
 
-> **Note:** Only H2 dialect is currently supported.
+> The CSV importer thus owns the table DDL, not just the row data. This
+> overlaps with EclipseLink's own `addETypes(true, true, …)` DDL pass (see
+> below); the two converge on a consistent state but log race-induced
+> "table/schema already exists" errors on the loser. An upstream PR to
+> `fennec-persistence-jpa` to expose `createMissingTables=false` on the
+> persistence-unit OCD is the planned fix.
 
----
+### `fennec.jpa.EMPersistenceUnit` (`org.eclipse.fennec.persistence.eclipselink`)
 
-## Bundle components — `jpa.rest`
+`EntityMappingPersistenceUnitConfigurator`. References:
 
-### JpaDataResource
+- `fennec.jpa.dataSource` — H2 DataSource, targeted via `file.context.matcher`.
+- `fennec.jpa.mapping` — `EntityMappings`, targeted via `fennec.jpa.orm.mapping.name`.
+- `fennec.jpa.converter` — `ConverterService` (singleton from `org.eclipse.fennec.persistence`).
 
-Path prefix: `/jpa/data`
-
-| Method | Path | Description |
-|--------|------|-------------|
-| `GET` | `/jpa/data/{eClassName}` | Returns all instances of the given EClass. Supports `?limit=<n>` (default 100) and `?ePackageUri=<uri>` to disambiguate when the same class name appears in multiple mappings. |
-| `GET` | `/jpa/data/{eClassName}/{id}` | Returns a single instance by its primary key. The `id` is coerced to the primary key's column type. |
-
-Resolution logic: the resource looks up a `JpaMappingConfig` service that has a
-`TableMapping` for `eClassName`, derives the `unitName`, then fetches the
-matching `EntityManagerFactory` service (filter `osgi.unit.name=<unitName>`) and
-executes a JPQL query through it. Results are returned as EMF objects serialised
-as XML or JSON.
-
-HTTP status codes:
-
-| Code | Meaning |
-|------|---------|
-| 200 | Success |
-| 204 | No objects found |
-| 400 | `id` cannot be parsed to the primary key type |
-| 404 | No `JpaMappingConfig` or persistence unit found |
-| 409 | Multiple `JpaMappingConfig` services match; provide `?ePackageUri` |
-| 500 | Internal error |
-
----
-
-### JpaConnectionResource
-
-Path prefix: `/jpa`
-
-| Method | Path | Description |
-|--------|------|-------------|
-| `POST` | `/jpa/test` | Tests the DataSource connection described in a `JpaMappingConfig` XMI body. Times out after 5 s. |
-| `GET` | `/jpa/test/{dataSourceName}` | Tests a DataSource already registered in the OSGi registry by name. |
-| `GET` | `/jpa/hello` | Liveness check — returns `"Hello"`. |
-
----
+Builds the EclipseLink `EntityManagerFactory` asynchronously on a single-threaded
+executor (`AbstractPersistenceUnitConfigurator.doActivate` submits via a
+`PromiseFactory`). On success the `EntityManagerFactory` is registered with
+`osgi.unit.name=<persistenceUnitName>` (which equals our `matcherKey`). On
+failure, the SEVERE log line under that logger is the single best diagnostic.
 
 ## Full pipeline walkthrough
 
@@ -383,40 +289,67 @@ path:
 
 ```
 1. FileSystemWatcher notifies DataFolderWatcher.handleBasePath(<root>)
-2. DataFolderWatcher reads name="demo" from <root>/mapping/mapping.jpamapping
-3. DataFolderWatcher creates four factory configurations via ConfigurationAdmin
+2. DataFolderWatcher confirms <root>/mapping/*.eorm exists, generates matcherKey (UUID),
+   and creates five factory configurations via ConfigurationAdmin
 
-4. EMFFileWatcher activates → scans <root>/mapping/ → loads model.ecore
-   → registers EPackage(nsUri="http://example.org/demo/1.0") as OSGi service
+3. daanse H2 DataSource activates (config-only) → javax.sql.DataSource registered
+   (file.context.matcher=<matcherKey>)
 
-5. JpaMappingFileWatcher activates → scans <root>/mapping/ → loads mapping.jpamapping
-   → registers JpaMappingConfig("demo") as OSGi service (unitName="demo")
+4. EMFFileWatcher activates → scans <root>/mapping/ (pattern .*\.ecore)
+   → loads model.ecore → registers EPackage(nsURI="http://example.org/jpa/demo/1.0")
+   → also stuffs it into EPackageRegistryImpl.INSTANCE
 
-6. DataSourceConfigHandler (always running) reacts to the new JpaMappingConfig
-   → reads DataSourceConfig → creates daanse.jdbc.datasource.h2.DataSource config
-   → H2 DataSource registered as OSGi service (unitName="demo")
+5. EormFileWatcher activates → scans <root>/mapping/ (pattern .*\.eorm)
+   → loads mapping.eorm → since it has entities, opens a ServiceTracker for
+     (emf.nsURI=http://example.org/jpa/demo/1.0)
+   → tracker fires (the EPackage from step 4 is already there)
+   → EcoreUtil.resolveAll(mappings) → register EntityMappings
+     (eorm.name="<name>", file.context.matcher=<matcherKey>,
+      fennec.jpa.orm.mapping.name=<matcherKey>)
+   → resource detached from the eorm ResourceSet
 
-7. JpaPersistenceUnitConfigurator activates (jpaMappingConfig.target=(unitName=demo) met)
-   → opens ServiceTracker for EPackage(nsUri=targetModelNsUri)
-   → EPackage from step 4 arrives
-   → TableMappingConverter.toEntityMappings(ePackage, jpaMappingConfig)
-   → registers EntityMappings as OSGi service (fennec.jpa.orm.mapping.name=demo)
-   → creates fennec.jpa.EMPersistenceUnit config, wiring:
-       dataSource.target=(unitName=demo)
-       mapping.target=(fennec.jpa.orm.mapping.name=demo)
+6. fennec.jpa.EMPersistenceUnit activates (DataSource + EntityMappings both bound)
+   → AbstractPersistenceUnitConfigurator submits configure() to its executor
+   → EclipseLink builds dynamic types, currently also runs
+     EDynamicHelper.addETypes(true, true, …) which CREATE SCHEMA / CREATE TABLE
+   → EntityManagerFactory registered (osgi.unit.name=<matcherKey>)
 
-8. EclipseLink (EMPersistenceUnit) starts
-   → creates EntityManagerFactory (osgi.unit.name=demo)
-   → creates any missing tables in H2 (DynamicSchemaManager.createTables)
-
-9. JpaCsvDataImporter activates (DataSource + EntityManagerFactory both present)
+7. daanse CsvDataImporter activates (DataSource + EntityManagerFactory both bound)
    → scans <root>/data/ recursively:
        employees.csv, products.csv → default schema
-       finance/invoices.csv → schema "finance"
-   → for each CSV file: DELETE FROM <table>, then INSERT all data rows
+       finance/invoices.csv         → schema "finance"
+       hr/contracts.csv             → schema "hr"
+   → for each CSV: DROP TABLE → CREATE TABLE (from CSV header) → INSERT rows
 
-10. REST client: GET /jpa/data/Employee
-    → JpaDataResource resolves JpaMappingConfig + EntityManagerFactory by unitName
+8. REST client: GET /jpa/data/Employee
+    → JpaDataResource finds the EntityMappings whose package contains "Employee"
+      (via the injected ResourceSet's package registry)
+    → resolves the EntityManagerFactory by (osgi.unit.name=<matcherKey>)
     → executes JPQL: SELECT e FROM Employee e
     → returns EObjects as XML or JSON
 ```
+
+## Known limitations and follow-ups
+
+- **DDL race between EclipseLink and CsvDataImporter.** Both create schemas
+  and tables for the entities defined in the `.eorm`. The loser logs a
+  benign-but-noisy `object already exists` (H2's `CREATE SCHEMA IF NOT EXISTS`
+  isn't atomic; H2 issue [#4188](https://github.com/h2database/h2database/issues/4188))
+  or `table already exists`. The end state is consistent (CSV importer wins
+  semantically because it drops + recreates). Planned fix: an upstream PR to
+  `fennec-persistence-jpa` exposing `createMissingTables` / `generateFKConstraints`
+  on the persistence-unit OCD; `DataFolderWatcher` will then set
+  `createMissingTables=false`.
+
+- **Initial-scan event race in daanse fs.watcher.** `FileWatcherRunable.registerPath`
+  delivers `handleInitialPaths` to the listener **before** registering the
+  `WatchKey` with the underlying `WatchService`. Any filesystem change in that
+  window goes undetected. Two PRs already drafted upstream:
+  (1) apply the pattern to `handleInitialPaths` (delivered), and
+  (2) swap the order so the `WatchKey` is live before the initial scan.
+
+- **`WorkspaceFileWatcher`-style discovery.** Today every `DataFolderWatcher`
+  instance must be configured by hand (factory config with `io.fs.watcher.path`).
+  A wrapper that scans a workspace root and registers a `DataFolderWatcher`
+  per `<folder>/mapping/*.eorm` it finds would remove that boilerplate. Out of
+  scope for this bundle as of writing.

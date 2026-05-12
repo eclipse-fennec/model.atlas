@@ -7,10 +7,9 @@ Test-Cases: ${classes;HIERARCHY_INDIRECTLY_ANNOTATED;org.junit.platform.commons.
 # sets the usually required buildpath using the bnd library, you can extend it with the normal -buildpath to your liking
 -buildpath: \
 	org.osgi.framework;version=latest,\
-	org.eclipse.fennec.data.atlas.mapping.model;version=snapshot,\
 	org.eclipse.fennec.data.atlas.jpa.rest;version=snapshot,\
-	org.eclipse.fennec.data.atlas.jpa.datasource;version=snapshot,\
 	org.eclipse.fennec.data.atlas.jpa.watcher;version=snapshot,\
+	org.eclipse.fennec.persistence.orm,\
 	org.eclipse.fennec.model.atlas;version=snapshot,\
 	jakarta.ws.rs-api,\
 	jakarta.persistence-api,\

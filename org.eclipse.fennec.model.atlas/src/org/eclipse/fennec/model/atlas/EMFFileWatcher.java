@@ -173,8 +173,12 @@ public class EMFFileWatcher implements FileSystemWatcherListener {
                 }
             });
             qvtConfigs.clear();
-            originalToNsUri.values()
-                    .forEach(md -> md.services.values().forEach(reg -> reg.forEach(ServiceRegistration::unregister)));
+            originalToNsUri.values().forEach(md -> md.services.forEach((k, v) -> {
+                v.forEach(ServiceRegistration::unregister);
+                if (k instanceof EPackage ePackage) {
+                    EPackageRegistryImpl.INSTANCE.remove(ePackage.getNsURI());
+                }
+            }));
             originalToNsUri.clear();
         } finally {
             lock.unlock();

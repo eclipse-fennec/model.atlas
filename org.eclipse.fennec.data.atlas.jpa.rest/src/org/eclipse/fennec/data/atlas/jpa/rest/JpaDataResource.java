@@ -5,14 +5,19 @@ import java.util.Collection;
 import java.util.List;
 
 import org.eclipse.emf.ecore.EObject;
-import org.eclipse.fennec.data.atlas.mapping.model.jpamapping.ColumnMapping;
-import org.eclipse.fennec.data.atlas.mapping.model.jpamapping.JpaMappingConfig;
+import org.eclipse.emf.ecore.EPackage;
+import org.eclipse.emf.ecore.resource.ResourceSet;
+import org.eclipse.fennec.persistence.eorm.Column;
+import org.eclipse.fennec.persistence.eorm.Entity;
+import org.eclipse.fennec.persistence.eorm.EntityMappings;
+import org.eclipse.fennec.persistence.eorm.Id;
 import org.gecko.emf.utilities.UtilitiesFactory;
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.InvalidSyntaxException;
 import org.osgi.framework.ServiceReference;
 import org.osgi.service.component.annotations.Activate;
 import org.osgi.service.component.annotations.Component;
+import org.osgi.service.component.annotations.Reference;
 import org.osgi.service.component.annotations.ServiceScope;
 import org.osgi.service.jakartars.whiteboard.propertytypes.JakartarsName;
 import org.osgi.service.jakartars.whiteboard.propertytypes.JakartarsResource;
@@ -38,19 +43,22 @@ import jakarta.ws.rs.core.Response.Status;
 @Path("/jpa/data")
 public class JpaDataResource {
 
-    private static final String PROP_TARGET_NS_URI = "jpamapping.targetNsUri";
-    private static final String PROP_UNIT_NAME = "unitName";
+    private static final String PROP_ORM_MAPPING_NAME = "fennec.jpa.orm.mapping.name";
     private static final String CONFLICT_HINT = " Use the ?ePackageUri=... query parameter to disambiguate.";
 
     private sealed interface EmfResolution {
         record Error(Response response) implements EmfResolution {}
         record Success(
-                JpaMappingConfig jpaMappingConfig,
+                EntityMappings entityMappings,
+                ServiceReference<EntityMappings> mappingRef,
                 ServiceReference<EntityManagerFactory> emfRef,
                 EntityManagerFactory emf) implements EmfResolution {}
     }
 
     private final BundleContext ctx;
+
+    @Reference(target = "(emf.name=eorm)")
+    private ResourceSet resourceSet;
 
     @Activate
     public JpaDataResource(BundleContext ctx) {
@@ -70,8 +78,8 @@ public class JpaDataResource {
     @Operation(summary = "Retrieve all objects of a certain eClassName", responses = {
             @ApiResponse(responseCode = "200", description = "Retrieval was successful."),
             @ApiResponse(responseCode = "204", description = "No objects found for the given EClass."),
-            @ApiResponse(responseCode = "404", description = "No JpaMappingConfig or persistence unit found."),
-            @ApiResponse(responseCode = "409", description = "Multiple JpaMappingConfigs match eClassName. Provide ePackageUri to disambiguate."),
+            @ApiResponse(responseCode = "404", description = "No EntityMappings or persistence unit found."),
+            @ApiResponse(responseCode = "409", description = "Multiple EntityMappings match eClassName. Provide ePackageUri to disambiguate."),
             @ApiResponse(responseCode = "500", description = "Internal server error") })
     public Response getEObjectsByEClass(
             @PathParam("eClassName") String eClassName,
@@ -102,7 +110,7 @@ public class JpaDataResource {
             return Response.serverError()
                     .entity("Failed to load data for '" + eClassName + "': " + e.getMessage()).build();
         } finally {
-            ctx.ungetService(r.emfRef());
+            releaseSuccess(r);
         }
     }
 
@@ -113,8 +121,8 @@ public class JpaDataResource {
             @ApiResponse(responseCode = "200", description = "Retrieval was successful."),
             @ApiResponse(responseCode = "204", description = "No object found for the given id."),
             @ApiResponse(responseCode = "400", description = "id cannot be parsed to the primary key type."),
-            @ApiResponse(responseCode = "404", description = "No JpaMappingConfig or persistence unit found."),
-            @ApiResponse(responseCode = "409", description = "Multiple JpaMappingConfigs match eClassName. Provide ePackageUri to disambiguate."),
+            @ApiResponse(responseCode = "404", description = "No EntityMappings or persistence unit found."),
+            @ApiResponse(responseCode = "409", description = "Multiple EntityMappings match eClassName. Provide ePackageUri to disambiguate."),
             @ApiResponse(responseCode = "500", description = "Internal server error") })
     public Response getEObjectsById(
             @PathParam("eClassName") String eClassName,
@@ -127,30 +135,28 @@ public class JpaDataResource {
         }
         EmfResolution.Success r = (EmfResolution.Success) resolution;
 
-        ColumnMapping pkMapping = r.jpaMappingConfig().getTableMappings().stream()
-                .filter(tm -> tm.getClassName().endsWith("#//" + eClassName))
-                .flatMap(tm -> tm.getColumnMappings().stream())
-                .filter(ColumnMapping::isPrimaryKey)
-                .findFirst()
-                .orElse(null);
-
-        if (pkMapping == null) {
+        Id pk = findPrimaryKey(r.entityMappings(), eClassName);
+        if (pk == null) {
+            releaseSuccess(r);
             return Response.status(Status.INTERNAL_SERVER_ERROR)
-                    .entity("No primary key mapping found for: " + eClassName).build();
+                    .entity("No primary-key Id mapping found for: " + eClassName).build();
         }
+        Column pkColumn = pk.getColumn();
+        String pkColumnDefinition = pkColumn != null ? pkColumn.getColumnDefinition() : null;
 
         Object parsedId;
         try {
-            parsedId = parseId(id, pkMapping.getColumnType());
+            parsedId = parseId(id, pkColumnDefinition);
         } catch (IllegalArgumentException e) {
+            releaseSuccess(r);
             return Response.status(Status.BAD_REQUEST)
-                    .entity("Cannot parse id '" + id + "' for column type " + pkMapping.getColumnType()
+                    .entity("Cannot parse id '" + id + "' for column type " + pkColumnDefinition
                             + ": " + e.getMessage()).build();
         }
 
         try (EntityManager em = r.emf().createEntityManager()) {
             List<?> results = em.createQuery(
-                    "SELECT e FROM " + eClassName + " e WHERE e." + pkMapping.getFeatureName() + " = :id")
+                    "SELECT e FROM " + eClassName + " e WHERE e." + pk.getName() + " = :id")
                     .setParameter("id", parsedId)
                     .getResultList();
 
@@ -167,37 +173,81 @@ public class JpaDataResource {
             return Response.serverError()
                     .entity("Failed to load data for '" + eClassName + "': " + e.getMessage()).build();
         } finally {
-            ctx.ungetService(r.emfRef());
+            releaseSuccess(r);
         }
     }
 
     /**
-     * Resolves the JpaMappingConfig and EntityManagerFactory for the given eClassName.
-     * Returns {@link EmfResolution.Error} with a ready-made Response on any failure,
-     * or {@link EmfResolution.Success} with the resolved resources on success.
+     * Finds the {@link EntityMappings} that declares an entity for the given
+     * eClassName, then locates the corresponding EntityManagerFactory by
+     * {@code osgi.unit.name = fennec.jpa.orm.mapping.name}.
+     *
+     * <p>Resolution walks each registered {@link EntityMappings} and looks up
+     * its {@link EntityMappings#getPackage() package URI} in the injected
+     * {@link ResourceSet}'s package registry. The {@link EPackage} is asked for
+     * an {@link EPackage#getEClassifier(String) EClassifier} matching
+     * {@code eClassName}. If {@code ePackageUri} is provided, only mappings
+     * whose package URI equals it are considered.
      */
     private EmfResolution resolveEmf(String eClassName, String ePackageUri) {
-        Collection<ServiceReference<JpaMappingConfig>> jpaMappingRefs;
+        Collection<ServiceReference<EntityMappings>> allRefs;
         try {
-            jpaMappingRefs = findJpaMappingRefs(eClassName, ePackageUri);
+            allRefs = ctx.getServiceReferences(EntityMappings.class,
+                    "(" + PROP_ORM_MAPPING_NAME + "=*)");
         } catch (InvalidSyntaxException e) {
             return new EmfResolution.Error(Response.status(Status.INTERNAL_SERVER_ERROR)
                     .entity("Invalid filter: " + e.getMessage()).build());
         }
-        if (jpaMappingRefs.isEmpty()) {
+        if (allRefs == null || allRefs.isEmpty()) {
             return new EmfResolution.Error(Response.status(Status.NOT_FOUND)
-                    .entity("No JpaMappingConfig found for class '" + eClassName + "'.").build());
-        }
-        if (jpaMappingRefs.size() > 1) {
-            return new EmfResolution.Error(Response.status(Status.CONFLICT)
-                    .entity("Multiple JpaMappingConfigs found for class '" + eClassName + "'." + CONFLICT_HINT).build());
+                    .entity("No EntityMappings registered.").build());
         }
 
-        ServiceReference<JpaMappingConfig> jpaMappingRef = jpaMappingRefs.iterator().next();
-        String unitName = (String) jpaMappingRef.getProperty(PROP_UNIT_NAME);
+        List<MappingMatch> matches = new ArrayList<>();
+        for (ServiceReference<EntityMappings> ref : allRefs) {
+            EntityMappings em = ctx.getService(ref);
+            if (em == null) {
+                continue;
+            }
+
+            String pkg = em.getPackage();
+            if (pkg == null || pkg.isBlank()) {
+                ctx.ungetService(ref);
+                continue;
+            }
+            if (ePackageUri != null && !ePackageUri.isBlank() && !ePackageUri.equals(pkg)) {
+                ctx.ungetService(ref);
+                continue;
+            }
+
+            EPackage ePackage = resourceSet.getPackageRegistry().getEPackage(pkg);
+            if (ePackage == null || !(ePackage.getEClassifier(eClassName) instanceof org.eclipse.emf.ecore.EClass)) {
+                ctx.ungetService(ref);
+                continue;
+            }
+
+            matches.add(new MappingMatch(ref, em));
+        }
+
+        if (matches.isEmpty()) {
+            String msg = (ePackageUri == null || ePackageUri.isBlank())
+                    ? "No EntityMappings has class '" + eClassName + "'."
+                    : "No EntityMappings with package '" + ePackageUri + "' has class '" + eClassName + "'.";
+            return new EmfResolution.Error(Response.status(Status.NOT_FOUND).entity(msg).build());
+        }
+        if (matches.size() > 1) {
+            matches.forEach(m -> ctx.ungetService(m.ref()));
+            return new EmfResolution.Error(Response.status(Status.CONFLICT)
+                    .entity("Multiple EntityMappings declare class '" + eClassName + "'." + CONFLICT_HINT)
+                    .build());
+        }
+
+        MappingMatch m = matches.get(0);
+        String unitName = (String) m.ref().getProperty(PROP_ORM_MAPPING_NAME);
         if (unitName == null) {
+            ctx.ungetService(m.ref());
             return new EmfResolution.Error(Response.status(Status.INTERNAL_SERVER_ERROR)
-                    .entity("JpaMappingConfig without unitName property found.").build());
+                    .entity("EntityMappings without '" + PROP_ORM_MAPPING_NAME + "' property.").build());
         }
 
         Collection<ServiceReference<EntityManagerFactory>> emfRefs;
@@ -205,10 +255,12 @@ public class JpaDataResource {
             emfRefs = ctx.getServiceReferences(EntityManagerFactory.class,
                     "(osgi.unit.name=" + unitName + ")");
         } catch (InvalidSyntaxException e) {
+            ctx.ungetService(m.ref());
             return new EmfResolution.Error(Response.status(Status.INTERNAL_SERVER_ERROR)
-                    .entity("Invalid unit name filter: " + e.getMessage()).build());
+                    .entity("Invalid unit-name filter: " + e.getMessage()).build());
         }
         if (emfRefs == null || emfRefs.isEmpty()) {
+            ctx.ungetService(m.ref());
             return new EmfResolution.Error(Response.status(Status.NOT_FOUND)
                     .entity("No persistence unit found for name: " + unitName).build());
         }
@@ -216,44 +268,28 @@ public class JpaDataResource {
         ServiceReference<EntityManagerFactory> emfRef = emfRefs.iterator().next();
         EntityManagerFactory emf = ctx.getService(emfRef);
         if (emf == null) {
+            ctx.ungetService(m.ref());
             return new EmfResolution.Error(Response.status(Status.NOT_FOUND)
                     .entity("Persistence unit '" + unitName + "' is not available.").build());
         }
 
-        JpaMappingConfig config = ctx.getService(jpaMappingRef);
-        return new EmfResolution.Success(config, emfRef, emf);
+        return new EmfResolution.Success(m.entityMappings(), m.ref(), emfRef, emf);
     }
 
-    /**
-     * Finds JpaMappingConfig service references that have a TableMapping for the given eClassName.
-     * If ePackageUri is provided, filters by it directly via the OSGi registry (fast path).
-     * Otherwise, fetches all JpaMappingConfig services and inspects each one in code,
-     * releasing non-matching references immediately.
-     */
-    private Collection<ServiceReference<JpaMappingConfig>> findJpaMappingRefs(String eClassName, String ePackageUri)
-            throws InvalidSyntaxException {
-        if (ePackageUri != null && !ePackageUri.isBlank()) {
-            Collection<ServiceReference<JpaMappingConfig>> refs = ctx.getServiceReferences(
-                    JpaMappingConfig.class, "(" + PROP_TARGET_NS_URI + "=" + ePackageUri + ")");
-            return refs != null ? refs : List.of();
+    private Id findPrimaryKey(EntityMappings em, String eClassName) {
+        Entity entity = em.getEntity().stream()
+                .filter(e -> eClassName.equals(e.getName()))
+                .findFirst()
+                .orElse(null);
+        if (entity == null || entity.getAttributes() == null) {
+            return null;
         }
-        Collection<ServiceReference<JpaMappingConfig>> allRefs =
-                ctx.getServiceReferences(JpaMappingConfig.class, null);
-        if (allRefs == null || allRefs.isEmpty()) {
-            return List.of();
-        }
-        List<ServiceReference<JpaMappingConfig>> matching = new ArrayList<>();
-        for (ServiceReference<JpaMappingConfig> ref : allRefs) {
-            JpaMappingConfig config = ctx.getService(ref);
-            boolean matches = config != null && config.getTableMappings().stream()
-                    .anyMatch(tm -> tm.getClassName().endsWith("#//" + eClassName));
-            if (matches) {
-                matching.add(ref);
-            } else {
-                ctx.ungetService(ref);
-            }
-        }
-        return matching;
+        return entity.getAttributes().getId().stream().findFirst().orElse(null);
+    }
+
+    private void releaseSuccess(EmfResolution.Success r) {
+        ctx.ungetService(r.emfRef());
+        ctx.ungetService(r.mappingRef());
     }
 
     private Object parseId(String id, String columnType) {
@@ -271,4 +307,6 @@ public class JpaDataResource {
             default -> id;
         };
     }
+
+    private record MappingMatch(ServiceReference<EntityMappings> ref, EntityMappings entityMappings) {}
 }

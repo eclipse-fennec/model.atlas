@@ -15,21 +15,26 @@ package org.eclipse.fennec.data.atlas.jpa.tests;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
 import java.sql.Connection;
 import java.sql.SQLException;
+import java.sql.Statement;
+import java.util.ArrayList;
 import java.util.Dictionary;
 import java.util.Hashtable;
+import java.util.List;
 import java.util.UUID;
 
 import javax.sql.DataSource;
 
-import org.eclipse.fennec.data.atlas.jpa.tests.helper.TestAnnotations;
 import org.eclipse.fennec.data.atlas.jpa.tests.helper.TestAnnotations.DataFolderWatcherConfig;
-import org.eclipse.fennec.data.atlas.mapping.model.jpamapping.JpaMappingConfig;
-import org.junit.jupiter.api.BeforeEach;
+import org.eclipse.fennec.data.atlas.jpa.watcher.api.WatcherConstants;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.io.TempDir;
@@ -44,309 +49,258 @@ import org.osgi.test.junit5.context.BundleContextExtension;
 import org.osgi.test.junit5.service.ServiceExtension;
 import org.osgi.util.tracker.ServiceTracker;
 
-import jakarta.persistence.EntityManagerFactory;
-
 /**
- * Integration tests for the CSV import pipeline.
+ * Integration tests for the CSV data import driven by the daanse
+ * {@code fennec.jpa.CsvDataLoader} component inside the {@code DataFolderWatcher}
+ * pipeline.
  *
- * <p>Initial-scan tests use {@link DataFolderWatcherConfig} to activate the full pipeline
- * (EMFFileWatcher → JpaMappingFileWatcher → DataSourceConfigHandler → JpaModelSetup →
- * EMPersistenceUnit → JpaCsvDataImporter) against the static {@code data/} folder.
- * EclipseLink creates schemas and tables; the CSV importer loads the data rows.
+ * <p>Initial-scan tests run against the static {@code data/} folder via
+ * {@link DataFolderWatcherConfig}. Each test injects the watcher-owned H2
+ * {@link DataSource} (filtered by {@code file.context.matcher}) and queries it
+ * directly with JDBC to verify the rows that EclipseLink + the CSV importer
+ * have populated.
  *
- * <p>Dynamic tests (file modify / delete / bad row) spin up an isolated pipeline in a
- * {@code @TempDir} with a unique unit name and H2 database, so they do not interfere
- * with the static-folder tests or with each other.
+ * <p>Dynamic tests provision an isolated pipeline in a {@code @TempDir} so the
+ * lifecycle of a single CSV (create / modify / delete) can be observed
+ * independently from the static fixtures.
  */
 @ExtendWith(BundleContextExtension.class)
 @ExtendWith(ServiceExtension.class)
 @ExtendWith(ConfigurationExtension.class)
 public class JpaCsvDataImporterTests {
-	
-	Path tempDir;
-	
-	@BeforeEach
-	public void beforeEach(@TempDir Path tempDir) {
-		System.setProperty(TestAnnotations.TEMP_DIR, tempDir.toAbsolutePath().toString());
-		this.tempDir = tempDir;
-	}
 
-    // ── Initial scan (static data/ folder) ───────────────────────────────────
+    private static final String FILTER_WATCHER_DS =
+            "(" + WatcherConstants.KEY_FILE_CONTEXT_MATCHER + "=*)";
+
+    private final List<Path> createdFiles = new ArrayList<>();
+    private final List<Configuration> createdConfigs = new ArrayList<>();
+
+    @AfterEach
+    void cleanUp() throws IOException, InterruptedException {
+        for (Configuration c : createdConfigs) {
+            try {
+                c.delete();
+            } catch (IOException ignored) {
+                // already deleted in the test body
+            }
+        }
+        createdConfigs.clear();
+        for (Path p : createdFiles) {
+            Files.deleteIfExists(p);
+        }
+        createdFiles.clear();
+        Thread.sleep(2000);
+    }
+
+    // ── Initial scan — static data/ folder ───────────────────────────────────
 
     @Test
     @DataFolderWatcherConfig
-    void testInitialScan_populatesDefaultSchemaTables(
-    		@InjectBundleContext BundleContext ctx,
-			@InjectService(cardinality = 0, filter = "(jpamapping.name=" + TestAnnotations.JPA_MAPPING_NAME + ")")
-			ServiceAware<JpaMappingConfig> configAware,
-			@InjectService(cardinality = 0, filter = "(osgi.unit.name=" + TestAnnotations.JPA_MAPPING_NAME + ")")
-			ServiceAware<EntityManagerFactory> emfAware, 
-			@InjectService(cardinality = 0, filter = "(unitName=" + TestAnnotations.JPA_MAPPING_NAME + ")")
-			ServiceAware<DataSource> dsAware)
+    public void testInitialImport_defaultSchemaTablesPopulated(
+            @InjectService(cardinality = 0, filter = FILTER_WATCHER_DS) ServiceAware<DataSource> dsAware)
             throws Exception {
-    	
-    	assertNotNull(configAware.waitForService(10_000), "JpaMappingConfig for " + TestAnnotations.JPA_MAPPING_NAME + " should be registered");
-		assertNotNull(emfAware.waitForService(15_000), "EntityManagerFactory for data should be registered");
-		assertNotNull(dsAware.waitForService(15_000), "DataSource for data should be registered");
+        DataSource ds = dsAware.waitForService(30_000);
+        assertNotNull(ds, "Watcher-owned H2 DataSource should be registered");
 
-		DataSource ds = dsAware.getService();
         assertRowCount(ds, "employees", 5, 30_000);
-        assertRowCount(ds, "products",  5, 30_000);
+        assertRowCount(ds, "products", 5, 30_000);
     }
 
     @Test
     @DataFolderWatcherConfig
-    void testInitialScan_populatesSchemaQualifiedTables(
-            @InjectService(filter = "(unitName=" + TestAnnotations.JPA_MAPPING_NAME + ")", timeout = 30_000) DataSource ds)
+    public void testInitialImport_schemaQualifiedTablesPopulated(
+            @InjectService(cardinality = 0, filter = FILTER_WATCHER_DS) ServiceAware<DataSource> dsAware)
             throws Exception {
-        assertRowCount(ds, "finance.invoices",  5, 30_000);
-        assertRowCount(ds, "finance.payments",  5, 30_000);
-        assertRowCount(ds, "hr.contracts",      5, 30_000);
+        DataSource ds = dsAware.waitForService(30_000);
+        assertNotNull(ds);
+
+        assertRowCount(ds, "finance.invoices", 5, 30_000);
+        assertRowCount(ds, "finance.payments", 5, 30_000);
+        assertRowCount(ds, "hr.contracts", 5, 30_000);
     }
 
     @Test
-    void testCrossSchemaJoin_contractsLinkedToEmployees(
-            @TempDir Path tempDir,
-            @InjectBundleContext BundleContext ctx,
-            @InjectService ConfigurationAdmin configAdmin) throws Exception {
-        String unitName = "csv-join-" + UUID.randomUUID().toString().substring(0, 8);
-        DataSource ds = startPipelineWithJoin(ctx, configAdmin, tempDir, unitName,
-                employeesCsv(
-                        "1,Alice,Müller,72000,10",
-                        "2,Bob,Schmidt,65000,10",
-                        "3,Clara,Weber,80000,20"),
-                contractsCsv(
-                        "1,1,2022-03-01,,PERMANENT,72000",
-                        "2,2,2021-06-15,,PERMANENT,65000",
-                        "3,3,2023-01-10,,PERMANENT,80000"));
-        assertRowCount(ds, "employees",   3, 30_000);
-        assertRowCount(ds, "hr.contracts", 3, 30_000);
+    @DataFolderWatcherConfig
+    public void testInitialImport_specificRowValuesPresent(
+            @InjectService(cardinality = 0, filter = FILTER_WATCHER_DS) ServiceAware<DataSource> dsAware)
+            throws Exception {
+        DataSource ds = dsAware.waitForService(30_000);
+        assertNotNull(ds);
+        assertRowCount(ds, "employees", 5, 30_000);
+
+        try (Connection c = ds.getConnection();
+             Statement s = c.createStatement();
+             var rs = s.executeQuery(
+                     "SELECT first_name, last_name, salary FROM employees WHERE id = 1")) {
+            assertTrue(rs.next(), "employee with id=1 should exist");
+            assertEquals("Alice", rs.getString("first_name"));
+            assertEquals("Müller", rs.getString("last_name"));
+            assertEquals(0, rs.getBigDecimal("salary").compareTo(new java.math.BigDecimal("72000")));
+        }
     }
 
-    // ── Dynamic tests (isolated temp dir) ────────────────────────────────────
+    // ── Dynamic CSV lifecycle — temp dir, isolated pipeline ─────────────────
 
     @Test
-    void testFileModified_oldDataClearedAndNewDataImported(
-            @TempDir Path tempDir,
+    public void testCsvAdded_rowsImported(@TempDir Path tempDir,
             @InjectBundleContext BundleContext ctx,
             @InjectService ConfigurationAdmin configAdmin) throws Exception {
-        DataSource ds = startPipeline(ctx, configAdmin, tempDir, employeesCsv(
+        DataSource ds = setupTempPipeline(ctx, configAdmin, tempDir);
+
+        // employees table exists (EclipseLink DDL) but has no rows yet — no CSV present.
+        assertRowCount(ds, "employees", 0, 30_000);
+
+        Path csv = tempDir.resolve("data").resolve("employees.csv");
+        Files.writeString(csv, employeesCsv(
+                "10,Foo,Bar,50000,99",
+                "11,Baz,Qux,60000,99"));
+        createdFiles.add(csv);
+
+        assertRowCount(ds, "employees", 2, 30_000);
+    }
+
+    @Test
+    public void testCsvModified_oldRowsReplacedByNew(@TempDir Path tempDir,
+            @InjectBundleContext BundleContext ctx,
+            @InjectService ConfigurationAdmin configAdmin) throws Exception {
+        // Write CSV BEFORE the watcher activates so the initial scan picks it up.
+        Files.createDirectories(tempDir.resolve("data"));
+        Path csv = tempDir.resolve("data").resolve("employees.csv");
+        Files.writeString(csv, employeesCsv(
                 "1,Alice,Müller,72000,10",
                 "2,Bob,Schmidt,65000,10",
                 "3,Clara,Weber,80000,20"));
-        assertRowCount(ds, "employees", 3, 30_000);
+        createdFiles.add(csv);
 
-        Files.writeString(tempDir.resolve("data").resolve("employees.csv"), employeesCsv("10,Foo,Bar,50000,99"));
+        DataSource ds = setupTempPipeline(ctx, configAdmin, tempDir);
+        assertRowCount(ds, "employees", 3, 30_000);
+        
+        Thread.sleep(2000);
+        
+        Files.writeString(csv, employeesCsv("99,Only,Remaining,1,0"));
         assertRowCount(ds, "employees", 1, 30_000);
     }
 
     @Test
-    void testFileDeleted_tableClearedAndRemainsEmpty(
-            @TempDir Path tempDir,
+    public void testCsvDeleted_tableDropped(@TempDir Path tempDir,
             @InjectBundleContext BundleContext ctx,
             @InjectService ConfigurationAdmin configAdmin) throws Exception {
-        DataSource ds = startPipeline(ctx, configAdmin, tempDir, employeesCsv(
+        Files.createDirectories(tempDir.resolve("data"));
+        Path csv = tempDir.resolve("data").resolve("employees.csv");
+        Files.writeString(csv, employeesCsv(
                 "1,Alice,Müller,72000,10",
-                "2,Bob,Schmidt,65000,10",
-                "3,Clara,Weber,80000,20"));
-        assertRowCount(ds, "employees", 3, 30_000);
+                "2,Bob,Schmidt,65000,10"));
+        createdFiles.add(csv);
 
-        Files.delete(tempDir.resolve("data").resolve("employees.csv"));
-        assertRowCount(ds, "employees", 0, 30_000);
-    }
-
-
-    @Test
-    void testBadRow_skippedAndRemainingRowsImported(
-            @TempDir Path tempDir,
-            @InjectBundleContext BundleContext ctx,
-            @InjectService ConfigurationAdmin configAdmin) throws Exception {
-        DataSource ds = startPipeline(ctx, configAdmin, tempDir, employeesCsv(
-                "1,Alice,Müller,72000,10",
-                "not_a_number,Bob,Schmidt,65000,10",   // bad id → INSERT fails → row skipped
-                "3,Clara,Weber,80000,20"));
+        DataSource ds = setupTempPipeline(ctx, configAdmin, tempDir);
         assertRowCount(ds, "employees", 2, 30_000);
+
+        Files.delete(csv);
+        createdFiles.remove(csv);
+
+        // The daanse CSV importer issues DROP TABLE on ENTRY_DELETE — we wait until
+        // SELECT COUNT(*) fails with a "table not found" SQLException.
+        assertTableDropped(ds, "employees", 30_000);
     }
 
-    // ── Pipeline setup ────────────────────────────────────────────────────────
+    // ── Helpers ──────────────────────────────────────────────────────────────
 
     /**
-     * Copies {@code model.ecore} from the static data folder to {@code dir}, writes a
-     * minimal {@code mapping.jpamapping} with a unique unit name and H2 database, writes
-     * the supplied {@code employeesCsv} content, and starts a {@code DataFolderWatcher}
-     * for {@code dir}.  Returns the DataSource once it appears in the registry.
+     * Copies {@code model.ecore} and {@code mapping.eorm} from the static fixture
+     * into {@code tempDir/mapping/}, creates an empty {@code tempDir/data/},
+     * configures a fresh {@code DataFolderWatcher} pointed at {@code tempDir},
+     * and waits for the watcher-owned H2 DataSource to appear.
      */
-    private DataSource startPipeline(BundleContext ctx, ConfigurationAdmin ca,
-            Path dir, String employeesCsv) throws Exception {
-        return startPipeline(ctx, ca, dir,
-                "csv-test-" + UUID.randomUUID().toString().substring(0, 8), employeesCsv);
-    }
+    private DataSource setupTempPipeline(BundleContext ctx, ConfigurationAdmin ca, Path tempDir)
+            throws Exception {
+        Path mapping = tempDir.resolve("mapping");
+        Path data = tempDir.resolve("data");
+        Files.createDirectories(mapping);
+        Files.createDirectories(data);
 
-    private DataSource startPipeline(BundleContext ctx, ConfigurationAdmin ca,
-            Path dir, String unitName, String employeesCsv) throws Exception {
         Path staticData = Path.of(System.getProperty("data-folder"));
-        Files.createDirectories(dir.resolve("mapping"));
-        Files.createDirectories(dir.resolve("data"));
-        Files.copy(staticData.resolve("mapping").resolve("model.ecore"), dir.resolve("mapping").resolve("model.ecore"));
-        Files.writeString(dir.resolve("mapping").resolve("mapping.jpamapping"), mappingXml(unitName));
-        Files.writeString(dir.resolve("data").resolve("employees.csv"), employeesCsv);
+        Files.copy(staticData.resolve("mapping").resolve("model.ecore"),
+                mapping.resolve("model.ecore"), StandardCopyOption.REPLACE_EXISTING);
+        Files.copy(staticData.resolve("mapping").resolve("mapping.eorm"),
+                mapping.resolve("mapping.eorm"), StandardCopyOption.REPLACE_EXISTING);
 
-        Configuration cfg = ca.getFactoryConfiguration("DataFolderWatcher", unitName, "?");
+        String cfgName = "csv-test-" + UUID.randomUUID().toString().substring(0, 8);
+        Configuration cfg = ca.getFactoryConfiguration(
+                WatcherConstants.PID_DATA_FOLDER_WATCHER, cfgName, "?");
         Dictionary<String, Object> props = new Hashtable<>();
-        props.put("io.fs.watcher.path", dir.toAbsolutePath().toString());
+        props.put("io.fs.watcher.path", tempDir.toAbsolutePath() + "/");
         cfg.update(props);
+        createdConfigs.add(cfg);
 
-        DataSource ds = waitForService(ctx, DataSource.class, "(unitName=" + unitName + ")", 30_000);
-        assertNotNull(ds, "DataSource for unit '" + unitName + "' must appear within timeout");
+        DataSource ds = waitForServiceByFilter(ctx, DataSource.class, FILTER_WATCHER_DS, 30_000);
+        assertNotNull(ds, "DataSource for temp pipeline must appear within timeout");
         return ds;
     }
-
-    private DataSource startPipelineWithJoin(BundleContext ctx, ConfigurationAdmin ca,
-            Path dir, String unitName, String employeesCsv, String contractsCsv) throws Exception {
-        Path staticData = Path.of(System.getProperty("data-folder"));
-        Files.createDirectories(dir.resolve("mapping"));
-        Files.createDirectories(dir.resolve("data").resolve("hr"));
-        Files.copy(staticData.resolve("mapping").resolve("model.ecore"), dir.resolve("mapping").resolve("model.ecore"));
-        Files.writeString(dir.resolve("mapping").resolve("mapping.jpamapping"), mappingXmlWithJoin(unitName));
-        Files.writeString(dir.resolve("data").resolve("employees.csv"), employeesCsv);
-        Files.writeString(dir.resolve("data").resolve("hr").resolve("contracts.csv"), contractsCsv);
-
-        Configuration cfg = ca.getFactoryConfiguration("DataFolderWatcher", unitName, "?");
-        Dictionary<String, Object> props = new Hashtable<>();
-        props.put("io.fs.watcher.path", dir.toAbsolutePath().toString());
-        cfg.update(props);
-
-        DataSource ds = waitForService(ctx, DataSource.class, "(unitName=" + unitName + ")", 30_000);
-        assertNotNull(ds, "DataSource for unit '" + unitName + "' must appear within timeout");
-        return ds;
-    }
-
-    // ── CSV builders ──────────────────────────────────────────────────────────
 
     private static String employeesCsv(String... dataRows) {
         StringBuilder sb = new StringBuilder("id,first_name,last_name,salary,department_id\n");
-        sb.append("BIGINT,VARCHAR,VARCHAR,DECIMAL,BIGINT\n");
+        sb.append("INTEGER,VARCHAR,VARCHAR,DECIMAL,BIGINT\n");
         for (String row : dataRows) {
             sb.append(row).append('\n');
         }
         return sb.toString();
     }
 
-    
-    private static String contractsCsv(String... dataRows) {
-        StringBuilder sb = new StringBuilder("id,employee_id,start_date,end_date,contract_type,salary\n");
-        sb.append("BIGINT,BIGINT,VARCHAR,VARCHAR,VARCHAR,DECIMAL\n");
-        for (String row : dataRows) {
-            sb.append(row).append('\n');
-        }
-        return sb.toString();
-    }
-
-    // ── Mapping XML ───────────────────────────────────────────────────────────
-
-   
-
-    private static String mappingXml(String unitName) {
-        String h2DbName = unitName.replace("-", "_");
-        return """
-                <?xml version="1.0" encoding="UTF-8"?>
-                <jpamapping:JpaMappingConfig xmi:version="2.0"
-                    xmlns:xmi="http://www.omg.org/XMI"
-                    xmlns:jpamapping="http://eclipse.org/fennec/data/atlas/jpamapping/1.0.0"
-                    name="%s"
-                    targetModelNsUri="http://example.org/jpa/demo/1.0">
-                  <dataSource
-                      driverClass="org.h2.Driver"
-                      jdbcUrl="jdbc:h2:mem:%s;DATABASE_TO_UPPER=FALSE;DB_CLOSE_DELAY=-1"
-                      username="sa"
-                      passwordRef="DB_PASSWORD"
-                      poolSize="5"
-                      dialect="H2"/>
-                  <tableMappings
-                      className="http://example.org/jpa/demo/1.0#//Employee"
-                      tableName="employees">
-                    <columnMappings featureName="id"           columnName="id"            columnType="BIGINT"        nullable="false" primaryKey="true"/>
-                    <columnMappings featureName="firstName"    columnName="first_name"    columnType="VARCHAR(255)"  nullable="false" primaryKey="false"/>
-                    <columnMappings featureName="lastName"     columnName="last_name"     columnType="VARCHAR(255)"  nullable="false" primaryKey="false"/>
-                    <columnMappings featureName="salary"       columnName="salary"        columnType="DECIMAL(15,2)" nullable="true"  primaryKey="false"/>
-                    <columnMappings featureName="departmentId" columnName="department_id" columnType="BIGINT"        nullable="true"  primaryKey="false"/>
-                  </tableMappings>
-                </jpamapping:JpaMappingConfig>
-                """.formatted(unitName, h2DbName);
-    }
-
-    private static String mappingXmlWithJoin(String unitName) {
-        String h2DbName = unitName.replace("-", "_");
-        return """
-                <?xml version="1.0" encoding="UTF-8"?>
-                <jpamapping:JpaMappingConfig xmi:version="2.0"
-                    xmlns:xmi="http://www.omg.org/XMI"
-                    xmlns:jpamapping="http://eclipse.org/fennec/data/atlas/jpamapping/1.0.0"
-                    name="%s"
-                    targetModelNsUri="http://example.org/jpa/demo/1.0">
-                  <dataSource
-                      driverClass="org.h2.Driver"
-                      jdbcUrl="jdbc:h2:mem:%s;DATABASE_TO_UPPER=FALSE;DB_CLOSE_DELAY=-1"
-                      username="sa"
-                      passwordRef="DB_PASSWORD"
-                      poolSize="5"
-                      dialect="H2"/>
-                  <tableMappings
-                      className="http://example.org/jpa/demo/1.0#//Employee"
-                      tableName="employees">
-                    <columnMappings featureName="id"           columnName="id"            columnType="BIGINT"        nullable="false" primaryKey="true"/>
-                    <columnMappings featureName="firstName"    columnName="first_name"    columnType="VARCHAR(255)"  nullable="false" primaryKey="false"/>
-                    <columnMappings featureName="lastName"     columnName="last_name"     columnType="VARCHAR(255)"  nullable="false" primaryKey="false"/>
-                    <columnMappings featureName="salary"       columnName="salary"        columnType="DECIMAL(15,2)" nullable="true"  primaryKey="false"/>
-                    <columnMappings featureName="departmentId" columnName="department_id" columnType="BIGINT"        nullable="true"  primaryKey="false"/>
-                    <joinMappings referenceName="contracts" joinType="FOREIGN_KEY" joinColumn="employee_id" cascadeType="ALL"/>
-                  </tableMappings>
-                  <tableMappings
-                      className="http://example.org/jpa/demo/1.0#//Contract"
-                      tableName="contracts"
-                      schema="hr">
-                    <columnMappings featureName="id"           columnName="id"            columnType="BIGINT"        nullable="false" primaryKey="true"/>
-                    <columnMappings featureName="startDate"    columnName="start_date"    columnType="VARCHAR(20)"   nullable="false" primaryKey="false"/>
-                    <columnMappings featureName="endDate"      columnName="end_date"      columnType="VARCHAR(20)"   nullable="true"  primaryKey="false"/>
-                    <columnMappings featureName="contractType" columnName="contract_type" columnType="VARCHAR(50)"   nullable="false" primaryKey="false"/>
-                    <columnMappings featureName="salary"       columnName="salary"        columnType="DECIMAL(15,2)" nullable="false" primaryKey="false"/>
-                  </tableMappings>
-                </jpamapping:JpaMappingConfig>
-                """.formatted(unitName, h2DbName);
-    }
-
-    // ── Assertion helpers ─────────────────────────────────────────────────────
-
+    /**
+     * Poll {@code SELECT COUNT(*)} on the given table until it returns {@code expected}
+     * rows, or fail after {@code timeoutMs}. Swallows {@link SQLException} during the
+     * window — the table may not exist yet while EclipseLink is finishing DDL.
+     */
     private void assertRowCount(DataSource ds, String table, int expected, long timeoutMs)
             throws Exception {
         long deadline = System.currentTimeMillis() + timeoutMs;
-        int actual = 0;
+        int actual = -1;
+        SQLException lastEx = null;
         while (System.currentTimeMillis() < deadline) {
             try {
                 actual = rowCount(ds, table);
                 if (actual == expected) {
                     return;
                 }
-            } catch (SQLException ignored) {
-                // Table may not exist yet (EclipseLink still starting); keep polling.
+            } catch (SQLException e) {
+                lastEx = e;
             }
             Thread.sleep(300);
         }
-        assertEquals(expected, actual, "Row count in " + table + " after timeout");
+        assertEquals(expected, actual,
+                "Row count in " + table + " after " + timeoutMs + "ms"
+                + (lastEx != null ? "; last SQL error: " + lastEx.getMessage() : ""));
     }
 
-   
     private int rowCount(DataSource ds, String table) throws SQLException {
         try (Connection c = ds.getConnection();
-             var rs = c.createStatement().executeQuery("SELECT COUNT(*) FROM " + table)) {
+             Statement s = c.createStatement();
+             var rs = s.executeQuery("SELECT COUNT(*) FROM " + table)) {
             rs.next();
             return rs.getInt(1);
         }
     }
 
-    // ── Service wait ──────────────────────────────────────────────────────────
+    /**
+     * Wait until {@code SELECT COUNT(*) FROM <table>} starts failing — i.e. the
+     * table has been dropped. The daanse CSV importer drops the table on
+     * {@code ENTRY_DELETE}, not just clears rows.
+     */
+    private void assertTableDropped(DataSource ds, String table, long timeoutMs) throws Exception {
+        long deadline = System.currentTimeMillis() + timeoutMs;
+        while (System.currentTimeMillis() < deadline) {
+            try {
+                rowCount(ds, table);
+            } catch (SQLException e) {
+                return;
+            }
+            Thread.sleep(300);
+        }
+        throw new AssertionError("Table " + table + " should have been dropped within "
+                + timeoutMs + "ms after CSV deletion");
+    }
 
-    private <T> T waitForService(BundleContext ctx, Class<T> type, String filter, long timeoutMs)
+    private <T> T waitForServiceByFilter(BundleContext ctx, Class<T> type, String filter, long timeoutMs)
             throws Exception {
         ServiceTracker<T, T> tracker = new ServiceTracker<>(ctx,
                 ctx.createFilter("(&(objectClass=" + type.getName() + ")" + filter + ")"), null);

@@ -19,6 +19,12 @@
         </accessibleObject>
         <column insertable="true" name="id" nullable="false" unique="true" updatable="true" columnDefinition="BIGINT"/>
       </id>
+      <basic access="FIELD" name="id" fetch="EAGER" optional="false">
+        <accessibleObject xsi:type="eorm:EFeatureObject" name="id">
+          <feature xsi:type="ecore:EAttribute" href="http://example.org/jpa/demo/1.0#//Employee/id"/>
+        </accessibleObject>
+        <column insertable="true" name="id" nullable="false" unique="true" updatable="true" columnDefinition="BIGINT"/>
+      </basic>
       <basic access="FIELD" name="firstName" fetch="EAGER" optional="false">
         <accessibleObject xsi:type="eorm:EFeatureObject" name="firstName">
           <feature xsi:type="ecore:EAttribute" href="http://example.org/jpa/demo/1.0#//Employee/firstName"/>
@@ -67,6 +73,12 @@
         </accessibleObject>
         <column insertable="true" name="id" nullable="false" unique="true" updatable="true" columnDefinition="BIGINT"/>
       </id>
+      <basic access="FIELD" name="id" fetch="EAGER" optional="false">
+        <accessibleObject xsi:type="eorm:EFeatureObject" name="id">
+          <feature xsi:type="ecore:EAttribute" href="http://example.org/jpa/demo/1.0#//Product/id"/>
+        </accessibleObject>
+        <column insertable="true" name="id" nullable="false" unique="true" updatable="true" columnDefinition="BIGINT"/>
+      </basic>
       <basic access="FIELD" name="name" fetch="EAGER" optional="false">
         <accessibleObject xsi:type="eorm:EFeatureObject" name="name">
           <feature xsi:type="ecore:EAttribute" href="http://example.org/jpa/demo/1.0#//Product/name"/>
@@ -107,6 +119,12 @@
         </accessibleObject>
         <column insertable="true" name="id" nullable="false" unique="true" updatable="true" columnDefinition="BIGINT"/>
       </id>
+      <basic access="FIELD" name="id" fetch="EAGER" optional="false">
+        <accessibleObject xsi:type="eorm:EFeatureObject" name="id">
+          <feature xsi:type="ecore:EAttribute" href="http://example.org/jpa/demo/1.0#//Invoice/id"/>
+        </accessibleObject>
+        <column insertable="true" name="id" nullable="false" unique="true" updatable="true" columnDefinition="BIGINT"/>
+      </basic>
       <basic access="FIELD" name="invoiceNumber" fetch="EAGER" optional="false">
         <accessibleObject xsi:type="eorm:EFeatureObject" name="invoiceNumber">
           <feature xsi:type="ecore:EAttribute" href="http://example.org/jpa/demo/1.0#//Invoice/invoiceNumber"/>
@@ -119,9 +137,9 @@
         </accessibleObject>
         <column insertable="true" name="amount" nullable="false" unique="false" updatable="true" columnDefinition="DECIMAL(15,2)"/>
       </basic>
-      <basic access="FIELD" name="invoiceDate" fetch="EAGER" optional="true">
-        <accessibleObject xsi:type="eorm:EFeatureObject" name="invoiceDate">
-          <feature xsi:type="ecore:EAttribute" href="http://example.org/jpa/demo/1.0#//Invoice/invoiceDate"/>
+      <basic access="FIELD" name="issueDate" fetch="EAGER" optional="true">
+        <accessibleObject xsi:type="eorm:EFeatureObject" name="issueDate">
+          <feature xsi:type="ecore:EAttribute" href="http://example.org/jpa/demo/1.0#//Invoice/issueDate"/>
         </accessibleObject>
         <column insertable="true" name="issue_date" nullable="true" unique="false" updatable="true" columnDefinition="VARCHAR(20)"/>
       </basic>
@@ -156,6 +174,12 @@
         </accessibleObject>
         <column insertable="true" name="id" nullable="false" unique="true" updatable="true" columnDefinition="BIGINT"/>
       </id>
+      <basic access="FIELD" name="id" fetch="EAGER" optional="false">
+        <accessibleObject xsi:type="eorm:EFeatureObject" name="id">
+          <feature xsi:type="ecore:EAttribute" href="http://example.org/jpa/demo/1.0#//Payment/id"/>
+        </accessibleObject>
+        <column insertable="true" name="id" nullable="false" unique="true" updatable="true" columnDefinition="BIGINT"/>
+      </basic>
       <basic access="FIELD" name="amount" fetch="EAGER" optional="false">
         <accessibleObject xsi:type="eorm:EFeatureObject" name="amount">
           <feature xsi:type="ecore:EAttribute" href="http://example.org/jpa/demo/1.0#//Payment/amount"/>
@@ -190,6 +214,12 @@
         </accessibleObject>
         <column insertable="true" name="id" nullable="false" unique="true" updatable="true" columnDefinition="BIGINT"/>
       </id>
+      <basic access="FIELD" name="id" fetch="EAGER" optional="false">
+        <accessibleObject xsi:type="eorm:EFeatureObject" name="id">
+          <feature xsi:type="ecore:EAttribute" href="http://example.org/jpa/demo/1.0#//Contract/id"/>
+        </accessibleObject>
+        <column insertable="true" name="id" nullable="false" unique="true" updatable="true" columnDefinition="BIGINT"/>
+      </basic>
       <basic access="FIELD" name="startDate" fetch="EAGER" optional="false">
         <accessibleObject xsi:type="eorm:EFeatureObject" name="startDate">
           <feature xsi:type="ecore:EAttribute" href="http://example.org/jpa/demo/1.0#//Contract/startDate"/>

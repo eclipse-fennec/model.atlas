@@ -3,7 +3,6 @@
 -buildpath: \
 	org.eclipse.daanse.io.fs.watcher.api,\
 	org.osgi.service.cm,\
-	org.eclipse.fennec.data.atlas.mapping.model,\
 	org.eclipse.fennec.persistence.orm,\
 	org.osgi.util.tracker,\
 	de.siegmar.fastcsv,\

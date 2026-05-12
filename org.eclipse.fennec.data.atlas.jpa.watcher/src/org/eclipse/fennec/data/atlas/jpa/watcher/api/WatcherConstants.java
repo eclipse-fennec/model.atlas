@@ -11,7 +11,7 @@
  * Contributors:
  *     Data In Motion - initial API and implementation
  */
-package org.eclipse.fennec.data.atlas.jpa.watcher;
+package org.eclipse.fennec.data.atlas.jpa.watcher.api;
 
 import org.eclipse.daanse.jdbc.datasource.h2.api.Constants;
 
@@ -22,6 +22,8 @@ import org.eclipse.daanse.jdbc.datasource.h2.api.Constants;
  */
 public interface WatcherConstants {
 
+	String PID_DATA_FOLDER_WATCHER = "DataFolderWatcher";
+	
 	// PIDs of the sub-components we configure dynamically
 	String PID_EMF_FILE_WATCHER = "EMFFileWatcher";  //--> ecore
 	String PID_ENTITY_MAPPINGS_FILE_WATCHER = "JpaMappingFileWatcher"; //--> eorm
