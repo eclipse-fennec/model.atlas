@@ -24,7 +24,6 @@
 	org.eclipse.fennec.model.atlas.model.documentation.provider;version=snapshot,\
 	org.eclipse.fennec.model.atlas.mediatypes.api;version=snapshot,\
 	org.eclipse.fennec.model.atlas.runtime;version=snapshot,\
-	org.eclipse.fennec.model.atlas;version=snapshot,\
 	org.eclipse.fennec.model.atlas.rest.model;version=snapshot,\
 	org.eclipse.fennec.model.atlas.management;version=snapshot,\
 	org.eclipse.fennec.model.atlas.workflow;version=snapshot,\

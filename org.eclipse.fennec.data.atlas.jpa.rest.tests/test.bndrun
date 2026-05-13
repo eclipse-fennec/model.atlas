@@ -11,13 +11,12 @@
 	bnd.identity;id='org.eclipse.daanse.io.fs.watcher.watchservice',\
 	bnd.identity;id='org.eclipse.daanse.jdbc.db.impl',\
 	bnd.identity;id='org.eclipse.fennec.data.atlas.jpa.watcher',\
-	bnd.identity;id='org.eclipse.fennec.model.atlas',\
 	bnd.identity;id='org.eclipse.daanse.jdbc.db.dialect.db.h2',\
 	bnd.identity;id='org.eclipse.persistence.jpa.jpql',\
 	bnd.identity;id='org.eclipse.fennec.persistence.eclipselink';version=latest,\
 	bnd.identity;id='org.eclipse.fennec.codec',\
-	bnd.identity;id='org.eclipse.fennec.codec.jsonschema',\
-	bnd.identity;id='org.eclipse.daanse.jdbc.db.importer.csv'
+	bnd.identity;id='org.eclipse.daanse.jdbc.db.importer.csv',\
+	bnd.identity;id='org.eclipse.fennec.data.atlas.epackage.watcher'
 	
 
 -runprovidedcapabilities: ${native_capability}
@@ -117,7 +116,6 @@
 	org.osgi.test.junit5.cm;version='[1.3.0,1.3.1)',\
 	org.eclipse.daanse.io.fs.watcher.api;version='[0.0.1,0.0.2)',\
 	org.eclipse.daanse.io.fs.watcher.watchservice;version='[0.0.1,0.0.2)',\
-	org.eclipse.fennec.model.atlas;version=snapshot,\
 	org.eclipse.fennec.model.atlas.emf.common;version=snapshot,\
 	org.gecko.emf.util.model;version='[2.2.2,2.2.3)',\
 	jakarta.persistence-api;version='[3.2.0,3.2.1)',\
@@ -133,7 +131,6 @@
 	org.apache.aries.spifly.dynamic.bundle;version='[1.3.7,1.3.8)',\
 	org.eclipse.fennec.codec;version='[0.1.0,0.1.1)',\
 	org.eclipse.fennec.codec.api;version='[0.1.0,0.1.1)',\
-	org.eclipse.fennec.codec.jsonschema;version='[0.1.0,0.1.1)',\
 	org.eclipse.fennec.codec.metadata;version='[0.1.0,0.1.1)',\
 	org.eclipse.fennec.model.metadata;version='[0.1.0,0.1.1)',\
 	org.eclipse.fennec.persistence;version='[0.1.0,0.1.1)',\
@@ -149,4 +146,5 @@
 	tools.jackson.core.jackson-core;version='[3.1.0,3.1.1)',\
 	tools.jackson.core.jackson-databind;version='[3.1.0,3.1.1)',\
 	de.siegmar.fastcsv;version='[3.4.0,3.4.1)',\
-	org.eclipse.daanse.jdbc.db.importer.csv;version='[0.0.1,0.0.2)'
+	org.eclipse.daanse.jdbc.db.importer.csv;version='[0.0.1,0.0.2)',\
+	org.eclipse.fennec.data.atlas.epackage.watcher;version=snapshot

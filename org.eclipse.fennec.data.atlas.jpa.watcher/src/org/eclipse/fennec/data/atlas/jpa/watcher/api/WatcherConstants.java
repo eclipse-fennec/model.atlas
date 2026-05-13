@@ -23,7 +23,8 @@ import org.eclipse.daanse.jdbc.datasource.h2.api.Constants;
 public interface WatcherConstants {
 
 	String PID_DATA_FOLDER_WATCHER = "DataFolderWatcher";
-	
+	String PID_WORKSPACE_FOLDER_WATCHER = "WorkspaceFolderWatcher";
+
 	// PIDs of the sub-components we configure dynamically
 	String PID_EMF_FILE_WATCHER = "EMFFileWatcher";  //--> ecore
 	String PID_ENTITY_MAPPINGS_FILE_WATCHER = "JpaMappingFileWatcher"; //--> eorm

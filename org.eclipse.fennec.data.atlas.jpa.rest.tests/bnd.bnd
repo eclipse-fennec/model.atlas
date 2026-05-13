@@ -10,14 +10,14 @@ Test-Cases: ${classes;HIERARCHY_INDIRECTLY_ANNOTATED;org.junit.platform.commons.
 	org.eclipse.fennec.data.atlas.jpa.rest;version=snapshot,\
 	org.eclipse.fennec.data.atlas.jpa.watcher;version=snapshot,\
 	org.eclipse.fennec.persistence.orm,\
-	org.eclipse.fennec.model.atlas;version=snapshot,\
 	jakarta.ws.rs-api,\
 	jakarta.persistence-api,\
 	org.osgi.service.jakartars,\
 	org.osgi.util.tracker,\
 	org.gecko.emf.rest.jakartars,\
 	osgi.cmpn,\
-	org.osgi.test.junit5.cm
+	org.osgi.test.junit5.cm,\
+	org.eclipse.fennec.data.atlas.epackage.watcher;version=snapshot
 	
 Private-Package: \
 	org.eclipse.fennec.data.atlas.jpa.rest.tests,\

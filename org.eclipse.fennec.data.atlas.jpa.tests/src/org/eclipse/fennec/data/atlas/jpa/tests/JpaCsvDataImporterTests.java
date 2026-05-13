@@ -147,8 +147,9 @@ public class JpaCsvDataImporterTests {
             @InjectService ConfigurationAdmin configAdmin) throws Exception {
         DataSource ds = setupTempPipeline(ctx, configAdmin, tempDir);
 
-        // employees table exists (EclipseLink DDL) but has no rows yet — no CSV present.
-        assertRowCount(ds, "employees", 0, 30_000);
+        // employees table doesn't exist yet — the daanse CSV importer creates it
+        // on first CSV, and EclipseLink no longer auto-generates DDL.
+        assertTableMissing(ds, "employees", 5_000);
 
         Path csv = tempDir.resolve("data").resolve("employees.csv");
         Files.writeString(csv, employeesCsv(
@@ -200,7 +201,7 @@ public class JpaCsvDataImporterTests {
 
         // The daanse CSV importer issues DROP TABLE on ENTRY_DELETE — we wait until
         // SELECT COUNT(*) fails with a "table not found" SQLException.
-        assertTableDropped(ds, "employees", 30_000);
+        assertTableMissing(ds, "employees", 30_000);
     }
 
     // ── Helpers ──────────────────────────────────────────────────────────────
@@ -282,11 +283,13 @@ public class JpaCsvDataImporterTests {
     }
 
     /**
-     * Wait until {@code SELECT COUNT(*) FROM <table>} starts failing — i.e. the
-     * table has been dropped. The daanse CSV importer drops the table on
-     * {@code ENTRY_DELETE}, not just clears rows.
+     * Wait until {@code SELECT COUNT(*) FROM <table>} fails with a "table not
+     * found" {@link SQLException} — i.e. the table is absent. Covers both the
+     * "never created" precondition (no CSV yet, EclipseLink not generating DDL)
+     * and the "dropped after delete" case (the daanse CSV importer drops the
+     * table on {@code ENTRY_DELETE}).
      */
-    private void assertTableDropped(DataSource ds, String table, long timeoutMs) throws Exception {
+    private void assertTableMissing(DataSource ds, String table, long timeoutMs) throws Exception {
         long deadline = System.currentTimeMillis() + timeoutMs;
         while (System.currentTimeMillis() < deadline) {
             try {
@@ -296,8 +299,8 @@ public class JpaCsvDataImporterTests {
             }
             Thread.sleep(300);
         }
-        throw new AssertionError("Table " + table + " should have been dropped within "
-                + timeoutMs + "ms after CSV deletion");
+        throw new AssertionError("Table " + table + " should not exist within "
+                + timeoutMs + "ms");
     }
 
     private <T> T waitForServiceByFilter(BundleContext ctx, Class<T> type, String filter, long timeoutMs)

@@ -35,7 +35,10 @@
       "Bash(xargs -I{} sh -c 'jar tf {} 2>/dev/null | grep -q \"FileSystemWatcher\" && echo {}')",
       "Bash(gh api *)",
       "Bash(xargs -I{} sh -c 'jar tf \"{}\" 2>/dev/null | grep -l \"DynamicSchemaManager\" && echo \"{}\"')",
-      "Bash(xargs -I{} basename {})"
+      "Bash(xargs -I{} basename {})",
+      "Read(//home/ilenia/tests/jpa/**)",
+      "Read(//home/ilenia/tests/jpa/test1/**)",
+      "Read(//home/ilenia/tests/jpa/test2/**)"
     ],
     "deny": [],
     "ask": []

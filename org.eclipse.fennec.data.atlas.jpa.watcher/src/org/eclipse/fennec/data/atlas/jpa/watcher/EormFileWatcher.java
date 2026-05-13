@@ -126,9 +126,12 @@ public class EormFileWatcher implements FileSystemWatcherListener {
         if (!isJpaMappingFile(uri)) {
             return;
         }
-        if (StandardWatchEventKinds.ENTRY_CREATE.equals(kind)) {
-        	loadJpaMapping(path);
-        } else if (StandardWatchEventKinds.ENTRY_MODIFY.equals(kind)) {
+        if (StandardWatchEventKinds.ENTRY_CREATE.equals(kind)
+                || StandardWatchEventKinds.ENTRY_MODIFY.equals(kind)) {
+            // CREATE includes atomic-rename saves (vim/IntelliJ/etc) — Linux's
+            // IN_MOVED_TO surfaces as ENTRY_CREATE even when the file existed.
+            // Always unload first so any prior registration tied to this path
+            // is torn down before the reload.
             unload(uri);
             loadJpaMapping(path);
         } else if (StandardWatchEventKinds.ENTRY_DELETE.equals(kind)) {

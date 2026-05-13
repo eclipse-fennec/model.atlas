@@ -138,7 +138,6 @@ public class DataFolderWatcher implements FileSystemWatcherListener {
             emfWatcherConfig = configAdmin.getFactoryConfiguration(WatcherConstants.PID_EMF_FILE_WATCHER, matcherKey, "?");
             properties = new Hashtable<>();
             properties.put(FileSystemWatcherWhiteboardConstants.FILESYSTEM_WATCHER_PATH, mappingPath);
-            properties.put(FileSystemWatcherWhiteboardConstants.FILESYSTEM_WATCHER_PATTERN, ".*\\.ecore");
             properties.put(WatcherConstants.KEY_FILE_CONTEXT_MATCHER, matcherKey);
             emfWatcherConfig.update(properties);
             
