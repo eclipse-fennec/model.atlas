@@ -268,7 +268,7 @@ public class ModelConverterResourceTest extends AbstractRestTest{
     // ========== Helper Methods ==========
 
     private String createJsonEPackage(String nsUri, String name, String nsPrefix) {
-        return String.format("{\"eClass\":\"http://www.eclipse.org/emf/2002/Ecore#//EPackage\","
+        return String.format("{\"_type\":\"http://www.eclipse.org/emf/2002/Ecore#//EPackage\","
                 + "\"name\":\"%s\",\"nsURI\":\"%s\",\"nsPrefix\":\"%s\"}", name, nsUri, nsPrefix);
     }
 

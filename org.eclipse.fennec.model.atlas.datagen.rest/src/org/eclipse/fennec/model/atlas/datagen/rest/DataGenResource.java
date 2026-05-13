@@ -13,6 +13,9 @@ import org.eclipse.fennec.model.atlas.datagen.model.datagen.ClassGenConfig;
 import org.eclipse.fennec.model.atlas.datagen.model.datagen.DataGenConfig;
 import org.eclipse.fennec.model.atlas.datagen.model.datagen.DataGenResult;
 import org.eclipse.fennec.model.atlas.datagen.model.datagen.DatagenFactory;
+import org.eclipse.fennec.model.atlas.mgmt.management.ObjectMetadata;
+import org.eclipse.fennec.model.atlas.wf.workflowapi.ScopeService;
+import org.eclipse.fennec.model.atlas.workflow.ScopeServiceCollector;
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
 import org.osgi.service.component.annotations.ReferenceScope;
@@ -21,9 +24,12 @@ import org.osgi.service.jakartars.whiteboard.propertytypes.JakartarsName;
 import org.osgi.service.jakartars.whiteboard.propertytypes.JakartarsResource;
 
 import jakarta.ws.rs.Consumes;
+import jakarta.ws.rs.GET;
 import jakarta.ws.rs.POST;
 import jakarta.ws.rs.Path;
+import jakarta.ws.rs.PathParam;
 import jakarta.ws.rs.Produces;
+import jakarta.ws.rs.QueryParam;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 
@@ -37,12 +43,19 @@ import jakarta.ws.rs.core.Response;
 @Component(name = "DataGenResource", service = DataGenResource.class, scope = ServiceScope.PROTOTYPE)
 @Path("/datagen")
 public class DataGenResource {
+	
+	private static final String JENA_SCOPE_NAME = "jena";
+	private static final String DATA_GEN_REGISTRY_NAME = "DataGen";
+	private static final String DATA_GEN_STAGE_NAME = "release";
 
 	@Reference(scope = ReferenceScope.PROTOTYPE_REQUIRED)
 	private DataGenService dataGenService;
 
 	@Reference
 	private ResourceSet resourceSet;
+	
+	@Reference
+    private ScopeServiceCollector scopeCollector;
 
 	@POST
 	@Consumes("application/xmi")
@@ -50,6 +63,46 @@ public class DataGenResource {
 	public Response generate(DataGenConfig config) {
 		try {
 			List<EPackage> targetPackages = resolvePackages(config);
+			Map<String, List<EObject>> generated = dataGenService.generate(config, targetPackages);
+
+			DataGenResult result = DatagenFactory.eINSTANCE.createDataGenResult();
+			generated.values().forEach(result.getResults()::addAll);
+
+			return Response.ok(result).build();
+		} catch (IllegalArgumentException e) {
+			return Response.status(Response.Status.BAD_REQUEST).entity(e.getMessage()).build();
+		} catch (Exception e) {
+			return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity(e.getMessage()).build();
+		}
+	}
+	
+	@GET
+	@Path("/{configName}")
+	@Produces({"application/xmi", MediaType.APPLICATION_JSON})
+	public Response generateByConfigName(@PathParam("configName") String configName, @QueryParam("version") String version) {
+		try {
+			ScopeService<?> scopeService = getScopeService();
+			
+			List<ObjectMetadata> objectsMetadata = scopeService.listInStageForRegistryByName(DATA_GEN_REGISTRY_NAME,
+					DATA_GEN_STAGE_NAME, configName);
+            if (objectsMetadata.isEmpty()) {
+                return Response.status(Response.Status.NO_CONTENT).build();
+            }
+            ObjectMetadata metadata = null;
+            if(version != null) {
+            	metadata = objectsMetadata.stream().filter(m -> version.equals(m.getVersion())).findFirst().orElse(null);
+            } else {
+            	metadata = objectsMetadata.get(0);
+            }
+            if(metadata == null) {
+            	return Response.status(Response.Status.NO_CONTENT).build();
+            }
+            EObject eObject = scopeService.getContentFromStageForRegistry(DATA_GEN_REGISTRY_NAME, DATA_GEN_STAGE_NAME, metadata.getObjectId());
+            if(eObject == null || !(eObject instanceof DataGenConfig)) {
+            	return Response.status(Response.Status.NO_CONTENT).build();
+            }
+            DataGenConfig config = (DataGenConfig) eObject;
+            List<EPackage> targetPackages = resolvePackages(config);
 			Map<String, List<EObject>> generated = dataGenService.generate(config, targetPackages);
 
 			DataGenResult result = DatagenFactory.eINSTANCE.createDataGenResult();
@@ -132,4 +185,8 @@ public class DataGenResource {
 		}
 		return null;
 	}
+	
+	private ScopeService<?> getScopeService() {
+        return scopeCollector.getScopeServiceByScopeName(JENA_SCOPE_NAME);
+    }
 }

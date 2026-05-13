@@ -23,6 +23,7 @@ Fennec Model Atlas is a dynamic EMF model management system that provides a REST
   - [Object Validation API](#object-validation-api)
   - [Data Generation API](#data-generation-api)
   - [Content Negotiation](#content-negotiation)
+  - [ETags and Conditional Requests](#etags-and-conditional-requests)
   - [Error Handling](#error-handling)
 - [Workflows](#workflows)
   - [Publishing a Schema](#publishing-a-schema)
@@ -444,13 +445,15 @@ Convert EMF models between different serialization formats.
 
 ### Object Validation API
 
-**Base path**: `/validate`
+**Base path**: `/{scopeName}/{stageName}/validate`
 
 Validate an EObject instance against its schema constraints, including any OCL constraints defined in the model. The endpoint runs EMF's `Diagnostician` on the submitted object and returns a structured diagnostic report.
 
+`scopeName` identifies the scope whose C-OCL registry is used for OCL-based validation. `stageName` is captured for future scope-aware resource set resolution; currently the globally registered resource set is used.
+
 ```bash
 # Validate a Person object (JSON request, JSON response)
-curl -X POST http://localhost:8080/rest/validate \
+curl -X POST http://localhost:8080/rest/jena/release/validate \
   -H "Content-Type: application/json" \
   -H "Accept: application/json" \
   -d '{
@@ -463,7 +466,7 @@ curl -X POST http://localhost:8080/rest/validate \
   }'
 
 # Validate using XMI format
-curl -X POST http://localhost:8080/rest/validate \
+curl -X POST http://localhost:8080/rest/jena/release/validate \
   -H "Content-Type: application/xmi" \
   -H "Accept: application/xmi" \
   -d '<?xml version="1.0" encoding="UTF-8"?>
@@ -475,7 +478,7 @@ curl -X POST http://localhost:8080/rest/validate \
     phone="0301234567"/>'
 
 # Override response format via query parameter
-curl -X POST "http://localhost:8080/rest/validate?mediaType=application/json" \
+curl -X POST "http://localhost:8080/rest/jena/release/validate?mediaType=application/json" \
   -H "Content-Type: application/xmi" \
   -d @person.xmi
 ```
@@ -586,6 +589,69 @@ curl -H "Accept: application/schema+json" \
   "http://localhost:8080/rest/my-tenant/schema/stages/release/content?nsUri=..."
 ```
 
+### ETags and Conditional Requests
+
+The Schema Packages API and Object Storage API support **ETags** and **conditional HTTP headers** for efficient caching and optimistic concurrency control.
+
+#### ETag Header
+
+Every response that returns object or schema content includes an `ETag` header containing a SHA-256 hash of the content. This applies to:
+
+- **Create** (`POST`): The `ETag` is returned on `201 Created` and `200 OK` (override update) responses
+- **Get content** (`GET`): The `ETag` is returned on `200 OK` responses
+- **Update** (`PUT`): The `ETag` of the updated content is returned on `200 OK` responses
+- **List by ID** (`GET` with `objectId` or `nsUri`): The `ETag` is returned when retrieving a single resource
+
+#### If-None-Match (Conditional GET)
+
+Use the `If-None-Match` header with a previously received ETag to avoid re-downloading unchanged content. If the content has not changed, the server returns `304 Not Modified` with no body.
+
+```bash
+# First request — get the content and its ETag
+curl -v "http://localhost:8080/rest/my-tenant/registries/configurations/stages/draft/content?objectId=app-settings" \
+  -H "Accept: application/json"
+# Response includes: ETag: "a1b2c3d4..."
+
+# Subsequent request — use If-None-Match to check for changes
+curl -v "http://localhost:8080/rest/my-tenant/registries/configurations/stages/draft/content?objectId=app-settings" \
+  -H "Accept: application/json" \
+  -H 'If-None-Match: "a1b2c3d4..."'
+# If unchanged: 304 Not Modified (no body)
+# If changed:   200 OK with new content and new ETag
+```
+
+#### If-Match (Optimistic Concurrency)
+
+Use the `If-Match` header on **update** (`PUT`) and **delete** (`DELETE`) requests to prevent overwriting changes made by another client. If the ETag does not match the current content hash, the server returns `412 Precondition Failed`.
+
+The `If-Match` header is **optional** — clients that do not send it will continue to work as before (last-write-wins).
+
+```bash
+# Get the current ETag
+curl -v "http://localhost:8080/rest/my-tenant/registries/configurations/stages/draft/content?objectId=app-settings"
+# ETag: "a1b2c3d4..."
+
+# Update with If-Match — succeeds only if content hasn't changed
+curl -X PUT "http://localhost:8080/rest/my-tenant/registries/configurations/stages/draft/content?objectId=app-settings" \
+  -H "Content-Type: application/json" \
+  -H 'If-Match: "a1b2c3d4..."' \
+  -d '{"logLevel": "WARN", "maxConnections": 200}'
+# If ETag matches:    200 OK with updated metadata and new ETag
+# If ETag mismatches: 412 Precondition Failed
+```
+
+#### Content-Aware Skip
+
+When updating an object or schema, if the new content is identical to the existing content (same content hash), the update is skipped — no timestamp is modified and the existing metadata is returned with `200 OK`. This ensures true idempotency for repeated updates with the same payload.
+
+#### Idempotent DELETE
+
+Delete operations always return `204 No Content`, whether the object was actually deleted or was already absent. This makes DELETE safe to retry.
+
+#### Idempotent Transitions
+
+If a stage transition is retried and the object has already been moved to the target stage (e.g., due to a previous successful but unacknowledged request), the API returns `200 OK` with the metadata from the target stage instead of failing.
+
 ### Error Handling
 
 All errors return a structured JSON response:
@@ -613,10 +679,12 @@ export MODELATLAS_DEBUG_STACKTRACE=true
 |------|---------|
 | 200 | Success |
 | 201 | Resource created |
-| 204 | No content / not found |
+| 204 | No content / not found (also used for successful DELETE) |
+| 304 | Not Modified (conditional GET with `If-None-Match` — content unchanged) |
 | 400 | Invalid request (bad scope, stage, parameters) |
 | 403 | Forbidden (read-only stage or parent object) |
 | 409 | Conflict (duplicate nsUri or objectId) |
+| 412 | Precondition Failed (`If-Match` ETag mismatch — resource modified by another client) |
 | 415 | Unsupported media type |
 | 500 | Internal server error |
 

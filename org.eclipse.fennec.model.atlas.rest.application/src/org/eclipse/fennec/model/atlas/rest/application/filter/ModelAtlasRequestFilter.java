@@ -105,6 +105,7 @@ public class ModelAtlasRequestFilter implements ContainerRequestFilter {
 
 	@Override
 	public void filter(ContainerRequestContext requestContext) throws IOException {
+		System.out.print("Entering filter");
 		MultivaluedMap<String, String> pathParams = requestContext.getUriInfo().getPathParameters();
 		String scopeName = pathParams.getFirst("scopeName");
 
@@ -194,6 +195,10 @@ public class ModelAtlasRequestFilter implements ContainerRequestFilter {
 		}
 
 		List<MediaType> acceptableMediaTypes = requestContext.getAcceptableMediaTypes();
+		if (acceptableMediaTypes.isEmpty()) {
+			requestContext.setProperty(ModelAtlasRestConstants.RESOLVED_MEDIA_TYPE, MediaType.APPLICATION_JSON);
+			return;
+		}
 		for (MediaType acceptedMediaType : acceptableMediaTypes) {
 			if (acceptedMediaType.isWildcardType() || acceptedMediaType.isWildcardSubtype()) {
 				requestContext.setProperty(ModelAtlasRestConstants.RESOLVED_MEDIA_TYPE, MediaType.APPLICATION_JSON);
@@ -206,6 +211,6 @@ public class ModelAtlasRequestFilter implements ContainerRequestFilter {
 			}
 		}
 
-		requestContext.setProperty(ModelAtlasRestConstants.RESOLVED_MEDIA_TYPE, MediaType.APPLICATION_JSON);
+		throw new WebApplicationException(Response.Status.UNSUPPORTED_MEDIA_TYPE);
 	}
 }

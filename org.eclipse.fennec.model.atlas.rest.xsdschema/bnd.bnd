@@ -4,7 +4,6 @@
 	jakarta.ws.rs-api;version='2.1.6',\
 	org.osgi.service.component.annotations,\
 	org.gecko.emf.rest.jakartars;version=latest,\
-	org.eclipse.fennec.codec.constants,\
 	org.osgi.service.jakartars,\
 	org.eclipse.xsd;version=latest,\
 	org.osgi.service.component,\

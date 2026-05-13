@@ -65,7 +65,7 @@ public class CommonTestAnnotations {
 	@StorageSetup
 	@WithFactoryConfiguration(factoryPid = PID_REGISTRY_SERVICE, name = SCHEMA_REGISTRY_NAME, location = "?", properties = {
 			@Property(key = "registry.name", value = SCHEMA_REGISTRY_NAME),
-			@Property(key = "schema.registry", value = "true", scalar = Scalar.Boolean),
+			@Property(key = "registry.type", value = "SCHEMA"),
 			@Property(key = "schema.uri", value = "http://www.eclipse.org/emf/2002/Ecore"),
 			@Property(key = "root.eclass.uri", value = "http://www.eclipse.org/emf/2002/Ecore#//EPackage"),
 			@Property(key = "resourceSet.target", value = "(emf.name=ecore)"),

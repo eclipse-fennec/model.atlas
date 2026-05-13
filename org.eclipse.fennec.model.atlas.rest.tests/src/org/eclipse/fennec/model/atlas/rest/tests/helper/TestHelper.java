@@ -61,6 +61,7 @@ public class TestHelper {
 
         // Serialize to byte array
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        
         resource.save(baos, Collections.emptyMap());
 
         // Clean up
@@ -114,20 +115,20 @@ public class TestHelper {
         ePackage.setNsPrefix(nsPrefix);
         return ePackage;
     }
-    
+
     public static EClass createTestEClass(String name) {
     	EClass eClass = EcoreFactory.eINSTANCE.createEClass();
         eClass.setName(name);
         return eClass;
     }
-    
+
     public static EAttribute createTestEAttribute(String name) {
     	EAttribute eAtt = EcoreFactory.eINSTANCE.createEAttribute();
     	eAtt.setName(name);
     	eAtt.setEType(EcorePackage.Literals.EINT);
     	return eAtt;
     }
-    
+
     public static Person createTestObject() {
 		Person person = DGFactory.eINSTANCE.createPerson();
 		person.setFirstName("John");
@@ -136,8 +137,6 @@ public class TestHelper {
 		person.setJobTitle("Software Developer");
 		return person;
 	}
-    
-    
 
     /**
      * Wraps a {@link ResourceSet} as a {@link ComponentServiceObjects} for use in

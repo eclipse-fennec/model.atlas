@@ -1,0 +1,326 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ecore:EPackage xmi:version="2.0" xmlns:xmi="http://www.omg.org/XMI" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xmlns:ecore="http://www.eclipse.org/emf/2002/Ecore" name="cocl" nsURI="http://www.gme.org/cocl/1.0" nsPrefix="cocl">
+  <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+    <details key="documentation" value="Custom OCL (C-OCL) Metamodell zur Definition von projektspezifischen OCL-Constraints, die unabhaengig vom Ecore-Modell verwaltet werden koennen."/>
+    <details key="oSGiCompatible" value="true"/>
+    <details key="basePackage" value="org.eclipse.fennec.model.atlas.validation.model"/>
+    <details key="complianceLevel" value="21.0"/>
+    <details key="copyrightText" value="Copyright (c) 2026 Contributors to the Eclipse Foundation.&#xA;&#xA;This program and the accompanying materials are made&#xA;available under the terms of the Eclipse Public License 2.0&#xA;which is available at https://www.eclipse.org/legal/epl-2.0/&#xA;&#xA;SPDX-License-Identifier: EPL-2.0&#xA;&#xA;Contributors:&#xA;  Data In Motion Consulting - initial implementation"/>
+    <details key="resource" value="XMI"/>
+    <details key="fileExtensions" value="cocl"/>
+  </eAnnotations>
+  <eClassifiers xsi:type="ecore:EEnum" name="Severity">
+    <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+      <details key="documentation" value="Schweregrad einer OCL-Constraint-Verletzung. Bestimmt die Darstellung in der Log-Tabelle und das Verhalten bei Validierungsfehlern."/>
+    </eAnnotations>
+    <eLiterals name="TRACE">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="Rein diagnostisch, nicht standardmaessig sichtbar. Fuer Entwickler und Debugging-Zwecke."/>
+      </eAnnotations>
+    </eLiterals>
+    <eLiterals name="INFO" value="1">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="Hinweis ohne Handlungsbedarf. Informiert den Nutzer ueber einen Zustand."/>
+      </eAnnotations>
+    </eLiterals>
+    <eLiterals name="WARN" value="2">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="Potenzielles Problem, das geprueft werden sollte. Blockiert keine Aktionen."/>
+      </eAnnotations>
+    </eLiterals>
+    <eLiterals name="ERROR" value="3">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="Fachlich ungueltiger Zustand. Die Instanz entspricht nicht den definierten Regeln."/>
+      </eAnnotations>
+    </eLiterals>
+    <eLiterals name="FATAL" value="4">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="Kritischer Zustand. Weitere Verarbeitung sollte abgebrochen werden."/>
+      </eAnnotations>
+    </eLiterals>
+  </eClassifiers>
+  <eClassifiers xsi:type="ecore:EEnum" name="OclRole">
+    <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+      <details key="documentation" value="Definiert die Rolle/Verwendung eines OCL-Ausdrucks im System."/>
+    </eAnnotations>
+    <eLiterals name="VALIDATION">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="OCL wird zur Validierung von Instanzen verwendet."/>
+      </eAnnotations>
+    </eLiterals>
+    <eLiterals name="DERIVED" value="1">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="OCL wird zur Berechnung von Derived Values verwendet."/>
+      </eAnnotations>
+    </eLiterals>
+    <eLiterals name="REFERENCE_FILTER" value="2">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="OCL wird zur Filterung von Referenzzielen verwendet."/>
+      </eAnnotations>
+    </eLiterals>
+    <eLiterals name="OPERATION" value="3">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="OCL to execute an operation."/>
+      </eAnnotations>
+    </eLiterals>
+  </eClassifiers>
+  <eClassifiers xsi:type="ecore:EClass" name="OclConstraint">
+    <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+      <details key="documentation" value="Zentrale Klasse zur Definition eines OCL-Constraints. Enthaelt den OCL-Ausdruck, Metadaten und optionale Einschraenkungen auf Zielobjekte."/>
+    </eAnnotations>
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="name" lowerBound="1" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="Eindeutiger, sprechender Name des Constraints. Wird in der Log-Tabelle und in Fehlermeldungen angezeigt."/>
+      </eAnnotations>
+    </eStructuralFeatures>
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="description" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="Fachliche Beschreibung des Constraints. Erklaert den Zweck und die Auswirkungen bei Verletzung."/>
+      </eAnnotations>
+    </eStructuralFeatures>
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="expression" lowerBound="1"
+        eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="Der OCL-Ausdruck selbst. Muss syntaktisch korrekt sein und zum Kontexttyp passen."/>
+      </eAnnotations>
+    </eStructuralFeatures>
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="severity" lowerBound="1"
+        eType="#//Severity" defaultValueLiteral="ERROR">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="Schweregrad bei Constraint-Verletzung. Bestimmt Darstellung und Verhalten."/>
+      </eAnnotations>
+    </eStructuralFeatures>
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="role" lowerBound="1" eType="#//OclRole"
+        defaultValueLiteral="VALIDATION">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="Definiert die Verwendung des OCL-Ausdrucks (Validierung, Derived, Filter)."/>
+      </eAnnotations>
+    </eStructuralFeatures>
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="contextClass" lowerBound="1"
+        eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="Vollqualifizierter Name der EClass, auf die sich dieser Constraint bezieht. Format: EClass URI"/>
+      </eAnnotations>
+    </eStructuralFeatures>
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="featureName" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="Optional: Name des Features (Attribut/Referenz), auf das sich der Constraint bezieht. Relevant fuer DERIVED und REFERENCE_FILTER Rollen."/>
+      </eAnnotations>
+    </eStructuralFeatures>
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="active" lowerBound="1"
+        eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EBoolean" defaultValueLiteral="true">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="Gibt an, ob der Constraint aktiv ist. Inaktive Constraints werden bei der Validierung uebersprungen."/>
+      </eAnnotations>
+    </eStructuralFeatures>
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="overrides" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EBoolean"
+        defaultValueLiteral="false">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="Wenn true, ueberschreibt dieser Constraint einen gleichnamigen Constraint aus einer Quelle mit niedrigerer Prioritaet (z.B. Ecore)."/>
+      </eAnnotations>
+    </eStructuralFeatures>
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="targetURIs" upperBound="-1"
+        eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="Optionale Liste von URIs konkreter EObjects, auf die sich der Constraint beschraenkt. Wenn leer, gilt der Constraint fuer alle Instanzen der contextClass."/>
+      </eAnnotations>
+    </eStructuralFeatures>
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="operationName" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="This is relevant only for constraint of type OPERATION, that has to specify the name of the operation here."/>
+      </eAnnotations>
+    </eStructuralFeatures>
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="operationParameterNames"
+        upperBound="-1" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="This is relevant only for constraint of type OPERATION, that has to specify the list of operation parameter names here."/>
+      </eAnnotations>
+    </eStructuralFeatures>
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="operationReturnType" eType="#//OperationReturnType">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="This is relevant only for constraint of type OPERATION. We have to know which kind of object is expected as return type to be able to create the right ValidationResult later on."/>
+      </eAnnotations>
+    </eStructuralFeatures>
+  </eClassifiers>
+  <eClassifiers xsi:type="ecore:EClass" name="OclConstraintSet">
+    <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+      <details key="documentation" value="Container fuer eine Sammlung von OCL-Constraints. Entspricht einer *.c-ocl Datei."/>
+    </eAnnotations>
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="name" lowerBound="1" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"
+        iD="true">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="Name des Constraint-Sets. Wird zur Identifikation und im Log verwendet."/>
+      </eAnnotations>
+    </eStructuralFeatures>
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="version" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"
+        defaultValueLiteral="1.0">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="Versionsnummer des Constraint-Sets fuer Kompatibilitaetspruefungen."/>
+      </eAnnotations>
+    </eStructuralFeatures>
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="description" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="Optionale Beschreibung des Constraint-Sets."/>
+      </eAnnotations>
+    </eStructuralFeatures>
+    <eStructuralFeatures xsi:type="ecore:EReference" name="constraints" upperBound="-1"
+        eType="#//OclConstraint" containment="true" eKeys="#//OclConstraint/name">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="Liste der enthaltenen OCL-Constraints."/>
+      </eAnnotations>
+    </eStructuralFeatures>
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="targetModelNsURIs" upperBound="-1"
+        eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="Liste von Namespace URIs der Zielmodelle, fuer die dieses Constraint-Set gilt."/>
+      </eAnnotations>
+    </eStructuralFeatures>
+  </eClassifiers>
+  <eClassifiers xsi:type="ecore:EClass" name="ValidationRequest" abstract="true">
+    <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+      <details key="documentation" value="Abstract validation request object"/>
+    </eAnnotations>
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="role" eType="#//OclRole"/>
+    <eStructuralFeatures xsi:type="ecore:EReference" name="validationObjects" upperBound="-1"
+        eType="ecore:EClass platform:/plugin/org.eclipse.emf.ecore/model/Ecore.ecore#//EObject"
+        containment="true">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="Objects to be validated. Muli-valued for batch request"/>
+      </eAnnotations>
+    </eStructuralFeatures>
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="coclId" eType="ecore:EDataType platform:/plugin/org.eclipse.emf.ecore/model/Ecore.ecore#//EString">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="The id of the ocol object, which is usually the coc constraint set name"/>
+      </eAnnotations>
+    </eStructuralFeatures>
+  </eClassifiers>
+  <eClassifiers xsi:type="ecore:EClass" name="ValidationResponse">
+    <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+      <details key="documentation" value="Validation response object, that i returned for all ValidationRequests"/>
+    </eAnnotations>
+    <eStructuralFeatures xsi:type="ecore:EReference" name="results" upperBound="-1"
+        eType="#//ValidationResult" containment="true">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="The resulting objects"/>
+      </eAnnotations>
+    </eStructuralFeatures>
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="role" eType="#//OclRole"/>
+    <eStructuralFeatures xsi:type="ecore:EReference" name="diagnostics" upperBound="-1"
+        eType="#//Diagnostic" containment="true">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="List of diagnostics to communicate"/>
+      </eAnnotations>
+    </eStructuralFeatures>
+  </eClassifiers>
+  <eClassifiers xsi:type="ecore:EClass" name="ValidationResult" abstract="true">
+    <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+      <details key="documentation" value="Abstract validation result"/>
+    </eAnnotations>
+    <eStructuralFeatures xsi:type="ecore:EReference" name="diagnostics" upperBound="-1"
+        eType="#//Diagnostic" containment="true">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="List of diagnostics to communicate"/>
+      </eAnnotations>
+    </eStructuralFeatures>
+  </eClassifiers>
+  <eClassifiers xsi:type="ecore:EClass" name="SimpleValidationResult" eSuperTypes="#//ValidationResult">
+    <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+      <details key="documentation" value="Validation result for simple java types"/>
+    </eAnnotations>
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="value" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="The simple value to be returned"/>
+      </eAnnotations>
+    </eStructuralFeatures>
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="valueJavaClassName" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+  </eClassifiers>
+  <eClassifiers xsi:type="ecore:EClass" name="EObjectValidationResult" eSuperTypes="#//ValidationResult">
+    <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+      <details key="documentation" value="Validation result for EMF EObjects"/>
+    </eAnnotations>
+    <eStructuralFeatures xsi:type="ecore:EReference" name="values" upperBound="-1"
+        eType="ecore:EClass platform:/plugin/org.eclipse.emf.ecore/model/Ecore.ecore#//EObject"
+        containment="true">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="The EObjects to be returned"/>
+      </eAnnotations>
+    </eStructuralFeatures>
+  </eClassifiers>
+  <eClassifiers xsi:type="ecore:EClass" name="DerivedValidationRequest" eSuperTypes="#//ValidationRequest">
+    <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+      <details key="documentation" value="Validation request for derived field validation"/>
+    </eAnnotations>
+    <eStructuralFeatures xsi:type="ecore:EReference" name="derivedFeature" lowerBound="1"
+        upperBound="-1" eType="ecore:EClass platform:/plugin/org.eclipse.emf.ecore/model/Ecore.ecore#//EStructuralFeature">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="EstructuralFeature for the derived field to be validated"/>
+      </eAnnotations>
+    </eStructuralFeatures>
+  </eClassifiers>
+  <eClassifiers xsi:type="ecore:EClass" name="OperationValidationRequest" eSuperTypes="#//ValidationRequest">
+    <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+      <details key="documentation" value="Validation request for operation validation"/>
+    </eAnnotations>
+    <eStructuralFeatures xsi:type="ecore:EReference" name="operation" eType="ecore:EClass platform:/plugin/org.eclipse.emf.ecore/model/Ecore.ecore#//EOperation">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="Operation to be executed. This has to be provided by the client when no C-OCL id is provided, but an EOperation defined in the model has to be invoked."/>
+      </eAnnotations>
+    </eStructuralFeatures>
+    <eStructuralFeatures xsi:type="ecore:EReference" name="parameters" upperBound="-1"
+        eType="#//OperationRequestParameter" containment="true">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="Operation . This has to be provided by the client when no C-OCL id is provided, but an EOperation defined in the model has to be invoked."/>
+      </eAnnotations>
+    </eStructuralFeatures>
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="operationName" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="When requesting an OperationValidation using a C-OCL id, the client has to provide an operationName, which then will be used to filter the right OPERATION Constraint from the C-OCL ConstraintSet."/>
+      </eAnnotations>
+    </eStructuralFeatures>
+  </eClassifiers>
+  <eClassifiers xsi:type="ecore:EClass" name="OperationRequestParameter">
+    <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+      <details key="documentation" value="Operation request parameter object"/>
+    </eAnnotations>
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="parameterName" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="When requesting an OperationValidation using a C-OCL id, the client has to provide the operation parameter names, which then will be used to filter the right OPERATION Constraint from the C-OCL ConstraintSet."/>
+      </eAnnotations>
+    </eStructuralFeatures>
+    <eStructuralFeatures xsi:type="ecore:EReference" name="parameter" eType="ecore:EClass platform:/plugin/org.eclipse.emf.ecore/model/Ecore.ecore#//EParameter">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="EParameter . This has to be provided by the client when no C-OCL id is provided, but an EOperation defined in the model has to be invoked."/>
+      </eAnnotations>
+    </eStructuralFeatures>
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="isNull" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EBoolean"/>
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="javaValue" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="We put the String representation here to not have issues via REST. Then we can construct the value back from the parameter type."/>
+      </eAnnotations>
+    </eStructuralFeatures>
+    <eStructuralFeatures xsi:type="ecore:EReference" name="eValue" eType="ecore:EClass http://www.eclipse.org/emf/2002/Ecore#//EObject"
+        containment="true"/>
+  </eClassifiers>
+  <eClassifiers xsi:type="ecore:EClass" name="Diagnostic">
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="message" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="source" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="type" eType="#//Severity"/>
+    <eStructuralFeatures xsi:type="ecore:EReference" name="children" upperBound="-1"
+        eType="#//Diagnostic" containment="true"/>
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="exceptionMsg" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="data" upperBound="-1" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+  </eClassifiers>
+  <eClassifiers xsi:type="ecore:EClass" name="BatchValidationRequest" eSuperTypes="#//ValidationRequest">
+    <eStructuralFeatures xsi:type="ecore:EReference" name="filterConstraint" eType="#//OclConstraint"
+        containment="true">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="An optional OclConstraint representing a filter constraint. It has to be of role type REFERENCE_FILTER"/>
+      </eAnnotations>
+    </eStructuralFeatures>
+  </eClassifiers>
+  <eClassifiers xsi:type="ecore:EEnum" name="OperationReturnType">
+    <eLiterals name="EOBJECT"/>
+    <eLiterals name="JAVA_OBJECT" value="1"/>
+  </eClassifiers>
+</ecore:EPackage>

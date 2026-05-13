@@ -14,7 +14,7 @@
     },
     
     "RegistryService~schema": {
-        "schema.registry": true,
+        "registry.type": "SCHEMA",
         "registry.name": "schema",
         "registry.description": "The schema registry to store EPackage objects",
         "stageActionService.target": "(component.name=EPackageStageActionService)",

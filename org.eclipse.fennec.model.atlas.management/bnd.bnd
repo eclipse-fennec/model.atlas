@@ -1,7 +1,7 @@
 Bundle-Name: Model Atlas Cloud - Workflow Management Core
 Bundle-Description: Core EMF-based workflow management system with Promise-based async operations. Provides object lifecycle management, metadata tracking, and workflow state transitions for governance processes.
 
--workingset: Workflow
+-workingset: workflow
 # sets the usually required buildpath using the bnd library, you can extend it with the normal -buildpath to your liking
 -library: \
 	enableEMF

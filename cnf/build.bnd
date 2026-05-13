@@ -37,12 +37,14 @@ Bundle-Developers: \
 	fennecTest,\
 	fennecEMF,\
 	fennecM2X,\
+	fennecJPA,\
 	fennecQVT,\
 	geckoEMFUtil,\
 	geckoMessaging,\
 	geckoEMFRepository,\
 	jakartaREST,\
-	geckoLibraries
+	geckoLibraries,\
+	fennecCodec
 
 # Needed because we enabled library 'gecko-dimc'
 # Activate baselining
@@ -53,7 +55,6 @@ base-version: 0.0.1
 maven-central: true
 
 # Maven Central Group-Id
-# For Geckoprojects the groupid must start with org.geckoprojects
 -groupid: org.eclipse.fennec.model.atlas
 
 javac.source: 21

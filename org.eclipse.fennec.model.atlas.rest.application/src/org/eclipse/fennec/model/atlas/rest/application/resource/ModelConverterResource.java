@@ -13,14 +13,10 @@
  */
 package org.eclipse.fennec.model.atlas.rest.application.resource;
 
-import java.util.List;
-
 import org.eclipse.emf.ecore.EPackage;
-import org.eclipse.fennec.model.atlas.mediatypes.api.SupportedMediatype;
+import org.eclipse.fennec.model.atlas.rest.common.ModelAtlasRestConstants;
 import org.eclipse.fennec.model.atlas.runtime.RequireRuntime;
-import org.osgi.service.component.annotations.Activate;
 import org.osgi.service.component.annotations.Component;
-import org.osgi.service.component.annotations.Reference;
 import org.osgi.service.component.annotations.ServiceScope;
 import org.osgi.service.jakartars.whiteboard.propertytypes.JakartarsName;
 import org.osgi.service.jakartars.whiteboard.propertytypes.JakartarsResource;
@@ -38,9 +34,7 @@ import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.WebApplicationException;
 import jakarta.ws.rs.core.Context;
 import jakarta.ws.rs.core.HttpHeaders;
-import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
-import jakarta.ws.rs.core.Response.Status;
 
 /**
  *
@@ -55,15 +49,11 @@ import jakarta.ws.rs.core.Response.Status;
 @Tag(name = "Model Converter Resource", description = "CRUD operations for converting models on the fly from one format to another")
 public class ModelConverterResource {
 
-    private final List<String> supportedMediaTypes;
-
     @Context
     private HttpHeaders headers;
-
-    @Activate
-    public ModelConverterResource(@Reference SupportedMediatype types) {
-        supportedMediaTypes = types.getSupportedMediaTypes();
-    }
+    
+    @Context
+    private jakarta.ws.rs.container.ContainerRequestContext requestContext;
 
     @POST
     @Consumes
@@ -75,9 +65,8 @@ public class ModelConverterResource {
     public Response convertPackage(
             @RequestBody(description = "The schema package content", required = true, content = @Content(schema = @Schema(implementation = EPackage.class))) EPackage ePackage) {
 
-        checkContentType();
         try {
-            return Response.status(Response.Status.OK).entity(ePackage).build();
+            return Response.status(Response.Status.OK).entity(ePackage).header("Content-Type", getResolvedMediaType()).build();
             
     	} catch (WebApplicationException e) {
 			// WebApplicationException already has the correct status code, rethrow it
@@ -87,23 +76,9 @@ public class ModelConverterResource {
         }
     }
 
-    /**
-     * Check that the Accept header contains a supported media type.
-     */
-    private void checkContentType() {
-        List<MediaType> acceptableMediaTypes = headers.getAcceptableMediaTypes();
-        for (MediaType acceptedMediaType : acceptableMediaTypes) {
-            String accept = acceptedMediaType.getType() + "/" + acceptedMediaType.getSubtype();
-            if (supportedMediaTypes.contains(accept)) {
-                return;
-            }
-        }
-        // Wildcard accepts anything, default to JSON
-        for (MediaType acceptedMediaType : acceptableMediaTypes) {
-            if (acceptedMediaType.isWildcardType() || acceptedMediaType.isWildcardSubtype()) {
-                return;
-            }
-        }
-        throw new WebApplicationException(Status.UNSUPPORTED_MEDIA_TYPE);
+
+    
+    private String getResolvedMediaType() {
+        return (String) requestContext.getProperty(ModelAtlasRestConstants.RESOLVED_MEDIA_TYPE);
     }
 }

@@ -27,6 +27,7 @@ import java.util.logging.Logger;
 import org.eclipse.emf.common.util.URI;
 import org.eclipse.emf.ecore.EObject;
 import org.eclipse.emf.ecore.EPackage;
+import org.eclipse.emf.ecore.EcorePackage;
 import org.eclipse.emf.ecore.resource.Resource;
 import org.eclipse.emf.ecore.resource.ResourceSet;
 import org.eclipse.emf.ecore.xmi.XMLResource;
@@ -136,7 +137,6 @@ public class EcoreMessageBodyHandler extends AbstractEPackageMessageBodyHandler 
 
             EObject rootObject = resource.getContents().get(0);
             logger.log(Level.INFO, "Successfully loaded EObject: {0}", rootObject.getClass().getSimpleName());
-
             return (EPackage) rootObject;
         } finally {
             factory.ungetService(resourceSet);
@@ -159,19 +159,22 @@ public class EcoreMessageBodyHandler extends AbstractEPackageMessageBodyHandler 
                 new Object[] { eObject.getClass().getSimpleName(), mediaType });
         var factory = getResourceSetFactory();
         ResourceSet resourceSet = factory.getService();
+
         try {
 
-            String fileName = eObject.getName() + (isXMI(mediaType) ? ".xmi" : ".xml");
+        	// Use ABSOLUTE URI for consistent behavior
+            String fileName = eObject.getName() + (isXMI(mediaType) ? ".ecore" : ".xml");
             httpHeaders.put(HttpHeaders.CONTENT_DISPOSITION, List.of("attachment; filename=" + fileName));
             URI absoluteURI = URI.createURI(fileName);
-            Resource resource = resourceSet.createResource(absoluteURI);
+            Resource resource = resourceSet.createResource(absoluteURI, EcorePackage.eCONTENT_TYPE);
             resource.getContents().add(eObject);
-
+            // Configure XMI saving options
             Map<Object, Object> options = new HashMap<>();
-            options.put(XMLResource.OPTION_ENCODING, "UTF-8");
-            options.put(XMLResource.OPTION_XML_VERSION, "1.0");
-            options.put(XMLResource.OPTION_DECLARE_XML, Boolean.TRUE);
+//            options.put(XMLResource.OPTION_ENCODING, "UTF-8");
+//            options.put(XMLResource.OPTION_XML_VERSION, "1.0");
+//            options.put(XMLResource.OPTION_DECLARE_XML, Boolean.TRUE);
 
+            // Save to output stream
             resource.save(entityStream, options);
 
             logger.log(Level.INFO, "Successfully serialized EObject to XMI");

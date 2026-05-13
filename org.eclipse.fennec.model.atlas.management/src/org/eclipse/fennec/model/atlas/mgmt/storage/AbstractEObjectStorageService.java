@@ -15,8 +15,12 @@ package org.eclipse.fennec.model.atlas.mgmt.storage;
 
 import static java.util.Objects.requireNonNull;
 
+import java.io.ByteArrayOutputStream;
+import java.security.MessageDigest;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HexFormat;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.Executors;
@@ -26,7 +30,9 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import org.eclipse.emf.ecore.EObject;
+import org.eclipse.emf.ecore.resource.Resource;
 import org.eclipse.emf.ecore.util.EcoreUtil;
+import org.eclipse.emf.ecore.xmi.impl.XMIResourceImpl;
 import org.eclipse.fennec.model.atlas.mgmt.api.EObjectRegistryService;
 import org.eclipse.fennec.model.atlas.mgmt.api.EObjectStorageService;
 import org.eclipse.fennec.model.atlas.mgmt.management.ObjectMetadata;
@@ -299,9 +305,32 @@ public abstract class AbstractEObjectStorageService implements EObjectStorageSer
         LOGGER.info("Storage service deactivated: " + getClass().getSimpleName());
     }
 
+    /**
+     * Computes a SHA-256 content hash of an EObject by serializing it to XMI.
+     *
+     * @param object the EObject to hash
+     * @return the hex-encoded SHA-256 hash, or null if computation fails
+     */
+    public static String computeContentHash(EObject object) {
+        if (object == null) {
+            return null;
+        }
+        try {
+            ByteArrayOutputStream baos = new ByteArrayOutputStream();
+            Resource resource = new XMIResourceImpl();
+            resource.getContents().add(EcoreUtil.copy(object));
+            resource.save(baos, Collections.emptyMap());
+            byte[] digest = MessageDigest.getInstance("SHA-256").digest(baos.toByteArray());
+            return HexFormat.of().formatHex(digest);
+        } catch (Exception e) {
+            LOGGER.log(Level.WARNING, "Failed to compute content hash", e);
+            return null;
+        }
+    }
+
     /*
      * (non-Javadoc)
-     * 
+     *
      * @see
      * org.eclipse.fennec.model.atlas.mgmt.api.EObjectStorageService#storeObject(
      * java.lang.String, java.lang.String, java.lang.String, java.lang.String,
@@ -328,6 +357,14 @@ public abstract class AbstractEObjectStorageService implements EObjectStorageSer
                     }
                 }
 
+                // Compute and set content hash
+                if (metadata != null && object != null) {
+                    String contentHash = computeContentHash(object);
+                    if (contentHash != null) {
+                        metadata.setContentHash(contentHash);
+                    }
+                }
+
                 // Use helper to save both object and metadata
                 storageHelper.saveEObject(scope, registry, stage, storageId, object, metadata);
                 storageHelper.saveMetadata(scope, registry, stage, storageId, metadata);
@@ -349,7 +386,6 @@ public abstract class AbstractEObjectStorageService implements EObjectStorageSer
 
             } catch (Exception e) {
                 LOGGER.log(Level.SEVERE, "Failed to store object", e);
-                e.printStackTrace(System.out);
                 throw new RuntimeException("Failed to store object", e);
             }
         });

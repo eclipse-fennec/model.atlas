@@ -1,0 +1,23 @@
+{
+	":configurator:resource-version": 1,
+	"org.apache.felix.http~gogo": {
+		"org.osgi.service.http.port:int": 8088,
+		"org.apache.felix.http.name": "gogo"
+	},
+	"MCPToolProvider~gogoShell": {
+		"name": "gogo_shell_tool_provider",
+		"description": "A tool provider that collects Gogo shell tools for executing commands in a running OSGi framework",
+		"tools.target": "(|(tool.name=execute_gogo)(tool.name=list_commands))",
+		"tools.cardinality.minimum:int": 2
+	},
+	"HttpMCPServerComponent~gogoShell": {
+		"server.name": "osgi-gogo-mcp-server",
+		"server.version": "1.0",
+		"osgi.http.whiteboard.servlet.pattern": "/mcp/gogo",
+		"osgi.http.whiteboard.target": "(org.apache.felix.http.name=gogo)",
+		"has.tool.capability": true,
+		"toolProviders.target": "(name=gogo_shell_tool_provider)",
+		"toolProviders.cardinality.minimum:int": 1,
+		"server.instructions": "Use this MCP server to interact with a live OSGi runtime. You can execute any Gogo shell command to inspect bundles, DS components, services, configurations, and more. Start with 'list_commands' to see what's available, then use 'execute_gogo' to run specific commands."
+	}
+}

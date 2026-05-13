@@ -40,6 +40,7 @@ import org.eclipse.fennec.model.atlas.mgmt.management.ManagementPackage;
 import org.eclipse.fennec.model.atlas.mgmt.management.ObjectMetadata;
 import org.eclipse.fennec.model.atlas.wf.workflowapi.Registry;
 import org.eclipse.fennec.model.atlas.wf.workflowapi.RegistryService;
+import org.eclipse.fennec.model.atlas.wf.workflowapi.RegistryType;
 import org.eclipse.fennec.model.atlas.wf.workflowapi.Stage;
 import org.eclipse.fennec.model.atlas.wf.workflowapi.StageTransition;
 import org.eclipse.fennec.model.atlas.wf.workflowapi.WorkflowApiFactory;
@@ -524,7 +525,7 @@ public class RegistryServiceImpl<T extends EObject> implements RegistryService<T
         Registry registry = WorkflowApiFactory.eINSTANCE.createRegistry();
         registry.setName(config.registry_name());
         registry.setDescription(config.registry_description());
-        registry.setSchemaRegistry(config.schema_registry());
+        registry.setType(RegistryType.get(config.registry_type()));
         registry.getAllowedTransitions().addAll(allowedTransitionsList);
         registry.getStages().addAll(stages);
         return registry;

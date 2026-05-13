@@ -13,7 +13,7 @@
         "registryService.cardinality.minimum:int": 1
     },
     "RegistryService~schema": {
-    	"schema.registry": true,
+        "registry.type": "SCHEMA",
         "registry.name": "schema",
         "registry.description": "The schema registry to store EPackage objects",
         "stageActionService.target": "(component.name=EPackageStageActionService)",
@@ -54,6 +54,7 @@
         "registry.name": "default",
         "registry.description": "The person registry to store Person objects",
         "stage.storage.mappings": [
+        
             "draft:file",
             "approved:file",
             "release:file"

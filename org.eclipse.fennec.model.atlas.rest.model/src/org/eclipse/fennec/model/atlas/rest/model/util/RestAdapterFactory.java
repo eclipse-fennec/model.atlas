@@ -1,6 +1,5 @@
 /**
- * Copyright (c) 2012 - 2025 Data In Motion and others.
- * All rights reserved.
+ * Copyright (c) 2026 Contributors to the Eclipse Foundation.
  * 
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
@@ -9,7 +8,7 @@
  * SPDX-License-Identifier: EPL-2.0
  * 
  * Contributors:
- *     Data In Motion - initial API and implementation
+ *   Data In Motion Consulting - initial implementation
  */
 package org.eclipse.fennec.model.atlas.rest.model.util;
 
@@ -97,10 +96,6 @@ public class RestAdapterFactory extends AdapterFactoryImpl {
 			@Override
 			public Adapter caseScopeListResponse(ScopeListResponse object) {
 				return createScopeListResponseAdapter();
-			}
-			@Override
-			public Adapter caseDiagnostic(Diagnostic object) {
-				return createDiagnosticAdapter();
 			}
 			@Override
 			public Adapter caseContainer(Container object) {
@@ -193,20 +188,6 @@ public class RestAdapterFactory extends AdapterFactoryImpl {
 	 * @generated
 	 */
 	public Adapter createScopeListResponseAdapter() {
-		return null;
-	}
-
-	/**
-	 * Creates a new adapter for an object of class '{@link org.eclipse.fennec.model.atlas.rest.model.Diagnostic <em>Diagnostic</em>}'.
-	 * <!-- begin-user-doc -->
-	 * This default implementation returns null so that we can easily ignore cases;
-	 * it's useful to ignore a case when inheritance will catch all the cases anyway.
-	 * <!-- end-user-doc -->
-	 * @return the new adapter.
-	 * @see org.eclipse.fennec.model.atlas.rest.model.Diagnostic
-	 * @generated
-	 */
-	public Adapter createDiagnosticAdapter() {
 		return null;
 	}
 

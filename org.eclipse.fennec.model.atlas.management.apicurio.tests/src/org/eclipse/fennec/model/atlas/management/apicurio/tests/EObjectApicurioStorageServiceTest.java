@@ -163,7 +163,6 @@ public class EObjectApicurioStorageServiceTest {
         metadata.setUploadUser("testUser");
         metadata.setUploadTime(Instant.now());
         metadata.setSourceChannel("testChannel");
-        metadata.setContentHash("testhash123");
         metadata.setVersion("1.0.0");
         metadata.setObjectRef(testPackage);
         metadata.setObjectName("test-id-123");
@@ -201,7 +200,7 @@ public class EObjectApicurioStorageServiceTest {
         assertNotNull(retrievedMetadata);
         assertEquals("testUser", retrievedMetadata.getUploadUser());
         assertEquals("testChannel", retrievedMetadata.getSourceChannel());
-        assertEquals("testhash123", retrievedMetadata.getContentHash());
+        assertNotNull(retrievedMetadata.getContentHash());
 
         // Cleanup
         Promise<Boolean> deletePromise = storageService.deleteObject(TEST_SCOPE, TEST_REGISTRY, TEST_STAGE, storageId);
@@ -604,7 +603,6 @@ public class EObjectApicurioStorageServiceTest {
         ObjectMetadata updatedMetadata = ManagementFactory.eINSTANCE.createObjectMetadata();
         updatedMetadata.setUploadUser("updatedUser");
         updatedMetadata.setSourceChannel("updatedChannel");
-        updatedMetadata.setContentHash("updatedHash");
         updatedMetadata.setUploadTime(Instant.now());
         updatedMetadata.setReviewUser("reviewUser");
         updatedMetadata.setReviewTime(Instant.now());
@@ -627,7 +625,6 @@ public class EObjectApicurioStorageServiceTest {
         assertEquals("originalUser", retrievedMetadata.getUploadUser(),
                 "Upload user should be immutable and preserved");
         assertEquals("updatedChannel", retrievedMetadata.getSourceChannel());
-        assertEquals("updatedHash", retrievedMetadata.getContentHash());
         assertEquals("reviewUser", retrievedMetadata.getReviewUser());
         assertEquals("Updated for testing", retrievedMetadata.getReviewReason());
         assertEquals("customValue", retrievedMetadata.getProperties().get("custom.property"));

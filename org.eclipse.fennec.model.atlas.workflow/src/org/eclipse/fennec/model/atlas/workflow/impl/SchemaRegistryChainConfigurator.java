@@ -23,6 +23,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import org.eclipse.fennec.model.atlas.wf.workflowapi.Registry;
+import org.eclipse.fennec.model.atlas.wf.workflowapi.RegistryType;
 import org.eclipse.fennec.model.atlas.wf.workflowapi.Scope;
 import org.eclipse.fennec.model.atlas.wf.workflowapi.ScopeService;
 import org.eclipse.fennec.model.atlas.wf.workflowapi.Stage;
@@ -132,7 +133,7 @@ public class SchemaRegistryChainConfigurator {
             return;
         }
         Registry schemaRegistry = scope.getRegistries().stream()
-                .filter(Registry::isSchemaRegistry)
+                .filter(r -> RegistryType.SCHEMA.equals(r.getType()))
                 .findFirst()
                 .orElse(null);
         if (schemaRegistry == null) {
@@ -191,7 +192,7 @@ public class SchemaRegistryChainConfigurator {
             return null;
         }
         Registry parentSchema = parentScope.getRegistries().stream()
-                .filter(Registry::isSchemaRegistry)
+                .filter(r -> RegistryType.SCHEMA.equals(r.getType()))
                 .findFirst()
                 .orElse(null);
         if (parentSchema == null || parentSchema.getStages().isEmpty()) {

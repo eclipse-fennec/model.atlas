@@ -56,7 +56,7 @@ public class TestAnnotations extends CommonTestAnnotations{
 	@StorageSetup
 	@WithFactoryConfiguration(factoryPid = PID_REGISTRY_SERVICE, name = OBJECT_REGISTRY_NAME, location = "?", properties = {
 			@Property(key = "registry.name", value = OBJECT_REGISTRY_NAME),
-			@Property(key = "schema.registry", value = "false", scalar = Scalar.Boolean),
+			@Property(key = "registry.type", value = "OBJECT"),
 			@Property(key = "schema.uri", value = "https://dg.de/1.0"),
 			@Property(key = "root.eclass.uri", value = "https://dg.de/1.0#//Person"),
 			@Property(key = "resourceSet.target", value = "(emf.name=dge)"),

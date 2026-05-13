@@ -22,10 +22,9 @@ import java.util.Map;
 
 import org.eclipse.emf.common.util.URI;
 import org.eclipse.emf.ecore.EPackage;
-import org.eclipse.emf.ecore.EcorePackage;
 import org.eclipse.emf.ecore.resource.Resource;
 import org.eclipse.emf.ecore.resource.ResourceSet;
-import org.eclipse.fennec.codec.options.CodecOptionsBuilder;
+import org.eclipse.fennec.codec.jsonschema.v2.constants.CodecJsonSchemaOptions;
 import org.eclipse.fennec.model.atlas.rest.common.AbstractEPackageMessageBodyHandler;
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.ServiceScope;
@@ -58,10 +57,8 @@ import jakarta.ws.rs.ext.Provider;
 @Consumes("application/schema+json")
 public class JsonSchemaMessageBodyReaderWriter extends AbstractEPackageMessageBodyHandler {
 
-	private static final Map<String, Object> OPTIONS = CodecOptionsBuilder.create()
-			.rootObject(EcorePackage.Literals.EPACKAGE).serializeType(false).serializeEmptyValue(true)
-			.serializeNullValue(true).forClass(EcorePackage.Literals.EPACKAGE)
-			.withExtraProperties(Map.of("jsonschema", "true", "jsonschema.feature.key", "definitions")).build();
+
+    private static final Map<String, Object> OPTIONS = Map.ofEntries(Map.entry(CodecJsonSchemaOptions.OPTION_SCHEMA_FEATURE, "definitions"));
 
 	@Override
 	public boolean isWriteable(Class<?> type, Type genericType, Annotation[] annotations, MediaType mediaType) {

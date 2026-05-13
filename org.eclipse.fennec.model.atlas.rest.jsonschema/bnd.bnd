@@ -6,7 +6,5 @@
 	org.gecko.emf.rest.jakartars;version=latest,\
 	org.osgi.service.jakartars,\
 	org.osgi.service.component,\
-	org.eclipse.fennec.codec.constants,\
-	org.eclipse.fennec.codec.jsonschema,\
-	org.gecko.emf.osgi.component.minimal,\
-	org.eclipse.fennec.model.atlas.rest.common;version=snapshot
+	org.eclipse.fennec.codec.jsonschema;version=latest,\
+	org.eclipse.fennec.model.atlas.rest.common;version=snapshot,\

@@ -35,7 +35,8 @@ Test-Cases: ${classes;HIERARCHY_INDIRECTLY_ANNOTATED;org.junit.platform.commons.
 	org.eclipse.fennec.model.atlas.tests.common;version=snapshot,\
 	org.eclipse.fennec.model.atlas.rest.common;version=snapshot,\
 	org.mockito.mockito-core;version=latest,\
-	jakarta.inject.jakarta.inject-api
+	jakarta.inject.jakarta.inject-api,\
+	org.gecko.emf.util.common
 
 Private-Package: org.eclipse.fennec.model.atlas.rest.tests,\
 	org.eclipse.fennec.model.atlas.rest.tests.helper
