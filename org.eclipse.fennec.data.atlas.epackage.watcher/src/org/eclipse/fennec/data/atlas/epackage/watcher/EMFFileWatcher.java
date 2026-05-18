@@ -42,7 +42,6 @@ import org.eclipse.emf.common.util.URI;
 import org.eclipse.emf.ecore.EAnnotation;
 import org.eclipse.emf.ecore.EObject;
 import org.eclipse.emf.ecore.EPackage;
-import org.eclipse.emf.ecore.impl.EPackageRegistryImpl;
 import org.eclipse.emf.ecore.resource.Resource;
 import org.eclipse.emf.ecore.resource.ResourceSet;
 import org.eclipse.emf.ecore.util.EcoreUtil;
@@ -77,6 +76,7 @@ public class EMFFileWatcher implements FileSystemWatcherListener {
     public static final String PID = "EMFFileWatcher";
 
     private final ResourceSet resourceSet;
+    
     private final BundleContext bundleContext;
     private final Map<String, String> forwardedProperties;
 
@@ -96,7 +96,7 @@ public class EMFFileWatcher implements FileSystemWatcherListener {
 
     @Activate
     public EMFFileWatcher(
-            @Reference(scope = ReferenceScope.PROTOTYPE_REQUIRED) ResourceSet resourceSet,
+            @Reference(name = "resourceSet", scope = ReferenceScope.PROTOTYPE_REQUIRED) ResourceSet resourceSet,
             BundleContext bundleContext,
             Map<String, Object> properties) {
         this.resourceSet = resourceSet;
@@ -144,7 +144,7 @@ public class EMFFileWatcher implements FileSystemWatcherListener {
         try {
             originalToNsUri.values().forEach(md -> md.services.forEach((ePackage, registrations) -> {
                 registrations.forEach(ServiceRegistration::unregister);
-                EPackageRegistryImpl.INSTANCE.remove(ePackage.getNsURI());
+                
             }));
             originalToNsUri.clear();
             ownedNsUris.clear();
@@ -323,7 +323,6 @@ public class EMFFileWatcher implements FileSystemWatcherListener {
     }
 
     private Dictionary<String, String> getServiceProperties(EPackage ePackage) {
-        EPackageRegistryImpl.INSTANCE.put(ePackage.getNsURI(), ePackage);
         Dictionary<String, String> serviceProperties = new Hashtable<>();
         String nsUri = ePackage.getNsURI();
         serviceProperties.put(EMFNamespaces.EMF_NAME, ePackage.getName());
@@ -356,7 +355,6 @@ public class EMFFileWatcher implements FileSystemWatcherListener {
             }
             metadata.services.forEach((ePackage, registrations) -> {
                 registrations.forEach(ServiceRegistration::unregister);
-                EPackageRegistryImpl.INSTANCE.remove(ePackage.getNsURI());
                 ownedNsUris.remove(ePackage.getNsURI());
             });
             metadata.resource.unload();

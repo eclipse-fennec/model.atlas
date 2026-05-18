@@ -78,6 +78,9 @@ public class EormFileWatcher implements FileSystemWatcherListener {
 
 	        @AttributeDefinition(name = "File Context Matcher", required = true)
 	        String file_context_matcher();
+	        
+	        @AttributeDefinition(name = "Jpa Root Folder", required = true)
+	        String jpa_root_folder();
 	    }
 
     @Activate
@@ -257,8 +260,9 @@ public class EormFileWatcher implements FileSystemWatcherListener {
         props.put(PROP_NAME, jpaMappingConfig.getName() != null ? jpaMappingConfig.getName() : "");
         props.put(PROP_TARGET_NS_URI, jpaMappingConfig.getPackage() != null ? jpaMappingConfig.getPackage() : "");
         props.put(PROP_FOLDER, folderOf(uri));
-        props.put("fennec.jpa.orm.mapping.name", config.file_context_matcher());
+        props.put("fennec.jpa.orm.mapping.name", config.jpa_root_folder());
         props.put(WatcherConstants.KEY_FILE_CONTEXT_MATCHER, config.file_context_matcher());
+        props.put(WatcherConstants.KEY_JPA_ROOT_FOLDER, config.jpa_root_folder());
 
         ServiceRegistration<EntityMappings> reg =
                 bundleContext.registerService(EntityMappings.class, jpaMappingConfig, props);

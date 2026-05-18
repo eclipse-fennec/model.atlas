@@ -1,5 +1,5 @@
 <?xml version='1.0' encoding='UTF-8'?>
-<repository xmlns="http://www.osgi.org/xmlns/repository/v1.0.0" name="Local" increment="1778667868240">
+<repository xmlns="http://www.osgi.org/xmlns/repository/v1.0.0" name="Local" increment="1779094366154">
   <resource>
     <capability namespace="osgi.identity">
       <attribute name="license" value="Eclipse Public License 2.0"/>
@@ -628,11 +628,11 @@
       <attribute name="documentation" value="https://github.com/eclipse-fennec/emf.persistence-jpa"/>
       <attribute name="description" value="EMF Persistence with Eclipselink JPA"/>
       <attribute name="type" value="osgi.bundle"/>
-      <attribute name="version" value="0.1.0.202605131024-SNAPSHOT" type="Version"/>
+      <attribute name="version" value="0.1.0.202605180746-SNAPSHOT" type="Version"/>
     </capability>
     <capability namespace="osgi.wiring.package">
       <attribute name="bundle-symbolic-name" value="org.eclipse.fennec.persistence.eclipselink"/>
-      <attribute name="bundle-version" value="0.1.0.202605131024-SNAPSHOT" type="Version"/>
+      <attribute name="bundle-version" value="0.1.0.202605180746-SNAPSHOT" type="Version"/>
       <attribute name="osgi.wiring.package" value="org.eclipse.fennec.persistence.eclipselink"/>
       <attribute name="version" value="1.0.0" type="Version"/>
       <attribute name="bnd.hashes" value="-1923478059" type="List&lt;Long&gt;"/>
@@ -640,7 +640,7 @@
     <capability namespace="osgi.wiring.package">
       <directive name="uses" value="org.eclipse.emf.ecore,org.eclipse.emf.ecore.util,org.eclipse.fennec.persistence.eclipselink.descriptors,org.eclipse.fennec.persistence.eclipselink.dynamic,org.eclipse.persistence.descriptors,org.eclipse.persistence.descriptors.copying,org.eclipse.persistence.exceptions,org.eclipse.persistence.sessions"/>
       <attribute name="bundle-symbolic-name" value="org.eclipse.fennec.persistence.eclipselink"/>
-      <attribute name="bundle-version" value="0.1.0.202605131024-SNAPSHOT" type="Version"/>
+      <attribute name="bundle-version" value="0.1.0.202605180746-SNAPSHOT" type="Version"/>
       <attribute name="osgi.wiring.package" value="org.eclipse.fennec.persistence.eclipselink.copying"/>
       <attribute name="version" value="0.1.0" type="Version"/>
       <attribute name="bnd.hashes" value="-1162650761,1555111724,-1923478059" type="List&lt;Long&gt;"/>
@@ -648,7 +648,7 @@
     <capability namespace="osgi.wiring.package">
       <directive name="uses" value="org.eclipse.emf.ecore,org.eclipse.fennec.persistence.eorm,org.eclipse.persistence.descriptors,org.eclipse.persistence.exceptions,org.eclipse.persistence.internal.descriptors,org.eclipse.persistence.internal.identitymaps,org.eclipse.persistence.internal.sessions"/>
       <attribute name="bundle-symbolic-name" value="org.eclipse.fennec.persistence.eclipselink"/>
-      <attribute name="bundle-version" value="0.1.0.202605131024-SNAPSHOT" type="Version"/>
+      <attribute name="bundle-version" value="0.1.0.202605180746-SNAPSHOT" type="Version"/>
       <attribute name="osgi.wiring.package" value="org.eclipse.fennec.persistence.eclipselink.descriptors"/>
       <attribute name="version" value="1.0.0" type="Version"/>
       <attribute name="bnd.hashes" value="-1682675710,-1839611814,1314854679,-1923478059" type="List&lt;Long&gt;"/>
@@ -656,7 +656,7 @@
     <capability namespace="osgi.wiring.package">
       <directive name="uses" value="jakarta.persistence,jakarta.persistence.spi,javax.sql,org.eclipse.emf.common.util,org.eclipse.emf.ecore,org.eclipse.fennec.persistence.api,org.eclipse.fennec.persistence.eorm,org.eclipse.fennec.persistence.epersistence,org.eclipse.fennec.persistence.processor,org.eclipse.persistence.descriptors,org.eclipse.persistence.dynamic,org.eclipse.persistence.internal.jpa.deployment,org.eclipse.persistence.jpa.dynamic,org.eclipse.persistence.mappings,org.eclipse.persistence.sequencing,org.eclipse.persistence.sessions,org.eclipse.persistence.sessions.server"/>
       <attribute name="bundle-symbolic-name" value="org.eclipse.fennec.persistence.eclipselink"/>
-      <attribute name="bundle-version" value="0.1.0.202605131024-SNAPSHOT" type="Version"/>
+      <attribute name="bundle-version" value="0.1.0.202605180746-SNAPSHOT" type="Version"/>
       <attribute name="osgi.wiring.package" value="org.eclipse.fennec.persistence.eclipselink.dynamic"/>
       <attribute name="version" value="0.1.0" type="Version"/>
       <attribute name="bnd.hashes" value="618995665,20143559,-1294299885,-1143444190,449542280,993931639,1725982356,1412125287,2132711547,1530165919,-1668951340,-486524912,869017088,-1923478059" type="List&lt;Long&gt;"/>
@@ -664,24 +664,24 @@
     <capability namespace="osgi.wiring.package">
       <directive name="uses" value="jakarta.persistence,org.eclipse.emf.common.util,org.eclipse.emf.ecore,org.eclipse.emf.ecore.resource,org.eclipse.emf.ecore.resource.impl,org.eclipse.fennec.persistence.engine,org.eclipse.fennec.persistence.resource"/>
       <attribute name="bundle-symbolic-name" value="org.eclipse.fennec.persistence.eclipselink"/>
-      <attribute name="bundle-version" value="0.1.0.202605131024-SNAPSHOT" type="Version"/>
+      <attribute name="bundle-version" value="0.1.0.202605180746-SNAPSHOT" type="Version"/>
       <attribute name="osgi.wiring.package" value="org.eclipse.fennec.persistence.eclipselink.resource"/>
       <attribute name="version" value="1.0.0" type="Version"/>
       <attribute name="bnd.hashes" value="1107536322,-157236255,282957481,-1923478059" type="List&lt;Long&gt;"/>
     </capability>
     <capability namespace="osgi.wiring.bundle">
-      <attribute name="bundle-version" value="0.1.0.202605131024-SNAPSHOT" type="Version"/>
+      <attribute name="bundle-version" value="0.1.0.202605180746-SNAPSHOT" type="Version"/>
       <attribute name="osgi.wiring.bundle" value="org.eclipse.fennec.persistence.eclipselink"/>
     </capability>
     <capability namespace="osgi.wiring.host">
-      <attribute name="bundle-version" value="0.1.0.202605131024-SNAPSHOT" type="Version"/>
+      <attribute name="bundle-version" value="0.1.0.202605180746-SNAPSHOT" type="Version"/>
       <attribute name="osgi.wiring.host" value="org.eclipse.fennec.persistence.eclipselink"/>
     </capability>
     <capability namespace="osgi.content">
-      <attribute name="size" value="204083" type="Long"/>
+      <attribute name="size" value="205313" type="Long"/>
       <attribute name="mime" value="application/vnd.osgi.bundle"/>
       <attribute name="url" value="org.eclipse.fennec.persistence.eclipselink/org.eclipse.fennec.persistence.eclipselink-0.1.0.jar"/>
-      <attribute name="osgi.content" value="4717E3638D3807FE4599689C69F164155ED0595A3ADE76F79AD07DA79D416AAC"/>
+      <attribute name="osgi.content" value="9ED89D8BBA4916EFE2183CF145DA398E4CFC92E4E4F31D44F0CFC5AD46BD59CC"/>
     </capability>
     <capability namespace="osgi.service">
       <directive name="uses" value="jakarta.persistence"/>

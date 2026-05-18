@@ -62,7 +62,7 @@ import jakarta.ws.rs.core.Response;
 @ExtendWith(ConfigurationExtension.class)
 public class JpaDataResourceTest {
 
-	private static final String BASE_URL = "http://localhost:8185/rest/jpa/data";
+	private static final String BASE_URL = "http://localhost:8185/rest/jpa/data/data";
 	private static final String E_PACKAGE_URI = "http://example.org/jpa/demo/1.0";
 
 	private static final String MAPPINGS_FILTER =
@@ -185,7 +185,7 @@ public class JpaDataResourceTest {
 
 	@Test
 	@DataFolderWatcherConfig
-	public void testGetAll_classNotFound_shouldReturn404(
+	public void testGetAll_classNotFound_shouldReturn400(
 			@InjectBundleContext BundleContext ctx,
 			@InjectService(cardinality = 0, filter = MAPPINGS_FILTER) ServiceAware<EntityMappings> mappingsAware,
 			@InjectService(cardinality = 0, filter = EMF_FILTER) ServiceAware<EntityManagerFactory> emfAware)
@@ -198,7 +198,7 @@ public class JpaDataResourceTest {
 				.request()
 				.get();
 
-		assertEquals(404, response.getStatus());
+		assertEquals(400, response.getStatus());
 	}
 
 	@Test

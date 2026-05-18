@@ -31,6 +31,7 @@ import org.eclipse.daanse.io.fs.watcher.api.FileSystemWatcherWhiteboardConstants
 import org.eclipse.daanse.io.fs.watcher.api.propertytypes.FileSystemWatcherListenerProperties;
 import org.eclipse.daanse.jdbc.datasource.h2.api.Constants;
 import org.eclipse.fennec.data.atlas.jpa.watcher.api.WatcherConstants;
+import org.eclipse.fennec.emf.osgi.constants.EMFNamespaces;
 import org.osgi.service.cm.Configuration;
 import org.osgi.service.cm.ConfigurationAdmin;
 import org.osgi.service.cm.annotations.RequireConfigurationAdmin;
@@ -68,6 +69,8 @@ public class DataFolderWatcher implements FileSystemWatcherListener {
     private ConfigurationAdmin configAdmin;
 
     private Path basePath;
+    private Path rootFolder;
+    
 //    private String unitName;
     private String matcherKey;
     private Configuration emfWatcherConfig;
@@ -75,6 +78,8 @@ public class DataFolderWatcher implements FileSystemWatcherListener {
     private Configuration csvImporterConfig;
     private Configuration jpaPersistenceUnitConfig;
     private Configuration dataSourceConfig;
+    private Configuration ePackageRegistryConfig;
+    private Configuration resourceSetFactoryConfig;
 
     @Deactivate
     void deactivate() {
@@ -83,16 +88,21 @@ public class DataFolderWatcher implements FileSystemWatcherListener {
         deleteConfig(csvImporterConfig);
         deleteConfig(jpaPersistenceUnitConfig);
         deleteConfig(dataSourceConfig);
+        deleteConfig(ePackageRegistryConfig);
+        deleteConfig(resourceSetFactoryConfig);
         emfWatcherConfig = null;
         entityMappingsFileWatcherConfig = null;
         csvImporterConfig = null;
         jpaPersistenceUnitConfig = null;
         dataSourceConfig = null;
+        ePackageRegistryConfig = null;
+        resourceSetFactoryConfig = null;
     }
 
     @Override
     public void handleBasePath(Path basePath) {
         this.basePath = basePath;
+        this.rootFolder = basePath.getFileName();
         Path eormFile = ensureEormFile(basePath.resolve("mapping"));
         if (eormFile == null) {
             LOG.log(Level.INFO, "No .eorm file in {0}/mapping — pipeline will start when one is added", basePath);
@@ -130,15 +140,22 @@ public class DataFolderWatcher implements FileSystemWatcherListener {
         	dataSourceConfig = configAdmin.getFactoryConfiguration(WatcherConstants.PID_H2_DATA_SOURCE, matcherKey, "?");
     		Dictionary<String, Object> properties = new Hashtable<>();
     		properties.put(Constants.DATASOURCE_PROPERTY_IDENTIFIER, "./generated/tmp/databases/" + matcherKey);
+    		properties.put(WatcherConstants.KEY_JPA_ROOT_FOLDER, rootFolder.toString());
     		properties.put(Constants.DATASOURCE_PROPERTY_PLUGABLE_FILESYSTEM, Constants.OPTION_PLUGABLE_FILESYSTEM_FILE);
     		properties.put(Constants.DATASOURCE_PROPERTY_DATABASE_TO_UPPER, false);
     		properties.put(WatcherConstants.KEY_FILE_CONTEXT_MATCHER, matcherKey);
     		dataSourceConfig.update(properties);
+    		
+    		ePackageRegistryConfig = createEPackageRegistryConfig();
+    		resourceSetFactoryConfig = createResourceSetFactoryConfig();
         	
             emfWatcherConfig = configAdmin.getFactoryConfiguration(WatcherConstants.PID_EMF_FILE_WATCHER, matcherKey, "?");
             properties = new Hashtable<>();
             properties.put(FileSystemWatcherWhiteboardConstants.FILESYSTEM_WATCHER_PATH, mappingPath);
             properties.put(WatcherConstants.KEY_FILE_CONTEXT_MATCHER, matcherKey);
+            properties.put("resourceSet.target", "(" + WatcherConstants.KEY_FILE_CONTEXT_MATCHER + "=" + matcherKey + ")");
+            properties.put(WatcherConstants.KEY_JPA_ROOT_FOLDER, rootFolder.toString());
+//            properties.put("ePackageRegistry.target", "(" + EMFNamespaces.PROP_RESOURCE_SET_FACTORY_NAME + "=" + matcherKey + ")");
             emfWatcherConfig.update(properties);
             
             entityMappingsFileWatcherConfig = configAdmin.getFactoryConfiguration(WatcherConstants.PID_ENTITY_MAPPINGS_FILE_WATCHER, matcherKey, "?");
@@ -146,6 +163,7 @@ public class DataFolderWatcher implements FileSystemWatcherListener {
             properties.put(FileSystemWatcherWhiteboardConstants.FILESYSTEM_WATCHER_PATH, mappingPath);
             properties.put(FileSystemWatcherWhiteboardConstants.FILESYSTEM_WATCHER_PATTERN, ".*\\.eorm");
             properties.put(WatcherConstants.KEY_FILE_CONTEXT_MATCHER, matcherKey);
+            properties.put(WatcherConstants.KEY_JPA_ROOT_FOLDER, rootFolder.toString());
             entityMappingsFileWatcherConfig.update(properties);
 
             csvImporterConfig = configAdmin.getFactoryConfiguration(WatcherConstants.PID_CSV_IMPORTER, matcherKey, "?");
@@ -156,21 +174,45 @@ public class DataFolderWatcher implements FileSystemWatcherListener {
             properties.put(FileSystemWatcherWhiteboardConstants.FILESYSTEM_WATCHER_KINDS,
                     new String[] { EventKind.ENTRY_CREATE.name(), EventKind.ENTRY_DELETE.name(), EventKind.ENTRY_MODIFY.name() });
             properties.put(WatcherConstants.KEY_FILE_CONTEXT_MATCHER, matcherKey);
-            properties.put(WatcherConstants.PROP_DATASOURCE_TARGET, "(" + WatcherConstants.KEY_FILE_CONTEXT_MATCHER + "=" + matcherKey + ")");
-            properties.put(WatcherConstants.PROP_ENTITY_MANAGER_FACTORY_TARGET, "(osgi.unit.name=" + matcherKey + ")");
+            properties.put(WatcherConstants.PROP_DATASOURCE_TARGET, "(" + WatcherConstants.KEY_JPA_ROOT_FOLDER + "=" + rootFolder.toString() + ")");
+            properties.put(WatcherConstants.PROP_ENTITY_MANAGER_FACTORY_TARGET, "(osgi.unit.name=" + rootFolder.toString() + ")");
+            properties.put(WatcherConstants.KEY_JPA_ROOT_FOLDER, rootFolder.toString());
             csvImporterConfig.update(properties);                
 
             jpaPersistenceUnitConfig = configAdmin.getFactoryConfiguration(WatcherConstants.PID_PERSISTENCE_UNIT, matcherKey, "?");
             properties = new Hashtable<>();
-            properties.put("fennec.jpa.persistenceUnitName", matcherKey);
-            properties.put("fennec.jpa.dataSource.target", "(" + WatcherConstants.KEY_FILE_CONTEXT_MATCHER + "=" + matcherKey + ")");
-            properties.put("fennec.jpa.mapping.target", "(" + WatcherConstants.PROP_EORM_MAPPING_NAME + "=" + matcherKey + ")");
+            properties.put("fennec.jpa.persistenceUnitName", rootFolder.toString());
+            properties.put("fennec.jpa.dataSource.target", "(" + WatcherConstants.KEY_JPA_ROOT_FOLDER + "=" + rootFolder.toString() + ")");
+            properties.put("fennec.jpa.mapping.target", "(" + WatcherConstants.PROP_EORM_MAPPING_NAME + "=" + rootFolder.toString() + ")");
+            properties.put(WatcherConstants.KEY_JPA_ROOT_FOLDER, rootFolder.toString());
             jpaPersistenceUnitConfig.update(properties);
 
             LOG.log(Level.INFO, "DataFolderWatcher activated for unit ''{0}'' at {1}", matcherKey, basePath.toAbsolutePath().toString());
         } catch (IOException e) {
             LOG.log(Level.ERROR, "Failed to create sub-component configs for folder " + basePath.toAbsolutePath().toString(), e);
         }
+    }
+    
+    private Configuration createEPackageRegistryConfig() throws IOException {
+        Configuration config = configAdmin.getFactoryConfiguration(EMFNamespaces.EPACKAGE_REGISTRY_CONFIG_NAME,
+                matcherKey, "?");
+        Hashtable<String, Object> props = new Hashtable<>();
+        props.put(EMFNamespaces.PROP_RESOURCE_SET_FACTORY_NAME, matcherKey);
+        props.put("ePackageConfigurator.target", "(" + WatcherConstants.KEY_JPA_ROOT_FOLDER + "=" + rootFolder.toString() + ")");
+        props.put(WatcherConstants.KEY_JPA_ROOT_FOLDER, rootFolder.toString());
+        config.update(props);
+        return config;
+    }
+
+    private Configuration createResourceSetFactoryConfig() throws IOException {
+        Configuration config = configAdmin.getFactoryConfiguration(EMFNamespaces.RESOURCE_SET_FACTORY_CONFIG_NAME,
+                matcherKey, "?");
+        Hashtable<String, Object> props = new Hashtable<>();
+        props.put("ePackageRegistry.target", "(" + EMFNamespaces.PROP_RESOURCE_SET_FACTORY_NAME + "=" + matcherKey + ")");
+        props.put(WatcherConstants.KEY_FILE_CONTEXT_MATCHER, matcherKey);
+        props.put(WatcherConstants.KEY_JPA_ROOT_FOLDER, rootFolder.toString());
+        config.update(props);
+        return config;
     }
 
     private Path ensureEormFile(Path folder) {

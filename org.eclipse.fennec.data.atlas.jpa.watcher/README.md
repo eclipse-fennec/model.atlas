@@ -107,11 +107,22 @@ project doesn't add anything on top of it.
 
 ```
 DataFolderWatcher  (this bundle)
+  │   For every sub-config below, in addition to the properties listed,
+  │   DataFolderWatcher also sets:
+  │     jpa.root.folder = <rootFolder>     (the last segment of the watched path)
+  │   This is the value REST clients pass as {rootFolderName} in the URL.
   │
   ├── creates ──► daanse H2 DataSource           file.context.matcher=<matcherKey>
+  │                                              jpa.root.folder=<rootFolder>
+  │
+  ├── creates ──► EPackageRegistry               emf.resourceSetFactoryName=<matcherKey>
+  │               + ResourceSetFactory           jpa.root.folder=<rootFolder>
+  │                                              (consumed by EMFFileWatcher and
+  │                                               by JpaDataResourceFilter)
   │
   ├── creates ──► EMFFileWatcher                 watches mapping/ (pattern: .*\.ecore)
   │               └── registers EPackage         emf.nsURI=<targetModelNsUri>
+  │                                              jpa.root.folder=<rootFolder>
   │
   ├── creates ──► EormFileWatcher  (this bundle) watches mapping/ (pattern: .*\.eorm)
   │               └── once the matching EPackage is in the registry:
@@ -119,27 +130,32 @@ DataFolderWatcher  (this bundle)
   │                                          eorm.name=<name>
   │                                          eorm.targetNsUri=<package>
   │                                          file.context.matcher=<matcherKey>
-  │                                          fennec.jpa.orm.mapping.name=<matcherKey>
+  │                                          fennec.jpa.orm.mapping.name=<rootFolder>
+  │                                          jpa.root.folder=<rootFolder>
   │
   ├── creates ──► daanse CsvDataImporter         watches data/ (kinds: CREATE|MODIFY|DELETE)
-  │               targets the H2 DataSource by file.context.matcher
+  │               targets the H2 DataSource by jpa.root.folder
   │               and the EntityManagerFactory by osgi.unit.name
   │
-  └── creates ──► fennec.jpa.EMPersistenceUnit   targets DataSource by file.context.matcher
+  └── creates ──► fennec.jpa.EMPersistenceUnit   persistenceUnitName=<rootFolder>
+                                                  targets DataSource by jpa.root.folder
                                                   and EntityMappings by fennec.jpa.orm.mapping.name
                   └── EclipseLink configures dynamic types from the EntityMappings
                       and registers EntityManagerFactory  osgi.unit.name=<matcherKey>
                                                           │
                                                           ▼
-                                          GET /jpa/data/{eClassName}   (jpa.rest)
-                                          GET /jpa/data/{eClassName}/{id}
+                              GET /jpa/{rootFolderName}/data/{eClassName}        (jpa.rest)
+                              GET /jpa/{rootFolderName}/data/{eClassName}/{id}
 ```
 
-All five sub-configurations share a single random `matcherKey` (a UUID) — that's
+All sub-configurations share a single random `matcherKey` (a UUID) — that's
 how the pipeline wires its own components together via OSGi targeted references
-without colliding with any other pipeline running in the same framework. On
-`DataFolderWatcher.deactivate()`, all five configurations are deleted, which
-tears the entire pipeline down.
+without colliding with any other pipeline running in the same framework. The
+`jpa.root.folder` property (the last segment of the watched root path) is set
+on every service so that `JpaDataResourceFilter` can look up the right
+`ResourceSet` / `EntityMappings` / `EntityManagerFactory` by the path parameter
+of the incoming HTTP request. On `DataFolderWatcher.deactivate()`, all
+sub-configurations are deleted, which tears the entire pipeline down.
 
 ## Components owned by this bundle
 
@@ -159,15 +175,20 @@ On activation (`handleBasePath`) it scans `<root>/mapping/` for an `.eorm` file:
   `handlePathEvent(*, ENTRY_CREATE | ENTRY_MODIFY)` for an `.eorm`, the
   pipeline is started lazily.
 
-`setupPipeline()` creates five factory configurations via `ConfigurationAdmin`:
+`setupPipeline()` creates the following factory configurations via
+`ConfigurationAdmin`. Every one of them, in addition to the properties listed
+below, also carries `jpa.root.folder=<rootFolder>` so that the REST filter can
+look the resulting services up by the `{rootFolderName}` path segment.
 
 | Factory PID | Watched path / target | Key properties set |
 |-------------|----------------------|--------------------|
-| `daanse.jdbc.datasource.h2.DataSource` | file H2 under `./generated/tmp/databases/<matcherKey>` | `identifier`, `file.context.matcher`, `database.to.upper=false` |
-| `EMFFileWatcher` | `<root>/mapping` | `io.fs.watcher.path`, `io.fs.watcher.pattern=.*\.ecore`, `file.context.matcher` |
-| `JpaMappingFileWatcher` (`EormFileWatcher`) | `<root>/mapping` | `io.fs.watcher.path`, `io.fs.watcher.pattern=.*\.eorm`, `file_context_matcher` |
-| `fennec.jpa.CsvDataLoader` | `<root>/data` | `io.fs.watcher.path`, `io.fs.watcher.kinds=CREATE,DELETE,MODIFY`, `file.context.matcher`, `dataSource.target`, `entityManagerFactory.target` |
-| `fennec.jpa.EMPersistenceUnit` | — | `fennec.jpa.persistenceUnitName=<matcherKey>`, `fennec.jpa.dataSource.target`, `fennec.jpa.mapping.target` |
+| `daanse.jdbc.datasource.h2.DataSource` | file H2 under `./generated/tmp/databases/<matcherKey>` | `identifier`, `file.context.matcher`, `database.to.upper=false`, `jpa.root.folder` |
+| `EPackageRegistry` (`EMF`) | — | `emf.resourceSetFactoryName=<matcherKey>`, `ePackageConfigurator.target=(jpa.root.folder=<rootFolder>)`, `jpa.root.folder` |
+| `ResourceSetFactory` (`EMF`) | — | `ePackageRegistry.target=(emf.resourceSetFactoryName=<matcherKey>)`, `file.context.matcher`, `jpa.root.folder` |
+| `EMFFileWatcher` | `<root>/mapping` | `io.fs.watcher.path`, `io.fs.watcher.pattern=.*\.ecore`, `file.context.matcher`, `resourceSet.target=(file.context.matcher=<matcherKey>)`, `jpa.root.folder` |
+| `JpaMappingFileWatcher` (`EormFileWatcher`) | `<root>/mapping` | `io.fs.watcher.path`, `io.fs.watcher.pattern=.*\.eorm`, `file_context_matcher`, `jpa_root_folder` |
+| `fennec.jpa.CsvDataLoader` | `<root>/data` | `io.fs.watcher.path`, `io.fs.watcher.kinds=CREATE,DELETE,MODIFY`, `file.context.matcher`, `dataSource.target=(jpa.root.folder=<rootFolder>)`, `entityManagerFactory.target=(osgi.unit.name=<matcherKey>)`, `jpa.root.folder` |
+| `fennec.jpa.EMPersistenceUnit` | — | `fennec.jpa.persistenceUnitName=<rootFolder>`, `fennec.jpa.dataSource.target=(jpa.root.folder=<rootFolder>)`, `fennec.jpa.mapping.target=(fennec.jpa.orm.mapping.name=<rootFolder>)`, `jpa.root.folder` |
 
 Note the explicit `io.fs.watcher.pattern` overrides on the EMF and EORM
 watchers: the same `mapping/` folder holds both `.ecore` and `.eorm` files, and
@@ -219,7 +240,8 @@ registry. Detaching keeps the resource set clean across many load/reload cycles.
 | `eorm.targetNsUri` | `EntityMappings.getPackage()` |
 | `eorm.folder` | Parent directory of the file |
 | `file.context.matcher` | Component config (set by `DataFolderWatcher`) |
-| `fennec.jpa.orm.mapping.name` | Component config — same value as `file.context.matcher`; this is the property `EntityMappingPersistenceUnitConfigurator` filters on by default |
+| `fennec.jpa.orm.mapping.name` | Component config — currently the root-folder name; this is the property `EntityMappingPersistenceUnitConfigurator` filters on by default |
+| `jpa.root.folder` | Component config (set by `DataFolderWatcher`) — the value REST clients use as `{rootFolderName}` in `/jpa/{rootFolderName}/data/...`. `JpaDataResourceFilter` looks up the `EntityMappings` by this property. |
 
 **Event semantics:**
 
@@ -229,11 +251,12 @@ registry. Detaching keeps the resource set clean across many load/reload cycles.
 | `ENTRY_MODIFY` | Unload existing registration for the URI, then load + register again |
 | `ENTRY_DELETE` | Unload registration |
 
-**Required configuration property:**
+**Required configuration properties:**
 
 | Property | Description |
 |----------|-------------|
 | `file_context_matcher` | Opaque identifier (a UUID, when created by `DataFolderWatcher`) used to link this watcher's `EntityMappings` to the other components in the same pipeline |
+| `jpa_root_folder` | Name of the data root folder. Mirrored onto the registered `EntityMappings` as the `jpa.root.folder` service property and used (via `fennec.jpa.orm.mapping.name=<jpa_root_folder>`) by the persistence-unit configurator to bind the right mapping. |
 
 ## External components
 
@@ -272,31 +295,42 @@ Schema is derived from the file's parent folder relative to the watched root.
 
 `EntityMappingPersistenceUnitConfigurator`. References:
 
-- `fennec.jpa.dataSource` — H2 DataSource, targeted via `file.context.matcher`.
-- `fennec.jpa.mapping` — `EntityMappings`, targeted via `fennec.jpa.orm.mapping.name`.
+- `fennec.jpa.dataSource` — H2 DataSource, targeted via
+  `(jpa.root.folder=<rootFolder>)`.
+- `fennec.jpa.mapping` — `EntityMappings`, targeted via
+  `(fennec.jpa.orm.mapping.name=<rootFolder>)`.
 - `fennec.jpa.converter` — `ConverterService` (singleton from `org.eclipse.fennec.persistence`).
 
 Builds the EclipseLink `EntityManagerFactory` asynchronously on a single-threaded
 executor (`AbstractPersistenceUnitConfigurator.doActivate` submits via a
 `PromiseFactory`). On success the `EntityManagerFactory` is registered with
-`osgi.unit.name=<persistenceUnitName>` (which equals our `matcherKey`). On
-failure, the SEVERE log line under that logger is the single best diagnostic.
+`osgi.unit.name=<persistenceUnitName>` — and `DataFolderWatcher` configures
+`persistenceUnitName=<rootFolder>`, so the unit name matches the value REST
+clients pass as `{rootFolderName}`. (`JpaDataResourceFilter` indexes
+`EntityManagerFactory` services by `osgi.unit.name` exactly for this reason.)
+On failure, the SEVERE log line under that logger is the single best
+diagnostic.
 
 ## Full pipeline walkthrough
 
 Sequence after a correctly structured root folder is placed under the watched
 path:
 
+Assume the watched root folder is `…/<rootFolder>/` — e.g. `…/demo/` so that
+`<rootFolder> = "demo"`.
+
 ```
 1. FileSystemWatcher notifies DataFolderWatcher.handleBasePath(<root>)
 2. DataFolderWatcher confirms <root>/mapping/*.eorm exists, generates matcherKey (UUID),
-   and creates five factory configurations via ConfigurationAdmin
+   captures rootFolder = <root>.getFileName(), and creates the factory configurations
+   via ConfigurationAdmin — every one of them tagged with jpa.root.folder=<rootFolder>
 
 3. daanse H2 DataSource activates (config-only) → javax.sql.DataSource registered
-   (file.context.matcher=<matcherKey>)
+   (file.context.matcher=<matcherKey>, jpa.root.folder=<rootFolder>)
 
 4. EMFFileWatcher activates → scans <root>/mapping/ (pattern .*\.ecore)
-   → loads model.ecore → registers EPackage(nsURI="http://example.org/jpa/demo/1.0")
+   → loads model.ecore → registers EPackage(nsURI="http://example.org/jpa/demo/1.0",
+                                             jpa.root.folder=<rootFolder>)
    → also stuffs it into EPackageRegistryImpl.INSTANCE
 
 5. EormFileWatcher activates → scans <root>/mapping/ (pattern .*\.eorm)
@@ -305,14 +339,16 @@ path:
    → tracker fires (the EPackage from step 4 is already there)
    → EcoreUtil.resolveAll(mappings) → register EntityMappings
      (eorm.name="<name>", file.context.matcher=<matcherKey>,
-      fennec.jpa.orm.mapping.name=<matcherKey>)
+      fennec.jpa.orm.mapping.name=<rootFolder>,
+      jpa.root.folder=<rootFolder>)
    → resource detached from the eorm ResourceSet
 
-6. fennec.jpa.EMPersistenceUnit activates (DataSource + EntityMappings both bound)
+6. fennec.jpa.EMPersistenceUnit activates (DataSource + EntityMappings both bound
+   via (jpa.root.folder=<rootFolder>) / (fennec.jpa.orm.mapping.name=<rootFolder>))
    → AbstractPersistenceUnitConfigurator submits configure() to its executor
    → EclipseLink builds dynamic types, currently also runs
      EDynamicHelper.addETypes(true, true, …) which CREATE SCHEMA / CREATE TABLE
-   → EntityManagerFactory registered (osgi.unit.name=<matcherKey>)
+   → EntityManagerFactory registered (osgi.unit.name=<rootFolder>)
 
 7. daanse CsvDataImporter activates (DataSource + EntityManagerFactory both bound)
    → scans <root>/data/ recursively:
@@ -321,11 +357,15 @@ path:
        hr/contracts.csv             → schema "hr"
    → for each CSV: DROP TABLE → CREATE TABLE (from CSV header) → INSERT rows
 
-8. REST client: GET /jpa/data/Employee
-    → JpaDataResource finds the EntityMappings whose package contains "Employee"
-      (via the injected ResourceSet's package registry)
-    → resolves the EntityManagerFactory by (osgi.unit.name=<matcherKey>)
-    → executes JPQL: SELECT e FROM Employee e
+8. REST client: GET /jpa/<rootFolder>/data/Employee
+    → JpaDataResourceFilter looks up ResourceSet, EntityMappings, and
+      EntityManagerFactory keyed by <rootFolder> (using jpa.root.folder for
+      ResourceSet/EntityMappings, and osgi.unit.name for EntityManagerFactory)
+    → validates that the EPackage in the ResourceSet declares an EClassifier
+      named "Employee" (and that any ?ePackageUri= matches EntityMappings.getPackage())
+    → stashes the resolved EntityManagerFactory and EntityMappings on the
+      ContainerRequestContext
+    → JpaDataResource executes JPQL: SELECT e FROM Employee e
     → returns EObjects as XML or JSON
 ```
 

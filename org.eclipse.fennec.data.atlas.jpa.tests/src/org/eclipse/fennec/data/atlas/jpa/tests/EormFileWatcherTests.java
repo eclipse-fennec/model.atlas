@@ -151,7 +151,7 @@ public class EormFileWatcherTests {
         assertEquals("props-test", ref.getProperty(PROP_NAME));
         assertEquals(DEMO_NS_URI, ref.getProperty(PROP_TARGET_NS_URI));
         assertEquals("props-matcher", ref.getProperty(PROP_MATCHER));
-        assertEquals("props-matcher", ref.getProperty(PROP_ORM_MAPPING_NAME));
+        assertEquals("data", ref.getProperty(PROP_ORM_MAPPING_NAME));
         assertNotNull(ref.getProperty(PROP_FOLDER));
         assertTrue(ref.getProperty(PROP_FOLDER).toString().endsWith(tempDir.toAbsolutePath().toString()),
                 "eorm.folder should point to the watched directory; got "
@@ -269,6 +269,7 @@ public class EormFileWatcherTests {
         props.put("io.fs.watcher.path", dir.toAbsolutePath() + "/");
         props.put("io.fs.watcher.pattern", ".*\\.eorm");
         props.put("file.context.matcher", matcherKey);
+        props.put("jpa.root.folder", "data");
         config.update(props);
         createdConfigs.add(config);
         return config;
@@ -281,6 +282,7 @@ public class EormFileWatcherTests {
         stub.setNsPrefix("stub");
         Dictionary<String, Object> props = new Hashtable<>();
         props.put(EMFNamespaces.EMF_MODEL_NSURI, nsUri);
+        props.put(WatcherConstants.KEY_JPA_ROOT_FOLDER, "data");
         ServiceRegistration<EPackage> reg = ctx.registerService(EPackage.class, stub, props);
         createdRegistrations.add(reg);
         return reg;

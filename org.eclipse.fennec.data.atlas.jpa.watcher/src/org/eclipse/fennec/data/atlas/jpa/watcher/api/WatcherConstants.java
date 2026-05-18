@@ -39,5 +39,6 @@ public interface WatcherConstants {
 	String PROP_EORM_MAPPING_NAME = "fennec.jpa.orm.mapping.name";
 
 	String KEY_FILE_CONTEXT_MATCHER = "file.context.matcher";
+	String KEY_JPA_ROOT_FOLDER = "jpa.root.folder";
 
 }

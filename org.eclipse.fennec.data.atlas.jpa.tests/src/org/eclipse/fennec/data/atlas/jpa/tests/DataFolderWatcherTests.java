@@ -228,8 +228,8 @@ public class DataFolderWatcherTests {
         assertNotNull(ePackageAware.waitForService(15_000), "EPackage from model.ecore should be registered");
 
         EntityManagerFactory emf = waitForServiceByFilter(ctx, EntityManagerFactory.class,
-                "(osgi.unit.name=" + matcherKey + ")", 55_000);
-        assertNotNull(emf, "EntityManagerFactory should be registered with osgi.unit.name=" + matcherKey);
+                "(osgi.unit.name=data)", 55_000);
+        assertNotNull(emf, "EntityManagerFactory should be registered with osgi.unit.name=data");
     }
 
     @Test
@@ -253,7 +253,7 @@ public class DataFolderWatcherTests {
         assertNotNull(dsAware.waitForService(15_000));
         assertNotNull(ePackageAware.waitForService(15_000));
         assertNotNull(waitForServiceByFilter(ctx, EntityManagerFactory.class,
-                "(osgi.unit.name=" + matcherKey + ")", 15_000));
+                "(osgi.unit.name=data)", 15_000));
 
         createdConfigs.remove(config);
         config.delete();
@@ -262,7 +262,7 @@ public class DataFolderWatcherTests {
         assertTrue(waitForNoService(dsAware, 15_000), "DataSource should be unregistered");
         assertTrue(waitForNoService(ePackageAware, 15_000), "EPackage should be unregistered");
         assertTrue(waitForNoServiceByFilter(ctx, EntityManagerFactory.class,
-                "(osgi.unit.name=" + matcherKey + ")", 15_000),
+                "(osgi.unit.name=data)", 15_000),
                 "EntityManagerFactory should be unregistered");
     }
 
