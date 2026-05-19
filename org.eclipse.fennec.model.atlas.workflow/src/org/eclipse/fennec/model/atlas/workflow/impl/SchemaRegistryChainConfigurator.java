@@ -22,6 +22,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import org.eclipse.fennec.emf.osgi.constants.EMFNamespaces;
 import org.eclipse.fennec.model.atlas.wf.workflowapi.Registry;
 import org.eclipse.fennec.model.atlas.wf.workflowapi.RegistryType;
 import org.eclipse.fennec.model.atlas.wf.workflowapi.Scope;
@@ -54,8 +55,6 @@ import org.osgi.service.component.annotations.ReferencePolicy;
 @Component(immediate = true, name = "SchemaRegistryChainConfigurator")
 public class SchemaRegistryChainConfigurator {
 
-    static final String EPACKAGE_REGISTRY_FACTORY_PID = "EPackageRegistry";
-    static final String RESOURCE_SET_FACTORY_FACTORY_PID = "ResourceSetFactory";
     static final String DEFAULT_REGISTRY_TARGET = "(default.resourceset.epackage.registry=true)";
 
     private static final Logger LOGGER = Logger.getLogger(SchemaRegistryChainConfigurator.class.getName());
@@ -208,7 +207,7 @@ public class SchemaRegistryChainConfigurator {
 
     private Configuration createEPackageRegistryConfig(String scopeName, String stageName, String rsfName,
             String parentTarget) throws IOException {
-        Configuration config = configAdmin.getFactoryConfiguration(EPACKAGE_REGISTRY_FACTORY_PID,
+        Configuration config = configAdmin.getFactoryConfiguration(EMFNamespaces.EPACKAGE_REGISTRY_CONFIG_NAME,
                 scopeName + "-" + stageName, "?");
         Hashtable<String, Object> props = new Hashtable<>();
         props.put("rsf.name", rsfName);
@@ -222,7 +221,7 @@ public class SchemaRegistryChainConfigurator {
 
     private Configuration createResourceSetFactoryConfig(String scopeName, String stageName, String parentTarget)
             throws IOException {
-        Configuration config = configAdmin.getFactoryConfiguration(RESOURCE_SET_FACTORY_FACTORY_PID,
+        Configuration config = configAdmin.getFactoryConfiguration(EMFNamespaces.RESOURCE_SET_FACTORY_CONFIG_NAME,
                 scopeName + "-" + stageName, "?");
         Hashtable<String, Object> props = new Hashtable<>();
         props.put("ePackageRegistry.target", parentTarget);

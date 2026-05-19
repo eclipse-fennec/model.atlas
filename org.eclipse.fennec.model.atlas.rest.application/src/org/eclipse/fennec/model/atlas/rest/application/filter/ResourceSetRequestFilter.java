@@ -18,6 +18,7 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 
 import org.eclipse.emf.ecore.resource.ResourceSet;
+import org.eclipse.fennec.emf.osgi.ResourceSetFactory;
 import org.eclipse.fennec.model.atlas.rest.common.ModelAtlasRestConstants;
 import org.eclipse.fennec.model.atlas.workflow.ResourceSetCollector;
 import org.osgi.service.component.ComponentServiceObjects;
@@ -119,7 +120,16 @@ public class ResourceSetRequestFilter implements ContainerRequestFilter {
 									stageName, scopeName))
 							.build());
 		}
+		ResourceSetFactory resSetFactory = collector.getResourceSetFactory(scopeName, stageName);
+		if (resSetFactory == null) {
+			throw new WebApplicationException(
+					Response.status(Response.Status.BAD_REQUEST)
+							.entity(String.format("Resource Set Factory for Stage [%s] and Scope [%s] not found.",
+									stageName, scopeName))
+							.build());
+		}
 		requestContext.setProperty(ModelAtlasRestConstants.RESOLVED_RESOURCE_SET_CSO, cso);
+		requestContext.setProperty(ModelAtlasRestConstants.RESOLVED_RESOURCE_SET_FACTORY, resSetFactory);
 	}
 
 	/**

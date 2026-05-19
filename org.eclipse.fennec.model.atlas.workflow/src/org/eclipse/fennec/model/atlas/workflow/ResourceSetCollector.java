@@ -18,6 +18,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Logger;
 
 import org.eclipse.emf.ecore.resource.ResourceSet;
+import org.eclipse.fennec.emf.osgi.ResourceSetFactory;
 import org.osgi.service.component.ComponentServiceObjects;
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
@@ -51,6 +52,7 @@ public class ResourceSetCollector {
     private static final Logger LOGGER = Logger.getLogger(ResourceSetCollector.class.getName());
 
     private final Map<Key, ComponentServiceObjects<ResourceSet>> resourceSetsByKey = new ConcurrentHashMap<>();
+    private final Map<Key, ResourceSetFactory> resourceSetFactoryByKey = new ConcurrentHashMap<>();
 
     /**
      * Returns the {@link ComponentServiceObjects} for the {@link ResourceSet}
@@ -62,6 +64,13 @@ public class ResourceSetCollector {
             return null;
         }
         return resourceSetsByKey.get(new Key(scopeName, stageName));
+    }
+    
+    public ResourceSetFactory getResourceSetFactory(String scopeName, String stageName) {
+        if (scopeName == null || stageName == null) {
+            return null;
+        }
+        return resourceSetFactoryByKey.get(new Key(scopeName, stageName));
     }
 
     @Reference(
@@ -93,6 +102,37 @@ public class ResourceSetCollector {
             return;
         }
         resourceSetsByKey.remove(new Key(scopeName, stageName), cso);
+    }
+    
+    @Reference(
+            policy = ReferencePolicy.DYNAMIC,
+            policyOption = ReferencePolicyOption.GREEDY,
+            cardinality = ReferenceCardinality.MULTIPLE,
+            scope = ReferenceScope.PROTOTYPE_REQUIRED,
+            target = "(&(" + SCOPE_NAME_PROPERTY + "=*)(" + STAGE_NAME_PROPERTY + "=*))")
+    public void bindResourceSetFactory(ResourceSetFactory cso, Map<String, Object> properties) {
+        String scopeName = (String) properties.get(SCOPE_NAME_PROPERTY);
+        String stageName = (String) properties.get(STAGE_NAME_PROPERTY);
+        if (scopeName == null || scopeName.isBlank() || stageName == null || stageName.isBlank()) {
+            LOGGER.severe(String.format(
+                    "Cannot track ResourceSet without both %s and %s properties set", SCOPE_NAME_PROPERTY,
+                    STAGE_NAME_PROPERTY));
+            return;
+        }
+        ResourceSetFactory previous = resourceSetFactoryByKey.put(new Key(scopeName, stageName), cso);
+        if (previous != null) {
+            LOGGER.warning(String.format(
+                    "ResourceSet for scope '%s' / stage '%s' already existed. Overriding", scopeName, stageName));
+        }
+    }
+
+    public void unbindResourceSetFactory(ResourceSetFactory cso, Map<String, Object> properties) {
+        String scopeName = (String) properties.get(SCOPE_NAME_PROPERTY);
+        String stageName = (String) properties.get(STAGE_NAME_PROPERTY);
+        if (scopeName == null || stageName == null) {
+            return;
+        }
+        resourceSetFactoryByKey.remove(new Key(scopeName, stageName), cso);
     }
 
     private record Key(String scopeName, String stageName) {
