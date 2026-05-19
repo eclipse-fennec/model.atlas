@@ -1,0 +1,18 @@
+Bundle-Name: Model Atlas - Initial Model Bootstrap
+Bundle-Description: One-shot loader that scans a configured folder on startup (e.g. an initial file mount in the docker image), \
+    loads the .ecore/.jsonschema/.qvto files found there, and registers the resulting EPackages and EPackageConfigurators \
+    as OSGi services so they become available via the Atlas scope.
+
+-library: enableEMF
+-workingset: atlas
+
+-buildpath: \
+	org.osgi.service.component.annotations;version=latest,\
+	org.osgi.service.metatype.annotations,\
+	org.osgi.service.cm;version=latest,\
+	org.osgi.util.promise;version=latest,\
+	org.eclipse.fennec.model.atlas.emf.common;version=snapshot,\
+	org.eclipse.fennec.codec;version=latest,\
+	org.eclipse.fennec.codec.jsonschema;version=latest
+
+Bundle-Version: 1.0.0.SNAPSHOT
