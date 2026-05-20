@@ -84,6 +84,8 @@ public class SchemaRegistryChainConfiguratorIntegrationTest {
 			ScopeService<?> parentScope = parentScopeAware.waitForService(5000);
 			assertNotNull(parentScope, "Parent ScopeService should be available");
 
+			Thread.sleep(2000);
+			
 			// 3 stages => 3 EPackageRegistry + 3 ResourceSetFactory per scope
 			Configuration[] eprConfigs = configAdmin
 					.listConfigurations("(service.factoryPid=" + EPACKAGE_REGISTRY_FACTORY_PID + ")");
@@ -101,54 +103,54 @@ public class SchemaRegistryChainConfiguratorIntegrationTest {
 		}
 
 		@Test
-		@DisplayName("Should chain stages so that the last stage points at default registry for atlas parent")
+		@DisplayName("Should link parent release stage ResourceSetFactory to its own EPackageRegistry")
 		@ParentScopeServiceSetup
-		void shouldChainLastStageToDefaultRegistry(
+		void shouldLinkParentReleaseStageRsfToOwnEPackageRegistry(
 				@InjectService(cardinality = 0, filter = "(scope.name=" + TestAnnotations.TEST_PARENT_SCOPE_NAME + ")")
 				ServiceAware<ScopeService> parentScopeAware) throws Exception {
 
 			assertNotNull(parentScopeAware.waitForService(5000));
+			
 
-			// The final stage (release) should point at the default registry
 			Configuration rsfRelease = findConfiguration(RESOURCE_SET_FACTORY_FACTORY_PID,
 					TestAnnotations.TEST_PARENT_SCOPE_NAME + "-" + CommonTestAnnotations.STAGE_RELEASE);
 			assertNotNull(rsfRelease, "ResourceSetFactory for release stage should exist");
 
 			String target = (String) rsfRelease.getProperties().get("ePackageRegistry.target");
-			assertEquals(DEFAULT_REGISTRY_TARGET, target,
-					"Final stage should point at default EPackage registry when parent is atlas");
+			assertEquals(
+					"(rsf.name=" + TestAnnotations.TEST_PARENT_SCOPE_NAME + "_" + CommonTestAnnotations.STAGE_RELEASE
+							+ ")",
+					target, "Release stage ResourceSetFactory should point at its own EPackageRegistry");
 		}
 
 		@Test
-		@DisplayName("Should chain intermediate stages to the next stage")
+		@DisplayName("Should link parent intermediate stage ResourceSetFactories to their own EPackageRegistries")
 		@ParentScopeServiceSetup
-		void shouldChainIntermediateStagesToNextStage(
+		void shouldLinkParentIntermediateStageRsfsToOwnEPackageRegistries(
 				@InjectService(cardinality = 0, filter = "(scope.name=" + TestAnnotations.TEST_PARENT_SCOPE_NAME + ")")
 				ServiceAware<ScopeService> parentScopeAware) throws Exception {
 
 			assertNotNull(parentScopeAware.waitForService(5000));
 
-			// Draft should point at approved
 			Configuration rsfDraft = findConfiguration(RESOURCE_SET_FACTORY_FACTORY_PID,
 					TestAnnotations.TEST_PARENT_SCOPE_NAME + "-" + CommonTestAnnotations.STAGE_DRAFT);
 			assertNotNull(rsfDraft, "ResourceSetFactory for draft stage should exist");
 
 			String draftTarget = (String) rsfDraft.getProperties().get("ePackageRegistry.target");
 			assertEquals(
-					"(rsf.name=" + TestAnnotations.TEST_PARENT_SCOPE_NAME + "_" + CommonTestAnnotations.STAGE_APPROVED
+					"(rsf.name=" + TestAnnotations.TEST_PARENT_SCOPE_NAME + "_" + CommonTestAnnotations.STAGE_DRAFT
 							+ ")",
-					draftTarget, "Draft stage should point at approved stage");
+					draftTarget, "Draft stage ResourceSetFactory should point at its own EPackageRegistry");
 
-			// Approved should point at release
 			Configuration rsfApproved = findConfiguration(RESOURCE_SET_FACTORY_FACTORY_PID,
 					TestAnnotations.TEST_PARENT_SCOPE_NAME + "-" + CommonTestAnnotations.STAGE_APPROVED);
 			assertNotNull(rsfApproved, "ResourceSetFactory for approved stage should exist");
 
 			String approvedTarget = (String) rsfApproved.getProperties().get("ePackageRegistry.target");
 			assertEquals(
-					"(rsf.name=" + TestAnnotations.TEST_PARENT_SCOPE_NAME + "_" + CommonTestAnnotations.STAGE_RELEASE
+					"(rsf.name=" + TestAnnotations.TEST_PARENT_SCOPE_NAME + "_" + CommonTestAnnotations.STAGE_APPROVED
 							+ ")",
-					approvedTarget, "Approved stage should point at release stage");
+					approvedTarget, "Approved stage ResourceSetFactory should point at its own EPackageRegistry");
 		}
 
 		@Test
@@ -207,9 +209,9 @@ public class SchemaRegistryChainConfiguratorIntegrationTest {
 	class ParentChildChainTests {
 
 		@Test
-		@DisplayName("Should chain child's final stage to parent scope's final stage")
+		@DisplayName("Should link child release stage ResourceSetFactory to its own EPackageRegistry")
 		@ParentScopeServiceSetup
-		void shouldChainChildFinalStageToParentFinalStage(
+		void shouldLinkChildReleaseStageRsfToOwnEPackageRegistry(
 				@InjectService(cardinality = 0, filter = "(scope.name=" + TestAnnotations.TEST_SCOPE_NAME + ")")
 				ServiceAware<ScopeService> childScopeAware,
 				@InjectService(cardinality = 0, filter = "(scope.name=" + TestAnnotations.TEST_PARENT_SCOPE_NAME + ")")
@@ -217,19 +219,17 @@ public class SchemaRegistryChainConfiguratorIntegrationTest {
 
 			assertNotNull(parentScopeAware.waitForService(5000), "Parent ScopeService should be available");
 			assertNotNull(childScopeAware.waitForService(5000), "Child ScopeService should be available");
-			
+
 			Thread.sleep(2000);
 
-			// Child's final stage (release) should point at parent's final stage (release)
 			Configuration rsfRelease = findConfiguration(RESOURCE_SET_FACTORY_FACTORY_PID,
 					TestAnnotations.TEST_SCOPE_NAME + "-" + CommonTestAnnotations.STAGE_RELEASE);
 			assertNotNull(rsfRelease, "ResourceSetFactory for child's release stage should exist");
 
 			String target = (String) rsfRelease.getProperties().get("ePackageRegistry.target");
 			assertEquals(
-					"(rsf.name=" + TestAnnotations.TEST_PARENT_SCOPE_NAME + "_" + CommonTestAnnotations.STAGE_RELEASE
-							+ ")",
-					target, "Child's final stage should point at parent's final stage");
+					"(rsf.name=" + TestAnnotations.TEST_SCOPE_NAME + "_" + CommonTestAnnotations.STAGE_RELEASE + ")",
+					target, "Child's release stage ResourceSetFactory should point at its own EPackageRegistry");
 		}
 
 		@Test
@@ -258,9 +258,9 @@ public class SchemaRegistryChainConfiguratorIntegrationTest {
 		}
 
 		@Test
-		@DisplayName("Should chain child's intermediate stages correctly")
+		@DisplayName("Should link child intermediate stage ResourceSetFactories to their own EPackageRegistries")
 		@ParentScopeServiceSetup
-		void shouldChainChildIntermediateStages(
+		void shouldLinkChildIntermediateStageRsfsToOwnEPackageRegistries(
 				@InjectService(cardinality = 0, filter = "(scope.name=" + TestAnnotations.TEST_SCOPE_NAME + ")")
 				ServiceAware<ScopeService> childScopeAware,
 				@InjectService(cardinality = 0, filter = "(scope.name=" + TestAnnotations.TEST_PARENT_SCOPE_NAME + ")")
@@ -268,28 +268,27 @@ public class SchemaRegistryChainConfiguratorIntegrationTest {
 
 			assertNotNull(parentScopeAware.waitForService(5000));
 			assertNotNull(childScopeAware.waitForService(5000));
-			
+
 			Thread.sleep(2000);
 
-			// Child's draft should point at child's approved
 			Configuration rsfDraft = findConfiguration(RESOURCE_SET_FACTORY_FACTORY_PID,
 					TestAnnotations.TEST_SCOPE_NAME + "-" + CommonTestAnnotations.STAGE_DRAFT);
 			assertNotNull(rsfDraft, "ResourceSetFactory for child's draft stage should exist");
 
 			String draftTarget = (String) rsfDraft.getProperties().get("ePackageRegistry.target");
 			assertEquals(
-					"(rsf.name=" + TestAnnotations.TEST_SCOPE_NAME + "_" + CommonTestAnnotations.STAGE_APPROVED + ")",
-					draftTarget, "Child's draft should point at child's approved stage");
+					"(rsf.name=" + TestAnnotations.TEST_SCOPE_NAME + "_" + CommonTestAnnotations.STAGE_DRAFT + ")",
+					draftTarget, "Child's draft stage ResourceSetFactory should point at its own EPackageRegistry");
 
-			// Child's approved should point at child's release
 			Configuration rsfApproved = findConfiguration(RESOURCE_SET_FACTORY_FACTORY_PID,
 					TestAnnotations.TEST_SCOPE_NAME + "-" + CommonTestAnnotations.STAGE_APPROVED);
 			assertNotNull(rsfApproved, "ResourceSetFactory for child's approved stage should exist");
 
 			String approvedTarget = (String) rsfApproved.getProperties().get("ePackageRegistry.target");
 			assertEquals(
-					"(rsf.name=" + TestAnnotations.TEST_SCOPE_NAME + "_" + CommonTestAnnotations.STAGE_RELEASE + ")",
-					approvedTarget, "Child's approved should point at child's release stage");
+					"(rsf.name=" + TestAnnotations.TEST_SCOPE_NAME + "_" + CommonTestAnnotations.STAGE_APPROVED + ")",
+					approvedTarget,
+					"Child's approved stage ResourceSetFactory should point at its own EPackageRegistry");
 		}
 	}
 
@@ -361,6 +360,7 @@ public class SchemaRegistryChainConfiguratorIntegrationTest {
 	// ---- Helper methods ----
 
 	private Configuration findConfiguration(String factoryPid, String name) throws Exception {
+		Thread.sleep(2000);
 		String filter = "(&(service.factoryPid=" + factoryPid + ")(service.pid=" + factoryPid + "~" + name + "))";
 		Configuration[] configs = configAdmin.listConfigurations(filter);
 		return configs != null && configs.length > 0 ? configs[0] : null;

@@ -161,7 +161,7 @@ public class SchemaRegistryChainConfigurator {
                         : finalStageParentTarget;
 
                 created.add(createEPackageRegistryConfig(scopeName, stageName, rsfName, nextTarget));
-                created.add(createResourceSetFactoryConfig(scopeName, stageName, nextTarget));
+                created.add(createResourceSetFactoryConfig(scopeName, stageName, rsfName));
             }
         } catch (IOException e) {
             LOGGER.log(Level.SEVERE, "Failed to create chain configurations for scope " + scopeName, e);
@@ -210,21 +210,21 @@ public class SchemaRegistryChainConfigurator {
         Configuration config = configAdmin.getFactoryConfiguration(EMFNamespaces.EPACKAGE_REGISTRY_CONFIG_NAME,
                 scopeName + "-" + stageName, "?");
         Hashtable<String, Object> props = new Hashtable<>();
-        props.put("rsf.name", rsfName);
-        props.put("ePackageConfigurator.target",
-                "(&(emf.model.scope=" + scopeName + ")(" + WorkflowConstants.ATLAS_EPACKAGE_REGISTRATION_STAGE_PROPERTY
+        props.put(EMFNamespaces.PROP_RESOURCE_SET_FACTORY_NAME, rsfName);
+        props.put(EMFNamespaces.EPACKAGE_TARGET,
+                "(&(" + EMFNamespaces.EMF_MODEL_SCOPE + "=" + scopeName + ")(" + WorkflowConstants.ATLAS_EPACKAGE_REGISTRATION_STAGE_PROPERTY
                         + "=" + stageName + "))");
         props.put("parentRegistry.target", parentTarget);
         config.update(props);
         return config;
     }
 
-    private Configuration createResourceSetFactoryConfig(String scopeName, String stageName, String parentTarget)
+    private Configuration createResourceSetFactoryConfig(String scopeName, String stageName, String rsfName)
             throws IOException {
         Configuration config = configAdmin.getFactoryConfiguration(EMFNamespaces.RESOURCE_SET_FACTORY_CONFIG_NAME,
                 scopeName + "-" + stageName, "?");
         Hashtable<String, Object> props = new Hashtable<>();
-        props.put("ePackageRegistry.target", parentTarget);
+        props.put(EMFNamespaces.EPACKAGE_REGISTRY_TARGET, "(" + EMFNamespaces.PROP_RESOURCE_SET_FACTORY_NAME+ "="+rsfName+")");
         props.put("scope.name", scopeName);
         props.put("stage.name", stageName);
         config.update(props);

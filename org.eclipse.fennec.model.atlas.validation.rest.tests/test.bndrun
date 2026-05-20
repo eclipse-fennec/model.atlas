@@ -124,4 +124,5 @@
 	org.eclipse.fennec.codec;version='[0.1.0,0.1.1)',\
 	org.eclipse.fennec.codec.api;version='[0.1.0,0.1.1)',\
 	org.eclipse.fennec.codec.metadata;version='[0.1.0,0.1.1)',\
-	org.eclipse.fennec.model.metadata;version='[0.1.0,0.1.1)'
+	org.eclipse.fennec.model.metadata;version='[0.1.0,0.1.1)',\
+	org.eclipse.fennec.model.atlas.rest.common;version=snapshot

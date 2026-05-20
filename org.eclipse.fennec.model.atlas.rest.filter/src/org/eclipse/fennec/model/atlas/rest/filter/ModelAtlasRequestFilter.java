@@ -105,7 +105,6 @@ public class ModelAtlasRequestFilter implements ContainerRequestFilter {
 
 	@Override
 	public void filter(ContainerRequestContext requestContext) throws IOException {
-		System.out.print("Entering filter");
 		MultivaluedMap<String, String> pathParams = requestContext.getUriInfo().getPathParameters();
 		String scopeName = pathParams.getFirst("scopeName");
 

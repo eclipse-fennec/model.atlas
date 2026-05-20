@@ -3,9 +3,7 @@ package org.eclipse.fennec.model.atlas.tests.common;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 
-
 import org.osgi.test.common.annotation.Property;
-import org.osgi.test.common.annotation.Property.Scalar;
 import org.osgi.test.common.annotation.Property.TemplateArgument;
 import org.osgi.test.common.annotation.Property.Type;
 import org.osgi.test.common.annotation.Property.ValueSource;

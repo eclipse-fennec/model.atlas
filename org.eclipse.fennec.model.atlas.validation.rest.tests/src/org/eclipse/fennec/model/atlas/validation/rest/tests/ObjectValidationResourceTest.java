@@ -138,6 +138,7 @@ public class ObjectValidationResourceTest {
 	@JenaScopeServiceSetup
 	public void testValidate_Success(@InjectBundleContext BundleContext context) throws Exception {
 		ensureResourceAvailability(context);
+		Thread.sleep(2000);
 		EPackage validPackage = TestHelper.createTestEPackage("http://test.com/valid/1.0", "ValidPackage", "vp");
 		String xmiContent = TestHelper.serializeToXMI(validPackage, resourceSet);
 
@@ -153,6 +154,7 @@ public class ObjectValidationResourceTest {
 	@JenaScopeServiceSetup
 	public void testValidate_ResponseContainsDiagnosticInfo(@InjectBundleContext BundleContext context) throws Exception {
 		ensureResourceAvailability(context);
+		Thread.sleep(2000);
 		EPackage validPackage = TestHelper.createTestEPackage("http://test.com/diag/1.0", "DiagPackage", "dp");
 		String xmiContent = TestHelper.serializeToXMI(validPackage, resourceSet);
 
@@ -173,6 +175,7 @@ public class ObjectValidationResourceTest {
 	@JenaScopeServiceSetup
 	public void testValidate_UnsupportedMediaType(@InjectBundleContext BundleContext context) throws Exception {
 		ensureResourceAvailability(context);
+		Thread.sleep(2000);
 		EPackage validPackage = TestHelper.createTestEPackage("http://test.com/unsup/1.0", "UnsupPackage", "up");
 		String xmiContent = TestHelper.serializeToXMI(validPackage, resourceSet);
 
@@ -188,6 +191,7 @@ public class ObjectValidationResourceTest {
 	@JenaScopeServiceSetup
 	public void testValidate_WithSupportedMediaTypeQueryParam(@InjectBundleContext BundleContext context) throws Exception {
 		ensureResourceAvailability(context);
+		Thread.sleep(2000);
 		EPackage validPackage = TestHelper.createTestEPackage("http://test.com/mt/1.0", "MtPackage", "mt");
 		String xmiContent = TestHelper.serializeToXMI(validPackage, resourceSet);
 
@@ -205,6 +209,7 @@ public class ObjectValidationResourceTest {
 	@JenaScopeServiceSetup
 	public void testValidate_RejectsUnsupportedAcceptHeader(@InjectBundleContext BundleContext context) throws Exception {
 		ensureResourceAvailability(context);
+		Thread.sleep(2000);
 		EPackage validPackage = TestHelper.createTestEPackage("http://test.com/def/1.0", "DefPackage", "def");
 		String xmiContent = TestHelper.serializeToXMI(validPackage, resourceSet);
 
@@ -224,7 +229,7 @@ public class ObjectValidationResourceTest {
 			@InjectService(filter = "(scope.name=jena)", timeout = 10000) ScopeService jenaScope)
 			throws Exception {
 		ensureResourceAvailability(context);
-
+		Thread.sleep(2000);
 		Company company = DGFactory.eINSTANCE.createCompany();
 		company.setName("Acme");
 		String xmiContent = TestHelper.serializeToXMI(company, resourceSet);
@@ -244,6 +249,7 @@ public class ObjectValidationResourceTest {
 			@InjectService(filter = "(scope.name=jena)", timeout = 10000) ScopeService jenaScope)
 			throws Exception {
 		ensureResourceAvailability(context);
+		Thread.sleep(2000);
 		String coclId = "validate-ocl-not-applicable";
 		TestHelper.uploadConstraintSet(jenaScope, coclId, buildValidationCoclSetForWrongModel(coclId));
 
@@ -266,6 +272,7 @@ public class ObjectValidationResourceTest {
 			@InjectService(filter = "(scope.name=jena)", timeout = 10000) ScopeService jenaScope)
 			throws Exception {
 		ensureResourceAvailability(context);
+		Thread.sleep(2000);
 		String coclId = "validate-ocl-pass";
 		TestHelper.uploadConstraintSet(jenaScope, coclId, buildValidationCoclSet(coclId));
 
@@ -289,6 +296,7 @@ public class ObjectValidationResourceTest {
 			@InjectService(filter = "(scope.name=jena)", timeout = 10000) ScopeService jenaScope)
 			throws Exception {
 		ensureResourceAvailability(context);
+		Thread.sleep(2000);
 		String coclId = "validate-ocl-fail";
 		TestHelper.uploadConstraintSet(jenaScope, coclId, buildValidationCoclSet(coclId));
 
@@ -313,6 +321,7 @@ public class ObjectValidationResourceTest {
 	@JenaScopeServiceSetup
 	public void testCompute_NoValidationObjects(@InjectBundleContext BundleContext context) throws Exception {
 		ensureResourceAvailability(context);
+		Thread.sleep(2000);
 		OperationValidationRequest request = buildComputeRequest(null, null);
 
 		Response response = postComputeRequest(request);
@@ -325,6 +334,7 @@ public class ObjectValidationResourceTest {
 	@JenaScopeServiceSetup
 	public void testCompute_TooManyValidationObjects(@InjectBundleContext BundleContext context) throws Exception {
 		ensureResourceAvailability(context);
+		Thread.sleep(2000);
 		EOperation op = companyOperation("getTotalEmployees");
 		OperationValidationRequest request = buildComputeRequest(DGFactory.eINSTANCE.createCompany(), op);
 		request.getValidationObjects().add(DGFactory.eINSTANCE.createCompany());
@@ -339,6 +349,7 @@ public class ObjectValidationResourceTest {
 	@JenaScopeServiceSetup
 	public void testCompute_OperationNotFoundInEClass(@InjectBundleContext BundleContext context) throws Exception {
 		ensureResourceAvailability(context);
+		Thread.sleep(2000);
 		EOperation unknownOp = EcorePackage.eINSTANCE.getEClass().getEOperations().get(0);
 		OperationValidationRequest request = buildComputeRequest(DGFactory.eINSTANCE.createCompany(), unknownOp);
 
@@ -352,6 +363,7 @@ public class ObjectValidationResourceTest {
 	@JenaScopeServiceSetup
 	public void testCompute_WrongReturnType(@InjectBundleContext BundleContext context) throws Exception {
 		ensureResourceAvailability(context);
+		Thread.sleep(2000);
 		EOperation op = mismatchOperation("getTotalEmployees", EcorePackage.Literals.ESTRING);
 		OperationValidationRequest request = buildComputeRequest(DGFactory.eINSTANCE.createCompany(), op);
 
@@ -365,14 +377,13 @@ public class ObjectValidationResourceTest {
 	@JenaScopeServiceSetup
 	public void testCompute_WrongParamCount(@InjectBundleContext BundleContext context) throws Exception {
 		ensureResourceAvailability(context);
+		Thread.sleep(2000);
 		EParameter p1 = param("namePrefix", EcorePackage.Literals.ESTRING);
 		EParameter p2 = param("extra", EcorePackage.Literals.ESTRING);
 		EOperation op = mismatchOperation("findEmployeesByNamePrefix", EcorePackage.Literals.ESTRING, p1, p2);
 		OperationValidationRequest request = buildComputeRequest(DGFactory.eINSTANCE.createCompany(), op);
 
 		Response response = postComputeRequest(request);
-		String entity = response.readEntity(String.class);
-		System.out.println(entity);
 		assertEquals(400, response.getStatus(), "Should return 400 when the operation parameter count does not match");
 	}
 
@@ -381,6 +392,7 @@ public class ObjectValidationResourceTest {
 	@JenaScopeServiceSetup
 	public void testCompute_WrongParamType(@InjectBundleContext BundleContext context) throws Exception {
 		ensureResourceAvailability(context);
+		Thread.sleep(2000);
 		EParameter p = param("namePrefix", EcorePackage.Literals.EINT);
 		EOperation op = mismatchOperation("findEmployeesByNamePrefix", EcorePackage.Literals.ESTRING, p);
 		OperationValidationRequest request = buildComputeRequest(DGFactory.eINSTANCE.createCompany(), op);
@@ -395,6 +407,7 @@ public class ObjectValidationResourceTest {
 	@JenaScopeServiceSetup
 	public void testCompute_ValidOperation_Returns200(@InjectBundleContext BundleContext context) throws Exception {
 		ensureResourceAvailability(context);
+		Thread.sleep(2000);
 		EOperation op = companyOperation("getTotalEmployees");
 		OperationValidationRequest request = buildComputeRequest(DGFactory.eINSTANCE.createCompany(), op);
 
@@ -409,6 +422,7 @@ public class ObjectValidationResourceTest {
 	@JenaScopeServiceSetup
 	public void testCompute_ValidOperationWithParameters_Returns200(@InjectBundleContext BundleContext context) throws Exception {
 		ensureResourceAvailability(context);
+		Thread.sleep(2000);
 		EOperation op = companyOperation("findEmployeesByNamePrefix");
 		OperationValidationRequest request = buildComputeRequest(DGFactory.eINSTANCE.createCompany(), op);
 
@@ -433,6 +447,7 @@ public class ObjectValidationResourceTest {
 			@InjectService(filter = "(scope.name=jena)", timeout = 10000) ScopeService jenaScope)
 			throws Exception {
 		ensureResourceAvailability(context);
+		Thread.sleep(2000);
 		String coclId = "compute-ocl-missing-name";
 		TestHelper.uploadConstraintSet(jenaScope, coclId, buildOperationCoclSet(coclId));
 
@@ -454,6 +469,7 @@ public class ObjectValidationResourceTest {
 			@InjectService(filter = "(scope.name=jena)", timeout = 10000) ScopeService jenaScope)
 			throws Exception {
 		ensureResourceAvailability(context);
+		Thread.sleep(2000);
 		String coclId = "compute-ocl-no-match";
 		TestHelper.uploadConstraintSet(jenaScope, coclId, buildOperationCoclSet(coclId));
 
@@ -475,6 +491,7 @@ public class ObjectValidationResourceTest {
 			@InjectService(filter = "(scope.name=jena)", timeout = 10000) ScopeService jenaScope)
 			throws Exception {
 		ensureResourceAvailability(context);
+		Thread.sleep(2000);
 		String coclId = "compute-ocl-valid";
 		TestHelper.uploadConstraintSet(jenaScope, coclId, buildOperationCoclSet(coclId));
 
@@ -496,6 +513,7 @@ public class ObjectValidationResourceTest {
 	@JenaScopeServiceSetup
 	public void testDerive_NoValidationObjects(@InjectBundleContext BundleContext context) throws Exception {
 		ensureResourceAvailability(context);
+		Thread.sleep(2000);
 		DerivedValidationRequest request = buildDeriveRequest(null);
 		Response response = postDeriveRequest(request);
 		assertEquals(400, response.getStatus(), "Should return 400 when no validation objects are provided");
@@ -506,6 +524,7 @@ public class ObjectValidationResourceTest {
 	@JenaScopeServiceSetup
 	public void testDerive_TooManyValidationObjects(@InjectBundleContext BundleContext context) throws Exception {
 		ensureResourceAvailability(context);
+		Thread.sleep(2000);
 		EStructuralFeature nameFeature = DGPackage.eINSTANCE.getCompany().getEStructuralFeature("name");
 		DerivedValidationRequest request = buildDeriveRequest(DGFactory.eINSTANCE.createCompany(), nameFeature);
 		request.getValidationObjects().add(DGFactory.eINSTANCE.createCompany());
@@ -518,6 +537,7 @@ public class ObjectValidationResourceTest {
 	@JenaScopeServiceSetup
 	public void testDerive_FeatureNotInEClass(@InjectBundleContext BundleContext context) throws Exception {
 		ensureResourceAvailability(context);
+		Thread.sleep(2000);
 		EStructuralFeature personFeature = DGPackage.eINSTANCE.getPerson().getEStructuralFeature("firstName");
 		DerivedValidationRequest request = buildDeriveRequest(DGFactory.eINSTANCE.createCompany(), personFeature);
 		Response response = postDeriveRequest(request);
@@ -529,6 +549,7 @@ public class ObjectValidationResourceTest {
 	@JenaScopeServiceSetup
 	public void testDerive_SimpleFeature_Returns200(@InjectBundleContext BundleContext context) throws Exception {
 		ensureResourceAvailability(context);
+		Thread.sleep(2000);
 		EStructuralFeature nameFeature = DGPackage.eINSTANCE.getCompany().getEStructuralFeature("name");
 		DerivedValidationRequest request = buildDeriveRequest(DGFactory.eINSTANCE.createCompany(), nameFeature);
 		Response response = postDeriveRequest(request);
@@ -541,6 +562,7 @@ public class ObjectValidationResourceTest {
 	@JenaScopeServiceSetup
 	public void testDerive_EObjectFeature_Returns200(@InjectBundleContext BundleContext context) throws Exception {
 		ensureResourceAvailability(context);
+		Thread.sleep(2000);
 		Company company = DGFactory.eINSTANCE.createCompany();
 		Address address = DGFactory.eINSTANCE.createAddress();
 		company.setAddress(address);
@@ -556,6 +578,7 @@ public class ObjectValidationResourceTest {
 	@JenaScopeServiceSetup
 	public void testDerive_ManyEObjectFeature_Returns200(@InjectBundleContext BundleContext context) throws Exception {
 		ensureResourceAvailability(context);
+		Thread.sleep(2000);
 		Company company = DGFactory.eINSTANCE.createCompany();
 		EStructuralFeature employeesFeature = DGPackage.eINSTANCE.getCompany().getEStructuralFeature("employees");
 		DerivedValidationRequest request = buildDeriveRequest(company, employeesFeature);
@@ -569,6 +592,7 @@ public class ObjectValidationResourceTest {
 	@JenaScopeServiceSetup
 	public void testDerive_ManyEDataTypeFeature_Returns200(@InjectBundleContext BundleContext context) throws Exception {
 		ensureResourceAvailability(context);
+		Thread.sleep(2000);
 		Company company = DGFactory.eINSTANCE.createCompany();
 		EStructuralFeature employeesNamesFeature = DGPackage.eINSTANCE.getCompany().getEStructuralFeature("employeesNames");
 		DerivedValidationRequest request = buildDeriveRequest(company, employeesNamesFeature);
@@ -587,6 +611,7 @@ public class ObjectValidationResourceTest {
 			@InjectService(filter = "(scope.name=jena)", timeout = 10000) ScopeService jenaScope)
 			throws Exception {
 		ensureResourceAvailability(context);
+		Thread.sleep(2000);
 		String coclId = "derive-ocl-no-match";
 		TestHelper.uploadConstraintSet(jenaScope, coclId, buildEmptyDerivedCoclSet(coclId));
 
@@ -609,6 +634,7 @@ public class ObjectValidationResourceTest {
 			@InjectService(filter = "(scope.name=jena)", timeout = 10000) ScopeService jenaScope)
 			throws Exception {
 		ensureResourceAvailability(context);
+		Thread.sleep(2000);
 		String coclId = "derive-ocl-valid";
 		TestHelper.uploadConstraintSet(jenaScope, coclId, buildDerivedCoclSet(coclId, "name", "self.name"));
 

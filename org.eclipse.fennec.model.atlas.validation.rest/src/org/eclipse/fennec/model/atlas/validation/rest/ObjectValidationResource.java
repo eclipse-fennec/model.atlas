@@ -15,9 +15,11 @@ import java.util.List;
 import java.util.NoSuchElementException;
 
 import org.eclipse.emf.ecore.EObject;
+import org.eclipse.emf.ecore.resource.ResourceSet;
 import org.eclipse.fennec.codec.rest.jakartas.JakartaRestConstants;
 import org.eclipse.fennec.emf.osgi.ResourceSetFactory;
 import org.eclipse.fennec.model.atlas.mediatypes.api.SupportedMediatype;
+import org.eclipse.fennec.model.atlas.rest.common.ResourceAttacherHelper;
 import org.eclipse.fennec.model.atlas.runtime.RequireRuntime;
 import org.eclipse.fennec.model.atlas.validation.ValidationService;
 import org.eclipse.fennec.model.atlas.validation.model.cocl.DerivedValidationRequest;
@@ -165,7 +167,9 @@ public class ObjectValidationResource {
 			content = @Content(schema = @Schema(implementation = DerivedValidationRequest.class))) DerivedValidationRequest validationRequest) {
 		try {
 			checkContentType();
-			ValidationResponse response = validationService.derive(validationRequest, oclId, scopeName, getResolvedResourceSetFactory().createResourceSet());
+			ResourceSet resSet = getResolvedResourceSetFactory().createResourceSet();
+			ResourceAttacherHelper.attach(resSet, validationRequest);
+			ValidationResponse response = validationService.derive(validationRequest, oclId, scopeName, resSet);
 			return Response.status(Response.Status.OK).entity(response).header("Content-Type", mediaType).build();
 		} catch (IllegalArgumentException e) {
 			return Response.status(Status.BAD_REQUEST).entity(e.getMessage()).build();
@@ -194,7 +198,9 @@ public class ObjectValidationResource {
 			content = @Content(schema = @Schema(implementation = OperationValidationRequest.class))) OperationValidationRequest validationRequest) {
 		try {
 			checkContentType();
-			ValidationResponse response = validationService.compute(validationRequest, scopeName, getResolvedResourceSetFactory().createResourceSet());
+			ResourceSet resSet = getResolvedResourceSetFactory().createResourceSet();
+			ResourceAttacherHelper.attach(resSet, validationRequest);
+			ValidationResponse response = validationService.compute(validationRequest, scopeName, resSet);
 			return Response.status(Response.Status.OK).entity(response).header("Content-Type", mediaType).build();
 		} catch (IllegalArgumentException e) {
 			return Response.status(Status.BAD_REQUEST).entity(e.getMessage()).build();
