@@ -31,4 +31,4 @@
 	org.eclipse.fennec.model.atlas.schema.registry.api;version=snapshot,\
 	org.eclipse.fennec.model.atlas.management.lucene;version=snapshot,\
 	org.eclipse.fennec.model.atlas.rest.common;version=snapshot,\
-	org.eclipse.fennec.codec.rest
+	org.eclipse.fennec.codec.rest;version=latest,\

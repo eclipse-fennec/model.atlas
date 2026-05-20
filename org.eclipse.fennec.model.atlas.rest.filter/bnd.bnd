@@ -1,6 +1,6 @@
 -library: enableEMF
 -buildpath: \
-	org.eclipse.fennec.codec.rest,\
+	org.eclipse.fennec.codec.rest;version=latest,\
 	org.osgi.service.jakartars,\
 	org.eclipse.fennec.model.atlas.workflow,\
 	org.eclipse.fennec.model.atlas.mediatypes.api,\
