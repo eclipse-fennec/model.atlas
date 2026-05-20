@@ -35,9 +35,9 @@ import org.osgi.service.jakartars.whiteboard.annotations.RequireJakartarsWhitebo
  */
 @RequireJakartarsWhiteboard
 @RequireHttpWhiteboard
-@RequireEMFJson
+//@RequireEMFJson
 @RequireOCL
-@RequireEMFMessageBodyReaderWriter
+//@RequireEMFMessageBodyReaderWriter
 public @interface RequireRuntime {
 
 }

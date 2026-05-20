@@ -17,7 +17,6 @@ import java.time.Instant;
 import java.util.List;
 
 import org.eclipse.emf.ecore.EObject;
-import org.eclipse.emf.ecore.resource.ResourceSet;
 import org.eclipse.emf.ecore.util.EcoreUtil;
 import org.eclipse.fennec.model.atlas.mgmt.management.ManagementFactory;
 import org.eclipse.fennec.model.atlas.mgmt.management.ObjectMetadata;
@@ -53,6 +52,7 @@ import jakarta.ws.rs.PathParam;
 import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.QueryParam;
 import jakarta.ws.rs.WebApplicationException;
+import jakarta.ws.rs.container.ContainerRequestContext;
 import jakarta.ws.rs.core.Context;
 import jakarta.ws.rs.core.EntityTag;
 import jakarta.ws.rs.core.HttpHeaders;
@@ -75,9 +75,6 @@ import jakarta.ws.rs.core.Response.Status;
 public class ObjectRegistryResource {
 
     @Reference
-    ResourceSet resourceSet;
-
-    @Reference
     private ScopeServiceCollector scopeCollector;
 
     @Reference
@@ -90,7 +87,7 @@ public class ObjectRegistryResource {
     private HttpHeaders headers;
     
     @Context
-    private jakarta.ws.rs.container.ContainerRequestContext requestContext;
+    private ContainerRequestContext requestContext;
 
     // ======================
     // Storage Objects

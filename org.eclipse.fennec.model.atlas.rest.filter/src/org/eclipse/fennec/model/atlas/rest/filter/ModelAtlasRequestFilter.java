@@ -11,7 +11,7 @@
  * Contributors:
  *     Data In Motion - initial API and implementation
  */
-package org.eclipse.fennec.model.atlas.rest.application.filter;
+package org.eclipse.fennec.model.atlas.rest.filter;
 
 import java.io.IOException;
 import java.util.List;

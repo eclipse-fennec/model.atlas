@@ -32,6 +32,7 @@ import jakarta.ws.rs.POST;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.WebApplicationException;
+import jakarta.ws.rs.container.ContainerRequestContext;
 import jakarta.ws.rs.core.Context;
 import jakarta.ws.rs.core.HttpHeaders;
 import jakarta.ws.rs.core.Response;
@@ -53,7 +54,7 @@ public class ModelConverterResource {
     private HttpHeaders headers;
     
     @Context
-    private jakarta.ws.rs.container.ContainerRequestContext requestContext;
+    private ContainerRequestContext requestContext;
 
     @POST
     @Consumes

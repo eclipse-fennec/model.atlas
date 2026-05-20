@@ -4,7 +4,8 @@
 	org.eclipse.fennec.model.atlas.validation.model;version=snapshot,\
 	org.eclipse.fennec.model.atlas.runtime,\
 	io.swagger.core.v3.swagger-annotations,\
-	org.eclipse.fennec.model.atlas.mediatypes.api
+	org.eclipse.fennec.model.atlas.mediatypes.api,\
+	org.eclipse.fennec.codec.rest
 
 -library: enableJakartaREST,\
 	enableEMF

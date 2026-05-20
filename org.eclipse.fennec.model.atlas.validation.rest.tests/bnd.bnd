@@ -13,7 +13,6 @@ Test-Cases: ${classes;HIERARCHY_INDIRECTLY_ANNOTATED;org.junit.platform.commons.
 	org.eclipse.fennec.model.atlas.management,\
 	org.osgi.test.junit5.cm,\
 	jakarta.ws.rs-api,\
-	org.gecko.emf.rest.jakartars,\
 	org.eclipse.fennec.model.atlas.datagen.example.model,\
 	org.eclipse.fennec.model.atlas.validation.model,\
 	org.eclipse.fennec.model.atlas.workflow,\

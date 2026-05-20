@@ -11,13 +11,14 @@
  * Contributors:
  *     Data In Motion - initial API and implementation
  */
-package org.eclipse.fennec.model.atlas.rest.application.filter;
+package org.eclipse.fennec.model.atlas.rest.filter;
 
 import java.io.IOException;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 
 import org.eclipse.emf.ecore.resource.ResourceSet;
+import org.eclipse.fennec.codec.rest.jakartas.JakartaRestConstants;
 import org.eclipse.fennec.emf.osgi.ResourceSetFactory;
 import org.eclipse.fennec.model.atlas.rest.common.ModelAtlasRestConstants;
 import org.eclipse.fennec.model.atlas.workflow.ResourceSetCollector;
@@ -26,6 +27,7 @@ import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
 import org.osgi.service.component.annotations.ReferencePolicy;
 import org.osgi.service.component.annotations.ReferencePolicyOption;
+import org.osgi.service.component.propertytypes.ServiceRanking;
 import org.osgi.service.jakartars.whiteboard.propertytypes.JakartarsExtension;
 import org.osgi.service.jakartars.whiteboard.propertytypes.JakartarsName;
 
@@ -66,11 +68,15 @@ import jakarta.ws.rs.core.Response;
  */
 @Component
 @JakartarsExtension
-@JakartarsName("ResourceSetRequestFilter")
+@JakartarsName("ResourceSetFilter") //This has to be the same name as the default resource set filter in the codec rest, otherwise we cannot shadow it
+@ServiceRanking(100) //We need this to shadow the default resource set filter in the codec.rest
 public class ResourceSetRequestFilter implements ContainerRequestFilter {
 	
 	@Reference
-	ComponentServiceObjects<ResourceSet> defaultResSetFactory;
+	ComponentServiceObjects<ResourceSet> defaultCSOResourceSet;
+	
+	@Reference
+	ResourceSetFactory defaultResourceSetFactory;
 
 	private final AtomicReference<ResourceSetCollector> resourceSetCollectorRef = new AtomicReference<>();
 
@@ -102,7 +108,8 @@ public class ResourceSetRequestFilter implements ContainerRequestFilter {
 		String stageName = pathParams.getFirst("stageName");
 
 		if (scopeName == null || stageName == null || isScopesResourcePath(requestContext)) {
-			requestContext.setProperty(ModelAtlasRestConstants.RESOLVED_RESOURCE_SET_CSO, defaultResSetFactory);
+			requestContext.setProperty(ModelAtlasRestConstants.RESOLVED_RESOURCE_SET_CSO, defaultCSOResourceSet);
+			requestContext.setProperty(JakartaRestConstants.RESOLVED_RESOURCE_SET_FACTORY, defaultResourceSetFactory);
 			return;
 		}
 		ResourceSetCollector collector = resourceSetCollectorRef.get();
@@ -129,7 +136,7 @@ public class ResourceSetRequestFilter implements ContainerRequestFilter {
 							.build());
 		}
 		requestContext.setProperty(ModelAtlasRestConstants.RESOLVED_RESOURCE_SET_CSO, cso);
-		requestContext.setProperty(ModelAtlasRestConstants.RESOLVED_RESOURCE_SET_FACTORY, resSetFactory);
+		requestContext.setProperty(JakartaRestConstants.RESOLVED_RESOURCE_SET_FACTORY, resSetFactory);
 	}
 
 	/**

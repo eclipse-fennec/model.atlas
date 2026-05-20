@@ -36,6 +36,4 @@ public final class ModelAtlasRestConstants {
      * {@code getService}/{@code ungetService} lifecycle.
      */
     public static final String RESOLVED_RESOURCE_SET_CSO = "resolvedResourceSetCso";
-    
-    public static final String RESOLVED_RESOURCE_SET_FACTORY = "resolvedResourceSetFactory";
-}
+    }

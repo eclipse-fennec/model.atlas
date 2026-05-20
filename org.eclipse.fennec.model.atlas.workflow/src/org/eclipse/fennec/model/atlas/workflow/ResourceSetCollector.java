@@ -108,7 +108,6 @@ public class ResourceSetCollector {
             policy = ReferencePolicy.DYNAMIC,
             policyOption = ReferencePolicyOption.GREEDY,
             cardinality = ReferenceCardinality.MULTIPLE,
-            scope = ReferenceScope.PROTOTYPE_REQUIRED,
             target = "(&(" + SCOPE_NAME_PROPERTY + "=*)(" + STAGE_NAME_PROPERTY + "=*))")
     public void bindResourceSetFactory(ResourceSetFactory cso, Map<String, Object> properties) {
         String scopeName = (String) properties.get(SCOPE_NAME_PROPERTY);

@@ -46,7 +46,7 @@ public class TestAnnotations extends CommonTestAnnotations{
 	
 	public static final String PID_SCOPE_SERVICE = "ScopeService";
 
-	public static final String TEST_REGISTRY_NAME = "schema";
+//	public static final String TEST_REGISTRY_NAME = "schema";
 
 	public static final String TEST_SCOPE_NAME = "test-scope";
 
@@ -62,7 +62,7 @@ public class TestAnnotations extends CommonTestAnnotations{
 	@WithFactoryConfiguration(factoryPid = PID_SCOPE_SERVICE, name = TEST_SCOPE_NAME, location = "?", properties = {
 			@Property(key = "scope.name", value = TEST_SCOPE_NAME),
 			@Property(key = "scope.parent", value = TEST_PARENT_SCOPE_NAME),
-			@Property(key = "registryService.target", value = "(registry.name="+TEST_REGISTRY_NAME+")"),
+			@Property(key = "registryService.target", value = "(registry.name="+SCHEMA_REGISTRY_NAME+")"),
 			@Property(key = "registryService.cardinality.minimum", value = "1", scalar = Scalar.Integer)})
 	@Retention(RetentionPolicy.RUNTIME)
 	public @interface ScopeServiceSetup {
@@ -71,7 +71,7 @@ public class TestAnnotations extends CommonTestAnnotations{
 	@ScopeServiceSetup
 	@WithFactoryConfiguration(factoryPid = PID_SCOPE_SERVICE, name = TEST_PARENT_SCOPE_NAME, location = "?", properties = {
 			@Property(key = "scope.name", value = TEST_PARENT_SCOPE_NAME),
-			@Property(key = "registryService.target", value = "(registry.name="+TEST_REGISTRY_NAME+")"),
+			@Property(key = "registryService.target", value = "(registry.name="+SCHEMA_REGISTRY_NAME+")"),
 			@Property(key = "registryService.cardinality.minimum", value = "1", scalar = Scalar.Integer)})
 	@Retention(RetentionPolicy.RUNTIME)
 	public @interface ParentScopeServiceSetup {
@@ -95,10 +95,11 @@ public class TestAnnotations extends CommonTestAnnotations{
 	}
 
 	@CoclRegistryServiceSetup
+	@SchemaRegistryServiceSetup
 	@WithFactoryConfiguration(factoryPid = PID_SCOPE_SERVICE, name = TEST_JENA_SCOPE_NAME, location = "?", properties = {
 			@Property(key = "scope.name", value = TEST_JENA_SCOPE_NAME),
-			@Property(key = "registryService.target", value = "(registry.name="+TEST_COCL_REGISTRY_NAME+")"),
-			@Property(key = "registryService.cardinality.minimum", value = "1", scalar = Scalar.Integer)})
+			@Property(key = "registryService.target", value = "(|(registry.name="+TEST_COCL_REGISTRY_NAME+")(registry.name="+ SCHEMA_REGISTRY_NAME +"))"),
+			@Property(key = "registryService.cardinality.minimum", value = "2", scalar = Scalar.Integer)})
 	@Retention(RetentionPolicy.RUNTIME)
 	public @interface JenaScopeServiceSetup {
 	}
