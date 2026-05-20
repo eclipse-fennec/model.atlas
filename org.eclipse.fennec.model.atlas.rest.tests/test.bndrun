@@ -43,7 +43,9 @@
 # Ensure clean environment
 -runkeep: false
 
--runblacklist: bnd.identity;id='org.eclipse.uml2.uml';version='[0.0.0,5.6.0)'
+-runblacklist: \
+	bnd.identity;id='org.eclipse.uml2.uml';version='[0.0.0,5.6.0)',\
+	bnd.identity;id='org.eclipse.fennec.model.atlas.management.apicurio'
 
 
 -runbundles: \
