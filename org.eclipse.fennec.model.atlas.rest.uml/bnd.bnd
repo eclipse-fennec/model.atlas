@@ -5,4 +5,5 @@
 	org.osgi.service.component,\
 	org.eclipse.uml2.uml;version=snapshot,\
 	org.eclipse.uml2.common;version=latest,\
-	org.eclipse.uml2.uml.resources;version=latest
+	org.eclipse.uml2.uml.resources;version=latest,\
+	org.eclipse.fennec.model.atlas.rest.common;version=snapshot

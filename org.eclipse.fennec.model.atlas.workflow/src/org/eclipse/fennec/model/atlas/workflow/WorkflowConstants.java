@@ -25,4 +25,9 @@ public interface WorkflowConstants {
 	public static final String ATLAS_SCHEMA_REGISTRY_NAME = "atlas-schema-registry";
 	
 	public static final String ATLAS_SCHEMA_REGISTRY_STAGE_NAME = "released";
+	
+	/** ATLAS_EPACKAGE_REGISTRATION_STAGE_PROPERTY 
+	 * This is the property used to register EPackages as a service via the EPackageStageActionService
+	 * */
+	public static final String ATLAS_EPACKAGE_REGISTRATION_STAGE_PROPERTY = "atlas.stage";
 }

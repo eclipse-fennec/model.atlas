@@ -142,6 +142,8 @@ public class SchemaPackagesResourceTest extends AbstractRestTest {
 		ensureResourceAvailability(context);
 		EPackage testPackage = TestHelper.createTestEPackage(TEST_PACKAGE_NSURI, TEST_PACKAGE_NAME, TEST_PACKAGE_NAME);
 		String xmiContent = TestHelper.serializeToXMI(testPackage, resourceSet);
+		
+		
 
 		Response response = schemaStageTarget(TestAnnotations.STAGE_RELEASE).queryParam("nsUri", TEST_PACKAGE_NSURI)
 				.queryParam("name", TEST_PACKAGE_NAME).request("application/xmi")

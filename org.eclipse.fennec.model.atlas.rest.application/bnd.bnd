@@ -30,5 +30,5 @@
 	org.eclipse.fennec.model.atlas.workflow;version=snapshot,\
 	org.eclipse.fennec.model.atlas.schema.registry.api;version=snapshot,\
 	org.eclipse.fennec.model.atlas.management.lucene;version=snapshot,\
-	org.eclipse.fennec.model.atlas.validation.model;version=snapshot,\
-	org.eclipse.fennec.model.atlas.validation;version=snapshot
+	org.eclipse.fennec.model.atlas.rest.common;version=snapshot,\
+	org.eclipse.fennec.codec.rest;version=latest,\

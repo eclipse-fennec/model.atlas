@@ -1,15 +1,9 @@
 {
     ":configurator:resource-version": 1,
     ":configurator:version": "1.0.0",
-    "EPackagePostReleaseActionService": {
-        "releaseStorage.target": "(storage.type=apicurio)"
-    },
-    "ScopeService~atlas": {
-        "scope.name": "atlas",
-        "scope.description": "Atlas scope. The parent of all other scopes.",
-        "parent.scope": "",
-        "registryService.target": "(|(registry.name=schema)(registry.name=default))",
-        "registryService.cardinality.minimum:int": 1
+    "EPackageStageActionService": {
+        "trigger.stages": ["draft", "approved", "release"],
+        "storageService.target": "(storage.type=apicurio)"
     },
     "ScopeService~civitas": {
         "scope.name": "civitas",
@@ -23,7 +17,7 @@
         "registry.type": "SCHEMA",
         "registry.name": "schema",
         "registry.description": "The schema registry to store EPackage objects",
-        "postReleaseActionService.target": "(component.name=EPackagePostReleaseActionService)",
+        "stageActionService.target": "(component.name=EPackageStageActionService)",
         "stage.storage.mappings": [
             "draft:apicurio",
             "approved:apicurio",

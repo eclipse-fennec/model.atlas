@@ -27,6 +27,7 @@ Fennec Model Atlas is a dynamic EMF model management system that provides a REST
   - [Error Handling](#error-handling)
 - [Workflows](#workflows)
   - [Publishing a Schema](#publishing-a-schema)
+  - [Schema Availability Across Stages](#schema-availability-across-stages)
   - [Storing Objects with Schema Validation](#storing-objects-with-schema-validation)
 - [Health Checks](#health-checks)
 - [Configuration](#configuration)
@@ -715,6 +716,16 @@ curl -X POST "http://localhost:8080/rest/my-tenant/schema/stages/approved/action
 curl http://localhost:8080/rest/child-tenant/schema
 # -> includes billing schema with isReadOnly=true
 ```
+
+### Schema Availability Across Stages
+
+As soon as a schema is uploaded into any stage (`draft`, `approved`, `release`, …), Model Atlas registers its `EPackage` with the running EMF runtime. This means the schema can immediately be used to:
+
+- validate and generate objects stored in the Object Storage API,
+- produce instances via the Data Generation API,
+- serialise and deserialise content in any of the supported formats.
+
+Updating a schema in place refreshes the registration so consumers see the new content, and deleting it (or transitioning it out of every stage) unregisters the EPackage. This is driven by the `EPackageStageActionService` — a built-in workflow extension that reacts to stage lifecycle events; see the [workflow module README](../org.eclipse.fennec.model.atlas.workflow/README.md#stage-action-services) for configuration details.
 
 ### Storing Objects with Schema Validation
 

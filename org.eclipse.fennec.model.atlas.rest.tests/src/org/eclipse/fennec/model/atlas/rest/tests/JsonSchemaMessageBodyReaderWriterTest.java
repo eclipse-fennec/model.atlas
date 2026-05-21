@@ -33,6 +33,8 @@ import org.eclipse.emf.ecore.EClass;
 import org.eclipse.emf.ecore.EPackage;
 import org.eclipse.emf.ecore.EcoreFactory;
 import org.eclipse.emf.ecore.EcorePackage;
+import org.eclipse.emf.ecore.resource.ResourceSet;
+import org.eclipse.fennec.model.atlas.rest.tests.helper.TestHelper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -82,6 +84,13 @@ public class JsonSchemaMessageBodyReaderWriterTest {
 
         assertNotNull(reader, "JsonSchemaMessageBodyReader service should be available");
         assertNotNull(writer, "JsonSchemaMessageBodyWriter service should be available");
+
+        // @Context fields are only injected by Jersey; inject a real ResourceSet
+        // directly so readFrom/writeTo work outside a JAX-RS request scope.
+        ResourceSet resourceSet = context.getService(context.getServiceReference(ResourceSet.class));
+        var cso = TestHelper.wrapAsComponentServiceObjects(resourceSet);
+        TestHelper.injectResourceSetFactory(reader, cso);
+        TestHelper.injectResourceSetFactory(writer, cso);
     }
 
     // ============ WRITER TESTS ============
