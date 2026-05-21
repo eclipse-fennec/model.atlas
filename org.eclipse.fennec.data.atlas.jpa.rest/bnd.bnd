@@ -15,3 +15,6 @@
 	org.gecko.emf.util.model,\
 	org.eclipse.daanse.jdbc.db.importer.csv,\
 	org.eclipse.fennec.data.atlas.jpa.watcher,\
+	org.osgi.service.cdi,\
+	org.osgi.service.component,\
+	org.eclipse.fennec.codec.rest

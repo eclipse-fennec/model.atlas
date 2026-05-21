@@ -198,7 +198,7 @@ public class DataFolderWatcher implements FileSystemWatcherListener {
                 matcherKey, "?");
         Hashtable<String, Object> props = new Hashtable<>();
         props.put(EMFNamespaces.PROP_RESOURCE_SET_FACTORY_NAME, matcherKey);
-        props.put("ePackageConfigurator.target", "(" + WatcherConstants.KEY_JPA_ROOT_FOLDER + "=" + rootFolder.toString() + ")");
+        props.put(EMFNamespaces.EPACKAGE_TARGET, "(" + WatcherConstants.KEY_JPA_ROOT_FOLDER + "=" + rootFolder.toString() + ")");
         props.put(WatcherConstants.KEY_JPA_ROOT_FOLDER, rootFolder.toString());
         config.update(props);
         return config;
@@ -208,7 +208,7 @@ public class DataFolderWatcher implements FileSystemWatcherListener {
         Configuration config = configAdmin.getFactoryConfiguration(EMFNamespaces.RESOURCE_SET_FACTORY_CONFIG_NAME,
                 matcherKey, "?");
         Hashtable<String, Object> props = new Hashtable<>();
-        props.put("ePackageRegistry.target", "(" + EMFNamespaces.PROP_RESOURCE_SET_FACTORY_NAME + "=" + matcherKey + ")");
+        props.put(EMFNamespaces.EPACKAGE_REGISTRY_TARGET, "(" + EMFNamespaces.PROP_RESOURCE_SET_FACTORY_NAME + "=" + matcherKey + ")");
         props.put(WatcherConstants.KEY_FILE_CONTEXT_MATCHER, matcherKey);
         props.put(WatcherConstants.KEY_JPA_ROOT_FOLDER, rootFolder.toString());
         config.update(props);

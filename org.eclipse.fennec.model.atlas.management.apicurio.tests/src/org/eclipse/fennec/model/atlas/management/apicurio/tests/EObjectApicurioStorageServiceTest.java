@@ -869,7 +869,7 @@ public class EObjectApicurioStorageServiceTest {
         serviceProperties.put("base.url", String.format(APICURIO_BASE_URL, container.getHost(), mappedPort));
         configuration.update(serviceProperties);
 
-        Thread.sleep(3000);
+        Thread.sleep(5000);
 
         // Storage service should be available (which implies registry is also working)
         EObjectStorageService<EObject> storageService = (EObjectStorageService<EObject>) serviceAware

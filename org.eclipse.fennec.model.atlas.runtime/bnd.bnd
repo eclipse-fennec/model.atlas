@@ -3,7 +3,6 @@
 -buildpath: \
 	org.osgi.annotation.versioning,\
 	org.osgi.annotation.bundle,\
-	org.gecko.emf.util.annotations,\
 	org.osgi.service.http.whiteboard,\
 	org.osgi.service.jakartars
 	

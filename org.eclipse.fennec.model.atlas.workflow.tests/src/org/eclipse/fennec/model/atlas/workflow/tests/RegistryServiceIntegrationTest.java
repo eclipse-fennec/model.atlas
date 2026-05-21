@@ -24,6 +24,7 @@ import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -32,6 +33,7 @@ import java.nio.file.Path;
 import java.util.Dictionary;
 import java.util.Hashtable;
 import java.util.List;
+import java.util.Set;
 
 import org.eclipse.emf.ecore.EObject;
 import org.eclipse.emf.ecore.EcoreFactory;
@@ -41,7 +43,10 @@ import org.eclipse.fennec.model.atlas.mgmt.api.EObjectStorageService;
 import org.eclipse.fennec.model.atlas.mgmt.management.ManagementFactory;
 import org.eclipse.fennec.model.atlas.mgmt.management.ObjectMetadata;
 import org.eclipse.fennec.model.atlas.wf.workflowapi.RegistryService;
-import org.eclipse.fennec.model.atlas.workflow.PostReleaseActionService;
+import org.eclipse.fennec.model.atlas.workflow.ActionContext;
+import org.eclipse.fennec.model.atlas.workflow.StageActionService;
+import org.eclipse.fennec.model.atlas.workflow.StageActionService.ActionEvent;
+import org.eclipse.fennec.model.atlas.workflow.StageActionService.ExitReason;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -49,6 +54,7 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.io.TempDir;
+import org.mockito.ArgumentCaptor;
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.ServiceRegistration;
 import org.osgi.service.cm.annotations.RequireConfigurationAdmin;
@@ -920,38 +926,43 @@ public class RegistryServiceIntegrationTest {
     }
 
     @Nested
-    @DisplayName("PostReleaseActionService Integration Tests")
-    class PostReleaseActionServiceTests {
+    @DisplayName("StageActionService Integration Tests")
+    class StageActionServiceTests {
 
-        private static final String POST_RELEASE_REGISTRY_NAME = "post-release-test-registry";
+        private static final String STAGE_ACTION_REGISTRY_NAME = "stage-action-test-registry";
 
-        private ServiceRegistration<PostReleaseActionService> mockPostReleaseRegistration;
-        private PostReleaseActionService mockPostReleaseService;
+        private ServiceRegistration<StageActionService> mockStageActionRegistration;
+        private StageActionService mockStageActionService;
 
         @BeforeEach
-        void setUpPostReleaseService() {
-            // Create mock PostReleaseActionService
-            mockPostReleaseService = mock(PostReleaseActionService.class);
+        void setUpStageActionService() {
+            mockStageActionService = mock(StageActionService.class);
 
-            // Configure mock to return resolved promises
-            when(mockPostReleaseService.executePostReleaseActions(anyString(), anyString(), anyString(), anyString(),
-                    anyString(), anyString(), anyString())).thenReturn(promiseFactory.resolved(null));
-            when(mockPostReleaseService.executePostUnreleaseActions(anyString(), anyString(), anyString(), anyString(),
-                    anyString(), anyString(), anyString())).thenReturn(promiseFactory.resolved(null));
+            // Subscribe only to the "release" stage so non-trigger dispatches are filtered
+            // out upstream by RegistryServiceImpl#dispatch.
+            when(mockStageActionService.supportsObjectType(anyString())).thenReturn(true);
+            when(mockStageActionService.getTriggerStages()).thenReturn(Set.of("release"));
+            when(mockStageActionService.getTriggerEvents())
+                    .thenReturn(Set.of(ActionEvent.ENTER, ActionEvent.UPDATE, ActionEvent.EXIT));
+            when(mockStageActionService.onEnter(any(ActionContext.class)))
+                    .thenReturn(promiseFactory.resolved(null));
+            when(mockStageActionService.onUpdate(any(ActionContext.class)))
+                    .thenReturn(promiseFactory.resolved(null));
+            when(mockStageActionService.onExit(any(ActionContext.class)))
+                    .thenReturn(promiseFactory.resolved(null));
 
-            // Register mock PostReleaseActionService
-            Dictionary<String, Object> postReleaseProps = new Hashtable<>();
-            postReleaseProps.put("service.ranking", Integer.valueOf(1000));
+            Dictionary<String, Object> props = new Hashtable<>();
+            props.put("service.ranking", Integer.valueOf(1000));
 
-            mockPostReleaseRegistration = bundleContext.registerService(PostReleaseActionService.class,
-                    mockPostReleaseService, postReleaseProps);
+            mockStageActionRegistration = bundleContext.registerService(StageActionService.class,
+                    mockStageActionService, props);
         }
 
         @AfterEach
-        void tearDownPostReleaseService() {
-            if (mockPostReleaseRegistration != null) {
+        void tearDownStageActionService() {
+            if (mockStageActionRegistration != null) {
                 try {
-                    mockPostReleaseRegistration.unregister();
+                    mockStageActionRegistration.unregister();
                 } catch (IllegalStateException e) {
                     // Already unregistered
                 }
@@ -960,18 +971,18 @@ public class RegistryServiceIntegrationTest {
 
         @SuppressWarnings({ "unchecked", "rawtypes" })
         @Test
-        @DisplayName("Should call executePostReleaseActions when uploading to final stage")
-        @WithFactoryConfiguration(factoryPid = "RegistryService", name = "post-release-test", location = "?", properties = {
-                @Property(key = "registry.name", value = POST_RELEASE_REGISTRY_NAME),
+        @DisplayName("Should invoke onEnter when uploading to a trigger stage")
+        @WithFactoryConfiguration(factoryPid = "RegistryService", name = "stage-action-test", location = "?", properties = {
+                @Property(key = "registry.name", value = STAGE_ACTION_REGISTRY_NAME),
                 @Property(key = "stages", type = Type.Array, value = {
                         "{ \"name\" : \"draft\", \"writable\" : true, \"final\": false}",
                         "{ \"name\" : \"release\", \"writable\" : true, \"final\": true}", }),
                 @Property(key = "workflow.transitions", type = Type.Array, value = { "draft:release" }),
                 @Property(key = "stage.storage.mappings", type = Type.Array, value = { "draft:mock", "release:mock" }),
                 @Property(key = "storageService.target", value = "(storage.type=mock)"),
-                @Property(key = "postReleaseActionService.target", value = "(service.ranking=1000)") })
-        void shouldCallPostReleaseActionsOnUploadToFinalStage(
-                @InjectService(cardinality = 0, filter = "(registry.name=" + POST_RELEASE_REGISTRY_NAME
+                @Property(key = "stageActionService.target", value = "(service.ranking=1000)") })
+        void shouldInvokeOnEnterOnUploadToTriggerStage(
+                @InjectService(cardinality = 0, filter = "(registry.name=" + STAGE_ACTION_REGISTRY_NAME
                         + ")") ServiceAware<RegistryService> registryAware)
                 throws InterruptedException, InvocationTargetException {
 
@@ -986,36 +997,47 @@ public class RegistryServiceIntegrationTest {
 
             ObjectMetadata resultMetadata = ManagementFactory.eINSTANCE.createObjectMetadata();
             resultMetadata.setObjectId("test-id");
+            resultMetadata.setObjectType("EClass");
 
             Promise<ObjectMetadata> promise = promiseFactory.resolved(resultMetadata);
             when(mockStorageService.storeObject(anyString(), anyString(), anyString(), anyString(), any(), any()))
                     .thenReturn(promise);
 
-            // Upload to final stage (release)
             Promise<ObjectMetadata> result = registryService.uploadToStage(SCOPE_NAME, "release", testObject, metadata);
 
             assertNotNull(result);
-            result.getValue(); // Wait for completion
+            result.getValue();
 
-            // Verify executePostReleaseActions was called
-            verify(mockPostReleaseService).executePostReleaseActions(eq(SCOPE_NAME), eq(POST_RELEASE_REGISTRY_NAME),
-                    eq("release"), eq("test-id"), eq("EClass"), anyString(), anyString());
+            ArgumentCaptor<ActionContext> captor = ArgumentCaptor.forClass(ActionContext.class);
+            verify(mockStageActionService).onEnter(captor.capture());
+            ActionContext ctx = captor.getValue();
+            assertEquals(SCOPE_NAME, ctx.scope());
+            assertEquals(STAGE_ACTION_REGISTRY_NAME, ctx.registry());
+            assertEquals("release", ctx.stage());
+            assertEquals("test-id", ctx.objectId());
+            assertEquals("EClass", ctx.objectType());
+            assertNull(ctx.sourceStage());
+            assertFalse(ctx.replay());
+
+            verify(mockStageActionService, times(1)).onEnter(any(ActionContext.class));
+            verify(mockStageActionService, never()).onUpdate(any(ActionContext.class));
+            verify(mockStageActionService, never()).onExit(any(ActionContext.class));
         }
 
         @SuppressWarnings({ "unchecked", "rawtypes" })
         @Test
-        @DisplayName("Should NOT call executePostReleaseActions when uploading to non-final stage")
-        @WithFactoryConfiguration(factoryPid = "RegistryService", name = "post-release-test", location = "?", properties = {
-                @Property(key = "registry.name", value = POST_RELEASE_REGISTRY_NAME),
+        @DisplayName("Should NOT invoke onEnter when uploading to a non-trigger stage")
+        @WithFactoryConfiguration(factoryPid = "RegistryService", name = "stage-action-test", location = "?", properties = {
+                @Property(key = "registry.name", value = STAGE_ACTION_REGISTRY_NAME),
                 @Property(key = "stages", type = Type.Array, value = {
                         "{ \"name\" : \"draft\", \"writable\" : true, \"final\": false}",
                         "{ \"name\" : \"release\", \"writable\" : true, \"final\": true}", }),
                 @Property(key = "workflow.transitions", type = Type.Array, value = { "draft:release" }),
                 @Property(key = "stage.storage.mappings", type = Type.Array, value = { "draft:mock", "release:mock" }),
                 @Property(key = "storageService.target", value = "(storage.type=mock)"),
-                @Property(key = "postReleaseActionService.target", value = "(service.ranking=1000)") })
-        void shouldNotCallPostReleaseActionsOnUploadToNonFinalStage(
-                @InjectService(cardinality = 0, filter = "(registry.name=" + POST_RELEASE_REGISTRY_NAME
+                @Property(key = "stageActionService.target", value = "(service.ranking=1000)") })
+        void shouldNotInvokeOnEnterOnUploadToNonTriggerStage(
+                @InjectService(cardinality = 0, filter = "(registry.name=" + STAGE_ACTION_REGISTRY_NAME
                         + ")") ServiceAware<RegistryService> registryAware)
                 throws InterruptedException, InvocationTargetException {
 
@@ -1030,36 +1052,36 @@ public class RegistryServiceIntegrationTest {
 
             ObjectMetadata resultMetadata = ManagementFactory.eINSTANCE.createObjectMetadata();
             resultMetadata.setObjectId("test-id");
+            resultMetadata.setObjectType("EClass");
 
             Promise<ObjectMetadata> promise = promiseFactory.resolved(resultMetadata);
             when(mockStorageService.storeObject(anyString(), anyString(), anyString(), anyString(), any(), any()))
                     .thenReturn(promise);
 
-            // Upload to non-final stage (draft)
             Promise<ObjectMetadata> result = registryService.uploadToStage(SCOPE_NAME, "draft", testObject, metadata);
 
             assertNotNull(result);
-            result.getValue(); // Wait for completion
+            result.getValue();
 
-            // Verify executePostReleaseActions was NOT called
-            verify(mockPostReleaseService, never()).executePostReleaseActions(anyString(), anyString(), anyString(),
-                    anyString(), anyString(), anyString(), anyString());
+            verify(mockStageActionService, never()).onEnter(any(ActionContext.class));
+            verify(mockStageActionService, never()).onUpdate(any(ActionContext.class));
+            verify(mockStageActionService, never()).onExit(any(ActionContext.class));
         }
 
         @SuppressWarnings({ "unchecked", "rawtypes" })
         @Test
-        @DisplayName("Should call executePostUnreleaseActions when deleting from final stage")
-        @WithFactoryConfiguration(factoryPid = "RegistryService", name = "post-release-test", location = "?", properties = {
-                @Property(key = "registry.name", value = POST_RELEASE_REGISTRY_NAME),
+        @DisplayName("Should invoke onExit when deleting from a trigger stage")
+        @WithFactoryConfiguration(factoryPid = "RegistryService", name = "stage-action-test", location = "?", properties = {
+                @Property(key = "registry.name", value = STAGE_ACTION_REGISTRY_NAME),
                 @Property(key = "stages", type = Type.Array, value = {
                         "{ \"name\" : \"draft\", \"writable\" : true, \"final\": false}",
                         "{ \"name\" : \"release\", \"writable\" : true, \"final\": true}", }),
                 @Property(key = "workflow.transitions", type = Type.Array, value = { "draft:release" }),
                 @Property(key = "stage.storage.mappings", type = Type.Array, value = { "draft:mock", "release:mock" }),
                 @Property(key = "storageService.target", value = "(storage.type=mock)"),
-                @Property(key = "postReleaseActionService.target", value = "(service.ranking=1000)") })
-        void shouldCallPostUnreleaseActionsOnDeleteFromFinalStage(
-                @InjectService(cardinality = 0, filter = "(registry.name=" + POST_RELEASE_REGISTRY_NAME
+                @Property(key = "stageActionService.target", value = "(service.ranking=1000)") })
+        void shouldInvokeOnExitOnDeleteFromTriggerStage(
+                @InjectService(cardinality = 0, filter = "(registry.name=" + STAGE_ACTION_REGISTRY_NAME
                         + ")") ServiceAware<RegistryService> registryAware)
                 throws InterruptedException, InvocationTargetException {
 
@@ -1078,31 +1100,41 @@ public class RegistryServiceIntegrationTest {
             when(mockStorageService.deleteObject(anyString(), anyString(), eq("release"), anyString()))
                     .thenReturn(deletePromise);
 
-            // Delete from final stage (release)
             Promise<Boolean> result = registryService.deleteFromStage(SCOPE_NAME, "release", "test-id");
 
             assertNotNull(result);
             assertTrue(result.getValue());
 
-            // Verify executePostUnreleaseActions was called
-            verify(mockPostReleaseService).executePostUnreleaseActions(eq(SCOPE_NAME), eq(POST_RELEASE_REGISTRY_NAME),
-                    eq("release"), eq("test-id"), eq("EClass"), anyString(), anyString());
+            ArgumentCaptor<ActionContext> captor = ArgumentCaptor.forClass(ActionContext.class);
+            verify(mockStageActionService).onExit(captor.capture());
+            ActionContext ctx = captor.getValue();
+            assertEquals(SCOPE_NAME, ctx.scope());
+            assertEquals(STAGE_ACTION_REGISTRY_NAME, ctx.registry());
+            assertEquals("release", ctx.stage());
+            assertEquals("test-id", ctx.objectId());
+            assertEquals("EClass", ctx.objectType());
+            assertEquals(ExitReason.DELETED, ctx.exitReason());
+            assertNull(ctx.targetStage());
+
+            verify(mockStageActionService, times(1)).onExit(any(ActionContext.class));
+            verify(mockStageActionService, never()).onEnter(any(ActionContext.class));
+            verify(mockStageActionService, never()).onUpdate(any(ActionContext.class));
         }
 
         @SuppressWarnings({ "unchecked", "rawtypes" })
         @Test
-        @DisplayName("Should NOT call executePostUnreleaseActions when deleting from non-final stage")
-        @WithFactoryConfiguration(factoryPid = "RegistryService", name = "post-release-test", location = "?", properties = {
-                @Property(key = "registry.name", value = POST_RELEASE_REGISTRY_NAME),
+        @DisplayName("Should NOT invoke onExit when deleting from a non-trigger stage")
+        @WithFactoryConfiguration(factoryPid = "RegistryService", name = "stage-action-test", location = "?", properties = {
+                @Property(key = "registry.name", value = STAGE_ACTION_REGISTRY_NAME),
                 @Property(key = "stages", type = Type.Array, value = {
                         "{ \"name\" : \"draft\", \"writable\" : true, \"final\": false}",
                         "{ \"name\" : \"release\", \"writable\" : true, \"final\": true}", }),
                 @Property(key = "workflow.transitions", type = Type.Array, value = { "draft:release" }),
                 @Property(key = "stage.storage.mappings", type = Type.Array, value = { "draft:mock", "release:mock" }),
                 @Property(key = "storageService.target", value = "(storage.type=mock)"),
-                @Property(key = "postReleaseActionService.target", value = "(service.ranking=1000)") })
-        void shouldNotCallPostUnreleaseActionsOnDeleteFromNonFinalStage(
-                @InjectService(cardinality = 0, filter = "(registry.name=" + POST_RELEASE_REGISTRY_NAME
+                @Property(key = "stageActionService.target", value = "(service.ranking=1000)") })
+        void shouldNotInvokeOnExitOnDeleteFromNonTriggerStage(
+                @InjectService(cardinality = 0, filter = "(registry.name=" + STAGE_ACTION_REGISTRY_NAME
                         + ")") ServiceAware<RegistryService> registryAware)
                 throws InterruptedException, InvocationTargetException {
 
@@ -1121,22 +1153,21 @@ public class RegistryServiceIntegrationTest {
             when(mockStorageService.deleteObject(anyString(), anyString(), eq("draft"), anyString()))
                     .thenReturn(deletePromise);
 
-            // Delete from non-final stage (draft)
             Promise<Boolean> result = registryService.deleteFromStage(SCOPE_NAME, "draft", "test-id");
 
             assertNotNull(result);
             assertTrue(result.getValue());
 
-            // Verify executePostUnreleaseActions was NOT called
-            verify(mockPostReleaseService, never()).executePostUnreleaseActions(anyString(), anyString(), anyString(),
-                    anyString(), anyString(), anyString(), anyString());
+            verify(mockStageActionService, never()).onEnter(any(ActionContext.class));
+            verify(mockStageActionService, never()).onUpdate(any(ActionContext.class));
+            verify(mockStageActionService, never()).onExit(any(ActionContext.class));
         }
 
         @SuppressWarnings({ "unchecked", "rawtypes" })
         @Test
-        @DisplayName("Should call executePostReleaseActions when transitioning TO final stage")
-        @WithFactoryConfiguration(factoryPid = "RegistryService", name = "post-release-test", location = "?", properties = {
-                @Property(key = "registry.name", value = POST_RELEASE_REGISTRY_NAME),
+        @DisplayName("Should invoke onEnter when transitioning INTO a trigger stage")
+        @WithFactoryConfiguration(factoryPid = "RegistryService", name = "stage-action-test", location = "?", properties = {
+                @Property(key = "registry.name", value = STAGE_ACTION_REGISTRY_NAME),
                 @Property(key = "stages", type = Type.Array, value = {
                         "{ \"name\" : \"draft\", \"writable\" : true, \"final\": false}",
                         "{ \"name\" : \"release\", \"writable\" : true, \"final\": true}", }),
@@ -1144,16 +1175,15 @@ public class RegistryServiceIntegrationTest {
                 @Property(key = "stage.storage.mappings", type = Type.Array, value = { "draft:mock", "release:mock" }),
                 @Property(key = "delete.after.transition", value = "true"),
                 @Property(key = "storageService.target", value = "(storage.type=mock)"),
-                @Property(key = "postReleaseActionService.target", value = "(service.ranking=1000)") })
-        void shouldCallPostReleaseActionsOnTransitionToFinalStage(
-                @InjectService(cardinality = 0, filter = "(registry.name=" + POST_RELEASE_REGISTRY_NAME
+                @Property(key = "stageActionService.target", value = "(service.ranking=1000)") })
+        void shouldInvokeOnEnterOnTransitionToTriggerStage(
+                @InjectService(cardinality = 0, filter = "(registry.name=" + STAGE_ACTION_REGISTRY_NAME
                         + ")") ServiceAware<RegistryService> registryAware)
                 throws InterruptedException, InvocationTargetException {
 
             RegistryService<EObject> registryService = registryAware.waitForService(5000);
             assertNotNull(registryService, "RegistryService should be available");
 
-            // Mock retrieving object from draft stage
             EObject testObject = EcoreFactory.eINSTANCE.createEClass();
             ObjectMetadata sourceMetadata = ManagementFactory.eINSTANCE.createObjectMetadata();
             sourceMetadata.setObjectId("test-id");
@@ -1167,40 +1197,44 @@ public class RegistryServiceIntegrationTest {
             when(mockStorageService.retrieveMetadata(anyString(), anyString(), eq("draft"), anyString()))
                     .thenReturn(metadataPromise);
 
-            // Mock storing object to release stage
             ObjectMetadata targetMetadata = ManagementFactory.eINSTANCE.createObjectMetadata();
             targetMetadata.setObjectId("test-id");
+            targetMetadata.setObjectType("EClass");
             targetMetadata.setStage("release");
 
             Promise<ObjectMetadata> storePromise = promiseFactory.resolved(targetMetadata);
             when(mockStorageService.storeObject(anyString(), anyString(), eq("release"), anyString(), any(), any()))
                     .thenReturn(storePromise);
 
-            // Mock deleting from draft stage
             Promise<Boolean> deletePromise = promiseFactory.resolved(Boolean.TRUE);
             when(mockStorageService.deleteObject(anyString(), anyString(), eq("draft"), anyString()))
                     .thenReturn(deletePromise);
 
-            // Transition from draft to release (final stage)
             ObjectMetadata result = registryService.transitionToStage(SCOPE_NAME, "test-id", "draft", "release");
 
             assertNotNull(result);
             assertEquals("release", result.getStage());
 
-            // Verify executePostReleaseActions was called for transitioning TO final stage
-            verify(mockPostReleaseService).executePostReleaseActions(eq(SCOPE_NAME), eq(POST_RELEASE_REGISTRY_NAME),
-                    eq("release"), eq("test-id"), eq("EClass"), anyString(), anyString());
+            // ENTER on the target stage (release) is a trigger event
+            ArgumentCaptor<ActionContext> captor = ArgumentCaptor.forClass(ActionContext.class);
+            verify(mockStageActionService).onEnter(captor.capture());
+            ActionContext ctx = captor.getValue();
+            assertEquals("release", ctx.stage());
+            assertEquals("draft", ctx.sourceStage());
+            assertEquals("test-id", ctx.objectId());
 
-            // Verify executePostUnreleaseActions was NOT called (draft is not final)
-            verify(mockPostReleaseService, never()).executePostUnreleaseActions(anyString(), anyString(), anyString(),
-                    anyString(), anyString(), anyString(), anyString());
+            // EXIT fires for the source stage (draft), but draft is not a trigger stage so
+            // the dispatcher filters it out.
+            verify(mockStageActionService, never()).onExit(any(ActionContext.class));
+            verify(mockStageActionService, never()).onUpdate(any(ActionContext.class));
+            verify(mockStageActionService, times(1)).onEnter(any(ActionContext.class));
         }
 
         @SuppressWarnings({ "unchecked", "rawtypes" })
         @Test
-        @DisplayName("Should call both post-release and post-unrelease actions when transitioning between final stages")
-        @WithFactoryConfiguration(factoryPid = "RegistryService", name = "post-release-test", location = "?", properties = {
-                @Property(key = "registry.name", value = POST_RELEASE_REGISTRY_NAME),
+        @DisplayName("Should NOT invoke any callback when transitioning between non-trigger stages")
+        @WithFactoryConfiguration(factoryPid = "RegistryService", name = "stage-action-test", location = "?", properties = {
+                @Property(key = "registry.name", value = STAGE_ACTION_REGISTRY_NAME),
                 @Property(key = "stages", type = Type.Array, value = {
                         "{ \"name\" : \"draft\", \"writable\" : true, \"final\": false}",
                         "{ \"name\" : \"approved\", \"writable\" : true, \"final\": false}",
@@ -1211,16 +1245,15 @@ public class RegistryServiceIntegrationTest {
                         "release:mock" }),
                 @Property(key = "delete.after.transition", value = "true"),
                 @Property(key = "storageService.target", value = "(storage.type=mock)"),
-                @Property(key = "postReleaseActionService.target", value = "(service.ranking=1000)") })
-        void shouldNotCallPostActionsOnTransitionBetweenNonFinalStages(
-                @InjectService(cardinality = 0, filter = "(registry.name=" + POST_RELEASE_REGISTRY_NAME
+                @Property(key = "stageActionService.target", value = "(service.ranking=1000)") })
+        void shouldNotInvokeCallbacksOnTransitionBetweenNonTriggerStages(
+                @InjectService(cardinality = 0, filter = "(registry.name=" + STAGE_ACTION_REGISTRY_NAME
                         + ")") ServiceAware<RegistryService> registryAware)
                 throws InterruptedException, InvocationTargetException {
 
             RegistryService<EObject> registryService = registryAware.waitForService(5000);
             assertNotNull(registryService, "RegistryService should be available");
 
-            // Mock retrieving object from draft stage
             EObject testObject = EcoreFactory.eINSTANCE.createEClass();
             ObjectMetadata sourceMetadata = ManagementFactory.eINSTANCE.createObjectMetadata();
             sourceMetadata.setObjectId("test-id");
@@ -1234,32 +1267,27 @@ public class RegistryServiceIntegrationTest {
             when(mockStorageService.retrieveMetadata(anyString(), anyString(), eq("draft"), anyString()))
                     .thenReturn(metadataPromise);
 
-            // Mock storing object to approved stage
             ObjectMetadata targetMetadata = ManagementFactory.eINSTANCE.createObjectMetadata();
             targetMetadata.setObjectId("test-id");
+            targetMetadata.setObjectType("EClass");
             targetMetadata.setStage("approved");
 
             Promise<ObjectMetadata> storePromise = promiseFactory.resolved(targetMetadata);
             when(mockStorageService.storeObject(anyString(), anyString(), eq("approved"), anyString(), any(), any()))
                     .thenReturn(storePromise);
 
-            // Mock deleting from draft stage
             Promise<Boolean> deletePromise = promiseFactory.resolved(Boolean.TRUE);
             when(mockStorageService.deleteObject(anyString(), anyString(), eq("draft"), anyString()))
                     .thenReturn(deletePromise);
 
-            // Transition from draft to approved (neither is final)
             ObjectMetadata result = registryService.transitionToStage(SCOPE_NAME, "test-id", "draft", "approved");
 
             assertNotNull(result);
             assertEquals("approved", result.getStage());
 
-            // Verify neither post-release nor post-unrelease was called (neither stage is
-            // final)
-            verify(mockPostReleaseService, never()).executePostReleaseActions(anyString(), anyString(), anyString(),
-                    anyString(), anyString(), anyString(), anyString());
-            verify(mockPostReleaseService, never()).executePostUnreleaseActions(anyString(), anyString(), anyString(),
-                    anyString(), anyString(), anyString(), anyString());
+            verify(mockStageActionService, never()).onEnter(any(ActionContext.class));
+            verify(mockStageActionService, never()).onUpdate(any(ActionContext.class));
+            verify(mockStageActionService, never()).onExit(any(ActionContext.class));
         }
     }
 }

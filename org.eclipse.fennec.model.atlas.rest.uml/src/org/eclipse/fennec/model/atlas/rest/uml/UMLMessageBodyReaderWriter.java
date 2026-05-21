@@ -1,13 +1,13 @@
 /**
  * Copyright (c) 2012 - 2025 Data In Motion and others.
- * All rights reserved. 
- * 
+ * All rights reserved.
+ *
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
  *
  * SPDX-License-Identifier: EPL-2.0
- * 
+ *
  * Contributors:
  *     Data In Motion - initial API and implementation
  */
@@ -24,12 +24,10 @@ import org.eclipse.emf.common.util.URI;
 import org.eclipse.emf.ecore.EPackage;
 import org.eclipse.emf.ecore.resource.Resource;
 import org.eclipse.emf.ecore.resource.ResourceSet;
+import org.eclipse.fennec.model.atlas.rest.common.AbstractEPackageMessageBodyHandler;
 import org.eclipse.uml2.uml.Package;
 import org.eclipse.uml2.uml.util.UMLUtil;
-import org.osgi.service.component.ComponentServiceObjects;
 import org.osgi.service.component.annotations.Component;
-import org.osgi.service.component.annotations.Reference;
-import org.osgi.service.component.annotations.ReferenceScope;
 import org.osgi.service.component.annotations.ServiceScope;
 import org.osgi.service.jakartars.whiteboard.JakartarsWhiteboardConstants;
 import org.osgi.service.jakartars.whiteboard.propertytypes.JakartarsApplicationSelect;
@@ -46,38 +44,20 @@ import jakarta.ws.rs.ext.MessageBodyWriter;
 import jakarta.ws.rs.ext.Provider;
 
 @Component(name = "UMLMessageBodyReaderWriter", service = { MessageBodyReader.class,
-        MessageBodyWriter.class }, enabled = true, scope = ServiceScope.SINGLETON)
+        MessageBodyWriter.class }, enabled = true, scope = ServiceScope.PROTOTYPE)
 @JakartarsExtension
 @JakartarsName("UMLMessageBodyReaderWriter")
 @JakartarsApplicationSelect("(|(emf=true)(" + JakartarsWhiteboardConstants.JAKARTA_RS_NAME + "=.default))")
 @Provider
 @Produces("application/uml")
 @Consumes("application/uml")
-public class UMLMessageBodyReaderWriter implements MessageBodyReader<EPackage>, MessageBodyWriter<EPackage> {
+public class UMLMessageBodyReaderWriter extends AbstractEPackageMessageBodyHandler {
 
-    @Reference(scope = ReferenceScope.PROTOTYPE_REQUIRED)
-    private ComponentServiceObjects<ResourceSet> resourceSetFactory;
-
-    /*
-     * (non-Javadoc)
-     * 
-     * @see jakarta.ws.rs.ext.MessageBodyWriter#isWriteable(java.lang.Class,
-     * java.lang.reflect.Type, java.lang.annotation.Annotation[],
-     * jakarta.ws.rs.core.MediaType)
-     */
     @Override
     public boolean isWriteable(Class<?> type, Type genericType, Annotation[] annotations, MediaType mediaType) {
         return EPackage.class.isAssignableFrom(type) && "application/uml".equals(mediaType.toString());
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see jakarta.ws.rs.ext.MessageBodyWriter#writeTo(java.lang.Object,
-     * java.lang.Class, java.lang.reflect.Type, java.lang.annotation.Annotation[],
-     * jakarta.ws.rs.core.MediaType, jakarta.ws.rs.core.MultivaluedMap,
-     * java.io.OutputStream)
-     */
     @Override
     public void writeTo(EPackage t, Class<?> type, Type genericType, Annotation[] annotations, MediaType mediaType,
             MultivaluedMap<String, Object> httpHeaders, OutputStream entityStream)
@@ -85,42 +65,29 @@ public class UMLMessageBodyReaderWriter implements MessageBodyReader<EPackage>, 
 
         String fileName = t.getName() + ".uml";
         Collection<Package> convertFromEcore = UMLUtil.convertFromEcore(t, null);
-        ResourceSet resourceSet = resourceSetFactory.getService();
+        var factory = getResourceSetFactory();
+        ResourceSet resourceSet = factory.getService();
         try {
             Resource resource = resourceSet.createResource(URI.createURI(fileName));
             resource.getContents().addAll(convertFromEcore);
             resource.save(entityStream, null);
             resource.getContents().clear();
         } finally {
-            resourceSetFactory.ungetService(resourceSet);
+            factory.ungetService(resourceSet);
         }
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see jakarta.ws.rs.ext.MessageBodyReader#isReadable(java.lang.Class,
-     * java.lang.reflect.Type, java.lang.annotation.Annotation[],
-     * jakarta.ws.rs.core.MediaType)
-     */
     @Override
     public boolean isReadable(Class<?> type, Type genericType, Annotation[] annotations, MediaType mediaType) {
         return isWriteable(type, genericType, annotations, mediaType);
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see jakarta.ws.rs.ext.MessageBodyReader#readFrom(java.lang.Class,
-     * java.lang.reflect.Type, java.lang.annotation.Annotation[],
-     * jakarta.ws.rs.core.MediaType, jakarta.ws.rs.core.MultivaluedMap,
-     * java.io.InputStream)
-     */
     @Override
     public EPackage readFrom(Class<EPackage> type, Type genericType, Annotation[] annotations, MediaType mediaType,
             MultivaluedMap<String, String> httpHeaders, InputStream entityStream)
             throws IOException, WebApplicationException {
-        ResourceSet resourceSet = resourceSetFactory.getService();
+        var factory = getResourceSetFactory();
+        ResourceSet resourceSet = factory.getService();
         try {
             Resource resource = resourceSet.createResource(URI.createURI("temp.uml"));
             resource.load(entityStream, null);
@@ -131,7 +98,7 @@ public class UMLMessageBodyReaderWriter implements MessageBodyReader<EPackage>, 
             Collection<EPackage> values = UMLUtil.convertToEcore(umlPackage, null);
             return values.iterator().next();
         } finally {
-            resourceSetFactory.ungetService(resourceSet);
+            factory.ungetService(resourceSet);
         }
     }
 }

@@ -24,6 +24,7 @@ import org.osgi.service.cm.annotations.RequireConfigurationAdmin;
 import org.osgi.service.typedevent.annotations.RequireTypedEvent;
 import org.osgi.test.common.annotation.Property;
 import org.osgi.test.common.annotation.Property.Scalar;
+import org.osgi.test.common.annotation.Property.Type;
 import org.osgi.test.common.annotation.config.WithFactoryConfiguration;
 
 /**
@@ -43,9 +44,15 @@ import org.osgi.test.common.annotation.config.WithFactoryConfiguration;
 @Requirement(namespace = MacCapabilityConstants.NAMESPACE_MAC_MANAGEMENT, name = MacCapabilityConstants.CAP_EOBJECT_STORAGE, filter = "(storage.backend=file)")
 public class TestAnnotations extends CommonTestAnnotations{
 
-	public static final String PID_EPACKAGE_POST_RELEASE_SERVICE = "EPackagePostReleaseActionService";
-
+	public static final String PID_EPACKAGE_STAGE_ACTION_SERVICE = "EPackageStageActionService";
+	
     public static final String PID_STORAGE_REGISTRY = "BasicStorageRegistry";
+    
+    public static final String PID_SCOPE_SERVICE = "ScopeService";
+
+	public static final String TEST_SCOPE_NAME = "test-scope";
+
+	public static final String TEST_PARENT_SCOPE_NAME = "test-parent-scope";
     
     @StorageSetup
     @WithFactoryConfiguration(factoryPid = PID_STORAGE_REGISTRY, name = "workflow", location = "?", properties = {
@@ -56,15 +63,36 @@ public class TestAnnotations extends CommonTestAnnotations{
     @RequireTypedEvent
     public @interface StorageRegistrySetup {
     }
-   
+    
+    
     @StorageSetup
-    @WithFactoryConfiguration(factoryPid = PID_EPACKAGE_POST_RELEASE_SERVICE, name = "post-release-action-service", location = "?", properties = {
-            @Property(key = "releaseStorage.target", value = "(storage.type=file)") })
+    @WithFactoryConfiguration(factoryPid = PID_EPACKAGE_STAGE_ACTION_SERVICE, name = "stage-action-service", location = "?", properties = {
+            @Property(key = "storageService.target", value = "(storage.type=file)"),
+            @Property(key = "trigger.stages", scalar = Scalar.String, type = Type.Array, value = {"draft", "approved", "release"})
+    })
     @Retention(RetentionPolicy.RUNTIME)
     @RequireTypedEvent
-    public @interface PostActionStorageSetup {
+    public @interface EPackageStageActionService {
     }
     
+    @SchemaRegistryServiceSetup
+	@WithFactoryConfiguration(factoryPid = PID_SCOPE_SERVICE, name = TEST_SCOPE_NAME, location = "?", properties = {
+			@Property(key = "scope.name", value = TEST_SCOPE_NAME),
+			@Property(key = "scope.parent", value = TEST_PARENT_SCOPE_NAME),
+			@Property(key = "registryService.target", value = "(registry.name="+SCHEMA_REGISTRY_NAME+")"),
+			@Property(key = "registryService.cardinality.minimum", value = "1", scalar = Scalar.Integer)})
+	@Retention(RetentionPolicy.RUNTIME)
+	public @interface ScopeServiceSetup {
+	}
+
+	@ScopeServiceSetup
+	@WithFactoryConfiguration(factoryPid = PID_SCOPE_SERVICE, name = TEST_PARENT_SCOPE_NAME, location = "?", properties = {
+			@Property(key = "scope.name", value = TEST_PARENT_SCOPE_NAME),
+			@Property(key = "registryService.target", value = "(registry.name="+SCHEMA_REGISTRY_NAME+")"),
+			@Property(key = "registryService.cardinality.minimum", value = "1", scalar = Scalar.Integer)})
+	@Retention(RetentionPolicy.RUNTIME)
+	public @interface ParentScopeServiceSetup {
+	}
 
 
 }

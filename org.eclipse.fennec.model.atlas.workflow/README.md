@@ -513,13 +513,60 @@ Query from tenant-a:
   listInFinalStage() → [app-module-v1, commons-v1, utils-v2]
 ```
 
+## Stage Action Services
+
+The workflow dispatches lifecycle callbacks to **`StageActionService`** implementations whenever objects enter, are updated in, or leave a stage. This is the extension point for reacting to workflow changes (registering services, sending notifications, invalidating caches, etc.) without modifying the core registry.
+
+### Lifecycle Events
+
+| Event | When it fires |
+|-------|---------------|
+| `ENTER` | After an object is written into a stage for the first time (initial upload or transition from another stage). |
+| `UPDATE` | After an object's content is updated in place while remaining in the same stage. |
+| `EXIT`  | After an object leaves a stage, either by deletion (`ExitReason.DELETED`) or by transitioning elsewhere (`ExitReason.TRANSITIONED`, with `targetStage` populated). By the time `EXIT` fires, the object is no longer retrievable from storage. |
+
+All events are delivered post-commit: the storage mutation has already been applied. Callbacks return an OSGi `Promise<Void>` and must be idempotent, because the workflow may replay `ENTER` events at startup to reconcile runtime state that does not survive a restart.
+
+### Implementation Contract
+
+A `StageActionService` declares what it cares about via:
+
+- `supportsObjectType(String)` — for example `"EPackage"`.
+- `getTriggerStages()` — stage names it subscribes to (empty set means "all stages").
+- `getTriggerEvents()` — subset of `ENTER` / `UPDATE` / `EXIT`.
+- `requiresReplayOnStartup()` / `requiresReplayOnShutdown()` — ask the workflow to replay `ENTER` / synthetic `EXIT` events for objects currently in a trigger stage.
+
+The registry filters dispatches by these declarations before calling `onEnter` / `onUpdate` / `onExit`, each receiving an `ActionContext` record with scope, registry, objectId, objectType, stage, `sourceStage` / `targetStage` (for transitions), `exitReason`, and a `replay` flag.
+
+### Bundled Implementation: `EPackageStageActionService`
+
+Ships as the default action for EMF schemas. When an `EPackage` object enters or is updated in a configured trigger stage it registers the following OSGi services backed by that EPackage:
+
+- `EPackageConfigurator`
+- `EPackage` (also as its concrete class)
+- `EFactory`
+- `Condition` (with `osgi.condition.id = <nsURI>`)
+
+so the EPackage becomes immediately available to the EMF runtime and to any consumer filtering by `emf.model.scope` / `atlas.stage` / `emf.name`. On `EXIT` the same services are unregistered.
+
+Configuration PID: `EPackageStageActionService` (factory or singleton). Typical properties:
+
+| Property | Default | Description |
+|----------|---------|-------------|
+| `trigger.stages` | `["release"]` | Stages whose `ENTER` / `UPDATE` / `EXIT` events trigger (un)registration. In the default runtime this is set to *all configured stages* (e.g. `["draft", "approved", "release"]`) so schemas are available for use — and for validation — from the moment they are uploaded, not only once they reach `release`. |
+| `replay.on.startup` | `true` | Replay `ENTER` for every EPackage currently in a trigger stage when the service starts. |
+| `replay.on.shutdown` | `true` | Replay `EXIT` for every EPackage currently in a trigger stage when the service stops. |
+| `storageService.target` | – | OSGi target filter for the `EObjectStorageService<EPackage>` used to fetch EPackage content during `ENTER` / `UPDATE`. |
+
+An `UPDATE` always tears down the previous OSGi registrations before re-registering, so service consumers see the new EPackage content (even when the `nsURI` is unchanged).
+
 ## Integration Points
 
 ### Required Services
 
 1. **EObjectRegistryService**: For object indexing and search
 2. **EObjectStorageService**: For persistent storage (one per stage)
-3. **PostReleaseActionService**: For post-release hooks
+3. **StageActionService** (optional, multiple): Lifecycle hooks fired on `ENTER` / `UPDATE` / `EXIT` for configured stages. See [Stage Action Services](#stage-action-services).
 4. **Parent WorkflowService** (optional): For hierarchical scopes
 
 ### OSGi Service Properties

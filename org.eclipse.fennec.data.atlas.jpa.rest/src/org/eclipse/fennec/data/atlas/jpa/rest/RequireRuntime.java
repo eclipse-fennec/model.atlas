@@ -21,8 +21,6 @@ import java.lang.annotation.Documented;
 import java.lang.annotation.Retention;
 import java.lang.annotation.Target;
 
-import org.gecko.emf.json.annotation.RequireEMFJson;
-import org.gecko.emf.rest.annotations.RequireEMFMessageBodyReaderWriter;
 import org.osgi.service.jakartars.whiteboard.annotations.RequireJakartarsWhiteboard;
 import org.osgi.service.servlet.whiteboard.annotations.RequireHttpWhiteboard;
 
@@ -34,8 +32,6 @@ import org.osgi.service.servlet.whiteboard.annotations.RequireHttpWhiteboard;
  */
 @RequireJakartarsWhiteboard
 @RequireHttpWhiteboard
-@RequireEMFJson
-@RequireEMFMessageBodyReaderWriter
 public @interface RequireRuntime {
 
 }

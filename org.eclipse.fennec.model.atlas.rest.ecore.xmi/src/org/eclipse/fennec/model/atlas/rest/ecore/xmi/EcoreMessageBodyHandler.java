@@ -30,12 +30,9 @@ import org.eclipse.emf.ecore.EPackage;
 import org.eclipse.emf.ecore.EcorePackage;
 import org.eclipse.emf.ecore.resource.Resource;
 import org.eclipse.emf.ecore.resource.ResourceSet;
-import org.eclipse.emf.ecore.util.EcoreUtil;
 import org.eclipse.emf.ecore.xmi.XMLResource;
-import org.osgi.service.component.ComponentServiceObjects;
+import org.eclipse.fennec.model.atlas.rest.common.AbstractEPackageMessageBodyHandler;
 import org.osgi.service.component.annotations.Component;
-import org.osgi.service.component.annotations.Reference;
-import org.osgi.service.component.annotations.ReferenceScope;
 import org.osgi.service.component.annotations.ServiceScope;
 import org.osgi.service.jakartars.whiteboard.JakartarsWhiteboardConstants;
 import org.osgi.service.jakartars.whiteboard.propertytypes.JakartarsApplicationSelect;
@@ -70,12 +67,9 @@ import jakarta.ws.rs.ext.MessageBodyWriter;
 @JakartarsName("EcoreMessageBodyHandler")
 @Consumes({ "application/xmi", "application/xml" })
 @Produces({ "application/xmi", "application/xml" })
-public class EcoreMessageBodyHandler implements MessageBodyReader<EPackage>, MessageBodyWriter<EPackage> {
-
+public class EcoreMessageBodyHandler extends AbstractEPackageMessageBodyHandler {
+	
     private static final Logger logger = Logger.getLogger(EcoreMessageBodyHandler.class.getName());
-
-    @Reference(scope = ReferenceScope.PROTOTYPE_REQUIRED)
-    private ComponentServiceObjects<ResourceSet> resourceSetFactory;
 
     // ========== MessageBodyReader Implementation ==========
 
@@ -108,7 +102,8 @@ public class EcoreMessageBodyHandler implements MessageBodyReader<EPackage>, Mes
         logger.log(Level.INFO, "Reading EObject from XMI: type={0}, mediaType={1}",
                 new Object[] { type.getSimpleName(), mediaType });
 
-        ResourceSet resourceSet = resourceSetFactory.getService();
+        var factory = getResourceSetFactory();
+        ResourceSet resourceSet = factory.getService();
         try {
 
             // Use ABSOLUTE URI to prevent "resolve against non-hierarchical or relative
@@ -118,8 +113,6 @@ public class EcoreMessageBodyHandler implements MessageBodyReader<EPackage>, Mes
 
             // Configure XMI loading options for robust parsing
             Map<Object, Object> options = new HashMap<>();
-
-            // Additional XMI loading options for robust parsing
             options.put(XMLResource.OPTION_DEFER_ATTACHMENT, Boolean.TRUE);
             options.put(XMLResource.OPTION_DEFER_IDREF_RESOLUTION, Boolean.TRUE);
             options.put(XMLResource.OPTION_LAX_FEATURE_PROCESSING, Boolean.TRUE);
@@ -138,7 +131,6 @@ public class EcoreMessageBodyHandler implements MessageBodyReader<EPackage>, Mes
                 throw new IOException("XMI loading failed: " + errorMsg.toString());
             }
 
-            // Get the root EObject
             if (resource.getContents().isEmpty()) {
                 throw new IOException("No content found in XMI resource");
             }
@@ -147,7 +139,7 @@ public class EcoreMessageBodyHandler implements MessageBodyReader<EPackage>, Mes
             logger.log(Level.INFO, "Successfully loaded EObject: {0}", rootObject.getClass().getSimpleName());
             return (EPackage) rootObject;
         } finally {
-            resourceSetFactory.ungetService(resourceSet);
+            factory.ungetService(resourceSet);
         }
     }
 
@@ -165,10 +157,12 @@ public class EcoreMessageBodyHandler implements MessageBodyReader<EPackage>, Mes
 
         logger.log(Level.INFO, "Writing EObject to XMI: type={0}, mediaType={1}",
                 new Object[] { eObject.getClass().getSimpleName(), mediaType });
-        ResourceSet resourceSet = resourceSetFactory.getService();
+        var factory = getResourceSetFactory();
+        ResourceSet resourceSet = factory.getService();
+
         try {
 
-            // Use ABSOLUTE URI for consistent behavior
+        	// Use ABSOLUTE URI for consistent behavior
             String fileName = eObject.getName() + (isXMI(mediaType) ? ".ecore" : ".xml");
             httpHeaders.put(HttpHeaders.CONTENT_DISPOSITION, List.of("attachment; filename=" + fileName));
             URI absoluteURI = URI.createURI(fileName);
@@ -186,7 +180,7 @@ public class EcoreMessageBodyHandler implements MessageBodyReader<EPackage>, Mes
             logger.log(Level.INFO, "Successfully serialized EObject to XMI");
 
         } finally {
-            resourceSetFactory.ungetService(resourceSet);
+            factory.ungetService(resourceSet);
         }
     }
 }

@@ -11,13 +11,14 @@
  * Contributors:
  *     Data In Motion - initial API and implementation
  */
-package org.eclipse.fennec.model.atlas.rest.application.filter;
+package org.eclipse.fennec.model.atlas.rest.filter;
 
 import java.io.IOException;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 
 import org.eclipse.fennec.model.atlas.mediatypes.api.SupportedMediatype;
+import org.eclipse.fennec.model.atlas.rest.common.ModelAtlasRestConstants;
 import org.eclipse.fennec.model.atlas.wf.workflowapi.ScopeService;
 import org.eclipse.fennec.model.atlas.workflow.ScopeServiceCollector;
 import org.osgi.service.component.annotations.Component;
@@ -44,8 +45,9 @@ import jakarta.ws.rs.core.Response;
  *
  * <p>MediaType resolution: centralizes the duplicated {@code checkContentType()}
  * logic from scope-based resources. The resolved media type is set as a request
- * property ({@link #RESOLVED_MEDIA_TYPE}) for resources to use in responses.
- * Only applies to requests with a {@code scopeName} path parameter.
+ * property ({@link ModelAtlasRestConstants#RESOLVED_MEDIA_TYPE}) for resources
+ * to use in responses. Only applies to requests with a {@code scopeName} path
+ * parameter.
  *
  * <p>Paths starting with {@code /scopes/} are excluded from scope/registry
  * validation, as the {@code ScopesResource} handles scope lookup itself.
@@ -77,11 +79,6 @@ import jakarta.ws.rs.core.Response;
 @JakartarsExtension
 @JakartarsName("ModelAtlasRequestFilter")
 public class ModelAtlasRequestFilter implements ContainerRequestFilter {
-
-	/**
-	 * Request property key for the resolved media type.
-	 */
-	public static final String RESOLVED_MEDIA_TYPE = "resolvedMediaType";
 
 	private static final String SCHEMA_REGISTRY_NAME = "schema";
 
@@ -190,25 +187,29 @@ public class ModelAtlasRequestFilter implements ContainerRequestFilter {
 
 		if (mediaTypeParam != null) {
 			if (supported.contains(mediaTypeParam)) {
-				requestContext.setProperty(RESOLVED_MEDIA_TYPE, mediaTypeParam);
+				requestContext.setProperty(ModelAtlasRestConstants.RESOLVED_MEDIA_TYPE, mediaTypeParam);
 				return;
 			}
 			throw new WebApplicationException(Response.Status.UNSUPPORTED_MEDIA_TYPE);
 		}
 
 		List<MediaType> acceptableMediaTypes = requestContext.getAcceptableMediaTypes();
+		if (acceptableMediaTypes.isEmpty()) {
+			requestContext.setProperty(ModelAtlasRestConstants.RESOLVED_MEDIA_TYPE, MediaType.APPLICATION_JSON);
+			return;
+		}
 		for (MediaType acceptedMediaType : acceptableMediaTypes) {
 			if (acceptedMediaType.isWildcardType() || acceptedMediaType.isWildcardSubtype()) {
-				requestContext.setProperty(RESOLVED_MEDIA_TYPE, MediaType.APPLICATION_JSON);
+				requestContext.setProperty(ModelAtlasRestConstants.RESOLVED_MEDIA_TYPE, MediaType.APPLICATION_JSON);
 				return;
 			}
 			String accept = acceptedMediaType.getType() + "/" + acceptedMediaType.getSubtype();
 			if (supported.contains(accept)) {
-				requestContext.setProperty(RESOLVED_MEDIA_TYPE, accept);
+				requestContext.setProperty(ModelAtlasRestConstants.RESOLVED_MEDIA_TYPE, accept);
 				return;
 			}
 		}
 
-		requestContext.setProperty(RESOLVED_MEDIA_TYPE, MediaType.APPLICATION_JSON);
+		throw new WebApplicationException(Response.Status.UNSUPPORTED_MEDIA_TYPE);
 	}
 }

@@ -1,11 +1,11 @@
 -library: enableEMF
 
 -buildpath: \
-	org.eclipse.daanse.io.fs.watcher.api,\
-	org.osgi.service.cm,\
-	org.eclipse.fennec.persistence.orm,\
-	org.osgi.util.tracker,\
-	de.siegmar.fastcsv,\
-	jakarta.persistence-api,\
-	org.eclipse.daanse.jdbc.datasource.h2,\
-	org.eclipse.daanse.jdbc.db.importer.csv
+	org.eclipse.daanse.io.fs.watcher.api;version=latest,\
+	org.osgi.service.cm;version=latest,\
+	org.eclipse.fennec.persistence.orm;version=latest,\
+	org.osgi.util.tracker;version=latest,\
+	de.siegmar.fastcsv;version=latest,\
+	jakarta.persistence-api;version=latest,\
+	org.eclipse.daanse.jdbc.datasource.h2;version=latest,\
+	org.eclipse.daanse.jdbc.db.importer.csv;version=latest

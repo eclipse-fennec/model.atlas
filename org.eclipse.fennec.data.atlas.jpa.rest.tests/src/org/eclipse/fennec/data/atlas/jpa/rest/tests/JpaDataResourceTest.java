@@ -27,7 +27,6 @@ import org.eclipse.fennec.data.atlas.jpa.rest.tests.helper.TestAnnotations.DataF
 import org.eclipse.fennec.data.atlas.jpa.rest.tests.helper.TestHelper;
 import org.eclipse.fennec.emf.osgi.annotation.require.RequireEMF;
 import org.eclipse.fennec.persistence.eorm.EntityMappings;
-import org.gecko.emf.rest.annotations.RequireEMFMessageBodyReaderWriter;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -54,7 +53,6 @@ import jakarta.ws.rs.core.Response;
  * Examples: https://github.com/osgi/osgi-test/tree/main/examples
  */
 @RequireEMF
-@RequireEMFMessageBodyReaderWriter
 @RequireJakartarsWhiteboard
 @RequireConfigurationAdmin
 @ExtendWith(BundleContextExtension.class)

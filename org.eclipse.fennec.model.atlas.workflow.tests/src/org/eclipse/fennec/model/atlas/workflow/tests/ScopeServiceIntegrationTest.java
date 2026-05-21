@@ -18,7 +18,6 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
@@ -32,14 +31,19 @@ import java.util.Hashtable;
 import java.util.List;
 
 import org.eclipse.emf.ecore.EObject;
+import org.eclipse.emf.ecore.EPackage;
 import org.eclipse.emf.ecore.EcoreFactory;
 import org.eclipse.fennec.emf.osgi.annotation.require.RequireEMF;
 import org.eclipse.fennec.model.atlas.mgmt.management.ManagementFactory;
 import org.eclipse.fennec.model.atlas.mgmt.management.ObjectMetadata;
+import org.eclipse.fennec.model.atlas.tests.common.CommonTestAnnotations;
 import org.eclipse.fennec.model.atlas.tests.common.CommonTestAnnotations.EPackageLuceneIndexSetup;
 import org.eclipse.fennec.model.atlas.tests.common.CommonTestAnnotations.RegistryConfiguration;
 import org.eclipse.fennec.model.atlas.wf.workflowapi.RegistryService;
 import org.eclipse.fennec.model.atlas.wf.workflowapi.ScopeService;
+import org.eclipse.fennec.model.atlas.workflow.tests.annotations.TestAnnotations;
+import org.eclipse.fennec.model.atlas.workflow.tests.annotations.TestAnnotations.ParentScopeServiceSetup;
+import org.eclipse.fennec.model.atlas.workflow.tests.annotations.TestAnnotations.ScopeServiceSetup;
 import org.eclipse.fennec.model.atlas.workflow.tests.support.LuceneAwareTempDirExtension;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -80,7 +84,6 @@ import org.osgi.util.promise.PromiseFactory;
 public class ScopeServiceIntegrationTest {
 
 	private static final String SCOPE_NAME = "test-scope";
-	private static final String PARENT_SCOPE_NAME = "parent-scope";
 	private static final String REGISTRY_NAME = "test-registry";
 	private static final String STAGE_NAME = "draft";
 	private static final String OBJECT_ID = "test-object-id";
@@ -256,13 +259,9 @@ public class ScopeServiceIntegrationTest {
 		@SuppressWarnings({ "unchecked", "rawtypes" })
 		@Test
 		@DisplayName("Should return all registry names")
-		@RegistryConfiguration
-		@EPackageLuceneIndexSetup
-		@WithFactoryConfiguration(factoryPid = "ScopeService", name = "test-scope", location = "?", properties = {
-				@Property(key = "scope.name", value = SCOPE_NAME), @Property(key = "scope.parent", value = ""),
-				@Property(key = "registryService.target", value = "(registry.name=" + REGISTRY_NAME + ")") })
+		@ScopeServiceSetup
 		void shouldReturnAllRegistryNames(
-				@InjectService(cardinality = 0, filter = "(scope.name=" + SCOPE_NAME
+				@InjectService(cardinality = 0, filter = "(scope.name=" + TestAnnotations.TEST_SCOPE_NAME
 				+ ")") ServiceAware<ScopeService> scopeAware)
 						throws InterruptedException, InvocationTargetException {
 
@@ -272,19 +271,15 @@ public class ScopeServiceIntegrationTest {
 			List<String> registries = scopeService.getAllRegistries();
 
 			assertEquals(1, registries.size());
-			assertTrue(registries.contains(REGISTRY_NAME));
+			assertTrue(registries.contains(TestAnnotations.SCHEMA_REGISTRY_NAME));
 		}
 
 		@SuppressWarnings({ "unchecked", "rawtypes" })
 		@Test
 		@DisplayName("Should throw exception for invalid registry")
-		@RegistryConfiguration
-		@EPackageLuceneIndexSetup
-		@WithFactoryConfiguration(factoryPid = "ScopeService", name = "test-scope", location = "?", properties = {
-				@Property(key = "scope.name", value = SCOPE_NAME), @Property(key = "scope.parent", value = ""),
-				@Property(key = "registryService.target", value = "(registry.name=" + REGISTRY_NAME + ")") })
+		@ScopeServiceSetup
 		void shouldThrowExceptionForInvalidRegistry(
-				@InjectService(cardinality = 0, filter = "(scope.name=" + SCOPE_NAME
+				@InjectService(cardinality = 0, filter = "(scope.name=" + TestAnnotations.TEST_SCOPE_NAME
 				+ ")") ServiceAware<ScopeService> scopeAware)
 						throws InterruptedException, InvocationTargetException {
 
@@ -308,133 +303,143 @@ public class ScopeServiceIntegrationTest {
 		@SuppressWarnings({ "unchecked", "rawtypes" })
 		@Test
 		@DisplayName("Should fallback to parent scope when metadata not found")
-		@RegistryConfiguration
-		@EPackageLuceneIndexSetup
-		@WithFactoryConfiguration(factoryPid = "ScopeService", name = "test-scope-with-parent", location = "?", properties = {
-				@Property(key = "scope.name", value = SCOPE_NAME),
-				@Property(key = "scope.parent", value = PARENT_SCOPE_NAME),
-				@Property(key = "registryService.target", value = "(registry.name=" + REGISTRY_NAME + ")") })
+		@ParentScopeServiceSetup
 		void shouldFallbackToParentScope(
-				@InjectService(cardinality = 0, filter = "(scope.name=" + SCOPE_NAME
-				+ ")") ServiceAware<ScopeService> scopeAware)
-						throws InterruptedException, InvocationTargetException {
+				@InjectService(cardinality = 0, filter = "(scope.name=" + TestAnnotations.TEST_SCOPE_NAME
+						+ ")") ServiceAware<ScopeService> childScopeAware,
+				@InjectService(cardinality = 0, filter = "(scope.name=" + TestAnnotations.TEST_PARENT_SCOPE_NAME
+						+ ")") ServiceAware<ScopeService> parentScopeAware)
+				throws InterruptedException, InvocationTargetException {
 
-			ScopeService<EObject> scopeService = scopeAware.waitForService(5000);
-			assertNotNull(scopeService);
+			ScopeService<EPackage> childScope = childScopeAware.waitForService(5000);
+			ScopeService<EPackage> parentScope = parentScopeAware.waitForService(5000);
+			assertNotNull(childScope);
+			assertNotNull(parentScope);
 
-			// Current scope returns null
-			when(mockRegistryService.getMetadataFromStage(SCOPE_NAME, STAGE_NAME, OBJECT_ID)).thenReturn(null);
+			// Upload an EPackage to the parent's release (final) stage
+			EPackage parentPackage = EcoreFactory.eINSTANCE.createEPackage();
+			parentPackage.setName("parent-package");
+			parentPackage.setNsURI("http://test/parent-package");
+			parentPackage.setNsPrefix("pp");
 
-			// Parent scope returns metadata
-			ObjectMetadata parentMetadata = ManagementFactory.eINSTANCE.createObjectMetadata();
-			parentMetadata.setObjectId(OBJECT_ID);
-			when(mockRegistryService.getMetadataFromFinalStage(PARENT_SCOPE_NAME, OBJECT_ID))
-			.thenReturn(parentMetadata);
+			ObjectMetadata uploadMetadata = ManagementFactory.eINSTANCE.createObjectMetadata();
+			uploadMetadata.setObjectId(OBJECT_ID);
 
-			// Act
-			ObjectMetadata result = scopeService.getMetadataFromStageForRegistry(REGISTRY_NAME, STAGE_NAME, OBJECT_ID);
+			ObjectMetadata uploaded = parentScope.uploadToStageForRegistry(
+					CommonTestAnnotations.SCHEMA_REGISTRY_NAME,
+					CommonTestAnnotations.STAGE_RELEASE,
+					parentPackage,
+					uploadMetadata).getValue();
+			assertNotNull(uploaded);
 
-			// Assert
-			assertNotNull(result);
+			// Child has nothing in its draft stage -> should fall back to parent's final stage
+			ObjectMetadata result = childScope.getMetadataFromStageForRegistry(
+					CommonTestAnnotations.SCHEMA_REGISTRY_NAME,
+					CommonTestAnnotations.STAGE_DRAFT,
+					OBJECT_ID);
+
+			assertNotNull(result, "Should fall back to parent's metadata");
 			assertEquals(OBJECT_ID, result.getObjectId());
 			assertTrue(result.isIsReadOnly(), "Parent metadata should be marked as read-only");
-
-			verify(mockRegistryService).getMetadataFromStage(SCOPE_NAME, STAGE_NAME, OBJECT_ID);
-			verify(mockRegistryService).getMetadataFromFinalStage(PARENT_SCOPE_NAME, OBJECT_ID);
 		}
 
 		@SuppressWarnings({ "unchecked", "rawtypes" })
 		@Test
 		@DisplayName("Should include parent metadata in listInFinalStage")
-		@RegistryConfiguration
-		@EPackageLuceneIndexSetup
-		@WithFactoryConfiguration(factoryPid = "ScopeService", name = "test-scope-with-parent", location = "?", properties = {
-				@Property(key = "scope.name", value = SCOPE_NAME),
-				@Property(key = "scope.parent", value = PARENT_SCOPE_NAME),
-				@Property(key = "registryService.target", value = "(registry.name=" + REGISTRY_NAME + ")") })
+		@ParentScopeServiceSetup
 		void shouldIncludeParentMetadataInList(
-				@InjectService(cardinality = 0, filter = "(scope.name=" + SCOPE_NAME
-				+ ")") ServiceAware<ScopeService> scopeAware)
-						throws InterruptedException, InvocationTargetException {
+				@InjectService(cardinality = 0, filter = "(scope.name=" + TestAnnotations.TEST_SCOPE_NAME
+						+ ")") ServiceAware<ScopeService> childScopeAware,
+				@InjectService(cardinality = 0, filter = "(scope.name=" + TestAnnotations.TEST_PARENT_SCOPE_NAME
+						+ ")") ServiceAware<ScopeService> parentScopeAware)
+				throws InterruptedException, InvocationTargetException {
 
-			ScopeService<EObject> scopeService = scopeAware.waitForService(5000);
-			assertNotNull(scopeService);
+			ScopeService<EPackage> childScope = childScopeAware.waitForService(5000);
+			ScopeService<EPackage> parentScope = parentScopeAware.waitForService(5000);
+			assertNotNull(childScope);
+			assertNotNull(parentScope);
 
-			ObjectMetadata scopedMetadata = ManagementFactory.eINSTANCE.createObjectMetadata();
-			scopedMetadata.setObjectId("scoped-object");
+			// Upload an EPackage to the child's release (final) stage
+			EPackage scopedPackage = EcoreFactory.eINSTANCE.createEPackage();
+			scopedPackage.setName("scoped-package");
+			scopedPackage.setNsURI("http://test/scoped-package");
+			scopedPackage.setNsPrefix("sp");
+			ObjectMetadata scopedMeta = ManagementFactory.eINSTANCE.createObjectMetadata();
+			scopedMeta.setObjectId("scoped-object");
+			childScope.uploadToStageForRegistry(
+					CommonTestAnnotations.SCHEMA_REGISTRY_NAME,
+					CommonTestAnnotations.STAGE_RELEASE,
+					scopedPackage,
+					scopedMeta).getValue();
 
-			ObjectMetadata parentMetadata = ManagementFactory.eINSTANCE.createObjectMetadata();
-			parentMetadata.setObjectId("parent-object");
+			// Upload an EPackage to the parent's release (final) stage
+			EPackage parentPackage = EcoreFactory.eINSTANCE.createEPackage();
+			parentPackage.setName("parent-package");
+			parentPackage.setNsURI("http://test/parent-package");
+			parentPackage.setNsPrefix("pp");
+			ObjectMetadata parentMeta = ManagementFactory.eINSTANCE.createObjectMetadata();
+			parentMeta.setObjectId("parent-object");
+			parentScope.uploadToStageForRegistry(
+					CommonTestAnnotations.SCHEMA_REGISTRY_NAME,
+					CommonTestAnnotations.STAGE_RELEASE,
+					parentPackage,
+					parentMeta).getValue();
 
-			when(mockRegistryService.listInFinalStage(anyString())).thenAnswer(invocation -> {
-				String argument = invocation.getArgument(0);
+			List<ObjectMetadata> result = childScope
+					.listInFinalStageForRegistry(CommonTestAnnotations.SCHEMA_REGISTRY_NAME);
 
-				if (argument.equals(SCOPE_NAME)) {
-					return new ArrayList<>(List.of(scopedMetadata));
-				} else if (argument.equals(PARENT_SCOPE_NAME)) {
-					return new ArrayList<>(List.of(parentMetadata));
-				}
-				throw new IllegalArgumentException("Unexpected argument: " + argument);
-			});
-
-			// Act
-			List<ObjectMetadata> result = scopeService.listInFinalStageForRegistry(REGISTRY_NAME);
-
-			// Assert
 			assertEquals(2, result.size());
 			assertTrue(result.stream().anyMatch(m -> "scoped-object".equals(m.getObjectId())));
 			assertTrue(result.stream().anyMatch(m -> "parent-object".equals(m.getObjectId())));
-
-            verify(mockRegistryService).listInFinalStage(SCOPE_NAME);
-            verify(mockRegistryService).listInFinalStage(PARENT_SCOPE_NAME);
-        }
+		}
 
         @SuppressWarnings({ "unchecked", "rawtypes" })
         @Test
         @DisplayName("Should include parent metadata in listAllForRegistry")
-		@RegistryConfiguration
-		@EPackageLuceneIndexSetup
-        @WithFactoryConfiguration(factoryPid = "ScopeService", name = "test-scope-with-parent", location = "?", properties = {
-                @Property(key = "scope.name", value = SCOPE_NAME),
-                @Property(key = "scope.parent", value = PARENT_SCOPE_NAME),
-                @Property(key = "registryService.target", value = "(registry.name=" + REGISTRY_NAME + ")") })
+        @ParentScopeServiceSetup
         void shouldIncludeParentMetadataInListAll(
-                @InjectService(cardinality = 0, filter = "(scope.name=" + SCOPE_NAME
-                        + ")") ServiceAware<ScopeService> scopeAware)
+                @InjectService(cardinality = 0, filter = "(scope.name=" + TestAnnotations.TEST_SCOPE_NAME
+                        + ")") ServiceAware<ScopeService> childScopeAware,
+                @InjectService(cardinality = 0, filter = "(scope.name=" + TestAnnotations.TEST_PARENT_SCOPE_NAME
+                        + ")") ServiceAware<ScopeService> parentScopeAware)
                 throws InterruptedException, InvocationTargetException {
 
-            ScopeService<EObject> scopeService = scopeAware.waitForService(5000);
-            assertNotNull(scopeService);
+            ScopeService<EPackage> childScope = childScopeAware.waitForService(5000);
+            ScopeService<EPackage> parentScope = parentScopeAware.waitForService(5000);
+            assertNotNull(childScope);
+            assertNotNull(parentScope);
 
-            ObjectMetadata scopedMetadata = ManagementFactory.eINSTANCE.createObjectMetadata();
-            scopedMetadata.setObjectId("scoped-object");
-            scopedMetadata.setStage("draft");
+            // Upload an EPackage to the child's draft stage
+            EPackage scopedPackage = EcoreFactory.eINSTANCE.createEPackage();
+            scopedPackage.setName("scoped-package");
+            scopedPackage.setNsURI("http://test/scoped-package");
+            scopedPackage.setNsPrefix("sp");
+            ObjectMetadata scopedMeta = ManagementFactory.eINSTANCE.createObjectMetadata();
+            scopedMeta.setObjectId("scoped-object");
+            childScope.uploadToStageForRegistry(
+                    CommonTestAnnotations.SCHEMA_REGISTRY_NAME,
+                    CommonTestAnnotations.STAGE_DRAFT,
+                    scopedPackage,
+                    scopedMeta).getValue();
 
-            ObjectMetadata parentMetadata = ManagementFactory.eINSTANCE.createObjectMetadata();
-            parentMetadata.setObjectId("parent-object");
-            parentMetadata.setStage("release");
+            // Upload an EPackage to the parent's release stage
+            EPackage parentPackage = EcoreFactory.eINSTANCE.createEPackage();
+            parentPackage.setName("parent-package");
+            parentPackage.setNsURI("http://test/parent-package");
+            parentPackage.setNsPrefix("pp");
+            ObjectMetadata parentMeta = ManagementFactory.eINSTANCE.createObjectMetadata();
+            parentMeta.setObjectId("parent-object");
+            parentScope.uploadToStageForRegistry(
+                    CommonTestAnnotations.SCHEMA_REGISTRY_NAME,
+                    CommonTestAnnotations.STAGE_RELEASE,
+                    parentPackage,
+                    parentMeta).getValue();
 
-            when(mockRegistryService.listAll(anyString())).thenAnswer(invocation -> {
-                String argument = invocation.getArgument(0);
+            List<ObjectMetadata> result = childScope.listAllForRegistry(CommonTestAnnotations.SCHEMA_REGISTRY_NAME);
 
-                if (argument.equals(SCOPE_NAME)) {
-                    return new ArrayList<>(List.of(scopedMetadata));
-                } else if (argument.equals(PARENT_SCOPE_NAME)) {
-                    return new ArrayList<>(List.of(parentMetadata));
-                }
-                throw new IllegalArgumentException("Unexpected argument: " + argument);
-            });
-
-            // Act
-            List<ObjectMetadata> result = scopeService.listAllForRegistry(REGISTRY_NAME);
-
-            // Assert
             assertEquals(2, result.size());
             assertTrue(result.stream().anyMatch(m -> "scoped-object".equals(m.getObjectId())));
             assertTrue(result.stream().anyMatch(m -> "parent-object".equals(m.getObjectId())));
-
-            verify(mockRegistryService).listAll(SCOPE_NAME);
-            verify(mockRegistryService).listAll(PARENT_SCOPE_NAME);
         }
     }
 

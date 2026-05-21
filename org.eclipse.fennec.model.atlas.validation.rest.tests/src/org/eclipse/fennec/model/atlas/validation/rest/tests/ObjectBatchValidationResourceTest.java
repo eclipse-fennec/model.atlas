@@ -37,10 +37,8 @@ import org.eclipse.fennec.model.atlas.validation.rest.tests.helper.TestAnnotatio
 import org.eclipse.fennec.model.atlas.validation.rest.tests.helper.TestAnnotations.JenaScopeServiceSetup;
 import org.eclipse.fennec.model.atlas.validation.rest.tests.helper.TestHelper;
 import org.eclipse.fennec.model.atlas.wf.workflowapi.ScopeService;
-import org.gecko.emf.rest.annotations.RequireEMFMessageBodyReaderWriter;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.io.TempDir;
@@ -70,7 +68,6 @@ import jakarta.ws.rs.core.Response;
  * @since Apr 2026
  */
 @RequireEMF
-@RequireEMFMessageBodyReaderWriter
 @RequireJakartarsWhiteboard
 @RequireConfigurationAdmin
 @ExtendWith(BundleContextExtension.class)
@@ -110,7 +107,7 @@ public class ObjectBatchValidationResourceTest {
 	// ========== validate Tests ==========
 
 	@Test
-	@Disabled
+	//@Disabled
 	public void testValidate_NoObjects_Returns400() throws Exception {
 		BatchValidationRequest request = COCLFactory.eINSTANCE.createBatchValidationRequest();
 		request.setCoclId("any-id");
@@ -121,7 +118,7 @@ public class ObjectBatchValidationResourceTest {
 	}
 
 	@Test
-	@Disabled
+	//@Disabled
 	public void testValidate_NoCoclId_Returns400() throws Exception {
 		BatchValidationRequest request = COCLFactory.eINSTANCE.createBatchValidationRequest();
 		request.getValidationObjects().add(DGFactory.eINSTANCE.createCompany());
@@ -132,7 +129,7 @@ public class ObjectBatchValidationResourceTest {
 	}
 
 	@Test
-	@Disabled
+	//@Disabled
 	@JenaScopeServiceSetup
 	public void testValidate_UnknownCoclId_Returns400(
 			@InjectBundleContext BundleContext context,
@@ -150,7 +147,7 @@ public class ObjectBatchValidationResourceTest {
 	}
 
 	@Test
-	@Disabled
+	//@Disabled
 	@JenaScopeServiceSetup
 	public void testValidate_ValidBatch_Returns200(
 			@InjectBundleContext BundleContext context,
@@ -176,7 +173,7 @@ public class ObjectBatchValidationResourceTest {
 	}
 
 	@Test
-	@Disabled
+	//@Disabled
 	@JenaScopeServiceSetup
 	public void testValidate_FilterConstraintWrongRole_Returns400(
 			@InjectBundleContext BundleContext context,
@@ -200,7 +197,7 @@ public class ObjectBatchValidationResourceTest {
 	}
 
 	@Test
-	@Disabled
+	//@Disabled
 	@JenaScopeServiceSetup
 	public void testValidate_WithFilter_FiltersObjects_Returns200(
 			@InjectBundleContext BundleContext context,
@@ -233,7 +230,7 @@ public class ObjectBatchValidationResourceTest {
 	// ========== filter Tests ==========
 
 	@Test
-	@Disabled
+	//@Disabled
 	public void testFilter_NoObjects_Returns400() throws Exception {
 		BatchValidationRequest request = COCLFactory.eINSTANCE.createBatchValidationRequest();
 		request.setCoclId("any-id");
@@ -244,7 +241,7 @@ public class ObjectBatchValidationResourceTest {
 	}
 
 	@Test
-	@Disabled
+	//@Disabled
 	public void testFilter_NoCoclId_Returns400() throws Exception {
 		BatchValidationRequest request = COCLFactory.eINSTANCE.createBatchValidationRequest();
 		request.getValidationObjects().add(DGFactory.eINSTANCE.createCompany());
@@ -255,7 +252,7 @@ public class ObjectBatchValidationResourceTest {
 	}
 
 	@Test
-	@Disabled
+	//@Disabled
 	@JenaScopeServiceSetup
 	public void testFilter_UnknownCoclId_Returns400(
 			@InjectBundleContext BundleContext context)
@@ -272,7 +269,7 @@ public class ObjectBatchValidationResourceTest {
 	}
 
 	@Test
-	@Disabled
+	//@Disabled
 	@JenaScopeServiceSetup
 	public void testFilter_NoFilterConstraints_Returns204(
 			@InjectBundleContext BundleContext context,
@@ -292,7 +289,7 @@ public class ObjectBatchValidationResourceTest {
 	}
 
 	@Test
-	@Disabled
+	//@Disabled
 	@JenaScopeServiceSetup
 	public void testFilter_AllRetained_Returns204(
 			@InjectBundleContext BundleContext context,
@@ -316,7 +313,7 @@ public class ObjectBatchValidationResourceTest {
 	}
 
 	@Test
-	@Disabled
+	//@Disabled
 	@JenaScopeServiceSetup
 	public void testFilter_SomeFiltered_Returns200(
 			@InjectBundleContext BundleContext context,

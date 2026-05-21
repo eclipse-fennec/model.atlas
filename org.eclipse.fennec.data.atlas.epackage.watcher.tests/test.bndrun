@@ -9,6 +9,9 @@
 -runbundles.test: \
 	org.eclipse.fennec.data.atlas.epackage.watcher.tests;version=snapshot
 
+-runproperties: \
+	${if;${is;${driver};gradle};gosh.args=--nointeractive}
+
 -runfw: org.apache.felix.framework
 
 -runee: JavaSE-21

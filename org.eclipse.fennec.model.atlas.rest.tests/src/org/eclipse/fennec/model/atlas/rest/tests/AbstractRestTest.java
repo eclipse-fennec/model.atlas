@@ -24,7 +24,6 @@ import org.eclipse.fennec.emf.osgi.annotation.require.RequireEMF;
 import org.eclipse.fennec.model.atlas.rest.tests.helper.ResourceAware;
 import org.eclipse.fennec.model.atlas.rest.tests.helper.TestAnnotations;
 import org.eclipse.fennec.model.atlas.rest.tests.helper.TestHelper;
-import org.gecko.emf.rest.annotations.RequireEMFMessageBodyReaderWriter;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -47,7 +46,6 @@ import jakarta.ws.rs.client.WebTarget;
  * @since Apr 10, 2026
  */
 @RequireEMF
-@RequireEMFMessageBodyReaderWriter
 @RequireJakartarsWhiteboard
 @RequireConfigurationAdmin
 @ExtendWith(BundleContextExtension.class)
@@ -111,6 +109,8 @@ public abstract class AbstractRestTest {
 
 		assertTrue(resourceReady, "ObjectRegistryResource should be registered within 15 seconds. "
 				+ "Check that the resource is properly configured and the Jakarta REST runtime is working.");
+		
+		Thread.sleep(2000); //give time to all the services to come up
 	}
 	
 	abstract String getResourceName();

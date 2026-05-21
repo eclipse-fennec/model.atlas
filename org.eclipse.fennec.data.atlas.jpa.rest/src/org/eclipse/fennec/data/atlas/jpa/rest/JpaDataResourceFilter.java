@@ -19,14 +19,16 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Logger;
 
 import org.eclipse.emf.ecore.EPackage;
-import org.eclipse.emf.ecore.resource.ResourceSet;
+import org.eclipse.fennec.codec.rest.jakartas.JakartaRestConstants;
 import org.eclipse.fennec.data.atlas.jpa.watcher.api.WatcherConstants;
+import org.eclipse.fennec.emf.osgi.ResourceSetFactory;
 import org.eclipse.fennec.persistence.eorm.EntityMappings;
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
 import org.osgi.service.component.annotations.ReferenceCardinality;
 import org.osgi.service.component.annotations.ReferencePolicy;
 import org.osgi.service.component.annotations.ReferencePolicyOption;
+import org.osgi.service.component.propertytypes.ServiceRanking;
 import org.osgi.service.jakartars.whiteboard.propertytypes.JakartarsExtension;
 import org.osgi.service.jakartars.whiteboard.propertytypes.JakartarsName;
 
@@ -44,28 +46,29 @@ import jakarta.ws.rs.core.Response;
  */
 @Component
 @JakartarsExtension
-@JakartarsName("JpaDataResourceFilter")
+@JakartarsName("ResourceSetFilter") //This has to be the same name as the default resource set filter in the codec rest, otherwise we cannot shadow it
+@ServiceRanking(100) //We need this to shadow the default resource set filter in the codec.rest
 public class JpaDataResourceFilter implements ContainerRequestFilter {
 	
 	private static final Logger LOGGER = Logger.getLogger(JpaDataResourceFilter.class.getName());
-	private Map<String, ResourceSet> folderToResrouceSetMap = new ConcurrentHashMap<>();
+	private Map<String, ResourceSetFactory> folderToResrouceSetFactoryMap = new ConcurrentHashMap<>();
 	private Map<String, EntityManagerFactory> folderToEntityManagerFactoryMap = new ConcurrentHashMap<>();
 	private Map<String, EntityMappings> folderToEntityMappingsMap = new ConcurrentHashMap<>();
 	
 	@Reference(policy = ReferencePolicy.DYNAMIC, cardinality = ReferenceCardinality.MULTIPLE, policyOption = ReferencePolicyOption.GREEDY)
-	void bindResourceSet(ResourceSet resourceSet, Map<String, Object> properties) {
+	void bindResourceSetFactory(ResourceSetFactory resourceSetFactory, Map<String, Object> properties) {
 		if(properties.containsKey(WatcherConstants.KEY_JPA_ROOT_FOLDER)) {
-			folderToResrouceSetMap.put((String) properties.get(WatcherConstants.KEY_JPA_ROOT_FOLDER), resourceSet);
+			folderToResrouceSetFactoryMap.put((String) properties.get(WatcherConstants.KEY_JPA_ROOT_FOLDER), resourceSetFactory);
 		} else {
-			LOGGER.warning("Cannot bind ResourceSet without jpa.root.folder property");
+			LOGGER.warning("Cannot bind ResourceSetFactory without jpa.root.folder property");
 		}
 	}
 
-	void unbindResourceSet(ResourceSet resourceSet, Map<String, Object> properties) {
+	void unbindResourceSetFactory(ResourceSetFactory resourceSetFactory, Map<String, Object> properties) {
 		if(properties.containsKey(WatcherConstants.KEY_JPA_ROOT_FOLDER)) {
-			folderToResrouceSetMap.remove((String) properties.get(WatcherConstants.KEY_JPA_ROOT_FOLDER));
+			folderToResrouceSetFactoryMap.remove((String) properties.get(WatcherConstants.KEY_JPA_ROOT_FOLDER));
 		} else {
-			LOGGER.warning("Cannot unbind ResourceSet without jpa.root.folder property");
+			LOGGER.warning("Cannot unbind ResourceSetFactory without jpa.root.folder property");
 		}	
 	}
 		
@@ -111,10 +114,10 @@ public class JpaDataResourceFilter implements ContainerRequestFilter {
 	public void filter(ContainerRequestContext requestContext) throws IOException {
 		MultivaluedMap<String, String> pathParams = requestContext.getUriInfo().getPathParameters();
 		String rootFolderName = pathParams.getFirst("rootFolderName");
-		if(!folderToResrouceSetMap.containsKey(rootFolderName)) {
+		if(!folderToResrouceSetFactoryMap.containsKey(rootFolderName)) {
 			throw new WebApplicationException(
 					Response.status(Response.Status.BAD_REQUEST)
-							.entity(String.format("ResourceSet for Root Folder [%s] not found.",
+							.entity(String.format("ResourceSetFactory for Root Folder [%s] not found.",
 									rootFolderName))
 							.build());
 		}
@@ -144,8 +147,8 @@ public class JpaDataResourceFilter implements ContainerRequestFilter {
 								.build());
 			}
 		}
-		ResourceSet resourceSet = folderToResrouceSetMap.get(rootFolderName);
-		EPackage ePackage = resourceSet.getPackageRegistry().getEPackage(entityMappings.getPackage());
+		ResourceSetFactory resourceSetFactory = folderToResrouceSetFactoryMap.get(rootFolderName);
+		EPackage ePackage = resourceSetFactory.createResourceSet().getPackageRegistry().getEPackage(entityMappings.getPackage());
 		if(ePackage == null) {
 			throw new WebApplicationException(
 					Response.status(Response.Status.BAD_REQUEST)
@@ -163,7 +166,7 @@ public class JpaDataResourceFilter implements ContainerRequestFilter {
 		}
 		requestContext.setProperty("entity.manager.factory", folderToEntityManagerFactoryMap.get(rootFolderName));
 		requestContext.setProperty("entity.mappings", entityMappings);
-		
+		requestContext.setProperty(JakartaRestConstants.RESOLVED_RESOURCE_SET_FACTORY, resourceSetFactory);
 	}
 
 }

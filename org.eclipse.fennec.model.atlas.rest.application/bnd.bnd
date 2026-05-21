@@ -19,7 +19,6 @@
 	com.fasterxml.jackson.core.jackson-databind;version=latest,\
 	org.eclipse.fennec.m2x.ocl.api;version=latest,\
 	org.eclipse.fennec.m2x.ocl.model;version=latest,\
-	org.gecko.emf.json;version=latest,\
 	org.gecko.emf.util.documentation.generators.apis;version=latest,\
 	org.eclipse.fennec.model.atlas.model.documentation.provider;version=snapshot,\
 	org.eclipse.fennec.model.atlas.mediatypes.api;version=snapshot,\
@@ -29,5 +28,5 @@
 	org.eclipse.fennec.model.atlas.workflow;version=snapshot,\
 	org.eclipse.fennec.model.atlas.schema.registry.api;version=snapshot,\
 	org.eclipse.fennec.model.atlas.management.lucene;version=snapshot,\
-	org.eclipse.fennec.model.atlas.validation.model;version=snapshot,\
-	org.eclipse.fennec.model.atlas.validation;version=snapshot
+	org.eclipse.fennec.model.atlas.rest.common;version=snapshot,\
+	org.eclipse.fennec.codec.rest;version=latest,\
