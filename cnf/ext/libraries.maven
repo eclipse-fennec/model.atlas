@@ -18,6 +18,7 @@ org.eclipse.fennec.bnd:org.eclipse.fennec.osgitest.bnd.library:0.0.9
 org.eclipse.fennec.m2x:org.eclipse.fennec.m2x.library.workspace:0.1.0-SNAPSHOT
 org.eclipse.fennec.persistence.jpa:org.eclipse.fennec.persistence.jpa.library.workspace:0.1.0-SNAPSHOT
 
+
 org.geckoprojects.libraries:org.gecko.libraries.workspace.library:1.0.0-SNAPSHOT
 
 

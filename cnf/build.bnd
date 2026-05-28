@@ -46,6 +46,7 @@ Bundle-Developers: \
 	jakartaREST,\
 	fennecCodec
 
+
 # Needed because we enabled library 'gecko-dimc'
 # Activate baselining
 github-project: model.atlas

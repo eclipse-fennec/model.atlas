@@ -1,0 +1,27 @@
+Test-Cases: ${classes;HIERARCHY_INDIRECTLY_ANNOTATED;org.junit.platform.commons.annotation.Testable;CONCRETE}
+
+-library: \
+	enableOSGi-Test,\
+	enableEMF
+
+# sets the usually required buildpath using the bnd library, you can extend it with the normal -buildpath to your liking
+-buildpath: \
+	org.osgi.framework;version=latest,\
+	org.eclipse.fennec.data.atlas.jpa.watcher;version=snapshot,\
+	org.eclipse.fennec.persistence.orm,\
+	osgi.cmpn,\
+	org.osgi.test.junit5.cm,\
+	org.osgi.util.tracker,\
+	jakarta.persistence-api
+	
+Private-Package: \
+	org.eclipse.fennec.data.atlas.jpa.tests,\
+	org.eclipse.fennec.data.atlas.jpa.tests.helper
+
+Bundle-Version: 1.0.0.SNAPSHOT
+
+-includeresource: \
+	data/=data/
+
+# Sometimes without DynamicImport Mockito will not find certain classes
+#DynamicImport-Package: *

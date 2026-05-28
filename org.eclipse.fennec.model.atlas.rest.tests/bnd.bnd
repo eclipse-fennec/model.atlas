@@ -14,7 +14,7 @@ Test-Cases: ${classes;HIERARCHY_INDIRECTLY_ANNOTATED;org.junit.platform.commons.
 	org.osgi.service.component;version=latest,\
 	org.osgi.service.jakartars;version=latest,\
 	jakarta.ws.rs-api;version=latest,\
-	org.eclipse.fennec.model.atlas;version=snapshot,\
+	org.gecko.emf.rest.jakartars;version=latest,\
 	org.eclipse.fennec.model.atlas.rest.application;version=snapshot,\
 	org.eclipse.fennec.model.atlas.rest.model;version=latest,\
 	org.eclipse.emf.ecore;version=latest,\
@@ -50,7 +50,6 @@ Bundle-Version: 1.0.0.SNAPSHOT
 Require-Capability: osgi.extender;filter:='(osgi.extender=osgi.configurator)'
 
 -dependson: \
-	org.eclipse.fennec.model.atlas,\
 	org.eclipse.fennec.model.atlas.rest.application,\
 	org.eclipse.fennec.model.atlas.rest.model,\
     org.eclipse.fennec.model.atlas.rest.xsdschema,\

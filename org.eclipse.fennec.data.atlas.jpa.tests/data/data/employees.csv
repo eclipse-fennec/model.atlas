@@ -1,0 +1,7 @@
+id,first_name,last_name,salary,department_id
+INTEGER,VARCHAR,VARCHAR,DECIMAL,BIGINT
+1,Alice,Müller,72000,10
+2,Bob,Schmidt,65000,10
+3,Clara,Weber,80000,20
+4,David,Fischer,55000,30
+5,Eva,Bauer,91000,20
