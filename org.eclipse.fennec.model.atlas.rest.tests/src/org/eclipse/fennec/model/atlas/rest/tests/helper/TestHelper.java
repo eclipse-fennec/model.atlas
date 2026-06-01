@@ -32,12 +32,6 @@ import org.eclipse.emf.ecore.xmi.impl.XMIResourceFactoryImpl;
 import org.eclipse.fennec.model.atlas.datagen.example.model.dge.DGFactory;
 import org.eclipse.fennec.model.atlas.datagen.example.model.dge.Person;
 import org.eclipse.fennec.model.atlas.rest.common.AbstractEPackageMessageBodyHandler;
-import org.eclipse.fennec.model.atlas.rest.common.ModelAtlasRestConstants;
-import org.mockito.Mockito;
-import org.osgi.framework.ServiceReference;
-import org.osgi.service.component.ComponentServiceObjects;
-
-import jakarta.ws.rs.container.ContainerRequestContext;
 
 /**
  * Helper utility for common test operations including XMI serialization and
@@ -139,45 +133,15 @@ public class TestHelper {
 	}
 
     /**
-     * Wraps a {@link ResourceSet} as a {@link ComponentServiceObjects} for use in
-     * tests that invoke MBR/W methods directly (outside a JAX-RS request scope),
-     * where {@code @Context} injection does not happen.
-     *
-     * <p>{@code ungetService} is a no-op; {@code getServiceReference} returns
-     * {@code null}. This is intentional — tests do not manage OSGi service
-     * lifecycles directly.</p>
+     * Injects a {@link ResourceSet} into the base-class {@code resourceSet}
+     * field so that unit tests can drive MBR/W {@code readFrom}/{@code writeTo}
+     * methods directly outside a JAX-RS request scope (where Jersey's
+     * {@code @Context} injection does not happen).
      */
-    public static ComponentServiceObjects<ResourceSet> wrapAsComponentServiceObjects(ResourceSet resourceSet) {
-        return new ComponentServiceObjects<>() {
-            @Override
-            public ResourceSet getService() {
-                return resourceSet;
-            }
-
-            @Override
-            public void ungetService(ResourceSet service) {
-                // no-op in tests
-            }
-
-            @Override
-            public ServiceReference<ResourceSet> getServiceReference() {
-                return null;
-            }
-        };
-    }
-
-    /**
-     * Injects a {@link ComponentServiceObjects} into the base-class
-     * {@code requestContextProvider} field so that {@code getResourceSetFactory()}
-     * works in unit tests where no JAX-RS request scope exists.
-     */
-    public static void injectResourceSetFactory(Object service, ComponentServiceObjects<ResourceSet> cso)
-            throws Exception {
-        ContainerRequestContext mockCtx = Mockito.mock(ContainerRequestContext.class);
-        Mockito.when(mockCtx.getProperty(ModelAtlasRestConstants.RESOLVED_RESOURCE_SET_CSO)).thenReturn(cso);
-        Field field = AbstractEPackageMessageBodyHandler.class.getDeclaredField("requestContextProvider");
+    public static void injectResourceSet(Object handler, ResourceSet resourceSet) throws Exception {
+        Field field = AbstractEPackageMessageBodyHandler.class.getDeclaredField("resourceSet");
         field.setAccessible(true);
-        field.set(service, (jakarta.inject.Provider<ContainerRequestContext>) () -> mockCtx);
+        field.set(handler, resourceSet);
     }
 
     /**

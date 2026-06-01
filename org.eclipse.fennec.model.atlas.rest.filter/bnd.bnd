@@ -5,6 +5,9 @@
 	org.eclipse.fennec.model.atlas.workflow,\
 	org.eclipse.fennec.model.atlas.mediatypes.api,\
 	jakarta.ws.rs-api,\
+	jakarta.inject.jakarta.inject-api,\
 	org.eclipse.fennec.model.atlas.rest.common,\
 	org.osgi.service.cdi,\
-	org.osgi.service.component
+	org.osgi.service.component,\
+	org.glassfish.hk2.api,\
+	org.glassfish.jersey.core.jersey-common

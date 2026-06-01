@@ -25,7 +25,6 @@ import org.eclipse.emf.common.util.URI;
 import org.eclipse.emf.ecore.EObject;
 import org.eclipse.emf.ecore.EPackage;
 import org.eclipse.emf.ecore.resource.Resource;
-import org.eclipse.emf.ecore.resource.ResourceSet;
 import org.eclipse.emf.ecore.util.BasicExtendedMetaData;
 import org.eclipse.fennec.model.atlas.rest.common.AbstractEPackageMessageBodyHandler;
 import org.eclipse.xsd.XSDSchema;
@@ -77,16 +76,10 @@ public class XSDSchemaMessageBodyReaderWriter extends AbstractEPackageMessageBod
         Collection<EObject> collection = schemaBuilder.generate(t);
         String fileName = t.getName() + ".xsd";
         httpHeaders.put(HttpHeaders.CONTENT_DISPOSITION, List.of("attachment; filename=" + fileName));
-        var factory = getResourceSetFactory();
-        ResourceSet resourceSet = factory.getService();
-        try {
-            Resource resource = resourceSet.createResource(URI.createURI(fileName));
-            resource.getContents().addAll(collection);
-            resource.save(entityStream, null);
-            resource.getContents().clear();
-        } finally {
-            factory.ungetService(resourceSet);
-        }
+        Resource resource = resourceSet.createResource(URI.createURI(fileName));
+        resource.getContents().addAll(collection);
+        resource.save(entityStream, null);
+        resource.getContents().clear();
     }
 
     @Override
@@ -98,23 +91,17 @@ public class XSDSchemaMessageBodyReaderWriter extends AbstractEPackageMessageBod
     public EPackage readFrom(Class<EPackage> type, Type genericType, Annotation[] annotations, MediaType mediaType,
             MultivaluedMap<String, String> httpHeaders, InputStream entityStream)
             throws IOException, WebApplicationException {
-        var factory = getResourceSetFactory();
-        ResourceSet resourceSet = factory.getService();
-        try {
-            Resource resource = resourceSet.createResource(URI.createURI("temp.xsd"));
-            resource.load(entityStream, null);
-            XSDSchema schema = resource.getContents().isEmpty() ? null : (XSDSchema) resource.getContents().remove(0);
-            if (schema == null) {
-                return null;
-            }
-            XSDEcoreBuilder ecoreBuilder = new XSDEcoreBuilder(
-                    new BasicExtendedMetaData(resourceSet.getPackageRegistry()));
-            ecoreBuilder.generate(schema);
-            Collection<EPackage> values = ecoreBuilder.getTargetNamespaceToEPackageMap().values();
-            return values.iterator().next();
-        } finally {
-            factory.ungetService(resourceSet);
+        Resource resource = resourceSet.createResource(URI.createURI("temp.xsd"));
+        resource.load(entityStream, null);
+        XSDSchema schema = resource.getContents().isEmpty() ? null : (XSDSchema) resource.getContents().remove(0);
+        if (schema == null) {
+            return null;
         }
+        XSDEcoreBuilder ecoreBuilder = new XSDEcoreBuilder(
+                new BasicExtendedMetaData(resourceSet.getPackageRegistry()));
+        ecoreBuilder.generate(schema);
+        Collection<EPackage> values = ecoreBuilder.getTargetNamespaceToEPackageMap().values();
+        return values.iterator().next();
     }
 
 }
