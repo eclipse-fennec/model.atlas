@@ -25,6 +25,7 @@ import org.eclipse.emf.common.util.URI;
 import org.eclipse.emf.ecore.EObject;
 import org.eclipse.emf.ecore.EPackage;
 import org.eclipse.emf.ecore.resource.Resource;
+import org.eclipse.emf.ecore.resource.ResourceSet;
 import org.eclipse.emf.ecore.util.BasicExtendedMetaData;
 import org.eclipse.fennec.model.atlas.rest.common.AbstractEPackageMessageBodyHandler;
 import org.eclipse.xsd.XSDSchema;
@@ -74,6 +75,7 @@ public class XSDSchemaMessageBodyReaderWriter extends AbstractEPackageMessageBod
         EcoreXMLSchemaBuilder schemaBuilder = new EcoreXMLSchemaBuilder();
 
         Collection<EObject> collection = schemaBuilder.generate(t);
+        ResourceSet resourceSet = getResourceSet();
         String fileName = t.getName() + ".xsd";
         httpHeaders.put(HttpHeaders.CONTENT_DISPOSITION, List.of("attachment; filename=" + fileName));
         Resource resource = resourceSet.createResource(URI.createURI(fileName));
@@ -91,6 +93,7 @@ public class XSDSchemaMessageBodyReaderWriter extends AbstractEPackageMessageBod
     public EPackage readFrom(Class<EPackage> type, Type genericType, Annotation[] annotations, MediaType mediaType,
             MultivaluedMap<String, String> httpHeaders, InputStream entityStream)
             throws IOException, WebApplicationException {
+        ResourceSet resourceSet = getResourceSet();
         Resource resource = resourceSet.createResource(URI.createURI("temp.xsd"));
         resource.load(entityStream, null);
         XSDSchema schema = resource.getContents().isEmpty() ? null : (XSDSchema) resource.getContents().remove(0);

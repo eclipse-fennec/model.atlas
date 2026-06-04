@@ -18,6 +18,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -78,19 +79,17 @@ public class ModelAtlasExceptionMapperTest extends AbstractRestTest {
 		
 		mockScopeCollectorRegistration = context.registerService(ScopeServiceCollector.class, mockCollector,
 				serviceProps);
-
-
-		// Small delay to allow service registration to propagate
-		Thread.sleep(200);
+		// The filter's rebind to this higher-ranked mock is awaited deterministically
+		// in ensureResourceAvailability (see the THROWING_SCOPE probe below), so no
+		// fixed sleep is needed here.
 	}
 
-	
+
 	@AfterEach
 	public void teardown() throws Exception {
 		if (nonNull(mockScopeCollectorRegistration)) {
 			mockScopeCollectorRegistration.unregister();
 			mockScopeCollectorRegistration = null;
-			Thread.sleep(200);
 		}
 		super.teardown();
 	}
@@ -137,7 +136,7 @@ public class ModelAtlasExceptionMapperTest extends AbstractRestTest {
 	@Test
 	@ParentScopeServiceSetup
 	public void testClientError_UnsupportedMediaType(@InjectBundleContext BundleContext context,
-			@InjectService(filter = "(scope.name="+ TestAnnotations.TEST_SCOPE_NAME +")") ServiceAware<ScopeService> scopeServiceAware) throws InterruptedException, IOException {
+			@InjectService(cardinality = 0, filter = "(scope.name="+ TestAnnotations.TEST_SCOPE_NAME +")") ServiceAware<ScopeService> scopeServiceAware) throws InterruptedException, IOException {
 
 		ensureResourceAvailability(context);
 		ScopeService scopeService = scopeServiceAware.waitForService(2000);
@@ -233,12 +232,39 @@ public class ModelAtlasExceptionMapperTest extends AbstractRestTest {
 
 
 
-	/* 
+	/*
 	 * (non-Javadoc)
 	 * @see org.eclipse.fennec.model.atlas.rest.tests.AbstractRestTest#getResourceName()
 	 */
 	@Override
 	String getResourceName() {
 		return "SchemaPackagesResource";
+	}
+
+	/**
+	 * In addition to the base readiness checks, deterministically wait until the
+	 * mock {@link ScopeServiceCollector} registered in {@link #setup} is actually
+	 * routed by {@code ModelAtlasRequestFilter}. The filter binds the highest-ranked
+	 * collector via a {@code DYNAMIC}/{@code GREEDY} reference, and that rebind is
+	 * asynchronous; rather than sleeping, we probe the {@code THROWING_SCOPE}
+	 * endpoint until it yields the mock-driven {@code 500} (it returns {@code 400}
+	 * "scope not found" while the real collector is still bound).
+	 */
+	@Override
+	public void ensureResourceAvailability(BundleContext context) throws InterruptedException {
+		super.ensureResourceAvailability(context);
+		long deadline = System.currentTimeMillis() + 15_000;
+		int status = -1;
+		while (System.currentTimeMillis() < deadline) {
+			try (Response probe = scopeTarget(THROWING_SCOPE).path("schema").request("application/json").get()) {
+				status = probe.getStatus();
+			}
+			if (status == 500) {
+				return;
+			}
+			Thread.sleep(100);
+		}
+		fail("Mock ScopeServiceCollector was not picked up by ModelAtlasRequestFilter within 15s "
+				+ "(THROWING_SCOPE returned " + status + ", expected 500).");
 	}
 }

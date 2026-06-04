@@ -47,6 +47,7 @@ import org.osgi.service.cm.annotations.RequireConfigurationAdmin;
 import org.osgi.service.jakartars.whiteboard.annotations.RequireJakartarsWhiteboard;
 import org.osgi.test.common.annotation.InjectBundleContext;
 import org.osgi.test.common.annotation.InjectService;
+import org.osgi.test.common.service.ServiceAware;
 import org.osgi.test.junit5.context.BundleContextExtension;
 import org.osgi.test.junit5.service.ServiceExtension;
 
@@ -80,6 +81,13 @@ public class ObjectBatchValidationResourceTest {
 
 	@InjectService(filter = "(emf.name=workflowapi)")
 	ResourceSet resourceSet;
+
+	// Tracks the per-(scope, stage) ResourceSet published once the registry chain
+	// for the jena/release scope is up. cardinality 0 so injection does not block
+	// before the scope configuration has been applied; the test awaits it via
+	// waitForService in ensureResourceAvailability.
+	@InjectService(cardinality = 0, filter = "(&(scope.name=jena)(stage.name=release))")
+	ServiceAware<ResourceSet> jenaReleaseResourceSet;
 
 	@InjectService
 	ClientBuilder clientBuilder;
@@ -349,6 +357,14 @@ public class ObjectBatchValidationResourceTest {
 		ResourceAware resourceAware = ResourceAware.create(context, "ObjectBatchValidationResource");
 		boolean resourceReady = resourceAware.waitForResource(15, TimeUnit.SECONDS);
 		assertTrue(resourceReady, "ObjectBatchValidationResource should be registered within 15 seconds.");
+		// The JAX-RS resource being registered does not guarantee the scope/stage
+		// ResourceSet is published yet. The codec's request-scoped @Context
+		// ResourceSet is resolved by ScopedResourceSetProvider from the
+		// (scope.name, stage.name) ResourceSet service tracked by
+		// ResourceSetCollector; if it is not yet available the provider answers
+		// 400. Wait for it so requests don't race the registry chain coming up.
+		assertNotNull(jenaReleaseResourceSet.waitForService(TimeUnit.SECONDS.toMillis(15)),
+				"ResourceSet for scope 'jena' / stage 'release' should be available within 15 seconds.");
 	}
 
 	private void saveValidationConstraintSet(ScopeService<EObject> jenaScope, String id) throws Exception {

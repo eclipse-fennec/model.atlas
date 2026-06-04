@@ -23,6 +23,7 @@ import java.util.Map;
 import org.eclipse.emf.common.util.URI;
 import org.eclipse.emf.ecore.EPackage;
 import org.eclipse.emf.ecore.resource.Resource;
+import org.eclipse.emf.ecore.resource.ResourceSet;
 import org.eclipse.fennec.codec.jsonschema.v2.constants.CodecJsonSchemaOptions;
 import org.eclipse.fennec.model.atlas.rest.common.AbstractEPackageMessageBodyHandler;
 import org.osgi.service.component.annotations.Component;
@@ -69,6 +70,7 @@ public class JsonSchemaMessageBodyReaderWriter extends AbstractEPackageMessageBo
 			MultivaluedMap<String, Object> httpHeaders, OutputStream entityStream)
 					throws IOException, WebApplicationException {
 
+		ResourceSet resourceSet = getResourceSet();
 		Resource resource = resourceSet.createResource(URI.createURI(t.getNsURI()), "application/schema+json");
 		resource.getContents().add(t);
 		resource.save(entityStream, OPTIONS);
@@ -84,6 +86,7 @@ public class JsonSchemaMessageBodyReaderWriter extends AbstractEPackageMessageBo
 	public EPackage readFrom(Class<EPackage> type, Type genericType, Annotation[] annotations, MediaType mediaType,
 			MultivaluedMap<String, String> httpHeaders, InputStream entityStream)
 					throws IOException, WebApplicationException {
+		ResourceSet resourceSet = getResourceSet();
 		Resource resource = resourceSet.createResource(URI.createURI("temp.jsonschema"), "application/schema+json");
 		resource.load(entityStream, OPTIONS);
 		return resource.getContents().isEmpty() ? null : (EPackage) resource.getContents().remove(0);

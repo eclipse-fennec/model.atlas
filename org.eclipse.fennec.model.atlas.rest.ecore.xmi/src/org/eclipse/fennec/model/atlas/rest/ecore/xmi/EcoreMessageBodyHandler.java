@@ -29,6 +29,7 @@ import org.eclipse.emf.ecore.EObject;
 import org.eclipse.emf.ecore.EPackage;
 import org.eclipse.emf.ecore.EcorePackage;
 import org.eclipse.emf.ecore.resource.Resource;
+import org.eclipse.emf.ecore.resource.ResourceSet;
 import org.eclipse.emf.ecore.xmi.XMLResource;
 import org.eclipse.fennec.model.atlas.rest.common.AbstractEPackageMessageBodyHandler;
 import org.osgi.service.component.annotations.Component;
@@ -103,6 +104,7 @@ public class EcoreMessageBodyHandler extends AbstractEPackageMessageBodyHandler 
 
         // Use ABSOLUTE URI to prevent "resolve against non-hierarchical or relative
         // base" error
+        ResourceSet resourceSet = getResourceSet();
         URI absoluteURI = URI.createURI("temp://governance/" + System.currentTimeMillis() + ".xmi");
         Resource resource = resourceSet.createResource(absoluteURI);
 
@@ -151,6 +153,7 @@ public class EcoreMessageBodyHandler extends AbstractEPackageMessageBodyHandler 
                 new Object[] { eObject.getClass().getSimpleName(), mediaType });
 
         // Use ABSOLUTE URI for consistent behavior
+        ResourceSet resourceSet = getResourceSet();
         String fileName = eObject.getName() + (isXMI(mediaType) ? ".ecore" : ".xml");
         httpHeaders.put(HttpHeaders.CONTENT_DISPOSITION, List.of("attachment; filename=" + fileName));
         URI absoluteURI = URI.createURI(fileName);

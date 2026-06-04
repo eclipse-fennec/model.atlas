@@ -9,5 +9,4 @@
 	org.eclipse.fennec.model.atlas.rest.common,\
 	org.osgi.service.cdi,\
 	org.osgi.service.component,\
-	org.glassfish.hk2.api,\
-	org.glassfish.jersey.core.jersey-common
+	org.glassfish.hk2.api

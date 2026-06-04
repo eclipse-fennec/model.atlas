@@ -25,7 +25,8 @@ import jakarta.ws.rs.ext.Provider;
 
 /**
  * Unwraps {@link MultiException}s produced by HK2 when a Jersey injection
- * supplier (such as {@link ScopedResourceSetFactory}) throws a
+ * supplier (such as the codec's request-scoped {@code ResourceSet} binding,
+ * which delegates to {@link ScopedResourceSetProvider}) throws a
  * {@link WebApplicationException}: the wrapping otherwise turns deliberate
  * 4xx responses into generic 500 errors.
  *

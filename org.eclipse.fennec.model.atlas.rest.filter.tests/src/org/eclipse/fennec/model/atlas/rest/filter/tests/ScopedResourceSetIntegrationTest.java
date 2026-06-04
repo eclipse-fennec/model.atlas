@@ -52,17 +52,21 @@ import jakarta.ws.rs.client.WebTarget;
 import jakarta.ws.rs.core.Response;
 
 /**
- * OSGi integration test for {@code ScopedResourceSetFeature}. Verifies two
- * properties of the HK2-binder-based per-request {@link ResourceSet}
- * injection:
+ * OSGi integration test for {@code ScopedResourceSetProvider}. The per-request
+ * {@link ResourceSet} {@code @Context} binding is provided by the codec's
+ * {@code CodecResourceSetFeature}, which resolves the highest-ranked
+ * {@code ResourceSetProvider} — here {@code ScopedResourceSetProvider}, which
+ * keys off the request's scope/stage path parameters. Verifies two properties:
  *
  * <ol>
  *   <li>The {@link ResourceSet} injected via {@code @Context} into a JAX-RS
  *       resource matches the scope/stage-specific instance published by the
  *       {@link TestResourceSetCollector} for that request's path
  *       parameters.</li>
- *   <li>HK2's {@code Factory.dispose()} runs after the response has been
- *       written, so for every request {@code getService()} on the underlying
+ *   <li>The codec's {@code CodecResourceSetCleanupFilter} runs after the
+ *       response has been written and calls
+ *       {@code ScopedResourceSetProvider.releaseResourceSet}, so for every
+ *       request {@code getService()} on the underlying
  *       {@link org.osgi.service.component.ComponentServiceObjects} is matched
  *       by exactly one {@code ungetService()}.</li>
  * </ol>
@@ -158,8 +162,9 @@ public class ScopedResourceSetIntegrationTest {
 			identityFor("scopeA", "stageA");
 		}
 
-		// dispose() runs after the response has been written; give it a
-		// moment to settle before asserting matched get/unget counts.
+		// releaseResourceSet() runs after the response has been written (via
+		// the codec cleanup filter); give it a moment to settle before
+		// asserting matched get/unget counts.
 		assertTrue(awaitBalanced(scopeAStageA, requests, 2_000),
 				String.format("Expected %d unget calls to match %d get calls (currently get=%d, unget=%d)",
 						requests, requests, scopeAStageA.getServiceCalls(), scopeAStageA.ungetServiceCalls()));

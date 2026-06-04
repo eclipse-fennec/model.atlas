@@ -76,7 +76,7 @@ public class ModelConverterResourceTest extends AbstractRestTest{
                 .post(Entity.json(jsonEPackage));
 
         // Then: Should return 200 OK with XML content
-        assertEquals(200, response.getStatus(), "Should return HTTP 200 OK");
+        assertStatus(200, response, "Should return HTTP 200 OK");
 
         String responseContent = response.readEntity(String.class);
         assertNotNull(responseContent, "Response content should not be null");
@@ -100,7 +100,7 @@ public class ModelConverterResourceTest extends AbstractRestTest{
                 .post(Entity.entity(xmiContent, "application/xmi"));
 
         // Then: Should return 200 OK with JSON content
-        assertEquals(200, response.getStatus(), "Should return HTTP 200 OK");
+        assertStatus(200, response, "Should return HTTP 200 OK");
 
         String responseContent = response.readEntity(String.class);
         assertNotNull(responseContent, "Response content should not be null");
@@ -124,7 +124,7 @@ public class ModelConverterResourceTest extends AbstractRestTest{
                 .post(Entity.entity(xmiContent, "application/xmi"));
 
         // Then: Should return 200 OK
-        assertEquals(200, response.getStatus(), "Should return HTTP 200 OK");
+        assertStatus(200, response, "Should return HTTP 200 OK");
 
         String responseContent = response.readEntity(String.class);
         assertNotNull(responseContent, "Response content should not be null");
@@ -145,7 +145,7 @@ public class ModelConverterResourceTest extends AbstractRestTest{
         Response response = restClient.target(CONVERT_BASE_URL).request("application/xmi").post(Entity.json(jsonEPackage));
 
         // Then: Should return 200 OK
-        assertEquals(200, response.getStatus(), "Should return HTTP 200 OK");
+        assertStatus(200, response, "Should return HTTP 200 OK");
 
         String responseContent = response.readEntity(String.class);
         assertNotNull(responseContent, "Response content should not be null");
@@ -169,7 +169,7 @@ public class ModelConverterResourceTest extends AbstractRestTest{
                 .post(Entity.entity(xmiContent, "application/xmi"));
 
         // Then: Should preserve the package structure
-        assertEquals(200, response.getStatus(), "Should return HTTP 200 OK");
+        assertStatus(200, response, "Should return HTTP 200 OK");
 
         String responseContent = response.readEntity(String.class);
         assertNotNull(responseContent, "Response content should not be null");
@@ -192,7 +192,7 @@ public class ModelConverterResourceTest extends AbstractRestTest{
                 .post(Entity.json(jsonEPackage));
 
         // Then: Should return 415 Unsupported Media Type
-        assertEquals(415, response.getStatus(), "Should return HTTP 415 Unsupported Media Type");
+        assertStatus(415, response, "Should return HTTP 415 Unsupported Media Type");
     }
 
     // ========== Same Format Conversion Tests ==========
@@ -201,9 +201,7 @@ public class ModelConverterResourceTest extends AbstractRestTest{
     @ParentScopeServiceSetup
     public void testConvertPackage_JsonToJson_Success(@InjectBundleContext BundleContext context) throws Exception {
     	ensureResourceAvailability(context);
-    	
-    	Thread.sleep(5000);
-    	
+
         // Given: An EPackage in JSON format
         String nsUri = TestHelper.generateUniqueNsUri("jsonToJsonTest");
         String jsonEPackage = createJsonEPackage(nsUri, "JsonToJsonPackage", "j2j");
@@ -213,7 +211,7 @@ public class ModelConverterResourceTest extends AbstractRestTest{
                 .post(Entity.json(jsonEPackage));
 
         // Then: Should return 200 OK
-        assertEquals(200, response.getStatus(), "Should return HTTP 200 OK");
+        assertStatus(200, response, "Should return HTTP 200 OK");
 
         String responseContent = response.readEntity(String.class);
         assertNotNull(responseContent, "Response content should not be null");
@@ -236,7 +234,7 @@ public class ModelConverterResourceTest extends AbstractRestTest{
                 .post(Entity.entity(xmiContent, "application/xmi"));
 
         // Then: Should return 200 OK (defaults to JSON)
-        assertEquals(200, response.getStatus(), "Should return HTTP 200 OK");
+        assertStatus(200, response, "Should return HTTP 200 OK");
 
         String responseContent = response.readEntity(String.class);
         assertNotNull(responseContent, "Response content should not be null");
@@ -257,7 +255,7 @@ public class ModelConverterResourceTest extends AbstractRestTest{
                 .post(Entity.json(jsonEPackage));
 
         // Then: Response Content-Type should be XML
-        assertEquals(200, response.getStatus(), "Should return HTTP 200 OK");
+        assertStatus(200, response, "Should return HTTP 200 OK");
 
         String contentType = response.getHeaderString("Content-Type");
         assertNotNull(contentType, "Response should have Content-Type header");

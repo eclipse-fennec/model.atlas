@@ -133,15 +133,18 @@ public class TestHelper {
 	}
 
     /**
-     * Injects a {@link ResourceSet} into the base-class {@code resourceSet}
-     * field so that unit tests can drive MBR/W {@code readFrom}/{@code writeTo}
-     * methods directly outside a JAX-RS request scope (where Jersey's
-     * {@code @Context} injection does not happen).
+     * Injects a {@link ResourceSet} into the base-class
+     * {@code resourceSetProvider} field so that unit tests can drive MBR/W
+     * {@code readFrom}/{@code writeTo} methods directly outside a JAX-RS request
+     * scope (where Jersey's {@code @Context} injection does not happen). The
+     * handler resolves the {@link ResourceSet} via {@code Provider#get()}, so a
+     * trivial provider that always returns {@code resourceSet} is injected.
      */
     public static void injectResourceSet(Object handler, ResourceSet resourceSet) throws Exception {
-        Field field = AbstractEPackageMessageBodyHandler.class.getDeclaredField("resourceSet");
+        Field field = AbstractEPackageMessageBodyHandler.class.getDeclaredField("resourceSetProvider");
         field.setAccessible(true);
-        field.set(handler, resourceSet);
+        jakarta.inject.Provider<ResourceSet> provider = () -> resourceSet;
+        field.set(handler, provider);
     }
 
     /**
