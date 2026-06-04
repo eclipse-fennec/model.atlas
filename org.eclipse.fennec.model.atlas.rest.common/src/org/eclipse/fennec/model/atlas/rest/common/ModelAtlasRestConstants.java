@@ -27,13 +27,4 @@ public final class ModelAtlasRestConstants {
      * {@code mediaType} query parameter or the Accept header).
      */
     public static final String RESOLVED_MEDIA_TYPE = "resolvedMediaType";
-
-    /**
-     * Request property carrying the scope/stage-specific
-     * {@link org.osgi.service.component.ComponentServiceObjects} of
-     * {@link org.eclipse.emf.ecore.resource.ResourceSet}, populated by
-     * {@code ModelAtlasRequestFilter}. Consumers are responsible for the
-     * {@code getService}/{@code ungetService} lifecycle.
-     */
-    public static final String RESOLVED_RESOURCE_SET_CSO = "resolvedResourceSetCso";
-    }
+}

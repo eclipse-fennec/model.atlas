@@ -70,16 +70,11 @@ public class JsonSchemaMessageBodyReaderWriter extends AbstractEPackageMessageBo
 			MultivaluedMap<String, Object> httpHeaders, OutputStream entityStream)
 					throws IOException, WebApplicationException {
 
-		var factory = getResourceSetFactory();
-		ResourceSet resourceSet = factory.getService();
-		try {
-			Resource resource = resourceSet.createResource(URI.createURI(t.getNsURI()), "application/schema+json");
-			resource.getContents().add(t);
-			resource.save(entityStream, OPTIONS);
-			resource.getContents().clear();
-		} finally {
-			factory.ungetService(resourceSet);
-		}
+		ResourceSet resourceSet = getResourceSet();
+		Resource resource = resourceSet.createResource(URI.createURI(t.getNsURI()), "application/schema+json");
+		resource.getContents().add(t);
+		resource.save(entityStream, OPTIONS);
+		resource.getContents().clear();
 	}
 
 	@Override
@@ -91,16 +86,10 @@ public class JsonSchemaMessageBodyReaderWriter extends AbstractEPackageMessageBo
 	public EPackage readFrom(Class<EPackage> type, Type genericType, Annotation[] annotations, MediaType mediaType,
 			MultivaluedMap<String, String> httpHeaders, InputStream entityStream)
 					throws IOException, WebApplicationException {
-		var factory = getResourceSetFactory();
-		ResourceSet resourceSet = factory.getService();
-		try {
-			Resource resource = resourceSet.createResource(URI.createURI("temp.jsonschema"), "application/schema+json");
-			resource.load(entityStream, OPTIONS);
-			EPackage ePackage = resource.getContents().isEmpty() ? null : (EPackage) resource.getContents().remove(0);
-			return ePackage;
-		} finally {
-			factory.ungetService(resourceSet);
-		}
+		ResourceSet resourceSet = getResourceSet();
+		Resource resource = resourceSet.createResource(URI.createURI("temp.jsonschema"), "application/schema+json");
+		resource.load(entityStream, OPTIONS);
+		return resource.getContents().isEmpty() ? null : (EPackage) resource.getContents().remove(0);
 	}
 
 }

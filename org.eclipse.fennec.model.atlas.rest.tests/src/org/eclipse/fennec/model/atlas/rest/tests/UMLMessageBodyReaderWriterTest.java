@@ -88,9 +88,8 @@ public class UMLMessageBodyReaderWriterTest {
         // @Context fields are only injected by Jersey; inject a real ResourceSet
         // directly so readFrom/writeTo work outside a JAX-RS request scope.
         ResourceSet resourceSet = context.getService(context.getServiceReference(ResourceSet.class));
-        var cso = TestHelper.wrapAsComponentServiceObjects(resourceSet);
-        TestHelper.injectResourceSetFactory(reader, cso);
-        TestHelper.injectResourceSetFactory(writer, cso);
+        TestHelper.injectResourceSet(reader, resourceSet);
+        TestHelper.injectResourceSet(writer, resourceSet);
     }
 
     // ============ WRITER TESTS ============

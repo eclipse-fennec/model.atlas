@@ -1,0 +1,34 @@
+-library: enableOSGi-Test
+
+-runfw: org.apache.felix.framework;version='[7.0.5,7.0.5]'
+
+-runee: JavaSE-21
+
+-runproperties: \
+	org.osgi.service.http.port=-1,\
+	logback.configurationFile=file:${.}/logback.xml,\
+	geckotest=true,\
+	gecko.log.level=INFO,\
+	${if;${is;${driver};gradle};gosh.args=--nointeractive}
+
+-runtrace: false
+
+-runvm: \
+	-ea
+
+-resolve.effective: active
+
+-runrequires: \
+	bnd.identity;id='org.eclipse.fennec.model.atlas.rest.filter',\
+	bnd.identity;id='org.eclipse.fennec.model.atlas.rest.filter.tests',\
+	bnd.identity;id='org.eclipse.fennec.emf.osgi.component',\
+	bnd.identity;id='org.eclipse.fennec.emf.osgi.component.minimal',\
+	bnd.identity;id='org.apache.felix.gogo.runtime',\
+	bnd.identity;id='org.apache.felix.gogo.shell'
+
+# Ensure clean environment
+-runkeep: false
+
+-runblacklist: \
+	bnd.identity;id='org.eclipse.uml2.uml';version='[0.0.0,5.6.0)',\
+	bnd.identity;id='org.eclipse.fennec.model.atlas.management.apicurio'
