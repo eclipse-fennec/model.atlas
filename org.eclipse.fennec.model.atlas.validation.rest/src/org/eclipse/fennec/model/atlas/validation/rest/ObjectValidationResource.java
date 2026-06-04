@@ -16,8 +16,6 @@ import java.util.NoSuchElementException;
 
 import org.eclipse.emf.ecore.EObject;
 import org.eclipse.emf.ecore.resource.ResourceSet;
-import org.eclipse.fennec.codec.rest.jakartas.JakartaRestConstants;
-import org.eclipse.fennec.emf.osgi.ResourceSetFactory;
 import org.eclipse.fennec.model.atlas.mediatypes.api.SupportedMediatype;
 import org.eclipse.fennec.model.atlas.rest.common.ResourceAttacherHelper;
 import org.eclipse.fennec.model.atlas.runtime.RequireRuntime;
@@ -47,7 +45,6 @@ import jakarta.ws.rs.PathParam;
 import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.QueryParam;
 import jakarta.ws.rs.WebApplicationException;
-import jakarta.ws.rs.container.ContainerRequestContext;
 import jakarta.ws.rs.core.Context;
 import jakarta.ws.rs.core.HttpHeaders;
 import jakarta.ws.rs.core.MediaType;
@@ -84,7 +81,7 @@ public class ObjectValidationResource {
 	private ValidationService validationService;
 
 	@Context
-    private ContainerRequestContext requestContext;
+	private ResourceSet resourceSet;
 
 
 	@Activate
@@ -135,7 +132,7 @@ public class ObjectValidationResource {
 			@RequestBody(description = "The object to validate", required = true, content = @Content(schema = @Schema(implementation = EObject.class))) EObject eObject) {
 		try {
 			checkContentType();
-			ValidationResponse response = validationService.validateWithOcl(eObject, oclId, scopeName, getResolvedResourceSetFactory().createResourceSet());
+			ValidationResponse response = validationService.validateWithOcl(eObject, oclId, scopeName, resourceSet);
 			return Response.status(Response.Status.OK).entity(response).header("Content-Type", mediaType).build();
 		} catch (IllegalArgumentException e) {
 			return Response.status(Status.BAD_REQUEST).entity(e.getMessage()).build();
@@ -167,9 +164,8 @@ public class ObjectValidationResource {
 			content = @Content(schema = @Schema(implementation = DerivedValidationRequest.class))) DerivedValidationRequest validationRequest) {
 		try {
 			checkContentType();
-			ResourceSet resSet = getResolvedResourceSetFactory().createResourceSet();
-			ResourceAttacherHelper.attach(resSet, validationRequest);
-			ValidationResponse response = validationService.derive(validationRequest, oclId, scopeName, resSet);
+			ResourceAttacherHelper.attach(resourceSet, validationRequest);
+			ValidationResponse response = validationService.derive(validationRequest, oclId, scopeName, resourceSet);
 			return Response.status(Response.Status.OK).entity(response).header("Content-Type", mediaType).build();
 		} catch (IllegalArgumentException e) {
 			return Response.status(Status.BAD_REQUEST).entity(e.getMessage()).build();
@@ -198,9 +194,8 @@ public class ObjectValidationResource {
 			content = @Content(schema = @Schema(implementation = OperationValidationRequest.class))) OperationValidationRequest validationRequest) {
 		try {
 			checkContentType();
-			ResourceSet resSet = getResolvedResourceSetFactory().createResourceSet();
-			ResourceAttacherHelper.attach(resSet, validationRequest);
-			ValidationResponse response = validationService.compute(validationRequest, scopeName, resSet);
+			ResourceAttacherHelper.attach(resourceSet, validationRequest);
+			ValidationResponse response = validationService.compute(validationRequest, scopeName, resourceSet);
 			return Response.status(Response.Status.OK).entity(response).header("Content-Type", mediaType).build();
 		} catch (IllegalArgumentException e) {
 			return Response.status(Status.BAD_REQUEST).entity(e.getMessage()).build();
@@ -234,8 +229,4 @@ public class ObjectValidationResource {
 		}
 		throw new WebApplicationException(Status.UNSUPPORTED_MEDIA_TYPE);
 	}
-	
-	private ResourceSetFactory getResolvedResourceSetFactory() {
-        return (ResourceSetFactory) requestContext.getProperty(JakartaRestConstants.RESOLVED_RESOURCE_SET_FACTORY);
-    }
 }

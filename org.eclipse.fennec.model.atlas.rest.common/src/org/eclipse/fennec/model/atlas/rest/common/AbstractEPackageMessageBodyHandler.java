@@ -15,48 +15,44 @@ package org.eclipse.fennec.model.atlas.rest.common;
 
 import org.eclipse.emf.ecore.EPackage;
 import org.eclipse.emf.ecore.resource.ResourceSet;
-import org.osgi.service.component.ComponentServiceObjects;
 
 import jakarta.inject.Provider;
-import jakarta.ws.rs.container.ContainerRequestContext;
 import jakarta.ws.rs.core.Context;
 import jakarta.ws.rs.ext.MessageBodyReader;
 import jakarta.ws.rs.ext.MessageBodyWriter;
 
 /**
  * Base class for {@link EPackage} {@link MessageBodyReader}/
- * {@link MessageBodyWriter} implementations that need a {@link ResourceSet} for
- * de/serialization.
+ * {@link MessageBodyWriter} implementations that need a {@link ResourceSet}
+ * for de/serialization.
  *
- * <p>
- * The scope/stage-specific {@link ResourceSet} is resolved per request via
- * {@link #resolveResourceSetFactory(ContainerRequestContext, ComponentServiceObjects)}:
- * if {@code ModelAtlasRequestFilter} populated the
- * {@link ModelAtlasRestConstants#RESOLVED_RESOURCE_SET_CSO} request property,
- * that CSO is used; otherwise the supplied fallback CSO is used (e.g. for
- * endpoints that do not target a specific scope/stage, or for direct unit
- * tests that invoke the handler outside a JAX-RS request).
- * </p>
+ * <p>The scope/stage-specific {@link ResourceSet} is resolved per request by
+ * the codec's {@code CodecResourceSetFeature}, which binds {@code ResourceSet}
+ * in the JAX-RS request scope via the highest-ranked {@code ResourceSetProvider}
+ * (the Model Atlas {@code ScopedResourceSetProvider}). The codec's
+ * {@code CodecResourceSetCleanupFilter} releases it back to its OSGi prototype
+ * CSO after the response has been written.</p>
  *
- * <p>
- * Subclasses must own the {@code @Reference ComponentServiceObjects<ResourceSet>}
- * (so DS can bind it) and the {@code @Context ContainerRequestContext}
- * (injected by JAX-RS per request), then pass both to
- * {@link #resolveResourceSetFactory(ContainerRequestContext, ComponentServiceObjects)}.
- * Always call {@code factory.getService()} / {@code factory.ungetService(rs)}
- * on the same local factory variable, to ensure the unget happens on the
- * matching CSO.
- * </p>
+ * <p>Because MBR/MBW components are JAX-RS providers (effectively singletons),
+ * a request-scoped {@link ResourceSet} cannot be injected into a plain field —
+ * it would be {@code null}. Instead a {@link Provider} is injected and
+ * {@link #getResourceSet()} resolves the current request's instance on every
+ * call. This is safe under concurrent requests.</p>
  */
 public abstract class AbstractEPackageMessageBodyHandler
         implements MessageBodyReader<EPackage>, MessageBodyWriter<EPackage> {
 
     @Context
-    private Provider<ContainerRequestContext> requestContextProvider;
+    private Provider<ResourceSet> resourceSetProvider;
 
-    @SuppressWarnings("unchecked")
-    protected ComponentServiceObjects<ResourceSet> getResourceSetFactory() {
-        return (ComponentServiceObjects<ResourceSet>)
-                requestContextProvider.get().getProperty(ModelAtlasRestConstants.RESOLVED_RESOURCE_SET_CSO);
+    /**
+     * Resolves the {@link ResourceSet} for the current request. Within a single
+     * request the same instance is returned on repeated calls (request scope).
+     *
+     * @return the per-request {@link ResourceSet}; never {@code null} in a
+     *         correctly wired runtime
+     */
+    protected ResourceSet getResourceSet() {
+        return resourceSetProvider.get();
     }
 }

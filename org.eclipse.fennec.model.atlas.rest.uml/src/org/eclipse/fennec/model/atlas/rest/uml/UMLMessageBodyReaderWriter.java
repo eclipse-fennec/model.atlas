@@ -63,18 +63,13 @@ public class UMLMessageBodyReaderWriter extends AbstractEPackageMessageBodyHandl
             MultivaluedMap<String, Object> httpHeaders, OutputStream entityStream)
             throws IOException, WebApplicationException {
 
+        ResourceSet resourceSet = getResourceSet();
         String fileName = t.getName() + ".uml";
         Collection<Package> convertFromEcore = UMLUtil.convertFromEcore(t, null);
-        var factory = getResourceSetFactory();
-        ResourceSet resourceSet = factory.getService();
-        try {
-            Resource resource = resourceSet.createResource(URI.createURI(fileName));
-            resource.getContents().addAll(convertFromEcore);
-            resource.save(entityStream, null);
-            resource.getContents().clear();
-        } finally {
-            factory.ungetService(resourceSet);
-        }
+        Resource resource = resourceSet.createResource(URI.createURI(fileName));
+        resource.getContents().addAll(convertFromEcore);
+        resource.save(entityStream, null);
+        resource.getContents().clear();
     }
 
     @Override
@@ -86,19 +81,14 @@ public class UMLMessageBodyReaderWriter extends AbstractEPackageMessageBodyHandl
     public EPackage readFrom(Class<EPackage> type, Type genericType, Annotation[] annotations, MediaType mediaType,
             MultivaluedMap<String, String> httpHeaders, InputStream entityStream)
             throws IOException, WebApplicationException {
-        var factory = getResourceSetFactory();
-        ResourceSet resourceSet = factory.getService();
-        try {
-            Resource resource = resourceSet.createResource(URI.createURI("temp.uml"));
-            resource.load(entityStream, null);
-            Package umlPackage = resource.getContents().isEmpty() ? null : (Package) resource.getContents().remove(0);
-            if (umlPackage == null) {
-                return null;
-            }
-            Collection<EPackage> values = UMLUtil.convertToEcore(umlPackage, null);
-            return values.iterator().next();
-        } finally {
-            factory.ungetService(resourceSet);
+        ResourceSet resourceSet = getResourceSet();
+        Resource resource = resourceSet.createResource(URI.createURI("temp.uml"));
+        resource.load(entityStream, null);
+        Package umlPackage = resource.getContents().isEmpty() ? null : (Package) resource.getContents().remove(0);
+        if (umlPackage == null) {
+            return null;
         }
+        Collection<EPackage> values = UMLUtil.convertToEcore(umlPackage, null);
+        return values.iterator().next();
     }
 }

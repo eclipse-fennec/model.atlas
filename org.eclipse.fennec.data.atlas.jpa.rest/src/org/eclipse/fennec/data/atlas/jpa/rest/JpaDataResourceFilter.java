@@ -19,7 +19,8 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Logger;
 
 import org.eclipse.emf.ecore.EPackage;
-import org.eclipse.fennec.codec.rest.jakartas.JakartaRestConstants;
+import org.eclipse.emf.ecore.resource.ResourceSet;
+import org.eclipse.fennec.codec.rest.jakartas.spi.ResourceSetProvider;
 import org.eclipse.fennec.data.atlas.jpa.watcher.api.WatcherConstants;
 import org.eclipse.fennec.emf.osgi.ResourceSetFactory;
 import org.eclipse.fennec.persistence.eorm.EntityMappings;
@@ -40,16 +41,28 @@ import jakarta.ws.rs.core.MultivaluedMap;
 import jakarta.ws.rs.core.Response;
 
 /**
- * 
+ * Validates the {@code rootFolderName}-scoped JPA request (resolving the
+ * matching {@code EntityManagerFactory}, {@code EntityMappings} and EMF
+ * {@code EClassifier}), stashes the resolved EntityManager/EntityMappings on
+ * the request, and supplies the per-request {@link ResourceSet} consumed by
+ * the codec message-body handlers.
+ *
+ * <p>The {@link ResourceSet} is exposed through the codec's
+ * {@link ResourceSetProvider} SPI rather than the old request-property +
+ * {@code ResourceSetFactory} mechanism. The codec's
+ * {@code CodecResourceSetFeature} binds the highest-ranked
+ * {@link ResourceSetProvider}; the {@link ServiceRanking} below makes this
+ * folder-scoped provider win over the codec default.
+ *
  * @author ilenia
  * @since May 18, 2026
  */
-@Component
+@Component(service = { ContainerRequestFilter.class, ResourceSetProvider.class })
 @JakartarsExtension
-@JakartarsName("ResourceSetFilter") //This has to be the same name as the default resource set filter in the codec rest, otherwise we cannot shadow it
-@ServiceRanking(100) //We need this to shadow the default resource set filter in the codec.rest
-public class JpaDataResourceFilter implements ContainerRequestFilter {
-	
+@JakartarsName("JpaDataResourceFilter")
+@ServiceRanking(100) // Win over the codec's DefaultResourceSetProvider
+public class JpaDataResourceFilter implements ContainerRequestFilter, ResourceSetProvider {
+
 	private static final Logger LOGGER = Logger.getLogger(JpaDataResourceFilter.class.getName());
 	private Map<String, ResourceSetFactory> folderToResrouceSetFactoryMap = new ConcurrentHashMap<>();
 	private Map<String, EntityManagerFactory> folderToEntityManagerFactoryMap = new ConcurrentHashMap<>();
@@ -166,7 +179,29 @@ public class JpaDataResourceFilter implements ContainerRequestFilter {
 		}
 		requestContext.setProperty("entity.manager.factory", folderToEntityManagerFactoryMap.get(rootFolderName));
 		requestContext.setProperty("entity.mappings", entityMappings);
-		requestContext.setProperty(JakartaRestConstants.RESOLVED_RESOURCE_SET_FACTORY, resourceSetFactory);
+	}
+
+	/**
+	 * Supplies the per-request {@link ResourceSet} for the codec message-body
+	 * handlers, created from the {@link ResourceSetFactory} registered for the
+	 * request's {@code rootFolderName} path parameter. The request filter has
+	 * already validated the folder by the time the codec resolves the
+	 * {@link ResourceSet}, so an unknown folder here means the request never
+	 * reached a body handler; we fail defensively with 400 in that case.
+	 */
+	@Override
+	public ResourceSet getResourceSet(ContainerRequestContext requestContext) {
+		MultivaluedMap<String, String> pathParams = requestContext.getUriInfo().getPathParameters();
+		String rootFolderName = pathParams.getFirst("rootFolderName");
+		ResourceSetFactory resourceSetFactory = folderToResrouceSetFactoryMap.get(rootFolderName);
+		if (resourceSetFactory == null) {
+			throw new WebApplicationException(
+					Response.status(Response.Status.BAD_REQUEST)
+							.entity(String.format("ResourceSetFactory for Root Folder [%s] not found.",
+									rootFolderName))
+							.build());
+		}
+		return resourceSetFactory.createResourceSet();
 	}
 
 }
