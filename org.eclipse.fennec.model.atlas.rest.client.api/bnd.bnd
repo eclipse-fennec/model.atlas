@@ -1,0 +1,13 @@
+Bundle-Description: Model Atlas REST client — public API. \
+ Client interfaces (ModelAtlasClient, RemoteEPackageProvider, DriftListener, \
+ DriftReport), the ClientConfiguration value type, the JakartaRsClientProvider \
+ SPI, the atlas.* origin-property constants and the typed exception hierarchy. \
+ Shared contract for both the plain-Java and the OSGi client implementations; \
+ intentionally free of OSGi runtime dependencies (DS / framework / ConfigAdmin).
+
+-buildpath: \
+	org.osgi.annotation.versioning,\
+	org.osgi.annotation.bundle,\
+	org.eclipse.emf.common;version=latest,\
+	org.eclipse.emf.ecore;version=latest,\
+	jakarta.ws.rs-api;version=latest
