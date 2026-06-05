@@ -61,6 +61,5 @@ Tests added to `SchemaPackagesResourceTest`: `testMetadataAndContentHaveDistinct
   ETag.
 - **Symmetric across both resources.** Per-file: 5 `METADATA` sites + 1 `CONTENT` site; the `CONTENT`
   site is the only one whose body is the object content (`contentMetadata` variable).
-- **Build status:** as of 2026-06-04 the additions compile (`rest.application` + `rest.tests`); the full
-  test run is still blocked by an unrelated compiler issue on another dependency, so the new tests are
-  not yet confirmed green by execution.
+- **Build status:** as of 2026-06-05 the full build and Phase-1 test suite (`rest.application` +
+  `rest.tests`) run green.

@@ -41,10 +41,10 @@ criteria, not a consolidation churn. Tests stay in `SchemaPackagesResourceTest`,
 CI (`.github/workflows/build.yml`) runs `./gradlew clean build`; the bnd `testOSGi` task runs as part of
 the build lifecycle (its `generated/test-reports/testOSGi/` outputs exist), and the workflow already
 uploads `**/test-reports/*/TEST-*.xml`. So the Phase-1 OSGi integration tests run in CI with no workflow
-change — criterion met once the project compiles.
+change — criterion met.
 
 ## Notes
 
-- Build status: `rest.application` + `rest.tests` COMPILE; the full OSGi run remains blocked by the
-  unrelated dependency compiler issue, so the suite is not yet confirmed green by execution.
-- Phase 1 (P1-1…P1-8) is now complete pending that green run.
+- Build status: as of 2026-06-05 the full build and Phase-1 OSGi test suite (`rest.application` +
+  `rest.tests`) run green.
+- Phase 1 (P1-1…P1-8) is complete.

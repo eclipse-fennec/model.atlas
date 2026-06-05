@@ -63,5 +63,5 @@ schema draft stage to populate the scope (`SchemaPackagesResource` is co-registe
 - **Exact diff only for cached baselines.** Unknown/evicted baseline → `200` with no diff headers
   ("re-sync fully"). This matches the polling drift-watcher's access pattern (it always cites its most
   recent etag). LRU cap is a constant for now (trivially promotable to a `@Component` config property).
-- **Build status:** `rest.application` + `rest.tests` COMPILE; the full OSGi test run remains blocked by
-  the unrelated dependency compiler issue, so these tests are not yet confirmed green by execution.
+- **Build status:** as of 2026-06-05 the full build and Phase-1 test suite (`rest.application` +
+  `rest.tests`) run green.

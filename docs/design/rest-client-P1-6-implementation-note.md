@@ -81,6 +81,5 @@ which representation the client fetched. The media-type fold is a *caching* conc
 
 - **Delete stays on `CONTENT`** per explicit decision — no behaviour change there, and the existing
   delete 412 fail-tests (which send a junk value) pass under either validator.
-- **Build status:** as of 2026-06-04 `rest.application` + `rest.tests` COMPILE; the full OSGi test run is
-  still blocked by an unrelated compiler issue on another dependency, so the new/fixed tests are not yet
-  confirmed green by execution.
+- **Build status:** as of 2026-06-05 the full build and Phase-1 test suite (`rest.application` +
+  `rest.tests`) run green.
