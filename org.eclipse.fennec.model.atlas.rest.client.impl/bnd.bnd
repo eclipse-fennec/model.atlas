@@ -1,0 +1,21 @@
+Bundle-Name: Model Atlas REST Client — plain-Java implementation
+Bundle-Description: Plain-Java implementation of the Model Atlas client API: \
+ builder-based ModelAtlasClient, the default JakartaRsClientProvider \
+ (ClientBuilder.newBuilder() + timeouts), and the ServiceLoader factory that \
+ backs ModelAtlasClient.builder(). REST mapping, caching and drift detection \
+ are added by later Phase-2 tickets. Reused as-is by the OSGi front-end (Phase 3).
+
+-buildpath: \
+	org.eclipse.fennec.model.atlas.rest.client.api;version=snapshot,\
+	jakarta.ws.rs-api;version=latest,\
+	org.eclipse.emf.common;version=latest,\
+	org.eclipse.emf.ecore;version=latest,\
+	org.eclipse.emf.ecore.xmi;version=latest,\
+	com.fasterxml.jackson.core.jackson-core;version=latest,\
+	com.fasterxml.jackson.core.jackson-databind;version=latest,\
+	com.fasterxml.jackson.core.jackson-annotations;version=latest,\
+	biz.aQute.bnd.annotation;version=latest
+
+-testpath: \
+	junit-jupiter-api,\
+	org.eclipse.fennec.model.atlas.rest.client.api

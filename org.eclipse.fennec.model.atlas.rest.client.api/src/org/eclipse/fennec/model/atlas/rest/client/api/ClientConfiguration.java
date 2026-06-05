@@ -32,6 +32,12 @@ import java.util.Objects;
  */
 public final class ClientConfiguration {
 
+	/** Default stage view the client reads from when {@code view} is not set. */
+	public static final String DEFAULT_VIEW = "released";
+
+	/** Default key/trust store type when not configured. */
+	public static final String DEFAULT_STORE_TYPE = "PKCS12";
+
 	private final URI baseUri;
 	private final int connectTimeoutMs;
 	private final int readTimeoutMs;
@@ -47,11 +53,18 @@ public final class ClientConfiguration {
 	private final int driftCheckIntervalMs;
 	private final List<String> scopeAllowList;
 	private final String defaultScope;
+	private final String view;
 	private final int cacheMaxEntries;
 	private final int cacheTtlMs;
 	private final String cacheDiskDir;
 	private final AuthType authType;
 	private final String authTokenEnv;
+	private final String keystorePath;
+	private final String keystorePassword;
+	private final String keystoreType;
+	private final String truststorePath;
+	private final String truststorePassword;
+	private final String truststoreType;
 
 	private ClientConfiguration(Builder b) {
 		this.baseUri = b.baseUri;
@@ -69,11 +82,18 @@ public final class ClientConfiguration {
 		this.driftCheckIntervalMs = b.driftCheckIntervalMs;
 		this.scopeAllowList = b.scopeAllowList;
 		this.defaultScope = b.defaultScope;
+		this.view = b.view;
 		this.cacheMaxEntries = b.cacheMaxEntries;
 		this.cacheTtlMs = b.cacheTtlMs;
 		this.cacheDiskDir = b.cacheDiskDir;
 		this.authType = b.authType;
 		this.authTokenEnv = b.authTokenEnv;
+		this.keystorePath = b.keystorePath;
+		this.keystorePassword = b.keystorePassword;
+		this.keystoreType = b.keystoreType;
+		this.truststorePath = b.truststorePath;
+		this.truststorePassword = b.truststorePassword;
+		this.truststoreType = b.truststoreType;
 	}
 
 	/** A new builder with every property at its default; {@code base.uri} is required. */
@@ -161,6 +181,17 @@ public final class ClientConfiguration {
 		return defaultScope;
 	}
 
+	/**
+	 * {@code view} — the stage the client reads packages from (schema list +
+	 * content GET); default {@link #DEFAULT_VIEW}. The server stage name is not
+	 * fixed, so this is configurable rather than assuming {@code "released"}.
+	 * Stamped as {@code atlas.view} on services published by the OSGi front-end
+	 * (Phase 3).
+	 */
+	public String getView() {
+		return view;
+	}
+
 	/** {@code cache.max.entries} — LRU bound; default {@code 500}. */
 	public int getCacheMaxEntries() {
 		return cacheMaxEntries;
@@ -184,6 +215,36 @@ public final class ClientConfiguration {
 	/** {@code auth.token.env} — env var holding the bearer token; may be {@code null}. */
 	public String getAuthTokenEnv() {
 		return authTokenEnv;
+	}
+
+	/** {@code auth.keystore.path} — client keystore (mTLS). Only used when {@code auth.type = mtls}. */
+	public String getKeystorePath() {
+		return keystorePath;
+	}
+
+	/** {@code auth.keystore.password} — keystore password (mTLS). Only used when {@code auth.type = mtls}. */
+	public String getKeystorePassword() {
+		return keystorePassword;
+	}
+
+	/** {@code auth.keystore.type} — keystore type; default {@link #DEFAULT_STORE_TYPE}. Only used when {@code auth.type = mtls}. */
+	public String getKeystoreType() {
+		return keystoreType;
+	}
+
+	/** {@code auth.truststore.path} — truststore (mTLS). Only used when {@code auth.type = mtls}. */
+	public String getTruststorePath() {
+		return truststorePath;
+	}
+
+	/** {@code auth.truststore.password} — truststore password (mTLS). Only used when {@code auth.type = mtls}. */
+	public String getTruststorePassword() {
+		return truststorePassword;
+	}
+
+	/** {@code auth.truststore.type} — truststore type; default {@link #DEFAULT_STORE_TYPE}. Only used when {@code auth.type = mtls}. */
+	public String getTruststoreType() {
+		return truststoreType;
 	}
 
 	@Override
@@ -212,23 +273,32 @@ public final class ClientConfiguration {
 				&& nsUriDenyList.equals(that.nsUriDenyList)
 				&& scopeAllowList.equals(that.scopeAllowList)
 				&& Objects.equals(defaultScope, that.defaultScope)
+				&& view.equals(that.view)
 				&& Objects.equals(cacheDiskDir, that.cacheDiskDir)
 				&& authType == that.authType
-				&& Objects.equals(authTokenEnv, that.authTokenEnv);
+				&& Objects.equals(authTokenEnv, that.authTokenEnv)
+				&& Objects.equals(keystorePath, that.keystorePath)
+				&& Objects.equals(keystorePassword, that.keystorePassword)
+				&& Objects.equals(keystoreType, that.keystoreType)
+				&& Objects.equals(truststorePath, that.truststorePath)
+				&& Objects.equals(truststorePassword, that.truststorePassword)
+				&& Objects.equals(truststoreType, that.truststoreType);
 	}
 
 	@Override
 	public int hashCode() {
 		return Objects.hash(baseUri, connectTimeoutMs, readTimeoutMs, mode, eagerScopes, eagerStages,
 				eagerNsUriAllowList, modeStrict, nsUriAllowList, nsUriDenyList, forceRemote,
-				registerInGlobalRegistry, driftCheckIntervalMs, scopeAllowList, defaultScope, cacheMaxEntries,
-				cacheTtlMs, cacheDiskDir, authType, authTokenEnv);
+				registerInGlobalRegistry, driftCheckIntervalMs, scopeAllowList, defaultScope, view, cacheMaxEntries,
+				cacheTtlMs, cacheDiskDir, authType, authTokenEnv, keystorePath, keystorePassword, keystoreType,
+				truststorePath, truststorePassword, truststoreType);
 	}
 
 	@Override
 	public String toString() {
-		return "ClientConfiguration[baseUri=" + baseUri + ", mode=" + mode + ", authType=" + authType
-				+ ", cacheMaxEntries=" + cacheMaxEntries + ", driftCheckIntervalMs=" + driftCheckIntervalMs + "]";
+		return "ClientConfiguration[baseUri=" + baseUri + ", mode=" + mode + ", view=" + view + ", authType="
+				+ authType + ", cacheMaxEntries=" + cacheMaxEntries + ", driftCheckIntervalMs=" + driftCheckIntervalMs
+				+ "]";
 	}
 
 	/**
@@ -252,11 +322,18 @@ public final class ClientConfiguration {
 		private int driftCheckIntervalMs = 300_000;
 		private List<String> scopeAllowList = List.of();
 		private String defaultScope;
+		private String view = DEFAULT_VIEW;
 		private int cacheMaxEntries = 500;
 		private int cacheTtlMs = 0;
 		private String cacheDiskDir;
 		private AuthType authType = AuthType.NONE;
 		private String authTokenEnv;
+		private String keystorePath;
+		private String keystorePassword;
+		private String keystoreType = DEFAULT_STORE_TYPE;
+		private String truststorePath;
+		private String truststorePassword;
+		private String truststoreType = DEFAULT_STORE_TYPE;
 
 		private Builder() {
 			// use ClientConfiguration.builder()
@@ -278,11 +355,18 @@ public final class ClientConfiguration {
 			this.driftCheckIntervalMs = from.driftCheckIntervalMs;
 			this.scopeAllowList = from.scopeAllowList;
 			this.defaultScope = from.defaultScope;
+			this.view = from.view;
 			this.cacheMaxEntries = from.cacheMaxEntries;
 			this.cacheTtlMs = from.cacheTtlMs;
 			this.cacheDiskDir = from.cacheDiskDir;
 			this.authType = from.authType;
 			this.authTokenEnv = from.authTokenEnv;
+			this.keystorePath = from.keystorePath;
+			this.keystorePassword = from.keystorePassword;
+			this.keystoreType = from.keystoreType;
+			this.truststorePath = from.truststorePath;
+			this.truststorePassword = from.truststorePassword;
+			this.truststoreType = from.truststoreType;
 		}
 
 		public Builder baseUri(URI baseUri) {
@@ -360,6 +444,11 @@ public final class ClientConfiguration {
 			return this;
 		}
 
+		public Builder view(String view) {
+			this.view = Objects.requireNonNull(view, "view");
+			return this;
+		}
+
 		public Builder cacheMaxEntries(int cacheMaxEntries) {
 			this.cacheMaxEntries = cacheMaxEntries;
 			return this;
@@ -382,6 +471,36 @@ public final class ClientConfiguration {
 
 		public Builder authTokenEnv(String authTokenEnv) {
 			this.authTokenEnv = authTokenEnv;
+			return this;
+		}
+
+		public Builder keystorePath(String keystorePath) {
+			this.keystorePath = keystorePath;
+			return this;
+		}
+
+		public Builder keystorePassword(String keystorePassword) {
+			this.keystorePassword = keystorePassword;
+			return this;
+		}
+
+		public Builder keystoreType(String keystoreType) {
+			this.keystoreType = Objects.requireNonNull(keystoreType, "keystoreType");
+			return this;
+		}
+
+		public Builder truststorePath(String truststorePath) {
+			this.truststorePath = truststorePath;
+			return this;
+		}
+
+		public Builder truststorePassword(String truststorePassword) {
+			this.truststorePassword = truststorePassword;
+			return this;
+		}
+
+		public Builder truststoreType(String truststoreType) {
+			this.truststoreType = Objects.requireNonNull(truststoreType, "truststoreType");
 			return this;
 		}
 
