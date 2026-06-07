@@ -10,3 +10,15 @@
 	org.osgi.service.cdi,\
 	org.osgi.service.component,\
 	org.glassfish.hk2.api
+
+# Declares this bundle as the implementation of the Model Atlas
+# scoped-resource-set filter feature (ScopedResourceSetProvider +
+# ModelAtlasRequestFilter + HK2MultiExceptionMapper). Consumers
+# (e.g. rest.application) pin the production filter via the
+# matching Require-Capability so the resolver cannot substitute a
+# test bundle that does not declare this capability.
+Provide-Capability: \
+	osgi.implementation;\
+		osgi.implementation="org.eclipse.fennec.model.atlas.scoped-resource-set";\
+		version:Version="1.0.0";\
+		uses:="org.eclipse.fennec.codec.rest.jakartas.spi"

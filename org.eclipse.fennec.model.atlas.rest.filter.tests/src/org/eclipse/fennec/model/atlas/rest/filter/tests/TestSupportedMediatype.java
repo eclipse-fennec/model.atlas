@@ -16,17 +16,16 @@ package org.eclipse.fennec.model.atlas.rest.filter.tests;
 import java.util.List;
 
 import org.eclipse.fennec.model.atlas.mediatypes.api.SupportedMediatype;
-import org.osgi.service.component.annotations.Component;
 
 /**
  * High-priority test override of {@link SupportedMediatype}. Reports
  * {@code text/plain} and {@code application/json} as supported so the
  * {@code ModelAtlasRequestFilter}'s media-type resolution passes for the test
  * resource.
+ *
+ * <p>No {@code @Component} annotation — registered manually by the test
+ * harness, see the rationale on {@link TestResourceSetCollector}.
  */
-@Component(
-		service = { SupportedMediatype.class, TestSupportedMediatype.class },
-		property = "service.ranking:Integer=2147483647")
 public class TestSupportedMediatype implements SupportedMediatype {
 
 	@Override
