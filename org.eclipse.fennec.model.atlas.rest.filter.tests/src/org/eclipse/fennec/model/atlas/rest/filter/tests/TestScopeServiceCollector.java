@@ -21,7 +21,6 @@ import java.util.concurrent.ConcurrentHashMap;
 import org.eclipse.emf.ecore.EObject;
 import org.eclipse.fennec.model.atlas.wf.workflowapi.ScopeService;
 import org.eclipse.fennec.model.atlas.workflow.ScopeServiceCollector;
-import org.osgi.service.component.annotations.Component;
 
 /**
  * High-priority test override of {@link ScopeServiceCollector}. Hands back a
@@ -29,10 +28,10 @@ import org.osgi.service.component.annotations.Component;
  * {@link #register(String)} so that the side-by-side
  * {@code ModelAtlasRequestFilter} (which validates scope names ahead of the
  * binder) lets requests through to the test resource.
+ *
+ * <p>No {@code @Component} annotation — registered manually by the test
+ * harness, see the rationale on {@link TestResourceSetCollector}.
  */
-@Component(
-		service = { ScopeServiceCollector.class, TestScopeServiceCollector.class },
-		property = "service.ranking:Integer=2147483647")
 public class TestScopeServiceCollector extends ScopeServiceCollector {
 
 	@SuppressWarnings("rawtypes")
