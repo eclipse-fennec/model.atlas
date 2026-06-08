@@ -26,6 +26,7 @@ Bundle-Description: End-to-end tests for the plain-Java Model Atlas client again
 	com.sun.jna;version=latest,\
 	org.apache.commons.commons-compress;version=latest,\
 	org.apache.commons.lang3;version=latest,\
+	org.apache.commons.commons-io;version=latest,\
 	com.fasterxml.jackson.core.jackson-annotations;version=latest,\
 	org.glassfish.jersey.core.jersey-client;version=latest,\
 	org.glassfish.jersey.core.jersey-common;version=latest,\
