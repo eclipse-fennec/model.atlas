@@ -72,7 +72,8 @@ slf4j.runpath:  \
 	bnd.identity;id='org.gecko.emf.osgi.component',\
 	bnd.identity;id='org.gecko.emf.osgi.component.config',\
 	bnd.identity;id='org.gecko.emf.osgi.api',\
-	bnd.identity;id='jakarta.servlet-api'
+	bnd.identity;id='jakarta.servlet-api',\
+	bnd.identity;id='org.eclipse.fennec.model.atlas.rest.filter.tests'
 	
 
 -runbundles: \

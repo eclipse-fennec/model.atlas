@@ -144,7 +144,9 @@ class RemoteEPackageProviderImplTest {
 		assertEquals(List.of(ns1, ns2), result);
 		ArgumentCaptor<String> paths = ArgumentCaptor.forClass(String.class);
 		verify(target, org.mockito.Mockito.atLeastOnce()).path(paths.capture());
-		assertEquals(List.of("jena", "schema", "stages", "released"), paths.getAllValues());
+		// Discovery hits the released/final-stage alias `/{scope}/schema` (hierarchy-walking),
+		// not the stage-explicit `/{scope}/schema/stages/{view}` listing.
+		assertEquals(List.of("jena", "schema"), paths.getAllValues());
 	}
 
 	@Test
@@ -262,7 +264,9 @@ class RemoteEPackageProviderImplTest {
 	}
 
 	@Test
-	void listNsUris_usesConfiguredView() {
+	void listNsUris_ignoresConfiguredView() {
+		// Discovery is the hierarchy-walking final-stage alias `/{scope}/schema`; it does
+		// not take a view path segment, so a non-default view must not change the listing URL.
 		Response response = jsonOk("{\"metadata\":[]}");
 		when(request.get()).thenReturn(response);
 		ClientConfiguration cfg = ClientConfiguration.builder().baseUri(BASE).view("draft").build();
@@ -271,7 +275,7 @@ class RemoteEPackageProviderImplTest {
 
 		ArgumentCaptor<String> paths = ArgumentCaptor.forClass(String.class);
 		verify(target, org.mockito.Mockito.atLeastOnce()).path(paths.capture());
-		assertEquals(List.of("jena", "schema", "stages", "draft"), paths.getAllValues());
+		assertEquals(List.of("jena", "schema"), paths.getAllValues());
 	}
 
 	// ---- caching (P2-5) ---------------------------------------------------

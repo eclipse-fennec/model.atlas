@@ -7,6 +7,8 @@ build/
 /docker/build/
 /docker/dataatlas/build/
 /docker/modelatlas/build/
+/docker/modelatlas_jena/build/
+/docker/modelatlas_jena/content/
 /release/
 /build/
 /local/

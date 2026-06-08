@@ -91,7 +91,14 @@ class RemoteEPackageProviderImpl implements RemoteEPackageProvider {
 	@Override
 	public List<String> listNsUris(String scopeName) {
 		Objects.requireNonNull(scopeName, "scopeName");
-		WebTarget listTarget = baseTarget.path(scopeName).path(SCHEMA).path(STAGES).path(configuration.getView());
+		// Discovery uses the released/final-stage alias `GET /{scope}/schema`
+		// (SchemaPackagesResource.listReleasedPackages → listInFinalStageForRegistry),
+		// which walks the scope hierarchy and so also surfaces packages inherited from
+		// parent scopes' final stages — each scope resolved against its OWN final stage,
+		// so a child's `release` and a parent's `released` both work. The stage-explicit
+		// `…/stages/{view}` listing does NOT inherit (single scope, single stage); switch
+		// back to it here if/when per-stage discovery is needed.
+		WebTarget listTarget = baseTarget.path(scopeName).path(SCHEMA);
 		Response response = RestSupport.get(listTarget, MediaType.APPLICATION_JSON);
 		try {
 			if (response.getStatus() == Response.Status.NO_CONTENT.getStatusCode()) {
