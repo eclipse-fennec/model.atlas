@@ -131,13 +131,22 @@ public interface WorkflowApiPackage extends org.eclipse.emf.ecore.EPackage {
 	int EOBJECT_WORKFLOW_SERVICE___GET_CONTENT_FROM_STAGE_FOR_REGISTRY__STRING_STRING_STRING = 3;
 
 	/**
+	 * The operation id for the '<em>Get Content From Final Stage For Registry</em>' operation.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 * @ordered
+	 */
+	int EOBJECT_WORKFLOW_SERVICE___GET_CONTENT_FROM_FINAL_STAGE_FOR_REGISTRY__STRING_STRING = 4;
+
+	/**
 	 * The operation id for the '<em>Update In Stage For Registry</em>' operation.
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
 	 * @generated
 	 * @ordered
 	 */
-	int EOBJECT_WORKFLOW_SERVICE___UPDATE_IN_STAGE_FOR_REGISTRY__STRING_STRING_EOBJECT_STRING_STRING = 4;
+	int EOBJECT_WORKFLOW_SERVICE___UPDATE_IN_STAGE_FOR_REGISTRY__STRING_STRING_EOBJECT_STRING_STRING = 5;
 
 	/**
 	 * The operation id for the '<em>Delete From Stage For Registry</em>' operation.
@@ -146,7 +155,7 @@ public interface WorkflowApiPackage extends org.eclipse.emf.ecore.EPackage {
 	 * @generated
 	 * @ordered
 	 */
-	int EOBJECT_WORKFLOW_SERVICE___DELETE_FROM_STAGE_FOR_REGISTRY__STRING_STRING_STRING = 5;
+	int EOBJECT_WORKFLOW_SERVICE___DELETE_FROM_STAGE_FOR_REGISTRY__STRING_STRING_STRING = 6;
 
 	/**
 	 * The operation id for the '<em>List In Stage For Registry</em>' operation.
@@ -155,7 +164,7 @@ public interface WorkflowApiPackage extends org.eclipse.emf.ecore.EPackage {
 	 * @generated
 	 * @ordered
 	 */
-	int EOBJECT_WORKFLOW_SERVICE___LIST_IN_STAGE_FOR_REGISTRY__STRING_STRING = 6;
+	int EOBJECT_WORKFLOW_SERVICE___LIST_IN_STAGE_FOR_REGISTRY__STRING_STRING = 7;
 
 	/**
 	 * The operation id for the '<em>List In Stage For Registry By Name</em>' operation.
@@ -164,7 +173,7 @@ public interface WorkflowApiPackage extends org.eclipse.emf.ecore.EPackage {
 	 * @generated
 	 * @ordered
 	 */
-	int EOBJECT_WORKFLOW_SERVICE___LIST_IN_STAGE_FOR_REGISTRY_BY_NAME__STRING_STRING_STRING = 7;
+	int EOBJECT_WORKFLOW_SERVICE___LIST_IN_STAGE_FOR_REGISTRY_BY_NAME__STRING_STRING_STRING = 8;
 
 	/**
 	 * The operation id for the '<em>List In Final Stage For Registry</em>' operation.
@@ -173,7 +182,7 @@ public interface WorkflowApiPackage extends org.eclipse.emf.ecore.EPackage {
 	 * @generated
 	 * @ordered
 	 */
-	int EOBJECT_WORKFLOW_SERVICE___LIST_IN_FINAL_STAGE_FOR_REGISTRY__STRING = 8;
+	int EOBJECT_WORKFLOW_SERVICE___LIST_IN_FINAL_STAGE_FOR_REGISTRY__STRING = 9;
 
 	/**
 	 * The operation id for the '<em>Transition To Stage For Registry</em>' operation.
@@ -182,7 +191,7 @@ public interface WorkflowApiPackage extends org.eclipse.emf.ecore.EPackage {
 	 * @generated
 	 * @ordered
 	 */
-	int EOBJECT_WORKFLOW_SERVICE___TRANSITION_TO_STAGE_FOR_REGISTRY__STRING_STRING_STRING_STRING = 9;
+	int EOBJECT_WORKFLOW_SERVICE___TRANSITION_TO_STAGE_FOR_REGISTRY__STRING_STRING_STRING_STRING = 10;
 
 	/**
 	 * The operation id for the '<em>Is Transition Allowed</em>' operation.
@@ -191,7 +200,7 @@ public interface WorkflowApiPackage extends org.eclipse.emf.ecore.EPackage {
 	 * @generated
 	 * @ordered
 	 */
-	int EOBJECT_WORKFLOW_SERVICE___IS_TRANSITION_ALLOWED__STRING_STRING = 10;
+	int EOBJECT_WORKFLOW_SERVICE___IS_TRANSITION_ALLOWED__STRING_STRING = 11;
 
 	/**
 	 * The number of operations of the '<em>EObject Workflow Service</em>' class.
@@ -200,7 +209,7 @@ public interface WorkflowApiPackage extends org.eclipse.emf.ecore.EPackage {
 	 * @generated
 	 * @ordered
 	 */
-	int EOBJECT_WORKFLOW_SERVICE_OPERATION_COUNT = 11;
+	int EOBJECT_WORKFLOW_SERVICE_OPERATION_COUNT = 12;
 
 	/**
 	 * The meta object id for the '{@link org.eclipse.fennec.model.atlas.wf.workflowapi.RegistryService <em>Registry Service</em>}' class.
@@ -258,13 +267,22 @@ public interface WorkflowApiPackage extends org.eclipse.emf.ecore.EPackage {
 	int REGISTRY_SERVICE___GET_CONTENT_FROM_STAGE__STRING_STRING_STRING = 3;
 
 	/**
+	 * The operation id for the '<em>Get Content From Final Stage</em>' operation.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 * @ordered
+	 */
+	int REGISTRY_SERVICE___GET_CONTENT_FROM_FINAL_STAGE__STRING_STRING = 4;
+
+	/**
 	 * The operation id for the '<em>Update In Stage</em>' operation.
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
 	 * @generated
 	 * @ordered
 	 */
-	int REGISTRY_SERVICE___UPDATE_IN_STAGE__STRING_STRING_EOBJECT_STRING_STRING = 4;
+	int REGISTRY_SERVICE___UPDATE_IN_STAGE__STRING_STRING_EOBJECT_STRING_STRING = 5;
 
 	/**
 	 * The operation id for the '<em>Delete From Stage</em>' operation.
@@ -273,7 +291,7 @@ public interface WorkflowApiPackage extends org.eclipse.emf.ecore.EPackage {
 	 * @generated
 	 * @ordered
 	 */
-	int REGISTRY_SERVICE___DELETE_FROM_STAGE__STRING_STRING_STRING = 5;
+	int REGISTRY_SERVICE___DELETE_FROM_STAGE__STRING_STRING_STRING = 6;
 
 	/**
 	 * The operation id for the '<em>List In Stage</em>' operation.
@@ -282,7 +300,7 @@ public interface WorkflowApiPackage extends org.eclipse.emf.ecore.EPackage {
 	 * @generated
 	 * @ordered
 	 */
-	int REGISTRY_SERVICE___LIST_IN_STAGE__STRING_STRING = 6;
+	int REGISTRY_SERVICE___LIST_IN_STAGE__STRING_STRING = 7;
 
 	/**
 	 * The operation id for the '<em>List In Stage By Name</em>' operation.
@@ -291,7 +309,7 @@ public interface WorkflowApiPackage extends org.eclipse.emf.ecore.EPackage {
 	 * @generated
 	 * @ordered
 	 */
-	int REGISTRY_SERVICE___LIST_IN_STAGE_BY_NAME__STRING_STRING_STRING = 7;
+	int REGISTRY_SERVICE___LIST_IN_STAGE_BY_NAME__STRING_STRING_STRING = 8;
 
 	/**
 	 * The operation id for the '<em>List In Final Stage</em>' operation.
@@ -300,7 +318,7 @@ public interface WorkflowApiPackage extends org.eclipse.emf.ecore.EPackage {
 	 * @generated
 	 * @ordered
 	 */
-	int REGISTRY_SERVICE___LIST_IN_FINAL_STAGE__STRING = 8;
+	int REGISTRY_SERVICE___LIST_IN_FINAL_STAGE__STRING = 9;
 
 	/**
 	 * The operation id for the '<em>List All</em>' operation.
@@ -309,7 +327,7 @@ public interface WorkflowApiPackage extends org.eclipse.emf.ecore.EPackage {
 	 * @generated
 	 * @ordered
 	 */
-	int REGISTRY_SERVICE___LIST_ALL__STRING = 9;
+	int REGISTRY_SERVICE___LIST_ALL__STRING = 10;
 
 	/**
 	 * The operation id for the '<em>Transition To Stage</em>' operation.
@@ -318,7 +336,7 @@ public interface WorkflowApiPackage extends org.eclipse.emf.ecore.EPackage {
 	 * @generated
 	 * @ordered
 	 */
-	int REGISTRY_SERVICE___TRANSITION_TO_STAGE__STRING_STRING_STRING_STRING = 10;
+	int REGISTRY_SERVICE___TRANSITION_TO_STAGE__STRING_STRING_STRING_STRING = 11;
 
 	/**
 	 * The operation id for the '<em>Get Registry Name</em>' operation.
@@ -327,7 +345,7 @@ public interface WorkflowApiPackage extends org.eclipse.emf.ecore.EPackage {
 	 * @generated
 	 * @ordered
 	 */
-	int REGISTRY_SERVICE___GET_REGISTRY_NAME = 11;
+	int REGISTRY_SERVICE___GET_REGISTRY_NAME = 12;
 
 	/**
 	 * The operation id for the '<em>Is Valid Stage</em>' operation.
@@ -336,7 +354,7 @@ public interface WorkflowApiPackage extends org.eclipse.emf.ecore.EPackage {
 	 * @generated
 	 * @ordered
 	 */
-	int REGISTRY_SERVICE___IS_VALID_STAGE__STRING = 12;
+	int REGISTRY_SERVICE___IS_VALID_STAGE__STRING = 13;
 
 	/**
 	 * The operation id for the '<em>Is Writable Stage</em>' operation.
@@ -345,7 +363,7 @@ public interface WorkflowApiPackage extends org.eclipse.emf.ecore.EPackage {
 	 * @generated
 	 * @ordered
 	 */
-	int REGISTRY_SERVICE___IS_WRITABLE_STAGE__STRING = 13;
+	int REGISTRY_SERVICE___IS_WRITABLE_STAGE__STRING = 14;
 
 	/**
 	 * The operation id for the '<em>Is Final Stage Writable</em>' operation.
@@ -354,7 +372,7 @@ public interface WorkflowApiPackage extends org.eclipse.emf.ecore.EPackage {
 	 * @generated
 	 * @ordered
 	 */
-	int REGISTRY_SERVICE___IS_FINAL_STAGE_WRITABLE = 14;
+	int REGISTRY_SERVICE___IS_FINAL_STAGE_WRITABLE = 15;
 
 	/**
 	 * The operation id for the '<em>Is Transition Allowed</em>' operation.
@@ -363,7 +381,7 @@ public interface WorkflowApiPackage extends org.eclipse.emf.ecore.EPackage {
 	 * @generated
 	 * @ordered
 	 */
-	int REGISTRY_SERVICE___IS_TRANSITION_ALLOWED__STRING_STRING = 15;
+	int REGISTRY_SERVICE___IS_TRANSITION_ALLOWED__STRING_STRING = 16;
 
 	/**
 	 * The operation id for the '<em>Get Registry</em>' operation.
@@ -372,7 +390,7 @@ public interface WorkflowApiPackage extends org.eclipse.emf.ecore.EPackage {
 	 * @generated
 	 * @ordered
 	 */
-	int REGISTRY_SERVICE___GET_REGISTRY = 16;
+	int REGISTRY_SERVICE___GET_REGISTRY = 17;
 
 	/**
 	 * The operation id for the '<em>Is EClass Compatible With Registry</em>' operation.
@@ -381,7 +399,7 @@ public interface WorkflowApiPackage extends org.eclipse.emf.ecore.EPackage {
 	 * @generated
 	 * @ordered
 	 */
-	int REGISTRY_SERVICE___IS_ECLASS_COMPATIBLE_WITH_REGISTRY__ECLASS = 17;
+	int REGISTRY_SERVICE___IS_ECLASS_COMPATIBLE_WITH_REGISTRY__ECLASS = 18;
 
 	/**
 	 * The operation id for the '<em>Get Root EClass</em>' operation.
@@ -390,7 +408,7 @@ public interface WorkflowApiPackage extends org.eclipse.emf.ecore.EPackage {
 	 * @generated
 	 * @ordered
 	 */
-	int REGISTRY_SERVICE___GET_ROOT_ECLASS = 18;
+	int REGISTRY_SERVICE___GET_ROOT_ECLASS = 19;
 
 	/**
 	 * The operation id for the '<em>Activate</em>' operation.
@@ -399,7 +417,7 @@ public interface WorkflowApiPackage extends org.eclipse.emf.ecore.EPackage {
 	 * @generated
 	 * @ordered
 	 */
-	int REGISTRY_SERVICE___ACTIVATE__STRING = 19;
+	int REGISTRY_SERVICE___ACTIVATE__STRING = 20;
 
 	/**
 	 * The operation id for the '<em>Deactivate</em>' operation.
@@ -408,7 +426,7 @@ public interface WorkflowApiPackage extends org.eclipse.emf.ecore.EPackage {
 	 * @generated
 	 * @ordered
 	 */
-	int REGISTRY_SERVICE___DEACTIVATE__STRING = 20;
+	int REGISTRY_SERVICE___DEACTIVATE__STRING = 21;
 
 	/**
 	 * The number of operations of the '<em>Registry Service</em>' class.
@@ -417,7 +435,7 @@ public interface WorkflowApiPackage extends org.eclipse.emf.ecore.EPackage {
 	 * @generated
 	 * @ordered
 	 */
-	int REGISTRY_SERVICE_OPERATION_COUNT = 21;
+	int REGISTRY_SERVICE_OPERATION_COUNT = 22;
 
 	/**
 	 * The meta object id for the '{@link org.eclipse.fennec.model.atlas.wf.workflowapi.ScopeService <em>Scope Service</em>}' class.
@@ -475,13 +493,22 @@ public interface WorkflowApiPackage extends org.eclipse.emf.ecore.EPackage {
 	int SCOPE_SERVICE___GET_CONTENT_FROM_STAGE_FOR_REGISTRY__STRING_STRING_STRING = 3;
 
 	/**
+	 * The operation id for the '<em>Get Content From Final Stage For Registry</em>' operation.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 * @ordered
+	 */
+	int SCOPE_SERVICE___GET_CONTENT_FROM_FINAL_STAGE_FOR_REGISTRY__STRING_STRING = 4;
+
+	/**
 	 * The operation id for the '<em>Update In Stage For Registry</em>' operation.
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
 	 * @generated
 	 * @ordered
 	 */
-	int SCOPE_SERVICE___UPDATE_IN_STAGE_FOR_REGISTRY__STRING_STRING_EOBJECT_STRING_STRING = 4;
+	int SCOPE_SERVICE___UPDATE_IN_STAGE_FOR_REGISTRY__STRING_STRING_EOBJECT_STRING_STRING = 5;
 
 	/**
 	 * The operation id for the '<em>Delete From Stage For Registry</em>' operation.
@@ -490,7 +517,7 @@ public interface WorkflowApiPackage extends org.eclipse.emf.ecore.EPackage {
 	 * @generated
 	 * @ordered
 	 */
-	int SCOPE_SERVICE___DELETE_FROM_STAGE_FOR_REGISTRY__STRING_STRING_STRING = 5;
+	int SCOPE_SERVICE___DELETE_FROM_STAGE_FOR_REGISTRY__STRING_STRING_STRING = 6;
 
 	/**
 	 * The operation id for the '<em>List In Stage For Registry</em>' operation.
@@ -499,7 +526,7 @@ public interface WorkflowApiPackage extends org.eclipse.emf.ecore.EPackage {
 	 * @generated
 	 * @ordered
 	 */
-	int SCOPE_SERVICE___LIST_IN_STAGE_FOR_REGISTRY__STRING_STRING = 6;
+	int SCOPE_SERVICE___LIST_IN_STAGE_FOR_REGISTRY__STRING_STRING = 7;
 
 	/**
 	 * The operation id for the '<em>List In Stage For Registry By Name</em>' operation.
@@ -508,7 +535,7 @@ public interface WorkflowApiPackage extends org.eclipse.emf.ecore.EPackage {
 	 * @generated
 	 * @ordered
 	 */
-	int SCOPE_SERVICE___LIST_IN_STAGE_FOR_REGISTRY_BY_NAME__STRING_STRING_STRING = 7;
+	int SCOPE_SERVICE___LIST_IN_STAGE_FOR_REGISTRY_BY_NAME__STRING_STRING_STRING = 8;
 
 	/**
 	 * The operation id for the '<em>List In Final Stage For Registry</em>' operation.
@@ -517,7 +544,7 @@ public interface WorkflowApiPackage extends org.eclipse.emf.ecore.EPackage {
 	 * @generated
 	 * @ordered
 	 */
-	int SCOPE_SERVICE___LIST_IN_FINAL_STAGE_FOR_REGISTRY__STRING = 8;
+	int SCOPE_SERVICE___LIST_IN_FINAL_STAGE_FOR_REGISTRY__STRING = 9;
 
 	/**
 	 * The operation id for the '<em>List All For Registry</em>' operation.
@@ -526,7 +553,7 @@ public interface WorkflowApiPackage extends org.eclipse.emf.ecore.EPackage {
 	 * @generated
 	 * @ordered
 	 */
-	int SCOPE_SERVICE___LIST_ALL_FOR_REGISTRY__STRING = 9;
+	int SCOPE_SERVICE___LIST_ALL_FOR_REGISTRY__STRING = 10;
 
 	/**
 	 * The operation id for the '<em>Transition To Stage For Registry</em>' operation.
@@ -535,7 +562,7 @@ public interface WorkflowApiPackage extends org.eclipse.emf.ecore.EPackage {
 	 * @generated
 	 * @ordered
 	 */
-	int SCOPE_SERVICE___TRANSITION_TO_STAGE_FOR_REGISTRY__STRING_STRING_STRING_STRING = 10;
+	int SCOPE_SERVICE___TRANSITION_TO_STAGE_FOR_REGISTRY__STRING_STRING_STRING_STRING = 11;
 
 	/**
 	 * The operation id for the '<em>Is Valid Registry</em>' operation.
@@ -544,7 +571,7 @@ public interface WorkflowApiPackage extends org.eclipse.emf.ecore.EPackage {
 	 * @generated
 	 * @ordered
 	 */
-	int SCOPE_SERVICE___IS_VALID_REGISTRY__STRING = 11;
+	int SCOPE_SERVICE___IS_VALID_REGISTRY__STRING = 12;
 
 	/**
 	 * The operation id for the '<em>Get All Registries</em>' operation.
@@ -553,7 +580,7 @@ public interface WorkflowApiPackage extends org.eclipse.emf.ecore.EPackage {
 	 * @generated
 	 * @ordered
 	 */
-	int SCOPE_SERVICE___GET_ALL_REGISTRIES = 12;
+	int SCOPE_SERVICE___GET_ALL_REGISTRIES = 13;
 
 	/**
 	 * The operation id for the '<em>Get Scope</em>' operation.
@@ -562,7 +589,7 @@ public interface WorkflowApiPackage extends org.eclipse.emf.ecore.EPackage {
 	 * @generated
 	 * @ordered
 	 */
-	int SCOPE_SERVICE___GET_SCOPE = 13;
+	int SCOPE_SERVICE___GET_SCOPE = 14;
 
 	/**
 	 * The number of operations of the '<em>Scope Service</em>' class.
@@ -571,7 +598,7 @@ public interface WorkflowApiPackage extends org.eclipse.emf.ecore.EPackage {
 	 * @generated
 	 * @ordered
 	 */
-	int SCOPE_SERVICE_OPERATION_COUNT = 14;
+	int SCOPE_SERVICE_OPERATION_COUNT = 15;
 
 	/**
 	 * The meta object id for the '{@link org.eclipse.fennec.model.atlas.wf.workflowapi.impl.StageImpl <em>Stage</em>}' class.
@@ -873,6 +900,16 @@ public interface WorkflowApiPackage extends org.eclipse.emf.ecore.EPackage {
 	EOperation getEObjectWorkflowService__GetContentFromStageForRegistry__String_String_String();
 
 	/**
+	 * Returns the meta object for the '{@link org.eclipse.fennec.model.atlas.wf.workflowapi.EObjectWorkflowService#getContentFromFinalStageForRegistry(java.lang.String, java.lang.String) <em>Get Content From Final Stage For Registry</em>}' operation.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @return the meta object for the '<em>Get Content From Final Stage For Registry</em>' operation.
+	 * @see org.eclipse.fennec.model.atlas.wf.workflowapi.EObjectWorkflowService#getContentFromFinalStageForRegistry(java.lang.String, java.lang.String)
+	 * @generated
+	 */
+	EOperation getEObjectWorkflowService__GetContentFromFinalStageForRegistry__String_String();
+
+	/**
 	 * Returns the meta object for the '{@link org.eclipse.fennec.model.atlas.wf.workflowapi.EObjectWorkflowService#updateInStageForRegistry(java.lang.String, java.lang.String, org.eclipse.emf.ecore.EObject, java.lang.String, java.lang.String) <em>Update In Stage For Registry</em>}' operation.
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
@@ -991,6 +1028,16 @@ public interface WorkflowApiPackage extends org.eclipse.emf.ecore.EPackage {
 	 * @generated
 	 */
 	EOperation getRegistryService__GetContentFromStage__String_String_String();
+
+	/**
+	 * Returns the meta object for the '{@link org.eclipse.fennec.model.atlas.wf.workflowapi.RegistryService#getContentFromFinalStage(java.lang.String, java.lang.String) <em>Get Content From Final Stage</em>}' operation.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @return the meta object for the '<em>Get Content From Final Stage</em>' operation.
+	 * @see org.eclipse.fennec.model.atlas.wf.workflowapi.RegistryService#getContentFromFinalStage(java.lang.String, java.lang.String)
+	 * @generated
+	 */
+	EOperation getRegistryService__GetContentFromFinalStage__String_String();
 
 	/**
 	 * Returns the meta object for the '{@link org.eclipse.fennec.model.atlas.wf.workflowapi.RegistryService#updateInStage(java.lang.String, java.lang.String, org.eclipse.emf.ecore.EObject, java.lang.String, java.lang.String) <em>Update In Stage</em>}' operation.
@@ -1211,6 +1258,16 @@ public interface WorkflowApiPackage extends org.eclipse.emf.ecore.EPackage {
 	 * @generated
 	 */
 	EOperation getScopeService__GetContentFromStageForRegistry__String_String_String();
+
+	/**
+	 * Returns the meta object for the '{@link org.eclipse.fennec.model.atlas.wf.workflowapi.ScopeService#getContentFromFinalStageForRegistry(java.lang.String, java.lang.String) <em>Get Content From Final Stage For Registry</em>}' operation.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @return the meta object for the '<em>Get Content From Final Stage For Registry</em>' operation.
+	 * @see org.eclipse.fennec.model.atlas.wf.workflowapi.ScopeService#getContentFromFinalStageForRegistry(java.lang.String, java.lang.String)
+	 * @generated
+	 */
+	EOperation getScopeService__GetContentFromFinalStageForRegistry__String_String();
 
 	/**
 	 * Returns the meta object for the '{@link org.eclipse.fennec.model.atlas.wf.workflowapi.ScopeService#updateInStageForRegistry(java.lang.String, java.lang.String, org.eclipse.emf.ecore.EObject, java.lang.String, java.lang.String) <em>Update In Stage For Registry</em>}' operation.
@@ -1582,6 +1639,14 @@ public interface WorkflowApiPackage extends org.eclipse.emf.ecore.EPackage {
 		EOperation EOBJECT_WORKFLOW_SERVICE___GET_CONTENT_FROM_STAGE_FOR_REGISTRY__STRING_STRING_STRING = eINSTANCE.getEObjectWorkflowService__GetContentFromStageForRegistry__String_String_String();
 
 		/**
+		 * The meta object literal for the '<em><b>Get Content From Final Stage For Registry</b></em>' operation.
+		 * <!-- begin-user-doc -->
+		 * <!-- end-user-doc -->
+		 * @generated
+		 */
+		EOperation EOBJECT_WORKFLOW_SERVICE___GET_CONTENT_FROM_FINAL_STAGE_FOR_REGISTRY__STRING_STRING = eINSTANCE.getEObjectWorkflowService__GetContentFromFinalStageForRegistry__String_String();
+
+		/**
 		 * The meta object literal for the '<em><b>Update In Stage For Registry</b></em>' operation.
 		 * <!-- begin-user-doc -->
 		 * <!-- end-user-doc -->
@@ -1678,6 +1743,14 @@ public interface WorkflowApiPackage extends org.eclipse.emf.ecore.EPackage {
 		 * @generated
 		 */
 		EOperation REGISTRY_SERVICE___GET_CONTENT_FROM_STAGE__STRING_STRING_STRING = eINSTANCE.getRegistryService__GetContentFromStage__String_String_String();
+
+		/**
+		 * The meta object literal for the '<em><b>Get Content From Final Stage</b></em>' operation.
+		 * <!-- begin-user-doc -->
+		 * <!-- end-user-doc -->
+		 * @generated
+		 */
+		EOperation REGISTRY_SERVICE___GET_CONTENT_FROM_FINAL_STAGE__STRING_STRING = eINSTANCE.getRegistryService__GetContentFromFinalStage__String_String();
 
 		/**
 		 * The meta object literal for the '<em><b>Update In Stage</b></em>' operation.
@@ -1856,6 +1929,14 @@ public interface WorkflowApiPackage extends org.eclipse.emf.ecore.EPackage {
 		 * @generated
 		 */
 		EOperation SCOPE_SERVICE___GET_CONTENT_FROM_STAGE_FOR_REGISTRY__STRING_STRING_STRING = eINSTANCE.getScopeService__GetContentFromStageForRegistry__String_String_String();
+
+		/**
+		 * The meta object literal for the '<em><b>Get Content From Final Stage For Registry</b></em>' operation.
+		 * <!-- begin-user-doc -->
+		 * <!-- end-user-doc -->
+		 * @generated
+		 */
+		EOperation SCOPE_SERVICE___GET_CONTENT_FROM_FINAL_STAGE_FOR_REGISTRY__STRING_STRING = eINSTANCE.getScopeService__GetContentFromFinalStageForRegistry__String_String();
 
 		/**
 		 * The meta object literal for the '<em><b>Update In Stage For Registry</b></em>' operation.

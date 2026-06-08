@@ -88,6 +88,17 @@ public interface RegistryService<T extends EObject> {
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
 	 * <!-- begin-model-doc -->
+	 * Get the actual EObject content by ID for the final stage, of a certain scope.
+	 * <!-- end-model-doc -->
+	 * @model objectIdRequired="true"
+	 * @generated
+	 */
+	T getContentFromFinalStage(String scope, String objectId);
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * <!-- begin-model-doc -->
 	 * Update an existing object for a certain stage and scope. Returned updated ObjectMetadata.
 	 * <!-- end-model-doc -->
 	 * @model dataType="org.eclipse.fennec.model.atlas.mgmt.management.Promise&lt;org.eclipse.fennec.model.atlas.mgmt.management.ObjectMetadata&gt;" updatedObjectRequired="true" objectIdRequired="true" versionRequired="true"

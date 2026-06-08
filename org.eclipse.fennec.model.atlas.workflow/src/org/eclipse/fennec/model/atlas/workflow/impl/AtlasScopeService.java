@@ -90,6 +90,16 @@ public class AtlasScopeService implements ScopeService<EPackage> {
 		validateRegistry(registry);
 		return atlasSchemaRegistryService.getContentFromStage(WorkflowConstants.ATLAS_SCOPE_NAME, stage, objectId);
 	}
+	
+	/* 
+	 * (non-Javadoc)
+	 * @see org.eclipse.fennec.model.atlas.wf.workflowapi.ScopeService#getContentFromFinalStageForRegistry(java.lang.String, java.lang.String)
+	 */
+	@Override
+	public EPackage getContentFromFinalStageForRegistry(String registry, String objectId) {
+		validateRegistry(registry);
+		return atlasSchemaRegistryService.getContentFromFinalStage(WorkflowConstants.ATLAS_SCOPE_NAME, objectId);
+	}
 
 	/* 
 	 * (non-Javadoc)
@@ -206,5 +216,7 @@ public class AtlasScopeService implements ScopeService<EPackage> {
 		validateRegistry(registry);
 		return atlasSchemaRegistryService.listAll(WorkflowConstants.ATLAS_SCOPE_NAME);
 	}
+
+	
 
 }

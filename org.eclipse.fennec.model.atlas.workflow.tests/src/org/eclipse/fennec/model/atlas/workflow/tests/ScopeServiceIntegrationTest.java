@@ -345,6 +345,87 @@ public class ScopeServiceIntegrationTest {
 
 		@SuppressWarnings({ "unchecked", "rawtypes" })
 		@Test
+		@DisplayName("Should fallback to parent scope final stage when content not found in stage")
+		@ParentScopeServiceSetup
+		void shouldFallbackToParentScopeForContent(
+				@InjectService(cardinality = 0, filter = "(scope.name=" + TestAnnotations.TEST_SCOPE_NAME
+						+ ")") ServiceAware<ScopeService> childScopeAware,
+				@InjectService(cardinality = 0, filter = "(scope.name=" + TestAnnotations.TEST_PARENT_SCOPE_NAME
+						+ ")") ServiceAware<ScopeService> parentScopeAware)
+				throws InterruptedException, InvocationTargetException {
+
+			ScopeService<EPackage> childScope = childScopeAware.waitForService(5000);
+			ScopeService<EPackage> parentScope = parentScopeAware.waitForService(5000);
+			assertNotNull(childScope);
+			assertNotNull(parentScope);
+
+			// Upload an EPackage to the parent's release (final) stage
+			EPackage parentPackage = EcoreFactory.eINSTANCE.createEPackage();
+			parentPackage.setName("parent-package");
+			parentPackage.setNsURI("http://test/parent-package");
+			parentPackage.setNsPrefix("pp");
+
+			ObjectMetadata uploadMetadata = ManagementFactory.eINSTANCE.createObjectMetadata();
+			uploadMetadata.setObjectId(OBJECT_ID);
+
+			parentScope.uploadToStageForRegistry(
+					CommonTestAnnotations.SCHEMA_REGISTRY_NAME,
+					CommonTestAnnotations.STAGE_RELEASE,
+					parentPackage,
+					uploadMetadata).getValue();
+
+			// Child has nothing in its draft stage -> content should fall back to the parent's final stage
+			EPackage result = childScope.getContentFromStageForRegistry(
+					CommonTestAnnotations.SCHEMA_REGISTRY_NAME,
+					CommonTestAnnotations.STAGE_DRAFT,
+					OBJECT_ID);
+
+			assertNotNull(result, "Should fall back to parent's content");
+			assertEquals("http://test/parent-package", result.getNsURI());
+		}
+
+		@SuppressWarnings({ "unchecked", "rawtypes" })
+		@Test
+		@DisplayName("Should fallback to parent scope final stage for getContentFromFinalStage")
+		@ParentScopeServiceSetup
+		void shouldFallbackToParentScopeForFinalStageContent(
+				@InjectService(cardinality = 0, filter = "(scope.name=" + TestAnnotations.TEST_SCOPE_NAME
+						+ ")") ServiceAware<ScopeService> childScopeAware,
+				@InjectService(cardinality = 0, filter = "(scope.name=" + TestAnnotations.TEST_PARENT_SCOPE_NAME
+						+ ")") ServiceAware<ScopeService> parentScopeAware)
+				throws InterruptedException, InvocationTargetException {
+
+			ScopeService<EPackage> childScope = childScopeAware.waitForService(5000);
+			ScopeService<EPackage> parentScope = parentScopeAware.waitForService(5000);
+			assertNotNull(childScope);
+			assertNotNull(parentScope);
+
+			// Upload an EPackage to the parent's release (final) stage
+			EPackage parentPackage = EcoreFactory.eINSTANCE.createEPackage();
+			parentPackage.setName("parent-package");
+			parentPackage.setNsURI("http://test/parent-package");
+			parentPackage.setNsPrefix("pp");
+
+			ObjectMetadata uploadMetadata = ManagementFactory.eINSTANCE.createObjectMetadata();
+			uploadMetadata.setObjectId(OBJECT_ID);
+
+			parentScope.uploadToStageForRegistry(
+					CommonTestAnnotations.SCHEMA_REGISTRY_NAME,
+					CommonTestAnnotations.STAGE_RELEASE,
+					parentPackage,
+					uploadMetadata).getValue();
+
+			// Child's own final stage is empty -> falls back to the parent's final stage
+			EPackage result = childScope.getContentFromFinalStageForRegistry(
+					CommonTestAnnotations.SCHEMA_REGISTRY_NAME,
+					OBJECT_ID);
+
+			assertNotNull(result, "Should fall back to parent's final-stage content");
+			assertEquals("http://test/parent-package", result.getNsURI());
+		}
+
+		@SuppressWarnings({ "unchecked", "rawtypes" })
+		@Test
 		@DisplayName("Should include parent metadata in listInFinalStage")
 		@ParentScopeServiceSetup
 		void shouldIncludeParentMetadataInList(

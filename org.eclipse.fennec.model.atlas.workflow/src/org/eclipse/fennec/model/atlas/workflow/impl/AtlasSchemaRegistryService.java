@@ -122,6 +122,15 @@ public class AtlasSchemaRegistryService implements RegistryService<EPackage> {
 	@Override
 	public EPackage getContentFromStage(String scope, String stage, String objectId) {
 		validateStage(stage);
+		return getContentFromFinalStage(scope, objectId);
+	}
+	
+	/* 
+	 * (non-Javadoc)
+	 * @see org.eclipse.fennec.model.atlas.wf.workflowapi.RegistryService#getContentFromFinalStage(java.lang.String, java.lang.String)
+	 */
+	@Override
+	public EPackage getContentFromFinalStage(String scope, String objectId) {
 		if(staticPackageRegistry != null) {
 			byte[] decodedBytes = Base64.getUrlDecoder().decode(objectId);
 			String originalNsUri = new String(decodedBytes);
@@ -324,5 +333,7 @@ public class AtlasSchemaRegistryService implements RegistryService<EPackage> {
 	public List<ObjectMetadata> listAll(String scope) {
 		return listInFinalStage(scope);
 	}
+
+	
 
 }

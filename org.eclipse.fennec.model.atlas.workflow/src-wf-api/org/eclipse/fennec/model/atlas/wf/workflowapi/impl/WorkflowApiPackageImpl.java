@@ -218,7 +218,7 @@ public class WorkflowApiPackageImpl extends EPackageImpl implements WorkflowApiP
 	 * @generated
 	 */
 	@Override
-	public EOperation getEObjectWorkflowService__UpdateInStageForRegistry__String_String_EObject_String_String() {
+	public EOperation getEObjectWorkflowService__GetContentFromFinalStageForRegistry__String_String() {
 		return eObjectWorkflowServiceEClass.getEOperations().get(4);
 	}
 
@@ -228,7 +228,7 @@ public class WorkflowApiPackageImpl extends EPackageImpl implements WorkflowApiP
 	 * @generated
 	 */
 	@Override
-	public EOperation getEObjectWorkflowService__DeleteFromStageForRegistry__String_String_String() {
+	public EOperation getEObjectWorkflowService__UpdateInStageForRegistry__String_String_EObject_String_String() {
 		return eObjectWorkflowServiceEClass.getEOperations().get(5);
 	}
 
@@ -238,7 +238,7 @@ public class WorkflowApiPackageImpl extends EPackageImpl implements WorkflowApiP
 	 * @generated
 	 */
 	@Override
-	public EOperation getEObjectWorkflowService__ListInStageForRegistry__String_String() {
+	public EOperation getEObjectWorkflowService__DeleteFromStageForRegistry__String_String_String() {
 		return eObjectWorkflowServiceEClass.getEOperations().get(6);
 	}
 
@@ -248,7 +248,7 @@ public class WorkflowApiPackageImpl extends EPackageImpl implements WorkflowApiP
 	 * @generated
 	 */
 	@Override
-	public EOperation getEObjectWorkflowService__ListInStageForRegistryByName__String_String_String() {
+	public EOperation getEObjectWorkflowService__ListInStageForRegistry__String_String() {
 		return eObjectWorkflowServiceEClass.getEOperations().get(7);
 	}
 
@@ -258,7 +258,7 @@ public class WorkflowApiPackageImpl extends EPackageImpl implements WorkflowApiP
 	 * @generated
 	 */
 	@Override
-	public EOperation getEObjectWorkflowService__ListInFinalStageForRegistry__String() {
+	public EOperation getEObjectWorkflowService__ListInStageForRegistryByName__String_String_String() {
 		return eObjectWorkflowServiceEClass.getEOperations().get(8);
 	}
 
@@ -268,7 +268,7 @@ public class WorkflowApiPackageImpl extends EPackageImpl implements WorkflowApiP
 	 * @generated
 	 */
 	@Override
-	public EOperation getEObjectWorkflowService__TransitionToStageForRegistry__String_String_String_String() {
+	public EOperation getEObjectWorkflowService__ListInFinalStageForRegistry__String() {
 		return eObjectWorkflowServiceEClass.getEOperations().get(9);
 	}
 
@@ -278,8 +278,18 @@ public class WorkflowApiPackageImpl extends EPackageImpl implements WorkflowApiP
 	 * @generated
 	 */
 	@Override
-	public EOperation getEObjectWorkflowService__IsTransitionAllowed__String_String() {
+	public EOperation getEObjectWorkflowService__TransitionToStageForRegistry__String_String_String_String() {
 		return eObjectWorkflowServiceEClass.getEOperations().get(10);
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
+	public EOperation getEObjectWorkflowService__IsTransitionAllowed__String_String() {
+		return eObjectWorkflowServiceEClass.getEOperations().get(11);
 	}
 
 	/**
@@ -338,7 +348,7 @@ public class WorkflowApiPackageImpl extends EPackageImpl implements WorkflowApiP
 	 * @generated
 	 */
 	@Override
-	public EOperation getRegistryService__UpdateInStage__String_String_EObject_String_String() {
+	public EOperation getRegistryService__GetContentFromFinalStage__String_String() {
 		return registryServiceEClass.getEOperations().get(4);
 	}
 
@@ -348,7 +358,7 @@ public class WorkflowApiPackageImpl extends EPackageImpl implements WorkflowApiP
 	 * @generated
 	 */
 	@Override
-	public EOperation getRegistryService__DeleteFromStage__String_String_String() {
+	public EOperation getRegistryService__UpdateInStage__String_String_EObject_String_String() {
 		return registryServiceEClass.getEOperations().get(5);
 	}
 
@@ -358,7 +368,7 @@ public class WorkflowApiPackageImpl extends EPackageImpl implements WorkflowApiP
 	 * @generated
 	 */
 	@Override
-	public EOperation getRegistryService__ListInStage__String_String() {
+	public EOperation getRegistryService__DeleteFromStage__String_String_String() {
 		return registryServiceEClass.getEOperations().get(6);
 	}
 
@@ -368,7 +378,7 @@ public class WorkflowApiPackageImpl extends EPackageImpl implements WorkflowApiP
 	 * @generated
 	 */
 	@Override
-	public EOperation getRegistryService__ListInStageByName__String_String_String() {
+	public EOperation getRegistryService__ListInStage__String_String() {
 		return registryServiceEClass.getEOperations().get(7);
 	}
 
@@ -378,7 +388,7 @@ public class WorkflowApiPackageImpl extends EPackageImpl implements WorkflowApiP
 	 * @generated
 	 */
 	@Override
-	public EOperation getRegistryService__ListInFinalStage__String() {
+	public EOperation getRegistryService__ListInStageByName__String_String_String() {
 		return registryServiceEClass.getEOperations().get(8);
 	}
 
@@ -388,7 +398,7 @@ public class WorkflowApiPackageImpl extends EPackageImpl implements WorkflowApiP
 	 * @generated
 	 */
 	@Override
-	public EOperation getRegistryService__ListAll__String() {
+	public EOperation getRegistryService__ListInFinalStage__String() {
 		return registryServiceEClass.getEOperations().get(9);
 	}
 
@@ -398,7 +408,7 @@ public class WorkflowApiPackageImpl extends EPackageImpl implements WorkflowApiP
 	 * @generated
 	 */
 	@Override
-	public EOperation getRegistryService__TransitionToStage__String_String_String_String() {
+	public EOperation getRegistryService__ListAll__String() {
 		return registryServiceEClass.getEOperations().get(10);
 	}
 
@@ -408,7 +418,7 @@ public class WorkflowApiPackageImpl extends EPackageImpl implements WorkflowApiP
 	 * @generated
 	 */
 	@Override
-	public EOperation getRegistryService__GetRegistryName() {
+	public EOperation getRegistryService__TransitionToStage__String_String_String_String() {
 		return registryServiceEClass.getEOperations().get(11);
 	}
 
@@ -418,7 +428,7 @@ public class WorkflowApiPackageImpl extends EPackageImpl implements WorkflowApiP
 	 * @generated
 	 */
 	@Override
-	public EOperation getRegistryService__IsValidStage__String() {
+	public EOperation getRegistryService__GetRegistryName() {
 		return registryServiceEClass.getEOperations().get(12);
 	}
 
@@ -428,7 +438,7 @@ public class WorkflowApiPackageImpl extends EPackageImpl implements WorkflowApiP
 	 * @generated
 	 */
 	@Override
-	public EOperation getRegistryService__IsWritableStage__String() {
+	public EOperation getRegistryService__IsValidStage__String() {
 		return registryServiceEClass.getEOperations().get(13);
 	}
 
@@ -438,7 +448,7 @@ public class WorkflowApiPackageImpl extends EPackageImpl implements WorkflowApiP
 	 * @generated
 	 */
 	@Override
-	public EOperation getRegistryService__IsFinalStageWritable() {
+	public EOperation getRegistryService__IsWritableStage__String() {
 		return registryServiceEClass.getEOperations().get(14);
 	}
 
@@ -448,7 +458,7 @@ public class WorkflowApiPackageImpl extends EPackageImpl implements WorkflowApiP
 	 * @generated
 	 */
 	@Override
-	public EOperation getRegistryService__IsTransitionAllowed__String_String() {
+	public EOperation getRegistryService__IsFinalStageWritable() {
 		return registryServiceEClass.getEOperations().get(15);
 	}
 
@@ -458,7 +468,7 @@ public class WorkflowApiPackageImpl extends EPackageImpl implements WorkflowApiP
 	 * @generated
 	 */
 	@Override
-	public EOperation getRegistryService__GetRegistry() {
+	public EOperation getRegistryService__IsTransitionAllowed__String_String() {
 		return registryServiceEClass.getEOperations().get(16);
 	}
 
@@ -468,7 +478,7 @@ public class WorkflowApiPackageImpl extends EPackageImpl implements WorkflowApiP
 	 * @generated
 	 */
 	@Override
-	public EOperation getRegistryService__IsEClassCompatibleWithRegistry__EClass() {
+	public EOperation getRegistryService__GetRegistry() {
 		return registryServiceEClass.getEOperations().get(17);
 	}
 
@@ -478,7 +488,7 @@ public class WorkflowApiPackageImpl extends EPackageImpl implements WorkflowApiP
 	 * @generated
 	 */
 	@Override
-	public EOperation getRegistryService__GetRootEClass() {
+	public EOperation getRegistryService__IsEClassCompatibleWithRegistry__EClass() {
 		return registryServiceEClass.getEOperations().get(18);
 	}
 
@@ -488,7 +498,7 @@ public class WorkflowApiPackageImpl extends EPackageImpl implements WorkflowApiP
 	 * @generated
 	 */
 	@Override
-	public EOperation getRegistryService__Activate__String() {
+	public EOperation getRegistryService__GetRootEClass() {
 		return registryServiceEClass.getEOperations().get(19);
 	}
 
@@ -498,8 +508,18 @@ public class WorkflowApiPackageImpl extends EPackageImpl implements WorkflowApiP
 	 * @generated
 	 */
 	@Override
-	public EOperation getRegistryService__Deactivate__String() {
+	public EOperation getRegistryService__Activate__String() {
 		return registryServiceEClass.getEOperations().get(20);
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
+	public EOperation getRegistryService__Deactivate__String() {
+		return registryServiceEClass.getEOperations().get(21);
 	}
 
 	/**
@@ -558,7 +578,7 @@ public class WorkflowApiPackageImpl extends EPackageImpl implements WorkflowApiP
 	 * @generated
 	 */
 	@Override
-	public EOperation getScopeService__UpdateInStageForRegistry__String_String_EObject_String_String() {
+	public EOperation getScopeService__GetContentFromFinalStageForRegistry__String_String() {
 		return scopeServiceEClass.getEOperations().get(4);
 	}
 
@@ -568,7 +588,7 @@ public class WorkflowApiPackageImpl extends EPackageImpl implements WorkflowApiP
 	 * @generated
 	 */
 	@Override
-	public EOperation getScopeService__DeleteFromStageForRegistry__String_String_String() {
+	public EOperation getScopeService__UpdateInStageForRegistry__String_String_EObject_String_String() {
 		return scopeServiceEClass.getEOperations().get(5);
 	}
 
@@ -578,7 +598,7 @@ public class WorkflowApiPackageImpl extends EPackageImpl implements WorkflowApiP
 	 * @generated
 	 */
 	@Override
-	public EOperation getScopeService__ListInStageForRegistry__String_String() {
+	public EOperation getScopeService__DeleteFromStageForRegistry__String_String_String() {
 		return scopeServiceEClass.getEOperations().get(6);
 	}
 
@@ -588,7 +608,7 @@ public class WorkflowApiPackageImpl extends EPackageImpl implements WorkflowApiP
 	 * @generated
 	 */
 	@Override
-	public EOperation getScopeService__ListInStageForRegistryByName__String_String_String() {
+	public EOperation getScopeService__ListInStageForRegistry__String_String() {
 		return scopeServiceEClass.getEOperations().get(7);
 	}
 
@@ -598,7 +618,7 @@ public class WorkflowApiPackageImpl extends EPackageImpl implements WorkflowApiP
 	 * @generated
 	 */
 	@Override
-	public EOperation getScopeService__ListInFinalStageForRegistry__String() {
+	public EOperation getScopeService__ListInStageForRegistryByName__String_String_String() {
 		return scopeServiceEClass.getEOperations().get(8);
 	}
 
@@ -608,7 +628,7 @@ public class WorkflowApiPackageImpl extends EPackageImpl implements WorkflowApiP
 	 * @generated
 	 */
 	@Override
-	public EOperation getScopeService__ListAllForRegistry__String() {
+	public EOperation getScopeService__ListInFinalStageForRegistry__String() {
 		return scopeServiceEClass.getEOperations().get(9);
 	}
 
@@ -618,7 +638,7 @@ public class WorkflowApiPackageImpl extends EPackageImpl implements WorkflowApiP
 	 * @generated
 	 */
 	@Override
-	public EOperation getScopeService__TransitionToStageForRegistry__String_String_String_String() {
+	public EOperation getScopeService__ListAllForRegistry__String() {
 		return scopeServiceEClass.getEOperations().get(10);
 	}
 
@@ -628,7 +648,7 @@ public class WorkflowApiPackageImpl extends EPackageImpl implements WorkflowApiP
 	 * @generated
 	 */
 	@Override
-	public EOperation getScopeService__IsValidRegistry__String() {
+	public EOperation getScopeService__TransitionToStageForRegistry__String_String_String_String() {
 		return scopeServiceEClass.getEOperations().get(11);
 	}
 
@@ -638,7 +658,7 @@ public class WorkflowApiPackageImpl extends EPackageImpl implements WorkflowApiP
 	 * @generated
 	 */
 	@Override
-	public EOperation getScopeService__GetAllRegistries() {
+	public EOperation getScopeService__IsValidRegistry__String() {
 		return scopeServiceEClass.getEOperations().get(12);
 	}
 
@@ -648,8 +668,18 @@ public class WorkflowApiPackageImpl extends EPackageImpl implements WorkflowApiP
 	 * @generated
 	 */
 	@Override
-	public EOperation getScopeService__GetScope() {
+	public EOperation getScopeService__GetAllRegistries() {
 		return scopeServiceEClass.getEOperations().get(13);
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
+	public EOperation getScopeService__GetScope() {
+		return scopeServiceEClass.getEOperations().get(14);
 	}
 
 	/**
@@ -876,6 +906,7 @@ public class WorkflowApiPackageImpl extends EPackageImpl implements WorkflowApiP
 		createEOperation(eObjectWorkflowServiceEClass, EOBJECT_WORKFLOW_SERVICE___GET_FROM_STAGE_FOR_REGISTRY__STRING_STRING_STRING);
 		createEOperation(eObjectWorkflowServiceEClass, EOBJECT_WORKFLOW_SERVICE___GET_FROM_FINAL_STAGE_FOR_REGISTRY__STRING_STRING);
 		createEOperation(eObjectWorkflowServiceEClass, EOBJECT_WORKFLOW_SERVICE___GET_CONTENT_FROM_STAGE_FOR_REGISTRY__STRING_STRING_STRING);
+		createEOperation(eObjectWorkflowServiceEClass, EOBJECT_WORKFLOW_SERVICE___GET_CONTENT_FROM_FINAL_STAGE_FOR_REGISTRY__STRING_STRING);
 		createEOperation(eObjectWorkflowServiceEClass, EOBJECT_WORKFLOW_SERVICE___UPDATE_IN_STAGE_FOR_REGISTRY__STRING_STRING_EOBJECT_STRING_STRING);
 		createEOperation(eObjectWorkflowServiceEClass, EOBJECT_WORKFLOW_SERVICE___DELETE_FROM_STAGE_FOR_REGISTRY__STRING_STRING_STRING);
 		createEOperation(eObjectWorkflowServiceEClass, EOBJECT_WORKFLOW_SERVICE___LIST_IN_STAGE_FOR_REGISTRY__STRING_STRING);
@@ -889,6 +920,7 @@ public class WorkflowApiPackageImpl extends EPackageImpl implements WorkflowApiP
 		createEOperation(registryServiceEClass, REGISTRY_SERVICE___GET_METADATA_FROM_STAGE__STRING_STRING_STRING);
 		createEOperation(registryServiceEClass, REGISTRY_SERVICE___GET_METADATA_FROM_FINAL_STAGE__STRING_STRING);
 		createEOperation(registryServiceEClass, REGISTRY_SERVICE___GET_CONTENT_FROM_STAGE__STRING_STRING_STRING);
+		createEOperation(registryServiceEClass, REGISTRY_SERVICE___GET_CONTENT_FROM_FINAL_STAGE__STRING_STRING);
 		createEOperation(registryServiceEClass, REGISTRY_SERVICE___UPDATE_IN_STAGE__STRING_STRING_EOBJECT_STRING_STRING);
 		createEOperation(registryServiceEClass, REGISTRY_SERVICE___DELETE_FROM_STAGE__STRING_STRING_STRING);
 		createEOperation(registryServiceEClass, REGISTRY_SERVICE___LIST_IN_STAGE__STRING_STRING);
@@ -912,6 +944,7 @@ public class WorkflowApiPackageImpl extends EPackageImpl implements WorkflowApiP
 		createEOperation(scopeServiceEClass, SCOPE_SERVICE___GET_METADATA_FROM_STAGE_FOR_REGISTRY__STRING_STRING_STRING);
 		createEOperation(scopeServiceEClass, SCOPE_SERVICE___GET_METADATA_FROM_FINAL_STAGE_FOR_REGISTRY__STRING_STRING);
 		createEOperation(scopeServiceEClass, SCOPE_SERVICE___GET_CONTENT_FROM_STAGE_FOR_REGISTRY__STRING_STRING_STRING);
+		createEOperation(scopeServiceEClass, SCOPE_SERVICE___GET_CONTENT_FROM_FINAL_STAGE_FOR_REGISTRY__STRING_STRING);
 		createEOperation(scopeServiceEClass, SCOPE_SERVICE___UPDATE_IN_STAGE_FOR_REGISTRY__STRING_STRING_EOBJECT_STRING_STRING);
 		createEOperation(scopeServiceEClass, SCOPE_SERVICE___DELETE_FROM_STAGE_FOR_REGISTRY__STRING_STRING_STRING);
 		createEOperation(scopeServiceEClass, SCOPE_SERVICE___LIST_IN_STAGE_FOR_REGISTRY__STRING_STRING);
@@ -1020,6 +1053,12 @@ public class WorkflowApiPackageImpl extends EPackageImpl implements WorkflowApiP
 		g1 = createEGenericType(eObjectWorkflowServiceEClass_T);
 		initEOperation(op, g1);
 
+		op = initEOperation(getEObjectWorkflowService__GetContentFromFinalStageForRegistry__String_String(), null, "getContentFromFinalStageForRegistry", 0, 1, IS_UNIQUE, IS_ORDERED);
+		addEParameter(op, ecorePackage.getEString(), "registry", 0, 1, IS_UNIQUE, IS_ORDERED);
+		addEParameter(op, ecorePackage.getEString(), "objectId", 1, 1, IS_UNIQUE, IS_ORDERED);
+		g1 = createEGenericType(eObjectWorkflowServiceEClass_T);
+		initEOperation(op, g1);
+
 		op = initEOperation(getEObjectWorkflowService__UpdateInStageForRegistry__String_String_EObject_String_String(), null, "updateInStageForRegistry", 0, 1, IS_UNIQUE, IS_ORDERED);
 		addEParameter(op, ecorePackage.getEString(), "stage", 0, 1, IS_UNIQUE, IS_ORDERED);
 		addEParameter(op, ecorePackage.getEString(), "registry", 0, 1, IS_UNIQUE, IS_ORDERED);
@@ -1100,6 +1139,12 @@ public class WorkflowApiPackageImpl extends EPackageImpl implements WorkflowApiP
 		op = initEOperation(getRegistryService__GetContentFromStage__String_String_String(), null, "getContentFromStage", 0, 1, IS_UNIQUE, IS_ORDERED);
 		addEParameter(op, ecorePackage.getEString(), "scope", 0, 1, IS_UNIQUE, IS_ORDERED);
 		addEParameter(op, ecorePackage.getEString(), "stage", 0, 1, IS_UNIQUE, IS_ORDERED);
+		addEParameter(op, ecorePackage.getEString(), "objectId", 1, 1, IS_UNIQUE, IS_ORDERED);
+		g1 = createEGenericType(eObjectWorkflowServiceEClass_T);
+		initEOperation(op, g1);
+
+		op = initEOperation(getRegistryService__GetContentFromFinalStage__String_String(), null, "getContentFromFinalStage", 0, 1, IS_UNIQUE, IS_ORDERED);
+		addEParameter(op, ecorePackage.getEString(), "scope", 0, 1, IS_UNIQUE, IS_ORDERED);
 		addEParameter(op, ecorePackage.getEString(), "objectId", 1, 1, IS_UNIQUE, IS_ORDERED);
 		g1 = createEGenericType(eObjectWorkflowServiceEClass_T);
 		initEOperation(op, g1);
@@ -1214,6 +1259,12 @@ public class WorkflowApiPackageImpl extends EPackageImpl implements WorkflowApiP
 		op = initEOperation(getScopeService__GetContentFromStageForRegistry__String_String_String(), null, "getContentFromStageForRegistry", 0, 1, IS_UNIQUE, IS_ORDERED);
 		addEParameter(op, ecorePackage.getEString(), "registry", 0, 1, IS_UNIQUE, IS_ORDERED);
 		addEParameter(op, ecorePackage.getEString(), "stage", 0, 1, IS_UNIQUE, IS_ORDERED);
+		addEParameter(op, ecorePackage.getEString(), "objectId", 1, 1, IS_UNIQUE, IS_ORDERED);
+		g1 = createEGenericType(eObjectWorkflowServiceEClass_T);
+		initEOperation(op, g1);
+
+		op = initEOperation(getScopeService__GetContentFromFinalStageForRegistry__String_String(), null, "getContentFromFinalStageForRegistry", 0, 1, IS_UNIQUE, IS_ORDERED);
+		addEParameter(op, ecorePackage.getEString(), "registry", 0, 1, IS_UNIQUE, IS_ORDERED);
 		addEParameter(op, ecorePackage.getEString(), "objectId", 1, 1, IS_UNIQUE, IS_ORDERED);
 		g1 = createEGenericType(eObjectWorkflowServiceEClass_T);
 		initEOperation(op, g1);

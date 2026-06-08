@@ -38,6 +38,10 @@
         <genParameters ecoreParameter="workflow-api.ecore#//EObjectWorkflowService/getContentFromStageForRegistry/registry"/>
         <genParameters ecoreParameter="workflow-api.ecore#//EObjectWorkflowService/getContentFromStageForRegistry/objectId"/>
       </genOperations>
+      <genOperations ecoreOperation="workflow-api.ecore#//EObjectWorkflowService/getContentFromFinalStageForRegistry">
+        <genParameters ecoreParameter="workflow-api.ecore#//EObjectWorkflowService/getContentFromFinalStageForRegistry/registry"/>
+        <genParameters ecoreParameter="workflow-api.ecore#//EObjectWorkflowService/getContentFromFinalStageForRegistry/objectId"/>
+      </genOperations>
       <genOperations ecoreOperation="workflow-api.ecore#//EObjectWorkflowService/updateInStageForRegistry">
         <genParameters ecoreParameter="workflow-api.ecore#//EObjectWorkflowService/updateInStageForRegistry/stage"/>
         <genParameters ecoreParameter="workflow-api.ecore#//EObjectWorkflowService/updateInStageForRegistry/registry"/>
@@ -94,6 +98,10 @@
         <genParameters ecoreParameter="workflow-api.ecore#//RegistryService/getContentFromStage/scope"/>
         <genParameters ecoreParameter="workflow-api.ecore#//RegistryService/getContentFromStage/stage"/>
         <genParameters ecoreParameter="workflow-api.ecore#//RegistryService/getContentFromStage/objectId"/>
+      </genOperations>
+      <genOperations ecoreOperation="workflow-api.ecore#//RegistryService/getContentFromFinalStage">
+        <genParameters ecoreParameter="workflow-api.ecore#//RegistryService/getContentFromFinalStage/scope"/>
+        <genParameters ecoreParameter="workflow-api.ecore#//RegistryService/getContentFromFinalStage/objectId"/>
       </genOperations>
       <genOperations ecoreOperation="workflow-api.ecore#//RegistryService/updateInStage">
         <genParameters ecoreParameter="workflow-api.ecore#//RegistryService/updateInStage/scope"/>
@@ -173,6 +181,10 @@
         <genParameters ecoreParameter="workflow-api.ecore#//ScopeService/getContentFromStageForRegistry/registry"/>
         <genParameters ecoreParameter="workflow-api.ecore#//ScopeService/getContentFromStageForRegistry/stage"/>
         <genParameters ecoreParameter="workflow-api.ecore#//ScopeService/getContentFromStageForRegistry/objectId"/>
+      </genOperations>
+      <genOperations ecoreOperation="workflow-api.ecore#//ScopeService/getContentFromFinalStageForRegistry">
+        <genParameters ecoreParameter="workflow-api.ecore#//ScopeService/getContentFromFinalStageForRegistry/registry"/>
+        <genParameters ecoreParameter="workflow-api.ecore#//ScopeService/getContentFromFinalStageForRegistry/objectId"/>
       </genOperations>
       <genOperations ecoreOperation="workflow-api.ecore#//ScopeService/updateInStageForRegistry">
         <genParameters ecoreParameter="workflow-api.ecore#//ScopeService/updateInStageForRegistry/registry"/>

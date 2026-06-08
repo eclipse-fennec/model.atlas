@@ -153,10 +153,50 @@ public class ScopeServiceImpl<T extends EObject> implements ScopeService<T> {
 	 * getContentFromStageForRegistry(java.lang.String, java.lang.String,
 	 * java.lang.String)
 	 */
+	@SuppressWarnings("unchecked")
 	@Override
 	public T getContentFromStageForRegistry(String registry, String stage, String objectId) {
 		validateRegistry(registry);
-		return getRegistryService(registry).getContentFromStage(config.scope_name(), stage, objectId);
+		T contentFromStage = getRegistryService(registry).getContentFromStage(config.scope_name(), stage, objectId);
+		if(contentFromStage == null) {
+			//          if parent scope is atlas and registry is schema registry -> go to atlas schema registry
+			//          if parent scope is NOT atlas -> look into the parent registry (must have the same name as this registry)
+			//          if parent scope is atlas and registry is NOT a schema registry -> no need to look into parent
+			//          if parent scope is not set -> this cannot happen because the default is atlas
+			T parentContent = null;
+			if(WorkflowConstants.ATLAS_SCOPE_NAME.equals(config.scope_parent()) && RegistryType.SCHEMA == getRegistryService(registry).getRegistry().getType()) {
+				parentContent = (T) atlasSchemaRegistryService.getContentFromFinalStage(config.scope_parent(), objectId);
+			} else if (!WorkflowConstants.ATLAS_SCOPE_NAME.equals(config.scope_parent())) {
+				parentContent = getRegistryService(registry).getContentFromFinalStage(config.scope_parent(), objectId);	
+			}
+			return parentContent;
+		}
+		return contentFromStage;		
+	}
+	
+	/* 
+	 * (non-Javadoc)
+	 * @see org.eclipse.fennec.model.atlas.wf.workflowapi.ScopeService#getContentFromFinalStageForRegistry(java.lang.String, java.lang.String)
+	 */
+	@SuppressWarnings("unchecked")
+	@Override
+	public T getContentFromFinalStageForRegistry(String registry, String objectId) {
+		validateRegistry(registry);
+		T contentFromStage = getRegistryService(registry).getContentFromFinalStage(config.scope_name(), objectId);
+		if(contentFromStage == null) {
+			//          if parent scope is atlas and registry is schema registry -> go to atlas schema registry
+			//          if parent scope is NOT atlas -> look into the parent registry (must have the same name as this registry)
+			//          if parent scope is atlas and registry is NOT a schema registry -> no need to look into parent
+			//          if parent scope is not set -> this cannot happen because the default is atlas
+			T parentContent = null;
+			if(WorkflowConstants.ATLAS_SCOPE_NAME.equals(config.scope_parent()) && RegistryType.SCHEMA == getRegistryService(registry).getRegistry().getType()) {
+				parentContent = (T) atlasSchemaRegistryService.getContentFromFinalStage(config.scope_parent(), objectId);
+			} else if (!WorkflowConstants.ATLAS_SCOPE_NAME.equals(config.scope_parent())) {
+				parentContent = getRegistryService(registry).getContentFromFinalStage(config.scope_parent(), objectId);	
+			}
+			return parentContent;
+		}
+		return contentFromStage;	
 	}
 
 	/*
@@ -327,6 +367,8 @@ public class ScopeServiceImpl<T extends EObject> implements ScopeService<T> {
 		}
 		return;
 	}
+
+
 
 
 }
