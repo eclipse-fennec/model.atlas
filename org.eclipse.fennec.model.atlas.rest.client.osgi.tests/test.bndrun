@@ -4,8 +4,6 @@
 	bnd.identity;id='org.eclipse.fennec.model.atlas.rest.client.osgi.tests',\
 	bnd.identity;id='org.eclipse.fennec.model.atlas.rest.client.osgi',\
 	bnd.identity;id='org.eclipse.fennec.emf.osgi.component',\
-	bnd.identity;id='org.apache.felix.gogo.command',\
-	bnd.identity;id='org.apache.felix.gogo.shell',\
 	bnd.identity;id='org.eclipse.osgitech.rest'
 	
 -runbundles.test: \
