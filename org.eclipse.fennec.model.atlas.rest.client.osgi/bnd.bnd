@@ -1,0 +1,22 @@
+Bundle-Name: Model Atlas REST Client — OSGi front-end
+Bundle-Description: OSGi DS front-end for the Model Atlas client. P3-1: a ConfigAdmin \
+ factory component (PID org.eclipse.fennec.model.atlas.rest.client) that maps a \
+ configuration onto the shared ClientConfiguration and builds one plain-Java \
+ ModelAtlasClient per Atlas instance. EPackage publishing, resolution modes, drift \
+ substitution and ResourceSet integration are added by later Phase-3 tickets.
+
+-library: enableEMF
+-workingset: atlas
+
+-buildpath: \
+	org.eclipse.fennec.model.atlas.rest.client.api;version=snapshot,\
+	org.eclipse.fennec.model.atlas.rest.client.impl;version=snapshot,\
+	jakarta.ws.rs-api;version=latest,\
+	org.osgi.service.component.annotations;version=latest,\
+	org.osgi.service.metatype.annotations;version=latest
+
+-testpath: \
+	junit-jupiter-api,\
+	org.eclipse.fennec.model.atlas.rest.client.api
+
+Bundle-Version: 1.0.0.SNAPSHOT

@@ -29,6 +29,7 @@ import java.util.concurrent.TimeUnit;
 
 import org.eclipse.fennec.model.atlas.rest.client.api.AuthType;
 import org.eclipse.fennec.model.atlas.rest.client.api.ClientConfiguration;
+import org.eclipse.fennec.model.atlas.rest.client.impl.spi.DefaultJakartaRsClientProvider;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 

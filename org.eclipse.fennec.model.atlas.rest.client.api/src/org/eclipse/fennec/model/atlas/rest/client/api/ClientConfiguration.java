@@ -26,9 +26,10 @@ import java.util.Objects;
  * mirror the Phase-2 configuration property table in the design document — the
  * dotted property name for each field is given in its accessor javadoc.
  * <p>
- * The Phase-3-only properties ({@code lazy.resolve.timeout.ms},
- * {@code resource.set.fallback}) are intentionally not modelled here; they are
- * added when the OSGi front-end lands.
+ * The two Phase-3-only properties ({@code lazy.resolve.timeout.ms},
+ * {@code resource.set.fallback}) are modelled here too so there is a single
+ * shared configuration value type, but they are consumed only by the OSGi
+ * front-end and are ignored by the plain-Java client.
  */
 public final class ClientConfiguration {
 
@@ -65,6 +66,8 @@ public final class ClientConfiguration {
 	private final String truststorePath;
 	private final String truststorePassword;
 	private final String truststoreType;
+	private final int lazyResolveTimeoutMs;
+	private final boolean resourceSetFallback;
 
 	private ClientConfiguration(Builder b) {
 		this.baseUri = b.baseUri;
@@ -94,6 +97,8 @@ public final class ClientConfiguration {
 		this.truststorePath = b.truststorePath;
 		this.truststorePassword = b.truststorePassword;
 		this.truststoreType = b.truststoreType;
+		this.lazyResolveTimeoutMs = b.lazyResolveTimeoutMs;
+		this.resourceSetFallback = b.resourceSetFallback;
 	}
 
 	/** A new builder with every property at its default; {@code base.uri} is required. */
@@ -247,6 +252,25 @@ public final class ClientConfiguration {
 		return truststoreType;
 	}
 
+	/**
+	 * {@code lazy.resolve.timeout.ms} — OSGi front-end only: how long the delegating
+	 * registry blocks in LAZY mode for a fetched package to become observable in the
+	 * framework {@code EPackage.Registry}; default {@code 5000}. Ignored by the
+	 * plain-Java client.
+	 */
+	public int getLazyResolveTimeoutMs() {
+		return lazyResolveTimeoutMs;
+	}
+
+	/**
+	 * {@code resource.set.fallback} — OSGi front-end only: whether framework-produced
+	 * {@code ResourceSet}s are wrapped with the Atlas-aware delegating registry;
+	 * default {@code true}. Ignored by the plain-Java client.
+	 */
+	public boolean isResourceSetFallback() {
+		return resourceSetFallback;
+	}
+
 	@Override
 	public boolean equals(Object o) {
 		if (this == o) {
@@ -258,6 +282,8 @@ public final class ClientConfiguration {
 		ClientConfiguration that = (ClientConfiguration) o;
 		return connectTimeoutMs == that.connectTimeoutMs
 				&& readTimeoutMs == that.readTimeoutMs
+				&& lazyResolveTimeoutMs == that.lazyResolveTimeoutMs
+				&& resourceSetFallback == that.resourceSetFallback
 				&& modeStrict == that.modeStrict
 				&& forceRemote == that.forceRemote
 				&& registerInGlobalRegistry == that.registerInGlobalRegistry
@@ -291,7 +317,7 @@ public final class ClientConfiguration {
 				eagerNsUriAllowList, modeStrict, nsUriAllowList, nsUriDenyList, forceRemote,
 				registerInGlobalRegistry, driftCheckIntervalMs, scopeAllowList, defaultScope, view, cacheMaxEntries,
 				cacheTtlMs, cacheDiskDir, authType, authTokenEnv, keystorePath, keystorePassword, keystoreType,
-				truststorePath, truststorePassword, truststoreType);
+				truststorePath, truststorePassword, truststoreType, lazyResolveTimeoutMs, resourceSetFallback);
 	}
 
 	@Override
@@ -334,6 +360,8 @@ public final class ClientConfiguration {
 		private String truststorePath;
 		private String truststorePassword;
 		private String truststoreType = DEFAULT_STORE_TYPE;
+		private int lazyResolveTimeoutMs = 5_000;
+		private boolean resourceSetFallback = true;
 
 		private Builder() {
 			// use ClientConfiguration.builder()
@@ -367,6 +395,8 @@ public final class ClientConfiguration {
 			this.truststorePath = from.truststorePath;
 			this.truststorePassword = from.truststorePassword;
 			this.truststoreType = from.truststoreType;
+			this.lazyResolveTimeoutMs = from.lazyResolveTimeoutMs;
+			this.resourceSetFallback = from.resourceSetFallback;
 		}
 
 		public Builder baseUri(URI baseUri) {
@@ -501,6 +531,16 @@ public final class ClientConfiguration {
 
 		public Builder truststoreType(String truststoreType) {
 			this.truststoreType = Objects.requireNonNull(truststoreType, "truststoreType");
+			return this;
+		}
+
+		public Builder lazyResolveTimeoutMs(int lazyResolveTimeoutMs) {
+			this.lazyResolveTimeoutMs = lazyResolveTimeoutMs;
+			return this;
+		}
+
+		public Builder resourceSetFallback(boolean resourceSetFallback) {
+			this.resourceSetFallback = resourceSetFallback;
 			return this;
 		}
 

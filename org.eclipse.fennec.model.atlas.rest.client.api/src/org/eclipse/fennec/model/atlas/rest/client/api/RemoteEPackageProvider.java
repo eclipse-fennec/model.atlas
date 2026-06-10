@@ -60,6 +60,26 @@ public interface RemoteEPackageProvider {
 	Optional<EPackage> ensureAvailable(String nsUri);
 
 	/**
+	 * Resolve an nsURI to its package <em>and</em> its authoritative origin.
+	 * <p>
+	 * Unlike {@link #getEPackage(String)}, which walks the configured scopes
+	 * probing for content and so cannot report where the package actually lives,
+	 * this reads the server's metadata first ({@code GET
+	 * /{scope}/schema/stages/{view}?nsUri=…}, which respects scope inheritance) to
+	 * learn the owning scope, registry, stage and version, then fetches the content
+	 * from that exact location. The entry scope queried is gated by
+	 * {@code scope.allow.list} / {@code default.scope} just like {@link #getEPackage(String)};
+	 * the resolved owning scope may be a parent of it. Intended for the OSGi
+	 * front-end's lazy publication, where the {@code atlas.*} origin properties must
+	 * be accurate rather than approximated.
+	 *
+	 * @param nsUri the package namespace URI
+	 * @return the resolved package with its origin, or empty if not visible from any
+	 *         allowed scope
+	 */
+	Optional<ResolvedEPackage> resolve(String nsUri);
+
+	/**
 	 * Force a re-fetch of one nsURI from the server, bypassing the cache, and
 	 * replace the cached entry with the result.
 	 *

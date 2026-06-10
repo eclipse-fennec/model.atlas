@@ -278,6 +278,73 @@ class RemoteEPackageProviderImplTest {
 		assertEquals(List.of("jena", "schema"), paths.getAllValues());
 	}
 
+	// ---- resolve (metadata-first) -----------------------------------------
+
+	private static String metadataJson(String scope, String registry, String stage, String version) {
+		return "{\"scope\":\"" + scope + "\",\"registry\":\"" + registry + "\",\"stage\":\"" + stage
+				+ "\",\"version\":\"" + version + "\"}";
+	}
+
+	@Test
+	void resolve_labelsOriginFromMetadata_butFetchesContentViaEntryScope() {
+		// Metadata query (json) reports the owning scope/registry/stage/version of an
+		// inherited package (owner "atlas", queried via "jena").
+		Response metadata = jsonOk(metadataJson("atlas", "schema", "released", "1.2"));
+		Response content = contentOk("<xmi/>".getBytes(StandardCharsets.UTF_8));
+		when(request.get()).thenReturn(metadata, content);
+
+		var resolved = provider(config("jena")).resolve("urn:ns:inherited");
+
+		assertTrue(resolved.isPresent());
+		assertEquals("urn:ns:inherited", resolved.get().getNsUri());
+		// The origin is LABELLED from the metadata — the owner, not the queried entry scope.
+		assertEquals("atlas", resolved.get().getScope());
+		assertEquals("schema", resolved.get().getRegistry());
+		assertEquals("released", resolved.get().getStage());
+		assertEquals("1.2", resolved.get().getVersion());
+		assertEquals("urn:ns:inherited", resolved.get().getEPackage().getNsURI());
+
+		// First the metadata URL (no /content), then content from the ENTRY scope's view
+		// stage — NOT a direct /{owningScope}/... request: a parent's schema registry is
+		// exposed under a different name, so parent-owned content is only reachable through
+		// the queried child, which the server resolves by inheritance.
+		ArgumentCaptor<String> paths = ArgumentCaptor.forClass(String.class);
+		verify(target, org.mockito.Mockito.atLeastOnce()).path(paths.capture());
+		assertEquals(List.of("jena", "schema", "stages", "released", "jena", "schema", "stages", "released",
+				"content"), paths.getAllValues());
+	}
+
+	@Test
+	void resolve_walksEntryScopes_untilMetadataVisible() {
+		// entry "a" cannot see it (204); entry "b" can, owner is "b"; then content.
+		Response miss = noContent();
+		Response metadata = jsonOk(metadataJson("b", "schema", "released", "1.0"));
+		Response content = contentOk("<xmi/>".getBytes(StandardCharsets.UTF_8));
+		when(request.get()).thenReturn(miss, metadata, content);
+
+		var resolved = provider(config("a", "b")).resolve("urn:ns:x");
+
+		assertTrue(resolved.isPresent());
+		assertEquals("b", resolved.get().getScope());
+	}
+
+	@Test
+	void resolve_notVisibleFromAnyAllowedScope_returnsEmpty() {
+		// Build the mocks first; constructing them inside thenReturn(...) nests stubbing.
+		Response miss1 = noContent();
+		Response miss2 = noContent();
+		when(request.get()).thenReturn(miss1, miss2);
+		assertFalse(provider(config("a", "b")).resolve("urn:ns:nope").isPresent());
+	}
+
+	@Test
+	void resolve_deniedNsUri_returnsEmpty_withoutFetch() {
+		ClientConfiguration cfg = ClientConfiguration.builder().baseUri(BASE).scopeAllowList(List.of("jena"))
+				.nsUriDenyList(List.of("urn:ns:denied")).build();
+		assertFalse(provider(cfg).resolve("urn:ns:denied").isPresent());
+		verify(request, org.mockito.Mockito.never()).get();
+	}
+
 	// ---- caching (P2-5) ---------------------------------------------------
 
 	@Test

@@ -24,6 +24,7 @@ import java.util.function.Supplier;
 import org.eclipse.emf.ecore.EPackage;
 import org.eclipse.fennec.model.atlas.rest.client.api.ClientConfiguration;
 import org.eclipse.fennec.model.atlas.rest.client.api.RemoteEPackageProvider;
+import org.eclipse.fennec.model.atlas.rest.client.api.ResolvedEPackage;
 
 import com.fasterxml.jackson.databind.JsonNode;
 
@@ -46,6 +47,12 @@ import jakarta.ws.rs.client.WebTarget;
  * scopes in order (first hit wins), caching the result</li>
  * <li>{@code refresh(nsUri)} → always re-contact the server, revalidating with
  * the stored ETag</li>
+ * <li>{@code resolve(nsUri)} → metadata-first: {@code GET
+ * /{scope}/schema/stages/{view}?nsUri=…} for the authoritative origin (owning
+ * scope/registry/stage/version, resolved through inheritance), then content fetched
+ * through that same entry scope's {@code view} stage (which walks the hierarchy
+ * server-side, so a parent-owned package is served via the queried child) — the
+ * metadata only labels the origin, so the caller need not guess where it lives</li>
  * </ul>
  * The body of a content hit is decoded by an {@link EPackageDeserializer} (P2-4)
  * and stored in the cache with its {@code ETag}/{@code Last-Modified} validators.
@@ -137,6 +144,44 @@ class RemoteEPackageProviderImpl implements RemoteEPackageProvider {
 	}
 
 	@Override
+	public Optional<ResolvedEPackage> resolve(String nsUri) {
+		Objects.requireNonNull(nsUri, "nsUri");
+		if (!isPublishable(nsUri)) {
+			return Optional.empty();
+		}
+		// Metadata-first: ask an entry scope for the authoritative origin (the server
+		// resolves it through scope inheritance, so the returned scope is the OWNING
+		// scope — possibly a parent of the queried one). Entry scopes are gated by
+		// scope.allow.list / default.scope, so nothing outside an allowed scope's
+		// visibility can be reached. First entry scope that can see it wins.
+		for (String entryScope : resolveScopes()) {
+			Optional<PackageMetadata> metadata = fetchMetadata(entryScope, nsUri);
+			if (metadata.isEmpty()) {
+				continue;
+			}
+			PackageMetadata md = metadata.get();
+			if (md.scope() == null || md.stage() == null) {
+				continue; // malformed metadata — cannot describe the origin
+			}
+			// Fetch the content through the ENTRY scope's view stage, not the owning
+			// scope/stage the metadata reports. A package inherited from a parent (e.g. the
+			// root `atlas` scope) is not reachable by a direct `/{owningScope}/schema/...`
+			// request — the parent's schema registry is exposed under a different name and
+			// only a child scope walks the hierarchy. The entry scope's content endpoint
+			// resolves inheritance server-side (this is the same path getEPackage uses), so
+			// it serves the parent-owned content; the metadata is used only to LABEL the
+			// authoritative origin (owning scope/registry/stage/version) on the result.
+			Optional<EPackage> content = fetchResolvedContent(entryScope, configuration.getView(), nsUri);
+			if (content.isEmpty()) {
+				continue;
+			}
+			return Optional.of(new ResolvedEPackage(content.get(), nsUri, md.scope(), md.registry(), md.stage(),
+					md.version()));
+		}
+		return Optional.empty();
+	}
+
+	@Override
 	public Optional<EPackage> refresh(String nsUri) {
 		Objects.requireNonNull(nsUri, "nsUri");
 		if (!isPublishable(nsUri)) {
@@ -219,7 +264,12 @@ class RemoteEPackageProviderImpl implements RemoteEPackageProvider {
 	 * </ul>
 	 */
 	private Optional<ContentResult> fetchContent(String scope, String nsUri, String ifNoneMatch) {
-		WebTarget target = baseTarget.path(scope).path(SCHEMA).path(STAGES).path(configuration.getView())
+		return fetchContent(scope, configuration.getView(), nsUri, ifNoneMatch);
+	}
+
+	/** As {@link #fetchContent(String, String, String)} but from an explicit stage (used by {@link #resolve}). */
+	private Optional<ContentResult> fetchContent(String scope, String stage, String nsUri, String ifNoneMatch) {
+		WebTarget target = baseTarget.path(scope).path(SCHEMA).path(STAGES).path(stage)
 				.path("content").queryParam("nsUri", nsUri);
 		Response response = RestSupport.get(target, EPACKAGE_MEDIA_TYPE, ifNoneMatch);
 		try {
@@ -242,6 +292,63 @@ class RemoteEPackageProviderImpl implements RemoteEPackageProvider {
 		} finally {
 			response.close();
 		}
+	}
+
+	/**
+	 * Fetch the authoritative metadata for {@code nsUri} as seen from {@code entryScope}
+	 * ({@code GET /{scope}/schema/stages/{view}?nsUri=…}, which respects scope
+	 * inheritance). Empty when the package is not visible from this entry scope
+	 * ({@code 204}/{@code 404}/any non-success), so the caller tries the next scope.
+	 */
+	private Optional<PackageMetadata> fetchMetadata(String entryScope, String nsUri) {
+		WebTarget target = baseTarget.path(entryScope).path(SCHEMA).path(STAGES).path(configuration.getView())
+				.queryParam("nsUri", nsUri);
+		Response response = RestSupport.get(target, MediaType.APPLICATION_JSON);
+		try {
+			// 204 (not visible from this scope) or any non-success → a miss; the caller
+			// tries the next entry scope rather than failing the whole resolution.
+			if (response.getStatus() == Response.Status.NO_CONTENT.getStatusCode()
+					|| !RestSupport.isSuccess(response)) {
+				return Optional.empty();
+			}
+			JsonNode node = RestSupport.parse(response.readEntity(String.class), "resolve(" + nsUri + ")");
+			return Optional.of(new PackageMetadata(text(node, "scope"), text(node, "registry"), text(node, "stage"),
+					text(node, "version")));
+		} finally {
+			response.close();
+		}
+	}
+
+	/**
+	 * Content fetch for {@link #resolve} from the given (entry) scope and stage —
+	 * which resolves scope inheritance server-side — reusing the cache and its
+	 * conditional-GET path (P2-5/P2-6).
+	 */
+	private Optional<EPackage> fetchResolvedContent(String scope, String stage, String nsUri) {
+		Optional<ClientCache.Entry<EPackage>> existing = cache.lookup(nsUri);
+		String ifNoneMatch = existing.map(ClientCache.Entry::etag).orElse(null);
+		Optional<ContentResult> result = fetchContent(scope, stage, nsUri, ifNoneMatch);
+		if (result.isEmpty()) {
+			return Optional.empty();
+		}
+		ContentResult content = result.get();
+		if (content.notModified()) {
+			ClientCache.Entry<EPackage> entry = existing.orElseThrow();
+			cache.put(nsUri, entry.value(), entry.etag(), entry.lastModified());
+			return Optional.of(entry.value());
+		}
+		FetchedPackage fetched = content.fetched();
+		cache.put(nsUri, fetched.ePackage(), fetched.etag(), fetched.lastModified());
+		return Optional.of(fetched.ePackage());
+	}
+
+	private static String text(JsonNode node, String field) {
+		JsonNode value = node.get(field);
+		return value == null || value.isNull() ? null : value.asText();
+	}
+
+	/** The origin fields of a package's {@code ObjectMetadata} needed to locate and stamp it. */
+	private record PackageMetadata(String scope, String registry, String stage, String version) {
 	}
 
 	/** A freshly fetched package together with its HTTP validators. */

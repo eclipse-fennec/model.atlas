@@ -40,6 +40,7 @@ import org.eclipse.emf.ecore.resource.ResourceSet;
 import org.eclipse.emf.ecore.resource.impl.ResourceSetImpl;
 import org.eclipse.emf.ecore.xmi.impl.XMIResourceFactoryImpl;
 import org.eclipse.fennec.model.atlas.rest.client.api.RemoteEPackageProvider;
+import org.eclipse.fennec.model.atlas.rest.client.api.ResolvedEPackage;
 import org.junit.jupiter.api.Test;
 
 /**
@@ -75,6 +76,12 @@ class AtlasDelegatingPackageRegistryTest {
 		@Override
 		public Optional<EPackage> refresh(String nsUri) {
 			return ensureAvailable(nsUri);
+		}
+
+		@Override
+		public Optional<ResolvedEPackage> resolve(String nsUri) {
+			return ensureAvailable(nsUri)
+					.map(pkg -> new ResolvedEPackage(pkg, nsUri, "test", "schema", "released", null));
 		}
 	}
 

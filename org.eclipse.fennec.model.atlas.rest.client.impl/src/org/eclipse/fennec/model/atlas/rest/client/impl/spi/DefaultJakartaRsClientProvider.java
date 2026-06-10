@@ -11,7 +11,7 @@
  * Contributors:
  *     Data In Motion - initial API and implementation
  */
-package org.eclipse.fennec.model.atlas.rest.client.impl;
+package org.eclipse.fennec.model.atlas.rest.client.impl.spi;
 
 import java.io.IOException;
 import java.io.InputStream;

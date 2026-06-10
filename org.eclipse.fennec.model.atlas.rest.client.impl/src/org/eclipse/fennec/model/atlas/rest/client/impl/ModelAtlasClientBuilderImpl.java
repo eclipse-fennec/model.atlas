@@ -19,6 +19,7 @@ import java.util.Objects;
 import org.eclipse.fennec.model.atlas.rest.client.api.ClientConfiguration;
 import org.eclipse.fennec.model.atlas.rest.client.api.JakartaRsClientProvider;
 import org.eclipse.fennec.model.atlas.rest.client.api.ModelAtlasClient;
+import org.eclipse.fennec.model.atlas.rest.client.impl.spi.DefaultJakartaRsClientProvider;
 
 import jakarta.ws.rs.client.Client;
 

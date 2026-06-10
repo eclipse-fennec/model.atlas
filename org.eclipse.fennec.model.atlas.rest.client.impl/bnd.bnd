@@ -5,6 +5,10 @@ Bundle-Description: Plain-Java implementation of the Model Atlas client API: \
  backs ModelAtlasClient.builder(). REST mapping, caching and drift detection \
  are added by later Phase-2 tickets. Reused as-is by the OSGi front-end (Phase 3).
 
+# Only the provider SPI base is exported, as an extension point for the OSGi
+# front-end (Phase 3): WhiteboardJakartaRsClientProvider extends it to source the
+# ClientBuilder from the Whiteboard. Everything else stays Private-Package.
+
 -buildpath: \
 	org.eclipse.fennec.model.atlas.rest.client.api;version=snapshot,\
 	jakarta.ws.rs-api;version=latest,\
