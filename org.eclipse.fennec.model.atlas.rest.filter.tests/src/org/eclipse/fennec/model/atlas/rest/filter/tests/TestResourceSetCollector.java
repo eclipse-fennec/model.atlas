@@ -19,24 +19,28 @@ import java.util.concurrent.ConcurrentHashMap;
 import org.eclipse.emf.ecore.resource.ResourceSet;
 import org.eclipse.fennec.model.atlas.workflow.ResourceSetCollector;
 import org.osgi.service.component.ComponentServiceObjects;
-import org.osgi.service.component.annotations.Component;
 
 /**
- * High-priority test override of {@link ResourceSetCollector}. Tests register
- * scope/stage-specific {@link CountingCso} entries via
- * {@link #register(String, String, CountingCso)}. The
- * {@code ScopedResourceSetFeature}'s DYNAMIC/GREEDY reference will pick this
- * instance because of the {@code service.ranking = Integer.MAX_VALUE}.
+ * High-priority test override of {@link ResourceSetCollector}. The test
+ * harness instantiates it directly and registers it as an OSGi service via
+ * {@code BundleContext.registerService} with {@code service.ranking = MAX_VALUE}
+ * so the production {@code ScopedResourceSetProvider}'s DYNAMIC/GREEDY
+ * reference picks it.
  *
- * <p>This subclass intentionally does not re-declare the parent's
- * {@code @Reference} bindings: DS only processes annotations on the declared
- * component class, so the inherited tracking maps stay empty and only entries
- * registered through {@link #register(String, String, CountingCso)} are
- * visible.
+ * <p>This class deliberately carries no {@code @Component} annotation. If it
+ * did, bnd would emit an {@code osgi.service} Provide-Capability entry for
+ * the {@link ResourceSetCollector} object class in this bundle's manifest,
+ * which would make the workspace-aware resolver consider the test bundle as
+ * a candidate provider for any production bundle that requires the
+ * production {@code ResourceSetCollector} — exactly the pull-in problem the
+ * runblacklist on this bundle used to work around. With manual registration,
+ * the manifest stays clean.
+ *
+ * <p>Because the parent class's {@code @Reference} bind methods are
+ * processed by DS only on the declared component (which this class is not),
+ * the inherited tracking maps stay empty and only entries registered through
+ * {@link #register(String, String, ComponentServiceObjects)} are visible.
  */
-@Component(
-		service = { ResourceSetCollector.class, TestResourceSetCollector.class },
-		property = "service.ranking:Integer=2147483647")
 public class TestResourceSetCollector extends ResourceSetCollector {
 
 	private final Map<String, ComponentServiceObjects<ResourceSet>> entries = new ConcurrentHashMap<>();

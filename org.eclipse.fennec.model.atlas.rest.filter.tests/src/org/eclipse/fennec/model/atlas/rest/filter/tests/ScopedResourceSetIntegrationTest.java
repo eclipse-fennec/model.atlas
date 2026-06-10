@@ -18,7 +18,9 @@ import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.ArrayList;
+import java.util.Dictionary;
 import java.util.HashSet;
+import java.util.Hashtable;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.Callable;
@@ -32,16 +34,23 @@ import org.eclipse.emf.ecore.EcoreFactory;
 import org.eclipse.emf.ecore.resource.ResourceSet;
 import org.eclipse.emf.ecore.resource.impl.ResourceSetImpl;
 import org.eclipse.fennec.emf.osgi.annotation.require.RequireEMF;
+import org.eclipse.fennec.model.atlas.mediatypes.api.SupportedMediatype;
+import org.eclipse.fennec.model.atlas.workflow.ResourceSetCollector;
+import org.eclipse.fennec.model.atlas.workflow.ScopeServiceCollector;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.osgi.framework.BundleContext;
+import org.osgi.framework.Constants;
+import org.osgi.framework.ServiceRegistration;
 import org.osgi.service.cm.annotations.RequireConfigurationAdmin;
 import org.osgi.service.jakartars.runtime.JakartarsServiceRuntime;
 import org.osgi.service.jakartars.runtime.dto.ApplicationDTO;
 import org.osgi.service.jakartars.runtime.dto.ResourceDTO;
 import org.osgi.service.jakartars.runtime.dto.RuntimeDTO;
 import org.osgi.service.jakartars.whiteboard.annotations.RequireJakartarsWhiteboard;
+import org.osgi.test.common.annotation.InjectBundleContext;
 import org.osgi.test.common.annotation.InjectService;
 import org.osgi.test.junit5.context.BundleContextExtension;
 import org.osgi.test.junit5.service.ServiceExtension;
@@ -83,12 +92,6 @@ public class ScopedResourceSetIntegrationTest {
 	private static final String SINGLETON_RESOURCE_NAME = "SingletonResourceSetClassResource";
 
 	@InjectService(timeout = 5_000)
-	TestResourceSetCollector testCollector;
-
-	@InjectService(timeout = 5_000)
-	TestScopeServiceCollector testScopeCollector;
-
-	@InjectService(timeout = 5_000)
 	ClientBuilder clientBuilder;
 
 	@InjectService(timeout = 5_000)
@@ -98,12 +101,38 @@ public class ScopedResourceSetIntegrationTest {
 	private CountingCso scopeAStageA;
 	private CountingCso scopeBStageB;
 
+	// Test overrides are instantiated directly and registered manually with
+	// MAX_VALUE service.ranking so the production DYNAMIC/GREEDY references
+	// rebind to them. Manual registration keeps these classes out of bnd's
+	// auto-generated osgi.service Provide-Capability set for this bundle,
+	// so the workspace-aware resolver no longer treats this test bundle as
+	// a candidate provider for ResourceSetCollector / ScopeServiceCollector
+	// / SupportedMediatype in production resolves.
+	private TestResourceSetCollector testCollector;
+	private TestScopeServiceCollector testScopeCollector;
+	private final List<ServiceRegistration<?>> registrations = new ArrayList<>();
+
 	@BeforeEach
-	public void setUp() throws InterruptedException {
+	public void setUp(@InjectBundleContext BundleContext context) throws InterruptedException {
 		client = clientBuilder.build();
 
-		testCollector.clear();
-		testScopeCollector.clear();
+		testCollector = new TestResourceSetCollector();
+		testScopeCollector = new TestScopeServiceCollector();
+		TestSupportedMediatype testMediatype = new TestSupportedMediatype();
+
+		registrations.add(context.registerService(
+				new String[] { ResourceSetCollector.class.getName(),
+						TestResourceSetCollector.class.getName() },
+				testCollector, maxRanking()));
+		registrations.add(context.registerService(
+				new String[] { ScopeServiceCollector.class.getName(),
+						TestScopeServiceCollector.class.getName() },
+				testScopeCollector, maxRanking()));
+		registrations.add(context.registerService(
+				new String[] { SupportedMediatype.class.getName(),
+						TestSupportedMediatype.class.getName() },
+				testMediatype, maxRanking()));
+
 		testScopeCollector.register("scopeA");
 		testScopeCollector.register("scopeB");
 
@@ -129,8 +158,26 @@ public class ScopedResourceSetIntegrationTest {
 			client.close();
 			client = null;
 		}
-		testCollector.clear();
-		testScopeCollector.clear();
+		for (ServiceRegistration<?> registration : registrations) {
+			try {
+				registration.unregister();
+			} catch (IllegalStateException alreadyUnregistered) {
+				// fine — the framework already cleaned this up
+			}
+		}
+		registrations.clear();
+		if (testCollector != null) {
+			testCollector.clear();
+		}
+		if (testScopeCollector != null) {
+			testScopeCollector.clear();
+		}
+	}
+
+	private static Dictionary<String, Object> maxRanking() {
+		Dictionary<String, Object> props = new Hashtable<>();
+		props.put(Constants.SERVICE_RANKING, Integer.MAX_VALUE);
+		return props;
 	}
 
 	@Test

@@ -30,3 +30,15 @@
 	org.eclipse.fennec.model.atlas.management.lucene;version=snapshot,\
 	org.eclipse.fennec.model.atlas.rest.common;version=snapshot,\
 	org.eclipse.fennec.codec.rest;version=latest,\
+
+# Hard runtime requirement on the Model Atlas scoped-resource-set
+# filter (provided by org.eclipse.fennec.model.atlas.rest.filter).
+# Without this, the @Context ResourceSet injection would not see the
+# scope/stage-aware ScopedResourceSetProvider and requests under
+# /{scopeName}/stages/{stageName}/... would resolve against the
+# default ResourceSet. The unique osgi.implementation identifier also
+# ensures the resolver picks the production filter bundle, not the
+# test bundle (which deliberately does not declare this capability).
+Require-Capability: \
+	osgi.implementation;\
+		filter:="(&(osgi.implementation=org.eclipse.fennec.model.atlas.scoped-resource-set)(version>=1.0.0))"
