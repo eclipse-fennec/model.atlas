@@ -52,7 +52,7 @@ Bundle-Developers: \
 github-project: model.atlas
 github-orga: eclipse-fennec
 fennec-baselining: false
-base-version: 0.0.1
+base-version: 0.1.0
 maven-central: true
 
 # Maven Central Group-Id
