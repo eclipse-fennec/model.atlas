@@ -20,6 +20,10 @@ import org.eclipse.emf.common.notify.impl.AdapterFactoryImpl;
 
 import org.eclipse.emf.ecore.EObject;
 
+import org.eclipse.fennec.model.atlas.scope.api.ReadOnlyScopeService;
+import org.eclipse.fennec.model.atlas.scope.api.RegistryInfo;
+import org.eclipse.fennec.model.atlas.scope.api.ScopeInfo;
+
 import org.eclipse.fennec.model.atlas.wf.workflowapi.*;
 
 /**
@@ -30,6 +34,7 @@ import org.eclipse.fennec.model.atlas.wf.workflowapi.*;
  * @see org.eclipse.fennec.model.atlas.wf.workflowapi.WorkflowApiPackage
  * @generated
  */
+@SuppressWarnings("deprecation")
 public class WorkflowApiAdapterFactory extends AdapterFactoryImpl {
 	/**
 	 * The cached model package.
@@ -107,6 +112,22 @@ public class WorkflowApiAdapterFactory extends AdapterFactoryImpl {
 				return createStageTransitionAdapter();
 			}
 			@Override
+			public <T extends EObject> Adapter caseWritableScopeService(WritableScopeService<T> object) {
+				return createWritableScopeServiceAdapter();
+			}
+			@Override
+			public <T extends EObject> Adapter caseReadOnlyScopeService(ReadOnlyScopeService<T> object) {
+				return createReadOnlyScopeServiceAdapter();
+			}
+			@Override
+			public Adapter caseRegistryInfo(RegistryInfo object) {
+				return createRegistryInfoAdapter();
+			}
+			@Override
+			public Adapter caseScopeInfo(ScopeInfo object) {
+				return createScopeInfoAdapter();
+			}
+			@Override
 			public Adapter defaultCase(EObject object) {
 				return createEObjectAdapter();
 			}
@@ -162,8 +183,10 @@ public class WorkflowApiAdapterFactory extends AdapterFactoryImpl {
 	 * <!-- end-user-doc -->
 	 * @return the new adapter.
 	 * @see org.eclipse.fennec.model.atlas.wf.workflowapi.ScopeService
+	 * @deprecated See {@link ScopeService model documentation} for details.
 	 * @generated
 	 */
+		@Deprecated
 	public Adapter createScopeServiceAdapter() {
 		return null;
 	}
@@ -221,6 +244,62 @@ public class WorkflowApiAdapterFactory extends AdapterFactoryImpl {
 	 * @generated
 	 */
 	public Adapter createStageTransitionAdapter() {
+		return null;
+	}
+
+	/**
+	 * Creates a new adapter for an object of class '{@link org.eclipse.fennec.model.atlas.wf.workflowapi.WritableScopeService <em>Writable Scope Service</em>}'.
+	 * <!-- begin-user-doc -->
+	 * This default implementation returns null so that we can easily ignore cases;
+	 * it's useful to ignore a case when inheritance will catch all the cases anyway.
+	 * <!-- end-user-doc -->
+	 * @return the new adapter.
+	 * @see org.eclipse.fennec.model.atlas.wf.workflowapi.WritableScopeService
+	 * @generated
+	 */
+	public Adapter createWritableScopeServiceAdapter() {
+		return null;
+	}
+
+	/**
+	 * Creates a new adapter for an object of class '{@link org.eclipse.fennec.model.atlas.scope.api.ReadOnlyScopeService <em>Read Only Scope Service</em>}'.
+	 * <!-- begin-user-doc -->
+	 * This default implementation returns null so that we can easily ignore cases;
+	 * it's useful to ignore a case when inheritance will catch all the cases anyway.
+	 * <!-- end-user-doc -->
+	 * @return the new adapter.
+	 * @see org.eclipse.fennec.model.atlas.scope.api.ReadOnlyScopeService
+	 * @generated
+	 */
+	public Adapter createReadOnlyScopeServiceAdapter() {
+		return null;
+	}
+
+	/**
+	 * Creates a new adapter for an object of class '{@link org.eclipse.fennec.model.atlas.scope.api.RegistryInfo <em>Registry Info</em>}'.
+	 * <!-- begin-user-doc -->
+	 * This default implementation returns null so that we can easily ignore cases;
+	 * it's useful to ignore a case when inheritance will catch all the cases anyway.
+	 * <!-- end-user-doc -->
+	 * @return the new adapter.
+	 * @see org.eclipse.fennec.model.atlas.scope.api.RegistryInfo
+	 * @generated
+	 */
+	public Adapter createRegistryInfoAdapter() {
+		return null;
+	}
+
+	/**
+	 * Creates a new adapter for an object of class '{@link org.eclipse.fennec.model.atlas.scope.api.ScopeInfo <em>Scope Info</em>}'.
+	 * <!-- begin-user-doc -->
+	 * This default implementation returns null so that we can easily ignore cases;
+	 * it's useful to ignore a case when inheritance will catch all the cases anyway.
+	 * <!-- end-user-doc -->
+	 * @return the new adapter.
+	 * @see org.eclipse.fennec.model.atlas.scope.api.ScopeInfo
+	 * @generated
+	 */
+	public Adapter createScopeInfoAdapter() {
 		return null;
 	}
 

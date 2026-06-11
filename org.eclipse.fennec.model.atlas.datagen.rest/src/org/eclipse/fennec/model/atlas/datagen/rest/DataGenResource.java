@@ -3,6 +3,7 @@ package org.eclipse.fennec.model.atlas.datagen.rest;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 import org.eclipse.emf.ecore.EClassifier;
 import org.eclipse.emf.ecore.EObject;
@@ -13,9 +14,8 @@ import org.eclipse.fennec.model.atlas.datagen.model.datagen.ClassGenConfig;
 import org.eclipse.fennec.model.atlas.datagen.model.datagen.DataGenConfig;
 import org.eclipse.fennec.model.atlas.datagen.model.datagen.DataGenResult;
 import org.eclipse.fennec.model.atlas.datagen.model.datagen.DatagenFactory;
-import org.eclipse.fennec.model.atlas.mgmt.management.ObjectMetadata;
-import org.eclipse.fennec.model.atlas.wf.workflowapi.ScopeService;
-import org.eclipse.fennec.model.atlas.workflow.ScopeServiceCollector;
+import org.eclipse.fennec.model.atlas.readonlyscope.collector.ReadOnlyScopeCollector;
+import org.eclipse.fennec.model.atlas.scope.api.ReadOnlyScopeService;
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
 import org.osgi.service.component.annotations.ReferenceScope;
@@ -29,7 +29,6 @@ import jakarta.ws.rs.POST;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.PathParam;
 import jakarta.ws.rs.Produces;
-import jakarta.ws.rs.QueryParam;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 
@@ -46,7 +45,6 @@ public class DataGenResource {
 	
 	private static final String JENA_SCOPE_NAME = "jena";
 	private static final String DATA_GEN_REGISTRY_NAME = "DataGen";
-	private static final String DATA_GEN_STAGE_NAME = "release";
 
 	@Reference(scope = ReferenceScope.PROTOTYPE_REQUIRED)
 	private DataGenService dataGenService;
@@ -55,7 +53,7 @@ public class DataGenResource {
 	private ResourceSet resourceSet;
 	
 	@Reference
-    private ScopeServiceCollector scopeCollector;
+    private ReadOnlyScopeCollector scopeCollector;
 
 	@POST
 	@Consumes("application/xmi")
@@ -77,31 +75,16 @@ public class DataGenResource {
 	}
 	
 	@GET
-	@Path("/{configName}")
+	@Path("/{objectId}")
 	@Produces({"application/xmi", MediaType.APPLICATION_JSON})
-	public Response generateByConfigName(@PathParam("configName") String configName, @QueryParam("version") String version) {
+	public Response generateByObjectId(@PathParam("objectId") String objectId) {
 		try {
-			ScopeService<?> scopeService = getScopeService();
-			
-			List<ObjectMetadata> objectsMetadata = scopeService.listInStageForRegistryByName(DATA_GEN_REGISTRY_NAME,
-					DATA_GEN_STAGE_NAME, configName);
-            if (objectsMetadata.isEmpty()) {
-                return Response.status(Response.Status.NO_CONTENT).build();
-            }
-            ObjectMetadata metadata = null;
-            if(version != null) {
-            	metadata = objectsMetadata.stream().filter(m -> version.equals(m.getVersion())).findFirst().orElse(null);
-            } else {
-            	metadata = objectsMetadata.get(0);
-            }
-            if(metadata == null) {
+			ReadOnlyScopeService<?> scopeService = getScopeService();
+
+			Optional<?> content = scopeService.get(DATA_GEN_REGISTRY_NAME, objectId);
+            if (content.isEmpty() || !(content.get() instanceof DataGenConfig config)) {
             	return Response.status(Response.Status.NO_CONTENT).build();
             }
-            EObject eObject = scopeService.getContentFromStageForRegistry(DATA_GEN_REGISTRY_NAME, DATA_GEN_STAGE_NAME, metadata.getObjectId());
-            if(eObject == null || !(eObject instanceof DataGenConfig)) {
-            	return Response.status(Response.Status.NO_CONTENT).build();
-            }
-            DataGenConfig config = (DataGenConfig) eObject;
             List<EPackage> targetPackages = resolvePackages(config);
 			Map<String, List<EObject>> generated = dataGenService.generate(config, targetPackages);
 
@@ -186,7 +169,7 @@ public class DataGenResource {
 		return null;
 	}
 	
-	private ScopeService<?> getScopeService() {
+	private ReadOnlyScopeService<?> getScopeService() {
         return scopeCollector.getScopeServiceByScopeName(JENA_SCOPE_NAME);
     }
 }

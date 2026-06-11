@@ -6,6 +6,7 @@
         "storageService.target": "(storage.type=file)"
     },
     "ScopeService~jena": {
+    	"atlas.scope": "jena",
         "scope.name": "jena",
         "scope.description": "City Jena Scope",
         "parent.scope": "atlas",

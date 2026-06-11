@@ -77,6 +77,7 @@ public class TestAnnotations extends CommonTestAnnotations{
     
     @SchemaRegistryServiceSetup
 	@WithFactoryConfiguration(factoryPid = PID_SCOPE_SERVICE, name = TEST_SCOPE_NAME, location = "?", properties = {
+			@Property(key = "atlas.scope", value = TEST_SCOPE_NAME),
 			@Property(key = "scope.name", value = TEST_SCOPE_NAME),
 			@Property(key = "scope.parent", value = TEST_PARENT_SCOPE_NAME),
 			@Property(key = "registryService.target", value = "(registry.name="+SCHEMA_REGISTRY_NAME+")"),
@@ -87,6 +88,7 @@ public class TestAnnotations extends CommonTestAnnotations{
 
 	@ScopeServiceSetup
 	@WithFactoryConfiguration(factoryPid = PID_SCOPE_SERVICE, name = TEST_PARENT_SCOPE_NAME, location = "?", properties = {
+			@Property(key = "atlas.scope", value = TEST_PARENT_SCOPE_NAME),
 			@Property(key = "scope.name", value = TEST_PARENT_SCOPE_NAME),
 			@Property(key = "registryService.target", value = "(registry.name="+SCHEMA_REGISTRY_NAME+")"),
 			@Property(key = "registryService.cardinality.minimum", value = "1", scalar = Scalar.Integer)})

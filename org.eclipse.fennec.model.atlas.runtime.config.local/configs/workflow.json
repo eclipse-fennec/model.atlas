@@ -6,6 +6,7 @@
         "storageService.target": "(storage.type=file)"
     },
     "ScopeService~civitas": {
+        "atlas.scope": "civitas",
         "scope.name": "civitas",
         "scope.description": "Civitas Scope",
         "parent.scope": "atlas",

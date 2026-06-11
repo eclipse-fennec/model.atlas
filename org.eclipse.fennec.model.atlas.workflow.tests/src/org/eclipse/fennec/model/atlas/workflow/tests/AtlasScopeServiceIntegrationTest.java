@@ -21,13 +21,15 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.List;
+import java.util.Optional;
 
 import org.eclipse.emf.ecore.EPackage;
 import org.eclipse.fennec.emf.osgi.annotation.require.RequireEMF;
+import org.eclipse.fennec.model.atlas.scope.api.RegistryInfo;
+import org.eclipse.fennec.model.atlas.scope.api.RegistryType;
+import org.eclipse.fennec.model.atlas.scope.api.ScopeInfo;
 import org.eclipse.fennec.model.atlas.tests.common.CommonTestAnnotations.EPackageLuceneIndexSetup;
 import org.eclipse.fennec.model.atlas.tests.common.CommonTestAnnotations.RegistryConfiguration;
-import org.eclipse.fennec.model.atlas.wf.workflowapi.Registry;
-import org.eclipse.fennec.model.atlas.wf.workflowapi.RegistryType;
 import org.eclipse.fennec.model.atlas.wf.workflowapi.Scope;
 import org.eclipse.fennec.model.atlas.wf.workflowapi.ScopeService;
 import org.eclipse.fennec.model.atlas.workflow.WorkflowConstants;
@@ -136,7 +138,7 @@ public class AtlasScopeServiceIntegrationTest {
 
 			Scope scope = scopeService.getScope();
 			assertEquals(1, scope.getRegistries().size());
-			Registry registry = scope.getRegistries().get(0);
+			RegistryInfo registry = scope.getRegistries().get(0);
 			assertEquals(WorkflowConstants.ATLAS_SCHEMA_REGISTRY_NAME, registry.getName());
 			assertEquals(RegistryType.SCHEMA, registry.getType());
 		}
@@ -198,6 +200,82 @@ public class AtlasScopeServiceIntegrationTest {
 					() -> scopeService.getMetadataFromStageForRegistry("invalid-registry", "released", "id"));
 			assertThrows(IllegalArgumentException.class,
 					() -> scopeService.listInFinalStageForRegistry("invalid-registry"));
+		}
+	}
+
+	@Nested
+	@DisplayName("ReadOnly Surface Tests")
+	class ReadOnlySurfaceTests {
+
+		@Test
+		@DisplayName("getScopeName is atlas and isInheritingFromParentScope is false")
+		@RegistryConfiguration
+		@EPackageLuceneIndexSetup
+		void shouldExposeReadOnlyScopeIdentity(
+				@InjectService(cardinality = 0, filter = "(scope.name=" + WorkflowConstants.ATLAS_SCOPE_NAME + ")")
+				ServiceAware<ScopeService> scopeAware)
+				throws InterruptedException {
+
+			ScopeService<EPackage> scopeService = scopeAware.waitForService(5000);
+			assertNotNull(scopeService);
+
+			assertEquals(WorkflowConstants.ATLAS_SCOPE_NAME, scopeService.getScopeName());
+			assertFalse(scopeService.isInheritingFromParentScope(), "Atlas is the root scope");
+		}
+
+		@Test
+		@DisplayName("getScopeInfo describes the atlas scope and its schema registry")
+		@RegistryConfiguration
+		@EPackageLuceneIndexSetup
+		void shouldExposeScopeInfo(
+				@InjectService(cardinality = 0, filter = "(scope.name=" + WorkflowConstants.ATLAS_SCOPE_NAME + ")")
+				ServiceAware<ScopeService> scopeAware)
+				throws InterruptedException {
+
+			ScopeService<EPackage> scopeService = scopeAware.waitForService(5000);
+			assertNotNull(scopeService);
+
+			ScopeInfo info = scopeService.getScopeInfo();
+			assertNotNull(info);
+			assertEquals(WorkflowConstants.ATLAS_SCOPE_NAME, info.getName());
+			RegistryInfo schema = info.getRegistries().stream()
+					.filter(r -> RegistryType.SCHEMA == r.getType())
+					.findFirst()
+					.orElseThrow();
+			assertEquals(WorkflowConstants.ATLAS_SCHEMA_REGISTRY_NAME, schema.getName());
+		}
+
+		@Test
+		@DisplayName("get() returns empty (not NPE) for a missing object")
+		@RegistryConfiguration
+		@EPackageLuceneIndexSetup
+		void shouldReturnEmptyForMissingObject(
+				@InjectService(cardinality = 0, filter = "(scope.name=" + WorkflowConstants.ATLAS_SCOPE_NAME + ")")
+				ServiceAware<ScopeService> scopeAware)
+				throws InterruptedException {
+
+			ScopeService<EPackage> scopeService = scopeAware.waitForService(5000);
+			assertNotNull(scopeService);
+
+			Optional<EPackage> missing = scopeService.get(WorkflowConstants.ATLAS_SCHEMA_REGISTRY_NAME, "does-not-exist");
+			assertTrue(missing.isEmpty(), "Missing object must yield Optional.empty(), not throw");
+		}
+
+		@Test
+		@DisplayName("listObjectIds is registry-validated and never null")
+		@RegistryConfiguration
+		@EPackageLuceneIndexSetup
+		void shouldListObjectIds(
+				@InjectService(cardinality = 0, filter = "(scope.name=" + WorkflowConstants.ATLAS_SCOPE_NAME + ")")
+				ServiceAware<ScopeService> scopeAware)
+				throws InterruptedException {
+
+			ScopeService<EPackage> scopeService = scopeAware.waitForService(5000);
+			assertNotNull(scopeService);
+
+			assertNotNull(scopeService.listObjectIds(WorkflowConstants.ATLAS_SCHEMA_REGISTRY_NAME));
+			assertThrows(IllegalArgumentException.class,
+					() -> scopeService.listObjectIds("invalid-registry"));
 		}
 	}
 }

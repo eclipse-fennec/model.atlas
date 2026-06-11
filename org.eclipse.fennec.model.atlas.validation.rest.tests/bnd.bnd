@@ -18,7 +18,8 @@ Test-Cases: ${classes;HIERARCHY_INDIRECTLY_ANNOTATED;org.junit.platform.commons.
 	org.eclipse.fennec.model.atlas.workflow,\
 	org.osgi.util.promise,\
 	org.eclipse.fennec.m2x.ocl.api,\
-	org.eclipse.fennec.model.atlas.tests.common
+	org.eclipse.fennec.model.atlas.tests.common,\
+	org.eclipse.fennec.model.atlas.scope.api;version=snapshot
 	
 Private-Package: \
 	org.eclipse.fennec.model.atlas.validation.rest.tests,\

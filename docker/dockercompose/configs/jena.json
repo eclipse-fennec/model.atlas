@@ -12,6 +12,7 @@
     },
     "ScopeService~atlas": {
         "scope.name": "atlas",
+        "atlas.scope": "atlas",
         "scope.description": "Atlas scope. The parent of all other scopes.",
         "parent.scope": "",
         "registryService.target": "(|(registry.name=schema)(registry.name=workspace))",
@@ -19,6 +20,7 @@
     },
     "ScopeService~jena": {
         "scope.name": "jena",
+        "atlas.scope": "jena",
         "scope.description": "City Jena Scope",
         "parent.scope": "atlas",
         "registryService.target": "(|(registry.name=schema)(registry.name=workspace))",
