@@ -1,0 +1,27 @@
+info:
+  name: Multi Validate issue#54
+  type: http
+  seq: 5
+
+http:
+  method: POST
+  url: "{{baseUrl}}/validate/"
+  headers:
+    - name: Accept
+      value: application/xmi
+  body:
+    type: xml
+    data: |-
+      <?xml version="1.0" encoding="UTF-8"?>
+      <rest:Container xmlns:xmi="http://www.omg.org/XMI" xmi:version="2.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:rest="http://eclipse.org/fennec/model/atlas/rest/1.0" xmlns:dge="https://dg.de/1.0">
+          <elements xsi:type="dge:Person" xmi:id="person1" firstName="Markus" lastName="Hochstein" email="markus.hochstein@gmx.de" phone="abcddd" address="address1"/>
+          <elements xsi:type="dge:Address" xmi:id="address1" street="Am Berg 1a" city="Dittmannsdorf" zipCode="09573" country="Deutschland"/>
+          <elements xsi:type="dge:Company" xmi:id="company1" name="Data In Motion" industry="Software IKT" employees="person1"/>
+      </rest:Container>
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

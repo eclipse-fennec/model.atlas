@@ -22,6 +22,7 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.Executors;
 import java.util.function.Function;
 import java.util.logging.Level;
@@ -39,15 +40,18 @@ import org.eclipse.fennec.model.atlas.mgmt.management.ManagementPackage;
 import org.eclipse.fennec.model.atlas.mgmt.management.ObjectMetadata;
 import org.eclipse.fennec.model.atlas.wf.workflowapi.Registry;
 import org.eclipse.fennec.model.atlas.wf.workflowapi.RegistryService;
+import org.eclipse.fennec.model.atlas.wf.workflowapi.RegistryType;
 import org.eclipse.fennec.model.atlas.wf.workflowapi.Stage;
 import org.eclipse.fennec.model.atlas.wf.workflowapi.StageTransition;
 import org.eclipse.fennec.model.atlas.wf.workflowapi.WorkflowApiFactory;
-import org.eclipse.fennec.model.atlas.workflow.PostReleaseActionService;
+import org.eclipse.fennec.model.atlas.workflow.ActionContext;
+import org.eclipse.fennec.model.atlas.workflow.StageActionService;
+import org.eclipse.fennec.model.atlas.workflow.StageActionService.ActionEvent;
+import org.eclipse.fennec.model.atlas.workflow.StageActionService.ExitReason;
 import org.osgi.service.component.annotations.Activate;
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.ConfigurationPolicy;
 import org.osgi.service.component.annotations.Reference;
-import org.osgi.service.component.annotations.ReferenceCardinality;
 import org.osgi.service.metatype.annotations.Designate;
 import org.osgi.util.promise.Promise;
 import org.osgi.util.promise.PromiseFactory;
@@ -77,14 +81,14 @@ public class RegistryServiceImpl<T extends EObject> implements RegistryService<T
     private final PromiseFactory promiseFactory = new PromiseFactory(Executors.newCachedThreadPool());
     private final EClass rootEClass;
 
-    private PostReleaseActionService postReleaseActionService;
+	private List<StageActionService> stageActionService;
 
     @Activate
-    public RegistryServiceImpl(@Reference(name = "storageService") List<EObjectStorageService<T>> storageService,
+    public RegistryServiceImpl(@Reference(name = "storageService", target = ("(scope=no-inject)")) List<EObjectStorageService<T>> storageService,
             @Reference(name = "resourceSet") ResourceSet resourceSet,
-            @Reference(name = "postReleaseActionService", cardinality = ReferenceCardinality.OPTIONAL) PostReleaseActionService postReleaseActionService,
+            @Reference(name = "stageActionService", target = ("(scope=no-inject)")) List<StageActionService> stageActionService,
             RegistryServiceConfig config) {
-        this.postReleaseActionService = postReleaseActionService;
+        this.stageActionService = stageActionService;
         this.config = config;
         this.allowedTransitionsList = parseTransitionsIntoList(config.workflow_transitions());
         this.storageMap = parseStageStorageMappings(config.stage_storage_mappings(), storageService);
@@ -109,10 +113,13 @@ public class RegistryServiceImpl<T extends EObject> implements RegistryService<T
      */
     @Override
     public Void activate(String scope) {
-        if (postReleaseActionService != null && postReleaseActionService.requiresStartupInitialization()) {
-            listInFinalStage(scope).forEach(m -> postReleaseActionService.executeStartupInitialization(scope,
-                    getRegistryName(), getFinalStageName(), m.getObjectId(), m.getObjectType()));
-        }
+        stageActionService.forEach(sas -> {
+            if (!sas.requiresReplayOnStartup()) {
+                return;
+            }
+            sas.getTriggerStages().forEach(stage -> listInStage(scope, stage).forEach(m -> dispatch(ActionEvent.ENTER,
+                    newContext(scope, stage, m, null, null, null, "startup replay", true))));
+        });
         return null;
     }
 
@@ -125,10 +132,13 @@ public class RegistryServiceImpl<T extends EObject> implements RegistryService<T
      */
     @Override
     public Void deactivate(String scope) {
-        if (postReleaseActionService != null && postReleaseActionService.requiresCleanup()) {
-            listInFinalStage(scope).forEach(m -> postReleaseActionService.executeCleanupAction(scope, getRegistryName(),
-                    getFinalStageName(), m.getObjectId(), m.getObjectType()));
-        }
+        stageActionService.forEach(sas -> {
+            if (!sas.requiresReplayOnShutdown()) {
+                return;
+            }
+            sas.getTriggerStages().forEach(stage -> listInStage(scope, stage).forEach(m -> dispatch(ActionEvent.EXIT,
+                    newContext(scope, stage, m, null, null, ExitReason.DELETED, "shutdown replay", true))));
+        });
         return null;
     }
 
@@ -156,11 +166,7 @@ public class RegistryServiceImpl<T extends EObject> implements RegistryService<T
             EObjectStorageService<T> storageService = storageMap.get(stage);
             ObjectMetadata objectMetadata = WorkflowServiceHelper.getPromiseValue(storageService.storeObject(scope,
                     config.registry_name(), stage, metadata.getObjectId(), object, metadata));
-            if (postReleaseActionService != null && isFinalStage(stage)) {
-                postReleaseActionService.executePostReleaseActions(scope, getRegistryName(), stage,
-                        metadata.getObjectId(), metadata.getObjectType(), "Automatic post release",
-                        "Automatic post release action");
-            }
+            dispatch(ActionEvent.ENTER, newContext(scope, stage, objectMetadata, null, null, null, null, false));
             return objectMetadata;
         });
     }
@@ -178,7 +184,7 @@ public class RegistryServiceImpl<T extends EObject> implements RegistryService<T
         EObjectStorageService<T> storageService = storageMap.get(stage);
         ObjectMetadata metadata = WorkflowServiceHelper
                 .getPromiseValue(storageService.retrieveMetadata(scope, config.registry_name(), stage, objectId));
-        if (!isWritableStage(stage))
+        if (!isWritableStage(stage) && metadata != null)
             metadata.setIsReadOnly(true);
         return metadata;
     }
@@ -242,6 +248,7 @@ public class RegistryServiceImpl<T extends EObject> implements RegistryService<T
             // delete-then-create)
             metadata = WorkflowServiceHelper
                     .getPromiseValue(storageService.updateObject(objectId, updatedObject, metadata));
+            dispatch(ActionEvent.UPDATE, newContext(scope, stage, metadata, null, null, null, null, false));
             return metadata;
         });
     }
@@ -278,11 +285,7 @@ public class RegistryServiceImpl<T extends EObject> implements RegistryService<T
             // Remove from registry
             if (deleted) {
                 registryService.removeFromCache(objectId);
-                if (postReleaseActionService != null && isFinalStage(stage)) {
-                    postReleaseActionService.executePostUnreleaseActions(scope, getRegistryName(), stage,
-                            metadata.getObjectId(), metadata.getObjectType(), "Automatic post unelease",
-                            "Automatic post unrelease action");
-                }
+                dispatch(ActionEvent.EXIT, newContext(scope, stage, metadata, null, null, ExitReason.DELETED, null, false));
             }
 
             return deleted;
@@ -369,6 +372,19 @@ public class RegistryServiceImpl<T extends EObject> implements RegistryService<T
         }
         return metadata;
     }
+    
+    /* 
+	 * (non-Javadoc)
+	 * @see org.eclipse.fennec.model.atlas.wf.workflowapi.RegistryService#listAll(java.lang.String)
+	 */
+	@Override
+	public List<ObjectMetadata> listAll(String scope) {
+		List<ObjectMetadata> metadata = new LinkedList<>();
+		stages.forEach(stage -> {
+			metadata.addAll(listInStage(scope, stage.getName()));
+		});
+		return metadata;
+	}
 
     /*
      * (non-Javadoc)
@@ -402,19 +418,12 @@ public class RegistryServiceImpl<T extends EObject> implements RegistryService<T
         if (config.delete_after_transition()) {
             WorkflowServiceHelper
                     .getPromiseValue(sourceStorage.deleteObject(scope, config.registry_name(), fromStage, objectId));
-            if (postReleaseActionService != null && isFinalStage(fromStage)) {
-                postReleaseActionService.executePostUnreleaseActions(scope, getRegistryName(), fromStage,
-                        metadata.getObjectId(), metadata.getObjectType(), "Automatic post unelease",
-                        "Automatic post unrelease action");
-            }
+            dispatch(ActionEvent.EXIT,
+                    newContext(scope, fromStage, metadata, null, toStage, ExitReason.TRANSITIONED, null, false));
         }
         WorkflowServiceHelper.getPromiseValue(
                 targetStorage.storeObject(scope, config.registry_name(), toStage, objectId, object, metadata));
-        if (postReleaseActionService != null && isFinalStage(toStage)) {
-            postReleaseActionService.executePostReleaseActions(scope, getRegistryName(), toStage,
-                    metadata.getObjectId(), metadata.getObjectType(), "Automatic post release",
-                    "Automatic post release action");
-        }
+        dispatch(ActionEvent.ENTER, newContext(scope, toStage, metadata, fromStage, null, null, null, false));
         return metadata;
     }
 
@@ -516,6 +525,7 @@ public class RegistryServiceImpl<T extends EObject> implements RegistryService<T
         Registry registry = WorkflowApiFactory.eINSTANCE.createRegistry();
         registry.setName(config.registry_name());
         registry.setDescription(config.registry_description());
+        registry.setType(RegistryType.get(config.registry_type()));
         registry.getAllowedTransitions().addAll(allowedTransitionsList);
         registry.getStages().addAll(stages);
         return registry;
@@ -630,8 +640,36 @@ public class RegistryServiceImpl<T extends EObject> implements RegistryService<T
         }
     }
 
-    private String getFinalStageName() {
-        return stages.stream().filter(s -> s.isFinal()).findFirst().get().getName();
+
+    private ActionContext newContext(String scope, String stage, ObjectMetadata m, String sourceStage,
+            String targetStage, ExitReason exitReason, String notes, boolean replay) {
+        return new ActionContext(scope, config.registry_name(), m.getObjectId(), m.getObjectType(), stage,
+                sourceStage, targetStage, exitReason, "system", Instant.now(), notes, replay, Map.of());
     }
+
+    private void dispatch(ActionEvent event, ActionContext ctx) {
+        stageActionService.forEach(sas -> {
+            if (!sas.supportsObjectType(ctx.objectType())) {
+                return;
+            }
+            Set<String> triggerStages = sas.getTriggerStages();
+            if (!triggerStages.isEmpty() && !triggerStages.contains(ctx.stage())) {
+                return;
+            }
+            Set<ActionEvent> triggerEvents = sas.getTriggerEvents();
+            if (!triggerEvents.isEmpty() && !triggerEvents.contains(event)) {
+                return;
+            }
+            Promise<Void> p = switch (event) {
+            case ENTER -> sas.onEnter(ctx);
+            case UPDATE -> sas.onUpdate(ctx);
+            case EXIT -> sas.onExit(ctx);
+            };
+            p.onFailure(t -> LOGGER.log(Level.WARNING, "StageAction " + sas.getClass().getSimpleName()
+                    + " failed for " + event + " on " + ctx.objectId(), t));
+        });
+    }
+
+	
 
 }

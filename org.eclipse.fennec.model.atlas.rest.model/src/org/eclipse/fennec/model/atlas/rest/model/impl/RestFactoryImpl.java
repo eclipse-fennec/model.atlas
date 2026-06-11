@@ -1,6 +1,5 @@
 /**
- * Copyright (c) 2012 - 2025 Data In Motion and others.
- * All rights reserved.
+ * Copyright (c) 2026 Contributors to the Eclipse Foundation.
  * 
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
@@ -9,7 +8,7 @@
  * SPDX-License-Identifier: EPL-2.0
  * 
  * Contributors:
- *     Data In Motion - initial API and implementation
+ *   Data In Motion Consulting - initial implementation
  */
 package org.eclipse.fennec.model.atlas.rest.model.impl;
 
@@ -72,6 +71,7 @@ public class RestFactoryImpl extends EFactoryImpl implements RestFactory {
 			case RestPackage.ERROR_RESPONSE: return createErrorResponse();
 			case RestPackage.STAGE_TRANSITION_REQUEST: return createStageTransitionRequest();
 			case RestPackage.SCOPE_LIST_RESPONSE: return createScopeListResponse();
+			case RestPackage.CONTAINER: return createContainer();
 			default:
 				throw new IllegalArgumentException("The class '" + eClass.getName() + "' is not a valid classifier");
 		}
@@ -130,6 +130,17 @@ public class RestFactoryImpl extends EFactoryImpl implements RestFactory {
 	public ScopeListResponse createScopeListResponse() {
 		ScopeListResponseImpl scopeListResponse = new ScopeListResponseImpl();
 		return scopeListResponse;
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
+	public org.eclipse.fennec.model.atlas.rest.model.Container createContainer() {
+		ContainerImpl container = new ContainerImpl();
+		return container;
 	}
 
 	/**

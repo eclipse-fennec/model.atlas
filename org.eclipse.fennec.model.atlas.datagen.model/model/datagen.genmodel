@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<genmodel:GenModel xmi:version="2.0" xmlns:xmi="http://www.omg.org/XMI" xmlns:ecore="http://www.eclipse.org/emf/2002/Ecore"
+    xmlns:genmodel="http://www.eclipse.org/emf/2002/GenModel" modelDirectory="/org,eclipse.fennec.model.atlas.datagen.model/src"
+    modelPluginID="org,eclipse.fennec.model.atlas.datagen.model" modelName="datagen"
+    rootExtendsClass="org.eclipse.emf.ecore.impl.MinimalEObjectImpl$Container" importerID="org.eclipse.emf.importer.ecore"
+    complianceLevel="17.0" suppressGenModelAnnotations="false" copyrightFields="false"
+    operationReflection="true" importOrganizing="true" oSGiCompatible="true">
+  <foreignModel>datagen.ecore</foreignModel>
+  <genPackages prefix="Datagen" basePackage="org.eclipse.fennec.model.atlas.datagen.model"
+      resource="XMI" disposableProviderFactory="true" ecorePackage="datagen.ecore#/">
+    <genEnums typeSafeEnumCompatible="false" ecoreEnum="datagen.ecore#//ReferenceStrategy">
+      <genEnumLiterals ecoreEnumLiteral="datagen.ecore#//ReferenceStrategy/RANDOM"/>
+      <genEnumLiterals ecoreEnumLiteral="datagen.ecore#//ReferenceStrategy/ROUND_ROBIN"/>
+      <genEnumLiterals ecoreEnumLiteral="datagen.ecore#//ReferenceStrategy/FIRST"/>
+      <genEnumLiterals ecoreEnumLiteral="datagen.ecore#//ReferenceStrategy/NONE"/>
+    </genEnums>
+    <genClasses ecoreClass="datagen.ecore#//DataGenConfig">
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute datagen.ecore#//DataGenConfig/name"/>
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute datagen.ecore#//DataGenConfig/version"/>
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute datagen.ecore#//DataGenConfig/description"/>
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute datagen.ecore#//DataGenConfig/seed"/>
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute datagen.ecore#//DataGenConfig/locale"/>
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute datagen.ecore#//DataGenConfig/targetModelNsURIs"/>
+      <genFeatures property="None" children="true" createChild="true" ecoreFeature="ecore:EReference datagen.ecore#//DataGenConfig/classConfigs"/>
+      <genFeatures property="None" children="true" createChild="true" ecoreFeature="ecore:EReference datagen.ecore#//DataGenConfig/customGenerators"/>
+    </genClasses>
+    <genClasses ecoreClass="datagen.ecore#//ClassGenConfig">
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute datagen.ecore#//ClassGenConfig/contextClass"/>
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute datagen.ecore#//ClassGenConfig/instanceCount"/>
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute datagen.ecore#//ClassGenConfig/enabled"/>
+      <genFeatures property="None" children="true" createChild="true" ecoreFeature="ecore:EReference datagen.ecore#//ClassGenConfig/attributeGens"/>
+      <genFeatures property="None" children="true" createChild="true" ecoreFeature="ecore:EReference datagen.ecore#//ClassGenConfig/referenceGens"/>
+    </genClasses>
+    <genClasses ecoreClass="datagen.ecore#//AttributeGenConfig">
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute datagen.ecore#//AttributeGenConfig/featureName"/>
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute datagen.ecore#//AttributeGenConfig/generatorKey"/>
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute datagen.ecore#//AttributeGenConfig/generatorArgs"/>
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute datagen.ecore#//AttributeGenConfig/unique"/>
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute datagen.ecore#//AttributeGenConfig/staticValue"/>
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute datagen.ecore#//AttributeGenConfig/template"/>
+    </genClasses>
+    <genClasses ecoreClass="datagen.ecore#//ReferenceGenConfig">
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute datagen.ecore#//ReferenceGenConfig/featureName"/>
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute datagen.ecore#//ReferenceGenConfig/strategy"/>
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute datagen.ecore#//ReferenceGenConfig/targetClassFilter"/>
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute datagen.ecore#//ReferenceGenConfig/minCount"/>
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute datagen.ecore#//ReferenceGenConfig/maxCount"/>
+    </genClasses>
+    <genClasses ecoreClass="datagen.ecore#//CustomGeneratorDef">
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute datagen.ecore#//CustomGeneratorDef/key"/>
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute datagen.ecore#//CustomGeneratorDef/label"/>
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute datagen.ecore#//CustomGeneratorDef/expression"/>
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute datagen.ecore#//CustomGeneratorDef/category"/>
+    </genClasses>
+    <genClasses ecoreClass="datagen.ecore#//DataGenResult">
+      <genFeatures property="None" children="true" createChild="true" ecoreFeature="ecore:EReference datagen.ecore#//DataGenResult/results"/>
+    </genClasses>
+  </genPackages>
+</genmodel:GenModel>

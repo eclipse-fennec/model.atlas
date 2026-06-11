@@ -16,13 +16,18 @@ Fennec Model Atlas is a dynamic EMF model management system that provides a REST
   - [Base URL and Swagger UI](#base-url-and-swagger-ui)
   - [Scopes API](#scopes-api)
   - [Schema Packages API](#schema-packages-api)
+    - [List All Packages](#list-all-packages)
+    - [Schema Search](#schema-search)
   - [Object Storage API](#object-storage-api)
   - [Model Converter API](#model-converter-api)
+  - [Object Validation API](#object-validation-api)
+  - [Data Generation API](#data-generation-api)
   - [Content Negotiation](#content-negotiation)
   - [ETags and Conditional Requests](#etags-and-conditional-requests)
   - [Error Handling](#error-handling)
 - [Workflows](#workflows)
   - [Publishing a Schema](#publishing-a-schema)
+  - [Schema Availability Across Stages](#schema-availability-across-stages)
   - [Storing Objects with Schema Validation](#storing-objects-with-schema-validation)
 - [Health Checks](#health-checks)
 - [Configuration](#configuration)
@@ -119,6 +124,14 @@ atlas (system-level, read-only base schemas)
   +-- partner-external
 ```
 
+#### The Atlas Scope
+
+The **atlas** scope is a special built-in scope that serves as the root parent of all other scopes. It requires no configuration and is automatically available at startup. Key characteristics:
+
+- **Read-only**: No objects can be uploaded, updated, deleted, or transitioned within the atlas scope
+- **System schemas**: It exposes all EPackages that are already registered in the OSGi runtime (e.g., models from generated code or bundles) through its single registry, the **atlas-schema-registry**
+- **Implicit parent**: By default, every configured scope has `atlas` as its parent (either directly or through its ancestor chain), so system schemas are visible everywhere
+
 ### Registries
 
 A **Registry** is a named collection within a scope that stores a specific type of object. Each scope can have multiple registries with independent workflow configurations.
@@ -129,6 +142,23 @@ Common registries:
 - Custom registries for domain-specific data
 
 The registry name in the configuration directly determines the **URL path segment** under which it is accessible in the REST API. For example, a registry configured with `registry.name=products` is reachable at `/{scopeName}/registries/products/...`.
+
+#### Schema Registries and the `schema.registry` Property
+
+A registry can be marked as a **schema registry** by setting `schema.registry=true` in its configuration. Schema registries are registries whose objects are EPackage schema definitions. This flag has an important effect on hierarchical visibility:
+
+- When listing objects in the **final stage** of a schema registry, the system also includes schemas from the **atlas-schema-registry** (the atlas scope's built-in registry) if the scope's parent is `atlas`
+- This means that system EPackages (models from generated code or OSGi bundles) are automatically visible alongside user-managed schemas in every schema registry's final stage
+- These inherited system schemas appear as **read-only** and cannot be modified or deleted
+
+#### The Atlas Schema Registry
+
+The **atlas-schema-registry** is the built-in, read-only registry of the atlas scope. It:
+
+- Automatically tracks all EPackages registered in the OSGi static `EPackage.Registry` (e.g., models from generated EMF code)
+- Has a single stage: `released` (non-writable, final)
+- Rejects all write operations (`upload`, `update`, `delete`, `transition`) with `UnsupportedOperationException`
+- Uses Base64-encoded namespace URIs as object IDs
 
 ### Workflow Stages
 
@@ -159,6 +189,7 @@ Child scopes can see objects from parent scopes' **final stages**:
 - A child scope sees its own objects in all stages, plus parent objects in the final stage
 - Parent objects appear as **read-only** in child scopes (cannot be modified or deleted)
 - Parents cannot see children's objects; siblings cannot see each other's objects
+- **Schema registries** (`schema.registry=true`) additionally include system schemas from the atlas scope's `atlas-schema-registry` when listing objects in their final stage. This ensures that EPackages from generated code or OSGi bundles are visible to all schema registries without requiring explicit upload
 
 **Write-time uniqueness** (for schemas):
 - When creating a schema, the `nsUri` must be unique across the entire visibility chain (local scope all stages + all ancestor final stages)
@@ -263,6 +294,101 @@ curl -X POST "http://localhost:8080/rest/my-tenant/schema/stages/draft/actions/t
 
 > Full endpoint documentation: [README-SchemaPackages.md](../org.eclipse.fennec.model.atlas.rest.application/README-SchemaPackages.md)
 
+#### List All Packages
+
+**Endpoint**: `GET /{scopeName}/schema/all`
+
+List all schema packages across all stages for a scope, including packages from parent scopes' released stages. Unlike `GET /{scopeName}/schema` (which only returns packages in the final/released stage), this endpoint returns packages in every stage (draft, approved, release, etc.).
+
+```bash
+# List all schemas across all stages (includes parent scope schemas)
+curl http://localhost:8080/rest/my-tenant/schema/all
+```
+
+**Response** (`200 OK`): Returns an `ObjectMetadataContainer` with all packages. Returns `204 No Content` if no packages exist in any stage.
+
+#### Schema Search
+
+**Endpoint**: `GET /{scopeName}/schema/search`
+
+Search for schema packages across a scope and its entire parent chain using EPackage-specific filters. The search is powered by a dedicated Lucene index that indexes EPackage metadata (namespace URI, classifiers, structural features) at upload time.
+
+**Scope chain traversal**: The search automatically resolves the full scope hierarchy. For example, searching in scope `tenant-a` (with parent `division-x` and grandparent `atlas`) queries across all three scopes. Results from parent scopes are marked as read-only.
+
+**Query parameters:**
+
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `nsUri` | String | | Partial match on namespace URI (e.g., `sensors` matches `http://example.com/sensors/1.0`) |
+| `nsUriExact` | String | | Exact match on namespace URI |
+| `name` | String | | Partial match on package name |
+| `prefix` | String | | Partial match on namespace prefix |
+| `classifier` | String | | Full-text search on classifier names (EClass, EEnum, EDataType) |
+| `featureName` | String | | Full-text search on structural feature names (EAttribute, EReference) |
+| `featureType` | String | | Full-text search on structural feature type names (e.g., `EString`, `Person`) |
+| `featureNameTypePair` | String | | Full-text search on combined `name:type` pairs (e.g., `friend:Person`) |
+| `stage` | String | | Filter by stage. If omitted, searches across all stages |
+| `limit` | Integer | 50 | Maximum results (max 500) |
+| `offset` | Integer | 0 | Number of results to skip |
+
+All filter parameters are optional. When multiple filters are provided, they are combined with AND logic.
+
+**Response headers:**
+
+| Header | Description |
+|--------|-------------|
+| `X-Total-Count` | Total number of matching results (before pagination) |
+| `X-Offset` | Current offset |
+| `X-Limit` | Applied limit |
+
+**Examples:**
+
+```bash
+# Find all packages containing a "Customer" classifier
+curl "http://localhost:8080/rest/my-tenant/schema/search?classifier=Customer"
+
+# Search by partial namespace URI with pagination
+curl "http://localhost:8080/rest/my-tenant/schema/search?nsUri=sensors&limit=20&offset=0"
+
+# Find packages with a structural feature named "temperature"
+curl "http://localhost:8080/rest/my-tenant/schema/search?featureName=temperature"
+
+# Find packages referencing a "Person" type
+curl "http://localhost:8080/rest/my-tenant/schema/search?featureType=Person"
+
+# Precise search: packages with a feature named "friend" of type "Person"
+curl "http://localhost:8080/rest/my-tenant/schema/search?featureNameTypePair=friend:Person"
+
+# Combined filters: packages with prefix "sensors" containing a "Reading" classifier
+# that has an EString feature, in approved stage
+curl "http://localhost:8080/rest/my-tenant/schema/search?prefix=sensors&classifier=Reading&featureType=EString&stage=approved"
+```
+
+**Response** (`200 OK`):
+
+```json
+{
+  "containerId": "search-results",
+  "metadata": [
+    {
+      "objectId": "aHR0cDovL2V4YW1wbGUuY29tL3NlbnNvcnMvMS4w",
+      "objectName": "SensorModel",
+      "stage": "approved",
+      "scope": "tenant-a",
+      "version": "1.0.0",
+      "status": "APPROVED",
+      "properties": {
+        "nsUri": "http://example.com/sensors/1.0"
+      }
+    }
+  ]
+}
+```
+
+Returns `204 No Content` if no packages match, or `400 Bad Request` for invalid parameters.
+
+> For details on the indexing design and search field semantics, see the [EPackage Lucene Indexing design document](design/epackage-lucene-indexing_v2.md).
+
 ### Object Storage API
 
 **Base path**: `/{scopeName}/registries/{registryName}`
@@ -272,6 +398,9 @@ Manage arbitrary EObjects in named registries with schema validation.
 ```bash
 # List all released objects in a registry
 curl http://localhost:8080/rest/my-tenant/registries/configurations
+
+# List all objects across all stages in a registry (includes parent scope objects)
+curl http://localhost:8080/rest/my-tenant/registries/configurations/all
 
 # List objects in a specific stage
 curl http://localhost:8080/rest/my-tenant/registries/configurations/stages/draft
@@ -313,6 +442,125 @@ Objects are validated against the registry's configured schema (`root.eclass.uri
 Convert EMF models between different serialization formats.
 
 > Full endpoint documentation: [README-ModelConverter.md](../org.eclipse.fennec.model.atlas.rest.application/README-ModelConverter.md)
+
+### Object Validation API
+
+**Base path**: `/{scopeName}/{stageName}/validate`
+
+Validate an EObject instance against its schema constraints, including any OCL constraints defined in the model. The endpoint runs EMF's `Diagnostician` on the submitted object and returns a structured diagnostic report.
+
+`scopeName` identifies the scope whose C-OCL registry is used for OCL-based validation. `stageName` is captured for future scope-aware resource set resolution; currently the globally registered resource set is used.
+
+```bash
+# Validate a Person object (JSON request, JSON response)
+curl -X POST http://localhost:8080/rest/jena/release/validate \
+  -H "Content-Type: application/json" \
+  -H "Accept: application/json" \
+  -d '{
+    "eClass": "https://dg.de/1.0#//Person",
+    "firstName": "Jane",
+    "lastName": "Doe",
+    "email": "jane.doe@example.com",
+    "phone": "0301234567",
+    "jobTitle": "Engineer"
+  }'
+
+# Validate using XMI format
+curl -X POST http://localhost:8080/rest/jena/release/validate \
+  -H "Content-Type: application/xmi" \
+  -H "Accept: application/xmi" \
+  -d '<?xml version="1.0" encoding="UTF-8"?>
+<dge:Person xmi:version="2.0"
+    xmlns:xmi="http://www.omg.org/XMI"
+    xmlns:dge="https://dg.de/1.0"
+    firstName="Jane"
+    lastName="Doe"
+    phone="0301234567"/>'
+
+# Override response format via query parameter
+curl -X POST "http://localhost:8080/rest/jena/release/validate?mediaType=application/json" \
+  -H "Content-Type: application/xmi" \
+  -d @person.xmi
+```
+
+**Response**
+
+The endpoint always returns `200 OK` with a `Diagnostic` object describing the validation result. The diagnostic has a tree structure: a root entry with a `type` summarizing the overall result, and `children` containing one entry per constraint violation.
+
+A valid object returns a diagnostic with type `OK` and no children:
+
+```json
+{
+  "type": "OK",
+  "message": "Diagnosis of Person",
+  "children": []
+}
+```
+
+An invalid object (e.g., a `phone` value that violates the `ValidPhoneNumber` OCL constraint `self.phone.matches('^\\d{10}$')`) returns child diagnostics with type `ERROR`:
+
+```json
+{
+  "type": "ERROR",
+  "message": "Diagnosis of Person",
+  "children": [
+    {
+      "type": "ERROR",
+      "message": "The 'ValidPhoneNumber' constraint is violated",
+      "source": "org.eclipse.emf.ecore",
+      "children": []
+    }
+  ]
+}
+```
+
+**Diagnostic types:**
+
+| Type | Meaning |
+|------|---------|
+| `OK` | Validation passed with no issues |
+| `INFO` | Informational message |
+| `WARNING` | Non-critical issue detected |
+| `ERROR` | Constraint violation or structural error |
+| `CANCEL` | Validation was cancelled |
+
+**Error responses:**
+
+| Code | Condition |
+|------|-----------|
+| 200 | Validation was performed (check diagnostic `type` for the result) |
+| 415 | Unsupported `mediaType` query parameter value |
+| 500 | Internal server error (e.g., request body could not be deserialized) |
+
+### Data Generation API
+
+**Base path**: `/datagen`
+
+Generate fake test data for any registered EMF model. Send a `DataGenConfig` as XMI and receive a `DataGenResult` containing the generated EObject instances. The response format is controlled by the `Accept` header (`application/xmi` or `application/json`).
+
+```bash
+# Generate 5 Person instances with German locale (JSON response)
+curl -X POST http://localhost:8086/atlas/rest/datagen \
+  -H "Content-Type: application/xmi" \
+  -H "Accept: application/json" \
+  -d '<?xml version="1.0" encoding="UTF-8"?>
+<datagen:DataGenConfig xmi:version="2.0"
+    xmlns:xmi="http://www.omg.org/XMI"
+    xmlns:datagen="http://www.gme.org/datagen/1.0"
+    name="person-gen"
+    locale="de"
+    seed="42">
+  <classConfigs contextClass="Person" instanceCount="5">
+    <attributeGens featureName="firstName" generatorKey="faker.person.firstName"/>
+    <attributeGens featureName="lastName" generatorKey="faker.person.lastName"/>
+  </classConfigs>
+</datagen:DataGenConfig>'
+```
+
+The referenced EClasses (e.g. `Person`) must be registered in the runtime via loaded EPackages. If a class is not found, the endpoint returns `400 Bad Request` with the missing class names.
+
+> Full endpoint documentation and more examples: [DataGen REST README](../org.eclipse.fennec.model.atlas.datagen.rest/README.md)
+> Service and configuration model reference: [DataGen Service README](../org.eclipse.fennec.model.atlas.datagen/README.md)
 
 ### Content Negotiation
 
@@ -469,6 +717,16 @@ curl http://localhost:8080/rest/child-tenant/schema
 # -> includes billing schema with isReadOnly=true
 ```
 
+### Schema Availability Across Stages
+
+As soon as a schema is uploaded into any stage (`draft`, `approved`, `release`, …), Model Atlas registers its `EPackage` with the running EMF runtime. This means the schema can immediately be used to:
+
+- validate and generate objects stored in the Object Storage API,
+- produce instances via the Data Generation API,
+- serialise and deserialise content in any of the supported formats.
+
+Updating a schema in place refreshes the registration so consumers see the new content, and deleting it (or transitioning it out of every stage) unregisters the EPackage. This is driven by the `EPackageStageActionService` — a built-in workflow extension that reacts to stage lifecycle events; see the [workflow module README](../org.eclipse.fennec.model.atlas.workflow/README.md#stage-action-services) for configuration details.
+
 ### Storing Objects with Schema Validation
 
 Objects stored via the Object Storage API are validated against the registry's schema:
@@ -535,7 +793,9 @@ Model Atlas is configured via OSGi Configuration Admin. Configuration files are 
 
 ### Scope Configuration
 
-Each scope is a factory configuration of `ScopeService`:
+The **atlas** scope and its **atlas-schema-registry** are built-in and require no configuration. They are automatically registered as OSGi services at startup.
+
+All other scopes are factory configurations of `ScopeService`. By default, `scope.parent` is `atlas`, so every scope inherits system schemas unless explicitly overridden:
 
 ```json
 {
@@ -549,12 +809,12 @@ Each scope is a factory configuration of `ScopeService`:
 }
 ```
 
-| Property | Required | Description |
-|----------|----------|-------------|
-| `scope.name` | yes | Unique scope identifier (used in URL paths) |
-| `scope.description` | no | Human-readable description |
-| `parent.scope` | no | Parent scope name (empty for root scopes) |
-| `registryService.target` | yes | OSGi filter selecting which registries belong to this scope |
+| Property | Required | Default | Description |
+|----------|----------|---------|-------------|
+| `scope.name` | yes | | Unique scope identifier (used in URL paths) |
+| `scope.description` | no | | Human-readable description |
+| `scope.parent` | no | `atlas` | Parent scope name for hierarchical lookup |
+| `registryService.target` | yes | | OSGi filter selecting which registries belong to this scope |
 
 ### Registry Configuration
 
@@ -590,6 +850,8 @@ Each registry is a factory configuration of `RegistryService`:
 | Property | Description |
 |----------|-------------|
 | `registry.name` | Registry identifier (becomes the URL path segment) |
+| `registry.description` | Human-readable description |
+| `schema.registry` | `true` if this registry manages EPackage schemas. When true, listing in the final stage also includes system schemas from the atlas-schema-registry (default: `false`) |
 | `stages` | Stage definitions with `writable` and `final` flags |
 | `workflow.transitions` | Allowed transitions, format: `"fromStage:toStage"` |
 | `stage.storage.mappings` | Maps stages to storage types, format: `"stage:storageType"` |
@@ -646,10 +908,15 @@ Storage backends are configured independently and referenced by `storage.type`:
 - [Schema Packages API](../org.eclipse.fennec.model.atlas.rest.application/README-SchemaPackages.md) - Full SchemaPackagesResource documentation
 - [Object Storage API](../org.eclipse.fennec.model.atlas.rest.application/README-ObjectStorage.md) - Full ObjectRegistryResource documentation
 - [Model Converter API](../org.eclipse.fennec.model.atlas.rest.application/README-ModelConverter.md) - Format conversion endpoints
+- [Object Validation API](#object-validation-api) - Validate EObjects against schema and OCL constraints
 
 ### Specifications
 - [Model Atlas API Specification](../org.eclipse.fennec.model.atlas.rest.application/Model%20Atlas%20API%20Specification.md) - Core API design, visibility rules, conventions
 - [Model Atlas Object API Specification](../org.eclipse.fennec.model.atlas.rest.application/Model%20Atlas%20Object%20API%20Specification.md) - Object Storage API design
+
+### Data Generation
+- [DataGen Service](../org.eclipse.fennec.model.atlas.datagen/README.md) - Fake data generation for EMF models using Datafaker
+- [DataGen REST API](../org.eclipse.fennec.model.atlas.datagen.rest/README.md) - REST endpoint with XMI examples
 
 ### Internal Components
 - [Workflow / ScopeService](../org.eclipse.fennec.model.atlas.workflow/README.md) - Workflow service internals and configuration

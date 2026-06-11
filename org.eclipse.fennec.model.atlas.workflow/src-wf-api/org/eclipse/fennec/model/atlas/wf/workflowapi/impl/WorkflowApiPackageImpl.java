@@ -15,6 +15,7 @@ package org.eclipse.fennec.model.atlas.wf.workflowapi.impl;
 
 import org.eclipse.emf.ecore.EAttribute;
 import org.eclipse.emf.ecore.EClass;
+import org.eclipse.emf.ecore.EEnum;
 import org.eclipse.emf.ecore.EGenericType;
 import org.eclipse.emf.ecore.EOperation;
 import org.eclipse.emf.ecore.EPackage;
@@ -27,6 +28,7 @@ import org.eclipse.fennec.model.atlas.mgmt.management.ManagementPackage;
 
 import org.eclipse.fennec.model.atlas.wf.workflowapi.EObjectWorkflowService;
 import org.eclipse.fennec.model.atlas.wf.workflowapi.RegistryService;
+import org.eclipse.fennec.model.atlas.wf.workflowapi.RegistryType;
 import org.eclipse.fennec.model.atlas.wf.workflowapi.Scope;
 import org.eclipse.fennec.model.atlas.wf.workflowapi.ScopeService;
 import org.eclipse.fennec.model.atlas.wf.workflowapi.Stage;
@@ -89,6 +91,13 @@ public class WorkflowApiPackageImpl extends EPackageImpl implements WorkflowApiP
 	 * @generated
 	 */
 	private EClass stageTransitionEClass = null;
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	private EEnum registryTypeEEnum = null;
 
 	/**
 	 * Creates an instance of the model <b>Package</b>, registered with
@@ -379,7 +388,7 @@ public class WorkflowApiPackageImpl extends EPackageImpl implements WorkflowApiP
 	 * @generated
 	 */
 	@Override
-	public EOperation getRegistryService__TransitionToStage__String_String_String_String() {
+	public EOperation getRegistryService__ListAll__String() {
 		return registryServiceEClass.getEOperations().get(9);
 	}
 
@@ -389,7 +398,7 @@ public class WorkflowApiPackageImpl extends EPackageImpl implements WorkflowApiP
 	 * @generated
 	 */
 	@Override
-	public EOperation getRegistryService__GetRegistryName() {
+	public EOperation getRegistryService__TransitionToStage__String_String_String_String() {
 		return registryServiceEClass.getEOperations().get(10);
 	}
 
@@ -399,7 +408,7 @@ public class WorkflowApiPackageImpl extends EPackageImpl implements WorkflowApiP
 	 * @generated
 	 */
 	@Override
-	public EOperation getRegistryService__IsValidStage__String() {
+	public EOperation getRegistryService__GetRegistryName() {
 		return registryServiceEClass.getEOperations().get(11);
 	}
 
@@ -409,7 +418,7 @@ public class WorkflowApiPackageImpl extends EPackageImpl implements WorkflowApiP
 	 * @generated
 	 */
 	@Override
-	public EOperation getRegistryService__IsWritableStage__String() {
+	public EOperation getRegistryService__IsValidStage__String() {
 		return registryServiceEClass.getEOperations().get(12);
 	}
 
@@ -419,7 +428,7 @@ public class WorkflowApiPackageImpl extends EPackageImpl implements WorkflowApiP
 	 * @generated
 	 */
 	@Override
-	public EOperation getRegistryService__IsFinalStageWritable() {
+	public EOperation getRegistryService__IsWritableStage__String() {
 		return registryServiceEClass.getEOperations().get(13);
 	}
 
@@ -429,7 +438,7 @@ public class WorkflowApiPackageImpl extends EPackageImpl implements WorkflowApiP
 	 * @generated
 	 */
 	@Override
-	public EOperation getRegistryService__IsTransitionAllowed__String_String() {
+	public EOperation getRegistryService__IsFinalStageWritable() {
 		return registryServiceEClass.getEOperations().get(14);
 	}
 
@@ -439,7 +448,7 @@ public class WorkflowApiPackageImpl extends EPackageImpl implements WorkflowApiP
 	 * @generated
 	 */
 	@Override
-	public EOperation getRegistryService__GetRegistry() {
+	public EOperation getRegistryService__IsTransitionAllowed__String_String() {
 		return registryServiceEClass.getEOperations().get(15);
 	}
 
@@ -449,7 +458,7 @@ public class WorkflowApiPackageImpl extends EPackageImpl implements WorkflowApiP
 	 * @generated
 	 */
 	@Override
-	public EOperation getRegistryService__IsEClassCompatibleWithRegistry__EClass() {
+	public EOperation getRegistryService__GetRegistry() {
 		return registryServiceEClass.getEOperations().get(16);
 	}
 
@@ -459,7 +468,7 @@ public class WorkflowApiPackageImpl extends EPackageImpl implements WorkflowApiP
 	 * @generated
 	 */
 	@Override
-	public EOperation getRegistryService__GetRootEClass() {
+	public EOperation getRegistryService__IsEClassCompatibleWithRegistry__EClass() {
 		return registryServiceEClass.getEOperations().get(17);
 	}
 
@@ -469,7 +478,7 @@ public class WorkflowApiPackageImpl extends EPackageImpl implements WorkflowApiP
 	 * @generated
 	 */
 	@Override
-	public EOperation getRegistryService__Activate__String() {
+	public EOperation getRegistryService__GetRootEClass() {
 		return registryServiceEClass.getEOperations().get(18);
 	}
 
@@ -479,8 +488,18 @@ public class WorkflowApiPackageImpl extends EPackageImpl implements WorkflowApiP
 	 * @generated
 	 */
 	@Override
-	public EOperation getRegistryService__Deactivate__String() {
+	public EOperation getRegistryService__Activate__String() {
 		return registryServiceEClass.getEOperations().get(19);
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
+	public EOperation getRegistryService__Deactivate__String() {
+		return registryServiceEClass.getEOperations().get(20);
 	}
 
 	/**
@@ -589,7 +608,7 @@ public class WorkflowApiPackageImpl extends EPackageImpl implements WorkflowApiP
 	 * @generated
 	 */
 	@Override
-	public EOperation getScopeService__TransitionToStageForRegistry__String_String_String_String() {
+	public EOperation getScopeService__ListAllForRegistry__String() {
 		return scopeServiceEClass.getEOperations().get(9);
 	}
 
@@ -599,7 +618,7 @@ public class WorkflowApiPackageImpl extends EPackageImpl implements WorkflowApiP
 	 * @generated
 	 */
 	@Override
-	public EOperation getScopeService__IsValidRegistry__String() {
+	public EOperation getScopeService__TransitionToStageForRegistry__String_String_String_String() {
 		return scopeServiceEClass.getEOperations().get(10);
 	}
 
@@ -609,7 +628,7 @@ public class WorkflowApiPackageImpl extends EPackageImpl implements WorkflowApiP
 	 * @generated
 	 */
 	@Override
-	public EOperation getScopeService__GetAllRegistries() {
+	public EOperation getScopeService__IsValidRegistry__String() {
 		return scopeServiceEClass.getEOperations().get(11);
 	}
 
@@ -619,8 +638,18 @@ public class WorkflowApiPackageImpl extends EPackageImpl implements WorkflowApiP
 	 * @generated
 	 */
 	@Override
-	public EOperation getScopeService__GetScope() {
+	public EOperation getScopeService__GetAllRegistries() {
 		return scopeServiceEClass.getEOperations().get(12);
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
+	public EOperation getScopeService__GetScope() {
+		return scopeServiceEClass.getEOperations().get(13);
 	}
 
 	/**
@@ -699,8 +728,18 @@ public class WorkflowApiPackageImpl extends EPackageImpl implements WorkflowApiP
 	 * @generated
 	 */
 	@Override
+	public EAttribute getRegistry_Type() {
+		return (EAttribute)registryEClass.getEStructuralFeatures().get(2);
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
 	public EReference getRegistry_Stages() {
-		return (EReference)registryEClass.getEStructuralFeatures().get(2);
+		return (EReference)registryEClass.getEStructuralFeatures().get(3);
 	}
 
 	/**
@@ -710,7 +749,7 @@ public class WorkflowApiPackageImpl extends EPackageImpl implements WorkflowApiP
 	 */
 	@Override
 	public EReference getRegistry_AllowedTransitions() {
-		return (EReference)registryEClass.getEStructuralFeatures().get(3);
+		return (EReference)registryEClass.getEStructuralFeatures().get(4);
 	}
 
 	/**
@@ -799,6 +838,16 @@ public class WorkflowApiPackageImpl extends EPackageImpl implements WorkflowApiP
 	 * @generated
 	 */
 	@Override
+	public EEnum getRegistryType() {
+		return registryTypeEEnum;
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
 	public WorkflowApiFactory getWorkflowApiFactory() {
 		return (WorkflowApiFactory)getEFactoryInstance();
 	}
@@ -845,6 +894,7 @@ public class WorkflowApiPackageImpl extends EPackageImpl implements WorkflowApiP
 		createEOperation(registryServiceEClass, REGISTRY_SERVICE___LIST_IN_STAGE__STRING_STRING);
 		createEOperation(registryServiceEClass, REGISTRY_SERVICE___LIST_IN_STAGE_BY_NAME__STRING_STRING_STRING);
 		createEOperation(registryServiceEClass, REGISTRY_SERVICE___LIST_IN_FINAL_STAGE__STRING);
+		createEOperation(registryServiceEClass, REGISTRY_SERVICE___LIST_ALL__STRING);
 		createEOperation(registryServiceEClass, REGISTRY_SERVICE___TRANSITION_TO_STAGE__STRING_STRING_STRING_STRING);
 		createEOperation(registryServiceEClass, REGISTRY_SERVICE___GET_REGISTRY_NAME);
 		createEOperation(registryServiceEClass, REGISTRY_SERVICE___IS_VALID_STAGE__STRING);
@@ -867,6 +917,7 @@ public class WorkflowApiPackageImpl extends EPackageImpl implements WorkflowApiP
 		createEOperation(scopeServiceEClass, SCOPE_SERVICE___LIST_IN_STAGE_FOR_REGISTRY__STRING_STRING);
 		createEOperation(scopeServiceEClass, SCOPE_SERVICE___LIST_IN_STAGE_FOR_REGISTRY_BY_NAME__STRING_STRING_STRING);
 		createEOperation(scopeServiceEClass, SCOPE_SERVICE___LIST_IN_FINAL_STAGE_FOR_REGISTRY__STRING);
+		createEOperation(scopeServiceEClass, SCOPE_SERVICE___LIST_ALL_FOR_REGISTRY__STRING);
 		createEOperation(scopeServiceEClass, SCOPE_SERVICE___TRANSITION_TO_STAGE_FOR_REGISTRY__STRING_STRING_STRING_STRING);
 		createEOperation(scopeServiceEClass, SCOPE_SERVICE___IS_VALID_REGISTRY__STRING);
 		createEOperation(scopeServiceEClass, SCOPE_SERVICE___GET_ALL_REGISTRIES);
@@ -880,6 +931,7 @@ public class WorkflowApiPackageImpl extends EPackageImpl implements WorkflowApiP
 		registryEClass = createEClass(REGISTRY);
 		createEAttribute(registryEClass, REGISTRY__NAME);
 		createEAttribute(registryEClass, REGISTRY__DESCRIPTION);
+		createEAttribute(registryEClass, REGISTRY__TYPE);
 		createEReference(registryEClass, REGISTRY__STAGES);
 		createEReference(registryEClass, REGISTRY__ALLOWED_TRANSITIONS);
 
@@ -892,6 +944,9 @@ public class WorkflowApiPackageImpl extends EPackageImpl implements WorkflowApiP
 		stageTransitionEClass = createEClass(STAGE_TRANSITION);
 		createEAttribute(stageTransitionEClass, STAGE_TRANSITION__FROM_STAGE);
 		createEAttribute(stageTransitionEClass, STAGE_TRANSITION__TO_STAGE);
+
+		// Create enums
+		registryTypeEEnum = createEEnum(REGISTRY_TYPE);
 	}
 
 	/**
@@ -1094,6 +1149,13 @@ public class WorkflowApiPackageImpl extends EPackageImpl implements WorkflowApiP
 		g1.getETypeArguments().add(g2);
 		initEOperation(op, g1);
 
+		op = initEOperation(getRegistryService__ListAll__String(), null, "listAll", 0, 1, IS_UNIQUE, IS_ORDERED);
+		addEParameter(op, ecorePackage.getEString(), "scope", 0, 1, IS_UNIQUE, IS_ORDERED);
+		g1 = createEGenericType(theManagementPackage.getList());
+		g2 = createEGenericType(theManagementPackage.getObjectMetadata());
+		g1.getETypeArguments().add(g2);
+		initEOperation(op, g1);
+
 		op = initEOperation(getRegistryService__TransitionToStage__String_String_String_String(), theManagementPackage.getObjectMetadata(), "transitionToStage", 0, 1, IS_UNIQUE, IS_ORDERED);
 		addEParameter(op, ecorePackage.getEString(), "scope", 0, 1, IS_UNIQUE, IS_ORDERED);
 		addEParameter(op, ecorePackage.getEString(), "objectId", 1, 1, IS_UNIQUE, IS_ORDERED);
@@ -1201,6 +1263,13 @@ public class WorkflowApiPackageImpl extends EPackageImpl implements WorkflowApiP
 		g1.getETypeArguments().add(g2);
 		initEOperation(op, g1);
 
+		op = initEOperation(getScopeService__ListAllForRegistry__String(), null, "listAllForRegistry", 0, 1, IS_UNIQUE, IS_ORDERED);
+		addEParameter(op, ecorePackage.getEString(), "registry", 0, 1, IS_UNIQUE, IS_ORDERED);
+		g1 = createEGenericType(theManagementPackage.getList());
+		g2 = createEGenericType(theManagementPackage.getObjectMetadata());
+		g1.getETypeArguments().add(g2);
+		initEOperation(op, g1);
+
 		op = initEOperation(getScopeService__TransitionToStageForRegistry__String_String_String_String(), theManagementPackage.getObjectMetadata(), "transitionToStageForRegistry", 0, 1, IS_UNIQUE, IS_ORDERED);
 		addEParameter(op, ecorePackage.getEString(), "registry", 0, 1, IS_UNIQUE, IS_ORDERED);
 		addEParameter(op, ecorePackage.getEString(), "objectId", 1, 1, IS_UNIQUE, IS_ORDERED);
@@ -1226,6 +1295,7 @@ public class WorkflowApiPackageImpl extends EPackageImpl implements WorkflowApiP
 		initEClass(registryEClass, org.eclipse.fennec.model.atlas.wf.workflowapi.Registry.class, "Registry", !IS_ABSTRACT, !IS_INTERFACE, IS_GENERATED_INSTANCE_CLASS);
 		initEAttribute(getRegistry_Name(), ecorePackage.getEString(), "name", null, 0, 1, org.eclipse.fennec.model.atlas.wf.workflowapi.Registry.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_UNSETTABLE, !IS_ID, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
 		initEAttribute(getRegistry_Description(), ecorePackage.getEString(), "description", null, 0, 1, org.eclipse.fennec.model.atlas.wf.workflowapi.Registry.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_UNSETTABLE, !IS_ID, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
+		initEAttribute(getRegistry_Type(), this.getRegistryType(), "type", "OTHER", 0, 1, org.eclipse.fennec.model.atlas.wf.workflowapi.Registry.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_UNSETTABLE, !IS_ID, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
 		initEReference(getRegistry_Stages(), this.getStage(), null, "stages", null, 0, -1, org.eclipse.fennec.model.atlas.wf.workflowapi.Registry.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, IS_COMPOSITE, !IS_RESOLVE_PROXIES, !IS_UNSETTABLE, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
 		initEReference(getRegistry_AllowedTransitions(), this.getStageTransition(), null, "allowedTransitions", null, 0, -1, org.eclipse.fennec.model.atlas.wf.workflowapi.Registry.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, IS_COMPOSITE, !IS_RESOLVE_PROXIES, !IS_UNSETTABLE, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
 
@@ -1238,6 +1308,12 @@ public class WorkflowApiPackageImpl extends EPackageImpl implements WorkflowApiP
 		initEClass(stageTransitionEClass, StageTransition.class, "StageTransition", !IS_ABSTRACT, !IS_INTERFACE, IS_GENERATED_INSTANCE_CLASS);
 		initEAttribute(getStageTransition_FromStage(), ecorePackage.getEString(), "fromStage", null, 0, 1, StageTransition.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_UNSETTABLE, !IS_ID, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
 		initEAttribute(getStageTransition_ToStage(), ecorePackage.getEString(), "toStage", null, 0, 1, StageTransition.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_UNSETTABLE, !IS_ID, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
+
+		// Initialize enums and add enum literals
+		initEEnum(registryTypeEEnum, RegistryType.class, "RegistryType");
+		addEEnumLiteral(registryTypeEEnum, RegistryType.OTHER);
+		addEEnumLiteral(registryTypeEEnum, RegistryType.SCHEMA);
+		addEEnumLiteral(registryTypeEEnum, RegistryType.COCL);
 
 		// Create resource
 		createResource(eNS_URI);

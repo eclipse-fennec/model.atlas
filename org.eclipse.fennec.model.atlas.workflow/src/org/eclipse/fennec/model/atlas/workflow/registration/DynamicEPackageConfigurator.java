@@ -20,6 +20,7 @@ import java.util.Objects;
 import org.eclipse.emf.ecore.EPackage;
 import org.eclipse.fennec.emf.osgi.configurator.EPackageConfigurator;
 import org.eclipse.fennec.emf.osgi.constants.EMFNamespaces;
+import org.eclipse.fennec.model.atlas.workflow.WorkflowConstants;
 
 /**
  * Dynamic EPackage configurator for runtime registration of released EPackages.
@@ -44,30 +45,27 @@ public class DynamicEPackageConfigurator implements EPackageConfigurator {
     private final EPackage ePackage;
     private final String fileExtension;
     private final String version;
+    private final String scope;
+    private final String stage;
 
     /**
      * Creates a new dynamic EPackage configurator.
-     * 
+     *
      * @param ePackage      the EPackage to register (must not be null)
      * @param fileExtension the file extension for this model (e.g., "ecore",
      *                      "sensors")
      * @param version       the version of the model (e.g., "1.0.0")
+     * @param scope         the workflow scope the EPackage belongs to
+     * @param stage         the workflow stage the EPackage was registered from
      * @throws NullPointerException if ePackage is null
      */
-    public DynamicEPackageConfigurator(EPackage ePackage, String fileExtension, String version) {
+    public DynamicEPackageConfigurator(EPackage ePackage, String fileExtension, String version, String scope,
+            String stage) {
         this.ePackage = Objects.requireNonNull(ePackage, "EPackage cannot be null");
         this.fileExtension = fileExtension != null ? fileExtension : "model";
         this.version = version != null ? version : "1.0";
-    }
-
-    /**
-     * Creates a new dynamic EPackage configurator with default file extension and
-     * version.
-     * 
-     * @param ePackage the EPackage to register (must not be null)
-     */
-    public DynamicEPackageConfigurator(EPackage ePackage) {
-        this(ePackage, null, null);
+        this.scope = scope;
+        this.stage = stage;
     }
 
     @Override
@@ -104,8 +102,9 @@ public class DynamicEPackageConfigurator implements EPackageConfigurator {
         properties.put(EMFNamespaces.EMF_MODEL_NSURI, ePackage.getNsURI());
         properties.put(EMFNamespaces.EMF_MODEL_FILE_EXT, fileExtension);
         properties.put(EMFNamespaces.EMF_MODEL_VERSION, version);
+        properties.put(EMFNamespaces.EMF_MODEL_SCOPE, scope);
+        properties.put(WorkflowConstants.ATLAS_EPACKAGE_REGISTRATION_STAGE_PROPERTY, stage); 
         properties.put("dynamic.registration", Boolean.TRUE);
-        properties.put("epackage.source", "workflow.release");
         return properties;
     }
 

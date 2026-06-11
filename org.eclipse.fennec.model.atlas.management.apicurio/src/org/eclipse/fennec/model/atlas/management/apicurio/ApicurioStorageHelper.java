@@ -75,7 +75,12 @@ public class ApicurioStorageHelper extends AbstractStorageHelper {
         super(resourceSet);
         this.objectRegistryService = objectRegistryService;
         this.config = config;
-        updateRegistryCache();
+        try {
+        	updateRegistryCache();
+        } catch(IOException e) {
+        	e.printStackTrace();
+        }
+        
     }
 
     /*

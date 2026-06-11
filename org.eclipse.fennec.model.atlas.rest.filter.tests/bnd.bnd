@@ -1,0 +1,42 @@
+Bundle-Name: Model Atlas - REST Filter Integration Tests
+Bundle-Description: OSGi integration tests for ScopedResourceSetFeature (HK2-binder based per-request ResourceSet injection)
+
+Test-Cases: ${classes;HIERARCHY_INDIRECTLY_ANNOTATED;org.junit.platform.commons.annotation.Testable;CONCRETE}
+
+-library: \
+	enableOSGi-Test,\
+	enableEMF
+
+-buildpath: \
+	org.osgi.framework;version=latest,\
+	org.osgi.util.promise;version=latest,\
+	org.osgi.util.tracker;version=latest,\
+	org.osgi.service.component;version=latest,\
+	org.osgi.service.jakartars;version=latest,\
+	jakarta.ws.rs-api;version=latest,\
+	jakarta.inject.jakarta.inject-api,\
+	org.eclipse.emf.ecore;version=latest,\
+	org.eclipse.emf.common;version=latest,\
+	org.eclipse.osgitech.rest;version=latest,\
+	org.eclipse.osgitech.rest.servlet.whiteboard;version=latest,\
+	org.osgi.service.cm,\
+	org.osgi.test.junit5.cm,\
+	org.eclipse.fennec.model.atlas.workflow;version=snapshot,\
+	org.eclipse.fennec.model.atlas.rest.filter;version=snapshot,\
+	org.eclipse.fennec.model.atlas.mediatypes.api;version=snapshot,\
+	org.mockito.mockito-core;version=latest,\
+	org.mockito.junit-jupiter;version=latest
+
+Private-Package: \
+	org.eclipse.fennec.model.atlas.rest.filter.tests,\
+	org.eclipse.fennec.model.atlas.rest.filter.tests.resource
+
+Bundle-Version: 1.0.0.SNAPSHOT
+
+-includeresource: \
+	OSGI-INF/configurator/=configs/
+
+Require-Capability: osgi.extender;filter:='(osgi.extender=osgi.configurator)'
+
+-dependson: \
+	org.eclipse.fennec.model.atlas.rest.filter

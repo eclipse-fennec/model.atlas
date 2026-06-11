@@ -1,0 +1,37 @@
+info:
+  name: Simple DataGen issue#52
+  type: http
+  seq: 3
+
+http:
+  method: POST
+  url: "{{baseUrl}}/datagen/"
+  headers:
+    - name: Accept
+      value: application/xmi
+  body:
+    type: xml
+    data: |-
+      <?xml version="1.0" encoding="UTF-8"?>
+      <datagen:DataGenConfig xmi:version="2.0"
+          xmlns:xmi="http://www.omg.org/XMI"
+          xmlns:datagen="http://www.gme.org/datagen/1.0"
+          name="MyTestData"
+          version="1.0"
+          locale="de">
+        <targetModelNsURIs>https://dg.de/1.0</targetModelNsURIs>
+        <classConfigs contextClass="https://dg.de/1.0#//Person" instanceCount="10">
+          <attributeGens featureName="firstName" generatorKey="faker.person.firstName"/>
+          <attributeGens featureName="lastName" generatorKey="faker.person.lastName"/>
+          <attributeGens featureName="email" generatorKey="faker.internet.email"/>
+          <attributeGens featureName="phone" generatorKey="faker.phone.number"/>
+          <attributeGens featureName="jobTitle" generatorKey="faker.person.jobTitle"/>
+        </classConfigs>
+      </datagen:DataGenConfig>
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

@@ -17,13 +17,12 @@ import java.time.Instant;
 import java.util.List;
 
 import org.eclipse.emf.ecore.EObject;
-import org.eclipse.emf.ecore.resource.ResourceSet;
 import org.eclipse.emf.ecore.util.EcoreUtil;
 import org.eclipse.fennec.model.atlas.mgmt.management.ManagementFactory;
 import org.eclipse.fennec.model.atlas.mgmt.management.ObjectMetadata;
 import org.eclipse.fennec.model.atlas.mgmt.management.ObjectMetadataContainer;
 import org.eclipse.fennec.model.atlas.mgmt.storage.AbstractEObjectStorageService;
-import org.eclipse.fennec.model.atlas.rest.application.filter.ModelAtlasRequestFilter;
+import org.eclipse.fennec.model.atlas.rest.common.ModelAtlasRestConstants;
 import org.eclipse.fennec.model.atlas.rest.model.StageTransitionRequest;
 import org.eclipse.fennec.model.atlas.runtime.RequireRuntime;
 import org.eclipse.fennec.model.atlas.wf.workflowapi.RegistryService;
@@ -53,6 +52,7 @@ import jakarta.ws.rs.PathParam;
 import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.QueryParam;
 import jakarta.ws.rs.WebApplicationException;
+import jakarta.ws.rs.container.ContainerRequestContext;
 import jakarta.ws.rs.core.Context;
 import jakarta.ws.rs.core.EntityTag;
 import jakarta.ws.rs.core.HttpHeaders;
@@ -75,9 +75,6 @@ import jakarta.ws.rs.core.Response.Status;
 public class ObjectRegistryResource {
 
     @Reference
-    ResourceSet resourceSet;
-
-    @Reference
     private ScopeServiceCollector scopeCollector;
 
     @Reference
@@ -90,11 +87,47 @@ public class ObjectRegistryResource {
     private HttpHeaders headers;
     
     @Context
-    private jakarta.ws.rs.container.ContainerRequestContext requestContext;
+    private ContainerRequestContext requestContext;
 
     // ======================
     // Storage Objects
     // ======================
+    
+    /**
+     * List all objects in all the stages for this scope and registry.
+     * Respects hierarchical visibility, including objects from parent scopes' final
+     * stages.
+     *
+     * @param scopeName    the scope name
+     * @param registryName the registry name
+     * @return List of ObjectMetadata objects
+     */
+    @GET
+    @Path("/all")
+    @Produces
+    @Operation(summary = "List objects in all the stages for provided scope and registry", description = "List all objects in all the stages for this scope and registry, including objects from parent scopes", responses = {
+            @ApiResponse(responseCode = "200", description = "Objects retrieved successfully", content = @Content(schema = @Schema(type = "array", implementation = ObjectMetadata.class))),
+            @ApiResponse(responseCode = "400", description = "Scope not available, registry not available for scope, stage not available for registry or not a valid stage"),
+            @ApiResponse(responseCode = "204", description = "No object found in scope final stage, nor in the parent final stage"),
+            @ApiResponse(responseCode = "500", description = "Internal server error") })
+    public Response listAll(
+            @Parameter(description = "The scope name", required = true) @PathParam("scopeName") String scopeName,
+            @Parameter(description = "The registry name", required = true) @PathParam("registryName") String registryName) {
+
+        ScopeService<?> scopeService = getScopeServiceByScopeName(scopeName);
+        try {
+            List<ObjectMetadata> objectsMetadata = scopeService.listAllForRegistry(registryName);
+            if (objectsMetadata.isEmpty())
+                return Response.status(Response.Status.NO_CONTENT).build();
+            ObjectMetadataContainer container = mgmtFactory.createObjectMetadataContainer();
+            container.getMetadata().addAll(objectsMetadata);
+            return Response.status(Response.Status.OK).entity(container).header("Content-Type", getResolvedMediaType()).build();
+        } catch (IllegalArgumentException e) {
+            return Response.status(Response.Status.BAD_REQUEST).entity(e.getMessage()).build();
+        } catch (Exception e) {
+            return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity(e.getMessage()).build();
+        }
+    }
 
     /**
      * List all objects in the final/released stage for this scope and registry.
@@ -615,6 +648,6 @@ public class ObjectRegistryResource {
     }
 
     private String getResolvedMediaType() {
-        return (String) requestContext.getProperty(ModelAtlasRequestFilter.RESOLVED_MEDIA_TYPE);
+        return (String) requestContext.getProperty(ModelAtlasRestConstants.RESOLVED_MEDIA_TYPE);
     }
 }

@@ -36,20 +36,23 @@ Bundle-Developers: \
 	fennec,\
 	fennecTest,\
 	fennecEMF,\
+	fennecM2X,\
+	fennecJPA,\
 	fennecQVT,\
 	geckoEMFUtil,\
 	geckoMessaging,\
-	geckoEMFRepository,\
-	jakartaREST,\
+	geckoSearch,\
 	geckoLibraries,\
+	jakartaREST,\
 	fennecCodec
+
 
 # Needed because we enabled library 'gecko-dimc'
 # Activate baselining
 github-project: model.atlas
 github-orga: eclipse-fennec
 fennec-baselining: false
-base-version: 0.0.1
+base-version: 0.1.0
 maven-central: true
 
 # Maven Central Group-Id
@@ -87,4 +90,5 @@ required_bnd_version: ${versionmask;===;${bnd_version}}
 		name = Temp; \
 		pretty = true; \
 		local = ${build}/cache/temp
+		
 		

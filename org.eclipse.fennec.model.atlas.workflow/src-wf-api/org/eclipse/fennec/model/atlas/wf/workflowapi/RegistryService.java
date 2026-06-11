@@ -143,6 +143,17 @@ public interface RegistryService<T extends EObject> {
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
 	 * <!-- begin-model-doc -->
+	 * List all objects in all the stages and for the specified scope of the workflow
+	 * <!-- end-model-doc -->
+	 * @model dataType="org.eclipse.fennec.model.atlas.mgmt.management.List&lt;org.eclipse.fennec.model.atlas.mgmt.management.ObjectMetadata&gt;" many="false"
+	 * @generated
+	 */
+	List<ObjectMetadata> listAll(String scope);
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * <!-- begin-model-doc -->
 	 * Performs a transition of an EObject from one stage to another for a certain scope, if allowed.
 	 * <!-- end-model-doc -->
 	 * @model objectIdRequired="true"

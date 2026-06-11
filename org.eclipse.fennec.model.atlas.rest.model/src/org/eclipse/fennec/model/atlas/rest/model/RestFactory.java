@@ -1,6 +1,5 @@
 /*
- * Copyright (c) 2012 - 2025 Data In Motion and others.
- * All rights reserved.
+ * Copyright (c) 2026 Contributors to the Eclipse Foundation.
  * 
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
@@ -9,7 +8,7 @@
  * SPDX-License-Identifier: EPL-2.0
  * 
  * Contributors:
- *     Data In Motion - initial API and implementation
+ *   Data In Motion Consulting - initial implementation
  */
 package org.eclipse.fennec.model.atlas.rest.model;
 
@@ -79,6 +78,15 @@ public interface RestFactory extends EFactory {
 	 * @generated
 	 */
 	ScopeListResponse createScopeListResponse();
+
+	/**
+	 * Returns a new object of class '<em>Container</em>'.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @return a new object of class '<em>Container</em>'.
+	 * @generated
+	 */
+	Container createContainer();
 
 	/**
 	 * Returns the package supported by this factory.

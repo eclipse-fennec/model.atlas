@@ -1,4 +1,4 @@
 -library: enableEMF
 
 -buildpath: \
-	org.eclipse.fennec.model.atlas.mediatypes.api;version=latest
+	org.eclipse.fennec.model.atlas.mediatypes.api;version=snapshot

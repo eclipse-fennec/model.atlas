@@ -21,6 +21,7 @@ plugins {
 }
 include ":docker:modelatlas_apicurio"
 include ":docker:modelatlas_file"
+include ":docker:modelatlas_jena"
 
 // Exclude non-standard projects from Gradle build
 def excludedProjects = [

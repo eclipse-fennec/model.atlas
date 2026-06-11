@@ -1,0 +1,11 @@
+Bundle-Name: Eclipse Fennect Data Generation Service
+Bundle-Description: Service to generate data out of a config and a model
+
+-workingset: datagen
+-library: enableEMF
+
+-buildpath: \
+	net.datafaker;version=latest,\
+	org.apache.lucene.core;version=latest,\
+	org.apache.lucene.queryparser;version=latest,\
+	org.eclipse.fennec.model.atlas.datagen.model;version=snapshot

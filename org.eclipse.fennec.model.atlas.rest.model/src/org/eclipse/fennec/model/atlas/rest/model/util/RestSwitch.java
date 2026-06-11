@@ -1,6 +1,5 @@
 /**
- * Copyright (c) 2012 - 2025 Data In Motion and others.
- * All rights reserved.
+ * Copyright (c) 2026 Contributors to the Eclipse Foundation.
  * 
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
@@ -9,7 +8,7 @@
  * SPDX-License-Identifier: EPL-2.0
  * 
  * Contributors:
- *     Data In Motion - initial API and implementation
+ *   Data In Motion Consulting - initial implementation
  */
 package org.eclipse.fennec.model.atlas.rest.model.util;
 
@@ -107,6 +106,12 @@ public class RestSwitch<T> extends Switch<T> {
 				if (result == null) result = defaultCase(theEObject);
 				return result;
 			}
+			case RestPackage.CONTAINER: {
+				Container container = (Container)theEObject;
+				T result = caseContainer(container);
+				if (result == null) result = defaultCase(theEObject);
+				return result;
+			}
 			default: return defaultCase(theEObject);
 		}
 	}
@@ -183,6 +188,21 @@ public class RestSwitch<T> extends Switch<T> {
 	 * @generated
 	 */
 	public T caseScopeListResponse(ScopeListResponse object) {
+		return null;
+	}
+
+	/**
+	 * Returns the result of interpreting the object as an instance of '<em>Container</em>'.
+	 * <!-- begin-user-doc -->
+	 * This implementation returns null;
+	 * returning a non-null result will terminate the switch.
+	 * <!-- end-user-doc -->
+	 * @param object the target of the switch.
+	 * @return the result of interpreting the object as an instance of '<em>Container</em>'.
+	 * @see #doSwitch(org.eclipse.emf.ecore.EObject) doSwitch(EObject)
+	 * @generated
+	 */
+	public T caseContainer(Container object) {
 		return null;
 	}
 

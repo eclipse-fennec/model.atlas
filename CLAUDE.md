@@ -8,140 +8,125 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ### Core Architecture
 
-- **OSGi-based**: Uses bnd workspace with OSGi bundles for modular architecture
-- **Dynamic EMF Models**: Runtime loading of .ecore models from filesystem with automatic registration
+- **OSGi-based**: Uses bnd workspace with OSGi Declarative Services (DS) annotations for component wiring
+- **Dynamic EMF Models**: Runtime loading of .ecore models from filesystem with automatic EPackage registration as OSGi services
+- **Scope/Workflow Management**: Multi-tenant scope system with configurable stage-based workflows (draft, review, approved, release)
+- **Pluggable Storage**: Storage backends are interchangeable (File-based, Apicurio Registry) via OSGi services
 - **RESTful API**: Jakarta RS-based REST API with Swagger/OpenAPI documentation
 - **Model Transformations**: QVT (Query/View/Transformation) support for model-to-model transformations
 - **Multi-format Export**: Supports JSON, BSON, XLSX, ODS, R-lang, and more via Fennec Codec
-- **File Watching**: Automatic model reloading when .ecore or .qvto files change
 
-### Package Structure
+### Architectural Layers
 
-All packages use the `org.eclipse.fennec.model.atlas.*` prefix:
-- `org.eclipse.fennec.model.atlas` - Core model bundle with EMFFileWatcher
-- `org.eclipse.fennec.model.atlas.runtime` - Runtime configuration and requirements
-- `org.eclipse.fennec.model.atlas.rest.application` - REST API with Swagger UI
-- `org.eclipse.fennec.model.atlas.model.documentation.provider` - Model documentation generation
-- `org.eclipse.fennec.model.atlas.mediatypes.api/impl` - Supported media types tracking
-- `org.eclipse.fennec.model.atlas.emf.common` - Dynamic EPackage and EObject utilities
+```
+REST API (Jakarta RS)  -->  Workflow/Scope Service  -->  Storage Backends
+     |                           |                        |-- File-based
+     |                           |                        |-- Apicurio Registry
+     v                           v                        |-- Lucene (search/index)
+  OpenAPI/Swagger         Schema Registry
+                                 |
+                          EMF Core (EPackage loading, dynamic factories)
+```
+
+- **REST Layer** (`rest.application`, `rest.model`, `rest.ecore.xmi`, `rest.jsonschema`, `rest.xsdschema`, `rest.uml`): HTTP endpoints for model access, format conversion, and schema management
+- **Workflow Layer** (`workflow`): `ScopeServiceImpl` manages scopes with parent-child hierarchies; `EObjectWorkflowService` handles stage transitions
+- **Management Layer** (`management`, `management.file`, `management.apicurio`, `management.lucene`): Pluggable storage and search via `AbstractEObjectStorageService`
+- **EMF Core** (`org.eclipse.fennec.model.atlas`): `EMFFileWatcher` monitors `workspace/` for .ecore/.qvto/.jsonschema files, registers EPackages as OSGi services
+- **EMF Common** (`emf.common`): `DynamicEPackageConfigurator`, `PrototypeEObjectServiceFactory`, format conversion utilities
 
 ## Development Commands
 
 ### Build & Test
 ```bash
-# Full build and test
-./gradlew build
+./gradlew build                    # Full build and test
+./gradlew clean build              # Clean build
+./gradlew assemble                 # Build without tests
+./gradlew :org.eclipse.fennec.model.atlas:build  # Build specific module
 
-# Clean build
-./gradlew clean build
+# Tests
+./gradlew test                     # Unit tests with JaCoCo coverage
+./gradlew testOSGi                 # OSGi integration tests
+./gradlew :org.eclipse.fennec.model.atlas.rest.tests:test  # Single module tests
+./gradlew build -x test -x testOSGi  # Build skipping all tests
 
-# Build specific module
-./gradlew :org.eclipse.fennec.model.atlas:build
+# Coverage
+./gradlew codeCoverageReport       # Aggregate JaCoCo report -> build/reports/jacoco/codeCoverageReport/
 
-# Release (creates OSGi bundles)
-./gradlew release
+# Release
+./gradlew release                  # Create OSGi bundles
+./gradlew cleanCache               # Clear bnd workspace cache
 ```
 
-### Runtime Export
+### Runtime Export & Docker
 ```bash
 # Resolve runtime dependencies
 ./gradlew org.eclipse.fennec.model.atlas.runtime:resolve.modelatlas.runtime_base
 
-# Export docker runtime
-./gradlew org.eclipse.fennec.model.atlas.runtime:export.modelatlas.runtime_docker
+# Export runtime JARs for docker variants
+./gradlew org.eclipse.fennec.model.atlas.runtime:export.modelatlas.runtime_docker_apicurio
+./gradlew org.eclipse.fennec.model.atlas.runtime:export.modelatlas.runtime_docker_file
 
-# Prepare docker images
-./gradlew prepareDocker
+# Prepare and build Docker images
+./gradlew docker:modelatlas_apicurio:prepareDocker
+./gradlew docker:modelatlas_file:prepareDocker
+docker build -t eclipsefennec/model.atlas:apicurio-snapshot docker/modelatlas_apicurio/
+docker build -t eclipsefennec/model.atlas:file-snapshot docker/modelatlas_file/
+
+# Run with Docker Compose
+docker compose -f docker/dockercompose/docker-compose-file.yml up -d       # File storage (standalone)
+docker compose -f docker/dockercompose/docker-compose-apicurio.yml up -d   # Apicurio + UI stack
 ```
 
-### Development Workflow
-```bash
-# Assemble without tests
-./gradlew assemble
+**Docker image variants**: Apicurio (uses Apicurio Registry for versioned artifact storage) and File (local filesystem, no external deps). Both use distroless Java 21 base images, port 8080.
 
-# Run unit tests with JaCoCo coverage
-./gradlew test
+## Bundle/Module Structure
 
-# Run OSGi integration tests
-./gradlew testOSGi
+All bundles use the `org.eclipse.fennec.model.atlas` prefix. Key groupings:
 
-# Clean cache (bnd workspace cache)
-./gradlew cleanCache
-```
+| Group | Bundles | Purpose |
+|-------|---------|---------|
+| **Core** | `.` (root bundle) | EMFFileWatcher, EPackageService |
+| **REST** | `.rest.application`, `.rest.model`, `.rest.ecore.xmi`, `.rest.jsonschema`, `.rest.xsdschema`, `.rest.uml`, `.rest.tests` | HTTP API, format-specific endpoints |
+| **Workflow** | `.workflow`, `.workflow.tests` | Scope management, stage-based workflows |
+| **Storage** | `.management`, `.management.file`, `.management.apicurio`, `.management.apicurio.model`, `.management.lucene` + test bundles | Pluggable storage backends |
+| **Schema** | `.schema.registry.api`, `.schema.registry.impl` | Schema registry service |
+| **Media** | `.mediatypes.api`, `.mediatypes.impl` | Media type codec tracking |
+| **EMF Utils** | `.emf.common` | Dynamic EPackage config, format converters |
+| **Runtime** | `.runtime`, `.runtime.config`, `.runtime.config.local`, `.runtime.config.docker`, `.runtime.config.docker.apicurio`, `.runtime.config.docker.file` | bndrun configurations per environment |
+| **Health** | `.healthcheck` | Felix Health Checks (liveness/readiness) |
+| **Docs** | `.model.documentation.provider` | Model documentation generation |
 
-### Code Quality
-- **JaCoCo**: Coverage reports in `build/reports/jacoco/codeCoverageReport/`
-- **SonarQube**: Configured for code quality analysis (SonarCloud integration)
-- **JUnit 5**: Testing framework with OSGi integration
+## Key Configuration Files
 
-## Key Components
+- `cnf/build.bnd` - OSGi workspace config: library definitions (fennec, gecko, EMF), Maven Central repos, Java 21
+- `cnf/central.mvn` - Maven dependency coordinates
+- `settings.gradle` - bnd workspace plugin (v7.2.1), includes docker modules
+- `build.gradle` - JaCoCo, SonarQube, JUnit 5.13.4 / Mockito 4.11.0 / AssertJ 3.27.4
+- `*.bndrun` files in runtime modules - OSGi runtime assembly with start levels
 
-### EMFFileWatcher (org.eclipse.fennec.model.atlas:86-556)
-Central component that monitors filesystem for EMF models and QVT transformations:
-- Watches `workspace/` directory for .ecore, .qvto, and .jsonschema files
-- Automatically registers EPackages as OSGi services
-- Creates dynamic EFactory instances for runtime model instantiation
-- Registers QVT transformations with ConfigurationAdmin
-- Supports JSON Schema to EPackage conversion
+## Runtime Workspaces
 
-### REST Application
-Provides HTTP endpoints for model access:
-- Swagger UI at `/swagger-api/`
-- Model resources exposed via Jakarta RS
-- Multiple content types supported (JSON, XML, BSON, etc.)
-- OpenAPI 3.0 documentation generation
-
-### Runtime Workspaces
-The `workspace/` directory (in runtime modules) contains:
-- `models/` - .ecore model definitions
+The `workspace/` directory (in runtime config modules) contains:
+- `models/` - .ecore model definitions (auto-loaded by EMFFileWatcher)
 - `trafos/` - QVT transformation files (.qvto)
 - `pipelines/` - Pipeline configuration files
 
-## Important Configuration Files
-
-- `cnf/build.bnd` - OSGi workspace configuration with Fennec/Gecko library imports
-- `settings.gradle` - Multi-module Gradle setup with bnd workspace plugin
-- `build.gradle` - Root build with JaCoCo, SonarQube, and JUnit setup
-- `Jenkinsfile` - CI/CD pipeline for main/snapshot branches
-- `*.bndrun` - Runtime configurations (base, local, docker)
-
-## Libraries & Dependencies
-
-### Core Libraries (cnf/build.bnd)
-- `fennec` - Fennec framework libraries
-- `fennecTest` - Fennec testing support
-- `geckoEMF` - Gecko EMF/OSGi integration
-- `fennecQVT` - QVT transformation engine
-- `fennecPersistence` - JPA/ORM persistence support
-- `geckoEMFUtil` - EMF utilities for Jakarta RS
-- `geckoMessaging` - Messaging integration
-- `geckoEMFRepository` - EMF repository support
-- `jakartaREST` - Jakarta RESTful Web Services
-
-### Key External Dependencies
-- Eclipse EMF (2.29+)
-- Apache Felix OSGi framework (7.0.5)
-- Jakarta RS API (3.1.0)
-- Swagger Core (2.2.28)
-- Jackson (2.19.2)
-- Fennec Codec (1.0.0) for serialization
-
-## Deployment & Release
-
-- **Snapshot builds**: Deploy to `cnf/release/` for development
-- **Release builds**: Version-controlled releases via Jenkins to Maven Central
-- **Docker images**: Built for `modelatlas` runtime
-- **Repository**: Group ID `org.eclipse.fennec.model.atlas`
-- **Baselining**: Enabled for API compatibility checking
-- **Java Version**: 21 (source and target)
-
-## Dynamic Model Loading
-
-Models in `workspace/models/` are automatically loaded and registered:
-1. File watcher detects new/modified .ecore files
-2. EPackage loaded with dynamic factory
-3. Registered as OSGi service with namespace URI
-4. Accessible via REST API
-5. QVT transformations automatically configured from .qvto files
-
 JSON Schema files (.jsonschema) are converted to EPackages at runtime.
+
+## Health Check Endpoints
+
+- `/atlas/system/health` - All health checks (tag: `atlas`)
+- `/atlas/system/health.json` - JSON format
+- `/atlas/system/health?tags=liveness` - Kubernetes liveness
+- `/atlas/system/health?tags=readiness` - Kubernetes readiness (EMF Registry + Media Types)
+
+## CI/CD
+
+- **GitHub Actions** (`.github/workflows/build.yml`): JDK 21, build + export all variants + artifact upload
+- **GitLab CI** (`.gitlab-ci.yml`): License check, build, docker build stages; uses Testcontainers with DinD
+- **Jenkins** (`Jenkinsfile`): Main/snapshot branch builds, docker push to internal registry
+- **License checks** (`.github/workflows/license.yml`): SkyWalking Eyes header verification
+
+## Java Version
+
+Java 21 (source and target).

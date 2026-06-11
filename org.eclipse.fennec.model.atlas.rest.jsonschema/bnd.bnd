@@ -7,4 +7,4 @@
 	org.osgi.service.jakartars,\
 	org.osgi.service.component,\
 	org.eclipse.fennec.codec.jsonschema;version=latest,\
-	org.gecko.emf.osgi.component.minimal
+	org.eclipse.fennec.model.atlas.rest.common;version=snapshot,\

@@ -16,14 +16,22 @@ package org.eclipse.fennec.model.atlas.rest.tests.helper;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.lang.reflect.Field;
 import java.util.Collections;
 
 import org.eclipse.emf.common.util.URI;
+import org.eclipse.emf.ecore.EAttribute;
+import org.eclipse.emf.ecore.EClass;
 import org.eclipse.emf.ecore.EObject;
 import org.eclipse.emf.ecore.EPackage;
+import org.eclipse.emf.ecore.EcoreFactory;
+import org.eclipse.emf.ecore.EcorePackage;
 import org.eclipse.emf.ecore.resource.Resource;
 import org.eclipse.emf.ecore.resource.ResourceSet;
 import org.eclipse.emf.ecore.xmi.impl.XMIResourceFactoryImpl;
+import org.eclipse.fennec.model.atlas.datagen.example.model.dge.DGFactory;
+import org.eclipse.fennec.model.atlas.datagen.example.model.dge.Person;
+import org.eclipse.fennec.model.atlas.rest.common.AbstractEPackageMessageBodyHandler;
 
 /**
  * Helper utility for common test operations including XMI serialization and
@@ -47,6 +55,7 @@ public class TestHelper {
 
         // Serialize to byte array
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        
         resource.save(baos, Collections.emptyMap());
 
         // Clean up
@@ -94,11 +103,48 @@ public class TestHelper {
      * @return a new test EPackage
      */
     public static EPackage createTestEPackage(String nsUri, String name, String nsPrefix) {
-        EPackage ePackage = org.eclipse.emf.ecore.EcoreFactory.eINSTANCE.createEPackage();
+        EPackage ePackage = EcoreFactory.eINSTANCE.createEPackage();
         ePackage.setNsURI(nsUri);
         ePackage.setName(name);
         ePackage.setNsPrefix(nsPrefix);
         return ePackage;
+    }
+
+    public static EClass createTestEClass(String name) {
+    	EClass eClass = EcoreFactory.eINSTANCE.createEClass();
+        eClass.setName(name);
+        return eClass;
+    }
+
+    public static EAttribute createTestEAttribute(String name) {
+    	EAttribute eAtt = EcoreFactory.eINSTANCE.createEAttribute();
+    	eAtt.setName(name);
+    	eAtt.setEType(EcorePackage.Literals.EINT);
+    	return eAtt;
+    }
+
+    public static Person createTestObject() {
+		Person person = DGFactory.eINSTANCE.createPerson();
+		person.setFirstName("John");
+		person.setLastName("Doe");
+		person.setEmail("john.doe@gmail.com");
+		person.setJobTitle("Software Developer");
+		return person;
+	}
+
+    /**
+     * Injects a {@link ResourceSet} into the base-class
+     * {@code resourceSetProvider} field so that unit tests can drive MBR/W
+     * {@code readFrom}/{@code writeTo} methods directly outside a JAX-RS request
+     * scope (where Jersey's {@code @Context} injection does not happen). The
+     * handler resolves the {@link ResourceSet} via {@code Provider#get()}, so a
+     * trivial provider that always returns {@code resourceSet} is injected.
+     */
+    public static void injectResourceSet(Object handler, ResourceSet resourceSet) throws Exception {
+        Field field = AbstractEPackageMessageBodyHandler.class.getDeclaredField("resourceSetProvider");
+        field.setAccessible(true);
+        jakarta.inject.Provider<ResourceSet> provider = () -> resourceSet;
+        field.set(handler, provider);
     }
 
     /**

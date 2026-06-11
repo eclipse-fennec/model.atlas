@@ -20,10 +20,13 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import org.eclipse.emf.common.util.URI;
 import org.eclipse.emf.ecore.EFactory;
 import org.eclipse.emf.ecore.EPackage;
+import org.eclipse.emf.ecore.resource.Resource;
 import org.eclipse.emf.ecore.resource.ResourceSet;
 import org.eclipse.fennec.emf.osgi.configurator.EPackageConfigurator;
+import org.eclipse.fennec.model.atlas.mgmt.management.ObjectMetadata;
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.Filter;
 import org.osgi.framework.FrameworkUtil;
@@ -66,8 +69,8 @@ import org.osgi.service.typedevent.TypedEventBus;
  * <pre>{@code
  * // After object release in workflow
  * EPackage releasedEPackage = loadReleasedEPackage(objectId);
- * registrationService.registerEPackage(releasedEPackage, "sensors", "1.0");
- * 
+ * registrationService.registerEPackage(releasedEPackage, metadata);
+ *
  * // Later, when EPackage should be removed
  * registrationService.unregisterEPackage(releasedEPackage.getNsURI());
  * }</pre>
@@ -151,7 +154,7 @@ public class DynamicEPackageRegistrationService {
 
     /**
      * Registers an EPackage in the OSGi EMF registry.
-     * 
+     *
      * <p>
      * This method creates and registers all necessary services for the EPackage:
      * </p>
@@ -161,19 +164,35 @@ public class DynamicEPackageRegistrationService {
      * <li>EFactory service</li>
      * <li>Condition service</li>
      * </ul>
-     * 
-     * @param ePackage      the EPackage to register (must not be null)
-     * @param fileExtension the file extension for this model (optional, defaults to
-     *                      "model")
-     * @param version       the version of the model (optional, defaults to "1.0")
+     *
+     * <p>
+     * File extension and version are read from {@code metadata} properties (keys
+     * {@code file.extension} and {@code version}), with fallbacks derived from the
+     * EPackage when absent. Workflow scope and stage are read directly from
+     * {@code metadata} and surfaced as service properties so consumers can filter
+     * registered EPackages by workflow location.
+     * </p>
+     *
+     * <p>
+     * Coupling note: this method intentionally takes the workflow-layer
+     * {@link ObjectMetadata} type — it is only meant to be called from the
+     * workflow stack and is not a generic EMF-OSGi utility.
+     * </p>
+     *
+     * @param ePackage the EPackage to register (must not be null)
+     * @param metadata the object metadata accompanying the EPackage (must not be
+     *                 null; {@code scope} is expected to be non-null)
      * @return true if registration was successful, false if already registered or
      *         failed
-     * @throws IllegalArgumentException if ePackage is null
+     * @throws IllegalArgumentException if ePackage or metadata is null
      * @throws IllegalStateException    if service is not active
      */
-    public boolean registerEPackage(EPackage ePackage, String fileExtension, String version) {
+    public boolean registerEPackage(EPackage ePackage, ObjectMetadata metadata) {
         if (ePackage == null) {
             throw new IllegalArgumentException("EPackage cannot be null");
+        }
+        if (metadata == null) {
+            throw new IllegalArgumentException("ObjectMetadata cannot be null");
         }
 
         if (bundleContext == null) {
@@ -195,18 +214,22 @@ public class DynamicEPackageRegistrationService {
         try {
             logger.info("Registering EPackage: " + nsURI + " (name=" + ePackage.getName() + ")");
 
+            Resource eResource = ePackage.eResource();
+            if(eResource.getResourceSet() != null) eResource.getResourceSet().getResources().remove(eResource);
+            eResource.setURI(URI.createURI(ePackage.getNsURI()));
+
+            String fileExtension = extractFileExtension(metadata, ePackage);
+            String version = extractVersion(metadata, ePackage);
+
             // Create configurator
-            DynamicEPackageConfigurator configurator = new DynamicEPackageConfigurator(ePackage, fileExtension,
-                    version);
+            DynamicEPackageConfigurator configurator = new DynamicEPackageConfigurator(ePackage, fileExtension, version,
+                    metadata.getScope(), metadata.getStage());
 
             // Track for pending configuration event when ResourceSet becomes available
             String modelName = ePackage.getName();
 
             RegisteredEPackage registered = null;
-//            if (modelName.equals("airquality")) {
-//            	initializer.doRegisterModel();
-//            	registered = new RegisteredEPackage(null, null, null, null, modelName);
-//            } else {
+
             // Register all services
             ServiceRegistration<EPackageConfigurator> configuratorReg = registerEPackageConfigurator(configurator);
             ServiceRegistration<?> ePackageReg = registerEPackageService(ePackage, configurator);
@@ -235,17 +258,6 @@ public class DynamicEPackageRegistrationService {
             logger.log(Level.SEVERE, "Failed to register EPackage: " + nsURI, e);
             return false;
         }
-    }
-
-    /**
-     * Registers an EPackage with default file extension and version.
-     * 
-     * @param ePackage the EPackage to register
-     * @return true if registration was successful, false if already registered or
-     *         failed
-     */
-    public boolean registerEPackage(EPackage ePackage) {
-        return registerEPackage(ePackage, null, null);
     }
 
     /**
@@ -460,6 +472,27 @@ public class DynamicEPackageRegistrationService {
         } catch (Exception e) {
             logger.log(Level.WARNING, "Failed to send REMOVE configuration event for " + modelName, e);
         }
+    }
+
+    private static String extractFileExtension(ObjectMetadata metadata, EPackage ePackage) {
+        if (metadata.getProperties() != null) {
+            Object fileExt = metadata.getProperties().get("file.extension");
+            if (fileExt instanceof String s && !s.isBlank()) {
+                return s.startsWith(".") ? s.substring(1) : s;
+            }
+        }
+        String name = ePackage.getName();
+        return (name != null && !name.isEmpty()) ? name.toLowerCase() : "ecore";
+    }
+
+    private static String extractVersion(ObjectMetadata metadata, EPackage ePackage) {
+        if (metadata.getProperties() != null) {
+            Object version = metadata.getProperties().get("version");
+            if (version instanceof String s && !s.isBlank()) {
+                return s;
+            }
+        }
+        return "1.0";
     }
 
     /**

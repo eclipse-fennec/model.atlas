@@ -29,13 +29,13 @@ import java.util.List;
 import org.eclipse.emf.ecore.EObject;
 import org.eclipse.emf.ecore.EPackage;
 import org.eclipse.emf.ecore.EcoreFactory;
-import org.eclipse.fennec.model.atlas.management.lucene.tests.annotations.LuceneTestAnnotations.RegistryConfiguration;
 import org.eclipse.fennec.model.atlas.mgmt.api.EObjectRegistryService;
 import org.eclipse.fennec.model.atlas.mgmt.api.EObjectStorageService;
 import org.eclipse.fennec.model.atlas.mgmt.management.ManagementFactory;
 import org.eclipse.fennec.model.atlas.mgmt.management.ObjectMetadata;
 import org.eclipse.fennec.model.atlas.mgmt.management.ObjectStatus;
 import org.eclipse.fennec.model.atlas.mgmt.management.StorageBackendType;
+import org.eclipse.fennec.model.atlas.tests.common.CommonTestAnnotations.RegistryConfiguration;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -869,7 +869,7 @@ public class EObjectApicurioStorageServiceTest {
         serviceProperties.put("base.url", String.format(APICURIO_BASE_URL, container.getHost(), mappedPort));
         configuration.update(serviceProperties);
 
-        Thread.sleep(3000);
+        Thread.sleep(5000);
 
         // Storage service should be available (which implies registry is also working)
         EObjectStorageService<EObject> storageService = (EObjectStorageService<EObject>) serviceAware

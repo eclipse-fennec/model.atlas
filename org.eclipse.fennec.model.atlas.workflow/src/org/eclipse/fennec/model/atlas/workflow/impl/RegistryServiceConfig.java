@@ -29,6 +29,9 @@ public @interface RegistryServiceConfig {
 
     @AttributeDefinition(name = "Registry Description", description = "A description for the registry", required = false, defaultValue = "")
     String registry_description() default "";
+    
+    @AttributeDefinition(name = "Registry Type", description = "The role of this registry: SCHEMA (holds EPackages), COCL (holds OCL constraint sets), OTHER (general purpose)", required = false, defaultValue = "OTHER")
+    String registry_type() default "OTHER";
 
     @AttributeDefinition(name = "Stage Storage Mappings", description = "Array of ':'-separated stage→storage mappings (e.g., [draft:mongodb,approved:minio,release:apicurio])", required = true)
     String[] stage_storage_mappings();

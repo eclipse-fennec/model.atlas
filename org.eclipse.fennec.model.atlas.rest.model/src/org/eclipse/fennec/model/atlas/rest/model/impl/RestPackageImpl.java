@@ -1,6 +1,5 @@
 /**
- * Copyright (c) 2012 - 2025 Data In Motion and others.
- * All rights reserved.
+ * Copyright (c) 2026 Contributors to the Eclipse Foundation.
  * 
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
@@ -9,7 +8,7 @@
  * SPDX-License-Identifier: EPL-2.0
  * 
  * Contributors:
- *     Data In Motion - initial API and implementation
+ *   Data In Motion Consulting - initial implementation
  */
 package org.eclipse.fennec.model.atlas.rest.model.impl;
 
@@ -73,6 +72,13 @@ public class RestPackageImpl extends EPackageImpl implements RestPackage {
 	 * @generated
 	 */
 	private EClass scopeListResponseEClass = null;
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	private EClass containerEClass = null;
 
 	/**
 	 * Creates an instance of the model <b>Package</b>, registered with
@@ -344,6 +350,26 @@ public class RestPackageImpl extends EPackageImpl implements RestPackage {
 	 * @generated
 	 */
 	@Override
+	public EClass getContainer() {
+		return containerEClass;
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
+	public EReference getContainer_Elements() {
+		return (EReference)containerEClass.getEStructuralFeatures().get(0);
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
 	public RestFactory getRestFactory() {
 		return (RestFactory)getEFactoryInstance();
 	}
@@ -391,6 +417,9 @@ public class RestPackageImpl extends EPackageImpl implements RestPackage {
 
 		scopeListResponseEClass = createEClass(SCOPE_LIST_RESPONSE);
 		createEReference(scopeListResponseEClass, SCOPE_LIST_RESPONSE__SCOPES);
+
+		containerEClass = createEClass(CONTAINER);
+		createEReference(containerEClass, CONTAINER__ELEMENTS);
 	}
 
 	/**
@@ -451,8 +480,36 @@ public class RestPackageImpl extends EPackageImpl implements RestPackage {
 		initEClass(scopeListResponseEClass, ScopeListResponse.class, "ScopeListResponse", !IS_ABSTRACT, !IS_INTERFACE, IS_GENERATED_INSTANCE_CLASS);
 		initEReference(getScopeListResponse_Scopes(), theWorkflowApiPackage.getScope(), null, "scopes", null, 0, -1, ScopeListResponse.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, IS_COMPOSITE, !IS_RESOLVE_PROXIES, !IS_UNSETTABLE, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
 
+		initEClass(containerEClass, org.eclipse.fennec.model.atlas.rest.model.Container.class, "Container", !IS_ABSTRACT, !IS_INTERFACE, IS_GENERATED_INSTANCE_CLASS);
+		initEReference(getContainer_Elements(), ecorePackage.getEObject(), null, "elements", null, 0, -1, org.eclipse.fennec.model.atlas.rest.model.Container.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, IS_COMPOSITE, !IS_RESOLVE_PROXIES, !IS_UNSETTABLE, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
+
 		// Create resource
 		createResource(eNS_URI);
+
+		// Create annotations
+		// http://www.eclipse.org/emf/2002/GenModel
+		createGenModelAnnotations();
+	}
+
+	/**
+	 * Initializes the annotations for <b>http://www.eclipse.org/emf/2002/GenModel</b>.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	protected void createGenModelAnnotations() {
+		String source = "http://www.eclipse.org/emf/2002/GenModel";
+		addAnnotation
+		  (this,
+		   source,
+		   new String[] {
+			   "copyrightText", "Copyright (c) 2026 Contributors to the Eclipse Foundation.\n\nThis program and the accompanying materials are made\navailable under the terms of the Eclipse Public License 2.0\nwhich is available at https://www.eclipse.org/legal/epl-2.0/\n\nSPDX-License-Identifier: EPL-2.0\n\nContributors:\n  Data In Motion Consulting - initial implementation",
+			   "oSGiCompatible", "true",
+			   "complianceLevel", "21.0",
+			   "basePackage", "org.eclipse.fennec.model.atlas.rest",
+			   "resource", "XMI",
+			   "fileExtensions", "rest"
+		   });
 	}
 
 } //RestPackageImpl

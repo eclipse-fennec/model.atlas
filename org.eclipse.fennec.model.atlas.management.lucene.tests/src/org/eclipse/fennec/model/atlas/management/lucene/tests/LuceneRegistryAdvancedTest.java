@@ -26,12 +26,12 @@ import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
-import org.eclipse.fennec.model.atlas.management.lucene.tests.annotations.LuceneTestAnnotations;
-import org.eclipse.fennec.model.atlas.management.lucene.tests.annotations.LuceneTestAnnotations.RegistryConfiguration;
 import org.eclipse.fennec.model.atlas.mgmt.api.EObjectRegistryService;
 import org.eclipse.fennec.model.atlas.mgmt.management.ManagementFactory;
 import org.eclipse.fennec.model.atlas.mgmt.management.ObjectMetadata;
 import org.eclipse.fennec.model.atlas.mgmt.management.ObjectStatus;
+import org.eclipse.fennec.model.atlas.tests.common.CommonTestAnnotations;
+import org.eclipse.fennec.model.atlas.tests.common.CommonTestAnnotations.RegistryConfiguration;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -73,7 +73,7 @@ public class LuceneRegistryAdvancedTest {
     @BeforeEach
     void setUp() {
         // Set system property for configurations that might need it
-        System.setProperty(LuceneTestAnnotations.PROP_TEMP_DIR, tempDir.toString());
+        System.setProperty(CommonTestAnnotations.PROP_TEMP_DIR, tempDir.toString());
     }
 
     @AfterEach

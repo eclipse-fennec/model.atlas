@@ -1,4 +1,4 @@
--workingset: Workflow
+-workingset: workflow
 
 -library: \
 	enableEMF
@@ -15,3 +15,4 @@
 
 Bundle-Name: MAC Lucene Registry 
 Bundle-Description: Lucene-based registry implementation for Model Atlas Cloud
+-testpath: junit-jupiter-api

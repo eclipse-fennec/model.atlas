@@ -1,0 +1,251 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<eorm:EntityMappings xmi:version="2.0"
+    xmlns:xmi="http://www.omg.org/XMI"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xmlns:ecore="http://www.eclipse.org/emf/2002/Ecore"
+    xmlns:eorm="https://eclipse.org/fennec/persistence/eorm/1.0.0"
+    package="http://example.org/jpa/demo/1.0"
+    name="demo-mapping">
+
+  <entity access="FIELD" name="Employee">
+    <accessibleObject xsi:type="eorm:EClassObject" name="demo.Employee">
+      <eclass href="http://example.org/jpa/demo/1.0#//Employee"/>
+    </accessibleObject>
+    <table name="employees"/>
+    <attributes>
+      <id access="FIELD" name="id">
+        <accessibleObject xsi:type="eorm:EFeatureObject" name="id">
+          <feature xsi:type="ecore:EAttribute" href="http://example.org/jpa/demo/1.0#//Employee/id"/>
+        </accessibleObject>
+        <column insertable="true" name="id" nullable="false" unique="true" updatable="true" columnDefinition="BIGINT"/>
+      </id>
+      <basic access="FIELD" name="id" fetch="EAGER" optional="false">
+        <accessibleObject xsi:type="eorm:EFeatureObject" name="id">
+          <feature xsi:type="ecore:EAttribute" href="http://example.org/jpa/demo/1.0#//Employee/id"/>
+        </accessibleObject>
+        <column insertable="true" name="id" nullable="false" unique="true" updatable="true" columnDefinition="BIGINT"/>
+      </basic>
+      <basic access="FIELD" name="firstName" fetch="EAGER" optional="false">
+        <accessibleObject xsi:type="eorm:EFeatureObject" name="firstName">
+          <feature xsi:type="ecore:EAttribute" href="http://example.org/jpa/demo/1.0#//Employee/firstName"/>
+        </accessibleObject>
+        <column insertable="true" name="first_name" nullable="false" unique="false" updatable="true" columnDefinition="VARCHAR(255)"/>
+      </basic>
+      <basic access="FIELD" name="lastName" fetch="EAGER" optional="false">
+        <accessibleObject xsi:type="eorm:EFeatureObject" name="lastName">
+          <feature xsi:type="ecore:EAttribute" href="http://example.org/jpa/demo/1.0#//Employee/lastName"/>
+        </accessibleObject>
+        <column insertable="true" name="last_name" nullable="false" unique="false" updatable="true" columnDefinition="VARCHAR(255)"/>
+      </basic>
+      <basic access="FIELD" name="salary" fetch="EAGER" optional="true">
+        <accessibleObject xsi:type="eorm:EFeatureObject" name="salary">
+          <feature xsi:type="ecore:EAttribute" href="http://example.org/jpa/demo/1.0#//Employee/salary"/>
+        </accessibleObject>
+        <column insertable="true" name="salary" nullable="true" unique="false" updatable="true" columnDefinition="DECIMAL(15,2)"/>
+      </basic>
+      <basic access="FIELD" name="departmentId" fetch="EAGER" optional="true">
+        <accessibleObject xsi:type="eorm:EFeatureObject" name="departmentId">
+          <feature xsi:type="ecore:EAttribute" href="http://example.org/jpa/demo/1.0#//Employee/departmentId"/>
+        </accessibleObject>
+        <column insertable="true" name="department_id" nullable="true" unique="false" updatable="true" columnDefinition="BIGINT"/>
+      </basic>
+      <oneToMany access="FIELD" name="contracts" fetch="LAZY" orphanRemoval="true">
+        <accessibleObject xsi:type="eorm:EFeatureObject" name="contracts">
+          <feature xsi:type="ecore:EReference" href="http://example.org/jpa/demo/1.0#//Employee/contracts"/>
+        </accessibleObject>
+        <cascade><cascadeAll/></cascade>
+        <joinColumn name="employee_id" nullable="false"/>
+        <foreignKey constraintMode="CONSTRAINT" foreignKeyDefinition="employee_id" name="employee_id"/>
+      </oneToMany>
+    </attributes>
+    <class xsi:type="ecore:EClass" href="http://example.org/jpa/demo/1.0#//Employee"/>
+  </entity>
+
+  <entity access="FIELD" name="Product">
+    <accessibleObject xsi:type="eorm:EClassObject" name="demo.Product">
+      <eclass href="http://example.org/jpa/demo/1.0#//Product"/>
+    </accessibleObject>
+    <table name="products"/>
+    <attributes>
+      <id access="FIELD" name="id">
+        <accessibleObject xsi:type="eorm:EFeatureObject" name="id">
+          <feature xsi:type="ecore:EAttribute" href="http://example.org/jpa/demo/1.0#//Product/id"/>
+        </accessibleObject>
+        <column insertable="true" name="id" nullable="false" unique="true" updatable="true" columnDefinition="BIGINT"/>
+      </id>
+      <basic access="FIELD" name="id" fetch="EAGER" optional="false">
+        <accessibleObject xsi:type="eorm:EFeatureObject" name="id">
+          <feature xsi:type="ecore:EAttribute" href="http://example.org/jpa/demo/1.0#//Product/id"/>
+        </accessibleObject>
+        <column insertable="true" name="id" nullable="false" unique="true" updatable="true" columnDefinition="BIGINT"/>
+      </basic>
+      <basic access="FIELD" name="name" fetch="EAGER" optional="false">
+        <accessibleObject xsi:type="eorm:EFeatureObject" name="name">
+          <feature xsi:type="ecore:EAttribute" href="http://example.org/jpa/demo/1.0#//Product/name"/>
+        </accessibleObject>
+        <column insertable="true" name="name" nullable="false" unique="false" updatable="true" columnDefinition="VARCHAR(255)"/>
+      </basic>
+      <basic access="FIELD" name="price" fetch="EAGER" optional="false">
+        <accessibleObject xsi:type="eorm:EFeatureObject" name="price">
+          <feature xsi:type="ecore:EAttribute" href="http://example.org/jpa/demo/1.0#//Product/price"/>
+        </accessibleObject>
+        <column insertable="true" name="price" nullable="false" unique="false" updatable="true" columnDefinition="DECIMAL(15,2)"/>
+      </basic>
+      <basic access="FIELD" name="stock" fetch="EAGER" optional="false">
+        <accessibleObject xsi:type="eorm:EFeatureObject" name="stock">
+          <feature xsi:type="ecore:EAttribute" href="http://example.org/jpa/demo/1.0#//Product/stock"/>
+        </accessibleObject>
+        <column insertable="true" name="stock" nullable="false" unique="false" updatable="true" columnDefinition="INTEGER"/>
+      </basic>
+      <basic access="FIELD" name="categoryId" fetch="EAGER" optional="true">
+        <accessibleObject xsi:type="eorm:EFeatureObject" name="categoryId">
+          <feature xsi:type="ecore:EAttribute" href="http://example.org/jpa/demo/1.0#//Product/categoryId"/>
+        </accessibleObject>
+        <column insertable="true" name="category_id" nullable="true" unique="false" updatable="true" columnDefinition="BIGINT"/>
+      </basic>
+    </attributes>
+    <class xsi:type="ecore:EClass" href="http://example.org/jpa/demo/1.0#//Product"/>
+  </entity>
+
+  <entity access="FIELD" name="Invoice">
+    <accessibleObject xsi:type="eorm:EClassObject" name="demo.Invoice">
+      <eclass href="http://example.org/jpa/demo/1.0#//Invoice"/>
+    </accessibleObject>
+    <table name="invoices" schema="finance"/>
+    <attributes>
+      <id access="FIELD" name="id">
+        <accessibleObject xsi:type="eorm:EFeatureObject" name="id">
+          <feature xsi:type="ecore:EAttribute" href="http://example.org/jpa/demo/1.0#//Invoice/id"/>
+        </accessibleObject>
+        <column insertable="true" name="id" nullable="false" unique="true" updatable="true" columnDefinition="BIGINT"/>
+      </id>
+      <basic access="FIELD" name="id" fetch="EAGER" optional="false">
+        <accessibleObject xsi:type="eorm:EFeatureObject" name="id">
+          <feature xsi:type="ecore:EAttribute" href="http://example.org/jpa/demo/1.0#//Invoice/id"/>
+        </accessibleObject>
+        <column insertable="true" name="id" nullable="false" unique="true" updatable="true" columnDefinition="BIGINT"/>
+      </basic>
+      <basic access="FIELD" name="invoiceNumber" fetch="EAGER" optional="false">
+        <accessibleObject xsi:type="eorm:EFeatureObject" name="invoiceNumber">
+          <feature xsi:type="ecore:EAttribute" href="http://example.org/jpa/demo/1.0#//Invoice/invoiceNumber"/>
+        </accessibleObject>
+        <column insertable="true" name="invoice_number" nullable="false" unique="false" updatable="true" columnDefinition="VARCHAR(50)"/>
+      </basic>
+      <basic access="FIELD" name="amount" fetch="EAGER" optional="false">
+        <accessibleObject xsi:type="eorm:EFeatureObject" name="amount">
+          <feature xsi:type="ecore:EAttribute" href="http://example.org/jpa/demo/1.0#//Invoice/amount"/>
+        </accessibleObject>
+        <column insertable="true" name="amount" nullable="false" unique="false" updatable="true" columnDefinition="DECIMAL(15,2)"/>
+      </basic>
+      <basic access="FIELD" name="issueDate" fetch="EAGER" optional="true">
+        <accessibleObject xsi:type="eorm:EFeatureObject" name="issueDate">
+          <feature xsi:type="ecore:EAttribute" href="http://example.org/jpa/demo/1.0#//Invoice/issueDate"/>
+        </accessibleObject>
+        <column insertable="true" name="issue_date" nullable="true" unique="false" updatable="true" columnDefinition="VARCHAR(20)"/>
+      </basic>
+      <manyToOne access="FIELD" name="employee" optional="true">
+        <accessibleObject xsi:type="eorm:EFeatureObject" name="employee">
+          <feature xsi:type="ecore:EReference" href="http://example.org/jpa/demo/1.0#//Invoice/employee"/>
+        </accessibleObject>
+        <joinColumn name="employee_id" nullable="true"/>
+        <foreignKey constraintMode="CONSTRAINT" foreignKeyDefinition="employee_id" name="employee_id"/>
+      </manyToOne>
+      <oneToMany access="FIELD" name="payments" fetch="LAZY" orphanRemoval="true">
+        <accessibleObject xsi:type="eorm:EFeatureObject" name="payments">
+          <feature xsi:type="ecore:EReference" href="http://example.org/jpa/demo/1.0#//Invoice/payments"/>
+        </accessibleObject>
+        <cascade><cascadeAll/></cascade>
+        <joinColumn name="invoice_id" nullable="false"/>
+        <foreignKey constraintMode="CONSTRAINT" foreignKeyDefinition="invoice_id" name="invoice_id"/>
+      </oneToMany>
+    </attributes>
+    <class xsi:type="ecore:EClass" href="http://example.org/jpa/demo/1.0#//Invoice"/>
+  </entity>
+
+  <entity access="FIELD" name="Payment">
+    <accessibleObject xsi:type="eorm:EClassObject" name="demo.Payment">
+      <eclass href="http://example.org/jpa/demo/1.0#//Payment"/>
+    </accessibleObject>
+    <table name="payments" schema="finance"/>
+    <attributes>
+      <id access="FIELD" name="id">
+        <accessibleObject xsi:type="eorm:EFeatureObject" name="id">
+          <feature xsi:type="ecore:EAttribute" href="http://example.org/jpa/demo/1.0#//Payment/id"/>
+        </accessibleObject>
+        <column insertable="true" name="id" nullable="false" unique="true" updatable="true" columnDefinition="BIGINT"/>
+      </id>
+      <basic access="FIELD" name="id" fetch="EAGER" optional="false">
+        <accessibleObject xsi:type="eorm:EFeatureObject" name="id">
+          <feature xsi:type="ecore:EAttribute" href="http://example.org/jpa/demo/1.0#//Payment/id"/>
+        </accessibleObject>
+        <column insertable="true" name="id" nullable="false" unique="true" updatable="true" columnDefinition="BIGINT"/>
+      </basic>
+      <basic access="FIELD" name="amount" fetch="EAGER" optional="false">
+        <accessibleObject xsi:type="eorm:EFeatureObject" name="amount">
+          <feature xsi:type="ecore:EAttribute" href="http://example.org/jpa/demo/1.0#//Payment/amount"/>
+        </accessibleObject>
+        <column insertable="true" name="amount" nullable="false" unique="false" updatable="true" columnDefinition="DECIMAL(15,2)"/>
+      </basic>
+      <basic access="FIELD" name="paymentDate" fetch="EAGER" optional="true">
+        <accessibleObject xsi:type="eorm:EFeatureObject" name="paymentDate">
+          <feature xsi:type="ecore:EAttribute" href="http://example.org/jpa/demo/1.0#//Payment/paymentDate"/>
+        </accessibleObject>
+        <column insertable="true" name="payment_date" nullable="true" unique="false" updatable="true" columnDefinition="VARCHAR(20)"/>
+      </basic>
+      <basic access="FIELD" name="method" fetch="EAGER" optional="true">
+        <accessibleObject xsi:type="eorm:EFeatureObject" name="method">
+          <feature xsi:type="ecore:EAttribute" href="http://example.org/jpa/demo/1.0#//Payment/method"/>
+        </accessibleObject>
+        <column insertable="true" name="method" nullable="true" unique="false" updatable="true" columnDefinition="VARCHAR(50)"/>
+      </basic>
+    </attributes>
+    <class xsi:type="ecore:EClass" href="http://example.org/jpa/demo/1.0#//Payment"/>
+  </entity>
+
+  <entity access="FIELD" name="Contract">
+    <accessibleObject xsi:type="eorm:EClassObject" name="demo.Contract">
+      <eclass href="http://example.org/jpa/demo/1.0#//Contract"/>
+    </accessibleObject>
+    <table name="contracts" schema="hr"/>
+    <attributes>
+      <id access="FIELD" name="id">
+        <accessibleObject xsi:type="eorm:EFeatureObject" name="id">
+          <feature xsi:type="ecore:EAttribute" href="http://example.org/jpa/demo/1.0#//Contract/id"/>
+        </accessibleObject>
+        <column insertable="true" name="id" nullable="false" unique="true" updatable="true" columnDefinition="BIGINT"/>
+      </id>
+      <basic access="FIELD" name="id" fetch="EAGER" optional="false">
+        <accessibleObject xsi:type="eorm:EFeatureObject" name="id">
+          <feature xsi:type="ecore:EAttribute" href="http://example.org/jpa/demo/1.0#//Contract/id"/>
+        </accessibleObject>
+        <column insertable="true" name="id" nullable="false" unique="true" updatable="true" columnDefinition="BIGINT"/>
+      </basic>
+      <basic access="FIELD" name="startDate" fetch="EAGER" optional="false">
+        <accessibleObject xsi:type="eorm:EFeatureObject" name="startDate">
+          <feature xsi:type="ecore:EAttribute" href="http://example.org/jpa/demo/1.0#//Contract/startDate"/>
+        </accessibleObject>
+        <column insertable="true" name="start_date" nullable="false" unique="false" updatable="true" columnDefinition="VARCHAR(20)"/>
+      </basic>
+      <basic access="FIELD" name="endDate" fetch="EAGER" optional="true">
+        <accessibleObject xsi:type="eorm:EFeatureObject" name="endDate">
+          <feature xsi:type="ecore:EAttribute" href="http://example.org/jpa/demo/1.0#//Contract/endDate"/>
+        </accessibleObject>
+        <column insertable="true" name="end_date" nullable="true" unique="false" updatable="true" columnDefinition="VARCHAR(20)"/>
+      </basic>
+      <basic access="FIELD" name="contractType" fetch="EAGER" optional="false">
+        <accessibleObject xsi:type="eorm:EFeatureObject" name="contractType">
+          <feature xsi:type="ecore:EAttribute" href="http://example.org/jpa/demo/1.0#//Contract/contractType"/>
+        </accessibleObject>
+        <column insertable="true" name="contract_type" nullable="false" unique="false" updatable="true" columnDefinition="VARCHAR(50)"/>
+      </basic>
+      <basic access="FIELD" name="salary" fetch="EAGER" optional="false">
+        <accessibleObject xsi:type="eorm:EFeatureObject" name="salary">
+          <feature xsi:type="ecore:EAttribute" href="http://example.org/jpa/demo/1.0#//Contract/salary"/>
+        </accessibleObject>
+        <column insertable="true" name="salary" nullable="false" unique="false" updatable="true" columnDefinition="DECIMAL(15,2)"/>
+      </basic>
+    </attributes>
+    <class xsi:type="ecore:EClass" href="http://example.org/jpa/demo/1.0#//Contract"/>
+  </entity>
+
+</eorm:EntityMappings>

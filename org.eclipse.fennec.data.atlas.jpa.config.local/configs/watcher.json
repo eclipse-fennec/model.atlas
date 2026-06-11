@@ -1,0 +1,7 @@
+{
+  ":configurator:resource-version": 1,
+
+  "WorkspaceFolderWatcher~test": {
+    "io.fs.watcher.path": "/home/ilenia/tests/jpa/"
+  }
+}

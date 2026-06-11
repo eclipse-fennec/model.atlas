@@ -28,15 +28,15 @@ import java.util.List;
 import org.eclipse.emf.ecore.EObject;
 import org.eclipse.emf.ecore.EPackage;
 import org.eclipse.emf.ecore.EcoreFactory;
-import org.eclipse.fennec.model.atlas.management.file.tests.annotations.FileTestAnnotations;
-import org.eclipse.fennec.model.atlas.management.file.tests.annotations.FileTestAnnotations.DefaultFileStorageSetup;
-import org.eclipse.fennec.model.atlas.management.lucene.tests.annotations.LuceneTestAnnotations.RegistryConfiguration;
 import org.eclipse.fennec.model.atlas.mgmt.api.EObjectRegistryService;
 import org.eclipse.fennec.model.atlas.mgmt.api.EObjectStorageService;
 import org.eclipse.fennec.model.atlas.mgmt.management.ManagementFactory;
 import org.eclipse.fennec.model.atlas.mgmt.management.ObjectMetadata;
 import org.eclipse.fennec.model.atlas.mgmt.management.ObjectStatus;
 import org.eclipse.fennec.model.atlas.mgmt.management.StorageBackendType;
+import org.eclipse.fennec.model.atlas.tests.common.CommonTestAnnotations;
+import org.eclipse.fennec.model.atlas.tests.common.CommonTestAnnotations.RegistryConfiguration;
+import org.eclipse.fennec.model.atlas.tests.common.CommonTestAnnotations.StorageSetup;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -74,12 +74,12 @@ public class EObjectFileStorageServiceTest {
         assertNotNull(tempDir, "TempDir should not be null");
 
         // Set system property for template argument resolution
-        System.setProperty(FileTestAnnotations.PROP_TEMP_DIR, tempDir.toString());
+        System.setProperty(CommonTestAnnotations.PROP_TEMP_DIR, tempDir.toString());
     }
 
     @SuppressWarnings({ "rawtypes", "unchecked" })
     @Test
-    @DefaultFileStorageSetup
+    @StorageSetup
     public void testServiceActivation(
             @InjectService(cardinality = 0, filter = "(storage.backend=file)") ServiceAware<EObjectStorageService> serviceAware)
             throws Exception {
@@ -96,7 +96,7 @@ public class EObjectFileStorageServiceTest {
 
     @SuppressWarnings({ "rawtypes", "unchecked" })
     @Test
-    @DefaultFileStorageSetup
+    @StorageSetup
     public void testStoreAndRetrieveEPackage(
             @InjectService(cardinality = 0, filter = "(storage.backend=file)") ServiceAware<EObjectStorageService> serviceAware)
             throws Exception {
@@ -131,9 +131,9 @@ public class EObjectFileStorageServiceTest {
         assertEquals("test-id-123", storageId);
 
         // Verify files were created
-        File ecoreFile = new File(tempDir.resolve(TEST_SCOPE).resolve(TEST_REGISTRY).resolve(TEST_STAGE).toFile(),
+        File ecoreFile = new File(tempDir.resolve(CommonTestAnnotations.FILE_STORAGE_FOLDER).resolve(TEST_SCOPE).resolve(TEST_REGISTRY).resolve(TEST_STAGE).toFile(),
                 storageId + ".ecore");
-        File metadataFile = new File(tempDir.resolve(TEST_SCOPE).resolve(TEST_REGISTRY).resolve(TEST_STAGE).toFile(),
+        File metadataFile = new File(tempDir.resolve(CommonTestAnnotations.FILE_STORAGE_FOLDER).resolve(TEST_SCOPE).resolve(TEST_REGISTRY).resolve(TEST_STAGE).toFile(),
                 storageId + ".metadata.xmi");
         assertTrue(ecoreFile.exists(), "Ecore file should exist");
         assertTrue(metadataFile.exists(), "Metadata file should exist");
@@ -163,7 +163,7 @@ public class EObjectFileStorageServiceTest {
 
     @SuppressWarnings({ "rawtypes", "unchecked" })
     @Test
-    @DefaultFileStorageSetup
+    @StorageSetup
     public void testListObjectIds(
             @InjectService(cardinality = 0, filter = "(storage.backend=file)") ServiceAware<EObjectStorageService> serviceAware)
             throws Exception {
@@ -204,7 +204,7 @@ public class EObjectFileStorageServiceTest {
 
     @SuppressWarnings({ "rawtypes", "unchecked" })
     @Test
-    @DefaultFileStorageSetup
+    @StorageSetup
     public void testDeleteObject(
             @InjectService(cardinality = 0, filter = "(storage.backend=file)") ServiceAware<EObjectStorageService> serviceAware)
             throws Exception {
@@ -228,9 +228,9 @@ public class EObjectFileStorageServiceTest {
         String storageId = metadata.getObjectId();
 
         // Verify files exist
-        File ecoreFile = new File(tempDir.resolve(TEST_SCOPE).resolve(TEST_REGISTRY).resolve(TEST_STAGE).toFile(),
+        File ecoreFile = new File(tempDir.resolve(CommonTestAnnotations.FILE_STORAGE_FOLDER).resolve(TEST_SCOPE).resolve(TEST_REGISTRY).resolve(TEST_STAGE).toFile(),
                 storageId + ".ecore");
-        File metadataFile = new File(tempDir.resolve(TEST_SCOPE).resolve(TEST_REGISTRY).resolve(TEST_STAGE).toFile(),
+        File metadataFile = new File(tempDir.resolve(CommonTestAnnotations.FILE_STORAGE_FOLDER).resolve(TEST_SCOPE).resolve(TEST_REGISTRY).resolve(TEST_STAGE).toFile(),
                 storageId + ".metadata.xmi");
         assertTrue(ecoreFile.exists());
         assertTrue(metadataFile.exists());
@@ -253,7 +253,7 @@ public class EObjectFileStorageServiceTest {
 
     @SuppressWarnings({ "rawtypes", "unchecked" })
     @Test
-    @DefaultFileStorageSetup
+    @StorageSetup
     public void testAutoGeneratedId(
             @InjectService(cardinality = 0, filter = "(storage.backend=file)") ServiceAware<EObjectStorageService> serviceAware)
             throws Exception {
@@ -291,7 +291,7 @@ public class EObjectFileStorageServiceTest {
 
     @SuppressWarnings({ "rawtypes", "unchecked" })
     @Test
-    @DefaultFileStorageSetup
+    @StorageSetup
     public void testCustomFileExtension(
             @InjectService(cardinality = 0, filter = "(storage.backend=file)") ServiceAware<EObjectStorageService> serviceAware)
             throws Exception {
@@ -315,7 +315,7 @@ public class EObjectFileStorageServiceTest {
         String storageId1 = metadata1.getObjectId();
 
         // Verify file with .ecore extension exists
-        File ecoreFile = new File(tempDir.resolve(TEST_SCOPE).resolve(TEST_REGISTRY).resolve(TEST_STAGE).toFile(),
+        File ecoreFile = new File(tempDir.resolve(CommonTestAnnotations.FILE_STORAGE_FOLDER).resolve(TEST_SCOPE).resolve(TEST_REGISTRY).resolve(TEST_STAGE).toFile(),
                 storageId1 + ".ecore");
         assertTrue(ecoreFile.exists(), "File with .ecore extension should exist");
 
@@ -333,7 +333,7 @@ public class EObjectFileStorageServiceTest {
         String storageId2 = metadata2.getObjectId();
 
         // Verify file with .xmi extension exists
-        File xmiFile = new File(tempDir.resolve(TEST_SCOPE).resolve(TEST_REGISTRY).resolve(TEST_STAGE).toFile(),
+        File xmiFile = new File(tempDir.resolve(CommonTestAnnotations.FILE_STORAGE_FOLDER).resolve(TEST_SCOPE).resolve(TEST_REGISTRY).resolve(TEST_STAGE).toFile(),
                 storageId2 + ".xmi");
         assertTrue(xmiFile.exists(), "File with .xmi extension should exist");
 
@@ -356,7 +356,7 @@ public class EObjectFileStorageServiceTest {
 
     @SuppressWarnings({ "rawtypes", "unchecked" })
     @Test
-    @DefaultFileStorageSetup
+    @StorageSetup
     public void testContentType(
             @InjectService(cardinality = 0, filter = "(storage.backend=file)") ServiceAware<EObjectStorageService> serviceAware)
             throws Exception {
@@ -384,7 +384,7 @@ public class EObjectFileStorageServiceTest {
         String storageId = metadata.getObjectId();
 
         // Verify file exists
-        File ecoreFile = new File(tempDir.resolve(TEST_SCOPE).resolve(TEST_REGISTRY).resolve(TEST_STAGE).toFile(),
+        File ecoreFile = new File(tempDir.resolve(CommonTestAnnotations.FILE_STORAGE_FOLDER).resolve(TEST_SCOPE).resolve(TEST_REGISTRY).resolve(TEST_STAGE).toFile(),
                 storageId + ".ecore");
         assertTrue(ecoreFile.exists(), "File with .ecore extension should exist");
 
@@ -400,7 +400,7 @@ public class EObjectFileStorageServiceTest {
 
     @SuppressWarnings({ "rawtypes", "unchecked" })
     @Test
-    @DefaultFileStorageSetup
+    @StorageSetup
     public void testUpdateMetadata(
             @InjectService(cardinality = 0, filter = "(storage.backend=file)") ServiceAware<EObjectStorageService> serviceAware)
             throws Exception {
@@ -471,7 +471,7 @@ public class EObjectFileStorageServiceTest {
 
     @SuppressWarnings({ "rawtypes", "unchecked" })
     @Test
-    @DefaultFileStorageSetup
+    @StorageSetup
     public void testUpdateStatus(
             @InjectService(cardinality = 0, filter = "(storage.backend=file)") ServiceAware<EObjectStorageService> serviceAware)
             throws Exception {
@@ -549,7 +549,7 @@ public class EObjectFileStorageServiceTest {
 
     @SuppressWarnings({ "rawtypes", "unchecked" })
     @Test
-    @DefaultFileStorageSetup
+    @StorageSetup
     public void testExists(
             @InjectService(cardinality = 0, filter = "(storage.backend=file)") ServiceAware<EObjectStorageService> serviceAware)
             throws Exception {
@@ -603,7 +603,7 @@ public class EObjectFileStorageServiceTest {
 
     @SuppressWarnings({ "rawtypes", "unchecked" })
     @Test
-    @DefaultFileStorageSetup
+    @StorageSetup
     public void testGetObjectCount(
             @InjectService(cardinality = 0, filter = "(storage.backend=file)") ServiceAware<EObjectStorageService> serviceAware)
             throws Exception {
@@ -640,9 +640,9 @@ public class EObjectFileStorageServiceTest {
         assertEquals(5, countAfterStore, "Object count should be 5 after storing 5 objects");
 
         // Verify metadata files exist before deletion
-        File metadataFile1 = new File(tempDir.resolve(TEST_SCOPE).resolve(TEST_REGISTRY).resolve(TEST_STAGE).toFile(),
+        File metadataFile1 = new File(tempDir.resolve(CommonTestAnnotations.FILE_STORAGE_FOLDER).resolve(TEST_SCOPE).resolve(TEST_REGISTRY).resolve(TEST_STAGE).toFile(),
                 "count-test-1.metadata.xmi");
-        File metadataFile3 = new File(tempDir.resolve(TEST_SCOPE).resolve(TEST_REGISTRY).resolve(TEST_STAGE).toFile(),
+        File metadataFile3 = new File(tempDir.resolve(CommonTestAnnotations.FILE_STORAGE_FOLDER).resolve(TEST_SCOPE).resolve(TEST_REGISTRY).resolve(TEST_STAGE).toFile(),
                 "count-test-3.metadata.xmi");
         assertTrue(metadataFile1.exists(), "Metadata file 1 should exist before deletion");
         assertTrue(metadataFile3.exists(), "Metadata file 3 should exist before deletion");
@@ -680,7 +680,7 @@ public class EObjectFileStorageServiceTest {
 
     @SuppressWarnings({ "rawtypes", "unchecked" })
     @Test
-    @DefaultFileStorageSetup
+    @StorageSetup
     public void testUpdateMetadataErrorHandling(
             @InjectService(cardinality = 0, filter = "(storage.backend=file)") ServiceAware<EObjectStorageService> serviceAware)
             throws Exception {
@@ -707,7 +707,7 @@ public class EObjectFileStorageServiceTest {
 
     @SuppressWarnings({ "rawtypes", "unchecked" })
     @Test
-    @DefaultFileStorageSetup
+    @StorageSetup
     public void testUpdateStatusErrorHandling(
             @InjectService(cardinality = 0, filter = "(storage.backend=file)") ServiceAware<EObjectStorageService> serviceAware)
             throws Exception {
@@ -736,7 +736,7 @@ public class EObjectFileStorageServiceTest {
     @SuppressWarnings({ "unchecked", "rawtypes" })
     @Test
     @RegistryConfiguration
-    @DefaultFileStorageSetup
+    @StorageSetup
     public void testStorageRegistryIntegration(
             @InjectService(cardinality = 0, filter = "(storage.backend=file)") ServiceAware<EObjectStorageService> serviceAware,
             @InjectService(cardinality = 0, filter = "(registry.type=shared)") ServiceAware<EObjectRegistryService> registryAware)

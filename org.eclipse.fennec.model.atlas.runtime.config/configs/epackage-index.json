@@ -1,0 +1,7 @@
+{
+	":configurator:resource-version": 1,
+	":configurator:version": "1.0.0",
+	"EPackageLuceneIndex": {
+		"index.folder": "$[env:STORAGE_ROOT;default=$[prop:STORAGE_ROOT;default=/tmp/mac]]/epackage-index"
+	}
+}

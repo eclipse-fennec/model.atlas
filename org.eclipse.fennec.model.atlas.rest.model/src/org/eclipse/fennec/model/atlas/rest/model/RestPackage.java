@@ -1,6 +1,5 @@
 /*
- * Copyright (c) 2012 - 2025 Data In Motion and others.
- * All rights reserved.
+ * Copyright (c) 2026 Contributors to the Eclipse Foundation.
  * 
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
@@ -9,7 +8,7 @@
  * SPDX-License-Identifier: EPL-2.0
  * 
  * Contributors:
- *     Data In Motion - initial API and implementation
+ *   Data In Motion Consulting - initial implementation
  */
 package org.eclipse.fennec.model.atlas.rest.model;
 
@@ -36,6 +35,7 @@ import org.osgi.annotation.versioning.ProviderType;
  * <!-- end-user-doc -->
  * @see org.eclipse.fennec.model.atlas.rest.model.RestFactory
  * @model kind="package"
+ *        annotation="http://www.eclipse.org/emf/2002/GenModel copyrightText='Copyright (c) 2026 Contributors to the Eclipse Foundation.\n\nThis program and the accompanying materials are made\navailable under the terms of the Eclipse Public License 2.0\nwhich is available at https://www.eclipse.org/legal/epl-2.0/\n\nSPDX-License-Identifier: EPL-2.0\n\nContributors:\n  Data In Motion Consulting - initial implementation' oSGiCompatible='true' complianceLevel='21.0' basePackage='org.eclipse.fennec.model.atlas.rest' resource='XMI' fileExtensions='rest'"
  * @generated
  */
 @ProviderType
@@ -348,6 +348,43 @@ public interface RestPackage extends org.eclipse.emf.ecore.EPackage {
 	 */
 	int SCOPE_LIST_RESPONSE_OPERATION_COUNT = 0;
 
+	/**
+	 * The meta object id for the '{@link org.eclipse.fennec.model.atlas.rest.model.impl.ContainerImpl <em>Container</em>}' class.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @see org.eclipse.fennec.model.atlas.rest.model.impl.ContainerImpl
+	 * @see org.eclipse.fennec.model.atlas.rest.model.impl.RestPackageImpl#getContainer()
+	 * @generated
+	 */
+	int CONTAINER = 5;
+
+	/**
+	 * The feature id for the '<em><b>Elements</b></em>' containment reference list.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 * @ordered
+	 */
+	int CONTAINER__ELEMENTS = 0;
+
+	/**
+	 * The number of structural features of the '<em>Container</em>' class.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 * @ordered
+	 */
+	int CONTAINER_FEATURE_COUNT = 1;
+
+	/**
+	 * The number of operations of the '<em>Container</em>' class.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 * @ordered
+	 */
+	int CONTAINER_OPERATION_COUNT = 0;
+
 
 	/**
 	 * Returns the meta object for class '{@link org.eclipse.fennec.model.atlas.rest.model.EPackageInfo <em>EPackage Info</em>}'.
@@ -565,6 +602,27 @@ public interface RestPackage extends org.eclipse.emf.ecore.EPackage {
 	EReference getScopeListResponse_Scopes();
 
 	/**
+	 * Returns the meta object for class '{@link org.eclipse.fennec.model.atlas.rest.model.Container <em>Container</em>}'.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @return the meta object for class '<em>Container</em>'.
+	 * @see org.eclipse.fennec.model.atlas.rest.model.Container
+	 * @generated
+	 */
+	EClass getContainer();
+
+	/**
+	 * Returns the meta object for the containment reference list '{@link org.eclipse.fennec.model.atlas.rest.model.Container#getElements <em>Elements</em>}'.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @return the meta object for the containment reference list '<em>Elements</em>'.
+	 * @see org.eclipse.fennec.model.atlas.rest.model.Container#getElements()
+	 * @see #getContainer()
+	 * @generated
+	 */
+	EReference getContainer_Elements();
+
+	/**
 	 * Returns the factory that creates the instances of the model.
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
@@ -756,6 +814,24 @@ public interface RestPackage extends org.eclipse.emf.ecore.EPackage {
 		 * @generated
 		 */
 		EReference SCOPE_LIST_RESPONSE__SCOPES = eINSTANCE.getScopeListResponse_Scopes();
+
+		/**
+		 * The meta object literal for the '{@link org.eclipse.fennec.model.atlas.rest.model.impl.ContainerImpl <em>Container</em>}' class.
+		 * <!-- begin-user-doc -->
+		 * <!-- end-user-doc -->
+		 * @see org.eclipse.fennec.model.atlas.rest.model.impl.ContainerImpl
+		 * @see org.eclipse.fennec.model.atlas.rest.model.impl.RestPackageImpl#getContainer()
+		 * @generated
+		 */
+		EClass CONTAINER = eINSTANCE.getContainer();
+
+		/**
+		 * The meta object literal for the '<em><b>Elements</b></em>' containment reference list feature.
+		 * <!-- begin-user-doc -->
+		 * <!-- end-user-doc -->
+		 * @generated
+		 */
+		EReference CONTAINER__ELEMENTS = eINSTANCE.getContainer_Elements();
 
 	}
 
