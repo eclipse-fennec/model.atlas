@@ -10,4 +10,5 @@ Bundle-Description: Model Atlas REST client — public API. \
 	org.osgi.annotation.bundle,\
 	org.eclipse.emf.common;version=latest,\
 	org.eclipse.emf.ecore;version=latest,\
+	org.eclipse.fennec.model.atlas.scope.api;version=snapshot,\
 	jakarta.ws.rs-api;version=latest

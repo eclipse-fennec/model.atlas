@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012 - 2025 Data In Motion and others.
+ * Copyright (c) 2012 - 2026 Data In Motion and others.
  * All rights reserved.
  * 
  * This program and the accompanying materials are made
@@ -11,7 +11,7 @@
  * Contributors:
  *      Data In Motion - initial API and implementation
  */
-package org.eclipse.fennec.model.atlas.wf.workflowapi;
+package org.eclipse.fennec.model.atlas.scope.api;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -29,7 +29,7 @@ import org.osgi.annotation.versioning.ProviderType;
  * <!-- begin-model-doc -->
  * Classifies a Registry by its role within a scope.
  * <!-- end-model-doc -->
- * @see org.eclipse.fennec.model.atlas.wf.workflowapi.WorkflowApiPackage#getRegistryType()
+ * @see org.eclipse.fennec.model.atlas.scope.api.ScopeApiPackage#getRegistryType()
  * @model
  * @generated
  */
@@ -39,9 +39,6 @@ public enum RegistryType implements Enumerator {
 	 * The '<em><b>OTHER</b></em>' literal object.
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
-	 * <!-- begin-model-doc -->
-	 * General-purpose registry. Default value.
-	 * <!-- end-model-doc -->
 	 * @see #OTHER_VALUE
 	 * @generated
 	 * @ordered
@@ -52,9 +49,6 @@ public enum RegistryType implements Enumerator {
 	 * The '<em><b>SCHEMA</b></em>' literal object.
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
-	 * <!-- begin-model-doc -->
-	 * Registry holding EPackage schema definitions.
-	 * <!-- end-model-doc -->
 	 * @see #SCHEMA_VALUE
 	 * @generated
 	 * @ordered
@@ -65,9 +59,6 @@ public enum RegistryType implements Enumerator {
 	 * The '<em><b>COCL</b></em>' literal object.
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
-	 * <!-- begin-model-doc -->
-	 * Registry holding C-OCL OclConstraintSet objects used for validation.
-	 * <!-- end-model-doc -->
 	 * @see #COCL_VALUE
 	 * @generated
 	 * @ordered
@@ -78,9 +69,6 @@ public enum RegistryType implements Enumerator {
 	 * The '<em><b>OTHER</b></em>' literal value.
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
-	 * <!-- begin-model-doc -->
-	 * General-purpose registry. Default value.
-	 * <!-- end-model-doc -->
 	 * @see #OTHER
 	 * @model
 	 * @generated
@@ -92,9 +80,6 @@ public enum RegistryType implements Enumerator {
 	 * The '<em><b>SCHEMA</b></em>' literal value.
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
-	 * <!-- begin-model-doc -->
-	 * Registry holding EPackage schema definitions.
-	 * <!-- end-model-doc -->
 	 * @see #SCHEMA
 	 * @model
 	 * @generated
@@ -106,9 +91,6 @@ public enum RegistryType implements Enumerator {
 	 * The '<em><b>COCL</b></em>' literal value.
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
-	 * <!-- begin-model-doc -->
-	 * Registry holding C-OCL OclConstraintSet objects used for validation.
-	 * <!-- end-model-doc -->
 	 * @see #COCL
 	 * @model
 	 * @generated

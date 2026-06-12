@@ -45,7 +45,28 @@ public interface DriftListener {
 	 */
 	void onPackageRemoved(String nsUri);
 
-	// Phase 5 (EObject registries) will add object-level drift callbacks here:
-	//   void onObjectChanged(String scope, String registry, String objectId);
-	//   void onObjectRemoved(String scope, String registry, String objectId);
+	/**
+	 * An EObject changed on the server; its cache entry was evicted/refreshed (the
+	 * next read reflects the change). Default no-op so EPackage-only listeners need
+	 * not implement it.
+	 *
+	 * @param scope    the scope the object lives in
+	 * @param registry the registry within the scope
+	 * @param objectId the object identifier
+	 */
+	default void onObjectChanged(String scope, String registry, String objectId) {
+		// no-op by default
+	}
+
+	/**
+	 * An EObject is no longer available on the server; its cache entry was dropped.
+	 * Default no-op so EPackage-only listeners need not implement it.
+	 *
+	 * @param scope    the scope the object lived in
+	 * @param registry the registry within the scope
+	 * @param objectId the object identifier
+	 */
+	default void onObjectRemoved(String scope, String registry, String objectId) {
+		// no-op by default
+	}
 }

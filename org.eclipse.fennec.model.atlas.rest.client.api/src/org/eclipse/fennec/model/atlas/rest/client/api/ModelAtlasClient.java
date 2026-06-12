@@ -17,7 +17,9 @@ import java.net.URI;
 import java.util.List;
 import java.util.ServiceLoader;
 
+import org.eclipse.emf.ecore.EObject;
 import org.eclipse.emf.ecore.resource.ResourceSet;
+import org.eclipse.fennec.model.atlas.scope.api.ReadOnlyScopeService;
 import org.osgi.annotation.versioning.ProviderType;
 
 /**
@@ -100,15 +102,31 @@ public interface ModelAtlasClient extends AutoCloseable {
 	ResourceSet newResourceSet();
 
 	/**
+	 * The registries the server exposes for a scope, read from
+	 * {@code GET /scopes/{s}} (i.e. {@code readOnlyScope(s).getScopeInfo().getRegistries()}).
+	 *
+	 * @param scopeName the scope name
+	 * @return the registry names (possibly empty)
+	 */
+	List<String> listRegistries(String scopeName);
+
+	/**
+	 * A read-only, final-stage EObject view of one scope — the client mirror of the
+	 * server-side {@code scope.api} {@link ReadOnlyScopeService}, so a consumer can
+	 * depend on the same contract whether it reads an in-process Atlas or a remote one
+	 * (the registry is a method parameter on the returned service). Repeated calls for
+	 * the same scope return the same instance (backed by one cache).
+	 *
+	 * @param scopeName the scope name
+	 * @return the read-only scope view
+	 */
+	ReadOnlyScopeService<EObject> readOnlyScope(String scopeName);
+
+	/**
 	 * Release the underlying Jakarta RS client and any background tasks.
 	 */
 	@Override
 	void close();
-
-	// Phase 5 (EObject registries, depends on the scope.api ScopedEObjectsRegistry
-	// contract from Phase 4) will add:
-	//   List<String> listRegistries(String scopeName);                              // GET /scopes/{s}
-	//   ScopedEObjectsRegistry<EObject> registry(String scopeName, String registry);
 
 	/**
 	 * Fluent builder for a plain-Java {@link ModelAtlasClient}.

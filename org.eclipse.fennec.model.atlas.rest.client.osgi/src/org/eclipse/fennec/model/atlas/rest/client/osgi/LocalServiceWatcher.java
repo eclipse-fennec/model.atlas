@@ -22,7 +22,7 @@ import java.util.logging.Logger;
 import org.eclipse.emf.ecore.EPackage;
 import org.eclipse.fennec.emf.osgi.configurator.EPackageConfigurator;
 import org.eclipse.fennec.emf.osgi.constants.EMFNamespaces;
-import org.eclipse.fennec.model.atlas.rest.client.api.AtlasProperties;
+import org.eclipse.fennec.model.atlas.scope.api.AtlasProperties;
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.ServiceEvent;
 import org.osgi.framework.ServiceListener;

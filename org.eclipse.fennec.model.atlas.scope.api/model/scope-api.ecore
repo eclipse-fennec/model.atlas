@@ -1,0 +1,110 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ecore:EPackage xmi:version="2.0" xmlns:xmi="http://www.omg.org/XMI" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xmlns:ecore="http://www.eclipse.org/emf/2002/Ecore" name="api" nsURI="http://eclipse.org/fennec/model/atlas/scope/api/1.0.0"
+    nsPrefix="scopeapi">
+  <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+    <details key="modelName" value="ScopeApi"/>
+    <details key="complianceLevel" value="17.0"/>
+    <details key="copyrightText" value="Copyright (c) 2012 - 2026 Data In Motion and others.&#xA;All rights reserved.&#xA;&#xA;This program and the accompanying materials are made&#xA;available under the terms of the Eclipse Public License 2.0&#xA;which is available at https://www.eclipse.org/legal/epl-2.0/&#xA;&#xA;SPDX-License-Identifier: EPL-2.0&#xA;&#xA;Contributors:&#xA;     Data In Motion - initial API and implementation"/>
+    <details key="resource" value="XMI"/>
+    <details key="prefix" value="ScopeApi"/>
+    <details key="basePackage" value="org.eclipse.fennec.model.atlas.scope"/>
+    <details key="rootExtendsInterface" value=""/>
+    <details key="oSGiCompatible" value="false"/>
+    <details key="suppressNotification" value="true"/>
+    <details key="suppressEMFTypes" value="true"/>
+  </eAnnotations>
+  <eClassifiers xsi:type="ecore:EClass" name="ReadOnlyScopeService" abstract="true"
+      interface="true">
+    <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+      <details key="documentation" value="Read-only, final-stage view of the EObjects in a scope, mirroring the workflow API's registry dimension: the registry is a parameter on each operation, and reads resolve that registry's final stage, reading through to parent scopes' final stages when inheriting. It carries no stage parameter (per-stage access is a workflow concern) and no ObjectMetadata (a wire/storage concern), so it stays free of the workflow/management API. This is the contract a pure consumer of published models depends on (the validation service, a remote Atlas client, any downstream reader)."/>
+    </eAnnotations>
+    <eTypeParameters name="T">
+      <eBounds eClassifier="ecore:EClass http://www.eclipse.org/emf/2002/Ecore#//EObject"/>
+    </eTypeParameters>
+    <eOperations name="getScopeName" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="The scope this service reads from. @return the scope name (e.g. {@code jena}); never {@code null}"/>
+      </eAnnotations>
+    </eOperations>
+    <eOperations name="isInheritingFromParentScope" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EBoolean">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="Whether reads read through to parent scopes' final stages, so listings and look-ups reflect inherited content.&#xA;@return {@code true} if the scope inherits from a parent scope"/>
+      </eAnnotations>
+    </eOperations>
+    <eOperations name="get">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="Resolve a single object by its identifier from a registry's final-stage view.&#xA;@param registry the registry within the scope (e.g. {@code schema})&#xA;@param objectId the object identifier within that registry&#xA;@return the resolved object, or empty if not visible (including, when inheriting, the parent scopes')"/>
+      </eAnnotations>
+      <eGenericType eClassifier="#//Optional">
+        <eTypeArguments eTypeParameter="#//ReadOnlyScopeService/T"/>
+      </eGenericType>
+      <eParameters name="registry" lowerBound="1" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+      <eParameters name="objectId" lowerBound="1" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    </eOperations>
+    <eOperations name="listObjectIds">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="The identifiers of every object visible in a registry's final-stage view, without resolving their content.&#xA;@param registry the registry within the scope&#xA;@return the object ids (possibly empty); never {@code null}"/>
+      </eAnnotations>
+      <eGenericType eClassifier="#//List">
+        <eTypeArguments eClassifier="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+      </eGenericType>
+      <eParameters name="registry" lowerBound="1" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    </eOperations>
+    <eOperations name="listAll">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="Resolve every object visible in a registry's final-stage view; prefer stream() for large registries.&#xA;@param registry the registry within the scope&#xA;@return the resolved objects (possibly empty); never {@code null}"/>
+      </eAnnotations>
+      <eGenericType eClassifier="#//List">
+        <eTypeArguments eTypeParameter="#//ReadOnlyScopeService/T"/>
+      </eGenericType>
+      <eParameters name="registry" lowerBound="1" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    </eOperations>
+    <eOperations name="stream">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="A lazy stream over the objects in a registry's final-stage view, resolving content as it is consumed.&#xA;@param registry the registry within the scope&#xA;@return a stream of resolved objects; never {@code null}"/>
+      </eAnnotations>
+      <eGenericType eClassifier="#//Stream">
+        <eTypeArguments eTypeParameter="#//ReadOnlyScopeService/T"/>
+      </eGenericType>
+      <eParameters name="registry" lowerBound="1" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    </eOperations>
+    <eOperations name="getScopeInfo" eType="#//ScopeInfo">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="A read-only descriptor of the scope this service reads from: its name, description, parent scope, and the registries it exposes (name + type, without the workflow stage/transition detail). @return the scope info; never {@code null}"/>
+      </eAnnotations>
+    </eOperations>
+  </eClassifiers>
+  <eClassifiers xsi:type="ecore:EDataType" name="Optional" instanceClassName="java.util.Optional"
+      serializable="false">
+    <eTypeParameters name="T"/>
+  </eClassifiers>
+  <eClassifiers xsi:type="ecore:EDataType" name="List" instanceClassName="java.util.List"
+      serializable="false">
+    <eTypeParameters name="T"/>
+  </eClassifiers>
+  <eClassifiers xsi:type="ecore:EDataType" name="Stream" instanceClassName="java.util.stream.Stream"
+      serializable="false">
+    <eTypeParameters name="T"/>
+  </eClassifiers>
+  <eClassifiers xsi:type="ecore:EClass" name="ScopeInfo">
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="name" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="description" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="parentScope" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    <eStructuralFeatures xsi:type="ecore:EReference" name="registries" upperBound="-1"
+        eType="#//RegistryInfo" containment="true"/>
+  </eClassifiers>
+  <eClassifiers xsi:type="ecore:EClass" name="RegistryInfo">
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="name" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="description" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="type" eType="#//RegistryType"/>
+  </eClassifiers>
+  <eClassifiers xsi:type="ecore:EEnum" name="RegistryType">
+    <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+      <details key="documentation" value="Classifies a Registry by its role within a scope."/>
+    </eAnnotations>
+    <eLiterals name="OTHER"/>
+    <eLiterals name="SCHEMA" value="1"/>
+    <eLiterals name="COCL" value="2"/>
+  </eClassifiers>
+</ecore:EPackage>

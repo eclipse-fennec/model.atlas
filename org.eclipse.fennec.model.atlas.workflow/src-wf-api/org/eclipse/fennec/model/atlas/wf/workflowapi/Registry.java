@@ -15,6 +15,8 @@ package org.eclipse.fennec.model.atlas.wf.workflowapi;
 
 import java.util.List;
 
+import org.eclipse.fennec.model.atlas.scope.api.RegistryInfo;
+
 import org.osgi.annotation.versioning.ProviderType;
 
 /**
@@ -26,9 +28,6 @@ import org.osgi.annotation.versioning.ProviderType;
  * The following features are supported:
  * </p>
  * <ul>
- *   <li>{@link org.eclipse.fennec.model.atlas.wf.workflowapi.Registry#getName <em>Name</em>}</li>
- *   <li>{@link org.eclipse.fennec.model.atlas.wf.workflowapi.Registry#getDescription <em>Description</em>}</li>
- *   <li>{@link org.eclipse.fennec.model.atlas.wf.workflowapi.Registry#getType <em>Type</em>}</li>
  *   <li>{@link org.eclipse.fennec.model.atlas.wf.workflowapi.Registry#getStages <em>Stages</em>}</li>
  *   <li>{@link org.eclipse.fennec.model.atlas.wf.workflowapi.Registry#getAllowedTransitions <em>Allowed Transitions</em>}</li>
  * </ul>
@@ -38,80 +37,7 @@ import org.osgi.annotation.versioning.ProviderType;
  * @generated
  */
 @ProviderType
-public interface Registry {
-	/**
-	 * Returns the value of the '<em><b>Name</b></em>' attribute.
-	 * <!-- begin-user-doc -->
-	 * <!-- end-user-doc -->
-	 * @return the value of the '<em>Name</em>' attribute.
-	 * @see #setName(String)
-	 * @see org.eclipse.fennec.model.atlas.wf.workflowapi.WorkflowApiPackage#getRegistry_Name()
-	 * @model
-	 * @generated
-	 */
-	String getName();
-
-	/**
-	 * Sets the value of the '{@link org.eclipse.fennec.model.atlas.wf.workflowapi.Registry#getName <em>Name</em>}' attribute.
-	 * <!-- begin-user-doc -->
-	 * <!-- end-user-doc -->
-	 * @param value the new value of the '<em>Name</em>' attribute.
-	 * @see #getName()
-	 * @generated
-	 */
-	void setName(String value);
-
-	/**
-	 * Returns the value of the '<em><b>Description</b></em>' attribute.
-	 * <!-- begin-user-doc -->
-	 * <!-- end-user-doc -->
-	 * @return the value of the '<em>Description</em>' attribute.
-	 * @see #setDescription(String)
-	 * @see org.eclipse.fennec.model.atlas.wf.workflowapi.WorkflowApiPackage#getRegistry_Description()
-	 * @model
-	 * @generated
-	 */
-	String getDescription();
-
-	/**
-	 * Sets the value of the '{@link org.eclipse.fennec.model.atlas.wf.workflowapi.Registry#getDescription <em>Description</em>}' attribute.
-	 * <!-- begin-user-doc -->
-	 * <!-- end-user-doc -->
-	 * @param value the new value of the '<em>Description</em>' attribute.
-	 * @see #getDescription()
-	 * @generated
-	 */
-	void setDescription(String value);
-
-	/**
-	 * Returns the value of the '<em><b>Type</b></em>' attribute.
-	 * The default value is <code>"OTHER"</code>.
-	 * The literals are from the enumeration {@link org.eclipse.fennec.model.atlas.wf.workflowapi.RegistryType}.
-	 * <!-- begin-user-doc -->
-	 * <!-- end-user-doc -->
-	 * <!-- begin-model-doc -->
-	 * Classifies the registry by its role. SCHEMA registries hold EPackage definitions, COCL registries hold OCL constraint sets, OTHER is the default for general-purpose registries.
-	 * <!-- end-model-doc -->
-	 * @return the value of the '<em>Type</em>' attribute.
-	 * @see org.eclipse.fennec.model.atlas.wf.workflowapi.RegistryType
-	 * @see #setType(RegistryType)
-	 * @see org.eclipse.fennec.model.atlas.wf.workflowapi.WorkflowApiPackage#getRegistry_Type()
-	 * @model default="OTHER"
-	 * @generated
-	 */
-	RegistryType getType();
-
-	/**
-	 * Sets the value of the '{@link org.eclipse.fennec.model.atlas.wf.workflowapi.Registry#getType <em>Type</em>}' attribute.
-	 * <!-- begin-user-doc -->
-	 * <!-- end-user-doc -->
-	 * @param value the new value of the '<em>Type</em>' attribute.
-	 * @see org.eclipse.fennec.model.atlas.wf.workflowapi.RegistryType
-	 * @see #getType()
-	 * @generated
-	 */
-	void setType(RegistryType value);
-
+public interface Registry extends RegistryInfo {
 	/**
 	 * Returns the value of the '<em><b>Stages</b></em>' containment reference list.
 	 * The list contents are of type {@link org.eclipse.fennec.model.atlas.wf.workflowapi.Stage}.

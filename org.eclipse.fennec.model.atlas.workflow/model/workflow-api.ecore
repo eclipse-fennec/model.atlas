@@ -60,14 +60,6 @@
       <eParameters name="registry" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
       <eParameters name="objectId" lowerBound="1" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
     </eOperations>
-    <eOperations name="getContentFromFinalStageForRegistry">
-      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
-        <details key="documentation" value="Get the actual EObject content by ID for the final stage of a registry.  If nothing is found in that stage, the parents final stage of the same registry are also inspected. "/>
-      </eAnnotations>
-      <eGenericType eTypeParameter="#//EObjectWorkflowService/T"/>
-      <eParameters name="registry" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
-      <eParameters name="objectId" lowerBound="1" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
-    </eOperations>
     <eOperations name="updateInStageForRegistry">
       <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
         <details key="documentation" value="Update an existing object in a certain stage and registry. Returned updated ObjectMetadata."/>
@@ -188,7 +180,7 @@
     </eOperations>
     <eOperations name="getContentFromFinalStage">
       <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
-        <details key="documentation" value="Get the actual EObject content by ID for the final stage, of a certain scope."/>
+        <details key="documentation" value="Get the actual EObject content by ID for the final stage of a certain scope."/>
       </eAnnotations>
       <eGenericType eTypeParameter="#//EObjectWorkflowService/T"/>
       <eParameters name="scope" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
@@ -294,7 +286,35 @@
   </eClassifiers>
   <eClassifiers xsi:type="ecore:EClass" name="ScopeService" abstract="true" interface="true">
     <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
-      <details key="documentation" value="Orchestrates all data operations for this scope by validating and delegating to RegistryService."/>
+      <details key="documentation" value="@deprecated Use {@link WritableScopeService} instead."/>
+    </eAnnotations>
+    <eTypeParameters name="T">
+      <eBounds eClassifier="ecore:EClass http://www.eclipse.org/emf/2002/Ecore#//EObject"/>
+    </eTypeParameters>
+    <eGenericSuperTypes eClassifier="#//WritableScopeService">
+      <eTypeArguments eTypeParameter="#//ScopeService/T"/>
+    </eGenericSuperTypes>
+  </eClassifiers>
+  <eClassifiers xsi:type="ecore:EClass" name="Stage">
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="name" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="writable" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EBoolean"/>
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="final" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EBoolean"/>
+  </eClassifiers>
+  <eClassifiers xsi:type="ecore:EClass" name="Registry" eSuperTypes="../../org.eclipse.fennec.model.atlas.scope.api/model/scope-api.ecore#//RegistryInfo">
+    <eStructuralFeatures xsi:type="ecore:EReference" name="stages" upperBound="-1"
+        eType="#//Stage" containment="true"/>
+    <eStructuralFeatures xsi:type="ecore:EReference" name="allowedTransitions" upperBound="-1"
+        eType="#//StageTransition" containment="true"/>
+  </eClassifiers>
+  <eClassifiers xsi:type="ecore:EClass" name="Scope" eSuperTypes="../../org.eclipse.fennec.model.atlas.scope.api/model/scope-api.ecore#//ScopeInfo"/>
+  <eClassifiers xsi:type="ecore:EClass" name="StageTransition">
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="fromStage" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="toStage" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+  </eClassifiers>
+  <eClassifiers xsi:type="ecore:EClass" name="WritableScopeService" abstract="true"
+      interface="true">
+    <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+      <details key="documentation" value="Orchestrates all data operations for this scope by validating and delegating to RegistryService. This will replace the current ScopeService"/>
     </eAnnotations>
     <eTypeParameters name="T">
       <eBounds eClassifier="ecore:EClass http://www.eclipse.org/emf/2002/Ecore#//EObject"/>
@@ -309,7 +329,7 @@
       <eParameters name="registry" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
       <eParameters name="stage" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
       <eParameters name="object" lowerBound="1">
-        <eGenericType eTypeParameter="#//EObjectWorkflowService/T"/>
+        <eGenericType eTypeParameter="#//WritableScopeService/T"/>
       </eParameters>
       <eParameters name="metadata" lowerBound="1" eType="ecore:EClass ../../org.eclipse.fennec.model.atlas.management/model/management.ecore#//ObjectMetadata"/>
     </eOperations>
@@ -332,17 +352,9 @@
       <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
         <details key="documentation" value="Get the actual EObject content by ID for a certain stage and registry. If nothing is found, the parents final stage of the same registry are also inspected."/>
       </eAnnotations>
-      <eGenericType eTypeParameter="#//EObjectWorkflowService/T"/>
+      <eGenericType eTypeParameter="#//WritableScopeService/T"/>
       <eParameters name="registry" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
       <eParameters name="stage" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
-      <eParameters name="objectId" lowerBound="1" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
-    </eOperations>
-    <eOperations name="getContentFromFinalStageForRegistry">
-      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
-        <details key="documentation" value="Get the actual EObject content by ID for the final stage of a registry. If nothing is found, the parents final stage of the same registry are also inspected."/>
-      </eAnnotations>
-      <eGenericType eTypeParameter="#//EObjectWorkflowService/T"/>
-      <eParameters name="registry" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
       <eParameters name="objectId" lowerBound="1" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
     </eOperations>
     <eOperations name="updateInStageForRegistry">
@@ -355,7 +367,7 @@
       <eParameters name="registry" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
       <eParameters name="stage" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
       <eParameters name="updatedObject" lowerBound="1">
-        <eGenericType eTypeParameter="#//EObjectWorkflowService/T"/>
+        <eGenericType eTypeParameter="#//WritableScopeService/T"/>
       </eParameters>
       <eParameters name="objectId" lowerBound="1" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
       <eParameters name="version" lowerBound="1" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
@@ -428,55 +440,8 @@
       </eGenericType>
     </eOperations>
     <eOperations name="getScope" eType="#//Scope"/>
-  </eClassifiers>
-  <eClassifiers xsi:type="ecore:EClass" name="Stage">
-    <eStructuralFeatures xsi:type="ecore:EAttribute" name="name" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
-    <eStructuralFeatures xsi:type="ecore:EAttribute" name="writable" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EBoolean"/>
-    <eStructuralFeatures xsi:type="ecore:EAttribute" name="final" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EBoolean"/>
-  </eClassifiers>
-  <eClassifiers xsi:type="ecore:EClass" name="Registry">
-    <eStructuralFeatures xsi:type="ecore:EAttribute" name="name" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
-    <eStructuralFeatures xsi:type="ecore:EAttribute" name="description" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
-    <eStructuralFeatures xsi:type="ecore:EAttribute" name="type" eType="#//RegistryType"
-        defaultValueLiteral="OTHER">
-      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
-        <details key="documentation" value="Classifies the registry by its role. SCHEMA registries hold EPackage definitions, COCL registries hold OCL constraint sets, OTHER is the default for general-purpose registries."/>
-      </eAnnotations>
-    </eStructuralFeatures>
-    <eStructuralFeatures xsi:type="ecore:EReference" name="stages" upperBound="-1"
-        eType="#//Stage" containment="true"/>
-    <eStructuralFeatures xsi:type="ecore:EReference" name="allowedTransitions" upperBound="-1"
-        eType="#//StageTransition" containment="true"/>
-  </eClassifiers>
-  <eClassifiers xsi:type="ecore:EClass" name="Scope">
-    <eStructuralFeatures xsi:type="ecore:EAttribute" name="name" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
-    <eStructuralFeatures xsi:type="ecore:EAttribute" name="description" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
-    <eStructuralFeatures xsi:type="ecore:EAttribute" name="parentScope" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
-    <eStructuralFeatures xsi:type="ecore:EReference" name="registries" upperBound="-1"
-        eType="#//Registry" containment="true"/>
-  </eClassifiers>
-  <eClassifiers xsi:type="ecore:EClass" name="StageTransition">
-    <eStructuralFeatures xsi:type="ecore:EAttribute" name="fromStage" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
-    <eStructuralFeatures xsi:type="ecore:EAttribute" name="toStage" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
-  </eClassifiers>
-  <eClassifiers xsi:type="ecore:EEnum" name="RegistryType">
-    <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
-      <details key="documentation" value="Classifies a Registry by its role within a scope."/>
-    </eAnnotations>
-    <eLiterals name="OTHER">
-      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
-        <details key="documentation" value="General-purpose registry. Default value."/>
-      </eAnnotations>
-    </eLiterals>
-    <eLiterals name="SCHEMA" value="1">
-      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
-        <details key="documentation" value="Registry holding EPackage schema definitions."/>
-      </eAnnotations>
-    </eLiterals>
-    <eLiterals name="COCL" value="2">
-      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
-        <details key="documentation" value="Registry holding C-OCL OclConstraintSet objects used for validation."/>
-      </eAnnotations>
-    </eLiterals>
+    <eGenericSuperTypes eClassifier="ecore:EClass ../../org.eclipse.fennec.model.atlas.scope.api/model/scope-api.ecore#//ReadOnlyScopeService">
+      <eTypeArguments eTypeParameter="#//WritableScopeService/T"/>
+    </eGenericSuperTypes>
   </eClassifiers>
 </ecore:EPackage>

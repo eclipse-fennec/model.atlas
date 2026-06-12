@@ -416,8 +416,9 @@ public class ScopeServiceIntegrationTest {
 					uploadMetadata).getValue();
 
 			// Child's own final stage is empty -> falls back to the parent's final stage
-			EPackage result = childScope.getContentFromFinalStageForRegistry(
+			EPackage result = childScope.getContentFromStageForRegistry(
 					CommonTestAnnotations.SCHEMA_REGISTRY_NAME,
+					CommonTestAnnotations.STAGE_RELEASE,
 					OBJECT_ID);
 
 			assertNotNull(result, "Should fall back to parent's final-stage content");

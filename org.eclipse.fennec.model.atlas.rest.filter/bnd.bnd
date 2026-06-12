@@ -9,7 +9,8 @@
 	org.eclipse.fennec.model.atlas.rest.common,\
 	org.osgi.service.cdi,\
 	org.osgi.service.component,\
-	org.glassfish.hk2.api
+	org.glassfish.hk2.api,\
+	org.eclipse.fennec.model.atlas.scope.api;version=snapshot
 
 # Declares this bundle as the implementation of the Model Atlas
 # scoped-resource-set filter feature (ScopedResourceSetProvider +

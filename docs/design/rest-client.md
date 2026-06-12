@@ -170,8 +170,8 @@ public interface ModelAtlasClient extends AutoCloseable {
     /** Direct EPackage access. */
     RemoteEPackageProvider ePackages();
 
-    /** Read-only EObject registry view for one (scope, registry). (Phase 5) */
-    ScopedEObjectsRegistry<EObject> registry(String scopeName, String registryName);
+    /** Read-only EObject view for a scope; registry is a per-call parameter. (Phase 5) */
+    ReadOnlyScopeService<EObject> readOnlyScope(String scopeName);
 
     /** Trigger a drift check across cached entries. */
     DriftReport checkForDrift();
@@ -236,7 +236,8 @@ The plain-Java client never mutates `EPackage.Registry.INSTANCE` automatically; 
 | `listRegistries(s)` | GET | `/scopes/{s}` (Phase 5) |
 | `ePackages.listNsUris(s)` | GET | `/{s}/schema` |
 | `ePackages.getEPackage(nsUri)` (cache miss / conditional) | GET | `/{s}/schema/stages/released/content?nsUri=` (with `If-None-Match` if cached) |
-| `registry(s,r).get(objectId)` (Phase 5) | GET | `/{s}/registries/{r}/stages/released/content?objectId=` |
+| `readOnlyScope(s).listObjectIds(r)` (Phase 5) | GET | `/{s}/registries/{r}` (final-stage listing) |
+| `readOnlyScope(s).get(r, objectId)` (Phase 5) | GET | `/{s}/registries/{r}/content?objectId=` (stage-free final-stage content, P5-0) |
 | drift watcher (per scope) | HEAD | `/{s}` (with `If-None-Match`) |
 
 The client uses the *released* stage as the default view. Other stages are workflow concerns; if a future read-only consumer needs draft-stage access, a configurable per-(scope, registry) `view` can be added.
@@ -548,34 +549,57 @@ Mounting only the read-only resource on a public Atlas instance, while a private
 
 ## Phase 5 — EObject-Registry Client
 
-Phase 5 extends the client (both plain-Java and OSGi variants) with `ScopedEObjectsRegistry<EObject>` per `(scope, registry)`. It depends on Phase 4 having shipped `scope.api`.
+Phase 5 extends the client (both plain-Java and OSGi variants) with the `scope.api`
+`ReadOnlyScopeService<EObject>` per **scope** (registry is a method parameter). It depends on
+Phase 4 having shipped `scope.api`.
+
+> **Reframed (2026-06-12).** Phase 4 shipped a per-scope `ReadOnlyScopeService<T>` rather than
+> the per-`(scope, registry)` `ScopedEObjectsRegistry<T>` this section originally described.
+> Phase 5 mirrors that contract exactly. A new server endpoint (P5-0) is required because the
+> only single-object content endpoint requires a stage name in the path, and final-stage names
+> are user-defined.
 
 ### What gets added
 
-- `rest.client.impl` gains `ScopedEObjectsRegistryImpl`, an implementation of the Phase-4 interface that:
-  - lists object IDs via `GET /{s}/registries/{r}`,
-  - fetches single objects via `GET /{s}/registries/{r}/stages/released/content?objectId=` (using the same conditional-GET / cache machinery as EPackages),
-  - participates in the scope-level drift watcher (Phase 1 HEAD response surfaces changed `(registry, objectId)` pairs).
+- **Server (P5-0)** — a stage-free final-stage content endpoint
+  `GET /{s}/registries/{r}/content?objectId=`, mirroring the existing stage-free final-stage
+  *listing* at `GET /{s}/registries/{r}`. Delegates to `ReadOnlyScopeService.get(registry, objectId)`
+  with ETag from `getMetadataFromFinalStageForRegistry(...)`.
 
-- `rest.client.api`'s `ModelAtlasClient.registry(scope, registry)` becomes functional.
+- `rest.client.impl` gains `RemoteReadOnlyScopeService implements ReadOnlyScopeService<EObject>`
+  (one per scope) that:
+  - lists object IDs via `GET /{s}/registries/{r}` (final-stage listing),
+  - fetches single objects via `GET /{s}/registries/{r}/content?objectId=` (P5-0), using the same
+    conditional-GET / cache machinery as EPackages (cache key `(scope, registry, objectId)`),
+  - exposes `getScopeInfo()` via `GET /scopes/{s}`,
+  - participates in the scope-level drift watcher (Phase 1 HEAD response surfaces changed
+    `(registry, objectId)` pairs).
 
-- `rest.client.osgi` publishes one `ScopedEObjectsRegistry<EObject>` OSGi service per `(scope, registry)` pair, with the property contract from Phase 4:
+- `rest.client.api`'s `ModelAtlasClient.readOnlyScope(scope)` and `listRegistries(scope)` become
+  functional.
+
+- `rest.client.osgi` publishes one `ReadOnlyScopeService<EObject>` OSGi service per **scope**,
+  with the property contract from Phase 4 (`atlas.view` discussed below):
 
   ```
-  atlas.scope=<scopeName>
-  atlas.registry=<registryName>
-  atlas.stage=released
+  atlas.scope=<scopeName>     # the collector key
   atlas.remote=true
+  # + whatever else the in-process ScopeServiceImpl stamps, mirrored for shape-identical
+  #   publications. atlas.view is advisory only (no consumer filters on it; reads always
+  #   target the final stage, resolved server-side) — mirrored if the server stamps it,
+  #   otherwise omitted. See P5-7 for retiring the stage name from the EPackage path too.
   ```
 
   Consumers (e.g. validation, UC-1) look up by service filter:
 
   ```java
-  @Reference(target = "(&(atlas.scope=jena)(atlas.registry=cocl))")
-  ScopedEObjectsRegistry<EObject> coclRegistry;
+  @Reference(target = "(atlas.scope=jena)")
+  ReadOnlyScopeService<EObject> jenaScope;
+  // ...then jenaScope.get("cocl", objectId)
   ```
 
-  This is the **same lookup that works against the in-process server-side publication** after Phase 4 — that is the symmetry payoff.
+  This is the **same lookup that works against the in-process server-side publication** after
+  Phase 4 — that is the symmetry payoff.
 
 ### Object identity and cross-references
 

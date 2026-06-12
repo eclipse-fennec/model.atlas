@@ -1,0 +1,523 @@
+/**
+ * Copyright (c) 2012 - 2026 Data In Motion and others.
+ * All rights reserved.
+ * 
+ * This program and the accompanying materials are made
+ * available under the terms of the Eclipse Public License 2.0
+ * which is available at https://www.eclipse.org/legal/epl-2.0/
+ * 
+ * SPDX-License-Identifier: EPL-2.0
+ * 
+ * Contributors:
+ *      Data In Motion - initial API and implementation
+ */
+package org.eclipse.fennec.model.atlas.scope.api.impl;
+
+import java.util.List;
+import java.util.Optional;
+
+import java.util.stream.Stream;
+
+import org.eclipse.emf.ecore.EAttribute;
+import org.eclipse.emf.ecore.EClass;
+import org.eclipse.emf.ecore.EDataType;
+import org.eclipse.emf.ecore.EEnum;
+import org.eclipse.emf.ecore.EGenericType;
+import org.eclipse.emf.ecore.EOperation;
+import org.eclipse.emf.ecore.EPackage;
+import org.eclipse.emf.ecore.EReference;
+import org.eclipse.emf.ecore.ETypeParameter;
+
+import org.eclipse.emf.ecore.impl.EPackageImpl;
+
+import org.eclipse.fennec.model.atlas.scope.api.ReadOnlyScopeService;
+import org.eclipse.fennec.model.atlas.scope.api.RegistryInfo;
+import org.eclipse.fennec.model.atlas.scope.api.RegistryType;
+import org.eclipse.fennec.model.atlas.scope.api.ScopeApiFactory;
+import org.eclipse.fennec.model.atlas.scope.api.ScopeApiPackage;
+import org.eclipse.fennec.model.atlas.scope.api.ScopeInfo;
+
+/**
+ * <!-- begin-user-doc -->
+ * An implementation of the model <b>Package</b>.
+ * <!-- end-user-doc -->
+ * @generated
+ */
+public class ScopeApiPackageImpl extends EPackageImpl implements ScopeApiPackage {
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	private EClass readOnlyScopeServiceEClass = null;
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	private EClass scopeInfoEClass = null;
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	private EClass registryInfoEClass = null;
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	private EEnum registryTypeEEnum = null;
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	private EDataType optionalEDataType = null;
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	private EDataType listEDataType = null;
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	private EDataType streamEDataType = null;
+
+	/**
+	 * Creates an instance of the model <b>Package</b>, registered with
+	 * {@link org.eclipse.emf.ecore.EPackage.Registry EPackage.Registry} by the package
+	 * package URI value.
+	 * <p>Note: the correct way to create the package is via the static
+	 * factory method {@link #init init()}, which also performs
+	 * initialization of the package, or returns the registered package,
+	 * if one already exists.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @see org.eclipse.emf.ecore.EPackage.Registry
+	 * @see org.eclipse.fennec.model.atlas.scope.api.ScopeApiPackage#eNS_URI
+	 * @see #init()
+	 * @generated
+	 */
+	private ScopeApiPackageImpl() {
+		super(eNS_URI, ScopeApiFactory.eINSTANCE);
+	}
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	private static boolean isInited = false;
+
+	/**
+	 * Creates, registers, and initializes the <b>Package</b> for this model, and for any others upon which it depends.
+	 *
+	 * <p>This method is used to initialize {@link ScopeApiPackage#eINSTANCE} when that field is accessed.
+	 * Clients should not invoke it directly. Instead, they should simply access that field to obtain the package.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @see #eNS_URI
+	 * @see #createPackageContents()
+	 * @see #initializePackageContents()
+	 * @generated
+	 */
+	public static ScopeApiPackage init() {
+		if (isInited) return (ScopeApiPackage)EPackage.Registry.INSTANCE.getEPackage(ScopeApiPackage.eNS_URI);
+
+		// Obtain or create and register package
+		Object registeredScopeApiPackage = EPackage.Registry.INSTANCE.get(eNS_URI);
+		ScopeApiPackageImpl theScopeApiPackage = registeredScopeApiPackage instanceof ScopeApiPackageImpl ? (ScopeApiPackageImpl)registeredScopeApiPackage : new ScopeApiPackageImpl();
+
+		isInited = true;
+
+		// Create package meta-data objects
+		theScopeApiPackage.createPackageContents();
+
+		// Initialize created meta-data
+		theScopeApiPackage.initializePackageContents();
+
+		// Mark meta-data to indicate it can't be changed
+		theScopeApiPackage.freeze();
+
+		// Update the registry and return the package
+		EPackage.Registry.INSTANCE.put(ScopeApiPackage.eNS_URI, theScopeApiPackage);
+		return theScopeApiPackage;
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
+	public EClass getReadOnlyScopeService() {
+		return readOnlyScopeServiceEClass;
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
+	public EOperation getReadOnlyScopeService__GetScopeName() {
+		return readOnlyScopeServiceEClass.getEOperations().get(0);
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
+	public EOperation getReadOnlyScopeService__IsInheritingFromParentScope() {
+		return readOnlyScopeServiceEClass.getEOperations().get(1);
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
+	public EOperation getReadOnlyScopeService__Get__String_String() {
+		return readOnlyScopeServiceEClass.getEOperations().get(2);
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
+	public EOperation getReadOnlyScopeService__ListObjectIds__String() {
+		return readOnlyScopeServiceEClass.getEOperations().get(3);
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
+	public EOperation getReadOnlyScopeService__ListAll__String() {
+		return readOnlyScopeServiceEClass.getEOperations().get(4);
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
+	public EOperation getReadOnlyScopeService__Stream__String() {
+		return readOnlyScopeServiceEClass.getEOperations().get(5);
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
+	public EOperation getReadOnlyScopeService__GetScopeInfo() {
+		return readOnlyScopeServiceEClass.getEOperations().get(6);
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
+	public EClass getScopeInfo() {
+		return scopeInfoEClass;
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
+	public EAttribute getScopeInfo_Name() {
+		return (EAttribute)scopeInfoEClass.getEStructuralFeatures().get(0);
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
+	public EAttribute getScopeInfo_Description() {
+		return (EAttribute)scopeInfoEClass.getEStructuralFeatures().get(1);
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
+	public EAttribute getScopeInfo_ParentScope() {
+		return (EAttribute)scopeInfoEClass.getEStructuralFeatures().get(2);
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
+	public EReference getScopeInfo_Registries() {
+		return (EReference)scopeInfoEClass.getEStructuralFeatures().get(3);
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
+	public EClass getRegistryInfo() {
+		return registryInfoEClass;
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
+	public EAttribute getRegistryInfo_Name() {
+		return (EAttribute)registryInfoEClass.getEStructuralFeatures().get(0);
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
+	public EAttribute getRegistryInfo_Description() {
+		return (EAttribute)registryInfoEClass.getEStructuralFeatures().get(1);
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
+	public EAttribute getRegistryInfo_Type() {
+		return (EAttribute)registryInfoEClass.getEStructuralFeatures().get(2);
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
+	public EEnum getRegistryType() {
+		return registryTypeEEnum;
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
+	public EDataType getOptional() {
+		return optionalEDataType;
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
+	public EDataType getList() {
+		return listEDataType;
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
+	public EDataType getStream() {
+		return streamEDataType;
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
+	public ScopeApiFactory getScopeApiFactory() {
+		return (ScopeApiFactory)getEFactoryInstance();
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	private boolean isCreated = false;
+
+	/**
+	 * Creates the meta-model objects for the package.  This method is
+	 * guarded to have no affect on any invocation but its first.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	public void createPackageContents() {
+		if (isCreated) return;
+		isCreated = true;
+
+		// Create classes and their features
+		readOnlyScopeServiceEClass = createEClass(READ_ONLY_SCOPE_SERVICE);
+		createEOperation(readOnlyScopeServiceEClass, READ_ONLY_SCOPE_SERVICE___GET_SCOPE_NAME);
+		createEOperation(readOnlyScopeServiceEClass, READ_ONLY_SCOPE_SERVICE___IS_INHERITING_FROM_PARENT_SCOPE);
+		createEOperation(readOnlyScopeServiceEClass, READ_ONLY_SCOPE_SERVICE___GET__STRING_STRING);
+		createEOperation(readOnlyScopeServiceEClass, READ_ONLY_SCOPE_SERVICE___LIST_OBJECT_IDS__STRING);
+		createEOperation(readOnlyScopeServiceEClass, READ_ONLY_SCOPE_SERVICE___LIST_ALL__STRING);
+		createEOperation(readOnlyScopeServiceEClass, READ_ONLY_SCOPE_SERVICE___STREAM__STRING);
+		createEOperation(readOnlyScopeServiceEClass, READ_ONLY_SCOPE_SERVICE___GET_SCOPE_INFO);
+
+		scopeInfoEClass = createEClass(SCOPE_INFO);
+		createEAttribute(scopeInfoEClass, SCOPE_INFO__NAME);
+		createEAttribute(scopeInfoEClass, SCOPE_INFO__DESCRIPTION);
+		createEAttribute(scopeInfoEClass, SCOPE_INFO__PARENT_SCOPE);
+		createEReference(scopeInfoEClass, SCOPE_INFO__REGISTRIES);
+
+		registryInfoEClass = createEClass(REGISTRY_INFO);
+		createEAttribute(registryInfoEClass, REGISTRY_INFO__NAME);
+		createEAttribute(registryInfoEClass, REGISTRY_INFO__DESCRIPTION);
+		createEAttribute(registryInfoEClass, REGISTRY_INFO__TYPE);
+
+		// Create enums
+		registryTypeEEnum = createEEnum(REGISTRY_TYPE);
+
+		// Create data types
+		optionalEDataType = createEDataType(OPTIONAL);
+		listEDataType = createEDataType(LIST);
+		streamEDataType = createEDataType(STREAM);
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	private boolean isInitialized = false;
+
+	/**
+	 * Complete the initialization of the package and its meta-model.  This
+	 * method is guarded to have no affect on any invocation but its first.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	public void initializePackageContents() {
+		if (isInitialized) return;
+		isInitialized = true;
+
+		// Initialize package
+		setName(eNAME);
+		setNsPrefix(eNS_PREFIX);
+		setNsURI(eNS_URI);
+
+		// Create type parameters
+		ETypeParameter readOnlyScopeServiceEClass_T = addETypeParameter(readOnlyScopeServiceEClass, "T");
+		addETypeParameter(optionalEDataType, "T");
+		addETypeParameter(listEDataType, "T");
+		addETypeParameter(streamEDataType, "T");
+
+		// Set bounds for type parameters
+		EGenericType g1 = createEGenericType(ecorePackage.getEObject());
+		readOnlyScopeServiceEClass_T.getEBounds().add(g1);
+
+		// Add supertypes to classes
+
+		// Initialize classes, features, and operations; add parameters
+		initEClass(readOnlyScopeServiceEClass, ReadOnlyScopeService.class, "ReadOnlyScopeService", IS_ABSTRACT, IS_INTERFACE, IS_GENERATED_INSTANCE_CLASS);
+
+		initEOperation(getReadOnlyScopeService__GetScopeName(), ecorePackage.getEString(), "getScopeName", 0, 1, IS_UNIQUE, IS_ORDERED);
+
+		initEOperation(getReadOnlyScopeService__IsInheritingFromParentScope(), ecorePackage.getEBoolean(), "isInheritingFromParentScope", 0, 1, IS_UNIQUE, IS_ORDERED);
+
+		EOperation op = initEOperation(getReadOnlyScopeService__Get__String_String(), null, "get", 0, 1, IS_UNIQUE, IS_ORDERED);
+		addEParameter(op, ecorePackage.getEString(), "registry", 1, 1, IS_UNIQUE, IS_ORDERED);
+		addEParameter(op, ecorePackage.getEString(), "objectId", 1, 1, IS_UNIQUE, IS_ORDERED);
+		g1 = createEGenericType(this.getOptional());
+		EGenericType g2 = createEGenericType(readOnlyScopeServiceEClass_T);
+		g1.getETypeArguments().add(g2);
+		initEOperation(op, g1);
+
+		op = initEOperation(getReadOnlyScopeService__ListObjectIds__String(), null, "listObjectIds", 0, 1, IS_UNIQUE, IS_ORDERED);
+		addEParameter(op, ecorePackage.getEString(), "registry", 1, 1, IS_UNIQUE, IS_ORDERED);
+		g1 = createEGenericType(this.getList());
+		g2 = createEGenericType(ecorePackage.getEString());
+		g1.getETypeArguments().add(g2);
+		initEOperation(op, g1);
+
+		op = initEOperation(getReadOnlyScopeService__ListAll__String(), null, "listAll", 0, 1, IS_UNIQUE, IS_ORDERED);
+		addEParameter(op, ecorePackage.getEString(), "registry", 1, 1, IS_UNIQUE, IS_ORDERED);
+		g1 = createEGenericType(this.getList());
+		g2 = createEGenericType(readOnlyScopeServiceEClass_T);
+		g1.getETypeArguments().add(g2);
+		initEOperation(op, g1);
+
+		op = initEOperation(getReadOnlyScopeService__Stream__String(), null, "stream", 0, 1, IS_UNIQUE, IS_ORDERED);
+		addEParameter(op, ecorePackage.getEString(), "registry", 1, 1, IS_UNIQUE, IS_ORDERED);
+		g1 = createEGenericType(this.getStream());
+		g2 = createEGenericType(readOnlyScopeServiceEClass_T);
+		g1.getETypeArguments().add(g2);
+		initEOperation(op, g1);
+
+		initEOperation(getReadOnlyScopeService__GetScopeInfo(), this.getScopeInfo(), "getScopeInfo", 0, 1, IS_UNIQUE, IS_ORDERED);
+
+		initEClass(scopeInfoEClass, ScopeInfo.class, "ScopeInfo", !IS_ABSTRACT, !IS_INTERFACE, IS_GENERATED_INSTANCE_CLASS);
+		initEAttribute(getScopeInfo_Name(), ecorePackage.getEString(), "name", null, 0, 1, ScopeInfo.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_UNSETTABLE, !IS_ID, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
+		initEAttribute(getScopeInfo_Description(), ecorePackage.getEString(), "description", null, 0, 1, ScopeInfo.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_UNSETTABLE, !IS_ID, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
+		initEAttribute(getScopeInfo_ParentScope(), ecorePackage.getEString(), "parentScope", null, 0, 1, ScopeInfo.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_UNSETTABLE, !IS_ID, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
+		initEReference(getScopeInfo_Registries(), this.getRegistryInfo(), null, "registries", null, 0, -1, ScopeInfo.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, IS_COMPOSITE, !IS_RESOLVE_PROXIES, !IS_UNSETTABLE, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
+
+		initEClass(registryInfoEClass, RegistryInfo.class, "RegistryInfo", !IS_ABSTRACT, !IS_INTERFACE, IS_GENERATED_INSTANCE_CLASS);
+		initEAttribute(getRegistryInfo_Name(), ecorePackage.getEString(), "name", null, 0, 1, RegistryInfo.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_UNSETTABLE, !IS_ID, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
+		initEAttribute(getRegistryInfo_Description(), ecorePackage.getEString(), "description", null, 0, 1, RegistryInfo.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_UNSETTABLE, !IS_ID, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
+		initEAttribute(getRegistryInfo_Type(), this.getRegistryType(), "type", null, 0, 1, RegistryInfo.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_UNSETTABLE, !IS_ID, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
+
+		// Initialize enums and add enum literals
+		initEEnum(registryTypeEEnum, RegistryType.class, "RegistryType");
+		addEEnumLiteral(registryTypeEEnum, RegistryType.OTHER);
+		addEEnumLiteral(registryTypeEEnum, RegistryType.SCHEMA);
+		addEEnumLiteral(registryTypeEEnum, RegistryType.COCL);
+
+		// Initialize data types
+		initEDataType(optionalEDataType, Optional.class, "Optional", !IS_SERIALIZABLE, !IS_GENERATED_INSTANCE_CLASS);
+		initEDataType(listEDataType, List.class, "List", !IS_SERIALIZABLE, !IS_GENERATED_INSTANCE_CLASS);
+		initEDataType(streamEDataType, Stream.class, "Stream", !IS_SERIALIZABLE, !IS_GENERATED_INSTANCE_CLASS);
+
+		// Create resource
+		createResource(eNS_URI);
+	}
+
+} //ScopeApiPackageImpl

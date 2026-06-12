@@ -88,7 +88,7 @@ public interface RegistryService<T extends EObject> {
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
 	 * <!-- begin-model-doc -->
-	 * Get the actual EObject content by ID for the final stage, of a certain scope.
+	 * Get the actual EObject content by ID for the final stage of a certain scope.
 	 * <!-- end-model-doc -->
 	 * @model objectIdRequired="true"
 	 * @generated

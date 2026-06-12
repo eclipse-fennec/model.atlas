@@ -360,6 +360,106 @@ public class ObjectRegistryResourceTest extends AbstractRestTest{
 		assertEquals(204, response.getStatus(), "Should return HTTP 204 No Content");
 	}
 
+	// ========== Get Object Content From Final Stage Tests (P5-0) ==========
+
+	@Test
+	@ParentScopeServiceSetup
+	public void testGetObjectContentFromFinalStage_Success(@InjectBundleContext BundleContext context) throws IOException, InterruptedException {
+		ensureResourceAvailability(context);
+		uploadTestObject(TestAnnotations.STAGE_RELEASE);
+
+		Response response = objectRegistryTarget().path("content")
+				.queryParam("objectId", TEST_OBJECT_ID).request("application/json").get();
+
+		assertEquals(200, response.getStatus(), "Should return HTTP 200 OK");
+		String responseContent = response.readEntity(String.class);
+		assertNotNull(responseContent, "Should return content");
+	}
+
+	@Test
+	@ParentScopeServiceSetup
+	public void testGetObjectContentFromFinalStage_NotFound(@InjectBundleContext BundleContext context) throws IOException, InterruptedException {
+		ensureResourceAvailability(context);
+		Response response = objectRegistryTarget().path("content")
+				.queryParam("objectId", "non-existent-object").request("application/json").get();
+
+		assertEquals(204, response.getStatus(), "Should return HTTP 204 No Content when object not in final stage");
+	}
+
+	@Test
+	@ParentScopeServiceSetup
+	public void testGetObjectContentFromFinalStage_ScopeNotFound(@InjectBundleContext BundleContext context) throws IOException, InterruptedException {
+		ensureResourceAvailability(context);
+		Response response = registryTarget("non-existent-scope", TestAnnotations.OBJECT_REGISTRY_NAME)
+				.path("content").queryParam("objectId", TEST_OBJECT_ID).request("application/json").get();
+
+		assertEquals(400, response.getStatus(), "Should return HTTP 400 Bad Request for unknown scope");
+	}
+
+	@Test
+	@ParentScopeServiceSetup
+	public void testGetObjectContentFromFinalStage_UnassignedRegistry(@InjectBundleContext BundleContext context) throws IOException, InterruptedException {
+		ensureResourceAvailability(context);
+		assertUnassignedRegistryRejected(registryTarget(UNASSIGNED_REGISTRY_NAME).path("content")
+				.queryParam("objectId", TEST_OBJECT_ID).request("application/json").get());
+	}
+
+	@Test
+	@ParentScopeServiceSetup
+	public void testGetObjectContentFromFinalStage_ConditionalGetNotModified(@InjectBundleContext BundleContext context) throws IOException, InterruptedException {
+		ensureResourceAvailability(context);
+		uploadTestObject(TestAnnotations.STAGE_RELEASE);
+
+		Response first = objectRegistryTarget().path("content")
+				.queryParam("objectId", TEST_OBJECT_ID).request("application/json").get();
+		assertEquals(200, first.getStatus(), "First GET should return HTTP 200 OK");
+		String etag = first.getHeaderString("ETag");
+		assertNotNull(etag, "Final-stage content GET should emit an ETag");
+
+		Response second = objectRegistryTarget().path("content")
+				.queryParam("objectId", TEST_OBJECT_ID).request("application/json")
+				.header("If-None-Match", etag).get();
+		assertEquals(304, second.getStatus(), "Matching If-None-Match should return HTTP 304 Not Modified");
+	}
+
+	@Test
+	@ParentScopeServiceSetup
+	public void testGetObjectContentFromFinalStage_InheritsFromParent(@InjectBundleContext BundleContext context) throws IOException, InterruptedException {
+		ensureResourceAvailability(context);
+		// Upload only to the PARENT scope's final stage; the child scope must read through.
+		Person person = TestHelper.createTestObject();
+		String xmiContent = TestHelper.serializeToXMI(person, resourceSet);
+		Response upload = registryTarget(TestAnnotations.TEST_PARENT_SCOPE_NAME, TestAnnotations.OBJECT_REGISTRY_NAME)
+				.path("stages").path(TestAnnotations.STAGE_RELEASE).path(TEST_OBJECT_ID)
+				.queryParam("name", TEST_OBJECT_NAME).queryParam("mediaType", "application/xml")
+				.request("application/xmi").post(Entity.entity(xmiContent, "application/xmi"));
+		assertEquals(201, upload.getStatus(), "Upload to parent scope final stage should succeed");
+
+		Response response = objectRegistryTarget().path("content")
+				.queryParam("objectId", TEST_OBJECT_ID).request("application/json").get();
+
+		assertEquals(200, response.getStatus(), "Child final-stage content should read through to the parent scope");
+		assertNotNull(response.readEntity(String.class), "Should return inherited content");
+	}
+
+	@Test
+	@ParentScopeServiceSetup
+	public void testGetObjectContentFromFinalStage_XmiIsStockLoadable(@InjectBundleContext BundleContext context) throws IOException, InterruptedException {
+		ensureResourceAvailability(context);
+		uploadTestObject(TestAnnotations.STAGE_RELEASE);
+
+		Response response = objectRegistryTarget().path("content")
+				.queryParam("objectId", TEST_OBJECT_ID).request("application/xmi").get();
+
+		assertEquals(200, response.getStatus(), "Should return HTTP 200 OK");
+		String body = response.readEntity(String.class);
+		// Proof for P5-1: a general EObject served as application/xmi is plain, stock-EMF
+		// loadable XMI (no codec needed on the client to reconstruct it).
+		org.eclipse.emf.ecore.EObject reloaded = TestHelper.deserializeFromXMI(body, resourceSet);
+		assertNotNull(reloaded, "XMI body should reload via stock EMF");
+		assertEquals("Person", reloaded.eClass().getName(), "Reloaded object should be the uploaded Person");
+	}
+
 	// ========== Update Object Content Tests ==========
 
 	@Test

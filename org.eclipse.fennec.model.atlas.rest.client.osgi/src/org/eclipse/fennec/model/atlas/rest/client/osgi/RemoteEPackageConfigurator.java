@@ -20,7 +20,7 @@ import java.util.Objects;
 import org.eclipse.emf.ecore.EPackage;
 import org.eclipse.fennec.emf.osgi.configurator.EPackageConfigurator;
 import org.eclipse.fennec.emf.osgi.constants.EMFNamespaces;
-import org.eclipse.fennec.model.atlas.rest.client.api.AtlasProperties;
+import org.eclipse.fennec.model.atlas.scope.api.AtlasProperties;
 
 /**
  * P3-3 — the {@link EPackageConfigurator} for a single EPackage fetched from a

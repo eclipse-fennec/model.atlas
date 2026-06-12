@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<genmodel:GenModel xmi:version="2.0" xmlns:xmi="http://www.omg.org/XMI" xmlns:ecore="http://www.eclipse.org/emf/2002/Ecore"
+    xmlns:genmodel="http://www.eclipse.org/emf/2002/GenModel" copyrightText="Copyright (c) 2012 - 2026 Data In Motion and others.&#xA;All rights reserved.&#xA;&#xA;This program and the accompanying materials are made&#xA;available under the terms of the Eclipse Public License 2.0&#xA;which is available at https://www.eclipse.org/legal/epl-2.0/&#xA;&#xA;SPDX-License-Identifier: EPL-2.0&#xA;&#xA;Contributors:&#xA;     Data In Motion - initial API and implementation"
+    modelDirectory="/org.eclipse.fennec.model.atlas.scope.api/src" modelPluginID="org.eclipse.fennec.model.atlas.scope.api"
+    modelName="ScopeApi" rootExtendsInterface="" rootExtendsClass="org.eclipse.emf.ecore.impl.MinimalEObjectImpl$Container"
+    suppressEMFTypes="true" importerID="org.eclipse.emf.importer.ecore" suppressNotification="true"
+    complianceLevel="17.0" copyrightFields="false" operationReflection="true" importOrganizing="true">
+  <foreignModel>scope-api.ecore</foreignModel>
+  <genPackages prefix="ScopeApi" basePackage="org.eclipse.fennec.model.atlas.scope"
+      resource="XMI" disposableProviderFactory="true" ecorePackage="scope-api.ecore#/">
+    <genEnums typeSafeEnumCompatible="false" ecoreEnum="scope-api.ecore#//RegistryType">
+      <genEnumLiterals ecoreEnumLiteral="scope-api.ecore#//RegistryType/OTHER"/>
+      <genEnumLiterals ecoreEnumLiteral="scope-api.ecore#//RegistryType/SCHEMA"/>
+      <genEnumLiterals ecoreEnumLiteral="scope-api.ecore#//RegistryType/COCL"/>
+    </genEnums>
+    <genDataTypes ecoreDataType="scope-api.ecore#//Optional">
+      <genTypeParameters ecoreTypeParameter="scope-api.ecore#//Optional/T"/>
+    </genDataTypes>
+    <genDataTypes ecoreDataType="scope-api.ecore#//List">
+      <genTypeParameters ecoreTypeParameter="scope-api.ecore#//List/T"/>
+    </genDataTypes>
+    <genDataTypes ecoreDataType="scope-api.ecore#//Stream">
+      <genTypeParameters ecoreTypeParameter="scope-api.ecore#//Stream/T"/>
+    </genDataTypes>
+    <genClasses image="false" ecoreClass="scope-api.ecore#//ReadOnlyScopeService">
+      <genTypeParameters ecoreTypeParameter="scope-api.ecore#//ReadOnlyScopeService/T"/>
+      <genOperations ecoreOperation="scope-api.ecore#//ReadOnlyScopeService/getScopeName"/>
+      <genOperations ecoreOperation="scope-api.ecore#//ReadOnlyScopeService/isInheritingFromParentScope"/>
+      <genOperations ecoreOperation="scope-api.ecore#//ReadOnlyScopeService/get">
+        <genParameters ecoreParameter="scope-api.ecore#//ReadOnlyScopeService/get/registry"/>
+        <genParameters ecoreParameter="scope-api.ecore#//ReadOnlyScopeService/get/objectId"/>
+      </genOperations>
+      <genOperations ecoreOperation="scope-api.ecore#//ReadOnlyScopeService/listObjectIds">
+        <genParameters ecoreParameter="scope-api.ecore#//ReadOnlyScopeService/listObjectIds/registry"/>
+      </genOperations>
+      <genOperations ecoreOperation="scope-api.ecore#//ReadOnlyScopeService/listAll">
+        <genParameters ecoreParameter="scope-api.ecore#//ReadOnlyScopeService/listAll/registry"/>
+      </genOperations>
+      <genOperations ecoreOperation="scope-api.ecore#//ReadOnlyScopeService/stream">
+        <genParameters ecoreParameter="scope-api.ecore#//ReadOnlyScopeService/stream/registry"/>
+      </genOperations>
+      <genOperations ecoreOperation="scope-api.ecore#//ReadOnlyScopeService/getScopeInfo"/>
+    </genClasses>
+    <genClasses ecoreClass="scope-api.ecore#//ScopeInfo">
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute scope-api.ecore#//ScopeInfo/name"/>
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute scope-api.ecore#//ScopeInfo/description"/>
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute scope-api.ecore#//ScopeInfo/parentScope"/>
+      <genFeatures property="None" children="true" createChild="true" ecoreFeature="ecore:EReference scope-api.ecore#//ScopeInfo/registries"/>
+    </genClasses>
+    <genClasses ecoreClass="scope-api.ecore#//RegistryInfo">
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute scope-api.ecore#//RegistryInfo/name"/>
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute scope-api.ecore#//RegistryInfo/description"/>
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute scope-api.ecore#//RegistryInfo/type"/>
+    </genClasses>
+  </genPackages>
+</genmodel:GenModel>

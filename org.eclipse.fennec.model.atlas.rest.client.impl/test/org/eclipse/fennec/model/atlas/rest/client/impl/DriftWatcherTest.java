@@ -55,8 +55,12 @@ class DriftWatcherTest {
 	}
 
 	private DriftWatcher watcher() {
+		return watcher(s -> null); // no read-only scope view by default (package-drift tests)
+	}
+
+	private DriftWatcher watcher(java.util.function.Function<String, RemoteReadOnlyScopeService> scopeServiceLookup) {
 		// interval 0 → no schedule; we drive check() manually.
-		return new DriftWatcher(target, () -> List.of("jena"), () -> provider, 0);
+		return new DriftWatcher(target, () -> List.of("jena"), () -> provider, scopeServiceLookup, 0);
 	}
 
 	private static Response headResponse(int status, Response.Status statusInfo, String etag, String changedNsUris) {
@@ -81,6 +85,8 @@ class DriftWatcherTest {
 	private static final class RecordingListener implements DriftListener {
 		final java.util.List<String> changed = new java.util.ArrayList<>();
 		final java.util.List<String> removed = new java.util.ArrayList<>();
+		final java.util.List<String> objectsChanged = new java.util.ArrayList<>();
+		final java.util.List<String> objectsRemoved = new java.util.ArrayList<>();
 
 		@Override
 		public void onPackageChanged(String nsUri, EPackage newPackage) {
@@ -90,6 +96,16 @@ class DriftWatcherTest {
 		@Override
 		public void onPackageRemoved(String nsUri) {
 			removed.add(nsUri);
+		}
+
+		@Override
+		public void onObjectChanged(String scope, String registry, String objectId) {
+			objectsChanged.add(scope + "/" + registry + "/" + objectId);
+		}
+
+		@Override
+		public void onObjectRemoved(String scope, String registry, String objectId) {
+			objectsRemoved.add(scope + "/" + registry + "/" + objectId);
 		}
 	}
 
@@ -186,5 +202,73 @@ class DriftWatcherTest {
 		watcher.check(); // change — listener already removed
 
 		assertTrue(listener.changed.isEmpty(), "unsubscribed listener must not be notified");
+	}
+
+	// ---- P5-2: EObject drift (Atlas-Changed-Objects) ----------------------
+
+	private static Response headWithObjects(String etag, String changedObjects) {
+		Response r = headResponse(200, Response.Status.OK, etag, null);
+		when(r.getHeaderString(DriftWatcher.ATLAS_CHANGED_OBJECTS)).thenReturn(changedObjects);
+		return r;
+	}
+
+	@Test
+	void objectChange_refreshesEntry_andFiresOnObjectChanged() {
+		Response baseline = headResponse(200, Response.Status.OK, "\"s1\"", null);
+		Response changed = headWithObjects("\"s2\"", "cocl/id1,cocl/id2");
+		when(request.head()).thenReturn(baseline, changed);
+
+		RemoteReadOnlyScopeService service = mock(RemoteReadOnlyScopeService.class);
+		when(service.cachedObjects())
+				.thenReturn(Set.of(new RemoteReadOnlyScopeService.ObjectKey("jena", "cocl", "id1"))); // only id1 held
+		when(service.refresh("cocl", "id1")).thenReturn(Optional.of(mock(org.eclipse.emf.ecore.EObject.class)));
+		RecordingListener listener = new RecordingListener();
+		DriftWatcher watcher = watcher(s -> "jena".equals(s) ? service : null);
+		watcher.addListener(listener);
+
+		watcher.check(); // baseline
+		watcher.check(); // change
+
+		assertEquals(List.of("jena/cocl/id1"), listener.objectsChanged);
+		assertTrue(listener.objectsRemoved.isEmpty());
+		verify(service).refresh("cocl", "id1");
+		verify(service, never()).refresh("cocl", "id2"); // id2 not cached → ignored
+	}
+
+	@Test
+	void objectRemoval_firesOnObjectRemoved() {
+		Response baseline = headResponse(200, Response.Status.OK, "\"s1\"", null);
+		Response changed = headWithObjects("\"s2\"", "cocl/id1");
+		when(request.head()).thenReturn(baseline, changed);
+
+		RemoteReadOnlyScopeService service = mock(RemoteReadOnlyScopeService.class);
+		when(service.cachedObjects())
+				.thenReturn(Set.of(new RemoteReadOnlyScopeService.ObjectKey("jena", "cocl", "id1")));
+		when(service.refresh("cocl", "id1")).thenReturn(Optional.empty()); // gone on the server
+		RecordingListener listener = new RecordingListener();
+		DriftWatcher watcher = watcher(s -> "jena".equals(s) ? service : null);
+		watcher.addListener(listener);
+
+		watcher.check();
+		watcher.check();
+
+		assertEquals(List.of("jena/cocl/id1"), listener.objectsRemoved);
+		assertTrue(listener.objectsChanged.isEmpty());
+	}
+
+	@Test
+	void objectChange_noReadOnlyView_isSkipped() {
+		Response baseline = headResponse(200, Response.Status.OK, "\"s1\"", null);
+		Response changed = headWithObjects("\"s2\"", "cocl/id1");
+		when(request.head()).thenReturn(baseline, changed);
+		RecordingListener listener = new RecordingListener();
+		DriftWatcher watcher = watcher(s -> null); // consumer never opened a read-only view
+		watcher.addListener(listener);
+
+		watcher.check();
+		watcher.check();
+
+		assertTrue(listener.objectsChanged.isEmpty(), "no cached scope view → nothing to evict or fire");
+		assertTrue(listener.objectsRemoved.isEmpty());
 	}
 }

@@ -15,6 +15,7 @@ package org.eclipse.fennec.model.atlas.rest.application.resource;
 
 import java.time.Instant;
 import java.util.List;
+import java.util.Optional;
 
 import org.eclipse.emf.ecore.EObject;
 import org.eclipse.emf.ecore.util.EcoreUtil;
@@ -384,6 +385,53 @@ public class ObjectRegistryResource {
                         objectId, scopeName, registryName, stageName)).build();
             }
             Response.ResponseBuilder rb = Response.status(Response.Status.OK).entity(eObject)
+                    .header("Content-Type", getResolvedMediaType());
+            if (contentMetadata != null) {
+                ObjectMetadataResponseFilter.attach(requestContext, contentMetadata);
+                return rb.build();
+            }
+            return rb.build();
+
+        } catch (IllegalArgumentException e) {
+            return Response.status(Response.Status.BAD_REQUEST).entity(e.getMessage()).build();
+        } catch (Exception e) {
+            return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity(e.getMessage()).build();
+        }
+    }
+    
+    /**
+     * Get the raw content of a storage object.
+     *
+     * @param scopeName    the scope name
+     * @param registryName the registry name
+     * @param objectId     the object identifier
+     * @return Storage object content in requested format
+     */
+    @GET
+    @Path("/content")
+    @Produces
+    @Operation(summary = "Get object content from final stage", description = "Retrieve the raw content of a storage object from the final stage. "
+            + "The Accept header can be used to request content transformation.", responses = {
+                    @ApiResponse(responseCode = "200", description = "Object content retrieved successfully"),
+                    @ApiResponse(responseCode = "204", description = "Object not found"),
+                    @ApiResponse(responseCode = "400", description = "Scope not available or registry not available for scope"),
+                    @ApiResponse(responseCode = "406", description = "Requested format not supported"),
+                    @ApiResponse(responseCode = "500", description = "Internal server error") })
+    public Response getObjectContentFromFinalStage(
+            @Parameter(description = "The scope name", required = true) @PathParam("scopeName") String scopeName,
+            @Parameter(description = "The registry name", required = true) @PathParam("registryName") String registryName,
+            @Parameter(description = "The object identifier", required = true) @QueryParam("objectId") String objectId) {
+
+        ScopeService<?> scopeService = getScopeServiceByScopeName(scopeName);
+        try {
+            ObjectMetadata contentMetadata = scopeService.getMetadataFromFinalStageForRegistry(registryName, objectId);
+            Optional<?> optionalContent = scopeService.get(registryName, objectId);
+            if (optionalContent.isEmpty()) {
+                return Response.status(Response.Status.NO_CONTENT).entity(String.format(
+                        "Obejct %s not found neither in (scope,registry)=('%s','%s') final stage nor in parent hierarchy",
+                        objectId, scopeName, registryName)).build();
+            }
+            Response.ResponseBuilder rb = Response.status(Response.Status.OK).entity(optionalContent.get())
                     .header("Content-Type", getResolvedMediaType());
             if (contentMetadata != null) {
                 ObjectMetadataResponseFilter.attach(requestContext, contentMetadata);

@@ -25,7 +25,7 @@ import java.util.logging.Logger;
 
 import org.eclipse.emf.ecore.EPackage;
 import org.eclipse.fennec.emf.osgi.configurator.ResourceSetConfigurator;
-import org.eclipse.fennec.model.atlas.rest.client.api.AtlasProperties;
+import org.eclipse.fennec.model.atlas.scope.api.AtlasProperties;
 import org.eclipse.fennec.model.atlas.rest.client.api.ClientConfiguration;
 import org.eclipse.fennec.model.atlas.rest.client.api.ModelAtlasClient;
 import org.eclipse.fennec.model.atlas.rest.client.api.ModelAtlasClientFactory;

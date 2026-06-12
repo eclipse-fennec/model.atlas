@@ -76,6 +76,20 @@ docker build -t eclipsefennec/model.atlas:apicurio-snapshot docker/modelatlas_ap
 docker build -t eclipsefennec/model.atlas:file-snapshot docker/modelatlas_file/
 ```
 
+## Branches & releases
+
+* `snapshot` is the active development branch. PRs land here first; every
+  push builds and publishes the `:apicurio-snapshot` / `:file-snapshot`
+  container images to Docker Hub and GHCR.
+* `main` always holds the latest released version. Unlike most Fennec
+  repositories, this project ships container images instead of Maven
+  Central artifacts; releases appear as `:apicurio-latest` / `:file-latest`
+  on [Docker Hub](https://hub.docker.com/r/eclipsefennec/model.atlas/tags) and
+  [GHCR](https://github.com/eclipse-fennec/model.atlas/pkgs/container/model.atlas),
+  alongside a version-pinned tag built from `Bundle-Version`.
+
+See [docs/ci.md](docs/ci.md) for the full CI / publishing pipeline.
+
 ## Health Checks
 
 Model Atlas provides health check endpoints using [Apache Felix Health Checks](https://felix.apache.org/documentation/subprojects/apache-felix-healthchecks.html) for monitoring system health and supporting Kubernetes liveness/readiness probes.

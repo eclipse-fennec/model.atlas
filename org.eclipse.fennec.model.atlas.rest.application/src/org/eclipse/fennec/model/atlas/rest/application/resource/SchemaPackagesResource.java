@@ -19,6 +19,7 @@ import java.util.Base64;
 import java.util.LinkedHashSet;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 
 import org.eclipse.emf.common.util.URI;
@@ -402,6 +403,51 @@ public class SchemaPackagesResource {
                 return Response.status(Response.Status.NO_CONTENT).build();
             }
             Response.ResponseBuilder rb = Response.status(Response.Status.OK).entity(ePackage)
+                    .header("Content-Type", getResolvedMediaType());
+            if (contentMetadata != null) {
+                ObjectMetadataResponseFilter.attach(requestContext, contentMetadata);
+                return rb.build();
+            }
+            return rb.build();
+
+        } catch (IllegalArgumentException e) {
+            return Response.status(Response.Status.BAD_REQUEST).entity(e.getMessage()).build();
+        } catch (Exception e) {
+            return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity(e.getMessage()).build();
+        }
+    }
+    
+    /**
+     * Get the content of a SchemaPackage in a specific format.
+     *
+     * @param scopeName the scope name
+     * @param nsUri     the namespace URI (required)
+     * @return Schema package content in requested format
+     */
+    @GET
+    @Path("/content")
+    @Produces
+    @Operation(summary = "Get package content from final stage, or in parent hierarchy", description = "Retrieve the content of a SchemaPackage in the requested format. "
+            + "Respects hierarchical visibility.", responses = {
+                    @ApiResponse(responseCode = "200", description = "Package content retrieved successfully"),
+                    @ApiResponse(responseCode = "204", description = "Package not found"),
+                    @ApiResponse(responseCode = "400", description = "Scope not available or schema registry not available for scope"),
+                    @ApiResponse(responseCode = "406", description = "Requested format not supported"),
+                    @ApiResponse(responseCode = "500", description = "Internal server error") })
+    public Response getPackageContentFromFinalStage(
+            @Parameter(description = "The scope name", required = true) @PathParam("scopeName") String scopeName,
+            @Parameter(description = "The namespace URI of the package", required = true) @QueryParam("nsUri") String nsUri) {
+
+        ScopeService<?> scopeService = getScopeServiceByScopeName(scopeName);
+        try {
+            nsUri = URI.decode(nsUri);
+            String encodedNsUri = encodePackageNsURI(nsUri);
+            ObjectMetadata contentMetadata = scopeService.getMetadataFromFinalStageForRegistry(REGISTRY_NAME, encodedNsUri);
+            Optional<?> ePackageContent = scopeService.get(REGISTRY_NAME, encodedNsUri);
+            if (ePackageContent.isEmpty()) {
+                return Response.status(Response.Status.NO_CONTENT).build();
+            }
+            Response.ResponseBuilder rb = Response.status(Response.Status.OK).entity(ePackageContent.get())
                     .header("Content-Type", getResolvedMediaType());
             if (contentMetadata != null) {
                 ObjectMetadataResponseFilter.attach(requestContext, contentMetadata);

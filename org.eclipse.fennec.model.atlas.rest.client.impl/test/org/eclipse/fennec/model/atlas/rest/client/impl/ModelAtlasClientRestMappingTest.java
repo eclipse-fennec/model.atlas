@@ -94,4 +94,33 @@ class ModelAtlasClientRestMappingTest {
 		ModelAtlasClientImpl atlas = newClient();
 		assertInstanceOf(AtlasDelegatingPackageRegistry.class, atlas.newResourceSet().getPackageRegistry());
 	}
+
+	// ---- P5-3: readOnlyScope / listRegistries -----------------------------
+
+	@Test
+	void readOnlyScope_isCachedPerScope() {
+		ModelAtlasClientImpl atlas = newClient();
+		assertSame(atlas.readOnlyScope("jena"), atlas.readOnlyScope("jena"),
+				"readOnlyScope(scope) should return the same instance per scope");
+		org.junit.jupiter.api.Assertions.assertNotSame(atlas.readOnlyScope("jena"), atlas.readOnlyScope("other"),
+				"different scopes get distinct services");
+	}
+
+	@Test
+	void readOnlyScope_resolvesAgainstConfiguredScope() {
+		ModelAtlasClientImpl atlas = newClient();
+		assertEquals("jena", atlas.readOnlyScope("jena").getScopeName());
+	}
+
+	@Test
+	void listRegistries_readsScopeInfoRegistries() {
+		Response response = jsonOk("{\"name\":\"jena\",\"registries\":[{\"name\":\"cocl\",\"type\":\"COCL\"},"
+				+ "{\"name\":\"schema\",\"type\":\"SCHEMA\"}]}");
+		when(request.get()).thenReturn(response);
+
+		List<String> registries = newClient().listRegistries("jena");
+
+		assertEquals(List.of("cocl", "schema"), registries);
+		verify(target).path("scopes");
+	}
 }

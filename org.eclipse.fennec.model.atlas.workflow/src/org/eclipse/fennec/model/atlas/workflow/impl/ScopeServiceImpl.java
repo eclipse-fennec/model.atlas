@@ -15,16 +15,21 @@ package org.eclipse.fennec.model.atlas.workflow.impl;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Stream;
 
 import org.eclipse.emf.ecore.EObject;
 import org.eclipse.emf.ecore.EPackage;
 import org.eclipse.fennec.model.atlas.mgmt.management.ObjectMetadata;
+import org.eclipse.fennec.model.atlas.scope.api.ReadOnlyScopeService;
+import org.eclipse.fennec.model.atlas.scope.api.RegistryType;
+import org.eclipse.fennec.model.atlas.scope.api.ScopeInfo;
 import org.eclipse.fennec.model.atlas.wf.workflowapi.RegistryService;
-import org.eclipse.fennec.model.atlas.wf.workflowapi.RegistryType;
 import org.eclipse.fennec.model.atlas.wf.workflowapi.Scope;
 import org.eclipse.fennec.model.atlas.wf.workflowapi.ScopeService;
 import org.eclipse.fennec.model.atlas.wf.workflowapi.WorkflowApiFactory;
+import org.eclipse.fennec.model.atlas.wf.workflowapi.WritableScopeService;
 import org.eclipse.fennec.model.atlas.workflow.WorkflowConstants;
 import org.osgi.service.component.annotations.Activate;
 import org.osgi.service.component.annotations.Component;
@@ -43,7 +48,7 @@ import org.osgi.util.promise.Promise;
  */
 @Component(name = "ScopeService", configurationPid = "ScopeService", configurationPolicy = ConfigurationPolicy.REQUIRE)
 @Designate(ocd = ScopeServiceConfig.class)
-public class ScopeServiceImpl<T extends EObject> implements ScopeService<T> {
+public class ScopeServiceImpl<T extends EObject> implements ScopeService<T>, WritableScopeService<T>, ReadOnlyScopeService<T> {
 
 	private Map<String, RegistryService<T>> registryServiceMap = new ConcurrentHashMap<>();
 	private ScopeServiceConfig config;
@@ -153,50 +158,14 @@ public class ScopeServiceImpl<T extends EObject> implements ScopeService<T> {
 	 * getContentFromStageForRegistry(java.lang.String, java.lang.String,
 	 * java.lang.String)
 	 */
-	@SuppressWarnings("unchecked")
 	@Override
 	public T getContentFromStageForRegistry(String registry, String stage, String objectId) {
 		validateRegistry(registry);
-		T contentFromStage = getRegistryService(registry).getContentFromStage(config.scope_name(), stage, objectId);
-		if(contentFromStage == null) {
-			//          if parent scope is atlas and registry is schema registry -> go to atlas schema registry
-			//          if parent scope is NOT atlas -> look into the parent registry (must have the same name as this registry)
-			//          if parent scope is atlas and registry is NOT a schema registry -> no need to look into parent
-			//          if parent scope is not set -> this cannot happen because the default is atlas
-			T parentContent = null;
-			if(WorkflowConstants.ATLAS_SCOPE_NAME.equals(config.scope_parent()) && RegistryType.SCHEMA == getRegistryService(registry).getRegistry().getType()) {
-				parentContent = (T) atlasSchemaRegistryService.getContentFromFinalStage(config.scope_parent(), objectId);
-			} else if (!WorkflowConstants.ATLAS_SCOPE_NAME.equals(config.scope_parent())) {
-				parentContent = getRegistryService(registry).getContentFromFinalStage(config.scope_parent(), objectId);	
-			}
-			return parentContent;
+		T content = getRegistryService(registry).getContentFromStage(config.scope_name(), stage, objectId);
+		if(content == null) {
+			return getContentFromParentForRegistry(registry, objectId);
 		}
-		return contentFromStage;		
-	}
-	
-	/* 
-	 * (non-Javadoc)
-	 * @see org.eclipse.fennec.model.atlas.wf.workflowapi.ScopeService#getContentFromFinalStageForRegistry(java.lang.String, java.lang.String)
-	 */
-	@SuppressWarnings("unchecked")
-	@Override
-	public T getContentFromFinalStageForRegistry(String registry, String objectId) {
-		validateRegistry(registry);
-		T contentFromStage = getRegistryService(registry).getContentFromFinalStage(config.scope_name(), objectId);
-		if(contentFromStage == null) {
-			//          if parent scope is atlas and registry is schema registry -> go to atlas schema registry
-			//          if parent scope is NOT atlas -> look into the parent registry (must have the same name as this registry)
-			//          if parent scope is atlas and registry is NOT a schema registry -> no need to look into parent
-			//          if parent scope is not set -> this cannot happen because the default is atlas
-			T parentContent = null;
-			if(WorkflowConstants.ATLAS_SCOPE_NAME.equals(config.scope_parent()) && RegistryType.SCHEMA == getRegistryService(registry).getRegistry().getType()) {
-				parentContent = (T) atlasSchemaRegistryService.getContentFromFinalStage(config.scope_parent(), objectId);
-			} else if (!WorkflowConstants.ATLAS_SCOPE_NAME.equals(config.scope_parent())) {
-				parentContent = getRegistryService(registry).getContentFromFinalStage(config.scope_parent(), objectId);	
-			}
-			return parentContent;
-		}
-		return contentFromStage;	
+		return content;
 	}
 
 	/*
@@ -368,7 +337,88 @@ public class ScopeServiceImpl<T extends EObject> implements ScopeService<T> {
 		return;
 	}
 
+	private T getContentFromFinalStageForRegistry(String registry, String objectId) {
+		validateRegistry(registry);
+		T content = getRegistryService(registry).getContentFromFinalStage(config.scope_name(), objectId);
+		if(content == null) {
+			return getContentFromParentForRegistry(registry, objectId);
+		}
+		return content;
+	}
+	
+	@SuppressWarnings("unchecked")
+	private T getContentFromParentForRegistry(String registry, String objectId) {
+		T parentContent = null;
+		if(WorkflowConstants.ATLAS_SCOPE_NAME.equals(config.scope_parent()) && RegistryType.SCHEMA == getRegistryService(registry).getRegistry().getType()) {
+			parentContent = (T) atlasSchemaRegistryService.getContentFromFinalStage(config.scope_parent(), objectId);
+		} else if (!WorkflowConstants.ATLAS_SCOPE_NAME.equals(config.scope_parent())) {
+			parentContent = getRegistryService(registry).getContentFromFinalStage(config.scope_parent(), objectId);
+		}
+		return parentContent;
+	}
 
+	/* 
+	 * (non-Javadoc)
+	 * @see org.eclipse.fennec.model.atlas.scope.api.ReadOnlyScopeService#getScopeName()
+	 */
+	@Override
+	public String getScopeName() {
+		return config.scope_name();
+	}
+
+	/* 
+	 * (non-Javadoc)
+	 * @see org.eclipse.fennec.model.atlas.scope.api.ReadOnlyScopeService#isInheritingFromParentScope()
+	 */
+	@Override
+	public boolean isInheritingFromParentScope() {
+		return config.scope_parent() != null && !config.scope_parent().isBlank();
+	}
+
+	/* 
+	 * (non-Javadoc)
+	 * @see org.eclipse.fennec.model.atlas.scope.api.ReadOnlyScopeService#get(java.lang.String, java.lang.String)
+	 */
+	@Override
+	public Optional<T> get(String registry, String objectId) {
+		return Optional.ofNullable(getContentFromFinalStageForRegistry(registry, objectId));
+	}
+
+	/* 
+	 * (non-Javadoc)
+	 * @see org.eclipse.fennec.model.atlas.scope.api.ReadOnlyScopeService#listObjectIds(java.lang.String)
+	 */
+	@Override
+	public List<String> listObjectIds(String registry) {
+		return listInFinalStageForRegistry(registry).stream().map(metadata -> metadata.getObjectId()).toList();
+	}
+
+	/* 
+	 * (non-Javadoc)
+	 * @see org.eclipse.fennec.model.atlas.scope.api.ReadOnlyScopeService#listAll(java.lang.String)
+	 */
+	@Override
+	public List<T> listAll(String registry) {
+		return listInFinalStageForRegistry(registry).stream().map(m -> getContentFromFinalStageForRegistry(registry, m.getObjectId())).toList();
+	}
+
+	/* 
+	 * (non-Javadoc)
+	 * @see org.eclipse.fennec.model.atlas.scope.api.ReadOnlyScopeService#stream(java.lang.String)
+	 */
+	@Override
+	public Stream<T> stream(String registry) {
+		return listAll(registry).stream();
+	}
+
+	/* 
+	 * (non-Javadoc)
+	 * @see org.eclipse.fennec.model.atlas.scope.api.ReadOnlyScopeService#getScopeInfo()
+	 */
+	@Override
+	public ScopeInfo getScopeInfo() {
+		return scopeObject;
+	}
 
 
 }

@@ -13,7 +13,8 @@ Bundle-Description: OSGi DS front-end for the Model Atlas client. P3-1: a Config
 	org.eclipse.fennec.model.atlas.rest.client.impl;version=snapshot,\
 	jakarta.ws.rs-api;version=latest,\
 	org.osgi.service.component.annotations;version=latest,\
-	org.osgi.service.metatype.annotations;version=latest
+	org.osgi.service.metatype.annotations;version=latest,\
+	org.eclipse.fennec.model.atlas.scope.api;version=snapshot
 
 -testpath: \
 	junit-jupiter-api,\

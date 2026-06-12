@@ -15,8 +15,11 @@ package org.eclipse.fennec.model.atlas.rest.client.impl;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
+import java.util.concurrent.ConcurrentHashMap;
 
+import org.eclipse.emf.ecore.EObject;
 import org.eclipse.emf.ecore.EPackage;
 import org.eclipse.emf.ecore.resource.Resource;
 import org.eclipse.emf.ecore.resource.ResourceSet;
@@ -27,6 +30,8 @@ import org.eclipse.fennec.model.atlas.rest.client.api.DriftListener;
 import org.eclipse.fennec.model.atlas.rest.client.api.DriftReport;
 import org.eclipse.fennec.model.atlas.rest.client.api.ModelAtlasClient;
 import org.eclipse.fennec.model.atlas.rest.client.api.RemoteEPackageProvider;
+import org.eclipse.fennec.model.atlas.scope.api.ReadOnlyScopeService;
+import org.eclipse.fennec.model.atlas.scope.api.RegistryInfo;
 
 import com.fasterxml.jackson.databind.JsonNode;
 
@@ -57,6 +62,7 @@ public class ModelAtlasClientImpl implements ModelAtlasClient {
 	private final DriftWatcher driftWatcher;
 
 	private volatile RemoteEPackageProviderImpl ePackages;
+	private final Map<String, RemoteReadOnlyScopeService> readOnlyScopes = new ConcurrentHashMap<>();
 
 	ModelAtlasClientImpl(ClientConfiguration configuration, Client client) {
 		this(configuration, client, new XmiEPackageDeserializer());
@@ -68,7 +74,7 @@ public class ModelAtlasClientImpl implements ModelAtlasClient {
 		this.deserializer = Objects.requireNonNull(deserializer, "deserializer");
 		this.baseTarget = client.target(configuration.getBaseUri());
 		this.driftWatcher = new DriftWatcher(baseTarget, this::scopesToWatch, this::ePackagesImpl,
-				configuration.getDriftCheckIntervalMs());
+				readOnlyScopes::get, configuration.getDriftCheckIntervalMs());
 		this.driftWatcher.start();
 	}
 
@@ -134,16 +140,50 @@ public class ModelAtlasClientImpl implements ModelAtlasClient {
 
 	@Override
 	public ResourceSet newResourceSet() {
+		AtlasDelegatingPackageRegistry registry = newAtlasRegistry();
+		ResourceSet resourceSet = newAtlasResourceSet(registry);
+		// Long-lived consumer set: keep the registry fresh by evicting on drift so the
+		// next look-up re-fetches.
+		addDriftListener(registry);
+		return resourceSet;
+	}
+
+	@Override
+	public List<String> listRegistries(String scopeName) {
+		return readOnlyScope(scopeName).getScopeInfo().getRegistries().stream().map(RegistryInfo::getName)
+				.filter(Objects::nonNull).toList();
+	}
+
+	@Override
+	public ReadOnlyScopeService<EObject> readOnlyScope(String scopeName) {
+		Objects.requireNonNull(scopeName, "scopeName");
+		// One service (and one cache) per scope; repeated calls return the same instance.
+		return readOnlyScopes.computeIfAbsent(scopeName,
+				s -> new RemoteReadOnlyScopeService(baseTarget, configuration, s, this::newDecodingResourceSet));
+	}
+
+	/**
+	 * A transient, Atlas-aware {@link ResourceSet} for decoding a fetched EObject's XMI.
+	 * Like {@link #newResourceSet()} but <em>not</em> registered as a drift listener: it
+	 * is short-lived (one decode), so registering it would leak a listener on every
+	 * {@code get(...)}. Remote package look-ups still go through the shared, drift-aware
+	 * EPackage provider.
+	 */
+	private ResourceSet newDecodingResourceSet() {
+		return newAtlasResourceSet(newAtlasRegistry());
+	}
+
+	/** A package registry that resolves local/INSTANCE first, then the remote Atlas on a miss. */
+	private AtlasDelegatingPackageRegistry newAtlasRegistry() {
+		return new AtlasDelegatingPackageRegistry(EPackage.Registry.INSTANCE, ePackagesImpl());
+	}
+
+	/** A ResourceSet with default XMI handling and the given Atlas-aware package registry. */
+	private static ResourceSet newAtlasResourceSet(AtlasDelegatingPackageRegistry registry) {
 		ResourceSetImpl resourceSet = new ResourceSetImpl();
-		// Default XMI handling so plain-Java consumers can load instances out of the box.
 		resourceSet.getResourceFactoryRegistry().getExtensionToFactoryMap()
 				.put(Resource.Factory.Registry.DEFAULT_EXTENSION, new XMIResourceFactoryImpl());
-		// Atlas-aware registry: local/INSTANCE first, then a remote fetch on a miss.
-		AtlasDelegatingPackageRegistry registry = new AtlasDelegatingPackageRegistry(EPackage.Registry.INSTANCE,
-				ePackagesImpl());
 		resourceSet.setPackageRegistry(registry);
-		// Keep the registry fresh: evict on drift so the next look-up re-fetches.
-		addDriftListener(registry);
 		return resourceSet;
 	}
 

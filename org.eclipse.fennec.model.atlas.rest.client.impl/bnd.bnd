@@ -18,7 +18,8 @@ Bundle-Description: Plain-Java implementation of the Model Atlas client API: \
 	com.fasterxml.jackson.core.jackson-core;version=latest,\
 	com.fasterxml.jackson.core.jackson-databind;version=latest,\
 	com.fasterxml.jackson.core.jackson-annotations;version=latest,\
-	biz.aQute.bnd.annotation;version=latest
+	biz.aQute.bnd.annotation;version=latest,\
+	org.eclipse.fennec.model.atlas.scope.api;version=snapshot
 
 -testpath: \
 	junit-jupiter-api,\

@@ -39,6 +39,26 @@ The request body is a `DataGenConfig` serialized as XMI. The `contextClass` entr
 
 On `400` or `500`, the response body contains a plain text error message describing which EClasses could not be resolved or what went wrong.
 
+## Generate from a Stored Config
+
+Instead of posting an inline config, you can generate from a `DataGenConfig` already published in the `jena` scope's `DataGen` registry, by its object id:
+
+```
+GET <host>/atlas/rest/datagen/{objectId}
+Accept: application/xmi | application/json
+```
+
+`{objectId}` is the registry object id of the stored `DataGenConfig`. The config is resolved read-only from the registry's **final stage** and then generated exactly as the `POST` form.
+
+| Status | Description |
+|--------|-------------|
+| `200 OK` | `DataGenResult` for the resolved config |
+| `204 No Content` | No object with that id, or the object is not a `DataGenConfig` |
+| `400 Bad Request` | Referenced EClasses not found in any registered EPackage |
+| `500 Internal Server Error` | Unexpected generation error |
+
+> **Note:** lookup is by **object id** and always reads the final stage. Earlier revisions looked up by config *name* with an optional `?version=` selector; both were removed when the resource moved to the read-only scope API (`ReadOnlyScopeService.get`), which exposes neither a name filter nor per-version metadata.
+
 ## Bruno Collection
 
 A [Bruno](https://www.usebruno.com/) API collection is included in the `bruno/` directory for interactive testing. Import the `bruno/Model Atlas Datagen` folder into Bruno to get pre-configured requests.
@@ -222,6 +242,7 @@ The `org.eclipse.fennec.model.atlas.datagen.example.model` bundle provides a sam
 
 - `DataGenService` (prototype scope) — the generation engine
 - `ResourceSet` — provides the EPackage registry with all loaded models
+- `ReadOnlyScopeCollector` — resolves the `jena` scope to read stored `DataGenConfig`s by id (used by the `GET` endpoint)
 
 ## License
 
