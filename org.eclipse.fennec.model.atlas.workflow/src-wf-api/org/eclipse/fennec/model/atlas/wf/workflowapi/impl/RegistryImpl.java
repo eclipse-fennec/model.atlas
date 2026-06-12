@@ -23,13 +23,12 @@ import org.eclipse.emf.common.util.EList;
 import org.eclipse.emf.ecore.EClass;
 import org.eclipse.emf.ecore.InternalEObject;
 
-import org.eclipse.emf.ecore.impl.MinimalEObjectImpl;
-
 import org.eclipse.emf.ecore.util.BasicInternalEList;
 import org.eclipse.emf.ecore.util.InternalEList;
 
+import org.eclipse.fennec.model.atlas.scope.api.impl.RegistryInfoImpl;
+
 import org.eclipse.fennec.model.atlas.wf.workflowapi.Registry;
-import org.eclipse.fennec.model.atlas.wf.workflowapi.RegistryType;
 import org.eclipse.fennec.model.atlas.wf.workflowapi.Stage;
 import org.eclipse.fennec.model.atlas.wf.workflowapi.StageTransition;
 import org.eclipse.fennec.model.atlas.wf.workflowapi.WorkflowApiPackage;
@@ -42,76 +41,13 @@ import org.eclipse.fennec.model.atlas.wf.workflowapi.WorkflowApiPackage;
  * The following features are implemented:
  * </p>
  * <ul>
- *   <li>{@link org.eclipse.fennec.model.atlas.wf.workflowapi.impl.RegistryImpl#getName <em>Name</em>}</li>
- *   <li>{@link org.eclipse.fennec.model.atlas.wf.workflowapi.impl.RegistryImpl#getDescription <em>Description</em>}</li>
- *   <li>{@link org.eclipse.fennec.model.atlas.wf.workflowapi.impl.RegistryImpl#getType <em>Type</em>}</li>
  *   <li>{@link org.eclipse.fennec.model.atlas.wf.workflowapi.impl.RegistryImpl#getStages <em>Stages</em>}</li>
  *   <li>{@link org.eclipse.fennec.model.atlas.wf.workflowapi.impl.RegistryImpl#getAllowedTransitions <em>Allowed Transitions</em>}</li>
  * </ul>
  *
  * @generated
  */
-public class RegistryImpl extends MinimalEObjectImpl.Container implements Registry {
-	/**
-	 * The default value of the '{@link #getName() <em>Name</em>}' attribute.
-	 * <!-- begin-user-doc -->
-	 * <!-- end-user-doc -->
-	 * @see #getName()
-	 * @generated
-	 * @ordered
-	 */
-	protected static final String NAME_EDEFAULT = null;
-
-	/**
-	 * The cached value of the '{@link #getName() <em>Name</em>}' attribute.
-	 * <!-- begin-user-doc -->
-	 * <!-- end-user-doc -->
-	 * @see #getName()
-	 * @generated
-	 * @ordered
-	 */
-	protected String name = NAME_EDEFAULT;
-
-	/**
-	 * The default value of the '{@link #getDescription() <em>Description</em>}' attribute.
-	 * <!-- begin-user-doc -->
-	 * <!-- end-user-doc -->
-	 * @see #getDescription()
-	 * @generated
-	 * @ordered
-	 */
-	protected static final String DESCRIPTION_EDEFAULT = null;
-
-	/**
-	 * The cached value of the '{@link #getDescription() <em>Description</em>}' attribute.
-	 * <!-- begin-user-doc -->
-	 * <!-- end-user-doc -->
-	 * @see #getDescription()
-	 * @generated
-	 * @ordered
-	 */
-	protected String description = DESCRIPTION_EDEFAULT;
-
-	/**
-	 * The default value of the '{@link #getType() <em>Type</em>}' attribute.
-	 * <!-- begin-user-doc -->
-	 * <!-- end-user-doc -->
-	 * @see #getType()
-	 * @generated
-	 * @ordered
-	 */
-	protected static final RegistryType TYPE_EDEFAULT = RegistryType.OTHER;
-
-	/**
-	 * The cached value of the '{@link #getType() <em>Type</em>}' attribute.
-	 * <!-- begin-user-doc -->
-	 * <!-- end-user-doc -->
-	 * @see #getType()
-	 * @generated
-	 * @ordered
-	 */
-	protected RegistryType type = TYPE_EDEFAULT;
-
+public class RegistryImpl extends RegistryInfoImpl implements Registry {
 	/**
 	 * The cached value of the '{@link #getStages() <em>Stages</em>}' containment reference list.
 	 * <!-- begin-user-doc -->
@@ -149,66 +85,6 @@ public class RegistryImpl extends MinimalEObjectImpl.Container implements Regist
 	@Override
 	protected EClass eStaticClass() {
 		return WorkflowApiPackage.Literals.REGISTRY;
-	}
-
-	/**
-	 * <!-- begin-user-doc -->
-	 * <!-- end-user-doc -->
-	 * @generated
-	 */
-	@Override
-	public String getName() {
-		return name;
-	}
-
-	/**
-	 * <!-- begin-user-doc -->
-	 * <!-- end-user-doc -->
-	 * @generated
-	 */
-	@Override
-	public void setName(String newName) {
-		name = newName;
-	}
-
-	/**
-	 * <!-- begin-user-doc -->
-	 * <!-- end-user-doc -->
-	 * @generated
-	 */
-	@Override
-	public String getDescription() {
-		return description;
-	}
-
-	/**
-	 * <!-- begin-user-doc -->
-	 * <!-- end-user-doc -->
-	 * @generated
-	 */
-	@Override
-	public void setDescription(String newDescription) {
-		description = newDescription;
-	}
-
-	/**
-	 * <!-- begin-user-doc -->
-	 * <!-- end-user-doc -->
-	 * @generated
-	 */
-	@Override
-	public RegistryType getType() {
-		return type;
-	}
-
-	/**
-	 * <!-- begin-user-doc -->
-	 * <!-- end-user-doc -->
-	 * @generated
-	 */
-	@Override
-	public void setType(RegistryType newType) {
-		type = newType == null ? TYPE_EDEFAULT : newType;
 	}
 
 	/**
@@ -261,12 +137,6 @@ public class RegistryImpl extends MinimalEObjectImpl.Container implements Regist
 	@Override
 	public Object eGet(int featureID, boolean resolve, boolean coreType) {
 		switch (featureID) {
-			case WorkflowApiPackage.REGISTRY__NAME:
-				return getName();
-			case WorkflowApiPackage.REGISTRY__DESCRIPTION:
-				return getDescription();
-			case WorkflowApiPackage.REGISTRY__TYPE:
-				return getType();
 			case WorkflowApiPackage.REGISTRY__STAGES:
 				return getStages();
 			case WorkflowApiPackage.REGISTRY__ALLOWED_TRANSITIONS:
@@ -284,15 +154,6 @@ public class RegistryImpl extends MinimalEObjectImpl.Container implements Regist
 	@Override
 	public void eSet(int featureID, Object newValue) {
 		switch (featureID) {
-			case WorkflowApiPackage.REGISTRY__NAME:
-				setName((String)newValue);
-				return;
-			case WorkflowApiPackage.REGISTRY__DESCRIPTION:
-				setDescription((String)newValue);
-				return;
-			case WorkflowApiPackage.REGISTRY__TYPE:
-				setType((RegistryType)newValue);
-				return;
 			case WorkflowApiPackage.REGISTRY__STAGES:
 				getStages().clear();
 				getStages().addAll((Collection<? extends Stage>)newValue);
@@ -313,15 +174,6 @@ public class RegistryImpl extends MinimalEObjectImpl.Container implements Regist
 	@Override
 	public void eUnset(int featureID) {
 		switch (featureID) {
-			case WorkflowApiPackage.REGISTRY__NAME:
-				setName(NAME_EDEFAULT);
-				return;
-			case WorkflowApiPackage.REGISTRY__DESCRIPTION:
-				setDescription(DESCRIPTION_EDEFAULT);
-				return;
-			case WorkflowApiPackage.REGISTRY__TYPE:
-				setType(TYPE_EDEFAULT);
-				return;
 			case WorkflowApiPackage.REGISTRY__STAGES:
 				getStages().clear();
 				return;
@@ -340,38 +192,12 @@ public class RegistryImpl extends MinimalEObjectImpl.Container implements Regist
 	@Override
 	public boolean eIsSet(int featureID) {
 		switch (featureID) {
-			case WorkflowApiPackage.REGISTRY__NAME:
-				return NAME_EDEFAULT == null ? name != null : !NAME_EDEFAULT.equals(name);
-			case WorkflowApiPackage.REGISTRY__DESCRIPTION:
-				return DESCRIPTION_EDEFAULT == null ? description != null : !DESCRIPTION_EDEFAULT.equals(description);
-			case WorkflowApiPackage.REGISTRY__TYPE:
-				return type != TYPE_EDEFAULT;
 			case WorkflowApiPackage.REGISTRY__STAGES:
 				return stages != null && !stages.isEmpty();
 			case WorkflowApiPackage.REGISTRY__ALLOWED_TRANSITIONS:
 				return allowedTransitions != null && !allowedTransitions.isEmpty();
 		}
 		return super.eIsSet(featureID);
-	}
-
-	/**
-	 * <!-- begin-user-doc -->
-	 * <!-- end-user-doc -->
-	 * @generated
-	 */
-	@Override
-	public String toString() {
-		if (eIsProxy()) return super.toString();
-
-		StringBuilder result = new StringBuilder(super.toString());
-		result.append(" (name: ");
-		result.append(name);
-		result.append(", description: ");
-		result.append(description);
-		result.append(", type: ");
-		result.append(type);
-		result.append(')');
-		return result.toString();
 	}
 
 } //RegistryImpl

@@ -15,6 +15,7 @@ package org.eclipse.fennec.model.atlas.workflow.impl;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Hashtable;
 import java.util.List;
 import java.util.Map;
@@ -23,8 +24,9 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import org.eclipse.fennec.emf.osgi.constants.EMFNamespaces;
+import org.eclipse.fennec.model.atlas.scope.api.RegistryInfo;
+import org.eclipse.fennec.model.atlas.scope.api.RegistryType;
 import org.eclipse.fennec.model.atlas.wf.workflowapi.Registry;
-import org.eclipse.fennec.model.atlas.wf.workflowapi.RegistryType;
 import org.eclipse.fennec.model.atlas.wf.workflowapi.Scope;
 import org.eclipse.fennec.model.atlas.wf.workflowapi.ScopeService;
 import org.eclipse.fennec.model.atlas.wf.workflowapi.Stage;
@@ -131,14 +133,17 @@ public class SchemaRegistryChainConfigurator {
         if (scope == null) {
             return;
         }
-        Registry schemaRegistry = scope.getRegistries().stream()
+        RegistryInfo schemaRegistry = scope.getRegistries().stream()
                 .filter(r -> RegistryType.SCHEMA.equals(r.getType()))
                 .findFirst()
                 .orElse(null);
         if (schemaRegistry == null) {
             return;
         }
-        List<Stage> stages = schemaRegistry.getStages();
+        List<Stage> stages = Collections.emptyList();
+        if(schemaRegistry instanceof Registry registry) {
+        	stages = registry.getStages();
+        } 
         if (stages.isEmpty()) {
             return;
         }
@@ -169,7 +174,7 @@ public class SchemaRegistryChainConfigurator {
             return;
         }
         configsByScope.put(scopeName, created);
-        LOGGER.log(Level.INFO, () -> "Generated " + created.size() + " chain configurations for scope '" + scopeName
+        LOGGER.log (Level.INFO, "Generated " + created.size() + " chain configurations for scope '" + scopeName
                 + "' (" + stages.size() + " stages)");
     }
 
@@ -190,14 +195,18 @@ public class SchemaRegistryChainConfigurator {
         if (parentScope == null) {
             return null;
         }
-        Registry parentSchema = parentScope.getRegistries().stream()
+        RegistryInfo parentSchema = parentScope.getRegistries().stream()
                 .filter(r -> RegistryType.SCHEMA.equals(r.getType()))
                 .findFirst()
                 .orElse(null);
-        if (parentSchema == null || parentSchema.getStages().isEmpty()) {
+        if(!(parentSchema instanceof Registry)) {
+        	return null;
+        }
+        Registry parentSchemaRegistry = (Registry) parentSchema;
+        if (parentSchemaRegistry.getStages().isEmpty()) {
             return null;
         }
-        String parentFinalStage = parentSchema.getStages().stream().filter(s -> s.isFinal()).map(s -> s.getName()).findFirst().orElse(null);
+        String parentFinalStage = parentSchemaRegistry.getStages().stream().filter(s -> s.isFinal()).map(s -> s.getName()).findFirst().orElse(null);
         if(parentFinalStage == null) {
         	LOGGER.warning(String.format("No Final Stage found in RegistryService %s", parentSchema.getName()));
         	return null;

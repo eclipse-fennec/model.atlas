@@ -30,7 +30,6 @@ import org.eclipse.fennec.model.atlas.tests.common.CommonTestAnnotations.EPackag
 import org.eclipse.fennec.model.atlas.tests.common.CommonTestAnnotations.RegistryConfiguration;
 import org.eclipse.fennec.model.atlas.wf.workflowapi.Registry;
 import org.eclipse.fennec.model.atlas.wf.workflowapi.RegistryService;
-import org.eclipse.fennec.model.atlas.wf.workflowapi.RegistryType;
 import org.eclipse.fennec.model.atlas.wf.workflowapi.Stage;
 import org.eclipse.fennec.model.atlas.workflow.WorkflowConstants;
 import org.eclipse.fennec.model.atlas.workflow.tests.support.LuceneAwareTempDirExtension;
@@ -44,6 +43,7 @@ import org.osgi.test.common.service.ServiceAware;
 import org.osgi.test.junit5.cm.ConfigurationExtension;
 import org.osgi.test.junit5.context.BundleContextExtension;
 import org.osgi.test.junit5.service.ServiceExtension;
+import org.eclipse.fennec.model.atlas.scope.api.RegistryType;
 
 /**
  * OSGi integration tests for {@link org.eclipse.fennec.model.atlas.workflow.impl.AtlasSchemaRegistryService}.

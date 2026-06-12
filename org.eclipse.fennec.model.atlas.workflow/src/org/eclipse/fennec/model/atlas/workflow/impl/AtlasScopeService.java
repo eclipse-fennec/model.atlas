@@ -14,9 +14,12 @@
 package org.eclipse.fennec.model.atlas.workflow.impl;
 
 import java.util.List;
+import java.util.Optional;
+import java.util.stream.Stream;
 
 import org.eclipse.emf.ecore.EPackage;
 import org.eclipse.fennec.model.atlas.mgmt.management.ObjectMetadata;
+import org.eclipse.fennec.model.atlas.scope.api.ScopeInfo;
 import org.eclipse.fennec.model.atlas.wf.workflowapi.RegistryService;
 import org.eclipse.fennec.model.atlas.wf.workflowapi.Scope;
 import org.eclipse.fennec.model.atlas.wf.workflowapi.ScopeService;
@@ -36,20 +39,21 @@ import org.osgi.util.promise.Promise;
  */
 @Component(name = "AtlasScopeService", immediate = true,
 property = {
+		"atlas.scope="+WorkflowConstants.ATLAS_SCOPE_NAME, 
 		"scope.name="+WorkflowConstants.ATLAS_SCOPE_NAME, 
 		"scope.description=Atlas Scope. The parent of all other scopes."
-		})
+})
 public class AtlasScopeService implements ScopeService<EPackage> {
 
 	private RegistryService<EPackage> atlasSchemaRegistryService;
 	private Scope scopeObject;
-	
+
 	@Activate
 	public AtlasScopeService(@Reference(target = "(registry.name=" + WorkflowConstants.ATLAS_SCHEMA_REGISTRY_NAME+")", cardinality = ReferenceCardinality.MANDATORY) RegistryService<EPackage> atlasSchemaRegistryService) {
 		this.atlasSchemaRegistryService = atlasSchemaRegistryService;
 		scopeObject = createScopeObject();
 	}
-	
+
 	/* 
 	 * (non-Javadoc)
 	 * @see org.eclipse.fennec.model.atlas.wf.workflowapi.ScopeService#uploadToStageForRegistry(java.lang.String, java.lang.String, org.eclipse.emf.ecore.EObject, org.eclipse.fennec.model.atlas.mgmt.management.ObjectMetadata)
@@ -179,23 +183,8 @@ public class AtlasScopeService implements ScopeService<EPackage> {
 	public Scope getScope() {
 		return scopeObject;
 	}
-	
-	 private Scope createScopeObject() {
-	        Scope scope = WorkflowApiFactory.eINSTANCE.createScope();
-	        scope.setName(WorkflowConstants.ATLAS_SCOPE_NAME);
-	        scope.setDescription("Atlas Scope. The parent of all other scopes.");
-	        scope.setParentScope(null);
-	        scope.getRegistries().add(atlasSchemaRegistryService.getRegistry());
-	        return scope;
-	    }
-	
-	private void validateRegistry(String registryName) {
-        if (!isValidRegistry(registryName)) {
-            throw new IllegalArgumentException(String.format("Registry %s is not a valid registry for the scope %s",
-                    registryName, WorkflowConstants.ATLAS_SCOPE_NAME));
-        }
-        return;
-    }
+
+
 
 	/* 
 	 * (non-Javadoc)
@@ -205,6 +194,89 @@ public class AtlasScopeService implements ScopeService<EPackage> {
 	public List<ObjectMetadata> listAllForRegistry(String registry) {
 		validateRegistry(registry);
 		return atlasSchemaRegistryService.listAll(WorkflowConstants.ATLAS_SCOPE_NAME);
+	}
+
+	/* 
+	 * (non-Javadoc)
+	 * @see org.eclipse.fennec.model.atlas.scope.api.ReadOnlyScopeService#getScopeName()
+	 */
+	@Override
+	public String getScopeName() {
+		return WorkflowConstants.ATLAS_SCOPE_NAME;
+	}
+
+	/* 
+	 * (non-Javadoc)
+	 * @see org.eclipse.fennec.model.atlas.scope.api.ReadOnlyScopeService#isInheritingFromParentScope()
+	 */
+	@Override
+	public boolean isInheritingFromParentScope() {
+		return false;
+	}
+
+	/* 
+	 * (non-Javadoc)
+	 * @see org.eclipse.fennec.model.atlas.scope.api.ReadOnlyScopeService#get(java.lang.String, java.lang.String)
+	 */
+	@Override
+	public Optional<EPackage> get(String registry, String objectId) {
+		validateRegistry(registry);
+		return Optional.ofNullable(atlasSchemaRegistryService.getContentFromFinalStage(WorkflowConstants.ATLAS_SCOPE_NAME, objectId));
+	}
+
+	/* 
+	 * (non-Javadoc)
+	 * @see org.eclipse.fennec.model.atlas.scope.api.ReadOnlyScopeService#listObjectIds(java.lang.String)
+	 */
+	@Override
+	public List<String> listObjectIds(String registry) {
+		validateRegistry(registry);
+		return atlasSchemaRegistryService.listInFinalStage(WorkflowConstants.ATLAS_SCOPE_NAME).stream().map(m -> m.getObjectId()).toList();
+	}
+
+	/* 
+	 * (non-Javadoc)
+	 * @see org.eclipse.fennec.model.atlas.scope.api.ReadOnlyScopeService#listAll(java.lang.String)
+	 */
+	@Override
+	public List<EPackage> listAll(String registry) {
+		validateRegistry(registry);
+		return atlasSchemaRegistryService.listInFinalStage(WorkflowConstants.ATLAS_SCOPE_NAME).stream().map(m -> atlasSchemaRegistryService.getContentFromFinalStage(getScopeName(), m.getObjectId())).toList();
+	}
+
+	/* 
+	 * (non-Javadoc)
+	 * @see org.eclipse.fennec.model.atlas.scope.api.ReadOnlyScopeService#stream(java.lang.String)
+	 */
+	@Override
+	public Stream<EPackage> stream(String registry) {
+		return listAll(registry).stream();
+	}
+
+	/* 
+	 * (non-Javadoc)
+	 * @see org.eclipse.fennec.model.atlas.scope.api.ReadOnlyScopeService#getScopeInfo()
+	 */
+	@Override
+	public ScopeInfo getScopeInfo() {
+		return scopeObject;
+	}
+
+	private Scope createScopeObject() {
+		Scope scope = WorkflowApiFactory.eINSTANCE.createScope();
+		scope.setName(WorkflowConstants.ATLAS_SCOPE_NAME);
+		scope.setDescription("Atlas Scope. The parent of all other scopes.");
+		scope.setParentScope(null);
+		scope.getRegistries().add(atlasSchemaRegistryService.getRegistry());
+		return scope;
+	}
+
+	private void validateRegistry(String registryName) {
+		if (!isValidRegistry(registryName)) {
+			throw new IllegalArgumentException(String.format("Registry %s is not a valid registry for the scope %s",
+					registryName, WorkflowConstants.ATLAS_SCOPE_NAME));
+		}
+		return;
 	}
 
 }

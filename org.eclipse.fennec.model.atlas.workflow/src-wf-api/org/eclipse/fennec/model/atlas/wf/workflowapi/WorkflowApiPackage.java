@@ -16,11 +16,12 @@ package org.eclipse.fennec.model.atlas.wf.workflowapi;
 
 import org.eclipse.emf.ecore.EAttribute;
 import org.eclipse.emf.ecore.EClass;
-import org.eclipse.emf.ecore.EEnum;
 import org.eclipse.emf.ecore.EOperation;
 import org.eclipse.emf.ecore.EReference;
 
 import org.eclipse.fennec.emf.osgi.annotation.provide.EPackage;
+
+import org.eclipse.fennec.model.atlas.scope.api.ScopeApiPackage;
 
 import org.osgi.annotation.versioning.ProviderType;
 
@@ -258,13 +259,22 @@ public interface WorkflowApiPackage extends org.eclipse.emf.ecore.EPackage {
 	int REGISTRY_SERVICE___GET_CONTENT_FROM_STAGE__STRING_STRING_STRING = 3;
 
 	/**
+	 * The operation id for the '<em>Get Content From Final Stage</em>' operation.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 * @ordered
+	 */
+	int REGISTRY_SERVICE___GET_CONTENT_FROM_FINAL_STAGE__STRING_STRING = 4;
+
+	/**
 	 * The operation id for the '<em>Update In Stage</em>' operation.
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
 	 * @generated
 	 * @ordered
 	 */
-	int REGISTRY_SERVICE___UPDATE_IN_STAGE__STRING_STRING_EOBJECT_STRING_STRING = 4;
+	int REGISTRY_SERVICE___UPDATE_IN_STAGE__STRING_STRING_EOBJECT_STRING_STRING = 5;
 
 	/**
 	 * The operation id for the '<em>Delete From Stage</em>' operation.
@@ -273,7 +283,7 @@ public interface WorkflowApiPackage extends org.eclipse.emf.ecore.EPackage {
 	 * @generated
 	 * @ordered
 	 */
-	int REGISTRY_SERVICE___DELETE_FROM_STAGE__STRING_STRING_STRING = 5;
+	int REGISTRY_SERVICE___DELETE_FROM_STAGE__STRING_STRING_STRING = 6;
 
 	/**
 	 * The operation id for the '<em>List In Stage</em>' operation.
@@ -282,7 +292,7 @@ public interface WorkflowApiPackage extends org.eclipse.emf.ecore.EPackage {
 	 * @generated
 	 * @ordered
 	 */
-	int REGISTRY_SERVICE___LIST_IN_STAGE__STRING_STRING = 6;
+	int REGISTRY_SERVICE___LIST_IN_STAGE__STRING_STRING = 7;
 
 	/**
 	 * The operation id for the '<em>List In Stage By Name</em>' operation.
@@ -291,7 +301,7 @@ public interface WorkflowApiPackage extends org.eclipse.emf.ecore.EPackage {
 	 * @generated
 	 * @ordered
 	 */
-	int REGISTRY_SERVICE___LIST_IN_STAGE_BY_NAME__STRING_STRING_STRING = 7;
+	int REGISTRY_SERVICE___LIST_IN_STAGE_BY_NAME__STRING_STRING_STRING = 8;
 
 	/**
 	 * The operation id for the '<em>List In Final Stage</em>' operation.
@@ -300,7 +310,7 @@ public interface WorkflowApiPackage extends org.eclipse.emf.ecore.EPackage {
 	 * @generated
 	 * @ordered
 	 */
-	int REGISTRY_SERVICE___LIST_IN_FINAL_STAGE__STRING = 8;
+	int REGISTRY_SERVICE___LIST_IN_FINAL_STAGE__STRING = 9;
 
 	/**
 	 * The operation id for the '<em>List All</em>' operation.
@@ -309,7 +319,7 @@ public interface WorkflowApiPackage extends org.eclipse.emf.ecore.EPackage {
 	 * @generated
 	 * @ordered
 	 */
-	int REGISTRY_SERVICE___LIST_ALL__STRING = 9;
+	int REGISTRY_SERVICE___LIST_ALL__STRING = 10;
 
 	/**
 	 * The operation id for the '<em>Transition To Stage</em>' operation.
@@ -318,7 +328,7 @@ public interface WorkflowApiPackage extends org.eclipse.emf.ecore.EPackage {
 	 * @generated
 	 * @ordered
 	 */
-	int REGISTRY_SERVICE___TRANSITION_TO_STAGE__STRING_STRING_STRING_STRING = 10;
+	int REGISTRY_SERVICE___TRANSITION_TO_STAGE__STRING_STRING_STRING_STRING = 11;
 
 	/**
 	 * The operation id for the '<em>Get Registry Name</em>' operation.
@@ -327,7 +337,7 @@ public interface WorkflowApiPackage extends org.eclipse.emf.ecore.EPackage {
 	 * @generated
 	 * @ordered
 	 */
-	int REGISTRY_SERVICE___GET_REGISTRY_NAME = 11;
+	int REGISTRY_SERVICE___GET_REGISTRY_NAME = 12;
 
 	/**
 	 * The operation id for the '<em>Is Valid Stage</em>' operation.
@@ -336,7 +346,7 @@ public interface WorkflowApiPackage extends org.eclipse.emf.ecore.EPackage {
 	 * @generated
 	 * @ordered
 	 */
-	int REGISTRY_SERVICE___IS_VALID_STAGE__STRING = 12;
+	int REGISTRY_SERVICE___IS_VALID_STAGE__STRING = 13;
 
 	/**
 	 * The operation id for the '<em>Is Writable Stage</em>' operation.
@@ -345,7 +355,7 @@ public interface WorkflowApiPackage extends org.eclipse.emf.ecore.EPackage {
 	 * @generated
 	 * @ordered
 	 */
-	int REGISTRY_SERVICE___IS_WRITABLE_STAGE__STRING = 13;
+	int REGISTRY_SERVICE___IS_WRITABLE_STAGE__STRING = 14;
 
 	/**
 	 * The operation id for the '<em>Is Final Stage Writable</em>' operation.
@@ -354,7 +364,7 @@ public interface WorkflowApiPackage extends org.eclipse.emf.ecore.EPackage {
 	 * @generated
 	 * @ordered
 	 */
-	int REGISTRY_SERVICE___IS_FINAL_STAGE_WRITABLE = 14;
+	int REGISTRY_SERVICE___IS_FINAL_STAGE_WRITABLE = 15;
 
 	/**
 	 * The operation id for the '<em>Is Transition Allowed</em>' operation.
@@ -363,7 +373,7 @@ public interface WorkflowApiPackage extends org.eclipse.emf.ecore.EPackage {
 	 * @generated
 	 * @ordered
 	 */
-	int REGISTRY_SERVICE___IS_TRANSITION_ALLOWED__STRING_STRING = 15;
+	int REGISTRY_SERVICE___IS_TRANSITION_ALLOWED__STRING_STRING = 16;
 
 	/**
 	 * The operation id for the '<em>Get Registry</em>' operation.
@@ -372,7 +382,7 @@ public interface WorkflowApiPackage extends org.eclipse.emf.ecore.EPackage {
 	 * @generated
 	 * @ordered
 	 */
-	int REGISTRY_SERVICE___GET_REGISTRY = 16;
+	int REGISTRY_SERVICE___GET_REGISTRY = 17;
 
 	/**
 	 * The operation id for the '<em>Is EClass Compatible With Registry</em>' operation.
@@ -381,7 +391,7 @@ public interface WorkflowApiPackage extends org.eclipse.emf.ecore.EPackage {
 	 * @generated
 	 * @ordered
 	 */
-	int REGISTRY_SERVICE___IS_ECLASS_COMPATIBLE_WITH_REGISTRY__ECLASS = 17;
+	int REGISTRY_SERVICE___IS_ECLASS_COMPATIBLE_WITH_REGISTRY__ECLASS = 18;
 
 	/**
 	 * The operation id for the '<em>Get Root EClass</em>' operation.
@@ -390,7 +400,7 @@ public interface WorkflowApiPackage extends org.eclipse.emf.ecore.EPackage {
 	 * @generated
 	 * @ordered
 	 */
-	int REGISTRY_SERVICE___GET_ROOT_ECLASS = 18;
+	int REGISTRY_SERVICE___GET_ROOT_ECLASS = 19;
 
 	/**
 	 * The operation id for the '<em>Activate</em>' operation.
@@ -399,7 +409,7 @@ public interface WorkflowApiPackage extends org.eclipse.emf.ecore.EPackage {
 	 * @generated
 	 * @ordered
 	 */
-	int REGISTRY_SERVICE___ACTIVATE__STRING = 19;
+	int REGISTRY_SERVICE___ACTIVATE__STRING = 20;
 
 	/**
 	 * The operation id for the '<em>Deactivate</em>' operation.
@@ -408,7 +418,7 @@ public interface WorkflowApiPackage extends org.eclipse.emf.ecore.EPackage {
 	 * @generated
 	 * @ordered
 	 */
-	int REGISTRY_SERVICE___DEACTIVATE__STRING = 20;
+	int REGISTRY_SERVICE___DEACTIVATE__STRING = 21;
 
 	/**
 	 * The number of operations of the '<em>Registry Service</em>' class.
@@ -417,26 +427,89 @@ public interface WorkflowApiPackage extends org.eclipse.emf.ecore.EPackage {
 	 * @generated
 	 * @ordered
 	 */
-	int REGISTRY_SERVICE_OPERATION_COUNT = 21;
+	int REGISTRY_SERVICE_OPERATION_COUNT = 22;
 
 	/**
-	 * The meta object id for the '{@link org.eclipse.fennec.model.atlas.wf.workflowapi.ScopeService <em>Scope Service</em>}' class.
+	 * The meta object id for the '{@link org.eclipse.fennec.model.atlas.wf.workflowapi.WritableScopeService <em>Writable Scope Service</em>}' class.
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
-	 * @see org.eclipse.fennec.model.atlas.wf.workflowapi.ScopeService
-	 * @see org.eclipse.fennec.model.atlas.wf.workflowapi.impl.WorkflowApiPackageImpl#getScopeService()
+	 * @see org.eclipse.fennec.model.atlas.wf.workflowapi.WritableScopeService
+	 * @see org.eclipse.fennec.model.atlas.wf.workflowapi.impl.WorkflowApiPackageImpl#getWritableScopeService()
 	 * @generated
 	 */
-	int SCOPE_SERVICE = 2;
+	int WRITABLE_SCOPE_SERVICE = 7;
 
 	/**
-	 * The number of structural features of the '<em>Scope Service</em>' class.
+	 * The number of structural features of the '<em>Writable Scope Service</em>' class.
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
 	 * @generated
 	 * @ordered
 	 */
-	int SCOPE_SERVICE_FEATURE_COUNT = 0;
+	int WRITABLE_SCOPE_SERVICE_FEATURE_COUNT = ScopeApiPackage.READ_ONLY_SCOPE_SERVICE_FEATURE_COUNT + 0;
+
+	/**
+	 * The operation id for the '<em>Get Scope Name</em>' operation.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 * @ordered
+	 */
+	int WRITABLE_SCOPE_SERVICE___GET_SCOPE_NAME = ScopeApiPackage.READ_ONLY_SCOPE_SERVICE___GET_SCOPE_NAME;
+
+	/**
+	 * The operation id for the '<em>Is Inheriting From Parent Scope</em>' operation.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 * @ordered
+	 */
+	int WRITABLE_SCOPE_SERVICE___IS_INHERITING_FROM_PARENT_SCOPE = ScopeApiPackage.READ_ONLY_SCOPE_SERVICE___IS_INHERITING_FROM_PARENT_SCOPE;
+
+	/**
+	 * The operation id for the '<em>Get</em>' operation.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 * @ordered
+	 */
+	int WRITABLE_SCOPE_SERVICE___GET__STRING_STRING = ScopeApiPackage.READ_ONLY_SCOPE_SERVICE___GET__STRING_STRING;
+
+	/**
+	 * The operation id for the '<em>List Object Ids</em>' operation.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 * @ordered
+	 */
+	int WRITABLE_SCOPE_SERVICE___LIST_OBJECT_IDS__STRING = ScopeApiPackage.READ_ONLY_SCOPE_SERVICE___LIST_OBJECT_IDS__STRING;
+
+	/**
+	 * The operation id for the '<em>List All</em>' operation.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 * @ordered
+	 */
+	int WRITABLE_SCOPE_SERVICE___LIST_ALL__STRING = ScopeApiPackage.READ_ONLY_SCOPE_SERVICE___LIST_ALL__STRING;
+
+	/**
+	 * The operation id for the '<em>Stream</em>' operation.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 * @ordered
+	 */
+	int WRITABLE_SCOPE_SERVICE___STREAM__STRING = ScopeApiPackage.READ_ONLY_SCOPE_SERVICE___STREAM__STRING;
+
+	/**
+	 * The operation id for the '<em>Get Scope Info</em>' operation.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 * @ordered
+	 */
+	int WRITABLE_SCOPE_SERVICE___GET_SCOPE_INFO = ScopeApiPackage.READ_ONLY_SCOPE_SERVICE___GET_SCOPE_INFO;
 
 	/**
 	 * The operation id for the '<em>Upload To Stage For Registry</em>' operation.
@@ -445,7 +518,7 @@ public interface WorkflowApiPackage extends org.eclipse.emf.ecore.EPackage {
 	 * @generated
 	 * @ordered
 	 */
-	int SCOPE_SERVICE___UPLOAD_TO_STAGE_FOR_REGISTRY__STRING_STRING_EOBJECT_OBJECTMETADATA = 0;
+	int WRITABLE_SCOPE_SERVICE___UPLOAD_TO_STAGE_FOR_REGISTRY__STRING_STRING_EOBJECT_OBJECTMETADATA = ScopeApiPackage.READ_ONLY_SCOPE_SERVICE_OPERATION_COUNT + 0;
 
 	/**
 	 * The operation id for the '<em>Get Metadata From Stage For Registry</em>' operation.
@@ -454,7 +527,7 @@ public interface WorkflowApiPackage extends org.eclipse.emf.ecore.EPackage {
 	 * @generated
 	 * @ordered
 	 */
-	int SCOPE_SERVICE___GET_METADATA_FROM_STAGE_FOR_REGISTRY__STRING_STRING_STRING = 1;
+	int WRITABLE_SCOPE_SERVICE___GET_METADATA_FROM_STAGE_FOR_REGISTRY__STRING_STRING_STRING = ScopeApiPackage.READ_ONLY_SCOPE_SERVICE_OPERATION_COUNT + 1;
 
 	/**
 	 * The operation id for the '<em>Get Metadata From Final Stage For Registry</em>' operation.
@@ -463,7 +536,7 @@ public interface WorkflowApiPackage extends org.eclipse.emf.ecore.EPackage {
 	 * @generated
 	 * @ordered
 	 */
-	int SCOPE_SERVICE___GET_METADATA_FROM_FINAL_STAGE_FOR_REGISTRY__STRING_STRING = 2;
+	int WRITABLE_SCOPE_SERVICE___GET_METADATA_FROM_FINAL_STAGE_FOR_REGISTRY__STRING_STRING = ScopeApiPackage.READ_ONLY_SCOPE_SERVICE_OPERATION_COUNT + 2;
 
 	/**
 	 * The operation id for the '<em>Get Content From Stage For Registry</em>' operation.
@@ -472,7 +545,7 @@ public interface WorkflowApiPackage extends org.eclipse.emf.ecore.EPackage {
 	 * @generated
 	 * @ordered
 	 */
-	int SCOPE_SERVICE___GET_CONTENT_FROM_STAGE_FOR_REGISTRY__STRING_STRING_STRING = 3;
+	int WRITABLE_SCOPE_SERVICE___GET_CONTENT_FROM_STAGE_FOR_REGISTRY__STRING_STRING_STRING = ScopeApiPackage.READ_ONLY_SCOPE_SERVICE_OPERATION_COUNT + 3;
 
 	/**
 	 * The operation id for the '<em>Update In Stage For Registry</em>' operation.
@@ -481,7 +554,7 @@ public interface WorkflowApiPackage extends org.eclipse.emf.ecore.EPackage {
 	 * @generated
 	 * @ordered
 	 */
-	int SCOPE_SERVICE___UPDATE_IN_STAGE_FOR_REGISTRY__STRING_STRING_EOBJECT_STRING_STRING = 4;
+	int WRITABLE_SCOPE_SERVICE___UPDATE_IN_STAGE_FOR_REGISTRY__STRING_STRING_EOBJECT_STRING_STRING = ScopeApiPackage.READ_ONLY_SCOPE_SERVICE_OPERATION_COUNT + 4;
 
 	/**
 	 * The operation id for the '<em>Delete From Stage For Registry</em>' operation.
@@ -490,7 +563,7 @@ public interface WorkflowApiPackage extends org.eclipse.emf.ecore.EPackage {
 	 * @generated
 	 * @ordered
 	 */
-	int SCOPE_SERVICE___DELETE_FROM_STAGE_FOR_REGISTRY__STRING_STRING_STRING = 5;
+	int WRITABLE_SCOPE_SERVICE___DELETE_FROM_STAGE_FOR_REGISTRY__STRING_STRING_STRING = ScopeApiPackage.READ_ONLY_SCOPE_SERVICE_OPERATION_COUNT + 5;
 
 	/**
 	 * The operation id for the '<em>List In Stage For Registry</em>' operation.
@@ -499,7 +572,7 @@ public interface WorkflowApiPackage extends org.eclipse.emf.ecore.EPackage {
 	 * @generated
 	 * @ordered
 	 */
-	int SCOPE_SERVICE___LIST_IN_STAGE_FOR_REGISTRY__STRING_STRING = 6;
+	int WRITABLE_SCOPE_SERVICE___LIST_IN_STAGE_FOR_REGISTRY__STRING_STRING = ScopeApiPackage.READ_ONLY_SCOPE_SERVICE_OPERATION_COUNT + 6;
 
 	/**
 	 * The operation id for the '<em>List In Stage For Registry By Name</em>' operation.
@@ -508,7 +581,7 @@ public interface WorkflowApiPackage extends org.eclipse.emf.ecore.EPackage {
 	 * @generated
 	 * @ordered
 	 */
-	int SCOPE_SERVICE___LIST_IN_STAGE_FOR_REGISTRY_BY_NAME__STRING_STRING_STRING = 7;
+	int WRITABLE_SCOPE_SERVICE___LIST_IN_STAGE_FOR_REGISTRY_BY_NAME__STRING_STRING_STRING = ScopeApiPackage.READ_ONLY_SCOPE_SERVICE_OPERATION_COUNT + 7;
 
 	/**
 	 * The operation id for the '<em>List In Final Stage For Registry</em>' operation.
@@ -517,7 +590,7 @@ public interface WorkflowApiPackage extends org.eclipse.emf.ecore.EPackage {
 	 * @generated
 	 * @ordered
 	 */
-	int SCOPE_SERVICE___LIST_IN_FINAL_STAGE_FOR_REGISTRY__STRING = 8;
+	int WRITABLE_SCOPE_SERVICE___LIST_IN_FINAL_STAGE_FOR_REGISTRY__STRING = ScopeApiPackage.READ_ONLY_SCOPE_SERVICE_OPERATION_COUNT + 8;
 
 	/**
 	 * The operation id for the '<em>List All For Registry</em>' operation.
@@ -526,7 +599,7 @@ public interface WorkflowApiPackage extends org.eclipse.emf.ecore.EPackage {
 	 * @generated
 	 * @ordered
 	 */
-	int SCOPE_SERVICE___LIST_ALL_FOR_REGISTRY__STRING = 9;
+	int WRITABLE_SCOPE_SERVICE___LIST_ALL_FOR_REGISTRY__STRING = ScopeApiPackage.READ_ONLY_SCOPE_SERVICE_OPERATION_COUNT + 9;
 
 	/**
 	 * The operation id for the '<em>Transition To Stage For Registry</em>' operation.
@@ -535,7 +608,7 @@ public interface WorkflowApiPackage extends org.eclipse.emf.ecore.EPackage {
 	 * @generated
 	 * @ordered
 	 */
-	int SCOPE_SERVICE___TRANSITION_TO_STAGE_FOR_REGISTRY__STRING_STRING_STRING_STRING = 10;
+	int WRITABLE_SCOPE_SERVICE___TRANSITION_TO_STAGE_FOR_REGISTRY__STRING_STRING_STRING_STRING = ScopeApiPackage.READ_ONLY_SCOPE_SERVICE_OPERATION_COUNT + 10;
 
 	/**
 	 * The operation id for the '<em>Is Valid Registry</em>' operation.
@@ -544,7 +617,7 @@ public interface WorkflowApiPackage extends org.eclipse.emf.ecore.EPackage {
 	 * @generated
 	 * @ordered
 	 */
-	int SCOPE_SERVICE___IS_VALID_REGISTRY__STRING = 11;
+	int WRITABLE_SCOPE_SERVICE___IS_VALID_REGISTRY__STRING = ScopeApiPackage.READ_ONLY_SCOPE_SERVICE_OPERATION_COUNT + 11;
 
 	/**
 	 * The operation id for the '<em>Get All Registries</em>' operation.
@@ -553,7 +626,7 @@ public interface WorkflowApiPackage extends org.eclipse.emf.ecore.EPackage {
 	 * @generated
 	 * @ordered
 	 */
-	int SCOPE_SERVICE___GET_ALL_REGISTRIES = 12;
+	int WRITABLE_SCOPE_SERVICE___GET_ALL_REGISTRIES = ScopeApiPackage.READ_ONLY_SCOPE_SERVICE_OPERATION_COUNT + 12;
 
 	/**
 	 * The operation id for the '<em>Get Scope</em>' operation.
@@ -562,16 +635,239 @@ public interface WorkflowApiPackage extends org.eclipse.emf.ecore.EPackage {
 	 * @generated
 	 * @ordered
 	 */
-	int SCOPE_SERVICE___GET_SCOPE = 13;
+	int WRITABLE_SCOPE_SERVICE___GET_SCOPE = ScopeApiPackage.READ_ONLY_SCOPE_SERVICE_OPERATION_COUNT + 13;
 
 	/**
-	 * The number of operations of the '<em>Scope Service</em>' class.
+	 * The number of operations of the '<em>Writable Scope Service</em>' class.
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
 	 * @generated
 	 * @ordered
 	 */
-	int SCOPE_SERVICE_OPERATION_COUNT = 14;
+	int WRITABLE_SCOPE_SERVICE_OPERATION_COUNT = ScopeApiPackage.READ_ONLY_SCOPE_SERVICE_OPERATION_COUNT + 14;
+
+	/**
+	 * The meta object id for the '{@link org.eclipse.fennec.model.atlas.wf.workflowapi.ScopeService <em>Scope Service</em>}' class.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @see org.eclipse.fennec.model.atlas.wf.workflowapi.ScopeService
+	 * @see org.eclipse.fennec.model.atlas.wf.workflowapi.impl.WorkflowApiPackageImpl#getScopeService()
+	 * @deprecated See {@link ScopeService model documentation} for details.
+	 * @generated
+	 */
+	@Deprecated
+	int SCOPE_SERVICE = 2;
+
+	/**
+	 * The number of structural features of the '<em>Scope Service</em>' class.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @deprecated See {@link ScopeService model documentation} for details.
+	 * @generated
+	 * @ordered
+	 */
+	@Deprecated
+	int SCOPE_SERVICE_FEATURE_COUNT = WRITABLE_SCOPE_SERVICE_FEATURE_COUNT + 0;
+
+	/**
+	 * The operation id for the '<em>Get Scope Name</em>' operation.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 * @ordered
+	 */
+	int SCOPE_SERVICE___GET_SCOPE_NAME = WRITABLE_SCOPE_SERVICE___GET_SCOPE_NAME;
+
+	/**
+	 * The operation id for the '<em>Is Inheriting From Parent Scope</em>' operation.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 * @ordered
+	 */
+	int SCOPE_SERVICE___IS_INHERITING_FROM_PARENT_SCOPE = WRITABLE_SCOPE_SERVICE___IS_INHERITING_FROM_PARENT_SCOPE;
+
+	/**
+	 * The operation id for the '<em>Get</em>' operation.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 * @ordered
+	 */
+	int SCOPE_SERVICE___GET__STRING_STRING = WRITABLE_SCOPE_SERVICE___GET__STRING_STRING;
+
+	/**
+	 * The operation id for the '<em>List Object Ids</em>' operation.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 * @ordered
+	 */
+	int SCOPE_SERVICE___LIST_OBJECT_IDS__STRING = WRITABLE_SCOPE_SERVICE___LIST_OBJECT_IDS__STRING;
+
+	/**
+	 * The operation id for the '<em>List All</em>' operation.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 * @ordered
+	 */
+	int SCOPE_SERVICE___LIST_ALL__STRING = WRITABLE_SCOPE_SERVICE___LIST_ALL__STRING;
+
+	/**
+	 * The operation id for the '<em>Stream</em>' operation.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 * @ordered
+	 */
+	int SCOPE_SERVICE___STREAM__STRING = WRITABLE_SCOPE_SERVICE___STREAM__STRING;
+
+	/**
+	 * The operation id for the '<em>Get Scope Info</em>' operation.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 * @ordered
+	 */
+	int SCOPE_SERVICE___GET_SCOPE_INFO = WRITABLE_SCOPE_SERVICE___GET_SCOPE_INFO;
+
+	/**
+	 * The operation id for the '<em>Upload To Stage For Registry</em>' operation.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 * @ordered
+	 */
+	int SCOPE_SERVICE___UPLOAD_TO_STAGE_FOR_REGISTRY__STRING_STRING_EOBJECT_OBJECTMETADATA = WRITABLE_SCOPE_SERVICE___UPLOAD_TO_STAGE_FOR_REGISTRY__STRING_STRING_EOBJECT_OBJECTMETADATA;
+
+	/**
+	 * The operation id for the '<em>Get Metadata From Stage For Registry</em>' operation.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 * @ordered
+	 */
+	int SCOPE_SERVICE___GET_METADATA_FROM_STAGE_FOR_REGISTRY__STRING_STRING_STRING = WRITABLE_SCOPE_SERVICE___GET_METADATA_FROM_STAGE_FOR_REGISTRY__STRING_STRING_STRING;
+
+	/**
+	 * The operation id for the '<em>Get Metadata From Final Stage For Registry</em>' operation.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 * @ordered
+	 */
+	int SCOPE_SERVICE___GET_METADATA_FROM_FINAL_STAGE_FOR_REGISTRY__STRING_STRING = WRITABLE_SCOPE_SERVICE___GET_METADATA_FROM_FINAL_STAGE_FOR_REGISTRY__STRING_STRING;
+
+	/**
+	 * The operation id for the '<em>Get Content From Stage For Registry</em>' operation.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 * @ordered
+	 */
+	int SCOPE_SERVICE___GET_CONTENT_FROM_STAGE_FOR_REGISTRY__STRING_STRING_STRING = WRITABLE_SCOPE_SERVICE___GET_CONTENT_FROM_STAGE_FOR_REGISTRY__STRING_STRING_STRING;
+
+	/**
+	 * The operation id for the '<em>Update In Stage For Registry</em>' operation.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 * @ordered
+	 */
+	int SCOPE_SERVICE___UPDATE_IN_STAGE_FOR_REGISTRY__STRING_STRING_EOBJECT_STRING_STRING = WRITABLE_SCOPE_SERVICE___UPDATE_IN_STAGE_FOR_REGISTRY__STRING_STRING_EOBJECT_STRING_STRING;
+
+	/**
+	 * The operation id for the '<em>Delete From Stage For Registry</em>' operation.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 * @ordered
+	 */
+	int SCOPE_SERVICE___DELETE_FROM_STAGE_FOR_REGISTRY__STRING_STRING_STRING = WRITABLE_SCOPE_SERVICE___DELETE_FROM_STAGE_FOR_REGISTRY__STRING_STRING_STRING;
+
+	/**
+	 * The operation id for the '<em>List In Stage For Registry</em>' operation.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 * @ordered
+	 */
+	int SCOPE_SERVICE___LIST_IN_STAGE_FOR_REGISTRY__STRING_STRING = WRITABLE_SCOPE_SERVICE___LIST_IN_STAGE_FOR_REGISTRY__STRING_STRING;
+
+	/**
+	 * The operation id for the '<em>List In Stage For Registry By Name</em>' operation.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 * @ordered
+	 */
+	int SCOPE_SERVICE___LIST_IN_STAGE_FOR_REGISTRY_BY_NAME__STRING_STRING_STRING = WRITABLE_SCOPE_SERVICE___LIST_IN_STAGE_FOR_REGISTRY_BY_NAME__STRING_STRING_STRING;
+
+	/**
+	 * The operation id for the '<em>List In Final Stage For Registry</em>' operation.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 * @ordered
+	 */
+	int SCOPE_SERVICE___LIST_IN_FINAL_STAGE_FOR_REGISTRY__STRING = WRITABLE_SCOPE_SERVICE___LIST_IN_FINAL_STAGE_FOR_REGISTRY__STRING;
+
+	/**
+	 * The operation id for the '<em>List All For Registry</em>' operation.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 * @ordered
+	 */
+	int SCOPE_SERVICE___LIST_ALL_FOR_REGISTRY__STRING = WRITABLE_SCOPE_SERVICE___LIST_ALL_FOR_REGISTRY__STRING;
+
+	/**
+	 * The operation id for the '<em>Transition To Stage For Registry</em>' operation.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 * @ordered
+	 */
+	int SCOPE_SERVICE___TRANSITION_TO_STAGE_FOR_REGISTRY__STRING_STRING_STRING_STRING = WRITABLE_SCOPE_SERVICE___TRANSITION_TO_STAGE_FOR_REGISTRY__STRING_STRING_STRING_STRING;
+
+	/**
+	 * The operation id for the '<em>Is Valid Registry</em>' operation.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 * @ordered
+	 */
+	int SCOPE_SERVICE___IS_VALID_REGISTRY__STRING = WRITABLE_SCOPE_SERVICE___IS_VALID_REGISTRY__STRING;
+
+	/**
+	 * The operation id for the '<em>Get All Registries</em>' operation.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 * @ordered
+	 */
+	int SCOPE_SERVICE___GET_ALL_REGISTRIES = WRITABLE_SCOPE_SERVICE___GET_ALL_REGISTRIES;
+
+	/**
+	 * The operation id for the '<em>Get Scope</em>' operation.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 * @ordered
+	 */
+	int SCOPE_SERVICE___GET_SCOPE = WRITABLE_SCOPE_SERVICE___GET_SCOPE;
+
+	/**
+	 * The number of operations of the '<em>Scope Service</em>' class.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @deprecated See {@link ScopeService model documentation} for details.
+	 * @generated
+	 * @ordered
+	 */
+	@Deprecated
+	int SCOPE_SERVICE_OPERATION_COUNT = WRITABLE_SCOPE_SERVICE_OPERATION_COUNT + 0;
 
 	/**
 	 * The meta object id for the '{@link org.eclipse.fennec.model.atlas.wf.workflowapi.impl.StageImpl <em>Stage</em>}' class.
@@ -645,7 +941,7 @@ public interface WorkflowApiPackage extends org.eclipse.emf.ecore.EPackage {
 	 * @generated
 	 * @ordered
 	 */
-	int REGISTRY__NAME = 0;
+	int REGISTRY__NAME = ScopeApiPackage.REGISTRY_INFO__NAME;
 
 	/**
 	 * The feature id for the '<em><b>Description</b></em>' attribute.
@@ -654,7 +950,7 @@ public interface WorkflowApiPackage extends org.eclipse.emf.ecore.EPackage {
 	 * @generated
 	 * @ordered
 	 */
-	int REGISTRY__DESCRIPTION = 1;
+	int REGISTRY__DESCRIPTION = ScopeApiPackage.REGISTRY_INFO__DESCRIPTION;
 
 	/**
 	 * The feature id for the '<em><b>Type</b></em>' attribute.
@@ -663,7 +959,7 @@ public interface WorkflowApiPackage extends org.eclipse.emf.ecore.EPackage {
 	 * @generated
 	 * @ordered
 	 */
-	int REGISTRY__TYPE = 2;
+	int REGISTRY__TYPE = ScopeApiPackage.REGISTRY_INFO__TYPE;
 
 	/**
 	 * The feature id for the '<em><b>Stages</b></em>' containment reference list.
@@ -672,7 +968,7 @@ public interface WorkflowApiPackage extends org.eclipse.emf.ecore.EPackage {
 	 * @generated
 	 * @ordered
 	 */
-	int REGISTRY__STAGES = 3;
+	int REGISTRY__STAGES = ScopeApiPackage.REGISTRY_INFO_FEATURE_COUNT + 0;
 
 	/**
 	 * The feature id for the '<em><b>Allowed Transitions</b></em>' containment reference list.
@@ -681,7 +977,7 @@ public interface WorkflowApiPackage extends org.eclipse.emf.ecore.EPackage {
 	 * @generated
 	 * @ordered
 	 */
-	int REGISTRY__ALLOWED_TRANSITIONS = 4;
+	int REGISTRY__ALLOWED_TRANSITIONS = ScopeApiPackage.REGISTRY_INFO_FEATURE_COUNT + 1;
 
 	/**
 	 * The number of structural features of the '<em>Registry</em>' class.
@@ -690,7 +986,7 @@ public interface WorkflowApiPackage extends org.eclipse.emf.ecore.EPackage {
 	 * @generated
 	 * @ordered
 	 */
-	int REGISTRY_FEATURE_COUNT = 5;
+	int REGISTRY_FEATURE_COUNT = ScopeApiPackage.REGISTRY_INFO_FEATURE_COUNT + 2;
 
 	/**
 	 * The number of operations of the '<em>Registry</em>' class.
@@ -699,7 +995,7 @@ public interface WorkflowApiPackage extends org.eclipse.emf.ecore.EPackage {
 	 * @generated
 	 * @ordered
 	 */
-	int REGISTRY_OPERATION_COUNT = 0;
+	int REGISTRY_OPERATION_COUNT = ScopeApiPackage.REGISTRY_INFO_OPERATION_COUNT + 0;
 
 	/**
 	 * The meta object id for the '{@link org.eclipse.fennec.model.atlas.wf.workflowapi.impl.ScopeImpl <em>Scope</em>}' class.
@@ -718,7 +1014,7 @@ public interface WorkflowApiPackage extends org.eclipse.emf.ecore.EPackage {
 	 * @generated
 	 * @ordered
 	 */
-	int SCOPE__NAME = 0;
+	int SCOPE__NAME = ScopeApiPackage.SCOPE_INFO__NAME;
 
 	/**
 	 * The feature id for the '<em><b>Description</b></em>' attribute.
@@ -727,7 +1023,7 @@ public interface WorkflowApiPackage extends org.eclipse.emf.ecore.EPackage {
 	 * @generated
 	 * @ordered
 	 */
-	int SCOPE__DESCRIPTION = 1;
+	int SCOPE__DESCRIPTION = ScopeApiPackage.SCOPE_INFO__DESCRIPTION;
 
 	/**
 	 * The feature id for the '<em><b>Parent Scope</b></em>' attribute.
@@ -736,7 +1032,7 @@ public interface WorkflowApiPackage extends org.eclipse.emf.ecore.EPackage {
 	 * @generated
 	 * @ordered
 	 */
-	int SCOPE__PARENT_SCOPE = 2;
+	int SCOPE__PARENT_SCOPE = ScopeApiPackage.SCOPE_INFO__PARENT_SCOPE;
 
 	/**
 	 * The feature id for the '<em><b>Registries</b></em>' containment reference list.
@@ -745,7 +1041,7 @@ public interface WorkflowApiPackage extends org.eclipse.emf.ecore.EPackage {
 	 * @generated
 	 * @ordered
 	 */
-	int SCOPE__REGISTRIES = 3;
+	int SCOPE__REGISTRIES = ScopeApiPackage.SCOPE_INFO__REGISTRIES;
 
 	/**
 	 * The number of structural features of the '<em>Scope</em>' class.
@@ -754,7 +1050,7 @@ public interface WorkflowApiPackage extends org.eclipse.emf.ecore.EPackage {
 	 * @generated
 	 * @ordered
 	 */
-	int SCOPE_FEATURE_COUNT = 4;
+	int SCOPE_FEATURE_COUNT = ScopeApiPackage.SCOPE_INFO_FEATURE_COUNT + 0;
 
 	/**
 	 * The number of operations of the '<em>Scope</em>' class.
@@ -763,7 +1059,7 @@ public interface WorkflowApiPackage extends org.eclipse.emf.ecore.EPackage {
 	 * @generated
 	 * @ordered
 	 */
-	int SCOPE_OPERATION_COUNT = 0;
+	int SCOPE_OPERATION_COUNT = ScopeApiPackage.SCOPE_INFO_OPERATION_COUNT + 0;
 
 	/**
 	 * The meta object id for the '{@link org.eclipse.fennec.model.atlas.wf.workflowapi.impl.StageTransitionImpl <em>Stage Transition</em>}' class.
@@ -810,16 +1106,6 @@ public interface WorkflowApiPackage extends org.eclipse.emf.ecore.EPackage {
 	 * @ordered
 	 */
 	int STAGE_TRANSITION_OPERATION_COUNT = 0;
-
-	/**
-	 * The meta object id for the '{@link org.eclipse.fennec.model.atlas.wf.workflowapi.RegistryType <em>Registry Type</em>}' enum.
-	 * <!-- begin-user-doc -->
-	 * <!-- end-user-doc -->
-	 * @see org.eclipse.fennec.model.atlas.wf.workflowapi.RegistryType
-	 * @see org.eclipse.fennec.model.atlas.wf.workflowapi.impl.WorkflowApiPackageImpl#getRegistryType()
-	 * @generated
-	 */
-	int REGISTRY_TYPE = 7;
 
 
 	/**
@@ -991,6 +1277,16 @@ public interface WorkflowApiPackage extends org.eclipse.emf.ecore.EPackage {
 	 * @generated
 	 */
 	EOperation getRegistryService__GetContentFromStage__String_String_String();
+
+	/**
+	 * Returns the meta object for the '{@link org.eclipse.fennec.model.atlas.wf.workflowapi.RegistryService#getContentFromFinalStage(java.lang.String, java.lang.String) <em>Get Content From Final Stage</em>}' operation.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @return the meta object for the '<em>Get Content From Final Stage</em>' operation.
+	 * @see org.eclipse.fennec.model.atlas.wf.workflowapi.RegistryService#getContentFromFinalStage(java.lang.String, java.lang.String)
+	 * @generated
+	 */
+	EOperation getRegistryService__GetContentFromFinalStage__String_String();
 
 	/**
 	 * Returns the meta object for the '{@link org.eclipse.fennec.model.atlas.wf.workflowapi.RegistryService#updateInStage(java.lang.String, java.lang.String, org.eclipse.emf.ecore.EObject, java.lang.String, java.lang.String) <em>Update In Stage</em>}' operation.
@@ -1168,149 +1464,11 @@ public interface WorkflowApiPackage extends org.eclipse.emf.ecore.EPackage {
 	 * <!-- end-user-doc -->
 	 * @return the meta object for class '<em>Scope Service</em>'.
 	 * @see org.eclipse.fennec.model.atlas.wf.workflowapi.ScopeService
+	 * @deprecated See {@link ScopeService model documentation} for details.
 	 * @generated
 	 */
+	@Deprecated
 	EClass getScopeService();
-
-	/**
-	 * Returns the meta object for the '{@link org.eclipse.fennec.model.atlas.wf.workflowapi.ScopeService#uploadToStageForRegistry(java.lang.String, java.lang.String, org.eclipse.emf.ecore.EObject, org.eclipse.fennec.model.atlas.mgmt.management.ObjectMetadata) <em>Upload To Stage For Registry</em>}' operation.
-	 * <!-- begin-user-doc -->
-	 * <!-- end-user-doc -->
-	 * @return the meta object for the '<em>Upload To Stage For Registry</em>' operation.
-	 * @see org.eclipse.fennec.model.atlas.wf.workflowapi.ScopeService#uploadToStageForRegistry(java.lang.String, java.lang.String, org.eclipse.emf.ecore.EObject, org.eclipse.fennec.model.atlas.mgmt.management.ObjectMetadata)
-	 * @generated
-	 */
-	EOperation getScopeService__UploadToStageForRegistry__String_String_EObject_ObjectMetadata();
-
-	/**
-	 * Returns the meta object for the '{@link org.eclipse.fennec.model.atlas.wf.workflowapi.ScopeService#getMetadataFromStageForRegistry(java.lang.String, java.lang.String, java.lang.String) <em>Get Metadata From Stage For Registry</em>}' operation.
-	 * <!-- begin-user-doc -->
-	 * <!-- end-user-doc -->
-	 * @return the meta object for the '<em>Get Metadata From Stage For Registry</em>' operation.
-	 * @see org.eclipse.fennec.model.atlas.wf.workflowapi.ScopeService#getMetadataFromStageForRegistry(java.lang.String, java.lang.String, java.lang.String)
-	 * @generated
-	 */
-	EOperation getScopeService__GetMetadataFromStageForRegistry__String_String_String();
-
-	/**
-	 * Returns the meta object for the '{@link org.eclipse.fennec.model.atlas.wf.workflowapi.ScopeService#getMetadataFromFinalStageForRegistry(java.lang.String, java.lang.String) <em>Get Metadata From Final Stage For Registry</em>}' operation.
-	 * <!-- begin-user-doc -->
-	 * <!-- end-user-doc -->
-	 * @return the meta object for the '<em>Get Metadata From Final Stage For Registry</em>' operation.
-	 * @see org.eclipse.fennec.model.atlas.wf.workflowapi.ScopeService#getMetadataFromFinalStageForRegistry(java.lang.String, java.lang.String)
-	 * @generated
-	 */
-	EOperation getScopeService__GetMetadataFromFinalStageForRegistry__String_String();
-
-	/**
-	 * Returns the meta object for the '{@link org.eclipse.fennec.model.atlas.wf.workflowapi.ScopeService#getContentFromStageForRegistry(java.lang.String, java.lang.String, java.lang.String) <em>Get Content From Stage For Registry</em>}' operation.
-	 * <!-- begin-user-doc -->
-	 * <!-- end-user-doc -->
-	 * @return the meta object for the '<em>Get Content From Stage For Registry</em>' operation.
-	 * @see org.eclipse.fennec.model.atlas.wf.workflowapi.ScopeService#getContentFromStageForRegistry(java.lang.String, java.lang.String, java.lang.String)
-	 * @generated
-	 */
-	EOperation getScopeService__GetContentFromStageForRegistry__String_String_String();
-
-	/**
-	 * Returns the meta object for the '{@link org.eclipse.fennec.model.atlas.wf.workflowapi.ScopeService#updateInStageForRegistry(java.lang.String, java.lang.String, org.eclipse.emf.ecore.EObject, java.lang.String, java.lang.String) <em>Update In Stage For Registry</em>}' operation.
-	 * <!-- begin-user-doc -->
-	 * <!-- end-user-doc -->
-	 * @return the meta object for the '<em>Update In Stage For Registry</em>' operation.
-	 * @see org.eclipse.fennec.model.atlas.wf.workflowapi.ScopeService#updateInStageForRegistry(java.lang.String, java.lang.String, org.eclipse.emf.ecore.EObject, java.lang.String, java.lang.String)
-	 * @generated
-	 */
-	EOperation getScopeService__UpdateInStageForRegistry__String_String_EObject_String_String();
-
-	/**
-	 * Returns the meta object for the '{@link org.eclipse.fennec.model.atlas.wf.workflowapi.ScopeService#deleteFromStageForRegistry(java.lang.String, java.lang.String, java.lang.String) <em>Delete From Stage For Registry</em>}' operation.
-	 * <!-- begin-user-doc -->
-	 * <!-- end-user-doc -->
-	 * @return the meta object for the '<em>Delete From Stage For Registry</em>' operation.
-	 * @see org.eclipse.fennec.model.atlas.wf.workflowapi.ScopeService#deleteFromStageForRegistry(java.lang.String, java.lang.String, java.lang.String)
-	 * @generated
-	 */
-	EOperation getScopeService__DeleteFromStageForRegistry__String_String_String();
-
-	/**
-	 * Returns the meta object for the '{@link org.eclipse.fennec.model.atlas.wf.workflowapi.ScopeService#listInStageForRegistry(java.lang.String, java.lang.String) <em>List In Stage For Registry</em>}' operation.
-	 * <!-- begin-user-doc -->
-	 * <!-- end-user-doc -->
-	 * @return the meta object for the '<em>List In Stage For Registry</em>' operation.
-	 * @see org.eclipse.fennec.model.atlas.wf.workflowapi.ScopeService#listInStageForRegistry(java.lang.String, java.lang.String)
-	 * @generated
-	 */
-	EOperation getScopeService__ListInStageForRegistry__String_String();
-
-	/**
-	 * Returns the meta object for the '{@link org.eclipse.fennec.model.atlas.wf.workflowapi.ScopeService#listInStageForRegistryByName(java.lang.String, java.lang.String, java.lang.String) <em>List In Stage For Registry By Name</em>}' operation.
-	 * <!-- begin-user-doc -->
-	 * <!-- end-user-doc -->
-	 * @return the meta object for the '<em>List In Stage For Registry By Name</em>' operation.
-	 * @see org.eclipse.fennec.model.atlas.wf.workflowapi.ScopeService#listInStageForRegistryByName(java.lang.String, java.lang.String, java.lang.String)
-	 * @generated
-	 */
-	EOperation getScopeService__ListInStageForRegistryByName__String_String_String();
-
-	/**
-	 * Returns the meta object for the '{@link org.eclipse.fennec.model.atlas.wf.workflowapi.ScopeService#listInFinalStageForRegistry(java.lang.String) <em>List In Final Stage For Registry</em>}' operation.
-	 * <!-- begin-user-doc -->
-	 * <!-- end-user-doc -->
-	 * @return the meta object for the '<em>List In Final Stage For Registry</em>' operation.
-	 * @see org.eclipse.fennec.model.atlas.wf.workflowapi.ScopeService#listInFinalStageForRegistry(java.lang.String)
-	 * @generated
-	 */
-	EOperation getScopeService__ListInFinalStageForRegistry__String();
-
-	/**
-	 * Returns the meta object for the '{@link org.eclipse.fennec.model.atlas.wf.workflowapi.ScopeService#listAllForRegistry(java.lang.String) <em>List All For Registry</em>}' operation.
-	 * <!-- begin-user-doc -->
-	 * <!-- end-user-doc -->
-	 * @return the meta object for the '<em>List All For Registry</em>' operation.
-	 * @see org.eclipse.fennec.model.atlas.wf.workflowapi.ScopeService#listAllForRegistry(java.lang.String)
-	 * @generated
-	 */
-	EOperation getScopeService__ListAllForRegistry__String();
-
-	/**
-	 * Returns the meta object for the '{@link org.eclipse.fennec.model.atlas.wf.workflowapi.ScopeService#transitionToStageForRegistry(java.lang.String, java.lang.String, java.lang.String, java.lang.String) <em>Transition To Stage For Registry</em>}' operation.
-	 * <!-- begin-user-doc -->
-	 * <!-- end-user-doc -->
-	 * @return the meta object for the '<em>Transition To Stage For Registry</em>' operation.
-	 * @see org.eclipse.fennec.model.atlas.wf.workflowapi.ScopeService#transitionToStageForRegistry(java.lang.String, java.lang.String, java.lang.String, java.lang.String)
-	 * @generated
-	 */
-	EOperation getScopeService__TransitionToStageForRegistry__String_String_String_String();
-
-	/**
-	 * Returns the meta object for the '{@link org.eclipse.fennec.model.atlas.wf.workflowapi.ScopeService#isValidRegistry(java.lang.String) <em>Is Valid Registry</em>}' operation.
-	 * <!-- begin-user-doc -->
-	 * <!-- end-user-doc -->
-	 * @return the meta object for the '<em>Is Valid Registry</em>' operation.
-	 * @see org.eclipse.fennec.model.atlas.wf.workflowapi.ScopeService#isValidRegistry(java.lang.String)
-	 * @generated
-	 */
-	EOperation getScopeService__IsValidRegistry__String();
-
-	/**
-	 * Returns the meta object for the '{@link org.eclipse.fennec.model.atlas.wf.workflowapi.ScopeService#getAllRegistries() <em>Get All Registries</em>}' operation.
-	 * <!-- begin-user-doc -->
-	 * <!-- end-user-doc -->
-	 * @return the meta object for the '<em>Get All Registries</em>' operation.
-	 * @see org.eclipse.fennec.model.atlas.wf.workflowapi.ScopeService#getAllRegistries()
-	 * @generated
-	 */
-	EOperation getScopeService__GetAllRegistries();
-
-	/**
-	 * Returns the meta object for the '{@link org.eclipse.fennec.model.atlas.wf.workflowapi.ScopeService#getScope() <em>Get Scope</em>}' operation.
-	 * <!-- begin-user-doc -->
-	 * <!-- end-user-doc -->
-	 * @return the meta object for the '<em>Get Scope</em>' operation.
-	 * @see org.eclipse.fennec.model.atlas.wf.workflowapi.ScopeService#getScope()
-	 * @generated
-	 */
-	EOperation getScopeService__GetScope();
 
 	/**
 	 * Returns the meta object for class '{@link org.eclipse.fennec.model.atlas.wf.workflowapi.Stage <em>Stage</em>}'.
@@ -1366,39 +1524,6 @@ public interface WorkflowApiPackage extends org.eclipse.emf.ecore.EPackage {
 	EClass getRegistry();
 
 	/**
-	 * Returns the meta object for the attribute '{@link org.eclipse.fennec.model.atlas.wf.workflowapi.Registry#getName <em>Name</em>}'.
-	 * <!-- begin-user-doc -->
-	 * <!-- end-user-doc -->
-	 * @return the meta object for the attribute '<em>Name</em>'.
-	 * @see org.eclipse.fennec.model.atlas.wf.workflowapi.Registry#getName()
-	 * @see #getRegistry()
-	 * @generated
-	 */
-	EAttribute getRegistry_Name();
-
-	/**
-	 * Returns the meta object for the attribute '{@link org.eclipse.fennec.model.atlas.wf.workflowapi.Registry#getDescription <em>Description</em>}'.
-	 * <!-- begin-user-doc -->
-	 * <!-- end-user-doc -->
-	 * @return the meta object for the attribute '<em>Description</em>'.
-	 * @see org.eclipse.fennec.model.atlas.wf.workflowapi.Registry#getDescription()
-	 * @see #getRegistry()
-	 * @generated
-	 */
-	EAttribute getRegistry_Description();
-
-	/**
-	 * Returns the meta object for the attribute '{@link org.eclipse.fennec.model.atlas.wf.workflowapi.Registry#getType <em>Type</em>}'.
-	 * <!-- begin-user-doc -->
-	 * <!-- end-user-doc -->
-	 * @return the meta object for the attribute '<em>Type</em>'.
-	 * @see org.eclipse.fennec.model.atlas.wf.workflowapi.Registry#getType()
-	 * @see #getRegistry()
-	 * @generated
-	 */
-	EAttribute getRegistry_Type();
-
-	/**
 	 * Returns the meta object for the containment reference list '{@link org.eclipse.fennec.model.atlas.wf.workflowapi.Registry#getStages <em>Stages</em>}'.
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
@@ -1429,50 +1554,6 @@ public interface WorkflowApiPackage extends org.eclipse.emf.ecore.EPackage {
 	 * @generated
 	 */
 	EClass getScope();
-
-	/**
-	 * Returns the meta object for the attribute '{@link org.eclipse.fennec.model.atlas.wf.workflowapi.Scope#getName <em>Name</em>}'.
-	 * <!-- begin-user-doc -->
-	 * <!-- end-user-doc -->
-	 * @return the meta object for the attribute '<em>Name</em>'.
-	 * @see org.eclipse.fennec.model.atlas.wf.workflowapi.Scope#getName()
-	 * @see #getScope()
-	 * @generated
-	 */
-	EAttribute getScope_Name();
-
-	/**
-	 * Returns the meta object for the attribute '{@link org.eclipse.fennec.model.atlas.wf.workflowapi.Scope#getDescription <em>Description</em>}'.
-	 * <!-- begin-user-doc -->
-	 * <!-- end-user-doc -->
-	 * @return the meta object for the attribute '<em>Description</em>'.
-	 * @see org.eclipse.fennec.model.atlas.wf.workflowapi.Scope#getDescription()
-	 * @see #getScope()
-	 * @generated
-	 */
-	EAttribute getScope_Description();
-
-	/**
-	 * Returns the meta object for the attribute '{@link org.eclipse.fennec.model.atlas.wf.workflowapi.Scope#getParentScope <em>Parent Scope</em>}'.
-	 * <!-- begin-user-doc -->
-	 * <!-- end-user-doc -->
-	 * @return the meta object for the attribute '<em>Parent Scope</em>'.
-	 * @see org.eclipse.fennec.model.atlas.wf.workflowapi.Scope#getParentScope()
-	 * @see #getScope()
-	 * @generated
-	 */
-	EAttribute getScope_ParentScope();
-
-	/**
-	 * Returns the meta object for the containment reference list '{@link org.eclipse.fennec.model.atlas.wf.workflowapi.Scope#getRegistries <em>Registries</em>}'.
-	 * <!-- begin-user-doc -->
-	 * <!-- end-user-doc -->
-	 * @return the meta object for the containment reference list '<em>Registries</em>'.
-	 * @see org.eclipse.fennec.model.atlas.wf.workflowapi.Scope#getRegistries()
-	 * @see #getScope()
-	 * @generated
-	 */
-	EReference getScope_Registries();
 
 	/**
 	 * Returns the meta object for class '{@link org.eclipse.fennec.model.atlas.wf.workflowapi.StageTransition <em>Stage Transition</em>}'.
@@ -1507,14 +1588,154 @@ public interface WorkflowApiPackage extends org.eclipse.emf.ecore.EPackage {
 	EAttribute getStageTransition_ToStage();
 
 	/**
-	 * Returns the meta object for enum '{@link org.eclipse.fennec.model.atlas.wf.workflowapi.RegistryType <em>Registry Type</em>}'.
+	 * Returns the meta object for class '{@link org.eclipse.fennec.model.atlas.wf.workflowapi.WritableScopeService <em>Writable Scope Service</em>}'.
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
-	 * @return the meta object for enum '<em>Registry Type</em>'.
-	 * @see org.eclipse.fennec.model.atlas.wf.workflowapi.RegistryType
+	 * @return the meta object for class '<em>Writable Scope Service</em>'.
+	 * @see org.eclipse.fennec.model.atlas.wf.workflowapi.WritableScopeService
 	 * @generated
 	 */
-	EEnum getRegistryType();
+	EClass getWritableScopeService();
+
+	/**
+	 * Returns the meta object for the '{@link org.eclipse.fennec.model.atlas.wf.workflowapi.WritableScopeService#uploadToStageForRegistry(java.lang.String, java.lang.String, org.eclipse.emf.ecore.EObject, org.eclipse.fennec.model.atlas.mgmt.management.ObjectMetadata) <em>Upload To Stage For Registry</em>}' operation.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @return the meta object for the '<em>Upload To Stage For Registry</em>' operation.
+	 * @see org.eclipse.fennec.model.atlas.wf.workflowapi.WritableScopeService#uploadToStageForRegistry(java.lang.String, java.lang.String, org.eclipse.emf.ecore.EObject, org.eclipse.fennec.model.atlas.mgmt.management.ObjectMetadata)
+	 * @generated
+	 */
+	EOperation getWritableScopeService__UploadToStageForRegistry__String_String_EObject_ObjectMetadata();
+
+	/**
+	 * Returns the meta object for the '{@link org.eclipse.fennec.model.atlas.wf.workflowapi.WritableScopeService#getMetadataFromStageForRegistry(java.lang.String, java.lang.String, java.lang.String) <em>Get Metadata From Stage For Registry</em>}' operation.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @return the meta object for the '<em>Get Metadata From Stage For Registry</em>' operation.
+	 * @see org.eclipse.fennec.model.atlas.wf.workflowapi.WritableScopeService#getMetadataFromStageForRegistry(java.lang.String, java.lang.String, java.lang.String)
+	 * @generated
+	 */
+	EOperation getWritableScopeService__GetMetadataFromStageForRegistry__String_String_String();
+
+	/**
+	 * Returns the meta object for the '{@link org.eclipse.fennec.model.atlas.wf.workflowapi.WritableScopeService#getMetadataFromFinalStageForRegistry(java.lang.String, java.lang.String) <em>Get Metadata From Final Stage For Registry</em>}' operation.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @return the meta object for the '<em>Get Metadata From Final Stage For Registry</em>' operation.
+	 * @see org.eclipse.fennec.model.atlas.wf.workflowapi.WritableScopeService#getMetadataFromFinalStageForRegistry(java.lang.String, java.lang.String)
+	 * @generated
+	 */
+	EOperation getWritableScopeService__GetMetadataFromFinalStageForRegistry__String_String();
+
+	/**
+	 * Returns the meta object for the '{@link org.eclipse.fennec.model.atlas.wf.workflowapi.WritableScopeService#getContentFromStageForRegistry(java.lang.String, java.lang.String, java.lang.String) <em>Get Content From Stage For Registry</em>}' operation.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @return the meta object for the '<em>Get Content From Stage For Registry</em>' operation.
+	 * @see org.eclipse.fennec.model.atlas.wf.workflowapi.WritableScopeService#getContentFromStageForRegistry(java.lang.String, java.lang.String, java.lang.String)
+	 * @generated
+	 */
+	EOperation getWritableScopeService__GetContentFromStageForRegistry__String_String_String();
+
+	/**
+	 * Returns the meta object for the '{@link org.eclipse.fennec.model.atlas.wf.workflowapi.WritableScopeService#updateInStageForRegistry(java.lang.String, java.lang.String, org.eclipse.emf.ecore.EObject, java.lang.String, java.lang.String) <em>Update In Stage For Registry</em>}' operation.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @return the meta object for the '<em>Update In Stage For Registry</em>' operation.
+	 * @see org.eclipse.fennec.model.atlas.wf.workflowapi.WritableScopeService#updateInStageForRegistry(java.lang.String, java.lang.String, org.eclipse.emf.ecore.EObject, java.lang.String, java.lang.String)
+	 * @generated
+	 */
+	EOperation getWritableScopeService__UpdateInStageForRegistry__String_String_EObject_String_String();
+
+	/**
+	 * Returns the meta object for the '{@link org.eclipse.fennec.model.atlas.wf.workflowapi.WritableScopeService#deleteFromStageForRegistry(java.lang.String, java.lang.String, java.lang.String) <em>Delete From Stage For Registry</em>}' operation.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @return the meta object for the '<em>Delete From Stage For Registry</em>' operation.
+	 * @see org.eclipse.fennec.model.atlas.wf.workflowapi.WritableScopeService#deleteFromStageForRegistry(java.lang.String, java.lang.String, java.lang.String)
+	 * @generated
+	 */
+	EOperation getWritableScopeService__DeleteFromStageForRegistry__String_String_String();
+
+	/**
+	 * Returns the meta object for the '{@link org.eclipse.fennec.model.atlas.wf.workflowapi.WritableScopeService#listInStageForRegistry(java.lang.String, java.lang.String) <em>List In Stage For Registry</em>}' operation.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @return the meta object for the '<em>List In Stage For Registry</em>' operation.
+	 * @see org.eclipse.fennec.model.atlas.wf.workflowapi.WritableScopeService#listInStageForRegistry(java.lang.String, java.lang.String)
+	 * @generated
+	 */
+	EOperation getWritableScopeService__ListInStageForRegistry__String_String();
+
+	/**
+	 * Returns the meta object for the '{@link org.eclipse.fennec.model.atlas.wf.workflowapi.WritableScopeService#listInStageForRegistryByName(java.lang.String, java.lang.String, java.lang.String) <em>List In Stage For Registry By Name</em>}' operation.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @return the meta object for the '<em>List In Stage For Registry By Name</em>' operation.
+	 * @see org.eclipse.fennec.model.atlas.wf.workflowapi.WritableScopeService#listInStageForRegistryByName(java.lang.String, java.lang.String, java.lang.String)
+	 * @generated
+	 */
+	EOperation getWritableScopeService__ListInStageForRegistryByName__String_String_String();
+
+	/**
+	 * Returns the meta object for the '{@link org.eclipse.fennec.model.atlas.wf.workflowapi.WritableScopeService#listInFinalStageForRegistry(java.lang.String) <em>List In Final Stage For Registry</em>}' operation.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @return the meta object for the '<em>List In Final Stage For Registry</em>' operation.
+	 * @see org.eclipse.fennec.model.atlas.wf.workflowapi.WritableScopeService#listInFinalStageForRegistry(java.lang.String)
+	 * @generated
+	 */
+	EOperation getWritableScopeService__ListInFinalStageForRegistry__String();
+
+	/**
+	 * Returns the meta object for the '{@link org.eclipse.fennec.model.atlas.wf.workflowapi.WritableScopeService#listAllForRegistry(java.lang.String) <em>List All For Registry</em>}' operation.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @return the meta object for the '<em>List All For Registry</em>' operation.
+	 * @see org.eclipse.fennec.model.atlas.wf.workflowapi.WritableScopeService#listAllForRegistry(java.lang.String)
+	 * @generated
+	 */
+	EOperation getWritableScopeService__ListAllForRegistry__String();
+
+	/**
+	 * Returns the meta object for the '{@link org.eclipse.fennec.model.atlas.wf.workflowapi.WritableScopeService#transitionToStageForRegistry(java.lang.String, java.lang.String, java.lang.String, java.lang.String) <em>Transition To Stage For Registry</em>}' operation.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @return the meta object for the '<em>Transition To Stage For Registry</em>' operation.
+	 * @see org.eclipse.fennec.model.atlas.wf.workflowapi.WritableScopeService#transitionToStageForRegistry(java.lang.String, java.lang.String, java.lang.String, java.lang.String)
+	 * @generated
+	 */
+	EOperation getWritableScopeService__TransitionToStageForRegistry__String_String_String_String();
+
+	/**
+	 * Returns the meta object for the '{@link org.eclipse.fennec.model.atlas.wf.workflowapi.WritableScopeService#isValidRegistry(java.lang.String) <em>Is Valid Registry</em>}' operation.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @return the meta object for the '<em>Is Valid Registry</em>' operation.
+	 * @see org.eclipse.fennec.model.atlas.wf.workflowapi.WritableScopeService#isValidRegistry(java.lang.String)
+	 * @generated
+	 */
+	EOperation getWritableScopeService__IsValidRegistry__String();
+
+	/**
+	 * Returns the meta object for the '{@link org.eclipse.fennec.model.atlas.wf.workflowapi.WritableScopeService#getAllRegistries() <em>Get All Registries</em>}' operation.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @return the meta object for the '<em>Get All Registries</em>' operation.
+	 * @see org.eclipse.fennec.model.atlas.wf.workflowapi.WritableScopeService#getAllRegistries()
+	 * @generated
+	 */
+	EOperation getWritableScopeService__GetAllRegistries();
+
+	/**
+	 * Returns the meta object for the '{@link org.eclipse.fennec.model.atlas.wf.workflowapi.WritableScopeService#getScope() <em>Get Scope</em>}' operation.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @return the meta object for the '<em>Get Scope</em>' operation.
+	 * @see org.eclipse.fennec.model.atlas.wf.workflowapi.WritableScopeService#getScope()
+	 * @generated
+	 */
+	EOperation getWritableScopeService__GetScope();
 
 	/**
 	 * Returns the factory that creates the instances of the model.
@@ -1680,6 +1901,14 @@ public interface WorkflowApiPackage extends org.eclipse.emf.ecore.EPackage {
 		EOperation REGISTRY_SERVICE___GET_CONTENT_FROM_STAGE__STRING_STRING_STRING = eINSTANCE.getRegistryService__GetContentFromStage__String_String_String();
 
 		/**
+		 * The meta object literal for the '<em><b>Get Content From Final Stage</b></em>' operation.
+		 * <!-- begin-user-doc -->
+		 * <!-- end-user-doc -->
+		 * @generated
+		 */
+		EOperation REGISTRY_SERVICE___GET_CONTENT_FROM_FINAL_STAGE__STRING_STRING = eINSTANCE.getRegistryService__GetContentFromFinalStage__String_String();
+
+		/**
 		 * The meta object literal for the '<em><b>Update In Stage</b></em>' operation.
 		 * <!-- begin-user-doc -->
 		 * <!-- end-user-doc -->
@@ -1821,121 +2050,11 @@ public interface WorkflowApiPackage extends org.eclipse.emf.ecore.EPackage {
 		 * <!-- end-user-doc -->
 		 * @see org.eclipse.fennec.model.atlas.wf.workflowapi.ScopeService
 		 * @see org.eclipse.fennec.model.atlas.wf.workflowapi.impl.WorkflowApiPackageImpl#getScopeService()
+		 * @deprecated See {@link ScopeService model documentation} for details.
 		 * @generated
 		 */
+		@Deprecated
 		EClass SCOPE_SERVICE = eINSTANCE.getScopeService();
-
-		/**
-		 * The meta object literal for the '<em><b>Upload To Stage For Registry</b></em>' operation.
-		 * <!-- begin-user-doc -->
-		 * <!-- end-user-doc -->
-		 * @generated
-		 */
-		EOperation SCOPE_SERVICE___UPLOAD_TO_STAGE_FOR_REGISTRY__STRING_STRING_EOBJECT_OBJECTMETADATA = eINSTANCE.getScopeService__UploadToStageForRegistry__String_String_EObject_ObjectMetadata();
-
-		/**
-		 * The meta object literal for the '<em><b>Get Metadata From Stage For Registry</b></em>' operation.
-		 * <!-- begin-user-doc -->
-		 * <!-- end-user-doc -->
-		 * @generated
-		 */
-		EOperation SCOPE_SERVICE___GET_METADATA_FROM_STAGE_FOR_REGISTRY__STRING_STRING_STRING = eINSTANCE.getScopeService__GetMetadataFromStageForRegistry__String_String_String();
-
-		/**
-		 * The meta object literal for the '<em><b>Get Metadata From Final Stage For Registry</b></em>' operation.
-		 * <!-- begin-user-doc -->
-		 * <!-- end-user-doc -->
-		 * @generated
-		 */
-		EOperation SCOPE_SERVICE___GET_METADATA_FROM_FINAL_STAGE_FOR_REGISTRY__STRING_STRING = eINSTANCE.getScopeService__GetMetadataFromFinalStageForRegistry__String_String();
-
-		/**
-		 * The meta object literal for the '<em><b>Get Content From Stage For Registry</b></em>' operation.
-		 * <!-- begin-user-doc -->
-		 * <!-- end-user-doc -->
-		 * @generated
-		 */
-		EOperation SCOPE_SERVICE___GET_CONTENT_FROM_STAGE_FOR_REGISTRY__STRING_STRING_STRING = eINSTANCE.getScopeService__GetContentFromStageForRegistry__String_String_String();
-
-		/**
-		 * The meta object literal for the '<em><b>Update In Stage For Registry</b></em>' operation.
-		 * <!-- begin-user-doc -->
-		 * <!-- end-user-doc -->
-		 * @generated
-		 */
-		EOperation SCOPE_SERVICE___UPDATE_IN_STAGE_FOR_REGISTRY__STRING_STRING_EOBJECT_STRING_STRING = eINSTANCE.getScopeService__UpdateInStageForRegistry__String_String_EObject_String_String();
-
-		/**
-		 * The meta object literal for the '<em><b>Delete From Stage For Registry</b></em>' operation.
-		 * <!-- begin-user-doc -->
-		 * <!-- end-user-doc -->
-		 * @generated
-		 */
-		EOperation SCOPE_SERVICE___DELETE_FROM_STAGE_FOR_REGISTRY__STRING_STRING_STRING = eINSTANCE.getScopeService__DeleteFromStageForRegistry__String_String_String();
-
-		/**
-		 * The meta object literal for the '<em><b>List In Stage For Registry</b></em>' operation.
-		 * <!-- begin-user-doc -->
-		 * <!-- end-user-doc -->
-		 * @generated
-		 */
-		EOperation SCOPE_SERVICE___LIST_IN_STAGE_FOR_REGISTRY__STRING_STRING = eINSTANCE.getScopeService__ListInStageForRegistry__String_String();
-
-		/**
-		 * The meta object literal for the '<em><b>List In Stage For Registry By Name</b></em>' operation.
-		 * <!-- begin-user-doc -->
-		 * <!-- end-user-doc -->
-		 * @generated
-		 */
-		EOperation SCOPE_SERVICE___LIST_IN_STAGE_FOR_REGISTRY_BY_NAME__STRING_STRING_STRING = eINSTANCE.getScopeService__ListInStageForRegistryByName__String_String_String();
-
-		/**
-		 * The meta object literal for the '<em><b>List In Final Stage For Registry</b></em>' operation.
-		 * <!-- begin-user-doc -->
-		 * <!-- end-user-doc -->
-		 * @generated
-		 */
-		EOperation SCOPE_SERVICE___LIST_IN_FINAL_STAGE_FOR_REGISTRY__STRING = eINSTANCE.getScopeService__ListInFinalStageForRegistry__String();
-
-		/**
-		 * The meta object literal for the '<em><b>List All For Registry</b></em>' operation.
-		 * <!-- begin-user-doc -->
-		 * <!-- end-user-doc -->
-		 * @generated
-		 */
-		EOperation SCOPE_SERVICE___LIST_ALL_FOR_REGISTRY__STRING = eINSTANCE.getScopeService__ListAllForRegistry__String();
-
-		/**
-		 * The meta object literal for the '<em><b>Transition To Stage For Registry</b></em>' operation.
-		 * <!-- begin-user-doc -->
-		 * <!-- end-user-doc -->
-		 * @generated
-		 */
-		EOperation SCOPE_SERVICE___TRANSITION_TO_STAGE_FOR_REGISTRY__STRING_STRING_STRING_STRING = eINSTANCE.getScopeService__TransitionToStageForRegistry__String_String_String_String();
-
-		/**
-		 * The meta object literal for the '<em><b>Is Valid Registry</b></em>' operation.
-		 * <!-- begin-user-doc -->
-		 * <!-- end-user-doc -->
-		 * @generated
-		 */
-		EOperation SCOPE_SERVICE___IS_VALID_REGISTRY__STRING = eINSTANCE.getScopeService__IsValidRegistry__String();
-
-		/**
-		 * The meta object literal for the '<em><b>Get All Registries</b></em>' operation.
-		 * <!-- begin-user-doc -->
-		 * <!-- end-user-doc -->
-		 * @generated
-		 */
-		EOperation SCOPE_SERVICE___GET_ALL_REGISTRIES = eINSTANCE.getScopeService__GetAllRegistries();
-
-		/**
-		 * The meta object literal for the '<em><b>Get Scope</b></em>' operation.
-		 * <!-- begin-user-doc -->
-		 * <!-- end-user-doc -->
-		 * @generated
-		 */
-		EOperation SCOPE_SERVICE___GET_SCOPE = eINSTANCE.getScopeService__GetScope();
 
 		/**
 		 * The meta object literal for the '{@link org.eclipse.fennec.model.atlas.wf.workflowapi.impl.StageImpl <em>Stage</em>}' class.
@@ -1982,30 +2101,6 @@ public interface WorkflowApiPackage extends org.eclipse.emf.ecore.EPackage {
 		EClass REGISTRY = eINSTANCE.getRegistry();
 
 		/**
-		 * The meta object literal for the '<em><b>Name</b></em>' attribute feature.
-		 * <!-- begin-user-doc -->
-		 * <!-- end-user-doc -->
-		 * @generated
-		 */
-		EAttribute REGISTRY__NAME = eINSTANCE.getRegistry_Name();
-
-		/**
-		 * The meta object literal for the '<em><b>Description</b></em>' attribute feature.
-		 * <!-- begin-user-doc -->
-		 * <!-- end-user-doc -->
-		 * @generated
-		 */
-		EAttribute REGISTRY__DESCRIPTION = eINSTANCE.getRegistry_Description();
-
-		/**
-		 * The meta object literal for the '<em><b>Type</b></em>' attribute feature.
-		 * <!-- begin-user-doc -->
-		 * <!-- end-user-doc -->
-		 * @generated
-		 */
-		EAttribute REGISTRY__TYPE = eINSTANCE.getRegistry_Type();
-
-		/**
 		 * The meta object literal for the '<em><b>Stages</b></em>' containment reference list feature.
 		 * <!-- begin-user-doc -->
 		 * <!-- end-user-doc -->
@@ -2030,38 +2125,6 @@ public interface WorkflowApiPackage extends org.eclipse.emf.ecore.EPackage {
 		 * @generated
 		 */
 		EClass SCOPE = eINSTANCE.getScope();
-
-		/**
-		 * The meta object literal for the '<em><b>Name</b></em>' attribute feature.
-		 * <!-- begin-user-doc -->
-		 * <!-- end-user-doc -->
-		 * @generated
-		 */
-		EAttribute SCOPE__NAME = eINSTANCE.getScope_Name();
-
-		/**
-		 * The meta object literal for the '<em><b>Description</b></em>' attribute feature.
-		 * <!-- begin-user-doc -->
-		 * <!-- end-user-doc -->
-		 * @generated
-		 */
-		EAttribute SCOPE__DESCRIPTION = eINSTANCE.getScope_Description();
-
-		/**
-		 * The meta object literal for the '<em><b>Parent Scope</b></em>' attribute feature.
-		 * <!-- begin-user-doc -->
-		 * <!-- end-user-doc -->
-		 * @generated
-		 */
-		EAttribute SCOPE__PARENT_SCOPE = eINSTANCE.getScope_ParentScope();
-
-		/**
-		 * The meta object literal for the '<em><b>Registries</b></em>' containment reference list feature.
-		 * <!-- begin-user-doc -->
-		 * <!-- end-user-doc -->
-		 * @generated
-		 */
-		EReference SCOPE__REGISTRIES = eINSTANCE.getScope_Registries();
 
 		/**
 		 * The meta object literal for the '{@link org.eclipse.fennec.model.atlas.wf.workflowapi.impl.StageTransitionImpl <em>Stage Transition</em>}' class.
@@ -2090,14 +2153,126 @@ public interface WorkflowApiPackage extends org.eclipse.emf.ecore.EPackage {
 		EAttribute STAGE_TRANSITION__TO_STAGE = eINSTANCE.getStageTransition_ToStage();
 
 		/**
-		 * The meta object literal for the '{@link org.eclipse.fennec.model.atlas.wf.workflowapi.RegistryType <em>Registry Type</em>}' enum.
+		 * The meta object literal for the '{@link org.eclipse.fennec.model.atlas.wf.workflowapi.WritableScopeService <em>Writable Scope Service</em>}' class.
 		 * <!-- begin-user-doc -->
 		 * <!-- end-user-doc -->
-		 * @see org.eclipse.fennec.model.atlas.wf.workflowapi.RegistryType
-		 * @see org.eclipse.fennec.model.atlas.wf.workflowapi.impl.WorkflowApiPackageImpl#getRegistryType()
+		 * @see org.eclipse.fennec.model.atlas.wf.workflowapi.WritableScopeService
+		 * @see org.eclipse.fennec.model.atlas.wf.workflowapi.impl.WorkflowApiPackageImpl#getWritableScopeService()
 		 * @generated
 		 */
-		EEnum REGISTRY_TYPE = eINSTANCE.getRegistryType();
+		EClass WRITABLE_SCOPE_SERVICE = eINSTANCE.getWritableScopeService();
+
+		/**
+		 * The meta object literal for the '<em><b>Upload To Stage For Registry</b></em>' operation.
+		 * <!-- begin-user-doc -->
+		 * <!-- end-user-doc -->
+		 * @generated
+		 */
+		EOperation WRITABLE_SCOPE_SERVICE___UPLOAD_TO_STAGE_FOR_REGISTRY__STRING_STRING_EOBJECT_OBJECTMETADATA = eINSTANCE.getWritableScopeService__UploadToStageForRegistry__String_String_EObject_ObjectMetadata();
+
+		/**
+		 * The meta object literal for the '<em><b>Get Metadata From Stage For Registry</b></em>' operation.
+		 * <!-- begin-user-doc -->
+		 * <!-- end-user-doc -->
+		 * @generated
+		 */
+		EOperation WRITABLE_SCOPE_SERVICE___GET_METADATA_FROM_STAGE_FOR_REGISTRY__STRING_STRING_STRING = eINSTANCE.getWritableScopeService__GetMetadataFromStageForRegistry__String_String_String();
+
+		/**
+		 * The meta object literal for the '<em><b>Get Metadata From Final Stage For Registry</b></em>' operation.
+		 * <!-- begin-user-doc -->
+		 * <!-- end-user-doc -->
+		 * @generated
+		 */
+		EOperation WRITABLE_SCOPE_SERVICE___GET_METADATA_FROM_FINAL_STAGE_FOR_REGISTRY__STRING_STRING = eINSTANCE.getWritableScopeService__GetMetadataFromFinalStageForRegistry__String_String();
+
+		/**
+		 * The meta object literal for the '<em><b>Get Content From Stage For Registry</b></em>' operation.
+		 * <!-- begin-user-doc -->
+		 * <!-- end-user-doc -->
+		 * @generated
+		 */
+		EOperation WRITABLE_SCOPE_SERVICE___GET_CONTENT_FROM_STAGE_FOR_REGISTRY__STRING_STRING_STRING = eINSTANCE.getWritableScopeService__GetContentFromStageForRegistry__String_String_String();
+
+		/**
+		 * The meta object literal for the '<em><b>Update In Stage For Registry</b></em>' operation.
+		 * <!-- begin-user-doc -->
+		 * <!-- end-user-doc -->
+		 * @generated
+		 */
+		EOperation WRITABLE_SCOPE_SERVICE___UPDATE_IN_STAGE_FOR_REGISTRY__STRING_STRING_EOBJECT_STRING_STRING = eINSTANCE.getWritableScopeService__UpdateInStageForRegistry__String_String_EObject_String_String();
+
+		/**
+		 * The meta object literal for the '<em><b>Delete From Stage For Registry</b></em>' operation.
+		 * <!-- begin-user-doc -->
+		 * <!-- end-user-doc -->
+		 * @generated
+		 */
+		EOperation WRITABLE_SCOPE_SERVICE___DELETE_FROM_STAGE_FOR_REGISTRY__STRING_STRING_STRING = eINSTANCE.getWritableScopeService__DeleteFromStageForRegistry__String_String_String();
+
+		/**
+		 * The meta object literal for the '<em><b>List In Stage For Registry</b></em>' operation.
+		 * <!-- begin-user-doc -->
+		 * <!-- end-user-doc -->
+		 * @generated
+		 */
+		EOperation WRITABLE_SCOPE_SERVICE___LIST_IN_STAGE_FOR_REGISTRY__STRING_STRING = eINSTANCE.getWritableScopeService__ListInStageForRegistry__String_String();
+
+		/**
+		 * The meta object literal for the '<em><b>List In Stage For Registry By Name</b></em>' operation.
+		 * <!-- begin-user-doc -->
+		 * <!-- end-user-doc -->
+		 * @generated
+		 */
+		EOperation WRITABLE_SCOPE_SERVICE___LIST_IN_STAGE_FOR_REGISTRY_BY_NAME__STRING_STRING_STRING = eINSTANCE.getWritableScopeService__ListInStageForRegistryByName__String_String_String();
+
+		/**
+		 * The meta object literal for the '<em><b>List In Final Stage For Registry</b></em>' operation.
+		 * <!-- begin-user-doc -->
+		 * <!-- end-user-doc -->
+		 * @generated
+		 */
+		EOperation WRITABLE_SCOPE_SERVICE___LIST_IN_FINAL_STAGE_FOR_REGISTRY__STRING = eINSTANCE.getWritableScopeService__ListInFinalStageForRegistry__String();
+
+		/**
+		 * The meta object literal for the '<em><b>List All For Registry</b></em>' operation.
+		 * <!-- begin-user-doc -->
+		 * <!-- end-user-doc -->
+		 * @generated
+		 */
+		EOperation WRITABLE_SCOPE_SERVICE___LIST_ALL_FOR_REGISTRY__STRING = eINSTANCE.getWritableScopeService__ListAllForRegistry__String();
+
+		/**
+		 * The meta object literal for the '<em><b>Transition To Stage For Registry</b></em>' operation.
+		 * <!-- begin-user-doc -->
+		 * <!-- end-user-doc -->
+		 * @generated
+		 */
+		EOperation WRITABLE_SCOPE_SERVICE___TRANSITION_TO_STAGE_FOR_REGISTRY__STRING_STRING_STRING_STRING = eINSTANCE.getWritableScopeService__TransitionToStageForRegistry__String_String_String_String();
+
+		/**
+		 * The meta object literal for the '<em><b>Is Valid Registry</b></em>' operation.
+		 * <!-- begin-user-doc -->
+		 * <!-- end-user-doc -->
+		 * @generated
+		 */
+		EOperation WRITABLE_SCOPE_SERVICE___IS_VALID_REGISTRY__STRING = eINSTANCE.getWritableScopeService__IsValidRegistry__String();
+
+		/**
+		 * The meta object literal for the '<em><b>Get All Registries</b></em>' operation.
+		 * <!-- begin-user-doc -->
+		 * <!-- end-user-doc -->
+		 * @generated
+		 */
+		EOperation WRITABLE_SCOPE_SERVICE___GET_ALL_REGISTRIES = eINSTANCE.getWritableScopeService__GetAllRegistries();
+
+		/**
+		 * The meta object literal for the '<em><b>Get Scope</b></em>' operation.
+		 * <!-- begin-user-doc -->
+		 * <!-- end-user-doc -->
+		 * @generated
+		 */
+		EOperation WRITABLE_SCOPE_SERVICE___GET_SCOPE = eINSTANCE.getWritableScopeService__GetScope();
 
 	}
 

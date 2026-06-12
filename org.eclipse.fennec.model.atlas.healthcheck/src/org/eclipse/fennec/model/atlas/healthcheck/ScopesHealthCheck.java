@@ -19,6 +19,7 @@ import java.util.StringJoiner;
 import org.apache.felix.hc.api.FormattingResultLog;
 import org.apache.felix.hc.api.HealthCheck;
 import org.apache.felix.hc.api.Result;
+import org.eclipse.fennec.model.atlas.scope.api.RegistryInfo;
 import org.eclipse.fennec.model.atlas.wf.workflowapi.Registry;
 import org.eclipse.fennec.model.atlas.wf.workflowapi.Scope;
 import org.eclipse.fennec.model.atlas.wf.workflowapi.ScopeService;
@@ -48,9 +49,9 @@ public class ScopesHealthCheck implements HealthCheck {
         } else {
             for (ScopeService<?> scopeService : scopesServices) {
                 Scope scope = scopeService.getScope();
-                List<Registry> registries = scope.getRegistries();
+                List<RegistryInfo> registries = scope.getRegistries();
                 if (registries != null && !registries.isEmpty()) {
-                    registries.forEach(r -> {
+                    registries.stream().filter(r -> r instanceof Registry).map(r -> (Registry) r).forEach(r -> {
                 	StringJoiner stages = new StringJoiner(", ");
                 	r.getStages().stream().map(Stage::getName).forEach(stages::add);
                 	log.info("scope: {} with Registry: {} Description: {} and Stages : {} available", scope.getName(), r.getName(), r.getDescription(), stages);

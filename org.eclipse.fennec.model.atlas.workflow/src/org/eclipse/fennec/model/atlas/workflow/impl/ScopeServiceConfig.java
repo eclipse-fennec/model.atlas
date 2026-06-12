@@ -37,5 +37,8 @@ public @interface ScopeServiceConfig {
             + "and no operation will be possible for the scope.", required = false, defaultValue = "(scope=no-inject)")
     String registryService_target() default "(scope=no-inject)";
     
+    @AttributeDefinition(name = "Scope Name", description = "This will replace in the long run the scope_name property", required = true)
+    String atlas_scope();
+    
 
 }

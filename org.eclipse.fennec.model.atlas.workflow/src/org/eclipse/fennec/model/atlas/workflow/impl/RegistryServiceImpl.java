@@ -38,9 +38,9 @@ import org.eclipse.fennec.model.atlas.mgmt.api.EObjectRegistryService;
 import org.eclipse.fennec.model.atlas.mgmt.api.EObjectStorageService;
 import org.eclipse.fennec.model.atlas.mgmt.management.ManagementPackage;
 import org.eclipse.fennec.model.atlas.mgmt.management.ObjectMetadata;
+import org.eclipse.fennec.model.atlas.scope.api.RegistryType;
 import org.eclipse.fennec.model.atlas.wf.workflowapi.Registry;
 import org.eclipse.fennec.model.atlas.wf.workflowapi.RegistryService;
-import org.eclipse.fennec.model.atlas.wf.workflowapi.RegistryType;
 import org.eclipse.fennec.model.atlas.wf.workflowapi.Stage;
 import org.eclipse.fennec.model.atlas.wf.workflowapi.StageTransition;
 import org.eclipse.fennec.model.atlas.wf.workflowapi.WorkflowApiFactory;
@@ -215,6 +215,16 @@ public class RegistryServiceImpl<T extends EObject> implements RegistryService<T
         return WorkflowServiceHelper
                 .getPromiseValue(storageService.retrieveObject(scope, config.registry_name(), stage, objectId));
     }
+    
+	/* 
+	 * (non-Javadoc)
+	 * @see org.eclipse.fennec.model.atlas.wf.workflowapi.RegistryService#getContentFromFinalStage(java.lang.String, java.lang.String)
+	 */
+	@Override
+	public T getContentFromFinalStage(String scope, String objectId) {
+		Stage finalStage = stages.stream().filter(s -> s.isFinal()).findFirst().get();
+		return getContentFromStage(scope, finalStage.getName(), objectId);
+	}
 
     /*
      * (non-Javadoc)
@@ -669,6 +679,8 @@ public class RegistryServiceImpl<T extends EObject> implements RegistryService<T
                     + " failed for " + event + " on " + ctx.objectId(), t));
         });
     }
+
+
 
 	
 

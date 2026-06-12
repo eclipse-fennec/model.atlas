@@ -30,7 +30,7 @@
 	org.eclipse.fennec.model.atlas.management.lucene;version=snapshot,\
 	org.eclipse.fennec.model.atlas.rest.common;version=snapshot,\
 	org.eclipse.fennec.codec.rest;version=latest,\
-
+	org.eclipse.fennec.model.atlas.scope.api;version=snapshot
 # Hard runtime requirement on the Model Atlas scoped-resource-set
 # filter (provided by org.eclipse.fennec.model.atlas.rest.filter).
 # Without this, the @Context ResourceSet injection would not see the
