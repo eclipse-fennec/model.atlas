@@ -34,6 +34,7 @@ Fennec Model Atlas is a dynamic EMF model management system that provides a REST
   - [Scope Configuration](#scope-configuration)
   - [Registry Configuration](#registry-configuration)
   - [Storage Backend Configuration](#storage-backend-configuration)
+- [Bootstrapping Initial Models](#bootstrapping-initial-models)
 - [Further Reading](#further-reading)
 
 ---
@@ -80,6 +81,7 @@ This starts the full stack:
 | `STORAGE_ROOT` | `/tmp/mac` | File | Root directory for file-based storage |
 | `APICURIO_HOST` | `localhost` | Apicurio | Hostname of the Apicurio Registry |
 | `APICURIO_PORT` | `8081` | Apicurio | Port of the Apicurio Registry |
+| `INITIAL_MODELS_FOLDER` | `/initial-models` | Both | Folder scanned once on startup to seed initial models. See [Bootstrapping Initial Models](#bootstrapping-initial-models) |
 
 > For more details on Docker setup, see the variant-specific documentation:
 > - [Docker Apicurio variant](../docker/modelatlas_apicurio/README.md)
@@ -900,6 +902,91 @@ Storage backends are configured independently and referenced by `storage.type`:
 
 ---
 
+## Bootstrapping Initial Models
+
+A fresh Model Atlas instance starts with no user models. To seed it with a baseline
+set of schemas (and transformations) without manual REST uploads, use the
+**Initial Model Loader** (`InitialModelLoader`). It scans a configured folder **once
+on startup** and registers everything it finds, making those models immediately
+available through the atlas scope and every scope that inherits from it.
+
+This is a **one-shot bootstrap**, not a live watcher: it runs when the component
+activates and does not react to later changes in the folder. (The runtime
+`EMFFileWatcher`, which continuously monitors the `workspace/` directory, is a
+separate mechanism.)
+
+### Supported file types
+
+The folder is scanned **recursively**; files are handled by extension:
+
+| Extension | Handling |
+|-----------|----------|
+| `.ecore` | Loaded as an Ecore model. The root `EPackage` and any sub-packages are registered. |
+| `.jsonschema` | Converted to an `EPackage` via the Fennec JSON-Schema codec (the schema's `definitions` are expanded into classifiers). |
+| `.qvto` | Registered as a `QVTModelTransformator` factory configuration (the parent folder name becomes the transformator id). |
+
+Other file types are ignored. Cross-references **between** the loaded files are
+resolved, so multiple `.ecore`/`.jsonschema` files may reference each other by
+namespace URI. If two files declare the same `nsUri` (or an `nsUri` is already
+registered), startup **fails fast** so the conflict is caught immediately.
+
+The loaded packages register in the static EMF `EPackage.Registry`, so they show up
+as **read-only** entries in the built-in [atlas-schema-registry](#the-atlas-schema-registry)
+— exactly like models shipped in OSGi bundles — and are visible to all scopes whose
+ancestor chain reaches `atlas`.
+
+### Configuration
+
+The loader is configured via the `InitialModelLoader` PID:
+
+| Property | Default | Description |
+|----------|---------|-------------|
+| `initial.models.folder` | `/initial-models` | Folder scanned once on startup. |
+
+The loader silently does nothing when the folder is blank, missing, not a directory,
+or still contains an un-interpolated `$[env:...]` template.
+
+### Using it with Docker
+
+The Docker runtime wires the folder to the `INITIAL_MODELS_FOLDER` environment
+variable, so you only need to set that variable and mount your models at the
+matching path. The provided `docker-compose-file.yml` already does this:
+
+```yaml
+services:
+  model-atlas:
+    image: eclipsefennec/model.atlas:file-snapshot
+    ports:
+      - "8080:8080"
+    environment:
+      # Path inside the container scanned once on startup.
+      # Remove this to disable initial model loading.
+      - INITIAL_MODELS_FOLDER=/initial-models
+    volumes:
+      # Mount a host folder with the models to deploy on first start.
+      - ./initial-models:/initial-models:ro
+```
+
+An example layout for the mounted folder:
+
+```
+initial-models/
+├── billing.ecore
+├── sensors.jsonschema
+└── billing-to-report/        # folder name becomes the transformator id
+    └── transform.qvto
+```
+
+After startup, the seeded schemas are listable just like any other system schema:
+
+```bash
+curl http://localhost:8080/rest/atlas/schema
+```
+
+> Full component reference: [Initial Model Bootstrap README](../org.eclipse.fennec.model.atlas.bootstrap/README.md)
+
+---
+
 ## Further Reading
 
 ### API Documentation (detailed endpoint reference)
@@ -921,6 +1008,7 @@ Storage backends are configured independently and referenced by `storage.type`:
 ### Internal Components
 - [Workflow / ScopeService](../org.eclipse.fennec.model.atlas.workflow/README.md) - Workflow service internals and configuration
 - [Apicurio Storage](../org.eclipse.fennec.model.atlas.management.apicurio/README.md) - Apicurio Registry integration details
+- [Initial Model Bootstrap](../org.eclipse.fennec.model.atlas.bootstrap/README.md) - One-shot loader that seeds models on startup
 
 ### Docker
 - [Docker Apicurio variant](../docker/modelatlas_apicurio/README.md)

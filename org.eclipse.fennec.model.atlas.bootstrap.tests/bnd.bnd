@@ -1,0 +1,32 @@
+Bundle-Name: Model Atlas - Initial Model Bootstrap Tests
+Bundle-Description: OSGi integration tests for the InitialModelLoader component \
+    in org.eclipse.fennec.model.atlas.bootstrap. Verifies that .ecore / .qvto files \
+    placed in the configured initial-models folder are discovered, registered as \
+    EPackage / EPackageConfigurator services and (for .qvto) as QVTModelTransformator \
+    factory configurations.
+
+Test-Cases: ${classes;HIERARCHY_INDIRECTLY_ANNOTATED;org.junit.platform.commons.annotation.Testable;CONCRETE}
+
+-workingset: atlas
+
+-library: \
+	enableOSGi-Test,\
+	enableEMF
+
+-buildpath: \
+	org.osgi.framework;version=latest,\
+	org.osgi.util.promise;version=latest,\
+	org.osgi.service.cm;version=latest,\
+	org.osgi.service.component;version=latest,\
+	org.osgi.test.junit5.cm;version=latest,\
+	org.eclipse.fennec.emf.osgi.component,\
+	org.eclipse.fennec.model.atlas.emf.common;version=snapshot,\
+	org.eclipse.fennec.model.atlas.bootstrap;version=snapshot
+
+Bundle-Version: 1.0.0.SNAPSHOT
+
+-includeresource: \
+	test-data=test-data/
+
+-dependson: \
+	org.eclipse.fennec.model.atlas.bootstrap

@@ -8,5 +8,8 @@
 		"org.apache.felix.http.context_path": "atlas/",
 		"org.apache.felix.http.name": "atlas",
 		"org.apache.felix.http.runtime.init.id": "atlasHttp"
+	},
+	"InitialModelLoader": {
+		"initial.models.folder": "$[env:INITIAL_MODELS_FOLDER;default=/initial-models]"
 	}
 }

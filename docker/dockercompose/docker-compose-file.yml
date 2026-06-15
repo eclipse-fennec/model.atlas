@@ -3,3 +3,11 @@ services:
     image: eclipsefennec/model.atlas:file-snapshot
     ports:
       - "8080:8080"
+    environment:
+      # Path inside the container that InitialModelLoader scans once on startup
+      # for .ecore / .jsonschema / .qvto files. Override or remove to disable.
+      - INITIAL_MODELS_FOLDER=/initial-models
+    volumes:
+      # Mount a host folder with the models you want deployed on first start.
+      # Replace ./initial-models with the path on your host machine.
+      - ./initial-models:/initial-models:ro

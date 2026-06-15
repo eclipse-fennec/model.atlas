@@ -1,0 +1,381 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ecore:EPackage xmi:version="2.0"
+    xmlns:xmi="http://www.omg.org/XMI"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xmlns:ecore="http://www.eclipse.org/emf/2002/Ecore"
+    name="postgis"
+    nsURI="http://postgis.net/model/3.0"
+    nsPrefix="postgis">
+
+  <!-- ===================================================================== -->
+  <!-- Enumerations                                                          -->
+  <!-- ===================================================================== -->
+
+  <eClassifiers xsi:type="ecore:EEnum" name="Dimension">
+    <eLiterals name="XY" value="0"/>
+    <eLiterals name="XYZ" value="1"/>
+    <eLiterals name="XYM" value="2"/>
+    <eLiterals name="XYZM" value="3"/>
+  </eClassifiers>
+
+  <eClassifiers xsi:type="ecore:EEnum" name="GeometryTypeCode">
+    <eLiterals name="POINT" value="1"/>
+    <eLiterals name="LINESTRING" value="2"/>
+    <eLiterals name="POLYGON" value="3"/>
+    <eLiterals name="MULTIPOINT" value="4"/>
+    <eLiterals name="MULTILINESTRING" value="5"/>
+    <eLiterals name="MULTIPOLYGON" value="6"/>
+    <eLiterals name="GEOMETRYCOLLECTION" value="7"/>
+    <eLiterals name="CIRCULARSTRING" value="8"/>
+    <eLiterals name="COMPOUNDCURVE" value="9"/>
+    <eLiterals name="CURVEPOLYGON" value="10"/>
+    <eLiterals name="MULTICURVE" value="11"/>
+    <eLiterals name="MULTISURFACE" value="12"/>
+    <eLiterals name="POLYHEDRALSURFACE" value="15"/>
+    <eLiterals name="TIN" value="16"/>
+    <eLiterals name="TRIANGLE" value="17"/>
+  </eClassifiers>
+
+  <!-- ===================================================================== -->
+  <!-- Abstract Geometry root                                                -->
+  <!-- ===================================================================== -->
+
+  <eClassifiers xsi:type="ecore:EClass" name="Geometry" abstract="true">
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="srid"
+        eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EInt"
+        defaultValueLiteral="4326"/>
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="dimension"
+        eType="#//Dimension" changeable="false" volatile="true" transient="true"
+        derived="true"/>
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="geometryType"
+        eType="#//GeometryTypeCode" changeable="false" volatile="true"
+        transient="true" derived="true"/>
+  </eClassifiers>
+
+  <!-- ===================================================================== -->
+  <!-- Point hierarchy                                                       -->
+  <!-- ===================================================================== -->
+
+  <eClassifiers xsi:type="ecore:EClass" name="AbstractPoint" abstract="true"
+      eSuperTypes="#//Geometry">
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="x"
+        eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EDouble"
+        lowerBound="1"/>
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="y"
+        eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EDouble"
+        lowerBound="1"/>
+  </eClassifiers>
+
+  <eClassifiers xsi:type="ecore:EClass" name="Point" eSuperTypes="#//AbstractPoint"/>
+
+  <eClassifiers xsi:type="ecore:EClass" name="PointZ" eSuperTypes="#//AbstractPoint">
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="z"
+        eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EDouble"
+        lowerBound="1"/>
+  </eClassifiers>
+
+  <eClassifiers xsi:type="ecore:EClass" name="PointM" eSuperTypes="#//AbstractPoint">
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="m"
+        eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EDouble"
+        lowerBound="1"/>
+  </eClassifiers>
+
+  <eClassifiers xsi:type="ecore:EClass" name="PointZM" eSuperTypes="#//AbstractPoint">
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="z"
+        eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EDouble"
+        lowerBound="1"/>
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="m"
+        eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EDouble"
+        lowerBound="1"/>
+  </eClassifiers>
+
+  <!-- ===================================================================== -->
+  <!-- Curve abstraction                                                     -->
+  <!-- ===================================================================== -->
+
+  <eClassifiers xsi:type="ecore:EClass" name="Curve" abstract="true"
+      eSuperTypes="#//Geometry"/>
+
+  <!-- LineString variants -->
+  <eClassifiers xsi:type="ecore:EClass" name="LineString" eSuperTypes="#//Curve">
+    <eStructuralFeatures xsi:type="ecore:EReference" name="points"
+        upperBound="-1" eType="#//Point" containment="true" lowerBound="2"/>
+  </eClassifiers>
+
+  <eClassifiers xsi:type="ecore:EClass" name="LineStringZ" eSuperTypes="#//Curve">
+    <eStructuralFeatures xsi:type="ecore:EReference" name="points"
+        upperBound="-1" eType="#//PointZ" containment="true" lowerBound="2"/>
+  </eClassifiers>
+
+  <eClassifiers xsi:type="ecore:EClass" name="LineStringM" eSuperTypes="#//Curve">
+    <eStructuralFeatures xsi:type="ecore:EReference" name="points"
+        upperBound="-1" eType="#//PointM" containment="true" lowerBound="2"/>
+  </eClassifiers>
+
+  <eClassifiers xsi:type="ecore:EClass" name="LineStringZM" eSuperTypes="#//Curve">
+    <eStructuralFeatures xsi:type="ecore:EReference" name="points"
+        upperBound="-1" eType="#//PointZM" containment="true" lowerBound="2"/>
+  </eClassifiers>
+
+  <!-- CircularString variants (arc segments – at least 3 points, odd count) -->
+  <eClassifiers xsi:type="ecore:EClass" name="CircularString" eSuperTypes="#//Curve">
+    <eStructuralFeatures xsi:type="ecore:EReference" name="points"
+        upperBound="-1" eType="#//Point" containment="true" lowerBound="3"/>
+  </eClassifiers>
+
+  <eClassifiers xsi:type="ecore:EClass" name="CircularStringZ" eSuperTypes="#//Curve">
+    <eStructuralFeatures xsi:type="ecore:EReference" name="points"
+        upperBound="-1" eType="#//PointZ" containment="true" lowerBound="3"/>
+  </eClassifiers>
+
+  <eClassifiers xsi:type="ecore:EClass" name="CircularStringM" eSuperTypes="#//Curve">
+    <eStructuralFeatures xsi:type="ecore:EReference" name="points"
+        upperBound="-1" eType="#//PointM" containment="true" lowerBound="3"/>
+  </eClassifiers>
+
+  <eClassifiers xsi:type="ecore:EClass" name="CircularStringZM" eSuperTypes="#//Curve">
+    <eStructuralFeatures xsi:type="ecore:EReference" name="points"
+        upperBound="-1" eType="#//PointZM" containment="true" lowerBound="3"/>
+  </eClassifiers>
+
+  <!-- CompoundCurve – sequence of LineString and CircularString segments -->
+  <eClassifiers xsi:type="ecore:EClass" name="CompoundCurve" eSuperTypes="#//Curve">
+    <eStructuralFeatures xsi:type="ecore:EReference" name="segments"
+        upperBound="-1" eType="#//Curve" containment="true" lowerBound="1"/>
+  </eClassifiers>
+
+  <!-- ===================================================================== -->
+  <!-- Surface abstraction                                                   -->
+  <!-- ===================================================================== -->
+
+  <eClassifiers xsi:type="ecore:EClass" name="Surface" abstract="true"
+      eSuperTypes="#//Geometry"/>
+
+  <!-- Linear ring – a closed LineString used by Polygon/Triangle -->
+  <eClassifiers xsi:type="ecore:EClass" name="LinearRing"
+      eSuperTypes="#//LineString"/>
+
+  <eClassifiers xsi:type="ecore:EClass" name="LinearRingZ"
+      eSuperTypes="#//LineStringZ"/>
+
+  <eClassifiers xsi:type="ecore:EClass" name="LinearRingM"
+      eSuperTypes="#//LineStringM"/>
+
+  <eClassifiers xsi:type="ecore:EClass" name="LinearRingZM"
+      eSuperTypes="#//LineStringZM"/>
+
+  <!-- Polygon variants -->
+  <eClassifiers xsi:type="ecore:EClass" name="Polygon" eSuperTypes="#//Surface">
+    <eStructuralFeatures xsi:type="ecore:EReference" name="exterior"
+        eType="#//LinearRing" containment="true" lowerBound="1"/>
+    <eStructuralFeatures xsi:type="ecore:EReference" name="interiors"
+        upperBound="-1" eType="#//LinearRing" containment="true"/>
+  </eClassifiers>
+
+  <eClassifiers xsi:type="ecore:EClass" name="PolygonZ" eSuperTypes="#//Surface">
+    <eStructuralFeatures xsi:type="ecore:EReference" name="exterior"
+        eType="#//LinearRingZ" containment="true" lowerBound="1"/>
+    <eStructuralFeatures xsi:type="ecore:EReference" name="interiors"
+        upperBound="-1" eType="#//LinearRingZ" containment="true"/>
+  </eClassifiers>
+
+  <eClassifiers xsi:type="ecore:EClass" name="PolygonM" eSuperTypes="#//Surface">
+    <eStructuralFeatures xsi:type="ecore:EReference" name="exterior"
+        eType="#//LinearRingM" containment="true" lowerBound="1"/>
+    <eStructuralFeatures xsi:type="ecore:EReference" name="interiors"
+        upperBound="-1" eType="#//LinearRingM" containment="true"/>
+  </eClassifiers>
+
+  <eClassifiers xsi:type="ecore:EClass" name="PolygonZM" eSuperTypes="#//Surface">
+    <eStructuralFeatures xsi:type="ecore:EReference" name="exterior"
+        eType="#//LinearRingZM" containment="true" lowerBound="1"/>
+    <eStructuralFeatures xsi:type="ecore:EReference" name="interiors"
+        upperBound="-1" eType="#//LinearRingZM" containment="true"/>
+  </eClassifiers>
+
+  <!-- Triangle – a Polygon constrained to exactly one ring of 4 points -->
+  <eClassifiers xsi:type="ecore:EClass" name="Triangle"
+      eSuperTypes="#//Polygon"/>
+  <eClassifiers xsi:type="ecore:EClass" name="TriangleZ"
+      eSuperTypes="#//PolygonZ"/>
+  <eClassifiers xsi:type="ecore:EClass" name="TriangleM"
+      eSuperTypes="#//PolygonM"/>
+  <eClassifiers xsi:type="ecore:EClass" name="TriangleZM"
+      eSuperTypes="#//PolygonZM"/>
+
+  <!-- CurvePolygon – polygon whose boundary is made of curves -->
+  <eClassifiers xsi:type="ecore:EClass" name="CurvePolygon" eSuperTypes="#//Surface">
+    <eStructuralFeatures xsi:type="ecore:EReference" name="exterior"
+        eType="#//Curve" containment="true" lowerBound="1"/>
+    <eStructuralFeatures xsi:type="ecore:EReference" name="interiors"
+        upperBound="-1" eType="#//Curve" containment="true"/>
+  </eClassifiers>
+
+  <!-- PolyhedralSurface – collection of polygons sharing edges -->
+  <eClassifiers xsi:type="ecore:EClass" name="PolyhedralSurface"
+      eSuperTypes="#//Surface">
+    <eStructuralFeatures xsi:type="ecore:EReference" name="patches"
+        upperBound="-1" eType="#//Polygon" containment="true" lowerBound="1"/>
+  </eClassifiers>
+
+  <eClassifiers xsi:type="ecore:EClass" name="PolyhedralSurfaceZ"
+      eSuperTypes="#//Surface">
+    <eStructuralFeatures xsi:type="ecore:EReference" name="patches"
+        upperBound="-1" eType="#//PolygonZ" containment="true" lowerBound="1"/>
+  </eClassifiers>
+
+  <eClassifiers xsi:type="ecore:EClass" name="PolyhedralSurfaceM"
+      eSuperTypes="#//Surface">
+    <eStructuralFeatures xsi:type="ecore:EReference" name="patches"
+        upperBound="-1" eType="#//PolygonM" containment="true" lowerBound="1"/>
+  </eClassifiers>
+
+  <eClassifiers xsi:type="ecore:EClass" name="PolyhedralSurfaceZM"
+      eSuperTypes="#//Surface">
+    <eStructuralFeatures xsi:type="ecore:EReference" name="patches"
+        upperBound="-1" eType="#//PolygonZM" containment="true" lowerBound="1"/>
+  </eClassifiers>
+
+  <!-- TIN – Triangulated Irregular Network -->
+  <eClassifiers xsi:type="ecore:EClass" name="TIN" eSuperTypes="#//Surface">
+    <eStructuralFeatures xsi:type="ecore:EReference" name="triangles"
+        upperBound="-1" eType="#//Triangle" containment="true" lowerBound="1"/>
+  </eClassifiers>
+
+  <eClassifiers xsi:type="ecore:EClass" name="TINZ" eSuperTypes="#//Surface">
+    <eStructuralFeatures xsi:type="ecore:EReference" name="triangles"
+        upperBound="-1" eType="#//TriangleZ" containment="true" lowerBound="1"/>
+  </eClassifiers>
+
+  <eClassifiers xsi:type="ecore:EClass" name="TINM" eSuperTypes="#//Surface">
+    <eStructuralFeatures xsi:type="ecore:EReference" name="triangles"
+        upperBound="-1" eType="#//TriangleM" containment="true" lowerBound="1"/>
+  </eClassifiers>
+
+  <eClassifiers xsi:type="ecore:EClass" name="TINZM" eSuperTypes="#//Surface">
+    <eStructuralFeatures xsi:type="ecore:EReference" name="triangles"
+        upperBound="-1" eType="#//TriangleZM" containment="true" lowerBound="1"/>
+  </eClassifiers>
+
+  <!-- ===================================================================== -->
+  <!-- GeometryCollection and Multi* hierarchies                             -->
+  <!-- ===================================================================== -->
+
+  <eClassifiers xsi:type="ecore:EClass" name="GeometryCollection"
+      eSuperTypes="#//Geometry">
+    <eStructuralFeatures xsi:type="ecore:EReference" name="geometries"
+        upperBound="-1" eType="#//Geometry" containment="true"/>
+  </eClassifiers>
+
+  <!-- MultiPoint variants -->
+  <eClassifiers xsi:type="ecore:EClass" name="MultiPoint"
+      eSuperTypes="#//GeometryCollection">
+    <eStructuralFeatures xsi:type="ecore:EReference" name="elements"
+        upperBound="-1" eType="#//Point" containment="true"/>
+  </eClassifiers>
+
+  <eClassifiers xsi:type="ecore:EClass" name="MultiPointZ"
+      eSuperTypes="#//GeometryCollection">
+    <eStructuralFeatures xsi:type="ecore:EReference" name="elements"
+        upperBound="-1" eType="#//PointZ" containment="true"/>
+  </eClassifiers>
+
+  <eClassifiers xsi:type="ecore:EClass" name="MultiPointM"
+      eSuperTypes="#//GeometryCollection">
+    <eStructuralFeatures xsi:type="ecore:EReference" name="elements"
+        upperBound="-1" eType="#//PointM" containment="true"/>
+  </eClassifiers>
+
+  <eClassifiers xsi:type="ecore:EClass" name="MultiPointZM"
+      eSuperTypes="#//GeometryCollection">
+    <eStructuralFeatures xsi:type="ecore:EReference" name="elements"
+        upperBound="-1" eType="#//PointZM" containment="true"/>
+  </eClassifiers>
+
+  <!-- MultiLineString variants -->
+  <eClassifiers xsi:type="ecore:EClass" name="MultiLineString"
+      eSuperTypes="#//GeometryCollection">
+    <eStructuralFeatures xsi:type="ecore:EReference" name="elements"
+        upperBound="-1" eType="#//LineString" containment="true"/>
+  </eClassifiers>
+
+  <eClassifiers xsi:type="ecore:EClass" name="MultiLineStringZ"
+      eSuperTypes="#//GeometryCollection">
+    <eStructuralFeatures xsi:type="ecore:EReference" name="elements"
+        upperBound="-1" eType="#//LineStringZ" containment="true"/>
+  </eClassifiers>
+
+  <eClassifiers xsi:type="ecore:EClass" name="MultiLineStringM"
+      eSuperTypes="#//GeometryCollection">
+    <eStructuralFeatures xsi:type="ecore:EReference" name="elements"
+        upperBound="-1" eType="#//LineStringM" containment="true"/>
+  </eClassifiers>
+
+  <eClassifiers xsi:type="ecore:EClass" name="MultiLineStringZM"
+      eSuperTypes="#//GeometryCollection">
+    <eStructuralFeatures xsi:type="ecore:EReference" name="elements"
+        upperBound="-1" eType="#//LineStringZM" containment="true"/>
+  </eClassifiers>
+
+  <!-- MultiPolygon variants -->
+  <eClassifiers xsi:type="ecore:EClass" name="MultiPolygon"
+      eSuperTypes="#//GeometryCollection">
+    <eStructuralFeatures xsi:type="ecore:EReference" name="elements"
+        upperBound="-1" eType="#//Polygon" containment="true"/>
+  </eClassifiers>
+
+  <eClassifiers xsi:type="ecore:EClass" name="MultiPolygonZ"
+      eSuperTypes="#//GeometryCollection">
+    <eStructuralFeatures xsi:type="ecore:EReference" name="elements"
+        upperBound="-1" eType="#//PolygonZ" containment="true"/>
+  </eClassifiers>
+
+  <eClassifiers xsi:type="ecore:EClass" name="MultiPolygonM"
+      eSuperTypes="#//GeometryCollection">
+    <eStructuralFeatures xsi:type="ecore:EReference" name="elements"
+        upperBound="-1" eType="#//PolygonM" containment="true"/>
+  </eClassifiers>
+
+  <eClassifiers xsi:type="ecore:EClass" name="MultiPolygonZM"
+      eSuperTypes="#//GeometryCollection">
+    <eStructuralFeatures xsi:type="ecore:EReference" name="elements"
+        upperBound="-1" eType="#//PolygonZM" containment="true"/>
+  </eClassifiers>
+
+  <!-- MultiCurve – arbitrary collection of curves -->
+  <eClassifiers xsi:type="ecore:EClass" name="MultiCurve"
+      eSuperTypes="#//GeometryCollection">
+    <eStructuralFeatures xsi:type="ecore:EReference" name="elements"
+        upperBound="-1" eType="#//Curve" containment="true"/>
+  </eClassifiers>
+
+  <!-- MultiSurface – arbitrary collection of surfaces -->
+  <eClassifiers xsi:type="ecore:EClass" name="MultiSurface"
+      eSuperTypes="#//GeometryCollection">
+    <eStructuralFeatures xsi:type="ecore:EReference" name="elements"
+        upperBound="-1" eType="#//Surface" containment="true"/>
+  </eClassifiers>
+
+  <!-- ===================================================================== -->
+  <!-- Bounding boxes (PostGIS helper types)                                 -->
+  <!-- ===================================================================== -->
+
+  <eClassifiers xsi:type="ecore:EClass" name="Box2D">
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="xmin"
+        eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EDouble"/>
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="ymin"
+        eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EDouble"/>
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="xmax"
+        eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EDouble"/>
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="ymax"
+        eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EDouble"/>
+  </eClassifiers>
+
+  <eClassifiers xsi:type="ecore:EClass" name="Box3D" eSuperTypes="#//Box2D">
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="zmin"
+        eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EDouble"/>
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="zmax"
+        eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EDouble"/>
+  </eClassifiers>
+
+</ecore:EPackage>
