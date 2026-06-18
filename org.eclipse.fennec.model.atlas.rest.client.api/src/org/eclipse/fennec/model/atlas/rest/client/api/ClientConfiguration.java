@@ -33,9 +33,6 @@ import java.util.Objects;
  */
 public final class ClientConfiguration {
 
-	/** Default stage view the client reads from when {@code view} is not set. */
-	public static final String DEFAULT_VIEW = "released";
-
 	/** Default key/trust store type when not configured. */
 	public static final String DEFAULT_STORE_TYPE = "PKCS12";
 
@@ -54,7 +51,6 @@ public final class ClientConfiguration {
 	private final int driftCheckIntervalMs;
 	private final List<String> scopeAllowList;
 	private final String defaultScope;
-	private final String view;
 	private final int cacheMaxEntries;
 	private final int cacheTtlMs;
 	private final String cacheDiskDir;
@@ -85,7 +81,6 @@ public final class ClientConfiguration {
 		this.driftCheckIntervalMs = b.driftCheckIntervalMs;
 		this.scopeAllowList = b.scopeAllowList;
 		this.defaultScope = b.defaultScope;
-		this.view = b.view;
 		this.cacheMaxEntries = b.cacheMaxEntries;
 		this.cacheTtlMs = b.cacheTtlMs;
 		this.cacheDiskDir = b.cacheDiskDir;
@@ -184,17 +179,6 @@ public final class ClientConfiguration {
 	/** {@code default.scope} — scope used for anonymous EPackage lookup; may be {@code null}. */
 	public String getDefaultScope() {
 		return defaultScope;
-	}
-
-	/**
-	 * {@code view} — the stage the client reads packages from (schema list +
-	 * content GET); default {@link #DEFAULT_VIEW}. The server stage name is not
-	 * fixed, so this is configurable rather than assuming {@code "released"}.
-	 * Stamped as {@code atlas.view} on services published by the OSGi front-end
-	 * (Phase 3).
-	 */
-	public String getView() {
-		return view;
 	}
 
 	/** {@code cache.max.entries} — LRU bound; default {@code 500}. */
@@ -299,7 +283,6 @@ public final class ClientConfiguration {
 				&& nsUriDenyList.equals(that.nsUriDenyList)
 				&& scopeAllowList.equals(that.scopeAllowList)
 				&& Objects.equals(defaultScope, that.defaultScope)
-				&& view.equals(that.view)
 				&& Objects.equals(cacheDiskDir, that.cacheDiskDir)
 				&& authType == that.authType
 				&& Objects.equals(authTokenEnv, that.authTokenEnv)
@@ -315,14 +298,14 @@ public final class ClientConfiguration {
 	public int hashCode() {
 		return Objects.hash(baseUri, connectTimeoutMs, readTimeoutMs, mode, eagerScopes, eagerStages,
 				eagerNsUriAllowList, modeStrict, nsUriAllowList, nsUriDenyList, forceRemote,
-				registerInGlobalRegistry, driftCheckIntervalMs, scopeAllowList, defaultScope, view, cacheMaxEntries,
+				registerInGlobalRegistry, driftCheckIntervalMs, scopeAllowList, defaultScope, cacheMaxEntries,
 				cacheTtlMs, cacheDiskDir, authType, authTokenEnv, keystorePath, keystorePassword, keystoreType,
 				truststorePath, truststorePassword, truststoreType, lazyResolveTimeoutMs, resourceSetFallback);
 	}
 
 	@Override
 	public String toString() {
-		return "ClientConfiguration[baseUri=" + baseUri + ", mode=" + mode + ", view=" + view + ", authType="
+		return "ClientConfiguration[baseUri=" + baseUri + ", mode=" + mode + ", authType="
 				+ authType + ", cacheMaxEntries=" + cacheMaxEntries + ", driftCheckIntervalMs=" + driftCheckIntervalMs
 				+ "]";
 	}
@@ -348,7 +331,6 @@ public final class ClientConfiguration {
 		private int driftCheckIntervalMs = 300_000;
 		private List<String> scopeAllowList = List.of();
 		private String defaultScope;
-		private String view = DEFAULT_VIEW;
 		private int cacheMaxEntries = 500;
 		private int cacheTtlMs = 0;
 		private String cacheDiskDir;
@@ -383,7 +365,6 @@ public final class ClientConfiguration {
 			this.driftCheckIntervalMs = from.driftCheckIntervalMs;
 			this.scopeAllowList = from.scopeAllowList;
 			this.defaultScope = from.defaultScope;
-			this.view = from.view;
 			this.cacheMaxEntries = from.cacheMaxEntries;
 			this.cacheTtlMs = from.cacheTtlMs;
 			this.cacheDiskDir = from.cacheDiskDir;
@@ -471,11 +452,6 @@ public final class ClientConfiguration {
 
 		public Builder defaultScope(String defaultScope) {
 			this.defaultScope = defaultScope;
-			return this;
-		}
-
-		public Builder view(String view) {
-			this.view = Objects.requireNonNull(view, "view");
 			return this;
 		}
 

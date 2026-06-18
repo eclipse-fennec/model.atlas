@@ -73,7 +73,9 @@ try (ModelAtlasClient client = ModelAtlasClient.builder()
 | Method | What it does |
 |---|---|
 | `listScopeNames()` | `GET /scopes` — the scope names the server exposes |
-| `ePackages()` | the cache-fronted `RemoteEPackageProvider` (see below) |
+| `ePackages()` | the cache-fronted `RemoteEPackageProvider` for **schemas** (see below) |
+| `readOnlyScope(scope)` | the per-scope `ReadOnlyScopeService<EObject>` for **ordinary EObjects** (see below) |
+| `listRegistries(scope)` | the registry names a scope exposes (`getScopeInfo().getRegistries()`) |
 | `newResourceSet()` | a `ResourceSet` that falls back to the Atlas on an unknown nsURI |
 | `checkForDrift()` | re-validate all cached entries now; returns a `DriftReport` |
 | `addDriftListener(listener)` | subscribe to change/removal events; returns an unsubscribe handle |
@@ -86,8 +88,40 @@ try (ModelAtlasClient client = ModelAtlasClient.builder()
 | `getEPackage(nsUri)` | local-first: cached, else fetched + cached; empty if no allowed scope holds it |
 | `ensureAvailable(nsUri)` | same as `getEPackage`, named for warm-up intent |
 | `resolve(nsUri)` | metadata-first: also reports the **owning** scope/registry/stage/version (`ResolvedEPackage`), resolving through scope inheritance |
-| `listNsUris(scope)` | the nsURIs available in a scope's view stage (inherited packages included) |
+| `listNsUris(scope)` | the nsURIs available in a scope's final stage (inherited packages included) |
 | `refresh(nsUri)` | force a re-fetch, bypassing the cache |
+
+Reads are **stage-free**: the server resolves each scope's final stage and walks
+inheritance, so no stage name is embedded in any read URL.
+
+### Reading EObjects (not just schemas)
+
+Besides schemas, a scope holds ordinary EObjects in its registries.
+`readOnlyScope(scope)` returns a per-scope `ReadOnlyScopeService<EObject>` — the same
+contract the in-process server exposes, so a consumer can depend on it whether it
+reads a local Atlas or a remote one. The registry is a method parameter:
+
+| Method | What it does |
+|---|---|
+| `get(registry, objectId)` | resolve one object from a registry's final stage (cache-fronted, ETag-revalidated) |
+| `listObjectIds(registry)` | the object ids visible in a registry's final stage |
+| `listAll(registry)` / `stream(registry)` | resolve every object in a registry |
+| `getScopeInfo()` | the scope descriptor: name, description, parent scope, and registries (name + type) |
+| `isInheritingFromParentScope()` | whether reads read through to a parent scope's final stage |
+
+```java
+ReadOnlyScopeService<EObject> jena = client.readOnlyScope("jena");
+for (String id : jena.listObjectIds("cocl")) {
+    jena.get("cocl", id).ifPresent(obj -> process(obj));
+}
+```
+
+> **SCHEMA registries are off-limits to this API.** A registry typed `SCHEMA` holds
+> EPackages; an EObject read against it would treat the package as an opaque EObject.
+> The client refuses: `get` / `listObjectIds` / `listAll` / `stream` on a SCHEMA
+> registry throw `ModelAtlasClientException` pointing you at `ePackages()`. Fetch
+> schemas through the EPackage API, EObjects through this one. (The registry type is
+> read once from the scope descriptor and memoized.)
 
 ## Configuration reference (honored by the plain-Java client)
 
@@ -100,7 +134,6 @@ everything else has a default.
 | `base.uri` (`baseUri`) | — (required) | Atlas REST base, e.g. `http://host:8080/atlas/rest` |
 | `connect.timeout.ms` (`connectTimeoutMs`) | `5000` | TCP connect timeout |
 | `read.timeout.ms` (`readTimeoutMs`) | `30000` | socket read timeout |
-| `view` (`view`) | `released` | the stage the client reads from (a scope's final stage; not always literally `released`) |
 | `default.scope` (`defaultScope`) | _unset_ | scope used for anonymous look-ups when no allow-list is set |
 | `scope.allow.list` (`scopeAllowList`) | _empty_ = all scopes | scopes probed, in order, for an anonymous look-up; first hit wins |
 | `nsuri.allow.list` (`nsUriAllowList`) | _empty_ = all | if non-empty, only these nsURIs are ever returned |
@@ -122,15 +155,16 @@ everything else has a default.
 
 ## Examples
 
-### Pin to one scope and a non-default stage
+### Pin to one scope
 
 ```java
 ModelAtlasClient.builder()
     .baseUri(URI.create("http://host:8080/atlas/rest"))
     .scopeAllowList(List.of("jena"))   // only look in jena (+ its parents, by inheritance)
-    .view("release")                   // jena's final stage is "release", not "released"
     .build();
 ```
+
+There is no stage to pin: reads resolve each scope's final stage server-side.
 
 ### Restrict which packages are usable
 
@@ -210,4 +244,4 @@ simply not present returns `Optional.empty()` rather than throwing.
 ## See also
 
 - `org.eclipse.fennec.model.atlas.rest.client.osgi` — the OSGi/DS front-end (ConfigAdmin-driven, publishes EPackages as services).
-- `docs/design/rest-client.md` — full design (Phase 2 covers this implementation); per-ticket notes `docs/design/rest-client-P2-*.md`.
+- `docs/design/rest-client.md` — full design (Phase 2 covers the EPackage core; Phase 5 the per-scope EObject API); per-ticket notes `docs/design/rest-client-P2-*.md` and `docs/design/rest-client-P5-*.md`.

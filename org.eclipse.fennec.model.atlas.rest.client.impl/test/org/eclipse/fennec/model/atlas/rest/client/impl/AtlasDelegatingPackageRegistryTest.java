@@ -14,6 +14,7 @@
 package org.eclipse.fennec.model.atlas.rest.client.impl;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
 
@@ -32,6 +33,7 @@ import org.eclipse.emf.ecore.EAttribute;
 import org.eclipse.emf.ecore.EClass;
 import org.eclipse.emf.ecore.EObject;
 import org.eclipse.emf.ecore.EPackage;
+import org.eclipse.emf.ecore.EReference;
 import org.eclipse.emf.ecore.EcoreFactory;
 import org.eclipse.emf.ecore.EcorePackage;
 import org.eclipse.emf.ecore.impl.EPackageRegistryImpl;
@@ -195,6 +197,186 @@ class AtlasDelegatingPackageRegistryTest {
 		EObject root = resource.getContents().get(0);
 		assertEquals("Item", root.eClass().getName(), "nsURI resolved through the Atlas fallback");
 		assertEquals("hello", root.eGet(root.eClass().getEStructuralFeature("label")));
+	}
+
+	// ---- P5-6: cross-package references + Jürgen's interdependent-package case ----
+
+	private static final String NS_LIB = "urn:atlas:test:lib/1.0";
+	private static final String NS_BOOK = "urn:atlas:test:book/1.0";
+
+	/**
+	 * Two interdependent EPackages:
+	 * <ul>
+	 * <li>{@code lib.Library} has a containment {@code entries} (0..*) typed to the
+	 * <em>abstract</em> {@code lib.Entry}, and a {@code flagship} reference typed to
+	 * {@code book.Book} (lib → book);</li>
+	 * <li>{@code book.Book} {@code extends lib.Entry} and has a {@code shelf} reference back
+	 * to {@code lib.Library} (book → lib).</li>
+	 * </ul>
+	 * Because {@code entries} is declared as the base {@code Entry} but holds a concrete
+	 * {@code Book}, the serialized instance carries an {@code xsi:type="book:Book"} — so the
+	 * loader must resolve {@code NS_BOOK} <em>through the package registry</em> (not via the
+	 * in-memory metamodel graph), which is exactly the path Jürgen's unload case exercises.
+	 *
+	 * @return {@code [libPackage, bookPackage]}
+	 */
+	private static EPackage[] interdependentPackages() {
+		EcoreFactory f = EcoreFactory.eINSTANCE;
+		EPackage lib = f.createEPackage();
+		lib.setName("lib");
+		lib.setNsPrefix("lib");
+		lib.setNsURI(NS_LIB);
+		EPackage book = f.createEPackage();
+		book.setName("book");
+		book.setNsPrefix("book");
+		book.setNsURI(NS_BOOK);
+
+		EClass entry = f.createEClass();
+		entry.setName("Entry");
+		entry.setAbstract(true);
+		lib.getEClassifiers().add(entry);
+		EClass library = f.createEClass();
+		library.setName("Library");
+		lib.getEClassifiers().add(library);
+		EClass bookClass = f.createEClass();
+		bookClass.setName("Book");
+		bookClass.getESuperTypes().add(entry); // book -> lib (subtype)
+		book.getEClassifiers().add(bookClass);
+
+		EAttribute title = f.createEAttribute();
+		title.setName("title");
+		title.setEType(EcorePackage.eINSTANCE.getEString());
+		bookClass.getEStructuralFeatures().add(title);
+
+		EReference entries = f.createEReference();
+		entries.setName("entries");
+		entries.setContainment(true);
+		entries.setUpperBound(-1);
+		entries.setEType(entry); // declared as the base type -> forces xsi:type on a Book
+		library.getEStructuralFeatures().add(entries);
+
+		EReference flagship = f.createEReference();
+		flagship.setName("flagship");
+		flagship.setEType(bookClass); // lib -> book (interdependent)
+		library.getEStructuralFeatures().add(flagship);
+
+		EReference shelf = f.createEReference();
+		shelf.setName("shelf");
+		shelf.setEType(library); // book -> lib
+		bookClass.getEStructuralFeatures().add(shelf);
+		return new EPackage[] { lib, book };
+	}
+
+	/**
+	 * A {@code Library} containing one {@code Book} (a different package, held under the
+	 * base-typed {@code entries}), cross-referenced by {@code flagship} and pointing back via
+	 * {@code shelf}; serialized to XMI.
+	 */
+	private static byte[] libraryWithBookXmi(EPackage lib, EPackage book) {
+		EClass library = (EClass) lib.getEClassifier("Library");
+		EClass bookClass = (EClass) book.getEClassifier("Book");
+		EObject libraryObj = lib.getEFactoryInstance().create(library);
+		EObject bookObj = book.getEFactoryInstance().create(bookClass);
+		bookObj.eSet(bookClass.getEStructuralFeature("title"), "Dune");
+		bookObj.eSet(bookClass.getEStructuralFeature("shelf"), libraryObj); // book -> lib
+		@SuppressWarnings("unchecked")
+		List<EObject> entries = (List<EObject>) libraryObj.eGet(library.getEStructuralFeature("entries"));
+		entries.add(bookObj);
+		libraryObj.eSet(library.getEStructuralFeature("flagship"), bookObj); // lib -> book
+
+		ResourceSet rs = new ResourceSetImpl();
+		rs.getResourceFactoryRegistry().getExtensionToFactoryMap()
+				.put(Resource.Factory.Registry.DEFAULT_EXTENSION, new XMIResourceFactoryImpl());
+		rs.getPackageRegistry().put(NS_LIB, lib);
+		rs.getPackageRegistry().put(NS_BOOK, book);
+		Resource resource = rs.createResource(URI.createURI("library.xmi"));
+		resource.getContents().add(libraryObj);
+		ByteArrayOutputStream out = new ByteArrayOutputStream();
+		try {
+			resource.save(out, Map.of());
+		} catch (IOException e) {
+			throw new UncheckedIOException(e);
+		}
+		return out.toByteArray();
+	}
+
+	/** An Atlas-aware {@link ResourceSet}, wired exactly as {@code ModelAtlasClientImpl} does. */
+	private static ResourceSet atlasResourceSet(AtlasDelegatingPackageRegistry registry) {
+		ResourceSet rs = new ResourceSetImpl();
+		rs.getResourceFactoryRegistry().getExtensionToFactoryMap()
+				.put(Resource.Factory.Registry.DEFAULT_EXTENSION, new XMIResourceFactoryImpl());
+		rs.setPackageRegistry(registry);
+		return rs;
+	}
+
+	private static EObject load(ResourceSet rs, byte[] xmi, String uri) {
+		Resource resource = rs.createResource(URI.createURI(uri));
+		try {
+			resource.load(new ByteArrayInputStream(xmi), Map.of());
+		} catch (IOException e) {
+			throw new UncheckedIOException(e);
+		}
+		return resource.getContents().get(0);
+	}
+
+	@SuppressWarnings("unchecked")
+	private static EObject firstEntry(EObject library) {
+		return ((List<EObject>) library.eGet(library.eClass().getEStructuralFeature("entries"))).get(0);
+	}
+
+	@Test
+	void loadsInstanceWithCrossPackageReference_resolvingBothPackagesRemotely() {
+		EPackage[] pkgs = interdependentPackages();
+		byte[] xmi = libraryWithBookXmi(pkgs[0], pkgs[1]);
+
+		FakeProvider remote = new FakeProvider();
+		remote.packages.put(NS_LIB, pkgs[0]);
+		remote.packages.put(NS_BOOK, pkgs[1]); // the Atlas "has" both packages
+
+		AtlasDelegatingPackageRegistry registry = new AtlasDelegatingPackageRegistry(new EPackageRegistryImpl(), remote);
+		EObject library = load(atlasResourceSet(registry), xmi, "library.xmi");
+
+		// Root metamodel resolved remotely.
+		assertEquals("Library", library.eClass().getName());
+		assertEquals(NS_LIB, library.eClass().getEPackage().getNsURI());
+
+		// The contained object's metamodel is a *different* package, also fetched from the Atlas.
+		EObject book = firstEntry(library);
+		assertEquals(NS_BOOK, book.eClass().getEPackage().getNsURI());
+		assertEquals("Dune", book.eGet(book.eClass().getEStructuralFeature("title")));
+
+		// Cross-references resolve through the Atlas-aware ResourceSet, in both directions:
+		// book -> library (other package -> this) and library -> book (this -> other package).
+		assertSame(library, book.eGet(book.eClass().getEStructuralFeature("shelf")));
+		assertSame(book, library.eGet(library.eClass().getEStructuralFeature("flagship")));
+	}
+
+	@Test
+	void interdependentPackages_reResolveAfterUnload_viaTheRootedRegistry() {
+		EPackage[] pkgs = interdependentPackages();
+		byte[] xmi = libraryWithBookXmi(pkgs[0], pkgs[1]);
+
+		FakeProvider remote = new FakeProvider();
+		remote.packages.put(NS_LIB, pkgs[0]);
+		remote.packages.put(NS_BOOK, pkgs[1]);
+
+		AtlasDelegatingPackageRegistry registry = new AtlasDelegatingPackageRegistry(new EPackageRegistryImpl(), remote);
+		ResourceSet rs = atlasResourceSet(registry);
+
+		// First load roots both packages — one fetch each.
+		EObject first = load(rs, xmi, "library1.xmi");
+		assertEquals(NS_BOOK, firstEntry(first).eClass().getEPackage().getNsURI());
+		assertEquals(2, remote.ensureCalls.get());
+
+		// Jürgen's case: the dependent package is unloaded (drift removal).
+		registry.onPackageRemoved(NS_BOOK);
+
+		// A subsequent resolution re-fetches NS_BOOK and re-roots it; NS_LIB stays cached.
+		EObject second = load(rs, xmi, "library2.xmi");
+		EObject book = firstEntry(second);
+		assertNotNull(book.eClass().getEPackage());
+		assertEquals(NS_BOOK, book.eClass().getEPackage().getNsURI());
+		assertEquals(3, remote.ensureCalls.get(), "only NS_BOOK was re-fetched after unload");
 	}
 
 	/** Serialize a single {@code Item} instance of {@code pkg} to XMI bytes. */

@@ -25,7 +25,8 @@ import org.osgi.annotation.versioning.ProviderType;
  * Anonymous lookups ({@link #getEPackage(String)}, {@link #ensureAvailable(String)},
  * {@link #refresh(String)}) resolve scope context by walking the configured
  * {@code scope.allow.list} in order — first hit wins — defaulting to
- * {@code default.scope}. The {@code released} stage is the default view.
+ * {@code default.scope}. Reads are stage-free: the server resolves each scope's final
+ * stage and walks inheritance, so no stage name is embedded in any read URL (P5-7).
  *
  * @see ModelAtlasClient#ePackages()
  */
@@ -42,12 +43,33 @@ public interface RemoteEPackageProvider {
 	Optional<EPackage> getEPackage(String nsUri);
 
 	/**
-	 * List the nsURIs available in the given scope's {@code released} stage.
+	 * List the nsURIs available in the given scope's final stage (inheritance-aware).
 	 *
 	 * @param scopeName the scope to enumerate
 	 * @return the nsURIs (possibly empty)
 	 */
 	List<String> listNsUris(String scopeName);
+
+	/**
+	 * List the packages in the given scope's final stage with the origin metadata the
+	 * listing already carries — the metadata-rich form of {@link #listNsUris(String)}.
+	 * <p>
+	 * A single listing call yields, per package, its nsURI plus owning scope / stage /
+	 * version (see {@link PackageDescriptor}), so a caller (e.g. the OSGi front-end's EAGER
+	 * prefetch) can publish each package with its <em>real</em> stage/version without the
+	 * per-package metadata round-trip {@link #resolve(String)} would add — the stage/version
+	 * are already in the listing the enumeration fetched.
+	 * <p>
+	 * The default implementation derives descriptors from {@link #listNsUris(String)} with
+	 * unset metadata, for providers that do not surface it; the remote client overrides it to
+	 * parse the full listing.
+	 *
+	 * @param scopeName the scope to enumerate
+	 * @return the package descriptors (possibly empty)
+	 */
+	default List<PackageDescriptor> listPackages(String scopeName) {
+		return listNsUris(scopeName).stream().map(nsUri -> new PackageDescriptor(nsUri, null, null, null)).toList();
+	}
 
 	/**
 	 * Eagerly load and cache an nsURI — useful for warm-up and for the OSGi
@@ -65,9 +87,9 @@ public interface RemoteEPackageProvider {
 	 * Unlike {@link #getEPackage(String)}, which walks the configured scopes
 	 * probing for content and so cannot report where the package actually lives,
 	 * this reads the server's metadata first ({@code GET
-	 * /{scope}/schema/stages/{view}?nsUri=…}, which respects scope inheritance) to
-	 * learn the owning scope, registry, stage and version, then fetches the content
-	 * from that exact location. The entry scope queried is gated by
+	 * /{scope}/schema?nsUri=…}, the stage-free final-stage listing, which respects scope
+	 * inheritance) to learn the owning scope, registry, stage and version, then fetches the
+	 * content from that exact location. The entry scope queried is gated by
 	 * {@code scope.allow.list} / {@code default.scope} just like {@link #getEPackage(String)};
 	 * the resolved owning scope may be a parent of it. Intended for the OSGi
 	 * front-end's lazy publication, where the {@code atlas.*} origin properties must

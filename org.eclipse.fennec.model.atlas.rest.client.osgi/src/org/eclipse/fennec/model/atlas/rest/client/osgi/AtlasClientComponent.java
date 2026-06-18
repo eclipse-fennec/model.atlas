@@ -127,6 +127,8 @@ public class AtlasClientComponent {
 
 	private final ModelAtlasClient client;
 	private final RemoteEPackagePublisher publisher;
+	/** P5-4: publishes one {@code ReadOnlyScopeService<EObject>} OSGi service per scope. */
+	private final RemoteScopeServicePublisher scopePublisher;
 	private final LazyResolvingPackageRegistry lazyRegistry;
 	private final LocalServiceWatcher localServiceWatcher;
 	private final ScheduledExecutorService debounceExecutor;
@@ -151,6 +153,8 @@ public class AtlasClientComponent {
 				: null;
 		this.publisher = new RemoteEPackagePublisher(bundleContext, configuration.getBaseUri().toString(),
 				serviceRanking, globalRegistry);
+		// P5-4: per-scope ReadOnlyScopeService<EObject> publications (keyed atlas.scope).
+		this.scopePublisher = new RemoteScopeServicePublisher(bundleContext, configuration.getBaseUri().toString());
 
 		// P3-7: every publish goes through the local-first gate — a remote package is only
 		// published when no local EPackage/EPackageConfigurator already provides its nsURI
@@ -211,6 +215,10 @@ public class AtlasClientComponent {
 				new ForceRemoteStartupCheck(() -> LocalServiceWatcher.localModels(bundleContext),
 						client.ePackages()::resolve, gate).run();
 			}
+			// P5-4: publish one ReadOnlyScopeService<EObject> per scope (independent of the
+			// EPackage resolution mode); a consumer's (atlas.scope=…) lookup then resolves
+			// against this client exactly as it does against the in-process server.
+			publishScopeServices(configuration);
 		} catch (RuntimeException strictFailure) {
 			// mode.strict=true + unreachable server: tear down what we built before
 			// letting activation fail, so nothing (client + drift scheduler, the drift
@@ -233,9 +241,25 @@ public class AtlasClientComponent {
 		closeQuietly(driftSubscription); // stop drift swaps
 		localServiceWatcher.close();
 		debounceExecutor.shutdownNow();
+		scopePublisher.unpublishAll(); // P5-4: revoke the per-scope ReadOnlyScopeService publications
 		publisher.unpublishAll();
 		if (client != null) {
 			client.close();
+		}
+	}
+
+	/**
+	 * P5-4 — publish a {@code ReadOnlyScopeService<EObject>} for each scope this client
+	 * exposes. The scope set is {@code scope.allow.list} when configured (no server call
+	 * needed — the per-scope façade fetches lazily), otherwise the scopes the server
+	 * advertises via {@code GET /scopes}. In {@code mode.strict}, a failing {@code listScopeNames}
+	 * propagates and tears down the activation (same contract as the EAGER prefetch above).
+	 */
+	private void publishScopeServices(ClientConfiguration configuration) {
+		List<String> scopes = configuration.getScopeAllowList().isEmpty() ? client.listScopeNames()
+				: configuration.getScopeAllowList();
+		for (String scope : scopes) {
+			scopePublisher.publish(scope, client.readOnlyScope(scope));
 		}
 	}
 
@@ -292,7 +316,6 @@ public class AtlasClientComponent {
 				.registerInGlobalRegistry(c.register_in_global_registry())
 				.driftCheckIntervalMs(c.drift_check_interval_ms())
 				.scopeAllowList(List.of(c.scope_allow_list()))
-				.view(c.view())
 				.cacheMaxEntries(c.cache_max_entries())
 				.cacheTtlMs(c.cache_ttl_ms())
 				.authType(c.auth_type())

@@ -88,6 +88,12 @@ class RemoteReadOnlyScopeService implements ReadOnlyScopeService<EObject> {
 	private final String scopeName;
 	private final Supplier<ResourceSet> resourceSetFactory;
 	private final ClientCache<ObjectKey, EObject> cache;
+	/**
+	 * Lazily-cached {@code registry name → RegistryType} map for this scope, used by the
+	 * SCHEMA-registry guard. A registry's type is structural and rarely drifts, so it is
+	 * fetched once per service instance (via {@link #getScopeInfo()}) and memoized.
+	 */
+	private volatile Map<String, RegistryType> registryTypes;
 
 	RemoteReadOnlyScopeService(WebTarget baseTarget, ClientConfiguration configuration, String scopeName,
 			Supplier<ResourceSet> resourceSetFactory) {
@@ -107,6 +113,15 @@ class RemoteReadOnlyScopeService implements ReadOnlyScopeService<EObject> {
 	/** The {@code (scope, registry, objectId)} keys currently held in the cache — used by the drift watcher (P5-2). */
 	java.util.Set<ObjectKey> cachedObjects() {
 		return cache.keys();
+	}
+
+	/**
+	 * Test seam: pre-seed the memoized {@code registry name → type} map so guarded reads
+	 * skip the {@link #getScopeInfo()} preflight. Production code never calls this — it
+	 * populates the map lazily on first guarded read.
+	 */
+	void primeRegistryTypes(Map<String, RegistryType> types) {
+		this.registryTypes = Map.copyOf(types);
 	}
 
 	/**
@@ -136,6 +151,7 @@ class RemoteReadOnlyScopeService implements ReadOnlyScopeService<EObject> {
 	public Optional<EObject> get(String registry, String objectId) {
 		Objects.requireNonNull(registry, "registry");
 		Objects.requireNonNull(objectId, "objectId");
+		assertNotSchemaRegistry(registry);
 		ObjectKey key = new ObjectKey(scopeName, registry, objectId);
 		Optional<EObject> cached = cache.get(key);
 		if (cached.isPresent()) {
@@ -149,6 +165,7 @@ class RemoteReadOnlyScopeService implements ReadOnlyScopeService<EObject> {
 	@Override
 	public List<String> listObjectIds(String registry) {
 		Objects.requireNonNull(registry, "registry");
+		assertNotSchemaRegistry(registry);
 		WebTarget listTarget = registryTarget(registry);
 		Response response = RestSupport.get(listTarget, MediaType.APPLICATION_JSON);
 		try {
@@ -267,6 +284,55 @@ class RemoteReadOnlyScopeService implements ReadOnlyScopeService<EObject> {
 	/** {@code /{scopeName}/registries/{registry}} */
 	private WebTarget registryTarget(String registry) {
 		return baseTarget.path(scopeName).path(REGISTRIES).path(registry);
+	}
+
+	/**
+	 * Reject reading a SCHEMA registry through this object API: a SCHEMA registry holds
+	 * EPackages, which an EObject read <em>could</em> fetch through the generic
+	 * {@code registries/{r}/content} path, but the caller should use the dedicated EPackage
+	 * API instead so the package is cached and resolved as a metamodel rather than handled as
+	 * an opaque EObject. The registry type is read from the scope descriptor
+	 * ({@link #getScopeInfo()}), memoized per instance. Unknown registries (absent from the
+	 * descriptor) pass through, preserving the existing 404/empty behavior.
+	 *
+	 * @throws ModelAtlasClientException if {@code registry} is a {@link RegistryType#SCHEMA} registry
+	 */
+	private void assertNotSchemaRegistry(String registry) {
+		if (registryTypeOf(registry) == RegistryType.SCHEMA) {
+			throw new ModelAtlasClientException("Registry '" + registry + "' in scope '" + scopeName
+					+ "' is a SCHEMA registry; fetch its EPackages via ModelAtlasClient.ePackages() "
+					+ "(RemoteEPackageProvider), not the object API (ReadOnlyScopeService).");
+		}
+	}
+
+	/**
+	 * The {@link RegistryType} of {@code registry} in this scope, or {@code null} if the
+	 * registry is not listed in the scope descriptor. Lazily fetches and memoizes the
+	 * {@code registry name → type} map (double-checked) on first use.
+	 */
+	private RegistryType registryTypeOf(String registry) {
+		Map<String, RegistryType> types = registryTypes;
+		if (types == null) {
+			synchronized (this) {
+				types = registryTypes;
+				if (types == null) {
+					types = loadRegistryTypes();
+					registryTypes = types;
+				}
+			}
+		}
+		return types.get(registry);
+	}
+
+	/** Read the {@code registry name → type} map from {@link #getScopeInfo()}. */
+	private Map<String, RegistryType> loadRegistryTypes() {
+		Map<String, RegistryType> types = new HashMap<>();
+		for (RegistryInfo ri : getScopeInfo().getRegistries()) {
+			if (ri.getName() != null) {
+				types.put(ri.getName(), ri.getType());
+			}
+		}
+		return types;
 	}
 
 	/** Extract {@code objectId}s from an {@code ObjectMetadataContainer} JSON body. */

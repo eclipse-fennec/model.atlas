@@ -21,4 +21,7 @@ org.eclipse.fennec.persistence.jpa:org.eclipse.fennec.persistence.jpa.library.wo
 
 org.geckoprojects.libraries:org.gecko.libraries.workspace.library:1.0.0-SNAPSHOT
 
+org.eclipse.fennec.codec:org.eclipse.fennec.codec.workspace.library:0.1.0-SNAPSHOT
+
+
 

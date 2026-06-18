@@ -4,10 +4,13 @@ Bundle-Description: End-to-end tests for the plain-Java Model Atlas client again
  (NOT an OSGi test): the client is exercised exactly as a plain-Java consumer would, \
  with a real Jakarta RS client implementation (Jersey) supplying ClientBuilder.
 
-# Compile against the client API/impl + EMF + Jackson.
+# Compile against the client API/impl + EMF + Jackson. scope.api is on the client's public
+# surface (ModelAtlasClient.readOnlyScope → ReadOnlyScopeService) and is loaded by
+# ModelAtlasClientImpl, so it must be on the flat test classpath too (Phase 5).
 -buildpath: \
 	org.eclipse.fennec.model.atlas.rest.client.api;version=snapshot,\
 	org.eclipse.fennec.model.atlas.rest.client.impl;version=snapshot,\
+	org.eclipse.fennec.model.atlas.scope.api;version=snapshot,\
 	jakarta.ws.rs-api;version=latest,\
 	org.eclipse.emf.common;version=latest,\
 	org.eclipse.emf.ecore;version=latest,\

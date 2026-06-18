@@ -33,10 +33,19 @@ re-publishes the trio, a removal revokes it. **Local-first** is the default — 
 remote package is suppressed while a local bundle provides the same nsURI (unless
 `force.remote=true`), and re-published if that local one disappears.
 
+Independently of the mode, the component also publishes one
+`ReadOnlyScopeService<EObject>` OSGi service **per scope** (keyed `atlas.scope`), so a
+consumer can read the scope's ordinary EObjects — `get` / `listObjectIds` /
+`listAll` / `stream`, the registry as a parameter — through the same contract the
+in-process server exposes. The scope set is `scope.allow.list` when configured,
+otherwise the scopes the server advertises (`GET /scopes`); in `mode.strict` a failing
+enumeration tears down activation. See "Consuming the published packages" below.
+
 ## Runtime requirements
 
-Besides this bundle, `…rest.client.api` and `…rest.client.impl`, the framework
-needs:
+Besides this bundle, `…rest.client.api`, `…rest.client.impl` and
+`…scope.api` (the `ReadOnlyScopeService` contract the per-scope services are
+published under), the framework needs:
 
 - **`org.eclipse.fennec.emf.osgi.component`** — provides the framework
   `EPackage.Registry` (`default.resourceset.epackage.registry=true`) and the
@@ -67,8 +76,7 @@ re-activates it.
   "org.eclipse.fennec.model.atlas.rest.client~jena": {
     "base.uri": "http://atlas-host:8080/atlas/rest",
     "mode": "LAZY",
-    "default.scope": "jena",
-    "view": "release"
+    "default.scope": "jena"
   }
 }
 ```
@@ -85,7 +93,6 @@ Hashtable<String, Object> props = new Hashtable<>();
 props.put("base.uri", "http://atlas-host:8080/atlas/rest");
 props.put("mode", "LAZY");
 props.put("default.scope", "jena");
-props.put("view", "release");
 cfg.update(props);
 ```
 
@@ -113,13 +120,12 @@ Attribute names in the OCD use `_`; the ConfigAdmin/Configurator property uses `
 | `mode.strict` | `false` | if `true`, EAGER activation **fails** when the server is unreachable |
 | `lazy.resolve.timeout.ms` | `5000` | how long a LAZY look-up blocks for a fetched package to become visible in `EPackage.Registry` |
 
-**Scope / stage selection**
+**Scope selection**
 
 | Property | Default | Meaning |
 |---|---|---|
 | `scope.allow.list` (`String[]`) | _empty_ = all | scopes looked in (in order); first that can see an nsURI wins |
 | `default.scope` | _unset_ | scope used for anonymous look-ups when no allow-list is set |
-| `view` | `released` | the stage read from (a scope's final stage; e.g. `release` for jena) |
 
 **Publishing behaviour**
 
@@ -158,8 +164,7 @@ Resolve on demand; framework `ResourceSet`s gain Atlas fallback automatically.
   "org.eclipse.fennec.model.atlas.rest.client~jena": {
     "base.uri": "http://host:8080/atlas/rest",
     "mode": "LAZY",
-    "default.scope": "jena",
-    "view": "release"
+    "default.scope": "jena"
   }
 }
 ```
@@ -172,7 +177,6 @@ Resolve on demand; framework `ResourceSet`s gain Atlas fallback automatically.
     "base.uri": "http://host:8080/atlas/rest",
     "mode": "EAGER",
     "eager.scopes": ["jena"],
-    "view": "release",
     "mode.strict": true
   }
 }
@@ -189,7 +193,6 @@ backend is loud rather than silent).
     "base.uri": "http://host:8080/atlas/rest",
     "mode": "HYBRID",
     "default.scope": "jena",
-    "view": "release",
     "eager.nsuri.allow.list": [
       "http://eclipse.org/fennec/model/atlas/management/api/1.0.0"
     ]
@@ -205,7 +208,6 @@ backend is loud rather than silent).
     "base.uri": "http://host:8080/atlas/rest",
     "mode": "EAGER",
     "eager.scopes": ["jena"],
-    "view": "release",
     "force.remote": true
   }
 }
@@ -224,7 +226,6 @@ backend is loud rather than silent).
     "base.uri": "https://host:8443/atlas/rest",
     "mode": "LAZY",
     "default.scope": "jena",
-    "view": "release",
     "auth.type": "BEARER",
     "auth.token.env": "ATLAS_TOKEN"
   }
@@ -239,7 +240,6 @@ backend is loud rather than silent).
     "base.uri": "https://host:8443/atlas/rest",
     "mode": "LAZY",
     "default.scope": "jena",
-    "view": "release",
     "auth.type": "MTLS",
     "auth.keystore.path": "/etc/atlas/client.p12",
     "auth.keystore.password": "changeit",
@@ -254,10 +254,10 @@ backend is loud rather than silent).
 ```json
 {
   "org.eclipse.fennec.model.atlas.rest.client~prod": {
-    "base.uri": "https://atlas-prod:8443/atlas/rest", "default.scope": "jena", "view": "release"
+    "base.uri": "https://atlas-prod:8443/atlas/rest", "default.scope": "jena"
   },
   "org.eclipse.fennec.model.atlas.rest.client~staging": {
-    "base.uri": "http://atlas-staging:8080/atlas/rest", "default.scope": "jena", "view": "release"
+    "base.uri": "http://atlas-staging:8080/atlas/rest", "default.scope": "jena"
   }
 }
 ```
@@ -268,13 +268,15 @@ backend is loud rather than silent).
 {
   "org.eclipse.fennec.model.atlas.rest.client~jena": {
     "base.uri": "http://host:8080/atlas/rest",
-    "mode": "EAGER", "eager.scopes": ["jena"], "view": "release",
+    "mode": "EAGER", "eager.scopes": ["jena"],
     "register.in.global.registry": true
   }
 }
 ```
 
-## Consuming the published packages
+## Consuming the published services
+
+### Schemas (EPackages)
 
 Once a package is published you can reach it the usual `emf.osgi` ways:
 
@@ -288,11 +290,30 @@ EPackage pkg = rs.getPackageRegistry().getEPackage("http://example.org/model/1.0
 EPackage pkg;
 ```
 
-Atlas-published services carry `atlas.remote=true`, `atlas.base.uri`,
-`atlas.scope`/`atlas.stage`, and the standard `emf.*` properties (`emf.nsURI`,
-`emf.model.version`, …).
+Atlas-published EPackage services carry `atlas.remote=true`, `atlas.base.uri`,
+`atlas.scope`, and the standard `emf.*` properties (`emf.nsURI`, `emf.model.version`,
+…). `atlas.stage` is also stamped as advisory provenance — the package's real owning
+stage, resolved server-side — and is omitted only when that stage is unknown. (The
+former `atlas.view` is no longer stamped, P5-7.)
+
+### EObjects (per-scope `ReadOnlyScopeService`)
+
+For ordinary EObjects, bind the per-scope service the front-end publishes (one per
+scope, keyed `atlas.scope`):
+
+```java
+@Reference(target = "(atlas.scope=jena)")
+ReadOnlyScopeService<EObject> jena;
+// ...
+jena.get("cocl", objectId).ifPresent(obj -> process(obj));
+```
+
+These services carry `atlas.scope`, `atlas.remote=true` and `atlas.base.uri`. The
+same contract is what an in-process server publishes, so a consumer's `@Reference`
+binds either source identically. **Note:** reading a `SCHEMA`-typed registry through
+this service throws — use the EPackage path above for schemas.
 
 ## See also
 
 - `org.eclipse.fennec.model.atlas.rest.client.impl` — the plain-Java client (non-OSGi).
-- `docs/design/rest-client.md` — full design; "Phase 3 — OSGi Delegate Registry for `emf.osgi`" and the per-ticket notes `docs/design/rest-client-P3-*.md`.
+- `docs/design/rest-client.md` — full design; "Phase 3 — OSGi Delegate Registry for `emf.osgi`" (EPackage publication) and Phase 5 (per-scope EObject services); per-ticket notes `docs/design/rest-client-P3-*.md` and `docs/design/rest-client-P5-*.md`.

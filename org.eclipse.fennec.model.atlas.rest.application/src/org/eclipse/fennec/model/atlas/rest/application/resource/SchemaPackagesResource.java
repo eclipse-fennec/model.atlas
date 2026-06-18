@@ -164,16 +164,31 @@ public class SchemaPackagesResource {
      */
     @GET
     @Produces
-    @Operation(summary = "List released packages in scope", description = "List all packages in the final stage for this scope, including packages from parent scopes", responses = {
+    @Operation(summary = "List released packages in scope", description = "List all packages in the final stage for this scope, including packages from parent scopes. "
+            + "With an exact nsUri the single final-stage ObjectMetadata is returned (hierarchy-aware), so the stage-free path can resolve a package's origin without a stage name (P5-7).", responses = {
             @ApiResponse(responseCode = "200", description = "Packages retrieved successfully", content = @Content(mediaType = MediaType.APPLICATION_JSON)),
             @ApiResponse(responseCode = "204", description = "No Package found in scope final stage, nor in the parent final stage"),
             @ApiResponse(responseCode = "400", description = "Scope not available, schema registry not available for scope, stage not available for registry or not a valid stage"),
             @ApiResponse(responseCode = "500", description = "Internal server error") })
     public Response listReleasedPackages(
-            @Parameter(description = "The scope name", required = true) @PathParam("scopeName") String scopeName) {
+            @Parameter(description = "The scope name", required = true) @PathParam("scopeName") String scopeName,
+            @Parameter(description = "Exact namespace URI of the package to retrieve from the final stage") @QueryParam("nsUri") String nsUri) {
 
         ScopeService<?> scopeService = getScopeServiceByScopeName(scopeName);
         try {
+            if (nsUri != null) {
+                // Stage-free final-stage metadata for one package (hierarchy-aware), mirroring the
+                // stage-explicit listing's nsUri branch — used by the client's resolve() (P5-7).
+                String encodedUri = encodePackageNsURI(nsUri);
+                ObjectMetadata metadata = scopeService.getMetadataFromFinalStageForRegistry(REGISTRY_NAME, encodedUri);
+                if (metadata == null) {
+                    return Response.status(Response.Status.NO_CONTENT).build();
+                }
+                ObjectMetadataResponseFilter.attach(requestContext, metadata,
+                        ObjectMetadataResponseFilter.CacheTarget.METADATA);
+                return Response.status(Response.Status.OK).entity(metadata)
+                        .header("Content-Type", getResolvedMediaType()).build();
+            }
             List<ObjectMetadata> objectsMetadata = scopeService.listInFinalStageForRegistry(REGISTRY_NAME);
             if (objectsMetadata.isEmpty())
                 return Response.status(Response.Status.NO_CONTENT).build();

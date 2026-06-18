@@ -33,6 +33,7 @@ import org.eclipse.emf.ecore.EcoreFactory;
 import org.eclipse.fennec.model.atlas.rest.client.api.ClientConfiguration;
 import org.eclipse.fennec.model.atlas.rest.client.api.ModelAtlasClient;
 import org.eclipse.fennec.model.atlas.rest.client.api.NotFoundException;
+import org.eclipse.fennec.model.atlas.rest.client.api.PackageDescriptor;
 import org.eclipse.fennec.model.atlas.rest.client.api.RemoteEPackageProvider;
 import org.eclipse.fennec.model.atlas.rest.client.api.ResolutionMode;
 import org.eclipse.fennec.model.atlas.rest.client.api.ResolvedEPackage;
@@ -89,7 +90,6 @@ class EagerPrefetchTest {
 				.modeStrict(strict)
 				.eagerScopes(eagerScopes)
 				.scopeAllowList(scopeAllowList)
-				.view("released")
 				.build();
 	}
 
@@ -97,9 +97,15 @@ class EagerPrefetchTest {
 		return new EagerPrefetch(client, publication, config);
 	}
 
+	/** A listing entry (Option A): nsUri + owning scope/stage/version. */
+	private static PackageDescriptor desc(String nsUri, String scope, String stage, String version) {
+		return new PackageDescriptor(nsUri, scope, stage, version);
+	}
+
 	@Test
 	void publishesEachPackageOfTheConfiguredEagerScopes() {
-		when(provider.listNsUris("jena")).thenReturn(List.of("urn:a", "urn:b"));
+		when(provider.listPackages("jena"))
+				.thenReturn(List.of(desc("urn:a", "jena", "release", "1.0"), desc("urn:b", "jena", "release", "2.0")));
 		when(provider.ensureAvailable("urn:a")).thenReturn(Optional.of(ePackage("urn:a")));
 		when(provider.ensureAvailable("urn:b")).thenReturn(Optional.of(ePackage("urn:b")));
 
@@ -107,9 +113,9 @@ class EagerPrefetchTest {
 
 		assertEquals(2, published);
 		assertEquals(2, publication.calls.size());
-		// scope is the one we listed from; stage is the configured view; version unset.
+		// Option A: each package is published with the REAL scope/stage/version the listing carried.
 		assertTrue(publication.calls.stream()
-				.allMatch(c -> c.scope().equals("jena") && c.stage().equals("released") && c.version() == null));
+				.allMatch(c -> c.scope().equals("jena") && c.stage().equals("release") && c.version() != null));
 		assertEquals(List.of("urn:a", "urn:b"),
 				publication.calls.stream().map(RecordingPublication.Published::nsUri).toList());
 		// listScopeNames must not be consulted when eager.scopes is set.
@@ -118,8 +124,8 @@ class EagerPrefetchTest {
 
 	@Test
 	void emptyEagerScopesFallsBackToScopeAllowList() {
-		when(provider.listNsUris("s1")).thenReturn(List.of("urn:x"));
-		when(provider.listNsUris("s2")).thenReturn(List.of("urn:y"));
+		when(provider.listPackages("s1")).thenReturn(List.of(desc("urn:x", "s1", "release", "1.0")));
+		when(provider.listPackages("s2")).thenReturn(List.of(desc("urn:y", "s2", "release", "1.0")));
 		when(provider.ensureAvailable(anyString()))
 				.thenAnswer(i -> Optional.of(ePackage(i.getArgument(0))));
 
@@ -127,14 +133,14 @@ class EagerPrefetchTest {
 
 		assertEquals(2, published);
 		verify(client, never()).listScopeNames();
-		verify(provider).listNsUris("s1");
-		verify(provider).listNsUris("s2");
+		verify(provider).listPackages("s1");
+		verify(provider).listPackages("s2");
 	}
 
 	@Test
 	void emptyEagerScopesAndAllowListFallsBackToAllAdvertisedScopes() {
 		when(client.listScopeNames()).thenReturn(List.of("only"));
-		when(provider.listNsUris("only")).thenReturn(List.of("urn:z"));
+		when(provider.listPackages("only")).thenReturn(List.of(desc("urn:z", "only", "release", "1.0")));
 		when(provider.ensureAvailable("urn:z")).thenReturn(Optional.of(ePackage("urn:z")));
 
 		int published = prefetch(config(ResolutionMode.EAGER, false, List.of(), List.of())).run();
@@ -145,7 +151,8 @@ class EagerPrefetchTest {
 
 	@Test
 	void unavailableContentIsSkippedNotPublished() {
-		when(provider.listNsUris("jena")).thenReturn(List.of("urn:present", "urn:absent"));
+		when(provider.listPackages("jena")).thenReturn(
+				List.of(desc("urn:present", "jena", "release", "1.0"), desc("urn:absent", "jena", "release", "1.0")));
 		when(provider.ensureAvailable("urn:present")).thenReturn(Optional.of(ePackage("urn:present")));
 		when(provider.ensureAvailable("urn:absent")).thenReturn(Optional.empty());
 
@@ -158,8 +165,8 @@ class EagerPrefetchTest {
 
 	@Test
 	void notFoundScopeIsSkippedAndOtherScopesStillProcessed() {
-		when(provider.listNsUris("missing")).thenThrow(new NotFoundException("Scope [missing] not found"));
-		when(provider.listNsUris("good")).thenReturn(List.of("urn:g"));
+		when(provider.listPackages("missing")).thenThrow(new NotFoundException("Scope [missing] not found"));
+		when(provider.listPackages("good")).thenReturn(List.of(desc("urn:g", "good", "release", "1.0")));
 		when(provider.ensureAvailable("urn:g")).thenReturn(Optional.of(ePackage("urn:g")));
 
 		int published = prefetch(config(ResolutionMode.EAGER, false, List.of("missing", "good"), List.of())).run();
@@ -171,7 +178,7 @@ class EagerPrefetchTest {
 
 	@Test
 	void strictModeRethrowsOnUnreachableServer() {
-		when(provider.listNsUris("jena")).thenThrow(new TransportException("connection refused"));
+		when(provider.listPackages("jena")).thenThrow(new TransportException("connection refused"));
 
 		EagerPrefetch eager = prefetch(config(ResolutionMode.EAGER, true, List.of("jena"), List.of()));
 
@@ -182,9 +189,9 @@ class EagerPrefetchTest {
 	@Test
 	void nonStrictModeSwallowsUnreachableServerAndReturnsPartialCount() {
 		// First scope publishes one package, second scope's listing times out.
-		when(provider.listNsUris("first")).thenReturn(List.of("urn:first"));
+		when(provider.listPackages("first")).thenReturn(List.of(desc("urn:first", "first", "release", "1.0")));
 		when(provider.ensureAvailable("urn:first")).thenReturn(Optional.of(ePackage("urn:first")));
-		when(provider.listNsUris("second")).thenThrow(new TransportException("read timed out"));
+		when(provider.listPackages("second")).thenThrow(new TransportException("read timed out"));
 
 		int published = prefetch(config(ResolutionMode.EAGER, false, List.of("first", "second"), List.of())).run();
 
@@ -202,7 +209,6 @@ class EagerPrefetchTest {
 				.mode(ResolutionMode.HYBRID)
 				.modeStrict(strict)
 				.eagerNsUriAllowList(eagerNsUris)
-				.view("released")
 				.build();
 	}
 

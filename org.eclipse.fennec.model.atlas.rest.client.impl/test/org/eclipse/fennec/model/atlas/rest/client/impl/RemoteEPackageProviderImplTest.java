@@ -38,6 +38,7 @@ import org.eclipse.emf.ecore.EcoreFactory;
 import org.eclipse.fennec.model.atlas.rest.client.api.ClientConfiguration;
 import org.eclipse.fennec.model.atlas.rest.client.api.ModelAtlasClientException;
 import org.eclipse.fennec.model.atlas.rest.client.api.NotFoundException;
+import org.eclipse.fennec.model.atlas.rest.client.api.PackageDescriptor;
 import org.eclipse.fennec.model.atlas.rest.client.api.TransportException;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
@@ -150,6 +151,29 @@ class RemoteEPackageProviderImplTest {
 	}
 
 	@Test
+	void listPackages_parsesOriginMetadataFromTheListing() {
+		// Option A: the listing carries each package's owning scope/stage/version, so EAGER can
+		// publish accurate provenance without a per-package metadata round-trip.
+		String ns = "https://eclipse.dev/fennec/jena/cocl/1.0";
+		String json = "{\"metadata\":[{\"objectId\":\"" + base64Url(ns)
+				+ "\",\"scope\":\"atlas\",\"stage\":\"released\",\"version\":\"1.2\"}]}";
+		Response response = jsonOk(json);
+		when(request.get()).thenReturn(response);
+
+		List<PackageDescriptor> result = provider(config()).listPackages("jena");
+
+		assertEquals(1, result.size());
+		PackageDescriptor d = result.get(0);
+		assertEquals(ns, d.nsUri());
+		assertEquals("atlas", d.scope());
+		assertEquals("released", d.stage());
+		assertEquals("1.2", d.version());
+		ArgumentCaptor<String> paths = ArgumentCaptor.forClass(String.class);
+		verify(target, org.mockito.Mockito.atLeastOnce()).path(paths.capture());
+		assertEquals(List.of("jena", "schema"), paths.getAllValues());
+	}
+
+	@Test
 	void listNsUris_noContent_returnsEmpty() {
 		Response response = noContent();
 		when(request.get()).thenReturn(response);
@@ -187,10 +211,10 @@ class RemoteEPackageProviderImplTest {
 
 		assertTrue(pkg.isPresent());
 		assertEquals("urn:ns:cocl", pkg.get().getNsURI());
-		// content path (default view) + nsUri query param + XMI accept
+		// stage-free content path (P5-7) + nsUri query param + XMI accept
 		ArgumentCaptor<String> paths = ArgumentCaptor.forClass(String.class);
 		verify(target, org.mockito.Mockito.atLeastOnce()).path(paths.capture());
-		assertEquals(List.of("jena", "schema", "stages", "released", "content"), paths.getAllValues());
+		assertEquals(List.of("jena", "schema", "content"), paths.getAllValues());
 		verify(target).queryParam("nsUri", "urn:ns:cocl");
 		verify(target).request(RemoteEPackageProviderImpl.EPACKAGE_MEDIA_TYPE);
 	}
@@ -251,25 +275,26 @@ class RemoteEPackageProviderImplTest {
 	}
 
 	@Test
-	void getEPackage_usesConfiguredView_notHardcodedReleased() {
+	void getEPackage_usesStageFreeContentUrl() {
+		// P5-7: the content read is stage-free — no stage segment in the URL.
 		Response response = contentOk("<xmi/>".getBytes(StandardCharsets.UTF_8));
 		when(request.get()).thenReturn(response);
 		ClientConfiguration cfg = ClientConfiguration.builder().baseUri(BASE).scopeAllowList(List.of("jena"))
-				.view("approved").build();
+				.build();
 
 		assertTrue(provider(cfg).getEPackage("urn:ns:a").isPresent());
 		ArgumentCaptor<String> paths = ArgumentCaptor.forClass(String.class);
 		verify(target, org.mockito.Mockito.atLeastOnce()).path(paths.capture());
-		assertEquals(List.of("jena", "schema", "stages", "approved", "content"), paths.getAllValues());
+		assertEquals(List.of("jena", "schema", "content"), paths.getAllValues());
 	}
 
 	@Test
-	void listNsUris_ignoresConfiguredView() {
-		// Discovery is the hierarchy-walking final-stage alias `/{scope}/schema`; it does
-		// not take a view path segment, so a non-default view must not change the listing URL.
+	void listNsUris_usesStageFreeListingUrl() {
+		// Discovery is the hierarchy-walking final-stage alias `/{scope}/schema`; it takes
+		// no stage path segment.
 		Response response = jsonOk("{\"metadata\":[]}");
 		when(request.get()).thenReturn(response);
-		ClientConfiguration cfg = ClientConfiguration.builder().baseUri(BASE).view("draft").build();
+		ClientConfiguration cfg = ClientConfiguration.builder().baseUri(BASE).build();
 
 		provider(cfg).listNsUris("jena");
 
@@ -304,14 +329,14 @@ class RemoteEPackageProviderImplTest {
 		assertEquals("1.2", resolved.get().getVersion());
 		assertEquals("urn:ns:inherited", resolved.get().getEPackage().getNsURI());
 
-		// First the metadata URL (no /content), then content from the ENTRY scope's view
-		// stage — NOT a direct /{owningScope}/... request: a parent's schema registry is
-		// exposed under a different name, so parent-owned content is only reachable through
-		// the queried child, which the server resolves by inheritance.
+		// First the stage-free metadata URL (/{scope}/schema?nsUri=, no /content), then the
+		// stage-free content from the ENTRY scope (/{scope}/schema/content) — NOT a direct
+		// /{owningScope}/... request: a parent's schema registry is exposed under a different
+		// name, so parent-owned content is only reachable through the queried child, which the
+		// server resolves by inheritance (P5-7: no stage segment in either URL).
 		ArgumentCaptor<String> paths = ArgumentCaptor.forClass(String.class);
 		verify(target, org.mockito.Mockito.atLeastOnce()).path(paths.capture());
-		assertEquals(List.of("jena", "schema", "stages", "released", "jena", "schema", "stages", "released",
-				"content"), paths.getAllValues());
+		assertEquals(List.of("jena", "schema", "jena", "schema", "content"), paths.getAllValues());
 	}
 
 	@Test

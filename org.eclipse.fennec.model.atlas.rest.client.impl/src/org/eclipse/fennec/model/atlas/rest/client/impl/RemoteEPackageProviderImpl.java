@@ -23,6 +23,7 @@ import java.util.function.Supplier;
 
 import org.eclipse.emf.ecore.EPackage;
 import org.eclipse.fennec.model.atlas.rest.client.api.ClientConfiguration;
+import org.eclipse.fennec.model.atlas.rest.client.api.PackageDescriptor;
 import org.eclipse.fennec.model.atlas.rest.client.api.RemoteEPackageProvider;
 import org.eclipse.fennec.model.atlas.rest.client.api.ResolvedEPackage;
 
@@ -37,20 +38,22 @@ import jakarta.ws.rs.client.WebTarget;
  * REST mapping for the read-only EPackage endpoints (P2-3), fronted by the
  * in-memory cache (P2-5).
  * <p>
- * Maps (against the configured {@code view} stage, default {@code released}):
+ * Maps to the <b>stage-free final-stage</b> schema endpoints (P5-7 — no stage name is
+ * embedded in any read URL; the server resolves the final stage and walks scope
+ * inheritance):
  * <ul>
- * <li>{@code listNsUris(scope)} → {@code GET /{scope}/schema/stages/{view}}
+ * <li>{@code listNsUris(scope)} → {@code GET /{scope}/schema}
  * (not cached — it is a listing)</li>
  * <li>{@code getEPackage(nsUri)} / {@code ensureAvailable(nsUri)} → cache hit
  * (within TTL), else revalidate/fetch via
- * {@code GET /{scope}/schema/stages/{view}/content?nsUri=…} walking the resolved
+ * {@code GET /{scope}/schema/content?nsUri=…} walking the resolved
  * scopes in order (first hit wins), caching the result</li>
  * <li>{@code refresh(nsUri)} → always re-contact the server, revalidating with
  * the stored ETag</li>
  * <li>{@code resolve(nsUri)} → metadata-first: {@code GET
- * /{scope}/schema/stages/{view}?nsUri=…} for the authoritative origin (owning
+ * /{scope}/schema?nsUri=…} for the authoritative origin (owning
  * scope/registry/stage/version, resolved through inheritance), then content fetched
- * through that same entry scope's {@code view} stage (which walks the hierarchy
+ * through that same entry scope's stage-free content endpoint (which walks the hierarchy
  * server-side, so a parent-owned package is served via the queried child) — the
  * metadata only labels the origin, so the caller need not guess where it lives</li>
  * </ul>
@@ -63,8 +66,6 @@ class RemoteEPackageProviderImpl implements RemoteEPackageProvider {
 
 	/** The schema-registry path segment under a scope. */
 	static final String SCHEMA = "schema";
-	/** The {@code stages} path segment. */
-	static final String STAGES = "stages";
 	/** EPackage content is requested as XMI; the EMF/XMI decode is P2-4. */
 	static final String EPACKAGE_MEDIA_TYPE = "application/xmi";
 
@@ -97,14 +98,19 @@ class RemoteEPackageProviderImpl implements RemoteEPackageProvider {
 
 	@Override
 	public List<String> listNsUris(String scopeName) {
+		return listPackages(scopeName).stream().map(PackageDescriptor::nsUri).toList();
+	}
+
+	@Override
+	public List<PackageDescriptor> listPackages(String scopeName) {
 		Objects.requireNonNull(scopeName, "scopeName");
-		// Discovery uses the released/final-stage alias `GET /{scope}/schema`
+		// Discovery uses the stage-free final-stage alias `GET /{scope}/schema`
 		// (SchemaPackagesResource.listReleasedPackages → listInFinalStageForRegistry),
 		// which walks the scope hierarchy and so also surfaces packages inherited from
 		// parent scopes' final stages — each scope resolved against its OWN final stage,
-		// so a child's `release` and a parent's `released` both work. The stage-explicit
-		// `…/stages/{view}` listing does NOT inherit (single scope, single stage); switch
-		// back to it here if/when per-stage discovery is needed.
+		// so a child's `release` and a parent's `released` both work. Each entry's
+		// ObjectMetadata carries the owning scope/stage/version, so a single listing call
+		// yields full provenance (no per-package metadata round-trip — see listPackages doc).
 		WebTarget listTarget = baseTarget.path(scopeName).path(SCHEMA);
 		Response response = RestSupport.get(listTarget, MediaType.APPLICATION_JSON);
 		try {
@@ -112,9 +118,9 @@ class RemoteEPackageProviderImpl implements RemoteEPackageProvider {
 				return List.of();
 			}
 			if (!RestSupport.isSuccess(response)) {
-				throw RestSupport.statusError(response, "listNsUris(" + scopeName + ")");
+				throw RestSupport.statusError(response, "listPackages(" + scopeName + ")");
 			}
-			return parseNsUris(response.readEntity(String.class), scopeName);
+			return parseDescriptors(response.readEntity(String.class), scopeName);
 		} finally {
 			response.close();
 		}
@@ -163,15 +169,15 @@ class RemoteEPackageProviderImpl implements RemoteEPackageProvider {
 			if (md.scope() == null || md.stage() == null) {
 				continue; // malformed metadata — cannot describe the origin
 			}
-			// Fetch the content through the ENTRY scope's view stage, not the owning
-			// scope/stage the metadata reports. A package inherited from a parent (e.g. the
+			// Fetch the content through the ENTRY scope's stage-free final-stage endpoint, not the
+			// owning scope/stage the metadata reports. A package inherited from a parent (e.g. the
 			// root `atlas` scope) is not reachable by a direct `/{owningScope}/schema/...`
 			// request — the parent's schema registry is exposed under a different name and
 			// only a child scope walks the hierarchy. The entry scope's content endpoint
 			// resolves inheritance server-side (this is the same path getEPackage uses), so
 			// it serves the parent-owned content; the metadata is used only to LABEL the
 			// authoritative origin (owning scope/registry/stage/version) on the result.
-			Optional<EPackage> content = fetchResolvedContent(entryScope, configuration.getView(), nsUri);
+			Optional<EPackage> content = fetchResolvedContent(entryScope, nsUri);
 			if (content.isEmpty()) {
 				continue;
 			}
@@ -264,13 +270,9 @@ class RemoteEPackageProviderImpl implements RemoteEPackageProvider {
 	 * </ul>
 	 */
 	private Optional<ContentResult> fetchContent(String scope, String nsUri, String ifNoneMatch) {
-		return fetchContent(scope, configuration.getView(), nsUri, ifNoneMatch);
-	}
-
-	/** As {@link #fetchContent(String, String, String)} but from an explicit stage (used by {@link #resolve}). */
-	private Optional<ContentResult> fetchContent(String scope, String stage, String nsUri, String ifNoneMatch) {
-		WebTarget target = baseTarget.path(scope).path(SCHEMA).path(STAGES).path(stage)
-				.path("content").queryParam("nsUri", nsUri);
+		// Stage-free final-stage content (P5-7): GET /{scope}/schema/content?nsUri=… — the server
+		// resolves the final stage and walks scope inheritance, so no stage name is embedded here.
+		WebTarget target = baseTarget.path(scope).path(SCHEMA).path("content").queryParam("nsUri", nsUri);
 		Response response = RestSupport.get(target, EPACKAGE_MEDIA_TYPE, ifNoneMatch);
 		try {
 			if (RestSupport.isNotModified(response)) {
@@ -296,13 +298,12 @@ class RemoteEPackageProviderImpl implements RemoteEPackageProvider {
 
 	/**
 	 * Fetch the authoritative metadata for {@code nsUri} as seen from {@code entryScope}
-	 * ({@code GET /{scope}/schema/stages/{view}?nsUri=…}, which respects scope
-	 * inheritance). Empty when the package is not visible from this entry scope
-	 * ({@code 204}/{@code 404}/any non-success), so the caller tries the next scope.
+	 * ({@code GET /{scope}/schema?nsUri=…}, the stage-free final-stage listing, which
+	 * respects scope inheritance — P5-7). Empty when the package is not visible from this
+	 * entry scope ({@code 204}/{@code 404}/any non-success), so the caller tries the next scope.
 	 */
 	private Optional<PackageMetadata> fetchMetadata(String entryScope, String nsUri) {
-		WebTarget target = baseTarget.path(entryScope).path(SCHEMA).path(STAGES).path(configuration.getView())
-				.queryParam("nsUri", nsUri);
+		WebTarget target = baseTarget.path(entryScope).path(SCHEMA).queryParam("nsUri", nsUri);
 		Response response = RestSupport.get(target, MediaType.APPLICATION_JSON);
 		try {
 			// 204 (not visible from this scope) or any non-success → a miss; the caller
@@ -320,14 +321,14 @@ class RemoteEPackageProviderImpl implements RemoteEPackageProvider {
 	}
 
 	/**
-	 * Content fetch for {@link #resolve} from the given (entry) scope and stage —
-	 * which resolves scope inheritance server-side — reusing the cache and its
-	 * conditional-GET path (P2-5/P2-6).
+	 * Content fetch for {@link #resolve} from the given (entry) scope's stage-free
+	 * final-stage endpoint — which resolves scope inheritance server-side — reusing the
+	 * cache and its conditional-GET path (P2-5/P2-6).
 	 */
-	private Optional<EPackage> fetchResolvedContent(String scope, String stage, String nsUri) {
+	private Optional<EPackage> fetchResolvedContent(String scope, String nsUri) {
 		Optional<ClientCache.Entry<EPackage>> existing = cache.lookup(nsUri);
 		String ifNoneMatch = existing.map(ClientCache.Entry::etag).orElse(null);
-		Optional<ContentResult> result = fetchContent(scope, stage, nsUri, ifNoneMatch);
+		Optional<ContentResult> result = fetchContent(scope, nsUri, ifNoneMatch);
 		if (result.isEmpty()) {
 			return Optional.empty();
 		}
@@ -366,17 +367,22 @@ class RemoteEPackageProviderImpl implements RemoteEPackageProvider {
 		}
 	}
 
-	/** Extract nsURIs from an {@code ObjectMetadataContainer} JSON body. */
-	private List<String> parseNsUris(String json, String scopeName) {
-		JsonNode metadata = RestSupport.parse(json, "listNsUris(" + scopeName + ")").path("metadata");
-		List<String> nsUris = new ArrayList<>();
+	/**
+	 * Extract per-package descriptors from an {@code ObjectMetadataContainer} JSON body —
+	 * each entry's {@code objectId} (decoded to the nsURI) plus the owning
+	 * {@code scope}/{@code stage}/{@code version} the listing already carries.
+	 */
+	private List<PackageDescriptor> parseDescriptors(String json, String scopeName) {
+		JsonNode metadata = RestSupport.parse(json, "listPackages(" + scopeName + ")").path("metadata");
+		List<PackageDescriptor> descriptors = new ArrayList<>();
 		for (JsonNode entry : metadata) {
 			JsonNode objectId = entry.get("objectId");
 			if (objectId != null && !objectId.isNull()) {
-				nsUris.add(decodeNsUri(objectId.asText()));
+				descriptors.add(new PackageDescriptor(decodeNsUri(objectId.asText()), text(entry, "scope"),
+						text(entry, "stage"), text(entry, "version")));
 			}
 		}
-		return List.copyOf(nsUris);
+		return List.copyOf(descriptors);
 	}
 
 	/**

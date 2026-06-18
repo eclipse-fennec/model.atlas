@@ -80,9 +80,6 @@ public @interface AtlasClientConfig {
 	@AttributeDefinition(name = "Default scope", description = "Scope used for anonymous EPackage look-ups.", required = false)
 	String default_scope() default "";
 
-	@AttributeDefinition(name = "View", description = "Stage the client reads packages from (the scope's final/released stage by convention).", required = false)
-	String view() default ClientConfiguration.DEFAULT_VIEW;
-
 	@AttributeDefinition(name = "Cache max entries", description = "LRU bound; <= 0 means unbounded.", required = false)
 	int cache_max_entries() default 500;
 

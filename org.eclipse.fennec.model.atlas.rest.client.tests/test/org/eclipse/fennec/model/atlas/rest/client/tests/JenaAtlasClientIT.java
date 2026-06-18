@@ -60,11 +60,6 @@ class JenaAtlasClientIT {
 	private static final String IMAGE = "eclipsefennec/model.atlas:jena-snapshot";
 	private static final int HTTP_PORT = 8080;
 	private static final String JENA_SCOPE = "jena";
-	/**
-	 * The jena schema registry's final stage is named {@code release} (see jena.json),
-	 * not the client default {@code released}, so the client's view must be set to match.
-	 */
-	private static final String JENA_VIEW = "release";
 
 	/** Mount target matching {@code docker-compose-jena.yml} (./configs:/opt/modelatlas/runtime/load). */
 	private static final String CONFIG_LOAD_DIR = "/opt/modelatlas/runtime/load";
@@ -103,14 +98,13 @@ class JenaAtlasClientIT {
 	}
 
 	/**
-	 * A {@link ClientConfiguration} builder pointed at the running jena Atlas, with the right
-	 * final-stage view ({@link #JENA_VIEW}) and {@code jena} as the default scope so per-nsURI
-	 * content look-ups go through jena and rely on the server's hierarchy walk (jena's release
-	 * stage inherits the parent atlas scope's released packages) instead of probing atlas
-	 * directly with a stage name it does not have.
+	 * A {@link ClientConfiguration} builder pointed at the running jena Atlas, with {@code jena}
+	 * as the default scope so per-nsURI content look-ups go through jena and rely on the server's
+	 * hierarchy walk (jena's release stage inherits the parent atlas scope's released packages).
+	 * Reads are stage-free (P5-7): no {@code view} is set — the server resolves jena's final stage.
 	 */
 	private static ClientConfiguration.Builder jenaConfig() {
-		return ClientConfiguration.builder().baseUri(baseUri).view(JENA_VIEW).defaultScope(JENA_SCOPE);
+		return ClientConfiguration.builder().baseUri(baseUri).defaultScope(JENA_SCOPE);
 	}
 
 	/**

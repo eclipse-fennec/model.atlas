@@ -605,7 +605,12 @@ Phase 4 having shipped `scope.api`.
 
 EObjects fetched via `get(...)` are detached copies (no shared `Resource`). The contract is read-only by interface; mutations are not expected to flow back. Cross-references between fetched EObjects resolve through the Atlas-aware `ResourceSet` (Phase 2/3), so an object referencing another via its URI lazily triggers a fetch of the referenced one.
 
-> Open question: cache hits return the same instance (faster, may surprise on mutation) vs. always a fresh copy (safer, more CPU/memory). Recommendation: same instance, document that `==` is meaningful only within one fetch session. Tracked under *Open Questions*.
+> **Resolved (P5-6):** cache hits return the **same instance** within one client lifetime
+> (the recommendation). `==` is meaningful only within one fetch session; the interface is
+> read-only so callers must not mutate returned objects. Identity is keyed per
+> `(scope, registry, objectId)` — distinct ids never alias. A `304` revalidation keeps the same
+> instance. Verified by `RemoteReadOnlyScopeServiceTest` (`get_cacheHit_returnsSameInstance_*`,
+> `get_distinctObjectIds_returnDistinctInstances`, `get_postTtlRevalidation_304_keepsSameInstance`).
 
 ### Validation service migration as acceptance test
 

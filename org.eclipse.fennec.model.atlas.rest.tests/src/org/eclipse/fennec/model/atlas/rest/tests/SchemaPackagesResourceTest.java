@@ -175,6 +175,54 @@ public class SchemaPackagesResourceTest extends AbstractRestTest {
 		assertStatus(400, response, "Should return HTTP 400 Bad Request");
 	}
 
+	// P5-7: stage-free final-stage metadata for a single package via GET /{s}/schema?nsUri=
+
+	@Test
+	@ParentScopeServiceSetup
+	public void testListReleasedPackages_WithNsUri_ReturnsSingleMetadata(@InjectBundleContext BundleContext context) throws Exception {
+		ensureResourceAvailability(context);
+		EPackage testPackage = TestHelper.createTestEPackage(TEST_PACKAGE_NSURI, TEST_PACKAGE_NAME, TEST_PACKAGE_NAME);
+		String xmiContent = TestHelper.serializeToXMI(testPackage, resourceSet);
+		schemaStageTarget(TestAnnotations.STAGE_RELEASE).queryParam("nsUri", TEST_PACKAGE_NSURI)
+				.queryParam("name", TEST_PACKAGE_NAME).request("application/xmi")
+				.post(Entity.entity(xmiContent, "application/xmi"));
+
+		Response response = schemaTarget().queryParam("nsUri", TEST_PACKAGE_NSURI).request("application/json").get();
+
+		assertStatus(200, response, "Should return HTTP 200 OK with the single final-stage metadata");
+		String body = response.readEntity(String.class);
+		assertNotNull(body, "Should return metadata");
+		assertNotNull(response.getHeaderString("ETag"), "Final-stage metadata GET should emit an ETag");
+	}
+
+	@Test
+	@ParentScopeServiceSetup
+	public void testListReleasedPackages_WithNsUri_NotFound(@InjectBundleContext BundleContext context) throws Exception {
+		ensureResourceAvailability(context);
+		Response response = schemaTarget().queryParam("nsUri", "http://non-existent.com/schema/1.0")
+				.request("application/json").get();
+
+		assertStatus(204, response, "Should return HTTP 204 No Content when the package is not in the final stage");
+	}
+
+	@Test
+	@ParentScopeServiceSetup
+	public void testListReleasedPackages_WithNsUri_InheritsFromParent(@InjectBundleContext BundleContext context) throws Exception {
+		ensureResourceAvailability(context);
+		EPackage testPackage = TestHelper.createTestEPackage(TEST_PACKAGE_NSURI, TEST_PACKAGE_NAME, TEST_PACKAGE_NAME);
+		String xmiContent = TestHelper.serializeToXMI(testPackage, resourceSet);
+		// Upload only to the PARENT scope's final stage; the child's stage-free listing must read through.
+		Response upload = schemaStageTarget(TestAnnotations.TEST_PARENT_SCOPE_NAME, TestAnnotations.STAGE_RELEASE)
+				.queryParam("nsUri", TEST_PACKAGE_NSURI).queryParam("name", TEST_PACKAGE_NAME)
+				.request("application/xmi").post(Entity.entity(xmiContent, "application/xmi"));
+		assertStatus(201, upload, "Upload to parent scope final stage should succeed");
+
+		Response response = schemaTarget().queryParam("nsUri", TEST_PACKAGE_NSURI).request("application/json").get();
+
+		assertStatus(200, response, "Child stage-free metadata should read through to the parent scope (P5-7)");
+		assertNotNull(response.readEntity(String.class), "Should return inherited metadata");
+	}
+
 	@Test
 	@ParentScopeServiceSetup
 	public void testListPackagesInStage_Success(@InjectBundleContext BundleContext context) throws InterruptedException, IOException {

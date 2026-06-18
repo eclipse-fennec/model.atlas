@@ -61,7 +61,9 @@ final class RemoteEPackageConfigurator implements EPackageConfigurator {
 	RemoteEPackageConfigurator(EPackage ePackage, String scope, String stage, String version, String baseUri) {
 		this.ePackage = Objects.requireNonNull(ePackage, "ePackage");
 		this.scope = Objects.requireNonNull(scope, "scope");
-		this.stage = Objects.requireNonNull(stage, "stage");
+		// P5-7: stage is advisory provenance and may be unknown (stage-free final-stage reads);
+		// nullable, and omitted from the service properties below when not set.
+		this.stage = stage;
 		this.baseUri = Objects.requireNonNull(baseUri, "baseUri");
 		this.version = (version == null || version.isBlank()) ? DEFAULT_VERSION : version;
 	}
@@ -93,7 +95,9 @@ final class RemoteEPackageConfigurator implements EPackageConfigurator {
 		// Atlas origin properties — always set.
 		properties.put(AtlasProperties.ATLAS_REMOTE, Boolean.TRUE);
 		properties.put(AtlasProperties.ATLAS_SCOPE, scope);
-		properties.put(AtlasProperties.ATLAS_STAGE, stage);
+		if (stage != null && !stage.isBlank()) {
+			properties.put(AtlasProperties.ATLAS_STAGE, stage); // advisory provenance; omitted when unknown (P5-7)
+		}
 		properties.put(AtlasProperties.ATLAS_BASE_URI, baseUri);
 		return properties;
 	}

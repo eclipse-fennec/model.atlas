@@ -964,11 +964,11 @@ publications rather than independently asserting `atlas.view`. `atlas.view` is a
 consumer filters on it; reads always target the final stage, resolved server-side), so it is
 mirrored if the server stamps it and otherwise omitted — never load-bearing here.
 
-**Acceptance Criteria**
+**Acceptance Criteria** — DONE (see `rest-client-P5-4-implementation-note.md`)
 
-- [ ] `@Reference(target = "(atlas.scope=jena)") ReadOnlyScopeService<EObject>` resolves against the client publication.
-- [ ] On drift, the publication is replaced atomically (same per-scope lock idea as P3-9, scope-scoped).
-- [ ] Service unregistered cleanly on bundle deactivation.
+- [x] `@Reference(target = "(atlas.scope=jena)") ReadOnlyScopeService<EObject>` resolves against the client publication.
+- [x] On drift, the publication is replaced atomically (same per-scope lock idea as P3-9, scope-scoped).
+- [x] Service unregistered cleanly on bundle deactivation.
 
 ---
 
@@ -982,11 +982,11 @@ mirrored if the server stamps it and otherwise omitted — never load-bearing he
 
 The validation service runs unchanged against (a) the in-process Atlas server and (b) a remote Atlas backend exposed by the client. This is the proof of Goal 1 (contract-identical surface). One test, two configurations.
 
-**Acceptance Criteria**
+**Acceptance Criteria** — DONE (see `rest-client-P5-5-implementation-note.md`)
 
-- [ ] Same validation test scenario passes against in-process and remote backends.
-- [ ] No code change in the validation bundle between the two runs — only OSGi configuration differs.
-- [ ] CI runs both configurations.
+- [x] Same validation test scenario passes against in-process and remote backends.
+- [x] No code change in the validation bundle between the two runs — only OSGi configuration differs.
+- [x] CI runs both configurations.
 
 ---
 
@@ -1004,11 +1004,11 @@ Edge cases for object identity and cross-references:
 - A fetched EObject referencing another by URI lazily resolves through the Atlas-aware `ResourceSet`.
 - Jürgen's case: two interdependent EPackages, one unloaded → proxy → re-resolution succeeds because the delegating registry guarantees the package is rooted in a `ResourceSet`.
 
-**Acceptance Criteria**
+**Acceptance Criteria** — DONE (see `rest-client-P5-6-implementation-note.md`)
 
-- [ ] Identity policy verified by test (same instance on cache hit within one client lifetime).
-- [ ] Cross-reference resolution via Atlas-aware `ResourceSet` works for a referenced remote EObject.
-- [ ] Jürgen's interdependent-package scenario resolves correctly post-unload.
+- [x] Identity policy verified by test (same instance on cache hit within one client lifetime).
+- [x] Cross-reference resolution via Atlas-aware `ResourceSet` works for a referenced remote EObject.
+- [x] Jürgen's interdependent-package scenario resolves correctly post-unload.
 
 ---
 
@@ -1040,9 +1040,9 @@ listing **reads through to parent scopes' final stages** (like `listObjectsInFin
 is not a pure no-op swap — it adds inheritance to the EPackage listing. Verify this is the desired
 semantics (it aligns EPackages with EObjects) and update the Phase-2/3 listing tests accordingly.
 
-**Acceptance Criteria**
+**Acceptance Criteria** — DONE (see `rest-client-P5-7-implementation-note.md`)
 
-- [ ] `GET /{s}/schema/content?nsUri=` and `GET /{s}/schema` (stage-free) implemented + tested server-side.
-- [ ] Client EPackage path no longer embeds a stage name; `view` knob deprecated/removed.
-- [ ] EPackage listing inheritance behavior change documented and covered by updated tests.
-- [ ] No stage name is hardcoded in any read endpoint, client- or server-side.
+- [x] `GET /{s}/schema/content?nsUri=` and `GET /{s}/schema` (stage-free) implemented + tested server-side. (+ `GET /{s}/schema?nsUri=` single-metadata for `resolve()`.)
+- [x] Client EPackage path no longer embeds a stage name; `view` knob deprecated.
+- [x] EPackage listing inheritance behavior change documented and covered by updated tests.
+- [x] No stage name is hardcoded in any read endpoint, client- or server-side.

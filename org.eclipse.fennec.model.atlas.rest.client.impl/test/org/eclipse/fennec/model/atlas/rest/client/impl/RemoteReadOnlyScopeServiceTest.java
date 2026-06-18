@@ -15,6 +15,7 @@ package org.eclipse.fennec.model.atlas.rest.client.impl;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotSame;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -30,6 +31,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.net.URI;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Supplier;
 
@@ -84,7 +86,11 @@ class RemoteReadOnlyScopeServiceTest {
 	private static final Supplier<ResourceSet> RESOURCE_SETS = ResourceSetImpl::new;
 
 	private RemoteReadOnlyScopeService service() {
-		return new RemoteReadOnlyScopeService(target, config(), SCOPE, RESOURCE_SETS);
+		RemoteReadOnlyScopeService service = new RemoteReadOnlyScopeService(target, config(), SCOPE, RESOURCE_SETS);
+		// REGISTRY is a COCL registry, so the SCHEMA-registry guard passes without a
+		// scope-info preflight; the guard's own behavior is exercised separately below.
+		service.primeRegistryTypes(Map.of(REGISTRY, RegistryType.COCL));
+		return service;
 	}
 
 	private static ClientConfiguration config() {
@@ -224,6 +230,23 @@ class RemoteReadOnlyScopeServiceTest {
 	}
 
 	@Test
+	void get_distinctObjectIds_returnDistinctInstances() throws IOException {
+		// P5-6 identity policy: identity is per (registry, objectId) within one client
+		// lifetime — a cache hit on the SAME id returns the same instance (see
+		// get_cacheHit_returnsSameInstance_withoutSecondCall), but DIFFERENT ids never alias.
+		Response first = contentOk(xmi(thing()), "\"a\"");
+		Response second = contentOk(xmi(thing()), "\"b\"");
+		when(request.get()).thenReturn(first, second);
+		RemoteReadOnlyScopeService service = service();
+
+		EObject a = service.get(REGISTRY, "id1").orElseThrow();
+		EObject b = service.get(REGISTRY, "id2").orElseThrow();
+
+		assertNotSame(a, b, "distinct objectIds must map to distinct cache entries");
+		verify(request, times(2)).get();
+	}
+
+	@Test
 	void get_postTtlRevalidation_304_keepsSameInstance() throws IOException {
 		Response first = contentOk(xmi(thing()), "\"v1\"");
 		Response revalidated = notModified();
@@ -233,6 +256,7 @@ class RemoteReadOnlyScopeServiceTest {
 		ClientCache<RemoteReadOnlyScopeService.ObjectKey, EObject> cache = new ClientCache<>(10, 1_000, now::get);
 		RemoteReadOnlyScopeService service = new RemoteReadOnlyScopeService(target, config(), SCOPE, RESOURCE_SETS,
 				cache);
+		service.primeRegistryTypes(Map.of(REGISTRY, RegistryType.COCL));
 
 		EObject initial = service.get(REGISTRY, "id1").orElseThrow(); // t=0: 200, expires at 1000
 
@@ -276,6 +300,64 @@ class RemoteReadOnlyScopeServiceTest {
 		Response response = jsonOk("{\"name\":\"atlas\"}");
 		when(request.get()).thenReturn(response);
 		assertFalse(service().isInheritingFromParentScope());
+	}
+
+	// ---- SCHEMA-registry guard --------------------------------------------
+
+	/** A scope descriptor whose {@code schema} registry is SCHEMA-typed and {@code cocl} is not. */
+	private static final String SCOPE_WITH_SCHEMA_REGISTRY = "{\"name\":\"jena\",\"parentScope\":\"atlas\","
+			+ "\"registries\":[{\"name\":\"cocl\",\"type\":\"COCL\"},{\"name\":\"schema\",\"type\":\"SCHEMA\"}]}";
+
+	/** An <em>unprimed</em> service, so the guard fetches the scope descriptor to learn registry types. */
+	private RemoteReadOnlyScopeService unprimedService() {
+		return new RemoteReadOnlyScopeService(target, config(), SCOPE, RESOURCE_SETS);
+	}
+
+	@Test
+	void get_onSchemaRegistry_throws_andPointsToEPackageApi() {
+		Response descriptor = jsonOk(SCOPE_WITH_SCHEMA_REGISTRY);
+		when(request.get()).thenReturn(descriptor);
+
+		ModelAtlasClientException ex = assertThrows(ModelAtlasClientException.class,
+				() -> unprimedService().get("schema", "some.ns.uri"));
+		assertTrue(ex.getMessage().contains("SCHEMA"), "message should name the registry type");
+		assertTrue(ex.getMessage().contains("ePackages()"), "message should point to the EPackage API");
+		// The guard rejects before any content fetch: the only GET was the scope-info preflight.
+		verify(request, times(1)).get();
+	}
+
+	@Test
+	void listObjectIds_onSchemaRegistry_throws() {
+		Response descriptor = jsonOk(SCOPE_WITH_SCHEMA_REGISTRY);
+		when(request.get()).thenReturn(descriptor);
+		assertThrows(ModelAtlasClientException.class, () -> unprimedService().listObjectIds("schema"));
+	}
+
+	@Test
+	void guard_isMemoized_scopeInfoFetchedOnceAcrossReads() {
+		Response descriptor = jsonOk(SCOPE_WITH_SCHEMA_REGISTRY);
+		when(request.get()).thenReturn(descriptor);
+		RemoteReadOnlyScopeService service = unprimedService();
+
+		assertThrows(ModelAtlasClientException.class, () -> service.get("schema", "a"));
+		assertThrows(ModelAtlasClientException.class, () -> service.listObjectIds("schema"));
+
+		// Two guarded reads, but the registry-type map is fetched only once.
+		verify(request, times(1)).get();
+	}
+
+	@Test
+	void get_onNonSchemaRegistry_passesGuard() throws IOException {
+		// Unprimed: the guard fetches the descriptor (1st GET), finds cocl is COCL-typed,
+		// and lets the read through to the content fetch (2nd GET).
+		Response descriptor = jsonOk(SCOPE_WITH_SCHEMA_REGISTRY);
+		Response content = contentOk(xmi(thing()), "\"v1\"");
+		when(request.get()).thenReturn(descriptor, content);
+		RemoteReadOnlyScopeService service = unprimedService();
+
+		EObject result = service.get("cocl", "id1").orElseThrow();
+
+		assertTrue(result instanceof EClass);
 	}
 
 	// ---- transport --------------------------------------------------------

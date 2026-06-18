@@ -192,7 +192,6 @@ org.eclipse.emf:org.eclipse.emf.common:2.44.0
 
 
 # Codec
-org.eclipse.fennec.codec:org.eclipse.fennec.codec.workspace.library:0.1.0-SNAPSHOT
 org.eclipse.fennec.codec:org.eclipse.fennec.codec.rest:0.1.0-SNAPSHOT
 
 

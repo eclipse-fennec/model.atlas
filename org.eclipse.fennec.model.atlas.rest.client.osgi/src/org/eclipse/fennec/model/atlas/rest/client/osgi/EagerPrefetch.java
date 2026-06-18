@@ -23,6 +23,7 @@ import org.eclipse.emf.ecore.EPackage;
 import org.eclipse.fennec.model.atlas.rest.client.api.ClientConfiguration;
 import org.eclipse.fennec.model.atlas.rest.client.api.ModelAtlasClient;
 import org.eclipse.fennec.model.atlas.rest.client.api.NotFoundException;
+import org.eclipse.fennec.model.atlas.rest.client.api.PackageDescriptor;
 import org.eclipse.fennec.model.atlas.rest.client.api.RemoteEPackageProvider;
 import org.eclipse.fennec.model.atlas.rest.client.api.ResolvedEPackage;
 import org.eclipse.fennec.model.atlas.rest.client.api.TransportException;
@@ -37,8 +38,9 @@ import org.eclipse.fennec.model.atlas.rest.client.api.TransportException;
  * up. Drift detection (the Phase-2 watcher) keeps it fresh afterwards. Two entry
  * points:
  * <ul>
- * <li>{@link #run()} — <strong>EAGER</strong>: lists the nsURIs of the configured
- * scopes and publishes each, stamping the prefetch scope + {@code view};</li>
+ * <li>{@link #run()} — <strong>EAGER</strong>: lists each configured scope's final-stage
+ * packages via {@link RemoteEPackageProvider#listPackages(String)} and publishes each with
+ * the owning scope/stage/version that listing already carries (Option A);</li>
  * <li>{@link #prefetchListedNsUris()} — <strong>HYBRID</strong>: publishes only the
  * nsURIs in {@code eager.nsuri.allow.list}, resolving each one's authoritative origin
  * via {@link RemoteEPackageProvider#resolve(String)} (exact scope/stage/version);
@@ -49,14 +51,12 @@ import org.eclipse.fennec.model.atlas.rest.client.api.TransportException;
  * else {@code scope.allow.list} (the design's "all configured" reading); else every
  * scope the server advertises ({@code GET /scopes}).
  * <p>
- * <strong>Stage.</strong> The design speaks of {@code eager.scopes × eager.stages},
- * but the Phase-2 read client deliberately reads from a single configured
- * {@code view} stage: {@link RemoteEPackageProvider#listNsUris(String)} hits the
- * final-stage inheriting alias ({@code GET /{scope}/schema}) and content is fetched
- * from {@code view}. So {@code eager.stages} is not an independently reachable knob
- * here; we pre-fetch each scope's {@code view} and stamp {@code atlas.stage = view}
- * on the published services. (Documented deviation — see the P3-4 implementation
- * note.)
+ * <strong>Stage.</strong> Reads are stage-free (P5-7): both modes target each scope's final
+ * stage, resolved server-side with inheritance. The published {@code atlas.stage} is advisory
+ * provenance taken from the server metadata — for EAGER, from the listing
+ * ({@link RemoteEPackageProvider#listPackages(String)}); for HYBRID, from
+ * {@link RemoteEPackageProvider#resolve(String)}. {@code eager.stages} is not an independently
+ * reachable knob here.
  * <p>
  * <strong>Reachability.</strong> A {@link TransportException} (server unreachable)
  * is fatal only when {@code mode.strict=true}: it is rethrown so component
@@ -159,17 +159,20 @@ final class EagerPrefetch {
 
 	private int prefetchScope(String scope) {
 		RemoteEPackageProvider provider = client.ePackages();
-		List<String> nsUris;
+		List<PackageDescriptor> packages;
 		try {
-			nsUris = provider.listNsUris(scope);
+			// The single listing already carries each package's owning scope/stage/version
+			// (Option A) — so EAGER publishes the REAL provenance without the per-package
+			// metadata round-trip resolve() would add, and no longer stamps stage=null.
+			packages = provider.listPackages(scope);
 		} catch (NotFoundException missing) {
 			LOGGER.log(Level.WARNING, missing,
 					() -> "EAGER pre-fetch: scope '" + scope + "' not found on the server; skipping it");
 			return 0;
 		}
 		int published = 0;
-		String stage = config.getView();
-		for (String nsUri : nsUris) {
+		for (PackageDescriptor descriptor : packages) {
+			String nsUri = descriptor.nsUri();
 			Optional<EPackage> ePackage;
 			try {
 				ePackage = provider.ensureAvailable(nsUri);
@@ -183,7 +186,11 @@ final class EagerPrefetch {
 						+ "' but its content was not available (filtered or empty); skipping it");
 				continue;
 			}
-			if (publication.publish(ePackage.get(), scope, stage, null)) {
+			// Owning scope from the listing (a parent for an inherited package), like HYBRID's
+			// resolve()-based provenance; fall back to the queried scope if the server omitted it.
+			String originScope = descriptor.scope() != null && !descriptor.scope().isBlank() ? descriptor.scope()
+					: scope;
+			if (publication.publish(ePackage.get(), originScope, descriptor.stage(), descriptor.version())) {
 				published++;
 			}
 		}
