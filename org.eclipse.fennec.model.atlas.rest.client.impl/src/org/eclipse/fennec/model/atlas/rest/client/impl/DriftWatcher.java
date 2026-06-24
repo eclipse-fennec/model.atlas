@@ -64,7 +64,7 @@ class DriftWatcher implements AutoCloseable {
 	private final WebTarget baseTarget;
 	private final Supplier<List<String>> scopesSupplier;
 	private final Supplier<RemoteEPackageProviderImpl> providerSupplier;
-	private final Function<String, RemoteReadOnlyScopeService> scopeServiceLookup;
+	private final Function<String, RemoteReadableScopeService> scopeServiceLookup;
 	private final long intervalMs;
 
 	private final List<DriftListener> listeners = new CopyOnWriteArrayList<>();
@@ -73,7 +73,7 @@ class DriftWatcher implements AutoCloseable {
 
 	DriftWatcher(WebTarget baseTarget, Supplier<List<String>> scopesSupplier,
 			Supplier<RemoteEPackageProviderImpl> providerSupplier,
-			Function<String, RemoteReadOnlyScopeService> scopeServiceLookup, long intervalMs) {
+			Function<String, RemoteReadableScopeService> scopeServiceLookup, long intervalMs) {
 		this.baseTarget = baseTarget;
 		this.scopesSupplier = Objects.requireNonNull(scopesSupplier, "scopesSupplier");
 		this.providerSupplier = Objects.requireNonNull(providerSupplier, "providerSupplier");
@@ -159,7 +159,7 @@ class DriftWatcher implements AutoCloseable {
 	/**
 	 * EObject drift (P5-2): the {@code Atlas-Changed-Objects} header lists changed
 	 * {@code registry/objectId} pairs. For each pair held in this scope's
-	 * {@link RemoteReadOnlyScopeService} cache, refresh the entry and fire
+	 * {@link RemoteReadableScopeService} cache, refresh the entry and fire
 	 * {@code onObjectChanged} (still present) or {@code onObjectRemoved} (gone). If the
 	 * consumer never asked for this scope's read-only view there is nothing cached to
 	 * evict, so the scope is skipped.
@@ -169,11 +169,11 @@ class DriftWatcher implements AutoCloseable {
 		if (header == null || header.isBlank()) {
 			return;
 		}
-		RemoteReadOnlyScopeService service = scopeServiceLookup.apply(scope);
+		RemoteReadableScopeService service = scopeServiceLookup.apply(scope);
 		if (service == null) {
 			return; // no read-only view for this scope → nothing cached to act on
 		}
-		Set<RemoteReadOnlyScopeService.ObjectKey> held = service.cachedObjects();
+		Set<RemoteReadableScopeService.ObjectKey> held = service.cachedObjects();
 		for (String raw : header.split(",")) {
 			String entry = raw.trim();
 			int slash = entry.indexOf('/');
@@ -182,14 +182,37 @@ class DriftWatcher implements AutoCloseable {
 			}
 			String registry = entry.substring(0, slash);
 			String objectId = entry.substring(slash + 1);
-			if (!held.contains(new RemoteReadOnlyScopeService.ObjectKey(scope, registry, objectId))) {
-				continue; // only act on entries we actually hold
+			// Inheritance means a view's requested stage need not be its content's origin stage (a
+			// draft read can be served by the parent's final stage), so we can't narrow by stage:
+			// revalidate EVERY held view of this object, each at its own stage, and let the
+			// per-view conditional GET decide what actually changed (P6-5).
+			boolean anyHeld = false;
+			boolean anyChanged = false;
+			boolean allRemoved = true;
+			for (RemoteReadableScopeService.ObjectKey k : held) {
+				if (!scope.equals(k.scope()) || !registry.equals(k.registry()) || !objectId.equals(k.objectId())) {
+					continue; // a different object/scope
+				}
+				anyHeld = true;
+				switch (service.refresh(k.registry(), k.stage(), k.objectId())) {
+				case CHANGED -> {
+					anyChanged = true;
+					allRemoved = false;
+				}
+				case UNCHANGED -> allRemoved = false;
+				case REMOVED -> {
+					// this view is gone; another view of the same object may still be present
+				}
+				}
 			}
-			if (service.refresh(registry, objectId).isPresent()) {
+			if (!anyHeld) {
+				continue; // we hold no view of this object
+			}
+			if (anyChanged) {
 				fireObjectChanged(scope, registry, objectId);
-			} else {
+			} else if (allRemoved) {
 				fireObjectRemoved(scope, registry, objectId);
-			}
+			} // else: only unchanged sibling views → no event
 		}
 	}
 

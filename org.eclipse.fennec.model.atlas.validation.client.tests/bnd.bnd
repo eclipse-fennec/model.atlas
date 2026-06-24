@@ -1,7 +1,7 @@
 Bundle-Name: Model Atlas Validation — remote-client acceptance test
 Bundle-Description: P5-5 — proves the validation service runs unchanged against a remote \
- Atlas backend exposed by rest.client.osgi (the P5-4 per-scope ReadOnlyScopeService \
- publication), bound through the ReadOnlyScopeCollector exactly like the in-process \
+ Atlas backend exposed by rest.client.osgi (the P5-4 per-scope ReadableScopeService \
+ publication), bound through the ReadableScopeCollector exactly like the in-process \
  ScopeService. Live jena image via Testcontainers.
 
 Test-Cases: ${classes;HIERARCHY_INDIRECTLY_ANNOTATED;org.junit.platform.commons.annotation.Testable;CONCRETE}
@@ -12,7 +12,7 @@ Test-Cases: ${classes;HIERARCHY_INDIRECTLY_ANNOTATED;org.junit.platform.commons.
 
 # Compile-time deps: the OSGi-test ConfigAdmin extension (drives the rest.client.osgi
 # factory), the validation + COCL + DataGen model API used by the scenario, the scope.api
-# ReadOnlyScopeService waited on, and the OSGified Testcontainers (daanse). EMF +
+# ReadableScopeService waited on, and the OSGified Testcontainers (daanse). EMF +
 # emf.osgi (ResourceSetFactory) come via -library enableEMF.
 -buildpath: \
 	org.osgi.framework;version=latest,\

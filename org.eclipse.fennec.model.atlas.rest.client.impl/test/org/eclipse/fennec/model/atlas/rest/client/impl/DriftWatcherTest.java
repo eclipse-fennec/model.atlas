@@ -58,7 +58,7 @@ class DriftWatcherTest {
 		return watcher(s -> null); // no read-only scope view by default (package-drift tests)
 	}
 
-	private DriftWatcher watcher(java.util.function.Function<String, RemoteReadOnlyScopeService> scopeServiceLookup) {
+	private DriftWatcher watcher(java.util.function.Function<String, RemoteReadableScopeService> scopeServiceLookup) {
 		// interval 0 → no schedule; we drive check() manually.
 		return new DriftWatcher(target, () -> List.of("jena"), () -> provider, scopeServiceLookup, 0);
 	}
@@ -218,10 +218,10 @@ class DriftWatcherTest {
 		Response changed = headWithObjects("\"s2\"", "cocl/id1,cocl/id2");
 		when(request.head()).thenReturn(baseline, changed);
 
-		RemoteReadOnlyScopeService service = mock(RemoteReadOnlyScopeService.class);
+		RemoteReadableScopeService service = mock(RemoteReadableScopeService.class);
 		when(service.cachedObjects())
-				.thenReturn(Set.of(new RemoteReadOnlyScopeService.ObjectKey("jena", "cocl", "id1"))); // only id1 held
-		when(service.refresh("cocl", "id1")).thenReturn(Optional.of(mock(org.eclipse.emf.ecore.EObject.class)));
+				.thenReturn(Set.of(new RemoteReadableScopeService.ObjectKey("jena", "cocl", null, "id1"))); // only id1 held
+		when(service.refresh("cocl", null, "id1")).thenReturn(RemoteReadableScopeService.DriftOutcome.CHANGED);
 		RecordingListener listener = new RecordingListener();
 		DriftWatcher watcher = watcher(s -> "jena".equals(s) ? service : null);
 		watcher.addListener(listener);
@@ -231,8 +231,8 @@ class DriftWatcherTest {
 
 		assertEquals(List.of("jena/cocl/id1"), listener.objectsChanged);
 		assertTrue(listener.objectsRemoved.isEmpty());
-		verify(service).refresh("cocl", "id1");
-		verify(service, never()).refresh("cocl", "id2"); // id2 not cached → ignored
+		verify(service).refresh("cocl", null, "id1");
+		verify(service, never()).refresh("cocl", null, "id2"); // id2 not cached → ignored
 	}
 
 	@Test
@@ -241,10 +241,10 @@ class DriftWatcherTest {
 		Response changed = headWithObjects("\"s2\"", "cocl/id1");
 		when(request.head()).thenReturn(baseline, changed);
 
-		RemoteReadOnlyScopeService service = mock(RemoteReadOnlyScopeService.class);
+		RemoteReadableScopeService service = mock(RemoteReadableScopeService.class);
 		when(service.cachedObjects())
-				.thenReturn(Set.of(new RemoteReadOnlyScopeService.ObjectKey("jena", "cocl", "id1")));
-		when(service.refresh("cocl", "id1")).thenReturn(Optional.empty()); // gone on the server
+				.thenReturn(Set.of(new RemoteReadableScopeService.ObjectKey("jena", "cocl", null, "id1")));
+		when(service.refresh("cocl", null, "id1")).thenReturn(RemoteReadableScopeService.DriftOutcome.REMOVED); // gone
 		RecordingListener listener = new RecordingListener();
 		DriftWatcher watcher = watcher(s -> "jena".equals(s) ? service : null);
 		watcher.addListener(listener);
@@ -253,6 +253,99 @@ class DriftWatcherTest {
 		watcher.check();
 
 		assertEquals(List.of("jena/cocl/id1"), listener.objectsRemoved);
+		assertTrue(listener.objectsChanged.isEmpty());
+	}
+
+	@Test
+	void objectChange_stagedView_isRefreshed() {
+		// The entry was fetched through a snapshot-bound view; pre-P6-5 drift ignored it.
+		Response baseline = headResponse(200, Response.Status.OK, "\"s1\"", null);
+		Response changed = headWithObjects("\"s2\"", "cocl/id1");
+		when(request.head()).thenReturn(baseline, changed);
+
+		RemoteReadableScopeService service = mock(RemoteReadableScopeService.class);
+		when(service.cachedObjects())
+				.thenReturn(Set.of(new RemoteReadableScopeService.ObjectKey("jena", "cocl", "snapshot", "id1")));
+		when(service.refresh("cocl", "snapshot", "id1")).thenReturn(RemoteReadableScopeService.DriftOutcome.CHANGED);
+		RecordingListener listener = new RecordingListener();
+		DriftWatcher watcher = watcher(s -> "jena".equals(s) ? service : null);
+		watcher.addListener(listener);
+
+		watcher.check();
+		watcher.check();
+
+		assertEquals(List.of("jena/cocl/id1"), listener.objectsChanged);
+		verify(service).refresh("cocl", "snapshot", "id1");
+	}
+
+	@Test
+	void objectChange_multipleViews_oneChanged_firesOnceAndRevalidatesAll() {
+		Response baseline = headResponse(200, Response.Status.OK, "\"s1\"", null);
+		Response changed = headWithObjects("\"s2\"", "cocl/id1");
+		when(request.head()).thenReturn(baseline, changed);
+
+		RemoteReadableScopeService service = mock(RemoteReadableScopeService.class);
+		when(service.cachedObjects()).thenReturn(Set.of(
+				new RemoteReadableScopeService.ObjectKey("jena", "cocl", null, "id1"),
+				new RemoteReadableScopeService.ObjectKey("jena", "cocl", "snapshot", "id1")));
+		when(service.refresh("cocl", null, "id1")).thenReturn(RemoteReadableScopeService.DriftOutcome.UNCHANGED);
+		when(service.refresh("cocl", "snapshot", "id1")).thenReturn(RemoteReadableScopeService.DriftOutcome.CHANGED);
+		RecordingListener listener = new RecordingListener();
+		DriftWatcher watcher = watcher(s -> "jena".equals(s) ? service : null);
+		watcher.addListener(listener);
+
+		watcher.check();
+		watcher.check();
+
+		assertEquals(List.of("jena/cocl/id1"), listener.objectsChanged, "one event despite two views");
+		// Every held view of the object is revalidated, regardless of which one changed.
+		verify(service).refresh("cocl", null, "id1");
+		verify(service).refresh("cocl", "snapshot", "id1");
+	}
+
+	@Test
+	void objectChange_allViewsUnchanged_firesNothing() {
+		// A sibling stage changed (object reported), but none of the held views' content did → 304s.
+		Response baseline = headResponse(200, Response.Status.OK, "\"s1\"", null);
+		Response changed = headWithObjects("\"s2\"", "cocl/id1");
+		when(request.head()).thenReturn(baseline, changed);
+
+		RemoteReadableScopeService service = mock(RemoteReadableScopeService.class);
+		when(service.cachedObjects())
+				.thenReturn(Set.of(new RemoteReadableScopeService.ObjectKey("jena", "cocl", null, "id1")));
+		when(service.refresh("cocl", null, "id1")).thenReturn(RemoteReadableScopeService.DriftOutcome.UNCHANGED);
+		RecordingListener listener = new RecordingListener();
+		DriftWatcher watcher = watcher(s -> "jena".equals(s) ? service : null);
+		watcher.addListener(listener);
+
+		watcher.check();
+		watcher.check();
+
+		assertTrue(listener.objectsChanged.isEmpty(), "an unchanged view must not fire onObjectChanged");
+		assertTrue(listener.objectsRemoved.isEmpty());
+	}
+
+	@Test
+	void objectRemoval_onlyWhenAllViewsGone() {
+		// One view gone, another still present (unchanged) → the object still exists → no removal.
+		Response baseline = headResponse(200, Response.Status.OK, "\"s1\"", null);
+		Response changed = headWithObjects("\"s2\"", "cocl/id1");
+		when(request.head()).thenReturn(baseline, changed);
+
+		RemoteReadableScopeService service = mock(RemoteReadableScopeService.class);
+		when(service.cachedObjects()).thenReturn(Set.of(
+				new RemoteReadableScopeService.ObjectKey("jena", "cocl", null, "id1"),
+				new RemoteReadableScopeService.ObjectKey("jena", "cocl", "snapshot", "id1")));
+		when(service.refresh("cocl", "snapshot", "id1")).thenReturn(RemoteReadableScopeService.DriftOutcome.REMOVED);
+		when(service.refresh("cocl", null, "id1")).thenReturn(RemoteReadableScopeService.DriftOutcome.UNCHANGED);
+		RecordingListener listener = new RecordingListener();
+		DriftWatcher watcher = watcher(s -> "jena".equals(s) ? service : null);
+		watcher.addListener(listener);
+
+		watcher.check();
+		watcher.check();
+
+		assertTrue(listener.objectsRemoved.isEmpty(), "object still present in another view → not removed");
 		assertTrue(listener.objectsChanged.isEmpty());
 	}
 

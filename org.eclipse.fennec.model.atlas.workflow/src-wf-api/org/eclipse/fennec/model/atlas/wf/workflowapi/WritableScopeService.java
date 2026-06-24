@@ -19,7 +19,7 @@ import org.eclipse.emf.ecore.EObject;
 
 import org.eclipse.fennec.model.atlas.mgmt.management.ObjectMetadata;
 
-import org.eclipse.fennec.model.atlas.scope.api.ReadOnlyScopeService;
+import org.eclipse.fennec.model.atlas.scope.api.ReadableScopeService;
 
 import org.osgi.annotation.versioning.ProviderType;
 
@@ -40,7 +40,7 @@ import org.osgi.util.promise.Promise;
  * @generated
  */
 @ProviderType
-public interface WritableScopeService<T extends EObject> extends ReadOnlyScopeService<T> {
+public interface WritableScopeService<T extends EObject> extends ReadableScopeService<T> {
 	/**
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->

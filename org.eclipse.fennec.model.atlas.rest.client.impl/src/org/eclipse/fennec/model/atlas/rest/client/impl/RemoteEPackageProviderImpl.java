@@ -197,6 +197,42 @@ class RemoteEPackageProviderImpl implements RemoteEPackageProvider {
 		return revalidateOrFetch(nsUri);
 	}
 
+	@Override
+	public Optional<EPackage> getEPackageAtStage(String nsUri, String scopeName, String stage) {
+		Objects.requireNonNull(nsUri, "nsUri");
+		Objects.requireNonNull(scopeName, "scopeName");
+		Objects.requireNonNull(stage, "stage");
+		// Stage-explicit content: GET /{scope}/schema/stages/{stage}/content?nsUri=…
+		// No caching here — the caller (AtlasScopedFetchOnMissRegistry) owns its own cache.
+		WebTarget target = baseTarget.path(scopeName).path(SCHEMA).path("stages").path(stage).path("content")
+				.queryParam("nsUri", nsUri);
+		Optional<ContentResult> result = fetchContent(target, nsUri, null);
+		if (result.isEmpty() || result.get().notModified()) {
+			return Optional.empty();
+		}
+		return Optional.of(result.get().fetched().ePackage());
+	}
+
+	@Override
+	public List<PackageDescriptor> listPackagesAtStage(String scopeName, String stage) {
+		Objects.requireNonNull(scopeName, "scopeName");
+		Objects.requireNonNull(stage, "stage");
+		// Stage-explicit listing: GET /{scope}/schema/stages/{stage}
+		WebTarget listTarget = baseTarget.path(scopeName).path(SCHEMA).path("stages").path(stage);
+		Response response = RestSupport.get(listTarget, MediaType.APPLICATION_JSON);
+		try {
+			if (response.getStatus() == Response.Status.NO_CONTENT.getStatusCode()) {
+				return List.of();
+			}
+			if (!RestSupport.isSuccess(response)) {
+				throw RestSupport.statusError(response, "listPackagesAtStage(" + scopeName + ", " + stage + ")");
+			}
+			return parseDescriptors(response.readEntity(String.class), scopeName);
+		} finally {
+			response.close();
+		}
+	}
+
 	/**
 	 * The nsURI allow/deny gate (P2-9, exact matches): a denied nsURI is never
 	 * publishable; with a non-empty allow-list only listed nsURIs are; both empty
@@ -273,6 +309,14 @@ class RemoteEPackageProviderImpl implements RemoteEPackageProvider {
 		// Stage-free final-stage content (P5-7): GET /{scope}/schema/content?nsUri=… — the server
 		// resolves the final stage and walks scope inheritance, so no stage name is embedded here.
 		WebTarget target = baseTarget.path(scope).path(SCHEMA).path("content").queryParam("nsUri", nsUri);
+		return fetchContent(target, nsUri, ifNoneMatch);
+	}
+
+	/**
+	 * Fetch one package's content from a pre-built target, conditionally on {@code ifNoneMatch}.
+	 * Shared by stage-free and stage-explicit paths.
+	 */
+	private Optional<ContentResult> fetchContent(WebTarget target, String nsUri, String ifNoneMatch) {
 		Response response = RestSupport.get(target, EPACKAGE_MEDIA_TYPE, ifNoneMatch);
 		try {
 			if (RestSupport.isNotModified(response)) {
@@ -328,7 +372,8 @@ class RemoteEPackageProviderImpl implements RemoteEPackageProvider {
 	private Optional<EPackage> fetchResolvedContent(String scope, String nsUri) {
 		Optional<ClientCache.Entry<EPackage>> existing = cache.lookup(nsUri);
 		String ifNoneMatch = existing.map(ClientCache.Entry::etag).orElse(null);
-		Optional<ContentResult> result = fetchContent(scope, nsUri, ifNoneMatch);
+		WebTarget target = baseTarget.path(scope).path(SCHEMA).path("content").queryParam("nsUri", nsUri);
+		Optional<ContentResult> result = fetchContent(target, nsUri, ifNoneMatch);
 		if (result.isEmpty()) {
 			return Optional.empty();
 		}

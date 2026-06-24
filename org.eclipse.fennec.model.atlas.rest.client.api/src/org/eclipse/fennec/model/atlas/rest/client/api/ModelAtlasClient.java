@@ -19,7 +19,7 @@ import java.util.ServiceLoader;
 
 import org.eclipse.emf.ecore.EObject;
 import org.eclipse.emf.ecore.resource.ResourceSet;
-import org.eclipse.fennec.model.atlas.scope.api.ReadOnlyScopeService;
+import org.eclipse.fennec.model.atlas.scope.api.ReadableScopeService;
 import org.osgi.annotation.versioning.ProviderType;
 
 /**
@@ -112,7 +112,7 @@ public interface ModelAtlasClient extends AutoCloseable {
 
 	/**
 	 * A read-only, final-stage EObject view of one scope — the client mirror of the
-	 * server-side {@code scope.api} {@link ReadOnlyScopeService}, so a consumer can
+	 * server-side {@code scope.api} {@link ReadableScopeService}, so a consumer can
 	 * depend on the same contract whether it reads an in-process Atlas or a remote one
 	 * (the registry is a method parameter on the returned service). Repeated calls for
 	 * the same scope return the same instance (backed by one cache).
@@ -120,7 +120,7 @@ public interface ModelAtlasClient extends AutoCloseable {
 	 * @param scopeName the scope name
 	 * @return the read-only scope view
 	 */
-	ReadOnlyScopeService<EObject> readOnlyScope(String scopeName);
+	ReadableScopeService<EObject> readOnlyScope(String scopeName);
 
 	/**
 	 * Release the underlying Jakarta RS client and any background tasks.

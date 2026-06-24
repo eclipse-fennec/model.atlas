@@ -26,10 +26,10 @@ import java.util.logging.Logger;
 import org.eclipse.fennec.emf.osgi.constants.EMFNamespaces;
 import org.eclipse.fennec.model.atlas.scope.api.RegistryInfo;
 import org.eclipse.fennec.model.atlas.scope.api.RegistryType;
+import org.eclipse.fennec.model.atlas.scope.api.StageInfo;
 import org.eclipse.fennec.model.atlas.wf.workflowapi.Registry;
 import org.eclipse.fennec.model.atlas.wf.workflowapi.Scope;
 import org.eclipse.fennec.model.atlas.wf.workflowapi.ScopeService;
-import org.eclipse.fennec.model.atlas.wf.workflowapi.Stage;
 import org.eclipse.fennec.model.atlas.workflow.WorkflowConstants;
 import org.osgi.service.cm.Configuration;
 import org.osgi.service.cm.ConfigurationAdmin;
@@ -140,7 +140,7 @@ public class SchemaRegistryChainConfigurator {
         if (schemaRegistry == null) {
             return;
         }
-        List<Stage> stages = Collections.emptyList();
+        List<StageInfo> stages = Collections.emptyList();
         if(schemaRegistry instanceof Registry registry) {
         	stages = registry.getStages();
         } 

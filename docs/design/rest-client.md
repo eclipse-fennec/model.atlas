@@ -171,7 +171,7 @@ public interface ModelAtlasClient extends AutoCloseable {
     RemoteEPackageProvider ePackages();
 
     /** Read-only EObject view for a scope; registry is a per-call parameter. (Phase 5) */
-    ReadOnlyScopeService<EObject> readOnlyScope(String scopeName);
+    ReadableScopeService<EObject> readOnlyScope(String scopeName);
 
     /** Trigger a drift check across cached entries. */
     DriftReport checkForDrift();
@@ -550,10 +550,10 @@ Mounting only the read-only resource on a public Atlas instance, while a private
 ## Phase 5 — EObject-Registry Client
 
 Phase 5 extends the client (both plain-Java and OSGi variants) with the `scope.api`
-`ReadOnlyScopeService<EObject>` per **scope** (registry is a method parameter). It depends on
+`ReadableScopeService<EObject>` per **scope** (registry is a method parameter). It depends on
 Phase 4 having shipped `scope.api`.
 
-> **Reframed (2026-06-12).** Phase 4 shipped a per-scope `ReadOnlyScopeService<T>` rather than
+> **Reframed (2026-06-12).** Phase 4 shipped a per-scope `ReadableScopeService<T>` rather than
 > the per-`(scope, registry)` `ScopedEObjectsRegistry<T>` this section originally described.
 > Phase 5 mirrors that contract exactly. A new server endpoint (P5-0) is required because the
 > only single-object content endpoint requires a stage name in the path, and final-stage names
@@ -563,10 +563,10 @@ Phase 4 having shipped `scope.api`.
 
 - **Server (P5-0)** — a stage-free final-stage content endpoint
   `GET /{s}/registries/{r}/content?objectId=`, mirroring the existing stage-free final-stage
-  *listing* at `GET /{s}/registries/{r}`. Delegates to `ReadOnlyScopeService.get(registry, objectId)`
+  *listing* at `GET /{s}/registries/{r}`. Delegates to `ReadableScopeService.get(registry, objectId)`
   with ETag from `getMetadataFromFinalStageForRegistry(...)`.
 
-- `rest.client.impl` gains `RemoteReadOnlyScopeService implements ReadOnlyScopeService<EObject>`
+- `rest.client.impl` gains `RemoteReadableScopeService implements ReadableScopeService<EObject>`
   (one per scope) that:
   - lists object IDs via `GET /{s}/registries/{r}` (final-stage listing),
   - fetches single objects via `GET /{s}/registries/{r}/content?objectId=` (P5-0), using the same
@@ -578,7 +578,7 @@ Phase 4 having shipped `scope.api`.
 - `rest.client.api`'s `ModelAtlasClient.readOnlyScope(scope)` and `listRegistries(scope)` become
   functional.
 
-- `rest.client.osgi` publishes one `ReadOnlyScopeService<EObject>` OSGi service per **scope**,
+- `rest.client.osgi` publishes one `ReadableScopeService<EObject>` OSGi service per **scope**,
   with the property contract from Phase 4 (`atlas.view` discussed below):
 
   ```
@@ -594,7 +594,7 @@ Phase 4 having shipped `scope.api`.
 
   ```java
   @Reference(target = "(atlas.scope=jena)")
-  ReadOnlyScopeService<EObject> jenaScope;
+  ReadableScopeService<EObject> jenaScope;
   // ...then jenaScope.get("cocl", objectId)
   ```
 
@@ -609,7 +609,7 @@ EObjects fetched via `get(...)` are detached copies (no shared `Resource`). The 
 > (the recommendation). `==` is meaningful only within one fetch session; the interface is
 > read-only so callers must not mutate returned objects. Identity is keyed per
 > `(scope, registry, objectId)` — distinct ids never alias. A `304` revalidation keeps the same
-> instance. Verified by `RemoteReadOnlyScopeServiceTest` (`get_cacheHit_returnsSameInstance_*`,
+> instance. Verified by `RemoteReadableScopeServiceTest` (`get_cacheHit_returnsSameInstance_*`,
 > `get_distinctObjectIds_returnDistinctInstances`, `get_postTtlRevalidation_304_keepsSameInstance`).
 
 ### Validation service migration as acceptance test

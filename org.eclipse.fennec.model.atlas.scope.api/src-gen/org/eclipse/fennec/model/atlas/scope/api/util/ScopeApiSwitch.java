@@ -77,9 +77,9 @@ public class ScopeApiSwitch<T1> extends Switch<T1> {
 	@Override
 	protected T1 doSwitch(int classifierID, EObject theEObject) {
 		switch (classifierID) {
-			case ScopeApiPackage.READ_ONLY_SCOPE_SERVICE: {
-				ReadOnlyScopeService<?> readOnlyScopeService = (ReadOnlyScopeService<?>)theEObject;
-				T1 result = caseReadOnlyScopeService(readOnlyScopeService);
+			case ScopeApiPackage.READABLE_SCOPE_SERVICE: {
+				ReadableScopeService<?> readableScopeService = (ReadableScopeService<?>)theEObject;
+				T1 result = caseReadableScopeService(readableScopeService);
 				if (result == null) result = defaultCase(theEObject);
 				return result;
 			}
@@ -95,22 +95,34 @@ public class ScopeApiSwitch<T1> extends Switch<T1> {
 				if (result == null) result = defaultCase(theEObject);
 				return result;
 			}
+			case ScopeApiPackage.STAGE_INFO: {
+				StageInfo stageInfo = (StageInfo)theEObject;
+				T1 result = caseStageInfo(stageInfo);
+				if (result == null) result = defaultCase(theEObject);
+				return result;
+			}
+			case ScopeApiPackage.READABLE_REGISTRY_VIEW: {
+				ReadableRegistryView<?> readableRegistryView = (ReadableRegistryView<?>)theEObject;
+				T1 result = caseReadableRegistryView(readableRegistryView);
+				if (result == null) result = defaultCase(theEObject);
+				return result;
+			}
 			default: return defaultCase(theEObject);
 		}
 	}
 
 	/**
-	 * Returns the result of interpreting the object as an instance of '<em>Read Only Scope Service</em>'.
+	 * Returns the result of interpreting the object as an instance of '<em>Readable Scope Service</em>'.
 	 * <!-- begin-user-doc -->
 	 * This implementation returns null;
 	 * returning a non-null result will terminate the switch.
 	 * <!-- end-user-doc -->
 	 * @param object the target of the switch.
-	 * @return the result of interpreting the object as an instance of '<em>Read Only Scope Service</em>'.
+	 * @return the result of interpreting the object as an instance of '<em>Readable Scope Service</em>'.
 	 * @see #doSwitch(org.eclipse.emf.ecore.EObject) doSwitch(EObject)
 	 * @generated
 	 */
-	public <T extends EObject> T1 caseReadOnlyScopeService(ReadOnlyScopeService<T> object) {
+	public <T extends EObject> T1 caseReadableScopeService(ReadableScopeService<T> object) {
 		return null;
 	}
 
@@ -141,6 +153,36 @@ public class ScopeApiSwitch<T1> extends Switch<T1> {
 	 * @generated
 	 */
 	public T1 caseRegistryInfo(RegistryInfo object) {
+		return null;
+	}
+
+	/**
+	 * Returns the result of interpreting the object as an instance of '<em>Stage Info</em>'.
+	 * <!-- begin-user-doc -->
+	 * This implementation returns null;
+	 * returning a non-null result will terminate the switch.
+	 * <!-- end-user-doc -->
+	 * @param object the target of the switch.
+	 * @return the result of interpreting the object as an instance of '<em>Stage Info</em>'.
+	 * @see #doSwitch(org.eclipse.emf.ecore.EObject) doSwitch(EObject)
+	 * @generated
+	 */
+	public T1 caseStageInfo(StageInfo object) {
+		return null;
+	}
+
+	/**
+	 * Returns the result of interpreting the object as an instance of '<em>Readable Registry View</em>'.
+	 * <!-- begin-user-doc -->
+	 * This implementation returns null;
+	 * returning a non-null result will terminate the switch.
+	 * <!-- end-user-doc -->
+	 * @param object the target of the switch.
+	 * @return the result of interpreting the object as an instance of '<em>Readable Registry View</em>'.
+	 * @see #doSwitch(org.eclipse.emf.ecore.EObject) doSwitch(EObject)
+	 * @generated
+	 */
+	public <T extends EObject> T1 caseReadableRegistryView(ReadableRegistryView<T> object) {
 		return null;
 	}
 

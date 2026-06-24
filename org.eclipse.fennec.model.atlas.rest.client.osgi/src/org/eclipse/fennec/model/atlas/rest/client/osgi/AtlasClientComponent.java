@@ -13,7 +13,9 @@
  */
 package org.eclipse.fennec.model.atlas.rest.client.osgi;
 
+import java.io.IOException;
 import java.net.URI;
+import java.util.ArrayList;
 import java.util.Hashtable;
 import java.util.List;
 import java.util.concurrent.Executors;
@@ -31,6 +33,7 @@ import org.eclipse.fennec.model.atlas.rest.client.api.ModelAtlasClient;
 import org.eclipse.fennec.model.atlas.rest.client.api.ModelAtlasClientFactory;
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.ServiceRegistration;
+import org.osgi.service.cm.ConfigurationAdmin;
 import org.osgi.service.component.annotations.Activate;
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.ConfigurationPolicy;
@@ -127,7 +130,7 @@ public class AtlasClientComponent {
 
 	private final ModelAtlasClient client;
 	private final RemoteEPackagePublisher publisher;
-	/** P5-4: publishes one {@code ReadOnlyScopeService<EObject>} OSGi service per scope. */
+	/** P5-4: publishes one {@code ReadableScopeService<EObject>} OSGi service per scope. */
 	private final RemoteScopeServicePublisher scopePublisher;
 	private final LazyResolvingPackageRegistry lazyRegistry;
 	private final LocalServiceWatcher localServiceWatcher;
@@ -135,11 +138,16 @@ public class AtlasClientComponent {
 	private final AutoCloseable driftSubscription;
 	/** P3-10: registered only when {@code resource.set.fallback=true}; {@code null} otherwise. */
 	private final ServiceRegistration<ResourceSetConfigurator> resourceSetConfiguratorReg;
+	/** P6-6: one fetch-on-miss bridge per (scope, stage) pair; registered as EPackage.Registry services. */
+	private final List<ServiceRegistration<EPackage.Registry>> fetchOnMissRegistrations = new ArrayList<>();
+	/** P6-6: manages the ConfigAdmin EPackageRegistry + ResourceSetFactory pairs. */
+	private final AtlasEPackageRegistryConfigurator registryConfigurator;
 
 	@Activate
 	public AtlasClientComponent(@Reference ModelAtlasClientFactory clientFactory,
 			@Reference ClientBuilder clientBuilder,
 			@Reference(target = DEFAULT_FRAMEWORK_REGISTRY_TARGET) EPackage.Registry frameworkRegistry,
+			@Reference ConfigurationAdmin configurationAdmin,
 			BundleContext bundleContext, AtlasClientConfig config) {
 		ClientConfiguration configuration = toConfiguration(config);
 		this.client = clientFactory.builder()
@@ -153,8 +161,13 @@ public class AtlasClientComponent {
 				: null;
 		this.publisher = new RemoteEPackagePublisher(bundleContext, configuration.getBaseUri().toString(),
 				serviceRanking, globalRegistry);
-		// P5-4: per-scope ReadOnlyScopeService<EObject> publications (keyed atlas.scope).
-		this.scopePublisher = new RemoteScopeServicePublisher(bundleContext, configuration.getBaseUri().toString());
+		// P5-4: per-scope ReadableScopeService<EObject> publications (keyed atlas.scope).
+		// P6-7: stamp atlas.stage when the client is configured with a primary stage so two
+		// front-ends for the same scope can be told apart; null = stage-free (stamp omitted).
+		String primaryStage = configuration.getEagerStages().isEmpty() ? null
+				: configuration.getEagerStages().get(0);
+		this.scopePublisher = new RemoteScopeServicePublisher(bundleContext, configuration.getBaseUri().toString(),
+				primaryStage);
 
 		// P3-7: every publish goes through the local-first gate — a remote package is only
 		// published when no local EPackage/EPackageConfigurator already provides its nsURI
@@ -200,6 +213,11 @@ public class AtlasClientComponent {
 		} else {
 			this.resourceSetConfiguratorReg = null;
 		}
+		// P6-6: for each (scope, stage) pair from (eager_scopes × eager_stages), register an
+		// AtlasScopedFetchOnMissRegistry OSGi service (the fetch-on-miss bridge) and generate
+		// the ConfigAdmin EPackageRegistry + ResourceSetFactory pair that targets it.
+		this.registryConfigurator = new AtlasEPackageRegistryConfigurator(configurationAdmin);
+		registerScopeRegistries(bundleContext, configuration, frameworkRegistry, client.ePackages());
 		try {
 			// P3-4 EAGER: pre-fetch the configured scopes. P3-6 HYBRID: pre-fetch only
 			// eager.nsuri.allow.list; the rest resolves lazily through lazyRegistry. LAZY
@@ -215,7 +233,7 @@ public class AtlasClientComponent {
 				new ForceRemoteStartupCheck(() -> LocalServiceWatcher.localModels(bundleContext),
 						client.ePackages()::resolve, gate).run();
 			}
-			// P5-4: publish one ReadOnlyScopeService<EObject> per scope (independent of the
+			// P5-4: publish one ReadableScopeService<EObject> per scope (independent of the
 			// EPackage resolution mode); a consumer's (atlas.scope=…) lookup then resolves
 			// against this client exactly as it does against the in-process server.
 			publishScopeServices(configuration);
@@ -238,10 +256,16 @@ public class AtlasClientComponent {
 	/** Release everything in the reverse order of build-up; safe to call from a failed activation. */
 	private void tearDown() {
 		unregisterQuietly(resourceSetConfiguratorReg); // stop wrapping new ResourceSets first
+		// P6-6: delete ConfigAdmin pairs and unregister fetch-on-miss bridge services.
+		if (registryConfigurator != null) {
+			registryConfigurator.close();
+		}
+		fetchOnMissRegistrations.forEach(AtlasClientComponent::unregisterQuietly);
+		fetchOnMissRegistrations.clear();
 		closeQuietly(driftSubscription); // stop drift swaps
 		localServiceWatcher.close();
 		debounceExecutor.shutdownNow();
-		scopePublisher.unpublishAll(); // P5-4: revoke the per-scope ReadOnlyScopeService publications
+		scopePublisher.unpublishAll(); // P5-4: revoke the per-scope ReadableScopeService publications
 		publisher.unpublishAll();
 		if (client != null) {
 			client.close();
@@ -249,7 +273,7 @@ public class AtlasClientComponent {
 	}
 
 	/**
-	 * P5-4 — publish a {@code ReadOnlyScopeService<EObject>} for each scope this client
+	 * P5-4 — publish a {@code ReadableScopeService<EObject>} for each scope this client
 	 * exposes. The scope set is {@code scope.allow.list} when configured (no server call
 	 * needed — the per-scope façade fetches lazily), otherwise the scopes the server
 	 * advertises via {@code GET /scopes}. In {@code mode.strict}, a failing {@code listScopeNames}
@@ -260,6 +284,64 @@ public class AtlasClientComponent {
 				: configuration.getScopeAllowList();
 		for (String scope : scopes) {
 			scopePublisher.publish(scope, client.readOnlyScope(scope));
+		}
+	}
+
+	/**
+	 * P6-6 — for each (scope, stage) pair in {@code eager_scopes × eager_stages}: register an
+	 * {@link AtlasScopedFetchOnMissRegistry} as an OSGi {@code EPackage.Registry} service (the
+	 * fetch-on-miss bridge), add it as a drift listener so its cache stays fresh, and generate
+	 * the ConfigAdmin {@code EPackageRegistry} + {@code ResourceSetFactory} pair via
+	 * {@link AtlasEPackageRegistryConfigurator}.
+	 * <p>
+	 * Only runs when at least one scope is configured in {@code eager_scopes}. Failures during
+	 * ConfigAdmin config creation are logged but do not abort activation (the bridge service is
+	 * already up; the stock registry simply won't be wired until the config is retried or the
+	 * component restarts).
+	 */
+	private void registerScopeRegistries(BundleContext bundleContext, ClientConfiguration configuration,
+			EPackage.Registry frameworkRegistry,
+			org.eclipse.fennec.model.atlas.rest.client.api.RemoteEPackageProvider provider) {
+		List<String> scopes = configuration.getEagerScopes();
+		List<String> stages = configuration.getEagerStages();
+		if (scopes.isEmpty()) {
+			return;
+		}
+		for (String scope : scopes) {
+			if (stages.isEmpty()) {
+				registerOneBridge(bundleContext, scope, null, frameworkRegistry, provider);
+			} else {
+				for (String stage : stages) {
+					registerOneBridge(bundleContext, scope, stage, frameworkRegistry, provider);
+				}
+			}
+		}
+	}
+
+	private void registerOneBridge(BundleContext bundleContext, String scope, String stage,
+			EPackage.Registry frameworkRegistry,
+			org.eclipse.fennec.model.atlas.rest.client.api.RemoteEPackageProvider provider) {
+		AtlasScopedFetchOnMissRegistry bridge = new AtlasScopedFetchOnMissRegistry(scope, stage, provider,
+				frameworkRegistry);
+		Hashtable<String, Object> props = new Hashtable<>();
+		props.put(AtlasProperties.ATLAS_REMOTE, Boolean.TRUE);
+		props.put(AtlasProperties.ATLAS_SCOPE, scope);
+		if (stage != null) {
+			props.put(AtlasProperties.ATLAS_STAGE, stage);
+		}
+		props.put(AtlasScopedFetchOnMissRegistry.FETCH_ON_MISS_PROPERTY, Boolean.TRUE);
+		ServiceRegistration<EPackage.Registry> reg = bundleContext.registerService(EPackage.Registry.class, bridge,
+				props);
+		fetchOnMissRegistrations.add(reg);
+		// Register as drift listener so cache is evicted when the Atlas signals a package change.
+		client.addDriftListener(bridge);
+		try {
+			registryConfigurator.register(scope, stage);
+		} catch (IOException e) {
+			LOGGER.log(Level.WARNING,
+					"Failed to register ConfigAdmin scope registry for scope='" + scope + "'"
+							+ (stage != null ? ", stage='" + stage + "'" : ""),
+					e);
 		}
 	}
 

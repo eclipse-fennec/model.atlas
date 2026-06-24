@@ -14,8 +14,8 @@ import org.eclipse.fennec.model.atlas.datagen.model.datagen.ClassGenConfig;
 import org.eclipse.fennec.model.atlas.datagen.model.datagen.DataGenConfig;
 import org.eclipse.fennec.model.atlas.datagen.model.datagen.DataGenResult;
 import org.eclipse.fennec.model.atlas.datagen.model.datagen.DatagenFactory;
-import org.eclipse.fennec.model.atlas.readonlyscope.collector.ReadOnlyScopeCollector;
-import org.eclipse.fennec.model.atlas.scope.api.ReadOnlyScopeService;
+import org.eclipse.fennec.model.atlas.readable.scope.collector.ReadableScopeCollector;
+import org.eclipse.fennec.model.atlas.scope.api.ReadableScopeService;
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
 import org.osgi.service.component.annotations.ReferenceScope;
@@ -53,7 +53,7 @@ public class DataGenResource {
 	private ResourceSet resourceSet;
 	
 	@Reference
-    private ReadOnlyScopeCollector scopeCollector;
+    private ReadableScopeCollector scopeCollector;
 
 	@POST
 	@Consumes("application/xmi")
@@ -79,7 +79,7 @@ public class DataGenResource {
 	@Produces({"application/xmi", MediaType.APPLICATION_JSON})
 	public Response generateByObjectId(@PathParam("objectId") String objectId) {
 		try {
-			ReadOnlyScopeService<?> scopeService = getScopeService();
+			ReadableScopeService<?> scopeService = getScopeService();
 
 			Optional<?> content = scopeService.get(DATA_GEN_REGISTRY_NAME, objectId);
             if (content.isEmpty() || !(content.get() instanceof DataGenConfig config)) {
@@ -169,7 +169,7 @@ public class DataGenResource {
 		return null;
 	}
 	
-	private ReadOnlyScopeService<?> getScopeService() {
+	private ReadableScopeService<?> getScopeService() {
         return scopeCollector.getScopeServiceByScopeName(JENA_SCOPE_NAME);
     }
 }

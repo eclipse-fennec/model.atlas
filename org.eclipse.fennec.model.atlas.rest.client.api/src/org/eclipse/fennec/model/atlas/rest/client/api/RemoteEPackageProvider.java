@@ -109,4 +109,41 @@ public interface RemoteEPackageProvider {
 	 * @return the freshly fetched package, or empty if it is no longer available
 	 */
 	Optional<EPackage> refresh(String nsUri);
+
+	/**
+	 * Fetch a package from a specific scope at a specific stage
+	 * ({@code GET /{scopeName}/schema/stages/{stage}/content?nsUri=…}, P6-6).
+	 * <p>
+	 * Unlike {@link #getEPackage(String)}, this call is scope- and stage-pinned: the
+	 * server does not walk inheritance or resolve to the final stage, so the returned
+	 * package is exactly the one published at {@code stage} in {@code scopeName}.
+	 * Used by {@code AtlasScopedFetchOnMissRegistry} when a stage-specific registry
+	 * misses its prefetched set.
+	 * <p>
+	 * The default implementation falls back to the stage-free {@link #getEPackage(String)};
+	 * the remote client overrides it with the stage-explicit endpoint.
+	 *
+	 * @param nsUri     the package namespace URI
+	 * @param scopeName the scope to query
+	 * @param stage     the stage name (must not be null)
+	 * @return the package at that scope+stage, or empty if absent
+	 */
+	default Optional<EPackage> getEPackageAtStage(String nsUri, String scopeName, String stage) {
+		return getEPackage(nsUri);
+	}
+
+	/**
+	 * List the packages available in a specific scope at a specific stage
+	 * ({@code GET /{scopeName}/schema/stages/{stage}}, P6-6).
+	 * <p>
+	 * The default implementation falls back to the stage-free {@link #listPackages(String)};
+	 * the remote client overrides it with the stage-explicit endpoint.
+	 *
+	 * @param scopeName the scope to enumerate
+	 * @param stage     the stage name (must not be null)
+	 * @return the package descriptors (possibly empty)
+	 */
+	default List<PackageDescriptor> listPackagesAtStage(String scopeName, String stage) {
+		return listPackages(scopeName);
+	}
 }

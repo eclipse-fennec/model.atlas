@@ -211,7 +211,7 @@ public class AtlasScopeServiceIntegrationTest {
 		@DisplayName("getScopeName is atlas and isInheritingFromParentScope is false")
 		@RegistryConfiguration
 		@EPackageLuceneIndexSetup
-		void shouldExposeReadOnlyScopeIdentity(
+		void shouldExposeReadableScopeIdentity(
 				@InjectService(cardinality = 0, filter = "(scope.name=" + WorkflowConstants.ATLAS_SCOPE_NAME + ")")
 				ServiceAware<ScopeService> scopeAware)
 				throws InterruptedException {

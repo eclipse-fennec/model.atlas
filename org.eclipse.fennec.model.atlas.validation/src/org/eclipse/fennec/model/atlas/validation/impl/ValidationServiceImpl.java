@@ -38,8 +38,7 @@ import org.eclipse.fennec.m2x.ocl.api.OclEngine;
 import org.eclipse.fennec.m2x.ocl.api.OclEvaluationOptions;
 import org.eclipse.fennec.m2x.ocl.api.OclParseException;
 import org.eclipse.fennec.m2x.ocl.api.OclResult;
-import org.eclipse.fennec.model.atlas.readonlyscope.collector.ReadOnlyScopeCollector;
-import org.eclipse.fennec.model.atlas.scope.api.ReadOnlyScopeService;
+import org.eclipse.fennec.model.atlas.scope.api.ReadableScopeService;
 import org.eclipse.fennec.model.atlas.scope.api.RegistryInfo;
 import org.eclipse.fennec.model.atlas.scope.api.RegistryType;
 import org.eclipse.fennec.model.atlas.scope.api.ScopeInfo;
@@ -64,6 +63,7 @@ import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
 import org.osgi.service.component.annotations.ReferenceScope;
 import org.osgi.service.component.annotations.ServiceScope;
+import org.eclipse.fennec.model.atlas.readable.scope.collector.ReadableScopeCollector;
 
 /**
  * @author ilenia
@@ -73,7 +73,7 @@ import org.osgi.service.component.annotations.ServiceScope;
 public class ValidationServiceImpl implements ValidationService {
 
 	@Reference
-	private ReadOnlyScopeCollector scopeCollector;
+	private ReadableScopeCollector scopeCollector;
 
 	@Reference(scope = ReferenceScope.PROTOTYPE_REQUIRED)
 	private OclEngine oclEngine;
@@ -86,7 +86,7 @@ public class ValidationServiceImpl implements ValidationService {
 
 	@Override
 	public ValidationResponse validateWithOcl(EObject eObject, String oclId, String scopeName, ResourceSet resourceSet) {
-		ReadOnlyScopeService<?> scopeService = resolveScopeService(scopeName);
+		ReadableScopeService<?> scopeService = resolveScopeService(scopeName);
 		OclConstraintSet oclConstraintSet = resolveConstraintSet(oclId, scopeService);
 		requireConstraintSetApplicable(oclConstraintSet, eObject);
 		List<OclConstraint> constraints = ValidationHelper.filter(oclConstraintSet,
@@ -127,7 +127,7 @@ public class ValidationServiceImpl implements ValidationService {
 		response.setRole(OclRole.DERIVED);
 		List<Diagnostic> diagnostics = new ArrayList<>();
 		if (oclId != null) {
-			ReadOnlyScopeService<?> scopeService = resolveScopeService(scopeName);
+			ReadableScopeService<?> scopeService = resolveScopeService(scopeName);
 			OclConstraintSet oclConstraintSet = resolveConstraintSet(oclId, scopeService);
 			requireConstraintSetApplicable(oclConstraintSet, validatingObject);
 			for (EStructuralFeature feature : request.getDerivedFeature()) {
@@ -172,7 +172,7 @@ public class ValidationServiceImpl implements ValidationService {
 		EObject validatingObject = checkRequest.validatingEObject;
 		boolean withCOCL = checkRequest.withCOCL;
 		if(withCOCL) {
-			ReadOnlyScopeService<?> scopeService = resolveScopeService(scopeName);
+			ReadableScopeService<?> scopeService = resolveScopeService(scopeName);
 			OclConstraintSet oclConstraintSet = resolveConstraintSet(request.getCoclId(), scopeService);
 			requireConstraintSetApplicable(oclConstraintSet, validatingObject);
 			String operationName = request.getOperationName();
@@ -256,7 +256,7 @@ public class ValidationServiceImpl implements ValidationService {
 					"Provided Filter Constraint is of type %s. Should be of type REFERENCE_FILTER",
 					filterConstraint.getRole()));
 		}
-		ReadOnlyScopeService<?> scopeService = resolveScopeService(scopeName);
+		ReadableScopeService<?> scopeService = resolveScopeService(scopeName);
 		OclConstraintSet constraintSet = resolveConstraintSet(request.getCoclId(), scopeService);
 		List<OclConstraint> constraints = ValidationHelper.filter(constraintSet,
 				c -> c.isActive() && OclRole.VALIDATION.equals(c.getRole()));
@@ -320,7 +320,7 @@ public class ValidationServiceImpl implements ValidationService {
 		if (request.getCoclId() == null) {
 			throw new IllegalArgumentException("No C-OCL id was provided");
 		}
-		ReadOnlyScopeService<?> scopeService = resolveScopeService(scopeName);
+		ReadableScopeService<?> scopeService = resolveScopeService(scopeName);
 		OclConstraintSet constraintSet = resolveConstraintSet(request.getCoclId(), scopeService);
 		requireConstraintSetApplicable(constraintSet, request.getValidationObjects());
 		List<OclConstraint> constraints = ValidationHelper.filter(constraintSet,
@@ -367,15 +367,15 @@ public class ValidationServiceImpl implements ValidationService {
 
 	// ---- OCL helpers ----
 	
-	private ReadOnlyScopeService<?> resolveScopeService(String scopeName) {
-		ReadOnlyScopeService<?> scopeService = scopeCollector.getScopeServiceByScopeName(scopeName);
+	private ReadableScopeService<?> resolveScopeService(String scopeName) {
+		ReadableScopeService<?> scopeService = scopeCollector.getScopeServiceByScopeName(scopeName);
 		if (scopeService == null) {
-			throw new NoSuchElementException("ReadOnlyScopeService not available for scope: " + scopeName);
+			throw new NoSuchElementException("ReadableScopeService not available for scope: " + scopeName);
 		}
 		return scopeService;
 	}
 
-	private OclConstraintSet resolveConstraintSet(String oclId, ReadOnlyScopeService<?> scopeService) {
+	private OclConstraintSet resolveConstraintSet(String oclId, ReadableScopeService<?> scopeService) {
 		ScopeInfo scope = scopeService.getScopeInfo();
 		RegistryInfo coclRegistry = scope.getRegistries().stream()
 				.filter(r -> RegistryType.COCL == r.getType())

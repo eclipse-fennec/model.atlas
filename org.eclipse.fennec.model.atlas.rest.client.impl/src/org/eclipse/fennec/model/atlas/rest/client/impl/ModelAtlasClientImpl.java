@@ -30,7 +30,7 @@ import org.eclipse.fennec.model.atlas.rest.client.api.DriftListener;
 import org.eclipse.fennec.model.atlas.rest.client.api.DriftReport;
 import org.eclipse.fennec.model.atlas.rest.client.api.ModelAtlasClient;
 import org.eclipse.fennec.model.atlas.rest.client.api.RemoteEPackageProvider;
-import org.eclipse.fennec.model.atlas.scope.api.ReadOnlyScopeService;
+import org.eclipse.fennec.model.atlas.scope.api.ReadableScopeService;
 import org.eclipse.fennec.model.atlas.scope.api.RegistryInfo;
 
 import com.fasterxml.jackson.databind.JsonNode;
@@ -62,7 +62,7 @@ public class ModelAtlasClientImpl implements ModelAtlasClient {
 	private final DriftWatcher driftWatcher;
 
 	private volatile RemoteEPackageProviderImpl ePackages;
-	private final Map<String, RemoteReadOnlyScopeService> readOnlyScopes = new ConcurrentHashMap<>();
+	private final Map<String, RemoteReadableScopeService> readOnlyScopes = new ConcurrentHashMap<>();
 
 	ModelAtlasClientImpl(ClientConfiguration configuration, Client client) {
 		this(configuration, client, new XmiEPackageDeserializer());
@@ -155,11 +155,11 @@ public class ModelAtlasClientImpl implements ModelAtlasClient {
 	}
 
 	@Override
-	public ReadOnlyScopeService<EObject> readOnlyScope(String scopeName) {
+	public ReadableScopeService<EObject> readOnlyScope(String scopeName) {
 		Objects.requireNonNull(scopeName, "scopeName");
 		// One service (and one cache) per scope; repeated calls return the same instance.
 		return readOnlyScopes.computeIfAbsent(scopeName,
-				s -> new RemoteReadOnlyScopeService(baseTarget, configuration, s, this::newDecodingResourceSet));
+				s -> new RemoteReadableScopeService(baseTarget, configuration, s, this::newDecodingResourceSet));
 	}
 
 	/**

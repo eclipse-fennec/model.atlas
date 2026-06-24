@@ -38,7 +38,7 @@ import org.eclipse.emf.ecore.resource.ResourceSet;
 import org.eclipse.fennec.emf.osgi.ResourceSetFactory;
 import org.eclipse.fennec.model.atlas.datagen.example.model.dge.Company;
 import org.eclipse.fennec.model.atlas.datagen.example.model.dge.DGFactory;
-import org.eclipse.fennec.model.atlas.scope.api.ReadOnlyScopeService;
+import org.eclipse.fennec.model.atlas.scope.api.ReadableScopeService;
 import org.eclipse.fennec.model.atlas.validation.ValidationService;
 import org.eclipse.fennec.model.atlas.validation.model.cocl.COCLFactory;
 import org.eclipse.fennec.model.atlas.validation.model.cocl.Diagnostic;
@@ -71,8 +71,8 @@ import org.testcontainers.containers.wait.strategy.Wait;
  * <p>
  * In-process the validation flow is covered by {@code ObjectValidationResourceTest}
  * (validation + the in-process {@code ScopeService}). Here the <em>same</em>
- * {@code ValidationServiceImpl} is exercised, but the {@code ReadOnlyScopeService} it
- * resolves through the {@code ReadOnlyScopeCollector} is the <b>remote</b> P5-4 publication
+ * {@code ValidationServiceImpl} is exercised, but the {@code ReadableScopeService} it
+ * resolves through the {@code ReadableScopeCollector} is the <b>remote</b> P5-4 publication
  * of {@code rest.client.osgi} (pointed at a live jena container) — no validation-bundle
  * change, only configuration.
  * <p>
@@ -82,7 +82,7 @@ import org.testcontainers.containers.wait.strategy.Wait;
  * {@code docker/dockercompose/configs/jena.json};</li>
  * <li>drive the {@code rest.client.osgi} ConfigAdmin factory at the container →
  * {@code RemoteScopeServicePublisher} (P5-4) publishes a
- * {@code ReadOnlyScopeService(atlas.scope=jena, atlas.remote=true)} the collector binds;</li>
+ * {@code ReadableScopeService(atlas.scope=jena, atlas.remote=true)} the collector binds;</li>
  * <li>seed an {@code OclConstraintSet} into {@code jena/cocl} at the final stage through the
  * writable REST endpoint ({@code ObjectRegistryResource.createObject}) — the remote client is
  * read-only, so the object must exist on the server;</li>
@@ -146,11 +146,11 @@ public class RemoteValidationIT {
 			@InjectConfiguration(withFactoryConfig = @WithFactoryConfiguration(factoryPid = PID, name = "remote",
 					location = "?")) Configuration configuration,
 			@InjectService(cardinality = 0,
-					filter = "(&(atlas.scope=jena)(atlas.remote=true))") ServiceAware<ReadOnlyScopeService> remoteScope,
+					filter = "(&(atlas.scope=jena)(atlas.remote=true))") ServiceAware<ReadableScopeService> remoteScope,
 			@InjectService ServiceAware<ResourceSetFactory> resourceSetFactories,
 			@InjectService ServiceAware<ValidationService> validationServices) throws Exception {
 
-		// 1. Activate the remote client → P5-4 publishes ReadOnlyScopeService(atlas.scope=jena).
+		// 1. Activate the remote client → P5-4 publishes ReadableScopeService(atlas.scope=jena).
 		//    LAZY: no EPackage prefetch needed; scope publication is independent of the mode.
 		Hashtable<String, Object> props = new Hashtable<>();
 		props.put("base.uri", baseUri.toString());
@@ -160,7 +160,7 @@ public class RemoteValidationIT {
 
 		// 2. The remote scope publication appears (and is thus bound by the collector).
 		assertNotNull(remoteScope.waitForService(SERVICE_WAIT_MS),
-				"P5-4 should publish a remote ReadOnlyScopeService for the jena scope");
+				"P5-4 should publish a remote ReadableScopeService for the jena scope");
 
 		ResourceSetFactory rsf = resourceSetFactories.waitForService(SERVICE_WAIT_MS);
 		assertNotNull(rsf, "an EMF ResourceSetFactory must be present");

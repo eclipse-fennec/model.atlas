@@ -34,7 +34,7 @@ remote package is suppressed while a local bundle provides the same nsURI (unles
 `force.remote=true`), and re-published if that local one disappears.
 
 Independently of the mode, the component also publishes one
-`ReadOnlyScopeService<EObject>` OSGi service **per scope** (keyed `atlas.scope`), so a
+`ReadableScopeService<EObject>` OSGi service **per scope** (keyed `atlas.scope`), so a
 consumer can read the scope's ordinary EObjects — `get` / `listObjectIds` /
 `listAll` / `stream`, the registry as a parameter — through the same contract the
 in-process server exposes. The scope set is `scope.allow.list` when configured,
@@ -44,7 +44,7 @@ enumeration tears down activation. See "Consuming the published packages" below.
 ## Runtime requirements
 
 Besides this bundle, `…rest.client.api`, `…rest.client.impl` and
-`…scope.api` (the `ReadOnlyScopeService` contract the per-scope services are
+`…scope.api` (the `ReadableScopeService` contract the per-scope services are
 published under), the framework needs:
 
 - **`org.eclipse.fennec.emf.osgi.component`** — provides the framework
@@ -177,13 +177,16 @@ Resolve on demand; framework `ResourceSet`s gain Atlas fallback automatically.
     "base.uri": "http://host:8080/atlas/rest",
     "mode": "EAGER",
     "eager.scopes": ["jena"],
+    "eager.stages": ["released"],
     "mode.strict": true
   }
 }
 ```
 
 `mode.strict=true` makes activation fail if the Atlas is unreachable (so a missing
-backend is loud rather than silent).
+backend is loud rather than silent). `eager.stages` controls which stage is pre-fetched
+and stamped on every service publication — omit it (or use `[]`) for a stage-free
+(final-stage) client.
 
 ### HYBRID — pin a few packages, lazy-resolve the rest
 
@@ -262,6 +265,55 @@ backend is loud rather than silent).
 }
 ```
 
+### Connect to a specific stage (snapshot / review workflow)
+
+Two separate client configurations — one against the `snapshot` stage, one against the
+final (`released`) stage — publish `ReadableScopeService` and `EPackage` services under
+the same `atlas.scope` but different `atlas.stage` stamps, so consumers can pick the
+right one:
+
+```json
+{
+  "org.eclipse.fennec.model.atlas.rest.client~jena-snapshot": {
+    "base.uri": "http://host:8080/atlas/rest",
+    "eager.scopes": ["jena"],
+    "eager.stages": ["snapshot"]
+  },
+  "org.eclipse.fennec.model.atlas.rest.client~jena-released": {
+    "base.uri": "http://host:8080/atlas/rest",
+    "eager.scopes": ["jena"],
+    "eager.stages": ["released"]
+  }
+}
+```
+
+**Service publications from the two instances:**
+
+| Service | Properties |
+|---|---|
+| `ReadableScopeService` (snapshot client) | `atlas.scope=jena`, `atlas.stage=snapshot`, `atlas.remote=true` |
+| `ReadableScopeService` (released client) | `atlas.scope=jena`, `atlas.stage=released`, `atlas.remote=true` |
+| `EPackage` (snapshot client) | `emf.nsURI=…`, `atlas.scope=jena`, `atlas.stage=snapshot` |
+| `EPackage` (released client) | `emf.nsURI=…`, `atlas.scope=jena`, `atlas.stage=released` |
+| `ResourceSetFactory` (snapshot client) | `rsf.name=jena_snapshot` |
+| `ResourceSetFactory` (released client) | `rsf.name=jena_released` |
+
+**Consumers bind by stage:**
+
+```java
+// Scope service — snapshot:
+@Reference(target = "(&(atlas.scope=jena)(atlas.stage=snapshot))")
+ReadableScopeService<EObject> jenaDraft;
+
+// EPackage — explicitly from snapshot:
+@Reference(target = "(&(emf.nsURI=http://example.org/model/1.0)(atlas.stage=snapshot))")
+EPackage draftPkg;
+
+// ResourceSet scoped to snapshot (packages resolve from jena/snapshot):
+@Reference(target = "(rsf.name=jena_snapshot)")
+ResourceSetFactory jenaSnapshotRsf;
+```
+
 ### Mirror into `EPackage.Registry.INSTANCE` for legacy code
 
 ```json
@@ -292,26 +344,109 @@ EPackage pkg;
 
 Atlas-published EPackage services carry `atlas.remote=true`, `atlas.base.uri`,
 `atlas.scope`, and the standard `emf.*` properties (`emf.nsURI`, `emf.model.version`,
-…). `atlas.stage` is also stamped as advisory provenance — the package's real owning
-stage, resolved server-side — and is omitted only when that stage is unknown. (The
-former `atlas.view` is no longer stamped, P5-7.)
+…). `atlas.stage` is also stamped when the client is configured with a specific stage
+(`eager.stages`) — it carries the stage the package was fetched from, so two front-ends
+for the same scope can be filtered apart: `(&(emf.nsURI=…)(atlas.stage=snapshot))`. The
+property is omitted only when the stage is unknown (stage-free final reads). (The former
+`atlas.view` is no longer stamped, P5-7.)
 
-### EObjects (per-scope `ReadOnlyScopeService`)
+### EObjects (per-scope `ReadableScopeService`)
 
 For ordinary EObjects, bind the per-scope service the front-end publishes (one per
 scope, keyed `atlas.scope`):
 
 ```java
 @Reference(target = "(atlas.scope=jena)")
-ReadOnlyScopeService<EObject> jena;
+ReadableScopeService<EObject> jena;
 // ...
 jena.get("cocl", objectId).ifPresent(obj -> process(obj));
 ```
 
-These services carry `atlas.scope`, `atlas.remote=true` and `atlas.base.uri`. The
-same contract is what an in-process server publishes, so a consumer's `@Reference`
+These services carry `atlas.scope`, `atlas.remote=true`, `atlas.base.uri`, and — when
+the client is configured with a specific stage via `eager.stages` — `atlas.stage`. The
+stage stamp is a **disambiguation label**: the service still reads each registry's final
+stage (per the stage-free design), but it lets two front-ends for the same scope be told
+apart:
+
+```java
+// Bind the snapshot-stage client's publication for "jena":
+@Reference(target = "(&(atlas.scope=jena)(atlas.stage=snapshot))")
+ReadableScopeService<EObject> jenaDraft;
+
+// Bind the released-stage client's publication (or any client without a stage stamp):
+@Reference(target = "(atlas.scope=jena)")
+ReadableScopeService<EObject> jenaFinal;
+```
+
+The same contract is what an in-process server publishes, so a consumer's `@Reference`
 binds either source identically. **Note:** reading a `SCHEMA`-typed registry through
 this service throws — use the EPackage path above for schemas.
+
+### Stage-scoped EPackage registries (`AtlasEPackageRegistry`)
+
+When `eager.scopes` is set, the front-end creates a **configurable `EPackageRegistry` +
+`ResourceSetFactory` pair** per `(scope, stage)` — the OSGi-native way to isolate the
+package namespace of a specific Atlas stage (e.g. `snapshot`) from the rest of the
+framework, equivalent to the server-side `SchemaRegistryChainConfigurator`.
+
+```json
+{
+  "org.eclipse.fennec.model.atlas.rest.client~jena-snapshot": {
+    "base.uri": "http://host:8080/atlas/rest",
+    "eager.scopes": ["jena"],
+    "eager.stages": ["snapshot"]
+  }
+}
+```
+
+With this configuration the front-end registers:
+
+- A `ResourceSetFactory` named `rsf.name=jena_snapshot`. Bind it to get a `ResourceSet`
+  whose package registry resolves packages from the `jena / snapshot` stage first,
+  fetching from the Atlas on a miss, then falling back to the global parent registry.
+- An `EPackage.Registry` bridge service (`atlas.scope=jena`, `atlas.stage=snapshot`,
+  `atlas.fetch.on.miss=true`) that the stock registry's `parentRegistry.target` chain
+  points at; fetch-on-miss is stage-aware (hits the `snapshot`-scoped server endpoint).
+
+Bind the stage-specific `ResourceSetFactory`:
+
+```java
+@Reference(target = "(rsf.name=jena_snapshot)")
+ResourceSetFactory jenaSnapshotRsf;
+// ...
+ResourceSet rs = jenaSnapshotRsf.createResourceSet();
+EPackage pkg = rs.getPackageRegistry().getEPackage("http://example.org/model/1.0");
+// → resolves from jena/snapshot stage; falls back to global registry on a miss
+```
+
+For a final-stage (stage-free) scoped registry omit `eager.stages` (or set it to `[]`):
+
+```json
+{
+  "org.eclipse.fennec.model.atlas.rest.client~jena": {
+    "base.uri": "http://host:8080/atlas/rest",
+    "eager.scopes": ["jena"],
+    "eager.stages": []
+  }
+}
+```
+
+This produces `rsf.name=jena` — the factory's `ResourceSet` resolves from `jena`'s
+final stage, fetching from the Atlas on a miss.
+
+Multiple stages can be listed; one pair is created per entry:
+
+```json
+{
+  "org.eclipse.fennec.model.atlas.rest.client~jena-both": {
+    "base.uri": "http://host:8080/atlas/rest",
+    "eager.scopes": ["jena"],
+    "eager.stages": ["snapshot", "released"]
+  }
+}
+```
+
+→ produces `rsf.name=jena_snapshot` and `rsf.name=jena_released` independently.
 
 ## See also
 

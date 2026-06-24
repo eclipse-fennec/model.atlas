@@ -27,7 +27,7 @@ package org.eclipse.fennec.model.atlas.scope.api;
  * <ul>
  * <li><b>Registry identity</b> — {@link #ATLAS_SCOPE}, {@link #ATLAS_REGISTRY},
  * {@link #ATLAS_REMOTE}: stamped on a
- * {@link ReadOnlyScopeService} (and on EPackage publications) so consumers can find
+ * {@link ReadableScopeService} (and on EPackage publications) so consumers can find
  * and filter them.</li>
  * <li><b>Remote-publication provenance</b> — {@link #ATLAS_STAGE},
  * {@link #ATLAS_BASE_URI}: where a remotely fetched artifact came from; set by the
@@ -57,7 +57,7 @@ public final class AtlasProperties {
 
 	/**
 	 * String. Registry name an EObject registry publication belongs to,
-	 * e.g. {@code cocl}. Used by the read-only {@link ReadOnlyScopeService}
+	 * e.g. {@code cocl}. Used by the read-only {@link ReadableScopeService}
 	 * services (Phase 4 / Phase 5).
 	 */
 	public static final String ATLAS_REGISTRY = "atlas.registry";

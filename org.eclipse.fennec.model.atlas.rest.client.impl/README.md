@@ -74,7 +74,7 @@ try (ModelAtlasClient client = ModelAtlasClient.builder()
 |---|---|
 | `listScopeNames()` | `GET /scopes` — the scope names the server exposes |
 | `ePackages()` | the cache-fronted `RemoteEPackageProvider` for **schemas** (see below) |
-| `readOnlyScope(scope)` | the per-scope `ReadOnlyScopeService<EObject>` for **ordinary EObjects** (see below) |
+| `readOnlyScope(scope)` | the per-scope `ReadableScopeService<EObject>` for **ordinary EObjects** (see below) |
 | `listRegistries(scope)` | the registry names a scope exposes (`getScopeInfo().getRegistries()`) |
 | `newResourceSet()` | a `ResourceSet` that falls back to the Atlas on an unknown nsURI |
 | `checkForDrift()` | re-validate all cached entries now; returns a `DriftReport` |
@@ -97,7 +97,7 @@ inheritance, so no stage name is embedded in any read URL.
 ### Reading EObjects (not just schemas)
 
 Besides schemas, a scope holds ordinary EObjects in its registries.
-`readOnlyScope(scope)` returns a per-scope `ReadOnlyScopeService<EObject>` — the same
+`readOnlyScope(scope)` returns a per-scope `ReadableScopeService<EObject>` — the same
 contract the in-process server exposes, so a consumer can depend on it whether it
 reads a local Atlas or a remote one. The registry is a method parameter:
 
@@ -106,15 +106,27 @@ reads a local Atlas or a remote one. The registry is a method parameter:
 | `get(registry, objectId)` | resolve one object from a registry's final stage (cache-fronted, ETag-revalidated) |
 | `listObjectIds(registry)` | the object ids visible in a registry's final stage |
 | `listAll(registry)` / `stream(registry)` | resolve every object in a registry |
-| `getScopeInfo()` | the scope descriptor: name, description, parent scope, and registries (name + type) |
+| `getScopeInfo()` | the scope descriptor: name, description, parent scope, and registries (with their stages — see below) |
 | `isInheritingFromParentScope()` | whether reads read through to a parent scope's final stage |
+| `registryView(registry)` | a `ReadableRegistryView` bound to one registry's final stage |
+| `registryView(registry, stage)` | a `ReadableRegistryView` bound to a specific stage; inheritance still reads through to parent scopes' final stages server-side |
 
 ```java
-ReadOnlyScopeService<EObject> jena = client.readOnlyScope("jena");
+ReadableScopeService<EObject> jena = client.readOnlyScope("jena");
 for (String id : jena.listObjectIds("cocl")) {
     jena.get("cocl", id).ifPresent(obj -> process(obj));
 }
 ```
+
+`ReadableRegistryView` (returned by `registryView(...)`) binds a single `(scope, registry[, stage])` combination and provides the same read operations without repeating the registry parameter:
+
+| Method | What it does |
+|---|---|
+| `get(objectId)` | resolve one object |
+| `listObjectIds()` | the visible object ids |
+| `listAll()` / `stream()` | resolve everything |
+| `getScopeName()` / `getRegistryName()` | the bound scope and registry |
+| `getStageName()` | the bound stage, or `null` for a final-stage view |
 
 > **SCHEMA registries are off-limits to this API.** A registry typed `SCHEMA` holds
 > EPackages; an EObject read against it would treat the package as an opaque EObject.
@@ -122,6 +134,75 @@ for (String id : jena.listObjectIds("cocl")) {
 > registry throw `ModelAtlasClientException` pointing you at `ePackages()`. Fetch
 > schemas through the EPackage API, EObjects through this one. (The registry type is
 > read once from the scope descriptor and memoized.)
+
+## Reading from a specific stage
+
+By default every read targets each registry's **final stage**, resolved server-side. Stage
+names are user-defined (e.g. `snapshot`, `review`, `released`) and differ per registry;
+never hardcode a stage name — discover it from the scope descriptor instead:
+
+```java
+ReadableScopeService<EObject> jena = client.readOnlyScope("jena");
+List<StageInfo> stages = jena.getScopeInfo().getRegistries().stream()
+        .filter(r -> "cocl".equals(r.getName()))
+        .findFirst()
+        .map(RegistryInfo::getStages)
+        .orElse(List.of());
+
+String snapshotStage = stages.stream()
+        .filter(s -> !s.isFinal() && s.isReadable())
+        .map(StageInfo::getName)
+        .findFirst()
+        .orElseThrow();
+```
+
+### Schemas (EPackages) at a specific stage
+
+```java
+RemoteEPackageProvider packages = client.ePackages();
+
+// Final stage (default — stage-free):
+Optional<EPackage> pkg = packages.getEPackage("http://example.org/model/1.0");
+
+// Explicit stage:
+Optional<EPackage> draft = packages.getEPackageAtStage(
+        "http://example.org/model/1.0", "jena", "snapshot");
+
+// List all packages available in a stage:
+List<PackageDescriptor> listed = packages.listPackagesAtStage("jena", "snapshot");
+```
+
+`getEPackageAtStage` bypasses the cache and goes straight to the server — it is intended
+for comparison / review workflows, not for hot-path resolution. The stage-free
+`getEPackage` remains the right call for normal use (cache-fronted).
+
+### EObjects at a specific stage
+
+Use `registryView(registry, stage)` to bind a `ReadableRegistryView` to an explicit stage.
+Reads through this view use the stage-explicit server endpoints; inheritance still reads
+through to parent scopes' **final** stages server-side (the "no silent demotion" rule: asking
+for `snapshot` in this scope never quietly yields a parent scope's snapshot — it yields the
+parent's final).
+
+```java
+ReadableScopeService<EObject> jena = client.readOnlyScope("jena");
+
+// Final stage (stage-free — the default):
+ReadableRegistryView<EObject> finalView = jena.registryView("cocl");
+finalView.listObjectIds().forEach(id ->
+    finalView.get(id).ifPresent(obj -> process(obj)));
+
+// Snapshot stage (explicit):
+ReadableRegistryView<EObject> snapshotView = jena.registryView("cocl", "snapshot");
+snapshotView.listObjectIds().forEach(id ->
+    snapshotView.get(id).ifPresent(obj -> reviewDraft(obj)));
+
+System.out.println(snapshotView.getStageName()); // "snapshot"
+System.out.println(finalView.getStageName());     // null  (= final, server-resolved)
+```
+
+The two views are independent: a `snapshot` read and a final read for the same id can
+return different content and do not share a cache slot.
 
 ## Configuration reference (honored by the plain-Java client)
 
@@ -219,6 +300,35 @@ try (ModelAtlasClient client = ModelAtlasClient.builder().baseUri(base).build())
     // … the background watcher (drift.check.interval.ms) fires events; or call:
     DriftReport report = client.checkForDrift();
     handle.close(); // unsubscribe
+}
+```
+
+### Read from a non-final stage (snapshot review)
+
+```java
+try (ModelAtlasClient client = ModelAtlasClient.builder()
+        .baseUri(URI.create("http://localhost:8080/atlas/rest"))
+        .build()) {
+
+    ReadableScopeService<EObject> jena = client.readOnlyScope("jena");
+
+    // Discover what stages exist for the "cocl" registry.
+    String snapshotStage = jena.getScopeInfo().getRegistries().stream()
+            .filter(r -> "cocl".equals(r.getName()))
+            .flatMap(r -> r.getStages().stream())
+            .filter(s -> !s.isFinal() && s.isReadable())
+            .map(StageInfo::getName)
+            .findFirst()
+            .orElseThrow(() -> new IllegalStateException("no readable non-final stage"));
+
+    // Bind a view to that stage.
+    ReadableRegistryView<EObject> draft = jena.registryView("cocl", snapshotStage);
+    draft.listAll().forEach(obj -> System.out.println(obj));
+
+    // Fetch a schema at the same stage.
+    client.ePackages()
+          .getEPackageAtStage("http://example.org/model/1.0", "jena", snapshotStage)
+          .ifPresent(pkg -> System.out.println("draft pkg: " + pkg.getName()));
 }
 ```
 

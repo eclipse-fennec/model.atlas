@@ -79,8 +79,8 @@ public class ScopeApiAdapterFactory extends AdapterFactoryImpl {
 	protected ScopeApiSwitch<Adapter> modelSwitch =
 		new ScopeApiSwitch<Adapter>() {
 			@Override
-			public <T extends EObject> Adapter caseReadOnlyScopeService(ReadOnlyScopeService<T> object) {
-				return createReadOnlyScopeServiceAdapter();
+			public <T extends EObject> Adapter caseReadableScopeService(ReadableScopeService<T> object) {
+				return createReadableScopeServiceAdapter();
 			}
 			@Override
 			public Adapter caseScopeInfo(ScopeInfo object) {
@@ -89,6 +89,14 @@ public class ScopeApiAdapterFactory extends AdapterFactoryImpl {
 			@Override
 			public Adapter caseRegistryInfo(RegistryInfo object) {
 				return createRegistryInfoAdapter();
+			}
+			@Override
+			public Adapter caseStageInfo(StageInfo object) {
+				return createStageInfoAdapter();
+			}
+			@Override
+			public <T extends EObject> Adapter caseReadableRegistryView(ReadableRegistryView<T> object) {
+				return createReadableRegistryViewAdapter();
 			}
 			@Override
 			public Adapter defaultCase(EObject object) {
@@ -111,16 +119,16 @@ public class ScopeApiAdapterFactory extends AdapterFactoryImpl {
 
 
 	/**
-	 * Creates a new adapter for an object of class '{@link org.eclipse.fennec.model.atlas.scope.api.ReadOnlyScopeService <em>Read Only Scope Service</em>}'.
+	 * Creates a new adapter for an object of class '{@link org.eclipse.fennec.model.atlas.scope.api.ReadableScopeService <em>Readable Scope Service</em>}'.
 	 * <!-- begin-user-doc -->
 	 * This default implementation returns null so that we can easily ignore cases;
 	 * it's useful to ignore a case when inheritance will catch all the cases anyway.
 	 * <!-- end-user-doc -->
 	 * @return the new adapter.
-	 * @see org.eclipse.fennec.model.atlas.scope.api.ReadOnlyScopeService
+	 * @see org.eclipse.fennec.model.atlas.scope.api.ReadableScopeService
 	 * @generated
 	 */
-	public Adapter createReadOnlyScopeServiceAdapter() {
+	public Adapter createReadableScopeServiceAdapter() {
 		return null;
 	}
 
@@ -149,6 +157,34 @@ public class ScopeApiAdapterFactory extends AdapterFactoryImpl {
 	 * @generated
 	 */
 	public Adapter createRegistryInfoAdapter() {
+		return null;
+	}
+
+	/**
+	 * Creates a new adapter for an object of class '{@link org.eclipse.fennec.model.atlas.scope.api.StageInfo <em>Stage Info</em>}'.
+	 * <!-- begin-user-doc -->
+	 * This default implementation returns null so that we can easily ignore cases;
+	 * it's useful to ignore a case when inheritance will catch all the cases anyway.
+	 * <!-- end-user-doc -->
+	 * @return the new adapter.
+	 * @see org.eclipse.fennec.model.atlas.scope.api.StageInfo
+	 * @generated
+	 */
+	public Adapter createStageInfoAdapter() {
+		return null;
+	}
+
+	/**
+	 * Creates a new adapter for an object of class '{@link org.eclipse.fennec.model.atlas.scope.api.ReadableRegistryView <em>Readable Registry View</em>}'.
+	 * <!-- begin-user-doc -->
+	 * This default implementation returns null so that we can easily ignore cases;
+	 * it's useful to ignore a case when inheritance will catch all the cases anyway.
+	 * <!-- end-user-doc -->
+	 * @return the new adapter.
+	 * @see org.eclipse.fennec.model.atlas.scope.api.ReadableRegistryView
+	 * @generated
+	 */
+	public Adapter createReadableRegistryViewAdapter() {
 		return null;
 	}
 

@@ -48,10 +48,10 @@ Companion design document: [`rest-client.md`](./rest-client.md). All section ref
 | P4-7 | Deprecate `ScopeService<T>` as typedef | 4 | 0.5 | P4-3 |
 | P4-8 | Tests covering both service publications | 4 | 1 | P4-3 |
 | P5-0 | Server: stage-free final-stage content endpoint `GET /{s}/registries/{r}/content` | 5 | 1 | P4-3 |
-| P5-1 | `RemoteReadOnlyScopeService` (REST mapping for EObjects, per scope) | 5 | 2 | P5-0, P4-1, P2-* |
+| P5-1 | `RemoteReadableScopeService` (REST mapping for EObjects, per scope) | 5 | 2 | P5-0, P4-1, P2-* |
 | P5-2 | Wire EObject drift into scope-level watcher | 5 | 1 | P5-1, P2-7 |
 | P5-3 | Wire `ModelAtlasClient.readOnlyScope(scope)` + `listRegistries(scope)` | 5 | 0.5 | P5-1 |
-| P5-4 | Publish `ReadOnlyScopeService<EObject>` OSGi service per scope (`atlas.scope`) | 5 | 2 | P5-1, P3-1 |
+| P5-4 | Publish `ReadableScopeService<EObject>` OSGi service per scope (`atlas.scope`) | 5 | 2 | P5-1, P3-1 |
 | P5-5 | Acceptance: validation runs unchanged against in-process & remote | 5 | 2 | P5-4, P4-6 |
 | P5-6 | Object identity + cross-reference tests via Atlas-aware ResourceSet | 5 | 2 | P5-4, P3-10 |
 | P5-7 | Retire `view` from the EPackage path: stage-free `/{s}/schema/content` (+ final-stage listing) | 5 | 1.5 | P5-0 |
@@ -60,9 +60,9 @@ Companion design document: [`rest-client.md`](./rest-client.md). All section ref
 
 > **Phase 5 reframed (2026-06-12).** The original tickets assumed a per-`(scope, registry)`
 > `ScopedEObjectsRegistry<T>`. Phase 4 deliberately shipped a per-**scope**
-> `ReadOnlyScopeService<T extends EObject>` instead (registry is a method parameter; OSGi
+> `ReadableScopeService<T extends EObject>` instead (registry is a method parameter; OSGi
 > service published per scope, keyed `atlas.scope`). Phase 5 is reframed to mirror that
-> contract so a consumer's `@Reference(target="(atlas.scope=…)") ReadOnlyScopeService<EObject>`
+> contract so a consumer's `@Reference(target="(atlas.scope=…)") ReadableScopeService<EObject>`
 > resolves identically against the in-process server and the remote client — the symmetry
 > payoff. P5-0 was added because no stage-free content endpoint exists and final-stage names
 > are user-defined (so the client cannot hardcode a stage path).
@@ -844,7 +844,7 @@ Change `org.eclipse.fennec.model.atlas.validation`'s `@Reference` from `ScopeSer
 
 ## Phase 5 — EObject-Registry Client
 
-> **Reframed (2026-06-12) around the per-scope `ReadOnlyScopeService<EObject>` contract that
+> **Reframed (2026-06-12) around the per-scope `ReadableScopeService<EObject>` contract that
 > Phase 4 actually shipped** (not the per-`(scope, registry)` `ScopedEObjectsRegistry<T>` the
 > tickets originally assumed). Registry is a *method parameter*; OSGi services are published
 > *per scope*, keyed `atlas.scope`. See the note under the summary table.
@@ -864,7 +864,7 @@ requires a stage name. Final-stage names are user-defined and no endpoint expose
 is final, so the client cannot resolve final-stage content. Add the missing endpoint to
 `ObjectRegistryResource`, mirroring the listing sibling:
 
-- `GET /{s}/registries/{r}/content?objectId=` → content via `ReadOnlyScopeService.get(registry, objectId)`
+- `GET /{s}/registries/{r}/content?objectId=` → content via `ReadableScopeService.get(registry, objectId)`
   (inheritance-aware), ETag/`Last-Modified` via `getMetadataFromFinalStageForRegistry(registry, objectId)`
   and the existing `ObjectMetadataResponseFilter` (CONTENT target).
 
@@ -878,7 +878,7 @@ is final, so the client cannot resolve final-stage content. Add the missing endp
 
 ---
 
-### P5-1: `RemoteReadOnlyScopeService` (REST mapping for EObjects)
+### P5-1: `RemoteReadableScopeService` (REST mapping for EObjects)
 
 **Estimate:** 2 PD
 **Depends on:** P5-0, P4-1, Phase 2 complete
@@ -886,7 +886,7 @@ is final, so the client cannot resolve final-stage content. Add the missing endp
 
 **Description**
 
-Implement the `scope.api` `ReadOnlyScopeService<EObject>` in `rest.client.impl` for one
+Implement the `scope.api` `ReadableScopeService<EObject>` in `rest.client.impl` for one
 **scope** (registry is a method parameter — same granularity as the server-side
 `ScopeServiceImpl`). Maps to:
 
@@ -903,7 +903,7 @@ post-Phase-4 `AtlasProperties` de-duplication flagged in the P4-1 note).
 
 **Acceptance Criteria**
 
-- [ ] All `ReadOnlyScopeService<EObject>` methods implemented against REST.
+- [ ] All `ReadableScopeService<EObject>` methods implemented against REST.
 - [ ] Cache reuses the Phase-2 cache infrastructure (key: `(scope, registry, objectId)`).
 - [ ] Conditional GET works for EObject content.
 - [ ] EObjects returned are detached (no shared `Resource`).
@@ -936,19 +936,19 @@ The Phase-2 watcher already calls `HEAD /{scope}` and parses `Atlas-Changed-Obje
 
 **Description**
 
-Add and make functional `readOnlyScope(scope)` (returns a `ReadOnlyScopeService<EObject>` for the
+Add and make functional `readOnlyScope(scope)` (returns a `ReadableScopeService<EObject>` for the
 scope) and `listRegistries(scope)` on `ModelAtlasClient`. `listRegistries` reads the registries
 from `GET /scopes/{s}` (i.e. `getScopeInfo().getRegistries()`).
 
 **Acceptance Criteria**
 
 - [ ] `listRegistries(scope)` returns the server-known registries.
-- [ ] `readOnlyScope(scope)` returns a working `ReadOnlyScopeService<EObject>` instance.
+- [ ] `readOnlyScope(scope)` returns a working `ReadableScopeService<EObject>` instance.
 - [ ] Repeated calls for the same `scope` return the same instance (or at least one backed by the same cache).
 
 ---
 
-### P5-4: Publish `ReadOnlyScopeService<EObject>` OSGi service per scope
+### P5-4: Publish `ReadableScopeService<EObject>` OSGi service per scope
 
 **Estimate:** 2 PD
 **Depends on:** P5-1, P3-1
@@ -956,7 +956,7 @@ from `GET /scopes/{s}` (i.e. `getScopeInfo().getRegistries()`).
 
 **Description**
 
-In `rest.client.osgi`, register one `ReadOnlyScopeService<EObject>` OSGi service per **scope**
+In `rest.client.osgi`, register one `ReadableScopeService<EObject>` OSGi service per **scope**
 with `atlas.scope` (the collector key) + `atlas.remote=true` (registry is a method parameter,
 not a service property). **The remaining properties mirror whatever the in-process server-side
 `ScopeServiceImpl` actually stamps** — match the published property *set* for shape-identical
@@ -966,7 +966,7 @@ mirrored if the server stamps it and otherwise omitted — never load-bearing he
 
 **Acceptance Criteria** — DONE (see `rest-client-P5-4-implementation-note.md`)
 
-- [x] `@Reference(target = "(atlas.scope=jena)") ReadOnlyScopeService<EObject>` resolves against the client publication.
+- [x] `@Reference(target = "(atlas.scope=jena)") ReadableScopeService<EObject>` resolves against the client publication.
 - [x] On drift, the publication is replaced atomically (same per-scope lock idea as P3-9, scope-scoped).
 - [x] Service unregistered cleanly on bundle deactivation.
 

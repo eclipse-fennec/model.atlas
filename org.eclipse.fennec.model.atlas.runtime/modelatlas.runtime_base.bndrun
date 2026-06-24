@@ -147,7 +147,7 @@ slf4j.runpath:  \
 	org.eclipse.fennec.model.atlas.management.lucene;version=snapshot;startlevel=1067,\
 	org.eclipse.fennec.model.atlas.mediatypes.api;version=snapshot;startlevel=1068,\
 	org.eclipse.fennec.model.atlas.mediatypes.impl;version=snapshot;startlevel=1069,\
-	org.eclipse.fennec.model.atlas.readonlyscope.collector;version=snapshot;startlevel=1070,\
+	org.eclipse.fennec.model.atlas.readable.scope.collector;version=snapshot;startlevel=1070,\
 	org.eclipse.fennec.model.atlas.rest.application;version=snapshot;startlevel=1071,\
 	org.eclipse.fennec.model.atlas.rest.common;version=snapshot;startlevel=1072,\
 	org.eclipse.fennec.model.atlas.rest.ecore.xmi;version=snapshot;startlevel=1073,\

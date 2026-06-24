@@ -54,6 +54,15 @@ public interface ScopeApiFactory extends EFactory {
 	RegistryInfo createRegistryInfo();
 
 	/**
+	 * Returns a new object of class '<em>Stage Info</em>'.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @return a new object of class '<em>Stage Info</em>'.
+	 * @generated
+	 */
+	StageInfo createStageInfo();
+
+	/**
 	 * Returns the package supported by this factory.
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->

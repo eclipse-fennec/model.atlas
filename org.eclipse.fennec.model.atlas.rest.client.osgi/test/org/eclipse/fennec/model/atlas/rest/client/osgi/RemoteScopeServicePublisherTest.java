@@ -29,14 +29,14 @@ import java.util.List;
 
 import org.eclipse.emf.ecore.EObject;
 import org.eclipse.fennec.model.atlas.scope.api.AtlasProperties;
-import org.eclipse.fennec.model.atlas.scope.api.ReadOnlyScopeService;
+import org.eclipse.fennec.model.atlas.scope.api.ReadableScopeService;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.ServiceRegistration;
 
 /**
- * Unit tests for the P5-4 per-scope {@link ReadOnlyScopeService} publication. The
+ * Unit tests for the P5-4 per-scope {@link ReadableScopeService} publication. The
  * {@link BundleContext} is mocked and the property {@link Dictionary} passed to
  * {@code registerService} is captured to assert the {@code atlas.*} contract a consumer
  * filters on.
@@ -51,9 +51,9 @@ class RemoteScopeServicePublisherTest {
 
 	@SuppressWarnings({ "unchecked", "rawtypes" })
 	RemoteScopeServicePublisherTest() {
-		// any(ReadOnlyScopeService.class) for the value disambiguates the (Class,S,Dictionary)
+		// any(ReadableScopeService.class) for the value disambiguates the (Class,S,Dictionary)
 		// overload from the (Class,ServiceFactory,Dictionary) one.
-		when(bundleContext.registerService(eq(ReadOnlyScopeService.class), any(ReadOnlyScopeService.class),
+		when(bundleContext.registerService(eq(ReadableScopeService.class), any(ReadableScopeService.class),
 				any(Dictionary.class))).thenAnswer(invocation -> {
 					ServiceRegistration reg = mock(ServiceRegistration.class);
 					registrations.add(reg);
@@ -62,15 +62,15 @@ class RemoteScopeServicePublisherTest {
 	}
 
 	@SuppressWarnings("unchecked")
-	private static ReadOnlyScopeService<EObject> scopeService() {
-		return mock(ReadOnlyScopeService.class);
+	private static ReadableScopeService<EObject> scopeService() {
+		return mock(ReadableScopeService.class);
 	}
 
 	@SuppressWarnings({ "unchecked", "rawtypes" })
 	private Dictionary<String, Object> lastCapturedProps() {
 		ArgumentCaptor<Dictionary> props = ArgumentCaptor.forClass(Dictionary.class);
-		verify(bundleContext, org.mockito.Mockito.atLeastOnce()).registerService(eq(ReadOnlyScopeService.class),
-				any(ReadOnlyScopeService.class), props.capture());
+		verify(bundleContext, org.mockito.Mockito.atLeastOnce()).registerService(eq(ReadableScopeService.class),
+				any(ReadableScopeService.class), props.capture());
 		return props.getValue();
 	}
 
@@ -151,5 +151,31 @@ class RemoteScopeServicePublisherTest {
 
 		assertFalse(publisher.publish("  ", scopeService()));
 		assertTrue(registrations.isEmpty(), "nothing registered for a blank scope name");
+	}
+
+	// ---- P6-7: atlas.stage disambiguation label --------------------------------
+
+	@Test
+	void publishWithStage_stampsAtlasStageProperty() {
+		RemoteScopeServicePublisher publisher = new RemoteScopeServicePublisher(bundleContext, BASE_URI, "snapshot");
+
+		publisher.publish("jena", scopeService());
+
+		Dictionary<String, Object> props = lastCapturedProps();
+		assertEquals("jena", props.get(AtlasProperties.ATLAS_SCOPE));
+		assertEquals("snapshot", props.get(AtlasProperties.ATLAS_STAGE),
+				"atlas.stage must be stamped for consumer disambiguation");
+		assertEquals(Boolean.TRUE, props.get(AtlasProperties.ATLAS_REMOTE));
+	}
+
+	@Test
+	void publishWithoutStage_omitsAtlasStageProperty() {
+		RemoteScopeServicePublisher publisher = new RemoteScopeServicePublisher(bundleContext, BASE_URI);
+
+		publisher.publish("jena", scopeService());
+
+		Dictionary<String, Object> props = lastCapturedProps();
+		assertEquals(null, props.get(AtlasProperties.ATLAS_STAGE),
+				"stage-free publisher must not stamp atlas.stage");
 	}
 }

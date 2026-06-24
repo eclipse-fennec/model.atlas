@@ -30,12 +30,14 @@ import org.eclipse.emf.ecore.ETypeParameter;
 
 import org.eclipse.emf.ecore.impl.EPackageImpl;
 
-import org.eclipse.fennec.model.atlas.scope.api.ReadOnlyScopeService;
+import org.eclipse.fennec.model.atlas.scope.api.ReadableRegistryView;
+import org.eclipse.fennec.model.atlas.scope.api.ReadableScopeService;
 import org.eclipse.fennec.model.atlas.scope.api.RegistryInfo;
 import org.eclipse.fennec.model.atlas.scope.api.RegistryType;
 import org.eclipse.fennec.model.atlas.scope.api.ScopeApiFactory;
 import org.eclipse.fennec.model.atlas.scope.api.ScopeApiPackage;
 import org.eclipse.fennec.model.atlas.scope.api.ScopeInfo;
+import org.eclipse.fennec.model.atlas.scope.api.StageInfo;
 
 /**
  * <!-- begin-user-doc -->
@@ -49,7 +51,7 @@ public class ScopeApiPackageImpl extends EPackageImpl implements ScopeApiPackage
 	 * <!-- end-user-doc -->
 	 * @generated
 	 */
-	private EClass readOnlyScopeServiceEClass = null;
+	private EClass readableScopeServiceEClass = null;
 
 	/**
 	 * <!-- begin-user-doc -->
@@ -64,6 +66,20 @@ public class ScopeApiPackageImpl extends EPackageImpl implements ScopeApiPackage
 	 * @generated
 	 */
 	private EClass registryInfoEClass = null;
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	private EClass stageInfoEClass = null;
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	private EClass readableRegistryViewEClass = null;
 
 	/**
 	 * <!-- begin-user-doc -->
@@ -159,8 +175,8 @@ public class ScopeApiPackageImpl extends EPackageImpl implements ScopeApiPackage
 	 * @generated
 	 */
 	@Override
-	public EClass getReadOnlyScopeService() {
-		return readOnlyScopeServiceEClass;
+	public EClass getReadableScopeService() {
+		return readableScopeServiceEClass;
 	}
 
 	/**
@@ -169,8 +185,8 @@ public class ScopeApiPackageImpl extends EPackageImpl implements ScopeApiPackage
 	 * @generated
 	 */
 	@Override
-	public EOperation getReadOnlyScopeService__GetScopeName() {
-		return readOnlyScopeServiceEClass.getEOperations().get(0);
+	public EOperation getReadableScopeService__GetScopeName() {
+		return readableScopeServiceEClass.getEOperations().get(0);
 	}
 
 	/**
@@ -179,8 +195,8 @@ public class ScopeApiPackageImpl extends EPackageImpl implements ScopeApiPackage
 	 * @generated
 	 */
 	@Override
-	public EOperation getReadOnlyScopeService__IsInheritingFromParentScope() {
-		return readOnlyScopeServiceEClass.getEOperations().get(1);
+	public EOperation getReadableScopeService__IsInheritingFromParentScope() {
+		return readableScopeServiceEClass.getEOperations().get(1);
 	}
 
 	/**
@@ -189,8 +205,8 @@ public class ScopeApiPackageImpl extends EPackageImpl implements ScopeApiPackage
 	 * @generated
 	 */
 	@Override
-	public EOperation getReadOnlyScopeService__Get__String_String() {
-		return readOnlyScopeServiceEClass.getEOperations().get(2);
+	public EOperation getReadableScopeService__Get__String_String() {
+		return readableScopeServiceEClass.getEOperations().get(2);
 	}
 
 	/**
@@ -199,8 +215,8 @@ public class ScopeApiPackageImpl extends EPackageImpl implements ScopeApiPackage
 	 * @generated
 	 */
 	@Override
-	public EOperation getReadOnlyScopeService__ListObjectIds__String() {
-		return readOnlyScopeServiceEClass.getEOperations().get(3);
+	public EOperation getReadableScopeService__ListObjectIds__String() {
+		return readableScopeServiceEClass.getEOperations().get(3);
 	}
 
 	/**
@@ -209,8 +225,8 @@ public class ScopeApiPackageImpl extends EPackageImpl implements ScopeApiPackage
 	 * @generated
 	 */
 	@Override
-	public EOperation getReadOnlyScopeService__ListAll__String() {
-		return readOnlyScopeServiceEClass.getEOperations().get(4);
+	public EOperation getReadableScopeService__ListAll__String() {
+		return readableScopeServiceEClass.getEOperations().get(4);
 	}
 
 	/**
@@ -219,8 +235,8 @@ public class ScopeApiPackageImpl extends EPackageImpl implements ScopeApiPackage
 	 * @generated
 	 */
 	@Override
-	public EOperation getReadOnlyScopeService__Stream__String() {
-		return readOnlyScopeServiceEClass.getEOperations().get(5);
+	public EOperation getReadableScopeService__Stream__String() {
+		return readableScopeServiceEClass.getEOperations().get(5);
 	}
 
 	/**
@@ -229,8 +245,28 @@ public class ScopeApiPackageImpl extends EPackageImpl implements ScopeApiPackage
 	 * @generated
 	 */
 	@Override
-	public EOperation getReadOnlyScopeService__GetScopeInfo() {
-		return readOnlyScopeServiceEClass.getEOperations().get(6);
+	public EOperation getReadableScopeService__GetScopeInfo() {
+		return readableScopeServiceEClass.getEOperations().get(6);
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
+	public EOperation getReadableScopeService__RegistryView__String() {
+		return readableScopeServiceEClass.getEOperations().get(7);
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
+	public EOperation getReadableScopeService__RegistryView__String_String() {
+		return readableScopeServiceEClass.getEOperations().get(8);
 	}
 
 	/**
@@ -329,6 +365,156 @@ public class ScopeApiPackageImpl extends EPackageImpl implements ScopeApiPackage
 	 * @generated
 	 */
 	@Override
+	public EReference getRegistryInfo_Stages() {
+		return (EReference)registryInfoEClass.getEStructuralFeatures().get(3);
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
+	public EClass getStageInfo() {
+		return stageInfoEClass;
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
+	public EAttribute getStageInfo_Name() {
+		return (EAttribute)stageInfoEClass.getEStructuralFeatures().get(0);
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
+	public EAttribute getStageInfo_Description() {
+		return (EAttribute)stageInfoEClass.getEStructuralFeatures().get(1);
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
+	public EAttribute getStageInfo_Readable() {
+		return (EAttribute)stageInfoEClass.getEStructuralFeatures().get(2);
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
+	public EAttribute getStageInfo_Writable() {
+		return (EAttribute)stageInfoEClass.getEStructuralFeatures().get(3);
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
+	public EAttribute getStageInfo_Final() {
+		return (EAttribute)stageInfoEClass.getEStructuralFeatures().get(4);
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
+	public EClass getReadableRegistryView() {
+		return readableRegistryViewEClass;
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
+	public EOperation getReadableRegistryView__GetScopeName() {
+		return readableRegistryViewEClass.getEOperations().get(0);
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
+	public EOperation getReadableRegistryView__GetRegistryName() {
+		return readableRegistryViewEClass.getEOperations().get(1);
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
+	public EOperation getReadableRegistryView__GetStageName() {
+		return readableRegistryViewEClass.getEOperations().get(2);
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
+	public EOperation getReadableRegistryView__Get__String() {
+		return readableRegistryViewEClass.getEOperations().get(3);
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
+	public EOperation getReadableRegistryView__ListObjectIds() {
+		return readableRegistryViewEClass.getEOperations().get(4);
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
+	public EOperation getReadableRegistryView__ListAll() {
+		return readableRegistryViewEClass.getEOperations().get(5);
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
+	public EOperation getReadableRegistryView__Stream() {
+		return readableRegistryViewEClass.getEOperations().get(6);
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
 	public EEnum getRegistryType() {
 		return registryTypeEEnum;
 	}
@@ -392,14 +578,16 @@ public class ScopeApiPackageImpl extends EPackageImpl implements ScopeApiPackage
 		isCreated = true;
 
 		// Create classes and their features
-		readOnlyScopeServiceEClass = createEClass(READ_ONLY_SCOPE_SERVICE);
-		createEOperation(readOnlyScopeServiceEClass, READ_ONLY_SCOPE_SERVICE___GET_SCOPE_NAME);
-		createEOperation(readOnlyScopeServiceEClass, READ_ONLY_SCOPE_SERVICE___IS_INHERITING_FROM_PARENT_SCOPE);
-		createEOperation(readOnlyScopeServiceEClass, READ_ONLY_SCOPE_SERVICE___GET__STRING_STRING);
-		createEOperation(readOnlyScopeServiceEClass, READ_ONLY_SCOPE_SERVICE___LIST_OBJECT_IDS__STRING);
-		createEOperation(readOnlyScopeServiceEClass, READ_ONLY_SCOPE_SERVICE___LIST_ALL__STRING);
-		createEOperation(readOnlyScopeServiceEClass, READ_ONLY_SCOPE_SERVICE___STREAM__STRING);
-		createEOperation(readOnlyScopeServiceEClass, READ_ONLY_SCOPE_SERVICE___GET_SCOPE_INFO);
+		readableScopeServiceEClass = createEClass(READABLE_SCOPE_SERVICE);
+		createEOperation(readableScopeServiceEClass, READABLE_SCOPE_SERVICE___GET_SCOPE_NAME);
+		createEOperation(readableScopeServiceEClass, READABLE_SCOPE_SERVICE___IS_INHERITING_FROM_PARENT_SCOPE);
+		createEOperation(readableScopeServiceEClass, READABLE_SCOPE_SERVICE___GET__STRING_STRING);
+		createEOperation(readableScopeServiceEClass, READABLE_SCOPE_SERVICE___LIST_OBJECT_IDS__STRING);
+		createEOperation(readableScopeServiceEClass, READABLE_SCOPE_SERVICE___LIST_ALL__STRING);
+		createEOperation(readableScopeServiceEClass, READABLE_SCOPE_SERVICE___STREAM__STRING);
+		createEOperation(readableScopeServiceEClass, READABLE_SCOPE_SERVICE___GET_SCOPE_INFO);
+		createEOperation(readableScopeServiceEClass, READABLE_SCOPE_SERVICE___REGISTRY_VIEW__STRING);
+		createEOperation(readableScopeServiceEClass, READABLE_SCOPE_SERVICE___REGISTRY_VIEW__STRING_STRING);
 
 		scopeInfoEClass = createEClass(SCOPE_INFO);
 		createEAttribute(scopeInfoEClass, SCOPE_INFO__NAME);
@@ -411,6 +599,23 @@ public class ScopeApiPackageImpl extends EPackageImpl implements ScopeApiPackage
 		createEAttribute(registryInfoEClass, REGISTRY_INFO__NAME);
 		createEAttribute(registryInfoEClass, REGISTRY_INFO__DESCRIPTION);
 		createEAttribute(registryInfoEClass, REGISTRY_INFO__TYPE);
+		createEReference(registryInfoEClass, REGISTRY_INFO__STAGES);
+
+		stageInfoEClass = createEClass(STAGE_INFO);
+		createEAttribute(stageInfoEClass, STAGE_INFO__NAME);
+		createEAttribute(stageInfoEClass, STAGE_INFO__DESCRIPTION);
+		createEAttribute(stageInfoEClass, STAGE_INFO__READABLE);
+		createEAttribute(stageInfoEClass, STAGE_INFO__WRITABLE);
+		createEAttribute(stageInfoEClass, STAGE_INFO__FINAL);
+
+		readableRegistryViewEClass = createEClass(READABLE_REGISTRY_VIEW);
+		createEOperation(readableRegistryViewEClass, READABLE_REGISTRY_VIEW___GET_SCOPE_NAME);
+		createEOperation(readableRegistryViewEClass, READABLE_REGISTRY_VIEW___GET_REGISTRY_NAME);
+		createEOperation(readableRegistryViewEClass, READABLE_REGISTRY_VIEW___GET_STAGE_NAME);
+		createEOperation(readableRegistryViewEClass, READABLE_REGISTRY_VIEW___GET__STRING);
+		createEOperation(readableRegistryViewEClass, READABLE_REGISTRY_VIEW___LIST_OBJECT_IDS);
+		createEOperation(readableRegistryViewEClass, READABLE_REGISTRY_VIEW___LIST_ALL);
+		createEOperation(readableRegistryViewEClass, READABLE_REGISTRY_VIEW___STREAM);
 
 		// Create enums
 		registryTypeEEnum = createEEnum(REGISTRY_TYPE);
@@ -445,54 +650,72 @@ public class ScopeApiPackageImpl extends EPackageImpl implements ScopeApiPackage
 		setNsURI(eNS_URI);
 
 		// Create type parameters
-		ETypeParameter readOnlyScopeServiceEClass_T = addETypeParameter(readOnlyScopeServiceEClass, "T");
+		ETypeParameter readableScopeServiceEClass_T = addETypeParameter(readableScopeServiceEClass, "T");
+		ETypeParameter readableRegistryViewEClass_T = addETypeParameter(readableRegistryViewEClass, "T");
 		addETypeParameter(optionalEDataType, "T");
 		addETypeParameter(listEDataType, "T");
 		addETypeParameter(streamEDataType, "T");
 
 		// Set bounds for type parameters
 		EGenericType g1 = createEGenericType(ecorePackage.getEObject());
-		readOnlyScopeServiceEClass_T.getEBounds().add(g1);
+		readableScopeServiceEClass_T.getEBounds().add(g1);
+		g1 = createEGenericType(ecorePackage.getEObject());
+		readableRegistryViewEClass_T.getEBounds().add(g1);
 
 		// Add supertypes to classes
 
 		// Initialize classes, features, and operations; add parameters
-		initEClass(readOnlyScopeServiceEClass, ReadOnlyScopeService.class, "ReadOnlyScopeService", IS_ABSTRACT, IS_INTERFACE, IS_GENERATED_INSTANCE_CLASS);
+		initEClass(readableScopeServiceEClass, ReadableScopeService.class, "ReadableScopeService", IS_ABSTRACT, IS_INTERFACE, IS_GENERATED_INSTANCE_CLASS);
 
-		initEOperation(getReadOnlyScopeService__GetScopeName(), ecorePackage.getEString(), "getScopeName", 0, 1, IS_UNIQUE, IS_ORDERED);
+		initEOperation(getReadableScopeService__GetScopeName(), ecorePackage.getEString(), "getScopeName", 0, 1, IS_UNIQUE, IS_ORDERED);
 
-		initEOperation(getReadOnlyScopeService__IsInheritingFromParentScope(), ecorePackage.getEBoolean(), "isInheritingFromParentScope", 0, 1, IS_UNIQUE, IS_ORDERED);
+		initEOperation(getReadableScopeService__IsInheritingFromParentScope(), ecorePackage.getEBoolean(), "isInheritingFromParentScope", 0, 1, IS_UNIQUE, IS_ORDERED);
 
-		EOperation op = initEOperation(getReadOnlyScopeService__Get__String_String(), null, "get", 0, 1, IS_UNIQUE, IS_ORDERED);
+		EOperation op = initEOperation(getReadableScopeService__Get__String_String(), null, "get", 0, 1, IS_UNIQUE, IS_ORDERED);
 		addEParameter(op, ecorePackage.getEString(), "registry", 1, 1, IS_UNIQUE, IS_ORDERED);
 		addEParameter(op, ecorePackage.getEString(), "objectId", 1, 1, IS_UNIQUE, IS_ORDERED);
 		g1 = createEGenericType(this.getOptional());
-		EGenericType g2 = createEGenericType(readOnlyScopeServiceEClass_T);
+		EGenericType g2 = createEGenericType(readableScopeServiceEClass_T);
 		g1.getETypeArguments().add(g2);
 		initEOperation(op, g1);
 
-		op = initEOperation(getReadOnlyScopeService__ListObjectIds__String(), null, "listObjectIds", 0, 1, IS_UNIQUE, IS_ORDERED);
+		op = initEOperation(getReadableScopeService__ListObjectIds__String(), null, "listObjectIds", 0, 1, IS_UNIQUE, IS_ORDERED);
 		addEParameter(op, ecorePackage.getEString(), "registry", 1, 1, IS_UNIQUE, IS_ORDERED);
 		g1 = createEGenericType(this.getList());
 		g2 = createEGenericType(ecorePackage.getEString());
 		g1.getETypeArguments().add(g2);
 		initEOperation(op, g1);
 
-		op = initEOperation(getReadOnlyScopeService__ListAll__String(), null, "listAll", 0, 1, IS_UNIQUE, IS_ORDERED);
+		op = initEOperation(getReadableScopeService__ListAll__String(), null, "listAll", 0, 1, IS_UNIQUE, IS_ORDERED);
 		addEParameter(op, ecorePackage.getEString(), "registry", 1, 1, IS_UNIQUE, IS_ORDERED);
 		g1 = createEGenericType(this.getList());
-		g2 = createEGenericType(readOnlyScopeServiceEClass_T);
+		g2 = createEGenericType(readableScopeServiceEClass_T);
 		g1.getETypeArguments().add(g2);
 		initEOperation(op, g1);
 
-		op = initEOperation(getReadOnlyScopeService__Stream__String(), null, "stream", 0, 1, IS_UNIQUE, IS_ORDERED);
+		op = initEOperation(getReadableScopeService__Stream__String(), null, "stream", 0, 1, IS_UNIQUE, IS_ORDERED);
 		addEParameter(op, ecorePackage.getEString(), "registry", 1, 1, IS_UNIQUE, IS_ORDERED);
 		g1 = createEGenericType(this.getStream());
-		g2 = createEGenericType(readOnlyScopeServiceEClass_T);
+		g2 = createEGenericType(readableScopeServiceEClass_T);
 		g1.getETypeArguments().add(g2);
 		initEOperation(op, g1);
 
-		initEOperation(getReadOnlyScopeService__GetScopeInfo(), this.getScopeInfo(), "getScopeInfo", 0, 1, IS_UNIQUE, IS_ORDERED);
+		initEOperation(getReadableScopeService__GetScopeInfo(), this.getScopeInfo(), "getScopeInfo", 0, 1, IS_UNIQUE, IS_ORDERED);
+
+		op = initEOperation(getReadableScopeService__RegistryView__String(), null, "registryView", 0, 1, IS_UNIQUE, IS_ORDERED);
+		addEParameter(op, ecorePackage.getEString(), "registry", 1, 1, IS_UNIQUE, IS_ORDERED);
+		g1 = createEGenericType(this.getReadableRegistryView());
+		g2 = createEGenericType(readableScopeServiceEClass_T);
+		g1.getETypeArguments().add(g2);
+		initEOperation(op, g1);
+
+		op = initEOperation(getReadableScopeService__RegistryView__String_String(), null, "registryView", 0, 1, IS_UNIQUE, IS_ORDERED);
+		addEParameter(op, ecorePackage.getEString(), "registry", 1, 1, IS_UNIQUE, IS_ORDERED);
+		addEParameter(op, ecorePackage.getEString(), "stage", 1, 1, IS_UNIQUE, IS_ORDERED);
+		g1 = createEGenericType(this.getReadableRegistryView());
+		g2 = createEGenericType(readableScopeServiceEClass_T);
+		g1.getETypeArguments().add(g2);
+		initEOperation(op, g1);
 
 		initEClass(scopeInfoEClass, ScopeInfo.class, "ScopeInfo", !IS_ABSTRACT, !IS_INTERFACE, IS_GENERATED_INSTANCE_CLASS);
 		initEAttribute(getScopeInfo_Name(), ecorePackage.getEString(), "name", null, 0, 1, ScopeInfo.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_UNSETTABLE, !IS_ID, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
@@ -504,6 +727,47 @@ public class ScopeApiPackageImpl extends EPackageImpl implements ScopeApiPackage
 		initEAttribute(getRegistryInfo_Name(), ecorePackage.getEString(), "name", null, 0, 1, RegistryInfo.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_UNSETTABLE, !IS_ID, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
 		initEAttribute(getRegistryInfo_Description(), ecorePackage.getEString(), "description", null, 0, 1, RegistryInfo.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_UNSETTABLE, !IS_ID, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
 		initEAttribute(getRegistryInfo_Type(), this.getRegistryType(), "type", null, 0, 1, RegistryInfo.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_UNSETTABLE, !IS_ID, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
+		initEReference(getRegistryInfo_Stages(), this.getStageInfo(), null, "stages", null, 0, -1, RegistryInfo.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, IS_COMPOSITE, !IS_RESOLVE_PROXIES, !IS_UNSETTABLE, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
+
+		initEClass(stageInfoEClass, StageInfo.class, "StageInfo", !IS_ABSTRACT, !IS_INTERFACE, IS_GENERATED_INSTANCE_CLASS);
+		initEAttribute(getStageInfo_Name(), ecorePackage.getEString(), "name", null, 0, 1, StageInfo.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_UNSETTABLE, !IS_ID, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
+		initEAttribute(getStageInfo_Description(), ecorePackage.getEString(), "description", null, 0, 1, StageInfo.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_UNSETTABLE, !IS_ID, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
+		initEAttribute(getStageInfo_Readable(), ecorePackage.getEBoolean(), "readable", "true", 0, 1, StageInfo.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_UNSETTABLE, !IS_ID, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
+		initEAttribute(getStageInfo_Writable(), ecorePackage.getEBoolean(), "writable", "false", 0, 1, StageInfo.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_UNSETTABLE, !IS_ID, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
+		initEAttribute(getStageInfo_Final(), ecorePackage.getEBoolean(), "final", "false", 0, 1, StageInfo.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_UNSETTABLE, !IS_ID, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
+
+		initEClass(readableRegistryViewEClass, ReadableRegistryView.class, "ReadableRegistryView", IS_ABSTRACT, IS_INTERFACE, IS_GENERATED_INSTANCE_CLASS);
+
+		initEOperation(getReadableRegistryView__GetScopeName(), ecorePackage.getEString(), "getScopeName", 0, 1, IS_UNIQUE, IS_ORDERED);
+
+		initEOperation(getReadableRegistryView__GetRegistryName(), ecorePackage.getEString(), "getRegistryName", 0, 1, IS_UNIQUE, IS_ORDERED);
+
+		initEOperation(getReadableRegistryView__GetStageName(), ecorePackage.getEString(), "getStageName", 0, 1, IS_UNIQUE, IS_ORDERED);
+
+		op = initEOperation(getReadableRegistryView__Get__String(), null, "get", 0, 1, IS_UNIQUE, IS_ORDERED);
+		addEParameter(op, ecorePackage.getEString(), "objectId", 1, 1, IS_UNIQUE, IS_ORDERED);
+		g1 = createEGenericType(this.getOptional());
+		g2 = createEGenericType(readableScopeServiceEClass_T);
+		g1.getETypeArguments().add(g2);
+		initEOperation(op, g1);
+
+		op = initEOperation(getReadableRegistryView__ListObjectIds(), null, "listObjectIds", 0, 1, IS_UNIQUE, IS_ORDERED);
+		g1 = createEGenericType(this.getList());
+		g2 = createEGenericType(ecorePackage.getEString());
+		g1.getETypeArguments().add(g2);
+		initEOperation(op, g1);
+
+		op = initEOperation(getReadableRegistryView__ListAll(), null, "listAll", 0, 1, IS_UNIQUE, IS_ORDERED);
+		g1 = createEGenericType(this.getList());
+		g2 = createEGenericType(readableScopeServiceEClass_T);
+		g1.getETypeArguments().add(g2);
+		initEOperation(op, g1);
+
+		op = initEOperation(getReadableRegistryView__Stream(), null, "stream", 0, 1, IS_UNIQUE, IS_ORDERED);
+		g1 = createEGenericType(this.getStream());
+		g2 = createEGenericType(readableScopeServiceEClass_T);
+		g1.getETypeArguments().add(g2);
+		initEOperation(op, g1);
 
 		// Initialize enums and add enum literals
 		initEEnum(registryTypeEEnum, RegistryType.class, "RegistryType");

@@ -22,24 +22,31 @@
     <genDataTypes ecoreDataType="scope-api.ecore#//Stream">
       <genTypeParameters ecoreTypeParameter="scope-api.ecore#//Stream/T"/>
     </genDataTypes>
-    <genClasses image="false" ecoreClass="scope-api.ecore#//ReadOnlyScopeService">
-      <genTypeParameters ecoreTypeParameter="scope-api.ecore#//ReadOnlyScopeService/T"/>
-      <genOperations ecoreOperation="scope-api.ecore#//ReadOnlyScopeService/getScopeName"/>
-      <genOperations ecoreOperation="scope-api.ecore#//ReadOnlyScopeService/isInheritingFromParentScope"/>
-      <genOperations ecoreOperation="scope-api.ecore#//ReadOnlyScopeService/get">
-        <genParameters ecoreParameter="scope-api.ecore#//ReadOnlyScopeService/get/registry"/>
-        <genParameters ecoreParameter="scope-api.ecore#//ReadOnlyScopeService/get/objectId"/>
+    <genClasses image="false" ecoreClass="scope-api.ecore#//ReadableScopeService">
+      <genTypeParameters ecoreTypeParameter="scope-api.ecore#//ReadableScopeService/T"/>
+      <genOperations ecoreOperation="scope-api.ecore#//ReadableScopeService/getScopeName"/>
+      <genOperations ecoreOperation="scope-api.ecore#//ReadableScopeService/isInheritingFromParentScope"/>
+      <genOperations ecoreOperation="scope-api.ecore#//ReadableScopeService/get">
+        <genParameters ecoreParameter="scope-api.ecore#//ReadableScopeService/get/registry"/>
+        <genParameters ecoreParameter="scope-api.ecore#//ReadableScopeService/get/objectId"/>
       </genOperations>
-      <genOperations ecoreOperation="scope-api.ecore#//ReadOnlyScopeService/listObjectIds">
-        <genParameters ecoreParameter="scope-api.ecore#//ReadOnlyScopeService/listObjectIds/registry"/>
+      <genOperations ecoreOperation="scope-api.ecore#//ReadableScopeService/listObjectIds">
+        <genParameters ecoreParameter="scope-api.ecore#//ReadableScopeService/listObjectIds/registry"/>
       </genOperations>
-      <genOperations ecoreOperation="scope-api.ecore#//ReadOnlyScopeService/listAll">
-        <genParameters ecoreParameter="scope-api.ecore#//ReadOnlyScopeService/listAll/registry"/>
+      <genOperations ecoreOperation="scope-api.ecore#//ReadableScopeService/listAll">
+        <genParameters ecoreParameter="scope-api.ecore#//ReadableScopeService/listAll/registry"/>
       </genOperations>
-      <genOperations ecoreOperation="scope-api.ecore#//ReadOnlyScopeService/stream">
-        <genParameters ecoreParameter="scope-api.ecore#//ReadOnlyScopeService/stream/registry"/>
+      <genOperations ecoreOperation="scope-api.ecore#//ReadableScopeService/stream">
+        <genParameters ecoreParameter="scope-api.ecore#//ReadableScopeService/stream/registry"/>
       </genOperations>
-      <genOperations ecoreOperation="scope-api.ecore#//ReadOnlyScopeService/getScopeInfo"/>
+      <genOperations ecoreOperation="scope-api.ecore#//ReadableScopeService/getScopeInfo"/>
+      <genOperations ecoreOperation="scope-api.ecore#//ReadableScopeService/registryView">
+        <genParameters ecoreParameter="scope-api.ecore#//ReadableScopeService/registryView/registry"/>
+      </genOperations>
+      <genOperations ecoreOperation="scope-api.ecore#//ReadableScopeService/registryView.1">
+        <genParameters ecoreParameter="scope-api.ecore#//ReadableScopeService/registryView.1/registry"/>
+        <genParameters ecoreParameter="scope-api.ecore#//ReadableScopeService/registryView.1/stage"/>
+      </genOperations>
     </genClasses>
     <genClasses ecoreClass="scope-api.ecore#//ScopeInfo">
       <genFeatures createChild="false" ecoreFeature="ecore:EAttribute scope-api.ecore#//ScopeInfo/name"/>
@@ -51,6 +58,26 @@
       <genFeatures createChild="false" ecoreFeature="ecore:EAttribute scope-api.ecore#//RegistryInfo/name"/>
       <genFeatures createChild="false" ecoreFeature="ecore:EAttribute scope-api.ecore#//RegistryInfo/description"/>
       <genFeatures createChild="false" ecoreFeature="ecore:EAttribute scope-api.ecore#//RegistryInfo/type"/>
+      <genFeatures property="None" children="true" createChild="true" ecoreFeature="ecore:EReference scope-api.ecore#//RegistryInfo/stages"/>
+    </genClasses>
+    <genClasses ecoreClass="scope-api.ecore#//StageInfo">
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute scope-api.ecore#//StageInfo/name"/>
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute scope-api.ecore#//StageInfo/description"/>
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute scope-api.ecore#//StageInfo/readable"/>
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute scope-api.ecore#//StageInfo/writable"/>
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute scope-api.ecore#//StageInfo/final"/>
+    </genClasses>
+    <genClasses image="false" ecoreClass="scope-api.ecore#//ReadableRegistryView">
+      <genTypeParameters ecoreTypeParameter="scope-api.ecore#//ReadableRegistryView/T"/>
+      <genOperations ecoreOperation="scope-api.ecore#//ReadableRegistryView/getScopeName"/>
+      <genOperations ecoreOperation="scope-api.ecore#//ReadableRegistryView/getRegistryName"/>
+      <genOperations ecoreOperation="scope-api.ecore#//ReadableRegistryView/getStageName"/>
+      <genOperations ecoreOperation="scope-api.ecore#//ReadableRegistryView/get">
+        <genParameters ecoreParameter="scope-api.ecore#//ReadableRegistryView/get/objectId"/>
+      </genOperations>
+      <genOperations ecoreOperation="scope-api.ecore#//ReadableRegistryView/listObjectIds"/>
+      <genOperations ecoreOperation="scope-api.ecore#//ReadableRegistryView/listAll"/>
+      <genOperations ecoreOperation="scope-api.ecore#//ReadableRegistryView/stream"/>
     </genClasses>
   </genPackages>
 </genmodel:GenModel>

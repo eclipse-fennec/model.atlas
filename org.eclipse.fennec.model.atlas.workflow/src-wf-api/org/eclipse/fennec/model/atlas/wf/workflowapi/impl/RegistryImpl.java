@@ -29,7 +29,6 @@ import org.eclipse.emf.ecore.util.InternalEList;
 import org.eclipse.fennec.model.atlas.scope.api.impl.RegistryInfoImpl;
 
 import org.eclipse.fennec.model.atlas.wf.workflowapi.Registry;
-import org.eclipse.fennec.model.atlas.wf.workflowapi.Stage;
 import org.eclipse.fennec.model.atlas.wf.workflowapi.StageTransition;
 import org.eclipse.fennec.model.atlas.wf.workflowapi.WorkflowApiPackage;
 
@@ -41,23 +40,12 @@ import org.eclipse.fennec.model.atlas.wf.workflowapi.WorkflowApiPackage;
  * The following features are implemented:
  * </p>
  * <ul>
- *   <li>{@link org.eclipse.fennec.model.atlas.wf.workflowapi.impl.RegistryImpl#getStages <em>Stages</em>}</li>
  *   <li>{@link org.eclipse.fennec.model.atlas.wf.workflowapi.impl.RegistryImpl#getAllowedTransitions <em>Allowed Transitions</em>}</li>
  * </ul>
  *
  * @generated
  */
 public class RegistryImpl extends RegistryInfoImpl implements Registry {
-	/**
-	 * The cached value of the '{@link #getStages() <em>Stages</em>}' containment reference list.
-	 * <!-- begin-user-doc -->
-	 * <!-- end-user-doc -->
-	 * @see #getStages()
-	 * @generated
-	 * @ordered
-	 */
-	protected EList<Stage> stages;
-
 	/**
 	 * The cached value of the '{@link #getAllowedTransitions() <em>Allowed Transitions</em>}' containment reference list.
 	 * <!-- begin-user-doc -->
@@ -93,19 +81,6 @@ public class RegistryImpl extends RegistryInfoImpl implements Registry {
 	 * @generated
 	 */
 	@Override
-	public List<Stage> getStages() {
-		if (stages == null) {
-			stages = new BasicInternalEList<Stage>(Stage.class);
-		}
-		return stages;
-	}
-
-	/**
-	 * <!-- begin-user-doc -->
-	 * <!-- end-user-doc -->
-	 * @generated
-	 */
-	@Override
 	public List<StageTransition> getAllowedTransitions() {
 		if (allowedTransitions == null) {
 			allowedTransitions = new BasicInternalEList<StageTransition>(StageTransition.class);
@@ -121,8 +96,6 @@ public class RegistryImpl extends RegistryInfoImpl implements Registry {
 	@Override
 	public NotificationChain eInverseRemove(InternalEObject otherEnd, int featureID, NotificationChain msgs) {
 		switch (featureID) {
-			case WorkflowApiPackage.REGISTRY__STAGES:
-				return ((InternalEList<?>)getStages()).basicRemove(otherEnd, msgs);
 			case WorkflowApiPackage.REGISTRY__ALLOWED_TRANSITIONS:
 				return ((InternalEList<?>)getAllowedTransitions()).basicRemove(otherEnd, msgs);
 		}
@@ -137,8 +110,6 @@ public class RegistryImpl extends RegistryInfoImpl implements Registry {
 	@Override
 	public Object eGet(int featureID, boolean resolve, boolean coreType) {
 		switch (featureID) {
-			case WorkflowApiPackage.REGISTRY__STAGES:
-				return getStages();
 			case WorkflowApiPackage.REGISTRY__ALLOWED_TRANSITIONS:
 				return getAllowedTransitions();
 		}
@@ -154,10 +125,6 @@ public class RegistryImpl extends RegistryInfoImpl implements Registry {
 	@Override
 	public void eSet(int featureID, Object newValue) {
 		switch (featureID) {
-			case WorkflowApiPackage.REGISTRY__STAGES:
-				getStages().clear();
-				getStages().addAll((Collection<? extends Stage>)newValue);
-				return;
 			case WorkflowApiPackage.REGISTRY__ALLOWED_TRANSITIONS:
 				getAllowedTransitions().clear();
 				getAllowedTransitions().addAll((Collection<? extends StageTransition>)newValue);
@@ -174,9 +141,6 @@ public class RegistryImpl extends RegistryInfoImpl implements Registry {
 	@Override
 	public void eUnset(int featureID) {
 		switch (featureID) {
-			case WorkflowApiPackage.REGISTRY__STAGES:
-				getStages().clear();
-				return;
 			case WorkflowApiPackage.REGISTRY__ALLOWED_TRANSITIONS:
 				getAllowedTransitions().clear();
 				return;
@@ -192,8 +156,6 @@ public class RegistryImpl extends RegistryInfoImpl implements Registry {
 	@Override
 	public boolean eIsSet(int featureID) {
 		switch (featureID) {
-			case WorkflowApiPackage.REGISTRY__STAGES:
-				return stages != null && !stages.isEmpty();
 			case WorkflowApiPackage.REGISTRY__ALLOWED_TRANSITIONS:
 				return allowedTransitions != null && !allowedTransitions.isEmpty();
 		}

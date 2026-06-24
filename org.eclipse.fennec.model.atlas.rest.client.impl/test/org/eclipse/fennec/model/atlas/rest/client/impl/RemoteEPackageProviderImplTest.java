@@ -533,4 +533,57 @@ class RemoteEPackageProviderImplTest {
 		assertFalse(provider(cfg).refresh("urn:ns:denied").isPresent());
 		verify(request, org.mockito.Mockito.never()).get();
 	}
+
+	// ---- getEPackageAtStage (P6-6) ----------------------------------------
+
+	@Test
+	void getEPackageAtStage_hitsStageExplicitContentPath() {
+		Response response = contentOk("<xmi/>".getBytes(StandardCharsets.UTF_8));
+		when(request.get()).thenReturn(response);
+
+		Optional<EPackage> pkg = provider(config()).getEPackageAtStage("urn:ns:gateway", "jena", "snapshot");
+
+		assertTrue(pkg.isPresent());
+		assertEquals("urn:ns:gateway", pkg.get().getNsURI());
+		// URL must be /{scope}/schema/stages/{stage}/content?nsUri=…
+		ArgumentCaptor<String> paths = ArgumentCaptor.forClass(String.class);
+		verify(target, org.mockito.Mockito.atLeastOnce()).path(paths.capture());
+		assertEquals(List.of("jena", "schema", "stages", "snapshot", "content"), paths.getAllValues());
+		verify(target).queryParam("nsUri", "urn:ns:gateway");
+	}
+
+	@Test
+	void getEPackageAtStage_noContent_returnsEmpty() {
+		Response response = noContent();
+		when(request.get()).thenReturn(response);
+		assertFalse(provider(config()).getEPackageAtStage("urn:ns:missing", "jena", "snapshot").isPresent());
+	}
+
+	// ---- listPackagesAtStage (P6-6) ----------------------------------------
+
+	@Test
+	void listPackagesAtStage_hitsStageExplicitListingPath() {
+		String ns = "https://eclipse.dev/fennec/jena/gateway/1.0";
+		String json = "{\"metadata\":[{\"objectId\":\"" + base64Url(ns)
+				+ "\",\"scope\":\"jena\",\"stage\":\"snapshot\",\"version\":\"1.0\"}]}";
+		Response response = jsonOk(json);
+		when(request.get()).thenReturn(response);
+
+		var result = provider(config()).listPackagesAtStage("jena", "snapshot");
+
+		assertEquals(1, result.size());
+		assertEquals(ns, result.get(0).nsUri());
+		assertEquals("snapshot", result.get(0).stage());
+		// URL must be /{scope}/schema/stages/{stage}  (no /content, no nsUri param)
+		ArgumentCaptor<String> paths = ArgumentCaptor.forClass(String.class);
+		verify(target, org.mockito.Mockito.atLeastOnce()).path(paths.capture());
+		assertEquals(List.of("jena", "schema", "stages", "snapshot"), paths.getAllValues());
+	}
+
+	@Test
+	void listPackagesAtStage_noContent_returnsEmpty() {
+		Response response = noContent();
+		when(request.get()).thenReturn(response);
+		assertTrue(provider(config()).listPackagesAtStage("jena", "snapshot").isEmpty());
+	}
 }
