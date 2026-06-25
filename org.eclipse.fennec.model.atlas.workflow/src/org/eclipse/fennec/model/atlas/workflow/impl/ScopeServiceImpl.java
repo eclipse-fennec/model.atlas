@@ -22,7 +22,8 @@ import java.util.stream.Stream;
 import org.eclipse.emf.ecore.EObject;
 import org.eclipse.emf.ecore.EPackage;
 import org.eclipse.fennec.model.atlas.mgmt.management.ObjectMetadata;
-import org.eclipse.fennec.model.atlas.scope.api.ReadOnlyScopeService;
+import org.eclipse.fennec.model.atlas.scope.api.ReadableRegistryView;
+import org.eclipse.fennec.model.atlas.scope.api.ReadableScopeService;
 import org.eclipse.fennec.model.atlas.scope.api.RegistryType;
 import org.eclipse.fennec.model.atlas.scope.api.ScopeInfo;
 import org.eclipse.fennec.model.atlas.wf.workflowapi.RegistryService;
@@ -48,7 +49,7 @@ import org.osgi.util.promise.Promise;
  */
 @Component(name = "ScopeService", configurationPid = "ScopeService", configurationPolicy = ConfigurationPolicy.REQUIRE)
 @Designate(ocd = ScopeServiceConfig.class)
-public class ScopeServiceImpl<T extends EObject> implements ScopeService<T>, WritableScopeService<T>, ReadOnlyScopeService<T> {
+public class ScopeServiceImpl<T extends EObject> implements ScopeService<T>, WritableScopeService<T>, ReadableScopeService<T> {
 
 	private Map<String, RegistryService<T>> registryServiceMap = new ConcurrentHashMap<>();
 	private ScopeServiceConfig config;
@@ -359,7 +360,7 @@ public class ScopeServiceImpl<T extends EObject> implements ScopeService<T>, Wri
 
 	/* 
 	 * (non-Javadoc)
-	 * @see org.eclipse.fennec.model.atlas.scope.api.ReadOnlyScopeService#getScopeName()
+	 * @see org.eclipse.fennec.model.atlas.scope.api.ReadableScopeService#getScopeName()
 	 */
 	@Override
 	public String getScopeName() {
@@ -368,7 +369,7 @@ public class ScopeServiceImpl<T extends EObject> implements ScopeService<T>, Wri
 
 	/* 
 	 * (non-Javadoc)
-	 * @see org.eclipse.fennec.model.atlas.scope.api.ReadOnlyScopeService#isInheritingFromParentScope()
+	 * @see org.eclipse.fennec.model.atlas.scope.api.ReadableScopeService#isInheritingFromParentScope()
 	 */
 	@Override
 	public boolean isInheritingFromParentScope() {
@@ -377,7 +378,7 @@ public class ScopeServiceImpl<T extends EObject> implements ScopeService<T>, Wri
 
 	/* 
 	 * (non-Javadoc)
-	 * @see org.eclipse.fennec.model.atlas.scope.api.ReadOnlyScopeService#get(java.lang.String, java.lang.String)
+	 * @see org.eclipse.fennec.model.atlas.scope.api.ReadableScopeService#get(java.lang.String, java.lang.String)
 	 */
 	@Override
 	public Optional<T> get(String registry, String objectId) {
@@ -386,7 +387,7 @@ public class ScopeServiceImpl<T extends EObject> implements ScopeService<T>, Wri
 
 	/* 
 	 * (non-Javadoc)
-	 * @see org.eclipse.fennec.model.atlas.scope.api.ReadOnlyScopeService#listObjectIds(java.lang.String)
+	 * @see org.eclipse.fennec.model.atlas.scope.api.ReadableScopeService#listObjectIds(java.lang.String)
 	 */
 	@Override
 	public List<String> listObjectIds(String registry) {
@@ -395,7 +396,7 @@ public class ScopeServiceImpl<T extends EObject> implements ScopeService<T>, Wri
 
 	/* 
 	 * (non-Javadoc)
-	 * @see org.eclipse.fennec.model.atlas.scope.api.ReadOnlyScopeService#listAll(java.lang.String)
+	 * @see org.eclipse.fennec.model.atlas.scope.api.ReadableScopeService#listAll(java.lang.String)
 	 */
 	@Override
 	public List<T> listAll(String registry) {
@@ -404,7 +405,7 @@ public class ScopeServiceImpl<T extends EObject> implements ScopeService<T>, Wri
 
 	/* 
 	 * (non-Javadoc)
-	 * @see org.eclipse.fennec.model.atlas.scope.api.ReadOnlyScopeService#stream(java.lang.String)
+	 * @see org.eclipse.fennec.model.atlas.scope.api.ReadableScopeService#stream(java.lang.String)
 	 */
 	@Override
 	public Stream<T> stream(String registry) {
@@ -413,11 +414,29 @@ public class ScopeServiceImpl<T extends EObject> implements ScopeService<T>, Wri
 
 	/* 
 	 * (non-Javadoc)
-	 * @see org.eclipse.fennec.model.atlas.scope.api.ReadOnlyScopeService#getScopeInfo()
+	 * @see org.eclipse.fennec.model.atlas.scope.api.ReadableScopeService#getScopeInfo()
 	 */
 	@Override
 	public ScopeInfo getScopeInfo() {
 		return scopeObject;
+	}
+
+	/* 
+	 * (non-Javadoc)
+	 * @see org.eclipse.fennec.model.atlas.scope.api.ReadableScopeService#registryView(java.lang.String)
+	 */
+	@Override
+	public ReadableRegistryView<T> registryView(String registry) {
+		throw new UnsupportedOperationException("registryView not yet implemented (P6-4)");
+	}
+
+	/* 
+	 * (non-Javadoc)
+	 * @see org.eclipse.fennec.model.atlas.scope.api.ReadableScopeService#registryView(java.lang.String, java.lang.String)
+	 */
+	@Override
+	public ReadableRegistryView<T> registryView(String registry, String stage) {
+		throw new UnsupportedOperationException("registryView not yet implemented (P6-4)");
 	}
 
 

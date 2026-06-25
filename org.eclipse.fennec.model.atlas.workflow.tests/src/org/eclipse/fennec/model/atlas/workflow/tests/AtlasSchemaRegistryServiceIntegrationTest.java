@@ -26,11 +26,12 @@ import org.eclipse.emf.ecore.EcorePackage;
 import org.eclipse.fennec.emf.osgi.annotation.require.RequireEMF;
 import org.eclipse.fennec.model.atlas.mgmt.management.ManagementFactory;
 import org.eclipse.fennec.model.atlas.mgmt.management.ObjectMetadata;
+import org.eclipse.fennec.model.atlas.scope.api.RegistryType;
+import org.eclipse.fennec.model.atlas.scope.api.StageInfo;
 import org.eclipse.fennec.model.atlas.tests.common.CommonTestAnnotations.EPackageLuceneIndexSetup;
 import org.eclipse.fennec.model.atlas.tests.common.CommonTestAnnotations.RegistryConfiguration;
 import org.eclipse.fennec.model.atlas.wf.workflowapi.Registry;
 import org.eclipse.fennec.model.atlas.wf.workflowapi.RegistryService;
-import org.eclipse.fennec.model.atlas.wf.workflowapi.Stage;
 import org.eclipse.fennec.model.atlas.workflow.WorkflowConstants;
 import org.eclipse.fennec.model.atlas.workflow.tests.support.LuceneAwareTempDirExtension;
 import org.junit.jupiter.api.DisplayName;
@@ -43,7 +44,6 @@ import org.osgi.test.common.service.ServiceAware;
 import org.osgi.test.junit5.cm.ConfigurationExtension;
 import org.osgi.test.junit5.context.BundleContextExtension;
 import org.osgi.test.junit5.service.ServiceExtension;
-import org.eclipse.fennec.model.atlas.scope.api.RegistryType;
 
 /**
  * OSGi integration tests for {@link org.eclipse.fennec.model.atlas.workflow.impl.AtlasSchemaRegistryService}.
@@ -133,7 +133,7 @@ public class AtlasSchemaRegistryServiceIntegrationTest {
 			Registry registry = registryService.getRegistry();
 			assertEquals(1, registry.getStages().size());
 
-			Stage stage = registry.getStages().get(0);
+			StageInfo stage = registry.getStages().get(0);
 			assertEquals(WorkflowConstants.ATLAS_SCHEMA_REGISTRY_STAGE_NAME, stage.getName());
 			assertFalse(stage.isWritable());
 			assertTrue(stage.isFinal());

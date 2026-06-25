@@ -14,7 +14,7 @@
     <details key="suppressNotification" value="true"/>
     <details key="suppressEMFTypes" value="true"/>
   </eAnnotations>
-  <eClassifiers xsi:type="ecore:EClass" name="ReadOnlyScopeService" abstract="true"
+  <eClassifiers xsi:type="ecore:EClass" name="ReadableScopeService" abstract="true"
       interface="true">
     <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
       <details key="documentation" value="Read-only, final-stage view of the EObjects in a scope, mirroring the workflow API's registry dimension: the registry is a parameter on each operation, and reads resolve that registry's final stage, reading through to parent scopes' final stages when inheriting. It carries no stage parameter (per-stage access is a workflow concern) and no ObjectMetadata (a wire/storage concern), so it stays free of the workflow/management API. This is the contract a pure consumer of published models depends on (the validation service, a remote Atlas client, any downstream reader)."/>
@@ -37,7 +37,7 @@
         <details key="documentation" value="Resolve a single object by its identifier from a registry's final-stage view.&#xA;@param registry the registry within the scope (e.g. {@code schema})&#xA;@param objectId the object identifier within that registry&#xA;@return the resolved object, or empty if not visible (including, when inheriting, the parent scopes')"/>
       </eAnnotations>
       <eGenericType eClassifier="#//Optional">
-        <eTypeArguments eTypeParameter="#//ReadOnlyScopeService/T"/>
+        <eTypeArguments eTypeParameter="#//ReadableScopeService/T"/>
       </eGenericType>
       <eParameters name="registry" lowerBound="1" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
       <eParameters name="objectId" lowerBound="1" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
@@ -56,7 +56,7 @@
         <details key="documentation" value="Resolve every object visible in a registry's final-stage view; prefer stream() for large registries.&#xA;@param registry the registry within the scope&#xA;@return the resolved objects (possibly empty); never {@code null}"/>
       </eAnnotations>
       <eGenericType eClassifier="#//List">
-        <eTypeArguments eTypeParameter="#//ReadOnlyScopeService/T"/>
+        <eTypeArguments eTypeParameter="#//ReadableScopeService/T"/>
       </eGenericType>
       <eParameters name="registry" lowerBound="1" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
     </eOperations>
@@ -65,14 +65,33 @@
         <details key="documentation" value="A lazy stream over the objects in a registry's final-stage view, resolving content as it is consumed.&#xA;@param registry the registry within the scope&#xA;@return a stream of resolved objects; never {@code null}"/>
       </eAnnotations>
       <eGenericType eClassifier="#//Stream">
-        <eTypeArguments eTypeParameter="#//ReadOnlyScopeService/T"/>
+        <eTypeArguments eTypeParameter="#//ReadableScopeService/T"/>
       </eGenericType>
       <eParameters name="registry" lowerBound="1" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
     </eOperations>
     <eOperations name="getScopeInfo" eType="#//ScopeInfo">
       <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
-        <details key="documentation" value="A read-only descriptor of the scope this service reads from: its name, description, parent scope, and the registries it exposes (name + type, without the workflow stage/transition detail). @return the scope info; never {@code null}"/>
+        <details key="documentation" value="A read-only descriptor of the scope this service reads from: its name, description, parent scope, and the registries it exposes, with its stages (without the workflow transition detail). @return the scope info; never {@code null}"/>
       </eAnnotations>
+    </eOperations>
+    <eOperations name="registryView">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="Final-stage view of a registry"/>
+      </eAnnotations>
+      <eGenericType eClassifier="#//ReadableRegistryView">
+        <eTypeArguments eTypeParameter="#//ReadableScopeService/T"/>
+      </eGenericType>
+      <eParameters name="registry" lowerBound="1" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    </eOperations>
+    <eOperations name="registryView">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="explicit-stage view; inheritance reads through to the parent hierarchy's final stage server-side"/>
+      </eAnnotations>
+      <eGenericType eClassifier="#//ReadableRegistryView">
+        <eTypeArguments eTypeParameter="#//ReadableScopeService/T"/>
+      </eGenericType>
+      <eParameters name="registry" lowerBound="1" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+      <eParameters name="stage" lowerBound="1" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
     </eOperations>
   </eClassifiers>
   <eClassifiers xsi:type="ecore:EDataType" name="Optional" instanceClassName="java.util.Optional"
@@ -98,6 +117,18 @@
     <eStructuralFeatures xsi:type="ecore:EAttribute" name="name" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
     <eStructuralFeatures xsi:type="ecore:EAttribute" name="description" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
     <eStructuralFeatures xsi:type="ecore:EAttribute" name="type" eType="#//RegistryType"/>
+    <eStructuralFeatures xsi:type="ecore:EReference" name="stages" upperBound="-1"
+        eType="#//StageInfo" containment="true"/>
+  </eClassifiers>
+  <eClassifiers xsi:type="ecore:EClass" name="StageInfo">
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="name" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="description" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="readable" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EBoolean"
+        defaultValueLiteral="true"/>
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="writable" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EBoolean"
+        defaultValueLiteral="false"/>
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="final" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EBoolean"
+        defaultValueLiteral="false"/>
   </eClassifiers>
   <eClassifiers xsi:type="ecore:EEnum" name="RegistryType">
     <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
@@ -106,5 +137,59 @@
     <eLiterals name="OTHER"/>
     <eLiterals name="SCHEMA" value="1"/>
     <eLiterals name="COCL" value="2"/>
+  </eClassifiers>
+  <eClassifiers xsi:type="ecore:EClass" name="ReadableRegistryView" abstract="true"
+      interface="true">
+    <eTypeParameters name="T">
+      <eBounds eClassifier="ecore:EClass http://www.eclipse.org/emf/2002/Ecore#//EObject"/>
+    </eTypeParameters>
+    <eOperations name="getScopeName" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="The scope this service reads from. @return the scope name (e.g. {@code jena}); never {@code null}"/>
+      </eAnnotations>
+    </eOperations>
+    <eOperations name="getRegistryName" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="The registry name"/>
+      </eAnnotations>
+    </eOperations>
+    <eOperations name="getStageName" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="the bound stage, or `null` for a&#xA;final-stage view (no stage was requested)."/>
+      </eAnnotations>
+    </eOperations>
+    <eOperations name="get">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="Resolve a single object by its identifier&#xA;@param objectId the object identifier within that registry&#xA;@return the resolved object, or empty if not visible (including, when inheriting, the parent scopes')"/>
+      </eAnnotations>
+      <eGenericType eClassifier="#//Optional">
+        <eTypeArguments eTypeParameter="#//ReadableScopeService/T"/>
+      </eGenericType>
+      <eParameters name="objectId" lowerBound="1" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    </eOperations>
+    <eOperations name="listObjectIds">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="The identifiers of every object visible in this registry view, without resolving their content.&#xA;@return the object ids (possibly empty); never {@code null}"/>
+      </eAnnotations>
+      <eGenericType eClassifier="#//List">
+        <eTypeArguments eClassifier="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+      </eGenericType>
+    </eOperations>
+    <eOperations name="listAll">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="Resolve every object visible in this registry view; prefer stream() for large registries.&#xA;@return the resolved objects (possibly empty); never {@code null}"/>
+      </eAnnotations>
+      <eGenericType eClassifier="#//List">
+        <eTypeArguments eTypeParameter="#//ReadableScopeService/T"/>
+      </eGenericType>
+    </eOperations>
+    <eOperations name="stream">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="A lazy stream over the objects in a registry's view, resolving content as it is consumed.&#xA;@return a stream of resolved objects; never {@code null}"/>
+      </eAnnotations>
+      <eGenericType eClassifier="#//Stream">
+        <eTypeArguments eTypeParameter="#//ReadableScopeService/T"/>
+      </eGenericType>
+    </eOperations>
   </eClassifiers>
 </ecore:EPackage>

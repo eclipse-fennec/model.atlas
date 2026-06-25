@@ -14,10 +14,13 @@
 package org.eclipse.fennec.model.atlas.rest.tests;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.IOException;
+import java.util.Date;
 
 import org.eclipse.emf.ecore.EAttribute;
 import org.eclipse.emf.ecore.EClass;
@@ -34,6 +37,7 @@ import org.osgi.test.common.annotation.InjectBundleContext;
 
 import jakarta.ws.rs.client.Entity;
 import jakarta.ws.rs.client.WebTarget;
+import jakarta.ws.rs.core.EntityTag;
 import jakarta.ws.rs.core.Response;
 
 /**
@@ -169,6 +173,54 @@ public class SchemaPackagesResourceTest extends AbstractRestTest {
 				.request("application/json").get();
 
 		assertStatus(400, response, "Should return HTTP 400 Bad Request");
+	}
+
+	// P5-7: stage-free final-stage metadata for a single package via GET /{s}/schema?nsUri=
+
+	@Test
+	@ParentScopeServiceSetup
+	public void testListReleasedPackages_WithNsUri_ReturnsSingleMetadata(@InjectBundleContext BundleContext context) throws Exception {
+		ensureResourceAvailability(context);
+		EPackage testPackage = TestHelper.createTestEPackage(TEST_PACKAGE_NSURI, TEST_PACKAGE_NAME, TEST_PACKAGE_NAME);
+		String xmiContent = TestHelper.serializeToXMI(testPackage, resourceSet);
+		schemaStageTarget(TestAnnotations.STAGE_RELEASE).queryParam("nsUri", TEST_PACKAGE_NSURI)
+				.queryParam("name", TEST_PACKAGE_NAME).request("application/xmi")
+				.post(Entity.entity(xmiContent, "application/xmi"));
+
+		Response response = schemaTarget().queryParam("nsUri", TEST_PACKAGE_NSURI).request("application/json").get();
+
+		assertStatus(200, response, "Should return HTTP 200 OK with the single final-stage metadata");
+		String body = response.readEntity(String.class);
+		assertNotNull(body, "Should return metadata");
+		assertNotNull(response.getHeaderString("ETag"), "Final-stage metadata GET should emit an ETag");
+	}
+
+	@Test
+	@ParentScopeServiceSetup
+	public void testListReleasedPackages_WithNsUri_NotFound(@InjectBundleContext BundleContext context) throws Exception {
+		ensureResourceAvailability(context);
+		Response response = schemaTarget().queryParam("nsUri", "http://non-existent.com/schema/1.0")
+				.request("application/json").get();
+
+		assertStatus(204, response, "Should return HTTP 204 No Content when the package is not in the final stage");
+	}
+
+	@Test
+	@ParentScopeServiceSetup
+	public void testListReleasedPackages_WithNsUri_InheritsFromParent(@InjectBundleContext BundleContext context) throws Exception {
+		ensureResourceAvailability(context);
+		EPackage testPackage = TestHelper.createTestEPackage(TEST_PACKAGE_NSURI, TEST_PACKAGE_NAME, TEST_PACKAGE_NAME);
+		String xmiContent = TestHelper.serializeToXMI(testPackage, resourceSet);
+		// Upload only to the PARENT scope's final stage; the child's stage-free listing must read through.
+		Response upload = schemaStageTarget(TestAnnotations.TEST_PARENT_SCOPE_NAME, TestAnnotations.STAGE_RELEASE)
+				.queryParam("nsUri", TEST_PACKAGE_NSURI).queryParam("name", TEST_PACKAGE_NAME)
+				.request("application/xmi").post(Entity.entity(xmiContent, "application/xmi"));
+		assertStatus(201, upload, "Upload to parent scope final stage should succeed");
+
+		Response response = schemaTarget().queryParam("nsUri", TEST_PACKAGE_NSURI).request("application/json").get();
+
+		assertStatus(200, response, "Child stage-free metadata should read through to the parent scope (P5-7)");
+		assertNotNull(response.readEntity(String.class), "Should return inherited metadata");
 	}
 
 	@Test
@@ -389,6 +441,85 @@ public class SchemaPackagesResourceTest extends AbstractRestTest {
 				.request("application/json").get();
 
 		assertStatus(204, response, "Should return HTTP 204 No Content");
+	}
+
+	// ========== Get Package Content From Final Stage Tests (P5-0) ==========
+
+	@Test
+	@ParentScopeServiceSetup
+	public void testGetPackageContentFromFinalStage_Success(@InjectBundleContext BundleContext context) throws Exception {
+		ensureResourceAvailability(context);
+		EPackage testPackage = TestHelper.createTestEPackage(TEST_PACKAGE_NSURI, TEST_PACKAGE_NAME, TEST_PACKAGE_NAME);
+		String xmiContent = TestHelper.serializeToXMI(testPackage, resourceSet);
+		schemaStageTarget(TestAnnotations.STAGE_RELEASE).queryParam("nsUri", TEST_PACKAGE_NSURI)
+				.queryParam("name", TEST_PACKAGE_NAME).request("application/xmi")
+				.post(Entity.entity(xmiContent, "application/xmi"));
+
+		Response response = schemaTarget().path("content").queryParam("nsUri", TEST_PACKAGE_NSURI)
+				.request("application/json").get();
+
+		assertStatus(200, response, "Should return HTTP 200 OK");
+		assertNotNull(response.readEntity(String.class), "Should return content");
+	}
+
+	@Test
+	@ParentScopeServiceSetup
+	public void testGetPackageContentFromFinalStage_NotFound(@InjectBundleContext BundleContext context) throws Exception {
+		ensureResourceAvailability(context);
+		Response response = schemaTarget().path("content").queryParam("nsUri", "http://non-existent.com/schema/1.0")
+				.request("application/json").get();
+
+		assertStatus(204, response, "Should return HTTP 204 No Content when package not in final stage");
+	}
+
+	@Test
+	@ParentScopeServiceSetup
+	public void testGetPackageContentFromFinalStage_ScopeNotFound(@InjectBundleContext BundleContext context) throws Exception {
+		ensureResourceAvailability(context);
+		Response response = schemaTarget("non-existent-scope").path("content").queryParam("nsUri", TEST_PACKAGE_NSURI)
+				.request("application/json").get();
+
+		assertStatus(400, response, "Should return HTTP 400 Bad Request for unknown scope");
+	}
+
+	@Test
+	@ParentScopeServiceSetup
+	public void testGetPackageContentFromFinalStage_ConditionalGetNotModified(@InjectBundleContext BundleContext context) throws Exception {
+		ensureResourceAvailability(context);
+		EPackage testPackage = TestHelper.createTestEPackage(TEST_PACKAGE_NSURI, TEST_PACKAGE_NAME, TEST_PACKAGE_NAME);
+		String xmiContent = TestHelper.serializeToXMI(testPackage, resourceSet);
+		schemaStageTarget(TestAnnotations.STAGE_RELEASE).queryParam("nsUri", TEST_PACKAGE_NSURI)
+				.queryParam("name", TEST_PACKAGE_NAME).request("application/xmi")
+				.post(Entity.entity(xmiContent, "application/xmi"));
+
+		Response first = schemaTarget().path("content").queryParam("nsUri", TEST_PACKAGE_NSURI)
+				.request("application/json").get();
+		assertStatus(200, first, "First GET should return HTTP 200 OK");
+		String etag = first.getHeaderString("ETag");
+		assertNotNull(etag, "Final-stage content GET should emit an ETag");
+
+		Response second = schemaTarget().path("content").queryParam("nsUri", TEST_PACKAGE_NSURI)
+				.request("application/json").header("If-None-Match", etag).get();
+		assertStatus(304, second, "Matching If-None-Match should return HTTP 304 Not Modified");
+	}
+
+	@Test
+	@ParentScopeServiceSetup
+	public void testGetPackageContentFromFinalStage_InheritsFromParent(@InjectBundleContext BundleContext context) throws Exception {
+		ensureResourceAvailability(context);
+		EPackage testPackage = TestHelper.createTestEPackage(TEST_PACKAGE_NSURI, TEST_PACKAGE_NAME, TEST_PACKAGE_NAME);
+		String xmiContent = TestHelper.serializeToXMI(testPackage, resourceSet);
+		// Upload only to the PARENT scope's final stage; the child scope must read through.
+		Response upload = schemaStageTarget(TestAnnotations.TEST_PARENT_SCOPE_NAME, TestAnnotations.STAGE_RELEASE)
+				.queryParam("nsUri", TEST_PACKAGE_NSURI).queryParam("name", TEST_PACKAGE_NAME)
+				.request("application/xmi").post(Entity.entity(xmiContent, "application/xmi"));
+		assertStatus(201, upload, "Upload to parent scope final stage should succeed");
+
+		Response response = schemaTarget().path("content").queryParam("nsUri", TEST_PACKAGE_NSURI)
+				.request("application/json").get();
+
+		assertStatus(200, response, "Child final-stage content should read through to the parent scope");
+		assertNotNull(response.readEntity(String.class), "Should return inherited content");
 	}
 
 	// ========== Update Package Content Tests ==========
@@ -1093,6 +1224,241 @@ public class SchemaPackagesResourceTest extends AbstractRestTest {
 
 	@Test
 	@ParentScopeServiceSetup
+	public void testGetPackageContent_ReturnsStrongETagAndLastModified(@InjectBundleContext BundleContext context) throws InterruptedException, IOException {
+		ensureResourceAvailability(context);
+		EPackage testPackage = TestHelper.createTestEPackage(TEST_PACKAGE_NSURI, TEST_PACKAGE_NAME, TEST_PACKAGE_NAME);
+		String xmiContent = TestHelper.serializeToXMI(testPackage, resourceSet);
+		schemaStageTarget(TestAnnotations.STAGE_DRAFT).queryParam("nsUri", TEST_PACKAGE_NSURI)
+				.queryParam("name", TEST_PACKAGE_NAME).request("application/xmi")
+				.post(Entity.entity(xmiContent, "application/xmi"));
+
+		Response response = schemaStageTarget(TestAnnotations.STAGE_DRAFT).path("content")
+				.queryParam("nsUri", TEST_PACKAGE_NSURI).request("application/json").get();
+
+		assertEquals(200, response.getStatus(), "Should return HTTP 200 OK");
+		EntityTag etag = response.getEntityTag();
+		assertNotNull(etag, "Content GET should emit an ETag (set by ObjectMetadataResponseFilter)");
+		assertFalse(etag.isWeak(), "ETag should be a strong validator");
+		assertNotNull(response.getLastModified(), "Content GET should emit a Last-Modified header");
+	}
+
+	@Test
+	@ParentScopeServiceSetup
+	public void testGetPackageContent_IfNoneMatchHit_Returns304WithETagNoBody(@InjectBundleContext BundleContext context) throws Exception {
+		ensureResourceAvailability(context);
+		EPackage testPackage = TestHelper.createTestEPackage(TEST_PACKAGE_NSURI, TEST_PACKAGE_NAME, TEST_PACKAGE_NAME);
+		String xmiContent = TestHelper.serializeToXMI(testPackage, resourceSet);
+		schemaStageTarget(TestAnnotations.STAGE_DRAFT).queryParam("nsUri", TEST_PACKAGE_NSURI)
+				.queryParam("name", TEST_PACKAGE_NAME).request("application/xmi")
+				.post(Entity.entity(xmiContent, "application/xmi"));
+
+		Response first = schemaStageTarget(TestAnnotations.STAGE_DRAFT).path("content")
+				.queryParam("nsUri", TEST_PACKAGE_NSURI).request("application/json").get();
+		assertEquals(200, first.getStatus());
+		String etag = first.getHeaderString("ETag");
+		assertNotNull(etag, "First content GET should carry an ETag");
+
+		Response second = schemaStageTarget(TestAnnotations.STAGE_DRAFT).path("content")
+				.queryParam("nsUri", TEST_PACKAGE_NSURI).request("application/json")
+				.header("If-None-Match", etag).get();
+		assertEquals(304, second.getStatus(), "Matching If-None-Match should yield 304");
+		assertEquals(etag, second.getHeaderString("ETag"), "304 should still carry the current ETag");
+		assertFalse(second.hasEntity(), "304 should have no body");
+	}
+
+	@Test
+	@ParentScopeServiceSetup
+	public void testGetPackageContent_IfNoneMatchStale_Returns200WithBodyAndETag(@InjectBundleContext BundleContext context) throws Exception {
+		ensureResourceAvailability(context);
+		EPackage testPackage = TestHelper.createTestEPackage(TEST_PACKAGE_NSURI, TEST_PACKAGE_NAME, TEST_PACKAGE_NAME);
+		String xmiContent = TestHelper.serializeToXMI(testPackage, resourceSet);
+		schemaStageTarget(TestAnnotations.STAGE_DRAFT).queryParam("nsUri", TEST_PACKAGE_NSURI)
+				.queryParam("name", TEST_PACKAGE_NAME).request("application/xmi")
+				.post(Entity.entity(xmiContent, "application/xmi"));
+
+		Response response = schemaStageTarget(TestAnnotations.STAGE_DRAFT).path("content")
+				.queryParam("nsUri", TEST_PACKAGE_NSURI).request("application/json")
+				.header("If-None-Match", "\"stale-etag-value\"").get();
+		assertEquals(200, response.getStatus(), "Stale If-None-Match should yield 200");
+		assertNotNull(response.getEntityTag(), "200 should carry the current ETag");
+		assertTrue(response.hasEntity(), "200 should carry a body");
+	}
+
+	@Test
+	@ParentScopeServiceSetup
+	public void testGetPackageContent_IfModifiedSince_NotModified_Returns304(@InjectBundleContext BundleContext context) throws Exception {
+		ensureResourceAvailability(context);
+		EPackage testPackage = TestHelper.createTestEPackage(TEST_PACKAGE_NSURI, TEST_PACKAGE_NAME, TEST_PACKAGE_NAME);
+		String xmiContent = TestHelper.serializeToXMI(testPackage, resourceSet);
+		schemaStageTarget(TestAnnotations.STAGE_DRAFT).queryParam("nsUri", TEST_PACKAGE_NSURI)
+				.queryParam("name", TEST_PACKAGE_NAME).request("application/xmi")
+				.post(Entity.entity(xmiContent, "application/xmi"));
+
+		Response first = schemaStageTarget(TestAnnotations.STAGE_DRAFT).path("content")
+				.queryParam("nsUri", TEST_PACKAGE_NSURI).request("application/json").get();
+		assertEquals(200, first.getStatus());
+		Date lastModified = first.getLastModified();
+		assertNotNull(lastModified, "First content GET should carry Last-Modified");
+
+		// Echoing the resource's own Last-Modified back means "not modified since" → 304.
+		Response second = schemaStageTarget(TestAnnotations.STAGE_DRAFT).path("content")
+				.queryParam("nsUri", TEST_PACKAGE_NSURI).request("application/json")
+				.header("If-Modified-Since", lastModified).get();
+		assertEquals(304, second.getStatus(), "If-Modified-Since >= lastChangeTime should yield 304");
+	}
+
+	@Test
+	@ParentScopeServiceSetup
+	public void testGetPackageContent_IfModifiedSince_Modified_Returns200(@InjectBundleContext BundleContext context) throws Exception {
+		ensureResourceAvailability(context);
+		EPackage testPackage = TestHelper.createTestEPackage(TEST_PACKAGE_NSURI, TEST_PACKAGE_NAME, TEST_PACKAGE_NAME);
+		String xmiContent = TestHelper.serializeToXMI(testPackage, resourceSet);
+		schemaStageTarget(TestAnnotations.STAGE_DRAFT).queryParam("nsUri", TEST_PACKAGE_NSURI)
+				.queryParam("name", TEST_PACKAGE_NAME).request("application/xmi")
+				.post(Entity.entity(xmiContent, "application/xmi"));
+
+		// A long-past If-Modified-Since means the resource has changed since → 200.
+		Response response = schemaStageTarget(TestAnnotations.STAGE_DRAFT).path("content")
+				.queryParam("nsUri", TEST_PACKAGE_NSURI).request("application/json")
+				.header("If-Modified-Since", new Date(0L)).get();
+		assertEquals(200, response.getStatus(), "Stale If-Modified-Since should yield 200");
+	}
+
+	@Test
+	@ParentScopeServiceSetup
+	public void testGetPackageContent_SetsVaryAccept(@InjectBundleContext BundleContext context) throws Exception {
+		ensureResourceAvailability(context);
+		EPackage testPackage = TestHelper.createTestEPackage(TEST_PACKAGE_NSURI, TEST_PACKAGE_NAME, TEST_PACKAGE_NAME);
+		String xmiContent = TestHelper.serializeToXMI(testPackage, resourceSet);
+		schemaStageTarget(TestAnnotations.STAGE_DRAFT).queryParam("nsUri", TEST_PACKAGE_NSURI)
+				.queryParam("name", TEST_PACKAGE_NAME).request("application/xmi")
+				.post(Entity.entity(xmiContent, "application/xmi"));
+
+		Response response = schemaStageTarget(TestAnnotations.STAGE_DRAFT).path("content")
+				.queryParam("nsUri", TEST_PACKAGE_NSURI).request("application/json").get();
+		assertEquals(200, response.getStatus());
+		assertNotNull(response.getHeaderString("Vary"), "Cacheable content GET should carry a Vary header");
+		assertTrue(response.getHeaderString("Vary").toLowerCase().contains("accept"),
+				"Vary header should mark the response as varying on Accept");
+	}
+
+	@Test
+	@ParentScopeServiceSetup
+	public void testGetPackageContent_VaryAcceptPresentOn304(@InjectBundleContext BundleContext context) throws Exception {
+		ensureResourceAvailability(context);
+		EPackage testPackage = TestHelper.createTestEPackage(TEST_PACKAGE_NSURI, TEST_PACKAGE_NAME, TEST_PACKAGE_NAME);
+		String xmiContent = TestHelper.serializeToXMI(testPackage, resourceSet);
+		schemaStageTarget(TestAnnotations.STAGE_DRAFT).queryParam("nsUri", TEST_PACKAGE_NSURI)
+				.queryParam("name", TEST_PACKAGE_NAME).request("application/xmi")
+				.post(Entity.entity(xmiContent, "application/xmi"));
+
+		Response first = schemaStageTarget(TestAnnotations.STAGE_DRAFT).path("content")
+				.queryParam("nsUri", TEST_PACKAGE_NSURI).request("application/json").get();
+		String etag = first.getHeaderString("ETag");
+		assertNotNull(etag);
+
+		Response second = schemaStageTarget(TestAnnotations.STAGE_DRAFT).path("content")
+				.queryParam("nsUri", TEST_PACKAGE_NSURI).request("application/json")
+				.header("If-None-Match", etag).get();
+		assertEquals(304, second.getStatus());
+		assertNotNull(second.getHeaderString("Vary"), "304 should still carry a Vary header");
+		assertTrue(second.getHeaderString("Vary").toLowerCase().contains("accept"),
+				"304 Vary header should mark the response as varying on Accept");
+	}
+
+	@Test
+	@ParentScopeServiceSetup
+	public void testGetPackageContent_DistinctETagPerRepresentation(@InjectBundleContext BundleContext context) throws Exception {
+		ensureResourceAvailability(context);
+		EPackage testPackage = TestHelper.createTestEPackage(TEST_PACKAGE_NSURI, TEST_PACKAGE_NAME, TEST_PACKAGE_NAME);
+		String xmiContent = TestHelper.serializeToXMI(testPackage, resourceSet);
+		schemaStageTarget(TestAnnotations.STAGE_DRAFT).queryParam("nsUri", TEST_PACKAGE_NSURI)
+				.queryParam("name", TEST_PACKAGE_NAME).request("application/xmi")
+				.post(Entity.entity(xmiContent, "application/xmi"));
+
+		// Same nsURI (same content hash), two different representations → two different ETags.
+		Response asXml = schemaStageTarget(TestAnnotations.STAGE_DRAFT).path("content")
+				.queryParam("nsUri", TEST_PACKAGE_NSURI).queryParam("mediaType", "application/xml")
+				.request("application/json").get();
+		assertEquals(200, asXml.getStatus());
+		String xmlETag = asXml.getHeaderString("ETag");
+		assertNotNull(xmlETag, "XML representation should carry an ETag");
+
+		Response asXmi = schemaStageTarget(TestAnnotations.STAGE_DRAFT).path("content")
+				.queryParam("nsUri", TEST_PACKAGE_NSURI).queryParam("mediaType", "application/xmi")
+				.request("application/json").get();
+		assertEquals(200, asXmi.getStatus());
+		String xmiETag = asXmi.getHeaderString("ETag");
+		assertNotNull(xmiETag, "XMI representation should carry an ETag");
+
+		assertNotEquals(xmlETag, xmiETag, "Different representations of the same object must have distinct ETags");
+	}
+
+	@Test
+	@ParentScopeServiceSetup
+	public void testMetadataAndContentHaveDistinctETags(@InjectBundleContext BundleContext context) throws Exception {
+		ensureResourceAvailability(context);
+		EPackage testPackage = TestHelper.createTestEPackage(TEST_PACKAGE_NSURI, TEST_PACKAGE_NAME, TEST_PACKAGE_NAME);
+		String xmiContent = TestHelper.serializeToXMI(testPackage, resourceSet);
+		schemaStageTarget(TestAnnotations.STAGE_DRAFT).queryParam("nsUri", TEST_PACKAGE_NSURI)
+				.queryParam("name", TEST_PACKAGE_NAME).request("application/xmi")
+				.post(Entity.entity(xmiContent, "application/xmi"));
+
+		// Metadata GET (no /content) and content GET, same nsURI and same Accept.
+		Response meta = schemaStageTarget(TestAnnotations.STAGE_DRAFT)
+				.queryParam("nsUri", TEST_PACKAGE_NSURI).request("application/json").get();
+		assertEquals(200, meta.getStatus());
+		String metaETag = meta.getHeaderString("ETag");
+		assertNotNull(metaETag, "Metadata GET should emit its own ETag");
+
+		Response content = schemaStageTarget(TestAnnotations.STAGE_DRAFT).path("content")
+				.queryParam("nsUri", TEST_PACKAGE_NSURI).request("application/json").get();
+		assertEquals(200, content.getStatus());
+		String contentETag = content.getHeaderString("ETag");
+		assertNotNull(contentETag, "Content GET should emit its own ETag");
+
+		assertNotEquals(metaETag, contentETag, "Metadata and content responses must have distinct ETags");
+	}
+
+	@Test
+	@ParentScopeServiceSetup
+	public void testStageTransitionChangesMetadataETagNotContentETag(@InjectBundleContext BundleContext context) throws Exception {
+		ensureResourceAvailability(context);
+		EPackage testPackage = TestHelper.createTestEPackage(TEST_PACKAGE_NSURI, TEST_PACKAGE_NAME, TEST_PACKAGE_NAME);
+		String xmiContent = TestHelper.serializeToXMI(testPackage, resourceSet);
+		schemaStageTarget(TestAnnotations.STAGE_DRAFT).queryParam("nsUri", TEST_PACKAGE_NSURI)
+				.queryParam("name", TEST_PACKAGE_NAME).request("application/xmi")
+				.post(Entity.entity(xmiContent, "application/xmi"));
+
+		String metaBefore = schemaStageTarget(TestAnnotations.STAGE_DRAFT).queryParam("nsUri", TEST_PACKAGE_NSURI)
+				.request("application/json").get().getHeaderString("ETag");
+		String contentBefore = schemaStageTarget(TestAnnotations.STAGE_DRAFT).path("content")
+				.queryParam("nsUri", TEST_PACKAGE_NSURI).request("application/json").get().getHeaderString("ETag");
+		assertNotNull(metaBefore);
+		assertNotNull(contentBefore);
+
+		// Transition DRAFT -> APPROVED without touching the content bytes.
+		StageTransitionRequest transition = RestFactory.eINSTANCE.createStageTransitionRequest();
+		transition.setObjectId(TEST_PACKAGE_NSURI);
+		transition.setTargetStage(TestAnnotations.STAGE_APPROVED);
+		String transitionXmi = TestHelper.serializeToXMI(transition, resourceSet);
+		Response transitionResponse = schemaStageTarget(TestAnnotations.STAGE_DRAFT).path("actions").path("transition")
+				.request("application/xmi").post(Entity.entity(transitionXmi, "application/xmi"));
+		assertEquals(200, transitionResponse.getStatus(), "Transition should succeed");
+
+		String metaAfter = schemaStageTarget(TestAnnotations.STAGE_APPROVED).queryParam("nsUri", TEST_PACKAGE_NSURI)
+				.request("application/json").get().getHeaderString("ETag");
+		String contentAfter = schemaStageTarget(TestAnnotations.STAGE_APPROVED).path("content")
+				.queryParam("nsUri", TEST_PACKAGE_NSURI).request("application/json").get().getHeaderString("ETag");
+		assertNotNull(metaAfter);
+		assertNotNull(contentAfter);
+
+		assertNotEquals(metaBefore, metaAfter, "A stage transition must change the metadata ETag");
+		assertEquals(contentBefore, contentAfter, "A stage transition must not change the content ETag");
+	}
+
+	@Test
+	@ParentScopeServiceSetup
 	public void testCreatePackage_ReturnsETag(@InjectBundleContext BundleContext context) throws Exception {
 		ensureResourceAvailability(context);
 		EPackage testPackage = TestHelper.createTestEPackage("http://etag-test.com/schema/1.0", "ETagPackage", "etag");
@@ -1155,7 +1521,8 @@ public class SchemaPackagesResourceTest extends AbstractRestTest {
 				.queryParam("name", TEST_PACKAGE_NAME).request("application/xmi")
 				.post(Entity.entity(xmiContent, "application/xmi"));
 
-		Response getResponse = schemaStageTarget(TestAnnotations.STAGE_DRAFT)
+		// A content write validates against the content ETag, so source If-Match from a content GET.
+		Response getResponse = schemaStageTarget(TestAnnotations.STAGE_DRAFT).path("content")
 				.queryParam("nsUri", TEST_PACKAGE_NSURI).request("application/json").get();
 		String etag = getResponse.getHeaderString("ETag");
 		assertNotNull(etag, "Should have ETag");
@@ -1240,6 +1607,108 @@ public class SchemaPackagesResourceTest extends AbstractRestTest {
 
 		assertStatus(412, response,
 				"Should return HTTP 412 Precondition Failed when If-Match doesn't match on delete");
+	}
+
+	@Test
+	@ParentScopeServiceSetup
+	public void testTransitionPackage_IfMatchSuccess(@InjectBundleContext BundleContext context) throws Exception {
+		ensureResourceAvailability(context);
+		EPackage testPackage = TestHelper.createTestEPackage(TEST_PACKAGE_NSURI, TEST_PACKAGE_NAME, TEST_PACKAGE_NAME);
+		String xmiContent = TestHelper.serializeToXMI(testPackage, resourceSet);
+		schemaStageTarget(TestAnnotations.STAGE_DRAFT).queryParam("nsUri", TEST_PACKAGE_NSURI)
+				.queryParam("name", TEST_PACKAGE_NAME).request("application/xmi")
+				.post(Entity.entity(xmiContent, "application/xmi"));
+
+		// A transition validates against the metadata ETag, so source If-Match from a metadata GET.
+		String etag = schemaStageTarget(TestAnnotations.STAGE_DRAFT).queryParam("nsUri", TEST_PACKAGE_NSURI)
+				.request("application/json").get().getHeaderString("ETag");
+		assertNotNull(etag, "Metadata GET should carry an ETag");
+
+		StageTransitionRequest transition = RestFactory.eINSTANCE.createStageTransitionRequest();
+		transition.setObjectId(TEST_PACKAGE_NSURI);
+		transition.setTargetStage(TestAnnotations.STAGE_APPROVED);
+		String transitionXmi = TestHelper.serializeToXMI(transition, resourceSet);
+
+		Response response = schemaStageTarget(TestAnnotations.STAGE_DRAFT).path("actions").path("transition")
+				.request("application/xmi").header("If-Match", etag)
+				.post(Entity.entity(transitionXmi, "application/xmi"));
+
+		assertEquals(200, response.getStatus(), "Matching If-Match should let the transition proceed");
+		assertNotNull(response.getHeaderString("ETag"), "Transition response should carry the new ETag");
+	}
+
+	@Test
+	@ParentScopeServiceSetup
+	public void testTransitionPackage_IfMatchFail_Returns412(@InjectBundleContext BundleContext context) throws Exception {
+		ensureResourceAvailability(context);
+		EPackage testPackage = TestHelper.createTestEPackage(TEST_PACKAGE_NSURI, TEST_PACKAGE_NAME, TEST_PACKAGE_NAME);
+		String xmiContent = TestHelper.serializeToXMI(testPackage, resourceSet);
+		schemaStageTarget(TestAnnotations.STAGE_DRAFT).queryParam("nsUri", TEST_PACKAGE_NSURI)
+				.queryParam("name", TEST_PACKAGE_NAME).request("application/xmi")
+				.post(Entity.entity(xmiContent, "application/xmi"));
+
+		StageTransitionRequest transition = RestFactory.eINSTANCE.createStageTransitionRequest();
+		transition.setObjectId(TEST_PACKAGE_NSURI);
+		transition.setTargetStage(TestAnnotations.STAGE_APPROVED);
+		String transitionXmi = TestHelper.serializeToXMI(transition, resourceSet);
+
+		Response response = schemaStageTarget(TestAnnotations.STAGE_DRAFT).path("actions").path("transition")
+				.request("application/xmi").header("If-Match", "\"stale-etag-value\"")
+				.post(Entity.entity(transitionXmi, "application/xmi"));
+
+		assertEquals(412, response.getStatus(), "Mismatching If-Match should block the transition with 412");
+		// No side effect: the package is still in the source stage.
+		Response stillInDraft = schemaStageTarget(TestAnnotations.STAGE_DRAFT).queryParam("nsUri", TEST_PACKAGE_NSURI)
+				.request("application/json").get();
+		assertEquals(200, stillInDraft.getStatus(), "Package must remain in the source stage after a 412");
+	}
+
+	@Test
+	@ParentScopeServiceSetup
+	public void testCreatePackage_Overwrite_IfMatchSuccess(@InjectBundleContext BundleContext context) throws Exception {
+		ensureResourceAvailability(context);
+		EPackage testPackage = TestHelper.createTestEPackage(TEST_PACKAGE_NSURI, TEST_PACKAGE_NAME, TEST_PACKAGE_NAME);
+		String xmiContent = TestHelper.serializeToXMI(testPackage, resourceSet);
+		schemaStageTarget(TestAnnotations.STAGE_DRAFT).queryParam("nsUri", TEST_PACKAGE_NSURI)
+				.queryParam("name", TEST_PACKAGE_NAME).request("application/xmi")
+				.post(Entity.entity(xmiContent, "application/xmi"));
+
+		// A create-with-overwrite replaces content, so source If-Match from a content GET.
+		String etag = schemaStageTarget(TestAnnotations.STAGE_DRAFT).path("content")
+				.queryParam("nsUri", TEST_PACKAGE_NSURI).request("application/json").get().getHeaderString("ETag");
+		assertNotNull(etag, "Content GET should carry an ETag");
+
+		EPackage updated = TestHelper.createTestEPackage(TEST_PACKAGE_NSURI, "OverwriteUpdated", "ow");
+		String updatedXmi = TestHelper.serializeToXMI(updated, resourceSet);
+
+		Response response = schemaStageTarget(TestAnnotations.STAGE_DRAFT).queryParam("nsUri", TEST_PACKAGE_NSURI)
+				.queryParam("name", TEST_PACKAGE_NAME).queryParam("overwrite", "true")
+				.request("application/xmi").header("If-Match", etag)
+				.post(Entity.entity(updatedXmi, "application/xmi"));
+
+		assertEquals(200, response.getStatus(), "Matching If-Match on create-overwrite should yield 200");
+		assertNotNull(response.getHeaderString("ETag"), "Overwrite response should carry the new ETag");
+	}
+
+	@Test
+	@ParentScopeServiceSetup
+	public void testCreatePackage_Overwrite_IfMatchFail_Returns412(@InjectBundleContext BundleContext context) throws Exception {
+		ensureResourceAvailability(context);
+		EPackage testPackage = TestHelper.createTestEPackage(TEST_PACKAGE_NSURI, TEST_PACKAGE_NAME, TEST_PACKAGE_NAME);
+		String xmiContent = TestHelper.serializeToXMI(testPackage, resourceSet);
+		schemaStageTarget(TestAnnotations.STAGE_DRAFT).queryParam("nsUri", TEST_PACKAGE_NSURI)
+				.queryParam("name", TEST_PACKAGE_NAME).request("application/xmi")
+				.post(Entity.entity(xmiContent, "application/xmi"));
+
+		EPackage updated = TestHelper.createTestEPackage(TEST_PACKAGE_NSURI, "OverwriteFail", "owf");
+		String updatedXmi = TestHelper.serializeToXMI(updated, resourceSet);
+
+		Response response = schemaStageTarget(TestAnnotations.STAGE_DRAFT).queryParam("nsUri", TEST_PACKAGE_NSURI)
+				.queryParam("name", TEST_PACKAGE_NAME).queryParam("overwrite", "true")
+				.request("application/xmi").header("If-Match", "\"stale-etag-value\"")
+				.post(Entity.entity(updatedXmi, "application/xmi"));
+
+		assertEquals(412, response.getStatus(), "Mismatching If-Match on create-overwrite should yield 412");
 	}
 
 	/** /{scope}/schema */

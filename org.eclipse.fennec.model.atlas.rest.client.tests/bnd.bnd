@@ -1,0 +1,46 @@
+Bundle-Name: Model Atlas REST Client — integration tests
+Bundle-Description: End-to-end tests for the plain-Java Model Atlas client against a \
+ live Atlas server (Testcontainers, jena image). Plain JUnit 5 on a flat classpath \
+ (NOT an OSGi test): the client is exercised exactly as a plain-Java consumer would, \
+ with a real Jakarta RS client implementation (Jersey) supplying ClientBuilder.
+
+# Compile against the client API/impl + EMF + Jackson. scope.api is on the client's public
+# surface (ModelAtlasClient.readOnlyScope → ReadableScopeService) and is loaded by
+# ModelAtlasClientImpl, so it must be on the flat test classpath too (Phase 5).
+-buildpath: \
+	org.eclipse.fennec.model.atlas.rest.client.api;version=snapshot,\
+	org.eclipse.fennec.model.atlas.rest.client.impl;version=snapshot,\
+	org.eclipse.fennec.model.atlas.scope.api;version=snapshot,\
+	jakarta.ws.rs-api;version=latest,\
+	org.eclipse.emf.common;version=latest,\
+	org.eclipse.emf.ecore;version=latest,\
+	org.eclipse.emf.ecore.xmi;version=latest,\
+	com.fasterxml.jackson.core.jackson-core;version=latest,\
+	com.fasterxml.jackson.core.jackson-databind;version=latest
+
+# Test runtime: JUnit 5, Testcontainers (daanse), and a full Jakarta RS *client*
+# implementation (Jersey + its HK2 injection chain) so ClientBuilder.newBuilder()
+# resolves on the flat test classpath.
+-testpath: \
+	junit-jupiter-api,\
+	org.eclipse.daanse.tooling.testcontainers.core;version=latest,\
+	slf4j.api;version=latest,\
+	slf4j.simple;version=latest,\
+	com.sun.jna;version=latest,\
+	org.apache.commons.commons-compress;version=latest,\
+	org.apache.commons.lang3;version=latest,\
+	org.apache.commons.commons-io;version=latest,\
+	com.fasterxml.jackson.core.jackson-annotations;version=latest,\
+	org.glassfish.jersey.core.jersey-client;version=latest,\
+	org.glassfish.jersey.core.jersey-common;version=latest,\
+	org.glassfish.jersey.inject.jersey-hk2;version=latest,\
+	org.glassfish.hk2.api;version=latest,\
+	org.glassfish.hk2.locator;version=latest,\
+	org.glassfish.hk2.utils;version=latest,\
+	org.glassfish.hk2.external.aopalliance-repackaged;version=latest,\
+	org.glassfish.hk2.osgi-resource-locator;version=latest,\
+	javassist;version=latest,\
+	jakarta.inject.jakarta.inject-api;version=latest,\
+	jakarta.annotation-api;version=latest
+
+Bundle-Version: 1.0.0.SNAPSHOT

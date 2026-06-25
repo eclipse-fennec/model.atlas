@@ -28,7 +28,6 @@ import org.osgi.annotation.versioning.ProviderType;
  * The following features are supported:
  * </p>
  * <ul>
- *   <li>{@link org.eclipse.fennec.model.atlas.wf.workflowapi.Registry#getStages <em>Stages</em>}</li>
  *   <li>{@link org.eclipse.fennec.model.atlas.wf.workflowapi.Registry#getAllowedTransitions <em>Allowed Transitions</em>}</li>
  * </ul>
  *
@@ -38,18 +37,6 @@ import org.osgi.annotation.versioning.ProviderType;
  */
 @ProviderType
 public interface Registry extends RegistryInfo {
-	/**
-	 * Returns the value of the '<em><b>Stages</b></em>' containment reference list.
-	 * The list contents are of type {@link org.eclipse.fennec.model.atlas.wf.workflowapi.Stage}.
-	 * <!-- begin-user-doc -->
-	 * <!-- end-user-doc -->
-	 * @return the value of the '<em>Stages</em>' containment reference list.
-	 * @see org.eclipse.fennec.model.atlas.wf.workflowapi.WorkflowApiPackage#getRegistry_Stages()
-	 * @model containment="true"
-	 * @generated
-	 */
-	List<Stage> getStages();
-
 	/**
 	 * Returns the value of the '<em><b>Allowed Transitions</b></em>' containment reference list.
 	 * The list contents are of type {@link org.eclipse.fennec.model.atlas.wf.workflowapi.StageTransition}.

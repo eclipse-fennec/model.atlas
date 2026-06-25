@@ -16,18 +16,23 @@ package org.eclipse.fennec.model.atlas.rest.tests;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.IOException;
 
+import org.eclipse.emf.ecore.EPackage;
 import org.eclipse.fennec.model.atlas.rest.tests.helper.TestAnnotations;
 import org.eclipse.fennec.model.atlas.rest.tests.helper.TestAnnotations.ParentScopeServiceSetup;
+import org.eclipse.fennec.model.atlas.rest.tests.helper.TestHelper;
 import org.eclipse.fennec.model.atlas.workflow.WorkflowConstants;
 import org.junit.jupiter.api.Test;
 import org.osgi.framework.BundleContext;
 import org.osgi.test.common.annotation.InjectBundleContext;
 
+import jakarta.ws.rs.client.Entity;
 import jakarta.ws.rs.client.WebTarget;
+import jakarta.ws.rs.core.EntityTag;
 import jakarta.ws.rs.core.Response;
 
 /**
@@ -186,9 +191,167 @@ public class ScopesResourceTest extends AbstractRestTest{
 		assertEquals(404, response.getStatus(), "Scope lookup should be case-sensitive and return 404 for mixed case");
 	}
 
+	// ========== Scope-level HEAD (aggregate validator) Tests ==========
+
+	private static final String SCOPE_HEAD_NSURI_1 = "http://test.example.com/schema/1.1";
+	private static final String SCOPE_HEAD_NAME_1 = "TestSchema";
+	private static final String SCOPE_HEAD_NSURI_2 = "http://test.example.com/schema2/1.0";
+	private static final String SCOPE_HEAD_NAME_2 = "TestSchema2";
+
+	/** /{TEST_SCOPE_NAME}/schema/stages/{draft} */
+	private WebTarget schemaDraftTarget() {
+		return scopeTarget(TestAnnotations.TEST_SCOPE_NAME).path("schema").path("stages")
+				.path(TestAnnotations.STAGE_DRAFT);
+	}
+
+	private void createPackage(String nsUri, String name) throws IOException {
+		EPackage pkg = TestHelper.createTestEPackage(nsUri, name, name);
+		String xmi = TestHelper.serializeToXMI(pkg, resourceSet);
+		schemaDraftTarget().queryParam("nsUri", nsUri).queryParam("name", name).request("application/xmi")
+				.post(Entity.entity(xmi, "application/xmi"));
+	}
+
+	private void deletePackage(String nsUri) {
+		schemaDraftTarget().queryParam("nsUri", nsUri).request().delete();
+	}
+
+	@Test
+	@ParentScopeServiceSetup
+	public void testScopeHead_ReturnsDeterministicAggregateETag(@InjectBundleContext BundleContext context) throws Exception {
+		ensureResourceAvailability(context);
+		createPackage(SCOPE_HEAD_NSURI_1, SCOPE_HEAD_NAME_1);
+
+		Response first = scopesTarget(TestAnnotations.TEST_SCOPE_NAME).request().head();
+		assertEquals(200, first.getStatus(), "Scope HEAD should return 200");
+		EntityTag etag = first.getEntityTag();
+		assertNotNull(etag, "Scope HEAD should emit an aggregate ETag");
+		assertFalse(etag.isWeak(), "Aggregate ETag should be a strong validator");
+
+		Response second = scopesTarget(TestAnnotations.TEST_SCOPE_NAME).request().head();
+		assertEquals(first.getHeaderString("ETag"), second.getHeaderString("ETag"),
+				"Aggregate ETag must be deterministic for an unchanged scope");
+	}
+
+	@Test
+	@ParentScopeServiceSetup
+	public void testScopeHead_ETagStableUnderReordering(@InjectBundleContext BundleContext context) throws Exception {
+		ensureResourceAvailability(context);
+		createPackage(SCOPE_HEAD_NSURI_1, SCOPE_HEAD_NAME_1);
+		createPackage(SCOPE_HEAD_NSURI_2, SCOPE_HEAD_NAME_2);
+		String etagAB = scopesTarget(TestAnnotations.TEST_SCOPE_NAME).request().head().getHeaderString("ETag");
+
+		// Remove both and re-create in the opposite order: same content, different discovery order.
+		deletePackage(SCOPE_HEAD_NSURI_1);
+		deletePackage(SCOPE_HEAD_NSURI_2);
+		createPackage(SCOPE_HEAD_NSURI_2, SCOPE_HEAD_NAME_2);
+		createPackage(SCOPE_HEAD_NSURI_1, SCOPE_HEAD_NAME_1);
+		String etagBA = scopesTarget(TestAnnotations.TEST_SCOPE_NAME).request().head().getHeaderString("ETag");
+
+		assertNotNull(etagAB);
+		assertEquals(etagAB, etagBA, "Aggregate ETag must be stable under reordering of underlying entries");
+	}
+
+	@Test
+	@ParentScopeServiceSetup
+	public void testScopeHead_IfNoneMatchMatch_Returns304(@InjectBundleContext BundleContext context) throws Exception {
+		ensureResourceAvailability(context);
+		createPackage(SCOPE_HEAD_NSURI_1, SCOPE_HEAD_NAME_1);
+
+		String etag = scopesTarget(TestAnnotations.TEST_SCOPE_NAME).request().head().getHeaderString("ETag");
+		assertNotNull(etag);
+
+		Response notModified = scopesTarget(TestAnnotations.TEST_SCOPE_NAME).request()
+				.header("If-None-Match", etag).head();
+		assertEquals(304, notModified.getStatus(), "Matching aggregate If-None-Match should yield 304");
+		assertNull(notModified.getHeaderString("Atlas-Changed-NsUris"), "304 must not carry change hints");
+		assertNull(notModified.getHeaderString("Atlas-Changed-Objects"), "304 must not carry change hints");
+	}
+
+	@Test
+	@ParentScopeServiceSetup
+	public void testScopeHead_StaleIfNoneMatch_Returns200WithExactDiff(@InjectBundleContext BundleContext context) throws Exception {
+		ensureResourceAvailability(context);
+		createPackage(SCOPE_HEAD_NSURI_1, SCOPE_HEAD_NAME_1);
+		String etag1 = scopesTarget(TestAnnotations.TEST_SCOPE_NAME).request().head().getHeaderString("ETag");
+		assertNotNull(etag1);
+
+		// Add a second package; only its nsURI should appear in the diff.
+		createPackage(SCOPE_HEAD_NSURI_2, SCOPE_HEAD_NAME_2);
+
+		Response changed = scopesTarget(TestAnnotations.TEST_SCOPE_NAME).request()
+				.header("If-None-Match", etag1).head();
+		assertEquals(200, changed.getStatus(), "Stale aggregate If-None-Match should yield 200");
+		String changedNsUris = changed.getHeaderString("Atlas-Changed-NsUris");
+		assertNotNull(changedNsUris, "200 with a known baseline should list the changed nsURIs");
+		assertEquals(SCOPE_HEAD_NSURI_2, changedNsUris, "Diff must contain exactly the newly added nsURI");
+	}
+
+	@Test
+	@ParentScopeServiceSetup
+	public void testScopeHead_UnknownBaseline_Returns200WithoutDiff(@InjectBundleContext BundleContext context) throws Exception {
+		ensureResourceAvailability(context);
+		createPackage(SCOPE_HEAD_NSURI_1, SCOPE_HEAD_NAME_1);
+
+		Response response = scopesTarget(TestAnnotations.TEST_SCOPE_NAME).request()
+				.header("If-None-Match", "\"unknown-baseline-etag\"").head();
+		assertEquals(200, response.getStatus(), "An unknown baseline should yield 200");
+		assertNull(response.getHeaderString("Atlas-Changed-NsUris"),
+				"No diff headers when the baseline cannot be reconstructed");
+		assertNull(response.getHeaderString("Atlas-Changed-Objects"),
+				"No diff headers when the baseline cannot be reconstructed");
+	}
+
+	@Test
+	@ParentScopeServiceSetup
+	public void testScopeHead_UnknownScope_Returns404(@InjectBundleContext BundleContext context) throws Exception {
+		ensureResourceAvailability(context);
+		Response response = scopesTarget("non-existent-scope").request().head();
+		assertEquals(404, response.getStatus(), "Unknown scope should yield 404");
+	}
+
+	@Test
+	@ParentScopeServiceSetup
+	public void testScopeHead_StaleIfNoneMatch_ReportsChangedObjects(@InjectBundleContext BundleContext context) throws Exception {
+		ensureResourceAvailability(context);
+		createObject("scope-head-obj-1", "ScopeHeadObj1");
+		String etag1 = scopesTarget(TestAnnotations.TEST_SCOPE_NAME).request().head().getHeaderString("ETag");
+		assertNotNull(etag1);
+
+		// Add a second registered object (non-schema registry) → reported via Atlas-Changed-Objects.
+		createObject("scope-head-obj-2", "ScopeHeadObj2");
+
+		Response changed = scopesTarget(TestAnnotations.TEST_SCOPE_NAME).request()
+				.header("If-None-Match", etag1).head();
+		assertEquals(200, changed.getStatus(), "Stale aggregate If-None-Match should yield 200");
+		String changedObjects = changed.getHeaderString("Atlas-Changed-Objects");
+		assertNotNull(changedObjects, "200 with a known baseline should list the changed objects");
+		assertEquals(TestAnnotations.OBJECT_REGISTRY_NAME + "/scope-head-obj-2", changedObjects,
+				"Diff must contain exactly the newly added registry/objectId");
+		assertNull(changed.getHeaderString("Atlas-Changed-NsUris"),
+				"No schema package changed, so no nsURI hints");
+	}
+
+	/** /{TEST_SCOPE_NAME}/registries/{person}/stages/{draft} */
+	private WebTarget personDraftTarget() {
+		return scopeTarget(TestAnnotations.TEST_SCOPE_NAME).path("registries")
+				.path(TestAnnotations.OBJECT_REGISTRY_NAME).path("stages").path(TestAnnotations.STAGE_DRAFT);
+	}
+
+	private void createObject(String objectId, String name) throws IOException {
+		var person = TestHelper.createTestObject();
+		String xmi = TestHelper.serializeToXMI(person, resourceSet);
+		personDraftTarget().path(objectId).queryParam("name", name).queryParam("mediaType", "application/xml")
+				.request("application/xmi").post(Entity.entity(xmi, "application/xmi"));
+	}
+
 	/** /scopes */
 	private WebTarget scopesTarget() {
 		return baseTarget().path("scopes");
+	}
+
+	/** /scopes/{scope} */
+	private WebTarget scopesTarget(String scope) {
+		return scopesTarget().path(scope);
 	}
 
 	/*

@@ -20,7 +20,7 @@ import org.eclipse.emf.common.notify.impl.AdapterFactoryImpl;
 
 import org.eclipse.emf.ecore.EObject;
 
-import org.eclipse.fennec.model.atlas.scope.api.ReadOnlyScopeService;
+import org.eclipse.fennec.model.atlas.scope.api.ReadableScopeService;
 import org.eclipse.fennec.model.atlas.scope.api.RegistryInfo;
 import org.eclipse.fennec.model.atlas.scope.api.ScopeInfo;
 
@@ -96,10 +96,6 @@ public class WorkflowApiAdapterFactory extends AdapterFactoryImpl {
 				return createScopeServiceAdapter();
 			}
 			@Override
-			public Adapter caseStage(Stage object) {
-				return createStageAdapter();
-			}
-			@Override
 			public Adapter caseRegistry(Registry object) {
 				return createRegistryAdapter();
 			}
@@ -116,8 +112,8 @@ public class WorkflowApiAdapterFactory extends AdapterFactoryImpl {
 				return createWritableScopeServiceAdapter();
 			}
 			@Override
-			public <T extends EObject> Adapter caseReadOnlyScopeService(ReadOnlyScopeService<T> object) {
-				return createReadOnlyScopeServiceAdapter();
+			public <T extends EObject> Adapter caseReadableScopeService(ReadableScopeService<T> object) {
+				return createReadableScopeServiceAdapter();
 			}
 			@Override
 			public Adapter caseRegistryInfo(RegistryInfo object) {
@@ -192,20 +188,6 @@ public class WorkflowApiAdapterFactory extends AdapterFactoryImpl {
 	}
 
 	/**
-	 * Creates a new adapter for an object of class '{@link org.eclipse.fennec.model.atlas.wf.workflowapi.Stage <em>Stage</em>}'.
-	 * <!-- begin-user-doc -->
-	 * This default implementation returns null so that we can easily ignore cases;
-	 * it's useful to ignore a case when inheritance will catch all the cases anyway.
-	 * <!-- end-user-doc -->
-	 * @return the new adapter.
-	 * @see org.eclipse.fennec.model.atlas.wf.workflowapi.Stage
-	 * @generated
-	 */
-	public Adapter createStageAdapter() {
-		return null;
-	}
-
-	/**
 	 * Creates a new adapter for an object of class '{@link org.eclipse.fennec.model.atlas.wf.workflowapi.Registry <em>Registry</em>}'.
 	 * <!-- begin-user-doc -->
 	 * This default implementation returns null so that we can easily ignore cases;
@@ -262,16 +244,16 @@ public class WorkflowApiAdapterFactory extends AdapterFactoryImpl {
 	}
 
 	/**
-	 * Creates a new adapter for an object of class '{@link org.eclipse.fennec.model.atlas.scope.api.ReadOnlyScopeService <em>Read Only Scope Service</em>}'.
+	 * Creates a new adapter for an object of class '{@link org.eclipse.fennec.model.atlas.scope.api.ReadableScopeService <em>Readable Scope Service</em>}'.
 	 * <!-- begin-user-doc -->
 	 * This default implementation returns null so that we can easily ignore cases;
 	 * it's useful to ignore a case when inheritance will catch all the cases anyway.
 	 * <!-- end-user-doc -->
 	 * @return the new adapter.
-	 * @see org.eclipse.fennec.model.atlas.scope.api.ReadOnlyScopeService
+	 * @see org.eclipse.fennec.model.atlas.scope.api.ReadableScopeService
 	 * @generated
 	 */
-	public Adapter createReadOnlyScopeServiceAdapter() {
+	public Adapter createReadableScopeServiceAdapter() {
 		return null;
 	}
 

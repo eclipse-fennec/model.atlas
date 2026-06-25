@@ -57,7 +57,7 @@ Accept: application/xmi | application/json
 | `400 Bad Request` | Referenced EClasses not found in any registered EPackage |
 | `500 Internal Server Error` | Unexpected generation error |
 
-> **Note:** lookup is by **object id** and always reads the final stage. Earlier revisions looked up by config *name* with an optional `?version=` selector; both were removed when the resource moved to the read-only scope API (`ReadOnlyScopeService.get`), which exposes neither a name filter nor per-version metadata.
+> **Note:** lookup is by **object id** and always reads the final stage. Earlier revisions looked up by config *name* with an optional `?version=` selector; both were removed when the resource moved to the read-only scope API (`ReadableScopeService.get`), which exposes neither a name filter nor per-version metadata.
 
 ## Bruno Collection
 
@@ -242,7 +242,7 @@ The `org.eclipse.fennec.model.atlas.datagen.example.model` bundle provides a sam
 
 - `DataGenService` (prototype scope) — the generation engine
 - `ResourceSet` — provides the EPackage registry with all loaded models
-- `ReadOnlyScopeCollector` — resolves the `jena` scope to read stored `DataGenConfig`s by id (used by the `GET` endpoint)
+- `ReadableScopeCollector` — resolves the `jena` scope to read stored `DataGenConfig`s by id (used by the `GET` endpoint)
 
 ## License
 

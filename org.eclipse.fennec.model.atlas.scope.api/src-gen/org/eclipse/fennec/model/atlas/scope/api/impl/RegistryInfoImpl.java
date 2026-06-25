@@ -13,13 +13,25 @@
  */
 package org.eclipse.fennec.model.atlas.scope.api.impl;
 
+import java.util.Collection;
+import java.util.List;
+
+import org.eclipse.emf.common.notify.NotificationChain;
+
+import org.eclipse.emf.common.util.EList;
+
 import org.eclipse.emf.ecore.EClass;
+import org.eclipse.emf.ecore.InternalEObject;
 
 import org.eclipse.emf.ecore.impl.MinimalEObjectImpl;
+
+import org.eclipse.emf.ecore.util.BasicInternalEList;
+import org.eclipse.emf.ecore.util.InternalEList;
 
 import org.eclipse.fennec.model.atlas.scope.api.RegistryInfo;
 import org.eclipse.fennec.model.atlas.scope.api.RegistryType;
 import org.eclipse.fennec.model.atlas.scope.api.ScopeApiPackage;
+import org.eclipse.fennec.model.atlas.scope.api.StageInfo;
 
 /**
  * <!-- begin-user-doc -->
@@ -32,6 +44,7 @@ import org.eclipse.fennec.model.atlas.scope.api.ScopeApiPackage;
  *   <li>{@link org.eclipse.fennec.model.atlas.scope.api.impl.RegistryInfoImpl#getName <em>Name</em>}</li>
  *   <li>{@link org.eclipse.fennec.model.atlas.scope.api.impl.RegistryInfoImpl#getDescription <em>Description</em>}</li>
  *   <li>{@link org.eclipse.fennec.model.atlas.scope.api.impl.RegistryInfoImpl#getType <em>Type</em>}</li>
+ *   <li>{@link org.eclipse.fennec.model.atlas.scope.api.impl.RegistryInfoImpl#getStages <em>Stages</em>}</li>
  * </ul>
  *
  * @generated
@@ -96,6 +109,16 @@ public class RegistryInfoImpl extends MinimalEObjectImpl.Container implements Re
 	 * @ordered
 	 */
 	protected RegistryType type = TYPE_EDEFAULT;
+
+	/**
+	 * The cached value of the '{@link #getStages() <em>Stages</em>}' containment reference list.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @see #getStages()
+	 * @generated
+	 * @ordered
+	 */
+	protected EList<StageInfo> stages;
 
 	/**
 	 * <!-- begin-user-doc -->
@@ -182,6 +205,33 @@ public class RegistryInfoImpl extends MinimalEObjectImpl.Container implements Re
 	 * @generated
 	 */
 	@Override
+	public List<StageInfo> getStages() {
+		if (stages == null) {
+			stages = new BasicInternalEList<StageInfo>(StageInfo.class);
+		}
+		return stages;
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
+	public NotificationChain eInverseRemove(InternalEObject otherEnd, int featureID, NotificationChain msgs) {
+		switch (featureID) {
+			case ScopeApiPackage.REGISTRY_INFO__STAGES:
+				return ((InternalEList<?>)getStages()).basicRemove(otherEnd, msgs);
+		}
+		return super.eInverseRemove(otherEnd, featureID, msgs);
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
 	public Object eGet(int featureID, boolean resolve, boolean coreType) {
 		switch (featureID) {
 			case ScopeApiPackage.REGISTRY_INFO__NAME:
@@ -190,6 +240,8 @@ public class RegistryInfoImpl extends MinimalEObjectImpl.Container implements Re
 				return getDescription();
 			case ScopeApiPackage.REGISTRY_INFO__TYPE:
 				return getType();
+			case ScopeApiPackage.REGISTRY_INFO__STAGES:
+				return getStages();
 		}
 		return super.eGet(featureID, resolve, coreType);
 	}
@@ -199,6 +251,7 @@ public class RegistryInfoImpl extends MinimalEObjectImpl.Container implements Re
 	 * <!-- end-user-doc -->
 	 * @generated
 	 */
+	@SuppressWarnings("unchecked")
 	@Override
 	public void eSet(int featureID, Object newValue) {
 		switch (featureID) {
@@ -210,6 +263,10 @@ public class RegistryInfoImpl extends MinimalEObjectImpl.Container implements Re
 				return;
 			case ScopeApiPackage.REGISTRY_INFO__TYPE:
 				setType((RegistryType)newValue);
+				return;
+			case ScopeApiPackage.REGISTRY_INFO__STAGES:
+				getStages().clear();
+				getStages().addAll((Collection<? extends StageInfo>)newValue);
 				return;
 		}
 		super.eSet(featureID, newValue);
@@ -232,6 +289,9 @@ public class RegistryInfoImpl extends MinimalEObjectImpl.Container implements Re
 			case ScopeApiPackage.REGISTRY_INFO__TYPE:
 				setType(TYPE_EDEFAULT);
 				return;
+			case ScopeApiPackage.REGISTRY_INFO__STAGES:
+				getStages().clear();
+				return;
 		}
 		super.eUnset(featureID);
 	}
@@ -250,6 +310,8 @@ public class RegistryInfoImpl extends MinimalEObjectImpl.Container implements Re
 				return DESCRIPTION_EDEFAULT == null ? description != null : !DESCRIPTION_EDEFAULT.equals(description);
 			case ScopeApiPackage.REGISTRY_INFO__TYPE:
 				return type != TYPE_EDEFAULT;
+			case ScopeApiPackage.REGISTRY_INFO__STAGES:
+				return stages != null && !stages.isEmpty();
 		}
 		return super.eIsSet(featureID);
 	}

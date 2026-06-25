@@ -39,9 +39,10 @@ import org.eclipse.fennec.model.atlas.mgmt.api.EObjectStorageService;
 import org.eclipse.fennec.model.atlas.mgmt.management.ManagementPackage;
 import org.eclipse.fennec.model.atlas.mgmt.management.ObjectMetadata;
 import org.eclipse.fennec.model.atlas.scope.api.RegistryType;
+import org.eclipse.fennec.model.atlas.scope.api.ScopeApiFactory;
+import org.eclipse.fennec.model.atlas.scope.api.StageInfo;
 import org.eclipse.fennec.model.atlas.wf.workflowapi.Registry;
 import org.eclipse.fennec.model.atlas.wf.workflowapi.RegistryService;
-import org.eclipse.fennec.model.atlas.wf.workflowapi.Stage;
 import org.eclipse.fennec.model.atlas.wf.workflowapi.StageTransition;
 import org.eclipse.fennec.model.atlas.wf.workflowapi.WorkflowApiFactory;
 import org.eclipse.fennec.model.atlas.workflow.ActionContext;
@@ -76,7 +77,7 @@ public class RegistryServiceImpl<T extends EObject> implements RegistryService<T
     private RegistryServiceConfig config;
     private final List<StageTransition> allowedTransitionsList;
     private final Map<String, EObjectStorageService<T>> storageMap;
-    private final List<Stage> stages;
+    private final List<StageInfo> stages;
     private final Registry registryObject;
     private final PromiseFactory promiseFactory = new PromiseFactory(Executors.newCachedThreadPool());
     private final EClass rootEClass;
@@ -197,7 +198,7 @@ public class RegistryServiceImpl<T extends EObject> implements RegistryService<T
      */
     @Override
     public ObjectMetadata getMetadataFromFinalStage(String scope, String objectId) {
-        Stage finalStage = stages.stream().filter(s -> s.isFinal()).findFirst().get();
+    	StageInfo finalStage = stages.stream().filter(s -> s.isFinal()).findFirst().get();
         return getMetadataFromStage(scope, finalStage.getName(), objectId);
     }
 
@@ -222,7 +223,7 @@ public class RegistryServiceImpl<T extends EObject> implements RegistryService<T
 	 */
 	@Override
 	public T getContentFromFinalStage(String scope, String objectId) {
-		Stage finalStage = stages.stream().filter(s -> s.isFinal()).findFirst().get();
+		StageInfo finalStage = stages.stream().filter(s -> s.isFinal()).findFirst().get();
 		return getContentFromStage(scope, finalStage.getName(), objectId);
 	}
 
@@ -363,7 +364,7 @@ public class RegistryServiceImpl<T extends EObject> implements RegistryService<T
     @Override
     public List<ObjectMetadata> listInFinalStage(String scope) {
         List<ObjectMetadata> metadata = new LinkedList<>();
-        Stage finalStage = stages.stream().filter(s -> s.isFinal()).findFirst().get();
+        StageInfo finalStage = stages.stream().filter(s -> s.isFinal()).findFirst().get();
         try {
             List<ObjectMetadata> localMetadata = requireNonNullElse(
                     registryService.findByScopeRegistryAndStage(scope, config.registry_name(), finalStage.getName()),
@@ -584,15 +585,15 @@ public class RegistryServiceImpl<T extends EObject> implements RegistryService<T
         return map;
     }
 
-    private List<Stage> parseStages(String[] stages) {
-        List<Stage> stageServices = new ArrayList<>(stages.length);
+    private List<StageInfo> parseStages(String[] stages) {
+        List<StageInfo> stageServices = new ArrayList<>(stages.length);
         for (String stage : stages) {
             ObjectMapper mapper = new ObjectMapper();
 
             Map<String, Object> map = mapper.readValue(stage, new TypeReference<Map<String, Object>>() {
             });
 
-            Stage stageService = WorkflowApiFactory.eINSTANCE.createStage();
+            StageInfo stageService = ScopeApiFactory.eINSTANCE.createStageInfo();
             stageService.setName((String) map.get("name"));
             stageService.setWritable((boolean) map.get("writable"));
             stageService.setFinal((boolean) map.get("final"));

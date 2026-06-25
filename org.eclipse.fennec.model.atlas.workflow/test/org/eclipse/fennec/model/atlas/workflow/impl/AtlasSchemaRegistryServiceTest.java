@@ -41,8 +41,8 @@ import org.eclipse.fennec.model.atlas.mgmt.api.EObjectRegistryService;
 import org.eclipse.fennec.model.atlas.mgmt.management.ManagementFactory;
 import org.eclipse.fennec.model.atlas.mgmt.management.ObjectMetadata;
 import org.eclipse.fennec.model.atlas.scope.api.RegistryType;
+import org.eclipse.fennec.model.atlas.scope.api.StageInfo;
 import org.eclipse.fennec.model.atlas.wf.workflowapi.Registry;
-import org.eclipse.fennec.model.atlas.wf.workflowapi.Stage;
 import org.eclipse.fennec.model.atlas.workflow.WorkflowConstants;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -99,7 +99,7 @@ public class AtlasSchemaRegistryServiceTest {
 		void shouldCreateRegistryWithSingleReleasedStage() {
 			Registry registry = service.getRegistry();
 			assertEquals(1, registry.getStages().size());
-			Stage stage = registry.getStages().get(0);
+			StageInfo stage = registry.getStages().get(0);
 			assertEquals(WorkflowConstants.ATLAS_SCHEMA_REGISTRY_STAGE_NAME, stage.getName());
 			assertFalse(stage.isWritable());
 			assertTrue(stage.isFinal());

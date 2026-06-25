@@ -13,6 +13,8 @@
  */
 package org.eclipse.fennec.model.atlas.scope.api;
 
+import java.util.List;
+
 import org.osgi.annotation.versioning.ProviderType;
 
 /**
@@ -27,6 +29,7 @@ import org.osgi.annotation.versioning.ProviderType;
  *   <li>{@link org.eclipse.fennec.model.atlas.scope.api.RegistryInfo#getName <em>Name</em>}</li>
  *   <li>{@link org.eclipse.fennec.model.atlas.scope.api.RegistryInfo#getDescription <em>Description</em>}</li>
  *   <li>{@link org.eclipse.fennec.model.atlas.scope.api.RegistryInfo#getType <em>Type</em>}</li>
+ *   <li>{@link org.eclipse.fennec.model.atlas.scope.api.RegistryInfo#getStages <em>Stages</em>}</li>
  * </ul>
  *
  * @see org.eclipse.fennec.model.atlas.scope.api.ScopeApiPackage#getRegistryInfo()
@@ -103,5 +106,17 @@ public interface RegistryInfo {
 	 * @generated
 	 */
 	void setType(RegistryType value);
+
+	/**
+	 * Returns the value of the '<em><b>Stages</b></em>' containment reference list.
+	 * The list contents are of type {@link org.eclipse.fennec.model.atlas.scope.api.StageInfo}.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @return the value of the '<em>Stages</em>' containment reference list.
+	 * @see org.eclipse.fennec.model.atlas.scope.api.ScopeApiPackage#getRegistryInfo_Stages()
+	 * @model containment="true"
+	 * @generated
+	 */
+	List<StageInfo> getStages();
 
 } // RegistryInfo

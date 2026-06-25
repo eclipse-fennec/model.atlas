@@ -3,7 +3,7 @@
 	org.eclipse.fennec.model.atlas.datagen;version=snapshot,\
 	org.eclipse.fennec.model.atlas.datagen.model;version=snapshot,\
 	org.eclipse.fennec.model.atlas.scope.api;version=snapshot,\
-	org.eclipse.fennec.model.atlas.readonlyscope.collector;version=snapshot
+	org.eclipse.fennec.model.atlas.readable.scope.collector;version=snapshot
 
 -library: enableJakartaREST,\
 	enableEMF

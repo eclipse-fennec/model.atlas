@@ -14,10 +14,13 @@
 package org.eclipse.fennec.model.atlas.rest.tests;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.IOException;
+import java.util.Date;
 
 import org.eclipse.emf.ecore.EClass;
 import org.eclipse.emf.ecore.EPackage;
@@ -35,6 +38,7 @@ import org.osgi.test.common.annotation.InjectBundleContext;
 
 import jakarta.ws.rs.client.Entity;
 import jakarta.ws.rs.client.WebTarget;
+import jakarta.ws.rs.core.EntityTag;
 import jakarta.ws.rs.core.Response;
 
 /**
@@ -354,6 +358,106 @@ public class ObjectRegistryResourceTest extends AbstractRestTest{
 				.queryParam("objectId", "non-existent-object").request("application/json").get();
 
 		assertEquals(204, response.getStatus(), "Should return HTTP 204 No Content");
+	}
+
+	// ========== Get Object Content From Final Stage Tests (P5-0) ==========
+
+	@Test
+	@ParentScopeServiceSetup
+	public void testGetObjectContentFromFinalStage_Success(@InjectBundleContext BundleContext context) throws IOException, InterruptedException {
+		ensureResourceAvailability(context);
+		uploadTestObject(TestAnnotations.STAGE_RELEASE);
+
+		Response response = objectRegistryTarget().path("content")
+				.queryParam("objectId", TEST_OBJECT_ID).request("application/json").get();
+
+		assertEquals(200, response.getStatus(), "Should return HTTP 200 OK");
+		String responseContent = response.readEntity(String.class);
+		assertNotNull(responseContent, "Should return content");
+	}
+
+	@Test
+	@ParentScopeServiceSetup
+	public void testGetObjectContentFromFinalStage_NotFound(@InjectBundleContext BundleContext context) throws IOException, InterruptedException {
+		ensureResourceAvailability(context);
+		Response response = objectRegistryTarget().path("content")
+				.queryParam("objectId", "non-existent-object").request("application/json").get();
+
+		assertEquals(204, response.getStatus(), "Should return HTTP 204 No Content when object not in final stage");
+	}
+
+	@Test
+	@ParentScopeServiceSetup
+	public void testGetObjectContentFromFinalStage_ScopeNotFound(@InjectBundleContext BundleContext context) throws IOException, InterruptedException {
+		ensureResourceAvailability(context);
+		Response response = registryTarget("non-existent-scope", TestAnnotations.OBJECT_REGISTRY_NAME)
+				.path("content").queryParam("objectId", TEST_OBJECT_ID).request("application/json").get();
+
+		assertEquals(400, response.getStatus(), "Should return HTTP 400 Bad Request for unknown scope");
+	}
+
+	@Test
+	@ParentScopeServiceSetup
+	public void testGetObjectContentFromFinalStage_UnassignedRegistry(@InjectBundleContext BundleContext context) throws IOException, InterruptedException {
+		ensureResourceAvailability(context);
+		assertUnassignedRegistryRejected(registryTarget(UNASSIGNED_REGISTRY_NAME).path("content")
+				.queryParam("objectId", TEST_OBJECT_ID).request("application/json").get());
+	}
+
+	@Test
+	@ParentScopeServiceSetup
+	public void testGetObjectContentFromFinalStage_ConditionalGetNotModified(@InjectBundleContext BundleContext context) throws IOException, InterruptedException {
+		ensureResourceAvailability(context);
+		uploadTestObject(TestAnnotations.STAGE_RELEASE);
+
+		Response first = objectRegistryTarget().path("content")
+				.queryParam("objectId", TEST_OBJECT_ID).request("application/json").get();
+		assertEquals(200, first.getStatus(), "First GET should return HTTP 200 OK");
+		String etag = first.getHeaderString("ETag");
+		assertNotNull(etag, "Final-stage content GET should emit an ETag");
+
+		Response second = objectRegistryTarget().path("content")
+				.queryParam("objectId", TEST_OBJECT_ID).request("application/json")
+				.header("If-None-Match", etag).get();
+		assertEquals(304, second.getStatus(), "Matching If-None-Match should return HTTP 304 Not Modified");
+	}
+
+	@Test
+	@ParentScopeServiceSetup
+	public void testGetObjectContentFromFinalStage_InheritsFromParent(@InjectBundleContext BundleContext context) throws IOException, InterruptedException {
+		ensureResourceAvailability(context);
+		// Upload only to the PARENT scope's final stage; the child scope must read through.
+		Person person = TestHelper.createTestObject();
+		String xmiContent = TestHelper.serializeToXMI(person, resourceSet);
+		Response upload = registryTarget(TestAnnotations.TEST_PARENT_SCOPE_NAME, TestAnnotations.OBJECT_REGISTRY_NAME)
+				.path("stages").path(TestAnnotations.STAGE_RELEASE).path(TEST_OBJECT_ID)
+				.queryParam("name", TEST_OBJECT_NAME).queryParam("mediaType", "application/xml")
+				.request("application/xmi").post(Entity.entity(xmiContent, "application/xmi"));
+		assertEquals(201, upload.getStatus(), "Upload to parent scope final stage should succeed");
+
+		Response response = objectRegistryTarget().path("content")
+				.queryParam("objectId", TEST_OBJECT_ID).request("application/json").get();
+
+		assertEquals(200, response.getStatus(), "Child final-stage content should read through to the parent scope");
+		assertNotNull(response.readEntity(String.class), "Should return inherited content");
+	}
+
+	@Test
+	@ParentScopeServiceSetup
+	public void testGetObjectContentFromFinalStage_XmiIsStockLoadable(@InjectBundleContext BundleContext context) throws IOException, InterruptedException {
+		ensureResourceAvailability(context);
+		uploadTestObject(TestAnnotations.STAGE_RELEASE);
+
+		Response response = objectRegistryTarget().path("content")
+				.queryParam("objectId", TEST_OBJECT_ID).request("application/xmi").get();
+
+		assertEquals(200, response.getStatus(), "Should return HTTP 200 OK");
+		String body = response.readEntity(String.class);
+		// Proof for P5-1: a general EObject served as application/xmi is plain, stock-EMF
+		// loadable XMI (no codec needed on the client to reconstruct it).
+		org.eclipse.emf.ecore.EObject reloaded = TestHelper.deserializeFromXMI(body, resourceSet);
+		assertNotNull(reloaded, "XMI body should reload via stock EMF");
+		assertEquals("Person", reloaded.eClass().getName(), "Reloaded object should be the uploaded Person");
 	}
 
 	// ========== Update Object Content Tests ==========
@@ -782,6 +886,154 @@ public class ObjectRegistryResourceTest extends AbstractRestTest{
 
 	@Test
 	@ParentScopeServiceSetup
+	public void testGetObjectContent_ReturnsStrongETagAndLastModified(@InjectBundleContext BundleContext context) throws IOException, InterruptedException {
+		ensureResourceAvailability(context);
+		uploadTestObject(TestAnnotations.STAGE_DRAFT);
+
+		Response response = stageTarget(TestAnnotations.STAGE_DRAFT).path("content")
+				.queryParam("objectId", TEST_OBJECT_ID).request("application/json").get();
+
+		assertEquals(200, response.getStatus(), "Should return HTTP 200 OK");
+		EntityTag etag = response.getEntityTag();
+		assertNotNull(etag, "Content GET should emit an ETag (set by ObjectMetadataResponseFilter)");
+		assertFalse(etag.isWeak(), "ETag should be a strong validator");
+		assertNotNull(response.getLastModified(), "Content GET should emit a Last-Modified header");
+	}
+
+	@Test
+	@ParentScopeServiceSetup
+	public void testGetObjectContent_IfNoneMatchHit_Returns304WithETagNoBody(@InjectBundleContext BundleContext context) throws IOException, InterruptedException {
+		ensureResourceAvailability(context);
+		uploadTestObject(TestAnnotations.STAGE_DRAFT);
+
+		Response first = stageTarget(TestAnnotations.STAGE_DRAFT).path("content")
+				.queryParam("objectId", TEST_OBJECT_ID).request("application/json").get();
+		assertEquals(200, first.getStatus());
+		String etag = first.getHeaderString("ETag");
+		assertNotNull(etag, "First content GET should carry an ETag");
+
+		Response second = stageTarget(TestAnnotations.STAGE_DRAFT).path("content")
+				.queryParam("objectId", TEST_OBJECT_ID).request("application/json")
+				.header("If-None-Match", etag).get();
+		assertEquals(304, second.getStatus(), "Matching If-None-Match should yield 304");
+		assertEquals(etag, second.getHeaderString("ETag"), "304 should still carry the current ETag");
+		assertFalse(second.hasEntity(), "304 should have no body");
+	}
+
+	@Test
+	@ParentScopeServiceSetup
+	public void testGetObjectContent_IfModifiedSince_NotModified_Returns304(@InjectBundleContext BundleContext context) throws IOException, InterruptedException {
+		ensureResourceAvailability(context);
+		uploadTestObject(TestAnnotations.STAGE_DRAFT);
+
+		Response first = stageTarget(TestAnnotations.STAGE_DRAFT).path("content")
+				.queryParam("objectId", TEST_OBJECT_ID).request("application/json").get();
+		assertEquals(200, first.getStatus());
+		Date lastModified = first.getLastModified();
+		assertNotNull(lastModified, "First content GET should carry Last-Modified");
+
+		// Echoing the resource's own Last-Modified back means "not modified since" → 304.
+		Response second = stageTarget(TestAnnotations.STAGE_DRAFT).path("content")
+				.queryParam("objectId", TEST_OBJECT_ID).request("application/json")
+				.header("If-Modified-Since", lastModified).get();
+		assertEquals(304, second.getStatus(), "If-Modified-Since >= lastChangeTime should yield 304");
+	}
+
+	@Test
+	@ParentScopeServiceSetup
+	public void testGetObjectContent_IfModifiedSince_Modified_Returns200(@InjectBundleContext BundleContext context) throws IOException, InterruptedException {
+		ensureResourceAvailability(context);
+		uploadTestObject(TestAnnotations.STAGE_DRAFT);
+
+		// A long-past If-Modified-Since means the resource has changed since → 200.
+		Response response = stageTarget(TestAnnotations.STAGE_DRAFT).path("content")
+				.queryParam("objectId", TEST_OBJECT_ID).request("application/json")
+				.header("If-Modified-Since", new Date(0L)).get();
+		assertEquals(200, response.getStatus(), "Stale If-Modified-Since should yield 200");
+	}
+
+	@Test
+	@ParentScopeServiceSetup
+	public void testGetObjectContent_SetsVaryAccept(@InjectBundleContext BundleContext context) throws IOException, InterruptedException {
+		ensureResourceAvailability(context);
+		uploadTestObject(TestAnnotations.STAGE_DRAFT);
+
+		Response response = stageTarget(TestAnnotations.STAGE_DRAFT).path("content")
+				.queryParam("objectId", TEST_OBJECT_ID).request("application/json").get();
+		assertEquals(200, response.getStatus());
+		assertNotNull(response.getHeaderString("Vary"), "Cacheable content GET should carry a Vary header");
+		assertTrue(response.getHeaderString("Vary").toLowerCase().contains("accept"),
+				"Vary header should mark the response as varying on Accept");
+	}
+
+	@Test
+	@ParentScopeServiceSetup
+	public void testGetObjectContent_VaryAcceptPresentOn304(@InjectBundleContext BundleContext context) throws IOException, InterruptedException {
+		ensureResourceAvailability(context);
+		uploadTestObject(TestAnnotations.STAGE_DRAFT);
+
+		Response first = stageTarget(TestAnnotations.STAGE_DRAFT).path("content")
+				.queryParam("objectId", TEST_OBJECT_ID).request("application/json").get();
+		String etag = first.getHeaderString("ETag");
+		assertNotNull(etag);
+
+		Response second = stageTarget(TestAnnotations.STAGE_DRAFT).path("content")
+				.queryParam("objectId", TEST_OBJECT_ID).request("application/json")
+				.header("If-None-Match", etag).get();
+		assertEquals(304, second.getStatus());
+		assertNotNull(second.getHeaderString("Vary"), "304 should still carry a Vary header");
+		assertTrue(second.getHeaderString("Vary").toLowerCase().contains("accept"),
+				"304 Vary header should mark the response as varying on Accept");
+	}
+
+	@Test
+	@ParentScopeServiceSetup
+	public void testGetObjectContent_DistinctETagPerRepresentation(@InjectBundleContext BundleContext context) throws IOException, InterruptedException {
+		ensureResourceAvailability(context);
+		uploadTestObject(TestAnnotations.STAGE_DRAFT);
+
+		// Same object (same content hash), two representations → two distinct ETags.
+		Response asXml = stageTarget(TestAnnotations.STAGE_DRAFT).path("content").queryParam("objectId", TEST_OBJECT_ID)
+				.queryParam("mediaType", "application/xml").request("application/json").get();
+		assertEquals(200, asXml.getStatus());
+		String xmlETag = asXml.getHeaderString("ETag");
+		assertNotNull(xmlETag, "XML representation should carry an ETag");
+
+		Response asXmi = stageTarget(TestAnnotations.STAGE_DRAFT).path("content").queryParam("objectId", TEST_OBJECT_ID)
+				.queryParam("mediaType", "application/xmi").request("application/json").get();
+		assertEquals(200, asXmi.getStatus());
+		String xmiETag = asXmi.getHeaderString("ETag");
+		assertNotNull(xmiETag, "XMI representation should carry an ETag");
+
+		assertNotEquals(xmlETag, xmiETag, "Different representations of the same object must have distinct ETags");
+	}
+
+	@Test
+	@ParentScopeServiceSetup
+	public void testCreateObject_Override_IfMatchSuccess(@InjectBundleContext BundleContext context) throws IOException, InterruptedException {
+		ensureResourceAvailability(context);
+		uploadTestObject(TestAnnotations.STAGE_DRAFT);
+
+		// A create-with-override replaces content, so source If-Match from a content GET.
+		String etag = stageTarget(TestAnnotations.STAGE_DRAFT).path("content").queryParam("objectId", TEST_OBJECT_ID)
+				.request("application/json").get().getHeaderString("ETag");
+		assertNotNull(etag, "Content GET should carry an ETag");
+
+		Person updated = TestHelper.createTestObject();
+		updated.setFirstName("Jane");
+		String xmi = TestHelper.serializeToXMI(updated, resourceSet);
+
+		Response response = stageTarget(TestAnnotations.STAGE_DRAFT).path(TEST_OBJECT_ID)
+				.queryParam("name", TEST_OBJECT_NAME).queryParam("override", "true")
+				.request("application/xmi").header("If-Match", etag)
+				.post(Entity.entity(xmi, "application/xmi"));
+
+		assertEquals(200, response.getStatus(), "Matching If-Match on create-override should yield 200");
+		assertNotNull(response.getHeaderString("ETag"), "Override response should carry the new ETag");
+	}
+
+	@Test
+	@ParentScopeServiceSetup
 	public void testGetObjectMetadata_IfNoneMatchHit_Returns304(@InjectBundleContext BundleContext context) throws IOException, InterruptedException {
 		ensureResourceAvailability(context);
 		uploadTestObject(TestAnnotations.STAGE_DRAFT);
@@ -816,7 +1068,8 @@ public class ObjectRegistryResourceTest extends AbstractRestTest{
 		ensureResourceAvailability(context);
 		uploadTestObject(TestAnnotations.STAGE_DRAFT);
 
-		Response getResponse = stageTarget(TestAnnotations.STAGE_DRAFT)
+		// A content write validates against the content ETag, so source If-Match from a content GET.
+		Response getResponse = stageTarget(TestAnnotations.STAGE_DRAFT).path("content")
 				.queryParam("objectId", TEST_OBJECT_ID).request("application/json").get();
 		String etag = getResponse.getHeaderString("ETag");
 		assertNotNull(etag, "Should have ETag");
@@ -908,6 +1161,52 @@ public class ObjectRegistryResourceTest extends AbstractRestTest{
 
 		assertEquals(412, response.getStatus(),
 				"Should return HTTP 412 Precondition Failed when If-Match doesn't match on delete");
+	}
+
+	@Test
+	@ParentScopeServiceSetup
+	public void testTransitionObject_IfMatchSuccess(@InjectBundleContext BundleContext context) throws IOException, InterruptedException {
+		ensureResourceAvailability(context);
+		uploadTestObject(TestAnnotations.STAGE_DRAFT);
+
+		// A transition validates against the metadata ETag, so source If-Match from a metadata GET.
+		String etag = stageTarget(TestAnnotations.STAGE_DRAFT).queryParam("objectId", TEST_OBJECT_ID)
+				.request("application/json").get().getHeaderString("ETag");
+		assertNotNull(etag, "Metadata GET should carry an ETag");
+
+		StageTransitionRequest transition = RestFactory.eINSTANCE.createStageTransitionRequest();
+		transition.setObjectId(TEST_OBJECT_ID);
+		transition.setTargetStage(TestAnnotations.STAGE_APPROVED);
+		String xmiContent = TestHelper.serializeToXMI(transition, resourceSet);
+
+		Response response = stageTarget(TestAnnotations.STAGE_DRAFT).path("actions").path("transition")
+				.request("application/xmi").header("If-Match", etag)
+				.post(Entity.entity(xmiContent, "application/xmi"));
+
+		assertEquals(200, response.getStatus(), "Matching If-Match should let the transition proceed");
+		assertNotNull(response.getHeaderString("ETag"), "Transition response should carry the new ETag");
+	}
+
+	@Test
+	@ParentScopeServiceSetup
+	public void testTransitionObject_IfMatchFail_Returns412(@InjectBundleContext BundleContext context) throws IOException, InterruptedException {
+		ensureResourceAvailability(context);
+		uploadTestObject(TestAnnotations.STAGE_DRAFT);
+
+		StageTransitionRequest transition = RestFactory.eINSTANCE.createStageTransitionRequest();
+		transition.setObjectId(TEST_OBJECT_ID);
+		transition.setTargetStage(TestAnnotations.STAGE_APPROVED);
+		String xmiContent = TestHelper.serializeToXMI(transition, resourceSet);
+
+		Response response = stageTarget(TestAnnotations.STAGE_DRAFT).path("actions").path("transition")
+				.request("application/xmi").header("If-Match", "\"stale-etag-value\"")
+				.post(Entity.entity(xmiContent, "application/xmi"));
+
+		assertEquals(412, response.getStatus(), "Mismatching If-Match should block the transition with 412");
+		// No side effect: the object is still in the source stage.
+		Response stillInDraft = stageTarget(TestAnnotations.STAGE_DRAFT).queryParam("objectId", TEST_OBJECT_ID)
+				.request("application/json").get();
+		assertEquals(200, stillInDraft.getStatus(), "Object must remain in the source stage after a 412");
 	}
 
 	@Test

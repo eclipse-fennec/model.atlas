@@ -3,9 +3,9 @@
 -buildpath: \
 	org.eclipse.fennec.model.atlas.validation.model;version=snapshot,\
 	org.osgi.service.component.annotations;version=latest,\
-	org.eclipse.fennec.m2x.ocl.api,\
-	org.eclipse.fennec.m2x.ocl.model,\
+	org.eclipse.fennec.m2x.ocl.api;version=latest,\
+	org.eclipse.fennec.m2x.ocl.model;version=latest,\
 	org.eclipse.fennec.model.atlas.scope.api;version=snapshot,\
-	org.eclipse.fennec.model.atlas.readonlyscope.collector;version=snapshot
+	org.eclipse.fennec.model.atlas.readable.scope.collector;version=snapshot
   
 

@@ -580,6 +580,37 @@ public class RegistryServiceIntegrationTest {
 
         @SuppressWarnings({ "unchecked", "rawtypes" })
         @Test
+        @DisplayName("Should retrieve content from final stage")
+        @WithFactoryConfiguration(factoryPid = "RegistryService", name = "test-registry", location = "?", properties = {
+                @Property(key = "registry.name", value = REGISTRY_NAME),
+                @Property(key = "stages", type = Type.Array, value = {
+                        "{ \"name\" : \"draft\", \"writable\" : true, \"final\": false}",
+                        "{ \"name\" : \"release\", \"writable\" : false, \"final\": true}", }),
+                @Property(key = "workflow.transitions", type = Type.Array, value = { "draft:release" }),
+                @Property(key = "stage.storage.mappings", type = Type.Array, value = { "draft:mock", "release:mock" }),
+                @Property(key = "storageService.target", value = "(storage.type=mock)") })
+        void shouldRetrieveContentFromFinalStage(
+                @InjectService(cardinality = 0, filter = "(registry.name=" + REGISTRY_NAME
+                        + ")") ServiceAware<RegistryService> registryAware)
+                throws InterruptedException, InvocationTargetException {
+
+            RegistryService<EObject> registryService = registryAware.waitForService(5000);
+            assertNotNull(registryService);
+
+            EObject expectedObject = EcoreFactory.eINSTANCE.createEClass();
+            Promise<EObject> promise = promiseFactory.resolved(expectedObject);
+            when(mockStorageService.retrieveObject(anyString(), anyString(), anyString(), anyString()))
+                    .thenReturn(promise);
+
+            // Retrieve content without naming a stage -> resolves the configured final stage ("release")
+            EObject result = registryService.getContentFromFinalStage(SCOPE_NAME, "test-id");
+
+            assertNotNull(result);
+            verify(mockStorageService).retrieveObject(SCOPE_NAME, REGISTRY_NAME, "release", "test-id");
+        }
+
+        @SuppressWarnings({ "unchecked", "rawtypes" })
+        @Test
         @DisplayName("Should update object in writable stage")
         @WithFactoryConfiguration(factoryPid = "RegistryService", name = "test-registry", location = "?", properties = {
                 @Property(key = "registry.name", value = REGISTRY_NAME),

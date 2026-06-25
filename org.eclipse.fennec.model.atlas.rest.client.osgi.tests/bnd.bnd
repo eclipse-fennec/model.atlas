@@ -1,0 +1,27 @@
+Bundle-Name: Model Atlas REST Client — OSGi integration tests
+Bundle-Description: P3-12 — OSGi integration tests for the rest.client.osgi front-end \
+ against a live Atlas (Testcontainers, jena image). Drives the ConfigAdmin factory \
+ component and asserts the OSGi side effects (published EPackage services, the \
+ ResourceSetConfigurator, Atlas-fallback resolution through a framework ResourceSet).
+
+Test-Cases: ${classes;HIERARCHY_INDIRECTLY_ANNOTATED;org.junit.platform.commons.annotation.Testable;CONCRETE}
+
+-library: \
+	enableOSGi-Test,\
+	enableEMF
+
+# Compile-time: the OSGi front-end + api (for AtlasProperties), ConfigAdmin + the
+# osgi-test ConfigurationExtension, and the OSGified Testcontainers (daanse), as in the
+# other test bundles. EMF (EPackage/ResourceSet/ResourceSetFactory/EPackageConfigurator)
+# comes via -library enableEMF.
+-buildpath: \
+	org.osgi.framework;version=latest,\
+	org.osgi.service.cm;version=latest,\
+	org.osgi.test.junit5.cm;version=latest,\
+	org.eclipse.fennec.model.atlas.rest.client.api;version=snapshot,\
+	org.eclipse.fennec.model.atlas.rest.client.osgi;version=snapshot,\
+	org.eclipse.daanse.tooling.testcontainers.core;version=latest
+
+Private-Package: org.eclipse.fennec.model.atlas.rest.client.osgi.tests
+
+Bundle-Version: 1.0.0.SNAPSHOT

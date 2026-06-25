@@ -18,7 +18,7 @@ import org.eclipse.emf.ecore.EPackage;
 
 import org.eclipse.emf.ecore.util.Switch;
 
-import org.eclipse.fennec.model.atlas.scope.api.ReadOnlyScopeService;
+import org.eclipse.fennec.model.atlas.scope.api.ReadableScopeService;
 import org.eclipse.fennec.model.atlas.scope.api.RegistryInfo;
 import org.eclipse.fennec.model.atlas.scope.api.ScopeInfo;
 
@@ -98,13 +98,7 @@ public class WorkflowApiSwitch<T1> extends Switch<T1> {
 				ScopeService<?> scopeService = (ScopeService<?>)theEObject;
 				T1 result = caseScopeService(scopeService);
 				if (result == null) result = caseWritableScopeService(scopeService);
-				if (result == null) result = caseReadOnlyScopeService(scopeService);
-				if (result == null) result = defaultCase(theEObject);
-				return result;
-			}
-			case WorkflowApiPackage.STAGE: {
-				Stage stage = (Stage)theEObject;
-				T1 result = caseStage(stage);
+				if (result == null) result = caseReadableScopeService(scopeService);
 				if (result == null) result = defaultCase(theEObject);
 				return result;
 			}
@@ -131,7 +125,7 @@ public class WorkflowApiSwitch<T1> extends Switch<T1> {
 			case WorkflowApiPackage.WRITABLE_SCOPE_SERVICE: {
 				WritableScopeService<?> writableScopeService = (WritableScopeService<?>)theEObject;
 				T1 result = caseWritableScopeService(writableScopeService);
-				if (result == null) result = caseReadOnlyScopeService(writableScopeService);
+				if (result == null) result = caseReadableScopeService(writableScopeService);
 				if (result == null) result = defaultCase(theEObject);
 				return result;
 			}
@@ -183,21 +177,6 @@ public class WorkflowApiSwitch<T1> extends Switch<T1> {
 	 */
 	@Deprecated
 	public <T extends EObject> T1 caseScopeService(ScopeService<T> object) {
-		return null;
-	}
-
-	/**
-	 * Returns the result of interpreting the object as an instance of '<em>Stage</em>'.
-	 * <!-- begin-user-doc -->
-	 * This implementation returns null;
-	 * returning a non-null result will terminate the switch.
-	 * <!-- end-user-doc -->
-	 * @param object the target of the switch.
-	 * @return the result of interpreting the object as an instance of '<em>Stage</em>'.
-	 * @see #doSwitch(org.eclipse.emf.ecore.EObject) doSwitch(EObject)
-	 * @generated
-	 */
-	public T1 caseStage(Stage object) {
 		return null;
 	}
 
@@ -262,17 +241,17 @@ public class WorkflowApiSwitch<T1> extends Switch<T1> {
 	}
 
 	/**
-	 * Returns the result of interpreting the object as an instance of '<em>Read Only Scope Service</em>'.
+	 * Returns the result of interpreting the object as an instance of '<em>Readable Scope Service</em>'.
 	 * <!-- begin-user-doc -->
 	 * This implementation returns null;
 	 * returning a non-null result will terminate the switch.
 	 * <!-- end-user-doc -->
 	 * @param object the target of the switch.
-	 * @return the result of interpreting the object as an instance of '<em>Read Only Scope Service</em>'.
+	 * @return the result of interpreting the object as an instance of '<em>Readable Scope Service</em>'.
 	 * @see #doSwitch(org.eclipse.emf.ecore.EObject) doSwitch(EObject)
 	 * @generated
 	 */
-	public <T extends EObject> T1 caseReadOnlyScopeService(ReadOnlyScopeService<T> object) {
+	public <T extends EObject> T1 caseReadableScopeService(ReadableScopeService<T> object) {
 		return null;
 	}
 

@@ -23,7 +23,7 @@ import org.eclipse.fennec.model.atlas.scope.api.RegistryInfo;
 import org.eclipse.fennec.model.atlas.wf.workflowapi.Registry;
 import org.eclipse.fennec.model.atlas.wf.workflowapi.Scope;
 import org.eclipse.fennec.model.atlas.wf.workflowapi.ScopeService;
-import org.eclipse.fennec.model.atlas.wf.workflowapi.Stage;
+import org.eclipse.fennec.model.atlas.scope.api.StageInfo;
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
 import org.osgi.service.component.annotations.ReferenceCardinality;
@@ -53,7 +53,7 @@ public class ScopesHealthCheck implements HealthCheck {
                 if (registries != null && !registries.isEmpty()) {
                     registries.stream().filter(r -> r instanceof Registry).map(r -> (Registry) r).forEach(r -> {
                 	StringJoiner stages = new StringJoiner(", ");
-                	r.getStages().stream().map(Stage::getName).forEach(stages::add);
+                	r.getStages().stream().map(StageInfo::getName).forEach(stages::add);
                 	log.info("scope: {} with Registry: {} Description: {} and Stages : {} available", scope.getName(), r.getName(), r.getDescription(), stages);
                     });
                 } else {

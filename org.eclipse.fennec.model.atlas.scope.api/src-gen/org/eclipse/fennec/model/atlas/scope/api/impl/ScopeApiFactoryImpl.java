@@ -70,6 +70,7 @@ public class ScopeApiFactoryImpl extends EFactoryImpl implements ScopeApiFactory
 		switch (eClass.getClassifierID()) {
 			case ScopeApiPackage.SCOPE_INFO: return (EObject)createScopeInfo();
 			case ScopeApiPackage.REGISTRY_INFO: return (EObject)createRegistryInfo();
+			case ScopeApiPackage.STAGE_INFO: return (EObject)createStageInfo();
 			default:
 				throw new IllegalArgumentException("The class '" + eClass.getName() + "' is not a valid classifier");
 		}
@@ -125,6 +126,17 @@ public class ScopeApiFactoryImpl extends EFactoryImpl implements ScopeApiFactory
 	public RegistryInfo createRegistryInfo() {
 		RegistryInfoImpl registryInfo = new RegistryInfoImpl();
 		return registryInfo;
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
+	public StageInfo createStageInfo() {
+		StageInfoImpl stageInfo = new StageInfoImpl();
+		return stageInfo;
 	}
 
 	/**
