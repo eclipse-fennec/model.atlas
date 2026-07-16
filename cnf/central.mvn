@@ -213,3 +213,6 @@ org.geckoprojects.emf:org.gecko.emf.osgi.example.model.basic:6.3.1
 
 #Database
 com.h2database:h2:2.3.232
+
+#jGit
+org.eclipse.jgit:org.eclipse.jgit:7.7.0.202606012155-r

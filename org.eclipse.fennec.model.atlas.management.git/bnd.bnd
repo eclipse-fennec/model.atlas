@@ -1,0 +1,19 @@
+Bundle-Name: MAC Management Git Storage Implementation
+Bundle-Description: Git-based, read-only storage implementation for workflow management
+
+-workingset: workflow
+-library: \
+	enableEMF
+
+# Read-core buildpath (mirrors management.file). Extended in later phases:
+#  G3 GitStorageHelper  -> org.gecko.jgit (org.geckoprojects.jgit:org.gecko.jgit)
+#  G2 webhook REST      -> jakartaREST library, org.osgi.service.typedevent, org.eclipse.fennec.codec.rest
+-buildpath: \
+	org.osgi.framework;version=latest,\
+	org.osgi.util.promise;version=latest,\
+	org.osgi.util.function;version=latest,\
+	org.osgi.service.component;version=latest,\
+	org.osgi.service.cm;version=latest,\
+	org.eclipse.fennec.model.atlas.management;version=snapshot
+
+Bundle-Version: 1.0.0.SNAPSHOT

@@ -13,3 +13,5 @@ org.gecko.graphql:org.gecko.whiteboard.graphql.api:1.0.0
 #graphql
 com.graphql-java:graphql-java:11.0
 com.graphql-java:java-dataloader:2.2.0
+
+org.geckoprojects.jgit:org.gecko.jgit:1.0.0-SNAPSHOT
