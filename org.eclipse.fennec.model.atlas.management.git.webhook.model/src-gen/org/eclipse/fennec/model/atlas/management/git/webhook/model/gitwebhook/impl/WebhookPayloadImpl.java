@@ -281,9 +281,7 @@ public abstract class WebhookPayloadImpl extends MinimalEObjectImpl.Container im
 	 */
 	@Override
 	public boolean isDeleted() {
-		// TODO: implement this method
-		// Ensure that you remove @generated or mark it @generated NOT
-		throw new UnsupportedOperationException();
+		return getAfter() != null && getAfter().matches("0+");
 	}
 
 	/**

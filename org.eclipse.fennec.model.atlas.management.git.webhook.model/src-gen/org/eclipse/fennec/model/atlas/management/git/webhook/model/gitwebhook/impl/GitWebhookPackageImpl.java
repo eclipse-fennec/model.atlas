@@ -525,7 +525,8 @@ public class GitWebhookPackageImpl extends EPackageImpl implements GitWebhookPac
 		  (getWebhookPayload__IsDeleted(),
 		   source,
 		   new String[] {
-			   "documentation", "True when this push deleted the ref (GitHub \'deleted\' flag; GitLab: after is the all-zero SHA)."
+			   "documentation", "True when this push deleted the ref (GitHub \'deleted\' flag; GitLab: after is the all-zero SHA).",
+			   "body", "return getAfter() != null && getAfter().matches(\"0+\");"
 		   });
 		addAnnotation
 		  (getWebhookPayload__IsForced(),

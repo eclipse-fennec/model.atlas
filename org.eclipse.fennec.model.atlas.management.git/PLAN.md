@@ -123,6 +123,37 @@ Fully config-driven through the existing chain, with the corrected mapping:
 Because only configured repos/branches exist as stages, model.atlas inherently
 only tracks — and only accepts webhooks/polls for — those repo/branch pairs.
 
+**D5 refinement (DECIDED 2026-07-17) — where derived `ObjectMetadata` gets scope/registry.**
+Git carries neither, but startup replay needs exact `scope`+`registry`+`stage` and routes
+by `objectType` (verified: shared registry cache is keyed by `objectId` only, but
+`RegistryServiceImpl.activate`→`listInStage`→`findByScopeRegistryAndStage(scope,
+registry_name, stage)` filters on all three, and `dispatch` gates on
+`objectType`=EClass-URI; a metadata missing any is *silently* never replayed).
+**Chosen: Option 1 — config on the git `StorageService`.** The git storage config declares
+**one `scope`** plus a map **`eClassUri → registryName`**; the `GitStorageHelper` stamps
+`scope`(config), `registry`(map lookup on the object's EClass URI), `stage`(=branch),
+`objectId`(=repo path incl. extension), `objectType`(=`EcoreUtil.getURI(obj.eClass())`),
+`version`(=commit SHA). Objects whose EClass URI is absent from the map are ignored
+(aligns with D2 "ignore unrecognized"). Config entries parsed by splitting on the **last**
+`:` (registry names have none; the URI itself contains colons). `objectType` requires
+loading each resource (EPackage for `.ecore`; `contents.get(0).eClass()` for instances) —
+the accepted G6 bootstrap cost.
+
+**Catch-all refinement (DECIDED 2026-07-17): registry routing = exact eClass URI, then
+the `EObject` URI as an *explicitly-configured* catch-all, else skip.** Rationale: EPackages
+all share the fixed Ecore `EPackage` eClass URI, so schemas auto-match with no per-model
+config; but instances have per-type URIs that can't be enumerated a priori, so an
+`http://www.eclipse.org/emf/2002/Ecore#//EObject` entry (which the configurer declares —
+**not** a hardcoded code default) catches every instance type. A specific instance type can
+still be pinned to its own registry (its exact URI wins by specificity). If no `EObject`
+entry is configured, unmapped objects are ignored. **Minimal genuine-object guard**
+(documented): non-EMF files never reach parsing (extension filter, D2); after a successful
+parse the only extra check is that the root's `eClass()` is resolved (not a proxy) — a
+registered-extension file that parsed into an unresolved root is ignored, not routed.
+(Stricter `AnyType` rejection deferred.) (Option 2 registry/scope-driven priming and Option 3
+in-repo manifest rejected: 2 = more G4 plumbing + diverges from FileStorageHelper priming;
+3 = repo must not encode overlays.)
+
 ### D6. Delivery guarantees — DECIDED (webhook + cron reconcile poll)
 Webhooks are best-effort (missed on downtime/network/retry-exhaustion; the
 reference has **no** backstop). **Decision: run both** — inbound webhooks for
@@ -186,6 +217,36 @@ layer**; the git-read core is untouched:
   selects the provider (or auto-detects by header) per git `StorageService`.
   Because the poll is provider-neutral and mandatory (D6), GitLab support can even
   ship poll-first with the webhook adapter added incrementally.
+
+### D9. Cache objectId-collision across branches — DECIDED (A: qualify objectId) & DONE
+**Decision (boss, 2026-07-17): Option A — the "easy workaround".** The git objectId is
+qualified as **`scope + "/" + stage + "/" + repoPath`** (e.g. `jena/draft/models/person.xmi`),
+making it unique in the shared objectId-keyed cache across branches *and* scopes. `scope` and
+`stage` are also request parameters, so reads strip the prefix back to the repo path
+(`GitStorageHelper.repoPathOf`, lenient — tolerates a bare repo path too); `loadEObject` then
+leases the per-`(scope,stage)` ResourceSet (correct dynamic EPackages) and reads
+`git://{commit}/{repoPath}`. Implemented in `GitStorageHelper` (`qualifiedId`/`repoPathOf`,
+`deriveOne` stamps qualified id, `derived` keyed by objectId, `findObjectPath` strips, added
+`loadMetadata` [serves derived copy] + `objectExists` overrides). Build green, 18 unit tests.
+Option B (composite shared-cache key) rejected as too broad for now. §9 note: objectIds contain
+`/`, so the REST layer's slash-in-id handling (already needed for nested file paths) applies.
+
+### D9-history. (original open write-up, retained)
+The shared registry cache (`LuceneEObjectRegistryService`) is keyed by **`objectId` alone**
+— in-memory `metadataCache.put(objectId, md)` and the Lucene index deletes/re-adds by
+`Term("objectId", objectId)`, so there is exactly **one document per objectId**;
+`findByScopeRegistryAndStage` only *filters* by scope+stage+registry. That is fine for
+file/apicurio because their workflow model keeps an object in **one stage at a time**
+(objectId globally unique). **Git violates it:** branch = stage, so the same repo path
+(`models/person.ecore`) exists on multiple branches at once, and with `objectId` = repo path
+(D2) the two collide → the last-primed stage wins → `listInStage` for the other stage returns
+nothing. (Not caught by current tests — single branch.) **Options:** **(A)** stage-qualify the
+git objectId (`<stage>/<path>`) — contained to the git backend, no shared-cache change, but
+deviates from D2, leaks the stage into the id, and needs the §9 client objectId audit; **(B)**
+make the shared cache key composite (`scope+registry+stage+objectId`) — the correct fix (keys by
+the identity it is queried by, doesn't break file/apicurio), but a change to a core service used
+by every backend → boss buy-in. Lean: **B**. **G7 reconcile is paused until this is decided**,
+since the reconcile evicts/re-adds cache entries per stage and needs stage-correct keying.
 
 ### D8. Reload / referential-integrity semantics — OPEN (spike done; contract still to decide)
 When a push changes/removes a `.ecore`, its EPackage is reloaded. What happens to
@@ -262,7 +323,41 @@ This is a boss/team call like D6; the spike is the input, not the answer.
   `org.geckoprojects.jgit:org.gecko.jgit:1.0.0-SNAPSHOT` (exports
   `org.gecko.jgit.api`) + `org.eclipse.jgit:org.eclipse.jgit:7.1.0.202411261347-r`.
   **[BLOCKER for G3 — needs these coordinates added to `cnf`.]**
-- **G2 — Lift webhook model + REST (provider-neutral, GitHub + GitLab — D7).**
+- **G2 — Lift webhook model + REST (provider-neutral, GitHub + GitLab — D7) — DONE (build green).**
+  Webhook **models** done (meta `webhook.model` + concrete `github.webhook.model`/
+  `gitlab.webhook.model`, generated to Java; `isDeleted` body added in the meta).
+  **REST adapters** done in `...management.git.webhook.rest`:
+  `GithubWebhookResource` (`@Path("/github")`, `@RootElement(rootType=GithubWebhookPackage.eNS_URI+"#//GithubPayload")`)
+  and `GitlabWebhookResource` (`@Path("/gitlab")`, `…#//GitlabPayload`), both parse via
+  the Fennec codec and `eventBus.deliver(WebhookTopics.topicFor(payload), payload)` the
+  **neutral `WebhookPayload`**. Security + push-gate live in a **name-bound
+  `ContainerRequestFilter`** (`WebhookSignatureFilter` + `@VerifyWebhookSignature`
+  NameBinding): it buffers the raw body (needed for HMAC), verifies GitHub
+  `X-Hub-Signature-256` (HMAC-SHA256, constant-time) / GitLab `X-Gitlab-Token`, resets
+  the stream so `@RootElement` can still parse, and `abortWith(200)` on non-push events
+  (e.g. GitHub `ping`). Secrets via ConfigAdmin pid
+  `org.eclipse.fennec.model.atlas.management.git.webhook`
+  (`githubSecret`/`gitlabToken`/`requireSignature`, **fail-closed by default**).
+  **Topic derivation** (`WebhookTopics`, exported) is the **shared publish/subscribe
+  contract** — the G4 storage service must compute its subscribe topic via the same
+  `topicFor(repoFullName, branch)` (branch from `refs/heads/…`); consider relocating it
+  to a non-REST shared bundle when G4 lands so `management.git` need not depend on a
+  JAX-RS bundle.
+  **PLAN CORRECTION:** the Fennec `codec.rest` `@RootElement` has **no `rootClassUri`** —
+  it exposes `rootType` (EClass URI) + `rootSchema` (EPackage nsURI). Adapters use
+  `rootType`. (Original note below is stale on that attribute name.)
+  **Unit tests DONE & green (23 tests, 0 fail):** `WebhookTopicsTest` (8),
+  `WebhookSignatureFilterTest` (11 — HMAC valid/invalid/missing, fail-closed vs
+  `requireSignature=false`, non-push→200, no-event→400, stream buffered+reset),
+  `GithubWebhookResourceTest`/`GitlabWebhookResourceTest` (2 each — neutral payload
+  delivered on derived topic, identical topic shape across providers, missing repo→400).
+  Plain JUnit5 + Mockito, in-bundle `test/`. **Build note:** resource/filter build
+  `jakarta.ws.rs Response` objects → need a JAX-RS `RuntimeDelegate` at test time, which
+  `jakarta.ws.rs-api` lacks; added `org.glassfish.jersey.core:jersey-common:3.1.3` as a
+  **test-only** dep scoped to this project in root `build.gradle` (not a bundle
+  compile/runtime dep). Whiteboard/codec-MBR/ConfigAdmin/real-TypedEventBus wiring is
+  **deferred to an OSGi IT (G8)** or whenever a live event consumer (G4) exists.
+  <details><summary>original G2 spec (retained)</summary>
   Port the two webhook bundles into the fennec namespace as the **GitHub adapter**;
   add HMAC (`X-Hub-Signature-256`) verification. Define a **provider-neutral change
   event** and normalize the GitHub payload into it, then add a **GitLab adapter**
@@ -284,29 +379,100 @@ This is a boss/team call like D6; the spike is the input, not the answer.
   capability requirement or explicit `-runrequires`, as `runtime_base.bndrun` does).
   Codec source: `/opt/git/fennec-codec` (`org.eclipse.fennec.codec.rest`,
   provider `EObjectMessageBodyHandler`).
-- **G3 — `GitStorageHelper` (read-only).** `GitService`/`GitURIHandler` reads,
-  no checkout; extension-filtered file selection (D2); `loadAllStoredMetadata`
-  derived per D1. Write methods throw.
-- **G4 — `EObjectGitStorageService`.** `@Component(storage.backend=git)` mirroring
-  `EObjectFileStorageService`; binds a `GitService` per (repo, branch=stage);
-  subscribes as `TypedEventHandler` on its topic; read-only wiring so git stages
-  surface via `ReadableScopeService` only.
-- **G5 — Sync-driven EPackage dispatch + register-before-parse ordering.**
-  EPackage registration is inherited from `EPackageStageActionService`/
-  `DynamicEPackageRegistrationService` — no new registrar. Wire `GitSyncService`
-  to drive ENTER/UPDATE/EXIT dispatch for schemas a push changes (startup replay
-  covers cold start), and ensure the repo's `.ecore` models are registered **and
-  propagated** into the per-stage `ResourceSet` before `.xmi` instances are parsed.
-- **G6 — `MetadataIndex` + startup cache.** Build-from-clone and incremental
-  update; wire into the registry cache on startup (mirrors
-  `FileStorageHelper.updateRegistryCache`, sourced from git). **Ordering
-  constraint (verified):** the cache must be primed **before** the git
-  `RegistryService` binds to its scope — `ScopeServiceImpl.bindRegistryService`
-  calls `activate(scope)` synchronously on bind, and `activate`→`listInStage`
-  reads the cache to drive startup replay/registration. Prime on the storage
-  helper's own activation (as `FileStorageHelper` does) so it precedes the
-  registry bind; otherwise cold-start replay sees an empty stage and registers
-  nothing until the next `GitSyncService` dispatch.
+  </details>
+- **G3 — `GitStorageHelper` (read-only) — DONE (build green, 10 unit tests).**
+  jgit on buildpath (`org.gecko.jgit` + `org.eclipse.jgit`). Lifted `GitEMFHelper`
+  (`git://{commitId}/{path}` parse + `createGitURI`) and `GitURIHandler` (adapted to
+  route by a live `commitId→GitService` map, since one helper may serve several
+  branches). `GitStorageHelper extends AbstractStorageHelper`: ctor takes
+  `(resourceSet, Collection<GitService> [one per branch=stage], scope,
+  Map<eClassUri,registryName>, registryService)`; registers the URI handler, `refresh()`
+  (fetch + `getFiles()` per branch, cache `TreeResult`), then primes the registry cache.
+  `createStorageURI`→`git://{commitId}/{path}`; `storageExists`/`findObjectPath` check the
+  branch tree (objectId = repo path incl. extension, no probing); `listObjectIds` filters
+  the derived cache by stage+registry; `loadAllStoredMetadata` parses each recognized file,
+  derives objectType=EClass URI → registry (map), stamps scope/registry/stage/objectId/
+  objectType/version(=commit); write methods (`persistResource`/`deleteObject`) throw
+  `UnsupportedOperationException` (G4 §5.8 to refine to a typed 4xx). Tests use a Mockito
+  `GitService` + real `ResourceSet` (also exercises `GitURIHandler` via `loadEObject`).
+  **Deferred (correctly): (a)** supplying the `GitService`s + scope + type→registry map from
+  config = **G4** (`EObjectGitStorageService`); **(b)** cold-start *instance* coverage —
+  `objectType` needs a parse and an instance only parses once its EPackage is registered, so
+  at construction instances are skipped-with-log; the register-then-reparse ordering is
+  **G5**; **(c)** per-file author/time (`uploadUser`/`uploadTime` via `getLog`) — optional,
+  not on the replay path, future refinement (`version`=commit is set).
+- **G4 — `EObjectGitStorageService` — DONE (build green, 16 unit tests in-bundle).**
+  `@Component(storage.backend=git)` extending `AbstractEObjectStorageService`, mirroring
+  `EObjectFileStorageService`; `getBackendType()=StorageBackendType.GIT` (enum literal
+  already existed). OCD `Config`: `repo`, `scope`, `type_registry_map` (`String[]` of
+  `eClassUri:registryName`, parsed by `parseTypeToRegistry` splitting on the LAST `:`),
+  `gitservice_target`, `storage_type`. Binds `GitService` per branch=stage via a
+  `gitservice` reference (`MULTIPLE`/`STATIC`/`GREEDY`, target from `gitservice.target`
+  config) so the component re-activates and rebuilds the helper when the branch set
+  changes. `createStorageHelper()` → `new GitStorageHelper(resourceSet[(emf.name=management)],
+  gitServices, scope, typeToRegistry, registry)`. Verified generated DS descriptor + the
+  `mac.management … storage.backend=git` capability. Unit test covers `parseTypeToRegistry`
+  (last-colon split, trim, skip malformed/blank, null); the DS wiring itself is an OSGi IT
+  (G8). **Deferred to G7 (with the reconcile poll):** the `TypedEventHandler<WebhookPayload>`
+  subscription + resync — that is where topic-consistency (`WebhookTopics.topicFor` on the
+  subscribe side, incl. deriving repoFullName from the clone URL to match the webhook side)
+  and the poll live together; **`WebhookTopics` relocation to a non-REST shared bundle is
+  therefore deferred to G7** too (not needed until management.git actually consumes it,
+  avoiding a premature edit to the generated meta-model bundle).
+- **G5 — Cold-start instance derivation via an EPackage ServiceTracker (NO registry
+  coupling).** **Architectural constraint (verified 2026-07-17):** the git storage
+  service must NOT reference `RegistryServiceImpl` — `RegistryServiceImpl` already
+  `@Reference`s `EObjectStorageService` (`storageService`, RegistryServiceImpl.java:88),
+  so a storage→registry edge would be a DS activation **cycle**. It isn't needed:
+  - **Schemas** are registered by the **existing** `RegistryServiceImpl.activate` replay
+    (reads the cache the helper primed) — no storage→registry ref.
+  - **Instances need no dispatch at all** — the only `StageActionService.supportsObjectType`
+    is `EPackageStageActionService` = `EPACKAGE_TYPE` only. Instances just need to be in the
+    **shared cache** (a leaf: `LuceneEObjectRegistryService` has no back-ref to storage), which
+    the git backend already references. So `storage→cache` is safe/acyclic.
+  The only real problem is **timing** (instances aren't parseable at construction because their
+  EPackage isn't registered yet).
+  **DONE (build green, 17 unit tests):** implemented via **per-(scope,stage) ResourceSet leasing +
+  an EPackage ServiceTracker for timing** (Ilenia's ResourceSet insight — do NOT hand-insert
+  EPackages). Details:
+  - `GitStorageHelper` now takes a `ResourceSetCollector` (leaf singleton; verified no cycle) and,
+    for every parse (derivation *and* `loadEObject`), leases the per-`(scope,stage)` ResourceSet
+    (`getResourceSetObjects(scope, branch)`) — which already carries that stage's dynamic
+    EPackages — adds the `git://` handler to that lease, parses, `ungetService`s. Falls back to
+    the injected management ResourceSet when no per-stage RS is available yet (schemas need only
+    Ecore, so they derive at cold start). Per-stage leasing is also required for correctness
+    (same nsURI may differ per branch → no cross-stage package bleed).
+  - `deriveAll()` is incremental: per branch it parses only files not yet in the `derived` map,
+    so repeated passes are cheap; `rederive()` re-runs it. `derived` keyed by (stage + path).
+  - `EObjectGitStorageService` opens a `ServiceTracker<EPackage>` (all EPackages) whose events
+    schedule a **coalesced** `rederive()` on a single-thread daemon executor (`AtomicBoolean`
+    guard → a burst of registrations collapses to ~one pass). A not-yet-propagated package just
+    fails that pass and is retried on the next tracker event (absorbs the async-propagation race).
+  - **Zero `RegistryServiceImpl` coupling** — instances only `updateCache` into the shared cache
+    (leaf). (Earlier framing of "drive ENTER/UPDATE/EXIT via a RegistryService reference" was
+    wrong — it would have created the cycle above.)
+  - `management.git` bnd now also buildpaths `org.eclipse.fennec.model.atlas.workflow`
+    (`ResourceSetCollector`, exported) + `org.osgi.util.tracker`. No cycle (workflow doesn't
+    depend on management.git). **Deferred:** EPackage *removal*/EXIT handling (drift) → G7.
+- **G6 — Startup cache priming ordering — DONE (verified; satisfied by G3/G5, no code change).**
+  Traced the chain: `ScopeServiceImpl.bindRegistryService`→`registryService.activate(scope)`
+  synchronously (ScopeServiceImpl.java:72) → `RegistryServiceImpl.activate` → per trigger-stage
+  `listInStage` → `findByScopeRegistryAndStage(scope, registry_name, stage)` reads the **shared
+  cache** (RegistryServiceImpl.java:314-320). The git helper primes **schemas** into that same
+  shared cache in its **constructor** (`deriveAll()`→`updateCache`), which runs inside
+  `EObjectGitStorageService.activate()` *before the storage service is registered* — mirroring
+  `FileStorageHelper.updateRegistryCache`. DS ordering then guarantees priming precedes the
+  RegistryService bind/`activate(scope)`, so schemas are in the cache before `listInStage` reads
+  them → ENTER dispatch registers the EPackages. **Schemas parse at ctor on the management
+  ResourceSet** (only need Ecore), so priming does not depend on per-stage RS availability.
+  Instances are primed later (tracker `rederive`, after `activate(scope)`) — fine, they need no
+  dispatch (G5), only cache presence for on-demand `findByScopeRegistryAndStage`.
+  **Runtime-config prerequisites (G9, identical to the file backend):** the git storage config
+  must (a) make the service discoverable by `RegistryServiceImpl`/`EPackageStageActionService`,
+  which filter storage on `(scope=no-inject)`; and (b) point the storage's `registry` reference
+  at the same shared cache the RegistryService reads (`storage.json` uses
+  `registry.target=(registry=main)`). The DS-lifecycle ordering itself is only exercisable in an
+  OSGi IT → covered at G8.
 - **G7 — `GitSyncService` + cron reconcile poll (D6, DECIDED).** Last-SHA
   tracking, fetch, batch reconcile, force-push/branch-delete handling. The
   **cron-based reconcile poll is mandatory and always on** (not just a fallback):

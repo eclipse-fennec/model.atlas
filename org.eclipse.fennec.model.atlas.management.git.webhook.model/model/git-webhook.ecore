@@ -62,6 +62,7 @@
     <eOperations name="isDeleted" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EBoolean">
       <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
         <details key="documentation" value="True when this push deleted the ref (GitHub 'deleted' flag; GitLab: after is the all-zero SHA)."/>
+        <details key="body" value="return getAfter() != null &amp;&amp; getAfter().matches(&quot;0+&quot;);"/>
       </eAnnotations>
     </eOperations>
     <eOperations name="isForced" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EBoolean">

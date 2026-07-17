@@ -203,6 +203,7 @@ public interface WebhookPayload extends EObject {
 	 * True when this push deleted the ref (GitHub 'deleted' flag; GitLab: after is the all-zero SHA).
 	 * <!-- end-model-doc -->
 	 * @model kind="operation"
+	 *        annotation="http://www.eclipse.org/emf/2002/GenModel body='return getAfter() != null &amp;&amp; getAfter().matches(\"0+\");'"
 	 * @generated
 	 */
 	boolean isDeleted();

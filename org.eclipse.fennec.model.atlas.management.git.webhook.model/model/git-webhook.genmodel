@@ -25,7 +25,8 @@
       <genOperations ecoreOperation="git-webhook.ecore#//WebhookPayload/getRemovedPaths"/>
       <genOperations ecoreOperation="git-webhook.ecore#//WebhookPayload/isCreated"
           body="return getBefore() != null &amp;&amp; getBefore().matches(&quot;0+&quot;);"/>
-      <genOperations ecoreOperation="git-webhook.ecore#//WebhookPayload/isDeleted"/>
+      <genOperations ecoreOperation="git-webhook.ecore#//WebhookPayload/isDeleted"
+          body="return getAfter() != null &amp;&amp; getAfter().matches(&quot;0+&quot;);"/>
       <genOperations ecoreOperation="git-webhook.ecore#//WebhookPayload/isForced"
           body="return false;"/>
     </genClasses>

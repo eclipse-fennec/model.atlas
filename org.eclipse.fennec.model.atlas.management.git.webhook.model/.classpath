@@ -8,4 +8,5 @@
 	<classpathentry kind="con" path="aQute.bnd.classpath.container"/>
 	<classpathentry kind="src" output="bin" path="src"/>
 	<classpathentry kind="output" path="bin"/>
+	<classpathentry kind="src" path="src-gen"/>
 </classpath>
