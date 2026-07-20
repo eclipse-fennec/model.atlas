@@ -280,9 +280,178 @@ a code read of `AbstractStorageHelper.loadEObject` (fresh parse per read + resou
   where nsURI is unchanged, or version the swap). Cleanest fit with `git://commitId`.
 - **(2) Register-before-parse ordering + retry/degrade** on the read path for the
   window (surface a clean 409/503-style "resyncing", not a 500).
-- **(3) Removal policy:** define what a read of an instance whose model was removed
-  returns (404 vs. quarantine), and whether such instances are evicted from the index.
+- **(3) Removal policy:** promoted to its own sub-decision **D8-3** (see below) — DECIDED, points 1-3 implemented.
 This is a boss/team call like D6; the spike is the input, not the answer.
+
+#### D8 DECIDED DIRECTION (2026-07-20) — stage-aware, branch-isolated, atomic registration (needs sign-off before code)
+
+Two further findings during G8 turned D8 from "just close the reload window" into a
+broader **registration-correctness** decision. Both are properties of the **shared
+workflow registration layer**, not the git bundle:
+
+- **Registration is NOT stage-aware.** `DynamicEPackageRegistrationService.registerEPackage`
+  dedups on **nsURI alone** (`registeredEPackages` is `Map<nsURI, …>`; returns `false` if
+  the nsURI is already registered). `EPackageStageActionService.registerOrUpdate` then
+  treats that `false` as a hard failure (`throw new IllegalStateException("Failed to
+  register EPackage: …")`). The stage only reaches the service props (`emf.model.scope`/
+  `atlas.stage`, set by `DynamicEPackageConfigurator` from `metadata`) of the *first*
+  registration. So the **same nsURI on two stages** → only the first stage registers; the
+  second stage's ENTER throws. Harmless for file/apicurio (an object lives in one stage at
+  a time), but git is branch-per-stage — the same schema legitimately lives on
+  draft+approved+release **at once** — so this is the registration-layer analogue of D9.
+- **The per-stage ResourceSet chain resolves across stages.** Stages chain by parent:
+  `draft`'s ResourceSet has `approved`'s as parent, `approved`'s has `release`'s, `release`'s
+  has the global atlas set. A package not found in `draft` is looked up in `approved`, then
+  `release`. That is the intended **lifecycle-promotion** model for workflow scopes. It is
+  **wrong for git**: branches are *parallel* lines and the same nsURI can carry different
+  content per branch (fixture: `Person` gains `email` on `release`), so a `draft` instance
+  falling through to a sibling branch's `Person` resolves against the **wrong** content —
+  silently, which is worse than a clean miss. A git branch must be a self-contained
+  resolution universe.
+
+**Decision driver (Ilenia, 2026-07-20):** git-backed EPackages **must be globally visible**
+— fetchable via the REST API and by every atlas client — so they have to live in the global
+OSGi registry (disambiguated by scope/stage). This **rejects the git-contained per-commit
+snapshot** (which would keep git schemas private to the storage service) and commits us to
+the **stage-aware shared-registrar** route. D8 is therefore decided as **(1) atomic swap**
+*plus* stage-aware registration *plus* branch-isolated (non-chained) git stages.
+
+**BOSS DECISION (2026-07-20) — simplified to A + C (+ the git-side seam D); B dropped.**
+Investigating the "commit SHA in the nsURI" hint showed MDO does **not** rewrite the nsURI —
+`GitBasedEMFRegistry.getServiceProperties` registers the plain `ePackage.getNsURI()`; the
+commit SHA only appears in the `git://{commitId}/{path}` *read* URI. MDO never hit the
+collision simply because it is **single-branch** (its `git.json` wires one `GitConfig~test`
++ one `GitBasedEMFRegistry`). And the stage-chain is **not** a problem once A is in: each
+branch registers its own EPackage tagged `atlas.stage=<branch>`, so a `draft` instance
+resolves `Person` **locally** in `draft`'s registry and the parent chain (consulted only on
+a local miss) is never reached for a schema present on the branch. So we **keep the chain**
+and drop the isolated-stage change.
+
+**Change set (⚠ = shared core; git = contained to `management.git`):**
+- **A ⚠ Stage-aware registration [APPROVED].** Add a `scope+stage+nsURI` check in
+  `DynamicEPackageRegistrationService` before the "already registered → skip" bailout, so a
+  same-nsURI EPackage for a *different* stage (branch) still registers (each carrying its
+  branch's content + its `emf.model.scope`/`atlas.stage` props). Key `registeredEPackages`
+  by the composite; `EPackageStageActionService` already has `(scope,stage,objectId)` in the
+  `ActionContext`, so it passes them through and no longer treats "same nsURI, other stage"
+  as a hard failure. Backward-compatible for file/apicurio (one entry per nsURI in practice).
+- **B ⚠ ~~Non-chained stages for git scopes~~ — DROPPED.** Chain is safe once A is in (local
+  resolution wins before fall-through; fall-through only fires for a schema genuinely absent
+  on a branch, i.e. a malformed self-contained repo — acceptable).
+- **C ⚠ Serialize reload with a lock [APPROVED].** The brief unregister→register window is
+  **acceptable** (low request frequency). The current registrar has **no lock** (only
+  `ConcurrentHashMap`s, which guard single map ops but not the unregister-then-register
+  *pair* `EPackageStageActionService` performs across two calls). Add a `ReentrantLock`
+  (as MDO does) to serialize register/unregister so concurrent reloads don't interleave.
+- **D (git + a decoupled workflow handler) Sync-driven dispatch [IMPLEMENTED 2026-07-20].**
+  A push must trigger schema (re)registration without the `RegistryServiceImpl` activation
+  cycle. Implemented as an **event bridge**: `GitStorageHelper.reconcile` fires an
+  `onReconciled` callback on a tip-move; `EObjectGitStorageService` (now with a
+  `@Reference TypedEventBus`) publishes a `RegistryResync` event (topic + `scope`, new shared
+  contract in the exported `…workflow` package). A new workflow `UntypedEventHandler`,
+  `RegistryResyncHandler`, subscribes and calls the public `RegistryService.activate(scope)`
+  on every registry — reusing the cold-start replay path, so change-A registration
+  re-registers pushed/changed schemas. Event-decoupled ⇒ no storage→dispatcher cycle; the
+  handler is isolated (only references `RegistryService`), so `RegistryServiceImpl` is
+  untouched. **Deferred:** removals (EXIT) — a schema removed on a branch is not unregistered
+  by this path (open D8 removal-policy decision); replay is also gated on
+  `requiresReplayOnStartup()`.
+
+**Headline risk — nsURI disambiguation audit.** Once the same nsURI is registered *multiple
+times globally* (one per branch), **every** by-nsURI resolution must disambiguate by
+scope+stage: the REST fetch path, the atlas client, and anything relying on the global
+`EPackage.Registry.INSTANCE` (nsURI-unique — can't hold two). The per-stage filtered
+registries already disambiguate; the audit confirms nothing on the REST/client path assumes
+"one EPackage per nsURI."
+
+**Removal handling is the sub-decision D8-3 (see below) — DECIDED; points 1-3 implemented, point 4 deferred.**
+
+**Status:** **A + C + D IMPLEMENTED & unit-tested (2026-07-20).** `DynamicEPackageRegistrationService`
+now keys `registeredEPackages` by a `RegistrationKey(scope,stage,nsURI)` record (register/
+unregister/`isRegistered`), guarded by a `ReentrantLock`; `unregisterEPackage` gained the
+`(scope,stage,nsURI)` signature and `EPackageStageActionService` passes `ctx.scope()`/
+`ctx.stage()` at both call sites (onExit + registerOrUpdate). New plain-JUnit test
+`DynamicEPackageRegistrationServiceStageAwareTest` (4 tests, green): same-nsURI-two-stages both
+register, exact-duplicate rejected, unregister-one-stage-leaves-other, concurrent-registration
+retained. Workflow bundle + full plain-JUnit suite compile & pass. **D also implemented** (see change D
+above): new `RegistryResync` contract + `RegistryResyncHandler` (workflow) + git publish;
+`GitStorageHelperTest` gains 2 tests (listener fires on tip-move, not on unchanged tip); git +
+workflow unit suites green. **Still open:** the **nsURI disambiguation audit**
+(REST/client/`EPackage.Registry.INSTANCE`); **D8-3 removal is DECIDED and points 1-3
+implemented** (EXIT on schema removal, `ModelUnavailableException` on orphaned-instance reads,
+eventual eviction + FINE log; branch-delete/force-push deferred; REST mapping of the exception
+is follow-up). **Untested end
+-to-end (needs the full chain in an OSGi IT):** a git scope wired with
+`RegistryService`+`EPackageStageActionService`+`RegistryResyncHandler` so a push actually
+(re)registers a schema as an OSGi service — the git ITs don't yet stand up that chain (they use
+the shared Lucene cache directly), so cold-start git registration and the D resync path are
+verified by unit tests + code-trace, not yet by an IT. Re-run the workflow **OSGi** tests
+(`EPackageStageActionServiceIntegrationTest`) in the IDE to confirm the A/C signature change
+end-to-end. The G8 D8 IT matrix lifts onto the real git path next.
+
+#### D8-3. Removal policy — DECIDED (2026-07-20, Ilenia); IMPLEMENTED (points 1-3) 2026-07-20
+
+**Impl summary:** the resync event (change D) now also carries the reconciled `stage` +
+`removedObjectIds`; `GitStorageHelper.reconcile` computes the removed **schemas** (present
+before the evict, absent after re-derive) and passes them to the reconcile listener, which the
+service publishes. `RegistryResyncHandler` dispatches **EXIT** for each removed schema to every
+`StageActionService` handling EPackages (mirrors `RegistryServiceImpl.dispatch(EXIT,…)`), so the
+removed schema's EPackage is unregistered (point 1). `GitStorageHelper.loadEObject` catches EMF
+`PackageNotFoundException` (thrown chain or `resource.getErrors()`) and rethrows a typed
+`ModelUnavailableException` (new, extends `IOException`, carries scope/stage/objectId/nsURI) —
+point 2. It lives in a dedicated **exported** API package
+`org.eclipse.fennec.model.atlas.management.git.api` (via an `@Export` `package-info`), so callers
+can catch it while the impl package `…management.git` stays `Private-Package`. Unit tests: git `reconcile_removedSchema_reportedToListenerForExit`
++ the listener tests updated; workflow handler covered by the resync path.
+
+**Known nuance on point 3 (eviction timing):** an orphaned instance is **not** evicted
+immediately. During the removal reconcile's `deriveAll` the schema is still registered (EXIT
+fires afterwards via the event), so the instance re-derives and stays in the index; it is
+evicted only on the *next* reconcile that finds it unparseable (model now unregistered). In the
+meantime a **read returns `ModelUnavailableException`** (point 2), so the user-facing guarantee
+holds; eviction is *eventual*. The derive-skip is logged at FINE (naming path+stage+cause);
+kept at FINE deliberately because a not-yet-registered instance at cold start is
+indistinguishable from a genuinely orphaned one, so a WARNING would be noisy. **Follow-up (not
+done):** map `ModelUnavailableException` to a clean HTTP response in the REST layer (different
+bundle); optional immediate eviction of orphaned instances; point 4 (branch delete/force-push).
+
+When a push **removes** a `.ecore` from a branch:
+
+1. **Unregister the EPackage (EXIT) — YES.** A removed schema's EPackage is unregistered for
+   that `(scope,stage)`. **[impl]** the change-D resync path only replays ENTER
+   (`activate(scope)`), so removal needs a diff: on reconcile the git backend knows which
+   schemas disappeared (present before the stage evict, absent after the re-derive) and must
+   drive EXIT for them. There is no public "dispatch EXIT" API (dispatch is
+   `RegistryServiceImpl`-internal), so this needs either a new `RegistryService` resync/EXIT
+   capability, or extending the resync event to carry the removed set and teaching
+   `RegistryResyncHandler` to unregister them. EXIT is per-`(scope,stage)` (change A), so
+   unregistering one branch's copy is safe.
+2. **Read of an instance whose model is gone → "model unavailable" — YES.** Surface a clean
+   "model unavailable" state rather than an opaque 500 / serialization error. **[impl]** the
+   object read (`GitStorageHelper.loadEObject`) throws EMF `PackageNotFoundException` when the
+   nsURI is unregistered; catch it there and translate to a defined error that the REST layer
+   maps to a clear "model unavailable" response. Metadata reads are unaffected (they don't
+   touch the model).
+3. **Evict the orphaned instance from the index + log — REVISED (2026-07-20).** Originally
+   "keep the metadata"; changed because git metadata is **derived by parsing** (not a stored
+   `.metadata.xmi` like file/apicurio), so a model-less instance cannot be freshly derived
+   (no eClass → no objectType/registry) — keeping it would require retaining stale metadata and
+   only ever cover instances derived *before* the model was removed. So instead: on reconcile,
+   an instance whose model was removed **fails to parse and is simply not re-derived** (dropped
+   from the index — which is already what the parse-or-skip derivation does), and we **log a
+   warning** naming the instance path + missing nsURI + stage so the drop is visible. **[impl]**
+   mostly free (add the warning log on the skip). **Considered & deferred:** flag-as-incomplete
+   instead of evicting — `ObjectMetadata` has no lifecycle-neutral "invalid/incomplete" status
+   (`ObjectStatus` = DRAFT/APPROVED/REJECTED/DEPLOYED/ARCHIVED), but its free-form
+   `properties` `EMap<String,Object>` could carry e.g. `model.available=false`; not done now
+   because for git it needs the retain-stale-derived-metadata reconcile work and only covers
+   previously-derived instances.
+4. **Branch delete / force-push — DEFERRED.** The extreme of removal (a stage disappears or its
+   history is rewritten); revisit later.
+
+Input: the G0.5 spike (reads are stateless/re-resolving; the reload *window* and *removed*
+model both hard-fail today). Until the above is implemented, git EXIT/removal stays a no-op
+beyond metadata eviction, and a read of an orphaned instance still fails opaquely.
 
 ## 3. Components
 
@@ -489,6 +658,32 @@ This is a boss/team call like D6; the spike is the input, not the answer.
   momentarily unregistered → today throws `PackageNotFoundException`) per the D8
   contract chosen; and reads of a **removed** model. Opt-in ITs against real GitHub
   **and** GitLab (payload + signature/token differences, D7).
+
+  > **G8 IN PROGRESS — harness decisions & a gecko.jgit finding (2026-07-20).**
+  > The IT harness lives in `org.eclipse.fennec.model.atlas.management.git.tests` and
+  > serves a real repo over the anonymous **`git://`** protocol from a throw-away
+  > **Testcontainer** (`alpine` + the separate `git-daemon` apk package; base `git`
+  > does *not* ship `git daemon`), fixtures on branches `main`+`release`
+  > (`GitTestRepository`). `git://` is used because gecko's `isRemote` only treats
+  > `git`/`https` prefixes as remote, and `git://` needs no TLS/creds.
+  >
+  > **Finding — `org.gecko.jgit.GitServiceImpl` is SSH-only.** Its `activate()`
+  > *unconditionally* sets a `TransportConfigCallback` that casts every jgit
+  > `Transport` to `SshTransport` (to attach the SSH private key). So it only works
+  > with SSH scp-like remotes (`git@host:path`); over `git://` (`TransportGitAnon`)
+  > and `https://` (`TransportHttp`) it throws `ClassCastException`. This matches
+  > production (the jena reference used `git@github.com:…` with a deploy key), so it
+  > may be intentional. Because SSH scp-like URLs carry no port and `ssh://host:port`
+  > is rejected by `isRemote`, the *real* impl cannot be driven from a
+  > Testcontainers-mapped random port. **Decision (2026-07-20): Solution 1** — the ITs
+  > register a test-only `TestGitService` (implements `GitService`, does exactly what
+  > `GitServiceImpl` does via jgit but **without** the SSH-only transport callback) as
+  > OSGi services with `id=testrepo`; the `GitObjectStorage` config binds them via
+  > `gitservice.target=(id=testrepo)`. This exercises all production `management.git`
+  > code (helper, `GitURIHandler`, reconcile, webhook, poll) over the real git wire
+  > protocol. **OPEN (boss):** whether to relax `GitServiceImpl` to attach the SSH
+  > callback only for SSH transports (or only when `privateKey` is set), which would
+  > let it serve `git://`/`https://` too — deferred, may be deliberate.
 - **G9 — Runtime wiring (deferrable).** `runtime.config.docker.git` +
   `modelatlas.runtime_docker_git.bndrun` + `docker/modelatlas_git`; expose the
   webhook port; document credential/secret injection **per provider** (GitHub PAT/

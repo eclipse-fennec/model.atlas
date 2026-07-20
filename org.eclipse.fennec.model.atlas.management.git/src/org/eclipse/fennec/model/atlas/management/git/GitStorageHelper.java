@@ -16,10 +16,12 @@ package org.eclipse.fennec.model.atlas.management.git;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.BiConsumer;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -29,6 +31,8 @@ import org.eclipse.emf.ecore.EcorePackage;
 import org.eclipse.emf.ecore.resource.Resource;
 import org.eclipse.emf.ecore.resource.ResourceSet;
 import org.eclipse.emf.ecore.util.EcoreUtil;
+import org.eclipse.emf.ecore.xmi.PackageNotFoundException;
+import org.eclipse.fennec.model.atlas.management.git.api.ModelUnavailableException;
 import org.eclipse.fennec.model.atlas.mgmt.api.EObjectRegistryService;
 import org.eclipse.fennec.model.atlas.mgmt.management.ManagementFactory;
 import org.eclipse.fennec.model.atlas.mgmt.management.ObjectMetadata;
@@ -97,6 +101,9 @@ public class GitStorageHelper extends AbstractStorageHelper {
 	/** The Ecore {@code EObject} eClass URI — the configurable instance catch-all key. */
 	private static final String EOBJECT_TYPE = EcoreUtil.getURI(EcorePackage.Literals.EOBJECT).toString();
 
+	/** The Ecore {@code EPackage} eClass URI — identifies a derived entry as a schema. */
+	private static final String EPACKAGE_TYPE = EcoreUtil.getURI(EcorePackage.Literals.EPACKAGE).toString();
+
 	private final String scope;
 	private final Map<String, String> eClassUriToRegistry;
 	private final EObjectRegistryService<EObject> registryService;
@@ -114,6 +121,15 @@ public class GitStorageHelper extends AbstractStorageHelper {
 	private final Map<String, ObjectMetadata> derived = new ConcurrentHashMap<>();
 
 	private final GitURIHandler gitUriHandler;
+
+	/**
+	 * Invoked (if set) after a {@link #reconcile(String)} that actually moved a branch tip,
+	 * with the reconciled {@code stage} and the objectIds of schemas <em>removed</em> by that
+	 * reconcile. The owning storage service uses it to request a registry replay (D8 change D)
+	 * — a push may have added/changed a schema (ENTER) or removed one (EXIT, D8-3). {@code null}
+	 * in unit tests / when no listener is wired.
+	 */
+	private volatile BiConsumer<String, List<String>> onReconciled;
 
 	public GitStorageHelper(ResourceSet resourceSet, Collection<GitService> gitServices, String scope,
 			Map<String, String> eClassUriToRegistry, EObjectRegistryService<EObject> registryService,
@@ -159,6 +175,132 @@ public class GitStorageHelper extends AbstractStorageHelper {
 	 */
 	public void rederive() {
 		deriveAll();
+	}
+
+	/**
+	 * Re-synchronizes a single branch (= stage) with its remote after an inbound
+	 * push (webhook) or a reconcile poll (G7). Fetches the branch and compares the
+	 * tip commit against the last observed one; if unchanged this is a no-op, so a
+	 * webhook and a poll firing for the same push are idempotent.
+	 *
+	 * <p>When the tip moved the whole branch is re-derived: {@link GitService#getFiles()}
+	 * exposes only paths + tip commit (no per-file SHA), so an in-place modify cannot
+	 * be detected cheaply. This stage's derived entries are therefore evicted from the
+	 * shared registry cache and re-derived against the new tree — which covers added,
+	 * modified and removed files uniformly (removed files simply do not reappear).
+	 *
+	 * <p><b>Not covered (deferred, see PLAN):</b> a <em>new or modified schema</em>
+	 * whose dynamic {@code EPackage} is not yet registered at runtime will not be
+	 * (re)registered here — that hits the registry dispatch cycle. Its instances
+	 * become derivable only once the package is registered (via {@link #rederive()}).
+	 *
+	 * @param stage the branch to reconcile
+	 * @return {@code true} if the tip moved and the stage was re-derived, {@code false}
+	 *         if nothing changed or the branch is unknown
+	 */
+	public synchronized boolean reconcile(String stage) {
+		GitService gs = branchToService.get(stage);
+		if (gs == null) {
+			LOGGER.fine(() -> "reconcile: no branch bound for stage " + stage + "; ignoring");
+			return false;
+		}
+		String previousCommit = commitIdForStage(stage);
+		TreeResult tree;
+		try {
+			gs.fetch();
+			tree = gs.getFiles();
+		} catch (Exception e) {
+			LOGGER.log(Level.WARNING, "Failed to reconcile git branch " + stage, e);
+			return false;
+		}
+		String newCommit = tree.getCommitId();
+		if (newCommit != null && newCommit.equals(previousCommit)) {
+			LOGGER.fine(() -> "reconcile: branch " + stage + " already at " + newCommit + "; no change");
+			return false;
+		}
+
+		// Capture the schemas present in this stage before the evict, so we can tell which
+		// ones a removal push deleted (present before, absent after re-derive) and drive EXIT.
+		List<String> schemasBefore = schemaObjectIds(stage);
+
+		evictStage(stage);
+		if (previousCommit != null) {
+			commitToService.remove(previousCommit);
+		}
+		branchToTree.put(stage, tree);
+		commitToService.put(newCommit, gs);
+
+		deriveAll();
+
+		List<String> schemasAfter = schemaObjectIds(stage);
+		List<String> removedSchemas = new ArrayList<>();
+		for (String id : schemasBefore) {
+			if (!schemasAfter.contains(id)) {
+				removedSchemas.add(id);
+			}
+		}
+
+		LOGGER.info("Reconciled git branch " + stage + ": " + previousCommit + " -> " + newCommit
+				+ (removedSchemas.isEmpty() ? "" : " (removed schemas: " + removedSchemas + ")"));
+		BiConsumer<String, List<String>> listener = onReconciled;
+		if (listener != null) {
+			listener.accept(stage, removedSchemas);
+		}
+		return true;
+	}
+
+	/** ObjectIds of the derived <em>schemas</em> (EPackages) currently in {@code stage}. */
+	private List<String> schemaObjectIds(String stage) {
+		List<String> ids = new ArrayList<>();
+		for (ObjectMetadata md : derived.values()) {
+			if (stage.equals(md.getStage()) && EPACKAGE_TYPE.equals(md.getObjectType())) {
+				ids.add(md.getObjectId());
+			}
+		}
+		return ids;
+	}
+
+	/**
+	 * Sets the callback invoked after a reconcile that moved a branch tip (see
+	 * {@link #onReconciled}): {@code (stage, removedSchemaObjectIds)}. Used by the storage
+	 * service to publish a registry-resync event; left unset in unit tests.
+	 */
+	public void setOnReconciled(BiConsumer<String, List<String>> onReconciled) {
+		this.onReconciled = onReconciled;
+	}
+
+	/**
+	 * Reconciles every configured branch with its remote. This is the reconcile
+	 * poll entry point (G7 part C): it simply calls {@link #reconcile(String)} for
+	 * each branch, which no-ops when the tip has not moved — so a poll and an
+	 * inbound webhook for the same push are idempotent. A failure on one branch is
+	 * logged and does not stop the others.
+	 */
+	public void reconcileAll() {
+		for (String stage : new ArrayList<>(branchToService.keySet())) {
+			try {
+				reconcile(stage);
+			} catch (Exception e) {
+				LOGGER.log(Level.WARNING, "Reconcile poll failed for branch " + stage, e);
+			}
+		}
+	}
+
+	/**
+	 * Drops every derived entry of one stage from both the local {@link #derived}
+	 * map and the shared registry cache, so a re-derive of the branch's new tip
+	 * starts clean (removed files disappear, modified files pick up new content and
+	 * commit version).
+	 */
+	private void evictStage(String stage) {
+		Iterator<Map.Entry<String, ObjectMetadata>> it = derived.entrySet().iterator();
+		while (it.hasNext()) {
+			Map.Entry<String, ObjectMetadata> entry = it.next();
+			if (stage.equals(entry.getValue().getStage())) {
+				registryService.removeFromCache(entry.getKey());
+				it.remove();
+			}
+		}
 	}
 
 	private String commitIdForStage(String stage) {
@@ -236,6 +378,12 @@ public class GitStorageHelper extends AbstractStorageHelper {
 	/**
 	 * Reads an object against the per-(scope,stage) ResourceSet (so an instance's
 	 * dynamic EPackage resolves), falling back to the management ResourceSet.
+	 *
+	 * <p>If the object's model is not registered (typically a schema removed on this branch
+	 * while the instance file remains — D8-3), the parse fails with EMF's
+	 * {@code PackageNotFoundException}; this is translated to a clean
+	 * {@link ModelUnavailableException} so callers get a defined "model unavailable" signal
+	 * rather than an opaque failure.
 	 */
 	@Override
 	public EObject loadEObject(String scope, String registry, String stage, String objectId) throws IOException {
@@ -245,24 +393,76 @@ public class GitStorageHelper extends AbstractStorageHelper {
 		}
 		URI uri = createStorageURI(scope, registry, stage, path);
 		ComponentServiceObjects<ResourceSet> cso = leaseFor(stage);
+		LOGGER.fine(() -> "loadEObject " + objectId + " on stage " + stage + " using "
+				+ (cso != null ? "per-stage leased ResourceSet" : "management ResourceSet (no per-stage lease)"));
 		ResourceSet rs = cso != null ? cso.getService() : resourceSet;
 		Resource resource = null;
 		try {
 			if (cso != null) {
 				rs.getURIConverter().getURIHandlers().add(0, new GitURIHandler(commitToService));
 			}
-			resource = rs.getResource(uri, true);
+			try {
+				resource = rs.getResource(uri, true);
+			} catch (RuntimeException e) {
+				// getResource wraps a load IOException (incl. PackageNotFoundException) in a
+				// WrappedException; surface the missing-model case as ModelUnavailableException.
+				PackageNotFoundException pnf = findPackageNotFound(e);
+				if (pnf != null) {
+					throw new ModelUnavailableException(scope, stage, objectId, pnf.uri(), e);
+				}
+				throw e;
+			}
+			// EMF may also record the missing package as a resource error rather than throw.
+			PackageNotFoundException pnf = resource == null ? null : findPackageNotFoundInErrors(resource);
+			if (pnf != null) {
+				throw new ModelUnavailableException(scope, stage, objectId, pnf.uri(), pnf);
+			}
 			if (resource == null || resource.getContents().isEmpty()) {
 				return null;
 			}
+			// Resolve cross-references (e.g. an EReference's eType pointing at an EClass in
+			// another .ecore, or an instance referencing another object) WHILE the leased
+			// per-stage ResourceSet — and its package registry — are still alive. These are
+			// lazy proxies otherwise resolved only on access, which for the caller happens
+			// after this method has released the ResourceSet, leaving them permanently
+			// unresolvable. Unresolvable proxies (e.g. a referenced package genuinely absent)
+			// are left as-is by resolveAll rather than throwing.
+			EcoreUtil.resolveAll(resource);
 			return resource.getContents().get(0);
 		} finally {
+			// Detach the resource from the ResourceSet BEFORE releasing a leased (prototype)
+			// ResourceSet: ungetService discards that ResourceSet, and a resource still held by
+			// it would be disposed along with it, leaving the returned EObject with a null
+			// eResource() (which breaks downstream EPackage registration). Removing it first
+			// keeps the returned object intact (eResource present, getResourceSet() null) —
+			// matching the shared-management-RS path.
+			if (resource != null) {
+				rs.getResources().remove(resource);
+			}
 			if (cso != null) {
 				cso.ungetService(rs); // discards the prototype ResourceSet
-			} else if (resource != null) {
-				rs.getResources().remove(resource); // keep the shared management RS clean
 			}
 		}
+	}
+
+	/** Walks {@code t} and its cause chain for a {@link PackageNotFoundException}. */
+	private static PackageNotFoundException findPackageNotFound(Throwable t) {
+		for (Throwable c = t; c != null; c = c.getCause()) {
+			if (c instanceof PackageNotFoundException pnf) {
+				return pnf;
+			}
+		}
+		return null;
+	}
+
+	/** Scans a loaded resource's errors for a {@link PackageNotFoundException}. */
+	private static PackageNotFoundException findPackageNotFoundInErrors(Resource resource) {
+		for (Resource.Diagnostic d : resource.getErrors()) {
+			if (d instanceof PackageNotFoundException pnf) {
+				return pnf;
+			}
+		}
+		return null;
 	}
 
 	@Override

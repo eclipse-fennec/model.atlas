@@ -216,3 +216,8 @@ com.h2database:h2:2.3.232
 
 #jGit
 org.eclipse.jgit:org.eclipse.jgit:7.7.0.202606012155-r
+org.eclipse.jgit:org.eclipse.jgit.http.server:7.7.0.202606012155-r
+org.eclipse.jgit:org.eclipse.jgit.ssh.jsch:7.7.0.202606012155-r
+#org.geckoprojects.jgit:org.gecko.jgit:1.0.0-SNAPSHOT
+org.apache.servicemix.bundles:org.apache.servicemix.bundles.jsch:0.1.55_1
+com.googlecode.javaewah:JavaEWAH:1.2.3

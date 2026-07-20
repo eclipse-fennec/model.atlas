@@ -20,14 +20,17 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.io.ByteArrayInputStream;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -188,15 +191,17 @@ class GitStorageHelperTest {
 		GitService gs = instanceGitService();
 		// EPackage -> schema (exact), EObject -> object (explicit catch-all).
 		// null collector: parses against the management resourceSet, which here has the Widget package.
-		new GitStorageHelper(resourceSet, List.of(gs), "jena",
-				Map.of(EPACKAGE_TYPE, "schema", EOBJECT_TYPE, "object"), registry, null);
+		try(GitStorageHelper gsh = new GitStorageHelper(resourceSet, List.of(gs), "jena",
+				Map.of(EPACKAGE_TYPE, "schema", EOBJECT_TYPE, "object"), registry, null)) {
+			ArgumentCaptor<ObjectMetadata> captor = ArgumentCaptor.forClass(ObjectMetadata.class);
+			verify(registry).updateCache(captor.capture());
+			ObjectMetadata md = captor.getValue();
+			assertEquals("jena/main/" + WIDGET_PATH, md.getObjectId());
+			assertEquals("object", md.getRegistry(), "instance falls through exact->EObject catch-all");
+			assertEquals(WIDGET_TYPE, md.getObjectType(), "objectType = the instance's own eClass URI");
+		}
 
-		ArgumentCaptor<ObjectMetadata> captor = ArgumentCaptor.forClass(ObjectMetadata.class);
-		verify(registry).updateCache(captor.capture());
-		ObjectMetadata md = captor.getValue();
-		assertEquals("jena/main/" + WIDGET_PATH, md.getObjectId());
-		assertEquals("object", md.getRegistry(), "instance falls through exact->EObject catch-all");
-		assertEquals(WIDGET_TYPE, md.getObjectType(), "objectType = the instance's own eClass URI");
+		
 	}
 
 	@Test
@@ -204,8 +209,9 @@ class GitStorageHelperTest {
 		GitService gs = instanceGitService();
 		// No EObject entry: an instance whose exact type is unmapped is ignored,
 		// never routed to a hardcoded default.
-		new GitStorageHelper(resourceSet, List.of(gs), "jena", Map.of(EPACKAGE_TYPE, "schema"), registry, null);
-		verify(registry, never()).updateCache(any());
+		try(GitStorageHelper gsh = new GitStorageHelper(resourceSet, List.of(gs), "jena", Map.of(EPACKAGE_TYPE, "schema"), registry, null)) {
+			verify(registry, never()).updateCache(any());
+		}
 	}
 
 	/**
@@ -263,21 +269,160 @@ class GitStorageHelperTest {
 		ResourceSetCollector collector = mock(ResourceSetCollector.class);
 		when(collector.getResourceSetObjects("jena", "main")).thenReturn(null); // not available yet
 
-		GitStorageHelper h = new GitStorageHelper(resourceSet, List.of(widgetGitService()), "jena",
-				Map.of(EOBJECT_TYPE, "object"), registry, collector);
+		try(GitStorageHelper h = new GitStorageHelper(resourceSet, List.of(widgetGitService()), "jena",
+				Map.of(EOBJECT_TYPE, "object"), registry, collector)) {
+			// Cold start: no per-stage RS, management RS lacks the package -> skipped.
+			verify(registry, never()).updateCache(any());
 
-		// Cold start: no per-stage RS, management RS lacks the package -> skipped.
-		verify(registry, never()).updateCache(any());
+			// The per-stage ResourceSet (with the Widget package) becomes available.
+			when(collector.getResourceSetObjects("jena", "main")).thenReturn(cso);
+			h.rederive();
 
-		// The per-stage ResourceSet (with the Widget package) becomes available.
-		when(collector.getResourceSetObjects("jena", "main")).thenReturn(cso);
-		h.rederive();
+			ArgumentCaptor<ObjectMetadata> captor = ArgumentCaptor.forClass(ObjectMetadata.class);
+			verify(registry).updateCache(captor.capture());
+			assertEquals("jena/main/" + WIDGET_PATH, captor.getValue().getObjectId());
+			assertEquals("object", captor.getValue().getRegistry());
+			assertEquals(WIDGET_TYPE, captor.getValue().getObjectType());
+			verify(cso).ungetService(stageRs); // lease returned
+		}
+	}
+
+	// --- G7: reconcile (webhook / poll resync) ------------------------------
+
+	@Test
+	void reconcile_tipUnchanged_isNoOp() throws Exception {
+		// getFiles keeps returning the same COMMIT tree -> nothing to do.
+		GitStorageHelper h = helper(Map.of(EPACKAGE_TYPE, "schema"));
+		verify(registry, times(1)).updateCache(any()); // construction derive
+
+		assertFalse(h.reconcile("main"), "unchanged tip -> false");
+		verify(registry, never()).removeFromCache(any());
+		verify(registry, times(1)).updateCache(any()); // still just the construction derive
+	}
+
+	@Test
+	void reconcile_tipMoved_evictsAndRederivesWithNewVersion() throws Exception {
+		TreeResult tree1 = new TreeResult(COMMIT, List.of(ECORE_PATH, "README.md"));
+		TreeResult tree2 = new TreeResult("c2", List.of(ECORE_PATH, "README.md"));
+		when(gitService.getFiles()).thenReturn(tree1, tree2);
+		when(gitService.readFile(eq("c2"), eq(ECORE_PATH)))
+				.thenAnswer(inv -> new ByteArrayInputStream(PERSON_ECORE.getBytes(StandardCharsets.UTF_8)));
+
+		GitStorageHelper h = helper(Map.of(EPACKAGE_TYPE, "schema"));
+
+		assertTrue(h.reconcile("main"), "moved tip -> true");
+		verify(registry).removeFromCache("jena/main/" + ECORE_PATH);
 
 		ArgumentCaptor<ObjectMetadata> captor = ArgumentCaptor.forClass(ObjectMetadata.class);
-		verify(registry).updateCache(captor.capture());
-		assertEquals("jena/main/" + WIDGET_PATH, captor.getValue().getObjectId());
-		assertEquals("object", captor.getValue().getRegistry());
-		assertEquals(WIDGET_TYPE, captor.getValue().getObjectType());
-		verify(cso).ungetService(stageRs); // lease returned
+		verify(registry, times(2)).updateCache(captor.capture());
+		assertEquals(COMMIT, captor.getAllValues().get(0).getVersion());
+		assertEquals("c2", captor.getAllValues().get(1).getVersion(), "re-derived at the new tip commit");
+		// still present, now versioned at the new tip
+		assertEquals(List.of("jena/main/" + ECORE_PATH), h.listObjectIds("jena", "schema", "main"));
+	}
+
+	@Test
+	void reconcile_tipMoved_firesOnReconciledListener() throws Exception {
+		TreeResult tree1 = new TreeResult(COMMIT, List.of(ECORE_PATH, "README.md"));
+		TreeResult tree2 = new TreeResult("c2", List.of(ECORE_PATH, "README.md"));
+		when(gitService.getFiles()).thenReturn(tree1, tree2);
+		when(gitService.readFile(eq("c2"), eq(ECORE_PATH)))
+				.thenAnswer(inv -> new ByteArrayInputStream(PERSON_ECORE.getBytes(StandardCharsets.UTF_8)));
+
+		GitStorageHelper h = helper(Map.of(EPACKAGE_TYPE, "schema"));
+		int[] fired = { 0 };
+		List<List<String>> removedSeen = new ArrayList<>();
+		h.setOnReconciled((stage, removed) -> {
+			fired[0]++;
+			removedSeen.add(removed);
+		});
+
+		assertTrue(h.reconcile("main"), "moved tip -> true");
+		assertEquals(1, fired[0], "the reconcile listener fires once when the branch tip moves (D8-D resync)");
+		assertEquals(List.of(List.of()), removedSeen, "no schema removed -> empty removed list (change, not removal)");
+	}
+
+	@Test
+	void reconcile_tipUnchanged_doesNotFireListener() throws Exception {
+		GitStorageHelper h = helper(Map.of(EPACKAGE_TYPE, "schema"));
+		int[] fired = { 0 };
+		h.setOnReconciled((stage, removed) -> fired[0]++);
+
+		assertFalse(h.reconcile("main"), "unchanged tip -> false");
+		assertEquals(0, fired[0], "the reconcile listener must not fire when nothing changed");
+	}
+
+	@Test
+	void reconcile_removedSchema_reportedToListenerForExit() throws Exception {
+		// person.ecore present at COMMIT, gone at c2 -> its (qualified) objectId is a removed schema.
+		TreeResult tree1 = new TreeResult(COMMIT, List.of(ECORE_PATH));
+		TreeResult tree2 = new TreeResult("c2", List.of("README.md"));
+		when(gitService.getFiles()).thenReturn(tree1, tree2);
+
+		GitStorageHelper h = helper(Map.of(EPACKAGE_TYPE, "schema"));
+		List<String> removedSeen = new ArrayList<>();
+		h.setOnReconciled((stage, removed) -> removedSeen.addAll(removed));
+
+		assertTrue(h.reconcile("main"), "moved tip -> true");
+		assertEquals(List.of("jena/main/" + ECORE_PATH), removedSeen,
+				"the removed schema's qualified objectId is reported so the resync can drive EXIT");
+	}
+
+	@Test
+	void reconcile_removedFile_isEvictedAndNotRederived() throws Exception {
+		TreeResult tree1 = new TreeResult(COMMIT, List.of(ECORE_PATH));
+		TreeResult tree2 = new TreeResult("c2", List.of("README.md")); // person.ecore deleted
+		when(gitService.getFiles()).thenReturn(tree1, tree2);
+
+		GitStorageHelper h = helper(Map.of(EPACKAGE_TYPE, "schema"));
+		assertEquals(1, h.listObjectIds("jena", "schema", "main").size());
+
+		assertTrue(h.reconcile("main"));
+		verify(registry).removeFromCache("jena/main/" + ECORE_PATH);
+		assertTrue(h.listObjectIds("jena", "schema", "main").isEmpty(), "removed file gone from listing");
+		verify(registry, times(1)).updateCache(any()); // only the construction derive; nothing re-derived
+	}
+
+	@Test
+	void reconcile_unknownBranch_returnsFalse() throws Exception {
+		GitStorageHelper h = helper(Map.of(EPACKAGE_TYPE, "schema"));
+		assertFalse(h.reconcile("no-such-branch"));
+		verify(registry, never()).removeFromCache(any());
+	}
+
+	@Test
+	void reconcileAll_reconcilesOnlyMovedBranches() throws Exception {
+		// main moves cMain1 -> cMain2; release stays at cRel.
+		GitService main = mock(GitService.class);
+		when(main.getBranch()).thenReturn("main");
+		when(main.getFiles()).thenReturn(
+				new TreeResult("cMain1", List.of(ECORE_PATH)),
+				new TreeResult("cMain2", List.of(ECORE_PATH)));
+		when(main.readFile(anyString(), eq(ECORE_PATH)))
+				.thenAnswer(inv -> new ByteArrayInputStream(PERSON_ECORE.getBytes(StandardCharsets.UTF_8)));
+
+		GitService release = mock(GitService.class);
+		when(release.getBranch()).thenReturn("release");
+		when(release.getFiles()).thenReturn(new TreeResult("cRel", List.of(ECORE_PATH)));
+		when(release.readFile(anyString(), eq(ECORE_PATH)))
+				.thenAnswer(inv -> new ByteArrayInputStream(PERSON_ECORE.getBytes(StandardCharsets.UTF_8)));
+
+		try(GitStorageHelper h = new GitStorageHelper(resourceSet, List.of(main, release), "jena",
+				Map.of(EPACKAGE_TYPE, "schema"), registry, null)) {
+			verify(registry, times(2)).updateCache(any()); // one per branch at construction
+
+			h.reconcileAll();
+
+			// only main moved -> only its entry evicted + re-derived
+			verify(registry).removeFromCache("jena/main/" + ECORE_PATH);
+			verify(registry, never()).removeFromCache("jena/release/" + ECORE_PATH);
+
+			ArgumentCaptor<ObjectMetadata> captor = ArgumentCaptor.forClass(ObjectMetadata.class);
+			verify(registry, times(3)).updateCache(captor.capture()); // +1 main re-derive
+			assertEquals("cMain2", captor.getAllValues().get(2).getVersion());
+			assertEquals(List.of("jena/main/" + ECORE_PATH), h.listObjectIds("jena", "schema", "main"));
+			assertEquals(List.of("jena/release/" + ECORE_PATH), h.listObjectIds("jena", "schema", "release"));
+		}
+		
 	}
 }

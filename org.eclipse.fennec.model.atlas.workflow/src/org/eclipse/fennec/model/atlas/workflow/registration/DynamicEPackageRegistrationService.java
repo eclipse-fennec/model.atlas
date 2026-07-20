@@ -17,6 +17,7 @@ import java.util.Collection;
 import java.util.Hashtable;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -91,12 +92,29 @@ public class DynamicEPackageRegistrationService {
 //    @Reference
 //    private ModelInitializer initializer;
 
-    // Thread-safe storage for registered EPackages and their service registrations
-    private final Map<String, RegisteredEPackage> registeredEPackages = new ConcurrentHashMap<>();
+    // Thread-safe storage for registered EPackages and their service registrations.
+    // Keyed by scope+stage+nsURI (NOT nsURI alone): the same nsURI legitimately exists in
+    // several workflow stages at once (e.g. a git schema present on multiple branches =
+    // stages), each carrying its own content and its own emf.model.scope/atlas.stage
+    // service properties. Keying by nsURI alone would drop every stage after the first.
+    private final Map<RegistrationKey, RegisteredEPackage> registeredEPackages = new ConcurrentHashMap<>();
 
     // Track EPackages waiting for ResourceSet availability to send configuration
-    // events
+    // events (keyed by nsURI; the southbound mapping it feeds is stage-independent)
     private final Map<String, String> pendingConfigurationEvents = new ConcurrentHashMap<>();
+
+    // Serializes register/unregister so concurrent reloads (unregister-then-register of the
+    // same nsURI) do not interleave. The brief window in which the nsURI is unregistered is
+    // accepted (low request frequency); the lock only prevents corruption from concurrency.
+    private final ReentrantLock registrationLock = new ReentrantLock();
+
+    /**
+     * Composite registration key: an EPackage is identified by its workflow location
+     * ({@code scope}, {@code stage}) <em>and</em> its {@code nsURI}, so the same nsURI can be
+     * registered once per stage. {@code scope}/{@code stage} may be {@code null}.
+     */
+    private record RegistrationKey(String scope, String stage, String nsURI) {
+    }
 
     /**
      * Container for all service registrations related to a single EPackage.
@@ -145,11 +163,16 @@ public class DynamicEPackageRegistrationService {
     public void deactivate() {
         logger.info("Deactivating Dynamic EPackage Registration Service - unregistering all EPackages");
 
-        // Unregister all registered EPackages
-        registeredEPackages.values().forEach(RegisteredEPackage::unregisterAll);
-        registeredEPackages.clear();
+        registrationLock.lock();
+        try {
+            // Unregister all registered EPackages
+            registeredEPackages.values().forEach(RegisteredEPackage::unregisterAll);
+            registeredEPackages.clear();
 
-        this.bundleContext = null;
+            this.bundleContext = null;
+        } finally {
+            registrationLock.unlock();
+        }
     }
 
     /**
@@ -205,14 +228,20 @@ public class DynamicEPackageRegistrationService {
             return false;
         }
 
-        // Check if already registered
-        if (registeredEPackages.containsKey(nsURI)) {
-            logger.info("EPackage already registered: " + nsURI);
-            return false;
-        }
+        // Identify by scope+stage+nsURI, so the same nsURI in a different stage (e.g. a git
+        // schema on another branch) is NOT treated as a duplicate.
+        RegistrationKey key = new RegistrationKey(metadata.getScope(), metadata.getStage(), nsURI);
 
+        registrationLock.lock();
         try {
-            logger.info("Registering EPackage: " + nsURI + " (name=" + ePackage.getName() + ")");
+            // Check if already registered for this exact scope/stage
+            if (registeredEPackages.containsKey(key)) {
+                logger.info("EPackage already registered for " + key);
+                return false;
+            }
+
+            logger.info("Registering EPackage: " + nsURI + " (name=" + ePackage.getName() + ", scope="
+                    + metadata.getScope() + ", stage=" + metadata.getStage() + ")");
 
             Resource eResource = ePackage.eResource();
             if(eResource.getResourceSet() != null) eResource.getResourceSet().getResources().remove(eResource);
@@ -238,10 +267,7 @@ public class DynamicEPackageRegistrationService {
 
             // Store registration info
             registered = new RegisteredEPackage(configuratorReg, ePackageReg, eFactoryReg, conditionReg, modelName);
-
-//            }
-            // Store registration info
-            registeredEPackages.put(nsURI, registered);
+            registeredEPackages.put(key, registered);
 
             if (modelName != null) {
                 pendingConfigurationEvents.put(nsURI, modelName);
@@ -257,62 +283,85 @@ public class DynamicEPackageRegistrationService {
         } catch (Exception e) {
             logger.log(Level.SEVERE, "Failed to register EPackage: " + nsURI, e);
             return false;
+        } finally {
+            registrationLock.unlock();
         }
     }
 
     /**
-     * Unregisters an EPackage from the OSGi EMF registry.
-     * 
+     * Unregisters an EPackage from the OSGi EMF registry for a specific workflow
+     * location. Because registration is keyed by {@code scope+stage+nsURI}, the same nsURI
+     * may remain registered for other stages after this call.
+     *
+     * @param scope        the workflow scope the EPackage was registered under (may be null)
+     * @param stage        the workflow stage the EPackage was registered under (may be null)
      * @param namespaceURI the namespace URI of the EPackage to unregister
-     * @return true if unregistration was successful, false if not registered or
-     *         failed
+     * @return true if unregistration was successful, false if not registered or failed
      * @throws IllegalArgumentException if namespaceURI is null or empty
      */
-    public boolean unregisterEPackage(String namespaceURI) {
+    public boolean unregisterEPackage(String scope, String stage, String namespaceURI) {
         if (namespaceURI == null || namespaceURI.trim().isEmpty()) {
             throw new IllegalArgumentException("Namespace URI cannot be null or empty");
         }
 
-        RegisteredEPackage registered = registeredEPackages.remove(namespaceURI);
-        if (registered == null) {
-            logger.warning("EPackage not registered: " + namespaceURI);
-            return false;
-        }
+        RegistrationKey key = new RegistrationKey(scope, stage, namespaceURI);
+
+        registrationLock.lock();
         try {
-            logger.info("Unregistering EPackage: " + namespaceURI);
+            RegisteredEPackage registered = registeredEPackages.remove(key);
+            if (registered == null) {
+                logger.warning("EPackage not registered: " + key);
+                return false;
+            }
+            try {
+                logger.info("Unregistering EPackage: " + key);
 
-            // Send REMOVE configuration event before unregistering
-            sendRemoveConfigurationEvent(namespaceURI, registered.modelName);
-//            if (registered.modelName.equals("airquality")) {
-//            	initializer.doUnregisterModel();
-//            }
-            registered.unregisterAll();
+                // Send REMOVE configuration event before unregistering
+                sendRemoveConfigurationEvent(namespaceURI, registered.modelName);
+                registered.unregisterAll();
 
-            // Remove from pending events if present
-            pendingConfigurationEvents.remove(namespaceURI);
+                // Remove the pending event only if no other stage still holds this nsURI
+                if (registeredEPackages.keySet().stream().noneMatch(k -> k.nsURI().equals(namespaceURI))) {
+                    pendingConfigurationEvents.remove(namespaceURI);
+                }
 
-            logger.info("Successfully unregistered EPackage: " + namespaceURI);
-            return true;
+                logger.info("Successfully unregistered EPackage: " + key);
+                return true;
 
-        } catch (Exception e) {
-            logger.log(Level.SEVERE, "Failed to unregister EPackage: " + namespaceURI, e);
-            return false;
+            } catch (Exception e) {
+                logger.log(Level.SEVERE, "Failed to unregister EPackage: " + key, e);
+                return false;
+            }
+        } finally {
+            registrationLock.unlock();
         }
     }
 
     /**
-     * Checks if an EPackage is currently registered.
-     * 
+     * Checks if an EPackage is registered for a specific scope/stage.
+     *
+     * @return true if the EPackage is registered for that exact workflow location
+     */
+    public boolean isRegistered(String scope, String stage, String namespaceURI) {
+        return namespaceURI != null
+                && registeredEPackages.containsKey(new RegistrationKey(scope, stage, namespaceURI));
+    }
+
+    /**
+     * Checks if an EPackage is currently registered in <em>any</em> scope/stage.
+     *
      * @param namespaceURI the namespace URI to check
-     * @return true if the EPackage is registered, false otherwise
+     * @return true if the EPackage is registered for at least one workflow location
      */
     public boolean isRegistered(String namespaceURI) {
-        return namespaceURI != null && registeredEPackages.containsKey(namespaceURI);
+        return namespaceURI != null
+                && registeredEPackages.keySet().stream().anyMatch(k -> namespaceURI.equals(k.nsURI()));
     }
 
     /**
-     * Returns the number of currently registered EPackages.
-     * 
+     * Returns the number of currently registered EPackages (one count per
+     * scope/stage/nsURI registration).
+     *
      * @return the count of registered EPackages
      */
     public int getRegisteredCount() {
@@ -320,12 +369,12 @@ public class DynamicEPackageRegistrationService {
     }
 
     /**
-     * Returns the namespace URIs of all currently registered EPackages.
-     * 
+     * Returns the distinct namespace URIs of all currently registered EPackages.
+     *
      * @return array of namespace URIs (never null, may be empty)
      */
     public String[] getRegisteredNamespaceURIs() {
-        return registeredEPackages.keySet().toArray(new String[0]);
+        return registeredEPackages.keySet().stream().map(RegistrationKey::nsURI).distinct().toArray(String[]::new);
     }
 
     @Reference(policy = ReferencePolicy.DYNAMIC, cardinality = ReferenceCardinality.OPTIONAL, updated = "modifiedResourceSet")

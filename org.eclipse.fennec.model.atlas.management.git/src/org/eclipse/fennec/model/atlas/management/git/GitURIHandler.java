@@ -15,6 +15,7 @@ package org.eclipse.fennec.model.atlas.management.git;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.util.Map;
 
 import org.eclipse.emf.common.util.URI;
@@ -34,10 +35,14 @@ import org.gecko.jgit.api.GitService;
  * unique within the repo, the mapping is unambiguous regardless of whether the
  * per-branch clones share object stores.
  *
- * <p>Read-only: {@code createOutputStream} is not supported (inherited default
- * throws).
+ * <p>Read-only: {@link #createOutputStream(URI, Map)} always throws, so an attempt
+ * to {@code Resource.save()} a {@code git://} URI fails cleanly and visibly (git
+ * content is written externally on the git host, not through this backend).
  */
 public class GitURIHandler extends URIHandlerImpl {
+
+	private static final String READ_ONLY_MESSAGE =
+			"Git storage is read-only; writes happen externally on the git host";
 
 	private final Map<String, GitService> commitToService;
 
@@ -63,5 +68,15 @@ public class GitURIHandler extends URIHandlerImpl {
 		}
 		String file = GitEMFHelper.getGitFilePath(uri);
 		return gitService.readFile(commitId, file);
+	}
+
+	/**
+	 * Read-only backend: writing a {@code git://} URI is never supported. Throwing here
+	 * makes {@code Resource.save()} fail immediately with a clear read-only signal instead
+	 * of the opaque failure produced by the default {@link URIHandlerImpl} write path.
+	 */
+	@Override
+	public OutputStream createOutputStream(URI uri, Map<?, ?> options) throws IOException {
+		throw new UnsupportedOperationException(READ_ONLY_MESSAGE);
 	}
 }

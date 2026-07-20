@@ -66,4 +66,38 @@ class EObjectGitStorageServiceTest {
 	void nullArray_yieldsEmptyMap() {
 		assertTrue(EObjectGitStorageService.parseTypeToRegistry(null).isEmpty());
 	}
+
+	// --- G7: clone URL -> repository full name (webhook topic subscriber side) ---
+
+	@Test
+	void repoFullName_httpsUrl_stripsSchemeHostAndGitSuffix() {
+		assertEquals("owner/repo",
+				EObjectGitStorageService.repoFullNameFromCloneUrl("https://github.com/owner/repo.git"));
+		assertEquals("owner/repo",
+				EObjectGitStorageService.repoFullNameFromCloneUrl("https://github.com/owner/repo"));
+	}
+
+	@Test
+	void repoFullName_sshScpForm_keepsPathAfterColon() {
+		assertEquals("owner/repo",
+				EObjectGitStorageService.repoFullNameFromCloneUrl("git@github.com:owner/repo.git"));
+	}
+
+	@Test
+	void repoFullName_httpsWithCredentials_stripsAuthority() {
+		assertEquals("owner/repo",
+				EObjectGitStorageService.repoFullNameFromCloneUrl("https://user:token@github.com/owner/repo.git"));
+	}
+
+	@Test
+	void repoFullName_gitlabSubgroups_keptAsNamespacedPath() {
+		assertEquals("group/subgroup/repo",
+				EObjectGitStorageService.repoFullNameFromCloneUrl("https://gitlab.com/group/subgroup/repo.git"));
+	}
+
+	@Test
+	void repoFullName_nullOrBlank_yieldsEmpty() {
+		assertEquals("", EObjectGitStorageService.repoFullNameFromCloneUrl(null));
+		assertEquals("", EObjectGitStorageService.repoFullNameFromCloneUrl("   "));
+	}
 }
