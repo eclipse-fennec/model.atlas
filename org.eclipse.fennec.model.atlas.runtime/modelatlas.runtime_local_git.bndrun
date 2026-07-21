@@ -1,0 +1,13 @@
+-include: \
+	modelatlas.runtime_docker_git.bndrun,\
+	secrets.git.bndrun
+
+-runproperties.local: \
+    base.path=${.},\
+    logback.configurationFile=file:${.}/runtime/etc/logback.xml,\
+    gecko.log.dir=${.}/runtime/logs,\
+    org.apache.felix.configadmin.plugin.interpolation.secretsdir=${.}/runtime/secrets,\
+    data=${.}/runtime/data/
+
+-runtrace: true
+-resolve: never

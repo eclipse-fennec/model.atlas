@@ -32,7 +32,7 @@ import org.eclipse.emf.ecore.resource.Resource;
 import org.eclipse.emf.ecore.resource.ResourceSet;
 import org.eclipse.emf.ecore.util.EcoreUtil;
 import org.eclipse.emf.ecore.xmi.PackageNotFoundException;
-import org.eclipse.fennec.model.atlas.management.git.api.ModelUnavailableException;
+import org.eclipse.fennec.model.atlas.mgmt.storage.ModelUnavailableException;
 import org.eclipse.fennec.model.atlas.mgmt.api.EObjectRegistryService;
 import org.eclipse.fennec.model.atlas.mgmt.management.ManagementFactory;
 import org.eclipse.fennec.model.atlas.mgmt.management.ObjectMetadata;
@@ -443,26 +443,6 @@ public class GitStorageHelper extends AbstractStorageHelper {
 				cso.ungetService(rs); // discards the prototype ResourceSet
 			}
 		}
-	}
-
-	/** Walks {@code t} and its cause chain for a {@link PackageNotFoundException}. */
-	private static PackageNotFoundException findPackageNotFound(Throwable t) {
-		for (Throwable c = t; c != null; c = c.getCause()) {
-			if (c instanceof PackageNotFoundException pnf) {
-				return pnf;
-			}
-		}
-		return null;
-	}
-
-	/** Scans a loaded resource's errors for a {@link PackageNotFoundException}. */
-	private static PackageNotFoundException findPackageNotFoundInErrors(Resource resource) {
-		for (Resource.Diagnostic d : resource.getErrors()) {
-			if (d instanceof PackageNotFoundException pnf) {
-				return pnf;
-			}
-		}
-		return null;
 	}
 
 	@Override

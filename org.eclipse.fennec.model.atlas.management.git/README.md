@@ -47,8 +47,10 @@ branch's copy distinct.
 - **`GitURIHandler`** — EMF URI handler for `git://{commitId}/{path}`; reads blobs via
   `GitService.readFile` (no checkout). `createOutputStream` throws (read-only).
 - **`GitEMFHelper`** — builds/parses `git://` URIs.
-- **`api/ModelUnavailableException`** — the bundle's **only exported type** (package
-  `…management.git.api`). Thrown when an instance's model is unavailable (see *Removal*).
+This bundle exports no public types of its own; the impl package is `Private-Package`. The
+"model unavailable" signal is the shared `ModelUnavailableException` in
+`org.eclipse.fennec.model.atlas.mgmt.storage` (thrown centrally by `AbstractStorageHelper` for
+every backend — see *Removal*).
 
 The webhook payload models and REST ingest live in sibling bundles
 (`…git.webhook.model`, `…git.github.webhook.model`, `…git.gitlab.webhook.model`,
@@ -173,11 +175,83 @@ GitConfig~release → { repo: "git@github.com:acme/models.git", branch: "release
 
 **3. The registry chain** (`RegistryService`, `EPackageStageActionService`, `ScopeService`)
 wired to git — set `storageService.target=(storage.type=git)` and list the branches as the
-stages / trigger stages. (See `GitRegistryChainIT` for a complete, working wiring.)
+stages / trigger stages.
 
 **4. Webhook secrets** (if using webhooks) via ConfigAdmin pid
 `org.eclipse.fennec.model.atlas.management.git.webhook` (`githubSecret`, `gitlabToken`,
 `requireSignature` — fail-closed by default).
+
+### Complete example
+
+A full schema-serving git scope, as OSGi Configurator JSON (adapted from the working
+`GitRegistryChainIT`). The wiring link is `storage.type=git`: the storage service *publishes*
+it, and the registry + stage-action service *target* it. Repo `acme/models`, branch `main`
+promoted to `release`.
+
+```jsonc
+{
+  // One GitService per branch (branch = stage); same repo, one shared id for the target filter.
+  "GitConfig~acme-main":    { "repo": "git@github.com:acme/models.git", "branch": "main",    "id": "acme" },
+  "GitConfig~acme-release": { "repo": "git@github.com:acme/models.git", "branch": "release", "id": "acme" },
+
+  // The git storage service. Publishes `storage.type=git`; binds the GitServices by id;
+  // routes EPackages to the "schema" registry (add `…#//EObject:<reg>` to route instances too).
+  "GitObjectStorage~acme": {
+    "scope": "acme",
+    "type.registry.map": [ "http://www.eclipse.org/emf/2002/Ecore#//EPackage:schema" ],
+    "gitservice.target": "(id=acme)",
+    "poll.interval.seconds": 60,
+    "storage.type": "git",
+    "registry.target": "(registry=main)"
+  },
+
+  // Schema-registration handler, pointed at the git storage; branches are the trigger stages.
+  "EPackageStageActionService~acme": {
+    "storageService.target": "(storage.type=git)",
+    "trigger.stages": [ "main", "release" ],
+    "replay.on.startup": true
+  },
+
+  // The "schema" registry, wired to the git storage. Stages = branches; `release` is final.
+  "RegistryService~acme-schema": {
+    "registry.name": "schema",
+    "registry.type": "SCHEMA",
+    "root.eclass.uri": "http://www.eclipse.org/emf/2002/Ecore#//EPackage",
+    "schema.uri": "http://www.eclipse.org/emf/2002/Ecore",
+    "storageService.target": "(storage.type=git)",
+    "stageActionService.target": "(component.name=EPackageStageActionService)",
+    "registryService.target": "(registry=main)",
+    "resourceSet.target": "(emf.name=ecore)",
+    "stage.storage.mappings": [ "main:git", "release:git" ],
+    "workflow.transitions": [ "main:release" ],
+    "stages": [
+      "{ \"name\": \"main\",    \"writable\": false, \"final\": false }",
+      "{ \"name\": \"release\", \"writable\": false, \"final\": true  }"
+    ]
+  },
+
+  // The scope, bound to the registry; its activation builds the per-stage registries and
+  // replays cold-start registration.
+  "ScopeService~acme": {
+    "atlas.scope": "acme",
+    "scope.name": "acme",
+    "registryService.target": "(registry.name=schema)",
+    "registryService.cardinality.minimum": 1
+  },
+
+  // Optional: webhook secrets (fail-closed by default).
+  "org.eclipse.fennec.model.atlas.management.git.webhook": {
+    "githubSecret": "<hmac-secret>",
+    "gitlabToken": "<gitlab-token>",
+    "requireSignature": true
+  }
+}
+```
+
+To also serve **instances** (not just schemas), add a second `RegistryService` (e.g.
+`registry.type=OBJECT`, its own `root.eclass.uri`) and route to it from `type.registry.map` —
+using the `EObject` URI `http://www.eclipse.org/emf/2002/Ecore#//EObject:<registry>` as the
+per-instance catch-all.
 
 ---
 
@@ -193,18 +267,29 @@ stages / trigger stages. (See `GitRegistryChainIT` for a complete, working wirin
   per-stage EXIT on removal, instance resolution, model-unavailable, and referential
   integrity across a reload (instance `eClass()` and cross-ecore references).
 
-> **`org.gecko.jgit.GitServiceImpl` is SSH-only** — it unconditionally installs an SSH
-> transport callback, so it works with `git@host:…` remotes but not `git://`/`https://`.
-> The OSGi ITs therefore bind a test-only `TestGitService` (jgit fetch + read, no SSH
-> callback) instead of the real impl. Whether to relax that upstream is an open question
-> (see `PLAN.md` G8).
+> **`org.gecko.jgit.GitServiceImpl` is SSH-only and hard-wired to JCraft JSch.** It
+> unconditionally installs an SSH transport callback, so it works with `git@host:…` remotes but
+> not `git://`/`https://` (so even a *public* repo needs an SSH key — there is no anonymous SSH).
+> It also builds its own `GitSshSessionFactory` extending jgit's **JSch** session factory and
+> imports `com.jcraft.jsch`, so private keys must be **RSA in classic PEM format**
+> (`ssh-keygen -t rsa -b 4096 -m PEM`) — JSch 0.1.55 rejects the modern OpenSSH key format and
+> ed25519. Moving gecko.jgit onto jgit's **Apache MINA sshd** backend
+> (`org.eclipse.jgit.ssh.apache`) would lift *both* the transport and the key-format constraints,
+> but that is an upstream (gecko) change — it can't be swapped in via config/bundles because
+> gecko.jgit compiles against JSch. The OSGi ITs bind a test-only `TestGitService` (jgit fetch +
+> read, no SSH callback) instead of the real impl. See `PLAN.md` G8.
 
 ---
 
 ## Known limitations / deferred
 
 - Branch deletion and force-push/history-rewrite are not yet reflected.
-- `ModelUnavailableException` → clean HTTP mapping in the REST layer is a follow-up.
-- Audit of by-`nsURI` resolution across REST/clients now that one `nsURI` can be registered
-  per stage (the schema-registration sibling of the objectId audit).
-- `org.gecko.jgit`'s SSH-only transport (above).
+- `org.gecko.jgit`'s SSH-only transport **and** its hard dependency on legacy **JCraft JSch**
+  (RSA/PEM keys only — no ed25519 / OpenSSH-format; no `https://`/`git://`). Modernizing gecko.jgit
+  onto jgit's **Apache MINA sshd** backend (`org.eclipse.jgit.ssh.apache`) would resolve both —
+  an upstream (gecko) change (see the SSH note above).
+- Runtime/deployment wiring (PLAN.md G9): the `runtime.config.docker.git` bundle, the docker +
+  local bndruns, and the `docker/modelatlas_git` image files now exist. The **local** variant
+  (`modelatlas.runtime_local_git.bndrun` + `secrets.git.bndrun`) runs via Eclipse; **building the
+  docker image** currently needs Gradle on **Java 21** (Gradle 8.14 can't compile the docker
+  build scripts on Java 25 — a limitation shared by all docker modules).

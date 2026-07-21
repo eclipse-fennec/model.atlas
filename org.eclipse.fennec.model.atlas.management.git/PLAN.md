@@ -684,6 +684,19 @@ beyond metadata eviction, and a read of an orphaned instance still fails opaquel
   > protocol. **OPEN (boss):** whether to relax `GitServiceImpl` to attach the SSH
   > callback only for SSH transports (or only when `privateKey` is set), which would
   > let it serve `git://`/`https://` too — deferred, may be deliberate.
+  >
+  > **Finding (2026-07-21) — gecko.jgit is hard-wired to legacy JCraft JSch.**
+  > `GitServiceImpl` builds its own inner `GitSshSessionFactory` extending jgit's
+  > **JSch** session factory, and the bundle `Import-Package`s `com.jcraft.jsch` +
+  > `org.eclipse.jgit.transport.ssh.jsch`. So the JSch dependency comes from gecko.jgit
+  > itself (model.atlas only supplies the `org.apache.servicemix.bundles.jsch:0.1.55` +
+  > `org.eclipse.jgit.ssh.jsch` bundles to satisfy it). Consequence: SSH keys must be
+  > **RSA in classic PEM format** (`ssh-keygen -t rsa -b 4096 -m PEM`) — JSch 0.1.55
+  > cannot parse the modern OpenSSH key format nor ed25519. **OPEN (upstream, same owner
+  > as the SSH-only item):** migrate gecko.jgit to jgit's **Apache MINA sshd** backend
+  > (`org.eclipse.jgit.ssh.apache`), which supports OpenSSH-format + ed25519 keys and
+  > would also make relaxing the SSH-only transport straightforward. Cannot be done by
+  > swapping bundles here — gecko.jgit compiles against JSch; it is a gecko change.
 - **G9 — Runtime wiring (deferrable).** `runtime.config.docker.git` +
   `modelatlas.runtime_docker_git.bndrun` + `docker/modelatlas_git`; expose the
   webhook port; document credential/secret injection **per provider** (GitHub PAT/
