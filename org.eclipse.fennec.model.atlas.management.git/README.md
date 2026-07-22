@@ -261,33 +261,52 @@ per-instance catch-all.
   `EObjectGitStorageServiceTest` — plain JUnit 5 + Mockito over a mocked `GitService`.
 - **OSGi integration tests** (`…management.git.tests`): serve a **real repository over the
   `git://` protocol from a throw-away container** (`GitTestRepository`: Alpine + the
-  `git-daemon` package). `EObjectGitStorageServiceIT` covers activation, per-branch reads,
+  `git-daemon` package), driving the **production `org.gecko.jgit.GitServiceImpl`** (one
+  `GitConfig` factory configuration per branch, no `privateKey` → anonymous fetch).
+  `EObjectGitStorageServiceIT` covers activation, per-branch reads,
   derived metadata, write-rejection, and webhook/poll resync; `GitRegistryChainIT` stands up
   the full registry chain and covers cold-start per-branch registration, webhook/poll ENTER,
   per-stage EXIT on removal, instance resolution, model-unavailable, and referential
   integrity across a reload (instance `eClass()` and cross-ecore references).
+- **Manual end-to-end test (2026-07-22)**: full runtime
+  (`modelatlas.runtime_local_git.bndrun`) against a real GitHub repository over anonymous
+  `https://`, three branches (= stages) `draft`/`approved`/`release`, the same nsURI with
+  *different* content on `draft` and `approved`, instances on both. Verified: per-stage
+  schema registration and instance reads (each stage resolves against its own branch's
+  schema), reconcile-poll pickup of pushes, schema removal on one branch → clean `409`
+  model-unavailable for that stage's instances while the other stage keeps working. This
+  test also uncovered the cross-stage JSON limitation below.
 
-> **`org.gecko.jgit.GitServiceImpl` is SSH-only and hard-wired to JCraft JSch.** It
-> unconditionally installs an SSH transport callback, so it works with `git@host:…` remotes but
-> not `git://`/`https://` (so even a *public* repo needs an SSH key — there is no anonymous SSH).
-> It also builds its own `GitSshSessionFactory` extending jgit's **JSch** session factory and
-> imports `com.jcraft.jsch`, so private keys must be **RSA in classic PEM format**
-> (`ssh-keygen -t rsa -b 4096 -m PEM`) — JSch 0.1.55 rejects the modern OpenSSH key format and
-> ed25519. Moving gecko.jgit onto jgit's **Apache MINA sshd** backend
-> (`org.eclipse.jgit.ssh.apache`) would lift *both* the transport and the key-format constraints,
-> but that is an upstream (gecko) change — it can't be swapped in via config/bundles because
-> gecko.jgit compiles against JSch. The OSGi ITs bind a test-only `TestGitService` (jgit fetch +
-> read, no SSH callback) instead of the real impl. See `PLAN.md` G8.
+> **gecko.jgit transport (fixed upstream, 2026-07):** `GitServiceImpl` used to be SSH-only and
+> hard-wired to legacy JCraft JSch (RSA/PEM keys only, no anonymous `git://`/`https://`). It now
+> uses jgit's **Apache MINA sshd** backend (`org.eclipse.jgit.ssh.apache`) and only installs the
+> SSH session factory **when a `privateKey` is configured** — so anonymous `git://`/`https://`
+> remotes work without a key, and SSH keys may be **ed25519 / OpenSSH-format** (a `knownHosts`
+> config option was added as well). The dependency closure changed accordingly: `ssh.apache` +
+> `sshd-osgi`/`sshd-sftp` + BouncyCastle instead of `ssh.jsch` + servicemix-jsch. The former
+> test-only `TestGitService` stand-in has been removed — the ITs bind the real impl.
 
 ---
 
 ## Known limitations / deferred
 
+- **Cross-stage JSON serialization after a schema removal (found in the manual e2e test,
+  2026-07-22 — XML unaffected).** With the same nsURI registered for several stages (= git
+  branches, the intended stage-aware behavior), removing the schema on ONE branch breaks
+  REST **JSON** reads of the OTHER branches' objects with HTTP 500
+  (`Error serializing outgoing object`), persistently; **XML reads of the same objects keep
+  working**, as do storage reads and the removed stage's own clean `409`. Root cause is NOT
+  in this bundle: fennec-codec's `MetadataServiceImpl` (`org.eclipse.fennec.model.metadata`)
+  tracks whiteboard-bound `EPackage` services in a map keyed by **nsURI alone** (first-wins
+  register, unconditional remove), so one stage's unbind drops the metadata entry the
+  surviving stages' JSON codec still needs. Red repro test:
+  `MetadataServiceSameNsUriMultiInstanceTest` (fennec-codec). Conceptually this is the
+  "version, not URI" / fingerprint-join problem analyzed in
+  [model.atlas#156](https://github.com/eclipse-fennec/model.atlas/issues/156) — any consumer
+  that whiteboard-tracks `EPackage` services keyed by nsURI breaks under multi-version
+  (multi-stage) registration. Until fixed there, JSON content reads are unreliable for a
+  nsURI after any stage's schema removal; XML is the workaround.
 - Branch deletion and force-push/history-rewrite are not yet reflected.
-- `org.gecko.jgit`'s SSH-only transport **and** its hard dependency on legacy **JCraft JSch**
-  (RSA/PEM keys only — no ed25519 / OpenSSH-format; no `https://`/`git://`). Modernizing gecko.jgit
-  onto jgit's **Apache MINA sshd** backend (`org.eclipse.jgit.ssh.apache`) would resolve both —
-  an upstream (gecko) change (see the SSH note above).
 - Runtime/deployment wiring (PLAN.md G9): the `runtime.config.docker.git` bundle, the docker +
   local bndruns, and the `docker/modelatlas_git` image files now exist. The **local** variant
   (`modelatlas.runtime_local_git.bndrun` + `secrets.git.bndrun`) runs via Eclipse; **building the

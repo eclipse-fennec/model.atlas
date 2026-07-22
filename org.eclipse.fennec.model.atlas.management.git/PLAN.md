@@ -674,29 +674,33 @@ beyond metadata eviction, and a read of an orphaned instance still fails opaquel
   > and `https://` (`TransportHttp`) it throws `ClassCastException`. This matches
   > production (the jena reference used `git@github.com:…` with a deploy key), so it
   > may be intentional. Because SSH scp-like URLs carry no port and `ssh://host:port`
-  > is rejected by `isRemote`, the *real* impl cannot be driven from a
-  > Testcontainers-mapped random port. **Decision (2026-07-20): Solution 1** — the ITs
-  > register a test-only `TestGitService` (implements `GitService`, does exactly what
-  > `GitServiceImpl` does via jgit but **without** the SSH-only transport callback) as
-  > OSGi services with `id=testrepo`; the `GitObjectStorage` config binds them via
-  > `gitservice.target=(id=testrepo)`. This exercises all production `management.git`
-  > code (helper, `GitURIHandler`, reconcile, webhook, poll) over the real git wire
-  > protocol. **OPEN (boss):** whether to relax `GitServiceImpl` to attach the SSH
-  > callback only for SSH transports (or only when `privateKey` is set), which would
-  > let it serve `git://`/`https://` too — deferred, may be deliberate.
+  > is rejected by `isRemote`, the *real* impl could not be driven from a
+  > Testcontainers-mapped random port. The original decision (2026-07-20) was to
+  > register a test-only `TestGitService` stand-in.
   >
-  > **Finding (2026-07-21) — gecko.jgit is hard-wired to legacy JCraft JSch.**
-  > `GitServiceImpl` builds its own inner `GitSshSessionFactory` extending jgit's
-  > **JSch** session factory, and the bundle `Import-Package`s `com.jcraft.jsch` +
-  > `org.eclipse.jgit.transport.ssh.jsch`. So the JSch dependency comes from gecko.jgit
-  > itself (model.atlas only supplies the `org.apache.servicemix.bundles.jsch:0.1.55` +
-  > `org.eclipse.jgit.ssh.jsch` bundles to satisfy it). Consequence: SSH keys must be
-  > **RSA in classic PEM format** (`ssh-keygen -t rsa -b 4096 -m PEM`) — JSch 0.1.55
-  > cannot parse the modern OpenSSH key format nor ed25519. **OPEN (upstream, same owner
-  > as the SSH-only item):** migrate gecko.jgit to jgit's **Apache MINA sshd** backend
-  > (`org.eclipse.jgit.ssh.apache`), which supports OpenSSH-format + ed25519 keys and
-  > would also make relaxing the SSH-only transport straightforward. Cannot be done by
-  > swapping bundles here — gecko.jgit compiles against JSch; it is a gecko change.
+  > **RESOLVED upstream (2026-07-22).** gecko.jgit fixed both findings: `GitServiceImpl`
+  > now uses jgit's **Apache MINA sshd** backend (`org.eclipse.jgit.ssh.apache` —
+  > ed25519/OpenSSH-format keys OK, new `knownHosts` config option; JSch is gone) and
+  > only installs the SSH session factory **when a `privateKey` is configured**, so
+  > anonymous `git://`/`https://` (and `ssh://`) remotes work without a key. The ITs
+  > now create the **real `GitServiceImpl`** per branch via `GitConfig` factory
+  > configurations (`repo`/`branch`/`id=testrepo`, no key) and `TestGitService` was
+  > removed; all 13 ITs green (2026-07-22). The dependency closure changed to
+  > `ssh.apache` + `sshd-osgi`/`sshd-sftp` + BouncyCastle (`cnf/central.mvn`,
+  > `test.bndrun`, `modelatlas.runtime_docker_git.bndrun` all updated). The updated
+  > jar is kept in `cnf/local/org.gecko.jgit/` until the upstream snapshot publish
+  > pipeline is live again.
+  >
+  > **Finding (2026-07-21) — why `org.gecko.jgit:1.0.0-SNAPSHOT` is unresolvable (the
+  > "No metadata for revision" caveat).** The gecko.jgit Jenkins snapshot job itself
+  > *fails*, so no snapshot is ever published (and old ones get GC'd). Per its build log it
+  > compiles fine but dies at `:org.gecko.jgit:release` uploading the POM to
+  > `https://oss.sonatype.org/content/repositories/snapshots/…` with **HTTP 405 Method Not
+  > Allowed** — Sonatype **OSSRH (`oss.sonatype.org`) is decommissioned**. Upstream fix (in
+  > the gecko.jgit repo): repoint the snapshot deploy from OSSRH to the Central Portal
+  > (`https://central.sonatype.com/repository/maven-snapshots/`). **model.atlas workaround
+  > (in place): keep the resolved release jar in `cnf/local/org.gecko.jgit/`, not the
+  > `-SNAPSHOT` maven coordinate** — decouples us from the broken upstream pipeline.
 - **G9 — Runtime wiring (deferrable).** `runtime.config.docker.git` +
   `modelatlas.runtime_docker_git.bndrun` + `docker/modelatlas_git`; expose the
   webhook port; document credential/secret injection **per provider** (GitHub PAT/

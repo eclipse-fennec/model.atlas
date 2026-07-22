@@ -45,7 +45,6 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.io.TempDir;
 import org.osgi.framework.BundleContext;
-import org.osgi.framework.ServiceRegistration;
 import org.osgi.service.cm.Configuration;
 import org.osgi.service.cm.ConfigurationAdmin;
 import org.osgi.service.cm.annotations.RequireConfigurationAdmin;
@@ -64,15 +63,14 @@ import org.slf4j.LoggerFactory;
  *
  * <p>A throw-away container ({@link GitTestRepository}) serves a real repository over
  * the anonymous {@code git://} protocol. The {@link GitService}s the backend binds to
- * are provided by {@link TestGitService} (one per branch = stage), registered as OSGi
- * services with {@code id=testrepo}; the {@code GitObjectStorage} configuration selects
- * them via {@code gitservice.target=(id=testrepo)}. {@code TestGitService} stands in for
- * {@code org.gecko.jgit.GitServiceImpl} because that impl is SSH-only and cannot be
- * driven over {@code git://} (see {@link TestGitService} and {@code PLAN.md} G8); it uses
- * jgit the same way but without the SSH-only transport callback, so all of the production
- * {@code management.git} code (helper, {@code GitURIHandler}, reconcile, webhook, poll)
- * is exercised. Services are registered at runtime once the container's mapped port is
- * known (the git URL is only knowable then).
+ * are the production {@code org.gecko.jgit.GitServiceImpl} (one per branch = stage),
+ * created via {@code GitConfig} factory configurations with {@code id=testrepo} and
+ * <em>no</em> {@code privateKey} — since gecko.jgit moved to the Apache MINA sshd
+ * backend, the SSH session factory is only installed when a key is configured, so
+ * anonymous {@code git://} fetches work. The {@code GitObjectStorage} configuration
+ * selects the services via {@code gitservice.target=(id=testrepo)}. Configurations are
+ * created at runtime once the container's mapped port is known (the git URL is only
+ * knowable then).
  *
  * <p>These tests are all D8-independent: they cover DS wiring, activation, schema
  * derivation and read-only reads. The reload / referential-integrity matrix (D8) is
@@ -109,7 +107,7 @@ public class EObjectGitStorageServiceIT {
 	Path tempDir;
 
 	private GitTestRepository repo;
-	private final List<ServiceRegistration<GitService>> gitServiceRegs = new ArrayList<>();
+	private final List<Configuration> gitServiceConfigs = new ArrayList<>();
 	private Configuration gitStorage;
 
 	@BeforeEach
@@ -127,14 +125,10 @@ public class EObjectGitStorageServiceIT {
 	@AfterEach
 	public void after() throws Exception {
 		deleteQuietly(gitStorage);
-		for (ServiceRegistration<GitService> reg : gitServiceRegs) {
-			try {
-				reg.unregister();
-			} catch (IllegalStateException ignore) {
-				// already unregistered
-			}
+		for (Configuration cfg : gitServiceConfigs) {
+			deleteQuietly(cfg);
 		}
-		gitServiceRegs.clear();
+		gitServiceConfigs.clear();
 		if (repo != null) {
 			repo.close();
 		}
@@ -432,7 +426,7 @@ public class EObjectGitStorageServiceIT {
 	@SuppressWarnings({ "rawtypes", "unchecked" })
 	private EObjectStorageService<EObject> awaitStorage(ServiceAware<EObjectStorageService> serviceAware,
 			int pollSeconds) throws Exception {
-		LOG.info("[git-it] registering TestGitServices + GitObjectStorage configuration (poll={}s)...", pollSeconds);
+		LOG.info("[git-it] creating GitConfig services + GitObjectStorage configuration (poll={}s)...", pollSeconds);
 		createGitBackend(pollSeconds);
 		LOG.info("[git-it] waiting for EObjectStorageService(storage.backend=git)...");
 		EObjectStorageService<EObject> storageService = (EObjectStorageService<EObject>) serviceAware
@@ -443,10 +437,12 @@ public class EObjectGitStorageServiceIT {
 	}
 
 	/**
-	 * Registers one {@link TestGitService} per branch (= stage) as an OSGi service with
-	 * {@code id=testrepo}, then creates the {@code GitObjectStorage} backend that binds
-	 * them via {@code gitservice.target=(id=testrepo)}. The services are registered first
-	 * so the {@code STATIC}/{@code GREEDY} gitservice reference binds them on activation.
+	 * Creates one real {@code org.gecko.jgit.GitServiceImpl} per branch (= stage) via a
+	 * {@code GitConfig} factory configuration with {@code id=testrepo} (and no private key,
+	 * so the fetch runs anonymously over {@code git://}), then creates the
+	 * {@code GitObjectStorage} backend that binds them via
+	 * {@code gitservice.target=(id=testrepo)}. The services are awaited first so the
+	 * {@code STATIC}/{@code GREEDY} gitservice reference binds them on activation.
 	 *
 	 * @param pollSeconds reconcile-poll interval; {@code 0} disables the poll (webhook-only)
 	 */
@@ -455,6 +451,7 @@ public class EObjectGitStorageServiceIT {
 
 		registerGitService(gitUrl, GitTestRepository.BRANCH_MAIN);
 		registerGitService(gitUrl, GitTestRepository.BRANCH_RELEASE);
+		awaitGitServices(2);
 
 		gitStorage = configAdmin.getFactoryConfiguration(GIT_STORAGE_PID, "test", "?");
 		Dictionary<String, Object> storageProps = new Hashtable<>();
@@ -469,13 +466,29 @@ public class EObjectGitStorageServiceIT {
 	}
 
 	private void registerGitService(String gitUrl, String branch) throws Exception {
-		Path gitDir = tempDir.resolve("clone-" + branch + "/git");
-		TestGitService service = new TestGitService(gitUrl, branch, gitDir);
+		Configuration cfg = configAdmin.getFactoryConfiguration("GitConfig", branch, "?");
 		Dictionary<String, Object> props = new Hashtable<>();
-		props.put("id", GIT_ID);
+		props.put("repo", gitUrl);
 		props.put("branch", branch);
-		gitServiceRegs.add(context.registerService(GitService.class, service, props));
-		LOG.info("[git-it] registered TestGitService branch={} url={}", branch, gitUrl);
+		// Extra (non-OCD) property published as a service property for the gitservice.target filter.
+		props.put("id", GIT_ID);
+		// No privateKey: GitServiceImpl then skips the SSH session factory entirely and the
+		// fetch runs anonymously over git://.
+		cfg.update(props);
+		gitServiceConfigs.add(cfg);
+		LOG.info("[git-it] created GitConfig~{} url={}", branch, gitUrl);
+	}
+
+	/** Waits until {@code count} real GitServiceImpl instances (id=testrepo) are registered. */
+	private void awaitGitServices(int count) throws Exception {
+		long deadline = System.currentTimeMillis() + 30_000L;
+		while (System.currentTimeMillis() < deadline) {
+			if (context.getServiceReferences(GitService.class, "(id=" + GIT_ID + ")").size() >= count) {
+				return;
+			}
+			Thread.sleep(100);
+		}
+		throw new IllegalStateException("expected " + count + " GitService(id=" + GIT_ID + ") services");
 	}
 
 	private static void deleteQuietly(Configuration config) {

@@ -6,9 +6,11 @@ and/or webhooks. Writing happens externally on the git host; Model Atlas only re
 
 ## Prerequisites
 
-- **SSH access.** `org.gecko.jgit` is SSH-only, so `GIT_REPO` must be an scp-like SSH URL
-  (`git@host:owner/repo.git`) and you must provide a private key with read access. `https://`
-  and `git://` are **not** supported by the current git transport.
+- **Repository access.** `GIT_REPO` may be an scp-like SSH URL (`git@host:owner/repo.git`),
+  `ssh://`, `https://` or `git://`. For SSH remotes provide a private key with read access
+  (e.g. a read-only deploy key) — `org.gecko.jgit` uses jgit's Apache MINA sshd backend, so
+  **ed25519 / OpenSSH-format keys are fine**. Anonymous `https://`/`git://` remotes need no
+  key (the SSH stack is only engaged for SSH transports).
 - The repository must contain the branches configured as stages (default: `draft`, `approved`,
   `release`), each holding the `.ecore` schemas (and `.xmi` instances) to serve.
 
@@ -31,8 +33,8 @@ Webhooks (optional) are served on the same port under the REST endpoints
 
 | Variable | Default | Description |
 |----------|---------|-------------|
-| `GIT_REPO` | `git@github.com:acme/models.git` | SSH URL of the repository to serve |
-| `GIT_PRIVATE_KEY` | `/opt/modelatlas/runtime/secrets/git_deploy_key` | Path to the SSH private key |
+| `GIT_REPO` | `git@github.com:acme/models.git` | URL of the repository to serve (SSH, `https://` or `git://`) |
+| `GIT_PRIVATE_KEY` | `/opt/modelatlas/runtime/secrets/git_deploy_key` | Path to the SSH private key (only used for SSH remotes) |
 | `GIT_PRIVATE_KEY_PASSPHRASE` | *(empty)* | Passphrase for the key, if any |
 | `GIT_WEBHOOK_GITHUB_SECRET` | *(empty)* | HMAC secret for GitHub push webhooks |
 | `GIT_WEBHOOK_GITLAB_TOKEN` | *(empty)* | Token for GitLab push webhooks |

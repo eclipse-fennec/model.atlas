@@ -42,7 +42,6 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.io.TempDir;
 import org.osgi.framework.BundleContext;
-import org.osgi.framework.ServiceRegistration;
 import org.osgi.service.cm.Configuration;
 import org.osgi.service.cm.ConfigurationAdmin;
 import org.osgi.service.cm.annotations.RequireConfigurationAdmin;
@@ -61,7 +60,9 @@ import org.slf4j.LoggerFactory;
  * registry chain — git storage → {@code EPackageStageActionService} →
  * {@code DynamicEPackageRegistrationService} → {@code RegistryService} → {@code ScopeService}
  * (which builds the per-stage {@code ResourceSet}s) — over the real {@code git://} container
- * ({@link GitTestRepository} + {@link TestGitService}). Unlike {@link EObjectGitStorageServiceIT}
+ * ({@link GitTestRepository}), with the production {@code org.gecko.jgit.GitServiceImpl} created
+ * per branch via {@code GitConfig} factory configurations (no private key → anonymous
+ * {@code git://} fetch). Unlike {@link EObjectGitStorageServiceIT}
  * (which primes the shared cache directly), this exercises the schema (un)registration path
  * end-to-end and thus validates:
  *
@@ -112,7 +113,7 @@ public class GitRegistryChainIT {
 	Path tempDir;
 
 	private GitTestRepository repo;
-	private final List<ServiceRegistration<GitService>> gitServiceRegs = new ArrayList<>();
+	private final List<Configuration> gitServiceConfigs = new ArrayList<>();
 	private final List<Configuration> configs = new ArrayList<>();
 
 	@BeforeEach
@@ -137,14 +138,14 @@ public class GitRegistryChainIT {
 			}
 		}
 		configs.clear();
-		for (ServiceRegistration<GitService> reg : gitServiceRegs) {
+		for (Configuration cfg : gitServiceConfigs) {
 			try {
-				reg.unregister();
-			} catch (IllegalStateException ignore) {
-				// already gone
+				cfg.delete();
+			} catch (Exception ignore) {
+				// best-effort teardown
 			}
 		}
-		gitServiceRegs.clear();
+		gitServiceConfigs.clear();
 		if (repo != null) {
 			repo.close();
 		}
@@ -262,6 +263,86 @@ public class GitRegistryChainIT {
 		assertTrue(waitUntilEmpty(mainPkgAware, WAIT), "person@main should be unregistered after removal");
 		// ...while release's survives.
 		assertNotNull(releasePkgAware.getService(), "person@release must survive the main-branch removal");
+	}
+
+	/**
+	 * Reproduces the manual-e2e regression (2026-07-22): with the same nsURI on two branches
+	 * (= stages), removing the schema on ONE branch made objects of the OTHER branch
+	 * unserializable in the REST layer ("[DynamicEObjectImpl] Error serializing outgoing
+	 * object", fennec codec) while the storage read of the same object kept returning 200.
+	 *
+	 * <p>This mirrors the codec's write path exactly: {@code ScopedResourceSetProvider} leases
+	 * a <b>fresh prototype per-stage ResourceSet per request</b> from the
+	 * {@code ResourceSetCollector}, the writer copies the outgoing EObject into a resource of
+	 * that ResourceSet and saves it. So after the release-branch removal this test leases a
+	 * fresh (scope, stage=main) ResourceSet — like the next incoming request would — and
+	 * asserts it can still resolve the person nsURI and serialize a copy of main's alice.
+	 */
+	@SuppressWarnings({ "rawtypes", "unchecked" })
+	@Test
+	@RegistryConfiguration
+	@EPackageLuceneIndexSetup
+	public void schemaRemovedOnOneBranch_survivingStageStillSerializesViaFreshResourceSet(
+			@InjectService(cardinality = 0, filter = "(storage.backend=git)") ServiceAware<EObjectStorageService> storageAware,
+			@InjectService(cardinality = 0, filter = "(&(emf.name=person)(emf.model.scope=" + SCOPE
+					+ ")(atlas.stage=main))") ServiceAware<EPackage> mainPkgAware,
+			@InjectService(cardinality = 0, filter = "(&(emf.name=person)(emf.model.scope=" + SCOPE
+					+ ")(atlas.stage=release))") ServiceAware<EPackage> releasePkgAware)
+			throws Exception {
+
+		startChain(2);
+		EObjectStorageService<EObject> storage = (EObjectStorageService<EObject>) storageAware.waitForService(WAIT);
+		assertNotNull(mainPkgAware.waitForService(WAIT), "person@main registered at start");
+		assertNotNull(releasePkgAware.waitForService(WAIT), "person@release registered at start");
+
+		String aliceId = SCOPE + "/" + GitTestRepository.BRANCH_MAIN + "/" + GitTestRepository.ALICE_XMI;
+
+		// Precondition (request BEFORE the removal): fresh per-stage RS resolves person and
+		// serializes alice — this is the manual step that worked.
+		serializeViaFreshStageResourceSet(storage, aliceId, "before the release-branch removal");
+
+		// Remove the schema from release only; wait for its EXIT to settle.
+		repo.removeOnBranch(GitTestRepository.BRANCH_RELEASE, GitTestRepository.PERSON_ECORE);
+		assertTrue(waitUntilEmpty(releasePkgAware, WAIT), "person@release should be unregistered after removal");
+		assertNotNull(mainPkgAware.getService(), "person@main must survive the release-branch removal");
+
+		// THE REGRESSION (request AFTER the removal): the storage read still works, but the
+		// codec-equivalent serialization via a freshly-leased main-stage ResourceSet broke.
+		serializeViaFreshStageResourceSet(storage, aliceId, "after the release-branch removal");
+	}
+
+	/**
+	 * Performs the codec's write path against a freshly-leased (scope, stage=main) prototype
+	 * ResourceSet: retrieve alice from storage, resolve her nsURI in the leased RS's package
+	 * registry, copy her into a new resource of that RS and save it.
+	 */
+	private void serializeViaFreshStageResourceSet(EObjectStorageService<EObject> storage, String aliceId,
+			String phase) throws Exception {
+		EObject alice = storage.retrieveObject(SCOPE, SCHEMA_REGISTRY, GitTestRepository.BRANCH_MAIN, aliceId)
+				.timeout(WAIT).getValue();
+		assertNotNull(alice, "main's alice must be retrievable from storage " + phase);
+
+		java.util.Collection<org.osgi.framework.ServiceReference<org.eclipse.emf.ecore.resource.ResourceSet>> refs = context
+				.getServiceReferences(org.eclipse.emf.ecore.resource.ResourceSet.class,
+						"(&(scope.name=" + SCOPE + ")(stage.name=" + GitTestRepository.BRANCH_MAIN + "))");
+		assertFalse(refs.isEmpty(), "per-stage (main) ResourceSet service must be present " + phase);
+		org.osgi.framework.ServiceObjects<org.eclipse.emf.ecore.resource.ResourceSet> so = context
+				.getServiceObjects(refs.iterator().next());
+		org.eclipse.emf.ecore.resource.ResourceSet rs = so.getService();
+		try {
+			assertNotNull(rs.getPackageRegistry().getEPackage(GitTestRepository.PERSON_NS_URI),
+					"person nsURI must resolve in a freshly-leased main-stage ResourceSet " + phase);
+			org.eclipse.emf.ecore.resource.Resource out = rs
+					.createResource(org.eclipse.emf.common.util.URI.createURI("http://test.test/alice.xmi"));
+			assertNotNull(out, "the leased ResourceSet must be able to create a resource " + phase);
+			out.getContents().add(org.eclipse.emf.ecore.util.EcoreUtil.copy(alice));
+			java.io.ByteArrayOutputStream bout = new java.io.ByteArrayOutputStream();
+			out.save(bout, java.util.Map.of());
+			assertTrue(bout.size() > 0, "serialized alice must not be empty " + phase);
+			rs.getResources().remove(out);
+		} finally {
+			so.ungetService(rs);
+		}
 	}
 
 	// ---------------------------------------------------------------------
@@ -428,14 +509,16 @@ public class GitRegistryChainIT {
 	// ---------------------------------------------------------------------
 
 	/**
-	 * Registers the {@link TestGitService}s and creates the chain configs in G6-safe order:
-	 * git storage (primes the cache) → EPackageStageActionService → RegistryService →
-	 * ScopeService (whose bind triggers the per-stage registries + the cold-start replay).
+	 * Creates the real {@code GitServiceImpl}s (via {@code GitConfig} factory configurations)
+	 * and the chain configs in G6-safe order: git storage (primes the cache) →
+	 * EPackageStageActionService → RegistryService → ScopeService (whose bind triggers the
+	 * per-stage registries + the cold-start replay).
 	 */
 	private void startChain(int pollSeconds) throws Exception {
 		String gitUrl = repo.gitUrl();
 		registerGitService(gitUrl, GitTestRepository.BRANCH_MAIN);
 		registerGitService(gitUrl, GitTestRepository.BRANCH_RELEASE);
+		awaitGitServices(2);
 
 		// 1) git storage — bring it up first so its ctor primes schemas into the shared cache.
 		Configuration storage = configAdmin.getFactoryConfiguration("GitObjectStorage", "chain", "?");
@@ -510,12 +593,28 @@ public class GitRegistryChainIT {
 	}
 
 	private void registerGitService(String gitUrl, String branch) throws Exception {
-		Path gitDir = tempDir.resolve("clone-" + branch + "/git");
-		TestGitService service = new TestGitService(gitUrl, branch, gitDir);
+		Configuration cfg = configAdmin.getFactoryConfiguration("GitConfig", branch, "?");
 		Dictionary<String, Object> props = new Hashtable<>();
-		props.put("id", GIT_ID);
+		props.put("repo", gitUrl);
 		props.put("branch", branch);
-		gitServiceRegs.add(context.registerService(GitService.class, service, props));
+		// Extra (non-OCD) property published as a service property for the gitservice.target filter.
+		props.put("id", GIT_ID);
+		// No privateKey: GitServiceImpl then skips the SSH session factory entirely and the
+		// fetch runs anonymously over git://.
+		cfg.update(props);
+		gitServiceConfigs.add(cfg);
+	}
+
+	/** Waits until {@code count} real GitServiceImpl instances (id=testrepo) are registered. */
+	private void awaitGitServices(int count) throws Exception {
+		long deadline = System.currentTimeMillis() + WAIT;
+		while (System.currentTimeMillis() < deadline) {
+			if (context.getServiceReferences(GitService.class, "(id=" + GIT_ID + ")").size() >= count) {
+				return;
+			}
+			Thread.sleep(100);
+		}
+		throw new IllegalStateException("expected " + count + " GitService(id=" + GIT_ID + ") services");
 	}
 
 	private static boolean waitUntilEmpty(ServiceAware<EPackage> aware, long timeoutMs) throws InterruptedException {

@@ -37,10 +37,13 @@ import org.slf4j.LoggerFactory;
  *
  * <p>Why {@code git://} and not {@code http://}: {@code org.gecko.jgit}'s
  * {@code GitServiceImpl} only treats a URL as <em>remote</em> (and therefore
- * clones/fetches it) when it {@code startsWith("git")} or {@code startsWith("https")};
+ * clones/fetches it) when it starts with {@code git}, {@code https} or {@code ssh};
  * a plain {@code http://} URL falls into its local-{@code File} branch and fails.
  * The anonymous git-daemon protocol needs no TLS and no credentials, which is
- * exactly right for our read-only backend, so we use it here.
+ * exactly right for our read-only backend, so we use it here. Since gecko.jgit
+ * moved to the Apache MINA sshd backend and only installs the SSH session factory
+ * when a {@code privateKey} is configured, the real {@code GitServiceImpl} can be
+ * driven over this URL directly (no test stand-in needed anymore).
  *
  * <h3>Layout of the served repo</h3>
  * <ul>
