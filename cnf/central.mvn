@@ -215,7 +215,7 @@ org.geckoprojects.emf:org.gecko.emf.osgi.example.model.basic:6.3.1
 com.h2database:h2:2.3.232
 
 #jGit
-#org.geckoprojects.jgit:org.gecko.jgit:1.0.0-SNAPSHOT
+org.geckoprojects.jgit:org.gecko.jgit:1.0.0-SNAPSHOT
 
 org.eclipse.jgit:org.eclipse.jgit:7.7.0.202606012155-r
 org.eclipse.jgit:org.eclipse.jgit.ssh.apache:7.7.0.202606012155-r
