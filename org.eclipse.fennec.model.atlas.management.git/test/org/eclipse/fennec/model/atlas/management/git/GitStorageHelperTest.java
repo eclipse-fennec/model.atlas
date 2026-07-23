@@ -30,7 +30,9 @@ import static org.mockito.Mockito.when;
 
 import java.io.ByteArrayInputStream;
 import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
 import java.util.ArrayList;
+import java.util.HexFormat;
 import java.util.List;
 import java.util.Map;
 
@@ -124,6 +126,14 @@ class GitStorageHelperTest {
 		assertEquals("main", md.getStage(), "stage = branch");
 		assertEquals(EPACKAGE_TYPE, md.getObjectType());
 		assertEquals(COMMIT, md.getVersion(), "version = commit id");
+		assertEquals(sha256Hex(PERSON_ECORE), md.getContentHash(), "contentHash = SHA-256 of the blob bytes");
+		assertEquals("http://example.org/person", md.getProperties().get("nsUri"),
+				"schema metadata carries the nsUri property (like the schema upload path)");
+	}
+
+	private static String sha256Hex(String content) throws Exception {
+		return HexFormat.of().formatHex(
+				MessageDigest.getInstance("SHA-256").digest(content.getBytes(StandardCharsets.UTF_8)));
 	}
 
 	@Test

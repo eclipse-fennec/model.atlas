@@ -23,7 +23,7 @@ specifics are confined to this bundle.
 | **Scope** / **registry** | *not* in the repo — supplied by configuration (git carries neither). |
 | **objectId** | `scope/stage/repoPath` (e.g. `jena/main/models/person.ecore`). The extension is part of the id. |
 | **Content** | streamed straight from the local mirror at a commit via a `git://` URI handler — **no working-tree checkout**. |
-| **Metadata** | **derived** from git facts, never authored: `stage`=branch, `version`=commit SHA, `objectType`=root EClass URI, `registry`=type-map lookup. |
+| **Metadata** | **derived** from git facts, never authored: `stage`=branch, `version`=commit SHA, `objectType`=root EClass URI, `registry`=type-map lookup, `contentHash`=SHA-256 of the raw blob bytes (per file — stable across commits that don't touch the file, unlike `version`; feeds the content ETag and the scope aggregate manifest). |
 | **Which files** | any file whose extension has a registered EMF factory (`.ecore`, `.xmi`, …); everything else (`README.md`, `.gitignore`) is ignored. |
 | **Writes** | rejected — every write path throws `UnsupportedOperationException`. |
 
@@ -306,6 +306,20 @@ per-instance catch-all.
   that whiteboard-tracks `EPackage` services keyed by nsURI breaks under multi-version
   (multi-stage) registration. Until fixed there, JSON content reads are unreliable for a
   nsURI after any stage's schema removal; XML is the workaround.
+- **EPackages cannot be resolved by nsURI through the schema REST endpoints.** The
+  `/{scope}/schema/...` endpoints derive the lookup objectId as `Base64-URL(nsUri)`
+  (`SchemaPackagesResource.encodePackageNsURI`), while this backend's objectIds are
+  `scope/stage/repoPath` — so every nsUri-parameterized request (single-package metadata
+  `?nsUri=`, content `/content?nsUri=`) returns `204` for git-backed packages even though
+  they exist. What DOES work: stage **listing** via `GET /{scope}/schema/stages/{stage}`
+  (filters by scope+registry+stage, no objectId), and metadata/content retrieval **by
+  objectId** via the generic registry endpoints, e.g.
+  `GET /{scope}/registries/schema/stages/{stage}/content?objectId=<scope/stage/repoPath>`.
+  Derived schema metadata carries `properties["nsUri"]` (like the schema upload path), so a
+  client CAN map nsURI → objectId from a stage listing and then query by objectId — the
+  nsUri-parameterized endpoints themselves still miss because they recompute the encoded id
+  instead of resolving via that property. Part of the identity/fingerprint discussion in
+  [model.atlas#156](https://github.com/eclipse-fennec/model.atlas/issues/156).
 - Branch deletion and force-push/history-rewrite are not yet reflected.
 - Runtime/deployment wiring (PLAN.md G9): the `runtime.config.docker.git` bundle, the docker +
   local bndruns, and the `docker/modelatlas_git` image files now exist. The **local** variant

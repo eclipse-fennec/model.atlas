@@ -14,6 +14,8 @@
 package org.eclipse.fennec.model.atlas.management.git;
 
 import java.io.IOException;
+import java.io.InputStream;
+import java.security.MessageDigest;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
@@ -21,12 +23,14 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.HexFormat;
 import java.util.function.BiConsumer;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import org.eclipse.emf.common.util.URI;
 import org.eclipse.emf.ecore.EObject;
+import org.eclipse.emf.ecore.EPackage;
 import org.eclipse.emf.ecore.EcorePackage;
 import org.eclipse.emf.ecore.resource.Resource;
 import org.eclipse.emf.ecore.resource.ResourceSet;
@@ -53,7 +57,9 @@ import org.osgi.service.component.ComponentServiceObjects;
  * {@code eClassUri -> registryName}. Metadata is <em>derived</em> from git facts
  * (D1) rather than read from a stored {@code .metadata.xmi}: {@code stage} =
  * branch, {@code version} = commit SHA, {@code objectType} = the root object's
- * EClass URI, and {@code registry} = the map lookup on that EClass URI.
+ * EClass URI, {@code registry} = the map lookup on that EClass URI, and
+ * {@code contentHash} = SHA-256 of the raw blob bytes (per file — stable across
+ * commits that do not touch the file, unlike {@code version}).
  *
  * <h3>objectId = {@code scope/stage/repoPath} (D9 workaround)</h3>
  * <p>The shared registry cache is keyed by {@code objectId} alone (one entry per
@@ -535,6 +541,13 @@ public class GitStorageHelper extends AbstractStorageHelper {
 			md.setStage(stage);
 			md.setObjectType(objectType);
 			md.setVersion(commitId);
+			md.setContentHash(computeContentHash(commitId, path));
+			// Same property the schema upload path stamps (SchemaPackagesResource):
+			// the only nsURI -> objectId mapping a client can get from listings,
+			// and the nsUri column of the scope aggregate manifest.
+			if (root instanceof EPackage pkg && pkg.getNsURI() != null) {
+				md.getProperties().put("nsUri", pkg.getNsURI());
+			}
 			return md;
 		} catch (Exception e) {
 			LOGGER.log(Level.FINE, e,
@@ -544,6 +557,32 @@ public class GitStorageHelper extends AbstractStorageHelper {
 			if (resource != null) {
 				rs.getResources().remove(resource);
 			}
+		}
+	}
+
+	/**
+	 * SHA-256 (lowercase hex) over the raw blob bytes at {@code commitId/path} —
+	 * the stored XMI content itself; this backend has no write-path
+	 * re-serialization to hash. Returns {@code null} (logged FINE) when the blob
+	 * cannot be read or hashed: a hash must never fail the derivation.
+	 */
+	private String computeContentHash(String commitId, String path) {
+		GitService gs = commitToService.get(commitId);
+		if (gs == null) {
+			return null;
+		}
+		try (InputStream in = gs.readFile(commitId, path)) {
+			MessageDigest digest = MessageDigest.getInstance("SHA-256");
+			byte[] buffer = new byte[8192];
+			int read;
+			while ((read = in.read(buffer)) >= 0) {
+				digest.update(buffer, 0, read);
+			}
+			return HexFormat.of().formatHex(digest.digest());
+		} catch (Exception e) {
+			LOGGER.log(Level.FINE, e,
+					() -> "Could not hash " + path + "@" + commitId + ": " + e.getMessage());
+			return null;
 		}
 	}
 
