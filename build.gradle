@@ -21,6 +21,10 @@ subprojects {
     // Allow gradle to enable JUnit support in submodules
     test {
         useJUnitPlatform()
+        // Some bundles (e.g. mediatypes.impl) carry test sources that only run
+        // as OSGi integration tests via testOSGi; Gradle 9 fails the plain
+        // `test` task by default when it discovers no tests.
+        failOnNoDiscoveredTests = false
     }
     
        // Add JUnit dependencies for modules that have Gradle tests
