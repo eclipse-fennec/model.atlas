@@ -59,6 +59,8 @@ public class RegistryServiceCollector {
             return;
         }
         String registryName = (String) properties.get("registry.name");
-        registryServiceMap.remove(registryName);
+        // Two-arg remove so unbinding a replaced service cannot wipe the
+        // freshly bound replacement (DS binds the new service first)
+        registryServiceMap.remove(registryName, registryService);
     }
 }

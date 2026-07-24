@@ -79,7 +79,9 @@ public class JpaDataResourceFilter implements ContainerRequestFilter, ResourceSe
 
 	void unbindResourceSetFactory(ResourceSetFactory resourceSetFactory, Map<String, Object> properties) {
 		if(properties.containsKey(WatcherConstants.KEY_JPA_ROOT_FOLDER)) {
-			folderToResrouceSetFactoryMap.remove((String) properties.get(WatcherConstants.KEY_JPA_ROOT_FOLDER));
+			// Two-arg remove: a replacement service for the same folder binds
+			// before the old one unbinds, so removing by key alone would wipe it
+			folderToResrouceSetFactoryMap.remove((String) properties.get(WatcherConstants.KEY_JPA_ROOT_FOLDER), resourceSetFactory);
 		} else {
 			LOGGER.warning("Cannot unbind ResourceSetFactory without jpa.root.folder property");
 		}	
@@ -96,7 +98,7 @@ public class JpaDataResourceFilter implements ContainerRequestFilter, ResourceSe
 
 	void unbindEntityManagerFactory(EntityManagerFactory entityManagerFactory, Map<String, Object> properties) {
 		if(properties.containsKey("osgi.unit.name")) {
-			folderToEntityManagerFactoryMap.remove((String) properties.get("osgi.unit.name"));
+			folderToEntityManagerFactoryMap.remove((String) properties.get("osgi.unit.name"), entityManagerFactory);
 		} else {
 			LOGGER.warning("Cannot unbind EntityManagerFactory without osgi.unit.name property");
 		}	
@@ -113,7 +115,7 @@ public class JpaDataResourceFilter implements ContainerRequestFilter, ResourceSe
 
 	void unbindEntityMappings(EntityMappings entityMappings, Map<String, Object> properties) {
 		if(properties.containsKey(WatcherConstants.KEY_JPA_ROOT_FOLDER)) {
-			folderToEntityMappingsMap.remove((String) properties.get(WatcherConstants.KEY_JPA_ROOT_FOLDER));
+			folderToEntityMappingsMap.remove((String) properties.get(WatcherConstants.KEY_JPA_ROOT_FOLDER), entityMappings);
 		} else {
 			LOGGER.warning("Cannot unbind EntityMappings without jpa.root.folder property");
 		}	

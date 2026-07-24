@@ -86,7 +86,9 @@ public class ScopeServiceCollector {
 		}
 		
 		String scopeName = (String) properties.get(propertyKey);
-		scopeServiceMap.remove(scopeName);
+		// Two-arg remove so unbinding a replaced service cannot wipe the
+		// freshly bound replacement (DS binds the new service first)
+		scopeServiceMap.remove(scopeName, scopeService);
 	}
 
 }

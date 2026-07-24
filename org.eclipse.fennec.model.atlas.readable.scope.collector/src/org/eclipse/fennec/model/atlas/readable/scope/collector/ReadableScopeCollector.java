@@ -59,6 +59,8 @@ public class ReadableScopeCollector {
             return;
         }
         String scopeName = (String) properties.get(AtlasProperties.ATLAS_SCOPE);
-        scopeServiceMap.remove(scopeName);
+        // Two-arg remove so unbinding a replaced service cannot wipe the
+        // freshly bound replacement (DS binds the new service first)
+        scopeServiceMap.remove(scopeName, scopeService);
     }
 }

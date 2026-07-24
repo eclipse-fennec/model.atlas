@@ -111,7 +111,10 @@ public class BasicStorageRegistry implements StorageRegistry {
     void removeStorageService(EObjectStorageService<EObject> storageService) {
         String type = typesByStorage.remove(storageService);
         if (type != null) {
-            storagesByType.remove(type);
+            // Two-arg remove: with DS dynamic-greedy rebinds the replacement
+            // service binds before the old one unbinds, so removing by key alone
+            // would wipe the fresh mapping
+            storagesByType.remove(type, storageService);
             logger.log(Level.INFO, "Unregistered storage service for type: {0}", type);
         }
     }

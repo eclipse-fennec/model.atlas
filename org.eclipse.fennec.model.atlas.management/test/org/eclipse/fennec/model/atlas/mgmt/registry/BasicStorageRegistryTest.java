@@ -119,6 +119,20 @@ class BasicStorageRegistryTest {
     }
 
     @Test
+    void testRemoveStorageServiceAfterReplacement() {
+        // DS dynamic-greedy rebind order: the replacement service binds BEFORE
+        // the old one unbinds. Unbinding the old service must not wipe the
+        // freshly bound replacement for the same storage type.
+        registry.addStorageService(fileStorage, createTypeProperties("file"));
+        registry.addStorageService(minioStorage, createTypeProperties("file"));
+        assertEquals(minioStorage, registry.getStorageByType("file"));
+
+        registry.removeStorageService(fileStorage);
+
+        assertEquals(minioStorage, registry.getStorageByType("file"));
+    }
+
+    @Test
     void testGetStorageByType() {
         // Given: Multiple registered storage services
         registry.addStorageService(fileStorage, createTypeProperties("file"));
