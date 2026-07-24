@@ -19,17 +19,19 @@ Blockers and majors are reported in full format below; minors and infos in compa
 
 ## Findings — blockers
 
-### F1 · blocker · license · datagen / datagen.rest / datagen.model / datagen.example.model / data.atlas.jpa.rest / data.atlas.jpa.watcher / tests.common
+### F1 · blocker · license · datagen / datagen.rest / datagen.model / datagen.example.model / data.atlas.jpa.rest / data.atlas.jpa.watcher / tests.common ✅ FIXED (2026-07-24)
 - **Where:** org.eclipse.fennec.model.atlas.datagen/src/org/eclipse/fennec/model/atlas/datagen/DataGenService.java:1 (representative; ~48 files total)
 - **What:** Shipped `.java` sources carry no EPL-2.0 license header at all: all hand-written sources in `datagen` (4), `datagen.rest` (1), the generated-but-unstamped `datagen.model` (22) and `datagen.example.model` (17) model files (empty `/* */` stub), plus `JpaDataResource.java`, `EormFileWatcher.java` and `tests.common/CommonTestAnnotations.java`.
 - **Why it matters:** Eclipse IP policy requires the EPL-2.0 header on every shipped source file; these bundles are in the runtime images. The generated model files show the generator's header template is empty for those two genmodels.
 - **Suggested fix:** Run `docker run -v $(pwd):/github/workspace apache/skywalking-eyes header fix` (or add headers manually); set the copyright text in the two `.genmodel` files so regeneration stamps headers.
+- **Status:** ✅ Fixed 2026-07-24 — canonical EPL-2.0 header added to all 51 `src/` files plus 7 more found by the real tool (in-bundle `test/` classes, `update.sh`, a `.qvto` test stub, `DatagenPackage(Impl).java`); `copyrightText` set in both `.genmodel` files. Verified with `license-eye header check`: 1932 files, 0 invalid.
 
-### F2 · blocker · license · validation / validation.rest
+### F2 · blocker · license · validation / validation.rest ✅ FIXED (2026-07-24)
 - **Where:** org.eclipse.fennec.model.atlas.validation/src/org/eclipse/fennec/model/atlas/validation/ValidationService.java:1 (+ ValidationServiceImpl.java, ObjectValidationResource.java, ObjectBatchValidationResource.java)
 - **What:** Four files carry the outdated **EPL-1.0** header ("Eclipse Public License v1.0 … epl-v10.html") instead of EPL-2.0.
 - **Why it matters:** Wrong license declaration on shipped code; the project's declared license is EPL-2.0 (`.licenserc.yaml`, NOTICE.md).
 - **Suggested fix:** Replace with the canonical EPL-2.0 header incl. `SPDX-License-Identifier: EPL-2.0`.
+- **Status:** ✅ Fixed 2026-07-24 — all four EPL-1.0 headers replaced with the canonical EPL-2.0 header.
 
 ### F3 · blocker · api-hygiene · workflow
 - **Where:** org.eclipse.fennec.model.atlas.workflow/src/org/eclipse/fennec/model/atlas/workflow/package-info.java:14
@@ -77,11 +79,12 @@ Blockers and majors are reported in full format below; minors and infos in compa
 
 ### Repo-level (release-readiness)
 
-### F10 · major · release-readiness · repo
+### F10 · major · release-readiness · repo ✅ FIXED (2026-07-24)
 - **Where:** .github/workflows/license.yml:5
 - **What:** The SkyWalking-Eyes license-header workflow triggers only on `workflow_dispatch` — header enforcement never runs on push/PR (which is how F1/F2 accumulated). It also uses unpinned `apache/skywalking-eyes@main` and `actions/checkout@v2`.
 - **Why it matters:** Header compliance is unenforced; the guideline treats missing enforcement as major even when headers are fine — and here they are not.
 - **Suggested fix:** Add `push`/`pull_request` triggers (copy from emf.osgi and adapt); pin the actions.
+- **Status:** ✅ Fixed 2026-07-24 — workflow now triggers on `push`/`pull_request`/`workflow_dispatch` with `actions/checkout@v4` and `apache/skywalking-eyes@v0.8.0` (matching the emf.osgi reference); local run of the same check passes with 0 invalid files.
 
 ### F11 · major · release-readiness · repo
 - **Where:** repo root (no `DEPENDENCIES`, no `tools/dash-licenses.*`, no `.github/workflows/dash-licenses.yml`)
@@ -451,7 +454,7 @@ Blockers and majors are reported in full format below; minors and infos in compa
 3. **`deactivate()` does not undo `activate()`** (F16, F19, F20, F29, F39, F41, F48, F103): unshutdown executors, unclosed Lucene writers, unremoved global-registry entries, undetached shared-ResourceSet resources. Worth a one-time sweep with a checklist per component.
 4. **Sibling-implementation contract drift** (F25, F27, F31, F33, F34, F60, F63, F65): the four REST format handlers and the file/apicurio storage pair each answer the same situations differently. Define the shared contract once (rest.common helper / storage API docs) and align.
 5. **Debug leftovers in production code** (F24, F61, F106): stdout payload dumps, hello/test endpoints, System.out prints.
-6. **License headers** (F1, F2, F10): ~52 files missing or wrong-license headers while the enforcement workflow never runs — fix headers and turn the workflow on in the same PR.
+6. **License headers** (F1, F2, F10): ~52 files missing or wrong-license headers while the enforcement workflow never runs — fix headers and turn the workflow on in the same PR. ✅ **FIXED 2026-07-24** (headers on 62 files, workflow armed, `license-eye header check` green).
 7. **Typos in identifiers and user-facing text** (F56): frequent enough across bundles to warrant a spell-check pass; several are user-facing ("now allowed" inverts the meaning).
 
 ## Skipped / not reviewed
