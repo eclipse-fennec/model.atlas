@@ -14,7 +14,8 @@
 package org.eclipse.fennec.model.atlas.mgmt.storage;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -154,6 +155,30 @@ class AbstractEObjectStorageServiceQueryDelegationTest {
     }
 
     @Test
+    void testQueryDelegationToRegistry_ScopeAndStage() throws Exception {
+        // Given: Registry service is available and query has scope + stage only
+        storageService.setRegistryService(registryService);
+
+        // Create fresh query for this test
+        ObjectQuery scopeAndStageQuery = managementFactory.createObjectQuery();
+        scopeAndStageQuery.setScope("tenant1");
+        scopeAndStageQuery.setStage("draft");
+
+        ObjectMetadata metadata = createTestMetadata("obj1", "draft", ObjectStatus.DRAFT, "EPackage");
+        when(registryService.findByScopeAndStage("tenant1", "draft")).thenReturn(Arrays.asList(metadata));
+
+        // When: Query is executed
+        Promise<List<ObjectMetadata>> resultPromise = storageService.queryObjects(scopeAndStageQuery);
+        List<ObjectMetadata> results = resultPromise.getValue();
+
+        // Then: Registry method was called with the API argument order (scope, stage)
+        // — regression test for the swapped-arguments bug
+        verify(registryService).findByScopeAndStage("tenant1", "draft");
+        assertEquals(1, results.size());
+        assertEquals("obj1", results.get(0).getObjectId());
+    }
+
+    @Test
     void testQueryFallbackToStorageScan_NoRegistryService() throws Exception {
         // Given: No registry service is available
         storageService.setRegistryService(null);
@@ -163,8 +188,14 @@ class AbstractEObjectStorageServiceQueryDelegationTest {
         noRegistryQuery.setStatus(ObjectStatus.DRAFT);
 
         // When: Query is executed
-        assertThrows(IllegalStateException.class, () -> storageService.queryObjects(noRegistryQuery),
-                "When no Registry is available, query objects should throw an ISE");
+        Promise<List<ObjectMetadata>> resultPromise = storageService.queryObjects(noRegistryQuery);
+
+        // Then: the Promise fails with an ISE instead of queryObjects throwing
+        // synchronously
+        assertNotNull(resultPromise.getFailure(),
+                "When no Registry is available, the returned Promise should fail");
+        assertTrue(resultPromise.getFailure() instanceof IllegalStateException,
+                "When no Registry is available, the Promise should fail with an IllegalStateException");
     }
 
     @Test

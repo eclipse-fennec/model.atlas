@@ -121,11 +121,12 @@ Blockers and majors are reported in full format below; minors and infos in compa
 
 ### Storage layer (management, management.file, management.apicurio, management.lucene)
 
-### F15 · major · correctness · management
+### F15 · major · correctness · management ✅ FIXED (2026-07-24)
 - **Where:** org.eclipse.fennec.model.atlas.management/src/org/eclipse/fennec/model/atlas/mgmt/storage/AbstractEObjectStorageService.java:702
 - **What:** `delegateQueryToRegistry` calls `registryService.findByScopeAndStage(query.getStage(), query.getScope())` — scope and stage **swapped** against the API signature `findByScopeAndStage(String scope, String stage)` (EObjectRegistryService:210). Verified.
 - **Why it matters:** Every backend inheriting this base silently returns wrong/empty results for scope+stage queries.
 - **Suggested fix:** Swap the arguments.
+- **Status:** ✅ Fixed 2026-07-24 — arguments swapped to `(query.getScope(), query.getStage())`; regression test `testQueryDelegationToRegistry_ScopeAndStage` added to `AbstractEObjectStorageServiceQueryDelegationTest` (the scope+stage branch was previously untested, which is how the swap survived). No caller compensated for the old order — the production callers in `RegistryServiceImpl` always include the registry and hit the correctly-ordered branches. Management module tests: 125/125 green.
 
 ### F16 · major · osgi-ds · management
 - **Where:** org.eclipse.fennec.model.atlas.management/src/org/eclipse/fennec/model/atlas/mgmt/storage/AbstractEObjectStorageService.java:300
@@ -133,17 +134,19 @@ Blockers and majors are reported in full format below; minors and infos in compa
 - **Why it matters:** Threads, Lucene handles and EMF resources leak on every component restart/config update.
 - **Suggested fix:** Keep the `ExecutorService` in a field; call `shutdown()` and `storageHelper.close()` in deactivate.
 
-### F17 · major · correctness · management
+### F17 · major · correctness · management ✅ FIXED (2026-07-24)
 - **Where:** org.eclipse.fennec.model.atlas.management/src/org/eclipse/fennec/model/atlas/mgmt/storage/AbstractEObjectStorageService.java:625
 - **What:** `updateStatus` saves metadata but never calls `registryService.updateCache(...)`, unlike `storeObject`/`updateMetadata`.
 - **Why it matters:** Registry status indexes go stale after every status transition; status-filtered queries return outdated results.
 - **Suggested fix:** Call `registryService.updateCache(EcoreUtil.copy(metadata))` after `saveMetadata`, mirroring `updateMetadata`.
+- **Status:** ✅ Fixed 2026-07-24 — `updateStatus` now refreshes the registry cache after `saveMetadata` exactly like `updateMetadata`; `testUpdateStatusWithTypePreservation` extended to verify `updateCache` is called with the new status. Management unit tests 125/125 and `management.file.tests` OSGi ITs green.
 
-### F18 · major · solid-lsp · management
+### F18 · major · solid-lsp · management ✅ FIXED (2026-07-24)
 - **Where:** org.eclipse.fennec.model.atlas.management/src/org/eclipse/fennec/model/atlas/mgmt/storage/AbstractEObjectStorageService.java:510
 - **What:** Promise-returning `queryObjects` throws `IllegalArgumentException`/`IllegalStateException` synchronously instead of failing the returned Promise.
 - **Why it matters:** Breaks the async error contract for all backends; callers composing promises never see the failure path they handle.
 - **Suggested fix:** Return `promiseFactory.failed(...)` for both error paths.
+- **Status:** ✅ Fixed 2026-07-24 — both error paths (`null` query → IAE, no registry service → ISE) now return `promiseFactory.failed(...)` instead of throwing synchronously; the two tests asserting the old synchronous throws were converted to assert the failed Promise. Callers are unaffected: they consume the Promise via `getPromiseValue`/callbacks inside existing `catch(Exception)` blocks. Management unit tests 125/125 and `management.file.tests` OSGi ITs green.
 
 ### F19 · major · osgi-ds · management
 - **Where:** org.eclipse.fennec.model.atlas.management/src/org/eclipse/fennec/model/atlas/mgmt/storage/AbstractStorageHelper.java:69

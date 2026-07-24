@@ -509,14 +509,14 @@ public abstract class AbstractEObjectStorageService implements EObjectStorageSer
     @Override
     public Promise<List<ObjectMetadata>> queryObjects(ObjectQuery query) {
         if (query == null) {
-            throw new IllegalArgumentException("ObjectQuery cannot be null");
+            return promiseFactory.failed(new IllegalArgumentException("ObjectQuery cannot be null"));
         }
         // If registry service is available, delegate to it for fast indexed queries
         if (registryService != null) {
             return delegateQueryToRegistry(query);
         } else {
-            throw new IllegalStateException(
-                    "queryObjects is only possible when an EObjectRegistryService is available");
+            return promiseFactory.failed(new IllegalStateException(
+                    "queryObjects is only possible when an EObjectRegistryService is available"));
         }
     }
 
@@ -623,6 +623,12 @@ public abstract class AbstractEObjectStorageService implements EObjectStorageSer
 
                 // Save updated metadata
                 storageHelper.saveMetadata(scope, registry, stage, objectId, metadata);
+
+                // Update registry cache if available
+                if (registryService != null) {
+                    registryService.updateCache(EcoreUtil.copy(metadata));
+                }
+
                 LOGGER.info("Updated status to " + newStatus + " for object: " + objectId);
                 return true;
 
@@ -699,7 +705,7 @@ public abstract class AbstractEObjectStorageService implements EObjectStorageSer
                 results = registryService.findByScopeRegistryAndStage(query.getScope(), query.getRegistry(),
                         query.getStage());
             } else if (query.getStage() != null && query.getScope() != null) {
-                results = registryService.findByScopeAndStage(query.getStage(), query.getScope());
+                results = registryService.findByScopeAndStage(query.getScope(), query.getStage());
             } else if (query.getStatus() != null && query.getObjectType() != null) {
                 // Most specific query - status + type
                 results = registryService.findByStatusAndType(query.getStatus(), query.getObjectType());

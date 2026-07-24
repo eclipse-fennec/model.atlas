@@ -407,6 +407,10 @@ public class AbstractEObjectStorageServiceTest {
 
         // Verify operations
         verify(mockStorageHelper).saveMetadata(TEST_SCOPE, TEST_REGISTRY, TEST_STAGE, "test-id", existingMetadata);
+
+        // Verify the registry cache was refreshed with the new status
+        verify(mockRegistryService)
+                .updateCache(argThat((ObjectMetadata m) -> m.getStatus() == ObjectStatus.APPROVED));
     }
 
     @Test
@@ -564,8 +568,13 @@ public class AbstractEObjectStorageServiceTest {
         storageService.activateStorageService();
 
         // Execute
-        assertThrows(IllegalArgumentException.class, () -> storageService.queryObjects(null),
-                "With a null QueryObject we should get an IllegalArgumentException");
+        Promise<List<ObjectMetadata>> result = storageService.queryObjects(null);
+
+        // Verify: the Promise fails with an IllegalArgumentException instead of
+        // queryObjects throwing synchronously
+        assertNotNull(result.getFailure(), "With a null QueryObject the returned Promise should fail");
+        assertTrue(result.getFailure() instanceof IllegalArgumentException,
+                "With a null QueryObject the Promise should fail with an IllegalArgumentException");
     }
 
     @Test
