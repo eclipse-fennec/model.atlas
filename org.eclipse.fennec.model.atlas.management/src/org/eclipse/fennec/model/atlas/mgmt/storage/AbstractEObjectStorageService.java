@@ -23,6 +23,7 @@ import java.util.Collections;
 import java.util.HexFormat;
 import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.atomic.AtomicLong;
@@ -134,6 +135,8 @@ public abstract class AbstractEObjectStorageService implements EObjectStorageSer
 
     protected PromiseFactory promiseFactory;
 
+    private ExecutorService executorService;
+
     protected AbstractStorageHelper storageHelper;
 
     protected BundleContext bctx;
@@ -194,7 +197,7 @@ public abstract class AbstractEObjectStorageService implements EObjectStorageSer
 
         String threadFactory = getBackendType() + "-worker-";
         AtomicLong threadCount = new AtomicLong(0);
-        this.promiseFactory = new PromiseFactory(Executors.newCachedThreadPool(new ThreadFactory() {
+        this.executorService = Executors.newCachedThreadPool(new ThreadFactory() {
 
             @Override
             public Thread newThread(Runnable r) {
@@ -204,7 +207,8 @@ public abstract class AbstractEObjectStorageService implements EObjectStorageSer
                 t.setPriority(Thread.NORM_PRIORITY);
                 return t;
             }
-        }));
+        });
+        this.promiseFactory = new PromiseFactory(executorService);
         this.storageHelper = createStorageHelper();
 
         if (this.storageHelper == null) {
@@ -300,6 +304,17 @@ public abstract class AbstractEObjectStorageService implements EObjectStorageSer
     protected void deactivateStorageService() {
         LOGGER.info("Deactivating " + getClass().getSimpleName());
         // No registry unregistration needed since we use shared registry
+        if (storageHelper != null) {
+            try {
+                storageHelper.close();
+            } catch (Exception e) {
+                LOGGER.log(Level.WARNING, "Failed to close storage helper during deactivation", e);
+            }
+        }
+        if (executorService != null) {
+            executorService.shutdown();
+            executorService = null;
+        }
         this.storageHelper = null;
         this.registryService = null;
         LOGGER.info("Storage service deactivated: " + getClass().getSimpleName());

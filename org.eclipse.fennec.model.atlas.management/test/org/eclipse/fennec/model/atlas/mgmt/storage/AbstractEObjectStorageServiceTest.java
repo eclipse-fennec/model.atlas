@@ -590,6 +590,9 @@ public class AbstractEObjectStorageServiceTest {
         // Verify cleanup
         assertNull(storageService.storageHelper);
         assertNull(storageService.registryService);
+
+        // Verify the helper's resources were released
+        verify(mockStorageHelper).close();
     }
 
     @Test

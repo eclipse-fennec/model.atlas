@@ -128,11 +128,12 @@ Blockers and majors are reported in full format below; minors and infos in compa
 - **Suggested fix:** Swap the arguments.
 - **Status:** ✅ Fixed 2026-07-24 — arguments swapped to `(query.getScope(), query.getStage())`; regression test `testQueryDelegationToRegistry_ScopeAndStage` added to `AbstractEObjectStorageServiceQueryDelegationTest` (the scope+stage branch was previously untested, which is how the swap survived). No caller compensated for the old order — the production callers in `RegistryServiceImpl` always include the registry and hit the correctly-ordered branches. Management module tests: 125/125 green.
 
-### F16 · major · osgi-ds · management
+### F16 · major · osgi-ds · management ✅ FIXED (2026-07-24)
 - **Where:** org.eclipse.fennec.model.atlas.management/src/org/eclipse/fennec/model/atlas/mgmt/storage/AbstractEObjectStorageService.java:300
 - **What:** `deactivateStorageService()` nulls fields but neither shuts down the cached thread pool created in `activateStorageService()` (line 197) nor calls `storageHelper.close()` (an `AutoCloseable`).
 - **Why it matters:** Threads, Lucene handles and EMF resources leak on every component restart/config update.
 - **Suggested fix:** Keep the `ExecutorService` in a field; call `shutdown()` and `storageHelper.close()` in deactivate.
+- **Status:** ✅ Fixed 2026-07-24 (together with F19/F20 — calling `close()` was only safe once F20 was fixed) — the cached thread pool is kept in an `executorService` field and `shutdown()` in `deactivateStorageService()`, which now also calls `storageHelper.close()` (log-and-continue on failure) before nulling the fields; `testDeactivation` extended to verify `close()` is invoked. Management unit tests 125/125, file + apicurio OSGi ITs green.
 
 ### F17 · major · correctness · management ✅ FIXED (2026-07-24)
 - **Where:** org.eclipse.fennec.model.atlas.management/src/org/eclipse/fennec/model/atlas/mgmt/storage/AbstractEObjectStorageService.java:625
@@ -148,17 +149,19 @@ Blockers and majors are reported in full format below; minors and infos in compa
 - **Suggested fix:** Return `promiseFactory.failed(...)` for both error paths.
 - **Status:** ✅ Fixed 2026-07-24 — both error paths (`null` query → IAE, no registry service → ISE) now return `promiseFactory.failed(...)` instead of throwing synchronously; the two tests asserting the old synchronous throws were converted to assert the failed Promise. Callers are unaffected: they consume the Promise via `getPromiseValue`/callbacks inside existing `catch(Exception)` blocks. Management unit tests 125/125 and `management.file.tests` OSGi ITs green.
 
-### F19 · major · osgi-ds · management
+### F19 · major · osgi-ds · management ✅ FIXED (2026-07-24)
 - **Where:** org.eclipse.fennec.model.atlas.management/src/org/eclipse/fennec/model/atlas/mgmt/storage/AbstractStorageHelper.java:69
 - **What:** The constructor puts a factory into the JVM-global `ConversionDelegate.Factory.Registry.INSTANCE` and `close()` never removes it.
 - **Why it matters:** Global-registry leak across component restarts — the known EMFFileWatcher bug class.
 - **Suggested fix:** Remember the key and `remove()` it in `close()` (or register once statically).
+- **Status:** ✅ Fixed 2026-07-24 via the static-registration variant: the stateless `InstantConversionDelegateFactory` is registered once in a static initializer instead of per instance. Remove-on-close was deliberately NOT chosen — several helper instances (file, apicurio, per-scope configs) share the `java.time.Instant` key, so one instance closing would break the others.
 
-### F20 · major · osgi-ds · management
+### F20 · major · osgi-ds · management ✅ FIXED (2026-07-24)
 - **Where:** org.eclipse.fennec.model.atlas.management/src/org/eclipse/fennec/model/atlas/mgmt/storage/AbstractStorageHelper.java:445
 - **What:** `close()` unloads and clears **all** resources of the injected `(emf.name=management)` ResourceSet — a shared OSGi service the helper does not own.
 - **Why it matters:** One storage service's shutdown wipes the resources of every other component sharing that ResourceSet.
 - **Suggested fix:** Track and remove only resources this helper created.
+- **Status:** ✅ Fixed 2026-07-24 — `close()` no longer touches the shared ResourceSet at all; it only calls `closeStorageResources()` (per-operation resources were already removed via `ResourceOperation.cleanup()`, so the wholesale clear was pure collateral damage). Javadoc updated to state the ownership rule. The registry-helper hierarchy (`AbstractRegistryHelper`) has its own `close()` and is unaffected.
 
 ### F21 · major · osgi-ds · management
 - **Where:** org.eclipse.fennec.model.atlas.management/src/org/eclipse/fennec/model/atlas/mgmt/registry/BasicEObjectRegistryService.java:198
@@ -457,7 +460,7 @@ Blockers and majors are reported in full format below; minors and infos in compa
 
 1. **DS component classes exported as API** (F3–F7): five bundles export packages whose contents are `@Component` classes registered as their own service type (`workflow` ×3 collectors, `management` ×2 packages, `readable.scope.collector`, `model.documentation.provider`). One refactor pattern fixes all: interface in the exported package, component in a private one.
 2. **Unbind-by-key breaks service replacement** (F22): six sites in four bundles remove map entries by key in dynamic unbind methods; the codebase itself contains the correct two-arg idiom (`ResourceSetCollector`, `EObjectStorageServiceCollector`) to copy.
-3. **`deactivate()` does not undo `activate()`** (F16, F19, F20, F29, F39, F41, F48, F103): unshutdown executors, unclosed Lucene writers, unremoved global-registry entries, undetached shared-ResourceSet resources. Worth a one-time sweep with a checklist per component.
+3. **`deactivate()` does not undo `activate()`** (F16 ✅, F19 ✅, F20 ✅, F29, F39, F41, F48, F103): unshutdown executors, unclosed Lucene writers, unremoved global-registry entries, undetached shared-ResourceSet resources. Worth a one-time sweep with a checklist per component. The management storage base class is fixed (2026-07-24); F29 (Lucene index), F39 (bootstrap), F41 (workflow executor), F48 (EORM watcher) and F103 remain.
 4. **Sibling-implementation contract drift** (F25, F27, F31, F33, F34, F60, F63, F65): the four REST format handlers and the file/apicurio storage pair each answer the same situations differently. Define the shared contract once (rest.common helper / storage API docs) and align.
 5. **Debug leftovers in production code** (F24, F61, F106): stdout payload dumps, hello/test endpoints, System.out prints.
 6. **License headers** (F1, F2, F10): ~52 files missing or wrong-license headers while the enforcement workflow never runs — fix headers and turn the workflow on in the same PR. ✅ **FIXED 2026-07-24** (headers on 62 files, workflow armed, `license-eye header check` green).
