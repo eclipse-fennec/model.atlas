@@ -24,7 +24,7 @@ src=${^src},src-wf-api
 -includeresource.model: model=model
 
 -buildpath: \
-	org.osgi.util.promise;versio=latest,\
+	org.osgi.util.promise;version=latest,\
 	org.osgi.util.function;version=latest,\
 	org.osgi.service.component;version=latest,\
 	org.osgi.service.typedevent;version=latest,\

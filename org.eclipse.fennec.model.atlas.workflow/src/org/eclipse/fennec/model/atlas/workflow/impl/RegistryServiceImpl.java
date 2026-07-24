@@ -23,6 +23,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.function.Function;
 import java.util.logging.Level;
@@ -50,6 +51,7 @@ import org.eclipse.fennec.model.atlas.workflow.StageActionService;
 import org.eclipse.fennec.model.atlas.workflow.StageActionService.ActionEvent;
 import org.eclipse.fennec.model.atlas.workflow.StageActionService.ExitReason;
 import org.osgi.service.component.annotations.Activate;
+import org.osgi.service.component.annotations.Deactivate;
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.ConfigurationPolicy;
 import org.osgi.service.component.annotations.Reference;
@@ -79,7 +81,13 @@ public class RegistryServiceImpl<T extends EObject> implements RegistryService<T
     private final Map<String, EObjectStorageService<T>> storageMap;
     private final List<StageInfo> stages;
     private final Registry registryObject;
-    private final PromiseFactory promiseFactory = new PromiseFactory(Executors.newCachedThreadPool());
+    private final ExecutorService promiseExecutor = Executors.newCachedThreadPool();
+    private final PromiseFactory promiseFactory = new PromiseFactory(promiseExecutor);
+
+    @Deactivate
+    void deactivate() {
+        promiseExecutor.shutdown();
+    }
     private final EClass rootEClass;
 
 	private List<StageActionService> stageActionService;
@@ -614,7 +622,7 @@ public class RegistryServiceImpl<T extends EObject> implements RegistryService<T
 
     private void validateStage(String stageName) {
         if (stageName == null) {
-            throw new IllegalArgumentException(String.format("Satge name cannot be null!"));
+            throw new IllegalArgumentException(String.format("Stage name cannot be null!"));
         }
         if (!isValidStage(stageName)) {
             throw new IllegalArgumentException(String.format("Stage %s is not a valid stage for the registry %s",

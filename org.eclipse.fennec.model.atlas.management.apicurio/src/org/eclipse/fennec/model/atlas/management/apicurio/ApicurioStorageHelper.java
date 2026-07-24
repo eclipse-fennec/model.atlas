@@ -474,7 +474,6 @@ public class ApicurioStorageHelper extends AbstractStorageHelper {
 
             Map<String, Object> options = Map.of(EMFUriHandlerConstants.OPTION_HTTP_METHOD, "POST",
                     EMFUriHandlerConstants.OPTION_HTTP_HEADERS, Map.of("Content-Type", "application/json"));
-            apicurioResource.save(System.out, options);
             apicurioResource.save(options);
         } finally {
             objectOp.cleanup();

@@ -825,15 +825,10 @@ public abstract class AbstractEObjectStorageService implements EObjectStorageSer
         // Always set lastChangeTime to current time for any update
         existing.setLastChangeTime(Instant.now());
 
-        // Merge properties (preserve existing, add new ones)
+        // Merge properties (entries from updates overwrite same-named existing ones;
+        // EMF EMaps are never null)
         if (updates.getProperties() != null && !updates.getProperties().isEmpty()) {
-            if (existing.getProperties() == null) {
-                // If existing has no properties, copy all from updates
-                existing.getProperties().putAll(updates.getProperties());
-            } else {
-                // Merge properties - existing ones are preserved, new ones are added
-                existing.getProperties().putAll(updates.getProperties());
-            }
+            existing.getProperties().putAll(updates.getProperties());
         }
 
         // CRITICAL: Upload fields are NEVER updated regardless of what's in the update

@@ -57,7 +57,7 @@ public class AtlasSchemaRegistryService implements RegistryService<EPackage> {
 	private final Registry registryObject;
 
     private EObjectRegistryService<EObject> registry;	
-	private EPackage.Registry staticPackageRegistry;
+	private volatile EPackage.Registry staticPackageRegistry;
 
 	private EPackageLuceneIndex ePackageIndex;
 
@@ -94,7 +94,7 @@ public class AtlasSchemaRegistryService implements RegistryService<EPackage> {
 	 */
 	@Override
 	public Promise<ObjectMetadata> uploadToStage(String scope, String stage, EPackage object, ObjectMetadata metadata) {
-		throw new UnsupportedOperationException("Upload Operation now allowed for Atlas Schema Registry");
+		throw new UnsupportedOperationException("Upload Operation not allowed for Atlas Schema Registry");
 	}
 
 	/* 
@@ -138,7 +138,7 @@ public class AtlasSchemaRegistryService implements RegistryService<EPackage> {
 	@Override
 	public Promise<ObjectMetadata> updateInStage(String scope, String stage, EPackage updatedObject, String objectId,
 			String version) {
-		throw new UnsupportedOperationException("Update Operation now allowed for Atlas Schema Registry");
+		throw new UnsupportedOperationException("Update Operation not allowed for Atlas Schema Registry");
 
 	}
 
@@ -148,7 +148,7 @@ public class AtlasSchemaRegistryService implements RegistryService<EPackage> {
 	 */
 	@Override
 	public Promise<Boolean> deleteFromStage(String scope, String stage, String objectId) {
-		throw new UnsupportedOperationException("Delete Operation now allowed for Atlas Schema Registry");
+		throw new UnsupportedOperationException("Delete Operation not allowed for Atlas Schema Registry");
 	}
 
 	/* 
@@ -186,7 +186,7 @@ public class AtlasSchemaRegistryService implements RegistryService<EPackage> {
 	 */
 	@Override
 	public ObjectMetadata transitionToStage(String scope, String objectId, String fromStage, String toStage) {
-		throw new UnsupportedOperationException("Transition Operation now allowed for Atlas Schema Registry");
+		throw new UnsupportedOperationException("Transition Operation not allowed for Atlas Schema Registry");
 	}
 
 	/* 

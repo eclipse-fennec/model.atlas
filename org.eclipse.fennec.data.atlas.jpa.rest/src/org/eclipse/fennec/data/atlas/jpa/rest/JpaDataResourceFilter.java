@@ -64,14 +64,14 @@ import jakarta.ws.rs.core.Response;
 public class JpaDataResourceFilter implements ContainerRequestFilter, ResourceSetProvider {
 
 	private static final Logger LOGGER = Logger.getLogger(JpaDataResourceFilter.class.getName());
-	private Map<String, ResourceSetFactory> folderToResrouceSetFactoryMap = new ConcurrentHashMap<>();
+	private Map<String, ResourceSetFactory> folderToResourceSetFactoryMap = new ConcurrentHashMap<>();
 	private Map<String, EntityManagerFactory> folderToEntityManagerFactoryMap = new ConcurrentHashMap<>();
 	private Map<String, EntityMappings> folderToEntityMappingsMap = new ConcurrentHashMap<>();
 	
 	@Reference(policy = ReferencePolicy.DYNAMIC, cardinality = ReferenceCardinality.MULTIPLE, policyOption = ReferencePolicyOption.GREEDY)
 	void bindResourceSetFactory(ResourceSetFactory resourceSetFactory, Map<String, Object> properties) {
 		if(properties.containsKey(WatcherConstants.KEY_JPA_ROOT_FOLDER)) {
-			folderToResrouceSetFactoryMap.put((String) properties.get(WatcherConstants.KEY_JPA_ROOT_FOLDER), resourceSetFactory);
+			folderToResourceSetFactoryMap.put((String) properties.get(WatcherConstants.KEY_JPA_ROOT_FOLDER), resourceSetFactory);
 		} else {
 			LOGGER.warning("Cannot bind ResourceSetFactory without jpa.root.folder property");
 		}
@@ -81,7 +81,7 @@ public class JpaDataResourceFilter implements ContainerRequestFilter, ResourceSe
 		if(properties.containsKey(WatcherConstants.KEY_JPA_ROOT_FOLDER)) {
 			// Two-arg remove: a replacement service for the same folder binds
 			// before the old one unbinds, so removing by key alone would wipe it
-			folderToResrouceSetFactoryMap.remove((String) properties.get(WatcherConstants.KEY_JPA_ROOT_FOLDER), resourceSetFactory);
+			folderToResourceSetFactoryMap.remove((String) properties.get(WatcherConstants.KEY_JPA_ROOT_FOLDER), resourceSetFactory);
 		} else {
 			LOGGER.warning("Cannot unbind ResourceSetFactory without jpa.root.folder property");
 		}	
@@ -129,7 +129,7 @@ public class JpaDataResourceFilter implements ContainerRequestFilter, ResourceSe
 	public void filter(ContainerRequestContext requestContext) throws IOException {
 		MultivaluedMap<String, String> pathParams = requestContext.getUriInfo().getPathParameters();
 		String rootFolderName = pathParams.getFirst("rootFolderName");
-		if(!folderToResrouceSetFactoryMap.containsKey(rootFolderName)) {
+		if(!folderToResourceSetFactoryMap.containsKey(rootFolderName)) {
 			throw new WebApplicationException(
 					Response.status(Response.Status.BAD_REQUEST)
 							.entity(String.format("ResourceSetFactory for Root Folder [%s] not found.",
@@ -162,7 +162,7 @@ public class JpaDataResourceFilter implements ContainerRequestFilter, ResourceSe
 								.build());
 			}
 		}
-		ResourceSetFactory resourceSetFactory = folderToResrouceSetFactoryMap.get(rootFolderName);
+		ResourceSetFactory resourceSetFactory = folderToResourceSetFactoryMap.get(rootFolderName);
 		EPackage ePackage = resourceSetFactory.createResourceSet().getPackageRegistry().getEPackage(entityMappings.getPackage());
 		if(ePackage == null) {
 			throw new WebApplicationException(
@@ -175,7 +175,7 @@ public class JpaDataResourceFilter implements ContainerRequestFilter, ResourceSe
 		if(ePackage.getEClassifier(className) == null) {
 			throw new WebApplicationException(
 					Response.status(Response.Status.BAD_REQUEST)
-							.entity(String.format("No EClassifier [%s] found in EPckage [%s].",
+							.entity(String.format("No EClassifier [%s] found in EPackage [%s].",
 									className, entityMappings.getPackage()))
 							.build());
 		}
@@ -195,7 +195,7 @@ public class JpaDataResourceFilter implements ContainerRequestFilter, ResourceSe
 	public ResourceSet getResourceSet(ContainerRequestContext requestContext) {
 		MultivaluedMap<String, String> pathParams = requestContext.getUriInfo().getPathParameters();
 		String rootFolderName = pathParams.getFirst("rootFolderName");
-		ResourceSetFactory resourceSetFactory = folderToResrouceSetFactoryMap.get(rootFolderName);
+		ResourceSetFactory resourceSetFactory = folderToResourceSetFactoryMap.get(rootFolderName);
 		if (resourceSetFactory == null) {
 			throw new WebApplicationException(
 					Response.status(Response.Status.BAD_REQUEST)

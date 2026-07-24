@@ -60,7 +60,7 @@ import org.osgi.util.tracker.ServiceTrackerCustomizer;
 @Component(name = EormFileWatcher.PID, scope = ServiceScope.SINGLETON,
 service = FileSystemWatcherListener.class,
 configurationPolicy = ConfigurationPolicy.REQUIRE)
-@FileSystemWatcherListenerProperties(pattern = ".*.eorm", recursive = true)
+@FileSystemWatcherListenerProperties(pattern = ".*\\.eorm", recursive = true)
 public class EormFileWatcher implements FileSystemWatcherListener {
 
     private static final Logger LOG = System.getLogger(EormFileWatcher.class.getName());
@@ -106,9 +106,9 @@ public class EormFileWatcher implements FileSystemWatcherListener {
     void deactivate() {
         lock.lock();
         try {
-        	System.out.println("Unregistering " + registrations.size() + " EntityMappings");
+        	LOG.log(Level.DEBUG, "Unregistering " + registrations.size() + " EntityMappings");
         	registrations.values().forEach(reg -> {
-        		System.out.println("Unregistering EntityMappings for " + reg.getReference().getProperty("file.context.matcher"));
+        		LOG.log(Level.DEBUG, "Unregistering EntityMappings for " + reg.getReference().getProperty("file.context.matcher"));
         	});
             registrations.values().forEach(ServiceRegistration::unregister);
             registrations.clear();
@@ -129,7 +129,7 @@ public class EormFileWatcher implements FileSystemWatcherListener {
     }
     
     private void loadJpaMapping(Path path) {
-    	if (Files.isDirectory(path) || !path.toString().endsWith(FILE_EXTENSION)) {
+    	if (Files.isDirectory(path) || !path.toString().endsWith("." + FILE_EXTENSION)) {
             return;
         }
     	String uri = toUri(path);
@@ -151,7 +151,7 @@ public class EormFileWatcher implements FileSystemWatcherListener {
             unload(uri);
             loadJpaMapping(path);
         } else if (StandardWatchEventKinds.ENTRY_DELETE.equals(kind)) {
-        	System.out.println("Handling deleting event " + uri);
+        	LOG.log(Level.DEBUG, "Handling deleting event " + uri);
             unload(uri);
         }
     }
@@ -281,7 +281,7 @@ public class EormFileWatcher implements FileSystemWatcherListener {
                 bundleContext.registerService(EntityMappings.class, jpaMappingConfig, props);
         registrations.put(uri, reg);
         LOG.log(Level.INFO, "Registered EntityMappings ''{0}'' from {1}", jpaMappingConfig.getName(), uri);
-        System.out.println("Registered EntityMappings for fileContextMatcher " + config.file_context_matcher());
+        LOG.log(Level.DEBUG, "Registered EntityMappings for fileContextMatcher " + config.file_context_matcher());
     }
 
     private void unload(String uri) {
@@ -291,7 +291,7 @@ public class EormFileWatcher implements FileSystemWatcherListener {
             if (tracker != null) {
                 tracker.close();
             }
-            System.out.println("unload uri=" + uri
+            LOG.log(Level.DEBUG, "unload uri=" + uri
                     + " registrations.keys=" + registrations.keySet());
             unregisterMapping(uri);
         } finally {
@@ -305,7 +305,7 @@ public class EormFileWatcher implements FileSystemWatcherListener {
         if (reg != null) {
             try {
                 reg.unregister();
-                System.out.println("Unregistered EntityMappings for fileContextMatcher " + config.file_context_matcher());
+                LOG.log(Level.DEBUG, "Unregistered EntityMappings for fileContextMatcher " + config.file_context_matcher());
             } catch (IllegalStateException e) {
                 // already unregistered
             }

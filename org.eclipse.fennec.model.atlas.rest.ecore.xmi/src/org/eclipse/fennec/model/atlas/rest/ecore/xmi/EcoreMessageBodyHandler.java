@@ -164,6 +164,7 @@ public class EcoreMessageBodyHandler extends AbstractEPackageMessageBodyHandler 
 
         // Save to output stream
         resource.save(entityStream, options);
+        resource.getContents().clear();
 
         logger.log(Level.INFO, "Successfully serialized EObject to XMI");
     }

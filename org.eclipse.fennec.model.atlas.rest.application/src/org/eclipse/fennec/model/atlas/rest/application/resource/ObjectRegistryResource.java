@@ -199,7 +199,7 @@ public class ObjectRegistryResource {
                         objectId);
                 if (metadata == null) {
                     return Response.status(Response.Status.NO_CONTENT).entity(String.format(
-                            "Obejct %s not found neither scope '%s', registry '%s' and stage '%s' nor in parent hierarchy",
+                            "Object %s not found neither scope '%s', registry '%s' and stage '%s' nor in parent hierarchy",
                             objectId, scopeName, registryName, stageName)).build();
                 } else {
                     Response.ResponseBuilder rb = Response.status(Response.Status.OK).entity(metadata)
@@ -381,7 +381,7 @@ public class ObjectRegistryResource {
             EObject eObject = scopeService.getContentFromStageForRegistry(registryName, stageName, objectId);
             if (eObject == null) {
                 return Response.status(Response.Status.NO_CONTENT).entity(String.format(
-                        "Obejct %s not found neither scope '%s', registry '%s' and stage '%s' nor in parent hierarchy",
+                        "Object %s not found neither scope '%s', registry '%s' and stage '%s' nor in parent hierarchy",
                         objectId, scopeName, registryName, stageName)).build();
             }
             Response.ResponseBuilder rb = Response.status(Response.Status.OK).entity(eObject)
@@ -428,7 +428,7 @@ public class ObjectRegistryResource {
             Optional<?> optionalContent = scopeService.get(registryName, objectId);
             if (optionalContent.isEmpty()) {
                 return Response.status(Response.Status.NO_CONTENT).entity(String.format(
-                        "Obejct %s not found neither in (scope,registry)=('%s','%s') final stage nor in parent hierarchy",
+                        "Object %s not found neither in (scope,registry)=('%s','%s') final stage nor in parent hierarchy",
                         objectId, scopeName, registryName)).build();
             }
             Response.ResponseBuilder rb = Response.status(Response.Status.OK).entity(optionalContent.get())
@@ -498,7 +498,7 @@ public class ObjectRegistryResource {
                     objectId);
             if (existingMetadata == null) {
                 return Response.status(Response.Status.NO_CONTENT).entity(String.format(
-                        "Obejct %s not found neither scope '%s', registry '%s' and stage '%s' nor in parent hierarchy",
+                        "Object %s not found neither scope '%s', registry '%s' and stage '%s' nor in parent hierarchy",
                         objectId, scopeName, registryName, stageName)).build();
             }
             // We might want to check if the metadata is read only (e.g. if it was retrieved
@@ -569,7 +569,7 @@ public class ObjectRegistryResource {
                     objectId);
             if (existingMetadata == null) {
                 return Response.status(Response.Status.NO_CONTENT).entity(String.format(
-                        "Obejct %s not found neither scope '%s', registry '%s' and stage '%s' nor in parent hierarchy",
+                        "Object %s not found neither scope '%s', registry '%s' and stage '%s' nor in parent hierarchy",
                         objectId, scopeName, registryName, stageName)).build();
             }
             if (existingMetadata.isIsReadOnly()) {
@@ -640,7 +640,7 @@ public class ObjectRegistryResource {
                             .header("Content-Type", getResolvedMediaType()).build();
                 }
                 return Response.status(Response.Status.NO_CONTENT).entity(String.format(
-                        "Obejct %s not found neither scope '%s', registry '%s' and stage '%s' nor in parent hierarchy",
+                        "Object %s not found neither scope '%s', registry '%s' and stage '%s' nor in parent hierarchy",
                         objectId, scopeName, registryName, stageName)).build();
             }
             if (existingMetadata.isIsReadOnly()) {

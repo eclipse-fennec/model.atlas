@@ -24,7 +24,7 @@ import org.osgi.service.metatype.annotations.ObjectClassDefinition;
 @ObjectClassDefinition(name = "Scope Service Configuration")
 public @interface ScopeServiceConfig {
 
-    @AttributeDefinition(name = "Scope Name", description = "A meaningflu name for the scope", required = true)
+    @AttributeDefinition(name = "Scope Name", description = "A meaningful name for the scope", required = true)
     String scope_name();
 
     @AttributeDefinition(name = "Scope Description", description = "A description for the scope", required = false, defaultValue = "")

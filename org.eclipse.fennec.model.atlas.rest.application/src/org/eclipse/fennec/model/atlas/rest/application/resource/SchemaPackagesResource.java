@@ -15,6 +15,7 @@ package org.eclipse.fennec.model.atlas.rest.application.resource;
 
 import java.io.UnsupportedEncodingException;
 import java.time.Instant;
+import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 import java.util.LinkedHashSet;
 import java.util.LinkedList;
@@ -825,7 +826,7 @@ public class SchemaPackagesResource {
     }
 
     private String encodePackageNsURI(String nsUri) throws UnsupportedEncodingException {
-        return new String(Base64.getUrlEncoder().encode(nsUri.getBytes()));
+        return new String(Base64.getUrlEncoder().encode(nsUri.getBytes(StandardCharsets.UTF_8)));
     }
 
     /**

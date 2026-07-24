@@ -183,11 +183,12 @@ Blockers and majors are reported in full format below; minors and infos in compa
 - **Why it matters:** Callers get every object regardless of filter — silently wrong results rather than an explicit unsupported-operation.
 - **Suggested fix:** Implement minimal field:value filtering or throw documented `UnsupportedOperationException` — never silently return everything.
 
-### F24 · major · debug-leftover · management.apicurio
+### F24 · major · debug-leftover · management.apicurio ✅ FIXED (2026-07-24)
 - **Where:** org.eclipse.fennec.model.atlas.management.apicurio/src/org/eclipse/fennec/model/atlas/management/apicurio/ApicurioStorageHelper.java:477
 - **What:** Every store double-serializes and dumps the full artifact payload to stdout (`apicurioResource.save(System.out, options)`) before the real save. Verified.
 - **Why it matters:** Log flooding and payload leakage into container logs on every write; measurable overhead.
 - **Suggested fix:** Delete the line.
+- **Status:** ✅ Fixed 2026-07-24 — the `save(System.out, options)` line is deleted; apicurio OSGi ITs green.
 
 ### F25 · major · osgi-ds/lsp · management.apicurio
 - **Where:** org.eclipse.fennec.model.atlas.management.apicurio/src/org/eclipse/fennec/model/atlas/management/apicurio/ApicurioStorageHelper.java:79
@@ -213,11 +214,12 @@ Blockers and majors are reported in full format below; minors and infos in compa
 - **Why it matters:** One special character in a name makes a scoped query return EVERY object across all scopes — a cross-tenant data exposure in multi-scope deployments.
 - **Suggested fix:** Return a match-none query (or rethrow) on parse failure; build `BooleanQuery`/`TermQuery` from values (or `QueryParser.escape`) instead of string concatenation.
 
-### F29 · major · osgi-ds · management.lucene
+### F29 · major · osgi-ds · management.lucene ✅ FIXED (2026-07-24)
 - **Where:** org.eclipse.fennec.model.atlas.management.lucene/src/org/eclipse/fennec/model/atlas/management/lucene/epackage/impl/EPackageLuceneIndexImpl.java:230
 - **What:** The component opens IndexWriter/SearcherManager/Directory in `@Activate` but has no `@Deactivate` — `close()` exists and DS never calls it. Verified (only `@Activate` present).
 - **Why it matters:** Leaks the Lucene `write.lock` and file handles on every reactivation; subsequent activations can fail to acquire the lock.
 - **Suggested fix:** Annotate `close()` with `@Deactivate`.
+- **Status:** ✅ Fixed 2026-07-24 — `close()` now carries `@Deactivate`, so DS releases the IndexWriter/SearcherManager/Directory (and the Lucene `write.lock`) on every deactivation; lucene OSGi ITs green.
 
 ### REST server layer
 
@@ -293,11 +295,12 @@ Blockers and majors are reported in full format below; minors and infos in compa
 
 ### workflow
 
-### F41 · major · osgi-ds · workflow
+### F41 · major · osgi-ds · workflow ✅ FIXED (2026-07-24)
 - **Where:** org.eclipse.fennec.model.atlas.workflow/src/org/eclipse/fennec/model/atlas/workflow/impl/RegistryServiceImpl.java:82
 - **What:** Each factory instance creates `new PromiseFactory(Executors.newCachedThreadPool())` and the class has no `@Deactivate` — the executor is never shut down.
 - **Why it matters:** Thread leak on every config update/reactivation of every registry.
 - **Suggested fix:** Keep the ExecutorService in a field; add `@Deactivate` calling `shutdown()`.
+- **Status:** ✅ Fixed 2026-07-24 — the cached thread pool is held in a `promiseExecutor` field and a new `@Deactivate` method shuts it down; workflow OSGi ITs green.
 
 ### F42 · major · osgi-ds · workflow
 - **Where:** org.eclipse.fennec.model.atlas.workflow/src/org/eclipse/fennec/model/atlas/workflow/impl/RegistryServiceImpl.java:581
@@ -385,19 +388,19 @@ Blockers and majors are reported in full format below; minors and infos in compa
 
 | # | Bundle | Where | Category | What → fix |
 |---|---|---|---|---|
-| F56 | several | org.eclipse.fennec.data.atlas.epackage.watcher/src/.../EMFFileWatcher.java:197 (anchor) | naming | Misspelled identifiers and user-facing strings across ≥5 bundles: `scheduleDelaied`/`DelaiedTimerTask`, `folderToResrouceSetFactoryMap` (JpaDataResourceFilter:67), "EPckage" (:176), "Obejct" (ObjectRegistryResource:201), "Regsitries" (ScopesHealthCheck:60), "Upload Operation **now** allowed" (AtlasSchemaRegistryService:97,141,151,189), "Satge" (RegistryServiceImpl:617), "meaningflu" (ScopeServiceConfig:27), "tatrget" (RegistryServiceConfig:45) → rename/correct |
+| F56 | several | org.eclipse.fennec.data.atlas.epackage.watcher/src/.../EMFFileWatcher.java:197 (anchor) | naming | Misspelled identifiers and user-facing strings across ≥5 bundles: `scheduleDelaied`/`DelaiedTimerTask`, `folderToResrouceSetFactoryMap` (JpaDataResourceFilter:67), "EPckage" (:176), "Obejct" (ObjectRegistryResource:201), "Regsitries" (ScopesHealthCheck:60), "Upload Operation **now** allowed" (AtlasSchemaRegistryService:97,141,151,189), "Satge" (RegistryServiceImpl:617), "meaningflu" (ScopeServiceConfig:27), "tatrget" (RegistryServiceConfig:45) → rename/correct ✅ FIXED 2026-07-24 |
 | F57 | rest.application | resource/SchemaPackagesResource.java:89 | srp/dry | 985-line resource mixes HTTP with version parsing (871–945), objectId encoding, index maintenance; duplicates `checkIfMatch`/`getResolvedMediaType` with ObjectRegistryResource:681–707 → extract shared helpers into rest.common |
-| F58 | rest.application | resource/SchemaPackagesResource.java:828 | correctness | `nsUri.getBytes()` uses platform default charset for Base64URL objectIds → `StandardCharsets.UTF_8` |
+| F58 | rest.application | resource/SchemaPackagesResource.java:828 | correctness | `nsUri.getBytes()` uses platform default charset for Base64URL objectIds → `StandardCharsets.UTF_8` ✅ FIXED 2026-07-24 |
 | F59 | rest.application | resource/ObjectRegistryResource.java:201 | http | Six 204 responses built with entity bodies that HTTP silently drops → bare 204 or 404-with-body |
 | F60 | rest.application | resource/ObjectRegistryResource.java:698 | lsp | Unknown scope → null → NPE → 500, while SchemaPackagesResource:818 throws 400 for the same case → same 400 WAE |
 | F61 | rest.application / datagen.rest / data.atlas.jpa.rest | resource/SchemaPackagesResource.java:109 (also OpenApiResource.java:143, JpaDataResource.java:43) | api-hygiene | Leftover `hello`/`test` debug endpoints ship on production paths (OpenApi one leaks class name + identityHashCode) → delete |
 | F62 | rest.filter | ModelAtlasRequestFilter.java:165 | correctness | `path.contains("/schema")` substring heuristic also matches segments merely starting with "schema" → match exact path segment |
 | F63 | rest.uml / rest.xsdschema | UMLMessageBodyReaderWriter.java:92 (also XSDSchemaMessageBodyReaderWriter.java:107) | robustness | Unguarded `values.iterator().next()` after conversion → NoSuchElementException → 500 on empty result → guard with 400/null |
-| F64 | rest.ecore.xmi | EcoreMessageBodyHandler.java:166 | lsp | writeTo leaves serialized EPackage attached to the request-scoped resource; all three siblings `getContents().clear()` after save → add the clear |
+| F64 | rest.ecore.xmi | EcoreMessageBodyHandler.java:166 | lsp | writeTo leaves serialized EPackage attached to the request-scoped resource; all three siblings `getContents().clear()` after save → add the clear ✅ FIXED 2026-07-24 |
 | F65 | rest.uml | UMLMessageBodyReaderWriter.java:67 | lsp | Content-Disposition drift: ecore.xmi/xsdschema set attachment filename, uml computes but never sets, jsonschema none → unify |
 | F66 | rest.common | ResourceAttacherHelper.java:29 | javadoc | Exported API class has only @author/@since → document contract/side effects/thread-safety |
 | F67 | validation.rest | ObjectBatchValidationResource.java:154 | dry | `checkContentType()` + 4-branch exception mapping duplicated verbatim across/within both resources → shared helper or ExceptionMapper |
-| F68 | validation | impl/ValidationServiceImpl.java:398 | correctness | Format string has one `%s`, two args — parse-error message silently dropped (also :408) → add second `%s` |
+| F68 | validation | impl/ValidationServiceImpl.java:398 | correctness | Format string has one `%s`, two args — parse-error message silently dropped (also :408) → add second `%s` ✅ FIXED 2026-07-24 |
 | F69 | validation | impl/ValidationServiceImpl.java:168 | srp | ~76-line `compute()` fuses OCL evaluation and reflective `eInvoke` marshalling behind one if/else → split into two methods |
 | F70 | validation | impl/ValidationServiceImpl.java:392 | dry | Two `evaluateConstraint` overloads copy-pasted except `OclContext.of(...)` arg → delegate |
 | F71 | validation | ValidationService.java:33 | javadoc | Exported API: no per-method docs; `filterBatch` null return (→ HTTP 204) is an undocumented contract → add @param/@return/@throws |
@@ -406,7 +409,7 @@ Blockers and majors are reported in full format below; minors and infos in compa
 | F74 | datagen | impl/ExpressionIndex.java:130 | error-handling | `findExpression` swallows IOException, returns null (indistinguishable from no-match) → log or rethrow |
 | F75 | datagen.rest | DataGenResource.java:86 | api-contract | Unknown objectId → 204 instead of 404 (siblings use 404) → return 404 |
 | F76 | datagen.rest | DataGenResource.java:130 | correctness | Checks for `#` but blindly skips 3 chars assuming `#//` → verify separator before slicing |
-| F77 | datagen.example.model | bnd.bnd:5 | config-hygiene | Comment claims codegen disabled to protect manual impls, but `-generate:` is active and no `@generated NOT` markers exist → delete stale comment or disable generate |
+| F77 | datagen.example.model | bnd.bnd:5 | config-hygiene | Comment claims codegen disabled to protect manual impls, but `-generate:` is active and no `@generated NOT` markers exist → delete stale comment or disable generate ✅ FIXED 2026-07-24 |
 | F78 | model.documentation.provider | ModelDocumentationConstants.java:21 | naming/api | Constant-interface antipattern in exported API → final class + private ctor |
 | F79 | model.documentation.provider | ModelDocumentationProvider.java:45 | javadoc | Exported type: empty class javadoc, no docs on ~10 public methods (incl. null-on-IOException) → add |
 | F80 | bootstrap | InitialModelLoader.java:119 | osgi-ds | `@Activate` ctor synchronously walks + loads all models, blocking SCR (bounded boot mount, but unbounded on large volumes) → go async via Promise |
@@ -421,21 +424,21 @@ Blockers and majors are reported in full format below; minors and infos in compa
 | F89 | rest.client.api | ClientConfiguration.java:383 | javadoc | ~28 public Builder setters (383–521) have no javadoc, unlike the rest of the API bundle → add one-liners referencing the dotted property names |
 | F90 | management | registry/BasicEObjectRegistryService.java:742 | consistency | Six newer finders skip `ensureCacheInitialized()` unlike all older finders — silently empty after a failed initial load → add the call ✅ FIXED 2026-07-24 (together with F21) |
 | F91 | workflow / data.atlas.jpa.watcher / management | impl/StorageRegistryServiceImpl.java:1 (anchor) | dead-code | Fully commented-out code shipped: 319-line StorageRegistryServiceImpl (only "impl" of exported EObjectWorkflowService), five //-prefixed files in jpa.watcher (DataFolderWatcherOld, JpaCsvDataImporter, JpaModelSetup, JpaPersistenceUnitConfigurator, StandaloneJpaMappingFileWatcher), ~~40-line initializeCache block (BasicEObjectRegistryService:557)~~ (✅ deleted 2026-07-24 with F21), ModelInitializer/airquality blocks (DynamicEPackageRegistrationService:91, 286) → delete; git history preserves them |
-| F92 | management | storage/AbstractEObjectStorageService.java:808 | dead-code | Properties-merge branch self-contradictory (null-check then deref; both branches identical) → collapse to one `putAll` |
-| F93 | management.file | FileStorageHelper.java:54 | exception-hygiene | IllegalStateException wraps activation IOException without the cause → chain `e` |
-| F94 | management.file | EObjectFileStorageService.java:141 | shadowing | Private `storageType` hides the inherited protected field also assigned by the base activate → delete the private field |
-| F95 | management.lucene | service/LuceneEObjectRegistryService.java:159 | concurrency | `totalUpdates`/`totalRemovals` plain longs incremented from concurrent threads → AtomicLong |
+| F92 | management | storage/AbstractEObjectStorageService.java:808 | dead-code | Properties-merge branch self-contradictory (null-check then deref; both branches identical) → collapse to one `putAll` ✅ FIXED 2026-07-24 |
+| F93 | management.file | FileStorageHelper.java:54 | exception-hygiene | IllegalStateException wraps activation IOException without the cause → chain `e` ✅ FIXED 2026-07-24 |
+| F94 | management.file | EObjectFileStorageService.java:141 | shadowing | Private `storageType` hides the inherited protected field also assigned by the base activate → delete the private field ✅ FIXED 2026-07-24 |
+| F95 | management.lucene | service/LuceneEObjectRegistryService.java:159 | concurrency | `totalUpdates`/`totalRemovals` plain longs incremented from concurrent threads → AtomicLong ✅ FIXED 2026-07-24 |
 | F96 | management.lucene | epackage/EPackageLuceneIndex.java:25 | javadoc | Exported API interface: empty javadoc → document contract/lifecycle/thread-safety |
 | F97 | management | collector/EObjectStorageServiceCollector.java:64 | solid-srp | Collector duplicates BasicStorageRegistry's job (both track EObjectStorageService by storage.type) → keep one, deprecate the other |
 | F98 | management.apicurio | ApicurioStorageHelper.java:108 | robustness | Unchecked `(EClass)` cast of `resourceSet.getEObject(...)` — unresolvable objectType label NPEs later (:328) → guard for null |
-| F99 | workflow | impl/WorkflowServiceHelper.java:45 | osgi-ds | InterruptedException wrapped without restoring interrupt status → `Thread.currentThread().interrupt()` first |
-| F100 | workflow | impl/ScopeServiceImpl.java:57 | concurrency | Non-volatile fields written by dynamic bind/unbind, read from other threads (`scopeObject`; also `staticPackageRegistry` in AtlasSchemaRegistryService:60) → volatile |
+| F99 | workflow | impl/WorkflowServiceHelper.java:45 | osgi-ds | InterruptedException wrapped without restoring interrupt status → `Thread.currentThread().interrupt()` first ✅ FIXED 2026-07-24 |
+| F100 | workflow | impl/ScopeServiceImpl.java:57 | concurrency | Non-volatile fields written by dynamic bind/unbind, read from other threads (`scopeObject`; also `staticPackageRegistry` in AtlasSchemaRegistryService:60) → volatile ✅ FIXED 2026-07-24 |
 | F101 | workflow | PostReleaseActionService.java:46 | api-hygiene | Exported legacy interface with no production impl/caller coexists undeprecated with replacement StageActionService → @Deprecated or remove pre-release |
 | F102 | schema.registry.api | SchemaRegistryService.java:20 | javadoc | Exported API interface + all 4 methods undocumented → add contract docs |
-| F103 | data.atlas.epackage.watcher | EMFFileWatcher.java:154 | osgi-ds | `deactivate()` cancels the timer but an already-running DelaiedTimerTask can still `registerService` on the dead context → closed flag under the lock |
-| F104 | data.atlas.epackage.watcher | EMFFileWatcher.java:183 | osgi-ds | ENTRY_DELETE doesn't remove the path from `pendingUris` — CREATE+DELETE inside one debounce window still loads the deleted file → remove in the DELETE branch |
-| F105 | data.atlas.jpa.watcher | EormFileWatcher.java:50 | robustness | Watcher pattern `.*.eorm` (unescaped dot) + `endsWith("eorm")` without the dot let names like `fooXeorm` pass → `.*\.eorm` and reuse `isJpaMappingFile` |
-| F106 | data.atlas.jpa.watcher | EormFileWatcher.java:96 | cleanliness | Debug `System.out.println` in production components (96, 98, 141, 271, 281, 295; DataFolderWatcher:237 prints "Deleted config" before deleting) → remove or Logger |
+| F103 | data.atlas.epackage.watcher | EMFFileWatcher.java:154 | osgi-ds | `deactivate()` cancels the timer but an already-running DelaiedTimerTask can still `registerService` on the dead context → closed flag under the lock ✅ FIXED 2026-07-24 |
+| F104 | data.atlas.epackage.watcher | EMFFileWatcher.java:183 | osgi-ds | ENTRY_DELETE doesn't remove the path from `pendingUris` — CREATE+DELETE inside one debounce window still loads the deleted file → remove in the DELETE branch ✅ FIXED 2026-07-24 |
+| F105 | data.atlas.jpa.watcher | EormFileWatcher.java:50 | robustness | Watcher pattern `.*.eorm` (unescaped dot) + `endsWith("eorm")` without the dot let names like `fooXeorm` pass → `.*\.eorm` and reuse `isJpaMappingFile` ✅ FIXED 2026-07-24 |
+| F106 | data.atlas.jpa.watcher | EormFileWatcher.java:96 | cleanliness | Debug `System.out.println` in production components (96, 98, 141, 271, 281, 295; DataFolderWatcher:237 prints "Deleted config" before deleting) → remove or Logger ✅ FIXED 2026-07-24 |
 | F107 | data.atlas.jpa.watcher | api/WatcherConstants.java:23 | javadoc | Exported API constants interface: empty javadoc → document each PID/property contract |
 | F108 | data.atlas.jpa.rest | JpaDataResource.java:43 | api-contract | `ePackageUri` declared but unused; documented 409 "Multiple EntityMappings match" is never produced → align @ApiResponse with behavior |
 | F109 | data.atlas.jpa.config.local | configs/watcher.json:5 | configuration | Hardcoded user-specific absolute path `/home/ilenia/tests/jpa/` in a checked-in config → env→prop→default placeholder like the model.atlas config bundles |
@@ -453,8 +456,8 @@ Blockers and majors are reported in full format below; minors and infos in compa
 | F116 | rest.ecore.xmi | EcoreMessageBodyHandler.java:102 | Per-request INFO logging (102, 136, 152, 168) and leftover "governance application" naming/`temp://governance/` URI from copy-paste origin — downgrade to FINE, rename |
 | F117 | schema.registry.impl | bnd.bnd:1 | Bundle referenced by no bndrun/runtime config and duplicates workflow RegistryService's root-EClass validation; together with F9 it is effectively dead — wire it in or retire the api+impl pair |
 | F118 | rest.application | resource/SchemaPackagesResource.java:537 | REST layer computes content hashes via storage-layer static `AbstractEObjectStorageService.computeContentHash` (also ObjectRegistryResource:519) — issue #156 territory; expose on the ScopeService/metadata API |
-| F119 | workflow | bnd.bnd:27 | Misspelled buildpath attribute `versio=latest` silently ignored by bnd → `version=latest` |
-| F120 | rest.uml | EnhancedUMLResourceFactoryImpl.java:38 | Hand-written method carries a misleading `@generated` tag (tooling will skip it) → remove tag |
+| F119 | workflow | bnd.bnd:27 | Misspelled buildpath attribute `versio=latest` silently ignored by bnd → `version=latest` ✅ FIXED 2026-07-24 |
+| F120 | rest.uml | EnhancedUMLResourceFactoryImpl.java:38 | Hand-written method carries a misleading `@generated` tag (tooling will skip it) → remove tag ✅ FIXED 2026-07-24 |
 | F121 | org.eclipse.uml2.uml | bnd.bnd:16 | Vendored repackaging of Eclipse UML2 5.7.0 (768 upstream EPL files) under the upstream BSN; exports are versioned and `internal.*` marked `x-internal` per upstream convention — document upstream version/commit provenance and cover via Dash (F11) |
 | F122 | repo | REFACTORING_PLAN.md, WORKFLOW_COLLECTOR_PLAN.md, exporter-migration-investigation.md, update.sh (root) | Working documents/scripts at the repo root — move under docs/ or remove before release |
 
@@ -462,11 +465,11 @@ Blockers and majors are reported in full format below; minors and infos in compa
 
 1. **DS component classes exported as API** (F3–F7): five bundles export packages whose contents are `@Component` classes registered as their own service type (`workflow` ×3 collectors, `management` ×2 packages, `readable.scope.collector`, `model.documentation.provider`). One refactor pattern fixes all: interface in the exported package, component in a private one.
 2. **Unbind-by-key breaks service replacement** (F22): six sites in four bundles remove map entries by key in dynamic unbind methods; the codebase itself contains the correct two-arg idiom (`ResourceSetCollector`, `EObjectStorageServiceCollector`) to copy. ✅ **FIXED 2026-07-24** (all six sites).
-3. **`deactivate()` does not undo `activate()`** (F16 ✅, F19 ✅, F20 ✅, F29, F39, F41, F48, F103): unshutdown executors, unclosed Lucene writers, unremoved global-registry entries, undetached shared-ResourceSet resources. Worth a one-time sweep with a checklist per component. The management storage base class is fixed (2026-07-24); F29 (Lucene index), F39 (bootstrap), F41 (workflow executor), F48 (EORM watcher) and F103 remain.
+3. **`deactivate()` does not undo `activate()`** (F16 ✅, F19 ✅, F20 ✅, F29 ✅, F39, F41 ✅, F48, F103 ✅): unshutdown executors, unclosed Lucene writers, unremoved global-registry entries, undetached shared-ResourceSet resources. Worth a one-time sweep with a checklist per component. Fixed 2026-07-24: storage base class, Lucene index @Deactivate, workflow executor, EMFFileWatcher timer race. Remaining: F39 (bootstrap), F48 (EORM watcher resources).
 4. **Sibling-implementation contract drift** (F25, F27, F31, F33, F34, F60, F63, F65): the four REST format handlers and the file/apicurio storage pair each answer the same situations differently. Define the shared contract once (rest.common helper / storage API docs) and align.
-5. **Debug leftovers in production code** (F24, F61, F106): stdout payload dumps, hello/test endpoints, System.out prints.
+5. **Debug leftovers in production code** (F24 ✅, F61, F106 ✅): stdout payload dumps, hello/test endpoints, System.out prints. Fixed 2026-07-24 except F61 (endpoint removal left as an explicit decision).
 6. **License headers** (F1, F2, F10): ~52 files missing or wrong-license headers while the enforcement workflow never runs — fix headers and turn the workflow on in the same PR. ✅ **FIXED 2026-07-24** (headers on 62 files, workflow armed, `license-eye header check` green).
-7. **Typos in identifiers and user-facing text** (F56): frequent enough across bundles to warrant a spell-check pass; several are user-facing ("now allowed" inverts the meaning).
+7. **Typos in identifiers and user-facing text** (F56): frequent enough across bundles to warrant a spell-check pass; several are user-facing ("now allowed" inverts the meaning). ✅ **FIXED 2026-07-24** (all listed occurrences).
 
 ## Skipped / not reviewed
 

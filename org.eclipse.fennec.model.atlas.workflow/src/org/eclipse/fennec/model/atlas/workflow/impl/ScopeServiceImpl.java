@@ -54,7 +54,7 @@ public class ScopeServiceImpl<T extends EObject> implements ScopeService<T>, Wri
 	private Map<String, RegistryService<T>> registryServiceMap = new ConcurrentHashMap<>();
 	private ScopeServiceConfig config;
 
-	private Scope scopeObject;
+	private volatile Scope scopeObject;
 
 	@Reference(target = "(registry.name="+ WorkflowConstants.ATLAS_SCHEMA_REGISTRY_NAME +")")
 	RegistryService<EPackage> atlasSchemaRegistryService;

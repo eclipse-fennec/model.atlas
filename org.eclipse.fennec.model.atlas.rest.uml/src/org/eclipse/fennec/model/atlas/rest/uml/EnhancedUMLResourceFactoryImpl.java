@@ -34,8 +34,6 @@ public class EnhancedUMLResourceFactoryImpl extends UMLResourceFactoryImpl {
     /**
      * A method providing the Properties the services around this ResourceFactory
      * should be registered with.
-     * 
-     * @generated
      */
     public Map<String, Object> getServiceProperties() {
         Map<String, Object> properties = new HashMap<String, Object>();

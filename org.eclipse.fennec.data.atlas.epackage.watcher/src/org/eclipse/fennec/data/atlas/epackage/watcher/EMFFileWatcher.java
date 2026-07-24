@@ -87,6 +87,7 @@ public class EMFFileWatcher implements FileSystemWatcherListener {
     private final Set<String> pendingUris = new LinkedHashSet<>();
     private final Timer timer = new Timer();
     private TimerTask task = null;
+    private boolean closed = false; // guarded by lock
 
     private static class Metadata {
         String originalFileUri;
@@ -142,6 +143,7 @@ public class EMFFileWatcher implements FileSystemWatcherListener {
     void deactivate() {
         lock.lock();
         try {
+            closed = true;
             originalToNsUri.values().forEach(md -> md.services.forEach((ePackage, registrations) -> {
                 registrations.forEach(ServiceRegistration::unregister);
                 
@@ -161,7 +163,7 @@ public class EMFFileWatcher implements FileSystemWatcherListener {
     @Override
     public void handleInitialPaths(List<Path> paths) {
         List<String> toAdd = paths.stream().map(this::cleanUpPath).toList();
-        scheduleDelaied(toAdd);
+        scheduleDelayed(toAdd);
     }
 
     @Override
@@ -179,10 +181,11 @@ public class EMFFileWatcher implements FileSystemWatcherListener {
             } finally {
                 lock.unlock();
             }
-            scheduleDelaied(List.of(pathString));
+            scheduleDelayed(List.of(pathString));
         } else if (StandardWatchEventKinds.ENTRY_DELETE.equals(kind)) {
             lock.lock();
             try {
+                pendingUris.remove(pathString);
                 handleRemove(List.of(pathString));
             } finally {
                 lock.unlock();
@@ -194,23 +197,26 @@ public class EMFFileWatcher implements FileSystemWatcherListener {
         return path.toAbsolutePath().normalize().toUri().toString();
     }
 
-    private void scheduleDelaied(List<String> toHandle) {
+    private void scheduleDelayed(List<String> toHandle) {
         lock.lock();
         try {
             pendingUris.addAll(toHandle);
             if (task != null) {
                 task.cancel();
             }
-            task = new DelaiedTimerTask(this::loadDelaied);
+            task = new DelayedTimerTask(this::loadDelayed);
             timer.schedule(task, 1000);
         } finally {
             lock.unlock();
         }
     }
 
-    private void loadDelaied() {
+    private void loadDelayed() {
         lock.lock();
         try {
+            if (closed) {
+                return;
+            }
             loadResources(pendingUris);
             pendingUris.clear();
         } finally {
@@ -362,11 +368,11 @@ public class EMFFileWatcher implements FileSystemWatcherListener {
         }
     }
 
-    private static final class DelaiedTimerTask extends TimerTask {
+    private static final class DelayedTimerTask extends TimerTask {
 
         private final Runnable runnable;
 
-        DelaiedTimerTask(Runnable runnable) {
+        DelayedTimerTask(Runnable runnable) {
             this.runnable = runnable;
         }
 

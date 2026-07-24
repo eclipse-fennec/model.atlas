@@ -53,6 +53,7 @@ import org.eclipse.fennec.model.atlas.management.lucene.epackage.EPackageLuceneI
 import org.eclipse.fennec.model.atlas.management.lucene.epackage.EPackageSearchQuery;
 import org.eclipse.fennec.model.atlas.mgmt.management.ObjectMetadata;
 import org.osgi.service.component.annotations.Activate;
+import org.osgi.service.component.annotations.Deactivate;
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.ConfigurationPolicy;
 import org.osgi.service.metatype.annotations.AttributeDefinition;
@@ -227,6 +228,7 @@ public class EPackageLuceneIndexImpl implements EPackageLuceneIndex, AutoCloseab
 	}
 
 	@Override
+	@Deactivate
 	public void close() throws Exception {
 		if (searcherManager != null) {
 			try {

@@ -234,7 +234,7 @@ public class DataFolderWatcher implements FileSystemWatcherListener {
             return;
         }
         try {
-        	System.out.println("Deleted config " + config.getPid());
+        	LOG.log(Level.DEBUG, "Deleted config " + config.getPid());
             config.delete();
             
         } catch (IOException e) {

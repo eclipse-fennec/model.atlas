@@ -57,7 +57,7 @@ public class ScopesHealthCheck implements HealthCheck {
                 	log.info("scope: {} with Registry: {} Description: {} and Stages : {} available", scope.getName(), r.getName(), r.getDescription(), stages);
                     });
                 } else {
-                    log.warn("No Regsitries available");
+                    log.warn("No Registries available");
                 }
             }
         }

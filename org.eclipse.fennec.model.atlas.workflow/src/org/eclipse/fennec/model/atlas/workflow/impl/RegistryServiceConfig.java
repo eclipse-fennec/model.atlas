@@ -42,7 +42,7 @@ public @interface RegistryServiceConfig {
     @AttributeDefinition(name = "Delete After Transition", description = "Whether to remove an object from a stage after a transition to another stage", required = false, defaultValue = "false")
     boolean delete_after_transition() default false;
 
-    @AttributeDefinition(name = "Storage Service Target Filter", description = "The tatrget filter for the storageService injected reference", required = false, defaultValue = "(storage.type=*)")
+    @AttributeDefinition(name = "Storage Service Target Filter", description = "The target filter for the storageService injected reference", required = false, defaultValue = "(storage.type=*)")
     String storageService_target() default "(storage.type=*)";
 
     @AttributeDefinition(name = "Stages", description = "The stages associated with this RegistryService. "

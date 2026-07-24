@@ -25,6 +25,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -156,8 +157,8 @@ public class LuceneEObjectRegistryService<T extends EObject> implements EObjectR
     private final Map<String, ObjectMetadata> metadataCache = new ConcurrentHashMap<>();
 
     // Statistics tracking
-    private long totalUpdates = 0;
-    private long totalRemovals = 0;
+    private final AtomicLong totalUpdates = new AtomicLong();
+    private final AtomicLong totalRemovals = new AtomicLong();
     private Instant lastStatsReset = Instant.now();
 
     @Activate
@@ -204,8 +205,8 @@ public class LuceneEObjectRegistryService<T extends EObject> implements EObjectR
         metadataCache.clear();
 
         // Log final statistics
-        LOGGER.info("Deactivated LuceneEObjectRegistryService - Total updates: " + totalUpdates + ", Total removals: "
-                + totalRemovals);
+        LOGGER.info("Deactivated LuceneEObjectRegistryService - Total updates: " + totalUpdates.get() + ", Total removals: "
+                + totalRemovals.get());
     }
 
     @Override
@@ -241,7 +242,7 @@ public class LuceneEObjectRegistryService<T extends EObject> implements EObjectR
 
             // Update in-memory cache using objectId as key
             metadataCache.put(objectId, metadata);
-            totalUpdates++;
+            totalUpdates.incrementAndGet();
 
             // Update Lucene index
             try {
@@ -251,7 +252,7 @@ public class LuceneEObjectRegistryService<T extends EObject> implements EObjectR
                 LOGGER.log(Level.WARNING, "Failed to update Lucene index for object: " + objectId, e);
             }
 
-            logDebug("Updated cache for object: " + objectId + " (total updates: " + totalUpdates + ")");
+            logDebug("Updated cache for object: " + objectId + " (total updates: " + totalUpdates.get() + ")");
 
         } catch (Exception e) {
             LOGGER.log(Level.SEVERE, "Error updating shared registry cache for object: " + objectId, e);
@@ -267,7 +268,7 @@ public class LuceneEObjectRegistryService<T extends EObject> implements EObjectR
             // Remove from in-memory cache
             ObjectMetadata removed = metadataCache.remove(objectId);
             if (removed != null) {
-                totalRemovals++;
+                totalRemovals.incrementAndGet();
             }
 
             // Remove from Lucene index
@@ -278,7 +279,7 @@ public class LuceneEObjectRegistryService<T extends EObject> implements EObjectR
                 LOGGER.log(Level.WARNING, "Failed to remove from Lucene index: " + objectId, e);
             }
 
-            logDebug("Removed from cache: " + objectId + " (total removals: " + totalRemovals + ")");
+            logDebug("Removed from cache: " + objectId + " (total removals: " + totalRemovals.get() + ")");
 
         } catch (Exception e) {
             LOGGER.log(Level.SEVERE, "Error removing from shared registry cache: " + objectId, e);
@@ -383,8 +384,8 @@ public class LuceneEObjectRegistryService<T extends EObject> implements EObjectR
 
             // Basic statistics
             stats.put("totalObjects", (long) metadataCache.size());
-            stats.put("totalUpdates", totalUpdates);
-            stats.put("totalRemovals", totalRemovals);
+            stats.put("totalUpdates", totalUpdates.get());
+            stats.put("totalRemovals", totalRemovals.get());
             stats.put("lastStatsReset", lastStatsReset);
             stats.put("registryType", "shared");
             stats.put("storageBackendTracking", config.storage_backend_tracking());
