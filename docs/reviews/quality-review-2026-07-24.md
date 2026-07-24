@@ -86,23 +86,26 @@ Blockers and majors are reported in full format below; minors and infos in compa
 - **Suggested fix:** Add `push`/`pull_request` triggers (copy from emf.osgi and adapt); pin the actions.
 - **Status:** ✅ Fixed 2026-07-24 — workflow now triggers on `push`/`pull_request`/`workflow_dispatch` with `actions/checkout@v4` and `apache/skywalking-eyes@v0.8.0` (matching the emf.osgi reference); local run of the same check passes with 0 invalid files.
 
-### F11 · major · release-readiness · repo
+### F11 · major · release-readiness · repo 🟡 TOOLING FIXED (2026-07-24) — IP review outstanding
 - **Where:** repo root (no `DEPENDENCIES`, no `tools/dash-licenses.*`, no `.github/workflows/dash-licenses.yml`)
 - **What:** The Eclipse Dash IP-check tooling is entirely absent: no committed `DEPENDENCIES` file, no dash script, no workflow — although CONTRIBUTING.md (line 30, 131) instructs contributors to run Dash.
 - **Why it matters:** No visibility on `restricted` third-party content before a release; a release-blocking IP gap. The vendored `org.eclipse.uml2.uml` source (F121) especially needs to be covered.
 - **Suggested fix:** Copy `tools/dash-licenses.sh`/`.bat` and `dash-licenses.yml` from emf.osgi, generate `DEPENDENCIES` via `bnd repo deps`, review and commit it (PMI id `technology.fennec`).
+- **Status:** 🟡 Tooling done 2026-07-24 — `tools/dash-licenses.sh`/`.bat` and `.github/workflows/dash-licenses.yml` copied from emf.osgi; `DEPENDENCIES` generated (587 entries) and `.licenserc.yaml` taught to ignore it. **Outstanding:** 126 `restricted` entries — almost all `org.geckoprojects.*`/fennec-ecosystem artifacts needing IP-Lab review via `tools/dash-licenses.sh --review --project technology.fennec` (requires a committer GitLab token); the Dash CI job will stay red until they are vetted.
 
-### F12 · major · release-readiness · repo
+### F12 · major · release-readiness · repo ✅ FIXED (2026-07-24)
 - **Where:** repo root (missing `SECURITY.md`); CONTRIBUTING.md:46
 - **What:** No `SECURITY.md`; CONTRIBUTING.md directs security reports to the `security@eclipse.org` mailing list instead.
 - **Why it matters:** Handbook expects a per-repo `SECURITY.md` (GitHub advisories URL, supported-versions table); the mailing-list pointer is the pattern the fennec guide explicitly replaces.
 - **Suggested fix:** Add `SECURITY.md` from emf.osgi (advisories URL for THIS repo, current versions table); point CONTRIBUTING.md at it.
+- **Status:** ✅ Fixed 2026-07-24 — `SECURITY.md` added (advisories URL for model.atlas, supported-versions section for the 0.0.x container-image stream); CONTRIBUTING.md security bullet now points at it (also closes F110).
 
-### F13 · major · release-readiness · repo
+### F13 · major · release-readiness · repo ✅ FIXED (2026-07-24)
 - **Where:** repo root (missing `CODE_OF_CONDUCT.md`)
 - **What:** No `CODE_OF_CONDUCT.md` at the repo root; the other five root documents exist and are adapted.
 - **Why it matters:** Required root document (Eclipse Community CoC 2.0).
 - **Suggested fix:** Copy from emf.osgi verbatim (it needs no adaptation).
+- **Status:** ✅ Fixed 2026-07-24 — Eclipse Community Code of Conduct 2.0 added verbatim from emf.osgi.
 
 ### F14 · major · release-readiness · repo
 - **Where:** cnf/build.bnd:54
@@ -428,7 +431,7 @@ Blockers and majors are reported in full format below; minors and infos in compa
 | F107 | data.atlas.jpa.watcher | api/WatcherConstants.java:23 | javadoc | Exported API constants interface: empty javadoc → document each PID/property contract |
 | F108 | data.atlas.jpa.rest | JpaDataResource.java:43 | api-contract | `ePackageUri` declared but unused; documented 409 "Multiple EntityMappings match" is never produced → align @ApiResponse with behavior |
 | F109 | data.atlas.jpa.config.local | configs/watcher.json:5 | configuration | Hardcoded user-specific absolute path `/home/ilenia/tests/jpa/` in a checked-in config → env→prop→default placeholder like the model.atlas config bundles |
-| F110 | repo | CONTRIBUTING.md:46 | release-readiness | Security reports pointed at the mailing list instead of SECURITY.md (see F12) → update once SECURITY.md exists |
+| F110 | repo | CONTRIBUTING.md:46 | release-readiness | Security reports pointed at the mailing list instead of SECURITY.md (see F12) → update once SECURITY.md exists ✅ FIXED 2026-07-24 |
 | F111 | repo | README.md:84 vs cnf/build.bnd:56 | docs | README says the project ships container images "instead of Maven Central artifacts", but build.bnd sets `maven-central: true` and build.yml wires Sonatype/GPG release secrets on main — docs and build config disagree → pick one story and align |
 
 ## Findings — infos (compact)

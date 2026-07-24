@@ -1,0 +1,45 @@
+name: License Check (IP Dash)
+
+on:
+  push:
+    # Run on the primary branches.
+    branches:
+      - main
+      - snapshot
+  pull_request:
+    # Run for all pull requests.
+    branches:
+      - '*'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  dash:
+    name: Eclipse Dash license check
+    runs-on: ubuntu-latest
+    steps:
+      - name: Git Checkout
+        uses: actions/checkout@v4
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: "temurin"
+          java-version: 21
+      - name: Generate DEPENDENCIES and check licenses
+        # Exits non-zero (number of "restricted" artifacts) when any dependency
+        # has not been vetted yet, which fails the job. Regenerate and review
+        # locally with: tools/dash-licenses.sh [--review]
+        run: bash tools/dash-licenses.sh
+      - name: Upload DEPENDENCIES
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: DEPENDENCIES
+          path: DEPENDENCIES
+          if-no-files-found: warn
