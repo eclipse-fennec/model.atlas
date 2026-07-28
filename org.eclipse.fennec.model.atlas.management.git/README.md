@@ -84,7 +84,9 @@ tip-SHA compare no-ops when nothing changed):
    `X-Hub-Signature-256` / GitLab `X-Gitlab-Token`), normalizes GitHub/GitLab payloads to a
    neutral `WebhookPayload`, and delivers it on the OSGi TypedEvent bus. The storage service
    is a `TypedEventHandler` subscribed to its branches' topics; an inbound push triggers
-   `reconcile(branch)`.
+   `reconcile(branch)`. Each provider's endpoint is **opt-in per configuration** — it only
+   exists while its ConfigAdmin pid is present (see “4. Webhook endpoints” below), so a
+   deployment can expose GitHub only, GitLab only, both, or none.
 2. **Reconcile poll** — an always-on background poll (`poll.interval.seconds`, default 60;
    ≤0 disables) calls `reconcileAll()`, the guaranteed backstop for missed/undelivered
    webhooks and for deployments that block inbound HTTP.
@@ -177,9 +179,13 @@ GitConfig~release → { repo: "git@github.com:acme/models.git", branch: "release
 wired to git — set `storageService.target=(storage.type=git)` and list the branches as the
 stages / trigger stages.
 
-**4. Webhook secrets** (if using webhooks) via ConfigAdmin pid
-`org.eclipse.fennec.model.atlas.management.git.webhook` (`githubSecret`, `gitlabToken`,
-`requireSignature` — fail-closed by default).
+**4. Webhook endpoints** (if using webhooks) via per-provider ConfigAdmin pids:
+`org.eclipse.fennec.model.atlas.management.git.webhook.github` (`githubSecret`,
+`requireSignature`) and `…webhook.gitlab` (`gitlabToken`, `requireSignature`). A provider's
+`POST /github/webhook` / `POST /gitlab/webhook` endpoint **only exists while its pid is
+configured** — no configuration, no endpoint (404). Configure only the provider(s) you use.
+With a configuration present but an empty secret, requests are rejected with 401 unless
+`requireSignature` is explicitly set to `false` (fail-closed by default).
 
 ### Complete example
 
@@ -239,9 +245,13 @@ promoted to `release`.
     "registryService.cardinality.minimum": 1
   },
 
-  // Optional: webhook secrets (fail-closed by default).
-  "org.eclipse.fennec.model.atlas.management.git.webhook": {
+  // Optional: webhook endpoints, one pid per provider. An endpoint only exists while its
+  // pid is configured; omit a block to leave that provider's endpoint absent (404).
+  "org.eclipse.fennec.model.atlas.management.git.webhook.github": {
     "githubSecret": "<hmac-secret>",
+    "requireSignature": true
+  },
+  "org.eclipse.fennec.model.atlas.management.git.webhook.gitlab": {
     "gitlabToken": "<gitlab-token>",
     "requireSignature": true
   }

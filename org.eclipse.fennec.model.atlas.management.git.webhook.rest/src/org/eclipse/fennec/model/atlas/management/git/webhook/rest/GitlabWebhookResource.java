@@ -18,8 +18,10 @@ import org.eclipse.fennec.model.atlas.management.git.gitlab.webhook.model.gitlab
 import org.eclipse.fennec.model.atlas.management.git.webhook.model.gitwebhook.WebhookPayload;
 import org.eclipse.fennec.model.atlas.management.git.webhook.utils.WebhookTopics;
 import org.osgi.service.component.annotations.Component;
+import org.osgi.service.component.annotations.ConfigurationPolicy;
 import org.osgi.service.component.annotations.Reference;
 import org.osgi.service.component.annotations.ServiceScope;
+import org.osgi.service.jakartars.whiteboard.propertytypes.JakartarsExtensionSelect;
 import org.osgi.service.jakartars.whiteboard.propertytypes.JakartarsName;
 import org.osgi.service.jakartars.whiteboard.propertytypes.JakartarsResource;
 import org.osgi.service.typedevent.TypedEventBus;
@@ -40,14 +42,24 @@ import jakarta.ws.rs.core.Response;
  * repository+branch topic ({@link WebhookTopics}) — the exact same topic the
  * GitHub adapter produces, so downstream stays provider-agnostic. Authenticity
  * ({@code X-Gitlab-Token}) and the push-only gate are enforced by the name-bound
- * {@link WebhookSignatureFilter} before this method runs.
+ * {@link GitlabWebhookSignatureFilter} before this method runs.
+ *
+ * <p>The endpoint only exists when the
+ * {@value GitlabWebhookSignatureFilter#CONFIG_PID} configuration is provided:
+ * the component requires that PID, and the whiteboard additionally withholds
+ * the resource until the signature filter is wired
+ * ({@code osgi.jakartars.extension.select}) — a request can never reach this
+ * method unverified.
  *
  * @author Data In Motion
  * @since 1.0
  */
 @JakartarsResource
 @JakartarsName("GitlabWebhookResource")
-@Component(service = GitlabWebhookResource.class, scope = ServiceScope.PROTOTYPE)
+@JakartarsExtensionSelect("(jakartars.name=" + GitlabWebhookSignatureFilter.NAME + ")")
+@Component(service = GitlabWebhookResource.class, scope = ServiceScope.PROTOTYPE,
+		configurationPid = GitlabWebhookSignatureFilter.CONFIG_PID,
+		configurationPolicy = ConfigurationPolicy.REQUIRE)
 @Path("/gitlab")
 public class GitlabWebhookResource {
 
@@ -57,7 +69,7 @@ public class GitlabWebhookResource {
 	@POST
 	@Path("/webhook")
 	@Consumes(MediaType.APPLICATION_JSON)
-	@VerifyWebhookSignature
+	@VerifyGitlabWebhookSignature
 	public Response webhook(
 			@RootElement(rootType = GitlabWebhookPackage.eNS_URI + "#//GitlabPayload") WebhookPayload payload) {
 		if (payload == null || payload.getRepositoryFullName() == null) {

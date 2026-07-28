@@ -26,8 +26,11 @@ docker run -d -p 8080:8080 \
 ```
 
 Webhooks (optional) are served on the same port under the REST endpoints
-(`/…/github`, `/…/gitlab`); set `GIT_WEBHOOK_GITHUB_SECRET` / `GIT_WEBHOOK_GITLAB_TOKEN` and flip
-`requireSignature` to `true` in the config for production.
+(`/…/github`, `/…/gitlab`). Each provider's endpoint only exists while its ConfigAdmin pid
+(`…management.git.webhook.github` / `…webhook.gitlab`) is present — the shipped
+`workflow.json` configures both; remove a block to drop that provider's endpoint entirely.
+Set `GIT_WEBHOOK_GITHUB_SECRET` / `GIT_WEBHOOK_GITLAB_TOKEN` and flip `requireSignature` to
+`true` in the config for production.
 
 ## Environment Variables
 

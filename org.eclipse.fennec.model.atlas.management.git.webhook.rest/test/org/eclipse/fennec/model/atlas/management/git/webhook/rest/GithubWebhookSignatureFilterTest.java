@@ -13,10 +13,8 @@
  */
 package org.eclipse.fennec.model.atlas.management.git.webhook.rest;
 
-import static org.eclipse.fennec.model.atlas.management.git.webhook.rest.WebhookSignatureFilter.GITHUB_EVENT_HEADER;
-import static org.eclipse.fennec.model.atlas.management.git.webhook.rest.WebhookSignatureFilter.GITHUB_SIGNATURE_HEADER;
-import static org.eclipse.fennec.model.atlas.management.git.webhook.rest.WebhookSignatureFilter.GITLAB_EVENT_HEADER;
-import static org.eclipse.fennec.model.atlas.management.git.webhook.rest.WebhookSignatureFilter.GITLAB_TOKEN_HEADER;
+import static org.eclipse.fennec.model.atlas.management.git.webhook.rest.GithubWebhookSignatureFilter.GITHUB_EVENT_HEADER;
+import static org.eclipse.fennec.model.atlas.management.git.webhook.rest.GithubWebhookSignatureFilter.GITHUB_SIGNATURE_HEADER;
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
@@ -43,134 +41,86 @@ import jakarta.ws.rs.container.ContainerRequestContext;
 import jakarta.ws.rs.core.Response;
 
 /**
- * Unit tests for {@link WebhookSignatureFilter}: HMAC/token verification,
+ * Unit tests for {@link GithubWebhookSignatureFilter}: HMAC verification,
  * fail-closed behaviour, push-event gating and entity-stream buffering.
  */
-class WebhookSignatureFilterTest {
+class GithubWebhookSignatureFilterTest {
 
 	private static final byte[] BODY = "{\"ref\":\"refs/heads/main\"}".getBytes(StandardCharsets.UTF_8);
 	private static final String SECRET = "s3cr3t";
-	private static final String TOKEN = "tok3n";
-
-	// --- GitHub -------------------------------------------------------------
 
 	@Test
-	void github_validSignature_passes() throws IOException {
+	void validSignature_passes() throws IOException {
 		AtomicReference<InputStream> reset = new AtomicReference<>();
 		ContainerRequestContext ctx = githubCtx("push", githubSignature(SECRET, BODY), reset);
 
-		filter(SECRET, "", true).filter(ctx);
+		filter(SECRET, true).filter(ctx);
 
 		verify(ctx, never()).abortWith(any());
 		assertArrayEquals(BODY, reset.get().readAllBytes(), "entity stream must be reset with original body");
 	}
 
 	@Test
-	void github_invalidSignature_rejected401() throws IOException {
+	void invalidSignature_rejected401() throws IOException {
 		ContainerRequestContext ctx = githubCtx("push", "sha256=deadbeef", new AtomicReference<>());
-		filter(SECRET, "", true).filter(ctx);
+		filter(SECRET, true).filter(ctx);
 		assertEquals(401, capturedStatus(ctx));
 	}
 
 	@Test
-	void github_missingSignatureHeader_rejected401() throws IOException {
+	void missingSignatureHeader_rejected401() throws IOException {
 		ContainerRequestContext ctx = githubCtx("push", null, new AtomicReference<>());
-		filter(SECRET, "", true).filter(ctx);
+		filter(SECRET, true).filter(ctx);
 		assertEquals(401, capturedStatus(ctx));
 	}
 
 	@Test
-	void github_secretNotConfigured_failClosed401() throws IOException {
+	void secretNotConfigured_failClosed401() throws IOException {
 		ContainerRequestContext ctx = githubCtx("push", githubSignature(SECRET, BODY), new AtomicReference<>());
-		filter("", "", true).filter(ctx);
+		filter("", true).filter(ctx);
 		assertEquals(401, capturedStatus(ctx));
 	}
 
 	@Test
-	void github_secretNotConfigured_requireDisabled_passes() throws IOException {
+	void secretNotConfigured_requireDisabled_passes() throws IOException {
 		ContainerRequestContext ctx = githubCtx("push", null, new AtomicReference<>());
-		filter("", "", false).filter(ctx);
+		filter("", false).filter(ctx);
 		verify(ctx, never()).abortWith(any());
 	}
 
 	@Test
-	void github_nonPushEvent_acknowledged200_notVerified() throws IOException {
+	void nonPushEvent_acknowledged200_notVerified() throws IOException {
 		// A 'ping' handshake must be accepted (200) without needing a signature.
 		ContainerRequestContext ctx = githubCtx("ping", null, new AtomicReference<>());
-		filter(SECRET, "", true).filter(ctx);
+		filter(SECRET, true).filter(ctx);
 		assertEquals(200, capturedStatus(ctx));
 	}
 
-	// --- GitLab -------------------------------------------------------------
-
 	@Test
-	void gitlab_validToken_passes() throws IOException {
-		ContainerRequestContext ctx = gitlabCtx("Push Hook", TOKEN, new AtomicReference<>());
-		filter("", TOKEN, true).filter(ctx);
-		verify(ctx, never()).abortWith(any());
-	}
-
-	@Test
-	void gitlab_invalidToken_rejected401() throws IOException {
-		ContainerRequestContext ctx = gitlabCtx("Push Hook", "wrong", new AtomicReference<>());
-		filter("", TOKEN, true).filter(ctx);
-		assertEquals(401, capturedStatus(ctx));
-	}
-
-	@Test
-	void gitlab_missingToken_rejected401() throws IOException {
-		ContainerRequestContext ctx = gitlabCtx("Push Hook", null, new AtomicReference<>());
-		filter("", TOKEN, true).filter(ctx);
-		assertEquals(401, capturedStatus(ctx));
-	}
-
-	@Test
-	void gitlab_nonPushEvent_acknowledged200() throws IOException {
-		ContainerRequestContext ctx = gitlabCtx("Tag Push Hook", TOKEN, new AtomicReference<>());
-		filter("", TOKEN, true).filter(ctx);
-		assertEquals(200, capturedStatus(ctx));
-	}
-
-	// --- Neither ------------------------------------------------------------
-
-	@Test
-	void noEventHeaders_rejected400() throws IOException {
-		ContainerRequestContext ctx = baseCtx(new AtomicReference<>());
-		filter(SECRET, TOKEN, true).filter(ctx);
+	void missingEventHeader_rejected400() throws IOException {
+		ContainerRequestContext ctx = githubCtx(null, null, new AtomicReference<>());
+		filter(SECRET, true).filter(ctx);
 		assertEquals(400, capturedStatus(ctx));
 	}
 
 	// --- helpers ------------------------------------------------------------
 
-	private static WebhookSignatureFilter filter(String githubSecret, String gitlabToken, boolean require) {
-		WebhookSignatureFilter f = new WebhookSignatureFilter();
-		f.activate(config(githubSecret, gitlabToken, require));
+	private static GithubWebhookSignatureFilter filter(String githubSecret, boolean require) {
+		GithubWebhookSignatureFilter f = new GithubWebhookSignatureFilter();
+		f.activate(config(githubSecret, require));
 		return f;
 	}
 
-	private static ContainerRequestContext baseCtx(AtomicReference<InputStream> resetSink) {
+	private static ContainerRequestContext githubCtx(String event, String signature,
+			AtomicReference<InputStream> resetSink) {
 		ContainerRequestContext ctx = mock(ContainerRequestContext.class);
 		when(ctx.getEntityStream()).thenReturn(new ByteArrayInputStream(BODY));
 		doAnswer(inv -> {
 			resetSink.set(inv.getArgument(0));
 			return null;
 		}).when(ctx).setEntityStream(any());
-		return ctx;
-	}
-
-	private static ContainerRequestContext githubCtx(String event, String signature,
-			AtomicReference<InputStream> resetSink) {
-		ContainerRequestContext ctx = baseCtx(resetSink);
 		when(ctx.getHeaderString(GITHUB_EVENT_HEADER)).thenReturn(event);
 		when(ctx.getHeaderString(GITHUB_SIGNATURE_HEADER)).thenReturn(signature);
-		return ctx;
-	}
-
-	private static ContainerRequestContext gitlabCtx(String event, String token,
-			AtomicReference<InputStream> resetSink) {
-		ContainerRequestContext ctx = baseCtx(resetSink);
-		when(ctx.getHeaderString(GITLAB_EVENT_HEADER)).thenReturn(event);
-		when(ctx.getHeaderString(GITLAB_TOKEN_HEADER)).thenReturn(token);
 		return ctx;
 	}
 
@@ -195,21 +145,16 @@ class WebhookSignatureFilterTest {
 		}
 	}
 
-	private static WebhookSignatureFilter.Config config(String githubSecret, String gitlabToken, boolean require) {
-		return new WebhookSignatureFilter.Config() {
+	private static GithubWebhookSignatureFilter.Config config(String githubSecret, boolean require) {
+		return new GithubWebhookSignatureFilter.Config() {
 			@Override
 			public Class<? extends Annotation> annotationType() {
-				return WebhookSignatureFilter.Config.class;
+				return GithubWebhookSignatureFilter.Config.class;
 			}
 
 			@Override
 			public String githubSecret() {
 				return githubSecret;
-			}
-
-			@Override
-			public String gitlabToken() {
-				return gitlabToken;
 			}
 
 			@Override

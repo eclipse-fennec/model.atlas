@@ -109,8 +109,11 @@
         "privateKey": "$[env:GIT_PRIVATE_KEY;default=$[prop:GIT_PRIVATE_KEY;default=/opt/modelatlas/runtime/secrets/git_deploy_key]]",
         "privateKeyPassphrase": "$[env:GIT_PRIVATE_KEY_PASSPHRASE;default=$[prop:GIT_PRIVATE_KEY_PASSPHRASE;default=]]"
     },
-    "org.eclipse.fennec.model.atlas.management.git.webhook": {
+    "org.eclipse.fennec.model.atlas.management.git.webhook.github": {
         "githubSecret": "$[env:GIT_WEBHOOK_GITHUB_SECRET;default=$[prop:GIT_WEBHOOK_GITHUB_SECRET;default=]]",
+        "requireSignature": false
+    },
+    "org.eclipse.fennec.model.atlas.management.git.webhook.gitlab": {
         "gitlabToken": "$[env:GIT_WEBHOOK_GITLAB_TOKEN;default=$[prop:GIT_WEBHOOK_GITLAB_TOKEN;default=]]",
         "requireSignature": false
     }

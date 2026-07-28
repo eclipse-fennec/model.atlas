@@ -23,13 +23,12 @@ import java.lang.annotation.Target;
 import jakarta.ws.rs.NameBinding;
 
 /**
- * Name-binding that scopes the {@link WebhookSignatureFilter} to the webhook
- * resource methods only.
+ * Name-binding that scopes the {@link GitlabWebhookSignatureFilter} to the
+ * GitLab webhook resource method only.
  *
- * <p>The filter buffers and validates the raw request body (GitHub HMAC /
- * GitLab token) and must therefore never run against unrelated resources in the
- * shared Jakarta RS whiteboard. Binding it by name keeps it confined to the
- * {@code /github} and {@code /gitlab} POST endpoints.
+ * <p>The filter validates the {@code X-Gitlab-Token} shared secret and must
+ * never run against unrelated resources in the shared Jakarta RS whiteboard.
+ * Binding it by name keeps it confined to the {@code /gitlab} POST endpoint.
  *
  * @author Data In Motion
  * @since 1.0
@@ -37,5 +36,5 @@ import jakarta.ws.rs.NameBinding;
 @NameBinding
 @Retention(RUNTIME)
 @Target({ TYPE, METHOD })
-public @interface VerifyWebhookSignature {
+public @interface VerifyGitlabWebhookSignature {
 }
