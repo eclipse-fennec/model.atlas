@@ -27,7 +27,7 @@ import org.eclipse.fennec.model.atlas.rest.client.api.PackageDescriptor;
 import org.eclipse.fennec.model.atlas.rest.client.api.RemoteEPackageProvider;
 import org.eclipse.fennec.model.atlas.rest.client.api.ResolvedEPackage;
 
-import com.fasterxml.jackson.databind.JsonNode;
+import tools.jackson.databind.JsonNode;
 
 import jakarta.ws.rs.core.HttpHeaders;
 import jakarta.ws.rs.core.MediaType;
