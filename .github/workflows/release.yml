@@ -1,0 +1,40 @@
+name: Release Build
+
+on:
+  push:
+    branches:
+      - main
+
+# Workflow-level ceiling for the called reusables. The credential-scoped release
+# and container steps get their secrets via `secrets: inherit` below (verify
+# never sees them); packages: write is needed for the GHCR image push.
+permissions:
+  contents: read
+  packages: write
+
+concurrency:
+  group: release-publish
+  cancel-in-progress: false
+
+jobs:
+  verify:
+    uses: eclipse-fennec/.github/.github/workflows/reusable-verify.yml@227b1dfa5f323fdd6d857d0a61fbaaf6e7288716 # v1.0.0
+    with:
+      # Gradle 8.14 cannot run on JDK 25; this workspace targets Java 21.
+      java-versions: '["21"]'
+      # No perfTest task in this workspace.
+      run-perf-tests: false
+
+  release:
+    needs: verify
+    uses: eclipse-fennec/.github/.github/workflows/reusable-release.yml@227b1dfa5f323fdd6d857d0a61fbaaf6e7288716 # v1.0.0
+    with:
+      do-release: true
+    secrets: inherit
+
+  container:
+    needs: release
+    uses: ./.github/workflows/reusable-container.yml
+    with:
+      docker-label: latest
+    secrets: inherit
