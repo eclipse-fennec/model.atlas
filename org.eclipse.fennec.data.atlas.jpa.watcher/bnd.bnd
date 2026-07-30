@@ -8,4 +8,4 @@
 	de.siegmar.fastcsv;version=latest,\
 	jakarta.persistence-api;version=latest,\
 	org.eclipse.daanse.jdbc.datasource.h2;version=latest,\
-	org.eclipse.daanse.jdbc.db.importer.csv;version=latest
+	org.eclipse.daanse.sql.jdbc.importer.csv;version=latest

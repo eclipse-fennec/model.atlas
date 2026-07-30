@@ -21,8 +21,7 @@ jobs:
     # Pinned to issue-13-release-extra-tasks; bump to the release tag once merged.
     uses: eclipse-fennec/.github/.github/workflows/reusable-verify.yml@43722f4454a87e09d3aa76d8b2bf3fe7fc47715b
     with:
-      # Gradle 8.14 cannot run on JDK 25; this workspace targets Java 21.
-      java-versions: '["21"]'
+      java-versions: '["25"]'
       # No perfTest task in this workspace.
       run-perf-tests: false
       gradle-parallel: false
@@ -33,6 +32,7 @@ jobs:
     uses: eclipse-fennec/.github/.github/workflows/reusable-release.yml@43722f4454a87e09d3aa76d8b2bf3fe7fc47715b
     with:
       do-release: false
+      publish-java-version: '25'
       # bnd resolve/export tasks are not parallel-safe in this workspace.
       gradle-parallel: false
       # Export the runtime jars in the SAME build that publishes to Maven,

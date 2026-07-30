@@ -1,0 +1,35 @@
+Bundle-Name: Model Atlas Cloud - Git Management Tests
+Bundle-Description: OSGi integration tests for the read-only git-backed storage backend. \
+ Serves a real repository over the git:// protocol from a throw-away container and exercises \
+ DS wiring, per-branch reads, derived metadata, write-rejection, and webhook/poll resync.
+
+Test-Cases: ${classes;HIERARCHY_INDIRECTLY_ANNOTATED;org.junit.platform.commons.annotation.Testable;CONCRETE}
+
+-workingset: workflow
+
+-library: \
+	enableOSGi-Test,\
+	enableEMF
+
+# sets the usually required buildpath using the bnd library, you can extend it with the normal -buildpath to your liking
+-buildpath: \
+	org.osgi.framework;version=latest,\
+	org.osgi.util.promise;version=latest,\
+	org.osgi.util.function;version=latest,\
+	org.osgi.service.cm;version=latest,\
+	org.osgi.service.typedevent;version=latest,\
+	org.osgi.test.junit5.cm;version=latest,\
+	slf4j.api;version=latest,\
+	org.gecko.jgit;version=latest,\
+	org.eclipse.jgit;version=latest,\
+	org.eclipse.fennec.model.atlas.management.git;version=snapshot,\
+	org.eclipse.fennec.model.atlas.management;version=snapshot,\
+	org.eclipse.fennec.model.atlas.management.lucene;version=snapshot,\
+	org.eclipse.fennec.model.atlas.management.git.webhook.model;version=snapshot,\
+	org.eclipse.fennec.model.atlas.management.git.github.webhook.model;version=snapshot,\
+	org.eclipse.daanse.tooling.testcontainers.core;version=latest,\
+	org.eclipse.fennec.model.atlas.tests.common;version=snapshot
+
+Private-Package: org.eclipse.fennec.model.atlas.management.git.tests
+
+Bundle-Version: 1.0.0.SNAPSHOT
