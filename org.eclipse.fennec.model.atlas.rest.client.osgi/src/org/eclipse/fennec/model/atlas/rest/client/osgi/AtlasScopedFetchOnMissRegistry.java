@@ -114,6 +114,13 @@ class AtlasScopedFetchOnMissRegistry extends ConcurrentHashMap<String, Object>
 	// ---- DriftListener: evict so the next lookup re-fetches at the correct stage ----
 
 	@Override
+	public java.util.Set<String> heldNsUris() {
+		// Stage-explicit fetches bypass the provider cache, so the drift watcher can
+		// only know about these entries through us.
+		return keySet();
+	}
+
+	@Override
 	public void onPackageChanged(String nsUri, EPackage newPackage) {
 		remove(nsUri);
 	}

@@ -14,13 +14,17 @@
 package org.eclipse.fennec.model.atlas.rest.client.osgi.tests;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assumptions.assumeFalse;
 import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.net.URI;
+import java.net.URLEncoder;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
@@ -39,8 +43,12 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
+import org.eclipse.emf.ecore.EObject;
 import org.eclipse.emf.ecore.EPackage;
+import org.eclipse.emf.ecore.resource.Resource;
 import org.eclipse.emf.ecore.resource.ResourceSet;
+import org.eclipse.emf.ecore.xmi.PackageNotFoundException;
+import org.eclipse.emf.ecore.xmi.impl.XMIResourceFactoryImpl;
 import org.eclipse.fennec.emf.osgi.ResourceSetFactory;
 import org.eclipse.fennec.emf.osgi.configurator.ResourceSetConfigurator;
 import org.junit.jupiter.api.AfterAll;
@@ -78,10 +86,15 @@ import org.testcontainers.containers.wait.strategy.Wait;
  * (so a normal build stays green); build the image and run {@code testOSGi} locally to
  * exercise it. Mirrors the container setup of the Phase-2 {@code JenaAtlasClientIT}.
  * <p>
- * Deferred (need a writable / local-bundle setup, like the Phase-2 live-scenario
- * deferrals): {@code force.remote} superseding a <em>local</em> bundle on startup, drift
- * substitution after a server mutation, and HYBRID's per-nsURI list (the bare jena image
- * exposes no fixed nsURI to pin). These are best driven against a seeded/writable server.
+ * Drift after a server mutation is covered live: the removal test uploads its own
+ * schema into jena's writable {@code release} stage, deletes it over REST and asserts
+ * the drift watcher revokes the published package and content of that package stops
+ * deserializing.
+ * <p>
+ * Deferred (need a local-bundle setup, like the Phase-2 live-scenario deferrals):
+ * {@code force.remote} superseding a <em>local</em> bundle on startup, and HYBRID's
+ * per-nsURI list against image-provided models (the bare jena image exposes no fixed
+ * nsURI to pin). These are best driven against a seeded server.
  */
 @ExtendWith(BundleContextExtension.class)
 @ExtendWith(ServiceExtension.class)
@@ -100,6 +113,36 @@ public class AtlasClientOsgiIT {
 	private static final String STORAGE_ROOT = "/opt/modelatlas/runtime/data";
 
 	private static final long SERVICE_WAIT_MS = 10_000L;
+
+	// ---- drift-removal fixture ---------------------------------------------
+
+	/** nsURI of the schema the drift test uploads and deletes; version derives from the URI. */
+	private static final String DRIFT_NS = "http://atlas.example/test/driftremoval/1.0";
+	private static final long DRIFT_INTERVAL_MS = 250L;
+
+	/**
+	 * Minimal schema: EClass {@code Thing} with a String attribute {@code name}. No
+	 * {@code xsi:schemaLocation} — the codec reader rejects relative locations with
+	 * fewer than 3 segments (fennec-codec {@code XMLURIHandler}).
+	 */
+	private static final String DRIFT_ECORE = """
+			<?xml version="1.0" encoding="UTF-8"?>
+			<ecore:EPackage xmi:version="2.0" xmlns:xmi="http://www.omg.org/XMI"
+			    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+			    xmlns:ecore="http://www.eclipse.org/emf/2002/Ecore"
+			    name="driftremoval" nsURI="%s" nsPrefix="dr">
+			  <eClassifiers xsi:type="ecore:EClass" name="Thing">
+			    <eStructuralFeatures xsi:type="ecore:EAttribute" name="name"
+			        eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+			  </eClassifiers>
+			</ecore:EPackage>
+			""".formatted(DRIFT_NS);
+
+	/** An instance document of that schema, deserialized before and after the removal. */
+	private static final String DRIFT_PAYLOAD = """
+			<?xml version="1.0" encoding="UTF-8"?>
+			<dr:Thing xmlns:dr="%s" name="hello"/>
+			""".formatted(DRIFT_NS);
 
 	private static GenericContainer<?> atlas;
 	private static URI baseUri;
@@ -267,7 +310,104 @@ public class AtlasClientOsgiIT {
 				"the Atlas ResourceSetConfigurator should be unregistered on deactivation");
 	}
 
+	@Test
+	public void driftDetectedRemoval_revokesThePackage_andBlocksDeserialization(
+			@InjectConfiguration(withFactoryConfig = @WithFactoryConfiguration(factoryPid = PID, name = "drift",
+					location = "?")) Configuration configuration,
+			@InjectService(cardinality = 0,
+					filter = "(&(atlas.remote=true)(emf.nsURI=" + DRIFT_NS + "))") ServiceAware<EPackage> driftPackages,
+			@InjectService ServiceAware<ResourceSetFactory> resourceSetFactories) throws Exception {
+		int uploadStatus = uploadDriftSchema();
+		assertTrue(uploadStatus == 201 || uploadStatus == 200,
+				() -> "uploading the drift-test schema should succeed, got HTTP " + uploadStatus);
+		try {
+			// HYBRID pinned to exactly our nsURI (deterministic publish), fast drift polling.
+			Hashtable<String, Object> props = baseProps("HYBRID");
+			props.put("eager.nsuri.allow.list", new String[] { DRIFT_NS });
+			props.put("drift.check.interval.ms", (int) DRIFT_INTERVAL_MS);
+			configuration.update(props);
+
+			assertNotNull(driftPackages.waitForService(SERVICE_WAIT_MS),
+					"activation should pre-fetch and publish the uploaded schema");
+			ResourceSetFactory factory = resourceSetFactories.waitForService(SERVICE_WAIT_MS);
+			assertNotNull(factory, "a framework ResourceSetFactory must be present");
+
+			// Before: content of the uploaded schema deserializes through a framework ResourceSet.
+			// (Guards against the 2026-07-29 serve-time leak: EcoreMessageBodyHandler used to
+			// re-parent served singletons, after which the EString eType arrived as a proxy to
+			// file:/opt/modelatlas/.../release/ecore.ecore#//EString that no client could resolve.)
+			EObject before = deserializeDriftPayload(factory);
+			assertEquals("Thing", before.eClass().getName());
+			assertEquals("hello", before.eGet(before.eClass().getEStructuralFeature("name")));
+
+			// The watcher's first probe of a scope only records the ETag baseline and emits
+			// nothing — give it a few intervals so the baseline predates the delete.
+			Thread.sleep(6 * DRIFT_INTERVAL_MS);
+
+			assertEquals(200, deleteDriftSchema(), "deleting the schema on the server should succeed");
+
+			// The next drift check sees the nsURI gone, the refetch misses, and the
+			// substitution revokes the published trio.
+			assertTrue(awaitEmpty(driftPackages),
+					"the drift check should revoke the published package after the server-side delete");
+			assertTrue(awaitDriftNsUnresolvable(factory),
+					"no registry layer should still resolve the removed nsURI (emf.osgi unbind is asynchronous)");
+
+			// After: the exact same payload no longer deserializes — the lazy fallback re-asks
+			// the Atlas, legitimately misses, and EMF reports the package as unknown.
+			IOException failure = assertThrows(IOException.class, () -> deserializeDriftPayload(factory));
+			assertInstanceOf(PackageNotFoundException.class, failure.getCause(),
+					"the load must fail because the package is unknown, not for some other reason");
+			assertEquals(DRIFT_NS, ((PackageNotFoundException) failure.getCause()).uri());
+		} finally {
+			deleteDriftSchema(); // idempotent cleanup (204 when already gone)
+		}
+	}
+
 	// ---- helpers ----------------------------------------------------------
+
+	private static int uploadDriftSchema() throws IOException, InterruptedException {
+		HttpResponse<String> response = HttpClient.newHttpClient().send(HttpRequest
+				.newBuilder(URI.create(baseUri + "/" + JENA_SCOPE + "/schema/stages/" + JENA_VIEW + "?name=DriftRemoval"))
+				.header("Content-Type", "application/xml").POST(HttpRequest.BodyPublishers.ofString(DRIFT_ECORE))
+				.build(), HttpResponse.BodyHandlers.ofString());
+		return response.statusCode();
+	}
+
+	private static int deleteDriftSchema() throws IOException, InterruptedException {
+		String nsUriParam = URLEncoder.encode(DRIFT_NS, StandardCharsets.UTF_8);
+		HttpResponse<String> response = HttpClient.newHttpClient().send(HttpRequest.newBuilder(
+				URI.create(baseUri + "/" + JENA_SCOPE + "/schema/stages/" + JENA_VIEW + "?nsUri=" + nsUriParam))
+				.DELETE().build(), HttpResponse.BodyHandlers.ofString());
+		return response.statusCode();
+	}
+
+	/** Deserialize {@link #DRIFT_PAYLOAD} through a fresh Atlas-aware framework ResourceSet. */
+	private static EObject deserializeDriftPayload(ResourceSetFactory factory) throws IOException {
+		ResourceSet resourceSet = factory.createResourceSet();
+		resourceSet.getResourceFactoryRegistry().getExtensionToFactoryMap().put("xmi", new XMIResourceFactoryImpl());
+		Resource resource = resourceSet
+				.createResource(org.eclipse.emf.common.util.URI.createURI("drift-removal.xmi"));
+		resource.load(new ByteArrayInputStream(DRIFT_PAYLOAD.getBytes(StandardCharsets.UTF_8)), java.util.Map.of());
+		return resource.getContents().get(0);
+	}
+
+	/**
+	 * Poll until no registry layer resolves {@link #DRIFT_NS} any more. The unpublish is
+	 * observable immediately on the service side, but emf.osgi unbinds the configurator from
+	 * the framework registry asynchronously — a fresh ResourceSet may briefly still see the
+	 * package through the primary registry.
+	 */
+	private static boolean awaitDriftNsUnresolvable(ResourceSetFactory factory) throws InterruptedException {
+		long deadline = System.currentTimeMillis() + SERVICE_WAIT_MS;
+		while (System.currentTimeMillis() < deadline) {
+			if (factory.createResourceSet().getPackageRegistry().getEPackage(DRIFT_NS) == null) {
+				return true;
+			}
+			Thread.sleep(100L);
+		}
+		return false;
+	}
 
 	/** Poll until the tracked services drain to none, or {@link #SERVICE_WAIT_MS} elapses. */
 	private static boolean awaitEmpty(ServiceAware<?> aware) throws InterruptedException {

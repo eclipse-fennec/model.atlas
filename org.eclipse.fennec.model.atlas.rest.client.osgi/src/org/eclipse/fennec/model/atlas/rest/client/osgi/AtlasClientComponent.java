@@ -199,7 +199,7 @@ public class AtlasClientComponent {
 		// before the prefetch so it is live throughout; events for not-yet-published nsURIs are
 		// ignored (isPublished gate).
 		this.driftSubscription = client.addDriftListener(new DriftSubstitution(publisher::isPublished,
-				client.ePackages()::resolve, publisher::republish, publisher::unpublish));
+				publisher::publishedNsUris, client.ePackages()::resolve, publisher::republish, publisher::unpublish));
 
 		// P3-10: unless resource.set.fallback=false, register a ResourceSetConfigurator so every
 		// framework-produced ResourceSet carries the delegating registry (Atlas fallback on a miss).

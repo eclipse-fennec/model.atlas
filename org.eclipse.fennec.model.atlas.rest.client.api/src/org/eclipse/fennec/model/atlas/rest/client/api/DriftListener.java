@@ -13,6 +13,8 @@
  */
 package org.eclipse.fennec.model.atlas.rest.client.api;
 
+import java.util.Set;
+
 import org.eclipse.emf.ecore.EPackage;
 import org.osgi.annotation.versioning.ConsumerType;
 
@@ -28,6 +30,22 @@ import org.osgi.annotation.versioning.ConsumerType;
  */
 @ConsumerType
 public interface DriftListener {
+
+	/**
+	 * The nsURIs this listener currently holds <em>outside</em> the client's own
+	 * package cache — e.g. a stage-explicit fetch-on-miss registry's entries or the
+	 * set of published services. The drift watcher acts on a changed nsURI when it
+	 * is held anywhere: in the client cache <em>or</em> by any registered listener.
+	 * Without this, packages obtained through cache-bypassing paths (stage-explicit
+	 * content fetches) would never receive change/removal events.
+	 * <p>
+	 * Default is the empty set, so purely reactive listeners need not implement it.
+	 *
+	 * @return the nsURIs this listener holds; never {@code null}
+	 */
+	default Set<String> heldNsUris() {
+		return Set.of();
+	}
 
 	/**
 	 * An EPackage changed on the server and was re-fetched.

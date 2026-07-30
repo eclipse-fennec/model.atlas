@@ -105,7 +105,13 @@ class DriftWatcher implements AutoCloseable {
 		Set<String> removed = new LinkedHashSet<>();
 		RemoteEPackageProviderImpl provider = providerSupplier.get();
 		for (String scope : scopesSupplier.get()) {
-			checkScope(scope, provider, changed, removed);
+			try {
+				checkScope(scope, provider, changed, removed);
+			} catch (RuntimeException e) {
+				// One scope failing (unreachable, bad payload, listener trouble) must not
+				// starve the remaining scopes of their drift events.
+				logger.log(Level.WARNING, e, () -> "Drift check failed for scope " + scope);
+			}
 		}
 		return DriftReport.of(changed, removed);
 	}
@@ -139,10 +145,10 @@ class DriftWatcher implements AutoCloseable {
 		if (header == null || header.isBlank()) {
 			return;
 		}
-		Set<String> cached = provider.cachedNsUris();
+		Set<String> held = heldNsUris(provider);
 		for (String raw : header.split(",")) {
 			String nsUri = raw.trim();
-			if (nsUri.isEmpty() || !cached.contains(nsUri)) {
+			if (nsUri.isEmpty() || !held.contains(nsUri)) {
 				continue; // only act on entries we actually hold
 			}
 			Optional<EPackage> refreshed = provider.refresh(nsUri);
@@ -154,6 +160,30 @@ class DriftWatcher implements AutoCloseable {
 				fireRemoved(nsUri);
 			}
 		}
+	}
+
+	/**
+	 * Every nsURI the client holds anywhere: the provider's cache plus each
+	 * listener's {@link DriftListener#heldNsUris()}. Stage-explicit fetches
+	 * ({@code getEPackageAtStage}) bypass the provider cache by design, so gating on
+	 * the cache alone would leave those packages drift-blind — never evicted, never
+	 * unpublished. A misbehaving listener must not kill the check, hence the guard.
+	 * <p>
+	 * Note that the eventual {@code refresh()} goes through the stage-free
+	 * final-stage path: a package existing only at a non-final stage reports as
+	 * removed here, the listener evicts it, and its next stage-explicit look-up
+	 * re-fetches it — self-healing, at the price of a spurious removal event.
+	 */
+	private Set<String> heldNsUris(RemoteEPackageProviderImpl provider) {
+		Set<String> held = new LinkedHashSet<>(provider.cachedNsUris());
+		for (DriftListener listener : listeners) {
+			try {
+				held.addAll(listener.heldNsUris());
+			} catch (RuntimeException e) {
+				logger.log(Level.WARNING, e, () -> "DriftListener heldNsUris failed");
+			}
+		}
+		return held;
 	}
 
 	/**
@@ -262,8 +292,9 @@ class DriftWatcher implements AutoCloseable {
 		try {
 			check();
 		} catch (RuntimeException e) {
-			// A transient failure must not kill the schedule.
-			logger.log(Level.FINE, e, () -> "Scheduled drift check failed");
+			// A transient failure must not kill the schedule — and it must not die
+			// silently either, or drift protection is off without anyone noticing.
+			logger.log(Level.WARNING, e, () -> "Scheduled drift check failed");
 		}
 	}
 
