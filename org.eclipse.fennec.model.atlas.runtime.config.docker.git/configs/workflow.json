@@ -1,0 +1,120 @@
+{
+    ":configurator:resource-version": 1,
+    ":configurator:version": "1.0.0",
+    "EPackageStageActionService": {
+        "trigger.stages": ["draft", "approved", "release"],
+        "storageService.target": "(storage.type=git)"
+    },
+    "ScopeService~jena": {
+        "atlas.scope": "jena",
+        "scope.name": "jena",
+        "scope.description": "Jena Scope",
+        "parent.scope": "atlas",
+        "registryService.target": "(|(registry.name=schema)(registry.name=default))",
+        "registryService.cardinality.minimum:int": 1
+    },
+    "RegistryService~schema": {
+        "registry.type": "SCHEMA",
+        "registry.name": "schema",
+        "registry.description": "The schema registry to store EPackage objects",
+        "stageActionService.target": "(component.name=EPackageStageActionService)",
+        "stage.storage.mappings": [
+            "draft:git",
+            "approved:git",
+            "release:git"
+        ],
+        "storageService.target": "(storage.type=git)",
+        "storageService.cardinality.minimum:int": 1,
+        "stages": [
+            {
+                "name": "draft",
+                "writable": false,
+                "final": false
+            },
+            {
+                "name": "approved",
+                "writable": false,
+                "final": false
+            },
+            {
+                "name": "release",
+                "writable": false,
+                "final": true
+            }
+        ],
+        "schema.uri": "http://www.eclipse.org/emf/2002/Ecore",
+        "root.eclass.uri": "http://www.eclipse.org/emf/2002/Ecore#//EPackage",
+        "resourceSet.target": "(emf.name=ecore)"
+    },
+    "RegistryService~default": {
+        "registry.name": "default",
+        "registry.description": "The person registry to store Person objects",
+        "stage.storage.mappings": [        
+            "draft:git",
+            "approved:git",
+            "release:git"
+        ],
+        "storageService.target": "(storage.type=git)",
+        "storageService.cardinality.minimum:int": 1,
+        "stages": [
+            {
+                "name": "draft",
+                "writable": false,
+                "final": false
+            },
+            {
+                "name": "approved",
+                "writable": false,
+                "final": false
+            },
+            {
+                "name": "release",
+                "writable": false,
+                "final": true
+            }
+        ],
+        "schema.uri": "http://www.eclipse.org/emf/2002/Ecore",
+        "root.eclass.uri": "http://www.eclipse.org/emf/2002/Ecore#//EObject",
+        "resourceSet.target": "(emf.name=ecore)"
+    },
+    "GitObjectStorage~jena": {
+        "scope": "jena",
+        "type.registry.map": [
+            "http://www.eclipse.org/emf/2002/Ecore#//EPackage:schema",
+            "http://www.eclipse.org/emf/2002/Ecore#//EObject:default"
+        ],
+        "gitservice.target": "(id=jena)",
+        "poll.interval.seconds:Integer": 60,
+        "storage.type": "git",
+        "registry.target": "(registry=main)"
+    },
+    "GitConfig~jena-draft": {
+        "id": "jena",
+        "repo": "$[env:GIT_REPO;default=$[prop:GIT_REPO;default=git@github.com:acme/models.git]]",
+        "branch": "draft",
+        "privateKey": "$[env:GIT_PRIVATE_KEY;default=$[prop:GIT_PRIVATE_KEY;default=/opt/modelatlas/runtime/secrets/git_deploy_key]]",
+        "privateKeyPassphrase": "$[env:GIT_PRIVATE_KEY_PASSPHRASE;default=$[prop:GIT_PRIVATE_KEY_PASSPHRASE;default=]]"
+    },
+    "GitConfig~jena-approved": {
+        "id": "jena",
+        "repo": "$[env:GIT_REPO;default=$[prop:GIT_REPO;default=git@github.com:acme/models.git]]",
+        "branch": "approved",
+        "privateKey": "$[env:GIT_PRIVATE_KEY;default=$[prop:GIT_PRIVATE_KEY;default=/opt/modelatlas/runtime/secrets/git_deploy_key]]",
+        "privateKeyPassphrase": "$[env:GIT_PRIVATE_KEY_PASSPHRASE;default=$[prop:GIT_PRIVATE_KEY_PASSPHRASE;default=]]"
+    },
+    "GitConfig~jena-release": {
+        "id": "jena",
+        "repo": "$[env:GIT_REPO;default=$[prop:GIT_REPO;default=git@github.com:acme/models.git]]",
+        "branch": "release",
+        "privateKey": "$[env:GIT_PRIVATE_KEY;default=$[prop:GIT_PRIVATE_KEY;default=/opt/modelatlas/runtime/secrets/git_deploy_key]]",
+        "privateKeyPassphrase": "$[env:GIT_PRIVATE_KEY_PASSPHRASE;default=$[prop:GIT_PRIVATE_KEY_PASSPHRASE;default=]]"
+    },
+    "org.eclipse.fennec.model.atlas.management.git.webhook.github": {
+        "githubSecret": "$[env:GIT_WEBHOOK_GITHUB_SECRET;default=$[prop:GIT_WEBHOOK_GITHUB_SECRET;default=]]",
+        "requireSignature": false
+    },
+    "org.eclipse.fennec.model.atlas.management.git.webhook.gitlab": {
+        "gitlabToken": "$[env:GIT_WEBHOOK_GITLAB_TOKEN;default=$[prop:GIT_WEBHOOK_GITLAB_TOKEN;default=]]",
+        "requireSignature": false
+    }
+}

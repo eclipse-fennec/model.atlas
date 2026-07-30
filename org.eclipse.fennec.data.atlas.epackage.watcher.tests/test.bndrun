@@ -20,7 +20,7 @@
 	junit-jupiter-api;version='[5.14.2,5.14.3)',\
 	junit-jupiter-params;version='[5.14.2,5.14.3)',\
 	junit-platform-commons;version='[1.14.2,1.14.3)',\
-	org.apache.aries.spifly.dynamic.framework.extension;version='[1.3.7,1.3.8)',\
+	org.apache.aries.spifly.dynamic.bundle;version='[1.3.7,1.3.8)',\
 	org.apache.felix.configadmin;version='[1.9.26,1.9.27)',\
 	org.apache.felix.scr;version='[2.2.14,2.2.15)',\
 	org.eclipse.daanse.io.fs.watcher.api;version='[0.0.1,0.0.2)',\
@@ -47,3 +47,4 @@
 	org.osgi.util.promise;version='[1.3.0,1.3.1)',\
 	slf4j.api;version='[2.0.16,2.0.17)',\
 	slf4j.simple;version='[2.0.16,2.0.17)'
+-runblacklist: bnd.identity;id='org.apache.aries.spifly.dynamic.framework.extension'
