@@ -3,8 +3,8 @@ name: Reusable Container Deploy
 # Repo-local reusable: builds/pushes the two Model Atlas docker variants
 # (apicurio, file) to Docker Hub and GHCR. The runtime jars are NOT rebuilt
 # here — they are downloaded from the "release-jars" artifact uploaded by
-# reusable-release (requires eclipse-fennec/.github with the extra-gradle-tasks
-# and artifact-paths inputs, see eclipse-fennec/.github#13), so the images
+# reusable-release (eclipse-fennec/.github v1.1.0+: extra-gradle-tasks and
+# artifact-paths inputs, added via eclipse-fennec/.github#13), so the images
 # embed exactly the jars that were published to Maven.
 # The moving tag label (snapshot vs latest) comes from the calling workflow.
 on:

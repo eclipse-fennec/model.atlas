@@ -18,8 +18,7 @@ concurrency:
 
 jobs:
   verify:
-    # Pinned to issue-13-release-extra-tasks; bump to the release tag once merged.
-    uses: eclipse-fennec/.github/.github/workflows/reusable-verify.yml@43722f4454a87e09d3aa76d8b2bf3fe7fc47715b
+    uses: eclipse-fennec/.github/.github/workflows/reusable-verify.yml@bb56215f3e78dfc0870da3c4ed4c495d6b208ede # v1.1.0
     with:
       java-versions: '["25"]'
       # No perfTest task in this workspace.
@@ -28,8 +27,7 @@ jobs:
 
   release:
     needs: verify
-    # Pinned to issue-13-release-extra-tasks; bump to the release tag once merged.
-    uses: eclipse-fennec/.github/.github/workflows/reusable-release.yml@43722f4454a87e09d3aa76d8b2bf3fe7fc47715b
+    uses: eclipse-fennec/.github/.github/workflows/reusable-release.yml@bb56215f3e78dfc0870da3c4ed4c495d6b208ede # v1.1.0
     with:
       do-release: true
       publish-java-version: '25'
