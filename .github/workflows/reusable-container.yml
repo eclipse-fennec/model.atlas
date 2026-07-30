@@ -1,15 +1,12 @@
 name: Reusable Container Deploy
 
-# Repo-local reusable: exports the runtime bndruns and builds/pushes the two
-# Model Atlas docker variants (apicurio, file) to Docker Hub and GHCR.
+# Repo-local reusable: builds/pushes the two Model Atlas docker variants
+# (apicurio, file) to Docker Hub and GHCR. The runtime jars are NOT rebuilt
+# here — they are downloaded from the "release-jars" artifact uploaded by
+# reusable-release (requires eclipse-fennec/.github with the extra-gradle-tasks
+# and artifact-paths inputs, see eclipse-fennec/.github#13), so the images
+# embed exactly the jars that were published to Maven.
 # The moving tag label (snapshot vs latest) comes from the calling workflow.
-#
-# INTERIM: this job rebuilds the workspace jars for the export, so the docker
-# images embed a different build than the jars published to Maven by the
-# release job. Once eclipse-fennec/.github#13 ships (extra-gradle-tasks +
-# artifact upload on reusable-release), switch this to download the release
-# job's artifact instead of rebuilding.
-# https://github.com/eclipse-fennec/.github/issues/13
 on:
   workflow_call:
     inputs:
@@ -28,8 +25,6 @@ permissions:
 
 env:
   LC_ALL: en_US.UTF-8
-  GRADLE_OPTS: >-
-    -Dorg.gradle.parallel=false
 
 defaults:
   run:
@@ -53,16 +48,12 @@ jobs:
         uses: actions/setup-java@03ad4de0992f5dab5e18fcb136590ce7c4a0ac95 # v5.6.0
         with:
           distribution: temurin
-          cache: gradle
           java-version: 21
-      - name: Grant execute permission for gradlew
-        run: chmod +x ./gradlew
-      - name: Resolve ModelAtlas bndrun
-        run: ./gradlew org.eclipse.fennec.model.atlas.runtime:resolve.modelatlas.runtime_base --info
-      - name: Export ModelAtlas Apicurio bndrun
-        run: ./gradlew org.eclipse.fennec.model.atlas.runtime:export.modelatlas.runtime_docker_apicurio --info
-      - name: Export ModelAtlas File bndrun
-        run: ./gradlew org.eclipse.fennec.model.atlas.runtime:export.modelatlas.runtime_docker_file --info
+      - name: Download Release Artifacts
+        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7.0.0
+        with:
+          name: release-jars
+          path: .
       - name: Install bnd
         run: |
           curl -Lk -o /tmp/biz.aQute.bnd.jar \

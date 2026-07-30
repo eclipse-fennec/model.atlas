@@ -18,18 +18,33 @@ concurrency:
 
 jobs:
   verify:
-    uses: eclipse-fennec/.github/.github/workflows/reusable-verify.yml@227b1dfa5f323fdd6d857d0a61fbaaf6e7288716 # v1.0.0
+    # Pinned to issue-13-release-extra-tasks; bump to the release tag once merged.
+    uses: eclipse-fennec/.github/.github/workflows/reusable-verify.yml@43722f4454a87e09d3aa76d8b2bf3fe7fc47715b
     with:
       # Gradle 8.14 cannot run on JDK 25; this workspace targets Java 21.
       java-versions: '["21"]'
       # No perfTest task in this workspace.
       run-perf-tests: false
+      gradle-parallel: false
 
   release:
     needs: verify
-    uses: eclipse-fennec/.github/.github/workflows/reusable-release.yml@227b1dfa5f323fdd6d857d0a61fbaaf6e7288716 # v1.0.0
+    # Pinned to issue-13-release-extra-tasks; bump to the release tag once merged.
+    uses: eclipse-fennec/.github/.github/workflows/reusable-release.yml@43722f4454a87e09d3aa76d8b2bf3fe7fc47715b
     with:
       do-release: true
+      # bnd resolve/export tasks are not parallel-safe in this workspace.
+      gradle-parallel: false
+      # Export the runtime jars in the SAME build that publishes to Maven,
+      # and hand them to the container job as the release-jars artifact.
+      extra-gradle-tasks: >-
+        org.eclipse.fennec.model.atlas.runtime:resolve.modelatlas.runtime_base
+        org.eclipse.fennec.model.atlas.runtime:export.modelatlas.runtime_docker_apicurio
+        org.eclipse.fennec.model.atlas.runtime:export.modelatlas.runtime_docker_file
+      artifact-paths: |
+        org.eclipse.fennec.model.atlas.runtime/generated/distributions/executable/modelatlas.runtime_docker_apicurio.jar
+        org.eclipse.fennec.model.atlas.runtime/generated/distributions/executable/modelatlas.runtime_docker_file.jar
+        org.eclipse.fennec.model.atlas.rest.application/generated/org.eclipse.fennec.model.atlas.rest.application.jar
     secrets: inherit
 
   container:
