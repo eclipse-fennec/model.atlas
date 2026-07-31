@@ -207,6 +207,29 @@ class AtlasScopedFetchOnMissRegistryTest {
 		assertEquals(2, provider.stagedCalls.get());
 	}
 
+	// ---- drift visibility (Bug B): report own entries to the watcher ------
+
+	/**
+	 * Stage-explicit fetches bypass the provider cache, so the drift watcher can
+	 * only learn about this registry's entries via {@code heldNsUris()}. Without it
+	 * the entries were drift-blind: never evicted, content deserializable forever
+	 * after a server-side removal.
+	 */
+	@Test
+	void heldNsUris_reportsCachedEntries_andShrinksOnEviction() {
+		FakeProvider provider = new FakeProvider();
+		provider.stagedPackages.put(NS, pkg(NS));
+
+		AtlasScopedFetchOnMissRegistry registry = new AtlasScopedFetchOnMissRegistry(SCOPE, STAGE, provider,
+				new EPackageRegistryImpl());
+
+		assertEquals(java.util.Set.of(), registry.heldNsUris());
+		registry.getEPackage(NS); // populates cache
+		assertEquals(java.util.Set.of(NS), registry.heldNsUris());
+		registry.onPackageRemoved(NS); // drift eviction
+		assertEquals(java.util.Set.of(), registry.heldNsUris());
+	}
+
 	// ---- wrong-stage guard (documents Option A gap) -----------------------
 
 	/**

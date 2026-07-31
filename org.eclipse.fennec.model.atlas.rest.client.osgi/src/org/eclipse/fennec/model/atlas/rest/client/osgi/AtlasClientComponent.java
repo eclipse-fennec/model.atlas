@@ -31,6 +31,7 @@ import org.eclipse.fennec.model.atlas.scope.api.AtlasProperties;
 import org.eclipse.fennec.model.atlas.rest.client.api.ClientConfiguration;
 import org.eclipse.fennec.model.atlas.rest.client.api.ModelAtlasClient;
 import org.eclipse.fennec.model.atlas.rest.client.api.ModelAtlasClientFactory;
+import org.osgi.annotation.bundle.Capability;
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.ServiceRegistration;
 import org.osgi.service.cm.ConfigurationAdmin;
@@ -106,6 +107,16 @@ import jakarta.ws.rs.client.ClientBuilder;
  * published EPackage into {@code EPackage.Registry.INSTANCE} for legacy code reaching the EMF
  * singleton (default {@code false} leaves it untouched).
  */
+// The services below are registered manually via BundleContext (per-scope / per-nsURI, so
+// they cannot be declared as DS services), which means DS does not generate their
+// osgi.service capabilities. Declare them explicitly so resolving against this bundle
+// satisfies consumers' service requirements without skipping the osgi.service namespace.
+@Capability(namespace = "osgi.service", attribute = { "objectClass:List<String>=\"org.eclipse.fennec.model.atlas.scope.api.ReadableScopeService\"", "uses:=\"org.eclipse.fennec.model.atlas.scope.api,org.eclipse.emf.ecore\"" })
+@Capability(namespace = "osgi.service", attribute = { "objectClass:List<String>=\"org.eclipse.emf.ecore.EPackage\"", "uses:=org.eclipse.emf.ecore" })
+@Capability(namespace = "osgi.service", attribute = { "objectClass:List<String>=\"org.eclipse.emf.ecore.EFactory\"", "uses:=org.eclipse.emf.ecore" })
+@Capability(namespace = "osgi.service", attribute = { "objectClass:List<String>=\"org.eclipse.fennec.emf.osgi.configurator.EPackageConfigurator\"", "uses:=\"org.eclipse.fennec.emf.osgi.configurator,org.eclipse.emf.ecore\"" })
+@Capability(namespace = "osgi.service", attribute = { "objectClass:List<String>=\"org.eclipse.fennec.emf.osgi.configurator.ResourceSetConfigurator\"", "uses:=\"org.eclipse.fennec.emf.osgi.configurator,org.eclipse.emf.ecore.resource\"" })
+@Capability(namespace = "osgi.service", attribute = { "objectClass:List<String>=\"org.eclipse.emf.ecore.EPackage$Registry\"", "uses:=org.eclipse.emf.ecore" })
 @Component(name = AtlasClientComponent.PID, configurationPid = AtlasClientComponent.PID, configurationPolicy = ConfigurationPolicy.REQUIRE)
 @Designate(ocd = AtlasClientConfig.class, factory = true)
 public class AtlasClientComponent {
@@ -199,7 +210,7 @@ public class AtlasClientComponent {
 		// before the prefetch so it is live throughout; events for not-yet-published nsURIs are
 		// ignored (isPublished gate).
 		this.driftSubscription = client.addDriftListener(new DriftSubstitution(publisher::isPublished,
-				client.ePackages()::resolve, publisher::republish, publisher::unpublish));
+				publisher::publishedNsUris, client.ePackages()::resolve, publisher::republish, publisher::unpublish));
 
 		// P3-10: unless resource.set.fallback=false, register a ResourceSetConfigurator so every
 		// framework-produced ResourceSet carries the delegating registry (Atlas fallback on a miss).

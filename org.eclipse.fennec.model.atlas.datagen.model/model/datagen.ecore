@@ -5,7 +5,7 @@
     <details key="documentation" value="Data Generator Metamodell zur Konfiguration automatischer Testdaten-Generierung fuer bestehende Metamodelle. Nutzt FakerJS als Datenquelle."/>
     <details key="oSGiCompatible" value="true"/>
     <details key="basePackage" value="org.eclipse.fennec.model.atlas.datagen.model"/>
-    <details key="copyrightText" value="Copyright (c) 2026 Contributors to the Eclipse Foundation.&#xA;&#xA;This program and the accompanying materials are made&#xA;available under the terms of the Eclipse Public License 2.0&#xA;which is available at https://www.eclipse.org/legal/epl-2.0/&#xA;&#xA;SPDX-License-Identifier: EPL-2.0&#xA;&#xA;Contributors:&#xA;  Data In Motion Consulting - initial implementation"/>
+    <details key="copyrightText" value="Copyright (c) 2012 - 2026 Data In Motion and others.&#xA;All rights reserved.&#xA;&#xA;This program and the accompanying materials are made&#xA;available under the terms of the Eclipse Public License 2.0&#xA;which is available at https://www.eclipse.org/legal/epl-2.0/&#xA;&#xA;SPDX-License-Identifier: EPL-2.0&#xA;&#xA;Contributors:&#xA;    Data In Motion - initial API and implementation"/>
     <details key="resource" value="XMI"/>
     <details key="fileExtensions" value="datagen"/>
   </eAnnotations>

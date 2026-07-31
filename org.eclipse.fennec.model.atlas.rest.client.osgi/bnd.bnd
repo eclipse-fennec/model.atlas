@@ -20,5 +20,3 @@ Bundle-Description: OSGi DS front-end for the Model Atlas client. P3-1: a Config
 -testpath: \
 	junit-jupiter-api,\
 	org.eclipse.fennec.model.atlas.rest.client.api
-
-Bundle-Version: 1.0.0.SNAPSHOT

@@ -58,7 +58,17 @@ class DriftSubstitutionTest {
 			republished.add(ePackage.getNsURI());
 			return true;
 		};
-		return new DriftSubstitution(published::contains, resolver, republisher, unpublished::add);
+		return new DriftSubstitution(published::contains, () -> published, resolver, republisher, unpublished::add);
+	}
+
+	@Test
+	void heldNsUris_reportsThePublishedSet() {
+		// A published service can outlive its provider-cache entry; reporting the
+		// published set keeps such packages visible to the drift watcher's gate.
+		published.add("ns1");
+		DriftSubstitution substitution = substitution(ns -> Optional.empty());
+
+		assertEquals(published, substitution.heldNsUris());
 	}
 
 	@Test

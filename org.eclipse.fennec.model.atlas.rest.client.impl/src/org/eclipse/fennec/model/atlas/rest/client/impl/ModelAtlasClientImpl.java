@@ -33,7 +33,7 @@ import org.eclipse.fennec.model.atlas.rest.client.api.RemoteEPackageProvider;
 import org.eclipse.fennec.model.atlas.scope.api.ReadableScopeService;
 import org.eclipse.fennec.model.atlas.scope.api.RegistryInfo;
 
-import com.fasterxml.jackson.databind.JsonNode;
+import tools.jackson.databind.JsonNode;
 
 import jakarta.ws.rs.client.Client;
 import jakarta.ws.rs.client.WebTarget;

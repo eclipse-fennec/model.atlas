@@ -30,6 +30,7 @@ import org.eclipse.emf.ecore.EPackage;
 import org.eclipse.emf.ecore.EcorePackage;
 import org.eclipse.emf.ecore.resource.Resource;
 import org.eclipse.emf.ecore.resource.ResourceSet;
+import org.eclipse.emf.ecore.util.EcoreUtil;
 import org.eclipse.emf.ecore.xmi.XMLResource;
 import org.eclipse.fennec.model.atlas.rest.common.AbstractEPackageMessageBodyHandler;
 import org.osgi.service.component.annotations.Component;
@@ -152,18 +153,33 @@ public class EcoreMessageBodyHandler extends AbstractEPackageMessageBodyHandler 
         logger.log(Level.INFO, "Writing EObject to XMI: type={0}, mediaType={1}",
                 new Object[] { eObject.getClass().getSimpleName(), mediaType });
 
-        // Use ABSOLUTE URI for consistent behavior
         ResourceSet resourceSet = getResourceSet();
         String fileName = eObject.getName() + (isXMI(mediaType) ? ".ecore" : ".xml");
         httpHeaders.put(HttpHeaders.CONTENT_DISPOSITION, List.of("attachment; filename=" + fileName));
-        URI absoluteURI = URI.createURI(fileName);
-        Resource resource = resourceSet.createResource(absoluteURI, EcorePackage.eCONTENT_TYPE);
-        resource.getContents().add(eObject);
         // Configure XMI saving options
         Map<Object, Object> options = new HashMap<>();
 
-        // Save to output stream
-        resource.save(entityStream, options);
+        // Never re-parent the served instance into the response resource: the served
+        // EPackage can be a shared/registered instance (a storage-loaded package still
+        // attached to its file: resource, or a registered singleton like
+        // EcorePackage.eINSTANCE reached via the parent-scope fallback). Moving it here
+        // permanently changed its eResource() to a resource named "<name>.ecore", after
+        // which every href computed against its elements leaked that URI — clients
+        // received eType="... file:/.../ecore.ecore#//EString" instead of the canonical
+        // nsURI and could no longer deserialize instances. Serializing the instance's
+        // own resource in place is no alternative either: a registered singleton's
+        // lazily created resource is a plain ResourceImpl whose save() throws
+        // UnsupportedOperationException. So always serialize a self-contained copy —
+        // cross-package references stay with the originals (resolved) or keep their
+        // canonical proxy URIs (unresolved), and the live instance stays untouched.
+        Resource resource = resourceSet.createResource(URI.createURI(fileName), EcorePackage.eCONTENT_TYPE);
+        try {
+            resource.getContents().add(EcoreUtil.copy(eObject));
+            resource.save(entityStream, options);
+        } finally {
+            resource.getContents().clear();
+            resourceSet.getResources().remove(resource);
+        }
 
         logger.log(Level.INFO, "Successfully serialized EObject to XMI");
     }

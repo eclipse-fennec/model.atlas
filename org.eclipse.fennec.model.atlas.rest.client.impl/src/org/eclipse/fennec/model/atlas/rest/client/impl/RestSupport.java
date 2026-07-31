@@ -17,8 +17,8 @@ import org.eclipse.fennec.model.atlas.rest.client.api.ModelAtlasClientException;
 import org.eclipse.fennec.model.atlas.rest.client.api.NotFoundException;
 import org.eclipse.fennec.model.atlas.rest.client.api.TransportException;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.ObjectMapper;
 
 import jakarta.ws.rs.ProcessingException;
 import jakarta.ws.rs.core.HttpHeaders;

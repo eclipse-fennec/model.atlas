@@ -24,6 +24,7 @@ import org.eclipse.emf.common.util.URI;
 import org.eclipse.emf.ecore.EPackage;
 import org.eclipse.emf.ecore.resource.Resource;
 import org.eclipse.emf.ecore.resource.ResourceSet;
+import org.eclipse.emf.ecore.util.EcoreUtil;
 import org.eclipse.fennec.codec.jsonschema.v2.constants.CodecJsonSchemaOptions;
 import org.eclipse.fennec.model.atlas.rest.common.AbstractEPackageMessageBodyHandler;
 import org.osgi.service.component.annotations.Component;
@@ -72,9 +73,16 @@ public class JsonSchemaMessageBodyReaderWriter extends AbstractEPackageMessageBo
 
 		ResourceSet resourceSet = getResourceSet();
 		Resource resource = resourceSet.createResource(URI.createURI(t.getNsURI()), "application/schema+json");
-		resource.getContents().add(t);
-		resource.save(entityStream, OPTIONS);
-		resource.getContents().clear();
+		// Serialize a copy: adding the served instance itself would detach it from its
+		// own resource (registered singletons and storage-loaded packages are shared),
+		// corrupting hrefs computed against it afterwards.
+		try {
+			resource.getContents().add(EcoreUtil.copy(t));
+			resource.save(entityStream, OPTIONS);
+		} finally {
+			resource.getContents().clear();
+			resourceSet.getResources().remove(resource);
+		}
 	}
 
 	@Override
