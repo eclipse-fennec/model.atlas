@@ -1,13 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <genmodel:GenModel xmi:version="2.0" xmlns:xmi="http://www.omg.org/XMI" xmlns:ecore="http://www.eclipse.org/emf/2002/Ecore"
-    xmlns:genmodel="http://www.eclipse.org/emf/2002/GenModel" modelDirectory="/org,eclipse.fennec.model.atlas.datagen.model/src"
-    modelPluginID="org,eclipse.fennec.model.atlas.datagen.model" modelName="datagen"
-    rootExtendsClass="org.eclipse.emf.ecore.impl.MinimalEObjectImpl$Container" importerID="org.eclipse.emf.importer.ecore"
-    complianceLevel="17.0" suppressGenModelAnnotations="false" copyrightFields="false"
-    operationReflection="true" importOrganizing="true" oSGiCompatible="true">
+    xmlns:genmodel="http://www.eclipse.org/emf/2002/GenModel" copyrightText="Copyright (c) 2012 - 2026 Data In Motion and others.&#xA;All rights reserved.&#xA;&#xA;This program and the accompanying materials are made&#xA;available under the terms of the Eclipse Public License 2.0&#xA;which is available at https://www.eclipse.org/legal/epl-2.0/&#xA;&#xA;SPDX-License-Identifier: EPL-2.0&#xA;&#xA;Contributors:&#xA;    Data In Motion - initial API and implementation"
+    modelDirectory="/org,eclipse.fennec.model.atlas.datagen.model/src" modelPluginID="org,eclipse.fennec.model.atlas.datagen.model"
+    modelName="datagen" rootExtendsClass="org.eclipse.emf.ecore.impl.MinimalEObjectImpl$Container"
+    importerID="org.eclipse.emf.importer.ecore" complianceLevel="17.0" suppressGenModelAnnotations="false"
+    copyrightFields="false" operationReflection="true" importOrganizing="true" oSGiCompatible="true">
   <foreignModel>datagen.ecore</foreignModel>
   <genPackages prefix="Datagen" basePackage="org.eclipse.fennec.model.atlas.datagen.model"
-      resource="XMI" disposableProviderFactory="true" ecorePackage="datagen.ecore#/">
+      resource="XMI" disposableProviderFactory="true" fileExtensions="datagen" ecorePackage="datagen.ecore#/">
     <genEnums typeSafeEnumCompatible="false" ecoreEnum="datagen.ecore#//ReferenceStrategy">
       <genEnumLiterals ecoreEnumLiteral="datagen.ecore#//ReferenceStrategy/RANDOM"/>
       <genEnumLiterals ecoreEnumLiteral="datagen.ecore#//ReferenceStrategy/ROUND_ROBIN"/>
