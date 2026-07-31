@@ -3,3 +3,6 @@
 Require-Capability: osgi.extender;filter:='(osgi.extender=osgi.configurator)'
 
 -workingset: modelatlas
+
+# Do not publish this bundle to Maven Central; local install only
+-maven-release: local

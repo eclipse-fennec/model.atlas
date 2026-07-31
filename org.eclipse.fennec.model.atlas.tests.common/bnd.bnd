@@ -2,3 +2,6 @@
 -buildpath: \
 	org.osgi.test.junit5,\
 	org.osgi.test.junit5.cm
+
+# Do not publish this bundle to Maven Central; local install only
+-maven-release: local

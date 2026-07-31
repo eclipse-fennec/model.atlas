@@ -40,3 +40,6 @@ Require-Capability: osgi.extender;filter:='(osgi.extender=osgi.configurator)'
 
 -dependson: \
 	org.eclipse.fennec.model.atlas.rest.filter
+
+# Do not publish this bundle to Maven Central; local install only
+-maven-release: local

@@ -30,3 +30,6 @@ Bundle-Version: 1.0.0.SNAPSHOT
 
 -dependson: \
 	org.eclipse.fennec.model.atlas.bootstrap
+
+# Do not publish this bundle to Maven Central; local install only
+-maven-release: local
