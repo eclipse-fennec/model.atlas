@@ -92,6 +92,8 @@ public class EPackageStageActionService implements StageActionService {
     private final EObjectStorageService<EPackage> storageService;
     private final PromiseFactory promiseFactory = new PromiseFactory(null);
     private final Map<String, String> registeredNsURIs = new ConcurrentHashMap<>();
+    /** objectId -&gt; the version (e.g. git commit SHA) it is currently registered at. */
+    private final Map<String, String> registeredVersions = new ConcurrentHashMap<>();
 
     private final Set<String> triggerStages;
     private final boolean replayOnStartup;
@@ -136,11 +138,12 @@ public class EPackageStageActionService implements StageActionService {
     public Promise<Void> onExit(ActionContext ctx) {
         return promiseFactory.submit(() -> {
             String nsURI = registeredNsURIs.remove(ctx.objectId());
+            registeredVersions.remove(ctx.objectId());
             if (nsURI == null) {
                 logger.fine(() -> "No tracked registration for " + ctx.objectId() + ", nothing to unregister");
                 return null;
             }
-            if (registrationService.unregisterEPackage(nsURI)) {
+            if (registrationService.unregisterEPackage(ctx.scope(), ctx.stage(), nsURI)) {
                 logger.info(() -> "Unregistered EPackage " + nsURI + " (left stage " + ctx.stage() + ")");
             } else {
                 logger.warning(() -> "Unregistration reported failure for EPackage " + nsURI);
@@ -169,15 +172,40 @@ public class EPackageStageActionService implements StageActionService {
             ObjectMetadata metadata = storageService
                     .retrieveMetadata(ctx.scope(), ctx.registry(), ctx.stage(), ctx.objectId()).getValue();
 
-            String previous = registeredNsURIs.remove(ctx.objectId());
-            if (previous != null) {
-                registrationService.unregisterEPackage(previous);
+            // Idempotent replay: on a REPLAY dispatch (startup replay or a git registry resync
+            // that re-enters every stage), if this object is already registered for its
+            // (scope,stage) at the same version, do nothing — this keeps a broad replay from
+            // needlessly unregistering-then-re-registering unchanged EPackages, which would
+            // otherwise briefly flap them for consumers. Only replays skip; a genuine
+            // upload/UPDATE (replay=false) always re-registers. A null/blank version (backends
+            // that do not version) never matches, so their behaviour is unchanged.
+            String version = metadata == null ? null : metadata.getVersion();
+            String previousVersion = registeredVersions.get(ctx.objectId());
+            if (ctx.replay() && version != null && !version.isBlank() && version.equals(previousVersion)
+                    && registrationService.isRegistered(ctx.scope(), ctx.stage(), ePackage.getNsURI())) {
+                logger.fine(() -> "EPackage " + ePackage.getNsURI() + " already registered for stage " + ctx.stage()
+                        + " at version " + version + "; skipping re-registration");
+                return null;
             }
 
-            if (!registrationService.registerEPackage(ePackage, metadata)) {
+            String previous = registeredNsURIs.remove(ctx.objectId());
+            if (previous != null) {
+                registrationService.unregisterEPackage(ctx.scope(), ctx.stage(), previous);
+            }
+
+            // registerEPackage returns false both for a genuine failure AND for "already
+            // registered for this (scope,stage,nsURI)". The latter is benign — the package IS
+            // registered (e.g. by a prior replay whose tracking this component instance does not
+            // hold) — so treat it as success and ADOPT it into our tracking, so a later EXIT can
+            // unregister it. Only a false result with the package genuinely absent is a failure.
+            if (!registrationService.registerEPackage(ePackage, metadata)
+                    && !registrationService.isRegistered(ctx.scope(), ctx.stage(), ePackage.getNsURI())) {
                 throw new IllegalStateException("Failed to register EPackage: " + ePackage.getNsURI());
             }
             registeredNsURIs.put(ctx.objectId(), ePackage.getNsURI());
+            if (version != null) {
+                registeredVersions.put(ctx.objectId(), version);
+            }
             logger.info(() -> "Registered EPackage nsURI=" + ePackage.getNsURI() + " stage=" + ctx.stage()
                     + " replay=" + ctx.replay());
             return null;

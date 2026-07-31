@@ -30,6 +30,7 @@ import org.eclipse.emf.ecore.EClass;
 import org.eclipse.emf.ecore.EObject;
 import org.eclipse.emf.ecore.resource.Resource;
 import org.eclipse.emf.ecore.resource.ResourceSet;
+import org.eclipse.emf.ecore.xmi.PackageNotFoundException;
 import org.eclipse.emf.ecore.util.EcoreUtil;
 import org.eclipse.fennec.codec.resource.CodecResource;
 import org.eclipse.fennec.emf.osgi.constants.EMFUriHandlerConstants;
@@ -50,6 +51,7 @@ import org.eclipse.fennec.model.atlas.mgmt.mgmtapicurio.SearchedArtifact;
 import org.eclipse.fennec.model.atlas.mgmt.mgmtapicurio.SearchedVersion;
 import org.eclipse.fennec.model.atlas.mgmt.mgmtapicurio.Version;
 import org.eclipse.fennec.model.atlas.mgmt.storage.AbstractStorageHelper;
+import org.eclipse.fennec.model.atlas.mgmt.storage.ModelUnavailableException;
 
 /**
  * 
@@ -105,10 +107,26 @@ public class ApicurioStorageHelper extends AbstractStorageHelper {
             String groupId = createGroupId(scope, registry, stage);
             URI objectUri = URI.createURI(constructApicurioURL(config.base_url(), groupId).concat("/")
                     .concat(objectPath).concat("/versions/").concat(latestVersion.getVersion()).concat("/content"));
-            EObject eObj = sendGETRequest(objectUri,
-                    (EClass) resourceSet.getEObject(URI.createURI(latestVersion.getLabels().get("objectType")), false),
-                    contentType);
-            return eObj;
+            String objectTypeUri = latestVersion.getLabels().get("objectType");
+            EClass rootEClass = (EClass) resourceSet.getEObject(URI.createURI(objectTypeUri), false);
+            if (rootEClass == null) {
+                // The instance's model (EPackage) is not registered — an orphaned instance
+                // (e.g. its schema was removed). Surface the same clean, typed signal as the
+                // other backends instead of failing opaquely (previously an NPE in sendGETRequest).
+                String nsURI = objectTypeUri == null ? null
+                        : URI.createURI(objectTypeUri).trimFragment().toString();
+                throw new ModelUnavailableException(scope, stage, objectId, nsURI, null);
+            }
+            try {
+                return sendGETRequest(objectUri, rootEClass, contentType);
+            } catch (RuntimeException e) {
+                // EMF may wrap a PackageNotFoundException in a WrappedException during parse.
+                PackageNotFoundException pnf = findPackageNotFound(e);
+                if (pnf != null) {
+                    throw new ModelUnavailableException(scope, stage, objectId, pnf.uri(), e);
+                }
+                throw e;
+            }
         }
         return null;
 

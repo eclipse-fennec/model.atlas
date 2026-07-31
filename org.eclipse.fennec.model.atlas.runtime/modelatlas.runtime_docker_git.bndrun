@@ -1,0 +1,47 @@
+-include: modelatlas.runtime_docker.bndrun
+
+-runproperties.git: org.osgi.framework.bootdelegation=javax.*
+
+# Variant bndruns are NOT resolved (only modelatlas.runtime_base.bndrun carries the resolved
+# plain -runbundles; a plain -runbundles here would be overridden by the include chain and
+# ignored). Like the apicurio variant, the git additions live in the merged suffix keys below:
+# -runbundles.git holds the hand-curated delta on top of the base closure.
+#
+# -runrequires.git documents the git requirements and enables an ad-hoc validation resolve
+# (`gradlew :...runtime:resolve.modelatlas.runtime_docker_git`) — if you run one, fold any
+# closure changes into -runbundles.git and REVERT the plain -runbundles it writes.
+-runrequires.git: \
+	bnd.identity;id='org.eclipse.fennec.model.atlas.runtime.config.docker.git',\
+	bnd.identity;id='org.eclipse.fennec.model.atlas.management.git',\
+	bnd.identity;id='org.eclipse.fennec.model.atlas.management.git.webhook.rest',\
+	bnd.identity;id='org.gecko.jgit',\
+	bnd.identity;id='org.eclipse.jgit.ssh.apache',\
+	bnd.identity;id='org.eclipse.fennec.model.atlas.management.git.github.webhook.model',\
+	bnd.identity;id='org.eclipse.fennec.model.atlas.management.git.gitlab.webhook.model'
+
+# The config bundle is a plain resource bundle (no deps) so it can be merged directly.
+-runbundles.docker.git: org.eclipse.fennec.model.atlas.runtime.config.docker.git
+
+# Git backend + jgit/sshd stack: the delta of the resolved git closure vs the base closure.
+# NOTE two groups here are required at runtime but invisible to the resolver, so they MUST
+# stay listed explicitly:
+#  - the github/gitlab webhook model bundles (webhook payload deserialization needs their
+#    EPackages; webhook.rest only references their compile-time constants);
+#  - bcpkix + bcutil (sshd-osgi's BouncyCastle imports are optional, but SSH private-key
+#    parsing — OpenSSH/PEM readers live in bcpkix — needs them as soon as a key is configured).
+-runbundles.git: \
+	com.googlecode.javaewah.JavaEWAH;version='[1.2.3,1.2.4)';startlevel=2100,\
+	org.apache.commons.commons-codec;version='[1.22.0,1.22.1)';startlevel=2101,\
+	bcprov;version='[1.84.0,1.84.1)';startlevel=2102,\
+	bcutil;version='[1.84.0,1.84.1)';startlevel=2103,\
+	bcpkix;version='[1.84.0,1.84.1)';startlevel=2104,\
+	org.apache.sshd.osgi;version='[2.17.1,2.17.2)';startlevel=2105,\
+	org.apache.sshd.sftp;version='[2.17.1,2.17.2)';startlevel=2106,\
+	org.eclipse.jgit;version='[7.7.0,7.7.1)';startlevel=2107,\
+	org.eclipse.jgit.ssh.apache;version='[7.7.0,7.7.1)';startlevel=2108,\
+	org.gecko.jgit;version='[1.0.0,1.0.1)';startlevel=2109,\
+	org.eclipse.fennec.model.atlas.management.git.webhook.model;version=snapshot;startlevel=2110,\
+	org.eclipse.fennec.model.atlas.management.git.github.webhook.model;version=snapshot;startlevel=2111,\
+	org.eclipse.fennec.model.atlas.management.git.gitlab.webhook.model;version=snapshot;startlevel=2112,\
+	org.eclipse.fennec.model.atlas.management.git.webhook.rest;version=snapshot;startlevel=2113,\
+	org.eclipse.fennec.model.atlas.management.git;version=snapshot;startlevel=2114

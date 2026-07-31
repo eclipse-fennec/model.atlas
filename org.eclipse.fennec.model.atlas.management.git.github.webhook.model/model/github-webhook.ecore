@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ecore:EPackage xmi:version="2.0" xmlns:xmi="http://www.omg.org/XMI" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xmlns:ecore="http://www.eclipse.org/emf/2002/Ecore" name="githubwebhook" nsURI="http://eclipse.org/fennec/model/atlas/management/github/webhook/1.0.0"
+    nsPrefix="githubwebhook">
+  <eAnnotations source="Version">
+    <details key="value" value="1.0"/>
+  </eAnnotations>
+  <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+    <details key="complianceLevel" value="17.0"/>
+    <details key="oSGiCompatible" value="true"/>
+    <details key="basePackage" value="org.eclipse.fennec.model.atlas.management.git.github.webhook.model"/>
+    <details key="resource" value="XMI"/>
+    <details key="copyrightText"/>
+  </eAnnotations>
+  <eClassifiers xsi:type="ecore:EClass" name="GithubPayload" eSuperTypes="../../org.eclipse.fennec.model.atlas.management.git.webhook.model/model/git-webhook.ecore#//WebhookPayload">
+    <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+      <details key="documentation" value="Concrete GitHub push webhook payload. Only the fields the git backend reads are modelled; the codec skips all other JSON properties (strictOnUnknown=false). Implements the neutral WebhookPayload operations from GitHub-specific fields."/>
+    </eAnnotations>
+    <eOperations name="getProvider" eType="ecore:EEnum ../../org.eclipse.fennec.model.atlas.management.git.webhook.model/model/git-webhook.ecore#//GitProvider">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="body" value="return GitProvider.GITHUB;"/>
+      </eAnnotations>
+    </eOperations>
+    <eOperations name="getCloneUrl" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="body" value="return getRepository() == null ? null : getRepository().getCloneUrl();"/>
+      </eAnnotations>
+    </eOperations>
+    <eOperations name="getRepositoryFullName" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="body" value="return getRepository() == null ? null : getRepository().getFullName();"/>
+      </eAnnotations>
+    </eOperations>
+    <eOperations name="getAddedPaths" upperBound="-1" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="body" value="java.util.LinkedHashSet&lt;String> paths = new java.util.LinkedHashSet&lt;>();&#xA;for(Commit c : getCommits()) {&#xA;&#x9;paths.addAll(c.getAdded());&#xA;}&#xA;if(getHeadCommit() != null) {&#xA;&#x9;paths.addAll(getHeadCommit().getAdded());&#xA;}&#xA;return new org.eclipse.emf.common.util.BasicEList&lt;>(paths);"/>
+      </eAnnotations>
+    </eOperations>
+    <eOperations name="getModifiedPaths" upperBound="-1" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="body" value="java.util.LinkedHashSet&lt;String> paths = new java.util.LinkedHashSet&lt;>();&#xA;for(Commit c : getCommits()) {&#xA;&#x9;paths.addAll(c.getModified());&#xA;}&#xA;if(getHeadCommit() != null) {&#xA;&#x9;paths.addAll(getHeadCommit().getModified());&#xA;}&#xA;return new org.eclipse.emf.common.util.BasicEList&lt;>(paths);"/>
+      </eAnnotations>
+    </eOperations>
+    <eOperations name="getRemovedPaths" upperBound="-1" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="body" value="java.util.LinkedHashSet&lt;String> paths = new java.util.LinkedHashSet&lt;>();&#xA;for(Commit c : getCommits()) {&#xA;&#x9;paths.addAll(c.getRemoved());&#xA;}&#xA;if(getHeadCommit() != null) {&#xA;&#x9;paths.addAll(getHeadCommit().getRemoved());&#xA;}&#xA;return new org.eclipse.emf.common.util.BasicEList&lt;>(paths);"/>
+      </eAnnotations>
+    </eOperations>
+    <eStructuralFeatures xsi:type="ecore:EReference" name="repository" eType="#//Repository"
+        containment="true"/>
+    <eStructuralFeatures xsi:type="ecore:EReference" name="commits" upperBound="-1"
+        eType="ecore:EClass ../../org.eclipse.fennec.model.atlas.management.git.webhook.model/model/git-webhook.ecore#//Commit"
+        containment="true"/>
+    <eStructuralFeatures xsi:type="ecore:EReference" name="headCommit" eType="ecore:EClass ../../org.eclipse.fennec.model.atlas.management.git.webhook.model/model/git-webhook.ecore#//Commit"
+        containment="true">
+      <eAnnotations source="http:///org/eclipse/emf/ecore/util/ExtendedMetaData">
+        <details key="name" value="head_commit"/>
+      </eAnnotations>
+    </eStructuralFeatures>
+  </eClassifiers>
+  <eClassifiers xsi:type="ecore:EClass" name="Repository">
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="cloneUrl" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString">
+      <eAnnotations source="http:///org/eclipse/emf/ecore/util/ExtendedMetaData">
+        <details key="name" value="clone_url"/>
+      </eAnnotations>
+    </eStructuralFeatures>
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="fullName" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString">
+      <eAnnotations source="http:///org/eclipse/emf/ecore/util/ExtendedMetaData">
+        <details key="name" value="full_name"/>
+      </eAnnotations>
+    </eStructuralFeatures>
+  </eClassifiers>
+</ecore:EPackage>
