@@ -318,8 +318,11 @@ public class GitRegistryChainIT {
 	 */
 	private void serializeViaFreshStageResourceSet(EObjectStorageService<EObject> storage, String aliceId,
 			String phase) throws Exception {
-		EObject alice = storage.retrieveObject(SCOPE, SCHEMA_REGISTRY, GitTestRepository.BRANCH_MAIN, aliceId)
-				.timeout(WAIT).getValue();
+		// Poll instead of a one-shot read: right after chain startup (and around branch
+		// removals) the read can transiently return null or throw while the git sync /
+		// registration replay is still settling — observed on CI and locally.
+		EObject alice = awaitRetrieve(storage, GitTestRepository.BRANCH_MAIN, aliceId, java.util.Objects::nonNull,
+				WAIT);
 		assertNotNull(alice, "main's alice must be retrievable from storage " + phase);
 
 		java.util.Collection<org.osgi.framework.ServiceReference<org.eclipse.emf.ecore.resource.ResourceSet>> refs = context
@@ -377,9 +380,10 @@ public class GitRegistryChainIT {
 
 		String aliceId = SCOPE + "/" + GitTestRepository.BRANCH_MAIN + "/" + GitTestRepository.ALICE_XMI;
 
-		// While the schema is present, the instance resolves to a typed Person.
-		EObject alice = storage.retrieveObject(SCOPE, SCHEMA_REGISTRY, GitTestRepository.BRANCH_MAIN, aliceId)
-				.timeout(WAIT).getValue();
+		// While the schema is present, the instance resolves to a typed Person. Poll: right
+		// after chain startup the read can transiently miss while the sync settles.
+		EObject alice = awaitRetrieve(storage, GitTestRepository.BRANCH_MAIN, aliceId, java.util.Objects::nonNull,
+				WAIT);
 		assertNotNull(alice, "alice instance should resolve while person is registered");
 		assertEquals("Person", alice.eClass().getName());
 		assertEquals("Alice", alice.eGet(alice.eClass().getEStructuralFeature("name")));
@@ -429,8 +433,9 @@ public class GitRegistryChainIT {
 		String aliceId = SCOPE + "/" + GitTestRepository.BRANCH_MAIN + "/" + GitTestRepository.ALICE_XMI;
 
 		// Before reload: alice resolves to a Person that has only 'name'.
-		EObject before = storage.retrieveObject(SCOPE, SCHEMA_REGISTRY, GitTestRepository.BRANCH_MAIN, aliceId)
-				.timeout(WAIT).getValue();
+		// Poll: right after chain startup the read can transiently miss while the sync settles.
+		EObject before = awaitRetrieve(storage, GitTestRepository.BRANCH_MAIN, aliceId, java.util.Objects::nonNull,
+				WAIT);
 		assertEquals("Person", before.eClass().getName());
 		assertFalse(before.eClass().eIsProxy(), "eClass must resolve before reload");
 		assertNull(before.eClass().getEStructuralFeature("email"), "no email attribute before reload");
