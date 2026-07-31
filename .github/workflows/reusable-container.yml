@@ -1,0 +1,115 @@
+name: Reusable Container Deploy
+
+# Repo-local reusable: builds/pushes the two Model Atlas docker variants
+# (apicurio, file) to Docker Hub and GHCR. The runtime jars are NOT rebuilt
+# here — they are downloaded from the "release-jars" artifact uploaded by
+# reusable-release (eclipse-fennec/.github v1.1.0+: extra-gradle-tasks and
+# artifact-paths inputs, added via eclipse-fennec/.github#13), so the images
+# embed exactly the jars that were published to Maven.
+# The moving tag label (snapshot vs latest) comes from the calling workflow.
+on:
+  workflow_call:
+    inputs:
+      docker-label:
+        description: 'Moving docker tag label, e.g. snapshot or latest.'
+        type: string
+        required: true
+    secrets:
+      DOCKER_USERNAME:
+        required: true
+      DOCKER_API_TOKEN:
+        required: true
+
+permissions:
+  contents: read
+
+env:
+  LC_ALL: en_US.UTF-8
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  container:
+    name: Container Deploy (${{ inputs.docker-label }})
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - name: Harden the runner
+        uses: step-security/harden-runner@bf7454d06d71f1098171f2acdf0cd4708d7b5920 # v2.20.0
+        with:
+          egress-policy: audit
+      - name: Git Checkout
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+      - name: Set up JDK 25
+        uses: actions/setup-java@03ad4de0992f5dab5e18fcb136590ce7c4a0ac95 # v5.6.0
+        with:
+          distribution: temurin
+          java-version: 25
+      - name: Download Release Artifacts
+        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7.0.0
+        with:
+          name: release-jars
+          path: .
+      - name: Install bnd
+        run: |
+          curl -Lk -o /tmp/biz.aQute.bnd.jar \
+            https://repo1.maven.org/maven2/biz/aQute/bnd/biz.aQute.bnd/7.2.1/biz.aQute.bnd-7.2.1.jar
+      - name: Extract Bundle Version
+        id: bundle_version
+        run: |
+          VERSION=$(java -jar /tmp/biz.aQute.bnd.jar select -h Bundle-Version \
+            org.eclipse.fennec.model.atlas.rest.application/generated/org.eclipse.fennec.model.atlas.rest.application.jar \
+            2>/dev/null | head -1)
+          echo "VERSION=${VERSION}"
+          echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
+      - name: Prepare Apicurio Docker content
+        run: |
+          mkdir -p docker/modelatlas_apicurio/content/runtime
+          cp org.eclipse.fennec.model.atlas.runtime/generated/distributions/executable/modelatlas.runtime_docker_apicurio.jar docker/modelatlas_apicurio/content/modelatlas.runtime_docker.jar
+          cp -rf org.eclipse.fennec.model.atlas.runtime/runtime/* docker/modelatlas_apicurio/content/runtime
+          ls -lR docker/modelatlas_apicurio/content
+      - name: Prepare File Docker content
+        run: |
+          mkdir -p docker/modelatlas_file/content/runtime
+          cp org.eclipse.fennec.model.atlas.runtime/generated/distributions/executable/modelatlas.runtime_docker_file.jar docker/modelatlas_file/content/modelatlas.runtime_docker.jar
+          cp -rf org.eclipse.fennec.model.atlas.runtime/runtime/* docker/modelatlas_file/content/runtime
+          ls -lR docker/modelatlas_file/content
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@e468171a9de216ec08956ac3ada2f0791b6bd435 # v3.11.1
+      - name: Login to Docker Hub
+        uses: docker/login-action@184bdaa0721073962dff0199f1fb9940f07167d1 # v3.5.0
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_API_TOKEN }}
+      - name: Login to Github Docker Registry
+        uses: docker/login-action@184bdaa0721073962dff0199f1fb9940f07167d1 # v3.5.0
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Build and Push Apicurio Docker Image
+        uses: docker/build-push-action@263435318d21b8e681c14492fe198d362a7d2c83 # v6.18.0
+        with:
+          context: docker/modelatlas_apicurio/
+          platforms: linux/amd64,linux/arm64/v8
+          push: true
+          tags: |-
+            docker.io/eclipsefennec/model.atlas:apicurio-${{ inputs.docker-label }}
+            docker.io/eclipsefennec/model.atlas:apicurio-${{ steps.bundle_version.outputs.version }}
+            ghcr.io/eclipse-fennec/model.atlas:apicurio-${{ inputs.docker-label }}
+            ghcr.io/eclipse-fennec/model.atlas:apicurio-${{ steps.bundle_version.outputs.version }}
+      - name: Build and Push File Docker Image
+        uses: docker/build-push-action@263435318d21b8e681c14492fe198d362a7d2c83 # v6.18.0
+        with:
+          context: docker/modelatlas_file/
+          platforms: linux/amd64,linux/arm64/v8
+          push: true
+          tags: |-
+            docker.io/eclipsefennec/model.atlas:file-${{ inputs.docker-label }}
+            docker.io/eclipsefennec/model.atlas:file-${{ steps.bundle_version.outputs.version }}
+            ghcr.io/eclipse-fennec/model.atlas:file-${{ inputs.docker-label }}
+            ghcr.io/eclipse-fennec/model.atlas:file-${{ steps.bundle_version.outputs.version }}

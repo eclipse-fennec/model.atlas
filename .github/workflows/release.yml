@@ -1,0 +1,53 @@
+name: Release Build
+
+on:
+  push:
+    branches:
+      - main
+
+# Workflow-level ceiling for the called reusables. The credential-scoped release
+# and container steps get their secrets via `secrets: inherit` below (verify
+# never sees them); packages: write is needed for the GHCR image push.
+permissions:
+  contents: read
+  packages: write
+
+concurrency:
+  group: release-publish
+  cancel-in-progress: false
+
+jobs:
+  verify:
+    uses: eclipse-fennec/.github/.github/workflows/reusable-verify.yml@bb56215f3e78dfc0870da3c4ed4c495d6b208ede # v1.1.0
+    with:
+      java-versions: '["25"]'
+      # No perfTest task in this workspace.
+      run-perf-tests: false
+      gradle-parallel: false
+
+  release:
+    needs: verify
+    uses: eclipse-fennec/.github/.github/workflows/reusable-release.yml@bb56215f3e78dfc0870da3c4ed4c495d6b208ede # v1.1.0
+    with:
+      do-release: true
+      publish-java-version: '25'
+      # bnd resolve/export tasks are not parallel-safe in this workspace.
+      gradle-parallel: false
+      # Export the runtime jars in the SAME build that publishes to Maven,
+      # and hand them to the container job as the release-jars artifact.
+      extra-gradle-tasks: >-
+        org.eclipse.fennec.model.atlas.runtime:resolve.modelatlas.runtime_base
+        org.eclipse.fennec.model.atlas.runtime:export.modelatlas.runtime_docker_apicurio
+        org.eclipse.fennec.model.atlas.runtime:export.modelatlas.runtime_docker_file
+      artifact-paths: |
+        org.eclipse.fennec.model.atlas.runtime/generated/distributions/executable/modelatlas.runtime_docker_apicurio.jar
+        org.eclipse.fennec.model.atlas.runtime/generated/distributions/executable/modelatlas.runtime_docker_file.jar
+        org.eclipse.fennec.model.atlas.rest.application/generated/org.eclipse.fennec.model.atlas.rest.application.jar
+    secrets: inherit
+
+  container:
+    needs: release
+    uses: ./.github/workflows/reusable-container.yml
+    with:
+      docker-label: latest
+    secrets: inherit
