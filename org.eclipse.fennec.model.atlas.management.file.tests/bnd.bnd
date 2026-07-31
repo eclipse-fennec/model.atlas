@@ -25,3 +25,6 @@ Test-Cases: ${classes;HIERARCHY_INDIRECTLY_ANNOTATED;org.junit.platform.commons.
 Bundle-Version: 1.0.0.SNAPSHOT
 
 -dependson: org.eclipse.fennec.model.atlas.management.file
+
+# Do not publish this bundle to Maven Central; local install only
+-maven-release: local

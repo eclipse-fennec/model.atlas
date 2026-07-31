@@ -41,3 +41,6 @@ Bundle-Version: 1.0.0.SNAPSHOT
 	org.eclipse.fennec.model.atlas.management,\
 	org.eclipse.fennec.model.atlas.management.lucene,\
 	org.eclipse.fennec.model.atlas.management.file
+
+# Do not publish this bundle to Maven Central; local install only
+-maven-release: local
