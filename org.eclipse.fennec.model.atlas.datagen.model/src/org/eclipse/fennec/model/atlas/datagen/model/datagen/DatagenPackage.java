@@ -44,7 +44,7 @@ import org.osgi.annotation.versioning.ProviderType;
  * @generated
  */
 @ProviderType
-@EPackage(uri = DatagenPackage.eNS_URI, genModel = "/model/datagen.genmodel", genModelSourceLocations = {"model/datagen.genmodel","org.eclipse.fennec.model.atlas.datagen.model/model/datagen.genmodel"}, ecore = "/model/datagen.ecore", ecoreSourceLocations = "/model/datagen.ecore")
+@EPackage(uri = DatagenPackage.eNS_URI, fingerprint = "fp1:3f736d82b3d843ed2692b619fe9436a106a278a40f01857f2110e469e4e3f43e", genModel = "/model/datagen.genmodel", genModelSourceLocations = {"model/datagen.genmodel","org.eclipse.fennec.model.atlas.datagen.model/model/datagen.genmodel"}, ecore = "/model/datagen.ecore", ecoreSourceLocations = "/model/datagen.ecore")
 public interface DatagenPackage extends org.eclipse.emf.ecore.EPackage {
 	/**
 	 * The package name.

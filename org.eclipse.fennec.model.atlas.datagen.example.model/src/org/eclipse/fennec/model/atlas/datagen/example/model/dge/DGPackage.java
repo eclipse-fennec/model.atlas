@@ -43,7 +43,7 @@ import org.osgi.annotation.versioning.ProviderType;
  * @generated
  */
 @ProviderType
-@EPackage(uri = DGPackage.eNS_URI, genModel = "/model/dge.genmodel", genModelSourceLocations = {"model/dge.genmodel","org.eclipse.fennec.model.atlas.datagen.example.model/model/dge.genmodel"}, ecore = "/model/dge.ecore", ecoreSourceLocations = "/model/dge.ecore")
+@EPackage(uri = DGPackage.eNS_URI, fingerprint = "fp1:f32309bbe75c77f1f730c3cb618b10341350b73f4b302a8fb88670c8c5a031ba", genModel = "/model/dge.genmodel", genModelSourceLocations = {"model/dge.genmodel","org.eclipse.fennec.model.atlas.datagen.example.model/model/dge.genmodel"}, ecore = "/model/dge.ecore", ecoreSourceLocations = "/model/dge.ecore")
 public interface DGPackage extends org.eclipse.emf.ecore.EPackage {
 	/**
 	 * The package name.

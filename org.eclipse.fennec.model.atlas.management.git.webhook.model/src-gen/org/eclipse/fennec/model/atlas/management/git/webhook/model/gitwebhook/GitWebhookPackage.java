@@ -42,7 +42,7 @@ import org.osgi.annotation.versioning.ProviderType;
  * @generated
  */
 @ProviderType
-@EPackage(uri = GitWebhookPackage.eNS_URI, genModel = "/model/git-webhook.genmodel", genModelSourceLocations = {"model/git-webhook.genmodel","org.eclipse.fennec.model.atlas.management.git.webhook.model/model/git-webhook.genmodel"}, ecore = "/model/git-webhook.ecore", ecoreSourceLocations = "/model/git-webhook.ecore")
+@EPackage(uri = GitWebhookPackage.eNS_URI, fingerprint = "fp1:be92b1ed5284e862d865afe8db61e4048bf2f1ec3a023d4dcc7023a1d767de5f", genModel = "/model/git-webhook.genmodel", genModelSourceLocations = {"model/git-webhook.genmodel","org.eclipse.fennec.model.atlas.management.git.webhook.model/model/git-webhook.genmodel"}, ecore = "/model/git-webhook.ecore", ecoreSourceLocations = "/model/git-webhook.ecore")
 public interface GitWebhookPackage extends org.eclipse.emf.ecore.EPackage {
 	/**
 	 * The package name.

@@ -39,7 +39,7 @@ import org.osgi.annotation.versioning.ProviderType;
  * @generated
  */
 @ProviderType
-@EPackage(uri = RestPackage.eNS_URI, genModel = "/model/rest-response.genmodel", genModelSourceLocations = {"model/rest-response.genmodel","org.eclipse.fennec.model.atlas.rest.model/model/rest-response.genmodel"}, ecore = "/model/rest-response.ecore", ecoreSourceLocations = "/model/rest-response.ecore")
+@EPackage(uri = RestPackage.eNS_URI, fingerprint = "fp1:e73560a7db52c1f546772264f58fc2c5fa3d13f7886bb04cfa1ee82ab7135d76", genModel = "/model/rest-response.genmodel", genModelSourceLocations = {"model/rest-response.genmodel","org.eclipse.fennec.model.atlas.rest.model/model/rest-response.genmodel"}, ecore = "/model/rest-response.ecore", ecoreSourceLocations = "/model/rest-response.ecore")
 public interface RestPackage extends org.eclipse.emf.ecore.EPackage {
 	/**
 	 * The package name.

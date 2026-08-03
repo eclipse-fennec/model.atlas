@@ -42,7 +42,7 @@ import org.osgi.annotation.versioning.ProviderType;
  * @generated
  */
 @ProviderType
-@EPackage(uri = ManagementPackage.eNS_URI, genModel = "/model/management.genmodel", genModelSourceLocations = {"model/management.genmodel","org.eclipse.fennec.model.atlas.management/model/management.genmodel"}, ecore = "/model/management.ecore", ecoreSourceLocations = "/model/management.ecore")
+@EPackage(uri = ManagementPackage.eNS_URI, fingerprint = "fp1:d693aada2403cd7129ae32d3f148fabccb63fefbc51b307735528679d9fe2d24", genModel = "/model/management.genmodel", genModelSourceLocations = {"model/management.genmodel","org.eclipse.fennec.model.atlas.management/model/management.genmodel"}, ecore = "/model/management.ecore", ecoreSourceLocations = "/model/management.ecore")
 public interface ManagementPackage extends org.eclipse.emf.ecore.EPackage {
 	/**
 	 * The package name.

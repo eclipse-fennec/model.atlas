@@ -32,6 +32,14 @@ import org.eclipse.fennec.model.atlas.datagen.example.model.dge.DGPackage;
  */
 public class DGEPackageConfigurator implements EPackageConfigurator {
 	
+	/**
+	 * The fingerprint of this model version, computed from the <code>.ecore</code> at build
+	 * time. It identifies the model content, not the artifact - see the <code>emf.fingerprint</code>
+	 * service property.
+	 * @generated
+	 */
+	public static final String FINGERPRINT = "fp1:f32309bbe75c77f1f730c3cb618b10341350b73f4b302a8fb88670c8c5a031ba";
+
 	private DGPackage ePackage;
 
 	protected DGEPackageConfigurator(DGPackage ePackage){
@@ -69,6 +77,7 @@ public class DGEPackageConfigurator implements EPackageConfigurator {
 		properties.put(EMFNamespaces.EMF_MODEL_REGISTRATION, EMFNamespaces.MODEL_REGISTRATION_PROVIDED);
 		properties.put(EMFNamespaces.EMF_MODEL_FILE_EXT, "dg");
 		properties.put(EMFNamespaces.EMF_MODEL_VERSION, "1.0");
+		properties.put(EMFNamespaces.EMF_MODEL_FINGERPRINT, FINGERPRINT);
 		return properties;
 	}
 }
