@@ -87,7 +87,7 @@ class DriftRemovalDeserializationTest {
 		// Publish seam: like RemoteEPackagePublisher + emf.osgi, a publish makes the
 		// package observable in the framework registry and in the publisher's
 		// current-publication map; an unpublish removes it from both.
-		PackagePublication publication = (ePackage, scope, stage, version) -> {
+		PackagePublication publication = (ePackage, scope, stage, version, serverFingerprint) -> {
 			currentPublications.put(ePackage.getNsURI(), ePackage);
 			framework.put(ePackage.getNsURI(), ePackage);
 			return true;

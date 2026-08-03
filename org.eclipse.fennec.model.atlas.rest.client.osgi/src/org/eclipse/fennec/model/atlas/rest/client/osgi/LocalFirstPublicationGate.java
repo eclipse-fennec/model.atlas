@@ -58,7 +58,7 @@ final class LocalFirstPublicationGate implements PackagePublication {
 	}
 
 	/** A remote publication we may (re)publish: the package plus its origin properties. */
-	private record Candidate(EPackage ePackage, String scope, String stage, String version) {
+	private record Candidate(EPackage ePackage, String scope, String stage, String version, String serverFingerprint) {
 	}
 
 	private static final Logger LOGGER = Logger.getLogger(LocalFirstPublicationGate.class.getName());
@@ -90,12 +90,12 @@ final class LocalFirstPublicationGate implements PackagePublication {
 	}
 
 	@Override
-	public boolean publish(EPackage ePackage, String scope, String stage, String version) {
+	public boolean publish(EPackage ePackage, String scope, String stage, String version, String serverFingerprint) {
 		String nsUri = ePackage.getNsURI();
 		if (nsUri == null || nsUri.isBlank()) {
-			return publisher.publish(ePackage, scope, stage, version); // let the publisher warn/handle it
+			return publisher.publish(ePackage, scope, stage, version, serverFingerprint); // let the publisher warn/handle it
 		}
-		Candidate candidate = new Candidate(ePackage, scope, stage, version);
+		Candidate candidate = new Candidate(ePackage, scope, stage, version, serverFingerprint);
 		synchronized (lock) {
 			if (!forceRemote && localPresent.test(nsUri)) {
 				parked.put(nsUri, candidate);
@@ -153,7 +153,7 @@ final class LocalFirstPublicationGate implements PackagePublication {
 
 	private boolean doPublish(String nsUri, Candidate candidate) {
 		boolean published = publisher.publish(candidate.ePackage(), candidate.scope(), candidate.stage(),
-				candidate.version());
+				candidate.version(), candidate.serverFingerprint());
 		if (published) {
 			publishedByUs.put(nsUri, candidate);
 			parked.remove(nsUri);

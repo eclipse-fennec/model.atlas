@@ -54,7 +54,7 @@ class DriftSubstitutionTest {
 	}
 
 	private DriftSubstitution substitution(Function<String, Optional<ResolvedEPackage>> resolver) {
-		PackagePublication republisher = (ePackage, scope, stage, version) -> {
+		PackagePublication republisher = (ePackage, scope, stage, version, serverFingerprint) -> {
 			republished.add(ePackage.getNsURI());
 			return true;
 		};

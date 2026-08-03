@@ -90,7 +90,7 @@ final class DriftSubstitution implements DriftListener {
 		}
 		if (resolved.isPresent()) {
 			ResolvedEPackage remote = resolved.get();
-			republisher.publish(remote.getEPackage(), remote.getScope(), remote.getStage(), remote.getVersion());
+			republisher.publish(remote.getEPackage(), remote.getScope(), remote.getStage(), remote.getVersion(), remote.getFingerprint());
 		} else {
 			// Changed-then-gone between the drift signal and our re-resolve.
 			unpublisher.accept(nsUri);

@@ -55,9 +55,9 @@ public class DynamicEPackageConfiguratorSharedRegistryTest {
 		EPackage draftPkg = newPersonPackage();
 		EPackage approvedPkg = newPersonPackage();
 
-		DynamicEPackageConfigurator draft = new DynamicEPackageConfigurator(draftPkg, "ecore", "1.0", SCOPE, "draft");
+		DynamicEPackageConfigurator draft = new DynamicEPackageConfigurator(draftPkg, "ecore", "1.0", SCOPE, "draft", "fake:draft");
 		DynamicEPackageConfigurator approved = new DynamicEPackageConfigurator(approvedPkg, "ecore", "1.0", SCOPE,
-				"approved");
+				"approved", "fake:approved");
 
 		EPackage.Registry shared = new EPackageRegistryImpl();
 

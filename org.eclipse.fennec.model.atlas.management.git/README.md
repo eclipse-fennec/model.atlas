@@ -316,20 +316,16 @@ per-instance catch-all.
   that whiteboard-tracks `EPackage` services keyed by nsURI breaks under multi-version
   (multi-stage) registration. Until fixed there, JSON content reads are unreliable for a
   nsURI after any stage's schema removal; XML is the workaround.
-- **EPackages cannot be resolved by nsURI through the schema REST endpoints.** The
-  `/{scope}/schema/...` endpoints derive the lookup objectId as `Base64-URL(nsUri)`
-  (`SchemaPackagesResource.encodePackageNsURI`), while this backend's objectIds are
-  `scope/stage/repoPath` — so every nsUri-parameterized request (single-package metadata
-  `?nsUri=`, content `/content?nsUri=`) returns `204` for git-backed packages even though
-  they exist. What DOES work: stage **listing** via `GET /{scope}/schema/stages/{stage}`
-  (filters by scope+registry+stage, no objectId), and metadata/content retrieval **by
-  objectId** via the generic registry endpoints, e.g.
-  `GET /{scope}/registries/schema/stages/{stage}/content?objectId=<scope/stage/repoPath>`.
-  Derived schema metadata carries `properties["nsUri"]` (like the schema upload path), so a
-  client CAN map nsURI → objectId from a stage listing and then query by objectId — the
-  nsUri-parameterized endpoints themselves still miss because they recompute the encoded id
-  instead of resolving via that property. Part of the identity/fingerprint discussion in
-  [model.atlas#156](https://github.com/eclipse-fennec/model.atlas/issues/156).
+- ~~**EPackages cannot be resolved by nsURI through the schema REST endpoints.**~~
+  **RESOLVED 2026-08-03 (fingerprint plan phase F8).** The `/{scope}/schema/...` endpoints no
+  longer recompute an encoded objectId from the nsURI; they resolve nsURI → metadata via the
+  `properties["nsUri"]` scan over the stage listing
+  (`WritableScopeService.getMetadataByPropertyFromStageForRegistry`), which this backend's
+  derived metadata has carried since 2026-07-23. All nsUri-parameterized requests
+  (single-package metadata `?nsUri=`, content `/content?nsUri=`, delete, transition) now work
+  for git-backed packages; the backend keeps its `scope/stage/repoPath` objectIds unchanged
+  (ids are opaque to all consumers since F8). Covered by
+  `GitRegistryChainIT.nsUriPropertyLookup_findsGitBackedPackages`.
 - Branch deletion and force-push/history-rewrite are not yet reflected.
 - Runtime/deployment wiring (PLAN.md G9): the `runtime.config.docker.git` bundle, the docker +
   local bndruns, and the `docker/modelatlas_git` image files now exist. The **local** variant

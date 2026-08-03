@@ -38,7 +38,7 @@ import org.osgi.annotation.versioning.ProviderType;
  * @generated
  */
 @ProviderType
-@EPackage(uri = ManagementApiPackage.eNS_URI, fingerprint = "fp1:d7ded6601137ebe4217e4c87f8d0d6c852e19ae82cefd89a669c16fcf07209cf", genModel = "/model/management-api.genmodel", genModelSourceLocations = {"model/management-api.genmodel","org.eclipse.fennec.model.atlas.management/model/management-api.genmodel"}, ecore = "/model/management-api.ecore", ecoreSourceLocations = "/model/management-api.ecore")
+@EPackage(uri = ManagementApiPackage.eNS_URI, fingerprint = "fp1:269b969e3d4ef2dd0660199b9219b472d16684736f7948c87c702ef78f6b411b", genModel = "/model/management-api.genmodel", genModelSourceLocations = {"model/management-api.genmodel","org.eclipse.fennec.model.atlas.management/model/management-api.genmodel"}, ecore = "/model/management-api.ecore", ecoreSourceLocations = "/model/management-api.ecore")
 public interface ManagementApiPackage extends org.eclipse.emf.ecore.EPackage {
 	/**
 	 * The package name.
@@ -482,13 +482,13 @@ public interface ManagementApiPackage extends org.eclipse.emf.ecore.EPackage {
 	int EOBJECT_REGISTRY_SERVICE___FIND_BY_VERSION_PATTERN__STRING = 6;
 
 	/**
-	 * The operation id for the '<em>Find By Fingerprint</em>' operation.
+	 * The operation id for the '<em>Find By Generation Trigger Fingerprint</em>' operation.
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
 	 * @generated
 	 * @ordered
 	 */
-	int EOBJECT_REGISTRY_SERVICE___FIND_BY_FINGERPRINT__STRING = 7;
+	int EOBJECT_REGISTRY_SERVICE___FIND_BY_GENERATION_TRIGGER_FINGERPRINT__STRING = 7;
 
 	/**
 	 * The operation id for the '<em>Find By Object Type</em>' operation.
@@ -581,13 +581,22 @@ public interface ManagementApiPackage extends org.eclipse.emf.ecore.EPackage {
 	int EOBJECT_REGISTRY_SERVICE___FIND_BY_SCOPE_REGISTRY_STAGE_AND_NAME__STRING_STRING_STRING_STRING = 17;
 
 	/**
+	 * The operation id for the '<em>Find By Fingerprint</em>' operation.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 * @ordered
+	 */
+	int EOBJECT_REGISTRY_SERVICE___FIND_BY_FINGERPRINT__STRING = 18;
+
+	/**
 	 * The number of operations of the '<em>EObject Registry Service</em>' class.
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
 	 * @generated
 	 * @ordered
 	 */
-	int EOBJECT_REGISTRY_SERVICE_OPERATION_COUNT = 18;
+	int EOBJECT_REGISTRY_SERVICE_OPERATION_COUNT = 19;
 
 	/**
 	 * The meta object id for the '{@link org.eclipse.fennec.model.atlas.mgmt.api.StorageRegistry <em>Storage Registry</em>}' class.
@@ -1044,14 +1053,14 @@ public interface ManagementApiPackage extends org.eclipse.emf.ecore.EPackage {
 	EOperation getEObjectRegistryService__FindByVersionPattern__String();
 
 	/**
-	 * Returns the meta object for the '{@link org.eclipse.fennec.model.atlas.mgmt.api.EObjectRegistryService#findByFingerprint(java.lang.String) <em>Find By Fingerprint</em>}' operation.
+	 * Returns the meta object for the '{@link org.eclipse.fennec.model.atlas.mgmt.api.EObjectRegistryService#findByGenerationTriggerFingerprint(java.lang.String) <em>Find By Generation Trigger Fingerprint</em>}' operation.
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
-	 * @return the meta object for the '<em>Find By Fingerprint</em>' operation.
-	 * @see org.eclipse.fennec.model.atlas.mgmt.api.EObjectRegistryService#findByFingerprint(java.lang.String)
+	 * @return the meta object for the '<em>Find By Generation Trigger Fingerprint</em>' operation.
+	 * @see org.eclipse.fennec.model.atlas.mgmt.api.EObjectRegistryService#findByGenerationTriggerFingerprint(java.lang.String)
 	 * @generated
 	 */
-	EOperation getEObjectRegistryService__FindByFingerprint__String();
+	EOperation getEObjectRegistryService__FindByGenerationTriggerFingerprint__String();
 
 	/**
 	 * Returns the meta object for the '{@link org.eclipse.fennec.model.atlas.mgmt.api.EObjectRegistryService#findByObjectType(java.lang.String) <em>Find By Object Type</em>}' operation.
@@ -1152,6 +1161,16 @@ public interface ManagementApiPackage extends org.eclipse.emf.ecore.EPackage {
 	 * @generated
 	 */
 	EOperation getEObjectRegistryService__FindByScopeRegistryStageAndName__String_String_String_String();
+
+	/**
+	 * Returns the meta object for the '{@link org.eclipse.fennec.model.atlas.mgmt.api.EObjectRegistryService#findByFingerprint(java.lang.String) <em>Find By Fingerprint</em>}' operation.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @return the meta object for the '<em>Find By Fingerprint</em>' operation.
+	 * @see org.eclipse.fennec.model.atlas.mgmt.api.EObjectRegistryService#findByFingerprint(java.lang.String)
+	 * @generated
+	 */
+	EOperation getEObjectRegistryService__FindByFingerprint__String();
 
 	/**
 	 * Returns the meta object for class '{@link org.eclipse.fennec.model.atlas.mgmt.api.StorageRegistry <em>Storage Registry</em>}'.
@@ -1549,12 +1568,12 @@ public interface ManagementApiPackage extends org.eclipse.emf.ecore.EPackage {
 		EOperation EOBJECT_REGISTRY_SERVICE___FIND_BY_VERSION_PATTERN__STRING = eINSTANCE.getEObjectRegistryService__FindByVersionPattern__String();
 
 		/**
-		 * The meta object literal for the '<em><b>Find By Fingerprint</b></em>' operation.
+		 * The meta object literal for the '<em><b>Find By Generation Trigger Fingerprint</b></em>' operation.
 		 * <!-- begin-user-doc -->
 		 * <!-- end-user-doc -->
 		 * @generated
 		 */
-		EOperation EOBJECT_REGISTRY_SERVICE___FIND_BY_FINGERPRINT__STRING = eINSTANCE.getEObjectRegistryService__FindByFingerprint__String();
+		EOperation EOBJECT_REGISTRY_SERVICE___FIND_BY_GENERATION_TRIGGER_FINGERPRINT__STRING = eINSTANCE.getEObjectRegistryService__FindByGenerationTriggerFingerprint__String();
 
 		/**
 		 * The meta object literal for the '<em><b>Find By Object Type</b></em>' operation.
@@ -1635,6 +1654,14 @@ public interface ManagementApiPackage extends org.eclipse.emf.ecore.EPackage {
 		 * @generated
 		 */
 		EOperation EOBJECT_REGISTRY_SERVICE___FIND_BY_SCOPE_REGISTRY_STAGE_AND_NAME__STRING_STRING_STRING_STRING = eINSTANCE.getEObjectRegistryService__FindByScopeRegistryStageAndName__String_String_String_String();
+
+		/**
+		 * The meta object literal for the '<em><b>Find By Fingerprint</b></em>' operation.
+		 * <!-- begin-user-doc -->
+		 * <!-- end-user-doc -->
+		 * @generated
+		 */
+		EOperation EOBJECT_REGISTRY_SERVICE___FIND_BY_FINGERPRINT__STRING = eINSTANCE.getEObjectRegistryService__FindByFingerprint__String();
 
 		/**
 		 * The meta object literal for the '{@link org.eclipse.fennec.model.atlas.mgmt.api.StorageRegistry <em>Storage Registry</em>}' class.

@@ -41,6 +41,7 @@ public final class ResolvedEPackage {
 	private final String registry;
 	private final String stage;
 	private final String version;
+	private final String fingerprint;
 
 	/**
 	 * @param ePackage the resolved package (never {@code null})
@@ -52,12 +53,31 @@ public final class ResolvedEPackage {
 	 */
 	public ResolvedEPackage(EPackage ePackage, String nsUri, String scope, String registry, String stage,
 			String version) {
+		this(ePackage, nsUri, scope, registry, stage, version, null);
+	}
+
+	/**
+	 * @param ePackage    the resolved package (never {@code null})
+	 * @param nsUri       its namespace URI
+	 * @param scope       the owning Atlas scope reported by the metadata
+	 * @param registry    the registry the package lives in (e.g. {@code schema})
+	 * @param stage       the stage the metadata was resolved from
+	 * @param version     the model version, or {@code null} if the server did not report one
+	 * @param fingerprint the server-reported content-derived model fingerprint
+	 *                    (scheme-prefixed, e.g. {@code fp1:<digest>}), or {@code null}
+	 *                    if the server did not report one. Advisory: consumers that
+	 *                    need a trustworthy value compute it locally from
+	 *                    {@link #getEPackage()} and may use this one as a cross-check.
+	 */
+	public ResolvedEPackage(EPackage ePackage, String nsUri, String scope, String registry, String stage,
+			String version, String fingerprint) {
 		this.ePackage = Objects.requireNonNull(ePackage, "ePackage");
 		this.nsUri = nsUri;
 		this.scope = scope;
 		this.registry = registry;
 		this.stage = stage;
 		this.version = version;
+		this.fingerprint = fingerprint;
 	}
 
 	/** The resolved package. */
@@ -90,6 +110,15 @@ public final class ResolvedEPackage {
 		return version;
 	}
 
+	/**
+	 * The server-reported model fingerprint (e.g. {@code fp1:<digest>}), or
+	 * {@code null} if the server did not report one. Advisory — see the
+	 * constructor note.
+	 */
+	public String getFingerprint() {
+		return fingerprint;
+	}
+
 	@Override
 	public boolean equals(Object o) {
 		if (this == o) {
@@ -101,17 +130,17 @@ public final class ResolvedEPackage {
 		ResolvedEPackage that = (ResolvedEPackage) o;
 		return ePackage == that.ePackage && Objects.equals(nsUri, that.nsUri) && Objects.equals(scope, that.scope)
 				&& Objects.equals(registry, that.registry) && Objects.equals(stage, that.stage)
-				&& Objects.equals(version, that.version);
+				&& Objects.equals(version, that.version) && Objects.equals(fingerprint, that.fingerprint);
 	}
 
 	@Override
 	public int hashCode() {
-		return Objects.hash(System.identityHashCode(ePackage), nsUri, scope, registry, stage, version);
+		return Objects.hash(System.identityHashCode(ePackage), nsUri, scope, registry, stage, version, fingerprint);
 	}
 
 	@Override
 	public String toString() {
 		return "ResolvedEPackage[nsUri=" + nsUri + ", scope=" + scope + ", registry=" + registry + ", stage=" + stage
-				+ ", version=" + version + "]";
+				+ ", version=" + version + ", fingerprint=" + fingerprint + "]";
 	}
 }

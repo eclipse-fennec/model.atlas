@@ -59,6 +59,7 @@ import org.osgi.annotation.versioning.ProviderType;
  *   <li>{@link org.eclipse.fennec.model.atlas.mgmt.management.ObjectMetadata#getScope <em>Scope</em>}</li>
  *   <li>{@link org.eclipse.fennec.model.atlas.mgmt.management.ObjectMetadata#isIsReadOnly <em>Is Read Only</em>}</li>
  *   <li>{@link org.eclipse.fennec.model.atlas.mgmt.management.ObjectMetadata#getRegistry <em>Registry</em>}</li>
+ *   <li>{@link org.eclipse.fennec.model.atlas.mgmt.management.ObjectMetadata#getFingerprint <em>Fingerprint</em>}</li>
  * </ul>
  *
  * @see org.eclipse.fennec.model.atlas.mgmt.management.ManagementPackage#getObjectMetadata()
@@ -686,5 +687,33 @@ public interface ObjectMetadata extends EObject {
 	 * @generated
 	 */
 	void setRegistry(String value);
+
+	/**
+	 * Returns the value of the '<em><b>Fingerprint</b></em>' attribute.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * <!-- begin-model-doc -->
+	 * Content-derived model fingerprint (`emf.fingerprint` format, scheme-prefixed 
+	 * e.g. `fp1:<digest>`). Set for EPackage objects; computed server-side, never 
+	 * taken from the client.
+	 * Distinct from contentHash, which hashes the stored XMI bytes.
+	 * <!-- end-model-doc -->
+	 * @return the value of the '<em>Fingerprint</em>' attribute.
+	 * @see #setFingerprint(String)
+	 * @see org.eclipse.fennec.model.atlas.mgmt.management.ManagementPackage#getObjectMetadata_Fingerprint()
+	 * @model
+	 * @generated
+	 */
+	String getFingerprint();
+
+	/**
+	 * Sets the value of the '{@link org.eclipse.fennec.model.atlas.mgmt.management.ObjectMetadata#getFingerprint <em>Fingerprint</em>}' attribute.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @param value the new value of the '<em>Fingerprint</em>' attribute.
+	 * @see #getFingerprint()
+	 * @generated
+	 */
+	void setFingerprint(String value);
 
 } // ObjectMetadata

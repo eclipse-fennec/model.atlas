@@ -187,9 +187,17 @@ public class ScopeAggregateService {
                 md.getContentHash());
     }
 
-    /** Unique key for an entry across the whole scope: registry + stage + objectId. */
+    /**
+     * Unique key for an entry across the whole scope: registry + stage + logical identity.
+     * For schema packages the identity is the nsURI (stable when a package is deleted and
+     * re-uploaded, unlike the random-UUID objectId), matching what {@link #record} reports
+     * in the diff; everything else keys on the objectId.
+     */
     private static String manifestKey(ObjectMetadata md) {
-        return md.getRegistry() + FIELD_SEP + md.getStage() + FIELD_SEP + md.getObjectId();
+        Object nsUri = md.getProperties() == null ? null : md.getProperties().get("nsUri");
+        String identity = SCHEMA_REGISTRY.equals(md.getRegistry()) && nsUri != null ? nsUri.toString()
+                : md.getObjectId();
+        return md.getRegistry() + FIELD_SEP + md.getStage() + FIELD_SEP + identity;
     }
 
     /**

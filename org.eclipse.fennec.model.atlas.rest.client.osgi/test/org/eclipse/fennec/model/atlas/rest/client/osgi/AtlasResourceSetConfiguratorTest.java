@@ -78,7 +78,7 @@ class AtlasResourceSetConfiguratorTest {
 		when(remote.resolve("urn:unknown"))
 				.thenReturn(Optional.of(new ResolvedEPackage(fetched, "urn:unknown", "atlas", "schema", "released",
 						"1.0")));
-		PackagePublication mirror = (ePackage, scope, stage, version) -> {
+		PackagePublication mirror = (ePackage, scope, stage, version, serverFingerprint) -> {
 			framework.put(ePackage.getNsURI(), ePackage);
 			return true;
 		};

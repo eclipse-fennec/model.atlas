@@ -188,6 +188,13 @@ public class AtlasClientOsgiIT {
 
 		EPackage published = remotePackages.waitForService(SERVICE_WAIT_MS);
 		assertNotNull(published, "EAGER activation should publish at least one remote EPackage service");
+
+		// F7: client-side publications carry the locally computed content identity,
+		// same property name as on the server (emf.fingerprint, fp1: scheme).
+		Object fingerprint = remotePackages.getServiceReference().getProperty("emf.fingerprint");
+		assertNotNull(fingerprint, "published remote EPackage must carry the emf.fingerprint property");
+		assertTrue(fingerprint.toString().startsWith("fp1:"),
+				"fingerprint should use the current scheme tag, was: " + fingerprint);
 	}
 
 	@Test

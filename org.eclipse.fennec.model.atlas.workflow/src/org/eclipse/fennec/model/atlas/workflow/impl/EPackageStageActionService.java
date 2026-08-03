@@ -188,8 +188,13 @@ public class EPackageStageActionService implements StageActionService {
                 return null;
             }
 
+            // Only explicitly unregister when the object's nsURI CHANGED between versions.
+            // For an unchanged nsURI the registration service handles the update itself:
+            // identical content is an idempotent no-op, changed content atomically replaces
+            // the stale registration — either way the services do not flap through an
+            // unregistered window as they would with unregister-then-register.
             String previous = registeredNsURIs.remove(ctx.objectId());
-            if (previous != null) {
+            if (previous != null && !previous.equals(ePackage.getNsURI())) {
                 registrationService.unregisterEPackage(ctx.scope(), ctx.stage(), previous);
             }
 

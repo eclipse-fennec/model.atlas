@@ -16,7 +16,12 @@ package org.eclipse.fennec.model.atlas.workflow.registration;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.atLeastOnce;
+import static org.mockito.Mockito.verify;
 
+import java.util.Dictionary;
+import java.util.Set;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -24,10 +29,13 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.eclipse.emf.common.util.URI;
+import org.eclipse.emf.ecore.EClass;
 import org.eclipse.emf.ecore.EPackage;
 import org.eclipse.emf.ecore.EcoreFactory;
 import org.eclipse.emf.ecore.resource.Resource;
 import org.eclipse.emf.ecore.xmi.impl.XMIResourceImpl;
+import org.eclipse.fennec.emf.osgi.constants.EMFNamespaces;
+import org.eclipse.fennec.emf.osgi.fingerprint.FingerprintService;
 import org.eclipse.fennec.model.atlas.mgmt.management.ManagementFactory;
 import org.eclipse.fennec.model.atlas.mgmt.management.ObjectMetadata;
 import org.junit.jupiter.api.BeforeEach;
@@ -35,6 +43,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Answers;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.osgi.framework.BundleContext;
@@ -63,9 +72,39 @@ public class DynamicEPackageRegistrationServiceStageAwareTest {
 
 	private DynamicEPackageRegistrationService service;
 
+	/**
+	 * Deterministic, content-sensitive fake: the value changes with the number of
+	 * classifiers, so tests can produce "same content" and "changed content"
+	 * without depending on the real emf.osgi implementation bundle.
+	 */
+	private static final FingerprintService FAKE_FINGERPRINTS = new FingerprintService() {
+
+		@Override
+		public String fingerprint(EPackage ePackage, String... derivationInputs) {
+			return "fake:" + ePackage.getNsURI() + ":" + ePackage.getEClassifiers().size()
+					+ (derivationInputs.length == 0 ? "" : ":" + String.join("|", derivationInputs));
+		}
+
+		@Override
+		public String currentScheme() {
+			return "fake";
+		}
+
+		@Override
+		public Set<String> supportedSchemes() {
+			return Set.of("fake");
+		}
+
+		@Override
+		public String fingerprintInScheme(String scheme, EPackage ePackage, String... derivationInputs) {
+			return fingerprint(ePackage, derivationInputs);
+		}
+	};
+
 	@BeforeEach
 	public void setup() {
 		service = new DynamicEPackageRegistrationService();
+		service.fingerprintService = FAKE_FINGERPRINTS;
 		service.activate(bundleContext);
 	}
 
@@ -105,6 +144,58 @@ public class DynamicEPackageRegistrationServiceStageAwareTest {
 		assertTrue(service.isRegistered(SCOPE, "release", NS_URI), "release must survive");
 		assertTrue(service.isRegistered(NS_URI), "nsURI still registered (via release)");
 		assertEquals(1, service.getRegisteredCount());
+	}
+
+	@Test
+	@DisplayName("Changed content at the same location replaces the stale registration")
+	public void changedContentSameLocationReplaces() {
+		assertTrue(service.registerEPackage(newPersonPackage(), metadata(SCOPE, "draft")));
+		assertEquals(1, service.getRegisteredCount());
+
+		// Same scope/stage/nsURI but different content -> different fingerprint. Before
+		// the fingerprint-aware key this was silently rejected, leaving stale services up.
+		assertTrue(service.registerEPackage(newPersonPackageWithClass("Extra"), metadata(SCOPE, "draft")),
+				"changed content at the same location must replace, not be rejected");
+		assertEquals(1, service.getRegisteredCount(), "replace must not leave two registrations for one location");
+		assertTrue(service.isRegistered(SCOPE, "draft", NS_URI));
+
+		// And the replacement is itself idempotent for identical content
+		assertFalse(service.registerEPackage(newPersonPackageWithClass("Extra"), metadata(SCOPE, "draft")),
+				"re-registering the identical changed content is a no-op");
+		assertEquals(1, service.getRegisteredCount());
+	}
+
+	@Test
+	@DisplayName("Registered services carry the emf.fingerprint service property")
+	public void registeredServicesCarryFingerprintProperty() {
+		EPackage pkg = newPersonPackage();
+		String expected = FAKE_FINGERPRINTS.fingerprint(pkg);
+		assertTrue(service.registerEPackage(pkg, metadata(SCOPE, "draft")));
+
+		@SuppressWarnings({ "unchecked", "rawtypes" })
+		ArgumentCaptor<Dictionary<String, ?>> props = ArgumentCaptor.forClass((Class) Dictionary.class);
+		// EPackage and EFactory services are registered via the String[] overload
+		verify(bundleContext, atLeastOnce()).registerService(any(String[].class), any(), props.capture());
+		for (Dictionary<String, ?> dict : props.getAllValues()) {
+			assertEquals(expected, dict.get(EMFNamespaces.EMF_MODEL_FINGERPRINT),
+					"every registration must carry the computed emf.fingerprint property");
+		}
+	}
+
+	@Test
+	@DisplayName("Fingerprint-exact unregistration removes only a matching content version")
+	public void unregisterWithFingerprintMatchesExactly() {
+		EPackage pkg = newPersonPackage();
+		String fp = FAKE_FINGERPRINTS.fingerprint(pkg);
+		assertTrue(service.registerEPackage(pkg, metadata(SCOPE, "draft")));
+
+		assertFalse(service.unregisterEPackage(SCOPE, "draft", NS_URI, "fake:wrong"),
+				"a non-matching fingerprint must not unregister the location");
+		assertTrue(service.isRegistered(SCOPE, "draft", NS_URI));
+
+		assertTrue(service.unregisterEPackage(SCOPE, "draft", NS_URI, fp),
+				"the matching fingerprint unregisters the location");
+		assertFalse(service.isRegistered(SCOPE, "draft", NS_URI));
 	}
 
 	@Test
@@ -151,6 +242,15 @@ public class DynamicEPackageRegistrationServiceStageAwareTest {
 		// suffices and avoids needing a registered resource factory.
 		Resource resource = new XMIResourceImpl(URI.createURI("person.ecore"));
 		resource.getContents().add(pkg);
+		return pkg;
+	}
+
+	/** Same nsURI, but with an extra EClass — "changed content" for the fake fingerprint. */
+	private static EPackage newPersonPackageWithClass(String className) {
+		EPackage pkg = newPersonPackage();
+		EClass eClass = EcoreFactory.eINSTANCE.createEClass();
+		eClass.setName(className);
+		pkg.getEClassifiers().add(eClass);
 		return pkg;
 	}
 

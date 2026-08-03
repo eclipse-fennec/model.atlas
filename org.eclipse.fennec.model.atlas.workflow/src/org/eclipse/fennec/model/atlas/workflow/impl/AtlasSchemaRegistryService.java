@@ -306,6 +306,7 @@ public class AtlasSchemaRegistryService implements RegistryService<EPackage> {
 		metadata.setStage(WorkflowConstants.ATLAS_SCHEMA_REGISTRY_STAGE_NAME);
 		metadata.setUploadTime(Instant.now());
 		metadata.setUploadUser("system");
+		metadata.getProperties().put(WorkflowConstants.NS_URI_METADATA_PROPERTY, ePackage.getNsURI());
 		return metadata;
 	}
 	

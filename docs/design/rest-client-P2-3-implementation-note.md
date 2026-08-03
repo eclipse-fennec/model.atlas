@@ -21,9 +21,11 @@ caching is **P2-5**, so `refresh` currently behaves like a fresh fetch.
 - **JSON parsing.** Responses are read as `String` and parsed with a shared Jackson `ObjectMapper`
   tree (no JAX-RS JSON provider needs registering on the plain client). `jackson-core` +
   `jackson-databind` + `jackson-annotations` added to the impl buildpath.
-- **nsURI recovery.** For schema packages the server's `objectId` is the Base64-URL encoding of the
+- **nsURI recovery.** ~~For schema packages the server's `objectId` is the Base64-URL encoding of the
   nsURI (`SchemaPackagesResource.encodePackageNsURI`), so `listNsUris` Base64-URL-decodes each
-  `objectId`.
+  `objectId`.~~ *Superseded 2026-08-03 (server F8): objectIds are opaque UUIDs; the client now reads
+  the nsURI from the listing entry's `properties["nsUri"]` and keeps the Base64 decode only as a
+  guarded fallback for pre-F8 servers (undecodable entries are skipped).*
 - **Content media type.** EPackage content is requested as `application/xmi` (the format the server's
   codec round-trips; matches the existing `SchemaPackagesResourceTest` POSTs). The body is buffered to
   `byte[]` and handed to the `EPackageDeserializer` seam.

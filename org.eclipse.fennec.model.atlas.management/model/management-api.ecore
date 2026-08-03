@@ -393,7 +393,7 @@
       </eGenericType>
       <eParameters name="versionPattern" lowerBound="1" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
     </eOperations>
-    <eOperations name="findByFingerprint">
+    <eOperations name="findByGenerationTriggerFingerprint">
       <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
         <details key="documentation" value="Find objects by generation trigger fingerprint for duplicate detection. Essential for AI generation workflow to prevent creating duplicate models for the same JSON structure. Returns Optional.empty() if no object with the specified fingerprint exists."/>
       </eAnnotations>
@@ -497,6 +497,15 @@
       <eParameters name="registry" lowerBound="1" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
       <eParameters name="stage" lowerBound="1" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
       <eParameters name="name" lowerBound="1" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    </eOperations>
+    <eOperations name="findByFingerprint">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="Find objects by fingerprint. This is the fingerprint set for EPackages which uniquely identify an EPackage. Returns a list of ObjectMetadata because we could have the same EPackage saved in different stages (e.g. in git, where a stage is a branch it can happen); in such cases the fingerprint would be the same so quering this method will return more than one result."/>
+      </eAnnotations>
+      <eGenericType eClassifier="ecore:EDataType management.ecore#//List">
+        <eTypeArguments eClassifier="ecore:EClass management.ecore#//ObjectMetadata"/>
+      </eGenericType>
+      <eParameters name="fingerprint" lowerBound="1" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
     </eOperations>
   </eClassifiers>
   <eClassifiers xsi:type="ecore:EClass" name="StorageRegistry" abstract="true" interface="true">

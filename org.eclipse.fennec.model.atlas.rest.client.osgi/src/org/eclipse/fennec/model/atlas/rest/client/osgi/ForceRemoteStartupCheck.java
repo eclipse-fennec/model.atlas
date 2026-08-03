@@ -83,7 +83,7 @@ final class ForceRemoteStartupCheck {
 			ResolvedEPackage remote = resolved.get();
 			if (isRemoteNewer(local.version(), remote.getVersion())
 					&& publisher.publish(remote.getEPackage(), remote.getScope(), remote.getStage(),
-							remote.getVersion())) {
+							remote.getVersion(), remote.getFingerprint())) {
 				superseded++;
 				LOGGER.log(Level.INFO,
 						() -> "force.remote: Atlas copy of " + local.nsUri() + " (version " + remote.getVersion()

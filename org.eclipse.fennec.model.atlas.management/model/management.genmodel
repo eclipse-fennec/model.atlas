@@ -74,6 +74,7 @@
       <genFeatures createChild="false" ecoreFeature="ecore:EAttribute management.ecore#//ObjectMetadata/scope"/>
       <genFeatures createChild="false" ecoreFeature="ecore:EAttribute management.ecore#//ObjectMetadata/isReadOnly"/>
       <genFeatures createChild="false" ecoreFeature="ecore:EAttribute management.ecore#//ObjectMetadata/registry"/>
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute management.ecore#//ObjectMetadata/fingerprint"/>
     </genClasses>
     <genClasses ecoreClass="management.ecore#//StringToObjectMapEntry">
       <genFeatures createChild="false" ecoreFeature="ecore:EAttribute management.ecore#//StringToObjectMapEntry/key"/>

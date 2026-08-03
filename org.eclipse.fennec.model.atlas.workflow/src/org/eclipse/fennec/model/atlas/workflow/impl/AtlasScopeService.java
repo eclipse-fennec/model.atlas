@@ -86,7 +86,44 @@ public class AtlasScopeService implements ScopeService<EPackage> {
 		return atlasSchemaRegistryService.getMetadataFromFinalStage(WorkflowConstants.ATLAS_SCOPE_NAME, objectId);
 	}
 
-	/* 
+	/*
+	 * (non-Javadoc)
+	 * @see org.eclipse.fennec.model.atlas.wf.workflowapi.WritableScopeService#getMetadataByPropertyFromStageForRegistry(java.lang.String, java.lang.String, java.lang.String, java.lang.String)
+	 */
+	@Override
+	public List<ObjectMetadata> getMetadataByPropertyFromStageForRegistry(String registry, String stage, String key,
+			String value) {
+		validateRegistry(registry);
+		validateProperty(key, value);
+		return filterByProperty(atlasSchemaRegistryService.listInStage(WorkflowConstants.ATLAS_SCOPE_NAME, stage), key, value);
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * @see org.eclipse.fennec.model.atlas.wf.workflowapi.WritableScopeService#getMetadataByPropertyFromFinalStageForRegistry(java.lang.String, java.lang.String, java.lang.String)
+	 */
+	@Override
+	public List<ObjectMetadata> getMetadataByPropertyFromFinalStageForRegistry(String registry, String key,
+			String value) {
+		validateRegistry(registry);
+		validateProperty(key, value);
+		return filterByProperty(atlasSchemaRegistryService.listInFinalStage(WorkflowConstants.ATLAS_SCOPE_NAME), key, value);
+	}
+
+	private static List<ObjectMetadata> filterByProperty(List<ObjectMetadata> metadata, String key, String value) {
+		return metadata.stream().filter(m -> value.equals(m.getProperties().get(key))).toList();
+	}
+
+	private static void validateProperty(String key, String value) {
+		if (key == null || key.isBlank()) {
+			throw new IllegalArgumentException("Property key cannot be null or blank!");
+		}
+		if (value == null) {
+			throw new IllegalArgumentException("Property value cannot be null!");
+		}
+	}
+
+	/*
 	 * (non-Javadoc)
 	 * @see org.eclipse.fennec.model.atlas.wf.workflowapi.ScopeService#getContentFromStageForRegistry(java.lang.String, java.lang.String, java.lang.String)
 	 */

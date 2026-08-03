@@ -627,7 +627,7 @@ public class WorkflowApiPackageImpl extends EPackageImpl implements WorkflowApiP
 	 * @generated
 	 */
 	@Override
-	public EOperation getWritableScopeService__GetContentFromStageForRegistry__String_String_String() {
+	public EOperation getWritableScopeService__GetMetadataByPropertyFromStageForRegistry__String_String_String_String() {
 		return writableScopeServiceEClass.getEOperations().get(3);
 	}
 
@@ -637,7 +637,7 @@ public class WorkflowApiPackageImpl extends EPackageImpl implements WorkflowApiP
 	 * @generated
 	 */
 	@Override
-	public EOperation getWritableScopeService__UpdateInStageForRegistry__String_String_EObject_String_String() {
+	public EOperation getWritableScopeService__GetMetadataByPropertyFromFinalStageForRegistry__String_String_String() {
 		return writableScopeServiceEClass.getEOperations().get(4);
 	}
 
@@ -647,7 +647,7 @@ public class WorkflowApiPackageImpl extends EPackageImpl implements WorkflowApiP
 	 * @generated
 	 */
 	@Override
-	public EOperation getWritableScopeService__DeleteFromStageForRegistry__String_String_String() {
+	public EOperation getWritableScopeService__GetContentFromStageForRegistry__String_String_String() {
 		return writableScopeServiceEClass.getEOperations().get(5);
 	}
 
@@ -657,7 +657,7 @@ public class WorkflowApiPackageImpl extends EPackageImpl implements WorkflowApiP
 	 * @generated
 	 */
 	@Override
-	public EOperation getWritableScopeService__ListInStageForRegistry__String_String() {
+	public EOperation getWritableScopeService__UpdateInStageForRegistry__String_String_EObject_String_String() {
 		return writableScopeServiceEClass.getEOperations().get(6);
 	}
 
@@ -667,7 +667,7 @@ public class WorkflowApiPackageImpl extends EPackageImpl implements WorkflowApiP
 	 * @generated
 	 */
 	@Override
-	public EOperation getWritableScopeService__ListInStageForRegistryByName__String_String_String() {
+	public EOperation getWritableScopeService__DeleteFromStageForRegistry__String_String_String() {
 		return writableScopeServiceEClass.getEOperations().get(7);
 	}
 
@@ -677,7 +677,7 @@ public class WorkflowApiPackageImpl extends EPackageImpl implements WorkflowApiP
 	 * @generated
 	 */
 	@Override
-	public EOperation getWritableScopeService__ListInFinalStageForRegistry__String() {
+	public EOperation getWritableScopeService__ListInStageForRegistry__String_String() {
 		return writableScopeServiceEClass.getEOperations().get(8);
 	}
 
@@ -687,7 +687,7 @@ public class WorkflowApiPackageImpl extends EPackageImpl implements WorkflowApiP
 	 * @generated
 	 */
 	@Override
-	public EOperation getWritableScopeService__ListAllForRegistry__String() {
+	public EOperation getWritableScopeService__ListInStageForRegistryByName__String_String_String() {
 		return writableScopeServiceEClass.getEOperations().get(9);
 	}
 
@@ -697,7 +697,7 @@ public class WorkflowApiPackageImpl extends EPackageImpl implements WorkflowApiP
 	 * @generated
 	 */
 	@Override
-	public EOperation getWritableScopeService__TransitionToStageForRegistry__String_String_String_String() {
+	public EOperation getWritableScopeService__ListInFinalStageForRegistry__String() {
 		return writableScopeServiceEClass.getEOperations().get(10);
 	}
 
@@ -707,7 +707,7 @@ public class WorkflowApiPackageImpl extends EPackageImpl implements WorkflowApiP
 	 * @generated
 	 */
 	@Override
-	public EOperation getWritableScopeService__IsValidRegistry__String() {
+	public EOperation getWritableScopeService__ListAllForRegistry__String() {
 		return writableScopeServiceEClass.getEOperations().get(11);
 	}
 
@@ -717,7 +717,7 @@ public class WorkflowApiPackageImpl extends EPackageImpl implements WorkflowApiP
 	 * @generated
 	 */
 	@Override
-	public EOperation getWritableScopeService__GetAllRegistries() {
+	public EOperation getWritableScopeService__TransitionToStageForRegistry__String_String_String_String() {
 		return writableScopeServiceEClass.getEOperations().get(12);
 	}
 
@@ -727,8 +727,28 @@ public class WorkflowApiPackageImpl extends EPackageImpl implements WorkflowApiP
 	 * @generated
 	 */
 	@Override
-	public EOperation getWritableScopeService__GetScope() {
+	public EOperation getWritableScopeService__IsValidRegistry__String() {
 		return writableScopeServiceEClass.getEOperations().get(13);
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
+	public EOperation getWritableScopeService__GetAllRegistries() {
+		return writableScopeServiceEClass.getEOperations().get(14);
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
+	public EOperation getWritableScopeService__GetScope() {
+		return writableScopeServiceEClass.getEOperations().get(15);
 	}
 
 	/**
@@ -812,6 +832,8 @@ public class WorkflowApiPackageImpl extends EPackageImpl implements WorkflowApiP
 		createEOperation(writableScopeServiceEClass, WRITABLE_SCOPE_SERVICE___UPLOAD_TO_STAGE_FOR_REGISTRY__STRING_STRING_EOBJECT_OBJECTMETADATA);
 		createEOperation(writableScopeServiceEClass, WRITABLE_SCOPE_SERVICE___GET_METADATA_FROM_STAGE_FOR_REGISTRY__STRING_STRING_STRING);
 		createEOperation(writableScopeServiceEClass, WRITABLE_SCOPE_SERVICE___GET_METADATA_FROM_FINAL_STAGE_FOR_REGISTRY__STRING_STRING);
+		createEOperation(writableScopeServiceEClass, WRITABLE_SCOPE_SERVICE___GET_METADATA_BY_PROPERTY_FROM_STAGE_FOR_REGISTRY__STRING_STRING_STRING_STRING);
+		createEOperation(writableScopeServiceEClass, WRITABLE_SCOPE_SERVICE___GET_METADATA_BY_PROPERTY_FROM_FINAL_STAGE_FOR_REGISTRY__STRING_STRING_STRING);
 		createEOperation(writableScopeServiceEClass, WRITABLE_SCOPE_SERVICE___GET_CONTENT_FROM_STAGE_FOR_REGISTRY__STRING_STRING_STRING);
 		createEOperation(writableScopeServiceEClass, WRITABLE_SCOPE_SERVICE___UPDATE_IN_STAGE_FOR_REGISTRY__STRING_STRING_EOBJECT_STRING_STRING);
 		createEOperation(writableScopeServiceEClass, WRITABLE_SCOPE_SERVICE___DELETE_FROM_STAGE_FOR_REGISTRY__STRING_STRING_STRING);
@@ -1117,6 +1139,25 @@ public class WorkflowApiPackageImpl extends EPackageImpl implements WorkflowApiP
 		op = initEOperation(getWritableScopeService__GetMetadataFromFinalStageForRegistry__String_String(), theManagementPackage.getObjectMetadata(), "getMetadataFromFinalStageForRegistry", 0, 1, IS_UNIQUE, IS_ORDERED);
 		addEParameter(op, ecorePackage.getEString(), "registry", 0, 1, IS_UNIQUE, IS_ORDERED);
 		addEParameter(op, ecorePackage.getEString(), "objectId", 1, 1, IS_UNIQUE, IS_ORDERED);
+
+		op = initEOperation(getWritableScopeService__GetMetadataByPropertyFromStageForRegistry__String_String_String_String(), null, "getMetadataByPropertyFromStageForRegistry", 0, 1, IS_UNIQUE, IS_ORDERED);
+		addEParameter(op, ecorePackage.getEString(), "registry", 0, 1, IS_UNIQUE, IS_ORDERED);
+		addEParameter(op, ecorePackage.getEString(), "stage", 0, 1, IS_UNIQUE, IS_ORDERED);
+		addEParameter(op, ecorePackage.getEString(), "key", 1, 1, IS_UNIQUE, IS_ORDERED);
+		addEParameter(op, ecorePackage.getEString(), "value", 1, 1, IS_UNIQUE, IS_ORDERED);
+		g1 = createEGenericType(theManagementPackage.getList());
+		g2 = createEGenericType(theManagementPackage.getObjectMetadata());
+		g1.getETypeArguments().add(g2);
+		initEOperation(op, g1);
+
+		op = initEOperation(getWritableScopeService__GetMetadataByPropertyFromFinalStageForRegistry__String_String_String(), null, "getMetadataByPropertyFromFinalStageForRegistry", 0, 1, IS_UNIQUE, IS_ORDERED);
+		addEParameter(op, ecorePackage.getEString(), "registry", 0, 1, IS_UNIQUE, IS_ORDERED);
+		addEParameter(op, ecorePackage.getEString(), "key", 1, 1, IS_UNIQUE, IS_ORDERED);
+		addEParameter(op, ecorePackage.getEString(), "value", 1, 1, IS_UNIQUE, IS_ORDERED);
+		g1 = createEGenericType(theManagementPackage.getList());
+		g2 = createEGenericType(theManagementPackage.getObjectMetadata());
+		g1.getETypeArguments().add(g2);
+		initEOperation(op, g1);
 
 		op = initEOperation(getWritableScopeService__GetContentFromStageForRegistry__String_String_String(), null, "getContentFromStageForRegistry", 0, 1, IS_UNIQUE, IS_ORDERED);
 		addEParameter(op, ecorePackage.getEString(), "registry", 0, 1, IS_UNIQUE, IS_ORDERED);

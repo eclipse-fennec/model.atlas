@@ -416,10 +416,41 @@ class LuceneRegistryHelperTest {
     }
 
     @Test
+    void testSearchByFingerprint() throws Exception {
+        // Realistic scheme-prefixed value: the colon inside the value is Lucene query
+        // syntax and must round-trip through the exact-match TermQuery path
+        String fp = "fp1:14466a0b5de879a6c3d2e1f0a9b8c7d6e5f4a3b2c1d0e9f8a7b6c5d4e3f2a1b0";
+
+        // Same content in two stages shares one fingerprint (e.g. two git branches)
+        ObjectMetadata draftEntry = createTestMetadata("fpUser", "MANUAL_UPLOAD", "EPackage");
+        draftEntry.setFingerprint(fp);
+        helper.updateIndex("fp-draft-obj", draftEntry);
+
+        ObjectMetadata approvedEntry = createTestMetadata("fpUser", "MANUAL_UPLOAD", "EPackage");
+        approvedEntry.setFingerprint(fp);
+        helper.updateIndex("fp-approved-obj", approvedEntry);
+
+        // Unquoted form (split on FIRST colon only: field=fingerprint, value=fp1:…)
+        List<String> results = helper.searchObjectIds("fingerprint:" + fp, 10);
+        assertEquals(2, results.size(), "Shared fingerprint should match both stage entries");
+        assertTrue(results.contains("fp-draft-obj"));
+        assertTrue(results.contains("fp-approved-obj"));
+
+        // Quoted form, as emitted by MetadataQueryBuilder.fingerprint(...)
+        List<String> quoted = helper.searchObjectIds("fingerprint:\"" + fp + "\"", 10);
+        assertEquals(2, quoted.size(), "Quoted query form should match identically");
+
+        // The model fingerprint field must not cross-match the generation trigger field
+        List<String> crossMatch = helper.searchObjectIds("generationTriggerFingerprint:\"" + fp + "\"", 10);
+        assertTrue(crossMatch.isEmpty(), "fingerprint and generationTriggerFingerprint are distinct fields");
+    }
+
+    @Test
     void testIndexRebuildWithNewFields() throws Exception {
         // Create metadata with new fields using parent helper
         ObjectMetadata metadata = createTestMetadata("rebuildUser", "AI_GENERATOR", "EPackage");
         metadata.setGenerationTriggerFingerprint("fp-rebuild-test");
+        metadata.setFingerprint("fp1:aaaa0b5de879a6c3d2e1f0a9b8c7d6e5f4a3b2c1d0e9f8a7b6c5d4e3f2a1cccc");
         metadata.setComplianceStatus("PENDING");
         metadata.setLastChangeUser("system");
         metadata.setLastChangeTime(Instant.now());
@@ -436,6 +467,11 @@ class LuceneRegistryHelperTest {
         List<String> fingerprintResults = helper.searchObjectIds("generationTriggerFingerprint:fp-rebuild-test", 10);
         assertEquals(1, fingerprintResults.size());
         assertEquals("rebuild-new-fields", fingerprintResults.get(0));
+
+        List<String> modelFingerprintResults = helper.searchObjectIds(
+                "fingerprint:\"fp1:aaaa0b5de879a6c3d2e1f0a9b8c7d6e5f4a3b2c1d0e9f8a7b6c5d4e3f2a1cccc\"", 10);
+        assertEquals(1, modelFingerprintResults.size());
+        assertEquals("rebuild-new-fields", modelFingerprintResults.get(0));
 
         List<String> complianceResults = helper.searchObjectIds("complianceStatus:PENDING", 10);
         assertEquals(1, complianceResults.size());

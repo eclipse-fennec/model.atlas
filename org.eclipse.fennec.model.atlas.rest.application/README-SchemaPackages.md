@@ -56,6 +56,8 @@ Provides the underlying workflow operations for schema management within a scope
 - `listInStageForRegistry(String registryName, String stage)`: List schemas in a specific stage
 - `listInStageForRegistryByName(String registryName, String stage, String name)`: List schemas filtered by name (supports wildcards, scope-specific)
 - `getMetadataFromStageForRegistry(String registryName, String stage, String objectId)`: Retrieve schema metadata
+- `getMetadataByPropertyFromStageForRegistry(String registryName, String stage, String key, String value)`: Resolve metadata by a metadata property (used for all nsUri lookups)
+- `getMetadataByPropertyFromFinalStageForRegistry(String registryName, String key, String value)`: Final-stage variant of the property lookup
 - `getContentFromStageForRegistry(String registryName, String stage, String objectId)`: Retrieve actual EPackage content
 - `uploadToStageForRegistry(String registryName, String stage, EObject object, ObjectMetadata metadata)`: Create new schema
 - `updateInStageForRegistry(String registryName, String stage, EObject object, String objectId, String version)`: Update existing schema
@@ -127,7 +129,8 @@ curl -X GET https://api.example.com/my-tenant/schema \
 {
   "metadata": [
     {
-      "objectId": "http%3A%2F%2Fexample.com%2Fschemas%2Fbilling%2Fv1",
+      "objectId": "3f8a1c2e-9d4b-4f6a-8c1d-2e5b7a9c0d41",
+      "properties": { "nsUri": "http://example.com/schemas/billing/v1" },
       "objectName": "Billing",
       "scope": "my-tenant",
       "role": "release",
@@ -137,7 +140,8 @@ curl -X GET https://api.example.com/my-tenant/schema \
       "lastChangeTime": "2023-10-27T10:00:00Z"
     },
     {
-      "objectId": "http%3A%2F%2Fexample.com%2Fschemas%2Fcommon%2Fv1",
+      "objectId": "7b2d4e6f-1a3c-4b5d-9e8f-0a1b2c3d4e5f",
+      "properties": { "nsUri": "http://example.com/schemas/common/v1" },
       "objectName": "CommonTypes",
       "scope": "atlas",
       "role": "release",
@@ -183,7 +187,8 @@ curl -X GET https://api.example.com/my-tenant/schema/all \
 {
   "metadata": [
     {
-      "objectId": "http%3A%2F%2Fexample.com%2Fschemas%2Fbilling%2Fv1",
+      "objectId": "3f8a1c2e-9d4b-4f6a-8c1d-2e5b7a9c0d41",
+      "properties": { "nsUri": "http://example.com/schemas/billing/v1" },
       "objectName": "Billing",
       "scope": "my-tenant",
       "stage": "draft",
@@ -192,7 +197,8 @@ curl -X GET https://api.example.com/my-tenant/schema/all \
       "uploadTime": "2023-10-27T10:00:00Z"
     },
     {
-      "objectId": "http%3A%2F%2Fexample.com%2Fschemas%2Fcommon%2Fv1",
+      "objectId": "7b2d4e6f-1a3c-4b5d-9e8f-0a1b2c3d4e5f",
+      "properties": { "nsUri": "http://example.com/schemas/common/v1" },
       "objectName": "CommonTypes",
       "scope": "my-tenant",
       "stage": "release",
@@ -314,7 +320,8 @@ curl -X POST "https://api.example.com/my-tenant/schema/stages/draft?nsUri=http%3
 **Example Response** (201 Created):
 ```json
 {
-  "objectId": "http%3A%2F%2Fexample.com%2Fschemas%2Fbilling%2Fv1",
+  "objectId": "3f8a1c2e-9d4b-4f6a-8c1d-2e5b7a9c0d41",
+  "properties": { "nsUri": "http://example.com/schemas/billing/v1" },
   "objectName": "Billing",
   "scope": "my-tenant",
   "role": "draft",
@@ -508,17 +515,19 @@ Content-Type: application/json
 **Request Body**:
 ```json
 {
-  "objectId": "http://example.com/schemas/billing/v1",
+  "objectId": "3f8a1c2e-9d4b-4f6a-8c1d-2e5b7a9c0d41",
   "targetStage": "review"
 }
 ```
 
 **Body Fields**:
-- `objectId` (string, required): The `nsUri` of the package (NOT the encoded version)
+- `objectId` (string, required): The package's `objectId` as returned in its `ObjectMetadata`
+  (an opaque UUID assigned at upload). For backward compatibility a raw `nsUri` is also
+  accepted and resolved via the `nsUri` metadata property.
 - `targetStage` (string, required): The target stage name
 
 **Behavior**:
-1. Encodes the `objectId` (nsUri) for lookup
+1. Resolves the package by `objectId` (falling back to an nsURI lookup for legacy clients)
 2. Verifies package exists in source stage
 3. Checks if package is read-only (cannot transition parent packages)
 4. Validates transition is allowed via `isTransitionAllowed()`
@@ -537,7 +546,7 @@ Content-Type: application/json
 curl -X POST "https://api.example.com/my-tenant/schema/stages/draft/actions/transition" \
   -H "Content-Type: application/json" \
   -d '{
-    "objectId": "http://example.com/schemas/billing/v1",
+    "objectId": "3f8a1c2e-9d4b-4f6a-8c1d-2e5b7a9c0d41",
     "targetStage": "review"
   }'
 ```
@@ -545,7 +554,8 @@ curl -X POST "https://api.example.com/my-tenant/schema/stages/draft/actions/tran
 **Example Response** (200 OK):
 ```json
 {
-  "objectId": "http%3A%2F%2Fexample.com%2Fschemas%2Fbilling%2Fv1",
+  "objectId": "3f8a1c2e-9d4b-4f6a-8c1d-2e5b7a9c0d41",
+  "properties": { "nsUri": "http://example.com/schemas/billing/v1" },
   "objectName": "Billing",
   "scope": "my-tenant",
   "role": "review",
@@ -657,32 +667,47 @@ In this example:
 
 ---
 
-## URL Encoding of nsUri
+## Object Identity and nsUri Resolution
 
-### Why URL Encoding?
+### objectId is opaque, and its shape is source-defined
 
-The `nsUri` typically contains characters that are not URL-safe (e.g., `:`, `/`, `?`). When used as a query parameter or object ID, it must be URL-encoded.
+Since 2026-08-03 (fingerprint plan phase F8) a schema package's `objectId` carries no
+derivable meaning; consumers must treat it as an opaque token. Schema `ObjectMetadata` has
+**three sources**, each with its own id scheme:
 
-**Example**:
+| Source | objectId | Notes |
+|--------|----------|-------|
+| **REST upload** (this resource's create endpoint) | `UUID.randomUUID()` at upload | Stable across stage transitions — the lifecycle audit trail. Uploading the same nsURI to two stages yields two distinct ids (audit trails do not merge). |
+| **Git backend** (`management.git`, derived metadata) | `scope/stage/repoPath` | Deterministic by design: metadata is re-derived on every reconcile poll, and a location-based id keeps that idempotent. Git has no stage transitions (branch = stage). |
+| **Atlas schema registry** (`AtlasSchemaRegistryService`, mirrors the static `EPackage.Registry`) | `Base64URL(nsURI)` | Deterministic for the same reason (re-derived on every bind); purely internal — its content lookups decode it back. Inherited system schemas therefore show Base64 ids in listings. |
+
+All three sources set the `nsUri` entry of the metadata `properties` map — that property,
+not the objectId, is the nsURI carrier, which is why the nsUri-parameterized endpoints work
+uniformly across sources (see below).
+
+### nsUri lookups
+
+Every nsUri-parameterized endpoint resolves nsURI → metadata by scanning the stage listing's
+`nsUri` metadata property (`WritableScopeService.getMetadataByPropertyFromStageForRegistry`),
+then addresses storage by the found `objectId`. This works uniformly for all storage
+backends — including git-backed packages, whose objectIds are backend-defined
+(`scope/stage/repoPath`).
+
+Uniqueness of one nsURI per (scope, registry, stage) is enforced by the upload
+conflict/overwrite check using the same lookup.
+
+### URL encoding in query parameters
+
+The `nsUri` query parameter contains characters that are not URL-safe (e.g., `:`, `/`).
+Clients must percent-encode it as usual for query strings; the server decodes it before the
+lookup. The `Location` header returned on create points at the stage listing endpoint with
+the percent-encoded raw nsURI:
+
 ```
 Original:  http://example.com/schemas/billing/v1
 Encoded:   http%3A%2F%2Fexample.com%2Fschemas%2Fbilling%2Fv1
+Location:  /my-tenant/schema/stages/draft?nsUri=http%3A%2F%2Fexample.com%2Fschemas%2Fbilling%2Fv1
 ```
-
-### Implementation Details
-
-The `encodePackageNsURI()` helper method handles encoding:
-
-```java
-private String encodePackageNsURI(String nsUri) throws UnsupportedEncodingException {
-    return URLEncoder.encode(nsUri, StandardCharsets.UTF_8.toString());
-}
-```
-
-**Usage**:
-- All internal object IDs use encoded `nsUri`
-- API consumers provide raw `nsUri` in query parameters
-- API automatically encodes/decodes as needed
 
 ---
 
@@ -805,7 +830,7 @@ DELETE /my-tenant/schema/stages/release?nsUri=http://example.com/v1
 ```bash
 POST /my-tenant/schema/stages/draft/actions/transition
 {
-  "objectId": "http://example.com/v1",
+  "objectId": "3f8a1c2e-9d4b-4f6a-8c1d-2e5b7a9c0d41",
   "targetStage": "production"  # stage doesn't exist
 }
 
@@ -966,7 +991,7 @@ curl -X PUT "https://api.example.com/my-tenant/schema/stages/draft/content?nsUri
 curl -X POST "https://api.example.com/my-tenant/schema/stages/draft/actions/transition" \
   -H "Content-Type: application/json" \
   -d '{
-    "objectId": "http://example.com/schemas/billing/v1",
+    "objectId": "3f8a1c2e-9d4b-4f6a-8c1d-2e5b7a9c0d41",
     "targetStage": "review"
   }'
 
@@ -976,7 +1001,7 @@ curl -X POST "https://api.example.com/my-tenant/schema/stages/draft/actions/tran
 curl -X POST "https://api.example.com/my-tenant/schema/stages/review/actions/transition" \
   -H "Content-Type: application/json" \
   -d '{
-    "objectId": "http://example.com/schemas/billing/v1",
+    "objectId": "3f8a1c2e-9d4b-4f6a-8c1d-2e5b7a9c0d41",
     "targetStage": "approved"
   }'
 
@@ -986,7 +1011,7 @@ curl -X POST "https://api.example.com/my-tenant/schema/stages/review/actions/tra
 curl -X POST "https://api.example.com/my-tenant/schema/stages/approved/actions/transition" \
   -H "Content-Type: application/json" \
   -d '{
-    "objectId": "http://example.com/schemas/billing/v1",
+    "objectId": "3f8a1c2e-9d4b-4f6a-8c1d-2e5b7a9c0d41",
     "targetStage": "release"
   }'
 
@@ -1023,7 +1048,7 @@ curl -X GET "https://api.example.com/child-tenant/schema" \
 
 ### Input Validation
 
-- All `nsUri` parameters are validated and encoded
+- All `nsUri` parameters are validated and resolved via the `nsUri` metadata property
 - Stage names validated against configured stages
 - Scope names validated via `ScopeServiceCollector`
 

@@ -25,6 +25,7 @@ import java.util.Date;
 import org.eclipse.emf.ecore.EAttribute;
 import org.eclipse.emf.ecore.EClass;
 import org.eclipse.emf.ecore.EPackage;
+import org.eclipse.emf.ecore.EcoreFactory;
 import org.eclipse.fennec.model.atlas.rest.model.RestFactory;
 import org.eclipse.fennec.model.atlas.rest.model.StageTransitionRequest;
 import org.eclipse.fennec.model.atlas.rest.tests.helper.TestAnnotations;
@@ -313,6 +314,145 @@ public class SchemaPackagesResourceTest extends AbstractRestTest {
 
 
 		assertStatus(400, response, "Should return HTTP 400 Bad Request");
+	}
+
+	@Test
+	@ParentScopeServiceSetup
+	public void testCreatePackage_ComputesFingerprint(@InjectBundleContext BundleContext context) throws Exception {
+		ensureResourceAvailability(context);
+		EPackage testPackage = TestHelper.createTestEPackage(TEST_PACKAGE_NSURI, TEST_PACKAGE_NAME, TEST_PACKAGE_NAME);
+		String xmiContent = TestHelper.serializeToXMI(testPackage, resourceSet);
+
+		// Create: response metadata carries a server-computed, scheme-prefixed fingerprint
+		Response response = schemaStageTarget(TestAnnotations.STAGE_DRAFT).queryParam("nsUri", TEST_PACKAGE_NSURI)
+				.queryParam("name", TEST_PACKAGE_NAME).request("application/xmi")
+				.post(Entity.entity(xmiContent, "application/xmi"));
+		assertStatus(201, response, "Should return HTTP 201 Created");
+		String createdFingerprint = extractFingerprint(response.readEntity(String.class));
+		assertNotNull(createdFingerprint, "created metadata must carry the model fingerprint");
+		assertTrue(createdFingerprint.startsWith("fp1:"),
+				"fingerprint should use the current scheme tag, was: " + createdFingerprint);
+
+		// Overwrite with IDENTICAL content: fingerprint stays the same (reproducible)
+		response = schemaStageTarget(TestAnnotations.STAGE_DRAFT).queryParam("nsUri", TEST_PACKAGE_NSURI)
+				.queryParam("name", TEST_PACKAGE_NAME).queryParam("overwrite", true).request("application/xmi")
+				.post(Entity.entity(xmiContent, "application/xmi"));
+		assertStatus(200, response, "Overwrite with identical content should succeed");
+		assertEquals(createdFingerprint, extractFingerprint(response.readEntity(String.class)),
+				"identical content must keep the identical fingerprint");
+
+		// Overwrite with CHANGED content: fingerprint changes (identifying)
+		EPackage changedPackage = TestHelper.createTestEPackage(TEST_PACKAGE_NSURI, TEST_PACKAGE_NAME,
+				TEST_PACKAGE_NAME);
+		EClass extraClass = EcoreFactory.eINSTANCE.createEClass();
+		extraClass.setName("ExtraClass");
+		changedPackage.getEClassifiers().add(extraClass);
+		String changedXmi = TestHelper.serializeToXMI(changedPackage, resourceSet);
+
+		response = schemaStageTarget(TestAnnotations.STAGE_DRAFT).queryParam("nsUri", TEST_PACKAGE_NSURI)
+				.queryParam("name", TEST_PACKAGE_NAME).queryParam("overwrite", true).request("application/xmi")
+				.post(Entity.entity(changedXmi, "application/xmi"));
+		assertStatus(200, response, "Overwrite with changed content should succeed");
+		String changedFingerprint = extractFingerprint(response.readEntity(String.class));
+		assertNotNull(changedFingerprint);
+		assertNotEquals(createdFingerprint, changedFingerprint, "changed content must change the fingerprint");
+	}
+
+	/** Extracts the fingerprint attribute from a metadata XMI response, or null. */
+	private static String extractFingerprint(String metadataXmi) {
+		java.util.regex.Matcher matcher = java.util.regex.Pattern.compile("fingerprint=\"([^\"]+)\"")
+				.matcher(metadataXmi);
+		return matcher.find() ? matcher.group(1) : null;
+	}
+
+	private static String extractObjectId(String metadataXmi) {
+		java.util.regex.Matcher matcher = java.util.regex.Pattern.compile("objectId=\"([^\"]+)\"")
+				.matcher(metadataXmi);
+		return matcher.find() ? matcher.group(1) : null;
+	}
+
+	// ========== objectId Decoupling Tests (F8) ==========
+
+	@Test
+	@ParentScopeServiceSetup
+	public void testCreatePackage_ObjectIdIsUuid_AndLocationCarriesNsUri(@InjectBundleContext BundleContext context)
+			throws Exception {
+		ensureResourceAvailability(context);
+		EPackage testPackage = TestHelper.createTestEPackage(TEST_PACKAGE_NSURI, TEST_PACKAGE_NAME, TEST_PACKAGE_NAME);
+		String xmiContent = TestHelper.serializeToXMI(testPackage, resourceSet);
+
+		Response response = schemaStageTarget(TestAnnotations.STAGE_DRAFT).queryParam("nsUri", TEST_PACKAGE_NSURI)
+				.queryParam("name", TEST_PACKAGE_NAME).request("application/xmi")
+				.post(Entity.entity(xmiContent, "application/xmi"));
+		assertStatus(201, response, "Should return HTTP 201 Created");
+
+		String objectId = extractObjectId(response.readEntity(String.class));
+		assertNotNull(objectId, "created metadata must carry an objectId");
+		// Opaque UUID — no meaning derivable from the id shape anymore
+		java.util.UUID.fromString(objectId);
+
+		String location = response.getHeaderString("Location");
+		assertNotNull(location, "created response must carry a Location header");
+		assertTrue(location.contains("/schema/stages/" + TestAnnotations.STAGE_DRAFT),
+				"Location should point at the stage listing endpoint, was: " + location);
+		assertTrue(location.contains("nsUri=" + java.net.URLEncoder.encode(TEST_PACKAGE_NSURI, java.nio.charset.StandardCharsets.UTF_8)),
+				"Location should carry the percent-encoded nsUri query, was: " + location);
+	}
+
+	@Test
+	@ParentScopeServiceSetup
+	public void testCreatePackage_SameNsUriInTwoStages_DistinctObjectIds(@InjectBundleContext BundleContext context)
+			throws Exception {
+		ensureResourceAvailability(context);
+		EPackage testPackage = TestHelper.createTestEPackage(TEST_PACKAGE_NSURI, TEST_PACKAGE_NAME, TEST_PACKAGE_NAME);
+		String xmiContent = TestHelper.serializeToXMI(testPackage, resourceSet);
+
+		Response draft = schemaStageTarget(TestAnnotations.STAGE_DRAFT).queryParam("nsUri", TEST_PACKAGE_NSURI)
+				.queryParam("name", TEST_PACKAGE_NAME).request("application/xmi")
+				.post(Entity.entity(xmiContent, "application/xmi"));
+		assertStatus(201, draft, "Draft upload should succeed");
+
+		Response approved = schemaStageTarget(TestAnnotations.STAGE_APPROVED).queryParam("nsUri", TEST_PACKAGE_NSURI)
+				.queryParam("name", TEST_PACKAGE_NAME).request("application/xmi")
+				.post(Entity.entity(xmiContent, "application/xmi"));
+		assertStatus(201, approved, "Approved upload of the same nsUri should succeed");
+
+		String draftId = extractObjectId(draft.readEntity(String.class));
+		String approvedId = extractObjectId(approved.readEntity(String.class));
+		assertNotNull(draftId);
+		assertNotNull(approvedId);
+		assertNotEquals(draftId, approvedId,
+				"same nsURI in two stages must get distinct objectIds — audit trails must not merge");
+	}
+
+	@Test
+	@ParentScopeServiceSetup
+	public void testTransitionPackage_ByRealObjectId_KeepsObjectIdStable(@InjectBundleContext BundleContext context)
+			throws Exception {
+		ensureResourceAvailability(context);
+		EPackage testPackage = TestHelper.createTestEPackage(TEST_PACKAGE_NSURI, TEST_PACKAGE_NAME, TEST_PACKAGE_NAME);
+		String xmiContent = TestHelper.serializeToXMI(testPackage, resourceSet);
+
+		Response created = schemaStageTarget(TestAnnotations.STAGE_DRAFT).queryParam("nsUri", TEST_PACKAGE_NSURI)
+				.queryParam("name", TEST_PACKAGE_NAME).request("application/xmi")
+				.post(Entity.entity(xmiContent, "application/xmi"));
+		assertStatus(201, created, "Should return HTTP 201 Created");
+		String createdId = extractObjectId(created.readEntity(String.class));
+		assertNotNull(createdId);
+
+		// Transition addressed by the REAL objectId (not the legacy nsUri-in-objectId shape)
+		StageTransitionRequest transition = RestFactory.eINSTANCE.createStageTransitionRequest();
+		transition.setObjectId(createdId);
+		transition.setTargetStage(TestAnnotations.STAGE_APPROVED);
+		String transitionXmi = TestHelper.serializeToXMI(transition, resourceSet);
+
+		Response response = schemaStageTarget(TestAnnotations.STAGE_DRAFT).path("actions").path("transition")
+				.request("application/xmi").post(Entity.entity(transitionXmi, "application/xmi"));
+		assertStatus(200, response, "Transition by real objectId should succeed");
+
+		String transitionedId = extractObjectId(response.readEntity(String.class));
+		assertEquals(createdId, transitionedId,
+				"the objectId is the lifecycle audit trail and must stay stable across stage transitions");
 	}
 
 	// ========== Overwrite Parameter Tests ==========

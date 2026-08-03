@@ -159,6 +159,75 @@ public class EObjectFileStorageServiceTest {
         assertEquals("testChannel", retrievedMetadata.getSourceChannel());
         assertNotNull(retrievedMetadata.getContentHash());
 
+        // F4 producer: storing an EPackage computes and PERSISTS the model fingerprint
+        assertNotNull(retrievedMetadata.getFingerprint(), "stored EPackage metadata must carry the model fingerprint");
+        assertTrue(retrievedMetadata.getFingerprint().startsWith("fp1:"),
+                "fingerprint should use the current scheme tag, was: " + retrievedMetadata.getFingerprint());
+    }
+
+    @SuppressWarnings({ "rawtypes", "unchecked" })
+    @Test
+    @StorageSetup
+    public void testFingerprintComputedServerSide_neverAdopted(
+            @InjectService(cardinality = 0, filter = "(storage.backend=file)") ServiceAware<EObjectStorageService> serviceAware)
+            throws Exception {
+        EObjectStorageService<EObject> storageService = (EObjectStorageService<EObject>) serviceAware
+                .waitForService(5000L);
+        assertNotNull(storageService, "Storage service should be available");
+
+        // 1) A client-supplied fingerprint on an EPackage upload is OVERWRITTEN by the
+        // server-side computation ("computed, never trusted").
+        EPackage testPackage = EcoreFactory.eINSTANCE.createEPackage();
+        testPackage.setName("FingerprintPackage");
+        testPackage.setNsPrefix("fp");
+        testPackage.setNsURI("http://test/fingerprint/1.0");
+
+        ObjectMetadata packageMetadata = ManagementFactory.eINSTANCE.createObjectMetadata();
+        packageMetadata.setUploadUser("testUser");
+        packageMetadata.setUploadTime(Instant.now());
+        packageMetadata.setSourceChannel("testChannel");
+        packageMetadata.getProperties().put("file.extension", ".ecore");
+        packageMetadata.setFingerprint("fp1:attacker-controlled-value");
+
+        storageService.storeObject(TEST_SCOPE, TEST_REGISTRY, TEST_STAGE, "fp-pkg-1", testPackage, packageMetadata)
+                .getValue();
+        ObjectMetadata storedPackageMetadata = storageService
+                .retrieveMetadata(TEST_SCOPE, TEST_REGISTRY, TEST_STAGE, "fp-pkg-1").getValue();
+        assertNotNull(storedPackageMetadata.getFingerprint());
+        assertTrue(storedPackageMetadata.getFingerprint().startsWith("fp1:"));
+        assertNotEquals("fp1:attacker-controlled-value", storedPackageMetadata.getFingerprint(),
+                "a client-supplied fingerprint must never be adopted");
+
+        // 2) For a non-EPackage object a client-supplied fingerprint is CLEARED.
+        EObject nonPackage = EcoreFactory.eINSTANCE.createEClass();
+        ObjectMetadata objectMetadata = ManagementFactory.eINSTANCE.createObjectMetadata();
+        objectMetadata.setUploadUser("testUser");
+        objectMetadata.setUploadTime(Instant.now());
+        objectMetadata.setSourceChannel("testChannel");
+        objectMetadata.setFingerprint("fp1:attacker-controlled-value");
+
+        storageService.storeObject(TEST_SCOPE, TEST_REGISTRY, TEST_STAGE, "fp-obj-1", nonPackage, objectMetadata)
+                .getValue();
+        ObjectMetadata storedObjectMetadata = storageService
+                .retrieveMetadata(TEST_SCOPE, TEST_REGISTRY, TEST_STAGE, "fp-obj-1").getValue();
+        assertNull(storedObjectMetadata.getFingerprint(),
+                "non-EPackage objects have no model fingerprint, client-supplied values are cleared");
+
+        // 3) Identical content re-stored under another id yields the SAME fingerprint
+        // (reproducible), diverging content a different one.
+        EPackage samePackage = EcoreFactory.eINSTANCE.createEPackage();
+        samePackage.setName("FingerprintPackage");
+        samePackage.setNsPrefix("fp");
+        samePackage.setNsURI("http://test/fingerprint/1.0");
+        ObjectMetadata sameMetadata = ManagementFactory.eINSTANCE.createObjectMetadata();
+        sameMetadata.setUploadUser("testUser");
+        sameMetadata.setUploadTime(Instant.now());
+        sameMetadata.setSourceChannel("testChannel");
+        sameMetadata.getProperties().put("file.extension", ".ecore");
+        storageService.storeObject(TEST_SCOPE, TEST_REGISTRY, TEST_STAGE, "fp-pkg-2", samePackage, sameMetadata)
+                .getValue();
+        assertEquals(storedPackageMetadata.getFingerprint(), sameMetadata.getFingerprint(),
+                "identical content must yield the identical fingerprint");
     }
 
     @SuppressWarnings({ "rawtypes", "unchecked" })

@@ -38,7 +38,7 @@ public class ManagementApiEPackageConfigurator implements EPackageConfigurator {
 	 * service property.
 	 * @generated
 	 */
-	public static final String FINGERPRINT = "fp1:d7ded6601137ebe4217e4c87f8d0d6c852e19ae82cefd89a669c16fcf07209cf";
+	public static final String FINGERPRINT = "fp1:269b969e3d4ef2dd0660199b9219b472d16684736f7948c87c702ef78f6b411b";
 
 	private ManagementApiPackage ePackage;
 
