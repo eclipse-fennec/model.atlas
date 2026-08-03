@@ -5,9 +5,6 @@ org.geckoprojects.search:org.gecko.emf.search.bnd.project.library:1.2.0
 org.geckoprojects.search:org.gecko.search.bnd.library:1.4.0
 org.geckoprojects.messaging:org.gecko.adapter.messaging.bnd.library.workspace:1.1.1
 
-org.geckoprojects.emf.utils:org.gecko.emf.util.qvt.bnd.library.workspace.felix:2.1.0-SNAPSHOT
-org.geckoprojects.emf.utils:org.gecko.emf.util.jakartars.bnd.library.workspace:2.4.0-SNAPSHOT
-
 org.geckoprojects.camel:org.eclipse.fennec.camel.workspace.library:1.0.0-SNAPSHOT
 org.geckoprojects.qvto:org.eclipse.fennec.qvt.bnd.library.workspace:2.1.0-SNAPSHOT
 org.eclipse.fennec.m2x:org.eclipse.fennec.m2x.library.workspace:0.1.0-SNAPSHOT
@@ -23,5 +20,7 @@ org.geckoprojects.libraries:org.gecko.libraries.workspace.library:1.0.0-SNAPSHOT
 
 org.eclipse.fennec.codec:org.eclipse.fennec.codec.workspace.library:0.1.0-SNAPSHOT
 
+org.eclipse.fennec.util:org.eclipse.fennec.util.workspace.library:1.0.0-SNAPSHOT
+org.eclipse.fennec.models:org.eclipse.fennec.common.models.library:0.0.1-SNAPSHOT
 
 

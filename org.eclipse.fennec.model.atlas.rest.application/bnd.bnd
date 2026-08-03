@@ -9,7 +9,6 @@
 	org.osgi.service.cm;version=latest,\
 	org.osgi.service.jakartars;version=latest,\
 	org.osgi.service.http.whiteboard;version=latest,\
-	org.gecko.emf.util.annotations,\
 	io.swagger.core.v3.swagger-core.jakarta;version=latest,\
 	io.swagger.core.v3.swagger-jaxrs2.jakarta;version=latest,\
 	io.swagger.core.v3.swagger-annotations;version=latest,\
@@ -19,8 +18,6 @@
 	com.fasterxml.jackson.core.jackson-databind;version=latest,\
 	org.eclipse.fennec.m2x.ocl.api;version=latest,\
 	org.eclipse.fennec.m2x.ocl.model;version=latest,\
-	org.gecko.emf.util.documentation.generators.apis;version=latest,\
-	org.eclipse.fennec.model.atlas.model.documentation.provider;version=snapshot,\
 	org.eclipse.fennec.model.atlas.mediatypes.api;version=snapshot,\
 	org.eclipse.fennec.model.atlas.runtime;version=snapshot,\
 	org.eclipse.fennec.model.atlas.rest.model;version=snapshot,\

@@ -39,12 +39,13 @@ Bundle-Developers: \
 	fennecM2X,\
 	fennecJPA,\
 	fennecQVT,\
-	geckoEMFUtil,\
+	fennecUtil,\
 	geckoMessaging,\
 	geckoSearch,\
 	geckoLibraries,\
 	jakartaREST,\
-	fennecCodec
+	fennecCodec,\
+	fennecEMFModels
 
 
 # Needed because we enabled library 'gecko-dimc'
@@ -92,3 +93,16 @@ required_bnd_version: ${versionmask;===;${bnd_version}}
 		local = ${build}/cache/temp
 		
 		
+
+# WORKAROUND: the published fennecUtil library's generated index (fennecUtil.maven) lists
+# emf.util's sensinact 0.0.2-SNAPSHOT deps, but the library's repo plugin only serves
+# Maven Central / Central Portal — sensinact snapshots live on repo.eclipse.org. Redefine
+# the plugin with the sensinact repos added so the index metadata resolves. Remove once
+# the fennecUtil library template ships these URLs itself.
+-plugin.fennecUtil: \
+	aQute.bnd.repository.maven.provider.MavenBndRepository;\
+		releaseUrl			= "https://repo.maven.apache.org/maven2/,https://repo.eclipse.org/content/repositories/sensinact-releases/"; \
+		snapshotUrl         = "https://central.sonatype.com/repository/maven-snapshots/,https://repo.eclipse.org/content/repositories/sensinact-snapshots/";\
+		index               = "${workspace}/cnf/cache/${bnd_version}/expanded/urn%resource%org.eclipse.fennec.util.workspace.library-1.0.0/template/fennecUtil.maven";\
+		readOnly            = true;\
+		name="Eclipse Fennec Util - override"
