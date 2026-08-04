@@ -215,4 +215,4 @@ slf4j.runpath:  \
 	OSGi-Test Dependencies,\
 	OSGi Technology Jakarta REST,\
 	Workspace,\
-	Eclipse Fennec Util - override
+	Eclipse Fennec Util - 1.0.0.202608041248-SNAPSHOT

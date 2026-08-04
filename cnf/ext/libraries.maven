@@ -20,7 +20,8 @@ org.geckoprojects.libraries:org.gecko.libraries.workspace.library:1.0.0-SNAPSHOT
 
 org.eclipse.fennec.codec:org.eclipse.fennec.codec.workspace.library:0.1.0-SNAPSHOT
 
-org.eclipse.fennec.util:org.eclipse.fennec.util.workspace.library:1.0.0-SNAPSHOT
 org.eclipse.fennec.models:org.eclipse.fennec.common.models.library:0.0.1-SNAPSHOT
+org.eclipse.fennec.util:org.eclipse.fennec.util.workspace.library:1.0.0-SNAPSHOT
+
 
 
