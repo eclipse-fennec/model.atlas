@@ -221,16 +221,41 @@ public class AtlasClientOsgiIT {
 		assumeFalse(nsUris.isEmpty(), "jena scope has no released packages to resolve");
 		String nsUri = nsUris.get(0);
 
-		configuration.update(baseProps("LAZY"));
+		// A configurator left over from the previous test's still-deactivating component
+		// would wrap the ResourceSet with a CLOSED client, whose fallback returns null
+		// silently (see AtlasResourceSetConfigurator) — wait until all are gone so the
+		// waitForService below can only observe the component this test configures.
+		assertTrue(awaitEmpty(configurators),
+				"configurators of earlier tests' components should be unregistered before this test starts");
+
+		Hashtable<String, Object> props = baseProps("LAZY");
+		// The lazy chain (metadata list + content fetch + publish-wait) must fit in this
+		// window; the 5 s component default flakes when a full build loads the machine.
+		props.put("lazy.resolve.timeout.ms", (int) SERVICE_WAIT_MS * 3);
+		configuration.update(props);
 		// The configurator must be registered before we ask the factory for a (wrapped) ResourceSet.
 		assertNotNull(configurators.waitForService(SERVICE_WAIT_MS),
 				"the Atlas ResourceSetConfigurator must be registered first");
 
 		ResourceSetFactory factory = resourceSetFactories.waitForService(SERVICE_WAIT_MS);
 		assertNotNull(factory, "a framework ResourceSetFactory must be present");
-		ResourceSet resourceSet = factory.createResourceSet();
 
-		EPackage resolved = resourceSet.getPackageRegistry().getEPackage(nsUri);
+		// The configurator service being registered does not mean the ResourceSetFactory has
+		// bound it yet — registration and factory binding are independent asynchronous
+		// whiteboards, and createResourceSet applies only already-bound configurators. An
+		// unwrapped ResourceSet answers null instantly, so re-create until the Atlas wrap is
+		// effective; a genuine resolution failure still fails when the deadline expires.
+		EPackage resolved = null;
+		long deadline = System.currentTimeMillis() + SERVICE_WAIT_MS;
+		while (resolved == null) {
+			resolved = factory.createResourceSet().getPackageRegistry().getEPackage(nsUri);
+			if (resolved == null) {
+				if (System.currentTimeMillis() >= deadline) {
+					break;
+				}
+				Thread.sleep(50L);
+			}
+		}
 		assertNotNull(resolved, () -> nsUri + " should resolve through the Atlas-aware ResourceSet");
 		assertEquals(nsUri, resolved.getNsURI());
 	}
