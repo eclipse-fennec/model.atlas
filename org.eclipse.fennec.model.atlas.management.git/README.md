@@ -285,7 +285,12 @@ per-instance catch-all.
   schema registration and instance reads (each stage resolves against its own branch's
   schema), reconcile-poll pickup of pushes, schema removal on one branch → clean `409`
   model-unavailable for that stage's instances while the other stage keeps working. This
-  test also uncovered the cross-stage JSON limitation below.
+  test also uncovered the cross-stage JSON limitation below (since resolved).
+- **Manual end-to-end re-test (2026-08-04, after fingerprint support)**: same live setup —
+  the same nsURI with different content on `draft` and `release` (release variant adds an
+  `email` attribute), instances on both, then schema removal on `release` only. Verified:
+  the `draft` instance keeps deserializing through REST **in XML and `application/json`**
+  after the removal — the cross-stage JSON breakage below no longer reproduces.
 
 > **gecko.jgit transport (fixed upstream, 2026-07):** `GitServiceImpl` used to be SSH-only and
 > hard-wired to legacy JCraft JSch (RSA/PEM keys only, no anonymous `git://`/`https://`). It now
@@ -300,22 +305,26 @@ per-instance catch-all.
 
 ## Known limitations / deferred
 
-- **Cross-stage JSON serialization after a schema removal (found in the manual e2e test,
-  2026-07-22 — XML unaffected).** With the same nsURI registered for several stages (= git
-  branches, the intended stage-aware behavior), removing the schema on ONE branch breaks
-  REST **JSON** reads of the OTHER branches' objects with HTTP 500
-  (`Error serializing outgoing object`), persistently; **XML reads of the same objects keep
-  working**, as do storage reads and the removed stage's own clean `409`. Root cause is NOT
-  in this bundle: fennec-codec's `MetadataServiceImpl` (`org.eclipse.fennec.model.metadata`)
-  tracks whiteboard-bound `EPackage` services in a map keyed by **nsURI alone** (first-wins
-  register, unconditional remove), so one stage's unbind drops the metadata entry the
-  surviving stages' JSON codec still needs. Red repro test:
-  `MetadataServiceSameNsUriMultiInstanceTest` (fennec-codec). Conceptually this is the
+- ~~**Cross-stage JSON serialization after a schema removal (found in the manual e2e test,
+  2026-07-22 — XML unaffected).**~~
+  **RESOLVED — verified in the live e2e re-test 2026-08-04 (fingerprint support).** With the
+  same nsURI registered for several stages (= git branches), removing the schema on ONE
+  branch used to break REST **JSON** reads of the OTHER branches' objects with HTTP 500
+  (`Error serializing outgoing object`), persistently, while XML kept working. Root cause
+  was never in this bundle: the old fennec-codec `MetadataServiceImpl`
+  (`org.eclipse.fennec.model.metadata`) tracked whiteboard-bound `EPackage` services keyed
+  by **nsURI alone** (first-wins register, unconditional remove), so one stage's unbind
+  dropped the metadata entry the surviving stages' JSON codec still needed — the
   "version, not URI" / fingerprint-join problem analyzed in
-  [model.atlas#156](https://github.com/eclipse-fennec/model.atlas/issues/156) — any consumer
-  that whiteboard-tracks `EPackage` services keyed by nsURI breaks under multi-version
-  (multi-stage) registration. Until fixed there, JSON content reads are unreliable for a
-  nsURI after any stage's schema removal; XML is the workaround.
+  [model.atlas#156](https://github.com/eclipse-fennec/model.atlas/issues/156). The
+  MetadataService has since moved to fennec emf.osgi
+  (`org.eclipse.fennec.emf.osgi.metadata`) and is **fingerprint-keyed with refcounted
+  shared metadata trees**: identical content across stages dedupes onto one tree that is
+  only withdrawn when the *last* holder unbinds, and diverging content under one nsURI
+  yields separate fingerprints/trees, so one stage's removal cannot evict another stage's
+  metadata from either direction (see `docs/plans/MODEL_FINGERPRINT_PLAN.md`,
+  "MetadataService interplay"). JSON content reads now survive schema removal on a sibling
+  stage; the XML-only workaround is obsolete.
 - ~~**EPackages cannot be resolved by nsURI through the schema REST endpoints.**~~
   **RESOLVED 2026-08-03 (fingerprint plan phase F8).** The `/{scope}/schema/...` endpoints no
   longer recompute an encoded objectId from the nsURI; they resolve nsURI → metadata via the
