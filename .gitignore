@@ -20,3 +20,4 @@ generated/
 bin/
 bin_test/
 .claude/*
+!.claude/settings.json
