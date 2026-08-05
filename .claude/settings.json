@@ -1,0 +1,13 @@
+{
+  "extraKnownMarketplaces": {
+    "fennec": {
+      "source": {
+        "source": "github",
+        "repo": "eclipse-fennec/.github"
+      }
+    }
+  },
+  "enabledPlugins": {
+    "fennec-dev@fennec": true
+  }
+}
