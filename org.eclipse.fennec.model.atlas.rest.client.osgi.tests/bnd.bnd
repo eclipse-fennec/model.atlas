@@ -17,6 +17,7 @@ Test-Cases: ${classes;HIERARCHY_INDIRECTLY_ANNOTATED;org.junit.platform.commons.
 -buildpath: \
 	org.osgi.framework;version=latest,\
 	org.osgi.service.cm;version=latest,\
+	org.osgi.service.component;version=latest,\
 	org.osgi.test.junit5.cm;version=latest,\
 	org.eclipse.fennec.model.atlas.rest.client.api;version=snapshot,\
 	org.eclipse.fennec.model.atlas.rest.client.osgi;version=snapshot,\
