@@ -151,14 +151,25 @@ public class GitStorageHelper extends AbstractStorageHelper {
 		}
 		this.gitUriHandler = new GitURIHandler(commitToService);
 		resourceSet.getURIConverter().getURIHandlers().add(0, gitUriHandler);
+	}
 
+	/**
+	 * Performs the initial remote fetch and derivation pass ({@link #refresh()} +
+	 * {@code deriveAll()}). Deliberately not called from the constructor: the owning
+	 * component constructs this helper inside DS {@code activate()} and submits
+	 * {@code prime()} to its re-derive worker instead, so remote fetches and the
+	 * full-repo parse never block the SCR thread (a hung remote must not stall
+	 * activation). Reads before priming see an empty store, exactly as during any
+	 * not-yet-derived phase.
+	 */
+	public final synchronized void prime() {
 		refresh();
 		deriveAll();
 	}
 
 	/**
 	 * Fetches each branch and refreshes the cached tree + commit routing. Called
-	 * at construction; later phases (G7 sync + reconcile poll) re-invoke it.
+	 * from {@link #prime()}; later phases (G7 sync + reconcile poll) re-invoke it.
 	 */
 	public final synchronized void refresh() {
 		for (Map.Entry<String, GitService> entry : branchToService.entrySet()) {
@@ -623,6 +634,12 @@ public class GitStorageHelper extends AbstractStorageHelper {
 	@Override
 	protected void closeStorageResources() throws Exception {
 		resourceSet.getURIConverter().getURIHandlers().remove(gitUriHandler);
+		// The owning component re-activates on every branch-set change; entries this
+		// helper pushed into the shared registry cache must not outlive it (otherwise
+		// listings keep advertising objects no storage service can load).
+		for (String objectId : derived.keySet()) {
+			registryService.removeFromCache(objectId);
+		}
 		branchToService.clear();
 		branchToTree.clear();
 		commitToService.clear();

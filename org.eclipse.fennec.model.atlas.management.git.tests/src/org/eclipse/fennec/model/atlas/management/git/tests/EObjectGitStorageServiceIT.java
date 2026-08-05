@@ -433,6 +433,10 @@ public class EObjectGitStorageServiceIT {
 				.waitForService(30000L);
 		LOG.info("[git-it] waitForService returned: {}", storageService);
 		assertNotNull(storageService, "Git storage service should be available");
+		// Priming (initial fetch + derivation) runs on the re-derive worker, off the
+		// activation thread — wait until the main-branch schema is derived so tests
+		// can assert on served content right away.
+		awaitContains(storageService, GitTestRepository.BRANCH_MAIN, id(GitTestRepository.BRANCH_MAIN), 15000L);
 		return storageService;
 	}
 
