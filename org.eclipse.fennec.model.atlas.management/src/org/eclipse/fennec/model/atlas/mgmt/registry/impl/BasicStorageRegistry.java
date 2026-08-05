@@ -11,7 +11,7 @@
  * Contributors:
  *      Data In Motion - initial API and implementation
  */
-package org.eclipse.fennec.model.atlas.mgmt.registry;
+package org.eclipse.fennec.model.atlas.mgmt.registry.impl;
 
 import static java.util.Objects.requireNonNull;
 
