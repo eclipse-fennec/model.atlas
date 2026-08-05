@@ -19,6 +19,7 @@ import java.io.OutputStream;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Type;
 import java.util.Collection;
+import java.util.List;
 
 import org.eclipse.emf.common.util.URI;
 import org.eclipse.emf.ecore.EPackage;
@@ -26,6 +27,7 @@ import org.eclipse.emf.ecore.resource.Resource;
 import org.eclipse.emf.ecore.resource.ResourceSet;
 import org.eclipse.fennec.model.atlas.rest.common.AbstractEPackageMessageBodyHandler;
 import org.eclipse.uml2.uml.Package;
+import org.eclipse.uml2.uml.resource.UMLResource;
 import org.eclipse.uml2.uml.util.UMLUtil;
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.ServiceScope;
@@ -37,6 +39,7 @@ import org.osgi.service.jakartars.whiteboard.propertytypes.JakartarsName;
 import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.WebApplicationException;
+import jakarta.ws.rs.core.HttpHeaders;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.MultivaluedMap;
 import jakarta.ws.rs.ext.MessageBodyReader;
@@ -53,9 +56,11 @@ import jakarta.ws.rs.ext.Provider;
 @Consumes("application/uml")
 public class UMLMessageBodyReaderWriter extends AbstractEPackageMessageBodyHandler {
 
+    private static final MediaType UML_TYPE = new MediaType("application", "uml");
+
     @Override
     public boolean isWriteable(Class<?> type, Type genericType, Annotation[] annotations, MediaType mediaType) {
-        return EPackage.class.isAssignableFrom(type) && "application/uml".equals(mediaType.toString());
+        return EPackage.class.isAssignableFrom(type) && isMediaType(mediaType, UML_TYPE);
     }
 
     @Override
@@ -64,7 +69,8 @@ public class UMLMessageBodyReaderWriter extends AbstractEPackageMessageBodyHandl
             throws IOException, WebApplicationException {
 
         ResourceSet resourceSet = getResourceSet();
-        String fileName = t.getName() + ".uml";
+        String fileName = t.getName() + "." + UMLResource.FILE_EXTENSION;
+        httpHeaders.put(HttpHeaders.CONTENT_DISPOSITION, List.of("attachment; filename=" + fileName));
         Collection<Package> convertFromEcore = UMLUtil.convertFromEcore(t, null);
         Resource resource = resourceSet.createResource(URI.createURI(fileName));
         resource.getContents().addAll(convertFromEcore);

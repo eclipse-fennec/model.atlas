@@ -63,9 +63,11 @@ import jakarta.ws.rs.ext.Provider;
 @Consumes("application/schema+xml")
 public class XSDSchemaMessageBodyReaderWriter extends AbstractEPackageMessageBodyHandler {
 
+    private static final MediaType SCHEMA_XML_TYPE = new MediaType("application", "schema+xml");
+
     @Override
     public boolean isWriteable(Class<?> type, Type genericType, Annotation[] annotations, MediaType mediaType) {
-        return EPackage.class.isAssignableFrom(type) && "application/schema+xml".equals(mediaType.toString());
+        return EPackage.class.isAssignableFrom(type) && isMediaType(mediaType, SCHEMA_XML_TYPE);
     }
 
     @Override

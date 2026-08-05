@@ -18,6 +18,7 @@ import org.eclipse.emf.ecore.resource.ResourceSet;
 
 import jakarta.inject.Provider;
 import jakarta.ws.rs.core.Context;
+import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.ext.MessageBodyReader;
 import jakarta.ws.rs.ext.MessageBodyWriter;
 
@@ -54,5 +55,20 @@ public abstract class AbstractEPackageMessageBodyHandler
      */
     protected ResourceSet getResourceSet() {
         return resourceSetProvider.get();
+    }
+
+    /**
+     * Compares type and subtype only, case-insensitively, so a request carrying
+     * parameters still matches: {@code application/uml;charset=UTF-8} is the
+     * {@code application/uml} handler's media type.
+     *
+     * @param mediaType the media type of the request or response, may be
+     *                  {@code null}
+     * @param expected  the media type this handler serves
+     * @return {@code true} if both name the same type and subtype
+     */
+    protected static boolean isMediaType(MediaType mediaType, MediaType expected) {
+        return mediaType != null && expected.getType().equalsIgnoreCase(mediaType.getType())
+                && expected.getSubtype().equalsIgnoreCase(mediaType.getSubtype());
     }
 }

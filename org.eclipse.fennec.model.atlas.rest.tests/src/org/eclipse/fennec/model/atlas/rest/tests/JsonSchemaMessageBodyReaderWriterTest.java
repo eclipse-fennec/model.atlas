@@ -45,7 +45,9 @@ import org.osgi.test.common.annotation.InjectService;
 import org.osgi.test.junit5.context.BundleContextExtension;
 import org.osgi.test.junit5.service.ServiceExtension;
 
+import jakarta.ws.rs.core.HttpHeaders;
 import jakarta.ws.rs.core.MediaType;
+import jakarta.ws.rs.core.MultivaluedHashMap;
 import jakarta.ws.rs.ext.MessageBodyReader;
 import jakarta.ws.rs.ext.MessageBodyWriter;
 
@@ -119,6 +121,18 @@ public class JsonSchemaMessageBodyReaderWriterTest {
     }
 
     @Test
+    void testIsWriteable_WithParameterizedJsonSchemaMediaType_ReturnsTrue() {
+        // Given: the handler's media type carrying a charset parameter
+        MediaType mediaType = MediaType.valueOf(JSON_SCHEMA_MEDIA_TYPE + ";charset=UTF-8");
+
+        // When: Check if writable
+        boolean writable = writer.isWriteable(EPackage.class, EPackage.class, null, mediaType);
+
+        // Then: parameters must not change the decision
+        assertTrue(writable, "Should be writable for EPackage with application/schema+json;charset=UTF-8");
+    }
+
+    @Test
     void testIsWriteable_WithWrongClass_ReturnsFalse() {
         // Given: Non-EPackage class
         MediaType mediaType = MediaType.valueOf(JSON_SCHEMA_MEDIA_TYPE);
@@ -138,8 +152,9 @@ public class JsonSchemaMessageBodyReaderWriterTest {
         // When: Write to output stream
         ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
         MediaType mediaType = MediaType.valueOf(JSON_SCHEMA_MEDIA_TYPE);
+        MultivaluedHashMap<String, Object> httpHeaders = new MultivaluedHashMap<>();
 
-        writer.writeTo(ePackage, EPackage.class, EPackage.class, null, mediaType, null, outputStream);
+        writer.writeTo(ePackage, EPackage.class, EPackage.class, null, mediaType, httpHeaders, outputStream);
 
         // Then: Should produce valid JSON Schema
         String jsonSchema = outputStream.toString("UTF-8");
@@ -150,6 +165,11 @@ public class JsonSchemaMessageBodyReaderWriterTest {
         assertTrue(jsonSchema.contains("\"definitions\""), "JSON Schema should contain definitions");
         assertTrue(jsonSchema.contains("SimpleTestPackage"), "JSON Schema should contain package name");
         assertTrue(jsonSchema.contains("Person"), "JSON Schema should contain Person class");
+
+        // And offers the schema as a named download, like the ecore/XSD siblings do
+        assertEquals("attachment; filename=" + ePackage.getName() + ".schema.json",
+                httpHeaders.getFirst(HttpHeaders.CONTENT_DISPOSITION),
+                "Content-Disposition should name the .schema.json file");
     }
 
     @Test
@@ -161,7 +181,7 @@ public class JsonSchemaMessageBodyReaderWriterTest {
         ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
         MediaType mediaType = MediaType.valueOf(JSON_SCHEMA_MEDIA_TYPE);
 
-        writer.writeTo(ePackage, EPackage.class, EPackage.class, null, mediaType, null, outputStream);
+        writer.writeTo(ePackage, EPackage.class, EPackage.class, null, mediaType, new MultivaluedHashMap<>(), outputStream);
 
         // Then: Should produce valid JSON Schema
         String jsonSchema = outputStream.toString("UTF-8");
@@ -245,7 +265,7 @@ public class JsonSchemaMessageBodyReaderWriterTest {
         ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
         MediaType mediaType = MediaType.valueOf(JSON_SCHEMA_MEDIA_TYPE);
 
-        writer.writeTo(originalPackage, EPackage.class, EPackage.class, null, mediaType, null, outputStream);
+        writer.writeTo(originalPackage, EPackage.class, EPackage.class, null, mediaType, new MultivaluedHashMap<>(), outputStream);
 
         String jsonSchema = outputStream.toString("UTF-8");
         InputStream inputStream = new ByteArrayInputStream(jsonSchema.getBytes("UTF-8"));

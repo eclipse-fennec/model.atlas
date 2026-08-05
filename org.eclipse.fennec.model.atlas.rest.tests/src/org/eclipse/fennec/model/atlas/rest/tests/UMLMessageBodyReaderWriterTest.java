@@ -45,7 +45,9 @@ import org.osgi.test.common.annotation.InjectService;
 import org.osgi.test.junit5.context.BundleContextExtension;
 import org.osgi.test.junit5.service.ServiceExtension;
 
+import jakarta.ws.rs.core.HttpHeaders;
 import jakarta.ws.rs.core.MediaType;
+import jakarta.ws.rs.core.MultivaluedHashMap;
 import jakarta.ws.rs.ext.MessageBodyReader;
 import jakarta.ws.rs.ext.MessageBodyWriter;
 
@@ -119,6 +121,28 @@ public class UMLMessageBodyReaderWriterTest {
     }
 
     @Test
+    void testIsWriteable_WithParameterizedUMLMediaType_ReturnsTrue() {
+        // Given: the handler's media type carrying a charset parameter, as a client
+        // that spells out "application/uml;charset=UTF-8" sends it
+        MediaType mediaType = MediaType.valueOf(MEDIA_TYPE + ";charset=UTF-8");
+
+        // When: Check if writable
+        boolean writable = writer.isWriteable(EPackage.class, EPackage.class, null, mediaType);
+
+        // Then: parameters must not change the decision
+        assertTrue(writable, "Should be writable for EPackage with application/uml;charset=UTF-8");
+    }
+
+    @Test
+    void testIsReadable_WithParameterizedUMLMediaType_ReturnsTrue() {
+        MediaType mediaType = MediaType.valueOf(MEDIA_TYPE + ";charset=UTF-8");
+
+        boolean readable = reader.isReadable(EPackage.class, EPackage.class, null, mediaType);
+
+        assertTrue(readable, "Should be readable for EPackage with application/uml;charset=UTF-8");
+    }
+
+    @Test
     void testIsWriteable_WithWrongClass_ReturnsFalse() {
         // Given: Non-EPackage class
         MediaType mediaType = MediaType.valueOf(MEDIA_TYPE);
@@ -138,8 +162,9 @@ public class UMLMessageBodyReaderWriterTest {
         // When: Write to output stream
         ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
         MediaType mediaType = MediaType.valueOf(MEDIA_TYPE);
+        MultivaluedHashMap<String, Object> httpHeaders = new MultivaluedHashMap<>();
 
-        writer.writeTo(ePackage, EPackage.class, EPackage.class, null, mediaType, null, outputStream);
+        writer.writeTo(ePackage, EPackage.class, EPackage.class, null, mediaType, httpHeaders, outputStream);
 
         // Then: Should produce valid UML XML
         String umlXml = outputStream.toString("UTF-8");
@@ -150,6 +175,10 @@ public class UMLMessageBodyReaderWriterTest {
         assertTrue(umlXml.contains("<?xml"), "UML should be valid XML");
         assertTrue(umlXml.contains("uml:"), "UML should contain UML namespace");
         assertTrue(umlXml.contains("packagedElement"), "UML should contain packaged elements");
+
+        // And offers the model as a named download, like the ecore/XSD siblings do
+        assertEquals("attachment; filename=" + ePackage.getName() + ".uml",
+                httpHeaders.getFirst(HttpHeaders.CONTENT_DISPOSITION), "Content-Disposition should name the .uml file");
     }
 
     @Test
@@ -161,7 +190,7 @@ public class UMLMessageBodyReaderWriterTest {
         ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
         MediaType mediaType = MediaType.valueOf(MEDIA_TYPE);
 
-        writer.writeTo(ePackage, EPackage.class, EPackage.class, null, mediaType, null, outputStream);
+        writer.writeTo(ePackage, EPackage.class, EPackage.class, null, mediaType, new MultivaluedHashMap<>(), outputStream);
 
         // Then: Should produce valid UML XML
         String umlXml = outputStream.toString("UTF-8");
@@ -244,7 +273,7 @@ public class UMLMessageBodyReaderWriterTest {
         ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
         MediaType mediaType = MediaType.valueOf(MEDIA_TYPE);
 
-        writer.writeTo(originalPackage, EPackage.class, EPackage.class, null, mediaType, null, outputStream);
+        writer.writeTo(originalPackage, EPackage.class, EPackage.class, null, mediaType, new MultivaluedHashMap<>(), outputStream);
 
         String umlXml = outputStream.toString("UTF-8");
         InputStream inputStream = new ByteArrayInputStream(umlXml.getBytes("UTF-8"));
