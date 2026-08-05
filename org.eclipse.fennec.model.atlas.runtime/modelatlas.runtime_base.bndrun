@@ -194,25 +194,3 @@ slf4j.runpath:  \
 	org.yaml.snakeyaml;version='[2.2.0,2.2.1)';startlevel=1120,\
 	tools.jackson.core.jackson-core;version='[3.1.0,3.1.1)';startlevel=1121,\
 	tools.jackson.core.jackson-databind;version='[3.1.0,3.1.1)';startlevel=1122
--runrepos: \
-	Local,\
-	Temp,\
-	Central,\
-	DIM Nexus,\
-	EclipseMDT-UML2,\
-	Libraries,\
-	Eclipse DAANSE,\
-	Eclipse EMF Snapshot,\
-	Eclipse Fennec Codec - 0.1.0.202608032052-SNAPSHOT,\
-	Eclipse Fennec EMF Dependencies - 1.1.0.202608041013-SNAPSHOT,\
-	Fennec Common Models Dependencies,\
-	Eclipse Fennec M2X Dependencies - 0.1.0.202606040415-SNAPSHOT,\
-	Eclipse Fennec Persistence JPA - 0.1.0.202607231545-SNAPSHOT,\
-	Fennec QVT M2M - 0.1.0.SNAPSHOT,\
-	Gecko Libraries - 1.0.0.202607131138-SNAPSHOT,\
-	GeckoMessaging Dependencies - 1.1.1,\
-	Gecko Search,\
-	OSGi-Test Dependencies,\
-	OSGi Technology Jakarta REST,\
-	Workspace,\
-	Eclipse Fennec Util - 1.0.0.202608041248-SNAPSHOT
