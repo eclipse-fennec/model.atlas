@@ -150,10 +150,15 @@ public class ApicurioStorageHelper extends AbstractStorageHelper {
             String groupId = createGroupId(scope, registry, stage);
             URI objectUri = URI.createURI(constructApicurioURL(config.base_url(), groupId).concat("/")
                     .concat(objectPath).concat("/versions/").concat(latestVersion.getVersion()).concat("/content"));
-            ObjectMetadata eObj = (ObjectMetadata) sendGETRequest(objectUri,
-                    (EClass) resourceSet.getEObject(URI.createURI(latestVersion.getLabels().get("objectType")), false),
-                    "application/xmi");
-            return eObj;
+            String objectTypeUri = latestVersion.getLabels().get("objectType");
+            EObject metadataType = resourceSet.getEObject(URI.createURI(objectTypeUri), false);
+            if (!(metadataType instanceof EClass metadataEClass)) {
+                // Same guard as loadEObject: an unresolvable type would otherwise NPE
+                // inside sendGETRequest (or throw CCE for a non-EClass resolution).
+                throw new ModelUnavailableException(scope, stage, objectId,
+                        URI.createURI(objectTypeUri).trimFragment().toString(), null);
+            }
+            return (ObjectMetadata) sendGETRequest(objectUri, metadataEClass, "application/xmi");
         }
         return null;
 

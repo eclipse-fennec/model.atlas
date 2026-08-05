@@ -13,6 +13,7 @@
  */
 package org.eclipse.fennec.model.atlas.workflow.impl;
 
+import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.util.Base64;
 import java.util.List;
@@ -81,7 +82,7 @@ public class AtlasSchemaRegistryService implements RegistryService<EPackage> {
 	
 	public void unbindStaticEPackageRegistry(EPackage.Registry staticPackageRegistry) {
 		staticPackageRegistry.values().stream().filter(v -> v instanceof EPackage).map(v -> (EPackage) v).forEach(ePackage -> {
-			String objectId = new String(Base64.getUrlEncoder().encode(ePackage.getNsURI().getBytes()));
+			String objectId = encodeObjectId(ePackage);
 			registry.removeFromCache(objectId);
 			ePackageIndex.remove(objectId);
 		});
@@ -124,9 +125,7 @@ public class AtlasSchemaRegistryService implements RegistryService<EPackage> {
 	public EPackage getContentFromStage(String scope, String stage, String objectId) {
 		validateStage(stage);
 		if(staticPackageRegistry != null) {
-			byte[] decodedBytes = Base64.getUrlDecoder().decode(objectId);
-			String originalNsUri = new String(decodedBytes);
-			return staticPackageRegistry.getEPackage(originalNsUri);
+			return staticPackageRegistry.getEPackage(decodeNsUri(objectId));
 		}
 		return null;
 	}
@@ -297,7 +296,7 @@ public class AtlasSchemaRegistryService implements RegistryService<EPackage> {
 
 	private ObjectMetadata createMetadata(EPackage ePackage) {
 		ObjectMetadata metadata = ManagementFactory.eINSTANCE.createObjectMetadata();
-		metadata.setObjectId(new String(Base64.getUrlEncoder().encode(ePackage.getNsURI().getBytes())));
+		metadata.setObjectId(encodeObjectId(ePackage));
 		metadata.setObjectName(ePackage.getName());
 		metadata.setIsReadOnly(true);
 		metadata.setObjectType(EcoreUtil.getURI(ePackage.eClass()).toString());
@@ -334,11 +333,24 @@ public class AtlasSchemaRegistryService implements RegistryService<EPackage> {
 	@Override
 	public EPackage getContentFromFinalStage(String scope, String objectId) {
 		if(staticPackageRegistry != null) {
-			byte[] decodedBytes = Base64.getUrlDecoder().decode(objectId);
-			String originalNsUri = new String(decodedBytes);
-			return staticPackageRegistry.getEPackage(originalNsUri);
+			return staticPackageRegistry.getEPackage(decodeNsUri(objectId));
 		}
 		return null;
+	}
+
+	/**
+	 * Encodes the nsURI of the given package into its objectId. UTF-8 is fixed on
+	 * both sides so ids stay stable across platform default charsets.
+	 */
+	private static String encodeObjectId(EPackage ePackage) {
+		return Base64.getUrlEncoder().encodeToString(ePackage.getNsURI().getBytes(StandardCharsets.UTF_8));
+	}
+
+	/**
+	 * Reverse of {@link #encodeObjectId(EPackage)}.
+	 */
+	private static String decodeNsUri(String objectId) {
+		return new String(Base64.getUrlDecoder().decode(objectId), StandardCharsets.UTF_8);
 	}
 
 }
