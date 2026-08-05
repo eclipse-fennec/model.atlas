@@ -63,13 +63,16 @@ Resolved 36 · Partial 8 · Still open 78 (details per finding; fresh evidence f
 | F58 | ➖ n/a | Base64 objectId encoding removed from REST — but the same default-charset pattern now lives in workflow (new F133) |
 | F59 | still open | 204-with-entity ×6 |
 | F60 | ✅ resolved | unknown scope now 400 via ModelAtlasRequestFilter:123-129 |
-| F61–F63, F65–F67, F69, F70 | still open | debug endpoints, /schema substring, iterator().next(), Content-Disposition drift, javadoc, validation dup/srp — unchanged |
+| F61–F63, F66, F67, F69, F70 | still open | debug endpoints, /schema substring, iterator().next(), ResourceAttacherHelper javadoc, validation dup/srp — unchanged |
+| F65 | ✅ fixed 2026-08-05 | UML + JSON-schema writers now set Content-Disposition like their ecore/XSD siblings |
 | F64 | ✅ resolved | copy-serialize in try/finally (jsonschema got the same treatment) |
 | F68 | ✅ resolved | format strings fixed |
 | F71 | 🟡 partial | class-level exception contract documented; per-method docs + null-return contract still missing |
-| F72–F76 | still open | validation/datagen minors unchanged |
+| F72, F73 | ✅ fixed 2026-08-05 | ValidationHelper documented + final with private ctor; DataGenService#generate key contract corrected |
+| F74–F76 | still open | datagen minors unchanged |
 | F77 | ✅ resolved | stale codegen comment gone |
-| F78–F89 | still open | doc-provider, bootstrap, healthcheck, mediatypes, emf.common, client minors unchanged |
+| F78 | ⏸ deferred | constant-interface antipattern in model.documentation.provider — bundle untouched by agreement (see F7) |
+| F79–F89 | still open | doc-provider, bootstrap, healthcheck, mediatypes, emf.common, client minors unchanged |
 | F90 | ✅ resolved | finders call ensureCacheInitialized() |
 | F91 | ✅ fixed 2026-08-05 | commented registration blocks deleted earlier; the 319-line commented-out `StorageRegistryServiceImpl.java` is now deleted too (every line was `//`-commented; only doc/plan prose referenced it) |
 | F92–F95 | ✅ resolved | verified still present |
@@ -84,6 +87,7 @@ Resolved 36 · Partial 8 · Still open 78 (details per finding; fresh evidence f
 | F108 | 🟡 partial | 409 still never produced (ePackageUri now filter-validated) |
 | F109 | ✅ fixed 2026-08-05 | `/home/ilenia/tests/jpa/` replaced by the repo's env→prop→default chain (`JPA_WATCH_PATH`, defaulting under `base.path`) |
 | F110 | ✅ resolved | CONTRIBUTING points at SECURITY.md |
+| F117 | ➖ n/a | closed by the schema.registry removal (F9) |
 | F111 | ✅ fixed 2026-08-05 | README "Branches & releases" now states both outputs (Maven Central bundles under `org.eclipse.fennec.model.atlas` + the container images) and notes that test/config bundles stay local via `-maven-release: local` |
 | F112–F118 | still open | infos unchanged; F118: fingerprint got an API home, contentHash didn't |
 | F119, F120 | ✅ resolved | verified |
