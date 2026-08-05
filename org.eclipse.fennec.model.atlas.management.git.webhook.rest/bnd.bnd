@@ -1,0 +1,11 @@
+-library: enableEMF
+-buildpath: \
+	org.eclipse.fennec.model.atlas.management.git.webhook.model;version=snapshot,\
+	org.eclipse.fennec.model.atlas.management.git.github.webhook.model;version=snapshot,\
+	org.eclipse.fennec.model.atlas.management.git.gitlab.webhook.model;version=snapshot,\
+	org.eclipse.fennec.codec.rest;version=latest,\
+	jakarta.ws.rs-api;version=latest,\
+	org.osgi.service.typedevent;version=latest,\
+	org.osgi.service.component;version=latest,\
+	org.osgi.service.component.annotations;version=latest,\
+	org.osgi.service.jakartars;version=latest,\

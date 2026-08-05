@@ -157,8 +157,8 @@
       <genOperations ecoreOperation="management-api.ecore#//EObjectRegistryService/findByVersionPattern">
         <genParameters ecoreParameter="management-api.ecore#//EObjectRegistryService/findByVersionPattern/versionPattern"/>
       </genOperations>
-      <genOperations ecoreOperation="management-api.ecore#//EObjectRegistryService/findByFingerprint">
-        <genParameters ecoreParameter="management-api.ecore#//EObjectRegistryService/findByFingerprint/fingerprint"/>
+      <genOperations ecoreOperation="management-api.ecore#//EObjectRegistryService/findByGenerationTriggerFingerprint">
+        <genParameters ecoreParameter="management-api.ecore#//EObjectRegistryService/findByGenerationTriggerFingerprint/fingerprint"/>
       </genOperations>
       <genOperations ecoreOperation="management-api.ecore#//EObjectRegistryService/findByObjectType">
         <genParameters ecoreParameter="management-api.ecore#//EObjectRegistryService/findByObjectType/objectType"/>
@@ -197,6 +197,9 @@
         <genParameters ecoreParameter="management-api.ecore#//EObjectRegistryService/findByScopeRegistryStageAndName/registry"/>
         <genParameters ecoreParameter="management-api.ecore#//EObjectRegistryService/findByScopeRegistryStageAndName/stage"/>
         <genParameters ecoreParameter="management-api.ecore#//EObjectRegistryService/findByScopeRegistryStageAndName/name"/>
+      </genOperations>
+      <genOperations ecoreOperation="management-api.ecore#//EObjectRegistryService/findByFingerprint">
+        <genParameters ecoreParameter="management-api.ecore#//EObjectRegistryService/findByFingerprint/fingerprint"/>
       </genOperations>
     </genClasses>
     <genClasses image="false" ecoreClass="management-api.ecore#//StorageRegistry">

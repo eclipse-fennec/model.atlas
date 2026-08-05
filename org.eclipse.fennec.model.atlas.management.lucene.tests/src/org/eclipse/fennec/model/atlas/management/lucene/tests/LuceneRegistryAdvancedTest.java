@@ -115,6 +115,9 @@ public class LuceneRegistryAdvancedTest {
         assertThrows(NullPointerException.class, () -> registryService.findByFingerprint(null),
                 "findByFingerprint should reject null fingerprint");
 
+        assertThrows(NullPointerException.class, () -> registryService.findByGenerationTriggerFingerprint(null),
+                "findByGenerationTriggerFingerprint should reject null fingerprint");
+
         assertThrows(NullPointerException.class, () -> registryService.findByVersion(null),
                 "findByVersion should reject null version");
 
@@ -150,8 +153,11 @@ public class LuceneRegistryAdvancedTest {
         assertTrue(registryService.findByObjectName("NonExistentName").isEmpty(),
                 "Should return empty list for non-existent object name");
 
-        assertFalse(registryService.findByFingerprint("non-existent-fp").isPresent(),
-                "Should return empty Optional for non-existent fingerprint");
+        assertTrue(registryService.findByFingerprint("non-existent-fp").isEmpty(),
+                "Should return empty list for non-existent fingerprint");
+
+        assertFalse(registryService.findByGenerationTriggerFingerprint("non-existent-fp").isPresent(),
+                "Should return empty Optional for non-existent generation trigger fingerprint");
 
         assertTrue(registryService.findByVersion("999.999.999").isEmpty(),
                 "Should return empty list for non-existent version");
@@ -193,15 +199,21 @@ public class LuceneRegistryAdvancedTest {
         // Test special characters in search strings
         assertTrue(registryService.findByObjectName("").isEmpty(), "Should handle empty object name gracefully");
 
-        assertFalse(registryService.findByFingerprint("").isPresent(), "Should handle empty fingerprint gracefully");
+        assertTrue(registryService.findByFingerprint("").isEmpty(), "Should handle empty fingerprint gracefully");
+
+        assertFalse(registryService.findByGenerationTriggerFingerprint("").isPresent(),
+                "Should handle empty generation trigger fingerprint gracefully");
 
         // Test very long strings
         String veryLongString = "a".repeat(10000);
         assertTrue(registryService.findByObjectName(veryLongString).isEmpty(),
                 "Should handle very long object name gracefully");
 
-        assertFalse(registryService.findByFingerprint(veryLongString).isPresent(),
+        assertTrue(registryService.findByFingerprint(veryLongString).isEmpty(),
                 "Should handle very long fingerprint gracefully");
+
+        assertFalse(registryService.findByGenerationTriggerFingerprint(veryLongString).isPresent(),
+                "Should handle very long generation trigger fingerprint gracefully");
 
         // Service automatically cleaned up by annotation
     }

@@ -42,7 +42,7 @@ import org.osgi.annotation.versioning.ProviderType;
  * @generated
  */
 @ProviderType
-@EPackage(uri = ManagementPackage.eNS_URI, genModel = "/model/management.genmodel", genModelSourceLocations = {"model/management.genmodel","org.eclipse.fennec.model.atlas.management/model/management.genmodel"}, ecore = "/model/management.ecore", ecoreSourceLocations = "/model/management.ecore")
+@EPackage(uri = ManagementPackage.eNS_URI, fingerprint = "fp1:553dea3c2bd00c9c0d522680854badf35e29bd8f9229bc9157ab836b571a3f50", genModel = "/model/management.genmodel", genModelSourceLocations = {"model/management.genmodel","org.eclipse.fennec.model.atlas.management/model/management.genmodel"}, ecore = "/model/management.ecore", ecoreSourceLocations = "/model/management.ecore")
 public interface ManagementPackage extends org.eclipse.emf.ecore.EPackage {
 	/**
 	 * The package name.
@@ -312,13 +312,22 @@ public interface ManagementPackage extends org.eclipse.emf.ecore.EPackage {
 	int OBJECT_METADATA__REGISTRY = 24;
 
 	/**
+	 * The feature id for the '<em><b>Fingerprint</b></em>' attribute.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 * @ordered
+	 */
+	int OBJECT_METADATA__FINGERPRINT = 25;
+
+	/**
 	 * The number of structural features of the '<em>Object Metadata</em>' class.
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
 	 * @generated
 	 * @ordered
 	 */
-	int OBJECT_METADATA_FEATURE_COUNT = 25;
+	int OBJECT_METADATA_FEATURE_COUNT = 26;
 
 	/**
 	 * The number of operations of the '<em>Object Metadata</em>' class.
@@ -1025,6 +1034,17 @@ public interface ManagementPackage extends org.eclipse.emf.ecore.EPackage {
 	EAttribute getObjectMetadata_Registry();
 
 	/**
+	 * Returns the meta object for the attribute '{@link org.eclipse.fennec.model.atlas.mgmt.management.ObjectMetadata#getFingerprint <em>Fingerprint</em>}'.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @return the meta object for the attribute '<em>Fingerprint</em>'.
+	 * @see org.eclipse.fennec.model.atlas.mgmt.management.ObjectMetadata#getFingerprint()
+	 * @see #getObjectMetadata()
+	 * @generated
+	 */
+	EAttribute getObjectMetadata_Fingerprint();
+
+	/**
 	 * Returns the meta object for class '{@link java.util.Map.Entry <em>String To Object Map Entry</em>}'.
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
@@ -1650,6 +1670,14 @@ public interface ManagementPackage extends org.eclipse.emf.ecore.EPackage {
 		 * @generated
 		 */
 		EAttribute OBJECT_METADATA__REGISTRY = eINSTANCE.getObjectMetadata_Registry();
+
+		/**
+		 * The meta object literal for the '<em><b>Fingerprint</b></em>' attribute feature.
+		 * <!-- begin-user-doc -->
+		 * <!-- end-user-doc -->
+		 * @generated
+		 */
+		EAttribute OBJECT_METADATA__FINGERPRINT = eINSTANCE.getObjectMetadata_Fingerprint();
 
 		/**
 		 * The meta object literal for the '{@link org.eclipse.fennec.model.atlas.mgmt.management.impl.StringToObjectMapEntryImpl <em>String To Object Map Entry</em>}' class.

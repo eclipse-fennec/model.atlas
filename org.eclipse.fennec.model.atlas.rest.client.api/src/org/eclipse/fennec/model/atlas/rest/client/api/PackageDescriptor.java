@@ -31,5 +31,13 @@ package org.eclipse.fennec.model.atlas.rest.client.api;
  * @param stage   the stage the package lives in (may be {@code null})
  * @param version the model version, or {@code null} if the server did not report one
  */
-public record PackageDescriptor(String nsUri, String scope, String stage, String version) {
+public record PackageDescriptor(String nsUri, String scope, String stage, String version, String fingerprint) {
+
+	/**
+	 * Compatibility constructor for callers that do not know the fingerprint
+	 * (e.g. nsURI-only listings); {@link #fingerprint()} is {@code null}.
+	 */
+	public PackageDescriptor(String nsUri, String scope, String stage, String version) {
+		this(nsUri, scope, stage, version, null);
+	}
 }

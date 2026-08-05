@@ -27,6 +27,7 @@ import org.eclipse.emf.ecore.EObject;
 import org.eclipse.emf.ecore.resource.Resource;
 import org.eclipse.emf.ecore.resource.ResourceSet;
 import org.eclipse.emf.ecore.util.EcoreUtil;
+import org.eclipse.emf.ecore.xmi.PackageNotFoundException;
 import org.eclipse.fennec.model.atlas.mgmt.conversion.InstantConversionDelegateFactory;
 import org.eclipse.fennec.model.atlas.mgmt.management.ManagementPackage;
 import org.eclipse.fennec.model.atlas.mgmt.management.ObjectMetadata;
@@ -251,15 +252,60 @@ public abstract class AbstractStorageHelper implements AutoCloseable {
         }
 
         URI objectUri = createStorageURI(scope, registry, stage, objectPath);
-        ResourceOperation operation = loadResource(objectUri);
+        ResourceOperation operation;
         try {
-            if (operation.getResource().getContents().isEmpty()) {
+            operation = loadResource(objectUri);
+        } catch (RuntimeException e) {
+            // EMF wraps a load-time IOException (incl. PackageNotFoundException) in a
+            // WrappedException. When the instance references a package that is not registered,
+            // surface it as a clean, backend-neutral ModelUnavailableException rather than an
+            // opaque failure — every backend benefits (git schema removal, deleted .ecore, ...).
+            PackageNotFoundException pnf = findPackageNotFound(e);
+            if (pnf != null) {
+                throw new ModelUnavailableException(scope, stage, objectId, pnf.uri(), e);
+            }
+            throw e;
+        }
+        try {
+            Resource resource = operation.getResource();
+            // EMF may record the missing package as a resource error instead of throwing.
+            PackageNotFoundException pnf = findPackageNotFoundInErrors(resource);
+            if (pnf != null) {
+                throw new ModelUnavailableException(scope, stage, objectId, pnf.uri(), pnf);
+            }
+            if (resource.getContents().isEmpty()) {
                 return null;
             }
-            return operation.getResource().getContents().get(0);
+            return resource.getContents().get(0);
         } finally {
             operation.cleanup();
         }
+    }
+
+    /**
+     * Walks {@code t} and its cause chain for a {@link PackageNotFoundException}. EMF wraps load
+     * failures in a {@code WrappedException}, so the real cause is nested.
+     */
+    protected static PackageNotFoundException findPackageNotFound(Throwable t) {
+        for (Throwable c = t; c != null; c = c.getCause()) {
+            if (c instanceof PackageNotFoundException pnf) {
+                return pnf;
+            }
+        }
+        return null;
+    }
+
+    /** Scans a loaded resource's errors for a {@link PackageNotFoundException}. */
+    protected static PackageNotFoundException findPackageNotFoundInErrors(Resource resource) {
+        if (resource == null) {
+            return null;
+        }
+        for (Resource.Diagnostic d : resource.getErrors()) {
+            if (d instanceof PackageNotFoundException pnf) {
+                return pnf;
+            }
+        }
+        return null;
     }
 
     public List<ObjectMetadata> loadAllMetadata() throws IOException {

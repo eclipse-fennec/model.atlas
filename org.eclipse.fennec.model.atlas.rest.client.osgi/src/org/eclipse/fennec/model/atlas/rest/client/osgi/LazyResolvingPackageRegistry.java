@@ -212,7 +212,7 @@ final class LazyResolvingPackageRegistry extends ConcurrentHashMap<String, Objec
 		ResolvedEPackage rp = resolved.get();
 		// Stamp the authoritative origin the server reported (owning scope/stage/version),
 		// not a guess — the whole point of resolve() over ensureAvailable().
-		publication.publish(rp.getEPackage(), rp.getScope(), rp.getStage(), rp.getVersion()); // idempotent per nsURI
+		publication.publish(rp.getEPackage(), rp.getScope(), rp.getStage(), rp.getVersion(), rp.getFingerprint()); // idempotent per nsURI
 		if (waitUntilVisible(nsURI)) {
 			return primary.getEPackage(nsURI);
 		}

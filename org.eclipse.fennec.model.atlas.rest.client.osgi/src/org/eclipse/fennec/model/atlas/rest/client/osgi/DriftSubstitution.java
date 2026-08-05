@@ -15,9 +15,11 @@ package org.eclipse.fennec.model.atlas.rest.client.osgi;
 
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
+import java.util.function.Supplier;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -49,16 +51,26 @@ final class DriftSubstitution implements DriftListener {
 	private static final Logger LOGGER = Logger.getLogger(DriftSubstitution.class.getName());
 
 	private final Predicate<String> isPublished;
+	private final Supplier<Set<String>> publishedNsUris;
 	private final Function<String, Optional<ResolvedEPackage>> resolver;
 	private final PackagePublication republisher;
 	private final Consumer<String> unpublisher;
 
-	DriftSubstitution(Predicate<String> isPublished, Function<String, Optional<ResolvedEPackage>> resolver,
-			PackagePublication republisher, Consumer<String> unpublisher) {
+	DriftSubstitution(Predicate<String> isPublished, Supplier<Set<String>> publishedNsUris,
+			Function<String, Optional<ResolvedEPackage>> resolver, PackagePublication republisher,
+			Consumer<String> unpublisher) {
 		this.isPublished = Objects.requireNonNull(isPublished, "isPublished");
+		this.publishedNsUris = Objects.requireNonNull(publishedNsUris, "publishedNsUris");
 		this.resolver = Objects.requireNonNull(resolver, "resolver");
 		this.republisher = Objects.requireNonNull(republisher, "republisher");
 		this.unpublisher = Objects.requireNonNull(unpublisher, "unpublisher");
+	}
+
+	@Override
+	public Set<String> heldNsUris() {
+		// A published service can outlive its provider-cache entry (TTL / size
+		// eviction); reporting the published set keeps such packages drift-visible.
+		return publishedNsUris.get();
 	}
 
 	@Override
@@ -78,7 +90,7 @@ final class DriftSubstitution implements DriftListener {
 		}
 		if (resolved.isPresent()) {
 			ResolvedEPackage remote = resolved.get();
-			republisher.publish(remote.getEPackage(), remote.getScope(), remote.getStage(), remote.getVersion());
+			republisher.publish(remote.getEPackage(), remote.getScope(), remote.getStage(), remote.getVersion(), remote.getFingerprint());
 		} else {
 			// Changed-then-gone between the drift signal and our re-resolve.
 			unpublisher.accept(nsUri);

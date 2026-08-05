@@ -9,7 +9,7 @@
  * SPDX-License-Identifier: EPL-2.0
  * 
  * Contributors:
- *       Data In Motion - initial API and implementation
+ *     Data In Motion - initial API and implementation
  */
 package org.eclipse.fennec.model.atlas.datagen.model.datagen;
 
@@ -40,11 +40,11 @@ import org.osgi.annotation.versioning.ProviderType;
  * <!-- end-model-doc -->
  * @see org.eclipse.fennec.model.atlas.datagen.model.datagen.DatagenFactory
  * @model kind="package"
- *        annotation="http://www.eclipse.org/emf/2002/GenModel oSGiCompatible='true' basePackage='org.eclipse.fennec.model.atlas.datagen.model' copyrightText='Copyright (c) 2026 Contributors to the Eclipse Foundation.\n\nThis program and the accompanying materials are made\navailable under the terms of the Eclipse Public License 2.0\nwhich is available at https://www.eclipse.org/legal/epl-2.0/\n\nSPDX-License-Identifier: EPL-2.0\n\nContributors:\n  Data In Motion Consulting - initial implementation' resource='XMI' fileExtensions='datagen'"
+ *        annotation="http://www.eclipse.org/emf/2002/GenModel oSGiCompatible='true' basePackage='org.eclipse.fennec.model.atlas.datagen.model' copyrightText='Copyright (c) 2012 - 2026 Data In Motion and others.\nAll rights reserved.\n\nThis program and the accompanying materials are made\navailable under the terms of the Eclipse Public License 2.0\nwhich is available at https://www.eclipse.org/legal/epl-2.0/\n\nSPDX-License-Identifier: EPL-2.0\n\nContributors:\n    Data In Motion - initial API and implementation' resource='XMI' fileExtensions='datagen'"
  * @generated
  */
 @ProviderType
-@EPackage(uri = DatagenPackage.eNS_URI, genModel = "/model/datagen.genmodel", genModelSourceLocations = {"model/datagen.genmodel","org.eclipse.fennec.model.atlas.datagen.model/model/datagen.genmodel"}, ecore = "/model/datagen.ecore", ecoreSourceLocations = "/model/datagen.ecore")
+@EPackage(uri = DatagenPackage.eNS_URI, fingerprint = "fp1:3f736d82b3d843ed2692b619fe9436a106a278a40f01857f2110e469e4e3f43e", genModel = "/model/datagen.genmodel", genModelSourceLocations = {"model/datagen.genmodel","org.eclipse.fennec.model.atlas.datagen.model/model/datagen.genmodel"}, ecore = "/model/datagen.ecore", ecoreSourceLocations = "/model/datagen.ecore")
 public interface DatagenPackage extends org.eclipse.emf.ecore.EPackage {
 	/**
 	 * The package name.

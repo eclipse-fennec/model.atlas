@@ -78,6 +78,28 @@ public interface WritableScopeService<T extends EObject> extends ReadableScopeSe
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
 	 * <!-- begin-model-doc -->
+	 * Get object registrations whose metadata property under the given key equals the given value, from a certain stage and a certain registry. Resolution scans the stage listing's metadata properties (String properties only for now), so it works for all storage backends. Returns a List because property values are not unique in general — multiple objects in the same stage may share a value; callers relying on a per-property uniqueness invariant (e.g. the schema registry's nsUri property, unique per scope/registry/stage by the upload conflict check) can take the single element. Only if nothing matches in the own stage, the parents final stage of the same registry is inspected and any hits are marked read-only (shadowing semantics: own-scope matches win, results are never merged across scopes). Returns an empty list if no object matches.
+	 * <!-- end-model-doc -->
+	 * @model dataType="org.eclipse.fennec.model.atlas.mgmt.management.List&lt;org.eclipse.fennec.model.atlas.mgmt.management.ObjectMetadata&gt;" many="false" keyRequired="true" valueRequired="true"
+	 * @generated
+	 */
+	List<ObjectMetadata> getMetadataByPropertyFromStageForRegistry(String registry, String stage, String key, String value);
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * <!-- begin-model-doc -->
+	 * Get object registrations whose metadata property under the given key equals the given value, from the final stage of a workflow and the specified registry. Resolution scans the stage listing's metadata properties (String properties only for now), so it works for all storage backends. Returns a List because property values are not unique in general — multiple objects in the same stage may share a value; callers relying on a per-property uniqueness invariant (e.g. the schema registry's nsUri property, unique per scope/registry/stage by the upload conflict check) can take the single element. Only if nothing matches in the own final stage, the parents final stage of the same registry is inspected and any hits are marked read-only (shadowing semantics: own-scope matches win, results are never merged across scopes). Returns an empty list if no object matches.
+	 * <!-- end-model-doc -->
+	 * @model dataType="org.eclipse.fennec.model.atlas.mgmt.management.List&lt;org.eclipse.fennec.model.atlas.mgmt.management.ObjectMetadata&gt;" many="false" keyRequired="true" valueRequired="true"
+	 * @generated
+	 */
+	List<ObjectMetadata> getMetadataByPropertyFromFinalStageForRegistry(String registry, String key, String value);
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * <!-- begin-model-doc -->
 	 * Get the actual EObject content by ID for a certain stage and registry. If nothing is found, the parents final stage of the same registry are also inspected.
 	 * <!-- end-model-doc -->
 	 * @model objectIdRequired="true"

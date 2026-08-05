@@ -434,8 +434,8 @@ public class BasicEObjectRegistryServiceTest {
     }
 
     @Test
-    public void testFindByFingerprint() {
-        // Create test objects with fingerprints
+    public void testFindByGenerationTriggerFingerprint() {
+        // Create test objects with generation trigger fingerprints
         ObjectMetadata metadata1 = createTestMetadata("fp1", "Package1", "1.0.0", ObjectStatus.DRAFT);
         metadata1.setGenerationTriggerFingerprint("fingerprint1234567890abcdef");
 
@@ -451,26 +451,26 @@ public class BasicEObjectRegistryServiceTest {
         registryService.updateCache(metadata3);
 
         // Test successful fingerprint lookup
-        Optional<ObjectMetadata> result1 = registryService.findByFingerprint("fingerprint1234567890abcdef");
+        Optional<ObjectMetadata> result1 = registryService.findByGenerationTriggerFingerprint("fingerprint1234567890abcdef");
         assertTrue(result1.isPresent());
         assertEquals("fp1", result1.get().getObjectId());
         assertEquals("Package1", result1.get().getObjectName());
 
-        Optional<ObjectMetadata> result2 = registryService.findByFingerprint("fingerprintxyz9876543210");
+        Optional<ObjectMetadata> result2 = registryService.findByGenerationTriggerFingerprint("fingerprintxyz9876543210");
         assertTrue(result2.isPresent());
         assertEquals("fp2", result2.get().getObjectId());
         assertEquals("Package2", result2.get().getObjectName());
 
         // Test non-existent fingerprint
-        Optional<ObjectMetadata> notFound = registryService.findByFingerprint("nonexistentfingerprint");
+        Optional<ObjectMetadata> notFound = registryService.findByGenerationTriggerFingerprint("nonexistentfingerprint");
         assertFalse(notFound.isPresent());
 
         // Test null input
-        assertThrows(NullPointerException.class, () -> registryService.findByFingerprint(null));
+        assertThrows(NullPointerException.class, () -> registryService.findByGenerationTriggerFingerprint(null));
     }
 
     @Test
-    public void testFingerprintIndexManagement() {
+    public void testGenerationTriggerFingerprintIndexManagement() {
         // Create object with fingerprint
         ObjectMetadata metadata = createTestMetadata("test-fp", "TestPackage", "1.0.0", ObjectStatus.DRAFT);
         metadata.setGenerationTriggerFingerprint("testfingerprint123");
@@ -479,7 +479,7 @@ public class BasicEObjectRegistryServiceTest {
         registryService.updateCache(metadata);
 
         // Verify it can be found by fingerprint
-        Optional<ObjectMetadata> found = registryService.findByFingerprint("testfingerprint123");
+        Optional<ObjectMetadata> found = registryService.findByGenerationTriggerFingerprint("testfingerprint123");
         assertTrue(found.isPresent());
         assertEquals("test-fp", found.get().getObjectId());
 
@@ -489,11 +489,11 @@ public class BasicEObjectRegistryServiceTest {
         registryService.updateCache(updatedMetadata);
 
         // Old fingerprint should not be found
-        Optional<ObjectMetadata> oldNotFound = registryService.findByFingerprint("testfingerprint123");
+        Optional<ObjectMetadata> oldNotFound = registryService.findByGenerationTriggerFingerprint("testfingerprint123");
         assertFalse(oldNotFound.isPresent());
 
         // New fingerprint should be found
-        Optional<ObjectMetadata> newFound = registryService.findByFingerprint("newfingerprint456");
+        Optional<ObjectMetadata> newFound = registryService.findByGenerationTriggerFingerprint("newfingerprint456");
         assertTrue(newFound.isPresent());
         assertEquals("test-fp", newFound.get().getObjectId());
 
@@ -501,8 +501,82 @@ public class BasicEObjectRegistryServiceTest {
         registryService.removeFromCache("test-fp");
 
         // Fingerprint should no longer be found
-        Optional<ObjectMetadata> removedNotFound = registryService.findByFingerprint("newfingerprint456");
+        Optional<ObjectMetadata> removedNotFound = registryService.findByGenerationTriggerFingerprint("newfingerprint456");
         assertFalse(removedNotFound.isPresent());
+    }
+
+    @Test
+    public void testFindByFingerprint() {
+        // The model fingerprint identifies a content version, not an object: the same
+        // EPackage content in two stages (e.g. two git branches) yields two metadata
+        // entries sharing one fingerprint — findByFingerprint therefore returns a List.
+        String sharedFingerprint = "fp1:14466a0b5de879a6c3d2e1f0a9b8c7d6e5f4a3b2c1d0e9f8a7b6c5d4e3f2a1b0";
+
+        ObjectMetadata draftEntry = createTestMetadata("pkg-draft", "SensorPackage", "1.0.0", ObjectStatus.DRAFT);
+        draftEntry.setFingerprint(sharedFingerprint);
+
+        ObjectMetadata releaseEntry = createTestMetadata("pkg-release", "SensorPackage", "1.0.0", ObjectStatus.APPROVED);
+        releaseEntry.setFingerprint(sharedFingerprint);
+
+        ObjectMetadata otherEntry = createTestMetadata("pkg-other", "OtherPackage", "2.0.0", ObjectStatus.DRAFT);
+        otherEntry.setFingerprint("fp1:aaaa0b5de879a6c3d2e1f0a9b8c7d6e5f4a3b2c1d0e9f8a7b6c5d4e3f2a1cccc");
+
+        registryService.updateCache(draftEntry);
+        registryService.updateCache(releaseEntry);
+        registryService.updateCache(otherEntry);
+
+        // Shared fingerprint returns BOTH entries
+        List<ObjectMetadata> shared = registryService.findByFingerprint(sharedFingerprint);
+        assertEquals(2, shared.size());
+        assertTrue(shared.stream().map(ObjectMetadata::getObjectId).toList()
+                .containsAll(List.of("pkg-draft", "pkg-release")));
+
+        // Distinct fingerprint returns exactly one
+        List<ObjectMetadata> single = registryService
+                .findByFingerprint("fp1:aaaa0b5de879a6c3d2e1f0a9b8c7d6e5f4a3b2c1d0e9f8a7b6c5d4e3f2a1cccc");
+        assertEquals(1, single.size());
+        assertEquals("pkg-other", single.get(0).getObjectId());
+
+        // Unknown fingerprint returns an empty list, not null
+        assertTrue(registryService.findByFingerprint("fp1:0000000000000000000000000000000000000000000000000000000000000000")
+                .isEmpty());
+
+        // Null input rejected
+        assertThrows(NullPointerException.class, () -> registryService.findByFingerprint(null));
+    }
+
+    @Test
+    public void testFingerprintIndexManagement() {
+        // Two entries share one fingerprint (same content in two stages)
+        String sharedFingerprint = "fp1:14466a0b5de879a6c3d2e1f0a9b8c7d6e5f4a3b2c1d0e9f8a7b6c5d4e3f2a1b0";
+
+        ObjectMetadata draftEntry = createTestMetadata("pkg-draft", "SensorPackage", "1.0.0", ObjectStatus.DRAFT);
+        draftEntry.setFingerprint(sharedFingerprint);
+        ObjectMetadata releaseEntry = createTestMetadata("pkg-release", "SensorPackage", "1.0.0", ObjectStatus.APPROVED);
+        releaseEntry.setFingerprint(sharedFingerprint);
+
+        registryService.updateCache(draftEntry);
+        registryService.updateCache(releaseEntry);
+        assertEquals(2, registryService.findByFingerprint(sharedFingerprint).size());
+
+        // Removing ONE entry must not evict the sibling sharing the fingerprint
+        registryService.removeFromCache("pkg-draft");
+        List<ObjectMetadata> remaining = registryService.findByFingerprint(sharedFingerprint);
+        assertEquals(1, remaining.size());
+        assertEquals("pkg-release", remaining.get(0).getObjectId());
+
+        // Updating an entry to a new fingerprint moves it between index buckets
+        ObjectMetadata updatedRelease = createTestMetadata("pkg-release", "SensorPackage", "1.0.1", ObjectStatus.APPROVED);
+        updatedRelease.setFingerprint("fp1:bbbb0b5de879a6c3d2e1f0a9b8c7d6e5f4a3b2c1d0e9f8a7b6c5d4e3f2a1dddd");
+        registryService.updateCache(updatedRelease);
+        assertTrue(registryService.findByFingerprint(sharedFingerprint).isEmpty());
+        assertEquals(1, registryService
+                .findByFingerprint("fp1:bbbb0b5de879a6c3d2e1f0a9b8c7d6e5f4a3b2c1d0e9f8a7b6c5d4e3f2a1dddd").size());
+
+        // Removing the last holder empties the bucket
+        registryService.removeFromCache("pkg-release");
+        assertTrue(registryService
+                .findByFingerprint("fp1:bbbb0b5de879a6c3d2e1f0a9b8c7d6e5f4a3b2c1d0e9f8a7b6c5d4e3f2a1dddd").isEmpty());
     }
 
     @Test

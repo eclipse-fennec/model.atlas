@@ -21,6 +21,10 @@ subprojects {
     // Allow gradle to enable JUnit support in submodules
     test {
         useJUnitPlatform()
+        // Some bundles (e.g. mediatypes.impl) carry test sources that only run
+        // as OSGi integration tests via testOSGi; Gradle 9 fails the plain
+        // `test` task by default when it discovers no tests.
+        failOnNoDiscoveredTests = false
     }
     
        // Add JUnit dependencies for modules that have Gradle tests
@@ -30,7 +34,18 @@ subprojects {
         testImplementation 'org.mockito:mockito-junit-jupiter:4.11.0'
         testImplementation 'org.assertj:assertj-core:3.27.4'
     }
-    
+
+    // The git webhook REST unit tests exercise resource/filter code that builds
+    // jakarta.ws.rs Response objects, which need a JAX-RS RuntimeDelegate on the
+    // classpath. jersey-common (already the runtime's JAX-RS provider, v3.1.3)
+    // supplies one via ServiceLoader. Test-scoped only — it is not a
+    // compile/runtime dependency of the bundle itself.
+    if (name == 'org.eclipse.fennec.model.atlas.management.git.webhook.rest') {
+        dependencies {
+            testImplementation 'org.glassfish.jersey.core:jersey-common:3.1.3'
+        }
+    }
+
 }
 
 // Sonar setup

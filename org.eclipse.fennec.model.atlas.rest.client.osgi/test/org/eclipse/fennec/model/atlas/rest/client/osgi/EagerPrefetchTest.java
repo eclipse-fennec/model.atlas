@@ -56,7 +56,8 @@ class EagerPrefetchTest {
 		final List<Published> calls = new ArrayList<>();
 
 		@Override
-		public boolean publish(EPackage ePackage, String scope, String stage, String version) {
+		public boolean publish(EPackage ePackage, String scope, String stage, String version,
+				String serverFingerprint) {
 			calls.add(new Published(ePackage.getNsURI(), scope, stage, version));
 			return true;
 		}

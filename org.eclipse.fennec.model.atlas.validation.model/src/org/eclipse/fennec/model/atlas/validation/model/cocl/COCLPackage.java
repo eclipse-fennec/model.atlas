@@ -43,7 +43,7 @@ import org.osgi.annotation.versioning.ProviderType;
  * @generated
  */
 @ProviderType
-@EPackage(uri = COCLPackage.eNS_URI, genModel = "/model/cocl.genmodel", genModelSourceLocations = {"model/cocl.genmodel","org.eclipse.fennec.model.atlas.validation.model/model/cocl.genmodel"}, ecore = "/model/cocl.ecore", ecoreSourceLocations = "/model/cocl.ecore")
+@EPackage(uri = COCLPackage.eNS_URI, fingerprint = "fp1:3349b64043aa15b20d6922e8f2c981d35c98c1e7ef66794a59bbf2d5a81082f3", genModel = "/model/cocl.genmodel", genModelSourceLocations = {"model/cocl.genmodel","org.eclipse.fennec.model.atlas.validation.model/model/cocl.genmodel"}, ecore = "/model/cocl.ecore", ecoreSourceLocations = "/model/cocl.ecore")
 public interface COCLPackage extends org.eclipse.emf.ecore.EPackage {
 	/**
 	 * The package name.

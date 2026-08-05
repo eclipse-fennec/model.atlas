@@ -32,6 +32,14 @@ import org.eclipse.fennec.model.atlas.mgmt.management.ManagementPackage;
  */
 public class ManagementEPackageConfigurator implements EPackageConfigurator {
 	
+	/**
+	 * The fingerprint of this model version, computed from the <code>.ecore</code> at build
+	 * time. It identifies the model content, not the artifact - see the <code>emf.fingerprint</code>
+	 * service property.
+	 * @generated
+	 */
+	public static final String FINGERPRINT = "fp1:553dea3c2bd00c9c0d522680854badf35e29bd8f9229bc9157ab836b571a3f50";
+
 	private ManagementPackage ePackage;
 
 	protected ManagementEPackageConfigurator(ManagementPackage ePackage){
@@ -69,6 +77,7 @@ public class ManagementEPackageConfigurator implements EPackageConfigurator {
 		properties.put(EMFNamespaces.EMF_MODEL_REGISTRATION, EMFNamespaces.MODEL_REGISTRATION_PROVIDED);
 		properties.put(EMFNamespaces.EMF_MODEL_FILE_EXT, "management");
 		properties.put(EMFNamespaces.EMF_MODEL_VERSION, "1.0");
+		properties.put(EMFNamespaces.EMF_MODEL_FINGERPRINT, FINGERPRINT);
 		return properties;
 	}
 }

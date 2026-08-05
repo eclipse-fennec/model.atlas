@@ -472,6 +472,16 @@ public class ManagementPackageImpl extends EPackageImpl implements ManagementPac
 	 * @generated
 	 */
 	@Override
+	public EAttribute getObjectMetadata_Fingerprint() {
+		return (EAttribute)objectMetadataEClass.getEStructuralFeatures().get(25);
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
 	public EClass getStringToObjectMapEntry() {
 		return stringToObjectMapEntryEClass;
 	}
@@ -881,6 +891,7 @@ public class ManagementPackageImpl extends EPackageImpl implements ManagementPac
 		createEAttribute(objectMetadataEClass, OBJECT_METADATA__SCOPE);
 		createEAttribute(objectMetadataEClass, OBJECT_METADATA__IS_READ_ONLY);
 		createEAttribute(objectMetadataEClass, OBJECT_METADATA__REGISTRY);
+		createEAttribute(objectMetadataEClass, OBJECT_METADATA__FINGERPRINT);
 
 		stringToObjectMapEntryEClass = createEClass(STRING_TO_OBJECT_MAP_ENTRY);
 		createEAttribute(stringToObjectMapEntryEClass, STRING_TO_OBJECT_MAP_ENTRY__KEY);
@@ -986,6 +997,7 @@ public class ManagementPackageImpl extends EPackageImpl implements ManagementPac
 		initEAttribute(getObjectMetadata_Scope(), ecorePackage.getEString(), "scope", null, 1, 1, ObjectMetadata.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_UNSETTABLE, !IS_ID, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
 		initEAttribute(getObjectMetadata_IsReadOnly(), ecorePackage.getEBoolean(), "isReadOnly", null, 0, 1, ObjectMetadata.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_UNSETTABLE, !IS_ID, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
 		initEAttribute(getObjectMetadata_Registry(), ecorePackage.getEString(), "registry", null, 1, 1, ObjectMetadata.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_UNSETTABLE, !IS_ID, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
+		initEAttribute(getObjectMetadata_Fingerprint(), ecorePackage.getEString(), "fingerprint", null, 0, 1, ObjectMetadata.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_UNSETTABLE, !IS_ID, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
 
 		initEClass(stringToObjectMapEntryEClass, Map.Entry.class, "StringToObjectMapEntry", !IS_ABSTRACT, !IS_INTERFACE, !IS_GENERATED_INSTANCE_CLASS);
 		initEAttribute(getStringToObjectMapEntry_Key(), ecorePackage.getEString(), "key", null, 1, 1, Map.Entry.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_UNSETTABLE, !IS_ID, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
@@ -1238,6 +1250,12 @@ public class ManagementPackageImpl extends EPackageImpl implements ManagementPac
 		   source,
 		   new String[] {
 			   "documentation", "The registry to which this metadata belongs (e.g. schema, configuration, script, etc.)"
+		   });
+		addAnnotation
+		  (getObjectMetadata_Fingerprint(),
+		   source,
+		   new String[] {
+			   "documentation", "Content-derived model fingerprint (`emf.fingerprint` format, scheme-prefixed \ne.g. `fp1:<digest>`). Set for EPackage objects; computed server-side, never \ntaken from the client.\nDistinct from contentHash, which hashes the stored XMI bytes."
 		   });
 		addAnnotation
 		  (stringToObjectMapEntryEClass,

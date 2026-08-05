@@ -1,4 +1,4 @@
-/*
+/**
  * Copyright (c) 2012 - 2026 Data In Motion and others.
  * All rights reserved.
  *
@@ -9,7 +9,7 @@
  * SPDX-License-Identifier: EPL-2.0
  *
  * Contributors:
- *      Data In Motion - initial API and implementation
+ *     Data In Motion - initial API and implementation
  */
 package org.eclipse.fennec.model.atlas.datagen.rest;
 

@@ -101,6 +101,13 @@ public class AtlasDelegatingPackageRegistry extends ConcurrentHashMap<String, Ob
 	// ---- DriftListener: evict so the next look-up re-fetches --------------
 
 	@Override
+	public java.util.Set<String> heldNsUris() {
+		// Our own entries can outlive the provider cache (TTL / size eviction), so
+		// the drift watcher must know we still hold them.
+		return keySet();
+	}
+
+	@Override
 	public void onPackageChanged(String nsUri, EPackage newPackage) {
 		remove(nsUri);
 	}

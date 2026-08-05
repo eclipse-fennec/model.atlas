@@ -611,11 +611,10 @@ public class LuceneEObjectRegistryService<T extends EObject> implements EObjectR
     }
 
     @Override
-    public Optional<ObjectMetadata> findByFingerprint(String fingerprint) {
+    public List<ObjectMetadata> findByFingerprint(String fingerprint) {
         requireNonNull(fingerprint, "Fingerprint cannot be null");
 
-        return metadataCache.values().stream()
-                .filter(metadata -> fingerprint.equals(metadata.getGenerationTriggerFingerprint())).findFirst();
+        return metadataCache.values().stream().filter(metadata -> fingerprint.equals(metadata.getFingerprint())).toList();
     }
 
     @Override
@@ -802,5 +801,17 @@ public class LuceneEObjectRegistryService<T extends EObject> implements EObjectR
         }
 
     }
+
+	/* 
+	 * (non-Javadoc)
+	 * @see org.eclipse.fennec.model.atlas.mgmt.api.EObjectRegistryService#findByGenerationTriggerFingerprint(java.lang.String)
+	 */
+	@Override
+	public Optional<ObjectMetadata> findByGenerationTriggerFingerprint(String fingerprint) {
+		requireNonNull(fingerprint, "Fingerprint cannot be null");
+
+        return metadataCache.values().stream()
+                .filter(metadata -> fingerprint.equals(metadata.getGenerationTriggerFingerprint())).findFirst();
+	}
 
 }

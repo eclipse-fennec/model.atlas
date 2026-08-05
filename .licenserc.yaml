@@ -61,6 +61,8 @@ header:
     - '.github/**'
     - '.gitignore'
     - 'cnf/release/**.*'
+    - 'cnf/cache/**'
+    - '**/generated/**'
     - 'docker/**/*'
     - '.gradle-wrapper/gradle-wrapper.properties'
     - '.licenserc.yaml'

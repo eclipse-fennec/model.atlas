@@ -9,7 +9,7 @@
  * SPDX-License-Identifier: EPL-2.0
  * 
  * Contributors:
- *       Data In Motion - initial API and implementation
+ *     Data In Motion - initial API and implementation
  */
 package org.eclipse.fennec.model.atlas.datagen.example.model.dge.util;
 

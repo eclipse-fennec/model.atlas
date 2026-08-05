@@ -90,7 +90,8 @@ class LazyResolvingPackageRegistryTest {
 		}
 
 		@Override
-		public boolean publish(EPackage ePackage, String scope, String stage, String version) {
+		public boolean publish(EPackage ePackage, String scope, String stage, String version,
+				String serverFingerprint) {
 			publishCount.incrementAndGet();
 			lastScope = scope;
 			lastStage = stage;

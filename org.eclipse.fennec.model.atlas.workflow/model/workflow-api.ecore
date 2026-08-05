@@ -341,6 +341,29 @@
       <eParameters name="registry" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
       <eParameters name="objectId" lowerBound="1" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
     </eOperations>
+    <eOperations name="getMetadataByPropertyFromStageForRegistry">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="Get object registrations whose metadata property under the given key equals the given value, from a certain stage and a certain registry. Resolution scans the stage listing's metadata properties (String properties only for now), so it works for all storage backends. Returns a List because property values are not unique in general — multiple objects in the same stage may share a value; callers relying on a per-property uniqueness invariant (e.g. the schema registry's nsUri property, unique per scope/registry/stage by the upload conflict check) can take the single element. Only if nothing matches in the own stage, the parents final stage of the same registry is inspected and any hits are marked read-only (shadowing semantics: own-scope matches win, results are never merged across scopes). Returns an empty list if no object matches."/>
+      </eAnnotations>
+      <eGenericType eClassifier="ecore:EDataType ../../org.eclipse.fennec.model.atlas.management/model/management.ecore#//List">
+        <eTypeArguments eClassifier="ecore:EClass ../../org.eclipse.fennec.model.atlas.management/model/management.ecore#//ObjectMetadata"/>
+      </eGenericType>
+      <eParameters name="registry" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+      <eParameters name="stage" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+      <eParameters name="key" lowerBound="1" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+      <eParameters name="value" lowerBound="1" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    </eOperations>
+    <eOperations name="getMetadataByPropertyFromFinalStageForRegistry">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="Get object registrations whose metadata property under the given key equals the given value, from the final stage of a workflow and the specified registry. Resolution scans the stage listing's metadata properties (String properties only for now), so it works for all storage backends. Returns a List because property values are not unique in general — multiple objects in the same stage may share a value; callers relying on a per-property uniqueness invariant (e.g. the schema registry's nsUri property, unique per scope/registry/stage by the upload conflict check) can take the single element. Only if nothing matches in the own final stage, the parents final stage of the same registry is inspected and any hits are marked read-only (shadowing semantics: own-scope matches win, results are never merged across scopes). Returns an empty list if no object matches."/>
+      </eAnnotations>
+      <eGenericType eClassifier="ecore:EDataType ../../org.eclipse.fennec.model.atlas.management/model/management.ecore#//List">
+        <eTypeArguments eClassifier="ecore:EClass ../../org.eclipse.fennec.model.atlas.management/model/management.ecore#//ObjectMetadata"/>
+      </eGenericType>
+      <eParameters name="registry" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+      <eParameters name="key" lowerBound="1" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+      <eParameters name="value" lowerBound="1" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    </eOperations>
     <eOperations name="getContentFromStageForRegistry">
       <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
         <details key="documentation" value="Get the actual EObject content by ID for a certain stage and registry. If nothing is found, the parents final stage of the same registry are also inspected."/>

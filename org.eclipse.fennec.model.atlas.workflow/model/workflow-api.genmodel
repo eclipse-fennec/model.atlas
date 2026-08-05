@@ -179,6 +179,17 @@
         <genParameters ecoreParameter="workflow-api.ecore#//WritableScopeService/getMetadataFromFinalStageForRegistry/registry"/>
         <genParameters ecoreParameter="workflow-api.ecore#//WritableScopeService/getMetadataFromFinalStageForRegistry/objectId"/>
       </genOperations>
+      <genOperations ecoreOperation="workflow-api.ecore#//WritableScopeService/getMetadataByPropertyFromStageForRegistry">
+        <genParameters ecoreParameter="workflow-api.ecore#//WritableScopeService/getMetadataByPropertyFromStageForRegistry/registry"/>
+        <genParameters ecoreParameter="workflow-api.ecore#//WritableScopeService/getMetadataByPropertyFromStageForRegistry/stage"/>
+        <genParameters ecoreParameter="workflow-api.ecore#//WritableScopeService/getMetadataByPropertyFromStageForRegistry/key"/>
+        <genParameters ecoreParameter="workflow-api.ecore#//WritableScopeService/getMetadataByPropertyFromStageForRegistry/value"/>
+      </genOperations>
+      <genOperations ecoreOperation="workflow-api.ecore#//WritableScopeService/getMetadataByPropertyFromFinalStageForRegistry">
+        <genParameters ecoreParameter="workflow-api.ecore#//WritableScopeService/getMetadataByPropertyFromFinalStageForRegistry/registry"/>
+        <genParameters ecoreParameter="workflow-api.ecore#//WritableScopeService/getMetadataByPropertyFromFinalStageForRegistry/key"/>
+        <genParameters ecoreParameter="workflow-api.ecore#//WritableScopeService/getMetadataByPropertyFromFinalStageForRegistry/value"/>
+      </genOperations>
       <genOperations ecoreOperation="workflow-api.ecore#//WritableScopeService/getContentFromStageForRegistry">
         <genParameters ecoreParameter="workflow-api.ecore#//WritableScopeService/getContentFromStageForRegistry/registry"/>
         <genParameters ecoreParameter="workflow-api.ecore#//WritableScopeService/getContentFromStageForRegistry/stage"/>

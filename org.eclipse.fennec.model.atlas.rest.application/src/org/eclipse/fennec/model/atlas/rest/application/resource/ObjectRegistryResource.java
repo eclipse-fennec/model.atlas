@@ -23,6 +23,8 @@ import org.eclipse.fennec.model.atlas.mgmt.management.ManagementFactory;
 import org.eclipse.fennec.model.atlas.mgmt.management.ObjectMetadata;
 import org.eclipse.fennec.model.atlas.mgmt.management.ObjectMetadataContainer;
 import org.eclipse.fennec.model.atlas.mgmt.storage.AbstractEObjectStorageService;
+import org.eclipse.fennec.model.atlas.mgmt.storage.ModelUnavailableException;
+import org.eclipse.fennec.model.atlas.rest.application.exception.ModelUnavailableExceptionMapper;
 import org.eclipse.fennec.model.atlas.rest.application.filter.ObjectMetadataResponseFilter;
 import org.eclipse.fennec.model.atlas.rest.common.ModelAtlasRestConstants;
 import org.eclipse.fennec.model.atlas.rest.model.StageTransitionRequest;
@@ -395,6 +397,13 @@ public class ObjectRegistryResource {
         } catch (IllegalArgumentException e) {
             return Response.status(Response.Status.BAD_REQUEST).entity(e.getMessage()).build();
         } catch (Exception e) {
+            // The instance's backing model may have been removed (e.g. a git branch push) — the
+            // storage read surfaces that as a (wrapped) ModelUnavailableException. Map it to 409
+            // Conflict rather than an opaque 500.
+            ModelUnavailableException mue = ModelUnavailableExceptionMapper.findInChain(e);
+            if (mue != null) {
+                return ModelUnavailableExceptionMapper.conflict(mue);
+            }
             return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity(e.getMessage()).build();
         }
     }
@@ -442,6 +451,13 @@ public class ObjectRegistryResource {
         } catch (IllegalArgumentException e) {
             return Response.status(Response.Status.BAD_REQUEST).entity(e.getMessage()).build();
         } catch (Exception e) {
+            // The instance's backing model may have been removed (e.g. a git branch push) — the
+            // storage read surfaces that as a (wrapped) ModelUnavailableException. Map it to 409
+            // Conflict rather than an opaque 500.
+            ModelUnavailableException mue = ModelUnavailableExceptionMapper.findInChain(e);
+            if (mue != null) {
+                return ModelUnavailableExceptionMapper.conflict(mue);
+            }
             return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity(e.getMessage()).build();
         }
     }

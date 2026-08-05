@@ -96,6 +96,10 @@ All bundles use the `org.eclipse.fennec.model.atlas` prefix. Key groupings:
 | **Health** | `.healthcheck` | Felix Health Checks (liveness/readiness) |
 | **Docs** | `.model.documentation.provider` | Model documentation generation |
 
+### Bundle Conventions
+
+- All test bundles (`*.tests`, `.tests.common`) and config bundles (`*config*`) must set `-maven-release: local` in their `bnd.bnd` so they are only installed to the local Maven repository and never published to Maven Central. Apply this to any newly created test/config bundle.
+
 ## Key Configuration Files
 
 - `cnf/build.bnd` - OSGi workspace config: library definitions (fennec, gecko, EMF), Maven Central repos, Java 21

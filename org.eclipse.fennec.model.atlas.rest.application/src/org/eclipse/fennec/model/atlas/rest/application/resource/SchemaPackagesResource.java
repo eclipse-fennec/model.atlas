@@ -13,15 +13,15 @@
  */
 package org.eclipse.fennec.model.atlas.rest.application.resource;
 
-import java.io.UnsupportedEncodingException;
-import java.time.Instant;
+import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
-import java.util.Base64;
+import java.time.Instant;
 import java.util.LinkedHashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import java.util.UUID;
 
 import org.eclipse.emf.common.util.URI;
 import org.eclipse.emf.ecore.EObject;
@@ -42,6 +42,7 @@ import org.eclipse.fennec.model.atlas.wf.workflowapi.Scope;
 import org.eclipse.fennec.model.atlas.rest.application.filter.ObjectMetadataResponseFilter;
 import org.eclipse.fennec.model.atlas.wf.workflowapi.ScopeService;
 import org.eclipse.fennec.model.atlas.workflow.ScopeServiceCollector;
+import org.eclipse.fennec.model.atlas.workflow.WorkflowConstants;
 import org.osgi.framework.Version;
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
@@ -180,8 +181,7 @@ public class SchemaPackagesResource {
             if (nsUri != null) {
                 // Stage-free final-stage metadata for one package (hierarchy-aware), mirroring the
                 // stage-explicit listing's nsUri branch — used by the client's resolve() (P5-7).
-                String encodedUri = encodePackageNsURI(nsUri);
-                ObjectMetadata metadata = scopeService.getMetadataFromFinalStageForRegistry(REGISTRY_NAME, encodedUri);
+                ObjectMetadata metadata = findByNsUriInFinalStage(scopeService, nsUri);
                 if (metadata == null) {
                     return Response.status(Response.Status.NO_CONTENT).build();
                 }
@@ -237,9 +237,7 @@ public class SchemaPackagesResource {
         ScopeService<?> scopeService = getScopeServiceByScopeName(scopeName);
         try {
             if (nsUri != null) {
-                String encodedUri = encodePackageNsURI(nsUri);
-                ObjectMetadata metadata = scopeService.getMetadataFromStageForRegistry(REGISTRY_NAME, stageName,
-                        encodedUri);
+                ObjectMetadata metadata = findByNsUriInStage(scopeService, stageName, nsUri);
                 if (metadata == null) {
                     return Response.status(Response.Status.NO_CONTENT).build();
                 } else {
@@ -315,10 +313,8 @@ public class SchemaPackagesResource {
         try {
             String validatedNsUri = validateAndResolveNsUri(nsUri, ePackage);
             String resolvedVersion = resolveAndValidateVersion(version, validatedNsUri);
-            String encodedNsURI = encodePackageNsURI(validatedNsUri);
             // Check uniqueness across visibility chain
-            ObjectMetadata existingMetadata = scopeService.getMetadataFromStageForRegistry(REGISTRY_NAME, stageName,
-                    encodedNsURI);
+            ObjectMetadata existingMetadata = findByNsUriInStage(scopeService, stageName, validatedNsUri);
             if (existingMetadata != null) {
                 if (!overwrite) {
                     return Response.status(Response.Status.CONFLICT)
@@ -339,22 +335,23 @@ public class SchemaPackagesResource {
                         return preconditionResponse;
                     }
                     ObjectMetadata metadata = scopeService
-                            .updateInStageForRegistry(REGISTRY_NAME, stageName, ePackage, encodedNsURI, resolvedVersion)
+                            .updateInStageForRegistry(REGISTRY_NAME, stageName, ePackage,
+                                    existingMetadata.getObjectId(), resolvedVersion)
                             .getValue();
                     ePackageIndex.index(metadata, ePackage);
                     Response.ResponseBuilder rb = Response.status(Response.Status.OK)
-                            .header("Location",
-                                    "/".concat(scopeName).concat("/schemas/stages/").concat(stageName).concat("?nsUri=")
-                                            .concat(encodedNsURI))
+                            .header("Location", packageLocation(scopeName, stageName, validatedNsUri))
                             .entity(metadata).header("Content-Type", getResolvedMediaType());
                     ObjectMetadataResponseFilter.attach(requestContext, metadata,
                             ObjectMetadataResponseFilter.CacheTarget.METADATA);
                     return rb.build();
                 }
             }
-            // Create package and return metadata with Location header
+            // Create package and return metadata with Location header. The objectId is a
+            // random UUID assigned once at upload and stable across stage transitions (it is
+            // the lifecycle audit trail); the nsURI is carried only by the nsUri property.
             ObjectMetadata metadata = mgmtFactory.createObjectMetadata();
-            metadata.setObjectId(encodedNsURI);
+            metadata.setObjectId(UUID.randomUUID().toString());
             metadata.setObjectName(name == null ? ePackage.getName() : name);
             metadata.setUploadTime(Instant.now());
             metadata.setStage(stageName);
@@ -368,8 +365,7 @@ public class SchemaPackagesResource {
             ePackageIndex.index(metadata, ePackage);
 
             Response.ResponseBuilder rb = Response.status(Response.Status.CREATED)
-                    .header("Location", "/".concat(scopeName).concat("/schemas/stages/").concat(stageName)
-                            .concat("?nsUri=").concat(encodedNsURI))
+                    .header("Location", packageLocation(scopeName, stageName, validatedNsUri))
                     .entity(metadata).header("Content-Type", getResolvedMediaType());
             ObjectMetadataResponseFilter.attach(requestContext, metadata,
                     ObjectMetadataResponseFilter.CacheTarget.METADATA);
@@ -409,12 +405,14 @@ public class SchemaPackagesResource {
 
         ScopeService<?> scopeService = getScopeServiceByScopeName(scopeName);
         try {
+            requireNsUri(nsUri);
             nsUri = URI.decode(nsUri);
-            String encodedNsUri = encodePackageNsURI(nsUri);
-            ObjectMetadata contentMetadata = scopeService.getMetadataFromStageForRegistry(REGISTRY_NAME, stageName,
-                    encodedNsUri);
+            ObjectMetadata contentMetadata = findByNsUriInStage(scopeService, stageName, nsUri);
+            if (contentMetadata == null) {
+                return Response.status(Response.Status.NO_CONTENT).build();
+            }
             EPackage ePackage = (EPackage) scopeService.getContentFromStageForRegistry(REGISTRY_NAME, stageName,
-                    encodedNsUri);
+                    contentMetadata.getObjectId());
             if (ePackage == null) {
                 return Response.status(Response.Status.NO_CONTENT).build();
             }
@@ -456,10 +454,13 @@ public class SchemaPackagesResource {
 
         ScopeService<?> scopeService = getScopeServiceByScopeName(scopeName);
         try {
+            requireNsUri(nsUri);
             nsUri = URI.decode(nsUri);
-            String encodedNsUri = encodePackageNsURI(nsUri);
-            ObjectMetadata contentMetadata = scopeService.getMetadataFromFinalStageForRegistry(REGISTRY_NAME, encodedNsUri);
-            Optional<?> ePackageContent = scopeService.get(REGISTRY_NAME, encodedNsUri);
+            ObjectMetadata contentMetadata = findByNsUriInFinalStage(scopeService, nsUri);
+            if (contentMetadata == null) {
+                return Response.status(Response.Status.NO_CONTENT).build();
+            }
+            Optional<?> ePackageContent = scopeService.get(REGISTRY_NAME, contentMetadata.getObjectId());
             if (ePackageContent.isEmpty()) {
                 return Response.status(Response.Status.NO_CONTENT).build();
             }
@@ -514,9 +515,7 @@ public class SchemaPackagesResource {
         try {
             String validatedNsUri = validateAndResolveNsUri(nsUri, ePackage);
             String resolvedVersion = resolveAndValidateVersion(version, validatedNsUri);
-            String encodedNsUri = encodePackageNsURI(validatedNsUri);
-            ObjectMetadata existingMetadata = scopeService.getMetadataFromStageForRegistry(REGISTRY_NAME, stageName,
-                    encodedNsUri);
+            ObjectMetadata existingMetadata = findByNsUriInStage(scopeService, stageName, validatedNsUri);
             if (existingMetadata == null) {
                 return Response.status(Response.Status.NO_CONTENT).build();
             }
@@ -550,7 +549,8 @@ public class SchemaPackagesResource {
             }
 
             ObjectMetadata metadata = scopeService
-                    .updateInStageForRegistry(REGISTRY_NAME, stageName, ePackage, encodedNsUri, resolvedVersion)
+                    .updateInStageForRegistry(REGISTRY_NAME, stageName, ePackage, existingMetadata.getObjectId(),
+                            resolvedVersion)
                     .getValue();
             ePackageIndex.index(metadata, ePackage);
             Response.ResponseBuilder rb = Response.status(Response.Status.OK)
@@ -585,9 +585,8 @@ public class SchemaPackagesResource {
 
         ScopeService<?> scopeService = getScopeServiceByScopeName(scopeName);
         try {
-            String encodedNsUri = encodePackageNsURI(nsUri);
-            ObjectMetadata existingMetadata = scopeService.getMetadataFromStageForRegistry(REGISTRY_NAME, stageName,
-                    encodedNsUri);
+            requireNsUri(nsUri);
+            ObjectMetadata existingMetadata = findByNsUriInStage(scopeService, stageName, nsUri);
             if (existingMetadata == null) {
                 return Response.status(Response.Status.NO_CONTENT).build();
             }
@@ -603,10 +602,11 @@ public class SchemaPackagesResource {
                 return preconditionResponse;
             }
 
-            boolean deleted = scopeService.deleteFromStageForRegistry(REGISTRY_NAME, stageName, encodedNsUri)
+            boolean deleted = scopeService
+                    .deleteFromStageForRegistry(REGISTRY_NAME, stageName, existingMetadata.getObjectId())
                     .getValue();
             if (deleted) {
-            	ePackageIndex.remove(encodedNsUri);
+            	ePackageIndex.remove(existingMetadata.getObjectId());
             	return Response.status(Response.Status.OK).build();
             }
             return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
@@ -641,14 +641,15 @@ public class SchemaPackagesResource {
 
         ScopeService<?> scopeService = getScopeServiceByScopeName(scopeName);
         try {
-            String encodedNsUri = encodePackageNsURI(transitionRequest.getObjectId());
+            String requestedId = transitionRequest.getObjectId();
+            if (requestedId == null || requestedId.isBlank()) {
+                throw new IllegalArgumentException("Transition request must carry an objectId");
+            }
             String targetStage = transitionRequest.getTargetStage();
-            ObjectMetadata existingMetadata = scopeService.getMetadataFromStageForRegistry(REGISTRY_NAME, stageName,
-                    encodedNsUri);
+            ObjectMetadata existingMetadata = resolvePackageInStage(scopeService, stageName, requestedId);
             if (existingMetadata == null) {
                 // Package not in source stage — check if already in target (idempotent retry)
-                ObjectMetadata targetMetadata = scopeService.getMetadataFromStageForRegistry(REGISTRY_NAME, targetStage,
-                        encodedNsUri);
+                ObjectMetadata targetMetadata = resolvePackageInStage(scopeService, targetStage, requestedId);
                 if (targetMetadata != null) {
                     ObjectMetadataResponseFilter.attach(requestContext, targetMetadata,
                             ObjectMetadataResponseFilter.CacheTarget.METADATA);
@@ -669,8 +670,8 @@ public class SchemaPackagesResource {
             if (preconditionResponse != null) {
                 return preconditionResponse;
             }
-            ObjectMetadata metadata = scopeService.transitionToStageForRegistry(REGISTRY_NAME, encodedNsUri, stageName,
-                    targetStage);
+            ObjectMetadata metadata = scopeService.transitionToStageForRegistry(REGISTRY_NAME,
+                    existingMetadata.getObjectId(), stageName, targetStage);
             ObjectMetadataResponseFilter.attach(requestContext, metadata,
                     ObjectMetadataResponseFilter.CacheTarget.METADATA);
             return Response.status(Response.Status.OK).entity(metadata).header("Content-Type", getResolvedMediaType()).build();
@@ -825,8 +826,47 @@ public class SchemaPackagesResource {
         return scopeService;
     }
 
-    private String encodePackageNsURI(String nsUri) throws UnsupportedEncodingException {
-        return new String(Base64.getUrlEncoder().encode(nsUri.getBytes(StandardCharsets.UTF_8)));
+    /**
+     * Resolves the single package with the given nsURI in a stage via the nsUri metadata
+     * property (hierarchy-aware, works for all storage backends including git). The upload
+     * conflict check keeps the nsURI unique per (scope, registry, stage), so the property
+     * lookup yields at most one element.
+     */
+    private ObjectMetadata findByNsUriInStage(ScopeService<?> scopeService, String stageName, String nsUri) {
+        List<ObjectMetadata> matches = scopeService.getMetadataByPropertyFromStageForRegistry(REGISTRY_NAME, stageName,
+                WorkflowConstants.NS_URI_METADATA_PROPERTY, nsUri);
+        return matches.isEmpty() ? null : matches.get(0);
+    }
+
+    /**
+     * Resolves a package in a stage by the identifier a transition request carries: first as a
+     * real objectId, then — for legacy clients that still send the raw nsURI (the objectId used
+     * to be derived from it) — via the nsUri property lookup.
+     */
+    private ObjectMetadata resolvePackageInStage(ScopeService<?> scopeService, String stageName, String idOrNsUri) {
+        ObjectMetadata metadata = scopeService.getMetadataFromStageForRegistry(REGISTRY_NAME, stageName, idOrNsUri);
+        if (metadata == null) {
+            metadata = findByNsUriInStage(scopeService, stageName, idOrNsUri);
+        }
+        return metadata;
+    }
+
+    /** Final-stage variant of {@link #findByNsUriInStage(ScopeService, String, String)}. */
+    private ObjectMetadata findByNsUriInFinalStage(ScopeService<?> scopeService, String nsUri) {
+        List<ObjectMetadata> matches = scopeService.getMetadataByPropertyFromFinalStageForRegistry(REGISTRY_NAME,
+                WorkflowConstants.NS_URI_METADATA_PROPERTY, nsUri);
+        return matches.isEmpty() ? null : matches.get(0);
+    }
+
+    private String packageLocation(String scopeName, String stageName, String nsUri) {
+        return "/".concat(scopeName).concat("/schema/stages/").concat(stageName).concat("?nsUri=")
+                .concat(URLEncoder.encode(nsUri, StandardCharsets.UTF_8));
+    }
+
+    private static void requireNsUri(String nsUri) {
+        if (nsUri == null || nsUri.isBlank()) {
+            throw new IllegalArgumentException("Query parameter nsUri is required");
+        }
     }
 
     /**

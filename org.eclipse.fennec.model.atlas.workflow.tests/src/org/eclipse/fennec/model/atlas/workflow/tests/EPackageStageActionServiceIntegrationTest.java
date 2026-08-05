@@ -145,7 +145,19 @@ public class EPackageStageActionServiceIntegrationTest {
         EPackage registered = ePackageServiceAware.waitForService(5000L);
         assertNotNull(registered,
                 "EPackage should be registered with emf.model.scope and atlas.stage properties");
-        
+
+        // F3+F4 end-to-end agreement: the registered service carries the computed
+        // emf.fingerprint property, and it matches the fingerprint the storage
+        // producer persisted in the metadata (i.e. the drift detector stays silent).
+        Object serviceFingerprint = ePackageServiceAware.getServiceReference().getProperty("emf.fingerprint");
+        assertNotNull(serviceFingerprint, "registered EPackage must carry the emf.fingerprint property");
+        assertTrue(serviceFingerprint.toString().startsWith("fp1:"),
+                "fingerprint should use the current scheme tag, was: " + serviceFingerprint);
+        ObjectMetadata storedMetadata = (ObjectMetadata) storage
+                .retrieveMetadata(TEST_SCOPE, TEST_REGISTRY, TEST_STAGE, objectId).getValue();
+        assertEquals(storedMetadata.getFingerprint(), serviceFingerprint,
+                "service property and stored metadata fingerprint must agree");
+
         removeEPackage(objectId, stageActionService);
     }
 

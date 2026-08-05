@@ -82,7 +82,7 @@ class DriftWatcherTest {
 		return p;
 	}
 
-	private static final class RecordingListener implements DriftListener {
+	private static class RecordingListener implements DriftListener {
 		final java.util.List<String> changed = new java.util.ArrayList<>();
 		final java.util.List<String> removed = new java.util.ArrayList<>();
 		final java.util.List<String> objectsChanged = new java.util.ArrayList<>();
@@ -202,6 +202,104 @@ class DriftWatcherTest {
 		watcher.check(); // change — listener already removed
 
 		assertTrue(listener.changed.isEmpty(), "unsubscribed listener must not be notified");
+	}
+
+	// ---- Bug B: nsURIs held only by a listener (stage-explicit fetches bypass
+	// the provider cache) must still receive drift events -------------------
+
+	/** A listener that holds an nsURI itself, like AtlasScopedFetchOnMissRegistry. */
+	private static final class HoldingListener extends RecordingListener {
+		private final Set<String> held;
+
+		HoldingListener(Set<String> held) {
+			this.held = held;
+		}
+
+		@Override
+		public Set<String> heldNsUris() {
+			return held;
+		}
+	}
+
+	@Test
+	void listenerHeldNsUri_notInProviderCache_removalStillFiresOnPackageRemoved() {
+		Response baseline = headResponse(200, Response.Status.OK, "\"s1\"", null);
+		Response changed = headResponse(200, Response.Status.OK, "\"s2\"", "ns-staged");
+		when(request.head()).thenReturn(baseline, changed);
+		// The provider cache never saw this package: it was fetched stage-explicitly
+		// (getEPackageAtStage deliberately bypasses the cache).
+		when(provider.cachedNsUris()).thenReturn(Set.of());
+		when(provider.refresh("ns-staged")).thenReturn(Optional.empty()); // gone on the server
+		HoldingListener listener = new HoldingListener(Set.of("ns-staged"));
+		DriftWatcher watcher = watcher();
+		watcher.addListener(listener);
+
+		watcher.check(); // baseline
+		DriftReport report = watcher.check(); // change
+
+		assertEquals(List.of("ns-staged"), listener.removed,
+				"a listener-held nsURI must receive the removal event even though the provider cache never held it");
+		assertEquals(List.of("ns-staged"), report.getRemovedNsUris());
+	}
+
+	@Test
+	void listenerHeldNsUri_notInProviderCache_changeStillFiresOnPackageChanged() {
+		Response baseline = headResponse(200, Response.Status.OK, "\"s1\"", null);
+		Response changed = headResponse(200, Response.Status.OK, "\"s2\"", "ns-staged");
+		when(request.head()).thenReturn(baseline, changed);
+		when(provider.cachedNsUris()).thenReturn(Set.of());
+		when(provider.refresh("ns-staged")).thenReturn(Optional.of(pkg("ns-staged")));
+		HoldingListener listener = new HoldingListener(Set.of("ns-staged"));
+		DriftWatcher watcher = watcher();
+		watcher.addListener(listener);
+
+		watcher.check();
+		DriftReport report = watcher.check();
+
+		assertEquals(List.of("ns-staged"), listener.changed,
+				"a listener-held nsURI must receive the change event even though the provider cache never held it");
+		assertEquals(List.of("ns-staged"), report.getChangedNsUris());
+	}
+
+	@Test
+	void oneScopeFailing_doesNotStarveTheOtherScopes() {
+		// First scope's HEAD blows up on every check; the second scope must still be
+		// probed and its drift events delivered (previously the whole check aborted).
+		Response baseline = headResponse(200, Response.Status.OK, "\"s1\"", null);
+		Response changed = headResponse(200, Response.Status.OK, "\"s2\"", "ns1");
+		when(request.head())
+				.thenThrow(new IllegalStateException("scope 'broken' unreachable")).thenReturn(baseline)
+				.thenThrow(new IllegalStateException("scope 'broken' unreachable")).thenReturn(changed);
+		when(provider.cachedNsUris()).thenReturn(Set.of("ns1"));
+		when(provider.refresh("ns1")).thenReturn(Optional.empty());
+		RecordingListener listener = new RecordingListener();
+		DriftWatcher watcher = new DriftWatcher(target, () -> List.of("broken", "jena"), () -> provider, s -> null, 0);
+		watcher.addListener(listener);
+
+		watcher.check(); // broken throws, jena baselines
+		DriftReport report = watcher.check(); // broken throws again, jena reports the removal
+
+		assertEquals(List.of("ns1"), listener.removed, "the healthy scope's events must still be delivered");
+		assertEquals(List.of("ns1"), report.getRemovedNsUris());
+	}
+
+	@Test
+	void nsUriHeldNowhere_staysIgnored() {
+		// The gate exists to avoid refetching the world: an nsURI neither cached nor
+		// held by any listener must still be skipped.
+		Response baseline = headResponse(200, Response.Status.OK, "\"s1\"", null);
+		Response changed = headResponse(200, Response.Status.OK, "\"s2\"", "ns-foreign");
+		when(request.head()).thenReturn(baseline, changed);
+		when(provider.cachedNsUris()).thenReturn(Set.of());
+		RecordingListener listener = new RecordingListener(); // holds nothing
+		DriftWatcher watcher = watcher();
+		watcher.addListener(listener);
+
+		watcher.check();
+		DriftReport report = watcher.check();
+
+		assertFalse(report.hasChanges());
+		verify(provider, never()).refresh(anyString());
 	}
 
 	// ---- P5-2: EObject drift (Atlas-Changed-Objects) ----------------------

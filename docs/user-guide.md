@@ -160,7 +160,28 @@ The **atlas-schema-registry** is the built-in, read-only registry of the atlas s
 - Automatically tracks all EPackages registered in the OSGi static `EPackage.Registry` (e.g., models from generated EMF code)
 - Has a single stage: `released` (non-writable, final)
 - Rejects all write operations (`upload`, `update`, `delete`, `transition`) with `UnsupportedOperationException`
-- Uses Base64-encoded namespace URIs as object IDs
+- Uses Base64-encoded namespace URIs as object IDs (see below)
+
+#### Object Identity: Where objectIds Come From
+
+Every object's metadata carries an `objectId`. The id is **opaque** — never parse it or
+derive meaning from its shape — and its format depends on where the metadata comes from:
+
+| Source | objectId format | Why |
+|--------|-----------------|-----|
+| Schema upload via REST (`POST /{scope}/schema/stages/{stage}`) | Random UUID, e.g. `3f8a1c2e-9d4b-…` | Assigned once at upload, stays stable across stage transitions — it is the lifecycle audit trail |
+| Git storage backend (derived from repository content) | `scope/stage/repoPath`, e.g. `jena/release/models/cocl.ecore` | Metadata is re-derived on every reconcile; a deterministic, location-based id keeps re-derivation idempotent (git has no transitions — the branch *is* the stage) |
+| Atlas schema registry (mirrors the static OSGi `EPackage.Registry`) | Base64-URL of the nsURI, e.g. `aHR0cDovL…` | Metadata is re-derived on every bind; deterministic and recognizable when debugging |
+| Generic object registries (`/{scope}/registries/{name}/...`) | Client-supplied (a UUID is generated if empty) | The client owns the id |
+
+So a schema listing can legitimately show differently-shaped ids side by side (uploaded
+UUIDs next to inherited Base64 system-schema ids next to git path ids).
+
+For **schema packages** the namespace URI is the portable way to address a package: it is
+stored in the `nsUri` entry of the metadata `properties` map by *all* three schema sources,
+and every nsUri-parameterized endpoint resolves through that property — uniformly, whatever
+the id shape. Use the `objectId` where an endpoint asks for one (e.g. stage transitions);
+use `nsUri` everywhere else.
 
 ### Workflow Stages
 
@@ -288,10 +309,12 @@ curl -X PUT "http://localhost:8080/rest/my-tenant/schema/stages/draft/content?ns
 # Delete a schema
 curl -X DELETE "http://localhost:8080/rest/my-tenant/schema/stages/draft?nsUri=http%3A%2F%2Fexample.com%2Fbilling%2Fv1"
 
-# Transition a schema to the next stage
+# Transition a schema to the next stage. The objectId is the UUID from the package's
+# metadata (returned on upload / in listings); a raw nsURI is still accepted for
+# backward compatibility.
 curl -X POST "http://localhost:8080/rest/my-tenant/schema/stages/draft/actions/transition" \
   -H "Content-Type: application/json" \
-  -d '{"objectId": "http://example.com/billing/v1", "targetStage": "release"}'
+  -d '{"objectId": "3f8a1c2e-9d4b-4f6a-8c1d-2e5b7a9c0d41", "targetStage": "release"}'
 ```
 
 > Full endpoint documentation: [README-SchemaPackages.md](../org.eclipse.fennec.model.atlas.rest.application/README-SchemaPackages.md)
@@ -373,7 +396,7 @@ curl "http://localhost:8080/rest/my-tenant/schema/search?prefix=sensors&classifi
   "containerId": "search-results",
   "metadata": [
     {
-      "objectId": "aHR0cDovL2V4YW1wbGUuY29tL3NlbnNvcnMvMS4w",
+      "objectId": "550e8400-e29b-41d4-a716-446655440000",
       "objectName": "SensorModel",
       "stage": "approved",
       "scope": "tenant-a",

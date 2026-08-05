@@ -27,7 +27,7 @@ import org.eclipse.fennec.model.atlas.rest.client.api.PackageDescriptor;
 import org.eclipse.fennec.model.atlas.rest.client.api.RemoteEPackageProvider;
 import org.eclipse.fennec.model.atlas.rest.client.api.ResolvedEPackage;
 
-import com.fasterxml.jackson.databind.JsonNode;
+import tools.jackson.databind.JsonNode;
 
 import jakarta.ws.rs.core.HttpHeaders;
 import jakarta.ws.rs.core.MediaType;
@@ -182,7 +182,7 @@ class RemoteEPackageProviderImpl implements RemoteEPackageProvider {
 				continue;
 			}
 			return Optional.of(new ResolvedEPackage(content.get(), nsUri, md.scope(), md.registry(), md.stage(),
-					md.version()));
+					md.version(), md.fingerprint()));
 		}
 		return Optional.empty();
 	}
@@ -358,7 +358,7 @@ class RemoteEPackageProviderImpl implements RemoteEPackageProvider {
 			}
 			JsonNode node = RestSupport.parse(response.readEntity(String.class), "resolve(" + nsUri + ")");
 			return Optional.of(new PackageMetadata(text(node, "scope"), text(node, "registry"), text(node, "stage"),
-					text(node, "version")));
+					text(node, "version"), text(node, "fingerprint")));
 		} finally {
 			response.close();
 		}
@@ -394,7 +394,7 @@ class RemoteEPackageProviderImpl implements RemoteEPackageProvider {
 	}
 
 	/** The origin fields of a package's {@code ObjectMetadata} needed to locate and stamp it. */
-	private record PackageMetadata(String scope, String registry, String stage, String version) {
+	private record PackageMetadata(String scope, String registry, String stage, String version, String fingerprint) {
 	}
 
 	/** A freshly fetched package together with its HTTP validators. */
@@ -414,28 +414,54 @@ class RemoteEPackageProviderImpl implements RemoteEPackageProvider {
 
 	/**
 	 * Extract per-package descriptors from an {@code ObjectMetadataContainer} JSON body —
-	 * each entry's {@code objectId} (decoded to the nsURI) plus the owning
+	 * each entry's nsURI (from the {@code nsUri} metadata property) plus the owning
 	 * {@code scope}/{@code stage}/{@code version} the listing already carries.
 	 */
 	private List<PackageDescriptor> parseDescriptors(String json, String scopeName) {
 		JsonNode metadata = RestSupport.parse(json, "listPackages(" + scopeName + ")").path("metadata");
 		List<PackageDescriptor> descriptors = new ArrayList<>();
 		for (JsonNode entry : metadata) {
-			JsonNode objectId = entry.get("objectId");
-			if (objectId != null && !objectId.isNull()) {
-				descriptors.add(new PackageDescriptor(decodeNsUri(objectId.asText()), text(entry, "scope"),
-						text(entry, "stage"), text(entry, "version")));
+			String nsUri = nsUriOf(entry);
+			if (nsUri != null) {
+				descriptors.add(new PackageDescriptor(nsUri, text(entry, "scope"),
+						text(entry, "stage"), text(entry, "version"), text(entry, "fingerprint")));
 			}
 		}
 		return List.copyOf(descriptors);
 	}
 
 	/**
-	 * For schema packages the server's {@code objectId} is the Base64-URL encoding
-	 * of the nsURI (see {@code SchemaPackagesResource.encodePackageNsURI}); decode
-	 * it back to the real nsURI.
+	 * The nsURI of a listing entry: authoritative is the {@code nsUri} metadata property
+	 * (present for upload- and git-backed entries alike since the objectId became an
+	 * opaque UUID). Tolerates both EMap wire shapes (object map and key/value entry
+	 * array). Falls back to Base64-URL-decoding the {@code objectId} for pre-F8 servers,
+	 * whose schema objectIds were the encoded nsURI; entries whose nsURI cannot be
+	 * determined either way (e.g. git-backed ids of such old servers) are skipped.
 	 */
-	private static String decodeNsUri(String objectId) {
-		return new String(Base64.getUrlDecoder().decode(objectId));
+	private static String nsUriOf(JsonNode entry) {
+		JsonNode properties = entry.get("properties");
+		if (properties != null) {
+			if (properties.isObject()) {
+				JsonNode nsUri = properties.get("nsUri");
+				if (nsUri != null && !nsUri.isNull()) {
+					return nsUri.asText();
+				}
+			} else if (properties.isArray()) {
+				for (JsonNode property : properties) {
+					if ("nsUri".equals(text(property, "key"))) {
+						return text(property, "value");
+					}
+				}
+			}
+		}
+		JsonNode objectId = entry.get("objectId");
+		if (objectId == null || objectId.isNull()) {
+			return null;
+		}
+		try {
+			return new String(Base64.getUrlDecoder().decode(objectId.asText()));
+		} catch (IllegalArgumentException e) {
+			return null;
+		}
 	}
 }

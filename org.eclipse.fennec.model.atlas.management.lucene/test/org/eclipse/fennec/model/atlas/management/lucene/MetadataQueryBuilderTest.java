@@ -269,6 +269,15 @@ class MetadataQueryBuilderTest {
     }
 
     @Test
+    void testFingerprintQuery() {
+        // Realistic scheme-prefixed value: the colon inside the value is Lucene query
+        // syntax and must survive via the quoted form
+        String fp = "fp1:14466a0b5de879a6c3d2e1f0a9b8c7d6e5f4a3b2c1d0e9f8a7b6c5d4e3f2a1b0";
+        String query = MetadataQueryBuilder.create().fingerprint(fp).build();
+        assertEquals("fingerprint:\"" + fp + "\"", query);
+    }
+
+    @Test
     void testComplianceStatusQuery() {
         String query = MetadataQueryBuilder.create().complianceStatus("COMPLIANT").build();
         assertEquals("complianceStatus:COMPLIANT", query);
@@ -333,6 +342,7 @@ class MetadataQueryBuilderTest {
 
         assertSame(builder, builder.reviewReason("test"));
         assertSame(builder, builder.generationTriggerFingerprint("test"));
+        assertSame(builder, builder.fingerprint("test"));
         assertSame(builder, builder.complianceStatus("test"));
         assertSame(builder, builder.governanceDocumentationId("test"));
         assertSame(builder, builder.lastChangeUser("test"));
@@ -342,8 +352,8 @@ class MetadataQueryBuilderTest {
 
     @Test
     void testNewFieldsWithNullValues() {
-        String query = MetadataQueryBuilder.create().generationTriggerFingerprint(null).complianceStatus("")
-                .governanceDocumentationId("gov-123").lastChangeUser(null).build();
+        String query = MetadataQueryBuilder.create().generationTriggerFingerprint(null).fingerprint(null)
+                .fingerprint("").complianceStatus("").governanceDocumentationId("gov-123").lastChangeUser(null).build();
         assertEquals("governanceDocumentationId:\"gov-123\"", query);
     }
 

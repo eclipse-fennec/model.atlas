@@ -277,6 +277,21 @@ public class MetadataQueryBuilder {
         }
         return this;
     }
+    
+    /**
+     * Adds a condition for fingerprint. Note: This field uses
+     * exact match (StringField), so no escaping is applied.
+     * 
+     * @param fingerprint the metadata fingerprint
+     * @return this builder for method chaining
+     */
+    public MetadataQueryBuilder fingerprint(String fingerprint) {
+        if (fingerprint != null && !fingerprint.isEmpty()) {
+            // Use quotes for exact match on StringField
+            conditions.add(LuceneRegistryHelper.FIELD_FINGERPRINT + ":\"" + fingerprint + "\"");
+        }
+        return this;
+    }
 
     /**
      * Adds a condition for compliance status.

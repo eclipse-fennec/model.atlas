@@ -68,6 +68,7 @@ import org.eclipse.fennec.model.atlas.mgmt.management.ObjectStatus;
  *   <li>{@link org.eclipse.fennec.model.atlas.mgmt.management.impl.ObjectMetadataImpl#getScope <em>Scope</em>}</li>
  *   <li>{@link org.eclipse.fennec.model.atlas.mgmt.management.impl.ObjectMetadataImpl#isIsReadOnly <em>Is Read Only</em>}</li>
  *   <li>{@link org.eclipse.fennec.model.atlas.mgmt.management.impl.ObjectMetadataImpl#getRegistry <em>Registry</em>}</li>
+ *   <li>{@link org.eclipse.fennec.model.atlas.mgmt.management.impl.ObjectMetadataImpl#getFingerprint <em>Fingerprint</em>}</li>
  * </ul>
  *
  * @generated
@@ -552,6 +553,26 @@ public class ObjectMetadataImpl extends MinimalEObjectImpl.Container implements 
 	 * @ordered
 	 */
 	protected String registry = REGISTRY_EDEFAULT;
+
+	/**
+	 * The default value of the '{@link #getFingerprint() <em>Fingerprint</em>}' attribute.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @see #getFingerprint()
+	 * @generated
+	 * @ordered
+	 */
+	protected static final String FINGERPRINT_EDEFAULT = null;
+
+	/**
+	 * The cached value of the '{@link #getFingerprint() <em>Fingerprint</em>}' attribute.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @see #getFingerprint()
+	 * @generated
+	 * @ordered
+	 */
+	protected String fingerprint = FINGERPRINT_EDEFAULT;
 
 	/**
 	 * <!-- begin-user-doc -->
@@ -1160,6 +1181,29 @@ public class ObjectMetadataImpl extends MinimalEObjectImpl.Container implements 
 	 * @generated
 	 */
 	@Override
+	public String getFingerprint() {
+		return fingerprint;
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
+	public void setFingerprint(String newFingerprint) {
+		String oldFingerprint = fingerprint;
+		fingerprint = newFingerprint;
+		if (eNotificationRequired())
+			eNotify(new ENotificationImpl(this, Notification.SET, ManagementPackage.OBJECT_METADATA__FINGERPRINT, oldFingerprint, fingerprint));
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
 	public NotificationChain eInverseRemove(InternalEObject otherEnd, int featureID, NotificationChain msgs) {
 		switch (featureID) {
 			case ManagementPackage.OBJECT_METADATA__PROPERTIES:
@@ -1228,6 +1272,8 @@ public class ObjectMetadataImpl extends MinimalEObjectImpl.Container implements 
 				return isIsReadOnly();
 			case ManagementPackage.OBJECT_METADATA__REGISTRY:
 				return getRegistry();
+			case ManagementPackage.OBJECT_METADATA__FINGERPRINT:
+				return getFingerprint();
 		}
 		return super.eGet(featureID, resolve, coreType);
 	}
@@ -1314,6 +1360,9 @@ public class ObjectMetadataImpl extends MinimalEObjectImpl.Container implements 
 				return;
 			case ManagementPackage.OBJECT_METADATA__REGISTRY:
 				setRegistry((String)newValue);
+				return;
+			case ManagementPackage.OBJECT_METADATA__FINGERPRINT:
+				setFingerprint((String)newValue);
 				return;
 		}
 		super.eSet(featureID, newValue);
@@ -1402,6 +1451,9 @@ public class ObjectMetadataImpl extends MinimalEObjectImpl.Container implements 
 			case ManagementPackage.OBJECT_METADATA__REGISTRY:
 				setRegistry(REGISTRY_EDEFAULT);
 				return;
+			case ManagementPackage.OBJECT_METADATA__FINGERPRINT:
+				setFingerprint(FINGERPRINT_EDEFAULT);
+				return;
 		}
 		super.eUnset(featureID);
 	}
@@ -1464,6 +1516,8 @@ public class ObjectMetadataImpl extends MinimalEObjectImpl.Container implements 
 				return isReadOnly != IS_READ_ONLY_EDEFAULT;
 			case ManagementPackage.OBJECT_METADATA__REGISTRY:
 				return REGISTRY_EDEFAULT == null ? registry != null : !REGISTRY_EDEFAULT.equals(registry);
+			case ManagementPackage.OBJECT_METADATA__FINGERPRINT:
+				return FINGERPRINT_EDEFAULT == null ? fingerprint != null : !FINGERPRINT_EDEFAULT.equals(fingerprint);
 		}
 		return super.eIsSet(featureID);
 	}
@@ -1524,6 +1578,8 @@ public class ObjectMetadataImpl extends MinimalEObjectImpl.Container implements 
 		result.append(isReadOnly);
 		result.append(", registry: ");
 		result.append(registry);
+		result.append(", fingerprint: ");
+		result.append(fingerprint);
 		result.append(')');
 		return result.toString();
 	}

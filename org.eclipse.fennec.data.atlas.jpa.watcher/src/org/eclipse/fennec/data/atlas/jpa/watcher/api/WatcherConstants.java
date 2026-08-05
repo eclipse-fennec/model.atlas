@@ -29,7 +29,7 @@ public interface WatcherConstants {
 	String PID_EMF_FILE_WATCHER = "EMFFileWatcher";  //--> ecore
 	String PID_ENTITY_MAPPINGS_FILE_WATCHER = "JpaMappingFileWatcher"; //--> eorm
 	String PID_H2_DATA_SOURCE = Constants.PID_DATASOURCE; // --> DataSource
-	String PID_CSV_IMPORTER = org.eclipse.daanse.jdbc.db.importer.csv.api.Constants.PID_CSV_DATA_IMPORTER; //--> csv
+	String PID_CSV_IMPORTER = org.eclipse.daanse.sql.jdbc.importer.csv.api.Constants.PID_CSV_DATA_IMPORTER; //--> csv
 	String PID_PERSISTENCE_UNIT = "fennec.jpa.EMPersistenceUnit"; //--> persistence unit
 
 

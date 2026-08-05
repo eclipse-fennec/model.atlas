@@ -130,7 +130,7 @@ public interface EObjectRegistryService<T extends EObject> {
 	 * @model dataType="org.eclipse.fennec.model.atlas.mgmt.management.Optional&lt;org.eclipse.fennec.model.atlas.mgmt.management.ObjectMetadata&gt;" fingerprintRequired="true"
 	 * @generated
 	 */
-	Optional<ObjectMetadata> findByFingerprint(String fingerprint);
+	Optional<ObjectMetadata> findByGenerationTriggerFingerprint(String fingerprint);
 
 	/**
 	 * <!-- begin-user-doc -->
@@ -241,5 +241,16 @@ public interface EObjectRegistryService<T extends EObject> {
 	 * @generated
 	 */
 	List<ObjectMetadata> findByScopeRegistryStageAndName(String scope, String registry, String stage, String name);
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * <!-- begin-model-doc -->
+	 * Find objects by fingerprint. This is the fingerprint set for EPackages which uniquely identify an EPackage. Returns a list of ObjectMetadata because we could have the same EPackage saved in different stages (e.g. in git, where a stage is a branch it can happen); in such cases the fingerprint would be the same so quering this method will return more than one result.
+	 * <!-- end-model-doc -->
+	 * @model dataType="org.eclipse.fennec.model.atlas.mgmt.management.List&lt;org.eclipse.fennec.model.atlas.mgmt.management.ObjectMetadata&gt;" many="false" fingerprintRequired="true"
+	 * @generated
+	 */
+	List<ObjectMetadata> findByFingerprint(String fingerprint);
 
 } // EObjectRegistryService

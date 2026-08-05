@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ecore:EPackage xmi:version="2.0" xmlns:xmi="http://www.omg.org/XMI" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xmlns:ecore="http://www.eclipse.org/emf/2002/Ecore" name="gitwebhook" nsURI="http://eclipse.org/fennec/model/atlas/management/git/webhook/1.0.0"
+    nsPrefix="gitwebhook">
+  <eAnnotations source="Version">
+    <details key="value" value="1.0"/>
+  </eAnnotations>
+  <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+    <details key="complianceLevel" value="17.0"/>
+    <details key="oSGiCompatible" value="true"/>
+    <details key="basePackage" value="org.eclipse.fennec.model.atlas.management.git.webhook.model"/>
+    <details key="resource" value="XMI"/>
+    <details key="copyrightText" value="Copyright (c) 2012 - 2026 Data In Motion and others.&#xA;All rights reserved.&#xA;&#xA;This program and the accompanying materials are made&#xA;available under the terms of the Eclipse Public License 2.0&#xA;which is available at https://www.eclipse.org/legal/epl-2.0/&#xA;&#xA;SPDX-License-Identifier: EPL-2.0&#xA;&#xA;Contributors:&#xA;    Data In Motion - initial API and implementation"/>
+  </eAnnotations>
+  <eClassifiers xsi:type="ecore:EEnum" name="GitProvider">
+    <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+      <details key="documentation" value="The git host a webhook payload originates from."/>
+    </eAnnotations>
+    <eLiterals name="GITHUB"/>
+    <eLiterals name="GITLAB" value="1"/>
+  </eClassifiers>
+  <eClassifiers xsi:type="ecore:EClass" name="WebhookPayload" abstract="true">
+    <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+      <details key="documentation" value="Provider-neutral base for an inbound push webhook. Fields whose JSON key is identical across GitHub and GitLab (ref, before, after) are modelled as attributes and populated directly by the codec. Everything that differs per provider (clone URL, repository name, the added/modified/removed change set, and the created/deleted/forced flags) is exposed as an EOperation that each concrete provider payload overrides via a GenModel 'body' annotation. Downstream (GitSyncService) consumes only this abstract type."/>
+    </eAnnotations>
+    <eOperations name="getProvider" eType="#//GitProvider">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="Which git host this payload came from."/>
+      </eAnnotations>
+    </eOperations>
+    <eOperations name="getCloneUrl" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="HTTP(S) fetch/clone URL of the repository (GitHub repository.clone_url; GitLab project.git_http_url)."/>
+      </eAnnotations>
+    </eOperations>
+    <eOperations name="getRepositoryFullName" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="Namespaced repository identifier (GitHub repository.full_name; GitLab project.path_with_namespace)."/>
+      </eAnnotations>
+    </eOperations>
+    <eOperations name="getAddedPaths" upperBound="-1" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="Repository-relative paths added by this push, aggregated across the payload's commits."/>
+      </eAnnotations>
+    </eOperations>
+    <eOperations name="getModifiedPaths" upperBound="-1" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="Repository-relative paths modified by this push, aggregated across the payload's commits."/>
+      </eAnnotations>
+    </eOperations>
+    <eOperations name="getRemovedPaths" upperBound="-1" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="Repository-relative paths removed by this push, aggregated across the payload's commits."/>
+      </eAnnotations>
+    </eOperations>
+    <eOperations name="isCreated" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EBoolean">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="True when this push created the ref (GitHub 'created' flag; GitLab: before is the all-zero SHA)."/>
+        <details key="body" value="return getBefore() != null &amp;&amp; getBefore().matches(&quot;0+&quot;);"/>
+      </eAnnotations>
+    </eOperations>
+    <eOperations name="isDeleted" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EBoolean">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="True when this push deleted the ref (GitHub 'deleted' flag; GitLab: after is the all-zero SHA)."/>
+        <details key="body" value="return getAfter() != null &amp;&amp; getAfter().matches(&quot;0+&quot;);"/>
+      </eAnnotations>
+    </eOperations>
+    <eOperations name="isForced" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EBoolean">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="True when this push was a force-push / non-fast-forward update (GitHub 'forced' flag; GitLab: derived)."/>
+        <details key="body" value="return false;"/>
+      </eAnnotations>
+    </eOperations>
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="ref" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="The full git ref of the push, e.g. refs/heads/main. Same JSON key on GitHub and GitLab."/>
+      </eAnnotations>
+    </eStructuralFeatures>
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="before" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="SHA of the ref before the push (all-zero SHA when the branch was created). Same JSON key on GitHub and GitLab."/>
+      </eAnnotations>
+    </eStructuralFeatures>
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="after" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="SHA of the ref after the push (all-zero SHA when the branch was deleted). Same JSON key on GitHub and GitLab."/>
+      </eAnnotations>
+    </eStructuralFeatures>
+  </eClassifiers>
+  <eClassifiers xsi:type="ecore:EClass" name="Commit">
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="id" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="added" upperBound="-1"
+        eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="modified" upperBound="-1"
+        eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="removed" upperBound="-1"
+        eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+  </eClassifiers>
+</ecore:EPackage>

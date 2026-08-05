@@ -41,7 +41,8 @@ class LocalFirstPublicationGateTest {
 		final List<String> published = new ArrayList<>();
 
 		@Override
-		public boolean publish(EPackage ePackage, String scope, String stage, String version) {
+		public boolean publish(EPackage ePackage, String scope, String stage, String version,
+				String serverFingerprint) {
 			published.add(ePackage.getNsURI());
 			return true;
 		}

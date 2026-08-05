@@ -20,7 +20,7 @@ is for plain Java: a CLI, a test fixture, a Spring/standalone app, etc.
 | `…rest.client.api` | the interfaces you program against |
 | `…rest.client.impl` | this bundle (the implementation, discovered via `ServiceLoader`) |
 | A Jakarta RS **client** runtime (e.g. Jersey: `jersey-client` + `jersey-common` + `jersey-hk2`) | provides `jakarta.ws.rs.client.ClientBuilder.newBuilder()` |
-| Jackson (`jackson-core`, `jackson-databind`, `jackson-annotations`) | JSON parsing of listings/metadata |
+| Jackson 3 (`tools.jackson:jackson-core`, `tools.jackson:jackson-databind`) + `com.fasterxml.jackson.core:jackson-annotations` (still 2.x-namespaced, required by databind) | JSON parsing of listings/metadata |
 | EMF (`org.eclipse.emf.common`, `…ecore`, `…ecore.xmi`) | the `EPackage`s themselves and XMI decode |
 
 The implementation registers a `ModelAtlasClientFactory` `ServiceLoader` provider

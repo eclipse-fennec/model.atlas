@@ -1,3 +1,7 @@
--include: modelatlas.runtime_docker.bndrun
+-include: \
+	modelatlas.runtime_docker.bndrun
+
+-runbundles.docker.jena: \
+	org.eclipse.fennec.sensinact.mapping;startlevel=1060
 
 -runproperties.docker.jena: configurator.initial=file:///opt/modelatlas/runtime/load/jena.json

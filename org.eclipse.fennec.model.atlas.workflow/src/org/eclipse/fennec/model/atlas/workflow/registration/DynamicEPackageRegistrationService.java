@@ -16,7 +16,9 @@ package org.eclipse.fennec.model.atlas.workflow.registration;
 import java.util.Collection;
 import java.util.Hashtable;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -26,6 +28,7 @@ import org.eclipse.emf.ecore.EPackage;
 import org.eclipse.emf.ecore.resource.Resource;
 import org.eclipse.emf.ecore.resource.ResourceSet;
 import org.eclipse.fennec.emf.osgi.configurator.EPackageConfigurator;
+import org.eclipse.fennec.emf.osgi.fingerprint.FingerprintService;
 import org.eclipse.fennec.model.atlas.mgmt.management.ObjectMetadata;
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.Filter;
@@ -71,8 +74,8 @@ import org.osgi.service.typedevent.TypedEventBus;
  * EPackage releasedEPackage = loadReleasedEPackage(objectId);
  * registrationService.registerEPackage(releasedEPackage, metadata);
  *
- * // Later, when EPackage should be removed
- * registrationService.unregisterEPackage(releasedEPackage.getNsURI());
+ * // Later, when EPackage should be removed from that workflow location
+ * registrationService.unregisterEPackage(scope, stage, releasedEPackage.getNsURI());
  * }</pre>
  * 
  * @author Mark Hoffmann
@@ -87,16 +90,37 @@ public class DynamicEPackageRegistrationService {
 
     @Reference
     private TypedEventBus typedEventBus;
+    
+    @Reference
+    FingerprintService fingerprintService;
 
-//    @Reference
-//    private ModelInitializer initializer;
-
-    // Thread-safe storage for registered EPackages and their service registrations
-    private final Map<String, RegisteredEPackage> registeredEPackages = new ConcurrentHashMap<>();
+    // Thread-safe storage for registered EPackages and their service registrations.
+    // Keyed by scope+stage+nsURI+fingerprint: the same nsURI legitimately exists in
+    // several workflow stages at once (e.g. a git schema present on multiple branches =
+    // stages), each carrying its own content and its own emf.model.scope/atlas.stage
+    // service properties. The fingerprint component acts WITHIN one location only:
+    // same content re-registered is an idempotent no-op, changed content replaces the
+    // stale registration. It never creates sharing across locations — unregistration is
+    // always addressed by (scope, stage, nsURI), so sibling stages holding identical
+    // content (same fingerprint) are unaffected.
+    private final Map<RegistrationKey, RegisteredEPackage> registeredEPackages = new ConcurrentHashMap<>();
 
     // Track EPackages waiting for ResourceSet availability to send configuration
-    // events
+    // events (keyed by nsURI; the southbound mapping it feeds is stage-independent)
     private final Map<String, String> pendingConfigurationEvents = new ConcurrentHashMap<>();
+
+    // Serializes register/unregister so concurrent reloads (unregister-then-register of the
+    // same nsURI) do not interleave. The brief window in which the nsURI is unregistered is
+    // accepted (low request frequency); the lock only prevents corruption from concurrency.
+    private final ReentrantLock registrationLock = new ReentrantLock();
+
+    /**
+     * Composite registration key: an EPackage is identified by its workflow location
+     * ({@code scope}, {@code stage}), its {@code nsURI} <em>and</em> its fingerprint.
+     * {@code scope}/{@code stage} may be {@code null}.
+     */
+    private record RegistrationKey(String scope, String stage, String nsURI, String fingerprint) {
+    }
 
     /**
      * Container for all service registrations related to a single EPackage.
@@ -145,11 +169,16 @@ public class DynamicEPackageRegistrationService {
     public void deactivate() {
         logger.info("Deactivating Dynamic EPackage Registration Service - unregistering all EPackages");
 
-        // Unregister all registered EPackages
-        registeredEPackages.values().forEach(RegisteredEPackage::unregisterAll);
-        registeredEPackages.clear();
+        registrationLock.lock();
+        try {
+            // Unregister all registered EPackages
+            registeredEPackages.values().forEach(RegisteredEPackage::unregisterAll);
+            registeredEPackages.clear();
 
-        this.bundleContext = null;
+            this.bundleContext = null;
+        } finally {
+            registrationLock.unlock();
+        }
     }
 
     /**
@@ -179,11 +208,21 @@ public class DynamicEPackageRegistrationService {
      * workflow stack and is not a generic EMF-OSGi utility.
      * </p>
      *
+     * <p>
+     * Version semantics: the content fingerprint is computed here (never taken
+     * from {@code metadata} — "computed, never trusted") and published as the
+     * {@code emf.fingerprint} service property. If this exact location
+     * (scope, stage, nsURI) already holds the identical content, the call is an
+     * idempotent no-op; if it holds a <em>different</em> content version, the
+     * stale registration is replaced by this one.
+     * </p>
+     *
      * @param ePackage the EPackage to register (must not be null)
      * @param metadata the object metadata accompanying the EPackage (must not be
      *                 null; {@code scope} is expected to be non-null)
-     * @return true if registration was successful, false if already registered or
-     *         failed
+     * @return true if registration was successful (including replacement of a
+     *         stale content version), false if the identical content is already
+     *         registered for this location or registration failed
      * @throws IllegalArgumentException if ePackage or metadata is null
      * @throws IllegalStateException    if service is not active
      */
@@ -205,14 +244,40 @@ public class DynamicEPackageRegistrationService {
             return false;
         }
 
-        // Check if already registered
-        if (registeredEPackages.containsKey(nsURI)) {
-            logger.info("EPackage already registered: " + nsURI);
-            return false;
+        // Identify by scope+stage+nsURI, so the same nsURI in a different stage (e.g. a git
+        // schema on another branch) is NOT treated as a duplicate. The fingerprint is
+        // ALWAYS computed here, never adopted from metadata ("computed, never trusted").
+        String fp = fingerprintService.fingerprint(ePackage);
+        RegistrationKey key = new RegistrationKey(metadata.getScope(), metadata.getStage(), nsURI, fp);
+
+        // Cheap drift detector: a stored metadata fingerprint that disagrees with the
+        // freshly computed one means stored content and registered instance diverged.
+        if (metadata.getFingerprint() != null && !fp.equals(metadata.getFingerprint())) {
+            logger.warning("Fingerprint drift for " + nsURI + " (scope=" + metadata.getScope() + ", stage="
+                    + metadata.getStage() + "): metadata carries " + metadata.getFingerprint()
+                    + " but the loaded EPackage computes to " + fp);
         }
 
+        registrationLock.lock();
         try {
-            logger.info("Registering EPackage: " + nsURI + " (name=" + ePackage.getName() + ")");
+            // Identical content already registered for this exact location: idempotent no-op
+            if (registeredEPackages.containsKey(key)) {
+                logger.info("EPackage already registered for " + key);
+                return false;
+            }
+
+            // Same location under a DIFFERENT fingerprint: the content changed — replace the
+            // stale registration instead of silently keeping outdated services alive.
+            RegistrationKey staleKey = findKeyForLocation(metadata.getScope(), metadata.getStage(), nsURI);
+            if (staleKey != null) {
+                logger.info("Replacing EPackage registration for " + staleKey + " with new fingerprint " + fp);
+                RegisteredEPackage stale = registeredEPackages.remove(staleKey);
+                stale.unregisterAll();
+                // No REMOVE configuration event: the same model re-registers immediately below.
+            }
+
+            logger.info("Registering EPackage: " + nsURI + " (name=" + ePackage.getName() + ", scope="
+                    + metadata.getScope() + ", stage=" + metadata.getStage() + ", fingerprint=" + fp + ")");
 
             Resource eResource = ePackage.eResource();
             if(eResource.getResourceSet() != null) eResource.getResourceSet().getResources().remove(eResource);
@@ -223,7 +288,7 @@ public class DynamicEPackageRegistrationService {
 
             // Create configurator
             DynamicEPackageConfigurator configurator = new DynamicEPackageConfigurator(ePackage, fileExtension, version,
-                    metadata.getScope(), metadata.getStage());
+                    metadata.getScope(), metadata.getStage(), fp);
 
             // Track for pending configuration event when ResourceSet becomes available
             String modelName = ePackage.getName();
@@ -238,10 +303,7 @@ public class DynamicEPackageRegistrationService {
 
             // Store registration info
             registered = new RegisteredEPackage(configuratorReg, ePackageReg, eFactoryReg, conditionReg, modelName);
-
-//            }
-            // Store registration info
-            registeredEPackages.put(nsURI, registered);
+            registeredEPackages.put(key, registered);
 
             if (modelName != null) {
                 pendingConfigurationEvents.put(nsURI, modelName);
@@ -257,62 +319,121 @@ public class DynamicEPackageRegistrationService {
         } catch (Exception e) {
             logger.log(Level.SEVERE, "Failed to register EPackage: " + nsURI, e);
             return false;
+        } finally {
+            registrationLock.unlock();
         }
     }
 
     /**
-     * Unregisters an EPackage from the OSGi EMF registry.
-     * 
+     * Unregisters an EPackage from the OSGi EMF registry for a specific workflow
+     * location, regardless of which content version (fingerprint) is currently
+     * registered there. Because registration is keyed per location, the same nsURI
+     * may remain registered for other stages after this call — including sibling
+     * stages holding identical content under the same fingerprint.
+     *
+     * @param scope        the workflow scope the EPackage was registered under (may be null)
+     * @param stage        the workflow stage the EPackage was registered under (may be null)
      * @param namespaceURI the namespace URI of the EPackage to unregister
-     * @return true if unregistration was successful, false if not registered or
-     *         failed
+     * @return true if unregistration was successful, false if not registered or failed
      * @throws IllegalArgumentException if namespaceURI is null or empty
      */
-    public boolean unregisterEPackage(String namespaceURI) {
+    public boolean unregisterEPackage(String scope, String stage, String namespaceURI) {
+        return unregisterEPackage(scope, stage, namespaceURI, null);
+    }
+
+    /**
+     * Unregisters an EPackage from the OSGi EMF registry for a specific workflow
+     * location and content version.
+     *
+     * @param scope        the workflow scope the EPackage was registered under (may be null)
+     * @param stage        the workflow stage the EPackage was registered under (may be null)
+     * @param namespaceURI the namespace URI of the EPackage to unregister
+     * @param fingerprint  the content fingerprint the location is expected to hold;
+     *                     {@code null} matches whatever version is registered there
+     *                     (stage EXIT events do not know the fingerprint)
+     * @return true if unregistration was successful, false if not registered or failed
+     * @throws IllegalArgumentException if namespaceURI is null or empty
+     */
+    public boolean unregisterEPackage(String scope, String stage, String namespaceURI, String fingerprint) {
         if (namespaceURI == null || namespaceURI.trim().isEmpty()) {
             throw new IllegalArgumentException("Namespace URI cannot be null or empty");
         }
 
-        RegisteredEPackage registered = registeredEPackages.remove(namespaceURI);
-        if (registered == null) {
-            logger.warning("EPackage not registered: " + namespaceURI);
-            return false;
-        }
+        registrationLock.lock();
         try {
-            logger.info("Unregistering EPackage: " + namespaceURI);
+            RegistrationKey key = fingerprint != null ? new RegistrationKey(scope, stage, namespaceURI, fingerprint)
+                    : findKeyForLocation(scope, stage, namespaceURI);
+            RegisteredEPackage registered = key != null ? registeredEPackages.remove(key) : null;
+            if (registered == null) {
+                logger.warning("EPackage not registered: " + (key != null ? key.toString()
+                        : scope + "/" + stage + "/" + namespaceURI));
+                return false;
+            }
+            try {
+                logger.info("Unregistering EPackage: " + key);
 
-            // Send REMOVE configuration event before unregistering
-            sendRemoveConfigurationEvent(namespaceURI, registered.modelName);
-//            if (registered.modelName.equals("airquality")) {
-//            	initializer.doUnregisterModel();
-//            }
-            registered.unregisterAll();
+                // Send REMOVE configuration event before unregistering
+                sendRemoveConfigurationEvent(namespaceURI, registered.modelName);
+                registered.unregisterAll();
 
-            // Remove from pending events if present
-            pendingConfigurationEvents.remove(namespaceURI);
+                // Remove the pending event only if no other stage still holds this nsURI
+                if (registeredEPackages.keySet().stream().noneMatch(k -> k.nsURI().equals(namespaceURI))) {
+                    pendingConfigurationEvents.remove(namespaceURI);
+                }
 
-            logger.info("Successfully unregistered EPackage: " + namespaceURI);
-            return true;
+                logger.info("Successfully unregistered EPackage: " + key);
+                return true;
 
-        } catch (Exception e) {
-            logger.log(Level.SEVERE, "Failed to unregister EPackage: " + namespaceURI, e);
-            return false;
+            } catch (Exception e) {
+                logger.log(Level.SEVERE, "Failed to unregister EPackage: " + key, e);
+                return false;
+            }
+        } finally {
+            registrationLock.unlock();
         }
     }
 
     /**
-     * Checks if an EPackage is currently registered.
-     * 
+     * Checks if an EPackage is registered for a specific scope/stage, in whatever
+     * content version (fingerprint) that location currently holds.
+     *
+     * @return true if the EPackage is registered for that exact workflow location
+     */
+    public boolean isRegistered(String scope, String stage, String namespaceURI) {
+        return namespaceURI != null && findKeyForLocation(scope, stage, namespaceURI) != null;
+    }
+
+    /**
+     * Finds the registration key currently held for a workflow location
+     * ({@code scope}, {@code stage}, {@code nsURI}), ignoring the fingerprint
+     * component. Thanks to the replace-on-changed-content semantics of
+     * {@link #registerEPackage(EPackage, ObjectMetadata)} a location holds at most
+     * one registration at a time.
+     *
+     * @return the key registered for that location, or {@code null} if none
+     */
+    private RegistrationKey findKeyForLocation(String scope, String stage, String namespaceURI) {
+        return registeredEPackages.keySet().stream()
+                .filter(k -> Objects.equals(k.scope(), scope) && Objects.equals(k.stage(), stage)
+                        && Objects.equals(k.nsURI(), namespaceURI))
+                .findFirst().orElse(null);
+    }
+
+    /**
+     * Checks if an EPackage is currently registered in <em>any</em> scope/stage.
+     *
      * @param namespaceURI the namespace URI to check
-     * @return true if the EPackage is registered, false otherwise
+     * @return true if the EPackage is registered for at least one workflow location
      */
     public boolean isRegistered(String namespaceURI) {
-        return namespaceURI != null && registeredEPackages.containsKey(namespaceURI);
+        return namespaceURI != null
+                && registeredEPackages.keySet().stream().anyMatch(k -> namespaceURI.equals(k.nsURI()));
     }
 
     /**
-     * Returns the number of currently registered EPackages.
-     * 
+     * Returns the number of currently registered EPackages (one count per
+     * scope/stage/nsURI registration).
+     *
      * @return the count of registered EPackages
      */
     public int getRegisteredCount() {
@@ -320,12 +441,12 @@ public class DynamicEPackageRegistrationService {
     }
 
     /**
-     * Returns the namespace URIs of all currently registered EPackages.
-     * 
+     * Returns the distinct namespace URIs of all currently registered EPackages.
+     *
      * @return array of namespace URIs (never null, may be empty)
      */
     public String[] getRegisteredNamespaceURIs() {
-        return registeredEPackages.keySet().toArray(new String[0]);
+        return registeredEPackages.keySet().stream().map(RegistrationKey::nsURI).distinct().toArray(String[]::new);
     }
 
     @Reference(policy = ReferencePolicy.DYNAMIC, cardinality = ReferenceCardinality.OPTIONAL, updated = "modifiedResourceSet")

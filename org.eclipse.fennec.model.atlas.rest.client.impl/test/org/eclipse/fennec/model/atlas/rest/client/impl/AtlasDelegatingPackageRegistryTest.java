@@ -174,6 +174,23 @@ class AtlasDelegatingPackageRegistryTest {
 	}
 
 	@Test
+	void heldNsUris_reportsOwnEntries_soDriftStaysVisibleAfterProviderCacheEviction() {
+		FakeProvider remote = new FakeProvider();
+		remote.packages.put(NS, demoPackage());
+
+		AtlasDelegatingPackageRegistry registry = new AtlasDelegatingPackageRegistry(new EPackageRegistryImpl(),
+				remote);
+
+		assertEquals(java.util.Set.of(), registry.heldNsUris());
+		registry.getEPackage(NS); // fetch + cache here
+		// Our entry can outlive the provider's cache (TTL / size eviction); the drift
+		// watcher gates on the union of held nsURIs, so we must report ours.
+		assertEquals(java.util.Set.of(NS), registry.heldNsUris());
+		registry.onPackageRemoved(NS);
+		assertEquals(java.util.Set.of(), registry.heldNsUris());
+	}
+
+	@Test
 	void loadsXmiInstanceReferencingUnknownNsUri() {
 		EPackage pkg = demoPackage();
 		byte[] instanceXmi = serializeInstance(pkg, "hello");

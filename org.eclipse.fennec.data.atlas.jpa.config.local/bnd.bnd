@@ -3,3 +3,6 @@
 Require-Capability: \
 	osgi.extender;filter:='(osgi.extender=osgi.configurator)',\
 	osgi.implementation;filter:='(&(osgi.implementation=osgi.cm)(version>=1.6.0)(!(version>=2.0.0)))'
+
+# Do not publish this bundle to Maven Central; local install only
+-maven-release: local

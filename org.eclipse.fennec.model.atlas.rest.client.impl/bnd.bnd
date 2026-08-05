@@ -15,8 +15,8 @@ Bundle-Description: Plain-Java implementation of the Model Atlas client API: \
 	org.eclipse.emf.common;version=latest,\
 	org.eclipse.emf.ecore;version=latest,\
 	org.eclipse.emf.ecore.xmi;version=latest,\
-	com.fasterxml.jackson.core.jackson-core;version=latest,\
-	com.fasterxml.jackson.core.jackson-databind;version=latest,\
+	tools.jackson.core.jackson-core;version=latest,\
+	tools.jackson.core.jackson-databind;version=latest,\
 	com.fasterxml.jackson.core.jackson-annotations;version=latest,\
 	biz.aQute.bnd.annotation;version=latest,\
 	org.eclipse.fennec.model.atlas.scope.api;version=snapshot

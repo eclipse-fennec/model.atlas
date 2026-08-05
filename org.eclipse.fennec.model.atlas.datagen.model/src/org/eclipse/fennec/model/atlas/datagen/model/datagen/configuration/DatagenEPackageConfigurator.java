@@ -9,7 +9,7 @@
  * SPDX-License-Identifier: EPL-2.0
  * 
  * Contributors:
- *       Data In Motion - initial API and implementation
+ *     Data In Motion - initial API and implementation
  */
 package org.eclipse.fennec.model.atlas.datagen.model.datagen.configuration;
 
@@ -35,6 +35,14 @@ import org.eclipse.fennec.model.atlas.datagen.model.datagen.DatagenPackage;
  */
 public class DatagenEPackageConfigurator implements EPackageConfigurator {
 	
+	/**
+	 * The fingerprint of this model version, computed from the <code>.ecore</code> at build
+	 * time. It identifies the model content, not the artifact - see the <code>emf.fingerprint</code>
+	 * service property.
+	 * @generated
+	 */
+	public static final String FINGERPRINT = "fp1:3f736d82b3d843ed2692b619fe9436a106a278a40f01857f2110e469e4e3f43e";
+
 	private DatagenPackage ePackage;
 
 	protected DatagenEPackageConfigurator(DatagenPackage ePackage){
@@ -72,6 +80,7 @@ public class DatagenEPackageConfigurator implements EPackageConfigurator {
 		properties.put(EMFNamespaces.EMF_MODEL_REGISTRATION, EMFNamespaces.MODEL_REGISTRATION_PROVIDED);
 		properties.put(EMFNamespaces.EMF_MODEL_FILE_EXT, "datagen");
 		properties.put(EMFNamespaces.EMF_MODEL_VERSION, "1.0");
+		properties.put(EMFNamespaces.EMF_MODEL_FINGERPRINT, FINGERPRINT);
 		return properties;
 	}
 }

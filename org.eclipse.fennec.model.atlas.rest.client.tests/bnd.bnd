@@ -15,8 +15,8 @@ Bundle-Description: End-to-end tests for the plain-Java Model Atlas client again
 	org.eclipse.emf.common;version=latest,\
 	org.eclipse.emf.ecore;version=latest,\
 	org.eclipse.emf.ecore.xmi;version=latest,\
-	com.fasterxml.jackson.core.jackson-core;version=latest,\
-	com.fasterxml.jackson.core.jackson-databind;version=latest
+	tools.jackson.core.jackson-core;version=latest,\
+	tools.jackson.core.jackson-databind;version=latest
 
 # Test runtime: JUnit 5, Testcontainers (daanse), and a full Jakarta RS *client*
 # implementation (Jersey + its HK2 injection chain) so ClientBuilder.newBuilder()
@@ -44,3 +44,6 @@ Bundle-Description: End-to-end tests for the plain-Java Model Atlas client again
 	jakarta.annotation-api;version=latest
 
 Bundle-Version: 1.0.0.SNAPSHOT
+
+# Do not publish this bundle to Maven Central; local install only
+-maven-release: local

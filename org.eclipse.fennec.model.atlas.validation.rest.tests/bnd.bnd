@@ -34,3 +34,6 @@ Require-Capability: osgi.extender;filter:='(osgi.extender=osgi.configurator)'
 
 # Sometimes without DynamicImport Mockito will not find certain classes
 #DynamicImport-Package: *
+
+# Do not publish this bundle to Maven Central; local install only
+-maven-release: local

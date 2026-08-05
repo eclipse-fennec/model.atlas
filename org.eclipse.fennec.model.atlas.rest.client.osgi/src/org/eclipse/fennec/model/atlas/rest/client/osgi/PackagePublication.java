@@ -29,11 +29,19 @@ interface PackagePublication {
 	/**
 	 * Publish the EPackage as the configurator/EPackage/EFactory trio.
 	 *
-	 * @param ePackage the fetched package
-	 * @param scope    the Atlas scope it came from (origin marker)
-	 * @param stage    the stage it was fetched from
-	 * @param version  the model version, or {@code null} to stamp the default
+	 * @param ePackage          the fetched package
+	 * @param scope             the Atlas scope it came from (origin marker)
+	 * @param stage             the stage it was fetched from
+	 * @param version           the model version, or {@code null} to stamp the default
+	 * @param serverFingerprint the server-reported model fingerprint, or {@code null} when
+	 *                          unknown — used only as a cross-check against the locally
+	 *                          computed {@code emf.fingerprint} property, never adopted
 	 * @return {@code true} if it was newly published (idempotent per nsURI)
 	 */
-	boolean publish(EPackage ePackage, String scope, String stage, String version);
+	boolean publish(EPackage ePackage, String scope, String stage, String version, String serverFingerprint);
+
+	/** Publish without a server fingerprint cross-check. */
+	default boolean publish(EPackage ePackage, String scope, String stage, String version) {
+		return publish(ePackage, scope, stage, version, null);
+	}
 }

@@ -7,15 +7,6 @@
 		"jersey.context.path": "rest",
 		"osgi.http.whiteboard.target": "(id=atlasHttp)"
 	},
-	"ModelDocumentationProvider~docProvider" : {
-		"output.root.folder" : "./data/model/documentation/",
-		"output.md.folder" : "md",
-		"output.md.mermaid.folder" : "md_mermaid",
-		"output.md.plantuml.folder" : "md_plantuml",
-		"output.html.folder" : "html",
-		"output.html.mermaid.folder" : "html_mermaid",
-		"output.package.hash.code.folder": "epackage_hash_code"
-	},
 	"org.apache.felix.hc.core.impl.servlet.HealthCheckExecutorServlet~atlas": {
 		"osgi.http.whiteboard.servlet.pattern": "/health/*",
 		"osgi.http.whiteboard.target": "(id=atlasHttp)",
@@ -27,11 +18,6 @@
 		"httpStatus.critical": 503,
 		"httpStatus.temporarilyUnavailable": 503
 	},
-//	"org.apache.felix.hc.generalchecks.DsComponentsCheck" : {
-//	   "components.list" : [
-//	           "ScopeService"
-//	       ]
-//	   },
 	"org.apache.felix.hc.generalchecks.ServicesCheck" : {
 	   "services.list" : [
                "(scope.name=jena)",
