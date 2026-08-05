@@ -32,6 +32,14 @@ import org.eclipse.fennec.model.atlas.management.git.github.webhook.model.github
  */
 public class GithubWebhookEPackageConfigurator implements EPackageConfigurator {
 	
+	/**
+	 * The fingerprint of this model version, computed from the <code>.ecore</code> at build
+	 * time. It identifies the model content, not the artifact - see the <code>emf.fingerprint</code>
+	 * service property.
+	 * @generated
+	 */
+	public static final String FINGERPRINT = "fp1:8a5940f8942a6c20c722f84764c66d57f833f7f733b1478edee0c8388e241a9c";
+
 	private GithubWebhookPackage ePackage;
 
 	protected GithubWebhookEPackageConfigurator(GithubWebhookPackage ePackage){
@@ -69,6 +77,7 @@ public class GithubWebhookEPackageConfigurator implements EPackageConfigurator {
 		properties.put(EMFNamespaces.EMF_MODEL_REGISTRATION, EMFNamespaces.MODEL_REGISTRATION_PROVIDED);
 		properties.put(EMFNamespaces.EMF_MODEL_FILE_EXT, "githubwebhook");
 		properties.put(EMFNamespaces.EMF_MODEL_VERSION, "1.0");
+		properties.put(EMFNamespaces.EMF_MODEL_FINGERPRINT, FINGERPRINT);
 		return properties;
 	}
 }

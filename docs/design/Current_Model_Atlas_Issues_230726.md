@@ -40,8 +40,12 @@ Affected (return 204 despite the package existing):
   2. The root cause is the same identity confusion as issue 1, seen from the other side: the REST schema API hardcodes one objectId-derivation rule as if it were a system-wide contract, but objectId semantics are actually 
     backend-defined. Issue 1 is what breaks when two things share an objectId; issue 2 is what breaks when the same logical thing has two different ones.
 
-  Remaining short-term mitigation: change the schema endpoints to resolve nsURI → metadata via a query on the properties["nsUri"] field (or the ePackageIndex) instead of recomputing the encoded id — that makes the endpoints
-  scheme-agnostic. Long-term it folds into the #156 identity work.
+  ~~Remaining short-term mitigation: change the schema endpoints to resolve nsURI → metadata via a query on the properties["nsUri"] field (or the ePackageIndex) instead of recomputing the encoded id — that makes the endpoints
+  scheme-agnostic. Long-term it folds into the #156 identity work.~~
+  **RESOLVED (2026-08-03, fingerprint plan phase F8):** exactly this was implemented — the schema endpoints resolve nsURI → metadata via the properties["nsUri"] scan (scope-service level, so it works for every backend; the
+  ePackageIndex was deliberately NOT used because it only sees REST writes), upload-path objectIds became opaque UUIDs, and `encodePackageNsURI` is gone. The nsUri-parameterized endpoints now work for git-backed packages
+  (proven by `GitRegistryChainIT.nsUriPropertyLookup_findsGitBackedPackages`). NOTE the write-side wrinkle above is only half-fixed: overwrite=true now FINDS the git-backed metadata (no more silent create path), but the
+  subsequent update still surfaces the read-only backend's UnsupportedOperationException as a 500 — git-derived metadata does not set isReadOnly, so the clean 403 path is not taken. Still open.
 
 ## Fennec-codec as well as some model atlas internal services still look up and store EPackage only by nsURI, causing issues when we have multiple EPackages with the same nsURI 
 

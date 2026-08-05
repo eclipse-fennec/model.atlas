@@ -154,7 +154,75 @@ public class ScopeServiceImpl<T extends EObject> implements ScopeService<T>, Wri
 
 	/*
 	 * (non-Javadoc)
-	 * 
+	 *
+	 * @see org.eclipse.fennec.model.atlas.wf.workflowapi.WritableScopeService#
+	 * getMetadataByPropertyFromStageForRegistry(java.lang.String, java.lang.String,
+	 * java.lang.String, java.lang.String)
+	 */
+	@Override
+	public List<ObjectMetadata> getMetadataByPropertyFromStageForRegistry(String registry, String stage, String key,
+			String value) {
+		validateRegistry(registry);
+		validateProperty(key, value);
+		List<ObjectMetadata> scopedMetadata = filterByProperty(
+				getRegistryService(registry).listInStage(config.scope_name(), stage), key, value);
+		if(scopedMetadata.isEmpty()) {
+			return getMetadataByPropertyFromParentForRegistry(registry, key, value);
+		}
+		return scopedMetadata;
+	}
+
+	/*
+	 * (non-Javadoc)
+	 *
+	 * @see org.eclipse.fennec.model.atlas.wf.workflowapi.WritableScopeService#
+	 * getMetadataByPropertyFromFinalStageForRegistry(java.lang.String,
+	 * java.lang.String, java.lang.String)
+	 */
+	@Override
+	public List<ObjectMetadata> getMetadataByPropertyFromFinalStageForRegistry(String registry, String key,
+			String value) {
+		validateRegistry(registry);
+		validateProperty(key, value);
+		List<ObjectMetadata> scopedMetadata = filterByProperty(
+				getRegistryService(registry).listInFinalStage(config.scope_name()), key, value);
+		if(scopedMetadata.isEmpty()) {
+			return getMetadataByPropertyFromParentForRegistry(registry, key, value);
+		}
+		return scopedMetadata;
+	}
+
+	private List<ObjectMetadata> getMetadataByPropertyFromParentForRegistry(String registry, String key, String value) {
+		//          if parent scope is atlas and registry is schema registry -> go to atlas schema registry
+		//          if parent scope is NOT atlas -> look into the parent registry (must have the same name as this registry)
+		//          if parent scope is atlas and registry is NOT a schema registry -> no need to look into parent
+		//          if parent scope is not set -> this cannot happen because the default is atlas
+		List<ObjectMetadata> parentScopeMetadata = List.of();
+		if(WorkflowConstants.ATLAS_SCOPE_NAME.equals(config.scope_parent()) && RegistryType.SCHEMA == getRegistryService(registry).getRegistry().getType()) {
+			parentScopeMetadata = filterByProperty(atlasSchemaRegistryService.listInFinalStage(config.scope_parent()), key, value);
+		} else if (!WorkflowConstants.ATLAS_SCOPE_NAME.equals(config.scope_parent())) {
+			parentScopeMetadata = filterByProperty(getRegistryService(registry).listInFinalStage(config.scope_parent()), key, value);
+			parentScopeMetadata.forEach(pm -> pm.setIsReadOnly(true));
+		}
+		return parentScopeMetadata;
+	}
+
+	private static List<ObjectMetadata> filterByProperty(List<ObjectMetadata> metadata, String key, String value) {
+		return metadata.stream().filter(m -> value.equals(m.getProperties().get(key))).toList();
+	}
+
+	private static void validateProperty(String key, String value) {
+		if (key == null || key.isBlank()) {
+			throw new IllegalArgumentException("Property key cannot be null or blank!");
+		}
+		if (value == null) {
+			throw new IllegalArgumentException("Property value cannot be null!");
+		}
+	}
+
+	/*
+	 * (non-Javadoc)
+	 *
 	 * @see org.eclipse.fennec.model.atlas.wf.workflowapi.ScopeService#
 	 * getContentFromStageForRegistry(java.lang.String, java.lang.String,
 	 * java.lang.String)

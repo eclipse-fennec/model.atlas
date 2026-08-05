@@ -522,7 +522,7 @@ public class ManagementApiPackageImpl extends EPackageImpl implements Management
 	 * @generated
 	 */
 	@Override
-	public EOperation getEObjectRegistryService__FindByFingerprint__String() {
+	public EOperation getEObjectRegistryService__FindByGenerationTriggerFingerprint__String() {
 		return eObjectRegistryServiceEClass.getEOperations().get(7);
 	}
 
@@ -624,6 +624,16 @@ public class ManagementApiPackageImpl extends EPackageImpl implements Management
 	@Override
 	public EOperation getEObjectRegistryService__FindByScopeRegistryStageAndName__String_String_String_String() {
 		return eObjectRegistryServiceEClass.getEOperations().get(17);
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
+	public EOperation getEObjectRegistryService__FindByFingerprint__String() {
+		return eObjectRegistryServiceEClass.getEOperations().get(18);
 	}
 
 	/**
@@ -756,7 +766,7 @@ public class ManagementApiPackageImpl extends EPackageImpl implements Management
 		createEOperation(eObjectRegistryServiceEClass, EOBJECT_REGISTRY_SERVICE___FIND_PENDING_APPROVAL);
 		createEOperation(eObjectRegistryServiceEClass, EOBJECT_REGISTRY_SERVICE___FIND_BY_VERSION__STRING);
 		createEOperation(eObjectRegistryServiceEClass, EOBJECT_REGISTRY_SERVICE___FIND_BY_VERSION_PATTERN__STRING);
-		createEOperation(eObjectRegistryServiceEClass, EOBJECT_REGISTRY_SERVICE___FIND_BY_FINGERPRINT__STRING);
+		createEOperation(eObjectRegistryServiceEClass, EOBJECT_REGISTRY_SERVICE___FIND_BY_GENERATION_TRIGGER_FINGERPRINT__STRING);
 		createEOperation(eObjectRegistryServiceEClass, EOBJECT_REGISTRY_SERVICE___FIND_BY_OBJECT_TYPE__STRING);
 		createEOperation(eObjectRegistryServiceEClass, EOBJECT_REGISTRY_SERVICE___FIND_BY_STATUS_AND_TYPE__OBJECTSTATUS_STRING);
 		createEOperation(eObjectRegistryServiceEClass, EOBJECT_REGISTRY_SERVICE___FIND_RECENTLY_MODIFIED__INSTANT_INT);
@@ -767,6 +777,7 @@ public class ManagementApiPackageImpl extends EPackageImpl implements Management
 		createEOperation(eObjectRegistryServiceEClass, EOBJECT_REGISTRY_SERVICE___FIND_BY_SCOPE_STAGE_AND_NAME__STRING_STRING_STRING);
 		createEOperation(eObjectRegistryServiceEClass, EOBJECT_REGISTRY_SERVICE___FIND_BY_SCOPE_REGISTRY_AND_STAGE__STRING_STRING_STRING);
 		createEOperation(eObjectRegistryServiceEClass, EOBJECT_REGISTRY_SERVICE___FIND_BY_SCOPE_REGISTRY_STAGE_AND_NAME__STRING_STRING_STRING_STRING);
+		createEOperation(eObjectRegistryServiceEClass, EOBJECT_REGISTRY_SERVICE___FIND_BY_FINGERPRINT__STRING);
 
 		storageRegistryEClass = createEClass(STORAGE_REGISTRY);
 		createEOperation(storageRegistryEClass, STORAGE_REGISTRY___GET_ALL_STORAGES);
@@ -1100,7 +1111,7 @@ public class ManagementApiPackageImpl extends EPackageImpl implements Management
 		g1.getETypeArguments().add(g2);
 		initEOperation(op, g1);
 
-		op = initEOperation(getEObjectRegistryService__FindByFingerprint__String(), null, "findByFingerprint", 0, 1, IS_UNIQUE, IS_ORDERED);
+		op = initEOperation(getEObjectRegistryService__FindByGenerationTriggerFingerprint__String(), null, "findByGenerationTriggerFingerprint", 0, 1, IS_UNIQUE, IS_ORDERED);
 		addEParameter(op, ecorePackage.getEString(), "fingerprint", 1, 1, IS_UNIQUE, IS_ORDERED);
 		g1 = createEGenericType(theManagementPackage.getOptional());
 		g2 = createEGenericType(theManagementPackage.getObjectMetadata());
@@ -1177,6 +1188,13 @@ public class ManagementApiPackageImpl extends EPackageImpl implements Management
 		addEParameter(op, ecorePackage.getEString(), "registry", 1, 1, IS_UNIQUE, IS_ORDERED);
 		addEParameter(op, ecorePackage.getEString(), "stage", 1, 1, IS_UNIQUE, IS_ORDERED);
 		addEParameter(op, ecorePackage.getEString(), "name", 1, 1, IS_UNIQUE, IS_ORDERED);
+		g1 = createEGenericType(theManagementPackage.getList());
+		g2 = createEGenericType(theManagementPackage.getObjectMetadata());
+		g1.getETypeArguments().add(g2);
+		initEOperation(op, g1);
+
+		op = initEOperation(getEObjectRegistryService__FindByFingerprint__String(), null, "findByFingerprint", 0, 1, IS_UNIQUE, IS_ORDERED);
+		addEParameter(op, ecorePackage.getEString(), "fingerprint", 1, 1, IS_UNIQUE, IS_ORDERED);
 		g1 = createEGenericType(theManagementPackage.getList());
 		g2 = createEGenericType(theManagementPackage.getObjectMetadata());
 		g1.getETypeArguments().add(g2);

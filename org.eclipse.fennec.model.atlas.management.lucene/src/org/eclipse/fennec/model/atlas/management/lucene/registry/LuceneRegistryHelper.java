@@ -127,6 +127,7 @@ public class LuceneRegistryHelper extends AbstractRegistryHelper {
     public static final String FIELD_SCOPE = "scope";
     public static final String FIELD_REGISTRY = "registry";
     public static final String FIELD_STAGE = "stage";
+    public static final String FIELD_FINGERPRINT = "fingerprint";
 
     // Additional fields for advanced querying
     public static final String FIELD_LAST_CHANGE_USER = "lastChangeUser";
@@ -583,6 +584,7 @@ public class LuceneRegistryHelper extends AbstractRegistryHelper {
         addTimeField(doc, FIELD_COMPLIANCE_CHECK_TIME, metadata.getComplianceCheckTime());
         addTimeField(doc, FIELD_LAST_CHANGE_TIME, metadata.getLastChangeTime());
         addFieldIfNotNull(doc, FIELD_VERSION, metadata.getVersion(), true);
+        addFieldIfNotNull(doc, FIELD_FINGERPRINT, metadata.getFingerprint(), false);
 
         // Handle ObjectRef - it's an EObject reference, only store if not null
         if (metadata.getObjectRef() != null) {
@@ -655,7 +657,7 @@ public class LuceneRegistryHelper extends AbstractRegistryHelper {
             // Set of fields that use StringField (exact match)
             Set<String> exactMatchFields = Set.of(FIELD_UPLOAD_USER, FIELD_REVIEW_USER, FIELD_LAST_CHANGE_USER,
                     FIELD_CONTENT_HASH, FIELD_GENERATION_TRIGGER_FINGERPRINT, FIELD_GOVERNANCE_DOCUMENTATION_ID,
-                    FIELD_STATUS, FIELD_OBJECT_REF, FIELD_OBJECT_METADATA_ID, FIELD_STAGE, FIELD_SCOPE, FIELD_REGISTRY);
+                    FIELD_STATUS, FIELD_OBJECT_REF, FIELD_OBJECT_METADATA_ID, FIELD_STAGE, FIELD_SCOPE, FIELD_REGISTRY, FIELD_FINGERPRINT);
 
             // Set of analyzed user fields for wildcard/fuzzy searches
             Set<String> analyzedUserFields = Set.of(FIELD_UPLOAD_USER_TEXT, FIELD_REVIEW_USER_TEXT,

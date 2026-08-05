@@ -44,7 +44,7 @@ import org.osgi.annotation.versioning.ProviderType;
  * @generated
  */
 @ProviderType
-@EPackage(uri = GitlabWebhookPackage.eNS_URI, genModel = "/model/gitlab-webhook.genmodel", genModelSourceLocations = {"model/gitlab-webhook.genmodel","org.eclipse.fennec.model.atlas.management.git.gitlab.webhook.model/model/gitlab-webhook.genmodel"}, ecore = "/model/gitlab-webhook.ecore", ecoreSourceLocations = "/model/gitlab-webhook.ecore")
+@EPackage(uri = GitlabWebhookPackage.eNS_URI, fingerprint = "fp1:0f60415005fbada3b3cbcd361096f3a15f6bb218835c3ef1e1aa7ed38f01ebb0", genModel = "/model/gitlab-webhook.genmodel", genModelSourceLocations = {"model/gitlab-webhook.genmodel","org.eclipse.fennec.model.atlas.management.git.gitlab.webhook.model/model/gitlab-webhook.genmodel"}, ecore = "/model/gitlab-webhook.ecore", ecoreSourceLocations = "/model/gitlab-webhook.ecore")
 public interface GitlabWebhookPackage extends org.eclipse.emf.ecore.EPackage {
 	/**
 	 * The package name.

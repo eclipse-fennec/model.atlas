@@ -30,9 +30,11 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import org.eclipse.emf.ecore.EObject;
+import org.eclipse.emf.ecore.EPackage;
 import org.eclipse.emf.ecore.resource.Resource;
 import org.eclipse.emf.ecore.util.EcoreUtil;
 import org.eclipse.emf.ecore.xmi.impl.XMIResourceImpl;
+import org.eclipse.fennec.emf.osgi.fingerprint.util.FingerprintHelper;
 import org.eclipse.fennec.model.atlas.mgmt.api.EObjectRegistryService;
 import org.eclipse.fennec.model.atlas.mgmt.api.EObjectStorageService;
 import org.eclipse.fennec.model.atlas.mgmt.management.ObjectMetadata;
@@ -363,6 +365,16 @@ public abstract class AbstractEObjectStorageService implements EObjectStorageSer
                     if (contentHash != null) {
                         metadata.setContentHash(contentHash);
                     }
+                }
+
+                // Compute and set the model fingerprint for EPackages. Always overwritten
+                // here, never taken from the caller ("computed, never trusted") — and
+                // cleared for non-EPackage objects so a client-supplied value cannot
+                // survive the upload path. Unlike contentHash (bytes identity of the
+                // stored XMI) the fingerprint is the semantic model identity.
+                if (metadata != null) {
+                    metadata.setFingerprint(
+                            object instanceof EPackage ePackage ? FingerprintHelper.fingerprint(ePackage) : null);
                 }
 
                 // Use helper to save both object and metadata

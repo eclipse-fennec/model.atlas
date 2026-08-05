@@ -151,6 +151,11 @@
         <details key="documentation" value="The registry to which this metadata belongs (e.g. schema, configuration, script, etc.)"/>
       </eAnnotations>
     </eStructuralFeatures>
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="fingerprint" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="Content-derived model fingerprint (`emf.fingerprint` format, scheme-prefixed &#xA;e.g. `fp1:&lt;digest>`). Set for EPackage objects; computed server-side, never &#xA;taken from the client.&#xA;Distinct from contentHash, which hashes the stored XMI bytes."/>
+      </eAnnotations>
+    </eStructuralFeatures>
   </eClassifiers>
   <eClassifiers xsi:type="ecore:EClass" name="StringToObjectMapEntry" instanceClassName="java.util.Map$Entry">
     <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">

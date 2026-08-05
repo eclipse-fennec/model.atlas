@@ -16,11 +16,11 @@ package org.eclipse.fennec.data.atlas.jpa.rest;
 import java.util.List;
 
 import org.eclipse.emf.ecore.EObject;
+import org.eclipse.fennec.model.utilities.UtilitiesFactory;
 import org.eclipse.fennec.persistence.eorm.Column;
 import org.eclipse.fennec.persistence.eorm.Entity;
 import org.eclipse.fennec.persistence.eorm.EntityMappings;
 import org.eclipse.fennec.persistence.eorm.Id;
-import org.gecko.emf.utilities.UtilitiesFactory;
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.ServiceScope;
 import org.osgi.service.jakartars.whiteboard.propertytypes.JakartarsName;
@@ -86,7 +86,7 @@ public class JpaDataResource {
                 return Response.noContent().build();
             }
 
-            org.gecko.emf.utilities.Response response = UtilitiesFactory.eINSTANCE.createResponse();
+            org.eclipse.fennec.model.utilities.Response response = UtilitiesFactory.eINSTANCE.createResponse();
             response.getData().addAll(results.stream()
                     .filter(EObject.class::isInstance)
                     .map(EObject.class::cast).toList());
@@ -145,7 +145,7 @@ public class JpaDataResource {
                 return Response.noContent().build();
             }
 
-            org.gecko.emf.utilities.Response response = UtilitiesFactory.eINSTANCE.createResponse();
+            org.eclipse.fennec.model.utilities.Response response = UtilitiesFactory.eINSTANCE.createResponse();
             response.getData().addAll(results.stream()
                     .filter(EObject.class::isInstance)
                     .map(EObject.class::cast).toList());

@@ -26,8 +26,15 @@ public interface WorkflowConstants {
 	
 	public static final String ATLAS_SCHEMA_REGISTRY_STAGE_NAME = "released";
 	
-	/** ATLAS_EPACKAGE_REGISTRATION_STAGE_PROPERTY 
+	/** ATLAS_EPACKAGE_REGISTRATION_STAGE_PROPERTY
 	 * This is the property used to register EPackages as a service via the EPackageStageActionService
 	 * */
 	public static final String ATLAS_EPACKAGE_REGISTRATION_STAGE_PROPERTY = "atlas.stage";
+
+	/** NS_URI_METADATA_PROPERTY
+	 * The ObjectMetadata properties key carrying the raw namespace URI of an EPackage.
+	 * Written by the schema REST upload path and by the git backend's metadata derivation;
+	 * used by the nsUri-based scope-service lookups.
+	 * */
+	public static final String NS_URI_METADATA_PROPERTY = "nsUri";
 }

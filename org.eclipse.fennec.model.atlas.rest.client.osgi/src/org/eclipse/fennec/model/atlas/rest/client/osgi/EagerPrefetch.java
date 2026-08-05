@@ -136,7 +136,7 @@ final class EagerPrefetch {
 				continue;
 			}
 			ResolvedEPackage rp = resolved.get();
-			if (publication.publish(rp.getEPackage(), rp.getScope(), rp.getStage(), rp.getVersion())) {
+			if (publication.publish(rp.getEPackage(), rp.getScope(), rp.getStage(), rp.getVersion(), rp.getFingerprint())) {
 				published++;
 			}
 		}
@@ -190,7 +190,8 @@ final class EagerPrefetch {
 			// resolve()-based provenance; fall back to the queried scope if the server omitted it.
 			String originScope = descriptor.scope() != null && !descriptor.scope().isBlank() ? descriptor.scope()
 					: scope;
-			if (publication.publish(ePackage.get(), originScope, descriptor.stage(), descriptor.version())) {
+			if (publication.publish(ePackage.get(), originScope, descriptor.stage(), descriptor.version(),
+					descriptor.fingerprint())) {
 				published++;
 			}
 		}

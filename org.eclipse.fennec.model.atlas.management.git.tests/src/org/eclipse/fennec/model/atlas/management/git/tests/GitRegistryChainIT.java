@@ -15,6 +15,7 @@ package org.eclipse.fennec.model.atlas.management.git.tests;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -31,10 +32,12 @@ import org.eclipse.emf.ecore.EClassifier;
 import org.eclipse.emf.ecore.EObject;
 import org.eclipse.emf.ecore.EPackage;
 import org.eclipse.emf.ecore.EReference;
+import org.eclipse.fennec.model.atlas.mgmt.management.ObjectMetadata;
 import org.eclipse.fennec.model.atlas.mgmt.storage.ModelUnavailableException;
 import org.eclipse.fennec.model.atlas.mgmt.api.EObjectStorageService;
 import org.eclipse.fennec.model.atlas.tests.common.CommonTestAnnotations.EPackageLuceneIndexSetup;
 import org.eclipse.fennec.model.atlas.tests.common.CommonTestAnnotations.RegistryConfiguration;
+import org.eclipse.fennec.model.atlas.wf.workflowapi.WritableScopeService;
 import org.gecko.jgit.api.GitService;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -195,6 +198,67 @@ public class GitRegistryChainIT {
 		EClass releasePerson = (EClass) releasePkg.getEClassifier("Person");
 		assertEquals(1, mainPerson.getEStructuralFeatures().size(), "main Person has only 'name'");
 		assertEquals(2, releasePerson.getEStructuralFeatures().size(), "release Person adds 'email'");
+
+		// F3: every dynamically registered EPackage carries the content-derived
+		// emf.fingerprint service property — and since the two branches diverge
+		// (1 vs 2 features), their fingerprints must differ.
+		Object mainFp = mainPkgAware.getServiceReference().getProperty("emf.fingerprint");
+		Object releaseFp = releasePkgAware.getServiceReference().getProperty("emf.fingerprint");
+		assertNotNull(mainFp, "registered EPackage must carry the emf.fingerprint property");
+		assertNotNull(releaseFp, "registered EPackage must carry the emf.fingerprint property");
+		assertTrue(mainFp.toString().startsWith("fp1:"), "fingerprint should use the current scheme tag");
+		assertNotEquals(mainFp, releaseFp, "diverging branch content must yield diverging fingerprints");
+	}
+
+	// ---------------------------------------------------------------------
+	// F8 bonus fix — nsUri property lookup reaches git-backed packages
+	// ---------------------------------------------------------------------
+
+	/**
+	 * The scope-service nsUri lookup (F8: {@code getMetadataByPropertyFromStageForRegistry})
+	 * resolves via the {@code nsUri} metadata property that {@code GitStorageHelper.deriveOne}
+	 * stamps — so it finds <em>git-backed</em> packages whose objectId is the derived
+	 * {@code scope/stage/repoPath} (never the Base64 the old REST lookups recomputed; that
+	 * mismatch was the documented "known limitation").
+	 */
+	@SuppressWarnings("rawtypes")
+	@Test
+	@RegistryConfiguration
+	@EPackageLuceneIndexSetup
+	public void nsUriPropertyLookup_findsGitBackedPackages(
+			@InjectService(cardinality = 0, filter = "(storage.backend=git)") ServiceAware<EObjectStorageService> storageAware,
+			@InjectService(cardinality = 0, filter = "(&(emf.name=person)(emf.model.scope=" + SCOPE
+					+ ")(atlas.stage=release))") ServiceAware<EPackage> releasePkgAware,
+			@InjectService(cardinality = 0, filter = "(scope.name=" + SCOPE
+					+ ")") ServiceAware<WritableScopeService> scopeAware)
+			throws Exception {
+
+		startChain(0);
+
+		assertNotNull(releasePkgAware.waitForService(WAIT), "chain must be primed before the lookup");
+		WritableScopeService<?> scopeService = scopeAware.waitForService(WAIT);
+		assertNotNull(scopeService, "ScopeService for the git scope should be up");
+
+		// Stage-explicit lookup on main.
+		List<ObjectMetadata> main = scopeService
+				.getMetadataByPropertyFromStageForRegistry(SCHEMA_REGISTRY, GitTestRepository.BRANCH_MAIN, "nsUri",
+						GitTestRepository.PERSON_NS_URI);
+		assertEquals(1, main.size(), "exactly one person package in stage main");
+		assertEquals(SCOPE + "/" + GitTestRepository.BRANCH_MAIN + "/" + GitTestRepository.PERSON_ECORE,
+				main.get(0).getObjectId(), "git keeps its derived scope/stage/repoPath objectId");
+
+		// Final-stage lookup (release is the terminal stage of the chain config).
+		List<ObjectMetadata> released = scopeService
+				.getMetadataByPropertyFromFinalStageForRegistry(SCHEMA_REGISTRY, "nsUri",
+						GitTestRepository.PERSON_NS_URI);
+		assertEquals(1, released.size(), "exactly one person package in the final stage");
+		assertEquals(GitTestRepository.BRANCH_RELEASE, released.get(0).getStage());
+
+		// Unknown nsURI yields an empty list, not an error.
+		assertTrue(scopeService
+				.getMetadataByPropertyFromStageForRegistry(SCHEMA_REGISTRY, GitTestRepository.BRANCH_MAIN, "nsUri",
+						"http://example.org/does-not-exist/1.0")
+				.isEmpty(), "unknown nsURI must yield an empty result");
 	}
 
 	// ---------------------------------------------------------------------

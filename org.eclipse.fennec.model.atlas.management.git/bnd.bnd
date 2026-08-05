@@ -20,6 +20,7 @@ Bundle-Description: Git-based, read-only storage implementation for workflow man
 	org.eclipse.fennec.model.atlas.workflow;version=snapshot,\
 	org.eclipse.fennec.model.atlas.management.git.webhook.model;version=snapshot,\
 	org.gecko.jgit;version=latest,\
-	org.eclipse.jgit;version=latest
+	org.eclipse.jgit;version=latest,\
+	org.eclipse.fennec.emf.osgi.component.minimal;version=latest
 
 Bundle-Version: 1.0.0.SNAPSHOT

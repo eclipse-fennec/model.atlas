@@ -105,6 +105,15 @@ final class RemoteEPackagePublisher {
 	 * @return {@code true} if it was newly published
 	 */
 	boolean publish(EPackage ePackage, String scope, String stage, String version) {
+		return publish(ePackage, scope, stage, version, null);
+	}
+
+	/**
+	 * Same as {@link #publish(EPackage, String, String, String)}, additionally passing the
+	 * server-reported fingerprint as a cross-check for the locally computed
+	 * {@code emf.fingerprint} property (a mismatch is logged, never adopted).
+	 */
+	boolean publish(EPackage ePackage, String scope, String stage, String version, String serverFingerprint) {
 		Objects.requireNonNull(ePackage, "ePackage");
 		String nsUri = ePackage.getNsURI();
 		if (nsUri == null || nsUri.isBlank()) {
@@ -116,7 +125,8 @@ final class RemoteEPackagePublisher {
 			if (published.containsKey(nsUri)) {
 				return; // already published — idempotent
 			}
-			published.put(nsUri, register(new RemoteEPackageConfigurator(ePackage, scope, stage, version, baseUri)));
+			published.put(nsUri,
+					register(new RemoteEPackageConfigurator(ePackage, scope, stage, version, baseUri, serverFingerprint)));
 			mirrorToGlobal(nsUri, ePackage);
 			created[0] = true;
 		});
@@ -141,6 +151,11 @@ final class RemoteEPackagePublisher {
 	 * @return {@code true} if it replaced an existing publication
 	 */
 	boolean republish(EPackage ePackage, String scope, String stage, String version) {
+		return republish(ePackage, scope, stage, version, null);
+	}
+
+	/** Same as {@link #republish(EPackage, String, String, String)} with the fingerprint cross-check. */
+	boolean republish(EPackage ePackage, String scope, String stage, String version, String serverFingerprint) {
 		Objects.requireNonNull(ePackage, "ePackage");
 		String nsUri = ePackage.getNsURI();
 		if (nsUri == null || nsUri.isBlank()) {
@@ -150,7 +165,8 @@ final class RemoteEPackagePublisher {
 		boolean[] replaced = { false };
 		locks.run(nsUri, () -> {
 			Registration old = published.get(nsUri);
-			Registration fresh = register(new RemoteEPackageConfigurator(ePackage, scope, stage, version, baseUri));
+			Registration fresh = register(
+					new RemoteEPackageConfigurator(ePackage, scope, stage, version, baseUri, serverFingerprint));
 			published.put(nsUri, fresh);
 			mirrorToGlobal(nsUri, ePackage); // replaces the singleton entry in step with the service swap
 			if (old != null) {

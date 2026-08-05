@@ -53,7 +53,7 @@ class ForceRemoteStartupCheckTest {
 	}
 
 	private PackagePublication recorder() {
-		return (ePackage, scope, stage, version) -> {
+		return (ePackage, scope, stage, version, serverFingerprint) -> {
 			published.add(ePackage.getNsURI());
 			return true;
 		};

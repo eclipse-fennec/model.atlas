@@ -36,6 +36,7 @@ import org.eclipse.emf.ecore.resource.Resource;
 import org.eclipse.emf.ecore.resource.ResourceSet;
 import org.eclipse.emf.ecore.util.EcoreUtil;
 import org.eclipse.emf.ecore.xmi.PackageNotFoundException;
+import org.eclipse.fennec.emf.osgi.fingerprint.util.FingerprintHelper;
 import org.eclipse.fennec.model.atlas.mgmt.storage.ModelUnavailableException;
 import org.eclipse.fennec.model.atlas.mgmt.api.EObjectRegistryService;
 import org.eclipse.fennec.model.atlas.mgmt.management.ManagementFactory;
@@ -547,6 +548,16 @@ public class GitStorageHelper extends AbstractStorageHelper {
 			// and the nsUri column of the scope aggregate manifest.
 			if (root instanceof EPackage pkg && pkg.getNsURI() != null) {
 				md.getProperties().put("nsUri", pkg.getNsURI());
+				// Model fingerprint for schemas — same producer contract as the upload
+				// path (AbstractEObjectStorageService.storeObject): computed here from
+				// the parsed content, never adopted from anywhere. Like contentHash, a
+				// failed computation must never fail the derivation.
+				try {
+					md.setFingerprint(FingerprintHelper.fingerprint(pkg));
+				} catch (Exception e) {
+					LOGGER.log(Level.FINE, e,
+							() -> "Fingerprint computation failed for " + path + ": " + e.getMessage());
+				}
 			}
 			return md;
 		} catch (Exception e) {

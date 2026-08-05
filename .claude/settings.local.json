@@ -88,7 +88,9 @@
       "Bash(sed -i s/ReadOnlyScope/ReadableScope/g org.eclipse.fennec.model.atlas.readable.scope.collector/src/org/eclipse/fennec/model/atlas/readable/scope/collector/ReadableScopeCollector.java org.eclipse.fennec.model.atlas.readable.scope.collector/test/org/eclipse/fennec/model/atlas/readable/scope/collector/ReadableScopeCollectorTest.java org.eclipse.fennec.model.atlas.rest.client.osgi/src/org/eclipse/fennec/model/atlas/rest/client/osgi/RemoteScopeServicePublisher.java org.eclipse.fennec.model.atlas.validation.client.tests/src/org/eclipse/fennec/model/atlas/validation/client/tests/RemoteValidationIT.java org.eclipse.fennec.model.atlas.workflow.tests/src/org/eclipse/fennec/model/atlas/workflow/tests/AtlasScopeServiceIntegrationTest.java org.eclipse.fennec.model.atlas.workflow.tests/src/org/eclipse/fennec/model/atlas/workflow/tests/ReadableScopeServiceIntegrationTest.java org.eclipse.fennec.model.atlas.rest.client.tests/bnd.bnd org.eclipse.fennec.model.atlas.validation.client.tests/bnd.bnd)",
       "Bash(echo \"sed exit: $?\")",
       "Bash(grep \"\\\\.java$\")",
-      "Bash(grep -E \"BUILD|FAILED|ERROR|tests completed|> Task.*test$\")"
+      "Bash(grep -E \"BUILD|FAILED|ERROR|tests completed|> Task.*test$\")",
+      "Read(//opt/git/common.models/**)",
+      "Read(//opt/git/common.models/cnf/**)"
     ],
     "deny": [],
     "ask": []

@@ -16,6 +16,7 @@ package org.eclipse.fennec.model.atlas.management.git;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -129,6 +130,9 @@ class GitStorageHelperTest {
 		assertEquals(sha256Hex(PERSON_ECORE), md.getContentHash(), "contentHash = SHA-256 of the blob bytes");
 		assertEquals("http://example.org/person", md.getProperties().get("nsUri"),
 				"schema metadata carries the nsUri property (like the schema upload path)");
+		assertNotNull(md.getFingerprint(), "schema metadata carries the model fingerprint (F4 producer)");
+		assertTrue(md.getFingerprint().startsWith("fp1:"),
+				"fingerprint uses the current scheme tag, was: " + md.getFingerprint());
 	}
 
 	private static String sha256Hex(String content) throws Exception {

@@ -52,8 +52,10 @@ import org.osgi.test.junit5.service.ServiceExtension;
  * <ul>
  * <li><strong>Version Operations</strong> - findByVersion,
  * findByVersionPattern</li>
- * <li><strong>Fingerprint Queries</strong> - findByFingerprint for AI
- * generation tracking</li>
+ * <li><strong>Fingerprint Queries</strong> - findByGenerationTriggerFingerprint
+ * for AI generation tracking, findByFingerprint for content-version lookup
+ * (List-valued: identical content in several stages shares one
+ * fingerprint)</li>
  * <li><strong>Approval Workflow</strong> - findPendingApproval delegation</li>
  * <li><strong>Time-based Queries</strong> - findRecentlyModified with sorting
  * and limits</li>
@@ -164,7 +166,7 @@ public class LuceneRegistryInterfaceMethodsTest {
     @SuppressWarnings({ "rawtypes", "unchecked" })
     @Test
     @RegistryConfiguration
-    public void testFindByFingerprint(
+    public void testFindByGenerationTriggerFingerprint(
             @InjectService(filter = "(registry.type=shared)") EObjectRegistryService registryService) throws Exception {
 
         // Create test objects with generation trigger fingerprints (AI generation use
@@ -189,22 +191,75 @@ public class LuceneRegistryInterfaceMethodsTest {
         registryService.updateCache(manual);
 
         // Test fingerprint queries
-        Optional<ObjectMetadata> found1 = registryService.findByFingerprint("fp_abc123def456");
+        Optional<ObjectMetadata> found1 = registryService.findByGenerationTriggerFingerprint("fp_abc123def456");
         assertTrue(found1.isPresent(), "Should find AI generated package with fingerprint fp_abc123def456");
         assertEquals("ai-pkg-1", found1.get().getObjectId());
         assertEquals("AI_GENERATOR", found1.get().getSourceChannel());
 
-        Optional<ObjectMetadata> found2 = registryService.findByFingerprint("fp_xyz789abc123");
+        Optional<ObjectMetadata> found2 = registryService.findByGenerationTriggerFingerprint("fp_xyz789abc123");
         assertTrue(found2.isPresent(), "Should find AI generated package with fingerprint fp_xyz789abc123");
         assertEquals("ai-pkg-2", found2.get().getObjectId());
 
         // Test non-existent fingerprint
-        Optional<ObjectMetadata> notFound = registryService.findByFingerprint("fp_nonexistent");
+        Optional<ObjectMetadata> notFound = registryService.findByGenerationTriggerFingerprint("fp_nonexistent");
         assertFalse(notFound.isPresent(), "Should not find package with non-existent fingerprint");
 
         // Test empty string fingerprint
-        Optional<ObjectMetadata> emptyFingerprint = registryService.findByFingerprint("");
+        Optional<ObjectMetadata> emptyFingerprint = registryService.findByGenerationTriggerFingerprint("");
         assertFalse(emptyFingerprint.isPresent(), "Should not find package with empty fingerprint");
+    }
+
+    @SuppressWarnings({ "rawtypes", "unchecked" })
+    @Test
+    @RegistryConfiguration
+    public void testFindByFingerprint(
+            @InjectService(filter = "(registry.type=shared)") EObjectRegistryService registryService) throws Exception {
+
+        // The model fingerprint names a content version, not an object: identical
+        // EPackage content in two stages (e.g. two git branches) produces two metadata
+        // entries sharing one fingerprint, so findByFingerprint returns a List.
+        // Values use the real scheme-prefixed format (fp1:<sha256-hex>) on purpose —
+        // the colon is Lucene query syntax and must survive the round-trip.
+        String sharedFingerprint = "fp1:14466a0b5de879a6c3d2e1f0a9b8c7d6e5f4a3b2c1d0e9f8a7b6c5d4e3f2a1b0";
+
+        ObjectMetadata draftEntry = createTestMetadata("pkg-draft", "SensorPackage", "1.0.0", ObjectStatus.DRAFT,
+                "draft");
+        draftEntry.setFingerprint(sharedFingerprint);
+
+        ObjectMetadata approvedEntry = createTestMetadata("pkg-approved", "SensorPackage", "1.0.0",
+                ObjectStatus.APPROVED, "approved");
+        approvedEntry.setFingerprint(sharedFingerprint);
+
+        ObjectMetadata otherEntry = createTestMetadata("pkg-other", "OtherPackage", "2.0.0", ObjectStatus.DRAFT,
+                "draft");
+        otherEntry.setFingerprint("fp1:aaaa0b5de879a6c3d2e1f0a9b8c7d6e5f4a3b2c1d0e9f8a7b6c5d4e3f2a1cccc");
+
+        registryService.updateCache(draftEntry);
+        registryService.updateCache(approvedEntry);
+        registryService.updateCache(otherEntry);
+
+        // Shared fingerprint returns both stage entries
+        List<ObjectMetadata> shared = registryService.findByFingerprint(sharedFingerprint);
+        assertEquals(2, shared.size(), "Same content in two stages should yield two entries for one fingerprint");
+        assertTrue(shared.stream().map(m -> ((ObjectMetadata) m).getObjectId()).toList()
+                .containsAll(List.of("pkg-draft", "pkg-approved")));
+
+        // Distinct fingerprint returns exactly one entry
+        List<ObjectMetadata> single = registryService
+                .findByFingerprint("fp1:aaaa0b5de879a6c3d2e1f0a9b8c7d6e5f4a3b2c1d0e9f8a7b6c5d4e3f2a1cccc");
+        assertEquals(1, single.size());
+        assertEquals("pkg-other", single.get(0).getObjectId());
+
+        // Removing one stage's entry must not evict the sibling sharing the fingerprint
+        registryService.removeFromCache("pkg-draft");
+        List<ObjectMetadata> remaining = registryService.findByFingerprint(sharedFingerprint);
+        assertEquals(1, remaining.size(), "Removing one holder must not evict the sibling entry");
+        assertEquals("pkg-approved", remaining.get(0).getObjectId());
+
+        // Unknown fingerprint yields an empty list
+        assertTrue(registryService
+                .findByFingerprint("fp1:0000000000000000000000000000000000000000000000000000000000000000")
+                .isEmpty(), "Unknown fingerprint should yield an empty list");
     }
 
     @SuppressWarnings({ "rawtypes", "unchecked" })

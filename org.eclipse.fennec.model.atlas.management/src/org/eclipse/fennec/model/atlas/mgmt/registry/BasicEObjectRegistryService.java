@@ -172,7 +172,8 @@ public class BasicEObjectRegistryService<T extends EObject> implements EObjectRe
     private final Map<String, Set<String>> objectIdsByType = new ConcurrentHashMap<>();
     private final Map<String, Set<String>> objectIdsByVersion = new ConcurrentHashMap<>();
     private final Map<String, Set<String>> objectIdsByChannel = new ConcurrentHashMap<>();
-    private final Map<String, String> objectIdsByFingerprint = new ConcurrentHashMap<>();
+    private final Map<String, String> objectIdsByGenerationTriggerFingerprint = new ConcurrentHashMap<>();
+    private final Map<String, Set<String>>  objectIdsByFingerprint = new ConcurrentHashMap<>();
 
     // Thread safety for index updates
     private final ReadWriteLock cacheLock = new ReentrantReadWriteLock();
@@ -344,17 +345,14 @@ public class BasicEObjectRegistryService<T extends EObject> implements EObjectRe
     }
 
     @Override
-    public Optional<ObjectMetadata> findByFingerprint(String fingerprint) {
+    public List<ObjectMetadata> findByFingerprint(String fingerprint) {
         requireNonNull(fingerprint, "Fingerprint must not be null");
 
         cacheLock.readLock().lock();
         try {
             ensureCacheInitialized();
-            String objectId = objectIdsByFingerprint.get(fingerprint);
-            if (objectId != null) {
-                return Optional.ofNullable(metadataById.get(objectId));
-            }
-            return Optional.empty();
+            Set<String> objectIds = objectIdsByFingerprint.getOrDefault(fingerprint, Collections.emptySet());
+            return objectIds.stream().map(metadataById::get).filter(Objects::nonNull).collect(Collectors.toList());
         } finally {
             cacheLock.readLock().unlock();
         }
@@ -644,9 +642,14 @@ public class BasicEObjectRegistryService<T extends EObject> implements EObjectRe
                     .add(objectId);
         }
 
-        // Fingerprint index
+        // Generation Fingerprint index
         if (metadata.getGenerationTriggerFingerprint() != null) {
-            objectIdsByFingerprint.put(metadata.getGenerationTriggerFingerprint(), objectId);
+        	objectIdsByGenerationTriggerFingerprint.put(metadata.getGenerationTriggerFingerprint(), objectId);
+        }
+        
+        // Fingerprint index
+        if (metadata.getFingerprint() != null) {
+            objectIdsByFingerprint.computeIfAbsent(metadata.getFingerprint(), k -> ConcurrentHashMap.newKeySet()).add(objectId);
         }
     }
 
@@ -698,9 +701,20 @@ public class BasicEObjectRegistryService<T extends EObject> implements EObjectRe
             }
         }
 
-        // Fingerprint index
+        // Generation Fingerprint index
         if (metadata.getGenerationTriggerFingerprint() != null) {
-            objectIdsByFingerprint.remove(metadata.getGenerationTriggerFingerprint());
+            objectIdsByGenerationTriggerFingerprint.remove(metadata.getGenerationTriggerFingerprint());
+        }
+
+        // Fingerprint index
+        if (metadata.getFingerprint() != null) {
+            Set<String> fingerprintSet = objectIdsByFingerprint.get(metadata.getFingerprint());
+            if (fingerprintSet != null) {
+                fingerprintSet.remove(objectId);
+                if (fingerprintSet.isEmpty()) {
+                    objectIdsByFingerprint.remove(metadata.getFingerprint());
+                }
+            }
         }
     }
 
@@ -720,6 +734,7 @@ public class BasicEObjectRegistryService<T extends EObject> implements EObjectRe
             objectIdsByType.clear();
             objectIdsByVersion.clear();
             objectIdsByChannel.clear();
+            objectIdsByGenerationTriggerFingerprint.clear();
             objectIdsByFingerprint.clear();
             cacheInitialized = false;
 
@@ -885,5 +900,26 @@ public class BasicEObjectRegistryService<T extends EObject> implements EObjectRe
             cacheLock.readLock().unlock();
         }
     }
+
+	/* 
+	 * (non-Javadoc)
+	 * @see org.eclipse.fennec.model.atlas.mgmt.api.EObjectRegistryService#findByGenerationTriggerFingerprint(java.lang.String)
+	 */
+	@Override
+	public Optional<ObjectMetadata> findByGenerationTriggerFingerprint(String fingerprint) {
+		requireNonNull(fingerprint, "Fingerprint must not be null");
+
+        cacheLock.readLock().lock();
+        try {
+            ensureCacheInitialized();
+            String objectId = objectIdsByGenerationTriggerFingerprint.get(fingerprint);
+            if (objectId != null) {
+                return Optional.ofNullable(metadataById.get(objectId));
+            }
+            return Optional.empty();
+        } finally {
+            cacheLock.readLock().unlock();
+        }
+	}
 
 }

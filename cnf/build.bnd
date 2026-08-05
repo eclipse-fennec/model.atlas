@@ -39,12 +39,13 @@ Bundle-Developers: \
 	fennecM2X,\
 	fennecJPA,\
 	fennecQVT,\
-	geckoEMFUtil,\
+	fennecUtil,\
 	geckoMessaging,\
 	geckoSearch,\
 	geckoLibraries,\
 	jakartaREST,\
-	fennecCodec
+	fennecCodec,\
+	fennecEMFModels
 
 
 # Needed because we enabled library 'gecko-dimc'
@@ -92,3 +93,4 @@ required_bnd_version: ${versionmask;===;${bnd_version}}
 		local = ${build}/cache/temp
 		
 		
+

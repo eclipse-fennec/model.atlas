@@ -156,7 +156,8 @@ class RemoteEPackageProviderImplTest {
 		// publish accurate provenance without a per-package metadata round-trip.
 		String ns = "https://eclipse.dev/fennec/jena/cocl/1.0";
 		String json = "{\"metadata\":[{\"objectId\":\"" + base64Url(ns)
-				+ "\",\"scope\":\"atlas\",\"stage\":\"released\",\"version\":\"1.2\"}]}";
+				+ "\",\"scope\":\"atlas\",\"stage\":\"released\",\"version\":\"1.2\","
+				+ "\"fingerprint\":\"fp1:14466a0b5de879a6\"}]}";
 		Response response = jsonOk(json);
 		when(request.get()).thenReturn(response);
 
@@ -168,9 +169,49 @@ class RemoteEPackageProviderImplTest {
 		assertEquals("atlas", d.scope());
 		assertEquals("released", d.stage());
 		assertEquals("1.2", d.version());
+		assertEquals("fp1:14466a0b5de879a6", d.fingerprint(),
+				"the listing's fingerprint travels into the descriptor");
 		ArgumentCaptor<String> paths = ArgumentCaptor.forClass(String.class);
 		verify(target, org.mockito.Mockito.atLeastOnce()).path(paths.capture());
 		assertEquals(List.of("jena", "schema"), paths.getAllValues());
+	}
+
+	@Test
+	void listNsUris_prefersNsUriProperty_overObjectIdDecoding() {
+		// F8 servers: objectId is an opaque UUID, the nsURI travels in the nsUri
+		// metadata property — decoding the UUID would yield garbage, so the property wins.
+		String ns = "https://eclipse.dev/fennec/jena/cocl/1.0";
+		String json = "{\"metadata\":[{\"objectId\":\"550e8400-e29b-41d4-a716-446655440000\","
+				+ "\"properties\":{\"nsUri\":\"" + ns + "\"}}]}";
+		Response response = jsonOk(json);
+		when(request.get()).thenReturn(response);
+
+		assertEquals(List.of(ns), provider(config()).listNsUris("jena"));
+	}
+
+	@Test
+	void listNsUris_readsNsUriProperty_fromEntryArrayShape() {
+		// The EMap may also serialize as an array of key/value entries.
+		String ns = "https://eclipse.dev/fennec/jena/cocl/1.0";
+		String json = "{\"metadata\":[{\"objectId\":\"550e8400-e29b-41d4-a716-446655440000\","
+				+ "\"properties\":[{\"key\":\"nsUri\",\"value\":\"" + ns + "\"}]}]}";
+		Response response = jsonOk(json);
+		when(request.get()).thenReturn(response);
+
+		assertEquals(List.of(ns), provider(config()).listNsUris("jena"));
+	}
+
+	@Test
+	void listNsUris_skipsEntriesWithoutResolvableNsUri() {
+		// A pre-F8 git-backed id (scope/stage/repoPath) is not Base64-URL and has no
+		// property — the entry is skipped instead of poisoning the whole listing.
+		String ns = "https://eclipse.dev/fennec/jena/cocl/1.0";
+		String json = "{\"metadata\":[{\"objectId\":\"jena/release/models/cocl.ecore\"},"
+				+ "{\"objectId\":\"" + base64Url(ns) + "\"}]}";
+		Response response = jsonOk(json);
+		when(request.get()).thenReturn(response);
+
+		assertEquals(List.of(ns), provider(config()).listNsUris("jena"));
 	}
 
 	@Test
@@ -307,7 +348,7 @@ class RemoteEPackageProviderImplTest {
 
 	private static String metadataJson(String scope, String registry, String stage, String version) {
 		return "{\"scope\":\"" + scope + "\",\"registry\":\"" + registry + "\",\"stage\":\"" + stage
-				+ "\",\"version\":\"" + version + "\"}";
+				+ "\",\"version\":\"" + version + "\",\"fingerprint\":\"fp1:14466a0b5de879a6\"}";
 	}
 
 	@Test
@@ -327,6 +368,8 @@ class RemoteEPackageProviderImplTest {
 		assertEquals("schema", resolved.get().getRegistry());
 		assertEquals("released", resolved.get().getStage());
 		assertEquals("1.2", resolved.get().getVersion());
+		assertEquals("fp1:14466a0b5de879a6", resolved.get().getFingerprint(),
+				"the server-reported fingerprint travels into the ResolvedEPackage");
 		assertEquals("urn:ns:inherited", resolved.get().getEPackage().getNsURI());
 
 		// First the stage-free metadata URL (/{scope}/schema?nsUri=, no /content), then the

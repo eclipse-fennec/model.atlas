@@ -42,7 +42,7 @@ import org.osgi.annotation.versioning.ProviderType;
  * @generated
  */
 @ProviderType
-@EPackage(uri = MgmtApicurioPackage.eNS_URI, genModel = "/model/mgmt-apicurio.genmodel", genModelSourceLocations = {"model/mgmt-apicurio.genmodel","org.eclipse.fennec.model.atlas.management.apicurio.model/model/mgmt-apicurio.genmodel"}, ecore = "/model/mgmt-apicurio.ecore", ecoreSourceLocations = "/model/mgmt-apicurio.ecore")
+@EPackage(uri = MgmtApicurioPackage.eNS_URI, fingerprint = "fp1:1658745f6a62fc069c91d4267c21521d403f969b2e97da3c28a5d958de681476", genModel = "/model/mgmt-apicurio.genmodel", genModelSourceLocations = {"model/mgmt-apicurio.genmodel","org.eclipse.fennec.model.atlas.management.apicurio.model/model/mgmt-apicurio.genmodel"}, ecore = "/model/mgmt-apicurio.ecore", ecoreSourceLocations = "/model/mgmt-apicurio.ecore")
 public interface MgmtApicurioPackage extends org.eclipse.emf.ecore.EPackage {
 	/**
 	 * The package name.
