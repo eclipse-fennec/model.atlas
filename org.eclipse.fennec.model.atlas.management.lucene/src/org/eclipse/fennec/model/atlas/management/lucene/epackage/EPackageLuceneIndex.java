@@ -19,7 +19,24 @@ import org.eclipse.emf.ecore.EPackage;
 import org.eclipse.fennec.model.atlas.mgmt.management.ObjectMetadata;
 
 /**
- * 
+ * Full-text index over the {@link EPackage}s held by a registry, used to answer
+ * schema searches that the storage backends cannot express themselves.
+ *
+ * <p>
+ * The index is a derived, rebuildable view: entries are added by
+ * {@link #index(ObjectMetadata, EPackage)} as packages are stored or reloaded and
+ * dropped by {@link #remove(String)}, keyed by the {@code objectId} of the
+ * {@link ObjectMetadata}. A hit therefore carries the (objectId, scope, registry,
+ * stage) coordinates needed to load the real object from the storage layer — never
+ * the package itself. An index that has fallen behind its backend can be repopulated
+ * by re-indexing every object; nothing here is a system of record.
+ * </p>
+ *
+ * <p>
+ * Implementations are OSGi services that own their index directory for the lifetime
+ * of the component and are safe to call from multiple threads.
+ * </p>
+ *
  * @author ilenia
  * @since Apr 8, 2026
  */

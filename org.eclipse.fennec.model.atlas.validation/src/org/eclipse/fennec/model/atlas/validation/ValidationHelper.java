@@ -24,7 +24,22 @@ import org.eclipse.fennec.model.atlas.validation.model.cocl.OclConstraint;
 import org.eclipse.fennec.model.atlas.validation.model.cocl.OclConstraintSet;
 import org.eclipse.fennec.model.atlas.validation.model.cocl.OclRole;
 
-public class ValidationHelper {
+/**
+ * Applicability checks used to narrow an {@link OclConstraintSet} down to the
+ * constraints that may run against a given object.
+ *
+ * <p>
+ * Both predicates are deliberately permissive: an unrestricted constraint set (no
+ * target nsURIs) applies to every object, and a constraint without a context class
+ * applies to every EClass. Callers therefore filter, they do not validate — an empty
+ * result means "nothing to evaluate", not "invalid input".
+ * </p>
+ */
+public final class ValidationHelper {
+
+	private ValidationHelper() {
+		// static utilities only
+	}
 
 	public static boolean canEvaluateEObject(OclConstraintSet constraintSet, EObject eObject) {
 		if(constraintSet.getTargetModelNsURIs().isEmpty()) return true;
