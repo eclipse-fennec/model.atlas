@@ -38,7 +38,7 @@ Resolved 36 · Partial 8 · Still open 78 (details per finding; fresh evidence f
 | F13 | ✅ resolved | CODE_OF_CONDUCT.md present |
 | F14 | ➖ deferred by design | `fennec-baselining: false` (cnf/build.bnd:55) — the project is still a prototype published only as snapshots, so there is no released baseline to check against (owner decision 2026-08-05); revisit at the first real release |
 | F15–F22 | ✅ resolved | all storage-layer fixes verified still present post-merge |
-| F23 | still open | searchObjectIds still returns all ids |
+| F23 | ✅ fixed 2026-08-05 | `searchObjectIds` now honours a documented `field:value` subset (the shapes the Lucene sibling emits) and rejects anything it cannot answer, instead of returning every id |
 | F24 | ✅ resolved | stdout payload dump gone |
 | F25–F28 | still open | apicurio activation/robustness/LSP + Lucene injection cluster unchanged |
 | F29 | ✅ resolved | `@Deactivate` on Lucene index close() |
@@ -157,7 +157,7 @@ All locations re-verified 2026-08-05; line numbers are current. Full problem sta
 | id | Bundle | Fresh location | State |
 |---|---|---|---|
 | F14 | repo | cnf/build.bnd:55 | `fennec-baselining: false` — ➖ **deferred by design 2026-08-05**: prototype with snapshot-only releases, no baseline exists yet |
-| F23 | management | BasicRegistryHelper.java:90-94 | searchObjectIds ignores query, returns all ids |
+| F23 | management | ~~BasicRegistryHelper.java:90-94~~ | ✅ **FIXED 2026-08-05, test first.** `searchObjectIds` ignored the query ("query parsing not implemented") and returned every id, so a caller could not tell a filter from a match-all. It now parses the subset the sibling `LuceneRegistryHelper` emits from its own finders — `field:value` terms, values optionally quoted, joined by `AND` or `OR`, parentheses tolerated — matching values exactly against the metadata attributes under the Lucene field names, with `null`/blank/`*:*` meaning match-all. Unknown fields and non-`field:value` terms now raise `IllegalArgumentException`: returning everything is indistinguishable from a genuine match-all and is the silent-wrong-results the finding was about. No production code called it (only the Lucene service calls the Lucene helper), so nothing changes behaviour at runtime; it is exported API others may hold. Six new tests in `BasicRegistryHelperTest`, **four fail pre-fix** — the old test asserted the buggy contract ("Basic implementation returns all IDs") and was replaced. management unit tests 134/134, file + lucene OSGi suites 22/22 and 29/29. |
 | F25 | management.apicurio | ApicurioStorageHelper.java:80-84 | sync HTTP scan in @Activate + printStackTrace-swallow; FileStorageHelper:51-55 fails instead — drift |
 | F26 | management.apicurio | ApicurioStorageHelper.java:298-306,334-336 | null-groups NPE; foreign/hyphenated groupId breaks whole load |
 | F27 | management.apicurio | ApicurioStorageHelper.java:199-204 vs FileStorageHelper.java:157-183 | delete-result semantics drift (AND vs OR) |

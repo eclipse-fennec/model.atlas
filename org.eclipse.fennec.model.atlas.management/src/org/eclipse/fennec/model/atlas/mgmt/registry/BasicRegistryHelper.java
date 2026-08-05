@@ -17,10 +17,13 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.LinkedList;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Function;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 import org.eclipse.fennec.model.atlas.mgmt.management.ObjectMetadata;
@@ -42,8 +45,9 @@ import org.eclipse.fennec.model.atlas.mgmt.management.ObjectStatus;
  * <li><strong>Thread-Safe</strong> - Uses ConcurrentHashMap for safe concurrent
  * access</li>
  * <li><strong>Fast Access</strong> - O(1) lookups for direct queries</li>
- * <li><strong>Simple Filtering</strong> - Stream-based filtering for complex
- * queries</li>
+ * <li><strong>Simple Filtering</strong> - Stream-based filtering; the string query
+ * syntax of {@link #searchObjectIds(String, int)} is a documented subset (exact
+ * field:value terms), and anything outside it is rejected rather than ignored</li>
  * <li><strong>No Dependencies</strong> - Uses only standard Java
  * collections</li>
  * </ul>
@@ -61,6 +65,32 @@ import org.eclipse.fennec.model.atlas.mgmt.management.ObjectStatus;
  * @since 1.0.0
  */
 public class BasicRegistryHelper extends AbstractRegistryHelper {
+
+    /** Matches every indexed object, mirroring Lucene's {@code *:*}. */
+    private static final String MATCH_ALL_QUERY = "*:*";
+
+    /**
+     * The attributes {@link #searchObjectIds(String, int)} can filter on, under the same
+     * names the sibling Lucene index uses for them.
+     */
+    private static final Map<String, Function<ObjectMetadata, String>> SEARCHABLE_FIELDS = Map.ofEntries(
+            Map.entry("objectId", ObjectMetadata::getObjectId),
+            Map.entry("objectName", ObjectMetadata::getObjectName),
+            Map.entry("stage", ObjectMetadata::getStage),
+            Map.entry("scope", ObjectMetadata::getScope),
+            Map.entry("registry", ObjectMetadata::getRegistry),
+            Map.entry("objectType", ObjectMetadata::getObjectType),
+            Map.entry("version", ObjectMetadata::getVersion),
+            Map.entry("contentHash", ObjectMetadata::getContentHash),
+            Map.entry("fingerprint", ObjectMetadata::getFingerprint),
+            Map.entry("uploadUser", ObjectMetadata::getUploadUser),
+            Map.entry("reviewUser", ObjectMetadata::getReviewUser),
+            Map.entry("lastChangeUser", ObjectMetadata::getLastChangeUser),
+            Map.entry("sourceChannel", ObjectMetadata::getSourceChannel),
+            Map.entry("complianceStatus", ObjectMetadata::getComplianceStatus),
+            Map.entry("governanceDocumentationId", ObjectMetadata::getGovernanceDocumentationId),
+            Map.entry("generationTriggerFingerprint", ObjectMetadata::getGenerationTriggerFingerprint),
+            Map.entry("status", metadata -> metadata.getStatus() == null ? null : metadata.getStatus().getLiteral()));
 
     private final Map<String, ObjectMetadata> metadataById = new ConcurrentHashMap<>();
     private volatile boolean initialized = false;
@@ -86,11 +116,75 @@ public class BasicRegistryHelper extends AbstractRegistryHelper {
         metadataById.remove(objectId);
     }
 
+    /**
+     * Searches the indexed metadata.
+     *
+     * <p>
+     * The supported query syntax is the subset the sibling {@code LuceneRegistryHelper}
+     * emits from its own finders: {@code field:value} terms, values optionally quoted,
+     * combined with {@code AND} or {@code OR} (not both in one query) and optionally
+     * wrapped in parentheses — for example {@code stage:draft} or
+     * {@code (objectName:"My Package" AND stage:draft)}. A {@code null}, blank or
+     * {@code *:*} query matches everything. Values are compared for exact equality:
+     * this index does no analysis, so there are no wildcards, ranges or fuzzy terms.
+     * </p>
+     *
+     * <p>
+     * Anything outside that subset — an unknown field, or a term that is not
+     * {@code field:value} — is rejected with an {@link IllegalArgumentException}. A
+     * search that cannot honour its filter must not answer with every object it holds;
+     * a caller cannot tell that apart from a genuine match-all.
+     * </p>
+     *
+     * @param query      the search query, or {@code null}/blank/{@code *:*} for all
+     * @param maxResults maximum number of results, unlimited if not positive
+     * @return the ids of the matching objects
+     * @throws IllegalArgumentException if the query is outside the supported subset
+     */
     @Override
     public List<String> searchObjectIds(String query, int maxResults) throws IOException {
-        // Basic implementation - just return all IDs (query parsing not implemented)
-        return getAllObjectIds().stream().limit(maxResults > 0 ? maxResults : Integer.MAX_VALUE)
+        Predicate<ObjectMetadata> filter = parseQuery(query);
+        return metadataById.entrySet().stream().filter(entry -> filter.test(entry.getValue()))
+                .map(Map.Entry::getKey).limit(maxResults > 0 ? maxResults : Integer.MAX_VALUE)
                 .collect(Collectors.toList());
+    }
+
+    private static Predicate<ObjectMetadata> parseQuery(String query) {
+        if (query == null || query.isBlank() || MATCH_ALL_QUERY.equals(query.trim())) {
+            return metadata -> true;
+        }
+        boolean anyOf = query.contains(" OR ");
+        List<Predicate<ObjectMetadata>> terms = new LinkedList<>();
+        for (String term : query.split(anyOf ? " OR " : " AND ")) {
+            terms.add(parseTerm(term));
+        }
+        return anyOf ? metadata -> terms.stream().anyMatch(term -> term.test(metadata))
+                : metadata -> terms.stream().allMatch(term -> term.test(metadata));
+    }
+
+    private static Predicate<ObjectMetadata> parseTerm(String term) {
+        String cleaned = term.trim().replaceAll("^\\(+|\\)+$", "").trim();
+        int separator = cleaned.indexOf(':');
+        if (separator < 1) {
+            throw new IllegalArgumentException(String.format(
+                    "Unsupported search term '%s': expected field:value, one of %s", term, SEARCHABLE_FIELDS.keySet()));
+        }
+        String field = cleaned.substring(0, separator).trim();
+        Function<ObjectMetadata, String> reader = SEARCHABLE_FIELDS.get(field);
+        if (reader == null) {
+            throw new IllegalArgumentException(
+                    String.format("Unknown search field '%s': searchable fields are %s", field,
+                            SEARCHABLE_FIELDS.keySet()));
+        }
+        String value = unquote(cleaned.substring(separator + 1).trim());
+        return metadata -> value.equals(reader.apply(metadata));
+    }
+
+    private static String unquote(String value) {
+        if (value.length() > 1 && value.startsWith("\"") && value.endsWith("\"")) {
+            return value.substring(1, value.length() - 1);
+        }
+        return value;
     }
 
     @Override

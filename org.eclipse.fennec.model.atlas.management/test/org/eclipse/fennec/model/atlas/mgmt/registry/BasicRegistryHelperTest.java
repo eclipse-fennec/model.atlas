@@ -372,21 +372,75 @@ class BasicRegistryHelperTest {
     }
 
     @Test
-    void testSearchObjectIds() throws IOException {
-        // Add test objects
+    void testSearchObjectIdsFiltersByField() throws IOException {
+        indexTwoStagedObjects();
+
+        List<String> drafts = registryHelper.searchObjectIds("stage:draft", 10);
+
+        assertEquals(List.of("obj1"), drafts, "A field query must filter, not return every indexed object");
+    }
+
+    @Test
+    void testSearchObjectIdsMatchesQuotedValues() throws IOException {
+        indexTwoStagedObjects();
+
+        // The shape the sibling LuceneRegistryHelper emits for findByObjectName.
+        List<String> byName = registryHelper.searchObjectIds("objectName:\"Package2\"", 10);
+
+        assertEquals(List.of("obj2"), byName, "A quoted value must match the attribute exactly");
+    }
+
+    @Test
+    void testSearchObjectIdsCombinesTermsWithAnd() throws IOException {
+        indexTwoStagedObjects();
+
+        // The shape the sibling emits for findByObjectNameAndStage.
+        List<String> both = registryHelper.searchObjectIds("(objectName:\"Package1\" AND stage:draft)", 10);
+        List<String> contradiction = registryHelper.searchObjectIds("(objectName:\"Package1\" AND stage:approved)", 10);
+
+        assertEquals(List.of("obj1"), both, "AND must require every term to match");
+        assertTrue(contradiction.isEmpty(), "AND must not match an object that fails one of the terms");
+    }
+
+    @Test
+    void testSearchObjectIdsCombinesTermsWithOr() throws IOException {
+        indexTwoStagedObjects();
+
+        List<String> either = registryHelper.searchObjectIds("stage:draft OR stage:approved", 10);
+
+        assertEquals(2, either.size(), "OR must match objects satisfying any term");
+    }
+
+    @Test
+    void testSearchObjectIdsRejectsQueriesItCannotHonour() throws IOException {
+        indexTwoStagedObjects();
+
+        // Silently returning everything is worse than saying "I cannot answer that".
+        assertThrows(IllegalArgumentException.class, () -> registryHelper.searchObjectIds("noSuchField:x", 10),
+                "An unknown field must be rejected, not ignored");
+        assertThrows(IllegalArgumentException.class, () -> registryHelper.searchObjectIds("free text", 10),
+                "A query that is not field:value must be rejected, not ignored");
+    }
+
+    @Test
+    void testSearchObjectIdsMatchesEverythingForAnEmptyQuery() throws IOException {
+        indexTwoStagedObjects();
+
+        assertEquals(2, registryHelper.searchObjectIds(null, 10).size(), "No query means no filter");
+        assertEquals(2, registryHelper.searchObjectIds("  ", 10).size(), "A blank query means no filter");
+        assertEquals(2, registryHelper.searchObjectIds("*:*", 10).size(), "*:* is the match-all query");
+        assertEquals(1, registryHelper.searchObjectIds("*:*", 1).size(), "maxResults still caps the result");
+    }
+
+    /** obj1: Package1 in draft, obj2: Package2 in approved. */
+    private void indexTwoStagedObjects() throws IOException {
         ObjectMetadata obj1 = createTestMetadata("obj1", "Package1", "1.0.0", ObjectStatus.DRAFT);
+        obj1.setStage("draft");
         ObjectMetadata obj2 = createTestMetadata("obj2", "Package2", "1.0.0", ObjectStatus.APPROVED);
+        obj2.setStage("approved");
 
         registryHelper.updateIndex("obj1", obj1);
         registryHelper.updateIndex("obj2", obj2);
-
-        // Basic implementation returns all IDs (query parsing not implemented)
-        List<String> results = registryHelper.searchObjectIds("any query", 10);
-        assertEquals(2, results.size());
-
-        // Test max results limit
-        List<String> limitedResults = registryHelper.searchObjectIds("any query", 1);
-        assertEquals(1, limitedResults.size());
     }
 
     @Test
