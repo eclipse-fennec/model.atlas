@@ -7,9 +7,6 @@
         "storage.type": "file",
         "registry.target": "(registry=main)"
     },
-    "EPackagePostReleaseActionService": {
-        "releaseStorage.target": "(storage.type=file)"
-    },
     "ScopeService~jena": {
         "scope.name": "jena",
         "atlas.scope": "jena",
