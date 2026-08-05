@@ -22,6 +22,8 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import org.eclipse.emf.common.util.URI;
 import org.eclipse.emf.ecore.EObject;
@@ -105,6 +107,8 @@ public class SchemaPackagesResource {
     @Context
     private HttpHeaders headers;
     
+    private static final Logger LOGGER = Logger.getLogger(SchemaPackagesResource.class.getName());
+
     private static final String REGISTRY_NAME = "schema";
 
     @GET
@@ -672,6 +676,7 @@ public class SchemaPackagesResource {
             }
             ObjectMetadata metadata = scopeService.transitionToStageForRegistry(REGISTRY_NAME,
                     existingMetadata.getObjectId(), stageName, targetStage);
+            reindexAfterTransition(scopeService, metadata, targetStage);
             ObjectMetadataResponseFilter.attach(requestContext, metadata,
                     ObjectMetadataResponseFilter.CacheTarget.METADATA);
             return Response.status(Response.Status.OK).entity(metadata).header("Content-Type", getResolvedMediaType()).build();
@@ -681,6 +686,39 @@ public class SchemaPackagesResource {
             return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity(e.getMessage()).build();
         }
 
+    }
+
+    /**
+     * Re-indexes a package after it moved to another stage. The index doc records the stage
+     * a hit must be resolved against, so leaving the old one in place makes search report a
+     * stage the object has left — and, once the source copy is gone, makes the hit resolve to
+     * nothing and be dropped silently. Indexing is keyed by objectId, which a transition
+     * preserves, so this replaces the doc rather than adding a second one.
+     *
+     * <p>
+     * A transition that succeeded must not be reported as failed because the search index
+     * could not be updated: the index is a derived view and can be rebuilt, so a failure here
+     * is logged and the stale doc removed, leaving the package absent from search rather than
+     * present under the wrong stage.
+     * </p>
+     */
+    private void reindexAfterTransition(ScopeService<?> scopeService, ObjectMetadata metadata, String targetStage) {
+        String objectId = metadata.getObjectId();
+        try {
+            Object content = scopeService.getContentFromStageForRegistry(REGISTRY_NAME, targetStage, objectId);
+            if (content instanceof EPackage ePackage) {
+                ePackageIndex.index(metadata, ePackage);
+                return;
+            }
+            LOGGER.log(Level.WARNING,
+                    "Could not re-index object {0} after its transition to stage {1}: no EPackage content in the target stage. Removing its stale index entry.",
+                    new Object[] { objectId, targetStage });
+        } catch (Exception e) {
+            LOGGER.log(Level.WARNING, e,
+                    () -> "Could not re-index object " + objectId + " after its transition to stage " + targetStage
+                            + "; removing its stale index entry");
+        }
+        ePackageIndex.remove(objectId);
     }
     
     @GET
