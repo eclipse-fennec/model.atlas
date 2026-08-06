@@ -76,6 +76,8 @@ import jakarta.ws.rs.core.HttpHeaders;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.core.Response.Status;
+import org.eclipse.fennec.codec.constants.CodecOptions;
+import org.eclipse.fennec.codec.rest.annotations.ResourceOption;
 
 /**
  * REST API for managing SchemaPackages within scopes. Provides endpoints for
@@ -114,6 +116,7 @@ public class SchemaPackagesResource {
     @GET
     @Path("hello")
     @Produces({ MediaType.TEXT_PLAIN })
+    @ResourceOption(key = CodecOptions.CODEC_ID_KEY_MODE, value = "FEATURE_ONLY")
     public Response hello(@PathParam("scopeName") String scopeName) {
         return Response.ok().entity("Hello " + scopeName).build();
     }
@@ -138,6 +141,7 @@ public class SchemaPackagesResource {
             @ApiResponse(responseCode = "204", description = "No Package found in scope final stage, nor in the parent final stage"),
             @ApiResponse(responseCode = "400", description = "Scope not available, schema registry not available for scope, stage not available for registry or not a valid stage"),
             @ApiResponse(responseCode = "500", description = "Internal server error") })
+    @ResourceOption(key = CodecOptions.CODEC_ID_KEY_MODE, value = "FEATURE_ONLY")
     public Response listAllPackages(
             @Parameter(description = "The scope name", required = true) @PathParam("scopeName") String scopeName) {
 
@@ -176,6 +180,7 @@ public class SchemaPackagesResource {
             @ApiResponse(responseCode = "204", description = "No Package found in scope final stage, nor in the parent final stage"),
             @ApiResponse(responseCode = "400", description = "Scope not available, schema registry not available for scope, stage not available for registry or not a valid stage"),
             @ApiResponse(responseCode = "500", description = "Internal server error") })
+    @ResourceOption(key = CodecOptions.CODEC_ID_KEY_MODE, value = "FEATURE_ONLY")
     public Response listReleasedPackages(
             @Parameter(description = "The scope name", required = true) @PathParam("scopeName") String scopeName,
             @Parameter(description = "Exact namespace URI of the package to retrieve from the final stage") @QueryParam("nsUri") String nsUri) {
@@ -232,6 +237,7 @@ public class SchemaPackagesResource {
                     @ApiResponse(responseCode = "204", description = "Package not found"),
                     @ApiResponse(responseCode = "400", description = "Scope not available, schema registry not available for scope, stage not available for registry or not a valid stage"),
                     @ApiResponse(responseCode = "500", description = "Internal server error") })
+    @ResourceOption(key = CodecOptions.CODEC_ID_KEY_MODE, value = "FEATURE_ONLY")
     public Response listPackagesInStage(
             @Parameter(description = "The scope name", required = true) @PathParam("scopeName") String scopeName,
             @Parameter(description = "The stage name", required = true) @PathParam("stageName") String stageName,
@@ -303,6 +309,7 @@ public class SchemaPackagesResource {
                     @ApiResponse(responseCode = "409", description = "Package with nsUri already exists"),
                     @ApiResponse(responseCode = "415", description = "Unsupported media type"),
                     @ApiResponse(responseCode = "500", description = "Internal server error") })
+    @ResourceOption(key = CodecOptions.CODEC_ID_KEY_MODE, value = "FEATURE_ONLY")
     public Response createPackage(
             @Parameter(description = "The scope name", required = true) @PathParam("scopeName") String scopeName,
             @Parameter(description = "The stage name", required = true) @PathParam("stageName") String stageName,
@@ -402,6 +409,7 @@ public class SchemaPackagesResource {
                     @ApiResponse(responseCode = "400", description = "Scope not available, schema registry not available for scope, stage not available for registry or not a valid stage"),
                     @ApiResponse(responseCode = "406", description = "Requested format not supported"),
                     @ApiResponse(responseCode = "500", description = "Internal server error") })
+    @ResourceOption(key = CodecOptions.CODEC_ID_KEY_MODE, value = "FEATURE_ONLY")
     public Response getPackageContent(
             @Parameter(description = "The scope name", required = true) @PathParam("scopeName") String scopeName,
             @Parameter(description = "The stage name", required = true) @PathParam("stageName") String stageName,
@@ -452,6 +460,7 @@ public class SchemaPackagesResource {
                     @ApiResponse(responseCode = "400", description = "Scope not available or schema registry not available for scope"),
                     @ApiResponse(responseCode = "406", description = "Requested format not supported"),
                     @ApiResponse(responseCode = "500", description = "Internal server error") })
+    @ResourceOption(key = CodecOptions.CODEC_ID_KEY_MODE, value = "FEATURE_ONLY")
     public Response getPackageContentFromFinalStage(
             @Parameter(description = "The scope name", required = true) @PathParam("scopeName") String scopeName,
             @Parameter(description = "The namespace URI of the package", required = true) @QueryParam("nsUri") String nsUri) {
@@ -508,6 +517,7 @@ public class SchemaPackagesResource {
                     @ApiResponse(responseCode = "404", description = "Scope or stage not found"),
                     @ApiResponse(responseCode = "204", description = "Package not found"),
                     @ApiResponse(responseCode = "500", description = "Internal server error") })
+    @ResourceOption(key = CodecOptions.CODEC_ID_KEY_MODE, value = "FEATURE_ONLY")
     public Response updatePackageContent(
             @Parameter(description = "The scope name", required = true) @PathParam("scopeName") String scopeName,
             @Parameter(description = "The stage name", required = true) @PathParam("stageName") String stageName,
@@ -582,6 +592,7 @@ public class SchemaPackagesResource {
                     @ApiResponse(responseCode = "400", description = "Scope not available, schema registry not available for scope, stage not available for registry or not a valid stage"),
                     @ApiResponse(responseCode = "204", description = "Package not found"),
                     @ApiResponse(responseCode = "500", description = "Internal server error") })
+    @ResourceOption(key = CodecOptions.CODEC_ID_KEY_MODE, value = "FEATURE_ONLY")
     public Response deletePackage(
             @Parameter(description = "The scope name", required = true) @PathParam("scopeName") String scopeName,
             @Parameter(description = "The stage name", required = true) @PathParam("stageName") String stageName,
@@ -638,6 +649,7 @@ public class SchemaPackagesResource {
                     @ApiResponse(responseCode = "403", description = "Stage is read-only or Object is only present in a parent scope final stage and so it's read-only"),
                     @ApiResponse(responseCode = "204", description = "Package not found in source stage"),
                     @ApiResponse(responseCode = "500", description = "Internal server error") })
+    @ResourceOption(key = CodecOptions.CODEC_ID_KEY_MODE, value = "FEATURE_ONLY")
     public Response transitionPackage(
             @Parameter(description = "The scope name", required = true) @PathParam("scopeName") String scopeName,
             @Parameter(description = "The source stage name", required = true) @PathParam("stageName") String stageName,
@@ -729,6 +741,7 @@ public class SchemaPackagesResource {
             + "parent scopes. Supports filtering by nsUri, name, prefix, "
             + "classifier names, structural feature names and types. "
             + "Returns ObjectMetadata with pagination.")
+    @ResourceOption(key = CodecOptions.CODEC_ID_KEY_MODE, value = "FEATURE_ONLY")
     public Response searchPackages(
         @PathParam("scopeName") String scopeName,
         @QueryParam("nsUri") String nsUri,

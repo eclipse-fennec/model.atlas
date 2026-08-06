@@ -36,6 +36,8 @@ import jakarta.ws.rs.container.ContainerRequestContext;
 import jakarta.ws.rs.core.Context;
 import jakarta.ws.rs.core.HttpHeaders;
 import jakarta.ws.rs.core.Response;
+import org.eclipse.fennec.codec.constants.CodecOptions;
+import org.eclipse.fennec.codec.rest.annotations.ResourceOption;
 
 /**
  *
@@ -63,6 +65,7 @@ public class ModelConverterResource {
             @ApiResponse(responseCode = "200", description = "Package converted successfully", content = @Content(schema = @Schema(implementation = EPackage.class))),
             @ApiResponse(responseCode = "415", description = "Unsupported media type"),
             @ApiResponse(responseCode = "500", description = "Internal server error") })
+    @ResourceOption(key = CodecOptions.CODEC_ID_KEY_MODE, value = "FEATURE_ONLY")
     public Response convertPackage(
             @RequestBody(description = "The schema package content", required = true, content = @Content(schema = @Schema(implementation = EPackage.class))) EPackage ePackage) {
 

@@ -49,6 +49,8 @@ import jakarta.ws.rs.core.HttpHeaders;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.core.Response.Status;
+import org.eclipse.fennec.codec.constants.CodecOptions;
+import org.eclipse.fennec.codec.rest.annotations.ResourceOption;
 
 /**
  * @author ilenia
@@ -98,6 +100,7 @@ public class ObjectBatchValidationResource {
 			@ApiResponse(responseCode = "404", description = "Scope or COCL registry not found"),
 			@ApiResponse(responseCode = "415", description = "Unsupported media type"),
 			@ApiResponse(responseCode = "500", description = "Internal server error") })
+	@ResourceOption(key = CodecOptions.CODEC_ID_KEY_MODE, value = "FEATURE_ONLY")
 	public Response validate(
 			@RequestBody(description = "The batch validation request", required = true, content = @Content(schema = @Schema(implementation = BatchValidationRequest.class))) BatchValidationRequest validationRequest) {
 		try {
@@ -129,6 +132,7 @@ public class ObjectBatchValidationResource {
 			@ApiResponse(responseCode = "404", description = "Scope or COCL registry not found"),
 			@ApiResponse(responseCode = "415", description = "Unsupported media type"),
 			@ApiResponse(responseCode = "500", description = "Internal server error") })
+	@ResourceOption(key = CodecOptions.CODEC_ID_KEY_MODE, value = "FEATURE_ONLY")
 	public Response filter(
 			@RequestBody(description = "The BatchValidationRequest", required = true,
 			content = @Content(schema = @Schema(implementation = BatchValidationRequest.class))) BatchValidationRequest validationRequest) {

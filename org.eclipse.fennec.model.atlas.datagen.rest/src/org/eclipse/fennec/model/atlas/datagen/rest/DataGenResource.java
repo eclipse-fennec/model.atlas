@@ -44,6 +44,8 @@ import jakarta.ws.rs.PathParam;
 import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
+import org.eclipse.fennec.codec.constants.CodecOptions;
+import org.eclipse.fennec.codec.rest.annotations.ResourceOption;
 
 /**
  * REST resource for generating test data from a {@link DataGenConfig}.
@@ -71,6 +73,7 @@ public class DataGenResource {
 	@POST
 	@Consumes("application/xmi")
 	@Produces({"application/xmi", MediaType.APPLICATION_JSON})
+	@ResourceOption(key = CodecOptions.CODEC_ID_KEY_MODE, value = "FEATURE_ONLY")
 	public Response generate(DataGenConfig config) {
 		try {
 			List<EPackage> targetPackages = resolvePackages(config);
@@ -90,6 +93,7 @@ public class DataGenResource {
 	@GET
 	@Path("/{objectId}")
 	@Produces({"application/xmi", MediaType.APPLICATION_JSON})
+	@ResourceOption(key = CodecOptions.CODEC_ID_KEY_MODE, value = "FEATURE_ONLY")
 	public Response generateByObjectId(@PathParam("objectId") String objectId) {
 		try {
 			ReadableScopeService<?> scopeService = getScopeService();

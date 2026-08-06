@@ -19,6 +19,8 @@ import java.util.Optional;
 
 import org.eclipse.emf.ecore.EObject;
 import org.eclipse.emf.ecore.util.EcoreUtil;
+import org.eclipse.fennec.codec.constants.CodecOptions;
+import org.eclipse.fennec.codec.rest.annotations.ResourceOption;
 import org.eclipse.fennec.model.atlas.mgmt.management.ManagementFactory;
 import org.eclipse.fennec.model.atlas.mgmt.management.ObjectMetadata;
 import org.eclipse.fennec.model.atlas.mgmt.management.ObjectMetadataContainer;
@@ -113,6 +115,7 @@ public class ObjectRegistryResource {
             @ApiResponse(responseCode = "400", description = "Scope not available, registry not available for scope, stage not available for registry or not a valid stage"),
             @ApiResponse(responseCode = "204", description = "No object found in scope final stage, nor in the parent final stage"),
             @ApiResponse(responseCode = "500", description = "Internal server error") })
+    @ResourceOption(key = CodecOptions.CODEC_ID_KEY_MODE, value = "FEATURE_ONLY")
     public Response listAll(
             @Parameter(description = "The scope name", required = true) @PathParam("scopeName") String scopeName,
             @Parameter(description = "The registry name", required = true) @PathParam("registryName") String registryName) {
@@ -148,6 +151,7 @@ public class ObjectRegistryResource {
             @ApiResponse(responseCode = "400", description = "Scope not available, registry not available for scope, stage not available for registry or not a valid stage"),
             @ApiResponse(responseCode = "204", description = "No object found in scope final stage, nor in the parent final stage"),
             @ApiResponse(responseCode = "500", description = "Internal server error") })
+    @ResourceOption(key = CodecOptions.CODEC_ID_KEY_MODE, value = "FEATURE_ONLY")
     public Response listObjectsInFinalStage(
             @Parameter(description = "The scope name", required = true) @PathParam("scopeName") String scopeName,
             @Parameter(description = "The registry name", required = true) @PathParam("registryName") String registryName) {
@@ -187,6 +191,7 @@ public class ObjectRegistryResource {
                     @ApiResponse(responseCode = "204", description = "Stored object not found, or registry or stage not available for the scope"),
                     @ApiResponse(responseCode = "400", description = "Scope not available, registry not available for scope, stage not available for registry or not a valid stage"),
                     @ApiResponse(responseCode = "500", description = "Internal server error") })
+    @ResourceOption(key = CodecOptions.CODEC_ID_KEY_MODE, value = "FEATURE_ONLY")
     public Response listObjectsInRegistry(
             @Parameter(description = "The scope name", required = true) @PathParam("scopeName") String scopeName,
             @Parameter(description = "The registry name", required = true) @PathParam("registryName") String registryName,
@@ -262,6 +267,7 @@ public class ObjectRegistryResource {
                     @ApiResponse(responseCode = "409", description = "Object with same id already exists and override option not set to true"),
                     @ApiResponse(responseCode = "415", description = "Unsupported media type"),
                     @ApiResponse(responseCode = "500", description = "Internal server error") })
+    @ResourceOption(key = CodecOptions.CODEC_ID_KEY_MODE, value = "FEATURE_ONLY")
     public Response createObject(
             @Parameter(description = "The scope name", required = true) @PathParam("scopeName") String scopeName,
             @Parameter(description = "The registry name", required = true) @PathParam("registryName") String registryName,
@@ -371,6 +377,7 @@ public class ObjectRegistryResource {
                     @ApiResponse(responseCode = "400", description = "Scope not available, registry not available for scope, stage not available for registry or not a valid stage"),
                     @ApiResponse(responseCode = "406", description = "Requested format not supported"),
                     @ApiResponse(responseCode = "500", description = "Internal server error") })
+    @ResourceOption(key = CodecOptions.CODEC_ID_KEY_MODE, value = "FEATURE_ONLY")
     public Response getObjectContent(
             @Parameter(description = "The scope name", required = true) @PathParam("scopeName") String scopeName,
             @Parameter(description = "The registry name", required = true) @PathParam("registryName") String registryName,
@@ -426,6 +433,7 @@ public class ObjectRegistryResource {
                     @ApiResponse(responseCode = "400", description = "Scope not available or registry not available for scope"),
                     @ApiResponse(responseCode = "406", description = "Requested format not supported"),
                     @ApiResponse(responseCode = "500", description = "Internal server error") })
+    @ResourceOption(key = CodecOptions.CODEC_ID_KEY_MODE, value = "FEATURE_ONLY")
     public Response getObjectContentFromFinalStage(
             @Parameter(description = "The scope name", required = true) @PathParam("scopeName") String scopeName,
             @Parameter(description = "The registry name", required = true) @PathParam("registryName") String registryName,
@@ -484,6 +492,7 @@ public class ObjectRegistryResource {
                     @ApiResponse(responseCode = "403", description = "The requested object is read-only (e.g. if it is only available in a parent scope)"),
                     @ApiResponse(responseCode = "415", description = "Requested format not supported"),
                     @ApiResponse(responseCode = "500", description = "Internal server error") })
+    @ResourceOption(key = CodecOptions.CODEC_ID_KEY_MODE, value = "FEATURE_ONLY")
     public Response updateObjectContent(
             @Parameter(description = "The scope name", required = true) @PathParam("scopeName") String scopeName,
             @Parameter(description = "The registry name", required = true) @PathParam("registryName") String registryName,
@@ -573,6 +582,7 @@ public class ObjectRegistryResource {
             @ApiResponse(responseCode = "400", description = "Scope not available, registry not available for scope, stage not available for registry or not a valid stage"),
             @ApiResponse(responseCode = "204", description = "Object not found"),
             @ApiResponse(responseCode = "500", description = "Internal server error") })
+    @ResourceOption(key = CodecOptions.CODEC_ID_KEY_MODE, value = "FEATURE_ONLY")
     public Response deleteObject(
             @Parameter(description = "The scope name", required = true) @PathParam("scopeName") String scopeName,
             @Parameter(description = "The registry name", required = true) @PathParam("registryName") String registryName,
@@ -633,6 +643,7 @@ public class ObjectRegistryResource {
                     @ApiResponse(responseCode = "403", description = "Stage is read-only or Object is only present in a parent scope final stage and so it's read-only"),
                     @ApiResponse(responseCode = "204", description = "Object not found in source stage"),
                     @ApiResponse(responseCode = "500", description = "Internal server error") })
+    @ResourceOption(key = CodecOptions.CODEC_ID_KEY_MODE, value = "FEATURE_ONLY")
     public Response transitionObject(
             @Parameter(description = "The scope name", required = true) @PathParam("scopeName") String scopeName,
             @Parameter(description = "The registry name", required = true) @PathParam("registryName") String registryName,

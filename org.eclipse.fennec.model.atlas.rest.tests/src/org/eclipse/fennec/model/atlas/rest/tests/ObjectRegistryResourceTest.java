@@ -182,7 +182,7 @@ public class ObjectRegistryResourceTest extends AbstractRestTest{
 
 		String responseContent = response.readEntity(String.class);
 		assertNotNull(responseContent, "Should return content");
-		assertTrue(responseContent.contains("objectId"), "Response should contain objectId");
+		assertTrue(responseContent.contains("objectId"), "Response should contain objectId | body: " + responseContent);
 	}
 
 	@Test
@@ -198,7 +198,30 @@ public class ObjectRegistryResourceTest extends AbstractRestTest{
 
 		String responseContent = response.readEntity(String.class);
 		assertNotNull(responseContent, "Should return content");
-		assertTrue(responseContent.contains("objectId"), "Response should contain objectId");
+		assertTrue(responseContent.contains("objectId"), "Response should contain objectId | body: " + responseContent);
+	}
+
+	@Test
+	@ParentScopeServiceSetup
+	public void testMetadataJsonKeysTheIdAttributeByItsFeatureName(@InjectBundleContext BundleContext context)
+			throws IOException, InterruptedException {
+		ensureResourceAvailability(context);
+		uploadTestObject(TestAnnotations.STAGE_DRAFT);
+		Response response = stageTarget(TestAnnotations.STAGE_DRAFT)
+				.queryParam("name", TEST_OBJECT_NAME)
+				.request("application/json").get();
+
+		String responseContent = response.readEntity(String.class);
+
+		// objectId is an EMF ID attribute, and the codec keys those as "_id" by default,
+		// dropping the feature name. That name is published API - the Atlas REST client
+		// reads it, and the OpenAPI schema documents it - so every endpoint pins the id
+		// key mode to FEATURE_ONLY. Without it this response says "_id" and no consumer
+		// finds the id it was promised.
+		assertTrue(responseContent.contains("\"objectId\""),
+				"Metadata JSON must key the id by its feature name | body: " + responseContent);
+		assertFalse(responseContent.contains("\"_id\""),
+				"Metadata JSON must not key the id as _id | body: " + responseContent);
 	}
 
 	@Test

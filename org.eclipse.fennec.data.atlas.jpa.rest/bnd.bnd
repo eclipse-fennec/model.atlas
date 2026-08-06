@@ -14,4 +14,5 @@
 	org.osgi.service.cdi;version=latest,\
 	org.osgi.service.component;version=latest,\
 	org.eclipse.fennec.codec.rest;version=latest,\
+	org.eclipse.fennec.codec.api;version=latest,\
 	org.eclipse.fennec.model;version=latest

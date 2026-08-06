@@ -41,6 +41,8 @@ import jakarta.ws.rs.core.Context;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.core.Response.Status;
+import org.eclipse.fennec.codec.constants.CodecOptions;
+import org.eclipse.fennec.codec.rest.annotations.ResourceOption;
 
 @RequireRuntime
 @JakartarsResource()
@@ -55,6 +57,7 @@ public class JpaDataResource {
     @GET
     @Path("/hello")
     @Produces(MediaType.TEXT_PLAIN)
+    @ResourceOption(key = CodecOptions.CODEC_ID_KEY_MODE, value = "FEATURE_ONLY")
     public Response hello() {
         return Response.ok("Hello JpaDataResource").build();
     }
@@ -70,6 +73,7 @@ public class JpaDataResource {
             @ApiResponse(responseCode = "404", description = "No EntityMappings or persistence unit found."),
             @ApiResponse(responseCode = "409", description = "Multiple EntityMappings match eClassName. Provide ePackageUri to disambiguate."),
             @ApiResponse(responseCode = "500", description = "Internal server error") })
+    @ResourceOption(key = CodecOptions.CODEC_ID_KEY_MODE, value = "FEATURE_ONLY")
     public Response getEObjectsByEClass(
             @PathParam("eClassName") String eClassName,
             @QueryParam("ePackageUri") String ePackageUri,
@@ -108,6 +112,7 @@ public class JpaDataResource {
             @ApiResponse(responseCode = "404", description = "No EntityMappings or persistence unit found."),
             @ApiResponse(responseCode = "409", description = "Multiple EntityMappings match eClassName. Provide ePackageUri to disambiguate."),
             @ApiResponse(responseCode = "500", description = "Internal server error") })
+    @ResourceOption(key = CodecOptions.CODEC_ID_KEY_MODE, value = "FEATURE_ONLY")
     public Response getEObjectsById(
             @PathParam("eClassName") String eClassName,
             @PathParam("id") String id,
