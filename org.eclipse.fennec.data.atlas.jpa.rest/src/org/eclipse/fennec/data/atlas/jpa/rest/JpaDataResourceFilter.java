@@ -129,6 +129,16 @@ public class JpaDataResourceFilter implements ContainerRequestFilter, ResourceSe
 	public void filter(ContainerRequestContext requestContext) throws IOException {
 		MultivaluedMap<String, String> pathParams = requestContext.getUriInfo().getPathParameters();
 		String rootFolderName = pathParams.getFirst("rootFolderName");
+		String className = pathParams.getFirst("eClassName");
+		if(rootFolderName == null || className == null) {
+			// This filter is registered whiteboard-global, so it sees requests that are
+			// none of its business — the bundle's own /hello, and anything belonging to
+			// another application matched by the same whiteboard. Without both path
+			// params there is nothing here to validate: the folder lookup would go into
+			// ConcurrentHashMap.containsKey(null), which throws, and the EClassifier
+			// check below would reject the request outright.
+			return;
+		}
 		if(!folderToResourceSetFactoryMap.containsKey(rootFolderName)) {
 			throw new WebApplicationException(
 					Response.status(Response.Status.BAD_REQUEST)
@@ -171,7 +181,6 @@ public class JpaDataResourceFilter implements ContainerRequestFilter, ResourceSe
 								entityMappings.getPackage()))
 							.build());
 		}
-		String className = pathParams.getFirst("eClassName");
 		if(ePackage.getEClassifier(className) == null) {
 			throw new WebApplicationException(
 					Response.status(Response.Status.BAD_REQUEST)

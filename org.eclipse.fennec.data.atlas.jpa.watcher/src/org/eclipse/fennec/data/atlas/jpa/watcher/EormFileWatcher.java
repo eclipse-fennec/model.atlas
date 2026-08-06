@@ -82,8 +82,17 @@ public class EormFileWatcher implements FileSystemWatcherListener {
 
     private final Lock lock = new ReentrantLock();
 
+    /** Guards {@link #registrations}, {@link #pendingTrackers}, {@link #pendingResources} and
+     *  the mutations of the shared {@code (emf.name=eorm)} ResourceSet made from here. */
     private final Map<String, ServiceRegistration<EntityMappings>> registrations = new HashMap<>();
     private final Map<String, ServiceTracker<EPackage, EPackage>> pendingTrackers = new HashMap<>();
+    /**
+     * Resources waiting for their EPackage, by URI. They are attached to the shared
+     * ResourceSet until the EPackage arrives — and if it never does, only this map knows
+     * they are there, so unloading and deactivating can still detach them instead of
+     * leaving them in a ResourceSet that outlives this component.
+     */
+    private final Map<String, Resource> pendingResources = new HashMap<>();
 	private Config config;
 
 	  @ObjectClassDefinition
@@ -114,6 +123,8 @@ public class EormFileWatcher implements FileSystemWatcherListener {
             registrations.clear();
             pendingTrackers.values().forEach(ServiceTracker::close);
             pendingTrackers.clear();
+            pendingResources.values().forEach(this::detach);
+            pendingResources.clear();
         } finally {
             lock.unlock();
         }
@@ -174,9 +185,18 @@ public class EormFileWatcher implements FileSystemWatcherListener {
             boolean hasEntityRefs = !mappings.getEntity().isEmpty();
             if (nsUri == null || nsUri.isBlank() || !hasEntityRefs) {
                 // No entity references to resolve — register immediately and detach.
+                // Under the lock: this runs on the watcher thread, while the tracker
+                // callbacks and deactivate() touch the same maps and ResourceSet from
+                // theirs.
                 EcoreUtil.resolveAll(resource);
-                register(uri, mappings);
-                detach(resource);
+                Resource loaded = resource;
+                lock.lock();
+                try {
+                    register(uri, mappings);
+                    detach(loaded);
+                } finally {
+                    lock.unlock();
+                }
                 resource = null;
                 return;
             }
@@ -224,6 +244,7 @@ public class EormFileWatcher implements FileSystemWatcherListener {
 //                                EcoreUtil.resolveAll(ePackage);
                                 EcoreUtil.resolveAll(mappings);
                                 register(uri, mappings);
+                                pendingResources.remove(uri);
                                 detach(resource);
                             }
                         } finally {
@@ -255,12 +276,17 @@ public class EormFileWatcher implements FileSystemWatcherListener {
             if (previous != null) {
                 previous.close();
             }
+            Resource previouslyParked = pendingResources.put(uri, resource);
+            if (previouslyParked != null && previouslyParked != resource) {
+                detach(previouslyParked);
+            }
         } finally {
             lock.unlock();
         }
         tracker.open();
     }
 
+    /** Caller must hold {@link #lock}. */
     private void register(String uri, EntityMappings jpaMappingConfig) {
         ServiceRegistration<EntityMappings> existing = registrations.remove(uri);
         if (existing != null) {
@@ -290,6 +316,10 @@ public class EormFileWatcher implements FileSystemWatcherListener {
             ServiceTracker<EPackage, EPackage> tracker = pendingTrackers.remove(uri);
             if (tracker != null) {
                 tracker.close();
+            }
+            Resource parked = pendingResources.remove(uri);
+            if (parked != null) {
+                detach(parked);
             }
             LOG.log(Level.DEBUG, "unload uri=" + uri
                     + " registrations.keys=" + registrations.keySet());
