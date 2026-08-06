@@ -14,7 +14,6 @@ Test-Cases: ${classes;HIERARCHY_INDIRECTLY_ANNOTATED;org.junit.platform.commons.
 	
 Private-Package: org.eclipse.fennec.data.atlas.epackage.watcher.tests
 
-Bundle-Version: 1.0.0.SNAPSHOT
 
 # Sometimes without DynamicImport Mockito will not find certain classes
 #DynamicImport-Package: *

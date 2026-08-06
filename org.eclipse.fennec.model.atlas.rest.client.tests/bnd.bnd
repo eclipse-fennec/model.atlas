@@ -43,7 +43,6 @@ Bundle-Description: End-to-end tests for the plain-Java Model Atlas client again
 	jakarta.inject.jakarta.inject-api;version=latest,\
 	jakarta.annotation-api;version=latest
 
-Bundle-Version: 1.0.0.SNAPSHOT
 
 # Do not publish this bundle to Maven Central; local install only
 -maven-release: local

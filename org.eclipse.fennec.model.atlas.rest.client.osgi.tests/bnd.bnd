@@ -25,7 +25,6 @@ Test-Cases: ${classes;HIERARCHY_INDIRECTLY_ANNOTATED;org.junit.platform.commons.
 
 Private-Package: org.eclipse.fennec.model.atlas.rest.client.osgi.tests
 
-Bundle-Version: 1.0.0.SNAPSHOT
 
 # Do not publish this bundle to Maven Central; local install only
 -maven-release: local

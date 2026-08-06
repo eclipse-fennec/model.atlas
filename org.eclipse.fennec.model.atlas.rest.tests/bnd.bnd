@@ -37,7 +37,6 @@ Test-Cases: ${classes;HIERARCHY_INDIRECTLY_ANNOTATED;org.junit.platform.commons.
 Private-Package: org.eclipse.fennec.model.atlas.rest.tests,\
 	org.eclipse.fennec.model.atlas.rest.tests.helper
 
-Bundle-Version: 1.0.0.SNAPSHOT
 
 -includeresource: \
 	OSGI-INF/configurator/=configs/,\

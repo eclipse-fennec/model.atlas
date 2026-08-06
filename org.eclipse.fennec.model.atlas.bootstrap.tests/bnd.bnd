@@ -23,7 +23,6 @@ Test-Cases: ${classes;HIERARCHY_INDIRECTLY_ANNOTATED;org.junit.platform.commons.
 	org.eclipse.fennec.model.atlas.emf.common;version=snapshot,\
 	org.eclipse.fennec.model.atlas.bootstrap;version=snapshot
 
-Bundle-Version: 1.0.0.SNAPSHOT
 
 -includeresource: \
 	test-data=test-data/

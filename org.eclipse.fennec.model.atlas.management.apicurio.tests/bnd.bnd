@@ -23,7 +23,6 @@ Test-Cases: ${classes;HIERARCHY_INDIRECTLY_ANNOTATED;org.junit.platform.commons.
 	org.eclipse.daanse.tooling.testcontainers.core;version=latest,\
 	org.eclipse.fennec.model.atlas.tests.common;version=snapshot
 	
-Bundle-Version: 1.0.0.SNAPSHOT
 
 # Do not publish this bundle to Maven Central; local install only
 -maven-release: local

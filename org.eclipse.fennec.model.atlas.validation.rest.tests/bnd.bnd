@@ -25,7 +25,6 @@ Private-Package: \
 	org.eclipse.fennec.model.atlas.validation.rest.tests,\
 	org.eclipse.fennec.model.atlas.validation.rest.tests.helper
 
-Bundle-Version: 1.0.0.SNAPSHOT
 
 -includeresource: \
 	OSGI-INF/configurator/=configs/

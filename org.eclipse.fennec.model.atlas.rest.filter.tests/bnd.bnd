@@ -31,7 +31,6 @@ Private-Package: \
 	org.eclipse.fennec.model.atlas.rest.filter.tests,\
 	org.eclipse.fennec.model.atlas.rest.filter.tests.resource
 
-Bundle-Version: 1.0.0.SNAPSHOT
 
 -includeresource: \
 	OSGI-INF/configurator/=configs/

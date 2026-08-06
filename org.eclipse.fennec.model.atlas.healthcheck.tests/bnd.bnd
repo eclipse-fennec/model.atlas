@@ -20,7 +20,6 @@ Test-Cases: ${classes;HIERARCHY_INDIRECTLY_ANNOTATED;org.junit.platform.commons.
 Private-Package: \
 	org.eclipse.fennec.model.atlas.healthcheck.tests
 
-Bundle-Version: 1.0.0.SNAPSHOT
 
 -dependson: \
 	org.eclipse.fennec.model.atlas.healthcheck
