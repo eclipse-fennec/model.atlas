@@ -8,3 +8,5 @@
 	org.osgi.annotation.versioning
 
 -workingset: atlas
+
+-testpath: junit-jupiter-api
