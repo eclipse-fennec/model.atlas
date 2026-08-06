@@ -15,6 +15,7 @@ package org.eclipse.fennec.model.atlas.workflow.impl;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Stream;
@@ -495,16 +496,36 @@ public class ScopeServiceImpl<T extends EObject> implements ScopeService<T>, Wri
 	 */
 	@Override
 	public ReadableRegistryView<T> registryView(String registry) {
-		throw new UnsupportedOperationException("registryView not yet implemented (P6-4)");
+		Objects.requireNonNull(registry, "registry");
+		validateRegistry(registry);
+		return new ScopeRegistryView<>(config.scope_name(), registry, null,
+				() -> listObjectIds(registry),
+				objectId -> getContentFromFinalStageForRegistry(registry, objectId));
 	}
 
 	/* 
 	 * (non-Javadoc)
 	 * @see org.eclipse.fennec.model.atlas.scope.api.ReadableScopeService#registryView(java.lang.String, java.lang.String)
 	 */
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>
+	 * The two reads a stage-explicit view offers inherit differently, because the
+	 * underlying scope operations do: {@code get} falls back to the parent hierarchy's
+	 * final stage ({@link #getContentFromStageForRegistry}), while the listing is this
+	 * scope's stage only ({@link #listInStageForRegistry}). The remote client's view
+	 * has the same shape, since it calls the endpoints backed by these operations.
+	 * </p>
+	 */
 	@Override
 	public ReadableRegistryView<T> registryView(String registry, String stage) {
-		throw new UnsupportedOperationException("registryView not yet implemented (P6-4)");
+		Objects.requireNonNull(registry, "registry");
+		Objects.requireNonNull(stage, "stage — use registryView(registry) for the final-stage view");
+		validateRegistry(registry);
+		return new ScopeRegistryView<>(config.scope_name(), registry, stage,
+				() -> listInStageForRegistry(registry, stage).stream().map(ObjectMetadata::getObjectId).toList(),
+				objectId -> getContentFromStageForRegistry(registry, stage, objectId));
 	}
 
 

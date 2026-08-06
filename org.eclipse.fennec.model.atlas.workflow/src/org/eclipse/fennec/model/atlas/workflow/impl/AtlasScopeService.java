@@ -14,6 +14,7 @@
 package org.eclipse.fennec.model.atlas.workflow.impl;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Stream;
 
@@ -323,16 +324,36 @@ public class AtlasScopeService implements ScopeService<EPackage> {
 	 */
 	@Override
 	public ReadableRegistryView<EPackage> registryView(String registry) {
-		throw new UnsupportedOperationException("registryView not yet implemented (P6-4)");
+		Objects.requireNonNull(registry, "registry");
+		validateRegistry(registry);
+		return new ScopeRegistryView<>(getScopeName(), registry, null,
+				() -> listObjectIds(registry),
+				objectId -> atlasSchemaRegistryService.getContentFromFinalStage(WorkflowConstants.ATLAS_SCOPE_NAME,
+						objectId));
 	}
 
 	/* 
 	 * (non-Javadoc)
 	 * @see org.eclipse.fennec.model.atlas.scope.api.ReadableScopeService#registryView(java.lang.String, java.lang.String)
 	 */
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>
+	 * The atlas scope holds the schema registry every other scope inherits from, and it
+	 * publishes into one stage only, so a stage-explicit view reads that stage through
+	 * the same registry operations as the final-stage one; a stage the registry does not
+	 * have simply lists and resolves nothing.
+	 * </p>
+	 */
 	@Override
 	public ReadableRegistryView<EPackage> registryView(String registry, String stage) {
-		throw new UnsupportedOperationException("registryView not yet implemented (P6-4)");
+		Objects.requireNonNull(registry, "registry");
+		Objects.requireNonNull(stage, "stage — use registryView(registry) for the final-stage view");
+		validateRegistry(registry);
+		return new ScopeRegistryView<>(getScopeName(), registry, stage,
+				() -> listInStageForRegistry(registry, stage).stream().map(ObjectMetadata::getObjectId).toList(),
+				objectId -> getContentFromStageForRegistry(registry, stage, objectId));
 	}
 
 }
