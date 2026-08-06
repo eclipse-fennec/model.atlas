@@ -26,6 +26,7 @@ import org.eclipse.fennec.model.atlas.mgmt.management.ObjectMetadata;
 import org.eclipse.fennec.model.atlas.mgmt.management.ObjectMetadataContainer;
 import org.eclipse.fennec.model.atlas.mgmt.storage.AbstractEObjectStorageService;
 import org.eclipse.fennec.model.atlas.mgmt.storage.ModelUnavailableException;
+import org.eclipse.fennec.model.atlas.rest.application.exception.EndpointFailures;
 import org.eclipse.fennec.model.atlas.rest.application.exception.ModelUnavailableExceptionMapper;
 import org.eclipse.fennec.model.atlas.rest.application.filter.ObjectMetadataResponseFilter;
 import org.eclipse.fennec.model.atlas.rest.common.ModelAtlasRestConstants;
@@ -131,7 +132,7 @@ public class ObjectRegistryResource {
         } catch (IllegalArgumentException e) {
             return Response.status(Response.Status.BAD_REQUEST).entity(e.getMessage()).build();
         } catch (Exception e) {
-            return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity(e.getMessage()).build();
+            throw EndpointFailures.propagate(e);
         }
     }
 
@@ -167,7 +168,7 @@ public class ObjectRegistryResource {
         } catch (IllegalArgumentException e) {
             return Response.status(Response.Status.BAD_REQUEST).entity(e.getMessage()).build();
         } catch (Exception e) {
-            return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity(e.getMessage()).build();
+            throw EndpointFailures.propagate(e);
         }
     }
 
@@ -237,7 +238,7 @@ public class ObjectRegistryResource {
         } catch (IllegalArgumentException e) {
             return Response.status(Response.Status.BAD_REQUEST).entity(e.getMessage()).build();
         } catch (Exception e) {
-            return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity(e.getMessage()).build();
+            throw EndpointFailures.propagate(e);
         }
     }
 
@@ -354,7 +355,7 @@ public class ObjectRegistryResource {
         } catch (IllegalArgumentException e) {
             return Response.status(Response.Status.BAD_REQUEST).entity(e.getMessage()).build();
         } catch (Exception e) {
-            return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity(e.getMessage()).build();
+            throw EndpointFailures.propagate(e);
         }
     }
 
@@ -411,7 +412,7 @@ public class ObjectRegistryResource {
             if (mue != null) {
                 return ModelUnavailableExceptionMapper.conflict(mue);
             }
-            return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity(e.getMessage()).build();
+            throw EndpointFailures.propagate(e);
         }
     }
     
@@ -466,7 +467,7 @@ public class ObjectRegistryResource {
             if (mue != null) {
                 return ModelUnavailableExceptionMapper.conflict(mue);
             }
-            return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity(e.getMessage()).build();
+            throw EndpointFailures.propagate(e);
         }
     }
 
@@ -561,7 +562,7 @@ public class ObjectRegistryResource {
         } catch (IllegalArgumentException e) {
             return Response.status(Response.Status.BAD_REQUEST).entity(e.getMessage()).build();
         } catch (Exception e) {
-            return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity(e.getMessage()).build();
+            throw EndpointFailures.propagate(e);
         }
     }
 
@@ -594,9 +595,9 @@ public class ObjectRegistryResource {
             ObjectMetadata existingMetadata = scopeService.getMetadataFromStageForRegistry(registryName, stageName,
                     objectId);
             if (existingMetadata == null) {
-                return Response.status(Response.Status.NO_CONTENT).entity(String.format(
-                        "Object %s not found neither scope '%s', registry '%s' and stage '%s' nor in parent hierarchy",
-                        objectId, scopeName, registryName, stageName)).build();
+                // Nothing to delete. 204 without a body: a 204 carries no entity, and the
+                // status alone is now unambiguous because a delete that happened is 200.
+                return Response.noContent().build();
             }
             if (existingMetadata.isIsReadOnly()) {
                 return Response.status(Response.Status.FORBIDDEN)
@@ -612,13 +613,16 @@ public class ObjectRegistryResource {
 
             boolean deleted = scopeService.deleteFromStageForRegistry(registryName, stageName, objectId).getValue();
             if (deleted)
-                return Response.noContent().build();
+                // 200, as this endpoint's @ApiResponse documents and as the sibling
+                // SchemaPackagesResource.deletePackage answers, so that success is
+                // distinguishable from the 204 above.
+                return Response.status(Response.Status.OK).build();
             return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
                     .entity(String.format("Object %s deletion failed but causes are unknown", objectId)).build();
         } catch (IllegalArgumentException e) {
             return Response.status(Response.Status.BAD_REQUEST).entity(e.getMessage()).build();
         } catch (Exception e) {
-            return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity(e.getMessage()).build();
+            throw EndpointFailures.propagate(e);
         }
     }
 
@@ -689,7 +693,7 @@ public class ObjectRegistryResource {
         } catch (IllegalArgumentException e) {
             return Response.status(Response.Status.BAD_REQUEST).entity(e.getMessage()).build();
         } catch (Exception e) {
-            return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity(e.getMessage()).build();
+            throw EndpointFailures.propagate(e);
         }
     }
 

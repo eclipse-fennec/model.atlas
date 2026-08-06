@@ -23,6 +23,7 @@ Test-Cases: ${classes;HIERARCHY_INDIRECTLY_ANNOTATED;org.junit.platform.commons.
 	org.eclipse.osgitech.rest.servlet.whiteboard;version=latest,\
 	org.osgi.service.cm,\
 	org.eclipse.fennec.model.atlas.workflow,\
+	org.eclipse.fennec.model.atlas.scope.api;version=snapshot,\
 	org.eclipse.fennec.model.atlas.management,\
 	org.eclipse.uml2.uml,\
 	org.eclipse.fennec.m2x.ocl.api,\

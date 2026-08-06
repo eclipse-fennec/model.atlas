@@ -14,6 +14,7 @@
 package org.eclipse.fennec.model.atlas.rest.application.resource;
 
 import org.eclipse.emf.ecore.EPackage;
+import org.eclipse.fennec.model.atlas.rest.application.exception.EndpointFailures;
 import org.eclipse.fennec.model.atlas.rest.common.ModelAtlasRestConstants;
 import org.eclipse.fennec.model.atlas.runtime.RequireRuntime;
 import org.osgi.service.component.annotations.Component;
@@ -76,7 +77,7 @@ public class ModelConverterResource {
 			// WebApplicationException already has the correct status code, rethrow it
 			throw e;
         } catch (Exception e) {
-            return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity(e.getMessage()).build();
+            throw EndpointFailures.propagate(e);
         }
     }
 

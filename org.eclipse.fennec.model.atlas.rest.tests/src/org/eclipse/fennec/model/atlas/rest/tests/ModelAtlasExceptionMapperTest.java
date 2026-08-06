@@ -19,7 +19,9 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -63,6 +65,9 @@ public class ModelAtlasExceptionMapperTest extends AbstractRestTest {
 
 	private ServiceRegistration<ScopeServiceCollector> mockScopeCollectorRegistration;
 	private static final String THROWING_SCOPE = "throw-runtime-exception";
+	/** A scope whose service fails *inside* an endpoint's try block, not while being resolved. */
+	private static final String THROWING_ENDPOINT_SCOPE = "throw-inside-endpoint";
+	private static final String INTERNAL_DETAIL = "Simulated storage failure at /var/atlas/secret-path";
 	private ScopeServiceCollector mockCollector;
 
 	@BeforeEach
@@ -77,6 +82,14 @@ public class ModelAtlasExceptionMapperTest extends AbstractRestTest {
 		when(mockCollector.getScopeServiceByScopeName(eq(THROWING_SCOPE)))                                                                                                                                                                                                                               
 	      .thenThrow(new RuntimeException("Simulated internal failure"));      
 		
+		// A scope that resolves fine but whose service throws once the endpoint is
+		// already inside its try block — the path the per-endpoint catch-alls covered.
+		ScopeService<?> throwingScopeService = mock(ScopeService.class);
+		when(throwingScopeService.isValidRegistry(any())).thenReturn(true);
+		when(throwingScopeService.listInFinalStageForRegistry(any()))
+			.thenThrow(new IllegalStateException(INTERNAL_DETAIL));
+		doReturn(throwingScopeService).when(mockCollector).getScopeServiceByScopeName(eq(THROWING_ENDPOINT_SCOPE));
+
 		mockScopeCollectorRegistration = context.registerService(ScopeServiceCollector.class, mockCollector,
 				serviceProps);
 		// The filter's rebind to this higher-ranked mock is awaited deterministically
@@ -112,6 +125,29 @@ public class ModelAtlasExceptionMapperTest extends AbstractRestTest {
 		assertTrue(body.contains("message"), "ErrorResponse should contain 'message' field");
 		assertTrue(body.contains("code"), "ErrorResponse should contain 'code' field");
 		assertTrue(body.contains("timestamp"), "ErrorResponse should contain 'timestamp' field");
+	}
+
+	@Test
+	@ParentScopeServiceSetup
+	public void testEndpointFailure_IsSanitizedByTheMapper(@InjectBundleContext BundleContext context)
+			throws InterruptedException, IOException {
+
+		ensureResourceAvailability(context);
+		Response response = scopeTarget(THROWING_ENDPOINT_SCOPE).path("schema")
+				.request("application/json")
+				.get();
+
+		assertEquals(500, response.getStatus(), "Should return HTTP 500 Internal Server Error");
+
+		String body = response.readEntity(String.class);
+		// A failure raised inside an endpoint must reach ModelAtlasExceptionMapper like any
+		// other. The per-endpoint catch-alls used to answer it themselves with the raw
+		// exception message, so the sanitized path never ran and internal detail — here a
+		// filesystem path — went to the client.
+		assertFalse(body.contains(INTERNAL_DETAIL),
+				"An internal failure must not leak its message | body: " + body);
+		assertTrue(body.contains("An internal server error occurred"),
+				"An internal failure must get the mapper's generic message | body: " + body);
 	}
 
 	// ========== Client Error (4xx) Tests ==========

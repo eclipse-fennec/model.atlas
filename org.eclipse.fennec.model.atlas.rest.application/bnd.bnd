@@ -39,3 +39,7 @@
 Require-Capability: \
 	osgi.implementation;\
 		filter:="(&(osgi.implementation=org.eclipse.fennec.model.atlas.scoped-resource-set)(version>=1.0.0))"
+
+-testpath: \
+	junit-jupiter-api,\
+	org.glassfish.jersey.core.jersey-common;version=latest

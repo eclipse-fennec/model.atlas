@@ -544,7 +544,10 @@ public class ObjectRegistryResourceTest extends AbstractRestTest{
 		Response response = stageTarget(TestAnnotations.STAGE_DRAFT)
 				.queryParam("objectId", TEST_OBJECT_ID).request().delete();
 
-		assertEquals(204, response.getStatus(), "Should return HTTP 204 No Content");
+		// 200, like the sibling deletePackage and like this endpoint's own @ApiResponse.
+		// It used to answer 204 -- the same code it uses for "not found", so a client
+		// could not tell a delete that happened from one that had nothing to delete.
+		assertEquals(200, response.getStatus(), "A delete that happened must be distinguishable from a no-op");
 	}
 
 	@Disabled("We have to fix issue #64 first")
@@ -566,6 +569,7 @@ public class ObjectRegistryResourceTest extends AbstractRestTest{
 				.queryParam("objectId", TEST_OBJECT_ID).request().delete();
 
 		assertEquals(204, response.getStatus(), "Should return HTTP 204 No Content");
+		assertFalse(response.hasEntity(), "A 204 must not carry a body");
 	}
 
 	// ========== Transition Tests ==========
