@@ -1,6 +1,5 @@
 Bundle-Name: MAC Management Git Webhook REST
 Bundle-Description: Whiteboard REST endpoints receiving GitHub/GitLab push webhooks for the git storage backend
-Bundle-Version: 1.0.0.SNAPSHOT
 
 -library: enableEMF
 -buildpath: \
