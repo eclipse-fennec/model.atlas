@@ -50,7 +50,8 @@ Resolved 36 · Partial 8 · Still open 78 (details per finding; fresh evidence f
 | F34 | ✅ fixed 2026-08-06 | all four schema readers now answer an unreadable payload the same way — 400 — through one shared `loadPayload` check in their common base class |
 | F35 | ✅ fixed 2026-08-06 | the stray `save(null)` is gone, so attaching no longer writes a file per request into the server's working directory (and there is no swallowed IOException left to hide); the class also got the javadoc F66 asked for |
 | F36 | ✅ fixed 2026-08-05 | half the finding was wrong (EAGER already filtered on strict); the real fatal call was scope discovery. Guarded, with three ITs that fail pre-fix |
-| F37–F39 | still open | doc-provider hashCode persistence + closed dispatch, bootstrap registry leak |
+| F37, F38 | ⏸ deferred by decision | doc-provider hashCode persistence + closed dispatch — bundle untouched pending the F7 repo decision (owner, 2026-08-06) |
+| F39 | still open | bootstrap registry leak |
 | F40 | ✅ fixed 2026-08-05 | ScopesHealthCheck reference now DYNAMIC/GREEDY + volatile; new `healthcheck.tests` bundle proves it (2 ITs fail pre-fix, pass post-fix) |
 | F41 | ✅ resolved | workflow promise executor shut down |
 | F42 | ✅ fixed 2026-08-05 | unmatched storageType now logs a WARNING naming stage/registry/available types, and all 10 lookups go through `storageFor(stage)`, which throws with the configuration context instead of NPE-ing |
@@ -66,7 +67,8 @@ Resolved 36 · Partial 8 · Still open 78 (details per finding; fresh evidence f
 | F58 | ➖ n/a | Base64 objectId encoding removed from REST — but the same default-charset pattern now lives in workflow (new F133) |
 | F59 | still open | 204-with-entity ×6 |
 | F60 | ✅ resolved | unknown scope now 400 via ModelAtlasRequestFilter:123-129 |
-| F61–F63, F67, F69, F70 | still open | debug endpoints, /schema substring, iterator().next(), validation dup/srp — unchanged |
+| F61–F63 | still open | debug endpoints, /schema substring, iterator().next() — unchanged |
+| F67, F69, F70 | ⏸ deferred by decision | validation dup/srp — the validation bundles are not being worked on for now (owner, 2026-08-06) |
 | F66 | ✅ fixed 2026-08-06 | `ResourceAttacherHelper` documented (contract, what it deliberately does not do, how long the attachment lasts) while fixing F35 |
 | F65 | ✅ fixed 2026-08-05 | UML + JSON-schema writers now set Content-Disposition like their ecore/XSD siblings |
 | F64 | ✅ resolved | copy-serialize in try/finally (jsonschema got the same treatment) |
@@ -76,7 +78,8 @@ Resolved 36 · Partial 8 · Still open 78 (details per finding; fresh evidence f
 | F74–F76 | still open | datagen minors unchanged |
 | F77 | ✅ resolved | stale codegen comment gone |
 | F78 | ⏸ deferred | constant-interface antipattern in model.documentation.provider — bundle untouched by agreement (see F7) |
-| F79–F89 | still open | doc-provider, bootstrap, healthcheck, mediatypes, emf.common, client minors unchanged |
+| F79 | ⏸ deferred by decision | doc-provider javadoc — bundle untouched pending the F7 repo decision (owner, 2026-08-06) |
+| F80–F89 | still open | bootstrap, healthcheck, mediatypes, emf.common, client minors unchanged |
 | F90 | ✅ resolved | finders call ensureCacheInitialized() |
 | F91 | ✅ fixed 2026-08-05 | commented registration blocks deleted earlier; the 319-line commented-out `StorageRegistryServiceImpl.java` is now deleted too (every line was `//`-commented; only doc/plan prose referenced it) |
 | F92–F95 | ✅ resolved | verified still present |
@@ -196,16 +199,16 @@ All locations re-verified 2026-08-05; line numbers are current. Full problem sta
 
 | id | Fresh location | id | Fresh location |
 |---|---|---|---|
-| F57 | SchemaPackagesResource.java (1026 lines; dup helpers :788,:804) | F79 | ModelDocumentationProvider.java:45-49 |
+| F57 | SchemaPackagesResource.java (1026 lines; dup helpers :788,:804) | F79 | ModelDocumentationProvider.java:45-49 ⏸ **DEFERRED 2026-08-06 (owner): `model.documentation.provider` stays untouched until its repo fate is decided (the F7 escalation).** |
 | F59 | ObjectRegistryResource.java:203,385,439,516,587,658 | F80 | InitialModelLoader.java:111-119,163,205-216 |
 | F61 | SchemaPackagesResource.java:110-115; OpenApiResource.java:140-151 | F81 | MediaTypesHealthCheck.java:34-35,41 |
 | F62 | ModelAtlasRequestFilter.java:165 | F82 | SupportedMediatypesImpl.java:39-41 |
 | F63 | UMLMessageBodyReaderWriter.java:92; XSDSchemaMessageBodyReaderWriter.java:107 | F83 | SupportedMediatypesImpl.java:34-42,52-53 |
 | F65 ✅ | ~~uml / jsonschema never set Content-Disposition~~ fixed 2026-08-05 — both writers now set it (`<name>.uml` / `<name>.schema.json`), asserted in rest.tests | F84 | DynamicEPackageConfigurator.java:22 |
 | F66 ✅ fixed 2026-08-06 (with F35) | ~~ResourceAttacherHelper.java:24-29~~ | F85 | AtlasEPackageRegistryConfigurator.java:92-93,123-130,136-144 |
-| F67 | ObjectValidationResource.java:215-233 = ObjectBatchValidationResource.java:156-174 (+6 catch-ladder copies) | F86 | RemoteEPackagePublisher.java:116-137,225-231 |
-| F69 | ValidationServiceImpl.java:170-245 | F87 | AtlasScopedFetchOnMissRegistry.java:93-101 vs :70-91 |
-| F70 | ValidationServiceImpl.java:394-402,404-413 | F88 | ModelAtlasClientImpl.java:142-149 (drift mechanism still live on this branch) |
+| F67 | ObjectValidationResource.java:215-233 = ObjectBatchValidationResource.java:156-174 (+6 catch-ladder copies) ⏸ **DEFERRED 2026-08-06 (owner): the validation bundles are not being worked on for now.** | F86 | RemoteEPackagePublisher.java:116-137,225-231 |
+| F69 | ValidationServiceImpl.java:170-245 ⏸ **DEFERRED 2026-08-06 (owner): the validation bundles are not being worked on for now.** | F87 | AtlasScopedFetchOnMissRegistry.java:93-101 vs :70-91 |
+| F70 | ValidationServiceImpl.java:394-402,404-413 ⏸ **DEFERRED 2026-08-06 (owner): the validation bundles are not being worked on for now.** | F88 | ModelAtlasClientImpl.java:142-149 (drift mechanism still live on this branch) |
 | F71 🟡 | ValidationService.java:24-46 (methods still undocumented) | F89 | ClientConfiguration.java:383-522 (~29 setters) |
 | F72 ✅ | ~~ValidationHelper.java:27~~ fixed 2026-08-05 — documented, `final` + private ctor | F91 ✅ | ~~StorageRegistryServiceImpl.java:1-319~~ deleted 2026-08-05 |
 | F73 ✅ | ~~DataGenService.java:34~~ fixed 2026-08-05 — `generate` javadoc now says the keys are contextClass URIs | F96 ✅ | ~~EPackageLuceneIndex.java:21-25~~ documented 2026-08-05 |
