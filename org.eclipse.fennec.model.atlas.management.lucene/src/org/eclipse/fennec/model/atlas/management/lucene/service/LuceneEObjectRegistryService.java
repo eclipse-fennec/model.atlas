@@ -293,8 +293,7 @@ public class LuceneEObjectRegistryService<T extends EObject> implements EObjectR
 
         try {
             // Use Lucene for efficient status-based search
-            String query = "status:" + status.getLiteral();
-            List<String> objectIds = luceneHelper.searchObjectIds(query, Integer.MAX_VALUE);
+            List<String> objectIds = luceneHelper.findByStatus(status);
             List<ObjectMetadata> luceneResults = loadMetadataList(objectIds);
 
             // If Lucene returns results or cache is empty, use Lucene results
@@ -331,8 +330,7 @@ public class LuceneEObjectRegistryService<T extends EObject> implements EObjectR
 
         try {
             // Search in properties for storage.backend key
-            String query = "properties:storage.backend\\:" + backend;
-            List<String> objectIds = luceneHelper.searchObjectIds(query, Integer.MAX_VALUE);
+            List<String> objectIds = luceneHelper.findByStorageBackend(backend);
             return loadMetadataList(objectIds);
         } catch (Exception e) {
             LOGGER.log(Level.SEVERE, "Error in Lucene search by storage backend: " + backend, e);
@@ -354,9 +352,7 @@ public class LuceneEObjectRegistryService<T extends EObject> implements EObjectR
         requireNonNull(stage, "Storage stage cannot be null");
 
         try {
-            String query = "(properties:storage.backend\\:" + backend + " AND " + LuceneRegistryHelper.FIELD_STAGE + ":"
-                    + stage + ")";
-            List<String> objectIds = luceneHelper.searchObjectIds(query, Integer.MAX_VALUE);
+            List<String> objectIds = luceneHelper.findByStorageBackendAndStage(backend, stage);
             return loadMetadataList(objectIds);
         } catch (Exception e) {
             LOGGER.log(Level.SEVERE, "Error in Lucene search by backend and role: " + backend + ", " + stage, e);
@@ -436,9 +432,7 @@ public class LuceneEObjectRegistryService<T extends EObject> implements EObjectR
 
         try {
             // Use Lucene for efficient search
-            String query = LuceneRegistryHelper.FIELD_SCOPE + ":" + scope + " AND " + LuceneRegistryHelper.FIELD_STAGE
-                    + ":" + stage;
-            List<String> objectIds = luceneHelper.searchObjectIds(query, Integer.MAX_VALUE);
+            List<String> objectIds = luceneHelper.findByScopeAndStage(scope, stage);
             List<ObjectMetadata> luceneResults = loadMetadataList(objectIds);
 
             // If Lucene returns results or cache is empty, use Lucene results
@@ -531,8 +525,7 @@ public class LuceneEObjectRegistryService<T extends EObject> implements EObjectR
 
         try {
             // Use Lucene for efficient objectName search
-            String query = LuceneRegistryHelper.FIELD_OBJECT_NAME + ":\"" + objectName + "\"";
-            List<String> objectIds = luceneHelper.searchObjectIds(query, Integer.MAX_VALUE);
+            List<String> objectIds = luceneHelper.findByObjectName(objectName);
             List<ObjectMetadata> luceneResults = loadMetadataList(objectIds);
 
             // If Lucene returns results or cache is empty, use Lucene results
@@ -557,9 +550,8 @@ public class LuceneEObjectRegistryService<T extends EObject> implements EObjectR
 
         try {
             // Use Lucene for efficient objectName and role search
-            String query = "(" + LuceneRegistryHelper.FIELD_OBJECT_NAME + ":\"" + objectName + "\" AND "
-                    + LuceneRegistryHelper.FIELD_STAGE + ":" + stage + ")";
-            List<String> objectIds = luceneHelper.searchObjectIds(query, 1);
+            List<String> objectIds = luceneHelper.findByObjectNameAndStage(objectName, stage).map(List::of)
+                    .orElse(List.of());
             if (!objectIds.isEmpty()) {
                 ObjectMetadata metadata = metadataCache.get(objectIds.get(0));
                 if (metadata != null) {
@@ -677,13 +669,9 @@ public class LuceneEObjectRegistryService<T extends EObject> implements EObjectR
         requireNonNull(scope, "Scope cannot be null");
 
         try {
-            // Use Lucene for efficient objectName and role search
-            if (!objectName.contains("*"))
-                objectName = "\"" + objectName + "\""; // if is an exact match we add the "", otherwise not
-            String query = "(" + LuceneRegistryHelper.FIELD_OBJECT_NAME + ":" + objectName + " AND "
-                    + LuceneRegistryHelper.FIELD_STAGE + ":" + stage + " AND " + LuceneRegistryHelper.FIELD_SCOPE + ":"
-                    + scope + ")";
-            List<String> objectIds = luceneHelper.searchObjectIds(query, Integer.MAX_VALUE);
+            // Use Lucene for efficient objectName and role search; the name may be a
+            // wildcard pattern, which the helper tells apart from an exact name
+            List<String> objectIds = luceneHelper.findByScopeStageAndName(scope, stage, objectName);
             List<ObjectMetadata> luceneResults = loadMetadataList(objectIds);
             // If Lucene returns results or cache is empty, use Lucene results
             if (!luceneResults.isEmpty() || metadataCache.isEmpty()) {
@@ -725,9 +713,7 @@ public class LuceneEObjectRegistryService<T extends EObject> implements EObjectR
 
         try {
             // Use Lucene for efficient search
-            String query = LuceneRegistryHelper.FIELD_SCOPE + ":" + scope + " AND " + LuceneRegistryHelper.FIELD_STAGE
-                    + ":" + stage + " AND " + LuceneRegistryHelper.FIELD_REGISTRY + ":" + registry;
-            List<String> objectIds = luceneHelper.searchObjectIds(query, Integer.MAX_VALUE);
+            List<String> objectIds = luceneHelper.findByScopeRegistryAndStage(scope, registry, stage);
             List<ObjectMetadata> luceneResults = loadMetadataList(objectIds);
 
             // If Lucene returns results or cache is empty, use Lucene results
@@ -758,14 +744,9 @@ public class LuceneEObjectRegistryService<T extends EObject> implements EObjectR
         requireNonNull(scope, "Scope cannot be null");
 
         try {
-            // Use Lucene for efficient objectName and role search
-        	String objectNameSearch = objectName;
-            if (!objectName.contains("*"))
-                objectNameSearch = "\"" + objectNameSearch + "\""; // if is an exact match we add the "", otherwise not
-            String query = "(" + LuceneRegistryHelper.FIELD_OBJECT_NAME + ":" + objectNameSearch + " AND "
-                    + LuceneRegistryHelper.FIELD_STAGE + ":" + stage + " AND " + LuceneRegistryHelper.FIELD_SCOPE + ":"
-                    + scope + " AND " + LuceneRegistryHelper.FIELD_REGISTRY + ":" + registry + ")";
-            List<String> objectIds = luceneHelper.searchObjectIds(query, Integer.MAX_VALUE);
+            // Use Lucene for efficient objectName and role search; the name may be a
+            // wildcard pattern, which the helper tells apart from an exact name
+            List<String> objectIds = luceneHelper.findByScopeRegistryStageAndName(scope, registry, stage, objectName);
             List<ObjectMetadata> luceneResults = loadMetadataList(objectIds);
             // If Lucene returns results or cache is empty, use Lucene results
             if (!luceneResults.isEmpty() || metadataCache.isEmpty()) {
