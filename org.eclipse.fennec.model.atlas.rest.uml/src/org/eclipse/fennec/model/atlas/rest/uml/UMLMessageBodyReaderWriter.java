@@ -89,11 +89,11 @@ public class UMLMessageBodyReaderWriter extends AbstractEPackageMessageBodyHandl
             throws IOException, WebApplicationException {
         ResourceSet resourceSet = getResourceSet();
         Resource resource = resourceSet.createResource(URI.createURI("temp.uml"));
-        resource.load(entityStream, null);
-        Package umlPackage = resource.getContents().isEmpty() ? null : (Package) resource.getContents().remove(0);
-        if (umlPackage == null) {
-            return null;
-        }
+        // A payload this reader cannot turn into a model is the client's mistake: answer
+        // 400 rather than null, which the endpoint would dereference into a 500. The
+        // three sibling schema readers answer the same way.
+        loadPayload(resource, entityStream, null, "UML");
+        Package umlPackage = (Package) resource.getContents().remove(0);
         Collection<EPackage> values = UMLUtil.convertToEcore(umlPackage, null);
         return values.iterator().next();
     }

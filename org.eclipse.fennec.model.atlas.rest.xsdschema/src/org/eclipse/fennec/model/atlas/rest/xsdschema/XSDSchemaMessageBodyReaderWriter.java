@@ -97,11 +97,11 @@ public class XSDSchemaMessageBodyReaderWriter extends AbstractEPackageMessageBod
             throws IOException, WebApplicationException {
         ResourceSet resourceSet = getResourceSet();
         Resource resource = resourceSet.createResource(URI.createURI("temp.xsd"));
-        resource.load(entityStream, null);
-        XSDSchema schema = resource.getContents().isEmpty() ? null : (XSDSchema) resource.getContents().remove(0);
-        if (schema == null) {
-            return null;
-        }
+        // A payload this reader cannot turn into a model is the client's mistake: answer
+        // 400 rather than null, which the endpoint would dereference into a 500. The
+        // three sibling schema readers answer the same way.
+        loadPayload(resource, entityStream, null, "XSD");
+        XSDSchema schema = (XSDSchema) resource.getContents().remove(0);
         XSDEcoreBuilder ecoreBuilder = new XSDEcoreBuilder(
                 new BasicExtendedMetaData(resourceSet.getPackageRegistry()));
         ecoreBuilder.generate(schema);

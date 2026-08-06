@@ -102,8 +102,11 @@ public class JsonSchemaMessageBodyReaderWriter extends AbstractEPackageMessageBo
 					throws IOException, WebApplicationException {
 		ResourceSet resourceSet = getResourceSet();
 		Resource resource = resourceSet.createResource(URI.createURI("temp.jsonschema"), "application/schema+json");
-		resource.load(entityStream, OPTIONS);
-		return resource.getContents().isEmpty() ? null : (EPackage) resource.getContents().remove(0);
+		// A payload this reader cannot turn into a model is the client's mistake: answer
+		// 400 rather than null, which the endpoint would dereference into a 500. The
+		// three sibling schema readers answer the same way.
+		loadPayload(resource, entityStream, OPTIONS, "JSON Schema");
+		return (EPackage) resource.getContents().remove(0);
 	}
 
 }

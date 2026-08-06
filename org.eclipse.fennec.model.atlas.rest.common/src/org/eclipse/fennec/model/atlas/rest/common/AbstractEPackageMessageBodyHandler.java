@@ -13,10 +13,17 @@
  */
 package org.eclipse.fennec.model.atlas.rest.common;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.PushbackInputStream;
+import java.util.Map;
+
 import org.eclipse.emf.ecore.EPackage;
+import org.eclipse.emf.ecore.resource.Resource;
 import org.eclipse.emf.ecore.resource.ResourceSet;
 
 import jakarta.inject.Provider;
+import jakarta.ws.rs.BadRequestException;
 import jakarta.ws.rs.core.Context;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.ext.MessageBodyReader;
@@ -70,5 +77,64 @@ public abstract class AbstractEPackageMessageBodyHandler
     protected static boolean isMediaType(MediaType mediaType, MediaType expected) {
         return mediaType != null && expected.getType().equalsIgnoreCase(mediaType.getType())
                 && expected.getSubtype().equalsIgnoreCase(mediaType.getSubtype());
+    }
+
+    /**
+     * Loads a request payload into {@code resource}, rejecting anything that is not a
+     * readable model of this handler's format.
+     *
+     * <p>
+     * A body this handler cannot parse is the client's mistake, so every handler answers
+     * it with {@code 400}. The four schema handlers used to disagree about that for the
+     * very same condition: the XMI one threw {@link java.io.IOException} (a 500, blaming
+     * the server for the client's document) while the JSON-schema, UML and XSD ones
+     * returned {@code null}, which the endpoint then dereferenced into a 500 from an NPE
+     * further in. Those three also never inspected {@link Resource#getErrors()}, so a
+     * partially parsed document passed for a good one.
+     * </p>
+     *
+     * <p>
+     * A failure raised while parsing is treated the same as one recorded on the resource:
+     * the formats differ in which they use — EMF wraps a parse error in an
+     * {@code IOWrappedException}, the JSON codec throws its own unchecked read exception,
+     * and the XMI reader records diagnostics instead — but all three describe the bytes
+     * the client sent. Their message is passed on, because it names where the document
+     * broke and is what makes the 400 actionable.
+     * </p>
+     *
+     * @param resource     the resource to load into
+     * @param entityStream the request payload
+     * @param options      load options, may be {@code null}
+     * @param format       the payload's format, named in error messages (e.g. {@code XMI})
+     * @throws BadRequestException if the payload is empty, unparseable, or yields nothing
+     * @throws IOException         if the stream itself cannot be read
+     */
+    protected static void loadPayload(Resource resource, InputStream entityStream, Map<?, ?> options, String format)
+            throws IOException {
+        // An empty body never becomes a model, and not every format's parser says so:
+        // the JSON-schema codec answers an empty stream with an empty EPackage.
+        PushbackInputStream stream = new PushbackInputStream(entityStream);
+        int firstByte = stream.read();
+        if (firstByte == -1) {
+            throw new BadRequestException("No content found in the " + format + " payload");
+        }
+        stream.unread(firstByte);
+
+        try {
+            resource.load(stream, options);
+        } catch (IOException | RuntimeException e) {
+            throw new BadRequestException("The " + format + " payload could not be read: " + e.getMessage(), e);
+        }
+
+        if (!resource.getErrors().isEmpty()) {
+            StringBuilder message = new StringBuilder("The ").append(format).append(" payload could not be read: ");
+            for (Resource.Diagnostic error : resource.getErrors()) {
+                message.append(error.getMessage()).append("; ");
+            }
+            throw new BadRequestException(message.toString());
+        }
+        if (resource.getContents().isEmpty()) {
+            throw new BadRequestException("No content found in the " + format + " payload");
+        }
     }
 }
