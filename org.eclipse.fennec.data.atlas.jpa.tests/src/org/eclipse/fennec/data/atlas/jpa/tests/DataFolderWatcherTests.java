@@ -168,25 +168,34 @@ public class DataFolderWatcherTests {
             @InjectService ConfigurationAdmin configAdmin,
             @InjectService(cardinality = 0, filter = "(" + PROP_NAME + "=watcher-test)") ServiceAware<EntityMappings> aware)
             throws Exception {
-    	System.out.print(tempDir.toAbsolutePath().toString());
         Files.createDirectories(tempDir.resolve("mapping"));
 
         Configuration config = configAdmin.getFactoryConfiguration(
                 WatcherConstants.PID_DATA_FOLDER_WATCHER, "temp-add-mapping", "?");
         Dictionary<String, Object> props = new Hashtable<>();
-        props.put("io.fs.watcher.path", tempDir.toAbsolutePath() + "/");
+        props.put("io.fs.watcher.path", tempAbsolutePath(tempDir));
         config.update(props);
         createdConfigs.add(config);
 
-        assertTrue(aware.isEmpty());
+        // The folder must be under watch, and its initial scan done, *before* the .eorm
+        // is added -- otherwise the scan picks the file up and the deferred start this
+        // test is about is never exercised. That is what used to happen here: the
+        // assertion below passed because the watcher had not looked yet, and the pipeline
+        // then started from the initial scan rather than from the file event.
+        assertTrue(aware.isEmpty(), "Nothing to start the pipeline yet");
+        Thread.sleep(3_000);
+        assertTrue(aware.isEmpty(), "An empty mapping folder must not start a pipeline");
 
         Path file = tempDir.resolve("mapping").resolve("unit.eorm");
         Files.writeString(file, EORM_WATCHER_TEST);
         createdFiles.add(file);
 
-        assertNotNull(aware.waitForService(15_000));
-        
-       
+        assertNotNull(aware.waitForService(15_000),
+                "Adding a mapping to a watched folder must start its pipeline");
+    }
+
+    private static String tempAbsolutePath(Path tempDir) {
+        return tempDir.toAbsolutePath() + "/";
     }
 
     @Test

@@ -51,14 +51,18 @@ import org.osgi.service.component.annotations.Reference;
  * deleted on {@link #deactivate}.
  *
  * <p>The unit name is read from the {@code name} attribute of the
- * {@code .jpamapping} file found in the watched folder. If no such file is
+ * {@code .eorm} file found in {@code <basePath>/mapping}. If no such file is
  * present when the folder is first registered, the pipeline is not started;
- * it will be started automatically when a {@code .jpamapping} file is
- * subsequently added to the folder.
+ * it will be started automatically when an {@code .eorm} file is
+ * subsequently added to that folder.
  */
 @RequireConfigurationAdmin
 @Component(name = WatcherConstants.PID_DATA_FOLDER_WATCHER, configurationPolicy = ConfigurationPolicy.REQUIRE)
-@FileSystemWatcherListenerProperties(recursive = false)
+// Recursive: the mapping this watcher waits for lives in the <basePath>/mapping
+// subfolder, and a non-recursive watch only reports entries directly inside the
+// watched folder — so the deferred start below could never be triggered by a file
+// event, only by the initial scan happening to run late.
+@FileSystemWatcherListenerProperties(recursive = true)
 public class DataFolderWatcher implements FileSystemWatcherListener {
 
     private static final Logger LOG = System.getLogger(DataFolderWatcher.class.getName());
