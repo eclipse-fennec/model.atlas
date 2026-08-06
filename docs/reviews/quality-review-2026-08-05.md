@@ -66,7 +66,8 @@ Resolved 36 · Partial 8 · Still open 78 (details per finding; fresh evidence f
 | F58 | ➖ n/a | Base64 objectId encoding removed from REST — but the same default-charset pattern now lives in workflow (new F133) |
 | F59 | still open | 204-with-entity ×6 |
 | F60 | ✅ resolved | unknown scope now 400 via ModelAtlasRequestFilter:123-129 |
-| F61–F63, F66, F67, F69, F70 | still open | debug endpoints, /schema substring, iterator().next(), ResourceAttacherHelper javadoc, validation dup/srp — unchanged |
+| F61–F63, F67, F69, F70 | still open | debug endpoints, /schema substring, iterator().next(), validation dup/srp — unchanged |
+| F66 | ✅ fixed 2026-08-06 | `ResourceAttacherHelper` documented (contract, what it deliberately does not do, how long the attachment lasts) while fixing F35 |
 | F65 | ✅ fixed 2026-08-05 | UML + JSON-schema writers now set Content-Disposition like their ecore/XSD siblings |
 | F64 | ✅ resolved | copy-serialize in try/finally (jsonschema got the same treatment) |
 | F68 | ✅ resolved | format strings fixed |
