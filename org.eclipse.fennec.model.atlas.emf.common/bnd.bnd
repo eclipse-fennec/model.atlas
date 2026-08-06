@@ -1,2 +1,3 @@
 -library: enableEMF
 -workingset: atlas
+-testpath: junit-jupiter-api
