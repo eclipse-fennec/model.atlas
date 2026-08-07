@@ -53,7 +53,10 @@ Four separate things are being decided here:
 | stage | `ReadableScopeService.get()`, which is by contract the **final**-stage read | a config in `draft` cannot be run |
 | target EPackages | whichever `ResourceSet` service SCR bound | not the caller's, possibly not even the caller's scope |
 
-That last row is worth its own note. `SchemaRegistryChainConfigurator` creates one
+That last row is worth its own note — and it is **already on the books as info F112**
+("untargeted static `@Reference ResourceSet` binds whichever service ranks highest; siblings use
+`@Context ResourceSet`"), filed 2026-07-24. It is repeated here because the stage decision below
+determines how it gets fixed, not because it is new. `SchemaRegistryChainConfigurator` creates one
 `ResourceSetFactory` configuration **per (scope, stage) pair**
 (`SchemaRegistryChainConfigurator.java:231-240`, properties `scope.name` / `stage.name`), so the
 runtime holds many `ResourceSet` services. `DataGenResource`'s `@Reference ResourceSet` has no
@@ -289,7 +292,12 @@ endpoints will explain the same URL segment differently.
 - **#156** — the flat-nsURI audit. `resolvePackages` looking an nsURI up in a single
   `ResourceSet`'s package registry is precisely the flat-nsURI consumer pattern that audit
   described; whichever option is chosen should make this lookup scope-aware.
-- Leftovers in `DataGenResource` regardless of the decision: an unknown scope NPEs into a 500
-  (should be 404); a missing object answers **204 with no body** where the rest of the API answers
-  404; and both endpoints catch bare `Exception` and return the exception message as the entity
-  (the same pattern F30/F31 removed elsewhere).
+- **F112** (info) — the untargeted `@Reference ResourceSet`. Fixed as a side effect by the
+  recommended stage option; fixable on its own with a target filter if the decision goes elsewhere.
+- **F75** (minor) — a missing object answers **204 with no body** where the rest of the API answers
+  404. **F76** (minor) — `resolvePackages` checks for `#` and then skips three characters assuming
+  `#//`. Both live in the code any of these options rewrite, so they are worth folding into
+  whichever change lands.
+- Leftover not yet filed: an unknown scope NPEs into a 500 (should be 404), and both endpoints
+  catch bare `Exception` and return the exception message as the entity — the pattern F30/F31
+  removed elsewhere.
