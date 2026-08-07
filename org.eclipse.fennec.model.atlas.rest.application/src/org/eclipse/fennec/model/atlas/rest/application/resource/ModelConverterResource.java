@@ -15,7 +15,6 @@ package org.eclipse.fennec.model.atlas.rest.application.resource;
 
 import org.eclipse.emf.ecore.EPackage;
 import org.eclipse.fennec.model.atlas.rest.application.exception.EndpointFailures;
-import org.eclipse.fennec.model.atlas.rest.common.ModelAtlasRestConstants;
 import org.eclipse.fennec.model.atlas.runtime.RequireRuntime;
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.ServiceScope;
@@ -54,9 +53,6 @@ import org.eclipse.fennec.codec.rest.annotations.ResourceOption;
 public class ModelConverterResource {
 
     @Context
-    private HttpHeaders headers;
-    
-    @Context
     private ContainerRequestContext requestContext;
 
     @POST
@@ -71,7 +67,7 @@ public class ModelConverterResource {
             @RequestBody(description = "The schema package content", required = true, content = @Content(schema = @Schema(implementation = EPackage.class))) EPackage ePackage) {
 
         try {
-            return Response.status(Response.Status.OK).entity(ePackage).header("Content-Type", getResolvedMediaType()).build();
+            return Response.status(Response.Status.OK).entity(ePackage).header("Content-Type", ResourceSupport.resolvedMediaType(requestContext)).build();
             
     	} catch (WebApplicationException e) {
 			// WebApplicationException already has the correct status code, rethrow it
@@ -79,11 +75,5 @@ public class ModelConverterResource {
         } catch (Exception e) {
             throw EndpointFailures.propagate(e);
         }
-    }
-
-
-    
-    private String getResolvedMediaType() {
-        return (String) requestContext.getProperty(ModelAtlasRestConstants.RESOLVED_MEDIA_TYPE);
     }
 }

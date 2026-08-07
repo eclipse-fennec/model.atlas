@@ -232,6 +232,7 @@ public class ObjectRegistryResourceTest extends AbstractRestTest{
 				.queryParam("objectId", "non-existent-object").request("application/json").get();
 
 		assertEquals(204, response.getStatus(), "Should return HTTP 204 No Content");
+		assertFalse(response.hasEntity(), "A 204 must not carry a body");
 	}
 
 	// ========== Create Object Tests ==========
@@ -381,6 +382,7 @@ public class ObjectRegistryResourceTest extends AbstractRestTest{
 				.queryParam("objectId", "non-existent-object").request("application/json").get();
 
 		assertEquals(204, response.getStatus(), "Should return HTTP 204 No Content");
+		assertFalse(response.hasEntity(), "A 204 must not carry a body");
 	}
 
 	// ========== Get Object Content From Final Stage Tests (P5-0) ==========
@@ -407,6 +409,7 @@ public class ObjectRegistryResourceTest extends AbstractRestTest{
 				.queryParam("objectId", "non-existent-object").request("application/json").get();
 
 		assertEquals(204, response.getStatus(), "Should return HTTP 204 No Content when object not in final stage");
+		assertFalse(response.hasEntity(), "A 204 must not carry a body");
 	}
 
 	@Test
@@ -532,6 +535,7 @@ public class ObjectRegistryResourceTest extends AbstractRestTest{
 				.put(Entity.entity(xmiContent, "application/xmi"));
 
 		assertEquals(204, response.getStatus(), "Should return HTTP 204 No Content when object not found");
+		assertFalse(response.hasEntity(), "A 204 must not carry a body");
 	}
 
 	// ========== Delete Object Tests ==========
@@ -626,6 +630,7 @@ public class ObjectRegistryResourceTest extends AbstractRestTest{
 				.request("application/xmi").post(Entity.entity(xmiContent, "application/xmi"));
 
 		assertEquals(204, response.getStatus(), "Should return HTTP 204 No Content");
+		assertFalse(response.hasEntity(), "A 204 must not carry a body");
 	}
 
 	// ========== List Objects By Name Tests ==========

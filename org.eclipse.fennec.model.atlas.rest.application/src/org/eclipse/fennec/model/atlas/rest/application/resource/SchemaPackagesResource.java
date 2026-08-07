@@ -37,7 +37,6 @@ import org.eclipse.fennec.model.atlas.mgmt.management.ManagementFactory;
 import org.eclipse.fennec.model.atlas.mgmt.management.ObjectMetadata;
 import org.eclipse.fennec.model.atlas.mgmt.management.ObjectMetadataContainer;
 import org.eclipse.fennec.model.atlas.mgmt.storage.AbstractEObjectStorageService;
-import org.eclipse.fennec.model.atlas.rest.common.ModelAtlasRestConstants;
 import org.eclipse.fennec.model.atlas.rest.model.StageTransitionRequest;
 import org.eclipse.fennec.model.atlas.runtime.RequireRuntime;
 import org.eclipse.fennec.model.atlas.wf.workflowapi.Scope;
@@ -46,7 +45,6 @@ import org.eclipse.fennec.model.atlas.rest.application.filter.ObjectMetadataResp
 import org.eclipse.fennec.model.atlas.wf.workflowapi.ScopeService;
 import org.eclipse.fennec.model.atlas.workflow.ScopeServiceCollector;
 import org.eclipse.fennec.model.atlas.workflow.WorkflowConstants;
-import org.osgi.framework.Version;
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
 import org.osgi.service.component.annotations.ServiceScope;
@@ -153,7 +151,7 @@ public class SchemaPackagesResource {
                 return Response.status(Response.Status.NO_CONTENT).build();
             ObjectMetadataContainer container = mgmtFactory.createObjectMetadataContainer();
             container.getMetadata().addAll(objectsMetadata);
-            return Response.status(Response.Status.OK).entity(container).header("Content-Type", getResolvedMediaType()).build();
+            return Response.status(Response.Status.OK).entity(container).header("Content-Type", ResourceSupport.resolvedMediaType(requestContext)).build();
         } catch (IllegalArgumentException e) {
             return Response.status(Response.Status.BAD_REQUEST).entity(e.getMessage()).build();
         } catch (Exception e) {
@@ -198,14 +196,14 @@ public class SchemaPackagesResource {
                 ObjectMetadataResponseFilter.attach(requestContext, metadata,
                         ObjectMetadataResponseFilter.CacheTarget.METADATA);
                 return Response.status(Response.Status.OK).entity(metadata)
-                        .header("Content-Type", getResolvedMediaType()).build();
+                        .header("Content-Type", ResourceSupport.resolvedMediaType(requestContext)).build();
             }
             List<ObjectMetadata> objectsMetadata = scopeService.listInFinalStageForRegistry(REGISTRY_NAME);
             if (objectsMetadata.isEmpty())
                 return Response.status(Response.Status.NO_CONTENT).build();
             ObjectMetadataContainer container = mgmtFactory.createObjectMetadataContainer();
             container.getMetadata().addAll(objectsMetadata);
-            return Response.status(Response.Status.OK).entity(container).header("Content-Type", getResolvedMediaType()).build();
+            return Response.status(Response.Status.OK).entity(container).header("Content-Type", ResourceSupport.resolvedMediaType(requestContext)).build();
         } catch (IllegalArgumentException e) {
             return Response.status(Response.Status.BAD_REQUEST).entity(e.getMessage()).build();
         } catch (Exception e) {
@@ -253,7 +251,7 @@ public class SchemaPackagesResource {
                     return Response.status(Response.Status.NO_CONTENT).build();
                 } else {
                     Response.ResponseBuilder rb = Response.status(Response.Status.OK).entity(metadata)
-                            .header("Content-Type", getResolvedMediaType());
+                            .header("Content-Type", ResourceSupport.resolvedMediaType(requestContext));
                     ObjectMetadataResponseFilter.attach(requestContext, metadata,
                             ObjectMetadataResponseFilter.CacheTarget.METADATA);
                     return rb.build();
@@ -266,7 +264,7 @@ public class SchemaPackagesResource {
                 }
                 ObjectMetadataContainer container = mgmtFactory.createObjectMetadataContainer();
                 container.getMetadata().addAll(objectsMetadata);
-                return Response.status(Response.Status.OK).entity(container).header("Content-Type", getResolvedMediaType()).build();
+                return Response.status(Response.Status.OK).entity(container).header("Content-Type", ResourceSupport.resolvedMediaType(requestContext)).build();
             } else {
                 List<ObjectMetadata> objectsMetadata = scopeService.listInStageForRegistry(REGISTRY_NAME, stageName);
                 if (objectsMetadata.isEmpty()) {
@@ -274,7 +272,7 @@ public class SchemaPackagesResource {
                 }
                 ObjectMetadataContainer container = mgmtFactory.createObjectMetadataContainer();
                 container.getMetadata().addAll(objectsMetadata);
-                return Response.status(Response.Status.OK).entity(container).header("Content-Type", getResolvedMediaType()).build();
+                return Response.status(Response.Status.OK).entity(container).header("Content-Type", ResourceSupport.resolvedMediaType(requestContext)).build();
             }
         } catch (IllegalArgumentException e) {
             return Response.status(Response.Status.BAD_REQUEST).entity(e.getMessage()).build();
@@ -324,7 +322,7 @@ public class SchemaPackagesResource {
 
         try {
             String validatedNsUri = validateAndResolveNsUri(nsUri, ePackage);
-            String resolvedVersion = resolveAndValidateVersion(version, validatedNsUri);
+            String resolvedVersion = NsUriVersions.resolveAndValidate(version, validatedNsUri);
             // Check uniqueness across visibility chain
             ObjectMetadata existingMetadata = findByNsUriInStage(scopeService, stageName, validatedNsUri);
             if (existingMetadata != null) {
@@ -341,7 +339,7 @@ public class SchemaPackagesResource {
                     }
                     // If-Match validation (optimistic locking via the content ETag — overwrite replaces
                     // the content of an existing package).
-                    Response preconditionResponse = checkIfMatch(existingMetadata,
+                    Response preconditionResponse = ResourceSupport.checkIfMatch(headers, existingMetadata,
                             ObjectMetadataResponseFilter.CacheTarget.CONTENT);
                     if (preconditionResponse != null) {
                         return preconditionResponse;
@@ -353,7 +351,7 @@ public class SchemaPackagesResource {
                     ePackageIndex.index(metadata, ePackage);
                     Response.ResponseBuilder rb = Response.status(Response.Status.OK)
                             .header("Location", packageLocation(scopeName, stageName, validatedNsUri))
-                            .entity(metadata).header("Content-Type", getResolvedMediaType());
+                            .entity(metadata).header("Content-Type", ResourceSupport.resolvedMediaType(requestContext));
                     ObjectMetadataResponseFilter.attach(requestContext, metadata,
                             ObjectMetadataResponseFilter.CacheTarget.METADATA);
                     return rb.build();
@@ -378,7 +376,7 @@ public class SchemaPackagesResource {
 
             Response.ResponseBuilder rb = Response.status(Response.Status.CREATED)
                     .header("Location", packageLocation(scopeName, stageName, validatedNsUri))
-                    .entity(metadata).header("Content-Type", getResolvedMediaType());
+                    .entity(metadata).header("Content-Type", ResourceSupport.resolvedMediaType(requestContext));
             ObjectMetadataResponseFilter.attach(requestContext, metadata,
                     ObjectMetadataResponseFilter.CacheTarget.METADATA);
             return rb.build();
@@ -430,7 +428,7 @@ public class SchemaPackagesResource {
                 return Response.status(Response.Status.NO_CONTENT).build();
             }
             Response.ResponseBuilder rb = Response.status(Response.Status.OK).entity(ePackage)
-                    .header("Content-Type", getResolvedMediaType());
+                    .header("Content-Type", ResourceSupport.resolvedMediaType(requestContext));
             if (contentMetadata != null) {
                 ObjectMetadataResponseFilter.attach(requestContext, contentMetadata);
                 return rb.build();
@@ -479,7 +477,7 @@ public class SchemaPackagesResource {
                 return Response.status(Response.Status.NO_CONTENT).build();
             }
             Response.ResponseBuilder rb = Response.status(Response.Status.OK).entity(ePackageContent.get())
-                    .header("Content-Type", getResolvedMediaType());
+                    .header("Content-Type", ResourceSupport.resolvedMediaType(requestContext));
             if (contentMetadata != null) {
                 ObjectMetadataResponseFilter.attach(requestContext, contentMetadata);
                 return rb.build();
@@ -529,7 +527,7 @@ public class SchemaPackagesResource {
         ScopeService<EObject> scopeService = (ScopeService<EObject>) getScopeServiceByScopeName(scopeName);
         try {
             String validatedNsUri = validateAndResolveNsUri(nsUri, ePackage);
-            String resolvedVersion = resolveAndValidateVersion(version, validatedNsUri);
+            String resolvedVersion = NsUriVersions.resolveAndValidate(version, validatedNsUri);
             ObjectMetadata existingMetadata = findByNsUriInStage(scopeService, stageName, validatedNsUri);
             if (existingMetadata == null) {
                 return Response.status(Response.Status.NO_CONTENT).build();
@@ -542,7 +540,7 @@ public class SchemaPackagesResource {
             }
 
             // If-Match validation (optimistic locking via ETag)
-            Response preconditionResponse = checkIfMatch(existingMetadata,
+            Response preconditionResponse = ResourceSupport.checkIfMatch(headers, existingMetadata,
                     ObjectMetadataResponseFilter.CacheTarget.CONTENT);
             if (preconditionResponse != null) {
                 return preconditionResponse;
@@ -552,7 +550,7 @@ public class SchemaPackagesResource {
             String newContentHash = AbstractEObjectStorageService.computeContentHash(ePackage);
             if (newContentHash != null && newContentHash.equals(existingMetadata.getContentHash())) {
                 Response.ResponseBuilder rb = Response.status(Response.Status.OK)
-                        .entity(existingMetadata).header("Content-Type", getResolvedMediaType());
+                        .entity(existingMetadata).header("Content-Type", ResourceSupport.resolvedMediaType(requestContext));
                 ObjectMetadataResponseFilter.attach(requestContext, existingMetadata,
                         ObjectMetadataResponseFilter.CacheTarget.METADATA);
                 return rb.build();
@@ -569,7 +567,7 @@ public class SchemaPackagesResource {
                     .getValue();
             ePackageIndex.index(metadata, ePackage);
             Response.ResponseBuilder rb = Response.status(Response.Status.OK)
-                    .entity(metadata).header("Content-Type", getResolvedMediaType());
+                    .entity(metadata).header("Content-Type", ResourceSupport.resolvedMediaType(requestContext));
             ObjectMetadataResponseFilter.attach(requestContext, metadata,
                     ObjectMetadataResponseFilter.CacheTarget.METADATA);
             return rb.build();
@@ -612,7 +610,7 @@ public class SchemaPackagesResource {
             }
 
             // If-Match validation (optimistic locking via ETag)
-            Response preconditionResponse = checkIfMatch(existingMetadata,
+            Response preconditionResponse = ResourceSupport.checkIfMatch(headers, existingMetadata,
                     ObjectMetadataResponseFilter.CacheTarget.CONTENT);
             if (preconditionResponse != null) {
                 return preconditionResponse;
@@ -671,7 +669,7 @@ public class SchemaPackagesResource {
                     ObjectMetadataResponseFilter.attach(requestContext, targetMetadata,
                             ObjectMetadataResponseFilter.CacheTarget.METADATA);
                     return Response.status(Response.Status.OK).entity(targetMetadata)
-                            .header("Content-Type", getResolvedMediaType()).build();
+                            .header("Content-Type", ResourceSupport.resolvedMediaType(requestContext)).build();
                 }
                 return Response.status(Response.Status.NO_CONTENT).build();
             }
@@ -682,7 +680,7 @@ public class SchemaPackagesResource {
             }
             // If-Match validation (optimistic locking via the metadata ETag — a transition changes
             // metadata, not content).
-            Response preconditionResponse = checkIfMatch(existingMetadata,
+            Response preconditionResponse = ResourceSupport.checkIfMatch(headers, existingMetadata,
                     ObjectMetadataResponseFilter.CacheTarget.METADATA);
             if (preconditionResponse != null) {
                 return preconditionResponse;
@@ -692,7 +690,7 @@ public class SchemaPackagesResource {
             reindexAfterTransition(scopeService, metadata, targetStage);
             ObjectMetadataResponseFilter.attach(requestContext, metadata,
                     ObjectMetadataResponseFilter.CacheTarget.METADATA);
-            return Response.status(Response.Status.OK).entity(metadata).header("Content-Type", getResolvedMediaType()).build();
+            return Response.status(Response.Status.OK).entity(metadata).header("Content-Type", ResourceSupport.resolvedMediaType(requestContext)).build();
         } catch (IllegalArgumentException e) {
             return Response.status(Response.Status.BAD_REQUEST).entity(e.getMessage()).build();
         } catch (Exception e) {
@@ -786,14 +784,7 @@ public class SchemaPackagesResource {
         // 4. Retrieve ObjectMetadata for each hit using scope/stage from the index
         List<ObjectMetadata> metadataList = resolveMetadata(result.hits(), scopeName);
 
-        // 5. Mark results from parent scopes as read-only
-        for (ObjectMetadata metadata : metadataList) {
-            if (!scopeName.equals(metadata.getScope())) {
-                metadata.setIsReadOnly(true);
-            }
-        }
-
-        // 6. Build response
+        // 5. Build response
         ObjectMetadataContainer container = mgmtFactory.createObjectMetadataContainer();
         container.getMetadata().addAll(metadataList);
         return Response.ok(container)
@@ -836,38 +827,6 @@ public class SchemaPackagesResource {
         return chain;
     }
     
-
-    private String getResolvedMediaType() {
-        return (String) requestContext.getProperty(ModelAtlasRestConstants.RESOLVED_MEDIA_TYPE);
-    }
-
-    /**
-     * Checks the {@code If-Match} header for an optimistic-concurrency precondition against the current
-     * state of {@code metadata}, using the same validator the response filter emits as the ETag.
-     * Returns a {@code 412 Precondition Failed} response if the precondition is not satisfied, or
-     * {@code null} if it is satisfied, if no {@code If-Match} header was sent, or if there is no
-     * validator to compare against.
-     *
-     * @param metadata the current metadata of the object being written
-     * @param target   which validator to check against: {@link ObjectMetadataResponseFilter.CacheTarget#CONTENT}
-     *                 for writes that replace the content, {@link ObjectMetadataResponseFilter.CacheTarget#METADATA}
-     *                 for writes that only change metadata (e.g. a stage transition)
-     */
-    private Response checkIfMatch(ObjectMetadata metadata, ObjectMetadataResponseFilter.CacheTarget target) {
-        String ifMatch = headers.getHeaderString("If-Match");
-        if (ifMatch == null) {
-            return null;
-        }
-        String base = ObjectMetadataResponseFilter.baseValidator(metadata, target);
-        if (base == null) {
-            return null;
-        }
-        if (!ObjectMetadataResponseFilter.ifMatchSatisfied(ifMatch, base)) {
-            return Response.status(Response.Status.PRECONDITION_FAILED)
-                    .entity("Resource has been modified. ETag mismatch.").build();
-        }
-        return null;
-    }
 
     private ScopeService<?> getScopeServiceByScopeName(String scopeName) {
         ScopeService<?> scopeService = scopeCollector.getScopeServiceByScopeName(scopeName);
@@ -954,125 +913,4 @@ public class SchemaPackagesResource {
         return nsUri;
     }
 
-    /**
-     * Extracts an OSGi version from a URI by parsing each segment. Returns the last
-     * valid version found in the URI segments.
-     *
-     * @param nsUri the namespace URI to parse
-     * @return the extracted Version, or null if no valid version found
-     */
-    private Version extractVersionFromUri(String nsUri) {
-        if (nsUri == null || nsUri.isBlank()) {
-            return null;
-        }
-
-        try {
-            URI uri = URI.createURI(nsUri);
-            Version lastValidVersion = null;
-
-            // Parse each segment of the URI
-            for (String segment : uri.segments()) {
-                try {
-                    Version version = Version.parseVersion(segment);
-                    // Keep track of the last valid version found
-                    lastValidVersion = version;
-                } catch (IllegalArgumentException e) {
-                    // This segment is not a valid version, continue
-                }
-            }
-
-            // Also try parsing the authority and path components
-            if (uri.hasAuthority()) {
-                String authority = uri.authority();
-                if (authority != null) {
-                    String[] parts = authority.split("[/.]");
-                    for (String part : parts) {
-                        try {
-                            Version version = Version.parseVersion(part);
-                            lastValidVersion = version;
-                        } catch (IllegalArgumentException e) {
-                            // Not a version, continue
-                        }
-                    }
-                }
-            }
-
-            return lastValidVersion;
-        } catch (Exception e) {
-            // If URI parsing fails, return null
-            return null;
-        }
-    }
-
-    /**
-     * Validates that two versions are compatible according to semantic versioning
-     * rules. Compatible means they have the same major version, and the URI version
-     * is not lower than the parameter version.
-     *
-     * @param paramVersion the version from the parameter
-     * @param uriVersion   the version extracted from the URI
-     * @return true if compatible, false otherwise
-     */
-    private boolean areVersionsCompatible(Version paramVersion, Version uriVersion) {
-        if (paramVersion == null || uriVersion == null) {
-            return false;
-        }
-
-        // Major versions must match for semantic compatibility
-        if (paramVersion.getMajor() != uriVersion.getMajor()) {
-            return false;
-        }
-
-        // Compare minor and micro versions
-        int minorCompare = Integer.compare(uriVersion.getMinor(), paramVersion.getMinor());
-        if (minorCompare < 0) {
-            return false; // URI version has lower minor
-        }
-        if (minorCompare > 0) {
-            return true; // URI version has higher minor, compatible
-        }
-
-        // Minor versions are equal, check micro
-        int microCompare = Integer.compare(uriVersion.getMicro(), paramVersion.getMicro());
-        return microCompare >= 0; // URI version micro must be >= param version micro
-    }
-
-    /**
-     * Resolves and validates the version parameter. If no version parameter is
-     * given, extracts version from the URI. If both are present, validates
-     * compatibility.
-     *
-     * @param versionParam the version parameter (may be null)
-     * @param nsUri        the namespace URI
-     * @return the resolved version string, or null if no version found
-     * @throws WebApplicationException if version validation fails
-     */
-    private String resolveAndValidateVersion(String versionParam, String nsUri) {
-        Version uriVersion = extractVersionFromUri(nsUri);
-
-        if (versionParam == null || versionParam.isBlank()) {
-            // No parameter provided, use the version from URI if available
-            return uriVersion != null ? uriVersion.toString() : null;
-        }
-
-        // Parameter provided, validate it
-        Version paramVersion;
-        try {
-            paramVersion = Version.parseVersion(versionParam);
-        } catch (IllegalArgumentException e) {
-            throw new WebApplicationException(Response.status(Status.BAD_REQUEST)
-                    .entity(String.format("Invalid version parameter: '%s'", versionParam)).build());
-        }
-
-        // If URI has a version, check compatibility
-        if (uriVersion != null) {
-            if (!areVersionsCompatible(paramVersion, uriVersion)) {
-                throw new WebApplicationException(Response.status(Status.BAD_REQUEST).entity(String.format(
-                        "Version parameter '%s' is not compatible with URI version '%s' (semantic versioning rules)",
-                        versionParam, uriVersion.toString())).build());
-            }
-        }
-
-        return versionParam;
-    }
 }
