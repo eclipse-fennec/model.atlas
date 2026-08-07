@@ -33,6 +33,7 @@ import org.eclipse.emf.ecore.EcoreFactory;
 import org.eclipse.emf.ecore.EcorePackage;
 import org.eclipse.fennec.model.atlas.datagen.model.datagen.AttributeGenConfig;
 import org.eclipse.fennec.model.atlas.datagen.model.datagen.ClassGenConfig;
+import org.eclipse.fennec.model.atlas.datagen.model.datagen.CustomGeneratorDef;
 import org.eclipse.fennec.model.atlas.datagen.model.datagen.DataGenConfig;
 import org.eclipse.fennec.model.atlas.datagen.model.datagen.DatagenFactory;
 import org.eclipse.fennec.model.atlas.datagen.model.datagen.ReferenceGenConfig;
@@ -476,7 +477,90 @@ class DataGenServiceTest {
 		assertEquals(addresses.get(3), p1Addrs.get(1));
 	}
 
+	@Test
+	void testCustomGeneratorResolvesGeneratorKey() {
+		DataGenConfig config = configWithGeneratorKey("firstName", "custom.saluted");
+		config.getCustomGenerators().add(customGenerator("custom.saluted", "Dr. #{Name.first_name}"));
+
+		Map<String, List<EObject>> result = service.generate(config, List.of(testPackage));
+
+		String value = (String) result.get(PERSON_URI).get(0).eGet(personClass.getEStructuralFeature("firstName"));
+		assertTrue(value.startsWith("Dr. "),
+				"The custom generator's expression should have been evaluated: " + value);
+	}
+
+	@Test
+	void testCustomGeneratorOverridesBuiltInKey() {
+		DataGenConfig config = configWithGeneratorKey("firstName", "faker.person.firstName");
+		config.getCustomGenerators().add(customGenerator("faker.person.firstName", "Anonymous"));
+
+		Map<String, List<EObject>> result = service.generate(config, List.of(testPackage));
+
+		String value = (String) result.get(PERSON_URI).get(0).eGet(personClass.getEStructuralFeature("firstName"));
+		assertEquals("Anonymous", value, "A custom generator should win over the built-in mapping");
+	}
+
+	@Test
+	void testCustomGeneratorInTemplate() {
+		DataGenConfig config = configWithGeneratorKey("firstName", null);
+		config.getClassConfigs().get(0).getAttributeGens().get(0).setTemplate("#{custom.city}, #{Name.first_name}");
+		config.getCustomGenerators().add(customGenerator("custom.city", "Fulda"));
+
+		Map<String, List<EObject>> result = service.generate(config, List.of(testPackage));
+
+		String value = (String) result.get(PERSON_URI).get(0).eGet(personClass.getEStructuralFeature("firstName"));
+		assertTrue(value.startsWith("Fulda, "),
+				"A template placeholder should resolve against the custom generators: " + value);
+	}
+
+	@Test
+	void testCustomGeneratorWithoutKeyThrows() {
+		DataGenConfig config = configWithGeneratorKey("firstName", "faker.person.firstName");
+		config.getCustomGenerators().add(customGenerator(null, "#{Name.first_name}"));
+
+		assertThrows(IllegalArgumentException.class, () -> service.generate(config, List.of(testPackage)));
+	}
+
+	@Test
+	void testCustomGeneratorWithoutExpressionThrows() {
+		DataGenConfig config = configWithGeneratorKey("firstName", "faker.person.firstName");
+		config.getCustomGenerators().add(customGenerator("custom.broken", "  "));
+
+		assertThrows(IllegalArgumentException.class, () -> service.generate(config, List.of(testPackage)));
+	}
+
 	// --- Helper methods ---
+
+	/**
+	 * A one-Person config whose {@code firstName} is driven by the given
+	 * generatorKey ({@code null} leaves the key unset).
+	 */
+	private DataGenConfig configWithGeneratorKey(String featureName, String generatorKey) {
+		DataGenConfig config = DatagenFactory.eINSTANCE.createDataGenConfig();
+		config.setName("custom-generator-test");
+		config.setLocale("en");
+		config.setSeed(42);
+
+		ClassGenConfig classConfig = DatagenFactory.eINSTANCE.createClassGenConfig();
+		classConfig.setContextClass(PERSON_URI);
+		classConfig.setInstanceCount(1);
+
+		AttributeGenConfig attrConfig = DatagenFactory.eINSTANCE.createAttributeGenConfig();
+		attrConfig.setFeatureName(featureName);
+		attrConfig.setGeneratorKey(generatorKey);
+		classConfig.getAttributeGens().add(attrConfig);
+
+		config.getClassConfigs().add(classConfig);
+		return config;
+	}
+
+	private CustomGeneratorDef customGenerator(String key, String expression) {
+		CustomGeneratorDef def = DatagenFactory.eINSTANCE.createCustomGeneratorDef();
+		def.setKey(key);
+		def.setLabel(key);
+		def.setExpression(expression);
+		return def;
+	}
 
 	private DataGenConfig createSimpleConfig() {
 		DataGenConfig config = DatagenFactory.eINSTANCE.createDataGenConfig();

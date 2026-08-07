@@ -18,6 +18,7 @@ import org.eclipse.fennec.model.atlas.datagen.DataGenService;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -36,6 +37,7 @@ import org.eclipse.emf.ecore.EStructuralFeature;
 import org.eclipse.emf.ecore.util.EcoreUtil;
 import org.eclipse.fennec.model.atlas.datagen.model.datagen.AttributeGenConfig;
 import org.eclipse.fennec.model.atlas.datagen.model.datagen.ClassGenConfig;
+import org.eclipse.fennec.model.atlas.datagen.model.datagen.CustomGeneratorDef;
 import org.eclipse.fennec.model.atlas.datagen.model.datagen.DataGenConfig;
 import org.eclipse.fennec.model.atlas.datagen.model.datagen.ReferenceGenConfig;
 import org.eclipse.fennec.model.atlas.datagen.model.datagen.ReferenceStrategy;
@@ -65,6 +67,8 @@ public class DataGenServiceImpl implements DataGenService {
 		Random random = config.getSeed() != 0 ? new Random(config.getSeed()) : new Random();
 		Faker faker = new Faker(locale, random);
 
+		GeneratorContext context = new GeneratorContext(faker, collectCustomGenerators(config));
+
 		Map<String, EClass> classLookup = buildClassLookup(targetPackages);
 		Map<String, List<EObject>> result = new HashMap<>();
 
@@ -85,7 +89,7 @@ public class DataGenServiceImpl implements DataGenService {
 
 			for (int i = 0; i < classConfig.getInstanceCount(); i++) {
 				EObject instance = ePackage.getEFactoryInstance().create(eClass);
-				fillAttributes(instance, eClass, classConfig, faker, i, uniqueValues);
+				fillAttributes(instance, eClass, classConfig, context, i, uniqueValues);
 				instances.add(instance);
 			}
 			result.put(className, instances);
@@ -121,8 +125,32 @@ public class DataGenServiceImpl implements DataGenService {
 		return flat;
 	}
 
+	/**
+	 * Collects the config's custom generator definitions into a key -&gt; expression
+	 * lookup. Definitions are applied in declaration order, so a later entry
+	 * replaces an earlier one for the same key.
+	 *
+	 * @throws IllegalArgumentException if a definition has no key or no expression
+	 */
+	private static Map<String, String> collectCustomGenerators(DataGenConfig config) {
+		Map<String, String> generators = new LinkedHashMap<>();
+		for (CustomGeneratorDef def : config.getCustomGenerators()) {
+			String key = def.getKey();
+			if (key == null || key.isBlank()) {
+				throw new IllegalArgumentException("Custom generator without a key: "
+						+ "every customGenerator needs the key it is referenced by");
+			}
+			String expression = def.getExpression();
+			if (expression == null || expression.isBlank()) {
+				throw new IllegalArgumentException("Custom generator '" + key + "' has no expression");
+			}
+			generators.put(key, expression);
+		}
+		return generators;
+	}
+
 	private void fillAttributes(EObject instance, EClass eClass, ClassGenConfig classConfig,
-			Faker faker, int index, Map<String, Set<String>> uniqueValues) {
+			GeneratorContext context, int index, Map<String, Set<String>> uniqueValues) {
 		for (AttributeGenConfig attrConfig : classConfig.getAttributeGens()) {
 			EStructuralFeature feature = eClass.getEStructuralFeature(attrConfig.getFeatureName());
 			if (!(feature instanceof EAttribute eAttr)) {
@@ -131,7 +159,7 @@ public class DataGenServiceImpl implements DataGenService {
 			Set<String> usedForFeature = attrConfig.isUnique()
 					? uniqueValues.computeIfAbsent(attrConfig.getFeatureName(), k -> new HashSet<>())
 					: null;
-			Object value = generateAttributeValue(eAttr, attrConfig, eClass, faker, index, usedForFeature);
+			Object value = generateAttributeValue(eAttr, attrConfig, eClass, context, index, usedForFeature);
 			if (value != null) {
 				instance.eSet(eAttr, value);
 			}
@@ -139,7 +167,7 @@ public class DataGenServiceImpl implements DataGenService {
 	}
 
 	private Object generateAttributeValue(EAttribute eAttr, AttributeGenConfig attrConfig,
-			EClass eClass, Faker faker, int index, Set<String> usedForFeature) {
+			EClass eClass, GeneratorContext context, int index, Set<String> usedForFeature) {
 		// Static value takes precedence
 		if (attrConfig.getStaticValue() != null && !attrConfig.getStaticValue().isBlank()) {
 			return convertToType(attrConfig.getStaticValue(), eAttr.getEAttributeType());
@@ -147,16 +175,16 @@ public class DataGenServiceImpl implements DataGenService {
 
 		// Template with placeholders
 		if (attrConfig.getTemplate() != null && !attrConfig.getTemplate().isBlank()) {
-			String resolved = resolveTemplate(attrConfig.getTemplate(), faker);
+			String resolved = resolveTemplate(attrConfig.getTemplate(), context);
 			return convertToType(resolved, eAttr.getEAttributeType());
 		}
 
 		// Generator key -> Datafaker expression
-		String expression = resolveExpression(attrConfig, eAttr, eClass);
+		String expression = resolveExpression(attrConfig, eAttr, eClass, context);
 		int maxAttempts = attrConfig.isUnique() ? 1000 : 1;
 
 		for (int attempt = 0; attempt < maxAttempts; attempt++) {
-			String rawValue = faker.expression(expression);
+			String rawValue = context.faker().expression(expression);
 			if (usedForFeature == null || usedForFeature.add(rawValue)) {
 				return convertToType(rawValue, eAttr.getEAttributeType());
 			}
@@ -167,13 +195,16 @@ public class DataGenServiceImpl implements DataGenService {
 
 	/**
 	 * Resolves the Datafaker expression for an attribute config.
-	 * If a generatorKey is set, uses direct mapping. Otherwise falls back
-	 * to Lucene fuzzy search using the feature name and EClass context.
+	 * If a generatorKey is set, it is looked up in the config's own custom
+	 * generators first and then in the built-in mapping. Otherwise the method
+	 * falls back to Lucene fuzzy search using the feature name and EClass context.
 	 */
-	private String resolveExpression(AttributeGenConfig attrConfig, EAttribute eAttr, EClass eClass) {
+	private String resolveExpression(AttributeGenConfig attrConfig, EAttribute eAttr, EClass eClass,
+			GeneratorContext context) {
 		String generatorKey = attrConfig.getGeneratorKey();
 		if (generatorKey != null && !generatorKey.isBlank()) {
-			return GeneratorKeyMapper.toExpression(generatorKey);
+			String custom = context.customGenerators().get(generatorKey);
+			return custom != null ? custom : GeneratorKeyMapper.toExpression(generatorKey);
 		}
 		// No generatorKey set — try Lucene fuzzy match using feature name + EClass context
 		String fuzzyMatch = GeneratorKeyMapper.resolveByFeature(eAttr.getName(), eClass.getName());
@@ -186,10 +217,11 @@ public class DataGenServiceImpl implements DataGenService {
 
 	/**
 	 * Resolves a template string by replacing #{key} placeholders with Datafaker expressions.
-	 * Placeholders can be either generatorKeys (e.g. #{faker.person.firstName})
-	 * or direct Datafaker expressions (e.g. #{Name.first_name}).
+	 * Placeholders can be the key of one of the config's custom generators
+	 * (e.g. #{custom.fullAddress}), a generatorKey (e.g. #{faker.person.firstName})
+	 * or a direct Datafaker expression (e.g. #{Name.first_name}).
 	 */
-	String resolveTemplate(String template, Faker faker) {
+	String resolveTemplate(String template, GeneratorContext context) {
 		StringBuilder sb = new StringBuilder();
 		int pos = 0;
 		while (pos < template.length()) {
@@ -205,15 +237,18 @@ public class DataGenServiceImpl implements DataGenService {
 				break;
 			}
 			String key = template.substring(start + 2, end);
-			// If it looks like a generatorKey (starts with faker.), map it
+			// A custom generator wins, then a generatorKey (starts with faker.), else
+			// the key is already a Datafaker expression key
+			String custom = context.customGenerators().get(key);
 			String expression;
-			if (key.startsWith("faker.")) {
+			if (custom != null) {
+				expression = custom;
+			} else if (key.startsWith("faker.")) {
 				expression = GeneratorKeyMapper.toExpression(key);
 			} else {
-				// Already a Datafaker expression key
 				expression = "#{" + key + "}";
 			}
-			sb.append(faker.expression(expression));
+			sb.append(context.faker().expression(expression));
 			pos = end + 1;
 		}
 		return sb.toString();
@@ -315,6 +350,14 @@ public class DataGenServiceImpl implements DataGenService {
 			return null;
 		}
 		return EcoreUtil.createFromString(eDataType, value);
+	}
+
+	/**
+	 * The per-{@code generate} call state every attribute generation needs: the
+	 * seeded {@link Faker} and the config's own custom generators as a
+	 * key -&gt; Datafaker expression lookup.
+	 */
+	private record GeneratorContext(Faker faker, Map<String, String> customGenerators) {
 	}
 
 	private Map<String, EClass> buildClassLookup(List<EPackage> packages) {
