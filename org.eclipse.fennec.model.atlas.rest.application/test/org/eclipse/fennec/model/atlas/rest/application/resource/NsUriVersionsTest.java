@@ -60,6 +60,18 @@ class NsUriVersionsTest {
 	}
 
 	/**
+	 * Also current behaviour, not intent: the authority is parsed <em>after</em> the
+	 * segments and overwrites their result, so a numeric host outranks a genuine
+	 * version segment. See F134.
+	 */
+	@Test
+	void testANumericAuthorityOverridesTheVersionSegment() {
+		assertEquals(new Version("4.0.0"), NsUriVersions.extractVersion("http://10.2.3.4/model/5.0"),
+				"the last authority part wins over the 5.0 segment");
+		assertEquals(new Version("1.0.0"), NsUriVersions.extractVersion("http://192.168.0.1/model"));
+	}
+
+	/**
 	 * The consequence of the above: a caller who states the package's real version
 	 * is rejected, because the year outranks it. Also current behaviour, not intent.
 	 */
