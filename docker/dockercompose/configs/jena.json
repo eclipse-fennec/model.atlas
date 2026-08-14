@@ -169,8 +169,8 @@
                 "final": true
             }
         ],
-        "schema.uri": "https://fennec.eclipse.org/sensinact/core/mapping/1.0",
-        "root.eclass.uri": "https://fennec.eclipse.org/sensinact/core/mapping/1.0#//ProviderMapping",
+        "schema.uri": "https://fennec.eclipse.org/event.atlas/mapping/1.0",
+        "root.eclass.uri": "https://fennec.eclipse.org/event.atlas/mapping/1.0#//ProviderMapping",
         "resourceSet.target": "(emf.name=ecore)"
     }
 }

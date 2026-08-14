@@ -226,3 +226,7 @@ commons-codec:commons-codec:1.22.0
 org.bouncycastle:bcprov-jdk18on:1.84
 org.bouncycastle:bcpkix-jdk18on:1.84
 org.bouncycastle:bcutil-jdk18on:1.84
+
+org.eclipse.fennec.event.atlas:org.eclipse.fennec.event.atlas.mapping:1.0.0-SNAPSHOT
+
+
