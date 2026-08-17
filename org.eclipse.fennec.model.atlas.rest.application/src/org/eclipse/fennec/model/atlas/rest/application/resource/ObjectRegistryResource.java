@@ -19,14 +19,16 @@ import java.util.Optional;
 
 import org.eclipse.emf.ecore.EObject;
 import org.eclipse.emf.ecore.util.EcoreUtil;
+import org.eclipse.fennec.codec.constants.CodecOptions;
+import org.eclipse.fennec.codec.rest.annotations.ResourceOption;
 import org.eclipse.fennec.model.atlas.mgmt.management.ManagementFactory;
 import org.eclipse.fennec.model.atlas.mgmt.management.ObjectMetadata;
 import org.eclipse.fennec.model.atlas.mgmt.management.ObjectMetadataContainer;
 import org.eclipse.fennec.model.atlas.mgmt.storage.AbstractEObjectStorageService;
 import org.eclipse.fennec.model.atlas.mgmt.storage.ModelUnavailableException;
+import org.eclipse.fennec.model.atlas.rest.application.exception.EndpointFailures;
 import org.eclipse.fennec.model.atlas.rest.application.exception.ModelUnavailableExceptionMapper;
 import org.eclipse.fennec.model.atlas.rest.application.filter.ObjectMetadataResponseFilter;
-import org.eclipse.fennec.model.atlas.rest.common.ModelAtlasRestConstants;
 import org.eclipse.fennec.model.atlas.rest.model.StageTransitionRequest;
 import org.eclipse.fennec.model.atlas.runtime.RequireRuntime;
 import org.eclipse.fennec.model.atlas.wf.workflowapi.RegistryService;
@@ -113,6 +115,7 @@ public class ObjectRegistryResource {
             @ApiResponse(responseCode = "400", description = "Scope not available, registry not available for scope, stage not available for registry or not a valid stage"),
             @ApiResponse(responseCode = "204", description = "No object found in scope final stage, nor in the parent final stage"),
             @ApiResponse(responseCode = "500", description = "Internal server error") })
+    @ResourceOption(key = CodecOptions.CODEC_ID_KEY_MODE, value = "FEATURE_ONLY")
     public Response listAll(
             @Parameter(description = "The scope name", required = true) @PathParam("scopeName") String scopeName,
             @Parameter(description = "The registry name", required = true) @PathParam("registryName") String registryName) {
@@ -124,11 +127,11 @@ public class ObjectRegistryResource {
                 return Response.status(Response.Status.NO_CONTENT).build();
             ObjectMetadataContainer container = mgmtFactory.createObjectMetadataContainer();
             container.getMetadata().addAll(objectsMetadata);
-            return Response.status(Response.Status.OK).entity(container).header("Content-Type", getResolvedMediaType()).build();
+            return Response.status(Response.Status.OK).entity(container).header("Content-Type", ResourceSupport.resolvedMediaType(requestContext)).build();
         } catch (IllegalArgumentException e) {
             return Response.status(Response.Status.BAD_REQUEST).entity(e.getMessage()).build();
         } catch (Exception e) {
-            return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity(e.getMessage()).build();
+            throw EndpointFailures.propagate(e);
         }
     }
 
@@ -148,6 +151,7 @@ public class ObjectRegistryResource {
             @ApiResponse(responseCode = "400", description = "Scope not available, registry not available for scope, stage not available for registry or not a valid stage"),
             @ApiResponse(responseCode = "204", description = "No object found in scope final stage, nor in the parent final stage"),
             @ApiResponse(responseCode = "500", description = "Internal server error") })
+    @ResourceOption(key = CodecOptions.CODEC_ID_KEY_MODE, value = "FEATURE_ONLY")
     public Response listObjectsInFinalStage(
             @Parameter(description = "The scope name", required = true) @PathParam("scopeName") String scopeName,
             @Parameter(description = "The registry name", required = true) @PathParam("registryName") String registryName) {
@@ -159,11 +163,11 @@ public class ObjectRegistryResource {
                 return Response.status(Response.Status.NO_CONTENT).build();
             ObjectMetadataContainer container = mgmtFactory.createObjectMetadataContainer();
             container.getMetadata().addAll(objectsMetadata);
-            return Response.status(Response.Status.OK).entity(container).header("Content-Type", getResolvedMediaType()).build();
+            return Response.status(Response.Status.OK).entity(container).header("Content-Type", ResourceSupport.resolvedMediaType(requestContext)).build();
         } catch (IllegalArgumentException e) {
             return Response.status(Response.Status.BAD_REQUEST).entity(e.getMessage()).build();
         } catch (Exception e) {
-            return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity(e.getMessage()).build();
+            throw EndpointFailures.propagate(e);
         }
     }
 
@@ -187,6 +191,7 @@ public class ObjectRegistryResource {
                     @ApiResponse(responseCode = "204", description = "Stored object not found, or registry or stage not available for the scope"),
                     @ApiResponse(responseCode = "400", description = "Scope not available, registry not available for scope, stage not available for registry or not a valid stage"),
                     @ApiResponse(responseCode = "500", description = "Internal server error") })
+    @ResourceOption(key = CodecOptions.CODEC_ID_KEY_MODE, value = "FEATURE_ONLY")
     public Response listObjectsInRegistry(
             @Parameter(description = "The scope name", required = true) @PathParam("scopeName") String scopeName,
             @Parameter(description = "The registry name", required = true) @PathParam("registryName") String registryName,
@@ -200,12 +205,10 @@ public class ObjectRegistryResource {
                 ObjectMetadata metadata = scopeService.getMetadataFromStageForRegistry(registryName, stageName,
                         objectId);
                 if (metadata == null) {
-                    return Response.status(Response.Status.NO_CONTENT).entity(String.format(
-                            "Obejct %s not found neither scope '%s', registry '%s' and stage '%s' nor in parent hierarchy",
-                            objectId, scopeName, registryName, stageName)).build();
+                    return Response.status(Response.Status.NO_CONTENT).build();
                 } else {
                     Response.ResponseBuilder rb = Response.status(Response.Status.OK).entity(metadata)
-                            .header("Content-Type", getResolvedMediaType());
+                            .header("Content-Type", ResourceSupport.resolvedMediaType(requestContext));
                     ObjectMetadataResponseFilter.attach(requestContext, metadata,
                             ObjectMetadataResponseFilter.CacheTarget.METADATA);
                     return rb.build();
@@ -218,7 +221,7 @@ public class ObjectRegistryResource {
                 }
                 ObjectMetadataContainer container = mgmtFactory.createObjectMetadataContainer();
                 container.getMetadata().addAll(objectsMetadata);
-                return Response.status(Response.Status.OK).entity(container).header("Content-Type", getResolvedMediaType()).build();
+                return Response.status(Response.Status.OK).entity(container).header("Content-Type", ResourceSupport.resolvedMediaType(requestContext)).build();
             } else {
                 List<ObjectMetadata> objectsMetadata = scopeService.listInStageForRegistry(registryName, stageName);
                 if (objectsMetadata.isEmpty()) {
@@ -226,13 +229,13 @@ public class ObjectRegistryResource {
                 }
                 ObjectMetadataContainer container = mgmtFactory.createObjectMetadataContainer();
                 container.getMetadata().addAll(objectsMetadata);
-                return Response.status(Response.Status.OK).entity(container).header("Content-Type", getResolvedMediaType()).build();
+                return Response.status(Response.Status.OK).entity(container).header("Content-Type", ResourceSupport.resolvedMediaType(requestContext)).build();
             }
 
         } catch (IllegalArgumentException e) {
             return Response.status(Response.Status.BAD_REQUEST).entity(e.getMessage()).build();
         } catch (Exception e) {
-            return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity(e.getMessage()).build();
+            throw EndpointFailures.propagate(e);
         }
     }
 
@@ -262,6 +265,7 @@ public class ObjectRegistryResource {
                     @ApiResponse(responseCode = "409", description = "Object with same id already exists and override option not set to true"),
                     @ApiResponse(responseCode = "415", description = "Unsupported media type"),
                     @ApiResponse(responseCode = "500", description = "Internal server error") })
+    @ResourceOption(key = CodecOptions.CODEC_ID_KEY_MODE, value = "FEATURE_ONLY")
     public Response createObject(
             @Parameter(description = "The scope name", required = true) @PathParam("scopeName") String scopeName,
             @Parameter(description = "The registry name", required = true) @PathParam("registryName") String registryName,
@@ -306,7 +310,7 @@ public class ObjectRegistryResource {
                     }
                     // If-Match validation (optimistic locking via the content ETag — override replaces
                     // the content of an existing object).
-                    Response preconditionResponse = checkIfMatch(existingMetadata,
+                    Response preconditionResponse = ResourceSupport.checkIfMatch(headers, existingMetadata,
                             ObjectMetadataResponseFilter.CacheTarget.CONTENT);
                     if (preconditionResponse != null) {
                         return preconditionResponse;
@@ -317,7 +321,7 @@ public class ObjectRegistryResource {
                             .header("Location",
                                     "/".concat(scopeName).concat("/registries/").concat(registryName).concat("/stages/")
                                             .concat(stageName).concat("?objectId=").concat(objectId))
-                            .entity(metadata).header("Content-Type", getResolvedMediaType());
+                            .entity(metadata).header("Content-Type", ResourceSupport.resolvedMediaType(requestContext));
                     ObjectMetadataResponseFilter.attach(requestContext, metadata,
                             ObjectMetadataResponseFilter.CacheTarget.METADATA);
                     return rb.build();
@@ -338,7 +342,7 @@ public class ObjectRegistryResource {
                     .header("Location",
                             "/".concat(scopeName).concat("/registries/").concat(registryName).concat("/stages/")
                                     .concat(stageName).concat("?objectId=").concat(objectId))
-                    .entity(metadata).header("Content-Type", getResolvedMediaType());
+                    .entity(metadata).header("Content-Type", ResourceSupport.resolvedMediaType(requestContext));
             ObjectMetadataResponseFilter.attach(requestContext, metadata,
                     ObjectMetadataResponseFilter.CacheTarget.METADATA);
             return rb.build();
@@ -348,7 +352,7 @@ public class ObjectRegistryResource {
         } catch (IllegalArgumentException e) {
             return Response.status(Response.Status.BAD_REQUEST).entity(e.getMessage()).build();
         } catch (Exception e) {
-            return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity(e.getMessage()).build();
+            throw EndpointFailures.propagate(e);
         }
     }
 
@@ -371,6 +375,7 @@ public class ObjectRegistryResource {
                     @ApiResponse(responseCode = "400", description = "Scope not available, registry not available for scope, stage not available for registry or not a valid stage"),
                     @ApiResponse(responseCode = "406", description = "Requested format not supported"),
                     @ApiResponse(responseCode = "500", description = "Internal server error") })
+    @ResourceOption(key = CodecOptions.CODEC_ID_KEY_MODE, value = "FEATURE_ONLY")
     public Response getObjectContent(
             @Parameter(description = "The scope name", required = true) @PathParam("scopeName") String scopeName,
             @Parameter(description = "The registry name", required = true) @PathParam("registryName") String registryName,
@@ -382,12 +387,10 @@ public class ObjectRegistryResource {
             ObjectMetadata contentMetadata = scopeService.getMetadataFromStageForRegistry(registryName, stageName, objectId);
             EObject eObject = scopeService.getContentFromStageForRegistry(registryName, stageName, objectId);
             if (eObject == null) {
-                return Response.status(Response.Status.NO_CONTENT).entity(String.format(
-                        "Obejct %s not found neither scope '%s', registry '%s' and stage '%s' nor in parent hierarchy",
-                        objectId, scopeName, registryName, stageName)).build();
+                return Response.status(Response.Status.NO_CONTENT).build();
             }
             Response.ResponseBuilder rb = Response.status(Response.Status.OK).entity(eObject)
-                    .header("Content-Type", getResolvedMediaType());
+                    .header("Content-Type", ResourceSupport.resolvedMediaType(requestContext));
             if (contentMetadata != null) {
                 ObjectMetadataResponseFilter.attach(requestContext, contentMetadata);
                 return rb.build();
@@ -404,7 +407,7 @@ public class ObjectRegistryResource {
             if (mue != null) {
                 return ModelUnavailableExceptionMapper.conflict(mue);
             }
-            return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity(e.getMessage()).build();
+            throw EndpointFailures.propagate(e);
         }
     }
     
@@ -426,6 +429,7 @@ public class ObjectRegistryResource {
                     @ApiResponse(responseCode = "400", description = "Scope not available or registry not available for scope"),
                     @ApiResponse(responseCode = "406", description = "Requested format not supported"),
                     @ApiResponse(responseCode = "500", description = "Internal server error") })
+    @ResourceOption(key = CodecOptions.CODEC_ID_KEY_MODE, value = "FEATURE_ONLY")
     public Response getObjectContentFromFinalStage(
             @Parameter(description = "The scope name", required = true) @PathParam("scopeName") String scopeName,
             @Parameter(description = "The registry name", required = true) @PathParam("registryName") String registryName,
@@ -436,12 +440,10 @@ public class ObjectRegistryResource {
             ObjectMetadata contentMetadata = scopeService.getMetadataFromFinalStageForRegistry(registryName, objectId);
             Optional<?> optionalContent = scopeService.get(registryName, objectId);
             if (optionalContent.isEmpty()) {
-                return Response.status(Response.Status.NO_CONTENT).entity(String.format(
-                        "Obejct %s not found neither in (scope,registry)=('%s','%s') final stage nor in parent hierarchy",
-                        objectId, scopeName, registryName)).build();
+                return Response.status(Response.Status.NO_CONTENT).build();
             }
             Response.ResponseBuilder rb = Response.status(Response.Status.OK).entity(optionalContent.get())
-                    .header("Content-Type", getResolvedMediaType());
+                    .header("Content-Type", ResourceSupport.resolvedMediaType(requestContext));
             if (contentMetadata != null) {
                 ObjectMetadataResponseFilter.attach(requestContext, contentMetadata);
                 return rb.build();
@@ -458,7 +460,7 @@ public class ObjectRegistryResource {
             if (mue != null) {
                 return ModelUnavailableExceptionMapper.conflict(mue);
             }
-            return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity(e.getMessage()).build();
+            throw EndpointFailures.propagate(e);
         }
     }
 
@@ -484,6 +486,7 @@ public class ObjectRegistryResource {
                     @ApiResponse(responseCode = "403", description = "The requested object is read-only (e.g. if it is only available in a parent scope)"),
                     @ApiResponse(responseCode = "415", description = "Requested format not supported"),
                     @ApiResponse(responseCode = "500", description = "Internal server error") })
+    @ResourceOption(key = CodecOptions.CODEC_ID_KEY_MODE, value = "FEATURE_ONLY")
     public Response updateObjectContent(
             @Parameter(description = "The scope name", required = true) @PathParam("scopeName") String scopeName,
             @Parameter(description = "The registry name", required = true) @PathParam("registryName") String registryName,
@@ -513,9 +516,7 @@ public class ObjectRegistryResource {
             ObjectMetadata existingMetadata = scopeService.getMetadataFromStageForRegistry(registryName, stageName,
                     objectId);
             if (existingMetadata == null) {
-                return Response.status(Response.Status.NO_CONTENT).entity(String.format(
-                        "Obejct %s not found neither scope '%s', registry '%s' and stage '%s' nor in parent hierarchy",
-                        objectId, scopeName, registryName, stageName)).build();
+                return Response.status(Response.Status.NO_CONTENT).build();
             }
             // We might want to check if the metadata is read only (e.g. if it was retrieved
             // from a parent final stage
@@ -525,7 +526,7 @@ public class ObjectRegistryResource {
             }
 
             // If-Match validation (optimistic locking via ETag)
-            Response preconditionResponse = checkIfMatch(existingMetadata,
+            Response preconditionResponse = ResourceSupport.checkIfMatch(headers, existingMetadata,
                     ObjectMetadataResponseFilter.CacheTarget.CONTENT);
             if (preconditionResponse != null) {
                 return preconditionResponse;
@@ -535,7 +536,7 @@ public class ObjectRegistryResource {
             String newContentHash = AbstractEObjectStorageService.computeContentHash(eObject);
             if (newContentHash != null && newContentHash.equals(existingMetadata.getContentHash())) {
                 Response.ResponseBuilder rb = Response.status(Response.Status.OK)
-                        .entity(existingMetadata).header("Content-Type", getResolvedMediaType());
+                        .entity(existingMetadata).header("Content-Type", ResourceSupport.resolvedMediaType(requestContext));
                 ObjectMetadataResponseFilter.attach(requestContext, existingMetadata,
                         ObjectMetadataResponseFilter.CacheTarget.METADATA);
                 return rb.build();
@@ -544,7 +545,7 @@ public class ObjectRegistryResource {
             ObjectMetadata metadata = scopeService
                     .updateInStageForRegistry(registryName, stageName, eObject, objectId, version).getValue();
             Response.ResponseBuilder rb = Response.status(Response.Status.OK)
-                    .entity(metadata).header("Content-Type", getResolvedMediaType());
+                    .entity(metadata).header("Content-Type", ResourceSupport.resolvedMediaType(requestContext));
             ObjectMetadataResponseFilter.attach(requestContext, metadata,
                     ObjectMetadataResponseFilter.CacheTarget.METADATA);
             return rb.build();
@@ -552,7 +553,7 @@ public class ObjectRegistryResource {
         } catch (IllegalArgumentException e) {
             return Response.status(Response.Status.BAD_REQUEST).entity(e.getMessage()).build();
         } catch (Exception e) {
-            return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity(e.getMessage()).build();
+            throw EndpointFailures.propagate(e);
         }
     }
 
@@ -573,6 +574,7 @@ public class ObjectRegistryResource {
             @ApiResponse(responseCode = "400", description = "Scope not available, registry not available for scope, stage not available for registry or not a valid stage"),
             @ApiResponse(responseCode = "204", description = "Object not found"),
             @ApiResponse(responseCode = "500", description = "Internal server error") })
+    @ResourceOption(key = CodecOptions.CODEC_ID_KEY_MODE, value = "FEATURE_ONLY")
     public Response deleteObject(
             @Parameter(description = "The scope name", required = true) @PathParam("scopeName") String scopeName,
             @Parameter(description = "The registry name", required = true) @PathParam("registryName") String registryName,
@@ -584,9 +586,9 @@ public class ObjectRegistryResource {
             ObjectMetadata existingMetadata = scopeService.getMetadataFromStageForRegistry(registryName, stageName,
                     objectId);
             if (existingMetadata == null) {
-                return Response.status(Response.Status.NO_CONTENT).entity(String.format(
-                        "Obejct %s not found neither scope '%s', registry '%s' and stage '%s' nor in parent hierarchy",
-                        objectId, scopeName, registryName, stageName)).build();
+                // Nothing to delete. 204 without a body: a 204 carries no entity, and the
+                // status alone is now unambiguous because a delete that happened is 200.
+                return Response.noContent().build();
             }
             if (existingMetadata.isIsReadOnly()) {
                 return Response.status(Response.Status.FORBIDDEN)
@@ -594,7 +596,7 @@ public class ObjectRegistryResource {
             }
 
             // If-Match validation (optimistic locking via ETag)
-            Response preconditionResponse = checkIfMatch(existingMetadata,
+            Response preconditionResponse = ResourceSupport.checkIfMatch(headers, existingMetadata,
                     ObjectMetadataResponseFilter.CacheTarget.CONTENT);
             if (preconditionResponse != null) {
                 return preconditionResponse;
@@ -602,13 +604,16 @@ public class ObjectRegistryResource {
 
             boolean deleted = scopeService.deleteFromStageForRegistry(registryName, stageName, objectId).getValue();
             if (deleted)
-                return Response.noContent().build();
+                // 200, as this endpoint's @ApiResponse documents and as the sibling
+                // SchemaPackagesResource.deletePackage answers, so that success is
+                // distinguishable from the 204 above.
+                return Response.status(Response.Status.OK).build();
             return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
                     .entity(String.format("Object %s deletion failed but causes are unknown", objectId)).build();
         } catch (IllegalArgumentException e) {
             return Response.status(Response.Status.BAD_REQUEST).entity(e.getMessage()).build();
         } catch (Exception e) {
-            return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity(e.getMessage()).build();
+            throw EndpointFailures.propagate(e);
         }
     }
 
@@ -633,6 +638,7 @@ public class ObjectRegistryResource {
                     @ApiResponse(responseCode = "403", description = "Stage is read-only or Object is only present in a parent scope final stage and so it's read-only"),
                     @ApiResponse(responseCode = "204", description = "Object not found in source stage"),
                     @ApiResponse(responseCode = "500", description = "Internal server error") })
+    @ResourceOption(key = CodecOptions.CODEC_ID_KEY_MODE, value = "FEATURE_ONLY")
     public Response transitionObject(
             @Parameter(description = "The scope name", required = true) @PathParam("scopeName") String scopeName,
             @Parameter(description = "The registry name", required = true) @PathParam("registryName") String registryName,
@@ -653,11 +659,9 @@ public class ObjectRegistryResource {
                     ObjectMetadataResponseFilter.attach(requestContext, targetMetadata,
                             ObjectMetadataResponseFilter.CacheTarget.METADATA);
                     return Response.status(Response.Status.OK).entity(targetMetadata)
-                            .header("Content-Type", getResolvedMediaType()).build();
+                            .header("Content-Type", ResourceSupport.resolvedMediaType(requestContext)).build();
                 }
-                return Response.status(Response.Status.NO_CONTENT).entity(String.format(
-                        "Obejct %s not found neither scope '%s', registry '%s' and stage '%s' nor in parent hierarchy",
-                        objectId, scopeName, registryName, stageName)).build();
+                return Response.status(Response.Status.NO_CONTENT).build();
             }
             if (existingMetadata.isIsReadOnly()) {
                 return Response.status(Response.Status.FORBIDDEN)
@@ -665,7 +669,7 @@ public class ObjectRegistryResource {
             }
             // If-Match validation (optimistic locking via the metadata ETag — a transition changes
             // metadata, not content).
-            Response preconditionResponse = checkIfMatch(existingMetadata,
+            Response preconditionResponse = ResourceSupport.checkIfMatch(headers, existingMetadata,
                     ObjectMetadataResponseFilter.CacheTarget.METADATA);
             if (preconditionResponse != null) {
                 return preconditionResponse;
@@ -674,40 +678,12 @@ public class ObjectRegistryResource {
                     targetStage);
             ObjectMetadataResponseFilter.attach(requestContext, metadata,
                     ObjectMetadataResponseFilter.CacheTarget.METADATA);
-            return Response.status(Response.Status.OK).entity(metadata).header("Content-Type", getResolvedMediaType()).build();
+            return Response.status(Response.Status.OK).entity(metadata).header("Content-Type", ResourceSupport.resolvedMediaType(requestContext)).build();
         } catch (IllegalArgumentException e) {
             return Response.status(Response.Status.BAD_REQUEST).entity(e.getMessage()).build();
         } catch (Exception e) {
-            return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity(e.getMessage()).build();
+            throw EndpointFailures.propagate(e);
         }
-    }
-
-    /**
-     * Checks the {@code If-Match} header for an optimistic-concurrency precondition against the current
-     * state of {@code metadata}, using the same validator the response filter emits as the ETag.
-     * Returns a {@code 412 Precondition Failed} response if the precondition is not satisfied, or
-     * {@code null} if it is satisfied, if no {@code If-Match} header was sent, or if there is no
-     * validator to compare against.
-     *
-     * @param metadata the current metadata of the object being written
-     * @param target   which validator to check against: {@link ObjectMetadataResponseFilter.CacheTarget#CONTENT}
-     *                 for writes that replace the content, {@link ObjectMetadataResponseFilter.CacheTarget#METADATA}
-     *                 for writes that only change metadata (e.g. a stage transition)
-     */
-    private Response checkIfMatch(ObjectMetadata metadata, ObjectMetadataResponseFilter.CacheTarget target) {
-        String ifMatch = headers.getHeaderString("If-Match");
-        if (ifMatch == null) {
-            return null; // No precondition — proceed normally
-        }
-        String base = ObjectMetadataResponseFilter.baseValidator(metadata, target);
-        if (base == null) {
-            return null; // No validator yet — cannot validate, proceed
-        }
-        if (!ObjectMetadataResponseFilter.ifMatchSatisfied(ifMatch, base)) {
-            return Response.status(Response.Status.PRECONDITION_FAILED)
-                    .entity("Resource has been modified. ETag mismatch.").build();
-        }
-        return null;
     }
 
     private ScopeService<?> getScopeServiceByScopeName(String scopeName) {
@@ -716,9 +692,5 @@ public class ObjectRegistryResource {
 
     private RegistryService<?> getRegistryServiceByRegistryName(String registryName) {
         return registryCollector.getRegistryServiceByRegistryName(registryName);
-    }
-
-    private String getResolvedMediaType() {
-        return (String) requestContext.getProperty(ModelAtlasRestConstants.RESOLVED_MEDIA_TYPE);
     }
 }

@@ -1195,6 +1195,50 @@ public class SchemaPackagesResourceTest extends AbstractRestTest {
 
 	@Test
 	@ParentScopeServiceSetup
+	public void testSearchPackages_AfterTransition_StaysSearchableInNewStage(@InjectBundleContext BundleContext context)
+			throws Exception {
+		ensureResourceAvailability(context);
+		// Own nsURI/name so leftovers of other tests cannot satisfy the assertions.
+		String nsUri = "http://test.example.com/schema/transitionsearch/1.0";
+		String name = "TransitionSearchPackage";
+		EPackage testPackage = TestHelper.createTestEPackage(nsUri, name, name);
+		String xmiContent = TestHelper.serializeToXMI(testPackage, resourceSet);
+
+		Response upload = schemaStageTarget(TestAnnotations.STAGE_DRAFT).queryParam("nsUri", nsUri)
+				.queryParam("name", name).request("application/xmi")
+				.post(Entity.entity(xmiContent, "application/xmi"));
+		assertStatus(201, upload, "Should return HTTP 201 Created");
+		String objectId = extractObjectId(upload.readEntity(String.class));
+
+		// Control: searchable while it still sits in the stage it was uploaded to.
+		Response beforeTransition = schemaTarget().path("search").queryParam("name", name)
+				.request("application/json").get();
+		assertStatus(200, beforeTransition, "Search should find the uploaded package");
+		assertTrue(beforeTransition.readEntity(String.class).contains(name),
+				"Search should return the package it just indexed");
+
+		StageTransitionRequest transition = RestFactory.eINSTANCE.createStageTransitionRequest();
+		transition.setObjectId(objectId);
+		transition.setTargetStage(TestAnnotations.STAGE_APPROVED);
+		Response transitioned = schemaStageTarget(TestAnnotations.STAGE_DRAFT).path("actions").path("transition")
+				.request("application/xmi")
+				.post(Entity.entity(TestHelper.serializeToXMI(transition, resourceSet), "application/xmi"));
+		assertStatus(200, transitioned, "Transition should succeed");
+
+		// A search hit is resolved against the stage recorded in the index. If the transition
+		// leaves that stage stale, the lookup hits the stage the object has left, comes back
+		// null and the hit is dropped without a trace — the package vanishes from search.
+		Response afterTransition = schemaTarget().path("search").queryParam("name", name)
+				.request("application/json").get();
+		assertStatus(200, afterTransition, "Search should still answer after a transition");
+		String body = afterTransition.readEntity(String.class);
+		assertTrue(body.contains(name), "A transitioned package must stay searchable");
+		assertTrue(body.contains(TestAnnotations.STAGE_APPROVED),
+				"The search result must report the stage the package now lives in");
+	}
+
+	@Test
+	@ParentScopeServiceSetup
 	public void testSearchPackages_NoResults(@InjectBundleContext BundleContext context) throws Exception {
 		ensureResourceAvailability(context);
 		Response response = schemaTarget().path("search")

@@ -13,8 +13,8 @@
  */
 package org.eclipse.fennec.model.atlas.management.lucene;
 
-import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.IOException;
@@ -227,11 +227,16 @@ class LuceneRegistryHelperTest {
 
     @Test
     void testSearchWithMalformedQuery() throws Exception {
-        // Test with malformed query - should not throw exception
-        assertDoesNotThrow(() -> {
-            helper.searchObjectIds("uploadUser:[invalid query", 10);
-            // Should return empty or handle gracefully
-        });
+        helper.updateIndex("some-obj", createTestMetadata("someUser", "AI_GENERATOR", "EPackage"));
+
+        // A query the index cannot parse is rejected. It used to be answered with a
+        // match-all, which returns every indexed object to a caller that asked for a
+        // subset - and the caller cannot tell that apart from a genuine match-all.
+        assertThrows(IllegalArgumentException.class, () -> helper.searchObjectIds("sourceChannel:[invalid query", 10));
+
+        // On an exact-match field the value is never parsed as syntax to begin with: it
+        // is one term, which simply matches nothing.
+        assertTrue(helper.searchObjectIds("uploadUser:[invalid query", 10).isEmpty());
     }
 
     @Test

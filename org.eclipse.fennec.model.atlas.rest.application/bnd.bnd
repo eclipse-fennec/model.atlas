@@ -23,10 +23,10 @@
 	org.eclipse.fennec.model.atlas.rest.model;version=snapshot,\
 	org.eclipse.fennec.model.atlas.management;version=snapshot,\
 	org.eclipse.fennec.model.atlas.workflow;version=snapshot,\
-	org.eclipse.fennec.model.atlas.schema.registry.api;version=snapshot,\
 	org.eclipse.fennec.model.atlas.management.lucene;version=snapshot,\
 	org.eclipse.fennec.model.atlas.rest.common;version=snapshot,\
 	org.eclipse.fennec.codec.rest;version=latest,\
+	org.eclipse.fennec.codec.api;version=latest,\
 	org.eclipse.fennec.model.atlas.scope.api;version=snapshot
 # Hard runtime requirement on the Model Atlas scoped-resource-set
 # filter (provided by org.eclipse.fennec.model.atlas.rest.filter).
@@ -39,3 +39,7 @@
 Require-Capability: \
 	osgi.implementation;\
 		filter:="(&(osgi.implementation=org.eclipse.fennec.model.atlas.scoped-resource-set)(version>=1.0.0))"
+
+-testpath: \
+	junit-jupiter-api,\
+	org.glassfish.jersey.core.jersey-common;version=latest

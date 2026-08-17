@@ -21,6 +21,9 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.lenient;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.time.Instant;
@@ -85,11 +88,25 @@ public class BasicEObjectRegistryServiceTest {
 
     @BeforeEach
     public void setUp() throws Exception {
-        // Set up mock storage helper to return empty lists initially
-        when(mockStorageHelper.loadAllMetadata()).thenReturn(new ArrayList<>());
+        // Set up mock storage helper to return empty lists initially. Cache
+        // initialization is asynchronous (and lazy on first read), so tests that
+        // never read the cache never consume this stubbing — hence lenient().
+        lenient().when(mockStorageHelper.loadAllMetadata()).thenReturn(new ArrayList<>());
 
         // Create registry service with mocked dependencies
         registryService = new BasicEObjectRegistryService<>(mockStorageHelper, mockPromiseFactory);
+    }
+
+    @Test
+    public void testConstructorDoesNotLoadSynchronously() throws Exception {
+        // Construction happens on the DS activation path of storage services and
+        // must not block on storage I/O (the mocked PromiseFactory swallows the
+        // async initialization, so any synchronous load would show up here)
+        verify(mockStorageHelper, never()).loadAllMetadata();
+
+        // The first read initializes the cache lazily instead
+        registryService.getMetadata("any-id");
+        verify(mockStorageHelper).loadAllMetadata();
     }
 
     @Test

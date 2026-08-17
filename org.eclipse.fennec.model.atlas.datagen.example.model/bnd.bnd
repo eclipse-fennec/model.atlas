@@ -2,9 +2,6 @@
 -library: enableEMF
 -workingset: datagen
 
-# Code generation is disabled to preserve manual operation implementations in
-# CompanyImpl (getTotalEmployees, findEmployeesByNamePrefix). Re-enable temporarily
-# when the ecore/genmodel changes, then disable again after regenerating.
 -generate:\
 	model/dge.genmodel;\
 		generate=fennecEMF;\
@@ -16,7 +13,6 @@
 # Bundle Annotations		
 -includeresource.model: model=model
 
-Bundle-Version: 1.0.0.SNAPSHOT
 
 -buildpath: \
 	org.osgi.service.condition;version=latest

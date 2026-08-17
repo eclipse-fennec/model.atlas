@@ -45,6 +45,7 @@ import org.apache.lucene.search.TermQuery;
 import org.apache.lucene.search.TopDocs;
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.FSDirectory;
+import org.apache.lucene.util.QueryBuilder;
 import org.eclipse.emf.ecore.EClass;
 import org.eclipse.emf.ecore.EClassifier;
 import org.eclipse.emf.ecore.EPackage;
@@ -53,6 +54,7 @@ import org.eclipse.fennec.model.atlas.management.lucene.epackage.EPackageLuceneI
 import org.eclipse.fennec.model.atlas.management.lucene.epackage.EPackageSearchQuery;
 import org.eclipse.fennec.model.atlas.mgmt.management.ObjectMetadata;
 import org.osgi.service.component.annotations.Activate;
+import org.osgi.service.component.annotations.Deactivate;
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.ConfigurationPolicy;
 import org.osgi.service.metatype.annotations.AttributeDefinition;
@@ -227,6 +229,7 @@ public class EPackageLuceneIndexImpl implements EPackageLuceneIndex, AutoCloseab
 	}
 
 	@Override
+	@Deactivate
 	public void close() throws Exception {
 		if (searcherManager != null) {
 			try {
@@ -400,7 +403,12 @@ public class EPackageLuceneIndexImpl implements EPackageLuceneIndex, AutoCloseab
 
 	/**
 	 * Adds an analyzed (TextField) clause to the boolean query builder.
-	 * Uses QueryParser to handle tokenization consistently with the StandardAnalyzer.
+	 *
+	 * <p>The value is a search criterion, not query syntax: it goes through the same
+	 * StandardAnalyzer the field was indexed with, so punctuation in it is analyzed away
+	 * rather than parsed. Parsing it as a query string instead used to drop the clause
+	 * whenever the value did not happen to be valid Lucene syntax — silently widening the
+	 * result set, up to matching every package when it was the only criterion.</p>
 	 *
 	 * @return true if a clause was added
 	 */
@@ -408,16 +416,14 @@ public class EPackageLuceneIndexImpl implements EPackageLuceneIndex, AutoCloseab
 		if (value == null || value.isEmpty()) {
 			return false;
 		}
-		try {
-			org.apache.lucene.queryparser.classic.QueryParser parser =
-					new org.apache.lucene.queryparser.classic.QueryParser(field, analyzer);
-			Query parsed = parser.parse(value);
-			builder.add(parsed, BooleanClause.Occur.MUST);
-			return true;
-		} catch (org.apache.lucene.queryparser.classic.ParseException e) {
-			LOGGER.log(Level.WARNING, "Failed to parse query value for field " + field + ": " + value, e);
-			return false;
+		Query analyzed = new QueryBuilder(analyzer).createBooleanQuery(field, value, BooleanClause.Occur.SHOULD);
+		if (analyzed == null) {
+			// The value analyzed away to nothing (all punctuation): it can match nothing,
+			// and saying so is better than dropping the criterion.
+			analyzed = new TermQuery(new Term(field, value));
 		}
+		builder.add(analyzed, BooleanClause.Occur.MUST);
+		return true;
 	}
 
 	// -- Index recovery --

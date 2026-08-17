@@ -88,7 +88,6 @@ class RemoteReadableScopeService implements ReadableScopeService<EObject> {
 	static final String EOBJECT_MEDIA_TYPE = "application/xmi";
 
 	private final WebTarget baseTarget;
-	private final ClientConfiguration configuration;
 	private final String scopeName;
 	private final Supplier<ResourceSet> resourceSetFactory;
 	private final ClientCache<ObjectKey, EObject> cache;
@@ -108,7 +107,7 @@ class RemoteReadableScopeService implements ReadableScopeService<EObject> {
 	RemoteReadableScopeService(WebTarget baseTarget, ClientConfiguration configuration, String scopeName,
 			Supplier<ResourceSet> resourceSetFactory, ClientCache<ObjectKey, EObject> cache) {
 		this.baseTarget = Objects.requireNonNull(baseTarget, "baseTarget");
-		this.configuration = Objects.requireNonNull(configuration, "configuration");
+		Objects.requireNonNull(configuration, "configuration");
 		this.scopeName = Objects.requireNonNull(scopeName, "scopeName");
 		this.resourceSetFactory = Objects.requireNonNull(resourceSetFactory, "resourceSetFactory");
 		this.cache = Objects.requireNonNull(cache, "cache");
@@ -387,7 +386,7 @@ class RemoteReadableScopeService implements ReadableScopeService<EObject> {
 		for (JsonNode entry : metadata) {
 			JsonNode objectId = entry.get("objectId");
 			if (objectId != null && !objectId.isNull()) {
-				ids.add(objectId.asText());
+				ids.add(objectId.asString());
 			}
 		}
 		return List.copyOf(ids);
@@ -433,7 +432,7 @@ class RemoteReadableScopeService implements ReadableScopeService<EObject> {
 
 	private static String text(JsonNode node, String field) {
 		JsonNode value = node.get(field);
-		return value == null || value.isNull() ? null : value.asText();
+		return value == null || value.isNull() ? null : value.asString();
 	}
 
 	/** Read a boolean field, falling back to {@code defaultValue} when absent/null (EMF JSON omits defaults). */

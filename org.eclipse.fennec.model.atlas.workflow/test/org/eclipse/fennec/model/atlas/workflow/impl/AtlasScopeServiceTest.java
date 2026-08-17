@@ -30,6 +30,7 @@ import org.eclipse.emf.ecore.EPackage;
 import org.eclipse.emf.ecore.EcoreFactory;
 import org.eclipse.fennec.model.atlas.mgmt.management.ManagementFactory;
 import org.eclipse.fennec.model.atlas.mgmt.management.ObjectMetadata;
+import org.eclipse.fennec.model.atlas.scope.api.ReadableRegistryView;
 import org.eclipse.fennec.model.atlas.wf.workflowapi.Registry;
 import org.eclipse.fennec.model.atlas.wf.workflowapi.RegistryService;
 import org.eclipse.fennec.model.atlas.wf.workflowapi.Scope;
@@ -343,6 +344,72 @@ public class AtlasScopeServiceTest {
 
 			assertEquals(expected, result);
 			verify(mockRegistryService).transitionToStage(SCOPE, OBJECT_ID, "released", "other");
+		}
+	}
+
+	@Nested
+	@DisplayName("Registry View Tests")
+	class RegistryViewTests {
+
+		private static final String REGISTRY = WorkflowConstants.ATLAS_SCHEMA_REGISTRY_NAME;
+		private static final String SCOPE = WorkflowConstants.ATLAS_SCOPE_NAME;
+		private static final String OBJECT_ID = "view-id";
+
+		@Test
+		@DisplayName("Final-stage view reads the final stage and is bound to no stage")
+		void shouldReadFinalStageThroughView() {
+			EPackage pkg = EcoreFactory.eINSTANCE.createEPackage();
+			ObjectMetadata metadata = ManagementFactory.eINSTANCE.createObjectMetadata();
+			metadata.setObjectId(OBJECT_ID);
+			when(mockRegistryService.listInFinalStage(SCOPE)).thenReturn(List.of(metadata));
+			when(mockRegistryService.getContentFromFinalStage(SCOPE, OBJECT_ID)).thenReturn(pkg);
+
+			ReadableRegistryView<EPackage> view = service.registryView(REGISTRY);
+
+			assertEquals(SCOPE, view.getScopeName());
+			assertEquals(REGISTRY, view.getRegistryName());
+			assertNull(view.getStageName(), "A final-stage view is bound to no stage");
+			assertEquals(List.of(OBJECT_ID), view.listObjectIds());
+			assertEquals(pkg, view.get(OBJECT_ID).orElseThrow());
+			assertEquals(List.of(pkg), view.listAll());
+		}
+
+		@Test
+		@DisplayName("Stage-explicit view reads the stage it was given")
+		void shouldReadRequestedStageThroughView() {
+			EPackage pkg = EcoreFactory.eINSTANCE.createEPackage();
+			ObjectMetadata metadata = ManagementFactory.eINSTANCE.createObjectMetadata();
+			metadata.setObjectId(OBJECT_ID);
+			when(mockRegistryService.listInStage(SCOPE, "draft")).thenReturn(List.of(metadata));
+			when(mockRegistryService.getContentFromStage(SCOPE, "draft", OBJECT_ID)).thenReturn(pkg);
+
+			ReadableRegistryView<EPackage> view = service.registryView(REGISTRY, "draft");
+
+			assertEquals("draft", view.getStageName());
+			assertEquals(List.of(OBJECT_ID), view.listObjectIds());
+			assertEquals(pkg, view.get(OBJECT_ID).orElseThrow());
+		}
+
+		@Test
+		@DisplayName("An object that does not resolve is skipped, not returned as null")
+		void shouldSkipUnresolvableIds() {
+			ObjectMetadata metadata = ManagementFactory.eINSTANCE.createObjectMetadata();
+			metadata.setObjectId(OBJECT_ID);
+			when(mockRegistryService.listInFinalStage(SCOPE)).thenReturn(List.of(metadata));
+			when(mockRegistryService.getContentFromFinalStage(SCOPE, OBJECT_ID)).thenReturn(null);
+
+			ReadableRegistryView<EPackage> view = service.registryView(REGISTRY);
+
+			assertTrue(view.get(OBJECT_ID).isEmpty());
+			assertTrue(view.listAll().isEmpty(), "A missing object must not appear as a null element");
+		}
+
+		@Test
+		@DisplayName("Rejects an unknown registry and null arguments")
+		void shouldRejectBadArguments() {
+			assertThrows(IllegalArgumentException.class, () -> service.registryView("other-registry"));
+			assertThrows(NullPointerException.class, () -> service.registryView(null));
+			assertThrows(NullPointerException.class, () -> service.registryView(REGISTRY, null));
 		}
 	}
 }

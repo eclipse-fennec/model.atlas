@@ -19,8 +19,10 @@ import org.eclipse.emf.ecore.EFactory;
 import org.eclipse.emf.ecore.EPackage;
 import org.eclipse.emf.ecore.resource.Resource.Factory;
 import org.eclipse.fennec.emf.osgi.configurator.EPackageConfigurator;
+import org.eclipse.fennec.emf.osgi.constants.EMFNamespaces;
 import org.eclipse.uml2.uml.UMLFactory;
 import org.eclipse.uml2.uml.UMLPackage;
+import org.eclipse.uml2.uml.resource.UMLResource;
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.ServiceRegistration;
 import org.osgi.service.component.annotations.Activate;
@@ -62,12 +64,14 @@ public class UMLConfigurationComponent {
     }
 
     private void registerResourceFactoryService(BundleContext ctx) {
-        EnhancedUMLResourceFactoryImpl factory = new EnhancedUMLResourceFactoryImpl();
+        // Must stay on the API-typed UMLResource.Factory.INSTANCE; the equivalent
+        // UMLResourceFactoryImpl lives in an internal UML2 package with no API contract.
         Hashtable<String, Object> properties = new Hashtable<String, Object>();
-        properties.putAll(factory.getServiceProperties());
-        String[] serviceClasses = new String[] { EnhancedUMLResourceFactoryImpl.class.getName(),
-                Factory.class.getName() };
-        resourceFactoryRegistration = ctx.registerService(serviceClasses, factory, properties);
+        properties.put(EMFNamespaces.EMF_CONFIGURATOR_NAME, UMLPackage.eNAME);
+        properties.put(EMFNamespaces.EMF_MODEL_FILE_EXT, UMLResource.FILE_EXTENSION);
+        properties.put(EMFNamespaces.EMF_MODEL_VERSION, "1.0");
+        resourceFactoryRegistration = ctx.registerService(Factory.class.getName(), UMLResource.Factory.INSTANCE,
+                properties);
     }
 
     private UMLEPackageConfigurator registerEPackageConfiguratorService(UMLPackage ePackage, BundleContext ctx) {

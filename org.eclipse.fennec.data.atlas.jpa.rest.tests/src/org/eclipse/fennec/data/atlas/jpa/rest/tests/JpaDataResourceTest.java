@@ -61,6 +61,7 @@ import jakarta.ws.rs.core.Response;
 public class JpaDataResourceTest {
 
 	private static final String BASE_URL = "http://localhost:8185/rest/jpa/data/data";
+	private static final String HELLO_URL = "http://localhost:8185/rest/jpa/data/data/hello";
 	private static final String E_PACKAGE_URI = "http://example.org/jpa/demo/1.0";
 
 	private static final String MAPPINGS_FILTER =
@@ -109,6 +110,21 @@ public class JpaDataResourceTest {
 	@DataFolderWatcherConfig
 	public void testResourceAvailability(@InjectBundleContext BundleContext ctx) throws InterruptedException {
 		ensureResourceAvailability(ctx);
+	}
+
+	@Test
+	@DataFolderWatcherConfig
+	public void testHello_isNotRejectedByTheFilter(@InjectBundleContext BundleContext ctx) throws InterruptedException {
+		ensureResourceAvailability(ctx);
+
+		// /hello carries neither rootFolderName nor eClassName. The filter is registered
+		// whiteboard-global, so it runs for this request too and used to fail it: the
+		// absent path param went into ConcurrentHashMap.containsKey(null) — an NPE, i.e.
+		// a 500 — and had that not thrown, the EClassifier check would have answered 400.
+		Response response = restClient.target(HELLO_URL).request().get();
+
+		assertEquals(200, response.getStatus(),
+				"A request without this filter's path params is none of its business");
 	}
 
 	@Test

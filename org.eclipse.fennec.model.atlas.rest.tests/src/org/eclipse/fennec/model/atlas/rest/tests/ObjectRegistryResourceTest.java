@@ -182,7 +182,7 @@ public class ObjectRegistryResourceTest extends AbstractRestTest{
 
 		String responseContent = response.readEntity(String.class);
 		assertNotNull(responseContent, "Should return content");
-		assertTrue(responseContent.contains("objectId"), "Response should contain objectId");
+		assertTrue(responseContent.contains("objectId"), "Response should contain objectId | body: " + responseContent);
 	}
 
 	@Test
@@ -198,7 +198,30 @@ public class ObjectRegistryResourceTest extends AbstractRestTest{
 
 		String responseContent = response.readEntity(String.class);
 		assertNotNull(responseContent, "Should return content");
-		assertTrue(responseContent.contains("objectId"), "Response should contain objectId");
+		assertTrue(responseContent.contains("objectId"), "Response should contain objectId | body: " + responseContent);
+	}
+
+	@Test
+	@ParentScopeServiceSetup
+	public void testMetadataJsonKeysTheIdAttributeByItsFeatureName(@InjectBundleContext BundleContext context)
+			throws IOException, InterruptedException {
+		ensureResourceAvailability(context);
+		uploadTestObject(TestAnnotations.STAGE_DRAFT);
+		Response response = stageTarget(TestAnnotations.STAGE_DRAFT)
+				.queryParam("name", TEST_OBJECT_NAME)
+				.request("application/json").get();
+
+		String responseContent = response.readEntity(String.class);
+
+		// objectId is an EMF ID attribute, and the codec keys those as "_id" by default,
+		// dropping the feature name. That name is published API - the Atlas REST client
+		// reads it, and the OpenAPI schema documents it - so every endpoint pins the id
+		// key mode to FEATURE_ONLY. Without it this response says "_id" and no consumer
+		// finds the id it was promised.
+		assertTrue(responseContent.contains("\"objectId\""),
+				"Metadata JSON must key the id by its feature name | body: " + responseContent);
+		assertFalse(responseContent.contains("\"_id\""),
+				"Metadata JSON must not key the id as _id | body: " + responseContent);
 	}
 
 	@Test
@@ -209,6 +232,7 @@ public class ObjectRegistryResourceTest extends AbstractRestTest{
 				.queryParam("objectId", "non-existent-object").request("application/json").get();
 
 		assertEquals(204, response.getStatus(), "Should return HTTP 204 No Content");
+		assertFalse(response.hasEntity(), "A 204 must not carry a body");
 	}
 
 	// ========== Create Object Tests ==========
@@ -358,6 +382,7 @@ public class ObjectRegistryResourceTest extends AbstractRestTest{
 				.queryParam("objectId", "non-existent-object").request("application/json").get();
 
 		assertEquals(204, response.getStatus(), "Should return HTTP 204 No Content");
+		assertFalse(response.hasEntity(), "A 204 must not carry a body");
 	}
 
 	// ========== Get Object Content From Final Stage Tests (P5-0) ==========
@@ -384,6 +409,7 @@ public class ObjectRegistryResourceTest extends AbstractRestTest{
 				.queryParam("objectId", "non-existent-object").request("application/json").get();
 
 		assertEquals(204, response.getStatus(), "Should return HTTP 204 No Content when object not in final stage");
+		assertFalse(response.hasEntity(), "A 204 must not carry a body");
 	}
 
 	@Test
@@ -509,6 +535,7 @@ public class ObjectRegistryResourceTest extends AbstractRestTest{
 				.put(Entity.entity(xmiContent, "application/xmi"));
 
 		assertEquals(204, response.getStatus(), "Should return HTTP 204 No Content when object not found");
+		assertFalse(response.hasEntity(), "A 204 must not carry a body");
 	}
 
 	// ========== Delete Object Tests ==========
@@ -521,7 +548,10 @@ public class ObjectRegistryResourceTest extends AbstractRestTest{
 		Response response = stageTarget(TestAnnotations.STAGE_DRAFT)
 				.queryParam("objectId", TEST_OBJECT_ID).request().delete();
 
-		assertEquals(204, response.getStatus(), "Should return HTTP 204 No Content");
+		// 200, like the sibling deletePackage and like this endpoint's own @ApiResponse.
+		// It used to answer 204 -- the same code it uses for "not found", so a client
+		// could not tell a delete that happened from one that had nothing to delete.
+		assertEquals(200, response.getStatus(), "A delete that happened must be distinguishable from a no-op");
 	}
 
 	@Disabled("We have to fix issue #64 first")
@@ -543,6 +573,7 @@ public class ObjectRegistryResourceTest extends AbstractRestTest{
 				.queryParam("objectId", TEST_OBJECT_ID).request().delete();
 
 		assertEquals(204, response.getStatus(), "Should return HTTP 204 No Content");
+		assertFalse(response.hasEntity(), "A 204 must not carry a body");
 	}
 
 	// ========== Transition Tests ==========
@@ -599,6 +630,7 @@ public class ObjectRegistryResourceTest extends AbstractRestTest{
 				.request("application/xmi").post(Entity.entity(xmiContent, "application/xmi"));
 
 		assertEquals(204, response.getStatus(), "Should return HTTP 204 No Content");
+		assertFalse(response.hasEntity(), "A 204 must not carry a body");
 	}
 
 	// ========== List Objects By Name Tests ==========

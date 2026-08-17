@@ -23,6 +23,7 @@ import java.util.Collections;
 import java.util.HexFormat;
 import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.atomic.AtomicLong;
@@ -136,6 +137,8 @@ public abstract class AbstractEObjectStorageService implements EObjectStorageSer
 
     protected PromiseFactory promiseFactory;
 
+    private ExecutorService executorService;
+
     protected AbstractStorageHelper storageHelper;
 
     protected BundleContext bctx;
@@ -196,7 +199,7 @@ public abstract class AbstractEObjectStorageService implements EObjectStorageSer
 
         String threadFactory = getBackendType() + "-worker-";
         AtomicLong threadCount = new AtomicLong(0);
-        this.promiseFactory = new PromiseFactory(Executors.newCachedThreadPool(new ThreadFactory() {
+        this.executorService = Executors.newCachedThreadPool(new ThreadFactory() {
 
             @Override
             public Thread newThread(Runnable r) {
@@ -206,7 +209,8 @@ public abstract class AbstractEObjectStorageService implements EObjectStorageSer
                 t.setPriority(Thread.NORM_PRIORITY);
                 return t;
             }
-        }));
+        });
+        this.promiseFactory = new PromiseFactory(executorService);
         this.storageHelper = createStorageHelper();
 
         if (this.storageHelper == null) {
@@ -302,6 +306,17 @@ public abstract class AbstractEObjectStorageService implements EObjectStorageSer
     protected void deactivateStorageService() {
         LOGGER.info("Deactivating " + getClass().getSimpleName());
         // No registry unregistration needed since we use shared registry
+        if (storageHelper != null) {
+            try {
+                storageHelper.close();
+            } catch (Exception e) {
+                LOGGER.log(Level.WARNING, "Failed to close storage helper during deactivation", e);
+            }
+        }
+        if (executorService != null) {
+            executorService.shutdown();
+            executorService = null;
+        }
         this.storageHelper = null;
         this.registryService = null;
         LOGGER.info("Storage service deactivated: " + getClass().getSimpleName());
@@ -521,14 +536,14 @@ public abstract class AbstractEObjectStorageService implements EObjectStorageSer
     @Override
     public Promise<List<ObjectMetadata>> queryObjects(ObjectQuery query) {
         if (query == null) {
-            throw new IllegalArgumentException("ObjectQuery cannot be null");
+            return promiseFactory.failed(new IllegalArgumentException("ObjectQuery cannot be null"));
         }
         // If registry service is available, delegate to it for fast indexed queries
         if (registryService != null) {
             return delegateQueryToRegistry(query);
         } else {
-            throw new IllegalStateException(
-                    "queryObjects is only possible when an EObjectRegistryService is available");
+            return promiseFactory.failed(new IllegalStateException(
+                    "queryObjects is only possible when an EObjectRegistryService is available"));
         }
     }
 
@@ -635,6 +650,12 @@ public abstract class AbstractEObjectStorageService implements EObjectStorageSer
 
                 // Save updated metadata
                 storageHelper.saveMetadata(scope, registry, stage, objectId, metadata);
+
+                // Update registry cache if available
+                if (registryService != null) {
+                    registryService.updateCache(EcoreUtil.copy(metadata));
+                }
+
                 LOGGER.info("Updated status to " + newStatus + " for object: " + objectId);
                 return true;
 
@@ -711,7 +732,7 @@ public abstract class AbstractEObjectStorageService implements EObjectStorageSer
                 results = registryService.findByScopeRegistryAndStage(query.getScope(), query.getRegistry(),
                         query.getStage());
             } else if (query.getStage() != null && query.getScope() != null) {
-                results = registryService.findByScopeAndStage(query.getStage(), query.getScope());
+                results = registryService.findByScopeAndStage(query.getScope(), query.getStage());
             } else if (query.getStatus() != null && query.getObjectType() != null) {
                 // Most specific query - status + type
                 results = registryService.findByStatusAndType(query.getStatus(), query.getObjectType());
@@ -816,15 +837,10 @@ public abstract class AbstractEObjectStorageService implements EObjectStorageSer
         // Always set lastChangeTime to current time for any update
         existing.setLastChangeTime(Instant.now());
 
-        // Merge properties (preserve existing, add new ones)
+        // Merge properties (entries from updates overwrite same-named existing ones;
+        // EMF EMaps are never null)
         if (updates.getProperties() != null && !updates.getProperties().isEmpty()) {
-            if (existing.getProperties() == null) {
-                // If existing has no properties, copy all from updates
-                existing.getProperties().putAll(updates.getProperties());
-            } else {
-                // Merge properties - existing ones are preserved, new ones are added
-                existing.getProperties().putAll(updates.getProperties());
-            }
+            existing.getProperties().putAll(updates.getProperties());
         }
 
         // CRITICAL: Upload fields are NEVER updated regardless of what's in the update

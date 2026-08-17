@@ -67,6 +67,16 @@ The configuration is defined by the `datagen.ecore` model in `org.eclipse.fennec
 | `seed` | int | `0` | Random seed for reproducibility. `0` = random |
 | `targetModelNsURIs` | String[] | - | Namespace URIs of target metamodels |
 | `classConfigs` | ClassGenConfig[] | - | Per-class generation configurations |
+| `customGenerators` | CustomGeneratorDef[] | - | Config-local generator definitions (see below) |
+
+### CustomGeneratorDef
+
+| Field | Type | Default | Description |
+|-------|------|---------|-------------|
+| `key` | String | required | The key an `generatorKey` or a `#{key}` template placeholder refers to |
+| `label` | String | required | Display name of the generator |
+| `expression` | String | required | Datafaker expression, e.g. `Dr. #{Name.first_name}` |
+| `category` | String | - | Optional grouping for UIs |
 
 ### ClassGenConfig
 
@@ -138,9 +148,27 @@ When a `generatorKey` is provided, it is resolved through the explicit mapping o
 
 ### Resolution Order
 
-1. **`generatorKey` set** — direct map lookup, then convention-based fallback (`faker.category.method` → `#{Category.method}`)
+1. **`generatorKey` set** — the config's own `customGenerators` first, then the direct map lookup, then the convention-based fallback (`faker.category.method` → `#{Category.method}`)
 2. **`generatorKey` not set** — Lucene fuzzy search using the `featureName` and the containing EClass name as context
 3. **No match found** — error with a descriptive message
+
+### Custom Generators
+
+`customGenerators` lets a config define its own generator keys without touching `GeneratorKeyMapper`. Each definition maps a `key` to a Datafaker `expression`; the expression may combine several placeholders and literal text.
+
+```xml
+<customGenerators key="custom.saluted" label="Salutation + first name"
+                  expression="Dr. #{Name.first_name}"/>
+```
+
+The key is then usable both as a `generatorKey` and as a `#{...}` template placeholder:
+
+```xml
+<attributeGens featureName="firstName" generatorKey="custom.saluted"/>
+<attributeGens featureName="label" template="#{custom.saluted}, #{Address.city}"/>
+```
+
+Custom generators are resolved **before** the built-in mapping, so a definition may also override a built-in key such as `faker.person.firstName`. A definition without a `key` or without an `expression` is rejected with an `IllegalArgumentException`; a repeated key is replaced by the later definition.
 
 ### Automatic Fuzzy Matching
 
@@ -175,8 +203,8 @@ The `ExpressionIndex` builds an in-memory Lucene index from all known generator 
 
 For each attribute, the first matching rule applies:
 1. `staticValue` — fixed value, used as-is
-2. `template` — template with `#{key}` placeholders resolved via Datafaker
-3. `generatorKey` — mapped to Datafaker expression and evaluated
+2. `template` — template with `#{key}` placeholders resolved via custom generators, then Datafaker
+3. `generatorKey` — resolved via custom generators, then the built-in mapping, and evaluated
 4. **Fuzzy fallback** — feature name + EClass name resolved via Lucene index
 
 ## License

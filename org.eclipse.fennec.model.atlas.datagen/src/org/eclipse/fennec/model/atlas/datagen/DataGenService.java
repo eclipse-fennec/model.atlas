@@ -31,7 +31,8 @@ public interface DataGenService {
 	 *
 	 * @param config the data generation configuration
 	 * @param targetPackages the EPackages containing the target EClasses
-	 * @return map of EClass name to list of generated EObject instances
+	 * @return map of contextClass URI — the {@code nsURI#//ClassName} value configured
+	 *         per class, not a bare EClass name — to the instances generated for it
 	 */
 	Map<String, List<EObject>> generate(DataGenConfig config, List<EPackage> targetPackages);
 

@@ -18,6 +18,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Type;
+import java.util.List;
 import java.util.Map;
 
 import org.eclipse.emf.common.util.URI;
@@ -37,6 +38,7 @@ import org.osgi.service.jakartars.whiteboard.propertytypes.JakartarsName;
 import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.WebApplicationException;
+import jakarta.ws.rs.core.HttpHeaders;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.MultivaluedMap;
 import jakarta.ws.rs.ext.MessageBodyReader;
@@ -61,9 +63,11 @@ public class JsonSchemaMessageBodyReaderWriter extends AbstractEPackageMessageBo
 
     private static final Map<String, Object> OPTIONS = Map.ofEntries(Map.entry(CodecJsonSchemaOptions.OPTION_SCHEMA_FEATURE, "definitions"));
 
+	private static final MediaType SCHEMA_JSON_TYPE = new MediaType("application", "schema+json");
+
 	@Override
 	public boolean isWriteable(Class<?> type, Type genericType, Annotation[] annotations, MediaType mediaType) {
-		return EPackage.class.isAssignableFrom(type) && "application/schema+json".equals(mediaType.toString());
+		return EPackage.class.isAssignableFrom(type) && isMediaType(mediaType, SCHEMA_JSON_TYPE);
 	}
 
 	@Override
@@ -72,6 +76,8 @@ public class JsonSchemaMessageBodyReaderWriter extends AbstractEPackageMessageBo
 					throws IOException, WebApplicationException {
 
 		ResourceSet resourceSet = getResourceSet();
+		httpHeaders.put(HttpHeaders.CONTENT_DISPOSITION,
+				List.of("attachment; filename=" + t.getName() + ".schema.json"));
 		Resource resource = resourceSet.createResource(URI.createURI(t.getNsURI()), "application/schema+json");
 		// Serialize a copy: adding the served instance itself would detach it from its
 		// own resource (registered singletons and storage-loaded packages are shared),
@@ -96,8 +102,11 @@ public class JsonSchemaMessageBodyReaderWriter extends AbstractEPackageMessageBo
 					throws IOException, WebApplicationException {
 		ResourceSet resourceSet = getResourceSet();
 		Resource resource = resourceSet.createResource(URI.createURI("temp.jsonschema"), "application/schema+json");
-		resource.load(entityStream, OPTIONS);
-		return resource.getContents().isEmpty() ? null : (EPackage) resource.getContents().remove(0);
+		// A payload this reader cannot turn into a model is the client's mistake: answer
+		// 400 rather than null, which the endpoint would dereference into a 500. The
+		// three sibling schema readers answer the same way.
+		loadPayload(resource, entityStream, OPTIONS, "JSON Schema");
+		return (EPackage) resource.getContents().remove(0);
 	}
 
 }

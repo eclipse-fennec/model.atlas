@@ -1,3 +1,6 @@
+Bundle-Name: MAC Management Git Webhook REST
+Bundle-Description: Whiteboard REST endpoints receiving GitHub/GitLab push webhooks for the git storage backend
+
 -library: enableEMF
 -buildpath: \
 	org.eclipse.fennec.model.atlas.management.git.webhook.model;version=snapshot,\
@@ -8,4 +11,4 @@
 	org.osgi.service.typedevent;version=latest,\
 	org.osgi.service.component;version=latest,\
 	org.osgi.service.component.annotations;version=latest,\
-	org.osgi.service.jakartars;version=latest,\
+	org.osgi.service.jakartars;version=latest

@@ -14,6 +14,7 @@
 package org.eclipse.fennec.model.atlas.workflow.tests;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -341,6 +342,48 @@ public class ScopeServiceIntegrationTest {
 			assertNotNull(result, "Should fall back to parent's metadata");
 			assertEquals(OBJECT_ID, result.getObjectId());
 			assertTrue(result.isIsReadOnly(), "Parent metadata should be marked as read-only");
+		}
+
+		@SuppressWarnings({ "unchecked", "rawtypes" })
+		@Test
+		@DisplayName("Should inherit only the parent's final stage, never its unreleased objects")
+		@ParentScopeServiceSetup
+		void shouldNotInheritTheParentsDraft(
+				@InjectService(cardinality = 0, filter = "(scope.name=" + TestAnnotations.TEST_SCOPE_NAME
+						+ ")") ServiceAware<ScopeService> childScopeAware,
+				@InjectService(cardinality = 0, filter = "(scope.name=" + TestAnnotations.TEST_PARENT_SCOPE_NAME
+						+ ")") ServiceAware<ScopeService> parentScopeAware)
+				throws InterruptedException, InvocationTargetException {
+
+			ScopeService<EPackage> childScope = childScopeAware.waitForService(5000);
+			ScopeService<EPackage> parentScope = parentScopeAware.waitForService(5000);
+			assertNotNull(childScope);
+			assertNotNull(parentScope);
+
+			upload(parentScope, CommonTestAnnotations.STAGE_RELEASE, "parent-released", "http://test/parent/released");
+			upload(parentScope, CommonTestAnnotations.STAGE_DRAFT, "parent-draft", "http://test/parent/draft");
+
+			// A child scope inherits what its parent has released. Every other inheritance
+			// path reads the parent's final stage only; listAll asked the parent for all of
+			// its stages, so the child could see work the parent had not released.
+			List<String> visible = childScope.listAllForRegistry(CommonTestAnnotations.SCHEMA_REGISTRY_NAME)
+					.stream().map(ObjectMetadata::getObjectId).toList();
+
+			assertTrue(visible.contains("parent-released"), "The parent's released object is inherited");
+			assertFalse(visible.contains("parent-draft"),
+					"The parent's unreleased object must not be visible in the child scope: " + visible);
+		}
+
+		private void upload(ScopeService<EPackage> scope, String stage, String objectId, String nsUri)
+				throws InvocationTargetException, InterruptedException {
+			EPackage ePackage = EcoreFactory.eINSTANCE.createEPackage();
+			ePackage.setName(objectId);
+			ePackage.setNsURI(nsUri);
+			ePackage.setNsPrefix("inh");
+			ObjectMetadata metadata = ManagementFactory.eINSTANCE.createObjectMetadata();
+			metadata.setObjectId(objectId);
+			scope.uploadToStageForRegistry(CommonTestAnnotations.SCHEMA_REGISTRY_NAME, stage, ePackage, metadata)
+					.getValue();
 		}
 
 		@SuppressWarnings({ "unchecked", "rawtypes" })

@@ -14,7 +14,7 @@
 package org.eclipse.fennec.model.atlas.rest.application.resource;
 
 import org.eclipse.emf.ecore.EPackage;
-import org.eclipse.fennec.model.atlas.rest.common.ModelAtlasRestConstants;
+import org.eclipse.fennec.model.atlas.rest.application.exception.EndpointFailures;
 import org.eclipse.fennec.model.atlas.runtime.RequireRuntime;
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.ServiceScope;
@@ -36,6 +36,8 @@ import jakarta.ws.rs.container.ContainerRequestContext;
 import jakarta.ws.rs.core.Context;
 import jakarta.ws.rs.core.HttpHeaders;
 import jakarta.ws.rs.core.Response;
+import org.eclipse.fennec.codec.constants.CodecOptions;
+import org.eclipse.fennec.codec.rest.annotations.ResourceOption;
 
 /**
  *
@@ -51,9 +53,6 @@ import jakarta.ws.rs.core.Response;
 public class ModelConverterResource {
 
     @Context
-    private HttpHeaders headers;
-    
-    @Context
     private ContainerRequestContext requestContext;
 
     @POST
@@ -63,23 +62,18 @@ public class ModelConverterResource {
             @ApiResponse(responseCode = "200", description = "Package converted successfully", content = @Content(schema = @Schema(implementation = EPackage.class))),
             @ApiResponse(responseCode = "415", description = "Unsupported media type"),
             @ApiResponse(responseCode = "500", description = "Internal server error") })
+    @ResourceOption(key = CodecOptions.CODEC_ID_KEY_MODE, value = "FEATURE_ONLY")
     public Response convertPackage(
             @RequestBody(description = "The schema package content", required = true, content = @Content(schema = @Schema(implementation = EPackage.class))) EPackage ePackage) {
 
         try {
-            return Response.status(Response.Status.OK).entity(ePackage).header("Content-Type", getResolvedMediaType()).build();
+            return Response.status(Response.Status.OK).entity(ePackage).header("Content-Type", ResourceSupport.resolvedMediaType(requestContext)).build();
             
     	} catch (WebApplicationException e) {
 			// WebApplicationException already has the correct status code, rethrow it
 			throw e;
         } catch (Exception e) {
-            return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity(e.getMessage()).build();
+            throw EndpointFailures.propagate(e);
         }
-    }
-
-
-    
-    private String getResolvedMediaType() {
-        return (String) requestContext.getProperty(ModelAtlasRestConstants.RESOLVED_MEDIA_TYPE);
     }
 }

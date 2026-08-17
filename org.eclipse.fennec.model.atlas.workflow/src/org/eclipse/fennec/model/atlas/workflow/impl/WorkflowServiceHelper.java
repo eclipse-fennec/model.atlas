@@ -42,7 +42,10 @@ public class WorkflowServiceHelper {
     public static <R> R getPromiseValue(Promise<R> promise) {
         try {
             return promise.getValue();
-        } catch (InvocationTargetException | InterruptedException e) {
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new RuntimeException("Promise execution failed", e);
+        } catch (InvocationTargetException e) {
             throw new RuntimeException("Promise execution failed", e);
         }
     }

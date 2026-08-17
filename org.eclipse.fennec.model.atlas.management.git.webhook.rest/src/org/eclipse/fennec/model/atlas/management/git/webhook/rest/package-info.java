@@ -23,7 +23,6 @@
  * reconcile poll) consumes only the neutral type, so it never learns which host
  * a change came from.
  */
-@org.osgi.annotation.bundle.Export
 @org.eclipse.fennec.codec.rest.annotations.RequireCodecMessageBodyReaderWriter
 @org.osgi.service.jakartars.whiteboard.annotations.RequireJakartarsWhiteboard
 package org.eclipse.fennec.model.atlas.management.git.webhook.rest;

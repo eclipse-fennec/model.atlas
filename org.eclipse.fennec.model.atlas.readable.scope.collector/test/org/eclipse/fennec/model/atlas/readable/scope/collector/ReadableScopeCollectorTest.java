@@ -21,6 +21,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.eclipse.fennec.model.atlas.readable.scope.collector.impl.ReadableScopeCollectorImpl;
 import org.eclipse.fennec.model.atlas.scope.api.AtlasProperties;
 import org.eclipse.fennec.model.atlas.scope.api.ReadableScopeService;
 import org.junit.jupiter.api.BeforeEach;
@@ -53,11 +54,11 @@ public class ReadableScopeCollectorTest {
 	@Mock
 	private ReadableScopeService<?> serviceB;
 
-	private ReadableScopeCollector collector;
+	private ReadableScopeCollectorImpl collector;
 
 	@BeforeEach
 	void setUp() {
-		collector = new ReadableScopeCollector();
+		collector = new ReadableScopeCollectorImpl();
 	}
 
 	private static Map<String, Object> props(String atlasScope) {

@@ -17,11 +17,12 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 import org.eclipse.emf.ecore.resource.ResourceSet;
+import org.eclipse.fennec.emf.osgi.ResourceSetFactory;
 import org.eclipse.fennec.model.atlas.workflow.ResourceSetCollector;
 import org.osgi.service.component.ComponentServiceObjects;
 
 /**
- * High-priority test override of {@link ResourceSetCollector}. The test
+ * High-priority test implementation of {@link ResourceSetCollector}. The test
  * harness instantiates it directly and registers it as an OSGi service via
  * {@code BundleContext.registerService} with {@code service.ranking = MAX_VALUE}
  * so the production {@code ScopedResourceSetProvider}'s DYNAMIC/GREEDY
@@ -36,12 +37,11 @@ import org.osgi.service.component.ComponentServiceObjects;
  * runblacklist on this bundle used to work around. With manual registration,
  * the manifest stays clean.
  *
- * <p>Because the parent class's {@code @Reference} bind methods are
- * processed by DS only on the declared component (which this class is not),
- * the inherited tracking maps stay empty and only entries registered through
- * {@link #register(String, String, ComponentServiceObjects)} are visible.
+ * <p>Only entries registered through
+ * {@link #register(String, String, ComponentServiceObjects)} are visible; there
+ * is no service tracking behind this double.
  */
-public class TestResourceSetCollector extends ResourceSetCollector {
+public class TestResourceSetCollector implements ResourceSetCollector {
 
 	private final Map<String, ComponentServiceObjects<ResourceSet>> entries = new ConcurrentHashMap<>();
 
@@ -59,6 +59,15 @@ public class TestResourceSetCollector extends ResourceSetCollector {
 			return null;
 		}
 		return entries.get(key(scopeName, stageName));
+	}
+
+	/**
+	 * The per-request injection path under test resolves only
+	 * {@link ComponentServiceObjects}, so no factory is ever handed out.
+	 */
+	@Override
+	public ResourceSetFactory getResourceSetFactory(String scopeName, String stageName) {
+		return null;
 	}
 
 	private static String key(String scope, String stage) {

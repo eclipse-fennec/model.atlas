@@ -22,5 +22,3 @@ Bundle-Description: Git-based, read-only storage implementation for workflow man
 	org.gecko.jgit;version=latest,\
 	org.eclipse.jgit;version=latest,\
 	org.eclipse.fennec.emf.osgi.component.minimal;version=latest
-
-Bundle-Version: 1.0.0.SNAPSHOT

@@ -111,7 +111,9 @@ class GitStorageHelperTest {
 
 	private GitStorageHelper helper(Map<String, String> typeToRegistry) {
 		// null collector -> reads fall back to the management resourceSet
-		return new GitStorageHelper(resourceSet, List.of(gitService), "jena", typeToRegistry, registry, null);
+		GitStorageHelper h = new GitStorageHelper(resourceSet, List.of(gitService), "jena", typeToRegistry, registry, null);
+		h.prime();
+		return h;
 	}
 
 	@Test
@@ -207,6 +209,7 @@ class GitStorageHelperTest {
 		// null collector: parses against the management resourceSet, which here has the Widget package.
 		try(GitStorageHelper gsh = new GitStorageHelper(resourceSet, List.of(gs), "jena",
 				Map.of(EPACKAGE_TYPE, "schema", EOBJECT_TYPE, "object"), registry, null)) {
+			gsh.prime();
 			ArgumentCaptor<ObjectMetadata> captor = ArgumentCaptor.forClass(ObjectMetadata.class);
 			verify(registry).updateCache(captor.capture());
 			ObjectMetadata md = captor.getValue();
@@ -224,6 +227,7 @@ class GitStorageHelperTest {
 		// No EObject entry: an instance whose exact type is unmapped is ignored,
 		// never routed to a hardcoded default.
 		try(GitStorageHelper gsh = new GitStorageHelper(resourceSet, List.of(gs), "jena", Map.of(EPACKAGE_TYPE, "schema"), registry, null)) {
+			gsh.prime();
 			verify(registry, never()).updateCache(any());
 		}
 	}
@@ -285,6 +289,7 @@ class GitStorageHelperTest {
 
 		try(GitStorageHelper h = new GitStorageHelper(resourceSet, List.of(widgetGitService()), "jena",
 				Map.of(EOBJECT_TYPE, "object"), registry, collector)) {
+			h.prime();
 			// Cold start: no per-stage RS, management RS lacks the package -> skipped.
 			verify(registry, never()).updateCache(any());
 
@@ -423,7 +428,8 @@ class GitStorageHelperTest {
 
 		try(GitStorageHelper h = new GitStorageHelper(resourceSet, List.of(main, release), "jena",
 				Map.of(EPACKAGE_TYPE, "schema"), registry, null)) {
-			verify(registry, times(2)).updateCache(any()); // one per branch at construction
+			h.prime();
+			verify(registry, times(2)).updateCache(any()); // one per branch at priming
 
 			h.reconcileAll();
 
@@ -437,6 +443,15 @@ class GitStorageHelperTest {
 			assertEquals(List.of("jena/main/" + ECORE_PATH), h.listObjectIds("jena", "schema", "main"));
 			assertEquals(List.of("jena/release/" + ECORE_PATH), h.listObjectIds("jena", "schema", "release"));
 		}
-		
+
+	}
+
+	// --- lifecycle -----------------------------------------------------------
+
+	@Test
+	void close_evictsDerivedEntriesFromSharedRegistryCache() throws Exception {
+		GitStorageHelper h = helper(Map.of(EPACKAGE_TYPE, "schema"));
+		h.close();
+		verify(registry).removeFromCache("jena/main/" + ECORE_PATH);
 	}
 }

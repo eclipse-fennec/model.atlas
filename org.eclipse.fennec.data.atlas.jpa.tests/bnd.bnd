@@ -18,7 +18,6 @@ Private-Package: \
 	org.eclipse.fennec.data.atlas.jpa.tests,\
 	org.eclipse.fennec.data.atlas.jpa.tests.helper
 
-Bundle-Version: 1.0.0.SNAPSHOT
 
 -includeresource: \
 	data/=data/

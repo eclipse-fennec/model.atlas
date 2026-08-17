@@ -116,22 +116,11 @@ public class EcoreMessageBodyHandler extends AbstractEPackageMessageBodyHandler 
         options.put(XMLResource.OPTION_LAX_FEATURE_PROCESSING, Boolean.TRUE);
         options.put(XMLResource.OPTION_RECORD_UNKNOWN_FEATURE, Boolean.TRUE);
 
-        // Load the XMI content
-        resource.load(entityStream, options);
-
-        // Check for loading errors
-        if (!resource.getErrors().isEmpty()) {
-            StringBuilder errorMsg = new StringBuilder("XMI loading errors: ");
-            for (Resource.Diagnostic error : resource.getErrors()) {
-                errorMsg.append(error.getMessage()).append("; ");
-            }
-            logger.log(Level.SEVERE, errorMsg.toString());
-            throw new IOException("XMI loading failed: " + errorMsg.toString());
-        }
-
-        if (resource.getContents().isEmpty()) {
-            throw new IOException("No content found in XMI resource");
-        }
+        // Load the XMI content. A payload this reader cannot turn into a model is the
+        // client's mistake, so it is a 400 — not an IOException, which would blame the
+        // server for the client's document. The three sibling schema readers answer the
+        // same way, through this same check.
+        loadPayload(resource, entityStream, options, "XMI");
 
         EObject rootObject = resource.getContents().get(0);
         logger.log(Level.INFO, "Successfully loaded EObject: {0}", rootObject.getClass().getSimpleName());

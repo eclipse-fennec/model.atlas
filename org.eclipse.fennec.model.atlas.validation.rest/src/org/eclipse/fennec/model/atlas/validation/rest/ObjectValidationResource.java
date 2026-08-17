@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright (c) 2012 - 2026 Data In Motion and others.
  * All rights reserved.
  *
@@ -9,7 +9,7 @@
  * SPDX-License-Identifier: EPL-2.0
  *
  * Contributors:
- *     Data In Motion - initial API and implementation
+ *      Data In Motion - initial API and implementation
  */
 package org.eclipse.fennec.model.atlas.validation.rest;
 
@@ -52,6 +52,8 @@ import jakarta.ws.rs.core.HttpHeaders;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.core.Response.Status;
+import org.eclipse.fennec.codec.constants.CodecOptions;
+import org.eclipse.fennec.codec.rest.annotations.ResourceOption;
 
 /**
  * @author ilenia
@@ -100,6 +102,7 @@ public class ObjectValidationResource {
 					content = @Content(schema = @Schema(implementation = org.eclipse.fennec.model.atlas.validation.model.cocl.Diagnostic.class))),
 			@ApiResponse(responseCode = "415", description = "Unsupported media type"),
 			@ApiResponse(responseCode = "500", description = "Internal server error") })
+	@ResourceOption(key = CodecOptions.CODEC_ID_KEY_MODE, value = "FEATURE_ONLY")
 	public Response validate(
 			@RequestBody(description = "The object to validate", required = true, content = @Content(schema = @Schema(implementation = EObject.class))) EObject eObject) {
 		try {
@@ -129,6 +132,7 @@ public class ObjectValidationResource {
 			@ApiResponse(responseCode = "415", description = "Unsupported media type"),
 			@ApiResponse(responseCode = "404", description = "OCLConstraintSet id was not found in C-OCL registry or OCLConstraintSet cannot handle the provided EObject"),
 			@ApiResponse(responseCode = "500", description = "Internal server error") })
+	@ResourceOption(key = CodecOptions.CODEC_ID_KEY_MODE, value = "FEATURE_ONLY")
 	public Response validateByOCLId(
 			@PathParam("oclId") String oclId,
 			@RequestBody(description = "The object to validate", required = true, content = @Content(schema = @Schema(implementation = EObject.class))) EObject eObject) {
@@ -159,6 +163,7 @@ public class ObjectValidationResource {
 			@ApiResponse(responseCode = "400", description = "If no EObject or more than one EObject has to be validated or if the provided OCLConstraintSet cannot handle the provided EObject or if one or more feature in the request are not in the EObject EClass"),
 			@ApiResponse(responseCode = "404", description = "If the scope or COCL registry is not found"),
 			@ApiResponse(responseCode = "500", description = "Internal server error") })
+	@ResourceOption(key = CodecOptions.CODEC_ID_KEY_MODE, value = "FEATURE_ONLY")
 	public Response derive(
 			@Parameter(description = "The C-OCL id where to compute the derived expression from", required = false)
 			@QueryParam("oclId") String oclId,
@@ -191,6 +196,7 @@ public class ObjectValidationResource {
 			@ApiResponse(responseCode = "400", description = "No object to validate is provided or no matching EOperation in the object EClass is found"),
 			@ApiResponse(responseCode = "415", description = "Unsupported media type"),
 			@ApiResponse(responseCode = "500", description = "Internal server error") })
+	@ResourceOption(key = CodecOptions.CODEC_ID_KEY_MODE, value = "FEATURE_ONLY")
 	public Response compute(
 			@RequestBody(description = "The OperationValidationRequest", required = true,
 			content = @Content(schema = @Schema(implementation = OperationValidationRequest.class))) OperationValidationRequest validationRequest) {

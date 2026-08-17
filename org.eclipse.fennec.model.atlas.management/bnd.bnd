@@ -29,8 +29,7 @@ src=${^src},src-gen,src-gen-api
 
 # If this is not done with a instruction namespace, bnd would think you like
 # to take full control over whats exported and imported and will ignore @Export
-# Bundle Annotations		
+# Bundle Annotations
 -includeresource.model: model=model
 
-Bundle-Version: 1.0.0.SNAPSHOT
 

@@ -24,6 +24,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.logging.Level;
 
 import org.eclipse.emf.ecore.EObject;
 import org.eclipse.emf.ecore.EPackage;
@@ -207,21 +208,47 @@ public class EObjectGitStorageService extends AbstractEObjectStorageService
 		this.scope = config.scope();
 		this.storageTypeLabel = config.storage_type();
 		this.typeToRegistry = parseTypeToRegistry(config.type_registry_map());
-		activateStorageService();
-		LOGGER.info("Git storage service activated: scope=" + scope + ", branches="
-				+ gitServices.size() + ", type-registry entries=" + typeToRegistry.size());
-
 		this.rederiveExecutor = Executors.newSingleThreadExecutor(r -> {
 			Thread t = new Thread(r, "git-rederive-" + scope);
 			t.setDaemon(true);
 			return t;
 		});
+		try {
+			activateStorageService();
+		} catch (Exception e) {
+			// DS never calls deactivate() when activate() throws — undo ourselves.
+			rederiveExecutor.shutdownNow();
+			rederiveExecutor = null;
+			throw e;
+		}
+		LOGGER.info("Git storage service activated: scope=" + scope + ", branches="
+				+ gitServices.size() + ", type-registry entries=" + typeToRegistry.size());
+
+		// The initial remote fetch + full-repo derivation runs on the re-derive
+		// worker, never on the SCR thread: the STATIC/GREEDY gitservice reference
+		// re-triggers activation on every branch-set change, and a hung remote must
+		// not stall it. Reads simply see an empty store until priming completes.
+		GitStorageHelper helper = this.gitHelper;
+		rederiveExecutor.execute(() -> {
+			try {
+				helper.prime();
+				// The workflow's cold-start replay may have run while the store was
+				// still empty — request an ENTER replay now that content is derived.
+				publishResync(null, List.of());
+			} catch (Exception e) {
+				LOGGER.log(Level.WARNING, "Initial git refresh/derivation failed for scope " + scope, e);
+			}
+		});
+
 		this.ePackageTracker = new ServiceTracker<>(bundleContext, EPackage.class,
 				new ServiceTrackerCustomizer<>() {
 					@Override
 					public EPackage addingService(ServiceReference<EPackage> reference) {
 						scheduleRederive();
-						return bundleContext.getService(reference);
+						// Only the notification matters here; returning null keeps the
+						// service untracked, so no EPackage in the framework gets
+						// instantiated or pinned by a use count on our behalf.
+						return null;
 					}
 
 					@Override
@@ -231,7 +258,7 @@ public class EObjectGitStorageService extends AbstractEObjectStorageService
 
 					@Override
 					public void removedService(ServiceReference<EPackage> reference, EPackage service) {
-						bundleContext.ungetService(reference);
+						// Unreachable: addingService returns null, so nothing is tracked.
 					}
 				});
 		this.ePackageTracker.open();
@@ -289,7 +316,7 @@ public class EObjectGitStorageService extends AbstractEObjectStorageService
 			try {
 				helper.reconcileAll();
 			} catch (Exception e) {
-				LOGGER.warning("Reconcile poll pass failed for scope " + scope + ": " + e.getMessage());
+				LOGGER.log(Level.WARNING, "Reconcile poll pass failed for scope " + scope, e);
 			}
 		}, intervalSeconds, intervalSeconds, TimeUnit.SECONDS);
 		LOGGER.info("Reconcile poll started for scope " + scope + " every " + intervalSeconds + "s");
@@ -340,7 +367,7 @@ public class EObjectGitStorageService extends AbstractEObjectStorageService
 			try {
 				helper.reconcile(branch);
 			} catch (Exception e) {
-				LOGGER.warning("Reconcile after webhook failed for branch " + branch + ": " + e.getMessage());
+				LOGGER.log(Level.WARNING, "Reconcile after webhook failed for branch " + branch, e);
 			}
 		});
 	}
@@ -395,7 +422,7 @@ public class EObjectGitStorageService extends AbstractEObjectStorageService
 				try {
 					gitHelper.rederive();
 				} catch (Exception e) {
-					LOGGER.warning("Git re-derivation pass failed: " + e.getMessage());
+					LOGGER.log(Level.WARNING, "Git re-derivation pass failed", e);
 				}
 			});
 		}
@@ -441,11 +468,12 @@ public class EObjectGitStorageService extends AbstractEObjectStorageService
 	}
 
 	/**
-	 * Publishes a {@link RegistryResync} event after a reconcile that moved a branch tip.
-	 * Carries the scope (for the ENTER replay that (re)registers present/changed schemas) plus
-	 * the reconciled {@code stage} and any {@code removedObjectIds} (schemas the push deleted,
-	 * for the EXIT that unregisters them — D8-3). Failures are logged, not propagated (the read
-	 * path stays available).
+	 * Publishes a {@link RegistryResync} event after a reconcile that moved a branch tip —
+	 * or, with a {@code null} stage, after the initial priming pass. Carries the scope (for
+	 * the ENTER replay that (re)registers present/changed schemas) plus the reconciled
+	 * {@code stage} and any {@code removedObjectIds} (schemas the push deleted, for the EXIT
+	 * that unregisters them — D8-3). Failures are logged, not propagated (the read path
+	 * stays available).
 	 */
 	private void publishResync(String stage, List<String> removedObjectIds) {
 		TypedEventBus bus = eventBus;
@@ -455,16 +483,19 @@ public class EObjectGitStorageService extends AbstractEObjectStorageService
 		try {
 			Map<String, Object> payload = new LinkedHashMap<>();
 			payload.put(RegistryResync.KEY_SCOPE, scope);
-			payload.put(RegistryResync.KEY_STAGE, stage);
+			if (stage != null) {
+				payload.put(RegistryResync.KEY_STAGE, stage);
+			}
 			if (removedObjectIds != null && !removedObjectIds.isEmpty()) {
 				payload.put(RegistryResync.KEY_REMOVED_OBJECT_IDS, removedObjectIds.toArray(new String[0]));
 			}
 			bus.deliverUntyped(RegistryResync.TOPIC, payload);
-			LOGGER.info("Published registry resync for scope " + scope + " stage " + stage
+			LOGGER.info("Published registry resync for scope " + scope
+					+ (stage == null ? " (initial priming)" : " stage " + stage)
 					+ (removedObjectIds == null || removedObjectIds.isEmpty() ? ""
 							: " (removed " + removedObjectIds.size() + " schema(s))"));
 		} catch (Exception e) {
-			LOGGER.warning("Failed to publish registry resync for scope " + scope + ": " + e.getMessage());
+			LOGGER.log(Level.WARNING, "Failed to publish registry resync for scope " + scope, e);
 		}
 	}
 

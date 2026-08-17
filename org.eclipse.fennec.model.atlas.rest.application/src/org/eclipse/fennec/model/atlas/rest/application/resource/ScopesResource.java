@@ -44,6 +44,8 @@ import jakarta.ws.rs.core.EntityTag;
 import jakarta.ws.rs.core.HttpHeaders;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
+import org.eclipse.fennec.codec.constants.CodecOptions;
+import org.eclipse.fennec.codec.rest.annotations.ResourceOption;
 
 /**
  * REST API for Scope discovery and management. Provides endpoints to list and
@@ -75,6 +77,7 @@ public class ScopesResource {
     @Produces({ MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML })
     @Operation(summary = "List all scopes", description = "Get a list of all configured scopes in the Model Atlas", responses = {
             @ApiResponse(responseCode = "200", description = "Scopes retrieved successfully", content = @Content(mediaType = MediaType.APPLICATION_JSON, schema = @Schema(implementation = ScopeListResponse.class))), })
+    @ResourceOption(key = CodecOptions.CODEC_ID_KEY_MODE, value = "FEATURE_ONLY")
     public Response listScopes() {
         List<Scope> scopes = scopeCollector.getAllScopes();
         ScopeListResponse container = RestFactory.eINSTANCE.createScopeListResponse();
@@ -94,6 +97,7 @@ public class ScopesResource {
     @Operation(summary = "Get workflow scope metadata", description = "Retrieve metadata for a specific workflow scope by name", responses = {
             @ApiResponse(responseCode = "200", description = "Scope found", content = @Content(mediaType = MediaType.APPLICATION_JSON, schema = @Schema(implementation = Scope.class))),
             @ApiResponse(responseCode = "404", description = "Scope not found"), })
+    @ResourceOption(key = CodecOptions.CODEC_ID_KEY_MODE, value = "FEATURE_ONLY")
     public Response getScopeByName(
             @Parameter(description = "The name of the workflow scope", required = true) @PathParam("scopeName") String scopeName) {
         Scope scope = scopeCollector.getScopeByName(scopeName);
@@ -124,6 +128,7 @@ public class ScopesResource {
                     @ApiResponse(responseCode = "200", description = "Aggregate validator returned; change hints present when a stale If-None-Match baseline is known"),
                     @ApiResponse(responseCode = "304", description = "Scope unchanged since the supplied If-None-Match"),
                     @ApiResponse(responseCode = "404", description = "Scope not found") })
+    @ResourceOption(key = CodecOptions.CODEC_ID_KEY_MODE, value = "FEATURE_ONLY")
     public Response scopeAggregate(
             @Parameter(description = "The name of the workflow scope", required = true) @PathParam("scopeName") String scopeName,
             @Parameter(description = "Previously seen aggregate ETag") @HeaderParam(HttpHeaders.IF_NONE_MATCH) String ifNoneMatch) {

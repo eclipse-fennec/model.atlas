@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright (c) 2012 - 2026 Data In Motion and others.
  * All rights reserved.
  *
@@ -9,7 +9,7 @@
  * SPDX-License-Identifier: EPL-2.0
  *
  * Contributors:
- *     Data In Motion - initial API and implementation
+ *      Data In Motion - initial API and implementation
  */
 package org.eclipse.fennec.model.atlas.validation.impl;
 
@@ -397,7 +397,7 @@ public class ValidationServiceImpl implements ValidationService {
 			OclExpression expr = oclEngine.parse(constraint.getExpression(), source);
 			return oclEngine.evaluateWithDiagnostics(expr, OclContext.of(target), OclEvaluationOptions.lenient());
 		} catch (OclParseException e) {
-			throw new IllegalStateException(String.format("Failed to parse OCL expression '%s': ", constraint.getExpression(), e.getMessage()), e);
+			throw new IllegalStateException(String.format("Failed to parse OCL expression '%s': %s", constraint.getExpression(), e.getMessage()), e);
 		}
 	}
 	
@@ -407,7 +407,7 @@ public class ValidationServiceImpl implements ValidationService {
 			OclExpression expr = oclEngine.parse(constraint.getExpression(), source);
 			return oclEngine.evaluateWithDiagnostics(expr, OclContext.of(target, variables), OclEvaluationOptions.lenient());
 		} catch (OclParseException e) {
-			throw new IllegalStateException(String.format("Failed to parse OCL expression '%s': ", constraint.getExpression(), e.getMessage()), e);
+			throw new IllegalStateException(String.format("Failed to parse OCL expression '%s': %s", constraint.getExpression(), e.getMessage()), e);
 		}
 		
 	}

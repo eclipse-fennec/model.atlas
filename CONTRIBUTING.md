@@ -43,9 +43,9 @@ Background reading:
   first — your problem may already be reported.
 * When filing a new issue, include the Model Atlas image variant
   (`apicurio` / `file`), image tag, Java version, and a minimal reproducer.
-* Security issues must **not** be reported as public GitHub issues. Send
-  them privately to the project leads or to
-  [security@eclipse.org](mailto:security@eclipse.org).
+* Security issues must **not** be reported as public GitHub issues. Please
+  follow the coordinated-disclosure process described in
+  [SECURITY.md](SECURITY.md).
 
 ## Contributing code
 

@@ -1,0 +1,50 @@
+name: License Check (IP Dash)
+
+# Automatic triggers (push/pull_request) are disabled until the restricted
+# dependencies have passed IP review (150 as of 2026-08-07; see finding F11 in
+# docs/reviews/quality-review-2026-08-05.md). With that baseline the check is
+# structurally red on every push and pull request and only adds noise — the
+# script's exit code *is* the number of restricted artifacts, so it cannot go
+# green before the review is done. Same treatment as fennec-codec.
+# Run manually via workflow_dispatch when preparing a release or to see the
+# current count.
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  dash:
+    name: Eclipse Dash license check
+    runs-on: ubuntu-latest
+    # TODO: remove once the restricted dependencies have passed IP review
+    # (tools/dash-licenses.sh --review --project technology.fennec, needs a
+    # committer GitLab token). Until then the check runs informationally and
+    # must not fail the build — the step output and the uploaded DEPENDENCIES
+    # artifact still carry the result.
+    continue-on-error: true
+    steps:
+      - name: Git Checkout
+        uses: actions/checkout@v4
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: "temurin"
+          java-version: 21
+      - name: Generate DEPENDENCIES and check licenses
+        # Exits non-zero (number of "restricted" artifacts) when any dependency
+        # has not been vetted yet, which fails the job. Regenerate and review
+        # locally with: tools/dash-licenses.sh [--review]
+        run: bash tools/dash-licenses.sh
+      - name: Upload DEPENDENCIES
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: DEPENDENCIES
+          path: DEPENDENCIES
+          if-no-files-found: warn

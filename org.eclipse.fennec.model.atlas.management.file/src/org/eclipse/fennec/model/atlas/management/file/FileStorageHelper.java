@@ -51,7 +51,7 @@ public class FileStorageHelper extends AbstractStorageHelper {
         try {
             updateRegistryCache();
         } catch (IOException e) {
-            throw new IllegalStateException("IOException while updating registry with existing objects");
+            throw new IllegalStateException("IOException while updating registry with existing objects", e);
         }
     }
 

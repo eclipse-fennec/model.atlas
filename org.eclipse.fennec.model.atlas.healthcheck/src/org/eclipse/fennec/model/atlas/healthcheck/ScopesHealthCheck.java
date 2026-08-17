@@ -27,6 +27,8 @@ import org.eclipse.fennec.model.atlas.scope.api.StageInfo;
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
 import org.osgi.service.component.annotations.ReferenceCardinality;
+import org.osgi.service.component.annotations.ReferencePolicy;
+import org.osgi.service.component.annotations.ReferencePolicyOption;
 
 /**
  * Health check that verifies available scopes.
@@ -37,8 +39,14 @@ import org.osgi.service.component.annotations.ReferenceCardinality;
         HealthCheck.TAGS + "=atlas,readiness" })
 public class ScopesHealthCheck implements HealthCheck {
 
-    @Reference(cardinality = ReferenceCardinality.MULTIPLE)
-    private List<ScopeService<?>> scopesServices;
+    /**
+     * Scopes are configuration-driven, so ScopeServices appear and disappear while
+     * this check is active. The reference must therefore be DYNAMIC and GREEDY: on
+     * the DS defaults (static, reluctant) a ScopeService published after activation
+     * is never bound, and readiness keeps answering from the set seen at activation.
+     */
+    @Reference(cardinality = ReferenceCardinality.MULTIPLE, policy = ReferencePolicy.DYNAMIC, policyOption = ReferencePolicyOption.GREEDY)
+    private volatile List<ScopeService<?>> scopesServices;
 
     @Override
     public Result execute() {
@@ -57,7 +65,7 @@ public class ScopesHealthCheck implements HealthCheck {
                 	log.info("scope: {} with Registry: {} Description: {} and Stages : {} available", scope.getName(), r.getName(), r.getDescription(), stages);
                     });
                 } else {
-                    log.warn("No Regsitries available");
+                    log.warn("No Registries available");
                 }
             }
         }

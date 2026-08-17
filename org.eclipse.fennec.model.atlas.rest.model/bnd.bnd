@@ -16,5 +16,4 @@
 # Include model files in bundle
 -includeresource.model: model=model
 
-Bundle-Version: 1.0.0.SNAPSHOT
 -workingset: atlas

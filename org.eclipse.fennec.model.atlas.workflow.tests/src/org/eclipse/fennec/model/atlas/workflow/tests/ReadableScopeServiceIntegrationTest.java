@@ -14,8 +14,11 @@
 package org.eclipse.fennec.model.atlas.workflow.tests;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.lang.reflect.InvocationTargetException;
@@ -27,6 +30,7 @@ import org.eclipse.fennec.emf.osgi.annotation.require.RequireEMF;
 import org.eclipse.fennec.model.atlas.mgmt.management.ManagementFactory;
 import org.eclipse.fennec.model.atlas.mgmt.management.ObjectMetadata;
 import org.eclipse.fennec.model.atlas.readable.scope.collector.ReadableScopeCollector;
+import org.eclipse.fennec.model.atlas.scope.api.ReadableRegistryView;
 import org.eclipse.fennec.model.atlas.scope.api.ReadableScopeService;
 import org.eclipse.fennec.model.atlas.scope.api.RegistryInfo;
 import org.eclipse.fennec.model.atlas.scope.api.RegistryType;
@@ -153,6 +157,86 @@ public class ReadableScopeServiceIntegrationTest {
 
 			Optional<EPackage> missing = scopeService.get(SCHEMA_REGISTRY, "does-not-exist");
 			assertTrue(missing.isEmpty(), "Missing object must yield Optional.empty()");
+		}
+	}
+
+	@Nested
+	@DisplayName("Registry View Tests")
+	class RegistryViewTests {
+
+		@Test
+		@DisplayName("registryView(registry) reads the final stage and reports itself as unbound")
+		@ScopeServiceSetup
+		void shouldReadFinalStageThroughView(
+				@InjectService(cardinality = 0, filter = SCOPE_FILTER) ServiceAware<ScopeService> scopeAware)
+				throws InterruptedException, InvocationTargetException {
+
+			ScopeService<EPackage> scopeService = scopeAware.waitForService(5000);
+			assertNotNull(scopeService);
+			upload(scopeService, FINAL_STAGE, "view-final", "http://test/view/final");
+
+			ReadableRegistryView<EPackage> view = scopeService.registryView(SCHEMA_REGISTRY);
+
+			assertEquals(TestAnnotations.TEST_SCOPE_NAME, view.getScopeName());
+			assertEquals(SCHEMA_REGISTRY, view.getRegistryName());
+			assertNull(view.getStageName(), "A final-stage view is bound to no stage");
+
+			Optional<EPackage> resolved = view.get("view-final");
+			assertTrue(resolved.isPresent(), "The final-stage object must resolve through the view");
+			assertEquals("http://test/view/final", resolved.get().getNsURI());
+			assertTrue(view.listObjectIds().contains("view-final"));
+			assertTrue(view.listAll().stream().anyMatch(p -> "http://test/view/final".equals(p.getNsURI())));
+			assertTrue(view.stream().anyMatch(p -> "http://test/view/final".equals(p.getNsURI())));
+			assertTrue(view.get("does-not-exist").isEmpty(), "A missing object yields Optional.empty()");
+		}
+
+		@Test
+		@DisplayName("registryView(registry, stage) is bound to that stage and does not see another one's objects")
+		@ScopeServiceSetup
+		void shouldReadTheRequestedStageThroughView(
+				@InjectService(cardinality = 0, filter = SCOPE_FILTER) ServiceAware<ScopeService> scopeAware)
+				throws InterruptedException, InvocationTargetException {
+
+			ScopeService<EPackage> scopeService = scopeAware.waitForService(5000);
+			assertNotNull(scopeService);
+			upload(scopeService, CommonTestAnnotations.STAGE_DRAFT, "view-draft", "http://test/view/draft");
+
+			ReadableRegistryView<EPackage> draftView = scopeService.registryView(SCHEMA_REGISTRY,
+					CommonTestAnnotations.STAGE_DRAFT);
+			assertEquals(CommonTestAnnotations.STAGE_DRAFT, draftView.getStageName());
+			assertTrue(draftView.get("view-draft").isPresent(), "The draft object must resolve in the draft view");
+			assertTrue(draftView.listObjectIds().contains("view-draft"));
+
+			ReadableRegistryView<EPackage> releaseView = scopeService.registryView(SCHEMA_REGISTRY, FINAL_STAGE);
+			assertEquals(FINAL_STAGE, releaseView.getStageName());
+			assertFalse(releaseView.listObjectIds().contains("view-draft"),
+					"A draft object must not be listed by the release view");
+		}
+
+		@Test
+		@DisplayName("registryView rejects an unknown registry and null arguments")
+		@ScopeServiceSetup
+		void shouldRejectBadArguments(
+				@InjectService(cardinality = 0, filter = SCOPE_FILTER) ServiceAware<ScopeService> scopeAware)
+				throws InterruptedException {
+
+			ScopeService<EPackage> scopeService = scopeAware.waitForService(5000);
+			assertNotNull(scopeService);
+
+			assertThrows(IllegalArgumentException.class, () -> scopeService.registryView("no-such-registry"));
+			assertThrows(NullPointerException.class, () -> scopeService.registryView(null));
+			assertThrows(NullPointerException.class, () -> scopeService.registryView(SCHEMA_REGISTRY, null));
+		}
+
+		private void upload(ScopeService<EPackage> scopeService, String stage, String objectId, String nsUri)
+				throws InvocationTargetException, InterruptedException {
+			EPackage pkg = EcoreFactory.eINSTANCE.createEPackage();
+			pkg.setName(objectId);
+			pkg.setNsURI(nsUri);
+			pkg.setNsPrefix("vw");
+			ObjectMetadata meta = ManagementFactory.eINSTANCE.createObjectMetadata();
+			meta.setObjectId(objectId);
+			scopeService.uploadToStageForRegistry(SCHEMA_REGISTRY, stage, pkg, meta).getValue();
 		}
 	}
 

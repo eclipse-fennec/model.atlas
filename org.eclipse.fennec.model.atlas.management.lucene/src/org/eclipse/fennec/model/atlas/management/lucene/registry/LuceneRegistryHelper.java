@@ -49,8 +49,10 @@ import org.apache.lucene.search.ScoreDoc;
 import org.apache.lucene.search.SearcherManager;
 import org.apache.lucene.search.TermQuery;
 import org.apache.lucene.search.TopDocs;
+import org.apache.lucene.search.WildcardQuery;
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.FSDirectory;
+import org.apache.lucene.util.QueryBuilder;
 import org.eclipse.emf.common.util.URI;
 import org.eclipse.emf.ecore.EObject;
 import org.eclipse.emf.ecore.InternalEObject;
@@ -144,6 +146,19 @@ public class LuceneRegistryHelper extends AbstractRegistryHelper {
     public static final String FIELD_UPLOAD_USER_TEXT = "uploadUser_text";
     public static final String FIELD_REVIEW_USER_TEXT = "reviewUser_text";
     public static final String FIELD_LAST_CHANGE_USER_TEXT = "lastChangeUser_text";
+
+    /** Custom property under which storage services record their backend. */
+    public static final String PROPERTY_STORAGE_BACKEND = "storage.backend";
+
+    /** Fields indexed as {@link StringField}: they are matched as one exact term. */
+    private static final Set<String> EXACT_MATCH_FIELDS = Set.of(FIELD_UPLOAD_USER, FIELD_REVIEW_USER,
+            FIELD_LAST_CHANGE_USER, FIELD_CONTENT_HASH, FIELD_GENERATION_TRIGGER_FINGERPRINT,
+            FIELD_GOVERNANCE_DOCUMENTATION_ID, FIELD_STATUS, FIELD_OBJECT_REF, FIELD_OBJECT_METADATA_ID, FIELD_STAGE,
+            FIELD_SCOPE, FIELD_REGISTRY, FIELD_FINGERPRINT);
+
+    /** Analyzed twins of the user fields, for the wildcard/fuzzy searches tests use. */
+    private static final Set<String> ANALYZED_USER_FIELDS = Set.of(FIELD_UPLOAD_USER_TEXT, FIELD_REVIEW_USER_TEXT,
+            FIELD_LAST_CHANGE_USER_TEXT);
 
     private final Path workspacePath;
     private final String indexSubdirectory;
@@ -274,56 +289,134 @@ public class LuceneRegistryHelper extends AbstractRegistryHelper {
         }
     }
 
+    /**
+     * Searches the index with a Lucene query string.
+     *
+     * <p>
+     * A query this index cannot parse is rejected with an
+     * {@link IllegalArgumentException} rather than answered: a search that cannot honour
+     * its filter must not fall back to matching every document, because the caller
+     * cannot tell that apart from a genuine match-all — a scoped search would silently
+     * return the objects of every other scope.
+     * </p>
+     *
+     * <p>
+     * Callers that filter on values rather than on a query written by hand should use
+     * the {@code findBy...} methods below: those build the query from the values, so a
+     * name or a scope containing Lucene syntax stays data.
+     * </p>
+     *
+     * @param query      the Lucene query string
+     * @param maxResults maximum number of results to return
+     * @return the ids of the matching objects
+     * @throws IllegalArgumentException if the query cannot be parsed
+     */
     @Override
     public List<String> searchObjectIds(String query, int maxResults) throws IOException {
-        indexLock.readLock().lock();
-        try {
-            IndexSearcher searcher = searcherManager.acquire();
-            try {
-                Query luceneQuery = parseQuery(query);
-                TopDocs topDocs = searcher.search(luceneQuery, maxResults);
-
-                List<String> results = new ArrayList<>();
-                for (ScoreDoc scoreDoc : topDocs.scoreDocs) {
-                    Document doc = searcher.storedFields().document(scoreDoc.doc);
-                    results.add(doc.get(FIELD_OBJECT_ID));
-                }
-
-                LOGGER.fine("Search query '" + query + "' returned " + results.size() + " results");
-
-                return results;
-
-            } finally {
-                searcherManager.release(searcher);
-            }
-        } finally {
-            indexLock.readLock().unlock();
-        }
+        return search(parseQuery(query), maxResults, query);
     }
 
     @Override
     public List<String> findByStatus(ObjectStatus status) throws IOException {
-        String query = FIELD_STATUS + ":" + status.getLiteral();
-        return searchObjectIds(query, Integer.MAX_VALUE);
+        return search(exactly(FIELD_STATUS, status.getLiteral()), Integer.MAX_VALUE);
     }
 
     @Override
     public List<String> findByObjectName(String objectName) throws IOException {
-        String query = FIELD_OBJECT_NAME + ":\"" + objectName + "\"";
-        return searchObjectIds(query, Integer.MAX_VALUE);
+        return search(objectNameQuery(objectName), Integer.MAX_VALUE);
     }
 
     @Override
     public List<String> findByStage(String stage) throws IOException {
-        String query = FIELD_STAGE + ":" + stage;
-        return searchObjectIds(query, Integer.MAX_VALUE);
+        return search(exactly(FIELD_STAGE, stage), Integer.MAX_VALUE);
     }
 
     @Override
     public Optional<String> findByObjectNameAndStage(String objectName, String role) throws IOException {
-        String query = "(" + FIELD_OBJECT_NAME + ":\"" + objectName + "\" AND " + FIELD_STAGE + ":" + role + ")";
-        List<String> results = searchObjectIds(query, 1);
+        List<String> results = search(allOf(objectNameQuery(objectName), exactly(FIELD_STAGE, role)), 1);
         return results.isEmpty() ? Optional.empty() : Optional.of(results.get(0));
+    }
+
+    /**
+     * Finds the objects of one scope in one stage.
+     *
+     * @param scope the scope
+     * @param stage the stage
+     * @return the ids of the matching objects
+     * @throws IOException if the search fails
+     */
+    public List<String> findByScopeAndStage(String scope, String stage) throws IOException {
+        return search(allOf(exactly(FIELD_SCOPE, scope), exactly(FIELD_STAGE, stage)), Integer.MAX_VALUE);
+    }
+
+    /**
+     * Finds the objects of one registry of one scope in one stage.
+     *
+     * @param scope    the scope
+     * @param registry the registry within the scope
+     * @param stage    the stage
+     * @return the ids of the matching objects
+     * @throws IOException if the search fails
+     */
+    public List<String> findByScopeRegistryAndStage(String scope, String registry, String stage) throws IOException {
+        return search(allOf(exactly(FIELD_SCOPE, scope), exactly(FIELD_REGISTRY, registry),
+                exactly(FIELD_STAGE, stage)), Integer.MAX_VALUE);
+    }
+
+    /**
+     * Finds the objects of one scope in one stage whose name matches the given pattern.
+     *
+     * @param scope       the scope
+     * @param stage       the stage
+     * @param namePattern the object name, or a pattern containing {@code *} or {@code ?}
+     * @return the ids of the matching objects
+     * @throws IOException if the search fails
+     */
+    public List<String> findByScopeStageAndName(String scope, String stage, String namePattern) throws IOException {
+        return search(allOf(exactly(FIELD_SCOPE, scope), exactly(FIELD_STAGE, stage), objectNameQuery(namePattern)),
+                Integer.MAX_VALUE);
+    }
+
+    /**
+     * Finds the objects of one registry of one scope in one stage whose name matches the
+     * given pattern.
+     *
+     * @param scope       the scope
+     * @param registry    the registry within the scope
+     * @param stage       the stage
+     * @param namePattern the object name, or a pattern containing {@code *} or {@code ?}
+     * @return the ids of the matching objects
+     * @throws IOException if the search fails
+     */
+    public List<String> findByScopeRegistryStageAndName(String scope, String registry, String stage,
+            String namePattern) throws IOException {
+        return search(allOf(exactly(FIELD_SCOPE, scope), exactly(FIELD_REGISTRY, registry),
+                exactly(FIELD_STAGE, stage), objectNameQuery(namePattern)), Integer.MAX_VALUE);
+    }
+
+    /**
+     * Finds the objects recorded as living in the given storage backend, which storage
+     * services track in the {@code storage.backend} custom property.
+     *
+     * @param backend the storage backend, e.g. {@code file}
+     * @return the ids of the matching objects
+     * @throws IOException if the search fails
+     */
+    public List<String> findByStorageBackend(String backend) throws IOException {
+        return search(propertyQuery(PROPERTY_STORAGE_BACKEND, backend), Integer.MAX_VALUE);
+    }
+
+    /**
+     * Finds the objects of one stage recorded as living in the given storage backend.
+     *
+     * @param backend the storage backend, e.g. {@code file}
+     * @param stage   the stage
+     * @return the ids of the matching objects
+     * @throws IOException if the search fails
+     */
+    public List<String> findByStorageBackendAndStage(String backend, String stage) throws IOException {
+        return search(allOf(propertyQuery(PROPERTY_STORAGE_BACKEND, backend), exactly(FIELD_STAGE, stage)),
+                Integer.MAX_VALUE);
     }
 
     @Override
@@ -648,24 +741,97 @@ public class LuceneRegistryHelper extends AbstractRegistryHelper {
     }
 
     /**
+     * Runs a query that was built from values, so it cannot fail to parse.
+     */
+    private List<String> search(Query luceneQuery, int maxResults) throws IOException {
+        return search(luceneQuery, maxResults, luceneQuery.toString());
+    }
+
+    private List<String> search(Query luceneQuery, int maxResults, String description) throws IOException {
+        indexLock.readLock().lock();
+        try {
+            IndexSearcher searcher = searcherManager.acquire();
+            try {
+                TopDocs topDocs = searcher.search(luceneQuery, maxResults);
+
+                List<String> results = new ArrayList<>();
+                for (ScoreDoc scoreDoc : topDocs.scoreDocs) {
+                    Document doc = searcher.storedFields().document(scoreDoc.doc);
+                    results.add(doc.get(FIELD_OBJECT_ID));
+                }
+
+                LOGGER.fine("Search query '" + description + "' returned " + results.size() + " results");
+
+                return results;
+
+            } finally {
+                searcherManager.release(searcher);
+            }
+        } finally {
+            indexLock.readLock().unlock();
+        }
+    }
+
+    /**
+     * Matches one exact term, for the fields indexed as {@link StringField}.
+     */
+    private static Query exactly(String field, String value) {
+        return new TermQuery(new Term(field, value));
+    }
+
+    /**
+     * Matches an object name, which is indexed analyzed: a pattern containing
+     * {@code *} or {@code ?} becomes a wildcard query over the normalized term, anything
+     * else a phrase over the analyzed value. Either way the name is only ever a value —
+     * its own punctuation is never read as query syntax.
+     */
+    private Query objectNameQuery(String namePattern) {
+        if (namePattern.indexOf('*') >= 0 || namePattern.indexOf('?') >= 0) {
+            return new WildcardQuery(new Term(FIELD_OBJECT_NAME, analyzer.normalize(FIELD_OBJECT_NAME, namePattern)));
+        }
+        return analyzed(FIELD_OBJECT_NAME, namePattern);
+    }
+
+    /**
+     * Matches a {@code key:value} pair in the analyzed {@link #FIELD_PROPERTIES} field.
+     */
+    private Query propertyQuery(String key, String value) {
+        return analyzed(FIELD_PROPERTIES, key + ":" + value);
+    }
+
+    /**
+     * Matches the analyzed value as a phrase, so that multi-token values stay one value.
+     */
+    private Query analyzed(String field, String value) {
+        Query query = new QueryBuilder(analyzer).createPhraseQuery(field, value);
+        // The analyzer can leave nothing behind (a value that is all punctuation); a term
+        // query on the raw value then matches nothing, which is the honest answer.
+        return query != null ? query : exactly(field, value);
+    }
+
+    private static Query allOf(Query... clauses) {
+        if (clauses.length == 1) {
+            return clauses[0];
+        }
+        BooleanQuery.Builder builder = new BooleanQuery.Builder();
+        for (Query clause : clauses) {
+            builder.add(clause, BooleanClause.Occur.MUST);
+        }
+        return builder.build();
+    }
+
+    /**
      * Parses a query string with field-aware handling for StringField vs TextField.
      * Supports both exact-match user fields (for MetadataQueryBuilder) and analyzed
      * user fields (for wildcard/fuzzy searches in tests).
+     *
+     * @throws IllegalArgumentException if the query cannot be parsed
      */
-    private Query parseQuery(String queryString) throws IOException {
+    private Query parseQuery(String queryString) {
         try {
-            // Set of fields that use StringField (exact match)
-            Set<String> exactMatchFields = Set.of(FIELD_UPLOAD_USER, FIELD_REVIEW_USER, FIELD_LAST_CHANGE_USER,
-                    FIELD_CONTENT_HASH, FIELD_GENERATION_TRIGGER_FINGERPRINT, FIELD_GOVERNANCE_DOCUMENTATION_ID,
-                    FIELD_STATUS, FIELD_OBJECT_REF, FIELD_OBJECT_METADATA_ID, FIELD_STAGE, FIELD_SCOPE, FIELD_REGISTRY, FIELD_FINGERPRINT);
-
-            // Set of analyzed user fields for wildcard/fuzzy searches
-            Set<String> analyzedUserFields = Set.of(FIELD_UPLOAD_USER_TEXT, FIELD_REVIEW_USER_TEXT,
-                    FIELD_LAST_CHANGE_USER_TEXT);
-
             // Check if query uses analyzed user fields (test queries)
             boolean hasAnalyzedUserField = false;
-            for (String fieldName : analyzedUserFields) {
+            for (String fieldName : ANALYZED_USER_FIELDS) {
                 if (queryString.contains(fieldName + ":")) {
                     hasAnalyzedUserField = true;
                     break;
@@ -679,7 +845,7 @@ public class LuceneRegistryHelper extends AbstractRegistryHelper {
             }
 
             // Handle exact match fields by building TermQuery manually
-            Query exactMatchQuery = buildExactMatchQuery(queryString, exactMatchFields);
+            Query exactMatchQuery = buildExactMatchQuery(queryString, EXACT_MATCH_FIELDS);
             if (exactMatchQuery != null) {
                 return exactMatchQuery;
             }
@@ -688,9 +854,9 @@ public class LuceneRegistryHelper extends AbstractRegistryHelper {
             QueryParser parser = new QueryParser(FIELD_SOURCE_CHANNEL, analyzer);
             return parser.parse(queryString);
         } catch (ParseException e) {
-            LOGGER.log(Level.WARNING, "Failed to parse query: " + queryString, e);
-            // Fallback to match all if query parsing fails
-            return new MatchAllDocsQuery();
+            // Never fall back to matching every document: the caller asked for a subset,
+            // and cannot tell a match-all answer apart from a genuine one.
+            throw new IllegalArgumentException("Cannot parse search query '" + queryString + "': " + e.getMessage(), e);
         }
     }
 

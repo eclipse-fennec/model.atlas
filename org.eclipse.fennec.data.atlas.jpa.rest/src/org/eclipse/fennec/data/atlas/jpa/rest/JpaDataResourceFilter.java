@@ -64,14 +64,14 @@ import jakarta.ws.rs.core.Response;
 public class JpaDataResourceFilter implements ContainerRequestFilter, ResourceSetProvider {
 
 	private static final Logger LOGGER = Logger.getLogger(JpaDataResourceFilter.class.getName());
-	private Map<String, ResourceSetFactory> folderToResrouceSetFactoryMap = new ConcurrentHashMap<>();
+	private Map<String, ResourceSetFactory> folderToResourceSetFactoryMap = new ConcurrentHashMap<>();
 	private Map<String, EntityManagerFactory> folderToEntityManagerFactoryMap = new ConcurrentHashMap<>();
 	private Map<String, EntityMappings> folderToEntityMappingsMap = new ConcurrentHashMap<>();
 	
 	@Reference(policy = ReferencePolicy.DYNAMIC, cardinality = ReferenceCardinality.MULTIPLE, policyOption = ReferencePolicyOption.GREEDY)
 	void bindResourceSetFactory(ResourceSetFactory resourceSetFactory, Map<String, Object> properties) {
 		if(properties.containsKey(WatcherConstants.KEY_JPA_ROOT_FOLDER)) {
-			folderToResrouceSetFactoryMap.put((String) properties.get(WatcherConstants.KEY_JPA_ROOT_FOLDER), resourceSetFactory);
+			folderToResourceSetFactoryMap.put((String) properties.get(WatcherConstants.KEY_JPA_ROOT_FOLDER), resourceSetFactory);
 		} else {
 			LOGGER.warning("Cannot bind ResourceSetFactory without jpa.root.folder property");
 		}
@@ -79,7 +79,9 @@ public class JpaDataResourceFilter implements ContainerRequestFilter, ResourceSe
 
 	void unbindResourceSetFactory(ResourceSetFactory resourceSetFactory, Map<String, Object> properties) {
 		if(properties.containsKey(WatcherConstants.KEY_JPA_ROOT_FOLDER)) {
-			folderToResrouceSetFactoryMap.remove((String) properties.get(WatcherConstants.KEY_JPA_ROOT_FOLDER));
+			// Two-arg remove: a replacement service for the same folder binds
+			// before the old one unbinds, so removing by key alone would wipe it
+			folderToResourceSetFactoryMap.remove((String) properties.get(WatcherConstants.KEY_JPA_ROOT_FOLDER), resourceSetFactory);
 		} else {
 			LOGGER.warning("Cannot unbind ResourceSetFactory without jpa.root.folder property");
 		}	
@@ -96,7 +98,7 @@ public class JpaDataResourceFilter implements ContainerRequestFilter, ResourceSe
 
 	void unbindEntityManagerFactory(EntityManagerFactory entityManagerFactory, Map<String, Object> properties) {
 		if(properties.containsKey("osgi.unit.name")) {
-			folderToEntityManagerFactoryMap.remove((String) properties.get("osgi.unit.name"));
+			folderToEntityManagerFactoryMap.remove((String) properties.get("osgi.unit.name"), entityManagerFactory);
 		} else {
 			LOGGER.warning("Cannot unbind EntityManagerFactory without osgi.unit.name property");
 		}	
@@ -113,7 +115,7 @@ public class JpaDataResourceFilter implements ContainerRequestFilter, ResourceSe
 
 	void unbindEntityMappings(EntityMappings entityMappings, Map<String, Object> properties) {
 		if(properties.containsKey(WatcherConstants.KEY_JPA_ROOT_FOLDER)) {
-			folderToEntityMappingsMap.remove((String) properties.get(WatcherConstants.KEY_JPA_ROOT_FOLDER));
+			folderToEntityMappingsMap.remove((String) properties.get(WatcherConstants.KEY_JPA_ROOT_FOLDER), entityMappings);
 		} else {
 			LOGGER.warning("Cannot unbind EntityMappings without jpa.root.folder property");
 		}	
@@ -127,7 +129,17 @@ public class JpaDataResourceFilter implements ContainerRequestFilter, ResourceSe
 	public void filter(ContainerRequestContext requestContext) throws IOException {
 		MultivaluedMap<String, String> pathParams = requestContext.getUriInfo().getPathParameters();
 		String rootFolderName = pathParams.getFirst("rootFolderName");
-		if(!folderToResrouceSetFactoryMap.containsKey(rootFolderName)) {
+		String className = pathParams.getFirst("eClassName");
+		if(rootFolderName == null || className == null) {
+			// This filter is registered whiteboard-global, so it sees requests that are
+			// none of its business — the bundle's own /hello, and anything belonging to
+			// another application matched by the same whiteboard. Without both path
+			// params there is nothing here to validate: the folder lookup would go into
+			// ConcurrentHashMap.containsKey(null), which throws, and the EClassifier
+			// check below would reject the request outright.
+			return;
+		}
+		if(!folderToResourceSetFactoryMap.containsKey(rootFolderName)) {
 			throw new WebApplicationException(
 					Response.status(Response.Status.BAD_REQUEST)
 							.entity(String.format("ResourceSetFactory for Root Folder [%s] not found.",
@@ -160,7 +172,7 @@ public class JpaDataResourceFilter implements ContainerRequestFilter, ResourceSe
 								.build());
 			}
 		}
-		ResourceSetFactory resourceSetFactory = folderToResrouceSetFactoryMap.get(rootFolderName);
+		ResourceSetFactory resourceSetFactory = folderToResourceSetFactoryMap.get(rootFolderName);
 		EPackage ePackage = resourceSetFactory.createResourceSet().getPackageRegistry().getEPackage(entityMappings.getPackage());
 		if(ePackage == null) {
 			throw new WebApplicationException(
@@ -169,11 +181,10 @@ public class JpaDataResourceFilter implements ContainerRequestFilter, ResourceSe
 								entityMappings.getPackage()))
 							.build());
 		}
-		String className = pathParams.getFirst("eClassName");
 		if(ePackage.getEClassifier(className) == null) {
 			throw new WebApplicationException(
 					Response.status(Response.Status.BAD_REQUEST)
-							.entity(String.format("No EClassifier [%s] found in EPckage [%s].",
+							.entity(String.format("No EClassifier [%s] found in EPackage [%s].",
 									className, entityMappings.getPackage()))
 							.build());
 		}
@@ -193,7 +204,7 @@ public class JpaDataResourceFilter implements ContainerRequestFilter, ResourceSe
 	public ResourceSet getResourceSet(ContainerRequestContext requestContext) {
 		MultivaluedMap<String, String> pathParams = requestContext.getUriInfo().getPathParameters();
 		String rootFolderName = pathParams.getFirst("rootFolderName");
-		ResourceSetFactory resourceSetFactory = folderToResrouceSetFactoryMap.get(rootFolderName);
+		ResourceSetFactory resourceSetFactory = folderToResourceSetFactoryMap.get(rootFolderName);
 		if (resourceSetFactory == null) {
 			throw new WebApplicationException(
 					Response.status(Response.Status.BAD_REQUEST)

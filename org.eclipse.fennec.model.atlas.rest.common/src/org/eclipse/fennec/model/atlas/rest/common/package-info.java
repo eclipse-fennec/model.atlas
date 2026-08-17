@@ -12,5 +12,5 @@
  *      Data In Motion - initial API and implementation
  */
 @org.osgi.annotation.bundle.Export
-@org.osgi.annotation.versioning.Version("1.0")
+@org.osgi.annotation.versioning.Version("1.1")
 package org.eclipse.fennec.model.atlas.rest.common;

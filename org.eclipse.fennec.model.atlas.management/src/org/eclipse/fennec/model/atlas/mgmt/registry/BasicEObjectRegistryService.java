@@ -195,8 +195,14 @@ public class BasicEObjectRegistryService<T extends EObject> implements EObjectRe
         this.promiseFactory = requireNonNull(promiseFactory, "Promise factory must not be null");
         LOGGER.info("BasicEObjectRegistryService created for backend: " + storageHelper.getClass().getSimpleName());
 
-        // Initialize cache asynchronously
-        initializeCache();
+        // Kick off cache initialization asynchronously so constructing the service
+        // (which happens on the DS activation path of storage services) never
+        // blocks on storage I/O. Readers fall back to lazy initialization via
+        // ensureCacheInitialized() if it has not completed (or failed) yet.
+        promiseFactory.submit(() -> {
+            initializeCache();
+            return null;
+        });
     }
 
     @Override
@@ -552,50 +558,6 @@ public class BasicEObjectRegistryService<T extends EObject> implements EObjectRe
         }
     }
 
-    // private void initializeCache() {
-    // try {
-    // LOGGER.info("Initializing registry cache from storage backend");
-    //
-    // List<String> objectIds = storageHelper.listObjectIds();
-    // int loadedCount = 0;
-    // int errorCount = 0;
-    //
-    // cacheLock.writeLock().lock();
-    // try {
-    // for (String objectId : objectIds) {
-    // try {
-    // ObjectMetadata metadata = storageHelper.loadMetadata(objectId);
-    // if (metadata != null) {
-    // // Ensure objectId is set
-    // if (metadata.getObjectId() == null || metadata.getObjectId().isEmpty()) {
-    // metadata.setObjectId(objectId);
-    // }
-    //
-    // metadataById.put(objectId, metadata);
-    // addToIndexes(objectId, metadata);
-    // loadedCount++;
-    // }
-    // } catch (Exception e) {
-    // LOGGER.log(Level.WARNING, "Failed to load metadata during cache
-    // initialization: " + objectId, e);
-    // errorCount++;
-    // }
-    // }
-    //
-    // cacheInitialized = true;
-    // lastCacheUpdate = System.currentTimeMillis();
-    // } finally {
-    // cacheLock.writeLock().unlock();
-    // }
-    //
-    // LOGGER.info("Registry cache initialized: " + loadedCount + " objects loaded,
-    // " + errorCount + " errors");
-    //
-    // } catch (Exception e) {
-    // LOGGER.log(Level.SEVERE, "Failed to initialize registry cache", e);
-    // }
-    // }
-
     /**
      * Ensures cache is initialized before performing operations.
      */
@@ -756,6 +718,7 @@ public class BasicEObjectRegistryService<T extends EObject> implements EObjectRe
 
         cacheLock.readLock().lock();
         try {
+            ensureCacheInitialized();
             return metadataById.values().stream().filter(metadata -> objectName.equals(metadata.getObjectName()))
                     .collect(Collectors.toList());
         } finally {
@@ -776,6 +739,7 @@ public class BasicEObjectRegistryService<T extends EObject> implements EObjectRe
 
         cacheLock.readLock().lock();
         try {
+            ensureCacheInitialized();
             return metadataById.values().stream().filter(
                     metadata -> objectName.equals(metadata.getObjectName()) && stage.equals(metadata.getStage()))
                     .findFirst();
@@ -797,6 +761,7 @@ public class BasicEObjectRegistryService<T extends EObject> implements EObjectRe
 
         cacheLock.readLock().lock();
         try {
+            ensureCacheInitialized();
             return metadataById.values().stream()
                     .filter(metadata -> stage.equals(metadata.getStage()) && scope.equals(metadata.getScope()))
                     .collect(Collectors.toList());
@@ -822,6 +787,7 @@ public class BasicEObjectRegistryService<T extends EObject> implements EObjectRe
         String nameFilter = name.contains("*") ? name.replaceAll("\\*", "") : name;
         cacheLock.readLock().lock();
         try {
+            ensureCacheInitialized();
             if (isExact) {
                 return metadataById
                         .values().stream().filter(metadata -> stage.equals(metadata.getStage())
@@ -854,6 +820,7 @@ public class BasicEObjectRegistryService<T extends EObject> implements EObjectRe
 
         cacheLock.readLock().lock();
         try {
+            ensureCacheInitialized();
             return metadataById
                     .values().stream().filter(metadata -> stage.equals(metadata.getStage())
                             && scope.equals(metadata.getScope()) && registry.equals(metadata.getRegistry()))
@@ -883,6 +850,7 @@ public class BasicEObjectRegistryService<T extends EObject> implements EObjectRe
         String nameFilter = name.contains("*") ? name.replaceAll("\\*", "") : name;
         cacheLock.readLock().lock();
         try {
+            ensureCacheInitialized();
             if (isExact) {
                 return metadataById.values().stream()
                         .filter(metadata -> stage.equals(metadata.getStage()) && scope.equals(metadata.getScope())

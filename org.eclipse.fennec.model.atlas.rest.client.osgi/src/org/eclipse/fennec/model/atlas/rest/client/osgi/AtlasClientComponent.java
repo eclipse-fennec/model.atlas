@@ -31,6 +31,7 @@ import org.eclipse.fennec.model.atlas.scope.api.AtlasProperties;
 import org.eclipse.fennec.model.atlas.rest.client.api.ClientConfiguration;
 import org.eclipse.fennec.model.atlas.rest.client.api.ModelAtlasClient;
 import org.eclipse.fennec.model.atlas.rest.client.api.ModelAtlasClientFactory;
+import org.eclipse.fennec.model.atlas.rest.client.api.TransportException;
 import org.osgi.annotation.bundle.Capability;
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.ServiceRegistration;
@@ -248,13 +249,14 @@ public class AtlasClientComponent {
 			// EPackage resolution mode); a consumer's (atlas.scope=…) lookup then resolves
 			// against this client exactly as it does against the in-process server.
 			publishScopeServices(configuration);
-		} catch (RuntimeException strictFailure) {
-			// mode.strict=true + unreachable server: tear down what we built before
-			// letting activation fail, so nothing (client + drift scheduler, the drift
-			// subscription, the service listener, the debounce executor) leaks —
+		} catch (RuntimeException fatal) {
+			// Reached by an unreachable server only under mode.strict (both startup calls
+			// filter on it themselves), otherwise by a genuine defect — either way activation
+			// must fail. Tear down what we built first, so nothing (client + drift scheduler,
+			// the drift subscription, the service listener, the debounce executor) leaks:
 			// @Deactivate is not called for a component that never activated.
 			tearDown();
-			throw strictFailure;
+			throw fatal;
 		}
 		LOGGER.log(Level.INFO, () -> "Model Atlas client activated for " + configuration.getBaseUri());
 	}
@@ -287,12 +289,36 @@ public class AtlasClientComponent {
 	 * P5-4 — publish a {@code ReadableScopeService<EObject>} for each scope this client
 	 * exposes. The scope set is {@code scope.allow.list} when configured (no server call
 	 * needed — the per-scope façade fetches lazily), otherwise the scopes the server
-	 * advertises via {@code GET /scopes}. In {@code mode.strict}, a failing {@code listScopeNames}
-	 * propagates and tears down the activation (same contract as the EAGER prefetch above).
+	 * advertises via {@code GET /scopes}. That discovery call is the only server contact this
+	 * step makes: under {@code mode.strict} a transport failure propagates and tears down the
+	 * activation, otherwise it is logged and no scope service is published (same contract as the
+	 * EAGER prefetch above).
 	 */
 	private void publishScopeServices(ClientConfiguration configuration) {
-		List<String> scopes = configuration.getScopeAllowList().isEmpty() ? client.listScopeNames()
-				: configuration.getScopeAllowList();
+		List<String> scopes;
+		if (configuration.getScopeAllowList().isEmpty()) {
+			try {
+				scopes = client.listScopeNames();
+			} catch (TransportException unreachable) {
+				// Same contract as the EAGER pre-fetch (EagerPrefetch#failOrSkip): being unable to
+				// reach the Atlas is fatal only under mode.strict. Otherwise the client comes up
+				// without scope façades — the whole point of the LAZY default is that a client
+				// bundle may start before its server does.
+				if (configuration.isModeStrict()) {
+					LOGGER.log(Level.SEVERE, unreachable, () -> "Scope discovery failed: the Atlas at "
+							+ configuration.getBaseUri() + " is unreachable and mode.strict=true — aborting activation");
+					throw unreachable;
+				}
+				LOGGER.log(Level.WARNING, unreachable,
+						() -> "Scope discovery skipped: the Atlas at " + configuration.getBaseUri()
+								+ " is unreachable (mode.strict=false) — no ReadableScopeService published; set "
+								+ "scope.allow.list to publish them without contacting the server, or update the "
+								+ "configuration to retry");
+				return;
+			}
+		} else {
+			scopes = configuration.getScopeAllowList();
+		}
 		for (String scope : scopes) {
 			scopePublisher.publish(scope, client.readOnlyScope(scope));
 		}

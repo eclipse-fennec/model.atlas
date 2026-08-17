@@ -138,7 +138,6 @@ public class EObjectFileStorageService extends AbstractEObjectStorageService {
     private EObjectRegistryService<EObject> registry;
 
     private Path workspacePath;
-    private String storageType;
 
     @Activate
     public void activate(BundleContext bundleContext, Config config) throws Exception {

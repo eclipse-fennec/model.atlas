@@ -55,19 +55,18 @@ public abstract class AbstractStorageHelper implements AutoCloseable {
 
     protected final ResourceSet resourceSet;
 
-    public AbstractStorageHelper(ResourceSet resourceSet) {
-        this.resourceSet = resourceSet;
-        setupConversionDelegates();
+    static {
+        // Register the (stateless) Instant conversion delegate once for the whole
+        // JVM. The registry is a global singleton shared by every helper instance,
+        // so per-instance registration would either leak entries or, if removed on
+        // close(), break other still-active helpers using the same key.
+        EcoreUtil.setConversionDelegates(ManagementPackage.eINSTANCE, List.of(Instant.class.getName()));
+        ConversionDelegate.Factory.Registry.INSTANCE.put(Instant.class.getName(),
+                new InstantConversionDelegateFactory());
     }
 
-    /**
-     * Sets up EMF conversion delegates for custom data types.
-     */
-    private void setupConversionDelegates() {
-        // Register conversion delegate for Instant serialization
-        InstantConversionDelegateFactory conversionFactory = new InstantConversionDelegateFactory();
-        EcoreUtil.setConversionDelegates(ManagementPackage.eINSTANCE, List.of(Instant.class.getName()));
-        ConversionDelegate.Factory.Registry.INSTANCE.put(Instant.class.getName(), conversionFactory);
+    public AbstractStorageHelper(ResourceSet resourceSet) {
+        this.resourceSet = resourceSet;
     }
 
     /**
@@ -464,46 +463,18 @@ public abstract class AbstractStorageHelper implements AutoCloseable {
     /**
      * Closes the storage helper and releases any resources. Implements
      * AutoCloseable contract for proper resource management.
-     * 
+     *
      * <p>
-     * This method:
+     * Only storage-specific resources ({@link #closeStorageResources()}) are
+     * released here. The injected ResourceSet is a shared service this helper does
+     * not own, so it must not be unloaded or cleared wholesale — the individual
+     * resources created by this helper are already removed per operation via
+     * {@link ResourceOperation#cleanup()}.
      * </p>
-     * <ul>
-     * <li>Calls {@link #closeStorageResources()} for subclass-specific cleanup</li>
-     * <li>Unloads and clears all EMF resources from the ResourceSet</li>
-     * <li>Logs any cleanup errors without propagating exceptions</li>
-     * </ul>
      */
     @Override
     public void close() throws Exception {
         LOGGER.info("Closing storage helper: " + getClass().getSimpleName());
-
-        try {
-            // First, let subclasses clean up their specific resources
-            closeStorageResources();
-        } catch (Exception e) {
-            LOGGER.log(Level.SEVERE, "Failed to close storage-specific resources", e);
-            // Continue with ResourceSet cleanup even if storage cleanup fails
-        }
-
-        try {
-            // Clean up EMF ResourceSet
-            synchronized (resourceSet) {
-                // Unload all resources and clear the resource set
-                for (Resource resource : resourceSet.getResources()) {
-                    try {
-                        if (resource.isLoaded()) {
-                            resource.unload();
-                        }
-                    } catch (Exception e) {
-                        LOGGER.log(Level.WARNING, "Failed to unload resource: " + resource.getURI(), e);
-                    }
-                }
-                resourceSet.getResources().clear();
-            }
-        } catch (Exception e) {
-            LOGGER.log(Level.SEVERE, "Failed to close ResourceSet", e);
-            throw e; // Re-throw ResourceSet cleanup failures
-        }
+        closeStorageResources();
     }
 }

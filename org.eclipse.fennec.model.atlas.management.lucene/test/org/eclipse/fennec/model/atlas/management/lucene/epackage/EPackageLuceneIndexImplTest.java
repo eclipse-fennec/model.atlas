@@ -369,6 +369,23 @@ class EPackageLuceneIndexImplTest {
 	}
 
 	@Test
+	void testSearchKeepsAFilterItCannotParseAsAValue() {
+		index.index(
+				createMetadata("obj-1", "tenant-a", "draft"),
+				createSensorPackage());
+
+		// A search criterion is a value, not query syntax. Parsing it as a query string
+		// used to drop the whole criterion whenever it was not valid Lucene syntax, so
+		// this search answered with every package of the scope instead of none.
+		SearchResult result = index.search(EPackageSearchQuery.create()
+				.scopes(Set.of("tenant-a"))
+				.nsUri("does-not-exist(")
+				.build());
+
+		assertEquals(0, result.totalHits());
+	}
+
+	@Test
 	void testSearchWithNullQuery() {
 		SearchResult result = index.search(null);
 

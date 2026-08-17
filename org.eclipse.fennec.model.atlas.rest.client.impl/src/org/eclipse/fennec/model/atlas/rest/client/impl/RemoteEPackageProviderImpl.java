@@ -14,6 +14,7 @@
 package org.eclipse.fennec.model.atlas.rest.client.impl;
 
 import java.io.ByteArrayInputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Base64;
 import java.util.List;
@@ -459,7 +460,7 @@ class RemoteEPackageProviderImpl implements RemoteEPackageProvider {
 			return null;
 		}
 		try {
-			return new String(Base64.getUrlDecoder().decode(objectId.asText()));
+			return new String(Base64.getUrlDecoder().decode(objectId.asText()), StandardCharsets.UTF_8);
 		} catch (IllegalArgumentException e) {
 			return null;
 		}

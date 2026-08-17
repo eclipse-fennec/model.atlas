@@ -1,0 +1,28 @@
+Bundle-Name: Model Atlas - Health Check Integration Tests
+Bundle-Description: OSGi integration tests for the Atlas Felix health checks
+
+Test-Cases: ${classes;HIERARCHY_INDIRECTLY_ANNOTATED;org.junit.platform.commons.annotation.Testable;CONCRETE}
+
+-library: \
+	enableOSGi-Test,\
+	enableEMF
+
+-buildpath: \
+	org.osgi.framework;version=latest,\
+	org.osgi.service.component;version=latest,\
+	org.apache.felix.healthcheck.api;version=latest,\
+	org.eclipse.fennec.model.atlas.workflow;version=snapshot,\
+	org.eclipse.fennec.model.atlas.scope.api;version=snapshot,\
+	org.eclipse.fennec.model.atlas.healthcheck;version=snapshot,\
+	org.mockito.mockito-core;version=latest,\
+	org.mockito.junit-jupiter;version=latest
+
+Private-Package: \
+	org.eclipse.fennec.model.atlas.healthcheck.tests
+
+
+-dependson: \
+	org.eclipse.fennec.model.atlas.healthcheck
+
+# Do not publish this bundle to Maven Central; local install only
+-maven-release: local

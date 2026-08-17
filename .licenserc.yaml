@@ -54,6 +54,7 @@ header:
     - '**/*.sha'
     - '**/*.uml'
     - 'LICENSE'
+    - 'DEPENDENCIES'
     - 'Jenkinsfile'
     - 'NOTICE'
     - '.gitattributes'

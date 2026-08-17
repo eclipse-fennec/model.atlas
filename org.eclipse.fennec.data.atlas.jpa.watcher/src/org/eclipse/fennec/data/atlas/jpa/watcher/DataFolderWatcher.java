@@ -51,14 +51,18 @@ import org.osgi.service.component.annotations.Reference;
  * deleted on {@link #deactivate}.
  *
  * <p>The unit name is read from the {@code name} attribute of the
- * {@code .jpamapping} file found in the watched folder. If no such file is
+ * {@code .eorm} file found in {@code <basePath>/mapping}. If no such file is
  * present when the folder is first registered, the pipeline is not started;
- * it will be started automatically when a {@code .jpamapping} file is
- * subsequently added to the folder.
+ * it will be started automatically when an {@code .eorm} file is
+ * subsequently added to that folder.
  */
 @RequireConfigurationAdmin
 @Component(name = WatcherConstants.PID_DATA_FOLDER_WATCHER, configurationPolicy = ConfigurationPolicy.REQUIRE)
-@FileSystemWatcherListenerProperties(recursive = false)
+// Recursive: the mapping this watcher waits for lives in the <basePath>/mapping
+// subfolder, and a non-recursive watch only reports entries directly inside the
+// watched folder — so the deferred start below could never be triggered by a file
+// event, only by the initial scan happening to run late.
+@FileSystemWatcherListenerProperties(recursive = true)
 public class DataFolderWatcher implements FileSystemWatcherListener {
 
     private static final Logger LOG = System.getLogger(DataFolderWatcher.class.getName());
@@ -83,6 +87,21 @@ public class DataFolderWatcher implements FileSystemWatcherListener {
 
     @Deactivate
     void deactivate() {
+        deletePipelineConfigs();
+    }
+
+    /**
+     * Deletes every configuration this watcher created, and forgets them.
+     *
+     * <p>
+     * Used both on deactivation and to roll back a pipeline that could not be built:
+     * ConfigAdmin configurations outlive the call that created them, so a half-built
+     * pipeline leaves live components bound to configs that nothing will complete — and
+     * nothing would delete either, since the fields tracking them are overwritten by the
+     * next attempt.
+     * </p>
+     */
+    private void deletePipelineConfigs() {
         deleteConfig(emfWatcherConfig);
         deleteConfig(entityMappingsFileWatcherConfig);
         deleteConfig(csvImporterConfig);
@@ -132,7 +151,7 @@ public class DataFolderWatcher implements FileSystemWatcherListener {
     }
 
     private void setupPipeline() {
-        matcherKey = UUID.randomUUID().toString();
+        matcherKey = matcherKeyFor(basePath);
         String mappingPath = basePath.resolve("mapping").toAbsolutePath().toString();
         String dataPath    = basePath.resolve("data").toAbsolutePath().toString();
 
@@ -189,8 +208,29 @@ public class DataFolderWatcher implements FileSystemWatcherListener {
 
             LOG.log(Level.INFO, "DataFolderWatcher activated for unit ''{0}'' at {1}", matcherKey, basePath.toAbsolutePath().toString());
         } catch (IOException e) {
-            LOG.log(Level.ERROR, "Failed to create sub-component configs for folder " + basePath.toAbsolutePath().toString(), e);
+            LOG.log(Level.ERROR, "Failed to create sub-component configs for folder "
+                    + basePath.toAbsolutePath().toString() + " — rolling back the partial pipeline", e);
+            deletePipelineConfigs();
         }
+    }
+
+    /**
+     * A key identifying this folder's pipeline, stable across attempts.
+     *
+     * <p>
+     * It used to be a fresh {@link UUID} per {@code setupPipeline()} call. A second
+     * attempt — after a failed one — therefore addressed a whole new set of ConfigAdmin
+     * configurations, leaving the first set behind with nothing tracking it. Deriving the
+     * key from the folder means a retry updates the same configurations instead of
+     * orphaning them. It is also filter- and filename-safe, which the raw path is not:
+     * the key ends up in LDAP target filters and in the H2 database directory name.
+     * </p>
+     */
+    private static String matcherKeyFor(Path basePath) {
+        Path absolute = basePath.toAbsolutePath().normalize();
+        String name = absolute.getFileName() == null ? "unit" : absolute.getFileName().toString();
+        return name.replaceAll("[^A-Za-z0-9._-]", "_") + "-"
+                + Integer.toHexString(absolute.toString().hashCode());
     }
     
     private Configuration createEPackageRegistryConfig() throws IOException {
@@ -234,7 +274,7 @@ public class DataFolderWatcher implements FileSystemWatcherListener {
             return;
         }
         try {
-        	System.out.println("Deleted config " + config.getPid());
+        	LOG.log(Level.DEBUG, "Deleted config " + config.getPid());
             config.delete();
             
         } catch (IOException e) {

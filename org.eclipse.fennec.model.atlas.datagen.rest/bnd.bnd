@@ -1,5 +1,7 @@
 -buildpath: \
 	org.osgi.service.component.annotations;version=latest,\
+	org.eclipse.fennec.codec.rest;version=latest,\
+	org.eclipse.fennec.codec.api;version=latest,\
 	org.eclipse.fennec.model.atlas.datagen;version=snapshot,\
 	org.eclipse.fennec.model.atlas.datagen.model;version=snapshot,\
 	org.eclipse.fennec.model.atlas.scope.api;version=snapshot,\
@@ -8,5 +10,4 @@
 -library: enableJakartaREST,\
 	enableEMF
 
-Bundle-Version: 1.0.0.SNAPSHOT
 Private-Package: org.eclipse.fennec.model.atlas.datagen.rest

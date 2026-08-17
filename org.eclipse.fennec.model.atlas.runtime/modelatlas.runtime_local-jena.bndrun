@@ -2,7 +2,7 @@
 	modelatlas.runtime_base.bndrun
 
 -runbundles.local: \
-	org.eclipse.fennec.sensinact.mapping,\
+	org.eclipse.fennec.event.atlas.mapping,\
 	org.eclipse.fennec.model.atlas.runtime.config.local.jena,\
 	
 
