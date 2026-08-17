@@ -82,6 +82,11 @@
 	org.eclipse.fennec.model.atlas.emf.common;version=snapshot,\
 	org.eclipse.persistence.jpa.jpql;version='[4.0.9,4.0.10)',\
 	org.eclipse.fennec.data.atlas.epackage.watcher;version=snapshot
+# The framework-extension spifly variant installs a weaving hook that breaks class loading in
+# other bundles ("Weaving hook failed"); here it takes out daanse's PathWatcherService, so the
+# folder watcher never registers its EntityMappings. The resolver prefers it over the classic
+# spifly.dynamic.bundle unless it is blacklisted here.
 -runblacklist: \
 	bnd.identity;id='org.eclipse.fennec.model.atlas.management.apicurio',\
-	bnd.identity;id='org.gecko.emf.osgi.component.minimal'
+	bnd.identity;id='org.gecko.emf.osgi.component.minimal',\
+	bnd.identity;id='org.apache.aries.spifly.dynamic.framework.extension'

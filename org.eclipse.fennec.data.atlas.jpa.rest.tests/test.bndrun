@@ -142,6 +142,12 @@
 	org.osgi.util.pushstream;version='[1.1.0,1.1.1)',\
 	slf4j.api;version='[2.0.17,2.0.18)',\
 	slf4j.simple;version='[2.0.17,2.0.18)'
+# The framework-extension spifly variant installs a weaving hook that breaks class loading
+# in org.apache.felix.http.jetty ("Weaving hook failed" -> ClassFormatError in
+# HttpServiceController), so no HTTP service, no Jakarta REST whiteboard runtime and no
+# JpaDataResource - every test then times out waiting for the resource. The resolver prefers
+# it over the classic spifly.dynamic.bundle unless it is blacklisted here.
 -runblacklist: \
 	bnd.identity;id='org.eclipse.fennec.model.atlas.management.apicurio',\
-	bnd.identity;id='org.gecko.emf.osgi.component.minimal'
+	bnd.identity;id='org.gecko.emf.osgi.component.minimal',\
+	bnd.identity;id='org.apache.aries.spifly.dynamic.framework.extension'

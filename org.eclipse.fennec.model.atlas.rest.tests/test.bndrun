@@ -39,9 +39,14 @@
 # Ensure clean environment
 -runkeep: false
 
+# The framework-extension spifly variant installs a weaving hook that breaks class loading in
+# other bundles ("Weaving hook failed"): felix.http.jetty, the aries typedevent bus and daanse's
+# PathWatcherService have all been taken out by it. Listing spifly.dynamic.bundle in -runbundles
+# is not enough - testOSGi runs the RESOLVED bndrun and the resolver swaps the variant in.
 -runblacklist: \
 	bnd.identity;id='org.eclipse.uml2.uml';version='[0.0.0,5.6.0)',\
-	bnd.identity;id='org.eclipse.fennec.model.atlas.management.apicurio'
+	bnd.identity;id='org.eclipse.fennec.model.atlas.management.apicurio',\
+	bnd.identity;id='org.apache.aries.spifly.dynamic.framework.extension'
 # rest.filter.tests is no longer blacklisted: the test stubs that used to
 # overlap with production services (ResourceSetCollector,
 # ScopeServiceCollector, SupportedMediatype) are now registered manually

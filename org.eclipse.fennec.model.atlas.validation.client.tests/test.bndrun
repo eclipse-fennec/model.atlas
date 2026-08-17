@@ -96,3 +96,10 @@
 	slf4j.api;version='[2.0.16,2.0.17)',\
 	slf4j.simple;version='[2.0.16,2.0.17)',\
 	org.eclipse.fennec.model.atlas.readable.scope.collector;version=snapshot
+
+# The framework-extension spifly variant installs a weaving hook that breaks class loading in
+# other bundles ("Weaving hook failed"): felix.http.jetty, the aries typedevent bus and daanse's
+# PathWatcherService have all been taken out by it. Listing spifly.dynamic.bundle in -runbundles
+# is not enough - testOSGi runs the RESOLVED bndrun and the resolver swaps the variant in.
+-runblacklist: \
+	bnd.identity;id='org.apache.aries.spifly.dynamic.framework.extension'
