@@ -20,13 +20,13 @@ Test-Cases: ${classes;HIERARCHY_INDIRECTLY_ANNOTATED;org.junit.platform.commons.
 	org.osgi.service.typedevent;version=latest,\
 	org.osgi.test.junit5.cm;version=latest,\
 	slf4j.api;version=latest,\
-	org.gecko.jgit;version=latest,\
+	org.eclipse.fennec.jgit;version=latest,\
 	org.eclipse.jgit;version=latest,\
 	org.eclipse.fennec.model.atlas.management.git;version=snapshot,\
 	org.eclipse.fennec.model.atlas.management;version=snapshot,\
 	org.eclipse.fennec.model.atlas.management.lucene;version=snapshot,\
-	org.eclipse.fennec.model.atlas.management.git.webhook.model;version=snapshot,\
-	org.eclipse.fennec.model.atlas.management.git.github.webhook.model;version=snapshot,\
+	org.eclipse.fennec.git.webhook.model;version=latest,\
+	org.eclipse.fennec.git.github.webhook.model;version=latest,\
 	org.eclipse.daanse.tooling.testcontainers.core;version=latest,\
 	org.eclipse.fennec.model.atlas.tests.common;version=snapshot,\
 	org.eclipse.fennec.model.atlas.workflow;version=snapshot,\

@@ -20,7 +20,7 @@ import java.util.Map;
 
 import org.eclipse.emf.common.util.URI;
 import org.eclipse.emf.ecore.resource.impl.URIHandlerImpl;
-import org.gecko.jgit.api.GitService;
+import org.eclipse.fennec.jgit.api.GitService;
 
 /**
  * EMF {@link org.eclipse.emf.ecore.resource.URIHandler} that resolves
