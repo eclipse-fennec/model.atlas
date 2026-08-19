@@ -52,9 +52,30 @@ This bundle exports no public types of its own; the impl package is `Private-Pac
 `org.eclipse.fennec.model.atlas.mgmt.storage` (thrown centrally by `AbstractStorageHelper` for
 every backend — see *Removal*).
 
-The webhook payload models and REST ingest live in sibling bundles
-(`…git.webhook.model`, `…git.github.webhook.model`, `…git.gitlab.webhook.model`,
-`…git.webhook.rest`).
+### Dependencies from Fennec EMF Util
+
+The git plumbing this bundle builds on is **not in this repository** — it lives in
+[Fennec EMF Util](https://github.com/eclipse-fennec/fennec-emf.util) and is consumed as a
+released/snapshot Maven dependency:
+
+| Bundle | Provides |
+|---|---|
+| `org.eclipse.fennec.jgit` | `GitService` + `GitServiceImpl`, the `GitConfig` factory (one repo + branch per instance) |
+| `org.eclipse.fennec.git.webhook.model` | the neutral `WebhookPayload` and `WebhookTopics` |
+| `org.eclipse.fennec.git.github.webhook.model` | `GithubPayload` (GitHub wire format) |
+| `org.eclipse.fennec.git.gitlab.webhook.model` | `GitlabPayload` (GitLab wire format) |
+| `org.eclipse.fennec.git.webhook.rest` | the `POST /github/webhook` / `POST /gitlab/webhook` ingest endpoints |
+
+The webhook model and REST bundles used to live here under
+`org.eclipse.fennec.model.atlas.management.git.*.webhook.*`; they were moved to Fennec EMF Util
+so other projects can reuse them.
+
+> **Breaking config change (2026-08-18):** the webhook ConfigAdmin pids moved with the bundles,
+> from `org.eclipse.fennec.model.atlas.management.git.webhook.{github,gitlab}` to
+> **`org.eclipse.fennec.git.webhook.{github,gitlab}`**. A configuration still using the old pid
+> is simply never matched, and since the endpoints are gated on their pid the result is a silent
+> `404` on `POST /github/webhook` rather than an error. Update any deployment configuration —
+> the shipped `runtime.config.docker.git` already uses the new names.
 
 ---
 
@@ -157,7 +178,7 @@ picked up automatically:
 
 The backend is wired entirely through OSGi configuration. A minimal git-backed scope needs:
 
-**1. One `GitService` per branch** (from `org.gecko.jgit`, factory PID `GitConfig`):
+**1. One `GitService` per branch** (from `org.eclipse.fennec.jgit`, factory PID `GitConfig`):
 
 ```
 GitConfig~main    → { repo: "git@github.com:acme/models.git", branch: "main",    id: "acme" }
@@ -180,8 +201,9 @@ wired to git — set `storageService.target=(storage.type=git)` and list the bra
 stages / trigger stages.
 
 **4. Webhook endpoints** (if using webhooks) via per-provider ConfigAdmin pids:
-`org.eclipse.fennec.model.atlas.management.git.webhook.github` (`githubSecret`,
-`requireSignature`) and `…webhook.gitlab` (`gitlabToken`, `requireSignature`). A provider's
+`org.eclipse.fennec.git.webhook.github` (`githubSecret`, `requireSignature`) and
+`org.eclipse.fennec.git.webhook.gitlab` (`gitlabToken`, `requireSignature`). Both the endpoints
+and these pids belong to `org.eclipse.fennec.git.webhook.rest` in Fennec EMF Util. A provider's
 `POST /github/webhook` / `POST /gitlab/webhook` endpoint **only exists while its pid is
 configured** — no configuration, no endpoint (404). Configure only the provider(s) you use.
 With a configuration present but an empty secret, requests are rejected with 401 unless
@@ -247,11 +269,11 @@ promoted to `release`.
 
   // Optional: webhook endpoints, one pid per provider. An endpoint only exists while its
   // pid is configured; omit a block to leave that provider's endpoint absent (404).
-  "org.eclipse.fennec.model.atlas.management.git.webhook.github": {
+  "org.eclipse.fennec.git.webhook.github": {
     "githubSecret": "<hmac-secret>",
     "requireSignature": true
   },
-  "org.eclipse.fennec.model.atlas.management.git.webhook.gitlab": {
+  "org.eclipse.fennec.git.webhook.gitlab": {
     "gitlabToken": "<gitlab-token>",
     "requireSignature": true
   }
@@ -271,7 +293,7 @@ per-instance catch-all.
   `EObjectGitStorageServiceTest` — plain JUnit 5 + Mockito over a mocked `GitService`.
 - **OSGi integration tests** (`…management.git.tests`): serve a **real repository over the
   `git://` protocol from a throw-away container** (`GitTestRepository`: Alpine + the
-  `git-daemon` package), driving the **production `org.gecko.jgit.GitServiceImpl`** (one
+  `git-daemon` package), driving the **production `org.eclipse.fennec.jgit.GitServiceImpl`** (one
   `GitConfig` factory configuration per branch, no `privateKey` → anonymous fetch).
   `EObjectGitStorageServiceIT` covers activation, per-branch reads,
   derived metadata, write-rejection, and webhook/poll resync; `GitRegistryChainIT` stands up
@@ -292,7 +314,9 @@ per-instance catch-all.
   the `draft` instance keeps deserializing through REST **in XML and `application/json`**
   after the removal — the cross-stage JSON breakage below no longer reproduces.
 
-> **gecko.jgit transport (fixed upstream, 2026-07):** `GitServiceImpl` used to be SSH-only and
+> **jgit transport (fixed upstream, 2026-07):** the `GitService` implementation was originally
+> `org.gecko.jgit`; it now ships as `org.eclipse.fennec.jgit` from Fennec EMF Util.
+> `GitServiceImpl` used to be SSH-only and
 > hard-wired to legacy JCraft JSch (RSA/PEM keys only, no anonymous `git://`/`https://`). It now
 > uses jgit's **Apache MINA sshd** backend (`org.eclipse.jgit.ssh.apache`) and only installs the
 > SSH session factory **when a `privateKey` is configured** — so anonymous `git://`/`https://`

@@ -8,7 +8,7 @@ and/or webhooks. Writing happens externally on the git host; Model Atlas only re
 
 - **Repository access.** `GIT_REPO` may be an scp-like SSH URL (`git@host:owner/repo.git`),
   `ssh://`, `https://` or `git://`. For SSH remotes provide a private key with read access
-  (e.g. a read-only deploy key) — `org.gecko.jgit` uses jgit's Apache MINA sshd backend, so
+  (e.g. a read-only deploy key) — `org.eclipse.fennec.jgit` uses jgit’s Apache MINA sshd backend, so
   **ed25519 / OpenSSH-format keys are fine**. Anonymous `https://`/`git://` remotes need no
   key (the SSH stack is only engaged for SSH transports).
 - The repository must contain the branches configured as stages (default: `draft`, `approved`,
@@ -27,7 +27,7 @@ docker run -d -p 8080:8080 \
 
 Webhooks (optional) are served on the same port under the REST endpoints
 (`/…/github`, `/…/gitlab`). Each provider's endpoint only exists while its ConfigAdmin pid
-(`…management.git.webhook.github` / `…webhook.gitlab`) is present — the shipped
+(`org.eclipse.fennec.git.webhook.github` / `…git.webhook.gitlab`) is present — the shipped
 `workflow.json` configures both; remove a block to drop that provider's endpoint entirely.
 Set `GIT_WEBHOOK_GITHUB_SECRET` / `GIT_WEBHOOK_GITLAB_TOKEN` and flip `requireSignature` to
 `true` in the config for production.

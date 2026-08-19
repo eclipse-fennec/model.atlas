@@ -1,5 +1,5 @@
 -include: \
-	modelatlas.runtime_base.bndrun
+	modelatlas.runtime_docker_apicurio.bndrun
 
 -runbundles.local: org.eclipse.fennec.model.atlas.runtime.config.local
 
