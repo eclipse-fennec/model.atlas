@@ -1,0 +1,18 @@
+Bundle-Name: Fennec Model Atlas - EObject Registry Provider
+Bundle-Description: Generic Model Atlas content source for the emf.osgi EObject registry: \
+ syncs the objects of configured atlas registries into a named EObjectRegistry through its \
+ writer face - resiliently, with retry, periodic refresh and identity-compare-friendly \
+ pushes (the atlas client's ETag cache returns identical instances for unchanged objects). \
+ Deliberately a writer client, not an initial provider: registry publication must never \
+ depend on the network.
+
+-workingset: ModelAtlas
+
+-library: enableEMF
+
+-buildpath: \
+	org.eclipse.fennec.model.atlas.scope.api;version=latest,\
+	org.eclipse.fennec.emf.osgi.eobject.registry;version=latest
+
+-testpath: \
+	assertj-core;version=latest
