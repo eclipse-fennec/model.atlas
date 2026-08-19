@@ -330,8 +330,14 @@ public final class GitTestRepository implements AutoCloseable {
 		git(work, "commit", "-q", "-m", "release commit");
 		git(work, "checkout", "-q", BRANCH_MAIN);
 
+		// Deliberately NOT `git clone --bare`: a local clone copies/hardlinks the object
+		// directory file by file, which has proven flaky on CI runners (it died with
+		// "failed to copy file to '.../objects/xx/...': No such file or directory").
+		// An init-plus-push moves the objects through git's normal, atomic transfer instead.
 		Path bare = root.resolve(REPO_NAME);
-		git(root, "clone", "-q", "--bare", work.toString(), bare.toString());
+		Files.createDirectories(bare);
+		git(bare, "init", "-q", "--bare", "-b", BRANCH_MAIN);
+		git(work, "push", "-q", bare.toString(), BRANCH_MAIN, BRANCH_RELEASE);
 		return bare;
 	}
 
