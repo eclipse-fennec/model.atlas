@@ -322,18 +322,33 @@ public class SchemaRegistryChainConfiguratorIntegrationTest {
 	class EdgeCaseTests {
 
 		@Test
-		@DisplayName("Atlas scope should not generate chain configs")
+		@DisplayName("Atlas scope should generate its own chain configs rooted at the default registry")
 		@ParentScopeServiceSetup
-		void shouldNotGenerateConfigsForAtlasScope(
+		void shouldGenerateConfigsForAtlasScope(
 				@InjectService(cardinality = 0, filter = "(scope.name=" + TestAnnotations.TEST_PARENT_SCOPE_NAME + ")")
 				ServiceAware<ScopeService> parentScopeAware) throws Exception {
 
 			assertNotNull(parentScopeAware.waitForService(5000));
 
-			// The AtlasScopeService is always present but should be skipped
-			Configuration config = findConfiguration(EPACKAGE_REGISTRY_FACTORY_PID,
-					WorkflowConstants.ATLAS_SCOPE_NAME + "-" + WorkflowConstants.ATLAS_SCHEMA_REGISTRY_STAGE_NAME);
-			assertNull(config, "No chain configs should be created for the atlas scope");
+			// The atlas scope is a first-class, addressable scope in the REST API, so it
+			// needs a ResourceSet of its own: without the pair below,
+			// ResourceSetCollector has nothing for (atlas, released) and every request
+			// to the atlas scope fails in the writer's ResourceSet lookup.
+			String atlasPair = WorkflowConstants.ATLAS_SCOPE_NAME + "-"
+					+ WorkflowConstants.ATLAS_SCHEMA_REGISTRY_STAGE_NAME;
+
+			Configuration epr = findConfiguration(EPACKAGE_REGISTRY_FACTORY_PID, atlasPair);
+			assertNotNull(epr, "EPackageRegistry config for the atlas scope should exist");
+			assertEquals(DEFAULT_REGISTRY_TARGET, epr.getProperties().get("parentRegistry.target"),
+					"The atlas scope is the chain root: it reads from the default EPackage registry");
+
+			Configuration rsf = findConfiguration(RESOURCE_SET_FACTORY_FACTORY_PID, atlasPair);
+			assertNotNull(rsf, "ResourceSetFactory config for the atlas scope should exist");
+			Dictionary<String, Object> rsfProps = rsf.getProperties();
+			assertEquals(WorkflowConstants.ATLAS_SCOPE_NAME, rsfProps.get("scope.name"),
+					"scope.name must be set so ResourceSetCollector can key the ResourceSet");
+			assertEquals(WorkflowConstants.ATLAS_SCHEMA_REGISTRY_STAGE_NAME, rsfProps.get("stage.name"),
+					"stage.name must be set so ResourceSetCollector can key the ResourceSet");
 		}
 
 		@Test

@@ -15,10 +15,16 @@ package org.eclipse.fennec.model.atlas.rest.filter;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.Objects;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.stream.Collectors;
 
 import org.eclipse.fennec.model.atlas.mediatypes.api.SupportedMediatype;
 import org.eclipse.fennec.model.atlas.rest.common.ModelAtlasRestConstants;
+import org.eclipse.fennec.model.atlas.scope.api.RegistryInfo;
+import org.eclipse.fennec.model.atlas.scope.api.ScopeInfo;
+import org.eclipse.fennec.model.atlas.scope.api.StageInfo;
 import org.eclipse.fennec.model.atlas.wf.workflowapi.ScopeService;
 import org.eclipse.fennec.model.atlas.workflow.ScopeServiceCollector;
 import org.osgi.service.component.annotations.Component;
@@ -40,8 +46,9 @@ import jakarta.ws.rs.core.Response;
  * JAX-RS request filter that validates scope/registry assignment and resolves
  * media types before requests reach the resource methods.
  *
- * <p>Scope/registry validation: ensures that the requested registry is actually
- * configured for the given scope, preventing access to unconfigured registries.
+ * <p>Scope/registry/stage validation: ensures that the requested registry is
+ * actually configured for the given scope, and that the requested stage is one
+ * the scope declares, preventing access to unconfigured registries and stages.
  *
  * <p>MediaType resolution: centralizes the duplicated {@code checkContentType()}
  * logic from scope-based resources. The resolved media type is set as a request
@@ -137,7 +144,60 @@ public class ModelAtlasRequestFilter implements ContainerRequestFilter {
 							.build());
 		}
 
+		validateStage(scopeService, scopeName, registryName, pathParams.getFirst("stageName"));
+
 		resolveMediaType(requestContext);
+	}
+
+	/**
+	 * Rejects a {@code stageName} the addressed scope does not declare.
+	 *
+	 * <p>This is the only place that can answer such a request with a mappable
+	 * {@code 400} for every stage-bearing endpoint. Endpoints that hand the
+	 * stage to a registry service get the rejection from there, but those that
+	 * only need the stage to resolve a {@code ResourceSet} (model conversion,
+	 * validation) have no stage semantics of their own — and
+	 * {@code ScopedResourceSetProvider} deliberately no longer fails on an
+	 * unknown scope/stage, because it is called from
+	 * {@code MessageBodyWriter.isWriteable(...)} where an exception can only
+	 * become a bodyless 500.
+	 *
+	 * <p>When the scope publishes no stage information at all, the stage is
+	 * accepted: there is nothing to judge it against, and the layers below
+	 * still validate what they can.
+	 *
+	 * @param scopeService the service for the addressed scope
+	 * @param scopeName    the addressed scope, for the error message
+	 * @param registryName the addressed registry, or {@code null} to accept any
+	 *                     stage declared by any registry of the scope
+	 * @param stageName    the addressed stage, or {@code null} for paths without
+	 *                     a stage template
+	 */
+	private void validateStage(ScopeService<?> scopeService, String scopeName, String registryName, String stageName) {
+		if (stageName == null) {
+			return;
+		}
+		ScopeInfo scope = scopeService.getScopeInfo();
+		if (scope == null) {
+			return;
+		}
+		Set<String> knownStages = scope.getRegistries().stream()
+				.filter(registry -> registryName == null || registryName.equals(registry.getName()))
+				.map(RegistryInfo::getStages)
+				.flatMap(List::stream)
+				.map(StageInfo::getName)
+				.filter(Objects::nonNull)
+				.collect(Collectors.toSet());
+		if (knownStages.isEmpty() || knownStages.contains(stageName)) {
+			return;
+		}
+		String target = registryName == null
+				? String.format("scope [%s]", scopeName)
+				: String.format("registry [%s] in scope [%s]", registryName, scopeName);
+		throw new WebApplicationException(
+				Response.status(Response.Status.BAD_REQUEST)
+						.entity(String.format("Stage [%s] is not available for %s.", stageName, target))
+						.build());
 	}
 
 	/**

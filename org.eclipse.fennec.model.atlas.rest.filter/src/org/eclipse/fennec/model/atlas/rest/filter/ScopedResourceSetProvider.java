@@ -14,6 +14,7 @@
 package org.eclipse.fennec.model.atlas.rest.filter;
 
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.logging.Logger;
 
 import org.eclipse.emf.ecore.resource.ResourceSet;
 import org.eclipse.fennec.codec.rest.jakartas.spi.ResourceSetProvider;
@@ -50,6 +51,11 @@ import jakarta.ws.rs.core.UriInfo;
  * {@code ungetService} it once the codec's cleanup filter fires after the
  * response has been written.
  *
+ * <p>When no {@link ResourceSet} is registered for the request's scope/stage
+ * pair, the default {@link ResourceSet} is handed out instead. See
+ * {@link #resolveCso(String, String)} for why this must not fail the request
+ * here.
+ *
  * <h3>OSGi service binding strategy</h3>
  * <p>References use {@code policy = DYNAMIC} / {@code policyOption = GREEDY}
  * and are held in {@link AtomicReference} fields so a higher-ranked
@@ -72,6 +78,8 @@ public class ScopedResourceSetProvider implements ResourceSetProvider {
 	 * {@link ResourceSet} to it.
 	 */
 	static final String ACTIVE_CSO_PROPERTY = "scopedResourceSet.activeCSO";
+
+	private static final Logger LOGGER = Logger.getLogger(ScopedResourceSetProvider.class.getName());
 
 	private final AtomicReference<ResourceSetCollector> collectorRef = new AtomicReference<>();
 	private final AtomicReference<ComponentServiceObjects<ResourceSet>> defaultCsoRef = new AtomicReference<>();
@@ -123,39 +131,59 @@ public class ScopedResourceSetProvider implements ResourceSetProvider {
 
 	/**
 	 * Resolves the {@link ComponentServiceObjects} for the given scope/stage
-	 * pair. Falls back to the default {@link ResourceSet} CSO when either
-	 * parameter is {@code null} (e.g. paths without scope/stage templates).
+	 * pair, falling back to the default {@link ResourceSet} CSO when either
+	 * parameter is {@code null} (e.g. paths without scope/stage templates) or
+	 * when nothing is registered for the pair.
 	 *
-	 * @throws WebApplicationException 503 if the collector is currently
-	 *         unavailable, 400 if no ResourceSet is registered for the given
-	 *         scope/stage.
+	 * <p>An unresolvable scope/stage must not raise a
+	 * {@link WebApplicationException} here: this provider is reached lazily
+	 * through the codec's {@code CodecResourceSetSupplier}, and its first
+	 * caller is {@code MessageBodyWriter.isWriteable(...)}. HK2 swallows an
+	 * exception thrown at that point into a {@code MultiException}, Jersey
+	 * reads {@code isWriteable} as "no writer available" and answers a bodyless
+	 * {@code 500} — and writing the mapped error response fails the same way,
+	 * so the real cause never reaches the client. Rejecting unknown scope/stage
+	 * combinations belongs to the layers that can still produce a response:
+	 * {@code ModelAtlasRequestFilter} validates the scope and registry, and the
+	 * registry services validate the stage name and answer {@code 400}.
+	 *
+	 * @throws WebApplicationException 503 if neither a matching nor a default
+	 *         {@link ResourceSet} is available.
 	 */
 	private ComponentServiceObjects<ResourceSet> resolveCso(String scopeName, String stageName) {
 		if (scopeName == null || stageName == null) {
-			ComponentServiceObjects<ResourceSet> fallback = defaultCsoRef.get();
-			if (fallback == null) {
-				throw new WebApplicationException(
-						Response.status(Response.Status.SERVICE_UNAVAILABLE)
-								.entity("Default ResourceSet not available")
-								.build());
-			}
-			return fallback;
+			return defaultCso("no scope/stage path parameters on this request");
 		}
 		ResourceSetCollector collector = collectorRef.get();
 		if (collector == null) {
-			throw new WebApplicationException(
-					Response.status(Response.Status.SERVICE_UNAVAILABLE)
-							.entity("ResourceSetCollector not available")
-							.build());
+			return defaultCso("ResourceSetCollector not available");
 		}
 		ComponentServiceObjects<ResourceSet> cso = collector.getResourceSetObjects(scopeName, stageName);
 		if (cso == null) {
-			throw new WebApplicationException(
-					Response.status(Response.Status.BAD_REQUEST)
-							.entity(String.format("Resource Set for Stage [%s] and Scope [%s] not found.",
-									stageName, scopeName))
-							.build());
+			return defaultCso(String.format("no ResourceSet registered for scope [%s] / stage [%s]",
+					scopeName, stageName));
 		}
 		return cso;
+	}
+
+	/**
+	 * Returns the default {@link ResourceSet} CSO, logging why the scoped one
+	 * could not be used.
+	 *
+	 * @throws WebApplicationException 503 if there is no default either — with
+	 *         no {@link ResourceSet} at all nothing can be serialized.
+	 */
+	private ComponentServiceObjects<ResourceSet> defaultCso(String reason) {
+		ComponentServiceObjects<ResourceSet> fallback = defaultCsoRef.get();
+		if (fallback == null) {
+			LOGGER.severe(() -> "No ResourceSet available: " + reason
+					+ ", and no default ResourceSet is registered either");
+			throw new WebApplicationException(
+					Response.status(Response.Status.SERVICE_UNAVAILABLE)
+							.entity("Default ResourceSet not available")
+							.build());
+		}
+		LOGGER.fine(() -> "Falling back to the default ResourceSet: " + reason);
+		return fallback;
 	}
 }
