@@ -45,11 +45,21 @@ import org.osgi.service.component.annotations.ReferencePolicy;
  * configurations programmatically as {@link ScopeService}s are bound.
  *
  * <p>
- * For each bound non-atlas scope that has a schema registry, one
+ * For each bound scope that has a schema registry, one
  * {@code EPackageRegistry} / {@code ResourceSetFactory} pair is created per
  * stage (in stage declaration order). Chain: stage[i] points at stage[i+1];
  * the final stage points at the parent scope's final-stage pair, or at the
  * default EPackage registry when the parent is {@code atlas}.
+ * </p>
+ * <p>
+ * The {@code atlas} scope is generated like any other, and — being the root of
+ * the hierarchy — its single stage points at the default EPackage registry.
+ * That pair is what publishes the scope/stage-tagged {@code ResourceSet}
+ * {@code ResourceSetCollector} hands to the REST layer, so without it every
+ * request to the (first-class, addressable) atlas scope fails to resolve a
+ * {@code ResourceSet}. Scopes parented on {@code atlas} keep chaining onto the
+ * default registry rather than onto the atlas pair, so they are unaffected by
+ * whether the atlas scope is bound.
  * </p>
  *
  * @author ilenia
@@ -80,13 +90,14 @@ public class SchemaRegistryChainConfigurator {
             return;
         }
         String scopeName = scope.getName();
-        if (WorkflowConstants.ATLAS_SCOPE_NAME.equals(scopeName)) {
-            return;
-        }
         synchronized (lock) {
             scopesByName.put(scopeName, scopeService);
             regenerate(scopeName);
-            regenerateChildrenOf(scopeName);
+            // Scopes parented on atlas chain onto the default EPackage registry, not
+            // onto the atlas pair, so atlas binding never invalidates their chain.
+            if (!WorkflowConstants.ATLAS_SCOPE_NAME.equals(scopeName)) {
+                regenerateChildrenOf(scopeName);
+            }
         }
     }
 
@@ -96,13 +107,13 @@ public class SchemaRegistryChainConfigurator {
             return;
         }
         String scopeName = scope.getName();
-        if (WorkflowConstants.ATLAS_SCOPE_NAME.equals(scopeName)) {
-            return;
-        }
         synchronized (lock) {
             scopesByName.remove(scopeName);
             deleteConfigs(scopeName);
-            regenerateChildrenOf(scopeName);
+            // See bindScopeService: children of atlas do not depend on the atlas pair.
+            if (!WorkflowConstants.ATLAS_SCOPE_NAME.equals(scopeName)) {
+                regenerateChildrenOf(scopeName);
+            }
         }
     }
 

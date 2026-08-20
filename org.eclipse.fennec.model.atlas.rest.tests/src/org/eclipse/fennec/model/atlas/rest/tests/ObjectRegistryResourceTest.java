@@ -21,20 +21,25 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.IOException;
 import java.util.Date;
+import java.util.concurrent.TimeUnit;
 
 import org.eclipse.emf.ecore.EClass;
 import org.eclipse.emf.ecore.EPackage;
 import org.eclipse.emf.ecore.EcoreFactory;
+import org.eclipse.emf.ecore.resource.ResourceSet;
 import org.eclipse.fennec.model.atlas.datagen.example.model.dge.Person;
 import org.eclipse.fennec.model.atlas.rest.model.RestFactory;
 import org.eclipse.fennec.model.atlas.rest.model.StageTransitionRequest;
 import org.eclipse.fennec.model.atlas.rest.tests.helper.TestAnnotations;
 import org.eclipse.fennec.model.atlas.rest.tests.helper.TestAnnotations.ParentScopeServiceSetup;
 import org.eclipse.fennec.model.atlas.rest.tests.helper.TestHelper;
+import org.eclipse.fennec.model.atlas.workflow.WorkflowConstants;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.osgi.framework.BundleContext;
 import org.osgi.test.common.annotation.InjectBundleContext;
+import org.osgi.test.common.annotation.InjectService;
+import org.osgi.test.common.service.ServiceAware;
 
 import jakarta.ws.rs.client.Entity;
 import jakarta.ws.rs.client.WebTarget;
@@ -1264,6 +1269,45 @@ public class ObjectRegistryResourceTest extends AbstractRestTest{
 				"Should return HTTP 200 OK when object is already in target stage");
 	}
 
+	// ========== Atlas Scope Tests (issue #185) ==========
+
+	@Test
+	@ParentScopeServiceSetup
+	public void testListObjectsInAtlasStage_Success(@InjectBundleContext BundleContext context,
+			@InjectService(cardinality = 0, filter = "(&(scope.name=" + WorkflowConstants.ATLAS_SCOPE_NAME
+					+ ")(stage.name=" + WorkflowConstants.ATLAS_SCHEMA_REGISTRY_STAGE_NAME + "))")
+			ServiceAware<ResourceSet> atlasResourceSet) throws IOException, InterruptedException {
+		ensureResourceAvailability(context);
+		// Best-effort wait for the (atlas, released) ResourceSet that
+		// ScopedResourceSetProvider resolves for this request. Deliberately not
+		// asserted: when it is missing the test should fail with the symptom the
+		// client sees (a bodyless HTTP 500), not with a missing-service assertion.
+		atlasResourceSet.waitForService(TimeUnit.SECONDS.toMillis(15));
+
+		Response response = atlasRegistryTarget().path("stages")
+				.path(WorkflowConstants.ATLAS_SCHEMA_REGISTRY_STAGE_NAME)
+				.request("application/json").get();
+
+		assertStatus(200, response, "The built-in atlas scope must be addressable via REST");
+
+		String responseContent = response.readEntity(String.class);
+		assertNotNull(responseContent, "Should return content");
+		assertTrue(responseContent.contains("metadata"), "Response should contain metadata");
+	}
+
+	@Test
+	@ParentScopeServiceSetup
+	public void testListObjectsInUnknownStage_ReturnsBadRequest(@InjectBundleContext BundleContext context)
+			throws IOException, InterruptedException {
+		ensureResourceAvailability(context);
+		// No ResourceSet is registered for a stage the registry does not declare.
+		// The rejection has to come from the registry service (as a mappable 400),
+		// not from the writer's lazy ResourceSet lookup (an unmappable 500).
+		Response response = stageTarget("no-such-stage").request("application/json").get();
+
+		assertStatus(400, response, "An unknown stage must be rejected with a 400");
+	}
+
 	/** /{scope}/registries/{registry} */
 	private WebTarget registryTarget(String scope, String registry) {
 		return scopeTarget(scope).path("registries").path(registry);
@@ -1277,6 +1321,12 @@ public class ObjectRegistryResourceTest extends AbstractRestTest{
 	/** /{TEST_SCOPE_NAME}/registries/{OBJECT_REGISTRY_NAME} */
 	private WebTarget objectRegistryTarget() {
 		return registryTarget(TestAnnotations.OBJECT_REGISTRY_NAME);
+	}
+
+	/** /atlas/registries/atlas-schema-registry */
+	private WebTarget atlasRegistryTarget() {
+		return registryTarget(WorkflowConstants.ATLAS_SCOPE_NAME,
+				WorkflowConstants.ATLAS_SCHEMA_REGISTRY_NAME);
 	}
 
 	/** /{TEST_SCOPE_NAME}/registries/{registry}/stages/{stage} */

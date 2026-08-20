@@ -14,6 +14,7 @@
 package org.eclipse.fennec.model.atlas.rest.filter.tests;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -310,10 +311,14 @@ public class ScopedResourceSetIntegrationTest {
 	}
 
 	@Test
-	public void unknownStageReturnsBadRequest() {
+	public void unknownStageFallsBackToTheDefaultResourceSet() {
 		// scopeA exists for ModelAtlasRequestFilter, but no ResourceSet is
-		// registered for the (scopeA, missing) pair, so the binder must
-		// reject the request with 400.
+		// registered for the (scopeA, missing) pair. The provider must hand out
+		// the default ResourceSet instead of throwing: it is invoked from
+		// MessageBodyWriter.isWriteable(), where a WebApplicationException is
+		// swallowed by HK2 and degrades into a bodyless 500. Rejecting unknown
+		// scope/stage combinations is the resource layer's job (the registry
+		// services validate stage names and answer 400).
 		Response response = restTarget()
 				.path("binder-test/scopeA/stages/missing/identity")
 				.request()
@@ -321,11 +326,12 @@ public class ScopedResourceSetIntegrationTest {
 		try {
 			int status = response.getStatus();
 			String body = response.readEntity(String.class);
-			assertEquals(Response.Status.BAD_REQUEST.getStatusCode(), status,
-					"Unknown stage for a known scope must return 400. Actual status=" + status
+			assertEquals(Response.Status.OK.getStatusCode(), status,
+					"Unknown stage must be served from the default ResourceSet. Actual status=" + status
 							+ ", body=" + body);
-			assertTrue(body.contains("Resource Set for Stage"),
-					"Body must come from the binder, not the upstream filter: " + body);
+			assertFalse(body.isBlank(), "The fallback ResourceSet must still be injected: " + body);
+			assertNotEquals(identityFor("scopeA", "stageA"), body,
+					"The fallback must not hand out the scopeA/stageA ResourceSet");
 		} finally {
 			response.close();
 		}

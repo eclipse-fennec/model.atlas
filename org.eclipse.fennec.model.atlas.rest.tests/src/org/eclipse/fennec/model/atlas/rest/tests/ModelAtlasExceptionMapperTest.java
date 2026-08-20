@@ -150,6 +150,35 @@ public class ModelAtlasExceptionMapperTest extends AbstractRestTest {
 				"An internal failure must get the mapper's generic message | body: " + body);
 	}
 
+	@Test
+	@ParentScopeServiceSetup
+	public void testErrorResponse_IsWrittenWithoutAScopedResourceSet(@InjectBundleContext BundleContext context)
+			throws InterruptedException, IOException {
+
+		ensureResourceAvailability(context);
+		// A scope/stage pair for which no ResourceSet is registered: the failure
+		// happens in the request filter, and the ErrorResponse the mapper builds
+		// must still be serializable. If its writer depends on the scoped
+		// ResourceSet, writing the error response fails as well and the client
+		// gets a bodyless 500 instead ("Error occurred when processing a response
+		// created from an already mapped exception").
+		Response response = scopeTarget(THROWING_SCOPE)
+				.path("registries").path("any-registry")
+				.path("stages").path("no-such-stage")
+				.request("application/json")
+				.get();
+
+		assertEquals(500, response.getStatus(), "Should return HTTP 500");
+
+		String body = response.readEntity(String.class);
+		assertNotNull(body, "Response body should not be null");
+		assertTrue(body.contains("message"), "ErrorResponse should contain 'message' field | body: " + body);
+		assertTrue(body.contains("code"), "ErrorResponse should contain 'code' field | body: " + body);
+		assertTrue(body.contains("timestamp"), "ErrorResponse should contain 'timestamp' field | body: " + body);
+		assertTrue(body.contains("An internal server error occurred"),
+				"ErrorResponse should carry the mapper's generic message | body: " + body);
+	}
+
 	// ========== Client Error (4xx) Tests ==========
 
 	@Test

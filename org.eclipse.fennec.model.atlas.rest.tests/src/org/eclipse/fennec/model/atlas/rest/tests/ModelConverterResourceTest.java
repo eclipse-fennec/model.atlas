@@ -83,6 +83,27 @@ public class ModelConverterResourceTest extends AbstractRestTest{
         assertTrue(responseContent.contains("JsonToXmlPackage"), "Package name should be preserved in XML output");
     }
 
+    // ========== Unknown Stage Tests ==========
+
+    @Test
+    @ParentScopeServiceSetup
+    public void testConvertPackage_UnknownStage_ReturnsBadRequest(@InjectBundleContext BundleContext context)
+            throws Exception {
+        ensureResourceAvailability(context);
+        // This endpoint has no stage semantics of its own — it only needs the
+        // scope/stage ResourceSet for the codec — so nothing downstream rejects a
+        // stage the scope does not declare. The rejection has to happen where a
+        // 400 can still be produced: the request filter.
+        String jsonEPackage = createJsonEPackage(TestHelper.generateUniqueNsUri("unknownStageTest"),
+                "UnknownStagePackage", "uns");
+
+        String url = BASE_URL + "/" + TestAnnotations.TEST_SCOPE_NAME + "/stages/no-such-stage/convert";
+        Response response = restClient.target(url).request(MediaType.APPLICATION_XML)
+                .post(Entity.json(jsonEPackage));
+
+        assertStatus(400, response, "An unknown stage must be rejected with a 400");
+    }
+
     // ========== XML to JSON Conversion Tests ==========
 
     @Test
