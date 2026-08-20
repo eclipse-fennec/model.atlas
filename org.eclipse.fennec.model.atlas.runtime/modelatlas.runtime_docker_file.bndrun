@@ -1,3 +1,7 @@
 -include: modelatlas.runtime_docker.bndrun
 
--runbundles.docker.file: org.eclipse.fennec.model.atlas.runtime.config.docker.file
+-runbundles.docker.file: \
+	org.eclipse.fennec.event.atlas.mapping,\
+	org.eclipse.fennec.model.atlas.runtime.config.docker.file,\
+
+-resolve: never
