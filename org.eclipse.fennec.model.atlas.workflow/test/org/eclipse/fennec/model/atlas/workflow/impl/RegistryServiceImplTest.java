@@ -15,10 +15,14 @@ package org.eclipse.fennec.model.atlas.workflow.impl;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.util.List;
+import java.util.Set;
 
 import org.eclipse.emf.ecore.EClass;
 import org.eclipse.emf.ecore.EObject;
@@ -30,6 +34,11 @@ import org.eclipse.emf.ecore.resource.Resource;
 import org.eclipse.emf.ecore.resource.ResourceSet;
 import org.eclipse.emf.ecore.resource.impl.ResourceImpl;
 import org.eclipse.emf.ecore.resource.impl.ResourceSetImpl;
+import org.eclipse.fennec.model.atlas.mgmt.api.EObjectStorageService;
+import org.eclipse.fennec.model.atlas.mgmt.management.ManagementFactory;
+import org.eclipse.fennec.model.atlas.mgmt.management.ObjectMetadata;
+import org.eclipse.fennec.model.atlas.workflow.StageActionService;
+import org.osgi.util.promise.Promises;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -76,6 +85,11 @@ public class RegistryServiceImplTest {
     }
 
     private RegistryServiceImpl<EObject> createService(String rootEClassUri) {
+        return createService(rootEClassUri, List.of());
+    }
+
+    private RegistryServiceImpl<EObject> createService(String rootEClassUri,
+            List<EObjectStorageService<EObject>> storageServices) {
         RegistryServiceConfig config = mock(RegistryServiceConfig.class);
         when(config.registry_name()).thenReturn("test-registry");
         when(config.registry_description()).thenReturn("");
@@ -86,7 +100,7 @@ public class RegistryServiceImplTest {
                 "{\"name\": \"draft\", \"writable\": true, \"final\": false}",
                 "{\"name\": \"release\", \"writable\": true, \"final\": true}" });
         when(config.root_eclass_uri()).thenReturn(rootEClassUri);
-        return new RegistryServiceImpl<>(List.of(), resourceSet, List.of(), config);
+        return new RegistryServiceImpl<>(storageServices, resourceSet, config);
     }
 
     @Nested
@@ -116,6 +130,55 @@ public class RegistryServiceImplTest {
         @DisplayName("Should accept the EObject EClass itself")
         void shouldAcceptEObjectItself() {
             assertTrue(service.isEClassCompatibleWithRegistry(EcorePackage.Literals.EOBJECT));
+        }
+    }
+
+    @Nested
+    @DisplayName("Dynamic stage action service binding")
+    class StageActionBindingTests {
+
+        @SuppressWarnings("unchecked")
+        @Test
+        @DisplayName("A stage action service bound after scope activation receives the startup replay")
+        void lateBoundStageActionServiceReceivesStartupReplay() {
+            EObjectStorageService<EObject> storage = mock(EObjectStorageService.class);
+            when(storage.getStorageType()).thenReturn("file");
+            ObjectMetadata metadata = ManagementFactory.eINSTANCE.createObjectMetadata();
+            metadata.setObjectId("object-1");
+            metadata.setStage("draft");
+            when(storage.queryObjects(any())).thenReturn(Promises.resolved(List.of(metadata)));
+
+            RegistryServiceImpl<EObject> service = createService(TEST_NS_URI + "#//Person", List.of(storage));
+
+            // the scope activates while no stage action service is bound yet - with the
+            // former static reference this ordering silently lost all stage actions
+            service.activate("test-scope");
+
+            StageActionService stageAction = mock(StageActionService.class);
+            when(stageAction.requiresReplayOnStartup()).thenReturn(true);
+            when(stageAction.getTriggerStages()).thenReturn(Set.of("draft"));
+            when(stageAction.getTriggerEvents()).thenReturn(Set.of());
+            when(stageAction.supportsObjectType(any())).thenReturn(true);
+            when(stageAction.onEnter(any())).thenReturn(Promises.resolved(null));
+
+            service.addStageActionService(stageAction);
+
+            verify(stageAction).onEnter(any());
+        }
+
+        @SuppressWarnings("unchecked")
+        @Test
+        @DisplayName("A stage action service without startup replay is not replayed on late binding")
+        void lateBoundStageActionServiceWithoutReplayIsNotReplayed() {
+            RegistryServiceImpl<EObject> service = createService(TEST_NS_URI + "#//Person");
+            service.activate("test-scope");
+
+            StageActionService stageAction = mock(StageActionService.class);
+            when(stageAction.requiresReplayOnStartup()).thenReturn(false);
+
+            service.addStageActionService(stageAction);
+
+            verify(stageAction, never()).onEnter(any());
         }
     }
 
