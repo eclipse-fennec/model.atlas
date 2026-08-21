@@ -24,6 +24,8 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.function.Function;
@@ -57,6 +59,9 @@ import org.osgi.service.component.annotations.Deactivate;
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.ConfigurationPolicy;
 import org.osgi.service.component.annotations.Reference;
+import org.osgi.service.component.annotations.ReferenceCardinality;
+import org.osgi.service.component.annotations.ReferencePolicy;
+import org.osgi.service.component.annotations.ReferencePolicyOption;
 import org.osgi.service.metatype.annotations.Designate;
 import org.osgi.util.promise.Promise;
 import org.osgi.util.promise.PromiseFactory;
@@ -92,14 +97,15 @@ public class RegistryServiceImpl<T extends EObject> implements RegistryService<T
     }
     private final EClass rootEClass;
 
-	private List<StageActionService> stageActionService;
+    private final List<StageActionService> stageActionServices = new CopyOnWriteArrayList<>();
+    /** Scopes this registry has been activated for, to replay for late-binding stage action services. */
+    private final Set<String> activatedScopes = ConcurrentHashMap.newKeySet();
+    private final Object stageActionLock = new Object();
 
     @Activate
     public RegistryServiceImpl(@Reference(name = "storageService", target = ("(scope=no-inject)")) List<EObjectStorageService<T>> storageService,
             @Reference(name = "resourceSet") ResourceSet resourceSet,
-            @Reference(name = "stageActionService", target = ("(scope=no-inject)")) List<StageActionService> stageActionService,
             RegistryServiceConfig config) {
-        this.stageActionService = stageActionService;
         this.config = config;
         this.allowedTransitionsList = parseTransitionsIntoList(config.workflow_transitions());
         this.storageMap = parseStageStorageMappings(config.stage_storage_mappings(), storageService);
@@ -115,39 +121,77 @@ public class RegistryServiceImpl<T extends EObject> implements RegistryService<T
         }
     }
 
+    /**
+     * The stage action services are a DYNAMIC reference on purpose: as a static
+     * constructor reference the list was frozen at construction time, so a
+     * RegistryService that happened to activate before e.g. the
+     * EPackageStageActionService never dispatched any stage action — uploads were
+     * stored but the EPackages silently never registered (the activation order of
+     * configured components is not guaranteed). A service that appears later now
+     * joins immediately and receives the startup replay for every scope this
+     * registry is already activated for; the replay is idempotent on the receiver
+     * side.
+     */
+    @Reference(name = "stageActionService", target = ("(scope=no-inject)"),
+            cardinality = ReferenceCardinality.MULTIPLE, policy = ReferencePolicy.DYNAMIC,
+            policyOption = ReferencePolicyOption.GREEDY)
+    void addStageActionService(StageActionService stageActionService) {
+        synchronized (stageActionLock) {
+            stageActionServices.add(stageActionService);
+            activatedScopes.forEach(scope -> replayOnStartup(scope, List.of(stageActionService)));
+        }
+    }
+
+    void removeStageActionService(StageActionService stageActionService) {
+        synchronized (stageActionLock) {
+            stageActionServices.remove(stageActionService);
+        }
+    }
+
     /*
      * (non-Javadoc)
-     * 
+     *
      * @see
      * org.eclipse.fennec.model.atlas.wf.workflowapi.RegistryService#activate(java.
      * lang.String)
      */
     @Override
     public Void activate(String scope) {
-        stageActionService.forEach(sas -> {
+        synchronized (stageActionLock) {
+            activatedScopes.add(scope);
+            replayOnStartup(scope, stageActionServices);
+        }
+        return null;
+    }
+
+    private void replayOnStartup(String scope, List<StageActionService> services) {
+        services.forEach(sas -> {
             if (!sas.requiresReplayOnStartup()) {
                 return;
             }
-            sas.getTriggerStages().forEach(stage -> listInStage(scope, stage).forEach(m -> dispatch(ActionEvent.ENTER,
-                    newContext(scope, stage, m, null, null, null, "startup replay", true))));
+            sas.getTriggerStages().forEach(stage -> listInStage(scope, stage).forEach(m -> dispatchTo(sas,
+                    ActionEvent.ENTER, newContext(scope, stage, m, null, null, null, "startup replay", true))));
         });
-        return null;
     }
 
     /*
      * (non-Javadoc)
-     * 
+     *
      * @see
      * org.eclipse.fennec.model.atlas.wf.workflowapi.RegistryService#deactivate(java
      * .lang.String)
      */
     @Override
     public Void deactivate(String scope) {
-        stageActionService.forEach(sas -> {
+        synchronized (stageActionLock) {
+            activatedScopes.remove(scope);
+        }
+        stageActionServices.forEach(sas -> {
             if (!sas.requiresReplayOnShutdown()) {
                 return;
             }
-            sas.getTriggerStages().forEach(stage -> listInStage(scope, stage).forEach(m -> dispatch(ActionEvent.EXIT,
+            sas.getTriggerStages().forEach(stage -> listInStage(scope, stage).forEach(m -> dispatchTo(sas,
+                    ActionEvent.EXIT,
                     newContext(scope, stage, m, null, null, ExitReason.DELETED, "shutdown replay", true))));
         });
         return null;
@@ -694,26 +738,28 @@ public class RegistryServiceImpl<T extends EObject> implements RegistryService<T
     }
 
     private void dispatch(ActionEvent event, ActionContext ctx) {
-        stageActionService.forEach(sas -> {
-            if (!sas.supportsObjectType(ctx.objectType())) {
-                return;
-            }
-            Set<String> triggerStages = sas.getTriggerStages();
-            if (!triggerStages.isEmpty() && !triggerStages.contains(ctx.stage())) {
-                return;
-            }
-            Set<ActionEvent> triggerEvents = sas.getTriggerEvents();
-            if (!triggerEvents.isEmpty() && !triggerEvents.contains(event)) {
-                return;
-            }
-            Promise<Void> p = switch (event) {
-            case ENTER -> sas.onEnter(ctx);
-            case UPDATE -> sas.onUpdate(ctx);
-            case EXIT -> sas.onExit(ctx);
-            };
-            p.onFailure(t -> LOGGER.log(Level.WARNING, "StageAction " + sas.getClass().getSimpleName()
-                    + " failed for " + event + " on " + ctx.objectId(), t));
-        });
+        stageActionServices.forEach(sas -> dispatchTo(sas, event, ctx));
+    }
+
+    private void dispatchTo(StageActionService sas, ActionEvent event, ActionContext ctx) {
+        if (!sas.supportsObjectType(ctx.objectType())) {
+            return;
+        }
+        Set<String> triggerStages = sas.getTriggerStages();
+        if (!triggerStages.isEmpty() && !triggerStages.contains(ctx.stage())) {
+            return;
+        }
+        Set<ActionEvent> triggerEvents = sas.getTriggerEvents();
+        if (!triggerEvents.isEmpty() && !triggerEvents.contains(event)) {
+            return;
+        }
+        Promise<Void> p = switch (event) {
+        case ENTER -> sas.onEnter(ctx);
+        case UPDATE -> sas.onUpdate(ctx);
+        case EXIT -> sas.onExit(ctx);
+        };
+        p.onFailure(t -> LOGGER.log(Level.WARNING, "StageAction " + sas.getClass().getSimpleName()
+                + " failed for " + event + " on " + ctx.objectId(), t));
     }
 
 
