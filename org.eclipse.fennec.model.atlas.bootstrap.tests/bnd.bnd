@@ -21,14 +21,23 @@ Test-Cases: ${classes;HIERARCHY_INDIRECTLY_ANNOTATED;org.junit.platform.commons.
 	org.osgi.test.junit5.cm;version=latest,\
 	org.eclipse.fennec.emf.osgi.component,\
 	org.eclipse.fennec.model.atlas.emf.common;version=snapshot,\
-	org.eclipse.fennec.model.atlas.bootstrap;version=snapshot
+	org.eclipse.fennec.model.atlas.bootstrap;version=snapshot,\
+	org.eclipse.fennec.model.atlas.management;version=snapshot,\
+	org.eclipse.fennec.model.atlas.scope.api;version=snapshot,\
+	org.eclipse.fennec.model.atlas.workflow;version=snapshot,\
+	org.eclipse.fennec.model.atlas.tests.common;version=snapshot
 
 
 -includeresource: \
 	test-data=test-data/
 
 -dependson: \
-	org.eclipse.fennec.model.atlas.bootstrap
+	org.eclipse.fennec.model.atlas.bootstrap,\
+	org.eclipse.fennec.model.atlas.workflow,\
+	org.eclipse.fennec.model.atlas.management,\
+	org.eclipse.fennec.model.atlas.management.file,\
+	org.eclipse.fennec.model.atlas.management.lucene,\
+	org.eclipse.fennec.model.atlas.tests.common
 
 # Do not publish this bundle to Maven Central; local install only
 -maven-release: local
