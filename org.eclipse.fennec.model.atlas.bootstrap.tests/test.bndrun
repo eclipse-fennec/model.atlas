@@ -3,7 +3,15 @@
 -runrequires: \
 	bnd.identity;id='org.eclipse.fennec.model.atlas.bootstrap.tests',\
 	bnd.identity;id='org.eclipse.fennec.model.atlas.bootstrap',\
-	bnd.identity;id='org.eclipse.fennec.codec.jsonschema'
+	bnd.identity;id='org.eclipse.fennec.codec.jsonschema',\
+	bnd.identity;id='org.eclipse.fennec.model.atlas.management.file',\
+	bnd.identity;id='org.eclipse.fennec.model.atlas.management.lucene',\
+	bnd.identity;id='org.eclipse.fennec.emf.osgi.component'
+
+-runblacklist: \
+	bnd.identity;id='org.eclipse.uml2.uml';version='[0.0.0,5.6.0)',\
+	bnd.identity;id='org.eclipse.fennec.model.atlas.management.apicurio',\
+	bnd.identity;id='org.eclipse.fennec.emf.osgi.component.minimal'
 
 -runbundles.test: \
 	org.eclipse.fennec.model.atlas.bootstrap.tests;version=snapshot

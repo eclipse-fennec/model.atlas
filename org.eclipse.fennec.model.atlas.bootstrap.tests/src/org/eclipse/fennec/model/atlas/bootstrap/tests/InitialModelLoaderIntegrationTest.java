@@ -16,6 +16,7 @@ package org.eclipse.fennec.model.atlas.bootstrap.tests;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -225,6 +226,41 @@ public class InitialModelLoaderIntegrationTest {
         assertReferenceResolvesTo(cThing, "a", aThing);
     }
 
+    @Test
+    @DisplayName("A duplicate nsURI aborts the whole deployment atomically; a corrected folder then recovers")
+    public void duplicateNsUriRollsBackAndRecovers(@InjectBundleContext BundleContext context,
+            @InjectService(cardinality = 0) ServiceAware<ConfigurationAdmin> cmAware,
+            @InjectService(cardinality = 0, timeout = 15000,
+                    filter = "(" + EMFNamespaces.EMF_MODEL_NSURI + "=" + NS_BASE + "/duplicate)") ServiceAware<EPackage> duplicateAware,
+            @InjectService(cardinality = 0, timeout = 15000,
+                    filter = "(" + EMFNamespaces.EMF_MODEL_NSURI + "=" + NS_BASE + "/duplicate-sibling)") ServiceAware<EPackage> siblingAware)
+            throws Exception {
+
+        Path broken = Files.createDirectories(tempDir.resolve("broken"));
+        Path fixed = Files.createDirectories(tempDir.resolve("fixed"));
+        copyTestData(context, "duplicate", broken);
+        copyTestData(context, "duplicate-fixed", fixed);
+
+        applyLoaderConfiguration(cmAware.waitForService(5000), broken);
+
+        // two files share an nsURI -> the whole deployment must fail, including the
+        // perfectly valid sibling model in the same folder (issue #175, D2)
+        assertNull(siblingAware.waitForService(3000),
+                "The valid sibling model must not be deployed when the batch contains a duplicate");
+        assertFalse(EPackage.Registry.INSTANCE.containsKey(NS_BASE + "/duplicate"),
+                "The failed deployment must not leave the duplicate nsURI in the global registry");
+        assertFalse(EPackage.Registry.INSTANCE.containsKey(NS_BASE + "/duplicate-sibling"),
+                "The failed deployment must not leave the sibling nsURI in the global registry");
+
+        // a corrected folder deploys after a configuration update - the failed
+        // attempt left nothing behind that a retry could trip over (F39)
+        applyLoaderConfiguration(cmAware.waitForService(5000), fixed);
+        assertNotNull(duplicateAware.waitForService(15000),
+                "The corrected folder should deploy the formerly duplicated nsURI");
+        assertNotNull(siblingAware.waitForService(15000),
+                "The corrected folder should deploy the sibling model");
+    }
+
     private static void assertReferenceResolvesTo(EClass owner, String referenceName, EClass expectedTarget) {
         EReference reference = (EReference) owner.getEStructuralFeature(referenceName);
         assertNotNull(reference,
@@ -246,6 +282,8 @@ public class InitialModelLoaderIntegrationTest {
         loaderConfiguration = cm.getConfiguration(LOADER_PID, "?");
         Dictionary<String, Object> properties = new Hashtable<>();
         properties.put("initial.models.folder", folder.toAbsolutePath().toString());
+        // never stop the test framework when a (deliberately) broken deployment fails
+        properties.put("halt.on.error", false);
         loaderConfiguration.update(properties);
     }
 

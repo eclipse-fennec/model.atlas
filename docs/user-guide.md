@@ -950,13 +950,38 @@ The folder is scanned **recursively**; files are handled by extension:
 
 Other file types are ignored. Cross-references **between** the loaded files are
 resolved, so multiple `.ecore`/`.jsonschema` files may reference each other by
-namespace URI. If two files declare the same `nsUri` (or an `nsUri` is already
-registered), startup **fails fast** so the conflict is caught immediately.
+namespace URI.
 
 The loaded packages register in the static EMF `EPackage.Registry`, so they show up
 as **read-only** entries in the built-in [atlas-schema-registry](#the-atlas-schema-registry)
 — exactly like models shipped in OSGi bundles — and are visible to all scopes whose
 ancestor chain reaches `atlas`.
+
+### Seeding scopes
+
+Models placed below the reserved `scopes/<scopeName>/` folder are **not**
+registered globally. Instead they are **uploaded into that scope's schema
+registry** (default: registry `schema`, stage `draft`) as soon as the scope is
+up, exactly as if they had been uploaded through the REST API — persisted in the
+scope's storage backend, stage-transitionable, and registered as `EPackage`
+services with the scope/stage properties. This is the way to make a scope's
+registry configurations (e.g. one whose `root.eclass.uri` points into a custom
+model) resolvable at startup.
+
+Seeding a scope is **idempotent**: a namespace URI that already exists in the
+target stage is skipped, so restarts never overwrite content the scope already
+has. Model updates go through the REST API (or git), not through the boot mount.
+The built-in `atlas` scope cannot be seeded this way — put those models at the
+top level instead.
+
+### Failure behaviour
+
+The deployment is **atomic and fail-hard**: every file is validated before
+anything is registered; one bad file (unreadable, empty, no `EPackage` root,
+blank or duplicate `nsUri`) aborts the whole deployment and rolls back anything
+already done. By default the loader then **stops the OSGi framework**
+(`halt.on.error=true`), so a container with a broken model mount fails its
+startup visibly instead of silently running without its models.
 
 ### Configuration
 
@@ -965,6 +990,10 @@ The loader is configured via the `InitialModelLoader` PID:
 | Property | Default | Description |
 |----------|---------|-------------|
 | `initial.models.folder` | `/initial-models` | Folder scanned once on startup. |
+| `halt.on.error` | `true` | Stop the OSGi framework when the deployment fails (after rollback). |
+| `initial.models.registry` | `schema` | Registry within a scope that `scopes/<scopeName>/` models are uploaded into. |
+| `initial.models.stage` | `draft` | Stage the scope models are uploaded into (must be writable and a stage-action trigger stage). |
+| `scope.wait.seconds` | `60` | How long to wait for a scope folder's scope service before failing. |
 
 The loader silently does nothing when the folder is blank, missing, not a directory,
 or still contains an un-interpolated `$[env:...]` template.
@@ -994,10 +1023,14 @@ An example layout for the mounted folder:
 
 ```
 initial-models/
-├── billing.ecore
+├── billing.ecore              # registered globally (atlas scope)
 ├── sensors.jsonschema
-└── billing-to-report/        # folder name becomes the transformator id
-    └── transform.qvto
+├── billing-to-report/         # folder name becomes the transformator id
+│   └── transform.qvto
+└── scopes/
+    └── jena/                  # uploaded into the 'jena' scope (schema registry, draft stage)
+        ├── person.ecore
+        └── address.ecore
 ```
 
 After startup, the seeded schemas are listable just like any other system schema:

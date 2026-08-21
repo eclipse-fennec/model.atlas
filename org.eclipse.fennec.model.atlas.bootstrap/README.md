@@ -24,6 +24,10 @@ files by extension:
 
 All other file types are ignored.
 
+Files below the reserved **`scopes/`** folder follow different rules — see
+[Seeding scopes](#seeding-scopes) below. Everything else is registered globally
+(the "atlas" content).
+
 For every registered `EPackage` the loader publishes two OSGi services:
 
 - the `EPackage` itself, and
@@ -59,17 +63,47 @@ service with:
 Group a transformation's files in a dedicated subfolder; the folder name becomes
 the transformator id.
 
-### Duplicate detection
+### Seeding scopes
 
-If a package `nsURI` is already present in the registry (or appears twice in the
-scanned folder), activation **fails fast** with an `IllegalStateException`. A
-package without an `nsURI` is also rejected.
+Models placed below `scopes/<scopeName>/` are **not** registered globally.
+Instead, as soon as the named scope's `WritableScopeService` appears, they are
+uploaded into that scope's registry (default: the `schema` registry, `draft`
+stage) — exactly as if they had been uploaded through the REST API. The upload is
+persisted in the scope's storage backend and triggers the regular stage ENTER
+action, which registers the `EPackage` services with the scope/stage properties.
+
+- A namespace URI that is **already present** in the target stage is skipped, so
+  the seeding is idempotent across restarts and never overwrites content the
+  scope already has. Model updates go through the REST API (or git), not through
+  the boot mount.
+- If the scope service does not appear within `scope.wait.seconds`, the seeding
+  is considered failed (see below).
+- The built-in **`atlas`** scope cannot be targeted this way — its schema
+  registry is read-only. Its content is the set of globally registered packages,
+  i.e. the top-level files.
+- `.qvto` files are not scope-bound and are rejected below `scopes/`.
+
+### Atomicity and failure behaviour
+
+The deployment is **atomic**: every file is loaded and validated before anything
+is registered, and any failure rolls back everything that was already seeded or
+registered — a retry never trips over a failed attempt's leftovers. One bad file
+(unreadable, empty, no `EPackage` root, blank or duplicate `nsURI` — against the
+registries or within the batch) aborts the **whole** deployment, including the
+perfectly fine files next to it.
+
+By default (`halt.on.error=true`) a failed deployment also **stops the OSGi
+framework**, so a container startup fails visibly instead of running without its
+models. Set `halt.on.error=false` to only fail the component activation and keep
+the runtime going.
 
 ### Lifecycle
 
-On deactivation the loader cleanly reverses everything it did: it unregisters the
-`EPackage` / `EPackageConfigurator` services, removes the packages from the static
-registry, and deletes the QVT factory configurations.
+On deactivation the loader cleanly reverses its global registrations: it
+unregisters the `EPackage` / `EPackageConfigurator` services, removes the
+packages from the static registry, and deletes the QVT factory configurations.
+Models seeded **into scopes** are persisted uploads, exactly like REST uploads —
+they intentionally survive the loader (and container) lifecycle.
 
 ## Configuration
 
@@ -79,6 +113,10 @@ so it activates even without configuration (using the default folder).
 | Property | Default | Description |
 |----------|---------|-------------|
 | `initial.models.folder` | `/initial-models` | Folder scanned once on startup. |
+| `halt.on.error` | `true` | Stop the OSGi framework when the deployment fails (after rolling back). |
+| `initial.models.registry` | `schema` | Registry within a scope that `scopes/<scopeName>/` models are uploaded into. |
+| `initial.models.stage` | `draft` | Stage the scope models are uploaded into. Must be writable, and should be a trigger stage of the `EPackageStageActionService` for the packages to be registered. |
+| `scope.wait.seconds` | `60` | How long to wait for a scope folder's scope service before failing. |
 
 The loader does nothing (and logs an `INFO` message) when the folder is blank,
 does not exist, is not a directory, or still contains an un-interpolated
@@ -116,10 +154,14 @@ services:
 
 ```
 /initial-models
-├── billing.ecore
+├── billing.ecore              # registered globally (visible via the atlas scope)
 ├── sensors.jsonschema
-└── billing-to-report/        # folder name becomes transformator.id
-    └── transform.qvto
+├── billing-to-report/         # folder name becomes transformator.id
+│   └── transform.qvto
+└── scopes/
+    └── jena/                  # uploaded into the 'jena' scope's schema registry
+        ├── person.ecore
+        └── address.ecore
 ```
 
 ## License
