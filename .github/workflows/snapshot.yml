@@ -6,8 +6,8 @@ on:
       - snapshot
 
 # Workflow-level ceiling for the called reusables. The credential-scoped release
-# and container steps get their secrets via `secrets: inherit` below (verify
-# never sees them); packages: write is needed for the GHCR image push.
+# and container steps get their secrets via `secrets: inherit` below;
+# packages: write is needed for the GHCR image push.
 permissions:
   contents: read
   packages: write
@@ -16,17 +16,14 @@ concurrency:
   group: snapshot-publish
   cancel-in-progress: false
 
+# No separate verify job here: the reusable release runs
+# `build testOSGi <exports> release` in ONE Gradle invocation, so the full test
+# suite already gates the publish — and the tested jars are byte-identical to
+# the released ones. A verify job in front would run the exact same suite a
+# second time (~25 min) on the same commit. PRs and feature branches are
+# verified by build.yml.
 jobs:
-  verify:
-    uses: eclipse-fennec/.github/.github/workflows/reusable-verify.yml@bb56215f3e78dfc0870da3c4ed4c495d6b208ede # v1.1.0
-    with:
-      java-versions: '["25"]'
-      # No perfTest task in this workspace.
-      run-perf-tests: false
-      gradle-parallel: false
-
   release:
-    needs: verify
     uses: eclipse-fennec/.github/.github/workflows/reusable-release.yml@bb56215f3e78dfc0870da3c4ed4c495d6b208ede # v1.1.0
     with:
       do-release: false
