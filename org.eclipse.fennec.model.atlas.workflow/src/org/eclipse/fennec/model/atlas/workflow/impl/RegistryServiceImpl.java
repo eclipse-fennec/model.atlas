@@ -34,6 +34,7 @@ import java.util.stream.Collectors;
 import org.eclipse.emf.common.util.URI;
 import org.eclipse.emf.ecore.EClass;
 import org.eclipse.emf.ecore.EObject;
+import org.eclipse.emf.ecore.EcorePackage;
 import org.eclipse.emf.ecore.resource.ResourceSet;
 import org.eclipse.emf.ecore.util.EcoreUtil;
 import org.eclipse.fennec.model.atlas.mgmt.api.EObjectRegistryService;
@@ -515,6 +516,11 @@ public class RegistryServiceImpl<T extends EObject> implements RegistryService<T
      */
     @Override
     public boolean isEClassCompatibleWithRegistry(EClass eClass) {
+        // EObject is the implicit super type of every EClass but never appears in
+        // getEAllSuperTypes(), so a registry rooted at EObject must accept everything
+        if (rootEClass == EcorePackage.Literals.EOBJECT) {
+            return true;
+        }
         return EcoreUtil.getURI(eClass).equals(EcoreUtil.getURI(rootEClass))
                 || eClass.getEAllSuperTypes().contains(rootEClass);
     }

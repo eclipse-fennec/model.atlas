@@ -36,6 +36,10 @@ src=${^src},src-wf-api
 	org.eclipse.fennec.model.atlas.management.lucene;version=snapshot,\
 	org.eclipse.fennec.model.atlas.scope.api;version=snapshot
 
+# jackson-databind needs the annotations at runtime; in OSGi the import is wired
+# automatically, but the plain unit tests need it on the classpath explicitly
+-testpath: com.fasterxml.jackson.core.jackson-annotations
+
 
 
 
