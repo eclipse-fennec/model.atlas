@@ -13,7 +13,7 @@ Model Atlas is available as a Docker image in two variants, each tailored to a d
 | Variant | Image Tag | Description |
 |---------|-----------|-------------|
 | **Apicurio** | `eclipsefennec/model.atlas:apicurio-latest` | Uses [Apicurio Registry](https://www.apicur.io/registry/) for model storage with a full workflow (draft, approved, release stages) |
-| **File** | `eclipsefennec/model.atlas:file-latest` | Uses local file-based storage, no external dependencies required |
+| **File** | `eclipsefennec/model.atlas:file-latest` | Uses local file-based storage, no external dependencies required. Ships a preconfigured `jena` scope with the `schema`, `workspace`, `DataGen`, `cocl` and `sensinactmapping` registries — see the [File variant README](docker/modelatlas_file/README.md) |
 
 Both variants are also available on GHCR as `ghcr.io/eclipse-fennec/model.atlas`.
 
@@ -23,6 +23,15 @@ Snapshot builds from the `snapshot` branch are tagged as `apicurio-snapshot` and
 
 ```bash
 docker run -d -p 8080:8080 eclipsefennec/model.atlas:file-latest
+```
+
+Storage lives in `/opt/modelatlas/runtime/data` by default, so mounting a volume there keeps the
+stored models across container restarts:
+
+```bash
+docker run -d -p 8080:8080 \
+  -v modelatlas-data:/opt/modelatlas/runtime/data \
+  eclipsefennec/model.atlas:file-latest
 ```
 
 ### Quick Start (Apicurio variant)
@@ -47,7 +56,7 @@ This starts Model Atlas together with Apicurio Registry and its UI:
 |----------|---------|-------------|
 | `APICURIO_HOST` | `localhost` | Hostname of the Apicurio Registry (Apicurio variant only) |
 | `APICURIO_PORT` | `8081` | Port of the Apicurio Registry (Apicurio variant only) |
-| `STORAGE_ROOT` | `/tmp/mac` | Root directory for file-based storage (File variant only) |
+| `STORAGE_ROOT` | `/opt/modelatlas/runtime/data` | Root directory for file-based storage (File variant only) |
 
 ### Docker Compose Files
 
