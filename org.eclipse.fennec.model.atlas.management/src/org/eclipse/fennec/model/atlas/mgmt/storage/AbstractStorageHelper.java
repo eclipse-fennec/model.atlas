@@ -31,6 +31,7 @@ import org.eclipse.emf.ecore.xmi.PackageNotFoundException;
 import org.eclipse.fennec.model.atlas.mgmt.conversion.InstantConversionDelegateFactory;
 import org.eclipse.fennec.model.atlas.mgmt.management.ManagementPackage;
 import org.eclipse.fennec.model.atlas.mgmt.management.ObjectMetadata;
+import org.osgi.service.component.ComponentServiceObjects;
 
 /**
  * Abstract base class for EMF object storage operations. Provides shared
@@ -55,6 +56,13 @@ public abstract class AbstractStorageHelper implements AutoCloseable {
 
     protected final ResourceSet resourceSet;
 
+    /**
+     * Optional resolver for the per-(scope, stage) ResourceSets; when {@code null}
+     * everything is loaded through the shared management {@link #resourceSet},
+     * which only knows the statically registered models.
+     */
+    private StageResourceSetProvider stageResourceSetProvider;
+
     static {
         // Register the (stateless) Instant conversion delegate once for the whole
         // JVM. The registry is a global singleton shared by every helper instance,
@@ -67,6 +75,23 @@ public abstract class AbstractStorageHelper implements AutoCloseable {
 
     public AbstractStorageHelper(ResourceSet resourceSet) {
         this.resourceSet = resourceSet;
+    }
+
+    /**
+     * Sets the optional per-(scope, stage) ResourceSet resolver. See
+     * {@link StageResourceSetProvider}.
+     */
+    public void setStageResourceSetProvider(StageResourceSetProvider stageResourceSetProvider) {
+        this.stageResourceSetProvider = stageResourceSetProvider;
+    }
+
+    /**
+     * Returns a lease for the (scope, stage) ResourceSet, or {@code null} when no
+     * provider is wired or the location has no dedicated ResourceSet.
+     */
+    protected ComponentServiceObjects<ResourceSet> leaseFor(String scope, String stage) {
+        return stageResourceSetProvider == null ? null
+                : stageResourceSetProvider.getResourceSetObjects(scope, stage);
     }
 
     /**
@@ -244,6 +269,11 @@ public abstract class AbstractStorageHelper implements AutoCloseable {
 
     /**
      * Loads an EObject from storage, automatically detecting the file extension.
+     * When a {@link StageResourceSetProvider} is wired, the object is loaded
+     * through the per-(scope, stage) ResourceSet so instances of dynamically
+     * registered EPackages resolve (issue #190); otherwise — and for locations
+     * without a dedicated ResourceSet — the shared management ResourceSet is
+     * used, which suffices for the statically registered models.
      */
     public EObject loadEObject(String scope, String registry, String stage, String objectId) throws IOException {
         String objectPath = findObjectPath(scope, registry, stage, objectId);
@@ -252,6 +282,10 @@ public abstract class AbstractStorageHelper implements AutoCloseable {
         }
 
         URI objectUri = createStorageURI(scope, registry, stage, objectPath);
+        ComponentServiceObjects<ResourceSet> cso = leaseFor(scope, stage);
+        if (cso != null) {
+            return loadWithLeasedResourceSet(cso, scope, stage, objectId, objectUri);
+        }
         ResourceOperation operation;
         try {
             operation = loadResource(objectUri);
@@ -279,6 +313,45 @@ public abstract class AbstractStorageHelper implements AutoCloseable {
             return resource.getContents().get(0);
         } finally {
             operation.cleanup();
+        }
+    }
+
+    private EObject loadWithLeasedResourceSet(ComponentServiceObjects<ResourceSet> cso, String scope, String stage,
+            String objectId, URI objectUri) throws IOException {
+        ResourceSet rs = cso.getService();
+        Resource resource = null;
+        try {
+            try {
+                resource = rs.getResource(objectUri, true);
+            } catch (RuntimeException e) {
+                PackageNotFoundException pnf = findPackageNotFound(e);
+                if (pnf != null) {
+                    throw new ModelUnavailableException(scope, stage, objectId, pnf.uri(), e);
+                }
+                throw e;
+            }
+            PackageNotFoundException pnf = findPackageNotFoundInErrors(resource);
+            if (pnf != null) {
+                throw new ModelUnavailableException(scope, stage, objectId, pnf.uri(), pnf);
+            }
+            if (resource == null || resource.getContents().isEmpty()) {
+                return null;
+            }
+            // Resolve cross-references WHILE the leased per-stage ResourceSet — and its
+            // package registry — are still alive. They are lazy proxies otherwise resolved
+            // only on access, which for the caller happens after this method has released
+            // the ResourceSet, leaving them permanently unresolvable.
+            EcoreUtil.resolveAll(resource);
+            return resource.getContents().get(0);
+        } finally {
+            // Detach the resource BEFORE releasing the leased (prototype) ResourceSet:
+            // ungetService discards that ResourceSet, and a resource still held by it
+            // would be disposed along with it, leaving the returned EObject with a null
+            // eResource().
+            if (resource != null) {
+                rs.getResources().remove(resource);
+            }
+            cso.ungetService(rs);
         }
     }
 
