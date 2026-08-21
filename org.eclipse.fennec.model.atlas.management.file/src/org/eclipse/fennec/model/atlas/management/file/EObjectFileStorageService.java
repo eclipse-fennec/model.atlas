@@ -28,6 +28,7 @@ import org.eclipse.fennec.model.atlas.mgmt.api.EObjectStorageService;
 import org.eclipse.fennec.model.atlas.mgmt.management.StorageBackendType;
 import org.eclipse.fennec.model.atlas.mgmt.storage.AbstractEObjectStorageService;
 import org.eclipse.fennec.model.atlas.mgmt.storage.AbstractStorageHelper;
+import org.eclipse.fennec.model.atlas.mgmt.storage.StageResourceSetProvider;
 import org.osgi.annotation.bundle.Capability;
 import org.osgi.framework.BundleContext;
 import org.osgi.service.cm.annotations.RequireConfigurationAdmin;
@@ -36,6 +37,8 @@ import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.ConfigurationPolicy;
 import org.osgi.service.component.annotations.Deactivate;
 import org.osgi.service.component.annotations.Reference;
+import org.osgi.service.component.annotations.ReferenceCardinality;
+import org.osgi.service.component.annotations.ReferencePolicyOption;
 import org.osgi.service.component.propertytypes.ServiceDescription;
 import org.osgi.service.metatype.annotations.AttributeDefinition;
 import org.osgi.service.metatype.annotations.Designate;
@@ -137,6 +140,13 @@ public class EObjectFileStorageService extends AbstractEObjectStorageService {
     @Reference
     private EObjectRegistryService<EObject> registry;
 
+    // OPTIONAL: reads fall back to the management ResourceSet when no provider is
+    // deployed (e.g. runtimes without the workflow bundle). GREEDY + static so the
+    // component reactivates - and the helper is recreated with the provider - as
+    // soon as one appears.
+    @Reference(cardinality = ReferenceCardinality.OPTIONAL, policyOption = ReferencePolicyOption.GREEDY)
+    private StageResourceSetProvider stageResourceSetProvider;
+
     private Path workspacePath;
 
     @Activate
@@ -209,7 +219,9 @@ public class EObjectFileStorageService extends AbstractEObjectStorageService {
     @Override
     protected AbstractStorageHelper createStorageHelper() throws Exception {
         LOGGER.info("Creating file storage helper");
-        return new FileStorageHelper(resourceSet, workspacePath, registry);
+        FileStorageHelper helper = new FileStorageHelper(resourceSet, workspacePath, registry);
+        helper.setStageResourceSetProvider(stageResourceSetProvider);
+        return helper;
     }
 
 }

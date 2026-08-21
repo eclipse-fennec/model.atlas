@@ -25,6 +25,7 @@ src=${^src},src-gen,src-gen-api
 -buildpath: \
 	org.osgi.util.promise;version=latest,\
 	org.osgi.util.function;version=latest,\
+	org.osgi.service.component;version=latest,\
 	org.eclipse.fennec.emf.osgi.component.minimal;version=latest
 
 # If this is not done with a instruction namespace, bnd would think you like
