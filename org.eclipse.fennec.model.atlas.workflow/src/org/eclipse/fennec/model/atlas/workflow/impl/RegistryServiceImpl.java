@@ -16,6 +16,7 @@ package org.eclipse.fennec.model.atlas.workflow.impl;
 import static java.util.Objects.requireNonNull;
 import static java.util.Objects.requireNonNullElse;
 
+import java.lang.reflect.InvocationTargetException;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -737,21 +738,45 @@ public class RegistryServiceImpl<T extends EObject> implements RegistryService<T
                 sourceStage, targetStage, exitReason, "system", Instant.now(), notes, replay, Map.of());
     }
 
+    /**
+     * Dispatches an event to every stage action service and JOINS the returned
+     * promises: the surrounding operation (upload/update/delete/transition
+     * promise) must not resolve before the actions are through. The stage action
+     * promises run on their own executor, so a caller of e.g.
+     * {@code uploadToStage(...).getValue()} otherwise races whatever the action
+     * still does — concretely the SCR-driven package-registry update of the
+     * EPackage registration, which made responses serialized against a leased
+     * chain ResourceSet fail intermittently (issue #196). Action failures stay
+     * non-fatal (logged), exactly as before — only the timing is now
+     * deterministic.
+     */
     private void dispatch(ActionEvent event, ActionContext ctx) {
-        stageActionServices.forEach(sas -> dispatchTo(sas, event, ctx));
+        stageActionServices.forEach(sas -> {
+            Promise<Void> p = dispatchTo(sas, event, ctx);
+            if (p == null) {
+                return;
+            }
+            try {
+                p.getValue();
+            } catch (InvocationTargetException e) {
+                // already logged by the onFailure callback in dispatchTo
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            }
+        });
     }
 
-    private void dispatchTo(StageActionService sas, ActionEvent event, ActionContext ctx) {
+    private Promise<Void> dispatchTo(StageActionService sas, ActionEvent event, ActionContext ctx) {
         if (!sas.supportsObjectType(ctx.objectType())) {
-            return;
+            return null;
         }
         Set<String> triggerStages = sas.getTriggerStages();
         if (!triggerStages.isEmpty() && !triggerStages.contains(ctx.stage())) {
-            return;
+            return null;
         }
         Set<ActionEvent> triggerEvents = sas.getTriggerEvents();
         if (!triggerEvents.isEmpty() && !triggerEvents.contains(event)) {
-            return;
+            return null;
         }
         Promise<Void> p = switch (event) {
         case ENTER -> sas.onEnter(ctx);
@@ -760,6 +785,7 @@ public class RegistryServiceImpl<T extends EObject> implements RegistryService<T
         };
         p.onFailure(t -> LOGGER.log(Level.WARNING, "StageAction " + sas.getClass().getSimpleName()
                 + " failed for " + event + " on " + ctx.objectId(), t));
+        return p;
     }
 
 

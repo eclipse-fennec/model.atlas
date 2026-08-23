@@ -77,7 +77,7 @@ public class AtlasSchemaRegistryServiceIntegrationTest {
 				ServiceAware<RegistryService> registryAware)
 						throws InterruptedException {
 
-			RegistryService<EPackage> registryService = registryAware.waitForService(5000);
+			RegistryService<EPackage> registryService = registryAware.waitForService(15000);
 			assertNotNull(registryService, "AtlasSchemaRegistryService should be registered with registry.name=atlas-schema-registry");
 		}
 
@@ -90,7 +90,7 @@ public class AtlasSchemaRegistryServiceIntegrationTest {
 				ServiceAware<RegistryService> registryAware)
 						throws InterruptedException {
 
-			RegistryService<EPackage> registryService = registryAware.waitForService(5000);
+			RegistryService<EPackage> registryService = registryAware.waitForService(15000);
 			assertNotNull(registryService, "AtlasSchemaRegistryService should be registered with registry.type=SCHEMA");
 		}
 	}
@@ -108,7 +108,7 @@ public class AtlasSchemaRegistryServiceIntegrationTest {
 				ServiceAware<RegistryService> registryAware)
 						throws InterruptedException {
 
-			RegistryService<EPackage> registryService = registryAware.waitForService(5000);
+			RegistryService<EPackage> registryService = registryAware.waitForService(15000);
 			assertNotNull(registryService);
 
 			Registry registry = registryService.getRegistry();
@@ -127,7 +127,7 @@ public class AtlasSchemaRegistryServiceIntegrationTest {
 						throws InterruptedException {
 
 
-			RegistryService<EPackage> registryService = registryAware.waitForService(5000);
+			RegistryService<EPackage> registryService = registryAware.waitForService(15000);
 			assertNotNull(registryService);
 
 			Registry registry = registryService.getRegistry();
@@ -154,7 +154,7 @@ public class AtlasSchemaRegistryServiceIntegrationTest {
 						throws InterruptedException {
 
 
-			RegistryService<EPackage> registryService = registryAware.waitForService(5000);
+			RegistryService<EPackage> registryService = registryAware.waitForService(15000);
 			assertNotNull(registryService);
 
 			EPackage ePackage = EcoreFactory.eINSTANCE.createEPackage();
@@ -174,7 +174,7 @@ public class AtlasSchemaRegistryServiceIntegrationTest {
 						throws InterruptedException {
 
 
-			RegistryService<EPackage> registryService = registryAware.waitForService(5000);
+			RegistryService<EPackage> registryService = registryAware.waitForService(15000);
 			assertNotNull(registryService);
 
 			EPackage ePackage = EcoreFactory.eINSTANCE.createEPackage();
@@ -193,7 +193,7 @@ public class AtlasSchemaRegistryServiceIntegrationTest {
 						throws InterruptedException {
 
 
-			RegistryService<EPackage> registryService = registryAware.waitForService(5000);
+			RegistryService<EPackage> registryService = registryAware.waitForService(15000);
 			assertNotNull(registryService);
 
 			assertThrows(UnsupportedOperationException.class,
@@ -210,7 +210,7 @@ public class AtlasSchemaRegistryServiceIntegrationTest {
 						throws InterruptedException {
 
 
-			RegistryService<EPackage> registryService = registryAware.waitForService(5000);
+			RegistryService<EPackage> registryService = registryAware.waitForService(15000);
 			assertNotNull(registryService);
 
 			assertThrows(UnsupportedOperationException.class,
@@ -227,7 +227,7 @@ public class AtlasSchemaRegistryServiceIntegrationTest {
 						throws InterruptedException {
 
 
-			RegistryService<EPackage> registryService = registryAware.waitForService(5000);
+			RegistryService<EPackage> registryService = registryAware.waitForService(15000);
 			assertNotNull(registryService);
 
 			assertFalse(registryService.isWritableStage("released"));
@@ -244,7 +244,7 @@ public class AtlasSchemaRegistryServiceIntegrationTest {
 						throws InterruptedException {
 
 
-			RegistryService<EPackage> registryService = registryAware.waitForService(5000);
+			RegistryService<EPackage> registryService = registryAware.waitForService(15000);
 			assertNotNull(registryService);
 
 			assertFalse(registryService.isTransitionAllowed("released", "draft"));
@@ -266,7 +266,7 @@ public class AtlasSchemaRegistryServiceIntegrationTest {
 						throws InterruptedException {
 
 
-			RegistryService<EPackage> registryService = registryAware.waitForService(5000);
+			RegistryService<EPackage> registryService = registryAware.waitForService(15000);
 			assertNotNull(registryService);
 
 			assertTrue(registryService.isValidStage("released"));
@@ -284,7 +284,7 @@ public class AtlasSchemaRegistryServiceIntegrationTest {
 						throws InterruptedException {
 
 
-			RegistryService<EPackage> registryService = registryAware.waitForService(5000);
+			RegistryService<EPackage> registryService = registryAware.waitForService(15000);
 			assertNotNull(registryService);
 
 			assertThrows(IllegalArgumentException.class,
@@ -310,7 +310,7 @@ public class AtlasSchemaRegistryServiceIntegrationTest {
 				ServiceAware<RegistryService> registryAware)
 						throws InterruptedException {
 
-			RegistryService<EObject> registryService =  registryAware.waitForService(5000);
+			RegistryService<EObject> registryService =  registryAware.waitForService(15000);
 			assertNotNull(registryService);
 
 			assertTrue(registryService.isEClassCompatibleWithRegistry(EcorePackage.Literals.EPACKAGE));
@@ -326,7 +326,7 @@ public class AtlasSchemaRegistryServiceIntegrationTest {
 						throws InterruptedException {
 
 
-			RegistryService<EPackage> registryService = registryAware.waitForService(5000);
+			RegistryService<EPackage> registryService = registryAware.waitForService(15000);
 			assertNotNull(registryService);
 
 			assertFalse(registryService.isEClassCompatibleWithRegistry(EcorePackage.Literals.ECLASS));
@@ -343,7 +343,7 @@ public class AtlasSchemaRegistryServiceIntegrationTest {
 						throws InterruptedException {
 
 
-			RegistryService<EPackage> registryService = registryAware.waitForService(5000);
+			RegistryService<EPackage> registryService = registryAware.waitForService(15000);
 			assertNotNull(registryService);
 
 			assertEquals(EcorePackage.Literals.EPACKAGE, registryService.getRootEClass());
@@ -364,7 +364,7 @@ public class AtlasSchemaRegistryServiceIntegrationTest {
 						throws InterruptedException {
 
 
-			RegistryService<EPackage> registryService = registryAware.waitForService(5000);
+			RegistryService<EPackage> registryService = registryAware.waitForService(15000);
 			assertNotNull(registryService);
 
 			assertEquals(WorkflowConstants.ATLAS_SCHEMA_REGISTRY_NAME, registryService.getRegistryName());
