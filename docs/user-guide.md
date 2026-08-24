@@ -961,18 +961,36 @@ ancestor chain reaches `atlas`.
 
 Models placed below the reserved `scopes/<scopeName>/` folder are **not**
 registered globally. Instead they are **uploaded into that scope's schema
-registry** (default: registry `schema`, stage `draft`) as soon as the scope is
-up, exactly as if they had been uploaded through the REST API — persisted in the
-scope's storage backend, stage-transitionable, and registered as `EPackage`
-services with the scope/stage properties. This is the way to make a scope's
-registry configurations (e.g. one whose `root.eclass.uri` points into a custom
-model) resolvable at startup.
+registry** (default: registry `schema`, stage `release`) as soon as the scope
+and the target registry are up, exactly as if they had been uploaded through
+the REST API — persisted in the scope's storage backend, stage-transitionable,
+and registered as `EPackage` services with the scope/stage properties. This is
+the way to make a scope's registry configurations (e.g. one whose
+`root.eclass.uri` points into a custom model) resolvable at startup.
 
 Seeding a scope is **idempotent**: a namespace URI that already exists in the
 target stage is skipped, so restarts never overwrite content the scope already
 has. Model updates go through the REST API (or git), not through the boot mount.
 The built-in `atlas` scope cannot be seeded this way — put those models at the
 top level instead.
+
+### Seeding instances into a scope's registries
+
+A **sub folder of a scope folder names one of the scope's registries**: files
+below `scopes/<scopeName>/<registryName>/` are uploaded into that registry
+instead of the default one. `.xmi` files are seeded as model **instances**,
+validated against the registry's configured root EClass (`root.eclass.uri`) —
+the same check a REST upload passes — while `.ecore`/`.jsonschema` files keep
+their EPackage semantics, just targeted at the named registry. This gives
+registries of type `OTHER` a file-based bootstrap path, so a fresh instance no
+longer needs out-of-band REST calls to fill them.
+
+The **object id** of a seeded instance is taken from its EMF ID attribute; if
+the model declares none (or it is unset), the file name without extension is
+used. An object id already present in the target stage is skipped — the same
+idempotence rule as for packages. Instances may reference packages seeded by
+the same bootstrap: top-level files are registered first, and a scope's schema
+files are always seeded before its registry sub folders.
 
 ### Failure behaviour
 
@@ -991,9 +1009,9 @@ The loader is configured via the `InitialModelLoader` PID:
 |----------|---------|-------------|
 | `initial.models.folder` | `/initial-models` | Folder scanned once on startup. |
 | `halt.on.error` | `true` | Stop the OSGi framework when the deployment fails (after rollback). |
-| `initial.models.registry` | `schema` | Registry within a scope that `scopes/<scopeName>/` models are uploaded into. |
-| `initial.models.stage` | `draft` | Stage the scope models are uploaded into (must be writable and a stage-action trigger stage). |
-| `scope.wait.seconds` | `60` | How long to wait for a scope folder's scope service before failing. |
+| `initial.models.registry` | `schema` | Registry within a scope that models directly below `scopes/<scopeName>/` are uploaded into. A `scopes/<scopeName>/<registryName>/` sub folder targets the registry named by the folder instead. |
+| `initial.models.stage` | `release` | Stage the scope models are uploaded into (must be writable and, for packages, a stage-action trigger stage). |
+| `scope.wait.seconds` | `60` | How long to wait for a scope folder's scope service and target registry services before failing. |
 
 The loader silently does nothing when the folder is blank, missing, not a directory,
 or still contains an un-interpolated `$[env:...]` template.
@@ -1028,9 +1046,12 @@ initial-models/
 ├── billing-to-report/         # folder name becomes the transformator id
 │   └── transform.qvto
 └── scopes/
-    └── jena/                  # uploaded into the 'jena' scope (schema registry, draft stage)
+    └── jena/                  # uploaded into the 'jena' scope (schema registry, release stage)
         ├── person.ecore
-        └── address.ecore
+        ├── address.ecore
+        └── sensinactmapping/  # uploaded as instances into the 'sensinactmapping' registry
+            ├── water-temperature.xmi
+            └── water-quality.xmi
 ```
 
 After startup, the seeded schemas are listable just like any other system schema:
