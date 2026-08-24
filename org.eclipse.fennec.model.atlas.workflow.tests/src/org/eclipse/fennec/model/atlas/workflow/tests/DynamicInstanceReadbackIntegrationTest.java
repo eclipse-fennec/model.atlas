@@ -147,12 +147,25 @@ public class DynamicInstanceReadbackIntegrationTest {
                 CommonTestAnnotations.STAGE_DRAFT, personPackage,
                 metadata(CommonTestAnnotations.SCHEMA_REGISTRY_NAME, personPackage)).getValue();
 
-        // wait until the (scope, draft) chain ResourceSet exists and resolves the package
+        // issue #196: the moment the upload promise resolves, the registration must
+        // already be visible in the (scope, stage) chain ResourceSet - the stage
+        // action blocks until the SCR-driven registry update is through, so a
+        // response serialized against a leased ResourceSet can no longer race it.
+        // Deliberately NO polling here.
         ResourceSetCollector collector = collectorAware.waitForService(30000);
         assertNotNull(collector);
-        EPackage registeredPackage = waitForDynamicPackage(collector);
+        ComponentServiceObjects<ResourceSet> lease = collector.getResourceSetObjects(SCOPE_NAME,
+                CommonTestAnnotations.STAGE_DRAFT);
+        assertNotNull(lease, "The (scope, stage) chain ResourceSet must exist when the upload returns");
+        EPackage registeredPackage;
+        ResourceSet chainResourceSet = lease.getService();
+        try {
+            registeredPackage = chainResourceSet.getPackageRegistry().getEPackage(NS_URI);
+        } finally {
+            lease.ungetService(chainResourceSet);
+        }
         assertNotNull(registeredPackage,
-                "The (scope, stage) chain ResourceSet should resolve the uploaded EPackage");
+                "The uploaded EPackage must be visible in the chain ResourceSet the moment the upload returns");
 
         // An instance of the REGISTERED package, like one deserialized from a REST
         // upload: the registered package's resource URI is the nsURI, so the stored
@@ -174,26 +187,6 @@ public class DynamicInstanceReadbackIntegrationTest {
         assertEquals("Person", loaded.eClass().getName());
         assertEquals(NS_URI, loaded.eClass().getEPackage().getNsURI());
         assertEquals("Grace", loaded.eGet(loaded.eClass().getEStructuralFeature("name")));
-    }
-
-    private EPackage waitForDynamicPackage(ResourceSetCollector collector) throws InterruptedException {
-        for (int i = 0; i < 300; i++) {
-            ComponentServiceObjects<ResourceSet> cso = collector.getResourceSetObjects(SCOPE_NAME,
-                    CommonTestAnnotations.STAGE_DRAFT);
-            if (cso != null) {
-                ResourceSet resourceSet = cso.getService();
-                try {
-                    EPackage registered = resourceSet.getPackageRegistry().getEPackage(NS_URI);
-                    if (registered != null) {
-                        return registered;
-                    }
-                } finally {
-                    cso.ungetService(resourceSet);
-                }
-            }
-            Thread.sleep(100);
-        }
-        return null;
     }
 
     private ObjectMetadata metadata(String registry, EObject object) {
