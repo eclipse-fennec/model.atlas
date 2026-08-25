@@ -232,7 +232,7 @@ class RemoteEPackageProviderImpl implements RemoteEPackageProvider {
 				.queryParam("nsUri", nsUri);
 		// Dependencies are fetched from the same scope AND stage: a package staged in
 		// `draft` must not silently inherit from its parent's `release` content.
-		Optional<ContentResult> result = fetchContent(target, nsUri, null,
+		Optional<ContentResult> result = fetchContent(target, nsUri, null, "scope=" + scopeName + ", stage=" + stage,
 				dependency -> getEPackageAtStage(dependency, scopeName, stage));
 		if (result.isEmpty() || result.get().notModified()) {
 			return Optional.empty();
@@ -336,21 +336,25 @@ class RemoteEPackageProviderImpl implements RemoteEPackageProvider {
 		// Stage-free final-stage content (P5-7): GET /{scope}/schema/content?nsUri=… — the server
 		// resolves the final stage and walks scope inheritance, so no stage name is embedded here.
 		WebTarget target = baseTarget.path(scope).path(SCHEMA).path("content").queryParam("nsUri", nsUri);
-		return fetchContent(target, nsUri, ifNoneMatch, this::getEPackage);
+		return fetchContent(target, nsUri, ifNoneMatch, "scope=" + scope, this::getEPackage);
 	}
 
 	/**
 	 * Fetch one package's content from a pre-built target, conditionally on {@code ifNoneMatch}.
 	 * Shared by stage-free and stage-explicit paths.
 	 */
-	private Optional<ContentResult> fetchContent(WebTarget target, String nsUri, String ifNoneMatch,
+	private Optional<ContentResult> fetchContent(WebTarget target, String nsUri, String ifNoneMatch, String origin,
 			Function<String, Optional<EPackage>> dependencyFetcher) {
 		Response response = RestSupport.get(target, EPACKAGE_MEDIA_TYPE, ifNoneMatch);
 		try {
 			if (RestSupport.isNotModified(response)) {
 				return Optional.of(ContentResult.ofNotModified());
 			}
-			if (!RestSupport.isSuccess(response) || !response.hasEntity()) {
+			if (!RestSupport.isSuccess(response)) {
+				reportAbnormalMiss(response, nsUri, origin);
+				return Optional.empty();
+			}
+			if (!response.hasEntity()) {
 				return Optional.empty();
 			}
 			byte[] body = response.readEntity(byte[].class);
@@ -481,6 +485,28 @@ class RemoteEPackageProviderImpl implements RemoteEPackageProvider {
 	 * usable but incomplete, and without this the only symptom is a much later
 	 * "not a valid feature" on an instance — so say it here, where the cause is.
 	 */
+	/**
+	 * Report a miss that is not simply "not here" (issue #205).
+	 * <p>
+	 * {@code 204} and {@code 404} are how the server says a package is absent from
+	 * a scope or a stage; the scope walk is built on them and they stay quiet. Any
+	 * other status means the request itself was refused — asking for a stage a
+	 * scope does not have answers {@code 400} — and a caller that sees only
+	 * {@code Optional.empty()} cannot tell that apart from an empty registry. So
+	 * say it, rather than letting a misconfigured scope or stage look like a
+	 * registry that holds nothing.
+	 */
+	private static void reportAbnormalMiss(Response response, String nsUri, String origin) {
+		int status = response.getStatus();
+		if (status == Response.Status.NO_CONTENT.getStatusCode()
+				|| status == Response.Status.NOT_FOUND.getStatusCode()) {
+			return;
+		}
+		logger.warning(() -> "Fetching EPackage " + nsUri + " (" + origin + ") was refused with HTTP " + status
+				+ "; treating it as absent. A scope or stage name the server does not know answers 400 — that is not "
+				+ "the same as one that holds nothing, so check the configured names");
+	}
+
 	private static void warnOnUnresolvedProxies(EPackage ePackage, String nsUri) {
 		Set<String> unresolved = new LinkedHashSet<>();
 		for (EObject proxy : EcoreUtil.ProxyCrossReferencer.find(ePackage).keySet()) {
@@ -528,7 +554,7 @@ class RemoteEPackageProviderImpl implements RemoteEPackageProvider {
 		Optional<ClientCache.Entry<EPackage>> existing = cache.lookup(nsUri);
 		String ifNoneMatch = existing.map(ClientCache.Entry::etag).orElse(null);
 		WebTarget target = baseTarget.path(scope).path(SCHEMA).path("content").queryParam("nsUri", nsUri);
-		Optional<ContentResult> result = fetchContent(target, nsUri, ifNoneMatch, this::getEPackage);
+		Optional<ContentResult> result = fetchContent(target, nsUri, ifNoneMatch, "scope=" + scope, this::getEPackage);
 		if (result.isEmpty()) {
 			return Optional.empty();
 		}
