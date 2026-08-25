@@ -1,0 +1,12 @@
+-library: enableOSGi-Test
+
+-runrequires: \
+	bnd.identity;id='org.eclipse.fennec.model.atlas.dcat.tests'
+	
+-runbundles.test: \
+	org.eclipse.fennec.model.atlas.dcat.tests;version=snapshot
+
+-runfw: org.apache.felix.framework
+
+-runee: JavaSE-17
+
