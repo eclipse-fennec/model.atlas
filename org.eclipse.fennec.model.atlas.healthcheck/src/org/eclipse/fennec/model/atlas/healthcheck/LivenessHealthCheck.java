@@ -24,7 +24,7 @@ import org.osgi.service.component.annotations.Component;
  * @since 1.0
  */
 @Component(service = HealthCheck.class, property = { HealthCheck.NAME + "=Liveness",
-        HealthCheck.TAGS + "=atlas,liveness" })
+        HealthCheck.TAGS + "=atlas", HealthCheck.TAGS + "=liveness" })
 public class LivenessHealthCheck implements HealthCheck {
 
     @Override

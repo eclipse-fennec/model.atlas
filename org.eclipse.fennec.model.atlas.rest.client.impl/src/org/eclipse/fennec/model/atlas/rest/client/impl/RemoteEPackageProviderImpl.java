@@ -17,12 +17,25 @@ import java.io.ByteArrayInputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Base64;
+import java.util.HashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
+import java.util.function.Function;
 import java.util.function.Supplier;
+import java.util.logging.Logger;
 
+import org.eclipse.emf.common.util.URI;
+import org.eclipse.emf.ecore.EObject;
 import org.eclipse.emf.ecore.EPackage;
+import org.eclipse.emf.ecore.EcorePackage;
+import org.eclipse.emf.ecore.InternalEObject;
+import org.eclipse.emf.ecore.resource.Resource;
+import org.eclipse.emf.ecore.resource.ResourceSet;
+import org.eclipse.emf.ecore.util.EcoreUtil;
 import org.eclipse.fennec.model.atlas.rest.client.api.ClientConfiguration;
 import org.eclipse.fennec.model.atlas.rest.client.api.PackageDescriptor;
 import org.eclipse.fennec.model.atlas.rest.client.api.RemoteEPackageProvider;
@@ -70,11 +83,21 @@ class RemoteEPackageProviderImpl implements RemoteEPackageProvider {
 	/** EPackage content is requested as XMI; the EMF/XMI decode is P2-4. */
 	static final String EPACKAGE_MEDIA_TYPE = "application/xmi";
 
+	private static final Logger logger = Logger.getLogger(RemoteEPackageProviderImpl.class.getName());
+
 	private final WebTarget baseTarget;
 	private final ClientConfiguration configuration;
 	private final EPackageDeserializer deserializer;
 	private final Supplier<List<String>> scopeNamesSupplier;
 	private final ClientCache<String, EPackage> cache;
+	/**
+	 * The packages whose cross-package references are being resolved on this
+	 * thread, by nsURI — the cycle guard for {@link #resolveCrossPackageReferences}.
+	 * A package that references another which references it back must terminate,
+	 * and the back-reference has to wire to the very instance already in flight
+	 * (it is not in the cache yet).
+	 */
+	private final ThreadLocal<Map<String, EPackage>> resolving = ThreadLocal.withInitial(HashMap::new);
 
 	RemoteEPackageProviderImpl(WebTarget baseTarget, ClientConfiguration configuration,
 			EPackageDeserializer deserializer, Supplier<List<String>> scopeNamesSupplier) {
@@ -207,7 +230,10 @@ class RemoteEPackageProviderImpl implements RemoteEPackageProvider {
 		// No caching here — the caller (AtlasScopedFetchOnMissRegistry) owns its own cache.
 		WebTarget target = baseTarget.path(scopeName).path(SCHEMA).path("stages").path(stage).path("content")
 				.queryParam("nsUri", nsUri);
-		Optional<ContentResult> result = fetchContent(target, nsUri, null);
+		// Dependencies are fetched from the same scope AND stage: a package staged in
+		// `draft` must not silently inherit from its parent's `release` content.
+		Optional<ContentResult> result = fetchContent(target, nsUri, null, "scope=" + scopeName + ", stage=" + stage,
+				dependency -> getEPackageAtStage(dependency, scopeName, stage));
 		if (result.isEmpty() || result.get().notModified()) {
 			return Optional.empty();
 		}
@@ -310,20 +336,25 @@ class RemoteEPackageProviderImpl implements RemoteEPackageProvider {
 		// Stage-free final-stage content (P5-7): GET /{scope}/schema/content?nsUri=… — the server
 		// resolves the final stage and walks scope inheritance, so no stage name is embedded here.
 		WebTarget target = baseTarget.path(scope).path(SCHEMA).path("content").queryParam("nsUri", nsUri);
-		return fetchContent(target, nsUri, ifNoneMatch);
+		return fetchContent(target, nsUri, ifNoneMatch, "scope=" + scope, this::getEPackage);
 	}
 
 	/**
 	 * Fetch one package's content from a pre-built target, conditionally on {@code ifNoneMatch}.
 	 * Shared by stage-free and stage-explicit paths.
 	 */
-	private Optional<ContentResult> fetchContent(WebTarget target, String nsUri, String ifNoneMatch) {
+	private Optional<ContentResult> fetchContent(WebTarget target, String nsUri, String ifNoneMatch, String origin,
+			Function<String, Optional<EPackage>> dependencyFetcher) {
 		Response response = RestSupport.get(target, EPACKAGE_MEDIA_TYPE, ifNoneMatch);
 		try {
 			if (RestSupport.isNotModified(response)) {
 				return Optional.of(ContentResult.ofNotModified());
 			}
-			if (!RestSupport.isSuccess(response) || !response.hasEntity()) {
+			if (!RestSupport.isSuccess(response)) {
+				reportAbnormalMiss(response, nsUri, origin);
+				return Optional.empty();
+			}
+			if (!response.hasEntity()) {
 				return Optional.empty();
 			}
 			byte[] body = response.readEntity(byte[].class);
@@ -333,11 +364,160 @@ class RemoteEPackageProviderImpl implements RemoteEPackageProvider {
 			String mediaType = contentType != null ? contentType.getType() + "/" + contentType.getSubtype()
 					: EPACKAGE_MEDIA_TYPE;
 			EPackage ePackage = deserializer.deserialize(new ByteArrayInputStream(body), nsUri, mediaType);
+			// A package that references types in other namespaces is not usable until
+			// those are resolved too (issue #203), so do it here — on the one path every
+			// fetch goes through — before the package is cached or handed out.
+			resolveCrossPackageReferences(ePackage, nsUri, dependencyFetcher);
 			FetchedPackage fetched = new FetchedPackage(ePackage, response.getHeaderString(HttpHeaders.ETAG),
 					response.getHeaderString(HttpHeaders.LAST_MODIFIED));
 			return Optional.of(ContentResult.of(fetched));
 		} finally {
 			response.close();
+		}
+	}
+
+	/**
+	 * Resolve the references a freshly parsed package makes into <em>other</em>
+	 * namespaces (issue #203).
+	 * <p>
+	 * The XMI of a package that extends a type from another package carries that
+	 * super type as an absolute href into the other namespace
+	 * ({@code eSuperTypes="https://…/lorawan#//UplinkMessage"}); the same holds for
+	 * an {@code eType} or {@code eOpposite} across the boundary. Parsed on its own
+	 * the reference stays an unresolved proxy: its {@code getEPackage()} is
+	 * {@code null} and it contributes no features, so every feature the subclass
+	 * inherits is invisible — and the failure surfaces far away, as
+	 * "the feature 'x' is not a valid feature" when an instance is deserialized.
+	 * <p>
+	 * So: collect the namespaces the unresolved proxies point at, fetch each
+	 * through {@code dependencyFetcher} — the same cache-fronted path as any other
+	 * fetch, which is what keeps one instance per nsURI and makes this recurse for
+	 * a chain of packages — register them with the resource set the package was
+	 * parsed into, and let EMF wire the proxies. What cannot be resolved is logged
+	 * where it happens rather than left to fail later.
+	 *
+	 * @param ePackage          the freshly parsed package, not yet cached
+	 * @param nsUri             its namespace URI
+	 * @param dependencyFetcher fetches a package by nsURI from the same
+	 *                          scope/stage the outer fetch came from
+	 */
+	private void resolveCrossPackageReferences(EPackage ePackage, String nsUri,
+			Function<String, Optional<EPackage>> dependencyFetcher) {
+		Resource resource = ePackage.eResource();
+		ResourceSet resourceSet = resource == null ? null : resource.getResourceSet();
+		if (resourceSet == null) {
+			// Nothing to resolve against; the deserializer always parses into a set,
+			// so this only guards a custom EPackageDeserializer.
+			return;
+		}
+		Map<String, EPackage> inFlight = resolving.get();
+		if (inFlight.containsKey(nsUri)) {
+			// Already being resolved further up this thread's stack (a reference
+			// cycle): that invocation resolves the package, so stop here.
+			return;
+		}
+		inFlight.put(nsUri, ePackage);
+		try {
+			for (String dependency : referencedNsUris(ePackage, nsUri)) {
+				// A package caught in a cycle is not in the cache yet, so take the
+				// in-flight instance — the proxy must wire to that very object.
+				EPackage resolved = inFlight.get(dependency);
+				if (resolved == null) {
+					resolved = dependencyFetcher.apply(dependency).orElse(null);
+				}
+				if (resolved == null) {
+					logger.warning(() -> "EPackage " + nsUri + " references " + dependency
+							+ ", which the Atlas did not serve (not visible in the resolved scopes, or blocked by "
+							+ "the nsURI allow/deny list); features inherited across that reference stay invisible");
+					continue;
+				}
+				resourceSet.getPackageRegistry().putIfAbsent(dependency, resolved);
+			}
+			EcoreUtil.resolveAll(resource);
+			warnOnUnresolvedProxies(ePackage, nsUri);
+		} finally {
+			inFlight.remove(nsUri);
+			if (inFlight.isEmpty()) {
+				resolving.remove();
+			}
+		}
+	}
+
+	/**
+	 * The distinct namespaces the package's unresolved proxies point at, excluding
+	 * its own and {@code Ecore} (already registered by the deserializer). Proxies
+	 * with a relative URI are document-relative references, not namespaces — they
+	 * are resolved at load time against the document being parsed, and cannot be
+	 * fetched by nsURI, so they are left to {@link #warnOnUnresolvedProxies}.
+	 */
+	private static Set<String> referencedNsUris(EPackage ePackage, String ownNsUri) {
+		URI documentUri = ePackage.eResource() == null ? null : ePackage.eResource().getURI();
+		Set<String> nsUris = new LinkedHashSet<>();
+		for (EObject proxy : EcoreUtil.ProxyCrossReferencer.find(ePackage).keySet()) {
+			URI proxyUri = ((InternalEObject) proxy).eProxyURI();
+			if (proxyUri == null || proxyUri.isRelative() || sameDocumentBase(proxyUri, documentUri)) {
+				continue;
+			}
+			String candidate = proxyUri.trimFragment().toString();
+			if (candidate.isEmpty() || candidate.equals(ownNsUri) || EcorePackage.eNS_URI.equals(candidate)) {
+				continue;
+			}
+			nsUris.add(candidate);
+		}
+		return nsUris;
+	}
+
+	/**
+	 * Whether a proxy URI came in <em>document-relative</em> — the server writes a
+	 * same-document reference with its own resource name
+	 * ({@code dragino.ecore#//DecodedObject}), which EMF resolves against the URI
+	 * this document is being parsed under, yielding a URI under that synthetic
+	 * base. Such a reference names no namespace, so it must not be fetched;
+	 * resolving it is {@code PackageLoadingResourceSet}'s job.
+	 */
+	private static boolean sameDocumentBase(URI proxyUri, URI documentUri) {
+		return documentUri != null && proxyUri.scheme() != null && proxyUri.scheme().equals(documentUri.scheme())
+				&& Objects.equals(proxyUri.authority(), documentUri.authority());
+	}
+
+	/**
+	 * Report proxies still unresolved after the dependency fetch. The package is
+	 * usable but incomplete, and without this the only symptom is a much later
+	 * "not a valid feature" on an instance — so say it here, where the cause is.
+	 */
+	/**
+	 * Report a miss that is not simply "not here" (issue #205).
+	 * <p>
+	 * {@code 204} and {@code 404} are how the server says a package is absent from
+	 * a scope or a stage; the scope walk is built on them and they stay quiet. Any
+	 * other status means the request itself was refused — asking for a stage a
+	 * scope does not have answers {@code 400} — and a caller that sees only
+	 * {@code Optional.empty()} cannot tell that apart from an empty registry. So
+	 * say it, rather than letting a misconfigured scope or stage look like a
+	 * registry that holds nothing.
+	 */
+	private static void reportAbnormalMiss(Response response, String nsUri, String origin) {
+		int status = response.getStatus();
+		if (status == Response.Status.NO_CONTENT.getStatusCode()
+				|| status == Response.Status.NOT_FOUND.getStatusCode()) {
+			return;
+		}
+		logger.warning(() -> "Fetching EPackage " + nsUri + " (" + origin + ") was refused with HTTP " + status
+				+ "; treating it as absent. A scope or stage name the server does not know answers 400 — that is not "
+				+ "the same as one that holds nothing, so check the configured names");
+	}
+
+	private static void warnOnUnresolvedProxies(EPackage ePackage, String nsUri) {
+		Set<String> unresolved = new LinkedHashSet<>();
+		for (EObject proxy : EcoreUtil.ProxyCrossReferencer.find(ePackage).keySet()) {
+			URI proxyUri = ((InternalEObject) proxy).eProxyURI();
+			if (proxyUri != null) {
+				unresolved.add(proxyUri.toString());
+			}
+		}
+		if (!unresolved.isEmpty()) {
+			logger.warning(() -> "EPackage " + nsUri + " still holds unresolved references after resolving the "
+					+ "packages it points at: " + unresolved + "; features reached through them are not visible");
 		}
 	}
 
@@ -374,7 +554,7 @@ class RemoteEPackageProviderImpl implements RemoteEPackageProvider {
 		Optional<ClientCache.Entry<EPackage>> existing = cache.lookup(nsUri);
 		String ifNoneMatch = existing.map(ClientCache.Entry::etag).orElse(null);
 		WebTarget target = baseTarget.path(scope).path(SCHEMA).path("content").queryParam("nsUri", nsUri);
-		Optional<ContentResult> result = fetchContent(target, nsUri, ifNoneMatch);
+		Optional<ContentResult> result = fetchContent(target, nsUri, ifNoneMatch, "scope=" + scope, this::getEPackage);
 		if (result.isEmpty()) {
 			return Optional.empty();
 		}

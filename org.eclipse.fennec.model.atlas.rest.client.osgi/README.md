@@ -115,7 +115,7 @@ Attribute names in the OCD use `_`; the ConfigAdmin/Configurator property uses `
 |---|---|---|
 | `mode` | `LAZY` | `LAZY` / `EAGER` / `HYBRID` |
 | `eager.scopes` (`String[]`) | _empty_ | EAGER/HYBRID scopes to pre-fetch; empty + EAGER = all configured scopes |
-| `eager.stages` (`String[]`) | `["released"]` | stages pre-fetched per scope |
+| `eager.stages` (`String[]`) | _empty_ | stages to expose a scoped fetch-on-miss registry for, per eager scope; empty = one stage-free registry per scope, resolving that scope's own final stage. Does **not** drive the pre-fetch |
 | `eager.nsuri.allow.list` (`String[]`) | _empty_ | nsURIs pre-fetched in HYBRID |
 | `mode.strict` | `false` | if `true`, EAGER activation **fails** when the server is unreachable |
 | `lazy.resolve.timeout.ms` | `5000` | how long a LAZY look-up blocks for a fetched package to become visible in `EPackage.Registry` |
@@ -177,16 +177,18 @@ Resolve on demand; framework `ResourceSet`s gain Atlas fallback automatically.
     "base.uri": "http://host:8080/atlas/rest",
     "mode": "EAGER",
     "eager.scopes": ["jena"],
-    "eager.stages": ["released"],
     "mode.strict": true
   }
 }
 ```
 
 `mode.strict=true` makes activation fail if the Atlas is unreachable (so a missing
-backend is loud rather than silent). `eager.stages` controls which stage is pre-fetched
-and stamped on every service publication — omit it (or use `[]`) for a stage-free
-(final-stage) client.
+backend is loud rather than silent). The pre-fetch itself is stage-free: it reads each
+configured scope's final stage, resolved server-side, and the `atlas.stage` it stamps is
+provenance reported by the server. `eager.stages` does not change what is pre-fetched —
+it selects which per-stage scoped registries are exposed (see
+[Stage-scoped EPackage registries](#stage-scoped-epackage-registries-atlasepackageregistry)),
+and defaults to none, i.e. one stage-free registry per scope.
 
 ### HYBRID — pin a few packages, lazy-resolve the rest
 
