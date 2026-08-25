@@ -32,7 +32,8 @@ import org.osgi.service.component.annotations.ServiceScope;
  * @since 1.0
  */
 @Component(scope = ServiceScope.PROTOTYPE, property = { HealthCheck.NAME + "=ApiCurio Storage",
-        HealthCheck.TAGS + "=atlas,readiness,apicurio" })
+        HealthCheck.TAGS + "=atlas", HealthCheck.TAGS + "=readiness",
+        HealthCheck.TAGS + "=apicurio" })
 public class ApiCurioHealthCheck implements HealthCheck {
 
     @Reference(cardinality = ReferenceCardinality.MULTIPLE, target = "(storage.backend=apicurio)", policyOption = ReferencePolicyOption.GREEDY)

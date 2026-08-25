@@ -28,7 +28,7 @@ import org.osgi.service.component.annotations.Reference;
  * @since 1.0
  */
 @Component(service = HealthCheck.class, property = { HealthCheck.NAME + "=Media Types",
-        HealthCheck.TAGS + "=atlas,readiness" })
+        HealthCheck.TAGS + "=atlas", HealthCheck.TAGS + "=readiness" })
 public class MediaTypesHealthCheck implements HealthCheck {
 
     @Reference
