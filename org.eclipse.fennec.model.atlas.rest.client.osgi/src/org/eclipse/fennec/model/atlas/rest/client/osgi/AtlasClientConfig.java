@@ -50,8 +50,8 @@ public @interface AtlasClientConfig {
 	@AttributeDefinition(name = "Eager scopes", description = "Scopes pre-fetched in EAGER/HYBRID mode; empty + EAGER means all configured scopes.", required = false)
 	String[] eager_scopes() default {};
 
-	@AttributeDefinition(name = "Eager stages", description = "Stages pre-fetched per scope.", required = false)
-	String[] eager_stages() default { "released" };
+	@AttributeDefinition(name = "Eager stages", description = "Stages to expose a scoped fetch-on-miss EPackage.Registry for, per eager scope. Empty (the default) exposes one stage-free registry per scope, resolving that scope's own final stage server-side — correct whatever a scope names its stages. Does not drive the EAGER/HYBRID pre-fetch, which is stage-free by design.", required = false)
+	String[] eager_stages() default {};
 
 	@AttributeDefinition(name = "Eager nsURI allow-list", description = "nsURIs pre-fetched in HYBRID mode.", required = false)
 	String[] eager_nsuri_allow_list() default {};

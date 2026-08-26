@@ -36,7 +36,7 @@ import org.osgi.service.component.annotations.ReferencePolicyOption;
  * @since 1.0
  */
 @Component(service = HealthCheck.class, property = { HealthCheck.NAME + "=Scopes And Registries",
-        HealthCheck.TAGS + "=atlas,readiness" })
+        HealthCheck.TAGS + "=atlas", HealthCheck.TAGS + "=readiness" })
 public class ScopesHealthCheck implements HealthCheck {
 
     /**

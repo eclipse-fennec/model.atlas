@@ -30,7 +30,7 @@ import org.osgi.service.component.annotations.ServiceScope;
  * @since 1.0
  */
 @Component(scope = ServiceScope.PROTOTYPE, property = { HealthCheck.NAME + "=EMF Registry",
-        HealthCheck.TAGS + "=atlas,readiness" })
+        HealthCheck.TAGS + "=atlas", HealthCheck.TAGS + "=readiness" })
 public class EMFRegistryHealthCheck implements HealthCheck {
 
     @Reference(cardinality = ReferenceCardinality.OPTIONAL)

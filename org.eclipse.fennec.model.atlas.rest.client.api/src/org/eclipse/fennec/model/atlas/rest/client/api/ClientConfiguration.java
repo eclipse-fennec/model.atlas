@@ -131,7 +131,13 @@ public final class ClientConfiguration {
 		return eagerScopes;
 	}
 
-	/** {@code eager.stages} — stages to pre-fetch per scope; default {@code ["released"]}. */
+	/**
+	 * {@code eager.stages} — stages to expose a scoped fetch-on-miss registry for,
+	 * per eager scope; empty (the default) means one stage-free registry per scope,
+	 * resolving that scope's own final stage server-side. Stage names are per-scope
+	 * and user-defined, so no name is a correct default. Does not drive the
+	 * EAGER/HYBRID pre-fetch, which is stage-free by design.
+	 */
 	public List<String> getEagerStages() {
 		return eagerStages;
 	}
@@ -321,7 +327,7 @@ public final class ClientConfiguration {
 		private int readTimeoutMs = 30_000;
 		private ResolutionMode mode = ResolutionMode.LAZY;
 		private List<String> eagerScopes = List.of();
-		private List<String> eagerStages = List.of("released");
+		private List<String> eagerStages = List.of();
 		private List<String> eagerNsUriAllowList = List.of();
 		private boolean modeStrict = false;
 		private List<String> nsUriAllowList = List.of();

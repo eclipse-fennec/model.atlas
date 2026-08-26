@@ -30,8 +30,13 @@ import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.logging.Handler;
+import java.util.logging.Level;
+import java.util.logging.LogRecord;
+import java.util.logging.Logger;
 
 import org.eclipse.emf.ecore.EPackage;
 import org.eclipse.emf.ecore.EcoreFactory;
@@ -600,6 +605,78 @@ class RemoteEPackageProviderImplTest {
 		Response response = noContent();
 		when(request.get()).thenReturn(response);
 		assertFalse(provider(config()).getEPackageAtStage("urn:ns:missing", "jena", "snapshot").isPresent());
+	}
+
+	@Test
+	void getEPackageAtStage_stageRefused_isReported() {
+		// A stage name the scope does not have is refused, not answered empty: the
+		// server rejects it (400). Returning empty makes it look like a stage that
+		// simply holds nothing, so it has to be said out loud.
+		Response response = status(400, Response.Status.BAD_REQUEST);
+		when(request.get()).thenReturn(response);
+
+		List<LogRecord> logged = new CopyOnWriteArrayList<>();
+		Handler handler = collectInto(logged);
+		Logger logger = Logger.getLogger(RemoteEPackageProviderImpl.class.getName());
+		logger.addHandler(handler);
+		try {
+			assertFalse(provider(config()).getEPackageAtStage("urn:ns:x", "jena", "released").isPresent(),
+					"a refused request still yields no package, and must not throw");
+		} finally {
+			logger.removeHandler(handler);
+		}
+
+		List<String> warnings = warningsIn(logged);
+		assertEquals(1, warnings.size(), "a refused stage must be reported once: " + warnings);
+		assertTrue(warnings.get(0).contains("400"), "the status belongs in the message: " + warnings.get(0));
+		assertTrue(warnings.get(0).contains("released"),
+				"the stage that was refused belongs in the message: " + warnings.get(0));
+	}
+
+	@Test
+	void getEPackageAtStage_emptyStage_staysQuiet() {
+		// 204 is how the server says "this stage does not hold it" — the ordinary
+		// miss the scope walk is built on. It must not be reported as a problem.
+		Response response = noContent();
+		when(request.get()).thenReturn(response);
+
+		List<LogRecord> logged = new CopyOnWriteArrayList<>();
+		Handler handler = collectInto(logged);
+		Logger logger = Logger.getLogger(RemoteEPackageProviderImpl.class.getName());
+		logger.addHandler(handler);
+		try {
+			assertFalse(provider(config()).getEPackageAtStage("urn:ns:x", "jena", "release").isPresent());
+		} finally {
+			logger.removeHandler(handler);
+		}
+
+		assertEquals(List.of(), warningsIn(logged), "an absent package is not a problem worth warning about");
+	}
+
+	/** Collects what the provider logs, so a test can assert on it. */
+	private static Handler collectInto(List<LogRecord> records) {
+		return new Handler() {
+
+			@Override
+			public void publish(LogRecord record) {
+				records.add(record);
+			}
+
+			@Override
+			public void flush() {
+				// nothing buffered
+			}
+
+			@Override
+			public void close() {
+				// nothing to release
+			}
+		};
+	}
+
+	private static List<String> warningsIn(List<LogRecord> records) {
+		return records.stream().filter(record -> record.getLevel().intValue() >= Level.WARNING.intValue())
+				.map(LogRecord::getMessage).toList();
 	}
 
 	// ---- listPackagesAtStage (P6-6) ----------------------------------------

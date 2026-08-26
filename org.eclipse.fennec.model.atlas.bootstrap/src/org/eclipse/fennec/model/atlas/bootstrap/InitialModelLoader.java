@@ -25,12 +25,14 @@ import java.util.Dictionary;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Hashtable;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.Executors;
+import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
@@ -45,6 +47,7 @@ import org.eclipse.emf.ecore.impl.EPackageRegistryImpl;
 import org.eclipse.emf.ecore.resource.Resource;
 import org.eclipse.emf.ecore.resource.ResourceSet;
 import org.eclipse.emf.ecore.util.EcoreUtil;
+import org.eclipse.emf.ecore.xmi.impl.XMIResourceFactoryImpl;
 import org.eclipse.fennec.codec.jsonschema.v2.constants.CodecJsonSchemaOptions;
 import org.eclipse.fennec.codec.resource.CodecResource;
 import org.eclipse.fennec.emf.osgi.configurator.EPackageConfigurator;
@@ -54,6 +57,7 @@ import org.eclipse.fennec.model.atlas.emf.common.ecore.EClassResolvingDynamicEFa
 import org.eclipse.fennec.model.atlas.mgmt.management.ManagementFactory;
 import org.eclipse.fennec.model.atlas.mgmt.management.ObjectMetadata;
 import org.eclipse.fennec.model.atlas.scope.api.AtlasProperties;
+import org.eclipse.fennec.model.atlas.wf.workflowapi.RegistryService;
 import org.eclipse.fennec.model.atlas.wf.workflowapi.WritableScopeService;
 import org.eclipse.fennec.model.atlas.workflow.WorkflowConstants;
 import org.osgi.framework.Bundle;
@@ -97,12 +101,27 @@ import org.osgi.service.metatype.annotations.ObjectClassDefinition;
  * Models placed below {@code scopes/<scopeName>/} are not registered globally.
  * Instead they are uploaded into that scope's schema registry (configurable via
  * {@code initial.models.registry} / {@code initial.models.stage}) as soon as the
- * scope's {@link WritableScopeService} appears — exactly as if they had been
- * uploaded through the REST API, including persistence in the scope's storage
- * backend. A namespace URI that is already present in the target stage is
- * skipped, so the seeding is idempotent across restarts. The built-in
- * {@code atlas} scope cannot be targeted this way; its content is the set of
- * globally registered packages, i.e. the top-level files.
+ * scope's {@link WritableScopeService} and the target {@link RegistryService}
+ * appear — exactly as if they had been uploaded through the REST API, including
+ * persistence in the scope's storage backend. A namespace URI that is already
+ * present in the target stage is skipped, so the seeding is idempotent across
+ * restarts. The built-in {@code atlas} scope cannot be targeted this way; its
+ * content is the set of globally registered packages, i.e. the top-level files.
+ * </p>
+ *
+ * <p>
+ * A sub folder of a scope folder names one of the scope's registries (issue
+ * #198): files below {@code scopes/<scopeName>/<registryName>/} are uploaded
+ * into that registry instead of the configured default registry. {@code .xmi}
+ * files there are seeded as model <em>instances</em> — validated against the
+ * registry's root EClass, exactly like the Object Storage REST API validates an
+ * upload — while {@code .ecore}/{@code .jsonschema} files keep their EPackage
+ * semantics, just targeted at the named registry. Instance object ids are
+ * derived from the object's EMF ID attribute ({@link EcoreUtil#getID}) and fall
+ * back to the file name; an object id already present in the target stage is
+ * skipped. Each registry folder is seeded as soon as its
+ * {@link RegistryService} appears, after the scope's schema files — so
+ * instances may reference packages seeded by the very same bootstrap.
  * </p>
  *
  * <p>
@@ -130,6 +149,8 @@ public class InitialModelLoader {
     private static final String ATLAS_SCOPE_PROPERTY = AtlasProperties.ATLAS_SCOPE;
     /** Legacy fallback service property carrying the scope name. */
     private static final String SCOPE_NAME_PROPERTY = "scope.name";
+    /** Service property of a {@link RegistryService} carrying the registry name. */
+    private static final String REGISTRY_NAME_PROPERTY = "registry.name";
 
     private static final Logger LOG = System.getLogger(InitialModelLoader.class.getName());
 
@@ -150,19 +171,20 @@ public class InitialModelLoader {
         boolean halt_on_error() default true;
 
         @AttributeDefinition(name = "Initial Models Registry",
-                description = "Name of the registry within a scope that models from scopes/<scopeName>/ are "
-                        + "uploaded into.")
+                description = "Name of the registry within a scope that models placed directly below "
+                        + "scopes/<scopeName>/ are uploaded into. Files in a scopes/<scopeName>/<registryName>/ "
+                        + "sub folder target the registry named by that folder instead.")
         String initial_models_registry() default "schema";
 
         @AttributeDefinition(name = "Initial Models Stage",
                 description = "Stage that models from scopes/<scopeName>/ are uploaded into. Must be a writable "
                         + "stage of the target registry; to have the packages registered as EPackage services it "
                         + "must also be one of the EPackageStageActionService trigger stages.")
-        String initial_models_stage() default "draft";
+        String initial_models_stage() default "release";
 
         @AttributeDefinition(name = "Scope Wait Seconds",
-                description = "How long to wait for the scope service of a scopes/<scopeName>/ folder to appear "
-                        + "before the seeding is considered failed.")
+                description = "How long to wait for the scope service and the target registry services of a "
+                        + "scopes/<scopeName>/ folder to appear before the seeding is considered failed.")
         long scope_wait_seconds() default 60;
     }
 
@@ -174,11 +196,30 @@ public class InitialModelLoader {
     private final List<Configuration> qvtConfigurations = new ArrayList<>();
     private final List<String> seededNsUris = new ArrayList<>();
 
-    /** Scope folders still waiting for their {@link WritableScopeService} to appear. */
-    private final Map<String, List<Path>> pendingScopes = new HashMap<>();
-    private final ScheduledExecutorService scopeWatchdogExecutor = Executors
+    /**
+     * The files of one {@code scopes/<scopeName>/} folder, split into the schema
+     * files placed directly in the folder and the per-registry sub folders.
+     */
+    private static final class ScopeSeed {
+        final List<Path> schemaFiles = new ArrayList<>();
+        final Map<String, List<Path>> registryFolders = new LinkedHashMap<>();
+        boolean schemasSeeded;
+    }
+
+    /** Scope folders with parts still waiting for their services to appear. Guards itself, {@link #scopeServices} and {@link #registryServices}. */
+    private final Map<String, ScopeSeed> pendingScopes = new HashMap<>();
+    /** The {@link WritableScopeService}s currently bound, by scope name. */
+    private final Map<String, WritableScopeService<EObject>> scopeServices = new HashMap<>();
+    /** The {@link RegistryService}s currently bound, by their {@code registry.name} property. */
+    private final Map<String, RegistryService<?>> registryServices = new HashMap<>();
+    /**
+     * Single thread executing all scope seeding and the watchdog, so seeding
+     * units never run concurrently and SCR bind threads are never blocked on
+     * storage uploads.
+     */
+    private final ScheduledExecutorService scopeSeedingExecutor = Executors
             .newSingleThreadScheduledExecutor(r -> {
-                Thread t = new Thread(r, "InitialModelLoader-scope-watchdog");
+                Thread t = new Thread(r, "InitialModelLoader-scope-seeding");
                 t.setDaemon(true);
                 return t;
             });
@@ -208,8 +249,8 @@ public class InitialModelLoader {
     }
 
     /**
-     * Seeds the scope's folder as soon as its {@link WritableScopeService} shows
-     * up. The built-in atlas scope only implements the deprecated
+     * Tracks the scope services a {@code scopes/<scopeName>/} folder may be
+     * waiting for. The built-in atlas scope only implements the deprecated
      * {@code ScopeService} marker, so it is never offered here — which is
      * intended, its schema registry is read-only.
      */
@@ -220,33 +261,168 @@ public class InitialModelLoader {
         if (!(scopeName instanceof String name)) {
             return;
         }
-        List<Path> files;
         synchronized (pendingScopes) {
-            files = pendingScopes.remove(name);
+            scopeServices.put(name, scopeService);
         }
-        if (files == null) {
-            return;
-        }
-        try {
-            seedScope(name, scopeService, files);
-            synchronized (pendingScopes) {
-                if (pendingScopes.isEmpty() && scopeWatchdog != null) {
-                    scopeWatchdog.cancel(false);
-                    scopeWatchdog = null;
-                }
-            }
-        } catch (RuntimeException e) {
-            LOG.log(Level.ERROR,
-                    "InitialModelLoader: seeding scope '" + name + "' failed: " + e.getMessage(), e);
-            if (config.halt_on_error()) {
-                haltFramework();
-            }
-            throw e;
-        }
+        triggerSeeding();
     }
 
     void removeWritableScopeService(WritableScopeService<EObject> scopeService, Map<String, Object> properties) {
-        // one-shot seeding: nothing to undo when a scope goes away
+        // one-shot seeding: nothing to undo when a scope goes away, but stop
+        // offering the gone service to still-pending seeding units
+        synchronized (pendingScopes) {
+            scopeServices.values().remove(scopeService);
+        }
+    }
+
+    /**
+     * Tracks the registry services: a seeding unit only runs once its target
+     * registry is bound, so the root-EClass validation and the upload cannot
+     * race the registry's activation. Registries whose root EClass comes from a
+     * package this very bootstrap registers appear late by construction.
+     */
+    @Reference(cardinality = ReferenceCardinality.MULTIPLE, policy = ReferencePolicy.DYNAMIC,
+            policyOption = ReferencePolicyOption.GREEDY)
+    void addRegistryService(RegistryService<?> registryService, Map<String, Object> properties) {
+        if (!(properties.get(REGISTRY_NAME_PROPERTY) instanceof String name)) {
+            return;
+        }
+        synchronized (pendingScopes) {
+            registryServices.put(name, registryService);
+        }
+        triggerSeeding();
+    }
+
+    void removeRegistryService(RegistryService<?> registryService, Map<String, Object> properties) {
+        synchronized (pendingScopes) {
+            registryServices.values().remove(registryService);
+        }
+    }
+
+    private void triggerSeeding() {
+        try {
+            scopeSeedingExecutor.execute(this::seedReadyUnits);
+        } catch (RejectedExecutionException e) {
+            // component is deactivating
+        }
+    }
+
+    /**
+     * Executes every seeding unit whose services are available, repeating until
+     * nothing new became ready: a scope's schema files run once the scope service
+     * and the default registry are bound, each registry sub folder runs once its
+     * registry is additionally bound — but never before the scope's schema files,
+     * whose packages the instances may reference. Runs on the single seeding
+     * thread only.
+     */
+    private void seedReadyUnits() {
+        while (true) {
+            String scopeName = null;
+            WritableScopeService<EObject> scopeService = null;
+            RegistryService<?> registryService = null;
+            String registryName = null;
+            List<Path> files = null;
+            boolean schemaUnit = false;
+            synchronized (pendingScopes) {
+                for (Entry<String, ScopeSeed> entry : pendingScopes.entrySet()) {
+                    ScopeSeed seed = entry.getValue();
+                    WritableScopeService<EObject> scope = scopeServices.get(entry.getKey());
+                    if (scope == null) {
+                        continue;
+                    }
+                    if (!seed.schemasSeeded && seed.schemaFiles.isEmpty()) {
+                        seed.schemasSeeded = true;
+                    }
+                    if (!seed.schemasSeeded) {
+                        RegistryService<?> registry = registryServices.get(config.initial_models_registry());
+                        if (registry == null) {
+                            continue;
+                        }
+                        schemaUnit = true;
+                        registryName = config.initial_models_registry();
+                        registryService = registry;
+                        files = seed.schemaFiles;
+                    } else {
+                        for (Entry<String, List<Path>> folder : seed.registryFolders.entrySet()) {
+                            RegistryService<?> registry = registryServices.get(folder.getKey());
+                            if (registry != null) {
+                                registryName = folder.getKey();
+                                registryService = registry;
+                                files = folder.getValue();
+                                break;
+                            }
+                        }
+                        if (files == null) {
+                            continue;
+                        }
+                    }
+                    scopeName = entry.getKey();
+                    scopeService = scope;
+                    break;
+                }
+                if (scopeName == null) {
+                    return;
+                }
+            }
+            try {
+                seedFilesIntoRegistry(scopeName, scopeService, registryService, registryName, files);
+            } catch (SeedingInterrupted e) {
+                LOG.log(Level.INFO, "InitialModelLoader: seeding of scope '" + scopeName + "' (registry '"
+                        + registryName + "') was interrupted by deactivation; the next activation completes it.");
+                return;
+            } catch (RuntimeException e) {
+                boolean servicesReplaced;
+                synchronized (pendingScopes) {
+                    servicesReplaced = scopeServices.get(scopeName) != scopeService
+                            || registryServices.get(registryName) != registryService;
+                }
+                if (servicesReplaced) {
+                    // The scope or registry service bounced mid-seed (e.g. because
+                    // registering the global packages restarted parts of the EMF
+                    // stack). The unit is still pending - retry with the current
+                    // services, or when they reappear.
+                    String failedScope = scopeName;
+                    String failedRegistry = registryName;
+                    LOG.log(Level.INFO, () -> "InitialModelLoader: seeding of scope '" + failedScope
+                            + "' (registry '" + failedRegistry
+                            + "') failed because its services were replaced mid-seed; retrying: " + e.getMessage());
+                    continue;
+                }
+                LOG.log(Level.ERROR, "InitialModelLoader: seeding scope '" + scopeName + "' (registry '"
+                        + registryName + "') failed: " + e.getMessage(), e);
+                synchronized (pendingScopes) {
+                    // drop the whole scope so the failure is not retried endlessly
+                    pendingScopes.remove(scopeName);
+                    cancelWatchdogIfDone();
+                }
+                if (config.halt_on_error()) {
+                    haltFramework();
+                }
+                return;
+            }
+            synchronized (pendingScopes) {
+                ScopeSeed seed = pendingScopes.get(scopeName);
+                if (seed != null) {
+                    if (schemaUnit) {
+                        seed.schemasSeeded = true;
+                    } else {
+                        seed.registryFolders.remove(registryName);
+                    }
+                    if (seed.schemasSeeded && seed.registryFolders.isEmpty()) {
+                        pendingScopes.remove(scopeName);
+                    }
+                    cancelWatchdogIfDone();
+                }
+            }
+        }
+    }
+
+    /** Cancels the watchdog when nothing is pending anymore. Caller holds the {@link #pendingScopes} lock. */
+    private void cancelWatchdogIfDone() {
+        if (pendingScopes.isEmpty() && scopeWatchdog != null) {
+            scopeWatchdog.cancel(false);
+            scopeWatchdog = null;
+        }
     }
 
     @Deactivate
@@ -257,8 +433,10 @@ public class InitialModelLoader {
                 scopeWatchdog = null;
             }
             pendingScopes.clear();
+            scopeServices.clear();
+            registryServices.clear();
         }
-        scopeWatchdogExecutor.shutdownNow();
+        scopeSeedingExecutor.shutdownNow();
         rollback();
     }
 
@@ -396,8 +574,8 @@ public class InitialModelLoader {
         synchronized (pendingScopes) {
             if (!pendingScopes.isEmpty()) {
                 LOG.log(Level.INFO, () -> "InitialModelLoader: waiting up to " + config.scope_wait_seconds()
-                        + "s for the scope service(s) of " + pendingScopes.keySet() + ".");
-                scopeWatchdog = scopeWatchdogExecutor.schedule(this::scopeWaitExpired,
+                        + "s for the scope and registry service(s) of " + pendingScopes.keySet() + ".");
+                scopeWatchdog = scopeSeedingExecutor.schedule(this::scopeWaitExpired,
                         config.scope_wait_seconds(), TimeUnit.SECONDS);
             }
         }
@@ -415,11 +593,26 @@ public class InitialModelLoader {
                     + "' scope cannot be seeded via a scope folder - its schema registry is read-only. "
                     + "Place the models at the top level of the initial models folder instead.");
         }
+        if ("qvto".equals(ext)) {
+            throw new IllegalStateException("InitialModelLoader: " + file
+                    + " - QVT transformations are not scope-bound, place them outside '" + SCOPES_FOLDER + "'.");
+        }
+        if (relative.getNameCount() == 2) {
+            // directly in the scope folder: EPackages for the configured default registry
+            switch (ext) {
+            case "ecore", "jsonschema" ->
+                pendingScopes.computeIfAbsent(scopeName, s -> new ScopeSeed()).schemaFiles.add(file);
+            default -> {
+                // ignore other file types
+            }
+            }
+            return;
+        }
+        // in a sub folder: the folder names the target registry (issue #198)
+        String registryName = relative.getName(1).toString();
         switch (ext) {
-        case "ecore", "jsonschema" ->
-            pendingScopes.computeIfAbsent(scopeName, s -> new ArrayList<>()).add(file);
-        case "qvto" -> throw new IllegalStateException("InitialModelLoader: " + file
-                + " - QVT transformations are not scope-bound, place them outside '" + SCOPES_FOLDER + "'.");
+        case "ecore", "jsonschema", "xmi" -> pendingScopes.computeIfAbsent(scopeName, s -> new ScopeSeed())
+                .registryFolders.computeIfAbsent(registryName, r -> new ArrayList<>()).add(file);
         default -> {
             // ignore other file types
         }
@@ -427,55 +620,80 @@ public class InitialModelLoader {
     }
 
     private void scopeWaitExpired() {
-        Set<String> missing;
+        List<String> missing = new ArrayList<>();
         synchronized (pendingScopes) {
-            missing = new HashSet<>(pendingScopes.keySet());
+            for (Entry<String, ScopeSeed> entry : pendingScopes.entrySet()) {
+                String scopeName = entry.getKey();
+                ScopeSeed seed = entry.getValue();
+                if (!scopeServices.containsKey(scopeName)) {
+                    missing.add("scope service '" + scopeName + "'");
+                }
+                if (!seed.schemasSeeded && !seed.schemaFiles.isEmpty()
+                        && !registryServices.containsKey(config.initial_models_registry())) {
+                    missing.add("registry '" + config.initial_models_registry() + "' of scope '" + scopeName + "'");
+                }
+                for (String registryName : seed.registryFolders.keySet()) {
+                    if (!registryServices.containsKey(registryName)) {
+                        missing.add("registry '" + registryName + "' of scope '" + scopeName + "'");
+                    }
+                }
+            }
             pendingScopes.clear();
             scopeWatchdog = null;
         }
         if (missing.isEmpty()) {
             return;
         }
-        LOG.log(Level.ERROR, "InitialModelLoader: no writable scope service appeared within "
-                + config.scope_wait_seconds() + "s for the scope folder(s) " + missing
-                + ". Are these scopes configured? Their initial models are NOT deployed.");
+        LOG.log(Level.ERROR, "InitialModelLoader: the following services did not appear within "
+                + config.scope_wait_seconds() + "s: " + missing
+                + ". Are these scopes and registries configured? Their initial models are NOT deployed.");
         if (config.halt_on_error()) {
             haltFramework();
         }
     }
 
     /**
-     * Uploads the models of one {@code scopes/<scopeName>/} folder into the
-     * scope's registry, exactly like a REST upload would: through
+     * Uploads the models of one seeding unit — the files directly in a
+     * {@code scopes/<scopeName>/} folder, or one of its registry sub folders —
+     * into the scope's registry, exactly like a REST upload would: through
      * {@link WritableScopeService#uploadToStageForRegistry}, which persists the
-     * package in the scope's storage backend and triggers the stage ENTER action
-     * that registers the EPackage services. Namespace URIs already present in the
-     * target stage are skipped, making the seeding idempotent across restarts —
-     * initial models never overwrite what a scope already contains. A failure
-     * deletes what this run has uploaded before rethrowing.
+     * object in the scope's storage backend and triggers the stage ENTER
+     * actions (for EPackages: the service registration). Every root object is
+     * validated against the registry's root EClass, the same check the Object
+     * Storage REST API performs. EPackages whose namespace URI — and instances
+     * whose object id — are already present in the target stage are skipped,
+     * making the seeding idempotent across restarts: initial models never
+     * overwrite what a scope already contains. A failure deletes what this run
+     * has uploaded before rethrowing.
      */
-    private void seedScope(String scopeName, WritableScopeService<EObject> scopeService, List<Path> files) {
-        String registry = config.initial_models_registry();
+    private void seedFilesIntoRegistry(String scopeName, WritableScopeService<EObject> scopeService,
+            RegistryService<?> registryService, String registry, List<Path> files) {
         String stage = config.initial_models_stage();
         LOG.log(Level.INFO, () -> "InitialModelLoader: seeding scope '" + scopeName + "' (registry '" + registry
                 + "', stage '" + stage + "') with " + files.size() + " file(s).");
 
-        List<Resource> resources = new ArrayList<>();
+        List<Resource> packageResources = new ArrayList<>();
+        List<Resource> instanceResources = new ArrayList<>();
+        List<Path> instanceFiles = new ArrayList<>();
         for (Path file : files) {
             String name = file.getFileName().toString();
             String ext = name.substring(name.lastIndexOf('.') + 1).toLowerCase();
             String uri = file.toUri().toString();
-            if ("jsonschema".equals(ext)) {
-                resources.add(loadJsonschema(uri));
-            } else {
-                resources.add(resourceSet.createResource(URI.createURI(uri)));
+            switch (ext) {
+            case "jsonschema" -> packageResources.add(loadJsonschema(uri));
+            case "xmi" -> {
+                instanceResources.add(createXmiResource(uri));
+                instanceFiles.add(file);
+            }
+            default -> packageResources.add(resourceSet.createResource(URI.createURI(uri)));
             }
         }
-        loadFromDisk(resources);
+        // EPackages first: the instance files may reference them by nsURI
+        loadFromDisk(packageResources);
 
         Set<String> batchNsUris = new HashSet<>();
-        List<EPackage> roots = new ArrayList<>();
-        for (Resource resource : resources) {
+        List<EPackage> packageRoots = new ArrayList<>();
+        for (Resource resource : packageResources) {
             EObject root = resource.getContents().get(0);
             if (!(root instanceof EPackage ePackage)) {
                 throw new IllegalStateException("InitialModelLoader: resource " + resource.getURI()
@@ -490,24 +708,45 @@ public class InitialModelLoader {
                 throw new IllegalStateException("InitialModelLoader: duplicate EPackage nsURI '" + nsURI
                         + "' within the scope folder '" + scopeName + "'.");
             }
-            roots.add(ePackage);
+            packageRoots.add(ePackage);
         }
 
         // Align the Resource URIs and seed only the component-private ResourceSet
         // registry (NOT the global one), so nsURI-based cross-references between the
         // scope's files resolve. The prototype ResourceSet dies with this component.
-        for (int i = 0; i < resources.size(); i++) {
-            Resource resource = resources.get(i);
-            EPackage ePackage = roots.get(i);
+        for (int i = 0; i < packageResources.size(); i++) {
+            Resource resource = packageResources.get(i);
+            EPackage ePackage = packageRoots.get(i);
             resource.setURI(URI.createURI(ePackage.getNsURI()));
             resourceSet.getPackageRegistry().put(ePackage.getNsURI(), ePackage);
         }
-        resources.forEach(r -> r.getContents().forEach(EcoreUtil::resolveAll));
+        packageResources.forEach(r -> r.getContents().forEach(EcoreUtil::resolveAll));
+
+        loadFromDisk(instanceResources);
+        instanceResources.forEach(r -> r.getContents().forEach(EcoreUtil::resolveAll));
+
+        // Validate every root against the registry's root EClass — the same check
+        // the Object Storage REST API performs on an upload.
+        packageRoots.forEach(ePackage -> checkCompatibleWithRegistry(registryService, registry, ePackage));
+        List<EObject> instanceRoots = new ArrayList<>();
+        List<String> instanceIds = new ArrayList<>();
+        Set<String> batchObjectIds = new HashSet<>();
+        for (int i = 0; i < instanceResources.size(); i++) {
+            EObject root = instanceResources.get(i).getContents().get(0);
+            checkCompatibleWithRegistry(registryService, registry, root);
+            String objectId = deriveObjectId(root, instanceFiles.get(i));
+            if (!batchObjectIds.add(objectId)) {
+                throw new IllegalStateException("InitialModelLoader: duplicate object id '" + objectId
+                        + "' within the registry folder '" + registry + "' of scope '" + scopeName + "'.");
+            }
+            instanceRoots.add(root);
+            instanceIds.add(objectId);
+        }
 
         List<ObjectMetadata> uploaded = new ArrayList<>();
         int skipped = 0;
         try {
-            for (EPackage ePackage : roots) {
+            for (EPackage ePackage : packageRoots) {
                 String nsURI = ePackage.getNsURI();
                 if (!scopeService.getMetadataByPropertyFromStageForRegistry(registry, stage,
                         WorkflowConstants.NS_URI_METADATA_PROPERTY, nsURI).isEmpty()) {
@@ -519,7 +758,30 @@ public class InitialModelLoader {
                 ObjectMetadata metadata = createScopeMetadata(scopeName, registry, stage, ePackage);
                 uploaded.add(scopeService.uploadToStageForRegistry(registry, stage, ePackage, metadata).getValue());
             }
+            for (int i = 0; i < instanceRoots.size(); i++) {
+                String objectId = instanceIds.get(i);
+                if (scopeService.getMetadataFromStageForRegistry(registry, stage, objectId) != null) {
+                    LOG.log(Level.INFO, () -> "InitialModelLoader: object '" + objectId + "' is already present in "
+                            + "scope '" + scopeName + "' registry '" + registry + "' stage '" + stage
+                            + "', skipping.");
+                    skipped++;
+                    continue;
+                }
+                ObjectMetadata metadata = createInstanceMetadata(scopeName, registry, stage, objectId,
+                        instanceFiles.get(i), instanceRoots.get(i));
+                uploaded.add(scopeService
+                        .uploadToStageForRegistry(registry, stage, instanceRoots.get(i), metadata).getValue());
+            }
         } catch (Exception e) {
+            if (isCausedByInterrupt(e)) {
+                // The component is deactivating mid-seed (its executor was shut
+                // down, e.g. because registering the global packages bounced the
+                // injected ResourceSet and SCR restarts the component). Leave the
+                // uploads in place: the seeding is idempotent per object, so the
+                // next activation skips them and completes the rest.
+                Thread.currentThread().interrupt();
+                throw new SeedingInterrupted();
+            }
             for (ObjectMetadata metadata : uploaded) {
                 try {
                     scopeService.deleteFromStageForRegistry(registry, stage, metadata.getObjectId()).getValue();
@@ -534,8 +796,79 @@ public class InitialModelLoader {
         }
         int uploadedCount = uploaded.size();
         int skippedCount = skipped;
-        LOG.log(Level.INFO, () -> "InitialModelLoader: scope '" + scopeName + "': uploaded " + uploadedCount
-                + " EPackage(s), skipped " + skippedCount + " already present.");
+        LOG.log(Level.INFO, () -> "InitialModelLoader: scope '" + scopeName + "' registry '" + registry
+                + "': uploaded " + uploadedCount + " object(s), skipped " + skippedCount + " already present.");
+    }
+
+    /** Thrown when an in-flight seeding was interrupted by the component's own deactivation. */
+    private static final class SeedingInterrupted extends RuntimeException {
+        private static final long serialVersionUID = 1L;
+    }
+
+    private static boolean isCausedByInterrupt(Throwable t) {
+        for (Throwable cause = t; cause != null; cause = cause.getCause()) {
+            if (cause instanceof InterruptedException) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private void checkCompatibleWithRegistry(RegistryService<?> registryService, String registry, EObject object) {
+        if (!registryService.isEClassCompatibleWithRegistry(object.eClass())) {
+            throw new IllegalStateException(String.format(
+                    "InitialModelLoader: object type %s not compatible with registry %s (expects %s)",
+                    EcoreUtil.getURI(object.eClass()), registry,
+                    EcoreUtil.getURI(registryService.getRootEClass())));
+        }
+    }
+
+    /**
+     * The natural key of an instance is its EMF ID attribute value; files whose
+     * model does not declare one (or leaves it unset) fall back to the file name
+     * without extension.
+     */
+    private String deriveObjectId(EObject root, Path file) {
+        String id = EcoreUtil.getID(root);
+        if (id != null && !id.isBlank()) {
+            return id;
+        }
+        return fileBaseName(file);
+    }
+
+    private String fileBaseName(Path file) {
+        String name = file.getFileName().toString();
+        int dot = name.lastIndexOf('.');
+        return dot > 0 ? name.substring(0, dot) : name;
+    }
+
+    /**
+     * Builds instance metadata the same way {@code ObjectRegistryResource.createObject}
+     * does for a REST upload, so seeded and uploaded objects are
+     * indistinguishable downstream.
+     */
+    private ObjectMetadata createInstanceMetadata(String scopeName, String registry, String stage, String objectId,
+            Path file, EObject root) {
+        ObjectMetadata metadata = ManagementFactory.eINSTANCE.createObjectMetadata();
+        metadata.setObjectId(objectId);
+        metadata.setObjectName(fileBaseName(file));
+        metadata.setUploadTime(Instant.now());
+        metadata.setStage(stage);
+        metadata.setScope(scopeName);
+        metadata.setRegistry(registry);
+        metadata.setObjectType(EcoreUtil.getURI(root.eClass()).toString());
+        return metadata;
+    }
+
+    /**
+     * Creates a Resource for an instance {@code .xmi} file, pinning the standard
+     * XMI factory on the component-private ResourceSet so a wildcard codec
+     * factory can never claim the extension.
+     */
+    private Resource createXmiResource(String uri) {
+        resourceSet.getResourceFactoryRegistry().getExtensionToFactoryMap()
+                .putIfAbsent("xmi", new XMIResourceFactoryImpl());
+        return resourceSet.createResource(URI.createURI(uri));
     }
 
     /**

@@ -15,6 +15,7 @@ package org.eclipse.fennec.model.atlas.rest.client.impl;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 
 import org.eclipse.emf.common.util.URI;
@@ -38,8 +39,19 @@ import org.eclipse.emf.ecore.xmi.impl.XMIResourceImpl;
  * <li><b>Internal self-references serialized with the server's resource name.</b>
  * EMF saves with a relative resource URI, so a same-document reference comes
  * across as e.g. {@code sample.ecore#//Person}. Loaded under a different URI it
- * would not resolve, so — while exactly one document is being loaded — such a
- * reference's fragment is resolved against that one document.</li>
+ * would not resolve, so such a reference's fragment is resolved against the
+ * document being loaded.
+ * <p>
+ * That reference arrives resolved against the URI this document is parsed under
+ * — {@code atlas-client://epackage.ecore/sample.ecore#//Person} — which is how
+ * it is told apart from a genuine reference into another package: the latter
+ * carries the target namespace's own scheme and authority, and must keep
+ * falling through to be fetched rather than being answered from this document.
+ * The test is that base, not "only one resource is loaded": EMF demand-creates a
+ * placeholder resource for every cross-document href it reads, so any package
+ * that references another has more than one resource in the set before a single
+ * proxy is resolved — and gating on that count silently disabled this case for
+ * exactly the layered models that need it.</li>
  * </ol>
  * Genuinely external references (to another Atlas package not yet fetched) stay
  * unresolved here; fetching them is the Atlas-aware ResourceSet's job (P2-8).
@@ -78,19 +90,37 @@ class PackageLoadingResourceSet extends ResourceSetImpl {
 	}
 
 	/**
-	 * Resolve an internal self-reference against the single document being
-	 * loaded. Only active while exactly one resource is present, so it cannot
-	 * mis-route once more than one document is in play.
+	 * Resolve an internal self-reference against the document being loaded —
+	 * only for a reference that arrived document-relative, i.e. under the URI
+	 * this document is parsed under. A reference into another namespace carries
+	 * that namespace's own scheme and authority and is left alone, so this
+	 * cannot answer a genuine cross-package reference from the wrong document.
 	 */
 	private EObject resolveAgainstLoadedDocument(URI uri) {
 		if (uri == null || uri.fragment() == null) {
 			return null;
 		}
-		List<Resource> resources = getResources();
-		if (resources.size() != 1) {
+		Resource document = document();
+		if (document == null || !sameBase(uri, document.getURI())) {
 			return null;
 		}
-		return resources.get(0).getEObject(uri.fragment());
+		return document.getEObject(uri.fragment());
+	}
+
+	/**
+	 * The one document this set exists to load. A set is created per parse and
+	 * the document's resource is the first created in it; anything after it is a
+	 * placeholder EMF demand-created for a cross-document href.
+	 */
+	private Resource document() {
+		List<Resource> resources = getResources();
+		return resources.isEmpty() ? null : resources.get(0);
+	}
+
+	/** Whether {@code uri} sits under the same scheme and authority as the document. */
+	private static boolean sameBase(URI uri, URI documentUri) {
+		return documentUri != null && uri.scheme() != null && uri.scheme().equals(documentUri.scheme())
+				&& Objects.equals(uri.authority(), documentUri.authority());
 	}
 
 	private static Resource holderFor(EPackage ePackage) {

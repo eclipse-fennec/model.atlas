@@ -66,22 +66,48 @@ the transformator id.
 ### Seeding scopes
 
 Models placed below `scopes/<scopeName>/` are **not** registered globally.
-Instead, as soon as the named scope's `WritableScopeService` appears, they are
-uploaded into that scope's registry (default: the `schema` registry, `draft`
-stage) — exactly as if they had been uploaded through the REST API. The upload is
-persisted in the scope's storage backend and triggers the regular stage ENTER
-action, which registers the `EPackage` services with the scope/stage properties.
+Instead, as soon as the named scope's `WritableScopeService` and the target
+registry's `RegistryService` appear, they are uploaded into that scope's
+registry (default: the `schema` registry, `release` stage) — exactly as if they
+had been uploaded through the REST API. The upload is persisted in the scope's
+storage backend and triggers the regular stage ENTER action, which registers
+the `EPackage` services with the scope/stage properties.
 
 - A namespace URI that is **already present** in the target stage is skipped, so
   the seeding is idempotent across restarts and never overwrites content the
   scope already has. Model updates go through the REST API (or git), not through
   the boot mount.
-- If the scope service does not appear within `scope.wait.seconds`, the seeding
-  is considered failed (see below).
+- If the scope service or a target registry service does not appear within
+  `scope.wait.seconds`, the seeding is considered failed (see below).
 - The built-in **`atlas`** scope cannot be targeted this way — its schema
   registry is read-only. Its content is the set of globally registered packages,
   i.e. the top-level files.
 - `.qvto` files are not scope-bound and are rejected below `scopes/`.
+
+### Seeding instances into a scope's registries
+
+A sub folder of a scope folder names one of the scope's **registries**: files
+below `scopes/<scopeName>/<registryName>/` are uploaded into that registry
+instead of the configured default registry (issue #198). This gives registries
+of type `OTHER` a file-based bootstrap path — e.g. the `sensinactmapping`
+registry of the `jena` scope, whose `ProviderMapping` instances previously
+required an out-of-band REST call after every fresh start.
+
+- **`.xmi` files** are seeded as model *instances*. Every root object is
+  validated against the registry's configured root EClass
+  (`root.eclass.uri`) — the same check the Object Storage REST API performs on
+  an upload.
+- **`.ecore` / `.jsonschema` files** in a registry sub folder keep their
+  EPackage semantics, just targeted at the named registry.
+- The **object id** of an instance is derived from its EMF **ID attribute**
+  (`EcoreUtil.getID`); if the model declares none (or the value is unset), the
+  file name without extension is used. An object id already present in the
+  target stage is skipped — same idempotence rule as for packages.
+- Instances may **reference packages seeded by the same bootstrap**: the
+  top-level files are registered first, and a scope's schema files are always
+  seeded before its registry sub folders. A registry whose root EClass lives in
+  a boot-seeded package activates only after that package is registered; the
+  loader holds the instance seeding back until the registry appears.
 
 ### Atomicity and failure behaviour
 
@@ -114,9 +140,9 @@ so it activates even without configuration (using the default folder).
 |----------|---------|-------------|
 | `initial.models.folder` | `/initial-models` | Folder scanned once on startup. |
 | `halt.on.error` | `true` | Stop the OSGi framework when the deployment fails (after rolling back). |
-| `initial.models.registry` | `schema` | Registry within a scope that `scopes/<scopeName>/` models are uploaded into. |
-| `initial.models.stage` | `draft` | Stage the scope models are uploaded into. Must be writable, and should be a trigger stage of the `EPackageStageActionService` for the packages to be registered. |
-| `scope.wait.seconds` | `60` | How long to wait for a scope folder's scope service before failing. |
+| `initial.models.registry` | `schema` | Registry within a scope that models directly below `scopes/<scopeName>/` are uploaded into. Files in a `scopes/<scopeName>/<registryName>/` sub folder target the registry named by that folder instead. |
+| `initial.models.stage` | `release` | Stage the scope models are uploaded into. Must be writable, and should be a trigger stage of the `EPackageStageActionService` for the packages to be registered. |
+| `scope.wait.seconds` | `60` | How long to wait for a scope folder's scope service and target registry services before failing. |
 
 The loader does nothing (and logs an `INFO` message) when the folder is blank,
 does not exist, is not a directory, or still contains an un-interpolated
@@ -161,7 +187,10 @@ services:
 └── scopes/
     └── jena/                  # uploaded into the 'jena' scope's schema registry
         ├── person.ecore
-        └── address.ecore
+        ├── address.ecore
+        └── sensinactmapping/  # uploaded as instances into the 'sensinactmapping' registry
+            ├── water-temperature.xmi
+            └── water-quality.xmi
 ```
 
 ## License
