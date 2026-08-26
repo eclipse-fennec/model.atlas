@@ -223,6 +223,20 @@ public class ScopeServiceImpl<T extends EObject> implements ScopeService<T>, Wri
 	 * (non-Javadoc)
 	 * 
 	 * @see org.eclipse.fennec.model.atlas.wf.workflowapi.ScopeService#
+	 * updatePropertiesInStageForRegistry(java.lang.String, java.lang.String,
+	 * java.lang.String, java.util.Map)
+	 */
+	@Override
+	public Promise<ObjectMetadata> updatePropertiesInStageForRegistry(String registry, String stage, String objectId,
+			Map<String, Object> properties) {
+		validateRegistry(registry);
+		return getRegistryService(registry).updateProperties(config.scope_name(), stage, objectId, properties);
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see org.eclipse.fennec.model.atlas.wf.workflowapi.ScopeService#
 	 * deleteFromStageForRegistry(java.lang.String, java.lang.String,
 	 * java.lang.String)
 	 */

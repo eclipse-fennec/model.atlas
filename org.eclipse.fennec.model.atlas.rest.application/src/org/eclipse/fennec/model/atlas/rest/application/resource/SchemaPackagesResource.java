@@ -19,6 +19,7 @@ import java.time.Instant;
 import java.util.LinkedHashSet;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
@@ -316,6 +317,8 @@ public class SchemaPackagesResource {
             @Parameter(description = "Human-readable name for the package") @QueryParam("name") String name,
             @Parameter(description = "Package version. If not provided, will be extracted from the nsURI. If provided, must be semantically compatible with the URI version.", required = false) @QueryParam("version") String version,
             @Parameter(description = "Overwrite option. If true and a Package with the same uri already exists, it updates it. ", required = false) @QueryParam("overwrite") boolean overwrite,
+            @Parameter(description = "Assert that this package may be published to a DCAT portal. Recorded in the metadata as the 'dcat' property. "
+                    + "On create, absent means false. On an overwrite, absent leaves the stored flag untouched — only an explicit value changes it.", required = false) @QueryParam("dcat") Boolean dcat,
             @RequestBody(description = "The schema package content", required = true, content = @Content(schema = @Schema(implementation = EPackage.class))) EPackage ePackage) {
 
         ScopeService<EObject> scopeService = (ScopeService<EObject>) getScopeServiceByScopeName(scopeName);
@@ -348,6 +351,13 @@ public class SchemaPackagesResource {
                             .updateInStageForRegistry(REGISTRY_NAME, stageName, ePackage,
                                     existingMetadata.getObjectId(), resolvedVersion)
                             .getValue();
+                    // An absent ?dcat leaves the stored flag alone: an overwrite that says nothing
+                    // about publication must not unpublish the model. Only an explicit value moves it.
+                    if (dcat != null) {
+                        metadata = scopeService.updatePropertiesInStageForRegistry(REGISTRY_NAME, stageName,
+                                existingMetadata.getObjectId(),
+                                Map.of(WorkflowConstants.DCAT_PUBLISH_METADATA_PROPERTY, dcat)).getValue();
+                    }
                     ePackageIndex.index(metadata, ePackage);
                     Response.ResponseBuilder rb = Response.status(Response.Status.OK)
                             .header("Location", packageLocation(scopeName, stageName, validatedNsUri))
@@ -369,7 +379,11 @@ public class SchemaPackagesResource {
             metadata.setRegistry(REGISTRY_NAME);
             metadata.setVersion(resolvedVersion);
             metadata.setObjectType(EcoreUtil.getURI(ePackage.eClass()).toString());
-            metadata.getProperties().put("nsUri", validatedNsUri);
+            metadata.getProperties().put(WorkflowConstants.NS_URI_METADATA_PROPERTY, validatedNsUri);
+            // Stored as a Boolean, not a String: `properties` is String -> EJavaObject, so both
+            // are storable and only one is what the publisher tests. Absent means false.
+            metadata.getProperties().put(WorkflowConstants.DCAT_PUBLISH_METADATA_PROPERTY,
+                    Boolean.TRUE.equals(dcat));
 
             metadata = scopeService.uploadToStageForRegistry(REGISTRY_NAME, stageName, ePackage, metadata).getValue();
             ePackageIndex.index(metadata, ePackage);

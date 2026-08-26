@@ -21,6 +21,7 @@ import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.verify;
 
 import java.util.Dictionary;
+import java.util.List;
 import java.util.Set;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
@@ -38,6 +39,7 @@ import org.eclipse.fennec.emf.osgi.constants.EMFNamespaces;
 import org.eclipse.fennec.emf.osgi.fingerprint.FingerprintService;
 import org.eclipse.fennec.model.atlas.mgmt.management.ManagementFactory;
 import org.eclipse.fennec.model.atlas.mgmt.management.ObjectMetadata;
+import org.eclipse.fennec.model.atlas.workflow.WorkflowConstants;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -252,6 +254,75 @@ public class DynamicEPackageRegistrationServiceStageAwareTest {
 		eClass.setName(className);
 		pkg.getEClassifiers().add(eClass);
 		return pkg;
+	}
+
+	// ---- O13: the DCAT flag rides on the service properties -----------------
+
+	@Test
+	@DisplayName("O13: a dcat=true metadata flag reaches every registered service's properties")
+	public void dcatFlagIsProjectedOntoServiceProperties() {
+		ObjectMetadata md = metadata(SCOPE, "release");
+		md.getProperties().put(WorkflowConstants.DCAT_PUBLISH_METADATA_PROPERTY, Boolean.TRUE);
+
+		assertTrue(service.registerEPackage(newPersonPackage(), md));
+
+		for (Dictionary<String, ?> dict : capturedRegistrationProperties()) {
+			assertEquals(Boolean.TRUE, dict.get(WorkflowConstants.DCAT_PUBLISH_METADATA_PROPERTY),
+					"the publisher's tracker filters on (dcat=true), so the flag has to be a service property");
+		}
+	}
+
+	@Test
+	@DisplayName("O13: an absent dcat flag is projected as false, not left out")
+	public void absentDcatFlagIsProjectedAsFalse() {
+		// Absent means false, and stating it explicitly keeps the property greppable in the
+		// service registry instead of making "unflagged" and "never considered" look alike.
+		assertTrue(service.registerEPackage(newPersonPackage(), metadata(SCOPE, "release")));
+
+		for (Dictionary<String, ?> dict : capturedRegistrationProperties()) {
+			assertEquals(Boolean.FALSE, dict.get(WorkflowConstants.DCAT_PUBLISH_METADATA_PROPERTY),
+					"an unflagged package must register with dcat=false");
+		}
+	}
+
+	@Test
+	@DisplayName("O13: the flag is read defensively — the string \"true\" counts as true")
+	public void stringValuedDcatFlagIsHonoured() {
+		// ObjectMetadata.properties is String -> EJavaObject, so both the boolean and the string
+		// are storable and only one of them is what the upload path writes. A metadata record
+		// written by hand, by an older client or by a JSON round-trip may well carry the string.
+		ObjectMetadata md = metadata(SCOPE, "release");
+		md.getProperties().put(WorkflowConstants.DCAT_PUBLISH_METADATA_PROPERTY, "true");
+
+		assertTrue(service.registerEPackage(newPersonPackage(), md));
+
+		for (Dictionary<String, ?> dict : capturedRegistrationProperties()) {
+			assertEquals(Boolean.TRUE, dict.get(WorkflowConstants.DCAT_PUBLISH_METADATA_PROPERTY),
+					"a string-valued flag must be read as true");
+		}
+	}
+
+	@Test
+	@DisplayName("O13: a non-boolean, non-\"true\" value is false rather than an error")
+	public void garbageDcatFlagIsFalse() {
+		ObjectMetadata md = metadata(SCOPE, "release");
+		md.getProperties().put(WorkflowConstants.DCAT_PUBLISH_METADATA_PROPERTY, 42);
+
+		assertTrue(service.registerEPackage(newPersonPackage(), md),
+				"a nonsense flag must not break registration — the package still has to be servable");
+
+		for (Dictionary<String, ?> dict : capturedRegistrationProperties()) {
+			assertEquals(Boolean.FALSE, dict.get(WorkflowConstants.DCAT_PUBLISH_METADATA_PROPERTY),
+					"anything that is not true is not a publication assertion");
+		}
+	}
+
+	/** Every {@code registerService(String[], …)} publication's property dictionary. */
+	private List<Dictionary<String, ?>> capturedRegistrationProperties() {
+		@SuppressWarnings({ "unchecked", "rawtypes" })
+		ArgumentCaptor<Dictionary<String, ?>> props = ArgumentCaptor.forClass((Class) Dictionary.class);
+		verify(bundleContext, atLeastOnce()).registerService(any(String[].class), any(), props.capture());
+		return props.getAllValues();
 	}
 
 	private static ObjectMetadata metadata(String scope, String stage) {

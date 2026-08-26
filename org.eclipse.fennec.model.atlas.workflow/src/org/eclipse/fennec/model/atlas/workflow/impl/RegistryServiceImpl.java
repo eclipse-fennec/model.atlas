@@ -323,6 +323,57 @@ public class RegistryServiceImpl<T extends EObject> implements RegistryService<T
      * (non-Javadoc)
      * 
      * @see
+     * org.eclipse.fennec.model.atlas.wf.workflowapi.RegistryService#updateProperties
+     * (java.lang.String, java.lang.String, java.lang.String, java.util.Map)
+     */
+    @Override
+    public Promise<ObjectMetadata> updateProperties(String scope, String stage, String objectId,
+            Map<String, Object> properties) {
+
+        return promiseFactory.submit(() -> {
+            requireNonNull(objectId, "Object ID cannot be null");
+            requireNonNull(properties, "Properties cannot be null");
+
+            // validateWritableStage, deliberately NOT validateUpdatableStage: the final-stage bar
+            // on updateInStage protects released *content* from changing, and this touches none —
+            // no new contentHash, no new fingerprint, no storage write of the object. A final stage
+            // is exactly where a publication flag has to be editable, so the only gate that makes
+            // sense is the registry's own `writable` declaration.
+            validateWritableStage(stage);
+
+            EObjectStorageService<T> storageService = storageFor(stage);
+
+            ObjectMetadata metadata = WorkflowServiceHelper
+                    .getPromiseValue(storageService.retrieveMetadata(scope, config.registry_name(), stage, objectId));
+            if (metadata == null) {
+                return null;
+            }
+
+            // Merge, key by key. Never addAll the argument's entries and never EcoreUtil.copy the
+            // metadata: `properties` is a containment list, so entries would be re-parented, and
+            // the suppressed-notification models break copy() on BasicInternalEList.
+            properties.forEach((key, value) -> metadata.getProperties().put(key, value));
+
+            Boolean stored = WorkflowServiceHelper.getPromiseValue(
+                    storageService.updateMetadata(scope, config.registry_name(), stage, objectId, metadata));
+            if (!Boolean.TRUE.equals(stored)) {
+                throw new IllegalStateException(String.format(
+                        "Storage refused the metadata property update for object %s in stage %s of registry %s",
+                        objectId, stage, config.registry_name()));
+            }
+            // Re-read rather than returning the object we just mutated: updateMetadata merges into
+            // its own copy and stamps lastChangeTime itself, so the in-memory instance would carry
+            // a different timestamp than the stored one — and that value becomes the response's
+            // Last-Modified and ETag, which a client then sends back in an If-Match.
+            return WorkflowServiceHelper
+                    .getPromiseValue(storageService.retrieveMetadata(scope, config.registry_name(), stage, objectId));
+        });
+    }
+
+    /*
+     * (non-Javadoc)
+     * 
+     * @see
      * org.eclipse.fennec.model.atlas.wf.workflowapi.RegistryService#deleteFromStage
      * (java.lang.String, java.lang.String, java.lang.String)
      */

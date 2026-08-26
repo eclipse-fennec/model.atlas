@@ -1,0 +1,30 @@
+{
+	":configurator:resource-version": 1,
+	":configurator:symbolicname": "org.eclipse.fennec.model.atlas.runtime.config.local.jena.dcat",
+	":configurator:version": "0.0.0",
+
+	"org.eclipse.fennec.dcat.atlas.client~jena": {
+		"dcat.portal": "jena",
+		"base.uri": "$[env:DCAT_PORTAL_BASE_URI;default=http://localhost:8090/rest/]",
+		"check.ready": true,
+		"require.ready": false
+	},
+
+	"DcatPublisher~jena": {
+		"dcat.portal.target": "(dcat.portal=jena)",
+		"atlas.public.base.uri": "$[env:ATLAS_PUBLIC_BASE_URI;default=http://localhost:8086/atlas/rest]",
+		"allow.local.base.uri": true,
+		// The atlas root scope is deliberately absent: its registry holds the system schemas,
+		// which are not open data. Adding "atlas" here does work — verified — and is what §4 of the
+		// plan assumes when it links every other Catalog's Datasets into the root's.
+		"scopes": ["jena"],
+		"language": "de",
+		"publisher.name": "Stadt Jena",
+		"publisher.about": "https://www.jena.de",
+		// Required to publish a Distribution: dcat:Distribution#license is a lowerBound=1
+		// containment, so the portal refuses a Distribution without one.
+		"license.uri": "http://dcat-ap.de/def/licenses/dl-by-de/2.0",
+		"distribution.media.types": ["application/xmi", "application/json"],
+		"publish.stages": ["FINAL"]
+	}
+}

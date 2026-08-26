@@ -30,6 +30,7 @@ import org.eclipse.emf.ecore.resource.ResourceSet;
 import org.eclipse.fennec.emf.osgi.configurator.EPackageConfigurator;
 import org.eclipse.fennec.emf.osgi.fingerprint.FingerprintService;
 import org.eclipse.fennec.model.atlas.mgmt.management.ObjectMetadata;
+import org.eclipse.fennec.model.atlas.workflow.WorkflowConstants;
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.Filter;
 import org.osgi.framework.FrameworkUtil;
@@ -285,10 +286,11 @@ public class DynamicEPackageRegistrationService {
 
             String fileExtension = extractFileExtension(metadata, ePackage);
             String version = extractVersion(metadata, ePackage);
+            boolean dcatPublish = extractDcatFlag(metadata);
 
             // Create configurator
             DynamicEPackageConfigurator configurator = new DynamicEPackageConfigurator(ePackage, fileExtension, version,
-                    metadata.getScope(), metadata.getStage(), fp);
+                    metadata.getScope(), metadata.getStage(), fp, dcatPublish);
 
             // Track for pending configuration event when ResourceSet becomes available
             String modelName = ePackage.getName();
@@ -464,6 +466,30 @@ public class DynamicEPackageRegistrationService {
     }
 
     // Private helper methods for service registration
+
+    /**
+     * Reads the DCAT publication assertion out of the object's metadata so it can be projected
+     * onto the service properties.
+     *
+     * <p>
+     * {@code ObjectMetadata.properties} is typed {@code String -> EJavaObject}, so both
+     * {@code Boolean.TRUE} and the string {@code "true"} are storable and only one of them is
+     * what the schema upload path writes. Read both, and treat anything else — including a value
+     * of the wrong type entirely — as "not asserted" rather than as an error: a nonsense flag
+     * must not stop a package from being registered and served.
+     * </p>
+     *
+     * @param metadata the object's metadata; never {@code null} here
+     * @return {@code true} only if the metadata asserts publication
+     */
+    private boolean extractDcatFlag(ObjectMetadata metadata) {
+        Object flag = metadata.getProperties() == null ? null
+                : metadata.getProperties().get(WorkflowConstants.DCAT_PUBLISH_METADATA_PROPERTY);
+        if (flag instanceof Boolean bool) {
+            return bool.booleanValue();
+        }
+        return flag instanceof String text && Boolean.parseBoolean(text);
+    }
 
     private ServiceRegistration<EPackageConfigurator> registerEPackageConfigurator(
             DynamicEPackageConfigurator configurator) {

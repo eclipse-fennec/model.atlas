@@ -19,8 +19,8 @@ something stops being published**.
 ### 1.1 On the DCAT side — the client, as shipped
 
 `DcatAtlasClient` (`org.eclipse.fennec.dcat.atlas.client.api`) is complete for everything the
-mapping needs: `registerCatalog/Dataset/DatasetSeries/DataService/Distribution`, all six
-`link*`/`unlink*` pairs, `etagOf`, `delete(collection, id, DeleteMode)`, `ready()`. Writes are
+mapping needs: `registerCatalog/Dataset/Distribution`, the `linkDatasetToCatalog` /
+`linkSubCatalog` pairs and their `unlink*` counterparts, `etagOf`, `delete(collection, id, DeleteMode)`, `ready()`. Writes are
 idempotent `PUT`s keyed by a caller-chosen id, and every `registerX` has a three-argument
 conditional form returning `Registration<T>` (stored entity + new ETag, `applied()` false
 when a precondition refused it).
@@ -39,7 +39,7 @@ this workspace's runtime as-is.
 **The write floor, from the client's P1/P3 measurements.** `publisher` is `lowerBound=1`
 *containment* on `dcat:DcatResource` (`dcatap.ecore:654`) and `description` is the OCL
 invariant `HasDescription`; `StoreConfig.validateOnWrite()` defaults to **on**, independently
-of SHACL. So every Catalog/Dataset/DatasetSeries/DataService needs `title` + `description` +
+of SHACL. So every Catalog and Dataset needs `title` + `description` +
 a contained `foaf:Agent` that has its own `name`. Because publisher is containment, **each
 entity carries its own copy of the Agent** — nothing is shared. A `Distribution` instead
 requires `accessURL` and `license` (`license` is `lowerBound=1` containment there,
@@ -69,12 +69,23 @@ existing configuration.
 assumed did not exist *does* exist:
 
 ```
-accessURL   {base}/atlas/rest/{scope}/schema/stages/{stage}/content?nsUri={enc}
-downloadURL {base}/atlas/rest/{scope}/schema/stages/{stage}/content?nsUri={enc}&mediaType=application/xmi
+accessURL   {base}/{scope}/schema/stages/{stage}/content?nsUri={enc}
+downloadURL {base}/{scope}/schema/stages/{stage}/content?nsUri={enc}&mediaType=application/xmi
 ```
 
-Each Distribution can therefore carry a real `dcat:downloadURL`, and §4's "negotiation-only,
-empty downloadURL" decision can be revisited in our favour before anything is built.
+(`{base}` carries the public path prefix — §6 — because an APISIX may rewrite the container's
+own `/atlas/rest`.)
+
+So each Distribution carries a real `dcat:downloadURL`. **The mapping's §4 is updated
+accordingly (2026-08-26): the "negotiation-only, empty downloadURL" decision is reversed**, its
+premise having been the absence of a selector that turns out to exist.
+
+The **APISIX** makes that the correct choice and not merely the nicer one. Negotiation-only
+distributions share one URL and differ only by the `Accept` header, which puts the correctness
+of the whole scheme in the hands of a cache we do not own: a gateway response cache keyed
+without `Vary: Accept` will happily serve the XMI it cached to the next harvester asking for
+JSON. `?mediaType=` is in a cache key by default, so a `downloadURL` per representation removes
+the failure mode instead of documenting it.
 
 ---
 
@@ -116,9 +127,9 @@ the final design, not of a first phase.
 
 | bundle | contents |
 |---|---|
-| **`org.eclipse.fennec.model.atlas.dcat`** | the publisher. Exports one package, `…dcat.api` (the two SPIs of §7 and the `PublicationTarget` record); everything else `Private-Package`. Buildpath: `dcat.atlas.client.api` + `.client.osgi` + `dcatap.de.model` (Local repo, `version=latest`), `…model.atlas.scope.api`, `…mediatypes.api`, `org.eclipse.fennec.emf.osgi` (for `EMFNamespaces` and `FingerprintHelper`), DS/metatype/cm annotations |
+| **`org.eclipse.fennec.model.atlas.dcat`** | the publisher. Exports one package, `…dcat.api` (the two SPIs of §7 and the `PublicationTarget` record); everything else `Private-Package`. Buildpath: `dcat.atlas.client.api` + `.client.osgi` + `dcatap.de.model` (Local repo, `version=latest`), `…model.atlas.scope.api`, `…model.atlas.workflow` (for `ObjectMetadata` and the scope services — §7), `…mediatypes.api`, `org.eclipse.fennec.emf.osgi` (for `EMFNamespaces` and `FingerprintHelper`), DS/metatype/cm annotations |
 | **`org.eclipse.fennec.model.atlas.dcat.tests`** | plain-Java tests for the mapper, the id scheme and the policy; OSGi ITs against a portal container. `-maven-release: local` |
-| `…runtime.config.local.dcat` (or additions to `…local.jena`) | `DcatAtlasClient~portal` + `DcatPublisher~portal` configurations |
+| `…runtime.config.local.dcat` (or additions to `…local.jena`) | `DcatAtlasClient~portal` + `DcatPublisher~portal` configurations, plus one `DcatScopeCatalog~{scope}` per scope that needs an adopted or configured Catalog (§7a) |
 
 A separate `…dcat.api` *bundle* is deliberately not proposed: one exported package inside the
 implementation bundle keeps the api/internal split the Eclipse guidelines ask for without a
@@ -129,11 +140,13 @@ fourth artifact, and splitting it later is mechanical.
 | component | responsibility |
 |---|---|
 | `DcatPublisher` (factory PID `DcatPublisher`, `ConfigurationPolicy.REQUIRE`) | owns one portal: `@Reference(target = "(dcat.portal=…)")` on `AsyncDcatAtlasClient`, the work queue, the ETag/fingerprint state, the reconcile entry points |
-| `ScopeCatalogTracker` | `@Reference(MULTIPLE, DYNAMIC)` on `ReadableScopeService`, target `(atlas.scope=*)` → enqueue `publishCatalog(scope)` / `retireCatalog(scope)` |
-| `PackageServiceTracker` | `@Reference(MULTIPLE, DYNAMIC)` on `EPackage`, target `(&(dynamic.registration=true)(emf.model.scope=*)(atlas.stage=*)(emf.nsURI=*))` → enqueue `publishPackage(target)` / `retirePackage(target)`. Reads scope/stage/nsURI/version/fingerprint straight off the service properties; never touches the portal on the DS thread |
-| `DcatMapper` | atlas facts + defaults → `Catalog` / `DatasetSeries` / `Dataset` / `Distribution` / `DataService` EObjects |
+| `ScopeCatalogTracker` | `@Reference(MULTIPLE, DYNAMIC)` on the scope service, target `(atlas.scope=*)` → enqueue `publishCatalog(scope)` / `retireCatalog(scope)`, and on a *new* scope also the ancestor-dataset fan-in of §4 |
+| `ScopeHierarchy` | the scope tree from `ScopeInfo.parentScope`: ancestors of a scope, descendants of a scope, maintained as scope services come and go. The one place the fan-out is computed |
+| `PackageServiceTracker` | `@Reference(MULTIPLE, DYNAMIC)` on `EPackage`, target `(&(dynamic.registration=true)(dcat=true)(emf.model.scope=*)(atlas.stage=*)(emf.nsURI=*))` → enqueue `publishPackage(target)` / `retirePackage(target)`. **The `(dcat=true)` term does the selecting** (§7), so a bind *is* a publish decision; reads scope/stage/nsURI/version/fingerprint straight off the service properties and never touches the portal on the DS thread |
+| `DcatMapper` | atlas facts + defaults → `Catalog` / `Dataset` / `Distribution` EObjects |
 | `DcatIds` | the id scheme of §5 |
-| `ConfiguredPublicationPolicy` | the default `DcatPublicationPolicy` (§7), driven by configuration |
+| `CatalogResolver` | resolves a scope to (catalog id, ownership) across the three cases of §7a; the one place that knows whether a Catalog may be written |
+| `StagePublicationPolicy` | the default `DcatPublicationPolicy` (§7): the scope gate plus the stage gate (final stages only, unless configured wider). The `dcat` flag itself is already handled by the tracker's filter |
 | `ConfiguredMetadataSource` | the default `DcatMetadataSource` (§6), driven by configuration |
 | `DcatPublisherHealthCheck` | `HealthCheck` tagged `atlas`: portal readiness, queue depth, last error per target |
 | `DcatCommands` (optional) | gogo `dcat:status`, `dcat:reconcile [scope]` |
@@ -146,36 +159,33 @@ so a DS bind, a REST upload and a framework shutdown never wait on the portal.
 ## 4. The publishing sequence
 
 The client's §6.4a is binding: a `PUT` replaces, so containment (`dcat:distribution`) and
-membership (`inSeries`, `dataset`, `servesDataset`) are dropped by a re-register and must be
-re-asserted. Every step is idempotent, so the whole sequence is the normal path, not a repair.
+membership (`dcat:dataset`) is dropped by a re-register and must be re-asserted — and with inheritance carried by links, "re-asserted" now means *into every Catalog the Dataset belongs to*, not just its own. Every step is idempotent, so the whole sequence is the normal path, not a repair.
 
-**Once per portal, at activation** — `DataService`:
-
-```
-ready()  → register DataService(dataServiceId)
-           endpointURL         {base}/atlas/rest
-           endpointDescription {base}/atlas/rest/openapi.json
-```
-
-**Per scope** (catalog tracker):
+**Per scope** (catalog tracker) — the branch is §7a's:
 
 ```
-register Catalog(scope)                    ← ScopeInfo.name/description
-link DataService → Catalog
-if ScopeInfo.parentScope is itself published: link sub-catalog(parent, scope)
+resolve Catalog(scope) → (catalogId, owned?)
+if owned:   register Catalog(catalogId)     ← configured attributes, else ScopeInfo.name/description
+if !owned:  catalog(catalogId) must be present, else refuse this scope and report it
+if ScopeInfo.parentScope is itself published and both Catalogs are owned:
+            link sub-catalog(parent, scope)
+for each ancestor a of scope:               ← the fan-in for a newly appearing scope
+    for each published Dataset of a: link Dataset → Catalog(scope)
 ```
+
+An **adopted** Catalog is never `PUT` and never gets a sub-catalog link asserted *on* it from
+here — the first would drop its `dcat:dataset` links, and the second is a claim about somebody
+else's catalogue structure. Datasets still link *into* it, which is additive and safe.
 
 **Per published package-in-a-stage** (package tracker):
 
 ```
-register DatasetSeries(scope, nsURI)       if not already known
-register Dataset(scope, stage, nsURI)
+register Dataset(scope, stage, nsURI)      ← scope = the scope that DEFINES it
 for each publishable media type:
     register Distribution(datasetId, mediaTypeId)
 link Dataset → Catalog(scope)
-link Dataset → DatasetSeries(scope, nsURI)
-link Dataset → DataService                 (dcat:servesDataset)
-for each Distribution: link accessService(datasetId, distId, dataServiceId)
+for each descendant d of scope:            ← inheritance, by link and not by copy
+    link Dataset → Catalog(d)
 ```
 
 **Change detection.** Keep, per published Dataset, the `emf.fingerprint` last published and the
@@ -200,11 +210,15 @@ moves.
 
 | entity | id | notes |
 |---|---|---|
-| `DataService` | config `dataservice.id`, default `model-atlas` | must be distinct per atlas instance if two publish into one portal |
-| `Catalog` | `{scope}` | scope names are already URL path segments |
-| `DatasetSeries` | `{scope}--{b64url(nsURI)}` | Base64-URL, unpadded, computed by us — see below. `dct:identifier` carries the readable nsURI |
+| `Catalog` | configured `catalog.id`, default `{scope}` | scope names are already URL path segments. An **adopted** Catalog's id is whatever the portal already calls it, so this is the one id we do not get to choose (§7a) |
 | `Dataset` | `{scope}--{stage}--{b64url(nsURI)}` | scope *and* stage: the same nsURI legitimately lives in several scopes and stages |
 | `Distribution` | `{mediaTypeSlug}` (e.g. `application-xmi`) under its dataset | the admin path is `…/datasets/{datasetId}/distributions/{id}`, so the id namespace is per-dataset |
+
+**`{scope}` in a Dataset id is the scope that *defines* the package, not one it is visible in.**
+With inheritance carried by links (mapping §3), one Dataset appears in several Catalogs and keeps
+the single id of its defining scope. That is what makes the scheme work at all: an id per
+appearance would mean a duplicate Dataset per descendant scope, which is precisely what the
+linking design exists to avoid.
 
 **Not the atlas `objectId`.** `SchemaPackagesResource` mints a **random UUID** per package at
 upload (`SchemaPackagesResource.java:364`), stable across stage transitions; the nsURI lives in
@@ -215,6 +229,9 @@ not a URL component anywhere in the REST layer — package endpoints address con
 - **the event path does not carry it.** Hook 2 hands us `emf.nsURI`, `emf.model.scope`,
   `atlas.stage`, `emf.version`, `emf.fingerprint` — no `objectId`. Keying on it would mean a
   metadata lookup per registration event, purely to name a resource we can already name.
+  *Weaker since 2026-08-26:* §7 now does that lookup anyway to read the `dcat` flag, so the
+  `objectId` is in hand by the time an id is minted. The two reasons below are the ones that
+  still decide it.
 - **it is not stable across a delete/re-upload.** Deleting a package and uploading it again
   produces a *new* UUID for the same model, so the portal would grow a second Dataset IRI for
   something consumers have already bookmarked. `b64url(nsURI)` survives it.
@@ -224,13 +241,18 @@ not a URL component anywhere in the REST layer — package endpoints address con
 So the encoding is now purely our own convention — the "the schema REST layer already does it
 this way" argument in O1 is gone, and O1 was decided on its own merits (§11).
 
-**Series per scope, not global.** The mapping says "EPackage nsURI = DatasetSeries", which
-read literally makes one series span every scope holding that nsURI. Per-scope keeps a scope's
-catalogue self-contained, avoids a resource two catalogues both want to govern, and matches
-model.atlas's own reality: the same nsURI in two scopes is two independently governed things.
-Since `dcat:DatasetSeries` *is* a `dcat:Dataset` in DCAT 3, the series is also linked into its
-scope's Catalog, so nothing is left unlinked. Global series stays available as a config switch
-if a portal operator wants cross-scope grouping (O2).
+**No `DatasetSeries` (O2, revised 2026-08-26).** An EPackage is a Dataset under a Catalog with
+its Distributions, and nothing above it. `dcat:inSeries` is not written, `registerDatasetSeries`
+is not called, and the series id is not minted. The mapping doc records what that trades away;
+here the only consequence is that the sequence in §4 loses two lines and the entity that was
+hardest to write correctly is not written at all.
+
+**Dataset ids must survive a shared Catalog.** With adoption in play, our ids can land next to
+ids we did not mint, so the `{scope}--{stage}--` prefix stops being merely descriptive and
+starts doing work. It is not a guarantee — a foreign portal could hold anything — so a scope
+whose Catalog is adopted may want `id.prefix` on its `DcatScopeCatalog` configuration. Left out
+until a real portal asks for it; adding it later renames resources, so it is worth deciding
+before the first production publish rather than after.
 
 ---
 
@@ -241,7 +263,7 @@ is the second implementation of `DcatMetadataSource` and is out of scope here.
 
 | DCAT | source |
 |---|---|
-| `dct:title` | series/dataset: `EPackage.getName()`; dataset adds the stage (`"Person model (release)"`). Catalog: `ScopeInfo.getName()` |
+| `dct:title` | dataset: `EPackage.getName()` plus the stage (`"Person model (release)"`). Catalog: `DcatScopeCatalog.catalog.title`, else `ScopeInfo.getName()` (§7a) |
 | `dct:description` | `EcoreUtil.getDocumentation(ePackage)`, else a configured template. Catalog: `ScopeInfo.getDescription()` |
 | `dct:publisher` | configured `publisher.name` (+ optional `publisher.about` IRI, `publisher.mbox`, `publisher.type`); a **fresh contained `foaf:Agent` per entity** |
 | `dct:license` | configured `license.uri` → a contained `LicenseDocument` with `about` = that IRI. Required on every Distribution |
@@ -252,7 +274,7 @@ is the second implementation of `DcatMetadataSource` and is out of scope here.
 | `dct:modified` / `dct:issued` | `ObjectMetadata` timestamps where available, else first-publish time |
 | `dcat:mediaType`, `dct:format` | the media type string |
 | `spdx:checksum` (Distribution) | `emf.fingerprint` — `fp1:<sha256 hex>` → `algorithm` = the SPDX sha256 IRI, `checksumValue` = the decoded bytes |
-| `dcat:accessURL` / `dcat:downloadURL` | §1.2 |
+| `dcat:accessURL` / `dcat:downloadURL` | §1.2, with `{base}` from configuration (below) |
 
 **Media types.** `SupportedMediatype.getSupportedMediaTypes()` lists everything the runtime can
 serve, which is more than belongs in a catalogue (it includes whatever content types the bound
@@ -260,17 +282,157 @@ serve, which is more than belongs in a catalogue (it includes whatever content t
 `application/xmi, application/json, application/schema+json, application/schema+xml` — and
 intersect it with the runtime list, so a portal never advertises a format the server would 415.
 
-**`{base}` has to be configured.** model.atlas has no notion of its own public URL — there is
-no `PUBLIC_BASE_URL` equivalent anywhere in the repo — and a `UriInfo` is not available outside
-a request. `atlas.public.base.uri` is therefore a required property of `DcatPublisher`, and the
-publisher should refuse to activate without it rather than publish `localhost` URLs into a
-portal.
+### `{base}` is configuration, and an APISIX sits in front
+
+model.atlas has no notion of its own public URL — there is no `PUBLIC_BASE_URL` equivalent
+anywhere in the repo — and a `UriInfo` is not available outside a request. The publisher has no
+request at all: it acts on a DS bind, so there is nothing to derive a host from and
+`X-Forwarded-*` never reaches it. `atlas.public.base.uri` is therefore a **required** property
+of `DcatPublisher`, and the publisher refuses to activate without it rather than publish
+`localhost` into a portal.
+
+**Decided 2026-08-26: there is a gateway, so `{base}` includes the path prefix.** An APISIX
+terminates the public URL, and a gateway does not merely swap scheme and host — `proxy-rewrite`
+routinely changes the *path* too, so the container's `/atlas/rest` prefix is not necessarily
+what the world sees. Hard-coding it and appending it to a host-only base would produce URLs that
+404 for every harvester.
+
+So the configured value is the **whole public prefix, up to and including whatever stands in for
+`/atlas/rest`**, and the publisher appends only the resource-relative part:
+
+```
+atlas.public.base.uri = https://opendata.example.de/model-atlas     # behind APISIX
+atlas.public.base.uri = http://localhost:8080/atlas/rest            # no gateway
+```
+
+```
+Distribution.accessURL           {base}/{scope}/schema/stages/{stage}/content?nsUri={enc}
+Distribution.downloadURL         {base}/{scope}/schema/stages/{stage}/content?nsUri={enc}&mediaType={mt}
+```
+
+With the `DataService` dropped, the Distribution URLs are the *only* place `{base}` appears — so
+a misconfigured base no longer breaks an endpoint description as well, it simply makes every
+distribution unfetchable. Still fatal, still worth refusing activation over.
+
+One knob, and it survives any rewrite the gateway performs. Validation at activation: absolute,
+`http`/`https`, no query or fragment, trailing slash normalised away, and `localhost` /
+`127.0.0.1` refused unless `allow.local.base.uri` is set — a dev convenience that must not be
+the default, because a `localhost` URL in a public catalogue is worse than no catalogue entry.
+
+**Do not gate activation on fetching it.** The obvious next step — probe `{base}` at startup and
+refuse if it does not answer — fails in exactly the normal deployment: the gateway is frequently
+not reachable *from inside* the network it fronts, and split-horizon DNS makes the public name
+resolve to something else or to nothing. Report the configured base and the last probe result in
+`DcatPublisherHealthCheck`; never make publishing depend on the atlas being able to reach its own
+public address.
+
+**Two things about the gateway that are not ours to configure but are ours to check:**
+
+- **the routes must be anonymous.** If APISIX requires a key or a consumer on
+  `…/schema/stages/{stage}/content`, every published `accessURL` answers `401` to a harvester and
+  the catalogue is decorative. An open-data portal advertises URLs anyone can fetch; that is a
+  gateway-side decision and it needs making explicitly, not discovering later.
+- **`?mediaType=` must survive the gateway.** APISIX passes the query string through by
+  default, and it is part of a cache key by default; a route that strips or rewrites query
+  parameters would break every `downloadURL` silently, serving whatever the server prefers.
+
+**Changing the base later is cheap, and that is by design.** No id is derived from it — ids are
+`{scope}`, `{scope}--{stage}--b64url(nsURI)}` and the media-type slug — so a new domain or a
+rewritten prefix is a `dcat:reconcile` that rewrites `accessURL` and `downloadURL` in place. Every resource keeps its identity and no consumer's bookmark breaks. This is the payoff
+for O1 having kept the ids independent of anything that moves.
 
 ---
 
-## 7. Selective publication — the configurable part
+## 7. Selective publication — from the metadata model
 
-Two SPIs in `…dcat.api`, both whiteboards, highest `service.ranking` wins:
+**Decided 2026-08-26: the per-package verdict comes from `ObjectMetadata`.** An upload carries
+`?dcat=true`, `SchemaPackagesResource` stores it in `ObjectMetadata.properties`, and the
+publisher reads it back. No nsURI allowlist, no glob rule language, no EAnnotation.
+
+### The atlas-side change
+
+The `@POST`/`@PUT` on `/{scopeName}/schema/stages/{stageName}` already takes `overwrite` as a
+`@QueryParam` and already writes one property:
+
+```java
+metadata.getProperties().put("nsUri", validatedNsUri);   // SchemaPackagesResource.java:372
+```
+
+so the flag is the same two lines again:
+
+```java
+@Parameter(description = "Publish this package to the configured DCAT portal")
+@QueryParam("dcat") boolean dcat
+...
+metadata.getProperties().put(DCAT_PUBLISH, dcat);
+```
+
+Three things to get right beyond that:
+
+- **the content-update path** (`@PUT`/`@POST` on `…/stages/{stageName}/content`) and the
+  **transition** action have to carry the property forward, or a content edit silently
+  unpublishes the model. Same class of bug as the debounce in §8, in a different place.
+- **the key belongs in a shared constant.** The property name is now API between two bundles;
+  `WorkflowConstants` is where the atlas keeps that kind of thing.
+- **the value's type.** `properties` is `String → EJavaObject`, so `true` the boolean and
+  `"true"` the string are both storable and only one of them is what the publisher tests.
+  Store the boolean, read defensively.
+
+### The publisher side: the flag rides on the service properties
+
+**Decided 2026-08-26: `DynamicEPackageRegistrationService` copies `dcat` onto the registered
+`EPackage` service**, beside `emf.nsURI`, `emf.model.scope`, `atlas.stage`, `emf.version`,
+`emf.fingerprint` and `dynamic.registration`. `PackageServiceTracker`'s target filter then does
+the selecting:
+
+```
+(&(dynamic.registration=true)(dcat=true)(emf.model.scope=*)(atlas.stage=*)(emf.nsURI=*))
+```
+
+No metadata lookup, no cache, no `ObjectMetadata` dependency in the publisher at all. The
+metadata stays the system of record; the service property is its projection into the registry,
+which is where the publisher was already listening.
+
+**And unpublication comes free with it.** DS re-evaluates a target filter when a service's
+properties change, so flipping the flag to `false` makes the `EPackage` service stop matching
+and the tracker **unbinds**. Publish and retire are the same bind/unbind path the tracker
+already implements — no second notification channel, no polling, and the §8 debounce covers
+the update case exactly as it already does.
+
+Two things this makes load-bearing:
+
+- **the copy has to happen on every registration path.** `DynamicEPackageRegistrationService`
+  is the single funnel (§1.2, hook 2), which is what makes this cheap — but the property has to
+  be read from `ObjectMetadata` at that point, so registration now consults metadata where the
+  publisher used to.
+- **a flag change must reach the service properties**, or nothing fires. For the new endpoint
+  below that means `ServiceRegistration.setProperties` on the live registration, or an
+  unregister/re-register through the funnel. Whichever it is, it is the endpoint's job, not the
+  publisher's.
+
+### Stages: final only, by default
+
+**Decided 2026-08-26.** A `dcat=true` upload to `draft` records the intent; it does not put the
+model in a portal. Publication additionally requires the stage to be permitted, and by default
+that means the registry's **final** stages only — `StageInfo` already carries the `final` flag
+(§1.2, hook 4) that decides it, so nothing new has to be modelled.
+
+```
+publish.stages = FINAL          # FINAL (default) | ALL | an explicit list, e.g. ["release","qa"]
+```
+
+This **narrows O3** rather than replacing it: publication is still limited to what the atlas
+actually serves — a package must be *registered* to be a candidate — and the stage gate then
+narrows that further. The property that makes the catalogue honest is unchanged: every published
+`accessURL` resolves, because a published Dataset's stage is one the atlas serves from.
+
+Worth noting what this makes possible that the flag alone could not: a model can be marked for
+publication early in its life and reach the portal by being *promoted*, with no second action by
+anybody. A `transitionToStage` into a final stage re-registers the EPackage service, the filter
+matches, the tracker binds, the Dataset appears. That is the workflow driving the catalogue,
+which is the right way round.
+
+### The SPI stays
 
 ```java
 public record PublicationTarget(String scope, String stage, String registry,
@@ -286,15 +448,35 @@ public interface DcatPublicationPolicy {
 public interface DcatMetadataSource { /* title/description/publisher/license/theme/keywords */ }
 ```
 
-The default implementation is configuration-driven, on the `DcatPublisher` configuration:
+Whiteboards, highest `service.ranking` wins. The default `DcatPublicationPolicy` is now
+`MetadataPublicationPolicy`; a configured or annotation-driven one stays available as a second
+implementation, at no cost today.
+
+**The verdict is three-level**, and this is the part not to lose:
+
+1. **Scopes are opt-in, from configuration.** A scope publishes only if a `DcatPublisher`
+   configuration names it. `ObjectMetadata` cannot express "this deployment publishes to that
+   portal" — that is a property of a deployment, not of a model — so the guarantee that nothing
+   reaches a public portal because somebody uploaded a package with a query parameter has to
+   come from the operator's side.
+2. **Stages are gated, from configuration.** `publish.stages`, final-only by default.
+3. **Within a published scope and a permitted stage, the package's own metadata decides.**
+   `properties["dcat"]`, absent meaning false — enforced by the tracker's filter rather than by
+   a policy call.
+
+Levels 1 and 2 are the operator's, level 3 is the model's. Nothing publishes unless all three
+agree.
+
+The `exclude`/`include` glob language of the previous draft is dropped: the metadata flag does
+per-package selection now, and a second rule language over the same decision is the kind of
+thing that ends up disagreeing with itself.
 
 ```json
 "DcatPublisher~jena": {
     "dcat.portal.target": "(dcat.portal=jena)",
     "atlas.public.base.uri": "$[env:ATLAS_PUBLIC_BASE_URI;default=http://localhost:8080]",
     "scopes": ["jena"],
-    "exclude": ["jena/draft", "*#http://internal.example.org/*"],
-    "include": [],
+    "publish.stages": "FINAL",
     "distribution.media.types": ["application/xmi", "application/json"],
     "publish.inherited": false,
     "unpublish.mode": "UNLINK",
@@ -306,22 +488,116 @@ The default implementation is configuration-driven, on the `DcatPublisher` confi
 }
 ```
 
-**The rule shape** is one string, `scopePattern[/stagePattern][#nsUriPattern]`, with `*` as a
-glob. `jena` is a whole scope, `jena/draft` a stage within it, `jena/release#http://x/*` a set
-of packages in one scope+stage, `*#http://internal/*` those packages everywhere. That covers
-each granularity the requirement names, in one syntax, with no separate list per dimension.
+---
 
-**The verdict**, deliberately two-level rather than one:
+## 7b. A metadata endpoint, with an allowlist
 
-1. **Scopes are opt-in.** A scope publishes only if it is named in `scopes` (globs allowed).
-   Nothing reaches a public portal because somebody added a configuration.
-2. **Within a published scope, everything publishes unless excluded.** `exclude` then `include`
-   as a re-inclusion of a narrower slice; on a tie the more specific pattern wins, and on equal
-   specificity exclusion wins.
+**Decided 2026-08-26.** Re-uploading a package with `?dcat=true&overwrite=true` should not be
+the only way to change its mind about publication, so a small endpoint edits the metadata
+directly — restricted to fields that are labels, never fields that are identity.
 
-Because policy is an SPI, the mapping document's other candidate — an EAnnotation on the
-EPackage that opts it in — is a second implementation later, and the two compose by ranking
-(configuration above annotations, per the mapping's "both with configuration winning").
+```
+PATCH /{scope}/schema/stages/{stage}/metadata?nsUri={enc}
+If-Match: "<etag from the metadata GET>"
+```
+
+`PATCH`, not `PUT`: a whole-document `PUT` of an `ObjectMetadata` invites exactly the identity
+overwrite this endpoint exists to forbid. And `If-Match` is already available — the
+`ObjectMetadataResponseFilter` puts a strong `ETag` over metadata state on every metadata GET
+(and `Last-Modified` from `getLastChangeTime()`), so conditional update costs nothing new.
+
+**Editable:**
+
+| field | why |
+|---|---|
+| `properties`, restricted to a **key allowlist** | `dcat` today; the per-model DCAT metadata of §6 later. `nsUri` is *not* in the allowlist — it is identity that happens to live in this map |
+| `objectName` | the human-readable name, which is what a label is |
+| `lastChangeReason` | the audit note explaining this very edit |
+| `governanceDocumentationId` | a pointer, label-shaped |
+
+**Refused, with the offending field named in a 400** — never silently ignored, because a
+metadata editor that quietly drops half a request is how somebody comes to believe they changed
+a publisher when they did not:
+
+| group | fields |
+|---|---|
+| identity | `objectId`, `objectRef`, `scope`, `stage`, `registry`, `version`, `properties["nsUri"]` |
+| content-derived | `contentHash`, `fingerprint`, `generationTriggerFingerprint` |
+| provenance | `uploadUser`, `uploadTime`, `sourceChannel`, `objectType` |
+| workflow-owned | `status`, `isReadOnly`, `review*`, `compliance*` — the review and stage machinery owns these, and a label editor is not a back door into it |
+| server-maintained | `lastChangeUser`, `lastChangeTime` — set by the endpoint, not sent to it |
+
+**It has to propagate.** Because the `dcat` flag now rides on the `EPackage` service properties
+(§7), an edit that changes it must update the live service registration — otherwise the metadata
+says one thing, the registry says another, and the publisher believes the registry. That is the
+endpoint's responsibility and it is the one part of this that is not merely CRUD.
+
+**Two things left open**, deliberately:
+
+- **authorization.** This endpoint changes whether a model appears in a public catalogue, which
+  makes it a more consequential write than its size suggests. Whatever the atlas does for the
+  upload endpoints applies here, and if that is currently nothing, this is a good moment to say
+  so out loud rather than to discover it.
+- **`isReadOnly` packages.** An inherited package reports its parent's scope; editing its
+  metadata through a child scope's URL should be a `409`, not a silent write to the parent's
+  record. Needs confirming against what `isReadOnly` actually guards today.
+
+---
+
+## 7a. The Catalog for a scope: adopted, configured, or derived
+
+A scope's Catalog may already exist in the portal, created by someone else. Three cases, one
+factory configuration, `DcatScopeCatalog~{scope}`:
+
+| case | configuration | ownership |
+|---|---|---|
+| **adopted** | `catalog.id` + `catalog.adopt = true` | not ours. Link Datasets in; never `PUT`, never `DELETE` |
+| **configured** | `catalog.id` (optional) plus `catalog.title`, `catalog.description`, `catalog.publisher.*`, `catalog.license.uri`, `catalog.theme`, `catalog.homepage` | ours. Created and reconciled from these attributes |
+| **derived** | no `DcatScopeCatalog` configuration for the scope | ours. `ScopeInfo.name` / `getDescription()` plus the `DcatPublisher` defaults of §6. The behaviour of every version of this plan so far |
+
+The **root scope is not a special case**: `atlas` gets its Catalog by these same three rules. It
+is only distinguished by position — every other scope descends from it, so its Datasets are
+linked into every other Catalog (§4).
+
+```json
+"DcatScopeCatalog~jena": {
+    "scope": "jena",
+    "catalog.id": "stadt-jena-opendata",
+    "catalog.adopt": true
+}
+```
+
+```json
+"DcatScopeCatalog~verkehr": {
+    "scope": "verkehr",
+    "catalog.title": "Verkehrsmodelle Jena",
+    "catalog.description": "Datenmodelle des Verkehrsbetriebs",
+    "catalog.publisher.name": "Stadt Jena",
+    "catalog.license.uri": "http://dcat-ap.de/def/licenses/dl-by-de/2.0"
+}
+```
+
+**Ownership comes from configuration, never from inspecting the portal.** "Did we create this
+Catalog?" is not answerable by reading it — nothing in the DCAT graph records authorship — and
+guessing wrong is destructive in one direction. `catalog.adopt` is the whole answer, and
+`CatalogResolver` is the only component that consults it.
+
+**Why an adopted Catalog is read-only to us.** `registerCatalog` is a `PUT`, a `PUT` replaces,
+and `dcat:dataset` membership lives on the Catalog. Re-registering an adopted Catalog drops
+every dataset link it holds, other publishers' included, and a `CASCADE` delete on it reaches
+their Datasets. `linkDatasetToCatalog` / `unlinkDatasetFromCatalog` are additive, and are the
+only two operations the resolver permits there.
+
+**An adopted Catalog that is not there is a configuration error, not a licence to create one.**
+The operator asserted that id exists. If `client.catalog(id)` comes back empty: refuse the
+scope, log once, and let `DcatPublisherHealthCheck` report it. Minting a Catalog under an id in
+somebody else's portal is the one failure mode with no clean recovery. A
+`catalog.create.if.missing` switch can exist for operators who disagree; default false.
+
+**Metadata precedence** for an owned Catalog: `DcatScopeCatalog` attributes → `ScopeInfo` →
+`DcatPublisher` defaults. A configured title wins over the scope's name, and a scope that
+configures nothing behaves exactly as the derived case — which is what makes all of this
+backward compatible with §4 as written.
 
 ---
 
@@ -332,8 +608,9 @@ Selective publication implies it, and the shapes differ:
 | what happened | what the portal should say |
 |---|---|
 | a package is deleted, or transitions out of a stage that has `delete.after.transition` | the stage URL stops serving it → its Dataset should go |
+| the `dcat` flag is cleared, or a promotion leaves a permitted stage | same — and it arrives as a tracker *unbind*, because the flag is a service property (§7) |
 | the policy changes so a target is no longer publishable | same |
-| a scope's configuration is deleted | its Catalog and everything only reachable through it |
+| a scope's configuration is deleted | its Catalog and everything only reachable through it — **unless the Catalog is adopted**, in which case only our Datasets are unlinked from it (§7a) |
 | **the framework is shutting down** | **nothing, by default** — see below |
 
 That last row is the one to argue about, because the opposite reading is perfectly reasonable:
@@ -394,9 +671,21 @@ update rather than a stop, if we can tell. Everything else in this section appli
 | `DELETE` | `delete(…, SINGLE)`; fails if referrers remain |
 | `CASCADE` | `delete(…, CASCADE)`; the returned unlinked-resource list goes to the log |
 
-Note from the client's P1: a cascade delete of a dataset unlinks its catalog and service links
-but *not* `inSeries` — that lives on the dataset and dies with it. And a series whose last
-dataset has gone is left behind; reap it only in `CASCADE` mode.
+Note from the client's P1: a cascade delete of a Dataset unlinks its catalog and service
+links. With no `DatasetSeries` in the mapping (O2, revised) there is no second membership to
+reason about and no orphaned series to reap — one of the concrete simplifications the
+2026-08-26 decision buys.
+
+**Unlinking means every Catalog.** A Dataset is linked into its own scope's Catalog and every
+descendant's, so retiring it is a fan-out exactly mirroring §4's — computed from
+`ScopeHierarchy`, not from reading the portal back. A `CASCADE` delete does it for us and
+reports what it unlinked; the other modes have to do it themselves, and a missed descendant
+leaves a Catalog advertising a Dataset that is gone.
+
+**`unpublish.mode` is capped by ownership.** For a scope with an adopted Catalog, `DELETE` and
+`CASCADE` are downgraded to `UNLINK` and the downgrade is logged once at activation, not per
+event. Our Datasets are ours to delete; what a shared Catalog looks like afterwards is not
+ours to decide.
 
 ---
 
@@ -428,10 +717,13 @@ dataset has gone is left behind; reap it only in `CASCADE` mode.
 
 | phase | content | done when |
 |---|---|---|
-| **D1** | Bundle scaffolding, `DcatPublisher` config, client reference, readiness gate, `DataService` + one `Catalog` from a `ReadableScopeService` bind | a scope appears as a Catalog in a portal container, with the API as its DataService |
-| **D2** | `DcatIds`, `DcatMapper`, `ConfiguredMetadataSource`; the full sequence of §4 for one target, driven by a gogo `dcat:reconcile` | `inSeries=1`, distributions ≥ 1, `accessService=1` read back |
+| **D0** | The atlas-side `?dcat=true` query parameter and the shared constant, on all three write paths of §7 | upload with and without the flag; `GET …/stages/{stage}?nsUri=` shows `properties["dcat"]`, and a content update preserves it |
+| **D1** | Bundle scaffolding, `DcatPublisher` config, client reference, readiness gate, one derived `Catalog` | a scope appears as a Catalog in a portal container |
+| **D1a** | `CatalogResolver` and `DcatScopeCatalog`: all three cases of §7a | adopted catalog gets links and no `PUT`; configured catalog carries its own title; a missing adopted id fails the health check instead of creating one |
+| **D2** | `DcatIds`, `DcatMapper`, `ConfiguredMetadataSource`; the full sequence of §4 for one target, driven by a gogo `dcat:reconcile` | `dcat:dataset` link present, distributions ≥ 1, each with its own `downloadURL`, read back |
+| **D2a** | `ScopeHierarchy` + the link fan-out both ways | `atlas → jena → nawerker`: an `atlas` package's Dataset is one resource in three Catalogs; creating `nawerker` last still gets it |
 | **D3** | `PackageServiceTracker` + the work queue + fingerprint/ETag state | an upload through the REST API lands in the portal without a manual step; a restart re-publishes nothing |
-| **D4** | `DcatPublicationPolicy` + the rule language of §7 | each of the four granularities has a test |
+| **D4** | `MetadataPublicationPolicy`: the `WritableScopeService` lookup, the cache, the scope gate | a flagged package publishes, an unflagged one does not, a scope absent from `scopes` publishes nothing whatever its packages say |
 | **D5** | Unpublication: modes, the STOPPING guard, the debounce | a restart retires nothing; a delete retires exactly one Dataset |
 | **D6** | Error classification, backoff queue, health check | a 503 retries, a SHACL refusal does not |
 | **D7** | OSGi ITs against a portal container; the runtime config bundle and bndrun variant | `testOSGi` green |
@@ -443,39 +735,117 @@ operable.
 
 ## 11. Decisions
 
-All seven were resolved by the owner on **2026-08-25**. Kept here as the record of *why*, since
-each one is a constraint on the implementation rather than a preference.
+O1–O6 were resolved by the owner on **2026-08-25**. On **2026-08-26** O2 and O4 were reversed,
+O3 was narrowed, and O7–O13 were added. Kept here as the record of *why*, since each one is a constraint on the
+implementation rather than a preference.
 
 | # | question | decision |
 |---|---|---|
 | **O1** | the id encoding | **`b64url(nsURI)`**, as proposed |
-| **O2** | series per scope or global | **per scope**, as proposed (global stays a config switch) |
-| **O3** | which stages get published | **what is registered** |
-| **O4** | inherited packages | **configurable**, `publish.inherited=false` by default |
+| **O2** | series per scope or global | ~~per scope~~ → **no `DatasetSeries` at all** (2026-08-26) |
+| **O3** | which stages get published | what is registered, **narrowed to final stages** (`publish.stages`, 2026-08-26) |
+| **O4** | inherited packages | ~~not published~~ → **published, by linking one Dataset into every descendant Catalog** (2026-08-26) |
 | **O5** | do we need `ExitReason` | **no** |
 | **O5b** | should the portal reflect availability | **not from here** — the DCAT side already has an issue for it |
 | **O6** | one portal or several | **one for now**; the factory shape stays |
+| **O7** | what says a package is publishable | **`ObjectMetadata.properties["dcat"]`**, set by `?dcat=true` at upload |
+| **O8** | does configuration still gate anything | **yes — scopes stay opt-in**; metadata decides packages within them |
+| **O9** | whose Catalog is it | **adopted / configured / derived** (§7a); ownership from configuration only |
+| **O10** | where the public URL comes from | **`atlas.public.base.uri`, including the path prefix** — an APISIX fronts the atlas |
+| **O11** | how many entity types | **three: Catalog, Dataset, Distribution** — no `DataService` |
+| **O12** | can the flag be changed after upload | **yes**, a `PATCH` metadata endpoint with a field allowlist (§7b) |
+| **O13** | how the publisher learns the flag | **an `EPackage` service property**, so the tracker's filter decides and unbind means retire |
 
 **O1 — `b64url(nsURI)`.** A portal id is permanent and a slug collision is not repairable after
 publication, so opacity wins over readability. `dct:identifier` carries the readable nsURI and
 `dct:title` the readable name, so nothing is actually lost except the look of the URL.
 
-**O2 — series per scope.** A scope's catalogue stays self-contained and no resource has two
-catalogues claiming to govern it. Global grouping remains available as configuration if a portal
-operator ever asks for it.
+**O2 — no `DatasetSeries` (revised 2026-08-26).** An EPackage is a Dataset under a Catalog with
+its Distributions, and that is the whole hierarchy. The original question — per scope or global —
+is moot. What this costs is the link joining one nsURI's Datasets across stages; a consumer
+wanting all of them searches `dct:identifier`. What it buys is that the entity the client's own
+documentation uses as *the* example of an unwritable read-modify-write is never written, the
+cascade has one membership to reason about instead of two, and §4 loses two steps. Re-adding it
+is a widening: `registerDatasetSeries` and `linkDatasetToSeries` are already in the client and
+no Dataset changes shape to gain an `inSeries` link.
 
-**O3 — publish what is registered.** So the reconciler keeps enumerating through the *service
-registry* view of a scope, and the §2 limitation stands as intended behaviour rather than a
-caveat: a deployment whose `EPackageStageActionService.trigger.stages` lists only `release`
-publishes only release datasets. This is the property that keeps the catalogue honest — every
-published `accessURL` resolves, because it is exactly the set the atlas will serve. No
-`storage-visible` mode is built.
+**O7 — the flag comes from the metadata model.** Publishability is a fact about a package that
+somebody asserts when they upload it, so it belongs with the package's other governance facts,
+not in a deployment's configuration file and not in the `.ecore`. `properties` is already the
+map the upload path writes to, and it is queryable and mutable through an API that exists. The
+only cost is one metadata lookup per registration event (§7), and even that may be removable by
+propagating the flag onto the EPackage's service properties — a separate ask on the atlas side.
+Reading it through the workflow API rather than `ReadableScopeService` is not a cost: this bundle
+lives inside model.atlas, and one component provides both faces.
 
-**O4 — `publish.inherited=false`.** A child scope's catalogue will not relist a model it
-inherits from its parent; the parent's Catalog is where that model lives. Flipping the flag to
-`true` publishes an additional Dataset per inheriting scope, under that scope's id prefix, and
-that is the operator's call. Needs a README paragraph, because "the child API serves it but the
-child catalogue does not list it" is surprising until explained.
+**O8 — configuration still gates scopes.** This is the §7 safety property surviving O7 intact.
+A flag in a package's metadata says "this model may be published"; it cannot say "this
+deployment publishes to that portal", because it knows nothing about deployments or portals. If
+the metadata were the only gate, uploading a package with a query parameter would be enough to
+put a model into a public catalogue — which is precisely the property the two-level verdict
+exists to prevent.
+
+**O10 — `{base}` is configured, prefix and all.** There is an APISIX in front, so the public URL
+is not a scheme-and-host substitution on the container's own address: the gateway can rewrite the
+path, and the publisher has no request context to learn any of it from. Making the configured
+value the entire public prefix — rather than a host that we then append `/atlas/rest` to — means
+one property covers host, scheme, port and any rewrite, and no code has to know what the gateway
+was told. The two consequences worth carrying forward are in §6: the routes have to be anonymous
+or the published URLs are useless, and activation must not depend on the atlas being able to
+fetch its own public address, because from inside the network it usually cannot.
+
+**O9 — three Catalog cases, ownership from configuration.** The portal is shared: a scope's
+Catalog may predate us and outlive us. Since nothing in a DCAT graph records who created a
+resource, ownership cannot be discovered, only declared — so `catalog.adopt` declares it, and
+everything destructive keys off that one flag. The asymmetry in §7a is deliberate: guessing
+"ours" when it is not loses somebody else's dataset links to a `PUT`, while guessing "not ours"
+when it is only leaves a Catalog slightly stale.
+
+**O3 — publish what is registered, and only from final stages.** The reconciler still
+enumerates through the *service registry* view of a scope, so the §2 limitation stands as
+intended behaviour rather than a caveat, and the honesty property is unchanged: every published
+`accessURL` resolves, because a published Dataset is one the atlas serves. **Narrowed
+2026-08-26:** being registered is now necessary and not sufficient — `publish.stages` gates it,
+final-only by default, so a `dcat=true` upload to `draft` records intent without publishing.
+The good consequence is that promotion publishes: a `transitionToStage` into a final stage
+re-registers the service, the filter matches, the Dataset appears, and nobody had to do a second
+thing. No `storage-visible` mode is built.
+
+**O4 — inherited packages are published, by linking (reversed 2026-08-26).** The old answer
+avoided a real problem the wrong way: `publish.inherited=true` would have minted an additional
+Dataset per inheriting scope, so one model became N resources with N ids and a harvester saw N
+models. The fix is not to omit the model from the child catalogue but to stop duplicating it —
+**one Dataset, registered under the scope that defines it, linked into every descendant
+Catalog**. `atlas → jena → nawerker` gives `nawerker` its own Datasets plus `jena`'s plus
+`atlas`'s, and an `atlas` package is one resource appearing in three catalogues. The old
+surprise ("the child API serves it but the child catalogue does not list it") disappears rather
+than needing a README paragraph; what replaces it is the link bookkeeping in the mapping's §3,
+including the case that is easy to forget — **a scope created later must have every ancestor's
+Datasets linked into it**.
+
+**O11 — three entity types.** Dropping `dcat:DataService` removes `endpointURL`,
+`endpointDescription`, `servesDataset` and `accessService` from the mapping. The API still serves
+the content; it is simply not a catalogue resource. Two things follow. The catalogue now makes
+only the narrower claim — *these models exist, here is where to fetch them* — rather than also
+describing the atlas as a service, which is the claim it can actually keep. And `{base}` is now
+used in exactly one place, the Distribution URLs, so O10's failure mode is smaller. The cost:
+`dcat:accessService` (FR-10) loses its first consumer and stays unexercised, along with FR-11.
+
+**O12 — a metadata endpoint with an allowlist.** The alternative was leaving
+`?dcat=true&overwrite=true` as the only route, which means re-uploading content to change a
+label. The allowlist is the whole design (§7b): editable fields are labels, everything carrying
+identity, provenance, content hashes or workflow state is refused *by name* in a 400. The part
+that is not CRUD is propagation — the flag lives on the `EPackage` service properties too (O13),
+so an edit has to reach the live registration or the publisher never learns.
+
+**O13 — the flag rides on the service properties.** Asked for as an optimisation, kept for a
+better reason: it makes retire the same code path as publish. DS re-evaluates target filters on
+a service-property change, so `(dcat=true)` in `PackageServiceTracker`'s filter means clearing
+the flag *unbinds* the service and the existing unpublish path runs. No metadata lookup, no
+cache, no second notification channel. What it costs is that
+`DynamicEPackageRegistrationService` now reads `ObjectMetadata` at registration time — the
+lookup moved rather than vanished, but it moved to the place that was already loading the
+metadata anyway.
 
 **O5 — no `ExitReason`.** This settles the hook choice for good: **hook 1 (`StageActionService`)
 is not needed at all**, not now and not as a planned second phase. Deleted and

@@ -70,6 +70,12 @@
     </genClasses>
     <genClasses ecoreClass="workflow-api.ecore#//RegistryService">
       <genTypeParameters ecoreTypeParameter="workflow-api.ecore#//RegistryService/T"/>
+      <genOperations ecoreOperation="workflow-api.ecore#//RegistryService/updateProperties">
+        <genParameters ecoreParameter="workflow-api.ecore#//RegistryService/updateProperties/scope"/>
+        <genParameters ecoreParameter="workflow-api.ecore#//RegistryService/updateProperties/stage"/>
+        <genParameters ecoreParameter="workflow-api.ecore#//RegistryService/updateProperties/objectId"/>
+        <genParameters ecoreParameter="workflow-api.ecore#//RegistryService/updateProperties/properties"/>
+      </genOperations>
       <genOperations ecoreOperation="workflow-api.ecore#//RegistryService/uploadToStage">
         <genParameters ecoreParameter="workflow-api.ecore#//RegistryService/uploadToStage/scope"/>
         <genParameters ecoreParameter="workflow-api.ecore#//RegistryService/uploadToStage/stage"/>
@@ -164,6 +170,12 @@
     </genClasses>
     <genClasses image="false" ecoreClass="workflow-api.ecore#//WritableScopeService">
       <genTypeParameters ecoreTypeParameter="workflow-api.ecore#//WritableScopeService/T"/>
+      <genOperations ecoreOperation="workflow-api.ecore#//WritableScopeService/updatePropertiesInStageForRegistry">
+        <genParameters ecoreParameter="workflow-api.ecore#//WritableScopeService/updatePropertiesInStageForRegistry/registry"/>
+        <genParameters ecoreParameter="workflow-api.ecore#//WritableScopeService/updatePropertiesInStageForRegistry/stage"/>
+        <genParameters ecoreParameter="workflow-api.ecore#//WritableScopeService/updatePropertiesInStageForRegistry/objectId"/>
+        <genParameters ecoreParameter="workflow-api.ecore#//WritableScopeService/updatePropertiesInStageForRegistry/properties"/>
+      </genOperations>
       <genOperations ecoreOperation="workflow-api.ecore#//WritableScopeService/uploadToStageForRegistry">
         <genParameters ecoreParameter="workflow-api.ecore#//WritableScopeService/uploadToStageForRegistry/registry"/>
         <genParameters ecoreParameter="workflow-api.ecore#//WritableScopeService/uploadToStageForRegistry/stage"/>

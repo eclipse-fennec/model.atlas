@@ -1895,6 +1895,156 @@ public class SchemaPackagesResourceTest extends AbstractRestTest {
 		assertEquals(412, response.getStatus(), "Mismatching If-Match on create-overwrite should yield 412");
 	}
 
+	// ========== DCAT Publication Flag Tests (D0) ==========
+
+	/**
+	 * Reads the {@code dcat} entry out of the {@code properties} map of a JSON
+	 * ObjectMetadata response. Returns {@code null} when the key is absent, which is
+	 * what distinguishes "never written" from "written false".
+	 */
+	private static Boolean extractDcatFlag(String metadataJson) {
+		// The value may arrive as a JSON boolean or as a quoted string, depending on how
+		// the codec renders an EJavaObject map value — accept either and normalise.
+		java.util.regex.Matcher matcher = java.util.regex.Pattern
+				.compile("\"dcat\"\\s*:\\s*\"?(true|false)\"?").matcher(metadataJson);
+		return matcher.find() ? Boolean.valueOf(matcher.group(1)) : null;
+	}
+
+	private String draftMetadataJson() {
+		Response metadata = schemaStageTarget(TestAnnotations.STAGE_DRAFT).queryParam("nsUri", TEST_PACKAGE_NSURI)
+				.request("application/json").get();
+		assertStatus(200, metadata, "Metadata GET should return HTTP 200 OK");
+		return metadata.readEntity(String.class);
+	}
+
+	@Test
+	@ParentScopeServiceSetup
+	public void testCreatePackage_DcatTrue_StoredInMetadata(@InjectBundleContext BundleContext context)
+			throws Exception {
+		ensureResourceAvailability(context);
+		EPackage testPackage = TestHelper.createTestEPackage(TEST_PACKAGE_NSURI, TEST_PACKAGE_NAME, TEST_PACKAGE_NAME);
+		String xmiContent = TestHelper.serializeToXMI(testPackage, resourceSet);
+
+		Response response = schemaStageTarget(TestAnnotations.STAGE_DRAFT).queryParam("nsUri", TEST_PACKAGE_NSURI)
+				.queryParam("name", TEST_PACKAGE_NAME).queryParam("dcat", "true").request("application/xmi")
+				.post(Entity.entity(xmiContent, "application/xmi"));
+		assertStatus(201, response, "Should return HTTP 201 Created");
+
+		assertEquals(Boolean.TRUE, extractDcatFlag(draftMetadataJson()),
+				"?dcat=true must be recorded in ObjectMetadata.properties — the publisher reads it from there");
+	}
+
+	@Test
+	@ParentScopeServiceSetup
+	public void testCreatePackage_NoDcatParam_RecordsFalse(@InjectBundleContext BundleContext context)
+			throws Exception {
+		ensureResourceAvailability(context);
+		EPackage testPackage = TestHelper.createTestEPackage(TEST_PACKAGE_NSURI, TEST_PACKAGE_NAME, TEST_PACKAGE_NAME);
+		String xmiContent = TestHelper.serializeToXMI(testPackage, resourceSet);
+
+		Response response = schemaStageTarget(TestAnnotations.STAGE_DRAFT).queryParam("nsUri", TEST_PACKAGE_NSURI)
+				.queryParam("name", TEST_PACKAGE_NAME).request("application/xmi")
+				.post(Entity.entity(xmiContent, "application/xmi"));
+		assertStatus(201, response, "Should return HTTP 201 Created");
+
+		assertEquals(Boolean.FALSE, extractDcatFlag(draftMetadataJson()),
+				"an upload without ?dcat must record the flag as false, not leave it absent");
+	}
+
+	@Test
+	@ParentScopeServiceSetup
+	public void testUpdatePackageContent_PreservesDcatFlag(@InjectBundleContext BundleContext context)
+			throws Exception {
+		ensureResourceAvailability(context);
+		EPackage testPackage = TestHelper.createTestEPackage(TEST_PACKAGE_NSURI, TEST_PACKAGE_NAME, TEST_PACKAGE_NAME);
+		String xmiContent = TestHelper.serializeToXMI(testPackage, resourceSet);
+		assertStatus(201,
+				schemaStageTarget(TestAnnotations.STAGE_DRAFT).queryParam("nsUri", TEST_PACKAGE_NSURI)
+						.queryParam("name", TEST_PACKAGE_NAME).queryParam("dcat", "true").request("application/xmi")
+						.post(Entity.entity(xmiContent, "application/xmi")),
+				"Setup upload should return HTTP 201 Created");
+
+		EPackage updated = TestHelper.createTestEPackage(TEST_PACKAGE_NSURI, "DcatUpdated", "dcatupd");
+		Response contentUpdate = schemaStageTarget(TestAnnotations.STAGE_DRAFT).path("content")
+				.queryParam("nsUri", TEST_PACKAGE_NSURI).request("application/xmi")
+				.put(Entity.entity(TestHelper.serializeToXMI(updated, resourceSet), "application/xmi"));
+		assertStatus(200, contentUpdate, "Content update should return HTTP 200 OK");
+
+		assertEquals(Boolean.TRUE, extractDcatFlag(draftMetadataJson()),
+				"a content edit must not silently unpublish the model");
+	}
+
+	@Test
+	@ParentScopeServiceSetup
+	public void testTransitionPackage_PreservesDcatFlag(@InjectBundleContext BundleContext context) throws Exception {
+		ensureResourceAvailability(context);
+		EPackage testPackage = TestHelper.createTestEPackage(TEST_PACKAGE_NSURI, TEST_PACKAGE_NAME, TEST_PACKAGE_NAME);
+		String xmiContent = TestHelper.serializeToXMI(testPackage, resourceSet);
+		Response created = schemaStageTarget(TestAnnotations.STAGE_DRAFT).queryParam("nsUri", TEST_PACKAGE_NSURI)
+				.queryParam("name", TEST_PACKAGE_NAME).queryParam("dcat", "true").request("application/xmi")
+				.post(Entity.entity(xmiContent, "application/xmi"));
+		assertStatus(201, created, "Setup upload should return HTTP 201 Created");
+
+		StageTransitionRequest transition = RestFactory.eINSTANCE.createStageTransitionRequest();
+		transition.setObjectId(extractObjectId(created.readEntity(String.class)));
+		transition.setTargetStage(TestAnnotations.STAGE_APPROVED);
+		Response transitioned = schemaStageTarget(TestAnnotations.STAGE_DRAFT).path("actions").path("transition")
+				.request("application/xmi")
+				.post(Entity.entity(TestHelper.serializeToXMI(transition, resourceSet), "application/xmi"));
+		assertStatus(200, transitioned, "Transition should return HTTP 200 OK");
+
+		Response metadata = schemaStageTarget(TestAnnotations.STAGE_APPROVED).queryParam("nsUri", TEST_PACKAGE_NSURI)
+				.request("application/json").get();
+		assertStatus(200, metadata, "Metadata GET in the target stage should return HTTP 200 OK");
+		assertEquals(Boolean.TRUE, extractDcatFlag(metadata.readEntity(String.class)),
+				"promotion must carry the flag into the target stage — that is how a model reaches the portal");
+	}
+
+	@Test
+	@ParentScopeServiceSetup
+	public void testCreatePackage_OverwriteWithoutDcatParam_PreservesFlag(@InjectBundleContext BundleContext context)
+			throws Exception {
+		ensureResourceAvailability(context);
+		EPackage testPackage = TestHelper.createTestEPackage(TEST_PACKAGE_NSURI, TEST_PACKAGE_NAME, TEST_PACKAGE_NAME);
+		assertStatus(201,
+				schemaStageTarget(TestAnnotations.STAGE_DRAFT).queryParam("nsUri", TEST_PACKAGE_NSURI)
+						.queryParam("name", TEST_PACKAGE_NAME).queryParam("dcat", "true").request("application/xmi")
+						.post(Entity.entity(TestHelper.serializeToXMI(testPackage, resourceSet), "application/xmi")),
+				"Setup upload should return HTTP 201 Created");
+
+		EPackage updated = TestHelper.createTestEPackage(TEST_PACKAGE_NSURI, "DcatOverwrite", "dcatow");
+		Response overwrite = schemaStageTarget(TestAnnotations.STAGE_DRAFT).queryParam("nsUri", TEST_PACKAGE_NSURI)
+				.queryParam("name", TEST_PACKAGE_NAME).queryParam("overwrite", "true").request("application/xmi")
+				.post(Entity.entity(TestHelper.serializeToXMI(updated, resourceSet), "application/xmi"));
+		assertStatus(200, overwrite, "Overwrite should return HTTP 200 OK");
+
+		assertEquals(Boolean.TRUE, extractDcatFlag(draftMetadataJson()),
+				"an overwrite that says nothing about dcat must leave the flag alone, not default it to false");
+	}
+
+	@Test
+	@ParentScopeServiceSetup
+	public void testCreatePackage_OverwriteWithDcatFalse_ClearsFlag(@InjectBundleContext BundleContext context)
+			throws Exception {
+		ensureResourceAvailability(context);
+		EPackage testPackage = TestHelper.createTestEPackage(TEST_PACKAGE_NSURI, TEST_PACKAGE_NAME, TEST_PACKAGE_NAME);
+		assertStatus(201,
+				schemaStageTarget(TestAnnotations.STAGE_DRAFT).queryParam("nsUri", TEST_PACKAGE_NSURI)
+						.queryParam("name", TEST_PACKAGE_NAME).queryParam("dcat", "true").request("application/xmi")
+						.post(Entity.entity(TestHelper.serializeToXMI(testPackage, resourceSet), "application/xmi")),
+				"Setup upload should return HTTP 201 Created");
+
+		EPackage updated = TestHelper.createTestEPackage(TEST_PACKAGE_NSURI, "DcatCleared", "dcatclr");
+		Response overwrite = schemaStageTarget(TestAnnotations.STAGE_DRAFT).queryParam("nsUri", TEST_PACKAGE_NSURI)
+				.queryParam("name", TEST_PACKAGE_NAME).queryParam("overwrite", "true").queryParam("dcat", "false")
+				.request("application/xmi")
+				.post(Entity.entity(TestHelper.serializeToXMI(updated, resourceSet), "application/xmi"));
+		assertStatus(200, overwrite, "Overwrite should return HTTP 200 OK");
+
+		assertEquals(Boolean.FALSE, extractDcatFlag(draftMetadataJson()),
+				"an explicit ?dcat=false on overwrite must clear the flag");
+	}
+
 	/** /{scope}/schema */
 	private WebTarget schemaTarget(String scope) {
 		return scopeTarget(scope).path("schema");
