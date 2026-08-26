@@ -1,5 +1,5 @@
 <?xml version='1.0' encoding='UTF-8'?>
-<repository xmlns="http://www.osgi.org/xmlns/repository/v1.0.0" name="Local" increment="1787571484117">
+<repository xmlns="http://www.osgi.org/xmlns/repository/v1.0.0" name="Local" increment="1783338457708">
   <resource>
     <capability namespace="osgi.identity">
       <attribute name="license" value="Eclipse Public License 2.0"/>
@@ -129,42 +129,195 @@
   <resource>
     <capability namespace="osgi.identity">
       <attribute name="license" value="Eclipse Public License 2.0"/>
-      <attribute name="copyright" value="Data In Motion Consulting GmbH - All rights reserved"/>
-      <attribute name="osgi.identity" value="org.eclipse.fennec.dcat.atlas.client.api"/>
-      <attribute name="documentation" value="https://github.com/eclipse-fennec/dcat.atlas"/>
-      <attribute name="description" value="DCAT.Atlas client — public API. The DcatAtlasClient contract, the ClientConfiguration value type, the JakartaRsClientProvider seam and the typed exception hierarchy. Shared by the plain-Java and the OSGi client implementations, and intentionally free of OSGi runtime dependencies (DS / framework / ConfigAdmin) so it is consumable as a plain library."/>
+      <attribute name="copyright" value="Data In Motion Consuling GmbH - All rights reserved"/>
+      <attribute name="osgi.identity" value="org.gecko.emf.util.documentation.generators.markdown"/>
+      <attribute name="documentation" value="https://github.com/geckoprojects-org/org.gecko.emf.util"/>
+      <attribute name="description" value="Xtend Generator for Markdown"/>
       <attribute name="type" value="osgi.bundle"/>
-      <attribute name="version" value="1.0.0.202608241135-SNAPSHOT" type="Version"/>
+      <attribute name="version" value="1.0.0.202210200810-SNAPSHOT" type="Version"/>
     </capability>
     <capability namespace="osgi.wiring.package">
-      <directive name="uses" value="dcat,jakarta.ws.rs.client"/>
-      <attribute name="bundle-symbolic-name" value="org.eclipse.fennec.dcat.atlas.client.api"/>
-      <attribute name="bundle-version" value="1.0.0.202608241135-SNAPSHOT" type="Version"/>
-      <attribute name="osgi.wiring.package" value="org.eclipse.fennec.dcat.atlas.client.api"/>
-      <attribute name="version" value="1.0.0" type="Version"/>
-      <attribute name="bnd.hashes" value="1496920354,-646165371,1895597947,1828010699,1643655293,-1214279740,1231936747,-1172589402,-1400027824,1263361083,365139820,-537116146,-606277137,29979776,698385274,-1185989415,406776461,1961603910,-1923478059" type="List&lt;Long&gt;"/>
+      <directive name="uses" value="org.eclipse.emf.common.util,org.eclipse.emf.ecore,org.gecko.emf.util.documentation.generators.apis"/>
+      <attribute name="bundle-symbolic-name" value="org.gecko.emf.util.documentation.generators.markdown"/>
+      <attribute name="bundle-version" value="1.0.0.202210200810-SNAPSHOT" type="Version"/>
+      <attribute name="osgi.wiring.package" value="org.gecko.emf.util.documentation.generators.markdown"/>
+      <attribute name="version" value="1.0.0.SNAPSHOT" type="Version"/>
+      <attribute name="bnd.hashes" value="1220263444" type="List&lt;Long&gt;"/>
     </capability>
     <capability namespace="osgi.wiring.bundle">
-      <attribute name="bundle-version" value="1.0.0.202608241135-SNAPSHOT" type="Version"/>
-      <attribute name="osgi.wiring.bundle" value="org.eclipse.fennec.dcat.atlas.client.api"/>
+      <attribute name="bundle-version" value="1.0.0.202210200810-SNAPSHOT" type="Version"/>
+      <attribute name="osgi.wiring.bundle" value="org.gecko.emf.util.documentation.generators.markdown"/>
     </capability>
     <capability namespace="osgi.wiring.host">
-      <attribute name="bundle-version" value="1.0.0.202608241135-SNAPSHOT" type="Version"/>
-      <attribute name="osgi.wiring.host" value="org.eclipse.fennec.dcat.atlas.client.api"/>
+      <attribute name="bundle-version" value="1.0.0.202210200810-SNAPSHOT" type="Version"/>
+      <attribute name="osgi.wiring.host" value="org.gecko.emf.util.documentation.generators.markdown"/>
     </capability>
     <capability namespace="osgi.content">
-      <attribute name="size" value="54973" type="Long"/>
+      <attribute name="size" value="34129" type="Long"/>
       <attribute name="mime" value="application/vnd.osgi.bundle"/>
-      <attribute name="url" value="org.eclipse.fennec.dcat.atlas.client.api/org.eclipse.fennec.dcat.atlas.client.api-1.0.0.jar"/>
-      <attribute name="osgi.content" value="6AF7791C1CEEAE7D0A7B457FE540404773A0F20578948F21275CB91B7750994B"/>
+      <attribute name="url" value="org.gecko.emf.util.documentation.generators.markdown/org.gecko.emf.util.documentation.generators.markdown-1.0.0.jar"/>
+      <attribute name="osgi.content" value="2F69D1D577310DBB56A31843A0D288B46CF52F85A4E74D21544E5979E5BE36DD"/>
     </capability>
     <requirement namespace="osgi.wiring.package">
-      <directive name="filter" value="(&amp;(osgi.wiring.package=dcat)(version&gt;=1.0.0)(!(version&gt;=2.0.0)))"/>
-      <attribute name="osgi.wiring.package" value="dcat"/>
+      <directive name="filter" value="(osgi.wiring.package=java.lang)"/>
+      <attribute name="osgi.wiring.package" value="java.lang"/>
     </requirement>
     <requirement namespace="osgi.wiring.package">
-      <directive name="filter" value="(&amp;(osgi.wiring.package=jakarta.ws.rs.client)(version&gt;=3.1.0)(!(version&gt;=4.0.0)))"/>
-      <attribute name="osgi.wiring.package" value="jakarta.ws.rs.client"/>
+      <directive name="filter" value="(osgi.wiring.package=java.lang.invoke)"/>
+      <attribute name="osgi.wiring.package" value="java.lang.invoke"/>
+    </requirement>
+    <requirement namespace="osgi.wiring.package">
+      <directive name="filter" value="(osgi.wiring.package=java.util)"/>
+      <attribute name="osgi.wiring.package" value="java.util"/>
+    </requirement>
+    <requirement namespace="osgi.wiring.package">
+      <directive name="filter" value="(osgi.wiring.package=org.eclipse.emf.common.util)"/>
+      <attribute name="osgi.wiring.package" value="org.eclipse.emf.common.util"/>
+    </requirement>
+    <requirement namespace="osgi.wiring.package">
+      <directive name="filter" value="(osgi.wiring.package=org.eclipse.emf.ecore)"/>
+      <attribute name="osgi.wiring.package" value="org.eclipse.emf.ecore"/>
+    </requirement>
+    <requirement namespace="osgi.wiring.package">
+      <directive name="filter" value="(&amp;(osgi.wiring.package=org.eclipse.xtend2.lib)(version&gt;=2.29.0)(!(version&gt;=3.0.0)))"/>
+      <attribute name="osgi.wiring.package" value="org.eclipse.xtend2.lib"/>
+    </requirement>
+    <requirement namespace="osgi.wiring.package">
+      <directive name="filter" value="(&amp;(osgi.wiring.package=org.eclipse.xtext.xbase.lib)(version&gt;=2.29.0)(!(version&gt;=3.0.0)))"/>
+      <attribute name="osgi.wiring.package" value="org.eclipse.xtext.xbase.lib"/>
+    </requirement>
+    <requirement namespace="osgi.wiring.package">
+      <directive name="filter" value="(&amp;(osgi.wiring.package=org.gecko.emf.util.documentation.generators.apis)(version&gt;=1.0.0)(!(version&gt;=2.0.0)))"/>
+      <attribute name="osgi.wiring.package" value="org.gecko.emf.util.documentation.generators.apis"/>
+    </requirement>
+    <requirement namespace="osgi.wiring.package">
+      <directive name="filter" value="(&amp;(osgi.wiring.package=org.gecko.emf.util.documentation.generators.mermaid)(version&gt;=1.0.0)(!(version&gt;=2.0.0)))"/>
+      <attribute name="osgi.wiring.package" value="org.gecko.emf.util.documentation.generators.mermaid"/>
+    </requirement>
+    <requirement namespace="osgi.wiring.package">
+      <directive name="filter" value="(&amp;(osgi.wiring.package=org.gecko.emf.util.documentation.generators.plantuml)(version&gt;=1.0.0)(!(version&gt;=2.0.0)))"/>
+      <attribute name="osgi.wiring.package" value="org.gecko.emf.util.documentation.generators.plantuml"/>
+    </requirement>
+    <requirement namespace="osgi.ee">
+      <directive name="filter" value="(&amp;(osgi.ee=JavaSE)(version=11))"/>
+    </requirement>
+  </resource>
+  <resource>
+    <capability namespace="osgi.identity">
+      <attribute name="license" value="Eclipse Public License 2.0"/>
+      <attribute name="copyright" value="Data In Motion Consulting GmbH - All rights reserved"/>
+      <attribute name="osgi.identity" value="io.apicurio.registry.client"/>
+      <attribute name="documentation" value="https://github.com/geckoprojects-org/org.gecko.libraries"/>
+      <attribute name="type" value="osgi.bundle"/>
+      <attribute name="version" value="3.0.0.M2" type="Version"/>
+    </capability>
+    <capability namespace="osgi.wiring.package">
+      <directive name="uses" value="io.apicurio.registry.rest.v2.beans,io.apicurio.registry.types,io.apicurio.rest.client.auth,io.apicurio.rest.client.spi"/>
+      <attribute name="bundle-symbolic-name" value="io.apicurio.registry.client"/>
+      <attribute name="bundle-version" value="3.0.0.M2" type="Version"/>
+      <attribute name="osgi.wiring.package" value="io.apicurio.registry.rest.client"/>
+      <attribute name="version" value="3.0.0" type="Version"/>
+      <attribute name="bnd.hashes" value="715494362,1717767120,1150483080,180577634" type="List&lt;Long&gt;"/>
+    </capability>
+    <capability namespace="osgi.wiring.package">
+      <attribute name="bundle-symbolic-name" value="io.apicurio.registry.client"/>
+      <attribute name="bundle-version" value="3.0.0.M2" type="Version"/>
+      <attribute name="osgi.wiring.package" value="io.apicurio.registry.rest.client.config"/>
+      <attribute name="version" value="3.0.0" type="Version"/>
+      <attribute name="bnd.hashes" value="-1731103987" type="List&lt;Long&gt;"/>
+    </capability>
+    <capability namespace="osgi.wiring.package">
+      <directive name="uses" value="io.apicurio.registry.rest.v2.beans,io.apicurio.rest.client.error"/>
+      <attribute name="bundle-symbolic-name" value="io.apicurio.registry.client"/>
+      <attribute name="bundle-version" value="3.0.0.M2" type="Version"/>
+      <attribute name="osgi.wiring.package" value="io.apicurio.registry.rest.client.exception"/>
+      <attribute name="version" value="3.0.0" type="Version"/>
+      <attribute name="bnd.hashes" value="-1017177093,-608590739,-95163186,-646165371,-2143224311,1643655293,2023933255,259597540,1371765584,1524307969,-1611971349,1195516903,-1591430164,35106156,1890380234,-1818544159,-1230607730,-557501813,29979776,-30333005,1638136042,111710768,519049555,-1415935960,1531488791,959349988,-1317388058,-1636288831,368055435,204377334,1950218652,1671937438,1597241011,622118600" type="List&lt;Long&gt;"/>
+    </capability>
+    <capability namespace="osgi.wiring.package">
+      <directive name="uses" value="com.fasterxml.jackson.core,io.apicurio.registry.rest.client,io.apicurio.registry.rest.client.exception,io.apicurio.registry.rest.v2.beans,io.apicurio.registry.types,io.apicurio.rest.client.error,io.apicurio.rest.client.spi"/>
+      <attribute name="bundle-symbolic-name" value="io.apicurio.registry.client"/>
+      <attribute name="bundle-version" value="3.0.0.M2" type="Version"/>
+      <attribute name="osgi.wiring.package" value="io.apicurio.registry.rest.client.impl"/>
+      <attribute name="version" value="3.0.0" type="Version"/>
+      <attribute name="bnd.hashes" value="1942416666,1105434690,-1308222706,1982155976" type="List&lt;Long&gt;"/>
+    </capability>
+    <capability namespace="osgi.wiring.package">
+      <attribute name="bundle-symbolic-name" value="io.apicurio.registry.client"/>
+      <attribute name="bundle-version" value="3.0.0.M2" type="Version"/>
+      <attribute name="osgi.wiring.package" value="io.apicurio.registry.rest.client.request"/>
+      <attribute name="version" value="3.0.0" type="Version"/>
+      <attribute name="bnd.hashes" value="-1842766326" type="List&lt;Long&gt;"/>
+    </capability>
+    <capability namespace="osgi.wiring.package">
+      <directive name="uses" value="com.fasterxml.jackson.core,io.apicurio.registry.rest.v2.beans,io.apicurio.registry.types,io.apicurio.rest.client.request"/>
+      <attribute name="bundle-symbolic-name" value="io.apicurio.registry.client"/>
+      <attribute name="bundle-version" value="3.0.0.M2" type="Version"/>
+      <attribute name="osgi.wiring.package" value="io.apicurio.registry.rest.client.request.provider"/>
+      <attribute name="version" value="3.0.0" type="Version"/>
+      <attribute name="bnd.hashes" value="-229318876,1547924052,-103006928,-1841265814,591055805,-1880959011" type="List&lt;Long&gt;"/>
+    </capability>
+    <capability namespace="osgi.wiring.bundle">
+      <attribute name="bundle-version" value="3.0.0.M2" type="Version"/>
+      <attribute name="osgi.wiring.bundle" value="io.apicurio.registry.client"/>
+    </capability>
+    <capability namespace="osgi.wiring.host">
+      <attribute name="bundle-version" value="3.0.0.M2" type="Version"/>
+      <attribute name="osgi.wiring.host" value="io.apicurio.registry.client"/>
+    </capability>
+    <capability namespace="osgi.content">
+      <attribute name="size" value="170864" type="Long"/>
+      <attribute name="mime" value="application/vnd.osgi.bundle"/>
+      <attribute name="url" value="io.apicurio.registry.client/io.apicurio.registry.client-3.0.0.jar"/>
+      <attribute name="osgi.content" value="4DEA3218E05598527382E1DBB4A6C6ED5C51F29179751651EF2ADFBF0C819B08"/>
+    </capability>
+    <requirement namespace="osgi.wiring.package">
+      <directive name="filter" value="(osgi.wiring.package=com.fasterxml.jackson.core)"/>
+      <attribute name="osgi.wiring.package" value="com.fasterxml.jackson.core"/>
+    </requirement>
+    <requirement namespace="osgi.wiring.package">
+      <directive name="filter" value="(osgi.wiring.package=com.fasterxml.jackson.core.type)"/>
+      <attribute name="osgi.wiring.package" value="com.fasterxml.jackson.core.type"/>
+    </requirement>
+    <requirement namespace="osgi.wiring.package">
+      <directive name="filter" value="(osgi.wiring.package=com.fasterxml.jackson.databind)"/>
+      <attribute name="osgi.wiring.package" value="com.fasterxml.jackson.databind"/>
+    </requirement>
+    <requirement namespace="osgi.wiring.package">
+      <directive name="filter" value="(osgi.wiring.package=io.apicurio.registry.rest.v2.beans)"/>
+      <attribute name="osgi.wiring.package" value="io.apicurio.registry.rest.v2.beans"/>
+    </requirement>
+    <requirement namespace="osgi.wiring.package">
+      <directive name="filter" value="(osgi.wiring.package=io.apicurio.registry.types)"/>
+      <attribute name="osgi.wiring.package" value="io.apicurio.registry.types"/>
+    </requirement>
+    <requirement namespace="osgi.wiring.package">
+      <directive name="filter" value="(osgi.wiring.package=io.apicurio.registry.utils)"/>
+      <attribute name="osgi.wiring.package" value="io.apicurio.registry.utils"/>
+    </requirement>
+    <requirement namespace="osgi.wiring.package">
+      <directive name="filter" value="(osgi.wiring.package=io.apicurio.rest.client.auth)"/>
+      <attribute name="osgi.wiring.package" value="io.apicurio.rest.client.auth"/>
+    </requirement>
+    <requirement namespace="osgi.wiring.package">
+      <directive name="filter" value="(osgi.wiring.package=io.apicurio.rest.client.auth.exception)"/>
+      <attribute name="osgi.wiring.package" value="io.apicurio.rest.client.auth.exception"/>
+    </requirement>
+    <requirement namespace="osgi.wiring.package">
+      <directive name="filter" value="(osgi.wiring.package=io.apicurio.rest.client.error)"/>
+      <attribute name="osgi.wiring.package" value="io.apicurio.rest.client.error"/>
+    </requirement>
+    <requirement namespace="osgi.wiring.package">
+      <directive name="filter" value="(osgi.wiring.package=io.apicurio.rest.client.request)"/>
+      <attribute name="osgi.wiring.package" value="io.apicurio.rest.client.request"/>
+    </requirement>
+    <requirement namespace="osgi.wiring.package">
+      <directive name="filter" value="(osgi.wiring.package=io.apicurio.rest.client.spi)"/>
+      <attribute name="osgi.wiring.package" value="io.apicurio.rest.client.spi"/>
+    </requirement>
+    <requirement namespace="osgi.wiring.package">
+      <directive name="filter" value="(osgi.wiring.package=java.io)"/>
+      <attribute name="osgi.wiring.package" value="java.io"/>
     </requirement>
     <requirement namespace="osgi.wiring.package">
       <directive name="filter" value="(osgi.wiring.package=java.lang)"/>
@@ -175,8 +328,8 @@
       <attribute name="osgi.wiring.package" value="java.lang.invoke"/>
     </requirement>
     <requirement namespace="osgi.wiring.package">
-      <directive name="filter" value="(osgi.wiring.package=java.net)"/>
-      <attribute name="osgi.wiring.package" value="java.net"/>
+      <directive name="filter" value="(osgi.wiring.package=java.nio.charset)"/>
+      <attribute name="osgi.wiring.package" value="java.nio.charset"/>
     </requirement>
     <requirement namespace="osgi.wiring.package">
       <directive name="filter" value="(osgi.wiring.package=java.util)"/>
@@ -186,8 +339,12 @@
       <directive name="filter" value="(osgi.wiring.package=java.util.function)"/>
       <attribute name="osgi.wiring.package" value="java.util.function"/>
     </requirement>
+    <requirement namespace="osgi.wiring.package">
+      <directive name="filter" value="(osgi.wiring.package=org.slf4j)"/>
+      <attribute name="osgi.wiring.package" value="org.slf4j"/>
+    </requirement>
     <requirement namespace="osgi.ee">
-      <directive name="filter" value="(&amp;(osgi.ee=JavaSE)(version=21))"/>
+      <directive name="filter" value="(&amp;(osgi.ee=JavaSE)(version=11))"/>
     </requirement>
   </resource>
   <resource>
@@ -461,543 +618,6 @@
     </requirement>
     <requirement namespace="osgi.ee">
       <directive name="filter" value="(&amp;(osgi.ee=JavaSE)(version=17))"/>
-    </requirement>
-  </resource>
-  <resource>
-    <capability namespace="osgi.identity">
-      <attribute name="license" value="Eclipse Public License 2.0"/>
-      <attribute name="copyright" value="Data In Motion Consulting GmbH - All rights reserved"/>
-      <attribute name="osgi.identity" value="org.eclipse.fennec.dcat.atlas.dcatap.de.model"/>
-      <attribute name="documentation" value="https://github.com/eclipse-fennec/dcat.atlas"/>
-      <attribute name="type" value="osgi.bundle"/>
-      <attribute name="version" value="1.0.0.202608241129-SNAPSHOT" type="Version"/>
-    </capability>
-    <capability namespace="osgi.wiring.package">
-      <directive name="uses" value="org.eclipse.emf.ecore,rdf"/>
-      <attribute name="bundle-symbolic-name" value="org.eclipse.fennec.dcat.atlas.dcatap.de.model"/>
-      <attribute name="bundle-version" value="1.0.0.202608241129-SNAPSHOT" type="Version"/>
-      <attribute name="osgi.wiring.package" value="adms"/>
-      <attribute name="version" value="1.0.0" type="Version"/>
-      <attribute name="bnd.hashes" value="674219937,1425955268,959040221,375032009,-1923478059" type="List&lt;Long&gt;"/>
-    </capability>
-    <capability namespace="osgi.wiring.package">
-      <directive name="uses" value="adms,org.eclipse.emf.common.notify,org.eclipse.emf.ecore,org.eclipse.emf.ecore.impl,rdf,rdf.impl"/>
-      <attribute name="bundle-symbolic-name" value="org.eclipse.fennec.dcat.atlas.dcatap.de.model"/>
-      <attribute name="bundle-version" value="1.0.0.202608241129-SNAPSHOT" type="Version"/>
-      <attribute name="osgi.wiring.package" value="adms.impl"/>
-      <attribute name="version" value="1.0.0" type="Version"/>
-      <attribute name="bnd.hashes" value="1978918241,-1484658019,-519449975,-1923478059" type="List&lt;Long&gt;"/>
-    </capability>
-    <capability namespace="osgi.wiring.package">
-      <directive name="uses" value="adms,org.eclipse.emf.common.notify,org.eclipse.emf.common.notify.impl,org.eclipse.emf.ecore,org.eclipse.emf.ecore.util,rdf"/>
-      <attribute name="bundle-symbolic-name" value="org.eclipse.fennec.dcat.atlas.dcatap.de.model"/>
-      <attribute name="bundle-version" value="1.0.0.202608241129-SNAPSHOT" type="Version"/>
-      <attribute name="osgi.wiring.package" value="adms.util"/>
-      <attribute name="version" value="1.0.0" type="Version"/>
-      <attribute name="bnd.hashes" value="-73482172,-2079428163,-1923478059" type="List&lt;Long&gt;"/>
-    </capability>
-    <capability namespace="osgi.wiring.package">
-      <directive name="uses" value="adms,foaf,javax.xml.datatype,org.eclipse.emf.common.util,org.eclipse.emf.ecore,rdf,spdx,terms,vcard"/>
-      <attribute name="bundle-symbolic-name" value="org.eclipse.fennec.dcat.atlas.dcatap.de.model"/>
-      <attribute name="bundle-version" value="1.0.0.202608241129-SNAPSHOT" type="Version"/>
-      <attribute name="osgi.wiring.package" value="dcat"/>
-      <attribute name="version" value="1.0.0" type="Version"/>
-      <attribute name="bnd.hashes" value="-2074609671,-807554646,-2124151925,-1187099560,1860211951,1732274072,1425955268,2017094356,1308450624,-1416387932,-97531304,-1923478059" type="List&lt;Long&gt;"/>
-    </capability>
-    <capability namespace="osgi.wiring.package">
-      <directive name="uses" value="adms,dcat,foaf,javax.xml.datatype,org.eclipse.emf.common.notify,org.eclipse.emf.common.util,org.eclipse.emf.ecore,org.eclipse.emf.ecore.impl,rdf,rdf.impl,spdx,terms,vcard"/>
-      <attribute name="bundle-symbolic-name" value="org.eclipse.fennec.dcat.atlas.dcatap.de.model"/>
-      <attribute name="bundle-version" value="1.0.0.202608241129-SNAPSHOT" type="Version"/>
-      <attribute name="osgi.wiring.package" value="dcat.impl"/>
-      <attribute name="version" value="1.0.0" type="Version"/>
-      <attribute name="bnd.hashes" value="660351417,1629201130,1634999371,506672792,834755503,2067116504,-1396459756,1172215168,-1642297628,1849013400,-1923478059" type="List&lt;Long&gt;"/>
-    </capability>
-    <capability namespace="osgi.wiring.package">
-      <directive name="uses" value="dcat,org.eclipse.emf.common.notify,org.eclipse.emf.common.notify.impl,org.eclipse.emf.common.util,org.eclipse.emf.ecore,org.eclipse.emf.ecore.resource,org.eclipse.emf.ecore.resource.impl,org.eclipse.emf.ecore.util,org.eclipse.emf.ecore.xmi.impl,org.eclipse.emf.ecore.xmi.util,rdf,rdf.util"/>
-      <attribute name="bundle-symbolic-name" value="org.eclipse.fennec.dcat.atlas.dcatap.de.model"/>
-      <attribute name="bundle-version" value="1.0.0.202608241129-SNAPSHOT" type="Version"/>
-      <attribute name="osgi.wiring.package" value="dcat.util"/>
-      <attribute name="version" value="1.0.0" type="Version"/>
-      <attribute name="bnd.hashes" value="-1079014291,1118745322,1172215168,587101926,-1514416544,2094726253,-1923478059" type="List&lt;Long&gt;"/>
-    </capability>
-    <capability namespace="osgi.wiring.package">
-      <directive name="uses" value="org.eclipse.emf.common.util,org.eclipse.emf.ecore,rdf"/>
-      <attribute name="bundle-symbolic-name" value="org.eclipse.fennec.dcat.atlas.dcatap.de.model"/>
-      <attribute name="bundle-version" value="1.0.0.202608241129-SNAPSHOT" type="Version"/>
-      <attribute name="osgi.wiring.package" value="foaf"/>
-      <attribute name="version" value="1.0.0" type="Version"/>
-      <attribute name="bnd.hashes" value="63197925,926364987,1445635676,1425955268,1730455960,1343242579,-1907849355,-1923478059" type="List&lt;Long&gt;"/>
-    </capability>
-    <capability namespace="osgi.wiring.package">
-      <directive name="uses" value="foaf,org.eclipse.emf.common.notify,org.eclipse.emf.common.util,org.eclipse.emf.ecore,org.eclipse.emf.ecore.impl,rdf,rdf.impl"/>
-      <attribute name="bundle-symbolic-name" value="org.eclipse.fennec.dcat.atlas.dcatap.de.model"/>
-      <attribute name="bundle-version" value="1.0.0.202608241129-SNAPSHOT" type="Version"/>
-      <attribute name="osgi.wiring.package" value="foaf.impl"/>
-      <attribute name="version" value="1.0.0" type="Version"/>
-      <attribute name="bnd.hashes" value="302591653,-1309215237,1503325852,-1960250408,1622947347,-1623155915,-1923478059" type="List&lt;Long&gt;"/>
-    </capability>
-    <capability namespace="osgi.wiring.package">
-      <directive name="uses" value="foaf,org.eclipse.emf.common.notify,org.eclipse.emf.common.notify.impl,org.eclipse.emf.common.util,org.eclipse.emf.ecore,org.eclipse.emf.ecore.resource,org.eclipse.emf.ecore.resource.impl,org.eclipse.emf.ecore.util,org.eclipse.emf.ecore.xmi.impl,org.eclipse.emf.ecore.xmi.util,rdf,rdf.util"/>
-      <attribute name="bundle-symbolic-name" value="org.eclipse.fennec.dcat.atlas.dcatap.de.model"/>
-      <attribute name="bundle-version" value="1.0.0.202608241129-SNAPSHOT" type="Version"/>
-      <attribute name="osgi.wiring.package" value="foaf.util"/>
-      <attribute name="version" value="1.0.0" type="Version"/>
-      <attribute name="bnd.hashes" value="650766633,2055007150,874574140,439308194,-2096008156,1797085225,-1923478059" type="List&lt;Long&gt;"/>
-    </capability>
-    <capability namespace="osgi.wiring.package">
-      <directive name="uses" value="javax.xml.datatype,org.eclipse.emf.common.util,org.eclipse.emf.ecore"/>
-      <attribute name="bundle-symbolic-name" value="org.eclipse.fennec.dcat.atlas.dcatap.de.model"/>
-      <attribute name="bundle-version" value="1.0.0.202608241129-SNAPSHOT" type="Version"/>
-      <attribute name="osgi.wiring.package" value="rdf"/>
-      <attribute name="version" value="1.0.0" type="Version"/>
-      <attribute name="bnd.hashes" value="1854668292,1528417795,-1261058583,-1463911515,-1340259818,1425955268,-1055439534,1200769285,-1923478059" type="List&lt;Long&gt;"/>
-    </capability>
-    <capability namespace="osgi.wiring.package">
-      <directive name="uses" value="javax.xml.datatype,org.eclipse.emf.ecore,org.eclipse.emf.ecore.impl,rdf"/>
-      <attribute name="bundle-symbolic-name" value="org.eclipse.fennec.dcat.atlas.dcatap.de.model"/>
-      <attribute name="bundle-version" value="1.0.0.202608241129-SNAPSHOT" type="Version"/>
-      <attribute name="osgi.wiring.package" value="rdf.impl"/>
-      <attribute name="version" value="1.0.0" type="Version"/>
-      <attribute name="bnd.hashes" value="2110778051,660701097,-398395547,-49996458,781394578,867112133,-1923478059" type="List&lt;Long&gt;"/>
-    </capability>
-    <capability namespace="osgi.wiring.package">
-      <directive name="uses" value="javax.xml.datatype,org.eclipse.emf.common.notify,org.eclipse.emf.common.notify.impl,org.eclipse.emf.common.util,org.eclipse.emf.ecore,org.eclipse.emf.ecore.resource,org.eclipse.emf.ecore.resource.impl,org.eclipse.emf.ecore.util,org.eclipse.emf.ecore.xmi.impl,org.eclipse.emf.ecore.xmi.util,org.eclipse.emf.ecore.xml.type.util,rdf"/>
-      <attribute name="bundle-symbolic-name" value="org.eclipse.fennec.dcat.atlas.dcatap.de.model"/>
-      <attribute name="bundle-version" value="1.0.0.202608241129-SNAPSHOT" type="Version"/>
-      <attribute name="osgi.wiring.package" value="rdf.util"/>
-      <attribute name="version" value="1.0.0" type="Version"/>
-      <attribute name="bnd.hashes" value="-396523473,428982376,-33777214,-1174580056,718014814,888733871,-1923478059" type="List&lt;Long&gt;"/>
-    </capability>
-    <capability namespace="osgi.wiring.package">
-      <directive name="uses" value="org.eclipse.emf.ecore,rdf"/>
-      <attribute name="bundle-symbolic-name" value="org.eclipse.fennec.dcat.atlas.dcatap.de.model"/>
-      <attribute name="bundle-version" value="1.0.0.202608241129-SNAPSHOT" type="Version"/>
-      <attribute name="osgi.wiring.package" value="spdx"/>
-      <attribute name="version" value="1.0.0" type="Version"/>
-      <attribute name="bnd.hashes" value="1601552483,-457990151,1425955268,-173169867,-1923478059" type="List&lt;Long&gt;"/>
-    </capability>
-    <capability namespace="osgi.wiring.package">
-      <directive name="uses" value="org.eclipse.emf.ecore,org.eclipse.emf.ecore.impl,rdf.impl,spdx"/>
-      <attribute name="bundle-symbolic-name" value="org.eclipse.fennec.dcat.atlas.dcatap.de.model"/>
-      <attribute name="bundle-version" value="1.0.0.202608241129-SNAPSHOT" type="Version"/>
-      <attribute name="osgi.wiring.package" value="spdx.impl"/>
-      <attribute name="version" value="1.0.0" type="Version"/>
-      <attribute name="bnd.hashes" value="875277603,564384185,1395775221,-1923478059" type="List&lt;Long&gt;"/>
-    </capability>
-    <capability namespace="osgi.wiring.package">
-      <directive name="uses" value="org.eclipse.emf.common.notify,org.eclipse.emf.common.notify.impl,org.eclipse.emf.common.util,org.eclipse.emf.ecore,org.eclipse.emf.ecore.util,rdf,rdf.util,spdx"/>
-      <attribute name="bundle-symbolic-name" value="org.eclipse.fennec.dcat.atlas.dcatap.de.model"/>
-      <attribute name="bundle-version" value="1.0.0.202608241129-SNAPSHOT" type="Version"/>
-      <attribute name="osgi.wiring.package" value="spdx.util"/>
-      <attribute name="version" value="1.0.0" type="Version"/>
-      <attribute name="bnd.hashes" value="1761563884,100806245,-1824359807,-1923478059" type="List&lt;Long&gt;"/>
-    </capability>
-    <capability namespace="osgi.wiring.package">
-      <directive name="uses" value="org.eclipse.emf.common.util,org.eclipse.emf.ecore,rdf"/>
-      <attribute name="bundle-symbolic-name" value="org.eclipse.fennec.dcat.atlas.dcatap.de.model"/>
-      <attribute name="bundle-version" value="1.0.0.202608241129-SNAPSHOT" type="Version"/>
-      <attribute name="osgi.wiring.package" value="terms"/>
-      <attribute name="version" value="1.0.0" type="Version"/>
-      <attribute name="bnd.hashes" value="72786012,1965687765,-5655931,-528161746,-1293246152,1377272541,-89694813,1425955268,195125471,-1923478059" type="List&lt;Long&gt;"/>
-    </capability>
-    <capability namespace="osgi.wiring.package">
-      <directive name="uses" value="org.eclipse.emf.common.notify,org.eclipse.emf.common.util,org.eclipse.emf.ecore,org.eclipse.emf.ecore.impl,rdf,rdf.impl,terms"/>
-      <attribute name="bundle-symbolic-name" value="org.eclipse.fennec.dcat.atlas.dcatap.de.model"/>
-      <attribute name="bundle-version" value="1.0.0.202608241129-SNAPSHOT" type="Version"/>
-      <attribute name="osgi.wiring.package" value="terms.impl"/>
-      <attribute name="version" value="1.0.0" type="Version"/>
-      <attribute name="bnd.hashes" value="-1120278372,105703317,-688538043,-1910639762,233446264,-1563188579,1993124451,-1470451809,-1923478059" type="List&lt;Long&gt;"/>
-    </capability>
-    <capability namespace="osgi.wiring.package">
-      <directive name="uses" value="org.eclipse.emf.common.notify,org.eclipse.emf.common.notify.impl,org.eclipse.emf.common.util,org.eclipse.emf.ecore,org.eclipse.emf.ecore.resource,org.eclipse.emf.ecore.resource.impl,org.eclipse.emf.ecore.util,org.eclipse.emf.ecore.xmi.impl,org.eclipse.emf.ecore.xmi.util,rdf,rdf.util,terms"/>
-      <attribute name="bundle-symbolic-name" value="org.eclipse.fennec.dcat.atlas.dcatap.de.model"/>
-      <attribute name="bundle-version" value="1.0.0.202608241129-SNAPSHOT" type="Version"/>
-      <attribute name="osgi.wiring.package" value="terms.util"/>
-      <attribute name="version" value="1.0.0" type="Version"/>
-      <attribute name="bnd.hashes" value="-2058042366,351662197,-1121538475,-718597253,-79858261,-199027390,-1923478059" type="List&lt;Long&gt;"/>
-    </capability>
-    <capability namespace="osgi.wiring.package">
-      <directive name="uses" value="org.eclipse.emf.common.util,org.eclipse.emf.ecore,rdf"/>
-      <attribute name="bundle-symbolic-name" value="org.eclipse.fennec.dcat.atlas.dcatap.de.model"/>
-      <attribute name="bundle-version" value="1.0.0.202608241129-SNAPSHOT" type="Version"/>
-      <attribute name="osgi.wiring.package" value="vcard"/>
-      <attribute name="version" value="1.0.0" type="Version"/>
-      <attribute name="bnd.hashes" value="516961236,1343242579,1988446660,1425955268,-2021700352,-1923478059" type="List&lt;Long&gt;"/>
-    </capability>
-    <capability namespace="osgi.wiring.package">
-      <directive name="uses" value="org.eclipse.emf.common.notify,org.eclipse.emf.common.util,org.eclipse.emf.ecore,org.eclipse.emf.ecore.impl,rdf.impl,vcard"/>
-      <attribute name="bundle-symbolic-name" value="org.eclipse.fennec.dcat.atlas.dcatap.de.model"/>
-      <attribute name="bundle-version" value="1.0.0.202608241129-SNAPSHOT" type="Version"/>
-      <attribute name="osgi.wiring.package" value="vcard.impl"/>
-      <attribute name="version" value="1.0.0" type="Version"/>
-      <attribute name="bnd.hashes" value="290258964,1622947347,-1146774012,-315382976,-1923478059" type="List&lt;Long&gt;"/>
-    </capability>
-    <capability namespace="osgi.wiring.package">
-      <directive name="uses" value="org.eclipse.emf.common.notify,org.eclipse.emf.common.notify.impl,org.eclipse.emf.common.util,org.eclipse.emf.ecore,org.eclipse.emf.ecore.resource,org.eclipse.emf.ecore.resource.impl,org.eclipse.emf.ecore.util,org.eclipse.emf.ecore.xmi.impl,org.eclipse.emf.ecore.xmi.util,rdf,rdf.util,vcard"/>
-      <attribute name="bundle-symbolic-name" value="org.eclipse.fennec.dcat.atlas.dcatap.de.model"/>
-      <attribute name="bundle-version" value="1.0.0.202608241129-SNAPSHOT" type="Version"/>
-      <attribute name="osgi.wiring.package" value="vcard.util"/>
-      <attribute name="version" value="1.0.0" type="Version"/>
-      <attribute name="bnd.hashes" value="1614553281,909488918,325856980,733912890,-145695348,1248368065,-1923478059" type="List&lt;Long&gt;"/>
-    </capability>
-    <capability namespace="osgi.wiring.bundle">
-      <attribute name="bundle-version" value="1.0.0.202608241129-SNAPSHOT" type="Version"/>
-      <attribute name="osgi.wiring.bundle" value="org.eclipse.fennec.dcat.atlas.dcatap.de.model"/>
-    </capability>
-    <capability namespace="osgi.wiring.host">
-      <attribute name="bundle-version" value="1.0.0.202608241129-SNAPSHOT" type="Version"/>
-      <attribute name="osgi.wiring.host" value="org.eclipse.fennec.dcat.atlas.dcatap.de.model"/>
-    </capability>
-    <capability namespace="org.eclipse.emf.ecore.generated_package">
-      <attribute name="ecoreSourceLocations" value="/model/adms.ecore" type="List&lt;String&gt;"/>
-      <attribute name="emf.fingerprint" value="fp1:863579a43c85b838e564495133911ef50bbefc5e91fac2cbb3a6a51f7a3198d1"/>
-      <attribute name="ecore" value="/model/adms.ecore"/>
-      <attribute name="class" value="adms.AdmsPackage"/>
-      <attribute name="genModel" value="/model/dcatap.genmodel"/>
-      <attribute name="uri" value="http://www.w3.org/ns/adms#"/>
-      <attribute name="genModelSourceLocations" value="model/dcatap.genmodel,org.eclipse.fennec.dcat.atlas.dcatap.de.model/model/dcatap.genmodel" type="List&lt;String&gt;"/>
-    </capability>
-    <capability namespace="org.eclipse.emf.ecore.generated_package">
-      <attribute name="ecoreSourceLocations" value="/model/dcatap.ecore" type="List&lt;String&gt;"/>
-      <attribute name="emf.fingerprint" value="fp1:0412bd1f74f77b773b1163720704461185874cd712ccb44b94982e9d02629789"/>
-      <attribute name="ecore" value="/model/dcatap.ecore"/>
-      <attribute name="class" value="dcat.DcatPackage"/>
-      <attribute name="genModel" value="/model/dcatap.genmodel"/>
-      <attribute name="uri" value="http://www.w3.org/ns/dcat#"/>
-      <attribute name="genModelSourceLocations" value="model/dcatap.genmodel,org.eclipse.fennec.dcat.atlas.dcatap.de.model/model/dcatap.genmodel" type="List&lt;String&gt;"/>
-    </capability>
-    <capability namespace="org.eclipse.emf.ecore.generated_package">
-      <attribute name="ecoreSourceLocations" value="/model/foaf.ecore" type="List&lt;String&gt;"/>
-      <attribute name="emf.fingerprint" value="fp1:e4344045c4cf80c0a635d64a447d5e88b2577dbe50dd9204151bd24a927e0f50"/>
-      <attribute name="ecore" value="/model/foaf.ecore"/>
-      <attribute name="class" value="foaf.FoafPackage"/>
-      <attribute name="genModel" value="/model/dcatap.genmodel"/>
-      <attribute name="uri" value="http://xmlns.com/foaf/0.1/"/>
-      <attribute name="genModelSourceLocations" value="model/dcatap.genmodel,org.eclipse.fennec.dcat.atlas.dcatap.de.model/model/dcatap.genmodel" type="List&lt;String&gt;"/>
-    </capability>
-    <capability namespace="org.eclipse.emf.ecore.generated_package">
-      <attribute name="ecoreSourceLocations" value="/model/rdf.ecore" type="List&lt;String&gt;"/>
-      <attribute name="emf.fingerprint" value="fp1:f4782aac339582b8a6f5082d003dfa157e770ebda211da037c7bd170eaf29118"/>
-      <attribute name="ecore" value="/model/rdf.ecore"/>
-      <attribute name="class" value="rdf.RdfPackage"/>
-      <attribute name="genModel" value="/model/dcatap.genmodel"/>
-      <attribute name="uri" value="http://www.w3.org/1999/02/22-rdf-syntax-ns#"/>
-      <attribute name="genModelSourceLocations" value="model/dcatap.genmodel,org.eclipse.fennec.dcat.atlas.dcatap.de.model/model/dcatap.genmodel" type="List&lt;String&gt;"/>
-    </capability>
-    <capability namespace="org.eclipse.emf.ecore.generated_package">
-      <attribute name="ecoreSourceLocations" value="/model/spdx.ecore" type="List&lt;String&gt;"/>
-      <attribute name="emf.fingerprint" value="fp1:c38bb77170fee4ace540c02e342a38e00dc4f698a5eb23e0cd5b94efb174c8c4"/>
-      <attribute name="ecore" value="/model/spdx.ecore"/>
-      <attribute name="class" value="spdx.SpdxPackage"/>
-      <attribute name="genModel" value="/model/dcatap.genmodel"/>
-      <attribute name="uri" value="http://spdx.org/rdf/terms#"/>
-      <attribute name="genModelSourceLocations" value="model/dcatap.genmodel,org.eclipse.fennec.dcat.atlas.dcatap.de.model/model/dcatap.genmodel" type="List&lt;String&gt;"/>
-    </capability>
-    <capability namespace="org.eclipse.emf.ecore.generated_package">
-      <attribute name="ecoreSourceLocations" value="/model/terms.ecore" type="List&lt;String&gt;"/>
-      <attribute name="emf.fingerprint" value="fp1:961a36d28ee4d224a3c72c89b323e45b2699bb76c7736c9237818311378172a8"/>
-      <attribute name="ecore" value="/model/terms.ecore"/>
-      <attribute name="class" value="terms.TermsPackage"/>
-      <attribute name="genModel" value="/model/dcatap.genmodel"/>
-      <attribute name="uri" value="http://purl.org/dc/terms/"/>
-      <attribute name="genModelSourceLocations" value="model/dcatap.genmodel,org.eclipse.fennec.dcat.atlas.dcatap.de.model/model/dcatap.genmodel" type="List&lt;String&gt;"/>
-    </capability>
-    <capability namespace="org.eclipse.emf.ecore.generated_package">
-      <attribute name="ecoreSourceLocations" value="/model/vcard.ecore" type="List&lt;String&gt;"/>
-      <attribute name="emf.fingerprint" value="fp1:1186332e59d254dea3df1e8d5ca7fac41c99aa1a274c2ac94fdabe93163981aa"/>
-      <attribute name="ecore" value="/model/vcard.ecore"/>
-      <attribute name="class" value="vcard.VcardPackage"/>
-      <attribute name="genModel" value="/model/dcatap.genmodel"/>
-      <attribute name="uri" value="http://www.w3.org/2006/vcard/ns#"/>
-      <attribute name="genModelSourceLocations" value="model/dcatap.genmodel,org.eclipse.fennec.dcat.atlas.dcatap.de.model/model/dcatap.genmodel" type="List&lt;String&gt;"/>
-    </capability>
-    <capability namespace="osgi.content">
-      <attribute name="size" value="554179" type="Long"/>
-      <attribute name="mime" value="application/vnd.osgi.bundle"/>
-      <attribute name="url" value="org.eclipse.fennec.dcat.atlas.dcatap.de.model/org.eclipse.fennec.dcat.atlas.dcatap.de.model-1.0.0.jar"/>
-      <attribute name="osgi.content" value="D63518AD1F68B613AC31BA0AB5A7DA4A36E76161AFD11520B5152BE9409B58C6"/>
-    </capability>
-    <capability namespace="osgi.service">
-      <directive name="uses" value="org.eclipse.emf.ecore,adms"/>
-      <attribute name="objectClass" value="adms.AdmsFactory, org.eclipse.emf.ecore.EFactory" type="List&lt;String&gt;"/>
-    </capability>
-    <capability namespace="osgi.service">
-      <directive name="uses" value="org.eclipse.emf.ecore,adms"/>
-      <attribute name="objectClass" value="adms.AdmsPackage, org.eclipse.emf.ecore.EPackage" type="List&lt;String&gt;"/>
-    </capability>
-    <capability namespace="osgi.service">
-      <directive name="uses" value="org.eclipse.emf.ecore,dcat"/>
-      <attribute name="objectClass" value="dcat.DcatFactory, org.eclipse.emf.ecore.EFactory" type="List&lt;String&gt;"/>
-    </capability>
-    <capability namespace="osgi.service">
-      <directive name="uses" value="org.eclipse.emf.ecore,dcat"/>
-      <attribute name="objectClass" value="dcat.DcatPackage, org.eclipse.emf.ecore.EPackage" type="List&lt;String&gt;"/>
-    </capability>
-    <capability namespace="osgi.service">
-      <directive name="uses" value="org.eclipse.emf.ecore.resource,dcat.util"/>
-      <attribute name="objectClass" value="dcat.util.DcatResourceFactoryImpl, org.eclipse.emf.ecore.resource.Resource$Factory" type="List&lt;String&gt;"/>
-    </capability>
-    <capability namespace="osgi.service">
-      <directive name="uses" value="org.eclipse.emf.ecore,foaf"/>
-      <attribute name="objectClass" value="foaf.FoafFactory, org.eclipse.emf.ecore.EFactory" type="List&lt;String&gt;"/>
-    </capability>
-    <capability namespace="osgi.service">
-      <directive name="uses" value="org.eclipse.emf.ecore,foaf"/>
-      <attribute name="objectClass" value="foaf.FoafPackage, org.eclipse.emf.ecore.EPackage" type="List&lt;String&gt;"/>
-    </capability>
-    <capability namespace="osgi.service">
-      <directive name="uses" value="org.eclipse.emf.ecore.resource,foaf.util"/>
-      <attribute name="objectClass" value="foaf.util.FoafResourceFactoryImpl, org.eclipse.emf.ecore.resource.Resource$Factory" type="List&lt;String&gt;"/>
-    </capability>
-    <capability namespace="osgi.service">
-      <directive name="uses" value="org.eclipse.emf.ecore,adms"/>
-      <attribute name="objectClass" value="org.eclipse.fennec.emf.osgi.configurator.EPackageConfigurator" type="List&lt;String&gt;"/>
-    </capability>
-    <capability namespace="osgi.service">
-      <directive name="uses" value="org.eclipse.emf.ecore,dcat"/>
-      <attribute name="objectClass" value="org.eclipse.fennec.emf.osgi.configurator.EPackageConfigurator" type="List&lt;String&gt;"/>
-    </capability>
-    <capability namespace="osgi.service">
-      <directive name="uses" value="org.eclipse.emf.ecore,foaf"/>
-      <attribute name="objectClass" value="org.eclipse.fennec.emf.osgi.configurator.EPackageConfigurator" type="List&lt;String&gt;"/>
-    </capability>
-    <capability namespace="osgi.service">
-      <directive name="uses" value="org.eclipse.emf.ecore,rdf"/>
-      <attribute name="objectClass" value="org.eclipse.fennec.emf.osgi.configurator.EPackageConfigurator" type="List&lt;String&gt;"/>
-    </capability>
-    <capability namespace="osgi.service">
-      <directive name="uses" value="org.eclipse.emf.ecore,spdx"/>
-      <attribute name="objectClass" value="org.eclipse.fennec.emf.osgi.configurator.EPackageConfigurator" type="List&lt;String&gt;"/>
-    </capability>
-    <capability namespace="osgi.service">
-      <directive name="uses" value="org.eclipse.emf.ecore,terms"/>
-      <attribute name="objectClass" value="org.eclipse.fennec.emf.osgi.configurator.EPackageConfigurator" type="List&lt;String&gt;"/>
-    </capability>
-    <capability namespace="osgi.service">
-      <directive name="uses" value="org.eclipse.emf.ecore,vcard"/>
-      <attribute name="objectClass" value="org.eclipse.fennec.emf.osgi.configurator.EPackageConfigurator" type="List&lt;String&gt;"/>
-    </capability>
-    <capability namespace="osgi.service">
-      <directive name="uses" value="org.osgi.service.condition"/>
-      <attribute name="objectClass" value="org.osgi.service.condition.Condition" type="List&lt;String&gt;"/>
-    </capability>
-    <capability namespace="osgi.service">
-      <directive name="uses" value="org.eclipse.emf.ecore,rdf"/>
-      <attribute name="objectClass" value="rdf.RdfFactory, org.eclipse.emf.ecore.EFactory" type="List&lt;String&gt;"/>
-    </capability>
-    <capability namespace="osgi.service">
-      <directive name="uses" value="org.eclipse.emf.ecore,rdf"/>
-      <attribute name="objectClass" value="rdf.RdfPackage, org.eclipse.emf.ecore.EPackage" type="List&lt;String&gt;"/>
-    </capability>
-    <capability namespace="osgi.service">
-      <directive name="uses" value="org.eclipse.emf.ecore.resource,rdf.util"/>
-      <attribute name="objectClass" value="rdf.util.RdfResourceFactoryImpl, org.eclipse.emf.ecore.resource.Resource$Factory" type="List&lt;String&gt;"/>
-    </capability>
-    <capability namespace="osgi.service">
-      <directive name="uses" value="org.eclipse.emf.ecore,spdx"/>
-      <attribute name="objectClass" value="spdx.SpdxFactory, org.eclipse.emf.ecore.EFactory" type="List&lt;String&gt;"/>
-    </capability>
-    <capability namespace="osgi.service">
-      <directive name="uses" value="org.eclipse.emf.ecore,spdx"/>
-      <attribute name="objectClass" value="spdx.SpdxPackage, org.eclipse.emf.ecore.EPackage" type="List&lt;String&gt;"/>
-    </capability>
-    <capability namespace="osgi.service">
-      <directive name="uses" value="org.eclipse.emf.ecore,terms"/>
-      <attribute name="objectClass" value="terms.TermsFactory, org.eclipse.emf.ecore.EFactory" type="List&lt;String&gt;"/>
-    </capability>
-    <capability namespace="osgi.service">
-      <directive name="uses" value="org.eclipse.emf.ecore,terms"/>
-      <attribute name="objectClass" value="terms.TermsPackage, org.eclipse.emf.ecore.EPackage" type="List&lt;String&gt;"/>
-    </capability>
-    <capability namespace="osgi.service">
-      <directive name="uses" value="org.eclipse.emf.ecore.resource,terms.util"/>
-      <attribute name="objectClass" value="terms.util.TermsResourceFactoryImpl, org.eclipse.emf.ecore.resource.Resource$Factory" type="List&lt;String&gt;"/>
-    </capability>
-    <capability namespace="osgi.service">
-      <directive name="uses" value="org.eclipse.emf.ecore,vcard"/>
-      <attribute name="objectClass" value="vcard.VcardFactory, org.eclipse.emf.ecore.EFactory" type="List&lt;String&gt;"/>
-    </capability>
-    <capability namespace="osgi.service">
-      <directive name="uses" value="org.eclipse.emf.ecore,vcard"/>
-      <attribute name="objectClass" value="vcard.VcardPackage, org.eclipse.emf.ecore.EPackage" type="List&lt;String&gt;"/>
-    </capability>
-    <capability namespace="osgi.service">
-      <directive name="uses" value="org.eclipse.emf.ecore.resource,vcard.util"/>
-      <attribute name="objectClass" value="vcard.util.VcardResourceFactoryImpl, org.eclipse.emf.ecore.resource.Resource$Factory" type="List&lt;String&gt;"/>
-    </capability>
-    <requirement namespace="osgi.wiring.package">
-      <directive name="filter" value="(&amp;(osgi.wiring.package=adms)(version&gt;=1.0.0)(!(version&gt;=1.1.0)))"/>
-      <attribute name="osgi.wiring.package" value="adms"/>
-    </requirement>
-    <requirement namespace="osgi.wiring.package">
-      <directive name="filter" value="(&amp;(osgi.wiring.package=adms.impl)(version&gt;=1.0.0)(!(version&gt;=2.0.0)))"/>
-      <attribute name="osgi.wiring.package" value="adms.impl"/>
-    </requirement>
-    <requirement namespace="osgi.wiring.package">
-      <directive name="filter" value="(&amp;(osgi.wiring.package=dcat)(version&gt;=1.0.0)(!(version&gt;=1.1.0)))"/>
-      <attribute name="osgi.wiring.package" value="dcat"/>
-    </requirement>
-    <requirement namespace="osgi.wiring.package">
-      <directive name="filter" value="(&amp;(osgi.wiring.package=dcat.impl)(version&gt;=1.0.0)(!(version&gt;=2.0.0)))"/>
-      <attribute name="osgi.wiring.package" value="dcat.impl"/>
-    </requirement>
-    <requirement namespace="osgi.wiring.package">
-      <directive name="filter" value="(&amp;(osgi.wiring.package=dcat.util)(version&gt;=1.0.0)(!(version&gt;=2.0.0)))"/>
-      <attribute name="osgi.wiring.package" value="dcat.util"/>
-    </requirement>
-    <requirement namespace="osgi.wiring.package">
-      <directive name="filter" value="(&amp;(osgi.wiring.package=foaf)(version&gt;=1.0.0)(!(version&gt;=1.1.0)))"/>
-      <attribute name="osgi.wiring.package" value="foaf"/>
-    </requirement>
-    <requirement namespace="osgi.wiring.package">
-      <directive name="filter" value="(&amp;(osgi.wiring.package=foaf.impl)(version&gt;=1.0.0)(!(version&gt;=2.0.0)))"/>
-      <attribute name="osgi.wiring.package" value="foaf.impl"/>
-    </requirement>
-    <requirement namespace="osgi.wiring.package">
-      <directive name="filter" value="(&amp;(osgi.wiring.package=foaf.util)(version&gt;=1.0.0)(!(version&gt;=2.0.0)))"/>
-      <attribute name="osgi.wiring.package" value="foaf.util"/>
-    </requirement>
-    <requirement namespace="osgi.wiring.package">
-      <directive name="filter" value="(osgi.wiring.package=java.lang)"/>
-      <attribute name="osgi.wiring.package" value="java.lang"/>
-    </requirement>
-    <requirement namespace="osgi.wiring.package">
-      <directive name="filter" value="(osgi.wiring.package=java.lang.invoke)"/>
-      <attribute name="osgi.wiring.package" value="java.lang.invoke"/>
-    </requirement>
-    <requirement namespace="osgi.wiring.package">
-      <directive name="filter" value="(osgi.wiring.package=java.math)"/>
-      <attribute name="osgi.wiring.package" value="java.math"/>
-    </requirement>
-    <requirement namespace="osgi.wiring.package">
-      <directive name="filter" value="(osgi.wiring.package=java.util)"/>
-      <attribute name="osgi.wiring.package" value="java.util"/>
-    </requirement>
-    <requirement namespace="osgi.wiring.package">
-      <directive name="filter" value="(osgi.wiring.package=javax.xml.datatype)"/>
-      <attribute name="osgi.wiring.package" value="javax.xml.datatype"/>
-    </requirement>
-    <requirement namespace="osgi.wiring.package">
-      <directive name="filter" value="(&amp;(osgi.wiring.package=org.eclipse.emf.common.notify)(version&gt;=2.44.0)(!(version&gt;=3.0.0)))"/>
-      <attribute name="osgi.wiring.package" value="org.eclipse.emf.common.notify"/>
-    </requirement>
-    <requirement namespace="osgi.wiring.package">
-      <directive name="filter" value="(&amp;(osgi.wiring.package=org.eclipse.emf.common.notify.impl)(version&gt;=2.44.0)(!(version&gt;=3.0.0)))"/>
-      <attribute name="osgi.wiring.package" value="org.eclipse.emf.common.notify.impl"/>
-    </requirement>
-    <requirement namespace="osgi.wiring.package">
-      <directive name="filter" value="(&amp;(osgi.wiring.package=org.eclipse.emf.common.util)(version&gt;=2.44.0)(!(version&gt;=3.0.0)))"/>
-      <attribute name="osgi.wiring.package" value="org.eclipse.emf.common.util"/>
-    </requirement>
-    <requirement namespace="osgi.wiring.package">
-      <directive name="filter" value="(&amp;(osgi.wiring.package=org.eclipse.emf.ecore)(version&gt;=2.41.0)(!(version&gt;=3.0.0)))"/>
-      <attribute name="osgi.wiring.package" value="org.eclipse.emf.ecore"/>
-    </requirement>
-    <requirement namespace="osgi.wiring.package">
-      <directive name="filter" value="(&amp;(osgi.wiring.package=org.eclipse.emf.ecore.impl)(version&gt;=2.41.0)(!(version&gt;=3.0.0)))"/>
-      <attribute name="osgi.wiring.package" value="org.eclipse.emf.ecore.impl"/>
-    </requirement>
-    <requirement namespace="osgi.wiring.package">
-      <directive name="filter" value="(&amp;(osgi.wiring.package=org.eclipse.emf.ecore.plugin)(version&gt;=2.41.0)(!(version&gt;=3.0.0)))"/>
-      <attribute name="osgi.wiring.package" value="org.eclipse.emf.ecore.plugin"/>
-    </requirement>
-    <requirement namespace="osgi.wiring.package">
-      <directive name="filter" value="(&amp;(osgi.wiring.package=org.eclipse.emf.ecore.resource)(version&gt;=2.41.0)(!(version&gt;=3.0.0)))"/>
-      <attribute name="osgi.wiring.package" value="org.eclipse.emf.ecore.resource"/>
-    </requirement>
-    <requirement namespace="osgi.wiring.package">
-      <directive name="filter" value="(&amp;(osgi.wiring.package=org.eclipse.emf.ecore.resource.impl)(version&gt;=2.41.0)(!(version&gt;=3.0.0)))"/>
-      <attribute name="osgi.wiring.package" value="org.eclipse.emf.ecore.resource.impl"/>
-    </requirement>
-    <requirement namespace="osgi.wiring.package">
-      <directive name="filter" value="(&amp;(osgi.wiring.package=org.eclipse.emf.ecore.util)(version&gt;=2.41.0)(!(version&gt;=3.0.0)))"/>
-      <attribute name="osgi.wiring.package" value="org.eclipse.emf.ecore.util"/>
-    </requirement>
-    <requirement namespace="osgi.wiring.package">
-      <directive name="filter" value="(&amp;(osgi.wiring.package=org.eclipse.emf.ecore.xmi)(version&gt;=2.39.0)(!(version&gt;=3.0.0)))"/>
-      <attribute name="osgi.wiring.package" value="org.eclipse.emf.ecore.xmi"/>
-    </requirement>
-    <requirement namespace="osgi.wiring.package">
-      <directive name="filter" value="(&amp;(osgi.wiring.package=org.eclipse.emf.ecore.xmi.impl)(version&gt;=2.39.0)(!(version&gt;=3.0.0)))"/>
-      <attribute name="osgi.wiring.package" value="org.eclipse.emf.ecore.xmi.impl"/>
-    </requirement>
-    <requirement namespace="osgi.wiring.package">
-      <directive name="filter" value="(&amp;(osgi.wiring.package=org.eclipse.emf.ecore.xmi.util)(version&gt;=2.39.0)(!(version&gt;=3.0.0)))"/>
-      <attribute name="osgi.wiring.package" value="org.eclipse.emf.ecore.xmi.util"/>
-    </requirement>
-    <requirement namespace="osgi.wiring.package">
-      <directive name="filter" value="(&amp;(osgi.wiring.package=org.eclipse.emf.ecore.xml.type)(version&gt;=2.41.0)(!(version&gt;=3.0.0)))"/>
-      <attribute name="osgi.wiring.package" value="org.eclipse.emf.ecore.xml.type"/>
-    </requirement>
-    <requirement namespace="osgi.wiring.package">
-      <directive name="filter" value="(&amp;(osgi.wiring.package=org.eclipse.emf.ecore.xml.type.util)(version&gt;=2.41.0)(!(version&gt;=3.0.0)))"/>
-      <attribute name="osgi.wiring.package" value="org.eclipse.emf.ecore.xml.type.util"/>
-    </requirement>
-    <requirement namespace="osgi.wiring.package">
-      <directive name="filter" value="(&amp;(osgi.wiring.package=org.eclipse.fennec.emf.osgi.configurator)(version&gt;=1.0.0)(!(version&gt;=1.1.0)))"/>
-      <attribute name="osgi.wiring.package" value="org.eclipse.fennec.emf.osgi.configurator"/>
-    </requirement>
-    <requirement namespace="osgi.wiring.package">
-      <directive name="filter" value="(&amp;(osgi.wiring.package=org.osgi.framework)(version&gt;=1.10.0)(!(version&gt;=2.0.0)))"/>
-      <attribute name="osgi.wiring.package" value="org.osgi.framework"/>
-    </requirement>
-    <requirement namespace="osgi.wiring.package">
-      <directive name="filter" value="(&amp;(osgi.wiring.package=org.osgi.service.condition)(version&gt;=1.0.0)(!(version&gt;=2.0.0)))"/>
-      <attribute name="osgi.wiring.package" value="org.osgi.service.condition"/>
-    </requirement>
-    <requirement namespace="osgi.wiring.package">
-      <directive name="filter" value="(&amp;(osgi.wiring.package=rdf)(version&gt;=1.0.0)(!(version&gt;=1.1.0)))"/>
-      <attribute name="osgi.wiring.package" value="rdf"/>
-    </requirement>
-    <requirement namespace="osgi.wiring.package">
-      <directive name="filter" value="(&amp;(osgi.wiring.package=rdf.impl)(version&gt;=1.0.0)(!(version&gt;=2.0.0)))"/>
-      <attribute name="osgi.wiring.package" value="rdf.impl"/>
-    </requirement>
-    <requirement namespace="osgi.wiring.package">
-      <directive name="filter" value="(&amp;(osgi.wiring.package=rdf.util)(version&gt;=1.0.0)(!(version&gt;=2.0.0)))"/>
-      <attribute name="osgi.wiring.package" value="rdf.util"/>
-    </requirement>
-    <requirement namespace="osgi.wiring.package">
-      <directive name="filter" value="(&amp;(osgi.wiring.package=spdx)(version&gt;=1.0.0)(!(version&gt;=1.1.0)))"/>
-      <attribute name="osgi.wiring.package" value="spdx"/>
-    </requirement>
-    <requirement namespace="osgi.wiring.package">
-      <directive name="filter" value="(&amp;(osgi.wiring.package=spdx.impl)(version&gt;=1.0.0)(!(version&gt;=2.0.0)))"/>
-      <attribute name="osgi.wiring.package" value="spdx.impl"/>
-    </requirement>
-    <requirement namespace="osgi.wiring.package">
-      <directive name="filter" value="(&amp;(osgi.wiring.package=spdx.util)(version&gt;=1.0.0)(!(version&gt;=2.0.0)))"/>
-      <attribute name="osgi.wiring.package" value="spdx.util"/>
-    </requirement>
-    <requirement namespace="osgi.wiring.package">
-      <directive name="filter" value="(&amp;(osgi.wiring.package=terms)(version&gt;=1.0.0)(!(version&gt;=1.1.0)))"/>
-      <attribute name="osgi.wiring.package" value="terms"/>
-    </requirement>
-    <requirement namespace="osgi.wiring.package">
-      <directive name="filter" value="(&amp;(osgi.wiring.package=terms.impl)(version&gt;=1.0.0)(!(version&gt;=2.0.0)))"/>
-      <attribute name="osgi.wiring.package" value="terms.impl"/>
-    </requirement>
-    <requirement namespace="osgi.wiring.package">
-      <directive name="filter" value="(&amp;(osgi.wiring.package=terms.util)(version&gt;=1.0.0)(!(version&gt;=2.0.0)))"/>
-      <attribute name="osgi.wiring.package" value="terms.util"/>
-    </requirement>
-    <requirement namespace="osgi.wiring.package">
-      <directive name="filter" value="(&amp;(osgi.wiring.package=vcard)(version&gt;=1.0.0)(!(version&gt;=1.1.0)))"/>
-      <attribute name="osgi.wiring.package" value="vcard"/>
-    </requirement>
-    <requirement namespace="osgi.wiring.package">
-      <directive name="filter" value="(&amp;(osgi.wiring.package=vcard.impl)(version&gt;=1.0.0)(!(version&gt;=2.0.0)))"/>
-      <attribute name="osgi.wiring.package" value="vcard.impl"/>
-    </requirement>
-    <requirement namespace="osgi.wiring.package">
-      <directive name="filter" value="(&amp;(osgi.wiring.package=vcard.util)(version&gt;=1.0.0)(!(version&gt;=2.0.0)))"/>
-      <attribute name="osgi.wiring.package" value="vcard.util"/>
-    </requirement>
-    <requirement namespace="osgi.ee">
-      <directive name="filter" value="(&amp;(osgi.ee=JavaSE)(version=21))"/>
-    </requirement>
-    <requirement namespace="osgi.extender">
-      <directive name="filter" value="(&amp;(osgi.extender=osgi.component)(version&gt;=1.5.0)(!(version&gt;=2.0.0)))"/>
     </requirement>
   </resource>
   <resource>
@@ -1359,6 +979,74 @@
   <resource>
     <capability namespace="osgi.identity">
       <attribute name="license" value="Eclipse Public License 2.0"/>
+      <attribute name="copyright" value="Data In Motion Consuling GmbH - All rights reserved"/>
+      <attribute name="osgi.identity" value="org.gecko.emf.util.documentation.generators.plantuml"/>
+      <attribute name="documentation" value="https://github.com/geckoprojects-org/org.gecko.emf.util"/>
+      <attribute name="description" value="Xtend Generator for Plantuml"/>
+      <attribute name="type" value="osgi.bundle"/>
+      <attribute name="version" value="1.0.0.202210201148-SNAPSHOT" type="Version"/>
+    </capability>
+    <capability namespace="osgi.wiring.package">
+      <directive name="uses" value="org.eclipse.emf.common.util,org.eclipse.emf.ecore,org.gecko.emf.util.documentation.generators.apis"/>
+      <attribute name="bundle-symbolic-name" value="org.gecko.emf.util.documentation.generators.plantuml"/>
+      <attribute name="bundle-version" value="1.0.0.202210201148-SNAPSHOT" type="Version"/>
+      <attribute name="osgi.wiring.package" value="org.gecko.emf.util.documentation.generators.plantuml"/>
+      <attribute name="version" value="1.0.0" type="Version"/>
+      <attribute name="bnd.hashes" value="-1267988481" type="List&lt;Long&gt;"/>
+    </capability>
+    <capability namespace="osgi.wiring.bundle">
+      <attribute name="bundle-version" value="1.0.0.202210201148-SNAPSHOT" type="Version"/>
+      <attribute name="osgi.wiring.bundle" value="org.gecko.emf.util.documentation.generators.plantuml"/>
+    </capability>
+    <capability namespace="osgi.wiring.host">
+      <attribute name="bundle-version" value="1.0.0.202210201148-SNAPSHOT" type="Version"/>
+      <attribute name="osgi.wiring.host" value="org.gecko.emf.util.documentation.generators.plantuml"/>
+    </capability>
+    <capability namespace="osgi.content">
+      <attribute name="size" value="38600" type="Long"/>
+      <attribute name="mime" value="application/vnd.osgi.bundle"/>
+      <attribute name="url" value="org.gecko.emf.util.documentation.generators.plantuml/org.gecko.emf.util.documentation.generators.plantuml-1.0.0.jar"/>
+      <attribute name="osgi.content" value="381C3C6C1DD0DA3E7085DBF39343B298CA248CC26AF8B91EAFE399AE19CFE38A"/>
+    </capability>
+    <requirement namespace="osgi.wiring.package">
+      <directive name="filter" value="(osgi.wiring.package=java.lang)"/>
+      <attribute name="osgi.wiring.package" value="java.lang"/>
+    </requirement>
+    <requirement namespace="osgi.wiring.package">
+      <directive name="filter" value="(osgi.wiring.package=java.lang.invoke)"/>
+      <attribute name="osgi.wiring.package" value="java.lang.invoke"/>
+    </requirement>
+    <requirement namespace="osgi.wiring.package">
+      <directive name="filter" value="(osgi.wiring.package=java.util)"/>
+      <attribute name="osgi.wiring.package" value="java.util"/>
+    </requirement>
+    <requirement namespace="osgi.wiring.package">
+      <directive name="filter" value="(osgi.wiring.package=org.eclipse.emf.common.util)"/>
+      <attribute name="osgi.wiring.package" value="org.eclipse.emf.common.util"/>
+    </requirement>
+    <requirement namespace="osgi.wiring.package">
+      <directive name="filter" value="(osgi.wiring.package=org.eclipse.emf.ecore)"/>
+      <attribute name="osgi.wiring.package" value="org.eclipse.emf.ecore"/>
+    </requirement>
+    <requirement namespace="osgi.wiring.package">
+      <directive name="filter" value="(&amp;(osgi.wiring.package=org.eclipse.xtend2.lib)(version&gt;=2.29.0)(!(version&gt;=3.0.0)))"/>
+      <attribute name="osgi.wiring.package" value="org.eclipse.xtend2.lib"/>
+    </requirement>
+    <requirement namespace="osgi.wiring.package">
+      <directive name="filter" value="(&amp;(osgi.wiring.package=org.eclipse.xtext.xbase.lib)(version&gt;=2.29.0)(!(version&gt;=3.0.0)))"/>
+      <attribute name="osgi.wiring.package" value="org.eclipse.xtext.xbase.lib"/>
+    </requirement>
+    <requirement namespace="osgi.wiring.package">
+      <directive name="filter" value="(&amp;(osgi.wiring.package=org.gecko.emf.util.documentation.generators.apis)(version&gt;=1.0.0)(!(version&gt;=2.0.0)))"/>
+      <attribute name="osgi.wiring.package" value="org.gecko.emf.util.documentation.generators.apis"/>
+    </requirement>
+    <requirement namespace="osgi.ee">
+      <directive name="filter" value="(&amp;(osgi.ee=JavaSE)(version=11))"/>
+    </requirement>
+  </resource>
+  <resource>
+    <capability namespace="osgi.identity">
+      <attribute name="license" value="Eclipse Public License 2.0"/>
       <attribute name="copyright" value="Data In Motion Consulting GmbH - All rights reserved"/>
       <attribute name="osgi.identity" value="io.apicurio.registry.rest.client"/>
       <attribute name="documentation" value="https://github.com/geckoprojects-org/org.gecko.libraries"/>
@@ -1575,565 +1263,6 @@
     <requirement namespace="osgi.service">
       <directive name="filter" value="(objectClass=org.gecko.emf.util.documentation.generators.apis.EcoreToDocumentationService)"/>
       <directive name="effective" value="active"/>
-    </requirement>
-  </resource>
-  <resource>
-    <capability namespace="osgi.identity">
-      <attribute name="license" value="Eclipse Public License 2.0"/>
-      <attribute name="copyright" value="Data In Motion Consulting GmbH - All rights reserved"/>
-      <attribute name="osgi.identity" value="org.eclipse.fennec.dcat.atlas.client.osgi"/>
-      <attribute name="documentation" value="https://github.com/eclipse-fennec/dcat.atlas"/>
-      <attribute name="description" value="OSGi DS front-end for the DCAT.Atlas client: a ConfigAdmin factory component (PID org.eclipse.fennec.dcat.atlas.client) that maps one configuration onto the shared ClientConfiguration and builds one plain-Java client per portal, publishing it as both a synchronous DcatAtlasClient and an asynchronous AsyncDcatAtlasClient tagged with its dcat.portal name. The Jakarta RS client comes from the Whiteboard's ClientBuilder."/>
-      <attribute name="type" value="osgi.bundle"/>
-      <attribute name="version" value="1.0.0.202608241135-SNAPSHOT" type="Version"/>
-    </capability>
-    <capability namespace="osgi.wiring.package">
-      <directive name="uses" value="dcat,jakarta.ws.rs.client,org.eclipse.fennec.dcat.atlas.client.api,org.osgi.util.promise"/>
-      <attribute name="bundle-symbolic-name" value="org.eclipse.fennec.dcat.atlas.client.osgi"/>
-      <attribute name="bundle-version" value="1.0.0.202608241135-SNAPSHOT" type="Version"/>
-      <attribute name="osgi.wiring.package" value="org.eclipse.fennec.dcat.atlas.client.osgi"/>
-      <attribute name="version" value="1.0.0" type="Version"/>
-      <attribute name="bnd.hashes" value="-1197803032,-1649596007,-664658906,765887698,-1923478059" type="List&lt;Long&gt;"/>
-    </capability>
-    <capability namespace="osgi.wiring.bundle">
-      <attribute name="bundle-version" value="1.0.0.202608241135-SNAPSHOT" type="Version"/>
-      <attribute name="osgi.wiring.bundle" value="org.eclipse.fennec.dcat.atlas.client.osgi"/>
-    </capability>
-    <capability namespace="osgi.wiring.host">
-      <attribute name="bundle-version" value="1.0.0.202608241135-SNAPSHOT" type="Version"/>
-      <attribute name="osgi.wiring.host" value="org.eclipse.fennec.dcat.atlas.client.osgi"/>
-    </capability>
-    <capability namespace="osgi.content">
-      <attribute name="size" value="31241" type="Long"/>
-      <attribute name="mime" value="application/vnd.osgi.bundle"/>
-      <attribute name="url" value="org.eclipse.fennec.dcat.atlas.client.osgi/org.eclipse.fennec.dcat.atlas.client.osgi-1.0.0.jar"/>
-      <attribute name="osgi.content" value="2A73F96D717FE02B874A69C2CE94D85C838D32BD61E5C83DFD8B1FD1700B0569"/>
-    </capability>
-    <capability namespace="osgi.service">
-      <directive name="uses" value="org.eclipse.fennec.dcat.atlas.client.api,org.eclipse.fennec.dcat.atlas.client.osgi"/>
-      <attribute name="objectClass" value="org.eclipse.fennec.dcat.atlas.client.api.DcatAtlasClient,org.eclipse.fennec.dcat.atlas.client.osgi.AsyncDcatAtlasClient" type="List&lt;String&gt;"/>
-    </capability>
-    <requirement namespace="osgi.wiring.package">
-      <directive name="filter" value="(&amp;(osgi.wiring.package=dcat)(version&gt;=1.0.0)(!(version&gt;=2.0.0)))"/>
-      <attribute name="osgi.wiring.package" value="dcat"/>
-    </requirement>
-    <requirement namespace="osgi.wiring.package">
-      <directive name="filter" value="(&amp;(osgi.wiring.package=jakarta.ws.rs.client)(version&gt;=3.1.0)(!(version&gt;=4.0.0)))"/>
-      <attribute name="osgi.wiring.package" value="jakarta.ws.rs.client"/>
-    </requirement>
-    <requirement namespace="osgi.wiring.package">
-      <directive name="filter" value="(osgi.wiring.package=java.lang)"/>
-      <attribute name="osgi.wiring.package" value="java.lang"/>
-    </requirement>
-    <requirement namespace="osgi.wiring.package">
-      <directive name="filter" value="(osgi.wiring.package=java.lang.annotation)"/>
-      <attribute name="osgi.wiring.package" value="java.lang.annotation"/>
-    </requirement>
-    <requirement namespace="osgi.wiring.package">
-      <directive name="filter" value="(osgi.wiring.package=java.lang.invoke)"/>
-      <attribute name="osgi.wiring.package" value="java.lang.invoke"/>
-    </requirement>
-    <requirement namespace="osgi.wiring.package">
-      <directive name="filter" value="(osgi.wiring.package=java.net)"/>
-      <attribute name="osgi.wiring.package" value="java.net"/>
-    </requirement>
-    <requirement namespace="osgi.wiring.package">
-      <directive name="filter" value="(osgi.wiring.package=java.util)"/>
-      <attribute name="osgi.wiring.package" value="java.util"/>
-    </requirement>
-    <requirement namespace="osgi.wiring.package">
-      <directive name="filter" value="(osgi.wiring.package=java.util.concurrent)"/>
-      <attribute name="osgi.wiring.package" value="java.util.concurrent"/>
-    </requirement>
-    <requirement namespace="osgi.wiring.package">
-      <directive name="filter" value="(osgi.wiring.package=java.util.function)"/>
-      <attribute name="osgi.wiring.package" value="java.util.function"/>
-    </requirement>
-    <requirement namespace="osgi.wiring.package">
-      <directive name="filter" value="(osgi.wiring.package=java.util.logging)"/>
-      <attribute name="osgi.wiring.package" value="java.util.logging"/>
-    </requirement>
-    <requirement namespace="osgi.wiring.package">
-      <directive name="filter" value="(&amp;(osgi.wiring.package=org.eclipse.fennec.dcat.atlas.client.api)(version&gt;=1.0.0)(!(version&gt;=1.1.0)))"/>
-      <attribute name="osgi.wiring.package" value="org.eclipse.fennec.dcat.atlas.client.api"/>
-    </requirement>
-    <requirement namespace="osgi.wiring.package">
-      <directive name="filter" value="(&amp;(osgi.wiring.package=org.eclipse.fennec.dcat.atlas.client.impl.spi)(version&gt;=1.0.0)(!(version&gt;=2.0.0)))"/>
-      <attribute name="osgi.wiring.package" value="org.eclipse.fennec.dcat.atlas.client.impl.spi"/>
-    </requirement>
-    <requirement namespace="osgi.wiring.package">
-      <directive name="filter" value="(&amp;(osgi.wiring.package=org.eclipse.fennec.dcat.atlas.client.osgi)(version&gt;=1.0.0)(!(version&gt;=2.0.0)))"/>
-      <attribute name="osgi.wiring.package" value="org.eclipse.fennec.dcat.atlas.client.osgi"/>
-    </requirement>
-    <requirement namespace="osgi.wiring.package">
-      <directive name="filter" value="(&amp;(osgi.wiring.package=org.osgi.util.promise)(version&gt;=1.3.0)(!(version&gt;=2.0.0)))"/>
-      <attribute name="osgi.wiring.package" value="org.osgi.util.promise"/>
-    </requirement>
-    <requirement namespace="osgi.ee">
-      <directive name="filter" value="(&amp;(osgi.ee=JavaSE)(version=21))"/>
-    </requirement>
-    <requirement namespace="osgi.extender">
-      <directive name="filter" value="(&amp;(osgi.extender=osgi.component)(version&gt;=1.5.0)(!(version&gt;=2.0.0)))"/>
-    </requirement>
-    <requirement namespace="osgi.service">
-      <directive name="filter" value="(objectClass=jakarta.ws.rs.client.ClientBuilder)"/>
-      <directive name="effective" value="active"/>
-    </requirement>
-    <requirement namespace="osgi.service">
-      <directive name="filter" value="(objectClass=org.eclipse.fennec.dcat.atlas.client.api.DcatAtlasClientFactory)"/>
-      <directive name="effective" value="active"/>
-    </requirement>
-  </resource>
-  <resource>
-    <capability namespace="osgi.identity">
-      <attribute name="license" value="Eclipse Public License 2.0"/>
-      <attribute name="copyright" value="Data In Motion Consuling GmbH - All rights reserved"/>
-      <attribute name="osgi.identity" value="org.gecko.emf.util.documentation.generators.markdown"/>
-      <attribute name="documentation" value="https://github.com/geckoprojects-org/org.gecko.emf.util"/>
-      <attribute name="description" value="Xtend Generator for Markdown"/>
-      <attribute name="type" value="osgi.bundle"/>
-      <attribute name="version" value="1.0.0.202210200810-SNAPSHOT" type="Version"/>
-    </capability>
-    <capability namespace="osgi.wiring.package">
-      <directive name="uses" value="org.eclipse.emf.common.util,org.eclipse.emf.ecore,org.gecko.emf.util.documentation.generators.apis"/>
-      <attribute name="bundle-symbolic-name" value="org.gecko.emf.util.documentation.generators.markdown"/>
-      <attribute name="bundle-version" value="1.0.0.202210200810-SNAPSHOT" type="Version"/>
-      <attribute name="osgi.wiring.package" value="org.gecko.emf.util.documentation.generators.markdown"/>
-      <attribute name="version" value="1.0.0.SNAPSHOT" type="Version"/>
-      <attribute name="bnd.hashes" value="1220263444" type="List&lt;Long&gt;"/>
-    </capability>
-    <capability namespace="osgi.wiring.bundle">
-      <attribute name="bundle-version" value="1.0.0.202210200810-SNAPSHOT" type="Version"/>
-      <attribute name="osgi.wiring.bundle" value="org.gecko.emf.util.documentation.generators.markdown"/>
-    </capability>
-    <capability namespace="osgi.wiring.host">
-      <attribute name="bundle-version" value="1.0.0.202210200810-SNAPSHOT" type="Version"/>
-      <attribute name="osgi.wiring.host" value="org.gecko.emf.util.documentation.generators.markdown"/>
-    </capability>
-    <capability namespace="osgi.content">
-      <attribute name="size" value="34129" type="Long"/>
-      <attribute name="mime" value="application/vnd.osgi.bundle"/>
-      <attribute name="url" value="org.gecko.emf.util.documentation.generators.markdown/org.gecko.emf.util.documentation.generators.markdown-1.0.0.jar"/>
-      <attribute name="osgi.content" value="2F69D1D577310DBB56A31843A0D288B46CF52F85A4E74D21544E5979E5BE36DD"/>
-    </capability>
-    <requirement namespace="osgi.wiring.package">
-      <directive name="filter" value="(osgi.wiring.package=java.lang)"/>
-      <attribute name="osgi.wiring.package" value="java.lang"/>
-    </requirement>
-    <requirement namespace="osgi.wiring.package">
-      <directive name="filter" value="(osgi.wiring.package=java.lang.invoke)"/>
-      <attribute name="osgi.wiring.package" value="java.lang.invoke"/>
-    </requirement>
-    <requirement namespace="osgi.wiring.package">
-      <directive name="filter" value="(osgi.wiring.package=java.util)"/>
-      <attribute name="osgi.wiring.package" value="java.util"/>
-    </requirement>
-    <requirement namespace="osgi.wiring.package">
-      <directive name="filter" value="(osgi.wiring.package=org.eclipse.emf.common.util)"/>
-      <attribute name="osgi.wiring.package" value="org.eclipse.emf.common.util"/>
-    </requirement>
-    <requirement namespace="osgi.wiring.package">
-      <directive name="filter" value="(osgi.wiring.package=org.eclipse.emf.ecore)"/>
-      <attribute name="osgi.wiring.package" value="org.eclipse.emf.ecore"/>
-    </requirement>
-    <requirement namespace="osgi.wiring.package">
-      <directive name="filter" value="(&amp;(osgi.wiring.package=org.eclipse.xtend2.lib)(version&gt;=2.29.0)(!(version&gt;=3.0.0)))"/>
-      <attribute name="osgi.wiring.package" value="org.eclipse.xtend2.lib"/>
-    </requirement>
-    <requirement namespace="osgi.wiring.package">
-      <directive name="filter" value="(&amp;(osgi.wiring.package=org.eclipse.xtext.xbase.lib)(version&gt;=2.29.0)(!(version&gt;=3.0.0)))"/>
-      <attribute name="osgi.wiring.package" value="org.eclipse.xtext.xbase.lib"/>
-    </requirement>
-    <requirement namespace="osgi.wiring.package">
-      <directive name="filter" value="(&amp;(osgi.wiring.package=org.gecko.emf.util.documentation.generators.apis)(version&gt;=1.0.0)(!(version&gt;=2.0.0)))"/>
-      <attribute name="osgi.wiring.package" value="org.gecko.emf.util.documentation.generators.apis"/>
-    </requirement>
-    <requirement namespace="osgi.wiring.package">
-      <directive name="filter" value="(&amp;(osgi.wiring.package=org.gecko.emf.util.documentation.generators.mermaid)(version&gt;=1.0.0)(!(version&gt;=2.0.0)))"/>
-      <attribute name="osgi.wiring.package" value="org.gecko.emf.util.documentation.generators.mermaid"/>
-    </requirement>
-    <requirement namespace="osgi.wiring.package">
-      <directive name="filter" value="(&amp;(osgi.wiring.package=org.gecko.emf.util.documentation.generators.plantuml)(version&gt;=1.0.0)(!(version&gt;=2.0.0)))"/>
-      <attribute name="osgi.wiring.package" value="org.gecko.emf.util.documentation.generators.plantuml"/>
-    </requirement>
-    <requirement namespace="osgi.ee">
-      <directive name="filter" value="(&amp;(osgi.ee=JavaSE)(version=11))"/>
-    </requirement>
-  </resource>
-  <resource>
-    <capability namespace="osgi.identity">
-      <attribute name="license" value="Eclipse Public License 2.0"/>
-      <attribute name="copyright" value="Data In Motion Consulting GmbH - All rights reserved"/>
-      <attribute name="osgi.identity" value="org.eclipse.fennec.dcat.atlas.client.impl"/>
-      <attribute name="documentation" value="https://github.com/eclipse-fennec/dcat.atlas"/>
-      <attribute name="description" value="Plain-Java implementation of the DCAT.Atlas client API: the builder-based DcatAtlasClient, XMI (de)serialisation through an EMF ResourceSet, the status-to-exception mapping, the default JakartaRsClientProvider (ClientBuilder.newBuilder() + timeouts) and the factory behind DcatAtlasClient.builder(), published as a DS service for OSGi and through META-INF/services for a plain classpath. Reused as-is by the OSGi front-end."/>
-      <attribute name="type" value="osgi.bundle"/>
-      <attribute name="version" value="1.0.0.202608241135-SNAPSHOT" type="Version"/>
-    </capability>
-    <capability namespace="osgi.wiring.package">
-      <directive name="uses" value="jakarta.ws.rs.client,org.eclipse.fennec.dcat.atlas.client.api"/>
-      <attribute name="bundle-symbolic-name" value="org.eclipse.fennec.dcat.atlas.client.impl"/>
-      <attribute name="bundle-version" value="1.0.0.202608241135-SNAPSHOT" type="Version"/>
-      <attribute name="osgi.wiring.package" value="org.eclipse.fennec.dcat.atlas.client.impl.spi"/>
-      <attribute name="version" value="1.0.0" type="Version"/>
-      <attribute name="bnd.hashes" value="-1021024749,-827838802,-1923478059" type="List&lt;Long&gt;"/>
-    </capability>
-    <capability namespace="osgi.wiring.bundle">
-      <attribute name="bundle-version" value="1.0.0.202608241135-SNAPSHOT" type="Version"/>
-      <attribute name="osgi.wiring.bundle" value="org.eclipse.fennec.dcat.atlas.client.impl"/>
-    </capability>
-    <capability namespace="osgi.wiring.host">
-      <attribute name="bundle-version" value="1.0.0.202608241135-SNAPSHOT" type="Version"/>
-      <attribute name="osgi.wiring.host" value="org.eclipse.fennec.dcat.atlas.client.impl"/>
-    </capability>
-    <capability namespace="osgi.content">
-      <attribute name="size" value="49993" type="Long"/>
-      <attribute name="mime" value="application/vnd.osgi.bundle"/>
-      <attribute name="url" value="org.eclipse.fennec.dcat.atlas.client.impl/org.eclipse.fennec.dcat.atlas.client.impl-1.0.0.jar"/>
-      <attribute name="osgi.content" value="ADC5993C4511D34409C78BA3FE92CB5F8947B1EA8DC3A5BB14FBD9F9D1760E6F"/>
-    </capability>
-    <capability namespace="osgi.service">
-      <directive name="uses" value="org.eclipse.fennec.dcat.atlas.client.api"/>
-      <attribute name="objectClass" value="org.eclipse.fennec.dcat.atlas.client.api.DcatAtlasClientFactory" type="List&lt;String&gt;"/>
-    </capability>
-    <requirement namespace="osgi.wiring.package">
-      <directive name="filter" value="(&amp;(osgi.wiring.package=adms)(version&gt;=1.0.0)(!(version&gt;=2.0.0)))"/>
-      <attribute name="osgi.wiring.package" value="adms"/>
-    </requirement>
-    <requirement namespace="osgi.wiring.package">
-      <directive name="filter" value="(&amp;(osgi.wiring.package=dcat)(version&gt;=1.0.0)(!(version&gt;=2.0.0)))"/>
-      <attribute name="osgi.wiring.package" value="dcat"/>
-    </requirement>
-    <requirement namespace="osgi.wiring.package">
-      <directive name="filter" value="(&amp;(osgi.wiring.package=foaf)(version&gt;=1.0.0)(!(version&gt;=2.0.0)))"/>
-      <attribute name="osgi.wiring.package" value="foaf"/>
-    </requirement>
-    <requirement namespace="osgi.wiring.package">
-      <directive name="filter" value="(&amp;(osgi.wiring.package=jakarta.ws.rs)(version&gt;=3.1.0)(!(version&gt;=4.0.0)))"/>
-      <attribute name="osgi.wiring.package" value="jakarta.ws.rs"/>
-    </requirement>
-    <requirement namespace="osgi.wiring.package">
-      <directive name="filter" value="(&amp;(osgi.wiring.package=jakarta.ws.rs.client)(version&gt;=3.1.0)(!(version&gt;=4.0.0)))"/>
-      <attribute name="osgi.wiring.package" value="jakarta.ws.rs.client"/>
-    </requirement>
-    <requirement namespace="osgi.wiring.package">
-      <directive name="filter" value="(&amp;(osgi.wiring.package=jakarta.ws.rs.core)(version&gt;=3.1.0)(!(version&gt;=4.0.0)))"/>
-      <attribute name="osgi.wiring.package" value="jakarta.ws.rs.core"/>
-    </requirement>
-    <requirement namespace="osgi.wiring.package">
-      <directive name="filter" value="(osgi.wiring.package=java.io)"/>
-      <attribute name="osgi.wiring.package" value="java.io"/>
-    </requirement>
-    <requirement namespace="osgi.wiring.package">
-      <directive name="filter" value="(osgi.wiring.package=java.lang)"/>
-      <attribute name="osgi.wiring.package" value="java.lang"/>
-    </requirement>
-    <requirement namespace="osgi.wiring.package">
-      <directive name="filter" value="(osgi.wiring.package=java.lang.invoke)"/>
-      <attribute name="osgi.wiring.package" value="java.lang.invoke"/>
-    </requirement>
-    <requirement namespace="osgi.wiring.package">
-      <directive name="filter" value="(osgi.wiring.package=java.net)"/>
-      <attribute name="osgi.wiring.package" value="java.net"/>
-    </requirement>
-    <requirement namespace="osgi.wiring.package">
-      <directive name="filter" value="(osgi.wiring.package=java.nio.charset)"/>
-      <attribute name="osgi.wiring.package" value="java.nio.charset"/>
-    </requirement>
-    <requirement namespace="osgi.wiring.package">
-      <directive name="filter" value="(osgi.wiring.package=java.nio.file)"/>
-      <attribute name="osgi.wiring.package" value="java.nio.file"/>
-    </requirement>
-    <requirement namespace="osgi.wiring.package">
-      <directive name="filter" value="(osgi.wiring.package=java.security)"/>
-      <attribute name="osgi.wiring.package" value="java.security"/>
-    </requirement>
-    <requirement namespace="osgi.wiring.package">
-      <directive name="filter" value="(osgi.wiring.package=java.util)"/>
-      <attribute name="osgi.wiring.package" value="java.util"/>
-    </requirement>
-    <requirement namespace="osgi.wiring.package">
-      <directive name="filter" value="(osgi.wiring.package=java.util.concurrent)"/>
-      <attribute name="osgi.wiring.package" value="java.util.concurrent"/>
-    </requirement>
-    <requirement namespace="osgi.wiring.package">
-      <directive name="filter" value="(osgi.wiring.package=java.util.function)"/>
-      <attribute name="osgi.wiring.package" value="java.util.function"/>
-    </requirement>
-    <requirement namespace="osgi.wiring.package">
-      <directive name="filter" value="(osgi.wiring.package=java.util.logging)"/>
-      <attribute name="osgi.wiring.package" value="java.util.logging"/>
-    </requirement>
-    <requirement namespace="osgi.wiring.package">
-      <directive name="filter" value="(osgi.wiring.package=java.util.stream)"/>
-      <attribute name="osgi.wiring.package" value="java.util.stream"/>
-    </requirement>
-    <requirement namespace="osgi.wiring.package">
-      <directive name="filter" value="(&amp;(osgi.wiring.package=org.eclipse.emf.common.util)(version&gt;=2.44.0)(!(version&gt;=3.0.0)))"/>
-      <attribute name="osgi.wiring.package" value="org.eclipse.emf.common.util"/>
-    </requirement>
-    <requirement namespace="osgi.wiring.package">
-      <directive name="filter" value="(&amp;(osgi.wiring.package=org.eclipse.emf.ecore)(version&gt;=2.41.0)(!(version&gt;=3.0.0)))"/>
-      <attribute name="osgi.wiring.package" value="org.eclipse.emf.ecore"/>
-    </requirement>
-    <requirement namespace="osgi.wiring.package">
-      <directive name="filter" value="(&amp;(osgi.wiring.package=org.eclipse.emf.ecore.resource)(version&gt;=2.41.0)(!(version&gt;=3.0.0)))"/>
-      <attribute name="osgi.wiring.package" value="org.eclipse.emf.ecore.resource"/>
-    </requirement>
-    <requirement namespace="osgi.wiring.package">
-      <directive name="filter" value="(&amp;(osgi.wiring.package=org.eclipse.emf.ecore.resource.impl)(version&gt;=2.41.0)(!(version&gt;=3.0.0)))"/>
-      <attribute name="osgi.wiring.package" value="org.eclipse.emf.ecore.resource.impl"/>
-    </requirement>
-    <requirement namespace="osgi.wiring.package">
-      <directive name="filter" value="(&amp;(osgi.wiring.package=org.eclipse.emf.ecore.util)(version&gt;=2.41.0)(!(version&gt;=3.0.0)))"/>
-      <attribute name="osgi.wiring.package" value="org.eclipse.emf.ecore.util"/>
-    </requirement>
-    <requirement namespace="osgi.wiring.package">
-      <directive name="filter" value="(&amp;(osgi.wiring.package=org.eclipse.emf.ecore.xmi.impl)(version&gt;=2.39.0)(!(version&gt;=3.0.0)))"/>
-      <attribute name="osgi.wiring.package" value="org.eclipse.emf.ecore.xmi.impl"/>
-    </requirement>
-    <requirement namespace="osgi.wiring.package">
-      <directive name="filter" value="(&amp;(osgi.wiring.package=org.eclipse.fennec.dcat.atlas.client.api)(version&gt;=1.0.0)(!(version&gt;=1.1.0)))"/>
-      <attribute name="osgi.wiring.package" value="org.eclipse.fennec.dcat.atlas.client.api"/>
-    </requirement>
-    <requirement namespace="osgi.wiring.package">
-      <directive name="filter" value="(&amp;(osgi.wiring.package=org.eclipse.fennec.dcat.atlas.client.impl.spi)(version&gt;=1.0.0)(!(version&gt;=2.0.0)))"/>
-      <attribute name="osgi.wiring.package" value="org.eclipse.fennec.dcat.atlas.client.impl.spi"/>
-    </requirement>
-    <requirement namespace="osgi.wiring.package">
-      <directive name="filter" value="(&amp;(osgi.wiring.package=rdf)(version&gt;=1.0.0)(!(version&gt;=2.0.0)))"/>
-      <attribute name="osgi.wiring.package" value="rdf"/>
-    </requirement>
-    <requirement namespace="osgi.wiring.package">
-      <directive name="filter" value="(&amp;(osgi.wiring.package=spdx)(version&gt;=1.0.0)(!(version&gt;=2.0.0)))"/>
-      <attribute name="osgi.wiring.package" value="spdx"/>
-    </requirement>
-    <requirement namespace="osgi.wiring.package">
-      <directive name="filter" value="(&amp;(osgi.wiring.package=terms)(version&gt;=1.0.0)(!(version&gt;=2.0.0)))"/>
-      <attribute name="osgi.wiring.package" value="terms"/>
-    </requirement>
-    <requirement namespace="osgi.wiring.package">
-      <directive name="filter" value="(&amp;(osgi.wiring.package=vcard)(version&gt;=1.0.0)(!(version&gt;=2.0.0)))"/>
-      <attribute name="osgi.wiring.package" value="vcard"/>
-    </requirement>
-    <requirement namespace="osgi.ee">
-      <directive name="filter" value="(&amp;(osgi.ee=JavaSE)(version=21))"/>
-    </requirement>
-    <requirement namespace="osgi.extender">
-      <directive name="filter" value="(&amp;(osgi.extender=osgi.component)(version&gt;=1.5.0)(!(version&gt;=2.0.0)))"/>
-    </requirement>
-  </resource>
-  <resource>
-    <capability namespace="osgi.identity">
-      <attribute name="license" value="Eclipse Public License 2.0"/>
-      <attribute name="copyright" value="Data In Motion Consulting GmbH - All rights reserved"/>
-      <attribute name="osgi.identity" value="io.apicurio.registry.client"/>
-      <attribute name="documentation" value="https://github.com/geckoprojects-org/org.gecko.libraries"/>
-      <attribute name="type" value="osgi.bundle"/>
-      <attribute name="version" value="3.0.0.M2" type="Version"/>
-    </capability>
-    <capability namespace="osgi.wiring.package">
-      <directive name="uses" value="io.apicurio.registry.rest.v2.beans,io.apicurio.registry.types,io.apicurio.rest.client.auth,io.apicurio.rest.client.spi"/>
-      <attribute name="bundle-symbolic-name" value="io.apicurio.registry.client"/>
-      <attribute name="bundle-version" value="3.0.0.M2" type="Version"/>
-      <attribute name="osgi.wiring.package" value="io.apicurio.registry.rest.client"/>
-      <attribute name="version" value="3.0.0" type="Version"/>
-      <attribute name="bnd.hashes" value="715494362,1717767120,1150483080,180577634" type="List&lt;Long&gt;"/>
-    </capability>
-    <capability namespace="osgi.wiring.package">
-      <attribute name="bundle-symbolic-name" value="io.apicurio.registry.client"/>
-      <attribute name="bundle-version" value="3.0.0.M2" type="Version"/>
-      <attribute name="osgi.wiring.package" value="io.apicurio.registry.rest.client.config"/>
-      <attribute name="version" value="3.0.0" type="Version"/>
-      <attribute name="bnd.hashes" value="-1731103987" type="List&lt;Long&gt;"/>
-    </capability>
-    <capability namespace="osgi.wiring.package">
-      <directive name="uses" value="io.apicurio.registry.rest.v2.beans,io.apicurio.rest.client.error"/>
-      <attribute name="bundle-symbolic-name" value="io.apicurio.registry.client"/>
-      <attribute name="bundle-version" value="3.0.0.M2" type="Version"/>
-      <attribute name="osgi.wiring.package" value="io.apicurio.registry.rest.client.exception"/>
-      <attribute name="version" value="3.0.0" type="Version"/>
-      <attribute name="bnd.hashes" value="-1017177093,-608590739,-95163186,-646165371,-2143224311,1643655293,2023933255,259597540,1371765584,1524307969,-1611971349,1195516903,-1591430164,35106156,1890380234,-1818544159,-1230607730,-557501813,29979776,-30333005,1638136042,111710768,519049555,-1415935960,1531488791,959349988,-1317388058,-1636288831,368055435,204377334,1950218652,1671937438,1597241011,622118600" type="List&lt;Long&gt;"/>
-    </capability>
-    <capability namespace="osgi.wiring.package">
-      <directive name="uses" value="com.fasterxml.jackson.core,io.apicurio.registry.rest.client,io.apicurio.registry.rest.client.exception,io.apicurio.registry.rest.v2.beans,io.apicurio.registry.types,io.apicurio.rest.client.error,io.apicurio.rest.client.spi"/>
-      <attribute name="bundle-symbolic-name" value="io.apicurio.registry.client"/>
-      <attribute name="bundle-version" value="3.0.0.M2" type="Version"/>
-      <attribute name="osgi.wiring.package" value="io.apicurio.registry.rest.client.impl"/>
-      <attribute name="version" value="3.0.0" type="Version"/>
-      <attribute name="bnd.hashes" value="1942416666,1105434690,-1308222706,1982155976" type="List&lt;Long&gt;"/>
-    </capability>
-    <capability namespace="osgi.wiring.package">
-      <attribute name="bundle-symbolic-name" value="io.apicurio.registry.client"/>
-      <attribute name="bundle-version" value="3.0.0.M2" type="Version"/>
-      <attribute name="osgi.wiring.package" value="io.apicurio.registry.rest.client.request"/>
-      <attribute name="version" value="3.0.0" type="Version"/>
-      <attribute name="bnd.hashes" value="-1842766326" type="List&lt;Long&gt;"/>
-    </capability>
-    <capability namespace="osgi.wiring.package">
-      <directive name="uses" value="com.fasterxml.jackson.core,io.apicurio.registry.rest.v2.beans,io.apicurio.registry.types,io.apicurio.rest.client.request"/>
-      <attribute name="bundle-symbolic-name" value="io.apicurio.registry.client"/>
-      <attribute name="bundle-version" value="3.0.0.M2" type="Version"/>
-      <attribute name="osgi.wiring.package" value="io.apicurio.registry.rest.client.request.provider"/>
-      <attribute name="version" value="3.0.0" type="Version"/>
-      <attribute name="bnd.hashes" value="-229318876,1547924052,-103006928,-1841265814,591055805,-1880959011" type="List&lt;Long&gt;"/>
-    </capability>
-    <capability namespace="osgi.wiring.bundle">
-      <attribute name="bundle-version" value="3.0.0.M2" type="Version"/>
-      <attribute name="osgi.wiring.bundle" value="io.apicurio.registry.client"/>
-    </capability>
-    <capability namespace="osgi.wiring.host">
-      <attribute name="bundle-version" value="3.0.0.M2" type="Version"/>
-      <attribute name="osgi.wiring.host" value="io.apicurio.registry.client"/>
-    </capability>
-    <capability namespace="osgi.content">
-      <attribute name="size" value="170864" type="Long"/>
-      <attribute name="mime" value="application/vnd.osgi.bundle"/>
-      <attribute name="url" value="io.apicurio.registry.client/io.apicurio.registry.client-3.0.0.jar"/>
-      <attribute name="osgi.content" value="4DEA3218E05598527382E1DBB4A6C6ED5C51F29179751651EF2ADFBF0C819B08"/>
-    </capability>
-    <requirement namespace="osgi.wiring.package">
-      <directive name="filter" value="(osgi.wiring.package=com.fasterxml.jackson.core)"/>
-      <attribute name="osgi.wiring.package" value="com.fasterxml.jackson.core"/>
-    </requirement>
-    <requirement namespace="osgi.wiring.package">
-      <directive name="filter" value="(osgi.wiring.package=com.fasterxml.jackson.core.type)"/>
-      <attribute name="osgi.wiring.package" value="com.fasterxml.jackson.core.type"/>
-    </requirement>
-    <requirement namespace="osgi.wiring.package">
-      <directive name="filter" value="(osgi.wiring.package=com.fasterxml.jackson.databind)"/>
-      <attribute name="osgi.wiring.package" value="com.fasterxml.jackson.databind"/>
-    </requirement>
-    <requirement namespace="osgi.wiring.package">
-      <directive name="filter" value="(osgi.wiring.package=io.apicurio.registry.rest.v2.beans)"/>
-      <attribute name="osgi.wiring.package" value="io.apicurio.registry.rest.v2.beans"/>
-    </requirement>
-    <requirement namespace="osgi.wiring.package">
-      <directive name="filter" value="(osgi.wiring.package=io.apicurio.registry.types)"/>
-      <attribute name="osgi.wiring.package" value="io.apicurio.registry.types"/>
-    </requirement>
-    <requirement namespace="osgi.wiring.package">
-      <directive name="filter" value="(osgi.wiring.package=io.apicurio.registry.utils)"/>
-      <attribute name="osgi.wiring.package" value="io.apicurio.registry.utils"/>
-    </requirement>
-    <requirement namespace="osgi.wiring.package">
-      <directive name="filter" value="(osgi.wiring.package=io.apicurio.rest.client.auth)"/>
-      <attribute name="osgi.wiring.package" value="io.apicurio.rest.client.auth"/>
-    </requirement>
-    <requirement namespace="osgi.wiring.package">
-      <directive name="filter" value="(osgi.wiring.package=io.apicurio.rest.client.auth.exception)"/>
-      <attribute name="osgi.wiring.package" value="io.apicurio.rest.client.auth.exception"/>
-    </requirement>
-    <requirement namespace="osgi.wiring.package">
-      <directive name="filter" value="(osgi.wiring.package=io.apicurio.rest.client.error)"/>
-      <attribute name="osgi.wiring.package" value="io.apicurio.rest.client.error"/>
-    </requirement>
-    <requirement namespace="osgi.wiring.package">
-      <directive name="filter" value="(osgi.wiring.package=io.apicurio.rest.client.request)"/>
-      <attribute name="osgi.wiring.package" value="io.apicurio.rest.client.request"/>
-    </requirement>
-    <requirement namespace="osgi.wiring.package">
-      <directive name="filter" value="(osgi.wiring.package=io.apicurio.rest.client.spi)"/>
-      <attribute name="osgi.wiring.package" value="io.apicurio.rest.client.spi"/>
-    </requirement>
-    <requirement namespace="osgi.wiring.package">
-      <directive name="filter" value="(osgi.wiring.package=java.io)"/>
-      <attribute name="osgi.wiring.package" value="java.io"/>
-    </requirement>
-    <requirement namespace="osgi.wiring.package">
-      <directive name="filter" value="(osgi.wiring.package=java.lang)"/>
-      <attribute name="osgi.wiring.package" value="java.lang"/>
-    </requirement>
-    <requirement namespace="osgi.wiring.package">
-      <directive name="filter" value="(osgi.wiring.package=java.lang.invoke)"/>
-      <attribute name="osgi.wiring.package" value="java.lang.invoke"/>
-    </requirement>
-    <requirement namespace="osgi.wiring.package">
-      <directive name="filter" value="(osgi.wiring.package=java.nio.charset)"/>
-      <attribute name="osgi.wiring.package" value="java.nio.charset"/>
-    </requirement>
-    <requirement namespace="osgi.wiring.package">
-      <directive name="filter" value="(osgi.wiring.package=java.util)"/>
-      <attribute name="osgi.wiring.package" value="java.util"/>
-    </requirement>
-    <requirement namespace="osgi.wiring.package">
-      <directive name="filter" value="(osgi.wiring.package=java.util.function)"/>
-      <attribute name="osgi.wiring.package" value="java.util.function"/>
-    </requirement>
-    <requirement namespace="osgi.wiring.package">
-      <directive name="filter" value="(osgi.wiring.package=org.slf4j)"/>
-      <attribute name="osgi.wiring.package" value="org.slf4j"/>
-    </requirement>
-    <requirement namespace="osgi.ee">
-      <directive name="filter" value="(&amp;(osgi.ee=JavaSE)(version=11))"/>
-    </requirement>
-  </resource>
-  <resource>
-    <capability namespace="osgi.identity">
-      <attribute name="license" value="Eclipse Public License 2.0"/>
-      <attribute name="copyright" value="Data In Motion Consuling GmbH - All rights reserved"/>
-      <attribute name="osgi.identity" value="org.gecko.emf.util.documentation.generators.plantuml"/>
-      <attribute name="documentation" value="https://github.com/geckoprojects-org/org.gecko.emf.util"/>
-      <attribute name="description" value="Xtend Generator for Plantuml"/>
-      <attribute name="type" value="osgi.bundle"/>
-      <attribute name="version" value="1.0.0.202210201148-SNAPSHOT" type="Version"/>
-    </capability>
-    <capability namespace="osgi.wiring.package">
-      <directive name="uses" value="org.eclipse.emf.common.util,org.eclipse.emf.ecore,org.gecko.emf.util.documentation.generators.apis"/>
-      <attribute name="bundle-symbolic-name" value="org.gecko.emf.util.documentation.generators.plantuml"/>
-      <attribute name="bundle-version" value="1.0.0.202210201148-SNAPSHOT" type="Version"/>
-      <attribute name="osgi.wiring.package" value="org.gecko.emf.util.documentation.generators.plantuml"/>
-      <attribute name="version" value="1.0.0" type="Version"/>
-      <attribute name="bnd.hashes" value="-1267988481" type="List&lt;Long&gt;"/>
-    </capability>
-    <capability namespace="osgi.wiring.bundle">
-      <attribute name="bundle-version" value="1.0.0.202210201148-SNAPSHOT" type="Version"/>
-      <attribute name="osgi.wiring.bundle" value="org.gecko.emf.util.documentation.generators.plantuml"/>
-    </capability>
-    <capability namespace="osgi.wiring.host">
-      <attribute name="bundle-version" value="1.0.0.202210201148-SNAPSHOT" type="Version"/>
-      <attribute name="osgi.wiring.host" value="org.gecko.emf.util.documentation.generators.plantuml"/>
-    </capability>
-    <capability namespace="osgi.content">
-      <attribute name="size" value="38600" type="Long"/>
-      <attribute name="mime" value="application/vnd.osgi.bundle"/>
-      <attribute name="url" value="org.gecko.emf.util.documentation.generators.plantuml/org.gecko.emf.util.documentation.generators.plantuml-1.0.0.jar"/>
-      <attribute name="osgi.content" value="381C3C6C1DD0DA3E7085DBF39343B298CA248CC26AF8B91EAFE399AE19CFE38A"/>
-    </capability>
-    <requirement namespace="osgi.wiring.package">
-      <directive name="filter" value="(osgi.wiring.package=java.lang)"/>
-      <attribute name="osgi.wiring.package" value="java.lang"/>
-    </requirement>
-    <requirement namespace="osgi.wiring.package">
-      <directive name="filter" value="(osgi.wiring.package=java.lang.invoke)"/>
-      <attribute name="osgi.wiring.package" value="java.lang.invoke"/>
-    </requirement>
-    <requirement namespace="osgi.wiring.package">
-      <directive name="filter" value="(osgi.wiring.package=java.util)"/>
-      <attribute name="osgi.wiring.package" value="java.util"/>
-    </requirement>
-    <requirement namespace="osgi.wiring.package">
-      <directive name="filter" value="(osgi.wiring.package=org.eclipse.emf.common.util)"/>
-      <attribute name="osgi.wiring.package" value="org.eclipse.emf.common.util"/>
-    </requirement>
-    <requirement namespace="osgi.wiring.package">
-      <directive name="filter" value="(osgi.wiring.package=org.eclipse.emf.ecore)"/>
-      <attribute name="osgi.wiring.package" value="org.eclipse.emf.ecore"/>
-    </requirement>
-    <requirement namespace="osgi.wiring.package">
-      <directive name="filter" value="(&amp;(osgi.wiring.package=org.eclipse.xtend2.lib)(version&gt;=2.29.0)(!(version&gt;=3.0.0)))"/>
-      <attribute name="osgi.wiring.package" value="org.eclipse.xtend2.lib"/>
-    </requirement>
-    <requirement namespace="osgi.wiring.package">
-      <directive name="filter" value="(&amp;(osgi.wiring.package=org.eclipse.xtext.xbase.lib)(version&gt;=2.29.0)(!(version&gt;=3.0.0)))"/>
-      <attribute name="osgi.wiring.package" value="org.eclipse.xtext.xbase.lib"/>
-    </requirement>
-    <requirement namespace="osgi.wiring.package">
-      <directive name="filter" value="(&amp;(osgi.wiring.package=org.gecko.emf.util.documentation.generators.apis)(version&gt;=1.0.0)(!(version&gt;=2.0.0)))"/>
-      <attribute name="osgi.wiring.package" value="org.gecko.emf.util.documentation.generators.apis"/>
-    </requirement>
-    <requirement namespace="osgi.ee">
-      <directive name="filter" value="(&amp;(osgi.ee=JavaSE)(version=11))"/>
     </requirement>
   </resource>
 </repository>
