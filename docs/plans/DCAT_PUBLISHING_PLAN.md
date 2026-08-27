@@ -258,6 +258,32 @@ for the configuration to actually hold:
   never counts as a mismatch: empty is what startup looks like while codecs come up, and stripping
   every Distribution then would leave nothing to put them back.
 
+### A vanished scope, as built (O16, 2026-08-27)
+
+**Because `dcat:dataset` is a non-containment reference, a Catalog going away drops the memberships
+it held and says nothing about the Datasets themselves.** That is what makes row 4 of the table above
+simple, once stated. `atlas → jena`, with Dataset A defined in `jena` and Dataset B inherited from
+`atlas`; `jena` disappears:
+
+- **the Catalog `jena` is retired** — deleted under `DELETE`/`CASCADE`, emptied and kept under
+  `UNLINK`, untouched-but-emptied when it is adopted (never deleted, whatever the mode says: what
+  somebody else's catalogue looks like once our models leave it is not ours to decide);
+- **Dataset B survives**, still listed by `atlas`'s Catalog and by any other descendant's. It belongs
+  to the scope that defines it, and losing a Catalog that merely listed it is not a statement about
+  it;
+- **Dataset A is retired by its own package unbind**, which unlinks it from every Catalog that listed
+  it — a descendant `nawerker` included — before deleting anything. A Catalog is never left
+  advertising a Dataset that is gone.
+
+The two retirements are independent tasks and **either order is correct**: if the Catalog goes first,
+the Dataset's unlink from it finds nothing, which is tolerated; if the Dataset goes first, the Catalog
+is already empty of it. Enforcing an order would need cross-task sequencing for no benefit.
+
+Both are debounced like any other retirement, because a scope service reappears too — a configuration
+update is an unbind followed by a bind, and a returning scope cancels its Catalog's retirement. The
+Catalog id and the list of Datasets it was holding are **captured before the scope leaves the map**:
+afterwards there is no `ScopeInfo` to resolve an id from and no hierarchy to say what it was listing.
+
 ### As built (D2a, 2026-08-27)
 
 `ScopeHierarchy` is an immutable snapshot built per operation from the bound `ScopeInfo`s, not
@@ -875,12 +901,8 @@ ours to decide.
   gone from the runtime is not re-asserted, since nothing left knows it should be. Preserving
   memberships this publisher did not create is the same problem as writing to an adopted Catalog,
   and belongs with D1a.
-- **Deferred, and on purpose:** the unlink does **not** fan out over descendant Catalogs (added in
-  D2a), and a vanished scope's **Catalog resource is left in place**. Under `UNLINK` the outcome is
-  already right — the scope's packages unbind with it, so each Dataset retires itself and the
-  Catalog ends up listing nothing. D1a settled the ownership half of the Catalog-deletion question;
-  what remains is the portal's delete semantics for a Catalog that still lists Datasets and the
-  ordering against their own retirements. See §7a's as-built note.
+- The unlink fans out over descendant Catalogs (added in D2a), and a vanished scope's Catalog is
+  retired too — see below.
 
 ---
 
@@ -974,6 +996,7 @@ implementation rather than a preference.
 | **O13** | how the publisher learns the flag | **an `EPackage` service property**, so the tracker's filter decides and unbind means retire |
 | **O14** | are Catalogs nested with `dcat:catalog` | **no — never, for any Catalog** (2026-08-27) |
 | **O15** | who authorizes the writes that decide publication | **an APISIX + Keycloak in front of both the portal and the atlas** (2026-08-27) |
+| **O16** | what happens to a vanished scope's Catalog and to the Datasets in it | **the Catalog is retired per the mode; only the Datasets that scope defined are retired with it — inherited ones survive** (2026-08-27) |
 
 **O1 — `b64url(nsURI)`.** A portal id is permanent and a slug collision is not repairable after
 publication, so opacity wins over readability. `dct:identifier` carries the readable nsURI and
@@ -1090,6 +1113,14 @@ publisher pushes from there, so a portal-only login would protect reading the ca
 leaving the write that fills it unauthenticated. It also settles what this plan does about
 authorization, which is nothing: the atlas models no user, and an endpoint-by-endpoint scheme is how
 two endpoints come to disagree about who may publish.
+
+**O16 — a vanished scope's Catalog (decided 2026-08-27).** The question that blocked §8's fourth row
+was what deleting a Catalog does to the Datasets in it, and the answer is nothing: `dcat:dataset` is a
+non-containment reference. So the Catalog is retired per `unpublish.mode`, the Datasets the scope
+*defined* are retired by their own unbinds — unlinked from every descendant Catalog first, then
+deleted — and the ones it merely *inherited* stay published, because they belong to the scope that
+defines them and are still listed there. No ordering constraint between the two follows from this,
+which is why none is imposed.
 
 **O5b — availability belongs to the DCAT side.** There is an existing DCAT.Atlas issue for an
 availability check on (at least) the Distribution URL; that is the right home for it, because a

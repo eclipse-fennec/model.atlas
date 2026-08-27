@@ -272,6 +272,10 @@ public class DcatPublisher implements HealthCheck {
             return;
         }
         scopes.put(scopeName, info);
+        RetirementQueue queue = retirements;
+        if (queue != null && queue.cancel(catalogRetirementKey(scopeName))) {
+            LOGGER.fine(() -> "Scope " + scopeName + " came back inside the unpublish window; its Catalog stays");
+        }
         if (active) {
             publishCatalog(scopeName);
             relinkDescendantCatalogs(scopeName);
@@ -283,20 +287,114 @@ public class DcatPublisher implements HealthCheck {
         if (scopeName == null) {
             return;
         }
+        // Resolved and captured *before* the scope leaves the map: afterwards there is no ScopeInfo
+        // to resolve an id from, and no hierarchy to say which Datasets this Catalog was listing.
+        ResolvedCatalog resolved = resolveCatalog(scopeName);
+        boolean wasPublished = publishable(scopeName);
+        Set<String> listedDatasets = datasetsListedIn(scopeName);
         scopes.remove(scopeName);
-        if (!retirementAllowed()) {
+
+        if (!retirementAllowed() || !wasPublished || resolved.id() == null) {
             return;
         }
-        // The Catalog resource itself is not retired, and that is a decision rather than an
-        // omission. Under UNLINK — the default — there is nothing to do: a scope going away takes
-        // its EPackage services with it, so each Dataset retires itself through the unbind below
-        // and the Catalog ends up listing nothing, which is exactly what UNLINK means. Deleting
-        // the Catalog is the only part that differs, and it is the part that needs to know whether
-        // the Catalog is ours: for an adopted Catalog, DELETE and CASCADE must be capped at UNLINK
-        // (§7a). That ownership answer is D1a, and guessing it would risk deleting a Catalog we
-        // were only ever a contributor to.
-        LOGGER.info(() -> "Scope " + scopeName + " went away; its Datasets retire themselves and the Catalog "
-                + "resource is left in place (deleting it needs the ownership resolution of D1a)");
+        UnpublishMode mode = unpublishMode;
+        if (mode == UnpublishMode.NONE) {
+            LOGGER.info(() -> "Scope " + scopeName + " went away; unpublish.mode is NONE, so the portal keeps its "
+                    + "Catalog and every link in it");
+            return;
+        }
+        RetirementQueue queue = retirements;
+        if (queue == null) {
+            return;
+        }
+        String catalogId = resolved.id();
+        boolean adopted = resolved.adopted();
+        // Debounced like a Dataset retirement, and for the same reason: a scope service also
+        // reappears — a configuration update is an unbind followed by a bind.
+        queue.schedule(catalogRetirementKey(scopeName), unpublishDelayMillis,
+                () -> retireCatalog(scopeName, catalogId, adopted, mode, listedDatasets));
+    }
+
+    private static String catalogRetirementKey(String scopeName) {
+        return "catalog:" + scopeName;
+    }
+
+    /**
+     * Retires the Catalog of a scope that no longer exists.
+     *
+     * <h2>What a Catalog going away means for its Datasets — and does not</h2>
+     *
+     * {@code dcat:dataset} is a <em>non-containment</em> reference, so losing a Catalog drops the
+     * memberships it held and says nothing about the Datasets themselves. That is exactly right:
+     * an <em>inherited</em> Dataset belongs to the ancestor scope that defines it and stays
+     * published, still listed by that scope's Catalog and by any other descendant's. Only the
+     * Datasets this scope <em>defined</em> are retired, and they are retired by their own package
+     * unbinds — which unlink them from every Catalog that listed them, descendants included, before
+     * deleting anything. A Catalog is never left advertising a Dataset that is gone.
+     *
+     * <p>
+     * The two retirements are independent and either order is correct. If the Catalog goes first,
+     * the Dataset's unlink from it simply finds nothing, which is tolerated; if the Dataset goes
+     * first, the Catalog is already empty of it when it is deleted.
+     * </p>
+     *
+     * @param datasetIds the Datasets this Catalog was listing, captured while the tree was intact
+     */
+    private void retireCatalog(String scopeName, String catalogId, boolean adopted, UnpublishMode mode,
+            Set<String> datasetIds) {
+        submit(catalogRetirementKey(scopeName), "retiring the Catalog for scope " + scopeName, portal -> {
+            requireReady(portal, "retiring the Catalog for scope " + scopeName);
+            if (adopted || mode == UnpublishMode.UNLINK) {
+                // An adopted Catalog is never deleted whatever the mode says: it is somebody else's,
+                // and what it looks like once our models are out of it is not ours to decide. UNLINK
+                // keeps our own Catalog too — but it must stop advertising models for a scope that
+                // no longer exists.
+                datasetIds.forEach(datasetId -> unlink(portal, catalogId, datasetId));
+                LOGGER.info(() -> "Retired Catalog " + catalogId + " for the vanished scope " + scopeName + ": "
+                        + datasetIds.size() + " membership(s) dropped, the resource "
+                        + (adopted ? "is adopted and untouched" : "stays"));
+                return null;
+            }
+            try {
+                if (mode == UnpublishMode.CASCADE) {
+                    List<String> rewritten = portal.delete(DcatCollection.CATALOGS, catalogId, DeleteMode.CASCADE);
+                    LOGGER.info(() -> "Deleted Catalog " + catalogId + " (CASCADE); the portal rewrote " + rewritten);
+                    return null;
+                }
+                // Drop our memberships first so that nothing depends on the order in which this and
+                // the Datasets' own retirements run.
+                datasetIds.forEach(datasetId -> unlink(portal, catalogId, datasetId));
+                portal.delete(DcatCollection.CATALOGS, catalogId, DeleteMode.SINGLE);
+                LOGGER.info(() -> "Deleted Catalog " + catalogId + " for the vanished scope " + scopeName);
+            } catch (NotFoundException alreadyGone) {
+                LOGGER.fine(() -> "Catalog " + catalogId + " was already gone from the portal");
+            } catch (ConflictException referrers) {
+                LOGGER.warning(() -> "Catalog " + catalogId + " is still referenced, so it was emptied but not "
+                        + "deleted: " + referrers.getMessage());
+            }
+            return null;
+        });
+    }
+
+    /** The Datasets a scope's Catalog lists: the ones it defines, plus everything it inherits. */
+    private Set<String> datasetsListedIn(String scopeName) {
+        Set<String> inheritedFrom = new LinkedHashSet<>(hierarchy().ancestors(scopeName));
+        Set<String> datasetIds = new LinkedHashSet<>();
+        trackedPackages.forEach((datasetId, tracked) -> {
+            if (listedIn(scopeName, inheritedFrom, tracked.target())) {
+                datasetIds.add(datasetId);
+            }
+        });
+        return datasetIds;
+    }
+
+    /** Whether a Catalog for {@code catalogScope} should list this target's Dataset. */
+    private boolean listedIn(String catalogScope, Set<String> ancestorsOfCatalogScope, PublicationTarget target) {
+        String defining = target.scope();
+        if (!catalogScope.equals(defining) && !ancestorsOfCatalogScope.contains(defining)) {
+            return false;
+        }
+        return stagePermitted(target);
     }
 
     /**
@@ -1096,11 +1194,7 @@ public class DcatPublisher implements HealthCheck {
     private void relinkDatasets(DcatAtlasClient portal, String catalogId, String scope) {
         Set<String> inheritedFrom = new LinkedHashSet<>(hierarchy().ancestors(scope));
         trackedPackages.forEach((datasetId, tracked) -> {
-            String defining = tracked.target().scope();
-            if (!scope.equals(defining) && !inheritedFrom.contains(defining)) {
-                return;
-            }
-            if (!stagePermitted(tracked.target())) {
+            if (!listedIn(scope, inheritedFrom, tracked.target())) {
                 return;
             }
             try {

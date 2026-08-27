@@ -896,6 +896,107 @@ public class DcatPublisherIT {
                 "nothing here should take the atlas out of a load balancer");
     }
 
+    // ---- a scope going away ------------------------------------------------
+
+    @Test
+    public void aVanishedScopeTakesItsCatalogAndItsOwnDatasetsOnly(
+            @InjectConfiguration(withFactoryConfig = @WithFactoryConfiguration(factoryPid = CLIENT_PID,
+                    name = PORTAL + "24", location = "?")) Configuration clientConfig,
+            @InjectConfiguration(withFactoryConfig = @WithFactoryConfiguration(factoryPid = PUBLISHER_PID,
+                    name = PORTAL + "24", location = "?")) Configuration publisherConfig,
+            @InjectBundleContext BundleContext context) throws Exception {
+
+        clientConfig.update(clientProps());
+
+        // v-parent -> v-child -> v-grandchild, and v-child is the one that goes away.
+        ServiceRegistration<?> parent = StubScopeService.register(context, "v-parent", null);
+        ServiceRegistration<?> child = StubScopeService.register(context, "v-child", "v-parent");
+        ServiceRegistration<?> grandchild = StubScopeService.register(context, "v-grandchild", "v-child");
+        Hashtable<String, Object> props = publisherProps("v-parent", false);
+        props.put("scopes", new String[] { "v-parent", "v-child", "v-grandchild" });
+        props.put("unpublish.mode", "DELETE");
+        publisherConfig.update(props);
+
+        // A is defined by the scope that disappears; B is defined by its parent and only inherited.
+        String nsUriA = "http://test.example.com/vanish-own/1.0";
+        String nsUriB = "http://test.example.com/vanish-inherited/1.0";
+        String datasetA = datasetId("v-child", nsUriA, PublishablePackages.FINAL_STAGE);
+        String datasetB = datasetId("v-parent", nsUriB, PublishablePackages.FINAL_STAGE);
+        ServiceRegistration<?> packageA = PublishablePackages.register(context, "v-child", nsUriA,
+                PublishablePackages.FINAL_STAGE, FINGERPRINT, true);
+        ServiceRegistration<?> packageB = PublishablePackages.register(context, "v-parent", nsUriB,
+                PublishablePackages.FINAL_STAGE, FINGERPRINT, true);
+        try {
+            assertNotNull(await(portalRestBase + "/datasets/" + datasetA), "setup: A should publish");
+            assertNotNull(await(portalRestBase + "/datasets/" + datasetB), "setup: B should publish");
+            assertTrue(awaitCatalogTerm("v-child", datasetA, true), "setup: v-child should list its own Dataset");
+            assertTrue(awaitCatalogTerm("v-grandchild", datasetA, true), "setup: the descendant should list A");
+            assertTrue(awaitCatalogTerm("v-child", datasetB, true), "setup: v-child should list the inherited B");
+
+            // The scope's configuration is deleted: its scope service and its packages go with it.
+            packageA.unregister();
+            child.unregister();
+
+            assertTrue(awaitGone(portalRestBase + "/catalogs/v-child"), "the vanished scope's Catalog should go");
+            // A was linked into a descendant's Catalog too, so it has to be unlinked there before it
+            // can be deleted — and a Catalog must never be left advertising a Dataset that is gone.
+            assertTrue(awaitCatalogTerm("v-grandchild", datasetA, false),
+                    "the descendant Catalog must stop listing the deleted Dataset");
+            assertTrue(awaitGone(portalRestBase + "/datasets/" + datasetA),
+                    "a Dataset the vanished scope defined should be deleted");
+
+            // B belongs to the parent scope. dcat:dataset is a non-containment reference, so losing
+            // the Catalog that linked it says nothing about the Dataset itself.
+            assertNotNull(get(portalRestBase + "/datasets/" + datasetB),
+                    "an inherited Dataset must survive the scope that merely listed it");
+            assertTrue(awaitCatalogTerm("v-parent", datasetB, true),
+                    "and must still be listed by the scope that defines it");
+        } finally {
+            packageB.unregister();
+            grandchild.unregister();
+            parent.unregister();
+        }
+    }
+
+    @Test
+    public void unlinkModeEmptiesAVanishedScopeCatalogWithoutDeletingIt(
+            @InjectConfiguration(withFactoryConfig = @WithFactoryConfiguration(factoryPid = CLIENT_PID,
+                    name = PORTAL + "25", location = "?")) Configuration clientConfig,
+            @InjectConfiguration(withFactoryConfig = @WithFactoryConfiguration(factoryPid = PUBLISHER_PID,
+                    name = PORTAL + "25", location = "?")) Configuration publisherConfig,
+            @InjectBundleContext BundleContext context) throws Exception {
+
+        clientConfig.update(clientProps());
+
+        ServiceRegistration<?> parent = StubScopeService.register(context, "u-parent", null);
+        ServiceRegistration<?> child = StubScopeService.register(context, "u-child", "u-parent");
+        Hashtable<String, Object> props = publisherProps("u-parent", false);
+        props.put("scopes", new String[] { "u-parent", "u-child" });
+        publisherConfig.update(props);
+
+        String nsUri = "http://test.example.com/unlink-inherited/1.0";
+        String datasetId = datasetId("u-parent", nsUri, PublishablePackages.FINAL_STAGE);
+        ServiceRegistration<?> pkg = PublishablePackages.register(context, "u-parent", nsUri,
+                PublishablePackages.FINAL_STAGE, FINGERPRINT, true);
+        try {
+            assertTrue(awaitCatalogTerm("u-child", datasetId, true), "setup: the child should list the inherited one");
+
+            child.unregister();
+
+            // UNLINK deletes nothing, so the Catalog resource stays — but it must stop advertising
+            // models for a scope that no longer exists.
+            assertTrue(awaitCatalogTerm("u-child", datasetId, false),
+                    "the vanished scope's Catalog must stop listing our Datasets");
+            assertNotNull(get(portalRestBase + "/catalogs/u-child"),
+                    "UNLINK must leave the Catalog resource in place");
+            assertNotNull(get(portalRestBase + "/datasets/" + datasetId),
+                    "and must not touch a Dataset another scope defines");
+        } finally {
+            pkg.unregister();
+            parent.unregister();
+        }
+    }
+
     // ---- helpers ----------------------------------------------------------
 
     /** Polls one health check until its report mentions {@code term}, and returns the report. */
