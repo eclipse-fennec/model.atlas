@@ -101,6 +101,16 @@ public class DcatPublisher {
 
     private final Map<String, ScopeInfo> scopes = new ConcurrentHashMap<>();
 
+    /** Catalog configurations by scope; a scope without one is the derived case. */
+    private final Map<String, CatalogSettings> scopeCatalogs = new ConcurrentHashMap<>();
+
+    /**
+     * Scopes this publisher will not touch, and why: a broken {@code DcatScopeCatalog}, or an
+     * adopted Catalog the portal does not have. Kept so the refusal is logged once rather than per
+     * event, and so nothing of that scope is published while it stands.
+     */
+    private final Map<String, String> refusedScopes = new ConcurrentHashMap<>();
+
     private volatile DcatPublisherConfig config;
     private volatile String baseUri;
     private volatile Set<String> publishedScopes = Set.of();
@@ -211,6 +221,41 @@ public class DcatPublisher {
     }
 
     /**
+     * The Catalog configurations. Dynamic, because adopting a Catalog — or correcting the id of an
+     * adopted one — has to take effect without restarting the publisher.
+     */
+    @Reference(cardinality = ReferenceCardinality.MULTIPLE, //
+            policy = ReferencePolicy.DYNAMIC, //
+            policyOption = ReferencePolicyOption.GREEDY)
+    void bindScopeCatalog(DcatScopeCatalog scopeCatalog) {
+        String scopeName = scopeCatalog.scope();
+        if (scopeName == null || scopeName.isBlank()) {
+            return;
+        }
+        scopeCatalogs.put(scopeName, scopeCatalog.settings());
+        // The previous refusal, if any, was about the previous configuration.
+        refusedScopes.remove(scopeName);
+        if (active) {
+            publishCatalog(scopeName);
+        }
+    }
+
+    void unbindScopeCatalog(DcatScopeCatalog scopeCatalog) {
+        String scopeName = scopeCatalog.scope();
+        if (scopeName == null || scopeName.isBlank()) {
+            return;
+        }
+        scopeCatalogs.remove(scopeName);
+        refusedScopes.remove(scopeName);
+        // Losing the configuration makes the scope derived again, which means a Catalog under the
+        // scope's own name. Deliberately not published here: a Catalog id is permanent, and
+        // switching ids because a configuration went away is an operator's decision, not a
+        // consequence of one. The next activation publishes it.
+        LOGGER.info(() -> "Catalog configuration for scope " + scopeName + " went away; the scope is derived again "
+                + "from the next activation, and the Catalog it was using is left as it is");
+    }
+
+    /**
      * The publication trigger. The {@code (dcat=true)} term is what does the selecting, so a bind
      * <em>is</em> a publish decision: the flag rides on the service properties, and DS re-evaluates
      * a target filter when those change, so clearing the flag unbinds instead of needing a second
@@ -262,7 +307,7 @@ public class DcatPublisher {
             LOGGER.fine(() -> "Not retiring " + datasetId + ": this publisher is stopping, not the model");
             return;
         }
-        UnpublishMode mode = unpublishMode;
+        UnpublishMode mode = cappedByOwnership(unpublishMode, target.scope());
         if (mode == UnpublishMode.NONE) {
             // Keep tracking it, deliberately. NONE means the portal goes on advertising the
             // Dataset, and a Catalog PUT replaces — so dropping it from this map would let the
@@ -287,6 +332,23 @@ public class DcatPublisher {
         // Catalogs the portal still serves.
         Set<String> catalogIds = catalogsListing(target.scope());
         queue.schedule(datasetId, unpublishDelayMillis, () -> retireDataset(datasetId, target, mode, catalogIds));
+    }
+
+    /**
+     * Caps a mode at {@code UNLINK} where any Catalog listing the Dataset is adopted.
+     *
+     * <p>
+     * Our Datasets are ours to delete, but a {@code DELETE} leaves an adopted Catalog holding a
+     * dangling reference and a {@code CASCADE} rewrites it outright — and what somebody else's
+     * catalogue looks like afterwards is not ours to decide. The downgrade is announced once at
+     * activation rather than per event.
+     * </p>
+     */
+    private UnpublishMode cappedByOwnership(UnpublishMode mode, String definingScope) {
+        if (mode != UnpublishMode.DELETE && mode != UnpublishMode.CASCADE) {
+            return mode;
+        }
+        return anyListingCatalogAdopted(definingScope) ? UnpublishMode.UNLINK : mode;
     }
 
     /**
@@ -364,6 +426,16 @@ public class DcatPublisher {
             LOGGER.warning("No publishable media types: distribution.media.types does not overlap what this "
                     + "runtime reports it can serve, so Datasets would be advertised with no way to fetch them. "
                     + "Datasets are still published; Distributions are not");
+        }
+
+        // A new configuration re-decides every refusal: the reasons are all configuration.
+        refusedScopes.clear();
+
+        if (unpublishMode == UnpublishMode.DELETE || unpublishMode == UnpublishMode.CASCADE) {
+            scopeCatalogs.entrySet().stream().filter(entry -> entry.getValue().adopt()).map(Map.Entry::getKey)
+                    .forEach(scope -> LOGGER.info(() -> "unpublish.mode " + unpublishMode + " is capped at UNLINK for "
+                            + "scope " + scope + ", whose Catalog is adopted: what somebody else's catalogue looks "
+                            + "like after our Dataset goes is not ours to decide"));
         }
 
         if (unpublishDelayMillis == 0 && unpublishMode != UnpublishMode.NONE) {
@@ -542,15 +614,55 @@ public class DcatPublisher {
         if (info == null) {
             return;
         }
-        String catalogId = DcatIds.catalogId(scopeName);
+        ResolvedCatalog resolved = resolveCatalog(scopeName);
+        if (resolved.refused()) {
+            refuse(scopeName, resolved.refusalReason());
+            return;
+        }
+        String catalogId = resolved.id();
         client.submit(portal -> {
             if (!portal.ready()) {
                 LOGGER.warning(() -> "Portal is not ready; skipping the Catalog for scope " + scopeName
                         + ". It will be published on the next reconcile");
                 return null;
             }
-            return writeCatalog(portal, catalogId, info);
+            if (resolved.adopted()) {
+                adoptCatalog(portal, catalogId, info, resolved);
+                return null;
+            }
+            return writeCatalog(portal, catalogId, info, resolved.settings());
         }).onFailure(t -> LOGGER.log(Level.WARNING, "Publishing the Catalog for scope " + scopeName + " failed", t));
+    }
+
+    /**
+     * Takes up an existing Catalog: verify it is there, then link our Datasets into it. Never a
+     * {@code PUT}.
+     *
+     * <p>
+     * A missing adopted Catalog is a configuration error, not a licence to create one. The operator
+     * asserted the id exists; minting a Catalog under an id in somebody else's portal is the one
+     * failure mode with no clean recovery, so the scope is refused and reported instead.
+     * {@code catalog.create.if.missing} exists for operators who disagree.
+     * </p>
+     */
+    private void adoptCatalog(DcatAtlasClient portal, String catalogId, ScopeInfo info, ResolvedCatalog resolved) {
+        String scopeName = info.getName();
+        if (portal.catalog(catalogId).isEmpty()) {
+            if (!resolved.settings().createIfMissing()) {
+                refuse(scopeName, "the adopted Catalog " + catalogId + " is not in the portal. The id was asserted by "
+                        + "configuration, so it is not created here; fix catalog.id or set catalog.create.if.missing");
+                return;
+            }
+            LOGGER.warning(() -> "Adopted Catalog " + catalogId + " is missing and catalog.create.if.missing is set, "
+                    + "so it is being created from scope " + scopeName);
+            writeCatalog(portal, catalogId, info, resolved.settings());
+            return;
+        }
+        refusedScopes.remove(scopeName);
+        // Additive only, and no sub-catalog claims: see relinkSubCatalogs.
+        relinkDatasets(portal, catalogId, scopeName);
+        LOGGER.info(() -> "Adopted Catalog " + catalogId + " for scope " + scopeName
+                + "; its Datasets are linked in and it is never written from here");
     }
 
     /**
@@ -575,6 +687,13 @@ public class DcatPublisher {
                     + target.nsUri());
             return;
         }
+        if (refusedScopes.containsKey(target.scope()) || resolveCatalog(target.scope()).refused()) {
+            // The scope's Catalog is the precondition for its Datasets: publishing one anyway would
+            // advertise a model through no catalogue at all.
+            LOGGER.fine(() -> "Scope " + target.scope() + " is refused, so " + target.nsUri() + " is not published: "
+                    + refusedScopes.get(target.scope()));
+            return;
+        }
         if (!stagePermitted(target)) {
             LOGGER.fine(() -> "Stage " + target.stage() + " is not permitted by publish.stages; " + target.nsUri()
                     + " records the intent without being published");
@@ -584,6 +703,15 @@ public class DcatPublisher {
         client.submit(portal -> {
             if (!portal.ready()) {
                 LOGGER.warning(() -> "Portal is not ready; skipping Dataset " + datasetId);
+                return null;
+            }
+            // Re-checked here, not only above: whether an adopted Catalog exists is answered on
+            // this thread, and the client's executor is single-threaded, so a refusal recorded by
+            // the Catalog task queued before this one is visible now and was not when this task
+            // was submitted. Without this, a refused scope still publishes its first Dataset —
+            // into no Catalog at all, since the fan-out has nothing to link to.
+            if (refusedScopes.containsKey(target.scope())) {
+                LOGGER.fine(() -> "Scope " + target.scope() + " was refused; not publishing " + datasetId);
                 return null;
             }
             // Change detection. On a restart the in-memory map is empty, so ask the portal once
@@ -675,16 +803,54 @@ public class DcatPublisher {
     private Set<String> catalogsListing(String definingScope) {
         Set<String> catalogIds = new LinkedHashSet<>();
         if (publishable(definingScope)) {
-            catalogIds.add(DcatIds.catalogId(definingScope));
+            catalogIds.add(catalogIdOf(definingScope));
         }
-        hierarchy().descendants(definingScope).stream().filter(this::publishable).map(DcatIds::catalogId)
+        hierarchy().descendants(definingScope).stream().filter(this::publishable).map(this::catalogIdOf)
                 .forEach(catalogIds::add);
         return catalogIds;
     }
 
+    /**
+     * Whether any Catalog that lists a Dataset of {@code definingScope} is adopted, which is what
+     * caps {@code unpublish.mode}: a {@code CASCADE} delete of the Dataset unlinks its referrers,
+     * and rewriting somebody else's Catalog is not ours to do.
+     */
+    private boolean anyListingCatalogAdopted(String definingScope) {
+        if (resolveCatalog(definingScope).adopted()) {
+            return true;
+        }
+        return hierarchy().descendants(definingScope).stream().filter(this::publishable)
+                .anyMatch(scope -> resolveCatalog(scope).adopted());
+    }
+
     /** Whether this portal holds a Catalog for {@code scope} at all. */
     private boolean publishable(String scope) {
-        return publishedScopes.contains(scope) && scopes.containsKey(scope);
+        return publishedScopes.contains(scope) && scopes.containsKey(scope) && !refusedScopes.containsKey(scope)
+                && !resolveCatalog(scope).refused();
+    }
+
+    /**
+     * What one scope's Catalog is: which id, and whether we may write it. Configuration is the only
+     * input — see {@link CatalogResolver}.
+     */
+    private ResolvedCatalog resolveCatalog(String scope) {
+        return CatalogResolver.resolve(scope, scopeCatalogs.get(scope));
+    }
+
+    /** The id of a scope's Catalog, or {@code null} when the scope is refused. */
+    private String catalogIdOf(String scope) {
+        return resolveCatalog(scope).id();
+    }
+
+    /**
+     * Records a refusal and says so once. A refused scope publishes nothing: its Catalog is the
+     * precondition for its Datasets, so advertising them would produce {@code accessURL}s in no
+     * catalogue at all.
+     */
+    private void refuse(String scope, String reason) {
+        if (refusedScopes.put(scope, reason) == null) {
+            LOGGER.warning(() -> "Refusing scope " + scope + ": " + reason);
+        }
     }
 
     /**
@@ -705,12 +871,18 @@ public class DcatPublisher {
      * </p>
      */
     private void relinkSubCatalogs(DcatAtlasClient portal, String catalogId, String scope) {
+        if (resolveCatalog(scope).adopted()) {
+            // Neither direction for an adopted Catalog. Asserting a sub-catalog link on it is a
+            // claim about somebody else's catalogue structure, and hanging it under ours claims
+            // their catalogue is part of our tree. Datasets still link in, which is additive.
+            return;
+        }
         ScopeHierarchy tree = hierarchy();
-        tree.children(scope).stream().filter(this::publishable)
-                .forEach(child -> linkSubCatalog(portal, catalogId, DcatIds.catalogId(child)));
+        tree.children(scope).stream().filter(this::publishable).filter(child -> !resolveCatalog(child).adopted())
+                .forEach(child -> linkSubCatalog(portal, catalogId, catalogIdOf(child)));
         String parent = tree.parentOf(scope);
-        if (parent != null && publishable(parent)) {
-            linkSubCatalog(portal, DcatIds.catalogId(parent), catalogId);
+        if (parent != null && publishable(parent) && !resolveCatalog(parent).adopted()) {
+            linkSubCatalog(portal, catalogIdOf(parent), catalogId);
         }
     }
 
@@ -745,7 +917,7 @@ public class DcatPublisher {
             if (!portal.ready()) {
                 return null;
             }
-            descendants.forEach(scope -> relinkDatasets(portal, DcatIds.catalogId(scope), scope));
+            descendants.forEach(scope -> relinkDatasets(portal, catalogIdOf(scope), scope));
             return null;
         }).onFailure(t -> LOGGER.log(Level.WARNING, "Re-linking the Catalogs below " + scopeName + " failed", t));
     }
@@ -820,9 +992,10 @@ public class DcatPublisher {
                 || permittedStages.contains(target.stage());
     }
 
-    private Catalog writeCatalog(DcatAtlasClient portal, String catalogId, ScopeInfo info) {
+    private Catalog writeCatalog(DcatAtlasClient portal, String catalogId, ScopeInfo info,
+            CatalogSettings settings) {
         try {
-            Registration<Catalog> registration = portal.registerCatalog(catalogId, mapper.toCatalog(info));
+            Registration<Catalog> registration = portal.registerCatalog(catalogId, mapper.toCatalog(info, settings));
             if (!registration.applied()) {
                 // A foreign edit landed between our read and our write. Log and carry on; never
                 // unwind, because the next reconcile converges anyway.

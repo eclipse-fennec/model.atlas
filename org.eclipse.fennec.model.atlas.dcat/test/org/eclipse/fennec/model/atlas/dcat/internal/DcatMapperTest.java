@@ -53,7 +53,7 @@ class DcatMapperTest {
 
     @Test
     void derivedCatalogClearsThePortalWriteFloor() {
-        Catalog catalog = mapper().toCatalog(scope("jena", "City Jena Scope"));
+        Catalog catalog = mapper().toCatalog(scope("jena", "City Jena Scope"), CatalogSettings.none());
 
         assertThat(catalog.getTitle()).hasSize(1);
         assertThat(catalog.getTitle().get(0).getValue()).isEqualTo("jena");
@@ -66,9 +66,9 @@ class DcatMapperTest {
 
     @Test
     void fallsBackToTheTemplateWhenAScopeDeclaresNoDescription() {
-        assertThat(mapper().toCatalog(scope("verkehr", null)).getDescription().get(0).getValue())
+        assertThat(mapper().toCatalog(scope("verkehr", null), CatalogSettings.none()).getDescription().get(0).getValue())
                 .isEqualTo("Models of verkehr");
-        assertThat(mapper().toCatalog(scope("verkehr", "  ")).getDescription().get(0).getValue())
+        assertThat(mapper().toCatalog(scope("verkehr", "  "), CatalogSettings.none()).getDescription().get(0).getValue())
                 .isEqualTo("Models of verkehr");
     }
 
@@ -76,10 +76,50 @@ class DcatMapperTest {
     void eachEntityCarriesItsOwnAgentBecausePublisherIsContainment() {
         // Sharing one Agent instance across two entities would move it: containment re-parents.
         DcatMapper mapper = mapper();
-        assertThat(mapper.toCatalog(scope("a", "d")).getPublisher())
-                .isNotSameAs(mapper.toCatalog(scope("b", "d")).getPublisher());
+        assertThat(mapper.toCatalog(scope("a", "d"), CatalogSettings.none()).getPublisher())
+                .isNotSameAs(mapper.toCatalog(scope("b", "d"), CatalogSettings.none()).getPublisher());
         assertThat(mapper.toDataset(target("release"), pkg("Person", null)).getPublisher())
-                .isNotSameAs(mapper.toCatalog(scope("a", "d")).getPublisher());
+                .isNotSameAs(mapper.toCatalog(scope("a", "d"), CatalogSettings.none()).getPublisher());
+    }
+
+    @Test
+    void aConfiguredCatalogPrefersItsOwnAttributes() {
+        // Precedence is DcatScopeCatalog -> ScopeInfo -> publisher defaults, so a configured title
+        // wins over the scope name and a configured publisher over the portal-wide one.
+        CatalogSettings configured = new CatalogSettings("stadt-jena-opendata", false, false, "Verkehrsmodelle Jena",
+                "Datenmodelle des Verkehrsbetriebs", "Verkehrsbetrieb Jena", "https://www.jena.de/verkehr",
+                "http://dcat-ap.de/def/licenses/dl-by-de/2.0", "https://opendata.jena.de",
+                List.of("http://example.org/theme/TRAN"), List.of("verkehr"), null);
+
+        Catalog catalog = mapper().toCatalog(scope("jena", "City Jena Scope"), configured);
+
+        assertThat(catalog.getTitle().get(0).getValue()).isEqualTo("Verkehrsmodelle Jena");
+        assertThat(catalog.getDescription().get(0).getValue()).isEqualTo("Datenmodelle des Verkehrsbetriebs");
+        assertThat(catalog.getPublisher().getName().get(0).getValue()).isEqualTo("Verkehrsbetrieb Jena");
+        assertThat(catalog.getPublisher().getAbout()).isEqualTo("https://www.jena.de/verkehr");
+        assertThat(catalog.getLicense().getAbout()).isEqualTo("http://dcat-ap.de/def/licenses/dl-by-de/2.0");
+        assertThat(catalog.getHomepage()).isEqualTo("https://opendata.jena.de");
+        assertThat(catalog.getTheme()).containsExactly("http://example.org/theme/TRAN");
+        assertThat(catalog.getKeyword().get(0).getValue()).isEqualTo("verkehr");
+    }
+
+    @Test
+    void aCatalogConfiguringNothingIsExactlyTheDerivedCatalog() {
+        // What makes the configured case backward compatible: an empty configuration must not
+        // change a single field, or adopting the feature would rewrite every catalogue.
+        CatalogSettings empty = new CatalogSettings("some-id", false, false, null, null, null, null, null, null,
+                List.of(), List.of(), null);
+
+        Catalog configured = mapper().toCatalog(scope("jena", "City Jena Scope"), empty);
+        Catalog derived = mapper().toCatalog(scope("jena", "City Jena Scope"), CatalogSettings.none());
+
+        assertThat(configured.getTitle().get(0).getValue()).isEqualTo(derived.getTitle().get(0).getValue());
+        assertThat(configured.getDescription().get(0).getValue())
+                .isEqualTo(derived.getDescription().get(0).getValue());
+        assertThat(configured.getPublisher().getName().get(0).getValue())
+                .isEqualTo(derived.getPublisher().getName().get(0).getValue());
+        assertThat(configured.getLicense()).as("the atlas licenses no catalogue it was not told about").isNull();
+        assertThat(configured.getTheme()).isEmpty();
     }
 
     // ---- Dataset ---------------------------------------------------------

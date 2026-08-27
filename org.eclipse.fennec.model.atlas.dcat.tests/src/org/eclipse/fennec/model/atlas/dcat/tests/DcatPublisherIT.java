@@ -28,6 +28,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.attribute.PosixFilePermissions;
 import java.util.Base64;
+import java.util.Collection;
 import java.time.Duration;
 import java.util.Hashtable;
 import java.util.List;
@@ -38,6 +39,8 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.osgi.framework.BundleContext;
+import org.osgi.framework.FrameworkUtil;
+import org.osgi.framework.ServiceReference;
 import org.osgi.framework.ServiceRegistration;
 import org.osgi.service.cm.Configuration;
 import org.osgi.test.common.annotation.InjectBundleContext;
@@ -50,6 +53,15 @@ import org.testcontainers.DockerClientFactory;
 import org.testcontainers.containers.BindMode;
 import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.containers.wait.strategy.Wait;
+
+import org.eclipse.fennec.dcat.atlas.client.api.DcatAtlasClient;
+
+import dcat.Catalog;
+import dcat.DcatFactory;
+import foaf.Agent;
+import foaf.FoafFactory;
+import rdf.PlainLiteral;
+import rdf.RdfFactory;
 
 /**
  * The publisher, the real DCAT.Atlas client and a real portal container.
@@ -69,6 +81,7 @@ public class DcatPublisherIT {
     private static final String IMAGE = "eclipse-fennec/dcat.atlas:latest";
     private static final String CLIENT_PID = "org.eclipse.fennec.dcat.atlas.client";
     private static final String PUBLISHER_PID = "DcatPublisher";
+    private static final String SCOPE_CATALOG_PID = "DcatScopeCatalog";
     private static final String PORTAL = "it";
     private static final int HTTP_PORT = 8080;
     private static final long PUBLISH_WAIT_MS = 20_000;
@@ -636,7 +649,182 @@ public class DcatPublisherIT {
         }
     }
 
+    // ---- D1a: adopted, configured, derived ---------------------------------
+
+    @Test
+    public void anAdoptedCatalogGetsLinksAndIsNeverRewritten(
+            @InjectConfiguration(withFactoryConfig = @WithFactoryConfiguration(factoryPid = CLIENT_PID,
+                    name = PORTAL + "17", location = "?")) Configuration clientConfig,
+            @InjectConfiguration(withFactoryConfig = @WithFactoryConfiguration(factoryPid = PUBLISHER_PID,
+                    name = PORTAL + "17", location = "?")) Configuration publisherConfig,
+            @InjectConfiguration(withFactoryConfig = @WithFactoryConfiguration(factoryPid = SCOPE_CATALOG_PID,
+                    name = PORTAL + "17", location = "?")) Configuration catalogConfig,
+            @InjectBundleContext BundleContext context) throws Exception {
+
+        clientConfig.update(clientProps());
+
+        // Somebody else's Catalog, created before this publisher ever sees the scope. Written
+        // through the real client, so what the publisher meets is a genuine portal resource.
+        String foreignId = "foreign-catalog";
+        String foreignTitle = "Somebody Else's Catalogue";
+        awaitClient().registerCatalog(foreignId, foreignCatalog(foreignTitle));
+
+        ServiceRegistration<?> scope = StubScopeService.register(context, "a-scope", null);
+        Hashtable<String, Object> catalogProps = new Hashtable<>();
+        catalogProps.put("scope", "a-scope");
+        catalogProps.put("catalog.id", foreignId);
+        catalogProps.put("catalog.adopt", Boolean.TRUE);
+        catalogConfig.update(catalogProps);
+
+        Hashtable<String, Object> props = publisherProps("a-scope", false);
+        props.put("scopes", new String[] { "a-scope" });
+        publisherConfig.update(props);
+
+        String nsUri = "http://test.example.com/adopted/1.0";
+        String datasetId = datasetId("a-scope", nsUri, PublishablePackages.FINAL_STAGE);
+        ServiceRegistration<?> pkg = PublishablePackages.register(context, "a-scope", nsUri,
+                PublishablePackages.FINAL_STAGE, FINGERPRINT, true);
+        try {
+            assertTrue(awaitCatalogTerm(foreignId, datasetId, true),
+                    "Datasets must be linked into an adopted Catalog: that operation is additive");
+
+            String catalog = get(portalRestBase + "/catalogs/" + foreignId);
+            // A PUT replaces, and dcat:dataset membership lives on the Catalog — so re-registering
+            // an adopted Catalog would drop every link it holds, other publishers' included.
+            assertTrue(catalog.contains(foreignTitle),
+                    "an adopted Catalog must keep its own title, was: " + catalog);
+            assertTrue(get(portalRestBase + "/catalogs/a-scope") == null,
+                    "adopting a Catalog must not also create one under the scope name");
+        } finally {
+            pkg.unregister();
+            scope.unregister();
+        }
+    }
+
+    @Test
+    public void aMissingAdoptedCatalogRefusesTheScopeInsteadOfCreatingIt(
+            @InjectConfiguration(withFactoryConfig = @WithFactoryConfiguration(factoryPid = CLIENT_PID,
+                    name = PORTAL + "18", location = "?")) Configuration clientConfig,
+            @InjectConfiguration(withFactoryConfig = @WithFactoryConfiguration(factoryPid = PUBLISHER_PID,
+                    name = PORTAL + "18", location = "?")) Configuration publisherConfig,
+            @InjectConfiguration(withFactoryConfig = @WithFactoryConfiguration(factoryPid = SCOPE_CATALOG_PID,
+                    name = PORTAL + "18", location = "?")) Configuration catalogConfig,
+            @InjectBundleContext BundleContext context) throws Exception {
+
+        clientConfig.update(clientProps());
+
+        ServiceRegistration<?> scope = StubScopeService.register(context, "m-scope", null);
+        Hashtable<String, Object> catalogProps = new Hashtable<>();
+        catalogProps.put("scope", "m-scope");
+        catalogProps.put("catalog.id", "not-in-this-portal");
+        catalogProps.put("catalog.adopt", Boolean.TRUE);
+        catalogConfig.update(catalogProps);
+
+        Hashtable<String, Object> props = publisherProps("m-scope", false);
+        props.put("scopes", new String[] { "m-scope" });
+        publisherConfig.update(props);
+
+        String nsUri = "http://test.example.com/orphan/1.0";
+        String datasetId = datasetId("m-scope", nsUri, PublishablePackages.FINAL_STAGE);
+        ServiceRegistration<?> pkg = PublishablePackages.register(context, "m-scope", nsUri,
+                PublishablePackages.FINAL_STAGE, FINGERPRINT, true);
+        try {
+            Thread.sleep(6_000);
+
+            // The operator asserted that id exists. Minting a Catalog under an id in somebody
+            // else's portal is the one failure mode with no clean recovery, so the scope is refused.
+            assertTrue(get(portalRestBase + "/catalogs/not-in-this-portal") == null,
+                    "a missing adopted Catalog must not be created");
+            assertTrue(get(portalRestBase + "/catalogs/m-scope") == null,
+                    "nor may the scope fall back to a Catalog of its own");
+            assertTrue(get(portalRestBase + "/datasets/" + datasetId) == null,
+                    "a refused scope publishes nothing: its Catalog is the precondition for its Datasets");
+        } finally {
+            pkg.unregister();
+            scope.unregister();
+        }
+    }
+
+    @Test
+    public void aConfiguredCatalogCarriesItsOwnTitle(
+            @InjectConfiguration(withFactoryConfig = @WithFactoryConfiguration(factoryPid = CLIENT_PID,
+                    name = PORTAL + "19", location = "?")) Configuration clientConfig,
+            @InjectConfiguration(withFactoryConfig = @WithFactoryConfiguration(factoryPid = PUBLISHER_PID,
+                    name = PORTAL + "19", location = "?")) Configuration publisherConfig,
+            @InjectConfiguration(withFactoryConfig = @WithFactoryConfiguration(factoryPid = SCOPE_CATALOG_PID,
+                    name = PORTAL + "19", location = "?")) Configuration catalogConfig,
+            @InjectBundleContext BundleContext context) throws Exception {
+
+        clientConfig.update(clientProps());
+
+        ServiceRegistration<?> scope = StubScopeService.register(context, "c-scope", null);
+        Hashtable<String, Object> catalogProps = new Hashtable<>();
+        catalogProps.put("scope", "c-scope");
+        catalogProps.put("catalog.id", "verkehr-jena");
+        catalogProps.put("catalog.title", "Verkehrsmodelle Jena");
+        catalogProps.put("catalog.description", "Datenmodelle des Verkehrsbetriebs");
+        catalogProps.put("catalog.publisher.name", "Verkehrsbetrieb Jena");
+        catalogConfig.update(catalogProps);
+
+        Hashtable<String, Object> props = publisherProps("c-scope", false);
+        props.put("scopes", new String[] { "c-scope" });
+        publisherConfig.update(props);
+
+        try {
+            String catalog = await(portalRestBase + "/catalogs/verkehr-jena");
+            assertNotNull(catalog, "a configured Catalog is ours to write, under its configured id");
+            // Precedence: the configuration beats the scope, which beats the publisher's defaults.
+            assertTrue(catalog.contains("Verkehrsmodelle Jena"), "configured title should win: " + catalog);
+            assertTrue(catalog.contains("Datenmodelle des Verkehrsbetriebs"),
+                    "configured description should win: " + catalog);
+            assertTrue(catalog.contains("Verkehrsbetrieb Jena"), "configured publisher should win: " + catalog);
+            assertTrue(!catalog.contains(StubScopeService.DESCRIPTION),
+                    "the scope's own description must not survive a configured one: " + catalog);
+            assertTrue(get(portalRestBase + "/catalogs/c-scope") == null,
+                    "the configured id replaces the scope name rather than adding to it");
+        } finally {
+            scope.unregister();
+        }
+    }
+
     // ---- helpers ----------------------------------------------------------
+
+    /** Waits for the portal client this test configured, and hands it over. */
+    private static DcatAtlasClient awaitClient() throws Exception {
+        BundleContext context = FrameworkUtil.getBundle(DcatPublisherIT.class).getBundleContext();
+        long deadline = System.currentTimeMillis() + PUBLISH_WAIT_MS;
+        while (System.currentTimeMillis() < deadline) {
+            Collection<ServiceReference<DcatAtlasClient>> references = context
+                    .getServiceReferences(DcatAtlasClient.class, "(dcat.portal=" + PORTAL + ")");
+            if (!references.isEmpty()) {
+                return context.getService(references.iterator().next());
+            }
+            Thread.sleep(200);
+        }
+        throw new IllegalStateException("no DcatAtlasClient for portal " + PORTAL);
+    }
+
+    /**
+     * A Catalog standing in for one another publisher owns. It clears the portal's write floor —
+     * title, description and a contained Agent with a name — because otherwise it would not be
+     * stored at all, and the test would be adopting nothing.
+     */
+    private static Catalog foreignCatalog(String title) {
+        Catalog catalog = DcatFactory.eINSTANCE.createCatalog();
+        catalog.getTitle().add(literal(title));
+        catalog.getDescription().add(literal("A catalogue this atlas did not create"));
+        Agent publisher = FoafFactory.eINSTANCE.createAgent();
+        publisher.getName().add(literal("Another Publisher"));
+        catalog.setPublisher(publisher);
+        return catalog;
+    }
+
+    private static PlainLiteral literal(String value) {
+        PlainLiteral literal = RdfFactory.eINSTANCE.createPlainLiteral();
+        literal.setValue(value);
+        literal.setLang("de");
+        return literal;
+    }
 
     /** The debounce window the D5 tests configure, short enough to assert against. */
     private static final int UNPUBLISH_DELAY_SECONDS = 2;
@@ -645,10 +833,10 @@ public class DcatPublisherIT {
      * Polls the scope's Catalog until {@code term} is present (or absent, when {@code present} is
      * false). Membership is what retirement changes, and it changes asynchronously.
      */
-    private static boolean awaitCatalogTerm(String scope, String term, boolean present) throws Exception {
+    private static boolean awaitCatalogTerm(String catalogId, String term, boolean present) throws Exception {
         long deadline = System.currentTimeMillis() + PUBLISH_WAIT_MS;
         while (System.currentTimeMillis() < deadline) {
-            String body = get(portalRestBase + "/catalogs/" + scope);
+            String body = get(portalRestBase + "/catalogs/" + catalogId);
             if (body != null && body.contains(term) == present) {
                 return true;
             }

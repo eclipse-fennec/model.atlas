@@ -233,8 +233,8 @@ ancestor's Datasets by itself.
 - **Sub-catalog links are asserted in both directions**, because a `dcat:catalog` link lives on the
   *parent*: writing a Catalog drops the links to its children (re-asserted after every write), while
   its own membership in its parent survives that write but must be asserted when the child appears.
-  Asserting a link *on* another Catalog is only ours to do while every Catalog is derived — D1a has
-  to skip the ones we do not own.
+  Asserting a link *on* another Catalog is only ours to do for a Catalog we own; since D1a an
+  adopted one is skipped in both directions.
 - `descendants()` never returns the scope itself, even where a configuration has written a cycle;
   both walks truncate rather than loop. Caught by `ScopeHierarchyTest`, not by review.
 
@@ -636,6 +636,37 @@ somebody else's portal is the one failure mode with no clean recovery. A
 configures nothing behaves exactly as the derived case — which is what makes all of this
 backward compatible with §4 as written.
 
+### As built (D1a, 2026-08-27)
+
+- `DcatScopeCatalog` is a factory component registering itself as a service, tracked by every
+  publisher. **Not per portal, deliberately:** a Catalog's ownership is a fact about the catalogue,
+  not about which of this atlas's publishers is talking to it, and having to repeat it per portal is
+  how one of them ends up writing a Catalog it does not own.
+- **An unusable configuration still activates**, carrying `CatalogSettings.invalidReason()`.
+  Refusing to activate would remove the service, and the *absence* of a service is how the derived
+  case is expressed — so a broken `catalog.adopt` would silently become "write a Catalog under the
+  scope name", the opposite of what it asked for. `CatalogResolver` turns it into a `REFUSED`
+  resolution instead, and a refused scope publishes nothing at all: its Catalog is the precondition
+  for its Datasets.
+- **`DcatIds.catalogId` is no longer the answer**; every call site resolves through
+  `resolveCatalog(scope)`, because a configured id replaces the scope name.
+- **The refusal has to be re-checked on the client thread.** `publishPackage` gates on the DS
+  thread, but whether an adopted Catalog exists is only answered inside a submitted task — and the
+  client's executor is single-threaded, so the Catalog task queued first has finished by the time
+  the Dataset task runs. Checking only up front published the first Dataset of a refused scope into
+  no Catalog at all. Caught by `aMissingAdoptedCatalogRefusesTheScopeInsteadOfCreatingIt`.
+- **No sub-catalog link in either direction for an adopted Catalog.** Asserting one *on* it is a
+  claim about somebody else's catalogue structure; hanging it under ours claims their catalogue is
+  part of our tree. Datasets still link in, which is additive.
+- `unpublish.mode` is capped at `UNLINK` when **any** Catalog listing the Dataset is adopted, not
+  only when the defining scope's is — the fan-out of D2a means a descendant's adopted Catalog is
+  just as reachable by a `CASCADE`. Announced once at activation.
+- **Still open, and no longer an ownership question:** retiring a *Catalog* when its scope goes away
+  (§8, row 4). Ownership is now known, but the portal's delete semantics for a Catalog that still
+  lists Datasets, and the ordering against those Datasets' own concurrent retirements, are not — and
+  the operation is destructive enough to want an explicit decision rather than an inference. Under
+  `UNLINK` the outcome is already correct without it.
+
 ---
 
 ## 8. Unpublication
@@ -749,11 +780,12 @@ ours to decide.
   gone from the runtime is not re-asserted, since nothing left knows it should be. Preserving
   memberships this publisher did not create is the same problem as writing to an adopted Catalog,
   and belongs with D1a.
-- **Deferred, and on purpose:** the unlink does **not** fan out over descendant Catalogs (that
-  arrives with `ScopeHierarchy` in D2a), and a vanished scope's **Catalog resource is left in
-  place**. Under `UNLINK` the outcome is already right — the scope's packages unbind with it, so
-  each Dataset retires itself and the Catalog ends up listing nothing — and deleting the Catalog is
-  exactly the case that needs to know whether it is adopted (D1a).
+- **Deferred, and on purpose:** the unlink does **not** fan out over descendant Catalogs (added in
+  D2a), and a vanished scope's **Catalog resource is left in place**. Under `UNLINK` the outcome is
+  already right — the scope's packages unbind with it, so each Dataset retires itself and the
+  Catalog ends up listing nothing. D1a settled the ownership half of the Catalog-deletion question;
+  what remains is the portal's delete semantics for a Catalog that still lists Datasets and the
+  ordering against their own retirements. See §7a's as-built note.
 
 ---
 
@@ -787,7 +819,7 @@ ours to decide.
 |---|---|---|
 | **D0** | The atlas-side `?dcat=true` query parameter and the shared constant, on all three write paths of §7 | upload with and without the flag; `GET …/stages/{stage}?nsUri=` shows `properties["dcat"]`, and a content update preserves it |
 | **D1** | Bundle scaffolding, `DcatPublisher` config, client reference, readiness gate, one derived `Catalog` | a scope appears as a Catalog in a portal container |
-| **D1a** | `CatalogResolver` and `DcatScopeCatalog`: all three cases of §7a | adopted catalog gets links and no `PUT`; configured catalog carries its own title; a missing adopted id fails the health check instead of creating one |
+| **D1a** ✅ | `CatalogResolver` and `DcatScopeCatalog`: all three cases of §7a | adopted catalog gets links and no `PUT`; configured catalog carries its own title; a missing adopted id fails the health check instead of creating one |
 | **D2** | `DcatIds`, `DcatMapper`, `ConfiguredMetadataSource`; the full sequence of §4 for one target, driven by a gogo `dcat:reconcile` | `dcat:dataset` link present, distributions ≥ 1, each with its own `downloadURL`, read back |
 | **D2a** ✅ | `ScopeHierarchy` + the link fan-out both ways | `atlas → jena → nawerker`: an `atlas` package's Dataset is one resource in three Catalogs; creating `nawerker` last still gets it |
 | **D3** | `PackageServiceTracker` + the work queue + fingerprint/ETag state | an upload through the REST API lands in the portal without a manual step; a restart re-publishes nothing |

@@ -59,17 +59,36 @@ final class DcatMapper {
     }
 
     /**
-     * A derived Catalog: everything comes from the scope plus the publisher's configured
-     * defaults. The configured and adopted cases arrive later.
+     * The Catalog for one scope.
      *
-     * @param scope the scope to describe
+     * <p>
+     * Metadata precedence is {@code DcatScopeCatalog} attributes, then {@link ScopeInfo}, then the
+     * publisher's own defaults — so a scope that configures nothing produces exactly the derived
+     * Catalog, which is what makes the configured case backward compatible.
+     * </p>
+     *
+     * <p>
+     * Only ever called for a Catalog this atlas owns. An adopted one is never written, so it is
+     * never mapped.
+     * </p>
+     *
+     * @param scope    the scope to describe
+     * @param settings its Catalog configuration, or {@link CatalogSettings#none()}
      * @return a Catalog that satisfies the portal's write floor
      */
-    Catalog toCatalog(ScopeInfo scope) {
+    Catalog toCatalog(ScopeInfo scope, CatalogSettings settings) {
         Catalog catalog = DcatFactory.eINSTANCE.createCatalog();
-        catalog.getTitle().add(literal(scope.getName()));
-        catalog.getDescription().add(literal(description(scope)));
-        catalog.setPublisher(publisher(config.publisher_name()));
+        catalog.getTitle().add(literal(settings.titleOrEmpty().orElseGet(scope::getName)));
+        catalog.getDescription().add(literal(settings.descriptionOrEmpty().orElseGet(() -> description(scope))));
+        catalog.setPublisher(publisher(settings.publisherNameOrEmpty().orElseGet(config::publisher_name),
+                settings.publisherAboutOrEmpty().orElseGet(config::publisher_about)));
+        // A Catalog's own licence and themes are configuration only: the atlas has no opinion about
+        // either, and inventing one from the publisher's Dataset defaults would state a licence
+        // over a catalogue nobody licensed.
+        settings.licenseUriOrEmpty().ifPresent(uri -> catalog.setLicense(license(uri)));
+        settings.homepageOrEmpty().ifPresent(catalog::setHomepage);
+        catalog.getTheme().addAll(settings.themes());
+        settings.keywords().forEach(keyword -> catalog.getKeyword().add(literal(keyword)));
         return catalog;
     }
 
@@ -189,12 +208,11 @@ final class DcatMapper {
     }
 
     private Agent publisher(PublicationTarget target) {
-        return publisher(metadata.publisherName(target).orElse(config.publisher_name()));
+        return publisher(metadata.publisherName(target).orElse(config.publisher_name()), config.publisher_about());
     }
 
-    private Agent publisher(String name) {
+    private Agent publisher(String name, String about) {
         Agent agent = FoafFactory.eINSTANCE.createAgent();
-        String about = config.publisher_about();
         if (about != null && !about.isBlank()) {
             agent.setAbout(about);
         }
