@@ -610,7 +610,19 @@ public class SchemaPackagesResource {
      * metadata of §6 joins this list the same way, one typed parameter at a time.
      * </p>
      */
-    private static final Set<String> EDITABLE_METADATA_PARAMS = Set.of("nsUri", "dcat");
+    private static final Set<String> EDITABLE_METADATA_PARAMS = Set.of("dcat");
+
+    /**
+     * Parameters that say <em>which</em> package to edit, and are never written to it.
+     *
+     * <p>
+     * Kept apart from {@link #EDITABLE_METADATA_PARAMS} rather than merged into it: {@code nsUri} is
+     * identity that happens to live in the {@code properties} map, and a set that called it editable
+     * would say so in the 400 it hands clients — and would be the wrong thing to consult the day a
+     * generic property editor is added.
+     * </p>
+     */
+    private static final Set<String> METADATA_SELECTOR_PARAMS = Set.of("nsUri");
 
     /**
      * Fields this endpoint refuses, with the reason it refuses them. Identity, content-derived
@@ -725,7 +737,7 @@ public class SchemaPackagesResource {
      */
     private Response refuseNonEditableFields() {
         for (String parameter : requestContext.getUriInfo().getQueryParameters().keySet()) {
-            if (EDITABLE_METADATA_PARAMS.contains(parameter)) {
+            if (EDITABLE_METADATA_PARAMS.contains(parameter) || METADATA_SELECTOR_PARAMS.contains(parameter)) {
                 continue;
             }
             String reason = REFUSED_METADATA_PARAMS.get(parameter);

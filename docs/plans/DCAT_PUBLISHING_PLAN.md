@@ -636,6 +636,11 @@ If-Match: "<etag from the metadata GET>"
   produces a 400 naming it and the reason (identity / derived from the content / provenance / owned
   by the stage and review machinery / maintained by the server). A typo that silently changes
   nothing is the same failure as a refusal that says nothing.
+- **`nsUri` is a selector, not an editable field**, and the two are separate sets in the code. It
+  says *which* package to edit and is never written — it is identity that happens to live in the
+  `properties` map, exactly as the refused list above says. Holding it in the editable set would
+  have advertised it as editable in the 400 handed to clients, and would have been the wrong set to
+  consult the day a generic property editor arrives.
 - **Propagation lives in the workflow bundle, not the endpoint.** §7b assigned it to the endpoint,
   but `…workflow.registration` is not an exported package, and the invariant — stored metadata and
   live registration agree — belongs to whoever owns the registration rather than to one caller. So

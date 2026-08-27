@@ -2140,6 +2140,10 @@ public class SchemaPackagesResourceTest extends AbstractRestTest {
 
 		assertEquals(400, response.statusCode(), "an unknown field must be refused");
 		assertTrue(response.body().contains("dcatt"), "the refusal should name the field, was: " + response.body());
+		// nsUri says which package to edit; it is identity and is never written. A refusal that
+		// listed it among the editable fields would invite exactly the write this endpoint forbids.
+		assertFalse(response.body().contains("nsUri"),
+				"the list of editable fields must not include the selector, was: " + response.body());
 	}
 
 	@Test
