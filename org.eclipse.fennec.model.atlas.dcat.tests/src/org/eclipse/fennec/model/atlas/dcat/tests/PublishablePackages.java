@@ -59,7 +59,6 @@ final class PublishablePackages {
         properties.put("emf.name", ePackage.getName());
         properties.put("emf.model.scope", StubScopeService.SCOPE);
         properties.put("atlas.stage", stage);
-        properties.put("atlas.registry", "schema");
         properties.put("emf.version", "1.1.0");
         if (fingerprint != null) {
             properties.put("emf.fingerprint", fingerprint);

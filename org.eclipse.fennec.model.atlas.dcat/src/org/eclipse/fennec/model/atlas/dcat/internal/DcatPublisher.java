@@ -19,12 +19,18 @@ import java.util.Map;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import org.eclipse.fennec.dcat.atlas.client.api.ConflictException;
 import org.eclipse.fennec.dcat.atlas.client.api.DcatAtlasClient;
+import org.eclipse.fennec.dcat.atlas.client.api.DcatCollection;
 import org.eclipse.fennec.dcat.atlas.client.api.DcatModelConstraintException;
 import org.eclipse.fennec.dcat.atlas.client.api.DcatShaclException;
+import org.eclipse.fennec.dcat.atlas.client.api.DeleteMode;
+import org.eclipse.fennec.dcat.atlas.client.api.NotFoundException;
 import org.eclipse.fennec.dcat.atlas.client.api.Registration;
 import org.eclipse.fennec.dcat.atlas.client.osgi.AsyncDcatAtlasClient;
 import org.eclipse.fennec.model.atlas.dcat.api.DcatMetadataSource;
@@ -33,6 +39,8 @@ import org.eclipse.fennec.model.atlas.mediatypes.api.SupportedMediatype;
 import org.eclipse.fennec.model.atlas.scope.api.AtlasProperties;
 import org.eclipse.fennec.model.atlas.scope.api.ReadableScopeService;
 import org.eclipse.fennec.model.atlas.scope.api.ScopeInfo;
+import org.osgi.framework.Bundle;
+import org.osgi.framework.BundleContext;
 import org.osgi.service.component.annotations.Activate;
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.ConfigurationPolicy;
@@ -77,6 +85,13 @@ public class DcatPublisher {
     private static final Logger LOGGER = Logger.getLogger(DcatPublisher.class.getName());
 
     /**
+     * How long a shutdown retirement may block. Bounded because the alternative is holding up the
+     * framework on a portal that may be down, and a Dataset left listed is recoverable — the next
+     * start republishes it.
+     */
+    private static final long SHUTDOWN_RETIRE_TIMEOUT_MS = 10_000;
+
+    /**
      * Named so the DS target property is {@code dcat.portal.target}, which is also the name the
      * configuration uses — one key, not two spellings of the same thing.
      */
@@ -93,6 +108,16 @@ public class DcatPublisher {
     private volatile Set<String> mediaTypes = Set.of();
     private volatile Set<String> permittedStages = Set.of();
     private volatile boolean allStages;
+    private volatile UnpublishMode unpublishMode = UnpublishMode.UNLINK;
+    private volatile long unpublishDelayMillis;
+    private volatile boolean retireOnShutdown;
+    private volatile BundleContext bundleContext;
+
+    /**
+     * Deferred retirements, so a re-register can cancel one. Created at activation and closed at
+     * deactivation, because a pending retirement belongs to the configuration that asked for it.
+     */
+    private volatile RetirementQueue retirements;
 
     /**
      * Per published Dataset, the fingerprint last written. The startup ENTER replay re-registers
@@ -103,6 +128,14 @@ public class DcatPublisher {
 
     /** The tracked EPackage services, keyed by dataset id. */
     private final Map<String, TrackedPackage> trackedPackages = new ConcurrentHashMap<>();
+
+    /**
+     * Datasets this publisher has retired. A retirement drops the Catalog membership (and under
+     * {@code DELETE}/{@code CASCADE} the resource), but leaves an unchanged fingerprint behind on
+     * the portal — so a later re-publish of the same content would take the "already published"
+     * shortcut and never re-assert the link. This set makes the next write unconditional.
+     */
+    private final Set<String> retiredDatasets = ConcurrentHashMap.newKeySet();
 
     /** An EPackage service plus the facts read off its properties at bind time. */
     private record TrackedPackage(PublicationTarget target, EPackage ePackage) {
@@ -156,13 +189,23 @@ public class DcatPublisher {
 
     void unbindScopeService(ReadableScopeService<?> scopeService, Map<String, Object> properties) {
         String scopeName = (String) properties.get(AtlasProperties.ATLAS_SCOPE);
-        if (scopeName != null) {
-            scopes.remove(scopeName);
-            // Retirement is deliberately not done here yet: it needs the unpublish modes, the
-            // framework-STOPPING guard and the re-register debounce, or a plain restart would
-            // empty the catalogue. Until then a vanished scope leaves its Catalog in place.
-            LOGGER.info(() -> "Scope " + scopeName + " went away; its Catalog is left in the portal");
+        if (scopeName == null) {
+            return;
         }
+        scopes.remove(scopeName);
+        if (!retirementAllowed()) {
+            return;
+        }
+        // The Catalog resource itself is not retired, and that is a decision rather than an
+        // omission. Under UNLINK — the default — there is nothing to do: a scope going away takes
+        // its EPackage services with it, so each Dataset retires itself through the unbind below
+        // and the Catalog ends up listing nothing, which is exactly what UNLINK means. Deleting
+        // the Catalog is the only part that differs, and it is the part that needs to know whether
+        // the Catalog is ours: for an adopted Catalog, DELETE and CASCADE must be capped at UNLINK
+        // (§7a). That ownership answer is D1a, and guessing it would risk deleting a Catalog we
+        // were only ever a contributor to.
+        LOGGER.info(() -> "Scope " + scopeName + " went away; its Datasets retire themselves and the Catalog "
+                + "resource is left in place (deleting it needs the ownership resolution of D1a)");
     }
 
     /**
@@ -187,24 +230,84 @@ public class DcatPublisher {
         }
         String datasetId = DcatIds.datasetId(target.scope(), target.stage(), target.nsUri());
         trackedPackages.put(datasetId, new TrackedPackage(target, ePackage));
+        RetirementQueue queue = retirements;
+        if (queue != null && queue.cancel(datasetId)) {
+            // The unbind that preceded this bind was an update, not a removal. Saying so once is
+            // worth it: it is the only place the two are told apart.
+            LOGGER.fine(() -> "Re-registered " + target.nsUri() + " inside the unpublish window; "
+                    + "its retirement is cancelled and this is an update");
+        }
         if (active) {
             publishPackage(datasetId);
         }
     }
 
+    /**
+     * The retirement trigger, and it stands for four different events: the {@code dcat} flag
+     * cleared, the package deleted, a promotion out of a permitted stage, and a content update.
+     * Only the last one must not retire anything, and the only thing that distinguishes it is that
+     * a re-register follows — hence the delay.
+     */
     void unbindPublishablePackage(EPackage ePackage, Map<String, Object> properties) {
         PublicationTarget target = toTarget(properties);
         if (target == null) {
             return;
         }
         String datasetId = DcatIds.datasetId(target.scope(), target.stage(), target.nsUri());
-        trackedPackages.remove(datasetId);
-        // Retirement waits for the unpublish modes, the STOPPING guard and the re-register
-        // debounce. Without the debounce this would fire on every content update, because a
-        // changed package is replaced by unregister-then-register — so every edit would briefly
-        // unpublish its own Dataset.
-        LOGGER.info(() -> "Package " + target.nsUri() + " (" + target.scope() + "/" + target.stage()
-                + ") stopped being publishable; its Dataset is left in the portal");
+        if (!retirementAllowed()) {
+            // Deliberately keeps the entry: on the shutdown path this map is what
+            // retire.on.shutdown works from, and on a reactivation the rebind refreshes it anyway.
+            LOGGER.fine(() -> "Not retiring " + datasetId + ": this publisher is stopping, not the model");
+            return;
+        }
+        UnpublishMode mode = unpublishMode;
+        if (mode == UnpublishMode.NONE) {
+            // Keep tracking it, deliberately. NONE means the portal goes on advertising the
+            // Dataset, and a Catalog PUT replaces — so dropping it from this map would let the
+            // next Catalog write quietly remove the membership that NONE promises to keep. The
+            // cost is holding the EPackage of a service that is gone, which is what an operator
+            // asking for NONE is asking for.
+            LOGGER.info(() -> "Package " + target.nsUri() + " (" + target.scope() + "/" + target.stage()
+                    + ") stopped being publishable; unpublish.mode is NONE, so the portal keeps it");
+            return;
+        }
+        TrackedPackage tracked = trackedPackages.remove(datasetId);
+        if (tracked == null) {
+            return;
+        }
+        RetirementQueue queue = retirements;
+        if (queue == null) {
+            return;
+        }
+        queue.schedule(datasetId, unpublishDelayMillis, () -> retireDataset(datasetId, target, mode));
+    }
+
+    /**
+     * Whether an unbind is a statement about the model or about us.
+     *
+     * <p>
+     * Two cases where it is about us, gated in one place rather than scattered through the
+     * handlers: the framework is stopping, and this component is not active — a reactivation for a
+     * configuration change, or the bundle being refreshed for an update. Neither says a model is
+     * gone, and treating them as if they did would empty a catalogue on every redeploy.
+     * </p>
+     */
+    private boolean retirementAllowed() {
+        if (!active) {
+            return false;
+        }
+        BundleContext context = bundleContext;
+        if (context == null) {
+            return false;
+        }
+        try {
+            // The framework bundle, so this is one question about the whole runtime rather than a
+            // guess from our own state. Note it cannot distinguish stopping from stopping-for-
+            // update; both are equally not a statement about the models, so it does not matter.
+            return context.getBundle(0).getState() != Bundle.STOPPING;
+        } catch (IllegalStateException contextGone) {
+            return false;
+        }
     }
 
     private static PublicationTarget toTarget(Map<String, Object> properties) {
@@ -214,8 +317,8 @@ public class DcatPublisher {
         if (nsUri == null || scope == null || stage == null) {
             return null;
         }
-        return new PublicationTarget(scope, stage, string(properties, "atlas.registry"), nsUri,
-                string(properties, "emf.version"), string(properties, "emf.fingerprint"));
+        return new PublicationTarget(scope, stage, nsUri, string(properties, "emf.version"),
+                string(properties, "emf.fingerprint"));
     }
 
     private static String string(Map<String, Object> properties, String key) {
@@ -224,8 +327,9 @@ public class DcatPublisher {
     }
 
     @Activate
-    void activate(DcatPublisherConfig config) {
+    void activate(DcatPublisherConfig config, BundleContext bundleContext) {
         this.config = config;
+        this.bundleContext = bundleContext;
         String target = config.dcat_portal_target();
         if (target == null || target.isBlank()) {
             throw new IllegalArgumentException("dcat.portal.target is required: without it the reference binds "
@@ -239,6 +343,10 @@ public class DcatPublisher {
         // FINAL is the default and is resolved per registry from StageInfo, which the scope API
         // already carries; ALL skips the gate entirely.
         this.allStages = permittedStages.stream().anyMatch(s -> s.equalsIgnoreCase("ALL"));
+        this.unpublishMode = config.unpublish_mode() == null ? UnpublishMode.UNLINK : config.unpublish_mode();
+        this.unpublishDelayMillis = Math.max(0L, config.unpublish_delay_seconds()) * 1000L;
+        this.retireOnShutdown = config.retire_on_shutdown();
+        this.retirements = new RetirementQueue("dcat-retirement");
         DcatMetadataSource source = metadataSource;
         this.mapper = new DcatMapper(config, source != null ? source : new ConfiguredMetadataSource(config));
         this.mediaTypes = PublishableMediaTypes.resolve(config.distribution_media_types(),
@@ -249,6 +357,12 @@ public class DcatPublisher {
             LOGGER.warning("No publishable media types: distribution.media.types does not overlap what this "
                     + "runtime reports it can serve, so Datasets would be advertised with no way to fetch them. "
                     + "Datasets are still published; Distributions are not");
+        }
+
+        if (unpublishDelayMillis == 0 && unpublishMode != UnpublishMode.NONE) {
+            LOGGER.warning("unpublish.delay.seconds is 0, so a content update will briefly unpublish its own "
+                    + "Dataset: a changed package is republished by unregister-then-register, and with no window "
+                    + "the unregister is indistinguishable from a removal");
         }
 
         if (publishedScopes.isEmpty()) {
@@ -266,12 +380,116 @@ public class DcatPublisher {
     @Deactivate
     void deactivate() {
         active = false;
-        // Nothing is retired on deactivate. A DCAT entry says "this model exists, here is who
-        // governs it and where it is served from", and that stays true across a restart. Retiring
-        // on shutdown would also make every redeploy a full retire plus re-publish, and it cannot
-        // deliver the guarantee it appears to: a SIGKILL, an OOM kill or a dead host runs no
-        // @Deactivate at all.
-        LOGGER.info("DcatPublisher deactivated; the portal keeps what it holds");
+        RetirementQueue queue = retirements;
+        retirements = null;
+        if (queue != null) {
+            // Abandon what is pending rather than draining it: those retirements were scheduled
+            // while we were active, and we are no longer in a position to tell an update from a
+            // removal. The unbinds that follow this call are gated by retirementAllowed().
+            int abandoned = queue.pendingCount();
+            queue.close();
+            if (abandoned > 0) {
+                LOGGER.info(() -> "Abandoned " + abandoned + " pending retirement(s) on deactivate");
+            }
+        }
+        if (retireOnShutdown) {
+            retireEverything();
+        } else {
+            // A DCAT entry says "this model exists, here is who governs it and where it is served
+            // from", and that stays true across a restart. Retiring here would also make every
+            // redeploy a full retire plus re-publish, and it cannot deliver the guarantee it
+            // appears to: a SIGKILL, an OOM kill or a dead host runs no @Deactivate at all.
+            LOGGER.info("DcatPublisher deactivated; the portal keeps what it holds");
+        }
+        trackedPackages.clear();
+        retiredDatasets.clear();
+        publishedFingerprints.clear();
+    }
+
+    /**
+     * The opt-in shutdown path: retire everything this publisher is tracking, forced to
+     * {@link UnpublishMode#UNLINK}.
+     *
+     * <p>
+     * Forced, because a restart must never delete: the same runtime is expected back, and a
+     * {@code DELETE} here would destroy anything the portal added on its side, with nothing left
+     * running to put it back if the restart fails. And blocking, briefly, because the client is
+     * asynchronous — a promise handed off during deactivation may never run once the client
+     * component follows us down.
+     * </p>
+     */
+    private void retireEverything() {
+        if (unpublishMode == UnpublishMode.NONE) {
+            LOGGER.info("retire.on.shutdown is set but unpublish.mode is NONE; retiring nothing");
+            return;
+        }
+        Map<String, TrackedPackage> snapshot = Map.copyOf(trackedPackages);
+        if (snapshot.isEmpty()) {
+            return;
+        }
+        LOGGER.info(() -> "retire.on.shutdown: unlinking " + snapshot.size() + " Dataset(s)");
+        CountDownLatch done = new CountDownLatch(snapshot.size());
+        snapshot.forEach((datasetId, tracked) -> client.submit(portal -> {
+            retire(portal, datasetId, tracked.target(), UnpublishMode.UNLINK);
+            return null;
+        }).onResolve(done::countDown));
+        try {
+            if (!done.await(SHUTDOWN_RETIRE_TIMEOUT_MS, TimeUnit.MILLISECONDS)) {
+                LOGGER.warning("retire.on.shutdown did not finish within " + SHUTDOWN_RETIRE_TIMEOUT_MS
+                        + "ms; the portal may still list some Datasets. They are re-published on the next start");
+            }
+        } catch (InterruptedException interrupted) {
+            Thread.currentThread().interrupt();
+        }
+    }
+
+    /**
+     * Retires one Dataset, asynchronously, in {@code mode}.
+     *
+     * <p>
+     * The fingerprint is dropped and the id remembered, so a re-publish of byte-identical content
+     * writes rather than taking the unchanged shortcut. Without that, an unlinked Dataset would
+     * come back as a resource nothing links to.
+     * </p>
+     */
+    private void retireDataset(String datasetId, PublicationTarget target, UnpublishMode mode) {
+        publishedFingerprints.remove(datasetId);
+        retiredDatasets.add(datasetId);
+        client.submit(portal -> {
+            retire(portal, datasetId, target, mode);
+            return null;
+        }).onFailure(t -> LOGGER.log(Level.WARNING, "Retiring Dataset " + datasetId + " failed", t));
+    }
+
+    private void retire(DcatAtlasClient portal, String datasetId, PublicationTarget target, UnpublishMode mode) {
+        String catalogId = DcatIds.catalogId(target.scope());
+        try {
+            if (mode == UnpublishMode.CASCADE) {
+                // The portal unlinks every referrer in one commit and reports what it rewrote —
+                // including links this publisher never created, which is why it is not the default.
+                List<String> rewritten = portal.delete(DcatCollection.DATASETS, datasetId, DeleteMode.CASCADE);
+                LOGGER.info(() -> "Retired Dataset " + datasetId + " (CASCADE); the portal rewrote " + rewritten);
+                return;
+            }
+            // Our membership is ours to drop, and dropping it is both the whole of UNLINK and the
+            // precondition for a SINGLE delete. When D2a lands, this unlink fans out over the
+            // descendant Catalogs exactly as the link does — a missed descendant leaves a Catalog
+            // advertising a Dataset that is gone.
+            portal.unlinkDatasetFromCatalog(catalogId, datasetId);
+            if (mode == UnpublishMode.DELETE) {
+                portal.delete(DcatCollection.DATASETS, datasetId, DeleteMode.SINGLE);
+                LOGGER.info(() -> "Retired Dataset " + datasetId + " (DELETE)");
+            } else {
+                LOGGER.info(() -> "Retired Dataset " + datasetId + " (UNLINK); the resource stays in the portal");
+            }
+        } catch (NotFoundException alreadyGone) {
+            LOGGER.fine(() -> "Dataset " + datasetId + " was already gone from the portal");
+        } catch (ConflictException referrers) {
+            // Exactly what SINGLE is for: something we did not link still points at it. Leaving it
+            // is the safe answer, and the operator can widen the mode to CASCADE if they mean it.
+            LOGGER.warning(() -> "Dataset " + datasetId + " is still referenced, so it was unlinked from "
+                    + catalogId + " but not deleted: " + referrers.getMessage());
+        }
     }
 
     /**
@@ -337,6 +555,13 @@ public class DcatPublisher {
             }
             // Change detection. On a restart the in-memory map is empty, so ask the portal once
             // rather than rewriting: a git-backed portal pays two commits per entity otherwise.
+            if (retiredDatasets.remove(datasetId)) {
+                // Retired and back: the content may be byte-identical, but the membership this
+                // publisher dropped is not, so the shortcut below would leave the Dataset
+                // unreachable through its Catalog.
+                LOGGER.fine(() -> "Dataset " + datasetId + " was retired; re-publishing it unconditionally");
+                return writeDataset(portal, datasetId, tracked);
+            }
             String published = publishedFingerprints.get(datasetId);
             if (published == null) {
                 published = portal.dataset(datasetId).map(DcatPublisher::fingerprintOf).orElse(null);

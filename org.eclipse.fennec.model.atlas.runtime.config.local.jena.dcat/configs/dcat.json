@@ -25,6 +25,17 @@
 		// containment, so the portal refuses a Distribution without one.
 		"license.uri": "http://dcat-ap.de/def/licenses/dl-by-de/2.0",
 		"distribution.media.types": ["application/xmi", "application/json"],
-		"publish.stages": ["FINAL"]
+		"publish.stages": ["FINAL"],
+		// What happens when a package stops being publishable: UNLINK drops the Catalog
+		// membership and keeps the resource, so nothing a portal-side editor added is destroyed.
+		// DELETE and CASCADE remove it; NONE leaves everything.
+		"unpublish.mode": "UNLINK",
+		// A content update reaches the publisher as unregister-then-register, so a retirement
+		// waits this long for the re-register that cancels it. Shorter than the shipped 30s
+		// because a local runtime re-registers fast, and a short window makes manual testing
+		// bearable.
+		"unpublish.delay.seconds": 10,
+		// A restart is not a statement about the models: the catalogue is left standing.
+		"retire.on.shutdown": false
 	}
 }

@@ -268,7 +268,7 @@ is the second implementation of `DcatMetadataSource` and is out of scope here.
 | `dct:publisher` | configured `publisher.name` (+ optional `publisher.about` IRI, `publisher.mbox`, `publisher.type`); a **fresh contained `foaf:Agent` per entity** |
 | `dct:license` | configured `license.uri` → a contained `LicenseDocument` with `about` = that IRI. Required on every Distribution |
 | `dcat:theme` | configured `theme` list (DCAT-AP.de data-theme IRIs) |
-| `dcat:keyword` | configured `keywords`, plus `scope:{scope}`, `stage:{stage}`, `registry:schema` |
+| `dcat:keyword` | configured `keywords`, plus `scope:{scope}`, `stage:{stage}` |
 | `dct:identifier` | the nsURI |
 | `dcat:version` (Dataset) | `emf.version` service property |
 | `dct:modified` / `dct:issued` | `ObjectMetadata` timestamps where available, else first-publish time |
@@ -687,6 +687,37 @@ leaves a Catalog advertising a Dataset that is gone.
 event. Our Datasets are ours to delete; what a shared Catalog looks like afterwards is not
 ours to decide.
 
+### As built (D5, 2026-08-27)
+
+- `unpublish.mode` (default `UNLINK`), `unpublish.delay.seconds` (default 30) and
+  `retire.on.shutdown` (default `false`) are on `DcatPublisherConfig`. `UnpublishMode` has to be
+  **`public`** even though its package is private: an enum attribute is read through the JDK proxy
+  that realizes the annotation, and a package-private type fails there with an
+  `IllegalAccessError` at activation rather than at compile time.
+- The two guards collapse into one question — `retirementAllowed()` — which is `active &&
+  framework != STOPPING`. The second half covers a shutdown, the first covers everything else that
+  unbinds our references without saying anything about a model: a configuration update, a bundle
+  refresh, our own deactivate. On the stopping path the unbind deliberately **keeps** its
+  `trackedPackages` entry, because that map is what `retire.on.shutdown` works from.
+- `RetirementQueue` owns the debounce (one pending task per key, cancel on re-register) and is unit
+  tested without a portal; it abandons rather than drains on close.
+- **A retirement drops the fingerprint and remembers the id.** Otherwise a re-publish of unchanged
+  content takes the "already published" shortcut and never re-asserts the Catalog membership the
+  retirement dropped — the same invariant as the Catalog-rewrite bug, from the other direction.
+- **`DELETE` unlinks first, then deletes `SINGLE`.** Our own membership is ours to drop, and
+  `SINGLE` then refuses only on a referrer we did not create, which is the check worth keeping.
+- **`NONE` keeps the package tracked** rather than dropping it, because a Catalog `PUT` replaces:
+  an untracked Dataset would lose the membership `NONE` promises to keep at the next Catalog write.
+  The guarantee holds while the publisher is active; across a restart a Dataset whose package is
+  gone from the runtime is not re-asserted, since nothing left knows it should be. Preserving
+  memberships this publisher did not create is the same problem as writing to an adopted Catalog,
+  and belongs with D1a.
+- **Deferred, and on purpose:** the unlink does **not** fan out over descendant Catalogs (that
+  arrives with `ScopeHierarchy` in D2a), and a vanished scope's **Catalog resource is left in
+  place**. Under `UNLINK` the outcome is already right — the scope's packages unbind with it, so
+  each Dataset retires itself and the Catalog ends up listing nothing — and deleting the Catalog is
+  exactly the case that needs to know whether it is adopted (D1a).
+
 ---
 
 ## 9. Runtime and build plumbing
@@ -724,7 +755,7 @@ ours to decide.
 | **D2a** | `ScopeHierarchy` + the link fan-out both ways | `atlas → jena → nawerker`: an `atlas` package's Dataset is one resource in three Catalogs; creating `nawerker` last still gets it |
 | **D3** | `PackageServiceTracker` + the work queue + fingerprint/ETag state | an upload through the REST API lands in the portal without a manual step; a restart re-publishes nothing |
 | **D4** | `MetadataPublicationPolicy`: the `WritableScopeService` lookup, the cache, the scope gate | a flagged package publishes, an unflagged one does not, a scope absent from `scopes` publishes nothing whatever its packages say |
-| **D5** | Unpublication: modes, the STOPPING guard, the debounce | a restart retires nothing; a delete retires exactly one Dataset |
+| **D5** ✅ | Unpublication: modes, the STOPPING guard, the debounce | a restart retires nothing; a delete retires exactly one Dataset |
 | **D6** | Error classification, backoff queue, health check | a 503 retries, a SHACL refusal does not |
 | **D7** | OSGi ITs against a portal container; the runtime config bundle and bndrun variant | `testOSGi` green |
 

@@ -114,7 +114,7 @@ class DcatMapperTest {
         Dataset dataset = mapper().toDataset(target("release"), pkg("Person", null));
 
         assertThat(dataset.getKeyword().stream().map(k -> k.getValue()).toList())
-                .contains("scope:jena", "stage:release", "registry:schema", "modell");
+                .contains("scope:jena", "stage:release", "modell");
     }
 
     @Test
@@ -151,10 +151,10 @@ class DcatMapperTest {
     void anUnparseableFingerprintYieldsNoChecksumRatherThanAWrongOne() {
         // A wrong checksum in a catalogue is worse than no checksum: a harvester would report the
         // download as corrupt.
-        PublicationTarget bad = new PublicationTarget("jena", "release", "schema", NS, "1.1.0", "sha1:deadbeef");
+        PublicationTarget bad = new PublicationTarget("jena", "release", NS, "1.1.0", "sha1:deadbeef");
         assertThat(mapper().toDistribution(bad, "application/xmi", BASE).getChecksum()).isNull();
 
-        PublicationTarget none = new PublicationTarget("jena", "release", "schema", NS, "1.1.0", null);
+        PublicationTarget none = new PublicationTarget("jena", "release", NS, "1.1.0", null);
         assertThat(mapper().toDistribution(none, "application/xmi", BASE).getChecksum()).isNull();
     }
 
@@ -172,7 +172,7 @@ class DcatMapperTest {
     // ---- helpers ---------------------------------------------------------
 
     private static PublicationTarget target(String stage) {
-        return new PublicationTarget("jena", stage, "schema", NS, "1.1.0", FP);
+        return new PublicationTarget("jena", stage, NS, "1.1.0", FP);
     }
 
     private static EPackage pkg(String name, String documentation) {

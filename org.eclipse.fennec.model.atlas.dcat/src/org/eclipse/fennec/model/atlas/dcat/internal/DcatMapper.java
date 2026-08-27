@@ -111,9 +111,6 @@ final class DcatMapper {
         // ones are added on top rather than replacing them.
         dataset.getKeyword().add(literal("scope:" + target.scope()));
         dataset.getKeyword().add(literal("stage:" + target.stage()));
-        if (target.registry() != null) {
-            dataset.getKeyword().add(literal("registry:" + target.registry()));
-        }
         metadata.keywords(target).forEach(k -> dataset.getKeyword().add(literal(k)));
         return dataset;
     }

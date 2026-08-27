@@ -356,7 +356,170 @@ public class DcatPublisherIT {
         }
     }
 
+    // ---- D5: retirement, the debounce and the guards -----------------------
+
+    @Test
+    public void anUnregisteredPackageIsRetiredFromItsCatalog(
+            @InjectConfiguration(withFactoryConfig = @WithFactoryConfiguration(factoryPid = CLIENT_PID,
+                    name = PORTAL + "9", location = "?")) Configuration clientConfig,
+            @InjectConfiguration(withFactoryConfig = @WithFactoryConfiguration(factoryPid = PUBLISHER_PID,
+                    name = PORTAL + "9", location = "?")) Configuration publisherConfig,
+            @InjectBundleContext BundleContext context) throws Exception {
+
+        clientConfig.update(clientProps());
+        publisherConfig.update(publisherProps(StubScopeService.SCOPE, false));
+
+        String nsUri = "http://test.example.com/retired/1.0";
+        String datasetId = datasetId(nsUri, PublishablePackages.FINAL_STAGE);
+        ServiceRegistration<?> registration = PublishablePackages.register(context, nsUri,
+                PublishablePackages.FINAL_STAGE, FINGERPRINT, true);
+        assertNotNull(await(portalRestBase + "/datasets/" + datasetId), "setup: the Dataset should publish");
+        assertTrue(awaitCatalogTerm(StubScopeService.SCOPE, datasetId, true),
+                "setup: the Catalog should list the Dataset");
+
+        // The flag cleared, the package deleted, a promotion out of a permitted stage: all three
+        // reach the publisher as this one unbind.
+        registration.unregister();
+
+        assertTrue(awaitCatalogTerm(StubScopeService.SCOPE, datasetId, false),
+                "the retired Dataset must stop being a member of its Catalog");
+        // UNLINK is the default: discoverability goes, the resource stays. Nothing this publisher
+        // does on an unbind should destroy what a portal-side editor may have added to it.
+        assertNotNull(get(portalRestBase + "/datasets/" + datasetId),
+                "UNLINK must leave the Dataset resource in place");
+    }
+
+    @Test
+    public void aReRegisterInsideTheWindowKeepsTheDataset(
+            @InjectConfiguration(withFactoryConfig = @WithFactoryConfiguration(factoryPid = CLIENT_PID,
+                    name = PORTAL + "10", location = "?")) Configuration clientConfig,
+            @InjectConfiguration(withFactoryConfig = @WithFactoryConfiguration(factoryPid = PUBLISHER_PID,
+                    name = PORTAL + "10", location = "?")) Configuration publisherConfig,
+            @InjectBundleContext BundleContext context) throws Exception {
+
+        clientConfig.update(clientProps());
+        publisherConfig.update(publisherProps(StubScopeService.SCOPE, false));
+
+        String nsUri = "http://test.example.com/updated/1.0";
+        String datasetId = datasetId(nsUri, PublishablePackages.FINAL_STAGE);
+        ServiceRegistration<?> first = PublishablePackages.register(context, nsUri, PublishablePackages.FINAL_STAGE,
+                FINGERPRINT, true);
+        assertNotNull(await(portalRestBase + "/datasets/" + datasetId), "setup: the Dataset should publish");
+        assertTrue(awaitCatalogTerm(StubScopeService.SCOPE, datasetId, true),
+                "setup: the Catalog should list the Dataset");
+
+        // This is what a content update looks like from here: DynamicEPackageRegistrationService
+        // replaces a changed package by unregister-then-register. Without the debounce every edit
+        // would briefly unpublish its own Dataset.
+        first.unregister();
+        ServiceRegistration<?> second = PublishablePackages.register(context, nsUri, PublishablePackages.FINAL_STAGE,
+                "fp1:" + "cd".repeat(32), true);
+        try {
+            Thread.sleep(UNPUBLISH_DELAY_SECONDS * 2_000 + 4_000);
+            assertNotNull(get(portalRestBase + "/datasets/" + datasetId),
+                    "an update must not retire the Dataset it is updating");
+            assertTrue(awaitCatalogTerm(StubScopeService.SCOPE, datasetId, true),
+                    "an update must leave the Catalog membership standing");
+        } finally {
+            second.unregister();
+        }
+    }
+
+    @Test
+    public void deleteModeRemovesTheDatasetResource(
+            @InjectConfiguration(withFactoryConfig = @WithFactoryConfiguration(factoryPid = CLIENT_PID,
+                    name = PORTAL + "11", location = "?")) Configuration clientConfig,
+            @InjectConfiguration(withFactoryConfig = @WithFactoryConfiguration(factoryPid = PUBLISHER_PID,
+                    name = PORTAL + "11", location = "?")) Configuration publisherConfig,
+            @InjectBundleContext BundleContext context) throws Exception {
+
+        clientConfig.update(clientProps());
+        Hashtable<String, Object> props = publisherProps(StubScopeService.SCOPE, false);
+        props.put("unpublish.mode", "DELETE");
+        publisherConfig.update(props);
+
+        String nsUri = "http://test.example.com/deleted/1.0";
+        String datasetId = datasetId(nsUri, PublishablePackages.FINAL_STAGE);
+        ServiceRegistration<?> registration = PublishablePackages.register(context, nsUri,
+                PublishablePackages.FINAL_STAGE, FINGERPRINT, true);
+        assertNotNull(await(portalRestBase + "/datasets/" + datasetId), "setup: the Dataset should publish");
+        assertTrue(awaitCatalogTerm(StubScopeService.SCOPE, datasetId, true),
+                "setup: the Catalog should list the Dataset");
+
+        registration.unregister();
+
+        // DELETE is SINGLE, so the membership has to go first or the portal refuses the delete
+        // while a Catalog still references it. Our own memberships are ours to drop; a foreign
+        // referrer is what SINGLE is there to protect.
+        assertTrue(awaitGone(portalRestBase + "/datasets/" + datasetId),
+                "DELETE mode must remove the Dataset resource");
+    }
+
+    @Test
+    public void aConfigUpdateRetiresNothing(
+            @InjectConfiguration(withFactoryConfig = @WithFactoryConfiguration(factoryPid = CLIENT_PID,
+                    name = PORTAL + "12", location = "?")) Configuration clientConfig,
+            @InjectConfiguration(withFactoryConfig = @WithFactoryConfiguration(factoryPid = PUBLISHER_PID,
+                    name = PORTAL + "12", location = "?")) Configuration publisherConfig,
+            @InjectBundleContext BundleContext context) throws Exception {
+
+        clientConfig.update(clientProps());
+        publisherConfig.update(publisherProps(StubScopeService.SCOPE, false));
+
+        String nsUri = "http://test.example.com/reactivated/1.0";
+        String datasetId = datasetId(nsUri, PublishablePackages.FINAL_STAGE);
+        ServiceRegistration<?> registration = PublishablePackages.register(context, nsUri,
+                PublishablePackages.FINAL_STAGE, FINGERPRINT, true);
+        try {
+            assertNotNull(await(portalRestBase + "/datasets/" + datasetId), "setup: the Dataset should publish");
+
+            // Re-activation unbinds every reference before it rebinds them. Our own @Deactivate is
+            // "stop working", not a statement about the models — a redeploy or a config change must
+            // not empty the catalogue, and retire.on.shutdown is false by default.
+            publisherConfig.update(publisherProps(StubScopeService.SCOPE, false));
+            Thread.sleep(UNPUBLISH_DELAY_SECONDS * 2_000 + 4_000);
+
+            assertNotNull(get(portalRestBase + "/datasets/" + datasetId),
+                    "a configuration update must retire nothing");
+            assertTrue(awaitCatalogTerm(StubScopeService.SCOPE, datasetId, true),
+                    "a configuration update must leave the Catalog membership standing");
+        } finally {
+            registration.unregister();
+        }
+    }
+
     // ---- helpers ----------------------------------------------------------
+
+    /** The debounce window the D5 tests configure, short enough to assert against. */
+    private static final int UNPUBLISH_DELAY_SECONDS = 2;
+
+    /**
+     * Polls the scope's Catalog until {@code term} is present (or absent, when {@code present} is
+     * false). Membership is what retirement changes, and it changes asynchronously.
+     */
+    private static boolean awaitCatalogTerm(String scope, String term, boolean present) throws Exception {
+        long deadline = System.currentTimeMillis() + PUBLISH_WAIT_MS;
+        while (System.currentTimeMillis() < deadline) {
+            String body = get(portalRestBase + "/catalogs/" + scope);
+            if (body != null && body.contains(term) == present) {
+                return true;
+            }
+            Thread.sleep(500);
+        }
+        return false;
+    }
+
+    /** Polls until the URL stops answering 2xx. */
+    private static boolean awaitGone(String url) throws Exception {
+        long deadline = System.currentTimeMillis() + PUBLISH_WAIT_MS;
+        while (System.currentTimeMillis() < deadline) {
+            if (get(url) == null) {
+                return true;
+            }
+            Thread.sleep(500);
+        }
+        return false;
+    }
 
     /** {@code fp1:} + 64 hex digits, the shape the fingerprint service produces. */
     private static final String FINGERPRINT = "fp1:" + "ab".repeat(32);
@@ -401,6 +564,8 @@ public class DcatPublisherIT {
         // Required to publish a Distribution at all: license is a lowerBound=1 containment there.
         props.put("license.uri", "http://dcat-ap.de/def/licenses/dl-by-de/2.0");
         props.put("distribution.media.types", new String[] { "application/xmi" });
+        // Short enough to assert against; the shipped default is 30s.
+        props.put("unpublish.delay.seconds", UNPUBLISH_DELAY_SECONDS);
         return props;
     }
 

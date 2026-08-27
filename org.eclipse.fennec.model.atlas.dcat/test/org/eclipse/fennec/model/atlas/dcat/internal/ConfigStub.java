@@ -104,4 +104,19 @@ record ConfigStub(String publisherName, String publisherAbout, String lang, Stri
     public String dataset_description_template() {
         return datasetTemplate;
     }
+
+    @Override
+    public UnpublishMode unpublish_mode() {
+        return UnpublishMode.UNLINK;
+    }
+
+    @Override
+    public int unpublish_delay_seconds() {
+        return 30;
+    }
+
+    @Override
+    public boolean retire_on_shutdown() {
+        return false;
+    }
 }

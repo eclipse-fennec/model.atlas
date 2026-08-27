@@ -78,7 +78,7 @@ public @interface DcatPublisherConfig {
     /** {@code theme} — DCAT-AP.de data-theme IRIs. */
     String[] theme() default {};
 
-    /** {@code keywords} — added to the scope/stage/registry keywords the publisher derives. */
+    /** {@code keywords} — added to the scope/stage keywords the publisher derives. */
     String[] keywords() default {};
 
     /**
@@ -98,4 +98,30 @@ public @interface DcatPublisherConfig {
 
     /** {@code dataset.description.template} — used when an EPackage carries no documentation. */
     String dataset_description_template() default "The %s data model, served from the %s stage of the %s scope.";
+
+    /**
+     * {@code unpublish.mode} — what happens to a Dataset that stops being publishable: the flag
+     * cleared, the package deleted, a promotion out of a permitted stage. {@code UNLINK} is the
+     * default because it is reversible and cannot destroy what a portal-side editor added.
+     */
+    UnpublishMode unpublish_mode() default UnpublishMode.UNLINK;
+
+    /**
+     * {@code unpublish.delay.seconds} — how long an unbind stays ambiguous. A changed package is
+     * republished by unregister-then-register, so a re-register inside this window cancels the
+     * retirement; without it every content edit would briefly unpublish its own Dataset. Not a
+     * throughput knob: it should comfortably exceed how long a re-register takes.
+     */
+    int unpublish_delay_seconds() default 30;
+
+    /**
+     * {@code retire.on.shutdown} — whether a clean shutdown retires what this publisher put in the
+     * portal. {@code false}, because it cannot deliver the guarantee it appears to (a SIGKILL, an
+     * OOM kill or a dead host runs no deactivate at all) while charging every routine restart a
+     * full retire plus re-publish. A DCAT entry says the model exists and where it is served from,
+     * which stays true across a restart. When {@code true}, the shutdown path is forced to
+     * {@link UnpublishMode#UNLINK} whatever {@code unpublish.mode} says: a restart must never
+     * delete.
+     */
+    boolean retire_on_shutdown() default false;
 }

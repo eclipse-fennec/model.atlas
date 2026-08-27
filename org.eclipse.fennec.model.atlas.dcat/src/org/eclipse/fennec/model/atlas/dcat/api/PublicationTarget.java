@@ -25,11 +25,9 @@ package org.eclipse.fennec.model.atlas.dcat.api;
  *
  * @param scope       the defining scope, from {@code emf.model.scope}
  * @param stage       the stage the package is registered in, from {@code atlas.stage}
- * @param registry    the registry holding it, or {@code null} when not known from the properties
  * @param nsUri       the namespace URI, from {@code emf.nsURI}
  * @param version     the package version, from {@code emf.version}
  * @param fingerprint the content fingerprint, from {@code emf.fingerprint}; drives change detection
  */
-public record PublicationTarget(String scope, String stage, String registry, String nsUri, String version,
-        String fingerprint) {
+public record PublicationTarget(String scope, String stage, String nsUri, String version, String fingerprint) {
 }
