@@ -2,9 +2,3 @@
 
 -buildpath: \
 	org.eclipse.fennec.model.atlas.mediatypes.api;version=snapshot
-# SupportedMediatypesImpl registers its service by hand so that it can refresh the service
-# properties when the list changes, which means bnd cannot derive this capability from the DS
-# metadata any more. It has to be declared: the production runtime resolves with
-# `-resolve.effective: active`, where a consumer's mandatory reference needs a provider.
-Provide-Capability: \
-	osgi.service;objectClass:List<String>="org.eclipse.fennec.model.atlas.mediatypes.api.SupportedMediatype";uses:="org.eclipse.fennec.model.atlas.mediatypes.api"

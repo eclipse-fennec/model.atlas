@@ -223,9 +223,10 @@ for the configuration to actually hold:
   after a Dataset was published therefore adds its Distribution with no upload, no configuration
   touch and no restart.
 - Because the registration is manual, the `osgi.service` capability is no longer derivable from the
-  DS metadata and is **declared in `mediatypes.impl/bnd.bnd`**. Without it the production runtime,
-  which resolves with `-resolve.effective: active`, has no provider for its consumers' mandatory
-  references.
+  DS metadata, so `SupportedMediatypesImpl` carries an **`@Capability(namespace = "osgi.service", …)`**
+  annotation — the same way `AtlasClientComponent` declares the services it registers by hand.
+  Without it the production runtime, which resolves with `-resolve.effective: active`, has no
+  provider for its consumers' mandatory references.
 - **A narrowed allowlist has to reach already-published Datasets.** Their content has not changed,
   so the fingerprint check skips the write and nothing else would ever revisit them. On the first
   publish after a configuration change the published Distributions' media types are compared with

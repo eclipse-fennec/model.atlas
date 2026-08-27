@@ -20,6 +20,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
 
 import org.eclipse.emf.ecore.resource.ResourceSet;
 import org.eclipse.fennec.model.atlas.mediatypes.api.SupportedMediatype;
+import org.osgi.annotation.bundle.Capability;
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.ServiceRegistration;
 import org.osgi.service.component.annotations.Activate;
@@ -38,6 +39,13 @@ import org.osgi.service.component.annotations.ReferencePolicyOption;
  * event to react to, and anything that read the list once was stale for as long as it ran.
  * </p>
  */
+// The service is registered manually below, so DS does not generate its osgi.service capability.
+// Declare it explicitly, or resolving against this bundle stops satisfying consumers' service
+// requirements — which the production runtime has, since it resolves with `-resolve.effective:
+// active`.
+@Capability(namespace = "osgi.service", attribute = {
+        "objectClass:List<String>=\"org.eclipse.fennec.model.atlas.mediatypes.api.SupportedMediatype\"",
+        "uses:=org.eclipse.fennec.model.atlas.mediatypes.api" })
 @Component(immediate = true, service = {})
 public class SupportedMediatypesImpl implements SupportedMediatype {
 
