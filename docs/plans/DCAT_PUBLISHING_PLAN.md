@@ -146,7 +146,6 @@ fourth artifact, and splitting it later is mechanical.
 | `DcatMapper` | atlas facts + defaults → `Catalog` / `Dataset` / `Distribution` EObjects |
 | `DcatIds` | the id scheme of §5 |
 | `CatalogResolver` | resolves a scope to (catalog id, ownership) across the three cases of §7a; the one place that knows whether a Catalog may be written |
-| `StagePublicationPolicy` | the default `DcatPublicationPolicy` (§7): the scope gate plus the stage gate (final stages only, unless configured wider). The `dcat` flag itself is already handled by the tracker's filter |
 | `ConfiguredMetadataSource` | the default `DcatMetadataSource` (§6), driven by configuration |
 | `DcatPublisherHealthCheck` | `HealthCheck` tagged `atlas`: portal readiness, queue depth, last error per target |
 | `DcatCommands` (optional) | gogo `dcat:status`, `dcat:reconcile [scope]` |
@@ -534,18 +533,12 @@ public record PublicationTarget(String scope, String stage, String nsUri,
                                 String version, String fingerprint) {}
 
 @ConsumerType
-public interface DcatPublicationPolicy {
-    boolean publishScope(String scope);
-    boolean publish(PublicationTarget target);
-}
-
-@ConsumerType
 public interface DcatMetadataSource { /* title/description/publisher/license/theme/keywords */ }
 ```
 
-Whiteboards, highest `service.ranking` wins. The default `DcatPublicationPolicy` is now
-`MetadataPublicationPolicy`; a configured or annotation-driven one stays available as a second
-implementation, at no cost today.
+A whiteboard, highest `service.ranking` wins. `DcatMetadataSource` answers what a Dataset *says*;
+**there is no publication-policy SPI** — see D4 below for why the one this plan used to specify was
+deleted rather than implemented.
 
 **The verdict is three-level**, and this is the part not to lose:
 
@@ -881,13 +874,33 @@ ours to decide.
 | **D2** | `DcatIds`, `DcatMapper`, `ConfiguredMetadataSource`; the full sequence of §4 for one target, driven by a gogo `dcat:reconcile` | `dcat:dataset` link present, distributions ≥ 1, each with its own `downloadURL`, read back |
 | **D2a** ✅ | `ScopeHierarchy` + the link fan-out both ways | `atlas → jena → nawerker`: an `atlas` package's Dataset is one resource in three Catalogs; creating `nawerker` last still gets it |
 | **D3** | `PackageServiceTracker` + the work queue + fingerprint/ETag state | an upload through the REST API lands in the portal without a manual step; a restart re-publishes nothing |
-| **D4** | `MetadataPublicationPolicy`: the `WritableScopeService` lookup, the cache, the scope gate | a flagged package publishes, an unflagged one does not, a scope absent from `scopes` publishes nothing whatever its packages say |
+| **D4** ✅ | ~~`MetadataPublicationPolicy`~~ — satisfied by O13 and the configuration gates; the `DcatPublicationPolicy` SPI was **deleted** (below) | a flagged package publishes, an unflagged one does not, a scope absent from `scopes` publishes nothing whatever its packages say |
 | **D5** ✅ | Unpublication: modes, the STOPPING guard, the debounce | a restart retires nothing; a delete retires exactly one Dataset |
 | **D6** ✅ | Error classification, backoff queue, health check | a 503 retries, a SHACL refusal does not |
 | **D7** | OSGi ITs against a portal container; the runtime config bundle and bndrun variant | `testOSGi` green |
 
 D1–D3 is the walking skeleton and the honest end of "does this work". D4–D6 is what makes it
 operable.
+
+### D4, and why nothing was built for it (2026-08-27)
+
+D4's *behaviour* arrived with O13, from a different direction than this row assumed, and its
+done-when is covered by `anUnflaggedPackageIsNeverTracked`,
+`aScopeOutsideTheConfiguredListIsNotPublished` and `aNonFinalStageRecordsIntentWithoutPublishing`.
+The three-level verdict is intact: the `scopes` configuration opts a scope in, `publish.stages`
+gates the stages, and the package's own `dcat` flag decides the package — enforced by the tracker's
+target filter, which is why no policy call is reached. `MetadataPublicationPolicy`'s whole substance
+was the `ObjectMetadata` lookup and its cache, and O13 moved that into
+`DynamicEPackageRegistrationService`, which was already loading the metadata anyway.
+
+That left `DcatPublicationPolicy` as exported API nothing consulted, and it was **deleted**. The
+argument is this plan's own, from dropping the `exclude`/`include` globs: *a second rule language
+over the same decision is the kind of thing that ends up disagreeing with itself.* A policy SPI is
+exactly that, and a worse version of it, because its verdict would be invisible in both the
+configuration and the metadata. Had it been kept it would also have needed narrowing to
+restrict-only — "override the default", as its javadoc said, would let a bundle dropped into the
+runtime publish a scope the operator never opted into, which is precisely the guarantee level 1
+exists to give.
 
 ---
 
