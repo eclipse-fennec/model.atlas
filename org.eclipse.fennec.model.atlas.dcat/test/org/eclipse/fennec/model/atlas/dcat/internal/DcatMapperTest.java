@@ -176,8 +176,10 @@ class DcatMapperTest {
         // violates the controlled-vocabulary rule, which a shape reports as a node-kind violation.
         assertThat(distribution.getFormat())
                 .isEqualTo("http://publications.europa.eu/resource/authority/file-type/XML");
-        assertThat(distribution.getMediaType())
-                .isEqualTo("http://www.iana.org/assignments/media-types/application/vnd.xmi+xml");
+        // No dcat:mediaType for XMI: application/xmi is not registered, and the registered
+        // application/vnd.xmi+xml is not what this atlas serves. Omitting is conformant; claiming a
+        // near-enough type is a falsehood a harvester could act on.
+        assertThat(distribution.getMediaType()).isNull();
         // The served media type is still readable, which is what the title is for.
         assertThat(distribution.getTitle().getValue()).isEqualTo("application/xmi");
         assertThat(distribution.getAccessURL()).hasSize(1);

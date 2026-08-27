@@ -37,14 +37,27 @@ public class MediaTypeVocabularyTest {
     }
 
     @Test
-    public void xmiMapsToXmlForTheFileTypeAndToOmgsRegisteredNameForTheMediaType() {
+    public void xmiGetsTheXmlFileTypeAndNoMediaTypeAtAll() {
         // The file-type list has no XMI concept — that IRI answers 200 with nothing in it, exactly
-        // as a made-up code does — and application/xmi is not registered with IANA. The vendor-tree
-        // registration OMG filed in 2008 is the only registered name for the format.
+        // as a made-up code does — so the format is XML.
         assertThat(MediaTypeVocabulary.formatIri("application/xmi"))
                 .contains("http://publications.europa.eu/resource/authority/file-type/XML");
-        assertThat(MediaTypeVocabulary.mediaTypeIri("application/xmi"))
-                .contains("http://www.iana.org/assignments/media-types/application/vnd.xmi+xml");
+        // And no dcat:mediaType: application/xmi is not registered, and OMG's registered
+        // application/vnd.xmi+xml is a different type string from the one this atlas serves.
+        // Advertising it would be a false statement about the wire format that a harvester could
+        // act on — by sending it as an Accept header, for one.
+        assertThat(MediaTypeVocabulary.mediaTypeIri("application/xmi")).isEmpty();
+    }
+
+    @Test
+    public void aMediaTypeIriIsAlwaysTheIriOfTheTypeItIsFiledUnder() {
+        // Derived, not written out beside the entry: a hand-written IRI can disagree with the media
+        // type it belongs to, and that is exactly the mistake this shape of the table prevents.
+        for (String mediaType : new String[] { "application/json", "application/xml", "application/ld+json",
+                "text/csv" }) {
+            assertThat(MediaTypeVocabulary.mediaTypeIri(mediaType))
+                    .contains("http://www.iana.org/assignments/media-types/" + mediaType);
+        }
     }
 
     @Test
@@ -80,7 +93,8 @@ public class MediaTypeVocabularyTest {
             MediaTypeVocabulary.formatIri(mediaType)
                     .ifPresent(iri -> assertThat(iri).startsWith("http://").doesNotContain(" "));
             MediaTypeVocabulary.mediaTypeIri(mediaType)
-                    .ifPresent(iri -> assertThat(iri).startsWith("http://").doesNotContain(" "));
+                    .ifPresent(iri -> assertThat(iri).startsWith("http://").doesNotContain(" ")
+                            .endsWith(mediaType));
         }
     }
 }

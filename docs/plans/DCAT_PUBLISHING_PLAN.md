@@ -930,7 +930,7 @@ DCAT-AP mandates a controlled vocabulary for both properties: the EU file-type N
 
 | served | `dct:format` | `dcat:mediaType` |
 |---|---|---|
-| `application/xmi` | `…/file-type/XML` | `…/media-types/application/vnd.xmi+xml` |
+| `application/xmi` | `…/file-type/XML` | *omitted — not registered* |
 | `application/json` | `…/file-type/JSON` | `…/media-types/application/json` |
 | `application/xml` | `…/file-type/XML` | `…/media-types/application/xml` |
 | `application/ld+json` | `…/file-type/JSON_LD` | `…/media-types/application/ld+json` |
@@ -940,10 +940,13 @@ DCAT-AP mandates a controlled vocabulary for both properties: the EU file-type N
 
 Three findings behind that table:
 
-- **`application/xmi` is not registered with IANA**; the only registered name for the format is
-  OMG's vendor-tree `application/vnd.xmi+xml` (2008), which is what the mapping uses. The wire header
-  stays `application/xmi`, so the advertised name is the register's name for the format rather than
-  the header — a deliberate, reversible choice.
+- **`application/xmi` is not registered with IANA, so it gets no `dcat:mediaType`** — not even
+  OMG's registered `application/vnd.xmi+xml` (2008), which names the same format but is a *different
+  type string from the one this atlas serves*. Advertising it would be a false statement about the
+  wire format that a harvester could act on, by sending it as an `Accept` header for one. The rule is
+  therefore simple enough to check: **`dcat:mediaType` appears exactly when the served media type is
+  itself registered** — and the IRI is *derived* from that type rather than written beside it, so a
+  hand-written IRI can no longer disagree with the entry it is filed under.
 - **The file-type NAL has no XMI concept.** That IRI answers 200 with no concept in the body, exactly
   as a made-up code does, which is why the mapping goes to `XML`. Do not trust a 200 from that
   endpoint as evidence a concept exists.
