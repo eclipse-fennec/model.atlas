@@ -3,11 +3,12 @@
 # The portal image is built locally from the dcat.atlas repository; it is not published to a
 # registry, so `docker compose up` fails on the portal until you have built it there.
 #
-# ATLAS_PUBLIC_BASE_URI is deliberately not a localhost address: the publisher refuses one, because
-# a loopback URL in a public catalogue is worse than no catalogue entry. It is the address a
-# harvester fetches models from — through whatever gateway fronts this atlas — and is stamped into
-# the Distribution URLs rather than used to reach anything from here. For local poking about, run
-# `modelatlas.runtime_local-jena-dcat` instead, which allows a loopback.
+# ATLAS_PUBLIC_BASE_URI is the address a reader fetches models from — it is stamped into every
+# Distribution's downloadURL and accessURL, and is never used to reach anything from inside here.
+# This demo points it at the published host port, so the URLs the portal advertises can be curled
+# as they stand; that needs DCAT_ALLOW_LOCAL_BASE_URI=true, because the publisher otherwise refuses
+# a loopback address — in a real deployment it is the public prefix in front of the gateway, and
+# both of these lines change together.
 services:
   model-atlas:
     image: eclipsefennec/model.atlas:jena-dcat-snapshot
@@ -22,7 +23,8 @@ services:
       - ATLAS_HTTP_PORT=8080
       # Reachable from inside this network, not from the host.
       - DCAT_PORTAL_BASE_URI=http://dcat-portal:8080/rest/
-      - ATLAS_PUBLIC_BASE_URI=https://opendata.example.de/model-atlas
+      - ATLAS_PUBLIC_BASE_URI=http://localhost:8080/atlas/rest
+      - DCAT_ALLOW_LOCAL_BASE_URI=true
       - DCAT_PUBLISHER_NAME=Stadt Jena
       - DCAT_PUBLISHER_ABOUT=https://www.jena.de
     volumes:

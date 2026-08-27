@@ -21,9 +21,11 @@
 		// own /atlas/rest. An APISIX fronts the atlas, so this is the address a harvester can
 		// actually fetch from — never the container's internal one.
 		"atlas.public.base.uri": "$[env:ATLAS_PUBLIC_BASE_URI]",
-		// Not tolerated here, unlike the local runtime: a localhost URL in a public catalogue is
-		// worse than no catalogue entry, and this image is the one that reaches a real portal.
-		"allow.local.base.uri": false,
+		// Off by default: a localhost URL in a public catalogue is worse than no catalogue entry,
+		// and this image is the one that reaches a real portal. The knob exists because the same
+		// image runs the compose demo, where localhost IS the address a reader can fetch from —
+		// and a demo that advertises URLs nobody can download is worse than no demo.
+		"allow.local.base.uri": "$[env:DCAT_ALLOW_LOCAL_BASE_URI;default=false]",
 		// The atlas root scope is deliberately absent: its registry holds the system schemas,
 		// which are not open data.
 		"scopes": ["jena"],

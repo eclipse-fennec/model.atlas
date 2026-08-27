@@ -17,9 +17,11 @@ whoever uploads a model.
   repository.
 - **A public base URI for this atlas.** `ATLAS_PUBLIC_BASE_URI` is the entire public prefix, up to and
   including whatever stands in for this container's own `/atlas/rest` — the address a harvester can
-  actually fetch from, through the APISIX in front. A loopback address is **refused**: a `localhost`
-  URL in a public catalogue is worse than no catalogue entry. For local experiments use the
-  `modelatlas.runtime_local-jena-dcat` runtime instead, which allows one.
+  actually fetch from, through the APISIX in front. Every Distribution's `downloadURL` and
+  `accessURL` is built from it, so those URLs are directly downloadable exactly to the extent that
+  this value is right. A loopback address is refused unless `DCAT_ALLOW_LOCAL_BASE_URI=true`: a
+  `localhost` URL in a public catalogue is worse than no catalogue entry, but it is the correct value
+  for a demo stack whose URLs should be curlable from the host.
 - **A publisher identity.** `DCAT_PUBLISHER_NAME` is required by the portal's own model:
   `publisher` is a `lowerBound=1` containment on `dcat:DcatResource`, so a Catalog or Dataset without
   a named Agent never reaches its store.
@@ -49,6 +51,7 @@ docker run -d -p 8080:8080 \
 | `DCAT_LICENSE_URI` | `http://dcat-ap.de/def/licenses/dl-by-de/2.0` | `dct:license`; required on every Distribution by the portal's model |
 | `DCAT_LANGUAGE` | `de` | the language tag stamped on generated literals |
 | `DCAT_UNPUBLISH_MODE` | `UNLINK` | what retirement does: `NONE`, `UNLINK`, `DELETE`, `CASCADE` |
+| `DCAT_ALLOW_LOCAL_BASE_URI` | `false` | permits a loopback `ATLAS_PUBLIC_BASE_URI`. For a demo whose advertised URLs must be curlable from the host; never for a real deployment |
 
 Everything else — the scope list, the media types, the retry budget — is in the image's
 `runtime.config.docker.jena.dcat` bundle, and the scope/workflow configuration is mounted as

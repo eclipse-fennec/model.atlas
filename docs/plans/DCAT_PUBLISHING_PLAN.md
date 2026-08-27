@@ -914,9 +914,12 @@ ours to decide.
 `docker/modelatlas_jena_dcat` mirrors `modelatlas_jena`, and the DCAT configuration ships **as a
 bundle** (`runtime.config.docker.jena.dcat`) rather than in the mounted `jena.json`, so the image
 needs only environment variables: `DCAT_PORTAL_BASE_URI`, `ATLAS_PUBLIC_BASE_URI` and
-`DCAT_PUBLISHER_NAME` are required, the rest have defaults. `allow.local.base.uri` is `false` here,
-unlike the local runtime — this is the image that reaches a real portal, and a loopback URL in a
-public catalogue is worse than no entry.
+`DCAT_PUBLISHER_NAME` are required, the rest have defaults. `allow.local.base.uri` defaults to
+`false` here, unlike the local runtime — a loopback URL in a public catalogue is worse than no entry
+— but it is env-driven (`DCAT_ALLOW_LOCAL_BASE_URI`), because the same image runs the compose demo,
+where localhost *is* the address a reader fetches from. **The Distribution URLs are only as
+downloadable as `ATLAS_PUBLIC_BASE_URI` is correct**, so the demo sets both together and its
+advertised URLs can be curled as they stand.
 
 Three things cost real time and are worth writing down:
 
