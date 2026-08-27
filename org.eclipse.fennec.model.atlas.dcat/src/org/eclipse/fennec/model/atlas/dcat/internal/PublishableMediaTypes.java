@@ -13,6 +13,7 @@
  */
 package org.eclipse.fennec.model.atlas.dcat.internal;
 
+import java.util.Collection;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
@@ -38,6 +39,34 @@ final class PublishableMediaTypes {
      * @param supported  what the runtime reports it can serve
      * @return the intersection, in the allowlist's order; empty if they do not overlap
      */
+    /**
+     * Whether a published Dataset advertises something other than what the allowlist now resolves
+     * to — which is how a narrowed {@code distribution.media.types} reaches an already-published
+     * Dataset at all. Its content has not changed, so the fingerprint check would skip the write
+     * and the catalogue would go on offering a format the configuration no longer permits.
+     *
+     * <p>
+     * An <strong>empty</strong> {@code resolved} is never out of date. Empty means the runtime
+     * currently reports none of the allowed formats, which happens while codecs are still coming up
+     * — a runtime condition, not an instruction to strip a catalogue entry. Acting on it would
+     * remove every Distribution during startup and leave nothing to put them back.
+     * </p>
+     *
+     * @param resolved  what {@link #resolve} answers now
+     * @param published the media types the portal's Distributions carry
+     * @return {@code true} when the Dataset has to be rewritten
+     */
+    static boolean distributionsOutOfDate(Set<String> resolved, Collection<String> published) {
+        if (resolved == null || resolved.isEmpty()) {
+            return false;
+        }
+        Set<String> advertised = new LinkedHashSet<>();
+        if (published != null) {
+            published.stream().filter(t -> t != null).map(t -> t.trim().toLowerCase()).forEach(advertised::add);
+        }
+        return !advertised.equals(resolved);
+    }
+
     static Set<String> resolve(String[] configured, List<String> supported) {
         Set<String> runtime = new LinkedHashSet<>();
         if (supported != null) {

@@ -758,6 +758,47 @@ public class DcatPublisherIT {
         }
     }
 
+    // ---- the media-type allowlist ------------------------------------------
+
+    @Test
+    public void narrowingTheAllowlistRemovesTheDistributionItDropped(
+            @InjectConfiguration(withFactoryConfig = @WithFactoryConfiguration(factoryPid = CLIENT_PID,
+                    name = PORTAL + "20", location = "?")) Configuration clientConfig,
+            @InjectConfiguration(withFactoryConfig = @WithFactoryConfiguration(factoryPid = PUBLISHER_PID,
+                    name = PORTAL + "20", location = "?")) Configuration publisherConfig,
+            @InjectBundleContext BundleContext context) throws Exception {
+
+        clientConfig.update(clientProps());
+        Hashtable<String, Object> both = publisherProps(StubScopeService.SCOPE, false);
+        both.put("distribution.media.types", new String[] { "application/xmi", "application/json" });
+        publisherConfig.update(both);
+
+        String nsUri = "http://test.example.com/formats/1.0";
+        String datasetId = datasetId(nsUri, PublishablePackages.FINAL_STAGE);
+        ServiceRegistration<?> pkg = PublishablePackages.register(context, nsUri, PublishablePackages.FINAL_STAGE,
+                FINGERPRINT, true);
+        try {
+            String dataset = await(portalRestBase + "/datasets/" + datasetId);
+            assertNotNull(dataset, "setup: the Dataset should publish");
+            assertTrue(dataset.contains("application/json"),
+                    "setup: both allowed formats should be advertised, was: " + dataset);
+
+            // The operator narrows the allowlist. The content did not change, so the fingerprint
+            // check would skip the write — and the catalogue would go on advertising a format the
+            // configuration no longer permits.
+            Hashtable<String, Object> xmiOnly = publisherProps(StubScopeService.SCOPE, false);
+            xmiOnly.put("distribution.media.types", new String[] { "application/xmi" });
+            publisherConfig.update(xmiOnly);
+
+            assertTrue(awaitDatasetWithout(datasetId, "application/json"),
+                    "narrowing distribution.media.types must remove the Distribution it dropped");
+            String narrowed = get(portalRestBase + "/datasets/" + datasetId);
+            assertTrue(narrowed.contains("application/xmi"), "the remaining format must stay: " + narrowed);
+        } finally {
+            pkg.unregister();
+        }
+    }
+
     // ---- helpers ----------------------------------------------------------
 
     /** Waits for the portal client this test configured, and hands it over. */
@@ -809,6 +850,19 @@ public class DcatPublisherIT {
         while (System.currentTimeMillis() < deadline) {
             String body = get(portalRestBase + "/catalogs/" + catalogId);
             if (body != null && body.contains(term) == present) {
+                return true;
+            }
+            Thread.sleep(500);
+        }
+        return false;
+    }
+
+    /** Polls a Dataset until it stops mentioning {@code term}. */
+    private static boolean awaitDatasetWithout(String datasetId, String term) throws Exception {
+        long deadline = System.currentTimeMillis() + PUBLISH_WAIT_MS;
+        while (System.currentTimeMillis() < deadline) {
+            String body = get(portalRestBase + "/datasets/" + datasetId);
+            if (body != null && !body.contains(term)) {
                 return true;
             }
             Thread.sleep(500);

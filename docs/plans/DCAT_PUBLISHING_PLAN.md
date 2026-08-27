@@ -202,6 +202,24 @@ that entity: log once at WARNING with the report, mark the target unpublishable,
 `TransportException` go on a bounded backoff queue. `Registration.applied() == false` is a
 foreign edit: log at WARNING, carry on to the next resource, never unwind.
 
+### The media-type allowlist, as built (2026-08-27)
+
+`distribution.media.types` is the operator's allowlist and the only thing that decides which
+Distributions a Dataset carries; it is intersected with what the runtime reports it can serve, so
+the catalogue can never advertise a format the server would answer 415 for. Two things had to change
+for the configuration to actually hold:
+
+- **Resolved per use, not cached at activation.** `SupportedMediatypesImpl` refreshes its list when
+  its `ResourceSet` reference is updated, *without the service rebinding* — so a publisher that
+  activated before the codecs were up advertised fewer formats than configured for as long as it
+  ran, and the allowlist looked ignored.
+- **A narrowed allowlist has to reach already-published Datasets.** Their content has not changed,
+  so the fingerprint check skips the write and nothing else would ever revisit them. On the first
+  publish after a configuration change the published Distributions' media types are compared with
+  what the allowlist now resolves to, and a mismatch forces a full rewrite. An **empty** resolution
+  never counts as a mismatch: empty is what startup looks like while codecs come up, and stripping
+  every Distribution then would leave nothing to put them back.
+
 ### As built (D2a, 2026-08-27)
 
 `ScopeHierarchy` is an immutable snapshot built per operation from the bound `ScopeInfo`s, not

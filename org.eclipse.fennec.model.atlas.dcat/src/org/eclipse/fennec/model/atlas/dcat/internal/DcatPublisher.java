@@ -17,6 +17,7 @@ import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.Map;
+import java.util.Optional;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
@@ -116,7 +117,6 @@ public class DcatPublisher {
     private volatile Set<String> publishedScopes = Set.of();
     private volatile DcatMapper mapper;
     private volatile boolean active;
-    private volatile Set<String> mediaTypes = Set.of();
     private volatile Set<String> permittedStages = Set.of();
     private volatile boolean allStages;
     private volatile UnpublishMode unpublishMode = UnpublishMode.UNLINK;
@@ -418,11 +418,9 @@ public class DcatPublisher {
         this.retirements = new RetirementQueue("dcat-retirement");
         DcatMetadataSource source = metadataSource;
         this.mapper = new DcatMapper(config, source != null ? source : new ConfiguredMetadataSource(config));
-        this.mediaTypes = PublishableMediaTypes.resolve(config.distribution_media_types(),
-                supportedMediatypes == null ? List.of() : supportedMediatypes.getSupportedMediaTypes());
         this.active = true;
 
-        if (mediaTypes.isEmpty()) {
+        if (publishableMediaTypes().isEmpty()) {
             LOGGER.warning("No publishable media types: distribution.media.types does not overlap what this "
                     + "runtime reports it can serve, so Datasets would be advertised with no way to fetch them. "
                     + "Datasets are still published; Distributions are not");
@@ -724,7 +722,17 @@ public class DcatPublisher {
             }
             String published = publishedFingerprints.get(datasetId);
             if (published == null) {
-                published = portal.dataset(datasetId).map(DcatPublisher::fingerprintOf).orElse(null);
+                Optional<Dataset> existing = portal.dataset(datasetId);
+                if (existing.isPresent() && PublishableMediaTypes.distributionsOutOfDate(publishableMediaTypes(),
+                        advertisedMediaTypes(existing.get()))) {
+                    // A narrowed — or widened — distribution.media.types. The content is unchanged,
+                    // so nothing else would ever rewrite this Dataset, and the catalogue would keep
+                    // offering a format the configuration no longer permits.
+                    LOGGER.info(() -> "Dataset " + datasetId + " advertises formats the allowlist no longer "
+                            + "resolves to; rewriting it");
+                    return writeDataset(portal, datasetId, tracked);
+                }
+                published = existing.map(DcatPublisher::fingerprintOf).orElse(null);
                 if (published != null) {
                     publishedFingerprints.put(datasetId, published);
                 }
@@ -747,6 +755,7 @@ public class DcatPublisher {
                 return null;
             }
             // Re-assert the containment the PUT just dropped.
+            Set<String> mediaTypes = publishableMediaTypes();
             for (String mediaType : mediaTypes) {
                 Distribution distribution = mapper.toDistribution(target, mediaType, baseUri);
                 portal.registerDistribution(datasetId, DcatIds.distributionId(mediaType), distribution);
@@ -772,6 +781,24 @@ public class DcatPublisher {
             LOGGER.log(Level.WARNING, "Cannot publish Dataset " + datasetId + ": " + misconfigured.getMessage());
             return null;
         }
+    }
+
+    /**
+     * The formats a Dataset advertises: the configured allowlist intersected with what the runtime
+     * currently reports it can serve.
+     *
+     * <p>
+     * Resolved per use rather than cached at activation, because the runtime's own list grows as
+     * codecs come up — {@code SupportedMediatypesImpl} refreshes it when its {@code ResourceSet}
+     * reference is updated, without the service ever rebinding. A publisher that activated first
+     * would otherwise advertise fewer formats than configured for as long as it ran, and the
+     * operator's allowlist would look like it had been ignored.
+     * </p>
+     */
+    private Set<String> publishableMediaTypes() {
+        SupportedMediatype mediatypes = supportedMediatypes;
+        return PublishableMediaTypes.resolve(config.distribution_media_types(),
+                mediatypes == null ? List.of() : mediatypes.getSupportedMediaTypes());
     }
 
     /**
@@ -917,6 +944,11 @@ public class DcatPublisher {
                         + e.getMessage());
             }
         });
+    }
+
+    /** The media types a published Dataset's Distributions carry. */
+    private static List<String> advertisedMediaTypes(Dataset dataset) {
+        return dataset.getDistribution().stream().map(Distribution::getMediaType).filter(t -> t != null).toList();
     }
 
     /**
