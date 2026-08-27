@@ -790,12 +790,54 @@ public class DcatPublisherIT {
             xmiOnly.put("distribution.media.types", new String[] { "application/xmi" });
             publisherConfig.update(xmiOnly);
 
-            assertTrue(awaitDatasetWithout(datasetId, "application/json"),
+            assertTrue(awaitDatasetTerm(datasetId, "application/json", false),
                     "narrowing distribution.media.types must remove the Distribution it dropped");
             String narrowed = get(portalRestBase + "/datasets/" + datasetId);
             assertTrue(narrowed.contains("application/xmi"), "the remaining format must stay: " + narrowed);
         } finally {
             pkg.unregister();
+        }
+    }
+
+    @Test
+    public void aCodecComingUpLaterAddsItsDistribution(
+            @InjectConfiguration(withFactoryConfig = @WithFactoryConfiguration(factoryPid = CLIENT_PID,
+                    name = PORTAL + "21", location = "?")) Configuration clientConfig,
+            @InjectConfiguration(withFactoryConfig = @WithFactoryConfiguration(factoryPid = PUBLISHER_PID,
+                    name = PORTAL + "21", location = "?")) Configuration publisherConfig,
+            @InjectBundleContext BundleContext context) throws Exception {
+
+        clientConfig.update(clientProps());
+
+        // The runtime can serve only XMI when the publisher starts, as if the JSON codec had not
+        // come up yet — while the allowlist permits both.
+        try (MutableSupportedMediatype runtime = MutableSupportedMediatype.register(context,
+                List.of("application/xmi"))) {
+            Hashtable<String, Object> props = publisherProps(StubScopeService.SCOPE, false);
+            props.put("distribution.media.types", new String[] { "application/xmi", "application/json" });
+            publisherConfig.update(props);
+
+            String nsUri = "http://test.example.com/latecodec/1.0";
+            String datasetId = datasetId(nsUri, PublishablePackages.FINAL_STAGE);
+            ServiceRegistration<?> pkg = PublishablePackages.register(context, nsUri,
+                    PublishablePackages.FINAL_STAGE, FINGERPRINT, true);
+            try {
+                assertNotNull(await(portalRestBase + "/datasets/" + datasetId), "setup: the Dataset should publish");
+                assertTrue(awaitDatasetTerm(datasetId, "application/json", false),
+                        "setup: a format the runtime cannot serve must not be advertised");
+
+                // The codec arrives. The service does not rebind — its properties are refreshed —
+                // and that is the only signal there is. Nothing about the package changes: no
+                // upload, no configuration touch, no restart.
+                runtime.report(List.of("application/xmi", "application/json"));
+
+                assertTrue(awaitDatasetTerm(datasetId, "application/json", true),
+                        "a format becoming available must reach an already-published Dataset");
+                String widened = get(portalRestBase + "/datasets/" + datasetId);
+                assertTrue(widened.contains("application/xmi"), "and must not cost the existing one: " + widened);
+            } finally {
+                pkg.unregister();
+            }
         }
     }
 
@@ -857,12 +899,12 @@ public class DcatPublisherIT {
         return false;
     }
 
-    /** Polls a Dataset until it stops mentioning {@code term}. */
-    private static boolean awaitDatasetWithout(String datasetId, String term) throws Exception {
+    /** Polls a Dataset until {@code term} is present, or absent when {@code present} is false. */
+    private static boolean awaitDatasetTerm(String datasetId, String term, boolean present) throws Exception {
         long deadline = System.currentTimeMillis() + PUBLISH_WAIT_MS;
         while (System.currentTimeMillis() < deadline) {
             String body = get(portalRestBase + "/datasets/" + datasetId);
-            if (body != null && !body.contains(term)) {
+            if (body != null && body.contains(term) == present) {
                 return true;
             }
             Thread.sleep(500);

@@ -141,20 +141,83 @@ public class DcatPublisher {
     private final Map<String, TrackedPackage> trackedPackages = new ConcurrentHashMap<>();
 
     /**
-     * Datasets this publisher has retired. A retirement drops the Catalog membership (and under
-     * {@code DELETE}/{@code CASCADE} the resource), but leaves an unchanged fingerprint behind on
-     * the portal — so a later re-publish of the same content would take the "already published"
-     * shortcut and never re-assert the link. This set makes the next write unconditional.
+     * Datasets whose next write must happen whatever the fingerprint says.
+     *
+     * <p>
+     * Two things land here, and both are changes the fingerprint cannot see. A retirement drops the
+     * Catalog membership (and under {@code DELETE}/{@code CASCADE} the resource) while leaving an
+     * unchanged fingerprint on the portal, so a re-publish of the same content would take the
+     * "already published" shortcut and never re-assert the link. A change in the publishable
+     * formats is the same shape of problem: the content is identical and the Distributions are not.
+     * </p>
      */
-    private final Set<String> retiredDatasets = ConcurrentHashMap.newKeySet();
+    private final Set<String> pendingRewrites = ConcurrentHashMap.newKeySet();
 
     /** An EPackage service plus the facts read off its properties at bind time. */
     private record TrackedPackage(PublicationTarget target, EPackage ePackage) {
     }
 
-    @Reference(cardinality = ReferenceCardinality.OPTIONAL, policy = ReferencePolicy.DYNAMIC,
-            policyOption = ReferencePolicyOption.GREEDY)
     private volatile SupportedMediatype supportedMediatypes;
+
+    /**
+     * The formats last written to a Dataset, so a change in what the runtime can serve can be told
+     * from an event that changed nothing else.
+     */
+    private volatile Set<String> lastPublishedMediaTypes = Set.of();
+
+    /**
+     * Method injection rather than a field, because a field reference gets no {@code updated}
+     * callback — and that callback is the point. The supported list is not fixed: it grows as
+     * codecs register content types, and {@code SupportedMediatype} refreshes its service properties
+     * when it does, so DS calls {@link #updatedSupportedMediatypes} and a Dataset published before a
+     * codec came up can gain the Distribution it should have had.
+     */
+    @Reference(name = "mediatypes", cardinality = ReferenceCardinality.OPTIONAL, policy = ReferencePolicy.DYNAMIC,
+            policyOption = ReferencePolicyOption.GREEDY)
+    void bindSupportedMediatypes(SupportedMediatype supportedMediatypes) {
+        this.supportedMediatypes = supportedMediatypes;
+        republishIfFormatsChanged();
+    }
+
+    void updatedSupportedMediatypes(SupportedMediatype supportedMediatypes) {
+        this.supportedMediatypes = supportedMediatypes;
+        republishIfFormatsChanged();
+    }
+
+    void unbindSupportedMediatypes(SupportedMediatype supportedMediatypes) {
+        if (this.supportedMediatypes == supportedMediatypes) {
+            this.supportedMediatypes = null;
+        }
+        // Deliberately no republish: losing the service resolves to nothing, and an empty
+        // resolution never strips what is published — see PublishableMediaTypes.
+    }
+
+    /**
+     * Re-publishes every tracked package when the resolved format set has actually changed.
+     *
+     * <p>
+     * The properties are refreshed whenever the underlying {@code ResourceSet} changes, which says
+     * nothing about whether <em>our</em> allowlist resolves to anything different — so the set is
+     * compared rather than trusted. An empty resolution is ignored for the same reason it never
+     * strips a Distribution: it is what startup looks like while codecs come up.
+     * </p>
+     */
+    private void republishIfFormatsChanged() {
+        if (!active) {
+            return;
+        }
+        Set<String> resolved = publishableMediaTypes();
+        if (resolved.isEmpty() || resolved.equals(lastPublishedMediaTypes)) {
+            return;
+        }
+        LOGGER.info(() -> "Publishable formats changed from " + lastPublishedMediaTypes + " to " + resolved
+                + "; re-publishing " + trackedPackages.size() + " Dataset(s)");
+        lastPublishedMediaTypes = resolved;
+        // Forces the write past the fingerprint check: the content is unchanged, and the format set
+        // is the only thing that moved.
+        pendingRewrites.addAll(trackedPackages.keySet());
+        trackedPackages.keySet().forEach(this::publishPackage);
+    }
 
     /**
      * The metadata source whiteboard: highest {@code service.ranking} wins, and the configured
@@ -419,8 +482,9 @@ public class DcatPublisher {
         DcatMetadataSource source = metadataSource;
         this.mapper = new DcatMapper(config, source != null ? source : new ConfiguredMetadataSource(config));
         this.active = true;
+        this.lastPublishedMediaTypes = publishableMediaTypes();
 
-        if (publishableMediaTypes().isEmpty()) {
+        if (lastPublishedMediaTypes.isEmpty()) {
             LOGGER.warning("No publishable media types: distribution.media.types does not overlap what this "
                     + "runtime reports it can serve, so Datasets would be advertised with no way to fetch them. "
                     + "Datasets are still published; Distributions are not");
@@ -479,7 +543,7 @@ public class DcatPublisher {
             LOGGER.info("DcatPublisher deactivated; the portal keeps what it holds");
         }
         trackedPackages.clear();
-        retiredDatasets.clear();
+        pendingRewrites.clear();
         publishedFingerprints.clear();
     }
 
@@ -535,7 +599,7 @@ public class DcatPublisher {
     private void retireDataset(String datasetId, PublicationTarget target, UnpublishMode mode,
             Set<String> catalogsAtSchedule) {
         publishedFingerprints.remove(datasetId);
-        retiredDatasets.add(datasetId);
+        pendingRewrites.add(datasetId);
         client.submit(portal -> {
             retire(portal, datasetId, target, mode, catalogsAtSchedule);
             return null;
@@ -713,11 +777,11 @@ public class DcatPublisher {
             }
             // Change detection. On a restart the in-memory map is empty, so ask the portal once
             // rather than rewriting: a git-backed portal pays two commits per entity otherwise.
-            if (retiredDatasets.remove(datasetId)) {
-                // Retired and back: the content may be byte-identical, but the membership this
-                // publisher dropped is not, so the shortcut below would leave the Dataset
-                // unreachable through its Catalog.
-                LOGGER.fine(() -> "Dataset " + datasetId + " was retired; re-publishing it unconditionally");
+            if (pendingRewrites.remove(datasetId)) {
+                // Retired and back, or written under a different format set: the content may be
+                // byte-identical while what the catalogue should say about it is not, so the
+                // shortcut below would leave the Dataset wrong in a way no fingerprint reveals.
+                LOGGER.fine(() -> "Dataset " + datasetId + " is marked for rewrite; publishing it unconditionally");
                 return writeDataset(portal, datasetId, tracked);
             }
             String published = publishedFingerprints.get(datasetId);
@@ -756,6 +820,7 @@ public class DcatPublisher {
             }
             // Re-assert the containment the PUT just dropped.
             Set<String> mediaTypes = publishableMediaTypes();
+            lastPublishedMediaTypes = mediaTypes;
             for (String mediaType : mediaTypes) {
                 Distribution distribution = mapper.toDistribution(target, mediaType, baseUri);
                 portal.registerDistribution(datasetId, DcatIds.distributionId(mediaType), distribution);

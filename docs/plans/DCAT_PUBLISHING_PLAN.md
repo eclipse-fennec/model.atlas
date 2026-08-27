@@ -209,10 +209,23 @@ Distributions a Dataset carries; it is intersected with what the runtime reports
 the catalogue can never advertise a format the server would answer 415 for. Two things had to change
 for the configuration to actually hold:
 
-- **Resolved per use, not cached at activation.** `SupportedMediatypesImpl` refreshes its list when
-  its `ResourceSet` reference is updated, *without the service rebinding* — so a publisher that
-  activated before the codecs were up advertised fewer formats than configured for as long as it
-  ran, and the allowlist looked ignored.
+- **Resolved per use, not cached at activation.** The runtime's list grows as codecs register
+  content types, so a publisher that activated before they were up advertised fewer formats than
+  configured for as long as it ran, and the allowlist looked ignored.
+- **The runtime's list now announces itself.** `SupportedMediatypesImpl` refreshed its list inside
+  `bindResourceSet` without the service ever rebinding, so there was no event for a consumer to
+  react to. It now **registers its own service** and refreshes the service properties (
+  `SupportedMediatype.MEDIATYPES_PROPERTY`) whenever the list changes — a component cannot modify
+  properties DS registered on its behalf; only the holder of the `ServiceRegistration` can. The
+  publisher takes the reference by *method* injection, because a field reference gets no
+  `updated` callback ("Annotated field — There is no updated method name", cmpn 112), and
+  re-publishes its tracked packages when the resolved set has actually changed. A codec coming up
+  after a Dataset was published therefore adds its Distribution with no upload, no configuration
+  touch and no restart.
+- Because the registration is manual, the `osgi.service` capability is no longer derivable from the
+  DS metadata and is **declared in `mediatypes.impl/bnd.bnd`**. Without it the production runtime,
+  which resolves with `-resolve.effective: active`, has no provider for its consumers' mandatory
+  references.
 - **A narrowed allowlist has to reach already-published Datasets.** Their content has not changed,
   so the fingerprint check skips the write and nothing else would ever revisit them. On the first
   publish after a configuration change the published Distributions' media types are compared with
