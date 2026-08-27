@@ -908,6 +908,36 @@ ours to decide.
 
 ## 9. Runtime and build plumbing
 
+### The docker variant, as built (2026-08-27)
+
+`docker/modelatlas_jena_dcat` mirrors `modelatlas_jena`, and the DCAT configuration ships **as a
+bundle** (`runtime.config.docker.jena.dcat`) rather than in the mounted `jena.json`, so the image
+needs only environment variables: `DCAT_PORTAL_BASE_URI`, `ATLAS_PUBLIC_BASE_URI` and
+`DCAT_PUBLISHER_NAME` are required, the rest have defaults. `allow.local.base.uri` is `false` here,
+unlike the local runtime — this is the image that reaches a real portal, and a loopback URL in a
+public catalogue is worse than no entry.
+
+Three things cost real time and are worth writing down:
+
+- **`-include:` overrides the including file.** `modelatlas.runtime_docker_jena_dcat.bndrun` includes
+  the plain jena bndrun, so the jena `-runbundles` won and the resolved list — every DCAT bundle —
+  was silently ignored: the exported jar contained no publisher, and the image started a perfectly
+  healthy plain jena atlas. The fix is the **`~` prefix** (`-include: ~modelatlas.runtime_docker_jena.bndrun`),
+  which is the same rule behind bnd's "[Include Override] … consider using `-include: ~`" warning.
+  The local dcat bndrun avoids the trap differently, by adding only a *suffixed* `-runbundles.dcat`.
+- **`export.…` goes UP-TO-DATE and hands you a stale jar.** The first image was built from an export
+  that predated the DCAT bundles entirely. `--rerun`, or delete the jar.
+- **`docker/dockercompose/configs/jena.json` never configured `EPackageStageActionService`**, whose
+  `ConfigurationPolicy` is `REQUIRE` — so in the jena docker deployment *no EPackage was ever
+  registered as a service*, and DCAT had nothing to track. This is a pre-existing gap in that mounted
+  config, not something DCAT introduced; adding the PID brings it in line with the local jena runtime.
+
+Verified end to end in a compose stack: the Catalog carries the env-supplied publisher, a
+`?dcat=true` upload becomes a Dataset with an `application/xmi` and an `application/json`
+Distribution whose URLs carry `ATLAS_PUBLIC_BASE_URI`, `PATCH …/metadata?dcat=false` drops the
+membership after the unpublish window while `UNLINK` keeps the resource, and `?dcat=true` puts it
+back.
+
 - Add to `modelatlas.runtime_base.bndrun` (or a new `…_local-jena-dcat.bndrun` variant first):
   `bnd.identity` for `…model.atlas.dcat`, `…dcat.atlas.client.api`, `…client.impl`,
   `…client.osgi`, `…dcatap.de.model`, and the configuration bundle.
@@ -945,7 +975,7 @@ ours to decide.
 | **D6** ✅ | Error classification, backoff queue, health check | a 503 retries, a SHACL refusal does not |
 | **D7** ✅ | OSGi ITs against a portal container; the runtime config bundle and bndrun variant | `testOSGi` green |
 | **7b** ✅ | The metadata `PATCH` of §7b, and propagation to the live registration | the flag changes without a re-upload, and the publisher acts on it |
-| **docker** | a `docker/modelatlas_jena_dcat` image module for `modelatlas.runtime_docker_jena_dcat.bndrun` | `prepareDocker` produces a runnable image |
+| **docker** ✅ | a `docker/modelatlas_jena_dcat` image module and a `runtime.config.docker.jena.dcat` bundle | the image publishes to a portal in a compose stack, verified end to end |
 
 D1–D3 is the walking skeleton and the honest end of "does this work". D4–D6 is what makes it
 operable.

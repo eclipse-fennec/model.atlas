@@ -1,0 +1,55 @@
+# The jena atlas plus DCAT publishing, and a portal to publish to.
+#
+# The portal image is built locally from the dcat.atlas repository; it is not published to a
+# registry, so `docker compose up` fails on the portal until you have built it there.
+#
+# ATLAS_PUBLIC_BASE_URI is deliberately not a localhost address: the publisher refuses one, because
+# a loopback URL in a public catalogue is worse than no catalogue entry. It is the address a
+# harvester fetches models from — through whatever gateway fronts this atlas — and is stamped into
+# the Distribution URLs rather than used to reach anything from here. For local poking about, run
+# `modelatlas.runtime_local-jena-dcat` instead, which allows a loopback.
+services:
+  model-atlas:
+    image: eclipsefennec/model.atlas:jena-dcat-snapshot
+    stdin_open: true
+    tty: true
+    depends_on:
+      - dcat-portal
+    ports:
+      - "8080:8080"
+    environment:
+      - STORAGE_ROOT=/opt/modelatlas/runtime/data
+      - ATLAS_HTTP_PORT=8080
+      # Reachable from inside this network, not from the host.
+      - DCAT_PORTAL_BASE_URI=http://dcat-portal:8080/rest/
+      - ATLAS_PUBLIC_BASE_URI=https://opendata.example.de/model-atlas
+      - DCAT_PUBLISHER_NAME=Stadt Jena
+      - DCAT_PUBLISHER_ABOUT=https://www.jena.de
+    volumes:
+      - ./configs:/opt/modelatlas/runtime/load:ro
+      - atlas-data:/opt/modelatlas/runtime/data
+      - atlas-log:/opt/modelatlas/runtime/log
+
+  dcat-portal:
+    image: eclipse-fennec/dcat.atlas:latest
+    ports:
+      - "8090:8080"
+    environment:
+      - HTTP_PORT=8080
+      - CONTEXT_PATH=/
+      - GIT_REPO=/opt/dcat/store.git
+      - GIT_BRANCH=main
+      # Mandatory: without it PublicIrisImpl refuses to instantiate and /health/ready answers 500,
+      # which reads as a broken image but means a missing variable. It sets the IRIs the portal
+      # stamps into what it serves, not how anything reaches it.
+      - PUBLIC_BASE_URL=http://localhost:8090/rest/
+      - SHACL_ENFORCE=false
+    volumes:
+      # At least one *.ttl must be here or readiness reports CRITICAL — see the file's own comment.
+      - ./dcat-shapes:/opt/dcat/shapes:ro
+      - portal-data:/opt/dcat
+
+volumes:
+  atlas-data:
+  atlas-log:
+  portal-data:
