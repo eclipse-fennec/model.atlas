@@ -505,8 +505,8 @@ which is the right way round.
 ### The SPI stays
 
 ```java
-public record PublicationTarget(String scope, String stage, String registry,
-                                String nsUri, String version, String fingerprint) {}
+public record PublicationTarget(String scope, String stage, String nsUri,
+                                String version, String fingerprint) {}
 
 @ConsumerType
 public interface DcatPublicationPolicy {
