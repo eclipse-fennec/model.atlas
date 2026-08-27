@@ -129,9 +129,4 @@ final class ScopeHierarchy {
         return parents.entrySet().stream().filter(entry -> scope.equals(entry.getValue())).map(Map.Entry::getKey)
                 .toList();
     }
-
-    /** The parent of {@code scope}, or {@code null} when it is a root. */
-    String parentOf(String scope) {
-        return parents.get(scope);
-    }
 }

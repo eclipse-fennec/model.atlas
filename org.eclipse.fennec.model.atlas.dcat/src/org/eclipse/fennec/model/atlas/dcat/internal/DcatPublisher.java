@@ -659,7 +659,6 @@ public class DcatPublisher {
             return;
         }
         refusedScopes.remove(scopeName);
-        // Additive only, and no sub-catalog claims: see relinkSubCatalogs.
         relinkDatasets(portal, catalogId, scopeName);
         LOGGER.info(() -> "Adopted Catalog " + catalogId + " for scope " + scopeName
                 + "; its Datasets are linked in and it is never written from here");
@@ -784,6 +783,17 @@ public class DcatPublisher {
      * not others, with nothing left to notice.
      * </p>
      */
+    /**
+     * The scope tree, used for the Dataset fan-out and for nothing else.
+     *
+     * <p>
+     * No {@code dcat:catalog} link is ever written, in either direction and whoever owns the
+     * Catalogs. The hierarchy is already visible in the catalogue through the Datasets themselves —
+     * an inherited model appears in the descendant's Catalog — so a sub-catalogue link would be a
+     * second representation of the same fact, and one a harvester may traverse into counting the
+     * same Dataset twice. Datasets link into Catalogs; nothing else is linked anywhere.
+     * </p>
+     */
     private ScopeHierarchy hierarchy() {
         Map<String, String> parents = new LinkedHashMap<>();
         scopes.forEach((name, info) -> parents.put(name, info.getParentScope()));
@@ -850,50 +860,6 @@ public class DcatPublisher {
     private void refuse(String scope, String reason) {
         if (refusedScopes.put(scope, reason) == null) {
             LOGGER.warning(() -> "Refusing scope " + scope + ": " + reason);
-        }
-    }
-
-    /**
-     * Re-asserts this Catalog's place in the scope tree: its child Catalogs below it, and itself
-     * below its parent.
-     *
-     * <p>
-     * Both directions, because a {@code dcat:catalog} link lives on the <em>parent</em> resource.
-     * Writing this Catalog drops the links to its children, so those are re-asserted here; its own
-     * membership in its parent survives this write but has to be asserted somewhere, and a child
-     * appearing after its parent is the ordinary case.
-     * </p>
-     *
-     * <p>
-     * Asserting a link <em>on</em> another Catalog is a claim about that Catalog's structure, which
-     * is only ours to make while every Catalog is derived. When D1a brings adopted Catalogs, this
-     * has to skip the ones we do not own.
-     * </p>
-     */
-    private void relinkSubCatalogs(DcatAtlasClient portal, String catalogId, String scope) {
-        if (resolveCatalog(scope).adopted()) {
-            // Neither direction for an adopted Catalog. Asserting a sub-catalog link on it is a
-            // claim about somebody else's catalogue structure, and hanging it under ours claims
-            // their catalogue is part of our tree. Datasets still link in, which is additive.
-            return;
-        }
-        ScopeHierarchy tree = hierarchy();
-        tree.children(scope).stream().filter(this::publishable).filter(child -> !resolveCatalog(child).adopted())
-                .forEach(child -> linkSubCatalog(portal, catalogId, catalogIdOf(child)));
-        String parent = tree.parentOf(scope);
-        if (parent != null && publishable(parent) && !resolveCatalog(parent).adopted()) {
-            linkSubCatalog(portal, catalogIdOf(parent), catalogId);
-        }
-    }
-
-    private void linkSubCatalog(DcatAtlasClient portal, String parentCatalogId, String childCatalogId) {
-        try {
-            portal.linkSubCatalog(parentCatalogId, childCatalogId);
-        } catch (RuntimeException e) {
-            // A Catalog that has not been written yet cannot be linked; whichever of the two is
-            // written second asserts it.
-            LOGGER.fine(() -> "Could not link sub-catalog " + childCatalogId + " into " + parentCatalogId + ": "
-                    + e.getMessage());
         }
     }
 
@@ -1007,7 +973,6 @@ public class DcatPublisher {
             // rewriting the catalogue on every boot — which means nothing else will re-assert
             // these links. Whoever rewrites a Catalog owns its memberships.
             relinkDatasets(portal, catalogId, info.getName());
-            relinkSubCatalogs(portal, catalogId, info.getName());
             LOGGER.info(() -> "Published Catalog " + catalogId + " for scope " + info.getName());
             return registration.entity();
         } catch (DcatModelConstraintException | DcatShaclException e) {

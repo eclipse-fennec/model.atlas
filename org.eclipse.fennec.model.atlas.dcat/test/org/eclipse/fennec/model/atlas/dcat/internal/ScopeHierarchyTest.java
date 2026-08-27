@@ -77,7 +77,6 @@ public class ScopeHierarchyTest {
     public void anUnknownScopeAnswersEmpty() {
         assertThat(chain().ancestors("nobody")).isEmpty();
         assertThat(chain().descendants("nobody")).isEmpty();
-        assertThat(chain().parentOf("nobody")).isNull();
     }
 
     @Test
@@ -105,14 +104,14 @@ public class ScopeHierarchyTest {
         parents.put("child", "blank");
         ScopeHierarchy hierarchy = ScopeHierarchy.of(parents);
 
-        assertThat(hierarchy.parentOf("blank")).isNull();
-        assertThat(hierarchy.parentOf("nulled")).isNull();
+        assertThat(hierarchy.ancestors("blank")).as("a blank parent is no parent").isEmpty();
+        assertThat(hierarchy.ancestors("nulled")).isEmpty();
         assertThat(hierarchy.children("blank")).containsExactly("child");
     }
 
     @Test
     public void childrenAreDirectOnly() {
         assertThat(chain().children("atlas")).containsExactly("jena");
-        assertThat(chain().parentOf("jena")).isEqualTo("atlas");
+        assertThat(chain().children("nawerker")).isEmpty();
     }
 }

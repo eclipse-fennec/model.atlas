@@ -167,15 +167,16 @@ membership (`dcat:dataset`) is dropped by a re-register and must be re-asserted 
 resolve Catalog(scope) → (catalogId, owned?)
 if owned:   register Catalog(catalogId)     ← configured attributes, else ScopeInfo.name/description
 if !owned:  catalog(catalogId) must be present, else refuse this scope and report it
-if ScopeInfo.parentScope is itself published and both Catalogs are owned:
-            link sub-catalog(parent, scope)
 for each ancestor a of scope:               ← the fan-in for a newly appearing scope
     for each published Dataset of a: link Dataset → Catalog(scope)
 ```
 
-An **adopted** Catalog is never `PUT` and never gets a sub-catalog link asserted *on* it from
-here — the first would drop its `dcat:dataset` links, and the second is a claim about somebody
-else's catalogue structure. Datasets still link *into* it, which is additive and safe.
+An **adopted** Catalog is never `PUT` — that would drop its `dcat:dataset` links, other
+publishers' included. Datasets still link *into* it, which is additive and safe.
+
+**No `dcat:catalog` link is ever written** (**O14**, decided 2026-08-27): not on an adopted
+Catalog, not on one we own, in neither direction. Datasets link into Catalogs, and nothing else is
+linked anywhere.
 
 **Per published package-in-a-stage** (package tracker):
 
@@ -233,8 +234,8 @@ ancestor's Datasets by itself.
 - **Sub-catalog links are asserted in both directions**, because a `dcat:catalog` link lives on the
   *parent*: writing a Catalog drops the links to its children (re-asserted after every write), while
   its own membership in its parent survives that write but must be asserted when the child appears.
-  Asserting a link *on* another Catalog is only ours to do for a Catalog we own; since D1a an
-  adopted one is skipped in both directions.
+  Superseded by **O14**: no `dcat:catalog` link is written for any Catalog, so nothing has to be
+  re-asserted after a Catalog write except its `dcat:dataset` memberships.
 - `descendants()` never returns the scope itself, even where a configuration has written a cycle;
   both walks truncate rather than loop. Caught by `ScopeHierarchyTest`, not by review.
 
@@ -655,9 +656,9 @@ backward compatible with §4 as written.
   client's executor is single-threaded, so the Catalog task queued first has finished by the time
   the Dataset task runs. Checking only up front published the first Dataset of a refused scope into
   no Catalog at all. Caught by `aMissingAdoptedCatalogRefusesTheScopeInsteadOfCreatingIt`.
-- **No sub-catalog link in either direction for an adopted Catalog.** Asserting one *on* it is a
-  claim about somebody else's catalogue structure; hanging it under ours claims their catalogue is
-  part of our tree. Datasets still link in, which is additive.
+- **No sub-catalog link at all** (O14). What began as "never on an adopted Catalog" is now the rule
+  for every Catalog: `relinkSubCatalogs` is gone, and `ScopeHierarchy` serves the Dataset fan-out
+  only.
 - `unpublish.mode` is capped at `UNLINK` when **any** Catalog listing the Dataset is adopted, not
   only when the defining scope's is — the fan-out of D2a means a descendant's adopted Catalog is
   just as reachable by a `CASCADE`. Announced once at activation.
@@ -855,6 +856,7 @@ implementation rather than a preference.
 | **O11** | how many entity types | **three: Catalog, Dataset, Distribution** — no `DataService` |
 | **O12** | can the flag be changed after upload | **yes**, a `PATCH` metadata endpoint with a field allowlist (§7b) |
 | **O13** | how the publisher learns the flag | **an `EPackage` service property**, so the tracker's filter decides and unbind means retire |
+| **O14** | are Catalogs nested with `dcat:catalog` | **no — never, for any Catalog** (2026-08-27) |
 
 **O1 — `b64url(nsURI)`.** A portal id is permanent and a slug collision is not repairable after
 publication, so opacity wins over readability. `dct:identifier` carries the readable nsURI and
@@ -952,6 +954,17 @@ is not needed at all**, not now and not as a planned second phase. Deleted and
 transitioned-away both mean the stage URL stops serving the package, and the portal says the
 same thing either way. Hook 2 alone is the trigger, and no deployment's `workflow.json` is
 touched — the "no config changes" property of §2 is now permanent, not provisional.
+
+**O14 — no sub-catalogs anywhere (decided 2026-08-27).** D1a had arrived at "never on an adopted
+Catalog", for ownership reasons. The owner extended it to every Catalog, and the reason is better
+than the ownership one: **the hierarchy is already in the catalogue, carried by the Datasets.** O4
+puts an inherited model into its descendants' Catalogs, so `jena`'s Catalog already shows what
+`jena` serves from `atlas`. A `dcat:catalog` link would state the same fact a second way, in a form
+a harvester may traverse — and one that walks both the sub-catalogue and its parent counts the same
+Dataset twice. It also removes the last operation this publisher performed *on* a resource other
+than the one it was writing, which is what made ownership a question at every Catalog write. The
+mapping is now exactly: a Catalog per published scope, a Dataset per publishable package-in-a-stage,
+Distributions contained in it, and `dcat:dataset` links from Datasets into Catalogs. Nothing else.
 
 **O5b — availability belongs to the DCAT side.** There is an existing DCAT.Atlas issue for an
 availability check on (at least) the Distribution URL; that is the right home for it, because a

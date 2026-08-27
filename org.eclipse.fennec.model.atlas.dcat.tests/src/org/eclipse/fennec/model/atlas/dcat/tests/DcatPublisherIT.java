@@ -620,35 +620,6 @@ public class DcatPublisherIT {
         }
     }
 
-    @Test
-    public void aChildScopeCatalogIsLinkedIntoItsParent(
-            @InjectConfiguration(withFactoryConfig = @WithFactoryConfiguration(factoryPid = CLIENT_PID,
-                    name = PORTAL + "16", location = "?")) Configuration clientConfig,
-            @InjectConfiguration(withFactoryConfig = @WithFactoryConfiguration(factoryPid = PUBLISHER_PID,
-                    name = PORTAL + "16", location = "?")) Configuration publisherConfig,
-            @InjectBundleContext BundleContext context) throws Exception {
-
-        clientConfig.update(clientProps());
-
-        ServiceRegistration<?> parent = StubScopeService.register(context, "s-parent", null);
-        Hashtable<String, Object> props = publisherProps("s-parent", false);
-        props.put("scopes", new String[] { "s-parent", "s-child" });
-        publisherConfig.update(props);
-        assertNotNull(awaitCatalog("s-parent"), "setup: the parent Catalog should publish");
-
-        // Registered second, so the link has to be asserted from the child's side as well as
-        // re-asserted whenever the parent is rewritten.
-        ServiceRegistration<?> child = StubScopeService.register(context, "s-child", "s-parent");
-        try {
-            assertNotNull(awaitCatalog("s-child"), "setup: the child Catalog should publish");
-            assertTrue(awaitCatalogTerm("s-parent", "s-child", true),
-                    "the parent Catalog should carry the child as a sub-catalogue");
-        } finally {
-            child.unregister();
-            parent.unregister();
-        }
-    }
-
     // ---- D1a: adopted, configured, derived ---------------------------------
 
     @Test
