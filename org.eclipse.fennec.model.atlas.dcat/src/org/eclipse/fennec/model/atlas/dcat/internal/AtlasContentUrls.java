@@ -41,7 +41,7 @@ final class AtlasContentUrls {
      * @param nsUri the namespace URI
      * @return the access URL
      */
-    static String accessUrl(String base, String scope, String stage, String nsUri) {
+    static String contentUrl(String base, String scope, String stage, String nsUri) {
         return base + "/" + scope + "/schema/stages/" + stage + "/content?nsUri=" + encode(nsUri);
     }
 
@@ -56,7 +56,7 @@ final class AtlasContentUrls {
      * @return the download URL
      */
     static String downloadUrl(String base, String scope, String stage, String nsUri, String mediaType) {
-        return accessUrl(base, scope, stage, nsUri) + "&mediaType=" + encode(mediaType);
+        return contentUrl(base, scope, stage, nsUri) + "&mediaType=" + encode(mediaType);
     }
 
     private static String encode(String value) {

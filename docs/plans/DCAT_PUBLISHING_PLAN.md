@@ -909,6 +909,29 @@ ours to decide.
 
 ## 9. Runtime and build plumbing
 
+### `accessURL` and `downloadURL` (decided 2026-08-27, spec-checked)
+
+Both carry **the same URL, media type included**. DCAT's own usage note calls `dcat:downloadURL` "a
+specific form of `dcat:accessURL`" and deliberately does *not* declare it a sub-property, so that
+profiles may keep `accessURL` for non-download locations; the accompanying guidance is explicit that
+**where only direct download access can be provided, the URL should be duplicated in both.** That is
+this case exactly — the atlas content endpoint *is* the file, and there is no landing page or service
+to point at. DCAT-AP 3.0 makes `accessURL` mandatory (1..*) and `downloadURL` optional (0..*), so
+duplicating is conformant.
+
+Keeping `?mediaType=` in both also makes each Distribution self-contained. The earlier
+mediaType-less `accessURL` was identical on every Distribution of a Dataset and resolved by content
+negotiation to whatever the server defaulted to — so it matched none of them.
+
+**Open, and a decision rather than a defect:** `dct:format` and `dcat:mediaType` both carry the
+literal the atlas serves (`application/xmi`, `application/json`). DCAT-AP mandates controlled
+vocabularies for both — the EU file-type NAL
+(`http://publications.europa.eu/resource/authority/file-type`) for `dct:format`, and the IANA
+register for `dcat:mediaType`. `application/json` is registered; **`application/xmi` is not** — the
+only IANA registration for XMI is `application/vnd.xmi+xml` (vendor tree, OMG, 2008), which is not
+what this atlas sends. So conformance and accuracy conflict, and choosing between them is the
+owner's call.
+
 ### The docker variant, as built (2026-08-27)
 
 `docker/modelatlas_jena_dcat` mirrors `modelatlas_jena`, and the DCAT configuration ships **as a

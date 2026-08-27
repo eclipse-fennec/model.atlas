@@ -156,10 +156,18 @@ final class DcatMapper {
         distribution.setMediaType(mediaType);
         distribution.setFormat(mediaType);
         distribution.setLicense(license(licenseUri));
-        distribution.getAccessURL()
-                .add(AtlasContentUrls.accessUrl(baseUri, target.scope(), target.stage(), target.nsUri()));
-        distribution.getDownloadURL().add(
-                AtlasContentUrls.downloadUrl(baseUri, target.scope(), target.stage(), target.nsUri(), mediaType));
+        // Both, and the same value. DCAT's own usage note calls dcat:downloadURL "a specific form
+        // of dcat:accessURL", and its guidance is explicit that where only direct download access
+        // can be provided the URL should be duplicated in both — which is this case exactly: the
+        // atlas content endpoint *is* the file, there is no landing page or service to point at.
+        // Keeping the media type in both also makes each Distribution self-contained: the
+        // mediaType-less form answered whatever content negotiation defaulted to, which for two
+        // Distributions of one Dataset meant an identical accessURL that matched neither.
+        // DCAT-AP makes accessURL mandatory (1..*) and downloadURL optional, so this is conformant.
+        String contentUrl = AtlasContentUrls.downloadUrl(baseUri, target.scope(), target.stage(),
+                target.nsUri(), mediaType);
+        distribution.getAccessURL().add(contentUrl);
+        distribution.getDownloadURL().add(contentUrl);
         checksum(target.fingerprint()).ifPresent(distribution::setChecksum);
         return distribution;
     }

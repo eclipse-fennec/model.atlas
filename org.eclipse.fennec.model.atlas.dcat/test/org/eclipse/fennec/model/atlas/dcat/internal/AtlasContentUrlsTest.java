@@ -27,8 +27,8 @@ class AtlasContentUrlsTest {
     private static final String NS = "http://test.example.com/schema/1.1";
 
     @Test
-    void accessUrlAddressesTheStageContentEndpoint() {
-        assertThat(AtlasContentUrls.accessUrl(BASE, "jena", "release", NS))
+    void theContentUrlAddressesTheStageContentEndpoint() {
+        assertThat(AtlasContentUrls.contentUrl(BASE, "jena", "release", NS))
                 .isEqualTo(BASE + "/jena/schema/stages/release/content?nsUri="
                         + "http%3A%2F%2Ftest.example.com%2Fschema%2F1.1");
     }
@@ -43,7 +43,7 @@ class AtlasContentUrlsTest {
 
     @Test
     void theBaseIsUsedVerbatimSoAGatewayPrefixSurvives() {
-        assertThat(AtlasContentUrls.accessUrl("https://host/rewritten/prefix", "s", "t", "urn:x"))
+        assertThat(AtlasContentUrls.contentUrl("https://host/rewritten/prefix", "s", "t", "urn:x"))
                 .startsWith("https://host/rewritten/prefix/s/schema/stages/t/content");
     }
 }

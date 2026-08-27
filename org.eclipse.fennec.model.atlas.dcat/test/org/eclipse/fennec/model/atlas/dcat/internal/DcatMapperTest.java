@@ -171,8 +171,12 @@ class DcatMapperTest {
 
         assertThat(distribution.getMediaType()).isEqualTo("application/xmi");
         assertThat(distribution.getFormat()).isEqualTo("application/xmi");
+        // The same URL in both, per DCAT's guidance for a distribution whose only access IS the
+        // direct download — and with the media type in both, so each Distribution of a Dataset is
+        // self-contained rather than sharing an accessURL that matches neither.
         assertThat(distribution.getAccessURL()).hasSize(1);
         assertThat(distribution.getDownloadURL().get(0)).endsWith("&mediaType=application%2Fxmi");
+        assertThat(distribution.getAccessURL().get(0)).isEqualTo(distribution.getDownloadURL().get(0));
         // license is lowerBound=1 containment on a Distribution, so this is not optional.
         assertThat(distribution.getLicense()).isNotNull();
         assertThat(distribution.getLicense().getAbout()).isEqualTo("http://dcat-ap.de/def/licenses/dl-by-de/2.0");
