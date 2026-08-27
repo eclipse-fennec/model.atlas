@@ -52,6 +52,15 @@ public final class EndpointFailures {
      * actual failure rather than the reflection wrapper.
      * </p>
      *
+     * <p>
+     * An {@link UnsupportedOperationException} becomes a <strong>405</strong>. A registry that
+     * refuses an operation outright — the atlas root scope's, whose schemas are the system's own and
+     * which allows no upload, update, delete or transition — is answering the request, not failing
+     * to serve it, and the distinction is the difference between "you cannot do that here" and "this
+     * server is broken". Its message names the registry, so it is safe to pass on: it says nothing
+     * about storage layout or configuration.
+     * </p>
+     *
      * @param failure the exception an endpoint caught; never {@code null}
      * @return the exception to throw; the caller is expected to {@code throw} the result
      *         so the compiler sees the method end there
@@ -67,6 +76,9 @@ public final class EndpointFailures {
         }
         if (cause instanceof WebApplicationException webApplicationException) {
             return webApplicationException;
+        }
+        if (cause instanceof UnsupportedOperationException refused) {
+            return new WebApplicationException(refused.getMessage(), refused, Status.METHOD_NOT_ALLOWED);
         }
         return new WebApplicationException(cause, Status.INTERNAL_SERVER_ERROR);
     }

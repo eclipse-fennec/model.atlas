@@ -720,9 +720,6 @@ public class SchemaPackagesResource {
             return Response.status(Response.Status.OK).entity(metadata)
                     .header("Content-Type", ResourceSupport.resolvedMediaType(requestContext)).build();
 
-        } catch (UnsupportedOperationException notHere) {
-            // The atlas root scope's registry, for one: its schemas are the system's own.
-            return Response.status(Response.Status.METHOD_NOT_ALLOWED).entity(notHere.getMessage()).build();
         } catch (IllegalArgumentException e) {
             return Response.status(Response.Status.BAD_REQUEST).entity(e.getMessage()).build();
         } catch (Exception e) {

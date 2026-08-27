@@ -82,6 +82,33 @@ class EndpointFailuresTest {
     }
 
     @Test
+    @DisplayName("A registry that refuses an operation outright answers 405, not 500")
+    void refusedOperationBecomesMethodNotAllowed() {
+        // The atlas root scope's registry allows no upload, update, delete or transition: its
+        // schemas are the system's own. That is an answer to the request, not a failure to serve it.
+        UnsupportedOperationException refused = new UnsupportedOperationException(
+                "Update Operation not allowed for Atlas Schema Registry");
+
+        RuntimeException thrown = EndpointFailures.propagate(refused);
+
+        assertEquals(Status.METHOD_NOT_ALLOWED.getStatusCode(),
+                ((WebApplicationException) thrown).getResponse().getStatus());
+        assertEquals("Update Operation not allowed for Atlas Schema Registry", thrown.getMessage(),
+                "the message names the registry and says nothing about storage, so the client may see it");
+    }
+
+    @Test
+    @DisplayName("A refusal surfacing through a failed promise is still a 405")
+    void refusedOperationThroughAPromiseBecomesMethodNotAllowed() {
+        UnsupportedOperationException refused = new UnsupportedOperationException("not allowed");
+
+        RuntimeException thrown = EndpointFailures.propagate(new InvocationTargetException(refused));
+
+        assertEquals(Status.METHOD_NOT_ALLOWED.getStatusCode(),
+                ((WebApplicationException) thrown).getResponse().getStatus());
+    }
+
+    @Test
     @DisplayName("Anything else becomes a 500 carrying the original failure")
     void otherFailuresBecomeServerErrors() {
         IOException failure = new IOException("/var/atlas/secret-path is unreadable");

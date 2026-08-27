@@ -680,9 +680,10 @@ If-Match: "<etag from the metadata GET>"
   Modifying the service properties is also exactly what O13's design asks for: DS re-evaluates target
   filters when a bound service's properties change, so the publisher sees a bind or an unbind and
   needs no second channel.
-- **The atlas root scope answers 405.** `AtlasSchemaRegistryService.updateProperties` throws
-  `UnsupportedOperationException` — its schemas are the system's own — and the endpoint reports that
-  rather than a 500.
+- **The atlas root scope answers 405.** `AtlasSchemaRegistryService` refuses upload, update, delete
+  and transition outright — its schemas are the system's own — by throwing
+  `UnsupportedOperationException`. `EndpointFailures` maps that to a 405 for the whole REST surface,
+  so every endpoint answers "you cannot do that here" instead of the 500 they all used to give.
 - **Not built:** `objectName`, `lastChangeReason` and `governanceDocumentationId`. Each needs a
   service operation that does not exist (`updateProperties` merges the properties map and nothing
   else), and adding one means an ecore change, which is the model owner's call. The `dcat` flag was
