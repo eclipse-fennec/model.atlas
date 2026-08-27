@@ -169,11 +169,17 @@ class DcatMapperTest {
     void distributionCarriesBothUrlsAndTheLicence() {
         Distribution distribution = mapper().toDistribution(target("release"), "application/xmi", BASE);
 
-        assertThat(distribution.getMediaType()).isEqualTo("application/xmi");
-        assertThat(distribution.getFormat()).isEqualTo("application/xmi");
         // The same URL in both, per DCAT's guidance for a distribution whose only access IS the
         // direct download — and with the media type in both, so each Distribution of a Dataset is
         // self-contained rather than sharing an accessURL that matches neither.
+        // The register IRIs DCAT-AP mandates, not the served literal: a literal is valid RDF but
+        // violates the controlled-vocabulary rule, which a shape reports as a node-kind violation.
+        assertThat(distribution.getFormat())
+                .isEqualTo("http://publications.europa.eu/resource/authority/file-type/XML");
+        assertThat(distribution.getMediaType())
+                .isEqualTo("http://www.iana.org/assignments/media-types/application/vnd.xmi+xml");
+        // The served media type is still readable, which is what the title is for.
+        assertThat(distribution.getTitle().getValue()).isEqualTo("application/xmi");
         assertThat(distribution.getAccessURL()).hasSize(1);
         assertThat(distribution.getDownloadURL().get(0)).endsWith("&mediaType=application%2Fxmi");
         assertThat(distribution.getAccessURL().get(0)).isEqualTo(distribution.getDownloadURL().get(0));

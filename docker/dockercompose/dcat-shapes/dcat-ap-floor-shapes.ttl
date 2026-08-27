@@ -1,0 +1,63 @@
+# A FLOOR, not a validation policy — and self-authored.
+#
+# These shapes encode only the DCAT-AP 3.0 constraints that apply to what Model Atlas actually
+# writes (Catalog, Dataset, Distribution), transcribed from the specification's own mandatory
+# cardinalities and controlled-vocabulary rules. They exist so that this stack can be run with
+# SHACL_ENFORCE=true and the publisher's output checked, rather than assumed.
+#
+# They are NOT the official GovData DCAT-AP.de shapes. That set is AGPL-3.0 and is deployment
+# input: it is not fetched or vendored here, and it demands more than this file does — a real
+# deployment must mount it and will find constraints this floor does not express (dcatde:
+# properties, contributorID, the licence vocabulary, and so on). Passing this file is necessary,
+# not sufficient.
+#
+# Sources for each constraint are named per shape.
+
+@prefix sh:    <http://www.w3.org/ns/shacl#> .
+@prefix dcat:  <http://www.w3.org/ns/dcat#> .
+@prefix dct:   <http://purl.org/dc/terms/> .
+@prefix foaf:  <http://xmlns.com/foaf/0.1/> .
+
+# DCAT-AP 3.0, Catalogue: dct:title 1..*, dct:description 1..*, dct:publisher 1.
+<http://example.org/shapes/floor/CatalogShape>
+    a sh:NodeShape ;
+    sh:targetClass dcat:Catalog ;
+    sh:property [ sh:path dct:title       ; sh:minCount 1 ; sh:severity sh:Violation ;
+                  sh:message "DCAT-AP: a Catalogue must carry at least one dct:title" ] ;
+    sh:property [ sh:path dct:description ; sh:minCount 1 ; sh:severity sh:Violation ;
+                  sh:message "DCAT-AP: a Catalogue must carry at least one dct:description" ] ;
+    sh:property [ sh:path dct:publisher   ; sh:minCount 1 ; sh:maxCount 1 ; sh:severity sh:Violation ;
+                  sh:message "DCAT-AP: a Catalogue must name exactly one dct:publisher" ] .
+
+# DCAT-AP 3.0, Dataset: dct:title 1..*, dct:description 1..*. The publisher requirement is the
+# portal's own model floor (publisher is a lowerBound=1 containment on dcat:DcatResource).
+<http://example.org/shapes/floor/DatasetShape>
+    a sh:NodeShape ;
+    sh:targetClass dcat:Dataset ;
+    sh:property [ sh:path dct:title       ; sh:minCount 1 ; sh:severity sh:Violation ;
+                  sh:message "DCAT-AP: a Dataset must carry at least one dct:title" ] ;
+    sh:property [ sh:path dct:description ; sh:minCount 1 ; sh:severity sh:Violation ;
+                  sh:message "DCAT-AP: a Dataset must carry at least one dct:description" ] ;
+    sh:property [ sh:path dct:publisher   ; sh:minCount 1 ; sh:severity sh:Violation ;
+                  sh:message "A Dataset must name a dct:publisher" ] .
+
+# DCAT-AP 3.0, Distribution: dcat:accessURL 1..*, and the two controlled vocabularies —
+# dct:format from the EU file-type NAL, dcat:mediaType from the IANA register. Both are therefore
+# IRIs, which is what sh:nodeKind sh:IRI checks; a plain literal such as "application/xmi" is a
+# violation of the vocabulary rule even though it is perfectly valid RDF.
+<http://example.org/shapes/floor/DistributionShape>
+    a sh:NodeShape ;
+    sh:targetClass dcat:Distribution ;
+    sh:property [ sh:path dcat:accessURL  ; sh:minCount 1 ; sh:nodeKind sh:IRI ; sh:severity sh:Violation ;
+                  sh:message "DCAT-AP: a Distribution must carry at least one dcat:accessURL, as an IRI" ] ;
+    sh:property [ sh:path dcat:downloadURL ; sh:nodeKind sh:IRI ; sh:severity sh:Violation ;
+                  sh:message "dcat:downloadURL must be an IRI" ] ;
+    # No minCount on either: DCAT-AP makes both recommended, not mandatory, and a media type with
+    # no IANA registration is better left without a dcat:mediaType than given a literal one. What is
+    # checked is the vocabulary rule — when present, the value must be an IRI from the register.
+    sh:property [ sh:path dct:format      ; sh:nodeKind sh:IRI ; sh:severity sh:Violation ;
+                  sh:message "DCAT-AP: dct:format must be an IRI from the EU file-type authority table" ] ;
+    sh:property [ sh:path dcat:mediaType  ; sh:nodeKind sh:IRI ; sh:severity sh:Violation ;
+                  sh:message "DCAT-AP: dcat:mediaType must be an IRI from the IANA media-type register" ] ;
+    sh:property [ sh:path dct:license     ; sh:minCount 1 ; sh:severity sh:Violation ;
+                  sh:message "DCAT-AP.de: a Distribution must carry a dct:license" ] .

@@ -14,6 +14,7 @@
 package org.eclipse.fennec.model.atlas.dcat.internal;
 
 import java.util.Optional;
+import java.util.logging.Logger;
 
 import org.eclipse.emf.ecore.EPackage;
 import org.eclipse.emf.ecore.util.EcoreUtil;
@@ -46,6 +47,8 @@ import rdf.RdfFactory;
  * </p>
  */
 final class DcatMapper {
+
+    private static final Logger LOGGER = Logger.getLogger(DcatMapper.class.getName());
 
     /** {@code fp1:} fingerprints are sha256, and this is SPDX's IRI for that algorithm. */
     private static final String SPDX_SHA256 = "http://spdx.org/rdf/terms#checksumAlgorithm_sha256";
@@ -152,9 +155,23 @@ final class DcatMapper {
                         + "lowerBound=1 containment, so the portal refuses a Distribution without one"));
 
         Distribution distribution = DcatFactory.eINSTANCE.createDistribution();
+        // The title keeps the served media type verbatim, because that is what a reader needs in
+        // order to know which representation this is — and, for an unregistered type, the only
+        // place it still appears.
         distribution.setTitle(literal(mediaType));
-        distribution.setMediaType(mediaType);
-        distribution.setFormat(mediaType);
+        // dct:format and dcat:mediaType take the register IRIs DCAT-AP mandates. An unregistered
+        // media type gets no dcat:mediaType at all rather than a literal one: omitting it is
+        // conformant, since only accessURL is mandatory on a Distribution, where a literal is a
+        // violation a DCAT-AP shape reports. A media type the table does not know at all keeps the
+        // literal — non-conformant, but honest and logged.
+        distribution.setFormat(MediaTypeVocabulary.formatIri(mediaType).orElse(mediaType));
+        MediaTypeVocabulary.mediaTypeIri(mediaType).ifPresent(distribution::setMediaType);
+        if (!MediaTypeVocabulary.isMapped(mediaType)) {
+            distribution.setMediaType(mediaType);
+            LOGGER.warning(() -> "No DCAT-AP vocabulary term for media type " + mediaType
+                    + ", so dct:format and dcat:mediaType carry it as a literal. A DCAT-AP shape "
+                    + "reports that as a violation: add the media type to MediaTypeVocabulary");
+        }
         distribution.setLicense(license(licenseUri));
         // Both, and the same value. DCAT's own usage note calls dcat:downloadURL "a specific form
         // of dcat:accessURL", and its guidance is explicit that where only direct download access

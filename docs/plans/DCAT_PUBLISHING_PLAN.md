@@ -923,28 +923,52 @@ Keeping `?mediaType=` in both also makes each Distribution self-contained. The e
 mediaType-less `accessURL` was identical on every Distribution of a Dataset and resolved by content
 negotiation to whatever the server defaulted to — so it matched none of them.
 
-**Open, and a decision rather than a defect:** `dct:format` and `dcat:mediaType` both carry the
-literal the atlas serves (`application/xmi`, `application/json`). DCAT-AP mandates controlled
-vocabularies for both — the EU file-type NAL
-(`http://publications.europa.eu/resource/authority/file-type`) for `dct:format`, and the IANA
-register for `dcat:mediaType`. `application/json` is registered; **`application/xmi` is not** — the
-only IANA registration for XMI is `application/vnd.xmi+xml` (vendor tree, OMG, 2008), which is not
-what this atlas sends. So conformance and accuracy conflict, and choosing between them is the
-owner's call.
+**Resolved 2026-08-27 — the register IRIs, and SHACL enforcement turned on to prove it.**
+DCAT-AP mandates a controlled vocabulary for both properties: the EU file-type NAL for
+`dct:format`, the IANA register for `dcat:mediaType`. `MediaTypeVocabulary` holds the mapping, and
+**every IRI in it was dereferenced before being written down**:
 
-Two things measured on 2026-08-27, so the decision can be made on facts rather than guesses:
+| served | `dct:format` | `dcat:mediaType` |
+|---|---|---|
+| `application/xmi` | `…/file-type/XML` | `…/media-types/application/vnd.xmi+xml` |
+| `application/json` | `…/file-type/JSON` | `…/media-types/application/json` |
+| `application/xml` | `…/file-type/XML` | `…/media-types/application/xml` |
+| `application/ld+json` | `…/file-type/JSON_LD` | `…/media-types/application/ld+json` |
+| `text/csv` | `…/file-type/CSV` | `…/media-types/text/csv` |
+| `application/schema+json` | `…/file-type/JSON` | *omitted — not registered* |
+| `application/schema+xml` | `…/file-type/XML` | *omitted — not registered* |
 
-- **Nothing fails to parse.** RDF syntax does not know about controlled vocabularies. The portal
-  round-trips `dct:format "application/xmi"` as a plain literal and Jena re-serializes it happily;
-  what a register violates is a **SHACL shape**, which reports it rather than refusing to parse. In
-  the demo stack nothing checks it at all (`SHACL_ENFORCE=false`, and the only shape mounted is the
-  self-authored placeholder).
-- **The publisher can become conformant on its own.** The portal serializes a value that *is* an
-  absolute IRI as a real IRI node — verified by configuring
-  `theme=http://publications.europa.eu/resource/authority/data-theme/TECH` and reading back
-  `dcat:theme <http://publications.europa.eu/…/TECH>` in the Turtle, next to the literal
-  `dct:format "application/xmi"`. So emitting the register IRIs needs **no portal-side change**: it
-  is a mapping table from each publishable media type to its (file-type IRI, IANA IRI) pair.
+Three findings behind that table:
+
+- **`application/xmi` is not registered with IANA**; the only registered name for the format is
+  OMG's vendor-tree `application/vnd.xmi+xml` (2008), which is what the mapping uses. The wire header
+  stays `application/xmi`, so the advertised name is the register's name for the format rather than
+  the header — a deliberate, reversible choice.
+- **The file-type NAL has no XMI concept.** That IRI answers 200 with no concept in the body, exactly
+  as a made-up code does, which is why the mapping goes to `XML`. Do not trust a 200 from that
+  endpoint as evidence a concept exists.
+- **An unregistered media type gets no `dcat:mediaType` at all** rather than a literal one. Omitting
+  is conformant (only `dcat:accessURL` is mandatory on a Distribution); a literal is a documented
+  violation. The served type remains visible in `dct:title` and in the download URL's `?mediaType=`.
+  A media type the table does not know keeps the literal and logs a warning naming it.
+
+**Verified against a real SHACL run.** `docker/dockercompose/dcat-shapes/dcat-ap-floor-shapes.ttl`
+is a self-authored floor encoding the mandatory cardinalities and the two vocabulary rules from the
+DCAT-AP 3.0 specification, and the compose stack now runs with `SHACL_ENFORCE=true`. Before the
+mapping, the portal's dry-run validator (`POST /rest/admin/validate/datasets`) reported
+`sh:conforms false` with four `sh:NodeKindConstraintComponent` violations — `dct:format` and
+`dcat:mediaType` as literals on both Distributions. After it, both the Dataset and the Catalog
+report `sh:conforms true`.
+
+That floor is **necessary, not sufficient**: the official GovData DCAT-AP.de shapes are AGPL-3.0
+deployment input, are not vendored here, and demand more (the `dcatde:` properties, `contributorID`,
+the licence vocabulary). A deployment must mount its own set.
+
+**Also found, and it belongs to the portal rather than here:** with `enforceOnWrite=true` the portal
+still accepted the non-conformant Distributions. `ShaclValidation.check` runs in the store's
+`put(collection, id, object)`, but `DistributionAdminServiceImpl` writes a Distribution with
+`store.save(dataset)` — and `save(EObject)` does not validate. So a Distribution added to an existing
+Dataset bypasses SHACL entirely, and only a dry run reveals it. Worth an issue on `dcat.atlas`.
 
 ### The docker variant, as built (2026-08-27)
 

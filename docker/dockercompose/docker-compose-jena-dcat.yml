@@ -45,9 +45,13 @@ services:
       # which reads as a broken image but means a missing variable. It sets the IRIs the portal
       # stamps into what it serves, not how anything reaches it.
       - PUBLIC_BASE_URL=http://localhost:8090/rest/
-      - SHACL_ENFORCE=false
+      # On, deliberately: the point of this stack is to check that what the publisher writes
+      # actually validates. The mounted shapes are a self-authored DCAT-AP floor, not the AGPL
+      # GovData set — see the file's own header.
+      - SHACL_ENFORCE=true
     volumes:
-      # At least one *.ttl must be here or readiness reports CRITICAL — see the file's own comment.
+      # At least one *.ttl must be here or readiness reports CRITICAL. Replace this floor with the
+      # shapes your deployment is required to enforce.
       - ./dcat-shapes:/opt/dcat/shapes:ro
       - portal-data:/opt/dcat
 
