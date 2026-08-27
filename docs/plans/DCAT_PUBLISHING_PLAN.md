@@ -661,12 +661,13 @@ If-Match: "<etag from the metadata GET>"
   scope's URL can never write the parent's record. `isReadOnly` on top of that is a 403, matching
   the other write endpoints.
 
-**One thing left open**, deliberately:
-
-- **authorization.** This endpoint changes whether a model appears in a public catalogue, which
-  makes it a more consequential write than its size suggests. Whatever the atlas does for the
-  upload endpoints applies here — which is currently nothing, and worth saying out loud rather than
-  discovering later.
+**Authorization is the gateway's** (**O15**, decided 2026-08-27). An APISIX with Keycloak in front
+of the portal *and* in front of this atlas. That is the right split: this endpoint changes whether a
+model appears in a public catalogue, and it does so through the atlas's own state rather than by
+talking to the portal — so portal-side authentication alone would leave the more consequential of
+the two writes open. Nothing in this bundle authenticates anything, and nothing here should:
+the atlas has no notion of a user, and inventing one per endpoint is how two of them end up
+disagreeing.
 
 ---
 
@@ -965,6 +966,7 @@ implementation rather than a preference.
 | **O12** | can the flag be changed after upload | **yes**, a `PATCH` metadata endpoint with a field allowlist (§7b) |
 | **O13** | how the publisher learns the flag | **an `EPackage` service property**, so the tracker's filter decides and unbind means retire |
 | **O14** | are Catalogs nested with `dcat:catalog` | **no — never, for any Catalog** (2026-08-27) |
+| **O15** | who authorizes the writes that decide publication | **an APISIX + Keycloak in front of both the portal and the atlas** (2026-08-27) |
 
 **O1 — `b64url(nsURI)`.** A portal id is permanent and a slug collision is not repairable after
 publication, so opacity wins over readability. `dct:identifier` carries the readable nsURI and
@@ -1073,6 +1075,14 @@ Dataset twice. It also removes the last operation this publisher performed *on* 
 than the one it was writing, which is what made ownership a question at every Catalog write. The
 mapping is now exactly: a Catalog per published scope, a Dataset per publishable package-in-a-stage,
 Distributions contained in it, and `dcat:dataset` links from Datasets into Catalogs. Nothing else.
+
+**O15 — authorization belongs to the gateway, on both sides (decided 2026-08-27).** The portal gets
+an APISIX with a Keycloak login, and so does this atlas. Both halves are needed, and the second is
+the one easy to forget: the flag that decides publication is written to the *atlas*, and the
+publisher pushes from there, so a portal-only login would protect reading the catalogue while
+leaving the write that fills it unauthenticated. It also settles what this plan does about
+authorization, which is nothing: the atlas models no user, and an endpoint-by-endpoint scheme is how
+two endpoints come to disagree about who may publish.
 
 **O5b — availability belongs to the DCAT side.** There is an existing DCAT.Atlas issue for an
 availability check on (at least) the Distribution URL; that is the right home for it, because a
