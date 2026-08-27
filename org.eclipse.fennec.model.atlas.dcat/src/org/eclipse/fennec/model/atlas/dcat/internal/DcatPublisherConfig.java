@@ -115,6 +115,26 @@ public @interface DcatPublisherConfig {
     int unpublish_delay_seconds() default 30;
 
     /**
+     * {@code retry.initial.delay.seconds} — how long to wait before the first retry of a transient
+     * failure: a 503, a connect timeout, or a portal that is not ready yet. The delay doubles per
+     * attempt from here.
+     */
+    int retry_initial_delay_seconds() default 5;
+
+    /**
+     * {@code retry.max.delay.seconds} — the ceiling the doubling stops at, so a portal that is down
+     * for an hour is polled a handful of times rather than continuously.
+     */
+    int retry_max_delay_seconds() default 300;
+
+    /**
+     * {@code retry.max.attempts} — how many attempts a transient failure gets before it is recorded
+     * as abandoned. Bounded so that something which only looks transient does not retry forever;
+     * what it gives up on is reported by the health check rather than forgotten.
+     */
+    int retry_max_attempts() default 6;
+
+    /**
      * {@code retire.on.shutdown} — whether a clean shutdown retires what this publisher put in the
      * portal. {@code false}, because it cannot deliver the guarantee it appears to (a SIGKILL, an
      * OOM kill or a dead host runs no deactivate at all) while charging every routine restart a

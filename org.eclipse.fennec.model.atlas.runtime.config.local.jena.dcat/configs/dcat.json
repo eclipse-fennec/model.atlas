@@ -37,6 +37,12 @@
 		// bearable.
 		"unpublish.delay.seconds": 10,
 		// A restart is not a statement about the models: the catalogue is left standing.
-		"retire.on.shutdown": false
+		"retire.on.shutdown": false,
+		// A 503, a connect timeout or a portal that is not ready yet is retried with a doubling
+		// delay; a payload the portal refuses as invalid is not retried at all. Whatever the retries
+		// give up on is reported by the `atlas`-tagged health check rather than only logged.
+		"retry.initial.delay.seconds": 5,
+		"retry.max.delay.seconds": 300,
+		"retry.max.attempts": 6
 	}
 }

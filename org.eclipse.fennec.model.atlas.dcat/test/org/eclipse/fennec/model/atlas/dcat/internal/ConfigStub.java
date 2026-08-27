@@ -119,4 +119,19 @@ record ConfigStub(String publisherName, String publisherAbout, String lang, Stri
     public boolean retire_on_shutdown() {
         return false;
     }
+
+    @Override
+    public int retry_initial_delay_seconds() {
+        return 5;
+    }
+
+    @Override
+    public int retry_max_delay_seconds() {
+        return 300;
+    }
+
+    @Override
+    public int retry_max_attempts() {
+        return 6;
+    }
 }

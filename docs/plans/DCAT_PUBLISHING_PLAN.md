@@ -196,6 +196,31 @@ activation, re-seed validators with one `etagOf` per known resource (client §6.
 `foreign.writes.expected` is false, use the two-argument unconditional form and skip the
 seeding entirely.
 
+### As built (D6, 2026-08-27)
+
+- **One funnel.** Every portal interaction goes through `submit(key, what, work)`, so classification,
+  retry and reporting exist in one place instead of at each call site. Retrying is safe because every
+  write is an idempotent `PUT` under a caller-chosen id and every link assertion is additive — a
+  retry is the same operation again, not a second one.
+- **`portal.ready() == false` is now a failure, not a `return`.** It used to log and drop the
+  publish, which meant the most ordinary transient condition there is — a portal still starting —
+  left the catalogue behind until something unrelated triggered another write. It throws
+  `PortalNotReadyException`, which classifies as retryable alongside a 503.
+- **Bounded in both directions:** the delay doubles from `retry.initial.delay.seconds` to
+  `retry.max.delay.seconds`, so a portal down for an hour is polled a handful of times; and
+  `retry.max.attempts` runs out, so something that only looks transient does not retry forever.
+  Giving up is *recorded*, which is the difference between a stale catalogue somebody can see and one
+  nobody knows about.
+- **The health check is the publisher itself** — one per portal configuration, tagged `atlas` and
+  deliberately **not** `readiness`: a portal being down says nothing about whether this atlas can
+  serve its models, and a catalogue briefly behind is no reason to pull the atlas out of a load
+  balancer. It reports what was previously log-only: refused scopes (D1a), permanently rejected
+  payloads, and retries that have run out.
+- **`immediate = true` is load-bearing** on the publisher now. Providing a service makes a component
+  delayed by default, and a delayed publisher would not activate until somebody fetched its health
+  check — so nothing would publish until something asked how publishing was going. Caught by the
+  ITs, which went 16 red.
+
 **Errors, by class.** `DcatModelConstraintException` / `DcatShaclException` are permanent for
 that entity: log once at WARNING with the report, mark the target unpublishable, do not retry.
 `RetryableException` (503, portal's git push failed — the commit *is* durable) and
@@ -858,7 +883,7 @@ ours to decide.
 | **D3** | `PackageServiceTracker` + the work queue + fingerprint/ETag state | an upload through the REST API lands in the portal without a manual step; a restart re-publishes nothing |
 | **D4** | `MetadataPublicationPolicy`: the `WritableScopeService` lookup, the cache, the scope gate | a flagged package publishes, an unflagged one does not, a scope absent from `scopes` publishes nothing whatever its packages say |
 | **D5** ✅ | Unpublication: modes, the STOPPING guard, the debounce | a restart retires nothing; a delete retires exactly one Dataset |
-| **D6** | Error classification, backoff queue, health check | a 503 retries, a SHACL refusal does not |
+| **D6** ✅ | Error classification, backoff queue, health check | a 503 retries, a SHACL refusal does not |
 | **D7** | OSGi ITs against a portal container; the runtime config bundle and bndrun variant | `testOSGi` green |
 
 D1–D3 is the walking skeleton and the honest end of "does this work". D4–D6 is what makes it

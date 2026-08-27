@@ -8,6 +8,7 @@
 	bnd.identity;id='org.eclipse.fennec.model.atlas.dcat.tests',\
 	bnd.identity;id='org.eclipse.fennec.model.atlas.dcat',\
 	bnd.identity;id='org.eclipse.fennec.model.atlas.mediatypes.api',\
+	bnd.identity;id='org.apache.felix.healthcheck.api',\
 	bnd.identity;id='org.eclipse.fennec.dcat.atlas.client.impl',\
 	bnd.identity;id='org.eclipse.fennec.dcat.atlas.client.osgi',\
 	bnd.identity;id='org.eclipse.fennec.dcat.atlas.dcatap.de.model',\

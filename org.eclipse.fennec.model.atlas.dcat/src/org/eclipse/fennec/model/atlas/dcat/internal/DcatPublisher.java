@@ -22,10 +22,14 @@ import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CountDownLatch;
+import java.util.function.Function;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import org.apache.felix.hc.api.FormattingResultLog;
+import org.apache.felix.hc.api.HealthCheck;
+import org.apache.felix.hc.api.Result;
 import org.eclipse.fennec.dcat.atlas.client.api.ConflictException;
 import org.eclipse.fennec.dcat.atlas.client.api.DcatAtlasClient;
 import org.eclipse.fennec.dcat.atlas.client.api.DcatCollection;
@@ -76,10 +80,16 @@ import dcat.Distribution;
  * </p>
  */
 @Component(name = DcatPublisher.PID, //
+        service = HealthCheck.class, //
+        // Load-bearing. Providing a service makes a component delayed by default, and a delayed
+        // publisher would not activate until somebody fetched its health check — so nothing would
+        // publish until something asked how publishing was going.
+        immediate = true, //
         configurationPid = DcatPublisher.PID, //
-        configurationPolicy = ConfigurationPolicy.REQUIRE)
+        configurationPolicy = ConfigurationPolicy.REQUIRE, //
+        property = { HealthCheck.NAME + "=Model Atlas DCAT Publisher", HealthCheck.TAGS + "=atlas" })
 @Designate(ocd = DcatPublisherConfig.class, factory = true)
-public class DcatPublisher {
+public class DcatPublisher implements HealthCheck {
 
     /** ConfigAdmin factory PID. */
     static final String PID = "DcatPublisher";
@@ -129,6 +139,12 @@ public class DcatPublisher {
      * deactivation, because a pending retirement belongs to the configuration that asked for it.
      */
     private volatile RetirementQueue retirements;
+
+    /**
+     * The backoff queue and the failure ledger. Also the health check's whole substance: what is
+     * being retried, and what has been given up on.
+     */
+    private volatile RetryQueue retries;
 
     /**
      * Per published Dataset, the fingerprint last written. The startup ENTER replay re-registers
@@ -479,6 +495,8 @@ public class DcatPublisher {
         this.unpublishDelayMillis = Math.max(0L, config.unpublish_delay_seconds()) * 1000L;
         this.retireOnShutdown = config.retire_on_shutdown();
         this.retirements = new RetirementQueue("dcat-retirement");
+        this.retries = new RetryQueue("dcat-retry", config.retry_initial_delay_seconds() * 1000L,
+                config.retry_max_delay_seconds() * 1000L, config.retry_max_attempts());
         DcatMetadataSource source = metadataSource;
         this.mapper = new DcatMapper(config, source != null ? source : new ConfiguredMetadataSource(config));
         this.active = true;
@@ -533,6 +551,11 @@ public class DcatPublisher {
                 LOGGER.info(() -> "Abandoned " + abandoned + " pending retirement(s) on deactivate");
             }
         }
+        RetryQueue pendingRetries = this.retries;
+        this.retries = null;
+        if (pendingRetries != null) {
+            pendingRetries.close();
+        }
         if (retireOnShutdown) {
             retireEverything();
         } else {
@@ -545,6 +568,50 @@ public class DcatPublisher {
         trackedPackages.clear();
         pendingRewrites.clear();
         publishedFingerprints.clear();
+    }
+
+    /**
+     * What this publisher would want an operator to know.
+     *
+     * <p>
+     * Deliberately <strong>not</strong> tagged {@code readiness}. A portal being down says nothing
+     * about whether this atlas can serve its models, and a catalogue that is briefly behind is not a
+     * reason to take the atlas out of a load balancer. What it does report is the state that is
+     * otherwise only visible by reading logs: a scope refused because its adopted Catalog is
+     * missing, a payload the portal permanently rejects, and a transient failure that has run out of
+     * attempts.
+     * </p>
+     */
+    @Override
+    public Result execute() {
+        FormattingResultLog log = new FormattingResultLog();
+        if (!active) {
+            log.warn("The DCAT publisher is not active");
+            return new Result(log);
+        }
+        log.info("Publishing scopes {} to {}", publishedScopes, config.dcat_portal_target());
+        log.info("{} Dataset(s) tracked, formats {}", trackedPackages.size(), lastPublishedMediaTypes);
+
+        if (lastPublishedMediaTypes.isEmpty()) {
+            log.warn("No publishable media types: distribution.media.types does not overlap what this runtime "
+                    + "reports it can serve, so Datasets carry no Distribution");
+        }
+        refusedScopes.forEach((scope, reason) -> log.warn("Scope {} is refused: {}", scope, reason));
+
+        RetryQueue current = retries;
+        if (current == null) {
+            return new Result(log);
+        }
+        RetryQueue.Report report = current.report();
+        if (report.lines().isEmpty()) {
+            log.info("No failing publications");
+        } else {
+            // Both kinds are warnings rather than criticals: what is broken is the catalogue's
+            // freshness, not this atlas.
+            log.warn("{} publication(s) retrying, {} abandoned", report.retrying(), report.abandoned());
+            report.lines().forEach(line -> log.warn("{}", line));
+        }
+        return new Result(log);
     }
 
     /**
@@ -600,10 +667,11 @@ public class DcatPublisher {
             Set<String> catalogsAtSchedule) {
         publishedFingerprints.remove(datasetId);
         pendingRewrites.add(datasetId);
-        client.submit(portal -> {
+        submit("retire:" + datasetId, "retiring Dataset " + datasetId, portal -> {
+            requireReady(portal, "retiring Dataset " + datasetId);
             retire(portal, datasetId, target, mode, catalogsAtSchedule);
             return null;
-        }).onFailure(t -> LOGGER.log(Level.WARNING, "Retiring Dataset " + datasetId + " failed", t));
+        });
     }
 
     private void retire(DcatAtlasClient portal, String datasetId, PublicationTarget target, UnpublishMode mode,
@@ -682,18 +750,24 @@ public class DcatPublisher {
             return;
         }
         String catalogId = resolved.id();
-        client.submit(portal -> {
-            if (!portal.ready()) {
-                LOGGER.warning(() -> "Portal is not ready; skipping the Catalog for scope " + scopeName
-                        + ". It will be published on the next reconcile");
-                return null;
-            }
+        submit("catalog:" + scopeName, "publishing the Catalog for scope " + scopeName, portal -> {
+            requireReady(portal, "the Catalog for scope " + scopeName);
             if (resolved.adopted()) {
                 adoptCatalog(portal, catalogId, info, resolved);
                 return null;
             }
             return writeCatalog(portal, catalogId, info, resolved.settings());
-        }).onFailure(t -> LOGGER.log(Level.WARNING, "Publishing the Catalog for scope " + scopeName + " failed", t));
+        });
+    }
+
+    /**
+     * @throws PortalNotReadyException so a portal that is still coming up is retried rather than
+     *         silently skipped — the condition is transient by definition
+     */
+    private static void requireReady(DcatAtlasClient portal, String what) {
+        if (!portal.ready()) {
+            throw new PortalNotReadyException("the portal is not ready, so " + what + " was not attempted");
+        }
     }
 
     /**
@@ -761,11 +835,8 @@ public class DcatPublisher {
             return;
         }
 
-        client.submit(portal -> {
-            if (!portal.ready()) {
-                LOGGER.warning(() -> "Portal is not ready; skipping Dataset " + datasetId);
-                return null;
-            }
+        submit("dataset:" + datasetId, "publishing Dataset " + datasetId, portal -> {
+            requireReady(portal, "Dataset " + datasetId);
             // Re-checked here, not only above: whether an adopted Catalog exists is answered on
             // this thread, and the client's executor is single-threaded, so a refusal recorded by
             // the Catalog task queued before this one is visible now and was not when this task
@@ -806,7 +877,7 @@ public class DcatPublisher {
                 return null;
             }
             return writeDataset(portal, datasetId, tracked);
-        }).onFailure(t -> LOGGER.log(Level.WARNING, "Publishing Dataset " + datasetId + " failed", t));
+        });
     }
 
     private Dataset writeDataset(DcatAtlasClient portal, String datasetId, TrackedPackage tracked) {
@@ -838,14 +909,48 @@ public class DcatPublisher {
                     + catalogIds.size() + " catalog(s)");
             return registration.entity();
         } catch (DcatModelConstraintException | DcatShaclException e) {
+            // Permanent for this entity: the portal refuses the identical payload every time. Held
+            // in the ledger so the health check can say the catalogue is behind, and why.
+            recordPermanent("dataset:" + datasetId, "publishing Dataset " + datasetId, "the portal refused it as "
+                    + "invalid: " + e.getMessage());
             LOGGER.log(Level.WARNING, "Portal refused Dataset " + datasetId + " as invalid; not retrying", e);
             return null;
         } catch (IllegalStateException misconfigured) {
             // A missing license.uri, for instance: permanent until an operator acts, so saying it
             // once beats retrying forever.
+            recordPermanent("dataset:" + datasetId, "publishing Dataset " + datasetId, misconfigured.getMessage());
             LOGGER.log(Level.WARNING, "Cannot publish Dataset " + datasetId + ": " + misconfigured.getMessage());
             return null;
         }
+    }
+
+    /**
+     * Every portal interaction goes through here, so that classification, retry and reporting exist
+     * in one place rather than at each call site.
+     *
+     * <p>
+     * The work is idempotent — a {@code PUT} under a caller-chosen id, an additive link — so a
+     * retry is the same operation again rather than a second one. That is what makes a bounded
+     * backoff the right answer to a 503 instead of a lost publish.
+     * </p>
+     *
+     * @param key  identifies the operation, so a repeat of it replaces its pending retry
+     * @param what a description for the log and the health check
+     * @param work what to do with the portal
+     */
+    private void submit(String key, String what, Function<DcatAtlasClient, ?> work) {
+        RetryQueue retries = this.retries;
+        client.submit(work::apply).onSuccess(result -> {
+            if (retries != null) {
+                retries.succeeded(key);
+            }
+        }).onFailure(failure -> {
+            if (retries == null || !active) {
+                LOGGER.log(Level.WARNING, what + " failed", failure);
+                return;
+            }
+            retries.failed(key, what, failure, () -> submit(key, what, work));
+        });
     }
 
     /**
@@ -971,13 +1076,11 @@ public class DcatPublisher {
         if (descendants.isEmpty()) {
             return;
         }
-        client.submit(portal -> {
-            if (!portal.ready()) {
-                return null;
-            }
+        submit("relink:" + scopeName, "re-linking the Catalogs below " + scopeName, portal -> {
+            requireReady(portal, "re-linking the Catalogs below " + scopeName);
             descendants.forEach(scope -> relinkDatasets(portal, catalogIdOf(scope), scope));
             return null;
-        }).onFailure(t -> LOGGER.log(Level.WARNING, "Re-linking the Catalogs below " + scopeName + " failed", t));
+        });
     }
 
     /**
@@ -1009,6 +1112,13 @@ public class DcatPublisher {
                         + e.getMessage());
             }
         });
+    }
+
+    private void recordPermanent(String key, String what, String reason) {
+        RetryQueue current = retries;
+        if (current != null) {
+            current.permanent(key, what, reason);
+        }
     }
 
     /** The media types a published Dataset's Distributions carry. */
@@ -1075,6 +1185,8 @@ public class DcatPublisher {
         } catch (DcatModelConstraintException | DcatShaclException e) {
             // Permanent for this entity: the portal will refuse the identical payload every time,
             // so retrying is only noise. The report is the actionable part.
+            recordPermanent("catalog:" + info.getName(), "publishing the Catalog for scope " + info.getName(),
+                    "the portal refused it as invalid: " + e.getMessage());
             LOGGER.log(Level.WARNING, "Portal refused Catalog " + catalogId + " as invalid; not retrying", e);
             return null;
         }

@@ -54,6 +54,7 @@ import org.testcontainers.containers.BindMode;
 import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.containers.wait.strategy.Wait;
 
+import org.apache.felix.hc.api.HealthCheck;
 import org.eclipse.fennec.dcat.atlas.client.api.DcatAtlasClient;
 
 import dcat.Catalog;
@@ -841,7 +842,85 @@ public class DcatPublisherIT {
         }
     }
 
+    // ---- D6: retry and the health check ------------------------------------
+
+    @Test
+    public void anUnreachablePortalIsRetriedAndReported(
+            @InjectConfiguration(withFactoryConfig = @WithFactoryConfiguration(factoryPid = CLIENT_PID,
+                    name = PORTAL + "22", location = "?")) Configuration clientConfig,
+            @InjectConfiguration(withFactoryConfig = @WithFactoryConfiguration(factoryPid = PUBLISHER_PID,
+                    name = PORTAL + "22", location = "?")) Configuration publisherConfig,
+            @InjectBundleContext BundleContext context) throws Exception {
+
+        // A portal nothing is listening to. Before D6 this produced one log line per attempt and
+        // then silence: the publish was dropped, and the catalogue stayed behind whatever the atlas
+        // served until something unrelated triggered another write.
+        Hashtable<String, Object> deadPortal = clientProps();
+        deadPortal.put("dcat.portal", PORTAL + "22");
+        deadPortal.put("base.uri", "http://localhost:1/rest/");
+        clientConfig.update(deadPortal);
+
+        String checkName = "DCAT unreachable";
+        Hashtable<String, Object> props = publisherProps(StubScopeService.SCOPE, false);
+        props.put("dcat.portal.target", "(dcat.portal=" + PORTAL + "22)");
+        props.put("retry.initial.delay.seconds", Integer.valueOf(2));
+        props.put("retry.max.attempts", Integer.valueOf(20));
+        props.put("hc.name", checkName);
+        publisherConfig.update(props);
+
+        String report = awaitHealthCheck(context, checkName, "retrying");
+        assertNotNull(report, "an unreachable portal should be reported as retrying, not silently dropped");
+        assertTrue(report.contains("publishing the Catalog for scope " + StubScopeService.SCOPE),
+                "the report should name what is failing, was: " + report);
+    }
+
+    @Test
+    public void theHealthCheckIsGreenWhenPublishingWorks(
+            @InjectConfiguration(withFactoryConfig = @WithFactoryConfiguration(factoryPid = CLIENT_PID,
+                    name = PORTAL + "23", location = "?")) Configuration clientConfig,
+            @InjectConfiguration(withFactoryConfig = @WithFactoryConfiguration(factoryPid = PUBLISHER_PID,
+                    name = PORTAL + "23", location = "?")) Configuration publisherConfig,
+            @InjectBundleContext BundleContext context) throws Exception {
+
+        clientConfig.update(clientProps());
+        String checkName = "DCAT healthy";
+        Hashtable<String, Object> props = publisherProps(StubScopeService.SCOPE, false);
+        props.put("hc.name", checkName);
+        publisherConfig.update(props);
+        assertNotNull(awaitCatalog(StubScopeService.SCOPE), "setup: the Catalog should publish");
+
+        assertNotNull(awaitHealthCheck(context, checkName, "No failing publications"),
+                "a working publisher should report no failures");
+        // Not tagged readiness, and OK: a catalogue is not part of what makes this atlas usable.
+        assertTrue(healthCheck(context, checkName).execute().isOk(),
+                "nothing here should take the atlas out of a load balancer");
+    }
+
     // ---- helpers ----------------------------------------------------------
+
+    /** Polls one health check until its report mentions {@code term}, and returns the report. */
+    private static String awaitHealthCheck(BundleContext context, String name, String term) throws Exception {
+        long deadline = System.currentTimeMillis() + PUBLISH_WAIT_MS;
+        while (System.currentTimeMillis() < deadline) {
+            HealthCheck check = healthCheck(context, name);
+            if (check != null) {
+                StringBuilder report = new StringBuilder();
+                check.execute().forEach(entry -> report.append(entry.getStatus()).append(' ')
+                        .append(entry.getMessage()).append('\n'));
+                if (report.indexOf(term) >= 0) {
+                    return report.toString();
+                }
+            }
+            Thread.sleep(500);
+        }
+        return null;
+    }
+
+    private static HealthCheck healthCheck(BundleContext context, String name) throws Exception {
+        Collection<ServiceReference<HealthCheck>> references = context.getServiceReferences(HealthCheck.class,
+                "(hc.name=" + name + ")");
+        return references.isEmpty() ? null : context.getService(references.iterator().next());
+    }
 
     /** Waits for the portal client this test configured, and hands it over. */
     private static DcatAtlasClient awaitClient() throws Exception {
