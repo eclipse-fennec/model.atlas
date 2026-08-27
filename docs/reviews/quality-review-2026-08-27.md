@@ -275,6 +275,26 @@ container; the rest were verified by reading the exact code path.
   which is exactly why `immediate = true` had to become load-bearing (see the comment at `:84-87`).
   A separate health-check component reading a `report()`-shaped view would delete that subtlety.
 
+### F22 · minor · http-semantics · …atlas.rest.application — **found by live testing, after the review**
+- **Where:** `…/resource/SchemaPackagesResource.java:348-352` (the overwrite branch), surfacing
+  through `…/exception/EndpointFailures.java:83`
+- **What:** a deliberate workflow refusal returns **500** instead of 400.
+- **Verified live:** `POST …/jena/schema/stages/release?nsUri=…&overwrite=true` answered
+  `HTTP 500 Internal Server Error` with a generic body; the log showed
+  `IllegalArgumentException: Stage release is final for the registry schema. Objects in the final
+  stage cannot be updated.`
+- **Why it matters:** the refusal itself is correct and deliberate — released content is immutable,
+  which is exactly why `updateProperties` gates on `validateWritableStage` rather than
+  `validateUpdatableStage`. But the endpoint's own `catch (IllegalArgumentException) → 400` never
+  fires, because the exception arrives wrapped by `Promise.getValue()` in an
+  `InvocationTargetException`. `EndpointFailures` unwraps that, finds no `WebApplicationException`,
+  and makes it a 500 — so a client cannot tell "you asked for something this stage forbids" from
+  "the server is broken", and the reason is only in the log.
+- **Suggested fix:** map `IllegalArgumentException` to 400 in `EndpointFailures.propagate`, next to
+  the `UnsupportedOperationException` → 405 rule. Every endpoint in this bundle already catches it
+  directly for exactly that meaning, so the mapping only covers the cases where a Promise hid it.
+- **Not fixed:** left with the other post-review findings pending live testing.
+
 ## Skipped / not reviewed
 
 - EMF-generated sources (`src-wf-api/`, `model/`, `WorkflowApiPackageImpl`): header check only, per
