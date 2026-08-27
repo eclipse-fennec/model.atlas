@@ -912,16 +912,18 @@ ours to decide.
 
 | phase | content | done when |
 |---|---|---|
-| **D0** | The atlas-side `?dcat=true` query parameter and the shared constant, on all three write paths of §7 | upload with and without the flag; `GET …/stages/{stage}?nsUri=` shows `properties["dcat"]`, and a content update preserves it |
-| **D1** | Bundle scaffolding, `DcatPublisher` config, client reference, readiness gate, one derived `Catalog` | a scope appears as a Catalog in a portal container |
+| **D0** ✅ | The atlas-side `?dcat=true` query parameter and the shared constant, on all three write paths of §7 | upload with and without the flag; `GET …/stages/{stage}?nsUri=` shows `properties["dcat"]`, and a content update preserves it |
+| **D1** ✅ | Bundle scaffolding, `DcatPublisher` config, client reference, readiness gate, one derived `Catalog` | a scope appears as a Catalog in a portal container |
 | **D1a** ✅ | `CatalogResolver` and `DcatScopeCatalog`: all three cases of §7a | adopted catalog gets links and no `PUT`; configured catalog carries its own title; a missing adopted id fails the health check instead of creating one |
-| **D2** | `DcatIds`, `DcatMapper`, `ConfiguredMetadataSource`; the full sequence of §4 for one target, driven by a gogo `dcat:reconcile` | `dcat:dataset` link present, distributions ≥ 1, each with its own `downloadURL`, read back |
+| **D2** ✅ | `DcatIds`, `DcatMapper`, `ConfiguredMetadataSource`; the full sequence of §4 for one target, driven by a gogo `dcat:reconcile` | `dcat:dataset` link present, distributions ≥ 1, each with its own `downloadURL`, read back |
 | **D2a** ✅ | `ScopeHierarchy` + the link fan-out both ways | `atlas → jena → nawerker`: an `atlas` package's Dataset is one resource in three Catalogs; creating `nawerker` last still gets it |
-| **D3** | `PackageServiceTracker` + the work queue + fingerprint/ETag state | an upload through the REST API lands in the portal without a manual step; a restart re-publishes nothing |
+| **D3** ✅ | `PackageServiceTracker` + the work queue + fingerprint/ETag state | an upload through the REST API lands in the portal without a manual step; a restart re-publishes nothing |
 | **D4** ✅ | ~~`MetadataPublicationPolicy`~~ — satisfied by O13 and the configuration gates; the `DcatPublicationPolicy` SPI was **deleted** (below) | a flagged package publishes, an unflagged one does not, a scope absent from `scopes` publishes nothing whatever its packages say |
 | **D5** ✅ | Unpublication: modes, the STOPPING guard, the debounce | a restart retires nothing; a delete retires exactly one Dataset |
 | **D6** ✅ | Error classification, backoff queue, health check | a 503 retries, a SHACL refusal does not |
-| **D7** | OSGi ITs against a portal container; the runtime config bundle and bndrun variant | `testOSGi` green |
+| **D7** ✅ | OSGi ITs against a portal container; the runtime config bundle and bndrun variant | `testOSGi` green |
+| **7b** ✅ | The metadata `PATCH` of §7b, and propagation to the live registration | the flag changes without a re-upload, and the publisher acts on it |
+| **docker** | a `docker/modelatlas_jena_dcat` image module for `modelatlas.runtime_docker_jena_dcat.bndrun` | `prepareDocker` produces a runnable image |
 
 D1–D3 is the walking skeleton and the honest end of "does this work". D4–D6 is what makes it
 operable.
