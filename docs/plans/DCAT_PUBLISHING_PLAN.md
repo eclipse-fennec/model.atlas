@@ -201,6 +201,43 @@ that entity: log once at WARNING with the report, mark the target unpublishable,
 `TransportException` go on a bounded backoff queue. `Registration.applied() == false` is a
 foreign edit: log at WARNING, carry on to the next resource, never unwind.
 
+### As built (D2a, 2026-08-27)
+
+`ScopeHierarchy` is an immutable snapshot built per operation from the bound `ScopeInfo`s, not
+maintained state: it is a walk over a handful of entries, and a fan-out computed against a tree
+shifting underneath it would link into some descendants and not others with nothing left to notice.
+`ScopeInfo.parentScope` is the whole input — `isInheritingFromParentScope()` is defined as
+"has a parent", so there is no second flag to consult.
+
+**The fan-out is two dual questions, and both are needed.**
+
+| asked by | question | answer |
+|---|---|---|
+| `writeDataset` / `retire` | which Catalogs list this Dataset? | `catalogsListing(definingScope)` = own + **descendants** |
+| `writeCatalog` / `relinkDatasets` | which Datasets does this Catalog list? | own scope's + every **ancestor's** |
+
+The second is why the fan-in for a scope created later needs no separate code path: `relinkDatasets`
+already runs after every Catalog write, so a new scope's first Catalog write pulls in every
+ancestor's Datasets by itself.
+
+- **A bind can complete a chain.** A leaf bound before its middle scope can only see the parent name
+  it was told, so it never linked its grandparent's Datasets. `relinkDescendantCatalogs` re-links
+  everything below a newly bound scope — nothing else would revisit the leaf, because no package
+  changed.
+- **A retirement captures its Catalog set when it is scheduled**, and unions it with a fresh
+  computation when it runs. The ordinary reason for a retirement — a scope's configuration deleted —
+  takes the scope services with it, so a set computed only at run time would be empty and the
+  memberships would dangle. The union covers the reverse too: a descendant that appeared inside the
+  window and linked the Dataset in through its own fan-in. The unlink tolerates a `NotFound` per
+  Catalog, so a stale id abandons neither the rest of the fan-out nor the delete after it.
+- **Sub-catalog links are asserted in both directions**, because a `dcat:catalog` link lives on the
+  *parent*: writing a Catalog drops the links to its children (re-asserted after every write), while
+  its own membership in its parent survives that write but must be asserted when the child appears.
+  Asserting a link *on* another Catalog is only ours to do while every Catalog is derived — D1a has
+  to skip the ones we do not own.
+- `descendants()` never returns the scope itself, even where a configuration has written a cycle;
+  both walks truncate rather than loop. Caught by `ScopeHierarchyTest`, not by review.
+
 ---
 
 ## 5. Identity
@@ -752,7 +789,7 @@ ours to decide.
 | **D1** | Bundle scaffolding, `DcatPublisher` config, client reference, readiness gate, one derived `Catalog` | a scope appears as a Catalog in a portal container |
 | **D1a** | `CatalogResolver` and `DcatScopeCatalog`: all three cases of §7a | adopted catalog gets links and no `PUT`; configured catalog carries its own title; a missing adopted id fails the health check instead of creating one |
 | **D2** | `DcatIds`, `DcatMapper`, `ConfiguredMetadataSource`; the full sequence of §4 for one target, driven by a gogo `dcat:reconcile` | `dcat:dataset` link present, distributions ≥ 1, each with its own `downloadURL`, read back |
-| **D2a** | `ScopeHierarchy` + the link fan-out both ways | `atlas → jena → nawerker`: an `atlas` package's Dataset is one resource in three Catalogs; creating `nawerker` last still gets it |
+| **D2a** ✅ | `ScopeHierarchy` + the link fan-out both ways | `atlas → jena → nawerker`: an `atlas` package's Dataset is one resource in three Catalogs; creating `nawerker` last still gets it |
 | **D3** | `PackageServiceTracker` + the work queue + fingerprint/ETag state | an upload through the REST API lands in the portal without a manual step; a restart re-publishes nothing |
 | **D4** | `MetadataPublicationPolicy`: the `WritableScopeService` lookup, the cache, the scope gate | a flagged package publishes, an unflagged one does not, a scope absent from `scopes` publishes nothing whatever its packages say |
 | **D5** ✅ | Unpublication: modes, the STOPPING guard, the debounce | a restart retires nothing; a delete retires exactly one Dataset |

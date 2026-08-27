@@ -14,6 +14,7 @@
 package org.eclipse.fennec.model.atlas.dcat.internal;
 
 import java.util.Arrays;
+import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.List;
@@ -184,6 +185,7 @@ public class DcatPublisher {
         scopes.put(scopeName, info);
         if (active) {
             publishCatalog(scopeName);
+            relinkDescendantCatalogs(scopeName);
         }
     }
 
@@ -279,7 +281,12 @@ public class DcatPublisher {
         if (queue == null) {
             return;
         }
-        queue.schedule(datasetId, unpublishDelayMillis, () -> retireDataset(datasetId, target, mode));
+        // Captured now, while the scope tree is still intact. A retirement runs a window later, and
+        // the ordinary reason for one — a scope's configuration deleted — takes the scope services
+        // with it, so by then the fan-out would compute nothing and the memberships would dangle in
+        // Catalogs the portal still serves.
+        Set<String> catalogIds = catalogsListing(target.scope());
+        queue.schedule(datasetId, unpublishDelayMillis, () -> retireDataset(datasetId, target, mode, catalogIds));
     }
 
     /**
@@ -429,10 +436,13 @@ public class DcatPublisher {
         }
         LOGGER.info(() -> "retire.on.shutdown: unlinking " + snapshot.size() + " Dataset(s)");
         CountDownLatch done = new CountDownLatch(snapshot.size());
-        snapshot.forEach((datasetId, tracked) -> client.submit(portal -> {
-            retire(portal, datasetId, tracked.target(), UnpublishMode.UNLINK);
-            return null;
-        }).onResolve(done::countDown));
+        snapshot.forEach((datasetId, tracked) -> {
+            Set<String> catalogIds = catalogsListing(tracked.target().scope());
+            client.submit(portal -> {
+                retire(portal, datasetId, tracked.target(), UnpublishMode.UNLINK, catalogIds);
+                return null;
+            }).onResolve(done::countDown);
+        });
         try {
             if (!done.await(SHUTDOWN_RETIRE_TIMEOUT_MS, TimeUnit.MILLISECONDS)) {
                 LOGGER.warning("retire.on.shutdown did not finish within " + SHUTDOWN_RETIRE_TIMEOUT_MS
@@ -452,43 +462,66 @@ public class DcatPublisher {
      * come back as a resource nothing links to.
      * </p>
      */
-    private void retireDataset(String datasetId, PublicationTarget target, UnpublishMode mode) {
+    private void retireDataset(String datasetId, PublicationTarget target, UnpublishMode mode,
+            Set<String> catalogsAtSchedule) {
         publishedFingerprints.remove(datasetId);
         retiredDatasets.add(datasetId);
         client.submit(portal -> {
-            retire(portal, datasetId, target, mode);
+            retire(portal, datasetId, target, mode, catalogsAtSchedule);
             return null;
         }).onFailure(t -> LOGGER.log(Level.WARNING, "Retiring Dataset " + datasetId + " failed", t));
     }
 
-    private void retire(DcatAtlasClient portal, String datasetId, PublicationTarget target, UnpublishMode mode) {
-        String catalogId = DcatIds.catalogId(target.scope());
-        try {
-            if (mode == UnpublishMode.CASCADE) {
+    private void retire(DcatAtlasClient portal, String datasetId, PublicationTarget target, UnpublishMode mode,
+            Set<String> catalogsAtSchedule) {
+        // The union of what listed it when the retirement was scheduled and what lists it now: the
+        // first covers a scope that has since gone away, the second a descendant that appeared
+        // inside the window and had the Dataset linked in by its own fan-in.
+        Set<String> catalogIds = new LinkedHashSet<>(catalogsAtSchedule);
+        catalogIds.addAll(catalogsListing(target.scope()));
+        if (mode == UnpublishMode.CASCADE) {
+            try {
                 // The portal unlinks every referrer in one commit and reports what it rewrote —
                 // including links this publisher never created, which is why it is not the default.
                 List<String> rewritten = portal.delete(DcatCollection.DATASETS, datasetId, DeleteMode.CASCADE);
                 LOGGER.info(() -> "Retired Dataset " + datasetId + " (CASCADE); the portal rewrote " + rewritten);
-                return;
+            } catch (NotFoundException alreadyGone) {
+                LOGGER.fine(() -> "Dataset " + datasetId + " was already gone from the portal");
             }
-            // Our membership is ours to drop, and dropping it is both the whole of UNLINK and the
-            // precondition for a SINGLE delete. When D2a lands, this unlink fans out over the
-            // descendant Catalogs exactly as the link does — a missed descendant leaves a Catalog
-            // advertising a Dataset that is gone.
-            portal.unlinkDatasetFromCatalog(catalogId, datasetId);
-            if (mode == UnpublishMode.DELETE) {
-                portal.delete(DcatCollection.DATASETS, datasetId, DeleteMode.SINGLE);
-                LOGGER.info(() -> "Retired Dataset " + datasetId + " (DELETE)");
-            } else {
-                LOGGER.info(() -> "Retired Dataset " + datasetId + " (UNLINK); the resource stays in the portal");
-            }
+            return;
+        }
+        // Our memberships are ours to drop, and dropping them is both the whole of UNLINK and the
+        // precondition for a SINGLE delete. The unlink mirrors the publish fan-out exactly: a missed
+        // descendant leaves a Catalog advertising a Dataset that is gone.
+        catalogIds.forEach(catalogId -> unlink(portal, catalogId, datasetId));
+        if (mode != UnpublishMode.DELETE) {
+            LOGGER.info(() -> "Retired Dataset " + datasetId + " (UNLINK) from " + catalogIds.size()
+                    + " catalog(s); the resource stays in the portal");
+            return;
+        }
+        try {
+            portal.delete(DcatCollection.DATASETS, datasetId, DeleteMode.SINGLE);
+            LOGGER.info(() -> "Retired Dataset " + datasetId + " (DELETE)");
         } catch (NotFoundException alreadyGone) {
             LOGGER.fine(() -> "Dataset " + datasetId + " was already gone from the portal");
         } catch (ConflictException referrers) {
             // Exactly what SINGLE is for: something we did not link still points at it. Leaving it
             // is the safe answer, and the operator can widen the mode to CASCADE if they mean it.
             LOGGER.warning(() -> "Dataset " + datasetId + " is still referenced, so it was unlinked from "
-                    + catalogId + " but not deleted: " + referrers.getMessage());
+                    + catalogIds + " but not deleted: " + referrers.getMessage());
+        }
+    }
+
+    /**
+     * Drops one membership. A Catalog or Dataset the portal no longer has is not a failure — the id
+     * set deliberately includes ones that may already be gone — and one such id must not abandon the
+     * rest of the fan-out, nor the delete that follows it.
+     */
+    private void unlink(DcatAtlasClient portal, String catalogId, String datasetId) {
+        try {
+            portal.unlinkDatasetFromCatalog(catalogId, datasetId);
+        } catch (NotFoundException gone) {
+            LOGGER.fine(() -> "Nothing to unlink: " + datasetId + " in " + catalogId);
         }
     }
 
@@ -591,14 +624,17 @@ public class DcatPublisher {
                 Distribution distribution = mapper.toDistribution(target, mediaType, baseUri);
                 portal.registerDistribution(datasetId, DcatIds.distributionId(mediaType), distribution);
             }
-            // Re-assert the membership the PUT just dropped. Additive, so it is safe on a Catalog
-            // we do not own.
-            portal.linkDatasetToCatalog(DcatIds.catalogId(target.scope()), datasetId);
+            // Re-assert the membership the PUT just dropped — in every Catalog that serves this
+            // model, which is its own scope's and every descendant's. Additive, so it is safe even
+            // on a Catalog we do not own.
+            Set<String> catalogIds = catalogsListing(target.scope());
+            catalogIds.forEach(catalogId -> portal.linkDatasetToCatalog(catalogId, datasetId));
 
             if (target.fingerprint() != null) {
                 publishedFingerprints.put(datasetId, target.fingerprint());
             }
-            LOGGER.info(() -> "Published Dataset " + datasetId + " with " + mediaTypes.size() + " distribution(s)");
+            LOGGER.info(() -> "Published Dataset " + datasetId + " with " + mediaTypes.size() + " distribution(s) in "
+                    + catalogIds.size() + " catalog(s)");
             return registration.entity();
         } catch (DcatModelConstraintException | DcatShaclException e) {
             LOGGER.log(Level.WARNING, "Portal refused Dataset " + datasetId + " as invalid; not retrying", e);
@@ -612,12 +648,126 @@ public class DcatPublisher {
     }
 
     /**
-     * Re-asserts the Dataset membership of every tracked, publishable package in a scope.
-     * Idempotent and additive, so it is safe to run after any Catalog write.
+     * A snapshot of the scope tree, from the scope infos currently bound.
+     *
+     * <p>
+     * Rebuilt per operation rather than maintained: it is a walk over a handful of entries, and a
+     * fan-out computed against a tree shifting underneath it would link into some descendants and
+     * not others, with nothing left to notice.
+     * </p>
+     */
+    private ScopeHierarchy hierarchy() {
+        Map<String, String> parents = new LinkedHashMap<>();
+        scopes.forEach((name, info) -> parents.put(name, info.getParentScope()));
+        return ScopeHierarchy.of(parents);
+    }
+
+    /**
+     * Every Catalog that must list a Dataset defined by {@code definingScope}: its own scope's and
+     * every descendant's, because a descendant serves the model too — O4's inheritance is one
+     * Dataset linked into several Catalogs, never a Dataset per inheriting scope.
+     *
+     * <p>
+     * Filtered by this portal's {@code scopes} and by what is actually bound, since a Catalog only
+     * exists for a scope this publisher publishes.
+     * </p>
+     */
+    private Set<String> catalogsListing(String definingScope) {
+        Set<String> catalogIds = new LinkedHashSet<>();
+        if (publishable(definingScope)) {
+            catalogIds.add(DcatIds.catalogId(definingScope));
+        }
+        hierarchy().descendants(definingScope).stream().filter(this::publishable).map(DcatIds::catalogId)
+                .forEach(catalogIds::add);
+        return catalogIds;
+    }
+
+    /** Whether this portal holds a Catalog for {@code scope} at all. */
+    private boolean publishable(String scope) {
+        return publishedScopes.contains(scope) && scopes.containsKey(scope);
+    }
+
+    /**
+     * Re-asserts this Catalog's place in the scope tree: its child Catalogs below it, and itself
+     * below its parent.
+     *
+     * <p>
+     * Both directions, because a {@code dcat:catalog} link lives on the <em>parent</em> resource.
+     * Writing this Catalog drops the links to its children, so those are re-asserted here; its own
+     * membership in its parent survives this write but has to be asserted somewhere, and a child
+     * appearing after its parent is the ordinary case.
+     * </p>
+     *
+     * <p>
+     * Asserting a link <em>on</em> another Catalog is a claim about that Catalog's structure, which
+     * is only ours to make while every Catalog is derived. When D1a brings adopted Catalogs, this
+     * has to skip the ones we do not own.
+     * </p>
+     */
+    private void relinkSubCatalogs(DcatAtlasClient portal, String catalogId, String scope) {
+        ScopeHierarchy tree = hierarchy();
+        tree.children(scope).stream().filter(this::publishable)
+                .forEach(child -> linkSubCatalog(portal, catalogId, DcatIds.catalogId(child)));
+        String parent = tree.parentOf(scope);
+        if (parent != null && publishable(parent)) {
+            linkSubCatalog(portal, DcatIds.catalogId(parent), catalogId);
+        }
+    }
+
+    private void linkSubCatalog(DcatAtlasClient portal, String parentCatalogId, String childCatalogId) {
+        try {
+            portal.linkSubCatalog(parentCatalogId, childCatalogId);
+        } catch (RuntimeException e) {
+            // A Catalog that has not been written yet cannot be linked; whichever of the two is
+            // written second asserts it.
+            LOGGER.fine(() -> "Could not link sub-catalog " + childCatalogId + " into " + parentCatalogId + ": "
+                    + e.getMessage());
+        }
+    }
+
+    /**
+     * Re-asserts the memberships of every Catalog below {@code scopeName}, without rewriting them.
+     *
+     * <p>
+     * Needed because a bind can <em>complete a chain</em>: a leaf bound before its middle scope
+     * could see only as far as the parent name it was told, so it never linked its grandparent's
+     * Datasets. Once the middle scope is here the chain resolves — and nothing else would revisit
+     * the leaf, since no package changed.
+     * </p>
+     */
+    private void relinkDescendantCatalogs(String scopeName) {
+        Set<String> descendants = new LinkedHashSet<>(hierarchy().descendants(scopeName));
+        descendants.removeIf(scope -> !publishable(scope));
+        if (descendants.isEmpty()) {
+            return;
+        }
+        client.submit(portal -> {
+            if (!portal.ready()) {
+                return null;
+            }
+            descendants.forEach(scope -> relinkDatasets(portal, DcatIds.catalogId(scope), scope));
+            return null;
+        }).onFailure(t -> LOGGER.log(Level.WARNING, "Re-linking the Catalogs below " + scopeName + " failed", t));
+    }
+
+    /**
+     * Re-asserts every Dataset membership this Catalog owes: the scope's own packages and every
+     * ancestor's, the latter being what inheritance means here.
+     *
+     * <p>
+     * Idempotent and additive, so it is safe after any Catalog write — and it is also the whole of
+     * the fan-in for a scope that appears later, since nothing happens to an ancestor's package when
+     * a new scope binds and the new Catalog therefore has to pull those Datasets in itself.
+     * </p>
      */
     private void relinkDatasets(DcatAtlasClient portal, String catalogId, String scope) {
+        Set<String> inheritedFrom = new LinkedHashSet<>(hierarchy().ancestors(scope));
         trackedPackages.forEach((datasetId, tracked) -> {
-            if (!scope.equals(tracked.target().scope()) || !stagePermitted(tracked.target())) {
+            String defining = tracked.target().scope();
+            if (!scope.equals(defining) && !inheritedFrom.contains(defining)) {
+                return;
+            }
+            if (!stagePermitted(tracked.target())) {
                 return;
             }
             try {
@@ -684,6 +834,7 @@ public class DcatPublisher {
             // rewriting the catalogue on every boot — which means nothing else will re-assert
             // these links. Whoever rewrites a Catalog owns its memberships.
             relinkDatasets(portal, catalogId, info.getName());
+            relinkSubCatalogs(portal, catalogId, info.getName());
             LOGGER.info(() -> "Published Catalog " + catalogId + " for scope " + info.getName());
             return registration.entity();
         } catch (DcatModelConstraintException | DcatShaclException e) {

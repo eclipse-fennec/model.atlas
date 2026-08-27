@@ -49,6 +49,18 @@ final class PublishablePackages {
      */
     static ServiceRegistration<?> register(BundleContext context, String nsUri, String stage, String fingerprint,
             boolean dcat) {
+        return register(context, StubScopeService.SCOPE, nsUri, stage, fingerprint, dcat);
+    }
+
+    /**
+     * The same, for a package defined by another scope — which is the whole of the inheritance
+     * story: the Dataset belongs to the scope that defines the package, and appears in the
+     * descendants' Catalogs by link rather than by copy.
+     *
+     * @param scope the scope that defines the package, as {@code emf.model.scope}
+     */
+    static ServiceRegistration<?> register(BundleContext context, String scope, String nsUri, String stage,
+            String fingerprint, boolean dcat) {
         EPackage ePackage = EcoreFactory.eINSTANCE.createEPackage();
         ePackage.setName("Person");
         ePackage.setNsURI(nsUri);
@@ -57,7 +69,7 @@ final class PublishablePackages {
         Hashtable<String, Object> properties = new Hashtable<>();
         properties.put("emf.nsURI", nsUri);
         properties.put("emf.name", ePackage.getName());
-        properties.put("emf.model.scope", StubScopeService.SCOPE);
+        properties.put("emf.model.scope", scope);
         properties.put("atlas.stage", stage);
         properties.put("emf.version", "1.1.0");
         if (fingerprint != null) {

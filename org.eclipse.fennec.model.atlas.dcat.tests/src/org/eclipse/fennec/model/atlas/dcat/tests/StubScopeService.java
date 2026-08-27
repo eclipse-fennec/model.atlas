@@ -13,6 +13,7 @@
  */
 package org.eclipse.fennec.model.atlas.dcat.tests;
 
+import java.util.Hashtable;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Stream;
@@ -24,6 +25,8 @@ import org.eclipse.fennec.model.atlas.scope.api.RegistryInfo;
 import org.eclipse.fennec.model.atlas.scope.api.ScopeApiFactory;
 import org.eclipse.fennec.model.atlas.scope.api.ScopeInfo;
 import org.eclipse.fennec.model.atlas.scope.api.StageInfo;
+import org.osgi.framework.BundleContext;
+import org.osgi.framework.ServiceRegistration;
 import org.osgi.service.component.annotations.Component;
 
 /**
@@ -36,6 +39,12 @@ import org.osgi.service.component.annotations.Component;
  * thing under test: the publisher, the real client and a real portal. Everything the atlas does
  * to <em>produce</em> a scope is covered by the workflow tests.
  * </p>
+ *
+ * <p>
+ * Registered as a component for the single-scope tests, and by hand through
+ * {@link #register(BundleContext, String, String)} for the hierarchy tests, which need a scope
+ * tree that only exists for the duration of one test.
+ * </p>
  */
 @Component(service = ReadableScopeService.class, property = { "atlas.scope=" + StubScopeService.SCOPE })
 public class StubScopeService implements ReadableScopeService<EObject> {
@@ -46,16 +55,48 @@ public class StubScopeService implements ReadableScopeService<EObject> {
     /** The description the portal should end up storing. */
     public static final String DESCRIPTION = "Integration test scope";
 
+    private final String scope;
+    private final String parentScope;
+
+    /** The component constructor: the single, parentless {@link #SCOPE}. */
+    public StubScopeService() {
+        this(SCOPE, null);
+    }
+
+    /**
+     * @param scope       the scope name to answer with
+     * @param parentScope the parent scope name, or {@code null} for a root. A real scope's parent
+     *                    defaults to {@code atlas} rather than to nothing, so a root here means
+     *                    "the top of the tree this test builds"
+     */
+    public StubScopeService(String scope, String parentScope) {
+        this.scope = scope;
+        this.parentScope = parentScope;
+    }
+
+    /**
+     * Registers one scope service, the way the workflow bundle would.
+     *
+     * @return the registration, to be unregistered by the caller
+     */
+    public static ServiceRegistration<?> register(BundleContext context, String scope, String parentScope) {
+        Hashtable<String, Object> properties = new Hashtable<>();
+        properties.put("atlas.scope", scope);
+        return context.registerService(ReadableScopeService.class, new StubScopeService(scope, parentScope),
+                properties);
+    }
+
     @Override
     public String getScopeName() {
-        return SCOPE;
+        return scope;
     }
 
     @Override
     public ScopeInfo getScopeInfo() {
         ScopeInfo info = ScopeApiFactory.eINSTANCE.createScopeInfo();
-        info.setName(SCOPE);
+        info.setName(scope);
         info.setDescription(DESCRIPTION);
+        info.setParentScope(parentScope);
         // The publisher resolves publish.stages=FINAL against these, never against a hardcoded
         // stage name: a scope may call its final stage anything it likes.
         RegistryInfo registry = ScopeApiFactory.eINSTANCE.createRegistryInfo();
@@ -75,9 +116,13 @@ public class StubScopeService implements ReadableScopeService<EObject> {
         return stage;
     }
 
+    /**
+     * A scope inherits exactly when it has a parent — the real implementation answers
+     * {@code scope_parent != null}, so there is no third state to model.
+     */
     @Override
     public boolean isInheritingFromParentScope() {
-        return false;
+        return parentScope != null && !parentScope.isBlank();
     }
 
     @Override

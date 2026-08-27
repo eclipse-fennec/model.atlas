@@ -30,6 +30,7 @@ import java.nio.file.attribute.PosixFilePermissions;
 import java.util.Base64;
 import java.time.Duration;
 import java.util.Hashtable;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import org.junit.jupiter.api.AfterAll;
@@ -488,6 +489,153 @@ public class DcatPublisherIT {
         }
     }
 
+    // ---- D2a: the hierarchy and the link fan-out ---------------------------
+
+    @Test
+    public void aDatasetIsOneResourceInEveryDescendantCatalog(
+            @InjectConfiguration(withFactoryConfig = @WithFactoryConfiguration(factoryPid = CLIENT_PID,
+                    name = PORTAL + "13", location = "?")) Configuration clientConfig,
+            @InjectConfiguration(withFactoryConfig = @WithFactoryConfiguration(factoryPid = PUBLISHER_PID,
+                    name = PORTAL + "13", location = "?")) Configuration publisherConfig,
+            @InjectBundleContext BundleContext context) throws Exception {
+
+        clientConfig.update(clientProps());
+
+        // h-root -> h-mid -> h-leaf, the plan's atlas -> jena -> nawerker.
+        List<ServiceRegistration<?>> scopes = List.of(StubScopeService.register(context, "h-root", null),
+                StubScopeService.register(context, "h-mid", "h-root"),
+                StubScopeService.register(context, "h-leaf", "h-mid"));
+        Hashtable<String, Object> props = publisherProps("h-root", false);
+        props.put("scopes", new String[] { "h-root", "h-mid", "h-leaf" });
+        publisherConfig.update(props);
+
+        String nsUri = "http://test.example.com/inherited/1.0";
+        String datasetId = datasetId("h-root", nsUri, PublishablePackages.FINAL_STAGE);
+        ServiceRegistration<?> pkg = PublishablePackages.register(context, "h-root", nsUri,
+                PublishablePackages.FINAL_STAGE, FINGERPRINT, true);
+        try {
+            assertNotNull(await(portalRestBase + "/datasets/" + datasetId),
+                    "the defining scope should publish the Dataset");
+
+            // One resource in three Catalogs, not three Datasets: the id derives from the defining
+            // scope, so a harvester sees one model however many catalogues carry it.
+            for (String scope : List.of("h-root", "h-mid", "h-leaf")) {
+                assertTrue(awaitCatalogTerm(scope, datasetId, true),
+                        "Catalog " + scope + " should list the inherited Dataset");
+            }
+            String list = get(portalRestBase + "/datasets");
+            int occurrences = list.split("\"" + datasetId + "\"", -1).length - 1;
+            assertTrue(occurrences <= 1, "inheritance must link, not copy; found " + occurrences + " Datasets");
+        } finally {
+            pkg.unregister();
+            scopes.forEach(ServiceRegistration::unregister);
+        }
+    }
+
+    @Test
+    public void aScopeCreatedLaterInheritsItsAncestorsDatasets(
+            @InjectConfiguration(withFactoryConfig = @WithFactoryConfiguration(factoryPid = CLIENT_PID,
+                    name = PORTAL + "14", location = "?")) Configuration clientConfig,
+            @InjectConfiguration(withFactoryConfig = @WithFactoryConfiguration(factoryPid = PUBLISHER_PID,
+                    name = PORTAL + "14", location = "?")) Configuration publisherConfig,
+            @InjectBundleContext BundleContext context) throws Exception {
+
+        clientConfig.update(clientProps());
+
+        ServiceRegistration<?> root = StubScopeService.register(context, "l-root", null);
+        ServiceRegistration<?> mid = StubScopeService.register(context, "l-mid", "l-root");
+        Hashtable<String, Object> props = publisherProps("l-root", false);
+        props.put("scopes", new String[] { "l-root", "l-mid", "l-late" });
+        publisherConfig.update(props);
+
+        String nsUri = "http://test.example.com/ancestor/1.0";
+        String datasetId = datasetId("l-root", nsUri, PublishablePackages.FINAL_STAGE);
+        ServiceRegistration<?> pkg = PublishablePackages.register(context, "l-root", nsUri,
+                PublishablePackages.FINAL_STAGE, FINGERPRINT, true);
+        ServiceRegistration<?> late = null;
+        try {
+            assertTrue(awaitCatalogTerm("l-mid", datasetId, true), "setup: the existing descendant should have it");
+
+            // The case that is easy to forget: nothing about the package changes when a new scope
+            // appears, so the new Catalog has to pull its ancestors' Datasets in for itself.
+            late = StubScopeService.register(context, "l-late", "l-mid");
+
+            assertTrue(awaitCatalogTerm("l-late", datasetId, true),
+                    "a scope created later must still get every ancestor's Datasets");
+        } finally {
+            if (late != null) {
+                late.unregister();
+            }
+            pkg.unregister();
+            mid.unregister();
+            root.unregister();
+        }
+    }
+
+    @Test
+    public void retiringADatasetUnlinksItFromEveryCatalog(
+            @InjectConfiguration(withFactoryConfig = @WithFactoryConfiguration(factoryPid = CLIENT_PID,
+                    name = PORTAL + "15", location = "?")) Configuration clientConfig,
+            @InjectConfiguration(withFactoryConfig = @WithFactoryConfiguration(factoryPid = PUBLISHER_PID,
+                    name = PORTAL + "15", location = "?")) Configuration publisherConfig,
+            @InjectBundleContext BundleContext context) throws Exception {
+
+        clientConfig.update(clientProps());
+
+        ServiceRegistration<?> root = StubScopeService.register(context, "r-root", null);
+        ServiceRegistration<?> leaf = StubScopeService.register(context, "r-leaf", "r-root");
+        Hashtable<String, Object> props = publisherProps("r-root", false);
+        props.put("scopes", new String[] { "r-root", "r-leaf" });
+        publisherConfig.update(props);
+
+        String nsUri = "http://test.example.com/retired-inherited/1.0";
+        String datasetId = datasetId("r-root", nsUri, PublishablePackages.FINAL_STAGE);
+        ServiceRegistration<?> pkg = PublishablePackages.register(context, "r-root", nsUri,
+                PublishablePackages.FINAL_STAGE, FINGERPRINT, true);
+        try {
+            assertTrue(awaitCatalogTerm("r-leaf", datasetId, true), "setup: the descendant should list it");
+
+            pkg.unregister();
+
+            // Retirement mirrors publication exactly. A missed descendant leaves a Catalog
+            // advertising a Dataset that is gone, which is worse than never having linked it.
+            assertTrue(awaitCatalogTerm("r-root", datasetId, false), "the defining scope should drop it");
+            assertTrue(awaitCatalogTerm("r-leaf", datasetId, false), "the descendant should drop it too");
+        } finally {
+            leaf.unregister();
+            root.unregister();
+        }
+    }
+
+    @Test
+    public void aChildScopeCatalogIsLinkedIntoItsParent(
+            @InjectConfiguration(withFactoryConfig = @WithFactoryConfiguration(factoryPid = CLIENT_PID,
+                    name = PORTAL + "16", location = "?")) Configuration clientConfig,
+            @InjectConfiguration(withFactoryConfig = @WithFactoryConfiguration(factoryPid = PUBLISHER_PID,
+                    name = PORTAL + "16", location = "?")) Configuration publisherConfig,
+            @InjectBundleContext BundleContext context) throws Exception {
+
+        clientConfig.update(clientProps());
+
+        ServiceRegistration<?> parent = StubScopeService.register(context, "s-parent", null);
+        Hashtable<String, Object> props = publisherProps("s-parent", false);
+        props.put("scopes", new String[] { "s-parent", "s-child" });
+        publisherConfig.update(props);
+        assertNotNull(awaitCatalog("s-parent"), "setup: the parent Catalog should publish");
+
+        // Registered second, so the link has to be asserted from the child's side as well as
+        // re-asserted whenever the parent is rewritten.
+        ServiceRegistration<?> child = StubScopeService.register(context, "s-child", "s-parent");
+        try {
+            assertNotNull(awaitCatalog("s-child"), "setup: the child Catalog should publish");
+            assertTrue(awaitCatalogTerm("s-parent", "s-child", true),
+                    "the parent Catalog should carry the child as a sub-catalogue");
+        } finally {
+            child.unregister();
+            parent.unregister();
+        }
+    }
+
     // ---- helpers ----------------------------------------------------------
 
     /** The debounce window the D5 tests configure, short enough to assert against. */
@@ -525,9 +673,14 @@ public class DcatPublisherIT {
     private static final String FINGERPRINT = "fp1:" + "ab".repeat(32);
 
     private static String datasetId(String nsUri, String stage) {
+        return datasetId(StubScopeService.SCOPE, nsUri, stage);
+    }
+
+    /** The id is derived from the scope that <em>defines</em> the package, never from an inheritor. */
+    private static String datasetId(String scope, String nsUri, String stage) {
         String encoded = Base64.getUrlEncoder().withoutPadding()
                 .encodeToString(nsUri.getBytes(StandardCharsets.UTF_8));
-        return StubScopeService.SCOPE + "--" + stage + "--" + encoded;
+        return scope + "--" + stage + "--" + encoded;
     }
 
     /** Polls a portal URL until it answers 2xx, or gives up and returns {@code null}. */
