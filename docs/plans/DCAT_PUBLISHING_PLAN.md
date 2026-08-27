@@ -932,6 +932,20 @@ only IANA registration for XMI is `application/vnd.xmi+xml` (vendor tree, OMG, 2
 what this atlas sends. So conformance and accuracy conflict, and choosing between them is the
 owner's call.
 
+Two things measured on 2026-08-27, so the decision can be made on facts rather than guesses:
+
+- **Nothing fails to parse.** RDF syntax does not know about controlled vocabularies. The portal
+  round-trips `dct:format "application/xmi"` as a plain literal and Jena re-serializes it happily;
+  what a register violates is a **SHACL shape**, which reports it rather than refusing to parse. In
+  the demo stack nothing checks it at all (`SHACL_ENFORCE=false`, and the only shape mounted is the
+  self-authored placeholder).
+- **The publisher can become conformant on its own.** The portal serializes a value that *is* an
+  absolute IRI as a real IRI node — verified by configuring
+  `theme=http://publications.europa.eu/resource/authority/data-theme/TECH` and reading back
+  `dcat:theme <http://publications.europa.eu/…/TECH>` in the Turtle, next to the literal
+  `dct:format "application/xmi"`. So emitting the register IRIs needs **no portal-side change**: it
+  is a mapping table from each publishable media type to its (file-type IRI, IANA IRI) pair.
+
 ### The docker variant, as built (2026-08-27)
 
 `docker/modelatlas_jena_dcat` mirrors `modelatlas_jena`, and the DCAT configuration ships **as a
