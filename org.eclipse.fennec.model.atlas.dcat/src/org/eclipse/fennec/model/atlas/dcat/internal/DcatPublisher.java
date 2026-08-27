@@ -235,13 +235,52 @@ public class DcatPublisher implements HealthCheck {
         trackedPackages.keySet().forEach(this::publishPackage);
     }
 
+    private volatile DcatMetadataSource metadataSource;
+
     /**
      * The metadata source whiteboard: highest {@code service.ranking} wins, and the configured
-     * default fills in when nothing is registered.
+     * defaults fill in every field the registered source stays silent about.
+     *
+     * <p>
+     * Method injection rather than a field, for the same reason as the mediatypes reference: the
+     * mapper is built from this, so a bind or a rebind has to rebuild it. With a field the mapper
+     * kept whatever was there at activation, which made the ranking the SPI's javadoc promises
+     * meaningless and — worse — went on calling a source that had been unregistered.
+     * </p>
      */
-    @Reference(cardinality = ReferenceCardinality.OPTIONAL, policy = ReferencePolicy.DYNAMIC,
-            policyOption = ReferencePolicyOption.GREEDY)
-    private volatile DcatMetadataSource metadataSource;
+    @Reference(name = "metadata", cardinality = ReferenceCardinality.OPTIONAL,
+            policy = ReferencePolicy.DYNAMIC, policyOption = ReferencePolicyOption.GREEDY)
+    void bindMetadataSource(DcatMetadataSource metadataSource) {
+        this.metadataSource = metadataSource;
+        rebuildMapper();
+    }
+
+    void updatedMetadataSource(DcatMetadataSource metadataSource) {
+        this.metadataSource = metadataSource;
+        rebuildMapper();
+    }
+
+    void unbindMetadataSource(DcatMetadataSource metadataSource) {
+        if (this.metadataSource == metadataSource) {
+            this.metadataSource = null;
+            rebuildMapper();
+        }
+    }
+
+    /**
+     * Rebuilds the mapper around the current metadata source. A no-op before activation, which
+     * builds it once the configuration is known.
+     */
+    private void rebuildMapper() {
+        DcatPublisherConfig current = config;
+        if (current == null) {
+            return;
+        }
+        DcatMetadataSource configured = new ConfiguredMetadataSource(current);
+        DcatMetadataSource source = metadataSource;
+        this.mapper = new DcatMapper(current,
+                source == null ? configured : new FallbackMetadataSource(source, configured));
+    }
 
     /**
      * Tracks every scope in the runtime. {@link ReadableScopeService} is the read-side truth: the
@@ -581,8 +620,10 @@ public class DcatPublisher implements HealthCheck {
             throw new IllegalArgumentException("dcat.portal.target is required: without it the reference binds "
                     + "whichever portal client happens to be there, which is not a thing to guess about");
         }
-        // Throws with a message naming the defect; refusing to activate beats publishing a
-        // localhost URL into a public catalogue.
+        // Both of these throw with a message naming the defect, and refusing to activate is the
+        // point: a placeholder or a localhost URL in a public catalogue is worse than no catalogue
+        // entry, and neither is visible once it has been published.
+        InterpolatedValues.requireInterpolated(configuredStrings(config));
         this.baseUri = PublicBaseUri.validate(config.atlas_public_base_uri(), config.allow_local_base_uri());
         this.publishedScopes = new LinkedHashSet<>(Arrays.asList(config.scopes()));
         this.permittedStages = new LinkedHashSet<>(Arrays.asList(config.publish_stages()));
@@ -595,8 +636,7 @@ public class DcatPublisher implements HealthCheck {
         this.retirements = new RetirementQueue("dcat-retirement");
         this.retries = new RetryQueue("dcat-retry", config.retry_initial_delay_seconds() * 1000L,
                 config.retry_max_delay_seconds() * 1000L, config.retry_max_attempts());
-        DcatMetadataSource source = metadataSource;
-        this.mapper = new DcatMapper(config, source != null ? source : new ConfiguredMetadataSource(config));
+        rebuildMapper();
         this.active = true;
         this.lastPublishedMediaTypes = publishableMediaTypes();
 
@@ -946,12 +986,22 @@ public class DcatPublisher implements HealthCheck {
             }
             // Change detection. On a restart the in-memory map is empty, so ask the portal once
             // rather than rewriting: a git-backed portal pays two commits per entity otherwise.
-            if (pendingRewrites.remove(datasetId)) {
+            if (pendingRewrites.contains(datasetId)) {
                 // Retired and back, or written under a different format set: the content may be
                 // byte-identical while what the catalogue should say about it is not, so the
                 // shortcut below would leave the Dataset wrong in a way no fingerprint reveals.
                 LOGGER.fine(() -> "Dataset " + datasetId + " is marked for rewrite; publishing it unconditionally");
-                return writeDataset(portal, datasetId, tracked);
+                Dataset written = writeDataset(portal, datasetId, tracked);
+                if (written != null) {
+                    // Cleared only once the write has happened. A retry re-runs this whole lambda,
+                    // so consuming the mark up front would drop the retry into the fingerprint
+                    // shortcut below — where a retirement has already cleared the in-memory
+                    // fingerprint while the portal still holds the resource at the same one, so the
+                    // publisher would conclude "already published" and leave the Dataset in no
+                    // Catalog, permanently and with a green health check.
+                    pendingRewrites.remove(datasetId);
+                }
+                return written;
             }
             String published = publishedFingerprints.get(datasetId);
             if (published == null) {
@@ -1049,6 +1099,43 @@ public class DcatPublisher implements HealthCheck {
             }
             retries.failed(key, what, failure, () -> submit(key, what, work));
         });
+    }
+
+    /**
+     * Every configured string that reaches a portal or a service filter, by property name.
+     *
+     * <p>
+     * Templates are included: they are {@code String.format} patterns whose output is published, so
+     * an uninterpolated one shows up in a Dataset description. The enum and the numeric knobs cannot
+     * carry a placeholder — the type conversion would have failed first — and the arrays are checked
+     * element by element.
+     * </p>
+     */
+    private static Map<String, String> configuredStrings(DcatPublisherConfig config) {
+        Map<String, String> values = new LinkedHashMap<>();
+        values.put("dcat.portal.target", config.dcat_portal_target());
+        values.put("atlas.public.base.uri", config.atlas_public_base_uri());
+        values.put("language", config.language());
+        values.put("publisher.name", config.publisher_name());
+        values.put("publisher.about", config.publisher_about());
+        values.put("license.uri", config.license_uri());
+        values.put("catalog.description.template", config.catalog_description_template());
+        values.put("dataset.description.template", config.dataset_description_template());
+        indexed(values, "scopes", config.scopes());
+        indexed(values, "publish.stages", config.publish_stages());
+        indexed(values, "distribution.media.types", config.distribution_media_types());
+        indexed(values, "theme", config.theme());
+        indexed(values, "keywords", config.keywords());
+        return values;
+    }
+
+    private static void indexed(Map<String, String> values, String property, String[] entries) {
+        if (entries == null) {
+            return;
+        }
+        for (int i = 0; i < entries.length; i++) {
+            values.put(property + "[" + i + "]", entries[i]);
+        }
     }
 
     /**

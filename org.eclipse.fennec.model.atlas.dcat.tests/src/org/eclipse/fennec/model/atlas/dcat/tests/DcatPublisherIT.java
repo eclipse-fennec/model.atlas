@@ -997,6 +997,76 @@ public class DcatPublisherIT {
         }
     }
 
+    // ---- the metadata whiteboard and the configuration guard ----------------
+
+    @Test
+    public void aMetadataSourceOverridingOneFieldKeepsTheConfiguredRest(
+            @InjectConfiguration(withFactoryConfig = @WithFactoryConfiguration(factoryPid = CLIENT_PID,
+                    name = PORTAL + "26", location = "?")) Configuration clientConfig,
+            @InjectConfiguration(withFactoryConfig = @WithFactoryConfiguration(factoryPid = PUBLISHER_PID,
+                    name = PORTAL + "26", location = "?")) Configuration publisherConfig,
+            @InjectBundleContext BundleContext context) throws Exception {
+
+        clientConfig.update(clientProps());
+
+        // Registered before the publisher activates, which is the ordinary case for a whiteboard.
+        ServiceRegistration<?> metadata = TitleOnlyMetadataSource.register(context);
+        publisherConfig.update(publisherProps(StubScopeService.SCOPE, false));
+
+        String nsUri = "http://test.example.com/partialmetadata/1.0";
+        String datasetId = datasetId(nsUri, PublishablePackages.FINAL_STAGE);
+        ServiceRegistration<?> pkg = PublishablePackages.register(context, nsUri, PublishablePackages.FINAL_STAGE,
+                FINGERPRINT, true);
+        try {
+            String dataset = await(portalRestBase + "/datasets/" + datasetId);
+            assertNotNull(dataset, "a partial metadata source must not stop the Dataset publishing");
+            assertTrue(dataset.contains(TitleOnlyMetadataSource.TITLE),
+                    "the registered source should win where it answers, was: " + dataset);
+            // The regression: the source says nothing about the licence, and license.uri IS
+            // configured — but substituting the source for the configured defaults made
+            // toDistribution throw, which left an orphan Dataset with no Distribution in no Catalog
+            // and recorded the failure as permanent so nothing retried it.
+            assertTrue(dataset.contains("application/xmi"),
+                    "the configured licence must still let a Distribution be built, was: " + dataset);
+            assertTrue(awaitCatalogTerm(StubScopeService.SCOPE, datasetId, true),
+                    "and the Dataset must reach its Catalog");
+        } finally {
+            pkg.unregister();
+            metadata.unregister();
+        }
+    }
+
+    @Test
+    public void anUninterpolatedConfigurationRefusesToPublish(
+            @InjectConfiguration(withFactoryConfig = @WithFactoryConfiguration(factoryPid = CLIENT_PID,
+                    name = PORTAL + "27", location = "?")) Configuration clientConfig,
+            @InjectConfiguration(withFactoryConfig = @WithFactoryConfiguration(factoryPid = PUBLISHER_PID,
+                    name = PORTAL + "27", location = "?")) Configuration publisherConfig,
+            @InjectBundleContext BundleContext context) throws Exception {
+
+        clientConfig.update(clientProps());
+
+        // What an unset environment variable leaves behind: Felix's interpolation plugin does not
+        // fail, it leaves the placeholder as the value. Published, that puts "$[env:…]" into a
+        // public catalogue as the name of whoever governs the data.
+        Hashtable<String, Object> props = publisherProps("placeholder-scope", false);
+        props.put("scopes", new String[] { "placeholder-scope" });
+        props.put("publisher.name", "$[env:DCAT_PUBLISHER_NAME]");
+        publisherConfig.update(props);
+
+        ServiceRegistration<?> scope = StubScopeService.register(context, "placeholder-scope", null);
+        try {
+            Thread.sleep(4_000);
+
+            // Activation throws, so nothing is published at all — the same refusal shape as a
+            // loopback base URI.
+            assertTrue(get(portalRestBase + "/catalogs/placeholder-scope") == null,
+                    "an uninterpolated configuration must publish nothing");
+        } finally {
+            scope.unregister();
+        }
+    }
+
     // ---- helpers ----------------------------------------------------------
 
     /** Polls one health check until its report mentions {@code term}, and returns the report. */

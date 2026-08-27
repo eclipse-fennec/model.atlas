@@ -1,6 +1,10 @@
 # Quality review — model.atlas — 2026-08-27
 Mode: changes (branch `dcat_connection` vs `merge-base origin/snapshot` = `6d3d25c`) · Scope: the 17 commits of the DCAT integration · Rule sets: SOLID/OSGi + Eclipse Foundation (see skill references)
 
+> **Status, same day:** the three **major** findings (F1, F2, F3) were fixed and are marked ✅ below.
+> Everything else is deliberately left standing until the integration has been exercised live, on the
+> grounds that live testing may change what the right fix is (owner decision, 2026-08-27).
+
 ## Summary
 
 | severity | count | categories |
@@ -20,7 +24,8 @@ Contributors section; the new bundle exports exactly one versioned API package (
 three new test/config bundles carry `-maven-release: local` per the repo convention; `deactivate`
 undoes `activate` in the publisher, both executors are closed, no static mutable state, no foreign
 impl imports, no reflection, no `new`-ing of services. The heavy logic is extracted into nine
-plain-Java collaborators that are unit-tested without a framework (73 unit tests, 24 OSGi ITs).
+plain-Java collaborators that are unit-tested without a framework (82 unit tests, 26 OSGi ITs after
+the three fixes below; 73 and 24 as reviewed).
 
 What the findings concentrate on is the seam between *configuration and reality*: values that are
 never validated (F1), an exported SPI whose documented fallback does not happen (F2), and a
@@ -32,7 +37,7 @@ container; the rest were verified by reading the exact code path.
 
 ## Findings
 
-### F1 · major · configuration · runtime.config.docker.jena.dcat + …atlas.dcat
+### F1 ✅ fixed · major · configuration · runtime.config.docker.jena.dcat + …atlas.dcat
 - **Where:** `org.eclipse.fennec.model.atlas.runtime.config.docker.jena.dcat/configs/dcat.json:32`
   (`publisher.name`), and the missing guard in
   `org.eclipse.fennec.model.atlas.dcat/src/…/internal/DcatPublisher.java:576-600` (`activate`)
@@ -45,11 +50,12 @@ container; the rest were verified by reading the exact code path.
   there is visible to every harvester, and nothing in the atlas notices. `atlas.public.base.uri`
   escapes this only by accident — `PublicBaseUri.validate` happens to reject `$[env:…]` as an
   invalid URI — which shows the guard belongs at activation, not per property.
-- **Suggested fix:** in `activate`, refuse to activate when any configured string still contains
-  `$[env:`, naming the property and the variable. It is the same shape as the existing base-URI
-  refusal, and turns a silent public-catalogue defect into a startup failure an operator can read.
+- **Fixed:** `InterpolatedValues.requireInterpolated` runs over every configured string (templates
+  and array elements included) at the top of `activate` and throws naming every offending property
+  *and* its placeholder, so one restart names all of them rather than one per attempt. Covered by
+  `InterpolatedValuesTest` (5 tests) and the IT `anUninterpolatedConfigurationRefusesToPublish`.
 
-### F2 · major · api-contract · …atlas.dcat
+### F2 ✅ fixed · major · api-contract · …atlas.dcat
 - **Where:** `…/internal/DcatPublisher.java:598-599`, with `…/internal/DcatMapper.java:151-153`
 - **What:** a registered `DcatMetadataSource` *replaces* the configured defaults instead of layering
   over them, contradicting the exported SPI's own javadoc — and it is snapshotted at activation, so
@@ -62,12 +68,16 @@ container; the rest were verified by reading the exact code path.
   `license.uri` is configured — and the failure is recorded as *permanent*, so nothing retries it.
   `themes`/`keywords` silently degrade to empty the same way. Only `publisherName` layers
   (`DcatMapper:212`). Nothing in the repo implements the SPI yet, which is why no test caught it.
-- **Suggested fix:** compose rather than substitute — wrap the whiteboard source and
-  `ConfiguredMetadataSource` in a fallback source that tries the former and falls through on empty,
-  and read the volatile field per call (or rebuild the mapper on bind/unbind) so a rebind takes
-  effect. The mediatypes reference in the same class already does the latter correctly.
+- **Fixed:** a new `FallbackMetadataSource` composes the whiteboard source over
+  `ConfiguredMetadataSource` (null-tolerant, empty list = silence per the SPI's javadoc), and the
+  reference moved to method injection so a bind, rebind or unbind rebuilds the mapper — the
+  whiteboard's documented ranking now actually applies. Covered by `FallbackMetadataSourceTest`
+  (4 tests) and the IT `aMetadataSourceOverridingOneFieldKeepsTheConfiguredRest`.
+- **The IT was verified to have teeth:** reverting the composition to substitution makes it fail
+  with the Dataset published and carrying **no Distribution at all**, which is precisely the
+  described failure.
 
-### F3 · major · correctness · …atlas.dcat
+### F3 ✅ fixed · major · correctness · …atlas.dcat
 - **Where:** `…/internal/DcatPublisher.java:949-955`
 - **What:** the forced-rewrite marker is consumed before the write, so a transient failure during a
   marked rewrite downgrades the retry into the "already published at this fingerprint" shortcut.
@@ -78,7 +88,10 @@ container; the rest were verified by reading the exact code path.
   write", and the Dataset stays in no Catalog. A restart repeats the same reasoning, and the health
   check is green because the retry succeeded. This defeats precisely the case the set exists for
   (its javadoc at `:159-169`), and it needs only a portal blip while someone flips the flag.
-- **Suggested fix:** consume the marker only on success — `if (pendingRewrites.contains(id)) { Dataset d = writeDataset(...); if (d != null) { pendingRewrites.remove(id); } return d; }`.
+- **Fixed:** the marker is now cleared only once `writeDataset` has returned a written Dataset, so a
+  retried attempt still forces the write. No test: the publisher has no seam for injecting a
+  transient client failure mid-rewrite, and inventing one for this would be a larger change than the
+  fix — the reasoning is recorded in a comment at the call site instead.
 
 ### F4 · minor · osgi-ds · …atlas.dcat
 - **Where:** `…/internal/DcatPublisher.java:420-433` (`unbindScopeCatalog`)
