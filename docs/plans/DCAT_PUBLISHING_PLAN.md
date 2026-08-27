@@ -620,15 +620,53 @@ a publisher when they did not:
 says one thing, the registry says another, and the publisher believes the registry. That is the
 endpoint's responsibility and it is the one part of this that is not merely CRUD.
 
-**Two things left open**, deliberately:
+### As built (2026-08-27)
+
+```
+PATCH /{scope}/schema/stages/{stage}/metadata?nsUri={enc}&dcat=true|false
+If-Match: "<etag from the metadata GET>"
+```
+
+- **Typed parameters, not a document body, and not a generic `property=key=value`.** `properties` is
+  `String → EJavaObject`, so a string-valued editor would store `"true"` where the publisher's
+  service filter tests `Boolean.TRUE` — the flag would look set while publishing nothing. Each
+  allowlisted key therefore arrives as its own typed parameter, and §6's per-model DCAT metadata
+  joins the list the same way, one at a time.
+- **Refusal is by name, and covers unknown names too.** Every query parameter that is not editable
+  produces a 400 naming it and the reason (identity / derived from the content / provenance / owned
+  by the stage and review machinery / maintained by the server). A typo that silently changes
+  nothing is the same failure as a refusal that says nothing.
+- **Propagation lives in the workflow bundle, not the endpoint.** §7b assigned it to the endpoint,
+  but `…workflow.registration` is not an exported package, and the invariant — stored metadata and
+  live registration agree — belongs to whoever owns the registration rather than to one caller. So
+  `RegistryServiceImpl.updateProperties` calls the new
+  `DynamicEPackageRegistrationService.updateDcatFlag`, and *every* caller of the property update
+  gets it. A registry of plain EObjects has no such registration and the call finds nothing, so no
+  type test is needed.
+- **The registration is updated in place, not re-registered.** `registerEPackage` is an idempotent
+  no-op for unchanged content (the fingerprint is part of its key), and forcing an
+  unregister/register would churn every consumer of the EPackage for a metadata-only change.
+  Modifying the service properties is also exactly what O13's design asks for: DS re-evaluates target
+  filters when a bound service's properties change, so the publisher sees a bind or an unbind and
+  needs no second channel.
+- **The atlas root scope answers 405.** `AtlasSchemaRegistryService.updateProperties` throws
+  `UnsupportedOperationException` — its schemas are the system's own — and the endpoint reports that
+  rather than a 500.
+- **Not built:** `objectName`, `lastChangeReason` and `governanceDocumentationId`. Each needs a
+  service operation that does not exist (`updateProperties` merges the properties map and nothing
+  else), and adding one means an ecore change, which is the model owner's call. The `dcat` flag was
+  the field this endpoint existed for.
+- The **inherited-package** question of the next paragraph is answered: the endpoint compares the
+  found metadata's own `scope` with the URL's and returns **409** naming the owning scope, so a child
+  scope's URL can never write the parent's record. `isReadOnly` on top of that is a 403, matching
+  the other write endpoints.
+
+**One thing left open**, deliberately:
 
 - **authorization.** This endpoint changes whether a model appears in a public catalogue, which
   makes it a more consequential write than its size suggests. Whatever the atlas does for the
-  upload endpoints applies here, and if that is currently nothing, this is a good moment to say
-  so out loud rather than to discover it.
-- **`isReadOnly` packages.** An inherited package reports its parent's scope; editing its
-  metadata through a child scope's URL should be a `409`, not a silent write to the parent's
-  record. Needs confirming against what `isReadOnly` actually guards today.
+  upload endpoints applies here — which is currently nothing, and worth saying out loud rather than
+  discovering later.
 
 ---
 

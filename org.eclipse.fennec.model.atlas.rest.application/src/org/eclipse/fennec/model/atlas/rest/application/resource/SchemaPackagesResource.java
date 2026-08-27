@@ -63,6 +63,7 @@ import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.DELETE;
 import jakarta.ws.rs.DefaultValue;
 import jakarta.ws.rs.GET;
+import jakarta.ws.rs.PATCH;
 import jakarta.ws.rs.POST;
 import jakarta.ws.rs.PUT;
 import jakarta.ws.rs.Path;
@@ -594,6 +595,147 @@ public class SchemaPackagesResource {
         } catch (Exception e) {
             throw EndpointFailures.propagate(e);
         }
+    }
+
+    /**
+     * The metadata fields an operator may edit here. Everything else is refused <em>by name</em>: a
+     * metadata editor that quietly drops half a request is how somebody comes to believe they
+     * changed a publisher when they did not.
+     *
+     * <p>
+     * Only {@code dcat} for now. It is deliberately a typed parameter rather than a generic
+     * {@code property=key=value}: {@code properties} is {@code String -> EJavaObject}, so a
+     * string-valued editor would store {@code "true"} where the publisher's service filter tests
+     * {@code Boolean.TRUE}, and the flag would look set while publishing nothing. The per-model DCAT
+     * metadata of §6 joins this list the same way, one typed parameter at a time.
+     * </p>
+     */
+    private static final Set<String> EDITABLE_METADATA_PARAMS = Set.of("nsUri", "dcat");
+
+    /**
+     * Fields this endpoint refuses, with the reason it refuses them. Identity, content-derived
+     * values, provenance and workflow state are all owned by something other than a label editor.
+     */
+    private static final Map<String, String> REFUSED_METADATA_PARAMS = Map.ofEntries(
+            Map.entry("objectId", "identity"), Map.entry("objectRef", "identity"), Map.entry("scope", "identity"),
+            Map.entry("stage", "identity"), Map.entry("registry", "identity"), Map.entry("version", "identity"),
+            Map.entry("contentHash", "derived from the content"),
+            Map.entry("fingerprint", "derived from the content"),
+            Map.entry("generationTriggerFingerprint", "derived from the content"),
+            Map.entry("uploadUser", "provenance"), Map.entry("uploadTime", "provenance"),
+            Map.entry("sourceChannel", "provenance"), Map.entry("objectType", "provenance"),
+            Map.entry("status", "owned by the stage and review machinery"),
+            Map.entry("isReadOnly", "owned by the stage and review machinery"),
+            Map.entry("lastChangeUser", "maintained by the server"),
+            Map.entry("lastChangeTime", "maintained by the server"));
+
+    @PATCH
+    @Path("/stages/{stageName}/metadata")
+    @Consumes
+    @Produces
+    @Operation(summary = "Edit a schema package's editable metadata", description = "Changes metadata without "
+            + "re-uploading the package. Restricted to fields that are labels rather than identity: any other "
+            + "field is refused by name in a 400 rather than silently ignored. PATCH, not PUT, because a "
+            + "whole-document PUT of an ObjectMetadata invites exactly the identity overwrite this endpoint "
+            + "exists to forbid.", responses = {
+                    @ApiResponse(responseCode = "200", description = "Metadata updated", content = @Content(mediaType = MediaType.APPLICATION_JSON)),
+                    @ApiResponse(responseCode = "400", description = "A field that cannot be edited, or a missing nsUri"),
+                    @ApiResponse(responseCode = "403", description = "The package is read-only in this stage"),
+                    @ApiResponse(responseCode = "404", description = "No such package in this stage"),
+                    @ApiResponse(responseCode = "405", description = "This registry does not allow metadata updates"),
+                    @ApiResponse(responseCode = "409", description = "The package is inherited: edit it in the scope that owns it"),
+                    @ApiResponse(responseCode = "412", description = "If-Match did not match the current metadata"),
+                    @ApiResponse(responseCode = "500", description = "Internal server error") })
+    @ResourceOption(key = CodecOptions.CODEC_ID_KEY_MODE, value = "FEATURE_ONLY")
+    public Response patchPackageMetadata(
+            @Parameter(description = "The scope name", required = true) @PathParam("scopeName") String scopeName,
+            @Parameter(description = "The stage name", required = true) @PathParam("stageName") String stageName,
+            @Parameter(description = "The namespace URI of the package", required = true) @QueryParam("nsUri") String nsUri,
+            @Parameter(description = "Whether this package may be published to a DCAT portal. Clearing it retires "
+                    + "the published Dataset; setting it publishes the package if its scope and stage are "
+                    + "configured for a portal.", required = false) @QueryParam("dcat") Boolean dcat) {
+
+        ScopeService<?> scopeService = getScopeServiceByScopeName(scopeName);
+        try {
+            requireNsUri(nsUri);
+            Response refusal = refuseNonEditableFields();
+            if (refusal != null) {
+                return refusal;
+            }
+            if (dcat == null) {
+                return Response.status(Response.Status.BAD_REQUEST)
+                        .entity("Nothing to change: pass at least one editable field, e.g. ?dcat=true").build();
+            }
+
+            ObjectMetadata existingMetadata = findByNsUriInStage(scopeService, stageName, nsUri);
+            if (existingMetadata == null) {
+                return Response.status(Response.Status.NOT_FOUND)
+                        .entity(String.format("Schema %s is not in stage %s of scope %s", nsUri, stageName, scopeName))
+                        .build();
+            }
+            // An inherited package's record belongs to the scope that defines it. Editing it through
+            // a child scope's URL would write to the parent's metadata under a name that does not
+            // say so, which is worse than refusing.
+            if (existingMetadata.getScope() != null && !existingMetadata.getScope().equals(scopeName)) {
+                return Response.status(Response.Status.CONFLICT)
+                        .entity(String.format("Schema %s is inherited from scope %s; edit its metadata there", nsUri,
+                                existingMetadata.getScope()))
+                        .build();
+            }
+            if (existingMetadata.isIsReadOnly()) {
+                return Response.status(Response.Status.FORBIDDEN)
+                        .entity(String.format("Schema %s is in read-only state", nsUri)).build();
+            }
+
+            // Metadata state, not content: this edit changes neither the bytes nor their hash, so
+            // the precondition belongs over the metadata validator.
+            Response preconditionResponse = ResourceSupport.checkIfMatch(headers, existingMetadata,
+                    ObjectMetadataResponseFilter.CacheTarget.METADATA);
+            if (preconditionResponse != null) {
+                return preconditionResponse;
+            }
+
+            ObjectMetadata metadata = scopeService.updatePropertiesInStageForRegistry(REGISTRY_NAME, stageName,
+                    existingMetadata.getObjectId(),
+                    Map.of(WorkflowConstants.DCAT_PUBLISH_METADATA_PROPERTY, dcat)).getValue();
+            if (metadata == null) {
+                return Response.status(Response.Status.NOT_FOUND)
+                        .entity(String.format("Schema %s is not in stage %s of scope %s", nsUri, stageName, scopeName))
+                        .build();
+            }
+            ObjectMetadataResponseFilter.attach(requestContext, metadata,
+                    ObjectMetadataResponseFilter.CacheTarget.METADATA);
+            return Response.status(Response.Status.OK).entity(metadata)
+                    .header("Content-Type", ResourceSupport.resolvedMediaType(requestContext)).build();
+
+        } catch (UnsupportedOperationException notHere) {
+            // The atlas root scope's registry, for one: its schemas are the system's own.
+            return Response.status(Response.Status.METHOD_NOT_ALLOWED).entity(notHere.getMessage()).build();
+        } catch (IllegalArgumentException e) {
+            return Response.status(Response.Status.BAD_REQUEST).entity(e.getMessage()).build();
+        } catch (Exception e) {
+            throw EndpointFailures.propagate(e);
+        }
+    }
+
+    /**
+     * @return a 400 naming the first field that cannot be edited, or {@code null} when every
+     *         parameter sent is editable. Unknown names are refused too: a typo that silently
+     *         changes nothing is the same failure as a refusal that says nothing
+     */
+    private Response refuseNonEditableFields() {
+        for (String parameter : requestContext.getUriInfo().getQueryParameters().keySet()) {
+            if (EDITABLE_METADATA_PARAMS.contains(parameter)) {
+                continue;
+            }
+            String reason = REFUSED_METADATA_PARAMS.get(parameter);
+            String message = reason == null
+                    ? String.format("'%s' is not an editable metadata field. Editable: %s", parameter,
+                            EDITABLE_METADATA_PARAMS)
+                    : String.format("'%s' cannot be edited here: it is %s", parameter, reason);
+            return Response.status(Response.Status.BAD_REQUEST).entity(message).build();
+        }
+        return null;
     }
 
     @DELETE

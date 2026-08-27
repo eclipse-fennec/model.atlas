@@ -2045,6 +2045,124 @@ public class SchemaPackagesResourceTest extends AbstractRestTest {
 				"an explicit ?dcat=false on overwrite must clear the flag");
 	}
 
+	// ========== Metadata PATCH endpoint (7b) ==========
+
+	/**
+	 * PATCH through {@code java.net.http}, not the Jakarta RS client: Jersey's default connector
+	 * rejects PATCH outright unless a workaround property is set, which would make these tests fail
+	 * at the client for a reason that has nothing to do with the endpoint.
+	 */
+	private static java.net.http.HttpResponse<String> patch(java.net.URI uri) throws Exception {
+		java.net.http.HttpRequest request = java.net.http.HttpRequest.newBuilder(uri)
+				.method("PATCH", java.net.http.HttpRequest.BodyPublishers.noBody())
+				.header("Accept", "application/json").build();
+		return java.net.http.HttpClient.newHttpClient().send(request,
+				java.net.http.HttpResponse.BodyHandlers.ofString());
+	}
+
+	private java.net.URI metadataUri(String stage, String... params) {
+		WebTarget target = schemaStageTarget(stage).path("metadata").queryParam("nsUri", TEST_PACKAGE_NSURI);
+		for (int i = 0; i < params.length; i += 2) {
+			target = target.queryParam(params[i], params[i + 1]);
+		}
+		return target.getUri();
+	}
+
+	private void uploadDraft(String... extraParams) throws Exception {
+		EPackage testPackage = TestHelper.createTestEPackage(TEST_PACKAGE_NSURI, TEST_PACKAGE_NAME, TEST_PACKAGE_NAME);
+		String xmiContent = TestHelper.serializeToXMI(testPackage, resourceSet);
+		WebTarget target = schemaStageTarget(TestAnnotations.STAGE_DRAFT).queryParam("nsUri", TEST_PACKAGE_NSURI)
+				.queryParam("name", TEST_PACKAGE_NAME);
+		for (int i = 0; i < extraParams.length; i += 2) {
+			target = target.queryParam(extraParams[i], extraParams[i + 1]);
+		}
+		Response response = target.request("application/xmi").post(Entity.entity(xmiContent, "application/xmi"));
+		assertStatus(201, response, "setup: the package should upload");
+	}
+
+	@Test
+	@ParentScopeServiceSetup
+	public void testPatchMetadata_SetsTheDcatFlagWithoutReuploading(@InjectBundleContext BundleContext context)
+			throws Exception {
+		ensureResourceAvailability(context);
+		uploadDraft();
+		assertEquals(Boolean.FALSE, extractDcatFlag(draftMetadataJson()), "setup: the flag starts false");
+
+		java.net.http.HttpResponse<String> response = patch(metadataUri(TestAnnotations.STAGE_DRAFT, "dcat", "true"));
+
+		assertEquals(200, response.statusCode(), "PATCH should return HTTP 200 OK, body: " + response.body());
+		// The whole point of the endpoint: re-uploading the content was the only way to change this.
+		assertEquals(Boolean.TRUE, extractDcatFlag(draftMetadataJson()),
+				"PATCH ?dcat=true must record the flag in ObjectMetadata.properties");
+	}
+
+	@Test
+	@ParentScopeServiceSetup
+	public void testPatchMetadata_ClearsTheDcatFlag(@InjectBundleContext BundleContext context) throws Exception {
+		ensureResourceAvailability(context);
+		uploadDraft("dcat", "true");
+		assertEquals(Boolean.TRUE, extractDcatFlag(draftMetadataJson()), "setup: the flag starts true");
+
+		assertEquals(200, patch(metadataUri(TestAnnotations.STAGE_DRAFT, "dcat", "false")).statusCode(),
+				"PATCH should return HTTP 200 OK");
+
+		assertEquals(Boolean.FALSE, extractDcatFlag(draftMetadataJson()),
+				"clearing the flag is what retires a published Dataset, so it has to reach the metadata");
+	}
+
+	@Test
+	@ParentScopeServiceSetup
+	public void testPatchMetadata_RefusesAnIdentityFieldByName(@InjectBundleContext BundleContext context)
+			throws Exception {
+		ensureResourceAvailability(context);
+		uploadDraft();
+
+		java.net.http.HttpResponse<String> response = patch(
+				metadataUri(TestAnnotations.STAGE_DRAFT, "dcat", "true", "objectId", "something-else"));
+
+		// Named, never silently ignored: quietly dropping half a request is how somebody comes to
+		// believe they changed a publisher when they did not.
+		assertEquals(400, response.statusCode(), "an identity field must be refused");
+		assertTrue(response.body().contains("objectId"), "the refusal should name the field, was: " + response.body());
+		assertEquals(Boolean.FALSE, extractDcatFlag(draftMetadataJson()),
+				"a refused request must change nothing at all");
+	}
+
+	@Test
+	@ParentScopeServiceSetup
+	public void testPatchMetadata_RefusesAnUnknownField(@InjectBundleContext BundleContext context) throws Exception {
+		ensureResourceAvailability(context);
+		uploadDraft();
+
+		// A typo that silently changes nothing is the same failure as a refusal that says nothing.
+		java.net.http.HttpResponse<String> response = patch(
+				metadataUri(TestAnnotations.STAGE_DRAFT, "dcatt", "true"));
+
+		assertEquals(400, response.statusCode(), "an unknown field must be refused");
+		assertTrue(response.body().contains("dcatt"), "the refusal should name the field, was: " + response.body());
+	}
+
+	@Test
+	@ParentScopeServiceSetup
+	public void testPatchMetadata_RequiresSomethingToChange(@InjectBundleContext BundleContext context)
+			throws Exception {
+		ensureResourceAvailability(context);
+		uploadDraft();
+
+		assertEquals(400, patch(metadataUri(TestAnnotations.STAGE_DRAFT)).statusCode(),
+				"a PATCH that asks for no change should say so rather than answer 200");
+	}
+
+	@Test
+	@ParentScopeServiceSetup
+	public void testPatchMetadata_UnknownPackageIs404(@InjectBundleContext BundleContext context) throws Exception {
+		ensureResourceAvailability(context);
+
+		java.net.http.HttpResponse<String> response = patch(metadataUri(TestAnnotations.STAGE_DRAFT, "dcat", "true"));
+
+		assertEquals(404, response.statusCode(), "no such package in that stage");
+	}
+
 	/** /{scope}/schema */
 	private WebTarget schemaTarget(String scope) {
 		return scopeTarget(scope).path("schema");
