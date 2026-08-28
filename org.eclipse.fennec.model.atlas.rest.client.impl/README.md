@@ -354,4 +354,4 @@ simply not present returns `Optional.empty()` rather than throwing.
 ## See also
 
 - `org.eclipse.fennec.model.atlas.rest.client.osgi` — the OSGi/DS front-end (ConfigAdmin-driven, publishes EPackages as services).
-- `docs/design/rest-client.md` — full design (Phase 2 covers the EPackage core; Phase 5 the per-scope EObject API); per-ticket notes `docs/design/rest-client-P2-*.md` and `docs/design/rest-client-P5-*.md`.
+- `docs/design/rest-client.md` — full design (Phase 2 covers the EPackage core; Phase 5 the per-scope EObject API); per-ticket notes `docs/design/rest-client-P2-*.md` and `docs/design/rest-client-P5-*.md`. All of these live in the central docs repository (`DataInMotion/xdp`, under `docs/projects/model.atlas/`).

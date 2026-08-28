@@ -347,7 +347,7 @@ per-instance catch-all.
   only withdrawn when the *last* holder unbinds, and diverging content under one nsURI
   yields separate fingerprints/trees, so one stage's removal cannot evict another stage's
   metadata from either direction (see `docs/plans/MODEL_FINGERPRINT_PLAN.md`,
-  "MetadataService interplay"). JSON content reads now survive schema removal on a sibling
+  "MetadataService interplay", in the central docs repository (`DataInMotion/xdp`, under `docs/projects/model.atlas/`)). JSON content reads now survive schema removal on a sibling
   stage; the XML-only workaround is obsolete.
 - ~~**EPackages cannot be resolved by nsURI through the schema REST endpoints.**~~
   **RESOLVED 2026-08-03 (fingerprint plan phase F8).** The `/{scope}/schema/...` endpoints no

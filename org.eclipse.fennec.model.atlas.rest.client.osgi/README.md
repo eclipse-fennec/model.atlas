@@ -453,4 +453,4 @@ Multiple stages can be listed; one pair is created per entry:
 ## See also
 
 - `org.eclipse.fennec.model.atlas.rest.client.impl` — the plain-Java client (non-OSGi).
-- `docs/design/rest-client.md` — full design; "Phase 3 — OSGi Delegate Registry for `emf.osgi`" (EPackage publication) and Phase 5 (per-scope EObject services); per-ticket notes `docs/design/rest-client-P3-*.md` and `docs/design/rest-client-P5-*.md`.
+- `docs/design/rest-client.md` — full design; "Phase 3 — OSGi Delegate Registry for `emf.osgi`" (EPackage publication) and Phase 5 (per-scope EObject services); per-ticket notes `docs/design/rest-client-P3-*.md` and `docs/design/rest-client-P5-*.md`. All of these live in the central docs repository (`DataInMotion/xdp`, under `docs/projects/model.atlas/`).
