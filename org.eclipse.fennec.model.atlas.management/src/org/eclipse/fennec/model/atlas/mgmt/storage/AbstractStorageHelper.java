@@ -190,6 +190,34 @@ public abstract class AbstractStorageHelper implements AutoCloseable {
     }
 
     /**
+     * Creates the resource an object is persisted into, choosing the factory the
+     * way the read side ({@link ResourceSet#getResource(URI, boolean)}) does: by
+     * the storage URI — protocol, then file extension — first, and by the content
+     * type only when the URI does not determine a factory.
+     *
+     * <p>
+     * Both directions must agree on the factory because the factories differ in
+     * their default load/save options: the default content type
+     * {@code application/xml} maps to an ExtendedMetaData-aware XML factory that
+     * writes a feature under its XML name (e.g. {@code column-definition}), which
+     * the plain XMI factory selected by the {@code .xmi} extension on load cannot
+     * read back ({@code FeatureNotFoundException}, issue #213). Since the file is
+     * always read by its extension, it has to be written by it as well.
+     * </p>
+     */
+    protected ResourceOperation createStorageResource(URI uri, String contentType) throws IOException {
+        Resource resource;
+        synchronized (resourceSet) {
+            resource = resourceSet.createResource(uri, contentType);
+        }
+        if (resource == null) {
+            throw new IOException(
+                    "No resource factory registered for " + uri + " (content type " + contentType + ")");
+        }
+        return new ResourceOperation(resource, resourceSet);
+    }
+
+    /**
      * Loads a resource and returns a ResourceOperation for cleanup.
      */
     public ResourceOperation loadResource(URI uri) throws IOException {
@@ -212,7 +240,9 @@ public abstract class AbstractStorageHelper implements AutoCloseable {
         String objectPath = buildObjectPath(scope, registry, stage, objectId, fileExtension);
         URI objectUri = createStorageURI(scope, registry, stage, objectPath);
 
-        ResourceOperation objectOp = createResource(objectUri, contentType);
+        // Extension first, content type as fallback — the same lookup loadEObject uses
+        // (see createStorageResource / issue #213).
+        ResourceOperation objectOp = createStorageResource(objectUri, contentType);
         try {
             objectOp.getResource().getContents().add(object);
             objectOp.getResource().save(Collections.emptyMap());
