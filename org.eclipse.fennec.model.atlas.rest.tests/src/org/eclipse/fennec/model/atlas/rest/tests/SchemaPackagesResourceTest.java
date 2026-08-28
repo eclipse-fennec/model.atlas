@@ -555,6 +555,95 @@ public class SchemaPackagesResourceTest extends AbstractRestTest {
 		assertNotNull(responseContent, "Should return created metadata");
 	}
 
+	// ========== Final Stage Policy Tests ==========
+
+	/**
+	 * A writable final stage still accepts a package that is not there yet.
+	 */
+	@Test
+	@ParentScopeServiceSetup
+	public void testCreatePackage_NewInFinalStage_Returns201(@InjectBundleContext BundleContext context)
+			throws Exception {
+		ensureResourceAvailability(context);
+
+		Response response = postPackage(TestAnnotations.STAGE_RELEASE, TEST_PACKAGE_NAME, null);
+
+		assertStatus(201, response, "A new package in a writable final stage should still be created");
+	}
+
+	/**
+	 * Updating what is already in the final stage is refused by the registry's stage
+	 * policy, not broken by it: the client has to be able to tell a rule it violated
+	 * from a server that failed, so the answer is 403 and names stage and registry.
+	 */
+	@Test
+	@ParentScopeServiceSetup
+	public void testCreatePackage_OverwriteInFinalStage_Returns403(@InjectBundleContext BundleContext context)
+			throws Exception {
+		ensureResourceAvailability(context);
+		assertStatus(201, postPackage(TestAnnotations.STAGE_RELEASE, TEST_PACKAGE_NAME, null),
+				"Should return HTTP 201 Created");
+
+		Response response = postPackage(TestAnnotations.STAGE_RELEASE, "UpdatedSchema", true);
+
+		assertStatus(403, response, "Updating a package in a final stage should be refused, not fail");
+		String body = response.readEntity(String.class);
+		assertTrue(body.contains(TestAnnotations.STAGE_RELEASE),
+				"The refusal should name the stage it applies to: " + body);
+		assertTrue(body.contains("schema"), "The refusal should name the registry it applies to: " + body);
+	}
+
+	/**
+	 * Without {@code overwrite} the same second upload is a plain conflict, and stays
+	 * one — the stage policy only speaks for requests that actually mean to update.
+	 */
+	@Test
+	@ParentScopeServiceSetup
+	public void testCreatePackage_ExistingInFinalStageWithoutOverwrite_Returns409(
+			@InjectBundleContext BundleContext context) throws Exception {
+		ensureResourceAvailability(context);
+		assertStatus(201, postPackage(TestAnnotations.STAGE_RELEASE, TEST_PACKAGE_NAME, null),
+				"Should return HTTP 201 Created");
+
+		Response response = postPackage(TestAnnotations.STAGE_RELEASE, TEST_PACKAGE_NAME, false);
+
+		assertStatus(409, response, "An existing package without overwrite should still be a conflict");
+	}
+
+	/**
+	 * A stage that is not final keeps accepting updates.
+	 */
+	@Test
+	@ParentScopeServiceSetup
+	public void testCreatePackage_OverwriteInNonFinalStage_Returns200(@InjectBundleContext BundleContext context)
+			throws Exception {
+		ensureResourceAvailability(context);
+		assertStatus(201, postPackage(TestAnnotations.STAGE_DRAFT, TEST_PACKAGE_NAME, null),
+				"Should return HTTP 201 Created");
+
+		Response response = postPackage(TestAnnotations.STAGE_DRAFT, "UpdatedSchema", true);
+
+		assertStatus(200, response, "Updating a package in a non-final stage should succeed");
+	}
+
+	/**
+	 * Posts {@link #TEST_PACKAGE_NSURI} under {@code packageName} to {@code stage}.
+	 *
+	 * @param stage       the stage to post to
+	 * @param packageName the package's name, so a second post can carry other content
+	 * @param overwrite   the {@code overwrite} query parameter, or {@code null} to omit it
+	 */
+	private Response postPackage(String stage, String packageName, Boolean overwrite) throws IOException {
+		EPackage testPackage = TestHelper.createTestEPackage(TEST_PACKAGE_NSURI, packageName, "test");
+		String xmiContent = TestHelper.serializeToXMI(testPackage, resourceSet);
+		WebTarget target = schemaStageTarget(stage).queryParam("nsUri", TEST_PACKAGE_NSURI).queryParam("name",
+				packageName);
+		if (overwrite != null) {
+			target = target.queryParam("overwrite", overwrite);
+		}
+		return target.request("application/xmi").post(Entity.entity(xmiContent, "application/xmi"));
+	}
+
 	// ========== Get Package Content Tests ==========
 
 	@Test
