@@ -30,11 +30,14 @@ import java.util.Collection;
 import java.util.List;
 
 import org.eclipse.emf.ecore.EClass;
+import org.eclipse.emf.ecore.EClassifier;
 import org.eclipse.emf.ecore.EPackage;
 import org.eclipse.emf.ecore.EcoreFactory;
+import org.eclipse.emf.ecore.EReference;
 import org.eclipse.emf.ecore.EcorePackage;
 import org.eclipse.emf.ecore.resource.ResourceSet;
 import org.eclipse.fennec.model.atlas.rest.tests.helper.TestHelper;
+import org.eclipse.uml2.uml.resource.UMLResource;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -259,6 +262,52 @@ public class UMLMessageBodyReaderWriterTest {
         assertNotNull(ePackage.getName(), "EPackage should have a name");
     }
 
+    /**
+     * A model whose classes reference each other must not be served with those
+     * references routed through the file name the download is suggested to be saved
+     * as: such a document only resolves as long as the caller keeps that exact name.
+     */
+    @Test
+    void testWriteTo_DoesNotRouteIntraModelReferencesThroughTheFileName() throws Exception {
+        EPackage ePackage = createIntraReferenceTestEPackage();
+
+        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+        writer.writeTo(ePackage, EPackage.class, EPackage.class, null, MediaType.valueOf(MEDIA_TYPE),
+                new MultivaluedHashMap<>(), outputStream);
+
+        String umlXml = outputStream.toString("UTF-8");
+        assertFalse(umlXml.contains(ePackage.getName() + "." + UMLResource.FILE_EXTENSION),
+                "The served model must not reference its own file name: " + umlXml);
+    }
+
+    /**
+     * The served model has to resolve under any file name the caller picks, so a
+     * reference between two of its classes must survive the round trip.
+     */
+    @Test
+    void testRoundTrip_PreservesIntraModelReference() throws Exception {
+        EPackage ePackage = createIntraReferenceTestEPackage();
+
+        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+        MediaType mediaType = MediaType.valueOf(MEDIA_TYPE);
+        writer.writeTo(ePackage, EPackage.class, EPackage.class, null, mediaType, new MultivaluedHashMap<>(),
+                outputStream);
+
+        // The reader loads under "temp.uml", a name the served document never saw.
+        EPackage roundTrip = reader.readFrom(EPackage.class, EPackage.class, null, mediaType, null,
+                new ByteArrayInputStream(outputStream.toByteArray()));
+
+        EClass outer = (EClass) roundTrip.getEClassifier("Outer");
+        assertNotNull(outer, "Round-trip package should contain the Outer class");
+        EReference reference = (EReference) outer.getEStructuralFeature("inner");
+        assertNotNull(reference, "Round-trip Outer should keep its inner reference");
+        EClassifier innerType = reference.getEType();
+        assertNotNull(innerType, "Reference type should be present");
+        assertFalse(innerType.eIsProxy(), "Reference should resolve, not dangle as a proxy");
+        assertEquals(roundTrip.getEClassifier("Inner"), innerType,
+                "Reference should point at the Inner class of the same package");
+    }
+
     // ============ ROUND-TRIP TESTS ============
 
     @Test
@@ -302,6 +351,37 @@ public class UMLMessageBodyReaderWriterTest {
 
         ePackage.getEClassifiers().add(personClass);
 
+        return ePackage;
+    }
+
+    /**
+     * Creates a package whose {@code Outer.inner} reference points at another class
+     * of the very same package — the reference kind that must stay inside the served
+     * document.
+     */
+    private EPackage createIntraReferenceTestEPackage() {
+        EPackage ePackage = EcoreFactory.eINSTANCE.createEPackage();
+        ePackage.setNsURI("http://test.eclipse.fennec/hreftest/1.0");
+        ePackage.setName("HrefTestPackage");
+        ePackage.setNsPrefix("href");
+
+        EClass inner = EcoreFactory.eINSTANCE.createEClass();
+        inner.setName("Inner");
+        var value = EcoreFactory.eINSTANCE.createEAttribute();
+        value.setName("v");
+        value.setEType(EcorePackage.Literals.EINT);
+        inner.getEStructuralFeatures().add(value);
+
+        EClass outer = EcoreFactory.eINSTANCE.createEClass();
+        outer.setName("Outer");
+        EReference reference = EcoreFactory.eINSTANCE.createEReference();
+        reference.setName("inner");
+        reference.setEType(inner);
+        reference.setContainment(true);
+        outer.getEStructuralFeatures().add(reference);
+
+        ePackage.getEClassifiers().add(inner);
+        ePackage.getEClassifiers().add(outer);
         return ePackage;
     }
 
