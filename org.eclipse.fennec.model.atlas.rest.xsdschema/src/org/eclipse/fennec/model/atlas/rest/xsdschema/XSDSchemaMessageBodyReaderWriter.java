@@ -31,6 +31,7 @@ import org.eclipse.fennec.model.atlas.rest.common.AbstractEPackageMessageBodyHan
 import org.eclipse.xsd.XSDSchema;
 import org.eclipse.xsd.ecore.EcoreXMLSchemaBuilder;
 import org.eclipse.xsd.ecore.XSDEcoreBuilder;
+import org.eclipse.xsd.util.XSDResourceFactoryImpl;
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.ServiceScope;
 import org.osgi.service.jakartars.whiteboard.JakartarsWhiteboardConstants;
@@ -65,6 +66,18 @@ public class XSDSchemaMessageBodyReaderWriter extends AbstractEPackageMessageBod
 
     private static final MediaType SCHEMA_XML_TYPE = new MediaType("application", "schema+xml");
 
+    /**
+     * The URI a resource created for one request carries. It is absolute and
+     * hierarchical, so references inside the document deresolve against it, and its
+     * last segment is cosmetic — no document is ever written to that location.
+     *
+     * @param fileName the last segment of the URI
+     * @return a URI under this handler's synthetic {@code atlas://response} base
+     */
+    private static URI newSyntheticURI(String fileName) {
+        return URI.createHierarchicalURI("atlas", "response", null, new String[] { fileName }, null, null);
+    }
+
     @Override
     public boolean isWriteable(Class<?> type, Type genericType, Annotation[] annotations, MediaType mediaType) {
         return EPackage.class.isAssignableFrom(type) && isMediaType(mediaType, SCHEMA_XML_TYPE);
@@ -80,10 +93,23 @@ public class XSDSchemaMessageBodyReaderWriter extends AbstractEPackageMessageBod
         ResourceSet resourceSet = getResourceSet();
         String fileName = t.getName() + ".xsd";
         httpHeaders.put(HttpHeaders.CONTENT_DISPOSITION, List.of("attachment; filename=" + fileName));
-        Resource resource = resourceSet.createResource(URI.createURI(fileName));
-        resource.getContents().addAll(collection);
-        resource.save(entityStream, null);
-        resource.getContents().clear();
+        // Pin the schema serialization instead of letting the ResourceSet's extension
+        // map decide it. Asking the ResourceSet for a ".xsd" resource made the response
+        // format depend on that ResourceSet's configuration: one that does not know the
+        // extension answers with the fallback factory, which serialized EMF's XSD
+        // metamodel as XMI — served as application/schema+xml, with no error and
+        // unreadable by this handler's own reader — and one that knows no fallback
+        // either returns null, failing the request with an NPE. The resource still
+        // joins the ResourceSet, so schema locations resolve through its URI converter.
+        Resource resource = new XSDResourceFactoryImpl().createResource(newSyntheticURI(fileName));
+        resourceSet.getResources().add(resource);
+        try {
+            resource.getContents().addAll(collection);
+            resource.save(entityStream, null);
+        } finally {
+            resource.getContents().clear();
+            resourceSet.getResources().remove(resource);
+        }
     }
 
     @Override
@@ -96,7 +122,10 @@ public class XSDSchemaMessageBodyReaderWriter extends AbstractEPackageMessageBod
             MultivaluedMap<String, String> httpHeaders, InputStream entityStream)
             throws IOException, WebApplicationException {
         ResourceSet resourceSet = getResourceSet();
-        Resource resource = resourceSet.createResource(URI.createURI("temp.xsd"));
+        // Pin the factory here too: the payload is a schema document whichever
+        // extensions this ResourceSet happens to know.
+        Resource resource = new XSDResourceFactoryImpl().createResource(newSyntheticURI("temp.xsd"));
+        resourceSet.getResources().add(resource);
         // A payload this reader cannot turn into a model is the client's mistake: answer
         // 400 rather than null, which the endpoint would dereference into a 500. The
         // three sibling schema readers answer the same way.

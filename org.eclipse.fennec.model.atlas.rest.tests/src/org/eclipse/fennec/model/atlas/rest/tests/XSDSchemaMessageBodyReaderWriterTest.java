@@ -17,6 +17,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -30,8 +31,8 @@ import org.eclipse.emf.ecore.EReference;
 import org.eclipse.emf.ecore.EcoreFactory;
 import org.eclipse.emf.ecore.EcorePackage;
 import org.eclipse.emf.ecore.resource.ResourceSet;
+import org.eclipse.emf.ecore.resource.impl.ResourceSetImpl;
 import org.eclipse.fennec.model.atlas.rest.tests.helper.TestHelper;
-import org.eclipse.xsd.util.XSDResourceFactoryImpl;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -61,6 +62,16 @@ public class XSDSchemaMessageBodyReaderWriterTest {
 
     private static final String COMPONENT_NAME = "org.eclipse.fennec.model.atlas.rest.xsdschema.XSDSchemaMessageBodyReaderWriter";
 
+    /**
+     * Namespace declaration of an XML Schema document — what this handler serves. The
+     * closing quote matters: the XMI serialization of the XSD metamodel declares
+     * "…/XMLSchema-instance", which carries this namespace as a prefix.
+     */
+    private static final String XML_SCHEMA_NS = "\"http://www.w3.org/2001/XMLSchema\"";
+
+    /** Namespace of EMF's XSD metamodel — what a fallback to XMI would serve instead. */
+    private static final String XSD_METAMODEL_NS = "http://www.eclipse.org/xsd/2002/XSD";
+
     @SuppressWarnings("rawtypes")
     @InjectService
     List<MessageBodyWriter> messageBodyWriter;
@@ -89,15 +100,6 @@ public class XSDSchemaMessageBodyReaderWriterTest {
         // @Context fields are only injected by Jersey; inject a real ResourceSet
         // directly so readFrom/writeTo work outside a JAX-RS request scope.
         ResourceSet resourceSet = context.getService(context.getServiceReference(ResourceSet.class));
-        // The handler resolves its resource factory from the ResourceSet it is handed.
-        // The per-(scope, stage) ResourceSet the endpoint passes knows the .xsd
-        // extension; this plain one does not and would fall back to XMI, serializing
-        // the XSD model itself instead of a schema document. Register the factory so
-        // these tests exercise the same serialization the endpoint does.
-        if (!resourceSet.getResourceFactoryRegistry().getExtensionToFactoryMap().containsKey("xsd")) {
-            resourceSet.getResourceFactoryRegistry().getExtensionToFactoryMap().put("xsd",
-                    new XSDResourceFactoryImpl());
-        }
         TestHelper.injectResourceSet(reader, resourceSet);
         TestHelper.injectResourceSet(writer, resourceSet);
     }
@@ -117,6 +119,7 @@ public class XSDSchemaMessageBodyReaderWriterTest {
                 outputStream);
 
         String xsd = outputStream.toString("UTF-8");
+        assertTrue(xsd.contains(XML_SCHEMA_NS), "Must serve an XML Schema document: " + xsd);
         assertFalse(xsd.contains(ePackage.getName() + ".xsd"),
                 "The served schema must not reference its own file name: " + xsd);
         assertEquals("attachment; filename=" + ePackage.getName() + ".xsd",
@@ -158,6 +161,26 @@ public class XSDSchemaMessageBodyReaderWriterTest {
         assertFalse(innerType.eIsProxy(), "Reference should resolve, not dangle as a proxy");
         assertEquals(roundTrip.getEClassifier("Inner"), innerType,
                 "Reference should point at the Inner type of the same package");
+    }
+
+    /**
+     * Which format this handler serves must not depend on the {@link ResourceSet} it
+     * is handed. Given one that knows no {@code .xsd} extension, the resource factory
+     * lookup falls back to XMI and the body becomes a serialization of the XSD
+     * metamodel — offered to the client as {@code application/schema+xml}, with no
+     * error, and rejected by this handler's own reader.
+     */
+    @Test
+    void testWriteTo_ResourceSetWithoutXsdExtension_StillProducesASchemaDocument() throws Exception {
+        TestHelper.injectResourceSet(writer, new ResourceSetImpl());
+
+        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+        writer.writeTo(createIntraReferenceTestEPackage(), EPackage.class, EPackage.class, null,
+                MediaType.valueOf(MEDIA_TYPE), new MultivaluedHashMap<>(), outputStream);
+
+        String xsd = outputStream.toString("UTF-8");
+        assertFalse(xsd.contains(XSD_METAMODEL_NS), "Must not serve the XSD metamodel itself: " + xsd);
+        assertTrue(xsd.contains(XML_SCHEMA_NS), "Must serve an XML Schema document: " + xsd);
     }
 
     /**

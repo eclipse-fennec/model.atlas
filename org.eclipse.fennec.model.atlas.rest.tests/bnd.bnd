@@ -26,7 +26,6 @@ Test-Cases: ${classes;HIERARCHY_INDIRECTLY_ANNOTATED;org.junit.platform.commons.
 	org.eclipse.fennec.model.atlas.scope.api;version=snapshot,\
 	org.eclipse.fennec.model.atlas.management,\
 	org.eclipse.uml2.uml,\
-	org.eclipse.xsd;version=latest,\
 	org.eclipse.fennec.m2x.ocl.api,\
 	org.eclipse.fennec.model.atlas.management.lucene,\
 	org.osgi.test.junit5.cm,\

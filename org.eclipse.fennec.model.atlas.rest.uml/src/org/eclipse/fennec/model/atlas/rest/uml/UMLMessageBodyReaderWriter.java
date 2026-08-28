@@ -58,6 +58,18 @@ public class UMLMessageBodyReaderWriter extends AbstractEPackageMessageBodyHandl
 
     private static final MediaType UML_TYPE = new MediaType("application", "uml");
 
+    /**
+     * The URI a resource created for one request carries. It is absolute and
+     * hierarchical, so references inside the document deresolve against it, and its
+     * last segment is cosmetic — no document is ever written to that location.
+     *
+     * @param fileName the last segment of the URI
+     * @return a URI under this handler's synthetic {@code atlas://response} base
+     */
+    private static URI newSyntheticURI(String fileName) {
+        return URI.createHierarchicalURI("atlas", "response", null, new String[] { fileName }, null, null);
+    }
+
     @Override
     public boolean isWriteable(Class<?> type, Type genericType, Annotation[] annotations, MediaType mediaType) {
         return EPackage.class.isAssignableFrom(type) && isMediaType(mediaType, UML_TYPE);
@@ -72,10 +84,21 @@ public class UMLMessageBodyReaderWriter extends AbstractEPackageMessageBodyHandl
         String fileName = t.getName() + "." + UMLResource.FILE_EXTENSION;
         httpHeaders.put(HttpHeaders.CONTENT_DISPOSITION, List.of("attachment; filename=" + fileName));
         Collection<Package> convertFromEcore = UMLUtil.convertFromEcore(t, null);
-        Resource resource = resourceSet.createResource(URI.createURI(fileName));
-        resource.getContents().addAll(convertFromEcore);
-        resource.save(entityStream, null);
-        resource.getContents().clear();
+        // Pin the UML serialization instead of letting the ResourceSet's extension map
+        // decide it. Asking the ResourceSet for a ".uml" resource made the response
+        // format depend on that ResourceSet's configuration: one that does not know the
+        // extension answers with the fallback factory, and one that knows no fallback
+        // either returns null, failing the request with an NPE. The resource still joins
+        // the ResourceSet, so pathmap references resolve through its URI converter.
+        Resource resource = UMLResource.Factory.INSTANCE.createResource(newSyntheticURI(fileName));
+        resourceSet.getResources().add(resource);
+        try {
+            resource.getContents().addAll(convertFromEcore);
+            resource.save(entityStream, null);
+        } finally {
+            resource.getContents().clear();
+            resourceSet.getResources().remove(resource);
+        }
     }
 
     @Override
@@ -88,7 +111,11 @@ public class UMLMessageBodyReaderWriter extends AbstractEPackageMessageBodyHandl
             MultivaluedMap<String, String> httpHeaders, InputStream entityStream)
             throws IOException, WebApplicationException {
         ResourceSet resourceSet = getResourceSet();
-        Resource resource = resourceSet.createResource(URI.createURI("temp.uml"));
+        // Pin the factory here too: the payload is a UML model whichever extensions this
+        // ResourceSet happens to know. It joins the ResourceSet so the model's pathmap
+        // references — the UML primitive types among them — still resolve.
+        Resource resource = UMLResource.Factory.INSTANCE.createResource(newSyntheticURI("temp.uml"));
+        resourceSet.getResources().add(resource);
         // A payload this reader cannot turn into a model is the client's mistake: answer
         // 400 rather than null, which the endpoint would dereference into a 500. The
         // three sibling schema readers answer the same way.

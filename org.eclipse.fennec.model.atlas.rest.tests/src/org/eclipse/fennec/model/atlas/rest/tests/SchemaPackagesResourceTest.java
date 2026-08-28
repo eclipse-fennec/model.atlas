@@ -2017,7 +2017,9 @@ public class SchemaPackagesResourceTest extends AbstractRestTest {
 		assertStatus(200, response, "Should return HTTP 200 OK");
 
 		String served = response.readEntity(String.class);
-		assertTrue(served.contains("http://www.w3.org/2001/XMLSchema"),
+		// The closing quote matters: the XMI serialization of the XSD metamodel declares
+		// "…/XMLSchema-instance", which carries this namespace as a prefix.
+		assertTrue(served.contains("\"http://www.w3.org/2001/XMLSchema\""),
 				"Should be served as an XML Schema document, not as XMI of the XSD model: " + served);
 		assertFalse(served.contains(HREF_PACKAGE_NAME + ".xsd"),
 				"The served schema must not reference its own file name: " + served);

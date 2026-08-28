@@ -36,6 +36,7 @@ import org.eclipse.emf.ecore.EcoreFactory;
 import org.eclipse.emf.ecore.EReference;
 import org.eclipse.emf.ecore.EcorePackage;
 import org.eclipse.emf.ecore.resource.ResourceSet;
+import org.eclipse.emf.ecore.resource.impl.ResourceSetImpl;
 import org.eclipse.fennec.model.atlas.rest.tests.helper.TestHelper;
 import org.eclipse.uml2.uml.resource.UMLResource;
 import org.junit.jupiter.api.BeforeEach;
@@ -203,6 +204,30 @@ public class UMLMessageBodyReaderWriterTest {
         // Verify it contains the complex structure
         assertTrue(umlXml.contains("<?xml"), "UML should be valid XML");
         assertTrue(umlXml.contains("uml:"), "UML should contain UML namespace");
+    }
+
+    /**
+     * Which format this handler serves must not depend on the {@link ResourceSet} it
+     * is handed. Given one that knows no {@code .uml} extension, the resource factory
+     * lookup falls back to a generic XMI resource, so the model is no longer written
+     * as UML — and this handler's own reader is what has to read it back.
+     */
+    @Test
+    void testWriteTo_ResourceSetWithoutUmlExtension_StillProducesAUMLModel() throws Exception {
+        TestHelper.injectResourceSet(writer, new ResourceSetImpl());
+
+        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+        MediaType mediaType = MediaType.valueOf(MEDIA_TYPE);
+        writer.writeTo(createIntraReferenceTestEPackage(), EPackage.class, EPackage.class, null, mediaType,
+                new MultivaluedHashMap<>(), outputStream);
+
+        String umlXml = outputStream.toString("UTF-8");
+        assertTrue(umlXml.contains("uml:"), "Must serve a UML document: " + umlXml);
+
+        // And the served model still round-trips through this handler's reader.
+        EPackage roundTrip = reader.readFrom(EPackage.class, EPackage.class, null, mediaType, null,
+                new ByteArrayInputStream(outputStream.toByteArray()));
+        assertNotNull(roundTrip.getEClassifier("Outer"), "Served model should still be readable: " + umlXml);
     }
 
     // ============ READER TESTS ============
