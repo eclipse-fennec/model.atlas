@@ -72,6 +72,12 @@ public class EcoreMessageBodyHandler extends AbstractEPackageMessageBodyHandler 
 	
     private static final Logger logger = Logger.getLogger(EcoreMessageBodyHandler.class.getName());
 
+    /** Scheme of the synthetic base URI the response document is serialized against. */
+    private static final String RESPONSE_SCHEME = "atlas";
+
+    /** Authority of that base URI; no other model URI shares it. */
+    private static final String RESPONSE_AUTHORITY = "response";
+
     // ========== MessageBodyReader Implementation ==========
 
     @Override
@@ -161,7 +167,24 @@ public class EcoreMessageBodyHandler extends AbstractEPackageMessageBodyHandler 
         // UnsupportedOperationException. So always serialize a self-contained copy —
         // cross-package references stay with the originals (resolved) or keep their
         // canonical proxy URIs (unresolved), and the live instance stays untouched.
-        Resource resource = resourceSet.createResource(URI.createURI(fileName), EcorePackage.eCONTENT_TYPE);
+
+        // The response resource must not be named after the file the download is
+        // suggested to be saved as: an XMI writer only shortens a reference to a bare
+        // fragment when the resource it writes has an absolute, hierarchical URI (see
+        // XMLHelperImpl, which switches deresolution off otherwise). Against a bare
+        // "<name>.ecore" every reference between two classifiers of this very package
+        // came out as a cross-document href, "ecore:EClass <name>.ecore#//Inner"
+        // instead of the stored "#//Inner", so the document only resolved as long as
+        // the caller saved it under exactly that name. A synthetic absolute base fixes
+        // that without becoming visible: same-document references deresolve to "#...",
+        // and references into other packages keep their own absolute URIs, since they
+        // share no prefix with this scheme. The package's nsURI is not usable as that
+        // base — it would relativize a sibling package's URI, e.g. ".../schema/2.0" to
+        // "2.0", and a non-hierarchical one (a "urn:" nsURI) would not deresolve at
+        // all.
+        URI responseURI = URI.createHierarchicalURI(RESPONSE_SCHEME, RESPONSE_AUTHORITY, null,
+                new String[] { fileName }, null, null);
+        Resource resource = resourceSet.createResource(responseURI, EcorePackage.eCONTENT_TYPE);
         try {
             resource.getContents().add(EcoreUtil.copy(eObject));
             resource.save(entityStream, options);

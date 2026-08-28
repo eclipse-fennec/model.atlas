@@ -262,6 +262,7 @@ public class ObjectRegistryResource {
                     @ApiResponse(responseCode = "201", description = "Object created successfully", content = @Content(schema = @Schema(implementation = ObjectMetadata.class))),
                     @ApiResponse(responseCode = "200", description = "Object updated successfully", content = @Content(schema = @Schema(implementation = ObjectMetadata.class))),
                     @ApiResponse(responseCode = "400", description = "Schema not found, validation failed, scope not available, registry not available for scope, stage not available for registry or not a valid stage "),
+                    @ApiResponse(responseCode = "403", description = "The existing object is read-only, or its stage is final for the registry and so its objects cannot be updated"),
                     @ApiResponse(responseCode = "409", description = "Object with same id already exists and override option not set to true"),
                     @ApiResponse(responseCode = "415", description = "Unsupported media type"),
                     @ApiResponse(responseCode = "500", description = "Internal server error") })
