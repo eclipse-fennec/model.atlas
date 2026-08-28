@@ -340,12 +340,37 @@ public class ApicurioStorageHelper extends AbstractStorageHelper {
         return scope.concat("-").concat(registry).concat("-").concat(stage);
     }
 
+    /**
+     * Options every request to the configured Apicurio registry carries.
+     *
+     * <p>
+     * Besides the HTTP method, this marks the call as one this helper means to make.
+     * The REST URI handler blocks outbound http(s) resolution unless the host is in its
+     * allow-list, which defends against SSRF through proxy URIs that arrive inside model
+     * content — but this helper's URIs are not attacker-supplied: they are built here from
+     * the configured {@code base_url} and the group/artifact coordinates of the object being
+     * stored. Without the opt-in every read, write and delete against the registry failed
+     * with "Blocked outbound http(s) resolution", in tests and in the running apicurio
+     * image alike, and the alternative — allow-listing the registry host in every
+     * deployment's configuration — would also permit resolution of any other URI on that
+     * host, which is the very thing the guard exists to prevent.
+     * </p>
+     *
+     * @param httpMethod the HTTP method of the request
+     * @return a mutable option map the caller can add request-specific entries to
+     */
+    private static Map<String, Object> requestOptions(String httpMethod) {
+        Map<String, Object> options = new HashMap<>();
+        options.put(EMFUriHandlerConstants.OPTION_HTTP_METHOD, httpMethod);
+        options.put(EMFUriHandlerConstants.OPTION_ALLOW_URI_RESOLUTION, Boolean.TRUE);
+        return options;
+    }
+
     private EObject sendGETRequest(URI uri, EClass expectedResponseEClass, String mediaType) throws IOException {
         ResourceOperation searchOp = createResource(uri, mediaType);
         try {
-            Map<String, Object> options = new HashMap<>();
+            Map<String, Object> options = requestOptions("GET");
             options.put(CodecResource.CODEC_ROOT_TYPE, expectedResponseEClass);
-            options.put(EMFUriHandlerConstants.OPTION_HTTP_METHOD, "GET");
             searchOp.getResource().load(options);
             if (!searchOp.getResource().getContents().isEmpty()) {
                 if (searchOp.getResource().getContents().get(0).eClass().getInstanceClassName()
@@ -367,9 +392,7 @@ public class ApicurioStorageHelper extends AbstractStorageHelper {
     private boolean doDelete(String url) {
         ResourceOperation objectOp = createResource(URI.createURI(url), "application/json");
         try {
-            Map<String, Object> options = new HashMap<>();
-            options.put(EMFUriHandlerConstants.OPTION_HTTP_METHOD, "DELETE");
-            objectOp.getResource().save(options);
+            objectOp.getResource().save(requestOptions("DELETE"));
         } catch (IOException e) {
             LOGGER.severe(String.format("Error removing artifact %s from Apicurio registry", url));
             return false;
@@ -495,8 +518,8 @@ public class ApicurioStorageHelper extends AbstractStorageHelper {
             Resource apicurioResource = objectOp.getResource();
             apicurioResource.getContents().add(artifact);
 
-            Map<String, Object> options = Map.of(EMFUriHandlerConstants.OPTION_HTTP_METHOD, "POST",
-                    EMFUriHandlerConstants.OPTION_HTTP_HEADERS, Map.of("Content-Type", "application/json"));
+            Map<String, Object> options = requestOptions("POST");
+            options.put(EMFUriHandlerConstants.OPTION_HTTP_HEADERS, Map.of("Content-Type", "application/json"));
             apicurioResource.save(options);
         } finally {
             objectOp.cleanup();
