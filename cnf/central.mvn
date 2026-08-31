@@ -214,3 +214,8 @@ com.h2database:h2:2.3.232
 org.eclipse.fennec.event.atlas:org.eclipse.fennec.event.atlas.mapping:1.0.0-SNAPSHOT
 
 
+# DCAT.Atlas client (replaces the hand-placed jars formerly in cnf/local)
+org.eclipse.fennec.dcat:org.eclipse.fennec.dcat.atlas.dcatap.de.model:1.0.0-SNAPSHOT
+org.eclipse.fennec.dcat:org.eclipse.fennec.dcat.atlas.client.api:1.0.0-SNAPSHOT
+org.eclipse.fennec.dcat:org.eclipse.fennec.dcat.atlas.client.impl:1.0.0-SNAPSHOT
+org.eclipse.fennec.dcat:org.eclipse.fennec.dcat.atlas.client.osgi:1.0.0-SNAPSHOT

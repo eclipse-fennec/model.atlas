@@ -1,0 +1,56 @@
+{
+	":configurator:resource-version": 1,
+	":configurator:symbolicname": "org.eclipse.fennec.model.atlas.runtime.config.docker.jena.dcat",
+	":configurator:version": "0.0.0",
+
+	"org.eclipse.fennec.dcat.atlas.client~jena": {
+		// No default that would work by accident: a portal on localhost is not reachable from
+		// inside the container, so an unset variable should fail loudly rather than quietly
+		// publish nowhere.
+		"base.uri": "$[env:DCAT_PORTAL_BASE_URI]",
+		"dcat.portal": "jena",
+		"check.ready": true,
+		// The publisher retries a not-ready portal with a backoff, so the client need not refuse
+		// to start when the portal is still coming up — which, in a compose stack, it usually is.
+		"require.ready": false
+	},
+
+	"DcatPublisher~jena": {
+		"dcat.portal.target": "(dcat.portal=jena)",
+		// The entire public prefix, up to and including whatever stands in for this container's
+		// own /atlas/rest. An APISIX fronts the atlas, so this is the address a harvester can
+		// actually fetch from — never the container's internal one.
+		"atlas.public.base.uri": "$[env:ATLAS_PUBLIC_BASE_URI]",
+		// Off by default: a localhost URL in a public catalogue is worse than no catalogue entry,
+		// and this image is the one that reaches a real portal. The knob exists because the same
+		// image runs the compose demo, where localhost IS the address a reader can fetch from —
+		// and a demo that advertises URLs nobody can download is worse than no demo.
+		"allow.local.base.uri": "$[env:DCAT_ALLOW_LOCAL_BASE_URI;default=false]",
+		// The atlas root scope is deliberately absent: its registry holds the system schemas,
+		// which are not open data.
+		"scopes": ["jena"],
+		"language": "$[env:DCAT_LANGUAGE;default=de]",
+		"publisher.name": "$[env:DCAT_PUBLISHER_NAME]",
+		"publisher.about": "$[env:DCAT_PUBLISHER_ABOUT]",
+		// Required to publish a Distribution at all: dcat:Distribution#license is a lowerBound=1
+		// containment, so the portal refuses a Distribution without one.
+		"license.uri": "$[env:DCAT_LICENSE_URI;default=http://dcat-ap.de/def/licenses/dl-by-de/2.0]",
+		"distribution.media.types": ["application/xmi", "application/json"],
+		"publish.stages": ["FINAL"],
+		// UNLINK keeps every resource and only drops the memberships, so nothing a portal-side
+		// editor added is destroyed. DELETE and CASCADE remove Datasets and a vanished scope's
+		// Catalog; NONE leaves everything.
+		"unpublish.mode": "$[env:DCAT_UNPUBLISH_MODE;default=UNLINK]",
+		// A content update reaches the publisher as unregister-then-register, so a retirement
+		// waits this long for the re-register that cancels it.
+		"unpublish.delay.seconds": 30,
+		// A restart is not a statement about the models: the catalogue is left standing.
+		"retire.on.shutdown": false,
+		// A 503, a connect timeout or a portal that is not ready yet is retried with a doubling
+		// delay; a payload the portal refuses as invalid is not retried at all. Whatever the
+		// retries give up on is reported by the `atlas`-tagged health check.
+		"retry.initial.delay.seconds": 5,
+		"retry.max.delay.seconds": 300,
+		"retry.max.attempts": 6
+	}
+}

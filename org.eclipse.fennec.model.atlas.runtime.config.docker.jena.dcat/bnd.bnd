@@ -1,0 +1,13 @@
+-resourceonly: true
+-includeresource: OSGI-INF/configurator/=configs/
+Require-Capability: osgi.extender;filter:='(osgi.extender=osgi.configurator)'
+
+-workingset: modelatlas
+
+Bundle-Name: MAC Runtime Config Docker Jena DCAT
+Bundle-Description: Layers DCAT publishing onto the jena docker runtime: one portal client and one \
+ publisher for the jena scope, every deployment-specific value taken from the environment. Kept out \
+ of the plain jena image so that running it does not require a DCAT portal to be up.
+
+# Do not publish this bundle to Maven Central; local install only
+-maven-release: local

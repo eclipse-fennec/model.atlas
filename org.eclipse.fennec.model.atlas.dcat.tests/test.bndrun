@@ -1,0 +1,24 @@
+-library: enableOSGi-Test
+
+# Deliberately NO `-resolve.effective: active`: the osgitech whiteboard registers
+# jakarta.ws.rs.client.ClientBuilder programmatically, without an osgi.service capability, so
+# DcatAtlasClientComponent's mandatory reference has nothing to resolve against and the resolve
+# would fail on a runtime that actually works. rest.client.osgi.tests omits it for the same reason.
+-runrequires: \
+	bnd.identity;id='org.eclipse.fennec.model.atlas.dcat.tests',\
+	bnd.identity;id='org.eclipse.fennec.model.atlas.dcat',\
+	bnd.identity;id='org.eclipse.fennec.model.atlas.mediatypes.api',\
+	bnd.identity;id='org.apache.felix.healthcheck.api',\
+	bnd.identity;id='org.eclipse.fennec.dcat.atlas.client.impl',\
+	bnd.identity;id='org.eclipse.fennec.dcat.atlas.client.osgi',\
+	bnd.identity;id='org.eclipse.fennec.dcat.atlas.dcatap.de.model',\
+	bnd.identity;id='org.eclipse.fennec.emf.osgi.component',\
+	bnd.identity;id='org.eclipse.osgitech.rest',\
+	bnd.identity;id='org.eclipse.daanse.tooling.testcontainers.core',\
+	bnd.identity;id='slf4j.simple'
+
+-runbundles.test: \
+	org.eclipse.fennec.model.atlas.dcat.tests;version=snapshot
+
+-runfw: org.apache.felix.framework
+-runee: JavaSE-21

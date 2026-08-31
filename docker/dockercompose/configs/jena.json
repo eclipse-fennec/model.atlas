@@ -2,6 +2,10 @@
     ":configurator:resource-version": 1,
     ":configurator:symbolic-name": "org.eclipse.fennec.model.atlas.config.jena",
     ":configurator:version": "1.0.0",
+    "EPackageStageActionService": {
+        "trigger.stages": ["draft", "approved", "release"],
+        "storageService.target": "(storage.type=file)"
+    },
     "FileObjectStorage~file": {
         "workspace.folder": "$[env:STORAGE_ROOT;default=/opt/modelatlas/runtime/data]",
         "storage.type": "file",

@@ -140,6 +140,18 @@
     <eTypeParameters name="T">
       <eBounds eClassifier="ecore:EClass http://www.eclipse.org/emf/2002/Ecore#//EObject"/>
     </eTypeParameters>
+    <eOperations name="updateProperties">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="Merge entries into the properties map of an object's metadata for a certain stage and scope, without touching the object's content. Entries present in the argument are set; keys absent from the argument are left untouched. Returns the stored ObjectMetadata."/>
+      </eAnnotations>
+      <eGenericType eClassifier="ecore:EDataType ../../org.eclipse.fennec.model.atlas.management/model/management.ecore#//Promise">
+        <eTypeArguments eClassifier="ecore:EClass ../../org.eclipse.fennec.model.atlas.management/model/management.ecore#//ObjectMetadata"/>
+      </eGenericType>
+      <eParameters name="scope" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+      <eParameters name="stage" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+      <eParameters name="objectId" lowerBound="1" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+      <eParameters name="properties" upperBound="-1" eType="ecore:EClass ../../org.eclipse.fennec.model.atlas.management/model/management.ecore#//StringToObjectMapEntry"/>
+    </eOperations>
     <eOperations name="uploadToStage">
       <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
         <details key="documentation" value="Upload an EObject to a certain stage (draft, review, etc) for a certain scope; returns promise with uploaded ObjectMetadata."/>
@@ -312,6 +324,18 @@
     <eTypeParameters name="T">
       <eBounds eClassifier="ecore:EClass http://www.eclipse.org/emf/2002/Ecore#//EObject"/>
     </eTypeParameters>
+        <eOperations name="updatePropertiesInStageForRegistry">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="Merge entries into the properties map of an object's metadata in a certain stage and registry, without touching the object's content. Entries present in the argument are set (overwriting an existing value for the same key); keys absent from the argument are left untouched. Returns the stored ObjectMetadata."/>
+      </eAnnotations>
+      <eGenericType eClassifier="ecore:EDataType ../../org.eclipse.fennec.model.atlas.management/model/management.ecore#//Promise">
+        <eTypeArguments eClassifier="ecore:EClass ../../org.eclipse.fennec.model.atlas.management/model/management.ecore#//ObjectMetadata"/>
+      </eGenericType>
+      <eParameters name="registry" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+      <eParameters name="stage" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+      <eParameters name="objectId" lowerBound="1" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+      <eParameters name="properties" upperBound="-1" eType="ecore:EClass ../../org.eclipse.fennec.model.atlas.management/model/management.ecore#//StringToObjectMapEntry"/>
+    </eOperations>
     <eOperations name="uploadToStageForRegistry">
       <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
         <details key="documentation" value="Upload an EObject to a certain stage (draft, review, etc) for a certain registry (schema, configuration, script, etc); returns promise with uploaded ObjectMetadata."/>

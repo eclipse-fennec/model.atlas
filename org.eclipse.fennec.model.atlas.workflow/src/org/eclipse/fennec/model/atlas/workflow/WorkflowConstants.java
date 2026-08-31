@@ -37,4 +37,14 @@ public interface WorkflowConstants {
 	 * used by the nsUri-based scope-service lookups.
 	 * */
 	public static final String NS_URI_METADATA_PROPERTY = "nsUri";
+
+	/** DCAT_PUBLISH_METADATA_PROPERTY
+	 * The ObjectMetadata properties key asserting that an object may be published to a
+	 * DCAT portal. Written by the schema REST upload path from the {@code ?dcat=} query
+	 * parameter and read by the DCAT publisher, so the name is API between the two
+	 * bundles. The value is stored as a {@link Boolean}; readers should tolerate the
+	 * string form too, since {@code properties} is typed {@code String -> EJavaObject}
+	 * and both are storable. An absent key means false.
+	 * */
+	public static final String DCAT_PUBLISH_METADATA_PROPERTY = "dcat";
 }

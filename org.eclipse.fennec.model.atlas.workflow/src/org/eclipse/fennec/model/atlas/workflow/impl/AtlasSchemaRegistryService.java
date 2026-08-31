@@ -17,6 +17,7 @@ import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.util.Base64;
 import java.util.List;
+import java.util.Map;
 
 import org.eclipse.emf.ecore.EClass;
 import org.eclipse.emf.ecore.EObject;
@@ -139,6 +140,16 @@ public class AtlasSchemaRegistryService implements RegistryService<EPackage> {
 			String version) {
 		throw new UnsupportedOperationException("Update Operation not allowed for Atlas Schema Registry");
 
+	}
+
+	/* 
+	 * (non-Javadoc)
+	 * @see org.eclipse.fennec.model.atlas.wf.workflowapi.RegistryService#updateProperties(java.lang.String, java.lang.String, java.lang.String, java.util.Map)
+	 */
+	@Override
+	public Promise<ObjectMetadata> updateProperties(String scope, String stage, String objectId,
+			Map<String, Object> properties) {
+		throw new UnsupportedOperationException("Update Operation not allowed for Atlas Schema Registry");
 	}
 
 	/* 

@@ -49,6 +49,8 @@ import org.eclipse.fennec.model.atlas.scope.api.ScopeApiFactory;
 import org.eclipse.fennec.model.atlas.scope.api.StageInfo;
 import org.eclipse.fennec.model.atlas.scope.api.StagePolicyException;
 import org.eclipse.fennec.model.atlas.wf.workflowapi.Registry;
+import org.eclipse.fennec.model.atlas.workflow.WorkflowConstants;
+import org.eclipse.fennec.model.atlas.workflow.registration.DynamicEPackageRegistrationService;
 import org.eclipse.fennec.model.atlas.wf.workflowapi.RegistryService;
 import org.eclipse.fennec.model.atlas.wf.workflowapi.StageTransition;
 import org.eclipse.fennec.model.atlas.wf.workflowapi.WorkflowApiFactory;
@@ -134,6 +136,15 @@ public class RegistryServiceImpl<T extends EObject> implements RegistryService<T
      * registry is already activated for; the replay is idempotent on the receiver
      * side.
      */
+    /**
+     * Optional, because a registry of plain EObjects has no EPackage registration to keep in step —
+     * and dynamic, so this bundle's own registration service coming up later does not hold up a
+     * registry.
+     */
+    @Reference(cardinality = ReferenceCardinality.OPTIONAL, policy = ReferencePolicy.DYNAMIC,
+            policyOption = ReferencePolicyOption.GREEDY)
+    private volatile DynamicEPackageRegistrationService ePackageRegistrations;
+
     @Reference(name = "stageActionService", target = ("(scope=no-inject)"),
             cardinality = ReferenceCardinality.MULTIPLE, policy = ReferencePolicy.DYNAMIC,
             policyOption = ReferencePolicyOption.GREEDY)
@@ -318,6 +329,96 @@ public class RegistryServiceImpl<T extends EObject> implements RegistryService<T
             dispatch(ActionEvent.UPDATE, newContext(scope, stage, metadata, null, null, null, null, false));
             return metadata;
         });
+    }
+
+    /*
+     * (non-Javadoc)
+     * 
+     * @see
+     * org.eclipse.fennec.model.atlas.wf.workflowapi.RegistryService#updateProperties
+     * (java.lang.String, java.lang.String, java.lang.String, java.util.Map)
+     */
+    @Override
+    public Promise<ObjectMetadata> updateProperties(String scope, String stage, String objectId,
+            Map<String, Object> properties) {
+
+        return promiseFactory.submit(() -> {
+            requireNonNull(objectId, "Object ID cannot be null");
+            requireNonNull(properties, "Properties cannot be null");
+
+            // validateWritableStage, deliberately NOT validateUpdatableStage: the final-stage bar
+            // on updateInStage protects released *content* from changing, and this touches none —
+            // no new contentHash, no new fingerprint, no storage write of the object. A final stage
+            // is exactly where a publication flag has to be editable, so the only gate that makes
+            // sense is the registry's own `writable` declaration.
+            validateWritableStage(stage);
+
+            EObjectStorageService<T> storageService = storageFor(stage);
+
+            ObjectMetadata metadata = WorkflowServiceHelper
+                    .getPromiseValue(storageService.retrieveMetadata(scope, config.registry_name(), stage, objectId));
+            if (metadata == null) {
+                return null;
+            }
+
+            // Merge, key by key. Never addAll the argument's entries and never EcoreUtil.copy the
+            // metadata: `properties` is a containment list, so entries would be re-parented, and
+            // the suppressed-notification models break copy() on BasicInternalEList.
+            properties.forEach((key, value) -> metadata.getProperties().put(key, value));
+
+            Boolean stored = WorkflowServiceHelper.getPromiseValue(
+                    storageService.updateMetadata(scope, config.registry_name(), stage, objectId, metadata));
+            if (!Boolean.TRUE.equals(stored)) {
+                throw new IllegalStateException(String.format(
+                        "Storage refused the metadata property update for object %s in stage %s of registry %s",
+                        objectId, stage, config.registry_name()));
+            }
+            // Re-read rather than returning the object we just mutated: updateMetadata merges into
+            // its own copy and stamps lastChangeTime itself, so the in-memory instance would carry
+            // a different timestamp than the stored one — and that value becomes the response's
+            // Last-Modified and ETag, which a client then sends back in an If-Match.
+            ObjectMetadata reread = WorkflowServiceHelper
+                    .getPromiseValue(storageService.retrieveMetadata(scope, config.registry_name(), stage, objectId));
+            propagateDcatFlag(scope, stage, properties, reread == null ? metadata : reread);
+            return reread;
+        });
+    }
+
+    /**
+     * Projects a changed DCAT flag onto the live EPackage registration.
+     *
+     * <p>
+     * The flag is stored in the metadata but acted on as an {@code EPackage} service property
+     * (O13), so a metadata-only edit would otherwise leave the registry contradicting the storage —
+     * and the publisher believes the registry. The invariant belongs here rather than to the REST
+     * endpoint: whoever changes the stored property owes the registration an update, whichever
+     * caller it was.
+     * </p>
+     *
+     * <p>
+     * A registry of plain {@code EObject}s has no such registration, which the registration service
+     * reports by finding nothing — so no type test is needed here.
+     * </p>
+     */
+    private void propagateDcatFlag(String scope, String stage, Map<String, Object> properties,
+            ObjectMetadata metadata) {
+        if (!properties.containsKey(WorkflowConstants.DCAT_PUBLISH_METADATA_PROPERTY)) {
+            return;
+        }
+        DynamicEPackageRegistrationService registrations = ePackageRegistrations;
+        if (registrations == null) {
+            return;
+        }
+        Object nsUri = metadata.getProperties() == null ? null
+                : metadata.getProperties().get(WorkflowConstants.NS_URI_METADATA_PROPERTY);
+        if (nsUri == null) {
+            return;
+        }
+        Object flag = properties.get(WorkflowConstants.DCAT_PUBLISH_METADATA_PROPERTY);
+        // Read defensively: properties is String -> EJavaObject, so a stored string "true" must not
+        // read as false and a null must not throw.
+        boolean dcat = flag instanceof Boolean bool ? bool.booleanValue() : Boolean.parseBoolean(String.valueOf(flag));
+        registrations.updateDcatFlag(scope, stage, nsUri.toString(), dcat);
     }
 
     /*

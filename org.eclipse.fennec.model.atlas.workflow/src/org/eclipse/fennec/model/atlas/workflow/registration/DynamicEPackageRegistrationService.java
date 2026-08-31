@@ -15,6 +15,7 @@ package org.eclipse.fennec.model.atlas.workflow.registration;
 
 import java.util.Collection;
 import java.util.Hashtable;
+import java.util.Set;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
@@ -30,9 +31,11 @@ import org.eclipse.emf.ecore.resource.ResourceSet;
 import org.eclipse.fennec.emf.osgi.configurator.EPackageConfigurator;
 import org.eclipse.fennec.emf.osgi.fingerprint.FingerprintService;
 import org.eclipse.fennec.model.atlas.mgmt.management.ObjectMetadata;
+import org.eclipse.fennec.model.atlas.workflow.WorkflowConstants;
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.Filter;
 import org.osgi.framework.FrameworkUtil;
+import org.osgi.framework.Constants;
 import org.osgi.framework.ServiceReference;
 import org.osgi.framework.ServiceRegistration;
 import org.osgi.service.component.annotations.Activate;
@@ -125,6 +128,10 @@ public class DynamicEPackageRegistrationService {
     /**
      * Container for all service registrations related to a single EPackage.
      */
+    /** Set by the framework on every registration; not ours to copy or to set. */
+    private static final Set<String> FRAMEWORK_OWNED_PROPERTIES = Set.of(Constants.OBJECTCLASS, Constants.SERVICE_ID,
+            Constants.SERVICE_BUNDLEID, Constants.SERVICE_SCOPE);
+
     private static class RegisteredEPackage {
         final ServiceRegistration<EPackageConfigurator> configuratorRegistration;
         final ServiceRegistration<?> ePackageRegistration;
@@ -140,6 +147,44 @@ public class DynamicEPackageRegistrationService {
             this.eFactoryRegistration = eFactoryRegistration;
             this.conditionRegistration = conditionRegistration;
             this.modelName = modelName;
+        }
+
+        /**
+         * Sets one service property on every registration, keeping the rest as they are.
+         *
+         * <p>
+         * The current properties are read back off each {@code ServiceReference} rather than
+         * rebuilt, so whatever a particular registration carries beyond the configurator's own
+         * projection — the Condition's {@code condition.id}, for one — survives the update.
+         * Framework-owned keys are skipped: they are re-applied by the framework anyway, and
+         * cannot be set.
+         * </p>
+         */
+        void updateProperty(String key, Object value) {
+            for (ServiceRegistration<?> registration : new ServiceRegistration<?>[] { configuratorRegistration,
+                    ePackageRegistration, eFactoryRegistration, conditionRegistration }) {
+                if (registration == null) {
+                    continue;
+                }
+                try {
+                    ServiceReference<?> reference = registration.getReference();
+                    Hashtable<String, Object> properties = new Hashtable<>();
+                    for (String propertyKey : reference.getPropertyKeys()) {
+                        if (FRAMEWORK_OWNED_PROPERTIES.contains(propertyKey)) {
+                            continue;
+                        }
+                        Object current = reference.getProperty(propertyKey);
+                        if (current != null) {
+                            properties.put(propertyKey, current);
+                        }
+                    }
+                    properties.put(key, value);
+                    registration.setProperties(properties);
+                } catch (IllegalStateException alreadyGone) {
+                    logger.log(Level.FINE, "Service already unregistered; not updating its properties",
+                            alreadyGone);
+                }
+            }
         }
 
         void unregisterAll() {
@@ -285,10 +330,11 @@ public class DynamicEPackageRegistrationService {
 
             String fileExtension = extractFileExtension(metadata, ePackage);
             String version = extractVersion(metadata, ePackage);
+            boolean dcatPublish = extractDcatFlag(metadata);
 
             // Create configurator
             DynamicEPackageConfigurator configurator = new DynamicEPackageConfigurator(ePackage, fileExtension, version,
-                    metadata.getScope(), metadata.getStage(), fp);
+                    metadata.getScope(), metadata.getStage(), fp, dcatPublish);
 
             // Track for pending configuration event when ResourceSet becomes available
             String modelName = ePackage.getName();
@@ -337,6 +383,56 @@ public class DynamicEPackageRegistrationService {
      * @return true if unregistration was successful, false if not registered or failed
      * @throws IllegalArgumentException if namespaceURI is null or empty
      */
+    /**
+     * Projects a changed DCAT publication flag onto the live service registrations.
+     *
+     * <p>
+     * The flag is stored in {@code ObjectMetadata} but <em>acted on</em> as an {@code EPackage}
+     * service property (O13), so an edit that only touches the metadata leaves the registry saying
+     * the opposite of the storage — and the publisher believes the registry. Re-registering is not
+     * the answer: {@link #registerEPackage} is an idempotent no-op for unchanged content, since the
+     * fingerprint is part of the registration key, and forcing an unregister/register would churn
+     * every consumer of the EPackage for a metadata-only change.
+     * </p>
+     *
+     * <p>
+     * Modifying the service properties in place is both cheaper and exactly what the flag's design
+     * asks for: DS re-evaluates target filters when a bound service's properties change, so a
+     * publisher tracking {@code (dcat=true)} sees a bind or an unbind out of this, and needs no
+     * second notification channel.
+     * </p>
+     *
+     * @param scope        the scope the package is registered in
+     * @param stage        the stage
+     * @param namespaceURI the package's nsURI
+     * @param dcat         the new value
+     * @return {@code true} if a registration was found and updated; {@code false} when this
+     *         location holds no registration, which is the ordinary answer for a registry of
+     *         plain EObjects
+     */
+    public boolean updateDcatFlag(String scope, String stage, String namespaceURI, boolean dcat) {
+        if (namespaceURI == null || namespaceURI.isBlank()) {
+            return false;
+        }
+        registrationLock.lock();
+        try {
+            RegistrationKey key = findKeyForLocation(scope, stage, namespaceURI);
+            if (key == null) {
+                return false;
+            }
+            RegisteredEPackage registered = registeredEPackages.get(key);
+            if (registered == null) {
+                return false;
+            }
+            logger.info("Projecting " + WorkflowConstants.DCAT_PUBLISH_METADATA_PROPERTY + "=" + dcat
+                    + " onto the live registration of " + namespaceURI + " (scope=" + scope + ", stage=" + stage + ")");
+            registered.updateProperty(WorkflowConstants.DCAT_PUBLISH_METADATA_PROPERTY, Boolean.valueOf(dcat));
+            return true;
+        } finally {
+            registrationLock.unlock();
+        }
+    }
+
     public boolean unregisterEPackage(String scope, String stage, String namespaceURI) {
         return unregisterEPackage(scope, stage, namespaceURI, null);
     }
@@ -464,6 +560,30 @@ public class DynamicEPackageRegistrationService {
     }
 
     // Private helper methods for service registration
+
+    /**
+     * Reads the DCAT publication assertion out of the object's metadata so it can be projected
+     * onto the service properties.
+     *
+     * <p>
+     * {@code ObjectMetadata.properties} is typed {@code String -> EJavaObject}, so both
+     * {@code Boolean.TRUE} and the string {@code "true"} are storable and only one of them is
+     * what the schema upload path writes. Read both, and treat anything else — including a value
+     * of the wrong type entirely — as "not asserted" rather than as an error: a nonsense flag
+     * must not stop a package from being registered and served.
+     * </p>
+     *
+     * @param metadata the object's metadata; never {@code null} here
+     * @return {@code true} only if the metadata asserts publication
+     */
+    private boolean extractDcatFlag(ObjectMetadata metadata) {
+        Object flag = metadata.getProperties() == null ? null
+                : metadata.getProperties().get(WorkflowConstants.DCAT_PUBLISH_METADATA_PROPERTY);
+        if (flag instanceof Boolean bool) {
+            return bool.booleanValue();
+        }
+        return flag instanceof String text && Boolean.parseBoolean(text);
+    }
 
     private ServiceRegistration<EPackageConfigurator> registerEPackageConfigurator(
             DynamicEPackageConfigurator configurator) {

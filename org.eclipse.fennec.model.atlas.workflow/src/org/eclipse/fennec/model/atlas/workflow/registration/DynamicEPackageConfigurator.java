@@ -48,6 +48,7 @@ public class DynamicEPackageConfigurator implements EPackageConfigurator {
     private final String scope;
     private final String stage;
     private final String fingerprint;
+    private final boolean dcatPublish;
 
     /**
      * Creates a new dynamic EPackage configurator.
@@ -66,12 +67,27 @@ public class DynamicEPackageConfigurator implements EPackageConfigurator {
      */
     public DynamicEPackageConfigurator(EPackage ePackage, String fileExtension, String version, String scope,
             String stage, String fingerprint) {
+        this(ePackage, fileExtension, version, scope, stage, fingerprint, false);
+    }
+
+    /**
+     * As above, plus the DCAT publication flag.
+     *
+     * @param dcatPublish whether the object's metadata asserts that it may be published to a
+     *                    DCAT portal. Projected onto the service properties as {@code dcat}, which
+     *                    is where the DCAT publisher's tracker filter reads it — so clearing the
+     *                    flag makes the service stop matching and the publisher retires the entry
+     *                    through the same unbind path it already implements.
+     */
+    public DynamicEPackageConfigurator(EPackage ePackage, String fileExtension, String version, String scope,
+            String stage, String fingerprint, boolean dcatPublish) {
         this.ePackage = Objects.requireNonNull(ePackage, "EPackage cannot be null");
         this.fileExtension = fileExtension != null ? fileExtension : "model";
         this.version = version != null ? version : "1.0";
         this.scope = scope;
         this.stage = stage;
         this.fingerprint = fingerprint;
+        this.dcatPublish = dcatPublish;
     }
 
     @Override
@@ -119,6 +135,10 @@ public class DynamicEPackageConfigurator implements EPackageConfigurator {
             properties.put(EMFNamespaces.EMF_MODEL_FINGERPRINT, fingerprint);
         }
         properties.put("dynamic.registration", Boolean.TRUE);
+        // Always set, true or false: the publisher's filter is (dcat=true), so an absent property
+        // and an explicit false behave identically for it — but stating it keeps "not published"
+        // distinguishable from "this registration predates the flag" when reading the registry.
+        properties.put(WorkflowConstants.DCAT_PUBLISH_METADATA_PROPERTY, Boolean.valueOf(dcatPublish));
         return properties;
     }
 

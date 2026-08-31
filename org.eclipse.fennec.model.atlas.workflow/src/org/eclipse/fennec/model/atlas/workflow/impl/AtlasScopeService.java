@@ -14,6 +14,7 @@
 package org.eclipse.fennec.model.atlas.workflow.impl;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Stream;
@@ -21,6 +22,7 @@ import java.util.stream.Stream;
 import org.eclipse.emf.ecore.EPackage;
 import org.eclipse.fennec.model.atlas.mgmt.management.ObjectMetadata;
 import org.eclipse.fennec.model.atlas.scope.api.ReadableRegistryView;
+import org.eclipse.fennec.model.atlas.scope.api.ReadableScopeService;
 import org.eclipse.fennec.model.atlas.scope.api.ScopeInfo;
 import org.eclipse.fennec.model.atlas.wf.workflowapi.RegistryService;
 import org.eclipse.fennec.model.atlas.wf.workflowapi.Scope;
@@ -45,7 +47,10 @@ property = {
 		"scope.name="+WorkflowConstants.ATLAS_SCOPE_NAME, 
 		"scope.description=Atlas Scope. The parent of all other scopes."
 })
-public class AtlasScopeService implements ScopeService<EPackage> {
+// ReadableScopeService is named explicitly so DS registers it: without it this component
+// publishes only the deprecated ScopeService type, and a consumer tracking the read-side API
+// silently misses the atlas root scope. Every method is already implemented via ScopeService.
+public class AtlasScopeService implements ScopeService<EPackage>, ReadableScopeService<EPackage> {
 
 	private RegistryService<EPackage> atlasSchemaRegistryService;
 	private Scope scopeObject;
@@ -143,6 +148,18 @@ public class AtlasScopeService implements ScopeService<EPackage> {
 			String objectId, String version) {
 		validateRegistry(registry);
 		return atlasSchemaRegistryService.updateInStage(WorkflowConstants.ATLAS_SCOPE_NAME, stage, updatedObject, objectId, version);
+	}
+
+	/* 
+	 * (non-Javadoc)
+	 * @see org.eclipse.fennec.model.atlas.wf.workflowapi.ScopeService#updatePropertiesInStageForRegistry(java.lang.String, java.lang.String, java.lang.String, java.util.Map)
+	 */
+	@Override
+	public Promise<ObjectMetadata> updatePropertiesInStageForRegistry(String registry, String stage, String objectId,
+			Map<String, Object> properties) {
+		validateRegistry(registry);
+		return atlasSchemaRegistryService.updateProperties(WorkflowConstants.ATLAS_SCOPE_NAME, stage, objectId,
+				properties);
 	}
 
 	/* 

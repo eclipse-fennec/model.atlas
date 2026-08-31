@@ -1,0 +1,27 @@
+# The local jena runtime plus DCAT publishing, for driving a portal by hand.
+#
+# Kept separate from modelatlas.runtime_local-jena.bndrun because this one needs a
+# DCAT.Atlas portal reachable at DCAT_PORTAL_BASE_URI (default http://localhost:8090/rest/);
+# without one the client logs transport failures on every publish attempt.
+#
+# Deliberately NOT `-resolve.effective: active`: the osgitech whiteboard registers
+# jakarta.ws.rs.client.ClientBuilder programmatically without an osgi.service capability,
+# so DcatAtlasClientComponent's mandatory reference has nothing to resolve against.
+-include: \
+	modelatlas.runtime_local-jena.bndrun
+
+# Start levels are above the atlas's own bundles so the publisher binds scope services that
+# already exist, rather than racing them: the runtime's own bundles occupy 1000..~1070.
+-runbundles.dcat: \
+	org.eclipse.fennec.dcat.atlas.dcatap.de.model;startlevel=1080,\
+	org.eclipse.fennec.dcat.atlas.client.api;startlevel=1081,\
+	org.eclipse.fennec.dcat.atlas.client.impl;startlevel=1082,\
+	org.eclipse.fennec.dcat.atlas.client.osgi;startlevel=1083,\
+	org.eclipse.fennec.model.atlas.dcat;startlevel=1084,\
+	org.eclipse.fennec.model.atlas.runtime.config.local.jena.dcat;startlevel=1085
+
+# Headless runs have no console, and the gogo shell stops the framework as soon as its
+# stdin ends — the framework exited while bundles were still starting. --noshutdown keeps
+# it up so the publisher can actually reach the portal.
+-runproperties.dcat: \
+	gosh.args=--noshutdown

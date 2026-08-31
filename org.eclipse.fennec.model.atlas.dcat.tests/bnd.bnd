@@ -1,0 +1,33 @@
+Bundle-Name: MAC DCAT Publisher Tests
+Bundle-Description: OSGi integration tests for the DCAT publisher. Drives the real DcatPublisher and \
+ the real DCAT.Atlas client against a throw-away portal container, so the assertions are made against \
+ what the portal actually stored. Skipped when no portal image is available locally.
+
+Test-Cases: ${classes;HIERARCHY_INDIRECTLY_ANNOTATED;org.junit.platform.commons.annotation.Testable;CONCRETE}
+
+-workingset: workflow
+
+-library: \
+	enableOSGi-Test,\
+	enableEMF
+
+-buildpath: \
+	org.osgi.framework;version=latest,\
+	org.osgi.util.promise;version=latest,\
+	org.osgi.util.function;version=latest,\
+	org.osgi.service.cm;version=latest,\
+	org.osgi.service.component;version=latest,\
+	org.osgi.test.junit5.cm;version=latest,\
+	org.eclipse.daanse.tooling.testcontainers.core;version=latest,\
+	org.eclipse.fennec.model.atlas.dcat;version=snapshot,\
+	org.eclipse.fennec.model.atlas.scope.api;version=snapshot,\
+	org.eclipse.fennec.model.atlas.mediatypes.api;version=snapshot,\
+	org.apache.felix.healthcheck.api;version=latest,\
+	org.eclipse.fennec.dcat.atlas.client.api;version=latest,\
+	org.eclipse.fennec.dcat.atlas.client.osgi;version=latest,\
+	org.eclipse.fennec.dcat.atlas.dcatap.de.model;version=latest
+
+Private-Package: org.eclipse.fennec.model.atlas.dcat.tests
+
+# Do not publish this bundle to Maven Central; local install only
+-maven-release: local

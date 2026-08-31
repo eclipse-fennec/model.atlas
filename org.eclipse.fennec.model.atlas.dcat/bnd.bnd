@@ -1,0 +1,27 @@
+Bundle-Name: MAC DCAT Publisher
+Bundle-Description: Publishes this Model Atlas's scopes and schema packages to a DCAT.Atlas portal.
+
+-workingset: workflow
+-library: enableEMF
+
+Export-Package: org.eclipse.fennec.model.atlas.dcat.api
+Private-Package: org.eclipse.fennec.model.atlas.dcat.internal
+
+-buildpath: \
+	org.osgi.framework;version=latest,\
+	org.osgi.util.promise;version=latest,\
+	org.osgi.util.function;version=latest,\
+	org.osgi.service.component;version=latest,\
+	org.osgi.service.cm;version=latest,\
+	org.osgi.service.metatype;version=latest,\
+	org.eclipse.fennec.dcat.atlas.client.api;version=latest,\
+	org.eclipse.fennec.dcat.atlas.client.osgi;version=latest,\
+	org.eclipse.fennec.dcat.atlas.dcatap.de.model;version=latest,\
+	org.eclipse.fennec.model.atlas.scope.api;version=snapshot,\
+	org.eclipse.fennec.model.atlas.mediatypes.api;version=snapshot,\
+	org.apache.felix.healthcheck.api;version=latest,\
+	org.eclipse.fennec.emf.osgi.api;version=latest
+
+-testpath: \
+	junit-jupiter-api,\
+	assertj-core;version=latest

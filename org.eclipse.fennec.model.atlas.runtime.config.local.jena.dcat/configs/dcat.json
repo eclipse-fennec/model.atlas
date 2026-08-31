@@ -1,0 +1,48 @@
+{
+	":configurator:resource-version": 1,
+	":configurator:symbolicname": "org.eclipse.fennec.model.atlas.runtime.config.local.jena.dcat",
+	":configurator:version": "0.0.0",
+
+	"org.eclipse.fennec.dcat.atlas.client~jena": {
+		"dcat.portal": "jena",
+		"base.uri": "$[env:DCAT_PORTAL_BASE_URI;default=http://localhost:8090/rest/]",
+		"check.ready": true,
+		"require.ready": false
+	},
+
+	"DcatPublisher~jena": {
+		"dcat.portal.target": "(dcat.portal=jena)",
+		"atlas.public.base.uri": "$[env:ATLAS_PUBLIC_BASE_URI;default=http://localhost:8086/atlas/rest]",
+		"allow.local.base.uri": true,
+		// The atlas root scope is deliberately absent: its registry holds the system schemas,
+		// which are not open data. Adding "atlas" here does work — verified — and would then give
+		// jena's Catalog every atlas Dataset as well, since a descendant serves what it inherits
+		// (O4: one Dataset, linked into every descendant Catalog).
+		"scopes": ["jena"],
+		"language": "de",
+		"publisher.name": "Stadt Jena",
+		"publisher.about": "https://www.jena.de",
+		// Required to publish a Distribution: dcat:Distribution#license is a lowerBound=1
+		// containment, so the portal refuses a Distribution without one.
+		"license.uri": "http://dcat-ap.de/def/licenses/dl-by-de/2.0",
+		"distribution.media.types": ["application/xmi", "application/json"],
+		"publish.stages": ["FINAL"],
+		// What happens when a package stops being publishable: UNLINK drops the Catalog
+		// membership and keeps the resource, so nothing a portal-side editor added is destroyed.
+		// DELETE and CASCADE remove it; NONE leaves everything.
+		"unpublish.mode": "UNLINK",
+		// A content update reaches the publisher as unregister-then-register, so a retirement
+		// waits this long for the re-register that cancels it. Shorter than the shipped 30s
+		// because a local runtime re-registers fast, and a short window makes manual testing
+		// bearable.
+		"unpublish.delay.seconds": 10,
+		// A restart is not a statement about the models: the catalogue is left standing.
+		"retire.on.shutdown": false,
+		// A 503, a connect timeout or a portal that is not ready yet is retried with a doubling
+		// delay; a payload the portal refuses as invalid is not retried at all. Whatever the retries
+		// give up on is reported by the `atlas`-tagged health check rather than only logged.
+		"retry.initial.delay.seconds": 5,
+		"retry.max.delay.seconds": 300,
+		"retry.max.attempts": 6
+	}
+}
