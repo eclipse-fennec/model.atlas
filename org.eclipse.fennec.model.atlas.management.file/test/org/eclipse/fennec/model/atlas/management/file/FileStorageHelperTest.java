@@ -296,4 +296,40 @@ public class FileStorageHelperTest {
         ObjectMetadata loaded = helper.loadMetadata(TEST_SCOPE, TEST_REGISTRY, TEST_STAGE, "non-existent");
         assertNull(loaded);
     }
+
+    /**
+     * Issue #223: an objectId that cannot be a file name — here a raw nsURI, which
+     * the schema transition endpoint probes before its nsUri fallback — is simply
+     * an object that does not exist. On Windows the ':' used to escape as an
+     * InvalidPathException (HTTP 500); on Linux the '/' addressed a nested path.
+     */
+    @Test
+    public void testLookupWithNonFileNameObjectIdIsNotFound() throws Exception {
+        String nsUri = "http://test.example.com/schema/1.1";
+
+        assertFalse(helper.objectExists(TEST_SCOPE, TEST_REGISTRY, TEST_STAGE, nsUri));
+        assertNull(helper.loadMetadata(TEST_SCOPE, TEST_REGISTRY, TEST_STAGE, nsUri));
+        assertNull(helper.loadEObject(TEST_SCOPE, TEST_REGISTRY, TEST_STAGE, nsUri));
+        assertFalse(helper.deleteObject(TEST_SCOPE, TEST_REGISTRY, TEST_STAGE, nsUri));
+        assertFalse(helper.objectExists(TEST_SCOPE, TEST_REGISTRY, TEST_STAGE, ".."));
+    }
+
+    /**
+     * Issue #223: the write side refuses an objectId that would leave the stage
+     * directory instead of writing wherever the path happens to point.
+     */
+    @Test
+    public void testSaveWithNonFileNameObjectIdIsRejected() throws Exception {
+        EPackage testPackage = EcoreFactory.eINSTANCE.createEPackage();
+        testPackage.setName("Escape");
+        ObjectMetadata metadata = ManagementFactory.eINSTANCE.createObjectMetadata();
+
+        assertThrows(IllegalArgumentException.class,
+                () -> helper.saveEObject(TEST_SCOPE, TEST_REGISTRY, TEST_STAGE, "../escape", testPackage, metadata));
+        assertThrows(IllegalArgumentException.class,
+                () -> helper.saveMetadata(TEST_SCOPE, TEST_REGISTRY, TEST_STAGE, "../escape", metadata));
+
+        File escaped = tempDir.resolve(TEST_SCOPE).resolve(TEST_REGISTRY).resolve("escape.xmi").toFile();
+        assertFalse(escaped.exists(), "Nothing may be written outside the stage directory");
+    }
 }

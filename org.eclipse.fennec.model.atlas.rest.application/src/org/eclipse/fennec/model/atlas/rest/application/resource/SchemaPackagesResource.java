@@ -307,6 +307,7 @@ public class SchemaPackagesResource {
                     @ApiResponse(responseCode = "201", description = "Package created successfully", content = @Content(mediaType = MediaType.APPLICATION_JSON)),
                     @ApiResponse(responseCode = "400", description = "Invalid package data, missing required parameters, nsUri mismatch, or version incompatibility"),
                     @ApiResponse(responseCode = "400", description = "Scope not available, schema registry not available for scope, stage not available for registry or not a valid stage"),
+                    @ApiResponse(responseCode = "403", description = "The existing package is read-only, or its stage is final for the registry and so its packages cannot be updated"),
                     @ApiResponse(responseCode = "409", description = "Package with nsUri already exists"),
                     @ApiResponse(responseCode = "415", description = "Unsupported media type"),
                     @ApiResponse(responseCode = "500", description = "Internal server error") })

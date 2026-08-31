@@ -47,6 +47,7 @@ import org.eclipse.fennec.model.atlas.mgmt.management.ObjectMetadata;
 import org.eclipse.fennec.model.atlas.scope.api.RegistryType;
 import org.eclipse.fennec.model.atlas.scope.api.ScopeApiFactory;
 import org.eclipse.fennec.model.atlas.scope.api.StageInfo;
+import org.eclipse.fennec.model.atlas.scope.api.StagePolicyException;
 import org.eclipse.fennec.model.atlas.wf.workflowapi.Registry;
 import org.eclipse.fennec.model.atlas.workflow.WorkflowConstants;
 import org.eclipse.fennec.model.atlas.workflow.registration.DynamicEPackageRegistrationService;
@@ -807,7 +808,12 @@ public class RegistryServiceImpl<T extends EObject> implements RegistryService<T
     private void validateUpdatableStage(String stageName) {
         validateWritableStage(stageName);
         if (isFinalStage(stageName)) {
-            throw new IllegalArgumentException(String.format(
+            // A policy refusal, not a malformed request: the stage exists and is
+            // writable, and this very object is in it. Raised as its own type so the
+            // caller can answer it as one — as an IllegalArgumentException it was
+            // indistinguishable from a bad parameter, and once wrapped by the promise
+            // it reached the REST layer as a plain failure and became a 500.
+            throw new StagePolicyException(String.format(
                     "Stage %s is final for the registry %s. Objects in the final stage cannot be updated.", stageName,
                     config.registry_name()));
         }

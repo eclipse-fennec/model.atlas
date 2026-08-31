@@ -24,7 +24,9 @@ import java.util.Date;
 
 import org.eclipse.emf.ecore.EAttribute;
 import org.eclipse.emf.ecore.EClass;
+import org.eclipse.emf.ecore.EClassifier;
 import org.eclipse.emf.ecore.EPackage;
+import org.eclipse.emf.ecore.EReference;
 import org.eclipse.emf.ecore.EcoreFactory;
 import org.eclipse.fennec.model.atlas.rest.model.RestFactory;
 import org.eclipse.fennec.model.atlas.rest.model.StageTransitionRequest;
@@ -66,6 +68,9 @@ public class SchemaPackagesResourceTest extends AbstractRestTest {
 
 	private static final String TEST_PACKAGE_NSURI = "http://test.example.com/schema/1.1";
 	private static final String TEST_PACKAGE_NAME = "TestSchema";
+
+	private static final String HREF_PACKAGE_NSURI = "http://test.example.com/hreftest/1.0";
+	private static final String HREF_PACKAGE_NAME = "hreftest";
 
 	// ========== List All Packages Tests ==========
 
@@ -548,6 +553,95 @@ public class SchemaPackagesResourceTest extends AbstractRestTest {
 		assertStatus(201, response,
 				"Should return HTTP 201 Created when Overwrite is true for new package (behaves like normal create)");
 		assertNotNull(responseContent, "Should return created metadata");
+	}
+
+	// ========== Final Stage Policy Tests ==========
+
+	/**
+	 * A writable final stage still accepts a package that is not there yet.
+	 */
+	@Test
+	@ParentScopeServiceSetup
+	public void testCreatePackage_NewInFinalStage_Returns201(@InjectBundleContext BundleContext context)
+			throws Exception {
+		ensureResourceAvailability(context);
+
+		Response response = postPackage(TestAnnotations.STAGE_RELEASE, TEST_PACKAGE_NAME, null);
+
+		assertStatus(201, response, "A new package in a writable final stage should still be created");
+	}
+
+	/**
+	 * Updating what is already in the final stage is refused by the registry's stage
+	 * policy, not broken by it: the client has to be able to tell a rule it violated
+	 * from a server that failed, so the answer is 403 and names stage and registry.
+	 */
+	@Test
+	@ParentScopeServiceSetup
+	public void testCreatePackage_OverwriteInFinalStage_Returns403(@InjectBundleContext BundleContext context)
+			throws Exception {
+		ensureResourceAvailability(context);
+		assertStatus(201, postPackage(TestAnnotations.STAGE_RELEASE, TEST_PACKAGE_NAME, null),
+				"Should return HTTP 201 Created");
+
+		Response response = postPackage(TestAnnotations.STAGE_RELEASE, "UpdatedSchema", true);
+
+		assertStatus(403, response, "Updating a package in a final stage should be refused, not fail");
+		String body = response.readEntity(String.class);
+		assertTrue(body.contains(TestAnnotations.STAGE_RELEASE),
+				"The refusal should name the stage it applies to: " + body);
+		assertTrue(body.contains("schema"), "The refusal should name the registry it applies to: " + body);
+	}
+
+	/**
+	 * Without {@code overwrite} the same second upload is a plain conflict, and stays
+	 * one — the stage policy only speaks for requests that actually mean to update.
+	 */
+	@Test
+	@ParentScopeServiceSetup
+	public void testCreatePackage_ExistingInFinalStageWithoutOverwrite_Returns409(
+			@InjectBundleContext BundleContext context) throws Exception {
+		ensureResourceAvailability(context);
+		assertStatus(201, postPackage(TestAnnotations.STAGE_RELEASE, TEST_PACKAGE_NAME, null),
+				"Should return HTTP 201 Created");
+
+		Response response = postPackage(TestAnnotations.STAGE_RELEASE, TEST_PACKAGE_NAME, false);
+
+		assertStatus(409, response, "An existing package without overwrite should still be a conflict");
+	}
+
+	/**
+	 * A stage that is not final keeps accepting updates.
+	 */
+	@Test
+	@ParentScopeServiceSetup
+	public void testCreatePackage_OverwriteInNonFinalStage_Returns200(@InjectBundleContext BundleContext context)
+			throws Exception {
+		ensureResourceAvailability(context);
+		assertStatus(201, postPackage(TestAnnotations.STAGE_DRAFT, TEST_PACKAGE_NAME, null),
+				"Should return HTTP 201 Created");
+
+		Response response = postPackage(TestAnnotations.STAGE_DRAFT, "UpdatedSchema", true);
+
+		assertStatus(200, response, "Updating a package in a non-final stage should succeed");
+	}
+
+	/**
+	 * Posts {@link #TEST_PACKAGE_NSURI} under {@code packageName} to {@code stage}.
+	 *
+	 * @param stage       the stage to post to
+	 * @param packageName the package's name, so a second post can carry other content
+	 * @param overwrite   the {@code overwrite} query parameter, or {@code null} to omit it
+	 */
+	private Response postPackage(String stage, String packageName, Boolean overwrite) throws IOException {
+		EPackage testPackage = TestHelper.createTestEPackage(TEST_PACKAGE_NSURI, packageName, "test");
+		String xmiContent = TestHelper.serializeToXMI(testPackage, resourceSet);
+		WebTarget target = schemaStageTarget(stage).queryParam("nsUri", TEST_PACKAGE_NSURI).queryParam("name",
+				packageName);
+		if (overwrite != null) {
+			target = target.queryParam("overwrite", overwrite);
+		}
+		return target.request("application/xmi").post(Entity.entity(xmiContent, "application/xmi"));
 	}
 
 	// ========== Get Package Content Tests ==========
@@ -2165,6 +2259,151 @@ public class SchemaPackagesResourceTest extends AbstractRestTest {
 		java.net.http.HttpResponse<String> response = patch(metadataUri(TestAnnotations.STAGE_DRAFT, "dcat", "true"));
 
 		assertEquals(404, response.statusCode(), "no such package in that stage");
+	}
+	
+	// ========== Intra-Package Reference Serialization Tests ==========
+
+	/**
+	 * A package whose classifiers reference each other must be served the way it
+	 * was stored: an intra-package reference stays a bare fragment
+	 * ({@code #//Inner}), because a document that names its own file in its hrefs
+	 * only resolves as long as the caller saves it under exactly that file name.
+	 */
+	@Test
+	@ParentScopeServiceSetup
+	public void testGetPackageContent_KeepsIntraPackageReferenceAsFragment(@InjectBundleContext BundleContext context)
+			throws Exception {
+		ensureResourceAvailability(context);
+		String xmiContent = TestHelper.serializeToXMI(createIntraReferencePackage(), resourceSet);
+
+		Response created = schemaStageTarget(TestAnnotations.STAGE_DRAFT).queryParam("nsUri", HREF_PACKAGE_NSURI)
+				.queryParam("name", HREF_PACKAGE_NAME).request("application/xmi")
+				.post(Entity.entity(xmiContent, "application/xmi"));
+		assertStatus(201, created, "Should return HTTP 201 Created");
+
+		Response response = schemaStageTarget(TestAnnotations.STAGE_DRAFT).path("content")
+				.queryParam("nsUri", HREF_PACKAGE_NSURI).request("application/xmi").get();
+		assertStatus(200, response, "Should return HTTP 200 OK");
+
+		String served = response.readEntity(String.class);
+		assertFalse(served.contains(HREF_PACKAGE_NAME + ".ecore#//Inner"),
+				"Intra-package reference must not be rewritten into a file-name-relative href: " + served);
+		assertTrue(served.contains("eType=\"#//Inner\""),
+				"Intra-package reference should be served as the stored fragment #//Inner: " + served);
+		assertTrue(served.contains("http://www.eclipse.org/emf/2002/Ecore#//EInt"),
+				"Cross-package reference should stay absolute: " + served);
+		assertEquals("attachment; filename=" + HREF_PACKAGE_NAME + ".ecore",
+				response.getHeaderString("Content-Disposition"),
+				"Content-Disposition should still suggest the package file name");
+	}
+
+	/**
+	 * The served document has to load under any file name the caller picks, so its
+	 * intra-package reference must resolve without the response ever having been
+	 * saved as {@code hreftest.ecore}.
+	 */
+	@Test
+	@ParentScopeServiceSetup
+	public void testGetPackageContent_ServedDocumentResolvesUnderAnyFileName(@InjectBundleContext BundleContext context)
+			throws Exception {
+		ensureResourceAvailability(context);
+		String xmiContent = TestHelper.serializeToXMI(createIntraReferencePackage(), resourceSet);
+
+		Response created = schemaStageTarget(TestAnnotations.STAGE_DRAFT).queryParam("nsUri", HREF_PACKAGE_NSURI)
+				.queryParam("name", HREF_PACKAGE_NAME).request("application/xmi")
+				.post(Entity.entity(xmiContent, "application/xmi"));
+		assertStatus(201, created, "Should return HTTP 201 Created");
+
+		Response response = schemaStageTarget(TestAnnotations.STAGE_DRAFT).path("content")
+				.queryParam("nsUri", HREF_PACKAGE_NSURI).request("application/xmi").get();
+		assertStatus(200, response, "Should return HTTP 200 OK");
+
+		// Loaded under a file name that has nothing to do with the package name.
+		EPackage reloaded = (EPackage) TestHelper.deserializeFromXMI(response.readEntity(String.class), resourceSet);
+		EClass outer = (EClass) reloaded.getEClassifier("Outer");
+		assertNotNull(outer, "Served package should contain the Outer class");
+		EClassifier innerType = ((EReference) outer.getEStructuralFeature("inner")).getEType();
+		assertNotNull(innerType, "Reference type should be present");
+		assertFalse(innerType.eIsProxy(),
+				"Intra-package reference should resolve within the served document, not dangle as a proxy");
+		assertEquals(reloaded.getEClassifier("Inner"), innerType,
+				"Reference should point at the Inner class of the served package");
+	}
+
+	/**
+	 * The UML representation of the same package must keep the reference between its
+	 * two classes inside the served document, rather than routing it through the file
+	 * name the download is suggested to be saved as.
+	 */
+	@Test
+	@ParentScopeServiceSetup
+	public void testGetPackageContent_UmlKeepsIntraModelReferenceInsideTheDocument(
+			@InjectBundleContext BundleContext context) throws Exception {
+		ensureResourceAvailability(context);
+		String xmiContent = TestHelper.serializeToXMI(createIntraReferencePackage(), resourceSet);
+
+		Response created = schemaStageTarget(TestAnnotations.STAGE_DRAFT).queryParam("nsUri", HREF_PACKAGE_NSURI)
+				.queryParam("name", HREF_PACKAGE_NAME).request("application/xmi")
+				.post(Entity.entity(xmiContent, "application/xmi"));
+		assertStatus(201, created, "Should return HTTP 201 Created");
+
+		Response response = schemaStageTarget(TestAnnotations.STAGE_DRAFT).path("content")
+				.queryParam("nsUri", HREF_PACKAGE_NSURI).request("application/uml").get();
+		assertStatus(200, response, "Should return HTTP 200 OK");
+
+		String served = response.readEntity(String.class);
+		assertTrue(served.contains("uml:"), "Should be served as a UML document: " + served);
+		assertFalse(served.contains(HREF_PACKAGE_NAME + ".uml"),
+				"The served model must not reference its own file name: " + served);
+	}
+
+	/**
+	 * The XSD representation of the same package must be served as a schema document
+	 * that keeps the reference between its two types inside itself.
+	 */
+	@Test
+	@ParentScopeServiceSetup
+	public void testGetPackageContent_XsdKeepsIntraSchemaReferenceInsideTheDocument(
+			@InjectBundleContext BundleContext context) throws Exception {
+		ensureResourceAvailability(context);
+		String xmiContent = TestHelper.serializeToXMI(createIntraReferencePackage(), resourceSet);
+
+		Response created = schemaStageTarget(TestAnnotations.STAGE_DRAFT).queryParam("nsUri", HREF_PACKAGE_NSURI)
+				.queryParam("name", HREF_PACKAGE_NAME).request("application/xmi")
+				.post(Entity.entity(xmiContent, "application/xmi"));
+		assertStatus(201, created, "Should return HTTP 201 Created");
+
+		Response response = schemaStageTarget(TestAnnotations.STAGE_DRAFT).path("content")
+				.queryParam("nsUri", HREF_PACKAGE_NSURI).request("application/schema+xml").get();
+		assertStatus(200, response, "Should return HTTP 200 OK");
+
+		String served = response.readEntity(String.class);
+		// The closing quote matters: the XMI serialization of the XSD metamodel declares
+		// "…/XMLSchema-instance", which carries this namespace as a prefix.
+		assertTrue(served.contains("\"http://www.w3.org/2001/XMLSchema\""),
+				"Should be served as an XML Schema document, not as XMI of the XSD model: " + served);
+		assertFalse(served.contains(HREF_PACKAGE_NAME + ".xsd"),
+				"The served schema must not reference its own file name: " + served);
+	}
+
+	/**
+	 * Creates a package holding both reference kinds the serialization has to keep
+	 * apart: {@code Outer.inner} points at a classifier of the very same package,
+	 * {@code Inner.v} at Ecore's {@code EInt} in another one.
+	 */
+	private static EPackage createIntraReferencePackage() {
+		EPackage ePackage = TestHelper.createTestEPackage(HREF_PACKAGE_NSURI, HREF_PACKAGE_NAME, HREF_PACKAGE_NAME);
+		EClass inner = TestHelper.createTestEClass("Inner");
+		inner.getEStructuralFeatures().add(TestHelper.createTestEAttribute("v"));
+		EClass outer = TestHelper.createTestEClass("Outer");
+		EReference reference = EcoreFactory.eINSTANCE.createEReference();
+		reference.setName("inner");
+		reference.setEType(inner);
+		reference.setContainment(true);
+		outer.getEStructuralFeatures().add(reference);
+		ePackage.getEClassifiers().add(inner);
+		ePackage.getEClassifiers().add(outer);
+		return ePackage;
 	}
 
 	/** /{scope}/schema */

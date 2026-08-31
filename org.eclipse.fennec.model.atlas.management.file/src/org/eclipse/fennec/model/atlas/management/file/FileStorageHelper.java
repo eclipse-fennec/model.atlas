@@ -15,6 +15,7 @@ package org.eclipse.fennec.model.atlas.management.file;
 
 import java.io.IOException;
 import java.nio.file.Files;
+import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -57,8 +58,42 @@ public class FileStorageHelper extends AbstractStorageHelper {
 
     @Override
     protected URI createStorageURI(String scope, String registry, String stage, String path) {
-        Path filePath = workspacePath.resolve(scope).resolve(registry).resolve(stage).resolve(path);
+        Path filePath = resolveFileInStage(stagePath(scope, registry, stage), path);
+        if (filePath == null) {
+            // Only the write side gets here with an unchecked id (reads look up first and
+            // find nothing); refusing beats an OS-dependent failure or a file outside the
+            // stage directory.
+            throw new IllegalArgumentException(
+                    "Object id is not a valid file name for the file storage: '" + path + "'");
+        }
         return URI.createFileURI(filePath.toString());
+    }
+
+    private Path stagePath(String scope, String registry, String stage) {
+        return workspacePath.resolve(scope).resolve(registry).resolve(stage);
+    }
+
+    /**
+     * Resolves {@code fileName} as exactly one path segment below {@code base}, or
+     * returns {@code null} when it cannot be one: it contains a separator, is
+     * {@code .}/{@code ..}, or is illegal on the host file system (e.g. {@code :}
+     * on Windows). The file backend maps an objectId to one file name; an id that
+     * is not a file name — a raw nsURI like {@code http://x/y}, which the schema
+     * transition endpoint probes before falling back to its nsUri lookup — denotes
+     * no stored object and must not reach {@link Path#resolve}, which would throw
+     * on Windows or, with a separator, address a file outside the stage directory
+     * (issue #223).
+     */
+    private static Path resolveFileInStage(Path base, String fileName) {
+        if (fileName == null || fileName.isEmpty() || ".".equals(fileName) || "..".equals(fileName)) {
+            return null;
+        }
+        try {
+            Path file = base.resolve(fileName);
+            return base.equals(file.getParent()) ? file : null;
+        } catch (InvalidPathException e) {
+            return null;
+        }
     }
 
     @Override
@@ -70,8 +105,8 @@ public class FileStorageHelper extends AbstractStorageHelper {
 
     @Override
     protected boolean storageExists(String scope, String registry, String stage, String path) throws IOException {
-        Path filePath = workspacePath.resolve(scope).resolve(registry).resolve(stage).resolve(path);
-        return Files.exists(filePath);
+        Path filePath = resolveFileInStage(stagePath(scope, registry, stage), path);
+        return filePath != null && Files.exists(filePath);
     }
 
     @Override
@@ -174,8 +209,8 @@ public class FileStorageHelper extends AbstractStorageHelper {
         }
 
         // Delete the metadata file
-        Path metadataPath = basePath.resolve(objectId + METADATA_EXTENSION);
-        if (Files.exists(metadataPath)) {
+        Path metadataPath = resolveFileInStage(basePath, objectId + METADATA_EXTENSION);
+        if (metadataPath != null && Files.exists(metadataPath)) {
             Files.delete(metadataPath);
             deleted = true;
         }

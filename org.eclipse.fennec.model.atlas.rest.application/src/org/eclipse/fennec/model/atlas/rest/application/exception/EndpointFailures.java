@@ -15,6 +15,8 @@ package org.eclipse.fennec.model.atlas.rest.application.exception;
 
 import java.lang.reflect.InvocationTargetException;
 
+import org.eclipse.fennec.model.atlas.scope.api.StagePolicyException;
+
 import jakarta.ws.rs.WebApplicationException;
 import jakarta.ws.rs.core.Response.Status;
 
@@ -59,6 +61,9 @@ public final class EndpointFailures {
      * to serve it, and the distinction is the difference between "you cannot do that here" and "this
      * server is broken". Its message names the registry, so it is safe to pass on: it says nothing
      * about storage layout or configuration.
+     * A {@link StagePolicyException} anywhere in that chain becomes a 403 carrying its
+     * message: the registry refused the operation, and the client needs to read that as
+     * a rule it cannot retry past rather than as a fault.
      * </p>
      *
      * @param failure the exception an endpoint caught; never {@code null}
@@ -79,6 +84,15 @@ public final class EndpointFailures {
         }
         if (cause instanceof UnsupportedOperationException refused) {
             return new WebApplicationException(refused.getMessage(), refused, Status.METHOD_NOT_ALLOWED);
+        }
+        // A stage policy that refused the operation is an answer as well, and every
+        // write path raises it inside a Promise — so it arrives here wrapped, where a
+        // generic 500 would tell the client to retry something that can never succeed.
+        // Answering it centrally keeps every endpoint that routes failures through this
+        // class consistent, instead of each one recognising the refusal for itself.
+        StagePolicyException refusal = StagePolicyExceptionMapper.findInChain(cause);
+        if (refusal != null) {
+            return new WebApplicationException(refusal.getMessage(), refusal, Status.FORBIDDEN);
         }
         return new WebApplicationException(cause, Status.INTERNAL_SERVER_ERROR);
     }
