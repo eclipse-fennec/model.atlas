@@ -63,7 +63,20 @@ public enum RegistryType implements Enumerator {
 	 * @generated
 	 * @ordered
 	 */
-	COCL(2, "COCL", "COCL");
+	COCL(2, "COCL", "COCL"),
+
+	/**
+	 * The '<em><b>TRANSFORMATION</b></em>' literal object.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * <!-- begin-model-doc -->
+	 * Holds model-to-model transformation content: sources, compiled units and their diagnostics (issue #239).
+	 * <!-- end-model-doc -->
+	 * @see #TRANSFORMATION_VALUE
+	 * @generated
+	 * @ordered
+	 */
+	TRANSFORMATION(3, "TRANSFORMATION", "TRANSFORMATION");
 
 	/**
 	 * The '<em><b>OTHER</b></em>' literal value.
@@ -99,6 +112,20 @@ public enum RegistryType implements Enumerator {
 	public static final int COCL_VALUE = 2;
 
 	/**
+	 * The '<em><b>TRANSFORMATION</b></em>' literal value.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * <!-- begin-model-doc -->
+	 * Holds model-to-model transformation content: sources, compiled units and their diagnostics (issue #239).
+	 * <!-- end-model-doc -->
+	 * @see #TRANSFORMATION
+	 * @model
+	 * @generated
+	 * @ordered
+	 */
+	public static final int TRANSFORMATION_VALUE = 3;
+
+	/**
 	 * An array of all the '<em><b>Registry Type</b></em>' enumerators.
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
@@ -109,6 +136,7 @@ public enum RegistryType implements Enumerator {
 			OTHER,
 			SCHEMA,
 			COCL,
+			TRANSFORMATION,
 		};
 
 	/**
@@ -168,6 +196,7 @@ public enum RegistryType implements Enumerator {
 			case OTHER_VALUE: return OTHER;
 			case SCHEMA_VALUE: return SCHEMA;
 			case COCL_VALUE: return COCL;
+			case TRANSFORMATION_VALUE: return TRANSFORMATION;
 		}
 		return null;
 	}
