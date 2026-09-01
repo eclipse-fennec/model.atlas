@@ -62,6 +62,7 @@ import org.eclipse.emf.ecore.EPackage;
 import dcat.Catalog;
 import dcat.Dataset;
 import dcat.Distribution;
+import rdf.PlainLiteral;
 
 /**
  * Publishes this atlas to one DCAT.Atlas portal.
@@ -1302,9 +1303,23 @@ public class DcatPublisher implements HealthCheck {
         }
     }
 
-    /** The media types a published Dataset's Distributions carry. */
-    private static List<String> advertisedMediaTypes(Dataset dataset) {
-        return dataset.getDistribution().stream().map(Distribution::getMediaType).filter(t -> t != null).toList();
+    /**
+     * The media types a published Dataset's Distributions were written for.
+     *
+     * <p>
+     * Read from the Distribution <em>title</em>, which {@code DcatMapper.toDistribution} sets to
+     * the served type verbatim, and not from {@code dcat:mediaType}. That property speaks a
+     * different vocabulary: the IANA register IRI when the type is registered, and nothing at all
+     * when it is not (an unregistered type deliberately gets no {@code dcat:mediaType}, because a
+     * literal there is a DCAT-AP violation). Comparing it against {@link #publishableMediaTypes()},
+     * which yields served types, could therefore never be equal — so the allowlist-change check
+     * fired for every Dataset on every restart and rewrote the whole catalogue, which on a
+     * git-backed portal is two commits per entity (#232).
+     * </p>
+     */
+    static List<String> advertisedMediaTypes(Dataset dataset) {
+        return dataset.getDistribution().stream().map(Distribution::getTitle).filter(title -> title != null)
+                .map(PlainLiteral::getValue).filter(value -> value != null).toList();
     }
 
     /**
