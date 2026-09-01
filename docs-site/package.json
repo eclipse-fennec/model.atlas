@@ -1,0 +1,19 @@
+{
+  "name": "fennec-model-atlas-docs",
+  "version": "1.0.0",
+  "description": "VitePress documentation site for Fennec Model Atlas (dynamic EMF model management)",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "sync": "node sync-guides.mjs",
+    "predocs:dev": "npm run sync",
+    "docs:dev": "vitepress dev docs",
+    "predocs:build": "npm run sync",
+    "docs:build": "vitepress build docs",
+    "docs:preview": "vitepress preview docs"
+  },
+  "devDependencies": {
+    "vitepress": "^1.6.3",
+    "vue": "^3.5.13"
+  }
+}

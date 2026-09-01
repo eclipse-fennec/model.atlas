@@ -1,0 +1,24 @@
+name: Documentation
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - snapshot
+    paths:
+      - 'docs/**'
+      - 'docs-site/**'
+      - '.github/workflows/docs.yml'
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  docs:
+    uses: eclipse-fennec/.github/.github/workflows/reusable-docs.yml@227b1dfa5f323fdd6d857d0a61fbaaf6e7288716 # v1.0.0
