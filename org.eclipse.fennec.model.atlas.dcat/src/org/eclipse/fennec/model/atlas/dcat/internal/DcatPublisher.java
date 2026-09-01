@@ -33,8 +33,6 @@ import org.apache.felix.hc.api.Result;
 import org.eclipse.fennec.dcat.atlas.client.api.ConflictException;
 import org.eclipse.fennec.dcat.atlas.client.api.DcatAtlasClient;
 import org.eclipse.fennec.dcat.atlas.client.api.DcatCollection;
-import org.eclipse.fennec.dcat.atlas.client.api.DcatModelConstraintException;
-import org.eclipse.fennec.dcat.atlas.client.api.DcatShaclException;
 import org.eclipse.fennec.dcat.atlas.client.api.DeleteMode;
 import org.eclipse.fennec.dcat.atlas.client.api.NotFoundException;
 import org.eclipse.fennec.dcat.atlas.client.api.Registration;
@@ -1039,48 +1037,47 @@ public class DcatPublisher implements HealthCheck {
         });
     }
 
+    /**
+     * Writes the Dataset, its Distributions and its Catalog memberships.
+     *
+     * <p>
+     * A payload the portal refuses ({@code DcatShaclException},
+     * {@code DcatModelConstraintException}) and a misconfiguration ({@code IllegalStateException}
+     * from a missing {@code license.uri}) are deliberately <em>not</em> caught here. Catching them
+     * and returning {@code null} let the promise resolve successfully, which called
+     * {@code RetryQueue.succeeded} and deleted the very ledger entry the failure had just written —
+     * so a permanent failure was invisible to the health check (#231). Letting them out means
+     * {@code submit}'s failure path classifies them: none is retryable, so the queue abandons the
+     * operation and reports it, and a later genuine success still clears it.
+     * </p>
+     */
     private Dataset writeDataset(DcatAtlasClient portal, String datasetId, TrackedPackage tracked) {
         PublicationTarget target = tracked.target();
-        try {
-            Registration<Dataset> registration = portal.registerDataset(datasetId,
-                    mapper.toDataset(target, tracked.ePackage()));
-            if (!registration.applied()) {
-                LOGGER.warning(() -> "Dataset " + datasetId + " was not written: a precondition refused it");
-                return null;
-            }
-            // Re-assert the containment the PUT just dropped.
-            Set<String> mediaTypes = publishableMediaTypes();
-            lastPublishedMediaTypes = mediaTypes;
-            for (String mediaType : mediaTypes) {
-                Distribution distribution = mapper.toDistribution(target, mediaType, baseUri);
-                portal.registerDistribution(datasetId, DcatIds.distributionId(mediaType), distribution);
-            }
-            // Re-assert the membership the PUT just dropped — in every Catalog that serves this
-            // model, which is its own scope's and every descendant's. Additive, so it is safe even
-            // on a Catalog we do not own.
-            Set<String> catalogIds = catalogsListing(target.scope());
-            catalogIds.forEach(catalogId -> portal.linkDatasetToCatalog(catalogId, datasetId));
-
-            if (target.fingerprint() != null) {
-                publishedFingerprints.put(datasetId, target.fingerprint());
-            }
-            LOGGER.info(() -> "Published Dataset " + datasetId + " with " + mediaTypes.size() + " distribution(s) in "
-                    + catalogIds.size() + " catalog(s)");
-            return registration.entity();
-        } catch (DcatModelConstraintException | DcatShaclException e) {
-            // Permanent for this entity: the portal refuses the identical payload every time. Held
-            // in the ledger so the health check can say the catalogue is behind, and why.
-            recordPermanent("dataset:" + datasetId, "publishing Dataset " + datasetId, "the portal refused it as "
-                    + "invalid: " + e.getMessage());
-            LOGGER.log(Level.WARNING, "Portal refused Dataset " + datasetId + " as invalid; not retrying", e);
-            return null;
-        } catch (IllegalStateException misconfigured) {
-            // A missing license.uri, for instance: permanent until an operator acts, so saying it
-            // once beats retrying forever.
-            recordPermanent("dataset:" + datasetId, "publishing Dataset " + datasetId, misconfigured.getMessage());
-            LOGGER.log(Level.WARNING, "Cannot publish Dataset " + datasetId + ": " + misconfigured.getMessage());
+        Registration<Dataset> registration = portal.registerDataset(datasetId,
+                mapper.toDataset(target, tracked.ePackage()));
+        if (!registration.applied()) {
+            LOGGER.warning(() -> "Dataset " + datasetId + " was not written: a precondition refused it");
             return null;
         }
+        // Re-assert the containment the PUT just dropped.
+        Set<String> mediaTypes = publishableMediaTypes();
+        lastPublishedMediaTypes = mediaTypes;
+        for (String mediaType : mediaTypes) {
+            Distribution distribution = mapper.toDistribution(target, mediaType, baseUri);
+            portal.registerDistribution(datasetId, DcatIds.distributionId(mediaType), distribution);
+        }
+        // Re-assert the membership the PUT just dropped — in every Catalog that serves this
+        // model, which is its own scope's and every descendant's. Additive, so it is safe even
+        // on a Catalog we do not own.
+        Set<String> catalogIds = catalogsListing(target.scope());
+        catalogIds.forEach(catalogId -> portal.linkDatasetToCatalog(catalogId, datasetId));
+
+        if (target.fingerprint() != null) {
+            publishedFingerprints.put(datasetId, target.fingerprint());
+        }
+        LOGGER.info(() -> "Published Dataset " + datasetId + " with " + mediaTypes.size() + " distribution(s) in "
+                + catalogIds.size() + " catalog(s)");
+        return registration.entity();
     }
 
     /**
@@ -1306,13 +1303,6 @@ public class DcatPublisher implements HealthCheck {
         });
     }
 
-    private void recordPermanent(String key, String what, String reason) {
-        RetryQueue current = retries;
-        if (current != null) {
-            current.permanent(key, what, reason);
-        }
-    }
-
     /**
      * The media types a published Dataset's Distributions were written for.
      *
@@ -1371,30 +1361,29 @@ public class DcatPublisher implements HealthCheck {
                 || permittedStages.contains(target.stage());
     }
 
+    /**
+     * Writes the Catalog and re-asserts its memberships.
+     *
+     * <p>
+     * Like {@link #writeDataset}, a payload the portal refuses is not caught here: swallowing it
+     * resolved the promise successfully and erased the ledger entry it had just recorded (#231).
+     * </p>
+     */
     private Catalog writeCatalog(DcatAtlasClient portal, String catalogId, ScopeInfo info,
             CatalogSettings settings) {
-        try {
-            Registration<Catalog> registration = portal.registerCatalog(catalogId, mapper.toCatalog(info, settings));
-            if (!registration.applied()) {
-                // A foreign edit landed between our read and our write. Log and carry on; never
-                // unwind, because the next reconcile converges anyway.
-                LOGGER.warning(() -> "Catalog " + catalogId + " was not written: a precondition refused it");
-                return null;
-            }
-            // A PUT replaces, so that write just dropped every dcat:dataset membership the Catalog
-            // held. The Datasets themselves are skipped when unchanged — correctly, to avoid
-            // rewriting the catalogue on every boot — which means nothing else will re-assert
-            // these links. Whoever rewrites a Catalog owns its memberships.
-            relinkDatasets(portal, catalogId, info.getName());
-            LOGGER.info(() -> "Published Catalog " + catalogId + " for scope " + info.getName());
-            return registration.entity();
-        } catch (DcatModelConstraintException | DcatShaclException e) {
-            // Permanent for this entity: the portal will refuse the identical payload every time,
-            // so retrying is only noise. The report is the actionable part.
-            recordPermanent("catalog:" + info.getName(), "publishing the Catalog for scope " + info.getName(),
-                    "the portal refused it as invalid: " + e.getMessage());
-            LOGGER.log(Level.WARNING, "Portal refused Catalog " + catalogId + " as invalid; not retrying", e);
+        Registration<Catalog> registration = portal.registerCatalog(catalogId, mapper.toCatalog(info, settings));
+        if (!registration.applied()) {
+            // A foreign edit landed between our read and our write. Log and carry on; never
+            // unwind, because the next reconcile converges anyway.
+            LOGGER.warning(() -> "Catalog " + catalogId + " was not written: a precondition refused it");
             return null;
         }
+        // A PUT replaces, so that write just dropped every dcat:dataset membership the Catalog
+        // held. The Datasets themselves are skipped when unchanged — correctly, to avoid
+        // rewriting the catalogue on every boot — which means nothing else will re-assert
+        // these links. Whoever rewrites a Catalog owns its memberships.
+        relinkDatasets(portal, catalogId, info.getName());
+        LOGGER.info(() -> "Published Catalog " + catalogId + " for scope " + info.getName());
+        return registration.entity();
     }
 }

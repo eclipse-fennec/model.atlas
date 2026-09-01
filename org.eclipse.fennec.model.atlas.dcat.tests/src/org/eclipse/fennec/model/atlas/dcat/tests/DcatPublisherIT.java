@@ -896,6 +896,40 @@ public class DcatPublisherIT {
                 "nothing here should take the atlas out of a load balancer");
     }
 
+    @Test
+    public void aPermanentlyUnpublishableDatasetStaysInTheHealthReport(
+            @InjectConfiguration(withFactoryConfig = @WithFactoryConfiguration(factoryPid = CLIENT_PID,
+                    name = PORTAL + "40", location = "?")) Configuration clientConfig,
+            @InjectConfiguration(withFactoryConfig = @WithFactoryConfiguration(factoryPid = PUBLISHER_PID,
+                    name = PORTAL + "40", location = "?")) Configuration publisherConfig,
+            @InjectBundleContext BundleContext context) throws Exception {
+
+        // #231: writeDataset used to catch the failure, record it as permanent and return null.
+        // The promise then resolved successfully, which called RetryQueue.succeeded() and deleted
+        // the entry the failure had just written — so a Dataset that could never be published
+        // reported as healthy, which is precisely the case the ledger exists for.
+        clientConfig.update(clientProps());
+        String checkName = "DCAT permanent";
+        Hashtable<String, Object> props = publisherProps(StubScopeService.SCOPE, false);
+        // A Distribution cannot be built without a licence: license is a lowerBound=1 containment.
+        // The mapper raises IllegalStateException, which no retry can fix — an operator must act.
+        props.remove("license.uri");
+        props.put("hc.name", checkName);
+        publisherConfig.update(props);
+
+        String nsUri = "http://test.example.com/nolicence/1.0";
+        ServiceRegistration<?> registration = PublishablePackages.register(context, nsUri,
+                PublishablePackages.FINAL_STAGE, FINGERPRINT, true);
+        try {
+            String report = awaitHealthCheck(context, checkName, "publishing Dataset");
+            assertNotNull(report, "a Dataset that can never be published must stay in the health report");
+            assertTrue(report.contains("license"),
+                    "the report should say what an operator has to fix, was: " + report);
+        } finally {
+            registration.unregister();
+        }
+    }
+
     // ---- a scope going away ------------------------------------------------
 
     @Test
