@@ -40,6 +40,7 @@ class DriftSubstitutionTest {
 	private final Set<String> published = new HashSet<>();
 	private final List<String> republished = new ArrayList<>();
 	private final List<String> unpublished = new ArrayList<>();
+	private final List<String> adopted = new ArrayList<>();
 
 	private static EPackage ePackage(String nsUri) {
 		EPackage pkg = EcoreFactory.eINSTANCE.createEPackage();
@@ -59,6 +60,67 @@ class DriftSubstitutionTest {
 			return true;
 		};
 		return new DriftSubstitution(published::contains, () -> published, resolver, republisher, unpublished::add);
+	}
+
+	/** A substitution that adopts additions, gated by {@code wantsAddition} (issue #228). */
+	private DriftSubstitution adopting(Function<String, Optional<ResolvedEPackage>> resolver,
+			java.util.function.Predicate<String> wantsAddition) {
+		PackagePublication republisher = (ePackage, scope, stage, version, serverFingerprint) -> {
+			republished.add(ePackage.getNsURI());
+			return true;
+		};
+		PackagePublication adopter = (ePackage, scope, stage, version, serverFingerprint) -> {
+			adopted.add(ePackage.getNsURI());
+			return true;
+		};
+		return new DriftSubstitution(published::contains, () -> published, resolver, republisher, unpublished::add,
+				wantsAddition, adopter);
+	}
+
+	@Test
+	void additionIsPublishedThroughTheGate_notTheRepublishPath() {
+		// #228: nothing is published under NS yet, so this must go through the adopter
+		// (the local-first gate), never through republish, which bypasses suppression.
+		adopting(ns -> Optional.of(resolved(ns, "1.0")), ns -> true).onPackageAdded(NS, ePackage(NS));
+
+		assertEquals(List.of(NS), adopted);
+		assertTrue(republished.isEmpty());
+		assertTrue(unpublished.isEmpty());
+	}
+
+	@Test
+	void additionIsIgnoredWhenTheModeDoesNotWantIt() {
+		// LAZY, or HYBRID with an nsURI outside eager.nsuri.allow.list.
+		adopting(ns -> Optional.of(resolved(ns, "1.0")), ns -> false).onPackageAdded(NS, ePackage(NS));
+
+		assertTrue(adopted.isEmpty());
+	}
+
+	@Test
+	void additionOfAnAlreadyPublishedNsUriIsIgnored() {
+		// Raced with the EAGER pre-fetch: it is already ours, so a change (not an add).
+		published.add(NS);
+
+		adopting(ns -> Optional.of(resolved(ns, "1.0")), ns -> true).onPackageAdded(NS, ePackage(NS));
+
+		assertTrue(adopted.isEmpty());
+	}
+
+	@Test
+	void additionThatVanishesBeforeResolveIsNotPublished() {
+		adopting(ns -> Optional.empty(), ns -> true).onPackageAdded(NS, ePackage(NS));
+
+		assertTrue(adopted.isEmpty());
+		assertTrue(unpublished.isEmpty());
+	}
+
+	@Test
+	void defaultConstructorAdoptsNothing() {
+		// The 5-arg constructor keeps the pre-#228 behaviour for existing callers.
+		substitution(ns -> Optional.of(resolved(ns, "1.0"))).onPackageAdded(NS, ePackage(NS));
+
+		assertTrue(republished.isEmpty());
+		assertTrue(adopted.isEmpty());
 	}
 
 	@Test

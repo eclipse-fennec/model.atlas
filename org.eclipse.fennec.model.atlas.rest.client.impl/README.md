@@ -294,14 +294,23 @@ ModelAtlasClient.builder()
 ```java
 try (ModelAtlasClient client = ModelAtlasClient.builder().baseUri(base).build()) {
     AutoCloseable handle = client.addDriftListener(new DriftListener() {
+        public void onPackageAdded(String nsUri, EPackage p)   { /* newly available */ }
         public void onPackageChanged(String nsUri, EPackage p) { /* reload */ }
-        public void onPackageRemoved(String nsUri)            { /* invalidate */ }
+        public void onPackageRemoved(String nsUri)             { /* invalidate */ }
     });
     // … the background watcher (drift.check.interval.ms) fires events; or call:
     DriftReport report = client.checkForDrift();
     handle.close(); // unsubscribe
 }
 ```
+
+`onPackageChanged` / `onPackageRemoved` concern nsURIs the client already holds.
+`onPackageAdded` reports one it held nothing under — a package published and
+promoted into a scope's final stage after the client started — so a running client
+sees it without a restart. Discovery is on for **EAGER** and **HYBRID** and off for
+**LAZY**, which fetches on demand anyway. An nsURI the server names but cannot yet
+resolve stage-free (a draft-only publish) is skipped silently: it is not an
+addition, and never a removal.
 
 ### Read from a non-final stage (snapshot review)
 

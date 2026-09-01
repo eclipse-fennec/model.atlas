@@ -22,6 +22,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Predicate;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -210,8 +211,19 @@ public class AtlasClientComponent {
 		// and atomically swap the trio (per-nsURI lock); on removal we revoke it. Registered
 		// before the prefetch so it is live throughout; events for not-yet-published nsURIs are
 		// ignored (isPublished gate).
+		// #228: the same listener also adopts packages that appear on the server after
+		// start-up. EAGER mirrors its scopes, so it takes every one; HYBRID publishes only
+		// what eager.nsuri.allow.list names; LAZY adopts nothing and resolves on demand.
+		// Adoption publishes through the gate, not republish, so local-first suppression
+		// applies to a package the framework may already provide locally.
+		Predicate<String> wantsAddition = switch (configuration.getMode()) {
+			case EAGER -> nsUri -> true;
+			case HYBRID -> configuration.getEagerNsUriAllowList()::contains;
+			case LAZY -> nsUri -> false;
+		};
 		this.driftSubscription = client.addDriftListener(new DriftSubstitution(publisher::isPublished,
-				publisher::publishedNsUris, client.ePackages()::resolve, publisher::republish, publisher::unpublish));
+				publisher::publishedNsUris, client.ePackages()::resolve, publisher::republish, publisher::unpublish,
+				wantsAddition, gate));
 
 		// P3-10: unless resource.set.fallback=false, register a ResourceSetConfigurator so every
 		// framework-produced ResourceSet carries the delegating registry (Atlas fallback on a miss).

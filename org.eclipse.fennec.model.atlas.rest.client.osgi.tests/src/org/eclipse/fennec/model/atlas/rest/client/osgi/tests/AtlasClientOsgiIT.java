@@ -144,6 +144,29 @@ public class AtlasClientOsgiIT {
 			<dr:Thing xmlns:dr="%s" name="hello"/>
 			""".formatted(DRIFT_NS);
 
+	// ---- drift-discovery fixture (issue #228) ------------------------------
+
+	/** nsURI of the schema the discovery test publishes only AFTER the client is up. */
+	private static final String DISCOVERY_NS = "http://atlas.example/test/driftdiscovery/1.0";
+
+	private static final String DISCOVERY_ECORE = """
+			<?xml version="1.0" encoding="UTF-8"?>
+			<ecore:EPackage xmi:version="2.0" xmlns:xmi="http://www.omg.org/XMI"
+			    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+			    xmlns:ecore="http://www.eclipse.org/emf/2002/Ecore"
+			    name="driftdiscovery" nsURI="%s" nsPrefix="dd">
+			  <eClassifiers xsi:type="ecore:EClass" name="Thing">
+			    <eStructuralFeatures xsi:type="ecore:EAttribute" name="name"
+			        eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+			  </eClassifiers>
+			</ecore:EPackage>
+			""".formatted(DISCOVERY_NS);
+
+	private static final String DISCOVERY_PAYLOAD = """
+			<?xml version="1.0" encoding="UTF-8"?>
+			<dd:Thing xmlns:dd="%s" name="world"/>
+			""".formatted(DISCOVERY_NS);
+
 	private static GenericContainer<?> atlas;
 	private static URI baseUri;
 
@@ -396,18 +419,83 @@ public class AtlasClientOsgiIT {
 		}
 	}
 
+	@Test
+	public void driftDiscovery_publishesAPackageThatAppearedAfterActivation(
+			@InjectConfiguration(withFactoryConfig = @WithFactoryConfiguration(factoryPid = PID, name = "discovery",
+					location = "?")) Configuration configuration,
+			@InjectService(cardinality = 0, filter = "(atlas.remote=true)") ServiceAware<EPackage> remotePackages,
+			@InjectService(cardinality = 0, filter = "(&(atlas.remote=true)(emf.nsURI=" + DISCOVERY_NS
+					+ "))") ServiceAware<EPackage> discovered,
+			@InjectService ServiceAware<ResourceSetFactory> resourceSetFactories) throws Exception {
+		// issue #228: a package promoted into a scope's final stage AFTER the client started
+		// used to stay invisible until restart — the drift feed named it, and the watcher
+		// dropped it because nothing was held under that nsURI.
+		assumeFalse(releasedNsUris().isEmpty(), "jena scope has no released packages to signal EAGER activation");
+		deleteSchema(DISCOVERY_NS); // the whole point is that it is absent when the client comes up
+
+		try {
+			// resource.set.fallback=false removes the LAZY Atlas fallback, so a later successful
+			// deserialization can ONLY come from the published trio — i.e. from discovery.
+			Hashtable<String, Object> props = baseProps("EAGER");
+			props.put("eager.scopes", new String[] { JENA_SCOPE });
+			props.put("drift.check.interval.ms", (int) DRIFT_INTERVAL_MS);
+			props.put("resource.set.fallback", Boolean.FALSE);
+			configuration.update(props);
+
+			assertNotNull(remotePackages.waitForService(SERVICE_WAIT_MS),
+					"EAGER activation should publish the scope's existing packages");
+			assertEquals(0, discovered.size(),
+					"the discovery schema is not on the server yet, so the pre-fetch cannot have published it");
+
+			// The watcher's first probe of a scope only records the ETag baseline and emits
+			// nothing — give it a few intervals so the baseline predates the upload.
+			Thread.sleep(6 * DRIFT_INTERVAL_MS);
+
+			int status = uploadSchema(DISCOVERY_ECORE, "DriftDiscovery");
+			assertTrue(status == 201 || status == 200,
+					() -> "uploading the discovery schema should succeed, got HTTP " + status);
+
+			// Before the fix this waits out the full timeout and fails: the nsURI is named by
+			// Atlas-Changed-NsUris, but nothing is held under it, so it was skipped.
+			assertNotNull(discovered.waitForService(SERVICE_WAIT_MS),
+					"the drift check should publish a package that appeared after activation");
+			assertEquals(DISCOVERY_NS, discovered.getService().getNsURI());
+
+			// And the payload a consumer was failing on now deserializes.
+			ResourceSetFactory factory = resourceSetFactories.waitForService(SERVICE_WAIT_MS);
+			assertNotNull(factory, "a framework ResourceSetFactory must be present");
+			assertTrue(awaitResolvable(factory, DISCOVERY_NS),
+					"the discovered package should reach framework ResourceSets (emf.osgi binding is asynchronous)");
+			EObject instance = deserializePayload(factory, DISCOVERY_PAYLOAD, "drift-discovery.xmi");
+			assertEquals("Thing", instance.eClass().getName());
+			assertEquals("world", instance.eGet(instance.eClass().getEStructuralFeature("name")));
+		} finally {
+			deleteSchema(DISCOVERY_NS); // idempotent cleanup
+		}
+	}
+
 	// ---- helpers ----------------------------------------------------------
 
 	private static int uploadDriftSchema() throws IOException, InterruptedException {
+		return uploadSchema(DRIFT_ECORE, "DriftRemoval");
+	}
+
+	private static int deleteDriftSchema() throws IOException, InterruptedException {
+		return deleteSchema(DRIFT_NS);
+	}
+
+	/** POST an .ecore into jena's writable final stage. */
+	private static int uploadSchema(String ecore, String name) throws IOException, InterruptedException {
 		HttpResponse<String> response = HttpClient.newHttpClient().send(HttpRequest
-				.newBuilder(URI.create(baseUri + "/" + JENA_SCOPE + "/schema/stages/" + JENA_VIEW + "?name=DriftRemoval"))
-				.header("Content-Type", "application/xml").POST(HttpRequest.BodyPublishers.ofString(DRIFT_ECORE))
+				.newBuilder(URI.create(baseUri + "/" + JENA_SCOPE + "/schema/stages/" + JENA_VIEW + "?name=" + name))
+				.header("Content-Type", "application/xml").POST(HttpRequest.BodyPublishers.ofString(ecore))
 				.build(), HttpResponse.BodyHandlers.ofString());
 		return response.statusCode();
 	}
 
-	private static int deleteDriftSchema() throws IOException, InterruptedException {
-		String nsUriParam = URLEncoder.encode(DRIFT_NS, StandardCharsets.UTF_8);
+	/** DELETE one nsURI from jena's writable final stage; idempotent (204 when already gone). */
+	private static int deleteSchema(String nsUri) throws IOException, InterruptedException {
+		String nsUriParam = URLEncoder.encode(nsUri, StandardCharsets.UTF_8);
 		HttpResponse<String> response = HttpClient.newHttpClient().send(HttpRequest.newBuilder(
 				URI.create(baseUri + "/" + JENA_SCOPE + "/schema/stages/" + JENA_VIEW + "?nsUri=" + nsUriParam))
 				.DELETE().build(), HttpResponse.BodyHandlers.ofString());
@@ -416,11 +504,16 @@ public class AtlasClientOsgiIT {
 
 	/** Deserialize {@link #DRIFT_PAYLOAD} through a fresh Atlas-aware framework ResourceSet. */
 	private static EObject deserializeDriftPayload(ResourceSetFactory factory) throws IOException {
+		return deserializePayload(factory, DRIFT_PAYLOAD, "drift-removal.xmi");
+	}
+
+	/** Deserialize an instance document through a fresh framework ResourceSet. */
+	private static EObject deserializePayload(ResourceSetFactory factory, String payload, String name)
+			throws IOException {
 		ResourceSet resourceSet = factory.createResourceSet();
 		resourceSet.getResourceFactoryRegistry().getExtensionToFactoryMap().put("xmi", new XMIResourceFactoryImpl());
-		Resource resource = resourceSet
-				.createResource(org.eclipse.emf.common.util.URI.createURI("drift-removal.xmi"));
-		resource.load(new ByteArrayInputStream(DRIFT_PAYLOAD.getBytes(StandardCharsets.UTF_8)), java.util.Map.of());
+		Resource resource = resourceSet.createResource(org.eclipse.emf.common.util.URI.createURI(name));
+		resource.load(new ByteArrayInputStream(payload.getBytes(StandardCharsets.UTF_8)), java.util.Map.of());
 		return resource.getContents().get(0);
 	}
 
@@ -434,6 +527,22 @@ public class AtlasClientOsgiIT {
 		long deadline = System.currentTimeMillis() + SERVICE_WAIT_MS;
 		while (System.currentTimeMillis() < deadline) {
 			if (factory.createResourceSet().getPackageRegistry().getEPackage(DRIFT_NS) == null) {
+				return true;
+			}
+			Thread.sleep(100L);
+		}
+		return false;
+	}
+
+	/**
+	 * Poll until a fresh framework ResourceSet resolves {@code nsUri}. The EPackage service is
+	 * observable immediately, but emf.osgi binds its EPackageConfigurator into the framework
+	 * registry asynchronously.
+	 */
+	private static boolean awaitResolvable(ResourceSetFactory factory, String nsUri) throws InterruptedException {
+		long deadline = System.currentTimeMillis() + SERVICE_WAIT_MS;
+		while (System.currentTimeMillis() < deadline) {
+			if (factory.createResourceSet().getPackageRegistry().getEPackage(nsUri) != null) {
 				return true;
 			}
 			Thread.sleep(100L);
