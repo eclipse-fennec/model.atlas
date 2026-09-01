@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<genmodel:GenModel xmi:version="2.0" xmlns:xmi="http://www.omg.org/XMI" xmlns:ecore="http://www.eclipse.org/emf/2002/Ecore"
+    xmlns:genmodel="http://www.eclipse.org/emf/2002/GenModel" copyrightText="Copyright (c) 2012 - 2026 Data In Motion and others.&#xA;All rights reserved.&#xA;&#xA;This program and the accompanying materials are made&#xA;available under the terms of the Eclipse Public License 2.0&#xA;which is available at https://www.eclipse.org/legal/epl-2.0/&#xA;&#xA;SPDX-License-Identifier: EPL-2.0&#xA;&#xA;Contributors:&#xA;     Data In Motion - initial API and implementation"
+    modelDirectory="/org.eclipse.fennec.model.atlas.qvt/src-gen" modelPluginID="org.eclipse.fennec.model.atlas.qvt"
+    modelName="QvtDiagnostics" rootExtendsClass="org.eclipse.emf.ecore.impl.MinimalEObjectImpl$Container"
+    suppressEMFTypes="true" importerID="org.eclipse.emf.importer.ecore" suppressNotification="true"
+    complianceLevel="17.0" copyrightFields="false" operationReflection="true" importOrganizing="true">
+  <foreignModel>qvt-diagnostics.ecore</foreignModel>
+  <genPackages prefix="QvtDiagnostics" basePackage="org.eclipse.fennec.model.atlas.qvt"
+      resource="XMI" disposableProviderFactory="true" ecorePackage="qvt-diagnostics.ecore#/">
+    <genEnums typeSafeEnumCompatible="false" ecoreEnum="qvt-diagnostics.ecore#//CompileStatus">
+      <genEnumLiterals ecoreEnumLiteral="qvt-diagnostics.ecore#//CompileStatus/OK"/>
+      <genEnumLiterals ecoreEnumLiteral="qvt-diagnostics.ecore#//CompileStatus/INVALID"/>
+      <genEnumLiterals ecoreEnumLiteral="qvt-diagnostics.ecore#//CompileStatus/LIBRARY"/>
+    </genEnums>
+    <genEnums typeSafeEnumCompatible="false" ecoreEnum="qvt-diagnostics.ecore#//DiagnosticSeverity">
+      <genEnumLiterals ecoreEnumLiteral="qvt-diagnostics.ecore#//DiagnosticSeverity/ERROR"/>
+      <genEnumLiterals ecoreEnumLiteral="qvt-diagnostics.ecore#//DiagnosticSeverity/WARNING"/>
+      <genEnumLiterals ecoreEnumLiteral="qvt-diagnostics.ecore#//DiagnosticSeverity/INFO"/>
+    </genEnums>
+    <genClasses ecoreClass="qvt-diagnostics.ecore#//SourceDiagnostics">
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute qvt-diagnostics.ecore#//SourceDiagnostics/qualifiedName"/>
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute qvt-diagnostics.ecore#//SourceDiagnostics/sourceFingerprint"/>
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute qvt-diagnostics.ecore#//SourceDiagnostics/compileStatus"/>
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute qvt-diagnostics.ecore#//SourceDiagnostics/unitFingerprint"/>
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute qvt-diagnostics.ecore#//SourceDiagnostics/message"/>
+      <genFeatures property="None" children="true" createChild="true" ecoreFeature="ecore:EReference qvt-diagnostics.ecore#//SourceDiagnostics/entries"/>
+    </genClasses>
+    <genClasses ecoreClass="qvt-diagnostics.ecore#//DiagnosticEntry">
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute qvt-diagnostics.ecore#//DiagnosticEntry/line"/>
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute qvt-diagnostics.ecore#//DiagnosticEntry/column"/>
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute qvt-diagnostics.ecore#//DiagnosticEntry/severity"/>
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute qvt-diagnostics.ecore#//DiagnosticEntry/message"/>
+    </genClasses>
+  </genPackages>
+</genmodel:GenModel>

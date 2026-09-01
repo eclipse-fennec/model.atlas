@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ecore:EPackage xmi:version="2.0" xmlns:xmi="http://www.omg.org/XMI" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xmlns:ecore="http://www.eclipse.org/emf/2002/Ecore" name="diagnostics" nsURI="http://eclipse.org/fennec/model/atlas/qvt/diagnostics/1.0.0"
+    nsPrefix="qvtdiag">
+  <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+    <details key="modelName" value="QvtDiagnostics"/>
+    <details key="complianceLevel" value="17.0"/>
+    <details key="copyrightText" value="Copyright (c) 2012 - 2026 Data In Motion and others.&#xA;All rights reserved.&#xA;&#xA;This program and the accompanying materials are made&#xA;available under the terms of the Eclipse Public License 2.0&#xA;which is available at https://www.eclipse.org/legal/epl-2.0/&#xA;&#xA;SPDX-License-Identifier: EPL-2.0&#xA;&#xA;Contributors:&#xA;     Data In Motion - initial API and implementation"/>
+    <details key="resource" value="XMI"/>
+    <details key="prefix" value="QvtDiagnostics"/>
+    <details key="basePackage" value="org.eclipse.fennec.model.atlas.qvt"/>
+    <details key="oSGiCompatible" value="false"/>
+    <details key="suppressNotification" value="true"/>
+    <details key="suppressEMFTypes" value="true"/>
+  </eAnnotations>
+  <eClassifiers xsi:type="ecore:EClass" name="SourceDiagnostics">
+    <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+      <details key="documentation" value="The compile outcome of one uploaded transformation source in one (scope, registry, stage): its status, and — for an invalid source — the parse/link findings with positions. Stored beside the source under the id segment `&lt;language&gt;/diagnostics/&lt;qualifiedName&gt;` and replaced on every recompile (issue #239)."/>
+    </eAnnotations>
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="qualifiedName" lowerBound="1"
+        eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="sourceFingerprint" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="The m2x source fingerprint (m2x1:…) of the source text this outcome belongs to."/>
+      </eAnnotations>
+    </eStructuralFeatures>
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="compileStatus" eType="#//CompileStatus"/>
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="unitFingerprint" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="For status OK: the unit fingerprint (m2x1:…) of the compiled unit produced from this source — the value a consumer pins."/>
+      </eAnnotations>
+    </eStructuralFeatures>
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="message" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="Top-level summary (e.g. the parse exception message); the per-finding detail lives in the entries."/>
+      </eAnnotations>
+    </eStructuralFeatures>
+    <eStructuralFeatures xsi:type="ecore:EReference" name="entries" upperBound="-1"
+        eType="#//DiagnosticEntry" containment="true"/>
+  </eClassifiers>
+  <eClassifiers xsi:type="ecore:EClass" name="DiagnosticEntry">
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="line" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EInt">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="1-based line; 0 means position unknown (m2x #110)."/>
+      </eAnnotations>
+    </eStructuralFeatures>
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="column" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EInt">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="1-based column; 0 means position unknown."/>
+      </eAnnotations>
+    </eStructuralFeatures>
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="severity" eType="#//DiagnosticSeverity"/>
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="message" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+  </eClassifiers>
+  <eClassifiers xsi:type="ecore:EEnum" name="CompileStatus">
+    <eLiterals name="OK">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="The source compiled to a startable transformation; a compiled unit exists in this stage."/>
+      </eAnnotations>
+    </eLiterals>
+    <eLiterals name="INVALID" value="1">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="The source did not compile; the entries carry the findings. The source stays stored as draft."/>
+      </eAnnotations>
+    </eLiterals>
+    <eLiterals name="LIBRARY" value="2">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="The source is a valid library without a startable root transformation; it is stored as a source and resolved as a dependency of other compilations."/>
+      </eAnnotations>
+    </eLiterals>
+  </eClassifiers>
+  <eClassifiers xsi:type="ecore:EEnum" name="DiagnosticSeverity">
+    <eLiterals name="ERROR"/>
+    <eLiterals name="WARNING" value="1"/>
+    <eLiterals name="INFO" value="2"/>
+  </eClassifiers>
+</ecore:EPackage>
