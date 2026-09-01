@@ -15,6 +15,7 @@ package org.eclipse.fennec.model.atlas.rest.client.osgi;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -175,6 +176,145 @@ class RemoteEPackagePublisherTest {
 
 		assertNull(global.getEPackage("urn:a"));
 		assertNull(global.getEPackage("urn:b"));
+	}
+
+	// ---- #227: mirroring must never clobber someone else's registration ----
+
+	/** A stand-in for a generated package's own factory — the type the generated code casts to. */
+	private static class GeneratedFactory extends org.eclipse.emf.ecore.impl.EFactoryImpl {
+	}
+
+	/** A generated-style package: carries its own EFactory subclass. */
+	private static EPackage generatedPackage(String nsUri) {
+		EPackage pkg = ePackage(nsUri);
+		pkg.setEFactoryInstance(new GeneratedFactory());
+		return pkg;
+	}
+
+	@Test
+	void doesNotOverwriteAGeneratedRegistrationAlreadyInTheGlobalRegistry() {
+		// #227: an EAGER sweep of a scope that inherits the package must not replace the
+		// generated EPackage with the dynamic one — generated factory init does
+		// (GeneratedFactory) Registry.INSTANCE.getEFactory(eNS_URI) and would then CCE.
+		EPackageRegistryImpl global = new EPackageRegistryImpl();
+		EPackage generated = generatedPackage("urn:gen");
+		global.put("urn:gen", generated);
+		RemoteEPackagePublisher publisher = new RemoteEPackagePublisher(bundleContext, "http://atlas.test/atlas/rest",
+				0, global);
+
+		publisher.publish(ePackage("urn:gen"), "jena", "released", "1.0");
+
+		assertSame(generated, global.getEPackage("urn:gen"), "the generated package must survive the sweep");
+		assertInstanceOf(GeneratedFactory.class, global.getEFactory("urn:gen"),
+				"the generated EFactory must still be the one the generated code casts to");
+	}
+
+	@Test
+	void republishDoesNotOverwriteAForeignRegistrationEither() {
+		EPackageRegistryImpl global = new EPackageRegistryImpl();
+		EPackage generated = generatedPackage("urn:gen");
+		global.put("urn:gen", generated);
+		RemoteEPackagePublisher publisher = new RemoteEPackagePublisher(bundleContext, "http://atlas.test/atlas/rest",
+				0, global);
+
+		publisher.publish(ePackage("urn:gen"), "jena", "released", "1.0");
+		publisher.republish(ePackage("urn:gen"), "jena", "released", "2.0"); // a drift swap
+
+		assertSame(generated, global.getEPackage("urn:gen"));
+	}
+
+	@Test
+	void unpublishLeavesARegistrationItNeverPlaced() {
+		// The symmetric defect: removeFromGlobal used to delete whatever sat under the nsURI,
+		// including another bundle's generated registration we had merely tried to overwrite.
+		EPackageRegistryImpl global = new EPackageRegistryImpl();
+		EPackage generated = generatedPackage("urn:gen");
+		global.put("urn:gen", generated);
+		RemoteEPackagePublisher publisher = new RemoteEPackagePublisher(bundleContext, "http://atlas.test/atlas/rest",
+				0, global);
+		publisher.publish(ePackage("urn:gen"), "jena", "released", "1.0");
+
+		publisher.unpublish("urn:gen");
+
+		assertSame(generated, global.getEPackage("urn:gen"), "unpublish must not remove a foreign registration");
+	}
+
+	@Test
+	void unpublishAllLeavesRegistrationsItNeverPlaced() {
+		EPackageRegistryImpl global = new EPackageRegistryImpl();
+		EPackage generated = generatedPackage("urn:gen");
+		global.put("urn:gen", generated);
+		RemoteEPackagePublisher publisher = new RemoteEPackagePublisher(bundleContext, "http://atlas.test/atlas/rest",
+				0, global);
+		publisher.publish(ePackage("urn:gen"), "jena", "released", "1.0"); // skipped, foreign
+		publisher.publish(ePackage("urn:ours"), "jena", "released", "1.0"); // mirrored, ours
+
+		publisher.unpublishAll();
+
+		assertSame(generated, global.getEPackage("urn:gen"), "a foreign registration must survive shutdown");
+		assertNull(global.getEPackage("urn:ours"), "our own mirror must still be cleaned up");
+	}
+
+	@Test
+	void doesNotInitializeALazyDescriptorWhileProbing() {
+		// Generated packages are often registered as a Descriptor and initialised on first
+		// getEPackage(). Probing for an existing registration must not force that — the
+		// eager-init race is exactly what makes #227 intermittent.
+		EPackageRegistryImpl global = new EPackageRegistryImpl();
+		int[] initialisations = { 0 };
+		global.put("urn:lazy", new EPackage.Descriptor() {
+
+			@Override
+			public EPackage getEPackage() {
+				initialisations[0]++;
+				return generatedPackage("urn:lazy");
+			}
+
+			@Override
+			public org.eclipse.emf.ecore.EFactory getEFactory() {
+				initialisations[0]++;
+				return new GeneratedFactory();
+			}
+		});
+		RemoteEPackagePublisher publisher = new RemoteEPackagePublisher(bundleContext, "http://atlas.test/atlas/rest",
+				0, global);
+
+		publisher.publish(ePackage("urn:lazy"), "jena", "released", "1.0");
+
+		assertEquals(0, initialisations[0], "the descriptor must not be resolved just to check for its presence");
+	}
+
+	@Test
+	void unpublishLeavesAMirrorThatAGeneratedBundleLaterOverwrote() {
+		// The other half of the start-up race: our sweep wins the nsURI first, then the
+		// generated bundle's static initialiser puts its own package over ours. That entry is
+		// no longer the one we placed, so shutting the client down must leave it alone.
+		EPackageRegistryImpl global = new EPackageRegistryImpl();
+		RemoteEPackagePublisher publisher = new RemoteEPackagePublisher(bundleContext, "http://atlas.test/atlas/rest",
+				0, global);
+		publisher.publish(ePackage("urn:race"), "jena", "released", "1.0"); // free → mirrored, ours
+
+		EPackage generated = generatedPackage("urn:race");
+		global.put("urn:race", generated); // the generated bundle initialises afterwards
+
+		publisher.unpublish("urn:race");
+
+		assertSame(generated, global.getEPackage("urn:race"),
+				"a mirror that was overwritten by its generated owner is no longer ours to remove");
+	}
+
+	@Test
+	void stillMirrorsWhenTheNsUriIsFree() {
+		// The feature itself must keep working: a domain-only package with no local
+		// counterpart is still mirrored, which is the point of register.in.global.registry.
+		EPackageRegistryImpl global = new EPackageRegistryImpl();
+		RemoteEPackagePublisher publisher = new RemoteEPackagePublisher(bundleContext, "http://atlas.test/atlas/rest",
+				0, global);
+		EPackage remote = ePackage("urn:free");
+
+		publisher.publish(remote, "jena", "released", "1.0");
+
+		assertSame(remote, global.getEPackage("urn:free"));
 	}
 
 	@Test
