@@ -15,6 +15,7 @@ package org.eclipse.fennec.model.atlas.rest.application.resource;
 
 import java.time.Instant;
 import java.util.List;
+import java.util.stream.Collectors;
 import java.util.Optional;
 
 import org.eclipse.emf.ecore.EObject;
@@ -289,7 +290,7 @@ public class ObjectRegistryResource {
             return Response.status(Status.BAD_REQUEST)
                     .entity(String.format("Object type %s not compatible with registry %s (expects %s)",
                             EcoreUtil.getURI(object.eClass()), registryName,
-                            EcoreUtil.getURI(registryService.getRootEClass())))
+                            acceptedRootEClasses(registryService)))
                     .build();
         }
 
@@ -508,7 +509,7 @@ public class ObjectRegistryResource {
             return Response.status(Status.BAD_REQUEST)
                     .entity(String.format("Object type %s not compatible with registry %s (expects %s)",
                             EcoreUtil.getURI(eObject.eClass()), registryName,
-                            EcoreUtil.getURI(registryService.getRootEClass())))
+                            acceptedRootEClasses(registryService)))
                     .build();
         }
 
@@ -693,5 +694,10 @@ public class ObjectRegistryResource {
 
     private RegistryService<?> getRegistryServiceByRegistryName(String registryName) {
         return registryCollector.getRegistryServiceByRegistryName(registryName);
+    }
+
+    private static String acceptedRootEClasses(RegistryService<?> registryService) {
+        return registryService.getRootEClasses().stream().map(EcoreUtil::getURI).map(Object::toString)
+                .collect(Collectors.joining(", "));
     }
 }

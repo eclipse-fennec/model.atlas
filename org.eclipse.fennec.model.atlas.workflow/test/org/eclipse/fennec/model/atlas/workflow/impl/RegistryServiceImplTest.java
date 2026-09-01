@@ -84,12 +84,12 @@ public class RegistryServiceImplTest {
         resourceSet.getResources().add(resource);
     }
 
-    private RegistryServiceImpl<EObject> createService(String rootEClassUri) {
-        return createService(rootEClassUri, List.of());
+    private RegistryServiceImpl<EObject> createService(String... rootEClassUris) {
+        return createService(List.of(), rootEClassUris);
     }
 
-    private RegistryServiceImpl<EObject> createService(String rootEClassUri,
-            List<EObjectStorageService<EObject>> storageServices) {
+    private RegistryServiceImpl<EObject> createService(
+            List<EObjectStorageService<EObject>> storageServices, String... rootEClassUris) {
         RegistryServiceConfig config = mock(RegistryServiceConfig.class);
         when(config.registry_name()).thenReturn("test-registry");
         when(config.registry_description()).thenReturn("");
@@ -99,7 +99,7 @@ public class RegistryServiceImplTest {
         when(config.stages()).thenReturn(new String[] {
                 "{\"name\": \"draft\", \"writable\": true, \"final\": false}",
                 "{\"name\": \"release\", \"writable\": true, \"final\": true}" });
-        when(config.root_eclass_uri()).thenReturn(rootEClassUri);
+        when(config.root_eclass_uri()).thenReturn(rootEClassUris);
         return new RegistryServiceImpl<>(storageServices, resourceSet, config);
     }
 
@@ -148,7 +148,7 @@ public class RegistryServiceImplTest {
             metadata.setStage("draft");
             when(storage.queryObjects(any())).thenReturn(Promises.resolved(List.of(metadata)));
 
-            RegistryServiceImpl<EObject> service = createService(TEST_NS_URI + "#//Person", List.of(storage));
+            RegistryServiceImpl<EObject> service = createService(List.of(storage), TEST_NS_URI + "#//Person");
 
             // the scope activates while no stage action service is bound yet - with the
             // former static reference this ordering silently lost all stage actions
@@ -215,6 +215,53 @@ public class RegistryServiceImplTest {
         @DisplayName("Should reject the EObject EClass")
         void shouldRejectEObject() {
             assertFalse(service.isEClassCompatibleWithRegistry(EcorePackage.Literals.EOBJECT));
+        }
+    }
+
+    @Nested
+    @DisplayName("Registry with multiple unrelated root EClasses (issue #239)")
+    class MultiRootTests {
+
+        private RegistryServiceImpl<EObject> service;
+
+        @BeforeEach
+        void createMultiRootService() {
+            service = createService(TEST_NS_URI + "#//Person", TEST_NS_URI + "#//Unrelated");
+        }
+
+        @Test
+        @DisplayName("Should accept instances of every configured root")
+        void shouldAcceptEveryRoot() {
+            assertTrue(service.isEClassCompatibleWithRegistry(personClass));
+            assertTrue(service.isEClassCompatibleWithRegistry(unrelatedClass));
+        }
+
+        @Test
+        @DisplayName("Should accept subclasses of any configured root")
+        void shouldAcceptSubclassOfAnyRoot() {
+            assertTrue(service.isEClassCompatibleWithRegistry(employeeClass));
+        }
+
+        @Test
+        @DisplayName("Should reject an EClass matching no configured root")
+        void shouldRejectForeignEClass() {
+            EClass foreign = EcoreFactory.eINSTANCE.createEClass();
+            foreign.setName("Foreign");
+            assertFalse(service.isEClassCompatibleWithRegistry(foreign));
+        }
+
+        @Test
+        @DisplayName("getRootEClass answers the primary root, getRootEClasses all of them")
+        void shouldExposeConfiguredRoots() {
+            assertTrue(service.getRootEClass() == personClass);
+            assertTrue(service.getRootEClasses().equals(List.of(personClass, unrelatedClass)));
+        }
+
+        @Test
+        @DisplayName("Should fail activation when any configured root does not resolve")
+        void shouldFailOnUnresolvableRoot() {
+            org.junit.jupiter.api.Assertions.assertThrows(IllegalArgumentException.class,
+                    () -> createService(TEST_NS_URI + "#//Person", TEST_NS_URI + "#//DoesNotExist"));
         }
     }
 }

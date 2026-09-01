@@ -42,7 +42,7 @@ import org.osgi.annotation.versioning.ProviderType;
  * @generated
  */
 @ProviderType
-@EPackage(uri = WorkflowApiPackage.eNS_URI, fingerprint = "fp1:6075e2f1f13614ca70e92715c08d59cf66dc233c2c0a5eee8fd27728715c1883", genModel = "/model/workflow-api.genmodel", genModelSourceLocations = {"model/workflow-api.genmodel","org.eclipse.fennec.model.atlas.workflow/model/workflow-api.genmodel"}, ecore = "/model/workflow-api.ecore", ecoreSourceLocations = "/model/workflow-api.ecore")
+@EPackage(uri = WorkflowApiPackage.eNS_URI, fingerprint = "fp1:3f7c760504b4e37c1781fcb854ea6667d0354fb3f7eb65f93b57ceb43ad3e9c7", genModel = "/model/workflow-api.genmodel", genModelSourceLocations = {"model/workflow-api.genmodel","org.eclipse.fennec.model.atlas.workflow/model/workflow-api.genmodel"}, ecore = "/model/workflow-api.ecore", ecoreSourceLocations = "/model/workflow-api.ecore")
 public interface WorkflowApiPackage extends org.eclipse.emf.ecore.EPackage {
 	/**
 	 * The package name.
@@ -412,13 +412,22 @@ public interface WorkflowApiPackage extends org.eclipse.emf.ecore.EPackage {
 	int REGISTRY_SERVICE___GET_ROOT_ECLASS = 20;
 
 	/**
+	 * The operation id for the '<em>Get Root EClasses</em>' operation.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 * @ordered
+	 */
+	int REGISTRY_SERVICE___GET_ROOT_ECLASSES = 21;
+
+	/**
 	 * The operation id for the '<em>Activate</em>' operation.
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
 	 * @generated
 	 * @ordered
 	 */
-	int REGISTRY_SERVICE___ACTIVATE__STRING = 21;
+	int REGISTRY_SERVICE___ACTIVATE__STRING = 22;
 
 	/**
 	 * The operation id for the '<em>Deactivate</em>' operation.
@@ -427,7 +436,7 @@ public interface WorkflowApiPackage extends org.eclipse.emf.ecore.EPackage {
 	 * @generated
 	 * @ordered
 	 */
-	int REGISTRY_SERVICE___DEACTIVATE__STRING = 22;
+	int REGISTRY_SERVICE___DEACTIVATE__STRING = 23;
 
 	/**
 	 * The number of operations of the '<em>Registry Service</em>' class.
@@ -436,7 +445,7 @@ public interface WorkflowApiPackage extends org.eclipse.emf.ecore.EPackage {
 	 * @generated
 	 * @ordered
 	 */
-	int REGISTRY_SERVICE_OPERATION_COUNT = 23;
+	int REGISTRY_SERVICE_OPERATION_COUNT = 24;
 
 	/**
 	 * The meta object id for the '{@link org.eclipse.fennec.model.atlas.wf.workflowapi.WritableScopeService <em>Writable Scope Service</em>}' class.
@@ -1493,6 +1502,16 @@ public interface WorkflowApiPackage extends org.eclipse.emf.ecore.EPackage {
 	EOperation getRegistryService__GetRootEClass();
 
 	/**
+	 * Returns the meta object for the '{@link org.eclipse.fennec.model.atlas.wf.workflowapi.RegistryService#getRootEClasses() <em>Get Root EClasses</em>}' operation.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @return the meta object for the '<em>Get Root EClasses</em>' operation.
+	 * @see org.eclipse.fennec.model.atlas.wf.workflowapi.RegistryService#getRootEClasses()
+	 * @generated
+	 */
+	EOperation getRegistryService__GetRootEClasses();
+
+	/**
 	 * Returns the meta object for the '{@link org.eclipse.fennec.model.atlas.wf.workflowapi.RegistryService#activate(java.lang.String) <em>Activate</em>}' operation.
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
@@ -2065,6 +2084,14 @@ public interface WorkflowApiPackage extends org.eclipse.emf.ecore.EPackage {
 		 * @generated
 		 */
 		EOperation REGISTRY_SERVICE___GET_ROOT_ECLASS = eINSTANCE.getRegistryService__GetRootEClass();
+
+		/**
+		 * The meta object literal for the '<em><b>Get Root EClasses</b></em>' operation.
+		 * <!-- begin-user-doc -->
+		 * <!-- end-user-doc -->
+		 * @generated
+		 */
+		EOperation REGISTRY_SERVICE___GET_ROOT_ECLASSES = eINSTANCE.getRegistryService__GetRootEClasses();
 
 		/**
 		 * The meta object literal for the '<em><b>Activate</b></em>' operation.

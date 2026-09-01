@@ -243,10 +243,24 @@ public interface RegistryService<T extends EObject> {
 	/**
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
+	 * <!-- begin-model-doc -->
+	 * The primary (first configured) root EClass. Kept for callers that need one representative type (e.g. error messages); the full accepted set is {@link #getRootEClasses()}.
+	 * <!-- end-model-doc -->
 	 * @model kind="operation"
 	 * @generated
 	 */
 	EClass getRootEClass();
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * <!-- begin-model-doc -->
+	 * Every root EClass this registry accepts; an object is compatible if its EClass matches any of them or has one among its supertypes. Never empty; the first entry is the primary root returned by {@link #getRootEClass()}.
+	 * <!-- end-model-doc -->
+	 * @model kind="operation"
+	 * @generated
+	 */
+	List<EClass> getRootEClasses();
 
 	/**
 	 * <!-- begin-user-doc -->

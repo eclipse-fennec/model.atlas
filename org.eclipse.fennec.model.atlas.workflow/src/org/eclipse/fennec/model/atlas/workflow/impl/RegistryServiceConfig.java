@@ -52,9 +52,10 @@ public @interface RegistryServiceConfig {
     @AttributeDefinition(name = "Schema URI", description = "The uri of the EPackage this registry supports objects from", required = false, defaultValue = "http://www.eclipse.org/emf/2002/Ecore")
     String schema_uri() default "http://www.eclipse.org/emf/2002/Ecore";
 
-    @AttributeDefinition(name = "Root EClass URI", description = "The uri of the EClass this registry supports objects from. "
-            + "Should come from the same EPackage specified in schema.uri", required = false, defaultValue = "http://www.eclipse.org/emf/2002/Ecore#//EPackage")
-    String root_eclass_uri() default "http://www.eclipse.org/emf/2002/Ecore#//EPackage";
+    @AttributeDefinition(name = "Root EClass URIs", description = "The uris of the EClasses this registry supports objects from; "
+            + "an object is accepted if its EClass matches any listed root or has one among its supertypes. "
+            + "A single String value keeps working (coerced to a one-element array).", required = false, defaultValue = "http://www.eclipse.org/emf/2002/Ecore#//EPackage")
+    String[] root_eclass_uri() default { "http://www.eclipse.org/emf/2002/Ecore#//EPackage" };
 
     @AttributeDefinition(name = "ResourceSet Target", description = "The target filter ensuring that the ResourceSet with the required model is actually available", required = true)
     String resourceSet_target();

@@ -99,7 +99,7 @@ public class RegistryServiceImpl<T extends EObject> implements RegistryService<T
     void deactivate() {
         promiseExecutor.shutdown();
     }
-    private final EClass rootEClass;
+    private final List<EClass> rootEClasses;
 
     private final List<StageActionService> stageActionServices = new CopyOnWriteArrayList<>();
     /** Scopes this registry has been activated for, to replay for late-binding stage action services. */
@@ -116,13 +116,20 @@ public class RegistryServiceImpl<T extends EObject> implements RegistryService<T
         this.stages = parseStages(config.stages());
         validateStages();
         this.registryObject = createRegistryObject();
-        EObject eObject = resourceSet.getEObject(URI.createURI(config.root_eclass_uri()), false);
-        if (eObject != null && eObject instanceof EClass eClass) {
-            rootEClass = eClass;
-        } else {
-            throw new IllegalArgumentException(String.format(
-                    "The provided root.eclass.uri %s does not match to any known EClass", config.root_eclass_uri()));
+        List<EClass> roots = new ArrayList<>(config.root_eclass_uri().length);
+        for (String uri : config.root_eclass_uri()) {
+            EObject eObject = resourceSet.getEObject(URI.createURI(uri), false);
+            if (eObject instanceof EClass eClass) {
+                roots.add(eClass);
+            } else {
+                throw new IllegalArgumentException(String.format(
+                        "The provided root.eclass.uri %s does not match to any known EClass", uri));
+            }
         }
+        if (roots.isEmpty()) {
+            throw new IllegalArgumentException("root.eclass.uri must name at least one EClass");
+        }
+        rootEClasses = List.copyOf(roots);
     }
 
     /**
@@ -663,13 +670,18 @@ public class RegistryServiceImpl<T extends EObject> implements RegistryService<T
      */
     @Override
     public boolean isEClassCompatibleWithRegistry(EClass eClass) {
-        // EObject is the implicit super type of every EClass but never appears in
-        // getEAllSuperTypes(), so a registry rooted at EObject must accept everything
-        if (rootEClass == EcorePackage.Literals.EOBJECT) {
-            return true;
+        for (EClass rootEClass : rootEClasses) {
+            // EObject is the implicit super type of every EClass but never appears in
+            // getEAllSuperTypes(), so a registry rooted at EObject must accept everything
+            if (rootEClass == EcorePackage.Literals.EOBJECT) {
+                return true;
+            }
+            if (EcoreUtil.getURI(eClass).equals(EcoreUtil.getURI(rootEClass))
+                    || eClass.getEAllSuperTypes().contains(rootEClass)) {
+                return true;
+            }
         }
-        return EcoreUtil.getURI(eClass).equals(EcoreUtil.getURI(rootEClass))
-                || eClass.getEAllSuperTypes().contains(rootEClass);
+        return false;
     }
 
     /*
@@ -680,7 +692,18 @@ public class RegistryServiceImpl<T extends EObject> implements RegistryService<T
      */
     @Override
     public EClass getRootEClass() {
-        return rootEClass;
+        return rootEClasses.get(0);
+    }
+
+    /*
+     * (non-Javadoc)
+     *
+     * @see
+     * org.eclipse.fennec.model.atlas.wf.workflowapi.RegistryService#getRootEClasses()
+     */
+    @Override
+    public List<EClass> getRootEClasses() {
+        return rootEClasses;
     }
 
     /*
