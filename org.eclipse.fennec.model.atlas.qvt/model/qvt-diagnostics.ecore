@@ -9,7 +9,7 @@
     <details key="resource" value="XMI"/>
     <details key="prefix" value="QvtDiagnostics"/>
     <details key="basePackage" value="org.eclipse.fennec.model.atlas.qvt"/>
-    <details key="oSGiCompatible" value="false"/>
+    <details key="oSGiCompatible" value="true"/>
     <details key="suppressNotification" value="true"/>
     <details key="suppressEMFTypes" value="true"/>
   </eAnnotations>

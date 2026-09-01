@@ -1,0 +1,15 @@
+-library: enableOSGi-Test
+
+-runrequires: \
+	bnd.identity;id='org.eclipse.fennec.model.atlas.qvt.tests',\
+	bnd.identity;id='org.eclipse.fennec.model.atlas.qvt',\
+	bnd.identity;id='org.eclipse.fennec.model.atlas.management.lucene',\
+	bnd.identity;id='org.eclipse.fennec.model.atlas.management.file',\
+	bnd.identity;id='org.eclipse.fennec.emf.osgi.component'
+
+-runbundles.test: \
+	org.eclipse.fennec.model.atlas.qvt.tests;version=snapshot
+
+-runfw: org.apache.felix.framework;version='[7.0.5,7.0.5]'
+
+-runee: JavaSE-21

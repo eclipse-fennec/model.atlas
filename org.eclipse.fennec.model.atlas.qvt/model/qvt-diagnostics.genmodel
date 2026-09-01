@@ -4,7 +4,8 @@
     modelDirectory="/org.eclipse.fennec.model.atlas.qvt/src-gen" modelPluginID="org.eclipse.fennec.model.atlas.qvt"
     modelName="QvtDiagnostics" rootExtendsClass="org.eclipse.emf.ecore.impl.MinimalEObjectImpl$Container"
     suppressEMFTypes="true" importerID="org.eclipse.emf.importer.ecore" suppressNotification="true"
-    complianceLevel="17.0" copyrightFields="false" operationReflection="true" importOrganizing="true">
+    complianceLevel="17.0" copyrightFields="false" operationReflection="true" importOrganizing="true"
+    oSGiCompatible="true">
   <foreignModel>qvt-diagnostics.ecore</foreignModel>
   <genPackages prefix="QvtDiagnostics" basePackage="org.eclipse.fennec.model.atlas.qvt"
       resource="XMI" disposableProviderFactory="true" ecorePackage="qvt-diagnostics.ecore#/">
