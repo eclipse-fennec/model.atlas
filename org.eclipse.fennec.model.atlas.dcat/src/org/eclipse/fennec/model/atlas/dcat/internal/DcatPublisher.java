@@ -332,9 +332,19 @@ public class DcatPublisher implements HealthCheck {
         ResolvedCatalog resolved = resolveCatalog(scopeName);
         boolean wasPublished = publishable(scopeName);
         Set<String> listedDatasets = datasetsListedIn(scopeName);
+
+        if (!retirementAllowed()) {
+            // Deliberately keeps the entry, exactly as unbindPublishablePackage does: on the
+            // shutdown path this map is what retire.on.shutdown fans out over, and removing the
+            // scopes one unbind at a time left it with nothing to unlink from — every Dataset
+            // retired from zero Catalogs (#233). A reactivation's rebind refreshes it anyway.
+            LOGGER.fine(() -> "Not retiring the Catalog for scope " + scopeName
+                    + ": this publisher is stopping, not the scope");
+            return;
+        }
         scopes.remove(scopeName);
 
-        if (!retirementAllowed() || !wasPublished || resolved.id() == null) {
+        if (!wasPublished || resolved.id() == null) {
             return;
         }
         UnpublishMode mode = unpublishMode;
