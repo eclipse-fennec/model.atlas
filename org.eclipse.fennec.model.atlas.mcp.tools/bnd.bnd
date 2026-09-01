@@ -1,0 +1,32 @@
+Bundle-Name: Eclipse Fennec Model Atlas MCP Tools
+Bundle-Description: MCP tool publishing a session-registered EPackage to a model.atlas draft stage, \
+ so an inferred model leaves the runtime without its XMI ever passing through the LLM.
+-workingset: mcp
+
+-library: enableEMF
+
+-buildpath: \
+	io.modelcontextprotocol.sdk.mcp-core;version=latest,\
+	io.projectreactor.reactor-core;version=latest,\
+	reactive-streams;version=latest,\
+	tools.jackson.core.jackson-databind;version=latest,\
+	tools.jackson.core.jackson-core;version=latest,\
+	com.fasterxml.jackson.core.jackson-annotations;version=latest,\
+	org.eclipse.fennec.emf.osgi.metadata;version=latest,\
+	org.eclipse.fennec.emf.osgi.api;version=latest,\
+	org.osgi.service.metatype.annotations;version=latest,\
+	org.eclipse.fennec.mcp.api;version=latest
+
+# Deploying this bundle IS the authorization decision: a runtime without it
+# cannot publish anything. Hence a write-only service kept inside the bundle and
+# no write method added to the read-only, widely consumed ModelAtlasClient.
+# HTTP goes through the ResourceSet's URIConverter (Fennec's RESTful URI handler,
+# already in every Fennec runtime) rather than a JAX-RS client: no Jersey stack to
+# deploy, and no provider lookup that can lose a race with lazy bundle activation.
+# component.minimal exports org.eclipse.fennec.emf.osgi.fingerprint.util, whose
+# FingerprintHelper backs MetadataServices.createWhiteboard(). The tests resolve
+# packages through a real metadata whiteboard rather than a stub, so that
+# "registered" means here what it means in the runtime.
+-testpath: \
+	assertj-core,\
+	org.eclipse.fennec.emf.osgi.component.minimal;version=latest
