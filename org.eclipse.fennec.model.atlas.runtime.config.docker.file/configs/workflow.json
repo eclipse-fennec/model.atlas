@@ -5,13 +5,59 @@
         "trigger.stages": ["draft", "approved", "release"],
         "storageService.target": "(storage.type=file)"
     },
+    "QvtStageActionService": {
+        "trigger.stages": ["draft", "approved", "release"]
+    },
     "ScopeService~jena": {
     	"atlas.scope": "jena",
         "scope.name": "jena",
         "scope.description": "City Jena Scope",
         "parent.scope": "atlas",
-        "registryService.target": "(|(registry.name=schema)(registry.name=workspace)(registry.name=DataGen)(registry.name=cocl)(registry.name=sensinactmapping)(registry.name=sensinactprofile))",
+        "registryService.target": "(|(registry.name=schema)(registry.name=workspace)(registry.name=DataGen)(registry.name=cocl)(registry.name=sensinactmapping)(registry.name=sensinactprofile)(registry.name=transformations))",
         "registryService.cardinality.minimum:int": 1
+    },
+    "RegistryService~transformations": {
+        "registry.type": "TRANSFORMATION",
+        "registry.name": "transformations",
+        "registry.description": "QVT-O transformation sources, compiled units and their diagnostics (issue #239)",
+        "stageActionService.target": "(component.name=QvtStageActionService)",
+        "stageActionService.cardinality.minimum:int": 1,
+        "stage.storage.mappings": [
+            "draft:file",
+            "approved:file",
+            "release:file"
+        ],
+        "workflow.transitions": [
+            "draft:approved",
+            "approved:release"
+        ],
+        "delete.after.transition": false,
+        "storageService.target": "(storage.type=file)",
+        "storageService.cardinality.minimum:int": 1,
+        "stages": [
+            {
+                "name": "draft",
+                "writable": true,
+                "final": false
+            },
+            {
+                "name": "approved",
+                "writable": true,
+                "final": false
+            },
+            {
+                "name": "release",
+                "writable": true,
+                "final": true
+            }
+        ],
+        "schema.uri": "http://www.eclipse.org/fennec/m2x/compiled/1.0",
+        "root.eclass.uri": [
+            "http://www.eclipse.org/fennec/m2x/compiled/1.0#//CompiledUnit",
+            "http://www.eclipse.org/fennec/m2x/compiled/1.0#//SourceUnit",
+            "http://eclipse.org/fennec/model/atlas/qvt/diagnostics/1.0.0#//SourceDiagnostics"
+        ],
+        "resourceSet.target": "(&(emf.name=compiled)(emf.name=diagnostics))"
     },
     "RegistryService~schema": {
         "registry.type": "SCHEMA",

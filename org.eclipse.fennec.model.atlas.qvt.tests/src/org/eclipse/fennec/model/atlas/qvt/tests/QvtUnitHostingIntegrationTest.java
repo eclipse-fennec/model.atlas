@@ -365,6 +365,28 @@ public class QvtUnitHostingIntegrationTest {
     }
 
     @Test
+    @DisplayName("A source transition recompiles in the target stage; units never transition themselves")
+    void transitionRecompilesInTargetStage(
+            @InjectService(cardinality = 0, timeout = 15000, filter = "(registry.name=" + REGISTRY + ")") //
+            ServiceAware<RegistryService> aware) throws Exception {
+        RegistryService<EObject> registry = registry(aware);
+        uploadSource(registry, DRAFT, "Promote", "Promote", RENAME.replace("Rename", "Promote"));
+
+        AtlasUnitStore draftStore = new AtlasUnitStore(registry, SCOPE, DRAFT);
+        assertEquals(1, draftStore.versions(QvtUnits.LANGUAGE_QVTO, "Promote", UnitKind.COMPILED).size());
+
+        registry.transitionToStage(SCOPE, "Promote", DRAFT, "release");
+
+        AtlasUnitStore releaseStore = new AtlasUnitStore(registry, SCOPE, "release");
+        List<UnitKey> released = releaseStore.versions(QvtUnits.LANGUAGE_QVTO, "Promote", UnitKind.COMPILED);
+        assertEquals(1, released.size(), "the source's ENTER in the target stage recompiled it there");
+
+        SourceDiagnostics diagnostics = diagnosticsOf(registry, "release", "Promote");
+        assertEquals(CompileStatus.OK, diagnostics.getCompileStatus());
+        assertEquals(released.get(0).fingerprint().orElseThrow(), diagnostics.getUnitFingerprint());
+    }
+
+    @Test
     @DisplayName("Round trip: fetched by name + fingerprint, prepared and executed on a plain consumer engine")
     void roundTripPrepareExecute(
             @InjectService(cardinality = 0, timeout = 15000, filter = "(registry.name=" + REGISTRY + ")") //

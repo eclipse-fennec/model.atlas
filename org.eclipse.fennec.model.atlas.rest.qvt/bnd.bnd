@@ -12,4 +12,9 @@ Bundle-Description: Serves QVT-O sources over REST (issue #239): a text/x-qvto \
 	org.osgi.service.component,\
 	org.eclipse.fennec.m2x.unit;version=latest,\
 	org.eclipse.fennec.model.atlas.qvt;version=snapshot,\
-	org.eclipse.fennec.model.atlas.rest.common;version=snapshot
+	org.eclipse.fennec.model.atlas.rest.common;version=snapshot,\
+	org.eclipse.fennec.model.atlas.workflow;version=snapshot,\
+	org.eclipse.fennec.model.atlas.management;version=snapshot,\
+	org.eclipse.fennec.model.atlas.runtime;version=snapshot,\
+	org.osgi.util.promise;version=latest,\
+	io.swagger.core.v3.swagger-annotations;version=latest
