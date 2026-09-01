@@ -29,9 +29,13 @@ client and, depending on `mode`:
   is LAZY.
 
 Published packages are kept in step with the server: a drift change atomically
-re-publishes the trio, a removal revokes it. **Local-first** is the default — a
-remote package is suppressed while a local bundle provides the same nsURI (unless
-`force.remote=true`), and re-published if that local one disappears.
+re-publishes the trio, a removal revokes it, and a package that *appears* on the
+server after activation is published on the next drift tick — EAGER takes any one
+from its scopes, HYBRID only those named in `eager.nsuri.allow.list`, LAZY none
+(it resolves on demand). **Local-first** is the default — a remote package is
+suppressed while a local bundle provides the same nsURI (unless
+`force.remote=true`), and re-published if that local one disappears; a newly
+discovered package goes through that same gate, so it cannot displace a local one.
 
 Independently of the mode, the component also publishes one
 `ReadableScopeService<EObject>` OSGi service **per scope** (keyed `atlas.scope`), so a

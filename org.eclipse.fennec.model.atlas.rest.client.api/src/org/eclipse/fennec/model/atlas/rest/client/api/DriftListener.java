@@ -48,6 +48,22 @@ public interface DriftListener {
 	}
 
 	/**
+	 * An EPackage the client held nothing under became resolvable on the server —
+	 * a package published and promoted into a scope's final stage after this client
+	 * started.
+	 * <p>
+	 * Fired only when the client discovers additions (EAGER/HYBRID); a LAZY client
+	 * fetches on demand and needs no announcement. Default no-op, so listeners that
+	 * only track what they already hold need not implement it.
+	 *
+	 * @param nsUri      the newly resolvable nsURI
+	 * @param newPackage the freshly fetched package
+	 */
+	default void onPackageAdded(String nsUri, EPackage newPackage) {
+		// no-op by default
+	}
+
+	/**
 	 * An EPackage changed on the server and was re-fetched.
 	 *
 	 * @param nsUri      the affected nsURI

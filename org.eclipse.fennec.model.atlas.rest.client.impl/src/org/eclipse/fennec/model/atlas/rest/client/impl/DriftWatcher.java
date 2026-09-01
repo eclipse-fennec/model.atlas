@@ -66,6 +66,7 @@ class DriftWatcher implements AutoCloseable {
 	private final Supplier<RemoteEPackageProviderImpl> providerSupplier;
 	private final Function<String, RemoteReadableScopeService> scopeServiceLookup;
 	private final long intervalMs;
+	private final boolean discoverAdditions;
 
 	private final List<DriftListener> listeners = new CopyOnWriteArrayList<>();
 	private final Map<String, String> scopeEtags = new ConcurrentHashMap<>();
@@ -74,6 +75,19 @@ class DriftWatcher implements AutoCloseable {
 	DriftWatcher(WebTarget baseTarget, Supplier<List<String>> scopesSupplier,
 			Supplier<RemoteEPackageProviderImpl> providerSupplier,
 			Function<String, RemoteReadableScopeService> scopeServiceLookup, long intervalMs) {
+		this(baseTarget, scopesSupplier, providerSupplier, scopeServiceLookup, intervalMs, false);
+	}
+
+	/**
+	 * @param discoverAdditions whether an nsURI the client holds nothing under is
+	 *                          fetched and announced as an addition, rather than
+	 *                          skipped
+	 */
+	DriftWatcher(WebTarget baseTarget, Supplier<List<String>> scopesSupplier,
+			Supplier<RemoteEPackageProviderImpl> providerSupplier,
+			Function<String, RemoteReadableScopeService> scopeServiceLookup, long intervalMs,
+			boolean discoverAdditions) {
+		this.discoverAdditions = discoverAdditions;
 		this.baseTarget = baseTarget;
 		this.scopesSupplier = Objects.requireNonNull(scopesSupplier, "scopesSupplier");
 		this.providerSupplier = Objects.requireNonNull(providerSupplier, "providerSupplier");
@@ -101,22 +115,23 @@ class DriftWatcher implements AutoCloseable {
 	 * cache and listeners. Returns the aggregate of what changed/was removed.
 	 */
 	synchronized DriftReport check() {
+		Set<String> added = new LinkedHashSet<>();
 		Set<String> changed = new LinkedHashSet<>();
 		Set<String> removed = new LinkedHashSet<>();
 		RemoteEPackageProviderImpl provider = providerSupplier.get();
 		for (String scope : scopesSupplier.get()) {
 			try {
-				checkScope(scope, provider, changed, removed);
+				checkScope(scope, provider, added, changed, removed);
 			} catch (RuntimeException e) {
 				// One scope failing (unreachable, bad payload, listener trouble) must not
 				// starve the remaining scopes of their drift events.
 				logger.log(Level.WARNING, e, () -> "Drift check failed for scope " + scope);
 			}
 		}
-		return DriftReport.of(changed, removed);
+		return DriftReport.of(added, changed, removed);
 	}
 
-	private void checkScope(String scope, RemoteEPackageProviderImpl provider, Set<String> changed,
+	private void checkScope(String scope, RemoteEPackageProviderImpl provider, Set<String> added, Set<String> changed,
 			Set<String> removed) {
 		Response response = RestSupport.head(baseTarget.path(SCOPES).path(scope), scopeEtags.get(scope));
 		try {
@@ -131,16 +146,26 @@ class DriftWatcher implements AutoCloseable {
 			if (previousEtag == null) {
 				return; // first sight of this scope: establish the baseline, emit nothing
 			}
-			handleChangedNsUris(response, provider, changed, removed);
+			handleChangedNsUris(response, provider, added, changed, removed);
 			handleChangedObjects(scope, response);
 		} finally {
 			response.close();
 		}
 	}
 
-	/** EPackage drift: refresh and notify for each changed nsURI we currently hold. */
-	private void handleChangedNsUris(Response response, RemoteEPackageProviderImpl provider, Set<String> changed,
-			Set<String> removed) {
+	/**
+	 * EPackage drift: refresh and notify for each named nsURI.
+	 * <p>
+	 * An nsURI we hold is a change or a removal, as before. One we do <em>not</em>
+	 * hold is a candidate <em>addition</em> — but only when discovery is on, and only
+	 * if the server can actually resolve it: the server's diff reports every stage of
+	 * a scope, so a package that exists only in a draft stage is named here long
+	 * before a stage-free read can serve it. Such an nsURI is skipped silently. It
+	 * must never be reported as removed — we never held it, so there is nothing to
+	 * evict, and a listener acting on it would revoke a package it does not own.
+	 */
+	private void handleChangedNsUris(Response response, RemoteEPackageProviderImpl provider, Set<String> added,
+			Set<String> changed, Set<String> removed) {
 		String header = response.getHeaderString(ATLAS_CHANGED_NSURIS);
 		if (header == null || header.isBlank()) {
 			return;
@@ -148,8 +173,14 @@ class DriftWatcher implements AutoCloseable {
 		Set<String> held = heldNsUris(provider);
 		for (String raw : header.split(",")) {
 			String nsUri = raw.trim();
-			if (nsUri.isEmpty() || !held.contains(nsUri)) {
-				continue; // only act on entries we actually hold
+			if (nsUri.isEmpty()) {
+				continue;
+			}
+			if (!held.contains(nsUri)) {
+				if (discoverAdditions) {
+					discover(nsUri, provider, added);
+				}
+				continue;
 			}
 			Optional<EPackage> refreshed = provider.refresh(nsUri);
 			if (refreshed.isPresent()) {
@@ -160,6 +191,30 @@ class DriftWatcher implements AutoCloseable {
 				fireRemoved(nsUri);
 			}
 		}
+	}
+
+	/**
+	 * Try to fetch an nsURI we hold nothing under. Present ⇒ a genuine addition;
+	 * absent ⇒ not (yet) resolvable stage-free, which is the normal state of a
+	 * draft-only publish and is not an event of any kind.
+	 */
+	private void discover(String nsUri, RemoteEPackageProviderImpl provider, Set<String> added) {
+		Optional<EPackage> fetched;
+		try {
+			fetched = provider.refresh(nsUri);
+		} catch (RuntimeException e) {
+			// Discovery is best-effort: a package we never held failing to fetch must not
+			// cost the remaining nsURIs in this header their change/removal events.
+			logger.log(Level.WARNING, e, () -> "Drift: could not fetch newly reported nsURI " + nsUri);
+			return;
+		}
+		if (fetched.isEmpty()) {
+			logger.log(Level.FINE,
+					() -> "Drift: " + nsUri + " was reported changed but is not resolvable at a final stage yet");
+			return;
+		}
+		added.add(nsUri);
+		fireAdded(nsUri, fetched.get());
 	}
 
 	/**
@@ -243,6 +298,16 @@ class DriftWatcher implements AutoCloseable {
 			} else if (allRemoved) {
 				fireObjectRemoved(scope, registry, objectId);
 			} // else: only unchanged sibling views → no event
+		}
+	}
+
+	private void fireAdded(String nsUri, EPackage ePackage) {
+		for (DriftListener listener : listeners) {
+			try {
+				listener.onPackageAdded(nsUri, ePackage);
+			} catch (RuntimeException e) {
+				logger.log(Level.WARNING, e, () -> "DriftListener onPackageAdded failed for " + nsUri);
+			}
 		}
 	}
 

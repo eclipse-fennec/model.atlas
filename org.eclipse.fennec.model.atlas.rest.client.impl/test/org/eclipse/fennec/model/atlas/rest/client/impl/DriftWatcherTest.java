@@ -63,6 +63,11 @@ class DriftWatcherTest {
 		return new DriftWatcher(target, () -> List.of("jena"), () -> provider, scopeServiceLookup, 0);
 	}
 
+	/** A watcher that reads the feed as a discovery feed too (EAGER/HYBRID clients). */
+	private DriftWatcher discoveringWatcher() {
+		return new DriftWatcher(target, () -> List.of("jena"), () -> provider, s -> null, 0, true);
+	}
+
 	private static Response headResponse(int status, Response.Status statusInfo, String etag, String changedNsUris) {
 		Response r = mock(Response.class);
 		when(r.getStatus()).thenReturn(status);
@@ -83,10 +88,16 @@ class DriftWatcherTest {
 	}
 
 	private static class RecordingListener implements DriftListener {
+		final java.util.List<String> added = new java.util.ArrayList<>();
 		final java.util.List<String> changed = new java.util.ArrayList<>();
 		final java.util.List<String> removed = new java.util.ArrayList<>();
 		final java.util.List<String> objectsChanged = new java.util.ArrayList<>();
 		final java.util.List<String> objectsRemoved = new java.util.ArrayList<>();
+
+		@Override
+		public void onPackageAdded(String nsUri, EPackage newPackage) {
+			added.add(nsUri);
+		}
 
 		@Override
 		public void onPackageChanged(String nsUri, EPackage newPackage) {
@@ -161,6 +172,111 @@ class DriftWatcherTest {
 		assertTrue(report.getRemovedNsUris().isEmpty());
 		verify(provider).refresh("ns1");
 		verify(provider, never()).refresh("ns2"); // ns2 not cached → ignored
+	}
+
+	@Test
+	void newPackage_notHeld_isDiscoveredAndAnnounced() {
+		// issue #228: a package published+promoted after start-up is named by the server's
+		// Atlas-Changed-NsUris, but the client holds nothing under it yet.
+		Response baseline = headResponse(200, Response.Status.OK, "\"s1\"", null);
+		Response changed = headResponse(200, Response.Status.OK, "\"s2\"", "nsNew");
+		when(request.head()).thenReturn(baseline, changed);
+		when(provider.cachedNsUris()).thenReturn(Set.of()); // nothing held
+		when(provider.refresh("nsNew")).thenReturn(Optional.of(pkg("nsNew")));
+		RecordingListener listener = new RecordingListener();
+		DriftWatcher watcher = discoveringWatcher();
+		watcher.addListener(listener);
+
+		watcher.check(); // baseline
+		DriftReport report = watcher.check(); // the new package appears
+
+		assertEquals(List.of("nsNew"), report.getAddedNsUris());
+		assertEquals(List.of("nsNew"), listener.added);
+		assertTrue(report.getChangedNsUris().isEmpty());
+		assertTrue(report.getRemovedNsUris().isEmpty());
+		assertTrue(listener.removed.isEmpty());
+		assertTrue(report.hasChanges());
+	}
+
+	@Test
+	void newNsUri_notResolvableYet_isSilentlyIgnored() {
+		// The server's diff spans every stage, so a draft-only publish is named here long
+		// before a stage-free read can serve it. That is not an addition — and emphatically
+		// not a removal: we never held it, so there is nothing for a listener to revoke.
+		Response baseline = headResponse(200, Response.Status.OK, "\"s1\"", null);
+		Response changed = headResponse(200, Response.Status.OK, "\"s2\"", "nsDraftOnly");
+		when(request.head()).thenReturn(baseline, changed);
+		when(provider.cachedNsUris()).thenReturn(Set.of());
+		when(provider.refresh("nsDraftOnly")).thenReturn(Optional.empty());
+		RecordingListener listener = new RecordingListener();
+		DriftWatcher watcher = discoveringWatcher();
+		watcher.addListener(listener);
+
+		watcher.check();
+		DriftReport report = watcher.check();
+
+		assertFalse(report.hasChanges());
+		assertTrue(listener.added.isEmpty());
+		assertTrue(listener.removed.isEmpty());
+	}
+
+	@Test
+	void discoveryOff_leavesUnheldNsUrisAlone() {
+		// A LAZY client fetches on demand; the feed stays a pure invalidation signal.
+		Response baseline = headResponse(200, Response.Status.OK, "\"s1\"", null);
+		Response changed = headResponse(200, Response.Status.OK, "\"s2\"", "nsNew");
+		when(request.head()).thenReturn(baseline, changed);
+		when(provider.cachedNsUris()).thenReturn(Set.of());
+		RecordingListener listener = new RecordingListener();
+		DriftWatcher watcher = watcher();
+		watcher.addListener(listener);
+
+		watcher.check();
+		DriftReport report = watcher.check();
+
+		assertFalse(report.hasChanges());
+		assertTrue(listener.added.isEmpty());
+		verify(provider, never()).refresh("nsNew");
+	}
+
+	@Test
+	void discovery_separatesAdditionsFromChanges() {
+		Response baseline = headResponse(200, Response.Status.OK, "\"s1\"", null);
+		Response changed = headResponse(200, Response.Status.OK, "\"s2\"", "nsHeld,nsNew");
+		when(request.head()).thenReturn(baseline, changed);
+		when(provider.cachedNsUris()).thenReturn(Set.of("nsHeld"));
+		when(provider.refresh("nsHeld")).thenReturn(Optional.of(pkg("nsHeld")));
+		when(provider.refresh("nsNew")).thenReturn(Optional.of(pkg("nsNew")));
+		RecordingListener listener = new RecordingListener();
+		DriftWatcher watcher = discoveringWatcher();
+		watcher.addListener(listener);
+
+		watcher.check();
+		DriftReport report = watcher.check();
+
+		assertEquals(List.of("nsNew"), report.getAddedNsUris());
+		assertEquals(List.of("nsHeld"), report.getChangedNsUris());
+		assertEquals(List.of("nsNew"), listener.added);
+		assertEquals(List.of("nsHeld"), listener.changed);
+	}
+
+	@Test
+	void discoveryFailure_doesNotStarveTheRemainingNsUris() {
+		Response baseline = headResponse(200, Response.Status.OK, "\"s1\"", null);
+		Response changed = headResponse(200, Response.Status.OK, "\"s2\"", "nsBroken,nsHeld");
+		when(request.head()).thenReturn(baseline, changed);
+		when(provider.cachedNsUris()).thenReturn(Set.of("nsHeld"));
+		when(provider.refresh("nsBroken")).thenThrow(new IllegalStateException("boom"));
+		when(provider.refresh("nsHeld")).thenReturn(Optional.of(pkg("nsHeld")));
+		RecordingListener listener = new RecordingListener();
+		DriftWatcher watcher = discoveringWatcher();
+		watcher.addListener(listener);
+
+		watcher.check();
+		DriftReport report = watcher.check();
+
+		assertEquals(List.of("nsHeld"), report.getChangedNsUris());
+		assertTrue(report.getAddedNsUris().isEmpty());
 	}
 
 	@Test

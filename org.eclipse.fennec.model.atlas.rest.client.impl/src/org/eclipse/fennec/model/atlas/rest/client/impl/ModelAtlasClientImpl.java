@@ -26,6 +26,7 @@ import org.eclipse.emf.ecore.resource.ResourceSet;
 import org.eclipse.emf.ecore.resource.impl.ResourceSetImpl;
 import org.eclipse.emf.ecore.xmi.impl.XMIResourceFactoryImpl;
 import org.eclipse.fennec.model.atlas.rest.client.api.ClientConfiguration;
+import org.eclipse.fennec.model.atlas.rest.client.api.ResolutionMode;
 import org.eclipse.fennec.model.atlas.rest.client.api.DriftListener;
 import org.eclipse.fennec.model.atlas.rest.client.api.DriftReport;
 import org.eclipse.fennec.model.atlas.rest.client.api.ModelAtlasClient;
@@ -73,8 +74,12 @@ public class ModelAtlasClientImpl implements ModelAtlasClient {
 		this.client = Objects.requireNonNull(client, "client");
 		this.deserializer = Objects.requireNonNull(deserializer, "deserializer");
 		this.baseTarget = client.target(configuration.getBaseUri());
+		// A client that mirrors the Atlas (EAGER) or pre-fetches a fixed nsURI list
+		// (HYBRID) must learn about packages that appear after start-up; a LAZY client
+		// fetches on demand and needs no discovery (issue #228).
+		boolean discoverAdditions = configuration.getMode() != ResolutionMode.LAZY;
 		this.driftWatcher = new DriftWatcher(baseTarget, this::scopesToWatch, this::ePackagesImpl,
-				readOnlyScopes::get, configuration.getDriftCheckIntervalMs());
+				readOnlyScopes::get, configuration.getDriftCheckIntervalMs(), discoverAdditions);
 		this.driftWatcher.start();
 	}
 
