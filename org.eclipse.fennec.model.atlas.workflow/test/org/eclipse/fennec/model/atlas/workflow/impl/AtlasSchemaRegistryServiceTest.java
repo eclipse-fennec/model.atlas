@@ -454,6 +454,12 @@ public class AtlasSchemaRegistryServiceTest {
 		void shouldReturnEPackageAsRootEClass() {
 			assertEquals(EcorePackage.Literals.EPACKAGE, service.getRootEClass());
 		}
+
+		@Test
+		@DisplayName("Should return EPackage as the only accepted root EClass")
+		void shouldReturnEPackageAsOnlyRootEClass() {
+			assertEquals(java.util.List.of(EcorePackage.Literals.EPACKAGE), service.getRootEClasses());
+		}
 	}
 
 	@Nested
