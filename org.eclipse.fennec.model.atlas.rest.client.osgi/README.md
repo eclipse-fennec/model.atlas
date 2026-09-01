@@ -137,7 +137,7 @@ Attribute names in the OCD use `_`; the ConfigAdmin/Configurator property uses `
 |---|---|---|
 | `resource.set.fallback` | `true` | wrap framework-produced `ResourceSet`s with the Atlas-aware registry |
 | `force.remote` | `false` | prefer the remote EPackage over a same-nsURI local one (high `service.ranking` + startup version check) |
-| `register.in.global.registry` | `false` | also mirror published EPackages into `EPackage.Registry.INSTANCE` (legacy consumers) |
+| `register.in.global.registry` | `false` | also mirror published EPackages into `EPackage.Registry.INSTANCE` (legacy consumers); only ever *adds* — an nsURI another bundle already registered is left alone |
 | `nsuri.allow.list` / `nsuri.deny.list` (`String[]`) | _empty_ | restrict which nsURIs are publishable |
 | `drift.check.interval.ms` | `300000` | background drift-watcher period; `0` disables it |
 
@@ -331,6 +331,28 @@ ResourceSetFactory jenaSnapshotRsf;
   }
 }
 ```
+
+Mirroring is **additive**. An nsURI that is already registered in the singleton —
+typically by a generated package's own initialiser — is left exactly as it is, and
+the skip is logged at `INFO`. Only entries this client actually placed are replaced
+on a drift swap or removed on shutdown, and removal additionally checks the entry is
+still the one it put, so a generated bundle that initialises *after* the mirror keeps
+its registration.
+
+That matters because generated code owns the singleton entry it registers: a
+generated factory initialiser does
+
+```java
+ScopeApiFactory f = (ScopeApiFactory) EPackage.Registry.INSTANCE.getEFactory(ScopeApiPackage.eNS_URI);
+```
+
+and replacing the generated package with a dynamic one from the Atlas turns that into
+a `ClassCastException` (`EFactoryImpl` cannot be cast to `ScopeApiFactory`). Because
+generated factories cache once per classloader, whether it breaks depends on whether
+the class was touched before or after the eager sweep — so it used to surface as an
+intermittent start-up failure rather than a reproducible one.
+
+The OSGi services are published either way; only the singleton mirror is skipped.
 
 ## Consuming the published services
 

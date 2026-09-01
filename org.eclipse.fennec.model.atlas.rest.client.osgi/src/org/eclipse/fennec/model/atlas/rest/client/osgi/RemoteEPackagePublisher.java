@@ -59,6 +59,14 @@ import org.osgi.framework.ServiceRegistration;
  * so legacy code reaching the EMF singleton sees the same package — kept consistent with
  * the OSGi service through drift swaps. Default is {@code null} (the singleton is left
  * untouched).
+ * <p>
+ * The singleton is shared with every other bundle in the JVM, so mirroring only ever
+ * <em>adds</em>: an nsURI someone else already registered is left alone, and only entries
+ * this publisher actually placed are replaced or removed (issue #227). Overwriting a
+ * generated package with a dynamic one breaks the generated code that owns it — its
+ * factory initialiser casts {@code Registry.INSTANCE.getEFactory(eNS_URI)} to its own
+ * factory type and gets a {@code ClassCastException} — and the symmetric removal used to
+ * delete registrations this publisher never made.
  */
 final class RemoteEPackagePublisher {
 
@@ -69,6 +77,15 @@ final class RemoteEPackagePublisher {
 	private final int serviceRanking;
 	private final transient EPackage.Registry globalRegistry;
 	private final Map<String, Registration> published = new ConcurrentHashMap<>();
+	/**
+	 * What this publisher actually placed into {@link #globalRegistry}, by nsURI — the entries
+	 * it may replace on a drift swap and remove on unpublish. An nsURI that was already taken
+	 * when we first saw it never enters this map, so it is never touched again (#227). The
+	 * value is kept so removal can verify our entry is still the one in the registry: a
+	 * generated bundle whose static initialiser runs after our mirror overwrites it, and that
+	 * package is then no longer ours to remove.
+	 */
+	private final Map<String, EPackage> mirrored = new ConcurrentHashMap<>();
 	/** P3-9: serialises publish/republish/unpublish of the same nsURI (parallel for distinct nsURIs). */
 	private final NsUriLocks locks = new NsUriLocks();
 
@@ -230,17 +247,58 @@ final class RemoteEPackagePublisher {
 		published.clear();
 	}
 
-	/** P3-11: mirror a publication into the EMF singleton when one was supplied. */
+	/**
+	 * P3-11 / #227: mirror a publication into the EMF singleton when one was supplied, without
+	 * ever displacing another bundle's registration.
+	 * <p>
+	 * Presence is probed with {@code containsKey}, which is delegate-aware and — unlike
+	 * {@code getEPackage} — does not resolve an {@code EPackage.Descriptor}: a generated
+	 * package registered lazily must not be forced to initialise merely because we looked.
+	 * {@code putIfAbsent} then closes the gap against a concurrent put by another bundle's
+	 * static initialiser; its {@code HashMap} implementation only consults the local table,
+	 * which is why the delegate-aware check comes first.
+	 */
 	private void mirrorToGlobal(String nsUri, EPackage ePackage) {
-		if (globalRegistry != null) {
-			globalRegistry.put(nsUri, ePackage);
+		if (globalRegistry == null) {
+			return;
 		}
+		if (mirrored.containsKey(nsUri)) {
+			// Ours already: keep the singleton in step with the service swap.
+			globalRegistry.put(nsUri, ePackage);
+			mirrored.put(nsUri, ePackage);
+			return;
+		}
+		if (globalRegistry.containsKey(nsUri)) {
+			LOGGER.log(Level.INFO, () -> "Not mirroring " + nsUri
+					+ " into EPackage.Registry.INSTANCE: it is already registered there by someone else"
+					+ " (a generated package, most likely). The OSGi service is published as usual.");
+			return;
+		}
+		if (globalRegistry.putIfAbsent(nsUri, ePackage) != null) {
+			LOGGER.log(Level.INFO, () -> "Not mirroring " + nsUri
+					+ " into EPackage.Registry.INSTANCE: another registration won the race");
+			return;
+		}
+		mirrored.put(nsUri, ePackage);
+		LOGGER.log(Level.INFO, () -> "Mirrored " + nsUri + " into EPackage.Registry.INSTANCE");
 	}
 
-	/** P3-11: drop our mirrored entry from the EMF singleton. */
+	/**
+	 * P3-11 / #227: drop our mirrored entry from the EMF singleton — and only ours. An nsURI
+	 * we never placed belongs to another bundle, and removing it would unregister a package
+	 * this client does not own.
+	 * <p>
+	 * The value-matching {@code remove} covers the other ordering too: if a generated bundle's
+	 * static initialiser overwrote our mirror after we placed it, the entry is no longer the
+	 * one we put and is left where it is.
+	 */
 	private void removeFromGlobal(String nsUri) {
-		if (globalRegistry != null) {
-			globalRegistry.remove(nsUri);
+		if (globalRegistry == null) {
+			return;
+		}
+		EPackage ours = mirrored.remove(nsUri);
+		if (ours != null) {
+			globalRegistry.remove(nsUri, ours);
 		}
 	}
 
