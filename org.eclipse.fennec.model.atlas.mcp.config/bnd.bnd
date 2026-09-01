@@ -1,0 +1,19 @@
+Bundle-Name: Eclipse Fennec Model Atlas MCP Configuration
+Bundle-Description: OSGi Configurator resources for the model.atlas MCP publishing tool: the \
+ MCPToolProvider that carries post_to_model_atlas, and the ModelAtlasPublisher policy it needs. \
+ Every publisher property is env/system-property interpolated, so one bundle serves every deployment.
+-workingset: mcp
+
+-resourceonly: true
+-includeresource: OSGI-INF/configurator/=configs/
+
+# osgi.cm is required in addition to the extender: the JSON carries $[env:...] placeholders that
+# only Configuration Admin's interpolation plugin resolves, and a runtime without CM would apply
+# the configuration verbatim.
+Require-Capability: \
+	osgi.extender;filter:='(osgi.extender=osgi.configurator)',\
+	osgi.implementation;filter:='(&(osgi.implementation=osgi.cm)(version>=1.6.0)(!(version>=2.0.0)))'
+
+# Unlike the model.atlas runtime config bundles, this one is NOT '-maven-release: local'.
+# org.eclipse.fennec.mcp.inference.runtime in the emf.osgi-mcp project resolves it by identity
+# from the snapshot repository, so it has to be published.

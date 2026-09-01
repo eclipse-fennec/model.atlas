@@ -1,0 +1,10 @@
+{
+    ":configurator:resource-version": 1,
+    "ModelAtlasPublisher~publisher": {
+        "base.uri": "$[env:MODEL_ATLAS_BASE_URI;default=$[prop:MODEL_ATLAS_BASE_URI;default=]]",
+        "scope": "$[env:MODEL_ATLAS_PUBLISHING_SCOPE;default=$[prop:MODEL_ATLAS_PUBLISHING_SCOPE;default=]]",
+        "stage": "$[env:MODEL_ATLAS_PUBLISHING_STAGE;default=$[prop:MODEL_ATLAS_PUBLISHING_STAGE;default=draft]]",
+        "overwrite": "$[env:MODEL_ATLAS_OVERWRITE;default=$[prop:MODEL_ATLAS_OVERWRITE;default=false]]",
+        "publish.nsuri.allowlist": "$[env:MCP_ATLAS_PUBLISH_ALLOWLIST;type=String[];delimiter=|;default=$[prop:MCP_ATLAS_PUBLISH_ALLOWLIST;default=]]"
+    }
+}

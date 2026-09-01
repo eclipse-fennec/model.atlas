@@ -1,0 +1,10 @@
+{
+  ":configurator:resource-version": 1,
+  
+  "MCPToolProvider~modelAtlas": {
+		"name": "model_atlas_tool_provider",
+		"description": "Publishing tools handing a registered EPackage to the model atlas. Optional: this provider is absent unless org.eclipse.fennec.model.atlas.mcp.tools is deployed and a ModelAtlasPublisher is configured",
+		"tools.target": "(|(tool.name=post_to_model_atlas))",
+		"tools.cardinality.minimum:int": 1
+	}
+}
