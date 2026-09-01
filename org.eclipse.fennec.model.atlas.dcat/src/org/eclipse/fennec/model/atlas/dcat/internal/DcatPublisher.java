@@ -13,6 +13,7 @@
  */
 package org.eclipse.fennec.model.atlas.dcat.internal;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
@@ -154,6 +155,13 @@ public class DcatPublisher implements HealthCheck {
 
     /** The tracked EPackage services, keyed by dataset id. */
     private final Map<String, TrackedPackage> trackedPackages = new ConcurrentHashMap<>();
+
+    /**
+     * Datasets a scope refusal stopped from being written (#234). Draining this when the scope's
+     * Catalog becomes available is what turns a corrected configuration into published models,
+     * instead of leaving them tracked-but-invisible until something re-registers them.
+     */
+    private final Set<String> deferredByRefusal = ConcurrentHashMap.newKeySet();
 
     /**
      * Datasets whose next write must happen whatever the fingerprint says.
@@ -424,6 +432,53 @@ public class DcatPublisher implements HealthCheck {
         });
     }
 
+    /**
+     * Publishes the Datasets a refusal on {@code scopeName} deferred.
+     *
+     * <p>
+     * While a scope is refused, {@code publishPackage} records the intent and returns without
+     * writing anything, so those Datasets exist only in {@link #trackedPackages}. Publishing the
+     * Catalog alone did not recover them: {@code relinkDatasets} links Dataset <em>ids</em>, and
+     * linking one the portal has never seen fails and is logged at {@code FINE}, so the models
+     * stayed unpublished until something re-registered them (#234).
+     * </p>
+     *
+     * <p>
+     * The trigger is this ledger of deferred work rather than "a refusal was just lifted", because
+     * the refusal does not survive the operator action that fixes it: correcting {@code catalog.id}
+     * or setting {@code catalog.create.if.missing} updates the {@code DcatScopeCatalog}
+     * configuration, and {@link #unbindScopeCatalog} clears {@code refusedScopes} on the way
+     * through. What is durable is that these Datasets were never written.
+     * </p>
+     *
+     * <p>
+     * Called from inside the Catalog's own portal task, so the Dataset tasks it submits are queued
+     * behind it on the client's single-threaded executor: the Catalog they link into exists by the
+     * time they run.
+     * </p>
+     */
+    private void publishDeferredFor(String scopeName) {
+        if (deferredByRefusal.isEmpty()) {
+            return;
+        }
+        Set<String> inheritedFrom = new LinkedHashSet<>(hierarchy().ancestors(scopeName));
+        List<String> ready = new ArrayList<>();
+        deferredByRefusal.forEach(datasetId -> {
+            TrackedPackage tracked = trackedPackages.get(datasetId);
+            if (tracked != null && listedIn(scopeName, inheritedFrom, tracked.target())) {
+                ready.add(datasetId);
+            }
+        });
+        // Removed before re-publishing: publishPackage re-defers anything still refused, and
+        // keeping the entry would otherwise make it permanent.
+        ready.forEach(deferredByRefusal::remove);
+        if (!ready.isEmpty()) {
+            LOGGER.info(() -> "Catalog for scope " + scopeName + " is available; publishing " + ready.size()
+                    + " Dataset(s) a refusal had deferred");
+        }
+        ready.forEach(this::publishPackage);
+    }
+
     /** The Datasets a scope's Catalog lists: the ones it defines, plus everything it inherits. */
     private Set<String> datasetsListedIn(String scopeName) {
         Set<String> inheritedFrom = new LinkedHashSet<>(hierarchy().ancestors(scopeName));
@@ -461,6 +516,8 @@ public class DcatPublisher implements HealthCheck {
         // The previous refusal, if any, was about the previous configuration.
         refusedScopes.remove(scopeName);
         if (active) {
+            // Any Dataset the refusal deferred is picked up by the Catalog task itself, once it
+            // knows the Catalog is really there (#234).
             publishCatalog(scopeName);
         }
     }
@@ -903,7 +960,12 @@ public class DcatPublisher implements HealthCheck {
                 adoptCatalog(portal, catalogId, info, resolved);
                 return null;
             }
-            return writeCatalog(portal, catalogId, info, resolved.settings());
+            Catalog written = writeCatalog(portal, catalogId, info, resolved.settings());
+            // A Catalog now exists for this scope, so anything a refusal deferred can be written
+            // (#234). Covers the create-if-missing route out of a refusal, which reaches here from
+            // adoptCatalog rather than through its adoption path.
+            publishDeferredFor(scopeName);
+            return written;
         });
     }
 
@@ -939,12 +1001,17 @@ public class DcatPublisher implements HealthCheck {
             LOGGER.warning(() -> "Adopted Catalog " + catalogId + " is missing and catalog.create.if.missing is set, "
                     + "so it is being created from scope " + scopeName);
             writeCatalog(portal, catalogId, info, resolved.settings());
+            refusedScopes.remove(scopeName);
+            publishDeferredFor(scopeName);
             return;
         }
         refusedScopes.remove(scopeName);
         relinkDatasets(portal, catalogId, scopeName);
         LOGGER.info(() -> "Adopted Catalog " + catalogId + " for scope " + scopeName
                 + "; its Datasets are linked in and it is never written from here");
+        // Linking is not enough for a Dataset a refusal deferred: it was never written, so there is
+        // nothing in the portal to link (#234).
+        publishDeferredFor(scopeName);
     }
 
     /**
@@ -972,6 +1039,7 @@ public class DcatPublisher implements HealthCheck {
         if (refusedScopes.containsKey(target.scope()) || resolveCatalog(target.scope()).refused()) {
             // The scope's Catalog is the precondition for its Datasets: publishing one anyway would
             // advertise a model through no catalogue at all.
+            deferredByRefusal.add(datasetId);
             LOGGER.fine(() -> "Scope " + target.scope() + " is refused, so " + target.nsUri() + " is not published: "
                     + refusedScopes.get(target.scope()));
             return;
@@ -990,6 +1058,7 @@ public class DcatPublisher implements HealthCheck {
             // was submitted. Without this, a refused scope still publishes its first Dataset —
             // into no Catalog at all, since the fan-out has nothing to link to.
             if (refusedScopes.containsKey(target.scope())) {
+                deferredByRefusal.add(datasetId);
                 LOGGER.fine(() -> "Scope " + target.scope() + " was refused; not publishing " + datasetId);
                 return null;
             }

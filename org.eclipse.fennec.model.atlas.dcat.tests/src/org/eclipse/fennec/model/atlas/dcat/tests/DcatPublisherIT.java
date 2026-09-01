@@ -718,6 +718,59 @@ public class DcatPublisherIT {
     }
 
     @Test
+    public void aLiftedRefusalPublishesTheDatasetsItDeferred(
+            @InjectConfiguration(withFactoryConfig = @WithFactoryConfiguration(factoryPid = CLIENT_PID,
+                    name = PORTAL + "41", location = "?")) Configuration clientConfig,
+            @InjectConfiguration(withFactoryConfig = @WithFactoryConfiguration(factoryPid = PUBLISHER_PID,
+                    name = PORTAL + "41", location = "?")) Configuration publisherConfig,
+            @InjectConfiguration(withFactoryConfig = @WithFactoryConfiguration(factoryPid = SCOPE_CATALOG_PID,
+                    name = PORTAL + "41", location = "?")) Configuration catalogConfig,
+            @InjectBundleContext BundleContext context) throws Exception {
+
+        // #234: while a scope is refused its packages are tracked but never written. Lifting the
+        // refusal used to publish only the Catalog, and relinkDatasets then linked Dataset ids the
+        // portal had never seen — the links failed, were logged at FINE, and the models stayed
+        // invisible until something re-registered them.
+        clientConfig.update(clientProps());
+
+        ServiceRegistration<?> scope = StubScopeService.register(context, "d-scope", null);
+        Hashtable<String, Object> catalogProps = new Hashtable<>();
+        catalogProps.put("scope", "d-scope");
+        catalogProps.put("catalog.id", "deferred-catalog");
+        catalogProps.put("catalog.adopt", Boolean.TRUE);
+        catalogConfig.update(catalogProps);
+
+        Hashtable<String, Object> props = publisherProps("d-scope", false);
+        props.put("scopes", new String[] { "d-scope" });
+        publisherConfig.update(props);
+
+        String nsUri = "http://test.example.com/deferred/1.0";
+        String datasetId = datasetId("d-scope", nsUri, PublishablePackages.FINAL_STAGE);
+        ServiceRegistration<?> pkg = PublishablePackages.register(context, "d-scope", nsUri,
+                PublishablePackages.FINAL_STAGE, FINGERPRINT, true);
+        try {
+            Thread.sleep(6_000);
+            assertTrue(get(portalRestBase + "/datasets/" + datasetId) == null,
+                    "setup: a refused scope must publish nothing");
+
+            // The operator's fix: let the publisher create the Catalog it was told to adopt. This
+            // updates the DcatScopeCatalog configuration, which unbinds and rebinds the service —
+            // and the unbind clears refusedScopes, so "a refusal was just lifted" is not a signal
+            // that survives here. The deferred Datasets are.
+            catalogProps.put("catalog.create.if.missing", Boolean.TRUE);
+            catalogConfig.update(catalogProps);
+
+            assertNotNull(await(portalRestBase + "/catalogs/deferred-catalog"),
+                    "the Catalog should be created once create.if.missing is set");
+            assertNotNull(await(portalRestBase + "/datasets/" + datasetId),
+                    "the Dataset the refusal deferred must be published once its Catalog exists");
+        } finally {
+            pkg.unregister();
+            scope.unregister();
+        }
+    }
+
+    @Test
     public void aConfiguredCatalogCarriesItsOwnTitle(
             @InjectConfiguration(withFactoryConfig = @WithFactoryConfiguration(factoryPid = CLIENT_PID,
                     name = PORTAL + "19", location = "?")) Configuration clientConfig,
