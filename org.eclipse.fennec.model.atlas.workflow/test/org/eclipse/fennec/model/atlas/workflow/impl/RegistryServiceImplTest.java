@@ -14,6 +14,7 @@
 package org.eclipse.fennec.model.atlas.workflow.impl;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
@@ -84,12 +85,18 @@ public class RegistryServiceImplTest {
         resourceSet.getResources().add(resource);
     }
 
-    private RegistryServiceImpl<EObject> createService(String rootEClassUri) {
-        return createService(rootEClassUri, List.of());
+    private RegistryServiceImpl<EObject> createService(String... rootEClassUris) {
+        return createService(List.of(), rootEClassUris);
     }
 
-    private RegistryServiceImpl<EObject> createService(String rootEClassUri,
-            List<EObjectStorageService<EObject>> storageServices) {
+    private RegistryServiceImpl<EObject> createService(
+            List<EObjectStorageService<EObject>> storageServices, String... rootEClassUris) {
+        return createService(storageServices, rootEClassUris, new String[0]);
+    }
+
+    private RegistryServiceImpl<EObject> createService(
+            List<EObjectStorageService<EObject>> storageServices, String[] rootEClassUris,
+            String[] derivedEClassUris) {
         RegistryServiceConfig config = mock(RegistryServiceConfig.class);
         when(config.registry_name()).thenReturn("test-registry");
         when(config.registry_description()).thenReturn("");
@@ -99,7 +106,9 @@ public class RegistryServiceImplTest {
         when(config.stages()).thenReturn(new String[] {
                 "{\"name\": \"draft\", \"writable\": true, \"final\": false}",
                 "{\"name\": \"release\", \"writable\": true, \"final\": true}" });
-        when(config.root_eclass_uri()).thenReturn(rootEClassUri);
+        when(config.root_eclass_uri()).thenReturn(rootEClassUris);
+        // lenient: never read when an earlier config value already fails activation
+        org.mockito.Mockito.lenient().when(config.derived_eclass_uri()).thenReturn(derivedEClassUris);
         return new RegistryServiceImpl<>(storageServices, resourceSet, config);
     }
 
@@ -148,7 +157,7 @@ public class RegistryServiceImplTest {
             metadata.setStage("draft");
             when(storage.queryObjects(any())).thenReturn(Promises.resolved(List.of(metadata)));
 
-            RegistryServiceImpl<EObject> service = createService(TEST_NS_URI + "#//Person", List.of(storage));
+            RegistryServiceImpl<EObject> service = createService(List.of(storage), TEST_NS_URI + "#//Person");
 
             // the scope activates while no stage action service is bound yet - with the
             // former static reference this ordering silently lost all stage actions
@@ -215,6 +224,151 @@ public class RegistryServiceImplTest {
         @DisplayName("Should reject the EObject EClass")
         void shouldRejectEObject() {
             assertFalse(service.isEClassCompatibleWithRegistry(EcorePackage.Literals.EOBJECT));
+        }
+    }
+
+    @Nested
+    @DisplayName("Registry with multiple unrelated root EClasses (issue #239)")
+    class MultiRootTests {
+
+        private RegistryServiceImpl<EObject> service;
+
+        @BeforeEach
+        void createMultiRootService() {
+            service = createService(TEST_NS_URI + "#//Person", TEST_NS_URI + "#//Unrelated");
+        }
+
+        @Test
+        @DisplayName("Should accept instances of every configured root")
+        void shouldAcceptEveryRoot() {
+            assertTrue(service.isEClassCompatibleWithRegistry(personClass));
+            assertTrue(service.isEClassCompatibleWithRegistry(unrelatedClass));
+        }
+
+        @Test
+        @DisplayName("Should accept subclasses of any configured root")
+        void shouldAcceptSubclassOfAnyRoot() {
+            assertTrue(service.isEClassCompatibleWithRegistry(employeeClass));
+        }
+
+        @Test
+        @DisplayName("Should reject an EClass matching no configured root")
+        void shouldRejectForeignEClass() {
+            EClass foreign = EcoreFactory.eINSTANCE.createEClass();
+            foreign.setName("Foreign");
+            assertFalse(service.isEClassCompatibleWithRegistry(foreign));
+        }
+
+        @Test
+        @DisplayName("getRootEClass answers the primary root, getRootEClasses all of them")
+        void shouldExposeConfiguredRoots() {
+            assertTrue(service.getRootEClass() == personClass);
+            assertTrue(service.getRootEClasses().equals(List.of(personClass, unrelatedClass)));
+        }
+
+        @Test
+        @DisplayName("Should fail activation when any configured root does not resolve")
+        void shouldFailOnUnresolvableRoot() {
+            org.junit.jupiter.api.Assertions.assertThrows(IllegalArgumentException.class,
+                    () -> createService(TEST_NS_URI + "#//Person", TEST_NS_URI + "#//DoesNotExist"));
+        }
+    }
+
+    @Nested
+    @DisplayName("Derived EClasses (server-written content, issue #239 review)")
+    class DerivedTypeTests {
+
+        private EObjectStorageService<EObject> storage;
+        private RegistryServiceImpl<EObject> service;
+
+        @SuppressWarnings("unchecked")
+        @BeforeEach
+        void createDerivedService() {
+            storage = mock(EObjectStorageService.class);
+            when(storage.getStorageType()).thenReturn("file");
+            service = createService(List.of(storage), new String[] { TEST_NS_URI + "#//Person" },
+                    new String[] { TEST_NS_URI + "#//Unrelated" });
+        }
+
+        @Test
+        @DisplayName("A derived EClass is recognized but is no root")
+        void derivedIsRecognizedButNoRoot() {
+            assertTrue(service.isDerivedEClass(unrelatedClass));
+            assertFalse(service.isEClassCompatibleWithRegistry(unrelatedClass),
+                    "derived types are not client-writable roots");
+            assertTrue(service.getDerivedEClasses().equals(List.of(unrelatedClass)));
+        }
+
+        @Test
+        @DisplayName("A derived update passes the final-stage bar; a root update does not")
+        void derivedUpdatePassesFinalStageBar() throws Exception {
+            ObjectMetadata stored = ManagementFactory.eINSTANCE.createObjectMetadata();
+            stored.setObjectId("derived-1");
+            when(storage.retrieveMetadata(any(), any(), any(), any())).thenReturn(Promises.resolved(stored));
+            when(storage.updateObject(any(), any(), any())).thenReturn(Promises.resolved(stored));
+
+            EObject derived = unrelatedClass.getEPackage().getEFactoryInstance().create(unrelatedClass);
+            // release is the final stage of the test config — the derived refresh succeeds
+            assertNotNull(service.updateInStage("test-scope", "release", derived, "derived-1", null).getValue());
+
+            EObject root = personClass.getEPackage().getEFactoryInstance().create(personClass);
+            var promise = service.updateInStage("test-scope", "release", root, "root-1", null);
+            java.lang.reflect.InvocationTargetException failure = org.junit.jupiter.api.Assertions
+                    .assertThrows(java.lang.reflect.InvocationTargetException.class, promise::getValue);
+            assertTrue(failure.getCause() instanceof org.eclipse.fennec.model.atlas.scope.api.StagePolicyException,
+                    "a root update in the final stage stays refused, got " + failure.getCause());
+        }
+
+        @Test
+        @DisplayName("The service API accepts storing a derived object")
+        void derivedUploadPassesTheTypeGate() throws Exception {
+            when(storage.storeObject(any(), any(), any(), any(), any(), any()))
+                    .thenAnswer(invocation -> Promises.resolved(invocation.getArgument(5)));
+            EObject derived = unrelatedClass.getEPackage().getEFactoryInstance().create(unrelatedClass);
+            ObjectMetadata metadata = ManagementFactory.eINSTANCE.createObjectMetadata();
+            metadata.setObjectId("derived-2");
+            assertNotNull(service.uploadToStage("test-scope", "draft", derived, metadata).getValue());
+        }
+    }
+
+    @Nested
+    @DisplayName("Registry-side type gate (defense in depth beside the REST check)")
+    class TypeGateTests {
+
+        @Test
+        @DisplayName("uploadToStage refuses an object no configured root accepts, before storage is touched")
+        void uploadRefusesIncompatibleObject() throws Exception {
+            @SuppressWarnings("unchecked")
+            EObjectStorageService<EObject> storage = mock(EObjectStorageService.class);
+            when(storage.getStorageType()).thenReturn("file");
+            RegistryServiceImpl<EObject> service = createService(List.of(storage), TEST_NS_URI + "#//Person");
+
+            EObject unrelated = unrelatedClass.getEPackage().getEFactoryInstance().create(unrelatedClass);
+            ObjectMetadata metadata = ManagementFactory.eINSTANCE.createObjectMetadata();
+            metadata.setObjectId("forged");
+
+            var promise = service.uploadToStage("test-scope", "draft", unrelated, metadata);
+            java.lang.reflect.InvocationTargetException failure = org.junit.jupiter.api.Assertions
+                    .assertThrows(java.lang.reflect.InvocationTargetException.class, promise::getValue);
+            assertTrue(failure.getCause() instanceof IllegalArgumentException,
+                    "a type refusal is an IllegalArgumentException, got " + failure.getCause());
+            verify(storage, never()).storeObject(any(), any(), any(), any(), any(), any());
+        }
+
+        @Test
+        @DisplayName("updateInStage refuses an object no configured root accepts")
+        void updateRefusesIncompatibleObject() throws Exception {
+            @SuppressWarnings("unchecked")
+            EObjectStorageService<EObject> storage = mock(EObjectStorageService.class);
+            when(storage.getStorageType()).thenReturn("file");
+            RegistryServiceImpl<EObject> service = createService(List.of(storage), TEST_NS_URI + "#//Person");
+
+            EObject unrelated = unrelatedClass.getEPackage().getEFactoryInstance().create(unrelatedClass);
+            var promise = service.updateInStage("test-scope", "draft", unrelated, "some-id", null);
+            java.lang.reflect.InvocationTargetException failure = org.junit.jupiter.api.Assertions
+                    .assertThrows(java.lang.reflect.InvocationTargetException.class, promise::getValue);
+            assertTrue(failure.getCause() instanceof IllegalArgumentException,
+                    "a type refusal is an IllegalArgumentException, got " + failure.getCause());
         }
     }
 }

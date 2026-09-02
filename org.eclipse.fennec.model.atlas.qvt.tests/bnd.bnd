@@ -1,0 +1,40 @@
+Bundle-Name: Model Atlas - QVT Unit Hosting Tests
+Bundle-Description: OSGi integration tests for the QVT unit hosting (issue #239): compile-on-upload \
+ with diagnostics, library dependencies, dependent recompiles to the fixpoint, and the \
+ store round trip to a prepared execution.
+
+Test-Cases: ${classes;HIERARCHY_INDIRECTLY_ANNOTATED;org.junit.platform.commons.annotation.Testable;CONCRETE}
+
+-workingset: qvt
+
+-library: \
+	enableOSGi-Test,\
+	enableEMF
+
+-buildpath: \
+	org.osgi.framework;version=latest,\
+	org.osgi.util.promise;version=latest,\
+	org.osgi.service.cm;version=latest,\
+	org.osgi.service.component;version=latest,\
+	org.osgi.test.junit5.cm,\
+	org.eclipse.fennec.emf.osgi.component,\
+	org.eclipse.fennec.model.atlas.management;version=snapshot,\
+	org.eclipse.fennec.model.atlas.workflow;version=snapshot,\
+	org.eclipse.fennec.model.atlas.scope.api;version=snapshot,\
+	org.eclipse.fennec.model.atlas.qvt;version=snapshot,\
+	org.eclipse.fennec.model.atlas.tests.common;version=snapshot,\
+	org.eclipse.fennec.m2x.unit;version=latest,\
+	org.eclipse.fennec.m2x.qvto.api;version=latest,\
+	org.eclipse.fennec.m2x.qvto.engine;version=latest,\
+	org.eclipse.fennec.m2x.qvto.model;version=latest,\
+	org.eclipse.fennec.m2x.ocl.api;version=latest
+
+-dependson: \
+	org.eclipse.fennec.model.atlas.qvt,\
+	org.eclipse.fennec.model.atlas.workflow,\
+	org.eclipse.fennec.model.atlas.management,\
+	org.eclipse.fennec.model.atlas.management.lucene,\
+	org.eclipse.fennec.model.atlas.management.file
+
+# Do not publish this bundle to Maven Central; local install only
+-maven-release: local

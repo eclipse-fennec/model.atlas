@@ -15,6 +15,7 @@ package org.eclipse.fennec.model.atlas.rest.application.resource;
 
 import java.time.Instant;
 import java.util.List;
+import java.util.stream.Collectors;
 import java.util.Optional;
 
 import org.eclipse.emf.ecore.EObject;
@@ -284,12 +285,21 @@ public class ObjectRegistryResource {
                     .build();
         }
 
+        // Derived artifacts (compiled units, diagnostics, …) are produced by the
+        // Atlas itself; accepting them here would let a client forge them.
+        if (registryService.isDerivedEClass(object.eClass())) {
+            return Response.status(Status.FORBIDDEN)
+                    .entity(String.format(
+                            "Object type %s is derived content of registry %s and is written by the Atlas only",
+                            EcoreUtil.getURI(object.eClass()), registryName))
+                    .build();
+        }
         // Validate object type
         if (!registryService.isEClassCompatibleWithRegistry(object.eClass())) {
             return Response.status(Status.BAD_REQUEST)
                     .entity(String.format("Object type %s not compatible with registry %s (expects %s)",
                             EcoreUtil.getURI(object.eClass()), registryName,
-                            EcoreUtil.getURI(registryService.getRootEClass())))
+                            acceptedRootEClasses(registryService)))
                     .build();
         }
 
@@ -503,12 +513,21 @@ public class ObjectRegistryResource {
                     .build();
         }
 
+        // Derived artifacts are produced by the Atlas itself; accepting them here
+        // would let a client forge them.
+        if (registryService.isDerivedEClass(eObject.eClass())) {
+            return Response.status(Status.FORBIDDEN)
+                    .entity(String.format(
+                            "Object type %s is derived content of registry %s and is written by the Atlas only",
+                            EcoreUtil.getURI(eObject.eClass()), registryName))
+                    .build();
+        }
         // Validate object type
         if (!registryService.isEClassCompatibleWithRegistry(eObject.eClass())) {
             return Response.status(Status.BAD_REQUEST)
                     .entity(String.format("Object type %s not compatible with registry %s (expects %s)",
                             EcoreUtil.getURI(eObject.eClass()), registryName,
-                            EcoreUtil.getURI(registryService.getRootEClass())))
+                            acceptedRootEClasses(registryService)))
                     .build();
         }
 
@@ -693,5 +712,10 @@ public class ObjectRegistryResource {
 
     private RegistryService<?> getRegistryServiceByRegistryName(String registryName) {
         return registryCollector.getRegistryServiceByRegistryName(registryName);
+    }
+
+    private static String acceptedRootEClasses(RegistryService<?> registryService) {
+        return registryService.getRootEClasses().stream().map(EcoreUtil::getURI).map(Object::toString)
+                .collect(Collectors.joining(", "));
     }
 }

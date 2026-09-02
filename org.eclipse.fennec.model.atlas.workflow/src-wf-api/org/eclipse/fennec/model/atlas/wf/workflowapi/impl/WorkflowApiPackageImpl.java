@@ -505,7 +505,7 @@ public class WorkflowApiPackageImpl extends EPackageImpl implements WorkflowApiP
 	 * @generated
 	 */
 	@Override
-	public EOperation getRegistryService__Activate__String() {
+	public EOperation getRegistryService__GetRootEClasses() {
 		return registryServiceEClass.getEOperations().get(21);
 	}
 
@@ -515,8 +515,38 @@ public class WorkflowApiPackageImpl extends EPackageImpl implements WorkflowApiP
 	 * @generated
 	 */
 	@Override
-	public EOperation getRegistryService__Deactivate__String() {
+	public EOperation getRegistryService__GetDerivedEClasses() {
 		return registryServiceEClass.getEOperations().get(22);
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
+	public EOperation getRegistryService__IsDerivedEClass__EClass() {
+		return registryServiceEClass.getEOperations().get(23);
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
+	public EOperation getRegistryService__Activate__String() {
+		return registryServiceEClass.getEOperations().get(24);
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
+	public EOperation getRegistryService__Deactivate__String() {
+		return registryServiceEClass.getEOperations().get(25);
 	}
 
 	/**
@@ -835,6 +865,9 @@ public class WorkflowApiPackageImpl extends EPackageImpl implements WorkflowApiP
 		createEOperation(registryServiceEClass, REGISTRY_SERVICE___GET_REGISTRY);
 		createEOperation(registryServiceEClass, REGISTRY_SERVICE___IS_ECLASS_COMPATIBLE_WITH_REGISTRY__ECLASS);
 		createEOperation(registryServiceEClass, REGISTRY_SERVICE___GET_ROOT_ECLASS);
+		createEOperation(registryServiceEClass, REGISTRY_SERVICE___GET_ROOT_ECLASSES);
+		createEOperation(registryServiceEClass, REGISTRY_SERVICE___GET_DERIVED_ECLASSES);
+		createEOperation(registryServiceEClass, REGISTRY_SERVICE___IS_DERIVED_ECLASS__ECLASS);
 		createEOperation(registryServiceEClass, REGISTRY_SERVICE___ACTIVATE__STRING);
 		createEOperation(registryServiceEClass, REGISTRY_SERVICE___DEACTIVATE__STRING);
 
@@ -1132,6 +1165,13 @@ public class WorkflowApiPackageImpl extends EPackageImpl implements WorkflowApiP
 		addEParameter(op, ecorePackage.getEClass(), "eClass", 0, 1, IS_UNIQUE, IS_ORDERED);
 
 		initEOperation(getRegistryService__GetRootEClass(), ecorePackage.getEClass(), "getRootEClass", 0, 1, IS_UNIQUE, IS_ORDERED);
+
+		initEOperation(getRegistryService__GetRootEClasses(), ecorePackage.getEClass(), "getRootEClasses", 0, -1, IS_UNIQUE, IS_ORDERED);
+
+		initEOperation(getRegistryService__GetDerivedEClasses(), ecorePackage.getEClass(), "getDerivedEClasses", 0, -1, IS_UNIQUE, IS_ORDERED);
+
+		op = initEOperation(getRegistryService__IsDerivedEClass__EClass(), ecorePackage.getEBoolean(), "isDerivedEClass", 0, 1, IS_UNIQUE, IS_ORDERED);
+		addEParameter(op, ecorePackage.getEClass(), "eClass", 0, 1, IS_UNIQUE, IS_ORDERED);
 
 		op = initEOperation(getRegistryService__Activate__String(), theManagementPackage.getVoid(), "activate", 0, 1, IS_UNIQUE, IS_ORDERED);
 		addEParameter(op, ecorePackage.getEString(), "scope", 0, 1, IS_UNIQUE, IS_ORDERED);

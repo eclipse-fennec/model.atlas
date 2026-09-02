@@ -774,6 +774,7 @@ public class ScopeApiPackageImpl extends EPackageImpl implements ScopeApiPackage
 		addEEnumLiteral(registryTypeEEnum, RegistryType.OTHER);
 		addEEnumLiteral(registryTypeEEnum, RegistryType.SCHEMA);
 		addEEnumLiteral(registryTypeEEnum, RegistryType.COCL);
+		addEEnumLiteral(registryTypeEEnum, RegistryType.TRANSFORMATION);
 
 		// Initialize data types
 		initEDataType(optionalEDataType, Optional.class, "Optional", !IS_SERIALIZABLE, !IS_GENERATED_INSTANCE_CLASS);

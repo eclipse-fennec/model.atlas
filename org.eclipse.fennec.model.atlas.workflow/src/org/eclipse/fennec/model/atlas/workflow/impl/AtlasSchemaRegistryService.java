@@ -272,6 +272,33 @@ public class AtlasSchemaRegistryService implements RegistryService<EPackage> {
 		return EcorePackage.Literals.EPACKAGE;
 	}
 
+	/*
+	 * (non-Javadoc)
+	 * @see org.eclipse.fennec.model.atlas.wf.workflowapi.RegistryService#getRootEClasses()
+	 */
+	@Override
+	public List<EClass> getRootEClasses() {
+		return List.of(EcorePackage.Literals.EPACKAGE);
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * @see org.eclipse.fennec.model.atlas.wf.workflowapi.RegistryService#getDerivedEClasses()
+	 */
+	@Override
+	public List<EClass> getDerivedEClasses() {
+		return List.of();
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * @see org.eclipse.fennec.model.atlas.wf.workflowapi.RegistryService#isDerivedEClass(org.eclipse.emf.ecore.EClass)
+	 */
+	@Override
+	public boolean isDerivedEClass(EClass eClass) {
+		return false;
+	}
+
 	/* 
 	 * (non-Javadoc)
 	 * @see org.eclipse.fennec.model.atlas.wf.workflowapi.RegistryService#activate(java.lang.String)

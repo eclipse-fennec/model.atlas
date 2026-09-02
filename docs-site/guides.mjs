@@ -8,6 +8,7 @@
 // here and therefore stays GitHub-only, matching the other Fennec projects.
 export const GUIDES = [
   { file: 'user-guide.md', title: 'User Guide', group: 'Guides' },
+  { file: 'qvt-transformations.md', title: 'QVT Transformations', group: 'Guides' },
   { file: 'ci.md', title: 'CI & Publishing', group: 'Guides' },
 ];
 

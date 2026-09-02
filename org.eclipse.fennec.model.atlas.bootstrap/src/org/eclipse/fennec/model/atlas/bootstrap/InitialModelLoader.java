@@ -36,6 +36,7 @@ import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.eclipse.emf.common.util.URI;
@@ -819,7 +820,8 @@ public class InitialModelLoader {
             throw new IllegalStateException(String.format(
                     "InitialModelLoader: object type %s not compatible with registry %s (expects %s)",
                     EcoreUtil.getURI(object.eClass()), registry,
-                    EcoreUtil.getURI(registryService.getRootEClass())));
+                    registryService.getRootEClasses().stream().map(EcoreUtil::getURI).map(Object::toString)
+                            .collect(Collectors.joining(", "))));
         }
     }
 

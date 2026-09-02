@@ -99,7 +99,8 @@ public class RegistryServiceImpl<T extends EObject> implements RegistryService<T
     void deactivate() {
         promiseExecutor.shutdown();
     }
-    private final EClass rootEClass;
+    private final List<EClass> rootEClasses;
+    private final List<EClass> derivedEClasses;
 
     private final List<StageActionService> stageActionServices = new CopyOnWriteArrayList<>();
     /** Scopes this registry has been activated for, to replay for late-binding stage action services. */
@@ -116,13 +117,28 @@ public class RegistryServiceImpl<T extends EObject> implements RegistryService<T
         this.stages = parseStages(config.stages());
         validateStages();
         this.registryObject = createRegistryObject();
-        EObject eObject = resourceSet.getEObject(URI.createURI(config.root_eclass_uri()), false);
-        if (eObject != null && eObject instanceof EClass eClass) {
-            rootEClass = eClass;
-        } else {
-            throw new IllegalArgumentException(String.format(
-                    "The provided root.eclass.uri %s does not match to any known EClass", config.root_eclass_uri()));
+        rootEClasses = resolveEClasses(resourceSet, config.root_eclass_uri(), "root.eclass.uri");
+        if (rootEClasses.isEmpty()) {
+            throw new IllegalArgumentException("root.eclass.uri must name at least one EClass");
         }
+        derivedEClasses = resolveEClasses(resourceSet, config.derived_eclass_uri(), "derived.eclass.uri");
+    }
+
+    private static List<EClass> resolveEClasses(ResourceSet resourceSet, String[] uris, String property) {
+        if (uris == null) {
+            return List.of();
+        }
+        List<EClass> resolved = new ArrayList<>(uris.length);
+        for (String uri : uris) {
+            EObject eObject = resourceSet.getEObject(URI.createURI(uri), false);
+            if (eObject instanceof EClass eClass) {
+                resolved.add(eClass);
+            } else {
+                throw new IllegalArgumentException(String.format(
+                        "The provided %s %s does not match to any known EClass", property, uri));
+            }
+        }
+        return List.copyOf(resolved);
     }
 
     /**
@@ -225,6 +241,7 @@ public class RegistryServiceImpl<T extends EObject> implements RegistryService<T
             requireNonNull(object, "Object cannot be null");
             requireNonNull(metadata, "Metadata cannot be null");
             validateStage(stage);
+            requireCompatibleWithRegistry(object);
 
             metadata.setLastChangeTime(Instant.now());
             metadata.setStage(stage);
@@ -309,7 +326,16 @@ public class RegistryServiceImpl<T extends EObject> implements RegistryService<T
         return promiseFactory.submit(() -> {
             requireNonNull(objectId, "Object ID cannot be null");
             requireNonNull(updatedObject, "Updated object cannot be null");
-            validateUpdatableStage(stage);
+            // A derived object (e.g. a recompiled unit's diagnostics) is refreshed by
+            // the Atlas as the consequence of a sanctioned upload or transition — the
+            // final-stage bar exists to stop direct edits, not that refresh. Roots keep
+            // the full updatable-stage policy.
+            if (isDerivedEClass(updatedObject.eClass())) {
+                validateWritableStage(stage);
+            } else {
+                validateUpdatableStage(stage);
+            }
+            requireCompatibleWithRegistry(updatedObject);
 
             EObjectStorageService<T> storageService = storageFor(stage);
 
@@ -663,13 +689,44 @@ public class RegistryServiceImpl<T extends EObject> implements RegistryService<T
      */
     @Override
     public boolean isEClassCompatibleWithRegistry(EClass eClass) {
-        // EObject is the implicit super type of every EClass but never appears in
-        // getEAllSuperTypes(), so a registry rooted at EObject must accept everything
-        if (rootEClass == EcorePackage.Literals.EOBJECT) {
-            return true;
+        return matchesAny(eClass, rootEClasses);
+    }
+
+    /*
+     * (non-Javadoc)
+     *
+     * @see org.eclipse.fennec.model.atlas.wf.workflowapi.RegistryService#
+     * getDerivedEClasses()
+     */
+    @Override
+    public List<EClass> getDerivedEClasses() {
+        return derivedEClasses;
+    }
+
+    /*
+     * (non-Javadoc)
+     *
+     * @see org.eclipse.fennec.model.atlas.wf.workflowapi.RegistryService#
+     * isDerivedEClass(org.eclipse.emf.ecore.EClass)
+     */
+    @Override
+    public boolean isDerivedEClass(EClass eClass) {
+        return matchesAny(eClass, derivedEClasses);
+    }
+
+    private static boolean matchesAny(EClass eClass, List<EClass> accepted) {
+        for (EClass candidate : accepted) {
+            // EObject is the implicit super type of every EClass but never appears in
+            // getEAllSuperTypes(), so a registry rooted at EObject must accept everything
+            if (candidate == EcorePackage.Literals.EOBJECT) {
+                return true;
+            }
+            if (EcoreUtil.getURI(eClass).equals(EcoreUtil.getURI(candidate))
+                    || eClass.getEAllSuperTypes().contains(candidate)) {
+                return true;
+            }
         }
-        return EcoreUtil.getURI(eClass).equals(EcoreUtil.getURI(rootEClass))
-                || eClass.getEAllSuperTypes().contains(rootEClass);
+        return false;
     }
 
     /*
@@ -680,7 +737,18 @@ public class RegistryServiceImpl<T extends EObject> implements RegistryService<T
      */
     @Override
     public EClass getRootEClass() {
-        return rootEClass;
+        return rootEClasses.get(0);
+    }
+
+    /*
+     * (non-Javadoc)
+     *
+     * @see
+     * org.eclipse.fennec.model.atlas.wf.workflowapi.RegistryService#getRootEClasses()
+     */
+    @Override
+    public List<EClass> getRootEClasses() {
+        return rootEClasses;
     }
 
     /*
@@ -803,6 +871,25 @@ public class RegistryServiceImpl<T extends EObject> implements RegistryService<T
                     stageName, config.registry_name()));
         }
         return;
+    }
+
+    /**
+     * The registry-side half of the type gate (the REST layer checks first for a
+     * friendly 400): every write path enforces the configured roots itself, so a
+     * caller reaching the service API directly cannot store objects the registry
+     * does not accept — e.g. forging derived artifacts into a registry whose
+     * REST guard was bypassed.
+     */
+    private void requireCompatibleWithRegistry(T object) {
+        // the trusted service API accepts roots and derived types alike; the REST
+        // layer additionally refuses derived types before it ever gets here
+        if (!isEClassCompatibleWithRegistry(object.eClass()) && !isDerivedEClass(object.eClass())) {
+            throw new IllegalArgumentException(String.format(
+                    "Object type %s is not compatible with registry %s (accepts %s)",
+                    EcoreUtil.getURI(object.eClass()), config.registry_name(),
+                    rootEClasses.stream().map(EcoreUtil::getURI).map(Object::toString)
+                            .collect(Collectors.joining(", "))));
+        }
     }
 
     private void validateUpdatableStage(String stageName) {

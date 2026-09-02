@@ -42,7 +42,7 @@ import org.osgi.annotation.versioning.ProviderType;
  * @generated
  */
 @ProviderType
-@EPackage(uri = ScopeApiPackage.eNS_URI, fingerprint = "fp1:a21b8f3df410facb77a0cb85a7285a55b99af601d8d32017bd835bee7c10ff09", genModel = "/model/scope-api.genmodel", genModelSourceLocations = {"model/scope-api.genmodel","org.eclipse.fennec.model.atlas.scope.api/model/scope-api.genmodel"}, ecore = "/model/scope-api.ecore", ecoreSourceLocations = "/model/scope-api.ecore")
+@EPackage(uri = ScopeApiPackage.eNS_URI, fingerprint = "fp1:61cf9fdfa902e50d3cbcc6c56f3acaaeb6408d5b3939f3fc36de1bb076b30624", genModel = "/model/scope-api.genmodel", genModelSourceLocations = {"model/scope-api.genmodel","org.eclipse.fennec.model.atlas.scope.api/model/scope-api.genmodel"}, ecore = "/model/scope-api.ecore", ecoreSourceLocations = "/model/scope-api.ecore")
 public interface ScopeApiPackage extends org.eclipse.emf.ecore.EPackage {
 	/**
 	 * The package name.

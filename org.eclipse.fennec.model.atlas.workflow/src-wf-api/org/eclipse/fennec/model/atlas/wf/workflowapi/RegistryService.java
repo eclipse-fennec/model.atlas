@@ -243,10 +243,46 @@ public interface RegistryService<T extends EObject> {
 	/**
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
+	 * <!-- begin-model-doc -->
+	 * The primary (first configured) root EClass. Kept for callers that need one representative type (e.g. error messages); the full accepted set is {@link #getRootEClasses()}.
+	 * <!-- end-model-doc -->
 	 * @model kind="operation"
 	 * @generated
 	 */
 	EClass getRootEClass();
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * <!-- begin-model-doc -->
+	 * Every root EClass this registry accepts; an object is compatible if its EClass matches any of them or has one among its supertypes. Never empty; the first entry is the primary root returned by {@link #getRootEClass()}.
+	 * <!-- end-model-doc -->
+	 * @model kind="operation"
+	 * @generated
+	 */
+	List<EClass> getRootEClasses();
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * <!-- begin-model-doc -->
+	 * The derived EClasses of this registry: content that belongs to the registry but is produced by the Atlas itself (e.g. compiled units and their diagnostics, derived from an uploaded source). Derived objects are readable and listable like any other content, but a client must not write them — the REST layer refuses them — while the trusted service API may, including updates in final stages, because a derived write is the consequence of a sanctioned upload or transition rather than a direct edit. Possibly empty.
+	 * <!-- end-model-doc -->
+	 * @model kind="operation"
+	 * @generated
+	 */
+	List<EClass> getDerivedEClasses();
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * <!-- begin-model-doc -->
+	 * Whether the given EClass matches one of {@link #getDerivedEClasses()} or has one among its supertypes.
+	 * <!-- end-model-doc -->
+	 * @model
+	 * @generated
+	 */
+	boolean isDerivedEClass(EClass eClass);
 
 	/**
 	 * <!-- begin-user-doc -->

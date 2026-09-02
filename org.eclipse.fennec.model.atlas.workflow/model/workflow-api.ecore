@@ -288,7 +288,27 @@
     <eOperations name="isEClassCompatibleWithRegistry" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EBoolean">
       <eParameters name="eClass" eType="ecore:EClass http://www.eclipse.org/emf/2002/Ecore#//EClass"/>
     </eOperations>
-    <eOperations name="getRootEClass" eType="ecore:EClass http://www.eclipse.org/emf/2002/Ecore#//EClass"/>
+    <eOperations name="getRootEClass" eType="ecore:EClass http://www.eclipse.org/emf/2002/Ecore#//EClass">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="The primary (first configured) root EClass. Kept for callers that need one representative type (e.g. error messages); the full accepted set is {@link #getRootEClasses()}."/>
+      </eAnnotations>
+    </eOperations>
+    <eOperations name="getRootEClasses" upperBound="-1" eType="ecore:EClass http://www.eclipse.org/emf/2002/Ecore#//EClass">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="Every root EClass this registry accepts; an object is compatible if its EClass matches any of them or has one among its supertypes. Never empty; the first entry is the primary root returned by {@link #getRootEClass()}."/>
+      </eAnnotations>
+    </eOperations>
+    <eOperations name="getDerivedEClasses" upperBound="-1" eType="ecore:EClass http://www.eclipse.org/emf/2002/Ecore#//EClass">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="The derived EClasses of this registry: content that belongs to the registry but is produced by the Atlas itself (e.g. compiled units and their diagnostics, derived from an uploaded source). Derived objects are readable and listable like any other content, but a client must not write them — the REST layer refuses them — while the trusted service API may, including updates in final stages, because a derived write is the consequence of a sanctioned upload or transition rather than a direct edit. Possibly empty."/>
+      </eAnnotations>
+    </eOperations>
+    <eOperations name="isDerivedEClass" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EBoolean">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="Whether the given EClass matches one of {@link #getDerivedEClasses()} or has one among its supertypes."/>
+      </eAnnotations>
+      <eParameters name="eClass" eType="ecore:EClass http://www.eclipse.org/emf/2002/Ecore#//EClass"/>
+    </eOperations>
     <eOperations name="activate" eType="ecore:EDataType ../../org.eclipse.fennec.model.atlas.management/model/management.ecore#//Void">
       <eParameters name="scope" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
     </eOperations>

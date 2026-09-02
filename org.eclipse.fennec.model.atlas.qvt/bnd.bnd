@@ -1,0 +1,38 @@
+Bundle-Name: Model Atlas - QVT Unit Hosting
+Bundle-Description: Hosts QVT-O transformations in the Model Atlas (issue #239): compiles uploaded \
+ sources against the per-(scope, stage) package view, stores compiled units and structured \
+ diagnostics in the transformation registry, recompiles dependents on library changes, and exposes \
+ the registry view as an m2x UnitStore addressed by qualified name + fingerprint.
+
+-workingset: qvt
+
+-library: enableEMF
+
+src=${^src},src-gen
+
+# The code generation takes a bit of time and makes the build a bit slower.
+# It might be a good idea to put comments around it, when you don't need it
+-generate:\
+	model/qvt-diagnostics.genmodel;\
+		generate=fennecEMF;\
+		genmodel=model/qvt-diagnostics.genmodel;\
+		output=src-gen
+
+# If this is not done with a instruction namespace, bnd would think you like
+# to take full control over whats exported and imported and will ignore @Export
+# Bundle Annotations
+-includeresource.model: model=model
+
+-buildpath: \
+	org.osgi.util.promise;version=latest,\
+	org.osgi.util.function;version=latest,\
+	org.osgi.service.component;version=latest,\
+	osgi.cmpn,\
+	org.eclipse.fennec.model.atlas.scope.api;version=snapshot,\
+	org.eclipse.fennec.model.atlas.management;version=snapshot,\
+	org.eclipse.fennec.model.atlas.workflow;version=snapshot,\
+	org.eclipse.fennec.m2x.unit;version=latest,\
+	org.eclipse.fennec.m2x.qvto.api;version=latest,\
+	org.eclipse.fennec.m2x.qvto.engine;version=latest,\
+	org.eclipse.fennec.m2x.qvto.model;version=latest,\
+	org.eclipse.fennec.m2x.ocl.api;version=latest

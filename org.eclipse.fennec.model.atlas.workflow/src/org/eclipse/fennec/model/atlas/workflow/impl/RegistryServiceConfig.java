@@ -30,7 +30,7 @@ public @interface RegistryServiceConfig {
     @AttributeDefinition(name = "Registry Description", description = "A description for the registry", required = false, defaultValue = "")
     String registry_description() default "";
     
-    @AttributeDefinition(name = "Registry Type", description = "The role of this registry: SCHEMA (holds EPackages), COCL (holds OCL constraint sets), OTHER (general purpose)", required = false, defaultValue = "OTHER")
+    @AttributeDefinition(name = "Registry Type", description = "The role of this registry: SCHEMA (holds EPackages), COCL (holds OCL constraint sets), TRANSFORMATION (holds transformation sources and compiled units), OTHER (general purpose)", required = false, defaultValue = "OTHER")
     String registry_type() default "OTHER";
 
     @AttributeDefinition(name = "Stage Storage Mappings", description = "Array of ':'-separated stage→storage mappings (e.g., [draft:mongodb,approved:minio,release:apicurio])", required = true)
@@ -52,9 +52,16 @@ public @interface RegistryServiceConfig {
     @AttributeDefinition(name = "Schema URI", description = "The uri of the EPackage this registry supports objects from", required = false, defaultValue = "http://www.eclipse.org/emf/2002/Ecore")
     String schema_uri() default "http://www.eclipse.org/emf/2002/Ecore";
 
-    @AttributeDefinition(name = "Root EClass URI", description = "The uri of the EClass this registry supports objects from. "
-            + "Should come from the same EPackage specified in schema.uri", required = false, defaultValue = "http://www.eclipse.org/emf/2002/Ecore#//EPackage")
-    String root_eclass_uri() default "http://www.eclipse.org/emf/2002/Ecore#//EPackage";
+    @AttributeDefinition(name = "Root EClass URIs", description = "The uris of the EClasses this registry supports objects from; "
+            + "an object is accepted if its EClass matches any listed root or has one among its supertypes. "
+            + "A single String value keeps working (coerced to a one-element array).", required = false, defaultValue = "http://www.eclipse.org/emf/2002/Ecore#//EPackage")
+    String[] root_eclass_uri() default { "http://www.eclipse.org/emf/2002/Ecore#//EPackage" };
+
+    @AttributeDefinition(name = "Derived EClass URIs", description = "The uris of EClasses whose objects the Atlas itself derives from uploaded content "
+            + "(e.g. compiled units and their diagnostics). Derived objects are readable like any other content but are refused "
+            + "on the REST write path, while the trusted service API may write them — including updates in final stages, "
+            + "because a derived write is the consequence of a sanctioned upload or transition.", required = false)
+    String[] derived_eclass_uri() default {};
 
     @AttributeDefinition(name = "ResourceSet Target", description = "The target filter ensuring that the ResourceSet with the required model is actually available", required = true)
     String resourceSet_target();

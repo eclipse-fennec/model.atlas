@@ -12,6 +12,7 @@
       <genEnumLiterals ecoreEnumLiteral="scope-api.ecore#//RegistryType/OTHER"/>
       <genEnumLiterals ecoreEnumLiteral="scope-api.ecore#//RegistryType/SCHEMA"/>
       <genEnumLiterals ecoreEnumLiteral="scope-api.ecore#//RegistryType/COCL"/>
+      <genEnumLiterals ecoreEnumLiteral="scope-api.ecore#//RegistryType/TRANSFORMATION"/>
     </genEnums>
     <genDataTypes ecoreDataType="scope-api.ecore#//Optional">
       <genTypeParameters ecoreTypeParameter="scope-api.ecore#//Optional/T"/>
