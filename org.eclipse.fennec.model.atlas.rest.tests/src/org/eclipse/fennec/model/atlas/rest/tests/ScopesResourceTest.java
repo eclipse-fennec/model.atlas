@@ -265,6 +265,8 @@ public class ScopesResourceTest extends AbstractRestTest{
 		assertEquals(304, notModified.getStatus(), "Matching aggregate If-None-Match should yield 304");
 		assertNull(notModified.getHeaderString("Atlas-Changed-NsUris"), "304 must not carry change hints");
 		assertNull(notModified.getHeaderString("Atlas-Changed-Objects"), "304 must not carry change hints");
+		assertNull(notModified.getHeaderString("Atlas-Baseline-Unknown"),
+				"A matching baseline is by definition known");
 	}
 
 	@Test
@@ -284,6 +286,8 @@ public class ScopesResourceTest extends AbstractRestTest{
 		String changedNsUris = changed.getHeaderString("Atlas-Changed-NsUris");
 		assertNotNull(changedNsUris, "200 with a known baseline should list the changed nsURIs");
 		assertEquals(SCOPE_HEAD_NSURI_2, changedNsUris, "Diff must contain exactly the newly added nsURI");
+		assertNull(changed.getHeaderString("Atlas-Baseline-Unknown"),
+				"A reconstructable baseline must not be flagged unknown");
 	}
 
 	@Test
@@ -299,6 +303,11 @@ public class ScopesResourceTest extends AbstractRestTest{
 				"No diff headers when the baseline cannot be reconstructed");
 		assertNull(response.getHeaderString("Atlas-Changed-Objects"),
 				"No diff headers when the baseline cannot be reconstructed");
+		// #238: without this the answer is indistinguishable from "only things you don't
+		// track changed", and a client that just stores the new ETag loses the window for
+		// good - its next probe matches that ETag and 304s from then on.
+		assertEquals("true", response.getHeaderString("Atlas-Baseline-Unknown"),
+				"An unreconstructable baseline must be flagged so the client re-discovers the scope");
 	}
 
 	@Test

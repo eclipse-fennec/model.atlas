@@ -312,6 +312,16 @@ sees it without a restart. Discovery is on for **EAGER** and **HYBRID** and off 
 resolve stage-free (a draft-only publish) is skipped silently: it is not an
 addition, and never a removal.
 
+If the server cannot say *what* changed — it restarted, or the snapshot our ETag
+stood for aged out of its bounded per-scope cache — it answers `200` with no diff
+headers and `Atlas-Baseline-Unknown: true`. The watcher then re-discovers the scope
+in full (list its packages, revalidate everything held, revalidate every held
+object) rather than adopting the new ETag, which would otherwise lose that whole
+window: the next probe would match the stored ETag and `304` from then on. A server
+predating that header is handled by inference — a `200` means the aggregate differs,
+and a known baseline always names at least one entry, so neither diff header present
+can only be an unknown baseline.
+
 ### Read from a non-final stage (snapshot review)
 
 ```java

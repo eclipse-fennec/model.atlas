@@ -61,10 +61,11 @@ import org.eclipse.fennec.model.atlas.rest.client.api.TransportException;
  * <strong>Reachability.</strong> A {@link TransportException} (server unreachable)
  * is fatal only when {@code mode.strict=true}: it is rethrown so component
  * activation fails with a clear log line. With {@code mode.strict=false} (default)
- * it is logged at {@code WARNING} and the pre-fetch stops gracefully, to be retried
- * on the next configuration update. A {@link NotFoundException} on a single scope or
- * nsURI (the server is reachable, the item simply is not there) is logged and
- * skipped regardless of strictness.
+ * it is logged at {@code WARNING} and the pre-fetch stops gracefully, leaving
+ * {@link #isComplete()} {@code false} so {@link PrefetchRetry} runs the pass again until
+ * it completes (issue #238) - the instance is reusable for exactly that. A
+ * {@link NotFoundException} on a single scope or nsURI (the server is reachable, the item
+ * simply is not there) is logged and skipped regardless of strictness.
  */
 final class EagerPrefetch {
 
@@ -73,6 +74,14 @@ final class EagerPrefetch {
 	private final ModelAtlasClient client;
 	private final PackagePublication publication;
 	private final ClientConfiguration config;
+	/**
+	 * Whether the last pass reached the server throughout. A pass cut short by an
+	 * unreachable Atlas has to be run again ({@link PrefetchRetry}, issue #238) - published
+	 * nothing is indistinguishable from an empty Atlas to everything downstream, and the
+	 * drift watcher only reports what changed after it started. Written on the activation
+	 * thread, then on the retry thread - volatile so a reader on either sees the last pass.
+	 */
+	private volatile boolean complete = true;
 
 	EagerPrefetch(ModelAtlasClient client, PackagePublication publication, ClientConfiguration config) {
 		this.client = Objects.requireNonNull(client, "client");
@@ -87,6 +96,7 @@ final class EagerPrefetch {
 	 * @throws TransportException if the server is unreachable and {@code mode.strict=true}
 	 */
 	int run() {
+		complete = true;
 		int published = 0;
 		List<String> scopes;
 		try {
@@ -120,6 +130,7 @@ final class EagerPrefetch {
 	 * @throws TransportException if the server is unreachable and {@code mode.strict=true}
 	 */
 	int prefetchListedNsUris() {
+		complete = true;
 		RemoteEPackageProvider provider = client.ePackages();
 		List<String> nsUris = config.getEagerNsUriAllowList();
 		int published = 0;
@@ -198,7 +209,19 @@ final class EagerPrefetch {
 		return published;
 	}
 
+	/**
+	 * Whether the last {@link #run()} / {@link #prefetchListedNsUris()} reached the server
+	 * throughout. {@code false} means the pass was cut short by an unreachable Atlas and
+	 * has to be repeated - see {@link PrefetchRetry}.
+	 *
+	 * @return {@code true} if the last pass completed
+	 */
+	boolean isComplete() {
+		return complete;
+	}
+
 	private int failOrSkip(TransportException unreachable, int publishedSoFar) {
+		complete = false;
 		if (config.isModeStrict()) {
 			LOGGER.log(Level.SEVERE, unreachable, () -> "EAGER pre-fetch failed: the Atlas at " + config.getBaseUri()
 					+ " is unreachable and mode.strict=true — aborting activation");
@@ -207,7 +230,7 @@ final class EagerPrefetch {
 		LOGGER.log(Level.WARNING, unreachable,
 				() -> "EAGER pre-fetch incomplete: the Atlas at " + config.getBaseUri()
 						+ " is unreachable (mode.strict=false) — published " + publishedSoFar
-						+ " package(s) so far; will retry on the next configuration update");
+						+ " package(s) so far; the pass will be retried until it completes");
 		return publishedSoFar;
 	}
 }

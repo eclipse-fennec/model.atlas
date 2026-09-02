@@ -81,6 +81,13 @@ class DriftWatcherTest {
 		return r;
 	}
 
+	/** A 200 whose baseline the server could not reconstruct (server restart / evicted snapshot). */
+	private static Response headBaselineUnknown(String etag) {
+		Response r = headResponse(200, Response.Status.OK, etag, null);
+		when(r.getHeaderString(DriftWatcher.ATLAS_BASELINE_UNKNOWN)).thenReturn("true");
+		return r;
+	}
+
 	private static EPackage pkg(String nsUri) {
 		EPackage p = EcoreFactory.eINSTANCE.createEPackage();
 		p.setNsURI(nsUri);
@@ -416,6 +423,173 @@ class DriftWatcherTest {
 
 		assertFalse(report.hasChanges());
 		verify(provider, never()).refresh(anyString());
+	}
+
+	// ---- unknown baseline: the diff is not available, so re-discover ------
+
+	@Test
+	void unknownBaseline_resyncsTheScopeFromTheListing() {
+		// The server could not reconstruct what our ETag stood for (it restarted, or the
+		// snapshot was evicted), so it sends no diff at all. Adopting the new ETag and
+		// doing nothing loses every change in that window - permanently, because the next
+		// probe 304s against the ETag we just stored.
+		Response baseline = headResponse(200, Response.Status.OK, "\"s1\"", null);
+		Response unknownBaseline = headBaselineUnknown("\"s2\"");
+		when(request.head()).thenReturn(baseline, unknownBaseline);
+		when(provider.cachedNsUris()).thenReturn(Set.of("nsHeld"));
+		when(provider.listNsUris("jena")).thenReturn(List.of("nsHeld", "nsNew"));
+		when(provider.revalidate("nsHeld")).thenReturn(
+				new RemoteEPackageProviderImpl.Refreshed(RemoteEPackageProviderImpl.RefreshOutcome.CHANGED,
+						pkg("nsHeld")));
+		when(provider.refresh("nsNew")).thenReturn(Optional.of(pkg("nsNew")));
+		RecordingListener listener = new RecordingListener();
+		DriftWatcher watcher = discoveringWatcher();
+		watcher.addListener(listener);
+
+		watcher.check(); // baseline
+		DriftReport report = watcher.check(); // unknown baseline
+
+		assertEquals(List.of("nsHeld"), report.getChangedNsUris());
+		assertEquals(List.of("nsNew"), report.getAddedNsUris());
+		assertEquals(List.of("nsNew"), listener.added);
+	}
+
+	@Test
+	void unknownBaseline_isInferredFromAnOlderServersEmptyDiff() {
+		// A server without the Atlas-Baseline-Unknown header: a 200 means the aggregate
+		// changed, and a known baseline always names at least one entry in one of the two
+		// diff headers - so neither header can only mean the baseline was unknown.
+		Response baseline = headResponse(200, Response.Status.OK, "\"s1\"", null);
+		Response noDiff = headResponse(200, Response.Status.OK, "\"s2\"", null);
+		when(request.head()).thenReturn(baseline, noDiff);
+		when(provider.cachedNsUris()).thenReturn(Set.of());
+		when(provider.listNsUris("jena")).thenReturn(List.of("nsNew"));
+		when(provider.refresh("nsNew")).thenReturn(Optional.of(pkg("nsNew")));
+		RecordingListener listener = new RecordingListener();
+		DriftWatcher watcher = discoveringWatcher();
+		watcher.addListener(listener);
+
+		watcher.check();
+		DriftReport report = watcher.check();
+
+		assertEquals(List.of("nsNew"), report.getAddedNsUris());
+		assertEquals(List.of("nsNew"), listener.added);
+	}
+
+	@Test
+	void unknownBaseline_heldNsUriMissingFromTheListing_isReportedRemoved() {
+		Response baseline = headResponse(200, Response.Status.OK, "\"s1\"", null);
+		Response unknownBaseline = headBaselineUnknown("\"s2\"");
+		when(request.head()).thenReturn(baseline, unknownBaseline);
+		when(provider.cachedNsUris()).thenReturn(Set.of("nsGone"));
+		when(provider.listNsUris("jena")).thenReturn(List.of()); // the atlas no longer has it
+		when(provider.revalidate("nsGone")).thenReturn(
+				new RemoteEPackageProviderImpl.Refreshed(RemoteEPackageProviderImpl.RefreshOutcome.REMOVED, null));
+		RecordingListener listener = new RecordingListener();
+		DriftWatcher watcher = discoveringWatcher();
+		watcher.addListener(listener);
+
+		watcher.check();
+		DriftReport report = watcher.check();
+
+		assertEquals(List.of("nsGone"), report.getRemovedNsUris());
+		assertEquals(List.of("nsGone"), listener.removed);
+	}
+
+	@Test
+	void unknownBaseline_listingFailure_stillRevalidatesWhatWeHold() {
+		Response baseline = headResponse(200, Response.Status.OK, "\"s1\"", null);
+		Response unknownBaseline = headBaselineUnknown("\"s2\"");
+		when(request.head()).thenReturn(baseline, unknownBaseline);
+		when(provider.cachedNsUris()).thenReturn(Set.of("nsHeld"));
+		when(provider.listNsUris("jena")).thenThrow(new IllegalStateException("listing failed"));
+		when(provider.revalidate("nsHeld")).thenReturn(
+				new RemoteEPackageProviderImpl.Refreshed(RemoteEPackageProviderImpl.RefreshOutcome.CHANGED,
+						pkg("nsHeld")));
+		RecordingListener listener = new RecordingListener();
+		DriftWatcher watcher = discoveringWatcher();
+		watcher.addListener(listener);
+
+		watcher.check();
+		DriftReport report = watcher.check();
+
+		assertEquals(List.of("nsHeld"), report.getChangedNsUris());
+	}
+
+	@Test
+	void unknownBaseline_anUnchangedPackageIsNotAnnounced() {
+		// The resync has no server diff to go on, so it revalidates conditionally. A 304
+		// means we already hold the current payload - announcing it would swap every
+		// published service for an identical one, a re-registration storm at exactly the
+		// moment the server came back.
+		Response baseline = headResponse(200, Response.Status.OK, "\"s1\"", null);
+		Response unknownBaseline = headBaselineUnknown("\"s2\"");
+		when(request.head()).thenReturn(baseline, unknownBaseline);
+		when(provider.cachedNsUris()).thenReturn(Set.of("nsHeld"));
+		when(provider.listNsUris("jena")).thenReturn(List.of("nsHeld"));
+		when(provider.revalidate("nsHeld")).thenReturn(
+				new RemoteEPackageProviderImpl.Refreshed(RemoteEPackageProviderImpl.RefreshOutcome.UNCHANGED,
+						pkg("nsHeld")));
+		RecordingListener listener = new RecordingListener();
+		DriftWatcher watcher = discoveringWatcher();
+		watcher.addListener(listener);
+
+		watcher.check();
+		DriftReport report = watcher.check();
+
+		assertFalse(report.hasChanges());
+		assertTrue(listener.changed.isEmpty());
+		assertTrue(listener.removed.isEmpty());
+	}
+
+	@Test
+	void aKnownBaselineWithOnlyObjectChanges_doesNotResync() {
+		// Only Atlas-Changed-Objects: the baseline WAS known, so the diff is authoritative
+		// and re-listing the scope's packages would be pointless work.
+		Response baseline = headResponse(200, Response.Status.OK, "\"s1\"", null);
+		Response changed = headWithObjects("\"s2\"", "cocl/id1");
+		when(request.head()).thenReturn(baseline, changed);
+
+		RemoteReadableScopeService service = mock(RemoteReadableScopeService.class);
+		when(service.cachedObjects())
+				.thenReturn(Set.of(new RemoteReadableScopeService.ObjectKey("jena", "cocl", null, "id1")));
+		when(service.refresh("cocl", null, "id1")).thenReturn(RemoteReadableScopeService.DriftOutcome.CHANGED);
+		RecordingListener listener = new RecordingListener();
+		DriftWatcher watcher = new DriftWatcher(target, () -> List.of("jena"), () -> provider,
+				s -> "jena".equals(s) ? service : null, 0, true);
+		watcher.addListener(listener);
+
+		watcher.check();
+		watcher.check();
+
+		assertEquals(List.of("jena/cocl/id1"), listener.objectsChanged);
+		verify(provider, never()).listNsUris(anyString());
+	}
+
+	@Test
+	void unknownBaseline_revalidatesEveryHeldObjectOfTheScope() {
+		Response baseline = headResponse(200, Response.Status.OK, "\"s1\"", null);
+		Response unknownBaseline = headBaselineUnknown("\"s2\"");
+		when(request.head()).thenReturn(baseline, unknownBaseline);
+		when(provider.cachedNsUris()).thenReturn(Set.of());
+		when(provider.listNsUris("jena")).thenReturn(List.of());
+
+		RemoteReadableScopeService service = mock(RemoteReadableScopeService.class);
+		when(service.cachedObjects()).thenReturn(Set.of(
+				new RemoteReadableScopeService.ObjectKey("jena", "cocl", null, "id1"),
+				new RemoteReadableScopeService.ObjectKey("jena", "cocl", null, "id2")));
+		when(service.refresh("cocl", null, "id1")).thenReturn(RemoteReadableScopeService.DriftOutcome.CHANGED);
+		when(service.refresh("cocl", null, "id2")).thenReturn(RemoteReadableScopeService.DriftOutcome.REMOVED);
+		RecordingListener listener = new RecordingListener();
+		DriftWatcher watcher = new DriftWatcher(target, () -> List.of("jena"), () -> provider,
+				s -> "jena".equals(s) ? service : null, 0, true);
+		watcher.addListener(listener);
+
+		watcher.check();
+		watcher.check();
+
+		assertEquals(List.of("jena/cocl/id1"), listener.objectsChanged);
+		assertEquals(List.of("jena/cocl/id2"), listener.objectsRemoved);
 	}
 
 	// ---- P5-2: EObject drift (Atlas-Changed-Objects) ----------------------
