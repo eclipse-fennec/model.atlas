@@ -13,6 +13,7 @@
  */
 package org.eclipse.fennec.model.atlas.dcat.internal;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
@@ -33,8 +34,6 @@ import org.apache.felix.hc.api.Result;
 import org.eclipse.fennec.dcat.atlas.client.api.ConflictException;
 import org.eclipse.fennec.dcat.atlas.client.api.DcatAtlasClient;
 import org.eclipse.fennec.dcat.atlas.client.api.DcatCollection;
-import org.eclipse.fennec.dcat.atlas.client.api.DcatModelConstraintException;
-import org.eclipse.fennec.dcat.atlas.client.api.DcatShaclException;
 import org.eclipse.fennec.dcat.atlas.client.api.DeleteMode;
 import org.eclipse.fennec.dcat.atlas.client.api.NotFoundException;
 import org.eclipse.fennec.dcat.atlas.client.api.Registration;
@@ -62,6 +61,7 @@ import org.eclipse.emf.ecore.EPackage;
 import dcat.Catalog;
 import dcat.Dataset;
 import dcat.Distribution;
+import rdf.PlainLiteral;
 
 /**
  * Publishes this atlas to one DCAT.Atlas portal.
@@ -155,6 +155,13 @@ public class DcatPublisher implements HealthCheck {
 
     /** The tracked EPackage services, keyed by dataset id. */
     private final Map<String, TrackedPackage> trackedPackages = new ConcurrentHashMap<>();
+
+    /**
+     * Datasets a scope refusal stopped from being written (#234). Draining this when the scope's
+     * Catalog becomes available is what turns a corrected configuration into published models,
+     * instead of leaving them tracked-but-invisible until something re-registers them.
+     */
+    private final Set<String> deferredByRefusal = ConcurrentHashMap.newKeySet();
 
     /**
      * Datasets whose next write must happen whatever the fingerprint says.
@@ -331,9 +338,19 @@ public class DcatPublisher implements HealthCheck {
         ResolvedCatalog resolved = resolveCatalog(scopeName);
         boolean wasPublished = publishable(scopeName);
         Set<String> listedDatasets = datasetsListedIn(scopeName);
+
+        if (!retirementAllowed()) {
+            // Deliberately keeps the entry, exactly as unbindPublishablePackage does: on the
+            // shutdown path this map is what retire.on.shutdown fans out over, and removing the
+            // scopes one unbind at a time left it with nothing to unlink from — every Dataset
+            // retired from zero Catalogs (#233). A reactivation's rebind refreshes it anyway.
+            LOGGER.fine(() -> "Not retiring the Catalog for scope " + scopeName
+                    + ": this publisher is stopping, not the scope");
+            return;
+        }
         scopes.remove(scopeName);
 
-        if (!retirementAllowed() || !wasPublished || resolved.id() == null) {
+        if (!wasPublished || resolved.id() == null) {
             return;
         }
         UnpublishMode mode = unpublishMode;
@@ -415,6 +432,53 @@ public class DcatPublisher implements HealthCheck {
         });
     }
 
+    /**
+     * Publishes the Datasets a refusal on {@code scopeName} deferred.
+     *
+     * <p>
+     * While a scope is refused, {@code publishPackage} records the intent and returns without
+     * writing anything, so those Datasets exist only in {@link #trackedPackages}. Publishing the
+     * Catalog alone did not recover them: {@code relinkDatasets} links Dataset <em>ids</em>, and
+     * linking one the portal has never seen fails and is logged at {@code FINE}, so the models
+     * stayed unpublished until something re-registered them (#234).
+     * </p>
+     *
+     * <p>
+     * The trigger is this ledger of deferred work rather than "a refusal was just lifted", because
+     * the refusal does not survive the operator action that fixes it: correcting {@code catalog.id}
+     * or setting {@code catalog.create.if.missing} updates the {@code DcatScopeCatalog}
+     * configuration, and {@link #unbindScopeCatalog} clears {@code refusedScopes} on the way
+     * through. What is durable is that these Datasets were never written.
+     * </p>
+     *
+     * <p>
+     * Called from inside the Catalog's own portal task, so the Dataset tasks it submits are queued
+     * behind it on the client's single-threaded executor: the Catalog they link into exists by the
+     * time they run.
+     * </p>
+     */
+    private void publishDeferredFor(String scopeName) {
+        if (deferredByRefusal.isEmpty()) {
+            return;
+        }
+        Set<String> inheritedFrom = new LinkedHashSet<>(hierarchy().ancestors(scopeName));
+        List<String> ready = new ArrayList<>();
+        deferredByRefusal.forEach(datasetId -> {
+            TrackedPackage tracked = trackedPackages.get(datasetId);
+            if (tracked != null && listedIn(scopeName, inheritedFrom, tracked.target())) {
+                ready.add(datasetId);
+            }
+        });
+        // Removed before re-publishing: publishPackage re-defers anything still refused, and
+        // keeping the entry would otherwise make it permanent.
+        ready.forEach(deferredByRefusal::remove);
+        if (!ready.isEmpty()) {
+            LOGGER.info(() -> "Catalog for scope " + scopeName + " is available; publishing " + ready.size()
+                    + " Dataset(s) a refusal had deferred");
+        }
+        ready.forEach(this::publishPackage);
+    }
+
     /** The Datasets a scope's Catalog lists: the ones it defines, plus everything it inherits. */
     private Set<String> datasetsListedIn(String scopeName) {
         Set<String> inheritedFrom = new LinkedHashSet<>(hierarchy().ancestors(scopeName));
@@ -452,6 +516,8 @@ public class DcatPublisher implements HealthCheck {
         // The previous refusal, if any, was about the previous configuration.
         refusedScopes.remove(scopeName);
         if (active) {
+            // Any Dataset the refusal deferred is picked up by the Catalog task itself, once it
+            // knows the Catalog is really there (#234).
             publishCatalog(scopeName);
         }
     }
@@ -894,7 +960,12 @@ public class DcatPublisher implements HealthCheck {
                 adoptCatalog(portal, catalogId, info, resolved);
                 return null;
             }
-            return writeCatalog(portal, catalogId, info, resolved.settings());
+            Catalog written = writeCatalog(portal, catalogId, info, resolved.settings());
+            // A Catalog now exists for this scope, so anything a refusal deferred can be written
+            // (#234). Covers the create-if-missing route out of a refusal, which reaches here from
+            // adoptCatalog rather than through its adoption path.
+            publishDeferredFor(scopeName);
+            return written;
         });
     }
 
@@ -930,12 +1001,17 @@ public class DcatPublisher implements HealthCheck {
             LOGGER.warning(() -> "Adopted Catalog " + catalogId + " is missing and catalog.create.if.missing is set, "
                     + "so it is being created from scope " + scopeName);
             writeCatalog(portal, catalogId, info, resolved.settings());
+            refusedScopes.remove(scopeName);
+            publishDeferredFor(scopeName);
             return;
         }
         refusedScopes.remove(scopeName);
         relinkDatasets(portal, catalogId, scopeName);
         LOGGER.info(() -> "Adopted Catalog " + catalogId + " for scope " + scopeName
                 + "; its Datasets are linked in and it is never written from here");
+        // Linking is not enough for a Dataset a refusal deferred: it was never written, so there is
+        // nothing in the portal to link (#234).
+        publishDeferredFor(scopeName);
     }
 
     /**
@@ -963,6 +1039,7 @@ public class DcatPublisher implements HealthCheck {
         if (refusedScopes.containsKey(target.scope()) || resolveCatalog(target.scope()).refused()) {
             // The scope's Catalog is the precondition for its Datasets: publishing one anyway would
             // advertise a model through no catalogue at all.
+            deferredByRefusal.add(datasetId);
             LOGGER.fine(() -> "Scope " + target.scope() + " is refused, so " + target.nsUri() + " is not published: "
                     + refusedScopes.get(target.scope()));
             return;
@@ -981,6 +1058,7 @@ public class DcatPublisher implements HealthCheck {
             // was submitted. Without this, a refused scope still publishes its first Dataset —
             // into no Catalog at all, since the fan-out has nothing to link to.
             if (refusedScopes.containsKey(target.scope())) {
+                deferredByRefusal.add(datasetId);
                 LOGGER.fine(() -> "Scope " + target.scope() + " was refused; not publishing " + datasetId);
                 return null;
             }
@@ -1028,48 +1106,47 @@ public class DcatPublisher implements HealthCheck {
         });
     }
 
+    /**
+     * Writes the Dataset, its Distributions and its Catalog memberships.
+     *
+     * <p>
+     * A payload the portal refuses ({@code DcatShaclException},
+     * {@code DcatModelConstraintException}) and a misconfiguration ({@code IllegalStateException}
+     * from a missing {@code license.uri}) are deliberately <em>not</em> caught here. Catching them
+     * and returning {@code null} let the promise resolve successfully, which called
+     * {@code RetryQueue.succeeded} and deleted the very ledger entry the failure had just written —
+     * so a permanent failure was invisible to the health check (#231). Letting them out means
+     * {@code submit}'s failure path classifies them: none is retryable, so the queue abandons the
+     * operation and reports it, and a later genuine success still clears it.
+     * </p>
+     */
     private Dataset writeDataset(DcatAtlasClient portal, String datasetId, TrackedPackage tracked) {
         PublicationTarget target = tracked.target();
-        try {
-            Registration<Dataset> registration = portal.registerDataset(datasetId,
-                    mapper.toDataset(target, tracked.ePackage()));
-            if (!registration.applied()) {
-                LOGGER.warning(() -> "Dataset " + datasetId + " was not written: a precondition refused it");
-                return null;
-            }
-            // Re-assert the containment the PUT just dropped.
-            Set<String> mediaTypes = publishableMediaTypes();
-            lastPublishedMediaTypes = mediaTypes;
-            for (String mediaType : mediaTypes) {
-                Distribution distribution = mapper.toDistribution(target, mediaType, baseUri);
-                portal.registerDistribution(datasetId, DcatIds.distributionId(mediaType), distribution);
-            }
-            // Re-assert the membership the PUT just dropped — in every Catalog that serves this
-            // model, which is its own scope's and every descendant's. Additive, so it is safe even
-            // on a Catalog we do not own.
-            Set<String> catalogIds = catalogsListing(target.scope());
-            catalogIds.forEach(catalogId -> portal.linkDatasetToCatalog(catalogId, datasetId));
-
-            if (target.fingerprint() != null) {
-                publishedFingerprints.put(datasetId, target.fingerprint());
-            }
-            LOGGER.info(() -> "Published Dataset " + datasetId + " with " + mediaTypes.size() + " distribution(s) in "
-                    + catalogIds.size() + " catalog(s)");
-            return registration.entity();
-        } catch (DcatModelConstraintException | DcatShaclException e) {
-            // Permanent for this entity: the portal refuses the identical payload every time. Held
-            // in the ledger so the health check can say the catalogue is behind, and why.
-            recordPermanent("dataset:" + datasetId, "publishing Dataset " + datasetId, "the portal refused it as "
-                    + "invalid: " + e.getMessage());
-            LOGGER.log(Level.WARNING, "Portal refused Dataset " + datasetId + " as invalid; not retrying", e);
-            return null;
-        } catch (IllegalStateException misconfigured) {
-            // A missing license.uri, for instance: permanent until an operator acts, so saying it
-            // once beats retrying forever.
-            recordPermanent("dataset:" + datasetId, "publishing Dataset " + datasetId, misconfigured.getMessage());
-            LOGGER.log(Level.WARNING, "Cannot publish Dataset " + datasetId + ": " + misconfigured.getMessage());
+        Registration<Dataset> registration = portal.registerDataset(datasetId,
+                mapper.toDataset(target, tracked.ePackage()));
+        if (!registration.applied()) {
+            LOGGER.warning(() -> "Dataset " + datasetId + " was not written: a precondition refused it");
             return null;
         }
+        // Re-assert the containment the PUT just dropped.
+        Set<String> mediaTypes = publishableMediaTypes();
+        lastPublishedMediaTypes = mediaTypes;
+        for (String mediaType : mediaTypes) {
+            Distribution distribution = mapper.toDistribution(target, mediaType, baseUri);
+            portal.registerDistribution(datasetId, DcatIds.distributionId(mediaType), distribution);
+        }
+        // Re-assert the membership the PUT just dropped — in every Catalog that serves this
+        // model, which is its own scope's and every descendant's. Additive, so it is safe even
+        // on a Catalog we do not own.
+        Set<String> catalogIds = catalogsListing(target.scope());
+        catalogIds.forEach(catalogId -> portal.linkDatasetToCatalog(catalogId, datasetId));
+
+        if (target.fingerprint() != null) {
+            publishedFingerprints.put(datasetId, target.fingerprint());
+        }
+        LOGGER.info(() -> "Published Dataset " + datasetId + " with " + mediaTypes.size() + " distribution(s) in "
+                + catalogIds.size() + " catalog(s)");
+        return registration.entity();
     }
 
     /**
@@ -1295,16 +1372,23 @@ public class DcatPublisher implements HealthCheck {
         });
     }
 
-    private void recordPermanent(String key, String what, String reason) {
-        RetryQueue current = retries;
-        if (current != null) {
-            current.permanent(key, what, reason);
-        }
-    }
-
-    /** The media types a published Dataset's Distributions carry. */
-    private static List<String> advertisedMediaTypes(Dataset dataset) {
-        return dataset.getDistribution().stream().map(Distribution::getMediaType).filter(t -> t != null).toList();
+    /**
+     * The media types a published Dataset's Distributions were written for.
+     *
+     * <p>
+     * Read from the Distribution <em>title</em>, which {@code DcatMapper.toDistribution} sets to
+     * the served type verbatim, and not from {@code dcat:mediaType}. That property speaks a
+     * different vocabulary: the IANA register IRI when the type is registered, and nothing at all
+     * when it is not (an unregistered type deliberately gets no {@code dcat:mediaType}, because a
+     * literal there is a DCAT-AP violation). Comparing it against {@link #publishableMediaTypes()},
+     * which yields served types, could therefore never be equal — so the allowlist-change check
+     * fired for every Dataset on every restart and rewrote the whole catalogue, which on a
+     * git-backed portal is two commits per entity (#232).
+     * </p>
+     */
+    static List<String> advertisedMediaTypes(Dataset dataset) {
+        return dataset.getDistribution().stream().map(Distribution::getTitle).filter(title -> title != null)
+                .map(PlainLiteral::getValue).filter(value -> value != null).toList();
     }
 
     /**
@@ -1346,30 +1430,29 @@ public class DcatPublisher implements HealthCheck {
                 || permittedStages.contains(target.stage());
     }
 
+    /**
+     * Writes the Catalog and re-asserts its memberships.
+     *
+     * <p>
+     * Like {@link #writeDataset}, a payload the portal refuses is not caught here: swallowing it
+     * resolved the promise successfully and erased the ledger entry it had just recorded (#231).
+     * </p>
+     */
     private Catalog writeCatalog(DcatAtlasClient portal, String catalogId, ScopeInfo info,
             CatalogSettings settings) {
-        try {
-            Registration<Catalog> registration = portal.registerCatalog(catalogId, mapper.toCatalog(info, settings));
-            if (!registration.applied()) {
-                // A foreign edit landed between our read and our write. Log and carry on; never
-                // unwind, because the next reconcile converges anyway.
-                LOGGER.warning(() -> "Catalog " + catalogId + " was not written: a precondition refused it");
-                return null;
-            }
-            // A PUT replaces, so that write just dropped every dcat:dataset membership the Catalog
-            // held. The Datasets themselves are skipped when unchanged — correctly, to avoid
-            // rewriting the catalogue on every boot — which means nothing else will re-assert
-            // these links. Whoever rewrites a Catalog owns its memberships.
-            relinkDatasets(portal, catalogId, info.getName());
-            LOGGER.info(() -> "Published Catalog " + catalogId + " for scope " + info.getName());
-            return registration.entity();
-        } catch (DcatModelConstraintException | DcatShaclException e) {
-            // Permanent for this entity: the portal will refuse the identical payload every time,
-            // so retrying is only noise. The report is the actionable part.
-            recordPermanent("catalog:" + info.getName(), "publishing the Catalog for scope " + info.getName(),
-                    "the portal refused it as invalid: " + e.getMessage());
-            LOGGER.log(Level.WARNING, "Portal refused Catalog " + catalogId + " as invalid; not retrying", e);
+        Registration<Catalog> registration = portal.registerCatalog(catalogId, mapper.toCatalog(info, settings));
+        if (!registration.applied()) {
+            // A foreign edit landed between our read and our write. Log and carry on; never
+            // unwind, because the next reconcile converges anyway.
+            LOGGER.warning(() -> "Catalog " + catalogId + " was not written: a precondition refused it");
             return null;
         }
+        // A PUT replaces, so that write just dropped every dcat:dataset membership the Catalog
+        // held. The Datasets themselves are skipped when unchanged — correctly, to avoid
+        // rewriting the catalogue on every boot — which means nothing else will re-assert
+        // these links. Whoever rewrites a Catalog owns its memberships.
+        relinkDatasets(portal, catalogId, info.getName());
+        LOGGER.info(() -> "Published Catalog " + catalogId + " for scope " + info.getName());
+        return registration.entity();
     }
 }

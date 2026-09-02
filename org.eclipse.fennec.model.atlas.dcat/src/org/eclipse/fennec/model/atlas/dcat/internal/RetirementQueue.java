@@ -52,8 +52,56 @@ final class RetirementQueue implements AutoCloseable {
 
     private final ScheduledExecutorService scheduler;
 
-    /** Pending tasks by key. An entry is removed by whoever finishes it: the task, or a cancel. */
-    private final Map<String, ScheduledFuture<?>> pending = new ConcurrentHashMap<>();
+    /**
+     * Pending retirements by key. An entry is removed by whoever finishes it: the task, or a
+     * cancel — and only ever its <em>own</em> entry, which is why the value is a {@link Pending}
+     * with identity rather than a bare future (#235).
+     */
+    private final Map<String, Pending> pending = new ConcurrentHashMap<>();
+
+    /**
+     * One scheduled retirement. Its identity is the map value, so a task that finishes after being
+     * superseded cannot de-register its replacement, and a cancel that arrives before the future
+     * exists still stops the work.
+     */
+    private static final class Pending {
+
+        private ScheduledFuture<?> future;
+        private boolean cancelled;
+
+        /**
+         * Publishes the future to a concurrent canceller. A cancel that already came in wins: the
+         * task is stopped here rather than being allowed to run because it was not yet visible.
+         */
+        synchronized void schedule(ScheduledFuture<?> scheduled) {
+            if (cancelled) {
+                scheduled.cancel(false);
+            } else {
+                future = scheduled;
+            }
+        }
+
+        /** @return {@code true} when the work will not run because of this call */
+        synchronized boolean cancel() {
+            if (cancelled) {
+                return false;
+            }
+            cancelled = true;
+            // No future yet means it cannot have started, so marking it is enough — schedule()
+            // will cancel it on arrival.
+            return future == null || future.cancel(false);
+        }
+    }
+
+    /**
+     * A queue over a supplied scheduler. Package-private for the tests, which drive the
+     * interleavings this class exists for by running tasks by hand: the races live in the window
+     * between a task starting and de-registering itself, which no amount of sleeping can hit
+     * reliably from outside.
+     */
+    RetirementQueue(ScheduledExecutorService scheduler) {
+        this.scheduler = scheduler;
+    }
 
     RetirementQueue(String name) {
         this.scheduler = Executors.newSingleThreadScheduledExecutor(runnable -> {
@@ -74,21 +122,27 @@ final class RetirementQueue implements AutoCloseable {
      * @param work         run unless cancelled first
      */
     void schedule(String key, long delayMillis, Runnable work) {
-        ScheduledFuture<?> scheduled = scheduler.schedule(() -> {
+        Pending entry = new Pending();
+        // Installed before it is scheduled, so a zero-delay task always finds its own registration
+        // to remove; the other order left a finished future in the map for good (#235).
+        Pending previous = pending.put(key, entry);
+        if (previous != null) {
+            previous.cancel();
+        }
+        entry.schedule(scheduler.schedule(() -> {
             // Remove before running, not after: a bind arriving while the work is in flight must
             // not be able to cancel a task that is already past cancelling. It sees no pending
             // entry, republishes, and the publish path is what reconciles the outcome.
-            pending.remove(key);
+            //
+            // By identity, never by key alone: this task may already have been superseded, and the
+            // replacement's registration is not ours to delete (#235).
+            pending.remove(key, entry);
             try {
                 work.run();
             } catch (RuntimeException e) {
                 LOGGER.log(Level.WARNING, "Retiring " + key + " failed", e);
             }
-        }, Math.max(0, delayMillis), TimeUnit.MILLISECONDS);
-        ScheduledFuture<?> previous = pending.put(key, scheduled);
-        if (previous != null) {
-            previous.cancel(false);
-        }
+        }, Math.max(0, delayMillis), TimeUnit.MILLISECONDS));
     }
 
     /**
@@ -98,8 +152,8 @@ final class RetirementQueue implements AutoCloseable {
      *         "that unbind was an update" case, and worth logging as such
      */
     boolean cancel(String key) {
-        ScheduledFuture<?> scheduled = pending.remove(key);
-        return scheduled != null && scheduled.cancel(false);
+        Pending scheduled = pending.remove(key);
+        return scheduled != null && scheduled.cancel();
     }
 
     /** Cancels everything pending, leaving the queue usable. */
