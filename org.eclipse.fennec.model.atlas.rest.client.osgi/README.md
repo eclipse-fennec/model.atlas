@@ -187,7 +187,12 @@ Resolve on demand; framework `ResourceSet`s gain Atlas fallback automatically.
 ```
 
 `mode.strict=true` makes activation fail if the Atlas is unreachable (so a missing
-backend is loud rather than silent). The pre-fetch itself is stage-free: it reads each
+backend is loud rather than silent). With `mode.strict=false` (the default) an
+unreachable Atlas no longer costs the client every package until it is restarted: the
+start-up pass — pre-fetch, `force.remote` check and scope-service publication — is
+retried every `drift.check.interval.ms` (a minute when drift checking is off) until one
+of them completes, and drift detection takes over from there. The pre-fetch itself is
+stage-free: it reads each
 configured scope's final stage, resolved server-side, and the `atlas.stage` it stamps is
 provenance reported by the server. `eager.stages` does not change what is pre-fetched —
 it selects which per-stage scoped registries are exposed (see

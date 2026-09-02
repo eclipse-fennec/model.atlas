@@ -26,6 +26,7 @@ import org.eclipse.emf.ecore.EObject;
 import org.eclipse.emf.ecore.EPackage;
 import org.eclipse.emf.ecore.EcoreFactory;
 import org.eclipse.emf.ecore.EcorePackage;
+import org.eclipse.emf.ecore.impl.EPackageRegistryImpl;
 import org.eclipse.emf.ecore.util.EcoreUtil;
 import org.eclipse.fennec.emf.osgi.eobject.registry.EObjectRegistryEntry;
 import org.junit.jupiter.api.AfterEach;
@@ -44,6 +45,7 @@ class AtlasObjectSyncTest {
 	private FakeScopeService scope;
 	private RecordingWriter writer;
 	private DeterministicScheduler scheduler;
+	private EPackage.Registry frameworkRegistry;
 	private EPackage testPackage;
 	private EClass thingClass;
 	private AtlasObjectSync sync;
@@ -53,6 +55,7 @@ class AtlasObjectSyncTest {
 		scope = new FakeScopeService("iot");
 		writer = new RecordingWriter();
 		scheduler = new DeterministicScheduler();
+		frameworkRegistry = new EPackageRegistryImpl();
 		testPackage = EcoreFactory.eINSTANCE.createEPackage();
 		testPackage.setName("test");
 		testPackage.setNsPrefix("test");
@@ -94,6 +97,26 @@ class AtlasObjectSyncTest {
 	private void start(AtlasSyncSettings settings) {
 		sync = new AtlasObjectSync(scope, settings, AtlasObjectSync.objectIdKeys(), writer, scheduler);
 		scheduler.runPending();
+	}
+
+	/** Starts an engine whose gate resolves through the framework registry (the OSGi one). */
+	private void startWithFrameworkRegistry(AtlasSyncSettings settings) {
+		sync = new AtlasObjectSync(scope, settings, AtlasObjectSync.objectIdKeys(), writer, frameworkRegistry,
+				scheduler);
+		scheduler.runPending();
+	}
+
+	/**
+	 * A second, independent EPackage instance for the same nsURI - what the atlas client
+	 * publishes after a model was deleted and uploaded again.
+	 */
+	private EPackage republished() {
+		EPackage other = EcoreFactory.eINSTANCE.createEPackage();
+		other.setName("test");
+		other.setNsPrefix("test");
+		other.setNsURI(NS_URI);
+		other.getEClassifiers().add(EcoreUtil.copy(thingClass));
+		return other;
 	}
 
 	// --- complete passes ---
@@ -260,6 +283,86 @@ class AtlasObjectSyncTest {
 		assertThat(writer.ops(RecordingWriter.Kind.SYNC)).hasSize(2);
 	}
 
+	@Test
+	void requiredNsUriIsResolvedThroughTheFrameworkRegistry() {
+		scope.put("mappings", "a", thing("a-mid"));
+
+		startWithFrameworkRegistry(settings(List.of("mappings"), List.of(), "", Set.of(NS_URI)));
+
+		// nothing provides the nsURI yet -> nothing fetched, retry scheduled
+		assertThat(writer.ops).isEmpty();
+
+		// the atlas client publishes it after start-up: the package lands in the OSGi
+		// registry, not in the EMF singleton (mirroring it there is opt-in)
+		frameworkRegistry.put(NS_URI, testPackage);
+		scheduler.runScheduledOnce();
+
+		assertThat(writer.ops(RecordingWriter.Kind.SYNC)).hasSize(1);
+		// and it is mirrored for the legacy consumers that read the singleton
+		assertThat(EPackage.Registry.INSTANCE.getEPackage(NS_URI)).isSameAs(testPackage);
+	}
+
+	@Test
+	void requiredNsUriGateAdoptsARepublishedPackageInsteadOfSquattingOnTheStaleOne() {
+		scope.put("mappings", "a", thing("a-mid"));
+		// baseline: the atlas client published the package and mirrored it into the singleton
+		frameworkRegistry.put(NS_URI, testPackage);
+		EPackage.Registry.INSTANCE.put(NS_URI, testPackage);
+
+		startWithFrameworkRegistry(settings(List.of("mappings"), List.of(), "", Set.of(NS_URI)));
+		assertThat(writer.ops(RecordingWriter.Kind.SYNC)).hasSize(1);
+
+		// the model is deleted from the atlas: the client unpublishes it and drops its
+		// own mirror. The gate keeps the last known instance available so the pass runs.
+		frameworkRegistry.remove(NS_URI);
+		EPackage.Registry.INSTANCE.remove(NS_URI);
+		scheduler.runScheduledOnce();
+		assertThat(EPackage.Registry.INSTANCE.get(NS_URI)).isSameAs(testPackage);
+		assertThat(writer.ops(RecordingWriter.Kind.SYNC)).hasSize(2);
+
+		// the model is uploaded again: the client publishes a NEW instance for the same
+		// nsURI, but its mirror never displaces an occupied singleton entry (#227), so
+		// only the OSGi registry carries it
+		EPackage restored = republished();
+		frameworkRegistry.put(NS_URI, restored);
+		scheduler.runScheduledOnce();
+
+		assertThat(EPackage.Registry.INSTANCE.getEPackage(NS_URI)).isSameAs(restored);
+		assertThat(writer.ops(RecordingWriter.Kind.SYNC)).hasSize(3);
+	}
+
+	@Test
+	void requiredNsUriGateNeverDisplacesAForeignSingletonEntry() {
+		scope.put("mappings", "a", thing("a-mid"));
+		// a generated model bundle owns the nsURI in the singleton; the atlas client's
+		// dynamic copy of it only reaches the OSGi registry
+		EPackage foreign = republished();
+		EPackage.Registry.INSTANCE.put(NS_URI, foreign);
+		frameworkRegistry.put(NS_URI, testPackage);
+
+		startWithFrameworkRegistry(settings(List.of("mappings"), List.of(), "", Set.of(NS_URI)));
+
+		assertThat(writer.ops(RecordingWriter.Kind.SYNC)).hasSize(1);
+		assertThat(EPackage.Registry.INSTANCE.get(NS_URI)).isSameAs(foreign);
+	}
+
+	@Test
+	void requiredNsUriGateYieldsTheSingletonSlotToARealProvider() {
+		scope.put("mappings", "a", thing("a-mid"));
+		frameworkRegistry.put(NS_URI, testPackage);
+		startWithFrameworkRegistry(settings(List.of("mappings"), List.of(), "", Set.of(NS_URI)));
+		// the gate pinned the package into the singleton nobody else had claimed
+		assertThat(EPackage.Registry.INSTANCE.get(NS_URI)).isSameAs(testPackage);
+
+		// a real provider for the nsURI turns up in the OSGi registry: the pin is ours to
+		// give back, and the singleton has to follow the provider
+		EPackage generated = republished();
+		frameworkRegistry.put(NS_URI, generated);
+		scheduler.runScheduledOnce();
+
+		assertThat(EPackage.Registry.INSTANCE.get(NS_URI)).isSameAs(generated);
+	}
+
 	// --- scheduling transitions ---
 
 	@Test
@@ -297,6 +400,19 @@ class AtlasObjectSyncTest {
 	}
 
 	// --- lifecycle ---
+
+	@Test
+	void closeGivesBackTheSingletonEntriesTheGatePlaced() {
+		scope.put("mappings", "a", thing("a-mid"));
+		frameworkRegistry.put(NS_URI, testPackage);
+		startWithFrameworkRegistry(settings(List.of("mappings"), List.of(), "", Set.of(NS_URI)));
+		assertThat(EPackage.Registry.INSTANCE.get(NS_URI)).isSameAs(testPackage);
+
+		sync.close();
+
+		// the nsURI is free again, so its real owner can still claim it
+		assertThat(EPackage.Registry.INSTANCE.containsKey(NS_URI)).isFalse();
+	}
 
 	@Test
 	void closeClearsPendingWorkAndWritesNothing() {

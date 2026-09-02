@@ -17,10 +17,12 @@ import org.osgi.service.metatype.annotations.AttributeDefinition;
 import org.osgi.service.metatype.annotations.ObjectClassDefinition;
 
 /**
- * Configuration of an {@link AtlasEObjectProviderComponent} instance. Two standard DS
+ * Configuration of an {@link AtlasEObjectProviderComponent} instance. Standard DS
  * reference-target properties complete the wiring: {@code atlasScope.target} selects the
  * atlas scope (e.g. {@code (atlas.scope=jena)}), {@code writer.target} selects the
- * target registry by name (e.g. {@code (emf.eobject.registry.name=sensinact-mappings)}).
+ * target registry by name (e.g. {@code (emf.eobject.registry.name=sensinact-mappings)}),
+ * and {@code packageRegistry.target} selects the registry the {@code required.nsuris}
+ * gate resolves through (the framework one by default).
  * Because the registry's writer service only exists after its gated initial load, the
  * component is not satisfied - and never writes - before the registry is up.
  *
@@ -51,7 +53,8 @@ public @interface AtlasEObjectProviderConfig {
 
 	@AttributeDefinition(name = "Required nsURIs", required = false, description = "nsURIs whose generated EPackages "
 			+ "must be resolvable before a sync pass runs; guards against fetched objects materializing as dynamic "
-			+ "EObjects while a model bundle is not active yet.")
+			+ "EObjects while a model bundle is not active yet. Re-read on every pass, so a package that is "
+			+ "deleted and published again is picked up without a restart.")
 	String[] required_nsuris() default {};
 
 	@AttributeDefinition(name = "Refresh interval (ms)", required = false, description = "Interval for re-syncing from the atlas; 0 syncs once on activation.")
