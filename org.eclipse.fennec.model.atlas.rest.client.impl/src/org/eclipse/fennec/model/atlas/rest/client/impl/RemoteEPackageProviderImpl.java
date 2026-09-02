@@ -164,7 +164,7 @@ class RemoteEPackageProviderImpl implements RemoteEPackageProvider {
 		}
 		// Absent or past TTL: revalidate against the server (conditional GET if we
 		// still hold the expired entry's ETag), else a full fetch.
-		return revalidateOrFetch(nsUri);
+		return Optional.ofNullable(revalidateOrFetch(nsUri).ePackage());
 	}
 
 	@Override
@@ -213,9 +213,32 @@ class RemoteEPackageProviderImpl implements RemoteEPackageProvider {
 
 	@Override
 	public Optional<EPackage> refresh(String nsUri) {
+		return Optional.ofNullable(revalidate(nsUri).ePackage());
+	}
+
+	/** Whether a revalidation found new content, the content we already had, or nothing. */
+	enum RefreshOutcome {
+		CHANGED, UNCHANGED, REMOVED
+	}
+
+	/** A revalidation's outcome and the package it left in the cache ({@code null} when REMOVED). */
+	record Refreshed(RefreshOutcome outcome, EPackage ePackage) {
+	}
+
+	/**
+	 * {@link #refresh(String)} with the outcome the conditional GET actually produced.
+	 * <p>
+	 * The drift watcher needs the distinction when it re-discovers a scope without a
+	 * server diff to go on (#238): a {@code 304} there means we already hold the current
+	 * payload, and announcing it as a change would swap every published service for an
+	 * identical one. On the diff-driven path the server has already said the entry
+	 * changed - possibly only in provenance, e.g. a promotion whose content is
+	 * byte-identical - so that path deliberately does not consult this.
+	 */
+	Refreshed revalidate(String nsUri) {
 		Objects.requireNonNull(nsUri, "nsUri");
 		if (!isPublishable(nsUri)) {
-			return Optional.empty();
+			return new Refreshed(RefreshOutcome.REMOVED, null);
 		}
 		// Forced: always re-contact the server, but still revalidate with the stored ETag.
 		return revalidateOrFetch(nsUri);
@@ -278,12 +301,12 @@ class RemoteEPackageProviderImpl implements RemoteEPackageProvider {
 	 * Re-contact the server for {@code nsUri}, sending {@code If-None-Match} with the
 	 * stored ETag if one is cached (P2-6). Walk the resolved scopes, first hit wins:
 	 * <ul>
-	 * <li>{@code 304} → keep the cached value, refresh its TTL, no parsing;</li>
-	 * <li>{@code 200} → replace the cache entry with the new payload and ETag;</li>
-	 * <li>all scopes miss → drop any stale entry and report absent.</li>
+	 * <li>{@code 304} → keep the cached value, refresh its TTL, no parsing ({@code UNCHANGED});</li>
+	 * <li>{@code 200} → replace the cache entry with the new payload and ETag ({@code CHANGED});</li>
+	 * <li>all scopes miss → drop any stale entry and report {@code REMOVED}.</li>
 	 * </ul>
 	 */
-	private Optional<EPackage> revalidateOrFetch(String nsUri) {
+	private Refreshed revalidateOrFetch(String nsUri) {
 		Optional<ClientCache.Entry<EPackage>> existing = cache.lookup(nsUri);
 		String ifNoneMatch = existing.map(ClientCache.Entry::etag).orElse(null);
 		for (String scope : resolveScopes()) {
@@ -296,15 +319,15 @@ class RemoteEPackageProviderImpl implements RemoteEPackageProvider {
 				ClientCache.Entry<EPackage> entry = existing.orElseThrow();
 				// Keep the cached value; re-put to refresh its TTL.
 				cache.put(nsUri, entry.value(), entry.etag(), entry.lastModified());
-				return Optional.of(entry.value());
+				return new Refreshed(RefreshOutcome.UNCHANGED, entry.value());
 			}
 			FetchedPackage fetched = content.fetched();
 			cache.put(nsUri, fetched.ePackage(), fetched.etag(), fetched.lastModified());
-			return Optional.of(fetched.ePackage());
+			return new Refreshed(RefreshOutcome.CHANGED, fetched.ePackage());
 		}
 		// No scope holds it any more: drop a now-stale entry.
 		cache.invalidate(nsUri);
-		return Optional.empty();
+		return new Refreshed(RefreshOutcome.REMOVED, null);
 	}
 
 	/**

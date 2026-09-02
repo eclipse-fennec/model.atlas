@@ -107,6 +107,9 @@ public class ScopesResource {
         return Response.status(Response.Status.OK).entity(scope).build();
     }
 
+    /** Signals that the cited {@code If-None-Match} baseline could not be reconstructed, so no diff is available. */
+    static final String ATLAS_BASELINE_UNKNOWN = "Atlas-Baseline-Unknown";
+
     /**
      * Aggregate change-detection probe for an entire scope. Returns a strong, order-independent
      * {@code ETag} over every package and registered EObject in the scope plus a {@code Last-Modified},
@@ -115,6 +118,11 @@ public class ScopesResource {
      * <p>On a stale {@code If-None-Match} whose baseline is still known, the {@code 200} response also
      * carries {@code Atlas-Changed-NsUris} and/or {@code Atlas-Changed-Objects} listing exactly which
      * entries changed; a matching {@code If-None-Match} yields {@code 304} with no diff headers.
+     *
+     * <p>When the cited baseline cannot be reconstructed - the service restarted, or that snapshot has
+     * aged out of its bounded per-scope cache - the {@code 200} carries no diff headers but does carry
+     * {@code Atlas-Baseline-Unknown: true}, which tells the client to re-synchronise the scope in full
+     * instead of assuming nothing it cares about changed.
      *
      * @param scopeName   the scope name
      * @param ifNoneMatch the previously seen aggregate ETag, if any
@@ -125,7 +133,7 @@ public class ScopesResource {
     @Path("/{scopeName}")
     @Operation(summary = "Scope aggregate validator", description = "Aggregate ETag / Last-Modified over the whole scope, with "
             + "Atlas-Changed-NsUris / Atlas-Changed-Objects change hints on a stale If-None-Match.", responses = {
-                    @ApiResponse(responseCode = "200", description = "Aggregate validator returned; change hints present when a stale If-None-Match baseline is known"),
+                    @ApiResponse(responseCode = "200", description = "Aggregate validator returned; change hints present when a stale If-None-Match baseline is known, Atlas-Baseline-Unknown when it is not"),
                     @ApiResponse(responseCode = "304", description = "Scope unchanged since the supplied If-None-Match"),
                     @ApiResponse(responseCode = "404", description = "Scope not found") })
     @ResourceOption(key = CodecOptions.CODEC_ID_KEY_MODE, value = "FEATURE_ONLY")
@@ -156,6 +164,12 @@ public class ScopesResource {
             if (!diff.changedObjects().isEmpty()) {
                 rb.header("Atlas-Changed-Objects", String.join(",", diff.changedObjects()));
             }
+        } else {
+            // Say so outright (#238). Without it this answer is indistinguishable from
+            // "the aggregate changed, but nothing you track did", and a client that simply
+            // stores the new ETag never learns what it missed: its next probe matches that
+            // ETag and yields 304 from then on. Flagged, the client re-discovers the scope.
+            rb.header(ATLAS_BASELINE_UNKNOWN, Boolean.TRUE.toString());
         }
         return rb.build();
     }
