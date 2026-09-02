@@ -14,6 +14,7 @@
 package org.eclipse.fennec.model.atlas.rest.client.osgi;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -271,5 +272,56 @@ class EagerPrefetchTest {
 		assertEquals(1, published);
 		assertEquals(List.of("urn:first"),
 				publication.calls.stream().map(RecordingPublication.Published::nsUri).toList());
+	}
+
+	// ---- completeness reporting (#238: an incomplete pass has to be retried) ----
+
+	@Test
+	void anUnreachableServerLeavesTheEagerPassIncomplete() {
+		when(provider.listPackages("jena")).thenThrow(new TransportException("connection refused"));
+
+		EagerPrefetch eager = prefetch(config(ResolutionMode.EAGER, false, List.of("jena"), List.of()));
+		eager.run();
+
+		assertFalse(eager.isComplete());
+	}
+
+	@Test
+	void aPassThatReachedTheServerIsComplete() {
+		when(provider.listPackages("jena")).thenReturn(List.of(desc("urn:a", "jena", "release", "1.0")));
+		when(provider.ensureAvailable("urn:a")).thenReturn(Optional.of(ePackage("urn:a")));
+
+		EagerPrefetch eager = prefetch(config(ResolutionMode.EAGER, false, List.of("jena"), List.of()));
+		eager.run();
+
+		assertTrue(eager.isComplete());
+	}
+
+	@Test
+	void aRetriedPassThatSucceedsClearsTheIncompleteFlag() {
+		when(provider.listPackages("jena")).thenThrow(new TransportException("connection refused"))
+				.thenReturn(List.of(desc("urn:a", "jena", "release", "1.0")));
+		when(provider.ensureAvailable("urn:a")).thenReturn(Optional.of(ePackage("urn:a")));
+
+		EagerPrefetch eager = prefetch(config(ResolutionMode.EAGER, false, List.of("jena"), List.of()));
+		eager.run();
+		assertFalse(eager.isComplete());
+
+		// the atlas comes up: the same instance runs again and now completes
+		eager.run();
+
+		assertTrue(eager.isComplete());
+		assertEquals(List.of("urn:a"),
+				publication.calls.stream().map(RecordingPublication.Published::nsUri).toList());
+	}
+
+	@Test
+	void anUnreachableServerLeavesTheHybridPassIncomplete() {
+		when(provider.resolve("urn:a")).thenThrow(new TransportException("connection refused"));
+
+		EagerPrefetch hybrid = prefetch(hybridConfig(false, List.of("urn:a")));
+		hybrid.prefetchListedNsUris();
+
+		assertFalse(hybrid.isComplete());
 	}
 }
