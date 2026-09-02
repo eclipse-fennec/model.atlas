@@ -45,12 +45,19 @@ class DeterministicScheduler implements ScheduledExecutorService {
 		}
 	}
 
-	/** Drains the scheduled tasks and runs each once (then their follow-up submissions). */
+	/**
+	 * Drains the scheduled tasks and runs each once (then their follow-up submissions).
+	 * A fixed-delay task is re-armed afterwards - it keeps firing until the executor is
+	 * shut down - so a test can drive several refresh passes in a row.
+	 */
 	void runScheduledOnce() {
 		List<ScheduledTask> due = List.copyOf(scheduled);
 		scheduled.clear();
 		due.forEach(t -> t.task().run());
 		runPending();
+		if (!shutdown) {
+			due.stream().filter(ScheduledTask::periodic).filter(t -> !scheduled.contains(t)).forEach(scheduled::add);
+		}
 	}
 
 	@Override

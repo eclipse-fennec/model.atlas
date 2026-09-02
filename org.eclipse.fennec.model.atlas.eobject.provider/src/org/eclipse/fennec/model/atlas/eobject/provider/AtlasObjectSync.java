@@ -77,8 +77,15 @@ public final class AtlasObjectSync implements AutoCloseable {
 	private final BiFunction<String, EObject, String> keyFunction;
 	private final EObjectRegistryWriter writer;
 	private final ScheduledExecutorService executor;
+	/** Where the required-nsURI gate resolves; never {@code null}. */
+	private final EPackage.Registry packageRegistry;
 	/** Only touched on the executor thread. */
 	private final Map<String, EPackage> resolvedPackages = new HashMap<>();
+	/**
+	 * The singleton entries this engine placed itself, by nsURI - the only ones it may
+	 * replace or remove. Only touched on the executor thread.
+	 */
+	private final Map<String, EPackage> pinned = new HashMap<>();
 	private volatile boolean active = true;
 
 	/**
@@ -94,11 +101,26 @@ public final class AtlasObjectSync implements AutoCloseable {
 	 */
 	public AtlasObjectSync(ReadableScopeService<EObject> scopeService, AtlasSyncSettings settings,
 			BiFunction<String, EObject, String> keyFunction, EObjectRegistryWriter writer) {
-		this(scopeService, settings, keyFunction, writer, Executors.newSingleThreadScheduledExecutor(runnable -> {
-			Thread thread = new Thread(runnable, settings.threadName());
-			thread.setDaemon(true);
-			return thread;
-		}));
+		this(scopeService, settings, keyFunction, writer, (EPackage.Registry) null);
+	}
+
+	/**
+	 * Same, with the registry the required-nsURI gate resolves through.
+	 *
+	 * @param packageRegistry the registry to resolve {@code required.nsuris} against -
+	 *                        the OSGi framework {@code EPackage.Registry}, where both
+	 *                        locally shipped and atlas-published packages appear;
+	 *                        {@code null} falls back to {@link EPackage.Registry#INSTANCE}
+	 */
+	public AtlasObjectSync(ReadableScopeService<EObject> scopeService, AtlasSyncSettings settings,
+			BiFunction<String, EObject, String> keyFunction, EObjectRegistryWriter writer,
+			EPackage.Registry packageRegistry) {
+		this(scopeService, settings, keyFunction, writer, packageRegistry,
+				Executors.newSingleThreadScheduledExecutor(runnable -> {
+					Thread thread = new Thread(runnable, settings.threadName());
+					thread.setDaemon(true);
+					return thread;
+				}));
 	}
 
 	/**
@@ -108,6 +130,14 @@ public final class AtlasObjectSync implements AutoCloseable {
 	AtlasObjectSync(ReadableScopeService<EObject> scopeService, AtlasSyncSettings settings,
 			BiFunction<String, EObject, String> keyFunction, EObjectRegistryWriter writer,
 			ScheduledExecutorService executor) {
+		this(scopeService, settings, keyFunction, writer, (EPackage.Registry) null, executor);
+	}
+
+	/** Test constructor: caller-supplied gate registry and executor. */
+	AtlasObjectSync(ReadableScopeService<EObject> scopeService, AtlasSyncSettings settings,
+			BiFunction<String, EObject, String> keyFunction, EObjectRegistryWriter writer,
+			EPackage.Registry packageRegistry, ScheduledExecutorService executor) {
+		this.packageRegistry = packageRegistry == null ? EPackage.Registry.INSTANCE : packageRegistry;
 		this.scopeService = Objects.requireNonNull(scopeService, "scopeService");
 		this.settings = Objects.requireNonNull(settings, "settings");
 		this.keyFunction = Objects.requireNonNull(keyFunction, "keyFunction");
@@ -147,7 +177,10 @@ public final class AtlasObjectSync implements AutoCloseable {
 
 	/**
 	 * Stops the sync. The engine's entries deliberately stay in the registry - only a
-	 * complete pass of a living source removes content.
+	 * complete pass of a living source removes content. Its stop-gap entries in the EMF
+	 * singleton do not: they exist to keep <em>this</em> engine's passes running while a
+	 * package has no provider, and one left behind would occupy an nsURI its real owner
+	 * can no longer take (the mirroring rule of issue #227 makes an occupied nsURI final).
 	 */
 	@Override
 	public void close() {
@@ -158,6 +191,9 @@ public final class AtlasObjectSync implements AutoCloseable {
 		} catch (InterruptedException e) {
 			Thread.currentThread().interrupt();
 		}
+		// After the await no pass is running, so the executor-thread-only maps are ours.
+		pinned.forEach((nsUri, ePackage) -> EPackage.Registry.INSTANCE.remove(nsUri, ePackage));
+		pinned.clear();
 	}
 
 	private void initialSync() {
@@ -207,32 +243,93 @@ public final class AtlasObjectSync implements AutoCloseable {
 	}
 
 	/**
-	 * The required-nsURI gate. A listed nsURI whose generated package was never seen
-	 * postpones the whole pass (no fetch runs - fetched objects would materialize as
-	 * dynamic EObjects and downstream type dispatch would fail silently). Once seen, the
-	 * instance is held and re-pinned per pass ({@code putIfAbsent}), healing the window
-	 * a model-bundle refresh opens when its configurator removes the package on
-	 * deactivate.
+	 * The required-nsURI gate. A listed nsURI nothing provides postpones the whole pass
+	 * (no fetch runs - fetched objects would materialize as dynamic EObjects and
+	 * downstream type dispatch would fail silently).
+	 * <p>
+	 * Every pass re-reads the current provider, so the gate follows the package rather
+	 * than the instance it first saw: a model that is deleted from the atlas and
+	 * uploaded again comes back as a <em>new</em> EPackage instance, and holding on to
+	 * the old one leaves everything downstream typed against a package nobody publishes
+	 * any more (issue #238). Resolution order is the injected {@link #packageRegistry}
+	 * (the OSGi one, where both locally shipped and atlas-published packages appear),
+	 * then {@link EPackage.Registry#INSTANCE} for providers that only ever write there.
+	 * <p>
+	 * While no provider has it, the last known instance is pinned into the EMF singleton
+	 * so the pass can still run - healing the window a model-bundle refresh opens when
+	 * its configurator removes the package on deactivate. That pin is a stop-gap, not a
+	 * claim: it is tracked in {@link #pinned}, given back the moment a real provider
+	 * turns up, and an nsURI another bundle already holds in the singleton is never
+	 * touched (the mirroring rule of issue #227 - overwriting a generated package with a
+	 * dynamic one breaks the generated code that owns it).
 	 */
 	private boolean ensureRequiredPackages() {
 		boolean allPresent = true;
 		for (String nsUri : settings.requiredNsUris()) {
-			EPackage held = resolvedPackages.get(nsUri);
-			if (held != null) {
-				EPackage.Registry.INSTANCE.putIfAbsent(nsUri, held);
-				continue;
-			}
-			EPackage resolved = EPackage.Registry.INSTANCE.getEPackage(nsUri);
-			if (resolved == null) {
-				logger.warning(String.format(
-						"Required EPackage %s is not registered yet - postponing the sync pass of atlas scope %s",
-						nsUri, scopeService.getScopeName()));
-				allPresent = false;
-			} else {
-				resolvedPackages.put(nsUri, resolved);
-			}
+			allPresent &= ensureRequiredPackage(nsUri);
 		}
 		return allPresent;
+	}
+
+	private boolean ensureRequiredPackage(String nsUri) {
+		EPackage provided = provider(nsUri);
+		if (provided != null) {
+			resolvedPackages.put(nsUri, provided);
+			mirror(nsUri, provided);
+			return true;
+		}
+		EPackage held = resolvedPackages.get(nsUri);
+		if (held == null) {
+			logger.warning(String.format(
+					"Required EPackage %s is not registered yet - postponing the sync pass of atlas scope %s", nsUri,
+					scopeService.getScopeName()));
+			return false;
+		}
+		mirror(nsUri, held);
+		return true;
+	}
+
+	/**
+	 * Whoever currently provides {@code nsUri}, or {@code null} if that is nobody. Our own
+	 * stop-gap pin does not count as a provider - it is exactly what has to make way once
+	 * someone real shows up.
+	 */
+	private EPackage provider(String nsUri) {
+		EPackage pin = pinned.get(nsUri);
+		EPackage provided = packageRegistry.getEPackage(nsUri);
+		if (provided != null && provided != pin) {
+			return provided;
+		}
+		if (packageRegistry == EPackage.Registry.INSTANCE) {
+			return null; // already looked there
+		}
+		EPackage global = EPackage.Registry.INSTANCE.getEPackage(nsUri);
+		return global == pin ? null : global;
+	}
+
+	/**
+	 * Keep the EMF singleton pointing at {@code ePackage} for the legacy consumers that
+	 * read it - but only ever occupy an nsURI nobody else claims, and only ever replace or
+	 * remove an entry this engine placed itself.
+	 */
+	private void mirror(String nsUri, EPackage ePackage) {
+		EPackage pin = pinned.get(nsUri);
+		if (pin == ePackage) {
+			return; // ours already, and current
+		}
+		if (pin != null) {
+			// Value-matching remove: if something else won the nsURI meanwhile, it stays.
+			EPackage.Registry.INSTANCE.remove(nsUri, pin);
+			pinned.remove(nsUri);
+		}
+		// containsKey is delegate-aware and, unlike getEPackage, does not force a lazily
+		// registered EPackage.Descriptor to initialise just because we looked.
+		if (EPackage.Registry.INSTANCE.containsKey(nsUri)) {
+			return;
+		}
+		if (EPackage.Registry.INSTANCE.putIfAbsent(nsUri, ePackage) == null) {
+			pinned.put(nsUri, ePackage);
+		}
 	}
 
 	private boolean syncRegistry(String registry) {
