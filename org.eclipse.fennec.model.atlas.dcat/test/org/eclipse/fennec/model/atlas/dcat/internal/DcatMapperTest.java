@@ -223,6 +223,44 @@ class DcatMapperTest {
 
     // ---- helpers ---------------------------------------------------------
 
+    // ---- #232: what a Distribution advertises must be comparable to what we serve ----
+
+    @Test
+    void advertisedMediaTypesRoundTripToTheServedTypes() {
+        // The allowlist-change check compares what the portal advertises against
+        // publishableMediaTypes(), which yields served types. dcat:mediaType cannot answer that
+        // question: it is an IANA register IRI for a registered type and absent for an
+        // unregistered one, so the two sets could never be equal and every restart rewrote every
+        // Dataset. The Distribution title carries the served type verbatim, for both kinds.
+        DcatMapper mapper = mapper();
+        Dataset dataset = dcat.DcatFactory.eINSTANCE.createDataset();
+        // application/json is IANA-registered; application/xmi deliberately is not.
+        List<String> served = List.of("application/json", "application/xmi");
+        served.forEach(mediaType -> dataset.getDistribution()
+                .add(mapper.toDistribution(target("release"), mediaType, BASE)));
+
+        assertThat(DcatPublisher.advertisedMediaTypes(dataset))
+                .as("the served types must be readable back off a published Dataset")
+                .containsExactlyInAnyOrderElementsOf(served);
+        assertThat(PublishableMediaTypes.distributionsOutOfDate(new java.util.LinkedHashSet<>(served),
+                DcatPublisher.advertisedMediaTypes(dataset)))
+                .as("a Dataset serving exactly the configured formats is not out of date")
+                .isFalse();
+    }
+
+    @Test
+    void anUnregisteredMediaTypeCarriesNoMediaTypeIri() {
+        // Why the title is the only usable source. application/xmi is in the vocabulary table but
+        // is not IANA-registered, so it gets no dcat:mediaType whatsoever — conformant DCAT-AP,
+        // and a value the old comparison could never match against a served type.
+        Distribution distribution = mapper().toDistribution(target("release"), "application/xmi", BASE);
+
+        assertThat(distribution.getTitle().getValue()).isEqualTo("application/xmi");
+        assertThat(distribution.getMediaType())
+                .as("a known-but-unregistered type gets no dcat:mediaType at all, so it cannot be compared")
+                .isNull();
+    }
+
     private static PublicationTarget target(String stage) {
         return new PublicationTarget("jena", stage, NS, "1.1.0", FP);
     }

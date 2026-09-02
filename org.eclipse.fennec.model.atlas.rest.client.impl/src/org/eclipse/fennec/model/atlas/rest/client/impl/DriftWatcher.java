@@ -49,6 +49,12 @@ import jakarta.ws.rs.client.WebTarget;
  * registered {@link DriftListener}s are notified — {@code onPackageChanged} if it
  * is still present, {@code onPackageRemoved} if it is gone.
  * <p>
+ * When the server cannot diff against the ETag we sent — it restarted, or the
+ * snapshot aged out of its bounded cache — it answers {@code 200} with no diff
+ * headers (and, since #238, {@code Atlas-Baseline-Unknown}). That is not "nothing
+ * changed": the scope is then re-discovered in full, because silently adopting the
+ * new ETag would lose every change in that window for good.
+ * <p>
  * Runs on a daemon-threaded schedule every {@code drift.check.interval.ms}
  * ({@code 0} disables the schedule; {@link #check()} can still be invoked
  * manually). EObject-level drift ({@code Atlas-Changed-Objects}) is Phase 5.
@@ -60,6 +66,7 @@ class DriftWatcher implements AutoCloseable {
 	private static final String SCOPES = "scopes";
 	static final String ATLAS_CHANGED_NSURIS = "Atlas-Changed-NsUris";
 	static final String ATLAS_CHANGED_OBJECTS = "Atlas-Changed-Objects";
+	static final String ATLAS_BASELINE_UNKNOWN = "Atlas-Baseline-Unknown";
 
 	private final WebTarget baseTarget;
 	private final Supplier<List<String>> scopesSupplier;
@@ -146,6 +153,10 @@ class DriftWatcher implements AutoCloseable {
 			if (previousEtag == null) {
 				return; // first sight of this scope: establish the baseline, emit nothing
 			}
+			if (isBaselineUnknown(response)) {
+				resyncScope(scope, provider, added, changed, removed);
+				return;
+			}
 			handleChangedNsUris(response, provider, added, changed, removed);
 			handleChangedObjects(scope, response);
 		} finally {
@@ -173,23 +184,138 @@ class DriftWatcher implements AutoCloseable {
 		Set<String> held = heldNsUris(provider);
 		for (String raw : header.split(",")) {
 			String nsUri = raw.trim();
-			if (nsUri.isEmpty()) {
-				continue;
+			if (!nsUri.isEmpty()) {
+				applyNsUri(nsUri, provider, held, added, changed, removed);
 			}
-			if (!held.contains(nsUri)) {
-				if (discoverAdditions) {
-					discover(nsUri, provider, added);
-				}
-				continue;
+		}
+	}
+
+	/** One nsURI: a change or removal if we hold it, a candidate addition if we do not. */
+	private void applyNsUri(String nsUri, RemoteEPackageProviderImpl provider, Set<String> held, Set<String> added,
+			Set<String> changed, Set<String> removed) {
+		if (!held.contains(nsUri)) {
+			if (discoverAdditions) {
+				discover(nsUri, provider, added);
 			}
-			Optional<EPackage> refreshed = provider.refresh(nsUri);
-			if (refreshed.isPresent()) {
-				changed.add(nsUri);
-				fireChanged(nsUri, refreshed.get());
-			} else {
-				removed.add(nsUri);
-				fireRemoved(nsUri);
+			return;
+		}
+		Optional<EPackage> refreshed = provider.refresh(nsUri);
+		if (refreshed.isPresent()) {
+			changed.add(nsUri);
+			fireChanged(nsUri, refreshed.get());
+		} else {
+			removed.add(nsUri);
+			fireRemoved(nsUri);
+		}
+	}
+
+	/**
+	 * Whether the server could not tell us <em>what</em> changed.
+	 * <p>
+	 * {@code diffSince} answers {@code baselineKnown == false} when it cannot reconstruct
+	 * the state our {@code ETag} stood for — after a server restart, or once that snapshot
+	 * has aged out of its bounded per-scope cache — and the {@code 200} then carries no
+	 * diff headers at all. Storing the new ETag and doing nothing loses every change in
+	 * that window <em>permanently</em>: the next probe matches the ETag we just stored and
+	 * 304s forever after. The server says so outright with {@code Atlas-Baseline-Unknown};
+	 * for one that predates that header it is inferable, because a {@code 200} means the
+	 * aggregate differs and a known baseline always names at least one entry in one of the
+	 * two diff headers — so neither header present can only be an unknown baseline.
+	 */
+	private static boolean isBaselineUnknown(Response response) {
+		String flag = response.getHeaderString(ATLAS_BASELINE_UNKNOWN);
+		if (flag != null && !flag.isBlank()) {
+			return Boolean.parseBoolean(flag.trim());
+		}
+		return isBlank(response.getHeaderString(ATLAS_CHANGED_NSURIS))
+				&& isBlank(response.getHeaderString(ATLAS_CHANGED_OBJECTS));
+	}
+
+	private static boolean isBlank(String header) {
+		return header == null || header.isBlank();
+	}
+
+	/**
+	 * Full re-discovery of one scope, for when no diff is available: treat everything the
+	 * scope currently lists, plus everything we hold, exactly as a diff entry. Held
+	 * packages are revalidated (and reported removed if the atlas no longer serves them),
+	 * listed ones we do not hold are candidate additions. The listing is the only extra
+	 * server call, and it only happens on the rare unknown-baseline answer.
+	 */
+	private void resyncScope(String scope, RemoteEPackageProviderImpl provider, Set<String> added,
+			Set<String> changed, Set<String> removed) {
+		logger.log(Level.INFO, () -> "Drift: the server could not diff scope " + scope
+				+ " against our last-seen aggregate; re-discovering it in full");
+		Set<String> held = heldNsUris(provider);
+		Set<String> candidates = new LinkedHashSet<>(held);
+		try {
+			candidates.addAll(provider.listNsUris(scope));
+		} catch (RuntimeException e) {
+			// Without the listing we cannot find additions — but what we hold can still be
+			// revalidated, which is the half that protects against a stale local package.
+			logger.log(Level.WARNING, e,
+					() -> "Drift: could not list the packages of scope " + scope + " for a full re-discovery");
+		}
+		for (String nsUri : candidates) {
+			try {
+				resyncNsUri(nsUri, provider, held, added, changed, removed);
+			} catch (RuntimeException e) {
+				logger.log(Level.WARNING, e, () -> "Drift: re-discovery of " + nsUri + " failed");
 			}
+		}
+		resyncObjects(scope);
+	}
+
+	/**
+	 * One nsURI during a full re-discovery. Same shape as {@link #applyNsUri}, with one
+	 * difference that matters: with no server diff to trust, a held package is revalidated
+	 * <em>conditionally</em> and only announced when the payload really did change. The
+	 * diff-driven path announces whatever the server named — an entry can change in
+	 * provenance alone (a promotion whose content is byte-identical) and the publication
+	 * has to follow that. Here a {@code 304} means we already hold what the atlas serves,
+	 * and swapping every published service for an identical one — right after the restart
+	 * that lost the baseline — would be a re-registration storm for nothing.
+	 */
+	private void resyncNsUri(String nsUri, RemoteEPackageProviderImpl provider, Set<String> held, Set<String> added,
+			Set<String> changed, Set<String> removed) {
+		if (!held.contains(nsUri)) {
+			if (discoverAdditions) {
+				discover(nsUri, provider, added);
+			}
+			return;
+		}
+		RemoteEPackageProviderImpl.Refreshed refreshed = provider.revalidate(nsUri);
+		switch (refreshed.outcome()) {
+		case CHANGED -> {
+			changed.add(nsUri);
+			fireChanged(nsUri, refreshed.ePackage());
+		}
+		case UNCHANGED -> {
+			// We hold the current payload; there is nothing to tell a listener.
+		}
+		case REMOVED -> {
+			removed.add(nsUri);
+			fireRemoved(nsUri);
+		}
+		}
+	}
+
+	/** The object half of {@link #resyncScope}: revalidate every view we hold of this scope. */
+	private void resyncObjects(String scope) {
+		RemoteReadableScopeService service = scopeServiceLookup.apply(scope);
+		if (service == null) {
+			return; // no read-only view for this scope → nothing cached to act on
+		}
+		Set<RemoteReadableScopeService.ObjectKey> held = service.cachedObjects();
+		Set<String> objects = new LinkedHashSet<>();
+		for (RemoteReadableScopeService.ObjectKey key : held) {
+			if (scope.equals(key.scope())) {
+				objects.add(key.registry() + "/" + key.objectId());
+			}
+		}
+		for (String entry : objects) {
+			int slash = entry.indexOf('/');
+			revalidateObject(scope, service, held, entry.substring(0, slash), entry.substring(slash + 1));
 		}
 	}
 
@@ -265,40 +391,47 @@ class DriftWatcher implements AutoCloseable {
 			if (slash <= 0 || slash == entry.length() - 1) {
 				continue; // not a well-formed registry/objectId pair
 			}
-			String registry = entry.substring(0, slash);
-			String objectId = entry.substring(slash + 1);
-			// Inheritance means a view's requested stage need not be its content's origin stage (a
-			// draft read can be served by the parent's final stage), so we can't narrow by stage:
-			// revalidate EVERY held view of this object, each at its own stage, and let the
-			// per-view conditional GET decide what actually changed (P6-5).
-			boolean anyHeld = false;
-			boolean anyChanged = false;
-			boolean allRemoved = true;
-			for (RemoteReadableScopeService.ObjectKey k : held) {
-				if (!scope.equals(k.scope()) || !registry.equals(k.registry()) || !objectId.equals(k.objectId())) {
-					continue; // a different object/scope
-				}
-				anyHeld = true;
-				switch (service.refresh(k.registry(), k.stage(), k.objectId())) {
-				case CHANGED -> {
-					anyChanged = true;
-					allRemoved = false;
-				}
-				case UNCHANGED -> allRemoved = false;
-				case REMOVED -> {
-					// this view is gone; another view of the same object may still be present
-				}
-				}
-			}
-			if (!anyHeld) {
-				continue; // we hold no view of this object
-			}
-			if (anyChanged) {
-				fireObjectChanged(scope, registry, objectId);
-			} else if (allRemoved) {
-				fireObjectRemoved(scope, registry, objectId);
-			} // else: only unchanged sibling views → no event
+			revalidateObject(scope, service, held, entry.substring(0, slash), entry.substring(slash + 1));
 		}
+	}
+
+	/**
+	 * Revalidate one object of one scope and fire at most one event for it.
+	 * <p>
+	 * Inheritance means a view's requested stage need not be its content's origin stage (a
+	 * draft read can be served by the parent's final stage), so we can't narrow by stage:
+	 * revalidate EVERY held view of this object, each at its own stage, and let the
+	 * per-view conditional GET decide what actually changed (P6-5).
+	 */
+	private void revalidateObject(String scope, RemoteReadableScopeService service,
+			Set<RemoteReadableScopeService.ObjectKey> held, String registry, String objectId) {
+		boolean anyHeld = false;
+		boolean anyChanged = false;
+		boolean allRemoved = true;
+		for (RemoteReadableScopeService.ObjectKey k : held) {
+			if (!scope.equals(k.scope()) || !registry.equals(k.registry()) || !objectId.equals(k.objectId())) {
+				continue; // a different object/scope
+			}
+			anyHeld = true;
+			switch (service.refresh(k.registry(), k.stage(), k.objectId())) {
+			case CHANGED -> {
+				anyChanged = true;
+				allRemoved = false;
+			}
+			case UNCHANGED -> allRemoved = false;
+			case REMOVED -> {
+				// this view is gone; another view of the same object may still be present
+			}
+			}
+		}
+		if (!anyHeld) {
+			return; // we hold no view of this object
+		}
+		if (anyChanged) {
+			fireObjectChanged(scope, registry, objectId);
+		} else if (allRemoved) {
+			fireObjectRemoved(scope, registry, objectId);
+		} // else: only unchanged sibling views → no event
 	}
 
 	private void fireAdded(String nsUri, EPackage ePackage) {

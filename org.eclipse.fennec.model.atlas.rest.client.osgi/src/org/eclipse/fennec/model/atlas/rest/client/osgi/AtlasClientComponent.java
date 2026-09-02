@@ -32,6 +32,7 @@ import org.eclipse.fennec.model.atlas.scope.api.AtlasProperties;
 import org.eclipse.fennec.model.atlas.rest.client.api.ClientConfiguration;
 import org.eclipse.fennec.model.atlas.rest.client.api.ModelAtlasClient;
 import org.eclipse.fennec.model.atlas.rest.client.api.ModelAtlasClientFactory;
+import org.eclipse.fennec.model.atlas.rest.client.api.ResolutionMode;
 import org.eclipse.fennec.model.atlas.rest.client.api.TransportException;
 import org.osgi.annotation.bundle.Capability;
 import org.osgi.framework.BundleContext;
@@ -138,6 +139,9 @@ public class AtlasClientComponent {
 	/** Debounce before republishing a remote after its local counterpart disappears (P3-7, anti-flap). */
 	private static final long LOCAL_DISAPPEAR_DEBOUNCE_MS = 500L;
 
+	/** Retry cadence for an incomplete start-up pass when drift checking is switched off (#238). */
+	private static final long DEFAULT_PREFETCH_RETRY_MS = 60_000L;
+
 	/** {@code service.ranking} for forced remote publications (P3-8) — above the local default of 0. */
 	private static final int FORCE_REMOTE_SERVICE_RANKING = 1000;
 
@@ -155,6 +159,8 @@ public class AtlasClientComponent {
 	private final List<ServiceRegistration<EPackage.Registry>> fetchOnMissRegistrations = new ArrayList<>();
 	/** P6-6: manages the ConfigAdmin EPackageRegistry + ResourceSetFactory pairs. */
 	private final AtlasEPackageRegistryConfigurator registryConfigurator;
+	/** #238: re-runs the start-up sync until it completes. Idle once one pass has. */
+	private final PrefetchRetry prefetchRetry;
 
 	@Activate
 	public AtlasClientComponent(@Reference ModelAtlasClientFactory clientFactory,
@@ -247,20 +253,20 @@ public class AtlasClientComponent {
 			// eager.nsuri.allow.list; the rest resolves lazily through lazyRegistry. LAZY
 			// (P3-5, default): nothing up front. All publish through the local-first gate.
 			EagerPrefetch prefetch = new EagerPrefetch(client, gate, configuration);
-			switch (configuration.getMode()) {
-				case EAGER -> prefetch.run();
-				case HYBRID -> prefetch.prefetchListedNsUris();
-				case LAZY -> { /* nothing up front */ }
-			}
-			if (configuration.isForceRemote()) {
-				// P3-8: supersede any local EPackage the Atlas has a newer version of, in any mode.
-				new ForceRemoteStartupCheck(() -> LocalServiceWatcher.localModels(bundleContext),
-						client.ePackages()::resolve, gate).run();
-			}
-			// P5-4: publish one ReadableScopeService<EObject> per scope (independent of the
-			// EPackage resolution mode); a consumer's (atlas.scope=…) lookup then resolves
-			// against this client exactly as it does against the in-process server.
-			publishScopeServices(configuration);
+			boolean complete = startupSync(prefetch, configuration, bundleContext, gate);
+			// #238: an Atlas that was unreachable during activation used to leave this client
+			// publishing nothing until it was restarted — the pre-fetch ran once and the drift
+			// watcher only reports what changed after its first probe. Retry until one pass
+			// completes; from then on drift detection keeps things fresh.
+			this.prefetchRetry = new PrefetchRetry(
+					() -> startupSync(prefetch, configuration, bundleContext, gate),
+					// Shares the local-first debounce thread: both are rare, and a retry only
+					// delays a republish that re-checks local presence when it does fire.
+					(task, delayMs) -> {
+						ScheduledFuture<?> future = debounceExecutor.schedule(task, delayMs, TimeUnit.MILLISECONDS);
+						return () -> future.cancel(false);
+					}, prefetchRetryDelayMs(configuration));
+			prefetchRetry.armUnless(complete);
 		} catch (RuntimeException fatal) {
 			// Reached by an unreachable server only under mode.strict (both startup calls
 			// filter on it themselves), otherwise by a genuine defect — either way activation
@@ -287,6 +293,7 @@ public class AtlasClientComponent {
 		}
 		fetchOnMissRegistrations.forEach(AtlasClientComponent::unregisterQuietly);
 		fetchOnMissRegistrations.clear();
+		closeQuietly(prefetchRetry); // stop retrying the start-up pass
 		closeQuietly(driftSubscription); // stop drift swaps
 		localServiceWatcher.close();
 		debounceExecutor.shutdownNow();
@@ -298,6 +305,40 @@ public class AtlasClientComponent {
 	}
 
 	/**
+	 * One start-up synchronisation pass: the mode's pre-fetch, the {@code force.remote}
+	 * supersession check, and the per-scope {@code ReadableScopeService} publications.
+	 * Everything in it is idempotent per nsURI/scope, so a retry only fills in what the
+	 * previous pass could not reach.
+	 *
+	 * @return {@code true} when the whole pass reached the server; {@code false} when any
+	 *         part of it was skipped because the Atlas was unreachable (#238)
+	 */
+	private boolean startupSync(EagerPrefetch prefetch, ClientConfiguration configuration,
+			BundleContext bundleContext, PackagePublication gate) {
+		switch (configuration.getMode()) {
+			case EAGER -> prefetch.run();
+			case HYBRID -> prefetch.prefetchListedNsUris();
+			case LAZY -> { /* nothing up front */ }
+		}
+		boolean complete = configuration.getMode() == ResolutionMode.LAZY || prefetch.isComplete();
+		if (configuration.isForceRemote()) {
+			// P3-8: supersede any local EPackage the Atlas has a newer version of, in any mode.
+			new ForceRemoteStartupCheck(() -> LocalServiceWatcher.localModels(bundleContext),
+					client.ePackages()::resolve, gate).run();
+		}
+		// P5-4: publish one ReadableScopeService<EObject> per scope (independent of the
+		// EPackage resolution mode); a consumer's (atlas.scope=…) lookup then resolves
+		// against this client exactly as it does against the in-process server.
+		return publishScopeServices(configuration) && complete;
+	}
+
+	/** Retry cadence for an incomplete start-up pass: the drift interval, else a minute. */
+	private static long prefetchRetryDelayMs(ClientConfiguration configuration) {
+		int driftIntervalMs = configuration.getDriftCheckIntervalMs();
+		return driftIntervalMs > 0 ? driftIntervalMs : DEFAULT_PREFETCH_RETRY_MS;
+	}
+
+	/**
 	 * P5-4 — publish a {@code ReadableScopeService<EObject>} for each scope this client
 	 * exposes. The scope set is {@code scope.allow.list} when configured (no server call
 	 * needed — the per-scope façade fetches lazily), otherwise the scopes the server
@@ -306,7 +347,7 @@ public class AtlasClientComponent {
 	 * activation, otherwise it is logged and no scope service is published (same contract as the
 	 * EAGER prefetch above).
 	 */
-	private void publishScopeServices(ClientConfiguration configuration) {
+	private boolean publishScopeServices(ClientConfiguration configuration) {
 		List<String> scopes;
 		if (configuration.getScopeAllowList().isEmpty()) {
 			try {
@@ -324,9 +365,9 @@ public class AtlasClientComponent {
 				LOGGER.log(Level.WARNING, unreachable,
 						() -> "Scope discovery skipped: the Atlas at " + configuration.getBaseUri()
 								+ " is unreachable (mode.strict=false) — no ReadableScopeService published; set "
-								+ "scope.allow.list to publish them without contacting the server, or update the "
-								+ "configuration to retry");
-				return;
+								+ "scope.allow.list to publish them without contacting the server; the pass "
+								+ "will be retried until it completes");
+				return false;
 			}
 		} else {
 			scopes = configuration.getScopeAllowList();
@@ -334,6 +375,7 @@ public class AtlasClientComponent {
 		for (String scope : scopes) {
 			scopePublisher.publish(scope, client.readOnlyScope(scope));
 		}
+		return true;
 	}
 
 	/**

@@ -165,6 +165,7 @@ public class RegistryServiceIntegrationTest {
         @DisplayName("Should parse simple stages from configuration")
         @WithFactoryConfiguration(factoryPid = "RegistryService", name = "test-registry", location = "?", properties = {
                 @Property(key = "registry.name", value = REGISTRY_NAME),
+                @Property(key = "root.eclass.uri", value = "http://www.eclipse.org/emf/2002/Ecore#//EClass"),
                 @Property(key = "stages", type = Type.Array, value = {
                         "{ \"name\" : \"draft\", \"writable\" : true, \"final\": false}",
                         "{ \"name\" : \"approved\", \"writable\" : false, \"final\": false}",
@@ -198,6 +199,7 @@ public class RegistryServiceIntegrationTest {
         @DisplayName("Should parse writable flags correctly")
         @WithFactoryConfiguration(factoryPid = "RegistryService", name = "test-registry", location = "?", properties = {
                 @Property(key = "registry.name", value = REGISTRY_NAME),
+                @Property(key = "root.eclass.uri", value = "http://www.eclipse.org/emf/2002/Ecore#//EClass"),
                 @Property(key = "stages", type = Type.Array, value = {
                         "{ \"name\" : \"draft\", \"writable\" : true, \"final\": false}",
                         "{ \"name\" : \"approved\", \"writable\" : true, \"final\": false}",
@@ -226,6 +228,7 @@ public class RegistryServiceIntegrationTest {
         @DisplayName("Should parse final stage flag correctly")
         @WithFactoryConfiguration(factoryPid = "RegistryService", name = "test-registry", location = "?", properties = {
                 @Property(key = "registry.name", value = REGISTRY_NAME),
+                @Property(key = "root.eclass.uri", value = "http://www.eclipse.org/emf/2002/Ecore#//EClass"),
                 @Property(key = "stages", type = Type.Array, value = {
                         "{ \"name\" : \"draft\", \"writable\" : true, \"final\": false}",
                         "{ \"name\" : \"release\", \"writable\" : false, \"final\": true}", }),
@@ -249,6 +252,7 @@ public class RegistryServiceIntegrationTest {
         @DisplayName("Should handle writable final stage")
         @WithFactoryConfiguration(factoryPid = "RegistryService", name = "test-registry", location = "?", properties = {
                 @Property(key = "registry.name", value = REGISTRY_NAME),
+                @Property(key = "root.eclass.uri", value = "http://www.eclipse.org/emf/2002/Ecore#//EClass"),
                 @Property(key = "stages", type = Type.Array, value = {
                         "{ \"name\" : \"draft\", \"writable\" : true, \"final\": false}",
                         "{ \"name\" : \"release\", \"writable\" : true, \"final\": true}", }),
@@ -277,6 +281,7 @@ public class RegistryServiceIntegrationTest {
         @DisplayName("Should parse workflow transitions correctly")
         @WithFactoryConfiguration(factoryPid = "RegistryService", name = "test-registry", location = "?", properties = {
                 @Property(key = "registry.name", value = REGISTRY_NAME),
+                @Property(key = "root.eclass.uri", value = "http://www.eclipse.org/emf/2002/Ecore#//EClass"),
                 @Property(key = "stages", type = Type.Array, value = {
                         "{ \"name\" : \"draft\", \"writable\" : true, \"final\": false}",
                         "{ \"name\" : \"approved\", \"writable\" : true, \"final\": false}",
@@ -312,6 +317,7 @@ public class RegistryServiceIntegrationTest {
         @DisplayName("Should support non-linear workflows")
         @WithFactoryConfiguration(factoryPid = "RegistryService", name = "test-registry", location = "?", properties = {
                 @Property(key = "registry.name", value = REGISTRY_NAME),
+                @Property(key = "root.eclass.uri", value = "http://www.eclipse.org/emf/2002/Ecore#//EClass"),
                 @Property(key = "stages", type = Type.Array, value = {
                         "{ \"name\" : \"draft\", \"writable\" : true, \"final\": false}",
                         "{ \"name\" : \"approved\", \"writable\" : true, \"final\": false}",
@@ -342,6 +348,7 @@ public class RegistryServiceIntegrationTest {
         @DisplayName("Should handle multiple transitions from same stage")
         @WithFactoryConfiguration(factoryPid = "RegistryService", name = "test-registry", location = "?", properties = {
                 @Property(key = "registry.name", value = REGISTRY_NAME),
+                @Property(key = "root.eclass.uri", value = "http://www.eclipse.org/emf/2002/Ecore#//EClass"),
                 @Property(key = "stages", type = Type.Array, value = {
                         "{ \"name\" : \"draft\", \"writable\" : true, \"final\": false}",
                         "{ \"name\" : \"approved\", \"writable\" : true, \"final\": false}",
@@ -403,6 +410,7 @@ public class RegistryServiceIntegrationTest {
         @DisplayName("Should throw exception for invalid stage in upload")
         @WithFactoryConfiguration(factoryPid = "RegistryService", name = "test-registry", location = "?", properties = {
                 @Property(key = "registry.name", value = REGISTRY_NAME),
+                @Property(key = "root.eclass.uri", value = "http://www.eclipse.org/emf/2002/Ecore#//EClass"),
                 @Property(key = "stages", type = Type.Array, value = {
                         "{ \"name\" : \"draft\", \"writable\" : true, \"final\": false}",
                         "{ \"name\" : \"release\", \"writable\" : false, \"final\": true}", }),
@@ -437,6 +445,7 @@ public class RegistryServiceIntegrationTest {
         @DisplayName("Should throw exception for non-writable stage in update")
         @WithFactoryConfiguration(factoryPid = "RegistryService", name = "test-registry", location = "?", properties = {
                 @Property(key = "registry.name", value = REGISTRY_NAME),
+                @Property(key = "root.eclass.uri", value = "http://www.eclipse.org/emf/2002/Ecore#//EClass"),
                 @Property(key = "stages", type = Type.Array, value = {
                         "{ \"name\" : \"draft\", \"writable\" : true, \"final\": false}",
                         "{ \"name\" : \"release\", \"writable\" : false, \"final\": true}", }),
@@ -475,6 +484,7 @@ public class RegistryServiceIntegrationTest {
         @DisplayName("Should upload object to valid writable stage")
         @WithFactoryConfiguration(factoryPid = "RegistryService", name = "test-registry", location = "?", properties = {
                 @Property(key = "registry.name", value = REGISTRY_NAME),
+                @Property(key = "root.eclass.uri", value = "http://www.eclipse.org/emf/2002/Ecore#//EClass"),
                 @Property(key = "stages", type = Type.Array, value = {
                         "{ \"name\" : \"draft\", \"writable\" : true, \"final\": false}",
                         "{ \"name\" : \"release\", \"writable\" : false, \"final\": true}", }),
@@ -517,6 +527,7 @@ public class RegistryServiceIntegrationTest {
         @DisplayName("Should retrieve metadata from stage")
         @WithFactoryConfiguration(factoryPid = "RegistryService", name = "test-registry", location = "?", properties = {
                 @Property(key = "registry.name", value = REGISTRY_NAME),
+                @Property(key = "root.eclass.uri", value = "http://www.eclipse.org/emf/2002/Ecore#//EClass"),
                 @Property(key = "stages", type = Type.Array, value = {
                         "{ \"name\" : \"draft\", \"writable\" : true, \"final\": false}",
                         "{ \"name\" : \"release\", \"writable\" : false, \"final\": true}", }),
@@ -552,6 +563,7 @@ public class RegistryServiceIntegrationTest {
         @DisplayName("Should retrieve content from stage")
         @WithFactoryConfiguration(factoryPid = "RegistryService", name = "test-registry", location = "?", properties = {
                 @Property(key = "registry.name", value = REGISTRY_NAME),
+                @Property(key = "root.eclass.uri", value = "http://www.eclipse.org/emf/2002/Ecore#//EClass"),
                 @Property(key = "stages", type = Type.Array, value = {
                         "{ \"name\" : \"draft\", \"writable\" : true, \"final\": false}",
                         "{ \"name\" : \"release\", \"writable\" : false, \"final\": true}", }),
@@ -583,6 +595,7 @@ public class RegistryServiceIntegrationTest {
         @DisplayName("Should retrieve content from final stage")
         @WithFactoryConfiguration(factoryPid = "RegistryService", name = "test-registry", location = "?", properties = {
                 @Property(key = "registry.name", value = REGISTRY_NAME),
+                @Property(key = "root.eclass.uri", value = "http://www.eclipse.org/emf/2002/Ecore#//EClass"),
                 @Property(key = "stages", type = Type.Array, value = {
                         "{ \"name\" : \"draft\", \"writable\" : true, \"final\": false}",
                         "{ \"name\" : \"release\", \"writable\" : false, \"final\": true}", }),
@@ -614,6 +627,7 @@ public class RegistryServiceIntegrationTest {
         @DisplayName("Should update object in writable stage")
         @WithFactoryConfiguration(factoryPid = "RegistryService", name = "test-registry", location = "?", properties = {
                 @Property(key = "registry.name", value = REGISTRY_NAME),
+                @Property(key = "root.eclass.uri", value = "http://www.eclipse.org/emf/2002/Ecore#//EClass"),
                 @Property(key = "stages", type = Type.Array, value = {
                         "{ \"name\" : \"draft\", \"writable\" : true, \"final\": false}",
                         "{ \"name\" : \"release\", \"writable\" : false, \"final\": true}", }),
@@ -664,6 +678,7 @@ public class RegistryServiceIntegrationTest {
         @DisplayName("Should delete object from writable stage")
         @WithFactoryConfiguration(factoryPid = "RegistryService", name = "test-registry", location = "?", properties = {
                 @Property(key = "registry.name", value = REGISTRY_NAME),
+                @Property(key = "root.eclass.uri", value = "http://www.eclipse.org/emf/2002/Ecore#//EClass"),
                 @Property(key = "stages", type = Type.Array, value = {
                         "{ \"name\" : \"draft\", \"writable\" : true, \"final\": false}",
                         "{ \"name\" : \"release\", \"writable\" : false, \"final\": true}", }),
@@ -703,6 +718,7 @@ public class RegistryServiceIntegrationTest {
         @DisplayName("Should list objects in stage")
         @WithFactoryConfiguration(factoryPid = "RegistryService", name = "test-registry", location = "?", properties = {
                 @Property(key = "registry.name", value = REGISTRY_NAME),
+                @Property(key = "root.eclass.uri", value = "http://www.eclipse.org/emf/2002/Ecore#//EClass"),
                 @Property(key = "stages", type = Type.Array, value = {
                         "{ \"name\" : \"draft\", \"writable\" : true, \"final\": false}",
                         "{ \"name\" : \"release\", \"writable\" : false, \"final\": true}", }),
@@ -743,6 +759,7 @@ public class RegistryServiceIntegrationTest {
         @DisplayName("Should list objects in stage by name")
         @WithFactoryConfiguration(factoryPid = "RegistryService", name = "test-registry", location = "?", properties = {
                 @Property(key = "registry.name", value = REGISTRY_NAME),
+                @Property(key = "root.eclass.uri", value = "http://www.eclipse.org/emf/2002/Ecore#//EClass"),
                 @Property(key = "stages", type = Type.Array, value = {
                         "{ \"name\" : \"draft\", \"writable\" : true, \"final\": false}",
                         "{ \"name\" : \"release\", \"writable\" : false, \"final\": true}", }),
@@ -783,6 +800,7 @@ public class RegistryServiceIntegrationTest {
         @DisplayName("Should list all objects across all stages")
         @WithFactoryConfiguration(factoryPid = "RegistryService", name = "test-registry", location = "?", properties = {
                 @Property(key = "registry.name", value = REGISTRY_NAME),
+                @Property(key = "root.eclass.uri", value = "http://www.eclipse.org/emf/2002/Ecore#//EClass"),
                 @Property(key = "stages", type = Type.Array, value = {
                         "{ \"name\" : \"draft\", \"writable\" : true, \"final\": false}",
                         "{ \"name\" : \"approved\", \"writable\" : true, \"final\": false}",
@@ -838,6 +856,7 @@ public class RegistryServiceIntegrationTest {
         @DisplayName("Should return empty list when no objects in any stage")
         @WithFactoryConfiguration(factoryPid = "RegistryService", name = "test-registry", location = "?", properties = {
                 @Property(key = "registry.name", value = REGISTRY_NAME),
+                @Property(key = "root.eclass.uri", value = "http://www.eclipse.org/emf/2002/Ecore#//EClass"),
                 @Property(key = "stages", type = Type.Array, value = {
                         "{ \"name\" : \"draft\", \"writable\" : true, \"final\": false}",
                         "{ \"name\" : \"release\", \"writable\" : false, \"final\": true}", }),
@@ -868,6 +887,7 @@ public class RegistryServiceIntegrationTest {
         @DisplayName("Should transition object between stages")
         @WithFactoryConfiguration(factoryPid = "RegistryService", name = "test-registry", location = "?", properties = {
                 @Property(key = "registry.name", value = REGISTRY_NAME),
+                @Property(key = "root.eclass.uri", value = "http://www.eclipse.org/emf/2002/Ecore#//EClass"),
                 @Property(key = "stages", type = Type.Array, value = {
                         "{ \"name\" : \"draft\", \"writable\" : true, \"final\": false}",
                         "{ \"name\" : \"approved\", \"writable\" : true, \"final\": false}",
@@ -932,6 +952,7 @@ public class RegistryServiceIntegrationTest {
         @DisplayName("Should fail transition when not allowed")
         @WithFactoryConfiguration(factoryPid = "RegistryService", name = "test-registry", location = "?", properties = {
                 @Property(key = "registry.name", value = REGISTRY_NAME),
+                @Property(key = "root.eclass.uri", value = "http://www.eclipse.org/emf/2002/Ecore#//EClass"),
                 @Property(key = "stages", type = Type.Array, value = {
                         "{ \"name\" : \"draft\", \"writable\" : true, \"final\": false}",
                         "{ \"name\" : \"approved\", \"writable\" : false, \"final\": false}",
@@ -1005,6 +1026,7 @@ public class RegistryServiceIntegrationTest {
         @DisplayName("Should invoke onEnter when uploading to a trigger stage")
         @WithFactoryConfiguration(factoryPid = "RegistryService", name = "stage-action-test", location = "?", properties = {
                 @Property(key = "registry.name", value = STAGE_ACTION_REGISTRY_NAME),
+                @Property(key = "root.eclass.uri", value = "http://www.eclipse.org/emf/2002/Ecore#//EClass"),
                 @Property(key = "stages", type = Type.Array, value = {
                         "{ \"name\" : \"draft\", \"writable\" : true, \"final\": false}",
                         "{ \"name\" : \"release\", \"writable\" : true, \"final\": true}", }),
@@ -1060,6 +1082,7 @@ public class RegistryServiceIntegrationTest {
         @DisplayName("Should NOT invoke onEnter when uploading to a non-trigger stage")
         @WithFactoryConfiguration(factoryPid = "RegistryService", name = "stage-action-test", location = "?", properties = {
                 @Property(key = "registry.name", value = STAGE_ACTION_REGISTRY_NAME),
+                @Property(key = "root.eclass.uri", value = "http://www.eclipse.org/emf/2002/Ecore#//EClass"),
                 @Property(key = "stages", type = Type.Array, value = {
                         "{ \"name\" : \"draft\", \"writable\" : true, \"final\": false}",
                         "{ \"name\" : \"release\", \"writable\" : true, \"final\": true}", }),
@@ -1104,6 +1127,7 @@ public class RegistryServiceIntegrationTest {
         @DisplayName("Should invoke onExit when deleting from a trigger stage")
         @WithFactoryConfiguration(factoryPid = "RegistryService", name = "stage-action-test", location = "?", properties = {
                 @Property(key = "registry.name", value = STAGE_ACTION_REGISTRY_NAME),
+                @Property(key = "root.eclass.uri", value = "http://www.eclipse.org/emf/2002/Ecore#//EClass"),
                 @Property(key = "stages", type = Type.Array, value = {
                         "{ \"name\" : \"draft\", \"writable\" : true, \"final\": false}",
                         "{ \"name\" : \"release\", \"writable\" : true, \"final\": true}", }),
@@ -1157,6 +1181,7 @@ public class RegistryServiceIntegrationTest {
         @DisplayName("Should NOT invoke onExit when deleting from a non-trigger stage")
         @WithFactoryConfiguration(factoryPid = "RegistryService", name = "stage-action-test", location = "?", properties = {
                 @Property(key = "registry.name", value = STAGE_ACTION_REGISTRY_NAME),
+                @Property(key = "root.eclass.uri", value = "http://www.eclipse.org/emf/2002/Ecore#//EClass"),
                 @Property(key = "stages", type = Type.Array, value = {
                         "{ \"name\" : \"draft\", \"writable\" : true, \"final\": false}",
                         "{ \"name\" : \"release\", \"writable\" : true, \"final\": true}", }),
@@ -1199,6 +1224,7 @@ public class RegistryServiceIntegrationTest {
         @DisplayName("Should invoke onEnter when transitioning INTO a trigger stage")
         @WithFactoryConfiguration(factoryPid = "RegistryService", name = "stage-action-test", location = "?", properties = {
                 @Property(key = "registry.name", value = STAGE_ACTION_REGISTRY_NAME),
+                @Property(key = "root.eclass.uri", value = "http://www.eclipse.org/emf/2002/Ecore#//EClass"),
                 @Property(key = "stages", type = Type.Array, value = {
                         "{ \"name\" : \"draft\", \"writable\" : true, \"final\": false}",
                         "{ \"name\" : \"release\", \"writable\" : true, \"final\": true}", }),
@@ -1266,6 +1292,7 @@ public class RegistryServiceIntegrationTest {
         @DisplayName("Should NOT invoke any callback when transitioning between non-trigger stages")
         @WithFactoryConfiguration(factoryPid = "RegistryService", name = "stage-action-test", location = "?", properties = {
                 @Property(key = "registry.name", value = STAGE_ACTION_REGISTRY_NAME),
+                @Property(key = "root.eclass.uri", value = "http://www.eclipse.org/emf/2002/Ecore#//EClass"),
                 @Property(key = "stages", type = Type.Array, value = {
                         "{ \"name\" : \"draft\", \"writable\" : true, \"final\": false}",
                         "{ \"name\" : \"approved\", \"writable\" : true, \"final\": false}",
