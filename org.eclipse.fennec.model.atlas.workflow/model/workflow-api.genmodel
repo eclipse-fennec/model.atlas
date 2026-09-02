@@ -151,6 +151,10 @@
       </genOperations>
       <genOperations ecoreOperation="workflow-api.ecore#//RegistryService/getRootEClass"/>
       <genOperations ecoreOperation="workflow-api.ecore#//RegistryService/getRootEClasses"/>
+      <genOperations ecoreOperation="workflow-api.ecore#//RegistryService/getDerivedEClasses"/>
+      <genOperations ecoreOperation="workflow-api.ecore#//RegistryService/isDerivedEClass">
+        <genParameters ecoreParameter="workflow-api.ecore#//RegistryService/isDerivedEClass/eClass"/>
+      </genOperations>
       <genOperations ecoreOperation="workflow-api.ecore#//RegistryService/activate">
         <genParameters ecoreParameter="workflow-api.ecore#//RegistryService/activate/scope"/>
       </genOperations>

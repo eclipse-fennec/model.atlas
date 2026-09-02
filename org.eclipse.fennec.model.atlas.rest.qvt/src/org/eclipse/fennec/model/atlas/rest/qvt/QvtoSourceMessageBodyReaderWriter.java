@@ -77,7 +77,9 @@ public class QvtoSourceMessageBodyReaderWriter
      */
     private static final Pattern UNIT_NAME = Pattern
             .compile("\\b(?:transformation|library)\\s+([A-Za-z_$][\\w$]*(?:\\.[A-Za-z_$][\\w$]*)*)");
-    private static final Pattern COMMENTS = Pattern.compile("/\\*.*?\\*/|--[^\\r\\n]*", Pattern.DOTALL);
+    // QVT-O knows /* */ blocks and both line-comment forms, -- and //
+    private static final Pattern COMMENTS = Pattern.compile("/\\*.*?\\*/|--[^\\r\\n]*|//[^\\r\\n]*",
+            Pattern.DOTALL);
 
     private final DefaultUnitFingerprintService fingerprints = new DefaultUnitFingerprintService();
 

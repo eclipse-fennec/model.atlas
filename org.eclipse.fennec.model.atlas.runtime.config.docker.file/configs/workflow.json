@@ -53,8 +53,10 @@
         ],
         "schema.uri": "http://www.eclipse.org/fennec/m2x/compiled/1.0",
         "root.eclass.uri": [
+            "http://www.eclipse.org/fennec/m2x/compiled/1.0#//SourceUnit"
+        ],
+        "derived.eclass.uri": [
             "http://www.eclipse.org/fennec/m2x/compiled/1.0#//CompiledUnit",
-            "http://www.eclipse.org/fennec/m2x/compiled/1.0#//SourceUnit",
             "http://eclipse.org/fennec/model/atlas/qvt/diagnostics/1.0.0#//SourceDiagnostics"
         ],
         "resourceSet.target": "(&(emf.name=compiled)(emf.name=diagnostics))"

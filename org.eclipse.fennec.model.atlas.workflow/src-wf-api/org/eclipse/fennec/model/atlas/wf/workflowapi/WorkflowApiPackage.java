@@ -42,7 +42,7 @@ import org.osgi.annotation.versioning.ProviderType;
  * @generated
  */
 @ProviderType
-@EPackage(uri = WorkflowApiPackage.eNS_URI, fingerprint = "fp1:3f7c760504b4e37c1781fcb854ea6667d0354fb3f7eb65f93b57ceb43ad3e9c7", genModel = "/model/workflow-api.genmodel", genModelSourceLocations = {"model/workflow-api.genmodel","org.eclipse.fennec.model.atlas.workflow/model/workflow-api.genmodel"}, ecore = "/model/workflow-api.ecore", ecoreSourceLocations = "/model/workflow-api.ecore")
+@EPackage(uri = WorkflowApiPackage.eNS_URI, fingerprint = "fp1:59262d37f2ff0c0c808101720e1b793316339dba60e35e938641b9618b95aa5e", genModel = "/model/workflow-api.genmodel", genModelSourceLocations = {"model/workflow-api.genmodel","org.eclipse.fennec.model.atlas.workflow/model/workflow-api.genmodel"}, ecore = "/model/workflow-api.ecore", ecoreSourceLocations = "/model/workflow-api.ecore")
 public interface WorkflowApiPackage extends org.eclipse.emf.ecore.EPackage {
 	/**
 	 * The package name.
@@ -421,13 +421,31 @@ public interface WorkflowApiPackage extends org.eclipse.emf.ecore.EPackage {
 	int REGISTRY_SERVICE___GET_ROOT_ECLASSES = 21;
 
 	/**
+	 * The operation id for the '<em>Get Derived EClasses</em>' operation.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 * @ordered
+	 */
+	int REGISTRY_SERVICE___GET_DERIVED_ECLASSES = 22;
+
+	/**
+	 * The operation id for the '<em>Is Derived EClass</em>' operation.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 * @ordered
+	 */
+	int REGISTRY_SERVICE___IS_DERIVED_ECLASS__ECLASS = 23;
+
+	/**
 	 * The operation id for the '<em>Activate</em>' operation.
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
 	 * @generated
 	 * @ordered
 	 */
-	int REGISTRY_SERVICE___ACTIVATE__STRING = 22;
+	int REGISTRY_SERVICE___ACTIVATE__STRING = 24;
 
 	/**
 	 * The operation id for the '<em>Deactivate</em>' operation.
@@ -436,7 +454,7 @@ public interface WorkflowApiPackage extends org.eclipse.emf.ecore.EPackage {
 	 * @generated
 	 * @ordered
 	 */
-	int REGISTRY_SERVICE___DEACTIVATE__STRING = 23;
+	int REGISTRY_SERVICE___DEACTIVATE__STRING = 25;
 
 	/**
 	 * The number of operations of the '<em>Registry Service</em>' class.
@@ -445,7 +463,7 @@ public interface WorkflowApiPackage extends org.eclipse.emf.ecore.EPackage {
 	 * @generated
 	 * @ordered
 	 */
-	int REGISTRY_SERVICE_OPERATION_COUNT = 24;
+	int REGISTRY_SERVICE_OPERATION_COUNT = 26;
 
 	/**
 	 * The meta object id for the '{@link org.eclipse.fennec.model.atlas.wf.workflowapi.WritableScopeService <em>Writable Scope Service</em>}' class.
@@ -1512,6 +1530,26 @@ public interface WorkflowApiPackage extends org.eclipse.emf.ecore.EPackage {
 	EOperation getRegistryService__GetRootEClasses();
 
 	/**
+	 * Returns the meta object for the '{@link org.eclipse.fennec.model.atlas.wf.workflowapi.RegistryService#getDerivedEClasses() <em>Get Derived EClasses</em>}' operation.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @return the meta object for the '<em>Get Derived EClasses</em>' operation.
+	 * @see org.eclipse.fennec.model.atlas.wf.workflowapi.RegistryService#getDerivedEClasses()
+	 * @generated
+	 */
+	EOperation getRegistryService__GetDerivedEClasses();
+
+	/**
+	 * Returns the meta object for the '{@link org.eclipse.fennec.model.atlas.wf.workflowapi.RegistryService#isDerivedEClass(org.eclipse.emf.ecore.EClass) <em>Is Derived EClass</em>}' operation.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @return the meta object for the '<em>Is Derived EClass</em>' operation.
+	 * @see org.eclipse.fennec.model.atlas.wf.workflowapi.RegistryService#isDerivedEClass(org.eclipse.emf.ecore.EClass)
+	 * @generated
+	 */
+	EOperation getRegistryService__IsDerivedEClass__EClass();
+
+	/**
 	 * Returns the meta object for the '{@link org.eclipse.fennec.model.atlas.wf.workflowapi.RegistryService#activate(java.lang.String) <em>Activate</em>}' operation.
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
@@ -2092,6 +2130,22 @@ public interface WorkflowApiPackage extends org.eclipse.emf.ecore.EPackage {
 		 * @generated
 		 */
 		EOperation REGISTRY_SERVICE___GET_ROOT_ECLASSES = eINSTANCE.getRegistryService__GetRootEClasses();
+
+		/**
+		 * The meta object literal for the '<em><b>Get Derived EClasses</b></em>' operation.
+		 * <!-- begin-user-doc -->
+		 * <!-- end-user-doc -->
+		 * @generated
+		 */
+		EOperation REGISTRY_SERVICE___GET_DERIVED_ECLASSES = eINSTANCE.getRegistryService__GetDerivedEClasses();
+
+		/**
+		 * The meta object literal for the '<em><b>Is Derived EClass</b></em>' operation.
+		 * <!-- begin-user-doc -->
+		 * <!-- end-user-doc -->
+		 * @generated
+		 */
+		EOperation REGISTRY_SERVICE___IS_DERIVED_ECLASS__ECLASS = eINSTANCE.getRegistryService__IsDerivedEClass__EClass();
 
 		/**
 		 * The meta object literal for the '<em><b>Activate</b></em>' operation.

@@ -236,27 +236,44 @@ public class AtlasUnitStore implements UnitStore {
     }
 
     private void store(UnitKey key, EObject document) throws UnitStoreException {
-        String objectId = QvtUnits.objectId(key);
+        // same key, new content is possible when the same source recompiles against
+        // a changed package view (the unit fingerprint does not fold in package
+        // fingerprints) — the newer manifest replaces the older one
+        upsert(registryService, scope, stage, QvtUnits.objectId(key), key.qualifiedName(), document);
+    }
+
+    /**
+     * Create-or-replace of one Atlas-written document (a unit, a diagnostics
+     * document) in a (scope, stage) view — the shared write path of the store
+     * and the compile action.
+     */
+    public static void upsert(RegistryService<EObject> registryService, String scope, String stage, String objectId,
+            String objectName, EObject document) throws UnitStoreException {
+        String operation = "store " + objectId + " in (" + scope + ", " + registryService.getRegistryName() + ", "
+                + stage + ")";
         ObjectMetadata existing;
         try {
             existing = registryService.getMetadataFromStage(scope, stage, objectId);
         } catch (RuntimeException e) {
-            throw new UnitStoreException("cannot reach the transformation registry for " + describe(), e);
+            throw new UnitStoreException("cannot reach the transformation registry to " + operation, e);
         }
-        if (existing != null) {
-            // same key, new content: possible when the same source recompiles against
-            // a changed package view (the unit fingerprint does not fold in package
-            // fingerprints) — the newer manifest replaces the older one
-            await(registryService.updateInStage(scope, stage, document, objectId, existing.getVersion()),
-                    "update " + QvtUnits.entryKey(key));
-            return;
+        try {
+            if (existing != null) {
+                registryService.updateInStage(scope, stage, document, objectId, existing.getVersion()).getValue();
+                return;
+            }
+            ObjectMetadata metadata = ManagementFactory.eINSTANCE.createObjectMetadata();
+            metadata.setObjectId(objectId);
+            metadata.setObjectName(objectName);
+            metadata.setUploadTime(Instant.now());
+            metadata.setObjectType(EcoreUtil.getURI(document.eClass()).toString());
+            registryService.uploadToStage(scope, stage, document, metadata).getValue();
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new UnitStoreException("interrupted while trying to " + operation, e);
+        } catch (Exception e) {
+            throw new UnitStoreException("failed to " + operation, e);
         }
-        ObjectMetadata metadata = ManagementFactory.eINSTANCE.createObjectMetadata();
-        metadata.setObjectId(objectId);
-        metadata.setObjectName(key.qualifiedName());
-        metadata.setUploadTime(Instant.now());
-        metadata.setObjectType(EcoreUtil.getURI(document.eClass()).toString());
-        await(registryService.uploadToStage(scope, stage, document, metadata), "store " + QvtUnits.entryKey(key));
     }
 
     private ObjectMetadata metadataOfId(String objectId) throws UnitStoreException {

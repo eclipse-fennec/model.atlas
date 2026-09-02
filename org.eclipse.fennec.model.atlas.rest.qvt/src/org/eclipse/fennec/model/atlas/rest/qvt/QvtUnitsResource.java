@@ -53,12 +53,19 @@ import jakarta.ws.rs.core.Response.Status;
  * is part of the address deliberately: a unit fingerprint does not fold in
  * package fingerprints, so name + fingerprint is unique only within one
  * stage's package view.
+ *
+ * <p>
+ * Rooted at {@code …/registries/{registry}/units/{stage}/…} — beside, not
+ * inside, the generic {@code …/stages/{stage}/{objectId}} routes: a sub-path
+ * under {@code /stages} would shadow the generic endpoints for the literal
+ * object id {@code units}.
+ * </p>
  */
 @RequireRuntime
 @JakartarsResource
 @JakartarsName("QvtUnitsResource")
 @Component(name = "QvtUnitsResource", service = QvtUnitsResource.class, scope = ServiceScope.PROTOTYPE)
-@Path("/{scopeName}/registries/{registryName}/stages/{stageName}/units")
+@Path("/{scopeName}/registries/{registryName}/units/{stageName}")
 @Tag(name = "QVT Units", description = "Compiled QVT-O units addressed by qualified name + fingerprint")
 public class QvtUnitsResource {
 
@@ -76,34 +83,39 @@ public class QvtUnitsResource {
                     + " never a silent substitute.", responses = {
                             @ApiResponse(responseCode = "200", description = "The CompiledUnit document"),
                             @ApiResponse(responseCode = "404", description = "Unknown name, or pinned fingerprint not present (body names the existing versions)"),
-                            @ApiResponse(responseCode = "400", description = "Unknown scope, registry or stage") })
+                            @ApiResponse(responseCode = "400", description = "Unknown registry or stage"),
+                            @ApiResponse(responseCode = "500", description = "The registry's storage failed") })
     public Response getUnit(
             @Parameter(description = "The scope name", required = true) @PathParam("scopeName") String scopeName,
             @Parameter(description = "The registry name", required = true) @PathParam("registryName") String registryName,
             @Parameter(description = "The stage name", required = true) @PathParam("stageName") String stageName,
             @Parameter(description = "The unit's qualified name", required = true) @PathParam("qualifiedName") String qualifiedName,
             @Parameter(description = "Pin exactly this unit fingerprint (m2x1:…)") @QueryParam("fingerprint") String fingerprint) {
-        AtlasUnitStore store = storeFor(scopeName, registryName, stageName);
-        if (store == null) {
-            return Response.status(Status.BAD_REQUEST)
-                    .entity("Unknown or unconfigured registry: " + registryName).build();
-        }
-        UnitKey key = fingerprint == null || fingerprint.isBlank()
-                ? UnitKey.of(QvtUnits.LANGUAGE_QVTO, qualifiedName, UnitKind.COMPILED)
-                : UnitKey.pinned(QvtUnits.LANGUAGE_QVTO, qualifiedName, UnitKind.COMPILED, fingerprint);
-        try {
+        return withStore(scopeName, registryName, stageName, store -> {
+            // resolve through versions first: a storage failure there is a 500, and
+            // a pinned miss can then be answered naming what actually exists
+            List<UnitKey> versions = store.versions(QvtUnits.LANGUAGE_QVTO, qualifiedName, UnitKind.COMPILED);
+            UnitKey key;
+            if (fingerprint == null || fingerprint.isBlank()) {
+                if (versions.isEmpty()) {
+                    return notFound(scopeName, registryName, stageName, qualifiedName, null);
+                }
+                key = versions.get(0);
+            } else {
+                key = versions.stream().filter(v -> fingerprint.equals(v.fingerprint().orElse(null))).findFirst()
+                        .orElse(null);
+                if (key == null) {
+                    return notFound(scopeName, registryName, stageName, qualifiedName,
+                            versions.stream().map(v -> v.fingerprint().orElse("?"))
+                                    .collect(Collectors.joining(", ")));
+                }
+            }
             Optional<Unit> unit = store.get(key);
             if (unit.isEmpty() || !(unit.get() instanceof PackagedUnit packaged)) {
-                return Response.status(Status.NOT_FOUND)
-                        .entity("No compiled unit '" + qualifiedName + "' in (" + scopeName + ", " + registryName
-                                + ", " + stageName + ")")
-                        .build();
+                return notFound(scopeName, registryName, stageName, qualifiedName, null);
             }
             return Response.ok(packaged.document()).build();
-        } catch (UnitStoreException e) {
-            // the pinned-miss contract: the error names the versions the store has
-            return Response.status(Status.NOT_FOUND).entity(e.getMessage()).build();
-        }
+        });
     }
 
     @GET
@@ -112,22 +124,14 @@ public class QvtUnitsResource {
     @Produces("text/plain")
     @Operation(summary = "List the stored unit fingerprints of a qualified name, newest first", responses = {
             @ApiResponse(responseCode = "200", description = "One fingerprint per line, newest first (empty for an unknown name)"),
-            @ApiResponse(responseCode = "400", description = "Unknown scope, registry or stage") })
+            @ApiResponse(responseCode = "400", description = "Unknown registry or stage"),
+            @ApiResponse(responseCode = "500", description = "The registry's storage failed") })
     public Response getVersions(@PathParam("scopeName") String scopeName,
             @PathParam("registryName") String registryName, @PathParam("stageName") String stageName,
             @PathParam("qualifiedName") String qualifiedName) {
-        AtlasUnitStore store = storeFor(scopeName, registryName, stageName);
-        if (store == null) {
-            return Response.status(Status.BAD_REQUEST)
-                    .entity("Unknown or unconfigured registry: " + registryName).build();
-        }
-        try {
-            List<UnitKey> versions = store.versions(QvtUnits.LANGUAGE_QVTO, qualifiedName, UnitKind.COMPILED);
-            return Response.ok(versions.stream().map(v -> v.fingerprint().orElse("?"))
-                    .collect(Collectors.joining("\n"))).build();
-        } catch (UnitStoreException e) {
-            return Response.status(Status.INTERNAL_SERVER_ERROR).entity(e.getMessage()).build();
-        }
+        return withStore(scopeName, registryName, stageName,
+                store -> Response.ok(store.versions(QvtUnits.LANGUAGE_QVTO, qualifiedName, UnitKind.COMPILED)
+                        .stream().map(v -> v.fingerprint().orElse("?")).collect(Collectors.joining("\n"))).build());
     }
 
     @GET
@@ -137,7 +141,8 @@ public class QvtUnitsResource {
     @Operation(summary = "The compile outcome of a source: status and positioned findings", responses = {
             @ApiResponse(responseCode = "200", description = "The SourceDiagnostics document"),
             @ApiResponse(responseCode = "404", description = "No diagnostics for that name (never uploaded, or not compiled yet)"),
-            @ApiResponse(responseCode = "400", description = "Unknown scope, registry or stage") })
+            @ApiResponse(responseCode = "400", description = "Unknown registry or stage"),
+            @ApiResponse(responseCode = "500", description = "The registry's storage failed") })
     public Response getDiagnostics(@PathParam("scopeName") String scopeName,
             @PathParam("registryName") String registryName, @PathParam("stageName") String stageName,
             @PathParam("qualifiedName") String qualifiedName) {
@@ -146,8 +151,17 @@ public class QvtUnitsResource {
             return Response.status(Status.BAD_REQUEST)
                     .entity("Unknown or unconfigured registry: " + registryName).build();
         }
-        EObject diagnostics = registryService.getContentFromStage(scopeName, stageName,
-                QvtUnits.diagnosticsObjectId(QvtUnits.LANGUAGE_QVTO, qualifiedName));
+        if (!registryService.isValidStage(stageName)) {
+            return Response.status(Status.BAD_REQUEST)
+                    .entity("Unknown stage " + stageName + " for registry " + registryName).build();
+        }
+        EObject diagnostics;
+        try {
+            diagnostics = registryService.getContentFromStage(scopeName, stageName,
+                    QvtUnits.diagnosticsObjectId(QvtUnits.LANGUAGE_QVTO, qualifiedName));
+        } catch (RuntimeException e) {
+            return Response.status(Status.INTERNAL_SERVER_ERROR).entity(e.getMessage()).build();
+        }
         if (diagnostics == null) {
             return Response.status(Status.NOT_FOUND)
                     .entity("No diagnostics for '" + qualifiedName + "' in (" + scopeName + ", " + registryName
@@ -157,12 +171,36 @@ public class QvtUnitsResource {
         return Response.ok(diagnostics).build();
     }
 
-    private AtlasUnitStore storeFor(String scopeName, String registryName, String stageName) {
+    private interface StoreCall {
+        Response call(AtlasUnitStore store) throws UnitStoreException;
+    }
+
+    private Response withStore(String scopeName, String registryName, String stageName, StoreCall call) {
         RegistryService<EObject> registryService = registryFor(registryName);
-        if (registryService == null || !registryService.isValidStage(stageName)) {
-            return null;
+        if (registryService == null) {
+            return Response.status(Status.BAD_REQUEST)
+                    .entity("Unknown or unconfigured registry: " + registryName).build();
         }
-        return new AtlasUnitStore(registryService, scopeName, stageName);
+        if (!registryService.isValidStage(stageName)) {
+            return Response.status(Status.BAD_REQUEST)
+                    .entity("Unknown stage " + stageName + " for registry " + registryName).build();
+        }
+        try {
+            return call.call(new AtlasUnitStore(registryService, scopeName, stageName));
+        } catch (UnitStoreException e) {
+            // a broken storage must not masquerade as "not found"
+            return Response.status(Status.INTERNAL_SERVER_ERROR).entity(e.getMessage()).build();
+        }
+    }
+
+    private static Response notFound(String scopeName, String registryName, String stageName, String qualifiedName,
+            String existingVersions) {
+        String message = "No compiled unit '" + qualifiedName + "' in (" + scopeName + ", " + registryName + ", "
+                + stageName + ")";
+        if (existingVersions != null && !existingVersions.isEmpty()) {
+            message += " with that fingerprint; it has: " + existingVersions;
+        }
+        return Response.status(Status.NOT_FOUND).entity(message).build();
     }
 
     @SuppressWarnings("unchecked")

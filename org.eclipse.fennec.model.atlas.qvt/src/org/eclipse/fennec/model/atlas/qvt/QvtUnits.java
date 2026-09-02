@@ -81,7 +81,14 @@ public final class QvtUnits {
      * registry).
      */
     public static Optional<UnitKey> parseObjectId(String objectId) {
-        String decoded = decode(objectId);
+        String decoded;
+        try {
+            decoded = decode(objectId);
+        } catch (IllegalArgumentException e) {
+            // a foreign id that merely looks percent-encoded (e.g. "100%") — such an
+            // entry is no unit and must not poison scans over the whole registry
+            return Optional.empty();
+        }
         String[] parts = decoded.split("/");
         if (parts.length < 4) {
             return Optional.empty();

@@ -285,6 +285,15 @@ public class ObjectRegistryResource {
                     .build();
         }
 
+        // Derived artifacts (compiled units, diagnostics, …) are produced by the
+        // Atlas itself; accepting them here would let a client forge them.
+        if (registryService.isDerivedEClass(object.eClass())) {
+            return Response.status(Status.FORBIDDEN)
+                    .entity(String.format(
+                            "Object type %s is derived content of registry %s and is written by the Atlas only",
+                            EcoreUtil.getURI(object.eClass()), registryName))
+                    .build();
+        }
         // Validate object type
         if (!registryService.isEClassCompatibleWithRegistry(object.eClass())) {
             return Response.status(Status.BAD_REQUEST)
@@ -504,6 +513,15 @@ public class ObjectRegistryResource {
                     .build();
         }
 
+        // Derived artifacts are produced by the Atlas itself; accepting them here
+        // would let a client forge them.
+        if (registryService.isDerivedEClass(eObject.eClass())) {
+            return Response.status(Status.FORBIDDEN)
+                    .entity(String.format(
+                            "Object type %s is derived content of registry %s and is written by the Atlas only",
+                            EcoreUtil.getURI(eObject.eClass()), registryName))
+                    .build();
+        }
         // Validate object type
         if (!registryService.isEClassCompatibleWithRegistry(eObject.eClass())) {
             return Response.status(Status.BAD_REQUEST)

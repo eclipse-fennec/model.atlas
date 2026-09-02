@@ -14,6 +14,7 @@
 package org.eclipse.fennec.model.atlas.workflow.impl;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
@@ -90,6 +91,12 @@ public class RegistryServiceImplTest {
 
     private RegistryServiceImpl<EObject> createService(
             List<EObjectStorageService<EObject>> storageServices, String... rootEClassUris) {
+        return createService(storageServices, rootEClassUris, new String[0]);
+    }
+
+    private RegistryServiceImpl<EObject> createService(
+            List<EObjectStorageService<EObject>> storageServices, String[] rootEClassUris,
+            String[] derivedEClassUris) {
         RegistryServiceConfig config = mock(RegistryServiceConfig.class);
         when(config.registry_name()).thenReturn("test-registry");
         when(config.registry_description()).thenReturn("");
@@ -100,6 +107,8 @@ public class RegistryServiceImplTest {
                 "{\"name\": \"draft\", \"writable\": true, \"final\": false}",
                 "{\"name\": \"release\", \"writable\": true, \"final\": true}" });
         when(config.root_eclass_uri()).thenReturn(rootEClassUris);
+        // lenient: never read when an earlier config value already fails activation
+        org.mockito.Mockito.lenient().when(config.derived_eclass_uri()).thenReturn(derivedEClassUris);
         return new RegistryServiceImpl<>(storageServices, resourceSet, config);
     }
 
@@ -262,6 +271,63 @@ public class RegistryServiceImplTest {
         void shouldFailOnUnresolvableRoot() {
             org.junit.jupiter.api.Assertions.assertThrows(IllegalArgumentException.class,
                     () -> createService(TEST_NS_URI + "#//Person", TEST_NS_URI + "#//DoesNotExist"));
+        }
+    }
+
+    @Nested
+    @DisplayName("Derived EClasses (server-written content, issue #239 review)")
+    class DerivedTypeTests {
+
+        private EObjectStorageService<EObject> storage;
+        private RegistryServiceImpl<EObject> service;
+
+        @SuppressWarnings("unchecked")
+        @BeforeEach
+        void createDerivedService() {
+            storage = mock(EObjectStorageService.class);
+            when(storage.getStorageType()).thenReturn("file");
+            service = createService(List.of(storage), new String[] { TEST_NS_URI + "#//Person" },
+                    new String[] { TEST_NS_URI + "#//Unrelated" });
+        }
+
+        @Test
+        @DisplayName("A derived EClass is recognized but is no root")
+        void derivedIsRecognizedButNoRoot() {
+            assertTrue(service.isDerivedEClass(unrelatedClass));
+            assertFalse(service.isEClassCompatibleWithRegistry(unrelatedClass),
+                    "derived types are not client-writable roots");
+            assertTrue(service.getDerivedEClasses().equals(List.of(unrelatedClass)));
+        }
+
+        @Test
+        @DisplayName("A derived update passes the final-stage bar; a root update does not")
+        void derivedUpdatePassesFinalStageBar() throws Exception {
+            ObjectMetadata stored = ManagementFactory.eINSTANCE.createObjectMetadata();
+            stored.setObjectId("derived-1");
+            when(storage.retrieveMetadata(any(), any(), any(), any())).thenReturn(Promises.resolved(stored));
+            when(storage.updateObject(any(), any(), any())).thenReturn(Promises.resolved(stored));
+
+            EObject derived = unrelatedClass.getEPackage().getEFactoryInstance().create(unrelatedClass);
+            // release is the final stage of the test config — the derived refresh succeeds
+            assertNotNull(service.updateInStage("test-scope", "release", derived, "derived-1", null).getValue());
+
+            EObject root = personClass.getEPackage().getEFactoryInstance().create(personClass);
+            var promise = service.updateInStage("test-scope", "release", root, "root-1", null);
+            java.lang.reflect.InvocationTargetException failure = org.junit.jupiter.api.Assertions
+                    .assertThrows(java.lang.reflect.InvocationTargetException.class, promise::getValue);
+            assertTrue(failure.getCause() instanceof org.eclipse.fennec.model.atlas.scope.api.StagePolicyException,
+                    "a root update in the final stage stays refused, got " + failure.getCause());
+        }
+
+        @Test
+        @DisplayName("The service API accepts storing a derived object")
+        void derivedUploadPassesTheTypeGate() throws Exception {
+            when(storage.storeObject(any(), any(), any(), any(), any(), any()))
+                    .thenAnswer(invocation -> Promises.resolved(invocation.getArgument(5)));
+            EObject derived = unrelatedClass.getEPackage().getEFactoryInstance().create(unrelatedClass);
+            ObjectMetadata metadata = ManagementFactory.eINSTANCE.createObjectMetadata();
+            metadata.setObjectId("derived-2");
+            assertNotNull(service.uploadToStage("test-scope", "draft", derived, metadata).getValue());
         }
     }
 

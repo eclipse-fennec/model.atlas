@@ -16,6 +16,7 @@ package org.eclipse.fennec.model.atlas.qvt.tests;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.nio.file.Files;
@@ -97,8 +98,9 @@ import org.osgi.test.junit5.service.ServiceExtension;
         @Property(key = "registry.name", value = QvtUnitHostingIntegrationTest.REGISTRY),
         @Property(key = "registry.type", value = "TRANSFORMATION"),
         @Property(key = "root.eclass.uri", scalar = Scalar.String, type = Type.Array, value = {
+                "http://www.eclipse.org/fennec/m2x/compiled/1.0#//SourceUnit" }),
+        @Property(key = "derived.eclass.uri", scalar = Scalar.String, type = Type.Array, value = {
                 "http://www.eclipse.org/fennec/m2x/compiled/1.0#//CompiledUnit",
-                "http://www.eclipse.org/fennec/m2x/compiled/1.0#//SourceUnit",
                 "http://eclipse.org/fennec/model/atlas/qvt/diagnostics/1.0.0#//SourceDiagnostics" }),
         @Property(key = "resourceSet.target", value = "(&(emf.name=compiled)(emf.name=diagnostics))"),
         @Property(key = "storageService.target", value = "(storage.type=file)"),
@@ -384,6 +386,73 @@ public class QvtUnitHostingIntegrationTest {
         SourceDiagnostics diagnostics = diagnosticsOf(registry, "release", "Promote");
         assertEquals(CompileStatus.OK, diagnostics.getCompileStatus());
         assertEquals(released.get(0).fingerprint().orElseThrow(), diagnostics.getUnitFingerprint());
+    }
+
+    @Test
+    @DisplayName("A repeated promotion refreshes the unit and diagnostics in the final stage (review finding 1)")
+    void repeatedPromotionRefreshesFinalStage(
+            @InjectService(cardinality = 0, timeout = 15000, filter = "(registry.name=" + REGISTRY + ")") //
+            ServiceAware<RegistryService> aware) throws Exception {
+        RegistryService<EObject> registry = registry(aware);
+        uploadSource(registry, DRAFT, "Repromote", "Repromote", RENAME.replace("Rename", "Repromote"));
+        registry.transitionToStage(SCOPE, "Repromote", DRAFT, "release");
+
+        AtlasUnitStore releaseStore = new AtlasUnitStore(registry, SCOPE, "release");
+        String first = releaseStore.versions(QvtUnits.LANGUAGE_QVTO, "Repromote", UnitKind.COMPILED).get(0)
+                .fingerprint().orElseThrow();
+
+        // change the draft and promote AGAIN: the diagnostics document already
+        // exists in the final stage — its refresh is a derived update and must
+        // pass the final-stage bar
+        uploadSource(registry, DRAFT, "Repromote", "Repromote",
+                RENAME.replace("Rename", "Repromote").replace("toUpperCase", "toLowerCase"));
+        registry.transitionToStage(SCOPE, "Repromote", DRAFT, "release");
+
+        List<UnitKey> released = releaseStore.versions(QvtUnits.LANGUAGE_QVTO, "Repromote", UnitKind.COMPILED);
+        assertEquals(2, released.size(), "the second promotion recompiled in the final stage");
+        String second = released.get(0).fingerprint().orElseThrow();
+        assertFalse(second.equals(first), "the changed source yields a new unit fingerprint");
+
+        SourceDiagnostics diagnostics = diagnosticsOf(registry, "release", "Repromote");
+        assertEquals(CompileStatus.OK, diagnostics.getCompileStatus());
+        assertEquals(second, diagnostics.getUnitFingerprint(),
+                "the final-stage diagnostics follow the latest promotion, not the first");
+    }
+
+    @Test
+    @DisplayName("Deleting a source removes its diagnostics; compiled units stay for pinned consumers")
+    void deleteRemovesDiagnosticsKeepsUnits(
+            @InjectService(cardinality = 0, timeout = 15000, filter = "(registry.name=" + REGISTRY + ")") //
+            ServiceAware<RegistryService> aware) throws Exception {
+        RegistryService<EObject> registry = registry(aware);
+        uploadSource(registry, DRAFT, "Doomed", "Doomed", RENAME.replace("Rename", "Doomed"));
+        AtlasUnitStore store = new AtlasUnitStore(registry, SCOPE, DRAFT);
+        assertEquals(1, store.versions(QvtUnits.LANGUAGE_QVTO, "Doomed", UnitKind.COMPILED).size());
+
+        assertTrue(registry.deleteFromStage(SCOPE, DRAFT, "Doomed").getValue());
+
+        assertNull(registry.getContentFromStage(SCOPE, DRAFT,
+                QvtUnits.diagnosticsObjectId(QvtUnits.LANGUAGE_QVTO, "Doomed")),
+                "the diagnostics mirror a source that is gone");
+        assertEquals(1, store.versions(QvtUnits.LANGUAGE_QVTO, "Doomed", UnitKind.COMPILED).size(),
+                "already-compiled units stay resolvable for pinned consumers");
+    }
+
+    @Test
+    @DisplayName("A foreign id that only looks percent-encoded does not poison the stage view")
+    void malformedForeignIdDoesNotPoisonScans(
+            @InjectService(cardinality = 0, timeout = 15000, filter = "(registry.name=" + REGISTRY + ")") //
+            ServiceAware<RegistryService> aware) throws Exception {
+        RegistryService<EObject> registry = registry(aware);
+        // a working-copy source under an id with a stray percent sign — decoding
+        // it as an entry key would throw; the scan must survive it
+        uploadSource(registry, DRAFT, "100%odd", "Odd", RENAME.replace("Rename", "Odd"));
+
+        AtlasUnitStore store = new AtlasUnitStore(registry, SCOPE, DRAFT);
+        assertFalse(store.versions(QvtUnits.LANGUAGE_QVTO, "Odd", UnitKind.SOURCE).isEmpty(),
+                "the oddly named working copy is still served");
+        assertFalse(store.versions(QvtUnits.LANGUAGE_QVTO, "Odd", UnitKind.COMPILED).isEmpty(),
+                "its compile outcome is still served");
     }
 
     @Test

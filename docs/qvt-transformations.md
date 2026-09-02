@@ -20,6 +20,12 @@ Transformations live in a registry of type `TRANSFORMATION` (default name
 | Compiled unit (`CompiledUnit`) | The self-contained, executable form with its manifest | the Atlas, on every successful compile |
 | Diagnostics (`SourceDiagnostics`) | The compile outcome of your source: status + positioned findings | the Atlas, on every compile |
 
+Only sources are yours to write: units and diagnostics are **derived content**
+— attempting to POST/PUT them over the generic endpoints is answered `403`,
+because a compiled unit the Atlas did not produce would be a forgery.
+Deleting a source removes its diagnostics with it; already-compiled units
+stay, versioned, for consumers that pinned them.
+
 ## Uploading a source
 
 `POST`/`PUT` the plain transformation text to the generic registry endpoint
@@ -35,7 +41,7 @@ The upload response returns after the compile finished. What happened is in
 the diagnostics document:
 
 ```bash
-curl "http://localhost:8080/atlas/myscope/registries/transformations/stages/draft/units/Announce/diagnostics" \
+curl "http://localhost:8080/atlas/myscope/registries/transformations/units/draft/Announce/diagnostics" \
      -H "Accept: application/json"
 ```
 
@@ -82,13 +88,13 @@ is part of a unit's address: consumers always address
 
 ```bash
 # the newest compiled unit of that name in the stage view
-curl ".../myscope/registries/transformations/stages/release/units/Announce"
+curl ".../myscope/registries/transformations/units/release/Announce"
 
 # exactly one version — what the Data Atlas configuration pins
-curl ".../myscope/registries/transformations/stages/release/units/Announce?fingerprint=m2x1:9f86..."
+curl ".../myscope/registries/transformations/units/release/Announce?fingerprint=m2x1:9f86..."
 
 # the stored fingerprints, newest first
-curl ".../myscope/registries/transformations/stages/release/units/Announce/versions"
+curl ".../myscope/registries/transformations/units/release/Announce/versions"
 ```
 
 A pinned fingerprint the stage does not hold is answered `404` naming the

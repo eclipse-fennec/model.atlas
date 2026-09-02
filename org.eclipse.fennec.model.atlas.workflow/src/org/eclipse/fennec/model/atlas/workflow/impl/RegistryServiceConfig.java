@@ -57,6 +57,12 @@ public @interface RegistryServiceConfig {
             + "A single String value keeps working (coerced to a one-element array).", required = false, defaultValue = "http://www.eclipse.org/emf/2002/Ecore#//EPackage")
     String[] root_eclass_uri() default { "http://www.eclipse.org/emf/2002/Ecore#//EPackage" };
 
+    @AttributeDefinition(name = "Derived EClass URIs", description = "The uris of EClasses whose objects the Atlas itself derives from uploaded content "
+            + "(e.g. compiled units and their diagnostics). Derived objects are readable like any other content but are refused "
+            + "on the REST write path, while the trusted service API may write them — including updates in final stages, "
+            + "because a derived write is the consequence of a sanctioned upload or transition.", required = false)
+    String[] derived_eclass_uri() default {};
+
     @AttributeDefinition(name = "ResourceSet Target", description = "The target filter ensuring that the ResourceSet with the required model is actually available", required = true)
     String resourceSet_target();
 }

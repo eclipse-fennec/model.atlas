@@ -13,7 +13,6 @@
  */
 package org.eclipse.fennec.model.atlas.qvt;
 
-import java.time.Instant;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -40,8 +39,6 @@ import org.eclipse.fennec.m2x.unit.api.Unit;
 import org.eclipse.fennec.m2x.unit.api.UnitKey;
 import org.eclipse.fennec.m2x.unit.api.UnitKind;
 import org.eclipse.fennec.m2x.unit.api.UnitStoreException;
-import org.eclipse.fennec.model.atlas.mgmt.management.ManagementFactory;
-import org.eclipse.fennec.model.atlas.mgmt.management.ObjectMetadata;
 import org.eclipse.fennec.model.atlas.qvt.diagnostics.CompileStatus;
 import org.eclipse.fennec.model.atlas.qvt.diagnostics.DiagnosticEntry;
 import org.eclipse.fennec.model.atlas.qvt.diagnostics.DiagnosticSeverity;
@@ -133,7 +130,7 @@ public class QvtStageActionService implements StageActionService {
 
     @Override
     public Set<ActionEvent> getTriggerEvents() {
-        return Set.of(ActionEvent.ENTER, ActionEvent.UPDATE);
+        return Set.of(ActionEvent.ENTER, ActionEvent.UPDATE, ActionEvent.EXIT);
     }
 
     @Override
@@ -148,9 +145,25 @@ public class QvtStageActionService implements StageActionService {
 
     @Override
     public Promise<Void> onExit(ActionContext ctx) {
-        // units are derived per stage from their source and stay resolvable for
-        // pinned consumers; nothing to undo when a source leaves a stage
-        return promiseFactory.resolved(null);
+        if (ctx.exitReason() != ExitReason.DELETED) {
+            // on a transition the source stage keeps its derivatives: units stay
+            // resolvable for pinned consumers, the diagnostics still describe them
+            return promiseFactory.resolved(null);
+        }
+        return promiseFactory.submit(() -> {
+            // the diagnostics mirror a source that is gone — remove them so a delete
+            // is visible. Units stay: they are versioned and possibly pinned by
+            // consumers. Relies on the working-copy convention objectId ==
+            // qualified name; a foreign id leaves at most a stale diagnostics doc.
+            RegistryService<EObject> registryService = registryFor(ctx.registry());
+            String diagnosticsId = QvtUnits.diagnosticsObjectId(QvtUnits.LANGUAGE_QVTO, ctx.objectId());
+            if (registryService.getMetadataFromStage(ctx.scope(), ctx.stage(), diagnosticsId) != null) {
+                registryService.deleteFromStage(ctx.scope(), ctx.stage(), diagnosticsId).getValue();
+                logger.info(() -> "Removed diagnostics of deleted source " + ctx.objectId() + " in (" + ctx.scope()
+                        + ", " + ctx.stage() + ")");
+            }
+            return null;
+        }).map(v -> null);
     }
 
     @Override
@@ -211,23 +224,16 @@ public class QvtStageActionService implements StageActionService {
         try {
             CompiledUnit unit = engine.compile(sourceText, qualifiedName);
             diagnostics.setSourceFingerprint(unit.getManifest().getSourceFingerprint());
-            if (QvtUnits.isLibrary(unit)) {
-                diagnostics.setCompileStatus(CompileStatus.LIBRARY);
-                // the library's compiled form is what prepare loads for dependents —
-                // store it too (the double-put the compiled-units guide warns about)
-                UnitKey key = store.put(unit);
-                diagnostics.setUnitFingerprint(key.fingerprint().orElse(null));
-                changed.add(qualifiedName);
-                logger.info(() -> "Stored library " + qualifiedName + " (" + key.fingerprint().orElse("?") + ") in ("
-                        + ctx.scope() + ", " + ctx.stage() + ")");
-            } else {
-                UnitKey key = store.put(unit);
-                diagnostics.setCompileStatus(CompileStatus.OK);
-                diagnostics.setUnitFingerprint(key.fingerprint().orElse(null));
-                changed.add(qualifiedName);
-                logger.info(() -> "Compiled " + qualifiedName + " to unit " + key.fingerprint().orElse("?") + " in ("
-                        + ctx.scope() + ", " + ctx.stage() + ")");
-            }
+            // a library's compiled form is what prepare loads for dependents — it is
+            // stored just like a startable unit (the double-put the compiled-units
+            // guide warns about); only the reported status differs
+            boolean library = QvtUnits.isLibrary(unit);
+            UnitKey key = store.put(unit);
+            diagnostics.setCompileStatus(library ? CompileStatus.LIBRARY : CompileStatus.OK);
+            diagnostics.setUnitFingerprint(key.fingerprint().orElse(null));
+            changed.add(qualifiedName);
+            logger.info(() -> (library ? "Stored library " : "Compiled ") + qualifiedName + " -> "
+                    + key.fingerprint().orElse("?") + " in (" + ctx.scope() + ", " + ctx.stage() + ")");
         } catch (QvtoParseException e) {
             diagnostics.setCompileStatus(CompileStatus.INVALID);
             diagnostics.setMessage(e.getMessage());
@@ -246,6 +252,13 @@ public class QvtStageActionService implements StageActionService {
             diagnostics.setMessage("compiled, but the unit could not be stored: " + e.getMessage());
             logger.log(Level.WARNING, e,
                     () -> "Unit of " + qualifiedName + " could not be stored in (" + ctx.scope() + ", " + ctx.stage() + ")");
+        } catch (RuntimeException e) {
+            // an unexpected compiler failure must never leave the PREVIOUS outcome
+            // standing as if it described this source
+            diagnostics.setCompileStatus(CompileStatus.INVALID);
+            diagnostics.setMessage("internal compiler error: " + e);
+            logger.log(Level.WARNING, e, () -> "Compiling " + qualifiedName + " in (" + ctx.scope() + ", "
+                    + ctx.stage() + ") failed unexpectedly");
         }
         writeDiagnostics(registryService, ctx, diagnostics);
         return changed;
@@ -357,23 +370,11 @@ public class QvtStageActionService implements StageActionService {
 
     private void writeDiagnostics(RegistryService<EObject> registryService, ActionContext ctx,
             SourceDiagnostics diagnostics) {
-        String objectId = QvtUnits.diagnosticsObjectId(QvtUnits.LANGUAGE_QVTO, diagnostics.getQualifiedName());
         try {
-            ObjectMetadata existing = registryService.getMetadataFromStage(ctx.scope(), ctx.stage(), objectId);
-            if (existing != null) {
-                registryService.updateInStage(ctx.scope(), ctx.stage(), diagnostics, objectId, existing.getVersion())
-                        .getValue();
-                return;
-            }
-            ObjectMetadata metadata = ManagementFactory.eINSTANCE.createObjectMetadata();
-            metadata.setObjectId(objectId);
-            metadata.setObjectName(diagnostics.getQualifiedName());
-            metadata.setUploadTime(Instant.now());
-            metadata.setObjectType(EcoreUtil.getURI(diagnostics.eClass()).toString());
-            registryService.uploadToStage(ctx.scope(), ctx.stage(), diagnostics, metadata).getValue();
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-        } catch (Exception e) {
+            AtlasUnitStore.upsert(registryService, ctx.scope(), ctx.stage(),
+                    QvtUnits.diagnosticsObjectId(QvtUnits.LANGUAGE_QVTO, diagnostics.getQualifiedName()),
+                    diagnostics.getQualifiedName(), diagnostics);
+        } catch (UnitStoreException e) {
             logger.log(Level.WARNING, e, () -> "Diagnostics for " + diagnostics.getQualifiedName()
                     + " could not be stored in (" + ctx.scope() + ", " + ctx.stage() + ")");
         }
