@@ -232,6 +232,7 @@ public class RegistryServiceImpl<T extends EObject> implements RegistryService<T
             requireNonNull(object, "Object cannot be null");
             requireNonNull(metadata, "Metadata cannot be null");
             validateStage(stage);
+            requireCompatibleWithRegistry(object);
 
             metadata.setLastChangeTime(Instant.now());
             metadata.setStage(stage);
@@ -317,6 +318,7 @@ public class RegistryServiceImpl<T extends EObject> implements RegistryService<T
             requireNonNull(objectId, "Object ID cannot be null");
             requireNonNull(updatedObject, "Updated object cannot be null");
             validateUpdatableStage(stage);
+            requireCompatibleWithRegistry(updatedObject);
 
             EObjectStorageService<T> storageService = storageFor(stage);
 
@@ -826,6 +828,23 @@ public class RegistryServiceImpl<T extends EObject> implements RegistryService<T
                     stageName, config.registry_name()));
         }
         return;
+    }
+
+    /**
+     * The registry-side half of the type gate (the REST layer checks first for a
+     * friendly 400): every write path enforces the configured roots itself, so a
+     * caller reaching the service API directly cannot store objects the registry
+     * does not accept — e.g. forging derived artifacts into a registry whose
+     * REST guard was bypassed.
+     */
+    private void requireCompatibleWithRegistry(T object) {
+        if (!isEClassCompatibleWithRegistry(object.eClass())) {
+            throw new IllegalArgumentException(String.format(
+                    "Object type %s is not compatible with registry %s (accepts %s)",
+                    EcoreUtil.getURI(object.eClass()), config.registry_name(),
+                    rootEClasses.stream().map(EcoreUtil::getURI).map(Object::toString)
+                            .collect(Collectors.joining(", "))));
+        }
     }
 
     private void validateUpdatableStage(String stageName) {

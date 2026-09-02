@@ -264,4 +264,45 @@ public class RegistryServiceImplTest {
                     () -> createService(TEST_NS_URI + "#//Person", TEST_NS_URI + "#//DoesNotExist"));
         }
     }
+
+    @Nested
+    @DisplayName("Registry-side type gate (defense in depth beside the REST check)")
+    class TypeGateTests {
+
+        @Test
+        @DisplayName("uploadToStage refuses an object no configured root accepts, before storage is touched")
+        void uploadRefusesIncompatibleObject() throws Exception {
+            @SuppressWarnings("unchecked")
+            EObjectStorageService<EObject> storage = mock(EObjectStorageService.class);
+            when(storage.getStorageType()).thenReturn("file");
+            RegistryServiceImpl<EObject> service = createService(List.of(storage), TEST_NS_URI + "#//Person");
+
+            EObject unrelated = unrelatedClass.getEPackage().getEFactoryInstance().create(unrelatedClass);
+            ObjectMetadata metadata = ManagementFactory.eINSTANCE.createObjectMetadata();
+            metadata.setObjectId("forged");
+
+            var promise = service.uploadToStage("test-scope", "draft", unrelated, metadata);
+            java.lang.reflect.InvocationTargetException failure = org.junit.jupiter.api.Assertions
+                    .assertThrows(java.lang.reflect.InvocationTargetException.class, promise::getValue);
+            assertTrue(failure.getCause() instanceof IllegalArgumentException,
+                    "a type refusal is an IllegalArgumentException, got " + failure.getCause());
+            verify(storage, never()).storeObject(any(), any(), any(), any(), any(), any());
+        }
+
+        @Test
+        @DisplayName("updateInStage refuses an object no configured root accepts")
+        void updateRefusesIncompatibleObject() throws Exception {
+            @SuppressWarnings("unchecked")
+            EObjectStorageService<EObject> storage = mock(EObjectStorageService.class);
+            when(storage.getStorageType()).thenReturn("file");
+            RegistryServiceImpl<EObject> service = createService(List.of(storage), TEST_NS_URI + "#//Person");
+
+            EObject unrelated = unrelatedClass.getEPackage().getEFactoryInstance().create(unrelatedClass);
+            var promise = service.updateInStage("test-scope", "draft", unrelated, "some-id", null);
+            java.lang.reflect.InvocationTargetException failure = org.junit.jupiter.api.Assertions
+                    .assertThrows(java.lang.reflect.InvocationTargetException.class, promise::getValue);
+            assertTrue(failure.getCause() instanceof IllegalArgumentException,
+                    "a type refusal is an IllegalArgumentException, got " + failure.getCause());
+        }
+    }
 }
