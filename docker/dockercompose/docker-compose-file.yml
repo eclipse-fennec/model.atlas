@@ -11,3 +11,9 @@ services:
       # Mount a host folder with the models you want deployed on first start.
       # Replace ./initial-models with the path on your host machine.
       - ./initial-models:/initial-models:ro
+      # STORAGE_ROOT defaults to /opt/modelatlas/runtime/data - keep it in a volume
+      # so the stored models survive `docker compose down`.
+      - atlas-data:/opt/modelatlas/runtime/data
+
+volumes:
+  atlas-data:

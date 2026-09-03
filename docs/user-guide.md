@@ -58,6 +58,22 @@ Both are also available on GHCR as `ghcr.io/eclipse-fennec/model.atlas`.
 docker run -d -p 8080:8080 eclipsefennec/model.atlas:file-latest
 ```
 
+The image writes everything below `STORAGE_ROOT`, which defaults to `/opt/modelatlas/runtime/data`.
+Mount a volume there to keep the data:
+
+```bash
+docker run -d -p 8080:8080 \
+  -v modelatlas-data:/opt/modelatlas/runtime/data \
+  eclipsefennec/model.atlas:file-latest
+```
+
+Next to the built-in **atlas** scope, this variant ships a preconfigured scope `jena` with five
+registries — `schema` (EPackages, stages `draft`/`approved`/`release`), `workspace` (arbitrary
+EObjects), `DataGen` (`DataGenConfig`), `cocl` (`OclConstraintSet`) and `sensinactmapping`
+(`ProviderMapping`), the latter four with stages `draft`/`release`. All of them are backed by the
+single `file` storage. The full layout, and how to change it, is documented in the
+[File variant README](../docker/modelatlas_file/README.md).
+
 #### Apicurio variant (with Docker Compose)
 
 The Apicurio variant requires a running Apicurio Registry. Use the provided compose file:
@@ -78,7 +94,7 @@ This starts the full stack:
 
 | Variable | Default | Variant | Description |
 |----------|---------|---------|-------------|
-| `STORAGE_ROOT` | `/tmp/mac` | File | Root directory for file-based storage |
+| `STORAGE_ROOT` | `/opt/modelatlas/runtime/data` | File | Root directory for file-based storage |
 | `APICURIO_HOST` | `localhost` | Apicurio | Hostname of the Apicurio Registry |
 | `APICURIO_PORT` | `8081` | Apicurio | Port of the Apicurio Registry |
 | `INITIAL_MODELS_FOLDER` | `/initial-models` | Both | Folder scanned once on startup to seed initial models. See [Bootstrapping Initial Models](#bootstrapping-initial-models) |
