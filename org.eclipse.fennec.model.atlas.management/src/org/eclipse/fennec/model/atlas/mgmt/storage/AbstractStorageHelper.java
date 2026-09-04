@@ -15,15 +15,24 @@ package org.eclipse.fennec.model.atlas.mgmt.storage;
 
 import java.io.IOException;
 import java.time.Instant;
+import java.util.Collection;
 import java.util.Collections;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import org.eclipse.emf.common.util.TreeIterator;
 import org.eclipse.emf.common.util.URI;
+import org.eclipse.emf.ecore.EClass;
 import org.eclipse.emf.ecore.EDataType.Internal.ConversionDelegate;
 import org.eclipse.emf.ecore.EObject;
+import org.eclipse.emf.ecore.EPackage;
+import org.eclipse.emf.ecore.EStructuralFeature;
+import org.eclipse.emf.ecore.InternalEObject;
 import org.eclipse.emf.ecore.resource.Resource;
 import org.eclipse.emf.ecore.resource.ResourceSet;
 import org.eclipse.emf.ecore.util.EcoreUtil;
@@ -328,6 +337,11 @@ public abstract class AbstractStorageHelper implements AutoCloseable {
             if (pnf != null) {
                 throw new ModelUnavailableException(scope, stage, objectId, pnf.uri(), e);
             }
+            ModelUnavailableException unresolved = findUnresolvedModel(resourceSet, objectUri, scope, stage, objectId,
+                    e);
+            if (unresolved != null) {
+                throw unresolved;
+            }
             throw e;
         }
         try {
@@ -358,6 +372,10 @@ public abstract class AbstractStorageHelper implements AutoCloseable {
                 if (pnf != null) {
                     throw new ModelUnavailableException(scope, stage, objectId, pnf.uri(), e);
                 }
+                ModelUnavailableException unresolved = findUnresolvedModel(rs, objectUri, scope, stage, objectId, e);
+                if (unresolved != null) {
+                    throw unresolved;
+                }
                 throw e;
             }
             PackageNotFoundException pnf = findPackageNotFoundInErrors(resource);
@@ -383,6 +401,48 @@ public abstract class AbstractStorageHelper implements AutoCloseable {
             }
             cso.ungetService(rs);
         }
+    }
+
+    /**
+     * Detects the "registered but unresolvable model" condition behind a failed instance load
+     * (issue #251): the instance's package IS registered — so no
+     * {@link PackageNotFoundException} fires — but that package itself carries unresolved
+     * cross-package references, and deserialization died dereferencing such a proxy (typically a
+     * bare {@code NullPointerException}). The partially loaded resource is still in the
+     * ResourceSet after the failed demand-load; its contents name the packages involved, and the
+     * first unresolved proxy found in them names the missing dependency.
+     *
+     * @return the typed exception to throw instead, or {@code null} when the failure is not this
+     *         condition
+     */
+    protected static ModelUnavailableException findUnresolvedModel(ResourceSet resourceSet, URI uri, String scope,
+            String stage, String objectId, RuntimeException cause) {
+        Resource partial;
+        try {
+            partial = resourceSet.getResource(uri, false);
+        } catch (RuntimeException lookupFailure) {
+            return null;
+        }
+        if (partial == null) {
+            return null;
+        }
+        Set<EPackage> packages = new LinkedHashSet<>();
+        for (TreeIterator<EObject> it = partial.getAllContents(); it.hasNext();) {
+            EClass eClass = it.next().eClass();
+            if (eClass != null && eClass.getEPackage() != null) {
+                packages.add(eClass.getEPackage());
+            }
+        }
+        for (EPackage ePackage : packages) {
+            Map<EObject, Collection<EStructuralFeature.Setting>> unresolved = EcoreUtil.UnresolvedProxyCrossReferencer
+                    .find(ePackage);
+            if (!unresolved.isEmpty()) {
+                URI proxyUri = ((InternalEObject) unresolved.keySet().iterator().next()).eProxyURI();
+                String missing = proxyUri != null ? proxyUri.trimFragment().toString() : null;
+                return new ModelUnavailableException(scope, stage, objectId, missing, cause);
+            }
+        }
+        return null;
     }
 
     /**
