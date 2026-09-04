@@ -10,6 +10,7 @@ The **ObjectRegistryResource** provides a RESTful HTTP API for managing storage 
 - **Schema Validation**: Objects must conform to schemas known to the Model Atlas
 - **Scope-Based Management**: Multi-tenant isolation via configurable scopes
 - **Stage-Based Lifecycle**: Manage objects through workflow stages (draft, review, release, etc.)
+- **Stage-Scoped Identity**: An `objectId` identifies one object per `(scope, registry, stage)`; the same id in two stages is the same logical object at two points of its lifecycle (see [Stage-Scoped Identity](#stage-scoped-identity))
 - **Hierarchical Visibility**: Child scopes can access objects from parent scopes' final stages
 - **Content Negotiation**: Support for multiple formats (JSON, XML, XMI, UML)
 - **ETags and Conditional Requests**: Content-hash-based ETags, `If-Match` for optimistic concurrency, `If-None-Match` for conditional GETs
@@ -258,7 +259,9 @@ Content-Type: application/json | application/xml | application/xmi
 - `scopeName` (required): The scope name
 - `registryName` (required): The registry name
 - `stageName` (required): The stage name
-- `objectId` (required): The unique object identifier
+- `objectId` (required): The object identifier. It must be unique within this
+  `(scope, registry, stage)` — the stage is part of the key. The same id may exist in other
+  stages of the registry; see [Stage-Scoped Identity](#stage-scoped-identity)
 
 **Query Parameters**:
 - `name` (optional): Human-readable name for the object
@@ -270,11 +273,13 @@ Content-Type: application/json | application/xml | application/xmi
 **Behavior**:
 1. Validates that the registry is configured and available
 2. Validates that the object's EClass is compatible with the registry
-3. Checks if object already exists:
-   - If exists and `override=false`: Returns `409 Conflict`
-   - If exists and `override=true`: Updates the object (returns `200 OK`)
+3. Checks whether the id is already taken **in this stage** (falling back to the parent
+   final stages, which yields an inherited, read-only object):
+   - If taken and `override=false`: Returns `409 Conflict`
+   - If taken and `override=true`: Updates the object (returns `200 OK`)
    - If read-only: Returns `403 Forbidden`
-4. If new object: Creates and returns `201 Created`
+   - Other stages of the scope are **not** consulted
+4. If the id is free in this stage: Creates and returns `201 Created`
 
 **Response**:
 - **201 Created**: Object created successfully
@@ -285,7 +290,7 @@ Content-Type: application/json | application/xml | application/xmi
   - `ETag` header: SHA-256 content hash
 - **400 Bad Request**: Invalid object data, schema validation failed, or registry/scope/stage not available
 - **403 Forbidden**: Object is read-only (from parent scope)
-- **409 Conflict**: Object with ID already exists and override flag is false
+- **409 Conflict**: Object with this ID already exists in this stage (or is inherited from a parent final stage) and `override` is false
 - **415 Unsupported Media Type**: Invalid Content-Type
 - **500 Internal Server Error**: Server error
 
@@ -501,8 +506,16 @@ Content-Type: application/json
 **Behavior**:
 1. Verifies object exists in source stage
 2. Checks if object is read-only (cannot transition parent objects)
-3. Performs transition via `transitionToStageForRegistry()`
+3. Performs transition via `transitionToStageForRegistry()` — the object is written into
+   the target stage under its own `objectId`, and removed from the source stage only if the
+   registry sets `delete.after.transition=true`
 4. **Idempotent retry**: If the object is not found in the source stage but already exists in the target stage, returns `200 OK` with the metadata from the target stage (safe to retry)
+
+> **No conflict check on the target stage.** Unlike the create endpoint, the transition
+> writes into the target stage unconditionally: if a *different* object already occupies
+> that `objectId` in the target stage, it is replaced — there is no `409` and no override
+> flag. Because ids here are client-supplied, promote deliberately: check the target stage
+> first if two of your objects could ever share an id.
 
 **Response**:
 - **200 OK**: Object transitioned successfully (or already in target stage — idempotent)
@@ -561,6 +574,35 @@ When creating or updating objects, the `ObjectRegistryResource` validates that t
 Registries are configured via OSGi services that implement `RegistryService`. See [Configuration Requirements](#configuration-requirements) for the full JSON configuration format.
 
 The key property for schema validation is `root.eclass.uri`, which defines the expected root EClass for objects stored in the registry.
+
+---
+
+## Stage-Scoped Identity
+
+**Basic rule: an `objectId` is unique within a `(scope, registry, stage)` triple — the stage
+is part of the identity, not just an attribute of the object.** A stage of a registry never
+holds two objects under the same id, and the create endpoint enforces that with
+`409 Conflict` (`?override=true` updates the object that is there instead).
+
+Across stages the id is deliberately **not** unique, and uploading the same id into two
+stages of the same registry is allowed:
+
+- A transition **copies** the object into the target stage unless the registry sets
+  `delete.after.transition=true` (property default `false`, configured per registry), so a
+  promoted object legitimately exists in every stage it has passed through, under one id.
+- Starting a new revision of an already-released object means uploading that same id into
+  `draft` again while the released copy stays in place.
+
+The convention that goes with the rule: **the same id in two stages denotes the same logical
+object at two points of its lifecycle.** The store cannot verify that convention — it is the
+contract between the Atlas and its clients. Two genuinely different objects must use two
+different ids; in a schema registry, two versions of a model must use two different
+namespace URIs.
+
+The one sharp edge is the transition endpoint, which performs no conflict check on the
+target stage (see [8. Transition Object Between Stages](#8-transition-object-between-stages)):
+promoting an object onto an id that a *different* object already occupies in the target
+stage replaces that object silently.
 
 ---
 
@@ -647,7 +689,7 @@ curl -X GET "..." \
 | 304 Not Modified | Content unchanged | Conditional GET with `If-None-Match` — ETag matches |
 | 400 Bad Request | Invalid request | Invalid parameters, schema validation failed, scope/registry/stage not available |
 | 403 Forbidden | Operation not allowed | Object is read-only (from parent scope) |
-| 409 Conflict | Resource already exists | Object with ID already exists and override flag is false |
+| 409 Conflict | Resource already exists | Object with this ID already exists in the target stage and `override` is false |
 | 412 Precondition Failed | ETag mismatch | `If-Match` header does not match current content hash (concurrent modification) |
 | 415 Unsupported Media Type | Invalid Content-Type | Unsupported format in POST/PUT |
 | 500 Internal Server Error | Server error | Unexpected errors, exceptions |

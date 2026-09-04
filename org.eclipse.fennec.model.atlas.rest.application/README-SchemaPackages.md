@@ -12,7 +12,7 @@ The **SchemaPackagesResource** provides a RESTful HTTP API for managing EMF EPac
 - **Content Negotiation**: Support for multiple formats (JSON, XML, Ecore, JSON Schema)
 - **Stage Transitions**: Move schemas between workflow stages with validation
 - **ETags and Conditional Requests**: Content-hash-based ETags, `If-Match` for optimistic concurrency, `If-None-Match` for conditional GETs
-- **Uniqueness Validation**: Enforce unique `nsUri` across visibility chains
+- **Uniqueness Validation**: Enforce one `nsUri` per (scope, registry, stage), and no collision with a package inherited from an ancestor final stage
 - **Read-Only Protection**: Prevent modification of parent scope schemas and read-only stages
 
 ## Architecture
@@ -79,11 +79,16 @@ This implementation follows the **Model Atlas API Specification** which defines:
    - Some stages are read-only (typically "Released")
 
 3. **nsUri as Primary Key**: All lookups use the EPackage namespace URI
-   - NOT system-generated IDs
+   - NOT the `objectId` (which is a server-assigned UUID, see [Object Identity and nsUri Resolution](#object-identity-and-nsuri-resolution))
    - Must be URL-encoded in query parameters
 
-4. **Hierarchical Visibility** (Spec Section 1)
-   - **Write-Time Uniqueness**: `nsUri` must be unique within visibility chain (local scope + all parent final stages)
+4. **Stage-Scoped Identity**
+   - One package per `nsUri` **per stage**, and one object per `objectId` per stage — the stage is part of the key
+   - The same `nsUri` / `objectId` may exist in several stages of the scope: that is what a transition (which copies unless `delete.after.transition=true`) and a new draft revision of a released package produce. Same id in two stages means the same logical package at two points of its lifecycle
+   - Cross-stage uniqueness is deliberately **not** enforced; two *different* packages must use two different namespace URIs
+
+5. **Hierarchical Visibility** (Spec Section 1)
+   - **Write-Time Uniqueness**: `nsUri` must be free in the **target stage**, and must not collide with a package inherited from a parent final stage (inherited packages are read-only, so `overwrite=true` against one gives `403 Forbidden`)
    - **Read-Time Visibility**: Searches local scope first, then parent final stages recursively
    - Parent packages appear as read-only in child scopes
 
@@ -279,16 +284,18 @@ Content-Type: application/json | application/xml | application/ecore+xml
 - `nsUri` (string, required): The namespace URI of the package
 - `name` (string, optional): Human-readable name
 - `version` (string, optional): Package version
-- `override` (boolean, optional): If a Package already exists, just update it with similar bahviour to . 
+- `overwrite` (boolean, optional): If a package with this `nsUri` already exists in this stage, update it instead of failing with `409 Conflict`
 
 **Request Body**: EPackage content in the specified format
 
 **Behavior** (Per Spec):
 1. Validates `nsUri` is provided
-2. **Checks uniqueness across visibility chain**: Searches local scope (all stages) AND parent final stages
-3. Returns `409 Conflict` if `nsUri` exists anywhere in visibility chain
-4. Creates package with metadata
-5. URL-encodes the `nsUri` for use as object ID
+2. **Checks uniqueness in the target stage**: looks for the `nsUri` in `{stageName}` of this scope, falling back to the parent final stages (inherited packages)
+3. Returns `409 Conflict` if the `nsUri` is already taken there and `overwrite=false`; `403 Forbidden` if the package found is read-only (inherited or read-only stage)
+4. Creates the package with metadata: a fresh random UUID as `objectId` (stable across transitions) and the `nsUri` in the metadata `properties`
+
+The other stages of the local scope are **not** consulted — the same `nsUri` in `draft` and
+in `release` is legal and expected, see [Stage-Scoped Identity](#core-concepts-spec-section-1).
 
 **Response**:
 - **201 Created**: Package created successfully
@@ -301,7 +308,7 @@ Content-Type: application/json | application/xml | application/ecore+xml
 - **204 No Content**: No schemas found matching the criteria
 - **400 Bad Request**: Scope not available, stage not valid, or invalid parameters
 - **500 Internal Server Error**: Server error
-- **409 Conflict**: Package with `nsUri` already exists in visibility chain
+- **409 Conflict**: Package with `nsUri` already exists in this stage (or is inherited from a parent final stage) and `overwrite=false`
 - **415 Unsupported Media Type**: Invalid Content-Type
 - **500 Internal Server Error**: Server error
 
@@ -531,8 +538,18 @@ Content-Type: application/json
 2. Verifies package exists in source stage
 3. Checks if package is read-only (cannot transition parent packages)
 4. Validates transition is allowed via `isTransitionAllowed()`
-5. Performs transition via `transitionToStage()`
+5. Performs transition via `transitionToStage()` — the package is written into the target
+   stage under its own `objectId`, and removed from the source stage only if the registry
+   sets `delete.after.transition=true`
 6. **Idempotent retry**: If the package is not found in the source stage but already exists in the target stage, returns `200 OK` with the metadata from the target stage (safe to retry)
+
+> **No conflict check on the target stage.** Unlike `POST /stages/{stageName}` (which
+> answers `409 Conflict` on a taken `nsUri`), the transition writes into the target stage
+> unconditionally: a *different* package already stored there under the same `objectId`
+> would be replaced, and there is no override flag to guard it. For schema packages this is
+> practically unreachable — the `objectId` is a server-assigned UUID that the transition
+> carries along — but registries with client-supplied ids should promote deliberately (see
+> [README-ObjectStorage.md](README-ObjectStorage.md)).
 
 **Response**:
 - **200 OK**: Package transitioned successfully (or already in target stage — idempotent)
@@ -576,18 +593,23 @@ The Model Atlas API Specification defines strict rules for hierarchical visibili
 
 #### **Write-Time (Uniqueness Check)**
 
-When creating a new package (`POST`):
+When creating a new package (`POST` into `{stageName}`):
 
 ```
 Check for nsUri in:
-  1. Current scope, all stages (draft, review, release)
-  2. Parent scope, final stage only
-  3. Grandparent scope, final stage only
+  1. Current scope, the TARGET STAGE only
+  2. If not found there: parent scope, final stage only
+  3. If not found there: grandparent scope, final stage only
   ... (recursively up to root)
 
-If found anywhere → 409 Conflict
-If not found → Create package
+If found                    → 409 Conflict (or, with overwrite=true, an update;
+                               403 Forbidden if what was found is read-only)
+If not found                → Create package
 ```
+
+The other stages of the *local* scope are deliberately not part of the check: identity is
+scoped to a stage, so one `nsUri` may legitimately sit in several stages at once (see
+[Stage-Scoped Identity](#core-concepts-spec-section-1)).
 
 **Example**:
 ```
@@ -596,14 +618,26 @@ Hierarchy: atlas (root) → global-corporate → my-tenant
 Creating in my-tenant/draft with nsUri="http://example.com/billing/v1"
 
 Search locations:
-  ✓ my-tenant/draft
-  ✓ my-tenant/review
-  ✓ my-tenant/release
-  ✓ global-corporate/release (final stage)
-  ✓ atlas/release (final stage)
+  ✓ my-tenant/draft              (the target stage)
+  ✗ my-tenant/review             NOT checked
+  ✗ my-tenant/release            NOT checked
+  ✓ global-corporate/release     (parent final stage — inherited, read-only)
+  ✓ atlas/release                (grandparent final stage — inherited, read-only)
 
-If found in ANY location → 409 Conflict
+Found in my-tenant/draft            → 409 Conflict (overwrite=true updates it)
+Found only in an ancestor final stage → 409 Conflict (overwrite=true → 403 Forbidden,
+                                        the inherited package is read-only)
+Not found                            → Create package
 ```
+
+> **Why cross-stage duplicates are allowed.** A transition copies the package into the
+> target stage unless the registry sets `delete.after.transition=true`, so a promoted
+> package legitimately lives in `draft` *and* `release` under one `nsUri` and one
+> `objectId`; and starting a new revision of a released package means uploading that same
+> `nsUri` into `draft` again. The invariant is *"the same `nsUri`/`objectId` in two stages
+> is the same logical package at two points of its lifecycle"* — a convention the store
+> cannot verify. Two genuinely different packages must therefore use two different
+> namespace URIs, also when they are two versions of the same model.
 
 #### **Read-Time (Retrieval)**
 
@@ -782,7 +816,7 @@ curl -X GET "https://api.example.com/my-tenant/schema/stages/draft?name=Billing*
 | 304 Not Modified | Content unchanged | Conditional GET with `If-None-Match` — ETag matches |
 | 400 Bad Request | Invalid request | Scope not available, invalid stage, invalid transition, missing required parameters |
 | 403 Forbidden | Operation not allowed | Package is read-only (from parent scope) |
-| 409 Conflict | Resource already exists | Package with `nsUri` already exists and override flag is false |
+| 409 Conflict | Resource already exists | Package with `nsUri` already exists in the target stage and `overwrite` is false |
 | 412 Precondition Failed | ETag mismatch | `If-Match` header does not match current content hash (concurrent modification) |
 | 415 Unsupported Media Type | Invalid Content-Type | Unsupported format in POST/PUT |
 | 500 Internal Server Error | Server error | Unexpected errors, exceptions |
@@ -797,7 +831,9 @@ POST /my-tenant/schema/stages/draft?nsUri=http://existing.com/v1
 → 409 Conflict
 ```
 
-**Reason**: Package with same `nsUri` exists in visibility chain
+**Reason**: A package with the same `nsUri` is already in `draft` (or is inherited from an
+ancestor final stage). Pass `overwrite=true` to update it. The same `nsUri` sitting in
+*another* stage of this scope is not a conflict.
 
 ---
 

@@ -11,6 +11,7 @@ Fennec Model Atlas is a dynamic EMF model management system that provides a REST
   - [Scopes](#scopes)
   - [Registries](#registries)
   - [Workflow Stages](#workflow-stages)
+    - [One Object per Id per Stage](#one-object-per-id-per-stage)
   - [Hierarchical Visibility](#hierarchical-visibility)
 - [REST API](#rest-api)
   - [Base URL and Swagger UI](#base-url-and-swagger-ui)
@@ -183,6 +184,10 @@ and every nsUri-parameterized endpoint resolves through that property — unifor
 the id shape. Use the `objectId` where an endpoint asks for one (e.g. stage transitions);
 use `nsUri` everywhere else.
 
+An id is unique per *stage*, not per registry: see
+[One Object per Id per Stage](#one-object-per-id-per-stage) for the rule and its
+consequences for versioning.
+
 ### Workflow Stages
 
 Each registry defines its own **stages** that control the lifecycle of objects:
@@ -204,6 +209,56 @@ Stages and allowed transitions are fully configurable per registry. Common patte
 | Standard | draft, approved, release | Basic approval workflow |
 | Enterprise | draft, review, approved, staging, production | Multi-gate release process |
 
+#### One Object per Id per Stage
+
+**Basic rule: an `objectId` is unique within a `(scope, registry, stage)` triple — the stage
+is part of the identity, not just an attribute of the object.** A stage of a registry never
+holds two objects under the same id. For a schema registry the same rule reads as **one
+`nsUri` per stage**: a stage never holds two packages with the same namespace URI.
+
+Across stages the id is deliberately **not** unique. The same id existing in two stages of
+the same registry is normal and is not an error, because that is what the lifecycle
+produces:
+
+- A transition **copies** the object into the target stage unless the registry sets
+  `delete.after.transition=true` (the property default is `false`, and it is configured per
+  registry — see [Registry Configuration](#registry-configuration)). With a copying
+  registry a promoted object legitimately exists in every stage it has passed through,
+  under one id.
+- Starting a new revision of an already-released model means uploading that same id (and
+  that same `nsUri`) into `draft` again while the released copy stays in place.
+
+The convention that goes with the rule: **the same id in two stages denotes the same
+logical object at two points of its lifecycle.** The store cannot verify that convention —
+it is the contract between the Atlas and its clients.
+
+**What this means for versioning.** Because a stage holds one object per id and one package
+per `nsUri`, two variants of a model cannot coexist in the same stage. To keep several
+versions of a model side by side in the released stage, give them **different namespace
+URIs** — the version belongs in the `nsUri` (e.g. `http://example.com/billing/v1` and
+`http://example.com/billing/v2`), never in the `objectId`, which is opaque.
+
+How the API enforces the rule:
+
+| Operation | Behaviour when the id / `nsUri` is already taken in that stage |
+|-----------|---------------------------------------------------------------|
+| `POST`/`PUT /{scope}/registries/{registry}/stages/{stage}/{objectId}` | `409 Conflict`, unless `?override=true` — which updates the object that is there |
+| `POST`/`PUT /{scope}/schema/stages/{stage}?nsUri=...` | `409 Conflict`, unless `?overwrite=true` — which updates the package that is there |
+| `POST /{scope}/.../stages/{stage}/actions/transition` | **No conflict check.** The object is written into the target stage under its own id; if a *different* object occupies that id there, it is replaced |
+
+Two details of the conflict check:
+
+- It looks in the **target stage only** — not in the other stages of the scope. It does,
+  however, see objects inherited from ancestor final stages (see
+  [Hierarchical Visibility](#hierarchical-visibility)); those are read-only, so an
+  `override`/`overwrite` against an inherited object is rejected with `403 Forbidden`
+  rather than updating it.
+- The transition endpoint has no such guard and no override flag. In practice this only
+  matters for registries with **client-supplied ids**: promote deliberately there, and
+  check the target stage first if two of your objects could ever share an id. Schema
+  packages are unaffected in practice — their id is a server-assigned UUID that a
+  transition carries along unchanged.
+
 ### Hierarchical Visibility
 
 Child scopes can see objects from parent scopes' **final stages**:
@@ -215,7 +270,7 @@ Child scopes can see objects from parent scopes' **final stages**:
 - **Schema registries** (`schema.registry=true`) additionally include system schemas from the atlas scope's `atlas-schema-registry` when listing objects in their final stage. This ensures that EPackages from generated code or OSGi bundles are visible to all schema registries without requiring explicit upload
 
 **Write-time uniqueness** (for schemas):
-- When creating a schema, the `nsUri` must be unique across the entire visibility chain (local scope all stages + all ancestor final stages)
+- When creating a schema, the `nsUri` must be unique within the **target stage**, and it must not collide with a package inherited from an ancestor final stage (an inherited package is read-only, so it cannot be overwritten either). Other stages of the local scope are not consulted — see [One Object per Id per Stage](#one-object-per-id-per-stage)
 
 **Read-time fallback** (for lookups by ID):
 - If an object is not found in the local scope/stage, the system searches parent final stages recursively
@@ -316,6 +371,11 @@ curl -X POST "http://localhost:8080/rest/my-tenant/schema/stages/draft/actions/t
   -H "Content-Type: application/json" \
   -d '{"objectId": "3f8a1c2e-9d4b-4f6a-8c1d-2e5b7a9c0d41", "targetStage": "release"}'
 ```
+
+A stage holds at most one package per namespace URI: uploading an `nsUri` that the target
+stage already has yields `409 Conflict` unless you pass `?overwrite=true`. The same `nsUri`
+may exist in several stages of the scope (that is what a promotion and a new draft revision
+produce) — see [One Object per Id per Stage](#one-object-per-id-per-stage).
 
 > Full endpoint documentation: [README-SchemaPackages.md](../org.eclipse.fennec.model.atlas.rest.application/README-SchemaPackages.md)
 
@@ -459,6 +519,11 @@ curl -X POST "http://localhost:8080/rest/my-tenant/registries/configurations/sta
 ```
 
 Objects are validated against the registry's configured schema (`root.eclass.uri`). If the object's EClass is not compatible, the request is rejected with `400 Bad Request`.
+
+The `objectId` here is client-supplied and must be unique within the stage you upload into;
+an id already taken in that stage yields `409 Conflict` unless you pass `?override=true`.
+The same id may exist in other stages of the registry — that is how a promoted object is
+represented — see [One Object per Id per Stage](#one-object-per-id-per-stage).
 
 > Full endpoint documentation: [README-ObjectStorage.md](../org.eclipse.fennec.model.atlas.rest.application/README-ObjectStorage.md)
 
@@ -708,7 +773,7 @@ export MODELATLAS_DEBUG_STACKTRACE=true
 | 304 | Not Modified (conditional GET with `If-None-Match` — content unchanged) |
 | 400 | Invalid request (bad scope, stage, parameters) |
 | 403 | Forbidden (read-only stage or parent object) |
-| 409 | Conflict (duplicate nsUri or objectId) |
+| 409 | Conflict (an `objectId` or `nsUri` already taken in the target stage — see [One Object per Id per Stage](#one-object-per-id-per-stage)) |
 | 412 | Precondition Failed (`If-Match` ETag mismatch — resource modified by another client) |
 | 415 | Unsupported media type |
 | 500 | Internal server error |

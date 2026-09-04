@@ -223,8 +223,12 @@ Stages are fully configurable per scope:
 Child scopes can access schemas from parent scopes' final stages:
 
 **Write-Time** (Creating schemas):
-- nsUri must be unique across visibility chain
-- Checks local scope (all stages) + parent final stages
+- nsUri must be free in the **target stage** — identity is scoped to a stage, so the same
+  nsUri may sit in `draft` and in `release` at once (that is what a promotion and a new
+  draft revision produce)
+- Checks the target stage of the local scope + parent final stages (inherited packages are
+  read-only, so `overwrite=true` against one gives `403 Forbidden`)
+- Other stages of the local scope are not consulted
 
 **Read-Time** (Retrieving schemas):
 - Searches local scope first
@@ -401,7 +405,7 @@ docker run -e MODELATLAS_DEBUG_STACKTRACE=true -p 8185:8185 modelatlas:latest
 | 400 Bad Request | Invalid request | Invalid parameters, malformed data |
 | 403 Forbidden | Operation not allowed | Stage is read-only, or schema from parent scope |
 | 404 Not Found | Resource not found | Scope, stage, or schema doesn't exist |
-| 409 Conflict | Resource already exists | nsUri already exists in visibility chain |
+| 409 Conflict | Resource already exists | nsUri already exists in the target stage (or is inherited from a parent final stage) |
 | 415 Unsupported Media Type | Invalid Content-Type | Unsupported format in request |
 | 500 Internal Server Error | Server error | Unexpected errors |
 
