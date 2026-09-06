@@ -47,6 +47,7 @@ import org.eclipse.fennec.model.atlas.mgmt.management.ObjectMetadata;
 import org.eclipse.fennec.model.atlas.scope.api.RegistryType;
 import org.eclipse.fennec.model.atlas.scope.api.ScopeApiFactory;
 import org.eclipse.fennec.model.atlas.scope.api.StageInfo;
+import org.eclipse.fennec.model.atlas.scope.api.StageOccupiedException;
 import org.eclipse.fennec.model.atlas.scope.api.StagePolicyException;
 import org.eclipse.fennec.model.atlas.wf.workflowapi.Registry;
 import org.eclipse.fennec.model.atlas.workflow.WorkflowConstants;
@@ -476,9 +477,11 @@ public class RegistryServiceImpl<T extends EObject> implements RegistryService<T
             boolean deleted = WorkflowServiceHelper
                     .getPromiseValue(storageService.deleteObject(scope, config.registry_name(), stage, objectId));
 
-            // Remove from registry
+            // Remove from registry. Addressed, because the same objectId may be held by
+            // another stage of this registry and that copy must keep its entry
+            // (issue #252).
             if (deleted) {
-                registryService.removeFromCache(objectId);
+                registryService.removeFromCache(scope, config.registry_name(), stage, objectId);
                 dispatch(ActionEvent.EXIT, newContext(scope, stage, metadata, null, null, ExitReason.DELETED, null, false));
             }
 
@@ -599,6 +602,8 @@ public class RegistryServiceImpl<T extends EObject> implements RegistryService<T
         if (object == null || metadata == null) {
             throw new IllegalArgumentException("Object not found in stage " + fromStage + ": " + objectId);
         }
+        requireTargetFree(scope, toStage, objectId, metadata);
+
         // Update metadata for new stage
         metadata.setLastChangeTime(Instant.now());
         metadata.setStage(toStage);
@@ -606,9 +611,11 @@ public class RegistryServiceImpl<T extends EObject> implements RegistryService<T
         // Store in target stage
         EObjectStorageService<T> targetStorage = storageFor(toStage);
 
-        // Delete from source stage (if configured). If the registry is shared though,
-        // this will cause to remove also the newly created metadata,
-        // so we have to do it before storing the object in the target stage
+        // Delete from source stage (if configured) BEFORE storing into the target
+        // stage, so the workflow observes EXIT(fromStage) before ENTER(toStage).
+        // The registry removal is addressed by (scope, registry, stage, objectId)
+        // since issue #252, so the order no longer matters for the shared registry
+        // cache - the source removal cannot take the target entry with it.
         if (config.delete_after_transition()) {
             WorkflowServiceHelper
                     .getPromiseValue(sourceStorage.deleteObject(scope, config.registry_name(), fromStage, objectId));
@@ -619,6 +626,80 @@ public class RegistryServiceImpl<T extends EObject> implements RegistryService<T
                 targetStorage.storeObject(scope, config.registry_name(), toStage, objectId, object, metadata));
         dispatch(ActionEvent.ENTER, newContext(scope, toStage, metadata, fromStage, null, null, null, false));
         return metadata;
+    }
+
+    /**
+     * Refuses a promotion that would overwrite a <em>different</em> object in the
+     * target stage.
+     *
+     * <p>
+     * An objectId is unique per stage, not across stages (issue #211), so a
+     * promotion regularly writes onto an id the target stage already holds -
+     * replacing an earlier revision of the same object is what a promotion is for.
+     * What must not pass silently is the other case: the id is held by an object
+     * the caller never named, which the store would otherwise overwrite without
+     * telling anyone.
+     * </p>
+     *
+     * @param scope    the scope being written
+     * @param toStage  the stage being promoted into
+     * @param objectId the id being written there
+     * @param source   the metadata of the object being promoted
+     * @throws StageOccupiedException if the target stage holds a different object
+     *                                under that id
+     */
+    private void requireTargetFree(String scope, String toStage, String objectId, ObjectMetadata source) {
+        ObjectMetadata occupant = WorkflowServiceHelper.getPromiseValue(
+                storageFor(toStage).retrieveMetadata(scope, config.registry_name(), toStage, objectId));
+        if (occupant == null) {
+            return;
+        }
+        String difference = describeDifference(source, occupant);
+        if (difference == null) {
+            return;
+        }
+        throw new StageOccupiedException(String.format(
+                "Cannot transition object %s into stage '%s' of registry '%s' in scope '%s': that stage already holds a different object under this id (%s). "
+                        + "Delete it from that stage first if it is meant to be replaced.",
+                objectId, toStage, config.registry_name(), scope, difference));
+    }
+
+    /**
+     * Tells whether the two metadata describe different objects, and how.
+     *
+     * <p>
+     * Compared are the signals both sides actually carry - the {@code nsUri}
+     * property, the object type, the object name. One that is missing on either
+     * side decides nothing: the convention behind the per-stage id rule is that the
+     * same id means the same logical object, so only a signal that is present on
+     * both sides and disagrees is evidence against it.
+     * </p>
+     *
+     * @return a description of the first difference found, or {@code null} when the
+     *         two look like the same logical object
+     */
+    private static String describeDifference(ObjectMetadata source, ObjectMetadata occupant) {
+        String difference = difference("nsUri", nsUriOf(source), nsUriOf(occupant));
+        if (difference == null) {
+            difference = difference("object type", source.getObjectType(), occupant.getObjectType());
+        }
+        if (difference == null) {
+            difference = difference("name", source.getObjectName(), occupant.getObjectName());
+        }
+        return difference;
+    }
+
+    private static String difference(String signal, String promoted, String held) {
+        if (promoted == null || held == null || promoted.equals(held)) {
+            return null;
+        }
+        return String.format("%s '%s' is held there, the promoted object's is '%s'", signal, held, promoted);
+    }
+
+    private static String nsUriOf(ObjectMetadata metadata) {
+        Object nsUri = metadata.getProperties() == null ? null
+                : metadata.getProperties().get(WorkflowConstants.NS_URI_METADATA_PROPERTY);
+        return nsUri == null ? null : nsUri.toString();
     }
 
     /*

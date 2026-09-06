@@ -26,8 +26,10 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.function.Predicate;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.stream.Stream;
 
 import org.eclipse.emf.ecore.EObject;
 import org.eclipse.fennec.model.atlas.management.lucene.registry.LuceneRegistryHelper;
@@ -35,6 +37,7 @@ import org.eclipse.fennec.model.atlas.mgmt.annotations.MacCapabilityConstants;
 import org.eclipse.fennec.model.atlas.mgmt.api.EObjectRegistryService;
 import org.eclipse.fennec.model.atlas.mgmt.management.ObjectMetadata;
 import org.eclipse.fennec.model.atlas.mgmt.management.ObjectStatus;
+import org.eclipse.fennec.model.atlas.mgmt.registry.RegistryAddress;
 import org.osgi.annotation.bundle.Capability;
 import org.osgi.service.component.annotations.Activate;
 import org.osgi.service.component.annotations.Component;
@@ -153,8 +156,13 @@ public class LuceneEObjectRegistryService<T extends EObject> implements EObjectR
     // Lucene infrastructure
     private LuceneRegistryHelper luceneHelper;
 
-    // In-memory cache for fast access
-    private final Map<String, ObjectMetadata> metadataCache = new ConcurrentHashMap<>();
+    // In-memory cache for fast access: objectId -> the copies of that object, one
+    // per (scope, registry, stage) location holding it. The same object id
+    // legitimately lives in two stages of one registry - a transition copies unless
+    // the registry sets delete.after.transition=true, and a new draft revision of a
+    // released model re-uploads the same id (issue #211) - so a cache keyed by
+    // object id alone would keep only the last one written (issue #252).
+    private final Map<String, Map<RegistryAddress, ObjectMetadata>> metadataCache = new ConcurrentHashMap<>();
 
     // Statistics tracking
     private final AtomicLong totalUpdates = new AtomicLong();
@@ -209,19 +217,38 @@ public class LuceneEObjectRegistryService<T extends EObject> implements EObjectR
                 + totalRemovals.get());
     }
 
+    /**
+     * {@inheritDoc}
+     *
+     * <p>
+     * An object id does not identify a single object across stages: when two
+     * stages of a registry hold the same id, this returns an arbitrary one of
+     * them. Callers that know the location must use
+     * {@link #getMetadata(String, String, String, String)}.
+     * </p>
+     */
     @Override
     public Optional<ObjectMetadata> getMetadata(String objectId) {
         requireNonNull(objectId, "Object ID cannot be null");
 
         // Fast O(1) cache lookup
-        ObjectMetadata cached = metadataCache.get(objectId);
-        if (cached != null) {
-            logDebug("Cache hit for object: " + objectId);
-            return Optional.of(cached);
-        }
+        Optional<ObjectMetadata> cached = copiesOf(objectId).values().stream().findFirst();
+        logDebug((cached.isPresent() ? "Cache hit for object: " : "Cache miss for object: ") + objectId);
+        return cached;
+    }
 
-        logDebug("Cache miss for object: " + objectId);
-        return Optional.empty();
+    /**
+     * Returns the metadata of one addressed object, telling the copies the same
+     * object id has in other stages apart.
+     */
+    @Override
+    public Optional<ObjectMetadata> getMetadata(String scope, String registry, String stage, String objectId) {
+        requireNonNull(objectId, "Object ID cannot be null");
+
+        RegistryAddress address = new RegistryAddress(scope, registry, stage, objectId);
+        ObjectMetadata cached = copiesOf(objectId).get(address);
+        logDebug((cached != null ? "Cache hit for object: " : "Cache miss for object: ") + address);
+        return Optional.ofNullable(cached);
     }
 
     @Override
@@ -240,8 +267,9 @@ public class LuceneEObjectRegistryService<T extends EObject> implements EObjectR
                 enhanceMetadataWithStorageBackend(metadata);
             }
 
-            // Update in-memory cache using objectId as key
-            metadataCache.put(objectId, metadata);
+            // Update in-memory cache, addressed by objectId within its location
+            metadataCache.computeIfAbsent(objectId, id -> new ConcurrentHashMap<>())
+                    .put(RegistryAddress.of(objectId, metadata), metadata);
             totalUpdates.incrementAndGet();
 
             // Update Lucene index
@@ -260,14 +288,25 @@ public class LuceneEObjectRegistryService<T extends EObject> implements EObjectR
         }
     }
 
+    /**
+     * {@inheritDoc}
+     *
+     * <p>
+     * This drops the object in <em>every</em> stage holding it. Callers that
+     * delete one stage's copy must use
+     * {@link #removeFromCache(String, String, String, String)}, or the surviving
+     * copy would silently disappear from the listings of the stage that still
+     * stores it.
+     * </p>
+     */
     @Override
     public void removeFromCache(String objectId) {
         requireNonNull(objectId, "Object ID cannot be null");
 
         try {
             // Remove from in-memory cache
-            ObjectMetadata removed = metadataCache.remove(objectId);
-            if (removed != null) {
+            Map<RegistryAddress, ObjectMetadata> removed = metadataCache.remove(objectId);
+            if (removed != null && !removed.isEmpty()) {
                 totalRemovals.incrementAndGet();
             }
 
@@ -287,6 +326,43 @@ public class LuceneEObjectRegistryService<T extends EObject> implements EObjectR
         }
     }
 
+    /**
+     * Removes one addressed object from cache and index, leaving the copies the
+     * same object id has in other stages in place.
+     */
+    @Override
+    public void removeFromCache(String scope, String registry, String stage, String objectId) {
+        requireNonNull(objectId, "Object ID cannot be null");
+
+        RegistryAddress address = new RegistryAddress(scope, registry, stage, objectId);
+        try {
+            // Remove from in-memory cache, dropping the id entirely once its last
+            // location is gone
+            ObjectMetadata[] removed = new ObjectMetadata[1];
+            metadataCache.computeIfPresent(objectId, (id, copies) -> {
+                removed[0] = copies.remove(address);
+                return copies.isEmpty() ? null : copies;
+            });
+            if (removed[0] != null) {
+                totalRemovals.incrementAndGet();
+            }
+
+            // Remove from Lucene index
+            try {
+                luceneHelper.removeFromIndex(address);
+                logDebug("Removed from Lucene index: " + address);
+            } catch (Exception e) {
+                LOGGER.log(Level.WARNING, "Failed to remove from Lucene index: " + address, e);
+            }
+
+            logDebug("Removed from cache: " + address + " (total removals: " + totalRemovals.get() + ")");
+
+        } catch (Exception e) {
+            LOGGER.log(Level.SEVERE, "Error removing from shared registry cache: " + address, e);
+            throw new RuntimeException("Failed to remove from shared registry", e);
+        }
+    }
+
     @Override
     public List<ObjectMetadata> findByStatus(ObjectStatus status) {
         requireNonNull(status, "Status cannot be null");
@@ -294,7 +370,8 @@ public class LuceneEObjectRegistryService<T extends EObject> implements EObjectR
         try {
             // Use Lucene for efficient status-based search
             List<String> objectIds = luceneHelper.findByStatus(status);
-            List<ObjectMetadata> luceneResults = loadMetadataList(objectIds);
+            List<ObjectMetadata> luceneResults = loadMetadataList(objectIds,
+                    metadata -> status.equals(metadata.getStatus()));
 
             // If Lucene returns results or cache is empty, use Lucene results
             if (!luceneResults.isEmpty() || metadataCache.isEmpty()) {
@@ -309,11 +386,11 @@ public class LuceneEObjectRegistryService<T extends EObject> implements EObjectR
         }
 
         // Fallback to in-memory cache scan
-        return metadataCache.values().stream().filter(metadata -> status.equals(metadata.getStatus())).toList();
+        return allMetadata().filter(metadata -> status.equals(metadata.getStatus())).toList();
     }
 
     public List<ObjectMetadata> getAllMetadata() {
-        return List.copyOf(metadataCache.values());
+        return allMetadata().toList();
     }
 
     // === Enhanced Cross-Storage Query Methods ===
@@ -331,12 +408,12 @@ public class LuceneEObjectRegistryService<T extends EObject> implements EObjectR
         try {
             // Search in properties for storage.backend key
             List<String> objectIds = luceneHelper.findByStorageBackend(backend);
-            return loadMetadataList(objectIds);
+            return loadMetadataList(objectIds, metadata -> backend.equals(extractStorageBackend(metadata)));
         } catch (Exception e) {
             LOGGER.log(Level.SEVERE, "Error in Lucene search by storage backend: " + backend, e);
         }
         // Fallback to cache scan
-        return metadataCache.values().stream().filter(metadata -> backend.equals(extractStorageBackend(metadata)))
+        return allMetadata().filter(metadata -> backend.equals(extractStorageBackend(metadata)))
                 .toList();
     }
 
@@ -353,12 +430,13 @@ public class LuceneEObjectRegistryService<T extends EObject> implements EObjectR
 
         try {
             List<String> objectIds = luceneHelper.findByStorageBackendAndStage(backend, stage);
-            return loadMetadataList(objectIds);
+            return loadMetadataList(objectIds, metadata -> backend.equals(extractStorageBackend(metadata))
+                    && stage.equals(metadata.getStage()));
         } catch (Exception e) {
             LOGGER.log(Level.SEVERE, "Error in Lucene search by backend and role: " + backend + ", " + stage, e);
         }
         // Fallback to cache scan
-        return metadataCache.values().stream().filter(
+        return allMetadata().filter(
                 metadata -> backend.equals(extractStorageBackend(metadata)) && stage.equals(metadata.getStage()))
                 .toList();
     }
@@ -369,7 +447,7 @@ public class LuceneEObjectRegistryService<T extends EObject> implements EObjectR
      * @return map with storage identifiers as keys and object counts as values
      */
     public Map<String, Long> getStorageDistribution() {
-        return metadataCache.values().stream().collect(java.util.stream.Collectors
+        return allMetadata().collect(java.util.stream.Collectors
                 .groupingBy(metadata -> createStorageIdentifier(metadata), java.util.stream.Collectors.counting()));
     }
 
@@ -379,7 +457,7 @@ public class LuceneEObjectRegistryService<T extends EObject> implements EObjectR
             Map<String, Object> stats = new ConcurrentHashMap<>();
 
             // Basic statistics
-            stats.put("totalObjects", (long) metadataCache.size());
+            stats.put("totalObjects", allMetadata().count());
             stats.put("totalUpdates", totalUpdates.get());
             stats.put("totalRemovals", totalRemovals.get());
             stats.put("lastStatsReset", lastStatsReset);
@@ -388,7 +466,7 @@ public class LuceneEObjectRegistryService<T extends EObject> implements EObjectR
             stats.put("registryWorkspace", config.registry_workspace_folder());
 
             // Status distribution
-            Map<String, Long> statusCounts = metadataCache.values().stream()
+            Map<String, Long> statusCounts = allMetadata()
                     .collect(java.util.stream.Collectors.groupingBy(
                             metadata -> metadata.getStatus() != null ? metadata.getStatus().getLiteral() : "unknown",
                             java.util.stream.Collectors.counting()));
@@ -396,7 +474,7 @@ public class LuceneEObjectRegistryService<T extends EObject> implements EObjectR
 
             // Storage backend distribution (if tracking enabled)
             if (config.storage_backend_tracking()) {
-                Map<String, Long> backendCounts = metadataCache.values().stream()
+                Map<String, Long> backendCounts = allMetadata()
                         .collect(java.util.stream.Collectors.groupingBy(metadata -> extractStorageBackend(metadata),
                                 java.util.stream.Collectors.counting()));
                 stats.put("storageBackendDistribution", backendCounts);
@@ -433,7 +511,8 @@ public class LuceneEObjectRegistryService<T extends EObject> implements EObjectR
         try {
             // Use Lucene for efficient search
             List<String> objectIds = luceneHelper.findByScopeAndStage(scope, stage);
-            List<ObjectMetadata> luceneResults = loadMetadataList(objectIds);
+            List<ObjectMetadata> luceneResults = loadMetadataList(objectIds,
+                    metadata -> scope.equals(metadata.getScope()) && stage.equals(metadata.getStage()));
 
             // If Lucene returns results or cache is empty, use Lucene results
             if (!luceneResults.isEmpty() || metadataCache.isEmpty()) {
@@ -449,7 +528,7 @@ public class LuceneEObjectRegistryService<T extends EObject> implements EObjectR
             // Fall back to cache scan
         }
         // Fallback to in-memory cache scan
-        return metadataCache.values().stream()
+        return allMetadata()
                 .filter(metadata -> stage.equals(metadata.getStage()) && scope.equals(metadata.getScope())).toList();
     }
 
@@ -514,7 +593,51 @@ public class LuceneEObjectRegistryService<T extends EObject> implements EObjectR
     }
 
     private List<ObjectMetadata> loadMetadataList(List<String> objectIds) {
-        return objectIds.stream().map(metadataCache::get).filter(metadata -> metadata != null).toList();
+        return loadMetadataList(objectIds, metadata -> true);
+    }
+
+    /**
+     * Resolves the ids an index search returned to metadata.
+     *
+     * <p>
+     * A hit carries an object id only, and one id may be held by several stages,
+     * so the caller's own criteria are re-applied here: without that a stage
+     * listing would also pick up the copies the same id has in the other stages.
+     * </p>
+     *
+     * @param objectIds the ids the index matched
+     * @param filter    the criteria the search was made with
+     * @return the matching metadata
+     */
+    private List<ObjectMetadata> loadMetadataList(List<String> objectIds, Predicate<ObjectMetadata> filter) {
+        return objectIds.stream().distinct().flatMap(objectId -> copiesOf(objectId).values().stream()).filter(filter)
+                .toList();
+    }
+
+    /**
+     * Returns every copy of the given object id, keyed by the location holding it.
+     */
+    private Map<RegistryAddress, ObjectMetadata> copiesOf(String objectId) {
+        return metadataCache.getOrDefault(objectId, Map.of());
+    }
+
+    /** Every cached object, in every location holding it. */
+    private Stream<ObjectMetadata> allMetadata() {
+        return metadataCache.values().stream().flatMap(copies -> copies.values().stream());
+    }
+
+    /**
+     * Applies the name filter of the {@code ...AndName} queries: an exact match,
+     * or a substring match when the pattern contains a wildcard.
+     */
+    private static boolean nameMatches(String namePattern, ObjectMetadata metadata) {
+        if (metadata.getObjectName() == null) {
+            return false;
+        }
+        if (!namePattern.contains("*")) {
+            return namePattern.equals(metadata.getObjectName());
+        }
+        return metadata.getObjectName().contains(namePattern.replaceAll("\\*", ""));
     }
 
     // New interface methods for objectName and role queries
@@ -526,7 +649,8 @@ public class LuceneEObjectRegistryService<T extends EObject> implements EObjectR
         try {
             // Use Lucene for efficient objectName search
             List<String> objectIds = luceneHelper.findByObjectName(objectName);
-            List<ObjectMetadata> luceneResults = loadMetadataList(objectIds);
+            List<ObjectMetadata> luceneResults = loadMetadataList(objectIds,
+                    metadata -> nameMatches(objectName, metadata));
 
             // If Lucene returns results or cache is empty, use Lucene results
             if (!luceneResults.isEmpty() || metadataCache.isEmpty()) {
@@ -540,7 +664,7 @@ public class LuceneEObjectRegistryService<T extends EObject> implements EObjectR
             // Fall back to cache scan
         }
         // Fallback to in-memory cache scan
-        return metadataCache.values().stream().filter(metadata -> objectName.equals(metadata.getObjectName())).toList();
+        return allMetadata().filter(metadata -> objectName.equals(metadata.getObjectName())).toList();
     }
 
     @Override
@@ -553,9 +677,11 @@ public class LuceneEObjectRegistryService<T extends EObject> implements EObjectR
             List<String> objectIds = luceneHelper.findByObjectNameAndStage(objectName, stage).map(List::of)
                     .orElse(List.of());
             if (!objectIds.isEmpty()) {
-                ObjectMetadata metadata = metadataCache.get(objectIds.get(0));
-                if (metadata != null) {
-                    return Optional.of(metadata);
+                Optional<ObjectMetadata> metadata = loadMetadataList(objectIds,
+                        candidate -> objectName.equals(candidate.getObjectName())
+                                && stage.equals(candidate.getStage())).stream().findFirst();
+                if (metadata.isPresent()) {
+                    return metadata;
                 }
             }
 
@@ -573,7 +699,7 @@ public class LuceneEObjectRegistryService<T extends EObject> implements EObjectR
             // Fall back to cache scan
         }
         // Fallback to in-memory cache scan
-        return metadataCache.values().stream()
+        return allMetadata()
                 .filter(metadata -> objectName.equals(metadata.getObjectName()) && stage.equals(metadata.getStage()))
                 .findFirst();
 
@@ -593,7 +719,7 @@ public class LuceneEObjectRegistryService<T extends EObject> implements EObjectR
         try {
             // Simple pattern matching - can be enhanced later
             String regex = versionPattern.replace("*", ".*");
-            return metadataCache.values().stream()
+            return allMetadata()
                     .filter(metadata -> metadata.getVersion() != null && metadata.getVersion().matches(regex)).toList();
         } catch (Exception e) {
             // Handle malformed regex patterns gracefully
@@ -606,14 +732,14 @@ public class LuceneEObjectRegistryService<T extends EObject> implements EObjectR
     public List<ObjectMetadata> findByFingerprint(String fingerprint) {
         requireNonNull(fingerprint, "Fingerprint cannot be null");
 
-        return metadataCache.values().stream().filter(metadata -> fingerprint.equals(metadata.getFingerprint())).toList();
+        return allMetadata().filter(metadata -> fingerprint.equals(metadata.getFingerprint())).toList();
     }
 
     @Override
     public List<ObjectMetadata> findByObjectType(String objectType) {
         requireNonNull(objectType, "Object type cannot be null");
 
-        return metadataCache.values().stream().filter(metadata -> objectType.equals(metadata.getObjectType())).toList();
+        return allMetadata().filter(metadata -> objectType.equals(metadata.getObjectType())).toList();
     }
 
     @Override
@@ -621,7 +747,7 @@ public class LuceneEObjectRegistryService<T extends EObject> implements EObjectR
         requireNonNull(status, "Status cannot be null");
         requireNonNull(objectType, "Object type cannot be null");
 
-        return metadataCache.values().stream()
+        return allMetadata()
                 .filter(metadata -> status.equals(metadata.getStatus()) && objectType.equals(metadata.getObjectType()))
                 .toList();
     }
@@ -630,7 +756,7 @@ public class LuceneEObjectRegistryService<T extends EObject> implements EObjectR
     public List<ObjectMetadata> findRecentlyModified(Instant sinceTime, int maxResults) {
         requireNonNull(sinceTime, "Since time cannot be null");
 
-        return metadataCache.values().stream()
+        return allMetadata()
                 .filter(metadata -> metadata.getLastChangeTime() != null
                         && metadata.getLastChangeTime().isAfter(sinceTime))
                 .sorted((a, b) -> b.getLastChangeTime().compareTo(a.getLastChangeTime())).limit(maxResults).toList();
@@ -641,7 +767,7 @@ public class LuceneEObjectRegistryService<T extends EObject> implements EObjectR
         requireNonNull(version, "Version cannot be null");
 
         // Simple implementation - can be enhanced with Lucene later
-        return metadataCache.values().stream().filter(metadata -> version.equals(metadata.getVersion())).toList();
+        return allMetadata().filter(metadata -> version.equals(metadata.getVersion())).toList();
     }
 
     private void logDebug(String message) {
@@ -672,7 +798,9 @@ public class LuceneEObjectRegistryService<T extends EObject> implements EObjectR
             // Use Lucene for efficient objectName and role search; the name may be a
             // wildcard pattern, which the helper tells apart from an exact name
             List<String> objectIds = luceneHelper.findByScopeStageAndName(scope, stage, objectName);
-            List<ObjectMetadata> luceneResults = loadMetadataList(objectIds);
+            List<ObjectMetadata> luceneResults = loadMetadataList(objectIds,
+                    metadata -> scope.equals(metadata.getScope()) && stage.equals(metadata.getStage())
+                            && nameMatches(objectName, metadata));
             // If Lucene returns results or cache is empty, use Lucene results
             if (!luceneResults.isEmpty() || metadataCache.isEmpty()) {
                 return luceneResults;
@@ -691,7 +819,7 @@ public class LuceneEObjectRegistryService<T extends EObject> implements EObjectR
         // name can also contain * for wildcard search
         String nameFilter = objectName.contains("*") ? objectName.replaceAll("\\*", "") : objectName;
         boolean isExact = !objectName.contains("*");
-        return metadataCache.values().stream()
+        return allMetadata()
                 .filter(metadata -> stage.equals(metadata.getStage()) && scope.equals(metadata.getScope())
                         && (isExact ? nameFilter.equals(metadata.getObjectName())
                                 : metadata.getObjectName().contains(nameFilter)))
@@ -714,7 +842,9 @@ public class LuceneEObjectRegistryService<T extends EObject> implements EObjectR
         try {
             // Use Lucene for efficient search
             List<String> objectIds = luceneHelper.findByScopeRegistryAndStage(scope, registry, stage);
-            List<ObjectMetadata> luceneResults = loadMetadataList(objectIds);
+            List<ObjectMetadata> luceneResults = loadMetadataList(objectIds,
+                    metadata -> scope.equals(metadata.getScope()) && registry.equals(metadata.getRegistry())
+                            && stage.equals(metadata.getStage()));
 
             // If Lucene returns results or cache is empty, use Lucene results
             if (!luceneResults.isEmpty() || metadataCache.isEmpty()) {
@@ -731,7 +861,7 @@ public class LuceneEObjectRegistryService<T extends EObject> implements EObjectR
             // Fall back to cache scan
         }
         // Fallback to in-memory cache scan
-        return metadataCache.values().stream().filter(metadata -> stage.equals(metadata.getStage())
+        return allMetadata().filter(metadata -> stage.equals(metadata.getStage())
                 && scope.equals(metadata.getScope()) && registry.equals(metadata.getRegistry())).toList();
     }
 
@@ -747,7 +877,9 @@ public class LuceneEObjectRegistryService<T extends EObject> implements EObjectR
             // Use Lucene for efficient objectName and role search; the name may be a
             // wildcard pattern, which the helper tells apart from an exact name
             List<String> objectIds = luceneHelper.findByScopeRegistryStageAndName(scope, registry, stage, objectName);
-            List<ObjectMetadata> luceneResults = loadMetadataList(objectIds);
+            List<ObjectMetadata> luceneResults = loadMetadataList(objectIds,
+                    metadata -> scope.equals(metadata.getScope()) && registry.equals(metadata.getRegistry())
+                            && stage.equals(metadata.getStage()) && nameMatches(objectName, metadata));
             // If Lucene returns results or cache is empty, use Lucene results
             if (!luceneResults.isEmpty() || metadataCache.isEmpty()) {
                 return luceneResults;
@@ -770,12 +902,12 @@ public class LuceneEObjectRegistryService<T extends EObject> implements EObjectR
         boolean isExact = !objectName.contains("*");
         String nameFilter = objectName.contains("*") ? objectName.replaceAll("\\*", "") : objectName;
         if (isExact) {
-            return metadataCache.values().stream()
+            return allMetadata()
                     .filter(metadata -> stage.equals(metadata.getStage()) && scope.equals(metadata.getScope())
                             && registry.equals(metadata.getRegistry()) && nameFilter.equals(metadata.getObjectName()))
                     .toList();
         } else {
-            return metadataCache.values().stream()
+            return allMetadata()
                     .filter(metadata -> stage.equals(metadata.getStage()) && scope.equals(metadata.getScope())
                             && registry.equals(metadata.getRegistry()) && metadata.getObjectName().contains(nameFilter))
                     .toList();
@@ -791,7 +923,7 @@ public class LuceneEObjectRegistryService<T extends EObject> implements EObjectR
 	public Optional<ObjectMetadata> findByGenerationTriggerFingerprint(String fingerprint) {
 		requireNonNull(fingerprint, "Fingerprint cannot be null");
 
-        return metadataCache.values().stream()
+        return allMetadata()
                 .filter(metadata -> fingerprint.equals(metadata.getGenerationTriggerFingerprint())).findFirst();
 	}
 

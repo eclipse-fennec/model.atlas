@@ -492,9 +492,11 @@ public abstract class AbstractEObjectStorageService implements EObjectStorageSer
             try {
                 boolean deleted = storageHelper.deleteObject(scope, registry, stage, objectId);
 
-                // Remove from registry cache if deletion was successful
+                // Remove from registry cache if deletion was successful. The removal is
+                // addressed: the same objectId may be held by another stage of this
+                // registry, and that copy keeps its registry entry (issue #252).
                 if (deleted && registryService != null) {
-                    registryService.removeFromCache(objectId);
+                    registryService.removeFromCache(scope, registry, stage, objectId);
                 }
 
                 LOGGER.info("Deleted object with ID: " + objectId + " - " + deleted);

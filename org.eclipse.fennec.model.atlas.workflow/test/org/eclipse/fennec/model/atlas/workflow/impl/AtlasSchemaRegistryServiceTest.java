@@ -225,19 +225,22 @@ public class AtlasSchemaRegistryServiceTest {
 			String objectId = "test-id";
 			ObjectMetadata expectedMetadata = ManagementFactory.eINSTANCE.createObjectMetadata();
 			expectedMetadata.setObjectId(objectId);
-			when(registryService.getMetadata(objectId)).thenReturn(Optional.of(expectedMetadata));
+			when(registryService.getMetadata(WorkflowConstants.ATLAS_SCOPE_NAME, WorkflowConstants.ATLAS_SCHEMA_REGISTRY_NAME,
+					WorkflowConstants.ATLAS_SCHEMA_REGISTRY_STAGE_NAME, objectId)).thenReturn(Optional.of(expectedMetadata));
 
 			ObjectMetadata result = service.getMetadataFromFinalStage("atlas", objectId);
 
 			assertNotNull(result);
 			assertEquals(objectId, result.getObjectId());
-			verify(registryService).getMetadata(objectId);
+			verify(registryService).getMetadata(WorkflowConstants.ATLAS_SCOPE_NAME, WorkflowConstants.ATLAS_SCHEMA_REGISTRY_NAME,
+					WorkflowConstants.ATLAS_SCHEMA_REGISTRY_STAGE_NAME, objectId);
 		}
 
 		@Test
 		@DisplayName("Should return null when metadata not found")
 		void shouldReturnNullWhenMetadataNotFound() {
-			when(registryService.getMetadata("missing-id")).thenReturn(Optional.empty());
+			when(registryService.getMetadata(WorkflowConstants.ATLAS_SCOPE_NAME, WorkflowConstants.ATLAS_SCHEMA_REGISTRY_NAME,
+					WorkflowConstants.ATLAS_SCHEMA_REGISTRY_STAGE_NAME, "missing-id")).thenReturn(Optional.empty());
 
 			ObjectMetadata result = service.getMetadataFromFinalStage("atlas", "missing-id");
 
@@ -249,12 +252,14 @@ public class AtlasSchemaRegistryServiceTest {
 		void shouldDelegateGetMetadataFromStageToFinalStage() {
 			String objectId = "test-id";
 			ObjectMetadata expectedMetadata = ManagementFactory.eINSTANCE.createObjectMetadata();
-			when(registryService.getMetadata(objectId)).thenReturn(Optional.of(expectedMetadata));
+			when(registryService.getMetadata(WorkflowConstants.ATLAS_SCOPE_NAME, WorkflowConstants.ATLAS_SCHEMA_REGISTRY_NAME,
+					WorkflowConstants.ATLAS_SCHEMA_REGISTRY_STAGE_NAME, objectId)).thenReturn(Optional.of(expectedMetadata));
 
 			ObjectMetadata result = service.getMetadataFromStage("atlas", "released", objectId);
 
 			assertNotNull(result);
-			verify(registryService).getMetadata(objectId);
+			verify(registryService).getMetadata(WorkflowConstants.ATLAS_SCOPE_NAME, WorkflowConstants.ATLAS_SCHEMA_REGISTRY_NAME,
+					WorkflowConstants.ATLAS_SCHEMA_REGISTRY_STAGE_NAME, objectId);
 		}
 
 		@Test
@@ -363,7 +368,8 @@ public class AtlasSchemaRegistryServiceTest {
 			service.unbindStaticEPackageRegistry(mockStaticRegistry);
 
 			String expectedId = new String(Base64.getUrlEncoder().encode("http://test/package".getBytes()));
-			verify(registryService).removeFromCache(expectedId);
+			verify(registryService).removeFromCache(WorkflowConstants.ATLAS_SCOPE_NAME, WorkflowConstants.ATLAS_SCHEMA_REGISTRY_NAME,
+					WorkflowConstants.ATLAS_SCHEMA_REGISTRY_STAGE_NAME, expectedId);
 		}
 
 		@Test

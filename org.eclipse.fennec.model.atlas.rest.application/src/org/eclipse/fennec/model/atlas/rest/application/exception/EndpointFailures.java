@@ -15,6 +15,7 @@ package org.eclipse.fennec.model.atlas.rest.application.exception;
 
 import java.lang.reflect.InvocationTargetException;
 
+import org.eclipse.fennec.model.atlas.scope.api.StageOccupiedException;
 import org.eclipse.fennec.model.atlas.scope.api.StagePolicyException;
 
 import jakarta.ws.rs.WebApplicationException;
@@ -63,7 +64,9 @@ public final class EndpointFailures {
      * about storage layout or configuration.
      * A {@link StagePolicyException} anywhere in that chain becomes a 403 carrying its
      * message: the registry refused the operation, and the client needs to read that as
-     * a rule it cannot retry past rather than as a fault.
+     * a rule it cannot retry past rather than as a fault. A {@link StageOccupiedException}
+     * becomes a <strong>409</strong> the same way: the stage already holds a different
+     * object under the id the request wanted to write.
      * </p>
      *
      * @param failure the exception an endpoint caught; never {@code null}
@@ -93,6 +96,13 @@ public final class EndpointFailures {
         StagePolicyException refusal = StagePolicyExceptionMapper.findInChain(cause);
         if (refusal != null) {
             return new WebApplicationException(refusal.getMessage(), refusal, Status.FORBIDDEN);
+        }
+        // A target address another object already holds is a collision with state, not a
+        // fault: it arrives wrapped for the same reason, and a 409 tells the client both
+        // what happened and that deleting the occupant is the way past it.
+        StageOccupiedException occupied = StageOccupiedExceptionMapper.findInChain(cause);
+        if (occupied != null) {
+            return new WebApplicationException(occupied.getMessage(), occupied, Status.CONFLICT);
         }
         return new WebApplicationException(cause, Status.INTERNAL_SERVER_ERROR);
     }

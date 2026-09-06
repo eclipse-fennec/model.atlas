@@ -24,6 +24,14 @@ import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
 
+import org.apache.lucene.analysis.standard.StandardAnalyzer;
+import org.apache.lucene.document.Document;
+import org.apache.lucene.document.Field;
+import org.apache.lucene.document.StringField;
+import org.apache.lucene.index.IndexWriter;
+import org.apache.lucene.index.IndexWriterConfig;
+import org.apache.lucene.store.Directory;
+import org.apache.lucene.store.FSDirectory;
 import org.eclipse.emf.ecore.resource.ResourceSet;
 import org.eclipse.emf.ecore.resource.impl.ResourceSetImpl;
 import org.eclipse.emf.ecore.xmi.impl.XMIResourceFactoryImpl;
@@ -592,6 +600,34 @@ class LuceneRegistryHelperTest {
         List<String> aiDraftResults = helper.searchObjectIds("stage:draft AND sourceChannel:AI_GENERATOR", 10);
         assertEquals(1, aiDraftResults.size());
         assertEquals("epackage-draft", aiDraftResults.get(0));
+    }
+
+    @Test
+    void testLegacyIndexIsDiscardedOnInitialize() throws Exception {
+        // An index written before the documents carried their full address: the
+        // stage-free identity can no longer be replaced by an update, so a fresh
+        // start is taken and the storage backends repopulate it (issue #252).
+        helper.close();
+
+        Path indexPath = tempDir.resolve(".lucene-index");
+        try (Directory directory = FSDirectory.open(indexPath);
+                IndexWriter writer = new IndexWriter(directory, new IndexWriterConfig(new StandardAnalyzer()))) {
+            Document legacy = new Document();
+            legacy.add(new StringField(LuceneRegistryHelper.FIELD_OBJECT_ID, "legacy-obj", Field.Store.YES));
+            legacy.add(new StringField(LuceneRegistryHelper.FIELD_STAGE, "draft", Field.Store.YES));
+            writer.addDocument(legacy);
+            writer.commit();
+        }
+
+        helper = new LuceneRegistryHelper(tempDir);
+        helper.initialize();
+
+        assertEquals(0, helper.getObjectCount(), "a legacy index should be cleared on initialize");
+
+        // and a freshly indexed object is addressed again
+        ObjectMetadata metadata = createTestMetadata("alice", "AI_GENERATOR", "EPackage", "draft");
+        helper.updateIndex("obj-current", metadata);
+        assertEquals(1, helper.getObjectCount());
     }
 
     /**

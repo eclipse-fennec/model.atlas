@@ -84,7 +84,8 @@ public class AtlasSchemaRegistryService implements RegistryService<EPackage> {
 	public void unbindStaticEPackageRegistry(EPackage.Registry staticPackageRegistry) {
 		staticPackageRegistry.values().stream().filter(v -> v instanceof EPackage).map(v -> (EPackage) v).forEach(ePackage -> {
 			String objectId = encodeObjectId(ePackage);
-			registry.removeFromCache(objectId);
+			registry.removeFromCache(WorkflowConstants.ATLAS_SCOPE_NAME, WorkflowConstants.ATLAS_SCHEMA_REGISTRY_NAME,
+					WorkflowConstants.ATLAS_SCHEMA_REGISTRY_STAGE_NAME, objectId);
 			ePackageIndex.remove(objectId);
 		});
 		this.staticPackageRegistry = null;
@@ -115,7 +116,12 @@ public class AtlasSchemaRegistryService implements RegistryService<EPackage> {
 	 */
 	@Override
 	public ObjectMetadata getMetadataFromFinalStage(String scope, String objectId) {
-		return registry.getMetadata(objectId).orElse(null);
+		// Addressed at this registry's own location: an objectId is unique per stage,
+		// and the shared registry holds the objects of every scope, registry and stage
+		// (issue #252). This registry's objects are the ones createMetadata() places
+		// at the atlas schema location.
+		return registry.getMetadata(WorkflowConstants.ATLAS_SCOPE_NAME, WorkflowConstants.ATLAS_SCHEMA_REGISTRY_NAME,
+				WorkflowConstants.ATLAS_SCHEMA_REGISTRY_STAGE_NAME, objectId).orElse(null);
 	}
 
 	/* 

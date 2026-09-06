@@ -38,7 +38,7 @@ import org.osgi.annotation.versioning.ProviderType;
  * @generated
  */
 @ProviderType
-@EPackage(uri = ManagementApiPackage.eNS_URI, fingerprint = "fp1:269b969e3d4ef2dd0660199b9219b472d16684736f7948c87c702ef78f6b411b", genModel = "/model/management-api.genmodel", genModelSourceLocations = {"model/management-api.genmodel","org.eclipse.fennec.model.atlas.management/model/management-api.genmodel"}, ecore = "/model/management-api.ecore", ecoreSourceLocations = "/model/management-api.ecore")
+@EPackage(uri = ManagementApiPackage.eNS_URI, fingerprint = "fp1:5ea32cfc0f2a69d41de511451d29c6f01b09a4ff0db88bd8b38f3ffa09b7350f", genModel = "/model/management-api.genmodel", genModelSourceLocations = {"model/management-api.genmodel","org.eclipse.fennec.model.atlas.management/model/management-api.genmodel"}, ecore = "/model/management-api.ecore", ecoreSourceLocations = "/model/management-api.ecore")
 public interface ManagementApiPackage extends org.eclipse.emf.ecore.EPackage {
 	/**
 	 * The package name.
@@ -428,13 +428,22 @@ public interface ManagementApiPackage extends org.eclipse.emf.ecore.EPackage {
 	int EOBJECT_REGISTRY_SERVICE___GET_METADATA__STRING = 0;
 
 	/**
+	 * The operation id for the '<em>Get Metadata</em>' operation.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 * @ordered
+	 */
+	int EOBJECT_REGISTRY_SERVICE___GET_METADATA__STRING_STRING_STRING_STRING = 1;
+
+	/**
 	 * The operation id for the '<em>Find By Object Name</em>' operation.
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
 	 * @generated
 	 * @ordered
 	 */
-	int EOBJECT_REGISTRY_SERVICE___FIND_BY_OBJECT_NAME__STRING = 1;
+	int EOBJECT_REGISTRY_SERVICE___FIND_BY_OBJECT_NAME__STRING = 2;
 
 	/**
 	 * The operation id for the '<em>Find By Object Name And Stage</em>' operation.
@@ -443,7 +452,7 @@ public interface ManagementApiPackage extends org.eclipse.emf.ecore.EPackage {
 	 * @generated
 	 * @ordered
 	 */
-	int EOBJECT_REGISTRY_SERVICE___FIND_BY_OBJECT_NAME_AND_STAGE__STRING_STRING = 2;
+	int EOBJECT_REGISTRY_SERVICE___FIND_BY_OBJECT_NAME_AND_STAGE__STRING_STRING = 3;
 
 	/**
 	 * The operation id for the '<em>Find By Status</em>' operation.
@@ -452,7 +461,7 @@ public interface ManagementApiPackage extends org.eclipse.emf.ecore.EPackage {
 	 * @generated
 	 * @ordered
 	 */
-	int EOBJECT_REGISTRY_SERVICE___FIND_BY_STATUS__OBJECTSTATUS = 3;
+	int EOBJECT_REGISTRY_SERVICE___FIND_BY_STATUS__OBJECTSTATUS = 4;
 
 	/**
 	 * The operation id for the '<em>Find Pending Approval</em>' operation.
@@ -461,7 +470,7 @@ public interface ManagementApiPackage extends org.eclipse.emf.ecore.EPackage {
 	 * @generated
 	 * @ordered
 	 */
-	int EOBJECT_REGISTRY_SERVICE___FIND_PENDING_APPROVAL = 4;
+	int EOBJECT_REGISTRY_SERVICE___FIND_PENDING_APPROVAL = 5;
 
 	/**
 	 * The operation id for the '<em>Find By Version</em>' operation.
@@ -470,7 +479,7 @@ public interface ManagementApiPackage extends org.eclipse.emf.ecore.EPackage {
 	 * @generated
 	 * @ordered
 	 */
-	int EOBJECT_REGISTRY_SERVICE___FIND_BY_VERSION__STRING = 5;
+	int EOBJECT_REGISTRY_SERVICE___FIND_BY_VERSION__STRING = 6;
 
 	/**
 	 * The operation id for the '<em>Find By Version Pattern</em>' operation.
@@ -479,7 +488,7 @@ public interface ManagementApiPackage extends org.eclipse.emf.ecore.EPackage {
 	 * @generated
 	 * @ordered
 	 */
-	int EOBJECT_REGISTRY_SERVICE___FIND_BY_VERSION_PATTERN__STRING = 6;
+	int EOBJECT_REGISTRY_SERVICE___FIND_BY_VERSION_PATTERN__STRING = 7;
 
 	/**
 	 * The operation id for the '<em>Find By Generation Trigger Fingerprint</em>' operation.
@@ -488,7 +497,7 @@ public interface ManagementApiPackage extends org.eclipse.emf.ecore.EPackage {
 	 * @generated
 	 * @ordered
 	 */
-	int EOBJECT_REGISTRY_SERVICE___FIND_BY_GENERATION_TRIGGER_FINGERPRINT__STRING = 7;
+	int EOBJECT_REGISTRY_SERVICE___FIND_BY_GENERATION_TRIGGER_FINGERPRINT__STRING = 8;
 
 	/**
 	 * The operation id for the '<em>Find By Object Type</em>' operation.
@@ -497,7 +506,7 @@ public interface ManagementApiPackage extends org.eclipse.emf.ecore.EPackage {
 	 * @generated
 	 * @ordered
 	 */
-	int EOBJECT_REGISTRY_SERVICE___FIND_BY_OBJECT_TYPE__STRING = 8;
+	int EOBJECT_REGISTRY_SERVICE___FIND_BY_OBJECT_TYPE__STRING = 9;
 
 	/**
 	 * The operation id for the '<em>Find By Status And Type</em>' operation.
@@ -506,7 +515,7 @@ public interface ManagementApiPackage extends org.eclipse.emf.ecore.EPackage {
 	 * @generated
 	 * @ordered
 	 */
-	int EOBJECT_REGISTRY_SERVICE___FIND_BY_STATUS_AND_TYPE__OBJECTSTATUS_STRING = 9;
+	int EOBJECT_REGISTRY_SERVICE___FIND_BY_STATUS_AND_TYPE__OBJECTSTATUS_STRING = 10;
 
 	/**
 	 * The operation id for the '<em>Find Recently Modified</em>' operation.
@@ -515,7 +524,7 @@ public interface ManagementApiPackage extends org.eclipse.emf.ecore.EPackage {
 	 * @generated
 	 * @ordered
 	 */
-	int EOBJECT_REGISTRY_SERVICE___FIND_RECENTLY_MODIFIED__INSTANT_INT = 10;
+	int EOBJECT_REGISTRY_SERVICE___FIND_RECENTLY_MODIFIED__INSTANT_INT = 11;
 
 	/**
 	 * The operation id for the '<em>Update Cache</em>' operation.
@@ -524,7 +533,7 @@ public interface ManagementApiPackage extends org.eclipse.emf.ecore.EPackage {
 	 * @generated
 	 * @ordered
 	 */
-	int EOBJECT_REGISTRY_SERVICE___UPDATE_CACHE__OBJECTMETADATA = 11;
+	int EOBJECT_REGISTRY_SERVICE___UPDATE_CACHE__OBJECTMETADATA = 12;
 
 	/**
 	 * The operation id for the '<em>Remove From Cache</em>' operation.
@@ -533,7 +542,16 @@ public interface ManagementApiPackage extends org.eclipse.emf.ecore.EPackage {
 	 * @generated
 	 * @ordered
 	 */
-	int EOBJECT_REGISTRY_SERVICE___REMOVE_FROM_CACHE__STRING = 12;
+	int EOBJECT_REGISTRY_SERVICE___REMOVE_FROM_CACHE__STRING = 13;
+
+	/**
+	 * The operation id for the '<em>Remove From Cache</em>' operation.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 * @ordered
+	 */
+	int EOBJECT_REGISTRY_SERVICE___REMOVE_FROM_CACHE__STRING_STRING_STRING_STRING = 14;
 
 	/**
 	 * The operation id for the '<em>Get Registry Statistics</em>' operation.
@@ -542,7 +560,7 @@ public interface ManagementApiPackage extends org.eclipse.emf.ecore.EPackage {
 	 * @generated
 	 * @ordered
 	 */
-	int EOBJECT_REGISTRY_SERVICE___GET_REGISTRY_STATISTICS = 13;
+	int EOBJECT_REGISTRY_SERVICE___GET_REGISTRY_STATISTICS = 15;
 
 	/**
 	 * The operation id for the '<em>Find By Scope And Stage</em>' operation.
@@ -551,7 +569,7 @@ public interface ManagementApiPackage extends org.eclipse.emf.ecore.EPackage {
 	 * @generated
 	 * @ordered
 	 */
-	int EOBJECT_REGISTRY_SERVICE___FIND_BY_SCOPE_AND_STAGE__STRING_STRING = 14;
+	int EOBJECT_REGISTRY_SERVICE___FIND_BY_SCOPE_AND_STAGE__STRING_STRING = 16;
 
 	/**
 	 * The operation id for the '<em>Find By Scope Stage And Name</em>' operation.
@@ -560,7 +578,7 @@ public interface ManagementApiPackage extends org.eclipse.emf.ecore.EPackage {
 	 * @generated
 	 * @ordered
 	 */
-	int EOBJECT_REGISTRY_SERVICE___FIND_BY_SCOPE_STAGE_AND_NAME__STRING_STRING_STRING = 15;
+	int EOBJECT_REGISTRY_SERVICE___FIND_BY_SCOPE_STAGE_AND_NAME__STRING_STRING_STRING = 17;
 
 	/**
 	 * The operation id for the '<em>Find By Scope Registry And Stage</em>' operation.
@@ -569,7 +587,7 @@ public interface ManagementApiPackage extends org.eclipse.emf.ecore.EPackage {
 	 * @generated
 	 * @ordered
 	 */
-	int EOBJECT_REGISTRY_SERVICE___FIND_BY_SCOPE_REGISTRY_AND_STAGE__STRING_STRING_STRING = 16;
+	int EOBJECT_REGISTRY_SERVICE___FIND_BY_SCOPE_REGISTRY_AND_STAGE__STRING_STRING_STRING = 18;
 
 	/**
 	 * The operation id for the '<em>Find By Scope Registry Stage And Name</em>' operation.
@@ -578,7 +596,7 @@ public interface ManagementApiPackage extends org.eclipse.emf.ecore.EPackage {
 	 * @generated
 	 * @ordered
 	 */
-	int EOBJECT_REGISTRY_SERVICE___FIND_BY_SCOPE_REGISTRY_STAGE_AND_NAME__STRING_STRING_STRING_STRING = 17;
+	int EOBJECT_REGISTRY_SERVICE___FIND_BY_SCOPE_REGISTRY_STAGE_AND_NAME__STRING_STRING_STRING_STRING = 19;
 
 	/**
 	 * The operation id for the '<em>Find By Fingerprint</em>' operation.
@@ -587,7 +605,7 @@ public interface ManagementApiPackage extends org.eclipse.emf.ecore.EPackage {
 	 * @generated
 	 * @ordered
 	 */
-	int EOBJECT_REGISTRY_SERVICE___FIND_BY_FINGERPRINT__STRING = 18;
+	int EOBJECT_REGISTRY_SERVICE___FIND_BY_FINGERPRINT__STRING = 20;
 
 	/**
 	 * The number of operations of the '<em>EObject Registry Service</em>' class.
@@ -596,7 +614,7 @@ public interface ManagementApiPackage extends org.eclipse.emf.ecore.EPackage {
 	 * @generated
 	 * @ordered
 	 */
-	int EOBJECT_REGISTRY_SERVICE_OPERATION_COUNT = 19;
+	int EOBJECT_REGISTRY_SERVICE_OPERATION_COUNT = 21;
 
 	/**
 	 * The meta object id for the '{@link org.eclipse.fennec.model.atlas.mgmt.api.StorageRegistry <em>Storage Registry</em>}' class.
@@ -993,6 +1011,16 @@ public interface ManagementApiPackage extends org.eclipse.emf.ecore.EPackage {
 	EOperation getEObjectRegistryService__GetMetadata__String();
 
 	/**
+	 * Returns the meta object for the '{@link org.eclipse.fennec.model.atlas.mgmt.api.EObjectRegistryService#getMetadata(java.lang.String, java.lang.String, java.lang.String, java.lang.String) <em>Get Metadata</em>}' operation.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @return the meta object for the '<em>Get Metadata</em>' operation.
+	 * @see org.eclipse.fennec.model.atlas.mgmt.api.EObjectRegistryService#getMetadata(java.lang.String, java.lang.String, java.lang.String, java.lang.String)
+	 * @generated
+	 */
+	EOperation getEObjectRegistryService__GetMetadata__String_String_String_String();
+
+	/**
 	 * Returns the meta object for the '{@link org.eclipse.fennec.model.atlas.mgmt.api.EObjectRegistryService#findByObjectName(java.lang.String) <em>Find By Object Name</em>}' operation.
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
@@ -1111,6 +1139,16 @@ public interface ManagementApiPackage extends org.eclipse.emf.ecore.EPackage {
 	 * @generated
 	 */
 	EOperation getEObjectRegistryService__RemoveFromCache__String();
+
+	/**
+	 * Returns the meta object for the '{@link org.eclipse.fennec.model.atlas.mgmt.api.EObjectRegistryService#removeFromCache(java.lang.String, java.lang.String, java.lang.String, java.lang.String) <em>Remove From Cache</em>}' operation.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @return the meta object for the '<em>Remove From Cache</em>' operation.
+	 * @see org.eclipse.fennec.model.atlas.mgmt.api.EObjectRegistryService#removeFromCache(java.lang.String, java.lang.String, java.lang.String, java.lang.String)
+	 * @generated
+	 */
+	EOperation getEObjectRegistryService__RemoveFromCache__String_String_String_String();
 
 	/**
 	 * Returns the meta object for the '{@link org.eclipse.fennec.model.atlas.mgmt.api.EObjectRegistryService#getRegistryStatistics() <em>Get Registry Statistics</em>}' operation.
@@ -1520,6 +1558,14 @@ public interface ManagementApiPackage extends org.eclipse.emf.ecore.EPackage {
 		EOperation EOBJECT_REGISTRY_SERVICE___GET_METADATA__STRING = eINSTANCE.getEObjectRegistryService__GetMetadata__String();
 
 		/**
+		 * The meta object literal for the '<em><b>Get Metadata</b></em>' operation.
+		 * <!-- begin-user-doc -->
+		 * <!-- end-user-doc -->
+		 * @generated
+		 */
+		EOperation EOBJECT_REGISTRY_SERVICE___GET_METADATA__STRING_STRING_STRING_STRING = eINSTANCE.getEObjectRegistryService__GetMetadata__String_String_String_String();
+
+		/**
 		 * The meta object literal for the '<em><b>Find By Object Name</b></em>' operation.
 		 * <!-- begin-user-doc -->
 		 * <!-- end-user-doc -->
@@ -1614,6 +1660,14 @@ public interface ManagementApiPackage extends org.eclipse.emf.ecore.EPackage {
 		 * @generated
 		 */
 		EOperation EOBJECT_REGISTRY_SERVICE___REMOVE_FROM_CACHE__STRING = eINSTANCE.getEObjectRegistryService__RemoveFromCache__String();
+
+		/**
+		 * The meta object literal for the '<em><b>Remove From Cache</b></em>' operation.
+		 * <!-- begin-user-doc -->
+		 * <!-- end-user-doc -->
+		 * @generated
+		 */
+		EOperation EOBJECT_REGISTRY_SERVICE___REMOVE_FROM_CACHE__STRING_STRING_STRING_STRING = eINSTANCE.getEObjectRegistryService__RemoveFromCache__String_String_String_String();
 
 		/**
 		 * The meta object literal for the '<em><b>Get Registry Statistics</b></em>' operation.

@@ -59,6 +59,17 @@ public interface EObjectRegistryService<T extends EObject> {
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
 	 * <!-- begin-model-doc -->
+	 * Retrieve the metadata of one addressed object. An objectId is unique per stage, not across stages: a transition copies unless the registry sets delete.after.transition=true, and a new draft revision of an already released model re-uploads the same id, so the same id may be held by two stages of one registry at once. Only the full address (scope, registry, stage, objectId) identifies a single object. Returns Optional.empty() if no object is stored at that address.
+	 * <!-- end-model-doc -->
+	 * @model dataType="org.eclipse.fennec.model.atlas.mgmt.management.Optional&lt;org.eclipse.fennec.model.atlas.mgmt.management.ObjectMetadata&gt;" required="true" scopeRequired="true" registryRequired="true" stageRequired="true" objectIdRequired="true"
+	 * @generated
+	 */
+	Optional<ObjectMetadata> getMetadata(String scope, String registry, String stage, String objectId);
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * <!-- begin-model-doc -->
 	 * Find all metadata instances for a logical object across all storage roles. Returns list of metadata for the same objectName in different roles (draft, approved, documentation).
 	 * <!-- end-model-doc -->
 	 * @model dataType="org.eclipse.fennec.model.atlas.mgmt.management.List&lt;org.eclipse.fennec.model.atlas.mgmt.management.ObjectMetadata&gt;" many="false" objectNameRequired="true"
@@ -180,12 +191,23 @@ public interface EObjectRegistryService<T extends EObject> {
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
 	 * <!-- begin-model-doc -->
-	 * Remove object from registry cache and Lucene index by unique objectId. Called by EObjectStorageService on delete operations to maintain consistency.
+	 * Remove an object from registry cache and index by objectId, in every stage holding it. Callers that delete one stage's copy must use the addressed variant instead, or the copies the same id has in other stages disappear from their listings while they are still stored.
 	 * <!-- end-model-doc -->
 	 * @model objectIdRequired="true"
 	 * @generated
 	 */
 	void removeFromCache(String objectId);
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * <!-- begin-model-doc -->
+	 * Remove one addressed object from registry cache and index, leaving the copies the same objectId has in other stages in place. An objectId is unique per stage, not across stages: a transition copies unless the registry sets delete.after.transition=true, and a new draft revision of an already released model re-uploads the same id, so the same id may be held by two stages of one registry at once. Only the full address (scope, registry, stage, objectId) identifies a single object. Called by EObjectStorageService on delete operations to maintain consistency.
+	 * <!-- end-model-doc -->
+	 * @model scopeRequired="true" registryRequired="true" stageRequired="true" objectIdRequired="true"
+	 * @generated
+	 */
+	void removeFromCache(String scope, String registry, String stage, String objectId);
 
 	/**
 	 * <!-- begin-user-doc -->

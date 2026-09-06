@@ -60,6 +60,7 @@ import org.eclipse.emf.ecore.resource.Resource;
 import org.eclipse.fennec.model.atlas.mgmt.management.ObjectMetadata;
 import org.eclipse.fennec.model.atlas.mgmt.management.ObjectStatus;
 import org.eclipse.fennec.model.atlas.mgmt.registry.AbstractRegistryHelper;
+import org.eclipse.fennec.model.atlas.mgmt.registry.RegistryAddress;
 
 /**
  * Lucene-based registry helper for fast metadata indexing and searching.
@@ -115,6 +116,13 @@ public class LuceneRegistryHelper extends AbstractRegistryHelper {
 
     // Lucene field names
     public static final String FIELD_OBJECT_ID = "objectId";
+    /**
+     * The document's identity: the object id together with the (scope, registry,
+     * stage) location holding it. The object id alone does not identify a document
+     * - the same id legitimately lives in two stages of one registry (issue #211,
+     * issue #252).
+     */
+    public static final String FIELD_REGISTRY_KEY = "registryKey";
     public static final String FIELD_UPLOAD_USER = "uploadUser";
     public static final String FIELD_UPLOAD_TIME = "uploadTime";
     public static final String FIELD_SOURCE_CHANNEL = "sourceChannel";
@@ -154,7 +162,7 @@ public class LuceneRegistryHelper extends AbstractRegistryHelper {
     private static final Set<String> EXACT_MATCH_FIELDS = Set.of(FIELD_UPLOAD_USER, FIELD_REVIEW_USER,
             FIELD_LAST_CHANGE_USER, FIELD_CONTENT_HASH, FIELD_GENERATION_TRIGGER_FINGERPRINT,
             FIELD_GOVERNANCE_DOCUMENTATION_ID, FIELD_STATUS, FIELD_OBJECT_REF, FIELD_OBJECT_METADATA_ID, FIELD_STAGE,
-            FIELD_SCOPE, FIELD_REGISTRY, FIELD_FINGERPRINT);
+            FIELD_SCOPE, FIELD_REGISTRY, FIELD_FINGERPRINT, FIELD_REGISTRY_KEY);
 
     /** Analyzed twins of the user fields, for the wildcard/fuzzy searches tests use. */
     private static final Set<String> ANALYZED_USER_FIELDS = Set.of(FIELD_UPLOAD_USER_TEXT, FIELD_REVIEW_USER_TEXT,
@@ -229,8 +237,57 @@ public class LuceneRegistryHelper extends AbstractRegistryHelper {
 
         // Initialize index if empty
         initializeIndex();
+        discardLegacyIndex();
 
         LOGGER.info("Initialized Lucene registry at: " + indexPath);
+    }
+
+    /**
+     * Clears an index that was written before documents carried
+     * {@link #FIELD_REGISTRY_KEY}.
+     *
+     * <p>
+     * A document is identified by the full address of its object since issue
+     * #252. A legacy document has no such field, so an update can no longer
+     * replace it and it would linger for the life of the index. The index is a
+     * cache of what the storage backends hold - every backend re-pushes its
+     * metadata when it comes up - so dropping it is cheap and the entries come
+     * back addressed.
+     * </p>
+     *
+     * <p>
+     * One document is enough to tell the two shapes apart: the field is written
+     * for every document, and this runs before this helper has written any, so an
+     * index is either entirely legacy or entirely current.
+     * </p>
+     *
+     * @throws IOException if the index cannot be read or cleared
+     */
+    private void discardLegacyIndex() throws IOException {
+        indexLock.writeLock().lock();
+        try {
+            IndexSearcher searcher = searcherManager.acquire();
+            boolean legacy;
+            try {
+                TopDocs topDocs = searcher.search(new MatchAllDocsQuery(), 1);
+                if (topDocs.totalHits.value == 0) {
+                    return;
+                }
+                legacy = searcher.storedFields().document(topDocs.scoreDocs[0].doc).get(FIELD_REGISTRY_KEY) == null;
+            } finally {
+                searcherManager.release(searcher);
+            }
+
+            if (legacy) {
+                LOGGER.info("Registry index predates the addressed document identity, clearing it - "
+                        + "the storage backends repopulate it while they come up");
+                indexWriter.deleteAll();
+                indexWriter.commit();
+                searcherManager.maybeRefresh();
+            }
+        } finally {
+            indexLock.writeLock().unlock();
+        }
     }
 
     /**
@@ -252,8 +309,10 @@ public class LuceneRegistryHelper extends AbstractRegistryHelper {
     public void updateIndex(String objectId, ObjectMetadata metadata) throws IOException {
         indexLock.writeLock().lock();
         try {
-            // Remove existing document if it exists
-            indexWriter.deleteDocuments(new Term(FIELD_OBJECT_ID, objectId));
+            // Remove the existing document for THIS location only: a copy of the same
+            // object id in another stage is a document of its own and must survive
+            // (issue #252)
+            indexWriter.deleteDocuments(new Term(FIELD_REGISTRY_KEY, RegistryAddress.of(objectId, metadata).key()));
 
             // Create new document
             Document doc = createDocument(objectId, metadata);
@@ -272,17 +331,37 @@ public class LuceneRegistryHelper extends AbstractRegistryHelper {
         }
     }
 
+    /**
+     * Removes every document for the given object id, in every stage that holds
+     * it. Callers that delete one stage's copy must use
+     * {@link #removeFromIndex(RegistryAddress)} instead.
+     */
     @Override
     public void removeFromIndex(String objectId) throws IOException {
+        deleteBy(new Term(FIELD_OBJECT_ID, objectId), objectId);
+    }
+
+    /**
+     * Removes the document for one addressed object, leaving the copies the same
+     * object id has in other stages untouched.
+     *
+     * @param address the object's full address
+     * @throws IOException if the index cannot be written
+     */
+    public void removeFromIndex(RegistryAddress address) throws IOException {
+        deleteBy(new Term(FIELD_REGISTRY_KEY, address.key()), address.toString());
+    }
+
+    private void deleteBy(Term term, String description) throws IOException {
         indexLock.writeLock().lock();
         try {
-            indexWriter.deleteDocuments(new Term(FIELD_OBJECT_ID, objectId));
+            indexWriter.deleteDocuments(term);
             indexWriter.commit();
 
             // Refresh searcher manager for Near Real Time searching
             searcherManager.maybeRefresh();
 
-            LOGGER.fine("Removed from Lucene index: " + objectId);
+            LOGGER.fine("Removed from Lucene index: " + description);
 
         } finally {
             indexLock.writeLock().unlock();
@@ -462,13 +541,29 @@ public class LuceneRegistryHelper extends AbstractRegistryHelper {
         }
     }
 
+    /**
+     * Answers whether the addressed object has a document in this index. Unlike
+     * {@link #exists(String)} this tells the stages holding the same object id
+     * apart.
+     *
+     * @param address the object's full address
+     * @return {@code true} if this exact address is indexed
+     * @throws IOException if the index cannot be read
+     */
+    public boolean exists(RegistryAddress address) throws IOException {
+        return exists(new TermQuery(new Term(FIELD_REGISTRY_KEY, address.key())));
+    }
+
     @Override
     public boolean exists(String objectId) throws IOException {
+        return exists(new TermQuery(new Term(FIELD_OBJECT_ID, objectId)));
+    }
+
+    private boolean exists(Query query) throws IOException {
         indexLock.readLock().lock();
         try {
             IndexSearcher searcher = searcherManager.acquire();
             try {
-                Query query = new TermQuery(new Term(FIELD_OBJECT_ID, objectId));
                 TopDocs topDocs = searcher.search(query, 1);
                 return topDocs.totalHits.value > 0;
 
@@ -643,6 +738,9 @@ public class LuceneRegistryHelper extends AbstractRegistryHelper {
 
         // Object ID (exact match, stored)
         doc.add(new StringField(FIELD_OBJECT_ID, objectId, Field.Store.YES));
+
+        // Document identity: the object id within its (scope, registry, stage)
+        doc.add(new StringField(FIELD_REGISTRY_KEY, RegistryAddress.of(objectId, metadata).key(), Field.Store.YES));
 
         // Upload information - using dual indexing for user fields
         addUserField(doc, FIELD_UPLOAD_USER, FIELD_UPLOAD_USER_TEXT, metadata.getUploadUser());
