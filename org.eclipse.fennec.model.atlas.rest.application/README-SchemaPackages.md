@@ -543,19 +543,22 @@ Content-Type: application/json
    sets `delete.after.transition=true`
 6. **Idempotent retry**: If the package is not found in the source stage but already exists in the target stage, returns `200 OK` with the metadata from the target stage (safe to retry)
 
-> **No conflict check on the target stage.** Unlike `POST /stages/{stageName}` (which
-> answers `409 Conflict` on a taken `nsUri`), the transition writes into the target stage
-> unconditionally: a *different* package already stored there under the same `objectId`
-> would be replaced, and there is no override flag to guard it. For schema packages this is
-> practically unreachable — the `objectId` is a server-assigned UUID that the transition
-> carries along — but registries with client-supplied ids should promote deliberately (see
-> [README-ObjectStorage.md](README-ObjectStorage.md)).
+> **The target stage is checked for a *different* occupant.** An `objectId` is unique per
+> stage, not across stages, so the target stage regularly holds an earlier copy of the same
+> package — replacing it is what a promotion is for. What is refused, with `409 Conflict`,
+> is a promotion onto an id held there by another package: sameness is judged from the
+> `nsUri` property, the object type and the object name, and a signal missing on either
+> side decides nothing. Delete the occupant from the target stage first if it is meant to
+> be replaced. For schema packages this is practically unreachable — the `objectId` is a
+> server-assigned UUID that the transition carries along — but it also means a package
+> *renamed* in the source stage is refused until the old copy is deleted.
 
 **Response**:
 - **200 OK**: Package transitioned successfully (or already in target stage — idempotent)
   - Body: Updated `ObjectMetadata` with new stage
 - **204 No Content**: Package not found in source stage (and not in target stage)
 - **400 Bad Request**: Invalid transition, missing parameters, scope not available, or stage not valid
+- **409 Conflict**: The target stage already holds a *different* package under this `objectId`
 - **500 Internal Server Error**: Server error
 
 **Example**:

@@ -511,11 +511,15 @@ Content-Type: application/json
    registry sets `delete.after.transition=true`
 4. **Idempotent retry**: If the object is not found in the source stage but already exists in the target stage, returns `200 OK` with the metadata from the target stage (safe to retry)
 
-> **No conflict check on the target stage.** Unlike the create endpoint, the transition
-> writes into the target stage unconditionally: if a *different* object already occupies
-> that `objectId` in the target stage, it is replaced — there is no `409` and no override
-> flag. Because ids here are client-supplied, promote deliberately: check the target stage
-> first if two of your objects could ever share an id.
+> **The target stage is checked for a *different* occupant.** An `objectId` is unique per
+> stage, not across stages, so the target stage regularly holds an earlier copy of the same
+> object — replacing it is what a promotion is for. What is refused, with `409 Conflict`,
+> is a promotion onto an id held there by another object: sameness is judged from the
+> `nsUri` property, the object type and the object name, and a signal missing on either
+> side decides nothing. Delete the occupant from the target stage first if it is meant to
+> be replaced. Because ids here are client-supplied, this is the case worth knowing about —
+> as is its corollary, that an object *renamed* in the source stage is refused until the
+> old copy is deleted.
 
 **Response**:
 - **200 OK**: Object transitioned successfully (or already in target stage — idempotent)
@@ -523,6 +527,7 @@ Content-Type: application/json
 - **204 No Content**: Object not found in source stage (and not in target stage)
 - **400 Bad Request**: Invalid transition or missing parameters
 - **403 Forbidden**: Object is read-only (from parent scope)
+- **409 Conflict**: The target stage already holds a *different* object under this `objectId`
 - **500 Internal Server Error**: Server error
 
 **Example**:
@@ -599,10 +604,11 @@ contract between the Atlas and its clients. Two genuinely different objects must
 different ids; in a schema registry, two versions of a model must use two different
 namespace URIs.
 
-The one sharp edge is the transition endpoint, which performs no conflict check on the
-target stage (see [8. Transition Object Between Stages](#8-transition-object-between-stages)):
-promoting an object onto an id that a *different* object already occupies in the target
-stage replaces that object silently.
+The transition endpoint enforces the same rule from its own side (see
+[8. Transition Object Between Stages](#8-transition-object-between-stages)): promoting an
+object onto an id that a *different* object already occupies in the target stage answers
+`409 Conflict` instead of replacing it, while replacing an earlier copy of the same object
+is allowed — that is what a promotion is for.
 
 ---
 

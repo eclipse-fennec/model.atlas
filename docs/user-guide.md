@@ -244,7 +244,7 @@ How the API enforces the rule:
 |-----------|---------------------------------------------------------------|
 | `POST`/`PUT /{scope}/registries/{registry}/stages/{stage}/{objectId}` | `409 Conflict`, unless `?override=true` — which updates the object that is there |
 | `POST`/`PUT /{scope}/schema/stages/{stage}?nsUri=...` | `409 Conflict`, unless `?overwrite=true` — which updates the package that is there |
-| `POST /{scope}/.../stages/{stage}/actions/transition` | **No conflict check.** The object is written into the target stage under its own id; if a *different* object occupies that id there, it is replaced |
+| `POST /{scope}/.../stages/{stage}/actions/transition` | `409 Conflict` when the target stage holds a *different* object under that id. Promoting a newer revision of the *same* object replaces its own earlier copy there — that is what a promotion is for |
 
 Two details of the conflict check:
 
@@ -253,11 +253,15 @@ Two details of the conflict check:
   [Hierarchical Visibility](#hierarchical-visibility)); those are read-only, so an
   `override`/`overwrite` against an inherited object is rejected with `403 Forbidden`
   rather than updating it.
-- The transition endpoint has no such guard and no override flag. In practice this only
-  matters for registries with **client-supplied ids**: promote deliberately there, and
-  check the target stage first if two of your objects could ever share an id. Schema
-  packages are unaffected in practice — their id is a server-assigned UUID that a
-  transition carries along unchanged.
+- The transition guard asks a different question: not "is the id taken?" (it usually is,
+  by an earlier copy of the same object) but "is it taken by *another* object?". Sameness
+  is judged only from the signals both sides carry — the `nsUri` property, the object type,
+  the object name; a signal missing on either side decides nothing. So a promotion that
+  updates the target copy passes, and one that would silently overwrite an unrelated object
+  is refused with `409 Conflict`. The remedy is to delete the occupant from the target
+  stage first. One consequence worth knowing: an object **renamed** in the source stage
+  looks different from the copy it is meant to replace, so its promotion is refused until
+  the old copy is deleted.
 
 ### Hierarchical Visibility
 

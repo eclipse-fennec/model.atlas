@@ -28,6 +28,7 @@ import org.eclipse.fennec.model.atlas.management.lucene.epackage.EPackageLuceneI
 import org.eclipse.fennec.model.atlas.mgmt.api.EObjectRegistryService;
 import org.eclipse.fennec.model.atlas.mgmt.management.ManagementFactory;
 import org.eclipse.fennec.model.atlas.mgmt.management.ObjectMetadata;
+import org.eclipse.fennec.model.atlas.mgmt.registry.RegistryAddress;
 import org.eclipse.fennec.model.atlas.scope.api.RegistryType;
 import org.eclipse.fennec.model.atlas.scope.api.ScopeApiFactory;
 import org.eclipse.fennec.model.atlas.scope.api.StageInfo;
@@ -86,7 +87,9 @@ public class AtlasSchemaRegistryService implements RegistryService<EPackage> {
 			String objectId = encodeObjectId(ePackage);
 			registry.removeFromCache(WorkflowConstants.ATLAS_SCOPE_NAME, WorkflowConstants.ATLAS_SCHEMA_REGISTRY_NAME,
 					WorkflowConstants.ATLAS_SCHEMA_REGISTRY_STAGE_NAME, objectId);
-			ePackageIndex.remove(objectId);
+			ePackageIndex.remove(new RegistryAddress(WorkflowConstants.ATLAS_SCOPE_NAME,
+					WorkflowConstants.ATLAS_SCHEMA_REGISTRY_NAME,
+					WorkflowConstants.ATLAS_SCHEMA_REGISTRY_STAGE_NAME, objectId));
 		});
 		this.staticPackageRegistry = null;
 	}

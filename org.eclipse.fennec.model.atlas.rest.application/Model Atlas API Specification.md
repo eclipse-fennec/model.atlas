@@ -272,14 +272,18 @@ Endpoint for moving packages between stages.
   1. Find package in source stage
   2. Verify package is not read-only
   3. Verify transition is allowed (check `allowedTransitions`)
-  4. Write the package into the target stage under its own `objectId`, and remove it from
-     the source stage only if the registry sets `delete.after.transition=true`. The target
-     stage is **not** checked for a conflicting occupant of that id
+  4. Refuse the promotion if the target stage holds a *different* package under that
+     `objectId` (compared on the `nsUri` property, the object type and the object name; a
+     signal missing on either side decides nothing, so replacing an earlier copy of the
+     same package is allowed)
+  5. Write the package into the target stage under its own `objectId`, and remove it from
+     the source stage only if the registry sets `delete.after.transition=true`
 - **Response:**
   - `200 OK`: Transition successful - Body: Updated `ObjectMetadata` with new stage
   - `204 No Content`: Package not found in source stage
   - `400 Bad Request`: Invalid transition, missing parameters, or scope/stage not available
   - `403 Forbidden`: Package is read-only (from parent scope)
+  - `409 Conflict`: The target stage already holds a different package under this `objectId`
   - `500 Internal Server Error`: Unexpected error
 
 **Error Response Example (400 Bad Request):**
@@ -301,7 +305,7 @@ Endpoint for moving packages between stages.
 | 400 Bad Request | Invalid request | Scope not available, invalid stage, invalid transition |
 | 403 Forbidden | Operation not allowed | Resource is read-only (from parent scope) |
 | 404 Not Found | Scope not found | Only for `/scopes/{scopeName}` endpoint |
-| 409 Conflict | Resource exists | Package exists and override flag is false |
+| 409 Conflict | Resource exists | Package exists and override flag is false; or a transition target stage is held by a different object |
 | 500 Internal Server Error | Server error | Unexpected errors |
 
 ---

@@ -42,6 +42,7 @@ import org.apache.lucene.search.Query;
 import org.apache.lucene.search.ScoreDoc;
 import org.apache.lucene.search.SearcherManager;
 import org.apache.lucene.search.TermQuery;
+import org.apache.lucene.search.TermRangeQuery;
 import org.apache.lucene.search.TopDocs;
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.FSDirectory;
@@ -53,6 +54,7 @@ import org.eclipse.emf.ecore.EStructuralFeature;
 import org.eclipse.fennec.model.atlas.management.lucene.epackage.EPackageLuceneIndex;
 import org.eclipse.fennec.model.atlas.management.lucene.epackage.EPackageSearchQuery;
 import org.eclipse.fennec.model.atlas.mgmt.management.ObjectMetadata;
+import org.eclipse.fennec.model.atlas.mgmt.registry.RegistryAddress;
 import org.osgi.service.component.annotations.Activate;
 import org.osgi.service.component.annotations.Deactivate;
 import org.osgi.service.component.annotations.Component;
@@ -155,7 +157,9 @@ public class EPackageLuceneIndexImpl implements EPackageLuceneIndex, AutoCloseab
 
 		indexLock.writeLock().lock();
 		try {
-			indexWriter.deleteDocuments(new Term(FIELD_OBJECT_ID, objectId));
+			// Replace the document for THIS location only: the copy the same object id has
+			// in another stage is a document of its own and must survive (issue #252)
+			indexWriter.deleteDocuments(addressQuery(RegistryAddress.of(objectId, metadata)));
 			Document doc = createDocument(metadata, ePackage);
 			indexWriter.addDocument(doc);
 			indexWriter.commit();
@@ -186,6 +190,61 @@ public class EPackageLuceneIndexImpl implements EPackageLuceneIndex, AutoCloseab
 			LOGGER.log(Level.SEVERE, "Failed to remove EPackage from index: " + objectId, e);
 		} finally {
 			indexLock.writeLock().unlock();
+		}
+	}
+
+	@Override
+	public void remove(RegistryAddress address) {
+		if (address == null || address.objectId() == null || address.objectId().isEmpty()) {
+			return;
+		}
+
+		indexLock.writeLock().lock();
+		try {
+			indexWriter.deleteDocuments(addressQuery(address));
+			indexWriter.commit();
+			searcherManager.maybeRefresh();
+
+			LOGGER.fine("Removed EPackage from index: " + address);
+		} catch (IOException e) {
+			LOGGER.log(Level.SEVERE, "Failed to remove EPackage from index: " + address, e);
+		} finally {
+			indexLock.writeLock().unlock();
+		}
+	}
+
+	/**
+	 * The query selecting the single document of one addressed package.
+	 *
+	 * <p>
+	 * The document identity is the address itself rather than a flattened key field
+	 * (as in the metadata registry index): this index has no repopulation path -
+	 * entries are written when a package is uploaded, promoted or bound from the
+	 * static registry, never rebuilt from the storage backends - so an index written
+	 * by an older version has to keep working rather than be discarded, and it
+	 * already carries the four correlation fields.
+	 * </p>
+	 */
+	private static Query addressQuery(RegistryAddress address) {
+		BooleanQuery.Builder builder = new BooleanQuery.Builder();
+		addAddressClause(builder, FIELD_OBJECT_ID, address.objectId());
+		addAddressClause(builder, FIELD_SCOPE, address.scope());
+		addAddressClause(builder, FIELD_REGISTRY, address.registry());
+		addAddressClause(builder, FIELD_STAGE, address.stage());
+		return builder.build();
+	}
+
+	/**
+	 * Adds the clause matching one component of an address. A component the address
+	 * leaves empty is matched by the absence of the field, since
+	 * {@link #createDocument(ObjectMetadata, EPackage)} writes no field for a
+	 * correlation value the metadata does not carry.
+	 */
+	private static void addAddressClause(BooleanQuery.Builder builder, String field, String value) {
+		if (value == null || value.isEmpty()) {
+			builder.add(new TermRangeQuery(field, null, null, true, true), BooleanClause.Occur.MUST_NOT);
+		} else {
+			builder.add(new TermQuery(new Term(field, value)), BooleanClause.Occur.MUST);
 		}
 	}
 

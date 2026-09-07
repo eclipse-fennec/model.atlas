@@ -37,6 +37,7 @@ import org.eclipse.emf.ecore.EPackage;
 import org.eclipse.emf.ecore.EcoreFactory;
 import org.eclipse.emf.ecore.EcorePackage;
 import org.eclipse.fennec.model.atlas.management.lucene.epackage.EPackageLuceneIndex;
+import org.eclipse.fennec.model.atlas.mgmt.registry.RegistryAddress;
 import org.eclipse.fennec.model.atlas.mgmt.api.EObjectRegistryService;
 import org.eclipse.fennec.model.atlas.mgmt.management.ManagementFactory;
 import org.eclipse.fennec.model.atlas.mgmt.management.ObjectMetadata;
@@ -370,6 +371,11 @@ public class AtlasSchemaRegistryServiceTest {
 			String expectedId = new String(Base64.getUrlEncoder().encode("http://test/package".getBytes()));
 			verify(registryService).removeFromCache(WorkflowConstants.ATLAS_SCOPE_NAME, WorkflowConstants.ATLAS_SCHEMA_REGISTRY_NAME,
 					WorkflowConstants.ATLAS_SCHEMA_REGISTRY_STAGE_NAME, expectedId);
+			// The search index is addressed too: dropping this stage's entry must not deindex
+			// the copies the same id has in other stages (issue #252)
+			verify(ePackageIndex).remove(new RegistryAddress(WorkflowConstants.ATLAS_SCOPE_NAME,
+					WorkflowConstants.ATLAS_SCHEMA_REGISTRY_NAME,
+					WorkflowConstants.ATLAS_SCHEMA_REGISTRY_STAGE_NAME, expectedId));
 		}
 
 		@Test
