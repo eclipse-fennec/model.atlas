@@ -14,6 +14,7 @@
 package org.eclipse.fennec.model.atlas.rest.client.osgi.tests;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -551,6 +552,129 @@ public class AtlasClientOsgiIT {
 	}
 
 	/** Poll until the tracked services drain to none, or {@link #SERVICE_WAIT_MS} elapses. */
+	// ---- the atlas scope gate (issue #254) ---------------------------------
+
+	@Test
+	public void eagerMode_doesNotPublishThePackagesOfTheAtlasScope(
+			@InjectConfiguration(withFactoryConfig = @WithFactoryConfiguration(factoryPid = PID, name = "noatlas",
+					location = "?")) Configuration configuration,
+			@InjectService(cardinality = 0, filter = "(atlas.remote=true)") ServiceAware<EPackage> remotePackages)
+			throws Exception {
+		// Every scope inherits from the atlas scope, so a sweep of jena also lists the
+		// server's own metamodels. They must not be published (include.atlas.scope=false).
+		assumeFalse(atlasOwnedNsUris().isEmpty(), "the jena scope inherits no atlas-owned packages");
+		assertTrue(awaitEmpty(remotePackages), "publications of earlier tests should be gone");
+
+		Hashtable<String, Object> props = baseProps("EAGER");
+		props.put("eager.scopes", new String[] { JENA_SCOPE });
+		props.put("include.atlas.scope", Boolean.FALSE); // the default; stated because baseProps opts in
+		configuration.update(props);
+
+		// Give the sweep the same window the sibling test needs to publish them, then check
+		// that none of what it published is atlas-owned. That test is the control: it shows
+		// these very packages ARE publishable when the flag says so.
+		long deadline = System.currentTimeMillis() + SERVICE_WAIT_MS;
+		while (System.currentTimeMillis() < deadline) {
+			assertFalse(publishedScopes(remotePackages).contains("atlas"),
+					"no package owned by the atlas scope may be published");
+			Thread.sleep(100L);
+		}
+	}
+
+	@Test
+	public void eagerMode_publishesTheAtlasScopeWhenAskedTo(
+			@InjectConfiguration(withFactoryConfig = @WithFactoryConfiguration(factoryPid = PID, name = "withatlas",
+					location = "?")) Configuration configuration,
+			@InjectService(cardinality = 0, filter = "(atlas.remote=true)") ServiceAware<EPackage> remotePackages)
+			throws Exception {
+		assumeFalse(atlasOwnedNsUris().isEmpty(), "the jena scope inherits no atlas-owned packages");
+		assertTrue(awaitEmpty(remotePackages), "publications of earlier tests should be gone");
+
+		Hashtable<String, Object> props = baseProps("EAGER");
+		props.put("eager.scopes", new String[] { JENA_SCOPE });
+		props.put("include.atlas.scope", Boolean.TRUE);
+		configuration.update(props);
+
+		long deadline = System.currentTimeMillis() + SERVICE_WAIT_MS;
+		while (!publishedScopes(remotePackages).contains("atlas") && System.currentTimeMillis() < deadline) {
+			Thread.sleep(50L);
+		}
+		assertTrue(publishedScopes(remotePackages).contains("atlas"),
+				"include.atlas.scope=true must publish them again");
+	}
+
+	@Test
+	public void anAtlasScopePackageIsStillResolvableOnDemand(
+			@InjectConfiguration(withFactoryConfig = @WithFactoryConfiguration(factoryPid = PID, name = "ondemand",
+					location = "?")) Configuration configuration,
+			@InjectService(cardinality = 0,
+					filter = "(&(atlas.remote=true)(atlas.fetch.on.miss=true))") ServiceAware<EPackage.Registry> registries)
+			throws Exception {
+		// The flag governs publication, not retrieval: a model referencing one of the
+		// server's metamodels must still load.
+		String nsUri = firstAtlasNsUriNotHeldLocally();
+		assumeTrue(nsUri != null, "every atlas-scope package is already present locally — nothing to fetch");
+		assertTrue(awaitEmpty(registries), "registries of earlier tests' components should be gone");
+
+		Hashtable<String, Object> props = baseProps("LAZY");
+		props.put("include.atlas.scope", Boolean.FALSE); // the default; stated because baseProps opts in
+		// eager.scopes drives the per-scope fetch-on-miss registries in every mode; in LAZY
+		// it does not pre-fetch anything.
+		props.put("eager.scopes", new String[] { JENA_SCOPE });
+		props.put("lazy.resolve.timeout.ms", (int) SERVICE_WAIT_MS * 3);
+		configuration.update(props);
+
+		EPackage.Registry registry = registries.waitForService(SERVICE_WAIT_MS);
+		assertNotNull(registry, "the scoped fetch-on-miss registry should be registered");
+		assertNotNull(registry.getEPackage(nsUri),
+				"an atlas-scope package must still resolve on demand, even though it is never published");
+	}
+
+	/** The {@code atlas.scope} property of every currently published remote EPackage. */
+	private static List<String> publishedScopes(ServiceAware<EPackage> remotePackages) {
+		return remotePackages.getServiceReferences().stream().map(ref -> ref.getProperty("atlas.scope"))
+				.filter(java.util.Objects::nonNull).map(Object::toString).collect(Collectors.toList());
+	}
+
+	/**
+	 * The nsURIs the jena listing reports as owned by the {@code atlas} scope — the
+	 * server's statically registered metamodels, which every scope inherits. Read from the
+	 * same listing the EAGER sweep uses, so the test sees exactly what the client sees.
+	 * Each entry carries its {@code objectId} (Base64-URL of the nsURI) before its
+	 * {@code scope}, so the listing is split on the id and each chunk tested for the scope.
+	 */
+	private static List<String> atlasOwnedNsUris() throws Exception {
+		HttpResponse<String> response = HttpClient.newHttpClient().send(
+				HttpRequest.newBuilder(URI.create(baseUri + "/" + JENA_SCOPE + "/schema")).GET().build(),
+				HttpResponse.BodyHandlers.ofString());
+		if (response.statusCode() != 200) {
+			return List.of();
+		}
+		List<String> nsUris = new ArrayList<>();
+		String[] chunks = response.body().split("\"objectId\"\\s*:\\s*\"");
+		for (int i = 1; i < chunks.length; i++) {
+			String chunk = chunks[i];
+			String objectId = chunk.substring(0, chunk.indexOf('"'));
+			if (chunk.contains("\"scope\":\"atlas\"")) {
+				nsUris.add(new String(Base64.getUrlDecoder().decode(objectId), StandardCharsets.UTF_8));
+			}
+		}
+		return nsUris;
+	}
+
+	/**
+	 * An atlas-scope nsURI this OSGi runtime does not already provide, so resolving it
+	 * really has to go to the server; {@code null} when there is none.
+	 */
+	private static String firstAtlasNsUriNotHeldLocally() throws Exception {
+		for (String nsUri : atlasOwnedNsUris()) {
+			if (EPackage.Registry.INSTANCE.getEPackage(nsUri) == null) {
+				return nsUri;
+			}
+		}
+		return null;
+	}
+
 	private static boolean awaitEmpty(ServiceAware<?> aware) throws InterruptedException {
 		long deadline = System.currentTimeMillis() + SERVICE_WAIT_MS;
 		while (aware.size() != 0 && System.currentTimeMillis() < deadline) {
@@ -565,6 +689,12 @@ public class AtlasClientOsgiIT {
 		props.put("mode", mode);
 		props.put("view", JENA_VIEW);
 		props.put("default.scope", JENA_SCOPE);
+		// The bare jena image ships no models of its own: every package the jena scope shows
+		// is inherited from the atlas scope, which is not published by default since issue
+		// #254. These tests are about publishing, not about that filter, so they opt the
+		// atlas scope back in to have anything to publish at all. The filter itself is
+		// covered by the tests above, which set the property explicitly.
+		props.put("include.atlas.scope", Boolean.TRUE);
 		return props;
 	}
 

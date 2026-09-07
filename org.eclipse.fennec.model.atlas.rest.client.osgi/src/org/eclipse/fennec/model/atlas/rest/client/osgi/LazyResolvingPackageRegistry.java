@@ -22,6 +22,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.function.Function;
 import java.util.function.LongSupplier;
+import java.util.function.Predicate;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -79,6 +80,12 @@ final class LazyResolvingPackageRegistry extends ConcurrentHashMap<String, Objec
 	private final transient EPackage.Registry primary;
 	private final transient RemoteEPackageProvider remote;
 	private final transient PackagePublication publication;
+	/**
+	 * Whether a package owned by a given scope can be published at all (issue #254). A
+	 * resolution whose publication would be refused must not wait for the package to appear
+	 * in the framework registry - it never will - so it is served straight from the fetch.
+	 */
+	private final transient Predicate<String> scopePublishable;
 	private final transient Function<String, EPackage> publishedLookup;
 	private final long timeoutMs;
 	private final long pollIntervalMs;
@@ -95,17 +102,20 @@ final class LazyResolvingPackageRegistry extends ConcurrentHashMap<String, Objec
 	}
 
 	LazyResolvingPackageRegistry(EPackage.Registry primary, RemoteEPackageProvider remote,
-			PackagePublication publication, Function<String, EPackage> publishedLookup, long timeoutMs) {
-		this(primary, remote, publication, publishedLookup, timeoutMs, DEFAULT_POLL_INTERVAL_MS,
+			PackagePublication publication, Predicate<String> scopePublishable,
+			Function<String, EPackage> publishedLookup, long timeoutMs) {
+		this(primary, remote, publication, scopePublishable, publishedLookup, timeoutMs, DEFAULT_POLL_INTERVAL_MS,
 				System::currentTimeMillis, Thread::sleep);
 	}
 
 	LazyResolvingPackageRegistry(EPackage.Registry primary, RemoteEPackageProvider remote,
-			PackagePublication publication, Function<String, EPackage> publishedLookup, long timeoutMs,
+			PackagePublication publication, Predicate<String> scopePublishable,
+			Function<String, EPackage> publishedLookup, long timeoutMs,
 			long pollIntervalMs, LongSupplier clock, Sleeper sleeper) {
 		this.primary = Objects.requireNonNull(primary, "primary");
 		this.remote = Objects.requireNonNull(remote, "remote");
 		this.publication = Objects.requireNonNull(publication, "publication");
+		this.scopePublishable = Objects.requireNonNull(scopePublishable, "scopePublishable");
 		this.publishedLookup = Objects.requireNonNull(publishedLookup, "publishedLookup");
 		this.timeoutMs = timeoutMs;
 		this.pollIntervalMs = Math.max(1L, pollIntervalMs);
@@ -210,6 +220,14 @@ final class LazyResolvingPackageRegistry extends ConcurrentHashMap<String, Objec
 			return null;
 		}
 		ResolvedEPackage rp = resolved.get();
+		if (!scopePublishable.test(rp.getScope())) {
+			// Owned by a scope nothing may be published from (the atlas scope, issue #254):
+			// serve what we fetched instead of publishing it and waiting for a registry entry
+			// that will never appear. The flag governs publication, not retrieval.
+			LOGGER.log(Level.FINE, () -> "LAZY resolve: serving " + nsURI + " from scope '" + rp.getScope()
+					+ "' directly - packages of that scope are not published");
+			return rp.getEPackage();
+		}
 		// Stamp the authoritative origin the server reported (owning scope/stage/version),
 		// not a guess — the whole point of resolve() over ensureAvailable().
 		publication.publish(rp.getEPackage(), rp.getScope(), rp.getStage(), rp.getVersion(), rp.getFingerprint()); // idempotent per nsURI

@@ -83,7 +83,7 @@ class AtlasResourceSetConfiguratorTest {
 			return true;
 		};
 		LazyResolvingPackageRegistry atlasRegistry = new LazyResolvingPackageRegistry(framework, remote, mirror,
-				ns -> null, 2_000L, 1L, System::currentTimeMillis, Thread::sleep);
+				scope -> true, ns -> null, 2_000L, 1L, System::currentTimeMillis, Thread::sleep);
 
 		ResourceSet resourceSet = new ResourceSetImpl();
 		new AtlasResourceSetConfigurator(atlasRegistry).configureResourceSet(resourceSet);

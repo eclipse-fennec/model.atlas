@@ -178,8 +178,11 @@ public class AtlasClientComponent {
 		// P3-11: opt-in mirroring of published EPackages into the EMF singleton for legacy consumers.
 		EPackage.Registry globalRegistry = configuration.isRegisterInGlobalRegistry() ? EPackage.Registry.INSTANCE
 				: null;
+		// #254: the atlas scope is every scope's implicit parent, so a sweep or a drift
+		// re-discovery also turns up the server's platform metamodels; they are not
+		// published unless asked for.
 		this.publisher = new RemoteEPackagePublisher(bundleContext, configuration.getBaseUri().toString(),
-				serviceRanking, globalRegistry);
+				serviceRanking, globalRegistry, configuration.isIncludeAtlasScope());
 		// P5-4: per-scope ReadableScopeService<EObject> publications (keyed atlas.scope).
 		// P6-7: stamp atlas.stage when the client is configured with a primary stage so two
 		// front-ends for the same scope can be told apart; null = stage-free (stamp omitted).
@@ -211,7 +214,8 @@ public class AtlasClientComponent {
 		// It resolves each package's authoritative origin (scope/stage/version) per-fetch
 		// via the provider, so no scope/stage is supplied here. Publishing goes through the gate.
 		this.lazyRegistry = new LazyResolvingPackageRegistry(frameworkRegistry, client.ePackages(), gate,
-				publisher::publishedEPackage, configuration.getLazyResolveTimeoutMs());
+				publisher::isScopePublishable, publisher::publishedEPackage,
+				configuration.getLazyResolveTimeoutMs());
 
 		// P3-9: keep published services in step with the Atlas. On a drift change we re-resolve
 		// and atomically swap the trio (per-nsURI lock); on removal we revoke it. Registered
@@ -487,6 +491,7 @@ public class AtlasClientComponent {
 				.nsUriDenyList(List.of(c.nsuri_deny_list()))
 				.forceRemote(c.force_remote())
 				.registerInGlobalRegistry(c.register_in_global_registry())
+				.includeAtlasScope(c.include_atlas_scope())
 				.driftCheckIntervalMs(c.drift_check_interval_ms())
 				.scopeAllowList(List.of(c.scope_allow_list()))
 				.cacheMaxEntries(c.cache_max_entries())

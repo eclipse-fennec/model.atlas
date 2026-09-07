@@ -317,6 +317,58 @@ class RemoteEPackagePublisherTest {
 		assertSame(remote, global.getEPackage("urn:free"));
 	}
 
+	// -- the atlas scope gate (issue #254) --
+
+	@Test
+	void skipsPackagesOwnedByTheAtlasScope() {
+		// The atlas scope holds the SERVER's own statically registered metamodels - Ecore,
+		// UML, the framework APIs - which a client that has those bundles already provides
+		// as generated code. Mirroring a dynamic copy of one over the generated package is
+		// what breaks its factory initialiser, so they are not published by default.
+		EPackageRegistryImpl global = new EPackageRegistryImpl();
+		RemoteEPackagePublisher publisher = new RemoteEPackagePublisher(bundleContext, "http://atlas.test/atlas/rest",
+				0, global, false);
+
+		assertFalse(publisher.publish(ePackage("http://www.eclipse.org/emf/2002/Ecore"), "atlas", "released", "2.38"),
+				"an atlas-scope package must not be published");
+
+		assertNull(publisher.publishedEPackage("http://www.eclipse.org/emf/2002/Ecore"));
+		assertNull(global.getEPackage("http://www.eclipse.org/emf/2002/Ecore"));
+		verify(bundleContext, never()).registerService(eq(EPackageConfigurator.class), any(EPackageConfigurator.class),
+				any(Dictionary.class));
+	}
+
+	@Test
+	void publishesPackagesOfEveryOtherScope() {
+		// Only the atlas scope is filtered: a package inherited from an ordinary parent
+		// scope is data the client asked for, and is published like the scope's own.
+		RemoteEPackagePublisher publisher = new RemoteEPackagePublisher(bundleContext, "http://atlas.test/atlas/rest",
+				0, null, false);
+
+		assertTrue(publisher.publish(ePackage("urn:cities"), "cities", "released", "1.0"),
+				"an inherited package from an ordinary parent scope must still be published");
+	}
+
+	@Test
+	void publishesAtlasScopePackagesWhenTheyAreAskedFor() {
+		RemoteEPackagePublisher publisher = new RemoteEPackagePublisher(bundleContext, "http://atlas.test/atlas/rest",
+				0, null, true);
+
+		assertTrue(publisher.publish(ePackage("http://www.eclipse.org/emf/2002/Ecore"), "atlas", "released", "2.38"),
+				"include.atlas.scope=true must publish them again");
+	}
+
+	@Test
+	void skipsAnAtlasScopePackageOnRepublishToo() {
+		// Drift substitution and the force.remote start-up check reach the publisher on the
+		// republish path; the gate has to hold there or a filtered package returns later.
+		RemoteEPackagePublisher publisher = new RemoteEPackagePublisher(bundleContext, "http://atlas.test/atlas/rest",
+				0, null, false);
+
+		assertFalse(publisher.republish(ePackage("urn:uml"), "atlas", "released", "1.0"));
+		assertNull(publisher.publishedEPackage("urn:uml"));
+	}
+
 	@Test
 	void doesNotTouchTheGlobalRegistryWhenNotConfigured() {
 		EPackageRegistryImpl global = new EPackageRegistryImpl();

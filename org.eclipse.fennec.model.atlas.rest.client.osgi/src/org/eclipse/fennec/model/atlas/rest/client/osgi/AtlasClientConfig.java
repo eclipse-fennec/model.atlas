@@ -71,6 +71,9 @@ public @interface AtlasClientConfig {
 	@AttributeDefinition(name = "Register in global registry", description = "Mirror published EPackages into EPackage.Registry.INSTANCE.", required = false)
 	boolean register_in_global_registry() default false;
 
+	@AttributeDefinition(name = "Include the atlas scope", description = "Whether EPackages owned by the 'atlas' scope - the server's own statically registered metamodels (Ecore, UML, framework APIs), inherited by every scope - may be published. False (the default) keeps them out of the registries: a client that has those bundles already provides them as generated code, and a dynamic copy mirrored over a generated package breaks its factory. They stay resolvable on demand either way.", required = false)
+	boolean include_atlas_scope() default false;
+
 	@AttributeDefinition(name = "Drift check interval (ms)", description = "0 disables the drift watcher.", required = false)
 	int drift_check_interval_ms() default 300_000;
 
