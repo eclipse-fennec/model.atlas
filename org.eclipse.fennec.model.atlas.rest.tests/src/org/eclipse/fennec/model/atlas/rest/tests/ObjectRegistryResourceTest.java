@@ -652,7 +652,6 @@ public class ObjectRegistryResourceTest extends AbstractRestTest{
 				"The promotion must not have overwritten the object that held the target address");
 	}
 
-	@Disabled("Enable together with the transition override flag (issue #211 follow-up)")
 	@Test
 	@ParentScopeServiceSetup
 	public void testTransitionObject_TargetHeldByAnotherObject_Overwrite(@InjectBundleContext BundleContext context)

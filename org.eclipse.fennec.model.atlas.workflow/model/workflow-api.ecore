@@ -272,6 +272,16 @@
       <eParameters name="fromStage" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
       <eParameters name="toStage" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
     </eOperations>
+    <eOperations name="transitionToStage" eType="ecore:EClass ../../org.eclipse.fennec.model.atlas.management/model/management.ecore#//ObjectMetadata">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="Performs a transition of an EObject from one stage to another for a certain scope, if allowed. An objectId is unique per stage and not across stages, so the target stage regularly holds an earlier copy of the same object and replacing it is what a promotion is for. When overwrite is false, a transition onto an id that a different object holds in the target stage is refused; when it is true, that object is replaced - for callers that know what they are doing and do not want to delete it first."/>
+      </eAnnotations>
+      <eParameters name="scope" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+      <eParameters name="objectId" lowerBound="1" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+      <eParameters name="fromStage" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+      <eParameters name="toStage" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+      <eParameters name="overwrite" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EBoolean"/>
+    </eOperations>
     <eOperations name="getRegistryName" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
     <eOperations name="isValidStage" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EBoolean">
       <eParameters name="stageName" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
@@ -490,6 +500,16 @@
       <eParameters name="objectId" lowerBound="1" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
       <eParameters name="fromStage" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
       <eParameters name="toStage" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    </eOperations>
+    <eOperations name="transitionToStageForRegistry" eType="ecore:EClass ../../org.eclipse.fennec.model.atlas.management/model/management.ecore#//ObjectMetadata">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="Performs a transition of an EObject from one stage to another of a certain registry, if allowed. An objectId is unique per stage and not across stages, so the target stage regularly holds an earlier copy of the same object and replacing it is what a promotion is for. When overwrite is false, a transition onto an id that a different object holds in the target stage is refused; when it is true, that object is replaced - for callers that know what they are doing and do not want to delete it first."/>
+      </eAnnotations>
+      <eParameters name="registry" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+      <eParameters name="objectId" lowerBound="1" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+      <eParameters name="fromStage" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+      <eParameters name="toStage" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+      <eParameters name="overwrite" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EBoolean"/>
     </eOperations>
     <eOperations name="isValidRegistry" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EBoolean">
       <eParameters name="registryName" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>

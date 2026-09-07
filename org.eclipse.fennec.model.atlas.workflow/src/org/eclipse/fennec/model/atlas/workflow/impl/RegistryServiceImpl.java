@@ -592,6 +592,19 @@ public class RegistryServiceImpl<T extends EObject> implements RegistryService<T
      */
     @Override
     public ObjectMetadata transitionToStage(String scope, String objectId, String fromStage, String toStage) {
+        return transitionToStage(scope, objectId, fromStage, toStage, false);
+    }
+
+    /*
+     * (non-Javadoc)
+     * 
+     * @see org.eclipse.fennec.model.atlas.wf.workflowapi.RegistryService#
+     * transitionToStage(java.lang.String, java.lang.String, java.lang.String,
+     * java.lang.String, boolean)
+     */
+    @Override
+    public ObjectMetadata transitionToStage(String scope, String objectId, String fromStage, String toStage,
+            boolean overwrite) {
         validateTransition(fromStage, toStage);
         EObjectStorageService<T> sourceStorage = storageFor(fromStage);
         T object = WorkflowServiceHelper
@@ -602,7 +615,9 @@ public class RegistryServiceImpl<T extends EObject> implements RegistryService<T
         if (object == null || metadata == null) {
             throw new IllegalArgumentException("Object not found in stage " + fromStage + ": " + objectId);
         }
-        requireTargetFree(scope, toStage, objectId, metadata);
+        if (!overwrite) {
+            requireTargetFree(scope, toStage, objectId, metadata);
+        }
 
         // Update metadata for new stage
         metadata.setLastChangeTime(Instant.now());
@@ -639,6 +654,12 @@ public class RegistryServiceImpl<T extends EObject> implements RegistryService<T
      * What must not pass silently is the other case: the id is held by an object
      * the caller never named, which the store would otherwise overwrite without
      * telling anyone.
+     * </p>
+     *
+     * <p>
+     * A caller that means to take the id over says so with {@code overwrite}, which
+     * skips this check entirely - the guard is there to catch the promotion nobody
+     * meant to make, not to forbid the one somebody did.
      * </p>
      *
      * @param scope    the scope being written

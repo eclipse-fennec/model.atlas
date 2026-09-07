@@ -268,6 +268,12 @@ Endpoint for moving packages between stages.
   via the `nsUri` metadata property
 - `targetStage` (string, required): Target stage name
 
+- **Query Parameters:**
+  - `overwrite` (boolean, optional): If `true`, replace a *different* package occupying
+    that `objectId` in the target stage. If `false` (default), such a transition is
+    rejected with `409 Conflict`. Replacing an earlier copy of the package being promoted
+    needs no flag
+
 - **Logic:**
   1. Find package in source stage
   2. Verify package is not read-only
@@ -275,7 +281,7 @@ Endpoint for moving packages between stages.
   4. Refuse the promotion if the target stage holds a *different* package under that
      `objectId` (compared on the `nsUri` property, the object type and the object name; a
      signal missing on either side decides nothing, so replacing an earlier copy of the
-     same package is allowed)
+     same package is allowed). `?overwrite=true` skips this check and replaces the occupant
   5. Write the package into the target stage under its own `objectId`, and remove it from
      the source stage only if the registry sets `delete.after.transition=true`
 - **Response:**
@@ -283,7 +289,7 @@ Endpoint for moving packages between stages.
   - `204 No Content`: Package not found in source stage
   - `400 Bad Request`: Invalid transition, missing parameters, or scope/stage not available
   - `403 Forbidden`: Package is read-only (from parent scope)
-  - `409 Conflict`: The target stage already holds a different package under this `objectId`
+  - `409 Conflict`: The target stage already holds a different package under this `objectId` (use `?overwrite=true` to replace it)
   - `500 Internal Server Error`: Unexpected error
 
 **Error Response Example (400 Bad Request):**
@@ -305,7 +311,7 @@ Endpoint for moving packages between stages.
 | 400 Bad Request | Invalid request | Scope not available, invalid stage, invalid transition |
 | 403 Forbidden | Operation not allowed | Resource is read-only (from parent scope) |
 | 404 Not Found | Scope not found | Only for `/scopes/{scopeName}` endpoint |
-| 409 Conflict | Resource exists | Package exists and override flag is false; or a transition target stage is held by a different object |
+| 409 Conflict | Resource exists | Package exists and override flag is false; or a transition target is held by a different object and overwrite is false |
 | 500 Internal Server Error | Server error | Unexpected errors |
 
 ---

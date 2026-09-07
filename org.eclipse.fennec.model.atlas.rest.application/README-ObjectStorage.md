@@ -516,10 +516,10 @@ Content-Type: application/json
 > object — replacing it is what a promotion is for. What is refused, with `409 Conflict`,
 > is a promotion onto an id held there by another object: sameness is judged from the
 > `nsUri` property, the object type and the object name, and a signal missing on either
-> side decides nothing. Delete the occupant from the target stage first if it is meant to
-> be replaced. Because ids here are client-supplied, this is the case worth knowing about —
-> as is its corollary, that an object *renamed* in the source stage is refused until the
-> old copy is deleted.
+> side decides nothing. Pass `?overwrite=true` to replace it anyway, or delete it from the
+> target stage first. Because ids here are client-supplied, this is the case worth knowing
+> about — as is its corollary, that an object *renamed* in the source stage is refused
+> unless `overwrite=true` is passed or the old copy is deleted.
 
 **Response**:
 - **200 OK**: Object transitioned successfully (or already in target stage — idempotent)
@@ -527,7 +527,7 @@ Content-Type: application/json
 - **204 No Content**: Object not found in source stage (and not in target stage)
 - **400 Bad Request**: Invalid transition or missing parameters
 - **403 Forbidden**: Object is read-only (from parent scope)
-- **409 Conflict**: The target stage already holds a *different* object under this `objectId`
+- **409 Conflict**: The target stage already holds a *different* object under this `objectId` (pass `?overwrite=true` to replace it)
 - **500 Internal Server Error**: Server error
 
 **Example**:
@@ -607,8 +607,9 @@ namespace URIs.
 The transition endpoint enforces the same rule from its own side (see
 [8. Transition Object Between Stages](#8-transition-object-between-stages)): promoting an
 object onto an id that a *different* object already occupies in the target stage answers
-`409 Conflict` instead of replacing it, while replacing an earlier copy of the same object
-is allowed — that is what a promotion is for.
+`409 Conflict` instead of replacing it — unless the caller passes `?overwrite=true` and
+takes the id over deliberately — while replacing an earlier copy of the same object is
+allowed with no flag, that being what a promotion is for.
 
 ---
 

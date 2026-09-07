@@ -122,6 +122,50 @@ public class TransitionTargetOccupancyIntegrationTest {
                 .getMetadataFromStage(SCOPE, CommonTestAnnotations.STAGE_APPROVED, OBJECT_ID).getVersion());
     }
 
+    @Test
+    @DisplayName("overwrite=true promotes onto a different object instead of refusing")
+    @SchemaRegistryServiceSetup
+    void overwriteReplacesTheDifferentObject(
+            @InjectService(cardinality = 0, filter = REGISTRY_FILTER) ServiceAware<RegistryService> registryAware)
+            throws InterruptedException, InvocationTargetException {
+
+        RegistryService<EPackage> registryService = registryAware.waitForService(5000);
+        assertNotNull(registryService);
+
+        upload(registryService, CommonTestAnnotations.STAGE_APPROVED, NS_URI_A, "package-a", "1");
+        upload(registryService, CommonTestAnnotations.STAGE_DRAFT, NS_URI_B, "package-b", "1");
+
+        // The caller knows the target is held by another object and says so: no need to
+        // delete it first (issue #211 follow-up)
+        ObjectMetadata promoted = registryService.transitionToStage(SCOPE, OBJECT_ID,
+                CommonTestAnnotations.STAGE_DRAFT, CommonTestAnnotations.STAGE_APPROVED, true);
+        assertNotNull(promoted);
+
+        ObjectMetadata inTarget = registryService.getMetadataFromStage(SCOPE, CommonTestAnnotations.STAGE_APPROVED,
+                OBJECT_ID);
+        assertNotNull(inTarget);
+        assertEquals(NS_URI_B, inTarget.getProperties().get(WorkflowConstants.NS_URI_METADATA_PROPERTY));
+        assertEquals("package-b", inTarget.getObjectName());
+    }
+
+    @Test
+    @DisplayName("overwrite=false is the plain transition: still refused")
+    @SchemaRegistryServiceSetup
+    void overwriteFalseStillRefuses(
+            @InjectService(cardinality = 0, filter = REGISTRY_FILTER) ServiceAware<RegistryService> registryAware)
+            throws InterruptedException, InvocationTargetException {
+
+        RegistryService<EPackage> registryService = registryAware.waitForService(5000);
+        assertNotNull(registryService);
+
+        upload(registryService, CommonTestAnnotations.STAGE_APPROVED, NS_URI_A, "package-a", "1");
+        upload(registryService, CommonTestAnnotations.STAGE_DRAFT, NS_URI_B, "package-b", "1");
+
+        assertThrows(StageOccupiedException.class,
+                () -> registryService.transitionToStage(SCOPE, OBJECT_ID, CommonTestAnnotations.STAGE_DRAFT,
+                        CommonTestAnnotations.STAGE_APPROVED, false));
+    }
+
     private void upload(RegistryService<EPackage> registryService, String stage, String nsUri, String name,
             String version) throws InvocationTargetException, InterruptedException {
         EPackage pkg = EcoreFactory.eINSTANCE.createEPackage();

@@ -548,17 +548,18 @@ Content-Type: application/json
 > package — replacing it is what a promotion is for. What is refused, with `409 Conflict`,
 > is a promotion onto an id held there by another package: sameness is judged from the
 > `nsUri` property, the object type and the object name, and a signal missing on either
-> side decides nothing. Delete the occupant from the target stage first if it is meant to
-> be replaced. For schema packages this is practically unreachable — the `objectId` is a
+> side decides nothing. Pass `?overwrite=true` to replace it anyway, or delete it from the
+> target stage first. For schema packages this is practically unreachable — the `objectId` is a
 > server-assigned UUID that the transition carries along — but it also means a package
-> *renamed* in the source stage is refused until the old copy is deleted.
+> *renamed* in the source stage is refused unless `overwrite=true` is passed or the old
+> copy is deleted.
 
 **Response**:
 - **200 OK**: Package transitioned successfully (or already in target stage — idempotent)
   - Body: Updated `ObjectMetadata` with new stage
 - **204 No Content**: Package not found in source stage (and not in target stage)
 - **400 Bad Request**: Invalid transition, missing parameters, scope not available, or stage not valid
-- **409 Conflict**: The target stage already holds a *different* package under this `objectId`
+- **409 Conflict**: The target stage already holds a *different* package under this `objectId` (pass `?overwrite=true` to replace it)
 - **500 Internal Server Error**: Server error
 
 **Example**:

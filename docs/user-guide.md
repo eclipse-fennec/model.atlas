@@ -244,7 +244,7 @@ How the API enforces the rule:
 |-----------|---------------------------------------------------------------|
 | `POST`/`PUT /{scope}/registries/{registry}/stages/{stage}/{objectId}` | `409 Conflict`, unless `?override=true` — which updates the object that is there |
 | `POST`/`PUT /{scope}/schema/stages/{stage}?nsUri=...` | `409 Conflict`, unless `?overwrite=true` — which updates the package that is there |
-| `POST /{scope}/.../stages/{stage}/actions/transition` | `409 Conflict` when the target stage holds a *different* object under that id. Promoting a newer revision of the *same* object replaces its own earlier copy there — that is what a promotion is for |
+| `POST /{scope}/.../stages/{stage}/actions/transition` | `409 Conflict` when the target stage holds a *different* object under that id, unless `?overwrite=true` — which replaces it. Promoting a newer revision of the *same* object replaces its own earlier copy there with no flag — that is what a promotion is for |
 
 Two details of the conflict check:
 
@@ -258,10 +258,11 @@ Two details of the conflict check:
   is judged only from the signals both sides carry — the `nsUri` property, the object type,
   the object name; a signal missing on either side decides nothing. So a promotion that
   updates the target copy passes, and one that would silently overwrite an unrelated object
-  is refused with `409 Conflict`. The remedy is to delete the occupant from the target
-  stage first. One consequence worth knowing: an object **renamed** in the source stage
-  looks different from the copy it is meant to replace, so its promotion is refused until
-  the old copy is deleted.
+  is refused with `409 Conflict`. A caller that means to take the id over says so with
+  `?overwrite=true`, which skips the check; otherwise the remedy is to delete the occupant
+  from the target stage first. One consequence worth knowing: an object **renamed** in the
+  source stage looks different from the copy it is meant to replace, so its promotion is
+  refused until either the old copy is deleted or `overwrite=true` is passed.
 
 ### Hierarchical Visibility
 

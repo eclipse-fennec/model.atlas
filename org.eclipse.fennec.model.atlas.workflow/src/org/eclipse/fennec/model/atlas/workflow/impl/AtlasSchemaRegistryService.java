@@ -210,6 +210,16 @@ public class AtlasSchemaRegistryService implements RegistryService<EPackage> {
 
 	/* 
 	 * (non-Javadoc)
+	 * @see org.eclipse.fennec.model.atlas.wf.workflowapi.RegistryService#transitionToStage(java.lang.String, java.lang.String, java.lang.String, java.lang.String, boolean)
+	 */
+	@Override
+	public ObjectMetadata transitionToStage(String scope, String objectId, String fromStage, String toStage,
+			boolean overwrite) {
+		throw new UnsupportedOperationException("Transition Operation not allowed for Atlas Schema Registry");
+	}
+
+	/* 
+	 * (non-Javadoc)
 	 * @see org.eclipse.fennec.model.atlas.wf.workflowapi.RegistryService#getRegistryName()
 	 */
 	@Override

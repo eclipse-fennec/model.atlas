@@ -221,7 +221,9 @@ public class ScopeServiceIntegrationTest {
 			String toStage = "approved";
 			ObjectMetadata resultMetadata = ManagementFactory.eINSTANCE.createObjectMetadata();
 
-			when(mockRegistryService.transitionToStage(SCOPE_NAME, OBJECT_ID, fromStage, toStage))
+			// The four-argument transition is an alias for the five-argument one with
+			// overwrite=false, at every level, so that is the call the registry sees.
+			when(mockRegistryService.transitionToStage(SCOPE_NAME, OBJECT_ID, fromStage, toStage, false))
 			.thenReturn(resultMetadata);
 
 			// Act
@@ -230,7 +232,37 @@ public class ScopeServiceIntegrationTest {
 
 			// Assert
 			assertEquals(resultMetadata, result);
-			verify(mockRegistryService).transitionToStage(SCOPE_NAME, OBJECT_ID, fromStage, toStage);
+			verify(mockRegistryService).transitionToStage(SCOPE_NAME, OBJECT_ID, fromStage, toStage, false);
+		}
+
+		@SuppressWarnings({ "unchecked", "rawtypes" })
+		@Test
+		@DisplayName("Should pass the overwrite flag on to the RegistryService")
+		@RegistryConfiguration
+		@EPackageLuceneIndexSetup
+		@WithFactoryConfiguration(factoryPid = "ScopeService", name = "test-scope", location = "?", properties = {
+				@Property(key = "scope.name", value = SCOPE_NAME), @Property(key = "scope.parent", value = ""),
+				@Property(key = "registryService.target", value = "(registry.name=" + REGISTRY_NAME + ")") })
+		void shouldDelegateTransitionWithOverwrite(
+				@InjectService(cardinality = 0, filter = "(scope.name=" + SCOPE_NAME
+				+ ")") ServiceAware<ScopeService> scopeAware)
+						throws InterruptedException, InvocationTargetException {
+
+			ScopeService<EObject> scopeService = scopeAware.waitForService(5000);
+			assertNotNull(scopeService);
+
+			String fromStage = "draft";
+			String toStage = "approved";
+			ObjectMetadata resultMetadata = ManagementFactory.eINSTANCE.createObjectMetadata();
+
+			when(mockRegistryService.transitionToStage(SCOPE_NAME, OBJECT_ID, fromStage, toStage, true))
+			.thenReturn(resultMetadata);
+
+			ObjectMetadata result = scopeService.transitionToStageForRegistry(REGISTRY_NAME, OBJECT_ID, fromStage,
+					toStage, true);
+
+			assertEquals(resultMetadata, result);
+			verify(mockRegistryService).transitionToStage(SCOPE_NAME, OBJECT_ID, fromStage, toStage, true);
 		}
 	}
 

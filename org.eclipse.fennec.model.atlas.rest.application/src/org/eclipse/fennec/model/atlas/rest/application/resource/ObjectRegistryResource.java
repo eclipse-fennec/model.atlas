@@ -657,12 +657,14 @@ public class ObjectRegistryResource {
                     @ApiResponse(responseCode = "400", description = "Invalid transition, missing parameters, scope not available, registry not available for scope, stage not available for registry or not a valid stage"),
                     @ApiResponse(responseCode = "403", description = "Stage is read-only or Object is only present in a parent scope final stage and so it's read-only"),
                     @ApiResponse(responseCode = "204", description = "Object not found in source stage"),
+                    @ApiResponse(responseCode = "409", description = "The target stage already holds a different object under this objectId. An objectId is unique per stage, so promoting onto an earlier copy of the same object is allowed; taking the id over from another object requires overwrite=true"),
                     @ApiResponse(responseCode = "500", description = "Internal server error") })
     @ResourceOption(key = CodecOptions.CODEC_ID_KEY_MODE, value = "FEATURE_ONLY")
     public Response transitionObject(
             @Parameter(description = "The scope name", required = true) @PathParam("scopeName") String scopeName,
             @Parameter(description = "The registry name", required = true) @PathParam("registryName") String registryName,
             @Parameter(description = "The source stage name", required = true) @PathParam("stageName") String stageName,
+            @Parameter(description = "Overwrite option. If the target stage holds a different object under this objectId, false (the default) rejects the transition with a 409 and true replaces that object. Replacing an earlier copy of the object being promoted needs no flag - that is what a promotion is for", required = false) @QueryParam("overwrite") boolean overwrite,
             @RequestBody(description = "Transition request with objectId and targetStage", required = true, content = @Content(schema = @Schema(implementation = StageTransitionRequest.class))) StageTransitionRequest transitionRequest) {
 
         ScopeService<?> scopeService = getScopeServiceByScopeName(scopeName);
@@ -695,7 +697,7 @@ public class ObjectRegistryResource {
                 return preconditionResponse;
             }
             ObjectMetadata metadata = scopeService.transitionToStageForRegistry(registryName, objectId, stageName,
-                    targetStage);
+                    targetStage, overwrite);
             ObjectMetadataResponseFilter.attach(requestContext, metadata,
                     ObjectMetadataResponseFilter.CacheTarget.METADATA);
             return Response.status(Response.Status.OK).entity(metadata).header("Content-Type", ResourceSupport.resolvedMediaType(requestContext)).build();

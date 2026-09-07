@@ -816,11 +816,13 @@ public class SchemaPackagesResource {
                     @ApiResponse(responseCode = "400", description = "Invalid transition, missing parameters, scope not available, schema registry not available for scope, stage not available for registry or not a valid stage"),
                     @ApiResponse(responseCode = "403", description = "Stage is read-only or Object is only present in a parent scope final stage and so it's read-only"),
                     @ApiResponse(responseCode = "204", description = "Package not found in source stage"),
+                    @ApiResponse(responseCode = "409", description = "The target stage already holds a different package under this objectId. An objectId is unique per stage, so promoting onto an earlier copy of the same package is allowed; taking the id over from another package requires overwrite=true"),
                     @ApiResponse(responseCode = "500", description = "Internal server error") })
     @ResourceOption(key = CodecOptions.CODEC_ID_KEY_MODE, value = "FEATURE_ONLY")
     public Response transitionPackage(
             @Parameter(description = "The scope name", required = true) @PathParam("scopeName") String scopeName,
             @Parameter(description = "The source stage name", required = true) @PathParam("stageName") String stageName,
+            @Parameter(description = "Overwrite option. If the target stage holds a different package under this objectId, false (the default) rejects the transition with a 409 and true replaces that package. Replacing an earlier copy of the package being promoted needs no flag - that is what a promotion is for", required = false) @QueryParam("overwrite") boolean overwrite,
             @RequestBody(description = "Transition request with objectId and targetStage", required = true, content = @Content()) StageTransitionRequest transitionRequest) {
 
         ScopeService<?> scopeService = getScopeServiceByScopeName(scopeName);
@@ -855,7 +857,7 @@ public class SchemaPackagesResource {
                 return preconditionResponse;
             }
             ObjectMetadata metadata = scopeService.transitionToStageForRegistry(REGISTRY_NAME,
-                    existingMetadata.getObjectId(), stageName, targetStage);
+                    existingMetadata.getObjectId(), stageName, targetStage, overwrite);
             reindexAfterTransition(scopeService, metadata, stageName, targetStage);
             ObjectMetadataResponseFilter.attach(requestContext, metadata,
                     ObjectMetadataResponseFilter.CacheTarget.METADATA);
