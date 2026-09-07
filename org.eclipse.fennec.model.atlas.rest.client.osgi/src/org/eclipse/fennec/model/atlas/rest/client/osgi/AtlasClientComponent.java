@@ -151,6 +151,8 @@ public class AtlasClientComponent {
 	private final RemoteScopeServicePublisher scopePublisher;
 	private final LazyResolvingPackageRegistry lazyRegistry;
 	private final LocalServiceWatcher localServiceWatcher;
+	/** #254: what local bundles declare they generate, known before any of it is realised. */
+	private final LocalGeneratedPackages declaredLocalPackages;
 	private final ScheduledExecutorService debounceExecutor;
 	private final AutoCloseable driftSubscription;
 	/** P3-10: registered only when {@code resource.set.fallback=true}; {@code null} otherwise. */
@@ -204,10 +206,29 @@ public class AtlasClientComponent {
 			ScheduledFuture<?> future = debounceExecutor.schedule(task, delayMs, TimeUnit.MILLISECONDS);
 			return () -> future.cancel(false);
 		};
+		// #254: a generated package's EPackage service appears only when its bundle activates,
+		// which is after its factory initialiser has already read the registry - too late for
+		// the gate to suppress anything. What the bundle DECLARES is readable from the moment
+		// it is installed, so local-first asks both: what is registered, and what is promised.
+		this.declaredLocalPackages = LocalGeneratedPackages.scan(bundleContext);
 		LocalFirstPublicationGate gate = new LocalFirstPublicationGate(publisher::publish, publisher::unpublish,
-				nsUri -> LocalServiceWatcher.hasLocalService(bundleContext, nsUri), configuration.isForceRemote(),
-				scheduler, LOCAL_DISAPPEAR_DEBOUNCE_MS);
+				nsUri -> declaredLocalPackages.declares(nsUri)
+						|| LocalServiceWatcher.hasLocalService(bundleContext, nsUri),
+				configuration.isForceRemote(), scheduler, LOCAL_DISAPPEAR_DEBOUNCE_MS);
 		this.localServiceWatcher = LocalServiceWatcher.register(bundleContext, gate);
+		// A bundle installed later declares its packages before it runs: withdraw ours in time.
+		declaredLocalPackages.track(bundleContext, new LocalGeneratedPackages.DeclarationListener() {
+
+			@Override
+			public void declared(String nsUri) {
+				gate.onLocalAppeared(nsUri);
+			}
+
+			@Override
+			public void undeclared(String nsUri) {
+				gate.onLocalDisappeared(nsUri);
+			}
+		});
 
 		// P3-5: the on-demand LAZY registry over the framework registry. Used by HYBRID
 		// (P3-6) and installed into ResourceSets by P3-10; harmless to hold in any mode.
@@ -300,6 +321,7 @@ public class AtlasClientComponent {
 		closeQuietly(prefetchRetry); // stop retrying the start-up pass
 		closeQuietly(driftSubscription); // stop drift swaps
 		localServiceWatcher.close();
+		declaredLocalPackages.close();
 		debounceExecutor.shutdownNow();
 		scopePublisher.unpublishAll(); // P5-4: revoke the per-scope ReadableScopeService publications
 		publisher.unpublishAll();
