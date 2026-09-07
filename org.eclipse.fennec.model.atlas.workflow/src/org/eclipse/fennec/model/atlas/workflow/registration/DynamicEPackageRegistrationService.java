@@ -26,8 +26,11 @@ import java.util.logging.Logger;
 import org.eclipse.emf.common.util.URI;
 import org.eclipse.emf.ecore.EFactory;
 import org.eclipse.emf.ecore.EPackage;
+import org.eclipse.emf.ecore.impl.EPackageRegistryImpl;
 import org.eclipse.emf.ecore.resource.Resource;
 import org.eclipse.emf.ecore.resource.ResourceSet;
+import org.eclipse.emf.ecore.resource.impl.ResourceImpl;
+import org.eclipse.emf.ecore.resource.impl.ResourceSetImpl;
 import org.eclipse.fennec.emf.osgi.configurator.EPackageConfigurator;
 import org.eclipse.fennec.emf.osgi.fingerprint.FingerprintService;
 import org.eclipse.fennec.model.atlas.mgmt.management.ObjectMetadata;
@@ -111,6 +114,11 @@ public class DynamicEPackageRegistrationService {
     // Track EPackages waiting for ResourceSet availability to send configuration
     // events (keyed by nsURI; the southbound mapping it feeds is stage-independent)
     private final Map<String, String> pendingConfigurationEvents = new ConcurrentHashMap<>();
+
+    // Per (scope, stage): the registered packages' resources are anchored in one
+    // internal ResourceSet so their cross-package eType proxies stay lazily
+    // resolvable against the OTHER packages of the same location (issue #251).
+    private final Map<LocationKey, RegisteredPackagesLocation> locations = new ConcurrentHashMap<>();
 
     // Serializes register/unregister so concurrent reloads (unregister-then-register of the
     // same nsURI) do not interleave. The brief window in which the nsURI is unregistered is
@@ -204,6 +212,70 @@ public class DynamicEPackageRegistrationService {
         }
     }
 
+    /** A workflow location: {@code scope}/{@code stage} may be {@code null}. */
+    private record LocationKey(String scope, String stage) {
+    }
+
+    /**
+     * The registered packages of one (scope, stage) location, anchored together in one
+     * internal ResourceSet whose package registry contains exactly these packages.
+     *
+     * <p>
+     * Why: a package's cross-package {@code eType} references are EMF proxies that
+     * resolve lazily <em>through the ResourceSet of the package's own resource</em>.
+     * {@code registerEPackage} used to detach that resource from every ResourceSet, so a
+     * package registered before its dependency kept unresolved proxies forever —
+     * instance deserialization then dereferenced the proxy and died with a bare NPE
+     * after any restart whose replay order put the dependent first (issue #251).
+     * Anchoring the resource here makes resolution lazy and order-independent: the
+     * proxy resolves on first access once the dependency is registered for the same
+     * location, whenever that happens.
+     * </p>
+     *
+     * <p>
+     * The ResourceSet never demand-loads: an nsURI not registered for this location
+     * simply does not resolve ({@code EcoreUtil.resolve} leaves the proxy in place —
+     * an nsURI is not a fetchable location, so no network access may be attempted),
+     * and the storage read path reports it as {@code ModelUnavailableException}.
+     * </p>
+     */
+    private static final class RegisteredPackagesLocation {
+        final EPackageRegistryImpl packageRegistry = new EPackageRegistryImpl();
+        final ResourceSetImpl resourceSet = new ResourceSetImpl() {
+            @Override
+            public Resource getResource(URI uri, boolean loadOnDemand) {
+                // resolution source only — never demand-load foreign URIs
+                return super.getResource(uri, false);
+            }
+        };
+
+        RegisteredPackagesLocation() {
+            resourceSet.setPackageRegistry(packageRegistry);
+        }
+
+        synchronized void attach(String nsURI, EPackage ePackage, Resource resource) {
+            packageRegistry.put(nsURI, ePackage);
+            if (!resourceSet.getResources().contains(resource)) {
+                resourceSet.getResources().add(resource);
+            }
+        }
+
+        synchronized void detach(String nsURI) {
+            Object previous = packageRegistry.remove(nsURI);
+            if (previous instanceof EPackage ePackage && ePackage.eResource() != null) {
+                resourceSet.getResources().remove(ePackage.eResource());
+            }
+        }
+
+        synchronized boolean isEmpty() {
+            return packageRegistry.isEmpty();
+        }
+    }
+
+    private RegisteredPackagesLocation locationFor(String scope, String stage) {
+        return locations.computeIfAbsent(new LocationKey(scope, stage), k -> new RegisteredPackagesLocation());
+    }
+
     @Activate
     public void activate(BundleContext context) {
         this.bundleContext = context;
@@ -219,6 +291,7 @@ public class DynamicEPackageRegistrationService {
             // Unregister all registered EPackages
             registeredEPackages.values().forEach(RegisteredEPackage::unregisterAll);
             registeredEPackages.clear();
+            locations.clear();
 
             this.bundleContext = null;
         } finally {
@@ -318,15 +391,29 @@ public class DynamicEPackageRegistrationService {
                 logger.info("Replacing EPackage registration for " + staleKey + " with new fingerprint " + fp);
                 RegisteredEPackage stale = registeredEPackages.remove(staleKey);
                 stale.unregisterAll();
+                locationFor(metadata.getScope(), metadata.getStage()).detach(nsURI);
                 // No REMOVE configuration event: the same model re-registers immediately below.
             }
 
             logger.info("Registering EPackage: " + nsURI + " (name=" + ePackage.getName() + ", scope="
                     + metadata.getScope() + ", stage=" + metadata.getStage() + ", fingerprint=" + fp + ")");
 
+            // Anchor the package's resource in this location's internal ResourceSet so its
+            // cross-package eType proxies resolve lazily against the OTHER packages
+            // registered for the same (scope, stage) — order-independent, and a dependency
+            // arriving later heals dependents on their next access (issue #251). Detaching
+            // the resource into nothing (as before) froze such proxies unresolved forever.
             Resource eResource = ePackage.eResource();
-            if(eResource.getResourceSet() != null) eResource.getResourceSet().getResources().remove(eResource);
-            eResource.setURI(URI.createURI(ePackage.getNsURI()));
+            if (eResource == null) {
+                eResource = new ResourceImpl(URI.createURI(nsURI));
+                eResource.getContents().add(ePackage);
+            } else {
+                if (eResource.getResourceSet() != null) {
+                    eResource.getResourceSet().getResources().remove(eResource);
+                }
+                eResource.setURI(URI.createURI(nsURI));
+            }
+            locationFor(metadata.getScope(), metadata.getStage()).attach(nsURI, ePackage, eResource);
 
             String fileExtension = extractFileExtension(metadata, ePackage);
             String version = extractVersion(metadata, ePackage);
@@ -471,6 +558,18 @@ public class DynamicEPackageRegistrationService {
                 // Send REMOVE configuration event before unregistering
                 sendRemoveConfigurationEvent(namespaceURI, registered.modelName);
                 registered.unregisterAll();
+
+                // Drop the package from the location's proxy-resolution ResourceSet:
+                // dependents' not-yet-resolved references to it stop resolving; already
+                // resolved ones keep their object (consistent with the #250 semantics).
+                LocationKey locationKey = new LocationKey(scope, stage);
+                RegisteredPackagesLocation location = locations.get(locationKey);
+                if (location != null) {
+                    location.detach(namespaceURI);
+                    if (location.isEmpty()) {
+                        locations.remove(locationKey);
+                    }
+                }
 
                 // Remove the pending event only if no other stage still holds this nsURI
                 if (registeredEPackages.keySet().stream().noneMatch(k -> k.nsURI().equals(namespaceURI))) {

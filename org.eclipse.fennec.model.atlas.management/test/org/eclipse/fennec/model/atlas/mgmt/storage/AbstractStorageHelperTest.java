@@ -16,13 +16,20 @@ package org.eclipse.fennec.model.atlas.mgmt.storage;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.IOException;
 import java.util.List;
 
 import org.eclipse.emf.common.util.URI;
+import org.eclipse.emf.ecore.EClass;
+import org.eclipse.emf.ecore.EPackage;
+import org.eclipse.emf.ecore.EReference;
+import org.eclipse.emf.ecore.EcoreFactory;
 import org.eclipse.emf.ecore.EcorePackage;
+import org.eclipse.emf.ecore.InternalEObject;
+import org.eclipse.emf.ecore.util.EcoreUtil;
 import org.eclipse.emf.ecore.resource.Resource;
 import org.eclipse.emf.ecore.resource.ResourceSet;
 import org.eclipse.emf.ecore.resource.impl.ResourceSetImpl;
@@ -301,5 +308,57 @@ public class AbstractStorageHelperTest {
 
         boolean exists = helper.objectExists(TEST_SCOPE, TEST_REGISTRY, TEST_STAGE, "");
         assertFalse(exists, "Should return false for empty object ID");
+    }
+
+    /**
+     * Issue #251: a failed instance load whose packages ARE registered but carry
+     * unresolved cross-package references must be detectable as a typed
+     * "model unavailable" condition naming the unresolved target — instead of the
+     * bare NullPointerException the deserializer dies with.
+     */
+    @Test
+    public void testFindUnresolvedModelNamesTheMissingPackage() {
+        EPackage dependent = EcoreFactory.eINSTANCE.createEPackage();
+        dependent.setName("dependent");
+        dependent.setNsPrefix("dep");
+        dependent.setNsURI("http://test/dependent/1.0");
+        EClass holderClass = EcoreFactory.eINSTANCE.createEClass();
+        holderClass.setName("Holder");
+        EReference item = EcoreFactory.eINSTANCE.createEReference();
+        item.setName("item");
+        item.setContainment(true);
+        EClass missingType = EcoreFactory.eINSTANCE.createEClass();
+        ((InternalEObject) missingType).eSetProxyURI(URI.createURI("http://test/missing/1.0#//Gone"));
+        item.setEType(missingType);
+        holderClass.getEStructuralFeatures().add(item);
+        dependent.getEClassifiers().add(holderClass);
+
+        // the partially loaded instance the failed demand-load leaves in the ResourceSet
+        URI uri = URI.createURI("test://holder.xmi");
+        Resource partial = resourceSet.createResource(uri);
+        partial.getContents().add(EcoreUtil.create(holderClass));
+
+        ModelUnavailableException unavailable = AbstractStorageHelper.findUnresolvedModel(resourceSet, uri,
+                TEST_SCOPE, TEST_STAGE, "holder-1", new RuntimeException(new NullPointerException()));
+        assertNotNull(unavailable, "The unresolved-model condition must be detected");
+        assertEquals("http://test/missing/1.0", unavailable.getNsURI(),
+                "The unresolved reference's target package must be named");
+        assertEquals("holder-1", unavailable.getObjectId());
+        assertEquals(TEST_SCOPE, unavailable.getScope());
+        assertEquals(TEST_STAGE, unavailable.getStage());
+    }
+
+    /** Issue #251: an ordinary failure over a fully resolved model is NOT reinterpreted. */
+    @Test
+    public void testFindUnresolvedModelIsNullWhenModelResolves() {
+        URI uri = URI.createURI("test://metadata.xmi");
+        Resource partial = resourceSet.createResource(uri);
+        partial.getContents().add(ManagementFactory.eINSTANCE.createObjectMetadata());
+
+        assertNull(AbstractStorageHelper.findUnresolvedModel(resourceSet, uri, TEST_SCOPE, TEST_STAGE, "meta-1",
+                new RuntimeException()));
+        assertNull(AbstractStorageHelper.findUnresolvedModel(resourceSet, URI.createURI("test://absent.xmi"),
+                TEST_SCOPE, TEST_STAGE, "absent", new RuntimeException()),
+                "No partially loaded resource: not this condition");
     }
 }
