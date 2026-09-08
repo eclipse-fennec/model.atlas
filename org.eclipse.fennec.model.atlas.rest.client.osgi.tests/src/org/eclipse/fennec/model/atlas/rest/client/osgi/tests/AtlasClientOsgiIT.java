@@ -14,6 +14,7 @@
 package org.eclipse.fennec.model.atlas.rest.client.osgi.tests;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -57,6 +58,10 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.osgi.service.cm.Configuration;
 import org.osgi.service.cm.ConfigurationAdmin;
+import org.osgi.framework.BundleContext;
+import org.osgi.framework.wiring.BundleRevision;
+import org.osgi.framework.Bundle;
+import org.osgi.test.common.annotation.InjectBundleContext;
 import org.osgi.test.common.annotation.InjectService;
 import org.osgi.test.common.annotation.config.InjectConfiguration;
 import org.osgi.test.common.annotation.config.WithFactoryConfiguration;
@@ -548,6 +553,116 @@ public class AtlasClientOsgiIT {
 			Thread.sleep(100L);
 		}
 		return false;
+	}
+
+	@Test
+	public void doesNotPublishAnNsUriAnInstalledBundleOnlyDeclares(
+			@InjectConfiguration(withFactoryConfig = @WithFactoryConfiguration(factoryPid = PID, name = "declared",
+					location = "?")) Configuration configuration,
+			@InjectBundleContext BundleContext bundleContext,
+			@InjectService(cardinality = 0, filter = "(atlas.remote=true)") ServiceAware<EPackage> remotePackages)
+			throws Exception {
+		// The window issue #254 is really about: a bundle that GENERATES a package is installed
+		// but has not run yet, so it has registered no EPackage service and local-first cannot
+		// see it - while its generated factory will read the registry the moment it does run.
+		// The bundle installed here is that state made explicit: it declares the capability and
+		// nothing else, and is never started.
+		String nsUri = anAtlasOwnedNsUriNoBundleProvidesYet(bundleContext);
+		assumeTrue(nsUri != null, "every atlas-owned package is already provided by this runtime");
+		assertTrue(awaitEmpty(remotePackages), "publications of earlier tests should be gone");
+
+		Bundle declaring = bundleContext.installBundle("atlas-test:declaring-" + System.nanoTime(),
+				declaringBundleJar(nsUri));
+		try {
+			Hashtable<String, Object> props = baseProps("EAGER");
+			props.put("eager.scopes", new String[] { JENA_SCOPE });
+			configuration.update(props);
+
+			assertNotNull(remotePackages.waitForService(SERVICE_WAIT_MS), "the sweep should publish something");
+			long deadline = System.currentTimeMillis() + SERVICE_WAIT_MS;
+			while (System.currentTimeMillis() < deadline) {
+				assertFalse(publishedNsUris(remotePackages).contains(nsUri),
+						"a package an installed bundle declares as generated must not be published: " + nsUri);
+				Thread.sleep(100L);
+			}
+		} finally {
+			declaring.uninstall();
+		}
+	}
+
+	/** The {@code emf.nsURI} property of every currently published remote EPackage. */
+	private static List<String> publishedNsUris(ServiceAware<EPackage> remotePackages) {
+		return remotePackages.getServiceReferences().stream().map(ref -> ref.getProperty("emf.nsURI"))
+				.filter(java.util.Objects::nonNull).map(Object::toString).collect(Collectors.toList());
+	}
+
+	/**
+	 * An nsURI this Atlas serves from its atlas scope that no bundle of this framework declares
+	 * as a generated package, so the test can stage the "declared but not yet realised" state
+	 * itself; {@code null} when there is none left.
+	 */
+	private static String anAtlasOwnedNsUriNoBundleProvidesYet(BundleContext bundleContext) throws Exception {
+		Set<String> declaredLocally = new java.util.LinkedHashSet<>();
+		for (Bundle bundle : bundleContext.getBundles()) {
+			BundleRevision revision = bundle.adapt(BundleRevision.class);
+			if (revision == null) {
+				continue;
+			}
+			revision.getDeclaredCapabilities("org.eclipse.emf.ecore.generated_package").forEach(capability -> {
+				Object uri = capability.getAttributes().get("uri");
+				if (uri instanceof String declared) {
+					declaredLocally.add(declared);
+				}
+			});
+		}
+		return atlasOwnedNsUris().stream().filter(nsUri -> !declaredLocally.contains(nsUri)).findFirst().orElse(null);
+	}
+
+	/**
+	 * A bundle that declares one generated package and carries nothing else - no classes, no
+	 * components. Installed and left in INSTALLED state, it is exactly what the client must be
+	 * able to see before anything of that package exists at runtime.
+	 */
+	private static java.io.InputStream declaringBundleJar(String nsUri) throws IOException {
+		java.util.jar.Manifest manifest = new java.util.jar.Manifest();
+		java.util.jar.Attributes main = manifest.getMainAttributes();
+		main.put(java.util.jar.Attributes.Name.MANIFEST_VERSION, "1.0");
+		main.putValue("Bundle-ManifestVersion", "2");
+		main.putValue("Bundle-SymbolicName", "org.eclipse.fennec.model.atlas.test.declaring");
+		main.putValue("Bundle-Version", "1.0.0");
+		main.putValue("Provide-Capability",
+				"org.eclipse.emf.ecore.generated_package;uri=\"" + nsUri + "\";class=\"none.Declared\"");
+		java.io.ByteArrayOutputStream bytes = new java.io.ByteArrayOutputStream();
+		try (java.util.jar.JarOutputStream jar = new java.util.jar.JarOutputStream(bytes, manifest)) {
+			// manifest only
+		}
+		return new java.io.ByteArrayInputStream(bytes.toByteArray());
+	}
+
+	/**
+	 * The nsURIs the jena listing reports as owned by the {@code atlas} scope — the
+	 * server's statically registered metamodels, which every scope inherits. Read from the
+	 * same listing the EAGER sweep uses, so the test sees exactly what the client sees.
+	 * Each entry carries its {@code objectId} (Base64-URL of the nsURI) before its
+	 * {@code scope}, so the listing is split on the id and each chunk tested for the scope.
+	 */
+	private static List<String> atlasOwnedNsUris() throws Exception {
+		HttpResponse<String> response = HttpClient.newHttpClient().send(
+				HttpRequest.newBuilder(URI.create(baseUri + "/" + JENA_SCOPE + "/schema")).GET().build(),
+				HttpResponse.BodyHandlers.ofString());
+		if (response.statusCode() != 200) {
+			return List.of();
+		}
+		List<String> nsUris = new ArrayList<>();
+		String[] chunks = response.body().split("\"objectId\"\\s*:\\s*\"");
+		for (int i = 1; i < chunks.length; i++) {
+			String chunk = chunks[i];
+			String objectId = chunk.substring(0, chunk.indexOf('"'));
+			if (chunk.contains("\"scope\":\"atlas\"")) {
+				nsUris.add(new String(Base64.getUrlDecoder().decode(objectId), StandardCharsets.UTF_8));
+			}
+		}
+		return nsUris;
 	}
 
 	/** Poll until the tracked services drain to none, or {@link #SERVICE_WAIT_MS} elapses. */

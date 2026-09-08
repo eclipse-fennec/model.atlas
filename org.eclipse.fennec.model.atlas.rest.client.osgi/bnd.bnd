@@ -9,6 +9,8 @@ Bundle-Description: OSGi DS front-end for the Model Atlas client. P3-1: a Config
 -workingset: atlas
 
 -buildpath: \
+	org.osgi.framework;version=latest,\
+	org.osgi.resource;version=latest,\
 	org.eclipse.fennec.model.atlas.rest.client.api;version=snapshot,\
 	org.eclipse.fennec.model.atlas.rest.client.impl;version=snapshot,\
 	jakarta.ws.rs-api;version=latest,\

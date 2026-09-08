@@ -199,6 +199,26 @@ it selects which per-stage scoped registries are exposed (see
 [Stage-scoped EPackage registries](#stage-scoped-epackage-registries-atlasepackageregistry)),
 and defaults to none, i.e. one stage-free registry per scope.
 
+### Local packages always win
+
+Before it publishes anything, the client asks whether this framework already provides that
+nsURI, and stays out of the way if it does (`force.remote` overrides this — see below). It asks
+in two ways, because one of them is too late on its own:
+
+- **What is registered** — a local `EPackage` / `EPackageConfigurator` service that is not
+  `atlas.remote`. A remote already published is withdrawn when such a service appears, and
+  republished if it goes away again (after a short debounce, so a restart does not flap).
+- **What is declared** — the `org.eclipse.emf.ecore.generated_package` capability that every
+  generated model bundle carries, read from the bundle's manifest. This is visible from the
+  moment the bundle is *installed*: no activation, no class loading, no service. It has to be,
+  because a generated package's service appears only when its bundle activates — and by then its
+  factory initialiser has already read `EPackage.Registry.INSTANCE` and would have found the
+  Atlas copy sitting in its slot (`EFactoryImpl cannot be cast to XyzFactory`, issue #254).
+  Bundles installed later are picked up the same way, before they run.
+
+Locally *dynamic* models — loaded from an `.ecore` at runtime — declare no capability, so only
+the first rule covers them. They carry no generated factory to break.
+
 ### HYBRID — pin a few packages, lazy-resolve the rest
 
 ```json
