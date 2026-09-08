@@ -97,7 +97,7 @@ class DriftRemovalDeserializationTest {
 			framework.remove(nsUri);
 		};
 
-		lazyRegistry = new LazyResolvingPackageRegistry(framework, remote, publication, scope -> true,
+		lazyRegistry = new LazyResolvingPackageRegistry(framework, remote, publication,
 				currentPublications::get, FAST_TIMEOUT_MS, 1L, System::currentTimeMillis, Thread::sleep);
 		substitution = new DriftSubstitution(currentPublications::containsKey, currentPublications::keySet,
 				ns -> remote.resolve(ns), publication, unpublisher);

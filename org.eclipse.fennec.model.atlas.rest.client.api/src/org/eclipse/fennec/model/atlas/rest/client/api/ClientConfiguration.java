@@ -36,16 +36,6 @@ public final class ClientConfiguration {
 	/** Default key/trust store type when not configured. */
 	public static final String DEFAULT_STORE_TYPE = "PKCS12";
 
-	/**
-	 * The scope every Atlas serves from its own statically registered EPackages - Ecore,
-	 * UML, the framework APIs - and the implicit root of every scope chain, so it is
-	 * inherited by every scope a client can ask for. Its packages are the server's
-	 * platform metamodels rather than anyone's data, which is why they are not mirrored
-	 * unless {@code include.atlas.scope} says so (issue #254). Mirrored by the server-side
-	 * constant {@code WorkflowConstants.ATLAS_SCOPE_NAME}.
-	 */
-	public static final String ATLAS_SCOPE_NAME = "atlas";
-
 	private final URI baseUri;
 	private final int connectTimeoutMs;
 	private final int readTimeoutMs;
@@ -58,7 +48,6 @@ public final class ClientConfiguration {
 	private final List<String> nsUriDenyList;
 	private final boolean forceRemote;
 	private final boolean registerInGlobalRegistry;
-	private final boolean includeAtlasScope;
 	private final int driftCheckIntervalMs;
 	private final List<String> scopeAllowList;
 	private final String defaultScope;
@@ -89,7 +78,6 @@ public final class ClientConfiguration {
 		this.nsUriDenyList = b.nsUriDenyList;
 		this.forceRemote = b.forceRemote;
 		this.registerInGlobalRegistry = b.registerInGlobalRegistry;
-		this.includeAtlasScope = b.includeAtlasScope;
 		this.driftCheckIntervalMs = b.driftCheckIntervalMs;
 		this.scopeAllowList = b.scopeAllowList;
 		this.defaultScope = b.defaultScope;
@@ -182,20 +170,6 @@ public final class ClientConfiguration {
 	/** {@code register.in.global.registry} — mirror published EPackages into {@code EPackage.Registry.INSTANCE}. */
 	public boolean isRegisterInGlobalRegistry() {
 		return registerInGlobalRegistry;
-	}
-
-	/**
-	 * {@code include.atlas.scope} — whether EPackages owned by the {@link #ATLAS_SCOPE_NAME
-	 * atlas scope} may be published at all; {@code false} by default (issue #254).
-	 * <p>
-	 * Every scope inherits from the atlas scope, so a sweep of one scope also sees the
-	 * server's own platform metamodels. A client that has those bundles already provides
-	 * them as generated code, and mirroring a dynamic copy over a generated package breaks
-	 * the generated factory. They stay resolvable on demand either way - this governs
-	 * publication, not retrieval.
-	 */
-	public boolean isIncludeAtlasScope() {
-		return includeAtlasScope;
 	}
 
 	/** {@code drift.check.interval.ms} — default {@code 300000}; {@code 0} disables. */
@@ -303,7 +277,6 @@ public final class ClientConfiguration {
 				&& modeStrict == that.modeStrict
 				&& forceRemote == that.forceRemote
 				&& registerInGlobalRegistry == that.registerInGlobalRegistry
-				&& includeAtlasScope == that.includeAtlasScope
 				&& driftCheckIntervalMs == that.driftCheckIntervalMs
 				&& cacheMaxEntries == that.cacheMaxEntries
 				&& cacheTtlMs == that.cacheTtlMs
@@ -331,8 +304,7 @@ public final class ClientConfiguration {
 	public int hashCode() {
 		return Objects.hash(baseUri, connectTimeoutMs, readTimeoutMs, mode, eagerScopes, eagerStages,
 				eagerNsUriAllowList, modeStrict, nsUriAllowList, nsUriDenyList, forceRemote,
-				registerInGlobalRegistry, includeAtlasScope, driftCheckIntervalMs, scopeAllowList, defaultScope,
-				cacheMaxEntries,
+				registerInGlobalRegistry, driftCheckIntervalMs, scopeAllowList, defaultScope, cacheMaxEntries,
 				cacheTtlMs, cacheDiskDir, authType, authTokenEnv, keystorePath, keystorePassword, keystoreType,
 				truststorePath, truststorePassword, truststoreType, lazyResolveTimeoutMs, resourceSetFallback);
 	}
@@ -362,7 +334,6 @@ public final class ClientConfiguration {
 		private List<String> nsUriDenyList = List.of();
 		private boolean forceRemote = false;
 		private boolean registerInGlobalRegistry = false;
-		private boolean includeAtlasScope = false;
 		private int driftCheckIntervalMs = 300_000;
 		private List<String> scopeAllowList = List.of();
 		private String defaultScope;
@@ -397,7 +368,6 @@ public final class ClientConfiguration {
 			this.nsUriDenyList = from.nsUriDenyList;
 			this.forceRemote = from.forceRemote;
 			this.registerInGlobalRegistry = from.registerInGlobalRegistry;
-			this.includeAtlasScope = from.includeAtlasScope;
 			this.driftCheckIntervalMs = from.driftCheckIntervalMs;
 			this.scopeAllowList = from.scopeAllowList;
 			this.defaultScope = from.defaultScope;
@@ -473,11 +443,6 @@ public final class ClientConfiguration {
 
 		public Builder registerInGlobalRegistry(boolean registerInGlobalRegistry) {
 			this.registerInGlobalRegistry = registerInGlobalRegistry;
-			return this;
-		}
-
-		public Builder includeAtlasScope(boolean includeAtlasScope) {
-			this.includeAtlasScope = includeAtlasScope;
 			return this;
 		}
 

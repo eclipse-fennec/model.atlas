@@ -138,7 +138,6 @@ Attribute names in the OCD use `_`; the ConfigAdmin/Configurator property uses `
 | `resource.set.fallback` | `true` | wrap framework-produced `ResourceSet`s with the Atlas-aware registry |
 | `force.remote` | `false` | prefer the remote EPackage over a same-nsURI local one (high `service.ranking` + startup version check) |
 | `register.in.global.registry` | `false` | also mirror published EPackages into `EPackage.Registry.INSTANCE` (legacy consumers); only ever *adds* — an nsURI another bundle already registered is left alone |
-| `include.atlas.scope` | `false` | whether EPackages owned by the `atlas` scope may be published at all — see [The atlas scope](#the-atlas-scope) |
 | `nsuri.allow.list` / `nsuri.deny.list` (`String[]`) | _empty_ | restrict which nsURIs are publishable |
 | `drift.check.interval.ms` | `300000` | background drift-watcher period; `0` disables it |
 
@@ -199,29 +198,6 @@ provenance reported by the server. `eager.stages` does not change what is pre-fe
 it selects which per-stage scoped registries are exposed (see
 [Stage-scoped EPackage registries](#stage-scoped-epackage-registries-atlasepackageregistry)),
 and defaults to none, i.e. one stage-free registry per scope.
-
-### The atlas scope
-
-Every scope inherits from the `atlas` scope: it is the implicit root of every chain, and it
-holds what the *server's own bundles* statically registered — Ecore, UML, the framework APIs.
-So a sweep of one scope sees far more than that scope's packages. With
-`eager.scopes: ["jena"]` and a chain of `jena → cities → atlas`, the listing returns jena's
-packages, the ones cities has released, and the atlas scope's platform metamodels on top.
-
-Those last ones are the client's own: any client with the corresponding bundles already
-provides them as generated code. Publishing a dynamic copy over a generated package breaks
-the generated factory — its initialiser casts `Registry.INSTANCE.getEFactory(eNS_URI)` to its
-own factory type and gets a `ClassCastException` — and local-first suppression cannot prevent
-it, because the publisher structurally cannot see a package a bundle *provides* but has not
-realised yet.
-
-So **`include.atlas.scope` defaults to `false`**: nothing owned by the `atlas` scope is
-published, by the EAGER sweep or by a later drift re-discovery. Packages inherited from an
-ordinary parent scope like `cities` are unaffected — they are data the client asked for.
-
-The flag governs *publication*, not retrieval: `getEPackage()` still resolves an atlas-scope
-package on demand, so a model that references one still loads. Set it to `true` only for a
-client that genuinely has no local copy of the server's metamodels.
 
 ### Local packages always win
 

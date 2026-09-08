@@ -103,34 +103,10 @@ class LazyResolvingPackageRegistryTest {
 		}
 	}
 
-	private LazyResolvingPackageRegistry registry(PackagePublication publication, long timeoutMs,
-			java.util.function.Predicate<String> scopePublishable) {
-		return new LazyResolvingPackageRegistry(framework, remote, publication, scopePublishable, ns -> null, timeoutMs,
-				1L, System::currentTimeMillis, Thread::sleep);
-	}
-
-	@Test
-	void servesAPackageOfAnUnpublishableScopeWithoutPublishingIt() throws Exception {
-		// The atlas scope is not published (issue #254). Resolving one of its packages on
-		// demand must still hand it to the caller: publishing it and then waiting for a
-		// framework-registry entry that can never appear would burn the whole timeout and
-		// answer null.
-		EPackage remotePkg = ePackage(NS);
-		when(remote.resolve(NS)).thenReturn(Optional.of(resolved(remotePkg, "atlas", "released", "2.38")));
-		SimulatingPublication publication = new SimulatingPublication(false);
-
-		long start = System.currentTimeMillis();
-		EPackage result = registry(publication, 5_000L, scope -> !"atlas".equals(scope)).getEPackage(NS);
-
-		assertSame(remotePkg, result, "the fetched package must be served directly");
-		assertEquals(0, publication.publishCount.get(), "nothing of that scope may be published");
-		assertTrue(System.currentTimeMillis() - start < 4_000L, "it must not wait for a publication it skipped");
-	}
-
 	private LazyResolvingPackageRegistry registry(PackagePublication publication, long timeoutMs) {
 		// publishedLookup ns->null: these tests exercise the primary/resolve paths, not the
 		// P3-9 published-package fallback. poll every 1 ms, real clock/sleeper — keeps tests fast.
-		return new LazyResolvingPackageRegistry(framework, remote, publication, scope -> true, ns -> null, timeoutMs, 1L,
+		return new LazyResolvingPackageRegistry(framework, remote, publication, ns -> null, timeoutMs, 1L,
 				System::currentTimeMillis, Thread::sleep);
 	}
 

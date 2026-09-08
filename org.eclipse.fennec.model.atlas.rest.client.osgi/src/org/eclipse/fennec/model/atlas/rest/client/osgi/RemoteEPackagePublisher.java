@@ -24,7 +24,6 @@ import java.util.logging.Logger;
 import org.eclipse.emf.ecore.EFactory;
 import org.eclipse.emf.ecore.EPackage;
 import org.eclipse.fennec.emf.osgi.configurator.EPackageConfigurator;
-import org.eclipse.fennec.model.atlas.rest.client.api.ClientConfiguration;
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.Constants;
 import org.osgi.framework.ServiceRegistration;
@@ -89,8 +88,6 @@ final class RemoteEPackagePublisher {
 	private final Map<String, EPackage> mirrored = new ConcurrentHashMap<>();
 	/** P3-9: serialises publish/republish/unpublish of the same nsURI (parallel for distinct nsURIs). */
 	private final NsUriLocks locks = new NsUriLocks();
-	/** Whether packages owned by the atlas scope may be published at all (issue #254). */
-	private final boolean includeAtlasScope;
 
 	RemoteEPackagePublisher(BundleContext bundleContext, String baseUri) {
 		this(bundleContext, baseUri, 0, null);
@@ -108,25 +105,10 @@ final class RemoteEPackagePublisher {
 	 */
 	RemoteEPackagePublisher(BundleContext bundleContext, String baseUri, int serviceRanking,
 			EPackage.Registry globalRegistry) {
-		this(bundleContext, baseUri, serviceRanking, globalRegistry, false);
-	}
-
-	/**
-	 * @param serviceRanking     the {@code service.ranking} to stamp on every published
-	 *                           service (0 = omit / framework default; a positive value for
-	 *                           {@code force.remote})
-	 * @param globalRegistry     the EMF singleton to mirror published packages into (P3-11),
-	 *                           or {@code null} to leave it untouched
-	 * @param includeAtlasScope  whether packages owned by the atlas scope may be published
-	 *                           ({@code include.atlas.scope}, issue #254)
-	 */
-	RemoteEPackagePublisher(BundleContext bundleContext, String baseUri, int serviceRanking,
-			EPackage.Registry globalRegistry, boolean includeAtlasScope) {
 		this.bundleContext = Objects.requireNonNull(bundleContext, "bundleContext");
 		this.baseUri = Objects.requireNonNull(baseUri, "baseUri");
 		this.serviceRanking = serviceRanking;
 		this.globalRegistry = globalRegistry;
-		this.includeAtlasScope = includeAtlasScope;
 	}
 
 	/**
@@ -153,11 +135,6 @@ final class RemoteEPackagePublisher {
 		String nsUri = ePackage.getNsURI();
 		if (nsUri == null || nsUri.isBlank()) {
 			LOGGER.warning("Cannot publish an EPackage with a null/blank nsURI");
-			return false;
-		}
-		if (!isScopePublishable(scope)) {
-			LOGGER.log(Level.FINE, () -> "Not publishing EPackage " + nsUri
-					+ ": it is owned by the atlas scope and include.atlas.scope=false");
 			return false;
 		}
 		boolean[] created = { false };
@@ -202,11 +179,6 @@ final class RemoteEPackagePublisher {
 			LOGGER.warning("Cannot republish an EPackage with a null/blank nsURI");
 			return false;
 		}
-		if (!isScopePublishable(scope)) {
-			LOGGER.log(Level.FINE, () -> "Not re-publishing EPackage " + nsUri
-					+ ": it is owned by the atlas scope and include.atlas.scope=false");
-			return false;
-		}
 		boolean[] replaced = { false };
 		locks.run(nsUri, () -> {
 			Registration old = published.get(nsUri);
@@ -222,28 +194,6 @@ final class RemoteEPackagePublisher {
 		LOGGER.log(Level.INFO, () -> (replaced[0] ? "Re-published" : "Published") + " remote EPackage " + nsUri
 				+ " (scope=" + scope + ", stage=" + stage + ")");
 		return replaced[0];
-	}
-
-	/**
-	 * Whether a package owned by {@code scope} may be published at all.
-	 * <p>
-	 * Every scope inherits from the atlas scope, so any sweep or drift re-discovery of a
-	 * scope also turns up the server's own statically registered metamodels - Ecore, UML,
-	 * the framework APIs (issue #254). A client that has those bundles provides them as
-	 * generated code, and a dynamic copy mirrored over a generated package breaks the
-	 * generated factory initialiser with a {@code ClassCastException}; worse, the publisher
-	 * cannot see a package a bundle <em>provides</em> but has not realised yet, so
-	 * local-first suppression cannot catch it either. Filtering by the owning scope is what
-	 * is left, and it costs nothing: these packages are the client's own anyway.
-	 * <p>
-	 * This gates publication, not retrieval - {@code getEPackage()} still resolves an
-	 * atlas-scope package on demand through the provider.
-	 *
-	 * @param scope the owning scope reported by the server
-	 * @return {@code true} if packages of that scope may be published
-	 */
-	boolean isScopePublishable(String scope) {
-		return includeAtlasScope || !ClientConfiguration.ATLAS_SCOPE_NAME.equals(scope);
 	}
 
 	/** Revoke the trio for {@code nsUri}; {@code false} if it was not published. */
