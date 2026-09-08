@@ -133,6 +133,13 @@
         <genParameters ecoreParameter="workflow-api.ecore#//RegistryService/transitionToStage/fromStage"/>
         <genParameters ecoreParameter="workflow-api.ecore#//RegistryService/transitionToStage/toStage"/>
       </genOperations>
+      <genOperations ecoreOperation="workflow-api.ecore#//RegistryService/transitionToStage.1">
+        <genParameters ecoreParameter="workflow-api.ecore#//RegistryService/transitionToStage.1/scope"/>
+        <genParameters ecoreParameter="workflow-api.ecore#//RegistryService/transitionToStage.1/objectId"/>
+        <genParameters ecoreParameter="workflow-api.ecore#//RegistryService/transitionToStage.1/fromStage"/>
+        <genParameters ecoreParameter="workflow-api.ecore#//RegistryService/transitionToStage.1/toStage"/>
+        <genParameters ecoreParameter="workflow-api.ecore#//RegistryService/transitionToStage.1/overwrite"/>
+      </genOperations>
       <genOperations ecoreOperation="workflow-api.ecore#//RegistryService/getRegistryName"/>
       <genOperations ecoreOperation="workflow-api.ecore#//RegistryService/isValidStage">
         <genParameters ecoreParameter="workflow-api.ecore#//RegistryService/isValidStage/stageName"/>
@@ -244,6 +251,13 @@
         <genParameters ecoreParameter="workflow-api.ecore#//WritableScopeService/transitionToStageForRegistry/objectId"/>
         <genParameters ecoreParameter="workflow-api.ecore#//WritableScopeService/transitionToStageForRegistry/fromStage"/>
         <genParameters ecoreParameter="workflow-api.ecore#//WritableScopeService/transitionToStageForRegistry/toStage"/>
+      </genOperations>
+      <genOperations ecoreOperation="workflow-api.ecore#//WritableScopeService/transitionToStageForRegistry.1">
+        <genParameters ecoreParameter="workflow-api.ecore#//WritableScopeService/transitionToStageForRegistry.1/registry"/>
+        <genParameters ecoreParameter="workflow-api.ecore#//WritableScopeService/transitionToStageForRegistry.1/objectId"/>
+        <genParameters ecoreParameter="workflow-api.ecore#//WritableScopeService/transitionToStageForRegistry.1/fromStage"/>
+        <genParameters ecoreParameter="workflow-api.ecore#//WritableScopeService/transitionToStageForRegistry.1/toStage"/>
+        <genParameters ecoreParameter="workflow-api.ecore#//WritableScopeService/transitionToStageForRegistry.1/overwrite"/>
       </genOperations>
       <genOperations ecoreOperation="workflow-api.ecore#//WritableScopeService/isValidRegistry">
         <genParameters ecoreParameter="workflow-api.ecore#//WritableScopeService/isValidRegistry/registryName"/>

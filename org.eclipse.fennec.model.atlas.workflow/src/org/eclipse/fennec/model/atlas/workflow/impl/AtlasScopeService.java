@@ -209,8 +209,19 @@ public class AtlasScopeService implements ScopeService<EPackage>, ReadableScopeS
 	@Override
 	public ObjectMetadata transitionToStageForRegistry(String registry, String objectId, String fromStage,
 			String toStage) {
+		return transitionToStageForRegistry(registry, objectId, fromStage, toStage, false);
+	}
+
+	/* 
+	 * (non-Javadoc)
+	 * @see org.eclipse.fennec.model.atlas.wf.workflowapi.ScopeService#transitionToStageForRegistry(java.lang.String, java.lang.String, java.lang.String, java.lang.String, boolean)
+	 */
+	@Override
+	public ObjectMetadata transitionToStageForRegistry(String registry, String objectId, String fromStage,
+			String toStage, boolean overwrite) {
 		validateRegistry(registry);
-		return atlasSchemaRegistryService.transitionToStage(WorkflowConstants.ATLAS_SCOPE_NAME, objectId, fromStage, toStage);
+		return atlasSchemaRegistryService.transitionToStage(WorkflowConstants.ATLAS_SCOPE_NAME, objectId, fromStage,
+				toStage, overwrite);
 	}
 
 	/* 

@@ -34,6 +34,7 @@ import org.eclipse.fennec.model.atlas.management.lucene.epackage.EPackageLuceneI
 import org.eclipse.fennec.model.atlas.management.lucene.epackage.impl.EPackageLuceneIndexImpl;
 import org.eclipse.fennec.model.atlas.mgmt.management.ManagementFactory;
 import org.eclipse.fennec.model.atlas.mgmt.management.ObjectMetadata;
+import org.eclipse.fennec.model.atlas.mgmt.registry.RegistryAddress;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -355,6 +356,99 @@ class EPackageLuceneIndexImplTest {
 		assertEquals(0, sensorResult.totalHits());
 	}
 
+	// -- one object id, several stages (issue #211 / #252) --
+
+	@Test
+	void testIndexKeepsTheCopyTheSameIdHasInAnotherStage() {
+		index.index(createMetadata("obj-1", "tenant-a", "schema", "draft"), createSensorPackage());
+
+		// A transition copies: the same id is now indexed for the target stage too
+		index.index(createMetadata("obj-1", "tenant-a", "schema", "approved"), createSensorPackage());
+
+		SearchResult draftOnly = index.search(EPackageSearchQuery.create()
+				.scopes(Set.of("tenant-a"))
+				.stage("draft")
+				.build());
+		assertEquals(1, draftOnly.totalHits(), "the source stage must stay searchable after the copy");
+
+		SearchResult approvedOnly = index.search(EPackageSearchQuery.create()
+				.scopes(Set.of("tenant-a"))
+				.stage("approved")
+				.build());
+		assertEquals(1, approvedOnly.totalHits());
+	}
+
+	@Test
+	void testReindexingOneStageReplacesOnlyThatStagesDocument() {
+		index.index(createMetadata("obj-1", "tenant-a", "schema", "draft"), createSensorPackage());
+		index.index(createMetadata("obj-1", "tenant-a", "schema", "approved"), createSensorPackage());
+
+		// A new draft revision of the released model, under the same id
+		index.index(createMetadata("obj-1", "tenant-a", "schema", "draft"), createPersonPackage());
+
+		SearchResult draft = index.search(EPackageSearchQuery.create()
+				.scopes(Set.of("tenant-a"))
+				.stage("draft")
+				.classifier("Person")
+				.build());
+		assertEquals(1, draft.totalHits(), "the draft document must be replaced, not duplicated");
+
+		SearchResult approved = index.search(EPackageSearchQuery.create()
+				.scopes(Set.of("tenant-a"))
+				.stage("approved")
+				.classifier("Reading")
+				.build());
+		assertEquals(1, approved.totalHits(), "the approved copy must keep the package it was promoted with");
+	}
+
+	@Test
+	void testAddressedRemoveLeavesTheOtherStageAlone() {
+		index.index(createMetadata("obj-1", "tenant-a", "schema", "draft"), createSensorPackage());
+		index.index(createMetadata("obj-1", "tenant-a", "schema", "approved"), createSensorPackage());
+
+		index.remove(new RegistryAddress("tenant-a", "schema", "draft", "obj-1"));
+
+		SearchResult draftOnly = index.search(EPackageSearchQuery.create()
+				.scopes(Set.of("tenant-a"))
+				.stage("draft")
+				.build());
+		assertEquals(0, draftOnly.totalHits());
+
+		SearchResult approvedOnly = index.search(EPackageSearchQuery.create()
+				.scopes(Set.of("tenant-a"))
+				.stage("approved")
+				.build());
+		assertEquals(1, approvedOnly.totalHits(), "deleting one stage's copy must not deindex the other");
+	}
+
+	@Test
+	void testRemoveByObjectIdWipesEveryStage() {
+		index.index(createMetadata("obj-1", "tenant-a", "schema", "draft"), createSensorPackage());
+		index.index(createMetadata("obj-1", "tenant-a", "schema", "approved"), createSensorPackage());
+
+		index.remove("obj-1");
+
+		SearchResult result = index.search(EPackageSearchQuery.create()
+				.scopes(Set.of("tenant-a"))
+				.build());
+		assertEquals(0, result.totalHits(), "the stage-free removal drops the object everywhere, on purpose");
+	}
+
+	@Test
+	void testAddressedRemoveOfAnIndexWrittenWithoutARegistry() {
+		// Metadata that carries no registry - the address must still identify its document
+		index.index(createMetadata("obj-1", "tenant-a", "draft"), createSensorPackage());
+		index.index(createMetadata("obj-1", "tenant-a", "approved"), createSensorPackage());
+
+		index.remove(new RegistryAddress("tenant-a", null, "draft", "obj-1"));
+
+		SearchResult result = index.search(EPackageSearchQuery.create()
+				.scopes(Set.of("tenant-a"))
+				.build());
+		assertEquals(1, result.totalHits());
+		assertEquals("approved", result.hits().get(0).stage());
+	}
+
 	// -- edge cases --
 
 	@Test
@@ -454,6 +548,12 @@ class EPackageLuceneIndexImplTest {
 	}
 
 	// -- helper methods --
+
+	private ObjectMetadata createMetadata(String objectId, String scope, String registry, String stage) {
+		ObjectMetadata metadata = createMetadata(objectId, scope, stage);
+		metadata.setRegistry(registry);
+		return metadata;
+	}
 
 	private ObjectMetadata createMetadata(String objectId, String scope, String stage) {
 		ObjectMetadata metadata = ManagementFactory.eINSTANCE.createObjectMetadata();

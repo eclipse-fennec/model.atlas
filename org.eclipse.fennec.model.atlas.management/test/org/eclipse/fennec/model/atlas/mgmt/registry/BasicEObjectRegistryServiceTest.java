@@ -964,24 +964,30 @@ public class BasicEObjectRegistryServiceTest {
         assertEquals(1, tenant1Drafts.size());
         assertEquals("test-scope-Stage", tenant1Drafts.get(0).getObjectId());
 
-        // Update metadata with different scope and Stage
+        // Cache the same object id at a second scope/Stage. Entries are addressed by
+        // (scope, registry, stage, objectId) since issue #252, so this is a second
+        // location holding that id - exactly what a copy-transition produces - and
+        // not a move: the first location keeps its entry until it is removed.
         ObjectMetadata updatedMetadata = createTestMetadataWithScope("test-scope-Stage", "TestPackage", "1.0.0",
                 "EPackage", ObjectStatus.APPROVED, "approved", "tenant2");
         registryService.updateCache(updatedMetadata);
 
-        // Old scope/Stage combination should not contain this object
-        List<ObjectMetadata> tenant1DraftsAfter = registryService.findByScopeAndStage("tenant1", "draft");
-        assertTrue(tenant1DraftsAfter.isEmpty());
-
-        // New scope/Stage combination should contain this object
         List<ObjectMetadata> tenant2Approveds = registryService.findByScopeAndStage("tenant2", "approved");
         assertEquals(1, tenant2Approveds.size());
         assertEquals("test-scope-Stage", tenant2Approveds.get(0).getObjectId());
 
-        // Remove from cache
+        List<ObjectMetadata> tenant1DraftsAfter = registryService.findByScopeAndStage("tenant1", "draft");
+        assertEquals(1, tenant1DraftsAfter.size());
+        assertEquals("draft", tenant1DraftsAfter.get(0).getStage());
+
+        // The addressed removal takes out one location only
+        registryService.removeFromCache("tenant1", null, "draft", "test-scope-Stage");
+        assertTrue(registryService.findByScopeAndStage("tenant1", "draft").isEmpty());
+        assertEquals(1, registryService.findByScopeAndStage("tenant2", "approved").size());
+
+        // The stage-free removal takes out what is left
         registryService.removeFromCache("test-scope-Stage");
 
-        // Scope/Stage combination should no longer contain this object
         List<ObjectMetadata> tenant2ApprovedsAfter = registryService.findByScopeAndStage("tenant2", "approved");
         assertTrue(tenant2ApprovedsAfter.isEmpty());
     }

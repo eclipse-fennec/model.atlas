@@ -106,9 +106,31 @@ public class EPackageStageActionService implements StageActionService {
     private final BundleContext bundleContext;
     private final EObjectStorageService<EPackage> storageService;
     private final PromiseFactory promiseFactory = new PromiseFactory(null);
-    private final Map<String, String> registeredNsURIs = new ConcurrentHashMap<>();
-    /** objectId -&gt; the version (e.g. git commit SHA) it is currently registered at. */
-    private final Map<String, String> registeredVersions = new ConcurrentHashMap<>();
+    private final Map<TrackingKey, String> registeredNsURIs = new ConcurrentHashMap<>();
+    /** tracking key -&gt; the version (e.g. git commit SHA) it is currently registered at. */
+    private final Map<TrackingKey, String> registeredVersions = new ConcurrentHashMap<>();
+
+    /**
+     * Addresses one registration this component holds.
+     *
+     * <p>
+     * The same {@code objectId} may legitimately be held by two stages of one
+     * registry at the same time - a transition copies unless the registry sets
+     * {@code delete.after.transition=true}, and a new draft revision of a released
+     * model re-uploads the same id (issue #211). Since this component is configured
+     * for several stages at once, tracking by {@code objectId} alone would let the
+     * ENTER of the second stage overwrite the first stage's entry, and the first
+     * EXIT would then drop the remaining stage's tracking - leaving its EPackage
+     * registered for a stage it has left (issue #252). The registration itself is
+     * keyed by (scope, stage, nsURI), so the bookkeeping is keyed the same way.
+     * </p>
+     */
+    private record TrackingKey(String scope, String stage, String objectId) {
+
+        static TrackingKey of(ActionContext ctx) {
+            return new TrackingKey(ctx.scope(), ctx.stage(), ctx.objectId());
+        }
+    }
 
     private final Set<String> triggerStages;
     private final boolean replayOnStartup;
@@ -153,8 +175,9 @@ public class EPackageStageActionService implements StageActionService {
     @Override
     public Promise<Void> onExit(ActionContext ctx) {
         return promiseFactory.submit(() -> {
-            String nsURI = registeredNsURIs.remove(ctx.objectId());
-            registeredVersions.remove(ctx.objectId());
+            TrackingKey key = TrackingKey.of(ctx);
+            String nsURI = registeredNsURIs.remove(key);
+            registeredVersions.remove(key);
             if (nsURI == null) {
                 logger.fine(() -> "No tracked registration for " + ctx.objectId() + ", nothing to unregister");
                 return null;
@@ -195,8 +218,9 @@ public class EPackageStageActionService implements StageActionService {
             // otherwise briefly flap them for consumers. Only replays skip; a genuine
             // upload/UPDATE (replay=false) always re-registers. A null/blank version (backends
             // that do not version) never matches, so their behaviour is unchanged.
+            TrackingKey key = TrackingKey.of(ctx);
             String version = metadata == null ? null : metadata.getVersion();
-            String previousVersion = registeredVersions.get(ctx.objectId());
+            String previousVersion = registeredVersions.get(key);
             if (ctx.replay() && version != null && !version.isBlank() && version.equals(previousVersion)
                     && registrationService.isRegistered(ctx.scope(), ctx.stage(), ePackage.getNsURI())) {
                 logger.fine(() -> "EPackage " + ePackage.getNsURI() + " already registered for stage " + ctx.stage()
@@ -209,7 +233,7 @@ public class EPackageStageActionService implements StageActionService {
             // identical content is an idempotent no-op, changed content atomically replaces
             // the stale registration — either way the services do not flap through an
             // unregistered window as they would with unregister-then-register.
-            String previous = registeredNsURIs.remove(ctx.objectId());
+            String previous = registeredNsURIs.remove(key);
             if (previous != null && !previous.equals(ePackage.getNsURI())) {
                 registrationService.unregisterEPackage(ctx.scope(), ctx.stage(), previous);
             }
@@ -223,9 +247,9 @@ public class EPackageStageActionService implements StageActionService {
             if (!fresh && !registrationService.isRegistered(ctx.scope(), ctx.stage(), ePackage.getNsURI())) {
                 throw new IllegalStateException("Failed to register EPackage: " + ePackage.getNsURI());
             }
-            registeredNsURIs.put(ctx.objectId(), ePackage.getNsURI());
+            registeredNsURIs.put(key, ePackage.getNsURI());
             if (version != null) {
-                registeredVersions.put(ctx.objectId(), version);
+                registeredVersions.put(key, version);
             }
             if (!ctx.replay()) {
                 awaitRegistryVisibility(ctx.scope(), ctx.stage(), ePackage, fresh);

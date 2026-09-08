@@ -315,10 +315,19 @@ public class GitStorageHelper extends AbstractStorageHelper {
 		while (it.hasNext()) {
 			Map.Entry<String, ObjectMetadata> entry = it.next();
 			if (stage.equals(entry.getValue().getStage())) {
-				registryService.removeFromCache(entry.getKey());
+				removeFromRegistry(entry.getKey(), entry.getValue());
 				it.remove();
 			}
 		}
+	}
+
+	/**
+	 * Drops one derived entry from the shared registry cache, addressed by the
+	 * location it was derived for: the same objectId may be held by another stage
+	 * of this registry, and that copy keeps its entry (issue #252).
+	 */
+	private void removeFromRegistry(String objectId, ObjectMetadata metadata) {
+		registryService.removeFromCache(metadata.getScope(), metadata.getRegistry(), metadata.getStage(), objectId);
 	}
 
 	private String commitIdForStage(String stage) {
@@ -637,9 +646,7 @@ public class GitStorageHelper extends AbstractStorageHelper {
 		// The owning component re-activates on every branch-set change; entries this
 		// helper pushed into the shared registry cache must not outlive it (otherwise
 		// listings keep advertising objects no storage service can load).
-		for (String objectId : derived.keySet()) {
-			registryService.removeFromCache(objectId);
-		}
+		derived.forEach(this::removeFromRegistry);
 		branchToService.clear();
 		branchToTree.clear();
 		commitToService.clear();

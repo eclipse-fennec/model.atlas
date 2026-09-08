@@ -1333,6 +1333,46 @@ public class SchemaPackagesResourceTest extends AbstractRestTest {
 
 	@Test
 	@ParentScopeServiceSetup
+	public void testSearchPackages_AfterTransition_SourceStageStaysSearchable(@InjectBundleContext BundleContext context)
+			throws Exception {
+		ensureResourceAvailability(context);
+		// The test registry keeps the source copy (delete.after.transition defaults to false),
+		// so after the promotion the package lives in BOTH stages and must be findable in both
+		// (issue #211 / #252).
+		String nsUri = "http://test.example.com/schema/transitionsource/1.0";
+		String name = "TransitionSourcePackage";
+		EPackage testPackage = TestHelper.createTestEPackage(nsUri, name, name);
+		String xmiContent = TestHelper.serializeToXMI(testPackage, resourceSet);
+
+		Response upload = schemaStageTarget(TestAnnotations.STAGE_DRAFT).queryParam("nsUri", nsUri)
+				.queryParam("name", name).request("application/xmi")
+				.post(Entity.entity(xmiContent, "application/xmi"));
+		assertStatus(201, upload, "Should return HTTP 201 Created");
+		String objectId = extractObjectId(upload.readEntity(String.class));
+
+		StageTransitionRequest transition = RestFactory.eINSTANCE.createStageTransitionRequest();
+		transition.setObjectId(objectId);
+		transition.setTargetStage(TestAnnotations.STAGE_APPROVED);
+		Response transitioned = schemaStageTarget(TestAnnotations.STAGE_DRAFT).path("actions").path("transition")
+				.request("application/xmi")
+				.post(Entity.entity(TestHelper.serializeToXMI(transition, resourceSet), "application/xmi"));
+		assertStatus(200, transitioned, "Transition should succeed");
+
+		Response inSource = schemaTarget().path("search").queryParam("name", name)
+				.queryParam("stage", TestAnnotations.STAGE_DRAFT).request("application/json").get();
+		assertStatus(200, inSource, "Search should answer for the source stage");
+		assertEquals("1", inSource.getHeaderString("X-Total-Count"),
+				"The copy left in the source stage must stay searchable there");
+
+		Response inTarget = schemaTarget().path("search").queryParam("name", name)
+				.queryParam("stage", TestAnnotations.STAGE_APPROVED).request("application/json").get();
+		assertStatus(200, inTarget, "Search should answer for the target stage");
+		assertEquals("1", inTarget.getHeaderString("X-Total-Count"),
+				"The promoted copy must be searchable in the target stage");
+	}
+
+	@Test
+	@ParentScopeServiceSetup
 	public void testSearchPackages_NoResults(@InjectBundleContext BundleContext context) throws Exception {
 		ensureResourceAvailability(context);
 		Response response = schemaTarget().path("search")

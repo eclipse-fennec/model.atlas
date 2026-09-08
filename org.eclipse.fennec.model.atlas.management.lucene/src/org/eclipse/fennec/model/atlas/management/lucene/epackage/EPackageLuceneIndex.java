@@ -17,6 +17,7 @@ import java.util.List;
 
 import org.eclipse.emf.ecore.EPackage;
 import org.eclipse.fennec.model.atlas.mgmt.management.ObjectMetadata;
+import org.eclipse.fennec.model.atlas.mgmt.registry.RegistryAddress;
 
 /**
  * Full-text index over the {@link EPackage}s held by a registry, used to answer
@@ -25,11 +26,13 @@ import org.eclipse.fennec.model.atlas.mgmt.management.ObjectMetadata;
  * <p>
  * The index is a derived, rebuildable view: entries are added by
  * {@link #index(ObjectMetadata, EPackage)} as packages are stored or reloaded and
- * dropped by {@link #remove(String)}, keyed by the {@code objectId} of the
+ * dropped by {@link #remove(RegistryAddress)}, keyed by the full address of the
  * {@link ObjectMetadata}. A hit therefore carries the (objectId, scope, registry,
  * stage) coordinates needed to load the real object from the storage layer — never
- * the package itself. An index that has fallen behind its backend can be repopulated
- * by re-indexing every object; nothing here is a system of record.
+ * the package itself. An object id is unique per stage, not across stages (issue
+ * #211), so the same id may be indexed once per stage that holds a copy. An index
+ * that has fallen behind its backend can be repopulated by re-indexing every
+ * object; nothing here is a system of record.
  * </p>
  *
  * <p>
@@ -50,9 +53,21 @@ public interface EPackageLuceneIndex {
     public void index(ObjectMetadata metadata, EPackage ePackage);
 
     /**
-     * Remove an entry from the index.
+     * Removes every entry for the given object id, in every stage that holds it.
+     * Callers dropping one stage's copy must use {@link #remove(RegistryAddress)}
+     * instead, or they deindex the copies the other stages keep.
+     *
+     * @param objectId the object id to drop everywhere
      */
     public void remove(String objectId);
+
+    /**
+     * Removes the entry of one addressed package, leaving the copies the same
+     * object id has in other stages untouched.
+     *
+     * @param address the package's full address
+     */
+    public void remove(RegistryAddress address);
 
     /**
      * Search with filtering and pagination.

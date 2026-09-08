@@ -339,6 +339,18 @@
       </eGenericType>
       <eParameters name="objectId" lowerBound="1" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
     </eOperations>
+    <eOperations name="getMetadata" lowerBound="1">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="Retrieve the metadata of one addressed object. An objectId is unique per stage, not across stages: a transition copies unless the registry sets delete.after.transition=true, and a new draft revision of an already released model re-uploads the same id, so the same id may be held by two stages of one registry at once. Only the full address (scope, registry, stage, objectId) identifies a single object. Returns Optional.empty() if no object is stored at that address."/>
+      </eAnnotations>
+      <eGenericType eClassifier="ecore:EDataType management.ecore#//Optional">
+        <eTypeArguments eClassifier="ecore:EClass management.ecore#//ObjectMetadata"/>
+      </eGenericType>
+      <eParameters name="scope" lowerBound="1" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+      <eParameters name="registry" lowerBound="1" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+      <eParameters name="stage" lowerBound="1" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+      <eParameters name="objectId" lowerBound="1" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    </eOperations>
     <eOperations name="findByObjectName">
       <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
         <details key="documentation" value="Find all metadata instances for a logical object across all storage roles. Returns list of metadata for the same objectName in different roles (draft, approved, documentation)."/>
@@ -439,8 +451,17 @@
     </eOperations>
     <eOperations name="removeFromCache">
       <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
-        <details key="documentation" value="Remove object from registry cache and Lucene index by unique objectId. Called by EObjectStorageService on delete operations to maintain consistency."/>
+        <details key="documentation" value="Remove an object from registry cache and index by objectId, in every stage holding it. Callers that delete one stage's copy must use the addressed variant instead, or the copies the same id has in other stages disappear from their listings while they are still stored."/>
       </eAnnotations>
+      <eParameters name="objectId" lowerBound="1" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    </eOperations>
+    <eOperations name="removeFromCache">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="Remove one addressed object from registry cache and index, leaving the copies the same objectId has in other stages in place. An objectId is unique per stage, not across stages: a transition copies unless the registry sets delete.after.transition=true, and a new draft revision of an already released model re-uploads the same id, so the same id may be held by two stages of one registry at once. Only the full address (scope, registry, stage, objectId) identifies a single object. Called by EObjectStorageService on delete operations to maintain consistency."/>
+      </eAnnotations>
+      <eParameters name="scope" lowerBound="1" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+      <eParameters name="registry" lowerBound="1" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+      <eParameters name="stage" lowerBound="1" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
       <eParameters name="objectId" lowerBound="1" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
     </eOperations>
     <eOperations name="getRegistryStatistics">

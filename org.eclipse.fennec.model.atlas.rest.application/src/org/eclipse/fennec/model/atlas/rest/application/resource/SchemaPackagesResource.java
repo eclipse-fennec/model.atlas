@@ -37,6 +37,7 @@ import org.eclipse.fennec.model.atlas.management.lucene.epackage.EPackageSearchQ
 import org.eclipse.fennec.model.atlas.mgmt.management.ManagementFactory;
 import org.eclipse.fennec.model.atlas.mgmt.management.ObjectMetadata;
 import org.eclipse.fennec.model.atlas.mgmt.management.ObjectMetadataContainer;
+import org.eclipse.fennec.model.atlas.mgmt.registry.RegistryAddress;
 import org.eclipse.fennec.model.atlas.mgmt.storage.AbstractEObjectStorageService;
 import org.eclipse.fennec.model.atlas.rest.model.StageTransitionRequest;
 import org.eclipse.fennec.model.atlas.runtime.RequireRuntime;
@@ -786,7 +787,9 @@ public class SchemaPackagesResource {
                     .deleteFromStageForRegistry(REGISTRY_NAME, stageName, existingMetadata.getObjectId())
                     .getValue();
             if (deleted) {
-            	ePackageIndex.remove(existingMetadata.getObjectId());
+            	// Only this stage's copy is gone: the same id may be held by other stages
+            	// of this registry, and those entries must stay searchable (issue #252)
+            	ePackageIndex.remove(RegistryAddress.of(existingMetadata));
             	return Response.status(Response.Status.OK).build();
             }
             return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
@@ -813,11 +816,13 @@ public class SchemaPackagesResource {
                     @ApiResponse(responseCode = "400", description = "Invalid transition, missing parameters, scope not available, schema registry not available for scope, stage not available for registry or not a valid stage"),
                     @ApiResponse(responseCode = "403", description = "Stage is read-only or Object is only present in a parent scope final stage and so it's read-only"),
                     @ApiResponse(responseCode = "204", description = "Package not found in source stage"),
+                    @ApiResponse(responseCode = "409", description = "The target stage already holds a different package under this objectId. An objectId is unique per stage, so promoting onto an earlier copy of the same package is allowed; taking the id over from another package requires overwrite=true"),
                     @ApiResponse(responseCode = "500", description = "Internal server error") })
     @ResourceOption(key = CodecOptions.CODEC_ID_KEY_MODE, value = "FEATURE_ONLY")
     public Response transitionPackage(
             @Parameter(description = "The scope name", required = true) @PathParam("scopeName") String scopeName,
             @Parameter(description = "The source stage name", required = true) @PathParam("stageName") String stageName,
+            @Parameter(description = "Overwrite option. If the target stage holds a different package under this objectId, false (the default) rejects the transition with a 409 and true replaces that package. Replacing an earlier copy of the package being promoted needs no flag - that is what a promotion is for", required = false) @QueryParam("overwrite") boolean overwrite,
             @RequestBody(description = "Transition request with objectId and targetStage", required = true, content = @Content()) StageTransitionRequest transitionRequest) {
 
         ScopeService<?> scopeService = getScopeServiceByScopeName(scopeName);
@@ -852,8 +857,8 @@ public class SchemaPackagesResource {
                 return preconditionResponse;
             }
             ObjectMetadata metadata = scopeService.transitionToStageForRegistry(REGISTRY_NAME,
-                    existingMetadata.getObjectId(), stageName, targetStage);
-            reindexAfterTransition(scopeService, metadata, targetStage);
+                    existingMetadata.getObjectId(), stageName, targetStage, overwrite);
+            reindexAfterTransition(scopeService, metadata, stageName, targetStage);
             ObjectMetadataResponseFilter.attach(requestContext, metadata,
                     ObjectMetadataResponseFilter.CacheTarget.METADATA);
             return Response.status(Response.Status.OK).entity(metadata).header("Content-Type", ResourceSupport.resolvedMediaType(requestContext)).build();
@@ -866,36 +871,64 @@ public class SchemaPackagesResource {
     }
 
     /**
-     * Re-indexes a package after it moved to another stage. The index doc records the stage
-     * a hit must be resolved against, so leaving the old one in place makes search report a
-     * stage the object has left — and, once the source copy is gone, makes the hit resolve to
-     * nothing and be dropped silently. Indexing is keyed by objectId, which a transition
-     * preserves, so this replaces the doc rather than adding a second one.
+     * Brings the search index in line with a transition that has just happened. The index doc
+     * records the stage a hit must be resolved against, so both ends need attention: the
+     * target stage gains a doc for the copy it now holds, and the source stage keeps or loses
+     * its own doc depending on whether the registry deleted the source copy
+     * ({@code delete.after.transition}). An id is unique per stage, not across stages (issue
+     * #211), so the two docs coexist for a copying transition.
      *
      * <p>
      * A transition that succeeded must not be reported as failed because the search index
-     * could not be updated: the index is a derived view and can be rebuilt, so a failure here
-     * is logged and the stale doc removed, leaving the package absent from search rather than
-     * present under the wrong stage.
+     * could not be updated: the index is a derived view, so a failure here is logged and the
+     * target entry removed, leaving the package absent from search rather than present under
+     * the wrong stage.
      * </p>
      */
-    private void reindexAfterTransition(ScopeService<?> scopeService, ObjectMetadata metadata, String targetStage) {
+    private void reindexAfterTransition(ScopeService<?> scopeService, ObjectMetadata metadata, String sourceStage,
+            String targetStage) {
         String objectId = metadata.getObjectId();
         try {
             Object content = scopeService.getContentFromStageForRegistry(REGISTRY_NAME, targetStage, objectId);
             if (content instanceof EPackage ePackage) {
                 ePackageIndex.index(metadata, ePackage);
-                return;
+            } else {
+                LOGGER.log(Level.WARNING,
+                        "Could not re-index object {0} after its transition to stage {1}: no EPackage content in the target stage. Removing its stale index entry.",
+                        new Object[] { objectId, targetStage });
+                ePackageIndex.remove(addressIn(metadata, targetStage));
             }
-            LOGGER.log(Level.WARNING,
-                    "Could not re-index object {0} after its transition to stage {1}: no EPackage content in the target stage. Removing its stale index entry.",
-                    new Object[] { objectId, targetStage });
         } catch (Exception e) {
             LOGGER.log(Level.WARNING, e,
                     () -> "Could not re-index object " + objectId + " after its transition to stage " + targetStage
                             + "; removing its stale index entry");
+            ePackageIndex.remove(addressIn(metadata, targetStage));
         }
-        ePackageIndex.remove(objectId);
+        dropSourceEntryIfMoved(scopeService, metadata, sourceStage);
+    }
+
+    /**
+     * Drops the source stage's index entry when the transition was a move rather than a copy.
+     * Whether the source copy survives is the registry's configuration, not the caller's, so
+     * it is read back from the stage itself. A failure to look it up leaves the entry in
+     * place: a search hit that no longer resolves is dropped from the results, while removing
+     * a document of a package that is still there would hide it for good.
+     */
+    private void dropSourceEntryIfMoved(ScopeService<?> scopeService, ObjectMetadata metadata, String sourceStage) {
+        String objectId = metadata.getObjectId();
+        try {
+            if (scopeService.getMetadataFromStageForRegistry(REGISTRY_NAME, sourceStage, objectId) == null) {
+                ePackageIndex.remove(addressIn(metadata, sourceStage));
+            }
+        } catch (Exception e) {
+            LOGGER.log(Level.WARNING, e, () -> "Could not check whether object " + objectId
+                    + " still lives in stage " + sourceStage + "; leaving its index entry in place");
+        }
+    }
+
+    /** The address the given object has in the given stage of this registry. */
+    private static RegistryAddress addressIn(ObjectMetadata metadata, String stage) {
+        return new RegistryAddress(metadata.getScope(), metadata.getRegistry(), stage, metadata.getObjectId());
     }
     
     @GET
