@@ -315,7 +315,7 @@ class GitStorageHelperTest {
 		verify(registry, times(1)).updateCache(any()); // construction derive
 
 		assertFalse(h.reconcile("main"), "unchanged tip -> false");
-		verify(registry, never()).removeFromCache(any());
+		verify(registry, never()).removeFromCache(any(), any(), any(), any());
 		verify(registry, times(1)).updateCache(any()); // still just the construction derive
 	}
 
@@ -330,7 +330,7 @@ class GitStorageHelperTest {
 		GitStorageHelper h = helper(Map.of(EPACKAGE_TYPE, "schema"));
 
 		assertTrue(h.reconcile("main"), "moved tip -> true");
-		verify(registry).removeFromCache("jena/main/" + ECORE_PATH);
+		verify(registry).removeFromCache("jena", "schema", "main", "jena/main/" + ECORE_PATH);
 
 		ArgumentCaptor<ObjectMetadata> captor = ArgumentCaptor.forClass(ObjectMetadata.class);
 		verify(registry, times(2)).updateCache(captor.capture());
@@ -397,7 +397,7 @@ class GitStorageHelperTest {
 		assertEquals(1, h.listObjectIds("jena", "schema", "main").size());
 
 		assertTrue(h.reconcile("main"));
-		verify(registry).removeFromCache("jena/main/" + ECORE_PATH);
+		verify(registry).removeFromCache("jena", "schema", "main", "jena/main/" + ECORE_PATH);
 		assertTrue(h.listObjectIds("jena", "schema", "main").isEmpty(), "removed file gone from listing");
 		verify(registry, times(1)).updateCache(any()); // only the construction derive; nothing re-derived
 	}
@@ -406,7 +406,7 @@ class GitStorageHelperTest {
 	void reconcile_unknownBranch_returnsFalse() throws Exception {
 		GitStorageHelper h = helper(Map.of(EPACKAGE_TYPE, "schema"));
 		assertFalse(h.reconcile("no-such-branch"));
-		verify(registry, never()).removeFromCache(any());
+		verify(registry, never()).removeFromCache(any(), any(), any(), any());
 	}
 
 	@Test
@@ -434,8 +434,8 @@ class GitStorageHelperTest {
 			h.reconcileAll();
 
 			// only main moved -> only its entry evicted + re-derived
-			verify(registry).removeFromCache("jena/main/" + ECORE_PATH);
-			verify(registry, never()).removeFromCache("jena/release/" + ECORE_PATH);
+			verify(registry).removeFromCache("jena", "schema", "main", "jena/main/" + ECORE_PATH);
+			verify(registry, never()).removeFromCache("jena", "schema", "release", "jena/release/" + ECORE_PATH);
 
 			ArgumentCaptor<ObjectMetadata> captor = ArgumentCaptor.forClass(ObjectMetadata.class);
 			verify(registry, times(3)).updateCache(captor.capture()); // +1 main re-derive
@@ -452,6 +452,6 @@ class GitStorageHelperTest {
 	void close_evictsDerivedEntriesFromSharedRegistryCache() throws Exception {
 		GitStorageHelper h = helper(Map.of(EPACKAGE_TYPE, "schema"));
 		h.close();
-		verify(registry).removeFromCache("jena/main/" + ECORE_PATH);
+		verify(registry).removeFromCache("jena", "schema", "main", "jena/main/" + ECORE_PATH);
 	}
 }

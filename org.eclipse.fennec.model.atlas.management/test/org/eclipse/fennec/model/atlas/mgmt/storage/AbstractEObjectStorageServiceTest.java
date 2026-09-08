@@ -430,8 +430,11 @@ public class AbstractEObjectStorageServiceTest {
         // Verify storage deletion
         verify(mockStorageHelper).deleteObject(TEST_SCOPE, TEST_REGISTRY, TEST_STAGE, "test-id");
 
-        // Verify registry cleanup
-        verify(mockRegistryService).removeFromCache("test-id");
+        // Verify registry cleanup addresses the stage the object was deleted from:
+        // the same objectId may be held by another stage of the same registry, and
+        // that copy must keep its registry entry (issue #252)
+        verify(mockRegistryService).removeFromCache(TEST_SCOPE, TEST_REGISTRY, TEST_STAGE, "test-id");
+        verify(mockRegistryService, never()).removeFromCache(any());
     }
 
     @Test
@@ -450,6 +453,7 @@ public class AbstractEObjectStorageServiceTest {
 
         // Verify no registry cleanup when deletion fails
         verify(mockRegistryService, never()).removeFromCache(any());
+        verify(mockRegistryService, never()).removeFromCache(any(), any(), any(), any());
     }
 
     @Test

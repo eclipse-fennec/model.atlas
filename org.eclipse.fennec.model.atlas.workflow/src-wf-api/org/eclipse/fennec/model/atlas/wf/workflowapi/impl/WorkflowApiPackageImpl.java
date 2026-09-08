@@ -425,7 +425,7 @@ public class WorkflowApiPackageImpl extends EPackageImpl implements WorkflowApiP
 	 * @generated
 	 */
 	@Override
-	public EOperation getRegistryService__GetRegistryName() {
+	public EOperation getRegistryService__TransitionToStage__String_String_String_String_boolean() {
 		return registryServiceEClass.getEOperations().get(13);
 	}
 
@@ -435,7 +435,7 @@ public class WorkflowApiPackageImpl extends EPackageImpl implements WorkflowApiP
 	 * @generated
 	 */
 	@Override
-	public EOperation getRegistryService__IsValidStage__String() {
+	public EOperation getRegistryService__GetRegistryName() {
 		return registryServiceEClass.getEOperations().get(14);
 	}
 
@@ -445,7 +445,7 @@ public class WorkflowApiPackageImpl extends EPackageImpl implements WorkflowApiP
 	 * @generated
 	 */
 	@Override
-	public EOperation getRegistryService__IsWritableStage__String() {
+	public EOperation getRegistryService__IsValidStage__String() {
 		return registryServiceEClass.getEOperations().get(15);
 	}
 
@@ -455,7 +455,7 @@ public class WorkflowApiPackageImpl extends EPackageImpl implements WorkflowApiP
 	 * @generated
 	 */
 	@Override
-	public EOperation getRegistryService__IsFinalStageWritable() {
+	public EOperation getRegistryService__IsWritableStage__String() {
 		return registryServiceEClass.getEOperations().get(16);
 	}
 
@@ -465,7 +465,7 @@ public class WorkflowApiPackageImpl extends EPackageImpl implements WorkflowApiP
 	 * @generated
 	 */
 	@Override
-	public EOperation getRegistryService__IsTransitionAllowed__String_String() {
+	public EOperation getRegistryService__IsFinalStageWritable() {
 		return registryServiceEClass.getEOperations().get(17);
 	}
 
@@ -475,7 +475,7 @@ public class WorkflowApiPackageImpl extends EPackageImpl implements WorkflowApiP
 	 * @generated
 	 */
 	@Override
-	public EOperation getRegistryService__GetRegistry() {
+	public EOperation getRegistryService__IsTransitionAllowed__String_String() {
 		return registryServiceEClass.getEOperations().get(18);
 	}
 
@@ -485,7 +485,7 @@ public class WorkflowApiPackageImpl extends EPackageImpl implements WorkflowApiP
 	 * @generated
 	 */
 	@Override
-	public EOperation getRegistryService__IsEClassCompatibleWithRegistry__EClass() {
+	public EOperation getRegistryService__GetRegistry() {
 		return registryServiceEClass.getEOperations().get(19);
 	}
 
@@ -495,7 +495,7 @@ public class WorkflowApiPackageImpl extends EPackageImpl implements WorkflowApiP
 	 * @generated
 	 */
 	@Override
-	public EOperation getRegistryService__GetRootEClass() {
+	public EOperation getRegistryService__IsEClassCompatibleWithRegistry__EClass() {
 		return registryServiceEClass.getEOperations().get(20);
 	}
 
@@ -505,7 +505,7 @@ public class WorkflowApiPackageImpl extends EPackageImpl implements WorkflowApiP
 	 * @generated
 	 */
 	@Override
-	public EOperation getRegistryService__GetRootEClasses() {
+	public EOperation getRegistryService__GetRootEClass() {
 		return registryServiceEClass.getEOperations().get(21);
 	}
 
@@ -515,7 +515,7 @@ public class WorkflowApiPackageImpl extends EPackageImpl implements WorkflowApiP
 	 * @generated
 	 */
 	@Override
-	public EOperation getRegistryService__GetDerivedEClasses() {
+	public EOperation getRegistryService__GetRootEClasses() {
 		return registryServiceEClass.getEOperations().get(22);
 	}
 
@@ -525,7 +525,7 @@ public class WorkflowApiPackageImpl extends EPackageImpl implements WorkflowApiP
 	 * @generated
 	 */
 	@Override
-	public EOperation getRegistryService__IsDerivedEClass__EClass() {
+	public EOperation getRegistryService__GetDerivedEClasses() {
 		return registryServiceEClass.getEOperations().get(23);
 	}
 
@@ -535,7 +535,7 @@ public class WorkflowApiPackageImpl extends EPackageImpl implements WorkflowApiP
 	 * @generated
 	 */
 	@Override
-	public EOperation getRegistryService__Activate__String() {
+	public EOperation getRegistryService__IsDerivedEClass__EClass() {
 		return registryServiceEClass.getEOperations().get(24);
 	}
 
@@ -545,8 +545,18 @@ public class WorkflowApiPackageImpl extends EPackageImpl implements WorkflowApiP
 	 * @generated
 	 */
 	@Override
-	public EOperation getRegistryService__Deactivate__String() {
+	public EOperation getRegistryService__Activate__String() {
 		return registryServiceEClass.getEOperations().get(25);
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
+	public EOperation getRegistryService__Deactivate__String() {
+		return registryServiceEClass.getEOperations().get(26);
 	}
 
 	/**
@@ -777,7 +787,7 @@ public class WorkflowApiPackageImpl extends EPackageImpl implements WorkflowApiP
 	 * @generated
 	 */
 	@Override
-	public EOperation getWritableScopeService__IsValidRegistry__String() {
+	public EOperation getWritableScopeService__TransitionToStageForRegistry__String_String_String_String_boolean() {
 		return writableScopeServiceEClass.getEOperations().get(14);
 	}
 
@@ -787,7 +797,7 @@ public class WorkflowApiPackageImpl extends EPackageImpl implements WorkflowApiP
 	 * @generated
 	 */
 	@Override
-	public EOperation getWritableScopeService__GetAllRegistries() {
+	public EOperation getWritableScopeService__IsValidRegistry__String() {
 		return writableScopeServiceEClass.getEOperations().get(15);
 	}
 
@@ -797,8 +807,18 @@ public class WorkflowApiPackageImpl extends EPackageImpl implements WorkflowApiP
 	 * @generated
 	 */
 	@Override
-	public EOperation getWritableScopeService__GetScope() {
+	public EOperation getWritableScopeService__GetAllRegistries() {
 		return writableScopeServiceEClass.getEOperations().get(16);
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
+	public EOperation getWritableScopeService__GetScope() {
+		return writableScopeServiceEClass.getEOperations().get(17);
 	}
 
 	/**
@@ -857,6 +877,7 @@ public class WorkflowApiPackageImpl extends EPackageImpl implements WorkflowApiP
 		createEOperation(registryServiceEClass, REGISTRY_SERVICE___LIST_IN_FINAL_STAGE__STRING);
 		createEOperation(registryServiceEClass, REGISTRY_SERVICE___LIST_ALL__STRING);
 		createEOperation(registryServiceEClass, REGISTRY_SERVICE___TRANSITION_TO_STAGE__STRING_STRING_STRING_STRING);
+		createEOperation(registryServiceEClass, REGISTRY_SERVICE___TRANSITION_TO_STAGE__STRING_STRING_STRING_STRING_BOOLEAN);
 		createEOperation(registryServiceEClass, REGISTRY_SERVICE___GET_REGISTRY_NAME);
 		createEOperation(registryServiceEClass, REGISTRY_SERVICE___IS_VALID_STAGE__STRING);
 		createEOperation(registryServiceEClass, REGISTRY_SERVICE___IS_WRITABLE_STAGE__STRING);
@@ -897,6 +918,7 @@ public class WorkflowApiPackageImpl extends EPackageImpl implements WorkflowApiP
 		createEOperation(writableScopeServiceEClass, WRITABLE_SCOPE_SERVICE___LIST_IN_FINAL_STAGE_FOR_REGISTRY__STRING);
 		createEOperation(writableScopeServiceEClass, WRITABLE_SCOPE_SERVICE___LIST_ALL_FOR_REGISTRY__STRING);
 		createEOperation(writableScopeServiceEClass, WRITABLE_SCOPE_SERVICE___TRANSITION_TO_STAGE_FOR_REGISTRY__STRING_STRING_STRING_STRING);
+		createEOperation(writableScopeServiceEClass, WRITABLE_SCOPE_SERVICE___TRANSITION_TO_STAGE_FOR_REGISTRY__STRING_STRING_STRING_STRING_BOOLEAN);
 		createEOperation(writableScopeServiceEClass, WRITABLE_SCOPE_SERVICE___IS_VALID_REGISTRY__STRING);
 		createEOperation(writableScopeServiceEClass, WRITABLE_SCOPE_SERVICE___GET_ALL_REGISTRIES);
 		createEOperation(writableScopeServiceEClass, WRITABLE_SCOPE_SERVICE___GET_SCOPE);
@@ -1145,6 +1167,13 @@ public class WorkflowApiPackageImpl extends EPackageImpl implements WorkflowApiP
 		addEParameter(op, ecorePackage.getEString(), "fromStage", 0, 1, IS_UNIQUE, IS_ORDERED);
 		addEParameter(op, ecorePackage.getEString(), "toStage", 0, 1, IS_UNIQUE, IS_ORDERED);
 
+		op = initEOperation(getRegistryService__TransitionToStage__String_String_String_String_boolean(), theManagementPackage.getObjectMetadata(), "transitionToStage", 0, 1, IS_UNIQUE, IS_ORDERED);
+		addEParameter(op, ecorePackage.getEString(), "scope", 0, 1, IS_UNIQUE, IS_ORDERED);
+		addEParameter(op, ecorePackage.getEString(), "objectId", 1, 1, IS_UNIQUE, IS_ORDERED);
+		addEParameter(op, ecorePackage.getEString(), "fromStage", 0, 1, IS_UNIQUE, IS_ORDERED);
+		addEParameter(op, ecorePackage.getEString(), "toStage", 0, 1, IS_UNIQUE, IS_ORDERED);
+		addEParameter(op, ecorePackage.getEBoolean(), "overwrite", 0, 1, IS_UNIQUE, IS_ORDERED);
+
 		initEOperation(getRegistryService__GetRegistryName(), ecorePackage.getEString(), "getRegistryName", 0, 1, IS_UNIQUE, IS_ORDERED);
 
 		op = initEOperation(getRegistryService__IsValidStage__String(), ecorePackage.getEBoolean(), "isValidStage", 0, 1, IS_UNIQUE, IS_ORDERED);
@@ -1305,6 +1334,13 @@ public class WorkflowApiPackageImpl extends EPackageImpl implements WorkflowApiP
 		addEParameter(op, ecorePackage.getEString(), "objectId", 1, 1, IS_UNIQUE, IS_ORDERED);
 		addEParameter(op, ecorePackage.getEString(), "fromStage", 0, 1, IS_UNIQUE, IS_ORDERED);
 		addEParameter(op, ecorePackage.getEString(), "toStage", 0, 1, IS_UNIQUE, IS_ORDERED);
+
+		op = initEOperation(getWritableScopeService__TransitionToStageForRegistry__String_String_String_String_boolean(), theManagementPackage.getObjectMetadata(), "transitionToStageForRegistry", 0, 1, IS_UNIQUE, IS_ORDERED);
+		addEParameter(op, ecorePackage.getEString(), "registry", 0, 1, IS_UNIQUE, IS_ORDERED);
+		addEParameter(op, ecorePackage.getEString(), "objectId", 1, 1, IS_UNIQUE, IS_ORDERED);
+		addEParameter(op, ecorePackage.getEString(), "fromStage", 0, 1, IS_UNIQUE, IS_ORDERED);
+		addEParameter(op, ecorePackage.getEString(), "toStage", 0, 1, IS_UNIQUE, IS_ORDERED);
+		addEParameter(op, ecorePackage.getEBoolean(), "overwrite", 0, 1, IS_UNIQUE, IS_ORDERED);
 
 		op = initEOperation(getWritableScopeService__IsValidRegistry__String(), ecorePackage.getEBoolean(), "isValidRegistry", 0, 1, IS_UNIQUE, IS_ORDERED);
 		addEParameter(op, ecorePackage.getEString(), "registryName", 0, 1, IS_UNIQUE, IS_ORDERED);

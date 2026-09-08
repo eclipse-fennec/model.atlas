@@ -360,8 +360,22 @@ public class ScopeServiceImpl<T extends EObject> implements ScopeService<T>, Wri
 	@Override
 	public ObjectMetadata transitionToStageForRegistry(String registry, String objectId, String fromStage,
 			String toStage) {
+		return transitionToStageForRegistry(registry, objectId, fromStage, toStage, false);
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see org.eclipse.fennec.model.atlas.wf.workflowapi.ScopeService#
+	 * transitionToStageForRegistry(java.lang.String, java.lang.String,
+	 * java.lang.String, java.lang.String, boolean)
+	 */
+	@Override
+	public ObjectMetadata transitionToStageForRegistry(String registry, String objectId, String fromStage,
+			String toStage, boolean overwrite) {
 		validateRegistry(registry);
-		return getRegistryService(registry).transitionToStage(config.scope_name(), objectId, fromStage, toStage);
+		return getRegistryService(registry).transitionToStage(config.scope_name(), objectId, fromStage, toStage,
+				overwrite);
 	}
 
 	/*

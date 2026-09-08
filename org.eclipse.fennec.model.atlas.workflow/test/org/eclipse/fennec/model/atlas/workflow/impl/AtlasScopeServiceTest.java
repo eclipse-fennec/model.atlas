@@ -338,12 +338,29 @@ public class AtlasScopeServiceTest {
 		@DisplayName("Should delegate transition with atlas scope")
 		void shouldDelegateTransition() {
 			ObjectMetadata expected = ManagementFactory.eINSTANCE.createObjectMetadata();
-			when(mockRegistryService.transitionToStage(SCOPE, OBJECT_ID, "released", "other")).thenReturn(expected);
+			// The four-argument transition is an alias for the five-argument one with
+			// overwrite=false, at every level, so that is the call the registry sees.
+			when(mockRegistryService.transitionToStage(SCOPE, OBJECT_ID, "released", "other", false))
+					.thenReturn(expected);
 
 			ObjectMetadata result = service.transitionToStageForRegistry(REGISTRY, OBJECT_ID, "released", "other");
 
 			assertEquals(expected, result);
-			verify(mockRegistryService).transitionToStage(SCOPE, OBJECT_ID, "released", "other");
+			verify(mockRegistryService).transitionToStage(SCOPE, OBJECT_ID, "released", "other", false);
+		}
+
+		@Test
+		@DisplayName("Should pass the overwrite flag on with atlas scope")
+		void shouldDelegateTransitionWithOverwrite() {
+			ObjectMetadata expected = ManagementFactory.eINSTANCE.createObjectMetadata();
+			when(mockRegistryService.transitionToStage(SCOPE, OBJECT_ID, "released", "other", true))
+					.thenReturn(expected);
+
+			ObjectMetadata result = service.transitionToStageForRegistry(REGISTRY, OBJECT_ID, "released", "other",
+					true);
+
+			assertEquals(expected, result);
+			verify(mockRegistryService).transitionToStage(SCOPE, OBJECT_ID, "released", "other", true);
 		}
 	}
 

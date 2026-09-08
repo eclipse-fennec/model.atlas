@@ -15,6 +15,7 @@ Test-Cases: ${classes;HIERARCHY_INDIRECTLY_ANNOTATED;org.junit.platform.commons.
 # other test bundles. EMF (EPackage/ResourceSet/ResourceSetFactory/EPackageConfigurator)
 # comes via -library enableEMF.
 -buildpath: \
+	org.osgi.resource;version=latest,\
 	org.osgi.framework;version=latest,\
 	org.osgi.service.cm;version=latest,\
 	org.osgi.service.component;version=latest,\

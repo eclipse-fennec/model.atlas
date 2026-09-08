@@ -140,6 +140,12 @@
       <genOperations ecoreOperation="management-api.ecore#//EObjectRegistryService/getMetadata">
         <genParameters ecoreParameter="management-api.ecore#//EObjectRegistryService/getMetadata/objectId"/>
       </genOperations>
+      <genOperations ecoreOperation="management-api.ecore#//EObjectRegistryService/getMetadata.1">
+        <genParameters ecoreParameter="management-api.ecore#//EObjectRegistryService/getMetadata.1/scope"/>
+        <genParameters ecoreParameter="management-api.ecore#//EObjectRegistryService/getMetadata.1/registry"/>
+        <genParameters ecoreParameter="management-api.ecore#//EObjectRegistryService/getMetadata.1/stage"/>
+        <genParameters ecoreParameter="management-api.ecore#//EObjectRegistryService/getMetadata.1/objectId"/>
+      </genOperations>
       <genOperations ecoreOperation="management-api.ecore#//EObjectRegistryService/findByObjectName">
         <genParameters ecoreParameter="management-api.ecore#//EObjectRegistryService/findByObjectName/objectName"/>
       </genOperations>
@@ -176,6 +182,12 @@
       </genOperations>
       <genOperations ecoreOperation="management-api.ecore#//EObjectRegistryService/removeFromCache">
         <genParameters ecoreParameter="management-api.ecore#//EObjectRegistryService/removeFromCache/objectId"/>
+      </genOperations>
+      <genOperations ecoreOperation="management-api.ecore#//EObjectRegistryService/removeFromCache.1">
+        <genParameters ecoreParameter="management-api.ecore#//EObjectRegistryService/removeFromCache.1/scope"/>
+        <genParameters ecoreParameter="management-api.ecore#//EObjectRegistryService/removeFromCache.1/registry"/>
+        <genParameters ecoreParameter="management-api.ecore#//EObjectRegistryService/removeFromCache.1/stage"/>
+        <genParameters ecoreParameter="management-api.ecore#//EObjectRegistryService/removeFromCache.1/objectId"/>
       </genOperations>
       <genOperations ecoreOperation="management-api.ecore#//EObjectRegistryService/getRegistryStatistics"/>
       <genOperations ecoreOperation="management-api.ecore#//EObjectRegistryService/findByScopeAndStage">

@@ -623,6 +623,68 @@ public class ObjectRegistryResourceTest extends AbstractRestTest{
 
 	@Test
 	@ParentScopeServiceSetup
+	public void testTransitionObject_TargetHeldByAnotherObject(@InjectBundleContext BundleContext context)
+			throws IOException, InterruptedException {
+		ensureResourceAvailability(context);
+		// The target stage already holds a different object under this id: an
+		// objectId is unique per stage, not across stages (issue #211), so the
+		// promotion must not overwrite it silently.
+		uploadTestObject(TestAnnotations.STAGE_APPROVED, "another-object");
+		uploadTestObject(TestAnnotations.STAGE_DRAFT);
+
+		StageTransitionRequest transition = RestFactory.eINSTANCE.createStageTransitionRequest();
+		transition.setObjectId(TEST_OBJECT_ID);
+		transition.setTargetStage(TestAnnotations.STAGE_APPROVED);
+
+		String xmiContent = TestHelper.serializeToXMI(transition, resourceSet);
+
+		Response response = stageTarget(TestAnnotations.STAGE_DRAFT).path("actions").path("transition")
+				.request("application/xmi").post(Entity.entity(xmiContent, "application/xmi"));
+
+		assertEquals(409, response.getStatus(), "Should return HTTP 409 Conflict");
+
+		// the object holding the target address is still there, untouched
+		Response occupant = stageTarget(TestAnnotations.STAGE_APPROVED)
+				.queryParam("name", "another-object")
+				.request("application/json").get();
+		assertEquals(200, occupant.getStatus(), "The object in the target stage should still be listed");
+		assertTrue(occupant.readEntity(String.class).contains("another-object"),
+				"The promotion must not have overwritten the object that held the target address");
+	}
+
+	@Test
+	@ParentScopeServiceSetup
+	public void testTransitionObject_TargetHeldByAnotherObject_Overwrite(@InjectBundleContext BundleContext context)
+			throws IOException, InterruptedException {
+		ensureResourceAvailability(context);
+		// Same collision as above, but the caller states that it means to replace
+		// whatever holds the target address.
+		uploadTestObject(TestAnnotations.STAGE_APPROVED, "another-object");
+		uploadTestObject(TestAnnotations.STAGE_DRAFT);
+
+		StageTransitionRequest transition = RestFactory.eINSTANCE.createStageTransitionRequest();
+		transition.setObjectId(TEST_OBJECT_ID);
+		transition.setTargetStage(TestAnnotations.STAGE_APPROVED);
+
+		String xmiContent = TestHelper.serializeToXMI(transition, resourceSet);
+
+		Response response = stageTarget(TestAnnotations.STAGE_DRAFT).path("actions").path("transition")
+				.queryParam("overwrite", true)
+				.request("application/xmi").post(Entity.entity(xmiContent, "application/xmi"));
+
+		assertEquals(200, response.getStatus(), "Should return HTTP 200 OK");
+
+		// the promoted object now holds the target address
+		Response promoted = stageTarget(TestAnnotations.STAGE_APPROVED)
+				.queryParam("name", TEST_OBJECT_NAME)
+				.request("application/json").get();
+		assertEquals(200, promoted.getStatus(), "The promoted object should be listed in the target stage");
+		assertTrue(promoted.readEntity(String.class).contains(TEST_OBJECT_NAME),
+				"The promoted object should have replaced the one that held the target address");
+	}
+
+	@Test
+	@ParentScopeServiceSetup
 	public void testTransitionObject_NotFound(@InjectBundleContext BundleContext context) throws IOException, InterruptedException {
 		ensureResourceAvailability(context);
 		StageTransitionRequest transition = RestFactory.eINSTANCE.createStageTransitionRequest();
@@ -1345,11 +1407,15 @@ public class ObjectRegistryResourceTest extends AbstractRestTest{
 	}
 
 	private void uploadTestObject(String stage) throws IOException {
+		uploadTestObject(stage, TEST_OBJECT_NAME);
+	}
+
+	private void uploadTestObject(String stage, String objectName) throws IOException {
 		Person person = TestHelper.createTestObject();
 		String xmiContent = TestHelper.serializeToXMI(person, resourceSet);
 
 		Response response = stageTarget(stage).path(TEST_OBJECT_ID)
-				.queryParam("name", TEST_OBJECT_NAME)
+				.queryParam("name", objectName)
 				.queryParam("mediaType", "application/xml").request("application/xmi")
 				.post(Entity.entity(xmiContent, "application/xmi"));
 

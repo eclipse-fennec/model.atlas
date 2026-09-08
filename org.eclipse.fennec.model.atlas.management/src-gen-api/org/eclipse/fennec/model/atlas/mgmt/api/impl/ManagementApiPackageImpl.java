@@ -462,7 +462,7 @@ public class ManagementApiPackageImpl extends EPackageImpl implements Management
 	 * @generated
 	 */
 	@Override
-	public EOperation getEObjectRegistryService__FindByObjectName__String() {
+	public EOperation getEObjectRegistryService__GetMetadata__String_String_String_String() {
 		return eObjectRegistryServiceEClass.getEOperations().get(1);
 	}
 
@@ -472,7 +472,7 @@ public class ManagementApiPackageImpl extends EPackageImpl implements Management
 	 * @generated
 	 */
 	@Override
-	public EOperation getEObjectRegistryService__FindByObjectNameAndStage__String_String() {
+	public EOperation getEObjectRegistryService__FindByObjectName__String() {
 		return eObjectRegistryServiceEClass.getEOperations().get(2);
 	}
 
@@ -482,7 +482,7 @@ public class ManagementApiPackageImpl extends EPackageImpl implements Management
 	 * @generated
 	 */
 	@Override
-	public EOperation getEObjectRegistryService__FindByStatus__ObjectStatus() {
+	public EOperation getEObjectRegistryService__FindByObjectNameAndStage__String_String() {
 		return eObjectRegistryServiceEClass.getEOperations().get(3);
 	}
 
@@ -492,7 +492,7 @@ public class ManagementApiPackageImpl extends EPackageImpl implements Management
 	 * @generated
 	 */
 	@Override
-	public EOperation getEObjectRegistryService__FindPendingApproval() {
+	public EOperation getEObjectRegistryService__FindByStatus__ObjectStatus() {
 		return eObjectRegistryServiceEClass.getEOperations().get(4);
 	}
 
@@ -502,7 +502,7 @@ public class ManagementApiPackageImpl extends EPackageImpl implements Management
 	 * @generated
 	 */
 	@Override
-	public EOperation getEObjectRegistryService__FindByVersion__String() {
+	public EOperation getEObjectRegistryService__FindPendingApproval() {
 		return eObjectRegistryServiceEClass.getEOperations().get(5);
 	}
 
@@ -512,7 +512,7 @@ public class ManagementApiPackageImpl extends EPackageImpl implements Management
 	 * @generated
 	 */
 	@Override
-	public EOperation getEObjectRegistryService__FindByVersionPattern__String() {
+	public EOperation getEObjectRegistryService__FindByVersion__String() {
 		return eObjectRegistryServiceEClass.getEOperations().get(6);
 	}
 
@@ -522,7 +522,7 @@ public class ManagementApiPackageImpl extends EPackageImpl implements Management
 	 * @generated
 	 */
 	@Override
-	public EOperation getEObjectRegistryService__FindByGenerationTriggerFingerprint__String() {
+	public EOperation getEObjectRegistryService__FindByVersionPattern__String() {
 		return eObjectRegistryServiceEClass.getEOperations().get(7);
 	}
 
@@ -532,7 +532,7 @@ public class ManagementApiPackageImpl extends EPackageImpl implements Management
 	 * @generated
 	 */
 	@Override
-	public EOperation getEObjectRegistryService__FindByObjectType__String() {
+	public EOperation getEObjectRegistryService__FindByGenerationTriggerFingerprint__String() {
 		return eObjectRegistryServiceEClass.getEOperations().get(8);
 	}
 
@@ -542,7 +542,7 @@ public class ManagementApiPackageImpl extends EPackageImpl implements Management
 	 * @generated
 	 */
 	@Override
-	public EOperation getEObjectRegistryService__FindByStatusAndType__ObjectStatus_String() {
+	public EOperation getEObjectRegistryService__FindByObjectType__String() {
 		return eObjectRegistryServiceEClass.getEOperations().get(9);
 	}
 
@@ -552,7 +552,7 @@ public class ManagementApiPackageImpl extends EPackageImpl implements Management
 	 * @generated
 	 */
 	@Override
-	public EOperation getEObjectRegistryService__FindRecentlyModified__Instant_int() {
+	public EOperation getEObjectRegistryService__FindByStatusAndType__ObjectStatus_String() {
 		return eObjectRegistryServiceEClass.getEOperations().get(10);
 	}
 
@@ -562,7 +562,7 @@ public class ManagementApiPackageImpl extends EPackageImpl implements Management
 	 * @generated
 	 */
 	@Override
-	public EOperation getEObjectRegistryService__UpdateCache__ObjectMetadata() {
+	public EOperation getEObjectRegistryService__FindRecentlyModified__Instant_int() {
 		return eObjectRegistryServiceEClass.getEOperations().get(11);
 	}
 
@@ -572,7 +572,7 @@ public class ManagementApiPackageImpl extends EPackageImpl implements Management
 	 * @generated
 	 */
 	@Override
-	public EOperation getEObjectRegistryService__RemoveFromCache__String() {
+	public EOperation getEObjectRegistryService__UpdateCache__ObjectMetadata() {
 		return eObjectRegistryServiceEClass.getEOperations().get(12);
 	}
 
@@ -582,7 +582,7 @@ public class ManagementApiPackageImpl extends EPackageImpl implements Management
 	 * @generated
 	 */
 	@Override
-	public EOperation getEObjectRegistryService__GetRegistryStatistics() {
+	public EOperation getEObjectRegistryService__RemoveFromCache__String() {
 		return eObjectRegistryServiceEClass.getEOperations().get(13);
 	}
 
@@ -592,7 +592,7 @@ public class ManagementApiPackageImpl extends EPackageImpl implements Management
 	 * @generated
 	 */
 	@Override
-	public EOperation getEObjectRegistryService__FindByScopeAndStage__String_String() {
+	public EOperation getEObjectRegistryService__RemoveFromCache__String_String_String_String() {
 		return eObjectRegistryServiceEClass.getEOperations().get(14);
 	}
 
@@ -602,7 +602,7 @@ public class ManagementApiPackageImpl extends EPackageImpl implements Management
 	 * @generated
 	 */
 	@Override
-	public EOperation getEObjectRegistryService__FindByScopeStageAndName__String_String_String() {
+	public EOperation getEObjectRegistryService__GetRegistryStatistics() {
 		return eObjectRegistryServiceEClass.getEOperations().get(15);
 	}
 
@@ -612,7 +612,7 @@ public class ManagementApiPackageImpl extends EPackageImpl implements Management
 	 * @generated
 	 */
 	@Override
-	public EOperation getEObjectRegistryService__FindByScopeRegistryAndStage__String_String_String() {
+	public EOperation getEObjectRegistryService__FindByScopeAndStage__String_String() {
 		return eObjectRegistryServiceEClass.getEOperations().get(16);
 	}
 
@@ -622,7 +622,7 @@ public class ManagementApiPackageImpl extends EPackageImpl implements Management
 	 * @generated
 	 */
 	@Override
-	public EOperation getEObjectRegistryService__FindByScopeRegistryStageAndName__String_String_String_String() {
+	public EOperation getEObjectRegistryService__FindByScopeStageAndName__String_String_String() {
 		return eObjectRegistryServiceEClass.getEOperations().get(17);
 	}
 
@@ -632,8 +632,28 @@ public class ManagementApiPackageImpl extends EPackageImpl implements Management
 	 * @generated
 	 */
 	@Override
-	public EOperation getEObjectRegistryService__FindByFingerprint__String() {
+	public EOperation getEObjectRegistryService__FindByScopeRegistryAndStage__String_String_String() {
 		return eObjectRegistryServiceEClass.getEOperations().get(18);
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
+	public EOperation getEObjectRegistryService__FindByScopeRegistryStageAndName__String_String_String_String() {
+		return eObjectRegistryServiceEClass.getEOperations().get(19);
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
+	public EOperation getEObjectRegistryService__FindByFingerprint__String() {
+		return eObjectRegistryServiceEClass.getEOperations().get(20);
 	}
 
 	/**
@@ -760,6 +780,7 @@ public class ManagementApiPackageImpl extends EPackageImpl implements Management
 
 		eObjectRegistryServiceEClass = createEClass(EOBJECT_REGISTRY_SERVICE);
 		createEOperation(eObjectRegistryServiceEClass, EOBJECT_REGISTRY_SERVICE___GET_METADATA__STRING);
+		createEOperation(eObjectRegistryServiceEClass, EOBJECT_REGISTRY_SERVICE___GET_METADATA__STRING_STRING_STRING_STRING);
 		createEOperation(eObjectRegistryServiceEClass, EOBJECT_REGISTRY_SERVICE___FIND_BY_OBJECT_NAME__STRING);
 		createEOperation(eObjectRegistryServiceEClass, EOBJECT_REGISTRY_SERVICE___FIND_BY_OBJECT_NAME_AND_STAGE__STRING_STRING);
 		createEOperation(eObjectRegistryServiceEClass, EOBJECT_REGISTRY_SERVICE___FIND_BY_STATUS__OBJECTSTATUS);
@@ -772,6 +793,7 @@ public class ManagementApiPackageImpl extends EPackageImpl implements Management
 		createEOperation(eObjectRegistryServiceEClass, EOBJECT_REGISTRY_SERVICE___FIND_RECENTLY_MODIFIED__INSTANT_INT);
 		createEOperation(eObjectRegistryServiceEClass, EOBJECT_REGISTRY_SERVICE___UPDATE_CACHE__OBJECTMETADATA);
 		createEOperation(eObjectRegistryServiceEClass, EOBJECT_REGISTRY_SERVICE___REMOVE_FROM_CACHE__STRING);
+		createEOperation(eObjectRegistryServiceEClass, EOBJECT_REGISTRY_SERVICE___REMOVE_FROM_CACHE__STRING_STRING_STRING_STRING);
 		createEOperation(eObjectRegistryServiceEClass, EOBJECT_REGISTRY_SERVICE___GET_REGISTRY_STATISTICS);
 		createEOperation(eObjectRegistryServiceEClass, EOBJECT_REGISTRY_SERVICE___FIND_BY_SCOPE_AND_STAGE__STRING_STRING);
 		createEOperation(eObjectRegistryServiceEClass, EOBJECT_REGISTRY_SERVICE___FIND_BY_SCOPE_STAGE_AND_NAME__STRING_STRING_STRING);
@@ -1069,6 +1091,16 @@ public class ManagementApiPackageImpl extends EPackageImpl implements Management
 		g1.getETypeArguments().add(g2);
 		initEOperation(op, g1);
 
+		op = initEOperation(getEObjectRegistryService__GetMetadata__String_String_String_String(), null, "getMetadata", 1, 1, IS_UNIQUE, IS_ORDERED);
+		addEParameter(op, ecorePackage.getEString(), "scope", 1, 1, IS_UNIQUE, IS_ORDERED);
+		addEParameter(op, ecorePackage.getEString(), "registry", 1, 1, IS_UNIQUE, IS_ORDERED);
+		addEParameter(op, ecorePackage.getEString(), "stage", 1, 1, IS_UNIQUE, IS_ORDERED);
+		addEParameter(op, ecorePackage.getEString(), "objectId", 1, 1, IS_UNIQUE, IS_ORDERED);
+		g1 = createEGenericType(theManagementPackage.getOptional());
+		g2 = createEGenericType(theManagementPackage.getObjectMetadata());
+		g1.getETypeArguments().add(g2);
+		initEOperation(op, g1);
+
 		op = initEOperation(getEObjectRegistryService__FindByObjectName__String(), null, "findByObjectName", 0, 1, IS_UNIQUE, IS_ORDERED);
 		addEParameter(op, ecorePackage.getEString(), "objectName", 1, 1, IS_UNIQUE, IS_ORDERED);
 		g1 = createEGenericType(theManagementPackage.getList());
@@ -1145,6 +1177,12 @@ public class ManagementApiPackageImpl extends EPackageImpl implements Management
 		addEParameter(op, theManagementPackage.getObjectMetadata(), "metadata", 1, 1, IS_UNIQUE, IS_ORDERED);
 
 		op = initEOperation(getEObjectRegistryService__RemoveFromCache__String(), null, "removeFromCache", 0, 1, IS_UNIQUE, IS_ORDERED);
+		addEParameter(op, ecorePackage.getEString(), "objectId", 1, 1, IS_UNIQUE, IS_ORDERED);
+
+		op = initEOperation(getEObjectRegistryService__RemoveFromCache__String_String_String_String(), null, "removeFromCache", 0, 1, IS_UNIQUE, IS_ORDERED);
+		addEParameter(op, ecorePackage.getEString(), "scope", 1, 1, IS_UNIQUE, IS_ORDERED);
+		addEParameter(op, ecorePackage.getEString(), "registry", 1, 1, IS_UNIQUE, IS_ORDERED);
+		addEParameter(op, ecorePackage.getEString(), "stage", 1, 1, IS_UNIQUE, IS_ORDERED);
 		addEParameter(op, ecorePackage.getEString(), "objectId", 1, 1, IS_UNIQUE, IS_ORDERED);
 
 		op = initEOperation(getEObjectRegistryService__GetRegistryStatistics(), null, "getRegistryStatistics", 0, 1, IS_UNIQUE, IS_ORDERED);

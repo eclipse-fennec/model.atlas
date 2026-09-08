@@ -187,6 +187,17 @@ public interface RegistryService<T extends EObject> {
 	/**
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
+	 * <!-- begin-model-doc -->
+	 * Performs a transition of an EObject from one stage to another for a certain scope, if allowed. An objectId is unique per stage and not across stages, so the target stage regularly holds an earlier copy of the same object and replacing it is what a promotion is for. When overwrite is false, a transition onto an id that a different object holds in the target stage is refused; when it is true, that object is replaced - for callers that know what they are doing and do not want to delete it first.
+	 * <!-- end-model-doc -->
+	 * @model objectIdRequired="true"
+	 * @generated
+	 */
+	ObjectMetadata transitionToStage(String scope, String objectId, String fromStage, String toStage, boolean overwrite);
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
 	 * @model kind="operation"
 	 * @generated
 	 */

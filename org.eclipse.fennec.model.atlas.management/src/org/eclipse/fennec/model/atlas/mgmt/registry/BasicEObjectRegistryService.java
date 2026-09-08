@@ -16,6 +16,7 @@ package org.eclipse.fennec.model.atlas.mgmt.registry;
 import static java.util.Objects.requireNonNull;
 
 import java.time.Instant;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -31,6 +32,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.eclipse.emf.ecore.EObject;
 import org.eclipse.fennec.model.atlas.mgmt.api.EObjectRegistryService;
@@ -166,14 +168,19 @@ public class BasicEObjectRegistryService<T extends EObject> implements EObjectRe
      */
     protected final AbstractStorageHelper storageHelper;
 
-    // In-memory indexes for fast lookups
-    private final Map<String, ObjectMetadata> metadataById = new ConcurrentHashMap<>();
-    private final Map<ObjectStatus, Set<String>> objectIdsByStatus = new ConcurrentHashMap<>();
-    private final Map<String, Set<String>> objectIdsByType = new ConcurrentHashMap<>();
-    private final Map<String, Set<String>> objectIdsByVersion = new ConcurrentHashMap<>();
-    private final Map<String, Set<String>> objectIdsByChannel = new ConcurrentHashMap<>();
-    private final Map<String, String> objectIdsByGenerationTriggerFingerprint = new ConcurrentHashMap<>();
-    private final Map<String, Set<String>>  objectIdsByFingerprint = new ConcurrentHashMap<>();
+    // In-memory indexes for fast lookups. Entries are addressed by
+    // RegistryAddress, not by objectId: the same object id legitimately lives in
+    // two stages of one registry at once - a transition copies unless the registry
+    // sets delete.after.transition=true, and a new draft revision of a released
+    // model re-uploads the same id (issue #211) - so indexes keyed by object id
+    // alone would keep only the copy written last (issue #252).
+    private final Map<String, Map<RegistryAddress, ObjectMetadata>> copiesById = new ConcurrentHashMap<>();
+    private final Map<ObjectStatus, Set<RegistryAddress>> addressesByStatus = new ConcurrentHashMap<>();
+    private final Map<String, Set<RegistryAddress>> addressesByType = new ConcurrentHashMap<>();
+    private final Map<String, Set<RegistryAddress>> addressesByVersion = new ConcurrentHashMap<>();
+    private final Map<String, Set<RegistryAddress>> addressesByChannel = new ConcurrentHashMap<>();
+    private final Map<String, RegistryAddress> addressByGenerationTriggerFingerprint = new ConcurrentHashMap<>();
+    private final Map<String, Set<RegistryAddress>> addressesByFingerprint = new ConcurrentHashMap<>();
 
     // Thread safety for index updates
     private final ReadWriteLock cacheLock = new ReentrantReadWriteLock();
@@ -205,6 +212,16 @@ public class BasicEObjectRegistryService<T extends EObject> implements EObjectRe
         });
     }
 
+    /**
+     * {@inheritDoc}
+     *
+     * <p>
+     * An object id does not identify a single object across stages: when two
+     * stages hold the same id, this returns an arbitrary one of the copies.
+     * Callers that know the location must use
+     * {@link #getMetadata(String, String, String, String)}.
+     * </p>
+     */
     @Override
     public Optional<ObjectMetadata> getMetadata(String objectId) {
         requireNonNull(objectId, "Object ID must not be null");
@@ -212,7 +229,20 @@ public class BasicEObjectRegistryService<T extends EObject> implements EObjectRe
         cacheLock.readLock().lock();
         try {
             ensureCacheInitialized();
-            return Optional.ofNullable(metadataById.get(objectId));
+            return copiesOf(objectId).values().stream().findFirst();
+        } finally {
+            cacheLock.readLock().unlock();
+        }
+    }
+
+    @Override
+    public Optional<ObjectMetadata> getMetadata(String scope, String registry, String stage, String objectId) {
+        requireNonNull(objectId, "Object ID must not be null");
+
+        cacheLock.readLock().lock();
+        try {
+            ensureCacheInitialized();
+            return Optional.ofNullable(metadataAt(new RegistryAddress(scope, registry, stage, objectId)));
         } finally {
             cacheLock.readLock().unlock();
         }
@@ -225,8 +255,7 @@ public class BasicEObjectRegistryService<T extends EObject> implements EObjectRe
         cacheLock.readLock().lock();
         try {
             ensureCacheInitialized();
-            Set<String> objectIds = objectIdsByStatus.getOrDefault(status, Collections.emptySet());
-            return objectIds.stream().map(metadataById::get).filter(Objects::nonNull).collect(Collectors.toList());
+            return resolve(addressesByStatus.getOrDefault(status, Collections.emptySet()));
         } finally {
             cacheLock.readLock().unlock();
         }
@@ -242,23 +271,23 @@ public class BasicEObjectRegistryService<T extends EObject> implements EObjectRe
                 Map<String, Object> statistics = new HashMap<>();
 
                 // Basic counts from cache
-                statistics.put("totalObjects", (long) metadataById.size());
+                statistics.put("totalObjects", allMetadata().count());
 
                 // Status distribution (pre-computed from indexes)
                 Map<String, Long> statusCounts = new HashMap<>();
-                for (Map.Entry<ObjectStatus, Set<String>> entry : objectIdsByStatus.entrySet()) {
+                for (Map.Entry<ObjectStatus, Set<RegistryAddress>> entry : addressesByStatus.entrySet()) {
                     statusCounts.put(entry.getKey().toString(), (long) entry.getValue().size());
                 }
 
                 // Type distribution (pre-computed from indexes)
                 Map<String, Long> objectTypeCounts = new HashMap<>();
-                for (Map.Entry<String, Set<String>> entry : objectIdsByType.entrySet()) {
+                for (Map.Entry<String, Set<RegistryAddress>> entry : addressesByType.entrySet()) {
                     objectTypeCounts.put(entry.getKey(), (long) entry.getValue().size());
                 }
 
                 // Channel distribution (pre-computed from indexes)
                 Map<String, Long> sourceChannelCounts = new HashMap<>();
-                for (Map.Entry<String, Set<String>> entry : objectIdsByChannel.entrySet()) {
+                for (Map.Entry<String, Set<RegistryAddress>> entry : addressesByChannel.entrySet()) {
                     sourceChannelCounts.put(entry.getKey(), (long) entry.getValue().size());
                 }
 
@@ -272,7 +301,7 @@ public class BasicEObjectRegistryService<T extends EObject> implements EObjectRe
                 statistics.put("generatedAt", Instant.now().toString());
                 statistics.put("registryType", "basic-memory");
 
-                LOGGER.fine("Generated registry statistics from cache: " + metadataById.size() + " objects");
+                LOGGER.fine("Generated registry statistics from cache: " + allMetadata().count() + " objects");
 
                 return statistics;
 
@@ -324,8 +353,7 @@ public class BasicEObjectRegistryService<T extends EObject> implements EObjectRe
         cacheLock.readLock().lock();
         try {
             ensureCacheInitialized();
-            Set<String> objectIds = objectIdsByVersion.getOrDefault(version, Collections.emptySet());
-            return objectIds.stream().map(metadataById::get).filter(Objects::nonNull).collect(Collectors.toList());
+            return resolve(addressesByVersion.getOrDefault(version, Collections.emptySet()));
         } finally {
             cacheLock.readLock().unlock();
         }
@@ -342,8 +370,8 @@ public class BasicEObjectRegistryService<T extends EObject> implements EObjectRe
             String regex = versionPattern.replace("*", ".*").replace("?", ".");
             Pattern pattern = Pattern.compile(regex);
 
-            return objectIdsByVersion.entrySet().stream().filter(entry -> pattern.matcher(entry.getKey()).matches())
-                    .flatMap(entry -> entry.getValue().stream()).map(metadataById::get).filter(Objects::nonNull)
+            return addressesByVersion.entrySet().stream().filter(entry -> pattern.matcher(entry.getKey()).matches())
+                    .flatMap(entry -> entry.getValue().stream()).map(this::metadataAt).filter(Objects::nonNull)
                     .collect(Collectors.toList());
         } finally {
             cacheLock.readLock().unlock();
@@ -357,8 +385,7 @@ public class BasicEObjectRegistryService<T extends EObject> implements EObjectRe
         cacheLock.readLock().lock();
         try {
             ensureCacheInitialized();
-            Set<String> objectIds = objectIdsByFingerprint.getOrDefault(fingerprint, Collections.emptySet());
-            return objectIds.stream().map(metadataById::get).filter(Objects::nonNull).collect(Collectors.toList());
+            return resolve(addressesByFingerprint.getOrDefault(fingerprint, Collections.emptySet()));
         } finally {
             cacheLock.readLock().unlock();
         }
@@ -371,8 +398,7 @@ public class BasicEObjectRegistryService<T extends EObject> implements EObjectRe
         cacheLock.readLock().lock();
         try {
             ensureCacheInitialized();
-            Set<String> objectIds = objectIdsByType.getOrDefault(objectType, Collections.emptySet());
-            return objectIds.stream().map(metadataById::get).filter(Objects::nonNull).collect(Collectors.toList());
+            return resolve(addressesByType.getOrDefault(objectType, Collections.emptySet()));
         } finally {
             cacheLock.readLock().unlock();
         }
@@ -386,12 +412,11 @@ public class BasicEObjectRegistryService<T extends EObject> implements EObjectRe
         cacheLock.readLock().lock();
         try {
             ensureCacheInitialized();
-            Set<String> statusIds = objectIdsByStatus.getOrDefault(status, Collections.emptySet());
-            Set<String> typeIds = objectIdsByType.getOrDefault(objectType, Collections.emptySet());
+            Set<RegistryAddress> statusAddresses = addressesByStatus.getOrDefault(status, Collections.emptySet());
+            Set<RegistryAddress> typeAddresses = addressesByType.getOrDefault(objectType, Collections.emptySet());
 
             // Intersection of both sets
-            return statusIds.stream().filter(typeIds::contains).map(metadataById::get).filter(Objects::nonNull)
-                    .collect(Collectors.toList());
+            return resolve(statusAddresses.stream().filter(typeAddresses::contains).collect(Collectors.toList()));
         } finally {
             cacheLock.readLock().unlock();
         }
@@ -404,7 +429,7 @@ public class BasicEObjectRegistryService<T extends EObject> implements EObjectRe
         cacheLock.readLock().lock();
         try {
             ensureCacheInitialized();
-            return metadataById.values().stream().filter(metadata -> isRecentlyModified(metadata, sinceTime))
+            return allMetadata().filter(metadata -> isRecentlyModified(metadata, sinceTime))
                     .sorted(createMostRecentTimeComparator()).limit(maxResults > 0 ? maxResults : Integer.MAX_VALUE)
                     .collect(Collectors.toList());
         } finally {
@@ -479,20 +504,40 @@ public class BasicEObjectRegistryService<T extends EObject> implements EObjectRe
 
         cacheLock.writeLock().lock();
         try {
-            // Remove old metadata from indexes if it exists
-            ObjectMetadata oldMetadata = metadataById.get(objectId);
-            if (oldMetadata != null) {
-                removeFromIndexes(objectId, oldMetadata);
-            }
-
-            // Add new metadata to cache and indexes
-            metadataById.put(objectId, metadata);
-            addToIndexes(objectId, metadata);
-
+            cache(metadata);
             lastCacheUpdate = System.currentTimeMillis();
 
             if (LOGGER.isLoggable(Level.FINE)) {
                 LOGGER.fine("Updated cache for object: " + objectId);
+            }
+        } finally {
+            cacheLock.writeLock().unlock();
+        }
+    }
+
+    /**
+     * {@inheritDoc}
+     *
+     * <p>
+     * Only the entry stored at the given address is dropped: were the held copy
+     * the one of another stage - the same object id may legitimately be held by
+     * two stages of one registry (issue #211) - it stays, rather than
+     * disappearing from a stage that still stores it (issue #252).
+     * </p>
+     */
+    @Override
+    public void removeFromCache(String scope, String registry, String stage, String objectId) {
+        requireNonNull(objectId, "Object ID must not be null");
+
+        RegistryAddress address = new RegistryAddress(scope, registry, stage, objectId);
+        cacheLock.writeLock().lock();
+        try {
+            if (evict(address) != null) {
+                lastCacheUpdate = System.currentTimeMillis();
+
+                if (LOGGER.isLoggable(Level.FINE)) {
+                    LOGGER.fine("Removed object from cache: " + address);
+                }
             }
         } finally {
             cacheLock.writeLock().unlock();
@@ -505,13 +550,13 @@ public class BasicEObjectRegistryService<T extends EObject> implements EObjectRe
 
         cacheLock.writeLock().lock();
         try {
-            ObjectMetadata metadata = metadataById.remove(objectId);
-            if (metadata != null) {
-                removeFromIndexes(objectId, metadata);
+            Map<RegistryAddress, ObjectMetadata> copies = copiesById.remove(objectId);
+            if (copies != null && !copies.isEmpty()) {
+                copies.forEach(this::removeFromIndexes);
                 lastCacheUpdate = System.currentTimeMillis();
 
                 if (LOGGER.isLoggable(Level.FINE)) {
-                    LOGGER.fine("Removed object from cache: " + objectId);
+                    LOGGER.fine("Removed object from cache: " + objectId + " (" + copies.size() + " copies)");
                 }
             }
         } finally {
@@ -536,8 +581,7 @@ public class BasicEObjectRegistryService<T extends EObject> implements EObjectRe
             try {
                 for (ObjectMetadata metadata : storedMetadata) {
                     try {
-                        metadataById.put(metadata.getObjectId(), metadata);
-                        addToIndexes(metadata.getObjectId(), metadata);
+                        cache(metadata);
                         loadedCount++;
                     } catch (Exception e) {
                         LOGGER.log(Level.WARNING,
@@ -580,101 +624,160 @@ public class BasicEObjectRegistryService<T extends EObject> implements EObjectRe
     }
 
     /**
+     * Returns every copy of the given object id, keyed by the location holding it.
+     */
+    private Map<RegistryAddress, ObjectMetadata> copiesOf(String objectId) {
+        return copiesById.getOrDefault(objectId, Collections.emptyMap());
+    }
+
+    /**
+     * Returns the metadata stored at one address, or {@code null}.
+     */
+    private ObjectMetadata metadataAt(RegistryAddress address) {
+        return copiesOf(address.objectId()).get(address);
+    }
+
+    /** Every cached object, in every location holding it. */
+    private Stream<ObjectMetadata> allMetadata() {
+        return copiesById.values().stream().flatMap(copies -> copies.values().stream());
+    }
+
+    /**
+     * Resolves the addresses an index holds to the metadata stored at them.
+     */
+    private List<ObjectMetadata> resolve(Collection<RegistryAddress> addresses) {
+        return addresses.stream().map(this::metadataAt).filter(Objects::nonNull).collect(Collectors.toList());
+    }
+
+    /**
+     * Caches the metadata at its own address, replacing what that address held.
+     * The copies the same object id has in other stages are untouched.
+     */
+    private void cache(ObjectMetadata metadata) {
+        RegistryAddress address = RegistryAddress.of(metadata);
+        ObjectMetadata previous = copiesById.computeIfAbsent(address.objectId(), id -> new ConcurrentHashMap<>())
+                .put(address, metadata);
+        if (previous != null) {
+            removeFromIndexes(address, previous);
+        }
+        addToIndexes(address, metadata);
+    }
+
+    /**
+     * Drops the copy stored at one address, and the object id itself once its last
+     * copy is gone.
+     *
+     * @return the metadata that was removed, or {@code null} if that address held
+     *         nothing
+     */
+    private ObjectMetadata evict(RegistryAddress address) {
+        ObjectMetadata[] removed = new ObjectMetadata[1];
+        copiesById.computeIfPresent(address.objectId(), (id, copies) -> {
+            removed[0] = copies.remove(address);
+            return copies.isEmpty() ? null : copies;
+        });
+        if (removed[0] != null) {
+            removeFromIndexes(address, removed[0]);
+        }
+        return removed[0];
+    }
+
+    /**
      * Adds metadata to all relevant indexes.
      */
-    private void addToIndexes(String objectId, ObjectMetadata metadata) {
+    private void addToIndexes(RegistryAddress address, ObjectMetadata metadata) {
         // Status index
         if (metadata.getStatus() != null) {
-            objectIdsByStatus.computeIfAbsent(metadata.getStatus(), k -> ConcurrentHashMap.newKeySet()).add(objectId);
+            addressesByStatus.computeIfAbsent(metadata.getStatus(), k -> ConcurrentHashMap.newKeySet()).add(address);
         }
 
         // Type index
         if (metadata.getObjectType() != null) {
-            objectIdsByType.computeIfAbsent(metadata.getObjectType(), k -> ConcurrentHashMap.newKeySet()).add(objectId);
+            addressesByType.computeIfAbsent(metadata.getObjectType(), k -> ConcurrentHashMap.newKeySet()).add(address);
         }
 
         // Version index
         if (metadata.getVersion() != null) {
-            objectIdsByVersion.computeIfAbsent(metadata.getVersion(), k -> ConcurrentHashMap.newKeySet()).add(objectId);
+            addressesByVersion.computeIfAbsent(metadata.getVersion(), k -> ConcurrentHashMap.newKeySet()).add(address);
         }
 
         // Channel index
         if (metadata.getSourceChannel() != null) {
-            objectIdsByChannel.computeIfAbsent(metadata.getSourceChannel(), k -> ConcurrentHashMap.newKeySet())
-                    .add(objectId);
+            addressesByChannel.computeIfAbsent(metadata.getSourceChannel(), k -> ConcurrentHashMap.newKeySet())
+                    .add(address);
         }
 
         // Generation Fingerprint index
         if (metadata.getGenerationTriggerFingerprint() != null) {
-        	objectIdsByGenerationTriggerFingerprint.put(metadata.getGenerationTriggerFingerprint(), objectId);
+        	addressByGenerationTriggerFingerprint.put(metadata.getGenerationTriggerFingerprint(), address);
         }
         
         // Fingerprint index
         if (metadata.getFingerprint() != null) {
-            objectIdsByFingerprint.computeIfAbsent(metadata.getFingerprint(), k -> ConcurrentHashMap.newKeySet()).add(objectId);
+            addressesByFingerprint.computeIfAbsent(metadata.getFingerprint(), k -> ConcurrentHashMap.newKeySet()).add(address);
         }
     }
 
     /**
      * Removes metadata from all relevant indexes.
      */
-    private void removeFromIndexes(String objectId, ObjectMetadata metadata) {
+    private void removeFromIndexes(RegistryAddress address, ObjectMetadata metadata) {
         // Status index
         if (metadata.getStatus() != null) {
-            Set<String> statusSet = objectIdsByStatus.get(metadata.getStatus());
+            Set<RegistryAddress> statusSet = addressesByStatus.get(metadata.getStatus());
             if (statusSet != null) {
-                statusSet.remove(objectId);
+                statusSet.remove(address);
                 if (statusSet.isEmpty()) {
-                    objectIdsByStatus.remove(metadata.getStatus());
+                    addressesByStatus.remove(metadata.getStatus());
                 }
             }
         }
 
         // Type index
         if (metadata.getObjectType() != null) {
-            Set<String> typeSet = objectIdsByType.get(metadata.getObjectType());
+            Set<RegistryAddress> typeSet = addressesByType.get(metadata.getObjectType());
             if (typeSet != null) {
-                typeSet.remove(objectId);
+                typeSet.remove(address);
                 if (typeSet.isEmpty()) {
-                    objectIdsByType.remove(metadata.getObjectType());
+                    addressesByType.remove(metadata.getObjectType());
                 }
             }
         }
 
         // Version index
         if (metadata.getVersion() != null) {
-            Set<String> versionSet = objectIdsByVersion.get(metadata.getVersion());
+            Set<RegistryAddress> versionSet = addressesByVersion.get(metadata.getVersion());
             if (versionSet != null) {
-                versionSet.remove(objectId);
+                versionSet.remove(address);
                 if (versionSet.isEmpty()) {
-                    objectIdsByVersion.remove(metadata.getVersion());
+                    addressesByVersion.remove(metadata.getVersion());
                 }
             }
         }
 
         // Channel index
         if (metadata.getSourceChannel() != null) {
-            Set<String> channelSet = objectIdsByChannel.get(metadata.getSourceChannel());
+            Set<RegistryAddress> channelSet = addressesByChannel.get(metadata.getSourceChannel());
             if (channelSet != null) {
-                channelSet.remove(objectId);
+                channelSet.remove(address);
                 if (channelSet.isEmpty()) {
-                    objectIdsByChannel.remove(metadata.getSourceChannel());
+                    addressesByChannel.remove(metadata.getSourceChannel());
                 }
             }
         }
 
         // Generation Fingerprint index
         if (metadata.getGenerationTriggerFingerprint() != null) {
-            objectIdsByGenerationTriggerFingerprint.remove(metadata.getGenerationTriggerFingerprint());
+            addressByGenerationTriggerFingerprint.remove(metadata.getGenerationTriggerFingerprint());
         }
 
         // Fingerprint index
         if (metadata.getFingerprint() != null) {
-            Set<String> fingerprintSet = objectIdsByFingerprint.get(metadata.getFingerprint());
+            Set<RegistryAddress> fingerprintSet = addressesByFingerprint.get(metadata.getFingerprint());
             if (fingerprintSet != null) {
-                fingerprintSet.remove(objectId);
+                fingerprintSet.remove(address);
                 if (fingerprintSet.isEmpty()) {
-                    objectIdsByFingerprint.remove(metadata.getFingerprint());
+                    addressesByFingerprint.remove(metadata.getFingerprint());
                 }
             }
         }
@@ -691,13 +794,13 @@ public class BasicEObjectRegistryService<T extends EObject> implements EObjectRe
     public void deactivate() {
         cacheLock.writeLock().lock();
         try {
-            metadataById.clear();
-            objectIdsByStatus.clear();
-            objectIdsByType.clear();
-            objectIdsByVersion.clear();
-            objectIdsByChannel.clear();
-            objectIdsByGenerationTriggerFingerprint.clear();
-            objectIdsByFingerprint.clear();
+            copiesById.clear();
+            addressesByStatus.clear();
+            addressesByType.clear();
+            addressesByVersion.clear();
+            addressesByChannel.clear();
+            addressByGenerationTriggerFingerprint.clear();
+            addressesByFingerprint.clear();
             cacheInitialized = false;
 
             LOGGER.info("BasicEObjectRegistryService deactivated and cache cleared");
@@ -719,7 +822,7 @@ public class BasicEObjectRegistryService<T extends EObject> implements EObjectRe
         cacheLock.readLock().lock();
         try {
             ensureCacheInitialized();
-            return metadataById.values().stream().filter(metadata -> objectName.equals(metadata.getObjectName()))
+            return allMetadata().filter(metadata -> objectName.equals(metadata.getObjectName()))
                     .collect(Collectors.toList());
         } finally {
             cacheLock.readLock().unlock();
@@ -740,7 +843,7 @@ public class BasicEObjectRegistryService<T extends EObject> implements EObjectRe
         cacheLock.readLock().lock();
         try {
             ensureCacheInitialized();
-            return metadataById.values().stream().filter(
+            return allMetadata().filter(
                     metadata -> objectName.equals(metadata.getObjectName()) && stage.equals(metadata.getStage()))
                     .findFirst();
         } finally {
@@ -762,7 +865,7 @@ public class BasicEObjectRegistryService<T extends EObject> implements EObjectRe
         cacheLock.readLock().lock();
         try {
             ensureCacheInitialized();
-            return metadataById.values().stream()
+            return allMetadata()
                     .filter(metadata -> stage.equals(metadata.getStage()) && scope.equals(metadata.getScope()))
                     .collect(Collectors.toList());
         } finally {
@@ -789,13 +892,11 @@ public class BasicEObjectRegistryService<T extends EObject> implements EObjectRe
         try {
             ensureCacheInitialized();
             if (isExact) {
-                return metadataById
-                        .values().stream().filter(metadata -> stage.equals(metadata.getStage())
+                return allMetadata().filter(metadata -> stage.equals(metadata.getStage())
                                 && scope.equals(metadata.getScope()) && name.equals(metadata.getObjectName()))
                         .collect(Collectors.toList());
             } else {
-                return metadataById
-                        .values().stream().filter(metadata -> stage.equals(metadata.getStage())
+                return allMetadata().filter(metadata -> stage.equals(metadata.getStage())
                                 && scope.equals(metadata.getScope()) && metadata.getObjectName().contains(nameFilter))
                         .collect(Collectors.toList());
             }
@@ -821,8 +922,7 @@ public class BasicEObjectRegistryService<T extends EObject> implements EObjectRe
         cacheLock.readLock().lock();
         try {
             ensureCacheInitialized();
-            return metadataById
-                    .values().stream().filter(metadata -> stage.equals(metadata.getStage())
+            return allMetadata().filter(metadata -> stage.equals(metadata.getStage())
                             && scope.equals(metadata.getScope()) && registry.equals(metadata.getRegistry()))
                     .collect(Collectors.toList());
         } finally {
@@ -852,12 +952,12 @@ public class BasicEObjectRegistryService<T extends EObject> implements EObjectRe
         try {
             ensureCacheInitialized();
             if (isExact) {
-                return metadataById.values().stream()
+                return allMetadata()
                         .filter(metadata -> stage.equals(metadata.getStage()) && scope.equals(metadata.getScope())
                                 && registry.equals(metadata.getRegistry()) && name.equals(metadata.getObjectName()))
                         .collect(Collectors.toList());
             } else {
-                return metadataById.values().stream()
+                return allMetadata()
                         .filter(metadata -> stage.equals(metadata.getStage()) && scope.equals(metadata.getScope())
                                 && registry.equals(metadata.getRegistry())
                                 && metadata.getObjectName().contains(nameFilter))
@@ -880,11 +980,8 @@ public class BasicEObjectRegistryService<T extends EObject> implements EObjectRe
         cacheLock.readLock().lock();
         try {
             ensureCacheInitialized();
-            String objectId = objectIdsByGenerationTriggerFingerprint.get(fingerprint);
-            if (objectId != null) {
-                return Optional.ofNullable(metadataById.get(objectId));
-            }
-            return Optional.empty();
+            RegistryAddress address = addressByGenerationTriggerFingerprint.get(fingerprint);
+            return address == null ? Optional.empty() : Optional.ofNullable(metadataAt(address));
         } finally {
             cacheLock.readLock().unlock();
         }

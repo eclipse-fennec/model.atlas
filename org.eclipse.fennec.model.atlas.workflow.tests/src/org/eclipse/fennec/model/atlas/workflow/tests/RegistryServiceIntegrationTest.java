@@ -918,6 +918,10 @@ public class RegistryServiceIntegrationTest {
                     .thenReturn(objectPromise);
             when(mockStorageService.retrieveMetadata(anyString(), anyString(), eq("draft"), anyString()))
                     .thenReturn(metadataPromise);
+            // The transition reads the target stage as well, to refuse promoting onto an
+            // id another object holds there (issue #211): nothing holds it here.
+            when(mockStorageService.retrieveMetadata(anyString(), anyString(), eq("approved"), anyString()))
+                    .thenReturn(promiseFactory.resolved(null));
 
             // Mock storing object to approved stage
             ObjectMetadata targetMetadata = ManagementFactory.eINSTANCE.createObjectMetadata();
@@ -1204,6 +1208,10 @@ public class RegistryServiceIntegrationTest {
             Promise<ObjectMetadata> metadataPromise = promiseFactory.resolved(existingMetadata);
             when(mockStorageService.retrieveMetadata(anyString(), anyString(), eq("draft"), anyString()))
                     .thenReturn(metadataPromise);
+            // The transition reads the target stage as well, to refuse promoting onto an
+            // id another object holds there (issue #211): nothing holds it here.
+            when(mockStorageService.retrieveMetadata(anyString(), anyString(), eq("approved"), anyString()))
+                    .thenReturn(promiseFactory.resolved(null));
 
             Promise<Boolean> deletePromise = promiseFactory.resolved(Boolean.TRUE);
             when(mockStorageService.deleteObject(anyString(), anyString(), eq("draft"), anyString()))
@@ -1253,6 +1261,10 @@ public class RegistryServiceIntegrationTest {
                     .thenReturn(objectPromise);
             when(mockStorageService.retrieveMetadata(anyString(), anyString(), eq("draft"), anyString()))
                     .thenReturn(metadataPromise);
+            // The transition reads the target stage as well, to refuse promoting onto an
+            // id another object holds there (issue #211): nothing holds it here.
+            when(mockStorageService.retrieveMetadata(anyString(), anyString(), eq("release"), anyString()))
+                    .thenReturn(promiseFactory.resolved(null));
 
             ObjectMetadata targetMetadata = ManagementFactory.eINSTANCE.createObjectMetadata();
             targetMetadata.setObjectId("test-id");
@@ -1324,6 +1336,10 @@ public class RegistryServiceIntegrationTest {
                     .thenReturn(objectPromise);
             when(mockStorageService.retrieveMetadata(anyString(), anyString(), eq("draft"), anyString()))
                     .thenReturn(metadataPromise);
+            // The transition reads the target stage as well, to refuse promoting onto an
+            // id another object holds there (issue #211): nothing holds it here.
+            when(mockStorageService.retrieveMetadata(anyString(), anyString(), eq("approved"), anyString()))
+                    .thenReturn(promiseFactory.resolved(null));
 
             ObjectMetadata targetMetadata = ManagementFactory.eINSTANCE.createObjectMetadata();
             targetMetadata.setObjectId("test-id");

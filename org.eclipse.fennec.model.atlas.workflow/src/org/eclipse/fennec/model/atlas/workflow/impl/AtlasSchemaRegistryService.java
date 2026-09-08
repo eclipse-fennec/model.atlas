@@ -28,6 +28,7 @@ import org.eclipse.fennec.model.atlas.management.lucene.epackage.EPackageLuceneI
 import org.eclipse.fennec.model.atlas.mgmt.api.EObjectRegistryService;
 import org.eclipse.fennec.model.atlas.mgmt.management.ManagementFactory;
 import org.eclipse.fennec.model.atlas.mgmt.management.ObjectMetadata;
+import org.eclipse.fennec.model.atlas.mgmt.registry.RegistryAddress;
 import org.eclipse.fennec.model.atlas.scope.api.RegistryType;
 import org.eclipse.fennec.model.atlas.scope.api.ScopeApiFactory;
 import org.eclipse.fennec.model.atlas.scope.api.StageInfo;
@@ -84,8 +85,11 @@ public class AtlasSchemaRegistryService implements RegistryService<EPackage> {
 	public void unbindStaticEPackageRegistry(EPackage.Registry staticPackageRegistry) {
 		staticPackageRegistry.values().stream().filter(v -> v instanceof EPackage).map(v -> (EPackage) v).forEach(ePackage -> {
 			String objectId = encodeObjectId(ePackage);
-			registry.removeFromCache(objectId);
-			ePackageIndex.remove(objectId);
+			registry.removeFromCache(WorkflowConstants.ATLAS_SCOPE_NAME, WorkflowConstants.ATLAS_SCHEMA_REGISTRY_NAME,
+					WorkflowConstants.ATLAS_SCHEMA_REGISTRY_STAGE_NAME, objectId);
+			ePackageIndex.remove(new RegistryAddress(WorkflowConstants.ATLAS_SCOPE_NAME,
+					WorkflowConstants.ATLAS_SCHEMA_REGISTRY_NAME,
+					WorkflowConstants.ATLAS_SCHEMA_REGISTRY_STAGE_NAME, objectId));
 		});
 		this.staticPackageRegistry = null;
 	}
@@ -115,7 +119,12 @@ public class AtlasSchemaRegistryService implements RegistryService<EPackage> {
 	 */
 	@Override
 	public ObjectMetadata getMetadataFromFinalStage(String scope, String objectId) {
-		return registry.getMetadata(objectId).orElse(null);
+		// Addressed at this registry's own location: an objectId is unique per stage,
+		// and the shared registry holds the objects of every scope, registry and stage
+		// (issue #252). This registry's objects are the ones createMetadata() places
+		// at the atlas schema location.
+		return registry.getMetadata(WorkflowConstants.ATLAS_SCOPE_NAME, WorkflowConstants.ATLAS_SCHEMA_REGISTRY_NAME,
+				WorkflowConstants.ATLAS_SCHEMA_REGISTRY_STAGE_NAME, objectId).orElse(null);
 	}
 
 	/* 
@@ -196,6 +205,16 @@ public class AtlasSchemaRegistryService implements RegistryService<EPackage> {
 	 */
 	@Override
 	public ObjectMetadata transitionToStage(String scope, String objectId, String fromStage, String toStage) {
+		throw new UnsupportedOperationException("Transition Operation not allowed for Atlas Schema Registry");
+	}
+
+	/* 
+	 * (non-Javadoc)
+	 * @see org.eclipse.fennec.model.atlas.wf.workflowapi.RegistryService#transitionToStage(java.lang.String, java.lang.String, java.lang.String, java.lang.String, boolean)
+	 */
+	@Override
+	public ObjectMetadata transitionToStage(String scope, String objectId, String fromStage, String toStage,
+			boolean overwrite) {
 		throw new UnsupportedOperationException("Transition Operation not allowed for Atlas Schema Registry");
 	}
 
