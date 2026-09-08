@@ -18,6 +18,8 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import java.util.stream.Stream;
 
 import org.eclipse.emf.ecore.EObject;
@@ -52,6 +54,8 @@ import org.osgi.util.promise.Promise;
 @Designate(ocd = ScopeServiceConfig.class)
 public class ScopeServiceImpl<T extends EObject> implements ScopeService<T>, WritableScopeService<T>, ReadableScopeService<T> {
 
+	private static final Logger LOGGER = Logger.getLogger(ScopeServiceImpl.class.getName());
+
 	private Map<String, RegistryService<T>> registryServiceMap = new ConcurrentHashMap<>();
 	private ScopeServiceConfig config;
 
@@ -68,13 +72,60 @@ public class ScopeServiceImpl<T extends EObject> implements ScopeService<T>, Wri
 
 	@Reference(name = "registryService", policy = ReferencePolicy.DYNAMIC, policyOption = ReferencePolicyOption.GREEDY, cardinality = ReferenceCardinality.MULTIPLE)
 	public void bindRegistryService(RegistryService<T> registryService, Map<String, Object> properties) {
+		if (isSecondSchemaRegistry(registryService)) {
+			return;
+		}
 		registryServiceMap.put(registryService.getRegistryName(), registryService);
 		scopeObject = createScopeObject();
 		registryService.activate(config.scope_name());
 	}
 
+	/**
+	 * Whether {@code candidate} would give this scope a second registry of type
+	 * {@link RegistryType#SCHEMA}, in which case it is refused (and said so, loudly).
+	 *
+	 * <p>
+	 * Every consumer that asks for "the schema registry of this scope" resolves it by type
+	 * and takes the single match — the REST layer since issue #179, the registry chain
+	 * configurator, the validation service. Two of them would make that answer depend on
+	 * bind order, and different consumers would not even agree on which one they got. So the
+	 * limit is enforced where registries enter the scope, and the resolution downstream is
+	 * exact rather than best-effort.
+	 * </p>
+	 *
+	 * <p>
+	 * Rebinding under a name already held is an update of that same registry, not a second
+	 * one, so it is let through.
+	 * </p>
+	 */
+	private boolean isSecondSchemaRegistry(RegistryService<T> candidate) {
+		if (candidate.getRegistry() == null || RegistryType.SCHEMA != candidate.getRegistry().getType()) {
+			return false;
+		}
+		String candidateName = candidate.getRegistryName();
+		Optional<String> incumbent = registryServiceMap.entrySet().stream()
+				.filter(entry -> !Objects.equals(entry.getKey(), candidateName))
+				.filter(entry -> entry.getValue().getRegistry() != null
+						&& RegistryType.SCHEMA == entry.getValue().getRegistry().getType())
+				.map(Map.Entry::getKey)
+				.findFirst();
+		incumbent.ifPresent(held -> LOGGER.log(Level.SEVERE,
+				() -> String.format(
+						"Scope [%s] already has the SCHEMA registry [%s]; refusing to also bind [%s]. A scope may"
+								+ " define at most one registry of type SCHEMA - everything that resolves the schema"
+								+ " registry by type would otherwise depend on bind order. Fix the configuration: only"
+								+ " one registry of this scope may be configured with registry.type=SCHEMA.",
+						config.scope_name(), held, candidateName)));
+		return incumbent.isPresent();
+	}
+
 	public void unbindRegistryService(RegistryService<T> registryService, Map<String, Object> properties) {
-		registryServiceMap.remove(registryService.getRegistryName());
+		// Removed only when this very instance is the one held under that name: a registry
+		// refused above was never bound, and during a GREEDY rebind the replacement is
+		// already in the map under the same name when the departing one unbinds.
+		if (!registryServiceMap.remove(registryService.getRegistryName(), registryService)) {
+			return;
+		}
 		scopeObject = createScopeObject();
 		registryService.deactivate(config.scope_name());
 	}

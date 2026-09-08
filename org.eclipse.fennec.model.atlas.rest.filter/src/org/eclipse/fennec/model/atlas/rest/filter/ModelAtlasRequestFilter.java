@@ -24,6 +24,7 @@ import org.eclipse.fennec.model.atlas.mediatypes.api.SupportedMediatype;
 import org.eclipse.fennec.model.atlas.rest.common.ModelAtlasRestConstants;
 import org.eclipse.fennec.model.atlas.scope.api.RegistryInfo;
 import org.eclipse.fennec.model.atlas.scope.api.ScopeInfo;
+import org.eclipse.fennec.model.atlas.scope.api.ScopeRegistries;
 import org.eclipse.fennec.model.atlas.scope.api.StageInfo;
 import org.eclipse.fennec.model.atlas.wf.workflowapi.ScopeService;
 import org.eclipse.fennec.model.atlas.workflow.ScopeServiceCollector;
@@ -87,7 +88,11 @@ import jakarta.ws.rs.core.Response;
 @JakartarsName("ModelAtlasRequestFilter")
 public class ModelAtlasRequestFilter implements ContainerRequestFilter {
 
-	private static final String SCHEMA_REGISTRY_NAME = "schema";
+	/**
+	 * The literal second path segment of {@code /{scopeName}/schema/...}. It names the
+	 * <em>kind</em> of registry the request is about, not the registry itself (issue #179).
+	 */
+	private static final String SCHEMA_PATH_SEGMENT = "schema";
 
 	private final AtomicReference<ScopeServiceCollector> scopeCollectorRef = new AtomicReference<>();
 	private final AtomicReference<SupportedMediatype> supportedMediatypeRef = new AtomicReference<>();
@@ -135,7 +140,7 @@ public class ModelAtlasRequestFilter implements ContainerRequestFilter {
 							.build());
 		}
 
-		String registryName = resolveRegistryName(requestContext, pathParams);
+		String registryName = resolveRegistryName(requestContext, pathParams, scopeService, scopeName);
 		if (registryName != null && !scopeService.isValidRegistry(registryName)) {
 			throw new WebApplicationException(
 					Response.status(Response.Status.BAD_REQUEST)
@@ -210,22 +215,49 @@ public class ModelAtlasRequestFilter implements ContainerRequestFilter {
 	}
 
 	/**
-	 * Determines the registry name from path parameters or path segments.
-	 * For {@code /{scopeName}/registries/{registryName}} paths, it comes from
-	 * the path parameter. For {@code /{scopeName}/schema} paths, it is the
-	 * hardcoded "schema" registry.
+	 * Determines which registry of the scope a request addresses.
+	 *
+	 * <p>
+	 * For {@code /{scopeName}/registries/{registryName}} paths it comes from the path
+	 * parameter. For {@code /{scopeName}/schema} paths it is the scope's registry of type
+	 * {@link org.eclipse.fennec.model.atlas.scope.api.RegistryType#SCHEMA}, resolved by type:
+	 * {@code schema} in the URL says what kind of registry the request is about, and a
+	 * deployment may call that registry whatever it likes (issue #179).
+	 * </p>
+	 *
+	 * <p>
+	 * The segment is matched exactly. A {@code contains("/schema")} test also claimed paths
+	 * like {@code /{scopeName}/schemaDraft/...} and resolved them to the schema registry.
+	 * </p>
+	 *
+	 * @return the registry name to validate, or {@code null} for paths that address no
+	 *         particular registry
+	 * @throws WebApplicationException {@code 404} when the schema path is addressed but the
+	 *                                 scope has no SCHEMA registry to serve it
 	 */
 	private String resolveRegistryName(ContainerRequestContext requestContext,
-			MultivaluedMap<String, String> pathParams) {
+			MultivaluedMap<String, String> pathParams, ScopeService<?> scopeService, String scopeName) {
 		String registryName = pathParams.getFirst("registryName");
 		if (registryName != null) {
 			return registryName;
 		}
-		String path = requestContext.getUriInfo().getPath();
-		if (path.contains("/schema")) {
-			return SCHEMA_REGISTRY_NAME;
+		if (!isSchemaPath(requestContext)) {
+			return null;
 		}
-		return null;
+		return ScopeRegistries.schemaRegistryName(scopeService.getScopeInfo())
+				.orElseThrow(() -> new WebApplicationException(
+						Response.status(Response.Status.NOT_FOUND)
+								.entity(String.format("Scope [%s] has no schema registry.", scopeName))
+								.build()));
+	}
+
+	/**
+	 * Whether the request addresses {@code /{scopeName}/schema/...}, i.e. the second path
+	 * segment is exactly {@code schema}.
+	 */
+	private boolean isSchemaPath(ContainerRequestContext requestContext) {
+		List<PathSegment> segments = requestContext.getUriInfo().getPathSegments();
+		return segments.size() > 1 && SCHEMA_PATH_SEGMENT.equals(segments.get(1).getPath());
 	}
 
 	/**

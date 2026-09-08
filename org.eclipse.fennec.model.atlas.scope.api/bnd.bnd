@@ -23,3 +23,5 @@ src=${^src},src-gen
 # to take full control over whats exported and imported and will ignore @Export
 # Bundle Annotations		
 -includeresource.model: model=model
+
+-testpath: junit-jupiter-api

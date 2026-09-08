@@ -30,6 +30,8 @@ import java.util.TreeSet;
 import java.util.concurrent.ConcurrentHashMap;
 
 import org.eclipse.fennec.model.atlas.mgmt.management.ObjectMetadata;
+import org.eclipse.fennec.model.atlas.scope.api.RegistryType;
+import org.eclipse.fennec.model.atlas.scope.api.ScopeRegistries;
 import org.eclipse.fennec.model.atlas.wf.workflowapi.ScopeService;
 import org.eclipse.fennec.model.atlas.workflow.ScopeServiceCollector;
 import org.osgi.service.component.annotations.Component;
@@ -53,8 +55,17 @@ import org.osgi.service.component.annotations.Reference;
 @Component(service = ScopeAggregateService.class)
 public class ScopeAggregateService {
 
-    /** Registry under which schema packages live; their changes are reported as nsURIs. */
-    static final String SCHEMA_REGISTRY = "schema";
+    /**
+     * The registry holding schema packages is the scope's registry of type
+     * {@link RegistryType#SCHEMA}, whatever it is named (issue #179): its entries are
+     * identified — and their changes reported — by nsURI rather than by
+     * {@code registry/objectId}. Reading that from the registry <em>name</em> meant renaming
+     * the registry silently changed the identity every ETag-diffing client sees.
+     */
+    private static String schemaRegistryOf(ScopeService<?> scopeService) {
+        return scopeService == null ? null
+                : ScopeRegistries.schemaRegistryName(scopeService.getScopeInfo()).orElse(null);
+    }
 
     /** Number of recent manifests retained per scope for diffing against a stale {@code If-None-Match}. */
     static final int MAX_SNAPSHOTS_PER_SCOPE = 16;
@@ -66,7 +77,7 @@ public class ScopeAggregateService {
     private static final String ROW_SEP = "";
 
     @Reference
-    private ScopeServiceCollector scopeCollector;
+    ScopeServiceCollector scopeCollector;
 
     /** scope -&gt; (etag -&gt; manifest). The inner map is a bounded, access-ordered LRU. */
     private final Map<String, Map<String, Map<String, ManifestEntry>>> snapshots = new ConcurrentHashMap<>();
@@ -98,11 +109,12 @@ public class ScopeAggregateService {
         if (scopeService == null) {
             return null;
         }
+        String schemaRegistry = schemaRegistryOf(scopeService);
         Map<String, ManifestEntry> manifest = new LinkedHashMap<>();
         Instant lastModified = null;
         for (String registry : scopeService.getAllRegistries()) {
             for (ObjectMetadata md : scopeService.listAllForRegistry(registry)) {
-                manifest.put(manifestKey(md), toEntry(md));
+                manifest.put(manifestKey(md, schemaRegistry), toEntry(md));
                 Instant t = md.getLastChangeTime();
                 if (t != null && (lastModified == null || t.isAfter(lastModified))) {
                     lastModified = t;
@@ -134,6 +146,7 @@ public class ScopeAggregateService {
         if (baseline == null) {
             return new ScopeDiff(List.of(), List.of(), false);
         }
+        String schemaRegistry = schemaRegistryOf(scopeCollector.getScopeServiceByScopeName(scopeName));
         SortedSet<String> nsUris = new TreeSet<>();
         SortedSet<String> objects = new TreeSet<>();
         Map<String, ManifestEntry> cur = current.manifest();
@@ -141,13 +154,13 @@ public class ScopeAggregateService {
         for (Map.Entry<String, ManifestEntry> e : cur.entrySet()) {
             ManifestEntry old = baseline.get(e.getKey());
             if (old == null || !Objects.equals(old.contentHash(), e.getValue().contentHash())) {
-                record(e.getValue(), nsUris, objects);
+                record(e.getValue(), schemaRegistry, nsUris, objects);
             }
         }
         // Removed: present in the baseline, absent in current.
         for (Map.Entry<String, ManifestEntry> e : baseline.entrySet()) {
             if (!cur.containsKey(e.getKey())) {
-                record(e.getValue(), nsUris, objects);
+                record(e.getValue(), schemaRegistry, nsUris, objects);
             }
         }
         return new ScopeDiff(List.copyOf(nsUris), List.copyOf(objects), true);
@@ -173,8 +186,9 @@ public class ScopeAggregateService {
         return false;
     }
 
-    private static void record(ManifestEntry entry, Set<String> nsUris, Set<String> objects) {
-        if (SCHEMA_REGISTRY.equals(entry.registry()) && entry.nsUri() != null) {
+    private static void record(ManifestEntry entry, String schemaRegistry, Set<String> nsUris,
+            Set<String> objects) {
+        if (schemaRegistry != null && schemaRegistry.equals(entry.registry()) && entry.nsUri() != null) {
             nsUris.add(entry.nsUri());
         } else {
             objects.add(entry.registry() + "/" + entry.objectId());
@@ -193,9 +207,10 @@ public class ScopeAggregateService {
      * re-uploaded, unlike the random-UUID objectId), matching what {@link #record} reports
      * in the diff; everything else keys on the objectId.
      */
-    private static String manifestKey(ObjectMetadata md) {
+    private static String manifestKey(ObjectMetadata md, String schemaRegistry) {
         Object nsUri = md.getProperties() == null ? null : md.getProperties().get("nsUri");
-        String identity = SCHEMA_REGISTRY.equals(md.getRegistry()) && nsUri != null ? nsUri.toString()
+        String identity = schemaRegistry != null && schemaRegistry.equals(md.getRegistry()) && nsUri != null
+                ? nsUri.toString()
                 : md.getObjectId();
         return md.getRegistry() + FIELD_SEP + md.getStage() + FIELD_SEP + identity;
     }

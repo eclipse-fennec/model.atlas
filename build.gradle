@@ -40,7 +40,8 @@ subprojects {
     // classpath. jersey-common (already the runtime's JAX-RS provider, v3.1.3)
     // supplies one via ServiceLoader. Test-scoped only — it is not a
     // compile/runtime dependency of the bundle itself.
-    if (name == 'org.eclipse.fennec.model.atlas.management.git.webhook.rest') {
+    if (name in ['org.eclipse.fennec.model.atlas.management.git.webhook.rest',
+                 'org.eclipse.fennec.model.atlas.rest.filter']) {
         dependencies {
             testImplementation 'org.glassfish.jersey.core:jersey-common:3.1.3'
         }
