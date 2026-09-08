@@ -304,7 +304,7 @@ public class SchemaPackagesResource {
     @Produces
     @Operation(summary = "Create a new schema package", description = "Create a new SchemaPackage in the specified stage. Checks for uniqueness based on nsUri. "
             + "If nsUri is not provided, the URI from the EPackage will be used. If provided, it must match the EPackage's nsURI. "
-            + "If version is not provided, it will be extracted from the nsURI. If provided, it must be semantically compatible with the URI version.", responses = {
+            + "The version is taken from the ?version parameter if given, otherwise from the package's own Version annotation, otherwise from the last segment of the nsURI when that segment looks like a version. An explicit ?version is always honoured.", responses = {
                     @ApiResponse(responseCode = "201", description = "Package created successfully", content = @Content(mediaType = MediaType.APPLICATION_JSON)),
                     @ApiResponse(responseCode = "400", description = "Invalid package data, missing required parameters, nsUri mismatch, or version incompatibility"),
                     @ApiResponse(responseCode = "400", description = "Scope not available, schema registry not available for scope, stage not available for registry or not a valid stage"),
@@ -318,7 +318,7 @@ public class SchemaPackagesResource {
             @Parameter(description = "The stage name", required = true) @PathParam("stageName") String stageName,
             @Parameter(description = "The namespace URI of the package. If not provided, uses the EPackage's nsURI. If provided, must match the EPackage's nsURI.", required = false) @QueryParam("nsUri") String nsUri,
             @Parameter(description = "Human-readable name for the package") @QueryParam("name") String name,
-            @Parameter(description = "Package version. If not provided, will be extracted from the nsURI. If provided, must be semantically compatible with the URI version.", required = false) @QueryParam("version") String version,
+            @Parameter(description = "Package version, always honoured as given. If omitted, the version the package declares in its Version annotation is used; failing that, the last segment of the nsURI when it is version-shaped (so a year or spec number in the nsURI is not mistaken for one).", required = false) @QueryParam("version") String version,
             @Parameter(description = "Overwrite option. If true and a Package with the same uri already exists, it updates it. ", required = false) @QueryParam("overwrite") boolean overwrite,
             @Parameter(description = "Assert that this package may be published to a DCAT portal. Recorded in the metadata as the 'dcat' property. "
                     + "On create, absent means false. On an overwrite, absent leaves the stored flag untouched — only an explicit value changes it.", required = false) @QueryParam("dcat") Boolean dcat,
@@ -328,7 +328,7 @@ public class SchemaPackagesResource {
 
         try {
             String validatedNsUri = validateAndResolveNsUri(nsUri, ePackage);
-            String resolvedVersion = NsUriVersions.resolveAndValidate(version, validatedNsUri);
+            String resolvedVersion = PackageVersions.resolve(ePackage, version, validatedNsUri);
             // Check uniqueness across visibility chain
             ObjectMetadata existingMetadata = findByNsUriInStage(scopeService, stageName, validatedNsUri);
             if (existingMetadata != null) {
@@ -526,7 +526,7 @@ public class SchemaPackagesResource {
     @Operation(summary = "Update package content", description = "Replace the content of an existing SchemaPackage. "
             + "Fails if the stage is read-only (e.g., Released). "
             + "If nsUri is not provided, the URI from the EPackage will be used. If provided, it must match the EPackage's nsURI. "
-            + "If version is not provided, it will be extracted from the nsURI. If provided, it must be semantically compatible with the URI version.", responses = {
+            + "The version is taken from the ?version parameter if given, otherwise from the package's own Version annotation, otherwise from the last segment of the nsURI when that segment looks like a version. An explicit ?version is always honoured.", responses = {
                     @ApiResponse(responseCode = "200", description = "Package updated successfully", content = @Content(mediaType = MediaType.APPLICATION_JSON)),
                     @ApiResponse(responseCode = "400", description = "Invalid package data, nsUri mismatch, or version incompatibility, scope not available, schema registry not available for scope, stage not available for registry or not a valid stage"),
                     @ApiResponse(responseCode = "403", description = "Stage is read-only or Package is only present in a parent scope final stage and so it's read-only"),
@@ -537,14 +537,14 @@ public class SchemaPackagesResource {
     public Response updatePackageContent(
             @Parameter(description = "The scope name", required = true) @PathParam("scopeName") String scopeName,
             @Parameter(description = "The stage name", required = true) @PathParam("stageName") String stageName,
-            @Parameter(description = "The updated version. If not provided, will be extracted from the nsURI. If provided, must be semantically compatible with the URI version.", required = false) @QueryParam("version") String version,
+            @Parameter(description = "The updated version, always honoured as given. If omitted, the version the package declares in its Version annotation is used; failing that, the last segment of the nsURI when it is version-shaped.", required = false) @QueryParam("version") String version,
             @Parameter(description = "The namespace URI of the package. If not provided, uses the EPackage's nsURI. If provided, must match the EPackage's nsURI.", required = false) @QueryParam("nsUri") String nsUri,
             @RequestBody(description = "The new schema package content", required = true, content = @Content(schema = @Schema(implementation = EPackage.class))) EPackage ePackage) {
 
         ScopeService<EObject> scopeService = (ScopeService<EObject>) getScopeServiceByScopeName(scopeName);
         try {
             String validatedNsUri = validateAndResolveNsUri(nsUri, ePackage);
-            String resolvedVersion = NsUriVersions.resolveAndValidate(version, validatedNsUri);
+            String resolvedVersion = PackageVersions.resolve(ePackage, version, validatedNsUri);
             ObjectMetadata existingMetadata = findByNsUriInStage(scopeService, stageName, validatedNsUri);
             if (existingMetadata == null) {
                 return Response.status(Response.Status.NO_CONTENT).build();

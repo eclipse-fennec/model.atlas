@@ -36,6 +36,7 @@ import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -154,6 +155,19 @@ public class InitialModelLoader {
     private static final String REGISTRY_NAME_PROPERTY = "registry.name";
 
     private static final Logger LOG = System.getLogger(InitialModelLoader.class.getName());
+
+    /** Annotation source a model declares its version under; {@code emf.osgi}'s convention. */
+    private static final String VERSION_ANNOTATION_SOURCE = "Version";
+
+    /** Detail key holding the declared version, e.g. {@code <details key="value" value="1.2.0"/>}. */
+    private static final String VERSION_ANNOTATION_DETAIL = "value";
+
+    /**
+     * What an nsURI segment has to look like before it is read as a version: {@code
+     * major.minor}, optionally {@code .micro} and an OSGi qualifier. Kept in step with
+     * {@code PackageVersions} in the REST layer (issue #180).
+     */
+    private static final Pattern VERSION_SHAPED = Pattern.compile("\\d+\\.\\d+(\\.\\d+(\\.[\\p{Alnum}_-]+)?)?");
 
     @ObjectClassDefinition(name = "Atlas Initial Model Loader Configuration")
     public @interface Config {
@@ -886,27 +900,80 @@ public class InitialModelLoader {
         metadata.setStage(stage);
         metadata.setScope(scopeName);
         metadata.setRegistry(registry);
-        metadata.setVersion(extractVersion(ePackage.getNsURI()));
+        metadata.setVersion(extractVersion(ePackage));
         metadata.setObjectType(EcoreUtil.getURI(ePackage.eClass()).toString());
         metadata.getProperties().put(WorkflowConstants.NS_URI_METADATA_PROPERTY, ePackage.getNsURI());
         return metadata;
     }
 
     /**
-     * Returns the last URI segment that parses as an OSGi version, or {@code null}
-     * — the same convention the REST upload uses to derive a version from an
-     * nsURI.
+     * The version to record for a bootstrapped model: the one it declares in its
+     * {@code Version} annotation, or else the last segment of its nsURI when that segment
+     * looks like a version — the same rule the REST upload applies
+     * ({@code PackageVersions}, issue #180).
+     *
+     * <p>
+     * Being <em>parseable</em> as an OSGi version is not enough: a bare number parses, so
+     * parsing every segment read {@code 2002} out of
+     * {@code http://www.eclipse.org/emf/2002/Ecore} and recorded the model under that
+     * version.
+     * </p>
+     *
+     * <p>
+     * The rule is spelled out here rather than shared with the REST layer because the two
+     * differ on what a bad declaration means: a one-shot loader must not abort start-up over
+     * a junk annotation, so it logs and falls through, where the upload endpoint reports a
+     * bad request to the caller.
+     * </p>
+     *
+     * @param ePackage the bootstrapped package
+     * @return the version, or {@code null} when the model declares none and its nsURI carries
+     *         none
      */
-    private String extractVersion(String nsUri) {
-        Version version = null;
-        for (String segment : URI.createURI(nsUri).segments()) {
-            try {
-                version = Version.parseVersion(segment);
-            } catch (IllegalArgumentException e) {
-                // not a version segment
-            }
+    static String extractVersion(EPackage ePackage) {
+        String declared = declaredVersion(ePackage);
+        if (declared != null) {
+            return declared;
         }
-        return version == null ? null : version.toString();
+        String[] segments = URI.createURI(ePackage.getNsURI()).segments();
+        if (segments.length == 0) {
+            return null;
+        }
+        String last = segments[segments.length - 1];
+        if (last == null || !VERSION_SHAPED.matcher(last).matches()) {
+            return null;
+        }
+        try {
+            return Version.parseVersion(last).toString();
+        } catch (IllegalArgumentException e) {
+            return null;
+        }
+    }
+
+    /**
+     * The version the model states in its {@code Version} annotation (the convention
+     * {@code emf.osgi}'s generator writes), or {@code null} when it states none — or states
+     * something that is not a version, which is logged and ignored.
+     */
+    private static String declaredVersion(EPackage ePackage) {
+        EAnnotation annotation = ePackage.getEAnnotation(VERSION_ANNOTATION_SOURCE);
+        if (annotation == null) {
+            return null;
+        }
+        String declared = annotation.getDetails().get(VERSION_ANNOTATION_DETAIL);
+        if (declared == null || declared.isBlank()) {
+            return null;
+        }
+        String trimmed = declared.trim();
+        try {
+            Version.parseVersion(trimmed);
+            return trimmed;
+        } catch (IllegalArgumentException e) {
+            LOG.log(Level.WARNING, () -> "InitialModelLoader: " + ePackage.getNsURI()
+                    + " declares the version '" + declared
+                    + "' in its Version annotation, which is not a valid version - ignoring it");
+            return null;
+        }
     }
 
     private Resource loadJsonschema(String uri) {

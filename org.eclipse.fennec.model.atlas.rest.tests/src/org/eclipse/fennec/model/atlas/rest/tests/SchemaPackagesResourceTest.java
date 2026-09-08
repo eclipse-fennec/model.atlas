@@ -22,6 +22,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.io.IOException;
 import java.util.Date;
 
+import org.eclipse.emf.ecore.EAnnotation;
 import org.eclipse.emf.ecore.EAttribute;
 import org.eclipse.emf.ecore.EClass;
 import org.eclipse.emf.ecore.EClassifier;
@@ -757,6 +758,78 @@ public class SchemaPackagesResourceTest extends AbstractRestTest {
 	}
 
 	// ========== Update Package Content Tests ==========
+
+	// ========== Version resolution (issue #180) ==========
+
+	/**
+	 * A year in the nsURI is not a version. Uploading with an explicit {@code ?version=} used
+	 * to be rejected with <em>Version parameter '1.0.0' is not compatible with URI version
+	 * '2002.0.0'</em>, because every segment was parsed and a bare number parses.
+	 */
+	@Test
+	@ParentScopeServiceSetup
+	public void testUpload_ExplicitVersionIsHonouredForAYearNsUri(@InjectBundleContext BundleContext context)
+			throws Exception {
+		ensureResourceAvailability(context);
+		String nsUri = "http://www.example.org/emf/2002/Yearly";
+		EPackage testPackage = TestHelper.createTestEPackage(nsUri, "Yearly", "yearly");
+		String xmiContent = TestHelper.serializeToXMI(testPackage, resourceSet);
+
+		Response response = schemaStageTarget(TestAnnotations.STAGE_DRAFT).queryParam("nsUri", nsUri)
+				.queryParam("name", "Yearly").queryParam("version", "1.0.0").request("application/xmi")
+				.post(Entity.entity(xmiContent, "application/xmi"));
+
+		assertStatus(201, response, "An explicit version must be honoured, not vetoed by a year in the nsURI");
+		assertTrue(response.readEntity(String.class).contains("version=\"1.0.0\""),
+				"the package must be stored under the version the caller asked for");
+	}
+
+	/**
+	 * With nothing declared anywhere, a year-shaped nsURI yields no version at all - rather
+	 * than storing the package under 2002.0.0.
+	 */
+	@Test
+	@ParentScopeServiceSetup
+	public void testUpload_AYearNsUriYieldsNoVersion(@InjectBundleContext BundleContext context) throws Exception {
+		ensureResourceAvailability(context);
+		String nsUri = "http://www.example.org/emf/2003/Undeclared";
+		EPackage testPackage = TestHelper.createTestEPackage(nsUri, "Undeclared", "undeclared");
+		String xmiContent = TestHelper.serializeToXMI(testPackage, resourceSet);
+
+		Response response = schemaStageTarget(TestAnnotations.STAGE_DRAFT).queryParam("nsUri", nsUri)
+				.queryParam("name", "Undeclared").request("application/xmi")
+				.post(Entity.entity(xmiContent, "application/xmi"));
+
+		assertStatus(201, response, "Should return HTTP 201 Created");
+		String body = response.readEntity(String.class);
+		assertFalse(body.contains("version=\"2003"), "a year must not become the stored version | body: " + body);
+	}
+
+	/**
+	 * The version a model declares itself - the {@code Version} annotation emf.osgi's
+	 * generator writes - is honoured when the caller states none.
+	 */
+	@Test
+	@ParentScopeServiceSetup
+	public void testUpload_VersionAnnotationOfThePackageIsHonoured(@InjectBundleContext BundleContext context)
+			throws Exception {
+		ensureResourceAvailability(context);
+		String nsUri = "http://www.example.org/declared/9.9.9";
+		EPackage testPackage = TestHelper.createTestEPackage(nsUri, "Declared", "declared");
+		EAnnotation versionAnnotation = EcoreFactory.eINSTANCE.createEAnnotation();
+		versionAnnotation.setSource("Version");
+		versionAnnotation.getDetails().put("value", "2.5.0");
+		testPackage.getEAnnotations().add(versionAnnotation);
+		String xmiContent = TestHelper.serializeToXMI(testPackage, resourceSet);
+
+		Response response = schemaStageTarget(TestAnnotations.STAGE_DRAFT).queryParam("nsUri", nsUri)
+				.queryParam("name", "Declared").request("application/xmi")
+				.post(Entity.entity(xmiContent, "application/xmi"));
+
+		assertStatus(201, response, "Should return HTTP 201 Created");
+		assertTrue(response.readEntity(String.class).contains("version=\"2.5.0\""),
+				"the version the package declares must win over the 9.9.9 in its nsURI");
+	}
 
 	@Test
 	@ParentScopeServiceSetup
