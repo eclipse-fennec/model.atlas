@@ -18,3 +18,4 @@ Bundle-Description: One-shot loader that scans a configured folder on startup (e
 	org.eclipse.fennec.codec;version=latest,\
 	org.eclipse.fennec.codec.jsonschema;version=latest
 
+-testpath: junit-jupiter-api

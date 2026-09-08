@@ -283,8 +283,26 @@ Content-Type: application/json | application/xml | application/ecore+xml
 **Query Parameters** (Required):
 - `nsUri` (string, required): The namespace URI of the package
 - `name` (string, optional): Human-readable name
-- `version` (string, optional): Package version
+- `version` (string, optional): Package version — see [How the version is resolved](#how-the-version-is-resolved)
 - `overwrite` (boolean, optional): If a package with this `nsUri` already exists in this stage, update it instead of failing with `409 Conflict`
+
+#### How the version is resolved
+
+A version is declared, and only inferred as a last resort. In decreasing order of authority:
+
+1. **the `?version=` parameter** — used exactly as given, and never rejected for disagreeing with
+   anything else in the request;
+2. **the package's own `Version` annotation** — `<eAnnotations source="Version"><details key="value"
+   value="1.2.0"/></eAnnotations>`, the convention `emf.osgi`'s generator writes, so a model that
+   states its version is taken at its word;
+3. **the last segment of the `nsUri`**, and only when that segment looks like a version
+   (`major.minor` with an optional micro and qualifier).
+
+If none of the three applies, the package is stored without a version. A segment merely being
+*parseable* is not enough: `http://www.eclipse.org/emf/2002/Ecore` and
+`http://www.omg.org/spec/UML/20131001` carry no version, and neither does a numeric host such as
+`http://10.2.3.4/model` (see issue #180). A declared version is stored verbatim; an inferred one is
+stored as it parses.
 
 **Request Body**: EPackage content in the specified format
 
