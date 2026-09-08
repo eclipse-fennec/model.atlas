@@ -14,6 +14,7 @@
 package org.eclipse.fennec.model.atlas.rest.filter;
 
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import org.eclipse.emf.ecore.resource.ResourceSet;
@@ -152,16 +153,16 @@ public class ScopedResourceSetProvider implements ResourceSetProvider {
 	 */
 	private ComponentServiceObjects<ResourceSet> resolveCso(String scopeName, String stageName) {
 		if (scopeName == null || stageName == null) {
-			return defaultCso("no scope/stage path parameters on this request");
+			return defaultCso("no scope/stage path parameters on this request", Level.FINE);
 		}
 		ResourceSetCollector collector = collectorRef.get();
 		if (collector == null) {
-			return defaultCso("ResourceSetCollector not available");
+			return defaultCso("ResourceSetCollector not available", Level.WARNING);
 		}
 		ComponentServiceObjects<ResourceSet> cso = collector.getResourceSetObjects(scopeName, stageName);
 		if (cso == null) {
 			return defaultCso(String.format("no ResourceSet registered for scope [%s] / stage [%s]",
-					scopeName, stageName));
+					scopeName, stageName), Level.WARNING);
 		}
 		return cso;
 	}
@@ -170,10 +171,21 @@ public class ScopedResourceSetProvider implements ResourceSetProvider {
 	 * Returns the default {@link ResourceSet} CSO, logging why the scoped one
 	 * could not be used.
 	 *
+	 * <p>
+	 * The level is the caller's, because the two cases differ in kind. A request
+	 * without scope/stage templates has nothing to resolve and is routine. A
+	 * request that names a scope and a stage but gets the default anyway is
+	 * served by a {@link ResourceSet} that cannot see that scope's dynamically
+	 * registered EPackages, so a payload referencing one fails to deserialize
+	 * with {@code PackageNotFoundException} — a {@code 500} whose cause is
+	 * nowhere near the fallback that produced it (issue #263). That is worth a
+	 * warning rather than a {@code FINE} nobody has enabled.
+	 * </p>
+	 *
 	 * @throws WebApplicationException 503 if there is no default either — with
 	 *         no {@link ResourceSet} at all nothing can be serialized.
 	 */
-	private ComponentServiceObjects<ResourceSet> defaultCso(String reason) {
+	private ComponentServiceObjects<ResourceSet> defaultCso(String reason, Level level) {
 		ComponentServiceObjects<ResourceSet> fallback = defaultCsoRef.get();
 		if (fallback == null) {
 			LOGGER.severe(() -> "No ResourceSet available: " + reason
@@ -183,7 +195,8 @@ public class ScopedResourceSetProvider implements ResourceSetProvider {
 							.entity("Default ResourceSet not available")
 							.build());
 		}
-		LOGGER.fine(() -> "Falling back to the default ResourceSet: " + reason);
+		LOGGER.log(level, () -> "Falling back to the default ResourceSet: " + reason
+				+ ". Dynamically registered EPackages of that scope are not visible to it.");
 		return fallback;
 	}
 }
