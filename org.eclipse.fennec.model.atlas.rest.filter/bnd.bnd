@@ -23,3 +23,12 @@ Provide-Capability: \
 		osgi.implementation="org.eclipse.fennec.model.atlas.scoped-resource-set";\
 		version:Version="1.0.0";\
 		uses:="org.eclipse.fennec.codec.rest.jakartas.spi"
+
+# Unit tests only. Mocking ScopeService means byte-buddy has to load every type its
+# (generated) supertypes mention — ObjectMetadata and Promise — which the bundle itself
+# never touches, so they are test-scope additions rather than buildpath ones.
+-testpath: \
+	junit-jupiter-api,\
+	org.eclipse.fennec.model.atlas.management;version=snapshot,\
+	org.osgi.util.promise;version=latest,\
+	org.osgi.util.function;version=latest

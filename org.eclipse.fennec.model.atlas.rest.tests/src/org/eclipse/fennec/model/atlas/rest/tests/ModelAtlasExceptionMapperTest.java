@@ -32,6 +32,10 @@ import java.util.Hashtable;
 import org.eclipse.fennec.model.atlas.rest.tests.helper.TestAnnotations;
 import org.eclipse.fennec.model.atlas.rest.tests.helper.TestAnnotations.ParentScopeServiceSetup;
 import org.eclipse.fennec.model.atlas.wf.workflowapi.ScopeService;
+import org.eclipse.fennec.model.atlas.scope.api.RegistryType;
+import org.eclipse.fennec.model.atlas.wf.workflowapi.Registry;
+import org.eclipse.fennec.model.atlas.wf.workflowapi.Scope;
+import org.eclipse.fennec.model.atlas.wf.workflowapi.WorkflowApiFactory;
 import org.eclipse.fennec.model.atlas.workflow.ScopeServiceCollector;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -88,6 +92,16 @@ public class ModelAtlasExceptionMapperTest extends AbstractRestTest {
 		when(throwingScopeService.isValidRegistry(any())).thenReturn(true);
 		when(throwingScopeService.listInFinalStageForRegistry(any()))
 			.thenThrow(new IllegalStateException(INTERNAL_DETAIL));
+		// The /schema path is resolved to the scope's SCHEMA registry by type (issue #179),
+		// so this double has to describe its registries like a real ScopeService does -
+		// otherwise the request never reaches the endpoint whose failure is under test.
+		Scope throwingScope = WorkflowApiFactory.eINSTANCE.createScope();
+		throwingScope.setName(THROWING_ENDPOINT_SCOPE);
+		Registry schemaRegistry = WorkflowApiFactory.eINSTANCE.createRegistry();
+		schemaRegistry.setName("schema");
+		schemaRegistry.setType(RegistryType.SCHEMA);
+		throwingScope.getRegistries().add(schemaRegistry);
+		doReturn(throwingScope).when(throwingScopeService).getScopeInfo();
 		doReturn(throwingScopeService).when(mockCollector).getScopeServiceByScopeName(eq(THROWING_ENDPOINT_SCOPE));
 
 		mockScopeCollectorRegistration = context.registerService(ScopeServiceCollector.class, mockCollector,

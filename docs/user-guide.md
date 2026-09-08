@@ -277,7 +277,7 @@ The response includes the scope's registries, each with their stage definitions 
 
 **Base path**: `/{scopeName}/schema`
 
-Manage EMF EPackage schemas with full CRUD and stage transitions. The Schema API uses the fixed registry name `schema`.
+Manage EMF EPackage schemas with full CRUD and stage transitions. The `schema` in the path is a URL literal, not a registry name: the request is served by the scope's registry of type `SCHEMA` (`registry.type=SCHEMA`), whatever that registry is called — a deployment may name it `models`, `metamodels` or anything else. A scope may define **at most one** registry of type `SCHEMA`: a second one is refused when it binds (with a `SEVERE` log entry naming both), and a scope that has none answers `404` on these paths.
 
 ```bash
 # List all released schemas (includes parent scope schemas)

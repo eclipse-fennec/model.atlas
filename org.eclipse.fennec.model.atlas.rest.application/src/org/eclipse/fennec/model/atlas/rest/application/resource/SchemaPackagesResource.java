@@ -36,6 +36,8 @@ import org.eclipse.fennec.model.atlas.management.lucene.epackage.EPackageLuceneI
 import org.eclipse.fennec.model.atlas.management.lucene.epackage.EPackageSearchQuery;
 import org.eclipse.fennec.model.atlas.mgmt.management.ManagementFactory;
 import org.eclipse.fennec.model.atlas.mgmt.management.ObjectMetadata;
+import org.eclipse.fennec.model.atlas.scope.api.ScopeInfo;
+import org.eclipse.fennec.model.atlas.scope.api.ScopeRegistries;
 import org.eclipse.fennec.model.atlas.mgmt.management.ObjectMetadataContainer;
 import org.eclipse.fennec.model.atlas.mgmt.storage.AbstractEObjectStorageService;
 import org.eclipse.fennec.model.atlas.rest.model.StageTransitionRequest;
@@ -112,7 +114,6 @@ public class SchemaPackagesResource {
     
     private static final Logger LOGGER = Logger.getLogger(SchemaPackagesResource.class.getName());
 
-    private static final String REGISTRY_NAME = "schema";
 
     @GET
     @Path("hello")
@@ -148,7 +149,7 @@ public class SchemaPackagesResource {
 
         ScopeService<?> scopeService = getScopeServiceByScopeName(scopeName);
         try {
-            List<ObjectMetadata> objectsMetadata = scopeService.listAllForRegistry(REGISTRY_NAME);
+            List<ObjectMetadata> objectsMetadata = scopeService.listAllForRegistry(schemaRegistry(scopeService));
             if (objectsMetadata.isEmpty())
                 return Response.status(Response.Status.NO_CONTENT).build();
             ObjectMetadataContainer container = mgmtFactory.createObjectMetadataContainer();
@@ -200,7 +201,7 @@ public class SchemaPackagesResource {
                 return Response.status(Response.Status.OK).entity(metadata)
                         .header("Content-Type", ResourceSupport.resolvedMediaType(requestContext)).build();
             }
-            List<ObjectMetadata> objectsMetadata = scopeService.listInFinalStageForRegistry(REGISTRY_NAME);
+            List<ObjectMetadata> objectsMetadata = scopeService.listInFinalStageForRegistry(schemaRegistry(scopeService));
             if (objectsMetadata.isEmpty())
                 return Response.status(Response.Status.NO_CONTENT).build();
             ObjectMetadataContainer container = mgmtFactory.createObjectMetadataContainer();
@@ -259,7 +260,7 @@ public class SchemaPackagesResource {
                     return rb.build();
                 }
             } else if (name != null) {
-                List<ObjectMetadata> objectsMetadata = scopeService.listInStageForRegistryByName(REGISTRY_NAME,
+                List<ObjectMetadata> objectsMetadata = scopeService.listInStageForRegistryByName(schemaRegistry(scopeService),
                         stageName, name);
                 if (objectsMetadata.isEmpty()) {
                     return Response.status(Response.Status.NO_CONTENT).build();
@@ -268,7 +269,7 @@ public class SchemaPackagesResource {
                 container.getMetadata().addAll(objectsMetadata);
                 return Response.status(Response.Status.OK).entity(container).header("Content-Type", ResourceSupport.resolvedMediaType(requestContext)).build();
             } else {
-                List<ObjectMetadata> objectsMetadata = scopeService.listInStageForRegistry(REGISTRY_NAME, stageName);
+                List<ObjectMetadata> objectsMetadata = scopeService.listInStageForRegistry(schemaRegistry(scopeService), stageName);
                 if (objectsMetadata.isEmpty()) {
                     return Response.status(Response.Status.NO_CONTENT).build();
                 }
@@ -350,13 +351,13 @@ public class SchemaPackagesResource {
                         return preconditionResponse;
                     }
                     ObjectMetadata metadata = scopeService
-                            .updateInStageForRegistry(REGISTRY_NAME, stageName, ePackage,
+                            .updateInStageForRegistry(schemaRegistry(scopeService), stageName, ePackage,
                                     existingMetadata.getObjectId(), resolvedVersion)
                             .getValue();
                     // An absent ?dcat leaves the stored flag alone: an overwrite that says nothing
                     // about publication must not unpublish the model. Only an explicit value moves it.
                     if (dcat != null) {
-                        metadata = scopeService.updatePropertiesInStageForRegistry(REGISTRY_NAME, stageName,
+                        metadata = scopeService.updatePropertiesInStageForRegistry(schemaRegistry(scopeService), stageName,
                                 existingMetadata.getObjectId(),
                                 Map.of(WorkflowConstants.DCAT_PUBLISH_METADATA_PROPERTY, dcat)).getValue();
                     }
@@ -378,7 +379,7 @@ public class SchemaPackagesResource {
             metadata.setUploadTime(Instant.now());
             metadata.setStage(stageName);
             metadata.setScope(scopeName);
-            metadata.setRegistry(REGISTRY_NAME);
+            metadata.setRegistry(schemaRegistry(scopeService));
             metadata.setVersion(resolvedVersion);
             metadata.setObjectType(EcoreUtil.getURI(ePackage.eClass()).toString());
             metadata.getProperties().put(WorkflowConstants.NS_URI_METADATA_PROPERTY, validatedNsUri);
@@ -387,7 +388,7 @@ public class SchemaPackagesResource {
             metadata.getProperties().put(WorkflowConstants.DCAT_PUBLISH_METADATA_PROPERTY,
                     Boolean.TRUE.equals(dcat));
 
-            metadata = scopeService.uploadToStageForRegistry(REGISTRY_NAME, stageName, ePackage, metadata).getValue();
+            metadata = scopeService.uploadToStageForRegistry(schemaRegistry(scopeService), stageName, ePackage, metadata).getValue();
             ePackageIndex.index(metadata, ePackage);
 
             Response.ResponseBuilder rb = Response.status(Response.Status.CREATED)
@@ -438,7 +439,7 @@ public class SchemaPackagesResource {
             if (contentMetadata == null) {
                 return Response.status(Response.Status.NO_CONTENT).build();
             }
-            EPackage ePackage = (EPackage) scopeService.getContentFromStageForRegistry(REGISTRY_NAME, stageName,
+            EPackage ePackage = (EPackage) scopeService.getContentFromStageForRegistry(schemaRegistry(scopeService), stageName,
                     contentMetadata.getObjectId());
             if (ePackage == null) {
                 return Response.status(Response.Status.NO_CONTENT).build();
@@ -488,7 +489,7 @@ public class SchemaPackagesResource {
             if (contentMetadata == null) {
                 return Response.status(Response.Status.NO_CONTENT).build();
             }
-            Optional<?> ePackageContent = scopeService.get(REGISTRY_NAME, contentMetadata.getObjectId());
+            Optional<?> ePackageContent = scopeService.get(schemaRegistry(scopeService), contentMetadata.getObjectId());
             if (ePackageContent.isEmpty()) {
                 return Response.status(Response.Status.NO_CONTENT).build();
             }
@@ -578,7 +579,7 @@ public class SchemaPackagesResource {
             }
 
             ObjectMetadata metadata = scopeService
-                    .updateInStageForRegistry(REGISTRY_NAME, stageName, ePackage, existingMetadata.getObjectId(),
+                    .updateInStageForRegistry(schemaRegistry(scopeService), stageName, ePackage, existingMetadata.getObjectId(),
                             resolvedVersion)
                     .getValue();
             ePackageIndex.index(metadata, ePackage);
@@ -708,7 +709,7 @@ public class SchemaPackagesResource {
                 return preconditionResponse;
             }
 
-            ObjectMetadata metadata = scopeService.updatePropertiesInStageForRegistry(REGISTRY_NAME, stageName,
+            ObjectMetadata metadata = scopeService.updatePropertiesInStageForRegistry(schemaRegistry(scopeService), stageName,
                     existingMetadata.getObjectId(),
                     Map.of(WorkflowConstants.DCAT_PUBLISH_METADATA_PROPERTY, dcat)).getValue();
             if (metadata == null) {
@@ -783,7 +784,7 @@ public class SchemaPackagesResource {
             }
 
             boolean deleted = scopeService
-                    .deleteFromStageForRegistry(REGISTRY_NAME, stageName, existingMetadata.getObjectId())
+                    .deleteFromStageForRegistry(schemaRegistry(scopeService), stageName, existingMetadata.getObjectId())
                     .getValue();
             if (deleted) {
             	ePackageIndex.remove(existingMetadata.getObjectId());
@@ -851,7 +852,7 @@ public class SchemaPackagesResource {
             if (preconditionResponse != null) {
                 return preconditionResponse;
             }
-            ObjectMetadata metadata = scopeService.transitionToStageForRegistry(REGISTRY_NAME,
+            ObjectMetadata metadata = scopeService.transitionToStageForRegistry(schemaRegistry(scopeService),
                     existingMetadata.getObjectId(), stageName, targetStage);
             reindexAfterTransition(scopeService, metadata, targetStage);
             ObjectMetadataResponseFilter.attach(requestContext, metadata,
@@ -882,7 +883,7 @@ public class SchemaPackagesResource {
     private void reindexAfterTransition(ScopeService<?> scopeService, ObjectMetadata metadata, String targetStage) {
         String objectId = metadata.getObjectId();
         try {
-            Object content = scopeService.getContentFromStageForRegistry(REGISTRY_NAME, targetStage, objectId);
+            Object content = scopeService.getContentFromStageForRegistry(schemaRegistry(scopeService), targetStage, objectId);
             if (content instanceof EPackage ePackage) {
                 ePackageIndex.index(metadata, ePackage);
                 return;
@@ -994,6 +995,29 @@ public class SchemaPackagesResource {
     }
     
 
+    /**
+     * The name of this scope's schema registry, resolved by
+     * {@link org.eclipse.fennec.model.atlas.scope.api.RegistryType#SCHEMA} rather than
+     * assumed to be {@code "schema"}.
+     *
+     * <p>
+     * {@code /{scopeName}/schema} is a URL literal naming the kind of registry the request
+     * is about; the registry itself may be called anything, and it used to be that a scope
+     * whose schema registry was called {@code models} could not be reached through this
+     * resource at all (issue #179). Requests normally never get here without one — the
+     * request filter answers {@code 404} first — so this is the same answer for the paths
+     * that reach the resource directly.
+     * </p>
+     */
+    private static String schemaRegistry(ScopeService<?> scopeService) {
+        ScopeInfo scope = scopeService.getScopeInfo();
+        return ScopeRegistries.schemaRegistryName(scope)
+                .orElseThrow(() -> new WebApplicationException(Response.status(Response.Status.NOT_FOUND)
+                        .entity(String.format("Scope [%s] has no schema registry.",
+                                scope == null ? "?" : scope.getName()))
+                        .build()));
+    }
+
     private ScopeService<?> getScopeServiceByScopeName(String scopeName) {
         ScopeService<?> scopeService = scopeCollector.getScopeServiceByScopeName(scopeName);
         if (scopeService == null) {
@@ -1010,7 +1034,7 @@ public class SchemaPackagesResource {
      * lookup yields at most one element.
      */
     private ObjectMetadata findByNsUriInStage(ScopeService<?> scopeService, String stageName, String nsUri) {
-        List<ObjectMetadata> matches = scopeService.getMetadataByPropertyFromStageForRegistry(REGISTRY_NAME, stageName,
+        List<ObjectMetadata> matches = scopeService.getMetadataByPropertyFromStageForRegistry(schemaRegistry(scopeService), stageName,
                 WorkflowConstants.NS_URI_METADATA_PROPERTY, nsUri);
         return matches.isEmpty() ? null : matches.get(0);
     }
@@ -1021,7 +1045,7 @@ public class SchemaPackagesResource {
      * to be derived from it) — via the nsUri property lookup.
      */
     private ObjectMetadata resolvePackageInStage(ScopeService<?> scopeService, String stageName, String idOrNsUri) {
-        ObjectMetadata metadata = scopeService.getMetadataFromStageForRegistry(REGISTRY_NAME, stageName, idOrNsUri);
+        ObjectMetadata metadata = scopeService.getMetadataFromStageForRegistry(schemaRegistry(scopeService), stageName, idOrNsUri);
         if (metadata == null) {
             metadata = findByNsUriInStage(scopeService, stageName, idOrNsUri);
         }
@@ -1030,7 +1054,7 @@ public class SchemaPackagesResource {
 
     /** Final-stage variant of {@link #findByNsUriInStage(ScopeService, String, String)}. */
     private ObjectMetadata findByNsUriInFinalStage(ScopeService<?> scopeService, String nsUri) {
-        List<ObjectMetadata> matches = scopeService.getMetadataByPropertyFromFinalStageForRegistry(REGISTRY_NAME,
+        List<ObjectMetadata> matches = scopeService.getMetadataByPropertyFromFinalStageForRegistry(schemaRegistry(scopeService),
                 WorkflowConstants.NS_URI_METADATA_PROPERTY, nsUri);
         return matches.isEmpty() ? null : matches.get(0);
     }
