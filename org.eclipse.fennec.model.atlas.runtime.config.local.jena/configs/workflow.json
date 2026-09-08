@@ -9,7 +9,7 @@
     	"atlas.scope": "jena",
         "scope.name": "jena",
         "scope.description": "City Jena Scope",
-        "parent.scope": "atlas",
+        "scope.parent": "atlas",
         "registryService.target": "(|(registry.name=schema)(registry.name=workspace)(registry.name=DataGen)(registry.name=cocl)(registry.name=sensinactmapping)(registry.name=sensinactprofile))",
         "registryService.cardinality.minimum:int": 1
     },

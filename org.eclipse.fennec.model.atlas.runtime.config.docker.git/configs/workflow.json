@@ -9,7 +9,7 @@
         "atlas.scope": "jena",
         "scope.name": "jena",
         "scope.description": "Jena Scope",
-        "parent.scope": "atlas",
+        "scope.parent": "atlas",
         "registryService.target": "(|(registry.name=schema)(registry.name=default))",
         "registryService.cardinality.minimum:int": 1
     },
