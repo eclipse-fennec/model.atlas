@@ -13,7 +13,8 @@
  */
 package org.eclipse.fennec.model.atlas.management.lucene.service;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -84,12 +85,12 @@ public class LuceneRegistryStageIsolationTest {
         registry.updateCache(metadata("release"));
 
         List<ObjectMetadata> draft = registry.findByScopeRegistryAndStage(SCOPE, REGISTRY, "draft");
-        assertThat(draft).extracting(ObjectMetadata::getObjectId).containsExactly(OBJECT_ID);
-        assertThat(draft).extracting(ObjectMetadata::getStage).containsExactly("draft");
+        assertEquals(List.of(OBJECT_ID), draft.stream().map(ObjectMetadata::getObjectId).toList());
+        assertEquals(List.of("draft"), stages(draft));
 
         List<ObjectMetadata> release = registry.findByScopeRegistryAndStage(SCOPE, REGISTRY, "release");
-        assertThat(release).extracting(ObjectMetadata::getObjectId).containsExactly(OBJECT_ID);
-        assertThat(release).extracting(ObjectMetadata::getStage).containsExactly("release");
+        assertEquals(List.of(OBJECT_ID), release.stream().map(ObjectMetadata::getObjectId).toList());
+        assertEquals(List.of("release"), stages(release));
     }
 
     @Test
@@ -98,10 +99,8 @@ public class LuceneRegistryStageIsolationTest {
         registry.updateCache(metadata("draft"));
         registry.updateCache(metadata("release"));
 
-        assertThat(registry.findByScopeAndStage(SCOPE, "draft")).extracting(ObjectMetadata::getStage)
-                .containsExactly("draft");
-        assertThat(registry.findByScopeAndStage(SCOPE, "release")).extracting(ObjectMetadata::getStage)
-                .containsExactly("release");
+        assertEquals(List.of("draft"), stages(registry.findByScopeAndStage(SCOPE, "draft")));
+        assertEquals(List.of("release"), stages(registry.findByScopeAndStage(SCOPE, "release")));
     }
 
     @Test
@@ -110,10 +109,10 @@ public class LuceneRegistryStageIsolationTest {
         registry.updateCache(metadata("draft"));
         registry.updateCache(metadata("release"));
 
-        assertThat(registry.findByScopeRegistryStageAndName(SCOPE, REGISTRY, "draft", "the-object"))
-                .extracting(ObjectMetadata::getStage).containsExactly("draft");
-        assertThat(registry.findByScopeRegistryStageAndName(SCOPE, REGISTRY, "release", "the-object"))
-                .extracting(ObjectMetadata::getStage).containsExactly("release");
+        assertEquals(List.of("draft"),
+                stages(registry.findByScopeRegistryStageAndName(SCOPE, REGISTRY, "draft", "the-object")));
+        assertEquals(List.of("release"),
+                stages(registry.findByScopeRegistryStageAndName(SCOPE, REGISTRY, "release", "the-object")));
     }
 
     @Test
@@ -122,9 +121,8 @@ public class LuceneRegistryStageIsolationTest {
         registry.updateCache(metadata("draft"));
         registry.updateCache(metadata("release"));
 
-        assertThat(registry.findByStatus(ObjectStatus.DRAFT)).extracting(ObjectMetadata::getStage)
-                .containsExactlyInAnyOrder("draft", "release");
-        assertThat(registry.getAllMetadata()).hasSize(2);
+        assertEquals(List.of("draft", "release"), sortedStages(registry.findByStatus(ObjectStatus.DRAFT)));
+        assertEquals(2, registry.getAllMetadata().size());
     }
 
     @Test
@@ -135,11 +133,13 @@ public class LuceneRegistryStageIsolationTest {
 
         registry.removeFromCache(SCOPE, REGISTRY, "release", OBJECT_ID);
 
-        assertThat(registry.findByScopeRegistryAndStage(SCOPE, REGISTRY, "release")).isEmpty();
-        assertThat(registry.findByScopeRegistryAndStage(SCOPE, REGISTRY, "draft"))
-                .extracting(ObjectMetadata::getStage).containsExactly("draft");
-        assertThat(registry.getMetadata(SCOPE, REGISTRY, "draft", OBJECT_ID)).isPresent();
-        assertThat(registry.getMetadata(SCOPE, REGISTRY, "release", OBJECT_ID)).isEmpty();
+        assertTrue(registry.findByScopeRegistryAndStage(SCOPE, REGISTRY, "release").isEmpty(),
+                "the release copy is expected to be gone");
+        assertEquals(List.of("draft"), stages(registry.findByScopeRegistryAndStage(SCOPE, REGISTRY, "draft")));
+        assertTrue(registry.getMetadata(SCOPE, REGISTRY, "draft", OBJECT_ID).isPresent(),
+                "the draft copy is expected to be still addressable");
+        assertTrue(registry.getMetadata(SCOPE, REGISTRY, "release", OBJECT_ID).isEmpty(),
+                "the release copy is expected to be no longer addressable");
     }
 
     @Test
@@ -150,9 +150,19 @@ public class LuceneRegistryStageIsolationTest {
 
         registry.removeFromCache(OBJECT_ID);
 
-        assertThat(registry.getAllMetadata()).isEmpty();
-        assertThat(registry.findByScopeRegistryAndStage(SCOPE, REGISTRY, "draft")).isEmpty();
-        assertThat(registry.findByScopeRegistryAndStage(SCOPE, REGISTRY, "release")).isEmpty();
+        assertTrue(registry.getAllMetadata().isEmpty(), "no copy is expected to be left");
+        assertTrue(registry.findByScopeRegistryAndStage(SCOPE, REGISTRY, "draft").isEmpty(),
+                "the draft copy is expected to be gone");
+        assertTrue(registry.findByScopeRegistryAndStage(SCOPE, REGISTRY, "release").isEmpty(),
+                "the release copy is expected to be gone");
+    }
+
+    private static List<String> stages(List<ObjectMetadata> found) {
+        return found.stream().map(ObjectMetadata::getStage).toList();
+    }
+
+    private static List<String> sortedStages(List<ObjectMetadata> found) {
+        return found.stream().map(ObjectMetadata::getStage).sorted().toList();
     }
 
     private ObjectMetadata metadata(String stage) {

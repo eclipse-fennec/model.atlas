@@ -13,12 +13,14 @@
  */
 package org.eclipse.fennec.model.atlas.mgmt.registry;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.lenient;
 
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 import org.eclipse.emf.ecore.EObject;
 import org.eclipse.fennec.model.atlas.mgmt.management.ManagementFactory;
@@ -76,16 +78,13 @@ public class BasicRegistryStageIsolationTest {
         registryService.updateCache(metadata("draft"));
         registryService.updateCache(metadata("release"));
 
-        assertThat(registryService.findByScopeRegistryAndStage(SCOPE, REGISTRY, "draft"))
-                .extracting(ObjectMetadata::getStage).containsExactly("draft");
-        assertThat(registryService.findByScopeRegistryAndStage(SCOPE, REGISTRY, "release"))
-                .extracting(ObjectMetadata::getStage).containsExactly("release");
-        assertThat(registryService.findByScopeAndStage(SCOPE, "draft")).extracting(ObjectMetadata::getStage)
-                .containsExactly("draft");
-        assertThat(registryService.findByScopeStageAndName(SCOPE, "release", "the-object"))
-                .extracting(ObjectMetadata::getStage).containsExactly("release");
-        assertThat(registryService.findByScopeRegistryStageAndName(SCOPE, REGISTRY, "draft", "the-object"))
-                .extracting(ObjectMetadata::getStage).containsExactly("draft");
+        assertEquals(List.of("draft"), stages(registryService.findByScopeRegistryAndStage(SCOPE, REGISTRY, "draft")));
+        assertEquals(List.of("release"),
+                stages(registryService.findByScopeRegistryAndStage(SCOPE, REGISTRY, "release")));
+        assertEquals(List.of("draft"), stages(registryService.findByScopeAndStage(SCOPE, "draft")));
+        assertEquals(List.of("release"), stages(registryService.findByScopeStageAndName(SCOPE, "release", "the-object")));
+        assertEquals(List.of("draft"),
+                stages(registryService.findByScopeRegistryStageAndName(SCOPE, REGISTRY, "draft", "the-object")));
     }
 
     @Test
@@ -94,13 +93,11 @@ public class BasicRegistryStageIsolationTest {
         registryService.updateCache(metadata("draft"));
         registryService.updateCache(metadata("release"));
 
-        assertThat(registryService.getMetadata(SCOPE, REGISTRY, "draft", OBJECT_ID))
-                .hasValueSatisfying(metadata -> assertThat(metadata.getStage()).isEqualTo("draft"));
-        assertThat(registryService.getMetadata(SCOPE, REGISTRY, "release", OBJECT_ID))
-                .hasValueSatisfying(metadata -> assertThat(metadata.getStage()).isEqualTo("release"));
-        assertThat(registryService.getMetadata(SCOPE, REGISTRY, "approved", OBJECT_ID)).isEmpty();
-        assertThat(registryService.findByObjectNameAndStage("the-object", "draft"))
-                .hasValueSatisfying(metadata -> assertThat(metadata.getStage()).isEqualTo("draft"));
+        assertStage("draft", registryService.getMetadata(SCOPE, REGISTRY, "draft", OBJECT_ID));
+        assertStage("release", registryService.getMetadata(SCOPE, REGISTRY, "release", OBJECT_ID));
+        assertTrue(registryService.getMetadata(SCOPE, REGISTRY, "approved", OBJECT_ID).isEmpty(),
+                "no copy is expected in the approved stage");
+        assertStage("draft", registryService.findByObjectNameAndStage("the-object", "draft"));
     }
 
     @Test
@@ -109,18 +106,13 @@ public class BasicRegistryStageIsolationTest {
         registryService.updateCache(metadata("draft"));
         registryService.updateCache(metadata("release"));
 
-        assertThat(registryService.findByStatus(ObjectStatus.DRAFT)).extracting(ObjectMetadata::getStage)
-                .containsExactlyInAnyOrder("draft", "release");
-        assertThat(registryService.findByObjectType("EPackage")).extracting(ObjectMetadata::getStage)
-                .containsExactlyInAnyOrder("draft", "release");
-        assertThat(registryService.findByObjectName("the-object")).extracting(ObjectMetadata::getStage)
-                .containsExactlyInAnyOrder("draft", "release");
-        assertThat(registryService.findByVersion("1.0.0")).extracting(ObjectMetadata::getStage)
-                .containsExactlyInAnyOrder("draft", "release");
-        assertThat(registryService.findByFingerprint("fp1:abc")).extracting(ObjectMetadata::getStage)
-                .containsExactlyInAnyOrder("draft", "release");
-        assertThat(registryService.findByStatusAndType(ObjectStatus.DRAFT, "EPackage"))
-                .extracting(ObjectMetadata::getStage).containsExactlyInAnyOrder("draft", "release");
+        assertEquals(List.of("draft", "release"), sortedStages(registryService.findByStatus(ObjectStatus.DRAFT)));
+        assertEquals(List.of("draft", "release"), sortedStages(registryService.findByObjectType("EPackage")));
+        assertEquals(List.of("draft", "release"), sortedStages(registryService.findByObjectName("the-object")));
+        assertEquals(List.of("draft", "release"), sortedStages(registryService.findByVersion("1.0.0")));
+        assertEquals(List.of("draft", "release"), sortedStages(registryService.findByFingerprint("fp1:abc")));
+        assertEquals(List.of("draft", "release"),
+                sortedStages(registryService.findByStatusAndType(ObjectStatus.DRAFT, "EPackage")));
     }
 
     @Test
@@ -131,11 +123,10 @@ public class BasicRegistryStageIsolationTest {
 
         registryService.removeFromCache(SCOPE, REGISTRY, "release", OBJECT_ID);
 
-        assertThat(registryService.findByScopeRegistryAndStage(SCOPE, REGISTRY, "release")).isEmpty();
-        assertThat(registryService.findByScopeRegistryAndStage(SCOPE, REGISTRY, "draft"))
-                .extracting(ObjectMetadata::getStage).containsExactly("draft");
-        assertThat(registryService.findByStatus(ObjectStatus.DRAFT)).extracting(ObjectMetadata::getStage)
-                .containsExactly("draft");
+        assertTrue(registryService.findByScopeRegistryAndStage(SCOPE, REGISTRY, "release").isEmpty(),
+                "the release copy is expected to be gone");
+        assertEquals(List.of("draft"), stages(registryService.findByScopeRegistryAndStage(SCOPE, REGISTRY, "draft")));
+        assertEquals(List.of("draft"), stages(registryService.findByStatus(ObjectStatus.DRAFT)));
     }
 
     @Test
@@ -146,9 +137,11 @@ public class BasicRegistryStageIsolationTest {
 
         registryService.removeFromCache(OBJECT_ID);
 
-        assertThat(registryService.findByStatus(ObjectStatus.DRAFT)).isEmpty();
-        assertThat(registryService.findByScopeRegistryAndStage(SCOPE, REGISTRY, "draft")).isEmpty();
-        assertThat(registryService.findByScopeRegistryAndStage(SCOPE, REGISTRY, "release")).isEmpty();
+        assertTrue(registryService.findByStatus(ObjectStatus.DRAFT).isEmpty(), "no copy is expected to be left");
+        assertTrue(registryService.findByScopeRegistryAndStage(SCOPE, REGISTRY, "draft").isEmpty(),
+                "the draft copy is expected to be gone");
+        assertTrue(registryService.findByScopeRegistryAndStage(SCOPE, REGISTRY, "release").isEmpty(),
+                "the release copy is expected to be gone");
     }
 
     @Test
@@ -159,10 +152,22 @@ public class BasicRegistryStageIsolationTest {
 
         registryService = new BasicEObjectRegistryService<>(mockStorageHelper, mockPromiseFactory);
 
-        assertThat(registryService.findByScopeRegistryAndStage(SCOPE, REGISTRY, "draft"))
-                .extracting(ObjectMetadata::getStage).containsExactly("draft");
-        assertThat(registryService.findByScopeRegistryAndStage(SCOPE, REGISTRY, "release"))
-                .extracting(ObjectMetadata::getStage).containsExactly("release");
+        assertEquals(List.of("draft"), stages(registryService.findByScopeRegistryAndStage(SCOPE, REGISTRY, "draft")));
+        assertEquals(List.of("release"),
+                stages(registryService.findByScopeRegistryAndStage(SCOPE, REGISTRY, "release")));
+    }
+
+    private static List<String> stages(List<ObjectMetadata> found) {
+        return found.stream().map(ObjectMetadata::getStage).toList();
+    }
+
+    private static List<String> sortedStages(List<ObjectMetadata> found) {
+        return found.stream().map(ObjectMetadata::getStage).sorted().toList();
+    }
+
+    private static void assertStage(String expectedStage, Optional<ObjectMetadata> found) {
+        assertTrue(found.isPresent(), "a copy is expected in the " + expectedStage + " stage");
+        assertEquals(expectedStage, found.get().getStage());
     }
 
     private ObjectMetadata metadata(String stage) {
