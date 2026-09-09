@@ -24,6 +24,7 @@ import java.util.stream.Stream;
 
 import org.eclipse.emf.ecore.EObject;
 import org.eclipse.emf.ecore.EPackage;
+import org.eclipse.fennec.model.atlas.config.check.UnrecognisedProperties;
 import org.eclipse.fennec.model.atlas.mgmt.management.ObjectMetadata;
 import org.eclipse.fennec.model.atlas.scope.api.ReadableRegistryView;
 import org.eclipse.fennec.model.atlas.scope.api.ReadableScopeService;
@@ -68,6 +69,16 @@ public class ScopeServiceImpl<T extends EObject> implements ScopeService<T>, Wri
 	@Activate
 	public ScopeServiceImpl(ScopeServiceConfig config) {
 		this.config = config;
+	}
+
+	/**
+	 * Says what the configuration asked for that this component does not know - a
+	 * property Declarative Services would otherwise drop in silence (issue #261).
+	 */
+	@Activate
+	void activate(Map<String, Object> properties) {
+		UnrecognisedProperties.warn(LOGGER, String.format("ScopeService[%s]", config.scope_name()),
+				ScopeServiceConfig.class, properties);
 	}
 
 	@Reference(name = "registryService", policy = ReferencePolicy.DYNAMIC, policyOption = ReferencePolicyOption.GREEDY, cardinality = ReferenceCardinality.MULTIPLE)
