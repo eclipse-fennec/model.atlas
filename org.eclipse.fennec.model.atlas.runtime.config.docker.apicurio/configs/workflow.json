@@ -12,7 +12,7 @@
         "atlas.scope": "civitas",
         "scope.name": "civitas",
         "scope.description": "Civitas Scope",
-        "parent.scope": "atlas",
+        "scope.parent": "atlas",
         "registryService.target": "(|(registry.name=schema)(registry.name=default)(registry.name=transformations))",
         "registryService.cardinality.minimum:int": 1
     },
