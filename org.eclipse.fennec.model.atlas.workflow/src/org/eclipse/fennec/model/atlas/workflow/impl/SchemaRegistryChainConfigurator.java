@@ -18,12 +18,14 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Hashtable;
 import java.util.List;
+import java.util.Objects;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import org.eclipse.fennec.emf.osgi.constants.EMFNamespaces;
+import org.eclipse.emf.common.util.ECollections;
 import org.eclipse.fennec.model.atlas.scope.api.RegistryInfo;
 import org.eclipse.fennec.model.atlas.scope.api.RegistryType;
 import org.eclipse.fennec.model.atlas.scope.api.StageInfo;
@@ -144,18 +146,10 @@ public class SchemaRegistryChainConfigurator {
         if (scope == null) {
             return;
         }
-        RegistryInfo schemaRegistry = scope.getRegistries().stream()
-                .filter(r -> RegistryType.SCHEMA.equals(r.getType()))
-                .findFirst()
-                .orElse(null);
-        if (schemaRegistry == null) {
-            return;
-        }
-        List<StageInfo> stages = Collections.emptyList();
-        if(schemaRegistry instanceof Registry registry) {
-        	stages = registry.getStages();
-        } 
-        if (stages.isEmpty()) {
+
+        List<String> schemaStages = schemaStagesOf(scope);
+        List<String> instanceOnlyStages = instanceOnlyStagesOf(scope, schemaStages);
+        if (schemaStages.isEmpty() && instanceOnlyStages.isEmpty()) {
             return;
         }
 
@@ -169,15 +163,22 @@ public class SchemaRegistryChainConfigurator {
 
         List<Configuration> created = new ArrayList<>();
         try {
-            for (int i = 0; i < stages.size(); i++) {
-                String stageName = stages.get(i).getName();
-                String rsfName = rsfName(scopeName, stageName);
-                String nextTarget = (i < stages.size() - 1)
-                        ? rsfNameFilter(scopeName, stages.get(i + 1).getName())
+            for (int i = 0; i < schemaStages.size(); i++) {
+                String stageName = schemaStages.get(i);
+                String nextTarget = (i < schemaStages.size() - 1)
+                        ? rsfNameFilter(scopeName, schemaStages.get(i + 1))
                         : finalStageParentTarget;
-
-                created.add(createEPackageRegistryConfig(scopeName, stageName, rsfName, nextTarget));
-                created.add(createResourceSetFactoryConfig(scopeName, stageName, rsfName));
+                created.addAll(createStageConfigs(scopeName, stageName, nextTarget));
+            }
+            // A stage no schema registry declares still gets served: it is the stage an
+            // instance write addresses, and the request is deserialized against its
+            // ResourceSet. It holds no schemas of its own, so it chains onto the tail of this
+            // scope's schema chain - or straight onto the parent when the scope has no schema
+            // registry at all, which is what a tenant scope holding only instances looks like.
+            String instanceParentTarget = schemaStages.isEmpty() ? finalStageParentTarget
+                    : rsfNameFilter(scopeName, schemaStages.get(schemaStages.size() - 1));
+            for (String stageName : instanceOnlyStages) {
+                created.addAll(createStageConfigs(scopeName, stageName, instanceParentTarget));
             }
         } catch (IOException e) {
             LOGGER.log(Level.SEVERE, "Failed to create chain configurations for scope " + scopeName, e);
@@ -185,8 +186,56 @@ public class SchemaRegistryChainConfigurator {
             return;
         }
         configsByScope.put(scopeName, created);
-        LOGGER.log (Level.INFO, "Generated " + created.size() + " chain configurations for scope '" + scopeName
-                + "' (" + stages.size() + " stages)");
+        int stageCount = schemaStages.size() + instanceOnlyStages.size();
+        LOGGER.log(Level.INFO, () -> "Generated " + created.size() + " chain configurations for scope '" + scopeName
+                + "' (" + stageCount + " stages: " + schemaStages + " from the schema registry, "
+                + instanceOnlyStages + " from other registries)");
+    }
+
+    /** The EPackage registry and ResourceSetFactory a single (scope, stage) pair needs. */
+    private List<Configuration> createStageConfigs(String scopeName, String stageName, String parentTarget)
+            throws IOException {
+        String rsfName = rsfName(scopeName, stageName);
+        return List.of(createEPackageRegistryConfig(scopeName, stageName, rsfName, parentTarget),
+                createResourceSetFactoryConfig(scopeName, stageName, rsfName));
+    }
+
+    /**
+     * The stages of the scope's schema registry, in declared order: the ladder along which
+     * package visibility runs, each stage seeing the next one and, at the end, the parent
+     * scope.
+     */
+    private static List<String> schemaStagesOf(Scope scope) {
+        return scope.getRegistries().stream()
+                .filter(r -> RegistryType.SCHEMA.equals(r.getType()))
+                .filter(Registry.class::isInstance)
+                .map(Registry.class::cast)
+                .findFirst()
+                .map(Registry::getStages)
+                .orElse(ECollections.emptyEList())
+                .stream()
+                .map(StageInfo::getName)
+                .filter(Objects::nonNull)
+                .toList();
+    }
+
+    /**
+     * The stages the scope's other registries declare that its schema registry does not.
+     * Sorted, so the generated configuration is the same on every start.
+     */
+    private static List<String> instanceOnlyStagesOf(Scope scope, List<String> schemaStages) {
+        return scope.getRegistries().stream()
+                .filter(r -> !RegistryType.SCHEMA.equals(r.getType()))
+                .filter(Registry.class::isInstance)
+                .map(Registry.class::cast)
+                .map(Registry::getStages)
+                .flatMap(List::stream)
+                .map(StageInfo::getName)
+                .filter(Objects::nonNull)
+                .filter(stage -> !schemaStages.contains(stage))
+                .distinct()
+                .sorted()
+                .toList();
     }
 
     /**
