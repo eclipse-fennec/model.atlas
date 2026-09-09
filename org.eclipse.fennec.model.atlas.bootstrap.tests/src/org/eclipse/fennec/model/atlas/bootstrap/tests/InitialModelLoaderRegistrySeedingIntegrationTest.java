@@ -95,7 +95,6 @@ import org.osgi.test.junit5.service.ServiceExtension;
 @WithFactoryConfiguration(factoryPid = "RegistryService", name = InitialModelLoaderRegistrySeedingIntegrationTest.REGISTRY_NAME, location = "?", properties = {
         @Property(key = "registry.name", value = InitialModelLoaderRegistrySeedingIntegrationTest.REGISTRY_NAME),
         @Property(key = "registry.type", value = "OTHER"),
-        @Property(key = "schema.uri", value = InitialModelLoaderRegistrySeedingIntegrationTest.NS_URI),
         @Property(key = "root.eclass.uri", value = InitialModelLoaderRegistrySeedingIntegrationTest.NS_URI
                 + "#//Person"),
         @Property(key = "resourceSet.target", value = "(emf.name=registryPerson)"),

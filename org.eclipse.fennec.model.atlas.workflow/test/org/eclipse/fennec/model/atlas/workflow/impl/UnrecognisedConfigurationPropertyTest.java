@@ -76,13 +76,14 @@ public class UnrecognisedConfigurationPropertyTest {
     private Handler scopeHandler;
     private Handler registryHandler;
     private ResourceSet resourceSet;
+    private EPackage testPackage;
 
     @BeforeEach
     void setUp() {
         scopeHandler = capture(SCOPE_LOGGER, scopeRecords);
         registryHandler = capture(REGISTRY_LOGGER, registryRecords);
 
-        EPackage testPackage = EcoreFactory.eINSTANCE.createEPackage();
+        testPackage = EcoreFactory.eINSTANCE.createEPackage();
         testPackage.setName("test");
         testPackage.setNsPrefix("test");
         testPackage.setNsURI(TEST_NS_URI);
@@ -209,7 +210,8 @@ public class UnrecognisedConfigurationPropertyTest {
                 "{\"name\": \"release\", \"writable\": true, \"final\": true}" });
         when(config.root_eclass_uri()).thenReturn(new String[] { TEST_NS_URI + "#//Person" });
         when(config.derived_eclass_uri()).thenReturn(new String[0]);
-        RegistryServiceImpl<EObject> registryService = new RegistryServiceImpl<>(List.of(), resourceSet, config);
+        RegistryServiceImpl<EObject> registryService = new RegistryServiceImpl<>(List.of(), resourceSet,
+                testPackage, config);
         // What construction complains about (no storage service is injected here) is not
         // what this test is about: only activation reports the configuration's own keys.
         registryRecords.clear();

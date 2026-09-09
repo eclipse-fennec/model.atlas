@@ -299,7 +299,7 @@ Registries are configured in `workflow.json`:
       { "name": "release", "writable": false, "final": true }
     ],
     "storageService.target": "(storage.type=file)",
-    "schema.uri": "http://example.com/models/config",
+    "schemaPackage.target": "(emf.nsURI=http://example.com/models/config)",
     "root.eclass.uri": "http://example.com/models/config#//Configuration"
   }
 }

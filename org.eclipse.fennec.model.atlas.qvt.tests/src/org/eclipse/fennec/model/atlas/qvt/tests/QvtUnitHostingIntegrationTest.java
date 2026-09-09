@@ -102,6 +102,7 @@ import org.osgi.test.junit5.service.ServiceExtension;
         @Property(key = "derived.eclass.uri", scalar = Scalar.String, type = Type.Array, value = {
                 "http://www.eclipse.org/fennec/m2x/compiled/1.0#//CompiledUnit",
                 "http://eclipse.org/fennec/model/atlas/qvt/diagnostics/1.0.0#//SourceDiagnostics" }),
+        @Property(key = "schemaPackage.target", value = "(emf.nsURI=http://www.eclipse.org/fennec/m2x/compiled/1.0)"),
         @Property(key = "resourceSet.target", value = "(&(emf.name=compiled)(emf.name=diagnostics))"),
         @Property(key = "storageService.target", value = "(storage.type=file)"),
         @Property(key = "stageActionService.target", value = "(component.name=QvtStageActionService)"),

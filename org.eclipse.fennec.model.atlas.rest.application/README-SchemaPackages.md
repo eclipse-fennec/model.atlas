@@ -948,7 +948,7 @@ Registries define the stages and workflow transitions. The `SchemaPackagesResour
     ],
     "delete.after.transition": true,
     "storageService.target": "(storage.type=apicurio)",
-    "schema.uri": "http://www.eclipse.org/emf/2002/Ecore",
+    "schemaPackage.target": "(emf.nsURI=http://www.eclipse.org/emf/2002/Ecore)",
     "root.eclass.uri": "http://www.eclipse.org/emf/2002/Ecore#//EPackage"
   }
 }

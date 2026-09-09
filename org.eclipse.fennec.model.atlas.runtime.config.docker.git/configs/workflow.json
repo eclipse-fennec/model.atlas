@@ -42,7 +42,6 @@
                 "final": true
             }
         ],
-        "schema.uri": "http://www.eclipse.org/emf/2002/Ecore",
         "root.eclass.uri": "http://www.eclipse.org/emf/2002/Ecore#//EPackage",
         "resourceSet.target": "(emf.name=ecore)"
     },
@@ -73,7 +72,6 @@
                 "final": true
             }
         ],
-        "schema.uri": "http://www.eclipse.org/emf/2002/Ecore",
         "root.eclass.uri": "http://www.eclipse.org/emf/2002/Ecore#//EObject",
         "resourceSet.target": "(emf.name=ecore)"
     },

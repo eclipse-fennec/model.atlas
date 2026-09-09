@@ -17,6 +17,7 @@
         "registryService.cardinality.minimum:int": 1
     },
     "RegistryService~transformations": {
+        "schemaPackage.target": "(emf.nsURI=http://www.eclipse.org/fennec/m2x/compiled/1.0)",
         "registry.type": "TRANSFORMATION",
         "registry.name": "transformations",
         "registry.description": "QVT-O transformation sources, compiled units and their diagnostics (issue #239)",
@@ -51,7 +52,6 @@
                 "final": true
             }
         ],
-        "schema.uri": "http://www.eclipse.org/fennec/m2x/compiled/1.0",
         "root.eclass.uri": [
             "http://www.eclipse.org/fennec/m2x/compiled/1.0#//SourceUnit"
         ],
@@ -97,7 +97,6 @@
                 "final": true
             }
         ],
-        "schema.uri": "http://www.eclipse.org/emf/2002/Ecore",
         "root.eclass.uri": "http://www.eclipse.org/emf/2002/Ecore#//EPackage",
         "resourceSet.target": "(emf.name=ecore)"
     },
@@ -126,11 +125,11 @@
                 "final": true
             }
         ],
-        "schema.uri": "http://www.eclipse.org/emf/2002/Ecore",
         "root.eclass.uri": "http://www.eclipse.org/emf/2002/Ecore#//EObject",
         "resourceSet.target": "(emf.name=ecore)"
     },
     "RegistryService~datagen": {
+        "schemaPackage.target": "(emf.nsURI=http://www.gme.org/datagen/1.0)",
         "registry.name": "DataGen",
         "registry.description": "The DataGen Registry to store DataGenConfig objects",
         "stage.storage.mappings": [
@@ -155,11 +154,11 @@
                 "final": true
             }
         ],
-        "schema.uri": "http://www.gme.org/datagen/1.0",
         "root.eclass.uri": "http://www.gme.org/datagen/1.0#//DataGenConfig",
         "resourceSet.target": "(emf.name=ecore)"
     },
     "RegistryService~ocl": {
+        "schemaPackage.target": "(emf.nsURI=http://www.gme.org/cocl/1.0)",
         "registry.type": "COCL",
         "registry.name": "cocl",
         "registry.description": "The cocl Registry to store OclConstraintSet objects",
@@ -185,11 +184,11 @@
                 "final": true
             }
         ],
-        "schema.uri": "http://www.gme.org/cocl/1.0",
         "root.eclass.uri": "http://www.gme.org/cocl/1.0#//OclConstraintSet",
         "resourceSet.target": "(emf.name=ecore)"
     },
     "RegistryService~sensinactmapping": {
+        "schemaPackage.target": "(emf.nsURI=https://fennec.eclipse.org/event.atlas/mapping/1.0)",
         "registry.type": "OTHER",
         "registry.name": "sensinactmapping",
         "registry.description": "The Registry to store ProviderMapping objects",
@@ -215,11 +214,11 @@
                 "final": true
             }
         ],
-		"schema.uri": "https://fennec.eclipse.org/event.atlas/mapping/1.0",
 		"root.eclass.uri": "https://fennec.eclipse.org/event.atlas/mapping/1.0#//ProviderMapping",
 		"resourceSet.target": "(emf.name=ecore)"
     },
     "RegistryService~sensinactprofile": {
+        "schemaPackage.target": "(emf.nsURI=https://fennec.eclipse.org/event.atlas/mapping/1.0)",
         "registry.type": "OTHER",
         "registry.name": "sensinactprofile",
         "registry.description": "The Registry to store MappingProfile objects",
@@ -245,7 +244,6 @@
                 "final": true
             }
         ],
-        "schema.uri": "https://fennec.eclipse.org/event.atlas/mapping/1.0",
         "root.eclass.uri": "https://fennec.eclipse.org/event.atlas/mapping/1.0#//MappingProfile",
         "resourceSet.target": "(emf.name=ecore)"
     }
