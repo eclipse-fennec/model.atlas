@@ -3,12 +3,12 @@
 	org.eclipse.fennec.model.atlas.validation;version=snapshot,\
 	org.eclipse.fennec.model.atlas.validation.model;version=snapshot,\
 	org.eclipse.fennec.model.atlas.runtime,\
-	io.swagger.core.v3.swagger-annotations,\
 	org.eclipse.fennec.model.atlas.mediatypes.api,\
 	org.eclipse.fennec.codec.rest;version=latest,\
 	org.eclipse.fennec.codec.api;version=latest,\
 	org.eclipse.fennec.model.atlas.rest.common;version=snapshot,\
-	org.eclipse.fennec.model.atlas.scope.api;version=snapshot
+	org.eclipse.fennec.model.atlas.scope.api;version=snapshot,\
+	io.github.vpelikh.swagger-annotations;version=latest
 
 -library: enableJakartaREST,\
 	enableEMF

@@ -9,11 +9,6 @@
 	org.osgi.service.cm;version=latest,\
 	org.osgi.service.jakartars;version=latest,\
 	org.osgi.service.http.whiteboard;version=latest,\
-	io.swagger.core.v3.swagger-core.jakarta;version=latest,\
-	io.swagger.core.v3.swagger-jaxrs2.jakarta;version=latest,\
-	io.swagger.core.v3.swagger-annotations;version=latest,\
-	io.swagger.core.v3.swagger-integration.jakarta;version=latest,\
-	io.swagger.core.v3.swagger-models.jakarta;version=latest,\
 	com.fasterxml.jackson.core.jackson-core;version=latest,\
 	com.fasterxml.jackson.core.jackson-databind;version=latest,\
 	org.eclipse.fennec.m2x.ocl.api;version=latest,\
@@ -27,7 +22,12 @@
 	org.eclipse.fennec.model.atlas.rest.common;version=snapshot,\
 	org.eclipse.fennec.codec.rest;version=latest,\
 	org.eclipse.fennec.codec.api;version=latest,\
-	org.eclipse.fennec.model.atlas.scope.api;version=snapshot
+	org.eclipse.fennec.model.atlas.scope.api;version=snapshot,\
+	io.github.vpelikh.swagger-annotations;version=latest,\
+	io.github.vpelikh.swagger-core;version=latest,\
+	io.github.vpelikh.swagger-models;version=latest,\
+	io.github.vpelikh.swagger-integration;version=latest,\
+	io.github.vpelikh.swagger-jakarta-rest;version=latest
 # Hard runtime requirement on the Model Atlas scoped-resource-set
 # filter (provided by org.eclipse.fennec.model.atlas.rest.filter).
 # Without this, the @Context ResourceSet injection would not see the

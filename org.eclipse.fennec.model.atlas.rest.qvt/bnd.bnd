@@ -17,4 +17,4 @@ Bundle-Description: Serves QVT-O sources over REST (issue #239): a text/x-qvto \
 	org.eclipse.fennec.model.atlas.management;version=snapshot,\
 	org.eclipse.fennec.model.atlas.runtime;version=snapshot,\
 	org.osgi.util.promise;version=latest,\
-	io.swagger.core.v3.swagger-annotations;version=latest
+	io.github.vpelikh.swagger-annotations;version=latest

@@ -31,8 +31,8 @@ import org.osgi.service.jakartars.whiteboard.propertytypes.JakartarsResource;
 
 import io.swagger.v3.core.util.Json;
 import io.swagger.v3.core.util.Yaml;
-import io.swagger.v3.jaxrs2.integration.JaxrsOpenApiContextBuilder;
-import io.swagger.v3.jaxrs2.integration.resources.BaseOpenApiResource;
+import io.swagger.v3.jakartarest.integration.JaxrsOpenApiContextBuilder;
+import io.swagger.v3.jakartarest.integration.resources.BaseOpenApiResource;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.integration.SwaggerConfiguration;
 import io.swagger.v3.oas.integration.api.OpenAPIConfiguration;
@@ -71,6 +71,9 @@ public class OpenApiResource extends BaseOpenApiResource {
     ScopeServiceCollector scopeCollector;
 
     private final List<String> supportedMediaTypes;
+    
+    /** {@code application/yaml}, which {@link MediaType} has no constant for. */
+	static final String YAML = "application/yaml";
 
     @Activate
     public OpenApiResource(@Reference SupportedMediatype types) {
@@ -123,17 +126,13 @@ public class OpenApiResource extends BaseOpenApiResource {
         // Enhance OpenAPI spec with scope information
         enhanceWithScopeInformation(oas);
 
-        boolean pretty = Optional.ofNullable(ctx.getOpenApiConfiguration()).map(OpenAPIConfiguration::isPrettyPrint)
-                .orElse(Boolean.FALSE);
-
+        // The configuration above always pretty-prints, and the pretty writers keep
+        // Jackson out of this bundle's imports: Json.mapper()/Yaml.mapper() would return
+        // a tools.jackson.databind.ObjectMapper and drag Jackson 3 onto the wire.
         if (Optional.ofNullable(type).map(String::trim).map("yaml"::equalsIgnoreCase).orElse(Boolean.FALSE)) {
-            return Response.status(Response.Status.OK)
-                    .entity(pretty ? Yaml.pretty(oas) : Yaml.mapper().writeValueAsString(oas)).type("application/yaml")
-                    .build();
+            return Response.ok(Yaml.pretty(oas)).type(YAML).build();
         } else {
-            return Response.status(Response.Status.OK)
-                    .entity(pretty ? Json.pretty(oas) : Json.mapper().writeValueAsString(oas))
-                    .type(MediaType.APPLICATION_JSON_TYPE).build();
+            return Response.ok(Json.pretty(oas)).type(MediaType.APPLICATION_JSON).build();
         }
     }
 

@@ -14,6 +14,8 @@
 package org.eclipse.fennec.model.atlas.rest.application.resource;
 
 import org.eclipse.emf.ecore.EPackage;
+import org.eclipse.fennec.codec.constants.CodecOptions;
+import org.eclipse.fennec.codec.rest.annotations.ResourceOption;
 import org.eclipse.fennec.model.atlas.rest.application.exception.EndpointFailures;
 import org.eclipse.fennec.model.atlas.runtime.RequireRuntime;
 import org.osgi.service.component.annotations.Component;
@@ -34,10 +36,7 @@ import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.WebApplicationException;
 import jakarta.ws.rs.container.ContainerRequestContext;
 import jakarta.ws.rs.core.Context;
-import jakarta.ws.rs.core.HttpHeaders;
 import jakarta.ws.rs.core.Response;
-import org.eclipse.fennec.codec.constants.CodecOptions;
-import org.eclipse.fennec.codec.rest.annotations.ResourceOption;
 
 /**
  *

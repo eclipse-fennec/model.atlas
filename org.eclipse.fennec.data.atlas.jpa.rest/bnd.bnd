@@ -4,7 +4,6 @@
 	jakarta.ws.rs-api;version=latest,\
 	org.eclipse.fennec.persistence.orm;version=latest,\
 	com.h2database;version=latest,\
-	io.swagger.core.v3.swagger-annotations;version=latest,\
 	org.eclipse.fennec.model.atlas.mediatypes.api;version=snapshot,\
 	org.osgi.service.jdbc;version=latest,\
 	org.osgi.util.promise;version=latest,\
@@ -15,4 +14,5 @@
 	org.osgi.service.component;version=latest,\
 	org.eclipse.fennec.codec.rest;version=latest,\
 	org.eclipse.fennec.codec.api;version=latest,\
-	org.eclipse.fennec.model;version=latest
+	org.eclipse.fennec.model;version=latest,\
+	io.github.vpelikh.swagger-annotations;version=latest
