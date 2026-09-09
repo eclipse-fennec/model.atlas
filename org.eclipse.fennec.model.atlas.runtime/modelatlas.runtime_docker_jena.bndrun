@@ -1,8 +1,11 @@
 -include: \
 	modelatlas.runtime_docker.bndrun
 
+# The mapping model needs no start-order help any more: the registry that hosts it
+# waits for the EPackage service through its schemaPackage reference (issue #169),
+# so the pin that used to order this bundle ahead of the workflow bundle is gone.
 -runbundles.docker.jena: \
-	org.eclipse.fennec.event.atlas.mapping;startlevel=1060
+	org.eclipse.fennec.event.atlas.mapping
 
 -runproperties.docker.jena: configurator.initial=file:///opt/modelatlas/runtime/load/jena.json
 -runbundles: \

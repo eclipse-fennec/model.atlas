@@ -37,6 +37,7 @@ import java.util.stream.Collectors;
 import org.eclipse.emf.common.util.URI;
 import org.eclipse.emf.ecore.EClass;
 import org.eclipse.emf.ecore.EObject;
+import org.eclipse.emf.ecore.EPackage;
 import org.eclipse.emf.ecore.EcorePackage;
 import org.eclipse.emf.ecore.resource.ResourceSet;
 import org.eclipse.emf.ecore.util.EcoreUtil;
@@ -109,9 +110,31 @@ public class RegistryServiceImpl<T extends EObject> implements RegistryService<T
     private final Set<String> activatedScopes = ConcurrentHashMap.newKeySet();
     private final Object stageActionLock = new Object();
 
+    /**
+     * The schema package is a mandatory reference so that Declarative Services, not
+     * this constructor, decides when the registry may come up.
+     *
+     * <p>
+     * {@code root.eclass.uri} is resolved here, and a resolution against a package
+     * that has not registered yet used to throw - after which DS never tried again,
+     * because it retries an activation only when a reference or the configuration
+     * changes. A model bundle starting moments later left the registry permanently
+     * and silently absent (issue #169). Naming the package as a reference turns the
+     * race into an ordinary dependency: no package, no activation attempt, and the
+     * attempt comes as soon as the package appears.
+     * </p>
+     *
+     * <p>
+     * The target defaults to Ecore, which every runtime registers, so a registry
+     * rooted at an Ecore type needs no configuration. A registry rooted anywhere
+     * else must point {@code schemaPackage.target} at its own package - the same
+     * namespace URI its {@code root.eclass.uri} already starts with.
+     * </p>
+     */
     @Activate
     public RegistryServiceImpl(@Reference(name = "storageService", target = ("(scope=no-inject)")) List<EObjectStorageService<T>> storageService,
             @Reference(name = "resourceSet") ResourceSet resourceSet,
+            @Reference(name = "schemaPackage", target = ("(emf.nsURI=http://www.eclipse.org/emf/2002/Ecore)")) EPackage schemaPackage,
             RegistryServiceConfig config) {
         this.config = config;
         this.allowedTransitionsList = parseTransitionsIntoList(config.workflow_transitions());
@@ -119,11 +142,12 @@ public class RegistryServiceImpl<T extends EObject> implements RegistryService<T
         this.stages = parseStages(config.stages());
         validateStages();
         this.registryObject = createRegistryObject();
-        rootEClasses = resolveEClasses(resourceSet, config.root_eclass_uri(), "root.eclass.uri");
+        rootEClasses = resolveEClasses(resourceSet, schemaPackage, config.root_eclass_uri(), "root.eclass.uri");
         if (rootEClasses.isEmpty()) {
             throw new IllegalArgumentException("root.eclass.uri must name at least one EClass");
         }
-        derivedEClasses = resolveEClasses(resourceSet, config.derived_eclass_uri(), "derived.eclass.uri");
+        derivedEClasses = resolveEClasses(resourceSet, schemaPackage, config.derived_eclass_uri(),
+                "derived.eclass.uri");
     }
 
     /**
@@ -136,21 +160,48 @@ public class RegistryServiceImpl<T extends EObject> implements RegistryService<T
                 RegistryServiceConfig.class, properties);
     }
 
-    private static List<EClass> resolveEClasses(ResourceSet resourceSet, String[] uris, String property) {
+    private static List<EClass> resolveEClasses(ResourceSet resourceSet, EPackage schemaPackage, String[] uris,
+            String property) {
         if (uris == null) {
             return List.of();
         }
         List<EClass> resolved = new ArrayList<>(uris.length);
         for (String uri : uris) {
-            EObject eObject = resourceSet.getEObject(URI.createURI(uri), false);
-            if (eObject instanceof EClass eClass) {
-                resolved.add(eClass);
-            } else {
+            EClass eClass = resolveEClass(resourceSet, schemaPackage, URI.createURI(uri));
+            if (eClass == null) {
                 throw new IllegalArgumentException(String.format(
                         "The provided %s %s does not match to any known EClass", property, uri));
             }
+            resolved.add(eClass);
         }
         return List.copyOf(resolved);
+    }
+
+    /**
+     * Resolves through the injected ResourceSet, and failing that through the
+     * injected schema package itself.
+     *
+     * <p>
+     * The reference guarantees the package is <em>registered as a service</em>; that
+     * it has also reached this ResourceSet's package registry is the work of a
+     * different component, the EPackageConfigurator whiteboard, so the two are not
+     * ordered against each other. Asking the package we were handed closes that
+     * remaining window, rather than failing an activation that will never be retried.
+     * </p>
+     */
+    private static EClass resolveEClass(ResourceSet resourceSet, EPackage schemaPackage, URI uri) {
+        if (resourceSet.getEObject(uri, false) instanceof EClass fromResourceSet) {
+            return fromResourceSet;
+        }
+        if (schemaPackage == null || !schemaPackage.getNsURI().equals(uri.trimFragment().toString())) {
+            return null;
+        }
+        String fragment = uri.fragment();
+        if (fragment == null) {
+            return null;
+        }
+        String name = fragment.startsWith("//") ? fragment.substring(2) : fragment;
+        return schemaPackage.getEClassifier(name) instanceof EClass fromPackage ? fromPackage : null;
     }
 
     /**

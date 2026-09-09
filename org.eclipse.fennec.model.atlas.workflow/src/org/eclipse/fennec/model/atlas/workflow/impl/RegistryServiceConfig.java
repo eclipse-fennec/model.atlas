@@ -49,9 +49,6 @@ public @interface RegistryServiceConfig {
             + "Should be an array of complex objects of type Stage (e.g. {\"name\": \"draft\", \"writable\": true, \"final\": false})", required = true)
     String[] stages();
 
-    @AttributeDefinition(name = "Schema URI", description = "The uri of the EPackage this registry supports objects from", required = false, defaultValue = "http://www.eclipse.org/emf/2002/Ecore")
-    String schema_uri() default "http://www.eclipse.org/emf/2002/Ecore";
-
     @AttributeDefinition(name = "Root EClass URIs", description = "The uris of the EClasses this registry supports objects from; "
             + "an object is accepted if its EClass matches any listed root or has one among its supertypes. "
             + "A single String value keeps working (coerced to a one-element array).", required = false, defaultValue = "http://www.eclipse.org/emf/2002/Ecore#//EPackage")

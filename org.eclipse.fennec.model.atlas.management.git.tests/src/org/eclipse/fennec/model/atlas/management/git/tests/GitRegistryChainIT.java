@@ -626,7 +626,6 @@ public class GitRegistryChainIT {
 		rp.put("storageService.target", "(storage.type=git)");
 		rp.put("stageActionService.target", "(component.name=EPackageStageActionService)");
 		rp.put("registryService.target", "(registry=main)");
-		rp.put("schema.uri", "http://www.eclipse.org/emf/2002/Ecore");
 		rp.put("root.eclass.uri", EPACKAGE_TYPE_URI);
 		rp.put("resourceSet.target", "(emf.name=ecore)");
 		// RegistryService requires exactly one final stage; release is terminal (main -> release).

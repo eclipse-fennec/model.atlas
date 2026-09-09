@@ -85,6 +85,7 @@ public class TestAnnotations extends CommonTestAnnotations{
 			@Property(key = "registry.name", value = TEST_COCL_REGISTRY_NAME),
 			@Property(key = "registry.type", value = "COCL"),
 			@Property(key = "root.eclass.uri", value = "http://www.gme.org/cocl/1.0#//OclConstraintSet"),
+			@Property(key = "schemaPackage.target", value = "(emf.nsURI=http://www.gme.org/cocl/1.0)"),
 			@Property(key = "resourceSet.target", value = "(emf.name=cocl)"),
 			@Property(key = "storageService.target", value = "(storage.type=file)"),
 			@Property(key = "registry.target", value = "(registry=main)"),

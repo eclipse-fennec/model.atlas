@@ -17,6 +17,7 @@
         "registryService.cardinality.minimum:int": 1
     },
     "RegistryService~transformations": {
+        "schemaPackage.target": "(emf.nsURI=http://www.eclipse.org/fennec/m2x/compiled/1.0)",
         "registry.type": "TRANSFORMATION",
         "registry.name": "transformations",
         "registry.description": "QVT-O transformation sources, compiled units and their diagnostics (issue #239)",
@@ -51,7 +52,6 @@
                 "final": true
             }
         ],
-        "schema.uri": "http://www.eclipse.org/fennec/m2x/compiled/1.0",
         "root.eclass.uri": [
             "http://www.eclipse.org/fennec/m2x/compiled/1.0#//SourceUnit"
         ],
@@ -96,7 +96,6 @@
                 "final": true
             }
         ],
-        "schema.uri": "http://www.eclipse.org/emf/2002/Ecore",
         "root.eclass.uri": "http://www.eclipse.org/emf/2002/Ecore#//EPackage",
         "resourceSet.target": "(emf.name=ecore)"
     },
@@ -132,7 +131,6 @@
                 "final": true
             }
         ],
-        "schema.uri": "http://www.eclipse.org/emf/2002/Ecore",
         "root.eclass.uri": "http://www.eclipse.org/emf/2002/Ecore#//EObject",
         "resourceSet.target": "(emf.name=ecore)"
     },

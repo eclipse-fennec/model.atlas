@@ -245,7 +245,7 @@ promoted to `release`.
     "registry.name": "schema",
     "registry.type": "SCHEMA",
     "root.eclass.uri": "http://www.eclipse.org/emf/2002/Ecore#//EPackage",
-    "schema.uri": "http://www.eclipse.org/emf/2002/Ecore",
+    "schemaPackage.target": "(emf.nsURI=http://www.eclipse.org/emf/2002/Ecore)",
     "storageService.target": "(storage.type=git)",
     "stageActionService.target": "(component.name=EPackageStageActionService)",
     "registryService.target": "(registry=main)",

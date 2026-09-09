@@ -109,7 +109,7 @@ public class RegistryServiceImplTest {
         when(config.root_eclass_uri()).thenReturn(rootEClassUris);
         // lenient: never read when an earlier config value already fails activation
         org.mockito.Mockito.lenient().when(config.derived_eclass_uri()).thenReturn(derivedEClassUris);
-        return new RegistryServiceImpl<>(storageServices, resourceSet, config);
+        return new RegistryServiceImpl<>(storageServices, resourceSet, EcorePackage.eINSTANCE, config);
     }
 
     @Nested

@@ -74,7 +74,6 @@ public class RenamedSchemaRegistryTest extends AbstractRestTest {
 	@WithFactoryConfiguration(factoryPid = CommonTestAnnotations.PID_REGISTRY_SERVICE, name = SCHEMA_REGISTRY, location = "?", properties = {
 			@Property(key = "registry.name", value = SCHEMA_REGISTRY),
 			@Property(key = "registry.type", value = "SCHEMA"),
-			@Property(key = "schema.uri", value = "http://www.eclipse.org/emf/2002/Ecore"),
 			@Property(key = "root.eclass.uri", value = "http://www.eclipse.org/emf/2002/Ecore#//EPackage"),
 			@Property(key = "resourceSet.target", value = "(emf.name=ecore)"),
 			@Property(key = "storageService.target", value = "(storage.type=file)"),

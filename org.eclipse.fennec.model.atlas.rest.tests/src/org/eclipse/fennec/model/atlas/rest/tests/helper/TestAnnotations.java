@@ -57,8 +57,8 @@ public class TestAnnotations extends CommonTestAnnotations{
 	@WithFactoryConfiguration(factoryPid = PID_REGISTRY_SERVICE, name = OBJECT_REGISTRY_NAME, location = "?", properties = {
 			@Property(key = "registry.name", value = OBJECT_REGISTRY_NAME),
 			@Property(key = "registry.type", value = "OBJECT"),
-			@Property(key = "schema.uri", value = "https://dg.de/1.0"),
 			@Property(key = "root.eclass.uri", value = "https://dg.de/1.0#//Person"),
+			@Property(key = "schemaPackage.target", value = "(emf.nsURI=https://dg.de/1.0)"),
 			@Property(key = "resourceSet.target", value = "(emf.name=dge)"),
 			@Property(key = "storageService.target", value = "(storage.type=file)" ),
 			@Property(key = "registry.target", value = "(registry=main)"),
