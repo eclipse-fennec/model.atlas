@@ -135,4 +135,5 @@
 	org.objectweb.asm.tree.analysis;version='[9.10.1,9.10.2)',\
 	org.objectweb.asm.util;version='[9.10.1,9.10.2)',\
 	tools.jackson.core.jackson-core;version='[3.2.2,3.2.3)',\
-	tools.jackson.core.jackson-databind;version='[3.2.2,3.2.3)'
+	tools.jackson.core.jackson-databind;version='[3.2.2,3.2.3)',\
+	org.eclipse.fennec.model.atlas.config.check;version=snapshot

@@ -40,6 +40,7 @@ import org.eclipse.emf.ecore.EObject;
 import org.eclipse.emf.ecore.EcorePackage;
 import org.eclipse.emf.ecore.resource.ResourceSet;
 import org.eclipse.emf.ecore.util.EcoreUtil;
+import org.eclipse.fennec.model.atlas.config.check.UnrecognisedProperties;
 import org.eclipse.fennec.model.atlas.mgmt.api.EObjectRegistryService;
 import org.eclipse.fennec.model.atlas.mgmt.api.EObjectStorageService;
 import org.eclipse.fennec.model.atlas.mgmt.management.ManagementPackage;
@@ -123,6 +124,16 @@ public class RegistryServiceImpl<T extends EObject> implements RegistryService<T
             throw new IllegalArgumentException("root.eclass.uri must name at least one EClass");
         }
         derivedEClasses = resolveEClasses(resourceSet, config.derived_eclass_uri(), "derived.eclass.uri");
+    }
+
+    /**
+     * Says what the configuration asked for that this component does not know - a
+     * property Declarative Services would otherwise drop in silence (issue #261).
+     */
+    @Activate
+    void activate(Map<String, Object> properties) {
+        UnrecognisedProperties.warn(LOGGER, String.format("RegistryService[%s]", config.registry_name()),
+                RegistryServiceConfig.class, properties);
     }
 
     private static List<EClass> resolveEClasses(ResourceSet resourceSet, String[] uris, String property) {

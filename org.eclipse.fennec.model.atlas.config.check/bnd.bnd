@@ -1,0 +1,11 @@
+Bundle-Name: Model Atlas Configuration Checks
+Bundle-Description: Reports configuration properties a component does not declare. \
+ Declarative Services drops an unrecognised property in silence, which is how `parent.scope` \
+ sat in six shipped configurations while the component read `scope.parent` (issue #261). \
+ Depends on nothing but the JDK, so it can move to a fennec utility bundle unchanged.
+
+-buildpath: \
+	org.osgi.annotation.versioning,\
+	org.osgi.annotation.bundle
+
+-testpath: junit-jupiter-api

@@ -17,8 +17,6 @@
 -runfw: org.apache.felix.framework
 -runee: JavaSE-21
 -runbundles: \
-	bcprov;version='[1.84.0,1.84.1)',\
-	com.fasterxml.jackson.core.jackson-annotations;version='[2.21.0,2.21.1)',\
 	com.googlecode.javaewah.JavaEWAH;version='[1.2.3,1.2.4)',\
 	com.sun.jna;version='[5.18.1,5.18.2)',\
 	junit-jupiter-api;version='[5.14.2,5.14.3)',\
@@ -47,11 +45,6 @@
 	org.eclipse.fennec.model.atlas.scope.api;version=snapshot,\
 	org.eclipse.fennec.model.atlas.tests.common;version=snapshot,\
 	org.eclipse.fennec.model.atlas.workflow;version=snapshot,\
-	org.objectweb.asm;version='[9.9.1,9.9.2)',\
-	org.objectweb.asm.commons;version='[9.9.1,9.9.2)',\
-	org.objectweb.asm.tree;version='[9.9.1,9.9.2)',\
-	org.objectweb.asm.tree.analysis;version='[9.9.1,9.9.2)',\
-	org.objectweb.asm.util;version='[9.9.1,9.9.2)',\
 	org.opentest4j;version='[1.3.0,1.3.1)',\
 	org.osgi.service.cm;version='[1.6.1,1.6.2)',\
 	org.osgi.service.component;version='[1.5.1,1.5.2)',\
@@ -63,15 +56,19 @@
 	org.osgi.util.function;version='[1.2.0,1.2.1)',\
 	org.osgi.util.promise;version='[1.3.0,1.3.1)',\
 	org.osgi.util.pushstream;version='[1.1.0,1.1.1)',\
-	tools.jackson.core.jackson-core;version='[3.1.0,3.1.1)',\
-	tools.jackson.core.jackson-databind;version='[3.1.0,3.1.1)',\
-	org.apache.sshd.osgi;version='[2.19.0,2.19.1)',\
-	org.apache.sshd.sftp;version='[2.19.0,2.19.1)',\
 	org.eclipse.fennec.emf.osgi.component;version='[1.1.0,1.1.1)',\
 	org.eclipse.fennec.git.github.webhook.model;version='[1.0.0,1.0.1)',\
 	org.eclipse.fennec.git.webhook.model;version='[1.0.0,1.0.1)',\
 	org.eclipse.fennec.jgit;version='[1.0.0,1.0.1)',\
 	org.eclipse.jgit;version='[7.7.1,7.7.2)',\
-	org.eclipse.jgit.ssh.apache;version='[7.7.1,7.7.2)',\
 	slf4j.api;version='[2.0.17,2.0.18)',\
-	slf4j.simple;version='[2.0.17,2.0.18)'
+	slf4j.simple;version='[2.0.17,2.0.18)',\
+	com.fasterxml.jackson.core.jackson-annotations;version='[2.22.0,2.22.1)',\
+	org.eclipse.fennec.model.atlas.config.check;version=snapshot,\
+	org.objectweb.asm;version='[9.10.1,9.10.2)',\
+	org.objectweb.asm.commons;version='[9.10.1,9.10.2)',\
+	org.objectweb.asm.tree;version='[9.10.1,9.10.2)',\
+	org.objectweb.asm.tree.analysis;version='[9.10.1,9.10.2)',\
+	org.objectweb.asm.util;version='[9.10.1,9.10.2)',\
+	tools.jackson.core.jackson-core;version='[3.2.2,3.2.3)',\
+	tools.jackson.core.jackson-databind;version='[3.2.2,3.2.3)'

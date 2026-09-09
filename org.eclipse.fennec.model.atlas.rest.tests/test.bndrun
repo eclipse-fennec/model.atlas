@@ -178,4 +178,5 @@
 	slf4j.simple;version='[2.0.17,2.0.18)',\
 	tools.jackson.core.jackson-core;version='[3.2.2,3.2.3)',\
 	tools.jackson.core.jackson-databind;version='[3.2.2,3.2.3)',\
-	tools.jackson.dataformat.jackson-dataformat-yaml;version='[3.2.2,3.2.3)'
+	tools.jackson.dataformat.jackson-dataformat-yaml;version='[3.2.2,3.2.3)',\
+	org.eclipse.fennec.model.atlas.config.check;version=snapshot
