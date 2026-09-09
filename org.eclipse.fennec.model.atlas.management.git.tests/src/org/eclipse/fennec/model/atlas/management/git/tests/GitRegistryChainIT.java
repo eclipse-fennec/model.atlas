@@ -78,8 +78,9 @@ import org.slf4j.LoggerFactory;
  *   <li><b>D8-3 (EXIT on removal):</b> a schema removed on one branch is unregistered for that
  *       stage while the other branch's copy survives.</li>
  *   <li><b>Instance resolution + D8-3 point 2:</b> an instance resolves against its
- *       dynamically-registered schema; once the schema is removed the read fails with a clean
- *       {@link ModelUnavailableException}.</li>
+ *       dynamically-registered schema; a stage whose registry misses the schema falls through
+ *       to the next stage in the chain; once the schema is gone from the whole chain the read
+ *       fails with a clean {@link ModelUnavailableException}.</li>
  * </ul>
  *
  * <p>The chain is created at runtime via {@link ConfigurationAdmin} in a fixed order (git
@@ -417,9 +418,13 @@ public class GitRegistryChainIT {
 	// ---------------------------------------------------------------------
 
 	/**
-	 * An instance ({@code alice.xmi}) resolves to a typed {@code Person} while its schema is
-	 * registered; once {@code person.ecore} is removed from the branch the schema is
-	 * unregistered and a read of the still-present instance fails with a clean
+	 * An instance ({@code alice.xmi} on {@code main}) resolves to a typed {@code Person} while
+	 * its schema is registered. The stage registries form a chain ({@code main} delegates
+	 * misses to {@code release}, the final stage to the parent scope), so removing
+	 * {@code person.ecore} from {@code main} alone does <em>not</em> make the instance
+	 * unreadable: it now resolves against {@code release}'s copy of the schema (the one with
+	 * the extra {@code email} attribute). Only once the schema is gone from the whole chain
+	 * does a read of the still-present instance fail with a clean
 	 * {@link ModelUnavailableException} (D8-3 point 2) rather than an opaque error.
 	 */
 	@SuppressWarnings({ "rawtypes", "unchecked" })
@@ -430,6 +435,8 @@ public class GitRegistryChainIT {
 			@InjectService(cardinality = 0, filter = "(storage.backend=git)") ServiceAware<EObjectStorageService> storageAware,
 			@InjectService(cardinality = 0, filter = "(&(emf.name=person)(emf.model.scope=" + SCOPE
 					+ ")(atlas.stage=main))") ServiceAware<EPackage> mainPkgAware,
+			@InjectService(cardinality = 0, filter = "(&(emf.name=person)(emf.model.scope=" + SCOPE
+					+ ")(atlas.stage=release))") ServiceAware<EPackage> releasePkgAware,
 			@InjectService(cardinality = 0, filter = "(&(scope.name=" + SCOPE
 					+ ")(stage.name=main))") ServiceAware<org.eclipse.emf.ecore.resource.ResourceSet> stageRsAware)
 			throws Exception {
@@ -437,6 +444,7 @@ public class GitRegistryChainIT {
 		startChain(2);
 		EObjectStorageService<EObject> storage = (EObjectStorageService<EObject>) storageAware.waitForService(WAIT);
 		assertNotNull(mainPkgAware.waitForService(WAIT), "person@main must be registered so the instance resolves");
+		assertNotNull(releasePkgAware.waitForService(WAIT), "person@release must be registered at start");
 		// The per-stage ResourceSet (built by SchemaRegistryChainConfigurator) is what carries the
 		// dynamically-registered person package; the instance can only resolve once it is up.
 		assertNotNull(stageRsAware.waitForService(WAIT),
@@ -444,23 +452,38 @@ public class GitRegistryChainIT {
 
 		String aliceId = SCOPE + "/" + GitTestRepository.BRANCH_MAIN + "/" + GitTestRepository.ALICE_XMI;
 
-		// While the schema is present, the instance resolves to a typed Person. Poll: right
-		// after chain startup the read can transiently miss while the sync settles.
+		// While the schema is present on main, the instance resolves to main's Person (name
+		// only). Poll: right after chain startup the read can transiently miss while the sync
+		// settles.
 		EObject alice = awaitRetrieve(storage, GitTestRepository.BRANCH_MAIN, aliceId, java.util.Objects::nonNull,
 				WAIT);
 		assertNotNull(alice, "alice instance should resolve while person is registered");
 		assertEquals("Person", alice.eClass().getName());
 		assertEquals("Alice", alice.eGet(alice.eClass().getEStructuralFeature("name")));
+		assertNull(alice.eClass().getEStructuralFeature("email"),
+				"main's Person has no email attribute - the instance must resolve against main's schema");
 
-		// Remove the schema; wait for its EPackage to be unregistered.
+		// Remove the schema on main; wait for its EPackage to be unregistered.
 		repo.removeOnBranch(GitTestRepository.BRANCH_MAIN, GitTestRepository.PERSON_ECORE);
 		assertTrue(waitUntilEmpty(mainPkgAware, WAIT), "person@main should be unregistered after removal");
 
+		// main's registry now misses the nsURI and delegates to release's, which still holds
+		// its copy of person: the instance keeps resolving, against release's Person (which has
+		// email). Poll: the EPackage service goes before the EPackageConfigurator that feeds the
+		// stage registry, so the switch-over is not instantaneous.
+		EObject aliceViaRelease = awaitRetrieve(storage, GitTestRepository.BRANCH_MAIN, aliceId,
+				o -> o != null && o.eClass().getEStructuralFeature("email") != null, WAIT);
+		assertEquals("Person", aliceViaRelease.eClass().getName());
+		assertEquals("Alice", aliceViaRelease.eGet(aliceViaRelease.eClass().getEStructuralFeature("name")));
+
+		// Remove the schema on release as well - now no stage in the chain has it.
+		repo.removeOnBranch(GitTestRepository.BRANCH_RELEASE, GitTestRepository.PERSON_ECORE);
+		assertTrue(waitUntilEmpty(releasePkgAware, WAIT), "person@release should be unregistered after removal");
+
 		// The instance file still exists, but its model is gone -> ModelUnavailableException.
-		Promise<EObject> read = storage.retrieveObject(SCOPE, SCHEMA_REGISTRY, GitTestRepository.BRANCH_MAIN, aliceId)
-				.timeout(WAIT);
-		Throwable failure = read.getFailure();
-		assertNotNull(failure, "reading an instance whose model was removed must fail");
+		// Poll instead of a one-shot read, for the same unregister-order reason as above.
+		Throwable failure = awaitFailure(storage, GitTestRepository.BRANCH_MAIN, aliceId,
+				t -> hasCause(t, ModelUnavailableException.class), WAIT);
 		assertTrue(hasCause(failure, ModelUnavailableException.class),
 				"the failure should be a ModelUnavailableException, was: " + failure);
 	}
@@ -749,6 +772,30 @@ public class GitRegistryChainIT {
 			Thread.sleep(300);
 		}
 		fail("Timed out waiting for product.category type to satisfy the condition; last=" + last);
+		return null;
+	}
+
+	/**
+	 * Mirror of {@link #awaitRetrieve}: polls a read that is <em>expected to fail</em> until
+	 * its failure satisfies {@code until}. A read that still succeeds (or fails for another
+	 * reason) is treated as transient and retried until the deadline.
+	 */
+	private Throwable awaitFailure(EObjectStorageService<EObject> storage, String stage, String objectId,
+			java.util.function.Predicate<Throwable> until, long timeoutMs) throws Exception {
+		long deadline = System.currentTimeMillis() + timeoutMs;
+		Throwable last = null;
+		EObject lastValue = null;
+		while (System.currentTimeMillis() < deadline) {
+			Promise<EObject> read = storage.retrieveObject(SCOPE, SCHEMA_REGISTRY, stage, objectId).timeout(5000L);
+			last = read.getFailure();
+			if (last != null && until.test(last)) {
+				return last;
+			}
+			lastValue = last == null ? read.getValue() : null;
+			Thread.sleep(300);
+		}
+		fail("Timed out waiting for the read of " + objectId + " to fail as expected; last failure=" + last
+				+ ", last value=" + lastValue);
 		return null;
 	}
 
