@@ -59,12 +59,13 @@ REST API (Jakarta RS)  -->  Workflow/Scope Service  -->  Storage Backends
 
 ### Runtime Export & Docker
 ```bash
-# Resolve runtime dependencies
+# Resolve runtime dependencies (only the base bndrun is resolved, see below)
 ./gradlew org.eclipse.fennec.model.atlas.runtime:resolve.modelatlas.runtime_base
 
 # Export runtime JARs for docker variants
 ./gradlew org.eclipse.fennec.model.atlas.runtime:export.modelatlas.runtime_docker_apicurio
 ./gradlew org.eclipse.fennec.model.atlas.runtime:export.modelatlas.runtime_docker_file
+./gradlew org.eclipse.fennec.model.atlas.runtime:export.modelatlas.runtime_docker_jena
 
 # Prepare and build Docker images
 ./gradlew docker:modelatlas_apicurio:prepareDocker
@@ -77,7 +78,25 @@ docker compose -f docker/dockercompose/docker-compose-file.yml up -d       # Fil
 docker compose -f docker/dockercompose/docker-compose-apicurio.yml up -d   # Apicurio + UI stack
 ```
 
-**Docker image variants**: Apicurio (uses Apicurio Registry for versioned artifact storage) and File (local filesystem, no external deps). Both use distroless Java 21 base images, port 8080.
+**Docker image variants**: `modelatlas.runtime_docker.bndrun` is the common docker base; the variant
+bndruns beside it are `_apicurio` (Apicurio Registry for versioned artifact storage), `_file` (local
+filesystem, no external deps), `_git` (read-only git backend) and `_jena`. Gradle docker projects
+exist for `modelatlas_apicurio`, `modelatlas_file` and `modelatlas_jena` (`settings.gradle`);
+`docker/modelatlas_git` is not wired into the Gradle build. CI publishes only the apicurio and file
+images. All use distroless Java 21 base images, port 8080.
+
+**Variant bndruns are not resolved.** Only `modelatlas.runtime_base.bndrun` carries the resolved plain
+`-runbundles`; variants add their delta through merged suffix keys (`-runbundles.<suffix>`), because a
+plain `-runbundles` in a variant would be overridden by the include chain. Variants that must not be
+resolved at all say so explicitly (`-resolve: never` — e.g. `modelatlas.runtime_docker_file.bndrun` and
+the local bndruns). If you run an ad-hoc validation resolve on a variant, fold closure changes into its
+suffix key and revert the plain `-runbundles` it writes.
+
+**Variant configuration** lives in the matching `runtime.config.docker.*` bundle (`configs/*.json`,
+loaded by the OSGi configurator): scopes, registries and stage/transition layout in `workflow.json`,
+storage backends in `storage.json` where the variant splits them out. The file variant ships a `jena`
+scope with the `schema`, `workspace`, `DataGen`, `cocl` and `sensinactmapping` registries, all on one
+`FileObjectStorage` rooted at `STORAGE_ROOT` — see `docker/modelatlas_file/README.md`.
 
 ## Bundle/Module Structure
 
@@ -92,7 +111,7 @@ All bundles use the `org.eclipse.fennec.model.atlas` prefix. Key groupings:
 | **Schema** | `.schema.registry.api`, `.schema.registry.impl` | Schema registry service |
 | **Media** | `.mediatypes.api`, `.mediatypes.impl` | Media type codec tracking |
 | **EMF Utils** | `.emf.common` | Dynamic EPackage config, format converters |
-| **Runtime** | `.runtime`, `.runtime.config`, `.runtime.config.local`, `.runtime.config.docker`, `.runtime.config.docker.apicurio`, `.runtime.config.docker.file` | bndrun configurations per environment |
+| **Runtime** | `.runtime`, `.runtime.config`, `.runtime.config.local`, `.runtime.config.local.jena`, `.runtime.config.docker`, `.runtime.config.docker.apicurio`, `.runtime.config.docker.file`, `.runtime.config.docker.git` | bndrun configurations per environment; the `.config.*` bundles are resource-only configurator bundles |
 | **Health** | `.healthcheck` | Felix Health Checks (liveness/readiness) |
 | **Docs** | `.model.documentation.provider` | Model documentation generation |
 
