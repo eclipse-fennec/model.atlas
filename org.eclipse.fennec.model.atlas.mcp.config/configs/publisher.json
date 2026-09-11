@@ -6,5 +6,15 @@
         "stage": "$[env:MODEL_ATLAS_PUBLISHING_STAGE;default=$[prop:MODEL_ATLAS_PUBLISHING_STAGE;default=draft]]",
         "overwrite": "$[env:MODEL_ATLAS_OVERWRITE;default=$[prop:MODEL_ATLAS_OVERWRITE;default=false]]",
         "publish.nsuri.allowlist": "$[env:MCP_ATLAS_PUBLISH_ALLOWLIST;type=String[];delimiter=|;default=$[prop:MCP_ATLAS_PUBLISH_ALLOWLIST;default=]]"
+    },
+
+    "ModelAtlasObjectPublisher~publisher": {
+        "base.uri": "$[env:MODEL_ATLAS_BASE_URI;default=$[prop:MODEL_ATLAS_BASE_URI;default=]]",
+        "scope": "$[env:MODEL_ATLAS_OBJECT_SCOPE;default=$[env:MODEL_ATLAS_PUBLISHING_SCOPE;default=$[prop:MODEL_ATLAS_PUBLISHING_SCOPE;default=]]]",
+        "registry": "$[env:MODEL_ATLAS_OBJECT_REGISTRY;default=$[prop:MODEL_ATLAS_OBJECT_REGISTRY;default=]]",
+        "stage": "$[env:MODEL_ATLAS_OBJECT_STAGE;default=$[prop:MODEL_ATLAS_OBJECT_STAGE;default=draft]]",
+        "content.type": "$[env:MODEL_ATLAS_OBJECT_CONTENT_TYPE;default=$[prop:MODEL_ATLAS_OBJECT_CONTENT_TYPE;default=application/json]]",
+        "overwrite": "$[env:MODEL_ATLAS_OBJECT_OVERWRITE;default=$[prop:MODEL_ATLAS_OBJECT_OVERWRITE;default=false]]",
+        "max.body.bytes": "$[env:MODEL_ATLAS_OBJECT_MAX_BODY_BYTES;default=$[prop:MODEL_ATLAS_OBJECT_MAX_BODY_BYTES;default=1048576]]"
     }
 }

@@ -1,6 +1,7 @@
 Bundle-Name: Eclipse Fennec Model Atlas MCP Tools
-Bundle-Description: MCP tool publishing a session-registered EPackage to a model.atlas draft stage, \
- so an inferred model leaves the runtime without its XMI ever passing through the LLM.
+Bundle-Description: MCP tools writing to a model.atlas draft stage: one publishing a \
+ session-registered EPackage, so an inferred model leaves the runtime without its XMI ever passing \
+ through the LLM, and one storing an agent-supplied object in a configured object registry.
 -workingset: mcp
 
 -library: enableEMF
