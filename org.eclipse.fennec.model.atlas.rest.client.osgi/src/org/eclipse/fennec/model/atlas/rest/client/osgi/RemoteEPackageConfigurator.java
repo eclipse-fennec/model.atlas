@@ -89,6 +89,18 @@ final class RemoteEPackageConfigurator implements EPackageConfigurator {
 		}
 	}
 
+	/**
+	 * The locally computed model fingerprint — the key a publication is tracked under, so that two
+	 * versions of one nsURI are two publications rather than one silently dropping the other.
+	 * Computed, never adopted from the server: the same "compute, never trust" rule the published
+	 * {@code emf.fingerprint} property follows.
+	 *
+	 * @return the fingerprint, or {@code null} when it could not be computed
+	 */
+	static String fingerprintOf(EPackage ePackage) {
+		return computeFingerprint(ePackage);
+	}
+
 	private static String computeFingerprint(EPackage ePackage) {
 		try {
 			return FingerprintHelper.fingerprint(ePackage);

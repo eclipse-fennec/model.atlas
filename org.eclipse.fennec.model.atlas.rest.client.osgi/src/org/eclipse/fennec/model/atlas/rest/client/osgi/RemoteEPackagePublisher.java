@@ -15,6 +15,7 @@ package org.eclipse.fennec.model.atlas.rest.client.osgi;
 
 import java.util.Hashtable;
 import java.util.Map;
+import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
@@ -76,7 +77,27 @@ final class RemoteEPackagePublisher {
 	private final String baseUri;
 	private final int serviceRanking;
 	private final transient EPackage.Registry globalRegistry;
-	private final Map<String, Registration> published = new ConcurrentHashMap<>();
+	/**
+	 * Publications by <b>model version</b>, not by nsURI. Several versions of one nsURI can be live
+	 * at once — one per stage — and keying by nsURI silently dropped all but the first, which is
+	 * the same "nsURI is not an identity" root as #274.
+	 */
+	private final Map<VersionKey, Registration> published = new ConcurrentHashMap<>();
+
+	/**
+	 * The version that answers for an nsURI where only one can: {@link #publishedEPackage(String)},
+	 * the {@code EPackage.Registry.INSTANCE} mirror, and the drift swap. The final-stage version
+	 * wins — code reaching for an nsURI without naming a stage means the released model — and where
+	 * no final-stage version is published, the first one published holds the slot.
+	 */
+	private final Map<String, VersionKey> nsUriAnswer = new ConcurrentHashMap<>();
+
+	/** The versions that came from the final stage; see {@link #claimsNsUriSlot}. */
+	private final Set<VersionKey> finalStagePublications = ConcurrentHashMap.newKeySet();
+
+	/** A published model version: the nsURI plus the locally computed fingerprint. */
+	private record VersionKey(String nsUri, String fingerprint) {
+	}
 	/**
 	 * What this publisher actually placed into {@link #globalRegistry}, by nsURI — the entries
 	 * it may replace on a drift swap and remove on unpublish. An nsURI that was already taken
@@ -131,20 +152,40 @@ final class RemoteEPackagePublisher {
 	 * {@code emf.fingerprint} property (a mismatch is logged, never adopted).
 	 */
 	boolean publish(EPackage ePackage, String scope, String stage, String version, String serverFingerprint) {
+		return publish(ePackage, scope, stage, version, serverFingerprint, true);
+	}
+
+	/**
+	 * @param finalStage whether this version came from the scope's final stage — the stage-free
+	 *                   read path. It decides which version answers where only one can; see
+	 *                   {@link #nsUriAnswer}.
+	 */
+	boolean publish(EPackage ePackage, String scope, String stage, String version, String serverFingerprint,
+			boolean finalStage) {
 		Objects.requireNonNull(ePackage, "ePackage");
 		String nsUri = ePackage.getNsURI();
 		if (nsUri == null || nsUri.isBlank()) {
 			LOGGER.warning("Cannot publish an EPackage with a null/blank nsURI");
 			return false;
 		}
+		VersionKey key = new VersionKey(nsUri, RemoteEPackageConfigurator.fingerprintOf(ePackage));
 		boolean[] created = { false };
 		locks.run(nsUri, () -> {
-			if (published.containsKey(nsUri)) {
-				return; // already published — idempotent
+			if (published.containsKey(key)) {
+				return; // this same model version is already published — idempotent
 			}
-			published.put(nsUri,
+			published.put(key,
 					register(new RemoteEPackageConfigurator(ePackage, scope, stage, version, baseUri, serverFingerprint)));
-			mirrorToGlobal(nsUri, ePackage);
+			if (finalStage) {
+				finalStagePublications.add(key);
+			}
+			if (claimsNsUriSlot(nsUri, finalStage)) {
+				nsUriAnswer.put(nsUri, key);
+				mirrorToGlobal(nsUri, ePackage);
+			} else {
+				LOGGER.fine(() -> "Published " + nsUri + " at stage " + stage + " as a second model version; "
+						+ "the final-stage version keeps the nsURI slot and the EPackage.Registry.INSTANCE mirror");
+			}
 			created[0] = true;
 		});
 		if (created[0]) {
@@ -180,11 +221,23 @@ final class RemoteEPackagePublisher {
 			return false;
 		}
 		boolean[] replaced = { false };
+		VersionKey key = new VersionKey(nsUri, RemoteEPackageConfigurator.fingerprintOf(ePackage));
 		locks.run(nsUri, () -> {
-			Registration old = published.get(nsUri);
+			// A drift substitution replaces the version that answers for this nsURI.
+			VersionKey oldKey = nsUriAnswer.get(nsUri);
+			Registration old = oldKey == null ? null : published.get(oldKey);
+			// Drop the old entry *before* writing the new one: drifted content can hash to the same
+			// fingerprint as what it replaces (a change EMF does not see, or a re-publish of the
+			// same bytes), and removing afterwards would take the fresh registration with it.
+			if (oldKey != null) {
+				published.remove(oldKey);
+				finalStagePublications.remove(oldKey);
+			}
 			Registration fresh = register(
 					new RemoteEPackageConfigurator(ePackage, scope, stage, version, baseUri, serverFingerprint));
-			published.put(nsUri, fresh);
+			published.put(key, fresh);
+			finalStagePublications.add(key);
+			nsUriAnswer.put(nsUri, key);
 			mirrorToGlobal(nsUri, ePackage); // replaces the singleton entry in step with the service swap
 			if (old != null) {
 				old.unregisterAll();
@@ -196,18 +249,29 @@ final class RemoteEPackagePublisher {
 		return replaced[0];
 	}
 
-	/** Revoke the trio for {@code nsUri}; {@code false} if it was not published. */
+	/**
+	 * Revoke <b>every</b> published version of {@code nsUri}; {@code false} if none was published.
+	 * This is what "the server no longer has this package" means — not one stage of it.
+	 */
 	boolean unpublish(String nsUri) {
 		if (nsUri == null) {
 			return false;
 		}
 		boolean[] removed = { false };
 		locks.run(nsUri, () -> {
-			Registration registration = published.remove(nsUri);
-			if (registration != null) {
-				registration.unregisterAll();
+			for (VersionKey key : List.copyOf(published.keySet())) {
+				if (!nsUri.equals(key.nsUri())) {
+					continue;
+				}
+				Registration registration = published.remove(key);
+				if (registration != null) {
+					registration.unregisterAll();
+					removed[0] = true;
+				}
+			}
+			if (removed[0]) {
+				nsUriAnswer.remove(nsUri);
 				removeFromGlobal(nsUri);
-				removed[0] = true;
 			}
 		});
 		if (removed[0]) {
@@ -226,25 +290,69 @@ final class RemoteEPackagePublisher {
 		if (nsUri == null) {
 			return null;
 		}
-		Registration registration = published.get(nsUri);
+		VersionKey key = nsUriAnswer.get(nsUri);
+		Registration registration = key == null ? null : published.get(key);
 		return registration == null ? null : registration.ePackage();
 	}
 
 	boolean isPublished(String nsUri) {
-		return nsUri != null && published.containsKey(nsUri);
+		return nsUri != null && nsUriAnswer.containsKey(nsUri);
 	}
 
 	Set<String> publishedNsUris() {
-		return Set.copyOf(published.keySet());
+		return Set.copyOf(nsUriAnswer.keySet());
+	}
+
+	/**
+	 * Revoke one model version, leaving any other version of the same nsURI published. The nsURI
+	 * slot falls to whichever version remains, if any.
+	 */
+	boolean unpublishVersion(String nsUri, String fingerprint) {
+		if (nsUri == null || fingerprint == null) {
+			return false;
+		}
+		boolean[] removed = { false };
+		locks.run(nsUri, () -> {
+			Registration registration = published.remove(new VersionKey(nsUri, fingerprint));
+			if (registration == null) {
+				return;
+			}
+			registration.unregisterAll();
+			removed[0] = true;
+			if (new VersionKey(nsUri, fingerprint).equals(nsUriAnswer.get(nsUri))) {
+				nsUriAnswer.remove(nsUri);
+				removeFromGlobal(nsUri);
+				// Hand the slot to a surviving version rather than leaving the nsURI unanswerable.
+				published.keySet().stream().filter(key -> nsUri.equals(key.nsUri())).findFirst()
+						.ifPresent(key -> {
+							nsUriAnswer.put(nsUri, key);
+							mirrorToGlobal(nsUri, published.get(key).ePackage());
+						});
+			}
+		});
+		return removed[0];
 	}
 
 	/** Revoke every publication; called on client shutdown. */
 	void unpublishAll() {
-		published.forEach((nsUri, registration) -> {
-			registration.unregisterAll();
-			removeFromGlobal(nsUri); // P3-11: don't leak our entries in EPackage.Registry.INSTANCE
-		});
+		published.values().forEach(Registration::unregisterAll);
 		published.clear();
+		// P3-11: don't leak our entries in EPackage.Registry.INSTANCE
+		nsUriAnswer.keySet().forEach(this::removeFromGlobal);
+		nsUriAnswer.clear();
+	}
+
+	/**
+	 * Whether a newly published version takes the nsURI slot: nothing holds it yet, or this one is
+	 * the final-stage version and what holds it is not. A final-stage version already in place is
+	 * never displaced by a staged one.
+	 */
+	private boolean claimsNsUriSlot(String nsUri, boolean finalStage) {
+		VersionKey incumbent = nsUriAnswer.get(nsUri);
+		if (incumbent == null) {
+			return true;
+		}
+		return finalStage && !finalStagePublications.contains(incumbent);
 	}
 
 	/**
