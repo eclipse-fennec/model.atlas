@@ -38,13 +38,16 @@ import org.osgi.annotation.versioning.ProviderType;
 @ProviderType
 public final class DriftReport {
 
-	private static final DriftReport EMPTY = new DriftReport(List.of(), List.of(), List.of());
+	private static final DriftReport EMPTY = new DriftReport(List.of(), List.of(), List.of(), List.of());
 
 	private final List<String> addedNsUris;
 	private final List<String> changedNsUris;
 	private final List<String> removedNsUris;
+	private final List<PackageDrift> changedPackages;
 
-	private DriftReport(List<String> addedNsUris, List<String> changedNsUris, List<String> removedNsUris) {
+	private DriftReport(List<String> addedNsUris, List<String> changedNsUris, List<String> removedNsUris,
+			List<PackageDrift> changedPackages) {
+		this.changedPackages = List.copyOf(changedPackages);
 		this.addedNsUris = addedNsUris;
 		this.changedNsUris = changedNsUris;
 		this.removedNsUris = removedNsUris;
@@ -70,7 +73,24 @@ public final class DriftReport {
 		if (added.isEmpty() && changed.isEmpty() && removed.isEmpty()) {
 			return EMPTY;
 		}
-		return new DriftReport(added, changed, removed);
+		return new DriftReport(added, changed, removed, List.of());
+	}
+
+	/**
+	 * As {@link #of(Set, Set, Set)}, with the version-aware detail the server reported (#276).
+	 *
+	 * @param changedPackages one entry per changed {@code (stage, nsUri)}; {@code null} is empty
+	 */
+	public static DriftReport of(Set<String> addedNsUris, Set<String> changedNsUris, Set<String> removedNsUris,
+			List<PackageDrift> changedPackages) {
+		List<String> added = dedup(addedNsUris);
+		List<String> changed = dedup(changedNsUris);
+		List<String> removed = dedup(removedNsUris);
+		List<PackageDrift> packages = changedPackages == null ? List.of() : List.copyOf(changedPackages);
+		if (added.isEmpty() && changed.isEmpty() && removed.isEmpty() && packages.isEmpty()) {
+			return EMPTY;
+		}
+		return new DriftReport(added, changed, removed, packages);
 	}
 
 	/** A report with no drift. */
@@ -94,6 +114,18 @@ public final class DriftReport {
 	/** nsURIs no longer present on the server. */
 	public List<String> getRemovedNsUris() {
 		return removedNsUris;
+	}
+
+	/**
+	 * The changes named by stage and model version (#276), where the server reported that detail.
+	 * <p>
+	 * Empty against an Atlas that reports only nsURIs; the three nsURI lists above are always
+	 * populated, so a caller that does not care about versions can ignore this one.
+	 *
+	 * @return one entry per changed {@code (stage, nsUri)}
+	 */
+	public List<PackageDrift> getChangedPackages() {
+		return changedPackages;
 	}
 
 	/** {@code true} if anything was added, changed or removed. */

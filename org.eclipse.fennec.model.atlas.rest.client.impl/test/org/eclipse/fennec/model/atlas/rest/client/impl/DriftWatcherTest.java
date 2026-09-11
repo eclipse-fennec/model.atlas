@@ -31,6 +31,7 @@ import org.eclipse.emf.ecore.EPackage;
 import org.eclipse.emf.ecore.EcoreFactory;
 import org.eclipse.fennec.model.atlas.rest.client.api.DriftListener;
 import org.eclipse.fennec.model.atlas.rest.client.api.DriftReport;
+import org.eclipse.fennec.model.atlas.rest.client.api.PackageDrift;
 import org.junit.jupiter.api.Test;
 
 import jakarta.ws.rs.client.Invocation;
@@ -86,6 +87,29 @@ class DriftWatcherTest {
 		Response r = headResponse(200, Response.Status.OK, etag, null);
 		when(r.getHeaderString(DriftWatcher.ATLAS_BASELINE_UNKNOWN)).thenReturn("true");
 		return r;
+	}
+
+	/** A 200 carrying the version-aware change header (#276). */
+	private static Response headChangedPackages(String etag, String changedPackages) {
+		Response r = headResponse(200, Response.Status.OK, etag, null);
+		when(r.getHeaderString(DriftWatcher.ATLAS_CHANGED_PACKAGES)).thenReturn(changedPackages);
+		return r;
+	}
+
+	/** A listener bound to one (scope, stage), like the OSGi fetch-on-miss bridge. */
+	private static class StagedListener extends RecordingListener {
+		private final String scope;
+		private final String stage;
+
+		StagedListener(String scope, String stage) {
+			this.scope = scope;
+			this.stage = stage;
+		}
+
+		@Override
+		public boolean acceptsDrift(PackageDrift drift) {
+			return drift == null || drift.concerns(scope, stage);
+		}
 	}
 
 	private static EPackage pkg(String nsUri) {
@@ -751,5 +775,113 @@ class DriftWatcherTest {
 
 		assertTrue(listener.objectsChanged.isEmpty(), "no cached scope view → nothing to evict or fire");
 		assertTrue(listener.objectsRemoved.isEmpty());
+	}
+
+	// ---- version-aware drift (#276) ---------------------------------------
+
+	/**
+	 * The point of the whole issue: a change to the draft version must not evict a held release
+	 * version of the same nsURI. Before #276 drift was a bare nsURI, so it did.
+	 */
+	@Test
+	void draftChange_doesNotDisturbAHolderOfTheReleaseVersion() {
+		Response baseline = headResponse(200, Response.Status.OK, "\"v1\"", null);
+		Response changed = headChangedPackages("\"v2\"", "draft|urn:ns:a|fp1:new");
+		when(request.head()).thenReturn(baseline, changed);
+		when(provider.refresh("urn:ns:a")).thenReturn(Optional.of(pkg("urn:ns:a")));
+
+		StagedListener releaseHolder = new StagedListener("jena", "release");
+		StagedListener draftHolder = new StagedListener("jena", "draft");
+		DriftWatcher watcher = watcher(s -> null);
+		watcher.addListener(releaseHolder);
+		watcher.addListener(draftHolder);
+		when(provider.cachedNsUris()).thenReturn(Set.of("urn:ns:a"));
+
+		watcher.check();
+		watcher.check();
+
+		assertTrue(releaseHolder.changed.isEmpty(), "the release holder still holds a current package");
+		assertEquals(List.of("urn:ns:a"), draftHolder.changed, "the draft holder is the one affected");
+	}
+
+	/** A stage-free listener tracks whatever the final stage resolves to, so it takes every change. */
+	@Test
+	void stageFreeListener_stillSeesEveryChange() {
+		Response baseline = headResponse(200, Response.Status.OK, "\"v1\"", null);
+		Response changed = headChangedPackages("\"v2\"", "draft|urn:ns:a|fp1:new");
+		when(request.head()).thenReturn(baseline, changed);
+		when(provider.refresh("urn:ns:a")).thenReturn(Optional.of(pkg("urn:ns:a")));
+
+		StagedListener stageFree = new StagedListener("jena", null);
+		DriftWatcher watcher = watcher(s -> null);
+		watcher.addListener(stageFree);
+		when(provider.cachedNsUris()).thenReturn(Set.of("urn:ns:a"));
+
+		watcher.check();
+		watcher.check();
+
+		assertEquals(List.of("urn:ns:a"), stageFree.changed);
+	}
+
+	/** The report carries the detail, so a caller can tell which version moved without asking again. */
+	@Test
+	void reportNamesTheStageAndVersionThatChanged() {
+		Response baseline = headResponse(200, Response.Status.OK, "\"v1\"", null);
+		Response changed = headChangedPackages("\"v2\"", "draft|urn:ns:a|fp1:new,release|urn:ns:b|");
+		when(request.head()).thenReturn(baseline, changed);
+		when(provider.refresh(anyString())).thenReturn(Optional.of(pkg("urn:ns:a")));
+		when(provider.cachedNsUris()).thenReturn(Set.of("urn:ns:a", "urn:ns:b"));
+
+		DriftWatcher watcher = watcher(s -> null);
+		watcher.check();
+		DriftReport report = watcher.check();
+
+		List<PackageDrift> drifts = report.getChangedPackages();
+		assertEquals(2, drifts.size());
+		assertEquals(new PackageDrift("jena", "draft", "urn:ns:a", "fp1:new"), drifts.get(0));
+		assertEquals(new PackageDrift("jena", "release", "urn:ns:b", null), drifts.get(1),
+				"an empty fingerprint means the version is gone from that location");
+	}
+
+	/** An Atlas that reports only nsURIs must behave exactly as before: everyone is notified. */
+	@Test
+	void withoutVersionDetail_everyListenerIsNotified() {
+		Response baseline = headResponse(200, Response.Status.OK, "\"v1\"", null);
+		Response changed = headResponse(200, Response.Status.OK, "\"v2\"", "urn:ns:a");
+		when(request.head()).thenReturn(baseline, changed);
+		when(provider.refresh("urn:ns:a")).thenReturn(Optional.of(pkg("urn:ns:a")));
+		when(provider.cachedNsUris()).thenReturn(Set.of("urn:ns:a"));
+
+		StagedListener releaseHolder = new StagedListener("jena", "release");
+		DriftWatcher watcher = watcher(s -> null);
+		watcher.addListener(releaseHolder);
+
+		watcher.check();
+		watcher.check();
+
+		assertEquals(List.of("urn:ns:a"), releaseHolder.changed,
+				"no stage was reported, so the change may well be this holder's");
+	}
+
+	/**
+	 * A diff that carries only the version-aware header is still a diff. Treating it as a lost
+	 * baseline would trigger a full re-discovery of the scope for nothing — the failure mode #238
+	 * exists to avoid, reached from the other side.
+	 */
+	@Test
+	void versionAwareHeaderAlone_isNotMistakenForALostBaseline() {
+		Response baseline = headResponse(200, Response.Status.OK, "\"v1\"", null);
+		Response changed = headChangedPackages("\"v2\"", "draft|urn:ns:a|fp1:new");
+		when(request.head()).thenReturn(baseline, changed);
+		when(provider.refresh("urn:ns:a")).thenReturn(Optional.of(pkg("urn:ns:a")));
+		when(provider.cachedNsUris()).thenReturn(Set.of("urn:ns:a"));
+
+		DriftWatcher watcher = watcher(s -> null);
+		watcher.check();
+		watcher.check();
+
+		// revalidate() is the resync path; refresh() is the ordinary diff path.
+		verify(provider, never()).revalidate(anyString());
+		verify(provider).refresh("urn:ns:a");
 	}
 }

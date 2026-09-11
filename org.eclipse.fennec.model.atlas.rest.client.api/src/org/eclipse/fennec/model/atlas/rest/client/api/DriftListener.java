@@ -69,6 +69,21 @@ public interface DriftListener {
 	 * @param nsUri      the affected nsURI
 	 * @param newPackage the freshly fetched replacement package
 	 */
+	/**
+	 * Whether a reported change concerns what this listener holds (#276).
+	 * <p>
+	 * Consulted before {@link #onPackageChanged(String, EPackage)} and
+	 * {@link #onPackageRemoved(String)}, so a listener bound to one stage is not disturbed by a
+	 * change to another version of the same nsURI. The default takes everything, which is exactly
+	 * the behaviour before this hook existed.
+	 *
+	 * @param drift the change, carrying the stage and model version it happened at
+	 * @return whether the callbacks should fire for this listener
+	 */
+	default boolean acceptsDrift(PackageDrift drift) {
+		return true;
+	}
+
 	void onPackageChanged(String nsUri, EPackage newPackage);
 
 	/**

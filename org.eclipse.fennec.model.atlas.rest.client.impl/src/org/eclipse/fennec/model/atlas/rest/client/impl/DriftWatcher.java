@@ -14,6 +14,7 @@
 package org.eclipse.fennec.model.atlas.rest.client.impl;
 
 import java.util.LinkedHashSet;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -33,6 +34,7 @@ import java.util.logging.Logger;
 import org.eclipse.emf.ecore.EPackage;
 import org.eclipse.fennec.model.atlas.rest.client.api.DriftListener;
 import org.eclipse.fennec.model.atlas.rest.client.api.DriftReport;
+import org.eclipse.fennec.model.atlas.rest.client.api.PackageDrift;
 
 import jakarta.ws.rs.core.HttpHeaders;
 import jakarta.ws.rs.core.Response;
@@ -66,6 +68,8 @@ class DriftWatcher implements AutoCloseable {
 	private static final String SCOPES = "scopes";
 	static final String ATLAS_CHANGED_NSURIS = "Atlas-Changed-NsUris";
 	static final String ATLAS_CHANGED_OBJECTS = "Atlas-Changed-Objects";
+	/** Version-aware companion to {@link #ATLAS_CHANGED_NSURIS} (#276): {@code stage|nsUri|fingerprint}. */
+	static final String ATLAS_CHANGED_PACKAGES = "Atlas-Changed-Packages";
 	static final String ATLAS_BASELINE_UNKNOWN = "Atlas-Baseline-Unknown";
 
 	private final WebTarget baseTarget;
@@ -124,22 +128,23 @@ class DriftWatcher implements AutoCloseable {
 	synchronized DriftReport check() {
 		Set<String> added = new LinkedHashSet<>();
 		Set<String> changed = new LinkedHashSet<>();
+		List<PackageDrift> drifts = new ArrayList<>();
 		Set<String> removed = new LinkedHashSet<>();
 		RemoteEPackageProviderImpl provider = providerSupplier.get();
 		for (String scope : scopesSupplier.get()) {
 			try {
-				checkScope(scope, provider, added, changed, removed);
+				checkScope(scope, provider, added, changed, removed, drifts);
 			} catch (RuntimeException e) {
 				// One scope failing (unreachable, bad payload, listener trouble) must not
 				// starve the remaining scopes of their drift events.
 				logger.log(Level.WARNING, e, () -> "Drift check failed for scope " + scope);
 			}
 		}
-		return DriftReport.of(added, changed, removed);
+		return DriftReport.of(added, changed, removed, drifts);
 	}
 
 	private void checkScope(String scope, RemoteEPackageProviderImpl provider, Set<String> added, Set<String> changed,
-			Set<String> removed) {
+			Set<String> removed, List<PackageDrift> drifts) {
 		Response response = RestSupport.head(baseTarget.path(SCOPES).path(scope), scopeEtags.get(scope));
 		try {
 			if (RestSupport.isNotModified(response) || !RestSupport.isSuccess(response)) {
@@ -157,7 +162,7 @@ class DriftWatcher implements AutoCloseable {
 				resyncScope(scope, provider, added, changed, removed);
 				return;
 			}
-			handleChangedNsUris(response, provider, added, changed, removed);
+			handleChangedNsUris(scope, response, provider, added, changed, removed, drifts);
 			handleChangedObjects(scope, response);
 		} finally {
 			response.close();
@@ -175,8 +180,20 @@ class DriftWatcher implements AutoCloseable {
 	 * must never be reported as removed — we never held it, so there is nothing to
 	 * evict, and a listener acting on it would revoke a package it does not own.
 	 */
-	private void handleChangedNsUris(Response response, RemoteEPackageProviderImpl provider, Set<String> added,
-			Set<String> changed, Set<String> removed) {
+	private void handleChangedNsUris(String scope, Response response, RemoteEPackageProviderImpl provider,
+			Set<String> added, Set<String> changed, Set<String> removed, List<PackageDrift> drifts) {
+		// Prefer the version-aware header (#276). It names the stage and model version each change
+		// happened at, so a listener bound to one stage is not disturbed by another's. Against an
+		// Atlas that does not send it, fall back to the bare nsURI list — same behaviour as before.
+		List<PackageDrift> detailed = parseChangedPackages(scope, response);
+		if (!detailed.isEmpty()) {
+			drifts.addAll(detailed);
+			Set<String> held = heldNsUris(provider);
+			for (PackageDrift drift : detailed) {
+				applyNsUri(drift.nsUri(), provider, held, added, changed, removed, drift);
+			}
+			return;
+		}
 		String header = response.getHeaderString(ATLAS_CHANGED_NSURIS);
 		if (header == null || header.isBlank()) {
 			return;
@@ -185,14 +202,46 @@ class DriftWatcher implements AutoCloseable {
 		for (String raw : header.split(",")) {
 			String nsUri = raw.trim();
 			if (!nsUri.isEmpty()) {
-				applyNsUri(nsUri, provider, held, added, changed, removed);
+				// No version detail: every listener is concerned, as before.
+				applyNsUri(nsUri, provider, held, added, changed, removed, new PackageDrift(scope, null, nsUri, null));
 			}
 		}
 	}
 
+	/**
+	 * Parse {@code Atlas-Changed-Packages}: comma-separated {@code stage|nsUri|fingerprint}, where an
+	 * empty fingerprint means the version is gone from that location. Entries without an nsURI are
+	 * skipped rather than guessed at.
+	 */
+	private static List<PackageDrift> parseChangedPackages(String scope, Response response) {
+		String header = response.getHeaderString(ATLAS_CHANGED_PACKAGES);
+		if (header == null || header.isBlank()) {
+			return List.of();
+		}
+		List<PackageDrift> drifts = new ArrayList<>();
+		for (String raw : header.split(",")) {
+			String entry = raw.trim();
+			if (entry.isEmpty()) {
+				continue;
+			}
+			String[] fields = entry.split("\\|", -1);
+			String stage = fields.length > 0 ? emptyToNull(fields[0]) : null;
+			String nsUri = fields.length > 1 ? emptyToNull(fields[1]) : null;
+			String fingerprint = fields.length > 2 ? emptyToNull(fields[2]) : null;
+			if (nsUri != null) {
+				drifts.add(new PackageDrift(scope, stage, nsUri, fingerprint));
+			}
+		}
+		return drifts;
+	}
+
+	private static String emptyToNull(String value) {
+		return value == null || value.isBlank() ? null : value.trim();
+	}
+
 	/** One nsURI: a change or removal if we hold it, a candidate addition if we do not. */
 	private void applyNsUri(String nsUri, RemoteEPackageProviderImpl provider, Set<String> held, Set<String> added,
-			Set<String> changed, Set<String> removed) {
+			Set<String> changed, Set<String> removed, PackageDrift drift) {
 		if (!held.contains(nsUri)) {
 			if (discoverAdditions) {
 				discover(nsUri, provider, added);
@@ -202,10 +251,10 @@ class DriftWatcher implements AutoCloseable {
 		Optional<EPackage> refreshed = provider.refresh(nsUri);
 		if (refreshed.isPresent()) {
 			changed.add(nsUri);
-			fireChanged(nsUri, refreshed.get());
+			fireChanged(nsUri, refreshed.get(), drift);
 		} else {
 			removed.add(nsUri);
-			fireRemoved(nsUri);
+			fireRemoved(nsUri, drift);
 		}
 	}
 
@@ -227,8 +276,13 @@ class DriftWatcher implements AutoCloseable {
 		if (flag != null && !flag.isBlank()) {
 			return Boolean.parseBoolean(flag.trim());
 		}
+		// No diff headers at all means the server could not tell us what changed. Every diff
+		// header must be counted here, including the version-aware one (#276): a response that
+		// carries only that one is a perfectly good diff, and mistaking it for a lost baseline
+		// would trigger a full re-discovery for nothing.
 		return isBlank(response.getHeaderString(ATLAS_CHANGED_NSURIS))
-				&& isBlank(response.getHeaderString(ATLAS_CHANGED_OBJECTS));
+				&& isBlank(response.getHeaderString(ATLAS_CHANGED_OBJECTS))
+				&& isBlank(response.getHeaderString(ATLAS_CHANGED_PACKAGES));
 	}
 
 	private static boolean isBlank(String header) {
@@ -288,14 +342,16 @@ class DriftWatcher implements AutoCloseable {
 		switch (refreshed.outcome()) {
 		case CHANGED -> {
 			changed.add(nsUri);
-			fireChanged(nsUri, refreshed.ePackage());
+			// A resync has no per-change detail — the baseline is gone, which is why we are here.
+			// Every listener is told, exactly as before #276.
+			fireChanged(nsUri, refreshed.ePackage(), null);
 		}
 		case UNCHANGED -> {
 			// We hold the current payload; there is nothing to tell a listener.
 		}
 		case REMOVED -> {
 			removed.add(nsUri);
-			fireRemoved(nsUri);
+			fireRemoved(nsUri, null);
 		}
 		}
 	}
@@ -444,9 +500,12 @@ class DriftWatcher implements AutoCloseable {
 		}
 	}
 
-	private void fireChanged(String nsUri, EPackage ePackage) {
+	private void fireChanged(String nsUri, EPackage ePackage, PackageDrift drift) {
 		for (DriftListener listener : listeners) {
 			try {
+				if (!accepts(listener, drift, nsUri)) {
+					continue;
+				}
 				listener.onPackageChanged(nsUri, ePackage);
 			} catch (RuntimeException e) {
 				logger.log(Level.WARNING, e, () -> "DriftListener onPackageChanged failed for " + nsUri);
@@ -454,9 +513,12 @@ class DriftWatcher implements AutoCloseable {
 		}
 	}
 
-	private void fireRemoved(String nsUri) {
+	private void fireRemoved(String nsUri, PackageDrift drift) {
 		for (DriftListener listener : listeners) {
 			try {
+				if (!accepts(listener, drift, nsUri)) {
+					continue;
+				}
 				listener.onPackageRemoved(nsUri);
 			} catch (RuntimeException e) {
 				logger.log(Level.WARNING, e, () -> "DriftListener onPackageRemoved failed for " + nsUri);
@@ -509,5 +571,22 @@ class DriftWatcher implements AutoCloseable {
 			thread.setDaemon(true);
 			return thread;
 		};
+	}
+
+	/**
+	 * Whether {@code listener} should see this change (#276). A listener that throws from its own
+	 * filter is told about the change anyway: dropping a notification because a filter misbehaved
+	 * would leave that listener holding content it believes is current.
+	 */
+	private static boolean accepts(DriftListener listener, PackageDrift drift, String nsUri) {
+		if (drift == null) {
+			return true;
+		}
+		try {
+			return listener.acceptsDrift(drift);
+		} catch (RuntimeException e) {
+			logger.log(Level.WARNING, e, () -> "DriftListener acceptsDrift failed for " + nsUri + "; notifying anyway");
+			return true;
+		}
 	}
 }

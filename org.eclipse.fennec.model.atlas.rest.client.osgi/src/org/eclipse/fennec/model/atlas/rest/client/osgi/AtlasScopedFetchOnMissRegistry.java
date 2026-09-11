@@ -20,6 +20,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import org.eclipse.emf.ecore.EFactory;
 import org.eclipse.emf.ecore.EPackage;
 import org.eclipse.fennec.model.atlas.rest.client.api.DriftListener;
+import org.eclipse.fennec.model.atlas.rest.client.api.PackageDrift;
 import org.eclipse.fennec.model.atlas.rest.client.api.RemoteEPackageProvider;
 
 /**
@@ -118,6 +119,17 @@ class AtlasScopedFetchOnMissRegistry extends ConcurrentHashMap<String, Object>
 		// Stage-explicit fetches bypass the provider cache, so the drift watcher can
 		// only know about these entries through us.
 		return keySet();
+	}
+
+	/**
+	 * Only changes at this bridge's own location concern it (#276). A bridge holding the
+	 * {@code release} version of an nsURI used to evict it because the {@code draft} version moved:
+	 * drift was reported as a bare nsURI, which does not identify a version, so the safe response
+	 * was to drop a perfectly current package and re-fetch it.
+	 */
+	@Override
+	public boolean acceptsDrift(PackageDrift drift) {
+		return drift == null || drift.concerns(scope, stage);
 	}
 
 	@Override
