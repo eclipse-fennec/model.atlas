@@ -136,6 +136,28 @@ public interface RemoteEPackageProvider {
 	Optional<EPackage> getEPackageAtStage(String nsUri, String scopeName, String stage);
 
 	/**
+	 * As {@link #getEPackageAtStage(String, String, String)}, but also reporting where the package
+	 * came from: the scope, stage, version and model fingerprint the Atlas states for it (#273).
+	 * <p>
+	 * The stage-explicit content endpoint is the only path that reaches a package at a non-final
+	 * stage, so without this a client can fetch one of several live versions of an nsURI and have
+	 * no way to say which. The fingerprint is the server's statement about the content; a client
+	 * that computes fingerprints itself keeps its own value authoritative and uses this one as a
+	 * cross-check, never as the key.
+	 * <p>
+	 * Where the server reports no origin — an Atlas older than #273 — the returned scope and stage
+	 * are the ones that were asked for, and version and fingerprint are {@code null}. The registry
+	 * is {@code null}: this endpoint serves the scope's schema registry by definition and does not
+	 * name it.
+	 *
+	 * @param nsUri     the package namespace URI
+	 * @param scopeName the scope to query
+	 * @param stage     the stage name (must not be null)
+	 * @return the resolved package with its origin, or empty if absent at that stage
+	 */
+	Optional<ResolvedEPackage> resolveAtStage(String nsUri, String scopeName, String stage);
+
+	/**
 	 * List the packages available in a specific scope at a specific stage
 	 * ({@code GET /{scopeName}/schema/stages/{stage}}, P6-6).
 	 * <p>

@@ -100,6 +100,11 @@ class AtlasDelegatingPackageRegistryTest {
 		public List<PackageDescriptor> listPackagesAtStage(String scopeName, String stage) {
 			throw new UnsupportedOperationException("stage-free fake: no package is modelled per stage");
 		}
+
+		@Override
+		public Optional<ResolvedEPackage> resolveAtStage(String nsUri, String scopeName, String stage) {
+			throw new UnsupportedOperationException("stage-free fake: no package is modelled per stage");
+		}
 	}
 
 	private static EPackage demoPackage() {

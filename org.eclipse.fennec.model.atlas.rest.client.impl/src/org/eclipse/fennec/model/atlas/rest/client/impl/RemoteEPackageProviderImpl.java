@@ -89,6 +89,12 @@ class RemoteEPackageProviderImpl implements RemoteEPackageProvider {
 	private final ClientConfiguration configuration;
 	private final EPackageDeserializer deserializer;
 	private final Supplier<List<String>> scopeNamesSupplier;
+	/** Origin headers the Atlas stamps on a content response (#273); see {@code ObjectMetadataResponseFilter}. */
+	private static final String HEADER_SCOPE = "Atlas-Scope";
+	private static final String HEADER_STAGE = "Atlas-Stage";
+	private static final String HEADER_VERSION = "Atlas-Version";
+	private static final String HEADER_FINGERPRINT = "Atlas-Fingerprint";
+
 	private final ClientCache<String, EPackage> cache;
 	/**
 	 * The packages whose cross-package references are being resolved on this
@@ -246,6 +252,11 @@ class RemoteEPackageProviderImpl implements RemoteEPackageProvider {
 
 	@Override
 	public Optional<EPackage> getEPackageAtStage(String nsUri, String scopeName, String stage) {
+		return resolveAtStage(nsUri, scopeName, stage).map(ResolvedEPackage::getEPackage);
+	}
+
+	@Override
+	public Optional<ResolvedEPackage> resolveAtStage(String nsUri, String scopeName, String stage) {
 		Objects.requireNonNull(nsUri, "nsUri");
 		Objects.requireNonNull(scopeName, "scopeName");
 		Objects.requireNonNull(stage, "stage");
@@ -260,7 +271,17 @@ class RemoteEPackageProviderImpl implements RemoteEPackageProvider {
 		if (result.isEmpty() || result.get().notModified()) {
 			return Optional.empty();
 		}
-		return Optional.of(result.get().fetched().ePackage());
+		FetchedPackage fetched = result.get().fetched();
+		Origin origin = fetched.origin();
+		// What the server reported wins; where it reported nothing (an older Atlas), fall back to
+		// what we asked for — that is a fact about the request, not a guess about the content.
+		// The registry stays null: this endpoint serves the scope's schema registry by definition
+		// and does not name it, and inventing a name here would be a guess.
+		return Optional.of(new ResolvedEPackage(fetched.ePackage(), nsUri,
+				origin.scope() != null ? origin.scope() : scopeName,
+				null,
+				origin.stage() != null ? origin.stage() : stage,
+				origin.version(), origin.fingerprint()));
 	}
 
 	@Override
@@ -392,7 +413,7 @@ class RemoteEPackageProviderImpl implements RemoteEPackageProvider {
 			// fetch goes through — before the package is cached or handed out.
 			resolveCrossPackageReferences(ePackage, nsUri, dependencyFetcher);
 			FetchedPackage fetched = new FetchedPackage(ePackage, response.getHeaderString(HttpHeaders.ETAG),
-					response.getHeaderString(HttpHeaders.LAST_MODIFIED));
+					response.getHeaderString(HttpHeaders.LAST_MODIFIED), Origin.of(response));
 			return Optional.of(ContentResult.of(fetched));
 		} finally {
 			response.close();
@@ -602,7 +623,19 @@ class RemoteEPackageProviderImpl implements RemoteEPackageProvider {
 	}
 
 	/** A freshly fetched package together with its HTTP validators. */
-	private record FetchedPackage(EPackage ePackage, String etag, String lastModified) {
+	/**
+	 * What the server said about where a fetched package came from (#273): the {@code Atlas-*}
+	 * response headers. Any field is {@code null} when the server did not report it — an older
+	 * Atlas reports none of them, so a caller must be able to fall back on what it asked for.
+	 */
+	private record Origin(String scope, String stage, String version, String fingerprint) {
+		static Origin of(Response response) {
+			return new Origin(response.getHeaderString(HEADER_SCOPE), response.getHeaderString(HEADER_STAGE),
+					response.getHeaderString(HEADER_VERSION), response.getHeaderString(HEADER_FINGERPRINT));
+		}
+	}
+
+	private record FetchedPackage(EPackage ePackage, String etag, String lastModified, Origin origin) {
 	}
 
 	/** Outcome of a conditional content GET: either {@code 304} or a fetched package. */

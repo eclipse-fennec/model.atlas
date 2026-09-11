@@ -15,6 +15,7 @@ package org.eclipse.fennec.model.atlas.rest.client.impl;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -44,6 +45,7 @@ import org.eclipse.fennec.model.atlas.rest.client.api.ClientConfiguration;
 import org.eclipse.fennec.model.atlas.rest.client.api.ModelAtlasClientException;
 import org.eclipse.fennec.model.atlas.rest.client.api.NotFoundException;
 import org.eclipse.fennec.model.atlas.rest.client.api.PackageDescriptor;
+import org.eclipse.fennec.model.atlas.rest.client.api.ResolvedEPackage;
 import org.eclipse.fennec.model.atlas.rest.client.api.TransportException;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
@@ -598,6 +600,65 @@ class RemoteEPackageProviderImplTest {
 		verify(target, org.mockito.Mockito.atLeastOnce()).path(paths.capture());
 		assertEquals(List.of("jena", "schema", "stages", "snapshot", "content"), paths.getAllValues());
 		verify(target).queryParam("nsUri", "urn:ns:gateway");
+	}
+
+	// ---- resolveAtStage: origin headers (#273) ----------------------------
+
+	@Test
+	void resolveAtStage_reportsTheOriginTheServerStamped() {
+		Response response = contentOk("<xmi/>".getBytes(StandardCharsets.UTF_8));
+		when(response.getHeaderString("Atlas-Scope")).thenReturn("jena");
+		when(response.getHeaderString("Atlas-Stage")).thenReturn("snapshot");
+		when(response.getHeaderString("Atlas-Version")).thenReturn("1.2.0");
+		when(response.getHeaderString("Atlas-Fingerprint")).thenReturn("fp1:abc123");
+		when(request.get()).thenReturn(response);
+
+		ResolvedEPackage resolved = provider(config()).resolveAtStage("urn:ns:gateway", "jena", "snapshot")
+				.orElseThrow();
+
+		assertEquals("urn:ns:gateway", resolved.getNsUri());
+		assertEquals("jena", resolved.getScope());
+		assertEquals("snapshot", resolved.getStage());
+		assertEquals("1.2.0", resolved.getVersion());
+		assertEquals("fp1:abc123", resolved.getFingerprint(),
+				"the fingerprint is what tells two live versions of one nsURI apart");
+	}
+
+	/**
+	 * An Atlas older than #273 stamps no origin. The scope and stage then fall back to what was
+	 * asked for — a fact about the request — while version and fingerprint stay null rather than
+	 * being invented.
+	 */
+	@Test
+	void resolveAtStage_serverReportsNoOrigin_fallsBackToWhatWasAskedFor() {
+		Response response = contentOk("<xmi/>".getBytes(StandardCharsets.UTF_8));
+		when(request.get()).thenReturn(response);
+
+		ResolvedEPackage resolved = provider(config()).resolveAtStage("urn:ns:gateway", "jena", "snapshot")
+				.orElseThrow();
+
+		assertEquals("jena", resolved.getScope());
+		assertEquals("snapshot", resolved.getStage());
+		assertNull(resolved.getVersion());
+		assertNull(resolved.getFingerprint());
+	}
+
+	@Test
+	void resolveAtStage_noContent_returnsEmpty() {
+		Response response = noContent();
+		when(request.get()).thenReturn(response);
+		assertFalse(provider(config()).resolveAtStage("urn:ns:missing", "jena", "snapshot").isPresent());
+	}
+
+	/** The package-only accessor is the same fetch, so it must not cost a second round trip. */
+	@Test
+	void getEPackageAtStage_isResolveAtStageWithoutTheOrigin() {
+		Response response = contentOk("<xmi/>".getBytes(StandardCharsets.UTF_8));
+		when(request.get()).thenReturn(response);
+
+		assertTrue(provider(config()).getEPackageAtStage("urn:ns:gateway", "jena", "snapshot").isPresent());
+
+		verify(request, org.mockito.Mockito.times(1)).get();
 	}
 
 	@Test
