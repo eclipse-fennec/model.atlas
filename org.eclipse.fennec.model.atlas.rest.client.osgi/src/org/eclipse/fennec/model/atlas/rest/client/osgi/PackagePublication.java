@@ -40,6 +40,21 @@ interface PackagePublication {
 	 */
 	boolean publish(EPackage ePackage, String scope, String stage, String version, String serverFingerprint);
 
+	/**
+	 * Publish a version, saying whether it came from the scope's final stage (#279/#280).
+	 * <p>
+	 * Several versions of one nsURI can be published at once, one per stage, but only one can
+	 * answer where a bare nsURI is asked for — {@code publishedEPackage} and the
+	 * {@code EPackage.Registry.INSTANCE} mirror. The final-stage version holds that slot, so a
+	 * staged pre-fetch must say it is not one.
+	 *
+	 * @param finalStage whether this is the scope's final-stage version
+	 */
+	default boolean publish(EPackage ePackage, String scope, String stage, String version, String serverFingerprint,
+			boolean finalStage) {
+		return publish(ePackage, scope, stage, version, serverFingerprint);
+	}
+
 	/** Publish without a server fingerprint cross-check. */
 	default boolean publish(EPackage ePackage, String scope, String stage, String version) {
 		return publish(ePackage, scope, stage, version, null);
