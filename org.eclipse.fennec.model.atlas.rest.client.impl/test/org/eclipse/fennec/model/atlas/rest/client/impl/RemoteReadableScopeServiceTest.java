@@ -15,6 +15,7 @@ package org.eclipse.fennec.model.atlas.rest.client.impl;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNotSame;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
@@ -33,19 +34,25 @@ import java.io.IOException;
 import java.net.URI;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.atomic.AtomicLong;
-import java.util.function.Supplier;
+import java.util.function.Function;
 
+import org.eclipse.emf.ecore.EAttribute;
 import org.eclipse.emf.ecore.EClass;
 import org.eclipse.emf.ecore.EObject;
+import org.eclipse.emf.ecore.EPackage;
 import org.eclipse.emf.ecore.EcoreFactory;
+import org.eclipse.emf.ecore.EcorePackage;
 import org.eclipse.emf.ecore.resource.Resource;
 import org.eclipse.emf.ecore.resource.ResourceSet;
 import org.eclipse.emf.ecore.resource.impl.ResourceSetImpl;
+import org.eclipse.emf.ecore.util.EcoreUtil;
 import org.eclipse.emf.ecore.xmi.impl.XMIResourceFactoryImpl;
 import org.eclipse.fennec.model.atlas.rest.client.api.ClientConfiguration;
 import org.eclipse.fennec.model.atlas.rest.client.api.ModelAtlasClientException;
 import org.eclipse.fennec.model.atlas.rest.client.api.NotFoundException;
+import org.eclipse.fennec.model.atlas.rest.client.api.RemoteEPackageProvider;
 import org.eclipse.fennec.model.atlas.rest.client.api.TransportException;
 import org.eclipse.fennec.model.atlas.scope.api.ReadableRegistryView;
 import org.eclipse.fennec.model.atlas.scope.api.RegistryType;
@@ -85,8 +92,8 @@ class RemoteReadableScopeServiceTest {
 		when(request.header(anyString(), any())).thenReturn(request);
 	}
 
-	/** Bare {@link ResourceSet}s: the service installs the XMI factory, and Ecore is globally registered. */
-	private static final Supplier<ResourceSet> RESOURCE_SETS = ResourceSetImpl::new;
+	/** Bare {@link ResourceSet}s per stage: the service installs the XMI factory, and Ecore is globally registered. */
+	private static final Function<String, ResourceSet> RESOURCE_SETS = stage -> new ResourceSetImpl();
 
 	private RemoteReadableScopeService service() {
 		RemoteReadableScopeService service = new RemoteReadableScopeService(target, config(), SCOPE, RESOURCE_SETS);
@@ -500,6 +507,143 @@ class RemoteReadableScopeServiceTest {
 
 		assertThrows(ModelAtlasClientException.class,
 				() -> unprimedService().registryView("schema", "snapshot").get("some.ns.uri"));
+	}
+
+	// ---- staged reads resolve their metamodel at the requested stage (#272) ----
+
+	/** nsURI shared by both versions: the whole point is that it does not identify the version. */
+	private static final String STAGED_NS_URI = "https://example.org/staged-read/1.0";
+
+	/**
+	 * Two versions of one nsURI live at once — {@code draft} carries a feature the final
+	 * stage does not. An instance written against the draft schema, read through the draft
+	 * view, must be parsed with the draft metamodel: anything else silently drops the
+	 * feature and looks like corrupt data rather than a version mismatch.
+	 */
+	@Test
+	void stagedRead_resolvesMetamodelAtRequestedStage() throws IOException {
+		EPackage draft = reportPackage(true);
+		EPackage released = reportPackage(false);
+
+		RemoteEPackageProvider provider = mock(RemoteEPackageProvider.class);
+		// Stage-free resolution answers with the final stage — correct for a final-stage read.
+		when(provider.ensureAvailable(STAGED_NS_URI)).thenReturn(Optional.of(released));
+		when(provider.getEPackage(STAGED_NS_URI)).thenReturn(Optional.of(released));
+		// Stage-explicit resolution answers with the draft content.
+		when(provider.getEPackageAtStage(STAGED_NS_URI, SCOPE, "draft")).thenReturn(Optional.of(draft));
+
+		EClass reportEClass = (EClass) draft.getEClassifier("Report");
+		EObject report = EcoreUtil.create(reportEClass);
+		report.eSet(reportEClass.getEStructuralFeature("draftOnly"), "only-in-draft");
+		// Build the response before stubbing: contentOk() stubs another mock, and doing that
+		// inside thenReturn(...) trips Mockito's unfinished-stubbing check.
+		Response content = contentOk(xmi(report), null);
+		when(request.get()).thenReturn(content);
+
+		RemoteReadableScopeService service = new RemoteReadableScopeService(target, config(), SCOPE,
+				atlasResourceSets(provider));
+		service.primeRegistryTypes(Map.of(REGISTRY, RegistryType.COCL));
+
+		EObject read = service.registryView(REGISTRY, "draft").get("r1").orElseThrow();
+
+		assertNotNull(read.eClass().getEStructuralFeature("draftOnly"),
+				"draft-only feature missing: the instance was parsed against the final-stage schema");
+		assertEquals("only-in-draft", read.eGet(read.eClass().getEStructuralFeature("draftOnly")));
+	}
+
+	/**
+	 * Inheritance: a view's requested stage need not be its content's origin stage — an object
+	 * can come from a parent scope's final stage. The stage-explicit package look-up then misses,
+	 * and resolution must fall back to the stage-free path instead of failing.
+	 */
+	@Test
+	void stagedRead_packageAbsentAtThatStage_fallsBackToStageFreeResolution() throws IOException {
+		EPackage inherited = reportPackage(false);
+
+		RemoteEPackageProvider provider = mock(RemoteEPackageProvider.class);
+		when(provider.getEPackageAtStage(STAGED_NS_URI, SCOPE, "draft")).thenReturn(Optional.empty());
+		when(provider.ensureAvailable(STAGED_NS_URI)).thenReturn(Optional.of(inherited));
+
+		EClass reportEClass = (EClass) inherited.getEClassifier("Report");
+		EObject report = EcoreUtil.create(reportEClass);
+		report.eSet(reportEClass.getEStructuralFeature("title"), "inherited");
+		Response content = contentOk(xmi(report), null);
+		when(request.get()).thenReturn(content);
+
+		RemoteReadableScopeService service = new RemoteReadableScopeService(target, config(), SCOPE,
+				atlasResourceSets(provider));
+		service.primeRegistryTypes(Map.of(REGISTRY, RegistryType.COCL));
+
+		EObject read = service.registryView(REGISTRY, "draft").get("r1").orElseThrow();
+
+		assertEquals("inherited", read.eGet(read.eClass().getEStructuralFeature("title")));
+		verify(provider).getEPackageAtStage(STAGED_NS_URI, SCOPE, "draft");
+		verify(provider).ensureAvailable(STAGED_NS_URI);
+	}
+
+	/** A final-stage read is stage-free: it must not take the stage-explicit route at all. */
+	@Test
+	void finalStageRead_neverAsksForAStage() throws IOException {
+		EPackage released = reportPackage(false);
+
+		RemoteEPackageProvider provider = mock(RemoteEPackageProvider.class);
+		when(provider.ensureAvailable(STAGED_NS_URI)).thenReturn(Optional.of(released));
+
+		EObject report = EcoreUtil.create((EClass) released.getEClassifier("Report"));
+		Response content = contentOk(xmi(report), null);
+		when(request.get()).thenReturn(content);
+
+		RemoteReadableScopeService service = new RemoteReadableScopeService(target, config(), SCOPE,
+				atlasResourceSets(provider));
+		service.primeRegistryTypes(Map.of(REGISTRY, RegistryType.COCL));
+
+		service.get(REGISTRY, "r1").orElseThrow();
+
+		verify(provider).ensureAvailable(STAGED_NS_URI);
+		verify(provider, org.mockito.Mockito.never()).getEPackageAtStage(anyString(), anyString(), anyString());
+	}
+
+	/**
+	 * The {@code Report} EClass under {@link #STAGED_NS_URI}, with or without the attribute
+	 * that exists only in {@code draft}. Same nsURI, diverging content — two model versions.
+	 */
+	private static EPackage reportPackage(boolean withDraftOnly) {
+		EPackage ePackage = EcoreFactory.eINSTANCE.createEPackage();
+		ePackage.setName("stagedRead");
+		ePackage.setNsURI(STAGED_NS_URI);
+		ePackage.setNsPrefix("sr");
+
+		EClass report = EcoreFactory.eINSTANCE.createEClass();
+		report.setName("Report");
+		ePackage.getEClassifiers().add(report);
+
+		report.getEStructuralFeatures().add(stringAttribute("title"));
+		if (withDraftOnly) {
+			report.getEStructuralFeatures().add(stringAttribute("draftOnly"));
+		}
+		return ePackage;
+	}
+
+	private static EAttribute stringAttribute(String name) {
+		EAttribute attribute = EcoreFactory.eINSTANCE.createEAttribute();
+		attribute.setName(name);
+		attribute.setEType(EcorePackage.Literals.ESTRING);
+		return attribute;
+	}
+
+	/**
+	 * ResourceSets wired the way {@code ModelAtlasClientImpl} wires them for decoding: an
+	 * {@link AtlasDelegatingPackageRegistry} in front of the remote provider.
+	 */
+	private static Function<String, ResourceSet> atlasResourceSets(RemoteEPackageProvider provider) {
+		return stage -> {
+			ResourceSetImpl resourceSet = new ResourceSetImpl();
+			resourceSet.getResourceFactoryRegistry().getExtensionToFactoryMap()
+					.put(Resource.Factory.Registry.DEFAULT_EXTENSION, new XMIResourceFactoryImpl());
+			resourceSet.setPackageRegistry(
+					new AtlasDelegatingPackageRegistry(EPackage.Registry.INSTANCE, provider, SCOPE, stage));
+			return resourceSet;
+		};
 	}
 
 	// ---- transport --------------------------------------------------------

@@ -21,7 +21,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.function.Supplier;
+import java.util.function.Function;
 import java.util.stream.Stream;
 
 import org.eclipse.emf.common.util.URI;
@@ -89,7 +89,8 @@ class RemoteReadableScopeService implements ReadableScopeService<EObject> {
 
 	private final WebTarget baseTarget;
 	private final String scopeName;
-	private final Supplier<ResourceSet> resourceSetFactory;
+	/** stage (null = final) → a ResourceSet whose package registry resolves at that stage (#272). */
+	private final Function<String, ResourceSet> resourceSetFactory;
 	private final ClientCache<ObjectKey, EObject> cache;
 	/**
 	 * Lazily-cached {@code registry name → RegistryType} map for this scope, used by the
@@ -99,13 +100,13 @@ class RemoteReadableScopeService implements ReadableScopeService<EObject> {
 	private volatile Map<String, RegistryType> registryTypes;
 
 	RemoteReadableScopeService(WebTarget baseTarget, ClientConfiguration configuration, String scopeName,
-			Supplier<ResourceSet> resourceSetFactory) {
+			Function<String, ResourceSet> resourceSetFactory) {
 		this(baseTarget, configuration, scopeName, resourceSetFactory,
 				new ClientCache<>(configuration.getCacheMaxEntries(), configuration.getCacheTtlMs()));
 	}
 
 	RemoteReadableScopeService(WebTarget baseTarget, ClientConfiguration configuration, String scopeName,
-			Supplier<ResourceSet> resourceSetFactory, ClientCache<ObjectKey, EObject> cache) {
+			Function<String, ResourceSet> resourceSetFactory, ClientCache<ObjectKey, EObject> cache) {
 		this.baseTarget = Objects.requireNonNull(baseTarget, "baseTarget");
 		Objects.requireNonNull(configuration, "configuration");
 		this.scopeName = Objects.requireNonNull(scopeName, "scopeName");
@@ -287,9 +288,13 @@ class RemoteReadableScopeService implements ReadableScopeService<EObject> {
 	 * {@code XMIResource} — no codec. The body is loaded into a ResourceSet from
 	 * {@link #resourceSetFactory} (the Atlas-aware set), so the object's metamodel and
 	 * cross-references resolve locally or via the remote Atlas.
+	 * <p>
+	 * The set is built for {@code key.stage()} (#272): several versions of one nsURI can be
+	 * live at once, one per stage, so an instance read at a stage must be parsed with that
+	 * stage's metamodel. A stage-free key (final stage) keeps the previous behaviour.
 	 */
 	private EObject loadEObject(byte[] body, ObjectKey key) {
-		ResourceSet resourceSet = resourceSetFactory.get();
+		ResourceSet resourceSet = resourceSetFactory.apply(key.stage());
 		// Be robust if a bare ResourceSet is supplied: ensure an XMI factory is present.
 		resourceSet.getResourceFactoryRegistry().getExtensionToFactoryMap()
 				.putIfAbsent(Resource.Factory.Registry.DEFAULT_EXTENSION, new XMIResourceFactoryImpl());
