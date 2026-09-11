@@ -64,6 +64,20 @@ public interface DriftListener {
 	}
 
 	/**
+	 * As {@link #onPackageAdded(String, EPackage)}, saying <em>where</em> the package appeared
+	 * (#281). A package added at a non-final stage is reported with that stage, so a listener can
+	 * publish the version that actually appeared rather than looking for one at the final stage and
+	 * finding nothing. The default forwards to the nsURI form, which is the behaviour before this
+	 * hook existed.
+	 *
+	 * @param drift      the change, carrying the scope and stage it happened at
+	 * @param newPackage the package as resolved at that stage
+	 */
+	default void onPackageAdded(PackageDrift drift, EPackage newPackage) {
+		onPackageAdded(drift.nsUri(), newPackage);
+	}
+
+	/**
 	 * An EPackage changed on the server and was re-fetched.
 	 *
 	 * @param nsUri      the affected nsURI

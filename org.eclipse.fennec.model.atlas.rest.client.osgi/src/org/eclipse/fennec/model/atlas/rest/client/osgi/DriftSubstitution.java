@@ -26,6 +26,7 @@ import java.util.logging.Logger;
 import org.eclipse.emf.ecore.EPackage;
 import org.eclipse.fennec.model.atlas.rest.client.api.DriftListener;
 import org.eclipse.fennec.model.atlas.rest.client.api.ModelAtlasClientException;
+import org.eclipse.fennec.model.atlas.rest.client.api.PackageDrift;
 import org.eclipse.fennec.model.atlas.rest.client.api.ResolvedEPackage;
 
 /**
@@ -95,6 +96,24 @@ final class DriftSubstitution implements DriftListener {
 		// A published service can outlive its provider-cache entry (TTL / size
 		// eviction); reporting the published set keeps such packages drift-visible.
 		return publishedNsUris.get();
+	}
+
+	@Override
+	public void onPackageAdded(PackageDrift drift, EPackage newPackage) {
+		String nsUri = drift.nsUri();
+		if (drift.stage() != null) {
+			// #281: the package appeared at a named stage. Publish the version that appeared,
+			// as a staged one — the final-stage path claims the nsURI slot on its own terms.
+			if (!wantsAddition.test(nsUri)) {
+				return;
+			}
+			if (adopter.publish(newPackage, drift.scope(), drift.stage(), null, drift.fingerprint(), false)) {
+				LOGGER.log(Level.INFO, () -> "Drift: published newly discovered EPackage " + nsUri + " from scope "
+						+ drift.scope() + " at stage " + drift.stage());
+			}
+			return;
+		}
+		onPackageAdded(nsUri, newPackage);
 	}
 
 	@Override

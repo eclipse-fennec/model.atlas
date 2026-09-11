@@ -884,4 +884,52 @@ class DriftWatcherTest {
 		verify(provider, never()).revalidate(anyString());
 		verify(provider).refresh("urn:ns:a");
 	}
+
+	// ---- discovery follows the stage the change names (#281) --------------
+
+	/**
+	 * The reported failure, from the drift side: a package published to a non-final stage after
+	 * activation was looked for at the final stage, found nowhere, and never discovered.
+	 */
+	@Test
+	void aPackageAddedAtANonFinalStageIsDiscoveredThere() {
+		Response baseline = headResponse(200, Response.Status.OK, "\"v1\"", null);
+		Response changed = headChangedPackages("\"v2\"", "approved|urn:ns:new|fp1:new");
+		when(request.head()).thenReturn(baseline, changed);
+		when(provider.cachedNsUris()).thenReturn(Set.of()); // nothing held: this is a discovery
+		when(provider.getEPackageAtStage("urn:ns:new", "jena", "approved"))
+				.thenReturn(Optional.of(pkg("urn:ns:new")));
+
+		RecordingListener listener = new RecordingListener();
+		DriftWatcher watcher = discoveringWatcher();
+		watcher.addListener(listener);
+
+		watcher.check();
+		DriftReport report = watcher.check();
+
+		assertEquals(List.of("urn:ns:new"), report.getAddedNsUris());
+		assertEquals(List.of("urn:ns:new"), listener.added);
+		// Never asked the stage-free path, which is where it would have found nothing.
+		verify(provider, never()).refresh("urn:ns:new");
+	}
+
+	/** Without version detail the discovery is stage-free, exactly as before. */
+	@Test
+	void withoutAStageDiscoveryStaysStageFree() {
+		Response baseline = headResponse(200, Response.Status.OK, "\"v1\"", null);
+		Response changed = headResponse(200, Response.Status.OK, "\"v2\"", "urn:ns:new");
+		when(request.head()).thenReturn(baseline, changed);
+		when(provider.cachedNsUris()).thenReturn(Set.of());
+		when(provider.refresh("urn:ns:new")).thenReturn(Optional.of(pkg("urn:ns:new")));
+
+		RecordingListener listener = new RecordingListener();
+		DriftWatcher watcher = discoveringWatcher();
+		watcher.addListener(listener);
+
+		watcher.check();
+		watcher.check();
+
+		assertEquals(List.of("urn:ns:new"), listener.added);
+		verify(provider, never()).getEPackageAtStage(anyString(), anyString(), anyString());
+	}
 }

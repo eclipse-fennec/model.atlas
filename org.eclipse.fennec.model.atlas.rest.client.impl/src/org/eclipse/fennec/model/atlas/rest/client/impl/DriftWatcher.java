@@ -244,7 +244,7 @@ class DriftWatcher implements AutoCloseable {
 			Set<String> changed, Set<String> removed, PackageDrift drift) {
 		if (!held.contains(nsUri)) {
 			if (discoverAdditions) {
-				discover(nsUri, provider, added);
+				discover(nsUri, provider, added, drift);
 			}
 			return;
 		}
@@ -334,7 +334,7 @@ class DriftWatcher implements AutoCloseable {
 			Set<String> changed, Set<String> removed) {
 		if (!held.contains(nsUri)) {
 			if (discoverAdditions) {
-				discover(nsUri, provider, added);
+				discover(nsUri, provider, added, null);
 			}
 			return;
 		}
@@ -380,10 +380,15 @@ class DriftWatcher implements AutoCloseable {
 	 * absent ⇒ not (yet) resolvable stage-free, which is the normal state of a
 	 * draft-only publish and is not an event of any kind.
 	 */
-	private void discover(String nsUri, RemoteEPackageProviderImpl provider, Set<String> added) {
+	private void discover(String nsUri, RemoteEPackageProviderImpl provider, Set<String> added, PackageDrift drift) {
 		Optional<EPackage> fetched;
 		try {
-			fetched = provider.refresh(nsUri);
+			// Resolve where the change actually happened (#281). Refreshing stage-free would look
+			// for the package at the final stage and find nothing, which is precisely how a
+			// package added at a non-final stage stayed invisible.
+			fetched = drift != null && drift.stage() != null
+					? provider.getEPackageAtStage(nsUri, drift.scope(), drift.stage())
+					: provider.refresh(nsUri);
 		} catch (RuntimeException e) {
 			// Discovery is best-effort: a package we never held failing to fetch must not
 			// cost the remaining nsURIs in this header their change/removal events.
@@ -391,12 +396,13 @@ class DriftWatcher implements AutoCloseable {
 			return;
 		}
 		if (fetched.isEmpty()) {
-			logger.log(Level.FINE,
-					() -> "Drift: " + nsUri + " was reported changed but is not resolvable at a final stage yet");
+			logger.log(Level.FINE, () -> "Drift: " + nsUri + " was reported changed but is not resolvable"
+					+ (drift != null && drift.stage() != null ? " at stage " + drift.stage() : " at a final stage")
+					+ " yet");
 			return;
 		}
 		added.add(nsUri);
-		fireAdded(nsUri, fetched.get());
+		fireAdded(nsUri, fetched.get(), drift);
 	}
 
 	/**
@@ -490,10 +496,14 @@ class DriftWatcher implements AutoCloseable {
 		} // else: only unchanged sibling views → no event
 	}
 
-	private void fireAdded(String nsUri, EPackage ePackage) {
+	private void fireAdded(String nsUri, EPackage ePackage, PackageDrift drift) {
+		PackageDrift reported = drift != null ? drift : new PackageDrift(null, null, nsUri, null);
 		for (DriftListener listener : listeners) {
 			try {
-				listener.onPackageAdded(nsUri, ePackage);
+				if (!accepts(listener, drift, nsUri)) {
+					continue;
+				}
+				listener.onPackageAdded(reported, ePackage);
 			} catch (RuntimeException e) {
 				logger.log(Level.WARNING, e, () -> "DriftListener onPackageAdded failed for " + nsUri);
 			}
