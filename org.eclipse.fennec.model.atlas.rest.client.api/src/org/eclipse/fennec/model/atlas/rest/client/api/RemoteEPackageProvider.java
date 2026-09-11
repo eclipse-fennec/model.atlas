@@ -120,30 +120,34 @@ public interface RemoteEPackageProvider {
 	 * Used by {@code AtlasScopedFetchOnMissRegistry} when a stage-specific registry
 	 * misses its prefetched set.
 	 * <p>
-	 * The default implementation falls back to the stage-free {@link #getEPackage(String)};
-	 * the remote client overrides it with the stage-explicit endpoint.
+	 * <b>Answer at that stage, or do not answer.</b> Several versions of one nsURI can be
+	 * live at once, one per stage, so returning the stage-free (final-stage) package here
+	 * would be a wrong answer presented as a right one — the caller cannot tell the two
+	 * apart. An implementation that cannot resolve per stage must return
+	 * {@link Optional#empty()} if the absence is a fact, or throw
+	 * {@link UnsupportedOperationException} if it simply does not model stages. Callers
+	 * treat empty as "not at this stage" and may fall back deliberately.
 	 *
 	 * @param nsUri     the package namespace URI
 	 * @param scopeName the scope to query
 	 * @param stage     the stage name (must not be null)
 	 * @return the package at that scope+stage, or empty if absent
 	 */
-	default Optional<EPackage> getEPackageAtStage(String nsUri, String scopeName, String stage) {
-		return getEPackage(nsUri);
-	}
+	Optional<EPackage> getEPackageAtStage(String nsUri, String scopeName, String stage);
 
 	/**
 	 * List the packages available in a specific scope at a specific stage
 	 * ({@code GET /{scopeName}/schema/stages/{stage}}, P6-6).
 	 * <p>
-	 * The default implementation falls back to the stage-free {@link #listPackages(String)};
-	 * the remote client overrides it with the stage-explicit endpoint.
+	 * <b>Enumerate that stage, or do not answer.</b> As for
+	 * {@link #getEPackageAtStage(String, String, String)}, falling back to the stage-free
+	 * listing would report the final stage's contents as the stage's own. An implementation
+	 * that does not model stages must return an empty list or throw
+	 * {@link UnsupportedOperationException}.
 	 *
 	 * @param scopeName the scope to enumerate
 	 * @param stage     the stage name (must not be null)
 	 * @return the package descriptors (possibly empty)
 	 */
-	default List<PackageDescriptor> listPackagesAtStage(String scopeName, String stage) {
-		return listPackages(scopeName);
-	}
+	List<PackageDescriptor> listPackagesAtStage(String scopeName, String stage);
 }

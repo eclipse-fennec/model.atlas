@@ -17,6 +17,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -41,6 +42,7 @@ import org.eclipse.emf.ecore.resource.Resource;
 import org.eclipse.emf.ecore.resource.ResourceSet;
 import org.eclipse.emf.ecore.resource.impl.ResourceSetImpl;
 import org.eclipse.emf.ecore.xmi.impl.XMIResourceFactoryImpl;
+import org.eclipse.fennec.model.atlas.rest.client.api.PackageDescriptor;
 import org.eclipse.fennec.model.atlas.rest.client.api.RemoteEPackageProvider;
 import org.eclipse.fennec.model.atlas.rest.client.api.ResolvedEPackage;
 import org.junit.jupiter.api.Test;
@@ -85,6 +87,19 @@ class AtlasDelegatingPackageRegistryTest {
 			return ensureAvailable(nsUri)
 					.map(pkg -> new ResolvedEPackage(pkg, nsUri, "test", "schema", "released", null));
 		}
+
+		// This fake models no stages. Answering a stage query with its stage-free content
+		// would be the silent degradation #275 removed, so it refuses instead.
+
+		@Override
+		public Optional<EPackage> getEPackageAtStage(String nsUri, String scopeName, String stage) {
+			throw new UnsupportedOperationException("stage-free fake: no package is modelled per stage");
+		}
+
+		@Override
+		public List<PackageDescriptor> listPackagesAtStage(String scopeName, String stage) {
+			throw new UnsupportedOperationException("stage-free fake: no package is modelled per stage");
+		}
 	}
 
 	private static EPackage demoPackage() {
@@ -101,6 +116,23 @@ class AtlasDelegatingPackageRegistryTest {
 		label.setEType(EcorePackage.eINSTANCE.getEString());
 		item.getEStructuralFeatures().add(label);
 		return pkg;
+	}
+
+	/**
+	 * #275 — a provider that does not implement the stage-explicit look-up must say so, loudly.
+	 * {@link FakeProvider} models no stages; asked for one it must fail rather than hand back
+	 * its stage-free content dressed up as the answer for that stage.
+	 */
+	@Test
+	void stageLocated_providerWithoutStageSupport_failsInsteadOfServingFinalStageContent() {
+		FakeProvider remote = new FakeProvider();
+		remote.packages.put(NS, demoPackage());
+
+		AtlasDelegatingPackageRegistry registry = new AtlasDelegatingPackageRegistry(new EPackageRegistryImpl(),
+				remote, "jena", "draft");
+
+		assertThrows(UnsupportedOperationException.class, () -> registry.getEPackage(NS),
+				"a stage query answered with stage-free content is a wrong answer presented as a right one");
 	}
 
 	@Test
