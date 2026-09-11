@@ -59,13 +59,21 @@ class AtlasScopedFetchOnMissRegistry extends ConcurrentHashMap<String, Object>
 	private final String stage;
 	private final transient RemoteEPackageProvider provider;
 	private final transient EPackage.Registry parent;
+	/** Told what this bridge holds (#277); {@link StagedPackageSink#NONE} when nothing is listening. */
+	private final transient StagedPackageSink sink;
 
 	AtlasScopedFetchOnMissRegistry(String scope, String stage, RemoteEPackageProvider provider,
 			EPackage.Registry parent) {
+		this(scope, stage, provider, parent, StagedPackageSink.NONE);
+	}
+
+	AtlasScopedFetchOnMissRegistry(String scope, String stage, RemoteEPackageProvider provider,
+			EPackage.Registry parent, StagedPackageSink sink) {
 		this.scope = Objects.requireNonNull(scope, "scope");
 		this.stage = stage;
 		this.provider = Objects.requireNonNull(provider, "provider");
 		this.parent = Objects.requireNonNull(parent, "parent");
+		this.sink = Objects.requireNonNull(sink, "sink");
 	}
 
 	@Override
@@ -84,8 +92,18 @@ class AtlasScopedFetchOnMissRegistry extends ConcurrentHashMap<String, Object>
 				? provider.getEPackageAtStage(nsURI, scope, stage)
 				: provider.getEPackage(nsURI);
 		if (fetched.isPresent()) {
-			put(nsURI, fetched.get());
-			return fetched.get();
+			EPackage ePackage = fetched.get();
+			// Register on the *transition*, not on the fetch. Two concurrent misses on one nsURI
+			// both fetch and both arrive here; a plain put would tell the sink twice about one
+			// held entry, and a refcounting sink would then never drop it (#277).
+			Object previous = putIfAbsent(nsURI, ePackage);
+			if (previous == null) {
+				sink.registered(ePackage);
+				return ePackage;
+			}
+			// Lost the race: the winner's package is the one this bridge holds.
+			EPackage winner = resolveOwn(nsURI);
+			return winner != null ? winner : ePackage;
 		}
 		// 3. Delegate to parent (global/default registry).
 		return parent.getEPackage(nsURI);
@@ -102,7 +120,10 @@ class AtlasScopedFetchOnMissRegistry extends ConcurrentHashMap<String, Object>
 	}
 
 	private EPackage resolveOwn(String nsURI) {
-		Object value = get(nsURI);
+		return asEPackage(get(nsURI));
+	}
+
+	private static EPackage asEPackage(Object value) {
 		if (value instanceof EPackage ePackage) {
 			return ePackage;
 		}
@@ -134,12 +155,32 @@ class AtlasScopedFetchOnMissRegistry extends ConcurrentHashMap<String, Object>
 
 	@Override
 	public void onPackageChanged(String nsUri, EPackage newPackage) {
-		remove(nsUri);
+		evict(nsUri);
 	}
 
 	@Override
 	public void onPackageRemoved(String nsUri) {
-		remove(nsUri);
+		evict(nsUri);
+	}
+
+	/**
+	 * Drop one entry and tell the sink which package went. {@code remove} hands back the evicted
+	 * value, which an {@code EPackage.Registry} may hold as a {@link EPackage.Descriptor}, so it is
+	 * unwrapped the same way a lookup unwraps it.
+	 */
+	private void evict(String nsUri) {
+		Object evicted = remove(nsUri);
+		EPackage ePackage = asEPackage(evicted);
+		if (ePackage != null) {
+			sink.evicted(ePackage);
+		}
+	}
+
+	/** Drop everything, telling the sink about each — the bridge is going away. */
+	void dispose() {
+		for (String nsUri : keySet().toArray(String[]::new)) {
+			evict(nsUri);
+		}
 	}
 
 	String getScope() {

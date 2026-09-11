@@ -18,8 +18,16 @@ Bundle-Description: OSGi DS front-end for the Model Atlas client. P3-1: a Config
 	org.osgi.service.metatype.annotations;version=latest,\
 	org.osgi.service.cm;version=latest,\
 	org.eclipse.fennec.model.atlas.scope.api;version=snapshot,\
-	org.eclipse.fennec.emf.osgi.component.minimal;version=latest
+	org.eclipse.fennec.emf.osgi.component.minimal;version=latest,\
+	org.eclipse.fennec.emf.osgi.metadata;version=latest
 
 -testpath: \
 	junit-jupiter-api,\
 	org.eclipse.fennec.model.atlas.rest.client.api
+
+# The metadata layer is optional at runtime (#277): a deployment without it resolves and behaves
+# exactly as before, the bridge simply registers nothing.
+Import-Package: \
+	org.eclipse.fennec.emf.osgi.metadata;resolution:=optional,\
+	org.eclipse.fennec.emf.osgi.model.metadata;resolution:=optional,\
+	*
