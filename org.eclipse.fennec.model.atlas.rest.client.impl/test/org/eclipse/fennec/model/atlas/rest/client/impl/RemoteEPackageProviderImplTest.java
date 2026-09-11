@@ -46,6 +46,7 @@ import org.eclipse.fennec.model.atlas.rest.client.api.ModelAtlasClientException;
 import org.eclipse.fennec.model.atlas.rest.client.api.NotFoundException;
 import org.eclipse.fennec.model.atlas.rest.client.api.PackageDescriptor;
 import org.eclipse.fennec.model.atlas.rest.client.api.ResolvedEPackage;
+import org.eclipse.fennec.model.atlas.rest.client.api.VersionMismatchException;
 import org.eclipse.fennec.model.atlas.rest.client.api.TransportException;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
@@ -659,6 +660,56 @@ class RemoteEPackageProviderImplTest {
 		assertTrue(provider(config()).getEPackageAtStage("urn:ns:gateway", "jena", "snapshot").isPresent());
 
 		verify(request, org.mockito.Mockito.times(1)).get();
+	}
+
+	// ---- resolveAtStage: pinned reads (#274) ------------------------------
+
+	@Test
+	void resolveAtStage_pinned_sendsTheFingerprintAsAPrecondition() {
+		Response response = contentOk("<xmi/>".getBytes(StandardCharsets.UTF_8));
+		when(response.getHeaderString("Atlas-Fingerprint")).thenReturn("fp1:abc123");
+		when(request.get()).thenReturn(response);
+
+		ResolvedEPackage resolved = provider(config())
+				.resolveAtStage("urn:ns:gateway", "jena", "snapshot", "fp1:abc123").orElseThrow();
+
+		assertEquals("fp1:abc123", resolved.getFingerprint());
+		// Addressing is unchanged; the fingerprint rides along as a precondition.
+		verify(target).queryParam("nsUri", "urn:ns:gateway");
+		verify(target).queryParam("fingerprint", "fp1:abc123");
+	}
+
+	/** No pin, no precondition — the URL must stay exactly what it was before #274. */
+	@Test
+	void resolveAtStage_unpinned_sendsNoFingerprintParam() {
+		Response response = contentOk("<xmi/>".getBytes(StandardCharsets.UTF_8));
+		when(request.get()).thenReturn(response);
+
+		provider(config()).resolveAtStage("urn:ns:gateway", "jena", "snapshot").orElseThrow();
+
+		verify(target).queryParam("nsUri", "urn:ns:gateway");
+		verify(target, org.mockito.Mockito.never()).queryParam(eq("fingerprint"), any());
+	}
+
+	/**
+	 * A stale pin must be distinguishable. The location resolved — this is not a "not found" —
+	 * so answering with the other version, or with an error a caller might retry into it, is what
+	 * the precondition exists to prevent.
+	 */
+	@Test
+	void resolveAtStage_staleFingerprint_raisesVersionMismatch() {
+		Response response = status(412, Response.Status.PRECONDITION_FAILED);
+		when(response.hasEntity()).thenReturn(true);
+		when(response.readEntity(String.class)).thenReturn("expected 'fp1:old' but this location holds 'fp1:new'");
+		when(request.get()).thenReturn(response);
+
+		// Not a NotFoundException: the two are unrelated siblings, so the compiler already rules
+		// out confusing them. What this pins down is that the message says which version was found.
+		VersionMismatchException failure = assertThrows(VersionMismatchException.class,
+				() -> provider(config()).resolveAtStage("urn:ns:gateway", "jena", "snapshot", "fp1:old"));
+
+		assertTrue(failure.getMessage().contains("fp1:new"),
+				"the caller must be told which version is actually there");
 	}
 
 	@Test

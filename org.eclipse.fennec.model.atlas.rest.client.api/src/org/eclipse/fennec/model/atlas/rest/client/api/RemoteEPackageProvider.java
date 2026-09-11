@@ -155,7 +155,28 @@ public interface RemoteEPackageProvider {
 	 * @param stage     the stage name (must not be null)
 	 * @return the resolved package with its origin, or empty if absent at that stage
 	 */
-	Optional<ResolvedEPackage> resolveAtStage(String nsUri, String scopeName, String stage);
+	default Optional<ResolvedEPackage> resolveAtStage(String nsUri, String scopeName, String stage) {
+		return resolveAtStage(nsUri, scopeName, stage, null);
+	}
+
+	/**
+	 * As {@link #resolveAtStage(String, String, String)}, but pinned: {@code fingerprint} asserts
+	 * <em>which model version</em> the caller expects at that location (#274).
+	 * <p>
+	 * Addressing is unchanged — the package is still found by {@code (scope, stage, nsUri)}. The
+	 * fingerprint is a precondition on what is found there, which matters because several versions
+	 * of one nsURI can be live at once and a transition can move them between the moment a client
+	 * lists a version and the moment it fetches one. A pinned read therefore either returns the
+	 * version named or fails; it never returns a different one.
+	 *
+	 * @param nsUri       the package namespace URI
+	 * @param scopeName   the scope to query
+	 * @param stage       the stage name (must not be null)
+	 * @param fingerprint the expected model fingerprint, or {@code null} for no precondition
+	 * @return the resolved package with its origin, or empty if absent at that stage
+	 * @throws VersionMismatchException if a different model version sits at that location
+	 */
+	Optional<ResolvedEPackage> resolveAtStage(String nsUri, String scopeName, String stage, String fingerprint);
 
 	/**
 	 * List the packages available in a specific scope at a specific stage

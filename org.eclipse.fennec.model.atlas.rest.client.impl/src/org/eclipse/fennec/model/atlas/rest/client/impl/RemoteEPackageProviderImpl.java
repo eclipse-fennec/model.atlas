@@ -256,14 +256,21 @@ class RemoteEPackageProviderImpl implements RemoteEPackageProvider {
 	}
 
 	@Override
-	public Optional<ResolvedEPackage> resolveAtStage(String nsUri, String scopeName, String stage) {
+	public Optional<ResolvedEPackage> resolveAtStage(String nsUri, String scopeName, String stage,
+			String fingerprint) {
 		Objects.requireNonNull(nsUri, "nsUri");
 		Objects.requireNonNull(scopeName, "scopeName");
 		Objects.requireNonNull(stage, "stage");
 		// Stage-explicit content: GET /{scope}/schema/stages/{stage}/content?nsUri=…
-		// No caching here — the caller (AtlasScopedFetchOnMissRegistry) owns its own cache.
+		// No caching here — the caller (AtlasScopedFetchOnMissRegistry) owns its own cache, and a
+		// pinned read must not be served from, or poison, the nsURI-keyed stage-free cache.
 		WebTarget target = baseTarget.path(scopeName).path(SCHEMA).path("stages").path(stage).path("content")
 				.queryParam("nsUri", nsUri);
+		if (fingerprint != null && !fingerprint.isBlank()) {
+			// A precondition, not a selector: the server still resolves by location and answers
+			// 412 when what it finds there is a different version (RestSupport maps that).
+			target = target.queryParam("fingerprint", fingerprint);
+		}
 		// Dependencies are fetched from the same scope AND stage: a package staged in
 		// `draft` must not silently inherit from its parent's `release` content.
 		Optional<ContentResult> result = fetchContent(target, nsUri, null, "scope=" + scopeName + ", stage=" + stage,
@@ -393,6 +400,13 @@ class RemoteEPackageProviderImpl implements RemoteEPackageProvider {
 		try {
 			if (RestSupport.isNotModified(response)) {
 				return Optional.of(ContentResult.ofNotModified());
+			}
+			// A failed fingerprint precondition is not a miss (#274). Swallowed as "absent" it
+			// would be worse than useless: the caller falls back to the stage-free path and gets
+			// the very version the pin was there to exclude. It is the one refusal that must
+			// reach the caller.
+			if (response.getStatus() == Response.Status.PRECONDITION_FAILED.getStatusCode()) {
+				throw RestSupport.statusError(response, "resolveAtStage(" + nsUri + ", " + origin + ")");
 			}
 			if (!RestSupport.isSuccess(response)) {
 				reportAbnormalMiss(response, nsUri, origin);

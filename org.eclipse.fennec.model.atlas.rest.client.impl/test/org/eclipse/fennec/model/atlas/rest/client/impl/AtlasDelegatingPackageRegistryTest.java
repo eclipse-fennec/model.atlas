@@ -102,7 +102,8 @@ class AtlasDelegatingPackageRegistryTest {
 		}
 
 		@Override
-		public Optional<ResolvedEPackage> resolveAtStage(String nsUri, String scopeName, String stage) {
+		public Optional<ResolvedEPackage> resolveAtStage(String nsUri, String scopeName, String stage,
+				String fingerprint) {
 			throw new UnsupportedOperationException("stage-free fake: no package is modelled per stage");
 		}
 	}

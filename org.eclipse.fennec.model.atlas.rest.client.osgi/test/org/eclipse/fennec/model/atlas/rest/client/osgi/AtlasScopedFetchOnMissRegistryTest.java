@@ -72,8 +72,10 @@ class AtlasScopedFetchOnMissRegistryTest {
 		}
 
 		@Override
-		public Optional<ResolvedEPackage> resolveAtStage(String nsUri, String scopeName, String stage) {
+		public Optional<ResolvedEPackage> resolveAtStage(String nsUri, String scopeName, String stage,
+				String fingerprint) {
 			// Same content as getEPackageAtStage, reported with the origin it stands for (#273).
+			// This fake records no fingerprints, so it enforces no precondition (#274).
 			return getEPackageAtStage(nsUri, scopeName, stage)
 					.map(pkg -> new ResolvedEPackage(pkg, nsUri, scopeName, null, stage, null, null));
 		}
