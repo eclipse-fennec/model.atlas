@@ -16,6 +16,8 @@ package org.eclipse.fennec.model.atlas.workflow.impl;
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.util.Base64;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -72,26 +74,94 @@ public class AtlasSchemaRegistryService implements RegistryService<EPackage> {
 		this.registryObject = createRegistryObject();
 	}
 	
-	@Reference(target = "(component.name=StaticEPackageRegistry)", policy = ReferencePolicy.DYNAMIC, policyOption = ReferencePolicyOption.GREEDY)
+	/**
+	 * The packages this registry currently mirrors into the shared registry cache and the
+	 * EPackage search index, keyed by nsURI. Guarded by {@link #mirrorLock}.
+	 */
+	private final Map<String, EPackage> mirrored = new HashMap<>();
+	private final Object mirrorLock = new Object();
+
+	/**
+	 * The static registry announces every change of its contents by re-publishing its
+	 * service properties, so the {@code updated} callback is the signal that a package
+	 * arrived, was replaced or went away after this component bound the registry. Each
+	 * signal re-reads the registry and reconciles the mirror against it, so a package
+	 * registered after activation is listed, retrievable and searchable like one that was
+	 * present at activation (issue #282).
+	 */
+	@Reference(target = "(component.name=StaticEPackageRegistry)", policy = ReferencePolicy.DYNAMIC, policyOption = ReferencePolicyOption.GREEDY, updated = "updatedStaticEPackageRegistry")
 	public void bindStaticEPackageRegistry(EPackage.Registry staticPackageRegistry) {
-		this.staticPackageRegistry = staticPackageRegistry;
-		staticPackageRegistry.values().stream().filter(v -> v instanceof EPackage).map(v -> (EPackage) v).forEach(ePackage -> {
-			ObjectMetadata metadata = createMetadata(ePackage);
-			registry.updateCache(metadata);	
-			ePackageIndex.index(metadata, ePackage);
-		});
+		synchronized (mirrorLock) {
+			this.staticPackageRegistry = staticPackageRegistry;
+		}
+		reconcileMirror(staticPackageRegistry);
 	}
-	
+
+	public void updatedStaticEPackageRegistry(EPackage.Registry staticPackageRegistry) {
+		reconcileMirror(staticPackageRegistry);
+	}
+
 	public void unbindStaticEPackageRegistry(EPackage.Registry staticPackageRegistry) {
-		staticPackageRegistry.values().stream().filter(v -> v instanceof EPackage).map(v -> (EPackage) v).forEach(ePackage -> {
-			String objectId = encodeObjectId(ePackage);
-			registry.removeFromCache(WorkflowConstants.ATLAS_SCOPE_NAME, WorkflowConstants.ATLAS_SCHEMA_REGISTRY_NAME,
-					WorkflowConstants.ATLAS_SCHEMA_REGISTRY_STAGE_NAME, objectId);
-			ePackageIndex.remove(new RegistryAddress(WorkflowConstants.ATLAS_SCOPE_NAME,
-					WorkflowConstants.ATLAS_SCHEMA_REGISTRY_NAME,
-					WorkflowConstants.ATLAS_SCHEMA_REGISTRY_STAGE_NAME, objectId));
-		});
-		this.staticPackageRegistry = null;
+		synchronized (mirrorLock) {
+			if (this.staticPackageRegistry != staticPackageRegistry) {
+				// A greedy rebind already bound another registry; its bind owns the mirror now.
+				return;
+			}
+			this.staticPackageRegistry = null;
+			List.copyOf(mirrored.keySet()).forEach(this::forget);
+		}
+	}
+
+	/**
+	 * Brings the mirror in line with what the registry holds right now: packages the
+	 * registry gained are mirrored, packages it lost are forgotten, and a package whose
+	 * instance was replaced under the same nsURI is re-indexed. Packages present in both
+	 * are left untouched, so a reconcile against an unchanged registry is a no-op.
+	 */
+	private void reconcileMirror(EPackage.Registry source) {
+		Map<String, EPackage> current = new LinkedHashMap<>();
+		source.values().stream().filter(EPackage.class::isInstance).map(EPackage.class::cast)
+				.filter(AtlasSchemaRegistryService::isAnnounced)
+				.forEach(ePackage -> current.put(ePackage.getNsURI(), ePackage));
+		synchronized (mirrorLock) {
+			if (this.staticPackageRegistry != source) {
+				// A late signal from a registry this component no longer follows.
+				return;
+			}
+			List.copyOf(mirrored.keySet()).stream().filter(nsUri -> !current.containsKey(nsUri)).forEach(this::forget);
+			current.forEach((nsUri, ePackage) -> {
+				if (mirrored.get(nsUri) != ePackage) {
+					mirror(ePackage);
+				}
+			});
+		}
+	}
+
+	private void mirror(EPackage ePackage) {
+		ObjectMetadata metadata = createMetadata(ePackage);
+		registry.updateCache(metadata);
+		ePackageIndex.index(metadata, ePackage);
+		mirrored.put(ePackage.getNsURI(), ePackage);
+	}
+
+	private void forget(String nsUri) {
+		String objectId = encodeObjectId(nsUri);
+		registry.removeFromCache(WorkflowConstants.ATLAS_SCOPE_NAME, WorkflowConstants.ATLAS_SCHEMA_REGISTRY_NAME,
+				WorkflowConstants.ATLAS_SCHEMA_REGISTRY_STAGE_NAME, objectId);
+		ePackageIndex.remove(new RegistryAddress(WorkflowConstants.ATLAS_SCOPE_NAME,
+				WorkflowConstants.ATLAS_SCHEMA_REGISTRY_NAME,
+				WorkflowConstants.ATLAS_SCHEMA_REGISTRY_STAGE_NAME, objectId));
+		mirrored.remove(nsUri);
+	}
+
+	/**
+	 * The static registry only announces packages that carry a name and an nsURI; a
+	 * generated package is put into a registry before either is set. Mirroring the same
+	 * rule keeps this registry in step with what the static registry publishes, and an
+	 * objectId cannot be derived without the nsURI anyway.
+	 */
+	private static boolean isAnnounced(EPackage ePackage) {
+		return ePackage.getNsURI() != null && ePackage.getName() != null;
 	}
 
 	/* 
@@ -400,7 +470,11 @@ public class AtlasSchemaRegistryService implements RegistryService<EPackage> {
 	 * both sides so ids stay stable across platform default charsets.
 	 */
 	private static String encodeObjectId(EPackage ePackage) {
-		return Base64.getUrlEncoder().encodeToString(ePackage.getNsURI().getBytes(StandardCharsets.UTF_8));
+		return encodeObjectId(ePackage.getNsURI());
+	}
+
+	private static String encodeObjectId(String nsUri) {
+		return Base64.getUrlEncoder().encodeToString(nsUri.getBytes(StandardCharsets.UTF_8));
 	}
 
 	/**
