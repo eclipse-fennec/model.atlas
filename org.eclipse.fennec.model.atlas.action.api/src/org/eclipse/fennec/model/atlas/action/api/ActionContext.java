@@ -59,7 +59,11 @@ import org.eclipse.fennec.model.atlas.action.api.StageActionService.ExitReason;
  *                     when this is {@code true}
  * @param metadata     additional metadata carried with the event; escape hatch
  *                     for workflow- or caller-specific data that does not
- *                     belong on the typed surface of this record
+ *                     belong on the typed surface of this record. Keys the
+ *                     workflow itself sets are declared as constants on this
+ *                     record, for example {@link #FINGERPRINT}. Never
+ *                     {@code null}, but an entry is present only when the
+ *                     workflow had a value for it
  * @since 2.0.0
  */
 public record ActionContext(
@@ -76,4 +80,34 @@ public record ActionContext(
         String notes,
         boolean replay,
         Map<String, Object> metadata) {
+
+    /**
+     * {@link #metadata()} key carrying the fingerprint of the object the event is about,
+     * as a {@code String}.
+     *
+     * <p>
+     * A fingerprint identifies one revision of a model exactly, which an nsURI cannot: the
+     * same model is legitimately held at two stages at once. An action that is addressed by
+     * revision rather than by name — reviewing a model version, or deciding whether work
+     * already done for this revision can be skipped — would otherwise have to re-read the
+     * object's metadata to learn something the workflow had in hand when it raised the event.
+     * </p>
+     *
+     * <p>
+     * The entry is absent when the stored object carries no fingerprint. Instances generally
+     * do not; a model does. Read it with {@link #fingerprint()} rather than by key.
+     * </p>
+     */
+    public static final String FINGERPRINT = "fingerprint";
+
+    /**
+     * The fingerprint of the object this event is about, or {@code null} when the object
+     * carries none.
+     *
+     * @return the value of {@link #FINGERPRINT} in {@link #metadata()}, or {@code null}
+     */
+    public String fingerprint() {
+        Object value = metadata == null ? null : metadata.get(FINGERPRINT);
+        return value instanceof String s ? s : null;
+    }
 }
