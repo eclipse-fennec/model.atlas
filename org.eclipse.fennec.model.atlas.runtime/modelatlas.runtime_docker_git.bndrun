@@ -152,6 +152,7 @@
 	org.eclipse.fennec.model.atlas.validation;version=snapshot;startlevel=1105,\
 	org.eclipse.fennec.model.atlas.validation.model;version=snapshot;startlevel=1106,\
 	org.eclipse.fennec.model.atlas.validation.rest;version=snapshot;startlevel=1107,\
+	org.eclipse.fennec.model.atlas.action.api;version=snapshot,\
 	org.eclipse.fennec.model.atlas.workflow;version=snapshot;startlevel=1108,\
 	org.eclipse.jgit;version='[7.7.1,7.7.2)';startlevel=1109,\
 	org.eclipse.jgit.ssh.apache;version='[7.7.1,7.7.2)';startlevel=1110,\

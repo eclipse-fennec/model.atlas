@@ -44,6 +44,7 @@
 	org.eclipse.fennec.model.atlas.management.lucene;version=snapshot,\
 	org.eclipse.fennec.model.atlas.scope.api;version=snapshot,\
 	org.eclipse.fennec.model.atlas.tests.common;version=snapshot,\
+	org.eclipse.fennec.model.atlas.action.api;version=snapshot,\
 	org.eclipse.fennec.model.atlas.workflow;version=snapshot,\
 	org.opentest4j;version='[1.3.0,1.3.1)',\
 	org.osgi.service.cm;version='[1.6.1,1.6.2)',\

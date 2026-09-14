@@ -34,6 +34,7 @@ src=${^src},src-wf-api
 	tools.jackson.core.jackson-databind,\
 	tools.jackson.core.jackson-core,\
 	org.eclipse.fennec.model.atlas.management.lucene;version=snapshot,\
+	org.eclipse.fennec.model.atlas.action.api;version=snapshot,\
 	org.eclipse.fennec.model.atlas.scope.api;version=snapshot,\
 	org.eclipse.fennec.model.atlas.config.check;version=snapshot
 

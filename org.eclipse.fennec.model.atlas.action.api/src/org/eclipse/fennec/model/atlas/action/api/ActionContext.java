@@ -11,12 +11,13 @@
  * Contributors:
  *      Data In Motion - initial API and implementation
  */
-package org.eclipse.fennec.model.atlas.workflow;
+package org.eclipse.fennec.model.atlas.action.api;
 
 import java.time.Instant;
 import java.util.Map;
 
-import org.eclipse.fennec.model.atlas.workflow.StageActionService.ExitReason;
+import org.eclipse.fennec.model.atlas.action.api.StageActionService.ExitReason;
+
 
 /**
  * Context passed to a {@link StageActionService} callback.

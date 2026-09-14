@@ -1,0 +1,13 @@
+Bundle-Name: Model Atlas Action API — stage lifecycle SPI
+Bundle-Description: The whiteboard contract (StageActionService, ActionContext) an \
+ implementation registers to be called when an object enters, is updated in, or leaves \
+ a stage. Deliberately free of EMF and of the rest of the workflow bundle, so an \
+ implementor outside this repository — or a bundle here that only reacts to stage \
+ events — does not inherit the platform to provide one.
+
+-workingset: workflow
+
+-buildpath: \
+	org.osgi.util.promise;version=latest,\
+	org.osgi.annotation.versioning;version=latest,\
+	org.osgi.annotation.bundle;version=latest

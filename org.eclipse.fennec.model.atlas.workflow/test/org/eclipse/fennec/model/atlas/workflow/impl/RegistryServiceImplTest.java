@@ -38,7 +38,7 @@ import org.eclipse.emf.ecore.resource.impl.ResourceSetImpl;
 import org.eclipse.fennec.model.atlas.mgmt.api.EObjectStorageService;
 import org.eclipse.fennec.model.atlas.mgmt.management.ManagementFactory;
 import org.eclipse.fennec.model.atlas.mgmt.management.ObjectMetadata;
-import org.eclipse.fennec.model.atlas.workflow.StageActionService;
+import org.eclipse.fennec.model.atlas.action.api.StageActionService;
 import org.osgi.util.promise.Promises;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -189,6 +189,7 @@ public class RegistryServiceImplTest {
 
             verify(stageAction, never()).onEnter(any());
         }
+
     }
 
     @Nested

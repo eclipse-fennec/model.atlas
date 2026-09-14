@@ -28,6 +28,7 @@ src=${^src},src-gen
 	org.osgi.util.function;version=latest,\
 	org.osgi.service.component;version=latest,\
 	osgi.cmpn,\
+	org.eclipse.fennec.model.atlas.action.api;version=snapshot,\
 	org.eclipse.fennec.model.atlas.scope.api;version=snapshot,\
 	org.eclipse.fennec.model.atlas.management;version=snapshot,\
 	org.eclipse.fennec.model.atlas.workflow;version=snapshot,\
