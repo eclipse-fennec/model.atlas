@@ -21,3 +21,7 @@ bin/
 bin_test/
 .claude/*
 !.claude/settings.json
+
+# Per-machine compose environment: the ngrok URL Anthropic dials, the API key that pays for a
+# GDPR review, and the token that must match the GDPR runtime. Never committed.
+docker/dockercompose/.env

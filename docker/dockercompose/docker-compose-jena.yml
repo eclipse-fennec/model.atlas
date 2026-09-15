@@ -9,6 +9,13 @@ services:
     environment:
       - STORAGE_ROOT=/opt/modelatlas/runtime/data
       - ATLAS_HTTP_PORT=8080
+      # The GDPR review runs from inside this runtime: it pays Anthropic, and Anthropic dials the
+      # GDPR MCP server from its own side, so a localhost URL cannot work. Passed through from the
+      # host environment - nothing is stored here. With them unset the check service simply never
+      # activates, and a model entering 'approved' is not reviewed.
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY:-}
+      - GDPR_MCP_PUBLIC_URL=${GDPR_MCP_PUBLIC_URL:-}
+      - MCP_GDPR_AUTH_TOKEN=${MCP_GDPR_AUTH_TOKEN:-}
     volumes:
       - ./configs:/opt/modelatlas/runtime/load:ro
       - atlas-data:/opt/modelatlas/runtime/data
