@@ -13,8 +13,8 @@
  */
 package org.eclipse.fennec.model.atlas.rest.client.impl;
 
-import java.util.LinkedHashSet;
 import java.util.ArrayList;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -35,6 +35,7 @@ import org.eclipse.emf.ecore.EPackage;
 import org.eclipse.fennec.model.atlas.rest.client.api.DriftListener;
 import org.eclipse.fennec.model.atlas.rest.client.api.DriftReport;
 import org.eclipse.fennec.model.atlas.rest.client.api.PackageDrift;
+import org.eclipse.fennec.model.atlas.rest.client.api.ResolvedEPackage;
 
 import jakarta.ws.rs.core.HttpHeaders;
 import jakarta.ws.rs.core.Response;
@@ -75,6 +76,8 @@ class DriftWatcher implements AutoCloseable {
 	private final WebTarget baseTarget;
 	private final Supplier<List<String>> scopesSupplier;
 	private final Supplier<RemoteEPackageProviderImpl> providerSupplier;
+	/** {@code eager.stages}: where else to look before calling a package removed (#286). */
+	private final Supplier<List<String>> stagesSupplier;
 	private final Function<String, RemoteReadableScopeService> scopeServiceLookup;
 	private final long intervalMs;
 	private final boolean discoverAdditions;
@@ -98,7 +101,20 @@ class DriftWatcher implements AutoCloseable {
 			Supplier<RemoteEPackageProviderImpl> providerSupplier,
 			Function<String, RemoteReadableScopeService> scopeServiceLookup, long intervalMs,
 			boolean discoverAdditions) {
+		this(baseTarget, scopesSupplier, providerSupplier, scopeServiceLookup, intervalMs, discoverAdditions,
+				List::of);
+	}
+
+	/**
+	 * @param stagesSupplier the configured {@code eager.stages}, tried before a package whose
+	 *                       stage-free read came back empty is reported removed (#286)
+	 */
+	DriftWatcher(WebTarget baseTarget, Supplier<List<String>> scopesSupplier,
+			Supplier<RemoteEPackageProviderImpl> providerSupplier,
+			Function<String, RemoteReadableScopeService> scopeServiceLookup, long intervalMs,
+			boolean discoverAdditions, Supplier<List<String>> stagesSupplier) {
 		this.discoverAdditions = discoverAdditions;
+		this.stagesSupplier = Objects.requireNonNull(stagesSupplier, "stagesSupplier");
 		this.baseTarget = baseTarget;
 		this.scopesSupplier = Objects.requireNonNull(scopesSupplier, "scopesSupplier");
 		this.providerSupplier = Objects.requireNonNull(providerSupplier, "providerSupplier");
@@ -252,10 +268,68 @@ class DriftWatcher implements AutoCloseable {
 		if (refreshed.isPresent()) {
 			changed.add(nsUri);
 			fireChanged(nsUri, refreshed.get(), drift);
-		} else {
-			removed.add(nsUri);
-			fireRemoved(nsUri, drift);
+			return;
 		}
+		// Empty is not the same as gone (#286). refresh() reads stage-free, which the server
+		// resolves to the scope's FINAL stage, so a package living anywhere else reads as absent —
+		// and a promotion between two non-final stages would be reported as a deletion. Look where
+		// it could actually be before revoking anything.
+		Optional<Relocation> relocated = relocate(nsUri, provider, drift);
+		if (relocated.isPresent()) {
+			changed.add(nsUri);
+			fireChanged(nsUri, relocated.get().ePackage(), relocated.get().drift());
+			return;
+		}
+		removed.add(nsUri);
+		fireRemoved(nsUri, drift);
+	}
+
+	/** A package found somewhere other than the final stage, and where that was. */
+	private record Relocation(PackageDrift drift, EPackage ePackage) {
+	}
+
+	/**
+	 * Re-resolve a package the stage-free read could not serve, at the stages it could plausibly
+	 * be: the one the drift entry names first — the server has just told us the change happened
+	 * there — then each configured {@code eager.stage}.
+	 * <p>
+	 * Empty means the atlas serves it nowhere we look, which is what {@code REMOVED} has to mean if
+	 * a deletion is still to unpublish promptly.
+	 */
+	private Optional<Relocation> relocate(String nsUri, RemoteEPackageProviderImpl provider, PackageDrift drift) {
+		String scope = drift == null ? null : drift.scope();
+		if (scope == null) {
+			return Optional.empty(); // nothing to address a stage-explicit read with
+		}
+		List<String> candidates = new ArrayList<>();
+		// The stage the entry names, unless the entry is the server saying the version has *left*
+		// that stage — an empty fingerprint means exactly that (see parseChangedPackages), and a
+		// promotion reports the departure and the arrival as two entries.
+		if (drift.stage() != null && drift.fingerprint() != null) {
+			candidates.add(drift.stage());
+		}
+		for (String stage : stagesSupplier.get()) {
+			if (stage != null && !stage.isBlank() && !candidates.contains(stage)) {
+				candidates.add(stage);
+			}
+		}
+		for (String stage : candidates) {
+			try {
+				Optional<ResolvedEPackage> found = provider.resolveAtStage(nsUri, scope, stage);
+				if (found.isPresent()) {
+					ResolvedEPackage resolved = found.get();
+					logger.log(Level.FINE, () -> "Drift: " + nsUri + " is not served stage-free but is at stage "
+							+ stage + " of scope " + scope + "; treating it as a change, not a removal");
+					return Optional.of(new Relocation(
+							new PackageDrift(scope, stage, nsUri, resolved.getFingerprint()), resolved.getEPackage()));
+				}
+			} catch (RuntimeException e) {
+				// One stage failing must not decide the question for the others, nor turn a
+				// revalidation into a removal on its own.
+				logger.log(Level.FINE, e, () -> "Drift: could not read " + nsUri + " at stage " + stage);
+			}
+		}
+		return Optional.empty();
 	}
 
 	/**
@@ -511,12 +585,13 @@ class DriftWatcher implements AutoCloseable {
 	}
 
 	private void fireChanged(String nsUri, EPackage ePackage, PackageDrift drift) {
+		PackageDrift reported = drift != null ? drift : new PackageDrift(null, null, nsUri, null);
 		for (DriftListener listener : listeners) {
 			try {
 				if (!accepts(listener, drift, nsUri)) {
 					continue;
 				}
-				listener.onPackageChanged(nsUri, ePackage);
+				listener.onPackageChanged(reported, ePackage);
 			} catch (RuntimeException e) {
 				logger.log(Level.WARNING, e, () -> "DriftListener onPackageChanged failed for " + nsUri);
 			}

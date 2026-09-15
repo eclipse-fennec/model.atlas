@@ -18,6 +18,7 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -32,6 +33,7 @@ import org.eclipse.emf.ecore.EcoreFactory;
 import org.eclipse.fennec.model.atlas.rest.client.api.DriftListener;
 import org.eclipse.fennec.model.atlas.rest.client.api.DriftReport;
 import org.eclipse.fennec.model.atlas.rest.client.api.PackageDrift;
+import org.eclipse.fennec.model.atlas.rest.client.api.ResolvedEPackage;
 import org.junit.jupiter.api.Test;
 
 import jakarta.ws.rs.client.Invocation;
@@ -110,6 +112,94 @@ class DriftWatcherTest {
 		public boolean acceptsDrift(PackageDrift drift) {
 			return drift == null || drift.concerns(scope, stage);
 		}
+	}
+
+	// ---- #286: a stage-free miss is not a removal ---------------------------
+
+	/** A watcher that also knows the configured {@code eager.stages}. */
+	private DriftWatcher watcher(String... eagerStages) {
+		return new DriftWatcher(target, () -> List.of("jena"), () -> provider, s -> null, 0, false,
+				() -> List.of(eagerStages));
+	}
+
+	private static ResolvedEPackage resolved(String nsUri, String stage) {
+		return new ResolvedEPackage(pkg(nsUri), nsUri, "jena", "schema", stage, null, "fp1:" + stage);
+	}
+
+	/**
+	 * The promotion case. The package is held, the stage-free read cannot serve it — the server
+	 * answers that one from the scope's final stage — but it is right there at the stage the drift
+	 * entry names. That is a change, not a deletion.
+	 */
+	@Test
+	void heldNsUri_missingStageFreeButPresentAtTheDriftStage_isAChange() {
+		Response baseline = headResponse(200, Response.Status.OK, "e1", null);
+		Response changed = headChangedPackages("e2", "approved|nsPromoted|fp2");
+		when(request.head()).thenReturn(baseline, changed);
+		when(provider.cachedNsUris()).thenReturn(Set.of("nsPromoted"));
+		when(provider.refresh("nsPromoted")).thenReturn(Optional.empty());
+		when(provider.resolveAtStage("nsPromoted", "jena", "approved"))
+				.thenReturn(Optional.of(resolved("nsPromoted", "approved")));
+
+		RecordingListener listener = new RecordingListener();
+		DriftWatcher watcher = watcher();
+		watcher.addListener(listener);
+		watcher.check();
+		DriftReport report = watcher.check();
+
+		assertEquals(List.of("nsPromoted"), listener.changed);
+		assertTrue(listener.removed.isEmpty(), "a package the atlas still serves must not be reported removed");
+		assertTrue(report.getChangedNsUris().contains("nsPromoted"));
+		assertFalse(report.getRemovedNsUris().contains("nsPromoted"));
+	}
+
+	/**
+	 * Without a stage in the drift entry — an atlas that does not send the version-aware header —
+	 * the configured {@code eager.stages} are where to look.
+	 */
+	@Test
+	void heldNsUri_missingStageFree_isLookedForAtTheConfiguredStages() {
+		Response baseline = headResponse(200, Response.Status.OK, "e1", null);
+		Response changed = headResponse(200, Response.Status.OK, "e2", "nsPromoted");
+		when(request.head()).thenReturn(baseline, changed);
+		when(provider.cachedNsUris()).thenReturn(Set.of("nsPromoted"));
+		when(provider.refresh("nsPromoted")).thenReturn(Optional.empty());
+		when(provider.resolveAtStage("nsPromoted", "jena", "draft")).thenReturn(Optional.empty());
+		when(provider.resolveAtStage("nsPromoted", "jena", "approved"))
+				.thenReturn(Optional.of(resolved("nsPromoted", "approved")));
+
+		RecordingListener listener = new RecordingListener();
+		DriftWatcher watcher = watcher("draft", "approved");
+		watcher.addListener(listener);
+		watcher.check();
+		watcher.check();
+
+		assertEquals(List.of("nsPromoted"), listener.changed);
+		assertTrue(listener.removed.isEmpty());
+	}
+
+	/**
+	 * The invariant the extra lookups must not cost: served nowhere we look is still a removal, on
+	 * the same tick.
+	 */
+	@Test
+	void heldNsUri_servedNowhere_isStillARemoval() {
+		Response baseline = headResponse(200, Response.Status.OK, "e1", null);
+		Response changed = headChangedPackages("e2", "approved|nsGone|");
+		when(request.head()).thenReturn(baseline, changed);
+		when(provider.cachedNsUris()).thenReturn(Set.of("nsGone"));
+		when(provider.refresh("nsGone")).thenReturn(Optional.empty());
+		when(provider.resolveAtStage(eq("nsGone"), eq("jena"), anyString())).thenReturn(Optional.empty());
+
+		RecordingListener listener = new RecordingListener();
+		DriftWatcher watcher = watcher("draft", "approved");
+		watcher.addListener(listener);
+		watcher.check();
+		DriftReport report = watcher.check();
+
+		assertEquals(List.of("nsGone"), listener.removed);
+		assertTrue(listener.changed.isEmpty());
+		assertTrue(report.getRemovedNsUris().contains("nsGone"));
 	}
 
 	private static EPackage pkg(String nsUri) {

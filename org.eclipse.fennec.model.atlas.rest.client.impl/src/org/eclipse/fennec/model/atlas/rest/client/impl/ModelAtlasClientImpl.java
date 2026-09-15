@@ -79,7 +79,10 @@ public class ModelAtlasClientImpl implements ModelAtlasClient {
 		// fetches on demand and needs no discovery (issue #228).
 		boolean discoverAdditions = configuration.getMode() != ResolutionMode.LAZY;
 		this.driftWatcher = new DriftWatcher(baseTarget, this::scopesToWatch, this::ePackagesImpl,
-				readOnlyScopes::get, configuration.getDriftCheckIntervalMs(), discoverAdditions);
+				readOnlyScopes::get, configuration.getDriftCheckIntervalMs(), discoverAdditions,
+				// Where to look for a package the stage-free read cannot serve, before concluding
+				// it was deleted (#286).
+				configuration::getEagerStages);
 		this.driftWatcher.start();
 	}
 

@@ -19,10 +19,12 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
 import java.io.IOException;
+import java.net.URLEncoder;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -32,6 +34,8 @@ import java.util.Hashtable;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import org.eclipse.emf.ecore.EPackage;
@@ -92,6 +96,8 @@ public class StagedPackageVisibilityIT {
 	private static final String JENA_SCOPE = "jena";
 	private static final String FINAL_STAGE = "release";
 	private static final String STAGED = "approved";
+	/** The stage a package is authored at, non-final and not in {@code eager.stages}. */
+	private static final String DRAFT = "draft";
 	private static final String CONFIG_LOAD_DIR = "/opt/modelatlas/runtime/load";
 	private static final String STORAGE_ROOT = "/opt/modelatlas/runtime/data";
 
@@ -108,6 +114,10 @@ public class StagedPackageVisibilityIT {
 	private static final String TWO_VERSION_NS = "http://atlas.example/test/twoversions/1.0";
 	/** Published at {@code approved} only after the client is already up. */
 	private static final String LATE_NS = "http://atlas.example/test/latestage/1.0";
+	/** Authored at {@code draft} while the client is up, then promoted to {@code approved} (#286). */
+	private static final String PROMOTED_NS = "http://atlas.example/test/promoted/1.0";
+	/** Published at {@code approved}, then deleted outright — a removal must stay a removal (#286). */
+	private static final String DELETED_NS = "http://atlas.example/test/deleted/1.0";
 
 	private static GenericContainer<?> atlas;
 	private static URI baseUri;
@@ -210,6 +220,103 @@ public class StagedPackageVisibilityIT {
 				"a package added at a non-final stage must be discovered there, not looked for at the final stage");
 	}
 
+	/**
+	 * #286 — a promotion must not read as a deletion.
+	 * <p>
+	 * Discovery is stage-aware and publishes the package where the drift entry says it is
+	 * ({@code draft}); revalidation then asks the stage-free endpoint, which the server resolves to
+	 * the scope's <em>final</em> stage. {@code approved} is not final for {@code jena}, so the read
+	 * comes back empty and the publication is revoked — one drift interval after it appeared, and
+	 * with nothing to re-register it.
+	 * <p>
+	 * The observable is the published service, because that is what feeds {@code MetadataService}
+	 * in the consumer: with it revoked, a fingerprint stops resolving and a review refuses at its
+	 * first tool call.
+	 */
+	@Test
+	public void aPromotedPackageStaysPublished(
+			@InjectConfiguration(withFactoryConfig = @WithFactoryConfiguration(factoryPid = PID,
+					name = "staged-promotion", location = "?")) Configuration configuration,
+			@InjectService(cardinality = 0, filter = "(atlas.remote=true)") //
+			ServiceAware<EPackage> remotePackages) throws Exception {
+
+		Hashtable<String, Object> props = eagerWithStages(STAGED);
+		props.put("drift.check.interval.ms", (int) DRIFT_INTERVAL_MS);
+		configuration.update(props);
+		assertNotNull(remotePackages.waitForService(SERVICE_WAIT_MS), "the client should be up and pre-fetched");
+		awaitDriftBaseline();
+
+		assertUploaded(upload(ecore("promoted", PROMOTED_NS, false), DRAFT, "Promoted"), PROMOTED_NS, DRAFT);
+		assertTrue(awaitNsUri(remotePackages, PROMOTED_NS),
+				"the package should first be discovered at the stage it was authored at (#281); if this is what "
+						+ "fails, the premise of the test is broken rather than the behaviour under test");
+
+		assertTransitioned(transition(objectIdAt(PROMOTED_NS, DRAFT), DRAFT, STAGED), PROMOTED_NS);
+
+		assertTrue(stillPublished(remotePackages, PROMOTED_NS),
+				"a package promoted to another non-final stage must stay published; it is still served by the "
+						+ "atlas at " + STAGED + ", and unpublishing it makes a promotion indistinguishable "
+						+ "from a deletion");
+	}
+
+	/**
+	 * #286 — and the publication must say where the package now is. A consumer that filters on
+	 * {@code atlas.stage} would otherwise be reading a stale fact: the service would claim
+	 * {@code draft} for a package the atlas serves at {@code approved}.
+	 */
+	@Test
+	public void aPromotedPackageIsPublishedAtItsNewStage(
+			@InjectConfiguration(withFactoryConfig = @WithFactoryConfiguration(factoryPid = PID,
+					name = "staged-promotion-provenance", location = "?")) Configuration configuration,
+			@InjectService(cardinality = 0, filter = "(&(atlas.remote=true)(atlas.stage=approved))") //
+			ServiceAware<EPackage> approvedPackages,
+			@InjectService(cardinality = 0, filter = "(atlas.remote=true)") //
+			ServiceAware<EPackage> remotePackages) throws Exception {
+
+		Hashtable<String, Object> props = eagerWithStages(STAGED);
+		props.put("drift.check.interval.ms", (int) DRIFT_INTERVAL_MS);
+		configuration.update(props);
+		assertNotNull(remotePackages.waitForService(SERVICE_WAIT_MS), "the client should be up and pre-fetched");
+		awaitDriftBaseline();
+
+		String nsUri = PROMOTED_NS + "/provenance";
+		assertUploaded(upload(ecore("promotedprov", nsUri, false), DRAFT, "PromotedProvenance"), nsUri, DRAFT);
+		assertTrue(awaitNsUri(remotePackages, nsUri), "the package should first be discovered at " + DRAFT);
+
+		assertTransitioned(transition(objectIdAt(nsUri, DRAFT), DRAFT, STAGED), nsUri);
+
+		assertTrue(awaitNsUri(approvedPackages, nsUri),
+				"after the promotion the publication should carry atlas.stage=" + STAGED + ", was: "
+						+ stagesOf(remotePackages, nsUri));
+	}
+
+	/**
+	 * The invariant the fix must not trade away: a package the atlas really has dropped has to be
+	 * unpublished, and promptly. Looking harder before concluding {@code REMOVED} must not leave a
+	 * deleted package lingering in the consumer.
+	 */
+	@Test
+	public void aDeletedPackageIsStillUnpublished(
+			@InjectConfiguration(withFactoryConfig = @WithFactoryConfiguration(factoryPid = PID,
+					name = "staged-deletion", location = "?")) Configuration configuration,
+			@InjectService(cardinality = 0, filter = "(atlas.remote=true)") //
+			ServiceAware<EPackage> remotePackages) throws Exception {
+
+		Hashtable<String, Object> props = eagerWithStages(STAGED);
+		props.put("drift.check.interval.ms", (int) DRIFT_INTERVAL_MS);
+		configuration.update(props);
+		assertNotNull(remotePackages.waitForService(SERVICE_WAIT_MS), "the client should be up and pre-fetched");
+		awaitDriftBaseline();
+
+		assertUploaded(upload(ecore("deleted", DELETED_NS, false), STAGED, "Deleted"), DELETED_NS, STAGED);
+		assertTrue(awaitNsUri(remotePackages, DELETED_NS), "the package should be discovered at " + STAGED);
+
+		assertTrue(delete(DELETED_NS, STAGED) < 300, "deleting the package should succeed");
+
+		assertTrue(awaitGone(remotePackages, DELETED_NS),
+				"a package the atlas no longer serves anywhere must be unpublished");
+	}
+
 	// ---- helpers ------------------------------------------------------------
 
 	private static Hashtable<String, Object> eagerWithStages(String... stages) {
@@ -277,6 +384,94 @@ public class StagedPackageVisibilityIT {
 		while (System.currentTimeMillis() < deadline && referencesFor(aware, nsUri, context).size() < expected) {
 			Thread.sleep(100L);
 		}
+	}
+
+
+	/**
+	 * Wait out the drift watcher's first probe of the scope.
+	 * <p>
+	 * That probe stores the scope's ETag and deliberately emits nothing —
+	 * {@code DriftWatcher.checkScope}: <em>"first sight of this scope: establish the baseline, emit
+	 * nothing"</em>. A change made before it is therefore folded into the baseline and never
+	 * reported, so a test that uploads the moment activation publishes something is racing it.
+	 */
+	private static void awaitDriftBaseline() throws Exception {
+		Thread.sleep(DRIFT_INTERVAL_MS * 8);
+	}
+
+	/**
+	 * The transition endpoint takes the objectId, which only the server knows. The stage listing
+	 * carries one metadata object per stored package, each opening with its own id.
+	 */
+	private static String objectIdAt(String nsUri, String stage) throws IOException, InterruptedException {
+		String listing = HttpClient.newHttpClient()
+				.send(HttpRequest.newBuilder(URI.create(baseUri + "/" + JENA_SCOPE + "/schema/stages/" + stage))
+						.GET().build(), HttpResponse.BodyHandlers.ofString())
+				.body();
+		for (String entry : listing.split("\\{\"objectId\"")) {
+			Matcher id = Pattern.compile("^\\s*:\\s*\"([^\"]+)\"").matcher(entry);
+			if (entry.contains(nsUri) && id.find()) {
+				return id.group(1);
+			}
+		}
+		throw new AssertionError("no objectId for " + nsUri + " at stage " + stage + ", listing was: " + listing);
+	}
+
+	private static int transition(String objectId, String fromStage, String toStage)
+			throws IOException, InterruptedException {
+		String body = """
+				{"_type":"http://eclipse.org/fennec/model/atlas/rest/1.0#//StageTransitionRequest",\
+				"objectId":"%s","targetStage":"%s"}""".formatted(objectId, toStage);
+		return HttpClient.newHttpClient().send(HttpRequest
+				.newBuilder(URI.create(
+						baseUri + "/" + JENA_SCOPE + "/schema/stages/" + fromStage + "/actions/transition"))
+				.header("Content-Type", "application/json").POST(HttpRequest.BodyPublishers.ofString(body)).build(),
+				HttpResponse.BodyHandlers.ofString()).statusCode();
+	}
+
+	private static void assertTransitioned(int status, String nsUri) {
+		assertEquals(200, status, () -> "promoting " + nsUri + " should succeed");
+	}
+
+	private static int delete(String nsUri, String stage) throws IOException, InterruptedException {
+		return HttpClient.newHttpClient()
+				.send(HttpRequest
+						.newBuilder(URI.create(baseUri + "/" + JENA_SCOPE + "/schema/stages/" + stage + "?nsUri="
+								+ URLEncoder.encode(nsUri, StandardCharsets.UTF_8)))
+						.DELETE().build(), HttpResponse.BodyHandlers.ofString())
+				.statusCode();
+	}
+
+	private static Set<Object> stagesOf(ServiceAware<EPackage> aware, String nsUri) {
+		return aware.getServiceReferences().stream()
+				.filter(ref -> nsUri.equals(String.valueOf(ref.getProperty("emf.nsURI"))))
+				.map(ref -> ref.getProperty(ATLAS_STAGE)).collect(Collectors.toSet());
+	}
+
+	/**
+	 * Present for a whole stretch of drift ticks rather than merely present once: the failure is a
+	 * publication that appears and is then revoked, which a single look would not catch.
+	 */
+	private static boolean stillPublished(ServiceAware<EPackage> aware, String nsUri) throws Exception {
+		long deadline = System.currentTimeMillis() + SERVICE_WAIT_MS;
+		while (System.currentTimeMillis() < deadline) {
+			if (!nsUrisOf(aware).contains(nsUri)) {
+				return false;
+			}
+			Thread.sleep(DRIFT_INTERVAL_MS);
+		}
+		return true;
+	}
+
+	private static boolean awaitGone(ServiceAware<EPackage> aware, String nsUri) throws Exception {
+		long deadline = System.currentTimeMillis() + SERVICE_WAIT_MS;
+		while (System.currentTimeMillis() < deadline) {
+			if (!nsUrisOf(aware).contains(nsUri)) {
+				return true;
+			}
+			Thread.sleep(100L);
+		}
+		return false;
 	}
 
 	private static boolean awaitNsUri(ServiceAware<EPackage> aware, String nsUri) throws Exception {

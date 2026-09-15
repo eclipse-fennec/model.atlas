@@ -101,6 +101,23 @@ public interface DriftListener {
 	void onPackageChanged(String nsUri, EPackage newPackage);
 
 	/**
+	 * As {@link #onPackageChanged(String, EPackage)}, saying <em>where</em> the atlas serves the
+	 * package now (#286).
+	 * <p>
+	 * A listener that re-resolves stage-free cannot see a package held at a non-final stage, and
+	 * must not read that emptiness as a removal: a promotion between two non-final stages would
+	 * otherwise be indistinguishable from a deletion. The stage named here is where the watcher
+	 * actually found it. The default forwards to the nsURI form, which is the behaviour before
+	 * this method existed.
+	 *
+	 * @param drift      where the change happened, carrying the scope, the stage and the version
+	 * @param newPackage the package as the atlas serves it there
+	 */
+	default void onPackageChanged(PackageDrift drift, EPackage newPackage) {
+		onPackageChanged(drift.nsUri(), newPackage);
+	}
+
+	/**
 	 * An EPackage is no longer available on the server; its cache entry was
 	 * dropped.
 	 *
