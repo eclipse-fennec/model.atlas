@@ -12,7 +12,7 @@
  *   Data In Motion Consulting - initial implementation
  * ******************************************************************
  */
-package org.eclipse.fennec.model.atlas.mcp.tools;
+package org.eclipse.fennec.model.atlas.publisher.impl;
 
 import java.nio.charset.StandardCharsets;
 import java.util.LinkedHashMap;
@@ -24,6 +24,8 @@ import java.util.logging.Logger;
 import org.eclipse.emf.ecore.EPackage;
 import org.eclipse.fennec.emf.osgi.ResourceSetFactory;
 import org.eclipse.fennec.emf.osgi.metadata.MetadataService;
+import org.eclipse.fennec.model.atlas.publisher.PackagePublisher;
+import org.eclipse.fennec.model.atlas.publisher.PublishException;
 import org.osgi.service.component.annotations.Activate;
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Deactivate;
@@ -31,12 +33,14 @@ import org.osgi.service.component.annotations.Reference;
 import org.osgi.service.metatype.annotations.Designate;
 
 /**
- * Publishes a registered {@link EPackage} to a model.atlas stage.
+ * The {@link PackagePublisher} this bundle registers: a registered
+ * {@link EPackage} to a model.atlas schema stage, over the runtime's own URI
+ * handlers.
  * <p>
  * Everything the deployment decides — where to publish, whether an existing draft
  * may be replaced, which namespaces are publishable at all — is resolved here at
- * activation. The tool above it contributes one thing: which registered package
- * the agent named.
+ * activation, from the {@code ModelAtlasPublisher} configuration. The caller
+ * contributes one thing: which registered package it named.
  * <p>
  * The package is reached through {@link MetadataService} rather than through the
  * EMF tool bundle's session registry, which is private to that bundle. That is
@@ -44,19 +48,17 @@ import org.osgi.service.metatype.annotations.Designate;
  * package the EMF tools registered in this session alike, so a model the agent
  * just inferred is publishable by the same path as one that was always there.
  * <p>
- * This is a bundle-private service on purpose. Deploying the bundle <em>is</em>
- * the authorization decision — a runtime without it cannot publish — so there is
- * no write method on the widely consumed read-only {@code ModelAtlasClient} and
- * nothing here is exported.
+ * Everything the contract says about what may be published, and why that is not
+ * the caller's to choose, is on {@link PackagePublisher}.
  *
  * @author ilenia
  * @since Aug 27, 2026
  */
-@Designate(ocd = PublisherConfig.class, factory = true)
-@Component(name = "ModelAtlasPublisher", service = ModelAtlasPublisher.class, configurationPid = "ModelAtlasPublisher")
-public class ModelAtlasPublisher {
+@Designate(ocd = PackagePublisherConfig.class, factory = true)
+@Component(name = "ModelAtlasPublisher", service = PackagePublisher.class, configurationPid = "ModelAtlasPublisher")
+public class PackagePublisherImpl implements PackagePublisher {
 
-	private static final Logger LOGGER = Logger.getLogger(ModelAtlasPublisher.class.getName());
+	private static final Logger LOGGER = Logger.getLogger(PackagePublisherImpl.class.getName());
 
 	/** Query parameter carrying the namespace URI; the server cross-checks it against the body. */
 	private static final String PARAM_NS_URI = "nsUri";
@@ -75,38 +77,17 @@ public class ModelAtlasPublisher {
 	@Reference
 	ResourceSetFactory resourceSetFactory;
 
-	private volatile PublisherSettings settings;
+	private volatile PackagePublisherSettings settings;
 	private volatile AtlasTransport transport;
 	private volatile boolean ownsTransport;
 
-	/**
-	 * The outcome of one publication, as the agent sees it. Carries no upstream
-	 * body and no server address.
-	 *
-	 * @param outcome         {@code created} or {@code updated}
-	 * @param nsURI           the published namespace URI
-	 * @param packageName     the EPackage's name
-	 * @param scope           the scope it went to
-	 * @param stage           the stage it went to
-	 * @param classifierCount how many classifiers the published package holds
-	 * @param byteSize        the size of the serialized document
-	 */
-	public record Receipt(
-			String outcome,
-			String nsURI,
-			String packageName,
-			String scope,
-			String stage,
-			int classifierCount,
-			int byteSize) {
-	}
 
 	/** DS constructor. */
-	public ModelAtlasPublisher() {
+	public PackagePublisherImpl() {
 	}
 
 	/** Test constructor: the transport is supplied, so no client is built and none is closed. */
-	ModelAtlasPublisher(MetadataService metadata, PublisherSettings settings, AtlasTransport transport) {
+	PackagePublisherImpl(MetadataService metadata, PackagePublisherSettings settings, AtlasTransport transport) {
 		this.metadata = metadata;
 		this.settings = settings;
 		this.transport = transport;
@@ -114,15 +95,15 @@ public class ModelAtlasPublisher {
 	}
 
 	@Activate
-	void activate(PublisherConfig config) {
-		// Not folded into PublisherSettings: the base URI belongs to the transport,
+	void activate(PackagePublisherConfig config) {
+		// Not folded into PackagePublisherSettings: the base URI belongs to the transport,
 		// not to the publishing policy. Checked here for the same reason as the
 		// policy's own properties — an unset environment variable interpolates to
 		// "", which would otherwise surface as an unreachable atlas.
 		if (config.base_uri() == null || config.base_uri().isBlank()) {
 			throw new IllegalArgumentException("ModelAtlasPublisher: 'base.uri' must be configured and non-empty");
 		}
-		this.settings = new PublisherSettings(
+		this.settings = new PackagePublisherSettings(
 				config.scope(),
 				config.stage(),
 				config.packages_path(),
@@ -155,19 +136,20 @@ public class ModelAtlasPublisher {
 	 *
 	 * @param nsURI the namespace URI of a package the metadata layer knows
 	 * @return the receipt of a successful publication
-	 * @throws ToolException with an agent-facing message for every failure
+	 * @throws PublishException with a caller-facing message for every failure
 	 */
+	@Override
 	public Receipt publish(String nsURI) {
-		PublisherSettings current = settings;
+		PackagePublisherSettings current = settings;
 		if (!current.isPublishable(nsURI)) {
-			throw new ToolException(String.format(
+			throw new PublishException(String.format(
 					"Namespace '%s' is not publishable. This runtime publishes only the namespaces its "
 							+ "publish.nsuri.allowlist names, and that is a deployment decision — no tool "
 							+ "parameter changes it.", nsURI));
 		}
 		EPackage ePackage = metadata.getPackageMetadata(nsURI)
 				.map(packageMetadata -> packageMetadata.getEPackage())
-				.orElseThrow(() -> new ToolException(String.format(
+				.orElseThrow(() -> new PublishException(String.format(
 						"No package is registered under '%s'. Register the package first — an authored package "
 								+ "becomes visible here only once register_package has accepted it.", nsURI)));
 
@@ -185,16 +167,16 @@ public class ModelAtlasPublisher {
 	}
 
 	/**
-	 * Turns an upstream status into either a receipt or a message the agent can act
+	 * Turns an upstream status into either a receipt or a message the caller can act
 	 * on. The upstream body never crosses this method — it goes to the log, where
 	 * an operator can read it — because it is written for whoever runs the server,
-	 * not for whoever is talking to the agent.
+	 * not for whoever asked for the publication.
 	 */
-	private Receipt receiptOf(AtlasTransport.Result response, PublisherSettings current, String nsURI,
+	private Receipt receiptOf(AtlasTransport.Result response, PackagePublisherSettings current, String nsURI,
 			EPackage ePackage, String body) {
 		int byteSize = body.getBytes(StandardCharsets.UTF_8).length;
 		if (!response.reached()) {
-			throw new ToolException(
+			throw new PublishException(
 					"The model atlas could not be reached. Nothing was published; this is not something you can "
 							+ "correct by changing the package — report it and stop retrying.");
 		}
@@ -204,21 +186,21 @@ public class ModelAtlasPublisher {
 				ePackage.getEClassifiers().size(), byteSize);
 		case 200 -> new Receipt("updated", nsURI, ePackage.getName(), current.scope(), current.stage(),
 				ePackage.getEClassifiers().size(), byteSize);
-		case 409 -> throw new ToolException(String.format(
+		case 409 -> throw new PublishException(String.format(
 				"A package is already published under '%s' in the '%s' stage, and this runtime does not overwrite. "
 						+ "Publish under a namespace that is still free — check first with the discovery tools — "
 						+ "or ask for the existing draft to be replaced by hand.",
 				nsURI, current.stage()));
-		case 403 -> throw new ToolException(String.format(
+		case 403 -> throw new PublishException(String.format(
 				"The package published under '%s' is read-only and cannot be replaced.", nsURI));
-		case 400 -> throw new ToolException(badRequestMessage(current, nsURI));
-		case 401, 407 -> throw new ToolException(
+		case 400 -> throw new PublishException(badRequestMessage(current, nsURI));
+		case 401, 407 -> throw new PublishException(
 				"The model atlas rejected this runtime's credentials. Nothing was published, and no tool "
 						+ "parameter fixes it.");
-		case 415 -> throw new ToolException(String.format(
+		case 415 -> throw new PublishException(String.format(
 				"The model atlas does not accept '%s' for a package body. This is a deployment mismatch, not "
 						+ "something the package can be changed to satisfy.", current.contentType()));
-		default -> throw new ToolException(String.format(
+		default -> throw new PublishException(String.format(
 				"The model atlas refused the publication with status %d. Nothing was published.",
 				response.status()));
 		};
@@ -229,7 +211,7 @@ public class ModelAtlasPublisher {
 	 * and a package it will not accept. One GET separates them, and the difference
 	 * is the difference between an agent retrying pointlessly and an agent stopping.
 	 */
-	private String badRequestMessage(PublisherSettings current, String nsURI) {
+	private String badRequestMessage(PackagePublisherSettings current, String nsURI) {
 		AtlasTransport.Result stage = transport.get(current.stagePath());
 		if (stage.reached() && stage.status() >= 400) {
 			return String.format(
@@ -250,8 +232,8 @@ public class ModelAtlasPublisher {
 		}
 	}
 
-	/** @return the resolved settings, for the tool's description of what it will do */
-	PublisherSettings settings() {
+	/** @return the resolved settings, for the tests */
+	PackagePublisherSettings settings() {
 		return settings;
 	}
 }

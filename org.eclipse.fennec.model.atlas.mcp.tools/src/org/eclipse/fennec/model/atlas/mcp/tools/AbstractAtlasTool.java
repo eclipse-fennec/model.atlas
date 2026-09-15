@@ -20,6 +20,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import org.eclipse.fennec.mcp.api.AbstractMCPTool;
+import org.eclipse.fennec.model.atlas.publisher.PublishException;
 
 import io.modelcontextprotocol.spec.McpSchema;
 import reactor.core.publisher.Mono;
@@ -30,11 +31,13 @@ import tools.jackson.databind.json.JsonMapper;
  * What every tool in this bundle does the same way: turn a tool body into an MCP
  * result, and turn a failure into a message the agent can act on.
  * <p>
- * The split between {@link ToolException} and everything else is the whole point.
- * A {@code ToolException} message is written for the agent and reaches it
- * verbatim; any other exception is a server-side fault, so it is logged where an
- * operator can read it and reported generically — a stack trace or an upstream
- * body would otherwise tell whoever is talking to the agent about the deployment.
+ * The split between a message written for the agent and everything else is the
+ * whole point. A {@link ToolException} — this bundle's own, for an argument the
+ * agent got wrong — and a {@link PublishException} — the publisher's, for a
+ * publication it refused — both reach the agent verbatim; any other exception is
+ * a server-side fault, so it is logged where an operator can read it and reported
+ * generically, because a stack trace or an upstream body would otherwise tell
+ * whoever is talking to the agent about the deployment.
  *
  * @author ilenia
  * @since Sep 10, 2026
@@ -59,7 +62,7 @@ abstract class AbstractAtlasTool extends AbstractMCPTool {
 				Object result = body.call();
 				String text = result instanceof String string ? string : MAPPER.writeValueAsString(result);
 				return McpSchema.CallToolResult.builder().addTextContent(text).build();
-			} catch (ToolException e) {
+			} catch (ToolException | PublishException e) {
 				return error(e.getMessage());
 			} catch (Exception e) {
 				LOGGER.log(Level.SEVERE, e, () -> String.format("Unexpected error executing MCP tool '%s'", getName()));

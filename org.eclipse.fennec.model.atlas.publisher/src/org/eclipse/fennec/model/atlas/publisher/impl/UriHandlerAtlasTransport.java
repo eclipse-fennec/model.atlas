@@ -12,7 +12,7 @@
  *   Data In Motion Consulting - initial implementation
  * ******************************************************************
  */
-package org.eclipse.fennec.model.atlas.mcp.tools;
+package org.eclipse.fennec.model.atlas.publisher.impl;
 
 import java.io.IOException;
 import java.io.InputStream;

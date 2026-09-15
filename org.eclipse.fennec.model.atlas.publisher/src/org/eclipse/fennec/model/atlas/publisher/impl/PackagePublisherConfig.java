@@ -12,7 +12,7 @@
  *   Data In Motion Consulting - initial implementation
  * ******************************************************************
  */
-package org.eclipse.fennec.model.atlas.mcp.tools;
+package org.eclipse.fennec.model.atlas.publisher.impl;
 
 import org.osgi.service.metatype.annotations.AttributeDefinition;
 import org.osgi.service.metatype.annotations.ObjectClassDefinition;
@@ -34,7 +34,7 @@ import org.osgi.service.metatype.annotations.ObjectClassDefinition;
  * @since Aug 27, 2026
  */
 @ObjectClassDefinition(name = "Model Atlas Publisher", description = "Publishes a registered EPackage to a model.atlas draft stage.")
-public @interface PublisherConfig {
+public @interface PackagePublisherConfig {
 
 	@AttributeDefinition(name = "Base URI", description = "Required base URI of the model.atlas REST API, e.g. http://host:8080/atlas/rest", required = true)
 	String base_uri();

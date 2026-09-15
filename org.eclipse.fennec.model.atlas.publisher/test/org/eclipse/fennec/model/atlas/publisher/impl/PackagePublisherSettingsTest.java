@@ -12,7 +12,7 @@
  *   Data In Motion Consulting - initial implementation
  * ******************************************************************
  */
-package org.eclipse.fennec.model.atlas.mcp.tools;
+package org.eclipse.fennec.model.atlas.publisher.impl;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
@@ -27,15 +27,15 @@ import org.junit.jupiter.api.Test;
  * @author ilenia
  * @since Aug 27, 2026
  */
-class PublisherSettingsTest {
+class PackagePublisherSettingsTest {
 
-	private static PublisherSettings settings(List<String> allowList) {
-		return new PublisherSettings("jena", "draft", "schema", "application/xmi", false, allowList);
+	private static PackagePublisherSettings settings(List<String> allowList) {
+		return new PackagePublisherSettings("jena", "draft", "schema", "application/xmi", false, allowList);
 	}
 
 	@Test
 	void anEmptyAllowListPublishesNothing() {
-		PublisherSettings settings = settings(List.of());
+		PackagePublisherSettings settings = settings(List.of());
 
 		assertThat(settings.isPublishable(TestModels.DERIVED_NS_URI)).isFalse();
 		assertThat(settings.isPublishable("")).isFalse();
@@ -44,7 +44,7 @@ class PublisherSettingsTest {
 
 	@Test
 	void anExactRuleAdmitsOnlyThatNamespace() {
-		PublisherSettings settings = settings(List.of(TestModels.DERIVED_NS_URI));
+		PackagePublisherSettings settings = settings(List.of(TestModels.DERIVED_NS_URI));
 
 		assertThat(settings.isPublishable(TestModels.DERIVED_NS_URI)).isTrue();
 		assertThat(settings.isPublishable(TestModels.DERIVED_NS_URI + "/2.0")).isFalse();
@@ -53,7 +53,7 @@ class PublisherSettingsTest {
 
 	@Test
 	void aPrefixRuleIsAnchoredOnTheWholeUri() {
-		PublisherSettings settings = settings(List.of("https://eclipse.org/fennec/test/inference/*"));
+		PackagePublisherSettings settings = settings(List.of("https://eclipse.org/fennec/test/inference/*"));
 
 		assertThat(settings.isPublishable(TestModels.DERIVED_NS_URI)).isTrue();
 		// The rule must not admit a namespace that merely contains it: a host swap is
@@ -64,7 +64,7 @@ class PublisherSettingsTest {
 
 	@Test
 	void blankRulesAreIgnoredRatherThanMatchingEverything() {
-		PublisherSettings settings = settings(List.of("", "   "));
+		PackagePublisherSettings settings = settings(List.of("", "   "));
 
 		assertThat(settings.isPublishable(TestModels.DERIVED_NS_URI)).isFalse();
 	}
@@ -92,16 +92,16 @@ class PublisherSettingsTest {
 	@Test
 	void aBlankScopeOrStageIsRejectedAtConstruction() {
 		assertThatIllegalArgumentException()
-				.isThrownBy(() -> new PublisherSettings("", "draft", "schema", "application/xmi", false, List.of()))
+				.isThrownBy(() -> new PackagePublisherSettings("", "draft", "schema", "application/xmi", false, List.of()))
 				.withMessageContaining("scope");
 		assertThatIllegalArgumentException()
-				.isThrownBy(() -> new PublisherSettings("jena", "  ", "schema", "application/xmi", false, List.of()))
+				.isThrownBy(() -> new PackagePublisherSettings("jena", "  ", "schema", "application/xmi", false, List.of()))
 				.withMessageContaining("stage");
 		assertThatIllegalArgumentException()
-				.isThrownBy(() -> new PublisherSettings("jena", "draft", "", "application/xmi", false, List.of()))
+				.isThrownBy(() -> new PackagePublisherSettings("jena", "draft", "", "application/xmi", false, List.of()))
 				.withMessageContaining("packages.path");
 		assertThatIllegalArgumentException()
-				.isThrownBy(() -> new PublisherSettings("jena", "draft", "schema", null, false, List.of()))
+				.isThrownBy(() -> new PackagePublisherSettings("jena", "draft", "schema", null, false, List.of()))
 				.withMessageContaining("content.type");
 	}
 
@@ -109,7 +109,7 @@ class PublisherSettingsTest {
 	void theAllowListCannotBeMutatedThroughTheListItWasBuiltFrom() {
 		List<String> mutable = new java.util.ArrayList<>();
 		mutable.add(TestModels.DERIVED_NS_URI);
-		PublisherSettings settings = settings(mutable);
+		PackagePublisherSettings settings = settings(mutable);
 		mutable.add(TestModels.BASE_NS_URI);
 
 		assertThat(settings.isPublishable(TestModels.BASE_NS_URI)).isFalse();
@@ -117,7 +117,7 @@ class PublisherSettingsTest {
 
 	@Test
 	void thePathsMatchTheSchemaPackagesResource() {
-		PublisherSettings settings = settings(List.of());
+		PackagePublisherSettings settings = settings(List.of());
 
 		// SchemaPackagesResource is @Path("/{scopeName}/schema") with the create method
 		// at @Path("/stages/{stageName}").

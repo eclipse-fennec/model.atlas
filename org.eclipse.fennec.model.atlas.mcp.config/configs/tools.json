@@ -3,7 +3,7 @@
   
   "MCPToolProvider~modelAtlas": {
 		"name": "model_atlas_tool_provider",
-		"description": "Publishing tools handing a registered EPackage, or an object the agent assembled, to the model atlas. Optional: this provider is absent unless org.eclipse.fennec.model.atlas.mcp.tools is deployed and at least one of ModelAtlasPublisher / ModelAtlasObjectPublisher is configured",
+		"description": "Publishing tools handing a registered EPackage, or an object the agent assembled, to the model atlas. Optional: this provider is absent unless org.eclipse.fennec.model.atlas.mcp.tools and org.eclipse.fennec.model.atlas.publisher are deployed and at least one of ModelAtlasPublisher / ModelAtlasObjectPublisher is configured",
 		"tools.target": "(|(tool.name=post_to_model_atlas)(tool.name=post_object_to_model_atlas))",
 		"tools.cardinality.minimum:int": 1
 	}

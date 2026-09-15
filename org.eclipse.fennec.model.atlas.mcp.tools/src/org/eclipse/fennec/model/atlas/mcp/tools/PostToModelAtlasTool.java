@@ -17,6 +17,7 @@ package org.eclipse.fennec.model.atlas.mcp.tools;
 import java.util.Map;
 
 import org.eclipse.fennec.mcp.api.MCPTool;
+import org.eclipse.fennec.model.atlas.publisher.PackagePublisher;
 import org.osgi.service.component.annotations.Activate;
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
@@ -41,7 +42,7 @@ import reactor.core.publisher.Mono;
 public class PostToModelAtlasTool extends AbstractAtlasTool {
 
 	@Reference
-	ModelAtlasPublisher publisher;
+	PackagePublisher publisher;
 
 	@Activate
 	void activate() {

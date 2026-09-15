@@ -12,7 +12,7 @@
  *   Data In Motion Consulting - initial implementation
  * ******************************************************************
  */
-package org.eclipse.fennec.model.atlas.mcp.tools;
+package org.eclipse.fennec.model.atlas.publisher.impl;
 
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
@@ -27,7 +27,7 @@ import java.nio.charset.StandardCharsets;
  * package — the agent itself wrote.
  * <p>
  * There is deliberately no namespace allow-list here, the control its
- * package-publishing counterpart {@link PublisherSettings} carries. The type of
+ * package-publishing counterpart {@link PackagePublisherSettings} carries. The type of
  * an object is decided by the configured registry, which accepts only its own
  * root EClasses and rejects everything else server-side; a second, in-band type
  * check here would have to parse a body whose format the deployment chooses, and
@@ -68,7 +68,7 @@ public record ObjectPublisherSettings(
 
 	/**
 	 * Rejects a property that is present but empty, for the same reason
-	 * {@link PublisherSettings} does: an interpolated configuration resolves an
+	 * {@link PackagePublisherSettings} does: an interpolated configuration resolves an
 	 * unset environment variable to {@code ""}, a present-but-empty property
 	 * overrides the annotation default rather than falling back to it, and a blank
 	 * segment would build a request path that fails only at publish time — as an

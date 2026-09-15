@@ -12,7 +12,7 @@
  *   Data In Motion Consulting - initial implementation
  * ******************************************************************
  */
-package org.eclipse.fennec.model.atlas.mcp.tools;
+package org.eclipse.fennec.model.atlas.publisher.impl;
 
 import java.util.List;
 
@@ -36,7 +36,7 @@ import java.util.List;
  * @author ilenia
  * @since Aug 26, 2026
  */
-public record PublisherSettings(
+public record PackagePublisherSettings(
 		String scope,
 		String stage,
 		String packagesPath,
@@ -44,7 +44,7 @@ public record PublisherSettings(
 		boolean overwrite,
 		List<String> publishNsUriAllowList) {
 
-	public PublisherSettings {
+	public PackagePublisherSettings {
 		requireText("scope", scope);
 		requireText("stage", stage);
 		requireText("packages.path", packagesPath);

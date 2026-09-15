@@ -25,6 +25,7 @@ import java.util.logging.Logger;
 
 import org.eclipse.fennec.mcp.api.MCPTool;
 import org.eclipse.fennec.model.atlas.mcp.tools.api.PublishableObject;
+import org.eclipse.fennec.model.atlas.publisher.ObjectPublisher;
 import org.eclipse.fennec.model.atlas.mcp.tools.api.PublishableObjectSource;
 import org.osgi.framework.Constants;
 import org.osgi.service.component.annotations.Activate;
@@ -138,8 +139,7 @@ public class PostObjectToModelAtlasTool extends AbstractAtlasTool {
 	 * and it is no longer in the description either: nothing the agent writes is in that format.
 	 */
 	private String contentType() {
-		ObjectPublisherSettings settings = publisher == null ? null : publisher.settings();
-		return settings == null ? null : settings.contentType();
+		return publisher == null ? null : publisher.contentType();
 	}
 
 	@Override

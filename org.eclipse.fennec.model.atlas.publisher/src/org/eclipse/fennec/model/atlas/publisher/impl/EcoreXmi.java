@@ -12,7 +12,7 @@
  *   Data In Motion Consulting - initial implementation
  * ******************************************************************
  */
-package org.eclipse.fennec.model.atlas.mcp.tools;
+package org.eclipse.fennec.model.atlas.publisher.impl;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -33,6 +33,7 @@ import org.eclipse.emf.ecore.util.EcoreUtil;
 import org.eclipse.emf.ecore.xmi.XMLResource;
 import org.eclipse.emf.ecore.xmi.impl.EcoreResourceFactoryImpl;
 import org.eclipse.emf.ecore.xmi.impl.URIHandlerImpl;
+import org.eclipse.fennec.model.atlas.publisher.PublishException;
 
 /**
  * Serializes one {@link EPackage} to the {@code application/xmi} body the
@@ -63,12 +64,12 @@ final class EcoreXmi {
 	/**
 	 * @param ePackage the package to serialize
 	 * @return the {@code .ecore} XMI document as a UTF-8 string
-	 * @throws ToolException if the package has no namespace URI or cannot be serialized
+	 * @throws PublishException if the package has no namespace URI or cannot be serialized
 	 */
 	static String toXmi(EPackage ePackage) {
 		String nsURI = ePackage.getNsURI();
 		if (nsURI == null || nsURI.isBlank()) {
-			throw new ToolException("The package has no namespace URI and cannot be published");
+			throw new PublishException("The package has no namespace URI and cannot be published");
 		}
 		EcoreUtil.Copier copier = new EcoreUtil.Copier();
 		EPackage copy = (EPackage) copier.copy(ePackage);
@@ -101,7 +102,7 @@ final class EcoreXmi {
 		try {
 			resource.save(out, options);
 		} catch (IOException | RuntimeException e) {
-			throw new ToolException(String.format(
+			throw new PublishException(String.format(
 					"Serialization of '%s' failed: %s. This usually means the package references a classifier "
 							+ "that belongs to no registered package.", nsURI, e.getMessage()));
 		}

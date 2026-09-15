@@ -12,7 +12,7 @@
  *   Data In Motion Consulting - initial implementation
  * ******************************************************************
  */
-package org.eclipse.fennec.model.atlas.mcp.tools;
+package org.eclipse.fennec.model.atlas.publisher.impl;
 
 import org.osgi.service.metatype.annotations.AttributeDefinition;
 import org.osgi.service.metatype.annotations.ObjectClassDefinition;
@@ -20,10 +20,10 @@ import org.osgi.service.metatype.annotations.ObjectClassDefinition;
 /**
  * Configuration of the model.atlas object publisher.
  * <p>
- * The connection half mirrors {@link PublisherConfig}'s property names — and
+ * The connection half mirrors {@link PackagePublisherConfig}'s property names — and
  * through it {@code AtlasClientConfig}'s — so one deployment configures the read
  * client, the package publisher and this one the same way. It is a separate
- * factory PID rather than more properties on {@code ModelAtlasPublisher} because
+ * factory PID rather than more properties on {@code PackagePublisherImpl} because
  * the two are independently deployable decisions: a runtime may publish schemas
  * and not instances, or instances and not schemas, and an unconfigured publisher
  * has to be an <em>absent</em> tool rather than a tool that fails on use.

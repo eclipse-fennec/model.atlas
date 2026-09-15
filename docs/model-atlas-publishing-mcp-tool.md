@@ -7,11 +7,18 @@
 | **`post_to_model_atlas`** | the namespace URI of a registered `EPackage` — a **schema** | a scope's schema stage |
 | **`post_object_to_model_atlas`** | one serialized object — an **instance** | a stage of one of the scope's object registries |
 
+Neither tool writes anything itself. Both are thin shells over
+`org.eclipse.fennec.model.atlas.publisher`, which owns the write path and
+exports it: `PackagePublisher` for a schema, `ObjectPublisher` for an object,
+each answering with a receipt of strings and ints. A service that must write to
+an atlas from code — rather than because an agent asked — depends on that bundle
+and never sees an MCP tool.
+
 Their companion `org.eclipse.fennec.model.atlas.mcp.config` is a resource-only
 bundle carrying the Configurator JSON they need — one publisher configuration
 each, and the tool provider that publishes them to an MCP server.
 
-Both bundles live in the **model.atlas** project, while the MCP servers that
+All three bundles live in the **model.atlas** project, while the MCP servers that
 consume them live in
 [emf.osgi-mcp](https://github.com/eclipse-fennec/emf.osgi-mcp). That split is
 the point: model.atlas owns its own write path.
@@ -38,7 +45,7 @@ For `post_to_model_atlas`:
 | whether that namespace *may* be published | `publish.nsuri.allowlist`, deny-all by default, from `ModelAtlasPublisher` |
 | destination scope and stage | configuration from `ModelAtlasPublisher` |
 | whether an existing entry is replaced | configuration (`overwrite`) from `ModelAtlasPublisher` |
-| the serialized document | this bundle — never the agent |
+| the serialized document | the publisher — never the agent |
 
 For `post_object_to_model_atlas`:
 
@@ -65,10 +72,13 @@ refuses outright anything the atlas marks as its own derived content. A second
 type check here would have to parse a body whose format the deployment chooses,
 and would still not be the authority.
 
-**Deploying the bundle is the authorization decision.** A runtime that does not
-install it cannot publish, which is why the write path is a bundle-private
-service rather than a write method on the widely consumed, read-only
-`ModelAtlasClient`.
+**Deploying `org.eclipse.fennec.model.atlas.publisher` and configuring a
+publisher is the authorization decision.** A runtime that installs neither
+configuration cannot write to an atlas at all, which is why the write path is a
+separately deployed, separately configured service rather than a write method on
+the widely consumed, read-only `ModelAtlasClient`. Installing the MCP tools on
+top decides something narrower: whether an *agent* may ask for a publication
+that the deployment has already authorized.
 
 ## The endpoints
 
@@ -141,8 +151,9 @@ and the receipt that comes back names where it went:
 
 ## How the request leaves the runtime
 
-`UriHandlerAtlasTransport` is the only class here that talks HTTP, and it does
-so through the `URIConverter` of a `ResourceSet` obtained from the runtime's
+`UriHandlerAtlasTransport`, in the publisher bundle, is the only class that
+talks HTTP, and it does so through the `URIConverter` of a `ResourceSet`
+obtained from the runtime's
 own `ResourceSetFactory` — where Fennec's RESTful URI handler
 (`RestfulURIHandlerImpl`) serves `http` and `https`.
 
@@ -431,7 +442,9 @@ differently on purpose:
   `tools.cardinality.minimum` counts it. That endpoint therefore does *not*
   come up without this bundle — which is correct, since the inference feature
   exists in order to publish. `org.eclipse.fennec.mcp.inference.runtime` is the
-  resolution anchor and requires both of this project's bundles by identity.
+  resolution anchor and requires this project's bundles by identity — now three
+  of them: `…mcp.tools`, `…mcp.config` and `…publisher`, which the tools bind to
+  and without which neither tool activates.
 
   It does **not** name `post_object_to_model_atlas`, and adding it there is a
   change in `emf.osgi-mcp`, not here. Whoever makes it has to add the tool to

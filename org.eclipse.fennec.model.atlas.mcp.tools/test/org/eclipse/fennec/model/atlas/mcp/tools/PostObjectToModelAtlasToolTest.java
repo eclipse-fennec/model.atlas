@@ -23,6 +23,8 @@ import java.util.Optional;
 
 import org.eclipse.fennec.model.atlas.mcp.tools.api.PublishableObject;
 import org.eclipse.fennec.model.atlas.mcp.tools.api.PublishableObjectSource;
+import org.eclipse.fennec.model.atlas.publisher.ObjectPublisher;
+import org.eclipse.fennec.model.atlas.publisher.PublishException;
 import org.junit.jupiter.api.Test;
 import org.osgi.framework.Constants;
 
@@ -32,6 +34,12 @@ import tools.jackson.databind.json.JsonMapper;
 /**
  * The MCP surface: the object and its id in, a receipt or a sanitized message
  * out.
+ * <p>
+ * What the publisher does with the object — the destination, the size cap, the
+ * upstream status — is tested where it lives, in
+ * {@code org.eclipse.fennec.model.atlas.publisher}. Here it is a stand-in, so
+ * that what is asserted is the tool: which source is asked, what reaches the
+ * publisher, who is notified afterwards.
  *
  * @author ilenia
  * @since Sep 10, 2026
@@ -42,11 +50,36 @@ class PostObjectToModelAtlasToolTest {
 
 	private static final String CONTENT = "{\"_type\":\"https://eclipse.org/fennec/test/inference/em310udl#//EM310UDLUplink\",\"distance\":42}";
 
-	private static PostObjectToModelAtlasTool tool(RecordingTransport transport, FakeSource... sources) {
-		ObjectPublisherSettings settings = new ObjectPublisherSettings("jena", "default", "draft", "registries",
-				"application/json", false, 1024);
+	/** A publisher that records what it was handed and answers with a canned receipt — or refuses. */
+	private static final class FakePublisher implements ObjectPublisher {
+		String objectId;
+		String content;
+		String name;
+		String version;
+		RuntimeException failure;
+
+		@Override
+		public Receipt publish(String objectId, String content, String name, String version) {
+			this.objectId = objectId;
+			this.content = content;
+			this.name = name;
+			this.version = version;
+			if (failure != null) {
+				throw failure;
+			}
+			return new Receipt("created", objectId, name, version, "jena", "default", "draft", contentType(),
+					content.length());
+		}
+
+		@Override
+		public String contentType() {
+			return "application/json";
+		}
+	}
+
+	private static PostObjectToModelAtlasTool tool(FakePublisher publisher, FakeSource... sources) {
 		PostObjectToModelAtlasTool tool = new PostObjectToModelAtlasTool();
-		tool.publisher = new ObjectPublisher(settings, transport);
+		tool.publisher = publisher;
 		long serviceId = 1;
 		for (FakeSource source : sources) {
 			tool.addSource(source, Map.of(Constants.SERVICE_RANKING, source.ranking, Constants.SERVICE_ID,
@@ -102,7 +135,7 @@ class PostObjectToModelAtlasToolTest {
 
 	@Test
 	void theToolAdvertisesTheObjectAndItsIdAndNothingAboutWhereItLands() {
-		PostObjectToModelAtlasTool tool = tool(new RecordingTransport(201));
+		PostObjectToModelAtlasTool tool = tool(new FakePublisher());
 
 		assertThat(tool.getName()).isEqualTo("post_object_to_model_atlas");
 		assertThat(tool.getInputSchema()).contains("objectId");
@@ -117,12 +150,12 @@ class PostObjectToModelAtlasToolTest {
 	void theDescriptionNoLongerNamesAWireFormat() {
 		// Nothing the agent writes is in that format any more, so telling it one would only invite
 		// it to serialize something.
-		assertThat(tool(new RecordingTransport(201)).getDescription()).doesNotContain("application/json");
+		assertThat(tool(new FakePublisher()).getDescription()).doesNotContain("application/json");
 	}
 
 	@Test
 	void aStoredObjectIsReturnedAsJson() {
-		McpSchema.CallToolResult result = tool(new RecordingTransport(201), FakeSource.holding("device-1", CONTENT))
+		McpSchema.CallToolResult result = tool(new FakePublisher(), FakeSource.holding("device-1", CONTENT))
 				.execute(null, Map.of("objectId", "device-1", "version", "1.0.0")).block();
 
 		assertThat(result).isNotNull();
@@ -139,26 +172,31 @@ class PostObjectToModelAtlasToolTest {
 
 	@Test
 	void anIdNothingHoldsIsAnErrorResultNamingTheId() {
-		RecordingTransport transport = new RecordingTransport(201);
+		FakePublisher publisher = new FakePublisher();
 
-		McpSchema.CallToolResult result = tool(transport, FakeSource.holdingNothing())
+		McpSchema.CallToolResult result = tool(publisher, FakeSource.holdingNothing())
 				.execute(null, Map.of("objectId", "device-1")).block();
 
 		assertThat(result).isNotNull();
 		assertThat(result.isError()).isEqualTo(Boolean.TRUE);
 		assertThat(text(result)).contains("device-1").contains("the id is the one that tool gave you");
-		assertThat(transport.body).as("nothing was published").isNull();
+		assertThat(publisher.content).as("nothing was published").isNull();
 	}
 
+	/**
+	 * The publisher writes for the agent and the tool adds nothing: the message arrives verbatim.
+	 * That it says nothing about the deployment is the publisher's doing, and is tested there.
+	 */
 	@Test
 	void aRefusedObjectReachesTheAgentAsTheSanitizedMessage() {
-		McpSchema.CallToolResult result = tool(new RecordingTransport(409, "internal detail"),
-				FakeSource.holding("device-1", CONTENT))
+		FakePublisher publisher = refusing("An object is already stored as 'device-1'");
+
+		McpSchema.CallToolResult result = tool(publisher, FakeSource.holding("device-1", CONTENT))
 				.execute(null, Map.of("objectId", "device-1")).block();
 
 		assertThat(result).isNotNull();
 		assertThat(result.isError()).isEqualTo(Boolean.TRUE);
-		assertThat(text(result)).contains("already stored").doesNotContain("internal detail");
+		assertThat(text(result)).isEqualTo("An object is already stored as 'device-1'");
 	}
 
 
@@ -168,13 +206,13 @@ class PostObjectToModelAtlasToolTest {
 	void theObjectIsFetchedFromTheSourceThatHoldsIt() {
 		FakeSource empty = FakeSource.holdingNothing();
 		FakeSource holder = FakeSource.holding("device-1", CONTENT);
-		RecordingTransport transport = new RecordingTransport(201);
+		FakePublisher publisher = new FakePublisher();
 
-		McpSchema.CallToolResult result = tool(transport, empty, holder)
+		McpSchema.CallToolResult result = tool(publisher, empty, holder)
 				.execute(null, Map.of("objectId", "device-1")).block();
 
 		assertThat(result.isError()).isNotEqualTo(Boolean.TRUE);
-		assertThat(transport.body).isEqualTo(CONTENT);
+		assertThat(publisher.content).isEqualTo(CONTENT);
 		assertThat(empty.asked).containsExactly("device-1");
 		assertThat(holder.asked).containsExactly("device-1");
 	}
@@ -183,54 +221,61 @@ class PostObjectToModelAtlasToolTest {
 	void sourcesAreAskedHighestRankingFirst() {
 		FakeSource low = new FakeSource("device-1", new PublishableObject("low", null, null), 0);
 		FakeSource high = new FakeSource("device-1", new PublishableObject("high", null, null), 10);
-		RecordingTransport transport = new RecordingTransport(201);
+		FakePublisher publisher = new FakePublisher();
 
-		tool(transport, low, high).execute(null, Map.of("objectId", "device-1")).block();
+		tool(publisher, low, high).execute(null, Map.of("objectId", "device-1")).block();
 
-		assertThat(transport.body).isEqualTo("high");
+		assertThat(publisher.content).isEqualTo("high");
 	}
 
 	@Test
 	void theSourcesNameAndVersionReachThePublisher() {
 		FakeSource holder = new FakeSource("report-1",
 				new PublishableObject(CONTENT, "GDPR review of clinic 1.0.0", "fp1:abc"), 0);
-		RecordingTransport transport = new RecordingTransport(201);
+		FakePublisher publisher = new FakePublisher();
 
-		tool(transport, holder).execute(null, Map.of("objectId", "report-1")).block();
+		tool(publisher, holder).execute(null, Map.of("objectId", "report-1")).block();
 
-		assertThat(transport.query).containsEntry("name", "GDPR review of clinic 1.0.0")
-				.containsEntry("version", "fp1:abc");
+		assertThat(publisher.name).isEqualTo("GDPR review of clinic 1.0.0");
+		assertThat(publisher.version).isEqualTo("fp1:abc");
 	}
 
 	/** Facts the runtime holds should not be retyped by a model — but an explicit argument wins. */
 	@Test
 	void anExplicitNameOverridesTheSources() {
 		FakeSource holder = new FakeSource("report-1", new PublishableObject(CONTENT, "from the source", null), 0);
-		RecordingTransport transport = new RecordingTransport(201);
+		FakePublisher publisher = new FakePublisher();
 
-		tool(transport, holder).execute(null, Map.of("objectId", "report-1", "name", "from the agent")).block();
+		tool(publisher, holder).execute(null, Map.of("objectId", "report-1", "name", "from the agent")).block();
 
-		assertThat(transport.query).containsEntry("name", "from the agent");
+		assertThat(publisher.name).isEqualTo("from the agent");
 	}
 
 	@Test
 	void theSourceIsToldTheContentTypeTheAtlasWillBeTold() {
 		FakeSource holder = FakeSource.holding("device-1", CONTENT);
 
-		tool(new RecordingTransport(201), holder).execute(null, Map.of("objectId", "device-1")).block();
+		tool(new FakePublisher(), holder).execute(null, Map.of("objectId", "device-1")).block();
 
 		assertThat(holder.lastContentType).isEqualTo("application/json");
 	}
 
-	/** The existing cap is on the publish path, so it covers source-supplied bodies too. */
+	/**
+	 * Source-supplied content goes through the publisher rather than around it, so the publisher's
+	 * own refusals — the size cap among them, tested in the publisher bundle — reach the agent and
+	 * leave the source un-notified.
+	 */
 	@Test
-	void aSourceBodyOverTheCapIsStillRefused() {
+	void aPublisherRefusalOfSourceContentIsNotSwallowed() {
 		FakeSource holder = FakeSource.holding("device-1", "x".repeat(2048));
+		FakePublisher publisher = refusing("The object is 2048 bytes and this runtime accepts at most 1024");
 
-		McpSchema.CallToolResult result = tool(new RecordingTransport(201), holder)
+		McpSchema.CallToolResult result = tool(publisher, holder)
 				.execute(null, Map.of("objectId", "device-1")).block();
 
 		assertThat(result.isError()).isEqualTo(Boolean.TRUE);
+		assertThat(publisher.content).as("the source's body was handed over, not the agent's").isEqualTo(
+				"x".repeat(2048));
 		assertThat(holder.notified).as("nothing was stored, so nothing is notified").isEmpty();
 	}
 
@@ -243,7 +288,7 @@ class PostObjectToModelAtlasToolTest {
 		FakeSource broken = FakeSource.holding("device-1", CONTENT);
 		broken.findFailure = new IllegalStateException("the report has no classifier evaluations");
 
-		McpSchema.CallToolResult result = tool(new RecordingTransport(201), broken)
+		McpSchema.CallToolResult result = tool(new FakePublisher(), broken)
 				.execute(null, Map.of("objectId", "device-1")).block();
 
 		assertThat(result.isError()).isEqualTo(Boolean.TRUE);
@@ -257,7 +302,7 @@ class PostObjectToModelAtlasToolTest {
 		FakeSource empty = FakeSource.holdingNothing();
 		FakeSource holder = FakeSource.holding("device-1", CONTENT);
 
-		tool(new RecordingTransport(201), empty, holder).execute(null, Map.of("objectId", "device-1")).block();
+		tool(new FakePublisher(), empty, holder).execute(null, Map.of("objectId", "device-1")).block();
 
 		assertThat(holder.notified).containsExactly("device-1");
 		assertThat(empty.notified).isEmpty();
@@ -271,7 +316,7 @@ class PostObjectToModelAtlasToolTest {
 	void aRefusedPublishNotifiesNothing() {
 		FakeSource holder = FakeSource.holding("device-1", CONTENT);
 
-		McpSchema.CallToolResult result = tool(new RecordingTransport(409, "taken"), holder)
+		McpSchema.CallToolResult result = tool(refusing("that id is taken"), holder)
 				.execute(null, Map.of("objectId", "device-1")).block();
 
 		assertThat(result.isError()).isEqualTo(Boolean.TRUE);
@@ -283,11 +328,17 @@ class PostObjectToModelAtlasToolTest {
 		FakeSource holder = FakeSource.holding("device-1", CONTENT);
 		holder.publishedFailure = new IllegalStateException("sealing blew up");
 
-		McpSchema.CallToolResult result = tool(new RecordingTransport(201), holder)
+		McpSchema.CallToolResult result = tool(new FakePublisher(), holder)
 				.execute(null, Map.of("objectId", "device-1")).block();
 
 		assertThat(result.isError()).as("the object is stored; the notification is not the publish")
 				.isNotEqualTo(Boolean.TRUE);
+	}
+
+	private static FakePublisher refusing(String message) {
+		FakePublisher publisher = new FakePublisher();
+		publisher.failure = new PublishException(message);
+		return publisher;
 	}
 
 	private static String text(McpSchema.CallToolResult result) {

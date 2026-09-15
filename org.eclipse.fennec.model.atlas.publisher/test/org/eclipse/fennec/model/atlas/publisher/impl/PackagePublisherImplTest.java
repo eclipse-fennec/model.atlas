@@ -12,7 +12,7 @@
  *   Data In Motion Consulting - initial implementation
  * ******************************************************************
  */
-package org.eclipse.fennec.model.atlas.mcp.tools;
+package org.eclipse.fennec.model.atlas.publisher.impl;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -24,6 +24,7 @@ import org.eclipse.fennec.emf.osgi.metadata.MetadataServices;
 import org.eclipse.fennec.emf.osgi.metadata.MetadataWhiteboard;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.eclipse.fennec.model.atlas.publisher.PublishException;
 
 /**
  * Everything between the agent's namespace URI and the HTTP call: policy,
@@ -33,7 +34,7 @@ import org.junit.jupiter.api.Test;
  * @author ilenia
  * @since Aug 27, 2026
  */
-class ModelAtlasPublisherTest {
+class PackagePublisherImplTest {
 
 	private static final String SERVER_DETAIL = "org.postgresql.util.PSQLException: relation \"schema\" missing";
 
@@ -47,20 +48,20 @@ class ModelAtlasPublisherTest {
 		whiteboard.registerPackage(TestModels.derivedPackage(base));
 	}
 
-	private static PublisherSettings settings(boolean overwrite) {
-		return new PublisherSettings("jena", "draft", "schema", "application/xmi", overwrite,
+	private static PackagePublisherSettings settings(boolean overwrite) {
+		return new PackagePublisherSettings("jena", "draft", "schema", "application/xmi", overwrite,
 				List.of(TestModels.DERIVED_NS_URI));
 	}
 
-	private ModelAtlasPublisher publisher(RecordingTransport transport, boolean overwrite) {
-		return new ModelAtlasPublisher(whiteboard, settings(overwrite), transport);
+	private PackagePublisherImpl publisher(RecordingTransport transport, boolean overwrite) {
+		return new PackagePublisherImpl(whiteboard, settings(overwrite), transport);
 	}
 
 	@Test
 	void aCreatedPackageComesBackAsAReceipt() {
 		RecordingTransport transport = new RecordingTransport(201);
 
-		ModelAtlasPublisher.Receipt receipt = publisher(transport, false).publish(TestModels.DERIVED_NS_URI);
+		PackagePublisherImpl.Receipt receipt = publisher(transport, false).publish(TestModels.DERIVED_NS_URI);
 
 		assertThat(receipt.outcome()).isEqualTo("created");
 		assertThat(receipt.nsURI()).isEqualTo(TestModels.DERIVED_NS_URI);
@@ -90,7 +91,7 @@ class ModelAtlasPublisherTest {
 	void overwriteComesFromConfigurationAndNotFromTheCall() {
 		RecordingTransport transport = new RecordingTransport(200);
 
-		ModelAtlasPublisher.Receipt receipt = publisher(transport, false).publish(TestModels.DERIVED_NS_URI);
+		PackagePublisherImpl.Receipt receipt = publisher(transport, false).publish(TestModels.DERIVED_NS_URI);
 
 		assertThat(receipt.outcome()).isEqualTo("updated");
 		assertThat(transport.query).containsEntry("overwrite", "false");
@@ -101,7 +102,7 @@ class ModelAtlasPublisherTest {
 		RecordingTransport transport = new RecordingTransport(201);
 
 		assertThatThrownBy(() -> publisher(transport, false).publish(TestModels.BASE_NS_URI))
-				.isInstanceOf(ToolException.class)
+				.isInstanceOf(PublishException.class)
 				.hasMessageContaining("not publishable");
 		assertThat(transport.path).isNull();
 	}
@@ -109,12 +110,12 @@ class ModelAtlasPublisherTest {
 	@Test
 	void anUnregisteredNamespaceIsRefusedWithTheRemedy() {
 		RecordingTransport transport = new RecordingTransport(201);
-		ModelAtlasPublisher publisher = new ModelAtlasPublisher(whiteboard,
-				new PublisherSettings("jena", "draft", "schema", "application/xmi", false, List.of("https://*")),
+		PackagePublisherImpl publisher = new PackagePublisherImpl(whiteboard,
+				new PackagePublisherSettings("jena", "draft", "schema", "application/xmi", false, List.of("https://*")),
 				transport);
 
 		assertThatThrownBy(() -> publisher.publish("https://eclipse.org/fennec/test/absent"))
-				.isInstanceOf(ToolException.class)
+				.isInstanceOf(PublishException.class)
 				.hasMessageContaining("register_package");
 		assertThat(transport.path).isNull();
 	}
@@ -124,7 +125,7 @@ class ModelAtlasPublisherTest {
 		RecordingTransport transport = new RecordingTransport(409, SERVER_DETAIL);
 
 		assertThatThrownBy(() -> publisher(transport, false).publish(TestModels.DERIVED_NS_URI))
-				.isInstanceOf(ToolException.class)
+				.isInstanceOf(PublishException.class)
 				.hasMessageContaining("already published")
 				.hasMessageContaining("draft");
 	}
@@ -134,7 +135,7 @@ class ModelAtlasPublisherTest {
 		RecordingTransport transport = new RecordingTransport(403);
 
 		assertThatThrownBy(() -> publisher(transport, true).publish(TestModels.DERIVED_NS_URI))
-				.isInstanceOf(ToolException.class)
+				.isInstanceOf(PublishException.class)
 				.hasMessageContaining("read-only");
 	}
 
@@ -143,7 +144,7 @@ class ModelAtlasPublisherTest {
 		RecordingTransport transport = new RecordingTransport(400).withStageStatus(200);
 
 		assertThatThrownBy(() -> publisher(transport, false).publish(TestModels.DERIVED_NS_URI))
-				.isInstanceOf(ToolException.class)
+				.isInstanceOf(PublishException.class)
 				.hasMessageContaining("as invalid");
 		assertThat(transport.gets).containsExactly("jena/schema/stages/draft");
 	}
@@ -153,7 +154,7 @@ class ModelAtlasPublisherTest {
 		RecordingTransport transport = new RecordingTransport(400).withStageStatus(400);
 
 		assertThatThrownBy(() -> publisher(transport, false).publish(TestModels.DERIVED_NS_URI))
-				.isInstanceOf(ToolException.class)
+				.isInstanceOf(PublishException.class)
 				.hasMessageContaining("does not have")
 				.hasMessageContaining("no tool parameter fixes it");
 	}
@@ -163,7 +164,7 @@ class ModelAtlasPublisherTest {
 		RecordingTransport transport = new RecordingTransport(0);
 
 		assertThatThrownBy(() -> publisher(transport, false).publish(TestModels.DERIVED_NS_URI))
-				.isInstanceOf(ToolException.class)
+				.isInstanceOf(PublishException.class)
 				.hasMessageContaining("could not be reached")
 				.hasMessageContaining("stop retrying");
 	}
@@ -173,7 +174,7 @@ class ModelAtlasPublisherTest {
 		RecordingTransport transport = new RecordingTransport(401, SERVER_DETAIL);
 
 		assertThatThrownBy(() -> publisher(transport, false).publish(TestModels.DERIVED_NS_URI))
-				.isInstanceOf(ToolException.class)
+				.isInstanceOf(PublishException.class)
 				.hasMessageContaining("credentials");
 	}
 
@@ -182,7 +183,7 @@ class ModelAtlasPublisherTest {
 		RecordingTransport transport = new RecordingTransport(415);
 
 		assertThatThrownBy(() -> publisher(transport, false).publish(TestModels.DERIVED_NS_URI))
-				.isInstanceOf(ToolException.class)
+				.isInstanceOf(PublishException.class)
 				.hasMessageContaining("application/xmi")
 				.hasMessageContaining("deployment mismatch");
 	}
@@ -193,7 +194,7 @@ class ModelAtlasPublisherTest {
 			RecordingTransport transport = new RecordingTransport(status, SERVER_DETAIL).withStageStatus(200);
 
 			assertThatThrownBy(() -> publisher(transport, false).publish(TestModels.DERIVED_NS_URI))
-					.isInstanceOf(ToolException.class)
+					.isInstanceOf(PublishException.class)
 					.hasMessageNotContaining(SERVER_DETAIL)
 					.hasMessageNotContaining("PSQLException");
 		}

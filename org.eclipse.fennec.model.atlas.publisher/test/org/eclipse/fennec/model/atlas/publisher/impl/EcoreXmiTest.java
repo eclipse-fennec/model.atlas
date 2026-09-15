@@ -12,13 +12,14 @@
  *   Data In Motion Consulting - initial implementation
  * ******************************************************************
  */
-package org.eclipse.fennec.model.atlas.mcp.tools;
+package org.eclipse.fennec.model.atlas.publisher.impl;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import org.eclipse.emf.ecore.EPackage;
 import org.junit.jupiter.api.Test;
+import org.eclipse.fennec.model.atlas.publisher.PublishException;
 
 /**
  * The bytes that leave the runtime. Asserted on the generated document rather
@@ -72,7 +73,7 @@ class EcoreXmiTest {
 	@Test
 	void aPackageWithoutANamespaceUriIsRefused() {
 		assertThatThrownBy(() -> EcoreXmi.toXmi(TestModels.namelessPackage()))
-				.isInstanceOf(ToolException.class)
+				.isInstanceOf(PublishException.class)
 				.hasMessageContaining("no namespace URI");
 	}
 }

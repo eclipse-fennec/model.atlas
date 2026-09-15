@@ -12,12 +12,13 @@
  *   Data In Motion Consulting - initial implementation
  * ******************************************************************
  */
-package org.eclipse.fennec.model.atlas.mcp.tools;
+package org.eclipse.fennec.model.atlas.publisher.impl;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 
 import org.junit.jupiter.api.Test;
+import org.eclipse.fennec.model.atlas.publisher.PublishException;
 
 /**
  * What the agent hands over, what actually goes on the wire, and what it is told
@@ -26,16 +27,16 @@ import org.junit.jupiter.api.Test;
  * @author ilenia
  * @since Sep 10, 2026
  */
-class ObjectPublisherTest {
+class ObjectPublisherImplTest {
 
 	private static final String CONTENT = "{\"_type\":\"https://eclipse.org/fennec/test/inference/em310udl#//EM310UDLUplink\",\"distance\":42}";
 
-	private static ObjectPublisher publisher(RecordingTransport transport) {
+	private static ObjectPublisherImpl publisher(RecordingTransport transport) {
 		return publisher(transport, false, 1024);
 	}
 
-	private static ObjectPublisher publisher(RecordingTransport transport, boolean overwrite, int maxBodyBytes) {
-		return new ObjectPublisher(new ObjectPublisherSettings("jena", "default", "draft", "registries",
+	private static ObjectPublisherImpl publisher(RecordingTransport transport, boolean overwrite, int maxBodyBytes) {
+		return new ObjectPublisherImpl(new ObjectPublisherSettings("jena", "default", "draft", "registries",
 				"application/json", overwrite, maxBodyBytes), transport);
 	}
 
@@ -43,7 +44,7 @@ class ObjectPublisherTest {
 	void aStoredObjectIsPostedToTheConfiguredRegistryWithTheConfiguredReplacePolicy() {
 		RecordingTransport transport = new RecordingTransport(201);
 
-		ObjectPublisher.Receipt receipt = publisher(transport).publish("device-1", CONTENT, "Device 1", "1.0.0");
+		ObjectPublisherImpl.Receipt receipt = publisher(transport).publish("device-1", CONTENT, "Device 1", "1.0.0");
 
 		assertThat(transport.path).isEqualTo("jena/registries/default/stages/draft/device-1");
 		assertThat(transport.contentType).isEqualTo("application/json");
@@ -62,7 +63,7 @@ class ObjectPublisherTest {
 	void theOptionalParametersAreOmittedRatherThanSentEmpty() {
 		RecordingTransport transport = new RecordingTransport(200);
 
-		ObjectPublisher.Receipt receipt = publisher(transport).publish("device-1", CONTENT, null, "   ");
+		ObjectPublisherImpl.Receipt receipt = publisher(transport).publish("device-1", CONTENT, null, "   ");
 
 		assertThat(transport.query).doesNotContainKey("name").doesNotContainKey("version");
 		assertThat(receipt.outcome()).isEqualTo("updated");
@@ -81,7 +82,7 @@ class ObjectPublisherTest {
 	void anIdThatIsNotASinglePathSegmentIsRefusedBeforeAnythingIsSent() {
 		RecordingTransport transport = new RecordingTransport(201);
 
-		assertThatExceptionOfType(ToolException.class)
+		assertThatExceptionOfType(PublishException.class)
 				.isThrownBy(() -> publisher(transport).publish("sensors/device-1", CONTENT, null, null))
 				.withMessageContaining("single name");
 
@@ -92,7 +93,7 @@ class ObjectPublisherTest {
 	void anObjectOverTheConfiguredCapIsRefusedBeforeAnythingIsSent() {
 		RecordingTransport transport = new RecordingTransport(201);
 
-		assertThatExceptionOfType(ToolException.class)
+		assertThatExceptionOfType(PublishException.class)
 				.isThrownBy(() -> publisher(transport, false, 8).publish("device-1", CONTENT, null, null))
 				.withMessageContaining("smaller object");
 
@@ -103,7 +104,7 @@ class ObjectPublisherTest {
 	void emptyContentIsRefusedBeforeAnythingIsSent() {
 		RecordingTransport transport = new RecordingTransport(201);
 
-		assertThatExceptionOfType(ToolException.class)
+		assertThatExceptionOfType(PublishException.class)
 				.isThrownBy(() -> publisher(transport).publish("device-1", "   ", null, null))
 				.withMessageContaining("empty");
 
@@ -112,7 +113,7 @@ class ObjectPublisherTest {
 
 	@Test
 	void aTakenIdIsReportedAsATakenIdRatherThanAsTheUpstreamBody() {
-		assertThatExceptionOfType(ToolException.class)
+		assertThatExceptionOfType(PublishException.class)
 				.isThrownBy(() -> publisher(new RecordingTransport(409, "internal detail"))
 						.publish("device-1", CONTENT, null, null))
 				.withMessageContaining("already stored as 'device-1'")
@@ -125,7 +126,7 @@ class ObjectPublisherTest {
 		// is an operator's problem — no rewrite of the document fixes it.
 		RecordingTransport missingStage = new RecordingTransport(400).withStageStatus(400);
 
-		assertThatExceptionOfType(ToolException.class)
+		assertThatExceptionOfType(PublishException.class)
 				.isThrownBy(() -> publisher(missingStage).publish("device-1", CONTENT, null, null))
 				.withMessageContaining("which the model atlas does not have");
 		assertThat(missingStage.gets).containsExactly("jena/registries/default/stages/draft");
@@ -137,7 +138,7 @@ class ObjectPublisherTest {
 		// nothing, so only a 4xx there may be read as a destination that is not there.
 		RecordingTransport emptyStage = new RecordingTransport(400).withStageStatus(204);
 
-		assertThatExceptionOfType(ToolException.class)
+		assertThatExceptionOfType(PublishException.class)
 				.isThrownBy(() -> publisher(emptyStage).publish("device-1", CONTENT, null, null))
 				.withMessageContaining("rejected the object as invalid")
 				.withMessageContaining("_type");
@@ -145,21 +146,21 @@ class ObjectPublisherTest {
 
 	@Test
 	void anUnreachableAtlasTellsTheAgentToStop() {
-		assertThatExceptionOfType(ToolException.class)
+		assertThatExceptionOfType(PublishException.class)
 				.isThrownBy(() -> publisher(new RecordingTransport(0)).publish("device-1", CONTENT, null, null))
 				.withMessageContaining("stop retrying");
 	}
 
 	@Test
 	void aReadOnlyOrAtlasOwnedTypeIsReportedAsSuch() {
-		assertThatExceptionOfType(ToolException.class)
+		assertThatExceptionOfType(PublishException.class)
 				.isThrownBy(() -> publisher(new RecordingTransport(403)).publish("device-1", CONTENT, null, null))
 				.withMessageContaining("read-only");
 	}
 
 	@Test
 	void anUnexpectedStatusStillSaysNothingWasPublished() {
-		assertThatExceptionOfType(ToolException.class)
+		assertThatExceptionOfType(PublishException.class)
 				.isThrownBy(() -> publisher(new RecordingTransport(503)).publish("device-1", CONTENT, null, null))
 				.withMessageContaining("status 503")
 				.withMessageContaining("Nothing was published");
