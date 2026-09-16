@@ -5,7 +5,7 @@
 # OSGi whiteboard and only reaches services in its own framework. gdpr.check comes with it
 # (the action binds GDPRCheckService), and with it the four Fennec AI bundles its batch service
 # needs plus mcp.endpoint, which is the only package of that chain the runtime did not already
-# have. The gdpr bundles are hand-placed in cnf/local until fennec-gdpr publishes them.
+# have. The gdpr bundles come from the DIM Nexus as 0.1.0-SNAPSHOT (cnf/ext/nexus.maven).
 #
 # store.atlas keeps the review records in the atlas itself rather than in memory, writing
 # through the ObjectPublisher this runtime now also carries; the two gdpr.runtime.config

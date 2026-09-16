@@ -24,3 +24,12 @@ org.eclipse.fennec.ai:org.eclipse.fennec.ai.apis.meta.model:1.0.0-SNAPSHOT
 org.eclipse.fennec.ai:org.eclipse.fennec.ai.chat.completion.api:1.0.0-SNAPSHOT
 org.eclipse.fennec.ai:org.eclipse.fennec.ai.chat.completion.claude.model:1.0.0-SNAPSHOT
 org.eclipse.fennec.ai:org.eclipse.fennec.ai.chat.completion.impl.claude:1.0.0-SNAPSHOT
+
+# The GDPR review chain, deployed into the jena runtime because a StageActionService only
+# reaches services in its own framework. Source workspace /opt/git/fennec-gdpr (groupid
+# org.eclipse.fennec.gdpr), published by its Jenkins 'snapshot' branch job.
+org.eclipse.fennec.gdpr:org.eclipse.fennec.gdpr.action:0.1.0-SNAPSHOT
+org.eclipse.fennec.gdpr:org.eclipse.fennec.gdpr.check:0.1.0-SNAPSHOT
+org.eclipse.fennec.gdpr:org.eclipse.fennec.gdpr.store.atlas:0.1.0-SNAPSHOT
+org.eclipse.fennec.gdpr:org.eclipse.fennec.gdpr.runtime.config.common:0.1.0-SNAPSHOT
+org.eclipse.fennec.gdpr:org.eclipse.fennec.gdpr.runtime.config.check:0.1.0-SNAPSHOT
