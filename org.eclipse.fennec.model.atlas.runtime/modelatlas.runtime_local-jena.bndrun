@@ -1,9 +1,31 @@
 -include: \
 	modelatlas.runtime_base.bndrun
 
+# The GDPR review trigger, deployed here because the workflow fires stage actions through the
+# OSGi whiteboard and only reaches services in its own framework. gdpr.check comes with it
+# (the action binds GDPRCheckService), and with it the four Fennec AI bundles its batch service
+# needs plus mcp.endpoint, which is the only package of that chain the runtime did not already
+# have. The gdpr bundles come from the DIM Nexus as 0.1.0-SNAPSHOT (cnf/ext/nexus.maven).
+#
+# store.atlas keeps the review records in the atlas itself rather than in memory, writing
+# through the ObjectPublisher this runtime now also carries; the two gdpr.runtime.config
+# bundles own the check-side PIDs (they are split because the Configurator applies one of two
+# bundles supplying the same singleton PID wholesale and discards the other).
 -runbundles.local: \
 	org.eclipse.fennec.event.atlas.mapping,\
+	org.eclipse.fennec.gdpr.report.model,\
 	org.eclipse.fennec.model.atlas.runtime.config.local.jena,\
+	org.eclipse.fennec.gdpr.action,\
+	org.eclipse.fennec.gdpr.check,\
+	org.eclipse.fennec.ai.apis.meta.model,\
+	org.eclipse.fennec.ai.chat.completion.api,\
+	org.eclipse.fennec.ai.chat.completion.claude.model,\
+	org.eclipse.fennec.ai.chat.completion.impl.claude,\
+	org.eclipse.fennec.mcp.endpoint,\
+	org.eclipse.fennec.model.atlas.publisher,\
+	org.eclipse.fennec.gdpr.store.atlas,\
+	org.eclipse.fennec.gdpr.runtime.config.common,\
+	org.eclipse.fennec.gdpr.runtime.config.check,\
 	
 
 

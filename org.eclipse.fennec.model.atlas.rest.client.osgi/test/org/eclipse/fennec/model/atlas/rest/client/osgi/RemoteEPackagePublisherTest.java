@@ -326,4 +326,118 @@ class RemoteEPackagePublisherTest {
 
 		assertNull(global.getEPackage("urn:none"));
 	}
+
+	// ---- one service per model version, not per nsURI (A) -----------------
+
+	/** Same nsURI, diverging content: two model versions, so two publications. */
+	@Test
+	void twoVersionsOfOneNsUriAreBothPublished() {
+		RemoteEPackagePublisher publisher = new RemoteEPackagePublisher(bundleContext, "http://atlas.test/atlas/rest");
+
+		assertTrue(publisher.publish(ePackage("urn:v"), "jena", "release", "1.0", null, true));
+		assertTrue(publisher.publish(withExtraClass(ePackage("urn:v")), "jena", "approved", "2.0", null, false),
+				"a second model version of the same nsURI is not a duplicate");
+
+		assertEquals(2, configuratorRegs.size(), "two versions, two configurator registrations");
+	}
+
+	/** Identical content is the same model version, however often it is offered. */
+	@Test
+	void identicalContentIsStillPublishedOnce() {
+		RemoteEPackagePublisher publisher = new RemoteEPackagePublisher(bundleContext, "http://atlas.test/atlas/rest");
+
+		assertTrue(publisher.publish(ePackage("urn:same"), "jena", "release", "1.0"));
+		assertFalse(publisher.publish(ePackage("urn:same"), "jena", "release", "1.0"),
+				"same nsURI, same fingerprint — nothing new to publish");
+
+		assertEquals(1, configuratorRegs.size());
+	}
+
+	/**
+	 * Where only one version can answer — the nsURI lookup and the INSTANCE mirror — it is the
+	 * final-stage one. Code that reaches for an nsURI without naming a stage means the released
+	 * model, and a staged version must not displace it.
+	 */
+	@Test
+	void theFinalStageVersionKeepsTheNsUriSlot() {
+		EPackageRegistryImpl global = new EPackageRegistryImpl();
+		RemoteEPackagePublisher publisher = new RemoteEPackagePublisher(bundleContext, "http://atlas.test/atlas/rest",
+				0, global);
+		EPackage released = ePackage("urn:slot");
+		EPackage staged = withExtraClass(ePackage("urn:slot"));
+
+		publisher.publish(released, "jena", "release", "1.0", null, true);
+		publisher.publish(staged, "jena", "approved", "2.0", null, false);
+
+		assertSame(released, publisher.publishedEPackage("urn:slot"));
+		assertSame(released, global.getEPackage("urn:slot"));
+	}
+
+	/** Order must not decide it: a final-stage version arriving second still takes the slot. */
+	@Test
+	void aFinalStageVersionArrivingSecondTakesTheSlot() {
+		EPackageRegistryImpl global = new EPackageRegistryImpl();
+		RemoteEPackagePublisher publisher = new RemoteEPackagePublisher(bundleContext, "http://atlas.test/atlas/rest",
+				0, global);
+		EPackage staged = ePackage("urn:order");
+		EPackage released = withExtraClass(ePackage("urn:order"));
+
+		publisher.publish(staged, "jena", "approved", "2.0", null, false);
+		assertSame(staged, publisher.publishedEPackage("urn:order"), "it is the only version so far");
+
+		publisher.publish(released, "jena", "release", "1.0", null, true);
+
+		assertSame(released, publisher.publishedEPackage("urn:order"));
+		assertSame(released, global.getEPackage("urn:order"));
+	}
+
+	@Test
+	void unpublishingOneVersionLeavesTheOther() {
+		RemoteEPackagePublisher publisher = new RemoteEPackagePublisher(bundleContext, "http://atlas.test/atlas/rest");
+		EPackage released = ePackage("urn:one");
+		EPackage staged = withExtraClass(ePackage("urn:one"));
+		publisher.publish(released, "jena", "release", "1.0", null, true);
+		publisher.publish(staged, "jena", "approved", "2.0", null, false);
+
+		assertTrue(publisher.unpublishVersion("urn:one",
+				RemoteEPackageConfigurator.fingerprintOf(staged)));
+
+		assertSame(released, publisher.publishedEPackage("urn:one"), "the other version is untouched");
+		assertTrue(publisher.isPublished("urn:one"));
+	}
+
+	/** Dropping the version holding the slot hands it to a survivor rather than leaving a hole. */
+	@Test
+	void unpublishingTheSlotHolderPromotesASurvivor() {
+		RemoteEPackagePublisher publisher = new RemoteEPackagePublisher(bundleContext, "http://atlas.test/atlas/rest");
+		EPackage released = ePackage("urn:promote");
+		EPackage staged = withExtraClass(ePackage("urn:promote"));
+		publisher.publish(released, "jena", "release", "1.0", null, true);
+		publisher.publish(staged, "jena", "approved", "2.0", null, false);
+
+		publisher.unpublishVersion("urn:promote", RemoteEPackageConfigurator.fingerprintOf(released));
+
+		assertSame(staged, publisher.publishedEPackage("urn:promote"));
+	}
+
+	/** "The server no longer has this package" means every version of it. */
+	@Test
+	void unpublishByNsUriRevokesEveryVersion() {
+		RemoteEPackagePublisher publisher = new RemoteEPackagePublisher(bundleContext, "http://atlas.test/atlas/rest");
+		publisher.publish(ePackage("urn:all"), "jena", "release", "1.0", null, true);
+		publisher.publish(withExtraClass(ePackage("urn:all")), "jena", "approved", "2.0", null, false);
+
+		assertTrue(publisher.unpublish("urn:all"));
+
+		assertNull(publisher.publishedEPackage("urn:all"));
+		configuratorRegs.forEach(reg -> verify(reg).unregister());
+	}
+
+	/** A second EClass is enough to make it a different model version. */
+	private static EPackage withExtraClass(EPackage pkg) {
+		org.eclipse.emf.ecore.EClass extra = EcoreFactory.eINSTANCE.createEClass();
+		extra.setName("Extra");
+		pkg.getEClassifiers().add(extra);
+		return pkg;
+	}
 }

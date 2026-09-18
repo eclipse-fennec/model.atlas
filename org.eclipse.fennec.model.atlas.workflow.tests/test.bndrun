@@ -31,6 +31,7 @@
 	org.eclipse.emf.ecore.xmi;version='[2.39.0,2.39.1)',\
 	org.eclipse.fennec.model.atlas.management;version=snapshot,\
 	org.eclipse.fennec.model.atlas.management.file;version=snapshot,\
+	org.eclipse.fennec.model.atlas.action.api;version=snapshot,\
 	org.eclipse.fennec.model.atlas.workflow;version=snapshot,\
 	org.eclipse.fennec.model.atlas.workflow.tests;version=snapshot,\
 	org.apache.aries.component-dsl.component-dsl;version='[1.2.2,1.2.3)',\

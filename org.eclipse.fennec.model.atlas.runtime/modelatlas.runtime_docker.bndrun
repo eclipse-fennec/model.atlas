@@ -104,6 +104,7 @@
 	org.eclipse.fennec.model.atlas.validation;version=snapshot;startlevel=1093,\
 	org.eclipse.fennec.model.atlas.validation.model;version=snapshot;startlevel=1094,\
 	org.eclipse.fennec.model.atlas.validation.rest;version=snapshot;startlevel=1095,\
+	org.eclipse.fennec.model.atlas.action.api;version=snapshot,\
 	org.eclipse.fennec.model.atlas.workflow;version=snapshot;startlevel=1096,\
 	org.eclipse.osgitech.rest;version='[1.2.3,1.2.4)';startlevel=1097,\
 	org.eclipse.osgitech.rest.servlet.whiteboard;version='[1.2.3,1.2.4)';startlevel=1098,\

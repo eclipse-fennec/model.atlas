@@ -50,10 +50,34 @@ public class AtlasDelegatingPackageRegistry extends ConcurrentHashMap<String, Ob
 
 	private final transient EPackage.Registry primary;
 	private final transient RemoteEPackageProvider remote;
+	/** Atlas location a remote miss is resolved at; both null means stage-free (final stage). */
+	private final transient String scope;
+	private final transient String stage;
 
+	/** Stage-free: a remote miss resolves against the scope's final stage, server-side. */
 	public AtlasDelegatingPackageRegistry(EPackage.Registry primary, RemoteEPackageProvider remote) {
+		this(primary, remote, null, null);
+	}
+
+	/**
+	 * Stage-located (#272): a remote miss resolves at {@code scope}/{@code stage} first, so an
+	 * instance read at a non-final stage is parsed with that stage's metamodel rather than the
+	 * final one. Pass {@code null} stage for the stage-free behaviour.
+	 *
+	 * @param primary the registry consulted first (local / framework)
+	 * @param remote  the Atlas provider used on a miss
+	 * @param scope   the Atlas scope to resolve in, required when {@code stage} is given
+	 * @param stage   the stage to resolve at, or {@code null} for the scope's final stage
+	 */
+	public AtlasDelegatingPackageRegistry(EPackage.Registry primary, RemoteEPackageProvider remote, String scope,
+			String stage) {
 		this.primary = Objects.requireNonNull(primary, "primary");
 		this.remote = Objects.requireNonNull(remote, "remote");
+		if (stage != null) {
+			Objects.requireNonNull(scope, "scope is required when a stage is given");
+		}
+		this.scope = scope;
+		this.stage = stage;
 	}
 
 	@Override
@@ -69,12 +93,26 @@ public class AtlasDelegatingPackageRegistry extends ConcurrentHashMap<String, Ob
 			return own;
 		}
 		// 3. Fetch from the Atlas and cache the hit.
-		Optional<EPackage> fetched = remote.ensureAvailable(nsURI);
+		Optional<EPackage> fetched = fetchRemote(nsURI);
 		if (fetched.isPresent()) {
 			put(nsURI, fetched.get());
 			return fetched.get();
 		}
 		return null;
+	}
+
+	/**
+	 * Resolve a miss against the Atlas. When this registry is stage-located, ask that stage
+	 * first; fall back to the stage-free path, because a stage-explicit miss is the normal
+	 * case for a package inherited from a parent scope's final stage — the requested stage
+	 * need not be the content's origin stage.
+	 */
+	private Optional<EPackage> fetchRemote(String nsURI) {
+		if (stage == null) {
+			return remote.ensureAvailable(nsURI);
+		}
+		Optional<EPackage> atStage = remote.getEPackageAtStage(nsURI, scope, stage);
+		return atStage.isPresent() ? atStage : remote.ensureAvailable(nsURI);
 	}
 
 	@Override

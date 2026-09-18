@@ -107,6 +107,7 @@
 	org.eclipse.fennec.model.atlas.rest.uml;version=snapshot,\
 	org.eclipse.fennec.model.atlas.rest.xsdschema;version=snapshot,\
 	org.eclipse.fennec.model.atlas.tests.common;version=snapshot,\
+	org.eclipse.fennec.model.atlas.action.api;version=snapshot,\
 	org.eclipse.fennec.model.atlas.workflow;version=snapshot,\
 	org.eclipse.osgitech.rest;version='[1.2.3,1.2.4)',\
 	org.eclipse.osgitech.rest.servlet.whiteboard;version='[1.2.3,1.2.4)',\

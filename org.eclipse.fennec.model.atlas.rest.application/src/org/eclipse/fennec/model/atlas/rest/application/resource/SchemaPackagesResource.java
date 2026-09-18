@@ -424,12 +424,15 @@ public class SchemaPackagesResource {
                     @ApiResponse(responseCode = "204", description = "Package not found"),
                     @ApiResponse(responseCode = "400", description = "Scope not available, schema registry not available for scope, stage not available for registry or not a valid stage"),
                     @ApiResponse(responseCode = "406", description = "Requested format not supported"),
+                    @ApiResponse(responseCode = "412", description = "A fingerprint was given and the package at this location is a different model version"),
                     @ApiResponse(responseCode = "500", description = "Internal server error") })
     @ResourceOption(key = CodecOptions.CODEC_ID_KEY_MODE, value = "FEATURE_ONLY")
     public Response getPackageContent(
             @Parameter(description = "The scope name", required = true) @PathParam("scopeName") String scopeName,
             @Parameter(description = "The stage name", required = true) @PathParam("stageName") String stageName,
-            @Parameter(description = "The namespace URI of the package", required = true) @QueryParam("nsUri") String nsUri) {
+            @Parameter(description = "The namespace URI of the package", required = true) @QueryParam("nsUri") String nsUri,
+            @Parameter(description = "Optional precondition: the model fingerprint the caller expects. "
+                    + "Omitted, the request behaves exactly as before.") @QueryParam("fingerprint") String fingerprint) {
 
         ScopeService<?> scopeService = getScopeServiceByScopeName(scopeName);
         try {
@@ -438,6 +441,10 @@ public class SchemaPackagesResource {
             ObjectMetadata contentMetadata = findByNsUriInStage(scopeService, stageName, nsUri);
             if (contentMetadata == null) {
                 return Response.status(Response.Status.NO_CONTENT).build();
+            }
+            Response mismatch = refuseOnFingerprintMismatch(fingerprint, contentMetadata, nsUri);
+            if (mismatch != null) {
+                return mismatch;
             }
             EPackage ePackage = (EPackage) scopeService.getContentFromStageForRegistry(schemaRegistry(scopeService), stageName,
                     contentMetadata.getObjectId());
@@ -475,11 +482,14 @@ public class SchemaPackagesResource {
                     @ApiResponse(responseCode = "204", description = "Package not found"),
                     @ApiResponse(responseCode = "400", description = "Scope not available or schema registry not available for scope"),
                     @ApiResponse(responseCode = "406", description = "Requested format not supported"),
+                    @ApiResponse(responseCode = "412", description = "A fingerprint was given and the package at this location is a different model version"),
                     @ApiResponse(responseCode = "500", description = "Internal server error") })
     @ResourceOption(key = CodecOptions.CODEC_ID_KEY_MODE, value = "FEATURE_ONLY")
     public Response getPackageContentFromFinalStage(
             @Parameter(description = "The scope name", required = true) @PathParam("scopeName") String scopeName,
-            @Parameter(description = "The namespace URI of the package", required = true) @QueryParam("nsUri") String nsUri) {
+            @Parameter(description = "The namespace URI of the package", required = true) @QueryParam("nsUri") String nsUri,
+            @Parameter(description = "Optional precondition: the model fingerprint the caller expects. "
+                    + "Omitted, the request behaves exactly as before.") @QueryParam("fingerprint") String fingerprint) {
 
         ScopeService<?> scopeService = getScopeServiceByScopeName(scopeName);
         try {
@@ -488,6 +498,10 @@ public class SchemaPackagesResource {
             ObjectMetadata contentMetadata = findByNsUriInFinalStage(scopeService, nsUri);
             if (contentMetadata == null) {
                 return Response.status(Response.Status.NO_CONTENT).build();
+            }
+            Response mismatch = refuseOnFingerprintMismatch(fingerprint, contentMetadata, nsUri);
+            if (mismatch != null) {
+                return mismatch;
             }
             Optional<?> ePackageContent = scopeService.get(schemaRegistry(scopeService), contentMetadata.getObjectId());
             if (ePackageContent.isEmpty()) {
@@ -727,6 +741,41 @@ public class SchemaPackagesResource {
         } catch (Exception e) {
             throw EndpointFailures.propagate(e);
         }
+    }
+
+    /**
+     * Evaluate the optional {@code fingerprint} read precondition (#274).
+     * <p>
+     * Addressing stays {@code (scope, [stage], nsUri)}; the fingerprint only asserts <em>which
+     * model version</em> the caller expects to find there. Several versions of one nsURI can be
+     * live at once, one per stage, and a transition can move them between the moment a client
+     * listed a version and the moment it fetches one — so a pinned read must either return the
+     * version asked for or fail, never a different one.
+     * <p>
+     * A stored object that carries no fingerprint fails the precondition too: the caller asked for
+     * a specific version and the server cannot show that this is it. Saying so beats answering
+     * with content whose identity is unknown.
+     *
+     * @param requested the fingerprint the caller pinned, or {@code null}/blank for no precondition
+     * @param metadata  the metadata of the object that was resolved
+     * @param nsUri     the namespace URI, for the message
+     * @return a 412 response when the precondition fails, or {@code null} when it passes or none
+     *         was given
+     */
+    static Response refuseOnFingerprintMismatch(String requested, ObjectMetadata metadata, String nsUri) {
+        if (requested == null || requested.isBlank()) {
+            return null;
+        }
+        String actual = metadata == null ? null : metadata.getFingerprint();
+        if (requested.equals(actual)) {
+            return null;
+        }
+        String message = actual == null || actual.isBlank()
+                ? String.format("%s: the stored object reports no model fingerprint, so '%s' cannot be confirmed",
+                        nsUri, requested)
+                : String.format("%s: expected model version '%s' but this location holds '%s'", nsUri, requested,
+                        actual);
+        return Response.status(Response.Status.PRECONDITION_FAILED).entity(message).build();
     }
 
     /**

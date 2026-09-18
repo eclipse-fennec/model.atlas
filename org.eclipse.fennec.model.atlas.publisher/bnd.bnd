@@ -1,0 +1,31 @@
+Bundle-Name: Eclipse Fennec Model Atlas Publisher
+Bundle-Description: Writing to a model.atlas from code: ObjectPublisher stores one object in a \
+ configured object registry, PackagePublisher hands a registered EPackage to a configured schema \
+ stage. Both are configured services — the scope, the registry, the stage and whether an existing \
+ entry may be replaced belong to the deployment, never to the caller.
+
+# Deploying this bundle and configuring a factory PID IS the authorization decision:
+# a runtime holding neither configuration cannot write to an atlas from code, which
+# is why the widely consumed, read-only ModelAtlasClient still has no write on it.
+# What is exported is the two contracts and their receipts — strings and ints, no
+# ObjectMetadata, no Promise. The transport stays inside: HTTP goes through the
+# ResourceSet's URIConverter (Fennec's RESTful URI handler, already in every Fennec
+# runtime) rather than a JAX-RS client, so there is no Jersey stack to deploy and no
+# provider lookup that can lose a race with lazy bundle activation.
+
+-workingset: atlas
+
+-library: enableEMF
+
+-buildpath: \
+	org.eclipse.fennec.emf.osgi.metadata;version=latest,\
+	org.eclipse.fennec.emf.osgi.api;version=latest,\
+	org.osgi.service.metatype.annotations;version=latest
+
+# component.minimal exports org.eclipse.fennec.emf.osgi.fingerprint.util, whose
+# FingerprintHelper backs MetadataServices.createWhiteboard(). The tests resolve
+# packages through a real metadata whiteboard rather than a stub, so that
+# "registered" means here what it means in the runtime.
+-testpath: \
+	assertj-core,\
+	org.eclipse.fennec.emf.osgi.component.minimal;version=latest

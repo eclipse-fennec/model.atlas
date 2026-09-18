@@ -35,6 +35,7 @@ import jakarta.ws.rs.container.ContainerResponseFilter;
 import jakarta.ws.rs.core.EntityTag;
 import jakarta.ws.rs.core.HttpHeaders;
 import jakarta.ws.rs.core.MediaType;
+import jakarta.ws.rs.core.MultivaluedMap;
 import jakarta.ws.rs.core.Response;
 
 /**
@@ -93,6 +94,26 @@ public class ObjectMetadataResponseFilter implements ContainerResponseFilter {
      * represents, so the filter derives the right ETag validator.
      */
     public static final String PROP_CACHE_TARGET = "org.eclipse.fennec.model.atlas.rest.cacheTarget";
+
+    /**
+     * Response headers naming where a response's content came from and which model version it is
+     * (#273). The stage-explicit content endpoints otherwise report no origin at all, so a client
+     * that fetched a package at a stage could not tell which of several live versions of that nsURI
+     * it had just received. Emitted whenever a resource attaches its {@link ObjectMetadata}, so the
+     * object endpoints carry the same provenance for free.
+     * <p>
+     * {@code Atlas-Fingerprint} is the <em>semantic model identity</em> and is present only for
+     * EPackages; it is absent for instances, whose metadata carries no fingerprint. It is a
+     * statement of what the server holds, not an instruction: a client that computes fingerprints
+     * locally keeps its own value authoritative and uses this one as a cross-check.
+     */
+    public static final String HEADER_SCOPE = "Atlas-Scope";
+    /** @see #HEADER_SCOPE */
+    public static final String HEADER_STAGE = "Atlas-Stage";
+    /** @see #HEADER_SCOPE */
+    public static final String HEADER_VERSION = "Atlas-Version";
+    /** @see #HEADER_SCOPE */
+    public static final String HEADER_FINGERPRINT = "Atlas-Fingerprint";
 
     /**
      * What a cacheable response actually carries, which decides the ETag validator the filter derives.
@@ -154,11 +175,38 @@ public class ObjectMetadataResponseFilter implements ContainerResponseFilter {
         // Representations differ by Accept (XMI vs JSON vs …). Mark the response so caches key on it.
         // Set before any 304 rewrite so the 304 carries it too.
         addVaryAccept(responseContext);
+        // Set before any 304 rewrite so the 304 states the same origin as the 200 it stands for.
+        stampProvenance(responseContext.getHeaders(), metadata);
 
         if (isConditionalGet(requestContext, responseContext) && isNotModified(requestContext, metadata, etagValue)) {
             // Validators are already on the response; drop the body and switch to 304.
             responseContext.setStatus(Response.Status.NOT_MODIFIED.getStatusCode());
             responseContext.setEntity(null);
+        }
+    }
+
+    /**
+     * Stamp the Atlas origin of the response described by {@code metadata} (#273). Each header is
+     * set only when the metadata carries the value and the response does not already state it, so a
+     * resource that stamped its own is never overwritten — the same policy the validators follow.
+     *
+     * @param headers  the response headers to add to
+     * @param metadata the metadata describing the response entity; {@code null} is a no-op
+     */
+    static void stampProvenance(MultivaluedMap<String, Object> headers, ObjectMetadata metadata) {
+        if (headers == null || metadata == null) {
+            return;
+        }
+        putIfAbsent(headers, HEADER_SCOPE, metadata.getScope());
+        putIfAbsent(headers, HEADER_STAGE, metadata.getStage());
+        putIfAbsent(headers, HEADER_VERSION, metadata.getVersion());
+        putIfAbsent(headers, HEADER_FINGERPRINT, metadata.getFingerprint());
+    }
+
+    /** Adds {@code name: value} unless the value is absent/blank or the header is already set. */
+    private static void putIfAbsent(MultivaluedMap<String, Object> headers, String name, String value) {
+        if (value != null && !value.isBlank() && !headers.containsKey(name)) {
+            headers.putSingle(name, value);
         }
     }
 

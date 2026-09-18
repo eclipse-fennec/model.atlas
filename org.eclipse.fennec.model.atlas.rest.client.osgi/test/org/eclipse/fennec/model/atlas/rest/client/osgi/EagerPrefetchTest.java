@@ -17,7 +17,9 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
@@ -35,6 +37,7 @@ import org.eclipse.fennec.model.atlas.rest.client.api.ClientConfiguration;
 import org.eclipse.fennec.model.atlas.rest.client.api.ModelAtlasClient;
 import org.eclipse.fennec.model.atlas.rest.client.api.NotFoundException;
 import org.eclipse.fennec.model.atlas.rest.client.api.PackageDescriptor;
+import org.eclipse.fennec.model.atlas.rest.client.api.ModelAtlasClientException;
 import org.eclipse.fennec.model.atlas.rest.client.api.RemoteEPackageProvider;
 import org.eclipse.fennec.model.atlas.rest.client.api.ResolutionMode;
 import org.eclipse.fennec.model.atlas.rest.client.api.ResolvedEPackage;
@@ -51,7 +54,7 @@ class EagerPrefetchTest {
 
 	/** Records every publish call instead of touching the OSGi registry. */
 	private static final class RecordingPublication implements PackagePublication {
-		record Published(String nsUri, String scope, String stage, String version) {
+		record Published(String nsUri, String scope, String stage, String version, boolean finalStage) {
 		}
 
 		final List<Published> calls = new ArrayList<>();
@@ -59,7 +62,13 @@ class EagerPrefetchTest {
 		@Override
 		public boolean publish(EPackage ePackage, String scope, String stage, String version,
 				String serverFingerprint) {
-			calls.add(new Published(ePackage.getNsURI(), scope, stage, version));
+			return publish(ePackage, scope, stage, version, serverFingerprint, true);
+		}
+
+		@Override
+		public boolean publish(EPackage ePackage, String scope, String stage, String version,
+				String serverFingerprint, boolean finalStage) {
+			calls.add(new Published(ePackage.getNsURI(), scope, stage, version, finalStage));
 			return true;
 		}
 	}
@@ -92,6 +101,15 @@ class EagerPrefetchTest {
 				.modeStrict(strict)
 				.eagerScopes(eagerScopes)
 				.scopeAllowList(scopeAllowList)
+				.build();
+	}
+
+	private static ClientConfiguration configWithStages(List<String> eagerScopes, List<String> eagerStages) {
+		return ClientConfiguration.builder()
+				.baseUri(URI.create("http://atlas.test/atlas/rest"))
+				.mode(ResolutionMode.EAGER)
+				.eagerScopes(eagerScopes)
+				.eagerStages(eagerStages)
 				.build();
 	}
 
@@ -323,5 +341,68 @@ class EagerPrefetchTest {
 		hybrid.prefetchListedNsUris();
 
 		assertFalse(hybrid.isComplete());
+	}
+
+	// ---- the configured stages are pre-fetched too (#280) -----------------
+
+	/**
+	 * The reported failure: a package published only to a non-final stage never became visible,
+	 * because the pre-fetch enumerated the final stage alone and nothing ever provoked a
+	 * fetch-on-miss.
+	 */
+	@Test
+	void publishesPackagesFoundAtTheConfiguredStages() {
+		when(provider.listPackages("jena")).thenReturn(List.of());
+		when(provider.listPackagesAtStage("jena", "approved"))
+				.thenReturn(List.of(desc("urn:clinic", "jena", "approved", "1.0")));
+		EPackage clinic = ePackage("urn:clinic");
+		when(provider.resolveAtStage("urn:clinic", "jena", "approved")).thenReturn(
+				Optional.of(new ResolvedEPackage(clinic, "urn:clinic", "jena", "schema", "approved", "1.0", "fp1:c0")));
+
+		prefetch(configWithStages(List.of("jena"), List.of("approved"))).run();
+
+		// Published as a staged version: it must not take the nsURI slot from a released one.
+		assertEquals(List.of(new RecordingPublication.Published("urn:clinic", "jena", "approved", "1.0", false)),
+				publication.calls);
+	}
+
+	/** The final stage is still pre-fetched, and still as the final-stage version. */
+	@Test
+	void theFinalStageIsStillPrefetchedAlongside() {
+		when(provider.listPackages("jena")).thenReturn(List.of(desc("urn:a", "jena", "release", "1.0")));
+		when(provider.ensureAvailable("urn:a")).thenReturn(Optional.of(ePackage("urn:a")));
+		when(provider.listPackagesAtStage("jena", "approved")).thenReturn(List.of());
+
+		prefetch(configWithStages(List.of("jena"), List.of("approved"))).run();
+
+		verify(provider).listPackages("jena");
+		verify(provider).listPackagesAtStage("jena", "approved");
+		assertEquals(List.of(new RecordingPublication.Published("urn:a", "jena", "release", "1.0", true)),
+				publication.calls);
+	}
+
+	/** Empty stages is the old behaviour exactly: the final stage and nothing else. */
+	@Test
+	void withNoStagesConfiguredNothingStagedIsFetched() {
+		when(provider.listPackages("jena")).thenReturn(List.of(desc("urn:a", "jena", "release", "1.0")));
+		when(provider.ensureAvailable("urn:a")).thenReturn(Optional.of(ePackage("urn:a")));
+
+		prefetch(config(ResolutionMode.EAGER, false, List.of("jena"), List.of())).run();
+
+		verify(provider, never()).listPackagesAtStage(anyString(), anyString());
+	}
+
+	/** A stage a scope does not have must not cost it its final-stage packages. */
+	@Test
+	void aStageThatCannotBeListedIsSkippedNotFatal() {
+		when(provider.listPackages("jena")).thenReturn(List.of(desc("urn:a", "jena", "release", "1.0")));
+		when(provider.ensureAvailable("urn:a")).thenReturn(Optional.of(ePackage("urn:a")));
+		when(provider.listPackagesAtStage("jena", "nosuch"))
+				.thenThrow(new ModelAtlasClientException("stage 'nosuch' is not known to scope 'jena'"));
+
+		prefetch(configWithStages(List.of("jena"), List.of("nosuch"))).run();
+
+		assertEquals(List.of(new RecordingPublication.Published("urn:a", "jena", "release", "1.0", true)),
+				publication.calls, "the final-stage packages are published despite the bad stage");
 	}
 }

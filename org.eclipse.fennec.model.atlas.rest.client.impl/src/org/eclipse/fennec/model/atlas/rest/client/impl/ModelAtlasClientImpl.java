@@ -79,7 +79,10 @@ public class ModelAtlasClientImpl implements ModelAtlasClient {
 		// fetches on demand and needs no discovery (issue #228).
 		boolean discoverAdditions = configuration.getMode() != ResolutionMode.LAZY;
 		this.driftWatcher = new DriftWatcher(baseTarget, this::scopesToWatch, this::ePackagesImpl,
-				readOnlyScopes::get, configuration.getDriftCheckIntervalMs(), discoverAdditions);
+				readOnlyScopes::get, configuration.getDriftCheckIntervalMs(), discoverAdditions,
+				// Where to look for a package the stage-free read cannot serve, before concluding
+				// it was deleted (#286).
+				configuration::getEagerStages);
 		this.driftWatcher.start();
 	}
 
@@ -164,7 +167,8 @@ public class ModelAtlasClientImpl implements ModelAtlasClient {
 		Objects.requireNonNull(scopeName, "scopeName");
 		// One service (and one cache) per scope; repeated calls return the same instance.
 		return readOnlyScopes.computeIfAbsent(scopeName,
-				s -> new RemoteReadableScopeService(baseTarget, configuration, s, this::newDecodingResourceSet));
+				s -> new RemoteReadableScopeService(baseTarget, configuration, s,
+						stage -> newDecodingResourceSet(s, stage)));
 	}
 
 	/**
@@ -174,13 +178,21 @@ public class ModelAtlasClientImpl implements ModelAtlasClient {
 	 * {@code get(...)}. Remote package look-ups still go through the shared, drift-aware
 	 * EPackage provider.
 	 */
-	private ResourceSet newDecodingResourceSet() {
-		return newAtlasResourceSet(newAtlasRegistry());
+	private ResourceSet newDecodingResourceSet(String scope, String stage) {
+		return newAtlasResourceSet(newAtlasRegistry(scope, stage));
 	}
 
 	/** A package registry that resolves local/INSTANCE first, then the remote Atlas on a miss. */
 	private AtlasDelegatingPackageRegistry newAtlasRegistry() {
-		return new AtlasDelegatingPackageRegistry(EPackage.Registry.INSTANCE, ePackagesImpl());
+		return newAtlasRegistry(null, null);
+	}
+
+	/**
+	 * As {@link #newAtlasRegistry()}, but resolving a remote miss at {@code scope}/{@code stage}
+	 * (#272). {@code stage == null} is the stage-free final-stage behaviour.
+	 */
+	private AtlasDelegatingPackageRegistry newAtlasRegistry(String scope, String stage) {
+		return new AtlasDelegatingPackageRegistry(EPackage.Registry.INSTANCE, ePackagesImpl(), scope, stage);
 	}
 
 	/** A ResourceSet with default XMI handling and the given Atlas-aware package registry. */

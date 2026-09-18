@@ -89,6 +89,12 @@ class RemoteEPackageProviderImpl implements RemoteEPackageProvider {
 	private final ClientConfiguration configuration;
 	private final EPackageDeserializer deserializer;
 	private final Supplier<List<String>> scopeNamesSupplier;
+	/** Origin headers the Atlas stamps on a content response (#273); see {@code ObjectMetadataResponseFilter}. */
+	private static final String HEADER_SCOPE = "Atlas-Scope";
+	private static final String HEADER_STAGE = "Atlas-Stage";
+	private static final String HEADER_VERSION = "Atlas-Version";
+	private static final String HEADER_FINGERPRINT = "Atlas-Fingerprint";
+
 	private final ClientCache<String, EPackage> cache;
 	/**
 	 * The packages whose cross-package references are being resolved on this
@@ -246,13 +252,25 @@ class RemoteEPackageProviderImpl implements RemoteEPackageProvider {
 
 	@Override
 	public Optional<EPackage> getEPackageAtStage(String nsUri, String scopeName, String stage) {
+		return resolveAtStage(nsUri, scopeName, stage).map(ResolvedEPackage::getEPackage);
+	}
+
+	@Override
+	public Optional<ResolvedEPackage> resolveAtStage(String nsUri, String scopeName, String stage,
+			String fingerprint) {
 		Objects.requireNonNull(nsUri, "nsUri");
 		Objects.requireNonNull(scopeName, "scopeName");
 		Objects.requireNonNull(stage, "stage");
 		// Stage-explicit content: GET /{scope}/schema/stages/{stage}/content?nsUri=…
-		// No caching here — the caller (AtlasScopedFetchOnMissRegistry) owns its own cache.
+		// No caching here — the caller (AtlasScopedFetchOnMissRegistry) owns its own cache, and a
+		// pinned read must not be served from, or poison, the nsURI-keyed stage-free cache.
 		WebTarget target = baseTarget.path(scopeName).path(SCHEMA).path("stages").path(stage).path("content")
 				.queryParam("nsUri", nsUri);
+		if (fingerprint != null && !fingerprint.isBlank()) {
+			// A precondition, not a selector: the server still resolves by location and answers
+			// 412 when what it finds there is a different version (RestSupport maps that).
+			target = target.queryParam("fingerprint", fingerprint);
+		}
 		// Dependencies are fetched from the same scope AND stage: a package staged in
 		// `draft` must not silently inherit from its parent's `release` content.
 		Optional<ContentResult> result = fetchContent(target, nsUri, null, "scope=" + scopeName + ", stage=" + stage,
@@ -260,7 +278,17 @@ class RemoteEPackageProviderImpl implements RemoteEPackageProvider {
 		if (result.isEmpty() || result.get().notModified()) {
 			return Optional.empty();
 		}
-		return Optional.of(result.get().fetched().ePackage());
+		FetchedPackage fetched = result.get().fetched();
+		Origin origin = fetched.origin();
+		// What the server reported wins; where it reported nothing (an older Atlas), fall back to
+		// what we asked for — that is a fact about the request, not a guess about the content.
+		// The registry stays null: this endpoint serves the scope's schema registry by definition
+		// and does not name it, and inventing a name here would be a guess.
+		return Optional.of(new ResolvedEPackage(fetched.ePackage(), nsUri,
+				origin.scope() != null ? origin.scope() : scopeName,
+				null,
+				origin.stage() != null ? origin.stage() : stage,
+				origin.version(), origin.fingerprint()));
 	}
 
 	@Override
@@ -373,6 +401,13 @@ class RemoteEPackageProviderImpl implements RemoteEPackageProvider {
 			if (RestSupport.isNotModified(response)) {
 				return Optional.of(ContentResult.ofNotModified());
 			}
+			// A failed fingerprint precondition is not a miss (#274). Swallowed as "absent" it
+			// would be worse than useless: the caller falls back to the stage-free path and gets
+			// the very version the pin was there to exclude. It is the one refusal that must
+			// reach the caller.
+			if (response.getStatus() == Response.Status.PRECONDITION_FAILED.getStatusCode()) {
+				throw RestSupport.statusError(response, "resolveAtStage(" + nsUri + ", " + origin + ")");
+			}
 			if (!RestSupport.isSuccess(response)) {
 				reportAbnormalMiss(response, nsUri, origin);
 				return Optional.empty();
@@ -392,7 +427,7 @@ class RemoteEPackageProviderImpl implements RemoteEPackageProvider {
 			// fetch goes through — before the package is cached or handed out.
 			resolveCrossPackageReferences(ePackage, nsUri, dependencyFetcher);
 			FetchedPackage fetched = new FetchedPackage(ePackage, response.getHeaderString(HttpHeaders.ETAG),
-					response.getHeaderString(HttpHeaders.LAST_MODIFIED));
+					response.getHeaderString(HttpHeaders.LAST_MODIFIED), Origin.of(response));
 			return Optional.of(ContentResult.of(fetched));
 		} finally {
 			response.close();
@@ -602,7 +637,19 @@ class RemoteEPackageProviderImpl implements RemoteEPackageProvider {
 	}
 
 	/** A freshly fetched package together with its HTTP validators. */
-	private record FetchedPackage(EPackage ePackage, String etag, String lastModified) {
+	/**
+	 * What the server said about where a fetched package came from (#273): the {@code Atlas-*}
+	 * response headers. Any field is {@code null} when the server did not report it — an older
+	 * Atlas reports none of them, so a caller must be able to fall back on what it asked for.
+	 */
+	private record Origin(String scope, String stage, String version, String fingerprint) {
+		static Origin of(Response response) {
+			return new Origin(response.getHeaderString(HEADER_SCOPE), response.getHeaderString(HEADER_STAGE),
+					response.getHeaderString(HEADER_VERSION), response.getHeaderString(HEADER_FINGERPRINT));
+		}
+	}
+
+	private record FetchedPackage(EPackage ePackage, String etag, String lastModified, Origin origin) {
 	}
 
 	/** Outcome of a conditional content GET: either {@code 304} or a fetched package. */

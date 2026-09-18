@@ -26,6 +26,7 @@ import java.util.logging.Logger;
 import org.eclipse.emf.ecore.EPackage;
 import org.eclipse.fennec.model.atlas.rest.client.api.DriftListener;
 import org.eclipse.fennec.model.atlas.rest.client.api.ModelAtlasClientException;
+import org.eclipse.fennec.model.atlas.rest.client.api.PackageDrift;
 import org.eclipse.fennec.model.atlas.rest.client.api.ResolvedEPackage;
 
 /**
@@ -98,6 +99,24 @@ final class DriftSubstitution implements DriftListener {
 	}
 
 	@Override
+	public void onPackageAdded(PackageDrift drift, EPackage newPackage) {
+		String nsUri = drift.nsUri();
+		if (drift.stage() != null) {
+			// #281: the package appeared at a named stage. Publish the version that appeared,
+			// as a staged one — the final-stage path claims the nsURI slot on its own terms.
+			if (!wantsAddition.test(nsUri)) {
+				return;
+			}
+			if (adopter.publish(newPackage, drift.scope(), drift.stage(), null, drift.fingerprint(), false)) {
+				LOGGER.log(Level.INFO, () -> "Drift: published newly discovered EPackage " + nsUri + " from scope "
+						+ drift.scope() + " at stage " + drift.stage());
+			}
+			return;
+		}
+		onPackageAdded(nsUri, newPackage);
+	}
+
+	@Override
 	public void onPackageAdded(String nsUri, EPackage newPackage) {
 		if (isPublished.test(nsUri) || !wantsAddition.test(nsUri)) {
 			// Already ours (a race with the prefetch), or this mode does not want it.
@@ -127,6 +146,12 @@ final class DriftSubstitution implements DriftListener {
 
 	@Override
 	public void onPackageChanged(String nsUri, EPackage newPackage) {
+		onPackageChanged(new PackageDrift(null, null, nsUri, null), newPackage);
+	}
+
+	@Override
+	public void onPackageChanged(PackageDrift drift, EPackage newPackage) {
+		String nsUri = drift.nsUri();
 		if (!isPublished.test(nsUri)) {
 			// We are not publishing this nsURI (suppressed by a local, or never ours) — nothing to swap.
 			return;
@@ -143,6 +168,14 @@ final class DriftSubstitution implements DriftListener {
 		if (resolved.isPresent()) {
 			ResolvedEPackage remote = resolved.get();
 			republisher.publish(remote.getEPackage(), remote.getScope(), remote.getStage(), remote.getVersion(), remote.getFingerprint());
+		} else if (drift.stage() != null) {
+			// #286: the resolver reads stage-free, which the server answers from the scope's final
+			// stage — so a package held anywhere else looks gone to it. The watcher has just found
+			// this one at drift.stage(), so it is live; republishing there both keeps the service
+			// and moves its atlas.stage to where the package now is.
+			republisher.publish(newPackage, drift.scope(), drift.stage(), null, drift.fingerprint());
+			LOGGER.log(Level.INFO, () -> "Drift: " + nsUri + " is now served at stage " + drift.stage()
+					+ " of scope " + drift.scope() + "; republished there rather than unpublished");
 		} else {
 			// Changed-then-gone between the drift signal and our re-resolve.
 			unpublisher.accept(nsUri);

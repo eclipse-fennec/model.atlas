@@ -110,6 +110,9 @@ public class ScopesResource {
     /** Signals that the cited {@code If-None-Match} baseline could not be reconstructed, so no diff is available. */
     static final String ATLAS_BASELINE_UNKNOWN = "Atlas-Baseline-Unknown";
 
+    /** Version-aware companion to {@code Atlas-Changed-NsUris} (#276): {@code stage|nsUri|fingerprint} entries. */
+    static final String ATLAS_CHANGED_PACKAGES = "Atlas-Changed-Packages";
+
     /**
      * Aggregate change-detection probe for an entire scope. Returns a strong, order-independent
      * {@code ETag} over every package and registered EObject in the scope plus a {@code Last-Modified},
@@ -164,6 +167,17 @@ public class ScopesResource {
             if (!diff.changedObjects().isEmpty()) {
                 rb.header("Atlas-Changed-Objects", String.join(",", diff.changedObjects()));
             }
+            // Version-aware detail (#276): `stage|nsUri|fingerprint` per changed package, an empty
+            // fingerprint meaning the version is gone from that location. Atlas-Changed-NsUris stays
+            // exactly as it was, so a client that does not know this header is unaffected — but one
+            // that does can tell whether the version *it* holds moved, instead of evicting on the
+            // bare nsURI and dropping a still-valid sibling stage.
+            if (!diff.changedPackages().isEmpty()) {
+                rb.header(ATLAS_CHANGED_PACKAGES, diff.changedPackages().stream()
+                        .map(change -> String.join("|", nullToEmpty(change.stage()), nullToEmpty(change.nsUri()),
+                                nullToEmpty(change.fingerprint())))
+                        .collect(java.util.stream.Collectors.joining(",")));
+            }
         } else {
             // Say so outright (#238). Without it this answer is indistinguishable from
             // "the aggregate changed, but nothing you track did", and a client that simply
@@ -172,5 +186,10 @@ public class ScopesResource {
             rb.header(ATLAS_BASELINE_UNKNOWN, Boolean.TRUE.toString());
         }
         return rb.build();
+    }
+
+    /** Empty rather than the literal "null": an absent field must not look like a value. */
+    private static String nullToEmpty(String value) {
+        return value == null ? "" : value;
     }
 }

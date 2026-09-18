@@ -15,12 +15,9 @@
 package org.eclipse.fennec.model.atlas.mcp.tools;
 
 import java.util.Map;
-import java.util.concurrent.Callable;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
-import org.eclipse.fennec.mcp.api.AbstractMCPTool;
 import org.eclipse.fennec.mcp.api.MCPTool;
+import org.eclipse.fennec.model.atlas.publisher.PackagePublisher;
 import org.osgi.service.component.annotations.Activate;
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
@@ -28,8 +25,6 @@ import org.osgi.service.component.annotations.Reference;
 import io.modelcontextprotocol.server.McpAsyncServerExchange;
 import io.modelcontextprotocol.spec.McpSchema;
 import reactor.core.publisher.Mono;
-import tools.jackson.databind.SerializationFeature;
-import tools.jackson.databind.json.JsonMapper;
 
 /**
  * MCP tool handing one registered EPackage to the model atlas.
@@ -44,16 +39,10 @@ import tools.jackson.databind.json.JsonMapper;
  * @since Aug 27, 2026
  */
 @Component(name = "PostToModelAtlasTool", service = MCPTool.class, property = "tool.name=post_to_model_atlas")
-public class PostToModelAtlasTool extends AbstractMCPTool {
-
-	private static final Logger LOGGER = Logger.getLogger(PostToModelAtlasTool.class.getName());
-
-	private static final JsonMapper MAPPER = JsonMapper.builder()
-			.enable(SerializationFeature.INDENT_OUTPUT)
-			.build();
+public class PostToModelAtlasTool extends AbstractAtlasTool {
 
 	@Reference
-	ModelAtlasPublisher publisher;
+	PackagePublisher publisher;
 
 	@Activate
 	void activate() {
@@ -84,38 +73,5 @@ public class PostToModelAtlasTool extends AbstractMCPTool {
 	@Override
 	public Mono<McpSchema.CallToolResult> execute(McpAsyncServerExchange exchange, Map<String, Object> arguments) {
 		return run(() -> publisher.publish(requireString(arguments, "nsURI")));
-	}
-
-	/**
-	 * Runs the tool body, mapping exceptions to sanitized MCP error results:
-	 * {@link ToolException} messages are written for the agent and are returned
-	 * verbatim, anything else is logged server-side and reported generically.
-	 */
-	private Mono<McpSchema.CallToolResult> run(Callable<Object> body) {
-		return Mono.fromCallable(() -> {
-			try {
-				Object result = body.call();
-				String text = result instanceof String string ? string : MAPPER.writeValueAsString(result);
-				return McpSchema.CallToolResult.builder().addTextContent(text).build();
-			} catch (ToolException e) {
-				return error(e.getMessage());
-			} catch (Exception e) {
-				LOGGER.log(Level.SEVERE, e, () -> String.format("Unexpected error executing MCP tool '%s'", getName()));
-				return error("Unexpected server error while executing " + getName()
-						+ " — see the server log for details");
-			}
-		});
-	}
-
-	private static McpSchema.CallToolResult error(String message) {
-		return McpSchema.CallToolResult.builder().addTextContent(message).isError(true).build();
-	}
-
-	private static String requireString(Map<String, Object> arguments, String key) {
-		Object value = arguments == null ? null : arguments.get(key);
-		if (!(value instanceof String string) || string.isBlank()) {
-			throw new ToolException(String.format("Parameter '%s' is required and must be a non-empty string", key));
-		}
-		return string;
 	}
 }

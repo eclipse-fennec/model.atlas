@@ -169,6 +169,62 @@ final class EagerPrefetch {
 	}
 
 	private int prefetchScope(String scope) {
+		int published = prefetchFinalStage(scope);
+		// #280: the configured stages are pre-fetched too, so a package that exists only at a
+		// non-final stage is *registered* rather than merely reachable through a fetch-on-miss
+		// that nothing provokes. A consumer that refuses to dereference an untrusted nsURI, or
+		// that addresses by fingerprint, can only ever see what has been registered.
+		for (String stage : config.getEagerStages()) {
+			published += prefetchStage(scope, stage);
+		}
+		return published;
+	}
+
+	/**
+	 * Pre-fetch one named stage. Failures here are logged and skipped rather than failing the
+	 * pass: a stage a scope does not have is a configuration answer, not a reason to leave the
+	 * final-stage packages unpublished.
+	 */
+	private int prefetchStage(String scope, String stage) {
+		RemoteEPackageProvider provider = client.ePackages();
+		List<PackageDescriptor> packages;
+		try {
+			packages = provider.listPackagesAtStage(scope, stage);
+		} catch (RuntimeException e) {
+			LOGGER.log(Level.WARNING, e, () -> "EAGER pre-fetch: listing scope '" + scope + "' at stage '" + stage
+					+ "' failed; skipping that stage");
+			return 0;
+		}
+		int published = 0;
+		for (PackageDescriptor descriptor : packages) {
+			String nsUri = descriptor.nsUri();
+			Optional<ResolvedEPackage> resolved;
+			try {
+				// Stage-explicit, so the version published is the one at that stage — and
+				// resolveAtStage reports the origin the server stamped (#273).
+				resolved = provider.resolveAtStage(nsUri, scope, stage);
+			} catch (RuntimeException e) {
+				LOGGER.log(Level.WARNING, e, () -> "EAGER pre-fetch: nsURI '" + nsUri + "' listed in scope '" + scope
+						+ "' at stage '" + stage + "' but not retrievable there; skipping it");
+				continue;
+			}
+			if (resolved.isEmpty()) {
+				LOGGER.log(Level.FINE, () -> "EAGER pre-fetch: nsURI '" + nsUri + "' listed in scope '" + scope
+						+ "' at stage '" + stage + "' but its content was not available; skipping it");
+				continue;
+			}
+			ResolvedEPackage rp = resolved.get();
+			// finalStage=false: a staged version never takes the nsURI slot from the released
+			// one (#279).
+			if (publication.publish(rp.getEPackage(), rp.getScope() != null ? rp.getScope() : scope, rp.getStage(),
+					rp.getVersion(), rp.getFingerprint(), false)) {
+				published++;
+			}
+		}
+		return published;
+	}
+
+	private int prefetchFinalStage(String scope) {
 		RemoteEPackageProvider provider = client.ePackages();
 		List<PackageDescriptor> packages;
 		try {

@@ -1,7 +1,8 @@
 Bundle-Name: Eclipse Fennec Model Atlas MCP Configuration
-Bundle-Description: OSGi Configurator resources for the model.atlas MCP publishing tool: the \
- MCPToolProvider that carries post_to_model_atlas, and the ModelAtlasPublisher policy it needs. \
- Every publisher property is env/system-property interpolated, so one bundle serves every deployment.
+Bundle-Description: OSGi Configurator resources for the model.atlas MCP publishing tools: the \
+ MCPToolProvider that carries post_to_model_atlas and post_object_to_model_atlas, and the \
+ ModelAtlasPublisher and ModelAtlasObjectPublisher policies they need. Every publisher property is \
+ env/system-property interpolated, so one bundle serves every deployment.
 -workingset: mcp
 
 -resourceonly: true

@@ -43,6 +43,9 @@ import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.ConfigurationPolicy;
 import org.osgi.service.component.annotations.Deactivate;
 import org.osgi.service.component.annotations.Reference;
+import org.osgi.service.component.annotations.ReferencePolicyOption;
+import org.osgi.service.component.annotations.ReferencePolicy;
+import org.osgi.service.component.annotations.ReferenceCardinality;
 import org.osgi.service.metatype.annotations.Designate;
 
 import jakarta.ws.rs.client.ClientBuilder;
@@ -159,6 +162,17 @@ public class AtlasClientComponent {
 	private final ServiceRegistration<ResourceSetConfigurator> resourceSetConfiguratorReg;
 	/** P6-6: one fetch-on-miss bridge per (scope, stage) pair; registered as EPackage.Registry services. */
 	private final List<ServiceRegistration<EPackage.Registry>> fetchOnMissRegistrations = new ArrayList<>();
+	/** The bridges behind those registrations, kept so their held packages can be released (#277). */
+	private final List<AtlasScopedFetchOnMissRegistry> fetchOnMissBridges = new ArrayList<>();
+
+	/**
+	 * Optional (#277): present only where the metadata layer is deployed. Typed as a local
+	 * interface on purpose — a reference to a metadata type would fail this component at class
+	 * load wherever that package is absent, which is exactly the deployment it must survive.
+	 */
+	@Reference(cardinality = ReferenceCardinality.OPTIONAL, policy = ReferencePolicy.DYNAMIC,
+			policyOption = ReferencePolicyOption.GREEDY)
+	volatile StagedPackageSinkFactory stagedPackageSinkFactory;
 	/** P6-6: manages the ConfigAdmin EPackageRegistry + ResourceSetFactory pairs. */
 	private final AtlasEPackageRegistryConfigurator registryConfigurator;
 	/** #238: re-runs the start-up sync until it completes. Idle once one pass has. */
@@ -314,6 +328,10 @@ public class AtlasClientComponent {
 		}
 		fetchOnMissRegistrations.forEach(AtlasClientComponent::unregisterQuietly);
 		fetchOnMissRegistrations.clear();
+		// Withdraw whatever the bridges registered with the metadata layer before dropping them;
+		// a refcounted consumer would otherwise keep their trees alive for the framework's life.
+		fetchOnMissBridges.forEach(AtlasScopedFetchOnMissRegistry::dispose);
+		fetchOnMissBridges.clear();
 		closeQuietly(prefetchRetry); // stop retrying the start-up pass
 		closeQuietly(driftSubscription); // stop drift swaps
 		localServiceWatcher.close();
@@ -434,8 +452,11 @@ public class AtlasClientComponent {
 	private void registerOneBridge(BundleContext bundleContext, String scope, String stage,
 			EPackage.Registry frameworkRegistry,
 			org.eclipse.fennec.model.atlas.rest.client.api.RemoteEPackageProvider provider) {
+		StagedPackageSinkFactory sinkFactory = stagedPackageSinkFactory;
 		AtlasScopedFetchOnMissRegistry bridge = new AtlasScopedFetchOnMissRegistry(scope, stage, provider,
-				frameworkRegistry);
+				frameworkRegistry,
+				sinkFactory == null ? StagedPackageSink.NONE : sinkFactory.sinkFor(scope, stage));
+		fetchOnMissBridges.add(bridge);
 		Hashtable<String, Object> props = new Hashtable<>();
 		props.put(AtlasProperties.ATLAS_REMOTE, Boolean.TRUE);
 		props.put(AtlasProperties.ATLAS_SCOPE, scope);

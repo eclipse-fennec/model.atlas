@@ -83,7 +83,19 @@ public class ScopeAggregateService {
     private final Map<String, Map<String, Map<String, ManifestEntry>>> snapshots = new ConcurrentHashMap<>();
 
     /** A single scope entry: its identity (registry/objectId, plus nsURI for packages) and content hash. */
-    public record ManifestEntry(String registry, String objectId, String nsUri, String contentHash) {
+    /**
+     * One entry of a scope's manifest. {@code stage} and {@code fingerprint} are carried so a diff
+     * can say <em>which version</em> of an nsURI moved (#276): several versions of one nsURI can be
+     * live at once, one per stage, and a bare nsURI cannot tell them apart. {@code fingerprint} is
+     * the semantic model identity and is set for EPackages only.
+     */
+    public record ManifestEntry(String registry, String stage, String objectId, String nsUri, String contentHash,
+            String fingerprint) {
+
+        /** The same location with no version — what a removal leaves behind. */
+        ManifestEntry withoutFingerprint() {
+            return new ManifestEntry(registry, stage, objectId, nsUri, contentHash, null);
+        }
     }
 
     /** The current aggregate for a scope: its ETag, {@code Last-Modified}, and backing manifest. */
@@ -94,7 +106,20 @@ public class ScopeAggregateService {
      * The diff between a prior aggregate and the current one. {@code baselineKnown} is {@code false}
      * when the prior aggregate could not be reconstructed (so no exact diff is available).
      */
-    public record ScopeDiff(List<String> changedNsUris, List<String> changedObjects, boolean baselineKnown) {
+    /**
+     * One changed schema package, named precisely enough to act on (#276): a listener holding the
+     * {@code release} version of an nsURI must not evict it because the {@code draft} version moved.
+     * {@code fingerprint} is the version now at that location, or {@code null} when it is gone.
+     */
+    public record PackageChange(String nsUri, String stage, String fingerprint) {
+    }
+
+    public record ScopeDiff(List<String> changedNsUris, List<String> changedObjects, boolean baselineKnown,
+            List<PackageChange> changedPackages) {
+        /** Without version detail — an aggregate computed before #276. */
+        public ScopeDiff(List<String> changedNsUris, List<String> changedObjects, boolean baselineKnown) {
+            this(changedNsUris, changedObjects, baselineKnown, List.of());
+        }
     }
 
     /**
@@ -149,21 +174,24 @@ public class ScopeAggregateService {
         String schemaRegistry = schemaRegistryOf(scopeCollector.getScopeServiceByScopeName(scopeName));
         SortedSet<String> nsUris = new TreeSet<>();
         SortedSet<String> objects = new TreeSet<>();
+        // Version-aware detail (#276), keyed so one entry per (stage, nsUri) survives.
+        Map<String, PackageChange> packages = new LinkedHashMap<>();
         Map<String, ManifestEntry> cur = current.manifest();
         // Added or changed: present in current, absent or content-different in the baseline.
         for (Map.Entry<String, ManifestEntry> e : cur.entrySet()) {
             ManifestEntry old = baseline.get(e.getKey());
             if (old == null || !Objects.equals(old.contentHash(), e.getValue().contentHash())) {
-                record(e.getValue(), schemaRegistry, nsUris, objects);
+                record(e.getValue(), schemaRegistry, nsUris, objects, packages);
             }
         }
         // Removed: present in the baseline, absent in current.
         for (Map.Entry<String, ManifestEntry> e : baseline.entrySet()) {
             if (!cur.containsKey(e.getKey())) {
-                record(e.getValue(), schemaRegistry, nsUris, objects);
+                // Gone: report the location with no fingerprint — there is no version there now.
+                record(e.getValue().withoutFingerprint(), schemaRegistry, nsUris, objects, packages);
             }
         }
-        return new ScopeDiff(List.copyOf(nsUris), List.copyOf(objects), true);
+        return new ScopeDiff(List.copyOf(nsUris), List.copyOf(objects), true, List.copyOf(packages.values()));
     }
 
     /**
@@ -186,10 +214,12 @@ public class ScopeAggregateService {
         return false;
     }
 
-    private static void record(ManifestEntry entry, String schemaRegistry, Set<String> nsUris,
-            Set<String> objects) {
+    private static void record(ManifestEntry entry, String schemaRegistry, Set<String> nsUris, Set<String> objects,
+            Map<String, PackageChange> packages) {
         if (schemaRegistry != null && schemaRegistry.equals(entry.registry()) && entry.nsUri() != null) {
             nsUris.add(entry.nsUri());
+            packages.putIfAbsent(entry.stage() + FIELD_SEP + entry.nsUri(),
+                    new PackageChange(entry.nsUri(), entry.stage(), entry.fingerprint()));
         } else {
             objects.add(entry.registry() + "/" + entry.objectId());
         }
@@ -197,8 +227,8 @@ public class ScopeAggregateService {
 
     private static ManifestEntry toEntry(ObjectMetadata md) {
         Object nsUri = md.getProperties() == null ? null : md.getProperties().get("nsUri");
-        return new ManifestEntry(md.getRegistry(), md.getObjectId(), nsUri == null ? null : nsUri.toString(),
-                md.getContentHash());
+        return new ManifestEntry(md.getRegistry(), md.getStage(), md.getObjectId(),
+                nsUri == null ? null : nsUri.toString(), md.getContentHash(), md.getFingerprint());
     }
 
     /**

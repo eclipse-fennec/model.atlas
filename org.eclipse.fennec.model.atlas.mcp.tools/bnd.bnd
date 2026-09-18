@@ -1,10 +1,15 @@
 Bundle-Name: Eclipse Fennec Model Atlas MCP Tools
-Bundle-Description: MCP tool publishing a session-registered EPackage to a model.atlas draft stage, \
- so an inferred model leaves the runtime without its XMI ever passing through the LLM.
+Bundle-Description: MCP tools writing to a model.atlas draft stage: one publishing a \
+ session-registered EPackage, so an inferred model leaves the runtime without its XMI ever passing \
+ through the LLM, and one storing an agent-supplied object in a configured object registry.
+
 -workingset: mcp
 
--library: enableEMF
-
+# The tools are the MCP surface and nothing else: what they call is
+# org.eclipse.fennec.model.atlas.publisher, where the destination, the wire format
+# and the authorization decision live. Deploying THAT bundle and configuring a
+# publisher is what lets a runtime write at all; a tool with no publisher to bind
+# to never activates.
 -buildpath: \
 	io.modelcontextprotocol.sdk.mcp-core;version=latest,\
 	io.projectreactor.reactor-core;version=latest,\
@@ -12,21 +17,14 @@ Bundle-Description: MCP tool publishing a session-registered EPackage to a model
 	tools.jackson.core.jackson-databind;version=latest,\
 	tools.jackson.core.jackson-core;version=latest,\
 	com.fasterxml.jackson.core.jackson-annotations;version=latest,\
-	org.eclipse.fennec.emf.osgi.metadata;version=latest,\
-	org.eclipse.fennec.emf.osgi.api;version=latest,\
-	org.osgi.service.metatype.annotations;version=latest,\
-	org.eclipse.fennec.mcp.api;version=latest
+	org.eclipse.fennec.mcp.api;version=latest,\
+	org.osgi.framework;version=latest,\
+	org.eclipse.fennec.model.atlas.publisher;version=latest
 
-# Deploying this bundle IS the authorization decision: a runtime without it
-# cannot publish anything. Hence a write-only service kept inside the bundle and
-# no write method added to the read-only, widely consumed ModelAtlasClient.
-# HTTP goes through the ResourceSet's URIConverter (Fennec's RESTful URI handler,
-# already in every Fennec runtime) rather than a JAX-RS client: no Jersey stack to
-# deploy, and no provider lookup that can lose a race with lazy bundle activation.
-# component.minimal exports org.eclipse.fennec.emf.osgi.fingerprint.util, whose
-# FingerprintHelper backs MetadataServices.createWhiteboard(). The tests resolve
-# packages through a real metadata whiteboard rather than a stub, so that
-# "registered" means here what it means in the runtime.
+# EMF is not compiled against here any more — the tools handle strings — but
+# AbstractMCPTool resolves EMF types, so loading a tool in a plain JUnit test
+# still needs them on the class path.
 -testpath: \
 	assertj-core,\
-	org.eclipse.fennec.emf.osgi.component.minimal;version=latest
+	org.eclipse.emf.common;version=latest,\
+	org.eclipse.emf.ecore;version=latest

@@ -64,12 +64,58 @@ public interface DriftListener {
 	}
 
 	/**
+	 * As {@link #onPackageAdded(String, EPackage)}, saying <em>where</em> the package appeared
+	 * (#281). A package added at a non-final stage is reported with that stage, so a listener can
+	 * publish the version that actually appeared rather than looking for one at the final stage and
+	 * finding nothing. The default forwards to the nsURI form, which is the behaviour before this
+	 * hook existed.
+	 *
+	 * @param drift      the change, carrying the scope and stage it happened at
+	 * @param newPackage the package as resolved at that stage
+	 */
+	default void onPackageAdded(PackageDrift drift, EPackage newPackage) {
+		onPackageAdded(drift.nsUri(), newPackage);
+	}
+
+	/**
 	 * An EPackage changed on the server and was re-fetched.
 	 *
 	 * @param nsUri      the affected nsURI
 	 * @param newPackage the freshly fetched replacement package
 	 */
+	/**
+	 * Whether a reported change concerns what this listener holds (#276).
+	 * <p>
+	 * Consulted before {@link #onPackageChanged(String, EPackage)} and
+	 * {@link #onPackageRemoved(String)}, so a listener bound to one stage is not disturbed by a
+	 * change to another version of the same nsURI. The default takes everything, which is exactly
+	 * the behaviour before this hook existed.
+	 *
+	 * @param drift the change, carrying the stage and model version it happened at
+	 * @return whether the callbacks should fire for this listener
+	 */
+	default boolean acceptsDrift(PackageDrift drift) {
+		return true;
+	}
+
 	void onPackageChanged(String nsUri, EPackage newPackage);
+
+	/**
+	 * As {@link #onPackageChanged(String, EPackage)}, saying <em>where</em> the atlas serves the
+	 * package now (#286).
+	 * <p>
+	 * A listener that re-resolves stage-free cannot see a package held at a non-final stage, and
+	 * must not read that emptiness as a removal: a promotion between two non-final stages would
+	 * otherwise be indistinguishable from a deletion. The stage named here is where the watcher
+	 * actually found it. The default forwards to the nsURI form, which is the behaviour before
+	 * this method existed.
+	 *
+	 * @param drift      where the change happened, carrying the scope, the stage and the version
+	 * @param newPackage the package as the atlas serves it there
+	 */
+	default void onPackageChanged(PackageDrift drift, EPackage newPackage) {
+		onPackageChanged(drift.nsUri(), newPackage);
+	}
 
 	/**
 	 * An EPackage is no longer available on the server; its cache entry was

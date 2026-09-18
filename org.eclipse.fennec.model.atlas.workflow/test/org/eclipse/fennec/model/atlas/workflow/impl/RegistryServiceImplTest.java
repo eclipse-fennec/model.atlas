@@ -13,6 +13,8 @@
  */
 package org.eclipse.fennec.model.atlas.workflow.impl;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -38,13 +40,15 @@ import org.eclipse.emf.ecore.resource.impl.ResourceSetImpl;
 import org.eclipse.fennec.model.atlas.mgmt.api.EObjectStorageService;
 import org.eclipse.fennec.model.atlas.mgmt.management.ManagementFactory;
 import org.eclipse.fennec.model.atlas.mgmt.management.ObjectMetadata;
-import org.eclipse.fennec.model.atlas.workflow.StageActionService;
+import org.eclipse.fennec.model.atlas.action.api.ActionContext;
+import org.eclipse.fennec.model.atlas.action.api.StageActionService;
 import org.osgi.util.promise.Promises;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 /**
@@ -188,6 +192,66 @@ public class RegistryServiceImplTest {
             service.addStageActionService(stageAction);
 
             verify(stageAction, never()).onEnter(any());
+        }
+
+        @SuppressWarnings("unchecked")
+        @Test
+        @DisplayName("The event carries the fingerprint of the object it is about")
+        void actionContextCarriesTheFingerprint() {
+            EObjectStorageService<EObject> storage = mock(EObjectStorageService.class);
+            when(storage.getStorageType()).thenReturn("file");
+            ObjectMetadata metadata = ManagementFactory.eINSTANCE.createObjectMetadata();
+            metadata.setObjectId("object-1");
+            metadata.setStage("draft");
+            metadata.setFingerprint("fp1:abc123");
+            when(storage.queryObjects(any())).thenReturn(Promises.resolved(List.of(metadata)));
+
+            RegistryServiceImpl<EObject> service = createService(List.of(storage), TEST_NS_URI + "#//Person");
+            service.activate("test-scope");
+
+            StageActionService stageAction = replayingAction();
+            service.addStageActionService(stageAction);
+
+            ArgumentCaptor<ActionContext> captor = ArgumentCaptor.forClass(ActionContext.class);
+            verify(stageAction).onEnter(captor.capture());
+            // an action addressed by revision - a GDPR review, a skip-if-already-done guard -
+            // would otherwise re-read metadata the workflow held when it raised the event
+            assertEquals("fp1:abc123", captor.getValue().fingerprint());
+            assertEquals("fp1:abc123", captor.getValue().metadata().get(ActionContext.FINGERPRINT));
+        }
+
+        @SuppressWarnings("unchecked")
+        @Test
+        @DisplayName("An object without a fingerprint carries no fingerprint entry at all")
+        void actionContextOmitsAnAbsentFingerprint() {
+            EObjectStorageService<EObject> storage = mock(EObjectStorageService.class);
+            when(storage.getStorageType()).thenReturn("file");
+            ObjectMetadata metadata = ManagementFactory.eINSTANCE.createObjectMetadata();
+            metadata.setObjectId("object-1");
+            metadata.setStage("draft");
+            when(storage.queryObjects(any())).thenReturn(Promises.resolved(List.of(metadata)));
+
+            RegistryServiceImpl<EObject> service = createService(List.of(storage), TEST_NS_URI + "#//Person");
+            service.activate("test-scope");
+
+            StageActionService stageAction = replayingAction();
+            service.addStageActionService(stageAction);
+
+            ArgumentCaptor<ActionContext> captor = ArgumentCaptor.forClass(ActionContext.class);
+            verify(stageAction).onEnter(captor.capture());
+            // absent, not present-and-null, so containsKey means "the workflow knew one"
+            assertNull(captor.getValue().fingerprint());
+            assertFalse(captor.getValue().metadata().containsKey(ActionContext.FINGERPRINT));
+        }
+
+        private StageActionService replayingAction() {
+            StageActionService stageAction = mock(StageActionService.class);
+            when(stageAction.requiresReplayOnStartup()).thenReturn(true);
+            when(stageAction.getTriggerStages()).thenReturn(Set.of("draft"));
+            when(stageAction.getTriggerEvents()).thenReturn(Set.of());
+            when(stageAction.supportsObjectType(any())).thenReturn(true);
+            when(stageAction.onEnter(any())).thenReturn(Promises.resolved(null));
+            return stageAction;
         }
     }
 

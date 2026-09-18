@@ -4,8 +4,31 @@
 # The mapping model needs no start-order help any more: the registry that hosts it
 # waits for the EPackage service through its schemaPackage reference (issue #169),
 # so the pin that used to order this bundle ahead of the workflow bundle is gone.
+#
+# The GDPR review trigger, deployed here because the workflow fires stage actions through the
+# OSGi whiteboard and only reaches services in its own framework. gdpr.check comes with it
+# (the action binds GDPRCheckService), and with it the four Fennec AI bundles its batch service
+# needs plus mcp.endpoint, which is the only package of that chain the runtime did not already
+# have. The gdpr bundles come from the DIM Nexus as 0.1.0-SNAPSHOT (cnf/ext/nexus.maven).
+#
+# store.atlas keeps the review records in the atlas itself rather than in memory, writing
+# through the ObjectPublisher this runtime now also carries; the two gdpr.runtime.config
+# bundles own the check-side PIDs (they are split because the Configurator applies one of two
+# bundles supplying the same singleton PID wholesale and discards the other).
 -runbundles.docker.jena: \
-	org.eclipse.fennec.event.atlas.mapping
+	org.eclipse.fennec.event.atlas.mapping,\
+	org.eclipse.fennec.gdpr.report.model,\
+	org.eclipse.fennec.gdpr.action,\
+	org.eclipse.fennec.gdpr.check,\
+	org.eclipse.fennec.ai.apis.meta.model,\
+	org.eclipse.fennec.ai.chat.completion.api,\
+	org.eclipse.fennec.ai.chat.completion.claude.model,\
+	org.eclipse.fennec.ai.chat.completion.impl.claude,\
+	org.eclipse.fennec.mcp.endpoint,\
+	org.eclipse.fennec.model.atlas.publisher,\
+	org.eclipse.fennec.gdpr.store.atlas,\
+	org.eclipse.fennec.gdpr.runtime.config.common,\
+	org.eclipse.fennec.gdpr.runtime.config.check
 
 -runproperties.docker.jena: configurator.initial=file:///opt/modelatlas/runtime/load/jena.json
 -runbundles: \
@@ -105,6 +128,7 @@
 	org.eclipse.fennec.model.atlas.validation;version=snapshot;startlevel=1093,\
 	org.eclipse.fennec.model.atlas.validation.model;version=snapshot;startlevel=1094,\
 	org.eclipse.fennec.model.atlas.validation.rest;version=snapshot;startlevel=1095,\
+	org.eclipse.fennec.model.atlas.action.api;version=snapshot,\
 	org.eclipse.fennec.model.atlas.workflow;version=snapshot;startlevel=1096,\
 	org.eclipse.osgitech.rest;version='[1.2.3,1.2.4)';startlevel=1097,\
 	org.eclipse.osgitech.rest.servlet.whiteboard;version='[1.2.3,1.2.4)';startlevel=1098,\

@@ -57,10 +57,10 @@ import org.eclipse.fennec.model.atlas.workflow.registration.DynamicEPackageRegis
 import org.eclipse.fennec.model.atlas.wf.workflowapi.RegistryService;
 import org.eclipse.fennec.model.atlas.wf.workflowapi.StageTransition;
 import org.eclipse.fennec.model.atlas.wf.workflowapi.WorkflowApiFactory;
-import org.eclipse.fennec.model.atlas.workflow.ActionContext;
-import org.eclipse.fennec.model.atlas.workflow.StageActionService;
-import org.eclipse.fennec.model.atlas.workflow.StageActionService.ActionEvent;
-import org.eclipse.fennec.model.atlas.workflow.StageActionService.ExitReason;
+import org.eclipse.fennec.model.atlas.action.api.ActionContext;
+import org.eclipse.fennec.model.atlas.action.api.StageActionService;
+import org.eclipse.fennec.model.atlas.action.api.StageActionService.ActionEvent;
+import org.eclipse.fennec.model.atlas.action.api.StageActionService.ExitReason;
 import org.osgi.service.component.annotations.Activate;
 import org.osgi.service.component.annotations.Deactivate;
 import org.osgi.service.component.annotations.Component;
@@ -1093,7 +1093,19 @@ public class RegistryServiceImpl<T extends EObject> implements RegistryService<T
     private ActionContext newContext(String scope, String stage, ObjectMetadata m, String sourceStage,
             String targetStage, ExitReason exitReason, String notes, boolean replay) {
         return new ActionContext(scope, config.registry_name(), m.getObjectId(), m.getObjectType(), stage,
-                sourceStage, targetStage, exitReason, "system", Instant.now(), notes, replay, Map.of());
+                sourceStage, targetStage, exitReason, "system", Instant.now(), notes, replay, actionMetadata(m));
+    }
+
+    /**
+     * The metadata an action is handed with the event. The fingerprint is carried because it
+     * names one revision of the object exactly, and an action addressed by revision would
+     * otherwise re-read metadata this method already holds. Absent rather than null-valued
+     * when the object has no fingerprint, so {@code metadata.containsKey} means "known".
+     */
+    private static Map<String, Object> actionMetadata(ObjectMetadata m) {
+        String fingerprint = m.getFingerprint();
+        return fingerprint == null || fingerprint.isBlank() ? Map.of()
+                : Map.of(ActionContext.FINGERPRINT, fingerprint);
     }
 
     /**

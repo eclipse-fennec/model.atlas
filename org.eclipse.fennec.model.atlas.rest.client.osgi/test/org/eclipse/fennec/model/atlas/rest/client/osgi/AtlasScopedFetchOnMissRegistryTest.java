@@ -16,6 +16,7 @@ package org.eclipse.fennec.model.atlas.rest.client.osgi;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.HashMap;
 import java.util.List;
@@ -69,6 +70,15 @@ class AtlasScopedFetchOnMissRegistryTest {
 			lastScopeQueried = scopeName;
 			lastStageQueried = stage;
 			return Optional.ofNullable(stagedPackages.get(nsUri));
+		}
+
+		@Override
+		public Optional<ResolvedEPackage> resolveAtStage(String nsUri, String scopeName, String stage,
+				String fingerprint) {
+			// Same content as getEPackageAtStage, reported with the origin it stands for (#273).
+			// This fake records no fingerprints, so it enforces no precondition (#274).
+			return getEPackageAtStage(nsUri, scopeName, stage)
+					.map(pkg -> new ResolvedEPackage(pkg, nsUri, scopeName, null, stage, null, null));
 		}
 
 		@Override
@@ -255,5 +265,135 @@ class AtlasScopedFetchOnMissRegistryTest {
 
 		// Verify Option A's fallback path would have failed: the stage-free provider has nothing.
 		assertEquals(0, provider.stageFreeCalls.get());
+	}
+
+	// ---- sink pairing (#277) ----------------------------------------------
+
+	/** Records what the bridge says it holds, so the pairing can be asserted. */
+	private static final class RecordingSink implements StagedPackageSink {
+		final java.util.List<String> registered = new java.util.ArrayList<>();
+		final java.util.List<String> evicted = new java.util.ArrayList<>();
+
+		@Override
+		public void registered(EPackage ePackage) {
+			registered.add(ePackage.getNsURI());
+		}
+
+		@Override
+		public void evicted(EPackage ePackage) {
+			evicted.add(ePackage.getNsURI());
+		}
+	}
+
+	@Test
+	void tellsTheSinkOnceWhenItStartsHoldingAPackage() {
+		FakeProvider provider = new FakeProvider();
+		provider.stagedPackages.put(NS, pkg(NS));
+		RecordingSink sink = new RecordingSink();
+		AtlasScopedFetchOnMissRegistry registry = new AtlasScopedFetchOnMissRegistry(SCOPE, STAGE, provider,
+				new EPackageRegistryImpl(), sink);
+
+		registry.getEPackage(NS);
+		registry.getEPackage(NS); // second lookup is a cache hit, not a second hold
+
+		assertEquals(java.util.List.of(NS), sink.registered);
+	}
+
+	/**
+	 * Two concurrent misses on one nsURI both fetch and both arrive at the put. Only one of them
+	 * is the transition to "held", and a refcounting sink that is told twice never drops the
+	 * package again — so the pairing, not the fetch, is what must be counted.
+	 */
+	@Test
+	void concurrentMisses_areOneHold() throws Exception {
+		FakeProvider provider = new FakeProvider();
+		provider.stagedPackages.put(NS, pkg(NS));
+		RecordingSink sink = new RecordingSink();
+		AtlasScopedFetchOnMissRegistry registry = new AtlasScopedFetchOnMissRegistry(SCOPE, STAGE, provider,
+				new EPackageRegistryImpl(), sink);
+
+		int threads = 8;
+		java.util.concurrent.CountDownLatch start = new java.util.concurrent.CountDownLatch(1);
+		java.util.concurrent.CountDownLatch done = new java.util.concurrent.CountDownLatch(threads);
+		java.util.List<EPackage> seen = java.util.Collections.synchronizedList(new java.util.ArrayList<>());
+		java.util.concurrent.ExecutorService pool = java.util.concurrent.Executors.newFixedThreadPool(threads);
+		try {
+			for (int i = 0; i < threads; i++) {
+				pool.execute(() -> {
+					try {
+						start.await();
+						seen.add(registry.getEPackage(NS));
+					} catch (InterruptedException e) {
+						Thread.currentThread().interrupt();
+					} finally {
+						done.countDown();
+					}
+				});
+			}
+			start.countDown();
+			assertTrue(done.await(10, java.util.concurrent.TimeUnit.SECONDS));
+		} finally {
+			pool.shutdownNow();
+		}
+
+		assertEquals(1, sink.registered.size(), "one held entry is one registration");
+		// Every caller must get the package the bridge actually holds, not a loser's copy.
+		EPackage held = registry.getEPackage(NS);
+		assertTrue(seen.stream().allMatch(p -> p == held), "all callers see the held instance");
+
+		registry.onPackageRemoved(NS);
+		assertEquals(java.util.List.of(NS), sink.evicted, "and one eviction releases it");
+	}
+
+	@Test
+	void evictionTellsTheSinkWhatWentAway() {
+		FakeProvider provider = new FakeProvider();
+		provider.stagedPackages.put(NS, pkg(NS));
+		RecordingSink sink = new RecordingSink();
+		AtlasScopedFetchOnMissRegistry registry = new AtlasScopedFetchOnMissRegistry(SCOPE, STAGE, provider,
+				new EPackageRegistryImpl(), sink);
+		registry.getEPackage(NS);
+
+		registry.onPackageChanged(NS, pkg(NS));
+
+		assertEquals(java.util.List.of(NS), sink.evicted);
+	}
+
+	/** Evicting something never held must not report an eviction the sink cannot pair. */
+	@Test
+	void evictingSomethingNeverHeld_tellsTheSinkNothing() {
+		RecordingSink sink = new RecordingSink();
+		AtlasScopedFetchOnMissRegistry registry = new AtlasScopedFetchOnMissRegistry(SCOPE, STAGE,
+				new FakeProvider(), new EPackageRegistryImpl(), sink);
+
+		registry.onPackageRemoved(NS);
+
+		assertTrue(sink.evicted.isEmpty());
+	}
+
+	@Test
+	void disposeReleasesEverythingHeld() {
+		FakeProvider provider = new FakeProvider();
+		provider.stagedPackages.put(NS, pkg(NS));
+		RecordingSink sink = new RecordingSink();
+		AtlasScopedFetchOnMissRegistry registry = new AtlasScopedFetchOnMissRegistry(SCOPE, STAGE, provider,
+				new EPackageRegistryImpl(), sink);
+		registry.getEPackage(NS);
+
+		registry.dispose();
+
+		assertEquals(java.util.List.of(NS), sink.evicted);
+		assertTrue(registry.isEmpty());
+	}
+
+	/** No sink configured is the deployment without the metadata layer: unchanged behaviour. */
+	@Test
+	void withoutASink_resolutionIsUnchanged() {
+		FakeProvider provider = new FakeProvider();
+		provider.stagedPackages.put(NS, pkg(NS));
+		AtlasScopedFetchOnMissRegistry registry = new AtlasScopedFetchOnMissRegistry(SCOPE, STAGE, provider,
+				new EPackageRegistryImpl());
+
+		assertEquals(NS, registry.getEPackage(NS).getNsURI());
 	}
 }

@@ -120,30 +120,77 @@ public interface RemoteEPackageProvider {
 	 * Used by {@code AtlasScopedFetchOnMissRegistry} when a stage-specific registry
 	 * misses its prefetched set.
 	 * <p>
-	 * The default implementation falls back to the stage-free {@link #getEPackage(String)};
-	 * the remote client overrides it with the stage-explicit endpoint.
+	 * <b>Answer at that stage, or do not answer.</b> Several versions of one nsURI can be
+	 * live at once, one per stage, so returning the stage-free (final-stage) package here
+	 * would be a wrong answer presented as a right one — the caller cannot tell the two
+	 * apart. An implementation that cannot resolve per stage must return
+	 * {@link Optional#empty()} if the absence is a fact, or throw
+	 * {@link UnsupportedOperationException} if it simply does not model stages. Callers
+	 * treat empty as "not at this stage" and may fall back deliberately.
 	 *
 	 * @param nsUri     the package namespace URI
 	 * @param scopeName the scope to query
 	 * @param stage     the stage name (must not be null)
 	 * @return the package at that scope+stage, or empty if absent
 	 */
-	default Optional<EPackage> getEPackageAtStage(String nsUri, String scopeName, String stage) {
-		return getEPackage(nsUri);
+	Optional<EPackage> getEPackageAtStage(String nsUri, String scopeName, String stage);
+
+	/**
+	 * As {@link #getEPackageAtStage(String, String, String)}, but also reporting where the package
+	 * came from: the scope, stage, version and model fingerprint the Atlas states for it (#273).
+	 * <p>
+	 * The stage-explicit content endpoint is the only path that reaches a package at a non-final
+	 * stage, so without this a client can fetch one of several live versions of an nsURI and have
+	 * no way to say which. The fingerprint is the server's statement about the content; a client
+	 * that computes fingerprints itself keeps its own value authoritative and uses this one as a
+	 * cross-check, never as the key.
+	 * <p>
+	 * Where the server reports no origin — an Atlas older than #273 — the returned scope and stage
+	 * are the ones that were asked for, and version and fingerprint are {@code null}. The registry
+	 * is {@code null}: this endpoint serves the scope's schema registry by definition and does not
+	 * name it.
+	 *
+	 * @param nsUri     the package namespace URI
+	 * @param scopeName the scope to query
+	 * @param stage     the stage name (must not be null)
+	 * @return the resolved package with its origin, or empty if absent at that stage
+	 */
+	default Optional<ResolvedEPackage> resolveAtStage(String nsUri, String scopeName, String stage) {
+		return resolveAtStage(nsUri, scopeName, stage, null);
 	}
+
+	/**
+	 * As {@link #resolveAtStage(String, String, String)}, but pinned: {@code fingerprint} asserts
+	 * <em>which model version</em> the caller expects at that location (#274).
+	 * <p>
+	 * Addressing is unchanged — the package is still found by {@code (scope, stage, nsUri)}. The
+	 * fingerprint is a precondition on what is found there, which matters because several versions
+	 * of one nsURI can be live at once and a transition can move them between the moment a client
+	 * lists a version and the moment it fetches one. A pinned read therefore either returns the
+	 * version named or fails; it never returns a different one.
+	 *
+	 * @param nsUri       the package namespace URI
+	 * @param scopeName   the scope to query
+	 * @param stage       the stage name (must not be null)
+	 * @param fingerprint the expected model fingerprint, or {@code null} for no precondition
+	 * @return the resolved package with its origin, or empty if absent at that stage
+	 * @throws VersionMismatchException if a different model version sits at that location
+	 */
+	Optional<ResolvedEPackage> resolveAtStage(String nsUri, String scopeName, String stage, String fingerprint);
 
 	/**
 	 * List the packages available in a specific scope at a specific stage
 	 * ({@code GET /{scopeName}/schema/stages/{stage}}, P6-6).
 	 * <p>
-	 * The default implementation falls back to the stage-free {@link #listPackages(String)};
-	 * the remote client overrides it with the stage-explicit endpoint.
+	 * <b>Enumerate that stage, or do not answer.</b> As for
+	 * {@link #getEPackageAtStage(String, String, String)}, falling back to the stage-free
+	 * listing would report the final stage's contents as the stage's own. An implementation
+	 * that does not model stages must return an empty list or throw
+	 * {@link UnsupportedOperationException}.
 	 *
 	 * @param scopeName the scope to enumerate
 	 * @param stage     the stage name (must not be null)
 	 * @return the package descriptors (possibly empty)
 	 */
-	default List<PackageDescriptor> listPackagesAtStage(String scopeName, String stage) {
-		return listPackages(scopeName);
-	}
+	List<PackageDescriptor> listPackagesAtStage(String scopeName, String stage);
 }

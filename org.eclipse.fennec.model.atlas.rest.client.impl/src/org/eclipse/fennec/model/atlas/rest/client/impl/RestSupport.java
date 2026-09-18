@@ -15,6 +15,7 @@ package org.eclipse.fennec.model.atlas.rest.client.impl;
 
 import org.eclipse.fennec.model.atlas.rest.client.api.ModelAtlasClientException;
 import org.eclipse.fennec.model.atlas.rest.client.api.NotFoundException;
+import org.eclipse.fennec.model.atlas.rest.client.api.VersionMismatchException;
 import org.eclipse.fennec.model.atlas.rest.client.api.TransportException;
 
 import tools.jackson.databind.JsonNode;
@@ -105,6 +106,11 @@ final class RestSupport {
 		String detail = what + " — unexpected status " + status + (body.isEmpty() ? "" : ": " + body);
 		if (status == Response.Status.NOT_FOUND.getStatusCode()) {
 			return new NotFoundException(detail);
+		}
+		// A pinned read that found a different model version (#274): the location resolved, so
+		// this is emphatically not a "not found" and must not be retried into the wrong content.
+		if (status == Response.Status.PRECONDITION_FAILED.getStatusCode()) {
+			return new VersionMismatchException(detail);
 		}
 		return new ModelAtlasClientException(detail);
 	}

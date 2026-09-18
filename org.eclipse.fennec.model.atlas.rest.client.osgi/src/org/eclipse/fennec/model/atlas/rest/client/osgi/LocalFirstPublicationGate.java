@@ -58,7 +58,12 @@ final class LocalFirstPublicationGate implements PackagePublication {
 	}
 
 	/** A remote publication we may (re)publish: the package plus its origin properties. */
-	private record Candidate(EPackage ePackage, String scope, String stage, String version, String serverFingerprint) {
+	/**
+	 * {@code finalStage} travels with a parked candidate (#280): a staged version replayed later
+	 * must still be a staged version, or it would take the nsURI slot from the released one.
+	 */
+	private record Candidate(EPackage ePackage, String scope, String stage, String version, String serverFingerprint,
+			boolean finalStage) {
 	}
 
 	private static final Logger LOGGER = Logger.getLogger(LocalFirstPublicationGate.class.getName());
@@ -91,11 +96,18 @@ final class LocalFirstPublicationGate implements PackagePublication {
 
 	@Override
 	public boolean publish(EPackage ePackage, String scope, String stage, String version, String serverFingerprint) {
+		return publish(ePackage, scope, stage, version, serverFingerprint, true);
+	}
+
+	@Override
+	public boolean publish(EPackage ePackage, String scope, String stage, String version, String serverFingerprint,
+			boolean finalStage) {
 		String nsUri = ePackage.getNsURI();
 		if (nsUri == null || nsUri.isBlank()) {
-			return publisher.publish(ePackage, scope, stage, version, serverFingerprint); // let the publisher warn/handle it
+			// let the publisher warn/handle it
+			return publisher.publish(ePackage, scope, stage, version, serverFingerprint, finalStage);
 		}
-		Candidate candidate = new Candidate(ePackage, scope, stage, version, serverFingerprint);
+		Candidate candidate = new Candidate(ePackage, scope, stage, version, serverFingerprint, finalStage);
 		synchronized (lock) {
 			if (!forceRemote && localPresent.test(nsUri)) {
 				parked.put(nsUri, candidate);
@@ -153,7 +165,7 @@ final class LocalFirstPublicationGate implements PackagePublication {
 
 	private boolean doPublish(String nsUri, Candidate candidate) {
 		boolean published = publisher.publish(candidate.ePackage(), candidate.scope(), candidate.stage(),
-				candidate.version(), candidate.serverFingerprint());
+				candidate.version(), candidate.serverFingerprint(), candidate.finalStage());
 		if (published) {
 			publishedByUs.put(nsUri, candidate);
 			parked.remove(nsUri);
