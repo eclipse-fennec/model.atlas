@@ -109,6 +109,23 @@ class EndpointFailuresTest {
     }
 
     @Test
+    @DisplayName("A stage gate's refusal answers 409 carrying the gate's reason (issue #248)")
+    void gateRefusalBecomesConflict() {
+        org.eclipse.fennec.model.atlas.scope.api.StageGateRefusedException refused = new org.eclipse.fennec.model.atlas.scope.api.StageGateRefusedException(
+                "Cannot transition object Announce from stage 'draft' to stage 'release' of registry 'transformations' in scope 's': "
+                        + "source 'Announce' does not compile against the 'release' stage view");
+
+        RuntimeException direct = EndpointFailures.propagate(refused);
+        RuntimeException wrapped = EndpointFailures.propagate(new InvocationTargetException(refused));
+
+        assertEquals(Status.CONFLICT.getStatusCode(), ((WebApplicationException) direct).getResponse().getStatus());
+        assertEquals(Status.CONFLICT.getStatusCode(), ((WebApplicationException) wrapped).getResponse().getStatus(),
+                "the transition path may raise it inside a failed promise");
+        assertEquals(refused.getMessage(), wrapped.getMessage(),
+                "the reason says what to change before retrying, so the client may see it");
+    }
+
+    @Test
     @DisplayName("Anything else becomes a 500 carrying the original failure")
     void otherFailuresBecomeServerErrors() {
         IOException failure = new IOException("/var/atlas/secret-path is unreadable");

@@ -865,7 +865,8 @@ public class SchemaPackagesResource {
                     @ApiResponse(responseCode = "400", description = "Invalid transition, missing parameters, scope not available, schema registry not available for scope, stage not available for registry or not a valid stage"),
                     @ApiResponse(responseCode = "403", description = "Stage is read-only or Object is only present in a parent scope final stage and so it's read-only"),
                     @ApiResponse(responseCode = "204", description = "Package not found in source stage"),
-                    @ApiResponse(responseCode = "409", description = "The target stage already holds a different package under this objectId. An objectId is unique per stage, so promoting onto an earlier copy of the same package is allowed; taking the id over from another package requires overwrite=true"),
+                    @ApiResponse(responseCode = "409", description = "Either the target stage already holds a different package under this objectId (an objectId is unique per stage, so promoting onto an earlier copy of the same package is allowed; taking the id over from another package requires overwrite=true), "
+                            + "or a stage gate refused the transition because the package does not hold up in the target stage. The message carries the gate's reason and what to change before retrying"),
                     @ApiResponse(responseCode = "500", description = "Internal server error") })
     @ResourceOption(key = CodecOptions.CODEC_ID_KEY_MODE, value = "FEATURE_ONLY")
     public Response transitionPackage(

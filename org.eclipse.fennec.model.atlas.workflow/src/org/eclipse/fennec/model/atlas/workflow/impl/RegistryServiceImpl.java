@@ -49,6 +49,7 @@ import org.eclipse.fennec.model.atlas.mgmt.management.ObjectMetadata;
 import org.eclipse.fennec.model.atlas.scope.api.RegistryType;
 import org.eclipse.fennec.model.atlas.scope.api.ScopeApiFactory;
 import org.eclipse.fennec.model.atlas.scope.api.StageInfo;
+import org.eclipse.fennec.model.atlas.scope.api.StageGateRefusedException;
 import org.eclipse.fennec.model.atlas.scope.api.StageOccupiedException;
 import org.eclipse.fennec.model.atlas.scope.api.StagePolicyException;
 import org.eclipse.fennec.model.atlas.wf.workflowapi.Registry;
@@ -58,7 +59,10 @@ import org.eclipse.fennec.model.atlas.wf.workflowapi.RegistryService;
 import org.eclipse.fennec.model.atlas.wf.workflowapi.StageTransition;
 import org.eclipse.fennec.model.atlas.wf.workflowapi.WorkflowApiFactory;
 import org.eclipse.fennec.model.atlas.action.api.ActionContext;
+import org.eclipse.fennec.model.atlas.action.api.GateContext;
+import org.eclipse.fennec.model.atlas.action.api.GateVerdict;
 import org.eclipse.fennec.model.atlas.action.api.StageActionService;
+import org.eclipse.fennec.model.atlas.action.api.StageGate;
 import org.eclipse.fennec.model.atlas.action.api.StageActionService.ActionEvent;
 import org.eclipse.fennec.model.atlas.action.api.StageActionService.ExitReason;
 import org.osgi.service.component.annotations.Activate;
@@ -106,6 +110,8 @@ public class RegistryServiceImpl<T extends EObject> implements RegistryService<T
     private final List<EClass> derivedEClasses;
 
     private final List<StageActionService> stageActionServices = new CopyOnWriteArrayList<>();
+    /** The gates a transition has to pass before it commits (issue #248); see {@link #consultGates}. */
+    private final List<StageGate> stageGates = new CopyOnWriteArrayList<>();
     /** Scopes this registry has been activated for, to replay for late-binding stage action services. */
     private final Set<String> activatedScopes = ConcurrentHashMap.newKeySet();
     private final Object stageActionLock = new Object();
@@ -238,6 +244,24 @@ public class RegistryServiceImpl<T extends EObject> implements RegistryService<T
         synchronized (stageActionLock) {
             stageActionServices.remove(stageActionService);
         }
+    }
+
+    /**
+     * The gates are wired like the stage actions: a registry has none unless its
+     * configuration points {@code stageGate.target} at some, and a registry that must
+     * not run without its gate says so with {@code stageGate.cardinality.minimum}. The
+     * reference is dynamic so a gate arriving late joins without bouncing the
+     * registry; there is nothing to replay, a gate only ever looks forward.
+     */
+    @Reference(name = "stageGate", target = ("(scope=no-inject)"),
+            cardinality = ReferenceCardinality.MULTIPLE, policy = ReferencePolicy.DYNAMIC,
+            policyOption = ReferencePolicyOption.GREEDY)
+    void addStageGate(StageGate stageGate) {
+        stageGates.add(stageGate);
+    }
+
+    void removeStageGate(StageGate stageGate) {
+        stageGates.remove(stageGate);
     }
 
     /*
@@ -680,6 +704,9 @@ public class RegistryServiceImpl<T extends EObject> implements RegistryService<T
         if (!overwrite) {
             requireTargetFree(scope, toStage, objectId, metadata);
         }
+        // Every gate is asked before anything is written or deleted: a refused
+        // transition leaves both stages exactly as they were (issue #248).
+        consultGates(newGateContext(scope, fromStage, toStage, metadata));
 
         // Update metadata for new stage
         metadata.setLastChangeTime(Instant.now());
@@ -783,6 +810,56 @@ public class RegistryServiceImpl<T extends EObject> implements RegistryService<T
         Object nsUri = metadata.getProperties() == null ? null
                 : metadata.getProperties().get(WorkflowConstants.NS_URI_METADATA_PROPERTY);
         return nsUri == null ? null : nsUri.toString();
+    }
+
+    /**
+     * Asks every gate that cares about the object's type whether the transition may
+     * happen, and stops at the first that says no.
+     *
+     * <p>
+     * A gate's refusal is the caller's error: it surfaces as a
+     * {@link StageGateRefusedException} carrying the gate's reason, which the REST layer
+     * answers with a {@code 409}. A gate that cannot decide, because its promise fails,
+     * stops the transition as well, but as a fault of the operation: a check that
+     * silently passes when it breaks is no check, and the gates exist precisely to keep
+     * the target stage from receiving what does not hold up there.
+     * </p>
+     *
+     * @param ctx the transition about to happen
+     * @throws StageGateRefusedException if a gate refused the transition
+     * @throws IllegalStateException     if a gate could not decide
+     */
+    private void consultGates(GateContext ctx) {
+        for (StageGate gate : stageGates) {
+            if (!gate.supportsObjectType(ctx.objectType())) {
+                continue;
+            }
+            GateVerdict verdict;
+            try {
+                verdict = gate.beforeTransition(ctx).getValue();
+            } catch (InvocationTargetException e) {
+                throw new IllegalStateException(String.format(
+                        "Stage gate %s could not decide whether object %s may move from stage '%s' to stage '%s' of registry '%s' in scope '%s'",
+                        gate.getClass().getSimpleName(), ctx.objectId(), ctx.sourceStage(), ctx.targetStage(),
+                        ctx.registry(), ctx.scope()), e.getCause());
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                throw new IllegalStateException("Interrupted while a stage gate decided on the transition of object "
+                        + ctx.objectId(), e);
+            }
+            if (verdict == null || verdict.refused()) {
+                String reason = verdict == null ? "the gate " + gate.getClass().getSimpleName() + " gave no verdict"
+                        : verdict.reason();
+                throw new StageGateRefusedException(String.format(
+                        "Cannot transition object %s from stage '%s' to stage '%s' of registry '%s' in scope '%s': %s",
+                        ctx.objectId(), ctx.sourceStage(), ctx.targetStage(), ctx.registry(), ctx.scope(), reason));
+            }
+        }
+    }
+
+    private GateContext newGateContext(String scope, String fromStage, String toStage, ObjectMetadata m) {
+        return new GateContext(scope, config.registry_name(), m.getObjectId(), m.getObjectType(), fromStage, toStage,
+                "system", Instant.now(), actionMetadata(m));
     }
 
     /*

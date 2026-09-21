@@ -15,6 +15,7 @@ package org.eclipse.fennec.model.atlas.rest.application.exception;
 
 import java.lang.reflect.InvocationTargetException;
 
+import org.eclipse.fennec.model.atlas.scope.api.StageGateRefusedException;
 import org.eclipse.fennec.model.atlas.scope.api.StageOccupiedException;
 import org.eclipse.fennec.model.atlas.scope.api.StagePolicyException;
 
@@ -66,7 +67,9 @@ public final class EndpointFailures {
      * message: the registry refused the operation, and the client needs to read that as
      * a rule it cannot retry past rather than as a fault. A {@link StageOccupiedException}
      * becomes a <strong>409</strong> the same way: the stage already holds a different
-     * object under the id the request wanted to write.
+     * object under the id the request wanted to write. So does a
+     * {@link StageGateRefusedException}: a gate found that the object does not hold up in
+     * the target stage, and its reason tells the client what to change (issue #248).
      * </p>
      *
      * @param failure the exception an endpoint caught; never {@code null}
@@ -103,6 +106,12 @@ public final class EndpointFailures {
         StageOccupiedException occupied = StageOccupiedExceptionMapper.findInChain(cause);
         if (occupied != null) {
             return new WebApplicationException(occupied.getMessage(), occupied, Status.CONFLICT);
+        }
+        // A gate's refusal is an answer too: the object is not fit for the target stage
+        // as things stand, and the reason names what has to change before a retry.
+        StageGateRefusedException gateRefusal = StageGateRefusedExceptionMapper.findInChain(cause);
+        if (gateRefusal != null) {
+            return new WebApplicationException(gateRefusal.getMessage(), gateRefusal, Status.CONFLICT);
         }
         return new WebApplicationException(cause, Status.INTERNAL_SERVER_ERROR);
     }
