@@ -66,6 +66,13 @@ public class AtlasSchemaRegistryService implements RegistryService<EPackage> {
 
 	private EPackageLuceneIndex ePackageIndex;
 
+	/**
+	 * The packages this registry currently mirrors into the shared registry cache and the
+	 * EPackage search index, keyed by nsURI. Guarded by {@link #mirrorLock}.
+	 */
+	private final Map<String, EPackage> mirrored = new HashMap<>();
+	private final Object mirrorLock = new Object();
+
 	@Activate
 	public AtlasSchemaRegistryService(@Reference(cardinality = ReferenceCardinality.MANDATORY) EObjectRegistryService<EObject> registry, 
 			@Reference(cardinality = ReferenceCardinality.MANDATORY) EPackageLuceneIndex ePackageIndex) {
@@ -74,13 +81,6 @@ public class AtlasSchemaRegistryService implements RegistryService<EPackage> {
 		this.registryObject = createRegistryObject();
 	}
 	
-	/**
-	 * The packages this registry currently mirrors into the shared registry cache and the
-	 * EPackage search index, keyed by nsURI. Guarded by {@link #mirrorLock}.
-	 */
-	private final Map<String, EPackage> mirrored = new HashMap<>();
-	private final Object mirrorLock = new Object();
-
 	/**
 	 * The static registry announces every change of its contents by re-publishing its
 	 * service properties, so the {@code updated} callback is the signal that a package
@@ -93,12 +93,14 @@ public class AtlasSchemaRegistryService implements RegistryService<EPackage> {
 	public void bindStaticEPackageRegistry(EPackage.Registry staticPackageRegistry) {
 		synchronized (mirrorLock) {
 			this.staticPackageRegistry = staticPackageRegistry;
+			reconcileMirror(staticPackageRegistry);
 		}
-		reconcileMirror(staticPackageRegistry);
 	}
 
 	public void updatedStaticEPackageRegistry(EPackage.Registry staticPackageRegistry) {
-		reconcileMirror(staticPackageRegistry);
+		synchronized (mirrorLock) {
+			reconcileMirror(staticPackageRegistry);
+		}
 	}
 
 	public void unbindStaticEPackageRegistry(EPackage.Registry staticPackageRegistry) {
@@ -117,24 +119,26 @@ public class AtlasSchemaRegistryService implements RegistryService<EPackage> {
 	 * registry gained are mirrored, packages it lost are forgotten, and a package whose
 	 * instance was replaced under the same nsURI is re-indexed. Packages present in both
 	 * are left untouched, so a reconcile against an unchanged registry is a no-op.
+	 * Callers must hold {@link #mirrorLock}.
 	 */
 	private void reconcileMirror(EPackage.Registry source) {
+		if (this.staticPackageRegistry != source) {
+			// A late signal from a registry this component no longer follows.
+			return;
+		}
+		// The snapshot is taken under the same lock that applies it, so two racing
+		// reconciles cannot apply their snapshots in the opposite order to the one they
+		// were taken in; the last reconcile to acquire the lock always wins.
 		Map<String, EPackage> current = new LinkedHashMap<>();
 		source.values().stream().filter(EPackage.class::isInstance).map(EPackage.class::cast)
 				.filter(AtlasSchemaRegistryService::isAnnounced)
 				.forEach(ePackage -> current.put(ePackage.getNsURI(), ePackage));
-		synchronized (mirrorLock) {
-			if (this.staticPackageRegistry != source) {
-				// A late signal from a registry this component no longer follows.
-				return;
+		List.copyOf(mirrored.keySet()).stream().filter(nsUri -> !current.containsKey(nsUri)).forEach(this::forget);
+		current.forEach((nsUri, ePackage) -> {
+			if (mirrored.get(nsUri) != ePackage) {
+				mirror(ePackage);
 			}
-			List.copyOf(mirrored.keySet()).stream().filter(nsUri -> !current.containsKey(nsUri)).forEach(this::forget);
-			current.forEach((nsUri, ePackage) -> {
-				if (mirrored.get(nsUri) != ePackage) {
-					mirror(ePackage);
-				}
-			});
-		}
+		});
 	}
 
 	private void mirror(EPackage ePackage) {
