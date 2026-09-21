@@ -358,9 +358,11 @@ Transitions an object from one stage to another.
 **Behavior:**
 1. Validates transition is allowed (`isTransitionAllowed`)
 2. Retrieves object and metadata from source stage
-3. Updates metadata timestamps
-4. Stores object in target stage
-5. Optionally deletes from source stage (if `delete_after_transition` is true)
+3. Refuses if the target stage holds a *different* object under the id (`StageOccupiedException`, unless `overwrite`)
+4. Asks every configured [stage gate](#stage-gates); a refusal aborts with `StageGateRefusedException` before anything is written
+5. Updates metadata timestamps
+6. Optionally deletes from source stage (if `delete_after_transition` is true) and fires `EXIT`
+7. Stores object in target stage and fires `ENTER`
 
 **Example:**
 ```java
@@ -560,6 +562,30 @@ Configuration PID: `EPackageStageActionService` (factory or singleton). Typical 
 
 An `UPDATE` always tears down the previous OSGi registrations before re-registering, so service consumers see the new EPackage content (even when the `nsURI` is unchanged).
 
+## Stage Gates
+
+A `StageActionService` reacts to a mutation that has already happened and cannot stop it. A **`StageGate`** (same `action.api` bundle, issue #248) is the other half of that contract: the registry asks every gate **before** a transition commits, and a refusal aborts the transition before any store is touched. The caller gets the gate's reason as a `StageGateRefusedException`, which the REST layer answers with `409 Conflict`; post-commit action failures stay non-fatal as before.
+
+### Contract
+
+- `supportsObjectType(String)` — which object types the gate wants to be asked about.
+- `beforeTransition(GateContext)` — returns a `Promise<GateVerdict>`: `GateVerdict.pass()` or `GateVerdict.refuse(reason)`. The `GateContext` carries scope, registry, objectId, objectType, `sourceStage`, `targetStage` and the object's fingerprint; the object is still readable in its source stage, the target has not been written.
+
+A gate whose promise **fails** does not let the transition through: the registry treats an undecided gate as a fault of the operation (`IllegalStateException`, a `500` over REST). A check that silently passes when it breaks is no check. Further triggers (a delete guard, issue #250) will be added as `default` methods that pass, so existing gates keep compiling.
+
+### Wiring
+
+Gates are wired like stage actions, per registry, through the `stageGate` reference of the `RegistryService` configuration:
+
+| Property | Description |
+|----------|-------------|
+| `stageGate.target` | OSGi target filter selecting the gates for this registry, e.g. `(component.name=QvtTransitionGate)`. Without it a registry has no gates and transitions behave as before. |
+| `stageGate.cardinality.minimum` | Set to `1` when the registry must not run without its gate; the registry then waits for the gate to appear. |
+
+### Bundled Implementation: `QvtTransitionGate`
+
+Ships in the `qvt` bundle. For a QVT-O source it compiles the source against the **target** stage's view (its unit store for imports, its chain ResourceSet for model types) and refuses the transition when the compile fails, typically because an imported library has not been promoted yet. The reason lists the compiler's findings and names the remedy. The runtime configurations wire it into the `transformations` registry.
+
 ## Integration Points
 
 ### Required Services
@@ -567,7 +593,8 @@ An `UPDATE` always tears down the previous OSGi registrations before re-register
 1. **EObjectRegistryService**: For object indexing and search
 2. **EObjectStorageService**: For persistent storage (one per stage)
 3. **StageActionService** (optional, multiple): Lifecycle hooks fired on `ENTER` / `UPDATE` / `EXIT` for configured stages. See [Stage Action Services](#stage-action-services).
-4. **Parent WorkflowService** (optional): For hierarchical scopes
+4. **StageGate** (optional, multiple): Veto points asked before a transition commits. See [Stage Gates](#stage-gates).
+5. **Parent WorkflowService** (optional): For hierarchical scopes
 
 ### OSGi Service Properties
 

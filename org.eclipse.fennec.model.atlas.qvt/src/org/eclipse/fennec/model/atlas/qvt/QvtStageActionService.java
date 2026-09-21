@@ -22,7 +22,6 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import org.eclipse.emf.ecore.EObject;
-import org.eclipse.emf.ecore.EPackage;
 import org.eclipse.emf.ecore.resource.Resource;
 import org.eclipse.emf.ecore.resource.ResourceSet;
 import org.eclipse.emf.ecore.util.EcoreUtil;
@@ -30,11 +29,8 @@ import org.eclipse.fennec.m2x.model.compiled.CompiledPackage;
 import org.eclipse.fennec.m2x.model.compiled.CompiledUnit;
 import org.eclipse.fennec.m2x.model.compiled.DependencyEntry;
 import org.eclipse.fennec.m2x.model.compiled.SourceUnit;
-import org.eclipse.fennec.m2x.qvto.api.QvtoConfiguration;
 import org.eclipse.fennec.m2x.qvto.api.QvtoEngine;
 import org.eclipse.fennec.m2x.qvto.api.QvtoParseException;
-import org.eclipse.fennec.m2x.qvto.engine.QvtoEngines;
-import org.eclipse.fennec.m2x.qvto.engine.QvtoStoreUnitResolver;
 import org.eclipse.fennec.m2x.unit.api.Unit;
 import org.eclipse.fennec.m2x.unit.api.UnitKey;
 import org.eclipse.fennec.m2x.unit.api.UnitKind;
@@ -84,7 +80,11 @@ import org.osgi.util.promise.PromiseFactory;
  * <p>
  * A transition fires ENTER in the target stage, so the recompile against the
  * target stage's package view falls out of the same routine; units are
- * (re)derived per stage and never transition themselves.
+ * (re)derived per stage and never transition themselves. Whether the source
+ * may enter that stage at all is decided beforehand by the
+ * {@link QvtTransitionGate}, which compiles it against the same view (issue
+ * #248); by the time this action runs for a transition, the source is known
+ * to compile there.
  * </p>
  */
 @Component(name = "QvtStageActionService", //
@@ -198,7 +198,7 @@ public class QvtStageActionService implements StageActionService {
                     ctx.stage());
             ResourceSet resourceSet = lease != null ? lease.getService() : null;
             try {
-                QvtoEngine engine = engineFor(store, resourceSet);
+                QvtoEngine engine = QvtStageEngines.engineFor(store, resourceSet);
                 Set<String> changed = compileOne(engine, store, registryService, ctx,
                         source.getQualifiedName(), source.getSource());
                 recompileDependentsToFixpoint(engine, store, registryService, ctx, changed);
@@ -348,24 +348,6 @@ public class QvtStageActionService implements StageActionService {
             logger.log(Level.WARNING, e, () -> "Cannot load the source of " + qualifiedName);
         }
         return Optional.empty();
-    }
-
-    private QvtoEngine engineFor(AtlasUnitStore store, ResourceSet resourceSet) {
-        QvtoConfiguration.Builder builder = QvtoConfiguration.builder()
-                .addUnitResolver(new QvtoStoreUnitResolver(store))
-                .unitResolverEnabled(true);
-        if (resourceSet != null) {
-            // the per-(scope, stage) chain registry is the package view this stage
-            // compiles against; its fp1 fingerprints enter the unit manifest
-            EPackage.Registry packages = resourceSet.getPackageRegistry();
-            for (String nsURI : Set.copyOf(packages.keySet())) {
-                EPackage ePackage = packages.getEPackage(nsURI);
-                if (ePackage != null) {
-                    builder.registerPackage(ePackage);
-                }
-            }
-        }
-        return QvtoEngines.create(builder.build());
     }
 
     private void writeDiagnostics(RegistryService<EObject> registryService, ActionContext ctx,

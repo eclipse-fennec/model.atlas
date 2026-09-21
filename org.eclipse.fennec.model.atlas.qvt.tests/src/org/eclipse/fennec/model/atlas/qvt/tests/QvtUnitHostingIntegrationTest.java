@@ -14,6 +14,7 @@
 package org.eclipse.fennec.model.atlas.qvt.tests;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
@@ -48,6 +49,7 @@ import org.eclipse.fennec.model.atlas.mgmt.management.ManagementFactory;
 import org.eclipse.fennec.model.atlas.mgmt.management.ObjectMetadata;
 import org.eclipse.fennec.model.atlas.qvt.AtlasUnitStore;
 import org.eclipse.fennec.model.atlas.qvt.QvtUnits;
+import org.eclipse.fennec.model.atlas.scope.api.StageGateRefusedException;
 import org.eclipse.fennec.model.atlas.qvt.diagnostics.CompileStatus;
 import org.eclipse.fennec.model.atlas.qvt.diagnostics.SourceDiagnostics;
 import org.eclipse.fennec.model.atlas.tests.common.CommonTestAnnotations;
@@ -107,6 +109,8 @@ import org.osgi.test.junit5.service.ServiceExtension;
         @Property(key = "storageService.target", value = "(storage.type=file)"),
         @Property(key = "stageActionService.target", value = "(component.name=QvtStageActionService)"),
         @Property(key = "stageActionService.cardinality.minimum", scalar = Scalar.Integer, value = "1"),
+        @Property(key = "stageGate.target", value = "(component.name=QvtTransitionGate)"),
+        @Property(key = "stageGate.cardinality.minimum", scalar = Scalar.Integer, value = "1"),
         @Property(key = "stages", type = Type.Array, value = {
                 "{ \"name\" : \"draft\", \"writable\" : true, \"final\": false}",
                 "{ \"name\" : \"release\", \"writable\" : true, \"final\": true}" }),
@@ -387,6 +391,88 @@ public class QvtUnitHostingIntegrationTest {
         SourceDiagnostics diagnostics = diagnosticsOf(registry, "release", "Promote");
         assertEquals(CompileStatus.OK, diagnostics.getCompileStatus());
         assertEquals(released.get(0).fingerprint().orElseThrow(), diagnostics.getUnitFingerprint());
+    }
+
+    @Test
+    @DisplayName("Promoting a source before the library it imports is refused; the target stage stays untouched (issue #248)")
+    void promotionBeforeLibraryIsRefused(
+            @InjectService(cardinality = 0, timeout = 15000, filter = "(registry.name=" + REGISTRY + ")") //
+            ServiceAware<RegistryService> aware) throws Exception {
+        RegistryService<EObject> registry = registry(aware);
+        String lib = """
+                library gate.Lib {
+                    helper shout(s : String) : String {
+                        return s.toUpperCase() + '!';
+                    }
+                }
+                """;
+        String user = """
+                modeltype ECORE uses ecore('http://www.eclipse.org/emf/2002/Ecore');
+                import gate.Lib;
+                transformation GateUser(inout m : ECORE) {
+                    main() {
+                        m.objectsOfType(EPackage)->forEach(p) {
+                            p.name := shout(p.name);
+                        };
+                    }
+                }
+                """;
+        uploadSource(registry, DRAFT, "gate.Lib", "gate.Lib", lib);
+        uploadSource(registry, DRAFT, "GateUser", "GateUser", user);
+        assertEquals(CompileStatus.OK, diagnosticsOf(registry, DRAFT, "GateUser").getCompileStatus(),
+                "precondition: the source compiles in draft, where its library is");
+
+        // the library is not in release yet: the source does not compile there, so
+        // the transition is refused before anything is written
+        StageGateRefusedException refused = assertThrows(StageGateRefusedException.class,
+                () -> registry.transitionToStage(SCOPE, "GateUser", DRAFT, "release"));
+        assertTrue(refused.getMessage().contains("GateUser"), refused.getMessage());
+        assertTrue(refused.getMessage().contains("'release'"), refused.getMessage());
+        assertTrue(refused.getMessage().contains("libraries"),
+                "the reason names the remedy, got: " + refused.getMessage());
+
+        AtlasUnitStore releaseStore = new AtlasUnitStore(registry, SCOPE, "release");
+        assertNull(registry.getMetadataFromStage(SCOPE, "release", "GateUser"),
+                "the source did not enter the target stage");
+        assertTrue(releaseStore.versions(QvtUnits.LANGUAGE_QVTO, "GateUser", UnitKind.COMPILED).isEmpty(),
+                "no unit was derived in the target stage");
+        assertNull(registry.getMetadataFromStage(SCOPE, "release",
+                QvtUnits.diagnosticsObjectId(QvtUnits.LANGUAGE_QVTO, "GateUser")),
+                "no diagnostics document was written in the target stage");
+        assertNotNull(registry.getMetadataFromStage(SCOPE, DRAFT, "GateUser"), "the source stays in draft");
+
+        // libraries first: the library compiles on its own, so it passes; then the
+        // source finds it in the release view and passes too
+        registry.transitionToStage(SCOPE, "gate.Lib", DRAFT, "release");
+        registry.transitionToStage(SCOPE, "GateUser", DRAFT, "release");
+
+        assertEquals(1, releaseStore.versions(QvtUnits.LANGUAGE_QVTO, "GateUser", UnitKind.COMPILED).size(),
+                "once the library is there the promotion compiles in the target stage");
+        assertEquals(CompileStatus.OK, diagnosticsOf(registry, "release", "GateUser").getCompileStatus());
+    }
+
+    @Test
+    @DisplayName("Promoting a source that does not compile anywhere is refused too (issue #248)")
+    void promotionOfInvalidSourceIsRefused(
+            @InjectService(cardinality = 0, timeout = 15000, filter = "(registry.name=" + REGISTRY + ")") //
+            ServiceAware<RegistryService> aware) throws Exception {
+        RegistryService<EObject> registry = registry(aware);
+        // a syntax error: the assignment has no right-hand side and a brace is missing
+        uploadSource(registry, DRAFT, "GateBroken", "GateBroken", """
+                modeltype ECORE uses ecore('http://www.eclipse.org/emf/2002/Ecore');
+                transformation GateBroken(inout m : ECORE) {
+                    main() {
+                        m.objectsOfType(EPackage)->forEach(p) {
+                            p.name := ;
+                        };
+                }
+                """);
+        assertEquals(CompileStatus.INVALID, diagnosticsOf(registry, DRAFT, "GateBroken").getCompileStatus(),
+                "precondition: the upload is accepted and diagnosed as invalid");
+
+        assertThrows(StageGateRefusedException.class,
+                () -> registry.transitionToStage(SCOPE, "GateBroken", DRAFT, "release"));
+        assertNull(registry.getMetadataFromStage(SCOPE, "release", "GateBroken"));
     }
 
     @Test

@@ -73,12 +73,15 @@ scope's schema registry in that stage), and the package fingerprints go into
 the unit's manifest — a consumer's prepare step verifies them.
 
 Units never transition. Transitioning a **source** to another stage
-recompiles it there, against that stage's package view. If the target-stage
-compile fails (typically: an imported library has not been transitioned yet),
-the transition still succeeds and the failure is visible as the diagnostics
-document in the target stage; when the missing library later arrives there,
-its upload recompiles the dependents automatically. Rule of thumb:
-**transition libraries first**.
+recompiles it there, against that stage's package view. Before the transition
+commits, the Atlas compiles the source against the **target** stage's view; if
+that compile fails (typically: an imported library has not been transitioned
+yet), the transition is **refused with `409 Conflict`** and the target stage
+is left untouched. The error message carries the compiler's findings and the
+remedy. So the rule **transition libraries first** is enforced, not just
+advised: promote `text.Case` before `Announce`, and the second promotion
+finds the library in the target view. A source that is invalid in its own
+stage (status `INVALID`) cannot be promoted either.
 
 Because unit fingerprints do not incorporate package fingerprints, the stage
 is part of a unit's address: consumers always address
@@ -110,5 +113,6 @@ The registry and the compile action are plain ConfigAdmin configuration — see
 `org.eclipse.fennec.model.atlas.runtime.config.local/configs/workflow.json`
 for the reference shape: a `RegistryService~transformations` factory config
 (`registry.type: TRANSFORMATION`, the three root EClasses, a ResourceSet
-target that knows the `compiled` and `diagnostics` models) plus a
+target that knows the `compiled` and `diagnostics` models, a
+`stageGate.target` pointing at `QvtTransitionGate`) plus a
 `QvtStageActionService` config naming the trigger stages.

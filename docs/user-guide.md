@@ -244,7 +244,7 @@ How the API enforces the rule:
 |-----------|---------------------------------------------------------------|
 | `POST`/`PUT /{scope}/registries/{registry}/stages/{stage}/{objectId}` | `409 Conflict`, unless `?override=true` — which updates the object that is there |
 | `POST`/`PUT /{scope}/schema/stages/{stage}?nsUri=...` | `409 Conflict`, unless `?overwrite=true` — which updates the package that is there |
-| `POST /{scope}/.../stages/{stage}/actions/transition` | `409 Conflict` when the target stage holds a *different* object under that id, unless `?overwrite=true` — which replaces it. Promoting a newer revision of the *same* object replaces its own earlier copy there with no flag — that is what a promotion is for |
+| `POST /{scope}/.../stages/{stage}/actions/transition` | `409 Conflict` when the target stage holds a *different* object under that id, unless `?overwrite=true` — which replaces it. Promoting a newer revision of the *same* object replaces its own earlier copy there with no flag — that is what a promotion is for. Also `409 Conflict` when a *stage gate* refuses the transition because the object does not hold up in the target stage (see [Stage Gates](#stage-gates)); `overwrite` does not bypass a gate |
 
 Two details of the conflict check:
 
@@ -263,6 +263,22 @@ Two details of the conflict check:
   from the target stage first. One consequence worth knowing: an object **renamed** in the
   source stage looks different from the copy it is meant to replace, so its promotion is
   refused until either the old copy is deleted or `overwrite=true` is passed.
+
+### Stage Gates
+
+A transition is validated against the **target** stage before it commits. Besides the
+occupancy check above, a registry may be configured with *stage gates*: checks that look
+at the object relative to the stage it is about to enter and may refuse the move. A refused
+transition answers `409 Conflict` with the gate's reason, writes nothing into the target
+stage and leaves the source stage as it was. The reason names what has to change before a
+retry succeeds.
+
+The built-in gate is the QVT one: a transformation source is promoted only if it **compiles
+against the target stage's view**, so a source that imports a library not yet promoted is
+refused until the library has moved (see [QVT transformations](qvt-transformations.md)).
+Registries without a configured gate behave as before. A gate that cannot decide, because
+it fails internally, also stops the transition, but as a `500`, not a `409`: the object is
+not at fault, the server is.
 
 ### Hierarchical Visibility
 
@@ -778,7 +794,7 @@ export MODELATLAS_DEBUG_STACKTRACE=true
 | 304 | Not Modified (conditional GET with `If-None-Match` — content unchanged) |
 | 400 | Invalid request (bad scope, stage, parameters) |
 | 403 | Forbidden (read-only stage or parent object) |
-| 409 | Conflict (an `objectId` or `nsUri` already taken in the target stage — see [One Object per Id per Stage](#one-object-per-id-per-stage)) |
+| 409 | Conflict (an `objectId` or `nsUri` already taken in the target stage — see [One Object per Id per Stage](#one-object-per-id-per-stage) — or a stage gate refused a transition — see [Stage Gates](#stage-gates)) |
 | 412 | Precondition Failed (`If-Match` ETag mismatch — resource modified by another client) |
 | 415 | Unsupported media type |
 | 500 | Internal server error |

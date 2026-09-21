@@ -41,7 +41,11 @@ import org.eclipse.fennec.model.atlas.mgmt.api.EObjectStorageService;
 import org.eclipse.fennec.model.atlas.mgmt.management.ManagementFactory;
 import org.eclipse.fennec.model.atlas.mgmt.management.ObjectMetadata;
 import org.eclipse.fennec.model.atlas.action.api.ActionContext;
+import org.eclipse.fennec.model.atlas.action.api.GateContext;
+import org.eclipse.fennec.model.atlas.action.api.GateVerdict;
 import org.eclipse.fennec.model.atlas.action.api.StageActionService;
+import org.eclipse.fennec.model.atlas.action.api.StageGate;
+import org.eclipse.fennec.model.atlas.scope.api.StageGateRefusedException;
 import org.osgi.util.promise.Promises;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -252,6 +256,156 @@ public class RegistryServiceImplTest {
             when(stageAction.supportsObjectType(any())).thenReturn(true);
             when(stageAction.onEnter(any())).thenReturn(Promises.resolved(null));
             return stageAction;
+        }
+    }
+
+    @Nested
+    @DisplayName("Stage gates decide a transition before it commits (issue #248)")
+    class StageGateTests {
+
+        private EObjectStorageService<EObject> storage;
+        private RegistryServiceImpl<EObject> service;
+        private StageActionService stageAction;
+        private EObject person;
+
+        @SuppressWarnings("unchecked")
+        @BeforeEach
+        void setUp() {
+            person = personClass.getEPackage().getEFactoryInstance().create(personClass);
+            ObjectMetadata metadata = ManagementFactory.eINSTANCE.createObjectMetadata();
+            metadata.setObjectId("object-1");
+            metadata.setObjectType(TEST_NS_URI + "#//Person");
+            metadata.setStage("draft");
+            metadata.setFingerprint("fp1:abc123");
+
+            storage = mock(EObjectStorageService.class);
+            when(storage.getStorageType()).thenReturn("file");
+            org.mockito.Mockito.lenient().when(storage.retrieveObject("test-scope", "test-registry", "draft", "object-1"))
+                    .thenReturn(Promises.resolved(person));
+            org.mockito.Mockito.lenient().when(storage.retrieveMetadata("test-scope", "test-registry", "draft", "object-1"))
+                    .thenReturn(Promises.resolved(metadata));
+            // the target address is free
+            org.mockito.Mockito.lenient().when(storage.retrieveMetadata("test-scope", "test-registry", "release", "object-1"))
+                    .thenReturn(Promises.resolved(null));
+            org.mockito.Mockito.lenient().when(storage.storeObject(any(), any(), any(), any(), any(), any()))
+                    .thenReturn(Promises.resolved(metadata));
+
+            service = createService(List.of(storage), TEST_NS_URI + "#//Person");
+
+            // a post-commit action, to prove a refused transition fires none
+            stageAction = mock(StageActionService.class);
+            org.mockito.Mockito.lenient().when(stageAction.requiresReplayOnStartup()).thenReturn(false);
+            org.mockito.Mockito.lenient().when(stageAction.supportsObjectType(any())).thenReturn(true);
+            org.mockito.Mockito.lenient().when(stageAction.getTriggerStages()).thenReturn(Set.of());
+            org.mockito.Mockito.lenient().when(stageAction.getTriggerEvents()).thenReturn(Set.of());
+            org.mockito.Mockito.lenient().when(stageAction.onEnter(any())).thenReturn(Promises.resolved(null));
+            service.addStageActionService(stageAction);
+        }
+
+        @Test
+        @DisplayName("A refusing gate aborts the transition with its reason; nothing is written and no action fires")
+        void refusalLeavesTheTargetUntouched() {
+            StageGate gate = mock(StageGate.class);
+            when(gate.supportsObjectType(any())).thenReturn(true);
+            when(gate.beforeTransition(any()))
+                    .thenReturn(Promises.resolved(GateVerdict.refuse("the source does not compile in release")));
+            service.addStageGate(gate);
+
+            StageGateRefusedException refused = org.junit.jupiter.api.Assertions.assertThrows(
+                    StageGateRefusedException.class,
+                    () -> service.transitionToStage("test-scope", "object-1", "draft", "release"));
+
+            assertTrue(refused.getMessage().contains("the source does not compile in release"),
+                    "the caller reads the gate's reason, got: " + refused.getMessage());
+            assertTrue(refused.getMessage().contains("'draft'") && refused.getMessage().contains("'release'"),
+                    "the refusal names both stages, got: " + refused.getMessage());
+            verify(storage, never()).storeObject(any(), any(), any(), any(), any(), any());
+            verify(storage, never()).deleteObject(any(), any(), any(), any());
+            verify(stageAction, never()).onEnter(any());
+            verify(stageAction, never()).onExit(any());
+        }
+
+        @Test
+        @DisplayName("A passing gate lets the transition commit as before")
+        void passLetsTheTransitionCommit() {
+            StageGate gate = mock(StageGate.class);
+            when(gate.supportsObjectType(any())).thenReturn(true);
+            when(gate.beforeTransition(any())).thenReturn(Promises.resolved(GateVerdict.pass()));
+            service.addStageGate(gate);
+
+            ObjectMetadata promoted = service.transitionToStage("test-scope", "object-1", "draft", "release");
+
+            assertEquals("release", promoted.getStage());
+            verify(storage).storeObject(any(), any(), any(), any(), any(), any());
+            verify(stageAction).onEnter(any());
+        }
+
+        @Test
+        @DisplayName("The gate sees the pending transition: both stages, the type and the fingerprint")
+        void gateContextDescribesThePendingTransition() {
+            StageGate gate = mock(StageGate.class);
+            when(gate.supportsObjectType(any())).thenReturn(true);
+            when(gate.beforeTransition(any())).thenReturn(Promises.resolved(GateVerdict.pass()));
+            service.addStageGate(gate);
+
+            service.transitionToStage("test-scope", "object-1", "draft", "release");
+
+            ArgumentCaptor<GateContext> captor = ArgumentCaptor.forClass(GateContext.class);
+            verify(gate).beforeTransition(captor.capture());
+            GateContext ctx = captor.getValue();
+            assertEquals("test-scope", ctx.scope());
+            assertEquals("test-registry", ctx.registry());
+            assertEquals("object-1", ctx.objectId());
+            assertEquals(TEST_NS_URI + "#//Person", ctx.objectType());
+            assertEquals("draft", ctx.sourceStage());
+            assertEquals("release", ctx.targetStage());
+            assertEquals("fp1:abc123", ctx.fingerprint());
+        }
+
+        @Test
+        @DisplayName("A gate that does not support the object's type is not asked")
+        void unsupportedTypeIsNotConsulted() {
+            StageGate gate = mock(StageGate.class);
+            when(gate.supportsObjectType(any())).thenReturn(false);
+            service.addStageGate(gate);
+
+            service.transitionToStage("test-scope", "object-1", "draft", "release");
+
+            verify(gate, never()).beforeTransition(any());
+            verify(storage).storeObject(any(), any(), any(), any(), any(), any());
+        }
+
+        @Test
+        @DisplayName("A gate that cannot decide fails the transition closed: nothing is written")
+        void undecidedGateFailsClosed() {
+            StageGate gate = mock(StageGate.class);
+            when(gate.supportsObjectType(any())).thenReturn(true);
+            IllegalStateException fault = new IllegalStateException("compiler exploded");
+            when(gate.beforeTransition(any())).thenReturn(Promises.failed(fault));
+            service.addStageGate(gate);
+
+            IllegalStateException thrown = org.junit.jupiter.api.Assertions.assertThrows(IllegalStateException.class,
+                    () -> service.transitionToStage("test-scope", "object-1", "draft", "release"));
+
+            // a fault, not a refusal: the caller must not read it as "fix your object"
+            org.junit.jupiter.api.Assertions.assertSame(fault, thrown.getCause());
+            verify(storage, never()).storeObject(any(), any(), any(), any(), any(), any());
+            verify(stageAction, never()).onEnter(any());
+        }
+
+        @Test
+        @DisplayName("A gate removed again is no longer asked")
+        void removedGateIsNotConsulted() {
+            // no stubbing: a removed gate must not be touched at all, and strict Mockito
+            // would flag any stub it never reached
+            StageGate gate = mock(StageGate.class);
+            service.addStageGate(gate);
+            service.removeStageGate(gate);
+
+            service.transitionToStage("test-scope", "object-1", "draft", "release");
+
+            verify(gate, never()).beforeTransition(any());
+            verify(storage).storeObject(any(), any(), any(), any(), any(), any());
         }
     }
 

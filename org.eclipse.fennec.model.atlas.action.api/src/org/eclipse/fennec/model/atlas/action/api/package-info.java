@@ -14,7 +14,9 @@
 /**
  * The stage lifecycle SPI: an implementation of {@link
  * org.eclipse.fennec.model.atlas.action.api.StageActionService} is picked up as a
- * whiteboard service and called when an object enters, is updated in, or leaves a stage.
+ * whiteboard service and called when an object enters, is updated in, or leaves a stage;
+ * an implementation of {@link org.eclipse.fennec.model.atlas.action.api.StageGate} is
+ * asked <em>before</em> a stage transition and may refuse it (issue #248).
  *
  * <p>
  * This package deliberately depends on nothing but {@code java.*} and the OSGi promise
@@ -22,5 +24,5 @@
  * </p>
  */
 @org.osgi.annotation.bundle.Export
-@org.osgi.annotation.versioning.Version("1.0")
+@org.osgi.annotation.versioning.Version("1.1")
 package org.eclipse.fennec.model.atlas.action.api;

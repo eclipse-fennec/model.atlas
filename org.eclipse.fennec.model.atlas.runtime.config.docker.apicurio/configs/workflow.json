@@ -23,6 +23,8 @@
         "registry.description": "QVT-O transformation sources, compiled units and their diagnostics (issue #239)",
         "stageActionService.target": "(component.name=QvtStageActionService)",
         "stageActionService.cardinality.minimum:int": 1,
+        "stageGate.target": "(component.name=QvtTransitionGate)",
+        "stageGate.cardinality.minimum:int": 1,
         "stage.storage.mappings": [
             "draft:apicurio",
             "approved:apicurio",
