@@ -11,6 +11,13 @@
 # through the ObjectPublisher this runtime now also carries; the two gdpr.runtime.config
 # bundles own the check-side PIDs (they are split because the Configurator applies one of two
 # bundles supplying the same singleton PID wholesale and discards the other).
+#
+# The GDPR review document (AP4/AP5 of the ODS plan) and the ODS codec it is downloaded through.
+# This file is '-resolve: never', so unlike the docker jena runtime the closure is named by hand:
+# codec.ods needs codec.tabular, codec.tabular.model and SODS, and gdpr.history needs action.api
+# and the history model. Taken from the docker jena resolve, which is the file to re-read if
+# codec.ods ever grows a dependency. Both gdpr model bundles come from the published
+# common.models snapshots (cnf/central.mvn).
 -runbundles.local: \
 	org.eclipse.fennec.event.atlas.mapping,\
 	org.eclipse.fennec.gdpr.report.model,\
@@ -26,6 +33,13 @@
 	org.eclipse.fennec.gdpr.store.atlas,\
 	org.eclipse.fennec.gdpr.runtime.config.common,\
 	org.eclipse.fennec.gdpr.runtime.config.check,\
+	org.eclipse.fennec.model.atlas.action.api,\
+	org.eclipse.fennec.gdpr.report.history.model,\
+	org.eclipse.fennec.model.atlas.gdpr.history,\
+	org.eclipse.fennec.codec.ods,\
+	org.eclipse.fennec.codec.tabular,\
+	org.eclipse.fennec.codec.tabular.model,\
+	com.github.miachm.sods,\
 	
 
 

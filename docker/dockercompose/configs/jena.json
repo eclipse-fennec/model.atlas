@@ -10,6 +10,14 @@
         "trigger.stages": ["approved"],
         "review.on.update": false
     },
+    "GDPRReportHistoryStageAction": {
+        "reports.registry": "gdpr",
+        "report.stages": ["draft", "release"],
+        "trigger.scopes": ["jena"],
+        "scope.target": "(atlas.scope=jena)",
+        "document.registry": "gdprdoc",
+        "document.stage": "draft"
+    },
     "ModelAtlasObjectPublisher~gdprStatus": {
         "base.uri": "http://localhost:8080/atlas/rest",
         "scope": "jena",
@@ -34,7 +42,7 @@
         "atlas.scope": "jena",
         "scope.description": "City Jena Scope",
         "scope.parent": "atlas",
-        "registryService.target": "(|(registry.name=schema)(registry.name=workspace)(registry.name=DataGen)(registry.name=cocl)(registry.name=sensinactmapping)(registry.name=sensinactprofile)(registry.name=gdpr))",
+        "registryService.target": "(|(registry.name=schema)(registry.name=workspace)(registry.name=DataGen)(registry.name=cocl)(registry.name=sensinactmapping)(registry.name=sensinactprofile)(registry.name=gdpr)(registry.name=gdprdoc))",
         "registryService.cardinality.minimum:int": 1
     },
     "RegistryService~schema": {
@@ -228,6 +236,7 @@
         "registry.type": "OTHER",
         "registry.name": "gdpr",
         "registry.description": "The Registry to store GDPR Report and GdprRequestStatus objects",
+        "stageActionService.target": "(component.name=GDPRReportHistoryStageAction)",
         "stage.storage.mappings": [
             "draft:file",
             "release:file"
@@ -253,6 +262,38 @@
         "root.eclass.uri": [
             "https://org.eclipse/fennec/gdpr-report/1.0.0#//GdprReport",
             "https://org.eclipse/fennec/gdpr-report/1.0.0#//GdprRequestStatus"
+        ],
+        "resourceSet.target": "(emf.name=ecore)"
+    },
+    "RegistryService~gdprdoc": {
+        "schemaPackage.target": "(emf.nsURI=https://org.eclipse/fennec/gdpr-report-history/1.0.0)",
+        "registry.type": "OTHER",
+        "registry.name": "gdprdoc",
+        "registry.description": "The Registry holding the derived GdprReportHistory documents, one per reviewed model fingerprint",
+        "stage.storage.mappings": [
+            "draft:file",
+            "release:file"
+        ],
+        "workflow.transitions": [
+            "draft:release"
+        ],
+        "delete.after.transition": false,
+        "storageService.target": "(storage.type=file)",
+        "storageService.cardinality.minimum:int": 1,
+        "stages": [
+            {
+                "name": "draft",
+                "writable": true,
+                "final": false
+            },
+            {
+                "name": "release",
+                "writable": true,
+                "final": true
+            }
+        ],
+        "root.eclass.uri": [
+            "https://org.eclipse/fennec/gdpr-report-history/1.0.0#//GdprReportHistory"
         ],
         "resourceSet.target": "(emf.name=ecore)"
     }
