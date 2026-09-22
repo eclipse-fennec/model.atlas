@@ -204,8 +204,3 @@ org.eclipse.fennec.dcat:org.eclipse.fennec.dcat.atlas.dcatap.de.model:1.0.0-SNAP
 org.eclipse.fennec.dcat:org.eclipse.fennec.dcat.atlas.client.api:1.0.0-SNAPSHOT
 org.eclipse.fennec.dcat:org.eclipse.fennec.dcat.atlas.client.impl:1.0.0-SNAPSHOT
 org.eclipse.fennec.dcat:org.eclipse.fennec.dcat.atlas.client.osgi:1.0.0-SNAPSHOT
-
-# GDPR models from common.models — coordinates here until the next release adds
-# them to the fennecEMFModels workspace library
-org.eclipse.fennec.models:org.eclipse.fennec.gdpr.model:0.0.1-SNAPSHOT
-org.eclipse.fennec.models:org.eclipse.fennec.gdpr.report.model:1.0.0-SNAPSHOT
