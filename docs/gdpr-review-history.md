@@ -94,7 +94,12 @@ non-whitelisted keys are silently ignored — it simply comes back with the defa
 
 ## Configuration
 
-Two PIDs, plus the registry the document lives in. From `docker/dockercompose/configs/jena.json`:
+Two PIDs, plus the registry the document lives in. Shown here from
+`docker/dockercompose/configs/jena.json`, the config the jena image mounts. The same three
+entries live in `org.eclipse.fennec.model.atlas.runtime.config.local.jena/configs/workflow.json`
+for the local runtime and in
+`org.eclipse.fennec.model.atlas.runtime.config.docker.file/configs/workflow.json`, which is baked
+into the file image rather than mounted — change one and the others do not follow.
 
 ```jsonc
 "GDPRReportHistoryStageAction": {
