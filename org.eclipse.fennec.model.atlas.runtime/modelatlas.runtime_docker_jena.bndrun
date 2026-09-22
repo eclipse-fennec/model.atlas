@@ -1,5 +1,9 @@
+# '~' so THIS file's -runbundles wins over the included one's. Without it bnd keeps the base
+# runtime's resolved list and silently discards the one below - which is how the ODS codec and
+# the history bundle resolved green and still did not reach the image. The list below is a
+# strict superset of the base one, same versions, so nothing is lost by preferring it.
 -include: \
-	modelatlas.runtime_docker.bndrun
+	~modelatlas.runtime_docker.bndrun
 
 # The mapping model needs no start-order help any more: the registry that hosts it
 # waits for the EPackage service through its schemaPackage reference (issue #169),
@@ -15,9 +19,12 @@
 # through the ObjectPublisher this runtime now also carries; the two gdpr.runtime.config
 # bundles own the check-side PIDs (they are split because the Configurator applies one of two
 # bundles supplying the same singleton PID wholesale and discards the other).
+#
+# gdpr.report.model is NOT named here any more: the history bundle requires it, so the resolve
+# below brings it in with a version range. Naming it here unversioned as well risked a second,
+# differently versioned copy of the same EPackage.
 -runbundles.docker.jena: \
 	org.eclipse.fennec.event.atlas.mapping,\
-	org.eclipse.fennec.gdpr.report.model,\
 	org.eclipse.fennec.gdpr.action,\
 	org.eclipse.fennec.gdpr.check,\
 	org.eclipse.fennec.ai.apis.meta.model,\
@@ -30,141 +37,159 @@
 	org.eclipse.fennec.gdpr.runtime.config.common,\
 	org.eclipse.fennec.gdpr.runtime.config.check
 
+
+# The GDPR review document (AP4/AP5 of the ODS plan). Unlike the bundles above these are
+# pulled in as requirements rather than named directly, because codec.ods drags codec.tabular,
+# codec.tabular.model and SODS along with it and naming a transitive closure by hand is how a
+# runtime quietly loses a bundle. A suffixed -runrequires merges with the one in the included
+# base file; a bare one would replace it.
+-runrequires.docker.jena: \
+	bnd.identity;id='org.eclipse.fennec.codec.ods',\
+	bnd.identity;id='org.eclipse.fennec.gdpr.report.history.model',\
+	bnd.identity;id='org.eclipse.fennec.model.atlas.gdpr.history'
+
 -runproperties.docker.jena: configurator.initial=file:///opt/modelatlas/runtime/load/jena.json
 -runbundles: \
 	com.fasterxml.jackson.core.jackson-annotations;version='[2.22.0,2.22.1)';startlevel=1000,\
-	com.googlecode.libphonenumber;version='[9.0.26,9.0.27)';startlevel=1001,\
-	io.github.classgraph.classgraph;version='[4.8.165,4.8.166)';startlevel=1002,\
-	io.github.vpelikh.swagger-annotations;version='[4.0.5,4.0.6)';startlevel=1003,\
-	io.github.vpelikh.swagger-core;version='[4.0.5,4.0.6)';startlevel=1004,\
-	io.github.vpelikh.swagger-integration;version='[4.0.5,4.0.6)';startlevel=1005,\
-	io.github.vpelikh.swagger-jakarta-rest;version='[4.0.5,4.0.6)';startlevel=1006,\
-	io.github.vpelikh.swagger-models;version='[4.0.5,4.0.6)';startlevel=1007,\
-	jakarta.activation-api;version='[2.1.3,2.1.4)';startlevel=1008,\
-	jakarta.annotation-api;version='[2.1.1,2.1.2)';startlevel=1009,\
-	jakarta.inject.jakarta.inject-api;version='[2.0.1,2.0.2)';startlevel=1010,\
-	jakarta.validation.jakarta.validation-api;version='[3.1.0,3.1.1)';startlevel=1011,\
-	jakarta.ws.rs-api;version='[3.1.0,3.1.1)';startlevel=1012,\
-	jakarta.xml.bind-api;version='[4.0.2,4.0.3)';startlevel=1013,\
-	javassist;version='[3.29.2,3.29.3)';startlevel=1014,\
-	net.datafaker;version='[2.5.4,2.5.5)';startlevel=1015,\
-	org.antlr.antlr4-runtime;version='[4.13.2,4.13.3)';startlevel=1016,\
-	org.apache.aries.component-dsl.component-dsl;version='[1.2.2,1.2.3)';startlevel=1017,\
-	org.apache.aries.spifly.dynamic.bundle;version='[1.3.7,1.3.8)';startlevel=1018,\
-	org.apache.aries.typedevent.bus;version='[1.0.1,1.0.2)';startlevel=1019,\
-	org.apache.commons.commons-fileupload;version='[1.6.0,1.6.1)';startlevel=1020,\
-	org.apache.commons.commons-io;version='[2.22.0,2.22.1)';startlevel=1021,\
-	org.apache.felix.cm.json;version='[2.0.6,2.0.7)';startlevel=1022,\
-	org.apache.felix.configadmin;version='[1.9.26,1.9.27)';startlevel=1023,\
-	org.apache.felix.configadmin.plugin.interpolation;version='[1.2.8,1.2.9)';startlevel=1024,\
-	org.apache.felix.configurator;version='[1.0.18,1.0.19)';startlevel=1025,\
-	org.apache.felix.eventadmin;version='[1.6.4,1.6.5)';startlevel=1026,\
-	org.apache.felix.gogo.command;version='[1.1.2,1.1.3)';startlevel=1027,\
-	org.apache.felix.gogo.runtime;version='[1.1.6,1.1.7)';startlevel=1028,\
-	org.apache.felix.gogo.shell;version='[1.1.4,1.1.5)';startlevel=1029,\
-	org.apache.felix.healthcheck.api;version='[2.0.4,2.0.5)';startlevel=1030,\
-	org.apache.felix.healthcheck.core;version='[2.3.0,2.3.1)';startlevel=1031,\
-	org.apache.felix.healthcheck.generalchecks;version='[3.0.8,3.0.9)';startlevel=1032,\
-	org.apache.felix.http.jetty12;version='[1.1.0,1.1.1)';startlevel=1033,\
-	org.apache.felix.http.servlet-api;version='[6.1.0,6.1.1)';startlevel=1034,\
-	org.apache.felix.metatype;version='[1.2.4,1.2.5)';startlevel=1035,\
-	org.apache.felix.scr;version='[2.2.14,2.2.15)';startlevel=1036,\
-	org.apache.lucene.core;version='[9.12.3,9.12.4)';startlevel=1037,\
-	org.apache.lucene.queries;version='[9.12.3,9.12.4)';startlevel=1038,\
-	org.apache.lucene.queryparser;version='[9.12.3,9.12.4)';startlevel=1039,\
-	org.eclipse.emf.common;version='[2.44.0,2.44.1)';startlevel=1040,\
-	org.eclipse.emf.ecore;version='[2.41.0,2.41.1)';startlevel=1041,\
-	org.eclipse.emf.ecore.xmi;version='[2.39.0,2.39.1)';startlevel=1042,\
-	org.eclipse.emf.mapping.ecore2xml;version='[2.13.0,2.13.1)';startlevel=1043,\
-	org.eclipse.fennec.codec;version='[0.1.0,0.1.1)';startlevel=1044,\
-	org.eclipse.fennec.codec.api;version='[0.1.0,0.1.1)';startlevel=1045,\
-	org.eclipse.fennec.codec.jsonschema;version='[0.1.0,0.1.1)';startlevel=1046,\
-	org.eclipse.fennec.codec.metadata;version='[0.1.0,0.1.1)';startlevel=1047,\
-	org.eclipse.fennec.codec.rest;version='[0.1.0,0.1.1)';startlevel=1048,\
-	org.eclipse.fennec.emf.osgi.component;version='[1.1.0,1.1.1)';startlevel=1049,\
-	org.eclipse.fennec.emf.osgi.eobject.registry;version='[1.1.0,1.1.1)';startlevel=1050,\
-	org.eclipse.fennec.emf.osgi.eobject.registry.metadata;version='[1.1.0,1.1.1)';startlevel=1051,\
-	org.eclipse.fennec.emf.osgi.metadata;version='[1.1.0,1.1.1)';startlevel=1052,\
-	org.eclipse.fennec.m2x.ocl.api;version='[0.1.1,0.1.2)';startlevel=1053,\
-	org.eclipse.fennec.m2x.ocl.engine;version='[0.1.1,0.1.2)';startlevel=1054,\
-	org.eclipse.fennec.m2x.ocl.model;version='[0.1.1,0.1.2)';startlevel=1055,\
-	org.eclipse.fennec.m2x.ocl.parser;version='[0.1.1,0.1.2)';startlevel=1056,\
-	org.eclipse.fennec.m2x.qvt.model;version='[0.1.1,0.1.2)';startlevel=1057,\
-	org.eclipse.fennec.m2x.qvtd.api;version='[0.1.1,0.1.2)';startlevel=1058,\
-	org.eclipse.fennec.m2x.qvtd.model;version='[0.1.1,0.1.2)';startlevel=1059,\
-	org.eclipse.fennec.m2x.qvto.api;version='[0.1.1,0.1.2)';startlevel=1060,\
-	org.eclipse.fennec.m2x.qvto.engine;version='[0.1.1,0.1.2)';startlevel=1061,\
-	org.eclipse.fennec.m2x.qvto.model;version='[0.1.1,0.1.2)';startlevel=1062,\
-	org.eclipse.fennec.m2x.qvto.parser;version='[0.1.1,0.1.2)';startlevel=1063,\
-	org.eclipse.fennec.m2x.unit;version='[0.1.1,0.1.2)';startlevel=1064,\
-	org.eclipse.fennec.m2x.unit.osgi;version='[0.1.1,0.1.2)';startlevel=1065,\
-	org.eclipse.fennec.model.atlas.bootstrap;version=snapshot;startlevel=1066,\
-	org.eclipse.fennec.model.atlas.config.check;version=snapshot;startlevel=1067,\
-	org.eclipse.fennec.model.atlas.datagen;version=snapshot;startlevel=1068,\
-	org.eclipse.fennec.model.atlas.datagen.example.model;version=snapshot;startlevel=1069,\
-	org.eclipse.fennec.model.atlas.datagen.model;version=snapshot;startlevel=1070,\
-	org.eclipse.fennec.model.atlas.datagen.rest;version=snapshot;startlevel=1071,\
-	org.eclipse.fennec.model.atlas.emf.common;version=snapshot;startlevel=1072,\
-	org.eclipse.fennec.model.atlas.healthcheck;version=snapshot;startlevel=1073,\
-	org.eclipse.fennec.model.atlas.management;version=snapshot;startlevel=1074,\
-	org.eclipse.fennec.model.atlas.management.file;version=snapshot;startlevel=1075,\
-	org.eclipse.fennec.model.atlas.management.lucene;version=snapshot;startlevel=1076,\
-	org.eclipse.fennec.model.atlas.mediatypes.api;version=snapshot;startlevel=1077,\
-	org.eclipse.fennec.model.atlas.mediatypes.impl;version=snapshot;startlevel=1078,\
-	org.eclipse.fennec.model.atlas.qvt;version=snapshot;startlevel=1079,\
-	org.eclipse.fennec.model.atlas.readable.scope.collector;version=snapshot;startlevel=1080,\
-	org.eclipse.fennec.model.atlas.rest.application;version=snapshot;startlevel=1081,\
-	org.eclipse.fennec.model.atlas.rest.common;version=snapshot;startlevel=1082,\
-	org.eclipse.fennec.model.atlas.rest.ecore.xmi;version=snapshot;startlevel=1083,\
-	org.eclipse.fennec.model.atlas.rest.filter;version=snapshot;startlevel=1084,\
-	org.eclipse.fennec.model.atlas.rest.jsonschema;version=snapshot;startlevel=1085,\
-	org.eclipse.fennec.model.atlas.rest.model;version=snapshot;startlevel=1086,\
-	org.eclipse.fennec.model.atlas.rest.qvt;version=snapshot;startlevel=1087,\
-	org.eclipse.fennec.model.atlas.rest.uml;version=snapshot;startlevel=1088,\
-	org.eclipse.fennec.model.atlas.rest.xsdschema;version=snapshot;startlevel=1089,\
-	org.eclipse.fennec.model.atlas.runtime;version=snapshot;startlevel=1090,\
-	org.eclipse.fennec.model.atlas.runtime.config;version=snapshot;startlevel=1091,\
-	org.eclipse.fennec.model.atlas.scope.api;version=snapshot;startlevel=1092,\
-	org.eclipse.fennec.model.atlas.validation;version=snapshot;startlevel=1093,\
-	org.eclipse.fennec.model.atlas.validation.model;version=snapshot;startlevel=1094,\
-	org.eclipse.fennec.model.atlas.validation.rest;version=snapshot;startlevel=1095,\
-	org.eclipse.fennec.model.atlas.action.api;version=snapshot,\
-	org.eclipse.fennec.model.atlas.workflow;version=snapshot;startlevel=1096,\
-	org.eclipse.osgitech.rest;version='[1.2.3,1.2.4)';startlevel=1097,\
-	org.eclipse.osgitech.rest.servlet.whiteboard;version='[1.2.3,1.2.4)';startlevel=1098,\
-	org.eclipse.osgitech.rest.sse;version='[1.2.3,1.2.4)';startlevel=1099,\
-	org.eclipse.parsson.jakarta.json;version='[1.1.7,1.1.8)';startlevel=1100,\
-	org.eclipse.uml2.common;version='[2.5.0,2.5.1)';startlevel=1101,\
-	org.eclipse.uml2.types;version='[2.5.0,2.5.1)';startlevel=1102,\
-	org.eclipse.uml2.uml;version=snapshot;startlevel=1103,\
-	org.eclipse.xsd;version='[2.22.0,2.22.1)';startlevel=1104,\
-	org.glassfish.hk2.api;version='[3.0.5,3.0.6)';startlevel=1105,\
-	org.glassfish.hk2.external.aopalliance-repackaged;version='[3.0.5,3.0.6)';startlevel=1106,\
-	org.glassfish.hk2.locator;version='[3.0.5,3.0.6)';startlevel=1107,\
-	org.glassfish.hk2.osgi-resource-locator;version='[1.0.3,1.0.4)';startlevel=1108,\
-	org.glassfish.hk2.utils;version='[3.0.5,3.0.6)';startlevel=1109,\
-	org.glassfish.jersey.containers.jersey-container-servlet;version='[3.1.3,3.1.4)';startlevel=1110,\
-	org.glassfish.jersey.containers.jersey-container-servlet-core;version='[3.1.3,3.1.4)';startlevel=1111,\
-	org.glassfish.jersey.core.jersey-client;version='[3.1.3,3.1.4)';startlevel=1112,\
-	org.glassfish.jersey.core.jersey-common;version='[3.1.3,3.1.4)';startlevel=1113,\
-	org.glassfish.jersey.core.jersey-server;version='[3.1.3,3.1.4)';startlevel=1114,\
-	org.glassfish.jersey.inject.jersey-hk2;version='[3.1.3,3.1.4)';startlevel=1115,\
-	org.glassfish.jersey.media.jersey-media-jaxb;version='[3.1.3,3.1.4)';startlevel=1116,\
-	org.glassfish.jersey.media.jersey-media-sse;version='[3.1.3,3.1.4)';startlevel=1117,\
-	org.objectweb.asm;version='[9.10.1,9.10.2)';startlevel=1118,\
-	org.objectweb.asm.commons;version='[9.10.1,9.10.2)';startlevel=1119,\
-	org.objectweb.asm.tree;version='[9.10.1,9.10.2)';startlevel=1120,\
-	org.objectweb.asm.tree.analysis;version='[9.10.1,9.10.2)';startlevel=1121,\
-	org.objectweb.asm.util;version='[9.10.1,9.10.2)';startlevel=1122,\
-	org.osgi.service.component;version='[1.5.1,1.5.2)';startlevel=1123,\
-	org.osgi.service.jakartars;version='[2.0.0,2.0.1)';startlevel=1124,\
-	org.osgi.service.log;version='[1.5.0,1.5.1)';startlevel=1125,\
-	org.osgi.service.typedevent;version='[1.0.0,1.0.1)';startlevel=1126,\
-	org.osgi.util.converter;version='[1.0.9,1.0.10)';startlevel=1127,\
-	org.osgi.util.function;version='[1.2.0,1.2.1)';startlevel=1128,\
-	org.osgi.util.promise;version='[1.3.0,1.3.1)';startlevel=1129,\
-	org.osgi.util.pushstream;version='[1.1.0,1.1.1)';startlevel=1130,\
-	org.snakeyaml.engine;version='[3.0.1,3.0.2)';startlevel=1131,\
-	tools.jackson.core.jackson-core;version='[3.2.2,3.2.3)';startlevel=1132,\
-	tools.jackson.core.jackson-databind;version='[3.2.2,3.2.3)';startlevel=1133,\
-	tools.jackson.dataformat.jackson-dataformat-yaml;version='[3.2.2,3.2.3)';startlevel=1134
+	com.github.miachm.sods;version='[1.10.0,1.10.1)';startlevel=1001,\
+	com.googlecode.libphonenumber;version='[9.0.26,9.0.27)';startlevel=1002,\
+	io.github.classgraph.classgraph;version='[4.8.165,4.8.166)';startlevel=1003,\
+	io.github.vpelikh.swagger-annotations;version='[4.0.5,4.0.6)';startlevel=1004,\
+	io.github.vpelikh.swagger-core;version='[4.0.5,4.0.6)';startlevel=1005,\
+	io.github.vpelikh.swagger-integration;version='[4.0.5,4.0.6)';startlevel=1006,\
+	io.github.vpelikh.swagger-jakarta-rest;version='[4.0.5,4.0.6)';startlevel=1007,\
+	io.github.vpelikh.swagger-models;version='[4.0.5,4.0.6)';startlevel=1008,\
+	jakarta.activation-api;version='[2.1.3,2.1.4)';startlevel=1009,\
+	jakarta.annotation-api;version='[2.1.1,2.1.2)';startlevel=1010,\
+	jakarta.inject.jakarta.inject-api;version='[2.0.1,2.0.2)';startlevel=1011,\
+	jakarta.validation.jakarta.validation-api;version='[3.1.0,3.1.1)';startlevel=1012,\
+	jakarta.ws.rs-api;version='[3.1.0,3.1.1)';startlevel=1013,\
+	jakarta.xml.bind-api;version='[4.0.2,4.0.3)';startlevel=1014,\
+	javassist;version='[3.29.2,3.29.3)';startlevel=1015,\
+	net.datafaker;version='[2.5.4,2.5.5)';startlevel=1016,\
+	org.antlr.antlr4-runtime;version='[4.13.2,4.13.3)';startlevel=1017,\
+	org.apache.aries.component-dsl.component-dsl;version='[1.2.2,1.2.3)';startlevel=1018,\
+	org.apache.aries.spifly.dynamic.bundle;version='[1.3.7,1.3.8)';startlevel=1019,\
+	org.apache.aries.typedevent.bus;version='[1.0.1,1.0.2)';startlevel=1020,\
+	org.apache.commons.commons-fileupload;version='[1.6.0,1.6.1)';startlevel=1021,\
+	org.apache.commons.commons-io;version='[2.22.0,2.22.1)';startlevel=1022,\
+	org.apache.felix.cm.json;version='[2.0.6,2.0.7)';startlevel=1023,\
+	org.apache.felix.configadmin;version='[1.9.26,1.9.27)';startlevel=1024,\
+	org.apache.felix.configadmin.plugin.interpolation;version='[1.2.8,1.2.9)';startlevel=1025,\
+	org.apache.felix.configurator;version='[1.0.18,1.0.19)';startlevel=1026,\
+	org.apache.felix.eventadmin;version='[1.6.4,1.6.5)';startlevel=1027,\
+	org.apache.felix.gogo.command;version='[1.1.2,1.1.3)';startlevel=1028,\
+	org.apache.felix.gogo.runtime;version='[1.1.6,1.1.7)';startlevel=1029,\
+	org.apache.felix.gogo.shell;version='[1.1.4,1.1.5)';startlevel=1030,\
+	org.apache.felix.healthcheck.api;version='[2.0.4,2.0.5)';startlevel=1031,\
+	org.apache.felix.healthcheck.core;version='[2.3.0,2.3.1)';startlevel=1032,\
+	org.apache.felix.healthcheck.generalchecks;version='[3.0.8,3.0.9)';startlevel=1033,\
+	org.apache.felix.http.jetty12;version='[1.1.0,1.1.1)';startlevel=1034,\
+	org.apache.felix.http.servlet-api;version='[6.1.0,6.1.1)';startlevel=1035,\
+	org.apache.felix.metatype;version='[1.2.4,1.2.5)';startlevel=1036,\
+	org.apache.felix.scr;version='[2.2.14,2.2.15)';startlevel=1037,\
+	org.apache.lucene.core;version='[9.12.3,9.12.4)';startlevel=1038,\
+	org.apache.lucene.queries;version='[9.12.3,9.12.4)';startlevel=1039,\
+	org.apache.lucene.queryparser;version='[9.12.3,9.12.4)';startlevel=1040,\
+	org.eclipse.emf.common;version='[2.44.0,2.44.1)';startlevel=1041,\
+	org.eclipse.emf.ecore;version='[2.41.0,2.41.1)';startlevel=1042,\
+	org.eclipse.emf.ecore.xmi;version='[2.39.0,2.39.1)';startlevel=1043,\
+	org.eclipse.emf.mapping.ecore2xml;version='[2.13.0,2.13.1)';startlevel=1044,\
+	org.eclipse.fennec.codec;version='[0.1.0,0.1.1)';startlevel=1045,\
+	org.eclipse.fennec.codec.api;version='[0.1.0,0.1.1)';startlevel=1046,\
+	org.eclipse.fennec.codec.jsonschema;version='[0.1.0,0.1.1)';startlevel=1047,\
+	org.eclipse.fennec.codec.metadata;version='[0.1.0,0.1.1)';startlevel=1048,\
+	org.eclipse.fennec.codec.ods;version='[0.1.0,0.1.1)';startlevel=1049,\
+	org.eclipse.fennec.codec.rest;version='[0.1.0,0.1.1)';startlevel=1050,\
+	org.eclipse.fennec.codec.tabular;version='[0.1.0,0.1.1)';startlevel=1051,\
+	org.eclipse.fennec.codec.tabular.model;version='[1.0.0,1.0.1)';startlevel=1052,\
+	org.eclipse.fennec.emf.osgi.component;version='[1.1.0,1.1.1)';startlevel=1053,\
+	org.eclipse.fennec.emf.osgi.eobject.registry;version='[1.1.0,1.1.1)';startlevel=1054,\
+	org.eclipse.fennec.emf.osgi.eobject.registry.metadata;version='[1.1.0,1.1.1)';startlevel=1055,\
+	org.eclipse.fennec.emf.osgi.metadata;version='[1.1.0,1.1.1)';startlevel=1056,\
+	org.eclipse.fennec.gdpr.report.history.model;version='[1.0.0,1.0.1)';startlevel=1057,\
+	org.eclipse.fennec.gdpr.report.model;version='[1.0.0,1.0.1)';startlevel=1058,\
+	org.eclipse.fennec.m2x.ocl.api;version='[0.1.1,0.1.2)';startlevel=1059,\
+	org.eclipse.fennec.m2x.ocl.engine;version='[0.1.1,0.1.2)';startlevel=1060,\
+	org.eclipse.fennec.m2x.ocl.model;version='[0.1.1,0.1.2)';startlevel=1061,\
+	org.eclipse.fennec.m2x.ocl.parser;version='[0.1.1,0.1.2)';startlevel=1062,\
+	org.eclipse.fennec.m2x.qvt.model;version='[0.1.1,0.1.2)';startlevel=1063,\
+	org.eclipse.fennec.m2x.qvtd.api;version='[0.1.1,0.1.2)';startlevel=1064,\
+	org.eclipse.fennec.m2x.qvtd.model;version='[0.1.1,0.1.2)';startlevel=1065,\
+	org.eclipse.fennec.m2x.qvto.api;version='[0.1.1,0.1.2)';startlevel=1066,\
+	org.eclipse.fennec.m2x.qvto.engine;version='[0.1.1,0.1.2)';startlevel=1067,\
+	org.eclipse.fennec.m2x.qvto.model;version='[0.1.1,0.1.2)';startlevel=1068,\
+	org.eclipse.fennec.m2x.qvto.parser;version='[0.1.1,0.1.2)';startlevel=1069,\
+	org.eclipse.fennec.m2x.unit;version='[0.1.1,0.1.2)';startlevel=1070,\
+	org.eclipse.fennec.m2x.unit.osgi;version='[0.1.1,0.1.2)';startlevel=1071,\
+	org.eclipse.fennec.model.atlas.action.api;version=snapshot;startlevel=1072,\
+	org.eclipse.fennec.model.atlas.bootstrap;version=snapshot;startlevel=1073,\
+	org.eclipse.fennec.model.atlas.config.check;version=snapshot;startlevel=1074,\
+	org.eclipse.fennec.model.atlas.datagen;version=snapshot;startlevel=1075,\
+	org.eclipse.fennec.model.atlas.datagen.example.model;version=snapshot;startlevel=1076,\
+	org.eclipse.fennec.model.atlas.datagen.model;version=snapshot;startlevel=1077,\
+	org.eclipse.fennec.model.atlas.datagen.rest;version=snapshot;startlevel=1078,\
+	org.eclipse.fennec.model.atlas.emf.common;version=snapshot;startlevel=1079,\
+	org.eclipse.fennec.model.atlas.gdpr.history;version=snapshot;startlevel=1080,\
+	org.eclipse.fennec.model.atlas.healthcheck;version=snapshot;startlevel=1081,\
+	org.eclipse.fennec.model.atlas.management;version=snapshot;startlevel=1082,\
+	org.eclipse.fennec.model.atlas.management.file;version=snapshot;startlevel=1083,\
+	org.eclipse.fennec.model.atlas.management.lucene;version=snapshot;startlevel=1084,\
+	org.eclipse.fennec.model.atlas.mediatypes.api;version=snapshot;startlevel=1085,\
+	org.eclipse.fennec.model.atlas.mediatypes.impl;version=snapshot;startlevel=1086,\
+	org.eclipse.fennec.model.atlas.qvt;version=snapshot;startlevel=1087,\
+	org.eclipse.fennec.model.atlas.readable.scope.collector;version=snapshot;startlevel=1088,\
+	org.eclipse.fennec.model.atlas.rest.application;version=snapshot;startlevel=1089,\
+	org.eclipse.fennec.model.atlas.rest.common;version=snapshot;startlevel=1090,\
+	org.eclipse.fennec.model.atlas.rest.ecore.xmi;version=snapshot;startlevel=1091,\
+	org.eclipse.fennec.model.atlas.rest.filter;version=snapshot;startlevel=1092,\
+	org.eclipse.fennec.model.atlas.rest.jsonschema;version=snapshot;startlevel=1093,\
+	org.eclipse.fennec.model.atlas.rest.model;version=snapshot;startlevel=1094,\
+	org.eclipse.fennec.model.atlas.rest.qvt;version=snapshot;startlevel=1095,\
+	org.eclipse.fennec.model.atlas.rest.uml;version=snapshot;startlevel=1096,\
+	org.eclipse.fennec.model.atlas.rest.xsdschema;version=snapshot;startlevel=1097,\
+	org.eclipse.fennec.model.atlas.runtime;version=snapshot;startlevel=1098,\
+	org.eclipse.fennec.model.atlas.runtime.config;version=snapshot;startlevel=1099,\
+	org.eclipse.fennec.model.atlas.scope.api;version=snapshot;startlevel=1100,\
+	org.eclipse.fennec.model.atlas.validation;version=snapshot;startlevel=1101,\
+	org.eclipse.fennec.model.atlas.validation.model;version=snapshot;startlevel=1102,\
+	org.eclipse.fennec.model.atlas.validation.rest;version=snapshot;startlevel=1103,\
+	org.eclipse.fennec.model.atlas.workflow;version=snapshot;startlevel=1104,\
+	org.eclipse.osgitech.rest;version='[1.2.3,1.2.4)';startlevel=1105,\
+	org.eclipse.osgitech.rest.servlet.whiteboard;version='[1.2.3,1.2.4)';startlevel=1106,\
+	org.eclipse.osgitech.rest.sse;version='[1.2.3,1.2.4)';startlevel=1107,\
+	org.eclipse.parsson.jakarta.json;version='[1.1.7,1.1.8)';startlevel=1108,\
+	org.eclipse.uml2.common;version='[2.5.0,2.5.1)';startlevel=1109,\
+	org.eclipse.uml2.types;version='[2.5.0,2.5.1)';startlevel=1110,\
+	org.eclipse.uml2.uml;version=snapshot;startlevel=1111,\
+	org.eclipse.xsd;version='[2.22.0,2.22.1)';startlevel=1112,\
+	org.glassfish.hk2.api;version='[3.0.5,3.0.6)';startlevel=1113,\
+	org.glassfish.hk2.external.aopalliance-repackaged;version='[3.0.5,3.0.6)';startlevel=1114,\
+	org.glassfish.hk2.locator;version='[3.0.5,3.0.6)';startlevel=1115,\
+	org.glassfish.hk2.osgi-resource-locator;version='[1.0.3,1.0.4)';startlevel=1116,\
+	org.glassfish.hk2.utils;version='[3.0.5,3.0.6)';startlevel=1117,\
+	org.glassfish.jersey.containers.jersey-container-servlet;version='[3.1.3,3.1.4)';startlevel=1118,\
+	org.glassfish.jersey.containers.jersey-container-servlet-core;version='[3.1.3,3.1.4)';startlevel=1119,\
+	org.glassfish.jersey.core.jersey-client;version='[3.1.3,3.1.4)';startlevel=1120,\
+	org.glassfish.jersey.core.jersey-common;version='[3.1.3,3.1.4)';startlevel=1121,\
+	org.glassfish.jersey.core.jersey-server;version='[3.1.3,3.1.4)';startlevel=1122,\
+	org.glassfish.jersey.inject.jersey-hk2;version='[3.1.3,3.1.4)';startlevel=1123,\
+	org.glassfish.jersey.media.jersey-media-jaxb;version='[3.1.3,3.1.4)';startlevel=1124,\
+	org.glassfish.jersey.media.jersey-media-sse;version='[3.1.3,3.1.4)';startlevel=1125,\
+	org.objectweb.asm;version='[9.10.1,9.10.2)';startlevel=1126,\
+	org.objectweb.asm.commons;version='[9.10.1,9.10.2)';startlevel=1127,\
+	org.objectweb.asm.tree;version='[9.10.1,9.10.2)';startlevel=1128,\
+	org.objectweb.asm.tree.analysis;version='[9.10.1,9.10.2)';startlevel=1129,\
+	org.objectweb.asm.util;version='[9.10.1,9.10.2)';startlevel=1130,\
+	org.osgi.service.component;version='[1.5.1,1.5.2)';startlevel=1131,\
+	org.osgi.service.jakartars;version='[2.0.0,2.0.1)';startlevel=1132,\
+	org.osgi.service.log;version='[1.5.0,1.5.1)';startlevel=1133,\
+	org.osgi.service.typedevent;version='[1.0.0,1.0.1)';startlevel=1134,\
+	org.osgi.util.converter;version='[1.0.9,1.0.10)';startlevel=1135,\
+	org.osgi.util.function;version='[1.2.0,1.2.1)';startlevel=1136,\
+	org.osgi.util.promise;version='[1.3.0,1.3.1)';startlevel=1137,\
+	org.osgi.util.pushstream;version='[1.1.0,1.1.1)';startlevel=1138,\
+	org.snakeyaml.engine;version='[3.0.1,3.0.2)';startlevel=1139,\
+	tools.jackson.core.jackson-core;version='[3.2.2,3.2.3)';startlevel=1140,\
+	tools.jackson.core.jackson-databind;version='[3.2.2,3.2.3)';startlevel=1141,\
+	tools.jackson.dataformat.jackson-dataformat-yaml;version='[3.2.2,3.2.3)';startlevel=1142

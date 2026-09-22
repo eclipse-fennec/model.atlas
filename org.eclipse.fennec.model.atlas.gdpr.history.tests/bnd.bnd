@@ -1,0 +1,50 @@
+Bundle-Name: Model Atlas GDPR Report History Tests
+Bundle-Description: OSGi integration tests for the derived GDPR review document. They drive the \
+ real stage action through the real registries: a report stored in the 'gdpr' registry has to \
+ produce a GdprReportHistory in 'gdprdoc', and that document has to render as an ODS with one \
+ sheet per containment list.
+
+# The ODS half cannot be a plain unit test. OdsResourceFactoryComponent is Private-Package in
+# org.eclipse.fennec.codec.ods and reaches the world only as a Resource$Factory service, and the
+# exported OdsFormatProvider skips the codec resource that applies the save options - which is
+# exactly what has to be pinned (R1b of the plan). So the probe of §7.1 lives here.
+
+Test-Cases: ${classes;HIERARCHY_INDIRECTLY_ANNOTATED;org.junit.platform.commons.annotation.Testable;CONCRETE}
+
+-workingset: ModelAtlas
+
+-library: \
+	enableOSGi-Test,\
+	enableEMF
+
+-buildpath: \
+	org.osgi.framework;version=latest,\
+	org.osgi.util.promise;version=latest,\
+	org.osgi.util.function;version=latest,\
+	org.osgi.service.cm;version=latest,\
+	org.osgi.service.component;version=latest,\
+	org.osgi.test.junit5.cm;version=latest,\
+	org.eclipse.fennec.emf.osgi.component,\
+	org.eclipse.fennec.model.atlas.management;version=snapshot,\
+	org.eclipse.fennec.model.atlas.workflow;version=snapshot,\
+	org.eclipse.fennec.model.atlas.scope.api;version=snapshot,\
+	org.eclipse.fennec.model.atlas.action.api;version=snapshot,\
+	org.eclipse.fennec.model.atlas.tests.common;version=snapshot,\
+	org.eclipse.fennec.gdpr.report.model;version=latest,\
+	org.eclipse.fennec.gdpr.report.history.model;version=latest
+
+Private-Package: org.eclipse.fennec.model.atlas.gdpr.history.tests
+
+# The bundles under test. gdpr.history itself is Private-Package, so nothing here imports it -
+# it is driven through the workflow, which is the only way a deployment drives it either.
+-dependson: \
+	org.eclipse.fennec.model.atlas.gdpr.history,\
+	org.eclipse.fennec.model.atlas.workflow,\
+	org.eclipse.fennec.model.atlas.management,\
+	org.eclipse.fennec.model.atlas.management.file,\
+	org.eclipse.fennec.model.atlas.management.lucene
+
+Bundle-Version: 1.0.0.SNAPSHOT
+
+# Do not publish this bundle to Maven Central; local install only
+-maven-release: local

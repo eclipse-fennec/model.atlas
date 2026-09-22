@@ -4,6 +4,12 @@ A dynamic EMF model management system providing a RESTful API for managing and t
 
 For the full user documentation covering the REST API, core concepts, configuration, and workflows, see the **[User Guide](docs/user-guide.md)**.
 
+Feature guides:
+
+- [The GDPR review history document](docs/gdpr-review-history.md) — the derived, diffable review record and how to download it as a spreadsheet
+- [Publishing to the model atlas](docs/model-atlas-publishing-mcp-tool.md) — the MCP tools and the publisher bundle behind them
+- [QVT transformations](docs/qvt-transformations.md) — model-to-model transformations
+
 ## Docker
 
 Model Atlas is available as a Docker image in two variants, each tailored to a different storage backend.
