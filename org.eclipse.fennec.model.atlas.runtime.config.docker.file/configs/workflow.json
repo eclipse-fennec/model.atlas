@@ -91,7 +91,7 @@
         "registry.type": "SCHEMA",
         "registry.name": "schema",
         "registry.description": "The schema registry to store EPackage objects",
-        "stageActionService.target": "(component.name=EPackageStageActionService)",
+        "stageActionService.target": "(|(component.name=EPackageStageActionService)(component.name=GDPRCheckStageAction))",
         "stage.storage.mappings": [
             "draft:file",
             "approved:file",
