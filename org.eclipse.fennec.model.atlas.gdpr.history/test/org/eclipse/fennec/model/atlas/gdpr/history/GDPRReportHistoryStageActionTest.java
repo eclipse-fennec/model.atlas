@@ -30,22 +30,24 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
 import org.eclipse.emf.ecore.EObject;
-import org.eclipse.emf.ecore.resource.ResourceSet;
-import org.eclipse.emf.ecore.resource.impl.ResourceSetImpl;
 import org.eclipse.emf.ecore.util.EcoreUtil;
-import org.eclipse.emf.ecore.xmi.impl.XMIResourceFactoryImpl;
 import org.eclipse.fennec.model.atlas.action.api.ActionContext;
 import org.eclipse.fennec.model.atlas.action.api.StageActionService.ActionEvent;
-import org.eclipse.fennec.model.atlas.publisher.ObjectPublisher;
+import org.eclipse.fennec.model.atlas.mgmt.management.ManagementFactory;
+import org.eclipse.fennec.model.atlas.mgmt.management.ObjectMetadata;
 import org.eclipse.fennec.model.atlas.scope.api.ReadableRegistryView;
-import org.eclipse.fennec.model.atlas.scope.api.ReadableScopeService;
+import org.eclipse.fennec.model.atlas.wf.workflowapi.WritableScopeService;
 import org.eclipse.fennec.model.gdprReport.ClassifierEvaluation;
 import org.eclipse.fennec.model.gdprReport.GDPRReportFactory;
 import org.eclipse.fennec.model.gdprReport.GDPRReportPackage;
 import org.eclipse.fennec.model.gdprReport.GdprReport;
 import org.eclipse.fennec.model.gdprReport.GdprReportOrigin;
 import org.eclipse.fennec.model.gdprReport.SubjectModel;
+import org.eclipse.fennec.model.gdprReportHistory.GdprReportHistory;
+import org.eclipse.fennec.model.gdprReportHistory.ReportRevision;
 import org.junit.jupiter.api.DisplayName;
+import org.osgi.util.promise.Promise;
+import org.osgi.util.promise.Promises;
 import org.junit.jupiter.api.Test;
 
 /**
@@ -58,7 +60,6 @@ class GDPRReportHistoryStageActionTest {
 	private static final String FINGERPRINT = "fp1:9f2c1ab7d4e85530";
 	private static final String OTHER_FINGERPRINT = "fp1:0000deadbeef0000";
 
-	private final Publisher publisher = new Publisher();
 	private final Scope scope = new Scope();
 
 	/* ------------------------------------------------------------------ the trap */
@@ -96,7 +97,7 @@ class GDPRReportHistoryStageActionTest {
 
 		action.onEnter(context("anything", "draft", "gdpr-a"));
 
-		assertTrue(publisher.awaitPublish(), "a single-scope deployment needs no configuration");
+		assertTrue(scope.awaitWrite(), "a single-scope deployment needs no configuration");
 	}
 
 	@Test
@@ -107,7 +108,7 @@ class GDPRReportHistoryStageActionTest {
 
 		action.onEnter(context("someone-elses-scope", "draft", "gdpr-a"));
 
-		assertFalse(publisher.awaitPublish(),
+		assertFalse(scope.awaitWrite(),
 				"the workflow does not filter by scope, so the action has to");
 	}
 
@@ -125,15 +126,14 @@ class GDPRReportHistoryStageActionTest {
 
 		action.onEnter(context("jena", "draft", "gdpr-new"));
 
-		assertTrue(publisher.awaitPublish());
-		assertEquals("gdpr-history-fp1-9f2c1ab7d4e85530", publisher.objectId.get(),
+		assertTrue(scope.awaitWrite());
+		assertEquals("gdpr-history-fp1-9f2c1ab7d4e85530", scope.writtenId.get(),
 				"one document per subject, addressable from the fingerprint alone");
-		assertEquals(FINGERPRINT, publisher.version.get());
+		assertEquals(FINGERPRINT, scope.writtenVersion.get());
 
-		String body = publisher.body.get();
-		assertTrue(body.contains("gdpr-old") && body.contains("gdpr-new"),
-				"both reviews of the subject belong in the document");
-		assertFalse(body.contains("gdpr-unrelated"), "another model's review does not");
+		List<String> reviewed = scope.written.get().getRevisions().stream().map(ReportRevision::getReportId).toList();
+		assertEquals(List.of("gdpr-old", "gdpr-new"), reviewed,
+				"both reviews of the subject belong in the document, oldest first, and no other model's");
 	}
 
 	@Test
@@ -143,7 +143,7 @@ class GDPRReportHistoryStageActionTest {
 
 		action.onExit(context("jena", "draft", "gdpr-vanished"));
 
-		assertFalse(publisher.awaitPublish(),
+		assertFalse(scope.awaitWrite(),
 				"nothing left to say which subject it was about, so nothing is rewritten");
 	}
 
@@ -157,16 +157,44 @@ class GDPRReportHistoryStageActionTest {
 
 		action.onEnter(context("jena", "draft", "gdpr-orphan"));
 
-		assertFalse(publisher.awaitPublish());
+		assertFalse(scope.awaitWrite());
+	}
+
+	/* ------------------------------------------------------------------ how it writes */
+
+	@Test
+	@DisplayName("the first document is created")
+	void firstDocumentIsCreated() throws Exception {
+		var action = action(new String[] { "draft" }, new String[0]);
+		scope.put("draft", "gdpr-a", report("2026-09-15T08:12:00Z", FINGERPRINT));
+
+		action.onEnter(context("jena", "draft", "gdpr-a"));
+
+		assertTrue(scope.awaitWrite());
+		assertEquals("created", scope.outcome.get());
+	}
+
+	@Test
+	@DisplayName("a document that is already there is replaced, not refused")
+	void existingDocumentIsUpdated() throws Exception {
+		// The live failure this guards: writing the second review of a subject through a create
+		// call gets a 409 (or, in a final stage, a 403), and the document freezes at revision 1.
+		scope.documentExists();
+		var action = action(new String[] { "draft" }, new String[0]);
+		scope.put("draft", "gdpr-a", report("2026-09-15T08:12:00Z", FINGERPRINT));
+		scope.put("draft", "gdpr-b", report("2026-09-17T14:20:30Z", FINGERPRINT));
+
+		action.onEnter(context("jena", "draft", "gdpr-b"));
+
+		assertTrue(scope.awaitWrite());
+		assertEquals("updated", scope.outcome.get());
+		assertEquals(2, scope.written.get().getRevisionCount());
 	}
 
 	/* ------------------------------------------------------------------ fixtures */
 
 	private GDPRReportHistoryStageAction action(String[] stages, String[] scopes) {
-		ResourceSet json = new ResourceSetImpl();
-		json.getResourceFactoryRegistry().getExtensionToFactoryMap().put("json", new XMIResourceFactoryImpl());
-
-		GDPRReportHistoryStageAction action = new GDPRReportHistoryStageAction(publisher, scope, json);
+		GDPRReportHistoryStageAction action = new GDPRReportHistoryStageAction(scope);
 		action.activate(config(stages, scopes));
 		return action;
 	}
@@ -177,7 +205,8 @@ class GDPRReportHistoryStageActionTest {
 		values.put("report_stages", stages);
 		values.put("trigger_scopes", scopes);
 		values.put("scope_target", "(atlas.scope=jena)");
-		values.put("publisher_target", "");
+		values.put("document_registry", "gdprdoc");
+		values.put("document_stage", "draft");
 		return proxy(GDPRReportHistoryStageAction.Config.class, values);
 	}
 
@@ -208,40 +237,146 @@ class GDPRReportHistoryStageActionTest {
 
 	/* ------------------------------------------------------------------ doubles */
 
-	/** Captures one publication and lets a test wait for the rebuild thread. */
-	static class Publisher implements ObjectPublisher {
-		final AtomicReference<String> objectId = new AtomicReference<>();
-		final AtomicReference<String> body = new AtomicReference<>();
-		final AtomicReference<String> version = new AtomicReference<>();
-		final CountDownLatch published = new CountDownLatch(1);
-
-		@Override
-		public Receipt publish(String objectId, String content, String name, String version) {
-			this.objectId.set(objectId);
-			this.body.set(content);
-			this.version.set(version);
-			published.countDown();
-			return new Receipt("created", objectId, name, version, "jena", "gdprdoc", "draft",
-					"application/json", content.length());
-		}
-
-		@Override
-		public String contentType() {
-			return "application/json";
-		}
-
-		/** True if a document was written; false after a short wait if none was. */
-		boolean awaitPublish() throws InterruptedException {
-			return published.await(5, TimeUnit.SECONDS);
-		}
-	}
-
-	/** A scope whose views answer from a map, so a test can lay out stages by hand. */
-	static class Scope implements ReadableScopeService<EObject> {
+	/**
+	 * A scope whose views answer from a map, so a test can lay out stages by hand, and which
+	 * records the one document written back.
+	 */
+	static class Scope implements WritableScopeService<EObject> {
 		private final Map<String, Map<String, EObject>> byStage = new LinkedHashMap<>();
+
+		final AtomicReference<String> writtenId = new AtomicReference<>();
+		final AtomicReference<String> writtenVersion = new AtomicReference<>();
+		final AtomicReference<String> outcome = new AtomicReference<>();
+		final AtomicReference<GdprReportHistory> written = new AtomicReference<>();
+		private final CountDownLatch stored = new CountDownLatch(1);
+		private volatile ObjectMetadata existing;
 
 		void put(String stage, String objectId, EObject object) {
 			byStage.computeIfAbsent(stage, s -> new LinkedHashMap<>()).put(objectId, object);
+		}
+
+		/** Makes the document registry answer as if a document were already stored. */
+		void documentExists() {
+			ObjectMetadata metadata = ManagementFactory.eINSTANCE.createObjectMetadata();
+			metadata.setObjectId("gdpr-history-fp1-9f2c1ab7d4e85530");
+			existing = metadata;
+		}
+
+		/** True if a document was written; false after a short wait if none was. */
+		boolean awaitWrite() throws InterruptedException {
+			return stored.await(5, TimeUnit.SECONDS);
+		}
+
+		private Promise<ObjectMetadata> record(String how, String objectId, String version, EObject object,
+				ObjectMetadata metadata) {
+			outcome.set(how);
+			writtenId.set(objectId);
+			writtenVersion.set(version);
+			written.set((GdprReportHistory) object);
+			stored.countDown();
+			return Promises.resolved(metadata);
+		}
+
+		@Override
+		public ObjectMetadata getMetadataFromStageForRegistry(String registry, String stage, String objectId) {
+			return existing;
+		}
+
+		@Override
+		public Promise<ObjectMetadata> uploadToStageForRegistry(String registry, String stage, EObject object,
+				ObjectMetadata metadata) {
+			return record("created", metadata.getObjectId(), metadata.getVersion(), object, metadata);
+		}
+
+		@Override
+		public Promise<ObjectMetadata> updateInStageForRegistry(String registry, String stage, EObject updatedObject,
+				String objectId, String version) {
+			return record("updated", objectId, version, updatedObject, existing);
+		}
+
+		/*
+		 * The rest of the writable contract. The action uses three of its methods; anything else
+		 * being called is a change in the action worth failing over, not worth stubbing for.
+		 */
+
+		@Override
+		public org.eclipse.fennec.model.atlas.wf.workflowapi.Scope getScope() {
+			throw new UnsupportedOperationException();
+		}
+
+		@Override
+		public Promise<ObjectMetadata> updatePropertiesInStageForRegistry(String registry, String stage,
+				String objectId, Map<String, Object> properties) {
+			throw new UnsupportedOperationException();
+		}
+
+		@Override
+		public ObjectMetadata getMetadataFromFinalStageForRegistry(String registry, String objectId) {
+			throw new UnsupportedOperationException();
+		}
+
+		@Override
+		public List<ObjectMetadata> getMetadataByPropertyFromStageForRegistry(String registry, String stage,
+				String key, String value) {
+			throw new UnsupportedOperationException();
+		}
+
+		@Override
+		public List<ObjectMetadata> getMetadataByPropertyFromFinalStageForRegistry(String registry, String key,
+				String value) {
+			throw new UnsupportedOperationException();
+		}
+
+		@Override
+		public EObject getContentFromStageForRegistry(String registry, String stage, String objectId) {
+			throw new UnsupportedOperationException();
+		}
+
+		@Override
+		public Promise<Boolean> deleteFromStageForRegistry(String registry, String stage, String objectId) {
+			throw new UnsupportedOperationException();
+		}
+
+		@Override
+		public List<ObjectMetadata> listInStageForRegistry(String registry, String stage) {
+			throw new UnsupportedOperationException();
+		}
+
+		@Override
+		public List<ObjectMetadata> listInStageForRegistryByName(String registry, String stage, String name) {
+			throw new UnsupportedOperationException();
+		}
+
+		@Override
+		public List<ObjectMetadata> listInFinalStageForRegistry(String registry) {
+			throw new UnsupportedOperationException();
+		}
+
+		@Override
+		public List<ObjectMetadata> listAllForRegistry(String registry) {
+			throw new UnsupportedOperationException();
+		}
+
+		@Override
+		public ObjectMetadata transitionToStageForRegistry(String registry, String objectId, String fromStage,
+				String toStage) {
+			throw new UnsupportedOperationException();
+		}
+
+		@Override
+		public ObjectMetadata transitionToStageForRegistry(String registry, String objectId, String fromStage,
+				String toStage, boolean overwrite) {
+			throw new UnsupportedOperationException();
+		}
+
+		@Override
+		public boolean isValidRegistry(String registryName) {
+			throw new UnsupportedOperationException();
+		}
+
+		@Override
+		public List<String> getAllRegistries() {
+			throw new UnsupportedOperationException();
 		}
 
 		@Override

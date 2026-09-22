@@ -12,8 +12,13 @@ Bundle-Description: Turns the GDPR reviews stored for one subject into a single 
 # against a foreign domain model and ships only in the runtimes that want it.
 #
 # Everything GDPR-specific is in ReportHistoryBuilder. The rest — the stage action, the
-# read through ReadableRegistryView, the publish — is generic, so a second report type
+# read through ReadableRegistryView, the write — is generic, so a second report type
 # wanting the same treatment is a refactor and not a rewrite.
+#
+# The write goes through WritableScopeService (workflow) rather than a REST loopback: the
+# startup replay runs before the HTTP connector is configured, so a loopback loses exactly
+# the rebuild that exists to close a gap. That costs a build dependency on the workflow
+# bundle, which any deployment hosting the registries has anyway.
 
 -workingset: ModelAtlas
 
@@ -24,7 +29,8 @@ Bundle-Description: Turns the GDPR reviews stored for one subject into a single 
 	org.eclipse.fennec.gdpr.report.history.model;version=latest,\
 	org.eclipse.fennec.model.atlas.action.api;version=snapshot,\
 	org.eclipse.fennec.model.atlas.scope.api;version=snapshot,\
-	org.eclipse.fennec.model.atlas.publisher;version=snapshot,\
+	org.eclipse.fennec.model.atlas.workflow;version=snapshot,\
+	org.eclipse.fennec.model.atlas.management;version=snapshot,\
 	org.osgi.util.promise;version=latest,\
 	org.osgi.service.component;version=latest,\
 	org.osgi.service.metatype.annotations;version=latest

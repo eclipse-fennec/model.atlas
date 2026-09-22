@@ -13,8 +13,7 @@
  */
 package org.eclipse.fennec.model.atlas.gdpr.history;
 
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
+import java.lang.reflect.InvocationTargetException;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
@@ -22,25 +21,20 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
-import java.nio.charset.StandardCharsets;
-import java.util.UUID;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import org.eclipse.emf.common.util.URI;
 import org.eclipse.emf.ecore.EObject;
-import org.eclipse.emf.ecore.resource.Resource;
-import org.eclipse.emf.ecore.resource.ResourceSet;
 import org.eclipse.emf.ecore.util.EcoreUtil;
 import org.eclipse.fennec.model.atlas.action.api.ActionContext;
 import org.eclipse.fennec.model.atlas.action.api.StageActionService;
-import org.eclipse.fennec.model.atlas.publisher.ObjectPublisher;
-import org.eclipse.fennec.model.atlas.publisher.PublishException;
+import org.eclipse.fennec.model.atlas.mgmt.management.ManagementFactory;
+import org.eclipse.fennec.model.atlas.mgmt.management.ObjectMetadata;
 import org.eclipse.fennec.model.atlas.scope.api.ReadableRegistryView;
-import org.eclipse.fennec.model.atlas.scope.api.ReadableScopeService;
+import org.eclipse.fennec.model.atlas.wf.workflowapi.WritableScopeService;
 import org.eclipse.fennec.model.gdprReport.GDPRReportPackage;
 import org.eclipse.fennec.model.gdprReport.GdprReport;
 import org.eclipse.fennec.model.gdprReport.SubjectModel;
@@ -70,9 +64,14 @@ import org.osgi.util.promise.Promises;
  * action is called for all of them unless it says otherwise. Left unset the filter is open, which
  * keeps a single-scope deployment working without configuration.
  * <p>
- * <b>It never triggers itself.</b> The document is written to a different registry through the
- * publisher, and even in the same one {@link #supportsObjectType(String)} only answers for a
- * {@code GdprReport}.
+ * <b>It never triggers itself.</b> The document is written to its own registry, which binds no
+ * stage action at all, and even in the reports' registry {@link #supportsObjectType(String)} only
+ * answers for a {@code GdprReport}.
+ * <p>
+ * <b>The write is in-process.</b> It goes straight through {@link WritableScopeService}, not through
+ * a REST call to this same runtime. A loopback cannot work during the startup replay, which runs
+ * while the HTTP connector is still being configured - and the replay is the only thing that closes
+ * a gap left by a report written while this runtime was down.
  */
 @Component(name = GDPRReportHistoryStageAction.PID, //
 		service = StageActionService.class, //
@@ -88,8 +87,6 @@ public class GDPRReportHistoryStageAction implements StageActionService {
 	static final String PID = "GDPRReportHistoryStageAction";
 
 	private static final Logger LOGGER = Logger.getLogger(GDPRReportHistoryStageAction.class.getName());
-
-	private static final String JSON = "application/json";
 
 	/** What the storage layer writes into {@code ActionContext.objectType()} for a report. */
 	private static final String REPORT_TYPE = EcoreUtil.getURI(GDPRReportPackage.Literals.GDPR_REPORT).toString();
@@ -119,19 +116,24 @@ public class GDPRReportHistoryStageAction implements StageActionService {
 		String[] trigger_scopes() default {};
 
 		@AttributeDefinition(name = "Scope service target", //
-				description = "Which scope to read the reports from, as an OSGi target filter.")
+				description = "Which scope the reports are read from and the document is written to, as an "
+						+ "OSGi target filter.")
 		String scope_target() default "(atlas.scope=jena)";
 
-		@AttributeDefinition(name = "Publisher target", //
-				description = "Which ObjectPublisher writes the document, as an OSGi target filter. It must "
-						+ "be configured with overwrite=true: the document is derived and is rewritten in "
-						+ "full every time one of its reviews changes.")
-		String publisher_target() default "";
+		@AttributeDefinition(name = "Document registry", //
+				description = "The object registry the derived GdprReportHistory documents are written to. "
+						+ "Keep it separate from the report registry: a registry that binds no stage action "
+						+ "cannot re-trigger the action that writes into it.")
+		String document_registry() default "gdprdoc";
+
+		@AttributeDefinition(name = "Document stage", //
+				description = "The stage the document is written to. It must not be a final stage: the "
+						+ "document is derived and is rewritten in full every time one of its reviews "
+						+ "changes, and a final stage refuses updates.")
+		String document_stage() default "draft";
 	}
 
-	private final ObjectPublisher publisher;
-	private final ReadableScopeService<EObject> scope;
-	private final ResourceSet json;
+	private final WritableScopeService<EObject> scope;
 	private final ReportHistoryBuilder builder = new ReportHistoryBuilder();
 
 	/**
@@ -142,41 +144,31 @@ public class GDPRReportHistoryStageAction implements StageActionService {
 			runnable -> new Thread(runnable, "gdpr-history-rebuild"));
 
 	private volatile String registry = "gdpr";
+	private volatile String documentRegistry = "gdprdoc";
+	private volatile String documentStage = "draft";
 	private volatile Set<String> stages = Set.of();
 	private volatile Set<String> scopes = Set.of();
 
 	/**
-	 * @param publisher writes the document to the atlas
-	 * @param scope reads the reviews back; published by the atlas client, one per scope
-	 * @param json the codec's JSON resource set, the format the publisher is told the body is in
+	 * @param scope reads the reviews back and writes the document; one service per scope
 	 */
 	@Activate
-	public GDPRReportHistoryStageAction(@Reference(name = "publisher") ObjectPublisher publisher,
-			@Reference(name = "scope") ReadableScopeService<EObject> scope,
-			@Reference(name = "json", target = "(emf.fileExtension=json)") ResourceSet json) {
-		this.publisher = publisher;
+	public GDPRReportHistoryStageAction(@Reference(name = "scope") WritableScopeService<EObject> scope) {
 		this.scope = scope;
-		this.json = json;
 	}
 
 	@Activate
 	void activate(Config config) {
 		registry = config.reports_registry();
+		documentRegistry = config.document_registry();
+		documentStage = config.document_stage();
 		stages = toSet(config.report_stages());
 		scopes = toSet(config.trigger_scopes());
 
-		String contentType = publisher.contentType();
-		if (contentType != null && !JSON.equalsIgnoreCase(contentType)) {
-			// A JSON body announced as something else is worse than no document: the atlas either
-			// refuses it, or stores it under a media type nothing will parse it as.
-			throw new IllegalStateException(String.format(
-					"The configured ObjectPublisher sends '%s', and the document is serialized as '%s'. Set the "
-							+ "publisher's content.type to '%s' or point %s at a publisher that uses it.",
-					contentType, JSON, JSON, PID));
-		}
 		LOGGER.info(() -> String.format(
-				"GDPR review documents are rebuilt from registry '%s' stages %s of scope '%s', for %s.", registry,
-				stages, scope.getScopeName(), scopes.isEmpty() ? "every scope" : scopes));
+				"GDPR review documents are rebuilt from registry '%s' stages %s of scope '%s' into %s/%s, for %s.",
+				registry, stages, scope.getScopeName(), documentRegistry, documentStage,
+				scopes.isEmpty() ? "every scope" : scopes));
 	}
 
 	@Deactivate
@@ -281,7 +273,7 @@ public class GDPRReportHistoryStageAction implements StageActionService {
 
 			List<StoredReport> reports = reportsOf(subject.getModelFingerprint());
 			GdprReportHistory history = builder.build(reports, Instant.now());
-			publish(history, subject.getModelFingerprint(), reports.size());
+			store(history, subject.getModelFingerprint(), reports.size());
 		} catch (RuntimeException e) {
 			// Thrown on a background thread: swallowed here so one bad subject cannot take the
 			// executor down and stop every later rebuild.
@@ -333,19 +325,62 @@ public class GDPRReportHistoryStageAction implements StageActionService {
 		return Optional.empty();
 	}
 
-	private void publish(GdprReportHistory history, String modelFingerprint, int revisions) {
+	/**
+	 * Writes the document, replacing whatever is stored under the same id.
+	 * <p>
+	 * In-process, through the scope service, rather than through a REST call to this same runtime.
+	 * The startup replay runs while the HTTP connector is still being configured, so a loopback
+	 * fails there every time - and the replay is precisely the path that exists to close a gap.
+	 * <p>
+	 * Create-or-replace is spelled out the same way {@code ObjectRegistryResource} spells it,
+	 * because the storage layer has no single call for it: {@code uploadToStage} always dispatches
+	 * ENTER and {@code updateInStage} always dispatches UPDATE, and which one is correct depends on
+	 * whether the object is already there.
+	 */
+	private void store(GdprReportHistory history, String modelFingerprint, int revisions) {
 		String objectId = documentId(modelFingerprint);
-		String body = serialize(history, objectId);
+		ObjectMetadata existing = scope.getMetadataFromStageForRegistry(documentRegistry, documentStage, objectId);
+
+		String outcome;
+		Promise<ObjectMetadata> written;
+		if (existing == null) {
+			ObjectMetadata metadata = ManagementFactory.eINSTANCE.createObjectMetadata();
+			metadata.setObjectId(objectId);
+			metadata.setObjectName(history.getName());
+			metadata.setUploadTime(Instant.now());
+			metadata.setVersion(modelFingerprint);
+			metadata.setObjectType(EcoreUtil.getURI(history.eClass()).toString());
+			written = scope.uploadToStageForRegistry(documentRegistry, documentStage, history, metadata);
+			outcome = "created";
+		} else {
+			written = scope.updateInStageForRegistry(documentRegistry, documentStage, history, objectId,
+					modelFingerprint);
+			outcome = "updated";
+		}
+
+		resolve(written, objectId);
+		LOGGER.log(Level.INFO, () -> String.format("GDPR review document '%s' %s in %s/%s/%s, %d revision(s).",
+				objectId, outcome, scope.getScopeName(), documentRegistry, documentStage, revisions));
+	}
+
+	/**
+	 * Waits for the storage write and turns a failure into an exception on this thread, so the
+	 * caller's catch logs it. A promise that failed silently would leave a document that is quietly
+	 * out of date, which is the one thing a compliance record must not be.
+	 */
+	private void resolve(Promise<ObjectMetadata> written, String objectId) {
 		try {
-			ObjectPublisher.Receipt receipt = publisher.publish(objectId, body, history.getName(), modelFingerprint);
-			LOGGER.log(Level.INFO,
-					() -> String.format("GDPR review document '%s' %s in %s/%s/%s, %d revision(s).", objectId,
-							receipt.outcome(), receipt.scope(), receipt.registry(), receipt.stage(), revisions));
-		} catch (PublishException e) {
-			throw new IllegalStateException(String.format(
-					"The GDPR review document '%s' could not be written: %s. The document is rewritten in full on "
-							+ "every change, so the publisher it uses has to be configured with overwrite=true.",
-					objectId, e.getMessage() == null ? e.getClass().getSimpleName() : e.getMessage()), e);
+			written.getValue();
+		} catch (InvocationTargetException e) {
+			Throwable cause = e.getCause() == null ? e : e.getCause();
+			throw new IllegalStateException(
+					String.format("The GDPR review document '%s' could not be written: %s", objectId,
+							cause.getMessage() == null ? cause.getClass().getSimpleName() : cause.getMessage()),
+					cause);
+		} catch (InterruptedException e) {
+			Thread.currentThread().interrupt();
+			throw new IllegalStateException(
+					String.format("Interrupted while writing the GDPR review document '%s'.", objectId), e);
 		}
 	}
 
@@ -359,24 +394,6 @@ public class GDPRReportHistoryStageAction implements StageActionService {
 	 */
 	private static String documentId(String modelFingerprint) {
 		return "gdpr-history-" + modelFingerprint.replaceAll("[^A-Za-z0-9]", "-");
-	}
-
-	private String serialize(GdprReportHistory history, String objectId) {
-		Resource resource = json.createResource(URI.createURI(UUID.randomUUID() + ".json"));
-		try {
-			resource.getContents().add(history);
-			ByteArrayOutputStream out = new ByteArrayOutputStream();
-			resource.save(out, Map.of());
-			return out.toString(StandardCharsets.UTF_8);
-		} catch (IOException e) {
-			throw new IllegalStateException(
-					String.format("The GDPR review document '%s' could not be serialized: %s", objectId,
-							e.getMessage() == null ? e.getClass().getSimpleName() : e.getMessage()),
-					e);
-		} finally {
-			resource.getContents().clear();
-			json.getResources().remove(resource);
-		}
 	}
 
 	/* ------------------------------------------------------------------ small helpers */
