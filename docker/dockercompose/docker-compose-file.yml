@@ -7,6 +7,13 @@ services:
       # Path inside the container that InitialModelLoader scans once on startup
       # for .ecore / .jsonschema / .qvto files. Override or remove to disable.
       - INITIAL_MODELS_FOLDER=/initial-models
+      # The GDPR review runs from inside this runtime: it pays Anthropic, and Anthropic dials the
+      # GDPR MCP server from its own side, so a localhost URL cannot work. Passed through from the
+      # host environment - nothing is stored here. With them unset the check service simply never
+      # activates, and a model entering 'approved' is not reviewed.
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY:-}
+      - GDPR_MCP_PUBLIC_URL=${GDPR_MCP_PUBLIC_URL:-}
+      - MCP_GDPR_AUTH_TOKEN=${MCP_GDPR_AUTH_TOKEN:-}
     volumes:
       # Mount a host folder with the models you want deployed on first start.
       # Replace ./initial-models with the path on your host machine.
