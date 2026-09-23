@@ -156,6 +156,178 @@
         <details key="documentation" value="Content-derived model fingerprint (`emf.fingerprint` format, scheme-prefixed &#xA;e.g. `fp1:&lt;digest>`). Set for EPackage objects; computed server-side, never &#xA;taken from the client.&#xA;Distinct from contentHash, which hashes the stored XMI bytes."/>
       </eAnnotations>
     </eStructuralFeatures>
+    <eStructuralFeatures xsi:type="ecore:EReference" name="diagnostics" upperBound="-1"
+        eType="#//Diagnostic" containment="true" eKeys="#//Diagnostic/id">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="Findings about this object, produced by stage actions, stage gates and other&#xA;modules (issue #290). Diagnostics are metadata, not content: writing them changes&#xA;neither contentHash nor version, fires no stage action, and is allowed in stages&#xA;that are otherwise read-only, because a refused transition records its veto on&#xA;the object in its source stage.&#xA;&#xA;Each entry is a root of a diagnostic tree owned by one producer. A producer&#xA;replaces only its own roots and never touches those of another producer. Keyed&#xA;by id, which is stable across re-validation (see Diagnostic)."/>
+      </eAnnotations>
+    </eStructuralFeatures>
+  </eClassifiers>
+  <eClassifiers xsi:type="ecore:EClass" name="Diagnostic">
+    <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+      <details key="documentation" value="One finding about an object, modelled on org.eclipse.emf.common.util.Diagnostic:&#xA;a severity, a message, a source and code that identify the kind of finding, and&#xA;children that refine it. Unlike the EMF type it is persisted with the object's&#xA;metadata and lives on: it has a stable identity, a status that is decided&#xA;separately from its severity, a history of the changes made to it, and a version&#xA;for optimistic locking (issue #291).&#xA;&#xA;Stable id rule: the id is deterministic, derived from producer, code and target&#xA;(for a child: from the parent's id, code and target). The same finding about the&#xA;same element therefore gets the same id on every validation run, so references&#xA;from outside - a GDPR report item, a UI bookmark - survive re-validation without a&#xA;matching step, and a producer's replace operation is a plain replace by id. Two&#xA;findings of the same kind about the same element are one finding; a producer&#xA;that needs to tell them apart puts the distinction into the target or the code.&#xA;The API that mints ids is part of the diagnostic service (#293); the rule is&#xA;fixed here so every producer arrives at the same id."/>
+    </eAnnotations>
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="id" lowerBound="1" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"
+        iD="true">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="Unique and stable identifier of this diagnostic, derived from producer, code and&#xA;target (see the class documentation). Unique within the object's metadata; external&#xA;artifacts address a diagnostic by (scope, registry, stage, objectId, id)."/>
+      </eAnnotations>
+    </eStructuralFeatures>
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="producer" lowerBound="1"
+        eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="The action, gate or module that created this diagnostic, for example&#xA;`QvtTransitionGate` or `gdpr.review`. Ownership: a producer's replace operation&#xA;replaces exactly the roots carrying its own producer value. Set on roots; children&#xA;inherit their parent's producer and carry the same value."/>
+      </eAnnotations>
+    </eStructuralFeatures>
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="source" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="Identifies the origin of the finding within the producer, in the sense of&#xA;org.eclipse.emf.common.util.Diagnostic#getSource(): typically the validator, rule&#xA;set or compiler that raised it, for example `org.eclipse.fennec.m2x.qvto`. Optional;&#xA;a producer with a single source may leave it unset."/>
+      </eAnnotations>
+    </eStructuralFeatures>
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="code" lowerBound="1" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="Producer-defined identifier of the kind of finding, stable across releases of the&#xA;producer, for example `unresolved-import` or `personal-data-without-purpose`. Part&#xA;of the id; a client may switch on it, the message is for people."/>
+      </eAnnotations>
+    </eStructuralFeatures>
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="severity" lowerBound="1"
+        eType="#//DiagnosticSeverity">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="How serious the finding is. Independent of status: a resolved error is still&#xA;recognisable as a former error. A module may raise or lower the severity later&#xA;(#293); every such change is recorded in the history."/>
+      </eAnnotations>
+    </eStructuralFeatures>
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="message" lowerBound="1"
+        eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="Human-readable description of the finding, written for whoever looks at the&#xA;object. It travels to clients unchanged, so it carries no internal detail such as&#xA;storage paths."/>
+      </eAnnotations>
+    </eStructuralFeatures>
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="category" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="Coarse classification a UI can filter and group by, across producers, for&#xA;example `compile`, `reference`, `compliance`. Optional. Not part of the id, so a&#xA;producer may recategorise without minting new ids."/>
+      </eAnnotations>
+    </eStructuralFeatures>
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="target" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="The affected element inside the object, as a URI or URI fragment (for example&#xA;`//Person/birthDate` for an EStructuralFeature, or `line:12:col:4` for a text&#xA;position a producer defines). Optional; unset means the finding is about the object&#xA;as a whole. Part of the id, so the same finding about two elements yields two&#xA;diagnostics."/>
+      </eAnnotations>
+    </eStructuralFeatures>
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="status" lowerBound="1"
+        eType="#//DiagnosticStatus" defaultValueLiteral="OPEN">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="Where the finding stands in its life: OPEN when produced, ACKNOWLEDGED when&#xA;someone has seen it and accepts it for now, RESOLVED when it no longer applies&#xA;or was dealt with. Kept separate from severity on purpose. A status set by a&#xA;person is not silently reverted by an automatic re-validation (#293); the history&#xA;tells who set it."/>
+      </eAnnotations>
+    </eStructuralFeatures>
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="createdTime" lowerBound="1"
+        eType="#//Instant">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="When the diagnostic was first produced. A re-validation that yields the same id&#xA;keeps this value; the history records that it was seen again."/>
+      </eAnnotations>
+    </eStructuralFeatures>
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="lastChangeTime" eType="#//Instant">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="When severity, status or message last changed; equals the time of the newest&#xA;history entry. Unset while the diagnostic is untouched since creation."/>
+      </eAnnotations>
+    </eStructuralFeatures>
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="version" lowerBound="1"
+        eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//ELong" defaultValueLiteral="0">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="Optimistic-locking counter, incremented on every change to this diagnostic&#xA;(#293). A change that names an older version is refused as a conflict. Starts at 0."/>
+      </eAnnotations>
+    </eStructuralFeatures>
+    <eStructuralFeatures xsi:type="ecore:EReference" name="children" upperBound="-1"
+        eType="#//Diagnostic" containment="true" eKeys="#//Diagnostic/id">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="Findings that refine this one, as in an EMF diagnostic tree: a compile failure&#xA;with one child per error, a compliance finding with one child per affected&#xA;feature. Children share the parent's producer; their ids derive from the parent's&#xA;id."/>
+      </eAnnotations>
+    </eStructuralFeatures>
+    <eStructuralFeatures xsi:type="ecore:EReference" name="history" upperBound="-1"
+        eType="#//DiagnosticChange" containment="true">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="Every change made to this diagnostic after it was produced, oldest first: who,&#xA;when, what changed and why. Appended by the diagnostic service (#293), never&#xA;edited."/>
+      </eAnnotations>
+    </eStructuralFeatures>
+  </eClassifiers>
+  <eClassifiers xsi:type="ecore:EClass" name="DiagnosticChange">
+    <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+      <details key="documentation" value="One entry in a Diagnostic's history: a change of severity or status, or a&#xA;re-validation that confirmed the finding, with who made it, when and why. Old and&#xA;new values are recorded per field so a reader can follow the diagnostic's life&#xA;without diffing; an unchanged field carries the same value on both sides."/>
+    </eAnnotations>
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="changeTime" lowerBound="1"
+        eType="#//Instant">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="When the change was made"/>
+      </eAnnotations>
+    </eStructuralFeatures>
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="changedBy" lowerBound="1"
+        eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="Who made the change: a user name for a manual decision (acknowledge, resolve),&#xA;the producer or module name for an automatic one (re-validation, escalation).&#xA;Whether a change was manual matters, because a manual status is protected&#xA;against automatic reverts (#293)."/>
+      </eAnnotations>
+    </eStructuralFeatures>
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="oldSeverity" eType="#//DiagnosticSeverity">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="Severity before the change"/>
+      </eAnnotations>
+    </eStructuralFeatures>
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="newSeverity" eType="#//DiagnosticSeverity">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="Severity after the change"/>
+      </eAnnotations>
+    </eStructuralFeatures>
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="oldStatus" eType="#//DiagnosticStatus">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="Status before the change"/>
+      </eAnnotations>
+    </eStructuralFeatures>
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="newStatus" eType="#//DiagnosticStatus">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="Status after the change"/>
+      </eAnnotations>
+    </eStructuralFeatures>
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="reason" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="Why the change was made, in the words of whoever made it: the GDPR officer's&#xA;note on a resolution, or the producer's explanation of an escalation. Optional."/>
+      </eAnnotations>
+    </eStructuralFeatures>
+  </eClassifiers>
+  <eClassifiers xsi:type="ecore:EEnum" name="DiagnosticSeverity">
+    <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+      <details key="documentation" value="How serious a finding is, in the order of org.eclipse.emf.common.util.Diagnostic.&#xA;There is no OK literal: a diagnostic exists because something was found; an object&#xA;without findings has no diagnostics."/>
+    </eAnnotations>
+    <eLiterals name="INFO" literal="INFO">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="Worth knowing, nothing to do"/>
+      </eAnnotations>
+    </eLiterals>
+    <eLiterals name="WARNING" value="1" literal="WARNING">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="Something to look at; the object remains usable"/>
+      </eAnnotations>
+    </eLiterals>
+    <eLiterals name="ERROR" value="2" literal="ERROR">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="The object does not hold up as it stands; a gate may refuse an operation on it"/>
+      </eAnnotations>
+    </eLiterals>
+  </eClassifiers>
+  <eClassifiers xsi:type="ecore:EEnum" name="DiagnosticStatus">
+    <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+      <details key="documentation" value="Where a finding stands in its life. Deliberately separate from severity: a&#xA;resolved warning is still a former warning."/>
+    </eAnnotations>
+    <eLiterals name="OPEN" literal="OPEN">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="Produced and not yet dealt with; the default"/>
+      </eAnnotations>
+    </eLiterals>
+    <eLiterals name="ACKNOWLEDGED" value="1" literal="ACKNOWLEDGED">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="Seen and accepted for now by a person; still applies"/>
+      </eAnnotations>
+    </eLiterals>
+    <eLiterals name="RESOLVED" value="2" literal="RESOLVED">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="No longer applies, or was dealt with; kept for its history"/>
+      </eAnnotations>
+    </eLiterals>
   </eClassifiers>
   <eClassifiers xsi:type="ecore:EClass" name="StringToObjectMapEntry" instanceClassName="java.util.Map$Entry">
     <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
