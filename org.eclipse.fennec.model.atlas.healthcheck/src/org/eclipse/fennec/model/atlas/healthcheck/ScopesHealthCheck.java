@@ -15,6 +15,7 @@ package org.eclipse.fennec.model.atlas.healthcheck;
 
 import java.util.List;
 import java.util.StringJoiner;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 import org.apache.felix.hc.api.FormattingResultLog;
 import org.apache.felix.hc.api.HealthCheck;
@@ -45,14 +46,22 @@ public class ScopesHealthCheck implements HealthCheck {
      * the DS defaults (static, reluctant) a ScopeService published after activation
      * is never bound, and readiness keeps answering from the set seen at activation.
      */
+    private final List<ScopeService<?>> scopesServices = new CopyOnWriteArrayList<>();
+
     @Reference(cardinality = ReferenceCardinality.MULTIPLE, policy = ReferencePolicy.DYNAMIC, policyOption = ReferencePolicyOption.GREEDY)
-    private volatile List<ScopeService<?>> scopesServices;
+    void addScopeService(ScopeService<?> scopeService) {
+        scopesServices.add(scopeService);
+    }
+
+    void removeScopeService(ScopeService<?> scopeService) {
+        scopesServices.remove(scopeService);
+    }
 
     @Override
     public Result execute() {
         FormattingResultLog log = new FormattingResultLog();
 
-        if (scopesServices == null || scopesServices.isEmpty()) {
+        if (scopesServices.isEmpty()) {
             log.critical("No ScopeServices found");
         } else {
             for (ScopeService<?> scopeService : scopesServices) {

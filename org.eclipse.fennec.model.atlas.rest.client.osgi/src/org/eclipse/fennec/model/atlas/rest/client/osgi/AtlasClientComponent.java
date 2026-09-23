@@ -170,9 +170,19 @@ public class AtlasClientComponent {
 	 * interface on purpose — a reference to a metadata type would fail this component at class
 	 * load wherever that package is absent, which is exactly the deployment it must survive.
 	 */
+	private volatile StagedPackageSinkFactory stagedPackageSinkFactory;
+
 	@Reference(cardinality = ReferenceCardinality.OPTIONAL, policy = ReferencePolicy.DYNAMIC,
 			policyOption = ReferencePolicyOption.GREEDY)
-	volatile StagedPackageSinkFactory stagedPackageSinkFactory;
+	void bindStagedPackageSinkFactory(StagedPackageSinkFactory sinkFactory) {
+		this.stagedPackageSinkFactory = sinkFactory;
+	}
+
+	void unbindStagedPackageSinkFactory(StagedPackageSinkFactory sinkFactory) {
+		if (this.stagedPackageSinkFactory == sinkFactory) {
+			this.stagedPackageSinkFactory = null;
+		}
+	}
 	/** P6-6: manages the ConfigAdmin EPackageRegistry + ResourceSetFactory pairs. */
 	private final AtlasEPackageRegistryConfigurator registryConfigurator;
 	/** #238: re-runs the start-up sync until it completes. Idle once one pass has. */
