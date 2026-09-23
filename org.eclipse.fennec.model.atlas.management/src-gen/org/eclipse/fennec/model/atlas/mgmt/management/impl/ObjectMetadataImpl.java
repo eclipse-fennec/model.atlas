@@ -15,9 +15,12 @@ package org.eclipse.fennec.model.atlas.mgmt.management.impl;
 
 import java.time.Instant;
 
+import java.util.Collection;
+
 import org.eclipse.emf.common.notify.Notification;
 import org.eclipse.emf.common.notify.NotificationChain;
 
+import org.eclipse.emf.common.util.EList;
 import org.eclipse.emf.common.util.EMap;
 
 import org.eclipse.emf.ecore.EClass;
@@ -28,9 +31,11 @@ import org.eclipse.emf.ecore.InternalEObject;
 import org.eclipse.emf.ecore.impl.ENotificationImpl;
 import org.eclipse.emf.ecore.impl.MinimalEObjectImpl;
 
+import org.eclipse.emf.ecore.util.EObjectContainmentEList;
 import org.eclipse.emf.ecore.util.EcoreEMap;
 import org.eclipse.emf.ecore.util.InternalEList;
 
+import org.eclipse.fennec.model.atlas.mgmt.management.Diagnostic;
 import org.eclipse.fennec.model.atlas.mgmt.management.ManagementPackage;
 import org.eclipse.fennec.model.atlas.mgmt.management.ObjectMetadata;
 import org.eclipse.fennec.model.atlas.mgmt.management.ObjectStatus;
@@ -69,6 +74,7 @@ import org.eclipse.fennec.model.atlas.mgmt.management.ObjectStatus;
  *   <li>{@link org.eclipse.fennec.model.atlas.mgmt.management.impl.ObjectMetadataImpl#isIsReadOnly <em>Is Read Only</em>}</li>
  *   <li>{@link org.eclipse.fennec.model.atlas.mgmt.management.impl.ObjectMetadataImpl#getRegistry <em>Registry</em>}</li>
  *   <li>{@link org.eclipse.fennec.model.atlas.mgmt.management.impl.ObjectMetadataImpl#getFingerprint <em>Fingerprint</em>}</li>
+ *   <li>{@link org.eclipse.fennec.model.atlas.mgmt.management.impl.ObjectMetadataImpl#getDiagnostics <em>Diagnostics</em>}</li>
  * </ul>
  *
  * @generated
@@ -573,6 +579,16 @@ public class ObjectMetadataImpl extends MinimalEObjectImpl.Container implements 
 	 * @ordered
 	 */
 	protected String fingerprint = FINGERPRINT_EDEFAULT;
+
+	/**
+	 * The cached value of the '{@link #getDiagnostics() <em>Diagnostics</em>}' containment reference list.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @see #getDiagnostics()
+	 * @generated
+	 * @ordered
+	 */
+	protected EList<Diagnostic> diagnostics;
 
 	/**
 	 * <!-- begin-user-doc -->
@@ -1204,10 +1220,25 @@ public class ObjectMetadataImpl extends MinimalEObjectImpl.Container implements 
 	 * @generated
 	 */
 	@Override
+	public EList<Diagnostic> getDiagnostics() {
+		if (diagnostics == null) {
+			diagnostics = new EObjectContainmentEList<Diagnostic>(Diagnostic.class, this, ManagementPackage.OBJECT_METADATA__DIAGNOSTICS);
+		}
+		return diagnostics;
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
 	public NotificationChain eInverseRemove(InternalEObject otherEnd, int featureID, NotificationChain msgs) {
 		switch (featureID) {
 			case ManagementPackage.OBJECT_METADATA__PROPERTIES:
 				return ((InternalEList<?>)getProperties()).basicRemove(otherEnd, msgs);
+			case ManagementPackage.OBJECT_METADATA__DIAGNOSTICS:
+				return ((InternalEList<?>)getDiagnostics()).basicRemove(otherEnd, msgs);
 		}
 		return super.eInverseRemove(otherEnd, featureID, msgs);
 	}
@@ -1274,6 +1305,8 @@ public class ObjectMetadataImpl extends MinimalEObjectImpl.Container implements 
 				return getRegistry();
 			case ManagementPackage.OBJECT_METADATA__FINGERPRINT:
 				return getFingerprint();
+			case ManagementPackage.OBJECT_METADATA__DIAGNOSTICS:
+				return getDiagnostics();
 		}
 		return super.eGet(featureID, resolve, coreType);
 	}
@@ -1283,6 +1316,7 @@ public class ObjectMetadataImpl extends MinimalEObjectImpl.Container implements 
 	 * <!-- end-user-doc -->
 	 * @generated
 	 */
+	@SuppressWarnings("unchecked")
 	@Override
 	public void eSet(int featureID, Object newValue) {
 		switch (featureID) {
@@ -1363,6 +1397,10 @@ public class ObjectMetadataImpl extends MinimalEObjectImpl.Container implements 
 				return;
 			case ManagementPackage.OBJECT_METADATA__FINGERPRINT:
 				setFingerprint((String)newValue);
+				return;
+			case ManagementPackage.OBJECT_METADATA__DIAGNOSTICS:
+				getDiagnostics().clear();
+				getDiagnostics().addAll((Collection<? extends Diagnostic>)newValue);
 				return;
 		}
 		super.eSet(featureID, newValue);
@@ -1454,6 +1492,9 @@ public class ObjectMetadataImpl extends MinimalEObjectImpl.Container implements 
 			case ManagementPackage.OBJECT_METADATA__FINGERPRINT:
 				setFingerprint(FINGERPRINT_EDEFAULT);
 				return;
+			case ManagementPackage.OBJECT_METADATA__DIAGNOSTICS:
+				getDiagnostics().clear();
+				return;
 		}
 		super.eUnset(featureID);
 	}
@@ -1518,6 +1559,8 @@ public class ObjectMetadataImpl extends MinimalEObjectImpl.Container implements 
 				return REGISTRY_EDEFAULT == null ? registry != null : !REGISTRY_EDEFAULT.equals(registry);
 			case ManagementPackage.OBJECT_METADATA__FINGERPRINT:
 				return FINGERPRINT_EDEFAULT == null ? fingerprint != null : !FINGERPRINT_EDEFAULT.equals(fingerprint);
+			case ManagementPackage.OBJECT_METADATA__DIAGNOSTICS:
+				return diagnostics != null && !diagnostics.isEmpty();
 		}
 		return super.eIsSet(featureID);
 	}

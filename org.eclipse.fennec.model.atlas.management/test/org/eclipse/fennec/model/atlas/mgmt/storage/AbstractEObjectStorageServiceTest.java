@@ -40,6 +40,7 @@ import org.eclipse.emf.ecore.EcorePackage;
 import org.eclipse.emf.ecore.util.EcoreUtil;
 import org.eclipse.fennec.model.atlas.mgmt.api.EObjectRegistryService;
 import org.eclipse.fennec.model.atlas.mgmt.management.ManagementFactory;
+import org.eclipse.fennec.model.atlas.mgmt.management.Diagnostic;
 import org.eclipse.fennec.model.atlas.mgmt.management.ObjectMetadata;
 import org.eclipse.fennec.model.atlas.mgmt.management.ObjectStatus;
 import org.eclipse.fennec.model.atlas.mgmt.management.StorageBackendType;
@@ -981,5 +982,93 @@ public class AbstractEObjectStorageServiceTest {
         metadata.setUploadUser("test-user");
         metadata.setSourceChannel("TEST");
         return metadata;
+    }
+
+    /**
+     * Issue #292: a diagnostics write goes through its own path, not through
+     * {@code mergeMetadataUpdates}: the producer's roots are swapped on a copy of the stored
+     * metadata, the copy is saved and pushed to the registry cache, and nothing else moves -
+     * in particular not {@code lastChangeTime}, which the merge would have stamped.
+     */
+    @Test
+    public void testUpdateDiagnosticsSwapsTheProducersRootsAndNothingElse() throws Exception {
+        storageService.activateStorageService();
+        Instant lastChange = Instant.parse("2026-09-01T10:00:00Z");
+        ObjectMetadata existing = ManagementFactory.eINSTANCE.createObjectMetadata();
+        existing.setObjectId("test-id");
+        existing.setVersion("1.0.0");
+        existing.setContentHash("hash");
+        existing.setLastChangeTime(lastChange);
+        Diagnostic other = ManagementFactory.eINSTANCE.createDiagnostic();
+        other.setId("gdpr-1");
+        other.setProducer("gdpr");
+        other.setCode("personal-data");
+        other.setMessage("pii");
+        existing.getDiagnostics().add(other);
+        Diagnostic stale = ManagementFactory.eINSTANCE.createDiagnostic();
+        stale.setId("qvt-stale");
+        stale.setProducer("qvt");
+        stale.setCode("old");
+        stale.setMessage("old");
+        existing.getDiagnostics().add(stale);
+
+        when(mockStorageHelper.objectExists(any(), any(), any(), eq("test-id"))).thenReturn(true);
+        when(mockStorageHelper.loadMetadata(any(), any(), any(), eq("test-id"))).thenReturn(existing);
+        doNothing().when(mockStorageHelper).saveMetadata(any(), any(), any(), any(), any());
+
+        Diagnostic fresh = ManagementFactory.eINSTANCE.createDiagnostic();
+        fresh.setCode("compile-failed");
+        fresh.setMessage("does not compile");
+        ObjectMetadata result = storageService
+                .updateDiagnostics(TEST_SCOPE, TEST_REGISTRY, TEST_STAGE, "test-id", "qvt", List.of(fresh)).getValue();
+
+        assertNotNull(result);
+        assertEquals(2, result.getDiagnostics().size(), "the other producer's root stays, the stale one is gone");
+        assertTrue(result.getDiagnostics().stream().anyMatch(d -> "gdpr-1".equals(d.getId())));
+        assertTrue(result.getDiagnostics().stream().noneMatch(d -> "qvt-stale".equals(d.getId())));
+        Diagnostic written = result.getDiagnostics().stream().filter(d -> "qvt".equals(d.getProducer())).findFirst()
+                .orElseThrow();
+        assertEquals("compile-failed", written.getCode());
+        assertNotNull(written.getId(), "the id was minted");
+        assertNotNull(written.getCreatedTime(), "createdTime was stamped");
+        assertEquals(lastChange, result.getLastChangeTime(), "lastChangeTime is not touched");
+        assertEquals("1.0.0", result.getVersion());
+        assertEquals("hash", result.getContentHash());
+        assertEquals(2, existing.getDiagnostics().size(), "the stored instance was copied, not mutated");
+        assertTrue(existing.getDiagnostics().stream().anyMatch(d -> "qvt-stale".equals(d.getId())));
+
+        verify(mockStorageHelper).saveMetadata(eq(TEST_SCOPE), eq(TEST_REGISTRY), eq(TEST_STAGE), eq("test-id"),
+                argThat(m -> m.getDiagnostics().size() == 2));
+        verify(mockRegistryService).updateCache(argThat(m -> m.getDiagnostics().size() == 2));
+    }
+
+    @Test
+    public void testUpdateDiagnosticsYieldsNullForAnUnknownObject() throws Exception {
+        storageService.activateStorageService();
+        when(mockStorageHelper.objectExists(any(), any(), any(), eq("missing"))).thenReturn(false);
+
+        assertNull(storageService.updateDiagnostics(TEST_SCOPE, TEST_REGISTRY, TEST_STAGE, "missing", "qvt", List.of())
+                .getValue());
+        verify(mockStorageHelper, never()).saveMetadata(any(), any(), any(), any(), any());
+    }
+
+    @Test
+    public void testUpdateDiagnosticsRefusesAForeignProducer() throws Exception {
+        storageService.activateStorageService();
+        ObjectMetadata existing = ManagementFactory.eINSTANCE.createObjectMetadata();
+        existing.setObjectId("test-id");
+        when(mockStorageHelper.objectExists(any(), any(), any(), eq("test-id"))).thenReturn(true);
+        when(mockStorageHelper.loadMetadata(any(), any(), any(), eq("test-id"))).thenReturn(existing);
+        Diagnostic foreign = ManagementFactory.eINSTANCE.createDiagnostic();
+        foreign.setProducer("somebody-else");
+        foreign.setCode("x");
+        foreign.setMessage("m");
+
+        Promise<ObjectMetadata> result = storageService.updateDiagnostics(TEST_SCOPE, TEST_REGISTRY, TEST_STAGE,
+                "test-id", "qvt", List.of(foreign));
+        java.lang.reflect.InvocationTargetException failure = assertThrows(
+                java.lang.reflect.InvocationTargetException.class, result::getValue);
+        assertTrue(failure.getCause() instanceof IllegalArgumentException, String.valueOf(failure.getCause()));
+        verify(mockStorageHelper, never()).saveMetadata(any(), any(), any(), any(), any());
     }
 }

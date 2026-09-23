@@ -42,7 +42,7 @@ import org.osgi.annotation.versioning.ProviderType;
  * @generated
  */
 @ProviderType
-@EPackage(uri = ManagementPackage.eNS_URI, fingerprint = "fp1:553dea3c2bd00c9c0d522680854badf35e29bd8f9229bc9157ab836b571a3f50", genModel = "/model/management.genmodel", genModelSourceLocations = {"model/management.genmodel","org.eclipse.fennec.model.atlas.management/model/management.genmodel"}, ecore = "/model/management.ecore", ecoreSourceLocations = "/model/management.ecore")
+@EPackage(uri = ManagementPackage.eNS_URI, fingerprint = "fp1:fbd30797a0561bb931a13bdccdc902d7f1575fd8b6b882adfd0f4dbdae4d0687", genModel = "/model/management.genmodel", genModelSourceLocations = {"model/management.genmodel","org.eclipse.fennec.model.atlas.management/model/management.genmodel"}, ecore = "/model/management.ecore", ecoreSourceLocations = "/model/management.ecore")
 public interface ManagementPackage extends org.eclipse.emf.ecore.EPackage {
 	/**
 	 * The package name.
@@ -321,13 +321,22 @@ public interface ManagementPackage extends org.eclipse.emf.ecore.EPackage {
 	int OBJECT_METADATA__FINGERPRINT = 25;
 
 	/**
+	 * The feature id for the '<em><b>Diagnostics</b></em>' containment reference list.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 * @ordered
+	 */
+	int OBJECT_METADATA__DIAGNOSTICS = 26;
+
+	/**
 	 * The number of structural features of the '<em>Object Metadata</em>' class.
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
 	 * @generated
 	 * @ordered
 	 */
-	int OBJECT_METADATA_FEATURE_COUNT = 26;
+	int OBJECT_METADATA_FEATURE_COUNT = 27;
 
 	/**
 	 * The number of operations of the '<em>Object Metadata</em>' class.
@@ -339,6 +348,251 @@ public interface ManagementPackage extends org.eclipse.emf.ecore.EPackage {
 	int OBJECT_METADATA_OPERATION_COUNT = 0;
 
 	/**
+	 * The meta object id for the '{@link org.eclipse.fennec.model.atlas.mgmt.management.impl.DiagnosticImpl <em>Diagnostic</em>}' class.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @see org.eclipse.fennec.model.atlas.mgmt.management.impl.DiagnosticImpl
+	 * @see org.eclipse.fennec.model.atlas.mgmt.management.impl.ManagementPackageImpl#getDiagnostic()
+	 * @generated
+	 */
+	int DIAGNOSTIC = 1;
+
+	/**
+	 * The feature id for the '<em><b>Id</b></em>' attribute.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 * @ordered
+	 */
+	int DIAGNOSTIC__ID = 0;
+
+	/**
+	 * The feature id for the '<em><b>Producer</b></em>' attribute.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 * @ordered
+	 */
+	int DIAGNOSTIC__PRODUCER = 1;
+
+	/**
+	 * The feature id for the '<em><b>Source</b></em>' attribute.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 * @ordered
+	 */
+	int DIAGNOSTIC__SOURCE = 2;
+
+	/**
+	 * The feature id for the '<em><b>Code</b></em>' attribute.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 * @ordered
+	 */
+	int DIAGNOSTIC__CODE = 3;
+
+	/**
+	 * The feature id for the '<em><b>Severity</b></em>' attribute.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 * @ordered
+	 */
+	int DIAGNOSTIC__SEVERITY = 4;
+
+	/**
+	 * The feature id for the '<em><b>Message</b></em>' attribute.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 * @ordered
+	 */
+	int DIAGNOSTIC__MESSAGE = 5;
+
+	/**
+	 * The feature id for the '<em><b>Category</b></em>' attribute.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 * @ordered
+	 */
+	int DIAGNOSTIC__CATEGORY = 6;
+
+	/**
+	 * The feature id for the '<em><b>Target</b></em>' attribute.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 * @ordered
+	 */
+	int DIAGNOSTIC__TARGET = 7;
+
+	/**
+	 * The feature id for the '<em><b>Status</b></em>' attribute.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 * @ordered
+	 */
+	int DIAGNOSTIC__STATUS = 8;
+
+	/**
+	 * The feature id for the '<em><b>Created Time</b></em>' attribute.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 * @ordered
+	 */
+	int DIAGNOSTIC__CREATED_TIME = 9;
+
+	/**
+	 * The feature id for the '<em><b>Last Change Time</b></em>' attribute.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 * @ordered
+	 */
+	int DIAGNOSTIC__LAST_CHANGE_TIME = 10;
+
+	/**
+	 * The feature id for the '<em><b>Version</b></em>' attribute.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 * @ordered
+	 */
+	int DIAGNOSTIC__VERSION = 11;
+
+	/**
+	 * The feature id for the '<em><b>Children</b></em>' containment reference list.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 * @ordered
+	 */
+	int DIAGNOSTIC__CHILDREN = 12;
+
+	/**
+	 * The feature id for the '<em><b>History</b></em>' containment reference list.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 * @ordered
+	 */
+	int DIAGNOSTIC__HISTORY = 13;
+
+	/**
+	 * The number of structural features of the '<em>Diagnostic</em>' class.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 * @ordered
+	 */
+	int DIAGNOSTIC_FEATURE_COUNT = 14;
+
+	/**
+	 * The number of operations of the '<em>Diagnostic</em>' class.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 * @ordered
+	 */
+	int DIAGNOSTIC_OPERATION_COUNT = 0;
+
+	/**
+	 * The meta object id for the '{@link org.eclipse.fennec.model.atlas.mgmt.management.impl.DiagnosticChangeImpl <em>Diagnostic Change</em>}' class.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @see org.eclipse.fennec.model.atlas.mgmt.management.impl.DiagnosticChangeImpl
+	 * @see org.eclipse.fennec.model.atlas.mgmt.management.impl.ManagementPackageImpl#getDiagnosticChange()
+	 * @generated
+	 */
+	int DIAGNOSTIC_CHANGE = 2;
+
+	/**
+	 * The feature id for the '<em><b>Change Time</b></em>' attribute.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 * @ordered
+	 */
+	int DIAGNOSTIC_CHANGE__CHANGE_TIME = 0;
+
+	/**
+	 * The feature id for the '<em><b>Changed By</b></em>' attribute.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 * @ordered
+	 */
+	int DIAGNOSTIC_CHANGE__CHANGED_BY = 1;
+
+	/**
+	 * The feature id for the '<em><b>Old Severity</b></em>' attribute.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 * @ordered
+	 */
+	int DIAGNOSTIC_CHANGE__OLD_SEVERITY = 2;
+
+	/**
+	 * The feature id for the '<em><b>New Severity</b></em>' attribute.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 * @ordered
+	 */
+	int DIAGNOSTIC_CHANGE__NEW_SEVERITY = 3;
+
+	/**
+	 * The feature id for the '<em><b>Old Status</b></em>' attribute.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 * @ordered
+	 */
+	int DIAGNOSTIC_CHANGE__OLD_STATUS = 4;
+
+	/**
+	 * The feature id for the '<em><b>New Status</b></em>' attribute.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 * @ordered
+	 */
+	int DIAGNOSTIC_CHANGE__NEW_STATUS = 5;
+
+	/**
+	 * The feature id for the '<em><b>Reason</b></em>' attribute.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 * @ordered
+	 */
+	int DIAGNOSTIC_CHANGE__REASON = 6;
+
+	/**
+	 * The number of structural features of the '<em>Diagnostic Change</em>' class.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 * @ordered
+	 */
+	int DIAGNOSTIC_CHANGE_FEATURE_COUNT = 7;
+
+	/**
+	 * The number of operations of the '<em>Diagnostic Change</em>' class.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 * @ordered
+	 */
+	int DIAGNOSTIC_CHANGE_OPERATION_COUNT = 0;
+
+	/**
 	 * The meta object id for the '{@link org.eclipse.fennec.model.atlas.mgmt.management.impl.StringToObjectMapEntryImpl <em>String To Object Map Entry</em>}' class.
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
@@ -346,7 +600,7 @@ public interface ManagementPackage extends org.eclipse.emf.ecore.EPackage {
 	 * @see org.eclipse.fennec.model.atlas.mgmt.management.impl.ManagementPackageImpl#getStringToObjectMapEntry()
 	 * @generated
 	 */
-	int STRING_TO_OBJECT_MAP_ENTRY = 1;
+	int STRING_TO_OBJECT_MAP_ENTRY = 3;
 
 	/**
 	 * The feature id for the '<em><b>Key</b></em>' attribute.
@@ -392,7 +646,7 @@ public interface ManagementPackage extends org.eclipse.emf.ecore.EPackage {
 	 * @see org.eclipse.fennec.model.atlas.mgmt.management.impl.ManagementPackageImpl#getObjectQuery()
 	 * @generated
 	 */
-	int OBJECT_QUERY = 2;
+	int OBJECT_QUERY = 4;
 
 	/**
 	 * The feature id for the '<em><b>Upload User</b></em>' attribute.
@@ -492,7 +746,7 @@ public interface ManagementPackage extends org.eclipse.emf.ecore.EPackage {
 	 * @see org.eclipse.fennec.model.atlas.mgmt.management.impl.ManagementPackageImpl#getGenerationRequest()
 	 * @generated
 	 */
-	int GENERATION_REQUEST = 3;
+	int GENERATION_REQUEST = 5;
 
 	/**
 	 * The feature id for the '<em><b>Request Id</b></em>' attribute.
@@ -619,7 +873,7 @@ public interface ManagementPackage extends org.eclipse.emf.ecore.EPackage {
 	 * @see org.eclipse.fennec.model.atlas.mgmt.management.impl.ManagementPackageImpl#getObjectMetadataContainer()
 	 * @generated
 	 */
-	int OBJECT_METADATA_CONTAINER = 4;
+	int OBJECT_METADATA_CONTAINER = 6;
 
 	/**
 	 * The feature id for the '<em><b>Container Id</b></em>' attribute.
@@ -665,7 +919,7 @@ public interface ManagementPackage extends org.eclipse.emf.ecore.EPackage {
 	 * @see org.eclipse.fennec.model.atlas.mgmt.management.impl.ManagementPackageImpl#getObjectStatus()
 	 * @generated
 	 */
-	int OBJECT_STATUS = 5;
+	int OBJECT_STATUS = 7;
 
 	/**
 	 * The meta object id for the '{@link org.eclipse.fennec.model.atlas.mgmt.management.PackageStatus <em>Package Status</em>}' enum.
@@ -675,7 +929,7 @@ public interface ManagementPackage extends org.eclipse.emf.ecore.EPackage {
 	 * @see org.eclipse.fennec.model.atlas.mgmt.management.impl.ManagementPackageImpl#getPackageStatus()
 	 * @generated
 	 */
-	int PACKAGE_STATUS = 6;
+	int PACKAGE_STATUS = 8;
 
 	/**
 	 * The meta object id for the '{@link org.eclipse.fennec.model.atlas.mgmt.management.StorageBackendType <em>Storage Backend Type</em>}' enum.
@@ -685,7 +939,7 @@ public interface ManagementPackage extends org.eclipse.emf.ecore.EPackage {
 	 * @see org.eclipse.fennec.model.atlas.mgmt.management.impl.ManagementPackageImpl#getStorageBackendType()
 	 * @generated
 	 */
-	int STORAGE_BACKEND_TYPE = 7;
+	int STORAGE_BACKEND_TYPE = 9;
 
 	/**
 	 * The meta object id for the '{@link org.eclipse.fennec.model.atlas.mgmt.management.GenerationStatus <em>Generation Status</em>}' enum.
@@ -695,7 +949,27 @@ public interface ManagementPackage extends org.eclipse.emf.ecore.EPackage {
 	 * @see org.eclipse.fennec.model.atlas.mgmt.management.impl.ManagementPackageImpl#getGenerationStatus()
 	 * @generated
 	 */
-	int GENERATION_STATUS = 8;
+	int GENERATION_STATUS = 10;
+
+	/**
+	 * The meta object id for the '{@link org.eclipse.fennec.model.atlas.mgmt.management.DiagnosticSeverity <em>Diagnostic Severity</em>}' enum.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @see org.eclipse.fennec.model.atlas.mgmt.management.DiagnosticSeverity
+	 * @see org.eclipse.fennec.model.atlas.mgmt.management.impl.ManagementPackageImpl#getDiagnosticSeverity()
+	 * @generated
+	 */
+	int DIAGNOSTIC_SEVERITY = 11;
+
+	/**
+	 * The meta object id for the '{@link org.eclipse.fennec.model.atlas.mgmt.management.DiagnosticStatus <em>Diagnostic Status</em>}' enum.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @see org.eclipse.fennec.model.atlas.mgmt.management.DiagnosticStatus
+	 * @see org.eclipse.fennec.model.atlas.mgmt.management.impl.ManagementPackageImpl#getDiagnosticStatus()
+	 * @generated
+	 */
+	int DIAGNOSTIC_STATUS = 12;
 
 	/**
 	 * The meta object id for the '<em>Instant</em>' data type.
@@ -705,7 +979,7 @@ public interface ManagementPackage extends org.eclipse.emf.ecore.EPackage {
 	 * @see org.eclipse.fennec.model.atlas.mgmt.management.impl.ManagementPackageImpl#getInstant()
 	 * @generated
 	 */
-	int INSTANT = 9;
+	int INSTANT = 13;
 
 	/**
 	 * The meta object id for the '<em>Promise</em>' data type.
@@ -715,7 +989,7 @@ public interface ManagementPackage extends org.eclipse.emf.ecore.EPackage {
 	 * @see org.eclipse.fennec.model.atlas.mgmt.management.impl.ManagementPackageImpl#getPromise()
 	 * @generated
 	 */
-	int PROMISE = 10;
+	int PROMISE = 14;
 
 	/**
 	 * The meta object id for the '<em>List</em>' data type.
@@ -725,7 +999,7 @@ public interface ManagementPackage extends org.eclipse.emf.ecore.EPackage {
 	 * @see org.eclipse.fennec.model.atlas.mgmt.management.impl.ManagementPackageImpl#getList()
 	 * @generated
 	 */
-	int LIST = 11;
+	int LIST = 15;
 
 	/**
 	 * The meta object id for the '<em>Void</em>' data type.
@@ -735,7 +1009,7 @@ public interface ManagementPackage extends org.eclipse.emf.ecore.EPackage {
 	 * @see org.eclipse.fennec.model.atlas.mgmt.management.impl.ManagementPackageImpl#getVoid()
 	 * @generated
 	 */
-	int VOID = 12;
+	int VOID = 16;
 
 	/**
 	 * The meta object id for the '<em>Optional</em>' data type.
@@ -745,7 +1019,7 @@ public interface ManagementPackage extends org.eclipse.emf.ecore.EPackage {
 	 * @see org.eclipse.fennec.model.atlas.mgmt.management.impl.ManagementPackageImpl#getOptional()
 	 * @generated
 	 */
-	int OPTIONAL = 13;
+	int OPTIONAL = 17;
 
 
 	/**
@@ -1043,6 +1317,268 @@ public interface ManagementPackage extends org.eclipse.emf.ecore.EPackage {
 	 * @generated
 	 */
 	EAttribute getObjectMetadata_Fingerprint();
+
+	/**
+	 * Returns the meta object for the containment reference list '{@link org.eclipse.fennec.model.atlas.mgmt.management.ObjectMetadata#getDiagnostics <em>Diagnostics</em>}'.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @return the meta object for the containment reference list '<em>Diagnostics</em>'.
+	 * @see org.eclipse.fennec.model.atlas.mgmt.management.ObjectMetadata#getDiagnostics()
+	 * @see #getObjectMetadata()
+	 * @generated
+	 */
+	EReference getObjectMetadata_Diagnostics();
+
+	/**
+	 * Returns the meta object for class '{@link org.eclipse.fennec.model.atlas.mgmt.management.Diagnostic <em>Diagnostic</em>}'.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @return the meta object for class '<em>Diagnostic</em>'.
+	 * @see org.eclipse.fennec.model.atlas.mgmt.management.Diagnostic
+	 * @generated
+	 */
+	EClass getDiagnostic();
+
+	/**
+	 * Returns the meta object for the attribute '{@link org.eclipse.fennec.model.atlas.mgmt.management.Diagnostic#getId <em>Id</em>}'.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @return the meta object for the attribute '<em>Id</em>'.
+	 * @see org.eclipse.fennec.model.atlas.mgmt.management.Diagnostic#getId()
+	 * @see #getDiagnostic()
+	 * @generated
+	 */
+	EAttribute getDiagnostic_Id();
+
+	/**
+	 * Returns the meta object for the attribute '{@link org.eclipse.fennec.model.atlas.mgmt.management.Diagnostic#getProducer <em>Producer</em>}'.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @return the meta object for the attribute '<em>Producer</em>'.
+	 * @see org.eclipse.fennec.model.atlas.mgmt.management.Diagnostic#getProducer()
+	 * @see #getDiagnostic()
+	 * @generated
+	 */
+	EAttribute getDiagnostic_Producer();
+
+	/**
+	 * Returns the meta object for the attribute '{@link org.eclipse.fennec.model.atlas.mgmt.management.Diagnostic#getSource <em>Source</em>}'.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @return the meta object for the attribute '<em>Source</em>'.
+	 * @see org.eclipse.fennec.model.atlas.mgmt.management.Diagnostic#getSource()
+	 * @see #getDiagnostic()
+	 * @generated
+	 */
+	EAttribute getDiagnostic_Source();
+
+	/**
+	 * Returns the meta object for the attribute '{@link org.eclipse.fennec.model.atlas.mgmt.management.Diagnostic#getCode <em>Code</em>}'.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @return the meta object for the attribute '<em>Code</em>'.
+	 * @see org.eclipse.fennec.model.atlas.mgmt.management.Diagnostic#getCode()
+	 * @see #getDiagnostic()
+	 * @generated
+	 */
+	EAttribute getDiagnostic_Code();
+
+	/**
+	 * Returns the meta object for the attribute '{@link org.eclipse.fennec.model.atlas.mgmt.management.Diagnostic#getSeverity <em>Severity</em>}'.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @return the meta object for the attribute '<em>Severity</em>'.
+	 * @see org.eclipse.fennec.model.atlas.mgmt.management.Diagnostic#getSeverity()
+	 * @see #getDiagnostic()
+	 * @generated
+	 */
+	EAttribute getDiagnostic_Severity();
+
+	/**
+	 * Returns the meta object for the attribute '{@link org.eclipse.fennec.model.atlas.mgmt.management.Diagnostic#getMessage <em>Message</em>}'.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @return the meta object for the attribute '<em>Message</em>'.
+	 * @see org.eclipse.fennec.model.atlas.mgmt.management.Diagnostic#getMessage()
+	 * @see #getDiagnostic()
+	 * @generated
+	 */
+	EAttribute getDiagnostic_Message();
+
+	/**
+	 * Returns the meta object for the attribute '{@link org.eclipse.fennec.model.atlas.mgmt.management.Diagnostic#getCategory <em>Category</em>}'.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @return the meta object for the attribute '<em>Category</em>'.
+	 * @see org.eclipse.fennec.model.atlas.mgmt.management.Diagnostic#getCategory()
+	 * @see #getDiagnostic()
+	 * @generated
+	 */
+	EAttribute getDiagnostic_Category();
+
+	/**
+	 * Returns the meta object for the attribute '{@link org.eclipse.fennec.model.atlas.mgmt.management.Diagnostic#getTarget <em>Target</em>}'.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @return the meta object for the attribute '<em>Target</em>'.
+	 * @see org.eclipse.fennec.model.atlas.mgmt.management.Diagnostic#getTarget()
+	 * @see #getDiagnostic()
+	 * @generated
+	 */
+	EAttribute getDiagnostic_Target();
+
+	/**
+	 * Returns the meta object for the attribute '{@link org.eclipse.fennec.model.atlas.mgmt.management.Diagnostic#getStatus <em>Status</em>}'.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @return the meta object for the attribute '<em>Status</em>'.
+	 * @see org.eclipse.fennec.model.atlas.mgmt.management.Diagnostic#getStatus()
+	 * @see #getDiagnostic()
+	 * @generated
+	 */
+	EAttribute getDiagnostic_Status();
+
+	/**
+	 * Returns the meta object for the attribute '{@link org.eclipse.fennec.model.atlas.mgmt.management.Diagnostic#getCreatedTime <em>Created Time</em>}'.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @return the meta object for the attribute '<em>Created Time</em>'.
+	 * @see org.eclipse.fennec.model.atlas.mgmt.management.Diagnostic#getCreatedTime()
+	 * @see #getDiagnostic()
+	 * @generated
+	 */
+	EAttribute getDiagnostic_CreatedTime();
+
+	/**
+	 * Returns the meta object for the attribute '{@link org.eclipse.fennec.model.atlas.mgmt.management.Diagnostic#getLastChangeTime <em>Last Change Time</em>}'.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @return the meta object for the attribute '<em>Last Change Time</em>'.
+	 * @see org.eclipse.fennec.model.atlas.mgmt.management.Diagnostic#getLastChangeTime()
+	 * @see #getDiagnostic()
+	 * @generated
+	 */
+	EAttribute getDiagnostic_LastChangeTime();
+
+	/**
+	 * Returns the meta object for the attribute '{@link org.eclipse.fennec.model.atlas.mgmt.management.Diagnostic#getVersion <em>Version</em>}'.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @return the meta object for the attribute '<em>Version</em>'.
+	 * @see org.eclipse.fennec.model.atlas.mgmt.management.Diagnostic#getVersion()
+	 * @see #getDiagnostic()
+	 * @generated
+	 */
+	EAttribute getDiagnostic_Version();
+
+	/**
+	 * Returns the meta object for the containment reference list '{@link org.eclipse.fennec.model.atlas.mgmt.management.Diagnostic#getChildren <em>Children</em>}'.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @return the meta object for the containment reference list '<em>Children</em>'.
+	 * @see org.eclipse.fennec.model.atlas.mgmt.management.Diagnostic#getChildren()
+	 * @see #getDiagnostic()
+	 * @generated
+	 */
+	EReference getDiagnostic_Children();
+
+	/**
+	 * Returns the meta object for the containment reference list '{@link org.eclipse.fennec.model.atlas.mgmt.management.Diagnostic#getHistory <em>History</em>}'.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @return the meta object for the containment reference list '<em>History</em>'.
+	 * @see org.eclipse.fennec.model.atlas.mgmt.management.Diagnostic#getHistory()
+	 * @see #getDiagnostic()
+	 * @generated
+	 */
+	EReference getDiagnostic_History();
+
+	/**
+	 * Returns the meta object for class '{@link org.eclipse.fennec.model.atlas.mgmt.management.DiagnosticChange <em>Diagnostic Change</em>}'.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @return the meta object for class '<em>Diagnostic Change</em>'.
+	 * @see org.eclipse.fennec.model.atlas.mgmt.management.DiagnosticChange
+	 * @generated
+	 */
+	EClass getDiagnosticChange();
+
+	/**
+	 * Returns the meta object for the attribute '{@link org.eclipse.fennec.model.atlas.mgmt.management.DiagnosticChange#getChangeTime <em>Change Time</em>}'.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @return the meta object for the attribute '<em>Change Time</em>'.
+	 * @see org.eclipse.fennec.model.atlas.mgmt.management.DiagnosticChange#getChangeTime()
+	 * @see #getDiagnosticChange()
+	 * @generated
+	 */
+	EAttribute getDiagnosticChange_ChangeTime();
+
+	/**
+	 * Returns the meta object for the attribute '{@link org.eclipse.fennec.model.atlas.mgmt.management.DiagnosticChange#getChangedBy <em>Changed By</em>}'.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @return the meta object for the attribute '<em>Changed By</em>'.
+	 * @see org.eclipse.fennec.model.atlas.mgmt.management.DiagnosticChange#getChangedBy()
+	 * @see #getDiagnosticChange()
+	 * @generated
+	 */
+	EAttribute getDiagnosticChange_ChangedBy();
+
+	/**
+	 * Returns the meta object for the attribute '{@link org.eclipse.fennec.model.atlas.mgmt.management.DiagnosticChange#getOldSeverity <em>Old Severity</em>}'.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @return the meta object for the attribute '<em>Old Severity</em>'.
+	 * @see org.eclipse.fennec.model.atlas.mgmt.management.DiagnosticChange#getOldSeverity()
+	 * @see #getDiagnosticChange()
+	 * @generated
+	 */
+	EAttribute getDiagnosticChange_OldSeverity();
+
+	/**
+	 * Returns the meta object for the attribute '{@link org.eclipse.fennec.model.atlas.mgmt.management.DiagnosticChange#getNewSeverity <em>New Severity</em>}'.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @return the meta object for the attribute '<em>New Severity</em>'.
+	 * @see org.eclipse.fennec.model.atlas.mgmt.management.DiagnosticChange#getNewSeverity()
+	 * @see #getDiagnosticChange()
+	 * @generated
+	 */
+	EAttribute getDiagnosticChange_NewSeverity();
+
+	/**
+	 * Returns the meta object for the attribute '{@link org.eclipse.fennec.model.atlas.mgmt.management.DiagnosticChange#getOldStatus <em>Old Status</em>}'.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @return the meta object for the attribute '<em>Old Status</em>'.
+	 * @see org.eclipse.fennec.model.atlas.mgmt.management.DiagnosticChange#getOldStatus()
+	 * @see #getDiagnosticChange()
+	 * @generated
+	 */
+	EAttribute getDiagnosticChange_OldStatus();
+
+	/**
+	 * Returns the meta object for the attribute '{@link org.eclipse.fennec.model.atlas.mgmt.management.DiagnosticChange#getNewStatus <em>New Status</em>}'.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @return the meta object for the attribute '<em>New Status</em>'.
+	 * @see org.eclipse.fennec.model.atlas.mgmt.management.DiagnosticChange#getNewStatus()
+	 * @see #getDiagnosticChange()
+	 * @generated
+	 */
+	EAttribute getDiagnosticChange_NewStatus();
+
+	/**
+	 * Returns the meta object for the attribute '{@link org.eclipse.fennec.model.atlas.mgmt.management.DiagnosticChange#getReason <em>Reason</em>}'.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @return the meta object for the attribute '<em>Reason</em>'.
+	 * @see org.eclipse.fennec.model.atlas.mgmt.management.DiagnosticChange#getReason()
+	 * @see #getDiagnosticChange()
+	 * @generated
+	 */
+	EAttribute getDiagnosticChange_Reason();
 
 	/**
 	 * Returns the meta object for class '{@link java.util.Map.Entry <em>String To Object Map Entry</em>}'.
@@ -1380,6 +1916,26 @@ public interface ManagementPackage extends org.eclipse.emf.ecore.EPackage {
 	EEnum getGenerationStatus();
 
 	/**
+	 * Returns the meta object for enum '{@link org.eclipse.fennec.model.atlas.mgmt.management.DiagnosticSeverity <em>Diagnostic Severity</em>}'.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @return the meta object for enum '<em>Diagnostic Severity</em>'.
+	 * @see org.eclipse.fennec.model.atlas.mgmt.management.DiagnosticSeverity
+	 * @generated
+	 */
+	EEnum getDiagnosticSeverity();
+
+	/**
+	 * Returns the meta object for enum '{@link org.eclipse.fennec.model.atlas.mgmt.management.DiagnosticStatus <em>Diagnostic Status</em>}'.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @return the meta object for enum '<em>Diagnostic Status</em>'.
+	 * @see org.eclipse.fennec.model.atlas.mgmt.management.DiagnosticStatus
+	 * @generated
+	 */
+	EEnum getDiagnosticStatus();
+
+	/**
 	 * Returns the meta object for data type '{@link java.time.Instant <em>Instant</em>}'.
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
@@ -1680,6 +2236,202 @@ public interface ManagementPackage extends org.eclipse.emf.ecore.EPackage {
 		EAttribute OBJECT_METADATA__FINGERPRINT = eINSTANCE.getObjectMetadata_Fingerprint();
 
 		/**
+		 * The meta object literal for the '<em><b>Diagnostics</b></em>' containment reference list feature.
+		 * <!-- begin-user-doc -->
+		 * <!-- end-user-doc -->
+		 * @generated
+		 */
+		EReference OBJECT_METADATA__DIAGNOSTICS = eINSTANCE.getObjectMetadata_Diagnostics();
+
+		/**
+		 * The meta object literal for the '{@link org.eclipse.fennec.model.atlas.mgmt.management.impl.DiagnosticImpl <em>Diagnostic</em>}' class.
+		 * <!-- begin-user-doc -->
+		 * <!-- end-user-doc -->
+		 * @see org.eclipse.fennec.model.atlas.mgmt.management.impl.DiagnosticImpl
+		 * @see org.eclipse.fennec.model.atlas.mgmt.management.impl.ManagementPackageImpl#getDiagnostic()
+		 * @generated
+		 */
+		EClass DIAGNOSTIC = eINSTANCE.getDiagnostic();
+
+		/**
+		 * The meta object literal for the '<em><b>Id</b></em>' attribute feature.
+		 * <!-- begin-user-doc -->
+		 * <!-- end-user-doc -->
+		 * @generated
+		 */
+		EAttribute DIAGNOSTIC__ID = eINSTANCE.getDiagnostic_Id();
+
+		/**
+		 * The meta object literal for the '<em><b>Producer</b></em>' attribute feature.
+		 * <!-- begin-user-doc -->
+		 * <!-- end-user-doc -->
+		 * @generated
+		 */
+		EAttribute DIAGNOSTIC__PRODUCER = eINSTANCE.getDiagnostic_Producer();
+
+		/**
+		 * The meta object literal for the '<em><b>Source</b></em>' attribute feature.
+		 * <!-- begin-user-doc -->
+		 * <!-- end-user-doc -->
+		 * @generated
+		 */
+		EAttribute DIAGNOSTIC__SOURCE = eINSTANCE.getDiagnostic_Source();
+
+		/**
+		 * The meta object literal for the '<em><b>Code</b></em>' attribute feature.
+		 * <!-- begin-user-doc -->
+		 * <!-- end-user-doc -->
+		 * @generated
+		 */
+		EAttribute DIAGNOSTIC__CODE = eINSTANCE.getDiagnostic_Code();
+
+		/**
+		 * The meta object literal for the '<em><b>Severity</b></em>' attribute feature.
+		 * <!-- begin-user-doc -->
+		 * <!-- end-user-doc -->
+		 * @generated
+		 */
+		EAttribute DIAGNOSTIC__SEVERITY = eINSTANCE.getDiagnostic_Severity();
+
+		/**
+		 * The meta object literal for the '<em><b>Message</b></em>' attribute feature.
+		 * <!-- begin-user-doc -->
+		 * <!-- end-user-doc -->
+		 * @generated
+		 */
+		EAttribute DIAGNOSTIC__MESSAGE = eINSTANCE.getDiagnostic_Message();
+
+		/**
+		 * The meta object literal for the '<em><b>Category</b></em>' attribute feature.
+		 * <!-- begin-user-doc -->
+		 * <!-- end-user-doc -->
+		 * @generated
+		 */
+		EAttribute DIAGNOSTIC__CATEGORY = eINSTANCE.getDiagnostic_Category();
+
+		/**
+		 * The meta object literal for the '<em><b>Target</b></em>' attribute feature.
+		 * <!-- begin-user-doc -->
+		 * <!-- end-user-doc -->
+		 * @generated
+		 */
+		EAttribute DIAGNOSTIC__TARGET = eINSTANCE.getDiagnostic_Target();
+
+		/**
+		 * The meta object literal for the '<em><b>Status</b></em>' attribute feature.
+		 * <!-- begin-user-doc -->
+		 * <!-- end-user-doc -->
+		 * @generated
+		 */
+		EAttribute DIAGNOSTIC__STATUS = eINSTANCE.getDiagnostic_Status();
+
+		/**
+		 * The meta object literal for the '<em><b>Created Time</b></em>' attribute feature.
+		 * <!-- begin-user-doc -->
+		 * <!-- end-user-doc -->
+		 * @generated
+		 */
+		EAttribute DIAGNOSTIC__CREATED_TIME = eINSTANCE.getDiagnostic_CreatedTime();
+
+		/**
+		 * The meta object literal for the '<em><b>Last Change Time</b></em>' attribute feature.
+		 * <!-- begin-user-doc -->
+		 * <!-- end-user-doc -->
+		 * @generated
+		 */
+		EAttribute DIAGNOSTIC__LAST_CHANGE_TIME = eINSTANCE.getDiagnostic_LastChangeTime();
+
+		/**
+		 * The meta object literal for the '<em><b>Version</b></em>' attribute feature.
+		 * <!-- begin-user-doc -->
+		 * <!-- end-user-doc -->
+		 * @generated
+		 */
+		EAttribute DIAGNOSTIC__VERSION = eINSTANCE.getDiagnostic_Version();
+
+		/**
+		 * The meta object literal for the '<em><b>Children</b></em>' containment reference list feature.
+		 * <!-- begin-user-doc -->
+		 * <!-- end-user-doc -->
+		 * @generated
+		 */
+		EReference DIAGNOSTIC__CHILDREN = eINSTANCE.getDiagnostic_Children();
+
+		/**
+		 * The meta object literal for the '<em><b>History</b></em>' containment reference list feature.
+		 * <!-- begin-user-doc -->
+		 * <!-- end-user-doc -->
+		 * @generated
+		 */
+		EReference DIAGNOSTIC__HISTORY = eINSTANCE.getDiagnostic_History();
+
+		/**
+		 * The meta object literal for the '{@link org.eclipse.fennec.model.atlas.mgmt.management.impl.DiagnosticChangeImpl <em>Diagnostic Change</em>}' class.
+		 * <!-- begin-user-doc -->
+		 * <!-- end-user-doc -->
+		 * @see org.eclipse.fennec.model.atlas.mgmt.management.impl.DiagnosticChangeImpl
+		 * @see org.eclipse.fennec.model.atlas.mgmt.management.impl.ManagementPackageImpl#getDiagnosticChange()
+		 * @generated
+		 */
+		EClass DIAGNOSTIC_CHANGE = eINSTANCE.getDiagnosticChange();
+
+		/**
+		 * The meta object literal for the '<em><b>Change Time</b></em>' attribute feature.
+		 * <!-- begin-user-doc -->
+		 * <!-- end-user-doc -->
+		 * @generated
+		 */
+		EAttribute DIAGNOSTIC_CHANGE__CHANGE_TIME = eINSTANCE.getDiagnosticChange_ChangeTime();
+
+		/**
+		 * The meta object literal for the '<em><b>Changed By</b></em>' attribute feature.
+		 * <!-- begin-user-doc -->
+		 * <!-- end-user-doc -->
+		 * @generated
+		 */
+		EAttribute DIAGNOSTIC_CHANGE__CHANGED_BY = eINSTANCE.getDiagnosticChange_ChangedBy();
+
+		/**
+		 * The meta object literal for the '<em><b>Old Severity</b></em>' attribute feature.
+		 * <!-- begin-user-doc -->
+		 * <!-- end-user-doc -->
+		 * @generated
+		 */
+		EAttribute DIAGNOSTIC_CHANGE__OLD_SEVERITY = eINSTANCE.getDiagnosticChange_OldSeverity();
+
+		/**
+		 * The meta object literal for the '<em><b>New Severity</b></em>' attribute feature.
+		 * <!-- begin-user-doc -->
+		 * <!-- end-user-doc -->
+		 * @generated
+		 */
+		EAttribute DIAGNOSTIC_CHANGE__NEW_SEVERITY = eINSTANCE.getDiagnosticChange_NewSeverity();
+
+		/**
+		 * The meta object literal for the '<em><b>Old Status</b></em>' attribute feature.
+		 * <!-- begin-user-doc -->
+		 * <!-- end-user-doc -->
+		 * @generated
+		 */
+		EAttribute DIAGNOSTIC_CHANGE__OLD_STATUS = eINSTANCE.getDiagnosticChange_OldStatus();
+
+		/**
+		 * The meta object literal for the '<em><b>New Status</b></em>' attribute feature.
+		 * <!-- begin-user-doc -->
+		 * <!-- end-user-doc -->
+		 * @generated
+		 */
+		EAttribute DIAGNOSTIC_CHANGE__NEW_STATUS = eINSTANCE.getDiagnosticChange_NewStatus();
+
+		/**
+		 * The meta object literal for the '<em><b>Reason</b></em>' attribute feature.
+		 * <!-- begin-user-doc -->
+		 * <!-- end-user-doc -->
+		 * @generated
+		 */
+		EAttribute DIAGNOSTIC_CHANGE__REASON = eINSTANCE.getDiagnosticChange_Reason();
+
+		/**
 		 * The meta object literal for the '{@link org.eclipse.fennec.model.atlas.mgmt.management.impl.StringToObjectMapEntryImpl <em>String To Object Map Entry</em>}' class.
 		 * <!-- begin-user-doc -->
 		 * <!-- end-user-doc -->
@@ -1942,6 +2694,26 @@ public interface ManagementPackage extends org.eclipse.emf.ecore.EPackage {
 		 * @generated
 		 */
 		EEnum GENERATION_STATUS = eINSTANCE.getGenerationStatus();
+
+		/**
+		 * The meta object literal for the '{@link org.eclipse.fennec.model.atlas.mgmt.management.DiagnosticSeverity <em>Diagnostic Severity</em>}' enum.
+		 * <!-- begin-user-doc -->
+		 * <!-- end-user-doc -->
+		 * @see org.eclipse.fennec.model.atlas.mgmt.management.DiagnosticSeverity
+		 * @see org.eclipse.fennec.model.atlas.mgmt.management.impl.ManagementPackageImpl#getDiagnosticSeverity()
+		 * @generated
+		 */
+		EEnum DIAGNOSTIC_SEVERITY = eINSTANCE.getDiagnosticSeverity();
+
+		/**
+		 * The meta object literal for the '{@link org.eclipse.fennec.model.atlas.mgmt.management.DiagnosticStatus <em>Diagnostic Status</em>}' enum.
+		 * <!-- begin-user-doc -->
+		 * <!-- end-user-doc -->
+		 * @see org.eclipse.fennec.model.atlas.mgmt.management.DiagnosticStatus
+		 * @see org.eclipse.fennec.model.atlas.mgmt.management.impl.ManagementPackageImpl#getDiagnosticStatus()
+		 * @generated
+		 */
+		EEnum DIAGNOSTIC_STATUS = eINSTANCE.getDiagnosticStatus();
 
 		/**
 		 * The meta object literal for the '<em>Instant</em>' data type.

@@ -38,7 +38,7 @@ import org.osgi.annotation.versioning.ProviderType;
  * @generated
  */
 @ProviderType
-@EPackage(uri = ManagementApiPackage.eNS_URI, fingerprint = "fp1:5ea32cfc0f2a69d41de511451d29c6f01b09a4ff0db88bd8b38f3ffa09b7350f", genModel = "/model/management-api.genmodel", genModelSourceLocations = {"model/management-api.genmodel","org.eclipse.fennec.model.atlas.management/model/management-api.genmodel"}, ecore = "/model/management-api.ecore", ecoreSourceLocations = "/model/management-api.ecore")
+@EPackage(uri = ManagementApiPackage.eNS_URI, fingerprint = "fp1:5acaa8b5574bd36e7ea90374f22db8ac3554cbf32eb0acbe4140d2ebb8cf8e38", genModel = "/model/management-api.genmodel", genModelSourceLocations = {"model/management-api.genmodel","org.eclipse.fennec.model.atlas.management/model/management-api.genmodel"}, ecore = "/model/management-api.ecore", ecoreSourceLocations = "/model/management-api.ecore")
 public interface ManagementApiPackage extends org.eclipse.emf.ecore.EPackage {
 	/**
 	 * The package name.
@@ -346,13 +346,22 @@ public interface ManagementApiPackage extends org.eclipse.emf.ecore.EPackage {
 	int EOBJECT_STORAGE_SERVICE___UPDATE_METADATA__STRING_STRING_STRING_STRING_OBJECTMETADATA = 7;
 
 	/**
+	 * The operation id for the '<em>Update Diagnostics</em>' operation.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 * @ordered
+	 */
+	int EOBJECT_STORAGE_SERVICE___UPDATE_DIAGNOSTICS__STRING_STRING_STRING_STRING_STRING_LIST = 8;
+
+	/**
 	 * The operation id for the '<em>Update Status</em>' operation.
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
 	 * @generated
 	 * @ordered
 	 */
-	int EOBJECT_STORAGE_SERVICE___UPDATE_STATUS__STRING_STRING_STRING_STRING_OBJECTSTATUS_STRING = 8;
+	int EOBJECT_STORAGE_SERVICE___UPDATE_STATUS__STRING_STRING_STRING_STRING_OBJECTSTATUS_STRING = 9;
 
 	/**
 	 * The operation id for the '<em>Exists</em>' operation.
@@ -361,7 +370,7 @@ public interface ManagementApiPackage extends org.eclipse.emf.ecore.EPackage {
 	 * @generated
 	 * @ordered
 	 */
-	int EOBJECT_STORAGE_SERVICE___EXISTS__STRING_STRING_STRING_STRING = 9;
+	int EOBJECT_STORAGE_SERVICE___EXISTS__STRING_STRING_STRING_STRING = 10;
 
 	/**
 	 * The operation id for the '<em>Get Object Count</em>' operation.
@@ -370,7 +379,7 @@ public interface ManagementApiPackage extends org.eclipse.emf.ecore.EPackage {
 	 * @generated
 	 * @ordered
 	 */
-	int EOBJECT_STORAGE_SERVICE___GET_OBJECT_COUNT = 10;
+	int EOBJECT_STORAGE_SERVICE___GET_OBJECT_COUNT = 11;
 
 	/**
 	 * The operation id for the '<em>Get Backend Type</em>' operation.
@@ -379,7 +388,7 @@ public interface ManagementApiPackage extends org.eclipse.emf.ecore.EPackage {
 	 * @generated
 	 * @ordered
 	 */
-	int EOBJECT_STORAGE_SERVICE___GET_BACKEND_TYPE = 11;
+	int EOBJECT_STORAGE_SERVICE___GET_BACKEND_TYPE = 12;
 
 	/**
 	 * The operation id for the '<em>Get Storage Type</em>' operation.
@@ -388,7 +397,7 @@ public interface ManagementApiPackage extends org.eclipse.emf.ecore.EPackage {
 	 * @generated
 	 * @ordered
 	 */
-	int EOBJECT_STORAGE_SERVICE___GET_STORAGE_TYPE = 12;
+	int EOBJECT_STORAGE_SERVICE___GET_STORAGE_TYPE = 13;
 
 	/**
 	 * The number of operations of the '<em>EObject Storage Service</em>' class.
@@ -397,7 +406,7 @@ public interface ManagementApiPackage extends org.eclipse.emf.ecore.EPackage {
 	 * @generated
 	 * @ordered
 	 */
-	int EOBJECT_STORAGE_SERVICE_OPERATION_COUNT = 13;
+	int EOBJECT_STORAGE_SERVICE_OPERATION_COUNT = 14;
 
 	/**
 	 * The meta object id for the '{@link org.eclipse.fennec.model.atlas.mgmt.api.EObjectRegistryService <em>EObject Registry Service</em>}' class.
@@ -939,6 +948,16 @@ public interface ManagementApiPackage extends org.eclipse.emf.ecore.EPackage {
 	 * @generated
 	 */
 	EOperation getEObjectStorageService__UpdateMetadata__String_String_String_String_ObjectMetadata();
+
+	/**
+	 * Returns the meta object for the '{@link org.eclipse.fennec.model.atlas.mgmt.api.EObjectStorageService#updateDiagnostics(java.lang.String, java.lang.String, java.lang.String, java.lang.String, java.lang.String, java.util.List) <em>Update Diagnostics</em>}' operation.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @return the meta object for the '<em>Update Diagnostics</em>' operation.
+	 * @see org.eclipse.fennec.model.atlas.mgmt.api.EObjectStorageService#updateDiagnostics(java.lang.String, java.lang.String, java.lang.String, java.lang.String, java.lang.String, java.util.List)
+	 * @generated
+	 */
+	EOperation getEObjectStorageService__UpdateDiagnostics__String_String_String_String_String_List();
 
 	/**
 	 * Returns the meta object for the '{@link org.eclipse.fennec.model.atlas.mgmt.api.EObjectStorageService#updateStatus(java.lang.String, java.lang.String, java.lang.String, java.lang.String, org.eclipse.fennec.model.atlas.mgmt.management.ObjectStatus, java.lang.String) <em>Update Status</em>}' operation.
@@ -1498,6 +1517,14 @@ public interface ManagementApiPackage extends org.eclipse.emf.ecore.EPackage {
 		 * @generated
 		 */
 		EOperation EOBJECT_STORAGE_SERVICE___UPDATE_METADATA__STRING_STRING_STRING_STRING_OBJECTMETADATA = eINSTANCE.getEObjectStorageService__UpdateMetadata__String_String_String_String_ObjectMetadata();
+
+		/**
+		 * The meta object literal for the '<em><b>Update Diagnostics</b></em>' operation.
+		 * <!-- begin-user-doc -->
+		 * <!-- end-user-doc -->
+		 * @generated
+		 */
+		EOperation EOBJECT_STORAGE_SERVICE___UPDATE_DIAGNOSTICS__STRING_STRING_STRING_STRING_STRING_LIST = eINSTANCE.getEObjectStorageService__UpdateDiagnostics__String_String_String_String_String_List();
 
 		/**
 		 * The meta object literal for the '<em><b>Update Status</b></em>' operation.

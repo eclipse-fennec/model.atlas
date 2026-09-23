@@ -28,6 +28,10 @@ import org.eclipse.emf.ecore.EReference;
 
 import org.eclipse.emf.ecore.impl.EPackageImpl;
 
+import org.eclipse.fennec.model.atlas.mgmt.management.Diagnostic;
+import org.eclipse.fennec.model.atlas.mgmt.management.DiagnosticChange;
+import org.eclipse.fennec.model.atlas.mgmt.management.DiagnosticSeverity;
+import org.eclipse.fennec.model.atlas.mgmt.management.DiagnosticStatus;
 import org.eclipse.fennec.model.atlas.mgmt.management.GenerationRequest;
 import org.eclipse.fennec.model.atlas.mgmt.management.GenerationStatus;
 import org.eclipse.fennec.model.atlas.mgmt.management.ManagementFactory;
@@ -54,6 +58,20 @@ public class ManagementPackageImpl extends EPackageImpl implements ManagementPac
 	 * @generated
 	 */
 	private EClass objectMetadataEClass = null;
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	private EClass diagnosticEClass = null;
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	private EClass diagnosticChangeEClass = null;
 
 	/**
 	 * <!-- begin-user-doc -->
@@ -110,6 +128,20 @@ public class ManagementPackageImpl extends EPackageImpl implements ManagementPac
 	 * @generated
 	 */
 	private EEnum generationStatusEEnum = null;
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	private EEnum diagnosticSeverityEEnum = null;
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	private EEnum diagnosticStatusEEnum = null;
 
 	/**
 	 * <!-- begin-user-doc -->
@@ -482,6 +514,246 @@ public class ManagementPackageImpl extends EPackageImpl implements ManagementPac
 	 * @generated
 	 */
 	@Override
+	public EReference getObjectMetadata_Diagnostics() {
+		return (EReference)objectMetadataEClass.getEStructuralFeatures().get(26);
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
+	public EClass getDiagnostic() {
+		return diagnosticEClass;
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
+	public EAttribute getDiagnostic_Id() {
+		return (EAttribute)diagnosticEClass.getEStructuralFeatures().get(0);
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
+	public EAttribute getDiagnostic_Producer() {
+		return (EAttribute)diagnosticEClass.getEStructuralFeatures().get(1);
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
+	public EAttribute getDiagnostic_Source() {
+		return (EAttribute)diagnosticEClass.getEStructuralFeatures().get(2);
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
+	public EAttribute getDiagnostic_Code() {
+		return (EAttribute)diagnosticEClass.getEStructuralFeatures().get(3);
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
+	public EAttribute getDiagnostic_Severity() {
+		return (EAttribute)diagnosticEClass.getEStructuralFeatures().get(4);
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
+	public EAttribute getDiagnostic_Message() {
+		return (EAttribute)diagnosticEClass.getEStructuralFeatures().get(5);
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
+	public EAttribute getDiagnostic_Category() {
+		return (EAttribute)diagnosticEClass.getEStructuralFeatures().get(6);
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
+	public EAttribute getDiagnostic_Target() {
+		return (EAttribute)diagnosticEClass.getEStructuralFeatures().get(7);
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
+	public EAttribute getDiagnostic_Status() {
+		return (EAttribute)diagnosticEClass.getEStructuralFeatures().get(8);
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
+	public EAttribute getDiagnostic_CreatedTime() {
+		return (EAttribute)diagnosticEClass.getEStructuralFeatures().get(9);
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
+	public EAttribute getDiagnostic_LastChangeTime() {
+		return (EAttribute)diagnosticEClass.getEStructuralFeatures().get(10);
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
+	public EAttribute getDiagnostic_Version() {
+		return (EAttribute)diagnosticEClass.getEStructuralFeatures().get(11);
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
+	public EReference getDiagnostic_Children() {
+		return (EReference)diagnosticEClass.getEStructuralFeatures().get(12);
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
+	public EReference getDiagnostic_History() {
+		return (EReference)diagnosticEClass.getEStructuralFeatures().get(13);
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
+	public EClass getDiagnosticChange() {
+		return diagnosticChangeEClass;
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
+	public EAttribute getDiagnosticChange_ChangeTime() {
+		return (EAttribute)diagnosticChangeEClass.getEStructuralFeatures().get(0);
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
+	public EAttribute getDiagnosticChange_ChangedBy() {
+		return (EAttribute)diagnosticChangeEClass.getEStructuralFeatures().get(1);
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
+	public EAttribute getDiagnosticChange_OldSeverity() {
+		return (EAttribute)diagnosticChangeEClass.getEStructuralFeatures().get(2);
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
+	public EAttribute getDiagnosticChange_NewSeverity() {
+		return (EAttribute)diagnosticChangeEClass.getEStructuralFeatures().get(3);
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
+	public EAttribute getDiagnosticChange_OldStatus() {
+		return (EAttribute)diagnosticChangeEClass.getEStructuralFeatures().get(4);
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
+	public EAttribute getDiagnosticChange_NewStatus() {
+		return (EAttribute)diagnosticChangeEClass.getEStructuralFeatures().get(5);
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
+	public EAttribute getDiagnosticChange_Reason() {
+		return (EAttribute)diagnosticChangeEClass.getEStructuralFeatures().get(6);
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
 	public EClass getStringToObjectMapEntry() {
 		return stringToObjectMapEntryEClass;
 	}
@@ -792,6 +1064,26 @@ public class ManagementPackageImpl extends EPackageImpl implements ManagementPac
 	 * @generated
 	 */
 	@Override
+	public EEnum getDiagnosticSeverity() {
+		return diagnosticSeverityEEnum;
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
+	public EEnum getDiagnosticStatus() {
+		return diagnosticStatusEEnum;
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
 	public EDataType getInstant() {
 		return instantEDataType;
 	}
@@ -892,6 +1184,32 @@ public class ManagementPackageImpl extends EPackageImpl implements ManagementPac
 		createEAttribute(objectMetadataEClass, OBJECT_METADATA__IS_READ_ONLY);
 		createEAttribute(objectMetadataEClass, OBJECT_METADATA__REGISTRY);
 		createEAttribute(objectMetadataEClass, OBJECT_METADATA__FINGERPRINT);
+		createEReference(objectMetadataEClass, OBJECT_METADATA__DIAGNOSTICS);
+
+		diagnosticEClass = createEClass(DIAGNOSTIC);
+		createEAttribute(diagnosticEClass, DIAGNOSTIC__ID);
+		createEAttribute(diagnosticEClass, DIAGNOSTIC__PRODUCER);
+		createEAttribute(diagnosticEClass, DIAGNOSTIC__SOURCE);
+		createEAttribute(diagnosticEClass, DIAGNOSTIC__CODE);
+		createEAttribute(diagnosticEClass, DIAGNOSTIC__SEVERITY);
+		createEAttribute(diagnosticEClass, DIAGNOSTIC__MESSAGE);
+		createEAttribute(diagnosticEClass, DIAGNOSTIC__CATEGORY);
+		createEAttribute(diagnosticEClass, DIAGNOSTIC__TARGET);
+		createEAttribute(diagnosticEClass, DIAGNOSTIC__STATUS);
+		createEAttribute(diagnosticEClass, DIAGNOSTIC__CREATED_TIME);
+		createEAttribute(diagnosticEClass, DIAGNOSTIC__LAST_CHANGE_TIME);
+		createEAttribute(diagnosticEClass, DIAGNOSTIC__VERSION);
+		createEReference(diagnosticEClass, DIAGNOSTIC__CHILDREN);
+		createEReference(diagnosticEClass, DIAGNOSTIC__HISTORY);
+
+		diagnosticChangeEClass = createEClass(DIAGNOSTIC_CHANGE);
+		createEAttribute(diagnosticChangeEClass, DIAGNOSTIC_CHANGE__CHANGE_TIME);
+		createEAttribute(diagnosticChangeEClass, DIAGNOSTIC_CHANGE__CHANGED_BY);
+		createEAttribute(diagnosticChangeEClass, DIAGNOSTIC_CHANGE__OLD_SEVERITY);
+		createEAttribute(diagnosticChangeEClass, DIAGNOSTIC_CHANGE__NEW_SEVERITY);
+		createEAttribute(diagnosticChangeEClass, DIAGNOSTIC_CHANGE__OLD_STATUS);
+		createEAttribute(diagnosticChangeEClass, DIAGNOSTIC_CHANGE__NEW_STATUS);
+		createEAttribute(diagnosticChangeEClass, DIAGNOSTIC_CHANGE__REASON);
 
 		stringToObjectMapEntryEClass = createEClass(STRING_TO_OBJECT_MAP_ENTRY);
 		createEAttribute(stringToObjectMapEntryEClass, STRING_TO_OBJECT_MAP_ENTRY__KEY);
@@ -929,6 +1247,8 @@ public class ManagementPackageImpl extends EPackageImpl implements ManagementPac
 		packageStatusEEnum = createEEnum(PACKAGE_STATUS);
 		storageBackendTypeEEnum = createEEnum(STORAGE_BACKEND_TYPE);
 		generationStatusEEnum = createEEnum(GENERATION_STATUS);
+		diagnosticSeverityEEnum = createEEnum(DIAGNOSTIC_SEVERITY);
+		diagnosticStatusEEnum = createEEnum(DIAGNOSTIC_STATUS);
 
 		// Create data types
 		instantEDataType = createEDataType(INSTANT);
@@ -998,6 +1318,34 @@ public class ManagementPackageImpl extends EPackageImpl implements ManagementPac
 		initEAttribute(getObjectMetadata_IsReadOnly(), ecorePackage.getEBoolean(), "isReadOnly", null, 0, 1, ObjectMetadata.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_UNSETTABLE, !IS_ID, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
 		initEAttribute(getObjectMetadata_Registry(), ecorePackage.getEString(), "registry", null, 1, 1, ObjectMetadata.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_UNSETTABLE, !IS_ID, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
 		initEAttribute(getObjectMetadata_Fingerprint(), ecorePackage.getEString(), "fingerprint", null, 0, 1, ObjectMetadata.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_UNSETTABLE, !IS_ID, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
+		initEReference(getObjectMetadata_Diagnostics(), this.getDiagnostic(), null, "diagnostics", null, 0, -1, ObjectMetadata.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, IS_COMPOSITE, !IS_RESOLVE_PROXIES, !IS_UNSETTABLE, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
+		getObjectMetadata_Diagnostics().getEKeys().add(this.getDiagnostic_Id());
+
+		initEClass(diagnosticEClass, Diagnostic.class, "Diagnostic", !IS_ABSTRACT, !IS_INTERFACE, IS_GENERATED_INSTANCE_CLASS);
+		initEAttribute(getDiagnostic_Id(), ecorePackage.getEString(), "id", null, 1, 1, Diagnostic.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_UNSETTABLE, IS_ID, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
+		initEAttribute(getDiagnostic_Producer(), ecorePackage.getEString(), "producer", null, 1, 1, Diagnostic.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_UNSETTABLE, !IS_ID, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
+		initEAttribute(getDiagnostic_Source(), ecorePackage.getEString(), "source", null, 0, 1, Diagnostic.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_UNSETTABLE, !IS_ID, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
+		initEAttribute(getDiagnostic_Code(), ecorePackage.getEString(), "code", null, 1, 1, Diagnostic.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_UNSETTABLE, !IS_ID, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
+		initEAttribute(getDiagnostic_Severity(), this.getDiagnosticSeverity(), "severity", null, 1, 1, Diagnostic.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_UNSETTABLE, !IS_ID, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
+		initEAttribute(getDiagnostic_Message(), ecorePackage.getEString(), "message", null, 1, 1, Diagnostic.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_UNSETTABLE, !IS_ID, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
+		initEAttribute(getDiagnostic_Category(), ecorePackage.getEString(), "category", null, 0, 1, Diagnostic.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_UNSETTABLE, !IS_ID, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
+		initEAttribute(getDiagnostic_Target(), ecorePackage.getEString(), "target", null, 0, 1, Diagnostic.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_UNSETTABLE, !IS_ID, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
+		initEAttribute(getDiagnostic_Status(), this.getDiagnosticStatus(), "status", "OPEN", 1, 1, Diagnostic.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_UNSETTABLE, !IS_ID, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
+		initEAttribute(getDiagnostic_CreatedTime(), this.getInstant(), "createdTime", null, 1, 1, Diagnostic.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_UNSETTABLE, !IS_ID, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
+		initEAttribute(getDiagnostic_LastChangeTime(), this.getInstant(), "lastChangeTime", null, 0, 1, Diagnostic.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_UNSETTABLE, !IS_ID, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
+		initEAttribute(getDiagnostic_Version(), ecorePackage.getELong(), "version", "0", 1, 1, Diagnostic.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_UNSETTABLE, !IS_ID, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
+		initEReference(getDiagnostic_Children(), this.getDiagnostic(), null, "children", null, 0, -1, Diagnostic.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, IS_COMPOSITE, !IS_RESOLVE_PROXIES, !IS_UNSETTABLE, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
+		getDiagnostic_Children().getEKeys().add(this.getDiagnostic_Id());
+		initEReference(getDiagnostic_History(), this.getDiagnosticChange(), null, "history", null, 0, -1, Diagnostic.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, IS_COMPOSITE, !IS_RESOLVE_PROXIES, !IS_UNSETTABLE, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
+
+		initEClass(diagnosticChangeEClass, DiagnosticChange.class, "DiagnosticChange", !IS_ABSTRACT, !IS_INTERFACE, IS_GENERATED_INSTANCE_CLASS);
+		initEAttribute(getDiagnosticChange_ChangeTime(), this.getInstant(), "changeTime", null, 1, 1, DiagnosticChange.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_UNSETTABLE, !IS_ID, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
+		initEAttribute(getDiagnosticChange_ChangedBy(), ecorePackage.getEString(), "changedBy", null, 1, 1, DiagnosticChange.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_UNSETTABLE, !IS_ID, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
+		initEAttribute(getDiagnosticChange_OldSeverity(), this.getDiagnosticSeverity(), "oldSeverity", null, 0, 1, DiagnosticChange.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_UNSETTABLE, !IS_ID, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
+		initEAttribute(getDiagnosticChange_NewSeverity(), this.getDiagnosticSeverity(), "newSeverity", null, 0, 1, DiagnosticChange.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_UNSETTABLE, !IS_ID, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
+		initEAttribute(getDiagnosticChange_OldStatus(), this.getDiagnosticStatus(), "oldStatus", null, 0, 1, DiagnosticChange.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_UNSETTABLE, !IS_ID, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
+		initEAttribute(getDiagnosticChange_NewStatus(), this.getDiagnosticStatus(), "newStatus", null, 0, 1, DiagnosticChange.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_UNSETTABLE, !IS_ID, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
+		initEAttribute(getDiagnosticChange_Reason(), ecorePackage.getEString(), "reason", null, 0, 1, DiagnosticChange.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_UNSETTABLE, !IS_ID, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
 
 		initEClass(stringToObjectMapEntryEClass, Map.Entry.class, "StringToObjectMapEntry", !IS_ABSTRACT, !IS_INTERFACE, !IS_GENERATED_INSTANCE_CLASS);
 		initEAttribute(getStringToObjectMapEntry_Key(), ecorePackage.getEString(), "key", null, 1, 1, Map.Entry.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_UNSETTABLE, !IS_ID, IS_UNIQUE, !IS_DERIVED, IS_ORDERED);
@@ -1057,6 +1405,16 @@ public class ManagementPackageImpl extends EPackageImpl implements ManagementPac
 		addEEnumLiteral(generationStatusEEnum, GenerationStatus.COMPLETED);
 		addEEnumLiteral(generationStatusEEnum, GenerationStatus.FAILED);
 		addEEnumLiteral(generationStatusEEnum, GenerationStatus.CANCELLED);
+
+		initEEnum(diagnosticSeverityEEnum, DiagnosticSeverity.class, "DiagnosticSeverity");
+		addEEnumLiteral(diagnosticSeverityEEnum, DiagnosticSeverity.INFO);
+		addEEnumLiteral(diagnosticSeverityEEnum, DiagnosticSeverity.WARNING);
+		addEEnumLiteral(diagnosticSeverityEEnum, DiagnosticSeverity.ERROR);
+
+		initEEnum(diagnosticStatusEEnum, DiagnosticStatus.class, "DiagnosticStatus");
+		addEEnumLiteral(diagnosticStatusEEnum, DiagnosticStatus.OPEN);
+		addEEnumLiteral(diagnosticStatusEEnum, DiagnosticStatus.ACKNOWLEDGED);
+		addEEnumLiteral(diagnosticStatusEEnum, DiagnosticStatus.RESOLVED);
 
 		// Initialize data types
 		initEDataType(instantEDataType, Instant.class, "Instant", IS_SERIALIZABLE, !IS_GENERATED_INSTANCE_CLASS);
@@ -1256,6 +1614,198 @@ public class ManagementPackageImpl extends EPackageImpl implements ManagementPac
 		   source,
 		   new String[] {
 			   "documentation", "Content-derived model fingerprint (`emf.fingerprint` format, scheme-prefixed \ne.g. `fp1:<digest>`). Set for EPackage objects; computed server-side, never \ntaken from the client.\nDistinct from contentHash, which hashes the stored XMI bytes."
+		   });
+		addAnnotation
+		  (getObjectMetadata_Diagnostics(),
+		   source,
+		   new String[] {
+			   "documentation", "Findings about this object, produced by stage actions, stage gates and other\nmodules (issue #290). Diagnostics are metadata, not content: writing them changes\nneither contentHash nor version, fires no stage action, and is allowed in stages\nthat are otherwise read-only, because a refused transition records its veto on\nthe object in its source stage.\n\nEach entry is a root of a diagnostic tree owned by one producer. A producer\nreplaces only its own roots and never touches those of another producer. Keyed\nby id, which is stable across re-validation (see Diagnostic)."
+		   });
+		addAnnotation
+		  (diagnosticEClass,
+		   source,
+		   new String[] {
+			   "documentation", "One finding about an object, modelled on org.eclipse.emf.common.util.Diagnostic:\na severity, a message, a source and code that identify the kind of finding, and\nchildren that refine it. Unlike the EMF type it is persisted with the object\'s\nmetadata and lives on: it has a stable identity, a status that is decided\nseparately from its severity, a history of the changes made to it, and a version\nfor optimistic locking (issue #291).\n\nStable id rule: the id is deterministic, derived from producer, code and target\n(for a child: from the parent\'s id, code and target). The same finding about the\nsame element therefore gets the same id on every validation run, so references\nfrom outside - a GDPR report item, a UI bookmark - survive re-validation without a\nmatching step, and a producer\'s replace operation is a plain replace by id. Two\nfindings of the same kind about the same element are one finding; a producer\nthat needs to tell them apart puts the distinction into the target or the code.\nThe API that mints ids is part of the diagnostic service (#293); the rule is\nfixed here so every producer arrives at the same id."
+		   });
+		addAnnotation
+		  (getDiagnostic_Id(),
+		   source,
+		   new String[] {
+			   "documentation", "Unique and stable identifier of this diagnostic, derived from producer, code and\ntarget (see the class documentation). Unique within the object\'s metadata; external\nartifacts address a diagnostic by (scope, registry, stage, objectId, id)."
+		   });
+		addAnnotation
+		  (getDiagnostic_Producer(),
+		   source,
+		   new String[] {
+			   "documentation", "The action, gate or module that created this diagnostic, for example\n`QvtTransitionGate` or `gdpr.review`. Ownership: a producer\'s replace operation\nreplaces exactly the roots carrying its own producer value. Set on roots; children\ninherit their parent\'s producer and carry the same value."
+		   });
+		addAnnotation
+		  (getDiagnostic_Source(),
+		   source,
+		   new String[] {
+			   "documentation", "Identifies the origin of the finding within the producer, in the sense of\norg.eclipse.emf.common.util.Diagnostic#getSource(): typically the validator, rule\nset or compiler that raised it, for example `org.eclipse.fennec.m2x.qvto`. Optional;\na producer with a single source may leave it unset."
+		   });
+		addAnnotation
+		  (getDiagnostic_Code(),
+		   source,
+		   new String[] {
+			   "documentation", "Producer-defined identifier of the kind of finding, stable across releases of the\nproducer, for example `unresolved-import` or `personal-data-without-purpose`. Part\nof the id; a client may switch on it, the message is for people."
+		   });
+		addAnnotation
+		  (getDiagnostic_Severity(),
+		   source,
+		   new String[] {
+			   "documentation", "How serious the finding is. Independent of status: a resolved error is still\nrecognisable as a former error. A module may raise or lower the severity later\n(#293); every such change is recorded in the history."
+		   });
+		addAnnotation
+		  (getDiagnostic_Message(),
+		   source,
+		   new String[] {
+			   "documentation", "Human-readable description of the finding, written for whoever looks at the\nobject. It travels to clients unchanged, so it carries no internal detail such as\nstorage paths."
+		   });
+		addAnnotation
+		  (getDiagnostic_Category(),
+		   source,
+		   new String[] {
+			   "documentation", "Coarse classification a UI can filter and group by, across producers, for\nexample `compile`, `reference`, `compliance`. Optional. Not part of the id, so a\nproducer may recategorise without minting new ids."
+		   });
+		addAnnotation
+		  (getDiagnostic_Target(),
+		   source,
+		   new String[] {
+			   "documentation", "The affected element inside the object, as a URI or URI fragment (for example\n`//Person/birthDate` for an EStructuralFeature, or `line:12:col:4` for a text\nposition a producer defines). Optional; unset means the finding is about the object\nas a whole. Part of the id, so the same finding about two elements yields two\ndiagnostics."
+		   });
+		addAnnotation
+		  (getDiagnostic_Status(),
+		   source,
+		   new String[] {
+			   "documentation", "Where the finding stands in its life: OPEN when produced, ACKNOWLEDGED when\nsomeone has seen it and accepts it for now, RESOLVED when it no longer applies\nor was dealt with. Kept separate from severity on purpose. A status set by a\nperson is not silently reverted by an automatic re-validation (#293); the history\ntells who set it."
+		   });
+		addAnnotation
+		  (getDiagnostic_CreatedTime(),
+		   source,
+		   new String[] {
+			   "documentation", "When the diagnostic was first produced. A re-validation that yields the same id\nkeeps this value; the history records that it was seen again."
+		   });
+		addAnnotation
+		  (getDiagnostic_LastChangeTime(),
+		   source,
+		   new String[] {
+			   "documentation", "When severity, status or message last changed; equals the time of the newest\nhistory entry. Unset while the diagnostic is untouched since creation."
+		   });
+		addAnnotation
+		  (getDiagnostic_Version(),
+		   source,
+		   new String[] {
+			   "documentation", "Optimistic-locking counter, incremented on every change to this diagnostic\n(#293). A change that names an older version is refused as a conflict. Starts at 0."
+		   });
+		addAnnotation
+		  (getDiagnostic_Children(),
+		   source,
+		   new String[] {
+			   "documentation", "Findings that refine this one, as in an EMF diagnostic tree: a compile failure\nwith one child per error, a compliance finding with one child per affected\nfeature. Children share the parent\'s producer; their ids derive from the parent\'s\nid."
+		   });
+		addAnnotation
+		  (getDiagnostic_History(),
+		   source,
+		   new String[] {
+			   "documentation", "Every change made to this diagnostic after it was produced, oldest first: who,\nwhen, what changed and why. Appended by the diagnostic service (#293), never\nedited."
+		   });
+		addAnnotation
+		  (diagnosticChangeEClass,
+		   source,
+		   new String[] {
+			   "documentation", "One entry in a Diagnostic\'s history: a change of severity or status, or a\nre-validation that confirmed the finding, with who made it, when and why. Old and\nnew values are recorded per field so a reader can follow the diagnostic\'s life\nwithout diffing; an unchanged field carries the same value on both sides."
+		   });
+		addAnnotation
+		  (getDiagnosticChange_ChangeTime(),
+		   source,
+		   new String[] {
+			   "documentation", "When the change was made"
+		   });
+		addAnnotation
+		  (getDiagnosticChange_ChangedBy(),
+		   source,
+		   new String[] {
+			   "documentation", "Who made the change: a user name for a manual decision (acknowledge, resolve),\nthe producer or module name for an automatic one (re-validation, escalation).\nWhether a change was manual matters, because a manual status is protected\nagainst automatic reverts (#293)."
+		   });
+		addAnnotation
+		  (getDiagnosticChange_OldSeverity(),
+		   source,
+		   new String[] {
+			   "documentation", "Severity before the change"
+		   });
+		addAnnotation
+		  (getDiagnosticChange_NewSeverity(),
+		   source,
+		   new String[] {
+			   "documentation", "Severity after the change"
+		   });
+		addAnnotation
+		  (getDiagnosticChange_OldStatus(),
+		   source,
+		   new String[] {
+			   "documentation", "Status before the change"
+		   });
+		addAnnotation
+		  (getDiagnosticChange_NewStatus(),
+		   source,
+		   new String[] {
+			   "documentation", "Status after the change"
+		   });
+		addAnnotation
+		  (getDiagnosticChange_Reason(),
+		   source,
+		   new String[] {
+			   "documentation", "Why the change was made, in the words of whoever made it: the GDPR officer\'s\nnote on a resolution, or the producer\'s explanation of an escalation. Optional."
+		   });
+		addAnnotation
+		  (diagnosticSeverityEEnum,
+		   source,
+		   new String[] {
+			   "documentation", "How serious a finding is, in the order of org.eclipse.emf.common.util.Diagnostic.\nThere is no OK literal: a diagnostic exists because something was found; an object\nwithout findings has no diagnostics."
+		   });
+		addAnnotation
+		  (diagnosticSeverityEEnum.getELiterals().get(0),
+		   source,
+		   new String[] {
+			   "documentation", "Worth knowing, nothing to do"
+		   });
+		addAnnotation
+		  (diagnosticSeverityEEnum.getELiterals().get(1),
+		   source,
+		   new String[] {
+			   "documentation", "Something to look at; the object remains usable"
+		   });
+		addAnnotation
+		  (diagnosticSeverityEEnum.getELiterals().get(2),
+		   source,
+		   new String[] {
+			   "documentation", "The object does not hold up as it stands; a gate may refuse an operation on it"
+		   });
+		addAnnotation
+		  (diagnosticStatusEEnum,
+		   source,
+		   new String[] {
+			   "documentation", "Where a finding stands in its life. Deliberately separate from severity: a\nresolved warning is still a former warning."
+		   });
+		addAnnotation
+		  (diagnosticStatusEEnum.getELiterals().get(0),
+		   source,
+		   new String[] {
+			   "documentation", "Produced and not yet dealt with; the default"
+		   });
+		addAnnotation
+		  (diagnosticStatusEEnum.getELiterals().get(1),
+		   source,
+		   new String[] {
+			   "documentation", "Seen and accepted for now by a person; still applies"
+		   });
+		addAnnotation
+		  (diagnosticStatusEEnum.getELiterals().get(2),
+		   source,
+		   new String[] {
+			   "documentation", "No longer applies, or was dealt with; kept for its history"
 		   });
 		addAnnotation
 		  (stringToObjectMapEntryEClass,

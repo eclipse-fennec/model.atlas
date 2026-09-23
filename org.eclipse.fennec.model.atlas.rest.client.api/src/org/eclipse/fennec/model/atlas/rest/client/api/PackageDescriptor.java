@@ -13,6 +13,8 @@
  */
 package org.eclipse.fennec.model.atlas.rest.client.api;
 
+import java.util.List;
+
 /**
  * One entry of a scope's final-stage schema listing: a package's namespace URI together
  * with the origin metadata the listing already carries — the <em>owning</em> scope, the
@@ -30,14 +32,30 @@ package org.eclipse.fennec.model.atlas.rest.client.api;
  * @param scope   the owning Atlas scope reported by the listing metadata (may be {@code null})
  * @param stage   the stage the package lives in (may be {@code null})
  * @param version the model version, or {@code null} if the server did not report one
+ * @param fingerprint the content fingerprint, or {@code null} if the server did not report one
+ * @param diagnostics the findings the Atlas holds about the package (issue #292); empty, never
+ *                    {@code null}, when there are none or the server predates them
  */
-public record PackageDescriptor(String nsUri, String scope, String stage, String version, String fingerprint) {
+public record PackageDescriptor(String nsUri, String scope, String stage, String version, String fingerprint,
+		List<Diagnostic> diagnostics) {
+
+	public PackageDescriptor {
+		diagnostics = diagnostics == null ? List.of() : List.copyOf(diagnostics);
+	}
+
+	/**
+	 * Compatibility constructor for callers that carry no diagnostics;
+	 * {@link #diagnostics()} is empty.
+	 */
+	public PackageDescriptor(String nsUri, String scope, String stage, String version, String fingerprint) {
+		this(nsUri, scope, stage, version, fingerprint, List.of());
+	}
 
 	/**
 	 * Compatibility constructor for callers that do not know the fingerprint
 	 * (e.g. nsURI-only listings); {@link #fingerprint()} is {@code null}.
 	 */
 	public PackageDescriptor(String nsUri, String scope, String stage, String version) {
-		this(nsUri, scope, stage, version, null);
+		this(nsUri, scope, stage, version, null, List.of());
 	}
 }

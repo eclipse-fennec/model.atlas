@@ -655,7 +655,8 @@ public class SchemaPackagesResource {
             Map.entry("status", "owned by the stage and review machinery"),
             Map.entry("isReadOnly", "owned by the stage and review machinery"),
             Map.entry("lastChangeUser", "maintained by the server"),
-            Map.entry("lastChangeTime", "maintained by the server"));
+            Map.entry("lastChangeTime", "maintained by the server"),
+            Map.entry("diagnostics", "written by their producer through the diagnostics API"));
 
     @PATCH
     @Path("/stages/{stageName}/metadata")

@@ -18,6 +18,7 @@ import java.util.Map;
 
 import org.eclipse.emf.ecore.EObject;
 
+import org.eclipse.fennec.model.atlas.mgmt.management.Diagnostic;
 import org.eclipse.fennec.model.atlas.mgmt.management.ObjectMetadata;
 
 import org.eclipse.fennec.model.atlas.scope.api.ReadableScopeService;
@@ -52,6 +53,17 @@ public interface WritableScopeService<T extends EObject> extends ReadableScopeSe
 	 * @generated
 	 */
 	Promise<ObjectMetadata> updatePropertiesInStageForRegistry(String registry, String stage, String objectId, Map<String, Object> properties);
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * <!-- begin-model-doc -->
+	 * Replace the diagnostics one producer holds on an object in a certain stage and registry of this scope, without touching the object's content (issue #292). Delegates to RegistryService.updateDiagnostics; see there for the contract.
+	 * <!-- end-model-doc -->
+	 * @model dataType="org.eclipse.fennec.model.atlas.mgmt.management.Promise&lt;org.eclipse.fennec.model.atlas.mgmt.management.ObjectMetadata&gt;" objectIdRequired="true" producerRequired="true" diagnosticsDataType="org.eclipse.fennec.model.atlas.mgmt.management.List&lt;org.eclipse.fennec.model.atlas.mgmt.management.Diagnostic&gt;" diagnosticsRequired="true" diagnosticsMany="false"
+	 * @generated
+	 */
+	Promise<ObjectMetadata> updateDiagnosticsInStageForRegistry(String registry, String stage, String objectId, String producer, List<Diagnostic> diagnostics);
 
 	/**
 	 * <!-- begin-user-doc -->

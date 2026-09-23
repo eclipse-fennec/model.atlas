@@ -392,7 +392,7 @@ public class ManagementApiPackageImpl extends EPackageImpl implements Management
 	 * @generated
 	 */
 	@Override
-	public EOperation getEObjectStorageService__UpdateStatus__String_String_String_String_ObjectStatus_String() {
+	public EOperation getEObjectStorageService__UpdateDiagnostics__String_String_String_String_String_List() {
 		return eObjectStorageServiceEClass.getEOperations().get(8);
 	}
 
@@ -402,7 +402,7 @@ public class ManagementApiPackageImpl extends EPackageImpl implements Management
 	 * @generated
 	 */
 	@Override
-	public EOperation getEObjectStorageService__Exists__String_String_String_String() {
+	public EOperation getEObjectStorageService__UpdateStatus__String_String_String_String_ObjectStatus_String() {
 		return eObjectStorageServiceEClass.getEOperations().get(9);
 	}
 
@@ -412,7 +412,7 @@ public class ManagementApiPackageImpl extends EPackageImpl implements Management
 	 * @generated
 	 */
 	@Override
-	public EOperation getEObjectStorageService__GetObjectCount() {
+	public EOperation getEObjectStorageService__Exists__String_String_String_String() {
 		return eObjectStorageServiceEClass.getEOperations().get(10);
 	}
 
@@ -422,7 +422,7 @@ public class ManagementApiPackageImpl extends EPackageImpl implements Management
 	 * @generated
 	 */
 	@Override
-	public EOperation getEObjectStorageService__GetBackendType() {
+	public EOperation getEObjectStorageService__GetObjectCount() {
 		return eObjectStorageServiceEClass.getEOperations().get(11);
 	}
 
@@ -432,8 +432,18 @@ public class ManagementApiPackageImpl extends EPackageImpl implements Management
 	 * @generated
 	 */
 	@Override
-	public EOperation getEObjectStorageService__GetStorageType() {
+	public EOperation getEObjectStorageService__GetBackendType() {
 		return eObjectStorageServiceEClass.getEOperations().get(12);
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	@Override
+	public EOperation getEObjectStorageService__GetStorageType() {
+		return eObjectStorageServiceEClass.getEOperations().get(13);
 	}
 
 	/**
@@ -772,6 +782,7 @@ public class ManagementApiPackageImpl extends EPackageImpl implements Management
 		createEOperation(eObjectStorageServiceEClass, EOBJECT_STORAGE_SERVICE___LIST_OBJECT_IDS__STRING_STRING_STRING);
 		createEOperation(eObjectStorageServiceEClass, EOBJECT_STORAGE_SERVICE___QUERY_OBJECTS__OBJECTQUERY);
 		createEOperation(eObjectStorageServiceEClass, EOBJECT_STORAGE_SERVICE___UPDATE_METADATA__STRING_STRING_STRING_STRING_OBJECTMETADATA);
+		createEOperation(eObjectStorageServiceEClass, EOBJECT_STORAGE_SERVICE___UPDATE_DIAGNOSTICS__STRING_STRING_STRING_STRING_STRING_LIST);
 		createEOperation(eObjectStorageServiceEClass, EOBJECT_STORAGE_SERVICE___UPDATE_STATUS__STRING_STRING_STRING_STRING_OBJECTSTATUS_STRING);
 		createEOperation(eObjectStorageServiceEClass, EOBJECT_STORAGE_SERVICE___EXISTS__STRING_STRING_STRING_STRING);
 		createEOperation(eObjectStorageServiceEClass, EOBJECT_STORAGE_SERVICE___GET_OBJECT_COUNT);
@@ -1055,6 +1066,21 @@ public class ManagementApiPackageImpl extends EPackageImpl implements Management
 		addEParameter(op, theManagementPackage.getObjectMetadata(), "metadata", 1, 1, IS_UNIQUE, IS_ORDERED);
 		g1 = createEGenericType(theManagementPackage.getPromise());
 		g2 = createEGenericType(ecorePackage.getEBooleanObject());
+		g1.getETypeArguments().add(g2);
+		initEOperation(op, g1);
+
+		op = initEOperation(getEObjectStorageService__UpdateDiagnostics__String_String_String_String_String_List(), null, "updateDiagnostics", 0, 1, IS_UNIQUE, IS_ORDERED);
+		addEParameter(op, ecorePackage.getEString(), "scope", 1, 1, IS_UNIQUE, IS_ORDERED);
+		addEParameter(op, ecorePackage.getEString(), "registry", 1, 1, IS_UNIQUE, IS_ORDERED);
+		addEParameter(op, ecorePackage.getEString(), "stage", 1, 1, IS_UNIQUE, IS_ORDERED);
+		addEParameter(op, ecorePackage.getEString(), "objectId", 1, 1, IS_UNIQUE, IS_ORDERED);
+		addEParameter(op, ecorePackage.getEString(), "producer", 1, 1, IS_UNIQUE, IS_ORDERED);
+		g1 = createEGenericType(theManagementPackage.getList());
+		g2 = createEGenericType(theManagementPackage.getDiagnostic());
+		g1.getETypeArguments().add(g2);
+		addEParameter(op, g1, "diagnostics", 1, 1, IS_UNIQUE, IS_ORDERED);
+		g1 = createEGenericType(theManagementPackage.getPromise());
+		g2 = createEGenericType(theManagementPackage.getObjectMetadata());
 		g1.getETypeArguments().add(g2);
 		initEOperation(op, g1);
 

@@ -415,7 +415,12 @@ public class ApicurioStorageHelper extends AbstractStorageHelper {
         addLabels(artifact.getLabels(), metadata, isMetadata);
         artifact.getLabels().put("contentType", contentType);
         Version version = MgmtApicurioFactory.eINSTANCE.createVersion();
-        if (metadata.getVersion() != null && !metadata.getVersion().isEmpty()) {
+        // The content artifact's versions follow the model's version. The metadata artifact's
+        // versions are revisions of the metadata document and must not: a metadata-only write
+        // (properties, diagnostics, issue #292) keeps the model version, and re-posting the
+        // same explicit version answers 409. Apicurio numbers the metadata revisions itself;
+        // loadMetadata reads the latest.
+        if (!isMetadata && metadata.getVersion() != null && !metadata.getVersion().isEmpty()) {
             version.setVersion(metadata.getVersion());
         }
         addLabels(version.getLabels(), metadata, isMetadata);

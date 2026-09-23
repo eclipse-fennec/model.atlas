@@ -32,6 +32,8 @@ import org.eclipse.emf.ecore.EcoreFactory;
 import org.eclipse.fennec.model.atlas.mgmt.api.EObjectRegistryService;
 import org.eclipse.fennec.model.atlas.mgmt.api.EObjectStorageService;
 import org.eclipse.fennec.model.atlas.mgmt.management.ManagementFactory;
+import org.eclipse.fennec.model.atlas.mgmt.management.DiagnosticSeverity;
+import org.eclipse.fennec.model.atlas.mgmt.management.Diagnostic;
 import org.eclipse.fennec.model.atlas.mgmt.management.ObjectMetadata;
 import org.eclipse.fennec.model.atlas.mgmt.management.ObjectStatus;
 import org.eclipse.fennec.model.atlas.mgmt.management.StorageBackendType;
@@ -1004,6 +1006,81 @@ public class EObjectApicurioStorageServiceTest {
         // Clean up
         storageService.deleteObject(TEST_SCOPE, TEST_REGISTRY, TEST_STAGE, draftObjectId).getValue();
         storageService.deleteObject(TEST_SCOPE, TEST_REGISTRY, TEST_STAGE, rejectedObjectId).getValue();
+    }
+
+    /**
+     * Issue #292: the metadata body is full XMI in Apicurio, so a diagnostic tree written with
+     * {@code updateDiagnostics} must come back from a fresh {@code retrieveMetadata}, and the
+     * write must leave content hash and version alone.
+     */
+    @SuppressWarnings({ "unchecked", "rawtypes" })
+    @RegistryConfiguration
+    @Test
+    public void testDiagnosticsRoundTrip(
+            @InjectConfiguration(withFactoryConfig = @WithFactoryConfiguration(factoryPid = "ApicurioObjectStorage", name = "test", location = "?", properties = {
+                    @Property(key = "storage.type", value = "apicurio") })) Configuration configuration,
+            @InjectService(cardinality = 0, filter = "(storage.backend=apicurio)") ServiceAware<EObjectStorageService> serviceAware)
+            throws Exception {
+
+        int mappedPort = container.getMappedPort(8080);
+        Dictionary<String, Object> serviceProperties = new Hashtable<>();
+        serviceProperties.put("base.url", String.format(APICURIO_BASE_URL, container.getHost(), mappedPort));
+        configuration.update(serviceProperties);
+
+        Thread.sleep(3000);
+
+        EObjectStorageService<EObject> storageService = (EObjectStorageService<EObject>) serviceAware
+                .waitForService(5000l);
+        assertNotNull(storageService, "Storage service should be available");
+
+        EPackage testPackage = EcoreFactory.eINSTANCE.createEPackage();
+        testPackage.setName("Diagnosed");
+        testPackage.setNsPrefix("diag");
+        testPackage.setNsURI("http://diag/1.0");
+        ObjectMetadata metadata = ManagementFactory.eINSTANCE.createObjectMetadata();
+        metadata.setUploadUser("testUser");
+        metadata.setUploadTime(Instant.now());
+        metadata.setSourceChannel("testChannel");
+        metadata.setVersion("1.0.0");
+        metadata.setObjectName("diagnosed");
+        String objectId = "default:draft:diagnosed.xmi";
+        storageService.storeObject(TEST_SCOPE, TEST_REGISTRY, TEST_STAGE, objectId, testPackage, metadata).getValue();
+        String contentHash = metadata.getContentHash();
+
+        Diagnostic root = ManagementFactory.eINSTANCE.createDiagnostic();
+        root.setCode("compile-failed");
+        root.setSeverity(DiagnosticSeverity.ERROR);
+        root.setMessage("does not compile");
+        Diagnostic child = ManagementFactory.eINSTANCE.createDiagnostic();
+        child.setCode("unresolved-import");
+        child.setTarget("line:2:col:8");
+        child.setSeverity(DiagnosticSeverity.ERROR);
+        child.setMessage("text.Case is not in this stage");
+        root.getChildren().add(child);
+
+        ObjectMetadata written = storageService
+                .updateDiagnostics(TEST_SCOPE, TEST_REGISTRY, TEST_STAGE, objectId, "qvt", List.of(root)).getValue();
+        assertNotNull(written);
+        assertEquals(1, written.getDiagnostics().size());
+
+        ObjectMetadata reloaded = storageService.retrieveMetadata(TEST_SCOPE, TEST_REGISTRY, TEST_STAGE, objectId)
+                .getValue();
+        assertEquals(1, reloaded.getDiagnostics().size(), "the root came back through Apicurio");
+        Diagnostic r = reloaded.getDiagnostics().get(0);
+        assertEquals("qvt", r.getProducer());
+        assertEquals("compile-failed", r.getCode());
+        assertEquals(DiagnosticSeverity.ERROR, r.getSeverity());
+        assertNotNull(r.getId(), "the id was minted");
+        assertEquals(1, r.getChildren().size(), "the child came back");
+        assertEquals("line:2:col:8", r.getChildren().get(0).getTarget());
+        assertEquals(contentHash, reloaded.getContentHash(), "diagnostics are not content");
+        assertEquals("1.0.0", reloaded.getVersion(), "diagnostics do not bump the version");
+
+        storageService.updateDiagnostics(TEST_SCOPE, TEST_REGISTRY, TEST_STAGE, objectId, "qvt", List.of()).getValue();
+        assertTrue(storageService.retrieveMetadata(TEST_SCOPE, TEST_REGISTRY, TEST_STAGE, objectId).getValue()
+                .getDiagnostics().isEmpty(), "an empty replacement clears the producer's findings");
+
+        assertTrue(storageService.deleteObject(TEST_SCOPE, TEST_REGISTRY, TEST_STAGE, objectId).getValue());
     }
 
     private void configureApiCurioTestContainer(GenericContainer<?> container) {

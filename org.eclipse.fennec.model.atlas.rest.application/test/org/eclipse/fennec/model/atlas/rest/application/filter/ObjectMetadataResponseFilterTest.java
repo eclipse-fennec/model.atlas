@@ -32,6 +32,47 @@ import jakarta.ws.rs.core.MultivaluedMap;
  */
 class ObjectMetadataResponseFilterTest {
 
+	/**
+	 * #292 — a diagnostics write leaves {@code lastChangeTime} alone, so the metadata validator
+	 * has to see the diagnostics themselves; otherwise a client holding the metadata ETag is told
+	 * {@code 304} while the object's findings changed. The content validator must not move: the
+	 * bytes did not change.
+	 */
+	@Test
+	void metadataValidatorFollowsTheDiagnostics() {
+		ObjectMetadata metadata = metadata("jena", "release", "1.2.0", "fp1:abc");
+		metadata.setContentHash("hash");
+		String before = ObjectMetadataResponseFilter.baseValidator(metadata,
+				ObjectMetadataResponseFilter.CacheTarget.METADATA);
+		String contentBefore = ObjectMetadataResponseFilter.baseValidator(metadata,
+				ObjectMetadataResponseFilter.CacheTarget.CONTENT);
+
+		org.eclipse.fennec.model.atlas.mgmt.management.Diagnostic finding = ManagementFactory.eINSTANCE
+				.createDiagnostic();
+		finding.setId("d1");
+		finding.setProducer("checker");
+		finding.setCode("unresolved-reference");
+		finding.setSeverity(org.eclipse.fennec.model.atlas.mgmt.management.DiagnosticSeverity.WARNING);
+		finding.setMessage("b is not visible");
+		metadata.getDiagnostics().add(finding);
+		String withFinding = ObjectMetadataResponseFilter.baseValidator(metadata,
+				ObjectMetadataResponseFilter.CacheTarget.METADATA);
+
+		assertFalse(before.equals(withFinding), "a new finding changes the metadata validator");
+		assertEquals(contentBefore, ObjectMetadataResponseFilter.baseValidator(metadata,
+				ObjectMetadataResponseFilter.CacheTarget.CONTENT), "the content validator does not move");
+
+		finding.setStatus(org.eclipse.fennec.model.atlas.mgmt.management.DiagnosticStatus.RESOLVED);
+		String resolved = ObjectMetadataResponseFilter.baseValidator(metadata,
+				ObjectMetadataResponseFilter.CacheTarget.METADATA);
+		assertFalse(withFinding.equals(resolved), "a status change on the same finding changes it too");
+
+		metadata.getDiagnostics().clear();
+		assertEquals(before, ObjectMetadataResponseFilter.baseValidator(metadata,
+				ObjectMetadataResponseFilter.CacheTarget.METADATA),
+				"an object without diagnostics keeps the validator it had before #292");
+	}
+
 	@Test
 	void stampsScopeStageVersionAndFingerprint() {
 		MultivaluedMap<String, Object> headers = new MultivaluedHashMap<>();

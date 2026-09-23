@@ -38,6 +38,8 @@ import org.eclipse.emf.ecore.xmi.impl.XMIResourceImpl;
 import org.eclipse.fennec.emf.osgi.fingerprint.util.FingerprintHelper;
 import org.eclipse.fennec.model.atlas.mgmt.api.EObjectRegistryService;
 import org.eclipse.fennec.model.atlas.mgmt.api.EObjectStorageService;
+import org.eclipse.fennec.model.atlas.mgmt.diagnostics.Diagnostics;
+import org.eclipse.fennec.model.atlas.mgmt.management.Diagnostic;
 import org.eclipse.fennec.model.atlas.mgmt.management.ObjectMetadata;
 import org.eclipse.fennec.model.atlas.mgmt.management.ObjectQuery;
 import org.eclipse.fennec.model.atlas.mgmt.management.ObjectStatus;
@@ -610,6 +612,57 @@ public abstract class AbstractEObjectStorageService implements EObjectStorageSer
         });
     }
 
+    /**
+     * {@inheritDoc}
+     *
+     * <p>
+     * This is the one path that writes {@code ObjectMetadata.diagnostics}. It does not go
+     * through {@link #mergeMetadataUpdates}, on purpose: that merge stamps a new
+     * {@code lastChangeTime}, and a diagnostic is something the Atlas found out about the
+     * object, not a change somebody made to it. So the stored metadata comes back with the
+     * producer's roots swapped and every other field, {@code lastChangeTime} included, as it
+     * was. The registry cache receives a copy of the result, so listings served from the
+     * cache show the new diagnostics at once.
+     * </p>
+     */
+    @Override
+    public Promise<ObjectMetadata> updateDiagnostics(String scope, String registry, String stage, String objectId,
+            String producer, List<Diagnostic> diagnostics) {
+        return promiseFactory.submit(() -> {
+            if (objectId == null || objectId.isEmpty()) {
+                throw new IllegalArgumentException("Object ID cannot be null or empty");
+            }
+            if (producer == null || producer.isBlank()) {
+                throw new IllegalArgumentException("A producer is required: it owns the diagnostics it writes");
+            }
+            requireNonNull(diagnostics, "diagnostics");
+            if (!storageHelper.objectExists(scope, registry, stage, objectId)) {
+                LOGGER.warning("Cannot update diagnostics - object does not exist: " + objectId);
+                return null;
+            }
+            ObjectMetadata existing = storageHelper.loadMetadata(scope, registry, stage, objectId);
+            if (existing == null) {
+                LOGGER.warning("Cannot update diagnostics - no existing metadata found for object: " + objectId);
+                return null;
+            }
+            ObjectMetadata metadataCopy = EcoreUtil.copy(existing);
+            List<String> gone = Diagnostics.replaceOwned(metadataCopy, producer, diagnostics, Instant.now());
+            try {
+                storageHelper.saveMetadata(scope, registry, stage, objectId, metadataCopy);
+            } catch (Exception e) {
+                LOGGER.log(Level.SEVERE, "Failed to store diagnostics for object: " + objectId, e);
+                throw new RuntimeException("Failed to store diagnostics", e);
+            }
+            if (registryService != null) {
+                registryService.updateCache(EcoreUtil.copy(metadataCopy));
+            }
+            LOGGER.fine(() -> "Producer " + producer + " now holds " + diagnostics.size() + " diagnostic(s) on "
+                    + objectId + " in (" + scope + ", " + registry + ", " + stage + "); " + gone.size()
+                    + " earlier finding(s) no longer apply");
+            return metadataCopy;
+        });
+    }
+
     /*
      * (non-Javadoc)
      * 
@@ -790,7 +843,15 @@ public abstract class AbstractEObjectStorageService implements EObjectStorageSer
      * <li><strong>properties</strong> - Merged (existing properties preserved, new
      * ones added)</li>
      * </ul>
-     * 
+     *
+     * <h3>Not touched here</h3>
+     * <ul>
+     * <li><strong>diagnostics</strong> - the existing diagnostics are kept as they are;
+     * whatever the update carries is ignored. Diagnostics are written by their producer
+     * through {@link #updateDiagnostics}, which also leaves {@code lastChangeTime} alone
+     * (issue #292).</li>
+     * </ul>
+     *
      * @param existing the existing metadata to update (modified in-place)
      * @param updates  the metadata containing update values
      */

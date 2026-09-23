@@ -19,6 +19,7 @@ import java.util.Map;
 import org.eclipse.emf.ecore.EClass;
 import org.eclipse.emf.ecore.EObject;
 
+import org.eclipse.fennec.model.atlas.mgmt.management.Diagnostic;
 import org.eclipse.fennec.model.atlas.mgmt.management.ObjectMetadata;
 
 import org.osgi.annotation.versioning.ProviderType;
@@ -51,6 +52,17 @@ public interface RegistryService<T extends EObject> {
 	 * @generated
 	 */
 	Promise<ObjectMetadata> updateProperties(String scope, String stage, String objectId, Map<String, Object> properties);
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * <!-- begin-model-doc -->
+	 * Replace the diagnostics one producer holds on an object in a certain stage and scope, without touching the object's content (issue #292). Diagnostics are metadata, not content: the write changes neither contentHash nor version nor lastChangeTime, fires no stage action, and is allowed in every stage the registry knows, including final and non-writable ones, because a finding about a released object has to be recordable where the object is. The producer's current roots are replaced by the given ones, roots of other producers stay; an empty list clears the producer's diagnostics. Returns the stored ObjectMetadata, or null when the object is not in that stage.
+	 * <!-- end-model-doc -->
+	 * @model dataType="org.eclipse.fennec.model.atlas.mgmt.management.Promise&lt;org.eclipse.fennec.model.atlas.mgmt.management.ObjectMetadata&gt;" objectIdRequired="true" producerRequired="true" diagnosticsDataType="org.eclipse.fennec.model.atlas.mgmt.management.List&lt;org.eclipse.fennec.model.atlas.mgmt.management.Diagnostic&gt;" diagnosticsRequired="true" diagnosticsMany="false"
+	 * @generated
+	 */
+	Promise<ObjectMetadata> updateDiagnostics(String scope, String stage, String objectId, String producer, List<Diagnostic> diagnostics);
 
 	/**
 	 * <!-- begin-user-doc -->
