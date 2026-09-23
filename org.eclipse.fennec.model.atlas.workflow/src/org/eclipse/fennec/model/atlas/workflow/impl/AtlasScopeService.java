@@ -20,6 +20,7 @@ import java.util.Optional;
 import java.util.stream.Stream;
 
 import org.eclipse.emf.ecore.EPackage;
+import org.eclipse.fennec.model.atlas.mgmt.management.Diagnostic;
 import org.eclipse.fennec.model.atlas.mgmt.management.ObjectMetadata;
 import org.eclipse.fennec.model.atlas.scope.api.ReadableRegistryView;
 import org.eclipse.fennec.model.atlas.scope.api.ReadableScopeService;
@@ -160,6 +161,17 @@ public class AtlasScopeService implements ScopeService<EPackage>, ReadableScopeS
 		validateRegistry(registry);
 		return atlasSchemaRegistryService.updateProperties(WorkflowConstants.ATLAS_SCOPE_NAME, stage, objectId,
 				properties);
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * @see org.eclipse.fennec.model.atlas.wf.workflowapi.WritableScopeService#updateDiagnosticsInStageForRegistry(java.lang.String, java.lang.String, java.lang.String, java.lang.String, java.util.List)
+	 */
+	@Override
+	public Promise<ObjectMetadata> updateDiagnosticsInStageForRegistry(String registry, String stage, String objectId,
+			String producer, List<Diagnostic> diagnostics) {
+		return atlasSchemaRegistryService.updateDiagnostics(WorkflowConstants.ATLAS_SCOPE_NAME, stage, objectId, producer,
+				diagnostics);
 	}
 
 	/* 

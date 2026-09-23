@@ -152,6 +152,23 @@
       <eParameters name="objectId" lowerBound="1" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
       <eParameters name="properties" upperBound="-1" eType="ecore:EClass ../../org.eclipse.fennec.model.atlas.management/model/management.ecore#//StringToObjectMapEntry"/>
     </eOperations>
+    <eOperations name="updateDiagnostics">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="Replace the diagnostics one producer holds on an object in a certain stage and scope, without touching the object's content (issue #292). Diagnostics are metadata, not content: the write changes neither contentHash nor version nor lastChangeTime, fires no stage action, and is allowed in every stage the registry knows, including final and non-writable ones, because a finding about a released object has to be recordable where the object is. The producer's current roots are replaced by the given ones, roots of other producers stay; an empty list clears the producer's diagnostics. Returns the stored ObjectMetadata, or null when the object is not in that stage."/>
+      </eAnnotations>
+      <eGenericType eClassifier="ecore:EDataType ../../org.eclipse.fennec.model.atlas.management/model/management.ecore#//Promise">
+        <eTypeArguments eClassifier="ecore:EClass ../../org.eclipse.fennec.model.atlas.management/model/management.ecore#//ObjectMetadata"/>
+      </eGenericType>
+      <eParameters name="scope" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+      <eParameters name="stage" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+      <eParameters name="objectId" lowerBound="1" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+      <eParameters name="producer" lowerBound="1" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+      <eParameters name="diagnostics" lowerBound="1">
+        <eGenericType eClassifier="ecore:EDataType ../../org.eclipse.fennec.model.atlas.management/model/management.ecore#//List">
+          <eTypeArguments eClassifier="ecore:EClass ../../org.eclipse.fennec.model.atlas.management/model/management.ecore#//Diagnostic"/>
+        </eGenericType>
+      </eParameters>
+    </eOperations>
     <eOperations name="uploadToStage">
       <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
         <details key="documentation" value="Upload an EObject to a certain stage (draft, review, etc) for a certain scope; returns promise with uploaded ObjectMetadata."/>
@@ -366,6 +383,23 @@
       <eParameters name="objectId" lowerBound="1" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
       <eParameters name="properties" upperBound="-1" eType="ecore:EClass ../../org.eclipse.fennec.model.atlas.management/model/management.ecore#//StringToObjectMapEntry"/>
     </eOperations>
+        <eOperations name="updateDiagnosticsInStageForRegistry">
+          <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+            <details key="documentation" value="Replace the diagnostics one producer holds on an object in a certain stage and registry of this scope, without touching the object's content (issue #292). Delegates to RegistryService.updateDiagnostics; see there for the contract."/>
+          </eAnnotations>
+          <eGenericType eClassifier="ecore:EDataType ../../org.eclipse.fennec.model.atlas.management/model/management.ecore#//Promise">
+            <eTypeArguments eClassifier="ecore:EClass ../../org.eclipse.fennec.model.atlas.management/model/management.ecore#//ObjectMetadata"/>
+          </eGenericType>
+          <eParameters name="registry" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+          <eParameters name="stage" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+          <eParameters name="objectId" lowerBound="1" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+          <eParameters name="producer" lowerBound="1" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+          <eParameters name="diagnostics" lowerBound="1">
+            <eGenericType eClassifier="ecore:EDataType ../../org.eclipse.fennec.model.atlas.management/model/management.ecore#//List">
+              <eTypeArguments eClassifier="ecore:EClass ../../org.eclipse.fennec.model.atlas.management/model/management.ecore#//Diagnostic"/>
+            </eGenericType>
+          </eParameters>
+        </eOperations>
     <eOperations name="uploadToStageForRegistry">
       <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
         <details key="documentation" value="Upload an EObject to a certain stage (draft, review, etc) for a certain registry (schema, configuration, script, etc); returns promise with uploaded ObjectMetadata."/>

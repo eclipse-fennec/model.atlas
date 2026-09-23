@@ -23,6 +23,7 @@ import java.util.Date;
 import java.util.HexFormat;
 import java.util.List;
 
+import org.eclipse.fennec.model.atlas.mgmt.management.Diagnostic;
 import org.eclipse.fennec.model.atlas.mgmt.management.ObjectMetadata;
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.jakartars.whiteboard.propertytypes.JakartarsExtension;
@@ -282,6 +283,29 @@ public class ObjectMetadataResponseFilter implements ContainerResponseFilter {
     }
 
     /**
+     * The diagnostics' share of the metadata validator (issue #292). A diagnostics write
+     * deliberately leaves {@code lastChangeTime} alone, so without this a client holding a
+     * metadata ETag would be told {@code 304 Not Modified} while the object's findings had
+     * changed under it. Folds in, per diagnostic and depth first, what a client would show:
+     * id, severity, status, version and message. Empty when the object has no diagnostics,
+     * so objects without any keep the validator they had before.
+     */
+    private static String diagnosticsValidator(ObjectMetadata metadata) {
+        StringBuilder raw = new StringBuilder();
+        appendDiagnostics(raw, metadata.getDiagnostics());
+        return raw.toString();
+    }
+
+    private static void appendDiagnostics(StringBuilder raw, List<Diagnostic> diagnostics) {
+        for (Diagnostic diagnostic : diagnostics) {
+            raw.append(diagnostic.getId()).append(',').append(diagnostic.getSeverity()).append(',')
+                    .append(diagnostic.getStatus()).append(',').append(diagnostic.getVersion()).append(',')
+                    .append(diagnostic.getMessage()).append(';');
+            appendDiagnostics(raw, diagnostic.getChildren());
+        }
+    }
+
+    /**
      * The metadata validator: a strong (SHA-256) hash over
      * {@code (contentHash, version, status, lastChangeTime)}. This is independent of the content hash
      * alone, so a metadata-only change (e.g. a stage transition that doesn't touch the bytes) changes
@@ -293,10 +317,12 @@ public class ObjectMetadataResponseFilter implements ContainerResponseFilter {
         String version = metadata.getVersion();
         Object status = metadata.getStatus();
         Object lastChange = metadata.getLastChangeTime();
-        if (contentHash == null && version == null && status == null && lastChange == null) {
+        String diagnostics = diagnosticsValidator(metadata);
+        if (contentHash == null && version == null && status == null && lastChange == null
+                && diagnostics.isEmpty()) {
             return null;
         }
-        String raw = contentHash + "|" + version + "|" + status + "|" + lastChange;
+        String raw = contentHash + "|" + version + "|" + status + "|" + lastChange + "|" + diagnostics;
         try {
             byte[] digest = MessageDigest.getInstance("SHA-256").digest(raw.getBytes(StandardCharsets.UTF_8));
             return HexFormat.of().formatHex(digest);

@@ -283,6 +283,24 @@
       <eParameters name="objectId" lowerBound="1" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
       <eParameters name="metadata" lowerBound="1" eType="ecore:EClass management.ecore#//ObjectMetadata"/>
     </eOperations>
+    <eOperations name="updateDiagnostics">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="Replace the diagnostics one producer holds on an object, without touching anything else (issue #292).&#xA;&#xA;Diagnostics are metadata, not content: this write changes neither contentHash nor version nor lastChangeTime, and it is the only path that writes ObjectMetadata.diagnostics. The roots currently carrying the given producer are removed and the given roots take their place; roots of other producers are left as they are. An empty list clears the producer's diagnostics. Ids that are absent are minted by the stable id rule (producer, code, target); a root whose id already existed keeps its createdTime. Children inherit the producer.&#xA;&#xA;Returns the stored metadata, or null when the object does not exist in that stage."/>
+      </eAnnotations>
+      <eGenericType eClassifier="ecore:EDataType management.ecore#//Promise">
+        <eTypeArguments eClassifier="ecore:EClass management.ecore#//ObjectMetadata"/>
+      </eGenericType>
+      <eParameters name="scope" lowerBound="1" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+      <eParameters name="registry" lowerBound="1" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+      <eParameters name="stage" lowerBound="1" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+      <eParameters name="objectId" lowerBound="1" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+      <eParameters name="producer" lowerBound="1" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+      <eParameters name="diagnostics" lowerBound="1">
+        <eGenericType eClassifier="ecore:EDataType management.ecore#//List">
+          <eTypeArguments eClassifier="ecore:EClass management.ecore#//Diagnostic"/>
+        </eGenericType>
+      </eParameters>
+    </eOperations>
     <eOperations name="updateStatus">
       <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
         <details key="documentation" value="Convenience method to update only the lifecycle status of an object. Automatically sets lastChangeTime and can optionally set lastChangeUser."/>

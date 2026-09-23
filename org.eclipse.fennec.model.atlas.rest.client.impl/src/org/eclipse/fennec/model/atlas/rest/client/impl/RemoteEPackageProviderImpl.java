@@ -37,6 +37,7 @@ import org.eclipse.emf.ecore.resource.Resource;
 import org.eclipse.emf.ecore.resource.ResourceSet;
 import org.eclipse.emf.ecore.util.EcoreUtil;
 import org.eclipse.fennec.model.atlas.rest.client.api.ClientConfiguration;
+import org.eclipse.fennec.model.atlas.rest.client.api.Diagnostic;
 import org.eclipse.fennec.model.atlas.rest.client.api.PackageDescriptor;
 import org.eclipse.fennec.model.atlas.rest.client.api.RemoteEPackageProvider;
 import org.eclipse.fennec.model.atlas.rest.client.api.ResolvedEPackage;
@@ -675,10 +676,28 @@ class RemoteEPackageProviderImpl implements RemoteEPackageProvider {
 			String nsUri = nsUriOf(entry);
 			if (nsUri != null) {
 				descriptors.add(new PackageDescriptor(nsUri, text(entry, "scope"),
-						text(entry, "stage"), text(entry, "version"), text(entry, "fingerprint")));
+						text(entry, "stage"), text(entry, "version"), text(entry, "fingerprint"),
+						diagnosticsOf(entry.get("diagnostics"))));
 			}
 		}
 		return List.copyOf(descriptors);
+	}
+
+	/**
+	 * The findings a listing entry carries (issue #292), tree and all. An older server sends
+	 * none, so a missing or non-array node is simply an empty list.
+	 */
+	static List<Diagnostic> diagnosticsOf(JsonNode diagnostics) {
+		if (diagnostics == null || !diagnostics.isArray()) {
+			return List.of();
+		}
+		List<Diagnostic> result = new ArrayList<>();
+		for (JsonNode node : diagnostics) {
+			result.add(new Diagnostic(text(node, "id"), text(node, "producer"), text(node, "source"),
+					text(node, "code"), text(node, "severity"), text(node, "message"), text(node, "category"),
+					text(node, "target"), text(node, "status"), diagnosticsOf(node.get("children"))));
+		}
+		return List.copyOf(result);
 	}
 
 	/**

@@ -25,6 +25,7 @@ import java.util.stream.Stream;
 import org.eclipse.emf.ecore.EObject;
 import org.eclipse.emf.ecore.EPackage;
 import org.eclipse.fennec.model.atlas.config.check.UnrecognisedProperties;
+import org.eclipse.fennec.model.atlas.mgmt.management.Diagnostic;
 import org.eclipse.fennec.model.atlas.mgmt.management.ObjectMetadata;
 import org.eclipse.fennec.model.atlas.scope.api.ReadableRegistryView;
 import org.eclipse.fennec.model.atlas.scope.api.ReadableScopeService;
@@ -293,6 +294,21 @@ public class ScopeServiceImpl<T extends EObject> implements ScopeService<T>, Wri
 			Map<String, Object> properties) {
 		validateRegistry(registry);
 		return getRegistryService(registry).updateProperties(config.scope_name(), stage, objectId, properties);
+	}
+
+	/*
+	 * (non-Javadoc)
+	 *
+	 * @see org.eclipse.fennec.model.atlas.wf.workflowapi.WritableScopeService#
+	 * updateDiagnosticsInStageForRegistry(java.lang.String, java.lang.String,
+	 * java.lang.String, java.lang.String, java.util.List)
+	 */
+	@Override
+	public Promise<ObjectMetadata> updateDiagnosticsInStageForRegistry(String registry, String stage, String objectId,
+			String producer, List<Diagnostic> diagnostics) {
+		validateRegistry(registry);
+		return getRegistryService(registry).updateDiagnostics(config.scope_name(), stage, objectId, producer,
+				diagnostics);
 	}
 
 	/*

@@ -316,6 +316,34 @@ pkg.setName("UpdatedName");
 workflow.updateInStage("draft", pkg, objectId).getValue();
 ```
 
+#### `updateDiagnostics(String scope, String stage, String objectId, String producer, List<Diagnostic> diagnostics): Promise<ObjectMetadata>`
+
+Replaces the diagnostics one producer holds on an object, without touching the object's content (issue #292).
+
+**Parameters:**
+- `scope`, `stage`, `objectId` - The object; the stage may be final or non-writable
+- `producer` - The action, gate or module that owns the findings, e.g. `QvtTransitionGate`
+- `diagnostics` - The producer's new roots; an empty list clears them. Ids left unset are minted by the stable id rule (producer, code, target); children inherit the producer
+
+**Returns:** Promise<ObjectMetadata> with the stored metadata, or `null` when the object is not in that stage
+
+**Behavior:**
+- Validates the stage exists — deliberately **not** that it is writable or non-final: a finding about a released object is recorded on the released object. The content bar of `updateInStage` is untouched
+- Removes the producer's current roots and adds the given ones; roots of other producers stay
+- Changes neither `contentHash` nor `version` nor `lastChangeTime`, and fires **no** stage action (an action reacting to diagnostics would loop with the action that wrote them)
+- Pushes the result into the shared registry cache, so listings show it at once
+- A root that names another producer is refused with `IllegalArgumentException`
+
+**Example:**
+```java
+Diagnostic finding = ManagementFactory.eINSTANCE.createDiagnostic();
+finding.setCode("unresolved-reference");
+finding.setTarget("//Person/address");
+finding.setSeverity(DiagnosticSeverity.WARNING);
+finding.setMessage("http://example.org/b is not visible in release");
+workflow.updateDiagnostics("jena", "release", objectId, "reference-check", List.of(finding)).getValue();
+```
+
 ### Delete Operations
 
 #### `deleteFromStage(String stage, String objectId): Promise<Boolean>`

@@ -352,6 +352,39 @@ class RemoteEPackageProviderImplTest {
 		assertEquals(List.of("jena", "schema"), paths.getAllValues());
 	}
 
+	@Test
+	void listPackages_carriesTheDiagnosticsTreeOfEachEntry() {
+		// #292: the listing's ObjectMetadata carries the findings the Atlas holds about a
+		// package; the client hands them on as a tree and tolerates a server without any.
+		String ns = "https://eclipse.dev/fennec/jena/cocl/1.0";
+		String json = "{\"metadata\":[{\"objectId\":\"" + base64Url(ns)
+				+ "\",\"scope\":\"jena\",\"stage\":\"release\",\"version\":\"1.2\","
+				+ "\"diagnostics\":[{\"id\":\"d1\",\"producer\":\"reference-check\",\"code\":\"unresolved-reference\","
+				+ "\"severity\":\"WARNING\",\"status\":\"OPEN\",\"message\":\"b is not visible\",\"target\":\"//Person/address\","
+				+ "\"children\":[{\"id\":\"d1.1\",\"producer\":\"reference-check\",\"code\":\"missing-package\","
+				+ "\"severity\":\"WARNING\",\"status\":\"OPEN\",\"message\":\"http://b\"}]}]},"
+				+ "{\"objectId\":\"" + base64Url(ns + "/other") + "\",\"scope\":\"jena\",\"stage\":\"release\",\"version\":\"1.0\"}]}";
+		Response response = jsonOk(json);
+		when(request.get()).thenReturn(response);
+
+		List<PackageDescriptor> result = provider(config()).listPackages("jena");
+
+		assertEquals(2, result.size());
+		PackageDescriptor diagnosed = result.get(0);
+		assertEquals(1, diagnosed.diagnostics().size());
+		var finding = diagnosed.diagnostics().get(0);
+		assertEquals("d1", finding.id());
+		assertEquals("reference-check", finding.producer());
+		assertEquals("unresolved-reference", finding.code());
+		assertEquals("WARNING", finding.severity());
+		assertEquals("OPEN", finding.status());
+		assertEquals("//Person/address", finding.target());
+		assertEquals(1, finding.children().size(), "the tree comes through");
+		assertEquals("missing-package", finding.children().get(0).code());
+		assertTrue(finding.children().get(0).children().isEmpty(), "leaves have an empty, never null, list");
+		assertTrue(result.get(1).diagnostics().isEmpty(), "an entry without the field has no findings");
+	}
+
 	// ---- resolve (metadata-first) -----------------------------------------
 
 	private static String metadataJson(String scope, String registry, String stage, String version) {

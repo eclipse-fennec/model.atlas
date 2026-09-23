@@ -19,6 +19,7 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -406,6 +407,99 @@ public class RegistryServiceImplTest {
 
             verify(gate, never()).beforeTransition(any());
             verify(storage).storeObject(any(), any(), any(), any(), any(), any());
+        }
+    }
+
+    @Nested
+    @DisplayName("Diagnostics are metadata: written in any stage, no action fired (issue #292)")
+    class DiagnosticsTests {
+
+        private EObjectStorageService<EObject> storage;
+        private RegistryServiceImpl<EObject> service;
+        private StageActionService stageAction;
+        private ObjectMetadata stored;
+
+        @SuppressWarnings("unchecked")
+        @BeforeEach
+        void setUp() {
+            stored = ManagementFactory.eINSTANCE.createObjectMetadata();
+            stored.setObjectId("object-1");
+            stored.setStage("frozen");
+            storage = mock(EObjectStorageService.class);
+            when(storage.getStorageType()).thenReturn("file");
+            org.mockito.Mockito.lenient()
+                    .when(storage.updateDiagnostics(eq("test-scope"), eq("test-registry"), any(), eq("object-1"),
+                            eq("checker"), any()))
+                    .thenReturn(Promises.resolved(stored));
+
+            // a registry with a stage that is neither writable nor final: nothing but a
+            // diagnostics write may reach it
+            RegistryServiceConfig config = mock(RegistryServiceConfig.class);
+            when(config.registry_name()).thenReturn("test-registry");
+            when(config.registry_description()).thenReturn("");
+            when(config.registry_type()).thenReturn("OTHER");
+            when(config.workflow_transitions()).thenReturn(new String[] { "draft:release" });
+            when(config.stage_storage_mappings())
+                    .thenReturn(new String[] { "draft:file", "release:file", "frozen:file" });
+            when(config.stages()).thenReturn(new String[] {
+                    "{\"name\": \"draft\", \"writable\": true, \"final\": false}",
+                    "{\"name\": \"release\", \"writable\": true, \"final\": true}",
+                    "{\"name\": \"frozen\", \"writable\": false, \"final\": false}" });
+            when(config.root_eclass_uri()).thenReturn(new String[] { TEST_NS_URI + "#//Person" });
+            org.mockito.Mockito.lenient().when(config.derived_eclass_uri()).thenReturn(new String[0]);
+            service = new RegistryServiceImpl<>(List.of(storage), resourceSet, EcorePackage.eINSTANCE, config);
+
+            stageAction = mock(StageActionService.class);
+            org.mockito.Mockito.lenient().when(stageAction.requiresReplayOnStartup()).thenReturn(false);
+            org.mockito.Mockito.lenient().when(stageAction.supportsObjectType(any())).thenReturn(true);
+            org.mockito.Mockito.lenient().when(stageAction.getTriggerStages()).thenReturn(Set.of());
+            org.mockito.Mockito.lenient().when(stageAction.getTriggerEvents()).thenReturn(Set.of());
+            service.addStageActionService(stageAction);
+        }
+
+        @Test
+        @DisplayName("A diagnostics write reaches a non-writable stage and fires no stage action")
+        void writesIntoANonWritableStage() throws Exception {
+            ObjectMetadata result = service
+                    .updateDiagnostics("test-scope", "frozen", "object-1", "checker", List.of()).getValue();
+
+            assertNotNull(result);
+            assertTrue(result.isIsReadOnly(), "a non-writable stage is reported read-only, as on a read");
+            verify(storage).updateDiagnostics("test-scope", "test-registry", "frozen", "object-1", "checker",
+                    List.of());
+            verify(stageAction, never()).onUpdate(any());
+            verify(stageAction, never()).onEnter(any());
+        }
+
+        @Test
+        @DisplayName("A diagnostics write reaches a final stage where a content update is refused")
+        void writesIntoAFinalStage() throws Exception {
+            ObjectMetadata result = service
+                    .updateDiagnostics("test-scope", "release", "object-1", "checker", List.of()).getValue();
+
+            assertNotNull(result);
+            assertFalse(result.isIsReadOnly(), "release is writable, only its content is frozen");
+            verify(storage).updateDiagnostics("test-scope", "test-registry", "release", "object-1", "checker",
+                    List.of());
+        }
+
+        @Test
+        @DisplayName("An unknown stage is still refused")
+        void unknownStageIsRefused() {
+            var promise = service.updateDiagnostics("test-scope", "nowhere", "object-1", "checker", List.of());
+            java.lang.reflect.InvocationTargetException failure = org.junit.jupiter.api.Assertions
+                    .assertThrows(java.lang.reflect.InvocationTargetException.class, promise::getValue);
+            assertTrue(failure.getCause() instanceof IllegalArgumentException, String.valueOf(failure.getCause()));
+            verify(storage, never()).updateDiagnostics(any(), any(), any(), any(), any(), any());
+        }
+
+        @Test
+        @DisplayName("An object the storage does not know yields null, like updateProperties")
+        void unknownObjectYieldsNull() throws Exception {
+            when(storage.updateDiagnostics(any(), any(), any(), eq("missing"), any(), any()))
+                    .thenReturn(Promises.resolved(null));
+
+            assertNull(service.updateDiagnostics("test-scope", "draft", "missing", "checker", List.of()).getValue());
         }
     }
 

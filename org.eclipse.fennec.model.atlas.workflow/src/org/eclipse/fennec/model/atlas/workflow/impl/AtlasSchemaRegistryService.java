@@ -29,6 +29,7 @@ import org.eclipse.emf.ecore.util.EcoreUtil;
 import org.eclipse.fennec.model.atlas.management.lucene.epackage.EPackageLuceneIndex;
 import org.eclipse.fennec.model.atlas.mgmt.api.EObjectRegistryService;
 import org.eclipse.fennec.model.atlas.mgmt.management.ManagementFactory;
+import org.eclipse.fennec.model.atlas.mgmt.management.Diagnostic;
 import org.eclipse.fennec.model.atlas.mgmt.management.ObjectMetadata;
 import org.eclipse.fennec.model.atlas.mgmt.registry.RegistryAddress;
 import org.eclipse.fennec.model.atlas.scope.api.RegistryType;
@@ -232,6 +233,18 @@ public class AtlasSchemaRegistryService implements RegistryService<EPackage> {
 	@Override
 	public Promise<ObjectMetadata> updateProperties(String scope, String stage, String objectId,
 			Map<String, Object> properties) {
+		throw new UnsupportedOperationException("Update Operation not allowed for Atlas Schema Registry");
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * @see org.eclipse.fennec.model.atlas.wf.workflowapi.RegistryService#updateDiagnostics(java.lang.String, java.lang.String, java.lang.String, java.lang.String, java.util.List)
+	 */
+	@Override
+	public Promise<ObjectMetadata> updateDiagnostics(String scope, String stage, String objectId, String producer,
+			List<Diagnostic> diagnostics) {
+		// the atlas registry mirrors the static packages of the runtime; findings about them
+		// belong to the bundles that ship them, not to this registry
 		throw new UnsupportedOperationException("Update Operation not allowed for Atlas Schema Registry");
 	}
 

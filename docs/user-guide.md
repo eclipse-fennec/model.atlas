@@ -280,6 +280,38 @@ Registries without a configured gate behave as before. A gate that cannot decide
 it fails internally, also stops the transition, but as a `500`, not a `409`: the object is
 not at fault, the server is.
 
+### Diagnostics
+
+Every object's metadata can carry **diagnostics**: findings the Atlas made about the object,
+recorded by the action, gate or module that found them (the *producer*). They appear as the
+`diagnostics` list on `ObjectMetadata` in every listing and every metadata `GET`, so a client
+sees what is wrong with an object before it tries to use it.
+
+A diagnostic is a tree modelled on the EMF `Diagnostic`: a `severity` (`INFO`, `WARNING`,
+`ERROR`), a `message`, a producer-defined `code`, an optional `target` naming the affected
+element inside the object, optional `children` that refine it, plus what a persisted finding
+needs: a stable `id`, a `status` (`OPEN`, `ACKNOWLEDGED`, `RESOLVED`) that is kept separate
+from the severity, a `history` of changes and a `version`.
+
+Rules worth knowing:
+
+- **Diagnostics are metadata, not content.** Writing them changes neither `contentHash` nor
+  `version` nor `lastChangeTime`, and fires no stage action. The metadata `ETag` does change,
+  so a conditional `GET` sees new findings.
+- **They can be written where content is frozen.** A finding about a released object is
+  recorded on the released object, in its final or non-writable stage; only the content bar
+  stays.
+- **Each producer owns its findings.** A producer replaces only the diagnostics it wrote
+  earlier; another producer's findings stay untouched. Diagnostics are per
+  (scope, registry, stage, objectId), so the draft and the released copy of an object have
+  their own.
+- **Ids are stable.** The id is derived from producer, code and target, so the same finding
+  about the same element keeps its id across re-validation and can be referenced from outside.
+
+Today diagnostics are written through the service API (`RegistryService.updateDiagnostics`);
+the REST surface for changing them, and the refusal contract that returns them on a `409`, are
+part of the diagnostics epic (#290).
+
 ### Hierarchical Visibility
 
 Child scopes can see objects from parent scopes' **final stages**:
@@ -750,6 +782,14 @@ curl -X PUT "http://localhost:8080/rest/my-tenant/registries/configurations/stag
 # If ETag matches:    200 OK with updated metadata and new ETag
 # If ETag mismatches: 412 Precondition Failed
 ```
+
+#### Metadata ETags and Diagnostics
+
+Metadata responses carry their own `ETag`, derived from `contentHash`, `version`, `status`,
+`lastChangeTime` **and the object's diagnostics**. A diagnostics write leaves the first four
+alone on purpose (see [Diagnostics](#diagnostics)), so it is the diagnostics' share of the
+validator that lets a client holding a metadata `ETag` learn about new findings instead of
+being told `304 Not Modified`. The content `ETag` does not move: the bytes did not change.
 
 #### Content-Aware Skip
 

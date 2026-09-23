@@ -45,6 +45,7 @@ import org.eclipse.fennec.model.atlas.config.check.UnrecognisedProperties;
 import org.eclipse.fennec.model.atlas.mgmt.api.EObjectRegistryService;
 import org.eclipse.fennec.model.atlas.mgmt.api.EObjectStorageService;
 import org.eclipse.fennec.model.atlas.mgmt.management.ManagementPackage;
+import org.eclipse.fennec.model.atlas.mgmt.management.Diagnostic;
 import org.eclipse.fennec.model.atlas.mgmt.management.ObjectMetadata;
 import org.eclipse.fennec.model.atlas.scope.api.RegistryType;
 import org.eclipse.fennec.model.atlas.scope.api.ScopeApiFactory;
@@ -494,6 +495,39 @@ public class RegistryServiceImpl<T extends EObject> implements RegistryService<T
                     .getPromiseValue(storageService.retrieveMetadata(scope, config.registry_name(), stage, objectId));
             propagateDcatFlag(scope, stage, properties, reread == null ? metadata : reread);
             return reread;
+        });
+    }
+
+    /*
+     * (non-Javadoc)
+     *
+     * @see org.eclipse.fennec.model.atlas.wf.workflowapi.RegistryService#updateDiagnostics(java.lang.String,
+     * java.lang.String, java.lang.String, java.lang.String, java.util.List)
+     */
+    @Override
+    public Promise<ObjectMetadata> updateDiagnostics(String scope, String stage, String objectId, String producer,
+            List<Diagnostic> diagnostics) {
+        return promiseFactory.submit(() -> {
+            requireNonNull(objectId, "Object ID cannot be null");
+            // validateStage, deliberately neither validateWritableStage nor validateUpdatableStage:
+            // a diagnostic is something the Atlas found out about the object, not a change
+            // somebody made to it, so it has to be recordable wherever the object is - a
+            // refused transition records its veto on the source-stage copy, which may sit in a
+            // final stage, and a re-validation reaches released objects too (issue #292). What
+            // stays protected is the content: updateInStage keeps its full bar.
+            validateStage(stage);
+            EObjectStorageService<T> storageService = storageFor(stage);
+            ObjectMetadata metadata = WorkflowServiceHelper.getPromiseValue(storageService.updateDiagnostics(scope,
+                    config.registry_name(), stage, objectId, producer, diagnostics));
+            if (metadata == null) {
+                return null;
+            }
+            // no dispatch: diagnostics are metadata, and a stage action reacting to them would
+            // loop with the action that wrote them
+            if (!isWritableStage(stage)) {
+                metadata.setIsReadOnly(true);
+            }
+            return metadata;
         });
     }
 

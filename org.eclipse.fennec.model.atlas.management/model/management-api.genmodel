@@ -117,6 +117,14 @@
         <genParameters ecoreParameter="management-api.ecore#//EObjectStorageService/updateMetadata/objectId"/>
         <genParameters ecoreParameter="management-api.ecore#//EObjectStorageService/updateMetadata/metadata"/>
       </genOperations>
+      <genOperations ecoreOperation="management-api.ecore#//EObjectStorageService/updateDiagnostics">
+        <genParameters ecoreParameter="management-api.ecore#//EObjectStorageService/updateDiagnostics/scope"/>
+        <genParameters ecoreParameter="management-api.ecore#//EObjectStorageService/updateDiagnostics/registry"/>
+        <genParameters ecoreParameter="management-api.ecore#//EObjectStorageService/updateDiagnostics/stage"/>
+        <genParameters ecoreParameter="management-api.ecore#//EObjectStorageService/updateDiagnostics/objectId"/>
+        <genParameters ecoreParameter="management-api.ecore#//EObjectStorageService/updateDiagnostics/producer"/>
+        <genParameters ecoreParameter="management-api.ecore#//EObjectStorageService/updateDiagnostics/diagnostics"/>
+      </genOperations>
       <genOperations ecoreOperation="management-api.ecore#//EObjectStorageService/updateStatus">
         <genParameters ecoreParameter="management-api.ecore#//EObjectStorageService/updateStatus/scope"/>
         <genParameters ecoreParameter="management-api.ecore#//EObjectStorageService/updateStatus/registry"/>
