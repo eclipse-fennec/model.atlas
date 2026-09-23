@@ -311,6 +311,12 @@ class GDPRReportHistoryStageActionTest {
 		}
 
 		@Override
+		public Promise<ObjectMetadata> updateDiagnosticsInStageForRegistry(String registry, String stage,
+				String objectId, String producer, List<org.eclipse.fennec.model.atlas.mgmt.management.Diagnostic> diagnostics) {
+			throw new UnsupportedOperationException();
+		}
+
+		@Override
 		public ObjectMetadata getMetadataFromFinalStageForRegistry(String registry, String objectId) {
 			throw new UnsupportedOperationException();
 		}
