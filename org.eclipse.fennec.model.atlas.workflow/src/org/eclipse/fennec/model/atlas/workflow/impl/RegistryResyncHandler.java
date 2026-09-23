@@ -17,6 +17,7 @@ import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -66,12 +67,28 @@ public class RegistryResyncHandler implements UntypedEventHandler {
 
 	private static final String EPACKAGE_TYPE = EcoreUtil.getURI(EcorePackage.Literals.EPACKAGE).toString();
 
-	@Reference(cardinality = ReferenceCardinality.MULTIPLE, policy = ReferencePolicy.DYNAMIC)
 	@SuppressWarnings("rawtypes")
-	private volatile List<RegistryService> registryServices;
+	private final List<RegistryService> registryServices = new CopyOnWriteArrayList<>();
+
+	private final List<StageActionService> stageActionServices = new CopyOnWriteArrayList<>();
 
 	@Reference(cardinality = ReferenceCardinality.MULTIPLE, policy = ReferencePolicy.DYNAMIC)
-	private volatile List<StageActionService> stageActionServices;
+	void addRegistryService(@SuppressWarnings("rawtypes") RegistryService registryService) {
+		registryServices.add(registryService);
+	}
+
+	void removeRegistryService(@SuppressWarnings("rawtypes") RegistryService registryService) {
+		registryServices.remove(registryService);
+	}
+
+	@Reference(cardinality = ReferenceCardinality.MULTIPLE, policy = ReferencePolicy.DYNAMIC)
+	void addStageActionService(StageActionService stageActionService) {
+		stageActionServices.add(stageActionService);
+	}
+
+	void removeStageActionService(StageActionService stageActionService) {
+		stageActionServices.remove(stageActionService);
+	}
 
 	@Override
 	public void notifyUntyped(String topic, Map<String, Object> event) {
@@ -88,7 +105,7 @@ public class RegistryResyncHandler implements UntypedEventHandler {
 	private void replayEnter(String scope, Map<String, Object> event) {
 		@SuppressWarnings("rawtypes")
 		List<RegistryService> services = registryServices;
-		if (services == null || services.isEmpty()) {
+		if (services.isEmpty()) {
 			return;
 		}
 		LOGGER.info(() -> "Registry resync (ENTER) for scope " + scope + "; replaying " + services.size()
@@ -116,7 +133,7 @@ public class RegistryResyncHandler implements UntypedEventHandler {
 			return;
 		}
 		List<StageActionService> actions = stageActionServices;
-		if (actions == null || actions.isEmpty()) {
+		if (actions.isEmpty()) {
 			return;
 		}
 		for (String objectId : removed) {
