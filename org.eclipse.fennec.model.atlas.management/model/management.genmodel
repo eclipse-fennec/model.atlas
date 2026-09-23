@@ -37,6 +37,16 @@
       <genEnumLiterals ecoreEnumLiteral="management.ecore#//GenerationStatus/FAILED"/>
       <genEnumLiterals ecoreEnumLiteral="management.ecore#//GenerationStatus/CANCELLED"/>
     </genEnums>
+    <genEnums typeSafeEnumCompatible="false" ecoreEnum="management.ecore#//DiagnosticSeverity">
+      <genEnumLiterals ecoreEnumLiteral="management.ecore#//DiagnosticSeverity/INFO"/>
+      <genEnumLiterals ecoreEnumLiteral="management.ecore#//DiagnosticSeverity/WARNING"/>
+      <genEnumLiterals ecoreEnumLiteral="management.ecore#//DiagnosticSeverity/ERROR"/>
+    </genEnums>
+    <genEnums typeSafeEnumCompatible="false" ecoreEnum="management.ecore#//DiagnosticStatus">
+      <genEnumLiterals ecoreEnumLiteral="management.ecore#//DiagnosticStatus/OPEN"/>
+      <genEnumLiterals ecoreEnumLiteral="management.ecore#//DiagnosticStatus/ACKNOWLEDGED"/>
+      <genEnumLiterals ecoreEnumLiteral="management.ecore#//DiagnosticStatus/RESOLVED"/>
+    </genEnums>
     <genDataTypes ecoreDataType="management.ecore#//Instant"/>
     <genDataTypes ecoreDataType="management.ecore#//Promise">
       <genTypeParameters ecoreTypeParameter="management.ecore#//Promise/T"/>
@@ -75,6 +85,32 @@
       <genFeatures createChild="false" ecoreFeature="ecore:EAttribute management.ecore#//ObjectMetadata/isReadOnly"/>
       <genFeatures createChild="false" ecoreFeature="ecore:EAttribute management.ecore#//ObjectMetadata/registry"/>
       <genFeatures createChild="false" ecoreFeature="ecore:EAttribute management.ecore#//ObjectMetadata/fingerprint"/>
+      <genFeatures property="None" children="true" createChild="true" ecoreFeature="ecore:EReference management.ecore#//ObjectMetadata/diagnostics"/>
+    </genClasses>
+    <genClasses ecoreClass="management.ecore#//Diagnostic">
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute management.ecore#//Diagnostic/id"/>
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute management.ecore#//Diagnostic/producer"/>
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute management.ecore#//Diagnostic/source"/>
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute management.ecore#//Diagnostic/code"/>
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute management.ecore#//Diagnostic/severity"/>
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute management.ecore#//Diagnostic/message"/>
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute management.ecore#//Diagnostic/category"/>
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute management.ecore#//Diagnostic/target"/>
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute management.ecore#//Diagnostic/status"/>
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute management.ecore#//Diagnostic/createdTime"/>
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute management.ecore#//Diagnostic/lastChangeTime"/>
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute management.ecore#//Diagnostic/version"/>
+      <genFeatures property="None" children="true" createChild="true" ecoreFeature="ecore:EReference management.ecore#//Diagnostic/children"/>
+      <genFeatures property="None" children="true" createChild="true" ecoreFeature="ecore:EReference management.ecore#//Diagnostic/history"/>
+    </genClasses>
+    <genClasses ecoreClass="management.ecore#//DiagnosticChange">
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute management.ecore#//DiagnosticChange/changeTime"/>
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute management.ecore#//DiagnosticChange/changedBy"/>
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute management.ecore#//DiagnosticChange/oldSeverity"/>
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute management.ecore#//DiagnosticChange/newSeverity"/>
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute management.ecore#//DiagnosticChange/oldStatus"/>
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute management.ecore#//DiagnosticChange/newStatus"/>
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute management.ecore#//DiagnosticChange/reason"/>
     </genClasses>
     <genClasses ecoreClass="management.ecore#//StringToObjectMapEntry">
       <genFeatures createChild="false" ecoreFeature="ecore:EAttribute management.ecore#//StringToObjectMapEntry/key"/>
