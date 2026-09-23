@@ -20,14 +20,19 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.argThat;
+import static org.mockito.ArgumentMatchers.same;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.Base64;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -366,6 +371,7 @@ public class AtlasSchemaRegistryServiceTest {
 			EPackage.Registry mockStaticRegistry = mock(EPackage.Registry.class);
 			when(mockStaticRegistry.values()).thenReturn(registryMap.values());
 
+			service.bindStaticEPackageRegistry(mockStaticRegistry);
 			service.unbindStaticEPackageRegistry(mockStaticRegistry);
 
 			String expectedId = new String(Base64.getUrlEncoder().encode("http://test/package".getBytes()));
@@ -377,6 +383,171 @@ public class AtlasSchemaRegistryServiceTest {
 					WorkflowConstants.ATLAS_SCHEMA_REGISTRY_NAME,
 					WorkflowConstants.ATLAS_SCHEMA_REGISTRY_STAGE_NAME, expectedId));
 		}
+
+		@Test
+		@DisplayName("Should ignore an unbind of a registry that is not the bound one")
+		void shouldIgnoreUnbindOfForeignRegistry() {
+			EPackage testPackage = ePackage("TestPackage", "http://test/package");
+			EPackage.Registry bound = registryWith(testPackage);
+			// never read: an unbind of a registry that is not the bound one must not touch it
+			EPackage.Registry foreign = mock(EPackage.Registry.class);
+
+			service.bindStaticEPackageRegistry(bound);
+			service.unbindStaticEPackageRegistry(foreign);
+
+			verify(registryService, never()).removeFromCache(any(), any(), any(), any());
+			verify(ePackageIndex, never()).remove(any(RegistryAddress.class));
+		}
+	}
+
+	/**
+	 * The static registry announces content changes by re-publishing its service
+	 * properties; DS delivers those as {@code updated} callbacks (issue #282).
+	 */
+	@Nested
+	@DisplayName("Static EPackage Registry Update Tests")
+	class StaticEPackageRegistryUpdateTests {
+
+		@Test
+		@DisplayName("Should mirror a package that appears after the registry was bound")
+		void shouldMirrorPackageAddedAfterBind() {
+			EPackage first = ePackage("First", "http://test/first");
+			EPackage late = ePackage("Late", "http://test/late");
+			Map<String, Object> registryMap = new LinkedHashMap<>();
+			registryMap.put(first.getNsURI(), first);
+			EPackage.Registry mockStaticRegistry = mock(EPackage.Registry.class);
+			when(mockStaticRegistry.values()).thenAnswer(inv -> new ArrayList<>(registryMap.values()));
+
+			service.bindStaticEPackageRegistry(mockStaticRegistry);
+			registryMap.put(late.getNsURI(), late);
+			service.updatedStaticEPackageRegistry(mockStaticRegistry);
+
+			verify(registryService).updateCache(argThat(md -> objectId(first).equals(md.getObjectId())));
+			verify(registryService).updateCache(argThat(md -> objectId(late).equals(md.getObjectId())));
+			verify(ePackageIndex).index(argThat(md -> objectId(late).equals(md.getObjectId())), same(late));
+			verify(registryService, times(2)).updateCache(any(ObjectMetadata.class));
+			verify(registryService, never()).removeFromCache(any(), any(), any(), any());
+		}
+
+		@Test
+		@DisplayName("Should forget only the package that left the registry")
+		void shouldForgetOnlyTheRemovedPackage() {
+			EPackage staying = ePackage("Staying", "http://test/staying");
+			EPackage leaving = ePackage("Leaving", "http://test/leaving");
+			Map<String, Object> registryMap = new LinkedHashMap<>();
+			registryMap.put(staying.getNsURI(), staying);
+			registryMap.put(leaving.getNsURI(), leaving);
+			EPackage.Registry mockStaticRegistry = mock(EPackage.Registry.class);
+			when(mockStaticRegistry.values()).thenAnswer(inv -> new ArrayList<>(registryMap.values()));
+
+			service.bindStaticEPackageRegistry(mockStaticRegistry);
+			registryMap.remove(leaving.getNsURI());
+			service.updatedStaticEPackageRegistry(mockStaticRegistry);
+
+			RegistryAddress leavingAddress = new RegistryAddress(WorkflowConstants.ATLAS_SCOPE_NAME,
+					WorkflowConstants.ATLAS_SCHEMA_REGISTRY_NAME, WorkflowConstants.ATLAS_SCHEMA_REGISTRY_STAGE_NAME,
+					objectId(leaving));
+			verify(registryService).removeFromCache(WorkflowConstants.ATLAS_SCOPE_NAME,
+					WorkflowConstants.ATLAS_SCHEMA_REGISTRY_NAME, WorkflowConstants.ATLAS_SCHEMA_REGISTRY_STAGE_NAME,
+					objectId(leaving));
+			verify(ePackageIndex).remove(leavingAddress);
+			verify(registryService, times(1)).removeFromCache(any(), any(), any(), any());
+			verify(ePackageIndex, times(1)).remove(any(RegistryAddress.class));
+			// the survivor was mirrored once at bind and not touched again
+			verify(registryService, times(2)).updateCache(any(ObjectMetadata.class));
+		}
+
+		@Test
+		@DisplayName("Should do nothing on an update that changed no content")
+		void shouldNotTouchCacheOnUnchangedUpdate() {
+			EPackage testPackage = ePackage("TestPackage", "http://test/package");
+			EPackage.Registry mockStaticRegistry = registryWith(testPackage);
+
+			service.bindStaticEPackageRegistry(mockStaticRegistry);
+			service.updatedStaticEPackageRegistry(mockStaticRegistry);
+			service.updatedStaticEPackageRegistry(mockStaticRegistry);
+
+			verify(registryService, times(1)).updateCache(any(ObjectMetadata.class));
+			verify(ePackageIndex, times(1)).index(any(ObjectMetadata.class), any(EPackage.class));
+			verify(registryService, never()).removeFromCache(any(), any(), any(), any());
+		}
+
+		@Test
+		@DisplayName("Should re-index a package whose instance was replaced under the same nsURI")
+		void shouldReindexReplacedInstance() {
+			EPackage original = ePackage("TestPackage", "http://test/package");
+			EPackage replacement = ePackage("TestPackage", "http://test/package");
+			Map<String, Object> registryMap = new LinkedHashMap<>();
+			registryMap.put(original.getNsURI(), original);
+			EPackage.Registry mockStaticRegistry = mock(EPackage.Registry.class);
+			when(mockStaticRegistry.values()).thenAnswer(inv -> new ArrayList<>(registryMap.values()));
+
+			service.bindStaticEPackageRegistry(mockStaticRegistry);
+			registryMap.put(replacement.getNsURI(), replacement);
+			service.updatedStaticEPackageRegistry(mockStaticRegistry);
+
+			verify(ePackageIndex).index(any(ObjectMetadata.class), same(original));
+			verify(ePackageIndex).index(any(ObjectMetadata.class), same(replacement));
+			verify(registryService, never()).removeFromCache(any(), any(), any(), any());
+		}
+
+		@Test
+		@DisplayName("Should skip packages the static registry does not announce yet")
+		void shouldSkipUnannouncedPackages() {
+			EPackage nameless = EcoreFactory.eINSTANCE.createEPackage();
+			nameless.setNsURI("http://test/nameless");
+			EPackage uriless = EcoreFactory.eINSTANCE.createEPackage();
+			uriless.setName("Uriless");
+			Map<String, Object> registryMap = new LinkedHashMap<>();
+			registryMap.put("http://test/nameless", nameless);
+			registryMap.put("http://test/uriless", uriless);
+			EPackage.Registry mockStaticRegistry = mock(EPackage.Registry.class);
+			when(mockStaticRegistry.values()).thenAnswer(inv -> new ArrayList<>(registryMap.values()));
+
+			service.bindStaticEPackageRegistry(mockStaticRegistry);
+
+			verify(registryService, never()).updateCache(any(ObjectMetadata.class));
+		}
+
+		@Test
+		@DisplayName("Should ignore an update from a registry that is no longer bound")
+		void shouldIgnoreUpdateFromUnboundRegistry() {
+			EPackage testPackage = ePackage("TestPackage", "http://test/package");
+			EPackage.Registry mockStaticRegistry = registryWith(testPackage);
+
+			service.bindStaticEPackageRegistry(mockStaticRegistry);
+			service.unbindStaticEPackageRegistry(mockStaticRegistry);
+			service.updatedStaticEPackageRegistry(mockStaticRegistry);
+
+			verify(registryService, times(1)).updateCache(any(ObjectMetadata.class));
+		}
+	}
+
+	private static EPackage ePackage(String name, String nsUri) {
+		EPackage ePackage = EcoreFactory.eINSTANCE.createEPackage();
+		ePackage.setName(name);
+		ePackage.setNsURI(nsUri);
+		ePackage.setNsPrefix(name.toLowerCase());
+		return ePackage;
+	}
+
+	private static EPackage.Registry registryWith(EPackage... ePackages) {
+		Map<String, Object> registryMap = new LinkedHashMap<>();
+		for (EPackage ePackage : ePackages) {
+			registryMap.put(ePackage.getNsURI(), ePackage);
+		}
+		EPackage.Registry mockStaticRegistry = mock(EPackage.Registry.class);
+		when(mockStaticRegistry.values()).thenAnswer(inv -> new ArrayList<>(registryMap.values()));
+		return mockStaticRegistry;
+	}
+
+	private static String objectId(EPackage ePackage) {
+		return Base64.getUrlEncoder().encodeToString(ePackage.getNsURI().getBytes(StandardCharsets.UTF_8));
+	}
+
+	@Nested
+	@DisplayName("Static EPackage Registry Binding Tests (metadata)")
+	class StaticEPackageRegistryMetadataTests {
 
 		@Test
 		@DisplayName("Should create correct metadata for bound EPackage")
