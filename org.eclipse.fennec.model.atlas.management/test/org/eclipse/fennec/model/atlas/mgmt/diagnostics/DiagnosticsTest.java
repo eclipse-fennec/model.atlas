@@ -21,9 +21,14 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.time.Instant;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
+import org.eclipse.emf.ecore.util.EcoreUtil;
 import org.eclipse.fennec.model.atlas.mgmt.management.Diagnostic;
+import org.eclipse.fennec.model.atlas.mgmt.management.DiagnosticChange;
 import org.eclipse.fennec.model.atlas.mgmt.management.DiagnosticSeverity;
+import org.eclipse.fennec.model.atlas.mgmt.management.DiagnosticStatus;
 import org.eclipse.fennec.model.atlas.mgmt.management.ManagementFactory;
 import org.eclipse.fennec.model.atlas.mgmt.management.ObjectMetadata;
 import org.junit.jupiter.api.DisplayName;
@@ -146,6 +151,113 @@ class DiagnosticsTest {
         assertEquals(1, metadata.getDiagnostics().size());
         assertEquals("gdpr", metadata.getDiagnostics().get(0).getProducer());
         assertEquals(1, gone.size());
+    }
+
+    @Test
+    @DisplayName("A re-validation keeps a status a person set, with the history and version, and refreshes the producer's view")
+    void revalidationKeepsAnInformedStatus() {
+        ObjectMetadata metadata = ManagementFactory.eINSTANCE.createObjectMetadata();
+        Diagnostics.replaceOwned(metadata, "qvt",
+                List.of(diagnostic("compile-failed", null, DiagnosticSeverity.ERROR, "first run")), T0);
+        // a person resolved it through the service: status, history entry, version 1
+        Diagnostic stored = metadata.getDiagnostics().get(0);
+        stored.setStatus(DiagnosticStatus.RESOLVED);
+        stored.setVersion(1);
+        DiagnosticChange resolution = ManagementFactory.eINSTANCE.createDiagnosticChange();
+        resolution.setChangedBy("gdpr.officer");
+        resolution.setChangeTime(T1);
+        resolution.setOldStatus(DiagnosticStatus.OPEN);
+        resolution.setNewStatus(DiagnosticStatus.RESOLVED);
+        stored.getHistory().add(resolution);
+
+        // the producer runs again, knows nothing of that, reports the same finding with new text
+        Diagnostics.replaceOwned(metadata, "qvt",
+                List.of(diagnostic("compile-failed", null, DiagnosticSeverity.ERROR, "second run")), T1);
+
+        Diagnostic again = metadata.getDiagnostics().get(0);
+        assertEquals("second run", again.getMessage(), "the producer's view refreshes");
+        assertEquals(DiagnosticStatus.RESOLVED, again.getStatus(), "the person's decision stands");
+        assertEquals(1, again.getVersion(), "no informed change happened");
+        assertEquals(1, again.getHistory().size(), "an unchanged severity leaves no trace");
+        assertEquals("gdpr.officer", again.getHistory().get(0).getChangedBy());
+        assertEquals(T0, again.getCreatedTime());
+    }
+
+    @Test
+    @DisplayName("A re-validation that changes the severity records it in the producer's name and bumps the version")
+    void revalidationRecordsASeverityChange() {
+        ObjectMetadata metadata = ManagementFactory.eINSTANCE.createObjectMetadata();
+        Diagnostics.replaceOwned(metadata, "qvt",
+                List.of(diagnostic("deprecated-import", null, DiagnosticSeverity.WARNING, "m")), T0);
+
+        Diagnostics.replaceOwned(metadata, "qvt",
+                List.of(diagnostic("deprecated-import", null, DiagnosticSeverity.ERROR, "m")), T1);
+
+        Diagnostic again = metadata.getDiagnostics().get(0);
+        assertEquals(DiagnosticSeverity.ERROR, again.getSeverity());
+        assertEquals(1, again.getVersion());
+        assertEquals(1, again.getHistory().size());
+        DiagnosticChange change = again.getHistory().get(0);
+        assertEquals("qvt", change.getChangedBy());
+        assertEquals(DiagnosticSeverity.WARNING, change.getOldSeverity());
+        assertEquals(DiagnosticSeverity.ERROR, change.getNewSeverity());
+        assertEquals(T1, change.getChangeTime());
+        assertEquals(T1, again.getLastChangeTime());
+    }
+
+    @Test
+    @DisplayName("An informed change, at a higher version, is taken as it is")
+    void informedChangeWins() {
+        ObjectMetadata metadata = ManagementFactory.eINSTANCE.createObjectMetadata();
+        Diagnostics.replaceOwned(metadata, "qvt",
+                List.of(diagnostic("compile-failed", null, DiagnosticSeverity.ERROR, "m")), T0);
+        Diagnostic stored = metadata.getDiagnostics().get(0);
+        stored.setStatus(DiagnosticStatus.RESOLVED);
+        stored.setVersion(1);
+
+        // the service reopens it: version 2, status OPEN
+        Diagnostic edited = diagnostic("compile-failed", null, DiagnosticSeverity.ERROR, "m");
+        edited.setStatus(DiagnosticStatus.OPEN);
+        edited.setVersion(2);
+        Diagnostics.replaceOwned(metadata, "qvt", List.of(edited), T1);
+
+        Diagnostic again = metadata.getDiagnostics().get(0);
+        assertEquals(DiagnosticStatus.OPEN, again.getStatus(), "the informed change is not overruled");
+        assertEquals(2, again.getVersion());
+        assertEquals(T0, again.getCreatedTime(), "createdTime is carried over even so");
+    }
+
+    @Test
+    @DisplayName("find reaches descendants; diff reports added, changed and removed, and nothing for a no-op")
+    void findAndDiff() {
+        ObjectMetadata before = ManagementFactory.eINSTANCE.createObjectMetadata();
+        Diagnostic root = diagnostic("compile-failed", null, DiagnosticSeverity.ERROR, "m");
+        root.getChildren().add(diagnostic("error", "line:1", DiagnosticSeverity.ERROR, "e1"));
+        Diagnostic gone = diagnostic("deprecated-import", null, DiagnosticSeverity.INFO, "gone");
+        Diagnostics.replaceOwned(before, "qvt", List.of(root, gone), T0);
+        String childId = before.getDiagnostics().get(0).getChildren().get(0).getId();
+        assertEquals("e1", Diagnostics.find(before, childId).getMessage(), "find reaches a descendant");
+        assertEquals(before.getDiagnostics().get(0), Diagnostics.rootOf(Diagnostics.find(before, childId)));
+
+        assertTrue(Diagnostics.diff(before, EcoreUtil.copy(before)).isEmpty(), "a copy differs in nothing");
+
+        ObjectMetadata after = EcoreUtil.copy(before);
+        Diagnostics.replaceOwned(after, "qvt", List.of(
+                diagnostic("compile-failed", null, DiagnosticSeverity.WARNING, "m"),
+                diagnostic("new-finding", null, DiagnosticSeverity.INFO, "new")), T1);
+        List<DiagnosticDelta> deltas = Diagnostics.diff(before, after);
+
+        Map<String, String> kinds = deltas.stream().collect(Collectors.toMap(d -> d.id, d -> d.kind));
+        assertEquals(DiagnosticDelta.CHANGED, kinds.get(Diagnostics.idOf("qvt", "compile-failed", null)));
+        assertEquals(DiagnosticDelta.ADDED, kinds.get(Diagnostics.idOf("qvt", "new-finding", null)));
+        assertEquals(DiagnosticDelta.REMOVED, kinds.get(Diagnostics.idOf("qvt", "deprecated-import", null)));
+        assertEquals(DiagnosticDelta.REMOVED, kinds.get(childId), "the child went with the producer's new tree");
+        assertEquals(4, deltas.size());
+        DiagnosticDelta changed = deltas.stream().filter(d -> DiagnosticDelta.CHANGED.equals(d.kind)).findFirst()
+                .orElseThrow();
+        assertEquals("ERROR", changed.before.severity);
+        assertEquals("WARNING", changed.after.severity);
+        assertEquals("qvt", changed.after.changedBy, "the re-validation's history entry names the producer");
     }
 
     private static Diagnostic byProducer(ObjectMetadata metadata, String producer) {
