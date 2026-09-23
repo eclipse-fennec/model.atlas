@@ -1,7 +1,0 @@
-id,name,price,stock,category_id
-BIGINT,VARCHAR,DECIMAL,INTEGER,BIGINT
-1,Laptop Pro 15,1299.99,42,1
-2,Wireless Mouse,29.99,200,2
-3,USB-C Hub,49.99,150,2
-4,Standing Desk,599,15,3
-5,Office Chair,349,28,3

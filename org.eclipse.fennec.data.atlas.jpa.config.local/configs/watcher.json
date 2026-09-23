@@ -1,7 +1,0 @@
-{
-  ":configurator:resource-version": 1,
-
-  "WorkspaceFolderWatcher~test": {
-    "io.fs.watcher.path": "$[env:JPA_WATCH_PATH;default=$[prop:JPA_WATCH_PATH;default=$[prop:base.path;default=.]/workspace/jpa/]]"
-  }
-}
