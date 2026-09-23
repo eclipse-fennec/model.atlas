@@ -85,6 +85,14 @@ public class ManagementAdapterFactory extends AdapterFactoryImpl {
 				return createObjectMetadataAdapter();
 			}
 			@Override
+			public Adapter caseDiagnostic(Diagnostic object) {
+				return createDiagnosticAdapter();
+			}
+			@Override
+			public Adapter caseDiagnosticChange(DiagnosticChange object) {
+				return createDiagnosticChangeAdapter();
+			}
+			@Override
 			public Adapter caseStringToObjectMapEntry(Map.Entry<String, Object> object) {
 				return createStringToObjectMapEntryAdapter();
 			}
@@ -131,6 +139,34 @@ public class ManagementAdapterFactory extends AdapterFactoryImpl {
 	 * @generated
 	 */
 	public Adapter createObjectMetadataAdapter() {
+		return null;
+	}
+
+	/**
+	 * Creates a new adapter for an object of class '{@link org.eclipse.fennec.model.atlas.mgmt.management.Diagnostic <em>Diagnostic</em>}'.
+	 * <!-- begin-user-doc -->
+	 * This default implementation returns null so that we can easily ignore cases;
+	 * it's useful to ignore a case when inheritance will catch all the cases anyway.
+	 * <!-- end-user-doc -->
+	 * @return the new adapter.
+	 * @see org.eclipse.fennec.model.atlas.mgmt.management.Diagnostic
+	 * @generated
+	 */
+	public Adapter createDiagnosticAdapter() {
+		return null;
+	}
+
+	/**
+	 * Creates a new adapter for an object of class '{@link org.eclipse.fennec.model.atlas.mgmt.management.DiagnosticChange <em>Diagnostic Change</em>}'.
+	 * <!-- begin-user-doc -->
+	 * This default implementation returns null so that we can easily ignore cases;
+	 * it's useful to ignore a case when inheritance will catch all the cases anyway.
+	 * <!-- end-user-doc -->
+	 * @return the new adapter.
+	 * @see org.eclipse.fennec.model.atlas.mgmt.management.DiagnosticChange
+	 * @generated
+	 */
+	public Adapter createDiagnosticChangeAdapter() {
 		return null;
 	}
 

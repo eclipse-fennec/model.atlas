@@ -85,6 +85,18 @@ public class ManagementSwitch<T> extends Switch<T> {
 				if (result == null) result = defaultCase(theEObject);
 				return result;
 			}
+			case ManagementPackage.DIAGNOSTIC: {
+				Diagnostic diagnostic = (Diagnostic)theEObject;
+				T result = caseDiagnostic(diagnostic);
+				if (result == null) result = defaultCase(theEObject);
+				return result;
+			}
+			case ManagementPackage.DIAGNOSTIC_CHANGE: {
+				DiagnosticChange diagnosticChange = (DiagnosticChange)theEObject;
+				T result = caseDiagnosticChange(diagnosticChange);
+				if (result == null) result = defaultCase(theEObject);
+				return result;
+			}
 			case ManagementPackage.STRING_TO_OBJECT_MAP_ENTRY: {
 				@SuppressWarnings("unchecked") Map.Entry<String, Object> stringToObjectMapEntry = (Map.Entry<String, Object>)theEObject;
 				T result = caseStringToObjectMapEntry(stringToObjectMapEntry);
@@ -125,6 +137,36 @@ public class ManagementSwitch<T> extends Switch<T> {
 	 * @generated
 	 */
 	public T caseObjectMetadata(ObjectMetadata object) {
+		return null;
+	}
+
+	/**
+	 * Returns the result of interpreting the object as an instance of '<em>Diagnostic</em>'.
+	 * <!-- begin-user-doc -->
+	 * This implementation returns null;
+	 * returning a non-null result will terminate the switch.
+	 * <!-- end-user-doc -->
+	 * @param object the target of the switch.
+	 * @return the result of interpreting the object as an instance of '<em>Diagnostic</em>'.
+	 * @see #doSwitch(org.eclipse.emf.ecore.EObject) doSwitch(EObject)
+	 * @generated
+	 */
+	public T caseDiagnostic(Diagnostic object) {
+		return null;
+	}
+
+	/**
+	 * Returns the result of interpreting the object as an instance of '<em>Diagnostic Change</em>'.
+	 * <!-- begin-user-doc -->
+	 * This implementation returns null;
+	 * returning a non-null result will terminate the switch.
+	 * <!-- end-user-doc -->
+	 * @param object the target of the switch.
+	 * @return the result of interpreting the object as an instance of '<em>Diagnostic Change</em>'.
+	 * @see #doSwitch(org.eclipse.emf.ecore.EObject) doSwitch(EObject)
+	 * @generated
+	 */
+	public T caseDiagnosticChange(DiagnosticChange object) {
 		return null;
 	}
 

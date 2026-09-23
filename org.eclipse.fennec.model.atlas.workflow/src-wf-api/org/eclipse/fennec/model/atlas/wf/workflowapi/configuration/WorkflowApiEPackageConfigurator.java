@@ -38,7 +38,7 @@ public class WorkflowApiEPackageConfigurator implements EPackageConfigurator {
 	 * service property.
 	 * @generated
 	 */
-	public static final String FINGERPRINT = "fp1:fe33ab31c4fed24ade6508d1e0dda26f13598bc468c013869454c0561ba3e405";
+	public static final String FINGERPRINT = "fp1:8c4cd166ece42e3296a0cac144406174b3731e38f1e0a8cd8cc9ee22e400cd72";
 
 	private WorkflowApiPackage ePackage;
 

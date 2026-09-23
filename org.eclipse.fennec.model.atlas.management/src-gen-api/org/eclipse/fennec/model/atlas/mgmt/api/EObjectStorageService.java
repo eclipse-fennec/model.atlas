@@ -17,6 +17,7 @@ import java.util.List;
 
 import org.eclipse.emf.ecore.EObject;
 
+import org.eclipse.fennec.model.atlas.mgmt.management.Diagnostic;
 import org.eclipse.fennec.model.atlas.mgmt.management.ObjectMetadata;
 import org.eclipse.fennec.model.atlas.mgmt.management.ObjectQuery;
 import org.eclipse.fennec.model.atlas.mgmt.management.ObjectStatus;
@@ -129,6 +130,21 @@ public interface EObjectStorageService<T extends EObject> {
 	 * @generated
 	 */
 	Promise<Boolean> updateMetadata(String scope, String registry, String stage, String objectId, ObjectMetadata metadata);
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * <!-- begin-model-doc -->
+	 * Replace the diagnostics one producer holds on an object, without touching anything else (issue #292).
+	 * 
+	 * Diagnostics are metadata, not content: this write changes neither contentHash nor version nor lastChangeTime, and it is the only path that writes ObjectMetadata.diagnostics. The roots currently carrying the given producer are removed and the given roots take their place; roots of other producers are left as they are. An empty list clears the producer's diagnostics. Ids that are absent are minted by the stable id rule (producer, code, target); a root whose id already existed keeps its createdTime. Children inherit the producer.
+	 * 
+	 * Returns the stored metadata, or null when the object does not exist in that stage.
+	 * <!-- end-model-doc -->
+	 * @model dataType="org.eclipse.fennec.model.atlas.mgmt.management.Promise&lt;org.eclipse.fennec.model.atlas.mgmt.management.ObjectMetadata&gt;" scopeRequired="true" registryRequired="true" stageRequired="true" objectIdRequired="true" producerRequired="true" diagnosticsDataType="org.eclipse.fennec.model.atlas.mgmt.management.List&lt;org.eclipse.fennec.model.atlas.mgmt.management.Diagnostic&gt;" diagnosticsRequired="true" diagnosticsMany="false"
+	 * @generated
+	 */
+	Promise<ObjectMetadata> updateDiagnostics(String scope, String registry, String stage, String objectId, String producer, List<Diagnostic> diagnostics);
 
 	/**
 	 * <!-- begin-user-doc -->

@@ -15,6 +15,7 @@ package org.eclipse.fennec.model.atlas.mgmt.management;
 
 import java.time.Instant;
 
+import org.eclipse.emf.common.util.EList;
 import org.eclipse.emf.common.util.EMap;
 
 import org.eclipse.emf.ecore.EObject;
@@ -60,6 +61,7 @@ import org.osgi.annotation.versioning.ProviderType;
  *   <li>{@link org.eclipse.fennec.model.atlas.mgmt.management.ObjectMetadata#isIsReadOnly <em>Is Read Only</em>}</li>
  *   <li>{@link org.eclipse.fennec.model.atlas.mgmt.management.ObjectMetadata#getRegistry <em>Registry</em>}</li>
  *   <li>{@link org.eclipse.fennec.model.atlas.mgmt.management.ObjectMetadata#getFingerprint <em>Fingerprint</em>}</li>
+ *   <li>{@link org.eclipse.fennec.model.atlas.mgmt.management.ObjectMetadata#getDiagnostics <em>Diagnostics</em>}</li>
  * </ul>
  *
  * @see org.eclipse.fennec.model.atlas.mgmt.management.ManagementPackage#getObjectMetadata()
@@ -715,5 +717,28 @@ public interface ObjectMetadata extends EObject {
 	 * @generated
 	 */
 	void setFingerprint(String value);
+
+	/**
+	 * Returns the value of the '<em><b>Diagnostics</b></em>' containment reference list.
+	 * The list contents are of type {@link org.eclipse.fennec.model.atlas.mgmt.management.Diagnostic}.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * <!-- begin-model-doc -->
+	 * Findings about this object, produced by stage actions, stage gates and other
+	 * modules (issue #290). Diagnostics are metadata, not content: writing them changes
+	 * neither contentHash nor version, fires no stage action, and is allowed in stages
+	 * that are otherwise read-only, because a refused transition records its veto on
+	 * the object in its source stage.
+	 * 
+	 * Each entry is a root of a diagnostic tree owned by one producer. A producer
+	 * replaces only its own roots and never touches those of another producer. Keyed
+	 * by id, which is stable across re-validation (see Diagnostic).
+	 * <!-- end-model-doc -->
+	 * @return the value of the '<em>Diagnostics</em>' containment reference list.
+	 * @see org.eclipse.fennec.model.atlas.mgmt.management.ManagementPackage#getObjectMetadata_Diagnostics()
+	 * @model containment="true" keys="id"
+	 * @generated
+	 */
+	EList<Diagnostic> getDiagnostics();
 
 } // ObjectMetadata

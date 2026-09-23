@@ -45,6 +45,24 @@ public interface ManagementFactory extends EFactory {
 	ObjectMetadata createObjectMetadata();
 
 	/**
+	 * Returns a new object of class '<em>Diagnostic</em>'.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @return a new object of class '<em>Diagnostic</em>'.
+	 * @generated
+	 */
+	Diagnostic createDiagnostic();
+
+	/**
+	 * Returns a new object of class '<em>Diagnostic Change</em>'.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @return a new object of class '<em>Diagnostic Change</em>'.
+	 * @generated
+	 */
+	DiagnosticChange createDiagnosticChange();
+
+	/**
 	 * Returns a new object of class '<em>Object Query</em>'.
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
