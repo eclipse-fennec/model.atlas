@@ -344,6 +344,21 @@ finding.setMessage("http://example.org/b is not visible in release");
 workflow.updateDiagnostics("jena", "release", objectId, "reference-check", List.of(finding)).getValue();
 ```
 
+A root that comes back with the **same id** as one the producer held before is the same finding seen again (issue #293): it keeps its `createdTime`, `status`, `history` and `version`, and takes only the producer's fresh view (severity, message, target, children). A changed severity is recorded in the history in the producer's name. Only a replacement at a *higher* version than its predecessor, an informed change such as the `DiagnosticService` makes, is taken as it is. So a status a person set survives every re-validation.
+
+#### `DiagnosticService` — deciding about one finding
+
+The `DiagnosticService` (component `DiagnosticService`, whiteboard service in this bundle) changes single diagnostics by id: `add`, `update`, `acknowledge`, `resolve`, `escalate`, `remove`. Every call names `changedBy` and the `expectedVersion` it decided about; a stale version is refused with `DiagnosticVersionConflictException` and writes nothing, an unknown object or id with `DiagnosticNotFoundException`. Applied changes append a history entry, bump the version and are written through `updateDiagnostics`, so they take the same path and fire the same event as a producer's write. Operations on one object are serialised per address within the runtime.
+
+```java
+DiagnosticAddress at = new DiagnosticAddress("jena", "schema", "release", objectId);
+Diagnostic resolved = diagnosticService.resolve(at, findingId, 0, "gdpr.officer", "pseudonymised downstream").getValue();
+```
+
+#### `DiagnosticsChanged` events
+
+Every `updateDiagnostics` that changes what a reader would see delivers one `DiagnosticsChanged` event on the OSGi **Typed Event Bus** (topic `DiagnosticsChanged.TOPIC`), for the (scope, registry, stage, objectId) it happened on, with a `DiagnosticDelta` per diagnostic that looks different (`ADDED`, `CHANGED`, `REMOVED`) carrying the `DiagnosticState` before and after. A no-op write delivers nothing, so modules reacting to each other converge instead of looping. Subscribe as `TypedEventHandler<DiagnosticsChanged>` with `event.topics=org/eclipse/fennec/model/atlas/diagnostics/DIAGNOSTICS_CHANGED`. The bus is an optional reference of the registry: a runtime without it still writes diagnostics.
+
 ### Delete Operations
 
 #### `deleteFromStage(String stage, String objectId): Promise<Boolean>`

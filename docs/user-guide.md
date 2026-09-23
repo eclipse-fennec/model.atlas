@@ -308,9 +308,37 @@ Rules worth knowing:
 - **Ids are stable.** The id is derived from producer, code and target, so the same finding
   about the same element keeps its id across re-validation and can be referenced from outside.
 
-Today diagnostics are written through the service API (`RegistryService.updateDiagnostics`);
-the REST surface for changing them, and the refusal contract that returns them on a `409`, are
-part of the diagnostics epic (#290).
+Two ways to change diagnostics exist, and they mean different things:
+
+- **A producer writes its findings wholesale** (`RegistryService.updateDiagnostics`). That is a
+  re-validation: the producer reports what it finds now and knows nothing of what happened to
+  its earlier findings. A finding that comes back with the same id keeps its life: its
+  `createdTime`, its `status`, its `history` and its `version`. Only the producer's own view
+  refreshes: severity, message, target, children. A changed severity is recorded in the history
+  in the producer's name. So a status a person set is **never silently reverted** by an automatic
+  run.
+- **A person or module decides about one finding** through the `DiagnosticService`: `acknowledge`,
+  `resolve`, `escalate`, a generic `update`, `add` and `remove`, each by diagnostic id. Every call
+  names who makes the change (`changedBy`) and which `version` it decided about. A change that
+  names a version no longer current is refused with a version conflict and writes nothing, so
+  two people deciding about the same finding cannot overwrite each other. Every applied change
+  appends a history entry and increments the version. Any caller may change any finding, whoever
+  produced it; the audit trail, not a fence, is what protects them. Changes go both ways: a
+  resolved finding may be reopened, a warning escalated.
+
+**Change events.** Every write that changes what a reader would see delivers one
+`DiagnosticsChanged` event on the OSGi Typed Event Bus, topic
+`org/eclipse/fennec/model/atlas/diagnostics/DIAGNOSTICS_CHANGED`, for the (scope, registry, stage,
+objectId) it happened on. The event lists each diagnostic that looks different afterwards with
+its state **before and after** (id, producer, code, severity, status, message, target, version,
+who changed it last), whether the change came from a producer's re-validation, from a decision
+through the service, or from a refused transition recording its veto. A write that changes
+nothing delivers nothing, which is what keeps two modules reacting to each other from looping.
+Handlers subscribe as `TypedEventHandler<DiagnosticsChanged>` and must not write diagnostics
+unconditionally in response.
+
+The REST surface for changing diagnostics, and the refusal contract that returns them on a `409`,
+are part of the diagnostics epic (#290).
 
 ### Hierarchical Visibility
 

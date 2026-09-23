@@ -431,6 +431,9 @@ public class RegistryServiceImplTest {
                     .when(storage.updateDiagnostics(eq("test-scope"), eq("test-registry"), any(), eq("object-1"),
                             eq("checker"), any()))
                     .thenReturn(Promises.resolved(stored));
+            // the read before the write, for the event's "before" state
+            org.mockito.Mockito.lenient().when(storage.retrieveMetadata(any(), any(), any(), any()))
+                    .thenReturn(Promises.resolved(null));
 
             // a registry with a stage that is neither writable nor final: nothing but a
             // diagnostics write may reach it
@@ -491,6 +494,75 @@ public class RegistryServiceImplTest {
                     .assertThrows(java.lang.reflect.InvocationTargetException.class, promise::getValue);
             assertTrue(failure.getCause() instanceof IllegalArgumentException, String.valueOf(failure.getCause()));
             verify(storage, never()).updateDiagnostics(any(), any(), any(), any(), any(), any());
+        }
+
+        @Test
+        @DisplayName("A write that changes a finding delivers one typed event naming what changed (issue #293)")
+        void changedDiagnosticsAreAnnounced() throws Exception {
+            org.osgi.service.typedevent.TypedEventBus bus = mock(org.osgi.service.typedevent.TypedEventBus.class);
+            setBus(service, bus);
+            ObjectMetadata before = ManagementFactory.eINSTANCE.createObjectMetadata();
+            before.setObjectId("object-1");
+            org.eclipse.fennec.model.atlas.mgmt.management.Diagnostic old = ManagementFactory.eINSTANCE
+                    .createDiagnostic();
+            old.setId("d1");
+            old.setProducer("checker");
+            old.setCode("c");
+            old.setMessage("m");
+            old.setSeverity(org.eclipse.fennec.model.atlas.mgmt.management.DiagnosticSeverity.WARNING);
+            before.getDiagnostics().add(old);
+            org.eclipse.fennec.model.atlas.mgmt.management.Diagnostic now = org.eclipse.emf.ecore.util.EcoreUtil
+                    .copy(old);
+            now.setSeverity(org.eclipse.fennec.model.atlas.mgmt.management.DiagnosticSeverity.ERROR);
+            stored.getDiagnostics().add(now);
+            when(storage.retrieveMetadata("test-scope", "test-registry", "draft", "object-1"))
+                    .thenReturn(Promises.resolved(before));
+
+            service.updateDiagnostics("test-scope", "draft", "object-1", "checker", List.of()).getValue();
+
+            ArgumentCaptor<org.eclipse.fennec.model.atlas.mgmt.diagnostics.DiagnosticsChanged> captor = ArgumentCaptor
+                    .forClass(org.eclipse.fennec.model.atlas.mgmt.diagnostics.DiagnosticsChanged.class);
+            verify(bus).deliver(eq(org.eclipse.fennec.model.atlas.mgmt.diagnostics.DiagnosticsChanged.TOPIC),
+                    captor.capture());
+            var event = captor.getValue();
+            assertEquals("test-scope", event.scope);
+            assertEquals("test-registry", event.registry);
+            assertEquals("draft", event.stage);
+            assertEquals("object-1", event.objectId);
+            assertEquals("checker", event.producer);
+            assertEquals(1, event.changes.size());
+            assertEquals("d1", event.changes.get(0).id);
+            assertEquals(org.eclipse.fennec.model.atlas.mgmt.diagnostics.DiagnosticDelta.CHANGED,
+                    event.changes.get(0).kind);
+            assertEquals("WARNING", event.changes.get(0).before.severity);
+            assertEquals("ERROR", event.changes.get(0).after.severity);
+        }
+
+        @Test
+        @DisplayName("A write that changes nothing delivers no event, so reacting modules cannot loop")
+        void unchangedDiagnosticsStaySilent() throws Exception {
+            org.osgi.service.typedevent.TypedEventBus bus = mock(org.osgi.service.typedevent.TypedEventBus.class);
+            setBus(service, bus);
+            when(storage.retrieveMetadata("test-scope", "test-registry", "draft", "object-1"))
+                    .thenReturn(Promises.resolved(org.eclipse.emf.ecore.util.EcoreUtil.copy(stored)));
+
+            service.updateDiagnostics("test-scope", "draft", "object-1", "checker", List.of()).getValue();
+
+            verify(bus, never()).deliver(any(), any());
+        }
+
+        @Test
+        @DisplayName("Without a bus the write stands and nobody is told")
+        void noBusNoEvent() throws Exception {
+            when(storage.retrieveMetadata("test-scope", "test-registry", "draft", "object-1"))
+                    .thenReturn(Promises.resolved(null));
+
+            assertNotNull(service.updateDiagnostics("test-scope", "draft", "object-1", "checker", List.of())
+                    .getValue());
+        }
+
+        private static void setBus(RegistryServiceImpl<EObject> service, org.osgi.service.typedevent.TypedEventBus bus) {
+            service.bindTypedEventBus(bus);
         }
 
         @Test

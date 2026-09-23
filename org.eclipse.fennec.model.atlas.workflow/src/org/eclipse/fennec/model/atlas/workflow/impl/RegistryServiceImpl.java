@@ -45,8 +45,12 @@ import org.eclipse.fennec.model.atlas.config.check.UnrecognisedProperties;
 import org.eclipse.fennec.model.atlas.mgmt.api.EObjectRegistryService;
 import org.eclipse.fennec.model.atlas.mgmt.api.EObjectStorageService;
 import org.eclipse.fennec.model.atlas.mgmt.management.ManagementPackage;
+import org.eclipse.fennec.model.atlas.mgmt.diagnostics.DiagnosticDelta;
+import org.eclipse.fennec.model.atlas.mgmt.diagnostics.Diagnostics;
+import org.eclipse.fennec.model.atlas.mgmt.diagnostics.DiagnosticsChanged;
 import org.eclipse.fennec.model.atlas.mgmt.management.Diagnostic;
 import org.eclipse.fennec.model.atlas.mgmt.management.ObjectMetadata;
+import org.osgi.service.typedevent.TypedEventBus;
 import org.eclipse.fennec.model.atlas.scope.api.RegistryType;
 import org.eclipse.fennec.model.atlas.scope.api.ScopeApiFactory;
 import org.eclipse.fennec.model.atlas.scope.api.StageInfo;
@@ -227,9 +231,37 @@ public class RegistryServiceImpl<T extends EObject> implements RegistryService<T
      * and dynamic, so this bundle's own registration service coming up later does not hold up a
      * registry.
      */
+    private volatile DynamicEPackageRegistrationService ePackageRegistrations;
+
     @Reference(cardinality = ReferenceCardinality.OPTIONAL, policy = ReferencePolicy.DYNAMIC,
             policyOption = ReferencePolicyOption.GREEDY)
-    private volatile DynamicEPackageRegistrationService ePackageRegistrations;
+    void bindEPackageRegistrations(DynamicEPackageRegistrationService registrations) {
+        this.ePackageRegistrations = registrations;
+    }
+
+    void unbindEPackageRegistrations(DynamicEPackageRegistrationService registrations) {
+        if (this.ePackageRegistrations == registrations) {
+            this.ePackageRegistrations = null;
+        }
+    }
+
+    /**
+     * Carries the {@link DiagnosticsChanged} events (issue #293). Optional and dynamic: a
+     * runtime without the bus still writes diagnostics, it just tells nobody.
+     */
+    private volatile TypedEventBus typedEventBus;
+
+    @Reference(cardinality = ReferenceCardinality.OPTIONAL, policy = ReferencePolicy.DYNAMIC,
+            policyOption = ReferencePolicyOption.GREEDY)
+    void bindTypedEventBus(TypedEventBus bus) {
+        this.typedEventBus = bus;
+    }
+
+    void unbindTypedEventBus(TypedEventBus bus) {
+        if (this.typedEventBus == bus) {
+            this.typedEventBus = null;
+        }
+    }
 
     @Reference(name = "stageActionService", target = ("(scope=no-inject)"),
             cardinality = ReferenceCardinality.MULTIPLE, policy = ReferencePolicy.DYNAMIC,
@@ -517,18 +549,56 @@ public class RegistryServiceImpl<T extends EObject> implements RegistryService<T
             // stays protected is the content: updateInStage keeps its full bar.
             validateStage(stage);
             EObjectStorageService<T> storageService = storageFor(stage);
+            // the state before the write, so the event can say what changed (issue #293)
+            ObjectMetadata before = WorkflowServiceHelper
+                    .getPromiseValue(storageService.retrieveMetadata(scope, config.registry_name(), stage, objectId));
             ObjectMetadata metadata = WorkflowServiceHelper.getPromiseValue(storageService.updateDiagnostics(scope,
                     config.registry_name(), stage, objectId, producer, diagnostics));
             if (metadata == null) {
                 return null;
             }
             // no dispatch: diagnostics are metadata, and a stage action reacting to them would
-            // loop with the action that wrote them
+            // loop with the action that wrote them. What goes out is the typed event, and only
+            // when something looks different afterwards.
+            deliverDiagnosticsChanged(scope, stage, objectId, producer, before, metadata);
             if (!isWritableStage(stage)) {
                 metadata.setIsReadOnly(true);
             }
             return metadata;
         });
+    }
+
+    /**
+     * Delivers a {@link DiagnosticsChanged} event on the Typed Event Bus for what a
+     * diagnostics write changed. Nothing is delivered when nothing a reader would notice
+     * changed, which is what keeps two modules reacting to each other from looping, and
+     * nothing when no bus is around: the event is a courtesy to observers, the write stands
+     * without it.
+     */
+    private void deliverDiagnosticsChanged(String scope, String stage, String objectId, String producer,
+            ObjectMetadata before, ObjectMetadata after) {
+        TypedEventBus bus = typedEventBus;
+        if (bus == null) {
+            return;
+        }
+        List<DiagnosticDelta> deltas = Diagnostics.diff(before, after);
+        if (deltas.isEmpty()) {
+            return;
+        }
+        DiagnosticsChanged event = new DiagnosticsChanged();
+        event.scope = scope;
+        event.registry = config.registry_name();
+        event.stage = stage;
+        event.objectId = objectId;
+        event.producer = producer;
+        event.time = System.currentTimeMillis();
+        event.changes = deltas;
+        try {
+            bus.deliver(DiagnosticsChanged.TOPIC, event);
+        } catch (RuntimeException e) {
+            LOGGER.log(Level.WARNING, "The diagnostics of " + objectId + " in (" + scope + ", " + config.registry_name()
+                    + ", " + stage + ") changed, but the event could not be delivered", e);
+        }
     }
 
     /**
