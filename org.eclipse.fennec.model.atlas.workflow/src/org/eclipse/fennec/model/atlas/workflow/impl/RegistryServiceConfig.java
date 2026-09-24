@@ -62,4 +62,13 @@ public @interface RegistryServiceConfig {
 
     @AttributeDefinition(name = "ResourceSet Target", description = "The target filter ensuring that the ResourceSet with the required model is actually available", required = true)
     String resourceSet_target();
+
+    @AttributeDefinition(name = "Stage Action Chains", description = "The order in which this registry runs its stage actions for one event, "
+            + "and what a failure means (issue #296). One JSON object per entry: "
+            + "{\"stage\": \"draft\", \"objectType\": \"http://...#//SourceUnit\", \"actions\": [\"QvtCompile\", \"QvtValidate\"], \"onFailure\": \"stop\"}. "
+            + "stage and objectType are optional and narrow the chain; the first matching entry applies. actions names the actions "
+            + "that run first, in that order, by their stage.action.name service property (else component.name, else the simple class name); "
+            + "every other bound action follows in service.ranking order. onFailure is continue (default) or stop. "
+            + "Without entries all actions run in ranking order and a failure does not stop the others.", required = false)
+    String[] stage_action_chains() default {};
 }

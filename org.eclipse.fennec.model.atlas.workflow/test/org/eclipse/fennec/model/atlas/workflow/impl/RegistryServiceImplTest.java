@@ -31,7 +31,9 @@ import static org.mockito.Mockito.when;
 
 import java.lang.reflect.InvocationTargetException;
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import org.eclipse.emf.ecore.EClass;
@@ -123,7 +125,15 @@ public class RegistryServiceImplTest {
     private RegistryServiceImpl<EObject> createService(
             List<EObjectStorageService<EObject>> storageServices, String[] rootEClassUris,
             String[] derivedEClassUris) {
+        return createService(storageServices, rootEClassUris, derivedEClassUris, new String[0]);
+    }
+
+    private RegistryServiceImpl<EObject> createService(
+            List<EObjectStorageService<EObject>> storageServices, String[] rootEClassUris,
+            String[] derivedEClassUris, String[] stageActionChains) {
         RegistryServiceConfig config = mock(RegistryServiceConfig.class);
+        // lenient: the chains are read once at construction, whether or not a test cares
+        org.mockito.Mockito.lenient().when(config.stage_action_chains()).thenReturn(stageActionChains);
         when(config.registry_name()).thenReturn("test-registry");
         when(config.registry_description()).thenReturn("");
         when(config.registry_type()).thenReturn("OTHER");
@@ -428,6 +438,228 @@ public class RegistryServiceImplTest {
             verify(gate, never()).beforeTransition(any());
             verify(storage).storeObject(any(), any(), any(), any(), any(), any());
         }
+    }
+
+    @Nested
+    @DisplayName("Stage actions run in a configured order and record their results (issue #296)")
+    class StageActionChainTests {
+
+        private static final String PERSON = TEST_NS_URI + "#//Person";
+
+        private EObjectStorageService<EObject> storage;
+        private EObject person;
+        /** The stored copy the storage double writes diagnostics onto. */
+        private ObjectMetadata stored;
+        private final List<String> ran = new ArrayList<>();
+
+        @SuppressWarnings("unchecked")
+        @BeforeEach
+        void setUp() {
+            person = personClass.getEPackage().getEFactoryInstance().create(personClass);
+            stored = ManagementFactory.eINSTANCE.createObjectMetadata();
+            stored.setObjectId("object-1");
+            stored.setObjectType(PERSON);
+            stored.setStage("draft");
+
+            storage = mock(EObjectStorageService.class);
+            when(storage.getStorageType()).thenReturn("file");
+            lenient().when(storage.storeObject(any(), any(), any(), any(), any(), any()))
+                    .thenAnswer(inv -> Promises.resolved(inv.getArgument(5)));
+            lenient().when(storage.retrieveMetadata(any(), any(), any(), any()))
+                    .thenAnswer(inv -> Promises.resolved(EcoreUtil.copy(stored)));
+            lenient().when(storage.deleteObject(any(), any(), any(), any())).thenReturn(Promises.resolved(true));
+            lenient().when(storage.updateDiagnostics(any(), any(), any(), any(), any(), any())).thenAnswer(inv -> {
+                Diagnostics.replaceOwned(stored, inv.getArgument(4), inv.getArgument(5), Instant.now());
+                return Promises.resolved(EcoreUtil.copy(stored));
+            });
+        }
+
+        private RegistryServiceImpl<EObject> serviceWithChains(String... chains) {
+            RegistryServiceImpl<EObject> service = createService(List.of(storage), new String[] { PERSON },
+                    new String[0], chains);
+            // a delete evicts the registry cache, which DS injects into a private field
+            try {
+                java.lang.reflect.Field field = RegistryServiceImpl.class.getDeclaredField("registryService");
+                field.setAccessible(true);
+                field.set(service, mock(EObjectRegistryService.class));
+            } catch (ReflectiveOperationException e) {
+                throw new IllegalStateException(e);
+            }
+            return service;
+        }
+
+        /** An action that records its name when it runs and answers as told. */
+        private StageActionService action(String name, Promise<Void> answer) {
+            StageActionService sas = mock(StageActionService.class, name);
+            lenient().when(sas.supportsObjectType(any())).thenReturn(true);
+            lenient().when(sas.getTriggerStages()).thenReturn(Set.of());
+            lenient().when(sas.getTriggerEvents()).thenReturn(Set.of());
+            lenient().when(sas.requiresReplayOnStartup()).thenReturn(false);
+            lenient().when(sas.onEnter(any())).thenAnswer(inv -> {
+                ran.add(name);
+                return answer;
+            });
+            lenient().when(sas.onExit(any())).thenAnswer(inv -> {
+                ran.add(name);
+                return answer;
+            });
+            return sas;
+        }
+
+        private static Map<String, Object> props(String name, int ranking, long id) {
+            return Map.of(StageActionChains.NAME_PROPERTY, name, "service.ranking", ranking, "service.id", id);
+        }
+
+        private ObjectMetadata upload(RegistryServiceImpl<EObject> service) throws Exception {
+            ObjectMetadata metadata = ManagementFactory.eINSTANCE.createObjectMetadata();
+            metadata.setObjectId("object-1");
+            metadata.setObjectType(PERSON);
+            return service.uploadToStage("test-scope", "draft", person, metadata).getValue();
+        }
+
+        private static Diagnostic only(ObjectMetadata m, String producer) {
+            List<Diagnostic> owned = m.getDiagnostics().stream().filter(d -> producer.equals(d.getProducer()))
+                    .toList();
+            assertEquals(1, owned.size(), "exactly one root of " + producer + ", got " + m.getDiagnostics());
+            return owned.get(0);
+        }
+
+        @Test
+        @DisplayName("Without a chain the actions run in ranking order, highest first")
+        void rankingOrdersByDefault() throws Exception {
+            RegistryServiceImpl<EObject> service = serviceWithChains();
+            service.bindStageAction(action("low", Promises.resolved(null)), props("low", 1, 10L));
+            service.bindStageAction(action("high", Promises.resolved(null)), props("high", 10, 11L));
+            service.bindStageAction(action("mid", Promises.resolved(null)), props("mid", 5, 12L));
+
+            upload(service);
+
+            assertEquals(List.of("high", "mid", "low"), ran);
+        }
+
+        @Test
+        @DisplayName("A configured chain puts the named actions first, in its order; the rest follow by ranking")
+        void chainOrdersTheNamedActionsFirst() throws Exception {
+            RegistryServiceImpl<EObject> service = serviceWithChains(
+                    "{\"stage\": \"draft\", \"actions\": [\"validate\", \"compile\"]}");
+            service.bindStageAction(action("compile", Promises.resolved(null)), props("compile", 10, 1L));
+            service.bindStageAction(action("validate", Promises.resolved(null)), props("validate", 1, 2L));
+            service.bindStageAction(action("notify", Promises.resolved(null)), props("notify", 5, 3L));
+
+            upload(service);
+
+            assertEquals(List.of("validate", "compile", "notify"), ran);
+        }
+
+        @Test
+        @DisplayName("A chain for another stage or object type does not apply")
+        void chainIsSelectedByStageAndObjectType() throws Exception {
+            RegistryServiceImpl<EObject> service = serviceWithChains(
+                    "{\"stage\": \"release\", \"actions\": [\"validate\", \"compile\"]}",
+                    "{\"objectType\": \"http://elsewhere#//Other\", \"actions\": [\"validate\", \"compile\"]}");
+            service.bindStageAction(action("compile", Promises.resolved(null)), props("compile", 10, 1L));
+            service.bindStageAction(action("validate", Promises.resolved(null)), props("validate", 1, 2L));
+
+            upload(service);
+
+            assertEquals(List.of("compile", "validate"), ran, "neither chain matches a draft Person: ranking decides");
+        }
+
+        @Test
+        @DisplayName("By default a failing action does not stop the others, and its failure is recorded on the object")
+        void failureContinuesAndIsRecorded() throws Exception {
+            RegistryServiceImpl<EObject> service = serviceWithChains();
+            service.bindStageAction(action("compile", Promises.failed(new IllegalStateException("no compiler"))),
+                    props("compile", 10, 1L));
+            service.bindStageAction(action("validate", Promises.resolved(null)), props("validate", 1, 2L));
+
+            ObjectMetadata returned = upload(service);
+
+            assertEquals(List.of("compile", "validate"), ran);
+            Diagnostic recorded = only(stored, "stage-action/compile");
+            assertEquals(RegistryServiceImpl.STAGE_ACTION_FAILED, recorded.getCode());
+            assertEquals(DiagnosticSeverity.ERROR, recorded.getSeverity());
+            assertEquals("ENTER", recorded.getTarget());
+            assertTrue(recorded.getMessage().contains("no compiler"), recorded.getMessage());
+            assertNotNull(recorded.getId());
+            // the caller's copy says what the stored one says
+            assertEquals(recorded.getId(), only(returned, "stage-action/compile").getId());
+            assertTrue(stored.getDiagnostics().stream().noneMatch(d -> "stage-action/validate".equals(d.getProducer())),
+                    "a success with nothing to clear writes nothing");
+        }
+
+        @Test
+        @DisplayName("A chain that stops on failure skips the actions after the failing one and says so")
+        void stoppingChainSkipsTheRest() throws Exception {
+            RegistryServiceImpl<EObject> service = serviceWithChains(
+                    "{\"actions\": [\"compile\", \"validate\"], \"onFailure\": \"stop\"}");
+            service.bindStageAction(action("compile", Promises.failed(new IllegalStateException("no compiler"))),
+                    props("compile", 1, 1L));
+            StageActionService validate = action("validate", Promises.resolved(null));
+            service.bindStageAction(validate, props("validate", 10, 2L));
+            service.bindStageAction(action("notify", Promises.resolved(null)), props("notify", 5, 3L));
+
+            upload(service);
+
+            assertEquals(List.of("compile"), ran, "nothing after the failure runs");
+            verify(validate, never()).onEnter(any());
+            assertEquals(RegistryServiceImpl.STAGE_ACTION_FAILED, only(stored, "stage-action/compile").getCode());
+            Diagnostic skipped = only(stored, "stage-action/validate");
+            assertEquals(RegistryServiceImpl.STAGE_ACTION_SKIPPED, skipped.getCode());
+            assertEquals(DiagnosticSeverity.WARNING, skipped.getSeverity());
+            assertTrue(skipped.getMessage().contains("compile"), skipped.getMessage());
+            assertEquals(RegistryServiceImpl.STAGE_ACTION_SKIPPED, only(stored, "stage-action/notify").getCode());
+        }
+
+        @Test
+        @DisplayName("An action that succeeds again clears the failure it recorded before")
+        void successClearsAnEarlierFailure() throws Exception {
+            Diagnostic old = ManagementFactory.eINSTANCE.createDiagnostic();
+            old.setCode(RegistryServiceImpl.STAGE_ACTION_FAILED);
+            old.setSeverity(DiagnosticSeverity.ERROR);
+            old.setMessage("failed last time");
+            Diagnostics.replaceOwned(stored, "stage-action/compile", List.of(old), Instant.now());
+            RegistryServiceImpl<EObject> service = serviceWithChains();
+            service.bindStageAction(action("compile", Promises.resolved(null)), props("compile", 1, 1L));
+
+            ObjectMetadata metadata = ManagementFactory.eINSTANCE.createObjectMetadata();
+            metadata.setObjectId("object-1");
+            metadata.setObjectType(PERSON);
+            Diagnostics.replaceOwned(metadata, "stage-action/compile", List.of(EcoreUtil.copy(old)), Instant.now());
+            ObjectMetadata returned = service.uploadToStage("test-scope", "draft", person, metadata).getValue();
+
+            verify(storage).updateDiagnostics(eq("test-scope"), eq("test-registry"), eq("draft"), eq("object-1"),
+                    eq("stage-action/compile"), eq(List.of()));
+            assertTrue(stored.getDiagnostics().isEmpty(), "the stored copy no longer announces the old failure");
+            assertTrue(returned.getDiagnostics().isEmpty(), "nor does the caller's copy");
+        }
+
+        @Test
+        @DisplayName("Nothing is recorded after a delete: the object is gone")
+        void deleteRecordsNothing() throws Exception {
+            RegistryServiceImpl<EObject> service = serviceWithChains();
+            service.bindStageAction(action("cleanup", Promises.failed(new IllegalStateException("boom"))),
+                    props("cleanup", 1, 1L));
+
+            assertTrue(service.deleteFromStage("test-scope", "draft", "object-1").getValue());
+
+            assertEquals(List.of("cleanup"), ran, "the action still ran");
+            verify(storage, never()).updateDiagnostics(any(), any(), any(), any(), any(), any());
+        }
+
+        @Test
+        @DisplayName("An unbound action named in a chain is simply not there")
+        void unboundActionInChainIsIgnored() throws Exception {
+            RegistryServiceImpl<EObject> service = serviceWithChains(
+                    "{\"actions\": [\"missing\", \"compile\"], \"onFailure\": \"stop\"}");
+            service.bindStageAction(action("compile", Promises.resolved(null)), props("compile", 1, 1L));
+
+            upload(service);
+
+            assertEquals(List.of("compile"), ran);
+            assertTrue(stored.getDiagnostics().isEmpty());
+        }
+        // a malformed chain fails the registry at construction; StageActionChainsTest pins the parsing
     }
 
     @Nested

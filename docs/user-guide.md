@@ -326,6 +326,13 @@ Rules worth knowing:
 - **Diagnostics are metadata, not content.** Writing them changes neither `contentHash` nor
   `version` nor `lastChangeTime`, and fires no stage action. The metadata `ETag` does change,
   so a conditional `GET` sees new findings.
+- **Stage actions leave a record.** After an upload, update or transition the Atlas runs the
+  registry's stage actions in a configured order, and what each made of it appears on the
+  object under the producer `stage-action/<name>`: `stage-action.failed` (`ERROR`) when the
+  action failed, `stage-action.skipped` (`WARNING`) when an earlier action failed in a chain
+  that stops on failure, nothing when it succeeded. The metadata a write returns already
+  carries these records, so a `201` or `200` with a `stage-action.failed` diagnostic means
+  "stored, but the compile did not go through".
 - **They can be written where content is frozen.** A finding about a released object is
   recorded on the released object, in its final or non-writable stage; only the content bar
   stays.
