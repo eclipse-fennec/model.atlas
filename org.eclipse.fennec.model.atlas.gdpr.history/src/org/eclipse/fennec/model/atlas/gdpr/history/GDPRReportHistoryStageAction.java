@@ -37,7 +37,7 @@ import org.eclipse.fennec.model.atlas.scope.api.ReadableRegistryView;
 import org.eclipse.fennec.model.atlas.wf.workflowapi.WritableScopeService;
 import org.eclipse.fennec.model.gdprReport.GDPRReportPackage;
 import org.eclipse.fennec.model.gdprReport.GdprReport;
-import org.eclipse.fennec.model.gdprReport.SubjectModel;
+import org.eclipse.fennec.model.gdprReport.Subject;
 import org.eclipse.fennec.model.gdprReportHistory.GdprReportHistory;
 import org.eclipse.fennec.model.gdprReportHistory.RevisionOrigin;
 import org.osgi.service.component.annotations.Activate;
@@ -263,17 +263,17 @@ public class GDPRReportHistoryStageAction implements StageActionService {
 						objectId, triggerScope, registry));
 				return;
 			}
-			SubjectModel subject = trigger.get().getSubject();
-			if (subject == null || blank(subject.getModelFingerprint())) {
+			Subject subject = trigger.get().getSubject();
+			if (subject == null || blank(subject.getSubjectFingerprint())) {
 				LOGGER.log(Level.WARNING, () -> String.format(
 						"GDPR report '%s' names no subject fingerprint, so there is no document it belongs to.",
 						objectId));
 				return;
 			}
 
-			List<StoredReport> reports = reportsOf(subject.getModelFingerprint());
+			List<StoredReport> reports = reportsOf(subject.getSubjectFingerprint());
 			GdprReportHistory history = builder.build(reports, Instant.now());
-			store(history, subject.getModelFingerprint(), reports.size());
+			store(history, subject.getSubjectFingerprint(), reports.size());
 		} catch (RuntimeException e) {
 			// Thrown on a background thread: swallowed here so one bad subject cannot take the
 			// executor down and stop every later rebuild.
@@ -310,8 +310,8 @@ public class GDPRReportHistoryStageAction implements StageActionService {
 	}
 
 	private static boolean isAbout(GdprReport report, String modelFingerprint) {
-		SubjectModel subject = report.getSubject();
-		return subject != null && modelFingerprint.equals(subject.getModelFingerprint());
+		Subject subject = report.getSubject();
+		return subject != null && modelFingerprint.equals(subject.getSubjectFingerprint());
 	}
 
 	private Optional<GdprReport> find(String objectId) {

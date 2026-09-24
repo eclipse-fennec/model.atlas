@@ -62,8 +62,10 @@ public class GdprReportHistoryRebuildIT {
 		Documents.store(scope, Reports.agentReview());
 
 		GdprReportHistory document = Documents.awaitRevisions(scope, 1);
-		assertEquals(Reports.SUBJECT_NS_URI, document.getSubjectNsURI());
-		assertEquals(Reports.FINGERPRINT, document.getModelFingerprint());
+		// the generalised report model names the subject by its package name and fingerprint;
+		// the nsURI stays on the PackageSubject inside the report
+		assertEquals("clinic", document.getSubjectName());
+		assertEquals(Reports.FINGERPRINT, document.getSubjectFingerprint());
 
 		ReportRevision only = document.getRevisions().get(0);
 		assertEquals(1, only.getRevisionNumber());

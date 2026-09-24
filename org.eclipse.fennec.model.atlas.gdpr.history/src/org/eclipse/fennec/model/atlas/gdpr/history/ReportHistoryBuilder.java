@@ -33,15 +33,19 @@ import java.util.stream.Collectors;
 
 import org.eclipse.fennec.model.gdprReport.ClassifierEvaluation;
 import org.eclipse.fennec.model.gdprReport.ConfidenceType;
+import org.eclipse.fennec.model.gdprReport.Evaluation;
 import org.eclipse.fennec.model.gdprReport.Evidence;
 import org.eclipse.fennec.model.gdprReport.FeatureEvaluation;
 import org.eclipse.fennec.model.gdprReport.Finding;
+import org.eclipse.fennec.model.gdprReport.FlowEvaluation;
 import org.eclipse.fennec.model.gdprReport.GDPRReportPackage;
 import org.eclipse.fennec.model.gdprReport.GdprReport;
 import org.eclipse.fennec.model.gdprReport.GdprReportOrigin;
 import org.eclipse.fennec.model.gdprReport.LegalCorpusRef;
+import org.eclipse.fennec.model.gdprReport.PackageSubject;
 import org.eclipse.fennec.model.gdprReport.RelevanceLevelType;
-import org.eclipse.fennec.model.gdprReport.SubjectModel;
+import org.eclipse.fennec.model.gdprReport.Subject;
+import org.eclipse.fennec.model.gdprReport.TransformationSubject;
 import org.eclipse.fennec.model.gdprReportHistory.ChangeKind;
 import org.eclipse.fennec.model.gdprReportHistory.ChangeRow;
 import org.eclipse.fennec.model.gdprReportHistory.EvaluationRow;
@@ -137,20 +141,40 @@ public class ReportHistoryBuilder {
 		// The newest report describes the subject: an older one may predate a rename, and the
 		// fingerprint is the same for all of them anyway while a document covers one revision.
 		for (int i = ordered.size() - 1; i >= 0; i--) {
-			SubjectModel subject = ordered.get(i).report().getSubject();
+			Subject subject = ordered.get(i).report().getSubject();
 			if (subject == null) {
 				continue;
 			}
-			history.setSubjectNsURI(subject.getNsURI());
-			history.setSubjectName(subject.getName());
-			history.setModelFingerprint(subject.getModelFingerprint());
+			history.setSubjectName(subjectName(subject));
+			history.setSubjectFingerprint(subject.getSubjectFingerprint());
+			if (subject instanceof TransformationSubject transformation) {
+				history.setLanguage(transformation.getLanguage());
+			}
 			history.setName(historyName(subject));
 			return;
 		}
 	}
 
-	private static String historyName(SubjectModel subject) {
-		String name = blankToNull(subject.getName()) == null ? subject.getNsURI() : subject.getName();
+	/**
+	 * What the subject is called: a metamodel by its package name, a transformation by its
+	 * qualified name. The report model knows subjects of either kind since it was generalised
+	 * beyond Ecore packages; the history states the name and does not care which kind it was.
+	 */
+	private static String subjectName(Subject subject) {
+		if (subject instanceof PackageSubject pkg) {
+			return pkg.getName();
+		}
+		if (subject instanceof TransformationSubject transformation) {
+			return transformation.getQualifiedName();
+		}
+		return null;
+	}
+
+	private static String historyName(Subject subject) {
+		String name = blankToNull(subjectName(subject));
+		if (name == null && subject instanceof PackageSubject pkg) {
+			name = blankToNull(pkg.getNsURI());
+		}
 		return name == null ? "GDPR review history" : "GDPR review history of " + name;
 	}
 
@@ -168,9 +192,9 @@ public class ReportHistoryBuilder {
 		revision.setChangeCount(changeCount);
 		revision.setFindingCount(countFindings(report));
 
-		SubjectModel subject = report.getSubject();
+		Subject subject = report.getSubject();
 		if (subject != null) {
-			revision.setModelFingerprint(subject.getModelFingerprint());
+			revision.setModelFingerprint(subject.getSubjectFingerprint());
 		}
 		LegalCorpusRef corpus = report.getCorpus();
 		if (corpus != null) {
@@ -182,10 +206,12 @@ public class ReportHistoryBuilder {
 
 	private static int countFindings(GdprReport report) {
 		int count = report.getCombinations().size();
-		for (ClassifierEvaluation classifier : report.getClassifierEvaluation()) {
-			count += classifier.getFindings().size();
-			for (FeatureEvaluation feature : classifier.getFeatureEvaluation()) {
-				count += feature.getFindings().size();
+		for (Evaluation evaluation : report.getEvaluation()) {
+			count += evaluation.getFindings().size();
+			if (evaluation instanceof ClassifierEvaluation classifier) {
+				for (FeatureEvaluation feature : classifier.getFeatureEvaluation()) {
+					count += feature.getFindings().size();
+				}
 			}
 		}
 		return count;
@@ -199,27 +225,60 @@ public class ReportHistoryBuilder {
 	 */
 	private Map<RowKey, EvaluationRow> flatten(GdprReport report, int revisionNumber) {
 		Map<RowKey, EvaluationRow> rows = new LinkedHashMap<>();
-		for (ClassifierEvaluation classifier : report.getClassifierEvaluation()) {
-			String classifierId = identify(classifier.getId(), classifier.getUriFragment(), classifier.getName());
-			if (classifierId == null) {
-				// Nothing to key it by, so it could not be compared against anything in another
-				// revision. Dropping it silently would be worse, but so would inventing a key.
-				continue;
+		for (Evaluation evaluation : report.getEvaluation()) {
+			if (evaluation instanceof ClassifierEvaluation classifier) {
+				flattenClassifier(rows, classifier, revisionNumber);
+			} else if (evaluation instanceof FlowEvaluation flow) {
+				flattenFlow(rows, flow, revisionNumber);
 			}
-			if (!classifier.getFindings().isEmpty()) {
-				RowKey key = new RowKey(classifierId, "");
-				rows.put(key, classifierRow(classifier, classifierId, revisionNumber));
-			}
-			for (FeatureEvaluation feature : classifier.getFeatureEvaluation()) {
-				String featureId = identify(feature.getId(), feature.getUriFragment(), feature.getName());
-				if (featureId == null) {
-					continue;
-				}
-				RowKey key = new RowKey(classifierId, featureId);
-				rows.put(key, featureRow(classifier, classifierId, feature, featureId, revisionNumber));
-			}
+			// a FeatureEvaluation at the top level has no classifier to hang from and is not
+			// something the review of a metamodel produces; a kind this builder does not know
+			// is left out rather than guessed at
 		}
 		return rows;
+	}
+
+	private void flattenClassifier(Map<RowKey, EvaluationRow> rows, ClassifierEvaluation classifier,
+			int revisionNumber) {
+		String classifierId = identify(classifier.getId(), classifier.getUriFragment(), classifier.getName());
+		if (classifierId == null) {
+			// Nothing to key it by, so it could not be compared against anything in another
+			// revision. Dropping it silently would be worse, but so would inventing a key.
+			return;
+		}
+		if (!classifier.getFindings().isEmpty()) {
+			RowKey key = new RowKey(classifierId, "");
+			rows.put(key, classifierRow(classifier, classifierId, revisionNumber));
+		}
+		for (FeatureEvaluation feature : classifier.getFeatureEvaluation()) {
+			String featureId = identify(feature.getId(), feature.getUriFragment(), feature.getName());
+			if (featureId == null) {
+				continue;
+			}
+			RowKey key = new RowKey(classifierId, featureId);
+			rows.put(key, featureRow(classifier, classifierId, feature, featureId, revisionNumber));
+		}
+	}
+
+	/**
+	 * A transformation review has no classifiers and features; it has flows, one per source to
+	 * target path. A flow takes the classifier columns of the sheet - it is the unit the review
+	 * examined - with the mapping it belongs to as the name, so the history of a transformation
+	 * reads the same way as that of a metamodel.
+	 */
+	private void flattenFlow(Map<RowKey, EvaluationRow> rows, FlowEvaluation flow, int revisionNumber) {
+		String flowId = identify(flow.getId(), null, flow.getName());
+		if (flowId == null) {
+			return;
+		}
+		EvaluationRow row = factory.createEvaluationRow();
+		row.setRevisionNumber(revisionNumber);
+		row.setClassifierId(flowId);
+		row.setClassifierName(blankToNull(flow.getName()) == null ? flow.getMapping() : flow.getName());
+		row.setTypeName(flow.getFlowKind() == null ? null : flow.getFlowKind().getName());
+		row.setPurpose(flow.getPurpose());
+		merge(row, flow.getFindings(), flow.getRelevanceLevel());
+		rows.put(new RowKey(flowId, ""), row);
 	}
 
 	private EvaluationRow classifierRow(ClassifierEvaluation classifier, String classifierId, int revisionNumber) {
@@ -447,6 +506,7 @@ public class ReportHistoryBuilder {
 		return switch (stated) {
 		case AI_AGENT -> RevisionOrigin.AI_AGENT;
 		case HUMAN -> RevisionOrigin.HUMAN;
+		case STATIC_ANALYSIS -> RevisionOrigin.STATIC_ANALYSIS;
 		case UNKNOWN -> RevisionOrigin.UNKNOWN;
 		};
 	}

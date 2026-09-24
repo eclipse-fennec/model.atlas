@@ -23,7 +23,7 @@ import org.eclipse.fennec.model.gdprReport.GDPRReportFactory;
 import org.eclipse.fennec.model.gdprReport.GdprReport;
 import org.eclipse.fennec.model.gdprReport.GdprReportOrigin;
 import org.eclipse.fennec.model.gdprReport.RelevanceLevelType;
-import org.eclipse.fennec.model.gdprReport.SubjectModel;
+import org.eclipse.fennec.model.gdprReport.PackageSubject;
 
 /**
  * Two reviews of one model, a run apart: the agent's first pass, then a human raising
@@ -77,11 +77,11 @@ final class Reports {
 		report.setGeneratedBy(generatedBy);
 		report.setOrigin(origin);
 
-		SubjectModel subject = FACTORY.createSubjectModel();
+		PackageSubject subject = FACTORY.createPackageSubject();
 		subject.setName("clinic");
 		subject.setNsURI(SUBJECT_NS_URI);
 		subject.setNsPrefix("clinic");
-		subject.setModelFingerprint(FINGERPRINT);
+		subject.setSubjectFingerprint(FINGERPRINT);
 		report.setSubject(subject);
 
 		report.setCorpus(FACTORY.createLegalCorpusRef());
@@ -94,7 +94,7 @@ final class Reports {
 		classifier.setId("Patient");
 		classifier.setName("Patient");
 		classifier.setUriFragment("//Patient");
-		report.getClassifierEvaluation().add(classifier);
+		report.getEvaluation().add(classifier);
 		return classifier;
 	}
 
