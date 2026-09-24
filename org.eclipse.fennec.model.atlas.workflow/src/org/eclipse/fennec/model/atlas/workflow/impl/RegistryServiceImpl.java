@@ -1556,9 +1556,18 @@ public class RegistryServiceImpl<T extends EObject> implements RegistryService<T
      * when the object has no fingerprint, so {@code metadata.containsKey} means "known".
      */
     private static Map<String, Object> actionMetadata(ObjectMetadata m) {
+        Map<String, Object> selected = new LinkedHashMap<>();
         String fingerprint = m.getFingerprint();
-        return fingerprint == null || fingerprint.isBlank() ? Map.of()
-                : Map.of(ActionContext.FINGERPRINT, fingerprint);
+        if (fingerprint != null && !fingerprint.isBlank()) {
+            selected.put(ActionContext.FINGERPRINT, fingerprint);
+        }
+        // a schema's nsUri travels along, so a gate or action can name what depends on it
+        // even when the object is already gone from storage (issue #250)
+        String nsUri = nsUriOf(m);
+        if (nsUri != null) {
+            selected.put(WorkflowConstants.NS_URI_METADATA_PROPERTY, nsUri);
+        }
+        return Map.copyOf(selected);
     }
 
     /**

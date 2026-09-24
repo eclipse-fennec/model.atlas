@@ -26,6 +26,11 @@ import java.util.List;
 import java.util.Optional;
 
 import org.eclipse.emf.ecore.EObject;
+import org.eclipse.fennec.m2x.model.compiled.PackageRole;
+import org.eclipse.fennec.m2x.model.compiled.PackageEntry;
+import org.eclipse.fennec.model.atlas.workflow.dependency.SchemaDependentsContributor;
+import org.eclipse.fennec.model.atlas.workflow.dependency.SchemaDependent;
+import org.eclipse.emf.ecore.EcorePackage;
 import org.eclipse.emf.ecore.EPackage;
 import org.eclipse.emf.ecore.EcoreFactory;
 import org.eclipse.emf.ecore.util.EcoreUtil;
@@ -190,6 +195,51 @@ public class QvtUnitHostingIntegrationTest {
             """;
 
     // --- helpers --------------------------------------------------------
+
+    @Test
+    @DisplayName("A compiled unit depends on every package its manifest lists (issue #250)")
+    void compiledUnitDependsOnItsPackages(
+            @InjectService(cardinality = 0, timeout = 15000, filter = "(registry.name=" + REGISTRY + ")") //
+            ServiceAware<RegistryService> aware,
+            @InjectService(cardinality = 0, timeout = 15000, filter = "(component.name=QvtUnitDependentsContributor)") //
+            ServiceAware<SchemaDependentsContributor> contributorAware) throws Exception {
+        String personNs = "http://example.org/qvt/person/1.0";
+        RegistryService<EObject> registry = registry(aware);
+        uploadSource(registry, DRAFT, "Rename", "Rename", RENAME);
+        AtlasUnitStore store = new AtlasUnitStore(registry, SCOPE, DRAFT);
+        List<UnitKey> compiled = store.versions(QvtUnits.LANGUAGE_QVTO, "Rename", UnitKind.COMPILED);
+        assertEquals(1, compiled.size(), "the source compiled");
+        SchemaDependentsContributor contributor = contributorAware.waitForService(15000);
+        assertNotNull(contributor);
+
+        // Ecore is always present, so m2x does not list it in a manifest: nothing depends on it
+        assertTrue(contributor.dependentsIn(SCOPE, registry, DRAFT, EcorePackage.eNS_URI).isEmpty(),
+                "no unit lists Ecore");
+
+        // a unit compiled against an atlas package lists it - stored here as such a unit would be
+        Unit.Packaged packaged = (Unit.Packaged) store.get(compiled.get(0)).orElseThrow();
+        CompiledUnit document = EcoreUtil.copy(packaged.document());
+        PackageEntry entry = CompiledFactory.eINSTANCE.createPackageEntry();
+        entry.setNsURI(personNs);
+        entry.setFingerprint("fp1:test");
+        entry.setRole(PackageRole.REFERENCED);
+        document.getManifest().getPackageEntry().add(entry);
+        UnitKey dependentKey = store.put(document);
+
+        List<SchemaDependent> dependents = contributor.dependentsIn(SCOPE, registry, DRAFT, personNs);
+        assertEquals(1, dependents.size(), "the unit whose manifest lists the package: " + dependents);
+        SchemaDependent unit = dependents.get(0);
+        assertEquals(SchemaDependent.Kind.UNIT, unit.kind());
+        assertEquals(REGISTRY, unit.registry());
+        assertEquals(DRAFT, unit.stage());
+        assertEquals(QvtUnits.objectId(dependentKey), unit.objectId());
+        assertNotNull(registry.getMetadataFromStage(SCOPE, DRAFT, unit.objectId()), "it names a stored object");
+
+        assertTrue(contributor.dependentsIn(SCOPE, registry, DRAFT, "http://example.org/nobody/1.0").isEmpty(),
+                "a package no unit lists has no unit dependents");
+        assertTrue(contributor.dependentsIn(SCOPE, registry, "release", personNs).isEmpty(),
+                "nothing was promoted, so release holds no dependent");
+    }
 
     private static ObjectMetadata uploadSource(RegistryService<EObject> registry, String stage, String objectId,
             String qualifiedName, String source) throws Exception {

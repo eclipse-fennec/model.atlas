@@ -626,6 +626,15 @@ Configuration PID: `EPackageStageActionService` (factory or singleton). Typical 
 
 An `UPDATE` always tears down the previous OSGi registrations before re-registering, so service consumers see the new EPackage content (even when the `nsURI` is unchanged).
 
+### Bundled Implementation: `SchemaDependencyStageAction`
+
+Keeps the *unresolved* state of a schema's dependents current (issue #250). It listens on the schema registry next to the `EPackageStageActionService` (`stageActionService.target=(|(component.name=EPackageStageActionService)(component.name=SchemaDependencyStageAction))`, no configuration of its own):
+
+- `EXIT` of a package from a stage - a delete, forced or not, or a transition that removes the source copy - writes a `schema.dependency-missing` diagnostic (severity `ERROR`, category `dependencies`, target the package's nsURI) under the producer `SchemaDependencies` to every object that referenced the package in the view that stage served: other schemas in the stage, instances, compiled transformation units. A forced delete the `SchemaDeleteGate` let through has recorded the same already; the write is idempotent.
+- `ENTER` of a package into a stage removes that diagnostic again from the dependents in the views the stage now serves - a dependency arriving later, or again, heals them. This runs on the startup replay too, so a restart catches up; shutdown replays are ignored.
+
+Which objects count, and which stages see a package served from a given stage, is the [dependents query](#the-dependents-query-schemadependents) below.
+
 ## Stage Gates
 
 A `StageActionService` reacts to a mutation that has already happened and cannot stop it. A **`StageGate`** (same `action.api` bundle, issue #248) is the other half of that contract: the registry asks every gate **before** a transition or a delete commits, and a refusal aborts the operation before any store is touched. The caller gets the gates' reasons as a `StageGateRefusedException`, which the REST layer answers with `409 Conflict` whose body is the refused object's metadata from its source stage, diagnostics included (issue #295, `GateRefusals` in the endpoints, `StageGateRefusedExceptionMapper` as the fallback); post-commit action failures stay non-fatal as before.
@@ -661,6 +670,22 @@ Gates are wired like stage actions, per registry, through the `stageGate` refere
 ### Bundled Implementation: `QvtTransitionGate`
 
 Ships in the `qvt` bundle. For a QVT-O source it compiles the source against the **target** stage's view (its unit store for imports, its chain ResourceSet for model types) and refuses the transition when the compile fails, typically because an imported library has not been promoted yet. The reason lists the compiler's findings and names the remedy; the verdict carries them as one `qvto.does-not-compile` diagnostic (category `compile`, target the qualified name) with one `qvto.compiler-finding` child per compiler message at `line:column`, recorded under the producer `QvtTransitionGate`. The runtime configurations wire it into the `transformations` registry.
+
+### Bundled Implementation: `SchemaDeleteGate`
+
+Ships in this bundle (issue #250). For a package in a **schema registry** it refuses the delete while objects in the view that stage serves still depend on it: the verdict carries one `schema.has-dependents` finding (category `dependencies`, target the nsURI) with a `schema.dependent` child per dependent (target `registry/stage/objectId`), and one `schema.dependency-missing` consequence per dependent. A refusal records the finding on the package and answers `409 Conflict` with the package's metadata; `force` deletes anyway and the consequences land on the dependents, which is the same state the `SchemaDependencyStageAction` maintains from then on. Transitions pass. The runtime configurations wire it into the `schema` registry with `stageGate.target=(component.name=SchemaDeleteGate)`.
+
+### The dependents query: `SchemaDependents`
+
+`org.eclipse.fennec.model.atlas.workflow.dependency.SchemaDependents` answers *what breaks if this package leaves this stage*: `dependentsOf(scope, stage, nsURI)` lists every `SchemaDependent` (kind, registry, stage, objectId, objectType) that references the package as served from that stage. References are keyed by nsURI, and the *view* a stage serves follows the chain the registry chain configurator wires:
+
+- the stage itself, for all three edge types;
+- every earlier stage of the schema registry's chain up to the first one that holds a copy of the package itself (`draft` resolves through `approved` through `release`);
+- for the final stage, the stages only other registries have (they are wired to the final schema stage).
+
+Other schemas count in the stage itself only, because a registered package resolves its cross-package references against the packages registered for its own stage. Child scopes are not walked.
+
+Three edge types are known: another schema whose `eSuperTypes` or `eType`s point into the package (read off the registered `EPackage` services), an instance whose object type is a class of the package (read off the registries' listings), and a compiled transformation unit whose manifest lists the package (contributed by the `qvt` bundle). A bundle that knows a further kind of reference registers a `SchemaDependentsContributor` service; the query asks it per registry and stage of the view.
 
 ## Integration Points
 

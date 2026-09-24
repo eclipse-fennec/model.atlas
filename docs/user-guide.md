@@ -300,6 +300,18 @@ a deliberate decision. The object is deleted anyway, and what the gate found abo
 those dependents, so the consequence is visible where it lands instead of nowhere. `force`
 has no effect on a transition.
 
+The built-in delete guard is the **schema delete guard**: a package is not deleted from a
+stage of the schema registry while other objects in the view that stage serves still
+depend on it - instances whose type is a class of the package, other packages whose types
+point into it, compiled transformations whose manifest lists it. The `409` names every
+dependent (`schema.has-dependents` with one `schema.dependent` child each). After a forced
+delete the dependents are still listed, but each carries a `schema.dependency-missing`
+diagnostic (severity `ERROR`, producer `SchemaDependencies`, target the missing nsURI) -
+the *unresolved* state - and reading one answers the model-unavailable `409` until the
+package is back in that stage, which clears the diagnostic again. The same state is
+recorded when a package leaves a stage another way, e.g. a transition that removes the
+source copy.
+
 The built-in gate is the QVT one: a transformation source is promoted only if it **compiles
 against the target stage's view**, so a source that imports a library not yet promoted is
 refused until the library has moved (see [QVT transformations](qvt-transformations.md)); its

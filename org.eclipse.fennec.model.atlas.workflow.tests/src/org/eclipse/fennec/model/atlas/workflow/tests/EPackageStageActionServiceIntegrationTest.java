@@ -73,7 +73,7 @@ public class EPackageStageActionServiceIntegrationTest {
     @Test
     @EPackageStageActionService
     public void testSupportsObjectType(
-            @InjectService StageActionService stageActionService) {
+            @InjectService(filter = "(component.name=EPackageStageActionService)") StageActionService stageActionService) {
 
         assertNotNull(stageActionService, "StageActionService should be available");
         assertTrue(stageActionService.supportsObjectType(EPACKAGE_TYPE),
@@ -85,7 +85,7 @@ public class EPackageStageActionServiceIntegrationTest {
     @Test
     @EPackageStageActionService
     public void testTriggerStagesAndEvents(
-            @InjectService StageActionService stageActionService) {
+            @InjectService(filter = "(component.name=EPackageStageActionService)") StageActionService stageActionService) {
 
         Set<String> stages = stageActionService.getTriggerStages();
         assertEquals(Set.of("draft", "approved", "release"), stages,
@@ -101,7 +101,7 @@ public class EPackageStageActionServiceIntegrationTest {
     @EPackageStageActionService
     public void testOnEnterRegistersEPackage(
             @InjectService(filter = "(storage.type=file)") EObjectStorageService storage,
-            @InjectService StageActionService stageActionService,
+            @InjectService(filter = "(component.name=EPackageStageActionService)") StageActionService stageActionService,
             @InjectService(cardinality = 0, filter = "(emf.name=TestSensorModel)") ServiceAware<EPackage> ePackageServiceAware)
             throws Exception {
 
@@ -131,7 +131,7 @@ public class EPackageStageActionServiceIntegrationTest {
     @EPackageStageActionService
     public void testRegistrationCarriesWorkflowProperties(
             @InjectService(filter = "(storage.type=file)") EObjectStorageService storage,
-            @InjectService StageActionService stageActionService,
+            @InjectService(filter = "(component.name=EPackageStageActionService)") StageActionService stageActionService,
             @InjectService(cardinality = 0, filter = "(&(emf.name=TestSensorModel)(emf.model.scope=test-scope)(atlas.stage=release))") ServiceAware<EPackage> ePackageServiceAware)
             throws Exception {
 
@@ -166,7 +166,7 @@ public class EPackageStageActionServiceIntegrationTest {
     @EPackageStageActionService
     public void testOnUpdateKeepsRegistration(
             @InjectService(filter = "(storage.type=file)") EObjectStorageService storage,
-            @InjectService StageActionService stageActionService,
+            @InjectService(filter = "(component.name=EPackageStageActionService)") StageActionService stageActionService,
             @InjectService(cardinality = 0, filter = "(emf.name=TestSensorModel)") ServiceAware<EPackage> ePackageServiceAware)
             throws Exception {
 
@@ -196,7 +196,7 @@ public class EPackageStageActionServiceIntegrationTest {
     @EPackageStageActionService
     public void testOnExitUnregistersEPackage(
             @InjectService(filter = "(storage.type=file)") EObjectStorageService storage,
-            @InjectService StageActionService stageActionService,
+            @InjectService(filter = "(component.name=EPackageStageActionService)") StageActionService stageActionService,
             @InjectService(cardinality = 0, filter = "(emf.name=TestSensorModel)") ServiceAware<EPackage> ePackageServiceAware)
             throws Exception {
 
@@ -217,7 +217,7 @@ public class EPackageStageActionServiceIntegrationTest {
     @Test
     @EPackageStageActionService
     public void testOnExitWithoutPriorEnterIsNoOp(
-            @InjectService StageActionService stageActionService) throws Exception {
+            @InjectService(filter = "(component.name=EPackageStageActionService)") StageActionService stageActionService) throws Exception {
 
         // No prior onEnter / onUpdate — nothing is tracked for this objectId.
         String objectId = "test-exit-unknown-" + System.currentTimeMillis();
