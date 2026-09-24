@@ -67,9 +67,13 @@ public final class EndpointFailures {
      * message: the registry refused the operation, and the client needs to read that as
      * a rule it cannot retry past rather than as a fault. A {@link StageOccupiedException}
      * becomes a <strong>409</strong> the same way: the stage already holds a different
-     * object under the id the request wanted to write. So does a
-     * {@link StageGateRefusedException}: a gate found that the object does not hold up in
-     * the target stage, and its reason tells the client what to change (issue #248).
+     * object under the id the request wanted to write. A {@link StageGateRefusedException}
+     * is handed on <em>as it is</em>: a gate found that the object does not hold up in the
+     * target stage, or that others still depend on it (issues #248, #294). The endpoints
+     * that can be refused answer it themselves before they get here, with the refused
+     * object's metadata as the <strong>409</strong> body (issue #295); what still arrives
+     * here goes to the {@link StageGateRefusedExceptionMapper}, which keeps the
+     * <strong>409</strong> with the plain error body.
      * </p>
      *
      * @param failure the exception an endpoint caught; never {@code null}
@@ -107,11 +111,12 @@ public final class EndpointFailures {
         if (occupied != null) {
             return new WebApplicationException(occupied.getMessage(), occupied, Status.CONFLICT);
         }
-        // A gate's refusal is an answer too: the object is not fit for the target stage
-        // as things stand, and the reason names what has to change before a retry.
+        // A gate's refusal is an answer too: the object is not fit for the operation as
+        // things stand, and its diagnostics name what has to change before a retry. It goes
+        // on unwrapped, so its own mapper answers it as the 409 it is.
         StageGateRefusedException gateRefusal = StageGateRefusedExceptionMapper.findInChain(cause);
         if (gateRefusal != null) {
-            return new WebApplicationException(gateRefusal.getMessage(), gateRefusal, Status.CONFLICT);
+            return gateRefusal;
         }
         return new WebApplicationException(cause, Status.INTERNAL_SERVER_ERROR);
     }

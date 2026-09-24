@@ -270,9 +270,8 @@ Two details of the conflict check:
 A transition is validated against the **target** stage before it commits. Besides the
 occupancy check above, a registry may be configured with *stage gates*: checks that look
 at the object relative to the stage it is about to enter and may refuse the move. A refused
-transition answers `409 Conflict` with the gate's reason, writes nothing into the target
-stage and leaves the source stage's content as it was. The reason names what has to change
-before a retry succeeds.
+transition answers `409 Conflict`, writes nothing into the target stage and leaves the
+source stage's content as it was.
 
 The same gates guard a **delete**: `DELETE .../stages/{stage}` asks them before the object
 is removed, and a gate may refuse that too, typically because other objects still depend on
@@ -283,6 +282,17 @@ on the object in its current stage**, under the gate's producer name, so a later
 the metadata shows why the promotion or the delete failed, not only the response that
 refused it. A later attempt that passes clears them again. A gate may also pass and still
 leave warnings; on a transition they travel with the object into the target stage.
+
+**The refusal response** is one contract for transitions and deletes alike: status
+`409 Conflict`, body the object's **unchanged metadata from its current stage** in the
+format the request asked for - the same document a `GET .../{objectId}/metadata` returns,
+with the gate's findings in its `diagnostics`. Their `message`s are the reason; their
+`code`s and `id`s are stable, so a client can point back at them. So a UI handles one shape
+whether the operation went through (`200`, metadata) or not (`409`, metadata). Two
+neighbours stay what they were: a `409` for an *occupied id* (see above) carries the plain
+error document, and `403 Forbidden` is a stage policy (stage not writable, transition pair
+not allowed), never a gate. The Java client turns a refusal into an
+`OperationRefusedException` carrying the diagnostics.
 
 A delete may be **forced**: `DELETE .../stages/{stage}?force=true` overrides a gate's veto as
 a deliberate decision. The object is deleted anyway, and what the gate found about the
@@ -880,7 +890,7 @@ export MODELATLAS_DEBUG_STACKTRACE=true
 | 304 | Not Modified (conditional GET with `If-None-Match` — content unchanged) |
 | 400 | Invalid request (bad scope, stage, parameters) |
 | 403 | Forbidden (read-only stage or parent object) |
-| 409 | Conflict (an `objectId` or `nsUri` already taken in the target stage — see [One Object per Id per Stage](#one-object-per-id-per-stage) — or a stage gate refused a transition — see [Stage Gates](#stage-gates)) |
+| 409 | Conflict (an `objectId` or `nsUri` already taken in the target stage — see [One Object per Id per Stage](#one-object-per-id-per-stage) — with the error document as body; or a stage gate refused a transition or a delete — see [Stage Gates](#stage-gates) — with the object's metadata, diagnostics included, as body) |
 | 412 | Precondition Failed (`If-Match` ETag mismatch — resource modified by another client) |
 | 415 | Unsupported media type |
 | 500 | Internal server error |

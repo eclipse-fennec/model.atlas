@@ -809,7 +809,8 @@ public class SchemaPackagesResource {
                     @ApiResponse(responseCode = "403", description = "Stage is read-only or Package is only present in a parent scope final stage and so it's read-only"),
                     @ApiResponse(responseCode = "400", description = "Scope not available, schema registry not available for scope, stage not available for registry or not a valid stage"),
                     @ApiResponse(responseCode = "204", description = "Package not found"),
-                    @ApiResponse(responseCode = "409", description = "A stage gate refused the delete; the package keeps its stage and carries the gate's diagnostics. Retry with force=true to override."),
+                    @ApiResponse(responseCode = "409", description = "A stage gate refused the delete; the package keeps its stage. The body is its unchanged metadata, whose diagnostics carry the gate's findings. Retry with force=true to override.",
+                            content = @Content(schema = @Schema(implementation = ObjectMetadata.class))),
                     @ApiResponse(responseCode = "500", description = "Internal server error") })
     @ResourceOption(key = CodecOptions.CODEC_ID_KEY_MODE, value = "FEATURE_ONLY")
     public Response deletePackage(
@@ -851,6 +852,11 @@ public class SchemaPackagesResource {
         } catch (IllegalArgumentException e) {
             return Response.status(Response.Status.BAD_REQUEST).entity(e.getMessage()).build();
         } catch (Exception e) {
+            // a gate's refusal is answered with the package's metadata as the 409 body (issue #295)
+            Response refused = GateRefusals.conflict(e, scopeService, requestContext);
+            if (refused != null) {
+                return refused;
+            }
             throw EndpointFailures.propagate(e);
         }
     }
@@ -869,8 +875,9 @@ public class SchemaPackagesResource {
                     @ApiResponse(responseCode = "400", description = "Invalid transition, missing parameters, scope not available, schema registry not available for scope, stage not available for registry or not a valid stage"),
                     @ApiResponse(responseCode = "403", description = "Stage is read-only or Object is only present in a parent scope final stage and so it's read-only"),
                     @ApiResponse(responseCode = "204", description = "Package not found in source stage"),
-                    @ApiResponse(responseCode = "409", description = "Either the target stage already holds a different package under this objectId (an objectId is unique per stage, so promoting onto an earlier copy of the same package is allowed; taking the id over from another package requires overwrite=true), "
-                            + "or a stage gate refused the transition because the package does not hold up in the target stage. The message carries the gate's reason and what to change before retrying"),
+                    @ApiResponse(responseCode = "409", description = "Either the target stage already holds a different package under this objectId (an objectId is unique per stage, so promoting onto an earlier copy of the same package is allowed; taking the id over from another package requires overwrite=true) - then the body is the plain error document - "
+                            + "or a stage gate refused the transition because the package does not hold up in the target stage. Then the body is the package's unchanged metadata from the source stage, whose diagnostics carry the gate's findings and what to change before retrying",
+                            content = @Content(schema = @Schema(implementation = ObjectMetadata.class))),
                     @ApiResponse(responseCode = "500", description = "Internal server error") })
     @ResourceOption(key = CodecOptions.CODEC_ID_KEY_MODE, value = "FEATURE_ONLY")
     public Response transitionPackage(
@@ -919,6 +926,11 @@ public class SchemaPackagesResource {
         } catch (IllegalArgumentException e) {
             return Response.status(Response.Status.BAD_REQUEST).entity(e.getMessage()).build();
         } catch (Exception e) {
+            // a gate's refusal is answered with the source-stage metadata as the 409 body (issue #295)
+            Response refused = GateRefusals.conflict(e, scopeService, requestContext);
+            if (refused != null) {
+                return refused;
+            }
             throw EndpointFailures.propagate(e);
         }
 

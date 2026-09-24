@@ -23,6 +23,7 @@
 	org.eclipse.fennec.codec.rest;version=latest,\
 	org.eclipse.fennec.codec.api;version=latest,\
 	org.eclipse.fennec.model.atlas.scope.api;version=snapshot,\
+	org.eclipse.fennec.model.atlas.action.api;version=snapshot,\
 	io.github.vpelikh.swagger-annotations;version=latest,\
 	io.github.vpelikh.swagger-core;version=latest,\
 	io.github.vpelikh.swagger-models;version=latest,\
