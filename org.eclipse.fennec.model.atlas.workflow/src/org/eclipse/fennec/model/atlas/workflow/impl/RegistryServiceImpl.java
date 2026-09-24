@@ -50,6 +50,8 @@ import org.eclipse.fennec.model.atlas.mgmt.diagnostics.DiagnosticDelta;
 import org.eclipse.fennec.model.atlas.mgmt.diagnostics.Diagnostics;
 import org.eclipse.fennec.model.atlas.mgmt.diagnostics.DiagnosticsChanged;
 import org.eclipse.fennec.model.atlas.mgmt.management.Diagnostic;
+import org.eclipse.fennec.model.atlas.mgmt.management.DiagnosticSeverity;
+import org.eclipse.fennec.model.atlas.mgmt.management.ManagementFactory;
 import org.eclipse.fennec.model.atlas.mgmt.management.ObjectMetadata;
 import org.osgi.service.typedevent.TypedEventBus;
 import org.eclipse.fennec.model.atlas.scope.api.RegistryType;
@@ -119,7 +121,17 @@ public class RegistryServiceImpl<T extends EObject> implements RegistryService<T
     private final List<EClass> rootEClasses;
     private final List<EClass> derivedEClasses;
 
-    private final List<StageActionService> stageActionServices = new CopyOnWriteArrayList<>();
+    /** The bound stage actions with their names and rankings; a chain puts them in order (issue #296). */
+    private final List<StageActionChains.ActionBinding> stageActions = new CopyOnWriteArrayList<>();
+    /** The configured order of the stage actions per stage and object type, and what a failure means. */
+    private final StageActionChains stageActionChains;
+    /** The producer prefix under which the workflow records what a stage action did (issue #296). */
+    static final String STAGE_ACTION_PRODUCER_PREFIX = "stage-action/";
+    /** Diagnostic code: the action's promise failed. */
+    static final String STAGE_ACTION_FAILED = "stage-action.failed";
+    /** Diagnostic code: the action did not run because an earlier one in a stopping chain failed. */
+    static final String STAGE_ACTION_SKIPPED = "stage-action.skipped";
+    private static final String STAGE_ACTION_CATEGORY = "stage-action";
     /** The gates a transition has to pass before it commits (issue #248); see {@link #consultGates}. */
     private final List<StageGate> stageGates = new CopyOnWriteArrayList<>();
     /** Scopes this registry has been activated for, to replay for late-binding stage action services. */
@@ -157,6 +169,7 @@ public class RegistryServiceImpl<T extends EObject> implements RegistryService<T
         this.storageMap = parseStageStorageMappings(config.stage_storage_mappings(), storageService);
         this.stages = parseStages(config.stages());
         validateStages();
+        this.stageActionChains = StageActionChains.parse(config.stage_action_chains());
         this.registryObject = createRegistryObject();
         rootEClasses = resolveEClasses(resourceSet, schemaPackage, config.root_eclass_uri(), "root.eclass.uri");
         if (rootEClasses.isEmpty()) {
@@ -288,20 +301,34 @@ public class RegistryServiceImpl<T extends EObject> implements RegistryService<T
         }
     }
 
+    /**
+     * Binds a stage action with its service properties: the name a chain refers to it by
+     * and the ranking that orders it when no chain does (issue #296).
+     */
     @Reference(name = "stageActionService", target = ("(scope=no-inject)"),
             cardinality = ReferenceCardinality.MULTIPLE, policy = ReferencePolicy.DYNAMIC,
             policyOption = ReferencePolicyOption.GREEDY)
-    void addStageActionService(StageActionService stageActionService) {
+    void bindStageAction(StageActionService stageActionService, Map<String, Object> properties) {
+        StageActionChains.ActionBinding binding = StageActionChains.ActionBinding.of(stageActionService, properties);
         synchronized (stageActionLock) {
-            stageActionServices.add(stageActionService);
-            activatedScopes.forEach(scope -> replayOnStartup(scope, List.of(stageActionService)));
+            stageActions.add(binding);
+            activatedScopes.forEach(scope -> replayOnStartup(scope, List.of(binding)));
         }
     }
 
-    void removeStageActionService(StageActionService stageActionService) {
+    void unbindStageAction(StageActionService stageActionService) {
         synchronized (stageActionLock) {
-            stageActionServices.remove(stageActionService);
+            stageActions.removeIf(binding -> binding.service() == stageActionService);
         }
+    }
+
+    /** Binds an action without service properties: named by its class, ranking 0. For tests. */
+    void addStageActionService(StageActionService stageActionService) {
+        bindStageAction(stageActionService, Map.of());
+    }
+
+    void removeStageActionService(StageActionService stageActionService) {
+        unbindStageAction(stageActionService);
     }
 
     /**
@@ -333,13 +360,19 @@ public class RegistryServiceImpl<T extends EObject> implements RegistryService<T
     public Void activate(String scope) {
         synchronized (stageActionLock) {
             activatedScopes.add(scope);
-            replayOnStartup(scope, stageActionServices);
+            replayOnStartup(scope, stageActions);
         }
         return null;
     }
 
-    private void replayOnStartup(String scope, List<StageActionService> services) {
-        services.forEach(sas -> {
+    /**
+     * Replays ENTER for the objects already in an action's trigger stages. The actions are
+     * taken in ranking order; a replay reconciles each action's own runtime state, so the
+     * per-object chains and their failure rule do not apply here.
+     */
+    private void replayOnStartup(String scope, List<StageActionChains.ActionBinding> bindings) {
+        StageActionChains.DEFAULT.order(bindings).forEach(binding -> {
+            StageActionService sas = binding.service();
             if (!sas.requiresReplayOnStartup()) {
                 return;
             }
@@ -360,7 +393,8 @@ public class RegistryServiceImpl<T extends EObject> implements RegistryService<T
         synchronized (stageActionLock) {
             activatedScopes.remove(scope);
         }
-        stageActionServices.forEach(sas -> {
+        StageActionChains.DEFAULT.order(stageActions).forEach(binding -> {
+            StageActionService sas = binding.service();
             if (!sas.requiresReplayOnShutdown()) {
                 return;
             }
@@ -396,7 +430,8 @@ public class RegistryServiceImpl<T extends EObject> implements RegistryService<T
             EObjectStorageService<T> storageService = storageFor(stage);
             ObjectMetadata objectMetadata = WorkflowServiceHelper.getPromiseValue(storageService.storeObject(scope,
                     config.registry_name(), stage, metadata.getObjectId(), object, metadata));
-            dispatch(ActionEvent.ENTER, newContext(scope, stage, objectMetadata, null, null, null, null, false));
+            dispatch(ActionEvent.ENTER, newContext(scope, stage, objectMetadata, null, null, null, null, false),
+                    objectMetadata);
             return objectMetadata;
         });
     }
@@ -497,7 +532,7 @@ public class RegistryServiceImpl<T extends EObject> implements RegistryService<T
             // delete-then-create)
             metadata = WorkflowServiceHelper
                     .getPromiseValue(storageService.updateObject(objectId, updatedObject, metadata));
-            dispatch(ActionEvent.UPDATE, newContext(scope, stage, metadata, null, null, null, null, false));
+            dispatch(ActionEvent.UPDATE, newContext(scope, stage, metadata, null, null, null, null, false), metadata);
             return metadata;
         });
     }
@@ -739,7 +774,8 @@ public class RegistryServiceImpl<T extends EObject> implements RegistryService<T
             // (issue #252).
             if (deleted) {
                 registryService.removeFromCache(scope, config.registry_name(), stage, objectId);
-                dispatch(ActionEvent.EXIT, newContext(scope, stage, metadata, null, null, ExitReason.DELETED, null, false));
+                dispatch(ActionEvent.EXIT, newContext(scope, stage, metadata, null, null, ExitReason.DELETED, null, false),
+                        metadata);
             }
 
             return deleted;
@@ -905,11 +941,12 @@ public class RegistryServiceImpl<T extends EObject> implements RegistryService<T
             WorkflowServiceHelper
                     .getPromiseValue(sourceStorage.deleteObject(scope, config.registry_name(), fromStage, objectId));
             dispatch(ActionEvent.EXIT,
-                    newContext(scope, fromStage, metadata, null, toStage, ExitReason.TRANSITIONED, null, false));
+                    newContext(scope, fromStage, metadata, null, toStage, ExitReason.TRANSITIONED, null, false),
+                    metadata);
         }
         WorkflowServiceHelper.getPromiseValue(
                 targetStorage.storeObject(scope, config.registry_name(), toStage, objectId, object, metadata));
-        dispatch(ActionEvent.ENTER, newContext(scope, toStage, metadata, fromStage, null, null, null, false));
+        dispatch(ActionEvent.ENTER, newContext(scope, toStage, metadata, fromStage, null, null, null, false), metadata);
         return metadata;
     }
 
@@ -1525,45 +1562,146 @@ public class RegistryServiceImpl<T extends EObject> implements RegistryService<T
     }
 
     /**
-     * Dispatches an event to every stage action service and JOINS the returned
-     * promises: the surrounding operation (upload/update/delete/transition
-     * promise) must not resolve before the actions are through. The stage action
-     * promises run on their own executor, so a caller of e.g.
-     * {@code uploadToStage(...).getValue()} otherwise races whatever the action
-     * still does — concretely the SCR-driven package-registry update of the
-     * EPackage registration, which made responses serialized against a leased
-     * chain ResourceSet fail intermittently (issue #196). Action failures stay
-     * non-fatal (logged), exactly as before — only the timing is now
-     * deterministic.
+     * Dispatches an event to the stage actions, one after the other in the order the
+     * registry's chain puts them (issue #296), and JOINS each returned promise: the
+     * surrounding operation (upload/update/delete/transition promise) must not resolve
+     * before the actions are through. The stage action promises run on their own
+     * executor, so a caller of e.g. {@code uploadToStage(...).getValue()} otherwise races
+     * whatever the action still does — concretely the SCR-driven package-registry update
+     * of the EPackage registration, which made responses serialized against a leased chain
+     * ResourceSet fail intermittently (issue #196).
+     *
+     * <p>
+     * Action failures stay non-fatal for the operation: the object is where the event says
+     * it is, whatever an action made of that. What an action did is recorded on the object
+     * as a diagnostic under the producer {@code stage-action/<name>} - an
+     * {@link #STAGE_ACTION_FAILED error} when its promise failed, cleared again when it
+     * succeeds the next time. In a chain that {@code stop}s on failure, the actions after
+     * the failing one do not run for this event and record that they were
+     * {@link #STAGE_ACTION_SKIPPED skipped}; in the default chain, and in one that
+     * {@code continue}s, the others run regardless, as they always did.
+     * </p>
+     *
+     * @param event    the event
+     * @param ctx      the context handed to the actions
+     * @param metadata the metadata of the object the event is about, as the caller holds
+     *                 it; the recorded results are mirrored into it so the caller's copy
+     *                 says what the stored one says. May be {@code null}
      */
-    private void dispatch(ActionEvent event, ActionContext ctx) {
-        stageActionServices.forEach(sas -> {
-            Promise<Void> p = dispatchTo(sas, event, ctx);
-            if (p == null) {
-                return;
+    private void dispatch(ActionEvent event, ActionContext ctx, ObjectMetadata metadata) {
+        StageActionChains.Chain chain = stageActionChains.select(ctx.stage(), ctx.objectType());
+        boolean recordable = recordsActionResults(event, ctx);
+        String stoppedBy = null;
+        for (StageActionChains.ActionBinding binding : chain.order(stageActions)) {
+            StageActionService sas = binding.service();
+            if (!applies(sas, event, ctx)) {
+                continue;
             }
+            if (stoppedBy != null) {
+                String failed = stoppedBy;
+                LOGGER.info(() -> String.format("Stage action %s does not run for %s on %s: %s failed before it and the chain stops on failure",
+                        binding.name(), event, ctx.objectId(), failed));
+                if (recordable) {
+                    recordActionResult(ctx, metadata, binding, skippedDiagnostic(binding, event, stoppedBy));
+                }
+                continue;
+            }
+            Throwable failure = null;
             try {
-                p.getValue();
+                invoke(sas, event, ctx).getValue();
             } catch (InvocationTargetException e) {
-                // already logged by the onFailure callback in dispatchTo
+                // logged by the onFailure callback in invoke
+                failure = e.getCause() == null ? e : e.getCause();
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
+                return;
             }
-        });
+            if (recordable) {
+                recordActionResult(ctx, metadata, binding,
+                        failure == null ? null : failedDiagnostic(binding, event, failure));
+            }
+            if (failure != null && chain.stopOnFailure()) {
+                stoppedBy = binding.name();
+            }
+        }
     }
 
-    private Promise<Void> dispatchTo(StageActionService sas, ActionEvent event, ActionContext ctx) {
+    /**
+     * Whether an action's result can be recorded on the object after this event: not
+     * after a delete, the object is gone, and not after the EXIT of a transition whose
+     * source copy is deleted with it.
+     */
+    private boolean recordsActionResults(ActionEvent event, ActionContext ctx) {
+        if (event != ActionEvent.EXIT) {
+            return true;
+        }
+        return ctx.exitReason() == ExitReason.TRANSITIONED && !config.delete_after_transition();
+    }
+
+    /**
+     * Records what a stage action made of an event on the object, under the producer
+     * {@code stage-action/<name>}: the failure, or nothing - which clears the failure the
+     * same action recorded on an earlier event. Nothing is written when there is nothing
+     * to record and nothing to clear, and a failure of the write itself is logged, not
+     * raised: the operation stands, the record is a courtesy.
+     */
+    private void recordActionResult(ActionContext ctx, ObjectMetadata metadata, StageActionChains.ActionBinding binding,
+            Diagnostic result) {
+        String producer = STAGE_ACTION_PRODUCER_PREFIX + binding.name();
+        List<Diagnostic> findings = result == null ? List.of() : List.of(result);
+        if (findings.isEmpty() && (metadata == null || !holdsDiagnosticsOf(metadata, producer))) {
+            return;
+        }
+        try {
+            ObjectMetadata written = writeDiagnostics(ctx.scope(), ctx.stage(), ctx.objectId(), producer, findings);
+            if (written != null && metadata != null) {
+                Diagnostics.replaceOwned(metadata, producer, findings, Instant.now());
+            }
+        } catch (RuntimeException e) {
+            LOGGER.log(Level.WARNING, String.format("The result of stage action %s on %s could not be recorded on %s",
+                    binding.name(), ctx.objectId(), ctx.stage()), e);
+        }
+    }
+
+    private static Diagnostic failedDiagnostic(StageActionChains.ActionBinding binding, ActionEvent event,
+            Throwable failure) {
+        Diagnostic diagnostic = ManagementFactory.eINSTANCE.createDiagnostic();
+        diagnostic.setCode(STAGE_ACTION_FAILED);
+        diagnostic.setSeverity(DiagnosticSeverity.ERROR);
+        diagnostic.setCategory(STAGE_ACTION_CATEGORY);
+        diagnostic.setTarget(event.name());
+        String reason = failure.getMessage() == null ? failure.getClass().getSimpleName() : failure.getMessage();
+        diagnostic.setMessage(String.format("Stage action %s failed on %s: %s", binding.name(), event, reason));
+        return diagnostic;
+    }
+
+    private static Diagnostic skippedDiagnostic(StageActionChains.ActionBinding binding, ActionEvent event,
+            String failedBefore) {
+        Diagnostic diagnostic = ManagementFactory.eINSTANCE.createDiagnostic();
+        diagnostic.setCode(STAGE_ACTION_SKIPPED);
+        diagnostic.setSeverity(DiagnosticSeverity.WARNING);
+        diagnostic.setCategory(STAGE_ACTION_CATEGORY);
+        diagnostic.setTarget(event.name());
+        diagnostic.setMessage(String.format(
+                "Stage action %s did not run on %s: %s failed before it and the chain stops on failure",
+                binding.name(), event, failedBefore));
+        return diagnostic;
+    }
+
+    /** Whether an action wants this event: its object type, trigger stages and trigger events. */
+    private static boolean applies(StageActionService sas, ActionEvent event, ActionContext ctx) {
         if (!sas.supportsObjectType(ctx.objectType())) {
-            return null;
+            return false;
         }
         Set<String> triggerStages = sas.getTriggerStages();
         if (!triggerStages.isEmpty() && !triggerStages.contains(ctx.stage())) {
-            return null;
+            return false;
         }
         Set<ActionEvent> triggerEvents = sas.getTriggerEvents();
-        if (!triggerEvents.isEmpty() && !triggerEvents.contains(event)) {
-            return null;
-        }
+        return triggerEvents.isEmpty() || triggerEvents.contains(event);
+    }
+
+    private static Promise<Void> invoke(StageActionService sas, ActionEvent event, ActionContext ctx) {
         Promise<Void> p = switch (event) {
         case ENTER -> sas.onEnter(ctx);
         case UPDATE -> sas.onUpdate(ctx);
@@ -1572,6 +1710,11 @@ public class RegistryServiceImpl<T extends EObject> implements RegistryService<T
         p.onFailure(t -> LOGGER.log(Level.WARNING, "StageAction " + sas.getClass().getSimpleName()
                 + " failed for " + event + " on " + ctx.objectId(), t));
         return p;
+    }
+
+    /** The action's promise for the event, or {@code null} when the action does not want it. Used by the replays. */
+    private Promise<Void> dispatchTo(StageActionService sas, ActionEvent event, ActionContext ctx) {
+        return applies(sas, event, ctx) ? invoke(sas, event, ctx) : null;
     }
 
 

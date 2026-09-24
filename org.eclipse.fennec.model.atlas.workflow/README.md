@@ -583,6 +583,27 @@ A `StageActionService` declares what it cares about via:
 
 The registry filters dispatches by these declarations before calling `onEnter` / `onUpdate` / `onExit`, each receiving an `ActionContext` record with scope, registry, objectId, objectType, stage, `sourceStage` / `targetStage` (for transitions), `exitReason`, and a `replay` flag.
 
+### Order, chains and results (issue #296)
+
+For one event the registry runs its actions **one after the other**, each joined before the next starts, and the operation's promise resolves only after the last. The order is:
+
+- **by default** `service.ranking`, highest first, ties broken by `service.id` (registration order), and a failing action does not stop the others - it is logged and recorded, see below;
+- **with a chain** as the registry configures it in `stage.action.chains`, one JSON object per entry:
+
+  ```json
+  {"stage": "draft", "objectType": "http://…#//SourceUnit", "actions": ["QvtCompile", "QvtValidate"], "onFailure": "stop"}
+  ```
+
+  | Key | Meaning |
+  |-----|---------|
+  | `stage`, `objectType` | Optional. Narrow the chain to the events it is for; the **first** entry that matches an event applies, so put the specific ones first. |
+  | `actions` | The actions that have a place in the order, by name: the `stage.action.name` service property, else the DS `component.name`, else the simple class name. They run first, in this order; every other bound action follows in ranking order. A name nobody is bound under is simply not there - a registry that must not run without an action says so with `stageActionService.cardinality.minimum`. |
+  | `onFailure` | `continue` (default): the actions after a failing one still run. `stop`: they do not run for this event. |
+
+The chain is configuration, not a new kind of service: the actions know nothing of each other, and the same action may sit in different places in different registries. The startup and shutdown replays run per action in ranking order; a replay reconciles one action's own state, so chains and their failure rule do not apply there.
+
+**Results are recorded on the object.** After each action the workflow writes a diagnostic under the producer `stage-action/<name>` on the object in the event's stage: `stage-action.failed` (`ERROR`, the failure's message, `target` the event) when the action's promise failed, `stage-action.skipped` (`WARNING`) for every action a stopping chain did not run, and nothing when it succeeded - which clears the record the same action left on an earlier event. The metadata the operation returns carries the records as well. Nothing is recorded after a delete, the object is gone, nor after the `EXIT` of a transition whose source copy is deleted with it. An action that wants to say more than "failed" writes its own diagnostics under its own producer, through `RegistryService.updateDiagnostics`; the two never collide.
+
 ### Bundled Implementation: `EPackageStageActionService`
 
 Ships as the default action for EMF schemas. When an `EPackage` object enters or is updated in a configured trigger stage it registers the following OSGi services backed by that EPackage:
