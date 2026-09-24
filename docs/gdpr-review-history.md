@@ -17,9 +17,9 @@ line per thing in the model.
 
 | sheet | one row per | the columns that matter |
 |---|---|---|
-| `GdprReportHistory` | the document | `subjectNsURI`, `subjectName`, `modelFingerprint`, `rebuiltAt`, `revisionCount` |
+| `GdprReportHistory` | the document | `subjectName`, `subjectFingerprint`, `language` (for a transformation), `rebuiltAt`, `revisionCount` |
 | `ReportRevision` | review run | `revisionNumber`, `reportId`, `generatedAt`, `generatedBy`, `origin`, `findingCount`, `changeCount` |
-| `EvaluationRow` | evaluated classifier or feature, **per revision** | `classifierId`, `featureId`, `typeName`, `category`, `relevanceLevel`, `confidence`, `rationale`, `recommendation`, `citations`, `changeKind` |
+| `EvaluationRow` | evaluated classifier or feature - or, for a transformation review, one flow - **per revision** | `classifierId`, `featureId`, `typeName`, `category`, `relevanceLevel`, `confidence`, `rationale`, `recommendation`, `citations`, `changeKind` |
 | `ChangeRow` | field that changed | `revisionNumber`, `changedAt`, `changedBy`, `classifierId`, `featureId`, `field`, `changeKind`, `oldValue`, `newValue` |
 
 The change sheet is the point of the whole document. A human raising a category reads like this:

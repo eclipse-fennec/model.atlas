@@ -42,7 +42,7 @@ import org.eclipse.fennec.model.gdprReport.GDPRReportFactory;
 import org.eclipse.fennec.model.gdprReport.GDPRReportPackage;
 import org.eclipse.fennec.model.gdprReport.GdprReport;
 import org.eclipse.fennec.model.gdprReport.GdprReportOrigin;
-import org.eclipse.fennec.model.gdprReport.SubjectModel;
+import org.eclipse.fennec.model.gdprReport.PackageSubject;
 import org.eclipse.fennec.model.gdprReportHistory.GdprReportHistory;
 import org.eclipse.fennec.model.gdprReportHistory.ReportRevision;
 import org.junit.jupiter.api.DisplayName;
@@ -222,16 +222,16 @@ class GDPRReportHistoryStageActionTest {
 		report.setGeneratedBy("claude-opus-5");
 		report.setOrigin(GdprReportOrigin.AI_AGENT);
 
-		SubjectModel subject = REPORTS.createSubjectModel();
+		PackageSubject subject = REPORTS.createPackageSubject();
 		subject.setName("clinic");
 		subject.setNsURI("https://example.org/clinic/1.0.0");
-		subject.setModelFingerprint(fingerprint);
+		subject.setSubjectFingerprint(fingerprint);
 		report.setSubject(subject);
 
 		ClassifierEvaluation classifier = REPORTS.createClassifierEvaluation();
 		classifier.setId("Patient");
 		classifier.setName("Patient");
-		report.getClassifierEvaluation().add(classifier);
+		report.getEvaluation().add(classifier);
 		return report;
 	}
 

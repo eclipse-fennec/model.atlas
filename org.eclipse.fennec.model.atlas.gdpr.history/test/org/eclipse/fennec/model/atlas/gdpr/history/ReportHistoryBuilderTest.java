@@ -28,12 +28,14 @@ import org.eclipse.fennec.model.gdprReport.DataCategory;
 import org.eclipse.fennec.model.gdprReport.Evidence;
 import org.eclipse.fennec.model.gdprReport.FeatureEvaluation;
 import org.eclipse.fennec.model.gdprReport.Finding;
+import org.eclipse.fennec.model.gdprReport.FlowEvaluation;
 import org.eclipse.fennec.model.gdprReport.GDPRReportFactory;
 import org.eclipse.fennec.model.gdprReport.GdprReport;
 import org.eclipse.fennec.model.gdprReport.GdprReportOrigin;
 import org.eclipse.fennec.model.gdprReport.LegalCorpusRef;
 import org.eclipse.fennec.model.gdprReport.RelevanceLevelType;
-import org.eclipse.fennec.model.gdprReport.SubjectModel;
+import org.eclipse.fennec.model.gdprReport.PackageSubject;
+import org.eclipse.fennec.model.gdprReport.TransformationSubject;
 import org.eclipse.fennec.model.gdprReportHistory.ChangeKind;
 import org.eclipse.fennec.model.gdprReportHistory.ChangeRow;
 import org.eclipse.fennec.model.gdprReportHistory.EvaluationRow;
@@ -79,14 +81,13 @@ class ReportHistoryBuilderTest {
 	void subjectComesFromTheNewestReport() {
 		GdprReport first = report("2026-09-15T08:12:00Z", "claude-opus-5");
 		GdprReport second = report("2026-09-17T14:20:30Z", "someone");
-		second.getSubject().setName("clinic-renamed");
+		((PackageSubject) second.getSubject()).setName("clinic-renamed");
 
 		GdprReportHistory history = builder.build(
 				List.of(stored("gdpr-fp-20260915-081200", first), stored("gdpr-fp-20260917-142030", second)), now);
 
 		assertEquals("clinic-renamed", history.getSubjectName());
-		assertEquals("https://example.org/clinic/1.0.0", history.getSubjectNsURI());
-		assertEquals("9f2c1ab7d4e85530", history.getModelFingerprint());
+		assertEquals("9f2c1ab7d4e85530", history.getSubjectFingerprint());
 		assertEquals("GDPR review history of clinic-renamed", history.getName());
 	}
 
@@ -285,7 +286,51 @@ class ReportHistoryBuilderTest {
 		assertTrue(history.getRevisions().isEmpty());
 		assertTrue(history.getEvaluations().isEmpty());
 		assertTrue(history.getChanges().isEmpty());
-		assertNull(history.getSubjectNsURI());
+		assertNull(history.getSubjectFingerprint());
+		assertNull(history.getSubjectName());
+	}
+
+	@Test
+	@DisplayName("a transformation review is flattened by flow, named after its qualified name")
+	void transformationReviewIsFlattenedByFlow() {
+		GdprReport report = REPORTS.createGdprReport();
+		report.setGeneratedAt("2026-09-24T10:00:00Z");
+		report.setGeneratedBy("static-analysis");
+		report.setOrigin(GdprReportOrigin.STATIC_ANALYSIS);
+		TransformationSubject subject = REPORTS.createTransformationSubject();
+		subject.setQualifiedName("clinic.Anonymise");
+		subject.setLanguage("qvto");
+		subject.setSubjectFingerprint("77aa88bb99cc00dd");
+		report.setSubject(subject);
+		FlowEvaluation flow = REPORTS.createFlowEvaluation();
+		flow.setId("Patient.name->Record.label");
+		flow.setName("Patient.name -> Record.label");
+		flow.setMapping("patientToRecord");
+		flow.setRelevanceLevel(RelevanceLevelType.HIGH);
+		flow.setPurpose("copies the name verbatim");
+		report.getEvaluation().add(flow);
+		Finding finding = REPORTS.createFinding();
+		finding.setId("F-001");
+		finding.setCategory(DataCategory.PERSONAL_DATA);
+		finding.setRelevanceLevel(RelevanceLevelType.HIGH);
+		finding.setRationale("a person's name flows into the target unchanged");
+		flow.getFindings().add(finding);
+
+		GdprReportHistory history = builder.build(List.of(stored("gdpr-tr-20260924-100000", report)), now);
+
+		assertEquals("clinic.Anonymise", history.getSubjectName());
+		assertEquals("qvto", history.getLanguage());
+		assertEquals("77aa88bb99cc00dd", history.getSubjectFingerprint());
+		assertEquals("GDPR review history of clinic.Anonymise", history.getName());
+		assertEquals(RevisionOrigin.STATIC_ANALYSIS, history.getRevisions().get(0).getOrigin());
+		assertEquals(1, history.getRevisions().get(0).getFindingCount());
+		assertEquals(1, history.getEvaluations().size());
+		EvaluationRow row = history.getEvaluations().get(0);
+		assertEquals("Patient.name->Record.label", row.getClassifierId());
+		assertEquals("Patient.name -> Record.label", row.getClassifierName());
+		assertEquals("copies the name verbatim", row.getPurpose());
+		assertEquals(RelevanceLevelType.HIGH.getName(), row.getRelevanceLevel());
+		assertTrue(row.getRationale().contains("flows into the target"));
 	}
 
 	/* ------------------------------------------------------------------ provenance and purpose */
@@ -386,10 +431,10 @@ class ReportHistoryBuilderTest {
 		report.setGeneratedAt(generatedAt);
 		report.setGeneratedBy(generatedBy);
 
-		SubjectModel subject = REPORTS.createSubjectModel();
+		PackageSubject subject = REPORTS.createPackageSubject();
 		subject.setName("clinic");
 		subject.setNsURI("https://example.org/clinic/1.0.0");
-		subject.setModelFingerprint("9f2c1ab7d4e85530");
+		subject.setSubjectFingerprint("9f2c1ab7d4e85530");
 		report.setSubject(subject);
 
 		LegalCorpusRef corpus = REPORTS.createLegalCorpusRef();
@@ -404,7 +449,7 @@ class ReportHistoryBuilderTest {
 		classifier.setId(name);
 		classifier.setName(name);
 		classifier.setUriFragment("//" + name);
-		report.getClassifierEvaluation().add(classifier);
+		report.getEvaluation().add(classifier);
 		return classifier;
 	}
 
