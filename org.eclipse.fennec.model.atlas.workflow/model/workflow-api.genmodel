@@ -119,6 +119,12 @@
         <genParameters ecoreParameter="workflow-api.ecore#//RegistryService/deleteFromStage/stage"/>
         <genParameters ecoreParameter="workflow-api.ecore#//RegistryService/deleteFromStage/objectId"/>
       </genOperations>
+      <genOperations ecoreOperation="workflow-api.ecore#//RegistryService/deleteFromStage.1">
+        <genParameters ecoreParameter="workflow-api.ecore#//RegistryService/deleteFromStage.1/scope"/>
+        <genParameters ecoreParameter="workflow-api.ecore#//RegistryService/deleteFromStage.1/stage"/>
+        <genParameters ecoreParameter="workflow-api.ecore#//RegistryService/deleteFromStage.1/objectId"/>
+        <genParameters ecoreParameter="workflow-api.ecore#//RegistryService/deleteFromStage.1/force"/>
+      </genOperations>
       <genOperations ecoreOperation="workflow-api.ecore#//RegistryService/listInStage">
         <genParameters ecoreParameter="workflow-api.ecore#//RegistryService/listInStage/scope"/>
         <genParameters ecoreParameter="workflow-api.ecore#//RegistryService/listInStage/stage"/>
@@ -244,6 +250,12 @@
         <genParameters ecoreParameter="workflow-api.ecore#//WritableScopeService/deleteFromStageForRegistry/registry"/>
         <genParameters ecoreParameter="workflow-api.ecore#//WritableScopeService/deleteFromStageForRegistry/stage"/>
         <genParameters ecoreParameter="workflow-api.ecore#//WritableScopeService/deleteFromStageForRegistry/objectId"/>
+      </genOperations>
+      <genOperations ecoreOperation="workflow-api.ecore#//WritableScopeService/deleteFromStageForRegistry.1">
+        <genParameters ecoreParameter="workflow-api.ecore#//WritableScopeService/deleteFromStageForRegistry.1/registry"/>
+        <genParameters ecoreParameter="workflow-api.ecore#//WritableScopeService/deleteFromStageForRegistry.1/stage"/>
+        <genParameters ecoreParameter="workflow-api.ecore#//WritableScopeService/deleteFromStageForRegistry.1/objectId"/>
+        <genParameters ecoreParameter="workflow-api.ecore#//WritableScopeService/deleteFromStageForRegistry.1/force"/>
       </genOperations>
       <genOperations ecoreOperation="workflow-api.ecore#//WritableScopeService/listInStageForRegistry">
         <genParameters ecoreParameter="workflow-api.ecore#//WritableScopeService/listInStageForRegistry/registry"/>

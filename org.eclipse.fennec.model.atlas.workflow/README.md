@@ -607,14 +607,26 @@ An `UPDATE` always tears down the previous OSGi registrations before re-register
 
 ## Stage Gates
 
-A `StageActionService` reacts to a mutation that has already happened and cannot stop it. A **`StageGate`** (same `action.api` bundle, issue #248) is the other half of that contract: the registry asks every gate **before** a transition commits, and a refusal aborts the transition before any store is touched. The caller gets the gate's reason as a `StageGateRefusedException`, which the REST layer answers with `409 Conflict`; post-commit action failures stay non-fatal as before.
+A `StageActionService` reacts to a mutation that has already happened and cannot stop it. A **`StageGate`** (same `action.api` bundle, issue #248) is the other half of that contract: the registry asks every gate **before** a transition or a delete commits, and a refusal aborts the operation before any store is touched. The caller gets the gates' reasons as a `StageGateRefusedException`, which the REST layer answers with `409 Conflict`; post-commit action failures stay non-fatal as before.
 
 ### Contract
 
 - `supportsObjectType(String)` — which object types the gate wants to be asked about.
-- `beforeTransition(GateContext)` — returns a `Promise<GateVerdict>`: `GateVerdict.pass()` or `GateVerdict.refuse(reason)`. The `GateContext` carries scope, registry, objectId, objectType, `sourceStage`, `targetStage` and the object's fingerprint; the object is still readable in its source stage, the target has not been written.
+- `beforeTransition(GateContext)` — returns a `Promise<GateVerdict>`. The `GateContext` carries the `trigger` (`TRANSITION`), scope, registry, objectId, objectType, `sourceStage`, `targetStage` and the object's fingerprint; the object is still readable in its source stage, the target has not been written.
+- `beforeDelete(GateContext)` (issue #294) — the same for a delete: `trigger` is `DELETE`, `targetStage` is `null`, nothing has been removed yet. A `default` that passes, so a gate written against 1.1 keeps its behaviour.
+- `producer()` — the name the gate's diagnostics are recorded under; defaults to the class name. Override it when the class may move.
 
-A gate whose promise **fails** does not let the transition through: the registry treats an undecided gate as a fault of the operation (`IllegalStateException`, a `500` over REST). A check that silently passes when it breaks is no check. Further triggers (a delete guard, issue #250) will be added as `default` methods that pass, so existing gates keep compiling.
+A verdict is `GateVerdict.pass()`, `GateVerdict.pass(diagnostics)`, `GateVerdict.refuse(reason)` or `GateVerdict.refuse(reason, diagnostics)`. A **`GateDiagnostic`** is the EMF-free shape of a finding: severity, a gate-defined `code`, message, optional `category` and `target` (the element inside the object), children, and optionally the `Dependent` (registry, stage, objectId) it is about. A refusal always has at least one diagnostic; `refuse(reason)` makes one, coded `refused`, from the reason.
+
+What the registry does with a round of verdicts:
+
+- **All** gates that support the type are asked, not only up to the first refusal, so the caller sees everything in the way at once.
+- **Refused**: every consulted gate's findings about the object are written to its source-stage copy under the gate's `producer()` — a refusing gate's veto, and a passing gate's (possibly empty) findings, which clears a veto that gate recorded on an earlier attempt. Then a `StageGateRefusedException` is raised carrying `trigger`, scope, registry, stage, objectId and the refusing gates' diagnostics. Nothing else changes.
+- **Passed transition**: each gate's findings replace what it recorded on the metadata before, so warnings travel with the object into the target stage and stale vetoes are gone; when the source copy stays (`delete_after_transition` off) it is brought up to date too.
+- **Consequences**: findings about a `Dependent` are written to that object before the operation commits — through this registry, or through the `RegistryServiceCollector` for another registry. An unreachable dependent stops the operation like an undecided gate; a dependent that no longer exists is only logged.
+- **Forced delete** (`deleteFromStage(scope, stage, objectId, true)`, REST `?force=true`): a refusal no longer stops the delete. It is logged, the object goes, and the consequences are recorded on the dependents. The veto about the object itself is not written anywhere — the object is gone.
+
+A gate whose promise **fails** does not let the operation through: the registry treats an undecided gate as a fault of the operation (`IllegalStateException`, a `500` over REST). A check that silently passes when it breaks is no check.
 
 ### Wiring
 
@@ -627,7 +639,7 @@ Gates are wired like stage actions, per registry, through the `stageGate` refere
 
 ### Bundled Implementation: `QvtTransitionGate`
 
-Ships in the `qvt` bundle. For a QVT-O source it compiles the source against the **target** stage's view (its unit store for imports, its chain ResourceSet for model types) and refuses the transition when the compile fails, typically because an imported library has not been promoted yet. The reason lists the compiler's findings and names the remedy. The runtime configurations wire it into the `transformations` registry.
+Ships in the `qvt` bundle. For a QVT-O source it compiles the source against the **target** stage's view (its unit store for imports, its chain ResourceSet for model types) and refuses the transition when the compile fails, typically because an imported library has not been promoted yet. The reason lists the compiler's findings and names the remedy; the verdict carries them as one `qvto.does-not-compile` diagnostic (category `compile`, target the qualified name) with one `qvto.compiler-finding` child per compiler message at `line:column`, recorded under the producer `QvtTransitionGate`. The runtime configurations wire it into the `transformations` registry.
 
 ## Integration Points
 

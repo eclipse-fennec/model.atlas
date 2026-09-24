@@ -320,8 +320,20 @@ public class ScopeServiceImpl<T extends EObject> implements ScopeService<T>, Wri
 	 */
 	@Override
 	public Promise<Boolean> deleteFromStageForRegistry(String registry, String stage, String objectId) {
+		return deleteFromStageForRegistry(registry, stage, objectId, false);
+	}
+
+	/*
+	 * (non-Javadoc)
+	 *
+	 * @see org.eclipse.fennec.model.atlas.wf.workflowapi.WritableScopeService#
+	 * deleteFromStageForRegistry(java.lang.String, java.lang.String,
+	 * java.lang.String, boolean)
+	 */
+	@Override
+	public Promise<Boolean> deleteFromStageForRegistry(String registry, String stage, String objectId, boolean force) {
 		validateRegistry(registry);
-		return getRegistryService(registry).deleteFromStage(config.scope_name(), stage, objectId);
+		return getRegistryService(registry).deleteFromStage(config.scope_name(), stage, objectId, force);
 	}
 
 	/*

@@ -22,20 +22,23 @@ import java.util.Map;
  *
  * <p>
  * Unlike an {@link ActionContext}, this describes a <em>pending</em> mutation.
- * The object is still where it was: for a transition, readable in
- * {@link #sourceStage()} through the gate's own view of the registry, while the
- * target has not been written. A gate that needs the content looks it up with
- * {@link #objectId()}; the context carries what the workflow already had in
- * hand.
+ * The object is still where it was: readable in {@link #sourceStage()} through
+ * the gate's own view of the registry, while for a transition the target has
+ * not been written and for a delete nothing has been removed. A gate that needs
+ * the content looks it up with {@link #objectId()}; the context carries what
+ * the workflow already had in hand.
  * </p>
  *
+ * @param trigger     what is about to happen: a transition or a delete (issue
+ *                    #294); never {@code null}
  * @param scope       the scope the object belongs to
  * @param registry    the registry the object belongs to
  * @param objectId    the object's identifier
  * @param objectType  the object's type (for example the URI of the
  *                    {@code EPackage} EClass)
  * @param sourceStage the stage the object currently sits in
- * @param targetStage the stage the operation would move it to
+ * @param targetStage the stage a transition would move it to; {@code null} for
+ *                    a delete
  * @param triggerUser the user that requested the operation, or {@code "system"}
  * @param triggerTime the time the operation was requested
  * @param metadata    additional metadata carried with the operation; keys the
@@ -47,6 +50,7 @@ import java.util.Map;
  * @since 1.1
  */
 public record GateContext(
+        GateTrigger trigger,
         String scope,
         String registry,
         String objectId,
@@ -56,6 +60,29 @@ public record GateContext(
         String triggerUser,
         Instant triggerTime,
         Map<String, Object> metadata) {
+
+    public GateContext {
+        trigger = trigger == null ? GateTrigger.TRANSITION : trigger;
+    }
+
+    /**
+     * The shape of 1.1: the context of a {@link GateTrigger#TRANSITION}.
+     *
+     * @param scope       the scope the object belongs to
+     * @param registry    the registry the object belongs to
+     * @param objectId    the object's identifier
+     * @param objectType  the object's type
+     * @param sourceStage the stage the object currently sits in
+     * @param targetStage the stage the transition would move it to
+     * @param triggerUser the user that requested the operation
+     * @param triggerTime the time the operation was requested
+     * @param metadata    additional metadata carried with the operation
+     */
+    public GateContext(String scope, String registry, String objectId, String objectType, String sourceStage,
+            String targetStage, String triggerUser, Instant triggerTime, Map<String, Object> metadata) {
+        this(GateTrigger.TRANSITION, scope, registry, objectId, objectType, sourceStage, targetStage, triggerUser,
+                triggerTime, metadata);
+    }
 
     /**
      * The fingerprint of the object this operation is about, or {@code null}
@@ -67,5 +94,13 @@ public record GateContext(
     public String fingerprint() {
         Object value = metadata == null ? null : metadata.get(ActionContext.FINGERPRINT);
         return value instanceof String s ? s : null;
+    }
+
+    /**
+     * @return {@code true} if the object is about to be deleted rather than moved
+     * @since 1.2
+     */
+    public boolean isDelete() {
+        return trigger == GateTrigger.DELETE;
     }
 }

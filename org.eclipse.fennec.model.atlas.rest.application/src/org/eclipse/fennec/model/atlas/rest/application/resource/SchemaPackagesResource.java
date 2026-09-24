@@ -802,17 +802,21 @@ public class SchemaPackagesResource {
     @DELETE
     @Path("/stages/{stageName}")
     @Operation(summary = "Delete a package", description = "Delete a SchemaPackage from the specified stage. "
-            + "Fails if the stage is read-only.", responses = {
+            + "Fails if the stage is read-only. A stage gate may refuse the delete, for example while instances "
+            + "depend on the schema; the refusal is answered with 409 and its diagnostics are recorded on the "
+            + "package. force=true deletes anyway and records the consequence on the dependents the gate named.", responses = {
                     @ApiResponse(responseCode = "200", description = "Package deleted successfully"),
                     @ApiResponse(responseCode = "403", description = "Stage is read-only or Package is only present in a parent scope final stage and so it's read-only"),
                     @ApiResponse(responseCode = "400", description = "Scope not available, schema registry not available for scope, stage not available for registry or not a valid stage"),
                     @ApiResponse(responseCode = "204", description = "Package not found"),
+                    @ApiResponse(responseCode = "409", description = "A stage gate refused the delete; the package keeps its stage and carries the gate's diagnostics. Retry with force=true to override."),
                     @ApiResponse(responseCode = "500", description = "Internal server error") })
     @ResourceOption(key = CodecOptions.CODEC_ID_KEY_MODE, value = "FEATURE_ONLY")
     public Response deletePackage(
             @Parameter(description = "The scope name", required = true) @PathParam("scopeName") String scopeName,
             @Parameter(description = "The stage name", required = true) @PathParam("stageName") String stageName,
-            @Parameter(description = "The namespace URI of the package to delete", required = true) @QueryParam("nsUri") String nsUri) {
+            @Parameter(description = "The namespace URI of the package to delete", required = true) @QueryParam("nsUri") String nsUri,
+            @Parameter(description = "Delete although a stage gate refuses it; the gate's findings are recorded on the dependents instead") @QueryParam("force") @DefaultValue("false") boolean force) {
 
         ScopeService<?> scopeService = getScopeServiceByScopeName(scopeName);
         try {
@@ -833,9 +837,8 @@ public class SchemaPackagesResource {
                 return preconditionResponse;
             }
 
-            boolean deleted = scopeService
-                    .deleteFromStageForRegistry(schemaRegistry(scopeService), stageName, existingMetadata.getObjectId())
-                    .getValue();
+            boolean deleted = scopeService.deleteFromStageForRegistry(schemaRegistry(scopeService), stageName,
+                    existingMetadata.getObjectId(), force).getValue();
             if (deleted) {
             	// Only this stage's copy is gone: the same id may be held by other stages
             	// of this registry, and those entries must stay searchable (issue #252)

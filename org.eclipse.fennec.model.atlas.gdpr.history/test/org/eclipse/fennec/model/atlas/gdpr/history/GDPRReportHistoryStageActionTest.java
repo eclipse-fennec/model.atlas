@@ -344,6 +344,12 @@ class GDPRReportHistoryStageActionTest {
 		}
 
 		@Override
+		public Promise<Boolean> deleteFromStageForRegistry(String registry, String stage, String objectId,
+				boolean force) {
+			throw new UnsupportedOperationException();
+		}
+
+		@Override
 		public List<ObjectMetadata> listInStageForRegistry(String registry, String stage) {
 			throw new UnsupportedOperationException();
 		}

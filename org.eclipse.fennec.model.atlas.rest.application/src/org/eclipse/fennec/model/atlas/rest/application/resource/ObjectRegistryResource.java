@@ -57,6 +57,7 @@ import jakarta.ws.rs.PUT;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.PathParam;
 import jakarta.ws.rs.Produces;
+import jakarta.ws.rs.DefaultValue;
 import jakarta.ws.rs.QueryParam;
 import jakarta.ws.rs.WebApplicationException;
 import jakarta.ws.rs.container.ContainerRequestContext;
@@ -584,22 +585,29 @@ public class ObjectRegistryResource {
      * @param stageName    the stage name
      * @param registryName the registry name
      * @param objectId     the object identifier
+     * @param force        {@code true} to delete although a stage gate refuses it; the
+     *                     gate's findings are then recorded on the dependents it named
      * @return 200 on success
      */
     @DELETE
     @Path("/stages/{stageName}")
-    @Operation(summary = "Delete storage object", description = "Delete a storage object from the registry and stage. Fails if the stage is read-only.", responses = {
+    @Operation(summary = "Delete storage object", description = "Delete a storage object from the registry and stage. Fails if the stage is read-only. "
+            + "A stage gate may refuse the delete, for example while other objects depend on this one; "
+            + "the refusal is answered with 409 and its diagnostics are recorded on the object. "
+            + "force=true deletes anyway and records the consequence on the dependents the gate named.", responses = {
             @ApiResponse(responseCode = "200", description = "Object deleted successfully"),
             @ApiResponse(responseCode = "403", description = "Stage is read-only or Object is only present in a parent scope final stage and so it's read-only"),
             @ApiResponse(responseCode = "400", description = "Scope not available, registry not available for scope, stage not available for registry or not a valid stage"),
             @ApiResponse(responseCode = "204", description = "Object not found"),
+            @ApiResponse(responseCode = "409", description = "A stage gate refused the delete; the object keeps its stage and carries the gate's diagnostics. Retry with force=true to override."),
             @ApiResponse(responseCode = "500", description = "Internal server error") })
     @ResourceOption(key = CodecOptions.CODEC_ID_KEY_MODE, value = "FEATURE_ONLY")
     public Response deleteObject(
             @Parameter(description = "The scope name", required = true) @PathParam("scopeName") String scopeName,
             @Parameter(description = "The registry name", required = true) @PathParam("registryName") String registryName,
             @Parameter(description = "The stage name", required = true) @PathParam("stageName") String stageName,
-            @Parameter(description = "The object identifier", required = true) @QueryParam("objectId") String objectId) {
+            @Parameter(description = "The object identifier", required = true) @QueryParam("objectId") String objectId,
+            @Parameter(description = "Delete although a stage gate refuses it; the gate's findings are recorded on the dependents instead") @QueryParam("force") @DefaultValue("false") boolean force) {
 
         ScopeService<?> scopeService = getScopeServiceByScopeName(scopeName);
         try {
@@ -622,7 +630,8 @@ public class ObjectRegistryResource {
                 return preconditionResponse;
             }
 
-            boolean deleted = scopeService.deleteFromStageForRegistry(registryName, stageName, objectId).getValue();
+            boolean deleted = scopeService.deleteFromStageForRegistry(registryName, stageName, objectId, force)
+                    .getValue();
             if (deleted)
                 // 200, as this endpoint's @ApiResponse documents and as the sibling
                 // SchemaPackagesResource.deletePackage answers, so that success is
