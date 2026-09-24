@@ -454,11 +454,16 @@ public class QvtUnitHostingIntegrationTest {
         assertEquals("GateUser", veto.getTarget());
         assertEquals(QvtTransitionGate.CATEGORY, veto.getCategory());
         assertTrue(veto.getMessage().contains("libraries"), "the recorded message names the remedy too");
-        // a missing import may reach the gate as a bare exception without positioned findings;
-        // when the compiler does place them, each becomes a child at line:column
+        // the unresolvable import arrives as a positioned compiler finding (emf.m2x#264), so the
+        // veto points at the import line: one child per finding, placed at line:column
+        assertFalse(veto.getChildren().isEmpty(), "the missing import is a positioned finding, got: " + veto);
         for (Diagnostic finding : veto.getChildren()) {
             assertEquals(QvtTransitionGate.CODE_COMPILER_FINDING, finding.getCode());
             assertNotNull(finding.getTarget(), "a compiler finding is placed at line:column");
+            assertTrue(finding.getTarget().matches("\\d+:\\d+(#\\d+)?"),
+                    "placed at line:column, got: " + finding.getTarget());
+            assertTrue(finding.getMessage().contains("gate.Lib"),
+                    "the finding names the import it could not resolve, got: " + finding.getMessage());
         }
 
         // libraries first: the library compiles on its own, so it passes; then the
