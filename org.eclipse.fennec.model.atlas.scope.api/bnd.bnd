@@ -6,6 +6,10 @@ Bundle-Description: Read-only contract (ScopedEObjectsRegistry) for the resolved
 
 -library: enableEMF
 
+# StageGateRefusedException carries the gate's findings in the EMF-free shape of the action SPI
+-buildpath: \
+	org.eclipse.fennec.model.atlas.action.api;version=snapshot
+
 src=${^src},src-gen
 
 # The code generation takes a bit of time and makes the build a bit slower.

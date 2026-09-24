@@ -13,7 +13,10 @@
  */
 package org.eclipse.fennec.model.atlas.qvt;
 
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
@@ -26,6 +29,7 @@ import org.eclipse.fennec.m2x.model.compiled.SourceUnit;
 import org.eclipse.fennec.m2x.qvto.api.QvtoEngine;
 import org.eclipse.fennec.m2x.qvto.api.QvtoParseException;
 import org.eclipse.fennec.model.atlas.action.api.GateContext;
+import org.eclipse.fennec.model.atlas.action.api.GateDiagnostic;
 import org.eclipse.fennec.model.atlas.action.api.GateVerdict;
 import org.eclipse.fennec.model.atlas.action.api.StageGate;
 import org.eclipse.fennec.model.atlas.wf.workflowapi.RegistryService;
@@ -53,6 +57,15 @@ import org.osgi.util.promise.PromiseFactory;
  * </p>
  *
  * <p>
+ * The refusal is explained as a diagnostic tree (issue #294): one
+ * {@link #CODE_DOES_NOT_COMPILE} root about the source, with one
+ * {@link #CODE_COMPILER_FINDING} child per compiler message, placed at its
+ * line and column. The workflow records the tree on the source in its current
+ * stage, so the reason a promotion failed is visible on the object afterwards
+ * and not only in the response, and clears it once a later attempt passes.
+ * </p>
+ *
+ * <p>
  * The gate compiles and discards; storing the unit and the diagnostics in the
  * target stage remains the {@link QvtStageActionService}'s job on the ENTER
  * that follows a passed transition. Both use {@link QvtStageEngines} so they
@@ -62,6 +75,15 @@ import org.osgi.util.promise.PromiseFactory;
  */
 @Component(name = "QvtTransitionGate", service = StageGate.class, immediate = true)
 public class QvtTransitionGate implements StageGate {
+
+    /** The producer name the gate's diagnostics are recorded under; stable across class moves. */
+    public static final String PRODUCER = "QvtTransitionGate";
+    /** The category of every diagnostic this gate produces. */
+    public static final String CATEGORY = "compile";
+    /** The root finding: the source does not compile against the target stage's view. */
+    public static final String CODE_DOES_NOT_COMPILE = "qvto.does-not-compile";
+    /** One compiler message, a child of the root, placed at {@code line:column}. */
+    public static final String CODE_COMPILER_FINDING = "qvto.compiler-finding";
 
     private static final Logger logger = Logger.getLogger(QvtTransitionGate.class.getName());
     private static final String SOURCE_UNIT_TYPE = EcoreUtil.getURI(CompiledPackage.Literals.SOURCE_UNIT).toString();
@@ -79,6 +101,11 @@ public class QvtTransitionGate implements StageGate {
     @Override
     public boolean supportsObjectType(String objectType) {
         return SOURCE_UNIT_TYPE.equals(objectType);
+    }
+
+    @Override
+    public String producer() {
+        return PRODUCER;
     }
 
     @Override
@@ -116,7 +143,9 @@ public class QvtTransitionGate implements StageGate {
             String reason = describe(source.getQualifiedName(), ctx.targetStage(), e);
             logger.info(() -> "Refusing the transition of " + source.getQualifiedName() + " into (" + ctx.scope()
                     + ", " + ctx.targetStage() + "): " + reason);
-            return GateVerdict.refuse(reason);
+            GateDiagnostic finding = GateDiagnostic.error(CODE_DOES_NOT_COMPILE, reason).inCategory(CATEGORY)
+                    .at(source.getQualifiedName()).withChildren(findings(e));
+            return GateVerdict.refuse(reason, List.of(finding));
         } finally {
             if (lease != null && resourceSet != null) {
                 lease.ungetService(resourceSet);
@@ -145,6 +174,26 @@ public class QvtTransitionGate implements StageGate {
         }
         reason.append(". Transition the libraries it imports first, or fix the source in its current stage.");
         return reason.toString();
+    }
+
+    /**
+     * One child finding per compiler message, at {@code line:column}. The id of
+     * a child is minted from its code and target, so two messages at the same
+     * position are told apart by a running number, or the second would replace
+     * the first.
+     */
+    private static List<GateDiagnostic> findings(QvtoParseException e) {
+        List<GateDiagnostic> children = new ArrayList<>();
+        Map<String, Integer> seen = new HashMap<>();
+        for (Resource.Diagnostic error : e.getErrors()) {
+            String at = error.getLine() + ":" + error.getColumn();
+            int occurrence = seen.merge(at, 1, Integer::sum);
+            if (occurrence > 1) {
+                at = at + "#" + occurrence;
+            }
+            children.add(GateDiagnostic.error(CODE_COMPILER_FINDING, error.getMessage()).inCategory(CATEGORY).at(at));
+        }
+        return children;
     }
 
     @SuppressWarnings("unchecked")

@@ -45,9 +45,11 @@ import org.eclipse.fennec.m2x.unit.api.Unit;
 import org.eclipse.fennec.m2x.unit.api.UnitKey;
 import org.eclipse.fennec.m2x.unit.api.UnitKind;
 import org.eclipse.fennec.m2x.unit.prepare.UnitPreparer;
+import org.eclipse.fennec.model.atlas.mgmt.management.Diagnostic;
 import org.eclipse.fennec.model.atlas.mgmt.management.ManagementFactory;
 import org.eclipse.fennec.model.atlas.mgmt.management.ObjectMetadata;
 import org.eclipse.fennec.model.atlas.qvt.AtlasUnitStore;
+import org.eclipse.fennec.model.atlas.qvt.QvtTransitionGate;
 import org.eclipse.fennec.model.atlas.qvt.QvtUnits;
 import org.eclipse.fennec.model.atlas.scope.api.StageGateRefusedException;
 import org.eclipse.fennec.model.atlas.qvt.diagnostics.CompileStatus;
@@ -439,7 +441,25 @@ public class QvtUnitHostingIntegrationTest {
         assertNull(registry.getMetadataFromStage(SCOPE, "release",
                 QvtUnits.diagnosticsObjectId(QvtUnits.LANGUAGE_QVTO, "GateUser")),
                 "no diagnostics document was written in the target stage");
-        assertNotNull(registry.getMetadataFromStage(SCOPE, DRAFT, "GateUser"), "the source stays in draft");
+        ObjectMetadata draftCopy = registry.getMetadataFromStage(SCOPE, DRAFT, "GateUser");
+        assertNotNull(draftCopy, "the source stays in draft");
+
+        // the veto is recorded on the source where it is, as the gate's diagnostic tree (issue #294)
+        assertEquals(1, refused.diagnostics().size(), "the exception carries the gate's finding");
+        assertEquals(QvtTransitionGate.CODE_DOES_NOT_COMPILE, refused.diagnostics().get(0).code());
+        Diagnostic veto = draftCopy.getDiagnostics().stream()
+                .filter(d -> QvtTransitionGate.PRODUCER.equals(d.getProducer())).findFirst().orElse(null);
+        assertNotNull(veto, "the refusal is recorded on the draft copy, got " + draftCopy.getDiagnostics());
+        assertEquals(QvtTransitionGate.CODE_DOES_NOT_COMPILE, veto.getCode());
+        assertEquals("GateUser", veto.getTarget());
+        assertEquals(QvtTransitionGate.CATEGORY, veto.getCategory());
+        assertTrue(veto.getMessage().contains("libraries"), "the recorded message names the remedy too");
+        // a missing import may reach the gate as a bare exception without positioned findings;
+        // when the compiler does place them, each becomes a child at line:column
+        for (Diagnostic finding : veto.getChildren()) {
+            assertEquals(QvtTransitionGate.CODE_COMPILER_FINDING, finding.getCode());
+            assertNotNull(finding.getTarget(), "a compiler finding is placed at line:column");
+        }
 
         // libraries first: the library compiles on its own, so it passes; then the
         // source finds it in the release view and passes too
@@ -449,6 +469,10 @@ public class QvtUnitHostingIntegrationTest {
         assertEquals(1, releaseStore.versions(QvtUnits.LANGUAGE_QVTO, "GateUser", UnitKind.COMPILED).size(),
                 "once the library is there the promotion compiles in the target stage");
         assertEquals(CompileStatus.OK, diagnosticsOf(registry, "release", "GateUser").getCompileStatus());
+        // and the pass cleared the veto on the copy that moved
+        assertTrue(registry.getMetadataFromStage(SCOPE, "release", "GateUser").getDiagnostics().stream()
+                .noneMatch(d -> QvtTransitionGate.PRODUCER.equals(d.getProducer())),
+                "a passed promotion carries no stale veto");
     }
 
     @Test

@@ -709,7 +709,9 @@ public class ScopeServiceIntegrationTest {
 			assertNotNull(scopeService);
 
 			Promise<Boolean> expectedPromise = promiseFactory.resolved(true);
-			when(mockRegistryService.deleteFromStage(SCOPE_NAME, STAGE_NAME, OBJECT_ID)).thenReturn(expectedPromise);
+			// the plain delete is the forced one with force=false (issue #294)
+			when(mockRegistryService.deleteFromStage(SCOPE_NAME, STAGE_NAME, OBJECT_ID, false))
+					.thenReturn(expectedPromise);
 
 			// Act
 			Promise<Boolean> result = scopeService.deleteFromStageForRegistry(REGISTRY_NAME, STAGE_NAME, OBJECT_ID);
@@ -717,7 +719,7 @@ public class ScopeServiceIntegrationTest {
 			// Assert
 			assertNotNull(result);
 			assertTrue(result.getValue());
-			verify(mockRegistryService).deleteFromStage(SCOPE_NAME, STAGE_NAME, OBJECT_ID);
+			verify(mockRegistryService).deleteFromStage(SCOPE_NAME, STAGE_NAME, OBJECT_ID, false);
 		}
 	}
 }

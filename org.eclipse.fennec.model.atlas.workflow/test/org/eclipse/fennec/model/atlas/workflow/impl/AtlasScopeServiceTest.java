@@ -289,12 +289,25 @@ public class AtlasScopeServiceTest {
 		@DisplayName("Should delegate delete with atlas scope")
 		void shouldDelegateDelete() {
 			Promise<Boolean> expected = promiseFactory.resolved(true);
-			when(mockRegistryService.deleteFromStage(SCOPE, STAGE, OBJECT_ID)).thenReturn(expected);
+			// the plain delete is the forced one with force=false (issue #294)
+			when(mockRegistryService.deleteFromStage(SCOPE, STAGE, OBJECT_ID, false)).thenReturn(expected);
 
 			Promise<Boolean> result = service.deleteFromStageForRegistry(REGISTRY, STAGE, OBJECT_ID);
 
 			assertEquals(expected, result);
-			verify(mockRegistryService).deleteFromStage(SCOPE, STAGE, OBJECT_ID);
+			verify(mockRegistryService).deleteFromStage(SCOPE, STAGE, OBJECT_ID, false);
+		}
+
+		@Test
+		@DisplayName("Should delegate a forced delete with atlas scope, force intact")
+		void shouldDelegateForcedDelete() {
+			Promise<Boolean> expected = promiseFactory.resolved(true);
+			when(mockRegistryService.deleteFromStage(SCOPE, STAGE, OBJECT_ID, true)).thenReturn(expected);
+
+			Promise<Boolean> result = service.deleteFromStageForRegistry(REGISTRY, STAGE, OBJECT_ID, true);
+
+			assertEquals(expected, result);
+			verify(mockRegistryService).deleteFromStage(SCOPE, STAGE, OBJECT_ID, true);
 		}
 
 		@Test

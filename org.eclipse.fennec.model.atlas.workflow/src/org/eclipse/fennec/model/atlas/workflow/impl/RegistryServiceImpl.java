@@ -21,6 +21,7 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -58,13 +59,17 @@ import org.eclipse.fennec.model.atlas.scope.api.StageGateRefusedException;
 import org.eclipse.fennec.model.atlas.scope.api.StageOccupiedException;
 import org.eclipse.fennec.model.atlas.scope.api.StagePolicyException;
 import org.eclipse.fennec.model.atlas.wf.workflowapi.Registry;
+import org.eclipse.fennec.model.atlas.workflow.RegistryServiceCollector;
 import org.eclipse.fennec.model.atlas.workflow.WorkflowConstants;
 import org.eclipse.fennec.model.atlas.workflow.registration.DynamicEPackageRegistrationService;
 import org.eclipse.fennec.model.atlas.wf.workflowapi.RegistryService;
 import org.eclipse.fennec.model.atlas.wf.workflowapi.StageTransition;
 import org.eclipse.fennec.model.atlas.wf.workflowapi.WorkflowApiFactory;
 import org.eclipse.fennec.model.atlas.action.api.ActionContext;
+import org.eclipse.fennec.model.atlas.action.api.Dependent;
 import org.eclipse.fennec.model.atlas.action.api.GateContext;
+import org.eclipse.fennec.model.atlas.action.api.GateDiagnostic;
+import org.eclipse.fennec.model.atlas.action.api.GateTrigger;
 import org.eclipse.fennec.model.atlas.action.api.GateVerdict;
 import org.eclipse.fennec.model.atlas.action.api.StageActionService;
 import org.eclipse.fennec.model.atlas.action.api.StageGate;
@@ -260,6 +265,26 @@ public class RegistryServiceImpl<T extends EObject> implements RegistryService<T
     void unbindTypedEventBus(TypedEventBus bus) {
         if (this.typedEventBus == bus) {
             this.typedEventBus = null;
+        }
+    }
+
+    /**
+     * Reaches the registries of the {@link Dependent dependents} a gate names outside this
+     * registry (issue #294): a schema's dependents are instances in other registries.
+     * Optional and dynamic, because the collector in turn collects every registry; a
+     * runtime without it still records consequences within this registry.
+     */
+    private volatile RegistryServiceCollector registryCollector;
+
+    @Reference(cardinality = ReferenceCardinality.OPTIONAL, policy = ReferencePolicy.DYNAMIC,
+            policyOption = ReferencePolicyOption.GREEDY)
+    void bindRegistryCollector(RegistryServiceCollector collector) {
+        this.registryCollector = collector;
+    }
+
+    void unbindRegistryCollector(RegistryServiceCollector collector) {
+        if (this.registryCollector == collector) {
+            this.registryCollector = null;
         }
     }
 
@@ -548,24 +573,38 @@ public class RegistryServiceImpl<T extends EObject> implements RegistryService<T
             // final stage, and a re-validation reaches released objects too (issue #292). What
             // stays protected is the content: updateInStage keeps its full bar.
             validateStage(stage);
-            EObjectStorageService<T> storageService = storageFor(stage);
-            // the state before the write, so the event can say what changed (issue #293)
-            ObjectMetadata before = WorkflowServiceHelper
-                    .getPromiseValue(storageService.retrieveMetadata(scope, config.registry_name(), stage, objectId));
-            ObjectMetadata metadata = WorkflowServiceHelper.getPromiseValue(storageService.updateDiagnostics(scope,
-                    config.registry_name(), stage, objectId, producer, diagnostics));
-            if (metadata == null) {
-                return null;
-            }
-            // no dispatch: diagnostics are metadata, and a stage action reacting to them would
-            // loop with the action that wrote them. What goes out is the typed event, and only
-            // when something looks different afterwards.
-            deliverDiagnosticsChanged(scope, stage, objectId, producer, before, metadata);
-            if (!isWritableStage(stage)) {
+            ObjectMetadata metadata = writeDiagnostics(scope, stage, objectId, producer, diagnostics);
+            if (metadata != null && !isWritableStage(stage)) {
                 metadata.setIsReadOnly(true);
             }
             return metadata;
         });
+    }
+
+    /**
+     * Replaces one producer's diagnostics on the stored copy of an object and tells the bus
+     * what changed. Synchronous: the callers are already on a promise thread, or inside a
+     * transition that has to see the write land before it commits.
+     *
+     * @return the stored metadata after the write, or {@code null} when the object is not in
+     *         that stage
+     */
+    private ObjectMetadata writeDiagnostics(String scope, String stage, String objectId, String producer,
+            List<Diagnostic> diagnostics) {
+        EObjectStorageService<T> storageService = storageFor(stage);
+        // the state before the write, so the event can say what changed (issue #293)
+        ObjectMetadata before = WorkflowServiceHelper
+                .getPromiseValue(storageService.retrieveMetadata(scope, config.registry_name(), stage, objectId));
+        ObjectMetadata metadata = WorkflowServiceHelper.getPromiseValue(storageService.updateDiagnostics(scope,
+                config.registry_name(), stage, objectId, producer, diagnostics));
+        if (metadata == null) {
+            return null;
+        }
+        // no dispatch: diagnostics are metadata, and a stage action reacting to them would
+        // loop with the action that wrote them. What goes out is the typed event, and only
+        // when something looks different afterwards.
+        deliverDiagnosticsChanged(scope, stage, objectId, producer, before, metadata);
+        return metadata;
     }
 
     /**
@@ -647,6 +686,18 @@ public class RegistryServiceImpl<T extends EObject> implements RegistryService<T
      */
     @Override
     public Promise<Boolean> deleteFromStage(String scope, String stage, String objectId) {
+        return deleteFromStage(scope, stage, objectId, false);
+    }
+
+    /*
+     * (non-Javadoc)
+     *
+     * @see
+     * org.eclipse.fennec.model.atlas.wf.workflowapi.RegistryService#deleteFromStage
+     * (java.lang.String, java.lang.String, java.lang.String, boolean)
+     */
+    @Override
+    public Promise<Boolean> deleteFromStage(String scope, String stage, String objectId, boolean force) {
 
         return promiseFactory.submit(() -> {
             requireNonNull(objectId, "Object ID cannot be null");
@@ -662,6 +713,22 @@ public class RegistryServiceImpl<T extends EObject> implements RegistryService<T
                         "Cannot delete object %s for scope '%s', registry '%s' and stage '%s' because no metadata has been found for it",
                         objectId, scope, config.registry_name(), stage));
             }
+
+            // Every gate is asked before anything is removed (issue #294). A refusal keeps
+            // the object and records why on it. A caller that forces the delete overrides
+            // the veto - a deliberate decision, so it is logged - and what remains of the
+            // verdicts is what the gates found about the dependents, which is written to
+            // them before the object goes, so the consequence is not left implicit.
+            GateRound round = consultGates(newGateContext(GateTrigger.DELETE, scope, stage, null, metadata), metadata);
+            if (round.refused()) {
+                if (!force) {
+                    throw refusal(round);
+                }
+                LOGGER.info(() -> String.format(
+                        "Deleting object %s from stage '%s' of registry '%s' in scope '%s' although a gate refused it (%s): the caller forced the delete",
+                        objectId, stage, config.registry_name(), scope, round.reasons()));
+            }
+            recordConsequences(round);
 
             // Delete from draft storage
             boolean deleted = WorkflowServiceHelper
@@ -809,8 +876,18 @@ public class RegistryServiceImpl<T extends EObject> implements RegistryService<T
             requireTargetFree(scope, toStage, objectId, metadata);
         }
         // Every gate is asked before anything is written or deleted: a refused
-        // transition leaves both stages exactly as they were (issue #248).
-        consultGates(newGateContext(scope, fromStage, toStage, metadata));
+        // transition leaves both stages exactly as they were (issue #248), except that
+        // the refusal is now recorded on the source-stage copy (issue #294). A passed
+        // round travels with the object: its findings replace what the same gates
+        // recorded on an earlier attempt, and what it says about dependents is written
+        // to them before the move commits.
+        GateRound round = consultGates(newGateContext(GateTrigger.TRANSITION, scope, fromStage, toStage, metadata),
+                metadata);
+        if (round.refused()) {
+            throw refusal(round);
+        }
+        carryFindings(round, !config.delete_after_transition());
+        recordConsequences(round);
 
         // Update metadata for new stage
         metadata.setLastChangeTime(Instant.now());
@@ -917,53 +994,211 @@ public class RegistryServiceImpl<T extends EObject> implements RegistryService<T
     }
 
     /**
-     * Asks every gate that cares about the object's type whether the transition may
-     * happen, and stops at the first that says no.
+     * What one consultation of the gates yielded: the operation, the object's metadata as
+     * read for it, and every verdict by the gate that gave it, in the order they were asked.
+     */
+    private record GateRound(GateContext ctx, ObjectMetadata metadata, Map<StageGate, GateVerdict> verdicts) {
+
+        boolean refused() {
+            return verdicts.values().stream().anyMatch(GateVerdict::refused);
+        }
+
+        /** The refusing gates' reasons, joined; empty when none refused. */
+        String reasons() {
+            return verdicts.values().stream().filter(GateVerdict::refused).map(GateVerdict::reason)
+                    .collect(Collectors.joining("; "));
+        }
+
+        /** The refusing gates' findings about the object, in order. */
+        List<GateDiagnostic> refusals() {
+            List<GateDiagnostic> all = new ArrayList<>();
+            verdicts.values().stream().filter(GateVerdict::refused).forEach(v -> all.addAll(v.findings()));
+            return all;
+        }
+    }
+
+    /**
+     * Asks every gate that cares about the object's type whether the operation may happen.
      *
      * <p>
-     * A gate's refusal is the caller's error: it surfaces as a
-     * {@link StageGateRefusedException} carrying the gate's reason, which the REST layer
-     * answers with a {@code 409}. A gate that cannot decide, because its promise fails,
-     * stops the transition as well, but as a fault of the operation: a check that
-     * silently passes when it breaks is no check, and the gates exist precisely to keep
-     * the target stage from receiving what does not hold up there.
+     * All gates are asked, not only up to the first that says no: every refusal is recorded
+     * on the object (issue #294), so the caller sees everything that stands in the way at
+     * once instead of one obstacle per attempt. A gate's refusal is the caller's error: it
+     * surfaces through {@link #refusal(GateRound)} as a {@link StageGateRefusedException}
+     * carrying the gates' reasons, which the REST layer answers with a {@code 409}. A gate
+     * that cannot decide, because its promise fails, stops the operation as well, but as a
+     * fault of the operation: a check that silently passes when it breaks is no check, and
+     * the gates exist precisely to keep the target stage from receiving what does not hold
+     * up there, and to keep an object from vanishing under those that need it.
      * </p>
      *
-     * @param ctx the transition about to happen
-     * @throws StageGateRefusedException if a gate refused the transition
-     * @throws IllegalStateException     if a gate could not decide
+     * @param ctx      the operation about to happen
+     * @param metadata the object's metadata, as read for the operation
+     * @return the verdicts
+     * @throws IllegalStateException if a gate could not decide
      */
-    private void consultGates(GateContext ctx) {
+    private GateRound consultGates(GateContext ctx, ObjectMetadata metadata) {
+        Map<StageGate, GateVerdict> verdicts = new LinkedHashMap<>();
         for (StageGate gate : stageGates) {
             if (!gate.supportsObjectType(ctx.objectType())) {
                 continue;
             }
             GateVerdict verdict;
             try {
-                verdict = gate.beforeTransition(ctx).getValue();
+                Promise<GateVerdict> answer = ctx.isDelete() ? gate.beforeDelete(ctx) : gate.beforeTransition(ctx);
+                verdict = answer.getValue();
             } catch (InvocationTargetException e) {
-                throw new IllegalStateException(String.format(
-                        "Stage gate %s could not decide whether object %s may move from stage '%s' to stage '%s' of registry '%s' in scope '%s'",
-                        gate.getClass().getSimpleName(), ctx.objectId(), ctx.sourceStage(), ctx.targetStage(),
-                        ctx.registry(), ctx.scope()), e.getCause());
+                throw new IllegalStateException(String.format("Stage gate %s could not decide whether object %s may %s",
+                        gate.getClass().getSimpleName(), ctx.objectId(), describe(ctx)), e.getCause());
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
-                throw new IllegalStateException("Interrupted while a stage gate decided on the transition of object "
-                        + ctx.objectId(), e);
+                throw new IllegalStateException("Interrupted while a stage gate decided whether object "
+                        + ctx.objectId() + " may " + describe(ctx), e);
             }
-            if (verdict == null || verdict.refused()) {
-                String reason = verdict == null ? "the gate " + gate.getClass().getSimpleName() + " gave no verdict"
-                        : verdict.reason();
-                throw new StageGateRefusedException(String.format(
-                        "Cannot transition object %s from stage '%s' to stage '%s' of registry '%s' in scope '%s': %s",
-                        ctx.objectId(), ctx.sourceStage(), ctx.targetStage(), ctx.registry(), ctx.scope(), reason));
+            if (verdict == null) {
+                verdict = GateVerdict.refuse("the gate " + gate.getClass().getSimpleName() + " gave no verdict");
             }
+            verdicts.put(gate, verdict);
         }
+        return new GateRound(ctx, metadata, verdicts);
     }
 
-    private GateContext newGateContext(String scope, String fromStage, String toStage, ObjectMetadata m) {
-        return new GateContext(scope, config.registry_name(), m.getObjectId(), m.getObjectType(), fromStage, toStage,
-                "system", Instant.now(), actionMetadata(m));
+    private static String describe(GateContext ctx) {
+        return ctx.isDelete()
+                ? String.format("be deleted from stage '%s' of registry '%s' in scope '%s'", ctx.sourceStage(),
+                        ctx.registry(), ctx.scope())
+                : String.format("move from stage '%s' to stage '%s' of registry '%s' in scope '%s'", ctx.sourceStage(),
+                        ctx.targetStage(), ctx.registry(), ctx.scope());
+    }
+
+    /**
+     * Records a refused round on the object and turns it into the caller's error.
+     *
+     * <p>
+     * Every consulted gate's findings about the object are written to its source-stage
+     * copy under the gate's producer name: a refusing gate's veto, and a passing gate's
+     * findings, which may be none and then clear a veto the same gate recorded on an
+     * earlier attempt. Recorded first, raised second, so a client that re-reads the object
+     * after the {@code 409} finds what the response told it.
+     * </p>
+     */
+    private StageGateRefusedException refusal(GateRound round) {
+        GateContext ctx = round.ctx();
+        round.verdicts().forEach((gate, verdict) -> recordFindings(round, producerOf(gate), verdict.findings()));
+        String message = ctx.isDelete()
+                ? String.format("Cannot delete object %s from stage '%s' of registry '%s' in scope '%s': %s",
+                        ctx.objectId(), ctx.sourceStage(), ctx.registry(), ctx.scope(), round.reasons())
+                : String.format(
+                        "Cannot transition object %s from stage '%s' to stage '%s' of registry '%s' in scope '%s': %s",
+                        ctx.objectId(), ctx.sourceStage(), ctx.targetStage(), ctx.registry(), ctx.scope(),
+                        round.reasons());
+        return new StageGateRefusedException(message, ctx.trigger(), ctx.scope(), ctx.registry(), ctx.sourceStage(),
+                ctx.objectId(), round.refusals());
+    }
+
+    /**
+     * Writes one gate's findings to the object's source-stage copy. Nothing is written when
+     * the gate found nothing and holds nothing there: an empty list only earns a write when
+     * it clears something.
+     */
+    private void recordFindings(GateRound round, String producer, List<GateDiagnostic> findings) {
+        if (findings.isEmpty() && !holdsDiagnosticsOf(round.metadata(), producer)) {
+            return;
+        }
+        GateContext ctx = round.ctx();
+        writeDiagnostics(ctx.scope(), ctx.sourceStage(), ctx.objectId(), producer, GateDiagnostics.toModel(findings));
+    }
+
+    /**
+     * Folds a passed round into the object before it moves: every gate's findings replace
+     * what the same gate recorded on the metadata before, so warnings travel with the object
+     * into the target stage and a veto recorded on an earlier attempt is gone. When the
+     * source copy stays behind, it is brought up to date as well, so it does not keep
+     * announcing a veto that no longer holds.
+     *
+     * @param round       the passed round
+     * @param sourceStays {@code true} when the source-stage copy survives the transition
+     */
+    private void carryFindings(GateRound round, boolean sourceStays) {
+        GateContext ctx = round.ctx();
+        ObjectMetadata metadata = round.metadata();
+        Instant now = Instant.now();
+        round.verdicts().forEach((gate, verdict) -> {
+            String producer = producerOf(gate);
+            List<GateDiagnostic> findings = verdict.findings();
+            if (findings.isEmpty() && !holdsDiagnosticsOf(metadata, producer)) {
+                return;
+            }
+            List<Diagnostic> model = GateDiagnostics.toModel(findings);
+            if (sourceStays) {
+                writeDiagnostics(ctx.scope(), ctx.sourceStage(), ctx.objectId(), producer, model);
+            }
+            Diagnostics.replaceOwned(metadata, producer, model, now);
+        });
+    }
+
+    /**
+     * Writes what the gates found about other objects to those objects (issue #294): the
+     * instances that lose their schema when a forced delete goes through, for example. Done
+     * before the operation commits, so a dependent that cannot be reached stops the
+     * operation the way an undecided gate does - a consequence the caller was promised a
+     * record of is not silently dropped. A dependent that no longer exists is not an error:
+     * there is nothing left to warn.
+     */
+    private void recordConsequences(GateRound round) {
+        String scope = round.ctx().scope();
+        round.verdicts().forEach((gate, verdict) -> verdict.consequences().forEach((dependent, findings) -> {
+            List<Diagnostic> model = GateDiagnostics.toModel(findings);
+            String producer = producerOf(gate);
+            ObjectMetadata written;
+            if (dependent.registry() == null || dependent.registry().equals(config.registry_name())) {
+                validateStage(dependent.stage());
+                written = writeDiagnostics(scope, dependent.stage(), dependent.objectId(), producer, model);
+            } else {
+                written = WorkflowServiceHelper.getPromiseValue(registryFor(dependent).updateDiagnostics(scope,
+                        dependent.stage(), dependent.objectId(), producer, model));
+            }
+            if (written == null) {
+                LOGGER.warning(() -> String.format(
+                        "Gate %s named %s as a dependent of object %s, but nothing is stored there; nothing recorded",
+                        gate.getClass().getSimpleName(), dependent, round.ctx().objectId()));
+            }
+        }));
+    }
+
+    private RegistryService<?> registryFor(Dependent dependent) {
+        RegistryServiceCollector collector = registryCollector;
+        if (collector == null) {
+            throw new IllegalStateException(String.format(
+                    "Cannot record a consequence on %s: no RegistryServiceCollector is bound to reach registry '%s'",
+                    dependent, dependent.registry()));
+        }
+        RegistryService<?> other = collector.getRegistryServiceByRegistryName(dependent.registry());
+        if (other == null) {
+            throw new IllegalStateException(String.format(
+                    "Cannot record a consequence on %s: no registry '%s' is known", dependent, dependent.registry()));
+        }
+        return other;
+    }
+
+    private static boolean holdsDiagnosticsOf(ObjectMetadata metadata, String producer) {
+        return metadata.getDiagnostics().stream().anyMatch(d -> producer.equals(d.getProducer()));
+    }
+
+    /**
+     * The name a gate's diagnostics are recorded under. The SPI promises a non-blank name;
+     * a gate that breaks the promise still gets its findings recorded, under the name the
+     * SPI would have defaulted to, rather than losing them.
+     */
+    private static String producerOf(StageGate gate) {
+        String producer = gate.producer();
+        return producer == null || producer.isBlank() ? gate.getClass().getName() : producer;
+    }
+
+    private GateContext newGateContext(GateTrigger trigger, String scope, String fromStage, String toStage,
+            ObjectMetadata m) {
+        return new GateContext(trigger, scope, config.registry_name(), m.getObjectId(), m.getObjectType(), fromStage,
+                toStage, "system", Instant.now(), actionMetadata(m));
     }
 
     /*

@@ -245,6 +245,7 @@ How the API enforces the rule:
 | `POST`/`PUT /{scope}/registries/{registry}/stages/{stage}/{objectId}` | `409 Conflict`, unless `?override=true` — which updates the object that is there |
 | `POST`/`PUT /{scope}/schema/stages/{stage}?nsUri=...` | `409 Conflict`, unless `?overwrite=true` — which updates the package that is there |
 | `POST /{scope}/.../stages/{stage}/actions/transition` | `409 Conflict` when the target stage holds a *different* object under that id, unless `?overwrite=true` — which replaces it. Promoting a newer revision of the *same* object replaces its own earlier copy there with no flag — that is what a promotion is for. Also `409 Conflict` when a *stage gate* refuses the transition because the object does not hold up in the target stage (see [Stage Gates](#stage-gates)); `overwrite` does not bypass a gate |
+| `DELETE /{scope}/.../stages/{stage}` | `409 Conflict` when a *stage gate* refuses the delete, typically because other objects still depend on this one, unless `?force=true` — which deletes anyway and records the consequence on the dependents (see [Stage Gates](#stage-gates)) |
 
 Two details of the conflict check:
 
@@ -270,15 +271,32 @@ A transition is validated against the **target** stage before it commits. Beside
 occupancy check above, a registry may be configured with *stage gates*: checks that look
 at the object relative to the stage it is about to enter and may refuse the move. A refused
 transition answers `409 Conflict` with the gate's reason, writes nothing into the target
-stage and leaves the source stage as it was. The reason names what has to change before a
-retry succeeds.
+stage and leaves the source stage's content as it was. The reason names what has to change
+before a retry succeeds.
+
+The same gates guard a **delete**: `DELETE .../stages/{stage}` asks them before the object
+is removed, and a gate may refuse that too, typically because other objects still depend on
+the one about to go. The refusal is a `409 Conflict` as well, and the object stays.
+
+A gate explains itself with [diagnostics](#diagnostics). Those of a refusal are **recorded
+on the object in its current stage**, under the gate's producer name, so a later `GET` of
+the metadata shows why the promotion or the delete failed, not only the response that
+refused it. A later attempt that passes clears them again. A gate may also pass and still
+leave warnings; on a transition they travel with the object into the target stage.
+
+A delete may be **forced**: `DELETE .../stages/{stage}?force=true` overrides a gate's veto as
+a deliberate decision. The object is deleted anyway, and what the gate found about the
+*dependents* - the instances that lose their schema, say - is recorded as diagnostics on
+those dependents, so the consequence is visible where it lands instead of nowhere. `force`
+has no effect on a transition.
 
 The built-in gate is the QVT one: a transformation source is promoted only if it **compiles
 against the target stage's view**, so a source that imports a library not yet promoted is
-refused until the library has moved (see [QVT transformations](qvt-transformations.md)).
-Registries without a configured gate behave as before. A gate that cannot decide, because
-it fails internally, also stops the transition, but as a `500`, not a `409`: the object is
-not at fault, the server is.
+refused until the library has moved (see [QVT transformations](qvt-transformations.md)); its
+refusal records one `qvto.does-not-compile` diagnostic on the source with one
+`qvto.compiler-finding` child per compiler message. Registries without a configured gate
+behave as before. A gate that cannot decide, because it fails internally, also stops the
+operation, but as a `500`, not a `409`: the object is not at fault, the server is.
 
 ### Diagnostics
 
