@@ -30,12 +30,20 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.util.ArrayList;
 import java.util.HexFormat;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.eclipse.emf.common.util.URI;
 import org.eclipse.emf.ecore.EClass;
@@ -453,5 +461,94 @@ class GitStorageHelperTest {
 		GitStorageHelper h = helper(Map.of(EPACKAGE_TYPE, "schema"));
 		h.close();
 		verify(registry).removeFromCache("jena", "schema", "main", "jena/main/" + ECORE_PATH);
+	}
+
+	/**
+	 * Two threads read the same schema while no per-stage lease exists (startup priming:
+	 * metadata derivation and the registration replay). EMF flags a resource as loaded
+	 * before parsing it, so on a shared ResourceSet the second {@code getResource} would
+	 * return the model the first thread is still filling - an EPackage without classifiers
+	 * that was registered as such. Each read must parse on its own ResourceSet.
+	 */
+	@Test
+	void loadEObject_concurrentReadsOfOneSchema_neverShareAHalfParsedModel() throws Exception {
+		GitStorageHelper h = helper(Map.of(EPACKAGE_TYPE, "schema"));
+		String objectId = "jena/main/" + ECORE_PATH;
+		byte[] bytes = PERSON_ECORE.getBytes(StandardCharsets.UTF_8);
+		// The first read after priming stalls inside the parse until released; later reads
+		// (the second thread's own) stream the file at once.
+		AtomicBoolean stallNext = new AtomicBoolean(true);
+		CountDownLatch stalled = new CountDownLatch(1);
+		CountDownLatch release = new CountDownLatch(1);
+		when(gitService.readFile(eq(COMMIT), eq(ECORE_PATH))).thenAnswer(inv -> stallNext.getAndSet(false)
+				? new StallingInputStream(bytes, PERSON_ECORE.indexOf("<eClassifiers"), stalled, release)
+				: new ByteArrayInputStream(bytes));
+
+		ExecutorService pool = Executors.newFixedThreadPool(2);
+		try {
+			Future<EObject> first = pool.submit(() -> h.loadEObject("jena", "schema", "main", objectId));
+			assertTrue(stalled.await(10, TimeUnit.SECONDS), "the first read is parsing");
+			Future<EObject> second = pool.submit(() -> h.loadEObject("jena", "schema", "main", objectId));
+			// Must not depend on the first read, which is still stalled - and must be complete
+			// NOW, while that parse has not delivered its classifiers yet.
+			EObject fromSecond = second.get(10, TimeUnit.SECONDS);
+			EPackage seenBySecond = assertInstanceOf(EPackage.class, fromSecond, "a model, not the other read's empty resource");
+			assertEquals(1, seenBySecond.getEClassifiers().size(), "a complete model, never a half-parsed one");
+			assertEquals("Person", seenBySecond.getEClassifiers().get(0).getName());
+
+			release.countDown();
+			EPackage seenByFirst = assertInstanceOf(EPackage.class, first.get(10, TimeUnit.SECONDS));
+			assertEquals(1, seenByFirst.getEClassifiers().size());
+			assertTrue(seenByFirst != seenBySecond, "each read parsed its own copy");
+		} finally {
+			release.countDown();
+			pool.shutdownNow();
+		}
+	}
+
+	/** Streams {@code bytes} up to {@code stallAt}, then blocks until released. */
+	private static final class StallingInputStream extends InputStream {
+		private final byte[] bytes;
+		private final int stallAt;
+		private final CountDownLatch stalled;
+		private final CountDownLatch release;
+		private int position;
+
+		StallingInputStream(byte[] bytes, int stallAt, CountDownLatch stalled, CountDownLatch release) {
+			this.bytes = bytes;
+			this.stallAt = stallAt;
+			this.stalled = stalled;
+			this.release = release;
+		}
+
+		@Override
+		public int read() throws IOException {
+			byte[] one = new byte[1];
+			int n = read(one, 0, 1);
+			return n < 0 ? -1 : one[0] & 0xff;
+		}
+
+		@Override
+		public int read(byte[] target, int offset, int length) throws IOException {
+			if (position >= bytes.length) {
+				return -1;
+			}
+			if (position == stallAt) {
+				stalled.countDown();
+				try {
+					if (!release.await(10, TimeUnit.SECONDS)) {
+						throw new IOException("never released");
+					}
+				} catch (InterruptedException e) {
+					Thread.currentThread().interrupt();
+					throw new IOException(e);
+				}
+			}
+			int limit = position < stallAt ? stallAt : bytes.length;
+			int n = Math.min(length, limit - position);
+			System.arraycopy(bytes, position, target, offset, n);
+			position += n;
+			return n;
+		}
 	}
 }
