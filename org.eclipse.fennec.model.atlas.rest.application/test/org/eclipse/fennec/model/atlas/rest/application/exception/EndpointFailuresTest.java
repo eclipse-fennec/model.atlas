@@ -118,11 +118,13 @@ class EndpointFailuresTest {
         RuntimeException direct = EndpointFailures.propagate(refused);
         RuntimeException wrapped = EndpointFailures.propagate(new InvocationTargetException(refused));
 
-        assertEquals(Status.CONFLICT.getStatusCode(), ((WebApplicationException) direct).getResponse().getStatus());
-        assertEquals(Status.CONFLICT.getStatusCode(), ((WebApplicationException) wrapped).getResponse().getStatus(),
-                "the transition path may raise it inside a failed promise");
-        assertEquals(refused.getMessage(), wrapped.getMessage(),
-                "the reason says what to change before retrying, so the client may see it");
+        // handed on as it is, so StageGateRefusedExceptionMapper answers it (issue #295); the
+        // endpoints answer a refusal with the object's metadata before it ever gets here
+        assertSame(refused, direct);
+        assertSame(refused, wrapped, "the transition path may raise it inside a failed promise");
+        assertEquals(Status.CONFLICT.getStatusCode(),
+                StageGateRefusedExceptionMapper.conflict(refused).getStatus(),
+                "and the mapper's fallback still answers 409 when the object cannot be re-read");
     }
 
     @Test

@@ -607,7 +607,7 @@ An `UPDATE` always tears down the previous OSGi registrations before re-register
 
 ## Stage Gates
 
-A `StageActionService` reacts to a mutation that has already happened and cannot stop it. A **`StageGate`** (same `action.api` bundle, issue #248) is the other half of that contract: the registry asks every gate **before** a transition or a delete commits, and a refusal aborts the operation before any store is touched. The caller gets the gates' reasons as a `StageGateRefusedException`, which the REST layer answers with `409 Conflict`; post-commit action failures stay non-fatal as before.
+A `StageActionService` reacts to a mutation that has already happened and cannot stop it. A **`StageGate`** (same `action.api` bundle, issue #248) is the other half of that contract: the registry asks every gate **before** a transition or a delete commits, and a refusal aborts the operation before any store is touched. The caller gets the gates' reasons as a `StageGateRefusedException`, which the REST layer answers with `409 Conflict` whose body is the refused object's metadata from its source stage, diagnostics included (issue #295, `GateRefusals` in the endpoints, `StageGateRefusedExceptionMapper` as the fallback); post-commit action failures stay non-fatal as before.
 
 ### Contract
 

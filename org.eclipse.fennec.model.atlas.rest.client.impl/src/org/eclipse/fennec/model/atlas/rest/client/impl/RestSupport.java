@@ -13,8 +13,12 @@
  */
 package org.eclipse.fennec.model.atlas.rest.client.impl;
 
+import java.util.List;
+
+import org.eclipse.fennec.model.atlas.rest.client.api.Diagnostic;
 import org.eclipse.fennec.model.atlas.rest.client.api.ModelAtlasClientException;
 import org.eclipse.fennec.model.atlas.rest.client.api.NotFoundException;
+import org.eclipse.fennec.model.atlas.rest.client.api.OperationRefusedException;
 import org.eclipse.fennec.model.atlas.rest.client.api.VersionMismatchException;
 import org.eclipse.fennec.model.atlas.rest.client.api.TransportException;
 
@@ -96,9 +100,11 @@ final class RestSupport {
 
 	/**
 	 * Build the typed exception for an unexpected, non-success response:
-	 * {@code 404} → {@link NotFoundException}, anything else →
-	 * {@link ModelAtlasClientException}. Reads the body (best effort) into the
-	 * message.
+	 * {@code 404} → {@link NotFoundException}, {@code 412} →
+	 * {@link VersionMismatchException}, a {@code 409} whose body is an object's
+	 * metadata with diagnostics → {@link OperationRefusedException} carrying them
+	 * (issue #295), anything else → {@link ModelAtlasClientException}. Reads the
+	 * body (best effort) into the message.
 	 */
 	static ModelAtlasClientException statusError(Response response, String what) {
 		int status = response.getStatus();
@@ -112,7 +118,33 @@ final class RestSupport {
 		if (status == Response.Status.PRECONDITION_FAILED.getStatusCode()) {
 			return new VersionMismatchException(detail);
 		}
+		// A stage gate's veto (#295): the body is the object's metadata and its diagnostics say
+		// what to change. A 409 without them - an occupied id - is the plain conflict it was.
+		if (status == Response.Status.CONFLICT.getStatusCode()) {
+			List<Diagnostic> diagnostics = refusalDiagnostics(body);
+			if (!diagnostics.isEmpty()) {
+				return new OperationRefusedException(what + " — refused by a stage gate: "
+						+ diagnostics.stream().map(Diagnostic::message).filter(m -> m != null).reduce((a, b) -> a + "; " + b)
+								.orElse(""), diagnostics);
+			}
+		}
 		return new ModelAtlasClientException(detail);
+	}
+
+	/**
+	 * The diagnostics of a 409 body that is an object's metadata; empty for any other body,
+	 * including one that is no JSON at all.
+	 */
+	static List<Diagnostic> refusalDiagnostics(String body) {
+		if (body == null || body.isBlank() || !body.trim().startsWith("{")) {
+			return List.of();
+		}
+		try {
+			JsonNode root = MAPPER.readTree(body);
+			return root == null ? List.of() : RemoteEPackageProviderImpl.diagnosticsOf(root.get("diagnostics"));
+		} catch (Exception e) {
+			return List.of();
+		}
 	}
 
 	/** Parse a JSON body into a tree, wrapping parse failures. */

@@ -1,4 +1,4 @@
-@org.osgi.annotation.versioning.Version("1.2.0")
+@org.osgi.annotation.versioning.Version("1.3.0")
 @Export
 package org.eclipse.fennec.model.atlas.rest.client.api;
 
