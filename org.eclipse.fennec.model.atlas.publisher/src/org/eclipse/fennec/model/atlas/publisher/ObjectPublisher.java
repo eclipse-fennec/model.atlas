@@ -81,6 +81,21 @@ public interface ObjectPublisher {
 	Receipt publish(String objectId, String content, String name, String version);
 
 	/**
+	 * Publishes one object into a named stage.
+	 *
+	 * @param objectId the id the object is stored under, a single path segment
+	 * @param content  the serialized object, in the configured content type
+	 * @param name     a human-readable name, may be {@code null}
+	 * @param version  a version string, may be {@code null}
+	 * @param stage    the stage to write into. It must be one this publisher is configured to
+	 *                 allow; {@code null} or blank means "the one allowed stage", and is refused
+	 *                 when the publisher permits several, because then there is nothing to infer
+	 * @return the receipt of a successful publication
+	 * @throws PublishException if the stage is not permitted, or cannot be inferred
+	 */
+	Receipt publish(String objectId, String content, String name, String version, String stage);
+
+	/**
 	 * The wire format this publisher sends, so a caller assembling an object
 	 * serializes what the atlas will be told it is receiving rather than its own
 	 * preference. It is the deployment's choice, never the caller's.

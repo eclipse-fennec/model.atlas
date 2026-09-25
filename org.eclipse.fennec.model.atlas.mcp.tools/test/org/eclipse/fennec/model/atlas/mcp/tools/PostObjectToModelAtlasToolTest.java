@@ -56,7 +56,18 @@ class PostObjectToModelAtlasToolTest {
 		String content;
 		String name;
 		String version;
+		String stage;
 		RuntimeException failure;
+
+		/**
+		 * The tool names no stage: which stage an agent may write into is the deployment's choice,
+		 * expressed as the publisher's allowed.stages, not a tool parameter.
+		 */
+		@Override
+		public Receipt publish(String objectId, String content, String name, String version, String stage) {
+			this.stage = stage;
+			return publish(objectId, content, name, version);
+		}
 
 		@Override
 		public Receipt publish(String objectId, String content, String name, String version) {

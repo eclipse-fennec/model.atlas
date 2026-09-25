@@ -32,7 +32,9 @@
         "base.uri": "http://localhost:8080/atlas/rest",
         "scope": "jena",
         "registry": "gdpr",
-        "stage": "draft",
+        "allowed.stages": [
+            "draft"
+        ],
         "content.type": "application/json",
         "overwrite": true
     },

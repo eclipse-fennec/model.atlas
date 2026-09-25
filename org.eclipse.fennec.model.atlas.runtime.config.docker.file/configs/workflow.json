@@ -23,7 +23,9 @@
         "base.uri": "http://localhost:8080/atlas/rest",
         "scope": "$[env:GDPR_ATLAS_SCOPE;default=$[prop:GDPR_ATLAS_SCOPE;default=jena]]",
         "registry": "gdpr",
-        "stage": "draft",
+        "allowed.stages": [
+            "draft"
+        ],
         "content.type": "application/json",
         "overwrite": true
     },

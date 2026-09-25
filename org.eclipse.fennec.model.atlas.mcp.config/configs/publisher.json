@@ -12,7 +12,7 @@
         "base.uri": "$[env:MODEL_ATLAS_BASE_URI;default=$[prop:MODEL_ATLAS_BASE_URI;default=]]",
         "scope": "$[env:MODEL_ATLAS_OBJECT_SCOPE;default=$[env:MODEL_ATLAS_PUBLISHING_SCOPE;default=$[prop:MODEL_ATLAS_PUBLISHING_SCOPE;default=]]]",
         "registry": "$[env:MODEL_ATLAS_OBJECT_REGISTRY;default=$[prop:MODEL_ATLAS_OBJECT_REGISTRY;default=]]",
-        "stage": "$[env:MODEL_ATLAS_OBJECT_STAGE;default=$[prop:MODEL_ATLAS_OBJECT_STAGE;default=draft]]",
+        "allowed.stages": "$[env:MODEL_ATLAS_OBJECT_STAGES;type=String[];delimiter=|;default=$[prop:MODEL_ATLAS_OBJECT_STAGES;default=draft]]",
         "content.type": "$[env:MODEL_ATLAS_OBJECT_CONTENT_TYPE;default=$[prop:MODEL_ATLAS_OBJECT_CONTENT_TYPE;default=application/json]]",
         "overwrite": "$[env:MODEL_ATLAS_OBJECT_OVERWRITE;default=$[prop:MODEL_ATLAS_OBJECT_OVERWRITE;default=false]]",
         "max.body.bytes": "$[env:MODEL_ATLAS_OBJECT_MAX_BODY_BYTES;default=$[prop:MODEL_ATLAS_OBJECT_MAX_BODY_BYTES;default=1048576]]"

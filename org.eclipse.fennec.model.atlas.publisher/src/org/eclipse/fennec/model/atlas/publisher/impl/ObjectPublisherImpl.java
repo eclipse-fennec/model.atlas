@@ -94,7 +94,7 @@ public class ObjectPublisherImpl implements ObjectPublisher {
 		this.settings = new ObjectPublisherSettings(
 				config.scope(),
 				config.registry(),
-				config.stage(),
+				java.util.List.of(config.allowed_stages()),
 				config.registries_path(),
 				config.content_type(),
 				config.overwrite(),
@@ -128,7 +128,25 @@ public class ObjectPublisherImpl implements ObjectPublisher {
 	 */
 	@Override
 	public Receipt publish(String objectId, String content, String name, String version) {
+		return publish(objectId, content, name, version, null);
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * @see org.eclipse.fennec.model.atlas.publisher.ObjectPublisher#publish(java.lang.String,
+	 * java.lang.String, java.lang.String, java.lang.String, java.lang.String)
+	 */
+	@Override
+	public Receipt publish(String objectId, String content, String name, String version, String stage) {
 		ObjectPublisherSettings current = settings;
+		// Before anything else: a stage this publisher may not write into is a refusal, not a
+		// request the atlas gets to answer.
+		String target;
+		try {
+			target = current.stageFor(stage);
+		} catch (IllegalArgumentException e) {
+			throw new PublishException(e.getMessage());
+		}
 		requireSingleSegment(objectId);
 		if (content == null || content.isBlank()) {
 			throw new PublishException("The object content is empty. Send the serialized object as the 'content' "
@@ -152,9 +170,9 @@ public class ObjectPublisherImpl implements ObjectPublisher {
 		}
 		query.put(PARAM_OVERRIDE, Boolean.toString(current.overwrite()));
 
-		AtlasTransport.Result response = transport.post(current.createObjectPath(objectId), query,
+		AtlasTransport.Result response = transport.post(current.createObjectPath(target, objectId), query,
 				current.contentType(), content);
-		return receiptOf(response, current, objectId, name, version, byteSize);
+		return receiptOf(response, current, target, objectId, name, version, byteSize);
 	}
 
 	/**
@@ -181,8 +199,8 @@ public class ObjectPublisherImpl implements ObjectPublisher {
 	 * an operator can read it — because it is written for whoever runs the server,
 	 * not for whoever asked for the publication.
 	 */
-	private Receipt receiptOf(AtlasTransport.Result response, ObjectPublisherSettings current, String objectId,
-			String name, String version, int byteSize) {
+	private Receipt receiptOf(AtlasTransport.Result response, ObjectPublisherSettings current, String stage,
+			String objectId, String name, String version, int byteSize) {
 		if (!response.reached()) {
 			throw new PublishException(
 					"The model atlas could not be reached. Nothing was published; this is not something you can "
@@ -190,18 +208,18 @@ public class ObjectPublisherImpl implements ObjectPublisher {
 		}
 		logUpstream(response, objectId);
 		return switch (response.status()) {
-		case 201 -> receipt("created", current, objectId, name, version, byteSize);
-		case 200 -> receipt("updated", current, objectId, name, version, byteSize);
+		case 201 -> receipt("created", current, stage, objectId, name, version, byteSize);
+		case 200 -> receipt("updated", current, stage, objectId, name, version, byteSize);
 		case 409 -> throw new PublishException(String.format(
 				"An object is already stored as '%s' in the '%s' stage of registry '%s', and this runtime does not "
 						+ "replace what is there. Store it under an id that is still free, or ask for the existing "
 						+ "object to be replaced by hand.",
-				objectId, current.stage(), current.registry()));
+				objectId, stage, current.registry()));
 		case 403 -> throw new PublishException(String.format(
 				"The object stored as '%s' cannot be written: either it is read-only, or its type is content the "
 						+ "atlas produces itself and will not accept from a client.",
 				objectId));
-		case 400 -> throw new PublishException(badRequestMessage(current));
+		case 400 -> throw new PublishException(badRequestMessage(current, stage));
 		case 401, 407 -> throw new PublishException(
 				"The model atlas rejected this runtime's credentials. Nothing was published, and no tool "
 						+ "parameter fixes it.");
@@ -213,9 +231,9 @@ public class ObjectPublisherImpl implements ObjectPublisher {
 		};
 	}
 
-	private static Receipt receipt(String outcome, ObjectPublisherSettings current, String objectId, String name,
-			String version, int byteSize) {
-		return new Receipt(outcome, objectId, name, version, current.scope(), current.registry(), current.stage(),
+	private static Receipt receipt(String outcome, ObjectPublisherSettings current, String stage, String objectId,
+			String name, String version, int byteSize) {
+		return new Receipt(outcome, objectId, name, version, current.scope(), current.registry(), stage,
 				current.contentType(), byteSize);
 	}
 
@@ -225,13 +243,13 @@ public class ObjectPublisherImpl implements ObjectPublisher {
 	 * them, and the difference is the difference between an agent retrying
 	 * pointlessly and an agent fixing its document.
 	 */
-	private String badRequestMessage(ObjectPublisherSettings current) {
-		AtlasTransport.Result stage = transport.get(current.stagePath());
-		if (stage.reached() && stage.status() >= 400) {
+	private String badRequestMessage(ObjectPublisherSettings current, String stage) {
+		AtlasTransport.Result probe = transport.get(current.stagePath(stage));
+		if (probe.reached() && probe.status() >= 400) {
 			return String.format(
-					"This runtime is configured to write into the '%s' stage of registry '%s' in scope '%s', which "
-							+ "the model atlas does not have. Nothing was published, and no tool parameter fixes it.",
-					current.stage(), current.registry(), current.scope());
+					"This runtime was asked to write into the '%s' stage of registry '%s' in scope '%s', which the "
+							+ "model atlas does not have. Nothing was published, and no tool parameter fixes it.",
+					stage, current.registry(), current.scope());
 		}
 		return String.format(
 				"The model atlas rejected the object as invalid for registry '%s'. Either its type is not one the "
