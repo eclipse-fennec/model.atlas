@@ -112,7 +112,8 @@ into the file image rather than mounted — change one and the others do not fol
 
 **Only the file image takes the scope from the environment.** There, the `jena` in
 `trigger.scopes` and `scope.target` below, the scope of `ModelAtlasObjectPublisher~gdprStatus` and
-of `GDPRAtlasRequestStatusStore`, and the name of the image's own `ScopeService~jena` are all
+of `GDPRAtlasRequestStatusStore`, `GDPRCheckStageAction`'s `trigger.scopes` (read once
+DataInMotion/fennec-gdpr#7 is deployed), and the name of the image's own `ScopeService~jena` are all
 `$[env:MODEL_ATLAS_SCOPE;default=$[prop:MODEL_ATLAS_SCOPE;default=jena]]`. So is the health check in
 `runtime.config`, which waits for that scope. Setting `MODEL_ATLAS_SCOPE` therefore renames the
 tenant scope and moves the review with it, in one step. It must match `MODEL_ATLAS_SCOPE` on the

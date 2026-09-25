@@ -10,6 +10,7 @@
     },
     "GDPRCheckStageAction": {
         "trigger.stages": ["approved"],
+        "trigger.scopes": ["$[env:MODEL_ATLAS_SCOPE;default=$[prop:MODEL_ATLAS_SCOPE;default=jena]]"],
         "review.on.update": false
     },
     "GDPRReportHistoryStageAction": {
