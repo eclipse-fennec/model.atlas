@@ -43,10 +43,16 @@
         "scope.target": "(atlas.scope=jena)",
         "publisher.target": "(&(scope=jena)(registry=gdpr))"
     },
+    "StorageScopesHealthCheck": {
+        "storage.root": "$[env:STORAGE_ROOT;default=/opt/modelatlas/runtime/data]"
+    },
     "FileObjectStorage~file": {
         "workspace.folder": "$[env:STORAGE_ROOT;default=/opt/modelatlas/runtime/data]",
         "storage.type": "file",
         "registry.target": "(registry=main)"
+    },
+    "org.apache.felix.hc.generalchecks.ServicesCheck~tenant": {
+        "services.list": ["(scope.name=jena)"]
     },
     "ScopeService~jena": {
         "scope.name": "jena",

@@ -110,14 +110,29 @@ for the local runtime and in
 `org.eclipse.fennec.model.atlas.runtime.config.docker.file/configs/workflow.json`, which is baked
 into the file image rather than mounted — change one and the others do not follow.
 
-The file image does not hardcode the scope. The `jena` in `trigger.scopes` and `scope.target`
-below, and the scope of the `ModelAtlasObjectPublisher~gdprStatus` publisher and of the
-`GDPRAtlasRequestStatusStore`, are all
-`$[env:GDPR_ATLAS_SCOPE;default=$[prop:GDPR_ATLAS_SCOPE;default=jena]]` there, so a deployment
-with a differently named tenant scope sets one variable. It must match `GDPR_ATLAS_SCOPE` on the
+**Only the file image takes the scope from the environment.** There, the `jena` in
+`trigger.scopes` and `scope.target` below, the scope of `ModelAtlasObjectPublisher~gdprStatus` and
+of `GDPRAtlasRequestStatusStore`, `GDPRCheckStageAction`'s `trigger.scopes` (read once
+DataInMotion/fennec-gdpr#7 is deployed), and the name of the image's own `ScopeService~jena` are all
+`$[env:MODEL_ATLAS_SCOPE;default=$[prop:MODEL_ATLAS_SCOPE;default=jena]]`. So is the image's own
+health check on that scope (`ServicesCheck~tenant`). Setting `MODEL_ATLAS_SCOPE` therefore renames the
+tenant scope and moves the review with it, in one step. It must match `MODEL_ATLAS_SCOPE` on the
 fennec-gdpr MCP half, which reads the model under review from that scope and seals the report into
-it. The scope itself still has to exist and bind `gdpr` and `gdprdoc`; the image only defines
-`jena`.
+it. Otherwise reviews are triggered in one scope and looked for in another.
+
+Three things change with the name. The scope is part of the stored state: the file backend lays
+objects out as `STORAGE_ROOT/<scope>/<registry>/<stage>/`, and both Lucene indexes carry the scope
+as a field — so the name is chosen at first deployment. Renaming it on a volume that already holds
+data does not move that data; the scope comes up empty next to its own old folder. The `Storage
+Scopes` health check reports exactly that shape. The initial-models folder is read per scope
+(`scopes/<scopeName>/…`), so `scopes/jena/` is **not seeded** once the scope is called something
+else. Rename the folder with it — the loader now names the scopes it did find when it gives up. And
+give the variable a plain name or leave it unset. The default applies only while it is unset: an empty value
+(`-e MODEL_ATLAS_SCOPE=`) does not fail. It registers a scope with an empty name, which every
+`(atlas.scope=)` target matches, and whose REST paths are `/atlas/rest//registries/…`.
+
+The jena image (`configs/jena.json`) and the local jena runtime keep `jena` as a literal, as shown
+below, and do not read the variable.
 
 ```jsonc
 "GDPRReportHistoryStageAction": {

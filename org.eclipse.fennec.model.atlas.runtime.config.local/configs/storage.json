@@ -6,6 +6,9 @@
 		"storage.type": "apicurio",
 		"registry.target": "(registry=main)"
 	},
+	"StorageScopesHealthCheck": {
+		"storage.root": "$[env:STORAGE_ROOT;default=$[prop:STORAGE_ROOT;default=/tmp/mac]]"
+	},
 	"FileObjectStorage~file": {
 		"workspace.folder": "$[env:STORAGE_ROOT;default=$[prop:STORAGE_ROOT;default=/tmp/mac]]",
 		"storage.type": "file",
