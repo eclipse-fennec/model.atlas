@@ -20,6 +20,8 @@ services:
       # It also names the seed folder: ./initial-models/scopes/<scope>/ is what gets loaded, so
       # rename scopes/jena/ with it. Leave it unset rather than empty - an empty value is not
       # replaced by the default and registers a scope with no name.
+      # Pick it before the first start: stored objects live under STORAGE_ROOT/<scope>/, so
+      # renaming it on a volume that already holds data leaves that data under the old name.
       - MODEL_ATLAS_SCOPE=${MODEL_ATLAS_SCOPE:-jena}
     volumes:
       # Mount a host folder with the models you want deployed on first start.

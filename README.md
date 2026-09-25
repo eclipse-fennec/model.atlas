@@ -119,6 +119,8 @@ Model Atlas provides health check endpoints using [Apache Felix Health Checks](h
 | Liveness | `atlas`, `liveness` | Confirms the OSGi framework is running |
 | EMF Registry | `atlas`, `readiness` | Verifies EPackages are registered in the EMF registry |
 | Media Types | `atlas`, `readiness` | Verifies media type codecs are available |
+| Scopes And Registries | `atlas`, `readiness` | Lists every scope with its registries and stages |
+| Storage Scopes | `atlas` | File storage only, and only where configured: warns when a scope has no data while some stored folder belongs to no scope — the signature of a renamed scope, whose data the file backend leaves under the old name |
 
 ### Kubernetes Integration
 

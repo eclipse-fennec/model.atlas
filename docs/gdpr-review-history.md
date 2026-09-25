@@ -120,10 +120,14 @@ tenant scope and moves the review with it, in one step. It must match `MODEL_ATL
 fennec-gdpr MCP half, which reads the model under review from that scope and seals the report into
 it. Otherwise reviews are triggered in one scope and looked for in another.
 
-Two things change with the name. The initial-models folder is read per scope
+Three things change with the name. The scope is part of the stored state: the file backend lays
+objects out as `STORAGE_ROOT/<scope>/<registry>/<stage>/`, and both Lucene indexes carry the scope
+as a field — so the name is chosen at first deployment. Renaming it on a volume that already holds
+data does not move that data; the scope comes up empty next to its own old folder. The `Storage
+Scopes` health check reports exactly that shape. The initial-models folder is read per scope
 (`scopes/<scopeName>/…`), so `scopes/jena/` is **not seeded** once the scope is called something
-else. Rename the folder with it: the loader says nothing about a folder no scope claims. And give the
-variable a plain name or leave it unset. The default applies only while it is unset: an empty value
+else. Rename the folder with it — the loader now names the scopes it did find when it gives up. And
+give the variable a plain name or leave it unset. The default applies only while it is unset: an empty value
 (`-e MODEL_ATLAS_SCOPE=`) does not fail. It registers a scope with an empty name, which every
 `(atlas.scope=)` target matches, and whose REST paths are `/atlas/rest//registries/…`.
 
