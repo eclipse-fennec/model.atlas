@@ -27,7 +27,7 @@ docker run -d -p 8080:8080 \
 | Variable | Default | Description |
 |----------|---------|-------------|
 | `STORAGE_ROOT` | `/tmp/mac` | Root directory for file-based storage |
-| `MODEL_ATLAS_SCOPE` | `jena` | Name of the tenant scope this image defines. The GDPR review runs in it: it triggers the review history there and writes review status there. Must match `MODEL_ATLAS_SCOPE` on the fennec-gdpr MCP half. Passed through by `docker-compose-file.yml`. See [GDPR review history](../../docs/gdpr-review-history.md#configuration). |
+| `MODEL_ATLAS_SCOPE` | `jena` | Name of the tenant scope this image defines. The GDPR review runs in it: it triggers the review history there and writes review status there. Must match `MODEL_ATLAS_SCOPE` on the fennec-gdpr MCP half. The initial-models folder is seeded per scope (`scopes/<name>/`), so a renamed scope needs its folder renamed, or it is silently not seeded. Use a plain name or leave it unset: an empty value does not fall back to `jena`, it registers a nameless scope. Passed through by `docker-compose-file.yml`. See [GDPR review history](../../docs/gdpr-review-history.md#configuration). |
 | `INITIAL_MODELS_FOLDER` | `/initial-models` | Folder scanned once on startup to seed initial models (`.ecore` / `.jsonschema` / `.qvto`). Mount your models at this path; remove the variable to disable. See the [Initial Model Bootstrap README](../../org.eclipse.fennec.model.atlas.bootstrap/README.md). |
 
 ## Exposed Ports

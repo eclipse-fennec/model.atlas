@@ -18,9 +18,8 @@
 		"httpStatus.critical": 503,
 		"httpStatus.temporarilyUnavailable": 503
 	},
-	"org.apache.felix.hc.generalchecks.ServicesCheck" : {
+	"org.apache.felix.hc.generalchecks.ServicesCheck~atlas": {
 	   "services.list" : [
-               "(scope.name=$[env:MODEL_ATLAS_SCOPE;default=$[prop:MODEL_ATLAS_SCOPE;default=jena]])",
                "(scope.name=atlas)"
            ]
 	}

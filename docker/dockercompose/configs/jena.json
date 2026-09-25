@@ -48,6 +48,9 @@
         "storage.type": "file",
         "registry.target": "(registry=main)"
     },
+    "org.apache.felix.hc.generalchecks.ServicesCheck~tenant": {
+        "services.list": ["(scope.name=jena)"]
+    },
     "ScopeService~jena": {
         "scope.name": "jena",
         "atlas.scope": "jena",

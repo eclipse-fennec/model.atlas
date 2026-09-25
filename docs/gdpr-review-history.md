@@ -114,15 +114,21 @@ into the file image rather than mounted — change one and the others do not fol
 `trigger.scopes` and `scope.target` below, the scope of `ModelAtlasObjectPublisher~gdprStatus` and
 of `GDPRAtlasRequestStatusStore`, `GDPRCheckStageAction`'s `trigger.scopes` (read once
 DataInMotion/fennec-gdpr#7 is deployed), and the name of the image's own `ScopeService~jena` are all
-`$[env:MODEL_ATLAS_SCOPE;default=$[prop:MODEL_ATLAS_SCOPE;default=jena]]`. So is the health check in
-`runtime.config`, which waits for that scope. Setting `MODEL_ATLAS_SCOPE` therefore renames the
+`$[env:MODEL_ATLAS_SCOPE;default=$[prop:MODEL_ATLAS_SCOPE;default=jena]]`. So is the image's own
+health check on that scope (`ServicesCheck~tenant`). Setting `MODEL_ATLAS_SCOPE` therefore renames the
 tenant scope and moves the review with it, in one step. It must match `MODEL_ATLAS_SCOPE` on the
 fennec-gdpr MCP half, which reads the model under review from that scope and seals the report into
 it. Otherwise reviews are triggered in one scope and looked for in another.
 
+Two things change with the name. The initial-models folder is read per scope
+(`scopes/<scopeName>/…`), so `scopes/jena/` is **not seeded** once the scope is called something
+else. Rename the folder with it: the loader says nothing about a folder no scope claims. And give the
+variable a plain name or leave it unset. The default applies only while it is unset: an empty value
+(`-e MODEL_ATLAS_SCOPE=`) does not fail. It registers a scope with an empty name, which every
+`(atlas.scope=)` target matches, and whose REST paths are `/atlas/rest//registries/…`.
+
 The jena image (`configs/jena.json`) and the local jena runtime keep `jena` as a literal, as shown
-below, and do not read the variable. Do not set it on the other variants either: their scopes stay
-`jena`, but the shared health check would follow the variable and report the runtime down.
+below, and do not read the variable.
 
 ```jsonc
 "GDPRReportHistoryStageAction": {

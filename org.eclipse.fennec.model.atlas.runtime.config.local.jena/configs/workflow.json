@@ -31,6 +31,9 @@
         "scope.target": "(atlas.scope=jena)",
         "publisher.target": "(&(scope=jena)(registry=gdpr))"
     },
+    "org.apache.felix.hc.generalchecks.ServicesCheck~tenant": {
+        "services.list": ["(scope.name=jena)"]
+    },
     "ScopeService~jena": {
     	"atlas.scope": "jena",
         "scope.name": "jena",
