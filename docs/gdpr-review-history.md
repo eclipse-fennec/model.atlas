@@ -110,14 +110,18 @@ for the local runtime and in
 `org.eclipse.fennec.model.atlas.runtime.config.docker.file/configs/workflow.json`, which is baked
 into the file image rather than mounted — change one and the others do not follow.
 
-The file image does not hardcode the scope. The `jena` in `trigger.scopes` and `scope.target`
-below, and the scope of the `ModelAtlasObjectPublisher~gdprStatus` publisher and of the
-`GDPRAtlasRequestStatusStore`, are all
-`$[env:GDPR_ATLAS_SCOPE;default=$[prop:GDPR_ATLAS_SCOPE;default=jena]]` there, so a deployment
-with a differently named tenant scope sets one variable. It must match `GDPR_ATLAS_SCOPE` on the
+**Only the file image takes the scope from the environment.** There, the `jena` in
+`trigger.scopes` and `scope.target` below, the scope of `ModelAtlasObjectPublisher~gdprStatus` and
+of `GDPRAtlasRequestStatusStore`, and the name of the image's own `ScopeService~jena` are all
+`$[env:MODEL_ATLAS_SCOPE;default=$[prop:MODEL_ATLAS_SCOPE;default=jena]]`. So is the health check in
+`runtime.config`, which waits for that scope. Setting `MODEL_ATLAS_SCOPE` therefore renames the
+tenant scope and moves the review with it, in one step. It must match `MODEL_ATLAS_SCOPE` on the
 fennec-gdpr MCP half, which reads the model under review from that scope and seals the report into
-it. The scope itself still has to exist and bind `gdpr` and `gdprdoc`; the image only defines
-`jena`.
+it. Otherwise reviews are triggered in one scope and looked for in another.
+
+The jena image (`configs/jena.json`) and the local jena runtime keep `jena` as a literal, as shown
+below, and do not read the variable. Do not set it on the other variants either: their scopes stay
+`jena`, but the shared health check would follow the variable and report the runtime down.
 
 ```jsonc
 "GDPRReportHistoryStageAction": {

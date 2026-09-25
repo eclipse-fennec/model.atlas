@@ -20,7 +20,7 @@
 	},
 	"org.apache.felix.hc.generalchecks.ServicesCheck" : {
 	   "services.list" : [
-               "(scope.name=jena)",
+               "(scope.name=$[env:MODEL_ATLAS_SCOPE;default=$[prop:MODEL_ATLAS_SCOPE;default=jena]])",
                "(scope.name=atlas)"
            ]
 	}
