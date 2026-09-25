@@ -9,12 +9,14 @@
         "trigger.stages": ["draft", "approved", "release"]
     },
     "GDPRCheckStageAction": {
-        "trigger.stages": ["approved"],
+        "trigger.stages": [
+    "approved"
+],
         "review.on.update": false
     },
     "GDPRReportHistoryStageAction": {
         "reports.registry": "gdpr",
-        "report.stages": ["draft", "release"],
+        "report.stages": ["draft", "approved", "release"],
         "trigger.scopes": ["$[env:GDPR_ATLAS_SCOPE;default=$[prop:GDPR_ATLAS_SCOPE;default=jena]]"],
         "scope.target": "(atlas.scope=$[env:GDPR_ATLAS_SCOPE;default=$[prop:GDPR_ATLAS_SCOPE;default=jena]])",
         "document.registry": "gdprdoc"
@@ -24,7 +26,9 @@
         "scope": "$[env:GDPR_ATLAS_SCOPE;default=$[prop:GDPR_ATLAS_SCOPE;default=jena]]",
         "registry": "gdpr",
         "allowed.stages": [
-            "draft"
+            "draft",
+            "approved",
+            "release"
         ],
         "content.type": "application/json",
         "overwrite": true
@@ -286,17 +290,26 @@
         "stageActionService.target": "(component.name=GDPRReportHistoryStageAction)",
         "stage.storage.mappings": [
             "draft:file",
+            "approved:file",
             "release:file"
         ],
         "workflow.transitions": [
-            "draft:release"
-        ],
+                "draft:approved",
+                "approved:release",
+                "release:draft",
+                "approved:draft"
+            ],
         "delete.after.transition": true,
         "storageService.target": "(storage.type=file)",
         "storageService.cardinality.minimum:int": 1,
         "stages": [
             {
                 "name": "draft",
+                "writable": true,
+                "final": false
+            },
+            {
+                "name": "approved",
                 "writable": true,
                 "final": false
             },
@@ -319,17 +332,26 @@
         "registry.description": "The Registry holding the derived GdprReportHistory documents, one per reviewed model fingerprint",
         "stage.storage.mappings": [
             "draft:file",
+            "approved:file",
             "release:file"
         ],
         "workflow.transitions": [
-            "draft:release"
-        ],
+                "draft:approved",
+                "approved:release",
+                "release:draft",
+                "approved:draft"
+            ],
         "delete.after.transition": false,
         "storageService.target": "(storage.type=file)",
         "storageService.cardinality.minimum:int": 1,
         "stages": [
             {
                 "name": "draft",
+                "writable": true,
+                "final": false
+            },
+            {
+                "name": "approved",
                 "writable": true,
                 "final": false
             },
