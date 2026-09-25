@@ -16,6 +16,7 @@ package org.eclipse.fennec.model.atlas.publisher.impl;
 
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
+import java.util.List;
 
 /**
  * Where objects go and what may be sent, resolved from configuration once at
@@ -35,7 +36,7 @@ import java.nio.charset.StandardCharsets;
  *
  * @param scope          the model.atlas scope, e.g. {@code jena}
  * @param registry       the object registry within that scope, e.g. {@code default}
- * @param stage          the target stage, e.g. {@code draft} — never a released stage
+ * @param allowedStages  the stages this publisher may write into; empty denies everything
  * @param registriesPath the segment between scope and registry name — {@code registries}, matching
  *                       {@code ObjectRegistryResource}'s class-level {@code @Path}
  * @param contentType    the content type the object body is sent as
@@ -48,7 +49,7 @@ import java.nio.charset.StandardCharsets;
 public record ObjectPublisherSettings(
 		String scope,
 		String registry,
-		String stage,
+		List<String> allowedStages,
 		String registriesPath,
 		String contentType,
 		boolean overwrite,
@@ -57,7 +58,7 @@ public record ObjectPublisherSettings(
 	public ObjectPublisherSettings {
 		requireText("scope", scope);
 		requireText("registry", registry);
-		requireText("stage", stage);
+		allowedStages = allowedStages == null ? List.of() : List.copyOf(allowedStages);
 		requireText("registries.path", registriesPath);
 		requireText("content.type", contentType);
 		if (maxBodyBytes <= 0) {
@@ -97,15 +98,54 @@ public record ObjectPublisherSettings(
 	 * @param objectId the object id, already checked to be a single path segment
 	 * @return the path of the create-object endpoint below the base URI
 	 */
-	public String createObjectPath(String objectId) {
-		return String.join("/", stagePath(), encodeSegment(objectId));
+	public String createObjectPath(String stage, String objectId) {
+		return String.join("/", stagePath(stage), encodeSegment(objectId));
+	}
+
+	/**
+	 * The stage an object goes to: the one the caller named, or the single allowed one when it named
+	 * none.
+	 * <p>
+	 * An empty allowlist denies everything, as {@code publish.nsuri.allowlist} does on the package
+	 * publisher: a deployment that installs this bundle without saying where it may write publishes
+	 * nowhere, rather than defaulting into a stage nobody chose. A caller that names no stage is
+	 * served only when there is exactly one to infer - guessing among several is how an object ends
+	 * up in a stage that misdescribes it.
+	 *
+	 * @param requested the stage the caller asked for, may be {@code null} or blank
+	 * @return the stage to write into, never {@code null}
+	 * @throws IllegalArgumentException with a caller-facing message when there is no such stage
+	 */
+	public String stageFor(String requested) {
+		if (allowedStages.isEmpty()) {
+			throw new IllegalArgumentException(String.format(
+					"This runtime is not configured to publish into any stage of registry '%s' in scope '%s'. "
+							+ "Nothing was published: set 'allowed.stages' on the publisher.",
+					registry, scope));
+		}
+		if (requested == null || requested.isBlank()) {
+			if (allowedStages.size() == 1) {
+				return allowedStages.get(0);
+			}
+			throw new IllegalArgumentException(String.format(
+					"No stage was named and this runtime allows %s, so there is nothing to infer. Name the stage "
+							+ "the object belongs in.",
+					allowedStages));
+		}
+		if (!allowedStages.contains(requested)) {
+			throw new IllegalArgumentException(String.format(
+					"This runtime may not publish into the '%s' stage of registry '%s'; it allows %s. Nothing was "
+							+ "published, and no parameter of the object fixes it.",
+					requested, registry, allowedStages));
+		}
+		return requested;
 	}
 
 	/**
 	 * @return the path that tells whether the configured scope, registry and stage
 	 *         exist at all — {@code ObjectRegistryResource}'s list-in-stage endpoint
 	 */
-	public String stagePath() {
+	public String stagePath(String stage) {
 		return String.join("/", scope, registriesPath, registry, "stages", stage);
 	}
 

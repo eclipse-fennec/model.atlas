@@ -87,7 +87,10 @@ class ReportHistoryBuilderTest {
 				List.of(stored("gdpr-fp-20260915-081200", first), stored("gdpr-fp-20260917-142030", second)), now);
 
 		assertEquals("clinic-renamed", history.getSubjectName());
-		assertEquals("9f2c1ab7d4e85530", history.getSubjectFingerprint());
+		assertEquals("https://example.org/clinic/1.0.0", history.getSubjectIdentifier(),
+				"the document is filed under the nsURI, which a rename does not move");
+		assertEquals("9f2c1ab7d4e85530", history.getRevisions().get(1).getModelFingerprint(),
+				"the fingerprint is a property of the revision now, not of the document");
 		assertEquals("GDPR review history of clinic-renamed", history.getName());
 	}
 
@@ -287,7 +290,7 @@ class ReportHistoryBuilderTest {
 		assertTrue(history.getEvaluations().isEmpty());
 		assertTrue(history.getChanges().isEmpty());
 		assertNull(history.getSubjectName());
-		assertNull(history.getSubjectFingerprint());
+		assertNull(history.getSubjectIdentifier());
 	}
 
 	@Test
@@ -321,7 +324,9 @@ class ReportHistoryBuilderTest {
 		assertEquals("clinic.Anonymise", history.getSubjectName());
 		// what the transformation is WRITTEN IN; the review's own language is reportLanguage
 		assertEquals("qvto", history.getSubjectLanguage());
-		assertEquals("77aa88bb99cc00dd", history.getSubjectFingerprint());
+		assertEquals("clinic.Anonymise", history.getSubjectIdentifier(),
+				"a transformation is filed under its qualified name, a package under its nsURI");
+		assertEquals("77aa88bb99cc00dd", history.getRevisions().get(0).getModelFingerprint());
 		assertEquals("GDPR review history of clinic.Anonymise", history.getName());
 		assertEquals(RevisionOrigin.STATIC_ANALYSIS, history.getRevisions().get(0).getOrigin());
 		assertEquals(1, history.getRevisions().get(0).getFindingCount());

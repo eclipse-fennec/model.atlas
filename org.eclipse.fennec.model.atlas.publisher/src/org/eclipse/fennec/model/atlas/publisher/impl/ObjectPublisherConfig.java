@@ -53,8 +53,8 @@ public @interface ObjectPublisherConfig {
 	@AttributeDefinition(name = "Registry", description = "The object registry every object goes to, e.g. 'default'. Not an agent parameter: the registry decides which root EClasses are accepted at all, so it is the deployment's choice of what this tool may write.")
 	String registry();
 
-	@AttributeDefinition(name = "Stage", description = "The target stage. Keep this a draft stage: promotion to a released stage is a human decision made in model.atlas, not something an MCP tool should reach.", required = false)
-	String stage() default "draft";
+	@AttributeDefinition(name = "Allowed stages", description = "The stages this publisher may write into. Empty denies everything — this is the control that stops a caller writing where the deployment did not intend, and in particular keeps an MCP tool out of a released stage, which is a human decision made in model.atlas. A caller that names no stage is served only when exactly one stage is allowed; with several there is nothing to infer and the call is refused.", required = false)
+	String[] allowed_stages() default {};
 
 	@AttributeDefinition(name = "Registries path", description = "Path segment between the scope and the registry name in the object endpoint. Matches ObjectRegistryResource's class-level @Path; change it only if the server's resource path changes.", required = false)
 	String registries_path() default "registries";

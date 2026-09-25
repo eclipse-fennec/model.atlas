@@ -6,11 +6,19 @@ a model got to where it is — which verdict an agent gave, which one a human co
 changed between them.
 
 The **GDPR review history** is a second, derived object that answers exactly that. One document per
-reviewed model revision **and language**, holding every review of it, the assessment each one
-recorded, and a field-level diff between them. A review is carried out in one language from start to
-seal and quotes that language's consolidation of the regulation, so a German and an English review of
-the same model are not successive revisions of one another - they are two documents, addressed as
-`gdpr-history-<fingerprint>-de` and `-en`. Merged, the diff would report every rationale as rewritten
+reviewed **subject**, **stage** and **language**, holding every review of it, the assessment each one
+recorded, and a field-level diff between them.
+
+The subject is what stays the same while the content moves: the **nsURI** of a package, the qualified
+name of a compiled transformation unit. Keyed by fingerprint instead, a document would hold a single
+revision and its change sheet - the point of the whole thing - would have nothing to compare against.
+Each revision keeps the fingerprint it was about, so a model edited without its nsURI moving reads as
+successive revisions with a changing fingerprint.
+
+It is per **stage** because a review describes the stage it was carried out against: the same model at
+`draft` and at `approved` is two judgements, and merging them would diff one against the other. And per
+**language**, because a review is carried out in one language from start to seal and quotes that
+language's consolidation of the regulation; merged, the diff would report every rationale as rewritten
 on each switch. It is deliberately flat, so the tabular codec renders it as a
 spreadsheet without any rendering code: an auditor opens it in LibreOffice or Excel and reads one
 line per thing in the model.
@@ -21,7 +29,7 @@ line per thing in the model.
 
 | sheet | one row per | the columns that matter |
 |---|---|---|
-| `GdprReportHistory` | the document | `subjectName`, `subjectFingerprint`, `reportLanguage`, `subjectLanguage` (for a transformation), `rebuiltAt`, `revisionCount` |
+| `GdprReportHistory` | the document | `subjectIdentifier`, `subjectName`, `reportLanguage`, `subjectLanguage` (for a transformation), `rebuiltAt`, `revisionCount` |
 | `ReportRevision` | review run | `revisionNumber`, `reportId`, `generatedAt`, `generatedBy`, `origin`, `findingCount`, `changeCount` |
 | `EvaluationRow` | evaluated classifier or feature - or, for a transformation review, one flow - **per revision** | `classifierId`, `featureId`, `typeName`, `category`, `relevanceLevel`, `confidence`, `rationale`, `recommendation`, `citations`, `changeKind` |
 | `ChangeRow` | field that changed | `revisionNumber`, `changedAt`, `changedBy`, `classifierId`, `featureId`, `field`, `changeKind`, `oldValue`, `newValue` |
@@ -50,12 +58,29 @@ watched stage, it rebuilds the document of that report's subject.
   the whole document. A replayed event therefore cannot duplicate a revision, and a report written
   while the runtime was down is picked up by the next rebuild — a compliance document that is
   quietly wrong is worse than one that is missing.
-- **One document per model fingerprint.** The id is `gdpr-history-<fingerprint>`, with everything
-  that is not alphanumeric replaced by a dash. Keying by fingerprint rather than by nsURI keeps the
-  diff honest: within one model revision, ids and `uriFragment`s are comparable.
-- **Reviews are read from every configured stage.** A registry with `delete.after.transition` moves
-  a promoted review out of the stage it came from, so reading only `draft` would erase a promoted
-  review from the document.
+- **One document per subject, stage and language.** The id is
+  `gdpr-history-<identifier>-<digest>-<language>`: the identifier flattened to one path segment with
+  everything non-alphanumeric replaced by a dash, then eight hex characters of the SHA-256 of the
+  *raw* identifier, then the corpus language.
+
+  The digest is not decoration. Flattening is not injective - `http://x.org/a/b` and
+  `http://x.org/a-b` both give `http---x-org-a-b` - and the readable part is truncated, so a long
+  nsURI would collide with another that differs only past the cut. Without the digest one subject's
+  history would silently overwrite another's. It also keeps the id computable, so the action finds
+  its own document without searching for it.
+
+  **The stage is deliberately not in the id.** A document is stage-specific, but which stage it is in
+  is *where it lives*, not part of what it is called - an id naming a stage would start lying the
+  moment the document moved. The same id therefore names one document per stage, which is what an
+  objectId already means everywhere else in the atlas.
+- **The document is written into the stage its reviews were carried out at**, not into a configured
+  one. That stage may be the registry's final stage, which refuses updates - so the document's EClass
+  is declared `derived.eclass.uri` on the document registry, which is what lets the atlas rewrite its
+  own output there. Without that declaration the first document is accepted and every rebuild of it
+  is refused.
+- **Reviews are read from every configured stage.** `report.stages` has to name every stage the
+  reports can be in, including `approved`: a report in a stage the action was not told about is
+  invisible to it, and no document is built for it.
 - **Revisions are matched on `ClassifierEvaluation.id` and `FeatureEvaluation.id`**, which the report
   model documents as stable across reruns — never on `Finding.id`, which is assigned per run and
   would report a change to a finding that did not change.
@@ -70,7 +95,7 @@ representation the content endpoint serves on demand — which also gives CSV, X
 
 ```bash
 curl -o gdpr-history.ods \
-  'http://localhost:8080/atlas/rest/jena/registries/gdprdoc/stages/draft/content?objectId=gdpr-history-fp1-clinic100-en&mediaType=application/vnd.oasis.opendocument.spreadsheet'
+  'http://localhost:8080/atlas/rest/jena/registries/gdprdoc/stages/draft/content?objectId=gdpr-history-https---example-org-clinic-1-0-0-a1b2c3d4-en&mediaType=application/vnd.oasis.opendocument.spreadsheet'
 ```
 
 No `Codec-Options` header is needed. The two options the spreadsheet depends on -
@@ -137,16 +162,19 @@ below, and do not read the variable.
 ```jsonc
 "GDPRReportHistoryStageAction": {
     "reports.registry": "gdpr",              // where the GdprReport objects are
-    "report.stages": ["draft", "release"],   // every stage holding reviews; each one triggers
+    "report.stages": ["draft", "approved", "release"],  // every stage holding reviews; each triggers
     "trigger.scopes": ["jena"],              // empty means every scope (see below)
     "scope.target": "(atlas.scope=jena)",
-    "document.registry": "gdprdoc",          // where the derived document goes
-    "document.stage": "draft"
+    "document.registry": "gdprdoc"           // where the derived document goes; the stage is the
+                                             // stage of the reviews, not a configured one
 },
 "RegistryService~gdprdoc": {
     "registry.name": "gdprdoc",
     "registry.type": "OTHER",
     "root.eclass.uri": ["https://org.eclipse/fennec/gdpr-report-history/1.0.0#//GdprReportHistory"],
+    // Derived: the atlas builds these itself, so the service API may rewrite one even in a final
+    // stage. A document lives in the stage its reviews were carried out at, which may be that one.
+    "derived.eclass.uri": ["https://org.eclipse/fennec/gdpr-report-history/1.0.0#//GdprReportHistory"],
     "schemaPackage.target": "(emf.nsURI=https://org.eclipse/fennec/gdpr-report-history/1.0.0)",
     "stages": [
         { "name": "draft",   "writable": true, "final": false },
@@ -175,9 +203,11 @@ Four constraints are easy to get wrong, and three of them fail silently:
   activates, and the only symptom is a scope service that never appears. The registry comes up
   without the action and binds it when it appears; because the action replays on startup, that bind
   picks up anything stored in the meantime.
-- **The document stage must not be final.** A registry needs exactly one final stage, and a final
-  stage refuses updates — so a registry whose only stage is final accepts the first document and
-  rejects every rebuild after it.
+- **The document registry needs the stages of the registry it describes**, and its document EClass
+  declared `derived.eclass.uri`. A document is written into the stage its reviews were carried out
+  at; a stage the registry does not have fails the write, and a final stage refuses *updates*, so
+  without the derived declaration the first document is accepted and every rebuild of it is
+  rejected.
 - **`trigger.scopes` is the action's own filter.** The workflow dispatches on object type, stage and
   event only, and a registry instance is shared by every scope that binds it, so without this filter
   the action answers for all of them. Empty means every scope, which is what a single-scope

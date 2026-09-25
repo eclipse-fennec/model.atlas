@@ -53,13 +53,20 @@ For `post_object_to_model_atlas`:
 |---|---|
 | the object itself | the agent (`content`), and its id (`objectId`), name and version |
 | which **types** may be stored | the destination registry, which accepts only its own root EClasses — enforced server-side |
-| destination scope, registry and stage | configuration from `ModelAtlasObjectPublisher` |
+| destination scope and registry | configuration from `ModelAtlasObjectPublisher` |
+| destination **stage** | configuration (`allowed.stages`) — the tool names no stage, so it is served only because exactly one is allowed |
 | whether an object already stored under that id is replaced | configuration (`overwrite`) from `ModelAtlasObjectPublisher` |
 | the format the body is sent as | configuration (`content.type`), which the tool names in its own description |
 | how large a body is accepted | configuration (`max.body.bytes`) |
 
 Neither tool has a `scope`, `stage` or `overwrite` parameter, and the object
-tool has no `registry` parameter either. A 409 means the name is taken and the
+tool has no `registry` parameter either. `allowed.stages` is what keeps it that
+way: the stages an `ObjectPublisher` may write into are a deployment's choice, an
+empty list denies everything, and a caller that names no stage — which is what
+these tools do — is served only when exactly one stage is allowed. A deployment
+that widens it for another caller makes these tools refuse rather than guess, which
+is the intended direction: promotion to a released stage is a human decision made in
+model.atlas, not something an MCP tool should reach. A 409 means the name is taken and the
 answer is a *different* name, not a retry with a flag flipped.
 
 **There is no namespace allow-list on the object side**, and that is not an
@@ -380,7 +387,7 @@ properties, read the same way.
     "base.uri": "$[env:MODEL_ATLAS_BASE_URI;default=$[prop:MODEL_ATLAS_BASE_URI;default=]]",
     "scope": "$[env:MODEL_ATLAS_OBJECT_SCOPE;default=$[env:MODEL_ATLAS_PUBLISHING_SCOPE;default=$[prop:MODEL_ATLAS_PUBLISHING_SCOPE;default=]]]",
     "registry": "$[env:MODEL_ATLAS_OBJECT_REGISTRY;default=$[prop:MODEL_ATLAS_OBJECT_REGISTRY;default=]]",
-    "stage": "$[env:MODEL_ATLAS_OBJECT_STAGE;default=$[prop:MODEL_ATLAS_OBJECT_STAGE;default=draft]]",
+    "allowed.stages": "$[env:MODEL_ATLAS_OBJECT_STAGES;type=String[];delimiter=|;default=$[prop:MODEL_ATLAS_OBJECT_STAGES;default=draft]]",
     "content.type": "$[env:MODEL_ATLAS_OBJECT_CONTENT_TYPE;default=$[prop:MODEL_ATLAS_OBJECT_CONTENT_TYPE;default=application/json]]",
     "overwrite": "$[env:MODEL_ATLAS_OBJECT_OVERWRITE;default=$[prop:MODEL_ATLAS_OBJECT_OVERWRITE;default=false]]",
     "max.body.bytes": "$[env:MODEL_ATLAS_OBJECT_MAX_BODY_BYTES;default=$[prop:MODEL_ATLAS_OBJECT_MAX_BODY_BYTES;default=1048576]]"

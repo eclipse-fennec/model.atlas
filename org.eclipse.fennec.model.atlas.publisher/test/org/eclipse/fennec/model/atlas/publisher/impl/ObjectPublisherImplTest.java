@@ -36,8 +36,8 @@ class ObjectPublisherImplTest {
 	}
 
 	private static ObjectPublisherImpl publisher(RecordingTransport transport, boolean overwrite, int maxBodyBytes) {
-		return new ObjectPublisherImpl(new ObjectPublisherSettings("jena", "default", "draft", "registries",
-				"application/json", overwrite, maxBodyBytes), transport);
+		return new ObjectPublisherImpl(new ObjectPublisherSettings("jena", "default", java.util.List.of("draft"),
+				"registries", "application/json", overwrite, maxBodyBytes), transport);
 	}
 
 	@Test

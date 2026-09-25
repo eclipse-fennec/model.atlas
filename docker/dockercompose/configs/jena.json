@@ -12,28 +12,32 @@
     },
     "GDPRCheckStageAction": {
         "trigger.stages": [
-            "approved"
-        ],
+    "approved"
+],
         "review.on.update": false
     },
     "GDPRReportHistoryStageAction": {
         "reports.registry": "gdpr",
         "report.stages": [
             "draft",
+            "approved",
             "release"
         ],
         "trigger.scopes": [
             "jena"
         ],
         "scope.target": "(atlas.scope=jena)",
-        "document.registry": "gdprdoc",
-        "document.stage": "draft"
+        "document.registry": "gdprdoc"
     },
     "ModelAtlasObjectPublisher~gdprStatus": {
         "base.uri": "http://localhost:8080/atlas/rest",
         "scope": "jena",
         "registry": "gdpr",
-        "stage": "draft",
+        "allowed.stages": [
+            "draft",
+            "approved",
+            "release"
+        ],
         "content.type": "application/json",
         "overwrite": true
     },
@@ -256,17 +260,26 @@
         "stageActionService.target": "(component.name=GDPRReportHistoryStageAction)",
         "stage.storage.mappings": [
             "draft:file",
+            "approved:file",
             "release:file"
         ],
         "workflow.transitions": [
-            "draft:release"
-        ],
+                "draft:approved",
+                "approved:release",
+                "release:draft",
+                "approved:draft"
+            ],
         "delete.after.transition": true,
         "storageService.target": "(storage.type=file)",
         "storageService.cardinality.minimum:int": 1,
         "stages": [
             {
                 "name": "draft",
+                "writable": true,
+                "final": false
+            },
+            {
+                "name": "approved",
                 "writable": true,
                 "final": false
             },
@@ -289,11 +302,15 @@
         "registry.description": "The Registry holding the derived GdprReportHistory documents, one per reviewed model fingerprint",
         "stage.storage.mappings": [
             "draft:file",
+            "approved:file",
             "release:file"
         ],
         "workflow.transitions": [
-            "draft:release"
-        ],
+                "draft:approved",
+                "approved:release",
+                "release:draft",
+                "approved:draft"
+            ],
         "delete.after.transition": false,
         "storageService.target": "(storage.type=file)",
         "storageService.cardinality.minimum:int": 1,
@@ -304,12 +321,20 @@
                 "final": false
             },
             {
+                "name": "approved",
+                "writable": true,
+                "final": false
+            },
+            {
                 "name": "release",
                 "writable": true,
                 "final": true
             }
         ],
         "root.eclass.uri": [
+            "https://org.eclipse/fennec/gdpr-report-history/1.0.0#//GdprReportHistory"
+        ],
+        "derived.eclass.uri": [
             "https://org.eclipse/fennec/gdpr-report-history/1.0.0#//GdprReportHistory"
         ],
         "resourceSet.target": "(emf.name=ecore)"

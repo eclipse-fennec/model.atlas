@@ -15,6 +15,7 @@ package org.eclipse.fennec.model.atlas.gdpr.history.tests;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.List;
@@ -63,7 +64,9 @@ public class GdprReportHistoryRebuildIT {
 
 		GdprReportHistory document = Documents.awaitRevisions(scope, 1);
 		assertEquals("clinic", document.getSubjectName());
-		assertEquals(Reports.FINGERPRINT, document.getSubjectFingerprint());
+		assertEquals(Reports.SUBJECT_NS_URI, document.getSubjectIdentifier(),
+				"the document is filed under the subject's nsURI, not under one revision's fingerprint");
+		assertEquals(Reports.FINGERPRINT, document.getRevisions().get(0).getModelFingerprint());
 
 		ReportRevision only = document.getRevisions().get(0);
 		assertEquals(1, only.getRevisionNumber());
@@ -137,8 +140,31 @@ public class GdprReportHistoryRebuildIT {
 		assertNotNull(english, "the English document must still be there");
 		assertEquals("EN", english.getReportLanguage());
 		assertEquals(1, english.getRevisionCount(), "the German review is not a revision of the English document");
-		assertEquals(Reports.FINGERPRINT, english.getSubjectFingerprint(),
-				"both documents are about the same model revision");
+		assertEquals(Reports.SUBJECT_NS_URI, english.getSubjectIdentifier(),
+				"both documents are about the same subject");
+	}
+
+	@Test
+	@TestAnnotations.GdprHistorySetup
+	@DisplayName("a document in the final stage is still rebuilt, because it is a derived object")
+	public void theFinalStageIsRebuildable(
+			@InjectService(cardinality = 0, timeout = 30000, filter = SCOPE_FILTER) //
+			ServiceAware<WritableScopeService> aware) throws Exception {
+
+		WritableScopeService<EObject> scope = scope(aware);
+		// 'release' is the document registry's final stage, and a final stage refuses updates. The
+		// document is declared a derived EClass precisely so the Atlas may rewrite its own output
+		// there: without that, the first review lands and every later one is refused.
+		Documents.store(scope, Reports.agentReview(), "release");
+		Documents.awaitRevisions(scope, 1, "release");
+
+		Documents.store(scope, Reports.humanCorrection(), "release");
+		GdprReportHistory document = Documents.awaitRevisions(scope, 2, "release");
+
+		assertEquals(2, document.getRevisionCount(), "a rebuild in the final stage must not be refused");
+		assertEquals(Reports.SUBJECT_NS_URI, document.getSubjectIdentifier());
+		assertNull(Documents.read(scope, Reports.LANGUAGE, "draft"),
+				"the document belongs to the stage its reviews were carried out at, and to no other");
 	}
 
 	@SuppressWarnings("unchecked")

@@ -159,7 +159,7 @@ public class ReportHistoryBuilder {
 				// was carried out in, which is reportLanguage and comes from the corpus.
 				history.setSubjectLanguage(transformation.getLanguage());
 			}
-			history.setSubjectFingerprint(subject.getSubjectFingerprint());
+			history.setSubjectIdentifier(identifierOf(subject));
 			history.setName(historyName(subject));
 			return;
 		}
@@ -196,6 +196,32 @@ public class ReportHistoryBuilder {
 					languages.size(), String.join(", ", languages)));
 		}
 		history.setReportLanguage(languages.isEmpty() ? null : languages.iterator().next());
+	}
+
+	/**
+	 * What a document is filed under: the namespace URI of a package, the qualified name of a
+	 * transformation unit.
+	 * <p>
+	 * <b>Not the fingerprint.</b> A fingerprint names one revision exactly, so a document keyed by
+	 * it would hold a single revision and its change sheet - the point of the document - would have
+	 * nothing to compare against. The identifier is what stays the same while the content moves, and
+	 * each revision's fingerprint is a column of the revision sheet instead.
+	 * <p>
+	 * A version-bearing nsURI is taken as it stands, so {@code .../1.0.0} and {@code .../1.1.0} are
+	 * two documents. What one document then shows is a published identity being edited without its
+	 * nsURI moving, which is the drift worth seeing.
+	 *
+	 * @param subject the subject of a review, may be {@code null}
+	 * @return the identifier, or {@code null} for no subject or a kind this does not know
+	 */
+	public static String identifierOf(Subject subject) {
+		if (subject instanceof PackageSubject packageSubject) {
+			return blankToNull(packageSubject.getNsURI());
+		}
+		if (subject instanceof TransformationSubject transformation) {
+			return blankToNull(transformation.getQualifiedName());
+		}
+		return null;
 	}
 
 	/**
