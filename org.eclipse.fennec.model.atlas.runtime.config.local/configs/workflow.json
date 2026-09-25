@@ -8,6 +8,9 @@
     "QvtStageActionService": {
         "trigger.stages": ["draft", "approved", "release"]
     },
+    "org.apache.felix.hc.generalchecks.ServicesCheck~tenant": {
+        "services.list": ["(scope.name=civitas)"]
+    },
     "ScopeService~civitas": {
         "atlas.scope": "civitas",
         "scope.name": "civitas",

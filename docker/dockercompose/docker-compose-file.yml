@@ -14,6 +14,15 @@ services:
       - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY:-}
       - GDPR_MCP_PUBLIC_URL=${GDPR_MCP_PUBLIC_URL:-}
       - MCP_GDPR_AUTH_TOKEN=${MCP_GDPR_AUTH_TOKEN:-}
+      # The tenant scope this image defines, and the scope the GDPR review runs in. Must match
+      # MODEL_ATLAS_SCOPE on the GDPR MCP server, or reviews are triggered in one scope and the
+      # model is looked for in another.
+      # It also names the seed folder: ./initial-models/scopes/<scope>/ is what gets loaded, so
+      # rename scopes/jena/ with it. Leave it unset rather than empty - an empty value is not
+      # replaced by the default and registers a scope with no name.
+      # Pick it before the first start: stored objects live under STORAGE_ROOT/<scope>/, so
+      # renaming it on a volume that already holds data leaves that data under the old name.
+      - MODEL_ATLAS_SCOPE=${MODEL_ATLAS_SCOPE:-jena}
     volumes:
       # Mount a host folder with the models you want deployed on first start.
       # Replace ./initial-models with the path on your host machine.

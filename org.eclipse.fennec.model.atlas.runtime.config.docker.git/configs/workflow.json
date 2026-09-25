@@ -5,6 +5,9 @@
         "trigger.stages": ["draft", "approved", "release"],
         "storageService.target": "(storage.type=git)"
     },
+    "org.apache.felix.hc.generalchecks.ServicesCheck~tenant": {
+        "services.list": ["(scope.name=jena)"]
+    },
     "ScopeService~jena": {
         "atlas.scope": "jena",
         "scope.name": "jena",
