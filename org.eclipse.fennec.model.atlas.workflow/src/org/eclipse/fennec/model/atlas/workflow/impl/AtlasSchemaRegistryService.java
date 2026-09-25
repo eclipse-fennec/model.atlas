@@ -257,6 +257,15 @@ public class AtlasSchemaRegistryService implements RegistryService<EPackage> {
 		throw new UnsupportedOperationException("Delete Operation not allowed for Atlas Schema Registry");
 	}
 
+	/*
+	 * (non-Javadoc)
+	 * @see org.eclipse.fennec.model.atlas.wf.workflowapi.RegistryService#deleteFromStage(java.lang.String, java.lang.String, java.lang.String, boolean)
+	 */
+	@Override
+	public Promise<Boolean> deleteFromStage(String scope, String stage, String objectId, boolean force) {
+		throw new UnsupportedOperationException("Delete Operation not allowed for Atlas Schema Registry");
+	}
+
 	/* 
 	 * (non-Javadoc)
 	 * @see org.eclipse.fennec.model.atlas.wf.workflowapi.RegistryService#listInStage(java.lang.String, java.lang.String)

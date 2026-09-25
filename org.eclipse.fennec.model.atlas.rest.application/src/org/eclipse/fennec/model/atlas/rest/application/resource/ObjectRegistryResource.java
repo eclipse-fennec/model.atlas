@@ -58,6 +58,7 @@ import jakarta.ws.rs.PUT;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.PathParam;
 import jakarta.ws.rs.Produces;
+import jakarta.ws.rs.DefaultValue;
 import jakarta.ws.rs.QueryParam;
 import jakarta.ws.rs.WebApplicationException;
 import jakarta.ws.rs.container.ContainerRequestContext;
@@ -623,22 +624,30 @@ public class ObjectRegistryResource {
      * @param stageName    the stage name
      * @param registryName the registry name
      * @param objectId     the object identifier
+     * @param force        {@code true} to delete although a stage gate refuses it; the
+     *                     gate's findings are then recorded on the dependents it named
      * @return 200 on success
      */
     @DELETE
     @Path("/stages/{stageName}")
-    @Operation(summary = "Delete storage object", description = "Delete a storage object from the registry and stage. Fails if the stage is read-only.", responses = {
+    @Operation(summary = "Delete storage object", description = "Delete a storage object from the registry and stage. Fails if the stage is read-only. "
+            + "A stage gate may refuse the delete, for example while other objects depend on this one; "
+            + "the refusal is answered with 409 and its diagnostics are recorded on the object. "
+            + "force=true deletes anyway and records the consequence on the dependents the gate named.", responses = {
             @ApiResponse(responseCode = "200", description = "Object deleted successfully"),
             @ApiResponse(responseCode = "403", description = "Stage is read-only or Object is only present in a parent scope final stage and so it's read-only"),
             @ApiResponse(responseCode = "400", description = "Scope not available, registry not available for scope, stage not available for registry or not a valid stage"),
             @ApiResponse(responseCode = "204", description = "Object not found"),
+            @ApiResponse(responseCode = "409", description = "A stage gate refused the delete; the object keeps its stage. The body is its unchanged metadata, whose diagnostics carry the gate's findings. Retry with force=true to override.",
+                    content = @Content(schema = @Schema(implementation = ObjectMetadata.class))),
             @ApiResponse(responseCode = "500", description = "Internal server error") })
     @ResourceOption(key = CodecOptions.CODEC_ID_KEY_MODE, value = "FEATURE_ONLY")
     public Response deleteObject(
             @Parameter(description = "The scope name", required = true) @PathParam("scopeName") String scopeName,
             @Parameter(description = "The registry name", required = true) @PathParam("registryName") String registryName,
             @Parameter(description = "The stage name", required = true) @PathParam("stageName") String stageName,
-            @Parameter(description = "The object identifier", required = true) @QueryParam("objectId") String objectId) {
+            @Parameter(description = "The object identifier", required = true) @QueryParam("objectId") String objectId,
+            @Parameter(description = "Delete although a stage gate refuses it; the gate's findings are recorded on the dependents instead") @QueryParam("force") @DefaultValue("false") boolean force) {
 
         ScopeService<?> scopeService = getScopeServiceByScopeName(scopeName);
         try {
@@ -661,7 +670,8 @@ public class ObjectRegistryResource {
                 return preconditionResponse;
             }
 
-            boolean deleted = scopeService.deleteFromStageForRegistry(registryName, stageName, objectId).getValue();
+            boolean deleted = scopeService.deleteFromStageForRegistry(registryName, stageName, objectId, force)
+                    .getValue();
             if (deleted)
                 // 200, as this endpoint's @ApiResponse documents and as the sibling
                 // SchemaPackagesResource.deletePackage answers, so that success is
@@ -672,6 +682,11 @@ public class ObjectRegistryResource {
         } catch (IllegalArgumentException e) {
             return Response.status(Response.Status.BAD_REQUEST).entity(e.getMessage()).build();
         } catch (Exception e) {
+            // a gate's refusal is answered with the object's metadata as the 409 body (issue #295)
+            Response refused = GateRefusals.conflict(e, scopeService, requestContext);
+            if (refused != null) {
+                return refused;
+            }
             throw EndpointFailures.propagate(e);
         }
     }
@@ -696,8 +711,9 @@ public class ObjectRegistryResource {
                     @ApiResponse(responseCode = "400", description = "Invalid transition, missing parameters, scope not available, registry not available for scope, stage not available for registry or not a valid stage"),
                     @ApiResponse(responseCode = "403", description = "Stage is read-only or Object is only present in a parent scope final stage and so it's read-only"),
                     @ApiResponse(responseCode = "204", description = "Object not found in source stage"),
-                    @ApiResponse(responseCode = "409", description = "Either the target stage already holds a different object under this objectId (an objectId is unique per stage, so promoting onto an earlier copy of the same object is allowed; taking the id over from another object requires overwrite=true), "
-                            + "or a stage gate refused the transition because the object does not hold up in the target stage, e.g. a QVT source that does not compile against the target stage's view. The message carries the gate's reason and what to change before retrying"),
+                    @ApiResponse(responseCode = "409", description = "Either the target stage already holds a different object under this objectId (an objectId is unique per stage, so promoting onto an earlier copy of the same object is allowed; taking the id over from another object requires overwrite=true) - then the body is the plain error document - "
+                            + "or a stage gate refused the transition because the object does not hold up in the target stage, e.g. a QVT source that does not compile against the target stage's view. Then the body is the object's unchanged metadata from the source stage, whose diagnostics carry the gate's findings and what to change before retrying",
+                            content = @Content(schema = @Schema(implementation = ObjectMetadata.class))),
                     @ApiResponse(responseCode = "500", description = "Internal server error") })
     @ResourceOption(key = CodecOptions.CODEC_ID_KEY_MODE, value = "FEATURE_ONLY")
     public Response transitionObject(
@@ -744,6 +760,11 @@ public class ObjectRegistryResource {
         } catch (IllegalArgumentException e) {
             return Response.status(Response.Status.BAD_REQUEST).entity(e.getMessage()).build();
         } catch (Exception e) {
+            // a gate's refusal is answered with the source-stage metadata as the 409 body (issue #295)
+            Response refused = GateRefusals.conflict(e, scopeService, requestContext);
+            if (refused != null) {
+                return refused;
+            }
             throw EndpointFailures.propagate(e);
         }
     }

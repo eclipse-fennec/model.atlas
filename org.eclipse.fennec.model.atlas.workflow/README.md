@@ -583,6 +583,27 @@ A `StageActionService` declares what it cares about via:
 
 The registry filters dispatches by these declarations before calling `onEnter` / `onUpdate` / `onExit`, each receiving an `ActionContext` record with scope, registry, objectId, objectType, stage, `sourceStage` / `targetStage` (for transitions), `exitReason`, and a `replay` flag.
 
+### Order, chains and results (issue #296)
+
+For one event the registry runs its actions **one after the other**, each joined before the next starts, and the operation's promise resolves only after the last. The order is:
+
+- **by default** `service.ranking`, highest first, ties broken by `service.id` (registration order), and a failing action does not stop the others - it is logged and recorded, see below;
+- **with a chain** as the registry configures it in `stage.action.chains`, one JSON object per entry:
+
+  ```json
+  {"stage": "draft", "objectType": "http://…#//SourceUnit", "actions": ["QvtCompile", "QvtValidate"], "onFailure": "stop"}
+  ```
+
+  | Key | Meaning |
+  |-----|---------|
+  | `stage`, `objectType` | Optional. Narrow the chain to the events it is for; the **first** entry that matches an event applies, so put the specific ones first. |
+  | `actions` | The actions that have a place in the order, by name: the `stage.action.name` service property, else the DS `component.name`, else the simple class name. They run first, in this order; every other bound action follows in ranking order. A name nobody is bound under is simply not there - a registry that must not run without an action says so with `stageActionService.cardinality.minimum`. |
+  | `onFailure` | `continue` (default): the actions after a failing one still run. `stop`: they do not run for this event. |
+
+The chain is configuration, not a new kind of service: the actions know nothing of each other, and the same action may sit in different places in different registries. The startup and shutdown replays run per action in ranking order; a replay reconciles one action's own state, so chains and their failure rule do not apply there.
+
+**Results are recorded on the object.** After each action the workflow writes a diagnostic under the producer `stage-action/<name>` on the object in the event's stage: `stage-action.failed` (`ERROR`, the failure's message, `target` the event) when the action's promise failed, `stage-action.skipped` (`WARNING`) for every action a stopping chain did not run, and nothing when it succeeded - which clears the record the same action left on an earlier event. The metadata the operation returns carries the records as well. Nothing is recorded after a delete, the object is gone, nor after the `EXIT` of a transition whose source copy is deleted with it. An action that wants to say more than "failed" writes its own diagnostics under its own producer, through `RegistryService.updateDiagnostics`; the two never collide.
+
 ### Bundled Implementation: `EPackageStageActionService`
 
 Ships as the default action for EMF schemas. When an `EPackage` object enters or is updated in a configured trigger stage it registers the following OSGi services backed by that EPackage:
@@ -605,16 +626,37 @@ Configuration PID: `EPackageStageActionService` (factory or singleton). Typical 
 
 An `UPDATE` always tears down the previous OSGi registrations before re-registering, so service consumers see the new EPackage content (even when the `nsURI` is unchanged).
 
+### Bundled Implementation: `SchemaDependencyStageAction`
+
+Keeps the *unresolved* state of a schema's dependents current (issue #250). It listens on the schema registry next to the `EPackageStageActionService` (`stageActionService.target=(|(component.name=EPackageStageActionService)(component.name=SchemaDependencyStageAction))`, no configuration of its own):
+
+- `EXIT` of a package from a stage - a delete, forced or not, or a transition that removes the source copy - writes a `schema.dependency-missing` diagnostic (severity `ERROR`, category `dependencies`, target the package's nsURI) under the producer `SchemaDependencies` to every object that referenced the package in the view that stage served: other schemas in the stage, instances, compiled transformation units. A forced delete the `SchemaDeleteGate` let through has recorded the same already; the write is idempotent.
+- `ENTER` of a package into a stage removes that diagnostic again from the dependents in the views the stage now serves - a dependency arriving later, or again, heals them. This runs on the startup replay too, so a restart catches up; shutdown replays are ignored.
+
+Which objects count, and which stages see a package served from a given stage, is the [dependents query](#the-dependents-query-schemadependents) below.
+
 ## Stage Gates
 
-A `StageActionService` reacts to a mutation that has already happened and cannot stop it. A **`StageGate`** (same `action.api` bundle, issue #248) is the other half of that contract: the registry asks every gate **before** a transition commits, and a refusal aborts the transition before any store is touched. The caller gets the gate's reason as a `StageGateRefusedException`, which the REST layer answers with `409 Conflict`; post-commit action failures stay non-fatal as before.
+A `StageActionService` reacts to a mutation that has already happened and cannot stop it. A **`StageGate`** (same `action.api` bundle, issue #248) is the other half of that contract: the registry asks every gate **before** a transition or a delete commits, and a refusal aborts the operation before any store is touched. The caller gets the gates' reasons as a `StageGateRefusedException`, which the REST layer answers with `409 Conflict` whose body is the refused object's metadata from its source stage, diagnostics included (issue #295, `GateRefusals` in the endpoints, `StageGateRefusedExceptionMapper` as the fallback); post-commit action failures stay non-fatal as before.
 
 ### Contract
 
 - `supportsObjectType(String)` — which object types the gate wants to be asked about.
-- `beforeTransition(GateContext)` — returns a `Promise<GateVerdict>`: `GateVerdict.pass()` or `GateVerdict.refuse(reason)`. The `GateContext` carries scope, registry, objectId, objectType, `sourceStage`, `targetStage` and the object's fingerprint; the object is still readable in its source stage, the target has not been written.
+- `beforeTransition(GateContext)` — returns a `Promise<GateVerdict>`. The `GateContext` carries the `trigger` (`TRANSITION`), scope, registry, objectId, objectType, `sourceStage`, `targetStage` and the object's fingerprint; the object is still readable in its source stage, the target has not been written.
+- `beforeDelete(GateContext)` (issue #294) — the same for a delete: `trigger` is `DELETE`, `targetStage` is `null`, nothing has been removed yet. A `default` that passes, so a gate written against 1.1 keeps its behaviour.
+- `producer()` — the name the gate's diagnostics are recorded under; defaults to the class name. Override it when the class may move.
 
-A gate whose promise **fails** does not let the transition through: the registry treats an undecided gate as a fault of the operation (`IllegalStateException`, a `500` over REST). A check that silently passes when it breaks is no check. Further triggers (a delete guard, issue #250) will be added as `default` methods that pass, so existing gates keep compiling.
+A verdict is `GateVerdict.pass()`, `GateVerdict.pass(diagnostics)`, `GateVerdict.refuse(reason)` or `GateVerdict.refuse(reason, diagnostics)`. A **`GateDiagnostic`** is the EMF-free shape of a finding: severity, a gate-defined `code`, message, optional `category` and `target` (the element inside the object), children, and optionally the `Dependent` (registry, stage, objectId) it is about. A refusal always has at least one diagnostic; `refuse(reason)` makes one, coded `refused`, from the reason.
+
+What the registry does with a round of verdicts:
+
+- **All** gates that support the type are asked, not only up to the first refusal, so the caller sees everything in the way at once.
+- **Refused**: every consulted gate's findings about the object are written to its source-stage copy under the gate's `producer()` — a refusing gate's veto, and a passing gate's (possibly empty) findings, which clears a veto that gate recorded on an earlier attempt. Then a `StageGateRefusedException` is raised carrying `trigger`, scope, registry, stage, objectId and the refusing gates' diagnostics. Nothing else changes.
+- **Passed transition**: each gate's findings replace what it recorded on the metadata before, so warnings travel with the object into the target stage and stale vetoes are gone; when the source copy stays (`delete_after_transition` off) it is brought up to date too.
+- **Consequences**: findings about a `Dependent` are written to that object before the operation commits — through this registry, or through the `RegistryServiceCollector` for another registry. An unreachable dependent stops the operation like an undecided gate; a dependent that no longer exists is only logged.
+- **Forced delete** (`deleteFromStage(scope, stage, objectId, true)`, REST `?force=true`): a refusal no longer stops the delete. It is logged, the object goes, and the consequences are recorded on the dependents. The veto about the object itself is not written anywhere — the object is gone.
+
+A gate whose promise **fails** does not let the operation through: the registry treats an undecided gate as a fault of the operation (`IllegalStateException`, a `500` over REST). A check that silently passes when it breaks is no check.
 
 ### Wiring
 
@@ -627,7 +669,23 @@ Gates are wired like stage actions, per registry, through the `stageGate` refere
 
 ### Bundled Implementation: `QvtTransitionGate`
 
-Ships in the `qvt` bundle. For a QVT-O source it compiles the source against the **target** stage's view (its unit store for imports, its chain ResourceSet for model types) and refuses the transition when the compile fails, typically because an imported library has not been promoted yet. The reason lists the compiler's findings and names the remedy. The runtime configurations wire it into the `transformations` registry.
+Ships in the `qvt` bundle. For a QVT-O source it compiles the source against the **target** stage's view (its unit store for imports, its chain ResourceSet for model types) and refuses the transition when the compile fails, typically because an imported library has not been promoted yet. The reason lists the compiler's findings and names the remedy; the verdict carries them as one `qvto.does-not-compile` diagnostic (category `compile`, target the qualified name) with one `qvto.compiler-finding` child per compiler message at `line:column`, recorded under the producer `QvtTransitionGate`. The runtime configurations wire it into the `transformations` registry.
+
+### Bundled Implementation: `SchemaDeleteGate`
+
+Ships in this bundle (issue #250). For a package in a **schema registry** it refuses the delete while objects in the view that stage serves still depend on it: the verdict carries one `schema.has-dependents` finding (category `dependencies`, target the nsURI) with a `schema.dependent` child per dependent (target `registry/stage/objectId`), and one `schema.dependency-missing` consequence per dependent. A refusal records the finding on the package and answers `409 Conflict` with the package's metadata; `force` deletes anyway and the consequences land on the dependents, which is the same state the `SchemaDependencyStageAction` maintains from then on. Transitions pass. The runtime configurations wire it into the `schema` registry with `stageGate.target=(component.name=SchemaDeleteGate)`.
+
+### The dependents query: `SchemaDependents`
+
+`org.eclipse.fennec.model.atlas.workflow.dependency.SchemaDependents` answers *what breaks if this package leaves this stage*: `dependentsOf(scope, stage, nsURI)` lists every `SchemaDependent` (kind, registry, stage, objectId, objectType) that references the package as served from that stage. References are keyed by nsURI, and the *view* a stage serves follows the chain the registry chain configurator wires:
+
+- the stage itself, for all three edge types;
+- every earlier stage of the schema registry's chain up to the first one that holds a copy of the package itself (`draft` resolves through `approved` through `release`);
+- for the final stage, the stages only other registries have (they are wired to the final schema stage).
+
+Other schemas count in the stage itself only, because a registered package resolves its cross-package references against the packages registered for its own stage. Child scopes are not walked.
+
+Three edge types are known: another schema whose `eSuperTypes` or `eType`s point into the package (read off the registered `EPackage` services), an instance whose object type is a class of the package (read off the registries' listings), and a compiled transformation unit whose manifest lists the package (contributed by the `qvt` bundle). A bundle that knows a further kind of reference registers a `SchemaDependentsContributor` service; the query asks it per registry and stage of the view.
 
 ## Integration Points
 

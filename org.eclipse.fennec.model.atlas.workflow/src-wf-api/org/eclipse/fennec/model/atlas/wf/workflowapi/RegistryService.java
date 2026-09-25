@@ -145,6 +145,17 @@ public interface RegistryService<T extends EObject> {
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
 	 * <!-- begin-model-doc -->
+	 * Delete an object from a certain stage for a certain scope, deciding what a stage gate's veto means (issue #294). The registry's gates are asked before anything is removed. With force false a refusal keeps the object, records the gates' diagnostics on it and fails the promise with a StageGateRefusedException. With force true the veto is overridden: the object is deleted, and what the gates found about its dependents is recorded on those dependents before it goes. Returns whether the deletion was successful.
+	 * <!-- end-model-doc -->
+	 * @model dataType="org.eclipse.fennec.model.atlas.mgmt.management.Promise&lt;org.eclipse.emf.ecore.EBooleanObject&gt;" objectIdRequired="true" forceRequired="true"
+	 * @generated
+	 */
+	Promise<Boolean> deleteFromStage(String scope, String stage, String objectId, boolean force);
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * <!-- begin-model-doc -->
 	 * List all objects in a certain stage and scope of the workflow
 	 * <!-- end-model-doc -->
 	 * @model dataType="org.eclipse.fennec.model.atlas.mgmt.management.List&lt;org.eclipse.fennec.model.atlas.mgmt.management.ObjectMetadata&gt;" many="false"

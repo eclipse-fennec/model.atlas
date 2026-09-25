@@ -155,8 +155,8 @@ class GDPRReportHistoryStageActionTest {
 
 		GdprReportHistory english = scope.documents.get("gdpr-history-fp1-9f2c1ab7d4e85530-en");
 		GdprReportHistory german = scope.documents.get("gdpr-history-fp1-9f2c1ab7d4e85530-de");
-		assertEquals("EN", english.getLanguage());
-		assertEquals("DE", german.getLanguage());
+		assertEquals("EN", english.getReportLanguage());
+		assertEquals("DE", german.getReportLanguage());
 		assertEquals(List.of("gdpr-en"),
 				english.getRevisions().stream().map(ReportRevision::getReportId).toList(),
 				"the German review is not a later revision of the English one");
@@ -404,6 +404,12 @@ class GDPRReportHistoryStageActionTest {
 
 		@Override
 		public Promise<Boolean> deleteFromStageForRegistry(String registry, String stage, String objectId) {
+			throw new UnsupportedOperationException();
+		}
+
+		@Override
+		public Promise<Boolean> deleteFromStageForRegistry(String registry, String stage, String objectId,
+				boolean force) {
 			throw new UnsupportedOperationException();
 		}
 

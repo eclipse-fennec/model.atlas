@@ -240,10 +240,12 @@ public class GitRegistryChainIT {
 		WritableScopeService<?> scopeService = scopeAware.waitForService(WAIT);
 		assertNotNull(scopeService, "ScopeService for the git scope should be up");
 
-		// Stage-explicit lookup on main.
-		List<ObjectMetadata> main = scopeService
-				.getMetadataByPropertyFromStageForRegistry(SCHEMA_REGISTRY, GitTestRepository.BRANCH_MAIN, "nsUri",
-						GitTestRepository.PERSON_NS_URI);
+		// Stage-explicit lookup on main. The release package service above proves that the
+		// release schema has been derived, not that main's has: priming derives the branches
+		// one after the other on the storage's background thread, and the startup replay may
+		// register release from the gap in between. So wait for main's own metadata.
+		List<ObjectMetadata> main = awaitMetadataByNsUri(scopeService, GitTestRepository.BRANCH_MAIN,
+				GitTestRepository.PERSON_NS_URI, WAIT);
 		assertEquals(1, main.size(), "exactly one person package in stage main");
 		assertEquals(SCOPE + "/" + GitTestRepository.BRANCH_MAIN + "/" + GitTestRepository.PERSON_ECORE,
 				main.get(0).getObjectId(), "git keeps its derived scope/stage/repoPath objectId");
@@ -717,6 +719,24 @@ public class GitRegistryChainIT {
 			Thread.sleep(200);
 		}
 		return aware.isEmpty();
+	}
+
+	/**
+	 * Polls the scope service's {@code nsUri} lookup for {@code stage} until it returns
+	 * something, or the timeout elapses; returns the last (possibly empty) result.
+	 */
+	private List<ObjectMetadata> awaitMetadataByNsUri(WritableScopeService<?> scopeService, String stage, String nsUri,
+			long timeoutMs) throws Exception {
+		long deadline = System.currentTimeMillis() + timeoutMs;
+		List<ObjectMetadata> last = List.of();
+		while (System.currentTimeMillis() < deadline) {
+			last = scopeService.getMetadataByPropertyFromStageForRegistry(SCHEMA_REGISTRY, stage, "nsUri", nsUri);
+			if (!last.isEmpty()) {
+				return last;
+			}
+			Thread.sleep(200);
+		}
+		return last;
 	}
 
 	/**

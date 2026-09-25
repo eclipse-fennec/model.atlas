@@ -38,6 +38,7 @@ import org.eclipse.fennec.model.gdprReport.Evaluation;
 import org.eclipse.fennec.model.gdprReport.Evidence;
 import org.eclipse.fennec.model.gdprReport.FeatureEvaluation;
 import org.eclipse.fennec.model.gdprReport.Finding;
+import org.eclipse.fennec.model.gdprReport.FlowEvaluation;
 import org.eclipse.fennec.model.gdprReport.GDPRReportPackage;
 import org.eclipse.fennec.model.gdprReport.GdprReport;
 import org.eclipse.fennec.model.gdprReport.GdprReportOrigin;
@@ -154,6 +155,9 @@ public class ReportHistoryBuilder {
 				history.setSubjectName(packageSubject.getName());
 			} else if (subject instanceof TransformationSubject transformation) {
 				history.setSubjectName(transformation.getQualifiedName());
+				// The language the subject is WRITTEN IN, e.g. qvto - not the language the review
+				// was carried out in, which is reportLanguage and comes from the corpus.
+				history.setSubjectLanguage(transformation.getLanguage());
 			}
 			history.setSubjectFingerprint(subject.getSubjectFingerprint());
 			history.setName(historyName(subject));
@@ -162,7 +166,9 @@ public class ReportHistoryBuilder {
 	}
 
 	/**
-	 * The language the reviews were carried out in, taken from the corpus they quote.
+	 * The language the reviews were carried out in, taken from the corpus they quote. It is
+	 * {@code reportLanguage} and not {@code subjectLanguage}: the latter is what a transformation
+	 * subject is written in, which has nothing to do with the language of the legal text.
 	 * <p>
 	 * <b>A document covers one language.</b> A review quotes one consolidation of one language
 	 * version from start to seal, so revisions in two languages are not successive revisions of one
@@ -189,7 +195,7 @@ public class ReportHistoryBuilder {
 							+ "reports by corpus language and build one document per language.",
 					languages.size(), String.join(", ", languages)));
 		}
-		history.setLanguage(languages.isEmpty() ? null : languages.iterator().next());
+		history.setReportLanguage(languages.isEmpty() ? null : languages.iterator().next());
 	}
 
 	/**
@@ -260,54 +266,75 @@ public class ReportHistoryBuilder {
 	 */
 	private Map<RowKey, EvaluationRow> flatten(GdprReport report, int revisionNumber) {
 		Map<RowKey, EvaluationRow> rows = new LinkedHashMap<>();
-		warnOnUnrowedEvaluations(report, revisionNumber);
-		for (ClassifierEvaluation classifier : classifiersOf(report)) {
-			String classifierId = identify(classifier.getId(), classifier.getUriFragment(), classifier.getName());
-			if (classifierId == null) {
-				// Nothing to key it by, so it could not be compared against anything in another
-				// revision. Dropping it silently would be worse, but so would inventing a key.
-				continue;
-			}
-			if (!classifier.getFindings().isEmpty()) {
-				RowKey key = new RowKey(classifierId, "");
-				rows.put(key, classifierRow(classifier, classifierId, revisionNumber));
-			}
-			for (FeatureEvaluation feature : classifier.getFeatureEvaluation()) {
-				String featureId = identify(feature.getId(), feature.getUriFragment(), feature.getName());
-				if (featureId == null) {
-					continue;
-				}
-				RowKey key = new RowKey(classifierId, featureId);
-				rows.put(key, featureRow(classifier, classifierId, feature, featureId, revisionNumber));
+		for (Evaluation evaluation : report.getEvaluation()) {
+			if (evaluation instanceof ClassifierEvaluation classifier) {
+				flattenClassifier(rows, classifier, revisionNumber);
+			} else if (evaluation instanceof FlowEvaluation flow) {
+				flattenFlow(rows, flow, revisionNumber);
+			} else {
+				// A FeatureEvaluation at the top level has no classifier to hang from, and a kind
+				// added to the report model after this was written has no column here. Say so: a
+				// silently dropped evaluation reads as a review that found nothing.
+				warnOnUnrowedEvaluation(evaluation, revisionNumber);
 			}
 		}
 		return rows;
 	}
 
-	/**
-	 * The classifier evaluations of a report, in order. A report of a transformation carries
-	 * {@code FlowEvaluation}s here instead, and an {@link EvaluationRow} has nowhere to put a source
-	 * and a target feature, so those are left out of the sheet rather than flattened into a shape that
-	 * does not fit them.
-	 */
-	private static List<ClassifierEvaluation> classifiersOf(GdprReport report) {
-		return report.getEvaluation().stream().filter(ClassifierEvaluation.class::isInstance)
-				.map(ClassifierEvaluation.class::cast).collect(Collectors.toList());
+	private void flattenClassifier(Map<RowKey, EvaluationRow> rows, ClassifierEvaluation classifier,
+			int revisionNumber) {
+		String classifierId = identify(classifier.getId(), classifier.getUriFragment(), classifier.getName());
+		if (classifierId == null) {
+			// Nothing to key it by, so it could not be compared against anything in another
+			// revision. Dropping it silently would be worse, but so would inventing a key.
+			return;
+		}
+		if (!classifier.getFindings().isEmpty()) {
+			rows.put(new RowKey(classifierId, ""), classifierRow(classifier, classifierId, revisionNumber));
+		}
+		for (FeatureEvaluation feature : classifier.getFeatureEvaluation()) {
+			String featureId = identify(feature.getId(), feature.getUriFragment(), feature.getName());
+			if (featureId == null) {
+				continue;
+			}
+			RowKey key = new RowKey(classifierId, featureId);
+			rows.put(key, featureRow(classifier, classifierId, feature, featureId, revisionNumber));
+		}
 	}
 
 	/**
-	 * Says so when a revision holds evaluations the sheet cannot show. Silence would read as a review
-	 * that found nothing, which is the one thing this document must never imply.
+	 * A transformation review has no classifiers and features; it has flows, one per source to
+	 * target path. A flow takes the classifier columns of the sheet - it is the unit the review
+	 * examined - with the mapping it belongs to as the name, so the history of a transformation
+	 * reads the same way as that of a metamodel.
+	 * <p>
+	 * The source and target features a flow names have no columns of their own yet, so they are not
+	 * in the sheet; the flow's own id and name carry the path.
 	 */
-	private static void warnOnUnrowedEvaluations(GdprReport report, int revisionNumber) {
-		long unrowed = report.getEvaluation().stream().filter(e -> !(e instanceof ClassifierEvaluation)).count();
-		if (unrowed > 0) {
-			LOGGER.log(Level.WARNING, () -> String.format(
-					"Revision %d holds %d evaluation(s) that are not classifier evaluations; they are counted in "
-							+ "findingCount but have no row in the evaluation sheet, which only carries classifiers "
-							+ "and features.",
-					revisionNumber, unrowed));
+	private void flattenFlow(Map<RowKey, EvaluationRow> rows, FlowEvaluation flow, int revisionNumber) {
+		String flowId = identify(flow.getId(), null, flow.getName());
+		if (flowId == null) {
+			return;
 		}
+		EvaluationRow row = factory.createEvaluationRow();
+		row.setRevisionNumber(revisionNumber);
+		row.setClassifierId(flowId);
+		row.setClassifierName(blankToNull(flow.getName()) == null ? flow.getMapping() : flow.getName());
+		row.setTypeName(flow.getFlowKind() == null ? null : flow.getFlowKind().getName());
+		row.setPurpose(flow.getPurpose());
+		merge(row, flow.getFindings(), flow.getRelevanceLevel());
+		rows.put(new RowKey(flowId, ""), row);
+	}
+
+	/**
+	 * Says so when a revision holds an evaluation the sheet cannot show. Silence would read as a
+	 * review that found nothing, which is the one thing this document must never imply.
+	 */
+	private static void warnOnUnrowedEvaluation(Evaluation evaluation, int revisionNumber) {
+		LOGGER.log(Level.WARNING, () -> String.format(
+				"Revision %d holds a %s, which has no row in the evaluation sheet; its findings are counted in "
+						+ "findingCount but cannot be read there. The sheet carries classifiers, features and flows.",
+				revisionNumber, evaluation.eClass().getName()));
 	}
 
 	private EvaluationRow classifierRow(ClassifierEvaluation classifier, String classifierId, int revisionNumber) {

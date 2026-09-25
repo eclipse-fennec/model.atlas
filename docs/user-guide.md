@@ -245,6 +245,7 @@ How the API enforces the rule:
 | `POST`/`PUT /{scope}/registries/{registry}/stages/{stage}/{objectId}` | `409 Conflict`, unless `?override=true` — which updates the object that is there |
 | `POST`/`PUT /{scope}/schema/stages/{stage}?nsUri=...` | `409 Conflict`, unless `?overwrite=true` — which updates the package that is there |
 | `POST /{scope}/.../stages/{stage}/actions/transition` | `409 Conflict` when the target stage holds a *different* object under that id, unless `?overwrite=true` — which replaces it. Promoting a newer revision of the *same* object replaces its own earlier copy there with no flag — that is what a promotion is for. Also `409 Conflict` when a *stage gate* refuses the transition because the object does not hold up in the target stage (see [Stage Gates](#stage-gates)); `overwrite` does not bypass a gate |
+| `DELETE /{scope}/.../stages/{stage}` | `409 Conflict` when a *stage gate* refuses the delete, typically because other objects still depend on this one, unless `?force=true` — which deletes anyway and records the consequence on the dependents (see [Stage Gates](#stage-gates)) |
 
 Two details of the conflict check:
 
@@ -269,16 +270,55 @@ Two details of the conflict check:
 A transition is validated against the **target** stage before it commits. Besides the
 occupancy check above, a registry may be configured with *stage gates*: checks that look
 at the object relative to the stage it is about to enter and may refuse the move. A refused
-transition answers `409 Conflict` with the gate's reason, writes nothing into the target
-stage and leaves the source stage as it was. The reason names what has to change before a
-retry succeeds.
+transition answers `409 Conflict`, writes nothing into the target stage and leaves the
+source stage's content as it was.
+
+The same gates guard a **delete**: `DELETE .../stages/{stage}` asks them before the object
+is removed, and a gate may refuse that too, typically because other objects still depend on
+the one about to go. The refusal is a `409 Conflict` as well, and the object stays.
+
+A gate explains itself with [diagnostics](#diagnostics). Those of a refusal are **recorded
+on the object in its current stage**, under the gate's producer name, so a later `GET` of
+the metadata shows why the promotion or the delete failed, not only the response that
+refused it. A later attempt that passes clears them again. A gate may also pass and still
+leave warnings; on a transition they travel with the object into the target stage.
+
+**The refusal response** is one contract for transitions and deletes alike: status
+`409 Conflict`, body the object's **unchanged metadata from its current stage** in the
+format the request asked for - the same document a `GET .../{objectId}/metadata` returns,
+with the gate's findings in its `diagnostics`. Their `message`s are the reason; their
+`code`s and `id`s are stable, so a client can point back at them. So a UI handles one shape
+whether the operation went through (`200`, metadata) or not (`409`, metadata). Two
+neighbours stay what they were: a `409` for an *occupied id* (see above) carries the plain
+error document, and `403 Forbidden` is a stage policy (stage not writable, transition pair
+not allowed), never a gate. The Java client turns a refusal into an
+`OperationRefusedException` carrying the diagnostics.
+
+A delete may be **forced**: `DELETE .../stages/{stage}?force=true` overrides a gate's veto as
+a deliberate decision. The object is deleted anyway, and what the gate found about the
+*dependents* - the instances that lose their schema, say - is recorded as diagnostics on
+those dependents, so the consequence is visible where it lands instead of nowhere. `force`
+has no effect on a transition.
+
+The built-in delete guard is the **schema delete guard**: a package is not deleted from a
+stage of the schema registry while other objects in the view that stage serves still
+depend on it - instances whose type is a class of the package, other packages whose types
+point into it, compiled transformations whose manifest lists it. The `409` names every
+dependent (`schema.has-dependents` with one `schema.dependent` child each). After a forced
+delete the dependents are still listed, but each carries a `schema.dependency-missing`
+diagnostic (severity `ERROR`, producer `SchemaDependencies`, target the missing nsURI) -
+the *unresolved* state - and reading one answers the model-unavailable `409` until the
+package is back in that stage, which clears the diagnostic again. The same state is
+recorded when a package leaves a stage another way, e.g. a transition that removes the
+source copy.
 
 The built-in gate is the QVT one: a transformation source is promoted only if it **compiles
 against the target stage's view**, so a source that imports a library not yet promoted is
-refused until the library has moved (see [QVT transformations](qvt-transformations.md)).
-Registries without a configured gate behave as before. A gate that cannot decide, because
-it fails internally, also stops the transition, but as a `500`, not a `409`: the object is
-not at fault, the server is.
+refused until the library has moved (see [QVT transformations](qvt-transformations.md)); its
+refusal records one `qvto.does-not-compile` diagnostic on the source with one
+`qvto.compiler-finding` child per compiler message. Registries without a configured gate
+behave as before. A gate that cannot decide, because it fails internally, also stops the
+operation, but as a `500`, not a `409`: the object is not at fault, the server is.
 
 ### Diagnostics
 
@@ -298,6 +338,13 @@ Rules worth knowing:
 - **Diagnostics are metadata, not content.** Writing them changes neither `contentHash` nor
   `version` nor `lastChangeTime`, and fires no stage action. The metadata `ETag` does change,
   so a conditional `GET` sees new findings.
+- **Stage actions leave a record.** After an upload, update or transition the Atlas runs the
+  registry's stage actions in a configured order, and what each made of it appears on the
+  object under the producer `stage-action/<name>`: `stage-action.failed` (`ERROR`) when the
+  action failed, `stage-action.skipped` (`WARNING`) when an earlier action failed in a chain
+  that stops on failure, nothing when it succeeded. The metadata a write returns already
+  carries these records, so a `201` or `200` with a `stage-action.failed` diagnostic means
+  "stored, but the compile did not go through".
 - **They can be written where content is frozen.** A finding about a released object is
   recorded on the released object, in its final or non-writable stage; only the content bar
   stays.
@@ -862,7 +909,7 @@ export MODELATLAS_DEBUG_STACKTRACE=true
 | 304 | Not Modified (conditional GET with `If-None-Match` — content unchanged) |
 | 400 | Invalid request (bad scope, stage, parameters) |
 | 403 | Forbidden (read-only stage or parent object) |
-| 409 | Conflict (an `objectId` or `nsUri` already taken in the target stage — see [One Object per Id per Stage](#one-object-per-id-per-stage) — or a stage gate refused a transition — see [Stage Gates](#stage-gates)) |
+| 409 | Conflict (an `objectId` or `nsUri` already taken in the target stage — see [One Object per Id per Stage](#one-object-per-id-per-stage) — with the error document as body; or a stage gate refused a transition or a delete — see [Stage Gates](#stage-gates) — with the object's metadata, diagnostics included, as body) |
 | 412 | Precondition Failed (`If-Match` ETag mismatch — resource modified by another client) |
 | 415 | Unsupported media type |
 | 500 | Internal server error |

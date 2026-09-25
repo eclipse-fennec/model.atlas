@@ -21,6 +21,7 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -49,6 +50,8 @@ import org.eclipse.fennec.model.atlas.mgmt.diagnostics.DiagnosticDelta;
 import org.eclipse.fennec.model.atlas.mgmt.diagnostics.Diagnostics;
 import org.eclipse.fennec.model.atlas.mgmt.diagnostics.DiagnosticsChanged;
 import org.eclipse.fennec.model.atlas.mgmt.management.Diagnostic;
+import org.eclipse.fennec.model.atlas.mgmt.management.DiagnosticSeverity;
+import org.eclipse.fennec.model.atlas.mgmt.management.ManagementFactory;
 import org.eclipse.fennec.model.atlas.mgmt.management.ObjectMetadata;
 import org.osgi.service.typedevent.TypedEventBus;
 import org.eclipse.fennec.model.atlas.scope.api.RegistryType;
@@ -58,13 +61,17 @@ import org.eclipse.fennec.model.atlas.scope.api.StageGateRefusedException;
 import org.eclipse.fennec.model.atlas.scope.api.StageOccupiedException;
 import org.eclipse.fennec.model.atlas.scope.api.StagePolicyException;
 import org.eclipse.fennec.model.atlas.wf.workflowapi.Registry;
+import org.eclipse.fennec.model.atlas.workflow.RegistryServiceCollector;
 import org.eclipse.fennec.model.atlas.workflow.WorkflowConstants;
 import org.eclipse.fennec.model.atlas.workflow.registration.DynamicEPackageRegistrationService;
 import org.eclipse.fennec.model.atlas.wf.workflowapi.RegistryService;
 import org.eclipse.fennec.model.atlas.wf.workflowapi.StageTransition;
 import org.eclipse.fennec.model.atlas.wf.workflowapi.WorkflowApiFactory;
 import org.eclipse.fennec.model.atlas.action.api.ActionContext;
+import org.eclipse.fennec.model.atlas.action.api.Dependent;
 import org.eclipse.fennec.model.atlas.action.api.GateContext;
+import org.eclipse.fennec.model.atlas.action.api.GateDiagnostic;
+import org.eclipse.fennec.model.atlas.action.api.GateTrigger;
 import org.eclipse.fennec.model.atlas.action.api.GateVerdict;
 import org.eclipse.fennec.model.atlas.action.api.StageActionService;
 import org.eclipse.fennec.model.atlas.action.api.StageGate;
@@ -114,7 +121,17 @@ public class RegistryServiceImpl<T extends EObject> implements RegistryService<T
     private final List<EClass> rootEClasses;
     private final List<EClass> derivedEClasses;
 
-    private final List<StageActionService> stageActionServices = new CopyOnWriteArrayList<>();
+    /** The bound stage actions with their names and rankings; a chain puts them in order (issue #296). */
+    private final List<StageActionChains.ActionBinding> stageActions = new CopyOnWriteArrayList<>();
+    /** The configured order of the stage actions per stage and object type, and what a failure means. */
+    private final StageActionChains stageActionChains;
+    /** The producer prefix under which the workflow records what a stage action did (issue #296). */
+    static final String STAGE_ACTION_PRODUCER_PREFIX = "stage-action/";
+    /** Diagnostic code: the action's promise failed. */
+    static final String STAGE_ACTION_FAILED = "stage-action.failed";
+    /** Diagnostic code: the action did not run because an earlier one in a stopping chain failed. */
+    static final String STAGE_ACTION_SKIPPED = "stage-action.skipped";
+    private static final String STAGE_ACTION_CATEGORY = "stage-action";
     /** The gates a transition has to pass before it commits (issue #248); see {@link #consultGates}. */
     private final List<StageGate> stageGates = new CopyOnWriteArrayList<>();
     /** Scopes this registry has been activated for, to replay for late-binding stage action services. */
@@ -152,6 +169,7 @@ public class RegistryServiceImpl<T extends EObject> implements RegistryService<T
         this.storageMap = parseStageStorageMappings(config.stage_storage_mappings(), storageService);
         this.stages = parseStages(config.stages());
         validateStages();
+        this.stageActionChains = StageActionChains.parse(config.stage_action_chains());
         this.registryObject = createRegistryObject();
         rootEClasses = resolveEClasses(resourceSet, schemaPackage, config.root_eclass_uri(), "root.eclass.uri");
         if (rootEClasses.isEmpty()) {
@@ -263,20 +281,54 @@ public class RegistryServiceImpl<T extends EObject> implements RegistryService<T
         }
     }
 
-    @Reference(name = "stageActionService", target = ("(scope=no-inject)"),
-            cardinality = ReferenceCardinality.MULTIPLE, policy = ReferencePolicy.DYNAMIC,
+    /**
+     * Reaches the registries of the {@link Dependent dependents} a gate names outside this
+     * registry (issue #294): a schema's dependents are instances in other registries.
+     * Optional and dynamic, because the collector in turn collects every registry; a
+     * runtime without it still records consequences within this registry.
+     */
+    private volatile RegistryServiceCollector registryCollector;
+
+    @Reference(cardinality = ReferenceCardinality.OPTIONAL, policy = ReferencePolicy.DYNAMIC,
             policyOption = ReferencePolicyOption.GREEDY)
-    void addStageActionService(StageActionService stageActionService) {
-        synchronized (stageActionLock) {
-            stageActionServices.add(stageActionService);
-            activatedScopes.forEach(scope -> replayOnStartup(scope, List.of(stageActionService)));
+    void bindRegistryCollector(RegistryServiceCollector collector) {
+        this.registryCollector = collector;
+    }
+
+    void unbindRegistryCollector(RegistryServiceCollector collector) {
+        if (this.registryCollector == collector) {
+            this.registryCollector = null;
         }
     }
 
-    void removeStageActionService(StageActionService stageActionService) {
+    /**
+     * Binds a stage action with its service properties: the name a chain refers to it by
+     * and the ranking that orders it when no chain does (issue #296).
+     */
+    @Reference(name = "stageActionService", target = ("(scope=no-inject)"),
+            cardinality = ReferenceCardinality.MULTIPLE, policy = ReferencePolicy.DYNAMIC,
+            policyOption = ReferencePolicyOption.GREEDY)
+    void bindStageAction(StageActionService stageActionService, Map<String, Object> properties) {
+        StageActionChains.ActionBinding binding = StageActionChains.ActionBinding.of(stageActionService, properties);
         synchronized (stageActionLock) {
-            stageActionServices.remove(stageActionService);
+            stageActions.add(binding);
+            activatedScopes.forEach(scope -> replayOnStartup(scope, List.of(binding)));
         }
+    }
+
+    void unbindStageAction(StageActionService stageActionService) {
+        synchronized (stageActionLock) {
+            stageActions.removeIf(binding -> binding.service() == stageActionService);
+        }
+    }
+
+    /** Binds an action without service properties: named by its class, ranking 0. For tests. */
+    void addStageActionService(StageActionService stageActionService) {
+        bindStageAction(stageActionService, Map.of());
+    }
+
+    void removeStageActionService(StageActionService stageActionService) {
+        unbindStageAction(stageActionService);
     }
 
     /**
@@ -308,13 +360,19 @@ public class RegistryServiceImpl<T extends EObject> implements RegistryService<T
     public Void activate(String scope) {
         synchronized (stageActionLock) {
             activatedScopes.add(scope);
-            replayOnStartup(scope, stageActionServices);
+            replayOnStartup(scope, stageActions);
         }
         return null;
     }
 
-    private void replayOnStartup(String scope, List<StageActionService> services) {
-        services.forEach(sas -> {
+    /**
+     * Replays ENTER for the objects already in an action's trigger stages. The actions are
+     * taken in ranking order; a replay reconciles each action's own runtime state, so the
+     * per-object chains and their failure rule do not apply here.
+     */
+    private void replayOnStartup(String scope, List<StageActionChains.ActionBinding> bindings) {
+        StageActionChains.DEFAULT.order(bindings).forEach(binding -> {
+            StageActionService sas = binding.service();
             if (!sas.requiresReplayOnStartup()) {
                 return;
             }
@@ -335,7 +393,8 @@ public class RegistryServiceImpl<T extends EObject> implements RegistryService<T
         synchronized (stageActionLock) {
             activatedScopes.remove(scope);
         }
-        stageActionServices.forEach(sas -> {
+        StageActionChains.DEFAULT.order(stageActions).forEach(binding -> {
+            StageActionService sas = binding.service();
             if (!sas.requiresReplayOnShutdown()) {
                 return;
             }
@@ -371,7 +430,8 @@ public class RegistryServiceImpl<T extends EObject> implements RegistryService<T
             EObjectStorageService<T> storageService = storageFor(stage);
             ObjectMetadata objectMetadata = WorkflowServiceHelper.getPromiseValue(storageService.storeObject(scope,
                     config.registry_name(), stage, metadata.getObjectId(), object, metadata));
-            dispatch(ActionEvent.ENTER, newContext(scope, stage, objectMetadata, null, null, null, null, false));
+            dispatch(ActionEvent.ENTER, newContext(scope, stage, objectMetadata, null, null, null, null, false),
+                    objectMetadata);
             return objectMetadata;
         });
     }
@@ -472,7 +532,7 @@ public class RegistryServiceImpl<T extends EObject> implements RegistryService<T
             // delete-then-create)
             metadata = WorkflowServiceHelper
                     .getPromiseValue(storageService.updateObject(objectId, updatedObject, metadata));
-            dispatch(ActionEvent.UPDATE, newContext(scope, stage, metadata, null, null, null, null, false));
+            dispatch(ActionEvent.UPDATE, newContext(scope, stage, metadata, null, null, null, null, false), metadata);
             return metadata;
         });
     }
@@ -548,24 +608,38 @@ public class RegistryServiceImpl<T extends EObject> implements RegistryService<T
             // final stage, and a re-validation reaches released objects too (issue #292). What
             // stays protected is the content: updateInStage keeps its full bar.
             validateStage(stage);
-            EObjectStorageService<T> storageService = storageFor(stage);
-            // the state before the write, so the event can say what changed (issue #293)
-            ObjectMetadata before = WorkflowServiceHelper
-                    .getPromiseValue(storageService.retrieveMetadata(scope, config.registry_name(), stage, objectId));
-            ObjectMetadata metadata = WorkflowServiceHelper.getPromiseValue(storageService.updateDiagnostics(scope,
-                    config.registry_name(), stage, objectId, producer, diagnostics));
-            if (metadata == null) {
-                return null;
-            }
-            // no dispatch: diagnostics are metadata, and a stage action reacting to them would
-            // loop with the action that wrote them. What goes out is the typed event, and only
-            // when something looks different afterwards.
-            deliverDiagnosticsChanged(scope, stage, objectId, producer, before, metadata);
-            if (!isWritableStage(stage)) {
+            ObjectMetadata metadata = writeDiagnostics(scope, stage, objectId, producer, diagnostics);
+            if (metadata != null && !isWritableStage(stage)) {
                 metadata.setIsReadOnly(true);
             }
             return metadata;
         });
+    }
+
+    /**
+     * Replaces one producer's diagnostics on the stored copy of an object and tells the bus
+     * what changed. Synchronous: the callers are already on a promise thread, or inside a
+     * transition that has to see the write land before it commits.
+     *
+     * @return the stored metadata after the write, or {@code null} when the object is not in
+     *         that stage
+     */
+    private ObjectMetadata writeDiagnostics(String scope, String stage, String objectId, String producer,
+            List<Diagnostic> diagnostics) {
+        EObjectStorageService<T> storageService = storageFor(stage);
+        // the state before the write, so the event can say what changed (issue #293)
+        ObjectMetadata before = WorkflowServiceHelper
+                .getPromiseValue(storageService.retrieveMetadata(scope, config.registry_name(), stage, objectId));
+        ObjectMetadata metadata = WorkflowServiceHelper.getPromiseValue(storageService.updateDiagnostics(scope,
+                config.registry_name(), stage, objectId, producer, diagnostics));
+        if (metadata == null) {
+            return null;
+        }
+        // no dispatch: diagnostics are metadata, and a stage action reacting to them would
+        // loop with the action that wrote them. What goes out is the typed event, and only
+        // when something looks different afterwards.
+        deliverDiagnosticsChanged(scope, stage, objectId, producer, before, metadata);
+        return metadata;
     }
 
     /**
@@ -647,6 +721,18 @@ public class RegistryServiceImpl<T extends EObject> implements RegistryService<T
      */
     @Override
     public Promise<Boolean> deleteFromStage(String scope, String stage, String objectId) {
+        return deleteFromStage(scope, stage, objectId, false);
+    }
+
+    /*
+     * (non-Javadoc)
+     *
+     * @see
+     * org.eclipse.fennec.model.atlas.wf.workflowapi.RegistryService#deleteFromStage
+     * (java.lang.String, java.lang.String, java.lang.String, boolean)
+     */
+    @Override
+    public Promise<Boolean> deleteFromStage(String scope, String stage, String objectId, boolean force) {
 
         return promiseFactory.submit(() -> {
             requireNonNull(objectId, "Object ID cannot be null");
@@ -663,6 +749,22 @@ public class RegistryServiceImpl<T extends EObject> implements RegistryService<T
                         objectId, scope, config.registry_name(), stage));
             }
 
+            // Every gate is asked before anything is removed (issue #294). A refusal keeps
+            // the object and records why on it. A caller that forces the delete overrides
+            // the veto - a deliberate decision, so it is logged - and what remains of the
+            // verdicts is what the gates found about the dependents, which is written to
+            // them before the object goes, so the consequence is not left implicit.
+            GateRound round = consultGates(newGateContext(GateTrigger.DELETE, scope, stage, null, metadata), metadata);
+            if (round.refused()) {
+                if (!force) {
+                    throw refusal(round);
+                }
+                LOGGER.info(() -> String.format(
+                        "Deleting object %s from stage '%s' of registry '%s' in scope '%s' although a gate refused it (%s): the caller forced the delete",
+                        objectId, stage, config.registry_name(), scope, round.reasons()));
+            }
+            recordConsequences(round);
+
             // Delete from draft storage
             boolean deleted = WorkflowServiceHelper
                     .getPromiseValue(storageService.deleteObject(scope, config.registry_name(), stage, objectId));
@@ -672,7 +774,8 @@ public class RegistryServiceImpl<T extends EObject> implements RegistryService<T
             // (issue #252).
             if (deleted) {
                 registryService.removeFromCache(scope, config.registry_name(), stage, objectId);
-                dispatch(ActionEvent.EXIT, newContext(scope, stage, metadata, null, null, ExitReason.DELETED, null, false));
+                dispatch(ActionEvent.EXIT, newContext(scope, stage, metadata, null, null, ExitReason.DELETED, null, false),
+                        metadata);
             }
 
             return deleted;
@@ -809,8 +912,18 @@ public class RegistryServiceImpl<T extends EObject> implements RegistryService<T
             requireTargetFree(scope, toStage, objectId, metadata);
         }
         // Every gate is asked before anything is written or deleted: a refused
-        // transition leaves both stages exactly as they were (issue #248).
-        consultGates(newGateContext(scope, fromStage, toStage, metadata));
+        // transition leaves both stages exactly as they were (issue #248), except that
+        // the refusal is now recorded on the source-stage copy (issue #294). A passed
+        // round travels with the object: its findings replace what the same gates
+        // recorded on an earlier attempt, and what it says about dependents is written
+        // to them before the move commits.
+        GateRound round = consultGates(newGateContext(GateTrigger.TRANSITION, scope, fromStage, toStage, metadata),
+                metadata);
+        if (round.refused()) {
+            throw refusal(round);
+        }
+        carryFindings(round, !config.delete_after_transition());
+        recordConsequences(round);
 
         // Update metadata for new stage
         metadata.setLastChangeTime(Instant.now());
@@ -828,11 +941,12 @@ public class RegistryServiceImpl<T extends EObject> implements RegistryService<T
             WorkflowServiceHelper
                     .getPromiseValue(sourceStorage.deleteObject(scope, config.registry_name(), fromStage, objectId));
             dispatch(ActionEvent.EXIT,
-                    newContext(scope, fromStage, metadata, null, toStage, ExitReason.TRANSITIONED, null, false));
+                    newContext(scope, fromStage, metadata, null, toStage, ExitReason.TRANSITIONED, null, false),
+                    metadata);
         }
         WorkflowServiceHelper.getPromiseValue(
                 targetStorage.storeObject(scope, config.registry_name(), toStage, objectId, object, metadata));
-        dispatch(ActionEvent.ENTER, newContext(scope, toStage, metadata, fromStage, null, null, null, false));
+        dispatch(ActionEvent.ENTER, newContext(scope, toStage, metadata, fromStage, null, null, null, false), metadata);
         return metadata;
     }
 
@@ -917,53 +1031,211 @@ public class RegistryServiceImpl<T extends EObject> implements RegistryService<T
     }
 
     /**
-     * Asks every gate that cares about the object's type whether the transition may
-     * happen, and stops at the first that says no.
+     * What one consultation of the gates yielded: the operation, the object's metadata as
+     * read for it, and every verdict by the gate that gave it, in the order they were asked.
+     */
+    private record GateRound(GateContext ctx, ObjectMetadata metadata, Map<StageGate, GateVerdict> verdicts) {
+
+        boolean refused() {
+            return verdicts.values().stream().anyMatch(GateVerdict::refused);
+        }
+
+        /** The refusing gates' reasons, joined; empty when none refused. */
+        String reasons() {
+            return verdicts.values().stream().filter(GateVerdict::refused).map(GateVerdict::reason)
+                    .collect(Collectors.joining("; "));
+        }
+
+        /** The refusing gates' findings about the object, in order. */
+        List<GateDiagnostic> refusals() {
+            List<GateDiagnostic> all = new ArrayList<>();
+            verdicts.values().stream().filter(GateVerdict::refused).forEach(v -> all.addAll(v.findings()));
+            return all;
+        }
+    }
+
+    /**
+     * Asks every gate that cares about the object's type whether the operation may happen.
      *
      * <p>
-     * A gate's refusal is the caller's error: it surfaces as a
-     * {@link StageGateRefusedException} carrying the gate's reason, which the REST layer
-     * answers with a {@code 409}. A gate that cannot decide, because its promise fails,
-     * stops the transition as well, but as a fault of the operation: a check that
-     * silently passes when it breaks is no check, and the gates exist precisely to keep
-     * the target stage from receiving what does not hold up there.
+     * All gates are asked, not only up to the first that says no: every refusal is recorded
+     * on the object (issue #294), so the caller sees everything that stands in the way at
+     * once instead of one obstacle per attempt. A gate's refusal is the caller's error: it
+     * surfaces through {@link #refusal(GateRound)} as a {@link StageGateRefusedException}
+     * carrying the gates' reasons, which the REST layer answers with a {@code 409}. A gate
+     * that cannot decide, because its promise fails, stops the operation as well, but as a
+     * fault of the operation: a check that silently passes when it breaks is no check, and
+     * the gates exist precisely to keep the target stage from receiving what does not hold
+     * up there, and to keep an object from vanishing under those that need it.
      * </p>
      *
-     * @param ctx the transition about to happen
-     * @throws StageGateRefusedException if a gate refused the transition
-     * @throws IllegalStateException     if a gate could not decide
+     * @param ctx      the operation about to happen
+     * @param metadata the object's metadata, as read for the operation
+     * @return the verdicts
+     * @throws IllegalStateException if a gate could not decide
      */
-    private void consultGates(GateContext ctx) {
+    private GateRound consultGates(GateContext ctx, ObjectMetadata metadata) {
+        Map<StageGate, GateVerdict> verdicts = new LinkedHashMap<>();
         for (StageGate gate : stageGates) {
             if (!gate.supportsObjectType(ctx.objectType())) {
                 continue;
             }
             GateVerdict verdict;
             try {
-                verdict = gate.beforeTransition(ctx).getValue();
+                Promise<GateVerdict> answer = ctx.isDelete() ? gate.beforeDelete(ctx) : gate.beforeTransition(ctx);
+                verdict = answer.getValue();
             } catch (InvocationTargetException e) {
-                throw new IllegalStateException(String.format(
-                        "Stage gate %s could not decide whether object %s may move from stage '%s' to stage '%s' of registry '%s' in scope '%s'",
-                        gate.getClass().getSimpleName(), ctx.objectId(), ctx.sourceStage(), ctx.targetStage(),
-                        ctx.registry(), ctx.scope()), e.getCause());
+                throw new IllegalStateException(String.format("Stage gate %s could not decide whether object %s may %s",
+                        gate.getClass().getSimpleName(), ctx.objectId(), describe(ctx)), e.getCause());
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
-                throw new IllegalStateException("Interrupted while a stage gate decided on the transition of object "
-                        + ctx.objectId(), e);
+                throw new IllegalStateException("Interrupted while a stage gate decided whether object "
+                        + ctx.objectId() + " may " + describe(ctx), e);
             }
-            if (verdict == null || verdict.refused()) {
-                String reason = verdict == null ? "the gate " + gate.getClass().getSimpleName() + " gave no verdict"
-                        : verdict.reason();
-                throw new StageGateRefusedException(String.format(
-                        "Cannot transition object %s from stage '%s' to stage '%s' of registry '%s' in scope '%s': %s",
-                        ctx.objectId(), ctx.sourceStage(), ctx.targetStage(), ctx.registry(), ctx.scope(), reason));
+            if (verdict == null) {
+                verdict = GateVerdict.refuse("the gate " + gate.getClass().getSimpleName() + " gave no verdict");
             }
+            verdicts.put(gate, verdict);
         }
+        return new GateRound(ctx, metadata, verdicts);
     }
 
-    private GateContext newGateContext(String scope, String fromStage, String toStage, ObjectMetadata m) {
-        return new GateContext(scope, config.registry_name(), m.getObjectId(), m.getObjectType(), fromStage, toStage,
-                "system", Instant.now(), actionMetadata(m));
+    private static String describe(GateContext ctx) {
+        return ctx.isDelete()
+                ? String.format("be deleted from stage '%s' of registry '%s' in scope '%s'", ctx.sourceStage(),
+                        ctx.registry(), ctx.scope())
+                : String.format("move from stage '%s' to stage '%s' of registry '%s' in scope '%s'", ctx.sourceStage(),
+                        ctx.targetStage(), ctx.registry(), ctx.scope());
+    }
+
+    /**
+     * Records a refused round on the object and turns it into the caller's error.
+     *
+     * <p>
+     * Every consulted gate's findings about the object are written to its source-stage
+     * copy under the gate's producer name: a refusing gate's veto, and a passing gate's
+     * findings, which may be none and then clear a veto the same gate recorded on an
+     * earlier attempt. Recorded first, raised second, so a client that re-reads the object
+     * after the {@code 409} finds what the response told it.
+     * </p>
+     */
+    private StageGateRefusedException refusal(GateRound round) {
+        GateContext ctx = round.ctx();
+        round.verdicts().forEach((gate, verdict) -> recordFindings(round, producerOf(gate), verdict.findings()));
+        String message = ctx.isDelete()
+                ? String.format("Cannot delete object %s from stage '%s' of registry '%s' in scope '%s': %s",
+                        ctx.objectId(), ctx.sourceStage(), ctx.registry(), ctx.scope(), round.reasons())
+                : String.format(
+                        "Cannot transition object %s from stage '%s' to stage '%s' of registry '%s' in scope '%s': %s",
+                        ctx.objectId(), ctx.sourceStage(), ctx.targetStage(), ctx.registry(), ctx.scope(),
+                        round.reasons());
+        return new StageGateRefusedException(message, ctx.trigger(), ctx.scope(), ctx.registry(), ctx.sourceStage(),
+                ctx.objectId(), round.refusals());
+    }
+
+    /**
+     * Writes one gate's findings to the object's source-stage copy. Nothing is written when
+     * the gate found nothing and holds nothing there: an empty list only earns a write when
+     * it clears something.
+     */
+    private void recordFindings(GateRound round, String producer, List<GateDiagnostic> findings) {
+        if (findings.isEmpty() && !holdsDiagnosticsOf(round.metadata(), producer)) {
+            return;
+        }
+        GateContext ctx = round.ctx();
+        writeDiagnostics(ctx.scope(), ctx.sourceStage(), ctx.objectId(), producer, GateDiagnostics.toModel(findings));
+    }
+
+    /**
+     * Folds a passed round into the object before it moves: every gate's findings replace
+     * what the same gate recorded on the metadata before, so warnings travel with the object
+     * into the target stage and a veto recorded on an earlier attempt is gone. When the
+     * source copy stays behind, it is brought up to date as well, so it does not keep
+     * announcing a veto that no longer holds.
+     *
+     * @param round       the passed round
+     * @param sourceStays {@code true} when the source-stage copy survives the transition
+     */
+    private void carryFindings(GateRound round, boolean sourceStays) {
+        GateContext ctx = round.ctx();
+        ObjectMetadata metadata = round.metadata();
+        Instant now = Instant.now();
+        round.verdicts().forEach((gate, verdict) -> {
+            String producer = producerOf(gate);
+            List<GateDiagnostic> findings = verdict.findings();
+            if (findings.isEmpty() && !holdsDiagnosticsOf(metadata, producer)) {
+                return;
+            }
+            List<Diagnostic> model = GateDiagnostics.toModel(findings);
+            if (sourceStays) {
+                writeDiagnostics(ctx.scope(), ctx.sourceStage(), ctx.objectId(), producer, model);
+            }
+            Diagnostics.replaceOwned(metadata, producer, model, now);
+        });
+    }
+
+    /**
+     * Writes what the gates found about other objects to those objects (issue #294): the
+     * instances that lose their schema when a forced delete goes through, for example. Done
+     * before the operation commits, so a dependent that cannot be reached stops the
+     * operation the way an undecided gate does - a consequence the caller was promised a
+     * record of is not silently dropped. A dependent that no longer exists is not an error:
+     * there is nothing left to warn.
+     */
+    private void recordConsequences(GateRound round) {
+        String scope = round.ctx().scope();
+        round.verdicts().forEach((gate, verdict) -> verdict.consequences().forEach((dependent, findings) -> {
+            List<Diagnostic> model = GateDiagnostics.toModel(findings);
+            String producer = producerOf(gate);
+            ObjectMetadata written;
+            if (dependent.registry() == null || dependent.registry().equals(config.registry_name())) {
+                validateStage(dependent.stage());
+                written = writeDiagnostics(scope, dependent.stage(), dependent.objectId(), producer, model);
+            } else {
+                written = WorkflowServiceHelper.getPromiseValue(registryFor(dependent).updateDiagnostics(scope,
+                        dependent.stage(), dependent.objectId(), producer, model));
+            }
+            if (written == null) {
+                LOGGER.warning(() -> String.format(
+                        "Gate %s named %s as a dependent of object %s, but nothing is stored there; nothing recorded",
+                        gate.getClass().getSimpleName(), dependent, round.ctx().objectId()));
+            }
+        }));
+    }
+
+    private RegistryService<?> registryFor(Dependent dependent) {
+        RegistryServiceCollector collector = registryCollector;
+        if (collector == null) {
+            throw new IllegalStateException(String.format(
+                    "Cannot record a consequence on %s: no RegistryServiceCollector is bound to reach registry '%s'",
+                    dependent, dependent.registry()));
+        }
+        RegistryService<?> other = collector.getRegistryServiceByRegistryName(dependent.registry());
+        if (other == null) {
+            throw new IllegalStateException(String.format(
+                    "Cannot record a consequence on %s: no registry '%s' is known", dependent, dependent.registry()));
+        }
+        return other;
+    }
+
+    private static boolean holdsDiagnosticsOf(ObjectMetadata metadata, String producer) {
+        return metadata.getDiagnostics().stream().anyMatch(d -> producer.equals(d.getProducer()));
+    }
+
+    /**
+     * The name a gate's diagnostics are recorded under. The SPI promises a non-blank name;
+     * a gate that breaks the promise still gets its findings recorded, under the name the
+     * SPI would have defaulted to, rather than losing them.
+     */
+    private static String producerOf(StageGate gate) {
+        String producer = gate.producer();
+        return producer == null || producer.isBlank() ? gate.getClass().getName() : producer;
+    }
+
+    private GateContext newGateContext(GateTrigger trigger, String scope, String fromStage, String toStage,
+            ObjectMetadata m) {
+        return new GateContext(trigger, scope, config.registry_name(), m.getObjectId(), m.getObjectType(), fromStage,
+                toStage, "system", Instant.now(), actionMetadata(m));
     }
 
     /*
@@ -1284,51 +1556,161 @@ public class RegistryServiceImpl<T extends EObject> implements RegistryService<T
      * when the object has no fingerprint, so {@code metadata.containsKey} means "known".
      */
     private static Map<String, Object> actionMetadata(ObjectMetadata m) {
+        Map<String, Object> selected = new LinkedHashMap<>();
         String fingerprint = m.getFingerprint();
-        return fingerprint == null || fingerprint.isBlank() ? Map.of()
-                : Map.of(ActionContext.FINGERPRINT, fingerprint);
+        if (fingerprint != null && !fingerprint.isBlank()) {
+            selected.put(ActionContext.FINGERPRINT, fingerprint);
+        }
+        // a schema's nsUri travels along, so a gate or action can name what depends on it
+        // even when the object is already gone from storage (issue #250)
+        String nsUri = nsUriOf(m);
+        if (nsUri != null) {
+            selected.put(WorkflowConstants.NS_URI_METADATA_PROPERTY, nsUri);
+        }
+        return Map.copyOf(selected);
     }
 
     /**
-     * Dispatches an event to every stage action service and JOINS the returned
-     * promises: the surrounding operation (upload/update/delete/transition
-     * promise) must not resolve before the actions are through. The stage action
-     * promises run on their own executor, so a caller of e.g.
-     * {@code uploadToStage(...).getValue()} otherwise races whatever the action
-     * still does — concretely the SCR-driven package-registry update of the
-     * EPackage registration, which made responses serialized against a leased
-     * chain ResourceSet fail intermittently (issue #196). Action failures stay
-     * non-fatal (logged), exactly as before — only the timing is now
-     * deterministic.
+     * Dispatches an event to the stage actions, one after the other in the order the
+     * registry's chain puts them (issue #296), and JOINS each returned promise: the
+     * surrounding operation (upload/update/delete/transition promise) must not resolve
+     * before the actions are through. The stage action promises run on their own
+     * executor, so a caller of e.g. {@code uploadToStage(...).getValue()} otherwise races
+     * whatever the action still does — concretely the SCR-driven package-registry update
+     * of the EPackage registration, which made responses serialized against a leased chain
+     * ResourceSet fail intermittently (issue #196).
+     *
+     * <p>
+     * Action failures stay non-fatal for the operation: the object is where the event says
+     * it is, whatever an action made of that. What an action did is recorded on the object
+     * as a diagnostic under the producer {@code stage-action/<name>} - an
+     * {@link #STAGE_ACTION_FAILED error} when its promise failed, cleared again when it
+     * succeeds the next time. In a chain that {@code stop}s on failure, the actions after
+     * the failing one do not run for this event and record that they were
+     * {@link #STAGE_ACTION_SKIPPED skipped}; in the default chain, and in one that
+     * {@code continue}s, the others run regardless, as they always did.
+     * </p>
+     *
+     * @param event    the event
+     * @param ctx      the context handed to the actions
+     * @param metadata the metadata of the object the event is about, as the caller holds
+     *                 it; the recorded results are mirrored into it so the caller's copy
+     *                 says what the stored one says. May be {@code null}
      */
-    private void dispatch(ActionEvent event, ActionContext ctx) {
-        stageActionServices.forEach(sas -> {
-            Promise<Void> p = dispatchTo(sas, event, ctx);
-            if (p == null) {
-                return;
+    private void dispatch(ActionEvent event, ActionContext ctx, ObjectMetadata metadata) {
+        StageActionChains.Chain chain = stageActionChains.select(ctx.stage(), ctx.objectType());
+        boolean recordable = recordsActionResults(event, ctx);
+        String stoppedBy = null;
+        for (StageActionChains.ActionBinding binding : chain.order(stageActions)) {
+            StageActionService sas = binding.service();
+            if (!applies(sas, event, ctx)) {
+                continue;
             }
+            if (stoppedBy != null) {
+                String failed = stoppedBy;
+                LOGGER.info(() -> String.format("Stage action %s does not run for %s on %s: %s failed before it and the chain stops on failure",
+                        binding.name(), event, ctx.objectId(), failed));
+                if (recordable) {
+                    recordActionResult(ctx, metadata, binding, skippedDiagnostic(binding, event, stoppedBy));
+                }
+                continue;
+            }
+            Throwable failure = null;
             try {
-                p.getValue();
+                invoke(sas, event, ctx).getValue();
             } catch (InvocationTargetException e) {
-                // already logged by the onFailure callback in dispatchTo
+                // logged by the onFailure callback in invoke
+                failure = e.getCause() == null ? e : e.getCause();
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
+                return;
             }
-        });
+            if (recordable) {
+                recordActionResult(ctx, metadata, binding,
+                        failure == null ? null : failedDiagnostic(binding, event, failure));
+            }
+            if (failure != null && chain.stopOnFailure()) {
+                stoppedBy = binding.name();
+            }
+        }
     }
 
-    private Promise<Void> dispatchTo(StageActionService sas, ActionEvent event, ActionContext ctx) {
+    /**
+     * Whether an action's result can be recorded on the object after this event: not
+     * after a delete, the object is gone, and not after the EXIT of a transition whose
+     * source copy is deleted with it.
+     */
+    private boolean recordsActionResults(ActionEvent event, ActionContext ctx) {
+        if (event != ActionEvent.EXIT) {
+            return true;
+        }
+        return ctx.exitReason() == ExitReason.TRANSITIONED && !config.delete_after_transition();
+    }
+
+    /**
+     * Records what a stage action made of an event on the object, under the producer
+     * {@code stage-action/<name>}: the failure, or nothing - which clears the failure the
+     * same action recorded on an earlier event. Nothing is written when there is nothing
+     * to record and nothing to clear, and a failure of the write itself is logged, not
+     * raised: the operation stands, the record is a courtesy.
+     */
+    private void recordActionResult(ActionContext ctx, ObjectMetadata metadata, StageActionChains.ActionBinding binding,
+            Diagnostic result) {
+        String producer = STAGE_ACTION_PRODUCER_PREFIX + binding.name();
+        List<Diagnostic> findings = result == null ? List.of() : List.of(result);
+        if (findings.isEmpty() && (metadata == null || !holdsDiagnosticsOf(metadata, producer))) {
+            return;
+        }
+        try {
+            ObjectMetadata written = writeDiagnostics(ctx.scope(), ctx.stage(), ctx.objectId(), producer, findings);
+            if (written != null && metadata != null) {
+                Diagnostics.replaceOwned(metadata, producer, findings, Instant.now());
+            }
+        } catch (RuntimeException e) {
+            LOGGER.log(Level.WARNING, String.format("The result of stage action %s on %s could not be recorded on %s",
+                    binding.name(), ctx.objectId(), ctx.stage()), e);
+        }
+    }
+
+    private static Diagnostic failedDiagnostic(StageActionChains.ActionBinding binding, ActionEvent event,
+            Throwable failure) {
+        Diagnostic diagnostic = ManagementFactory.eINSTANCE.createDiagnostic();
+        diagnostic.setCode(STAGE_ACTION_FAILED);
+        diagnostic.setSeverity(DiagnosticSeverity.ERROR);
+        diagnostic.setCategory(STAGE_ACTION_CATEGORY);
+        diagnostic.setTarget(event.name());
+        String reason = failure.getMessage() == null ? failure.getClass().getSimpleName() : failure.getMessage();
+        diagnostic.setMessage(String.format("Stage action %s failed on %s: %s", binding.name(), event, reason));
+        return diagnostic;
+    }
+
+    private static Diagnostic skippedDiagnostic(StageActionChains.ActionBinding binding, ActionEvent event,
+            String failedBefore) {
+        Diagnostic diagnostic = ManagementFactory.eINSTANCE.createDiagnostic();
+        diagnostic.setCode(STAGE_ACTION_SKIPPED);
+        diagnostic.setSeverity(DiagnosticSeverity.WARNING);
+        diagnostic.setCategory(STAGE_ACTION_CATEGORY);
+        diagnostic.setTarget(event.name());
+        diagnostic.setMessage(String.format(
+                "Stage action %s did not run on %s: %s failed before it and the chain stops on failure",
+                binding.name(), event, failedBefore));
+        return diagnostic;
+    }
+
+    /** Whether an action wants this event: its object type, trigger stages and trigger events. */
+    private static boolean applies(StageActionService sas, ActionEvent event, ActionContext ctx) {
         if (!sas.supportsObjectType(ctx.objectType())) {
-            return null;
+            return false;
         }
         Set<String> triggerStages = sas.getTriggerStages();
         if (!triggerStages.isEmpty() && !triggerStages.contains(ctx.stage())) {
-            return null;
+            return false;
         }
         Set<ActionEvent> triggerEvents = sas.getTriggerEvents();
-        if (!triggerEvents.isEmpty() && !triggerEvents.contains(event)) {
-            return null;
-        }
+        return triggerEvents.isEmpty() || triggerEvents.contains(event);
+    }
+
+    private static Promise<Void> invoke(StageActionService sas, ActionEvent event, ActionContext ctx) {
         Promise<Void> p = switch (event) {
         case ENTER -> sas.onEnter(ctx);
         case UPDATE -> sas.onUpdate(ctx);
@@ -1337,6 +1719,11 @@ public class RegistryServiceImpl<T extends EObject> implements RegistryService<T
         p.onFailure(t -> LOGGER.log(Level.WARNING, "StageAction " + sas.getClass().getSimpleName()
                 + " failed for " + event + " on " + ctx.objectId(), t));
         return p;
+    }
+
+    /** The action's promise for the event, or {@code null} when the action does not want it. Used by the replays. */
+    private Promise<Void> dispatchTo(StageActionService sas, ActionEvent event, ActionContext ctx) {
+        return applies(sas, event, ctx) ? invoke(sas, event, ctx) : null;
     }
 
 

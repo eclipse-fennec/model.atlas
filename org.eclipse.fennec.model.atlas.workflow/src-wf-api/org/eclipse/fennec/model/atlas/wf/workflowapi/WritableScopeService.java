@@ -157,6 +157,17 @@ public interface WritableScopeService<T extends EObject> extends ReadableScopeSe
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
 	 * <!-- begin-model-doc -->
+	 * Delete an object from a certain registry and stage, deciding what a stage gate's veto means (issue #294). Delegates to RegistryService.deleteFromStage with force; see there for the contract. Returns whether the deletion was successful.
+	 * <!-- end-model-doc -->
+	 * @model dataType="org.eclipse.fennec.model.atlas.mgmt.management.Promise&lt;org.eclipse.emf.ecore.EBooleanObject&gt;" objectIdRequired="true" forceRequired="true"
+	 * @generated
+	 */
+	Promise<Boolean> deleteFromStageForRegistry(String registry, String stage, String objectId, boolean force);
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * <!-- begin-model-doc -->
 	 * List all objects in a certain stage and registry of the workflow
 	 * <!-- end-model-doc -->
 	 * @model dataType="org.eclipse.fennec.model.atlas.mgmt.management.List&lt;org.eclipse.fennec.model.atlas.mgmt.management.ObjectMetadata&gt;" many="false"

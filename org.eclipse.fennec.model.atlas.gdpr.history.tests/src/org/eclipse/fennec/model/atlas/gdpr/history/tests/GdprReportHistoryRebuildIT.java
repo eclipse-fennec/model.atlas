@@ -127,7 +127,7 @@ public class GdprReportHistoryRebuildIT {
 		Documents.store(scope, Reports.germanReview());
 
 		GdprReportHistory german = Documents.awaitDocument(scope, "DE");
-		assertEquals("DE", german.getLanguage());
+		assertEquals("DE", german.getReportLanguage());
 		assertEquals(1, german.getRevisionCount(), "the German document holds the German review alone");
 		assertEquals(List.of("gdpr-clinic-de-20260922-080000"),
 				german.getRevisions().stream().map(ReportRevision::getReportId).toList());
@@ -135,7 +135,7 @@ public class GdprReportHistoryRebuildIT {
 
 		GdprReportHistory english = Documents.read(scope, "EN");
 		assertNotNull(english, "the English document must still be there");
-		assertEquals("EN", english.getLanguage());
+		assertEquals("EN", english.getReportLanguage());
 		assertEquals(1, english.getRevisionCount(), "the German review is not a revision of the English document");
 		assertEquals(Reports.FINGERPRINT, english.getSubjectFingerprint(),
 				"both documents are about the same model revision");

@@ -32,8 +32,10 @@ import org.eclipse.emf.common.util.URI;
 import org.eclipse.emf.ecore.EObject;
 import org.eclipse.emf.ecore.EPackage;
 import org.eclipse.emf.ecore.EcorePackage;
+import org.eclipse.emf.ecore.impl.EPackageRegistryImpl;
 import org.eclipse.emf.ecore.resource.Resource;
 import org.eclipse.emf.ecore.resource.ResourceSet;
+import org.eclipse.emf.ecore.resource.impl.ResourceSetImpl;
 import org.eclipse.emf.ecore.util.EcoreUtil;
 import org.eclipse.emf.ecore.xmi.PackageNotFoundException;
 import org.eclipse.fennec.emf.osgi.fingerprint.util.FingerprintHelper;
@@ -81,8 +83,14 @@ import org.osgi.service.component.ComponentServiceObjects;
  * <em>per-(scope,stage)</em> ResourceSet produced by the registry chain. So for
  * every parse this helper prefers a fresh lease of that per-stage ResourceSet
  * from {@link ResourceSetCollector} (adding the {@code git://} handler to the
- * lease), falling back to the management ResourceSet when no per-stage
- * ResourceSet is available yet. Per-stage isolation is also required for
+ * lease). While no per-stage ResourceSet exists yet (the chain configurations
+ * are generated after this helper starts priming), it parses on a
+ * {@linkplain #privateResourceSet() private ResourceSet} that shares the
+ * management ResourceSet's registries but nothing else: the management
+ * ResourceSet is shared by every storage service and their concurrent reads,
+ * and EMF flags a resource as loaded before its parse begins, so a second
+ * {@code getResource(uri, true)} on the same ResourceSet hands back a
+ * half-parsed model. Per-stage isolation is also required for
  * correctness: the same {@code nsURI} may carry different content on different
  * branches, so instances must resolve against their own stage's packages.
  *
@@ -114,7 +122,7 @@ public class GitStorageHelper extends AbstractStorageHelper {
 	private final String scope;
 	private final Map<String, String> eClassUriToRegistry;
 	private final EObjectRegistryService<EObject> registryService;
-	/** May be {@code null} (e.g. in unit tests) — then reads fall back to the management ResourceSet. */
+	/** May be {@code null} (e.g. in unit tests) — then reads parse on a {@link #privateResourceSet()}. */
 	private final ResourceSetCollector resourceSetCollector;
 
 	/** branch (= stage) -> its GitService. */
@@ -348,6 +356,31 @@ public class GitStorageHelper extends AbstractStorageHelper {
 		return resourceSetCollector == null ? null : resourceSetCollector.getResourceSetObjects(scope, stage);
 	}
 
+	/**
+	 * A ResourceSet for one parse when no per-stage lease exists yet: it looks up
+	 * packages and resource factories exactly like the management ResourceSet (its
+	 * package registry delegates there) and reads {@code git://} through this helper's
+	 * handler, but owns its resource list.
+	 *
+	 * <p>The management ResourceSet itself is never parsed on. It is shared by every
+	 * storage service, whose reads run concurrently, and EMF marks a resource as loaded
+	 * <em>before</em> parsing it: a second {@code getResource(uri, true)} for the same
+	 * URI returns the resource another thread is still filling. Startup priming did
+	 * exactly that - metadata derivation and the registration replay both read the same
+	 * schema - and registered an EPackage with no classifiers yet, whose type references
+	 * were added by the other parse after the registration had detached it and could
+	 * never resolve again (every instance of it then failed with "Value ... is not
+	 * legal"). A ResourceSet per parse leaves nothing to share.
+	 */
+	private ResourceSet privateResourceSet() {
+		ResourceSet rs = new ResourceSetImpl();
+		rs.setPackageRegistry(new EPackageRegistryImpl(resourceSet.getPackageRegistry()));
+		rs.setResourceFactoryRegistry(resourceSet.getResourceFactoryRegistry());
+		rs.getLoadOptions().putAll(resourceSet.getLoadOptions());
+		rs.getURIConverter().getURIHandlers().add(0, gitUriHandler);
+		return rs;
+	}
+
 	// --- read path ----------------------------------------------------------
 
 	@Override
@@ -404,7 +437,7 @@ public class GitStorageHelper extends AbstractStorageHelper {
 
 	/**
 	 * Reads an object against the per-(scope,stage) ResourceSet (so an instance's
-	 * dynamic EPackage resolves), falling back to the management ResourceSet.
+	 * dynamic EPackage resolves), or on a {@link #privateResourceSet()} while none exists.
 	 *
 	 * <p>If the object's model is not registered (typically a schema removed on this branch
 	 * while the instance file remains — D8-3), the parse fails with EMF's
@@ -421,8 +454,8 @@ public class GitStorageHelper extends AbstractStorageHelper {
 		URI uri = createStorageURI(scope, registry, stage, path);
 		ComponentServiceObjects<ResourceSet> cso = leaseFor(stage);
 		LOGGER.fine(() -> "loadEObject " + objectId + " on stage " + stage + " using "
-				+ (cso != null ? "per-stage leased ResourceSet" : "management ResourceSet (no per-stage lease)"));
-		ResourceSet rs = cso != null ? cso.getService() : resourceSet;
+				+ (cso != null ? "per-stage leased ResourceSet" : "private ResourceSet (no per-stage lease)"));
+		ResourceSet rs = cso != null ? cso.getService() : privateResourceSet();
 		Resource resource = null;
 		try {
 			if (cso != null) {
@@ -480,7 +513,7 @@ public class GitStorageHelper extends AbstractStorageHelper {
 
 	/**
 	 * One derivation sweep: for each branch, parse the files not yet derived
-	 * against a leased per-stage ResourceSet (or the management ResourceSet when
+	 * against a leased per-stage ResourceSet (or a {@link #privateResourceSet()} when
 	 * none is available), routing each to its registry and priming the cache.
 	 */
 	private synchronized void deriveAll() {
@@ -500,7 +533,7 @@ public class GitStorageHelper extends AbstractStorageHelper {
 			}
 
 			ComponentServiceObjects<ResourceSet> cso = leaseFor(stage);
-			ResourceSet rs = cso != null ? cso.getService() : resourceSet;
+			ResourceSet rs = cso != null ? cso.getService() : privateResourceSet();
 			try {
 				if (cso != null) {
 					rs.getURIConverter().getURIHandlers().add(0, new GitURIHandler(commitToService));

@@ -1,7 +1,8 @@
 Bundle-Name: Model Atlas Action API — stage lifecycle SPI
 Bundle-Description: The whiteboard contracts an implementation registers to take part in \
  the stage lifecycle: StageActionService (called after an object entered, was updated in \
- or left a stage) and StageGate (asked before a transition, and able to refuse it). \
+ or left a stage) and StageGate (asked before a transition or a delete, able to refuse it \
+ and explaining itself with diagnostics). \
  Deliberately free of EMF and of the rest of the workflow bundle, so an \
  implementor outside this repository — or a bundle here that only reacts to stage \
  events — does not inherit the platform to provide one.
@@ -12,3 +13,5 @@ Bundle-Description: The whiteboard contracts an implementation registers to take
 	org.osgi.util.promise;version=latest,\
 	org.osgi.annotation.versioning;version=latest,\
 	org.osgi.annotation.bundle;version=latest
+
+-testpath: junit-jupiter-api

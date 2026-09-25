@@ -16,16 +16,24 @@ package org.eclipse.fennec.model.atlas.workflow.impl;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.lang.reflect.InvocationTargetException;
+import java.time.Instant;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import org.eclipse.emf.ecore.EClass;
@@ -38,15 +46,26 @@ import org.eclipse.emf.ecore.resource.Resource;
 import org.eclipse.emf.ecore.resource.ResourceSet;
 import org.eclipse.emf.ecore.resource.impl.ResourceImpl;
 import org.eclipse.emf.ecore.resource.impl.ResourceSetImpl;
+import org.eclipse.emf.ecore.util.EcoreUtil;
+import org.eclipse.fennec.model.atlas.mgmt.api.EObjectRegistryService;
 import org.eclipse.fennec.model.atlas.mgmt.api.EObjectStorageService;
+import org.eclipse.fennec.model.atlas.mgmt.diagnostics.Diagnostics;
+import org.eclipse.fennec.model.atlas.mgmt.management.Diagnostic;
+import org.eclipse.fennec.model.atlas.mgmt.management.DiagnosticSeverity;
 import org.eclipse.fennec.model.atlas.mgmt.management.ManagementFactory;
 import org.eclipse.fennec.model.atlas.mgmt.management.ObjectMetadata;
 import org.eclipse.fennec.model.atlas.action.api.ActionContext;
+import org.eclipse.fennec.model.atlas.action.api.Dependent;
 import org.eclipse.fennec.model.atlas.action.api.GateContext;
+import org.eclipse.fennec.model.atlas.action.api.GateDiagnostic;
+import org.eclipse.fennec.model.atlas.action.api.GateTrigger;
 import org.eclipse.fennec.model.atlas.action.api.GateVerdict;
 import org.eclipse.fennec.model.atlas.action.api.StageActionService;
 import org.eclipse.fennec.model.atlas.action.api.StageGate;
 import org.eclipse.fennec.model.atlas.scope.api.StageGateRefusedException;
+import org.eclipse.fennec.model.atlas.wf.workflowapi.RegistryService;
+import org.eclipse.fennec.model.atlas.workflow.RegistryServiceCollector;
+import org.osgi.util.promise.Promise;
 import org.osgi.util.promise.Promises;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -106,7 +125,15 @@ public class RegistryServiceImplTest {
     private RegistryServiceImpl<EObject> createService(
             List<EObjectStorageService<EObject>> storageServices, String[] rootEClassUris,
             String[] derivedEClassUris) {
+        return createService(storageServices, rootEClassUris, derivedEClassUris, new String[0]);
+    }
+
+    private RegistryServiceImpl<EObject> createService(
+            List<EObjectStorageService<EObject>> storageServices, String[] rootEClassUris,
+            String[] derivedEClassUris, String[] stageActionChains) {
         RegistryServiceConfig config = mock(RegistryServiceConfig.class);
+        // lenient: the chains are read once at construction, whether or not a test cares
+        org.mockito.Mockito.lenient().when(config.stage_action_chains()).thenReturn(stageActionChains);
         when(config.registry_name()).thenReturn("test-registry");
         when(config.registry_description()).thenReturn("");
         when(config.registry_type()).thenReturn("OTHER");
@@ -290,6 +317,9 @@ public class RegistryServiceImplTest {
                     .thenReturn(Promises.resolved(null));
             org.mockito.Mockito.lenient().when(storage.storeObject(any(), any(), any(), any(), any(), any()))
                     .thenReturn(Promises.resolved(metadata));
+            // a refusal is recorded on the source copy since issue #294
+            org.mockito.Mockito.lenient().when(storage.updateDiagnostics(any(), any(), any(), any(), any(), any()))
+                    .thenReturn(Promises.resolved(metadata));
 
             service = createService(List.of(storage), TEST_NS_URI + "#//Person");
 
@@ -407,6 +437,510 @@ public class RegistryServiceImplTest {
 
             verify(gate, never()).beforeTransition(any());
             verify(storage).storeObject(any(), any(), any(), any(), any(), any());
+        }
+    }
+
+    @Nested
+    @DisplayName("Stage actions run in a configured order and record their results (issue #296)")
+    class StageActionChainTests {
+
+        private static final String PERSON = TEST_NS_URI + "#//Person";
+
+        private EObjectStorageService<EObject> storage;
+        private EObject person;
+        /** The stored copy the storage double writes diagnostics onto. */
+        private ObjectMetadata stored;
+        private final List<String> ran = new ArrayList<>();
+
+        @SuppressWarnings("unchecked")
+        @BeforeEach
+        void setUp() {
+            person = personClass.getEPackage().getEFactoryInstance().create(personClass);
+            stored = ManagementFactory.eINSTANCE.createObjectMetadata();
+            stored.setObjectId("object-1");
+            stored.setObjectType(PERSON);
+            stored.setStage("draft");
+
+            storage = mock(EObjectStorageService.class);
+            when(storage.getStorageType()).thenReturn("file");
+            lenient().when(storage.storeObject(any(), any(), any(), any(), any(), any()))
+                    .thenAnswer(inv -> Promises.resolved(inv.getArgument(5)));
+            lenient().when(storage.retrieveMetadata(any(), any(), any(), any()))
+                    .thenAnswer(inv -> Promises.resolved(EcoreUtil.copy(stored)));
+            lenient().when(storage.deleteObject(any(), any(), any(), any())).thenReturn(Promises.resolved(true));
+            lenient().when(storage.updateDiagnostics(any(), any(), any(), any(), any(), any())).thenAnswer(inv -> {
+                Diagnostics.replaceOwned(stored, inv.getArgument(4), inv.getArgument(5), Instant.now());
+                return Promises.resolved(EcoreUtil.copy(stored));
+            });
+        }
+
+        private RegistryServiceImpl<EObject> serviceWithChains(String... chains) {
+            RegistryServiceImpl<EObject> service = createService(List.of(storage), new String[] { PERSON },
+                    new String[0], chains);
+            // a delete evicts the registry cache, which DS injects into a private field
+            try {
+                java.lang.reflect.Field field = RegistryServiceImpl.class.getDeclaredField("registryService");
+                field.setAccessible(true);
+                field.set(service, mock(EObjectRegistryService.class));
+            } catch (ReflectiveOperationException e) {
+                throw new IllegalStateException(e);
+            }
+            return service;
+        }
+
+        /** An action that records its name when it runs and answers as told. */
+        private StageActionService action(String name, Promise<Void> answer) {
+            StageActionService sas = mock(StageActionService.class, name);
+            lenient().when(sas.supportsObjectType(any())).thenReturn(true);
+            lenient().when(sas.getTriggerStages()).thenReturn(Set.of());
+            lenient().when(sas.getTriggerEvents()).thenReturn(Set.of());
+            lenient().when(sas.requiresReplayOnStartup()).thenReturn(false);
+            lenient().when(sas.onEnter(any())).thenAnswer(inv -> {
+                ran.add(name);
+                return answer;
+            });
+            lenient().when(sas.onExit(any())).thenAnswer(inv -> {
+                ran.add(name);
+                return answer;
+            });
+            return sas;
+        }
+
+        private static Map<String, Object> props(String name, int ranking, long id) {
+            return Map.of(StageActionChains.NAME_PROPERTY, name, "service.ranking", ranking, "service.id", id);
+        }
+
+        private ObjectMetadata upload(RegistryServiceImpl<EObject> service) throws Exception {
+            ObjectMetadata metadata = ManagementFactory.eINSTANCE.createObjectMetadata();
+            metadata.setObjectId("object-1");
+            metadata.setObjectType(PERSON);
+            return service.uploadToStage("test-scope", "draft", person, metadata).getValue();
+        }
+
+        private static Diagnostic only(ObjectMetadata m, String producer) {
+            List<Diagnostic> owned = m.getDiagnostics().stream().filter(d -> producer.equals(d.getProducer()))
+                    .toList();
+            assertEquals(1, owned.size(), "exactly one root of " + producer + ", got " + m.getDiagnostics());
+            return owned.get(0);
+        }
+
+        @Test
+        @DisplayName("Without a chain the actions run in ranking order, highest first")
+        void rankingOrdersByDefault() throws Exception {
+            RegistryServiceImpl<EObject> service = serviceWithChains();
+            service.bindStageAction(action("low", Promises.resolved(null)), props("low", 1, 10L));
+            service.bindStageAction(action("high", Promises.resolved(null)), props("high", 10, 11L));
+            service.bindStageAction(action("mid", Promises.resolved(null)), props("mid", 5, 12L));
+
+            upload(service);
+
+            assertEquals(List.of("high", "mid", "low"), ran);
+        }
+
+        @Test
+        @DisplayName("A configured chain puts the named actions first, in its order; the rest follow by ranking")
+        void chainOrdersTheNamedActionsFirst() throws Exception {
+            RegistryServiceImpl<EObject> service = serviceWithChains(
+                    "{\"stage\": \"draft\", \"actions\": [\"validate\", \"compile\"]}");
+            service.bindStageAction(action("compile", Promises.resolved(null)), props("compile", 10, 1L));
+            service.bindStageAction(action("validate", Promises.resolved(null)), props("validate", 1, 2L));
+            service.bindStageAction(action("notify", Promises.resolved(null)), props("notify", 5, 3L));
+
+            upload(service);
+
+            assertEquals(List.of("validate", "compile", "notify"), ran);
+        }
+
+        @Test
+        @DisplayName("A chain for another stage or object type does not apply")
+        void chainIsSelectedByStageAndObjectType() throws Exception {
+            RegistryServiceImpl<EObject> service = serviceWithChains(
+                    "{\"stage\": \"release\", \"actions\": [\"validate\", \"compile\"]}",
+                    "{\"objectType\": \"http://elsewhere#//Other\", \"actions\": [\"validate\", \"compile\"]}");
+            service.bindStageAction(action("compile", Promises.resolved(null)), props("compile", 10, 1L));
+            service.bindStageAction(action("validate", Promises.resolved(null)), props("validate", 1, 2L));
+
+            upload(service);
+
+            assertEquals(List.of("compile", "validate"), ran, "neither chain matches a draft Person: ranking decides");
+        }
+
+        @Test
+        @DisplayName("By default a failing action does not stop the others, and its failure is recorded on the object")
+        void failureContinuesAndIsRecorded() throws Exception {
+            RegistryServiceImpl<EObject> service = serviceWithChains();
+            service.bindStageAction(action("compile", Promises.failed(new IllegalStateException("no compiler"))),
+                    props("compile", 10, 1L));
+            service.bindStageAction(action("validate", Promises.resolved(null)), props("validate", 1, 2L));
+
+            ObjectMetadata returned = upload(service);
+
+            assertEquals(List.of("compile", "validate"), ran);
+            Diagnostic recorded = only(stored, "stage-action/compile");
+            assertEquals(RegistryServiceImpl.STAGE_ACTION_FAILED, recorded.getCode());
+            assertEquals(DiagnosticSeverity.ERROR, recorded.getSeverity());
+            assertEquals("ENTER", recorded.getTarget());
+            assertTrue(recorded.getMessage().contains("no compiler"), recorded.getMessage());
+            assertNotNull(recorded.getId());
+            // the caller's copy says what the stored one says
+            assertEquals(recorded.getId(), only(returned, "stage-action/compile").getId());
+            assertTrue(stored.getDiagnostics().stream().noneMatch(d -> "stage-action/validate".equals(d.getProducer())),
+                    "a success with nothing to clear writes nothing");
+        }
+
+        @Test
+        @DisplayName("A chain that stops on failure skips the actions after the failing one and says so")
+        void stoppingChainSkipsTheRest() throws Exception {
+            RegistryServiceImpl<EObject> service = serviceWithChains(
+                    "{\"actions\": [\"compile\", \"validate\"], \"onFailure\": \"stop\"}");
+            service.bindStageAction(action("compile", Promises.failed(new IllegalStateException("no compiler"))),
+                    props("compile", 1, 1L));
+            StageActionService validate = action("validate", Promises.resolved(null));
+            service.bindStageAction(validate, props("validate", 10, 2L));
+            service.bindStageAction(action("notify", Promises.resolved(null)), props("notify", 5, 3L));
+
+            upload(service);
+
+            assertEquals(List.of("compile"), ran, "nothing after the failure runs");
+            verify(validate, never()).onEnter(any());
+            assertEquals(RegistryServiceImpl.STAGE_ACTION_FAILED, only(stored, "stage-action/compile").getCode());
+            Diagnostic skipped = only(stored, "stage-action/validate");
+            assertEquals(RegistryServiceImpl.STAGE_ACTION_SKIPPED, skipped.getCode());
+            assertEquals(DiagnosticSeverity.WARNING, skipped.getSeverity());
+            assertTrue(skipped.getMessage().contains("compile"), skipped.getMessage());
+            assertEquals(RegistryServiceImpl.STAGE_ACTION_SKIPPED, only(stored, "stage-action/notify").getCode());
+        }
+
+        @Test
+        @DisplayName("An action that succeeds again clears the failure it recorded before")
+        void successClearsAnEarlierFailure() throws Exception {
+            Diagnostic old = ManagementFactory.eINSTANCE.createDiagnostic();
+            old.setCode(RegistryServiceImpl.STAGE_ACTION_FAILED);
+            old.setSeverity(DiagnosticSeverity.ERROR);
+            old.setMessage("failed last time");
+            Diagnostics.replaceOwned(stored, "stage-action/compile", List.of(old), Instant.now());
+            RegistryServiceImpl<EObject> service = serviceWithChains();
+            service.bindStageAction(action("compile", Promises.resolved(null)), props("compile", 1, 1L));
+
+            ObjectMetadata metadata = ManagementFactory.eINSTANCE.createObjectMetadata();
+            metadata.setObjectId("object-1");
+            metadata.setObjectType(PERSON);
+            Diagnostics.replaceOwned(metadata, "stage-action/compile", List.of(EcoreUtil.copy(old)), Instant.now());
+            ObjectMetadata returned = service.uploadToStage("test-scope", "draft", person, metadata).getValue();
+
+            verify(storage).updateDiagnostics(eq("test-scope"), eq("test-registry"), eq("draft"), eq("object-1"),
+                    eq("stage-action/compile"), eq(List.of()));
+            assertTrue(stored.getDiagnostics().isEmpty(), "the stored copy no longer announces the old failure");
+            assertTrue(returned.getDiagnostics().isEmpty(), "nor does the caller's copy");
+        }
+
+        @Test
+        @DisplayName("Nothing is recorded after a delete: the object is gone")
+        void deleteRecordsNothing() throws Exception {
+            RegistryServiceImpl<EObject> service = serviceWithChains();
+            service.bindStageAction(action("cleanup", Promises.failed(new IllegalStateException("boom"))),
+                    props("cleanup", 1, 1L));
+
+            assertTrue(service.deleteFromStage("test-scope", "draft", "object-1").getValue());
+
+            assertEquals(List.of("cleanup"), ran, "the action still ran");
+            verify(storage, never()).updateDiagnostics(any(), any(), any(), any(), any(), any());
+        }
+
+        @Test
+        @DisplayName("An unbound action named in a chain is simply not there")
+        void unboundActionInChainIsIgnored() throws Exception {
+            RegistryServiceImpl<EObject> service = serviceWithChains(
+                    "{\"actions\": [\"missing\", \"compile\"], \"onFailure\": \"stop\"}");
+            service.bindStageAction(action("compile", Promises.resolved(null)), props("compile", 1, 1L));
+
+            upload(service);
+
+            assertEquals(List.of("compile"), ran);
+            assertTrue(stored.getDiagnostics().isEmpty());
+        }
+        // a malformed chain fails the registry at construction; StageActionChainsTest pins the parsing
+    }
+
+    @Nested
+    @DisplayName("Gate verdicts carry diagnostics, guard deletes and record consequences (issue #294)")
+    class GateDiagnosticsTests {
+
+        private static final String PRODUCER = "qvt-gate";
+        private static final String DEPENDENT_ID = "instance-7";
+
+        private EObjectStorageService<EObject> storage;
+        private RegistryServiceImpl<EObject> service;
+        /** The stored draft copy of the object under decision; the storage double writes diagnostics onto it. */
+        private ObjectMetadata metadata;
+        /** Another draft object of this registry, named as a dependent. */
+        private ObjectMetadata dependent;
+
+        @SuppressWarnings("unchecked")
+        @BeforeEach
+        void setUp() {
+            EObject person = personClass.getEPackage().getEFactoryInstance().create(personClass);
+            metadata = ManagementFactory.eINSTANCE.createObjectMetadata();
+            metadata.setObjectId("object-1");
+            metadata.setObjectType(TEST_NS_URI + "#//Person");
+            metadata.setStage("draft");
+            dependent = ManagementFactory.eINSTANCE.createObjectMetadata();
+            dependent.setObjectId(DEPENDENT_ID);
+            dependent.setObjectType(TEST_NS_URI + "#//Person");
+            dependent.setStage("draft");
+
+            storage = mock(EObjectStorageService.class);
+            when(storage.getStorageType()).thenReturn("file");
+            lenient().when(storage.retrieveObject("test-scope", "test-registry", "draft", "object-1"))
+                    .thenReturn(Promises.resolved(person));
+            lenient().when(storage.retrieveMetadata("test-scope", "test-registry", "draft", "object-1"))
+                    .thenAnswer(inv -> Promises.resolved(EcoreUtil.copy(metadata)));
+            lenient().when(storage.retrieveMetadata("test-scope", "test-registry", "release", "object-1"))
+                    .thenReturn(Promises.resolved(null));
+            lenient().when(storage.retrieveMetadata("test-scope", "test-registry", "draft", DEPENDENT_ID))
+                    .thenAnswer(inv -> Promises.resolved(EcoreUtil.copy(dependent)));
+            lenient().when(storage.storeObject(any(), any(), any(), any(), any(), any()))
+                    .thenAnswer(inv -> Promises.resolved(inv.getArgument(5)));
+            lenient().when(storage.deleteObject(any(), any(), any(), any())).thenReturn(Promises.resolved(true));
+            // the storage double does what the real one does: replaces the producer's roots
+            lenient().when(storage.updateDiagnostics(eq("test-scope"), eq("test-registry"), eq("draft"), any(),
+                    any(), any())).thenAnswer(inv -> {
+                        ObjectMetadata target = DEPENDENT_ID.equals(inv.getArgument(3)) ? dependent : metadata;
+                        Diagnostics.replaceOwned(target, inv.getArgument(4), inv.getArgument(5), Instant.now());
+                        return Promises.resolved(EcoreUtil.copy(target));
+                    });
+
+            service = createService(List.of(storage), TEST_NS_URI + "#//Person");
+            // a delete evicts the registry cache, which DS injects into a private field
+            EObjectRegistryService<EObject> cache = mock(EObjectRegistryService.class);
+            try {
+                java.lang.reflect.Field field = RegistryServiceImpl.class.getDeclaredField("registryService");
+                field.setAccessible(true);
+                field.set(service, cache);
+            } catch (ReflectiveOperationException e) {
+                throw new IllegalStateException("RegistryServiceImpl.registryService moved; adjust the test", e);
+            }
+        }
+
+        private StageGate gate() {
+            StageGate gate = mock(StageGate.class);
+            when(gate.supportsObjectType(any())).thenReturn(true);
+            lenient().when(gate.producer()).thenReturn(PRODUCER);
+            return gate;
+        }
+
+        private static GateVerdict dependentsVeto() {
+            return GateVerdict.refuse("2 instances depend on this schema", List.of(
+                    GateDiagnostic.error("dependents", "2 instances depend on this schema"),
+                    GateDiagnostic.warning("schema-gone", "the schema this instance conforms to is gone")
+                            .on(Dependent.inSameRegistry("draft", DEPENDENT_ID))));
+        }
+
+        private static Diagnostic only(ObjectMetadata m, String producer) {
+            List<Diagnostic> owned = m.getDiagnostics().stream().filter(d -> producer.equals(d.getProducer()))
+                    .toList();
+            assertEquals(1, owned.size(), "exactly one root of " + producer + ", got " + m.getDiagnostics());
+            return owned.get(0);
+        }
+
+        @Test
+        @DisplayName("A refused transition records the veto on the source copy and hands it to the caller")
+        void refusedTransitionRecordsTheVetoOnTheSourceCopy() {
+            StageGate gate = gate();
+            GateDiagnostic finding = GateDiagnostic.error("qvto.does-not-compile", "does not compile")
+                    .inCategory("compile").at("Lib.qvto")
+                    .withChild(GateDiagnostic.error("qvto.compiler-finding", "unresolved import").at("3:7"));
+            when(gate.beforeTransition(any()))
+                    .thenReturn(Promises.resolved(GateVerdict.refuse("does not compile", List.of(finding))));
+            service.addStageGate(gate);
+
+            StageGateRefusedException refused = assertThrows(StageGateRefusedException.class,
+                    () -> service.transitionToStage("test-scope", "object-1", "draft", "release"));
+
+            // the caller gets the findings and where they were recorded
+            assertEquals(GateTrigger.TRANSITION, refused.trigger());
+            assertEquals("draft", refused.stage());
+            assertEquals("object-1", refused.objectId());
+            assertEquals("test-registry", refused.registry());
+            assertEquals(List.of(finding), refused.diagnostics());
+            // the source copy now carries the veto, as a persisted diagnostic with an id
+            verify(storage).updateDiagnostics(eq("test-scope"), eq("test-registry"), eq("draft"), eq("object-1"),
+                    eq(PRODUCER), any());
+            Diagnostic recorded = only(metadata, PRODUCER);
+            assertNotNull(recorded.getId(), "the id was minted");
+            assertEquals("qvto.does-not-compile", recorded.getCode());
+            assertEquals(DiagnosticSeverity.ERROR, recorded.getSeverity());
+            assertEquals("Lib.qvto", recorded.getTarget());
+            assertEquals("compile", recorded.getCategory());
+            assertEquals(1, recorded.getChildren().size());
+            assertEquals("3:7", recorded.getChildren().get(0).getTarget());
+            // and nothing moved
+            verify(storage, never()).storeObject(any(), any(), any(), any(), any(), any());
+        }
+
+        @Test
+        @DisplayName("A pass clears the veto the same gate recorded on an earlier attempt")
+        void passingRerunClearsAnEarlierVeto() {
+            Diagnostics.replaceOwned(metadata, PRODUCER,
+                    List.of(GateDiagnostics.toModel(GateDiagnostic.error("qvto.does-not-compile", "stale veto"))),
+                    Instant.now());
+            StageGate gate = gate();
+            when(gate.beforeTransition(any())).thenReturn(Promises.resolved(GateVerdict.pass()));
+            service.addStageGate(gate);
+
+            service.transitionToStage("test-scope", "object-1", "draft", "release");
+
+            ArgumentCaptor<ObjectMetadata> stored = ArgumentCaptor.forClass(ObjectMetadata.class);
+            verify(storage).storeObject(any(), any(), eq("release"), eq("object-1"), any(), stored.capture());
+            assertTrue(stored.getValue().getDiagnostics().isEmpty(), "the copy that moved carries no stale veto");
+            // the source copy stays (delete_after_transition is off) and is brought up to date too
+            verify(storage).updateDiagnostics(eq("test-scope"), eq("test-registry"), eq("draft"), eq("object-1"),
+                    eq(PRODUCER), eq(List.of()));
+            assertTrue(metadata.getDiagnostics().isEmpty());
+        }
+
+        @Test
+        @DisplayName("A pass with warnings lets the warnings travel with the object")
+        void passWithWarningsTravelsWithTheObject() {
+            StageGate gate = gate();
+            when(gate.beforeTransition(any())).thenReturn(Promises.resolved(
+                    GateVerdict.pass(List.of(GateDiagnostic.warning("deprecated-import", "imports a deprecated library")))));
+            service.addStageGate(gate);
+
+            service.transitionToStage("test-scope", "object-1", "draft", "release");
+
+            ArgumentCaptor<ObjectMetadata> stored = ArgumentCaptor.forClass(ObjectMetadata.class);
+            verify(storage).storeObject(any(), any(), eq("release"), eq("object-1"), any(), stored.capture());
+            Diagnostic carried = only(stored.getValue(), PRODUCER);
+            assertEquals("deprecated-import", carried.getCode());
+            assertEquals(DiagnosticSeverity.WARNING, carried.getSeverity());
+            assertNotNull(carried.getId());
+        }
+
+        @Test
+        @DisplayName("A refused delete keeps the object, records the veto on it and leaves the dependents alone")
+        void refusedDeleteKeepsTheObject() {
+            StageGate gate = gate();
+            when(gate.beforeDelete(any())).thenReturn(Promises.resolved(dependentsVeto()));
+            service.addStageGate(gate);
+
+            InvocationTargetException failed = assertThrows(InvocationTargetException.class,
+                    () -> service.deleteFromStage("test-scope", "draft", "object-1").getValue());
+            StageGateRefusedException refused = assertInstanceOf(StageGateRefusedException.class, failed.getCause());
+
+            assertEquals(GateTrigger.DELETE, refused.trigger());
+            assertTrue(refused.getMessage().contains("Cannot delete object object-1"), refused.getMessage());
+            assertTrue(refused.getMessage().contains("2 instances depend on this schema"), refused.getMessage());
+            assertEquals(1, refused.diagnostics().size(), "only the finding about the object itself is handed over");
+            assertEquals("dependents", refused.diagnostics().get(0).code());
+            verify(storage, never()).deleteObject(any(), any(), any(), any());
+            verify(gate, never()).beforeTransition(any());
+            assertEquals("dependents", only(metadata, PRODUCER).getCode());
+            assertTrue(dependent.getDiagnostics().isEmpty(), "nothing happened to the dependent, so nothing is recorded");
+        }
+
+        @Test
+        @DisplayName("A forced delete goes through and records the consequence on the dependents instead")
+        void forcedDeleteRecordsTheConsequenceOnDependents() throws Exception {
+            StageGate gate = gate();
+            when(gate.beforeDelete(any())).thenReturn(Promises.resolved(dependentsVeto()));
+            service.addStageGate(gate);
+
+            assertTrue(service.deleteFromStage("test-scope", "draft", "object-1", true).getValue());
+
+            verify(storage).deleteObject("test-scope", "test-registry", "draft", "object-1");
+            Diagnostic consequence = only(dependent, PRODUCER);
+            assertEquals("schema-gone", consequence.getCode());
+            assertEquals(DiagnosticSeverity.WARNING, consequence.getSeverity());
+            assertNotNull(consequence.getId());
+            // the veto about the deleted object itself is not written anywhere: the object is gone
+            verify(storage, never()).updateDiagnostics(any(), any(), any(), eq("object-1"), any(), any());
+        }
+
+        @Test
+        @DisplayName("Without force the delete stays what it was: no gate, no writes")
+        void deleteWithoutGatesIsUnchanged() throws Exception {
+            assertTrue(service.deleteFromStage("test-scope", "draft", "object-1").getValue());
+
+            verify(storage).deleteObject("test-scope", "test-registry", "draft", "object-1");
+            verify(storage, never()).updateDiagnostics(any(), any(), any(), any(), any(), any());
+        }
+
+        @Test
+        @DisplayName("A gate written against 1.1 passes deletes by default")
+        void beforeDeleteDefaultsToPass() throws Exception {
+            StageGate legacy = new StageGate() {
+                @Override
+                public boolean supportsObjectType(String objectType) {
+                    return true;
+                }
+
+                @Override
+                public Promise<GateVerdict> beforeTransition(GateContext ctx) {
+                    return Promises.resolved(GateVerdict.refuse("would refuse a transition"));
+                }
+            };
+            service.addStageGate(legacy);
+
+            assertTrue(service.deleteFromStage("test-scope", "draft", "object-1").getValue());
+            verify(storage).deleteObject("test-scope", "test-registry", "draft", "object-1");
+        }
+
+        @Test
+        @DisplayName("The delete context names the trigger, the stage and no target")
+        void deleteContextDescribesTheDelete() throws Exception {
+            StageGate gate = gate();
+            when(gate.beforeDelete(any())).thenReturn(Promises.resolved(GateVerdict.pass()));
+            service.addStageGate(gate);
+
+            service.deleteFromStage("test-scope", "draft", "object-1").getValue();
+
+            ArgumentCaptor<GateContext> captor = ArgumentCaptor.forClass(GateContext.class);
+            verify(gate).beforeDelete(captor.capture());
+            GateContext ctx = captor.getValue();
+            assertEquals(GateTrigger.DELETE, ctx.trigger());
+            assertTrue(ctx.isDelete());
+            assertEquals("draft", ctx.sourceStage());
+            assertNull(ctx.targetStage());
+            assertEquals("object-1", ctx.objectId());
+        }
+
+        @Test
+        @DisplayName("A consequence for another registry goes through that registry")
+        void consequenceOnAnotherRegistryGoesThroughTheCollector() throws Exception {
+            @SuppressWarnings("unchecked")
+            RegistryService<EObject> instances = mock(RegistryService.class);
+            when(instances.updateDiagnostics(eq("test-scope"), eq("release"), eq("instance-9"), eq(PRODUCER), any()))
+                    .thenReturn(Promises.resolved(ManagementFactory.eINSTANCE.createObjectMetadata()));
+            RegistryServiceCollector collector = mock(RegistryServiceCollector.class);
+            doReturn(instances).when(collector).getRegistryServiceByRegistryName("instances");
+            service.bindRegistryCollector(collector);
+
+            StageGate gate = gate();
+            when(gate.beforeDelete(any())).thenReturn(Promises.resolved(GateVerdict.pass(List.of(
+                    GateDiagnostic.warning("schema-gone", "gone").on(new Dependent("instances", "release", "instance-9"))))));
+            service.addStageGate(gate);
+
+            assertTrue(service.deleteFromStage("test-scope", "draft", "object-1").getValue());
+
+            verify(instances).updateDiagnostics(eq("test-scope"), eq("release"), eq("instance-9"), eq(PRODUCER), any());
+            verify(storage).deleteObject("test-scope", "test-registry", "draft", "object-1");
+        }
+
+        @Test
+        @DisplayName("A consequence that cannot be recorded stops the operation before it commits")
+        void unreachableDependentFailsClosed() {
+            StageGate gate = gate();
+            when(gate.beforeDelete(any())).thenReturn(Promises.resolved(GateVerdict.pass(List.of(
+                    GateDiagnostic.warning("schema-gone", "gone").on(new Dependent("instances", "release", "instance-9"))))));
+            service.addStageGate(gate);
+
+            InvocationTargetException failed = assertThrows(InvocationTargetException.class,
+                    () -> service.deleteFromStage("test-scope", "draft", "object-1", true).getValue());
+
+            // no collector is bound: a fault, not a refusal, and nothing was deleted
+            assertInstanceOf(IllegalStateException.class, failed.getCause());
+            verify(storage, never()).deleteObject(any(), any(), any(), any());
         }
     }
 

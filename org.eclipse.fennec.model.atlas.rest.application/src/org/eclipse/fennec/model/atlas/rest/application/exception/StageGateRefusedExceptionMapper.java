@@ -30,22 +30,27 @@ import jakarta.ws.rs.core.Response.Status;
 import jakarta.ws.rs.ext.ExceptionMapper;
 
 /**
- * Maps a {@link StageGateRefusedException} to <b>409 Conflict</b> instead of a generic 500.
+ * Maps a {@link StageGateRefusedException} that reaches the container to <b>409 Conflict</b>
+ * instead of a generic 500.
  *
  * <p>
- * The exception means a stage gate refused a transition before it committed: the object
- * does not hold up in the target stage, for instance a QVT source that does not compile
- * against the target stage's package view (issue #248). The request was well formed and
- * broke no stage rule; what stops it is the object's state relative to the target stage,
- * which the caller can change (promote the library first, fix the source). The gate's
- * reason travels to the client, because it says what to do.
+ * The exception means a stage gate refused a transition or a delete before it committed
+ * (issues #248, #294): the object does not hold up in the target stage, or others still
+ * depend on it. The request was well formed and broke no stage rule; what stops it is the
+ * object's state relative to the operation, which the caller can change. That is a
+ * {@code 409}.
  * </p>
  *
  * <p>
- * Like {@link StageOccupiedExceptionMapper}, this mapper only fires when the exception
- * propagates <em>unwrapped</em>; the transition path may raise it inside a failed
- * {@code Promise}, so {@link EndpointFailures#propagate(Exception)} finds it in the chain
- * with {@link #findInChain(Throwable)} and answers with the same status.
+ * The <em>contract</em> for a refusal (issue #295) is a {@code 409} whose body is the refused
+ * object's metadata from its source stage, diagnostics included. That body is built where
+ * the request is known - in the endpoint, through
+ * {@code org.eclipse.fennec.model.atlas.rest.application.resource.GateRefusals} - so the
+ * codec serialises it with the endpoint's own options and in the media type the request
+ * resolved to. This mapper is the safety net behind it: a refusal that escapes an endpoint
+ * unwrapped still answers {@code 409}, with the plain error body and the gates' reasons as
+ * its message, so the status never depends on the body. {@link EndpointFailures#propagate}
+ * hands a refusal on unwrapped for exactly this reason.
  * </p>
  *
  * @author Data In Motion
@@ -63,9 +68,9 @@ public class StageGateRefusedExceptionMapper implements ExceptionMapper<StageGat
 		return conflict(exception);
 	}
 
-	/** Builds the 409 Conflict response for a gate's refusal. */
+	/** Builds the 409 Conflict response for a gate's refusal with the plain error body. */
 	public static Response conflict(StageGateRefusedException exception) {
-		logger.log(Level.FINE, "A stage gate refused a transition", exception);
+		logger.log(Level.FINE, "A stage gate refused an operation", exception);
 
 		ErrorResponse errorResponse = RestFactory.eINSTANCE.createErrorResponse();
 		errorResponse.setMessage(exception.getMessage());
@@ -78,11 +83,6 @@ public class StageGateRefusedExceptionMapper implements ExceptionMapper<StageGat
 				.build();
 	}
 
-	/**
-	 * Returns the {@link StageGateRefusedException} in {@code t}'s cause chain, or
-	 * {@code null} if there is none. Callers that catch broadly must look down the chain
-	 * rather than test the top-level type, because a failed {@code Promise} wraps it.
-	 */
 	public static StageGateRefusedException findInChain(Throwable t) {
 		for (Throwable c = t; c != null; c = c.getCause()) {
 			if (c instanceof StageGateRefusedException sgre) {

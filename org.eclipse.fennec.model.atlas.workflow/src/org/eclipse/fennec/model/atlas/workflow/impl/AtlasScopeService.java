@@ -180,8 +180,17 @@ public class AtlasScopeService implements ScopeService<EPackage>, ReadableScopeS
 	 */
 	@Override
 	public Promise<Boolean> deleteFromStageForRegistry(String registry, String stage, String objectId) {
+		return deleteFromStageForRegistry(registry, stage, objectId, false);
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * @see org.eclipse.fennec.model.atlas.wf.workflowapi.WritableScopeService#deleteFromStageForRegistry(java.lang.String, java.lang.String, java.lang.String, boolean)
+	 */
+	@Override
+	public Promise<Boolean> deleteFromStageForRegistry(String registry, String stage, String objectId, boolean force) {
 		validateRegistry(registry);
-		return atlasSchemaRegistryService.deleteFromStage(WorkflowConstants.ATLAS_SCOPE_NAME, stage, objectId);
+		return atlasSchemaRegistryService.deleteFromStage(WorkflowConstants.ATLAS_SCOPE_NAME, stage, objectId, force);
 	}
 
 	/* 
