@@ -34,23 +34,31 @@ final class Documents {
 	 * What {@code GDPRReportHistoryStageAction.documentId} makes of the fixtures' fingerprint and
 	 * language. The language suffix is always written, so a single-language runtime has it too.
 	 */
-	static final String DOCUMENT_ID = "gdpr-history-fp1-clinic100-en";
+	static final String DOCUMENT_ID = documentId("EN");
 
 	private static final long TIMEOUT_MS = 30_000;
 	private static final long POLL_MS = 100;
+
+	/** The stage the reviews are carried out against; a document is bound to it. */
+	static final String REVIEW_STAGE = "draft";
 
 	private Documents() {
 	}
 
 	/** Stores a review in the reports registry, the way the REST resource stores one. */
 	static void store(WritableScopeService<EObject> scope, GdprReport report) throws Exception {
+		store(scope, report, REVIEW_STAGE);
+	}
+
+	/** Stores a review into one stage of the reports registry. */
+	static void store(WritableScopeService<EObject> scope, GdprReport report, String stage) throws Exception {
 		ObjectMetadata metadata = ManagementFactory.eINSTANCE.createObjectMetadata();
 		metadata.setObjectId(report.getReportId());
 		metadata.setObjectName(report.getName());
 		metadata.setUploadTime(Instant.now());
 		metadata.setVersion(Reports.FINGERPRINT);
 		metadata.setObjectType(EcoreUtil.getURI(report.eClass()).toString());
-		scope.uploadToStageForRegistry(TestAnnotations.REPORT_REGISTRY, "draft", report, metadata).getValue();
+		scope.uploadToStageForRegistry(TestAnnotations.REPORT_REGISTRY, stage, report, metadata).getValue();
 	}
 
 	/**
@@ -60,10 +68,15 @@ final class Documents {
 	 * returns before the document exists - by design, because the workflow must not wait on it.
 	 */
 	static GdprReportHistory awaitRevisions(WritableScopeService<EObject> scope, int revisions) {
+		return awaitRevisions(scope, revisions, REVIEW_STAGE);
+	}
+
+	/** Waits for the document of one stage to carry exactly {@code revisions} revisions. */
+	static GdprReportHistory awaitRevisions(WritableScopeService<EObject> scope, int revisions, String stage) {
 		long deadline = System.currentTimeMillis() + TIMEOUT_MS;
 		GdprReportHistory last = null;
 		while (System.currentTimeMillis() < deadline) {
-			last = read(scope);
+			last = read(scope, Reports.LANGUAGE, stage);
 			if (last != null && last.getRevisionCount() == revisions) {
 				return last;
 			}
@@ -86,8 +99,16 @@ final class Documents {
 
 	/** The document of one language, or null while it is not there yet. */
 	static GdprReportHistory read(WritableScopeService<EObject> scope, String language) {
+		return read(scope, language, REVIEW_STAGE);
+	}
+
+	/**
+	 * The document of one language, from the stage its reviews were carried out at, or null while it
+	 * is not there yet. A document lives in that stage: the id does not name it.
+	 */
+	static GdprReportHistory read(WritableScopeService<EObject> scope, String language, String stage) {
 		try {
-			EObject stored = scope.getContentFromStageForRegistry(TestAnnotations.DOCUMENT_REGISTRY, "draft",
+			EObject stored = scope.getContentFromStageForRegistry(TestAnnotations.DOCUMENT_REGISTRY, stage,
 					documentId(language));
 			return stored instanceof GdprReportHistory history ? history : null;
 		} catch (RuntimeException notThereYet) {
@@ -115,6 +136,29 @@ final class Documents {
 
 	/** What the action stores one language's document under. */
 	static String documentId(String language) {
-		return "gdpr-history-fp1-clinic100-" + language.toLowerCase(java.util.Locale.ROOT);
+		// The id the action mints: the flattened nsURI, a digest of the raw one so two nsURIs that
+		// flatten alike stay apart, and the corpus language. Not the stage - the document lives in
+		// its stage rather than naming it.
+		return "gdpr-history-" + segment(Reports.SUBJECT_NS_URI) + "-" + digest(Reports.SUBJECT_NS_URI) + "-"
+				+ segment(language).toLowerCase(java.util.Locale.ROOT);
+	}
+
+	/** The first eight hex characters of the SHA-256, as the action mints them. */
+	private static String digest(String value) {
+		try {
+			byte[] hash = java.security.MessageDigest.getInstance("SHA-256")
+					.digest(value.getBytes(java.nio.charset.StandardCharsets.UTF_8));
+			StringBuilder hex = new StringBuilder(8);
+			for (int i = 0; hex.length() < 8; i++) {
+				hex.append(String.format("%02x", hash[i]));
+			}
+			return hex.toString();
+		} catch (java.security.NoSuchAlgorithmException e) {
+			throw new IllegalStateException("SHA-256 is not available", e);
+		}
+	}
+
+	private static String segment(String value) {
+		return value.replaceAll("[^A-Za-z0-9]", "-");
 	}
 }

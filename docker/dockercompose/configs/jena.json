@@ -26,8 +26,7 @@
             "jena"
         ],
         "scope.target": "(atlas.scope=jena)",
-        "document.registry": "gdprdoc",
-        "document.stage": "draft"
+        "document.registry": "gdprdoc"
     },
     "ModelAtlasObjectPublisher~gdprStatus": {
         "base.uri": "http://localhost:8080/atlas/rest",
@@ -304,6 +303,9 @@
             }
         ],
         "root.eclass.uri": [
+            "https://org.eclipse/fennec/gdpr-report-history/1.0.0#//GdprReportHistory"
+        ],
+        "derived.eclass.uri": [
             "https://org.eclipse/fennec/gdpr-report-history/1.0.0#//GdprReportHistory"
         ],
         "resourceSet.target": "(emf.name=ecore)"

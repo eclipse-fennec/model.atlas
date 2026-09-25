@@ -36,9 +36,10 @@ import org.osgi.test.common.annotation.config.WithFactoryConfiguration;
  * <li><b>{@code stageActionService.target} on the reports registry.</b> That reference defaults to
  * {@code (scope=no-inject)}, so a registry that does not name an action binds none and dispatches
  * nothing at all - the action activates, logs, and never fires.</li>
- * <li><b>The document stage is not final.</b> A registry needs exactly one final stage and a final
- * stage refuses updates, so a single {@code draft{final:true}} registry accepts the first document
- * and then rejects every rebuild.</li>
+ * <li><b>The document EClass is declared {@code derived}.</b> A document lives in the stage its
+ * reviews were carried out at, which may be the registry's final stage, and a final stage refuses
+ * updates - so without that declaration the first document is accepted and every rebuild of it is
+ * rejected.</li>
  * </ul>
  */
 @RequireEMF
@@ -85,12 +86,15 @@ public class TestAnnotations extends CommonTestAnnotations {
 			@Property(key = "registry.name", value = DOCUMENT_REGISTRY),
 			@Property(key = "registry.type", value = "OTHER"),
 			@Property(key = "root.eclass.uri", value = HISTORY_NS_URI + "#//GdprReportHistory"),
+			// Derived: the Atlas builds these documents itself, so the trusted service API may
+			// rewrite one even in a final stage. A document lives in the stage its reviews were
+			// carried out at, and that stage may well be the final one.
+			@Property(key = "derived.eclass.uri", value = HISTORY_NS_URI + "#//GdprReportHistory"),
 			@Property(key = "schemaPackage.target", value = "(emf.nsURI=" + HISTORY_NS_URI + ")"),
 			@Property(key = "resourceSet.target", value = "(emf.name=ecore)"),
 			@Property(key = "storageService.target", value = "(storage.type=file)"),
 			@Property(key = "storageService.cardinality.minimum", value = "1", scalar = Scalar.Integer),
 			@Property(key = "registry.target", value = "(registry=main)"),
-			// draft is NOT final: the document is rewritten on every rebuild
 			@Property(key = "stages", type = Type.Array, value = {
 					"{ \"name\" : \"draft\", \"writable\" : true, \"final\": false}",
 					"{ \"name\" : \"release\", \"writable\" : true, \"final\": true}" }),
@@ -101,8 +105,7 @@ public class TestAnnotations extends CommonTestAnnotations {
 			@Property(key = "report.stages", type = Type.Array, value = { "draft", "release" }),
 			@Property(key = "trigger.scopes", type = Type.Array, value = { SCOPE_NAME }),
 			@Property(key = "scope.target", value = "(atlas.scope=" + SCOPE_NAME + ")"),
-			@Property(key = "document.registry", value = DOCUMENT_REGISTRY),
-			@Property(key = "document.stage", value = "draft") })
+			@Property(key = "document.registry", value = DOCUMENT_REGISTRY) })
 	@WithFactoryConfiguration(factoryPid = PID_SCOPE_SERVICE, name = SCOPE_NAME, location = "?", properties = {
 			@Property(key = "atlas.scope", value = SCOPE_NAME),
 			@Property(key = "scope.name", value = SCOPE_NAME),

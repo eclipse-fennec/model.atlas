@@ -17,8 +17,7 @@
         "report.stages": ["draft", "release"],
         "trigger.scopes": ["$[env:GDPR_ATLAS_SCOPE;default=$[prop:GDPR_ATLAS_SCOPE;default=jena]]"],
         "scope.target": "(atlas.scope=$[env:GDPR_ATLAS_SCOPE;default=$[prop:GDPR_ATLAS_SCOPE;default=jena]])",
-        "document.registry": "gdprdoc",
-        "document.stage": "draft"
+        "document.registry": "gdprdoc"
     },
     "ModelAtlasObjectPublisher~gdprStatus": {
         "base.uri": "http://localhost:8080/atlas/rest",
@@ -339,6 +338,9 @@
             }
         ],
         "root.eclass.uri": [
+            "https://org.eclipse/fennec/gdpr-report-history/1.0.0#//GdprReportHistory"
+        ],
+        "derived.eclass.uri": [
             "https://org.eclipse/fennec/gdpr-report-history/1.0.0#//GdprReportHistory"
         ],
         "resourceSet.target": "(emf.name=ecore)"

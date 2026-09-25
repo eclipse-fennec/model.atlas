@@ -14,6 +14,7 @@
 package org.eclipse.fennec.model.atlas.gdpr.history;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -62,6 +63,17 @@ class GDPRReportHistoryStageActionTest {
 	private static final GDPRReportFactory REPORTS = GDPRReportFactory.eINSTANCE;
 	private static final String FINGERPRINT = "fp1:9f2c1ab7d4e85530";
 	private static final String OTHER_FINGERPRINT = "fp1:0000deadbeef0000";
+	private static final String NS_URI = "https://example.org/clinic/1.0.0";
+	/**
+	 * The id the action mints: the flattened nsURI, a digest of the raw one, and the language. No
+	 * stage - a document lives in its stage rather than naming it. The digest is what keeps two
+	 * nsURIs that flatten alike apart.
+	 */
+	private static final String ID_EN = "gdpr-history-https---example-org-clinic-1-0-0-d013c531-en";
+	private static final String ID_DE = "gdpr-history-https---example-org-clinic-1-0-0-d013c531-de";
+	private static final String ID_UNKNOWN = "gdpr-history-https---example-org-clinic-1-0-0-d013c531-unknown";
+	/** A different model, which since the document is keyed by nsURI means a different nsURI. */
+	private static final String OTHER_NS_URI = "https://example.org/billing/1.0.0";
 
 	private final Scope scope = new Scope();
 
@@ -118,25 +130,76 @@ class GDPRReportHistoryStageActionTest {
 	/* ------------------------------------------------------------------ what it gathers */
 
 	@Test
-	@DisplayName("it gathers every stage, and only the reviews of the subject that changed")
-	void gathersTheSubjectAcrossStages() throws Exception {
+	@DisplayName("a review at each stage is its own document, and no other subject's review is in them")
+	void oneDocumentPerStage() throws Exception {
 		var action = action(new String[] { "draft", "release" }, new String[0]);
-		// A promoted review lives in 'release', a newer one in 'draft', and a third is about a
-		// different model altogether.
+		// The same subject reviewed at two stages, and a third review about a different model.
 		scope.put("release", "gdpr-old", report("2026-09-15T08:12:00Z", FINGERPRINT));
 		scope.put("draft", "gdpr-new", report("2026-09-17T14:20:30Z", FINGERPRINT));
-		scope.put("draft", "gdpr-unrelated", report("2026-09-16T09:00:00Z", OTHER_FINGERPRINT));
+		scope.put("draft", "gdpr-unrelated", report("2026-09-16T09:00:00Z", OTHER_FINGERPRINT, "EN", OTHER_NS_URI));
 
 		action.onEnter(context("jena", "draft", "gdpr-new"));
 
 		assertTrue(scope.awaitWrite());
-		assertEquals("gdpr-history-fp1-9f2c1ab7d4e85530-en", scope.writtenId.get(),
-				"one document per subject and language, addressable from the fingerprint and the language");
-		assertEquals(FINGERPRINT, scope.writtenVersion.get());
+		await(() -> scope.documents.size() == 2);
+		assertEquals(Set.of("draft/" + ID_EN, "release/" + ID_EN), scope.documents.keySet(),
+				"a review describes the stage it was carried out against, so two stages are two documents");
 
-		List<String> reviewed = scope.written.get().getRevisions().stream().map(ReportRevision::getReportId).toList();
-		assertEquals(List.of("gdpr-old", "gdpr-new"), reviewed,
-				"both reviews of the subject belong in the document, oldest first, and no other model's");
+		assertEquals(List.of("gdpr-new"), scope.documents.get("draft/" + ID_EN).getRevisions().stream()
+				.map(ReportRevision::getReportId).toList(),
+				"the release review is not an earlier revision of the draft one");
+		assertEquals(List.of("gdpr-old"), scope.documents.get("release/" + ID_EN).getRevisions().stream()
+				.map(ReportRevision::getReportId).toList());
+		assertEquals("https://example.org/clinic/1.0.0",
+				scope.documents.get("draft/" + ID_EN).getSubjectIdentifier(),
+				"both are filed under the subject's nsURI, not under a revision's fingerprint");
+	}
+
+	@Test
+	@DisplayName("two nsURIs that flatten to the same segment are still two documents")
+	void flattenedIdentifiersDoNotCollide() throws Exception {
+		var action = action(new String[] { "draft" }, new String[0]);
+		// Reduced to one path segment these are identical - "http---x-org-a-b" - so
+		// without the digest one subject's history would silently overwrite the other's.
+		scope.put("draft", "gdpr-slash", report("2026-09-15T08:12:00Z", FINGERPRINT, "EN", "http://x.org/a/b"));
+		scope.put("draft", "gdpr-dash", report("2026-09-16T09:00:00Z", OTHER_FINGERPRINT, "EN", "http://x.org/a-b"));
+
+		action.onEnter(context("jena", "draft", "gdpr-slash"));
+		assertTrue(scope.awaitWrite());
+		await(() -> scope.documents.size() == 1);
+		action.onEnter(context("jena", "draft", "gdpr-dash"));
+		await(() -> scope.documents.size() == 2);
+
+		assertEquals(Set.of("draft/gdpr-history-http---x-org-a-b-137d775e-en", "draft/gdpr-history-http---x-org-a-b-f2a0f452-en"), scope.documents.keySet(),
+				"the digest of the raw nsURI is what keeps them apart");
+		assertEquals(List.of("gdpr-slash"), scope.documents.get("draft/gdpr-history-http---x-org-a-b-137d775e-en").getRevisions().stream()
+				.map(ReportRevision::getReportId).toList(),
+				"neither document may hold the other subject's review");
+		assertEquals(List.of("gdpr-dash"), scope.documents.get("draft/gdpr-history-http---x-org-a-b-f2a0f452-en").getRevisions().stream()
+				.map(ReportRevision::getReportId).toList());
+	}
+
+	@Test
+	@DisplayName("two revisions of one nsURI are two revisions of one document, drift and all")
+	void contentDriftUnderOneIdentifier() throws Exception {
+		var action = action(new String[] { "draft" }, new String[0]);
+		// The same published identity, edited without the nsURI moving: the fingerprint is what
+		// changed, and seeing that change is the reason the document exists.
+		scope.put("draft", "gdpr-first", report("2026-09-15T08:12:00Z", FINGERPRINT));
+		scope.put("draft", "gdpr-second", report("2026-09-17T14:20:30Z", OTHER_FINGERPRINT));
+
+		action.onEnter(context("jena", "draft", "gdpr-second"));
+
+		assertTrue(scope.awaitWrite());
+		await(() -> scope.documents.size() == 1);
+		GdprReportHistory document = scope.documents.get("draft/" + ID_EN);
+		assertNotNull(document, "a changed fingerprint under an unchanged nsURI is not a second document");
+		assertEquals(List.of("gdpr-first", "gdpr-second"),
+				document.getRevisions().stream().map(ReportRevision::getReportId).toList(),
+				"both reviews belong to the one document, oldest first");
+		assertEquals(List.of(FINGERPRINT, OTHER_FINGERPRINT),
+				document.getRevisions().stream().map(ReportRevision::getModelFingerprint).toList(),
+				"and each revision keeps the fingerprint it was about");
 	}
 
 	@Test
@@ -150,11 +213,11 @@ class GDPRReportHistoryStageActionTest {
 
 		assertTrue(scope.awaitWrite());
 		await(() -> scope.documents.size() == 2);
-		assertEquals(Set.of("gdpr-history-fp1-9f2c1ab7d4e85530-en", "gdpr-history-fp1-9f2c1ab7d4e85530-de"),
+		assertEquals(Set.of("draft/" + ID_EN, "draft/" + ID_DE),
 				scope.documents.keySet(), "one document per language, both rebuilt although only DE fired");
 
-		GdprReportHistory english = scope.documents.get("gdpr-history-fp1-9f2c1ab7d4e85530-en");
-		GdprReportHistory german = scope.documents.get("gdpr-history-fp1-9f2c1ab7d4e85530-de");
+		GdprReportHistory english = scope.documents.get("draft/" + ID_EN);
+		GdprReportHistory german = scope.documents.get("draft/" + ID_DE);
 		assertEquals("EN", english.getReportLanguage());
 		assertEquals("DE", german.getReportLanguage());
 		assertEquals(List.of("gdpr-en"),
@@ -175,7 +238,7 @@ class GDPRReportHistoryStageActionTest {
 
 		assertTrue(scope.awaitWrite());
 		await(() -> scope.documents.size() == 2);
-		assertEquals(Set.of("gdpr-history-fp1-9f2c1ab7d4e85530-en", "gdpr-history-fp1-9f2c1ab7d4e85530-unknown"),
+		assertEquals(Set.of("draft/" + ID_EN, "draft/" + ID_UNKNOWN),
 				scope.documents.keySet(),
 				"an unlabelled review must not corrupt the diff of a language that is stated");
 	}
@@ -258,7 +321,6 @@ class GDPRReportHistoryStageActionTest {
 		values.put("trigger_scopes", scopes);
 		values.put("scope_target", "(atlas.scope=jena)");
 		values.put("document_registry", "gdprdoc");
-		values.put("document_stage", "draft");
 		return proxy(GDPRReportHistoryStageAction.Config.class, values);
 	}
 
@@ -273,6 +335,10 @@ class GDPRReportHistoryStageActionTest {
 	}
 
 	private static GdprReport report(String generatedAt, String fingerprint, String language) {
+		return report(generatedAt, fingerprint, language, NS_URI);
+	}
+
+	private static GdprReport report(String generatedAt, String fingerprint, String language, String nsURI) {
 		GdprReport report = REPORTS.createGdprReport();
 		report.setGeneratedAt(generatedAt);
 		report.setGeneratedBy("claude-opus-5");
@@ -280,7 +346,7 @@ class GDPRReportHistoryStageActionTest {
 
 		PackageSubject subject = REPORTS.createPackageSubject();
 		subject.setName("clinic");
-		subject.setNsURI("https://example.org/clinic/1.0.0");
+		subject.setNsURI(nsURI);
 		subject.setSubjectFingerprint(fingerprint);
 		report.setSubject(subject);
 
@@ -309,7 +375,12 @@ class GDPRReportHistoryStageActionTest {
 		final AtomicReference<String> writtenVersion = new AtomicReference<>();
 		final AtomicReference<String> outcome = new AtomicReference<>();
 		final AtomicReference<GdprReportHistory> written = new AtomicReference<>();
-		/** Every document written, by object id: a subject in two languages is two of them. */
+		/**
+		 * Every document written, by {@code <stage>/<objectId>} - the way the registry addresses
+		 * one. The stage is part of the key and not of the id: one subject reviewed at two stages
+		 * is two documents sharing an objectId, exactly as a package promoted between stages keeps
+		 * its own.
+		 */
 		final Map<String, GdprReportHistory> documents = new ConcurrentHashMap<>();
 		private final CountDownLatch stored = new CountDownLatch(1);
 		private volatile ObjectMetadata existing;
@@ -321,7 +392,7 @@ class GDPRReportHistoryStageActionTest {
 		/** Makes the document registry answer as if a document were already stored. */
 		void documentExists() {
 			ObjectMetadata metadata = ManagementFactory.eINSTANCE.createObjectMetadata();
-			metadata.setObjectId("gdpr-history-fp1-9f2c1ab7d4e85530-en");
+			metadata.setObjectId(ID_EN);
 			existing = metadata;
 		}
 
@@ -330,13 +401,13 @@ class GDPRReportHistoryStageActionTest {
 			return stored.await(5, TimeUnit.SECONDS);
 		}
 
-		private Promise<ObjectMetadata> record(String how, String objectId, String version, EObject object,
-				ObjectMetadata metadata) {
+		private Promise<ObjectMetadata> record(String how, String stage, String objectId, String version,
+				EObject object, ObjectMetadata metadata) {
 			outcome.set(how);
 			writtenId.set(objectId);
 			writtenVersion.set(version);
 			written.set((GdprReportHistory) object);
-			documents.put(objectId, (GdprReportHistory) object);
+			documents.put(stage + "/" + objectId, (GdprReportHistory) object);
 			stored.countDown();
 			return Promises.resolved(metadata);
 		}
@@ -349,13 +420,13 @@ class GDPRReportHistoryStageActionTest {
 		@Override
 		public Promise<ObjectMetadata> uploadToStageForRegistry(String registry, String stage, EObject object,
 				ObjectMetadata metadata) {
-			return record("created", metadata.getObjectId(), metadata.getVersion(), object, metadata);
+			return record("created", stage, metadata.getObjectId(), metadata.getVersion(), object, metadata);
 		}
 
 		@Override
 		public Promise<ObjectMetadata> updateInStageForRegistry(String registry, String stage, EObject updatedObject,
 				String objectId, String version) {
-			return record("updated", objectId, version, updatedObject, existing);
+			return record("updated", stage, objectId, version, updatedObject, existing);
 		}
 
 		/*
