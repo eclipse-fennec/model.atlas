@@ -21,6 +21,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Dictionary;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -636,6 +637,7 @@ public class InitialModelLoader {
 
     private void scopeWaitExpired() {
         List<String> missing = new ArrayList<>();
+        List<String> present;
         synchronized (pendingScopes) {
             for (Entry<String, ScopeSeed> entry : pendingScopes.entrySet()) {
                 String scopeName = entry.getKey();
@@ -653,18 +655,40 @@ public class InitialModelLoader {
                     }
                 }
             }
+            // Snapshot inside the lock: the log call below sits outside it, and both maps
+            // keep being written by SCR bind threads.
+            present = new ArrayList<>(scopeServices.keySet());
             pendingScopes.clear();
             scopeWatchdog = null;
         }
         if (missing.isEmpty()) {
             return;
         }
-        LOG.log(Level.ERROR, "InitialModelLoader: the following services did not appear within "
-                + config.scope_wait_seconds() + "s: " + missing
-                + ". Are these scopes and registries configured? Their initial models are NOT deployed.");
+        LOG.log(Level.ERROR, unresolvedSeedMessage(missing, present, config.scope_wait_seconds()));
         if (config.halt_on_error()) {
             haltFramework();
         }
+    }
+
+    /**
+     * What to say when a seeding unit never got its services.
+     *
+     * <p>
+     * The scopes that <em>did</em> appear are named because the usual cause is
+     * neither a missing scope nor a broken one: a {@code scopes/<name>/} folder is
+     * matched to a scope by name, so a deployment that renamed its scope — the file
+     * image takes the name from {@code MODEL_ATLAS_SCOPE} — leaves the folder
+     * addressed to a scope nobody configured. Without the present scopes in the
+     * message, that reads as a broken workflow configuration.
+     * </p>
+     */
+    static String unresolvedSeedMessage(List<String> missing, List<String> present, long waitSeconds) {
+        List<String> sorted = new ArrayList<>(present);
+        Collections.sort(sorted);
+        return "InitialModelLoader: the following services did not appear within " + waitSeconds + "s: " + missing
+                + ". Scopes present: " + sorted
+                + ". A scopes/<name>/ folder is seeded into the scope of the same name - check the folder names"
+                + " against the configured scopes. Their initial models are NOT deployed.";
     }
 
     /**
