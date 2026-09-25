@@ -3,6 +3,7 @@
 
 -buildpath: \
 	org.osgi.service.component.annotations;version=latest,\
+	org.osgi.service.metatype.annotations;version=latest,\
 	org.apache.felix.healthcheck.api;version=latest,\
 	org.apache.felix.healthcheck.core;version=latest,\
 	org.eclipse.fennec.model.atlas.mediatypes.api;version=snapshot,\
