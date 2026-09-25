@@ -33,7 +33,7 @@ import org.eclipse.fennec.model.gdprReport.GdprReport;
 import org.eclipse.fennec.model.gdprReport.GdprReportOrigin;
 import org.eclipse.fennec.model.gdprReport.LegalCorpusRef;
 import org.eclipse.fennec.model.gdprReport.RelevanceLevelType;
-import org.eclipse.fennec.model.gdprReport.SubjectModel;
+import org.eclipse.fennec.model.gdprReport.PackageSubject;
 import org.eclipse.fennec.model.gdprReportHistory.ChangeKind;
 import org.eclipse.fennec.model.gdprReportHistory.ChangeRow;
 import org.eclipse.fennec.model.gdprReportHistory.EvaluationRow;
@@ -79,14 +79,13 @@ class ReportHistoryBuilderTest {
 	void subjectComesFromTheNewestReport() {
 		GdprReport first = report("2026-09-15T08:12:00Z", "claude-opus-5");
 		GdprReport second = report("2026-09-17T14:20:30Z", "someone");
-		second.getSubject().setName("clinic-renamed");
+		((PackageSubject) second.getSubject()).setName("clinic-renamed");
 
 		GdprReportHistory history = builder.build(
 				List.of(stored("gdpr-fp-20260915-081200", first), stored("gdpr-fp-20260917-142030", second)), now);
 
 		assertEquals("clinic-renamed", history.getSubjectName());
-		assertEquals("https://example.org/clinic/1.0.0", history.getSubjectNsURI());
-		assertEquals("9f2c1ab7d4e85530", history.getModelFingerprint());
+		assertEquals("9f2c1ab7d4e85530", history.getSubjectFingerprint());
 		assertEquals("GDPR review history of clinic-renamed", history.getName());
 	}
 
@@ -285,7 +284,7 @@ class ReportHistoryBuilderTest {
 		assertTrue(history.getRevisions().isEmpty());
 		assertTrue(history.getEvaluations().isEmpty());
 		assertTrue(history.getChanges().isEmpty());
-		assertNull(history.getSubjectNsURI());
+		assertNull(history.getSubjectName());
 	}
 
 	/* ------------------------------------------------------------------ provenance and purpose */
@@ -350,6 +349,19 @@ class ReportHistoryBuilderTest {
 	}
 
 	@Test
+	@DisplayName("a report derived by a program is recorded as STATIC_ANALYSIS, not as an agent")
+	void aDerivedReviewIsNeitherAgentNorPerson() {
+		GdprReport derived = report("2026-09-15T08:12:00Z", "qvto-flow-analyser");
+		derived.setOrigin(GdprReportOrigin.STATIC_ANALYSIS);
+
+		GdprReportHistory history = builder.build(
+				List.of(new StoredReport("gdpr-fp-20260915-081200", derived, null, RevisionOrigin.AI_AGENT)), now);
+
+		assertEquals(RevisionOrigin.STATIC_ANALYSIS, history.getRevisions().get(0).getOrigin(),
+				"no agent and no person formed this judgement, and the document must not imply one did");
+	}
+
+	@Test
 	@DisplayName("a withdrawn purpose is REMOVED, and a reworded one MODIFIED")
 	void purposeCanAlsoChangeAndGoAway() {
 		GdprReport first = report("2026-09-15T08:12:00Z", "a.reviewer@example.org");
@@ -386,10 +398,10 @@ class ReportHistoryBuilderTest {
 		report.setGeneratedAt(generatedAt);
 		report.setGeneratedBy(generatedBy);
 
-		SubjectModel subject = REPORTS.createSubjectModel();
+		PackageSubject subject = REPORTS.createPackageSubject();
 		subject.setName("clinic");
 		subject.setNsURI("https://example.org/clinic/1.0.0");
-		subject.setModelFingerprint("9f2c1ab7d4e85530");
+		subject.setSubjectFingerprint("9f2c1ab7d4e85530");
 		report.setSubject(subject);
 
 		LegalCorpusRef corpus = REPORTS.createLegalCorpusRef();
@@ -404,7 +416,7 @@ class ReportHistoryBuilderTest {
 		classifier.setId(name);
 		classifier.setName(name);
 		classifier.setUriFragment("//" + name);
-		report.getClassifierEvaluation().add(classifier);
+		report.getEvaluation().add(classifier);
 		return classifier;
 	}
 

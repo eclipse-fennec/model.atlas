@@ -30,8 +30,11 @@ import org.eclipse.fennec.model.gdprReportHistory.GdprReportHistory;
  */
 final class Documents {
 
-	/** What {@code GDPRReportHistoryStageAction.documentId} makes of the fixtures' fingerprint. */
-	static final String DOCUMENT_ID = "gdpr-history-fp1-clinic100";
+	/**
+	 * What {@code GDPRReportHistoryStageAction.documentId} makes of the fixtures' fingerprint and
+	 * language. The language suffix is always written, so a single-language runtime has it too.
+	 */
+	static final String DOCUMENT_ID = "gdpr-history-fp1-clinic100-en";
 
 	private static final long TIMEOUT_MS = 30_000;
 	private static final long POLL_MS = 100;
@@ -78,12 +81,40 @@ final class Documents {
 
 	/** The document, or null while it is not there yet. */
 	static GdprReportHistory read(WritableScopeService<EObject> scope) {
+		return read(scope, Reports.LANGUAGE);
+	}
+
+	/** The document of one language, or null while it is not there yet. */
+	static GdprReportHistory read(WritableScopeService<EObject> scope, String language) {
 		try {
 			EObject stored = scope.getContentFromStageForRegistry(TestAnnotations.DOCUMENT_REGISTRY, "draft",
-					DOCUMENT_ID);
+					documentId(language));
 			return stored instanceof GdprReportHistory history ? history : null;
 		} catch (RuntimeException notThereYet) {
 			return null;
 		}
+	}
+
+	/** Waits for the document of one language to exist. */
+	static GdprReportHistory awaitDocument(WritableScopeService<EObject> scope, String language) {
+		long deadline = System.currentTimeMillis() + TIMEOUT_MS;
+		while (System.currentTimeMillis() < deadline) {
+			GdprReportHistory found = read(scope, language);
+			if (found != null) {
+				return found;
+			}
+			try {
+				Thread.sleep(POLL_MS);
+			} catch (InterruptedException e) {
+				Thread.currentThread().interrupt();
+				fail("interrupted while waiting for the " + language + " GDPR review document");
+			}
+		}
+		return fail("No " + language + " GDPR review document was written within " + TIMEOUT_MS + "ms");
+	}
+
+	/** What the action stores one language's document under. */
+	static String documentId(String language) {
+		return "gdpr-history-fp1-clinic100-" + language.toLowerCase(java.util.Locale.ROOT);
 	}
 }

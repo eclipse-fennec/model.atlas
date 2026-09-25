@@ -3,17 +3,28 @@
     ":configurator:symbolic-name": "org.eclipse.fennec.model.atlas.config.jena",
     ":configurator:version": "1.0.0",
     "EPackageStageActionService": {
-        "trigger.stages": ["draft", "approved", "release"],
+        "trigger.stages": [
+            "draft",
+            "approved",
+            "release"
+        ],
         "storageService.target": "(storage.type=file)"
     },
     "GDPRCheckStageAction": {
-        "trigger.stages": ["approved"],
+        "trigger.stages": [
+            "approved"
+        ],
         "review.on.update": false
     },
     "GDPRReportHistoryStageAction": {
         "reports.registry": "gdpr",
-        "report.stages": ["draft", "release"],
-        "trigger.scopes": ["jena"],
+        "report.stages": [
+            "draft",
+            "release"
+        ],
+        "trigger.scopes": [
+            "jena"
+        ],
         "scope.target": "(atlas.scope=jena)",
         "document.registry": "gdprdoc",
         "document.stage": "draft"
@@ -42,7 +53,7 @@
         "atlas.scope": "jena",
         "scope.description": "City Jena Scope",
         "scope.parent": "atlas",
-        "registryService.target": "(|(registry.name=schema)(registry.name=workspace)(registry.name=DataGen)(registry.name=cocl)(registry.name=sensinactmapping)(registry.name=sensinactprofile)(registry.name=gdpr)(registry.name=gdprdoc))",
+        "registryService.target": "(|(registry.name=schema)(registry.name=workspace)(registry.name=DataGen)(registry.name=cocl)(registry.name=sensinactmapping)(registry.name=sensinactprofile)(registry.name=transformations)(registry.name=gdpr)(registry.name=gdprdoc))",
         "registryService.cardinality.minimum:int": 1
     },
     "RegistryService~schema": {
@@ -296,5 +307,59 @@
             "https://org.eclipse/fennec/gdpr-report-history/1.0.0#//GdprReportHistory"
         ],
         "resourceSet.target": "(emf.name=ecore)"
+    },
+    "QvtStageActionService": {
+        "trigger.stages": [
+            "draft",
+            "approved",
+            "release"
+        ]
+    },
+    "RegistryService~transformations": {
+        "schemaPackage.target": "(emf.nsURI=http://www.eclipse.org/fennec/m2x/compiled/1.0)",
+        "registry.type": "TRANSFORMATION",
+        "registry.name": "transformations",
+        "registry.description": "QVT-O transformation sources, compiled units and their diagnostics (issue #239)",
+        "stageActionService.target": "(component.name=QvtStageActionService)",
+        "stageActionService.cardinality.minimum:int": 1,
+        "stageGate.target": "(component.name=QvtTransitionGate)",
+        "stageGate.cardinality.minimum:int": 1,
+        "stage.storage.mappings": [
+            "draft:file",
+            "approved:file",
+            "release:file"
+        ],
+        "workflow.transitions": [
+            "draft:approved",
+            "approved:release"
+        ],
+        "delete.after.transition": false,
+        "storageService.target": "(storage.type=file)",
+        "storageService.cardinality.minimum:int": 1,
+        "stages": [
+            {
+                "name": "draft",
+                "writable": true,
+                "final": false
+            },
+            {
+                "name": "approved",
+                "writable": true,
+                "final": false
+            },
+            {
+                "name": "release",
+                "writable": true,
+                "final": true
+            }
+        ],
+        "root.eclass.uri": [
+            "http://www.eclipse.org/fennec/m2x/compiled/1.0#//SourceUnit"
+        ],
+        "derived.eclass.uri": [
+            "http://www.eclipse.org/fennec/m2x/compiled/1.0#//CompiledUnit",
+            "http://eclipse.org/fennec/model/atlas/qvt/diagnostics/1.0.0#//SourceDiagnostics"
+        ],
+        "resourceSet.target": "(&(emf.name=compiled)(emf.name=diagnostics))"
     }
 }

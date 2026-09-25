@@ -25,6 +25,8 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
@@ -42,7 +44,8 @@ import org.eclipse.fennec.model.gdprReport.GDPRReportFactory;
 import org.eclipse.fennec.model.gdprReport.GDPRReportPackage;
 import org.eclipse.fennec.model.gdprReport.GdprReport;
 import org.eclipse.fennec.model.gdprReport.GdprReportOrigin;
-import org.eclipse.fennec.model.gdprReport.SubjectModel;
+import org.eclipse.fennec.model.gdprReport.LegalCorpusRef;
+import org.eclipse.fennec.model.gdprReport.PackageSubject;
 import org.eclipse.fennec.model.gdprReportHistory.GdprReportHistory;
 import org.eclipse.fennec.model.gdprReportHistory.ReportRevision;
 import org.junit.jupiter.api.DisplayName;
@@ -127,13 +130,62 @@ class GDPRReportHistoryStageActionTest {
 		action.onEnter(context("jena", "draft", "gdpr-new"));
 
 		assertTrue(scope.awaitWrite());
-		assertEquals("gdpr-history-fp1-9f2c1ab7d4e85530", scope.writtenId.get(),
-				"one document per subject, addressable from the fingerprint alone");
+		assertEquals("gdpr-history-fp1-9f2c1ab7d4e85530-en", scope.writtenId.get(),
+				"one document per subject and language, addressable from the fingerprint and the language");
 		assertEquals(FINGERPRINT, scope.writtenVersion.get());
 
 		List<String> reviewed = scope.written.get().getRevisions().stream().map(ReportRevision::getReportId).toList();
 		assertEquals(List.of("gdpr-old", "gdpr-new"), reviewed,
 				"both reviews of the subject belong in the document, oldest first, and no other model's");
+	}
+
+	@Test
+	@DisplayName("two languages of one subject become two documents, not one mixed revision list")
+	void oneDocumentPerLanguage() throws Exception {
+		var action = action(new String[] { "draft" }, new String[0]);
+		scope.put("draft", "gdpr-en", report("2026-09-15T08:12:00Z", FINGERPRINT, "EN"));
+		scope.put("draft", "gdpr-de", report("2026-09-17T14:20:30Z", FINGERPRINT, "DE"));
+
+		action.onEnter(context("jena", "draft", "gdpr-de"));
+
+		assertTrue(scope.awaitWrite());
+		await(() -> scope.documents.size() == 2);
+		assertEquals(Set.of("gdpr-history-fp1-9f2c1ab7d4e85530-en", "gdpr-history-fp1-9f2c1ab7d4e85530-de"),
+				scope.documents.keySet(), "one document per language, both rebuilt although only DE fired");
+
+		GdprReportHistory english = scope.documents.get("gdpr-history-fp1-9f2c1ab7d4e85530-en");
+		GdprReportHistory german = scope.documents.get("gdpr-history-fp1-9f2c1ab7d4e85530-de");
+		assertEquals("EN", english.getLanguage());
+		assertEquals("DE", german.getLanguage());
+		assertEquals(List.of("gdpr-en"),
+				english.getRevisions().stream().map(ReportRevision::getReportId).toList(),
+				"the German review is not a later revision of the English one");
+		assertEquals(List.of("gdpr-de"),
+				german.getRevisions().stream().map(ReportRevision::getReportId).toList());
+	}
+
+	@Test
+	@DisplayName("a review that names no language is kept apart, not folded into a named one")
+	void anUnlabelledReviewIsNotGuessedAt() throws Exception {
+		var action = action(new String[] { "draft" }, new String[0]);
+		scope.put("draft", "gdpr-en", report("2026-09-15T08:12:00Z", FINGERPRINT, "EN"));
+		scope.put("draft", "gdpr-silent", report("2026-09-17T14:20:30Z", FINGERPRINT, null));
+
+		action.onEnter(context("jena", "draft", "gdpr-silent"));
+
+		assertTrue(scope.awaitWrite());
+		await(() -> scope.documents.size() == 2);
+		assertEquals(Set.of("gdpr-history-fp1-9f2c1ab7d4e85530-en", "gdpr-history-fp1-9f2c1ab7d4e85530-unknown"),
+				scope.documents.keySet(),
+				"an unlabelled review must not corrupt the diff of a language that is stated");
+	}
+
+	/** Waits briefly for a condition the action reaches on its background thread. */
+	private static void await(java.util.function.BooleanSupplier condition) throws InterruptedException {
+		for (int i = 0; i < 100 && !condition.getAsBoolean(); i++) {
+			Thread.sleep(50);
+		}
+		assertTrue(condition.getAsBoolean(), "the action did not reach the expected state in time");
 	}
 
 	@Test
@@ -217,21 +269,30 @@ class GDPRReportHistoryStageActionTest {
 	}
 
 	private static GdprReport report(String generatedAt, String fingerprint) {
+		return report(generatedAt, fingerprint, "EN");
+	}
+
+	private static GdprReport report(String generatedAt, String fingerprint, String language) {
 		GdprReport report = REPORTS.createGdprReport();
 		report.setGeneratedAt(generatedAt);
 		report.setGeneratedBy("claude-opus-5");
 		report.setOrigin(GdprReportOrigin.AI_AGENT);
 
-		SubjectModel subject = REPORTS.createSubjectModel();
+		PackageSubject subject = REPORTS.createPackageSubject();
 		subject.setName("clinic");
 		subject.setNsURI("https://example.org/clinic/1.0.0");
-		subject.setModelFingerprint(fingerprint);
+		subject.setSubjectFingerprint(fingerprint);
 		report.setSubject(subject);
+
+		LegalCorpusRef corpus = REPORTS.createLegalCorpusRef();
+		corpus.setCelex("32016R0679");
+		corpus.setLanguage(language);
+		report.setCorpus(corpus);
 
 		ClassifierEvaluation classifier = REPORTS.createClassifierEvaluation();
 		classifier.setId("Patient");
 		classifier.setName("Patient");
-		report.getClassifierEvaluation().add(classifier);
+		report.getEvaluation().add(classifier);
 		return report;
 	}
 
@@ -248,6 +309,8 @@ class GDPRReportHistoryStageActionTest {
 		final AtomicReference<String> writtenVersion = new AtomicReference<>();
 		final AtomicReference<String> outcome = new AtomicReference<>();
 		final AtomicReference<GdprReportHistory> written = new AtomicReference<>();
+		/** Every document written, by object id: a subject in two languages is two of them. */
+		final Map<String, GdprReportHistory> documents = new ConcurrentHashMap<>();
 		private final CountDownLatch stored = new CountDownLatch(1);
 		private volatile ObjectMetadata existing;
 
@@ -258,7 +321,7 @@ class GDPRReportHistoryStageActionTest {
 		/** Makes the document registry answer as if a document were already stored. */
 		void documentExists() {
 			ObjectMetadata metadata = ManagementFactory.eINSTANCE.createObjectMetadata();
-			metadata.setObjectId("gdpr-history-fp1-9f2c1ab7d4e85530");
+			metadata.setObjectId("gdpr-history-fp1-9f2c1ab7d4e85530-en");
 			existing = metadata;
 		}
 
@@ -273,6 +336,7 @@ class GDPRReportHistoryStageActionTest {
 			writtenId.set(objectId);
 			writtenVersion.set(version);
 			written.set((GdprReportHistory) object);
+			documents.put(objectId, (GdprReportHistory) object);
 			stored.countDown();
 			return Promises.resolved(metadata);
 		}

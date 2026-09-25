@@ -23,7 +23,7 @@ import org.eclipse.fennec.model.gdprReport.GDPRReportFactory;
 import org.eclipse.fennec.model.gdprReport.GdprReport;
 import org.eclipse.fennec.model.gdprReport.GdprReportOrigin;
 import org.eclipse.fennec.model.gdprReport.RelevanceLevelType;
-import org.eclipse.fennec.model.gdprReport.SubjectModel;
+import org.eclipse.fennec.model.gdprReport.PackageSubject;
 
 /**
  * Two reviews of one model, a run apart: the agent's first pass, then a human raising
@@ -36,6 +36,9 @@ final class Reports {
 	static final GDPRReportFactory FACTORY = GDPRReportFactory.eINSTANCE;
 
 	static final String FINGERPRINT = "fp1:clinic100";
+
+	/** The language every fixture review is carried out in. */
+	static final String LANGUAGE = "EN";
 	static final String SUBJECT_NS_URI = "https://example.org/clinic/1.0.0";
 
 	private Reports() {
@@ -68,6 +71,21 @@ final class Reports {
 		return report;
 	}
 
+	/**
+	 * The German review of the same model revision. Not a later revision of the English one: it
+	 * quotes the German consolidation, so it belongs in a document of its own.
+	 */
+	static GdprReport germanReview() {
+		GdprReport report = report("gdpr-clinic-de-20260922-080000", "2026-09-22T08:00:00Z", "an-agent",
+				GdprReportOrigin.AI_AGENT);
+		report.getCorpus().setLanguage("DE");
+		ClassifierEvaluation patient = classifier(report);
+		feature(patient, "Patient.diagnosis", "diagnosis", DataCategory.PERSONAL_DATA,
+				ConfidenceType.REQUIRES_PURPOSE_CONFIRMATION,
+				"Freitext aus der Krankenakte kann Gesundheitsdaten enthalten.", "Art.9");
+		return report;
+	}
+
 	private static GdprReport report(String reportId, String generatedAt, String generatedBy,
 			GdprReportOrigin origin) {
 		GdprReport report = FACTORY.createGdprReport();
@@ -77,15 +95,18 @@ final class Reports {
 		report.setGeneratedBy(generatedBy);
 		report.setOrigin(origin);
 
-		SubjectModel subject = FACTORY.createSubjectModel();
+		PackageSubject subject = FACTORY.createPackageSubject();
 		subject.setName("clinic");
 		subject.setNsURI(SUBJECT_NS_URI);
 		subject.setNsPrefix("clinic");
-		subject.setModelFingerprint(FINGERPRINT);
+		subject.setSubjectFingerprint(FINGERPRINT);
 		report.setSubject(subject);
 
 		report.setCorpus(FACTORY.createLegalCorpusRef());
 		report.getCorpus().setCelex("32016R0679");
+		// The language the review was carried out in: the document is keyed by it, so a fixture
+		// without one would land under 'unknown' and not where a real review's document goes.
+		report.getCorpus().setLanguage(LANGUAGE);
 		return report;
 	}
 
@@ -94,7 +115,7 @@ final class Reports {
 		classifier.setId("Patient");
 		classifier.setName("Patient");
 		classifier.setUriFragment("//Patient");
-		report.getClassifierEvaluation().add(classifier);
+		report.getEvaluation().add(classifier);
 		return classifier;
 	}
 

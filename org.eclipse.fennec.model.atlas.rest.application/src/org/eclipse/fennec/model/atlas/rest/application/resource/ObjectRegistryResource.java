@@ -21,6 +21,7 @@ import java.util.Optional;
 import org.eclipse.emf.ecore.EObject;
 import org.eclipse.emf.ecore.util.EcoreUtil;
 import org.eclipse.fennec.codec.constants.CodecOptions;
+import org.eclipse.fennec.codec.rest.annotations.EMFResourceOptions;
 import org.eclipse.fennec.codec.rest.annotations.ResourceOption;
 import org.eclipse.fennec.model.atlas.mgmt.management.ManagementFactory;
 import org.eclipse.fennec.model.atlas.mgmt.management.ObjectMetadata;
@@ -386,7 +387,26 @@ public class ObjectRegistryResource {
                     @ApiResponse(responseCode = "400", description = "Scope not available, registry not available for scope, stage not available for registry or not a valid stage"),
                     @ApiResponse(responseCode = "406", description = "Requested format not supported"),
                     @ApiResponse(responseCode = "500", description = "Internal server error") })
-    @ResourceOption(key = CodecOptions.CODEC_ID_KEY_MODE, value = "FEATURE_ONLY")
+    /*
+     * AP4 of the GDPR review-document plan. The three options are pinned here rather than left to
+     * the caller:
+     *
+     * - CODEC_ID_KEY_MODE: an EMF ID attribute is a feature, not a document key, or it comes back
+     *   as '_id'.
+     * - codec.tabular.referenceMode=SQL_TABLES: what turns a root's containment lists into one
+     *   sheet each. Without it a spreadsheet download carries the root sheet alone - a review
+     *   history renders as its title and nothing else. The key is
+     *   CodecTabularOptions.OPTION_REFERENCE_MODE, written out because the tabular codec is not on
+     *   this bundle's buildpath and should not be, for one constant. Non-tabular codecs ignore it.
+     * - CODEC_SERIALIZE_DEFAULT: without it every value equal to its feature default is omitted,
+     *   so UNCHANGED, AI_AGENT and changeCount=0 arrive as empty cells. Whether a compliance
+     *   document shows its own default values is not a caller's decision, and the option is not on
+     *   the ODS whitelist, so it cannot come from the Codec-Options header either.
+     */
+    @EMFResourceOptions(options = { //
+            @ResourceOption(key = CodecOptions.CODEC_ID_KEY_MODE, value = "FEATURE_ONLY"), //
+            @ResourceOption(key = "codec.tabular.referenceMode", value = "SQL_TABLES"), //
+            @ResourceOption(key = CodecOptions.CODEC_SERIALIZE_DEFAULT, value = "true", valueType = Boolean.class) })
     public Response getObjectContent(
             @Parameter(description = "The scope name", required = true) @PathParam("scopeName") String scopeName,
             @Parameter(description = "The registry name", required = true) @PathParam("registryName") String registryName,
@@ -440,7 +460,26 @@ public class ObjectRegistryResource {
                     @ApiResponse(responseCode = "400", description = "Scope not available or registry not available for scope"),
                     @ApiResponse(responseCode = "406", description = "Requested format not supported"),
                     @ApiResponse(responseCode = "500", description = "Internal server error") })
-    @ResourceOption(key = CodecOptions.CODEC_ID_KEY_MODE, value = "FEATURE_ONLY")
+    /*
+     * AP4 of the GDPR review-document plan. The three options are pinned here rather than left to
+     * the caller:
+     *
+     * - CODEC_ID_KEY_MODE: an EMF ID attribute is a feature, not a document key, or it comes back
+     *   as '_id'.
+     * - codec.tabular.referenceMode=SQL_TABLES: what turns a root's containment lists into one
+     *   sheet each. Without it a spreadsheet download carries the root sheet alone - a review
+     *   history renders as its title and nothing else. The key is
+     *   CodecTabularOptions.OPTION_REFERENCE_MODE, written out because the tabular codec is not on
+     *   this bundle's buildpath and should not be, for one constant. Non-tabular codecs ignore it.
+     * - CODEC_SERIALIZE_DEFAULT: without it every value equal to its feature default is omitted,
+     *   so UNCHANGED, AI_AGENT and changeCount=0 arrive as empty cells. Whether a compliance
+     *   document shows its own default values is not a caller's decision, and the option is not on
+     *   the ODS whitelist, so it cannot come from the Codec-Options header either.
+     */
+    @EMFResourceOptions(options = { //
+            @ResourceOption(key = CodecOptions.CODEC_ID_KEY_MODE, value = "FEATURE_ONLY"), //
+            @ResourceOption(key = "codec.tabular.referenceMode", value = "SQL_TABLES"), //
+            @ResourceOption(key = CodecOptions.CODEC_SERIALIZE_DEFAULT, value = "true", valueType = Boolean.class) })
     public Response getObjectContentFromFinalStage(
             @Parameter(description = "The scope name", required = true) @PathParam("scopeName") String scopeName,
             @Parameter(description = "The registry name", required = true) @PathParam("registryName") String registryName,

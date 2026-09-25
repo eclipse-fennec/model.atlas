@@ -6,18 +6,22 @@ a model got to where it is — which verdict an agent gave, which one a human co
 changed between them.
 
 The **GDPR review history** is a second, derived object that answers exactly that. One document per
-reviewed model revision, holding every review of it, the assessment each one recorded, and a
-field-level diff between them. It is deliberately flat, so the tabular codec renders it as a
+reviewed model revision **and language**, holding every review of it, the assessment each one
+recorded, and a field-level diff between them. A review is carried out in one language from start to
+seal and quotes that language's consolidation of the regulation, so a German and an English review of
+the same model are not successive revisions of one another - they are two documents, addressed as
+`gdpr-history-<fingerprint>-de` and `-en`. Merged, the diff would report every rationale as rewritten
+on each switch. It is deliberately flat, so the tabular codec renders it as a
 spreadsheet without any rendering code: an auditor opens it in LibreOffice or Excel and reads one
 line per thing in the model.
 
 ## What is in it
 
-`GdprReportHistory` has three containment lists, and with `SQL_TABLES` each becomes a sheet:
+`GdprReportHistory` has three containment lists, and each becomes a sheet:
 
 | sheet | one row per | the columns that matter |
 |---|---|---|
-| `GdprReportHistory` | the document | `subjectNsURI`, `subjectName`, `modelFingerprint`, `rebuiltAt`, `revisionCount` |
+| `GdprReportHistory` | the document | `subjectName`, `subjectFingerprint`, `language`, `rebuiltAt`, `revisionCount` |
 | `ReportRevision` | review run | `revisionNumber`, `reportId`, `generatedAt`, `generatedBy`, `origin`, `findingCount`, `changeCount` |
 | `EvaluationRow` | evaluated classifier or feature, **per revision** | `classifierId`, `featureId`, `typeName`, `category`, `relevanceLevel`, `confidence`, `rationale`, `recommendation`, `citations`, `changeKind` |
 | `ChangeRow` | field that changed | `revisionNumber`, `changedAt`, `changedBy`, `classifierId`, `featureId`, `field`, `changeKind`, `oldValue`, `newValue` |
@@ -66,9 +70,14 @@ representation the content endpoint serves on demand — which also gives CSV, X
 
 ```bash
 curl -o gdpr-history.ods \
-  'http://localhost:8080/atlas/rest/jena/registries/gdprdoc/stages/draft/content?objectId=gdpr-history-fp1-clinic100&mediaType=application/vnd.oasis.opendocument.spreadsheet' \
-  -H 'Codec-Options: codec.tabular.referenceMode=SQL_TABLES, serializeDefault=true'
+  'http://localhost:8080/atlas/rest/jena/registries/gdprdoc/stages/draft/content?objectId=gdpr-history-fp1-clinic100-en&mediaType=application/vnd.oasis.opendocument.spreadsheet'
 ```
+
+No `Codec-Options` header is needed. The two options the spreadsheet depends on -
+`codec.tabular.referenceMode=SQL_TABLES`, which turns each containment list into a sheet, and
+`codec.serializeDefault=true`, without which every value equal to its default arrives as an empty
+cell - are pinned on the content endpoint. Whether a compliance document shows its own default values
+is not a caller's decision, and `codec.serializeDefault` could not come from the header anyway.
 
 `Accept: application/vnd.oasis.opendocument.spreadsheet` works in place of `?mediaType=`. Drop both
 and you get the JSON.

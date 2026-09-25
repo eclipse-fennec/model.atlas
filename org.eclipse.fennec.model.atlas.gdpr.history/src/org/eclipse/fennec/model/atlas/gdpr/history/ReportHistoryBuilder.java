@@ -23,6 +23,7 @@ import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
@@ -33,6 +34,7 @@ import java.util.stream.Collectors;
 
 import org.eclipse.fennec.model.gdprReport.ClassifierEvaluation;
 import org.eclipse.fennec.model.gdprReport.ConfidenceType;
+import org.eclipse.fennec.model.gdprReport.Evaluation;
 import org.eclipse.fennec.model.gdprReport.Evidence;
 import org.eclipse.fennec.model.gdprReport.FeatureEvaluation;
 import org.eclipse.fennec.model.gdprReport.Finding;
@@ -40,8 +42,10 @@ import org.eclipse.fennec.model.gdprReport.GDPRReportPackage;
 import org.eclipse.fennec.model.gdprReport.GdprReport;
 import org.eclipse.fennec.model.gdprReport.GdprReportOrigin;
 import org.eclipse.fennec.model.gdprReport.LegalCorpusRef;
+import org.eclipse.fennec.model.gdprReport.PackageSubject;
 import org.eclipse.fennec.model.gdprReport.RelevanceLevelType;
-import org.eclipse.fennec.model.gdprReport.SubjectModel;
+import org.eclipse.fennec.model.gdprReport.Subject;
+import org.eclipse.fennec.model.gdprReport.TransformationSubject;
 import org.eclipse.fennec.model.gdprReportHistory.ChangeKind;
 import org.eclipse.fennec.model.gdprReportHistory.ChangeRow;
 import org.eclipse.fennec.model.gdprReportHistory.EvaluationRow;
@@ -96,8 +100,8 @@ public class ReportHistoryBuilder {
 	/**
 	 * Builds the document.
 	 *
-	 * @param reports   every stored review of the subject, in any order; an empty list yields a
-	 *                  history with no revisions rather than {@code null}
+	 * @param reports   every stored review of the subject <b>in one language</b>, in any order; an
+	 *                  empty list yields a history with no revisions rather than {@code null}
 	 * @param rebuiltAt when this rebuild happened, required
 	 * @return the history, never {@code null}
 	 */
@@ -113,6 +117,7 @@ public class ReportHistoryBuilder {
 		history.setRebuiltAt(rebuiltAt.toString());
 		history.setRevisionCount(ordered.size());
 		describeSubject(history, ordered);
+		describeLanguage(history, ordered);
 
 		Map<RowKey, EvaluationRow> previous = Map.of();
 		int revisionNumber = 0;
@@ -137,20 +142,69 @@ public class ReportHistoryBuilder {
 		// The newest report describes the subject: an older one may predate a rename, and the
 		// fingerprint is the same for all of them anyway while a document covers one revision.
 		for (int i = ordered.size() - 1; i >= 0; i--) {
-			SubjectModel subject = ordered.get(i).report().getSubject();
+			Subject subject = ordered.get(i).report().getSubject();
 			if (subject == null) {
 				continue;
 			}
-			history.setSubjectNsURI(subject.getNsURI());
-			history.setSubjectName(subject.getName());
-			history.setModelFingerprint(subject.getModelFingerprint());
+			// The document names its subject the way that kind of subject is named: a package by
+			// its EPackage name, a transformation by the unit it was compiled from. The namespace
+			// URI is no longer a field of the document - a transformation has none - so a package
+			// that carries no name falls back to it through historyName rather than losing it.
+			if (subject instanceof PackageSubject packageSubject) {
+				history.setSubjectName(packageSubject.getName());
+			} else if (subject instanceof TransformationSubject transformation) {
+				history.setSubjectName(transformation.getQualifiedName());
+			}
+			history.setSubjectFingerprint(subject.getSubjectFingerprint());
 			history.setName(historyName(subject));
 			return;
 		}
 	}
 
-	private static String historyName(SubjectModel subject) {
-		String name = blankToNull(subject.getName()) == null ? subject.getNsURI() : subject.getName();
+	/**
+	 * The language the reviews were carried out in, taken from the corpus they quote.
+	 * <p>
+	 * <b>A document covers one language.</b> A review quotes one consolidation of one language
+	 * version from start to seal, so revisions in two languages are not successive revisions of one
+	 * review: diffing them would report every rationale and recommendation as changed on each
+	 * switch, which is noise in the one sheet that exists to be read. The caller groups; this only
+	 * records what it was given and says so when the grouping did not hold.
+	 *
+	 * @param history the document being built
+	 * @param ordered the reviews, oldest first
+	 */
+	private static void describeLanguage(GdprReportHistory history, List<StoredReport> ordered) {
+		Set<String> languages = new TreeSet<>();
+		for (StoredReport stored : ordered) {
+			LegalCorpusRef corpus = stored.report().getCorpus();
+			String language = corpus == null ? null : corpus.getLanguage();
+			if (blankToNull(language) != null) {
+				languages.add(language.trim().toUpperCase(Locale.ROOT));
+			}
+		}
+		if (languages.size() > 1) {
+			LOGGER.log(Level.WARNING, () -> String.format(
+					"Reviews in %d languages (%s) were built into one document; its change sheet compares a "
+							+ "revision in one language against a revision in another and cannot be read. Group the "
+							+ "reports by corpus language and build one document per language.",
+					languages.size(), String.join(", ", languages)));
+		}
+		history.setLanguage(languages.isEmpty() ? null : languages.iterator().next());
+	}
+
+	/**
+	 * Only a {@link PackageSubject} has a namespace to fall back on; a transformation is named by
+	 * the unit it was compiled from. A subject of some later kind leaves the document unnamed rather
+	 * than named after the wrong thing.
+	 */
+	private static String historyName(Subject subject) {
+		String name = null;
+		if (subject instanceof PackageSubject packageSubject) {
+			name = blankToNull(packageSubject.getName()) == null ? packageSubject.getNsURI()
+					: packageSubject.getName();
+		} else if (subject instanceof TransformationSubject transformation) {
+			name = blankToNull(transformation.getQualifiedName());
+		}
 		return name == null ? "GDPR review history" : "GDPR review history of " + name;
 	}
 
@@ -168,9 +222,9 @@ public class ReportHistoryBuilder {
 		revision.setChangeCount(changeCount);
 		revision.setFindingCount(countFindings(report));
 
-		SubjectModel subject = report.getSubject();
+		Subject subject = report.getSubject();
 		if (subject != null) {
-			revision.setModelFingerprint(subject.getModelFingerprint());
+			revision.setModelFingerprint(subject.getSubjectFingerprint());
 		}
 		LegalCorpusRef corpus = report.getCorpus();
 		if (corpus != null) {
@@ -180,12 +234,19 @@ public class ReportHistoryBuilder {
 		return revision;
 	}
 
+	/**
+	 * Every finding the report holds, whatever kind of evaluation carries it. It is deliberately not
+	 * limited to the evaluations {@link #flatten} turns into rows: the number answers "how much did
+	 * this review find", and a report whose findings sit on flows has found them all the same.
+	 */
 	private static int countFindings(GdprReport report) {
 		int count = report.getCombinations().size();
-		for (ClassifierEvaluation classifier : report.getClassifierEvaluation()) {
-			count += classifier.getFindings().size();
-			for (FeatureEvaluation feature : classifier.getFeatureEvaluation()) {
-				count += feature.getFindings().size();
+		for (Evaluation evaluation : report.getEvaluation()) {
+			count += evaluation.getFindings().size();
+			if (evaluation instanceof ClassifierEvaluation classifier) {
+				for (FeatureEvaluation feature : classifier.getFeatureEvaluation()) {
+					count += feature.getFindings().size();
+				}
 			}
 		}
 		return count;
@@ -199,7 +260,8 @@ public class ReportHistoryBuilder {
 	 */
 	private Map<RowKey, EvaluationRow> flatten(GdprReport report, int revisionNumber) {
 		Map<RowKey, EvaluationRow> rows = new LinkedHashMap<>();
-		for (ClassifierEvaluation classifier : report.getClassifierEvaluation()) {
+		warnOnUnrowedEvaluations(report, revisionNumber);
+		for (ClassifierEvaluation classifier : classifiersOf(report)) {
 			String classifierId = identify(classifier.getId(), classifier.getUriFragment(), classifier.getName());
 			if (classifierId == null) {
 				// Nothing to key it by, so it could not be compared against anything in another
@@ -220,6 +282,32 @@ public class ReportHistoryBuilder {
 			}
 		}
 		return rows;
+	}
+
+	/**
+	 * The classifier evaluations of a report, in order. A report of a transformation carries
+	 * {@code FlowEvaluation}s here instead, and an {@link EvaluationRow} has nowhere to put a source
+	 * and a target feature, so those are left out of the sheet rather than flattened into a shape that
+	 * does not fit them.
+	 */
+	private static List<ClassifierEvaluation> classifiersOf(GdprReport report) {
+		return report.getEvaluation().stream().filter(ClassifierEvaluation.class::isInstance)
+				.map(ClassifierEvaluation.class::cast).collect(Collectors.toList());
+	}
+
+	/**
+	 * Says so when a revision holds evaluations the sheet cannot show. Silence would read as a review
+	 * that found nothing, which is the one thing this document must never imply.
+	 */
+	private static void warnOnUnrowedEvaluations(GdprReport report, int revisionNumber) {
+		long unrowed = report.getEvaluation().stream().filter(e -> !(e instanceof ClassifierEvaluation)).count();
+		if (unrowed > 0) {
+			LOGGER.log(Level.WARNING, () -> String.format(
+					"Revision %d holds %d evaluation(s) that are not classifier evaluations; they are counted in "
+							+ "findingCount but have no row in the evaluation sheet, which only carries classifiers "
+							+ "and features.",
+					revisionNumber, unrowed));
+		}
 	}
 
 	private EvaluationRow classifierRow(ClassifierEvaluation classifier, String classifierId, int revisionNumber) {
@@ -448,6 +536,7 @@ public class ReportHistoryBuilder {
 		case AI_AGENT -> RevisionOrigin.AI_AGENT;
 		case HUMAN -> RevisionOrigin.HUMAN;
 		case UNKNOWN -> RevisionOrigin.UNKNOWN;
+		case STATIC_ANALYSIS -> RevisionOrigin.STATIC_ANALYSIS;
 		};
 	}
 

@@ -62,8 +62,8 @@ public class GdprReportHistoryRebuildIT {
 		Documents.store(scope, Reports.agentReview());
 
 		GdprReportHistory document = Documents.awaitRevisions(scope, 1);
-		assertEquals(Reports.SUBJECT_NS_URI, document.getSubjectNsURI());
-		assertEquals(Reports.FINGERPRINT, document.getModelFingerprint());
+		assertEquals("clinic", document.getSubjectName());
+		assertEquals(Reports.FINGERPRINT, document.getSubjectFingerprint());
 
 		ReportRevision only = document.getRevisions().get(0);
 		assertEquals(1, only.getRevisionNumber());
@@ -108,6 +108,37 @@ public class GdprReportHistoryRebuildIT {
 				.anyMatch(change -> "Patient.email".equals(change.getFeatureId())
 						&& ChangeKind.ADDED == change.getChangeKind()),
 				"a feature the second review added is an addition, not a modification");
+	}
+
+	@Test
+	@TestAnnotations.GdprHistorySetup
+	@DisplayName("a review in a second language gets its own document, not a revision of the first")
+	public void eachLanguageGetsItsOwnDocument(
+			@InjectService(cardinality = 0, timeout = 30000, filter = SCOPE_FILTER) //
+			ServiceAware<WritableScopeService> aware) throws Exception {
+
+		WritableScopeService<EObject> scope = scope(aware);
+		Documents.store(scope, Reports.agentReview());
+		Documents.awaitRevisions(scope, 1);
+
+		// The same model revision, reviewed against the German consolidation. Merged into one
+		// document it would read as a second revision and the change sheet would report every
+		// rationale as rewritten, which is the whole content of the sheet.
+		Documents.store(scope, Reports.germanReview());
+
+		GdprReportHistory german = Documents.awaitDocument(scope, "DE");
+		assertEquals("DE", german.getLanguage());
+		assertEquals(1, german.getRevisionCount(), "the German document holds the German review alone");
+		assertEquals(List.of("gdpr-clinic-de-20260922-080000"),
+				german.getRevisions().stream().map(ReportRevision::getReportId).toList());
+		assertTrue(german.getChanges().isEmpty(), "a first review in a language has nothing to diff against");
+
+		GdprReportHistory english = Documents.read(scope, "EN");
+		assertNotNull(english, "the English document must still be there");
+		assertEquals("EN", english.getLanguage());
+		assertEquals(1, english.getRevisionCount(), "the German review is not a revision of the English document");
+		assertEquals(Reports.FINGERPRINT, english.getSubjectFingerprint(),
+				"both documents are about the same model revision");
 	}
 
 	@SuppressWarnings("unchecked")
