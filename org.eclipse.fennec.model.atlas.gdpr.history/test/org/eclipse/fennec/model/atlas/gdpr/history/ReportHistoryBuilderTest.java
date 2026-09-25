@@ -34,8 +34,8 @@ import org.eclipse.fennec.model.gdprReport.GdprReport;
 import org.eclipse.fennec.model.gdprReport.GdprReportOrigin;
 import org.eclipse.fennec.model.gdprReport.LegalCorpusRef;
 import org.eclipse.fennec.model.gdprReport.RelevanceLevelType;
-import org.eclipse.fennec.model.gdprReport.PackageSubject;
 import org.eclipse.fennec.model.gdprReport.TransformationSubject;
+import org.eclipse.fennec.model.gdprReport.PackageSubject;
 import org.eclipse.fennec.model.gdprReportHistory.ChangeKind;
 import org.eclipse.fennec.model.gdprReportHistory.ChangeRow;
 import org.eclipse.fennec.model.gdprReportHistory.EvaluationRow;
@@ -286,8 +286,8 @@ class ReportHistoryBuilderTest {
 		assertTrue(history.getRevisions().isEmpty());
 		assertTrue(history.getEvaluations().isEmpty());
 		assertTrue(history.getChanges().isEmpty());
-		assertNull(history.getSubjectFingerprint());
 		assertNull(history.getSubjectName());
+		assertNull(history.getSubjectFingerprint());
 	}
 
 	@Test
@@ -319,7 +319,8 @@ class ReportHistoryBuilderTest {
 		GdprReportHistory history = builder.build(List.of(stored("gdpr-tr-20260924-100000", report)), now);
 
 		assertEquals("clinic.Anonymise", history.getSubjectName());
-		assertEquals("qvto", history.getLanguage());
+		// what the transformation is WRITTEN IN; the review's own language is reportLanguage
+		assertEquals("qvto", history.getSubjectLanguage());
 		assertEquals("77aa88bb99cc00dd", history.getSubjectFingerprint());
 		assertEquals("GDPR review history of clinic.Anonymise", history.getName());
 		assertEquals(RevisionOrigin.STATIC_ANALYSIS, history.getRevisions().get(0).getOrigin());
@@ -392,6 +393,19 @@ class ReportHistoryBuilderTest {
 				List.of(new StoredReport("gdpr-fp-20260915-081200", stated, null, RevisionOrigin.AI_AGENT)), now);
 
 		assertEquals(RevisionOrigin.HUMAN, history.getRevisions().get(0).getOrigin());
+	}
+
+	@Test
+	@DisplayName("a report derived by a program is recorded as STATIC_ANALYSIS, not as an agent")
+	void aDerivedReviewIsNeitherAgentNorPerson() {
+		GdprReport derived = report("2026-09-15T08:12:00Z", "qvto-flow-analyser");
+		derived.setOrigin(GdprReportOrigin.STATIC_ANALYSIS);
+
+		GdprReportHistory history = builder.build(
+				List.of(new StoredReport("gdpr-fp-20260915-081200", derived, null, RevisionOrigin.AI_AGENT)), now);
+
+		assertEquals(RevisionOrigin.STATIC_ANALYSIS, history.getRevisions().get(0).getOrigin(),
+				"no agent and no person formed this judgement, and the document must not imply one did");
 	}
 
 	@Test

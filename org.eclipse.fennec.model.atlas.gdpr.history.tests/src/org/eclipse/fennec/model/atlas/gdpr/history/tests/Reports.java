@@ -36,6 +36,9 @@ final class Reports {
 	static final GDPRReportFactory FACTORY = GDPRReportFactory.eINSTANCE;
 
 	static final String FINGERPRINT = "fp1:clinic100";
+
+	/** The language every fixture review is carried out in. */
+	static final String LANGUAGE = "EN";
 	static final String SUBJECT_NS_URI = "https://example.org/clinic/1.0.0";
 
 	private Reports() {
@@ -68,6 +71,21 @@ final class Reports {
 		return report;
 	}
 
+	/**
+	 * The German review of the same model revision. Not a later revision of the English one: it
+	 * quotes the German consolidation, so it belongs in a document of its own.
+	 */
+	static GdprReport germanReview() {
+		GdprReport report = report("gdpr-clinic-de-20260922-080000", "2026-09-22T08:00:00Z", "an-agent",
+				GdprReportOrigin.AI_AGENT);
+		report.getCorpus().setLanguage("DE");
+		ClassifierEvaluation patient = classifier(report);
+		feature(patient, "Patient.diagnosis", "diagnosis", DataCategory.PERSONAL_DATA,
+				ConfidenceType.REQUIRES_PURPOSE_CONFIRMATION,
+				"Freitext aus der Krankenakte kann Gesundheitsdaten enthalten.", "Art.9");
+		return report;
+	}
+
 	private static GdprReport report(String reportId, String generatedAt, String generatedBy,
 			GdprReportOrigin origin) {
 		GdprReport report = FACTORY.createGdprReport();
@@ -86,6 +104,9 @@ final class Reports {
 
 		report.setCorpus(FACTORY.createLegalCorpusRef());
 		report.getCorpus().setCelex("32016R0679");
+		// The language the review was carried out in: the document is keyed by it, so a fixture
+		// without one would land under 'unknown' and not where a real review's document goes.
+		report.getCorpus().setLanguage(LANGUAGE);
 		return report;
 	}
 

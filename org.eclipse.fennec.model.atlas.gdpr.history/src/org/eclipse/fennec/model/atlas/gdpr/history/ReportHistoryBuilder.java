@@ -23,6 +23,7 @@ import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
@@ -100,8 +101,8 @@ public class ReportHistoryBuilder {
 	/**
 	 * Builds the document.
 	 *
-	 * @param reports   every stored review of the subject, in any order; an empty list yields a
-	 *                  history with no revisions rather than {@code null}
+	 * @param reports   every stored review of the subject <b>in one language</b>, in any order; an
+	 *                  empty list yields a history with no revisions rather than {@code null}
 	 * @param rebuiltAt when this rebuild happened, required
 	 * @return the history, never {@code null}
 	 */
@@ -117,6 +118,7 @@ public class ReportHistoryBuilder {
 		history.setRebuiltAt(rebuiltAt.toString());
 		history.setRevisionCount(ordered.size());
 		describeSubject(history, ordered);
+		describeLanguage(history, ordered);
 
 		Map<RowKey, EvaluationRow> previous = Map.of();
 		int revisionNumber = 0;
@@ -145,35 +147,69 @@ public class ReportHistoryBuilder {
 			if (subject == null) {
 				continue;
 			}
-			history.setSubjectName(subjectName(subject));
-			history.setSubjectFingerprint(subject.getSubjectFingerprint());
-			if (subject instanceof TransformationSubject transformation) {
-				history.setLanguage(transformation.getLanguage());
+			// The document names its subject the way that kind of subject is named: a package by
+			// its EPackage name, a transformation by the unit it was compiled from. The namespace
+			// URI is no longer a field of the document - a transformation has none - so a package
+			// that carries no name falls back to it through historyName rather than losing it.
+			if (subject instanceof PackageSubject packageSubject) {
+				history.setSubjectName(packageSubject.getName());
+			} else if (subject instanceof TransformationSubject transformation) {
+				history.setSubjectName(transformation.getQualifiedName());
+				// The language the subject is WRITTEN IN, e.g. qvto - not the language the review
+				// was carried out in, which is reportLanguage and comes from the corpus.
+				history.setSubjectLanguage(transformation.getLanguage());
 			}
+			history.setSubjectFingerprint(subject.getSubjectFingerprint());
 			history.setName(historyName(subject));
 			return;
 		}
 	}
 
 	/**
-	 * What the subject is called: a metamodel by its package name, a transformation by its
-	 * qualified name. The report model knows subjects of either kind since it was generalised
-	 * beyond Ecore packages; the history states the name and does not care which kind it was.
+	 * The language the reviews were carried out in, taken from the corpus they quote. It is
+	 * {@code reportLanguage} and not {@code subjectLanguage}: the latter is what a transformation
+	 * subject is written in, which has nothing to do with the language of the legal text.
+	 * <p>
+	 * <b>A document covers one language.</b> A review quotes one consolidation of one language
+	 * version from start to seal, so revisions in two languages are not successive revisions of one
+	 * review: diffing them would report every rationale and recommendation as changed on each
+	 * switch, which is noise in the one sheet that exists to be read. The caller groups; this only
+	 * records what it was given and says so when the grouping did not hold.
+	 *
+	 * @param history the document being built
+	 * @param ordered the reviews, oldest first
 	 */
-	private static String subjectName(Subject subject) {
-		if (subject instanceof PackageSubject pkg) {
-			return pkg.getName();
+	private static void describeLanguage(GdprReportHistory history, List<StoredReport> ordered) {
+		Set<String> languages = new TreeSet<>();
+		for (StoredReport stored : ordered) {
+			LegalCorpusRef corpus = stored.report().getCorpus();
+			String language = corpus == null ? null : corpus.getLanguage();
+			if (blankToNull(language) != null) {
+				languages.add(language.trim().toUpperCase(Locale.ROOT));
+			}
 		}
-		if (subject instanceof TransformationSubject transformation) {
-			return transformation.getQualifiedName();
+		if (languages.size() > 1) {
+			LOGGER.log(Level.WARNING, () -> String.format(
+					"Reviews in %d languages (%s) were built into one document; its change sheet compares a "
+							+ "revision in one language against a revision in another and cannot be read. Group the "
+							+ "reports by corpus language and build one document per language.",
+					languages.size(), String.join(", ", languages)));
 		}
-		return null;
+		history.setReportLanguage(languages.isEmpty() ? null : languages.iterator().next());
 	}
 
+	/**
+	 * Only a {@link PackageSubject} has a namespace to fall back on; a transformation is named by
+	 * the unit it was compiled from. A subject of some later kind leaves the document unnamed rather
+	 * than named after the wrong thing.
+	 */
 	private static String historyName(Subject subject) {
-		String name = blankToNull(subjectName(subject));
-		if (name == null && subject instanceof PackageSubject pkg) {
-			name = blankToNull(pkg.getNsURI());
+		String name = null;
+		if (subject instanceof PackageSubject packageSubject) {
+			name = blankToNull(packageSubject.getName()) == null ? packageSubject.getNsURI()
+					: packageSubject.getName();
+		} else if (subject instanceof TransformationSubject transformation) {
+			name = blankToNull(transformation.getQualifiedName());
 		}
 		return name == null ? "GDPR review history" : "GDPR review history of " + name;
 	}
@@ -204,6 +240,11 @@ public class ReportHistoryBuilder {
 		return revision;
 	}
 
+	/**
+	 * Every finding the report holds, whatever kind of evaluation carries it. It is deliberately not
+	 * limited to the evaluations {@link #flatten} turns into rows: the number answers "how much did
+	 * this review find", and a report whose findings sit on flows has found them all the same.
+	 */
 	private static int countFindings(GdprReport report) {
 		int count = report.getCombinations().size();
 		for (Evaluation evaluation : report.getEvaluation()) {
@@ -230,10 +271,12 @@ public class ReportHistoryBuilder {
 				flattenClassifier(rows, classifier, revisionNumber);
 			} else if (evaluation instanceof FlowEvaluation flow) {
 				flattenFlow(rows, flow, revisionNumber);
+			} else {
+				// A FeatureEvaluation at the top level has no classifier to hang from, and a kind
+				// added to the report model after this was written has no column here. Say so: a
+				// silently dropped evaluation reads as a review that found nothing.
+				warnOnUnrowedEvaluation(evaluation, revisionNumber);
 			}
-			// a FeatureEvaluation at the top level has no classifier to hang from and is not
-			// something the review of a metamodel produces; a kind this builder does not know
-			// is left out rather than guessed at
 		}
 		return rows;
 	}
@@ -247,8 +290,7 @@ public class ReportHistoryBuilder {
 			return;
 		}
 		if (!classifier.getFindings().isEmpty()) {
-			RowKey key = new RowKey(classifierId, "");
-			rows.put(key, classifierRow(classifier, classifierId, revisionNumber));
+			rows.put(new RowKey(classifierId, ""), classifierRow(classifier, classifierId, revisionNumber));
 		}
 		for (FeatureEvaluation feature : classifier.getFeatureEvaluation()) {
 			String featureId = identify(feature.getId(), feature.getUriFragment(), feature.getName());
@@ -265,6 +307,9 @@ public class ReportHistoryBuilder {
 	 * target path. A flow takes the classifier columns of the sheet - it is the unit the review
 	 * examined - with the mapping it belongs to as the name, so the history of a transformation
 	 * reads the same way as that of a metamodel.
+	 * <p>
+	 * The source and target features a flow names have no columns of their own yet, so they are not
+	 * in the sheet; the flow's own id and name carry the path.
 	 */
 	private void flattenFlow(Map<RowKey, EvaluationRow> rows, FlowEvaluation flow, int revisionNumber) {
 		String flowId = identify(flow.getId(), null, flow.getName());
@@ -279,6 +324,17 @@ public class ReportHistoryBuilder {
 		row.setPurpose(flow.getPurpose());
 		merge(row, flow.getFindings(), flow.getRelevanceLevel());
 		rows.put(new RowKey(flowId, ""), row);
+	}
+
+	/**
+	 * Says so when a revision holds an evaluation the sheet cannot show. Silence would read as a
+	 * review that found nothing, which is the one thing this document must never imply.
+	 */
+	private static void warnOnUnrowedEvaluation(Evaluation evaluation, int revisionNumber) {
+		LOGGER.log(Level.WARNING, () -> String.format(
+				"Revision %d holds a %s, which has no row in the evaluation sheet; its findings are counted in "
+						+ "findingCount but cannot be read there. The sheet carries classifiers, features and flows.",
+				revisionNumber, evaluation.eClass().getName()));
 	}
 
 	private EvaluationRow classifierRow(ClassifierEvaluation classifier, String classifierId, int revisionNumber) {
@@ -506,8 +562,8 @@ public class ReportHistoryBuilder {
 		return switch (stated) {
 		case AI_AGENT -> RevisionOrigin.AI_AGENT;
 		case HUMAN -> RevisionOrigin.HUMAN;
-		case STATIC_ANALYSIS -> RevisionOrigin.STATIC_ANALYSIS;
 		case UNKNOWN -> RevisionOrigin.UNKNOWN;
+		case STATIC_ANALYSIS -> RevisionOrigin.STATIC_ANALYSIS;
 		};
 	}
 

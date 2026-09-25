@@ -16,8 +16,10 @@ package org.eclipse.fennec.model.atlas.gdpr.history;
 import java.lang.reflect.InvocationTargetException;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -37,6 +39,7 @@ import org.eclipse.fennec.model.atlas.scope.api.ReadableRegistryView;
 import org.eclipse.fennec.model.atlas.wf.workflowapi.WritableScopeService;
 import org.eclipse.fennec.model.gdprReport.GDPRReportPackage;
 import org.eclipse.fennec.model.gdprReport.GdprReport;
+import org.eclipse.fennec.model.gdprReport.LegalCorpusRef;
 import org.eclipse.fennec.model.gdprReport.Subject;
 import org.eclipse.fennec.model.gdprReportHistory.GdprReportHistory;
 import org.eclipse.fennec.model.gdprReportHistory.RevisionOrigin;
@@ -90,6 +93,13 @@ public class GDPRReportHistoryStageAction implements StageActionService {
 
 	/** What the storage layer writes into {@code ActionContext.objectType()} for a report. */
 	private static final String REPORT_TYPE = EcoreUtil.getURI(GDPRReportPackage.Literals.GDPR_REPORT).toString();
+
+	/**
+	 * Stands in for the language of a review that does not state one. A visible placeholder rather
+	 * than an empty segment, so a document id stays readable and a reader can tell an unlabelled
+	 * review from one carried out in a language nobody configured.
+	 */
+	private static final String UNKNOWN_LANGUAGE = "UNKNOWN";
 
 	/**
 	 * Configuration of this component.
@@ -271,9 +281,21 @@ public class GDPRReportHistoryStageAction implements StageActionService {
 				return;
 			}
 
-			List<StoredReport> reports = reportsOf(subject.getSubjectFingerprint());
-			GdprReportHistory history = builder.build(reports, Instant.now());
-			store(history, subject.getSubjectFingerprint(), reports.size());
+			String fingerprint = subject.getSubjectFingerprint();
+			Map<String, List<StoredReport>> byLanguage = byLanguage(reportsOf(fingerprint));
+			if (byLanguage.isEmpty()) {
+				LOGGER.log(Level.INFO, () -> String.format(
+						"No review of subject '%s' is readable any more, so no document was written.", fingerprint));
+				return;
+			}
+			// Every language of the subject, not only the one that fired: a rebuild reads all of
+			// its reviews anyway, and rebuilding the rest costs one in-memory pass each. It also
+			// repairs a document that was missed while nothing was listening.
+			Instant rebuiltAt = Instant.now();
+			for (Map.Entry<String, List<StoredReport>> group : byLanguage.entrySet()) {
+				GdprReportHistory history = builder.build(group.getValue(), rebuiltAt);
+				store(history, fingerprint, group.getKey(), group.getValue().size());
+			}
 		} catch (RuntimeException e) {
 			// Thrown on a background thread: swallowed here so one bad subject cannot take the
 			// executor down and stop every later rebuild.
@@ -284,7 +306,7 @@ public class GDPRReportHistoryStageAction implements StageActionService {
 	}
 
 	/** Every review of one subject, across every configured stage. */
-	private List<StoredReport> reportsOf(String modelFingerprint) {
+	private List<StoredReport> reportsOf(String subjectFingerprint) {
 		List<StoredReport> reports = new ArrayList<>();
 		Set<String> seen = new LinkedHashSet<>();
 		for (String stage : stages) {
@@ -294,7 +316,7 @@ public class GDPRReportHistoryStageAction implements StageActionService {
 					continue;
 				}
 				view.get(objectId).filter(GdprReport.class::isInstance).map(GdprReport.class::cast)
-						.filter(report -> isAbout(report, modelFingerprint))
+						.filter(report -> isAbout(report, subjectFingerprint))
 						.ifPresent(report -> reports.add(stored(objectId, report)));
 			}
 		}
@@ -309,9 +331,9 @@ public class GDPRReportHistoryStageAction implements StageActionService {
 		return new StoredReport(objectId, report, null, RevisionOrigin.UNKNOWN);
 	}
 
-	private static boolean isAbout(GdprReport report, String modelFingerprint) {
+	private static boolean isAbout(GdprReport report, String subjectFingerprint) {
 		Subject subject = report.getSubject();
-		return subject != null && modelFingerprint.equals(subject.getSubjectFingerprint());
+		return subject != null && subjectFingerprint.equals(subject.getSubjectFingerprint());
 	}
 
 	private Optional<GdprReport> find(String objectId) {
@@ -337,8 +359,8 @@ public class GDPRReportHistoryStageAction implements StageActionService {
 	 * ENTER and {@code updateInStage} always dispatches UPDATE, and which one is correct depends on
 	 * whether the object is already there.
 	 */
-	private void store(GdprReportHistory history, String modelFingerprint, int revisions) {
-		String objectId = documentId(modelFingerprint);
+	private void store(GdprReportHistory history, String subjectFingerprint, String language, int revisions) {
+		String objectId = documentId(subjectFingerprint, language);
 		ObjectMetadata existing = scope.getMetadataFromStageForRegistry(documentRegistry, documentStage, objectId);
 
 		String outcome;
@@ -348,19 +370,20 @@ public class GDPRReportHistoryStageAction implements StageActionService {
 			metadata.setObjectId(objectId);
 			metadata.setObjectName(history.getName());
 			metadata.setUploadTime(Instant.now());
-			metadata.setVersion(modelFingerprint);
+			metadata.setVersion(subjectFingerprint);
 			metadata.setObjectType(EcoreUtil.getURI(history.eClass()).toString());
 			written = scope.uploadToStageForRegistry(documentRegistry, documentStage, history, metadata);
 			outcome = "created";
 		} else {
 			written = scope.updateInStageForRegistry(documentRegistry, documentStage, history, objectId,
-					modelFingerprint);
+					subjectFingerprint);
 			outcome = "updated";
 		}
 
 		resolve(written, objectId);
-		LOGGER.log(Level.INFO, () -> String.format("GDPR review document '%s' %s in %s/%s/%s, %d revision(s).",
-				objectId, outcome, scope.getScopeName(), documentRegistry, documentStage, revisions));
+		LOGGER.log(Level.INFO, () -> String.format(
+				"GDPR review document '%s' (%s) %s in %s/%s/%s, %d revision(s).", objectId, language, outcome,
+				scope.getScopeName(), documentRegistry, documentStage, revisions));
 	}
 
 	/**
@@ -385,15 +408,50 @@ public class GDPRReportHistoryStageAction implements StageActionService {
 	}
 
 	/**
-	 * The id one subject's document is stored under. A single path segment, so everything that is
-	 * not alphanumeric becomes a dash.
+	 * The id one subject's document is stored under, in one language. A single path segment, so
+	 * everything that is not alphanumeric becomes a dash.
 	 * <p>
 	 * <b>Keyed by fingerprint</b>, which is open decision 1 of the plan: keying by nsURI instead
 	 * would make one document span several revisions of the model, and this method plus the filter
 	 * in {@link #reportsOf(String)} is the whole of the change.
+	 * <p>
+	 * <b>And by language.</b> A review is carried out in one language from start to seal and its
+	 * quotes come from that language's consolidation, so two languages are two documents - putting
+	 * them in one would diff a German revision against an English one and report every rationale as
+	 * changed. The suffix is written even where a runtime serves a single language: adding it only
+	 * once a second language appears would rename a document that people already have a link to.
 	 */
-	private static String documentId(String modelFingerprint) {
-		return "gdpr-history-" + modelFingerprint.replaceAll("[^A-Za-z0-9]", "-");
+	private static String documentId(String subjectFingerprint, String language) {
+		return "gdpr-history-" + subjectFingerprint.replaceAll("[^A-Za-z0-9]", "-") + "-"
+				+ language.replaceAll("[^A-Za-z0-9]", "-").toLowerCase(Locale.ROOT);
+	}
+
+	/**
+	 * Splits a subject's reviews by the language they were carried out in, keeping the order they
+	 * were found in.
+	 * <p>
+	 * The language is read from the report's own corpus, which is where it is recorded: the review
+	 * quotes one consolidation of one language version and the tool that starts a report copies
+	 * that language from the corpus it actually used. The tag in the object id is only a
+	 * convention, and a report uploaded by hand does not follow it.
+	 * <p>
+	 * A review that names no language is kept in a group of its own rather than folded into a named
+	 * one. It is the honest answer - nothing says which language it is - and it keeps one
+	 * unlabelled report from corrupting the diff of a real language.
+	 */
+	private static Map<String, List<StoredReport>> byLanguage(List<StoredReport> reports) {
+		Map<String, List<StoredReport>> groups = new LinkedHashMap<>();
+		for (StoredReport stored : reports) {
+			groups.computeIfAbsent(languageOf(stored), key -> new ArrayList<>()).add(stored);
+		}
+		return groups;
+	}
+
+	/** The language a review was carried out in, normalised; {@value #UNKNOWN_LANGUAGE} when unstated. */
+	private static String languageOf(StoredReport stored) {
+		LegalCorpusRef corpus = stored.report().getCorpus();
+		String language = corpus == null ? null : corpus.getLanguage();
+		return blank(language) ? UNKNOWN_LANGUAGE : language.trim().toUpperCase(Locale.ROOT);
 	}
 
 	/* ------------------------------------------------------------------ small helpers */
