@@ -80,6 +80,7 @@ This starts the full stack:
 | Variable | Default | Variant | Description |
 |----------|---------|---------|-------------|
 | `STORAGE_ROOT` | `/tmp/mac` | File | Root directory for file-based storage |
+| `GDPR_ATLAS_SCOPE` | `jena` | File | Scope the GDPR review runs in. See [GDPR review history](gdpr-review-history.md#configuration) |
 | `APICURIO_HOST` | `localhost` | Apicurio | Hostname of the Apicurio Registry |
 | `APICURIO_PORT` | `8081` | Apicurio | Port of the Apicurio Registry |
 | `INITIAL_MODELS_FOLDER` | `/initial-models` | Both | Folder scanned once on startup to seed initial models. See [Bootstrapping Initial Models](#bootstrapping-initial-models) |

@@ -15,14 +15,14 @@
     "GDPRReportHistoryStageAction": {
         "reports.registry": "gdpr",
         "report.stages": ["draft", "release"],
-        "trigger.scopes": ["jena"],
-        "scope.target": "(atlas.scope=jena)",
+        "trigger.scopes": ["$[env:GDPR_ATLAS_SCOPE;default=$[prop:GDPR_ATLAS_SCOPE;default=jena]]"],
+        "scope.target": "(atlas.scope=$[env:GDPR_ATLAS_SCOPE;default=$[prop:GDPR_ATLAS_SCOPE;default=jena]])",
         "document.registry": "gdprdoc",
         "document.stage": "draft"
     },
     "ModelAtlasObjectPublisher~gdprStatus": {
         "base.uri": "http://localhost:8080/atlas/rest",
-        "scope": "jena",
+        "scope": "$[env:GDPR_ATLAS_SCOPE;default=$[prop:GDPR_ATLAS_SCOPE;default=jena]]",
         "registry": "gdpr",
         "stage": "draft",
         "content.type": "application/json",
@@ -31,8 +31,8 @@
     "GDPRAtlasRequestStatusStore": {
         "registry": "gdpr",
         "stage": "draft",
-        "scope.target": "(atlas.scope=jena)",
-        "publisher.target": "(&(scope=jena)(registry=gdpr))"
+        "scope.target": "(atlas.scope=$[env:GDPR_ATLAS_SCOPE;default=$[prop:GDPR_ATLAS_SCOPE;default=jena]])",
+        "publisher.target": "(&(scope=$[env:GDPR_ATLAS_SCOPE;default=$[prop:GDPR_ATLAS_SCOPE;default=jena]])(registry=gdpr))"
     },
     "ScopeService~jena": {
     	"atlas.scope": "jena",

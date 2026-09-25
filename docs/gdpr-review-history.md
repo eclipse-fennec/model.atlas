@@ -110,6 +110,15 @@ for the local runtime and in
 `org.eclipse.fennec.model.atlas.runtime.config.docker.file/configs/workflow.json`, which is baked
 into the file image rather than mounted — change one and the others do not follow.
 
+The file image does not hardcode the scope. The `jena` in `trigger.scopes` and `scope.target`
+below, and the scope of the `ModelAtlasObjectPublisher~gdprStatus` publisher and of the
+`GDPRAtlasRequestStatusStore`, are all
+`$[env:GDPR_ATLAS_SCOPE;default=$[prop:GDPR_ATLAS_SCOPE;default=jena]]` there, so a deployment
+with a differently named tenant scope sets one variable. It must match `GDPR_ATLAS_SCOPE` on the
+fennec-gdpr MCP half, which reads the model under review from that scope and seals the report into
+it. The scope itself still has to exist and bind `gdpr` and `gdprdoc`; the image only defines
+`jena`.
+
 ```jsonc
 "GDPRReportHistoryStageAction": {
     "reports.registry": "gdpr",              // where the GdprReport objects are
