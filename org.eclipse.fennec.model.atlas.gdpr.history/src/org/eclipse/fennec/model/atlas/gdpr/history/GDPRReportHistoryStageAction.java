@@ -158,25 +158,28 @@ public class GDPRReportHistoryStageAction implements StageActionService {
 	private final ExecutorService rebuilds = Executors.newSingleThreadExecutor(
 			runnable -> new Thread(runnable, "gdpr-history-rebuild"));
 
-	private volatile String registry = "gdpr";
-	private volatile String documentRegistry = "gdprdoc";
-	private volatile Set<String> stages = Set.of();
-	private volatile Set<String> scopes = Set.of();
+	private final String registry;
+	private final String documentRegistry;
+	private final Set<String> stages;
+	private final Set<String> scopes;
 
 	/**
-	 * @param scope reads the reviews back and writes the document; one service per scope
+	 * Constructor injection, which DS hands both the reference and the configuration: the
+	 * configuration is an activation object like any other, so there is no reason for a second
+	 * activate method and the fields it would fill can be final.
+	 *
+	 * @param scope  reads the reviews back and writes the document; one service per scope
+	 * @param config which registries the reviews and the documents live in, and which events to
+	 *               answer
 	 */
 	@Activate
-	public GDPRReportHistoryStageAction(@Reference(name = "scope") WritableScopeService<EObject> scope) {
+	public GDPRReportHistoryStageAction(@Reference(name = "scope") WritableScopeService<EObject> scope,
+			Config config) {
 		this.scope = scope;
-	}
-
-	@Activate
-	void activate(Config config) {
-		registry = config.reports_registry();
-		documentRegistry = config.document_registry();
-		stages = toSet(config.report_stages());
-		scopes = toSet(config.trigger_scopes());
+		this.registry = config.reports_registry();
+		this.documentRegistry = config.document_registry();
+		this.stages = toSet(config.report_stages());
+		this.scopes = toSet(config.trigger_scopes());
 
 		LOGGER.info(() -> String.format(
 				"GDPR review documents are rebuilt from registry '%s' stages %s of scope '%s' into registry '%s', "

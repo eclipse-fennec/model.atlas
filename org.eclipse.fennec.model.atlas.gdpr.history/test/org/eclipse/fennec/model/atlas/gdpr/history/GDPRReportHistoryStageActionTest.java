@@ -309,9 +309,7 @@ class GDPRReportHistoryStageActionTest {
 	/* ------------------------------------------------------------------ fixtures */
 
 	private GDPRReportHistoryStageAction action(String[] stages, String[] scopes) {
-		GDPRReportHistoryStageAction action = new GDPRReportHistoryStageAction(scope);
-		action.activate(config(stages, scopes));
-		return action;
+		return new GDPRReportHistoryStageAction(scope, config(stages, scopes));
 	}
 
 	private static GDPRReportHistoryStageAction.Config config(String[] stages, String[] scopes) {
