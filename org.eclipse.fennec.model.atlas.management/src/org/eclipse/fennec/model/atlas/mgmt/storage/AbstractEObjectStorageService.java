@@ -356,6 +356,25 @@ public abstract class AbstractEObjectStorageService implements EObjectStorageSer
      * org.eclipse.emf.ecore.EObject,
      * org.eclipse.fennec.model.atlas.mgmt.management.ObjectMetadata)
      */
+    /**
+     * The fingerprint scheme this service computes, and therefore the only one it refuses to take
+     * from a caller.
+     * <p>
+     * Every other scheme names an identity it cannot compute — {@code m2x1:} for a compiled
+     * transformation unit, whose compiler stamps it — so the writer's value is the only one there
+     * is, and it is kept (issue #319).
+     * <p>
+     * <b>The trap this leaves.</b> A future type that is fingerprinted {@code fp1:} by something
+     * other than this service would have its value silently cleared here. {@code fp1:} is
+     * emf.osgi's <em>EPackage</em> scheme, so that combination is malformed today; a type that
+     * genuinely needs it belongs in the branch above, computed, rather than supplied.
+     */
+    private static final String OWNED_FINGERPRINT_SCHEME = "fp1:";
+
+    private static boolean isOwnedScheme(String fingerprint) {
+        return fingerprint != null && fingerprint.startsWith(OWNED_FINGERPRINT_SCHEME);
+    }
+
     @Override
     public Promise<ObjectMetadata> storeObject(String scope, String registry, String stage, String objectId,
             EObject object, ObjectMetadata metadata) {
@@ -384,14 +403,31 @@ public abstract class AbstractEObjectStorageService implements EObjectStorageSer
                     }
                 }
 
-                // Compute and set the model fingerprint for EPackages. Always overwritten
-                // here, never taken from the caller ("computed, never trusted") — and
-                // cleared for non-EPackage objects so a client-supplied value cannot
-                // survive the upload path. Unlike contentHash (bytes identity of the
-                // stored XMI) the fingerprint is the semantic model identity.
+                // The semantic identity of the stored object, unlike contentHash, which is the
+                // bytes identity of the stored XMI.
+                //
+                // An EPackage is fingerprinted here and the value is always overwritten, never
+                // taken from the caller: this service can compute it, so nobody else's word for
+                // it is needed. Any other type keeps whatever the metadata already carries — a
+                // compiled transformation unit is fingerprinted by its compiler (issue #319), and
+                // this service cannot recompute that without knowing a transformation model it
+                // has no business depending on.
+                //
+                // "Computed, never trusted" is unchanged, and now says which values it is about:
+                // this service owns the fp1 scheme. It computes fp1 itself, so it never adopts an
+                // fp1 value it did not compute — supplying one is either a mistake or an attempt,
+                // and both are answered by clearing it. A value in a scheme it cannot compute is
+                // not its to invent or to discard.
+                //
+                // Nor can an untrusted caller reach this with one: REST builds its ObjectMetadata
+                // fresh from path and query parameters — the request body is the object, never
+                // the metadata — and no REST resource sets a fingerprint at all.
                 if (metadata != null) {
-                    metadata.setFingerprint(
-                            object instanceof EPackage ePackage ? FingerprintHelper.fingerprint(ePackage) : null);
+                    if (object instanceof EPackage ePackage) {
+                        metadata.setFingerprint(FingerprintHelper.fingerprint(ePackage));
+                    } else if (isOwnedScheme(metadata.getFingerprint())) {
+                        metadata.setFingerprint(null);
+                    }
                 }
 
                 // Use helper to save both object and metadata

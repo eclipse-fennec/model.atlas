@@ -239,16 +239,44 @@ public class AtlasUnitStore implements UnitStore {
         // same key, new content is possible when the same source recompiles against
         // a changed package view (the unit fingerprint does not fold in package
         // fingerprints) — the newer manifest replaces the older one
-        upsert(registryService, scope, stage, QvtUnits.objectId(key), key.qualifiedName(), document);
+        upsert(registryService, scope, stage, QvtUnits.objectId(key), key.qualifiedName(), document,
+                unitFingerprintOf(document));
+    }
+
+    /**
+     * The {@code m2x1:} fingerprint of a compiled unit, read off the manifest its compiler
+     * stamped, so it becomes the object's {@code ObjectMetadata.fingerprint} (issue #319).
+     * <p>
+     * That is what makes a GDPR review of a transformation attachable: the review names its
+     * subject by the unit fingerprint, and the atlas can only find the unit it is about if the
+     * unit's metadata carries the same value. The storage layer cannot compute it — it would have
+     * to know the transformation model — so it is supplied here and kept rather than recomputed.
+     * <p>
+     * A {@code SourceUnit} deliberately gets none. Its own fingerprint is of the source text, a
+     * different value under the same {@code m2x1:} scheme, and nothing joins on it; an unread
+     * value in the metadata would only invite a lookup against the wrong one of the two.
+     *
+     * @return the unit fingerprint, or {@code null} for anything that is not a compiled unit
+     */
+    private static String unitFingerprintOf(EObject document) {
+        if (!(document instanceof CompiledUnit compiled) || compiled.getManifest() == null) {
+            return null;
+        }
+        String fingerprint = compiled.getManifest().getUnitFingerprint();
+        return fingerprint == null || fingerprint.isBlank() ? null : fingerprint;
     }
 
     /**
      * Create-or-replace of one Atlas-written document (a unit, a diagnostics
      * document) in a (scope, stage) view — the shared write path of the store
      * and the compile action.
+     *
+     * @param fingerprint the object's semantic identity, or {@code null} for a document that has
+     *                    none. Set on a create; a replace keeps what is stored, which is the same
+     *                    value because a unit's objectId ends in its fingerprint
      */
     public static void upsert(RegistryService<EObject> registryService, String scope, String stage, String objectId,
-            String objectName, EObject document) throws UnitStoreException {
+            String objectName, EObject document, String fingerprint) throws UnitStoreException {
         String operation = "store " + objectId + " in (" + scope + ", " + registryService.getRegistryName() + ", "
                 + stage + ")";
         ObjectMetadata existing;
@@ -267,6 +295,11 @@ public class AtlasUnitStore implements UnitStore {
             metadata.setObjectName(objectName);
             metadata.setUploadTime(Instant.now());
             metadata.setObjectType(EcoreUtil.getURI(document.eClass()).toString());
+            // Only on the create branch, and that is enough: the objectId of a unit ends in its
+            // own fingerprint, so a unit whose fingerprint changed is a different objectId and
+            // therefore a create. The rewrite branch above keeps the stored value, which is by
+            // construction the right one.
+            metadata.setFingerprint(fingerprint);
             registryService.uploadToStage(scope, stage, document, metadata).getValue();
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
