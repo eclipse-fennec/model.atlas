@@ -353,8 +353,9 @@ Rules worth knowing:
   earlier; another producer's findings stay untouched. Diagnostics are per
   (scope, registry, stage, objectId), so the draft and the released copy of an object have
   their own.
-- **Ids are stable.** The id is derived from producer, code and target, so the same finding
-  about the same element keeps its id across re-validation and can be referenced from outside.
+- **Ids are stable.** The id is derived from producer, code and target - for a child, from its
+  parent's id, code and target - so the same finding about the same element keeps its id across
+  re-validation and can be referenced from outside.
 
 Two ways to change diagnostics exist, and they mean different things:
 
@@ -364,7 +365,9 @@ Two ways to change diagnostics exist, and they mean different things:
   `createdTime`, its `status`, its `history` and its `version`. Only the producer's own view
   refreshes: severity, message, target, children. A changed severity is recorded in the history
   in the producer's name. So a status a person set is **never silently reverted** by an automatic
-  run.
+  run. This holds **at every level of the tree**: a decision belongs to whichever node states the
+  finding a person looked at, which for a producer that emits one root with a node per affected
+  element is a child rather than the root.
 - **A person or module decides about one finding** through the `DiagnosticService`: `acknowledge`,
   `resolve`, `escalate`, a generic `update`, `add` and `remove`, each by diagnostic id. Every call
   names who makes the change (`changedBy`) and which `version` it decided about. A change that
@@ -387,6 +390,12 @@ unconditionally in response.
 
 The REST surface for changing diagnostics, and the refusal contract that returns them on a `409`,
 are part of the diagnostics epic (#290).
+
+**Producers you will meet.** `stage-action/<name>` for what an action made of an event,
+`SchemaDependencies` for a dependency that is no longer served, `QvtTransitionGate` for a
+transformation that does not compile, and - where the GDPR review half is deployed - `gdpr.review`,
+which records what a review found on the model it reviewed. See
+[GDPR review findings on the reviewed model](gdpr-review-diagnostics.md).
 
 ### Hierarchical Visibility
 

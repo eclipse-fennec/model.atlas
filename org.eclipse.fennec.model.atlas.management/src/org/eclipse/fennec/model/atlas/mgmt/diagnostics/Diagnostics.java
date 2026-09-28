@@ -158,6 +158,14 @@ public final class Diagnostics {
      * leaves no trace.</li>
      * </ul>
      *
+     * <p>
+     * The same rule runs <b>down the tree</b>, node by node: a child that comes back under
+     * the same id keeps its own {@code createdTime}, {@code status}, {@code history} and
+     * {@code version}. A decision belongs to whichever node states the finding a person
+     * looked at, and for a producer that emits one root per element with one child per
+     * finding, that is a child.
+     * </p>
+     *
      * @param metadata     the metadata to change in place
      * @param producer     the producer whose roots are replaced
      * @param replacements the producer's new roots; an empty list clears them
@@ -192,7 +200,42 @@ public final class Diagnostics {
         return List.copyOf(previous.keySet());
     }
 
+    /**
+     * Carries a finding's life over to the node that reports it again, down the whole tree.
+     *
+     * <p>
+     * A decision is not a property of a root. {@link DiagnosticService} addresses any node
+     * by id, so a person acknowledges or resolves the node that says what they looked at -
+     * for a producer that puts one root per element and one child per finding, that is a
+     * child. Pairing only the roots would refresh the tree and quietly reset every such
+     * decision to {@code OPEN} on the next run.
+     * </p>
+     *
+     * <p>
+     * Children are paired by id, which is stable for the same finding, and an unmatched one
+     * on either side is simply a finding that came or went. The version rule is applied per
+     * node: an informed change at the root does not decide anything about a child that the
+     * producer merely re-validated.
+     * </p>
+     */
     private static void carryOver(Diagnostic before, Diagnostic again, String producer, Instant now) {
+        carryOverNode(before, again, producer, now);
+        if (before.getChildren().isEmpty() || again.getChildren().isEmpty()) {
+            return;
+        }
+        Map<String, Diagnostic> previous = new HashMap<>();
+        for (Diagnostic child : before.getChildren()) {
+            previous.put(child.getId(), child);
+        }
+        for (Diagnostic child : again.getChildren()) {
+            Diagnostic beforeChild = previous.get(child.getId());
+            if (beforeChild != null) {
+                carryOver(beforeChild, child, producer, now);
+            }
+        }
+    }
+
+    private static void carryOverNode(Diagnostic before, Diagnostic again, String producer, Instant now) {
         if (before.getCreatedTime() != null) {
             again.setCreatedTime(before.getCreatedTime());
         }
