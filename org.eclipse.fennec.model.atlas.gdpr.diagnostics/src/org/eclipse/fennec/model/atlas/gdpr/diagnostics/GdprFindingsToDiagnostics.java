@@ -47,13 +47,25 @@ import org.eclipse.fennec.model.gdprReport.RelevanceLevelType;
  * on their own. It <b>decides nothing the review did not</b>: every diagnostic is a projection of a
  * {@code Finding} that already exists, and the mapping is a table rather than a second opinion.
  *
- * <h2>Shape: one root per reviewed element, one child per claim</h2>
+ * <h2>Shape: one root for the producer, one node per element, one leaf per claim</h2>
+ *
+ * <pre>
+ * gdpr.review                  the review of this object      &lt;- the only root
+ *   gdpr.feature //Person/dob  what was found on that element
+ *     gdpr.finding.QUASI_IDENTIFIER.HIGH   one claim about it
+ * </pre>
  * <p>
- * A root stands for an element the review examined and found something on - a classifier, a
- * feature, a flow, or the set of evaluations a {@code CombinationFinding} ties together - and
- * carries the worst severity among its children as the badge a listing shows. Each child is one
- * claim about that element. An element the review examined and found nothing on gets no diagnostic
- * at all, which is what makes the absence of a {@code gdpr.review} root mean "nothing was found".
+ * <b>One root, because an object has several producers.</b> A reader looking at an object's
+ * diagnostics - in a browser, a tree, a listing - wants one collapsed row per producer and the
+ * choice of which to open. Spreading a producer's findings over many roots buries the other
+ * producers among them. So everything this producer has to say hangs under a single node, whose
+ * severity is the worst anywhere beneath it and whose message says how much there is.
+ * <p>
+ * Each node under it stands for an element the review examined and found something on - a
+ * classifier, a feature, a flow, or the set of evaluations a {@code CombinationFinding} ties
+ * together - and each leaf under that is one claim about that element. An element the review
+ * examined and found nothing on contributes nothing, and a review that found nothing produces no
+ * root at all: the absence of a {@code gdpr.review} root is what says nothing was found.
  * <p>
  * The producer is deliberately not set here: {@code Diagnostics.prepare} stamps {@link #PRODUCER}
  * onto every node of the tree and mints the ids from it, so this class never has to know the id
@@ -117,13 +129,20 @@ public class GdprFindingsToDiagnostics {
 	/** The coarse classification a UI filters by, shared with every other compliance producer. */
 	public static final String CATEGORY = "compliance";
 
-	/** Root code for the findings about one classifier. */
+	/**
+	 * Code of the one root: the review of this object, as a whole. Everything else this producer
+	 * has to say hangs under it, so a reader with several producers on one object collapses each
+	 * to a single row and opens the one they care about.
+	 */
+	public static final String CODE_REVIEW = "gdpr.review";
+
+	/** Code for the findings about one classifier. */
 	public static final String CODE_CLASSIFIER = "gdpr.classifier";
-	/** Root code for the findings about one structural feature. */
+	/** Code for the findings about one structural feature. */
 	public static final String CODE_FEATURE = "gdpr.feature";
-	/** Root code for the findings about one source-to-target path of a transformation. */
+	/** Code for the findings about one source-to-target path of a transformation. */
 	public static final String CODE_FLOW = "gdpr.flow";
-	/** Root code for a finding that only arises from several evaluations together. */
+	/** Code for a finding that only arises from several evaluations together. */
 	public static final String CODE_COMBINATION = "gdpr.combination";
 
 	/** Prefix of every child code, so a client can recognise one without knowing the categories. */
@@ -158,29 +177,50 @@ public class GdprFindingsToDiagnostics {
 			return List.of();
 		}
 		String source = blankToNull(report.getGeneratedBy());
-		List<Diagnostic> roots = new ArrayList<>();
+		List<Diagnostic> elements = new ArrayList<>();
 		for (Evaluation evaluation : report.getEvaluation()) {
-			collect(evaluation, source, roots);
+			collect(evaluation, source, elements);
 		}
 		for (CombinationFinding combination : report.getCombinations()) {
-			add(roots, root(CODE_COMBINATION, combinationTarget(combination), List.of(combination), source,
+			add(elements, element(CODE_COMBINATION, combinationTarget(combination), List.of(combination), source,
 					kindOf(combination)));
 		}
-		return roots;
+		if (elements.isEmpty()) {
+			// No root at all rather than an empty one: the absence of a gdpr.review root is what
+			// says the review found nothing, and an empty root would read as a review that did.
+			return List.of();
+		}
+
+		DiagnosticSeverity worst = DiagnosticSeverity.INFO;
+		int claims = 0;
+		for (Diagnostic element : elements) {
+			claims += element.getChildren().size();
+			if (element.getSeverity().getValue() > worst.getValue()) {
+				worst = element.getSeverity();
+			}
+		}
+		Diagnostic review = diagnostic(CODE_REVIEW, null, worst, summary(claims, elements.size()), source);
+		review.getChildren().addAll(elements);
+		return List.of(review);
 	}
 
-	private void collect(Evaluation evaluation, String source, List<Diagnostic> roots) {
+	private static String summary(int claims, int elements) {
+		return String.format("GDPR review: %d finding%s on %d element%s", claims, claims == 1 ? "" : "s", elements,
+				elements == 1 ? "" : "s");
+	}
+
+	private void collect(Evaluation evaluation, String source, List<Diagnostic> elements) {
 		if (evaluation instanceof ClassifierEvaluation classifier) {
-			add(roots, root(CODE_CLASSIFIER, targetOf(classifier), classifier.getFindings(), source, null));
+			add(elements, element(CODE_CLASSIFIER, targetOf(classifier), classifier.getFindings(), source, null));
 			for (FeatureEvaluation feature : classifier.getFeatureEvaluation()) {
-				add(roots, root(CODE_FEATURE, targetOf(feature), feature.getFindings(), source, null));
+				add(elements, element(CODE_FEATURE, targetOf(feature), feature.getFindings(), source, null));
 			}
 		} else if (evaluation instanceof FeatureEvaluation feature) {
 			// A feature the report held directly rather than under its classifier. It carries its
 			// own uriFragment, so it is addressed exactly the same way.
-			add(roots, root(CODE_FEATURE, targetOf(feature), feature.getFindings(), source, null));
+			add(elements, element(CODE_FEATURE, targetOf(feature), feature.getFindings(), source, null));
 		} else if (evaluation instanceof FlowEvaluation flow) {
-			add(roots, root(CODE_FLOW, targetOf(flow), flow.getFindings(), source, null));
+			add(elements, element(CODE_FLOW, targetOf(flow), flow.getFindings(), source, null));
 		} else {
 			// A kind of evaluation added to the report model after this was written. Say so: a
 			// silently dropped evaluation reads as a review that found nothing.
@@ -192,10 +232,10 @@ public class GdprFindingsToDiagnostics {
 	}
 
 	/**
-	 * One root for one element, with one child per claim, or {@code null} when the element has
-	 * nothing to say.
+	 * One node for one element, with one child per claim, or {@code null} when the element has
+	 * nothing to say. It hangs under the producer's single root.
 	 */
-	private Diagnostic root(String code, String target, Collection<? extends Finding> findings, String source,
+	private Diagnostic element(String code, String target, Collection<? extends Finding> findings, String source,
 			String note) {
 		Map<String, Claim> claims = claims(findings, target);
 		if (claims.isEmpty()) {
@@ -206,8 +246,8 @@ public class GdprFindingsToDiagnostics {
 			// mint the same id and all but one of them would be lost without a trace.
 			LOGGER.log(Level.WARNING, () -> String.format(
 					"A reviewed element of kind '%s' carries %d finding(s) but nothing to address it by, so they "
-							+ "cannot be written onto the object; a diagnostic without a target would collide with "
-							+ "every other one of its kind.",
+							+ "cannot be written onto the object; a node without a target would collide with every "
+							+ "other one of its kind under the same root.",
 					code, claims.size()));
 			return null;
 		}
@@ -225,10 +265,12 @@ public class GdprFindingsToDiagnostics {
 			}
 		}
 
-		Diagnostic root = diagnostic(code, target, worst,
-				"GDPR review" + (note == null ? "" : ", " + note) + ": " + String.join(", ", headline), source);
-		root.getChildren().addAll(children);
-		return root;
+		// No "GDPR review" prefix: the producer's root above already says whose finding this is,
+		// and the target says which element, so the message is the claim and nothing else.
+		Diagnostic element = diagnostic(code, target, worst,
+				(note == null ? "" : note + ": ") + String.join(", ", headline), source);
+		element.getChildren().addAll(children);
+		return element;
 	}
 
 	/**
@@ -356,9 +398,9 @@ public class GdprFindingsToDiagnostics {
 
 	/* ------------------------------------------------------------------ small helpers */
 
-	private static void add(List<Diagnostic> roots, Diagnostic root) {
-		if (root != null) {
-			roots.add(root);
+	private static void add(List<Diagnostic> elements, Diagnostic element) {
+		if (element != null) {
+			elements.add(element);
 		}
 	}
 

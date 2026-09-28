@@ -99,8 +99,9 @@ class GDPRMetadataDiagnosticsStageActionTest {
 		assertEquals("pkg-approved", write.objectId(),
 				"a review describes the stage it was carried out against, not the copy in another stage");
 		assertEquals(GdprFindingsToDiagnostics.PRODUCER, write.producer());
-		assertEquals(1, write.roots().size());
-		assertEquals("//Patient/category", write.roots().get(0).getTarget());
+		assertEquals(1, write.roots().size(), "one root per producer");
+		assertEquals(GdprFindingsToDiagnostics.CODE_REVIEW, write.roots().get(0).getCode());
+		assertEquals("//Patient/category", write.roots().get(0).getChildren().get(0).getTarget());
 	}
 
 	@Test
@@ -329,13 +330,15 @@ class GDPRMetadataDiagnosticsStageActionTest {
 		assertTrue(scope.writes.get(scope.writes.size() - 1).roots().isEmpty());
 	}
 
-	/** The code of the one child of the one root written last. */
+	/** The code of the one claim in the tree written last: root -> element -> claim. */
 	private String lastWrittenChildCode() {
 		assertFalse(scope.writes.isEmpty(), "nothing was written at all");
 		List<Diagnostic> roots = scope.writes.get(scope.writes.size() - 1).roots();
-		assertEquals(1, roots.size(), "one reviewed feature, one root");
-		assertEquals(1, roots.get(0).getChildren().size(), "one claim about it");
-		return roots.get(0).getChildren().get(0).getCode();
+		assertEquals(1, roots.size(), "one root per producer");
+		assertEquals(1, roots.get(0).getChildren().size(), "one reviewed element");
+		Diagnostic element = roots.get(0).getChildren().get(0);
+		assertEquals(1, element.getChildren().size(), "one claim about it");
+		return element.getChildren().get(0).getCode();
 	}
 
 	/* ------------------------------------------------------------------ fixtures */

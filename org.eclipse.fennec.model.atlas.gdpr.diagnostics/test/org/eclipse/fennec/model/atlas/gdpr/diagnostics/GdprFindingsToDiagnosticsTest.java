@@ -15,6 +15,7 @@ package org.eclipse.fennec.model.atlas.gdpr.diagnostics;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.time.Instant;
@@ -23,6 +24,8 @@ import java.util.List;
 import org.eclipse.fennec.model.atlas.mgmt.diagnostics.Diagnostics;
 import org.eclipse.fennec.model.atlas.mgmt.management.Diagnostic;
 import org.eclipse.fennec.model.atlas.mgmt.management.DiagnosticSeverity;
+import org.eclipse.fennec.model.atlas.mgmt.management.ManagementFactory;
+import org.eclipse.fennec.model.atlas.mgmt.management.ObjectMetadata;
 import org.eclipse.fennec.model.gdprReport.ClassifierEvaluation;
 import org.eclipse.fennec.model.gdprReport.CombinationFinding;
 import org.eclipse.fennec.model.gdprReport.CombinationKind;
@@ -50,7 +53,30 @@ class GdprFindingsToDiagnosticsTest {
 	private final GdprFindingsToDiagnostics mapper = new GdprFindingsToDiagnostics();
 
 	@Test
-	@DisplayName("A feature with one finding becomes one root carrying one child, addressed by the fragment")
+	@DisplayName("Everything the producer says hangs under one root, whatever it found")
+	void oneRootPerProducer() {
+		GdprReport report = report();
+		FeatureEvaluation one = feature("//Patient/a");
+		one.getFindings().add(finding("F-1", DataCategory.PERSONAL_DATA, RelevanceLevelType.LOW, null, "r", null));
+		FeatureEvaluation two = feature("//Patient/b");
+		two.getFindings().add(finding("F-2", DataCategory.SPECIAL_CATEGORY, RelevanceLevelType.HIGH, null, "r", null));
+		ClassifierEvaluation classifier = classifier(report, "//Patient", one, two);
+		classifier.getFindings()
+				.add(finding("F-3", DataCategory.PERSONAL_DATA, RelevanceLevelType.MEDIUM, null, "r", null));
+
+		List<Diagnostic> roots = mapper.map(report);
+
+		assertEquals(1, roots.size(), "one root per producer, so a reader collapses it to one row");
+		Diagnostic root = roots.get(0);
+		assertEquals(GdprFindingsToDiagnostics.CODE_REVIEW, root.getCode());
+		assertNull(root.getTarget(), "the review is about the object as a whole");
+		assertEquals(DiagnosticSeverity.WARNING, root.getSeverity(), "the worst of everything beneath it");
+		assertEquals("GDPR review: 3 findings on 3 elements", root.getMessage());
+		assertEquals(3, root.getChildren().size(), "one node per element, under the one root");
+	}
+
+	@Test
+	@DisplayName("A feature with one finding becomes one element node carrying one claim, addressed by the fragment")
 	void oneFindingOnOneFeature() {
 		GdprReport report = report();
 		FeatureEvaluation feature = feature("//Patient/category");
@@ -59,19 +85,20 @@ class GdprFindingsToDiagnosticsTest {
 				"Art.9(1)"));
 		classifier(report, "//Patient", feature);
 
-		List<Diagnostic> roots = mapper.map(report);
+		List<Diagnostic> elements = elements(report);
 
-		assertEquals(1, roots.size());
-		Diagnostic root = roots.get(0);
-		assertEquals(GdprFindingsToDiagnostics.CODE_FEATURE, root.getCode());
-		assertEquals("//Patient/category", root.getTarget());
-		assertEquals(DiagnosticSeverity.WARNING, root.getSeverity());
-		assertEquals("compliance", root.getCategory());
-		assertEquals("claude-sonnet-4-6", root.getSource(), "the source is what produced the review");
-		assertEquals("GDPR review: SPECIAL_CATEGORY (HIGH)", root.getMessage());
+		assertEquals(1, elements.size());
+		Diagnostic element = elements.get(0);
+		assertEquals(GdprFindingsToDiagnostics.CODE_FEATURE, element.getCode());
+		assertEquals("//Patient/category", element.getTarget());
+		assertEquals(DiagnosticSeverity.WARNING, element.getSeverity());
+		assertEquals("compliance", element.getCategory());
+		assertEquals("claude-sonnet-4-6", element.getSource(), "the source is what produced the review");
+		assertEquals("SPECIAL_CATEGORY (HIGH)", element.getMessage(),
+				"no 'GDPR review' prefix: the root above already says whose finding this is");
 
-		assertEquals(1, root.getChildren().size());
-		Diagnostic child = root.getChildren().get(0);
+		assertEquals(1, element.getChildren().size());
+		Diagnostic child = element.getChildren().get(0);
 		assertEquals("gdpr.finding.SPECIAL_CATEGORY.HIGH", child.getCode());
 		assertEquals("//Patient/category", child.getTarget(), "a child is about the same element as its root");
 		assertEquals(DiagnosticSeverity.WARNING, child.getSeverity());
@@ -95,20 +122,21 @@ class GdprFindingsToDiagnosticsTest {
 				ConfidenceType.MEDIUM, "Contributes to singling out.", null, "Rec.26"));
 		classifier(report, "//Person", feature);
 
-		List<Diagnostic> roots = mapper.map(report);
+		List<Diagnostic> elements = elements(report);
 
-		assertEquals(1, roots.size());
-		Diagnostic root = roots.get(0);
-		assertEquals(2, root.getChildren().size(), "same category and relevance fold, a different category does not");
-		Diagnostic folded = root.getChildren().get(0);
+		assertEquals(1, elements.size());
+		Diagnostic element = elements.get(0);
+		assertEquals(2, element.getChildren().size(),
+				"same category and relevance fold, a different category does not");
+		Diagnostic folded = element.getChildren().get(0);
 		assertEquals("gdpr.finding.PERSONAL_DATA.MEDIUM", folded.getCode());
 		assertTrue(folded.getMessage().contains("Reached by the feature name."), folded.getMessage());
 		assertTrue(folded.getMessage().contains("Reached by the owning classifier."), folded.getMessage());
 		assertTrue(folded.getMessage().contains("Evidence: Art.4(1), Rec.26"), folded.getMessage());
 		assertTrue(folded.getMessage().contains("Confidence: LOW"),
 				"folding never makes a claim surer than the least sure review that reached it: " + folded.getMessage());
-		assertEquals("gdpr.finding.QUASI_IDENTIFIER.MEDIUM", root.getChildren().get(1).getCode());
-		assertEquals("GDPR review: PERSONAL_DATA (MEDIUM), QUASI_IDENTIFIER (MEDIUM)", root.getMessage());
+		assertEquals("gdpr.finding.QUASI_IDENTIFIER.MEDIUM", element.getChildren().get(1).getCode());
+		assertEquals("PERSONAL_DATA (MEDIUM), QUASI_IDENTIFIER (MEDIUM)", element.getMessage());
 	}
 
 	@Test
@@ -132,7 +160,7 @@ class GdprFindingsToDiagnosticsTest {
 	}
 
 	@Test
-	@DisplayName("LOW informs, MEDIUM and HIGH warn, and the root carries the worst of its children")
+	@DisplayName("LOW informs, MEDIUM and HIGH warn, and every node carries the worst beneath it")
 	void severityMapping() {
 		GdprReport report = report();
 		FeatureEvaluation low = feature("//P/a");
@@ -143,14 +171,17 @@ class GdprFindingsToDiagnosticsTest {
 				.add(finding("F-3", DataCategory.DIRECT_IDENTIFIER, RelevanceLevelType.HIGH, null, "r", null));
 		classifier(report, "//P", low, mixed);
 
-		List<Diagnostic> roots = mapper.map(report);
+		Diagnostic review = review(report);
+		List<Diagnostic> elements = review.getChildren();
 
-		assertEquals(DiagnosticSeverity.INFO, roots.get(0).getSeverity());
-		assertEquals(DiagnosticSeverity.INFO, roots.get(0).getChildren().get(0).getSeverity());
-		assertEquals(DiagnosticSeverity.WARNING, roots.get(1).getSeverity(), "the root wears the worst badge");
-		assertEquals(DiagnosticSeverity.INFO, roots.get(1).getChildren().get(0).getSeverity());
-		assertEquals(DiagnosticSeverity.WARNING, roots.get(1).getChildren().get(1).getSeverity());
-		assertTrue(roots.stream().noneMatch(root -> root.getSeverity() == DiagnosticSeverity.ERROR),
+		assertEquals(DiagnosticSeverity.INFO, elements.get(0).getSeverity());
+		assertEquals(DiagnosticSeverity.INFO, elements.get(0).getChildren().get(0).getSeverity());
+		assertEquals(DiagnosticSeverity.WARNING, elements.get(1).getSeverity(), "the node wears the worst badge");
+		assertEquals(DiagnosticSeverity.INFO, elements.get(1).getChildren().get(0).getSeverity());
+		assertEquals(DiagnosticSeverity.WARNING, elements.get(1).getChildren().get(1).getSeverity());
+		assertEquals(DiagnosticSeverity.WARNING, review.getSeverity(), "and the root the worst of all of them");
+		assertTrue(Diagnostics.flatten(holding(review)).values().stream()
+				.noneMatch(node -> node.getSeverity() == DiagnosticSeverity.ERROR),
 				"a review never produces an ERROR: that would say the check did not run");
 	}
 
@@ -177,8 +208,8 @@ class GdprFindingsToDiagnosticsTest {
 	}
 
 	@Test
-	@DisplayName("A classifier's own findings get their own root, beside its features'")
-	void classifierFindingsAreTheirOwnRoot() {
+	@DisplayName("A classifier's own findings get their own node, beside its features'")
+	void classifierFindingsAreTheirOwnNode() {
 		GdprReport report = report();
 		FeatureEvaluation feature = feature("//Patient/diagnosis");
 		feature.getFindings()
@@ -187,13 +218,13 @@ class GdprFindingsToDiagnosticsTest {
 		classifier.getFindings()
 				.add(finding("F-1", DataCategory.PERSONAL_DATA, RelevanceLevelType.LOW, null, "a person", null));
 
-		List<Diagnostic> roots = mapper.map(report);
+		List<Diagnostic> elements = elements(report);
 
-		assertEquals(2, roots.size());
-		assertEquals(GdprFindingsToDiagnostics.CODE_CLASSIFIER, roots.get(0).getCode());
-		assertEquals("//Patient", roots.get(0).getTarget());
-		assertEquals(GdprFindingsToDiagnostics.CODE_FEATURE, roots.get(1).getCode());
-		assertEquals("//Patient/diagnosis", roots.get(1).getTarget());
+		assertEquals(2, elements.size());
+		assertEquals(GdprFindingsToDiagnostics.CODE_CLASSIFIER, elements.get(0).getCode());
+		assertEquals("//Patient", elements.get(0).getTarget());
+		assertEquals(GdprFindingsToDiagnostics.CODE_FEATURE, elements.get(1).getCode());
+		assertEquals("//Patient/diagnosis", elements.get(1).getTarget());
 	}
 
 	@Test
@@ -215,15 +246,15 @@ class GdprFindingsToDiagnosticsTest {
 		combination.getFeatures().add(birthDate);
 		report.getCombinations().add(combination);
 
-		List<Diagnostic> roots = mapper.map(report);
+		List<Diagnostic> elements = elements(report);
 
-		assertEquals(1, roots.size(), "the participating features found nothing on their own");
-		Diagnostic root = roots.get(0);
-		assertEquals(GdprFindingsToDiagnostics.CODE_COMBINATION, root.getCode());
-		assertEquals("//Patient/birthDate+//Patient/street", root.getTarget(),
+		assertEquals(1, elements.size(), "the participating features found nothing on their own");
+		Diagnostic element = elements.get(0);
+		assertEquals(GdprFindingsToDiagnostics.CODE_COMBINATION, element.getCode());
+		assertEquals("//Patient/birthDate+//Patient/street", element.getTarget(),
 				"sorted, so the id does not turn on the order the analyser listed them in");
-		assertEquals("GDPR review, QUASI_IDENTIFIER_SET: QUASI_IDENTIFIER (HIGH)", root.getMessage());
-		assertEquals(1, root.getChildren().size());
+		assertEquals("QUASI_IDENTIFIER_SET: QUASI_IDENTIFIER (HIGH)", element.getMessage());
+		assertEquals(1, element.getChildren().size());
 	}
 
 	@Test
@@ -241,12 +272,12 @@ class GdprFindingsToDiagnosticsTest {
 				.add(finding("F-1", DataCategory.SPECIAL_CATEGORY, RelevanceLevelType.HIGH, null, "health", null));
 		report.getEvaluation().add(flow);
 
-		List<Diagnostic> roots = mapper.map(report);
+		List<Diagnostic> elements = elements(report);
 
-		assertEquals(1, roots.size());
-		assertEquals(GdprFindingsToDiagnostics.CODE_FLOW, roots.get(0).getCode());
+		assertEquals(1, elements.size());
+		assertEquals(GdprFindingsToDiagnostics.CODE_FLOW, elements.get(0).getCode());
 		assertEquals("toContact:http://example.org/clinic/1.0#//Patient/diagnosis"
-				+ "->http://example.org/contacts/1.0#//Contact/comment", roots.get(0).getTarget(),
+				+ "->http://example.org/contacts/1.0#//Contact/comment", elements.get(0).getTarget(),
 				"the namespaces are part of it: two source models can carry the same fragment");
 	}
 
@@ -273,11 +304,30 @@ class GdprFindingsToDiagnosticsTest {
 
 	/* ------------------------------------------------------------------ helpers */
 
-	/** The id the child of a single-finding report would be stored under. */
+	/** The one root the mapper produces. */
+	private Diagnostic review(GdprReport report) {
+		List<Diagnostic> roots = mapper.map(report);
+		assertEquals(1, roots.size(), "a producer has exactly one root");
+		return roots.get(0);
+	}
+
+	/** The element nodes under that root. */
+	private List<Diagnostic> elements(GdprReport report) {
+		return review(report).getChildren();
+	}
+
+	/** Metadata holding one tree, so Diagnostics can walk it. */
+	private static ObjectMetadata holding(Diagnostic root) {
+		ObjectMetadata metadata = ManagementFactory.eINSTANCE.createObjectMetadata();
+		metadata.getDiagnostics().add(root);
+		return metadata;
+	}
+
+	/** The id the one claim of a single-finding report would be stored under. */
 	private String idOfOnlyChild(GdprReport report) {
 		List<Diagnostic> roots = mapper.map(report);
 		Diagnostics.prepare(GdprFindingsToDiagnostics.PRODUCER, roots, NOW);
-		return roots.get(0).getChildren().get(0).getId();
+		return roots.get(0).getChildren().get(0).getChildren().get(0).getId();
 	}
 
 	private static GdprReport oneFinding(String fragment, DataCategory category, RelevanceLevelType relevance,

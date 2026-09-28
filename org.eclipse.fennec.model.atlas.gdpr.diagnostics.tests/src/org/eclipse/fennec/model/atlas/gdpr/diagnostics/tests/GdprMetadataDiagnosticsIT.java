@@ -15,6 +15,7 @@ package org.eclipse.fennec.model.atlas.gdpr.diagnostics.tests;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.List;
@@ -72,17 +73,24 @@ public class GdprMetadataDiagnosticsIT {
 
 		List<Diagnostic> roots = Fixtures.await(scope, DRAFT, found -> found.size() == 1, "the review's findings");
 		Diagnostic root = roots.get(0);
-		assertEquals("gdpr.feature", root.getCode());
-		assertEquals(Fixtures.REVIEWED_FEATURE, root.getTarget());
+		assertEquals("gdpr.review", root.getCode(), "one root per producer, so a viewer collapses it to one row");
+		assertNull(root.getTarget(), "the review is about the object as a whole");
 		assertEquals(DiagnosticSeverity.WARNING, root.getSeverity());
 		assertEquals("compliance", root.getCategory());
 		assertEquals(DiagnosticStatus.OPEN, root.getStatus());
 		assertNotNull(root.getCreatedTime());
+		assertEquals("GDPR review: 1 finding on 1 element", root.getMessage());
 
 		assertEquals(1, root.getChildren().size());
-		Diagnostic child = root.getChildren().get(0);
+		Diagnostic element = root.getChildren().get(0);
+		assertEquals("gdpr.feature", element.getCode());
+		assertEquals(Fixtures.REVIEWED_FEATURE, element.getTarget());
+		assertEquals(DiagnosticSeverity.WARNING, element.getSeverity());
+
+		assertEquals(1, element.getChildren().size());
+		Diagnostic child = element.getChildren().get(0);
 		assertEquals("gdpr.finding.QUASI_IDENTIFIER.MEDIUM", child.getCode());
-		assertEquals(Fixtures.PRODUCER, child.getProducer(), "children carry their root's producer");
+		assertEquals(Fixtures.PRODUCER, child.getProducer(), "every node carries the root's producer");
 		assertTrue(child.getMessage().contains("date of birth"), child.getMessage());
 	}
 
@@ -175,7 +183,7 @@ public class GdprMetadataDiagnosticsIT {
 				DRAFT);
 		Diagnostic first = Fixtures.await(scope, DRAFT, found -> found.size() == 1, "the first review's findings")
 				.get(0);
-		String acknowledgedId = first.getChildren().get(0).getId();
+		String acknowledgedId = first.getChildren().get(0).getChildren().get(0).getId();
 		// a data protection officer has seen the claim and accepts it for now
 		acknowledge(scope, acknowledgedId);
 
@@ -184,22 +192,17 @@ public class GdprMetadataDiagnosticsIT {
 				Fixtures.review("report-2", fingerprint, DataCategory.QUASI_IDENTIFIER, RelevanceLevelType.MEDIUM),
 				DRAFT);
 		Fixtures.await(scope, DRAFT,
-				found -> found.size() == 1 && found.get(0).getChildren().size() == 1
-						&& DiagnosticStatus.ACKNOWLEDGED == found.get(0).getChildren().get(0).getStatus(),
+				found -> "gdpr.finding.QUASI_IDENTIFIER.MEDIUM".equals(childCode(found))
+						&& DiagnosticStatus.ACKNOWLEDGED == claim(found).getStatus(),
 				"the person's decision to survive a re-review of the same claim");
 
 		// a third review of the same feature at another category is another claim
 		Fixtures.storeReview(scope,
 				Fixtures.review("report-3", fingerprint, DataCategory.SPECIAL_CATEGORY, RelevanceLevelType.HIGH),
 				DRAFT);
-		Diagnostic recategorised = Fixtures
-				.await(scope, DRAFT,
-						found -> found.size() == 1 && found.get(0).getChildren().size() == 1
-								&& "gdpr.finding.SPECIAL_CATEGORY.HIGH"
-										.equals(found.get(0).getChildren().get(0).getCode()),
-						"a changed category to become a new claim")
-				.get(0);
-		Diagnostic child = recategorised.getChildren().get(0);
+		Diagnostic child = claim(Fixtures.await(scope, DRAFT,
+				found -> "gdpr.finding.SPECIAL_CATEGORY.HIGH".equals(childCode(found)),
+				"a changed category to become a new claim"));
 		assertEquals(DiagnosticStatus.OPEN, child.getStatus(), "a changed judgement has to be looked at again");
 		assertTrue(!acknowledgedId.equals(child.getId()), "and it is a different diagnostic, not the old one reopened");
 	}
@@ -258,15 +261,21 @@ public class GdprMetadataDiagnosticsIT {
 				"one review being withdrawn must not erase what another review still says");
 	}
 
-	/** The code of the one child of the one root, or null when there is not exactly one of each. */
+	/** The code of the one claim in the tree: root -> element -> claim; null if the shape differs. */
 	private static String childCode(List<Diagnostic> roots) {
 		if (roots.size() != 1 || roots.get(0).getChildren().size() != 1) {
 			return null;
 		}
-		return roots.get(0).getChildren().get(0).getCode();
+		Diagnostic element = roots.get(0).getChildren().get(0);
+		return element.getChildren().size() == 1 ? element.getChildren().get(0).getCode() : null;
 	}
 
 	/* ------------------------------------------------------------------ helpers */
+
+	/** The one claim in the tree. */
+	private static Diagnostic claim(List<Diagnostic> roots) {
+		return roots.get(0).getChildren().get(0).getChildren().get(0);
+	}
 
 	private static void acknowledge(WritableScopeService<EObject> scope, String diagnosticId) throws Exception {
 		ObjectMetadata metadata = Fixtures.metadata(scope, DRAFT);
