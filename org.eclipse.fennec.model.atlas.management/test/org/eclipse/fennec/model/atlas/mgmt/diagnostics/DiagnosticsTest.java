@@ -184,6 +184,70 @@ class DiagnosticsTest {
     }
 
     @Test
+    @DisplayName("A re-validation keeps a status a person set on a child, not only on a root")
+    void revalidationKeepsAnInformedStatusOnAChild() {
+        ObjectMetadata metadata = ManagementFactory.eINSTANCE.createObjectMetadata();
+        Diagnostic root = diagnostic("feature", "//Person/firstName", DiagnosticSeverity.WARNING, "1 finding");
+        root.getChildren()
+                .add(diagnostic("personal-data", "//Person/firstName", DiagnosticSeverity.WARNING, "first run"));
+        Diagnostics.replaceOwned(metadata, "gdpr.review", List.of(root), T0);
+        // a person acknowledged the child: the diagnostic service addresses any node of the
+        // tree, so a decision can sit on a child as well as on a root
+        Diagnostic storedChild = metadata.getDiagnostics().get(0).getChildren().get(0);
+        storedChild.setStatus(DiagnosticStatus.ACKNOWLEDGED);
+        storedChild.setVersion(1);
+        DiagnosticChange seen = ManagementFactory.eINSTANCE.createDiagnosticChange();
+        seen.setChangedBy("gdpr.officer");
+        seen.setChangeTime(T1);
+        seen.setOldStatus(DiagnosticStatus.OPEN);
+        seen.setNewStatus(DiagnosticStatus.ACKNOWLEDGED);
+        storedChild.getHistory().add(seen);
+
+        // the producer runs again and finds the same thing, worded differently
+        Diagnostic again = diagnostic("feature", "//Person/firstName", DiagnosticSeverity.WARNING, "1 finding");
+        again.getChildren()
+                .add(diagnostic("personal-data", "//Person/firstName", DiagnosticSeverity.WARNING, "second run"));
+        Diagnostics.replaceOwned(metadata, "gdpr.review", List.of(again), T1);
+
+        Diagnostic child = metadata.getDiagnostics().get(0).getChildren().get(0);
+        assertEquals("second run", child.getMessage(), "the producer's view refreshes");
+        assertEquals(DiagnosticStatus.ACKNOWLEDGED, child.getStatus(), "the person's decision stands on a child too");
+        assertEquals(T0, child.getCreatedTime(), "the same finding seen again keeps its createdTime");
+        assertEquals(1, child.getVersion(), "no informed change happened");
+        assertEquals(1, child.getHistory().size(), "the child's history survives the rewrite");
+        assertEquals("gdpr.officer", child.getHistory().get(0).getChangedBy());
+    }
+
+    @Test
+    @DisplayName("A child whose severity changed records it, and an informed change at the root spares the children")
+    void childSeverityChangeAndInformedRoot() {
+        ObjectMetadata metadata = ManagementFactory.eINSTANCE.createObjectMetadata();
+        Diagnostic root = diagnostic("feature", "//Person/photo", DiagnosticSeverity.INFO, "1 finding");
+        root.getChildren().add(diagnostic("personal-data", "//Person/photo", DiagnosticSeverity.INFO, "m"));
+        Diagnostics.replaceOwned(metadata, "gdpr.review", List.of(root), T0);
+        Diagnostic storedChild = metadata.getDiagnostics().get(0).getChildren().get(0);
+        storedChild.setStatus(DiagnosticStatus.ACKNOWLEDGED);
+
+        // the root arrives as an informed change; the child is a plain re-validation at a
+        // higher severity
+        Diagnostic again = diagnostic("feature", "//Person/photo", DiagnosticSeverity.WARNING, "1 finding");
+        again.setVersion(1);
+        again.getChildren().add(diagnostic("personal-data", "//Person/photo", DiagnosticSeverity.WARNING, "m"));
+        Diagnostics.replaceOwned(metadata, "gdpr.review", List.of(again), T1);
+
+        Diagnostic child = metadata.getDiagnostics().get(0).getChildren().get(0);
+        assertEquals(DiagnosticStatus.ACKNOWLEDGED, child.getStatus(),
+                "an informed change at the root does not reopen a child the producer re-validated");
+        assertEquals(DiagnosticSeverity.WARNING, child.getSeverity());
+        assertEquals(1, child.getVersion(), "the severity change bumps the child's own version");
+        assertEquals(1, child.getHistory().size());
+        DiagnosticChange change = child.getHistory().get(0);
+        assertEquals("gdpr.review", change.getChangedBy());
+        assertEquals(DiagnosticSeverity.INFO, change.getOldSeverity());
+        assertEquals(DiagnosticSeverity.WARNING, change.getNewSeverity());
+    }
+
+    @Test
     @DisplayName("A re-validation that changes the severity records it in the producer's name and bumps the version")
     void revalidationRecordsASeverityChange() {
         ObjectMetadata metadata = ManagementFactory.eINSTANCE.createObjectMetadata();
