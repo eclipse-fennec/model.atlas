@@ -357,22 +357,27 @@ public abstract class AbstractEObjectStorageService implements EObjectStorageSer
      * org.eclipse.fennec.model.atlas.mgmt.management.ObjectMetadata)
      */
     /**
-     * The fingerprint scheme this service computes, and therefore the only one it refuses to take
-     * from a caller.
+     * Whether the fingerprint is written in a scheme this service can compute, and therefore one
+     * it refuses to take from a caller.
      * <p>
-     * Every other scheme names an identity it cannot compute — {@code m2x1:} for a compiled
-     * transformation unit, whose compiler stamps it — so the writer's value is the only one there
-     * is, and it is kept (issue #319).
+     * The schemes are asked of {@link FingerprintHelper#supportedSchemes()} rather than named
+     * here, and it is <em>every</em> supported scheme rather than only
+     * {@link FingerprintHelper#currentScheme() the current} one: a value this service could have
+     * computed itself is one it must compute itself, whether or not that scheme is the one new
+     * values are produced in. A scheme added to emf.osgi later is refused here from the moment it
+     * exists, with no second list to keep in step.
      * <p>
-     * <b>The trap this leaves.</b> A future type that is fingerprinted {@code fp1:} by something
-     * other than this service would have its value silently cleared here. {@code fp1:} is
-     * emf.osgi's <em>EPackage</em> scheme, so that combination is malformed today; a type that
-     * genuinely needs it belongs in the branch above, computed, rather than supplied.
+     * Every other scheme names an identity this service cannot compute — {@code m2x1:} for a
+     * compiled transformation unit, whose compiler stamps it — so the writer's value is the only
+     * one there is, and it is kept (issue #319). A value carrying no scheme at all is in no
+     * scheme this service computes either, so it is kept on the same reasoning.
      */
-    private static final String OWNED_FINGERPRINT_SCHEME = "fp1:";
-
-    private static boolean isOwnedScheme(String fingerprint) {
-        return fingerprint != null && fingerprint.startsWith(OWNED_FINGERPRINT_SCHEME);
+    private static boolean isComputableScheme(String fingerprint) {
+        if (fingerprint == null) {
+            return false;
+        }
+        int separator = fingerprint.indexOf(':');
+        return separator > 0 && FingerprintHelper.supportedSchemes().contains(fingerprint.substring(0, separator));
     }
 
     @Override
@@ -414,10 +419,10 @@ public abstract class AbstractEObjectStorageService implements EObjectStorageSer
                 // has no business depending on.
                 //
                 // "Computed, never trusted" is unchanged, and now says which values it is about:
-                // this service owns the fp1 scheme. It computes fp1 itself, so it never adopts an
-                // fp1 value it did not compute — supplying one is either a mistake or an attempt,
-                // and both are answered by clearing it. A value in a scheme it cannot compute is
-                // not its to invent or to discard.
+                // the schemes this service can compute, which it asks FingerprintHelper for. It
+                // never adopts a value in one of those — supplying one is either a mistake or an
+                // attempt, and both are answered by clearing it. A value in a scheme it cannot
+                // compute is not its to invent or to discard.
                 //
                 // Nor can an untrusted caller reach this with one: REST builds its ObjectMetadata
                 // fresh from path and query parameters — the request body is the object, never
@@ -425,7 +430,7 @@ public abstract class AbstractEObjectStorageService implements EObjectStorageSer
                 if (metadata != null) {
                     if (object instanceof EPackage ePackage) {
                         metadata.setFingerprint(FingerprintHelper.fingerprint(ePackage));
-                    } else if (isOwnedScheme(metadata.getFingerprint())) {
+                    } else if (isComputableScheme(metadata.getFingerprint())) {
                         metadata.setFingerprint(null);
                     }
                 }
