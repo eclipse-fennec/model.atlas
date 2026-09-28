@@ -23,6 +23,12 @@ on each switch. It is deliberately flat, so the tabular codec renders it as a
 spreadsheet without any rendering code: an auditor opens it in LibreOffice or Excel and reads one
 line per thing in the model.
 
+A report landing also has a second, independent consequence: its findings are written onto the
+metadata of the model it is about, so the reviewed package itself says what was found. That is
+[GDPR review findings on the reviewed model](gdpr-review-diagnostics.md) - a sibling stage action
+on the same event, with its own output and its own configuration. Neither waits on the other, and
+either can be deployed without the other.
+
 ## What is in it
 
 `GdprReportHistory` has three containment lists, and each becomes a sheet:
