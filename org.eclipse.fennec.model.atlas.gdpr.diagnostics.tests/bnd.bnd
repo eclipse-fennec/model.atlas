@@ -1,0 +1,49 @@
+Bundle-Name: Model Atlas GDPR Metadata Diagnostics Tests
+Bundle-Description: OSGi integration tests for the GDPR review findings on a reviewed object's \
+ metadata. They drive the real stage action through the real registries: an EPackage stored in \
+ the schema registry and a report naming its fingerprint have to leave Diagnostics on that \
+ package's ObjectMetadata, and deleting the report has to take them away again.
+
+# Not a unit test's job. What is being pinned is the wiring: that the action is dispatched at
+# all (a registry that does not name it in stageActionService.target binds none and dispatches
+# nothing), that the server-computed fingerprint of a stored EPackage is the same string the
+# report carries, and that updateDiagnostics leaves the object's own metadata alone.
+
+Test-Cases: ${classes;HIERARCHY_INDIRECTLY_ANNOTATED;org.junit.platform.commons.annotation.Testable;CONCRETE}
+
+-workingset: ModelAtlas
+
+-library: \
+	enableOSGi-Test,\
+	enableEMF
+
+-buildpath: \
+	org.osgi.framework;version=latest,\
+	org.osgi.util.promise;version=latest,\
+	org.osgi.util.function;version=latest,\
+	org.osgi.service.cm;version=latest,\
+	org.osgi.service.component;version=latest,\
+	org.osgi.test.junit5.cm;version=latest,\
+	org.eclipse.fennec.emf.osgi.component,\
+	org.eclipse.fennec.model.atlas.management;version=snapshot,\
+	org.eclipse.fennec.model.atlas.workflow;version=snapshot,\
+	org.eclipse.fennec.model.atlas.scope.api;version=snapshot,\
+	org.eclipse.fennec.model.atlas.action.api;version=snapshot,\
+	org.eclipse.fennec.model.atlas.tests.common;version=snapshot,\
+	org.eclipse.fennec.gdpr.report.model;version=latest
+
+Private-Package: org.eclipse.fennec.model.atlas.gdpr.diagnostics.tests
+
+# The bundle under test. gdpr.diagnostics is Private-Package, so nothing here imports it - it is
+# driven through the workflow, which is the only way a deployment drives it either.
+-dependson: \
+	org.eclipse.fennec.model.atlas.gdpr.diagnostics,\
+	org.eclipse.fennec.model.atlas.workflow,\
+	org.eclipse.fennec.model.atlas.management,\
+	org.eclipse.fennec.model.atlas.management.file,\
+	org.eclipse.fennec.model.atlas.management.lucene
+
+Bundle-Version: 1.0.0.SNAPSHOT
+
+# Do not publish this bundle to Maven Central; local install only
+-maven-release: local

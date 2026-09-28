@@ -18,6 +18,12 @@
         "scope.target": "(atlas.scope=jena)",
         "document.registry": "gdprdoc"
     },
+    "GDPRMetadataDiagnosticsStageAction": {
+        "target.registry": "schema",
+        "report.stages": ["draft", "approved", "release"],
+        "trigger.scopes": ["jena"],
+        "scope.target": "(atlas.scope=jena)"
+    },
     "ModelAtlasObjectPublisher~gdprStatus": {
         "base.uri": "http://localhost:8080/atlas/rest",
         "scope": "jena",
@@ -238,7 +244,7 @@
         "registry.type": "OTHER",
         "registry.name": "gdpr",
         "registry.description": "The Registry to store GDPR Report and GdprRequestStatus objects",
-        "stageActionService.target": "(component.name=GDPRReportHistoryStageAction)",
+        "stageActionService.target": "(|(component.name=GDPRReportHistoryStageAction)(component.name=GDPRMetadataDiagnosticsStageAction))",
         "stage.storage.mappings": [
             "draft:file",
             "approved:file",
