@@ -626,6 +626,8 @@ Configuration PID: `EPackageStageActionService` (factory or singleton). Typical 
 
 An `UPDATE` always tears down the previous OSGi registrations before re-registering, so service consumers see the new EPackage content (even when the `nsURI` is unchanged).
 
+**Cross-package references and upload order.** A package may type its features or supertypes with classifiers of another package by nsURI. The order in which the packages of a stage arrive does not matter: the registered packages of one (scope, stage) are anchored in a shared ResourceSet whose package registry holds exactly those packages, so a reference into a package that is not there yet stays an unresolved proxy and resolves once the dependency is registered for the same stage (issue #251). A dependency's arrival also re-resolves the packages already in the stage and drops the EMF setting delegates their features may have built against the proxies; without that, an instance touched before the dependency arrived (for example an upload that failed on the missing package) would leave the feature validating against the proxy for good, and every later instance would be refused with `must be of type 'EClassImpl (eProxyURI: ...)'` (issue #322). Until the dependency arrives, instances that use such a reference cannot be deserialized; a read through the storage layer reports a `ModelUnavailableException` naming the missing nsURI.
+
 ### Bundled Implementation: `SchemaDependencyStageAction`
 
 Keeps the *unresolved* state of a schema's dependents current (issue #250). It listens on the schema registry next to the `EPackageStageActionService` (`stageActionService.target=(|(component.name=EPackageStageActionService)(component.name=SchemaDependencyStageAction))`, no configuration of its own):

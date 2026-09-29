@@ -23,14 +23,19 @@ import java.util.concurrent.locks.ReentrantLock;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import org.eclipse.emf.common.util.TreeIterator;
 import org.eclipse.emf.common.util.URI;
+import org.eclipse.emf.ecore.EClassifier;
 import org.eclipse.emf.ecore.EFactory;
+import org.eclipse.emf.ecore.EObject;
 import org.eclipse.emf.ecore.EPackage;
+import org.eclipse.emf.ecore.EStructuralFeature;
 import org.eclipse.emf.ecore.impl.EPackageRegistryImpl;
 import org.eclipse.emf.ecore.resource.Resource;
 import org.eclipse.emf.ecore.resource.ResourceSet;
 import org.eclipse.emf.ecore.resource.impl.ResourceImpl;
 import org.eclipse.emf.ecore.resource.impl.ResourceSetImpl;
+import org.eclipse.emf.ecore.util.EcoreUtil;
 import org.eclipse.fennec.emf.osgi.configurator.EPackageConfigurator;
 import org.eclipse.fennec.emf.osgi.fingerprint.FingerprintService;
 import org.eclipse.fennec.model.atlas.mgmt.management.ObjectMetadata;
@@ -229,7 +234,10 @@ public class DynamicEPackageRegistrationService {
      * after any restart whose replay order put the dependent first (issue #251).
      * Anchoring the resource here makes resolution lazy and order-independent: the
      * proxy resolves on first access once the dependency is registered for the same
-     * location, whenever that happens.
+     * location, whenever that happens. On top of that, a package's arrival actively
+     * re-resolves the other packages of the location and drops the setting delegates
+     * EMF may already have built against the proxies (issue #322, see
+     * {@link #rebindDependents(Resource, EPackage)}).
      * </p>
      *
      * <p>
@@ -257,6 +265,48 @@ public class DynamicEPackageRegistrationService {
             packageRegistry.put(nsURI, ePackage);
             if (!resourceSet.getResources().contains(resource)) {
                 resourceSet.getResources().add(resource);
+            }
+            for (Resource anchored : resourceSet.getResources()) {
+                if (anchored != resource) {
+                    rebindDependents(anchored, ePackage);
+                }
+            }
+        }
+
+        /**
+         * Re-resolves the cross-package references of one anchored package after
+         * {@code arrived} joined this location, and drops the setting delegates of the
+         * features that now type into it.
+         *
+         * <p>
+         * Lazy resolution alone is not enough (issue #322): EMF builds one
+         * {@code SettingDelegate} per structural feature on the first instance access
+         * through that feature and captures the feature's {@code eType} in it for good.
+         * Any instance of the dependent touched while the dependency was still missing
+         * - the failed deserialization the issue starts with, a copy, a serialization -
+         * leaves that delegate validating against the proxy EClass, and every later
+         * instance dies on {@code must be of type 'EClassImpl (eProxyURI: ...)'}
+         * although {@code getEType()} has long resolved. Dropping the delegate makes EMF
+         * rebuild it against the resolved type on the next access; it carries no
+         * per-instance state, so instances built through the old one keep their values.
+         * </p>
+         *
+         * <p>
+         * The delegate is dropped for every feature whose resolved type lives in
+         * {@code arrived}, not only for those still seen as proxies here: a request
+         * thread may resolve the proxy between the registry update and this walk, and
+         * the poisoned delegate would then slip through.
+         * </p>
+         */
+        private static void rebindDependents(Resource anchored, EPackage arrived) {
+            EcoreUtil.resolveAll(anchored);
+            for (TreeIterator<EObject> contents = anchored.getAllContents(); contents.hasNext();) {
+                if (contents.next() instanceof EStructuralFeature.Internal feature) {
+                    EClassifier type = feature.getEType();
+                    if (type != null && !type.eIsProxy() && type.getEPackage() == arrived) {
+                        feature.setSettingDelegate(null);
+                    }
+                }
             }
         }
 
