@@ -16,9 +16,18 @@ package org.eclipse.fennec.model.atlas.workflow.tests;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.io.ByteArrayInputStream;
+
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
+import java.nio.charset.StandardCharsets;
 import java.time.Instant;
+import java.util.Map;
 import java.util.UUID;
 
 import org.eclipse.emf.common.util.URI;
@@ -26,10 +35,13 @@ import org.eclipse.emf.ecore.EClass;
 import org.eclipse.emf.ecore.EObject;
 import org.eclipse.emf.ecore.EPackage;
 import org.eclipse.emf.ecore.EReference;
+import org.eclipse.emf.ecore.EStructuralFeature;
 import org.eclipse.emf.ecore.EcoreFactory;
 import org.eclipse.emf.ecore.InternalEObject;
+import org.eclipse.emf.ecore.resource.Resource;
 import org.eclipse.emf.ecore.resource.ResourceSet;
 import org.eclipse.emf.ecore.util.EcoreUtil;
+import org.eclipse.emf.ecore.xmi.impl.XMIResourceImpl;
 import org.eclipse.fennec.emf.osgi.annotation.require.RequireEMF;
 import org.eclipse.fennec.model.atlas.mgmt.management.ManagementFactory;
 import org.eclipse.fennec.model.atlas.mgmt.management.ObjectMetadata;
@@ -68,6 +80,12 @@ import org.osgi.test.junit5.service.ServiceExtension;
  * HTTP 500). Registered packages are now anchored per (scope, stage) so their
  * proxies resolve lazily whenever the dependency shows up.
  * </p>
+ *
+ * <p>
+ * Issue #322 is the follow-up: lazy resolution does not reach the setting
+ * delegates EMF has already built against the proxies, so a dependency's arrival
+ * now also drops those (second test).
+ * </p>
  */
 @RequireEMF
 @RequireConfigurationAdmin
@@ -75,16 +93,22 @@ import org.osgi.test.junit5.service.ServiceExtension;
 @ExtendWith(BundleContextExtension.class)
 @ExtendWith(ServiceExtension.class)
 @ExtendWith(ConfigurationExtension.class)
-@DisplayName("Cross-package schema registration (issue #251)")
+@DisplayName("Cross-package schema registration (issues #251, #322)")
 public class CrossPackageSchemaRegistrationIntegrationTest {
 
     static final String SCOPE_NAME = "xref-scope";
 
     private static final String NS_A = "http://test.fennec.eclipse.org/xref/base/1.0.0";
     private static final String NS_B = "http://test.fennec.eclipse.org/xref/dependent/1.0.0";
+    // The second test uses namespaces of its own: the registrations of the first test
+    // may outlive its scope, and a lingering dependency would hide the very problem.
+    private static final String NS_A2 = "http://test.fennec.eclipse.org/xref/base/2.0.0";
+    private static final String NS_B2 = "http://test.fennec.eclipse.org/xref/dependent/2.0.0";
 
-    @SuppressWarnings("unchecked")
-    @Test
+    /**
+     * The scope of this test: a schema registry and an instance registry, both with a
+     * {@code draft} and a {@code release} stage, the EPackage stage action wired in.
+     */
     @TestAnnotations.EPackageStageActionService
     @CommonTestAnnotations.EPackageLuceneIndexSetup
     @WithFactoryConfiguration(factoryPid = "RegistryService", name = CommonTestAnnotations.SCHEMA_REGISTRY_NAME, location = "?", properties = {
@@ -121,6 +145,15 @@ public class CrossPackageSchemaRegistrationIntegrationTest {
             @Property(key = "registryService.target", value = "(|(registry.name=" + CommonTestAnnotations.SCHEMA_REGISTRY_NAME
                     + ")(registry.name=configurations))"),
             @Property(key = "registryService.cardinality.minimum", value = "2", scalar = Scalar.Integer) })
+    @Retention(RetentionPolicy.RUNTIME)
+    @Target({ ElementType.METHOD, ElementType.TYPE })
+    @interface XrefScope {
+    }
+
+
+    @SuppressWarnings("unchecked")
+    @Test
+    @XrefScope
     @DisplayName("A dependent uploaded BEFORE its dependency heals once the dependency arrives")
     public void dependentRegisteredBeforeDependencyResolvesLazily(
             @InjectService(cardinality = 0, timeout = 30000,
@@ -133,22 +166,9 @@ public class CrossPackageSchemaRegistrationIntegrationTest {
         ResourceSetCollector collector = collectorAware.waitForService(30000);
         assertNotNull(collector);
 
-        // Package B references package A's classifier by nsURI — exactly the proxy a
+        // Package B references package A's classifier by nsURI - exactly the proxy a
         // deserialized .ecore with a cross-package eType carries. A is NOT uploaded yet.
-        EPackage packageB = EcoreFactory.eINSTANCE.createEPackage();
-        packageB.setName("xrefDependent");
-        packageB.setNsPrefix("xdep");
-        packageB.setNsURI(NS_B);
-        EClass thingClass = EcoreFactory.eINSTANCE.createEClass();
-        thingClass.setName("Thing");
-        EReference baseReference = EcoreFactory.eINSTANCE.createEReference();
-        baseReference.setName("base");
-        baseReference.setContainment(true);
-        EClass baseProxy = EcoreFactory.eINSTANCE.createEClass();
-        ((InternalEObject) baseProxy).eSetProxyURI(URI.createURI(NS_A + "#//Base"));
-        baseReference.setEType(baseProxy);
-        thingClass.getEStructuralFeatures().add(baseReference);
-        packageB.getEClassifiers().add(thingClass);
+        EPackage packageB = dependentPackage(NS_B, NS_A);
 
         // 1) upload the DEPENDENT first: it registers while its dependency is unknown
         scopeService.uploadToStageForRegistry(CommonTestAnnotations.SCHEMA_REGISTRY_NAME,
@@ -164,13 +184,7 @@ public class CrossPackageSchemaRegistrationIntegrationTest {
                 "Before the dependency arrives the cross-package reference is an unresolved proxy");
 
         // 2) upload the DEPENDENCY afterwards
-        EPackage packageA = EcoreFactory.eINSTANCE.createEPackage();
-        packageA.setName("xrefBase");
-        packageA.setNsPrefix("xbase");
-        packageA.setNsURI(NS_A);
-        EClass baseClass = EcoreFactory.eINSTANCE.createEClass();
-        baseClass.setName("Base");
-        packageA.getEClassifiers().add(baseClass);
+        EPackage packageA = basePackage(NS_A);
         scopeService.uploadToStageForRegistry(CommonTestAnnotations.SCHEMA_REGISTRY_NAME,
                 CommonTestAnnotations.STAGE_DRAFT, packageA,
                 metadata(CommonTestAnnotations.SCHEMA_REGISTRY_NAME, packageA)).getValue();
@@ -203,6 +217,133 @@ public class CrossPackageSchemaRegistrationIntegrationTest {
         assertNotNull(loadedBase, "The cross-package containment must deserialize");
         assertEquals("Base", loadedBase.eClass().getName());
         assertEquals(NS_A, loadedBase.eClass().getEPackage().getNsURI());
+    }
+
+    /**
+     * Issue #322: the lazy resolution of #251 is not enough once an instance of the
+     * dependent was touched while its dependency was still missing.
+     *
+     * <p>
+     * EMF builds one {@code SettingDelegate} per structural feature the first time any
+     * instance is read or written through that feature, captures the feature's
+     * {@code eType} in it and never rebuilds it. Every traversal of an instance reads all
+     * its containment features - unloading, copying, serializing, {@code eContents()} -
+     * so touching an instance of the dependent while the cross-package {@code eType} is
+     * still a proxy freezes that proxy into the delegate. The issue's sequence does
+     * exactly this: the first instance upload fails on the bare proxy and the partially
+     * built object is traversed on cleanup. When the dependency arrives afterwards,
+     * {@code getEType()} resolves, but the delegate still validates every value against
+     * the proxy EClass: {@code must be of type 'EClassImpl (eProxyURI: ...)'}.
+     * </p>
+     */
+    @Test
+    @XrefScope
+    @DisplayName("An instance touched BEFORE the dependency arrives does not freeze the proxy into the feature")
+    public void instanceTouchedBeforeDependencyArrivesStillDeserializes(
+            @InjectService(cardinality = 0, timeout = 30000,
+                    filter = "(atlas.scope=" + SCOPE_NAME + ")") ServiceAware<WritableScopeService> scopeAware,
+            @InjectService(cardinality = 0, timeout = 30000) ServiceAware<ResourceSetCollector> collectorAware)
+            throws Exception {
+
+        WritableScopeService<EObject> scopeService = scopeAware.waitForService(30000);
+        assertNotNull(scopeService, "The test scope service should be available");
+        ResourceSetCollector collector = collectorAware.waitForService(30000);
+        assertNotNull(collector);
+
+        // 1) the DEPENDENT first: registered while its dependency is unknown
+        EPackage packageB = dependentPackage(NS_B2, NS_A2);
+        scopeService.uploadToStageForRegistry(CommonTestAnnotations.SCHEMA_REGISTRY_NAME,
+                CommonTestAnnotations.STAGE_DRAFT, packageB,
+                metadata(CommonTestAnnotations.SCHEMA_REGISTRY_NAME, packageB)).getValue();
+        EPackage registeredB = registeredPackage(collector, NS_B2);
+        EClass registeredThingClass = (EClass) registeredB.getEClassifier("Thing");
+        EStructuralFeature baseFeature = registeredThingClass.getEStructuralFeature("base");
+
+        // 2) the issue's first instance upload: deserializing an instance of B through the
+        // stage ResourceSet dies on the bare proxy (EClass.getEPackage() is null) ...
+        assertThrows(Exception.class, () -> loadThing(collector, NS_B2),
+                "Without the dependency an instance of the dependent cannot be deserialized");
+        // ... and touching the partially built instance reads the feature through its
+        // setting delegate, which EMF builds against whatever getEType() answers now.
+        EObject touched = registeredB.getEFactoryInstance().create(registeredThingClass);
+        touched.eContents();
+
+        // 3) the DEPENDENCY afterwards
+        EPackage packageA = basePackage(NS_A2);
+        scopeService.uploadToStageForRegistry(CommonTestAnnotations.SCHEMA_REGISTRY_NAME,
+                CommonTestAnnotations.STAGE_DRAFT, packageA,
+                metadata(CommonTestAnnotations.SCHEMA_REGISTRY_NAME, packageA)).getValue();
+        assertFalse(baseFeature.getEType().eIsProxy(), "The dependency arrived, the eType resolves");
+
+        // 4) the instance upload of the issue: deserialize through the stage ResourceSet
+        EObject thing = loadThing(collector, NS_B2);
+        EObject loadedBase = (EObject) thing.eGet(baseFeature);
+        assertNotNull(loadedBase, "The cross-package containment must deserialize");
+        assertEquals("Base", loadedBase.eClass().getName());
+        assertEquals(NS_A2, loadedBase.eClass().getEPackage().getNsURI());
+
+        // and a programmatic set goes through the very same delegate
+        EPackage registeredA = registeredPackage(collector, NS_A2);
+        EObject base = registeredA.getEFactoryInstance().create((EClass) registeredA.getEClassifier("Base"));
+        EObject another = registeredB.getEFactoryInstance().create(registeredThingClass);
+        another.eSet(baseFeature, base);
+        assertEquals(base, another.eGet(baseFeature));
+    }
+
+    /**
+     * Deserializes an XMI instance of {@code Thing} carrying a {@code Base} through the
+     * (scope, draft) chain ResourceSet - the way the REST layer reads an uploaded
+     * instance.
+     */
+    private EObject loadThing(ResourceSetCollector collector, String nsB) throws Exception {
+        String xmi = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
+                + "<xdep:Thing xmi:version=\"2.0\" xmlns:xmi=\"http://www.omg.org/XMI\" xmlns:xdep=\"" + nsB + "\">\n"
+                + "  <base/>\n"
+                + "</xdep:Thing>\n";
+        ComponentServiceObjects<ResourceSet> lease = collector.getResourceSetObjects(SCOPE_NAME,
+                CommonTestAnnotations.STAGE_DRAFT);
+        assertNotNull(lease, "The (scope, stage) chain ResourceSet must exist");
+        ResourceSet chainResourceSet = lease.getService();
+        Resource resource = new XMIResourceImpl(URI.createURI("temp/thing.xmi"));
+        try {
+            chainResourceSet.getResources().add(resource);
+            resource.load(new ByteArrayInputStream(xmi.getBytes(StandardCharsets.UTF_8)), Map.of());
+            return resource.getContents().get(0);
+        } finally {
+            chainResourceSet.getResources().remove(resource);
+            lease.ungetService(chainResourceSet);
+        }
+    }
+
+    /** Package B: {@code Thing.base} is a containment typed by a proxy into package A. */
+    private static EPackage dependentPackage(String nsB, String nsA) {
+        EPackage packageB = EcoreFactory.eINSTANCE.createEPackage();
+        packageB.setName("xrefDependent");
+        packageB.setNsPrefix("xdep");
+        packageB.setNsURI(nsB);
+        EClass thingClass = EcoreFactory.eINSTANCE.createEClass();
+        thingClass.setName("Thing");
+        EReference baseReference = EcoreFactory.eINSTANCE.createEReference();
+        baseReference.setName("base");
+        baseReference.setContainment(true);
+        EClass baseProxy = EcoreFactory.eINSTANCE.createEClass();
+        ((InternalEObject) baseProxy).eSetProxyURI(URI.createURI(nsA + "#//Base"));
+        baseReference.setEType(baseProxy);
+        thingClass.getEStructuralFeatures().add(baseReference);
+        packageB.getEClassifiers().add(thingClass);
+        return packageB;
+    }
+
+    /** Package A: the {@code Base} class package B points at. */
+    private static EPackage basePackage(String nsA) {
+        EPackage packageA = EcoreFactory.eINSTANCE.createEPackage();
+        packageA.setName("xrefBase");
+        packageA.setNsPrefix("xbase");
+        packageA.setNsURI(nsA);
+        EClass baseClass = EcoreFactory.eINSTANCE.createEClass();
+        baseClass.setName("Base");
+        packageA.getEClassifiers().add(baseClass);
+        return packageA;
     }
 
     private EPackage registeredPackage(ResourceSetCollector collector, String nsUri) {
