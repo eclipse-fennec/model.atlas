@@ -361,9 +361,11 @@ public class GDPRMetadataDiagnosticsStageAction implements StageActionService {
 			return Promises.resolved(null);
 		}
 		GdprReport current = latestReviewOf(ctx, fingerprint);
-		List<Diagnostic> roots = current == null ? List.of() : mapper.map(current);
-		String what = current == null ? "withdrawn, no review of that revision is left"
-				: roots.isEmpty() ? "found nothing to record" : "wrote " + roots.size();
+		// Never an empty list: an object whose last review was withdrawn has not been checked, and
+		// clearing the producer would make it indistinguishable from one nobody has reviewed yet.
+		List<Diagnostic> roots = current == null ? mapper.noReview(fingerprint) : mapper.map(current);
+		String what = current == null ? "withdrawn, so the object is recorded as unreviewed"
+				: "wrote " + roots.size();
 		try {
 			resolve(scope.updateDiagnosticsInStageForRegistry(registry, stage, reviewed.getObjectId(),
 					GdprFindingsToDiagnostics.PRODUCER, roots));

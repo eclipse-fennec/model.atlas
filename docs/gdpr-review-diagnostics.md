@@ -68,17 +68,33 @@ on the order the analyser listed them in. Its message names the `combinationKind
 **A leaf per claim**, coded `gdpr.finding.<CATEGORY>.<RELEVANCE>`, carrying the review's own words:
 the rationale, then the recommendation, the citations and the confidence.
 
-**Severities.** `MEDIUM` and `HIGH` are `WARNING`, `LOW` is `INFO`, and a review **never** produces
-an `ERROR`. The report's own disclaimer says it flags features needing human review and must not
+**Severities.** `MEDIUM` and `HIGH` are `WARNING`, `LOW` is `INFO`, and **no finding is ever an
+`ERROR`**. The report's own disclaimer says it flags features needing human review and must not
 assert compliance or non-compliance; `ERROR` means the check did not run, which would misstate what
 it is. Nothing is lost by collapsing `MEDIUM` and `HIGH` onto one severity — the relevance is part
-of the leaf's code, and therefore of its identity.
+of the leaf's code, and therefore of its identity. `ERROR` is reserved for the two nodes that say
+the check did *not* run: `gdpr.unreviewed-source` and `gdpr.no-review`.
 
 **A finding that asserts nothing is not written**: `relevanceLevel` `NONE`, or a category of
 `NOT_PERSONAL_DATA` or `ANONYMOUS`. A review does not record cleanliness as a finding anyway — it
 records it by holding an evaluation with no findings — so this is mostly a guard against a
-contradictory one. The consequence is the useful part: **an object with no `gdpr.review` root is
-one the review found nothing on.**
+contradictory one.
+
+### Silence is never the answer
+
+A review that found nothing still writes, because an object nobody has reviewed and an object
+reviewed and cleared must not look the same. Four states, and each one is readable off the object:
+
+| On the object | What it means |
+|---|---|
+| no `gdpr.review` producer at all | nobody has reviewed this revision |
+| one `gdpr.review` root, `INFO`, no children | reviewed, nothing of concern; the message names how many elements were examined |
+| one `gdpr.review` root with children | reviewed, and this is what it found |
+| one `gdpr.no-review` root, `ERROR` | there *was* a review and it was withdrawn, so nothing checks this revision now |
+
+The fifth is the degenerate one: a report that asserts something but names no element any of it
+could be written onto yields a `WARNING` root saying so, rather than reading as clean. It means the
+report is malformed; the dropped findings are logged.
 
 ## Which object, and in which stage
 
@@ -147,8 +163,10 @@ said, because a producer's roots are replaced as a set.
 - **A re-review** rewrites the producer's tree. A claim that comes back under the same id keeps its
   life, including a status a person set; see below.
 - **A withdrawn review** takes its findings with it, unless another review of the same revision
-  still stands, in which case that one's findings are written instead. Only this producer's roots
-  go; another producer's findings on the same object are untouched.
+  still stands, in which case that one's findings are written instead. When none is left, the
+  producer does not go quiet — it writes the `gdpr.no-review` root, because an object whose review
+  was withdrawn has not been checked and must not look like one that was checked and cleared. Only
+  this producer's roots are rewritten; another producer's findings on the same object are untouched.
 - **A promotion** needs nothing. A transition carries the same `ObjectMetadata` into the target
   stage, diagnostics included, so a promoted object keeps its findings without anything being
   rewritten.

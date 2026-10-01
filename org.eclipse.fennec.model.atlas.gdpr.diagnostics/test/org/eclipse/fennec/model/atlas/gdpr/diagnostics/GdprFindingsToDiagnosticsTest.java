@@ -155,8 +155,11 @@ class GdprFindingsToDiagnosticsTest {
 				.add(finding("F-003", DataCategory.ANONYMOUS, RelevanceLevelType.LOW, null, "aggregated", null));
 		classifier(report, "//Patient", examinedAndClean, none, notPersonal, anonymous);
 
-		assertEquals(List.of(), mapper.map(report),
-				"no gdpr.review diagnostic on an object is what 'nothing was found' looks like");
+		Diagnostic clean = review(report);
+		assertEquals(DiagnosticSeverity.INFO, clean.getSeverity());
+		assertTrue(clean.getChildren().isEmpty(),
+				"none of the four says anything, so the review has only its own verdict to give");
+		assertTrue(clean.getMessage().contains("nothing of concern found"), clean.getMessage());
 	}
 
 	@Test
@@ -291,15 +294,64 @@ class GdprFindingsToDiagnosticsTest {
 				.add(finding("F-1", DataCategory.PERSONAL_DATA, RelevanceLevelType.HIGH, null, "r", null));
 		classifier(report, "//Patient", nameless);
 
-		assertEquals(List.of(), mapper.map(report),
-				"an untargeted diagnostic is about the object as a whole and would collide with every other one");
+		// an untargeted diagnostic is about the object as a whole and would collide with every
+		// other one, so it is not written - but the review is not clean either, and the root says
+		// which of the two happened
+		Diagnostic root = review(report);
+		assertEquals(DiagnosticSeverity.WARNING, root.getSeverity());
+		assertTrue(root.getChildren().isEmpty());
+		assertTrue(root.getMessage().contains("names an element"), root.getMessage());
 	}
 
 	@Test
-	@DisplayName("A report with nothing in it maps to nothing, and so does no report at all")
+	@DisplayName("No report at all maps to nothing; a report that found nothing says so")
 	void emptyInputs() {
+		// The two have to stay distinguishable on the object: no root means nobody reviewed it,
+		// and a model reviewed and cleared must not look the same as one nobody looked at.
 		assertEquals(List.of(), mapper.map(null));
-		assertEquals(List.of(), mapper.map(report()));
+
+		Diagnostic clean = review(report());
+		assertEquals(GdprFindingsToDiagnostics.CODE_REVIEW, clean.getCode());
+		assertEquals(DiagnosticSeverity.INFO, clean.getSeverity(), "a clean review is not a warning");
+		assertTrue(clean.getChildren().isEmpty(),
+				"no children: an empty root would read as a review that found something and lost it");
+		assertTrue(clean.getMessage().contains("nothing of concern found"), clean.getMessage());
+	}
+
+	@Test
+	@DisplayName("A clean review says how much it looked at")
+	void aCleanReviewNamesWhatItExamined() {
+		// "nothing found" after examining nothing and after clearing nineteen features are very
+		// different statements, and only the second is reassuring.
+		GdprReport report = report();
+		ClassifierEvaluation classifier = FACTORY.createClassifierEvaluation();
+		classifier.setUriFragment("//Person");
+		for (String name : List.of("//Person/name", "//Person/age")) {
+			FeatureEvaluation feature = FACTORY.createFeatureEvaluation();
+			feature.setUriFragment(name);
+			classifier.getFeatureEvaluation().add(feature);
+		}
+		report.getEvaluation().add(classifier);
+
+		assertTrue(review(report).getMessage().contains("3 elements examined"),
+				"the classifier and its two features: " + review(report).getMessage());
+	}
+
+	@Test
+	@DisplayName("No review left on a revision is an error, not silence")
+	void noReviewIsAnError() {
+		// Withdrawing the last review does not make an object clean, it makes it unchecked - and
+		// clearing the producer would leave it looking like one nobody has reviewed yet.
+		List<Diagnostic> roots = mapper.noReview("fp1:clinic");
+		assertEquals(1, roots.size(), "a producer has exactly one root");
+		Diagnostic root = roots.get(0);
+		assertEquals(GdprFindingsToDiagnostics.CODE_NO_REVIEW, root.getCode());
+		assertEquals(DiagnosticSeverity.ERROR, root.getSeverity());
+		assertTrue(root.getMessage().contains("fp1:clinic"),
+				"it names the revision nobody reviewed: " + root.getMessage());
+		assertTrue(root.getChildren().isEmpty(), "there is no review to carry anything from");
+		assertNotEquals(GdprFindingsToDiagnostics.CODE_NO_REVIEW, review(report()).getCode(),
+				"a review that found nothing is a different statement from no review at all");
 	}
 
 	/* ------------------------------------------------------------------ helpers */
