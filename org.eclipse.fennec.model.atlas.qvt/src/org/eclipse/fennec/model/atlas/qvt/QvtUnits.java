@@ -18,13 +18,9 @@ import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.Optional;
 
-import org.eclipse.emf.ecore.EClass;
-import org.eclipse.emf.ecore.EObject;
 import org.eclipse.fennec.m2x.model.compiled.CompiledUnit;
-import org.eclipse.fennec.m2x.model.qvtoperational.Library;
-import org.eclipse.fennec.m2x.model.qvtoperational.Module;
-import org.eclipse.fennec.m2x.model.qvtoperational.ModuleImport;
-import org.eclipse.fennec.m2x.model.qvtoperational.OperationalTransformation;
+import org.eclipse.fennec.m2x.model.compiled.CompiledUnitManifest;
+import org.eclipse.fennec.m2x.model.compiled.UnitNature;
 import org.eclipse.fennec.m2x.unit.api.UnitKey;
 import org.eclipse.fennec.m2x.unit.api.UnitKind;
 
@@ -47,14 +43,6 @@ public final class QvtUnits {
     /** The m2x language tag for QVT-O units. */
     public static final String LANGUAGE_QVTO = "qvto";
 
-    /**
-     * Pseudo-kind segment for the per-source diagnostics document — an Atlas
-     * convention outside the m2x {@code UnitKind} scheme (which knows only
-     * {@code source} and {@code compiled}); the store contract tolerates
-     * foreign entries, and {@link #parseObjectId(String)} answers empty for it.
-     */
-    public static final String DIAGNOSTICS_KIND = "diagnostics";
-
     private QvtUnits() {
     }
 
@@ -70,15 +58,11 @@ public final class QvtUnits {
         return encode(entryKey(key));
     }
 
-    /** The Atlas objectId of the diagnostics document for one source. */
-    public static String diagnosticsObjectId(String language, String qualifiedName) {
-        return encode(language + "/" + DIAGNOSTICS_KIND + "/" + qualifiedName);
-    }
-
     /**
      * The pinned unit key an Atlas objectId denotes, or empty for an id that is
-     * no unit entry (a diagnostics document, or foreign content sharing the
-     * registry).
+     * no unit entry - foreign content sharing the registry, or a
+     * {@code qvto/diagnostics/<name>} document left behind by a runtime from before issue #327,
+     * which this answers empty for without needing to know what it was.
      */
     public static Optional<UnitKey> parseObjectId(String objectId) {
         String decoded;
@@ -117,42 +101,17 @@ public final class QvtUnits {
     }
 
     /**
-     * Whether a compiled unit is a library rather than a startable
-     * transformation. Mirrors the (package-private) unwrap logic of the m2x
-     * linker: a standalone library source parses into a synthetic
-     * {@code OperationalTransformation} wrapper that has no module class of its
-     * own but imports a {@code Library} that has one. Tracked upstream as
-     * eclipse-fennec/emf.m2x#224 (asking for a first-class marker); replace this
-     * heuristic once that lands.
+     * Whether a compiled unit is a library rather than a startable transformation.
+     * <p>
+     * Read off {@code CompiledUnitManifest.nature}, which the compiling language stamps at package
+     * time (eclipse-fennec/emf.m2x#224). This used to mirror the m2x linker's unwrap logic -
+     * a standalone library source parses into a synthetic transformation wrapper - and that mirror
+     * is what the upstream change exists to remove: the question is answered once, where the
+     * compiler knows, and never again by a consumer reproducing the heuristic. It is also now
+     * answerable without walking the AST at all.
      */
     public static boolean isLibrary(CompiledUnit unit) {
-        EObject root = unit.getUnit();
-        if (!(root instanceof OperationalTransformation transformation)) {
-            // QVT-O compile always yields an OperationalTransformation root today;
-            // anything else is not startable by this action
-            return true;
-        }
-        if (findModuleClassIn(transformation) != null) {
-            return false;
-        }
-        for (ModuleImport moduleImport : transformation.getModuleImport()) {
-            if (moduleImport.getImportedModule() instanceof Library library && findModuleClassIn(library) != null) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    private static EClass findModuleClassIn(Module module) {
-        String name = module.getName();
-        if (name == null) {
-            return null;
-        }
-        return module.getEClassifiers().stream()
-                .filter(EClass.class::isInstance)
-                .map(EClass.class::cast)
-                .filter(c -> name.equals(c.getName()))
-                .findFirst()
-                .orElse(null);
+        CompiledUnitManifest manifest = unit.getManifest();
+        return manifest != null && UnitNature.LIBRARY == manifest.getNature();
     }
 }

@@ -134,43 +134,6 @@ public class QvtUnitsResource {
                         .stream().map(v -> v.fingerprint().orElse("?")).collect(Collectors.joining("\n"))).build());
     }
 
-    @GET
-    @Path("/{qualifiedName}/diagnostics")
-    @Consumes
-    @Produces
-    @Operation(summary = "The compile outcome of a source: status and positioned findings", responses = {
-            @ApiResponse(responseCode = "200", description = "The SourceDiagnostics document"),
-            @ApiResponse(responseCode = "404", description = "No diagnostics for that name (never uploaded, or not compiled yet)"),
-            @ApiResponse(responseCode = "400", description = "Unknown registry or stage"),
-            @ApiResponse(responseCode = "500", description = "The registry's storage failed") })
-    public Response getDiagnostics(@PathParam("scopeName") String scopeName,
-            @PathParam("registryName") String registryName, @PathParam("stageName") String stageName,
-            @PathParam("qualifiedName") String qualifiedName) {
-        RegistryService<EObject> registryService = registryFor(registryName);
-        if (registryService == null) {
-            return Response.status(Status.BAD_REQUEST)
-                    .entity("Unknown or unconfigured registry: " + registryName).build();
-        }
-        if (!registryService.isValidStage(stageName)) {
-            return Response.status(Status.BAD_REQUEST)
-                    .entity("Unknown stage " + stageName + " for registry " + registryName).build();
-        }
-        EObject diagnostics;
-        try {
-            diagnostics = registryService.getContentFromStage(scopeName, stageName,
-                    QvtUnits.diagnosticsObjectId(QvtUnits.LANGUAGE_QVTO, qualifiedName));
-        } catch (RuntimeException e) {
-            return Response.status(Status.INTERNAL_SERVER_ERROR).entity(e.getMessage()).build();
-        }
-        if (diagnostics == null) {
-            return Response.status(Status.NOT_FOUND)
-                    .entity("No diagnostics for '" + qualifiedName + "' in (" + scopeName + ", " + registryName
-                            + ", " + stageName + ")")
-                    .build();
-        }
-        return Response.ok(diagnostics).build();
-    }
-
     private interface StoreCall {
         Response call(AtlasUnitStore store) throws UnitStoreException;
     }
