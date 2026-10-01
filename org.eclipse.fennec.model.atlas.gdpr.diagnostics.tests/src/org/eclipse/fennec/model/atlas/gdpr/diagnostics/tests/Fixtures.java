@@ -39,6 +39,7 @@ import org.eclipse.fennec.model.gdprReport.GDPRReportFactory;
 import org.eclipse.fennec.model.gdprReport.GdprReport;
 import org.eclipse.fennec.model.gdprReport.PackageSubject;
 import org.eclipse.fennec.model.gdprReport.RelevanceLevelType;
+import org.eclipse.fennec.model.gdprReport.TransformationSubject;
 
 /**
  * The package under review, the review of it, and waiting for what the action makes of the two.
@@ -137,6 +138,27 @@ final class Fixtures {
 		feature.getFindings().add(finding);
 		classifier.getFeatureEvaluation().add(feature);
 		report.getEvaluation().add(classifier);
+		return report;
+	}
+
+	/**
+	 * The same review, but of a compiled transformation instead of a package - carrying whatever
+	 * fingerprint the caller hands it, a package's included.
+	 * <p>
+	 * That is deliberate and is the point of the fixture: in a real runtime a transformation's
+	 * {@code m2x1:} fingerprint never collides with a package's {@code fp1:} one, so a test that
+	 * relied on the prefixes would pass whether or not anything checks the subject type. Giving
+	 * the transformation report the package's own fingerprint removes that accident, and what is
+	 * left is the rule.
+	 */
+	static GdprReport transformationReview(String reportId, String fingerprint) {
+		GdprReport report = review(reportId, fingerprint, DataCategory.SPECIAL_CATEGORY, RelevanceLevelType.HIGH);
+		report.setName("GDPR review of clinic2contacts");
+		TransformationSubject subject = REPORTS.createTransformationSubject();
+		subject.setQualifiedName("clinic2contacts");
+		subject.setLanguage("qvto");
+		subject.setSubjectFingerprint(fingerprint);
+		report.setSubject(subject);
 		return report;
 	}
 

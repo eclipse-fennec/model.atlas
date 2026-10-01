@@ -24,6 +24,8 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import org.eclipse.emf.ecore.EClass;
+import org.eclipse.emf.ecore.EClassifier;
 import org.eclipse.emf.ecore.EObject;
 import org.eclipse.emf.ecore.util.EcoreUtil;
 import org.eclipse.fennec.model.atlas.action.api.ActionContext;
@@ -71,7 +73,8 @@ import org.osgi.util.promise.Promises;
  * however that scope names them. Only the target <em>registry</em> is configured, because a
  * {@code PackageSubject} resolves into the schema registry and a {@code TransformationSubject} into
  * the transformations one, and the report deliberately does not say which: it is a shared model
- * and knows nothing of Atlas topology. Run one instance per target registry.
+ * and knows nothing of Atlas topology. Run one instance per target registry, and name the kind of
+ * subject each one answers for.
  * <p>
  * <b>The write is guarded.</b> Configuration naming the wrong registry would no longer write
  * nothing - it would write one stage's findings onto another stage's object, which looks like a
@@ -79,9 +82,13 @@ import org.osgi.util.promise.Promises;
  * miss is logged and dropped rather than searched for elsewhere. A read-only stage is not a reason
  * to skip: the model says writing diagnostics is allowed in stages that are otherwise read-only.
  * <p>
- * Two instances cannot write onto each other's objects even if both are triggered by one report:
- * the fingerprint schemes are self-describing, so an {@code fp1:} value never matches anything in
- * the transformations registry and an {@code m2x1:} never matches anything in the schema registry.
+ * <b>Two instances cannot write onto each other's objects</b>, although every report reaches both:
+ * an instance answers only for the kind of subject its {@code subject.type} names, and stops at the
+ * report otherwise. The fingerprint schemes say the same thing a second time - an {@code fp1:}
+ * value matches nothing in the transformations registry and an {@code m2x1:} nothing in the schema
+ * one - but that is a property of the digests rather than a rule anybody wrote down, and it is not
+ * what the separation rests on. Leaving {@code subject.type} unset answers for every kind, which is
+ * what a deployment with a single reviewable registry wants.
  *
  * <h2>When a review goes away</h2>
  * <p>
@@ -139,6 +146,15 @@ public class GDPRMetadataDiagnosticsStageAction implements StageActionService {
 						+ "stage is never configured - it is the stage the report itself is in.")
 		String target_registry() default "schema";
 
+		@AttributeDefinition(name = "Subject type", //
+				description = "The kind of subject this instance answers for, as the EClass name the report "
+						+ "model gives it: 'PackageSubject' for a reviewed EPackage, 'TransformationSubject' for a "
+						+ "reviewed compiled transformation. It is the counterpart of the target registry - a "
+						+ "report of another kind is left to the instance configured for it. Empty answers for "
+						+ "every kind, which is right only where one registry holds everything reviewable.", //
+				required = false)
+		String subject_type() default "";
+
 		@AttributeDefinition(name = "Report stages", //
 				description = "The stages of the report registry this action answers for. Each of them writes to "
 						+ "the same-named stage of the target registry, which is what makes a review "
@@ -169,10 +185,16 @@ public class GDPRMetadataDiagnosticsStageAction implements StageActionService {
 	 * delete - the only event at which the report itself is already gone. Keyed by the address of
 	 * the report rather than by its id alone, because one registry is shared by every scope that
 	 * binds it.
+	 * <p>
+	 * A report this instance does not answer for is remembered too, with the subject type that says
+	 * so. It costs one entry and it keeps the two reasons for doing nothing on a delete apart: a
+	 * report of somebody else's kind is not the same thing as a report this runtime never saw, and
+	 * only the second is worth a line in the log.
 	 */
-	private final Map<ReportAddress, String> subjects = new ConcurrentHashMap<>();
+	private final Map<ReportAddress, ReviewedSubject> subjects = new ConcurrentHashMap<>();
 
 	private final String targetRegistry;
+	private final String subjectType;
 	private final Set<String> stages;
 	private final Set<String> scopes;
 
@@ -182,19 +204,26 @@ public class GDPRMetadataDiagnosticsStageAction implements StageActionService {
 	 * activate method and the fields it would fill can be final.
 	 *
 	 * @param scope  reads the report back and writes the diagnostics; one service per scope
-	 * @param config which registry the reviewed objects are in, and which events to answer
+	 * @param config which registry the reviewed objects are in, which kind of subject this instance
+	 *               answers for, and which events to answer
+	 * @throws IllegalArgumentException if {@code subject.type} names no subject the report model
+	 *                                  has. An instance answering for a kind of report nobody can
+	 *                                  write would do nothing and say nothing about it, so a typo
+	 *                                  fails where it can still be seen
 	 */
 	@Activate
 	public GDPRMetadataDiagnosticsStageAction(@Reference(name = "scope") WritableScopeService<EObject> scope,
 			Config config) {
 		this.scope = scope;
 		this.targetRegistry = config.target_registry();
+		this.subjectType = validatedSubjectType(config.subject_type());
 		this.stages = toSet(config.report_stages());
 		this.scopes = toSet(config.trigger_scopes());
 
 		LOGGER.info(() -> String.format(
-				"GDPR review findings are written as '%s' diagnostics onto the reviewed objects in registry '%s' "
-						+ "of scope '%s', each into the stage its review was carried out at (%s), for %s.",
+				"GDPR review findings of %s are written as '%s' diagnostics onto the reviewed objects in registry "
+						+ "'%s' of scope '%s', each into the stage its review was carried out at (%s), for %s.",
+				subjectType == null ? "every kind of subject" : "a " + subjectType,
 				GdprFindingsToDiagnostics.PRODUCER, targetRegistry, scope.getScopeName(), stages,
 				scopes.isEmpty() ? "every scope" : scopes));
 	}
@@ -258,17 +287,22 @@ public class GDPRMetadataDiagnosticsStageAction implements StageActionService {
 			// here would empty every finding in the scope, and only a restart would show it.
 			return Promises.resolved(null);
 		}
-		String fingerprint = subjects.remove(address);
-		if (fingerprint == null) {
+		ReviewedSubject reviewed = subjects.remove(address);
+		if (reviewed == null) {
 			LOGGER.log(Level.INFO, () -> String.format(
 					"GDPR report %s was deleted, but this runtime has no record of which subject it reviewed, so "
 							+ "no diagnostics were cleared. They go when that subject is next reviewed.",
 					address));
 			return Promises.resolved(null);
 		}
+		if (!answersFor(reviewed)) {
+			// Somebody else's kind of report, and the instance that did write its findings is
+			// clearing them from its own record of it.
+			return Promises.resolved(null);
+		}
 		// Recomputed from the reviews that are left, not cleared outright: another review of the
 		// same revision may still stand, and the deleted one may have been the superseded one.
-		return apply(ctx, fingerprint);
+		return apply(ctx, reviewed.fingerprint());
 	}
 
 	/* ------------------------------------------------------------------ the work */
@@ -285,17 +319,26 @@ public class GDPRMetadataDiagnosticsStageAction implements StageActionService {
 					address));
 			return Promises.resolved(null);
 		}
-		String fingerprint = fingerprintOf(report);
-		if (fingerprint == null) {
+		ReviewedSubject reviewed = ReviewedSubject.of(report);
+		if (reviewed == null) {
 			LOGGER.log(Level.WARNING, () -> String.format(
 					"GDPR report %s names no subject fingerprint, so there is no object its findings belong to.",
 					address));
 			return Promises.resolved(null);
 		}
-		// Remembered before the write, so a report whose subject is not in this registry is still
-		// one whose delete can be answered by the instance that did write it.
-		subjects.put(address, fingerprint);
-		return apply(ctx, fingerprint);
+		// Remembered before anything else, so a report whose subject is not in this registry is
+		// still one whose delete can be answered by the instance that did write it.
+		subjects.put(address, reviewed);
+		if (!answersFor(reviewed)) {
+			// Not this instance's kind of report. Said at FINE rather than INFO: in a runtime with
+			// one instance per reviewable registry this is the ordinary case and happens for every
+			// report, and it is not something anybody has to act on.
+			LOGGER.log(Level.FINE, () -> String.format(
+					"GDPR report %s is about a %s; this instance answers for %s.", address, reviewed.subjectType(),
+					subjectType));
+			return Promises.resolved(null);
+		}
+		return apply(ctx, reviewed.fingerprint());
 	}
 
 	/**
@@ -394,7 +437,8 @@ public class GDPRMetadataDiagnosticsStageAction implements StageActionService {
 		String latestId = null;
 		for (ObjectMetadata metadata : scope.listInStageForRegistry(ctx.registry(), ctx.stage())) {
 			GdprReport candidate = reportAt(ctx, metadata.getObjectId());
-			if (candidate == null || !fingerprint.equals(fingerprintOf(candidate))) {
+			ReviewedSubject about = candidate == null ? null : ReviewedSubject.of(candidate);
+			if (about == null || !fingerprint.equals(about.fingerprint())) {
 				continue;
 			}
 			Instant at = generatedAt(candidate, metadata);
@@ -443,14 +487,57 @@ public class GDPRMetadataDiagnosticsStageAction implements StageActionService {
 	}
 
 	/**
-	 * The revision the review was of. {@code fp1:} for an EPackage, {@code m2x1:} for a compiled
-	 * transformation - the prefixes are self-describing, which is what keeps two instances of this
-	 * action off each other's objects.
+	 * What a report says it is about: which kind of artefact, and which revision of it.
+	 *
+	 * @param fingerprint the revision the review was of - {@code fp1:} for an EPackage,
+	 *                    {@code m2x1:} for a compiled transformation. Never blank
+	 * @param subjectType the EClass name of the subject, {@code PackageSubject} or
+	 *                    {@code TransformationSubject}, which is what decides whether this
+	 *                    instance answers for the report at all
 	 */
-	private static String fingerprintOf(GdprReport report) {
-		Subject subject = report.getSubject();
-		String fingerprint = subject == null ? null : subject.getSubjectFingerprint();
-		return blank(fingerprint) ? null : fingerprint.trim();
+	private record ReviewedSubject(String fingerprint, String subjectType) {
+
+		/** What the report says, or {@code null} when it names no revision to write onto. */
+		static ReviewedSubject of(GdprReport report) {
+			Subject subject = report.getSubject();
+			String fingerprint = subject == null ? null : subject.getSubjectFingerprint();
+			if (blank(fingerprint)) {
+				return null;
+			}
+			return new ReviewedSubject(fingerprint.trim(), subject.eClass().getName());
+		}
+	}
+
+	/**
+	 * The configured subject type, or {@code null} for every kind.
+	 *
+	 * @throws IllegalArgumentException if it names no concrete subject of the report model - which
+	 *                                  would silently switch this instance off
+	 */
+	private static String validatedSubjectType(String configured) {
+		if (blank(configured)) {
+			return null;
+		}
+		String name = configured.trim();
+		if (subjectTypes().contains(name)) {
+			return name;
+		}
+		throw new IllegalArgumentException(String.format(
+				"'%s' is not a subject of the GDPR report model, so this action would answer for no report at "
+						+ "all. Configure subject.type as one of %s, or leave it unset to answer for every kind.",
+				name, subjectTypes()));
+	}
+
+	/** The concrete subclasses of {@code Subject} the report model has, by EClass name. */
+	private static Set<String> subjectTypes() {
+		Set<String> names = new LinkedHashSet<>();
+		for (EClassifier classifier : GDPRReportPackage.eINSTANCE.getEClassifiers()) {
+			if (classifier instanceof EClass candidate && !candidate.isAbstract()
+					&& GDPRReportPackage.Literals.SUBJECT.isSuperTypeOf(candidate)) {
+				names.add(candidate.getName());
+			}
+		}
+		return names;
 	}
 
 	/**
@@ -492,6 +579,11 @@ public class GDPRMetadataDiagnosticsStageAction implements StageActionService {
 
 	private boolean answersFor(String scopeName) {
 		return scopes.isEmpty() || scopes.contains(scopeName);
+	}
+
+	/** Whether a report about this subject is one this instance writes the findings of. */
+	private boolean answersFor(ReviewedSubject reviewed) {
+		return subjectType == null || subjectType.equals(reviewed.subjectType());
 	}
 
 	private static Set<String> toSet(String[] values) {

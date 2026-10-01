@@ -37,7 +37,9 @@ import org.eclipse.fennec.model.gdprReport.FeatureEvaluation;
 import org.eclipse.fennec.model.gdprReport.Finding;
 import org.eclipse.fennec.model.gdprReport.FlowEvaluation;
 import org.eclipse.fennec.model.gdprReport.GdprReport;
+import org.eclipse.fennec.model.gdprReport.PackageSubject;
 import org.eclipse.fennec.model.gdprReport.RelevanceLevelType;
+import org.eclipse.fennec.model.gdprReport.TransformationSubject;
 
 /**
  * Turns the findings of one {@link GdprReport} into the {@link Diagnostic} trees that are written
@@ -145,8 +147,21 @@ public class GdprFindingsToDiagnostics {
 	/** Code for a finding that only arises from several evaluations together. */
 	public static final String CODE_COMBINATION = "gdpr.combination";
 
+	/**
+	 * Code for a metamodel the report rests on that nobody reviewed. It is the one node this
+	 * producer writes at {@code ERROR}, and the one derived from the report's subject rather than
+	 * from its findings - see {@link #unreviewedSources}.
+	 */
+	public static final String CODE_UNREVIEWED_SOURCE = "gdpr.unreviewed-source";
+
 	/** Prefix of every child code, so a client can recognise one without knowing the categories. */
 	public static final String CODE_FINDING_PREFIX = "gdpr.finding.";
+
+	/**
+	 * A finding whose id reads {@code <code>:<what it is about>}, where the code starts with this
+	 * prefix, <b>declares the node it belongs under</b> - see {@link #declaredCode}.
+	 */
+	private static final String DECLARED_CODE_PREFIX = "gdpr.";
 
 	/** Separates the elements a combination spans in its target. */
 	private static final String COMBINATION_SEPARATOR = "+";
@@ -181,10 +196,12 @@ public class GdprFindingsToDiagnostics {
 		for (Evaluation evaluation : report.getEvaluation()) {
 			collect(evaluation, source, elements);
 		}
-		for (CombinationFinding combination : report.getCombinations()) {
-			add(elements, element(CODE_COMBINATION, combinationTarget(combination), List.of(combination), source,
-					kindOf(combination)));
+		for (Map.Entry<NodeKey, List<CombinationFinding>> group : combinationNodes(report).entrySet()) {
+			add(elements, element(group.getKey().code(), group.getKey().target(), group.getValue(), source,
+					kindOf(group.getValue().get(0))));
 		}
+		List<Diagnostic> unreviewed = unreviewedSources(report, source);
+		elements.addAll(unreviewed);
 		if (elements.isEmpty()) {
 			// No root at all rather than an empty one: the absence of a gdpr.review root is what
 			// says the review found nothing, and an empty root would read as a review that did.
@@ -199,28 +216,84 @@ public class GdprFindingsToDiagnostics {
 				worst = element.getSeverity();
 			}
 		}
-		Diagnostic review = diagnostic(CODE_REVIEW, null, worst, summary(claims, elements.size()), source);
+		Diagnostic review = diagnostic(CODE_REVIEW, null, worst, summary(claims, elements.size(), unreviewed.size()),
+				source);
 		review.getChildren().addAll(elements);
 		return List.of(review);
 	}
 
-	private static String summary(int claims, int elements) {
-		return String.format("GDPR review: %d finding%s on %d element%s", claims, claims == 1 ? "" : "s", elements,
-				elements == 1 ? "" : "s");
+	private static String summary(int claims, int elements, int unreviewed) {
+		String summary = String.format("GDPR review: %d finding%s on %d element%s", claims, claims == 1 ? "" : "s",
+				elements, elements == 1 ? "" : "s");
+		if (unreviewed == 0) {
+			return summary;
+		}
+		// Said in the one line a reader sees collapsed, because "0 findings" on its own is exactly
+		// the reading this has to prevent.
+		return summary + String.format("; %d metamodel%s it rests on %s no review", unreviewed,
+				unreviewed == 1 ? "" : "s", unreviewed == 1 ? "has" : "have");
+	}
+
+	/**
+	 * One node per metamodel the report rests on that nobody reviewed (issue #319).
+	 * <p>
+	 * A transformation is not reviewed, it is derived from the reviews of the metamodels it was
+	 * compiled against - so a metamodel with no review means the flows through it are still fact
+	 * while nothing classifies what travels along them. That is the check not having run, and it
+	 * must never be read as the transformation being clean.
+	 * <p>
+	 * <b>Derived from the subject, not from a finding.</b> The report model says to list such a
+	 * package and to leave its {@code reportId} unset, and that unset value <em>is</em> the
+	 * machine-readable statement. It could not be a {@code Finding} even if one wanted it to be:
+	 * {@code Finding.evidence} is mandatory, an analyser cites only by carrying a citation over
+	 * from a review, and for an unreviewed source there is no review to carry one from.
+	 * <p>
+	 * <b>{@code ERROR}, which is not an exception to the rule that a review never produces one.</b>
+	 * That rule exists because {@code ERROR} means the check did not run rather than that the model
+	 * is bad - and here the check genuinely did not run. The two agree: a finding about the data is
+	 * at most a {@code WARNING}; a statement that there is no finding to make is an {@code ERROR}.
+	 * <p>
+	 * It lands on the object the report is about - the compiled unit - and never on the unreviewed
+	 * metamodel itself. "You have no GDPR review" is a statement about a metamodel, but it is not
+	 * this transformation's business to write it there, and one would appear per transformation
+	 * that reads the model.
+	 */
+	private static List<Diagnostic> unreviewedSources(GdprReport report, String source) {
+		if (!(report.getSubject() instanceof TransformationSubject subject)) {
+			return List.of();
+		}
+		List<PackageSubject> rested = new ArrayList<>(subject.getSourcePackages());
+		rested.addAll(subject.getTargetPackages());
+		List<Diagnostic> nodes = new ArrayList<>();
+		Set<String> seen = new LinkedHashSet<>();
+		for (PackageSubject entry : rested) {
+			// A model declared inout is listed twice, as the same package in both directions
+			if (blankToNull(entry.getReportId()) != null || entry.getNsURI() == null || !seen.add(entry.getNsURI())) {
+				continue;
+			}
+			nodes.add(diagnostic(CODE_UNREVIEWED_SOURCE, entry.getNsURI(), DiagnosticSeverity.ERROR,
+					String.format(
+							"%s has no GDPR review of the revision this transformation was compiled against (%s), "
+									+ "so nothing classifies the data that travels through it. The analysis is "
+									+ "incomplete, not clean.",
+							entry.getNsURI(), entry.getSubjectFingerprint()),
+					source));
+		}
+		return nodes;
 	}
 
 	private void collect(Evaluation evaluation, String source, List<Diagnostic> elements) {
 		if (evaluation instanceof ClassifierEvaluation classifier) {
-			add(elements, element(CODE_CLASSIFIER, targetOf(classifier), classifier.getFindings(), source, null));
+			elements.addAll(nodesOf(CODE_CLASSIFIER, targetOf(classifier), classifier.getFindings(), source));
 			for (FeatureEvaluation feature : classifier.getFeatureEvaluation()) {
-				add(elements, element(CODE_FEATURE, targetOf(feature), feature.getFindings(), source, null));
+				elements.addAll(nodesOf(CODE_FEATURE, targetOf(feature), feature.getFindings(), source));
 			}
 		} else if (evaluation instanceof FeatureEvaluation feature) {
 			// A feature the report held directly rather than under its classifier. It carries its
 			// own uriFragment, so it is addressed exactly the same way.
-			add(elements, element(CODE_FEATURE, targetOf(feature), feature.getFindings(), source, null));
+			elements.addAll(nodesOf(CODE_FEATURE, targetOf(feature), feature.getFindings(), source));
 		} else if (evaluation instanceof FlowEvaluation flow) {
-			add(elements, element(CODE_FLOW, targetOf(flow), flow.getFindings(), source, null));
+			elements.addAll(nodesOf(CODE_FLOW, targetOf(flow), flow.getFindings(), source));
 		} else {
 			// A kind of evaluation added to the report model after this was written. Say so: a
 			// silently dropped evaluation reads as a review that found nothing.
@@ -229,6 +302,81 @@ public class GdprFindingsToDiagnostics {
 							+ "onto the reviewed object. It carries classifiers, features, flows and combinations.",
 					evaluation.eClass().getName()));
 		}
+	}
+
+	/**
+	 * Which node a group of findings becomes: its code and the element it is about.
+	 * <p>
+	 * A diagnostic's id is derived from its code and its target, so two nodes sharing both under
+	 * one parent are not two rows - the second silently replaces the first. This pair is therefore
+	 * the thing that has to be unique, and it is what the findings are grouped by.
+	 */
+	private record NodeKey(String code, String target) {
+	}
+
+	/**
+	 * The nodes one element's findings become: normally one, and one per declared code where the
+	 * findings say they are different kinds of statement.
+	 *
+	 * @see #declaredCode
+	 */
+	private List<Diagnostic> nodesOf(String defaultCode, String target, Collection<? extends Finding> findings,
+			String source) {
+		Map<String, List<Finding>> byCode = new LinkedHashMap<>();
+		for (Finding finding : findings) {
+			byCode.computeIfAbsent(declaredCode(finding, defaultCode), code -> new ArrayList<>()).add(finding);
+		}
+		List<Diagnostic> nodes = new ArrayList<>(byCode.size());
+		for (Map.Entry<String, List<Finding>> group : byCode.entrySet()) {
+			add(nodes, element(group.getKey(), target, group.getValue(), source, null));
+		}
+		return nodes;
+	}
+
+	/**
+	 * The combinations grouped into the nodes they become, by code and target.
+	 * <p>
+	 * A report may hold several combinations over the <em>same</em> set of evaluations - a
+	 * transformation report says three different things about one concatenation - and one node per
+	 * combination would mint one id for all of them. Grouped by what the node is addressed by, each
+	 * kind of statement gets its own node and combinations that really are the same statement fold
+	 * into one.
+	 */
+	private static Map<NodeKey, List<CombinationFinding>> combinationNodes(GdprReport report) {
+		Map<NodeKey, List<CombinationFinding>> grouped = new LinkedHashMap<>();
+		for (CombinationFinding combination : report.getCombinations()) {
+			NodeKey key = new NodeKey(declaredCode(combination, CODE_COMBINATION), combinationTarget(combination));
+			grouped.computeIfAbsent(key, ignored -> new ArrayList<>()).add(combination);
+		}
+		return grouped;
+	}
+
+	/**
+	 * The node code a finding declares for itself, or {@code fallback}.
+	 * <p>
+	 * A review's findings declare nothing: several findings on one feature are several signals for
+	 * one verdict, and folding them into one node under {@code gdpr.feature} is the whole point.
+	 * A <em>derived</em> report is the other case. Its findings on one flow come from different
+	 * rules and each states something of its own - that a classified value reaches a field, and
+	 * separately that the purpose stated for it does not travel with it - so folding them would
+	 * run two statements into one paragraph and, where they happen to share a category and a
+	 * relevance, mint one id for both.
+	 * <p>
+	 * The report model has no field for the kind of a finding, so the id is where a producer says
+	 * it: {@code <code>:<what it is about>} with a code under {@code gdpr.}. Anything else - an id
+	 * like {@code F-001}, or no id at all - declares nothing and behaves exactly as before.
+	 */
+	private static String declaredCode(Finding finding, String fallback) {
+		String id = blankToNull(finding.getId());
+		if (id == null) {
+			return fallback;
+		}
+		int separator = id.indexOf(':');
+		if (separator <= 0) {
+			return fallback;
+		}
+		String code = id.substring(0, separator);
+		return code.startsWith(DECLARED_CODE_PREFIX) ? code : fallback;
 	}
 
 	/**

@@ -261,6 +261,33 @@ public class GdprMetadataDiagnosticsIT {
 				"one review being withdrawn must not erase what another review still says");
 	}
 
+	@Test
+	@TestAnnotations.GdprDiagnosticsSetup
+	@DisplayName("a review of a transformation is left to the instance configured for transformations")
+	public void aTransformationReviewDoesNotReachAPackage(
+			@InjectService(cardinality = 0, timeout = 30000, filter = SCOPE_FILTER) //
+			ServiceAware<WritableScopeService> aware) throws Exception {
+
+		WritableScopeService<EObject> scope = scope(aware);
+		String fingerprint = Fixtures.storePackage(scope, DRAFT);
+
+		// The collision a real runtime does not produce: a report about a compiled transformation
+		// that names the package's own fingerprint. Every instance is triggered by every report,
+		// so what keeps this one off the package is that its subject is not the kind this
+		// instance answers for - not that the digests happen to differ.
+		Fixtures.storeReview(scope, Fixtures.transformationReview("report-t1", fingerprint), DRAFT);
+
+		Fixtures.settle();
+		assertTrue(Fixtures.owned(scope, DRAFT).isEmpty(),
+				"a transformation's review must not be written onto a package, whatever fingerprint it names");
+
+		// and the instance is not switched off by having ignored one: the next package review lands
+		Fixtures.storeReview(scope,
+				Fixtures.review("report-1", fingerprint, DataCategory.QUASI_IDENTIFIER, RelevanceLevelType.MEDIUM),
+				DRAFT);
+		Fixtures.await(scope, DRAFT, found -> found.size() == 1, "a package review to still land");
+	}
+
 	/** The code of the one claim in the tree: root -> element -> claim; null if the shape differs. */
 	private static String childCode(List<Diagnostic> roots) {
 		if (roots.size() != 1 || roots.get(0).getChildren().size() != 1) {

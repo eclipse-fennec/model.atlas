@@ -18,6 +18,19 @@ It is a sibling of [the review history document](gdpr-review-history.md), not a 
 run off the same event, each with its own output. A deployment may want either without the other,
 and a failing metadata write never costs a document rebuild.
 
+One node per reviewed element, and one child per claim — several findings on one feature are
+several signals for one verdict, so they fold into a single claim. A finding may **opt out** of that
+by declaring its own node code, as an id of the form `<code>:<what it is about>` with a code under
+`gdpr.`: a derived report's findings on one flow come from different rules and each states something
+of its own, so folding them would run two statements into one paragraph and, where they share a
+category and a relevance, mint one id for both. A review's findings declare nothing and behave
+exactly as they always have.
+
+The reviewed object need not be a metamodel. A compiled transformation gets a report too - derived
+rather than written, from the reviews of the metamodels it was compiled against - and a second
+instance of this same action puts those findings onto the compiled unit. See
+[a GDPR report for a transformation](gdpr-transformation-reports.md).
+
 ## What it writes
 
 One root for the producer, one node per reviewed element, one leaf per claim:
@@ -80,7 +93,8 @@ does not describe the copy in `draft`. The gdpr registry's stages mirror the rev
 the target stage is simply the stage the report is in. Only the target **registry** is configured,
 because a `PackageSubject` resolves into the schema registry and a `TransformationSubject` into the
 transformations one, and the report deliberately does not say which — it is a shared model and knows
-nothing of atlas topology. Run one instance per target registry.
+nothing of atlas topology. Run one instance per target registry, and tell each one which kind of
+subject it answers for with `subject.type`.
 
 **The write is guarded.** The fingerprint has to be present at that address before anything is
 written, and a miss is logged and dropped rather than searched for elsewhere:
@@ -98,9 +112,22 @@ nothing — it would write one stage's verdict onto another stage's object, whic
 A read-only stage is **not** a reason to skip. Diagnostics may be written where content is frozen,
 so a review of a released model is recorded on the released model.
 
-Two instances cannot write onto each other's objects even if both are triggered by one report: the
-fingerprint schemes are self-describing, so an `fp1:` value never matches anything in the
-transformations registry and an `m2x1:` never matches anything in the schema registry.
+**Two instances cannot write onto each other's objects**, although every report does reach both. An
+instance answers only for the kind of subject its `subject.type` names — `PackageSubject` or
+`TransformationSubject` — and stops at the report otherwise, before it looks in any registry. That
+is the rule; the fingerprint schemes say the same thing a second time, since an `fp1:` value matches
+nothing in the transformations registry and an `m2x1:` nothing in the schema one, but that is a
+property of the digests rather than something anybody wrote down, and it is not what the separation
+rests on.
+
+It also keeps the miss above worth reading. Without the filter every instance logged that line for
+every report of somebody else's kind, and the one case it exists for — the reviewed object and its
+review sitting in different stages — was one line among many.
+
+Leaving `subject.type` unset answers for every kind. That is right only where a single registry
+holds everything reviewable; a value that names no subject of the report model fails the
+configuration outright rather than leaving an instance that answers for nothing and says nothing
+about it.
 
 ## Two reviews of one revision
 
@@ -157,7 +184,8 @@ document would then record the edit as a new revision.
 
 ## Configuration
 
-One PID, plus the target registry having to name the action. Shown from
+One factory configuration per target registry, plus the gdpr registry having to name the action.
+Shown from
 `docker/dockercompose/configs/jena.json`, the config the jena image mounts. The same entries live in
 `org.eclipse.fennec.model.atlas.runtime.config.local.jena/configs/workflow.json` for the local
 runtime and in `org.eclipse.fennec.model.atlas.runtime.config.docker.file/configs/workflow.json`,
@@ -166,13 +194,23 @@ The file image takes its scope from `MODEL_ATLAS_SCOPE`, as
 [the history document's configuration](gdpr-review-history.md#configuration) describes in full.
 
 ```jsonc
-"GDPRMetadataDiagnosticsStageAction": {
-    "target.registry": "schema",             // where the reviewed objects are; one instance per
-                                             // registry. The STAGE is never configured - it is the
-                                             // stage the report itself is in
+"GDPRMetadataDiagnosticsStageAction~schema": {
+    "target.registry": "schema",             // where the reviewed objects are. The STAGE is never
+                                             // configured - it is the stage the report is in
+    "subject.type": "PackageSubject",        // and which reports those are. Every report reaches
+                                             // every instance; this is what keeps them apart
     "report.stages": ["draft", "approved", "release"],  // the report stages this answers for
     "trigger.scopes": ["jena"],              // empty means every scope that binds the registry
-    "scope.target": "(atlas.scope=jena)"
+    "scope.target": "(atlas.scope=jena)",
+    "stage.action.name": "GDPRMetadataDiagnosticsStageAction~schema"
+},
+"GDPRMetadataDiagnosticsStageAction~transformations": {
+    "target.registry": "transformations",    // the same action again, for reviews of compiled units
+    "subject.type": "TransformationSubject",
+    "report.stages": ["draft", "approved", "release"],
+    "trigger.scopes": ["jena"],
+    "scope.target": "(atlas.scope=jena)",
+    "stage.action.name": "GDPRMetadataDiagnosticsStageAction~transformations"
 },
 "RegistryService~gdpr": {
     // Without naming the action here the registry binds none and dispatches nothing: the action
@@ -182,6 +220,23 @@ The file image takes its scope from `MODEL_ATLAS_SCOPE`, as
         "(|(component.name=GDPRReportHistoryStageAction)(component.name=GDPRMetadataDiagnosticsStageAction))"
 }
 ```
+
+**Both instances bind to the gdpr registry, not to the registry they write into.** The trigger is a
+report arriving, and reports live in the gdpr registry; `target.registry` only says where the
+findings are then written. So the filter above needs no edit for a second instance — DS gives every
+component configuration the same `component.name` — and the transformations registry keeps naming
+only its own actions.
+
+**One factory configuration per instance** (`PID~name`), never a plain `PID` entry alongside them.
+DS reads a component's configuration PID either as a singleton or as a factory PID, and what a
+runtime does when both exist for one PID is not something the specification settles
+(§112.7). Each instance also names itself with `stage.action.name`, because the runtime records
+what a stage action made of an event under the producer `stage-action/<name>` and two instances
+sharing a name would overwrite each other's record on the report.
+
+A runtime without a transformations registry — the local jena runtime, today — configures the
+`~schema` instance only. An instance whose target registry does not exist has nothing to resolve
+into.
 
 `stage.action.chains` is deliberately left unset. The default ranking order with
 `onFailure: continue` is what keeps the two report actions independent; do not put them in a chain
@@ -220,9 +275,10 @@ default. Absent means `OPEN`.
   shared model.
 - **It does not write to more than one address.** A fingerprint held in two stages is two objects,
   and one stage's review says nothing about the other's copy.
-- **It does not yet work for transformations.** `ObjectMetadata.fingerprint` is filled for
-  EPackages only, so an `m2x1:` subject resolves to nothing and the action logs a skip. Nothing
-  here changes when that is fixed — it compares strings, and the schemes are self-describing.
+- **It does not itself review anything about a transformation.** A compiled unit now carries its
+  `m2x1:` fingerprint in `ObjectMetadata.fingerprint`, so the `~transformations` instance resolves a
+  `TransformationSubject` and writes its findings like any other — but something has to produce
+  those reports first (issue #319). Until then the instance sees no report it answers for.
 
 ## Deployment
 
