@@ -5,6 +5,24 @@
         "trigger.stages": ["draft", "approved", "release"],
         "storageService.target": "(storage.type=file)"
     },
+    "QvtGdprFlowStageAction": {
+        "report.registry": "gdpr",
+        "trigger.stages": ["draft", "approved", "release"],
+        "trigger.scopes": ["$[env:MODEL_ATLAS_SCOPE;default=$[prop:MODEL_ATLAS_SCOPE;default=jena]]"],
+        "scope.target": "(atlas.scope=$[env:MODEL_ATLAS_SCOPE;default=$[prop:MODEL_ATLAS_SCOPE;default=jena]])"
+    },
+    "QvtFlowFindingsStageAction": {
+        "target.registry": "schema",
+        "report.stages": ["draft", "approved", "release"],
+        "trigger.scopes": ["$[env:MODEL_ATLAS_SCOPE;default=$[prop:MODEL_ATLAS_SCOPE;default=jena]]"],
+        "scope.target": "(atlas.scope=$[env:MODEL_ATLAS_SCOPE;default=$[prop:MODEL_ATLAS_SCOPE;default=jena]])"
+    },
+    "QvtGdprReanalysisStageAction": {
+        "unit.registry": "transformations",
+        "report.stages": ["draft", "approved", "release"],
+        "trigger.scopes": ["$[env:MODEL_ATLAS_SCOPE;default=$[prop:MODEL_ATLAS_SCOPE;default=jena]]"],
+        "scope.target": "(atlas.scope=$[env:MODEL_ATLAS_SCOPE;default=$[prop:MODEL_ATLAS_SCOPE;default=jena]])"
+    },
     "QvtStageActionService": {
         "trigger.stages": ["draft", "approved", "release"]
     },
@@ -20,11 +38,21 @@
         "scope.target": "(atlas.scope=$[env:MODEL_ATLAS_SCOPE;default=$[prop:MODEL_ATLAS_SCOPE;default=jena]])",
         "document.registry": "gdprdoc"
     },
-    "GDPRMetadataDiagnosticsStageAction": {
+    "GDPRMetadataDiagnosticsStageAction~schema": {
         "target.registry": "schema",
+        "subject.type": "PackageSubject",
         "report.stages": ["draft", "approved", "release"],
         "trigger.scopes": ["$[env:MODEL_ATLAS_SCOPE;default=$[prop:MODEL_ATLAS_SCOPE;default=jena]]"],
-        "scope.target": "(atlas.scope=$[env:MODEL_ATLAS_SCOPE;default=$[prop:MODEL_ATLAS_SCOPE;default=jena]])"
+        "scope.target": "(atlas.scope=$[env:MODEL_ATLAS_SCOPE;default=$[prop:MODEL_ATLAS_SCOPE;default=jena]])",
+        "stage.action.name": "GDPRMetadataDiagnosticsStageAction~schema"
+    },
+    "GDPRMetadataDiagnosticsStageAction~transformations": {
+        "target.registry": "transformations",
+        "subject.type": "TransformationSubject",
+        "report.stages": ["draft", "approved", "release"],
+        "trigger.scopes": ["$[env:MODEL_ATLAS_SCOPE;default=$[prop:MODEL_ATLAS_SCOPE;default=jena]]"],
+        "scope.target": "(atlas.scope=$[env:MODEL_ATLAS_SCOPE;default=$[prop:MODEL_ATLAS_SCOPE;default=jena]])",
+        "stage.action.name": "GDPRMetadataDiagnosticsStageAction~transformations"
     },
     "ModelAtlasObjectPublisher~gdprStatus": {
         "base.uri": "http://localhost:8080/atlas/rest",
@@ -60,7 +88,7 @@
         "registry.type": "TRANSFORMATION",
         "registry.name": "transformations",
         "registry.description": "QVT-O transformation sources, compiled units and their diagnostics (issue #239)",
-        "stageActionService.target": "(component.name=QvtStageActionService)",
+        "stageActionService.target": "(|(component.name=QvtStageActionService)(component.name=QvtGdprFlowStageAction))",
         "stageActionService.cardinality.minimum:int": 1,
         "stageGate.target": "(component.name=QvtTransitionGate)",
         "stageGate.cardinality.minimum:int": 1,
@@ -295,7 +323,7 @@
         "registry.type": "OTHER",
         "registry.name": "gdpr",
         "registry.description": "The Registry to store GDPR Report and GdprRequestStatus objects",
-        "stageActionService.target": "(|(component.name=GDPRReportHistoryStageAction)(component.name=GDPRMetadataDiagnosticsStageAction))",
+        "stageActionService.target": "(|(component.name=GDPRReportHistoryStageAction)(component.name=GDPRMetadataDiagnosticsStageAction)(component.name=QvtFlowFindingsStageAction)(component.name=QvtGdprReanalysisStageAction))",
         "stage.storage.mappings": [
             "draft:file",
             "approved:file",

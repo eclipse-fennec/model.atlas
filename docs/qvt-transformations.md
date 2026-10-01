@@ -107,6 +107,13 @@ consumer side through the m2x `UnitMaterializer`/`UnitPreparer`, which
 verifies the manifest and binds the metamodels; see the m2x compiled-units
 guide, §6.
 
+## What a transformation says about personal data
+
+Where the GDPR half is deployed, a compiled unit also gets a GDPR report of its own — derived from
+the reviews of the metamodels it was compiled against rather than written by anybody, and the only
+place where "these three classified fields are concatenated into one free-text field" is visible at
+all. See [a GDPR report for a transformation](gdpr-transformation-reports.md).
+
 ## Configuration
 
 The registry and the compile action are plain ConfigAdmin configuration — see

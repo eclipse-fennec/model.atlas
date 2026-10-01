@@ -394,8 +394,11 @@ are part of the diagnostics epic (#290).
 **Producers you will meet.** `stage-action/<name>` for what an action made of an event,
 `SchemaDependencies` for a dependency that is no longer served, `QvtTransitionGate` for a
 transformation that does not compile, and - where the GDPR review half is deployed - `gdpr.review`,
-which records what a review found on the model it reviewed. See
-[GDPR review findings on the reviewed model](gdpr-review-diagnostics.md).
+which records what a review found on the model it reviewed, and
+`gdpr.transformation/<qualifiedName>`, one per transformation that reads or writes the model,
+recording what that transformation does to its fields. See
+[GDPR review findings on the reviewed model](gdpr-review-diagnostics.md) and, for a compiled
+transformation, [a GDPR report for a transformation](gdpr-transformation-reports.md).
 
 ### Hierarchical Visibility
 
