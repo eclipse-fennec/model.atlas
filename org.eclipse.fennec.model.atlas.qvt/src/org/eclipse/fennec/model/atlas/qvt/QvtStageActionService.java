@@ -13,11 +13,15 @@
  */
 package org.eclipse.fennec.model.atlas.qvt;
 
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Optional;
+import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -35,11 +39,9 @@ import org.eclipse.fennec.m2x.unit.api.Unit;
 import org.eclipse.fennec.m2x.unit.api.UnitKey;
 import org.eclipse.fennec.m2x.unit.api.UnitKind;
 import org.eclipse.fennec.m2x.unit.api.UnitStoreException;
-import org.eclipse.fennec.model.atlas.qvt.diagnostics.CompileStatus;
-import org.eclipse.fennec.model.atlas.qvt.diagnostics.DiagnosticEntry;
-import org.eclipse.fennec.model.atlas.qvt.diagnostics.DiagnosticSeverity;
-import org.eclipse.fennec.model.atlas.qvt.diagnostics.QvtDiagnosticsFactory;
-import org.eclipse.fennec.model.atlas.qvt.diagnostics.SourceDiagnostics;
+import org.eclipse.fennec.model.atlas.mgmt.management.Diagnostic;
+import org.eclipse.fennec.model.atlas.mgmt.management.DiagnosticSeverity;
+import org.eclipse.fennec.model.atlas.mgmt.management.ManagementFactory;
 import org.eclipse.fennec.model.atlas.wf.workflowapi.RegistryService;
 import org.eclipse.fennec.model.atlas.action.api.ActionContext;
 import org.eclipse.fennec.model.atlas.workflow.RegistryServiceCollector;
@@ -63,9 +65,11 @@ import org.osgi.util.promise.PromiseFactory;
  * Behaviour per source upload, decided 2026-09-01 on the issue:
  * </p>
  * <ul>
- * <li><b>Invalid source</b> → stays stored; a {@link SourceDiagnostics}
- * document with per-finding line/column/severity is stored beside it
- * (status {@code INVALID}). The upload itself never fails.</li>
+ * <li><b>Invalid source</b> → stays stored, and why it does not compile is
+ * recorded as {@link Diagnostic}s on the source's own {@code ObjectMetadata}
+ * (issue #327): one {@code qvto.does-not-compile} root with one
+ * {@code qvto.compiler-finding} child per compiler message, placed at its line
+ * and column. The upload itself never fails.</li>
  * <li><b>Valid source with a startable root transformation</b> → compiled
  * (m2x default {@code pin} mode) against this (scope, stage)'s package view
  * and stored as a {@code CompiledUnit} in the same stage — draft units are
@@ -101,7 +105,30 @@ public class QvtStageActionService implements StageActionService {
         String[] trigger_stages() default {};
     }
 
+    /**
+     * The producer the compile outcome is recorded under.
+     * <p>
+     * Deliberately not the component name: the workflow records what a stage action <em>made of an
+     * event</em> under {@code stage-action/QvtStageActionService}, and those two sitting side by
+     * side meaning different things is exactly the confusion to avoid. This one says what the
+     * compiler found; that one says whether the action itself ran.
+     */
+    public static final String PRODUCER = "QvtCompile";
+
     private static final Logger logger = Logger.getLogger(QvtStageActionService.class.getName());
+
+    /**
+     * The root a source carries when it <em>does</em> compile.
+     * <p>
+     * Written rather than left out, because absence is ambiguous: "it compiled" and "nothing ever
+     * ran here" would look identical, and a stage action that binds to no registry fires silently.
+     * It is not a content-free tick either - it names the unit the source produced, which is the
+     * one thing a caller otherwise has to make a second lookup for.
+     */
+    public static final String CODE_COMPILES = "qvto.compiles";
+
+    /** How many compiler findings the root spells out before it counts the rest. */
+    private static final int MAX_REPORTED_FINDINGS = 5;
     private static final String SOURCE_UNIT_TYPE = EcoreUtil.getURI(CompiledPackage.Literals.SOURCE_UNIT).toString();
 
     @Reference
@@ -143,27 +170,17 @@ public class QvtStageActionService implements StageActionService {
         return compileAction(ctx);
     }
 
+    /**
+     * Nothing to do on either exit.
+     * <p>
+     * The compile outcome now lives on the source's own metadata, so a deleted source takes it with
+     * it and a transitioned one carries it along - which is what the separate diagnostics document
+     * had to be cleaned up by hand for (issue #327). Units stay in the stage they were derived in:
+     * they are versioned and possibly pinned by consumers.
+     */
     @Override
     public Promise<Void> onExit(ActionContext ctx) {
-        if (ctx.exitReason() != ExitReason.DELETED) {
-            // on a transition the source stage keeps its derivatives: units stay
-            // resolvable for pinned consumers, the diagnostics still describe them
-            return promiseFactory.resolved(null);
-        }
-        return promiseFactory.submit(() -> {
-            // the diagnostics mirror a source that is gone — remove them so a delete
-            // is visible. Units stay: they are versioned and possibly pinned by
-            // consumers. Relies on the working-copy convention objectId ==
-            // qualified name; a foreign id leaves at most a stale diagnostics doc.
-            RegistryService<EObject> registryService = registryFor(ctx.registry());
-            String diagnosticsId = QvtUnits.diagnosticsObjectId(QvtUnits.LANGUAGE_QVTO, ctx.objectId());
-            if (registryService.getMetadataFromStage(ctx.scope(), ctx.stage(), diagnosticsId) != null) {
-                registryService.deleteFromStage(ctx.scope(), ctx.stage(), diagnosticsId).getValue();
-                logger.info(() -> "Removed diagnostics of deleted source " + ctx.objectId() + " in (" + ctx.scope()
-                        + ", " + ctx.stage() + ")");
-            }
-            return null;
-        }).map(v -> null);
+        return promiseFactory.resolved(null);
     }
 
     @Override
@@ -212,56 +229,111 @@ public class QvtStageActionService implements StageActionService {
     }
 
     /**
-     * Compiles one source and stores the outcome: the unit (startable root) and
-     * the diagnostics document. Returns the qualified names whose compiled unit
-     * changed (input for the dependent cascade), or an empty set.
+     * Compiles one source and stores the outcome: the unit (startable root), and why it does not
+     * compile - if it does not - onto the source's own metadata. Returns the qualified names whose
+     * compiled unit changed (input for the dependent cascade), or an empty set.
      */
     private Set<String> compileOne(QvtoEngine engine, AtlasUnitStore store,
             RegistryService<EObject> registryService, ActionContext ctx, String qualifiedName, String sourceText) {
-        SourceDiagnostics diagnostics = QvtDiagnosticsFactory.eINSTANCE.createSourceDiagnostics();
-        diagnostics.setQualifiedName(qualifiedName);
+        List<Diagnostic> findings = new ArrayList<>();
         Set<String> changed = new LinkedHashSet<>();
         try {
             CompiledUnit unit = engine.compile(sourceText, qualifiedName);
-            diagnostics.setSourceFingerprint(unit.getManifest().getSourceFingerprint());
             // a library's compiled form is what prepare loads for dependents — it is
             // stored just like a startable unit (the double-put the compiled-units
-            // guide warns about); only the reported status differs
+            // guide warns about); only the wording of the log differs
             boolean library = QvtUnits.isLibrary(unit);
             UnitKey key = store.put(unit);
-            diagnostics.setCompileStatus(library ? CompileStatus.LIBRARY : CompileStatus.OK);
-            diagnostics.setUnitFingerprint(key.fingerprint().orElse(null));
             changed.add(qualifiedName);
+            findings.add(compiles(key.fingerprint().orElse(null), library));
             logger.info(() -> (library ? "Stored library " : "Compiled ") + qualifiedName + " -> "
                     + key.fingerprint().orElse("?") + " in (" + ctx.scope() + ", " + ctx.stage() + ")");
         } catch (QvtoParseException e) {
-            diagnostics.setCompileStatus(CompileStatus.INVALID);
-            diagnostics.setMessage(e.getMessage());
-            for (Resource.Diagnostic error : e.getErrors()) {
-                DiagnosticEntry entry = QvtDiagnosticsFactory.eINSTANCE.createDiagnosticEntry();
-                entry.setLine(error.getLine());
-                entry.setColumn(error.getColumn());
-                entry.setSeverity(DiagnosticSeverity.ERROR);
-                entry.setMessage(error.getMessage());
-                diagnostics.getEntries().add(entry);
-            }
+            findings.add(doesNotCompile(summarise(e), compilerFindings(e)));
             logger.info(() -> "Source " + qualifiedName + " in (" + ctx.scope() + ", " + ctx.stage()
-                    + ") is invalid; stored as draft with " + diagnostics.getEntries().size() + " diagnostics");
+                    + ") is invalid; stored as draft with " + e.getErrors().size() + " diagnostics");
         } catch (UnitStoreException e) {
-            diagnostics.setCompileStatus(CompileStatus.INVALID);
-            diagnostics.setMessage("compiled, but the unit could not be stored: " + e.getMessage());
+            findings.add(doesNotCompile("compiled, but the unit could not be stored: " + e.getMessage(), List.of()));
             logger.log(Level.WARNING, e,
                     () -> "Unit of " + qualifiedName + " could not be stored in (" + ctx.scope() + ", " + ctx.stage() + ")");
         } catch (RuntimeException e) {
             // an unexpected compiler failure must never leave the PREVIOUS outcome
             // standing as if it described this source
-            diagnostics.setCompileStatus(CompileStatus.INVALID);
-            diagnostics.setMessage("internal compiler error: " + e);
+            findings.add(doesNotCompile("internal compiler error: " + e, List.of()));
             logger.log(Level.WARNING, e, () -> "Compiling " + qualifiedName + " in (" + ctx.scope() + ", "
                     + ctx.stage() + ") failed unexpectedly");
         }
-        writeDiagnostics(registryService, ctx, diagnostics);
+        writeDiagnostics(registryService, ctx, qualifiedName, findings);
         return changed;
+    }
+
+    /**
+     * The root a source carries when it compiled: which unit it produced, and whether that unit is
+     * something an engine can start or a library others import. {@code INFO} - it is a statement
+     * of fact, not a finding anybody has to act on.
+     */
+    private static Diagnostic compiles(String fingerprint, boolean library) {
+        Diagnostic root = diagnostic(CODE_COMPILES, null,
+                String.format("Compiled to %s (%s)", fingerprint == null ? "a unit with no fingerprint" : fingerprint,
+                        library ? "a library others import" : "a startable transformation"));
+        root.setSeverity(DiagnosticSeverity.INFO);
+        return root;
+    }
+
+    /**
+     * The root: this source does not compile against this stage's package view.
+     * <p>
+     * Same vocabulary as {@link QvtTransitionGate}, deliberately - a reader meets one set of codes
+     * whether the compile happened on upload or while a promotion was being decided. The two keep
+     * separate producers, because "does not compile here" and "may not enter there" are different
+     * statements that have to be able to stand at the same time.
+     */
+    private static Diagnostic doesNotCompile(String reason, List<Diagnostic> children) {
+        Diagnostic root = diagnostic(QvtTransitionGate.CODE_DOES_NOT_COMPILE, null, reason);
+        root.getChildren().addAll(children);
+        return root;
+    }
+
+    /** One child per compiler message, at {@code line:column}. */
+    private static List<Diagnostic> compilerFindings(QvtoParseException e) {
+        List<Diagnostic> children = new ArrayList<>();
+        Map<String, Integer> seen = new HashMap<>();
+        for (Resource.Diagnostic error : e.getErrors()) {
+            String at = error.getLine() + ":" + error.getColumn();
+            int occurrence = seen.merge(at, 1, Integer::sum);
+            if (occurrence > 1) {
+                // a diagnostic's id is derived from its code and its target, so two messages at one
+                // position would be one node and the second would silently replace the first
+                at = at + "#" + occurrence;
+            }
+            children.add(diagnostic(QvtTransitionGate.CODE_COMPILER_FINDING, at, error.getMessage()));
+        }
+        return children;
+    }
+
+    /** What the root says in one line: the first few findings, then a count of the rest. */
+    private static String summarise(QvtoParseException e) {
+        List<Resource.Diagnostic> errors = e.getErrors();
+        if (errors.isEmpty()) {
+            return e.getMessage();
+        }
+        StringBuilder reason = new StringBuilder(errors.stream().limit(MAX_REPORTED_FINDINGS)
+                .map(d -> "line " + d.getLine() + ":" + d.getColumn() + " " + d.getMessage())
+                .collect(Collectors.joining("; ")));
+        if (errors.size() > MAX_REPORTED_FINDINGS) {
+            reason.append(" and ").append(errors.size() - MAX_REPORTED_FINDINGS).append(" more");
+        }
+        return reason.toString();
+    }
+
+    private static Diagnostic diagnostic(String code, String target, String message) {
+        Diagnostic diagnostic = ManagementFactory.eINSTANCE.createDiagnostic();
+        diagnostic.setCode(code);
+        diagnostic.setTarget(target);
+        diagnostic.setSeverity(DiagnosticSeverity.ERROR);
+        diagnostic.setCategory(QvtTransitionGate.CATEGORY);
+        diagnostic.setMessage(message);
+        return diagnostic;
     }
 
     /**
@@ -350,17 +422,27 @@ public class QvtStageActionService implements StageActionService {
         return Optional.empty();
     }
 
+    /**
+     * Records what the compiler made of one source, onto that source's own metadata.
+     * <p>
+     * Always exactly one root, whichever way the compile went, so the outcome is readable without
+     * knowing what the absence of a root would have meant - and writing the new one is what
+     * replaces the old, so a source that has been fixed stops claiming it is broken.
+     * <p>
+     * Addressed by the qualified name rather than by {@code ctx.objectId()}, because the dependent
+     * cascade compiles sources the event was not about.
+     */
     private void writeDiagnostics(RegistryService<EObject> registryService, ActionContext ctx,
-            SourceDiagnostics diagnostics) {
+            String qualifiedName, List<Diagnostic> findings) {
         try {
-            // no fingerprint: a diagnostics document is about a source, it is not itself an
-            // artefact anybody addresses by content
-            AtlasUnitStore.upsert(registryService, ctx.scope(), ctx.stage(),
-                    QvtUnits.diagnosticsObjectId(QvtUnits.LANGUAGE_QVTO, diagnostics.getQualifiedName()),
-                    diagnostics.getQualifiedName(), diagnostics, null);
-        } catch (UnitStoreException e) {
-            logger.log(Level.WARNING, e, () -> "Diagnostics for " + diagnostics.getQualifiedName()
-                    + " could not be stored in (" + ctx.scope() + ", " + ctx.stage() + ")");
+            registryService.updateDiagnostics(ctx.scope(), ctx.stage(), qualifiedName, PRODUCER, findings).getValue();
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        } catch (Exception e) {
+            // the source is stored and the unit is where it belongs; the record of what happened is
+            // a courtesy, and failing the upload over it would be worse
+            logger.log(Level.WARNING, e, () -> "The compile outcome of " + qualifiedName
+                    + " could not be recorded in (" + ctx.scope() + ", " + ctx.stage() + ")");
         }
     }
 

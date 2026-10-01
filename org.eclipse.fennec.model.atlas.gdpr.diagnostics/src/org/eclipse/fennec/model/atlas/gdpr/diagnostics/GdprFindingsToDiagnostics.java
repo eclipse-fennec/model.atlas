@@ -15,6 +15,7 @@ package org.eclipse.fennec.model.atlas.gdpr.diagnostics;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -24,6 +25,7 @@ import java.util.TreeSet;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import org.eclipse.emf.ecore.EObject;
 import org.eclipse.fennec.model.atlas.mgmt.management.Diagnostic;
 import org.eclipse.fennec.model.atlas.mgmt.management.DiagnosticSeverity;
 import org.eclipse.fennec.model.atlas.mgmt.management.ManagementFactory;
@@ -154,6 +156,13 @@ public class GdprFindingsToDiagnostics {
 	 */
 	public static final String CODE_UNREVIEWED_SOURCE = "gdpr.unreviewed-source";
 
+	/**
+	 * Code of the root written when the object itself has no review left: every review of its
+	 * revision was withdrawn. {@code ERROR}, and the counterpart of a clean review's {@code INFO}
+	 * root - see {@link #noReview(String)}.
+	 */
+	public static final String CODE_NO_REVIEW = "gdpr.no-review";
+
 	/** Prefix of every child code, so a client can recognise one without knowing the categories. */
 	public static final String CODE_FINDING_PREFIX = "gdpr.finding.";
 
@@ -203,9 +212,12 @@ public class GdprFindingsToDiagnostics {
 		List<Diagnostic> unreviewed = unreviewedSources(report, source);
 		elements.addAll(unreviewed);
 		if (elements.isEmpty()) {
-			// No root at all rather than an empty one: the absence of a gdpr.review root is what
-			// says the review found nothing, and an empty root would read as a review that did.
-			return List.of();
+			// A review that found nothing still says so. Silence cannot carry it: a model nobody
+			// ever reviewed and one reviewed and cleared would look identical, and telling those
+			// two apart is the whole reason this producer exists. The root carries no children -
+			// an *empty* root would read as a review that found something and lost it - and it
+			// says in words that the check ran and came back clean.
+			return List.of(nothingWritten(report, source));
 		}
 
 		DiagnosticSeverity worst = DiagnosticSeverity.INFO;
@@ -220,6 +232,71 @@ public class GdprFindingsToDiagnostics {
 				source);
 		review.getChildren().addAll(elements);
 		return List.of(review);
+	}
+
+	/**
+	 * The roots to write when no review of the object's revision is on record any more.
+	 * <p>
+	 * An object whose last review was withdrawn is not a clean object: nothing has been checked.
+	 * Clearing the producer instead would leave it looking exactly like one nobody has reviewed
+	 * yet, so this producer says which of the two it is, and says it at {@code ERROR} - the same
+	 * severity an unreviewed metamodel gets under {@link #CODE_UNREVIEWED_SOURCE}, and for the
+	 * same reason: the check did not run.
+	 *
+	 * @param fingerprint the revision no review covers; may be {@code null}
+	 * @return the one root, never empty
+	 */
+	public List<Diagnostic> noReview(String fingerprint) {
+		String revision = blankToNull(fingerprint);
+		return List.of(diagnostic(CODE_NO_REVIEW, null, DiagnosticSeverity.ERROR,
+				revision == null ? "GDPR review: none on record for this revision"
+						: String.format("GDPR review: none on record for revision '%s'", revision),
+				null));
+	}
+
+	/**
+	 * The root of a review that wrote no findings.
+	 * <p>
+	 * {@code INFO}, and it names how much was looked at - a review of nothing and a review of
+	 * nineteen features that cleared all of them are both "nothing found", and only the second is
+	 * reassuring. The one exception is a review that did assert something and had none of it
+	 * written, because every element it spoke about was unaddressable: that is a malformed report,
+	 * not a clean model, and it must not read as one.
+	 */
+	private static Diagnostic nothingWritten(GdprReport report, String source) {
+		if (assertsAnything(report)) {
+			return diagnostic(CODE_REVIEW, null, DiagnosticSeverity.WARNING,
+					"GDPR review: it asserts something, but none of its findings names an element they could be "
+							+ "written onto",
+					source);
+		}
+		int examined = examined(report);
+		return diagnostic(CODE_REVIEW, null, DiagnosticSeverity.INFO,
+				String.format("GDPR review: nothing of concern found, %d element%s examined", examined,
+						examined == 1 ? "" : "s"),
+				source);
+	}
+
+	/** Whether any finding anywhere in the report says something about the data. */
+	private static boolean assertsAnything(GdprReport report) {
+		for (Iterator<EObject> contents = report.eAllContents(); contents.hasNext();) {
+			if (contents.next() instanceof Finding finding && !assertsNothing(finding)) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	/** How many things the review looked at: classifiers, their features, and flows. */
+	private static int examined(GdprReport report) {
+		int count = 0;
+		for (Evaluation evaluation : report.getEvaluation()) {
+			count++;
+			if (evaluation instanceof ClassifierEvaluation classifier) {
+				count += classifier.getFeatureEvaluation().size();
+			}
+		}
+		return count;
 	}
 
 	private static String summary(int claims, int elements, int unreviewed) {

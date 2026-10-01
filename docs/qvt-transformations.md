@@ -18,13 +18,14 @@ Transformations live in a registry of type `TRANSFORMATION` (default name
 |---|---|---|
 | Source (`SourceUnit`) | The `.qvto` text you edit | you, via upload |
 | Compiled unit (`CompiledUnit`) | The self-contained, executable form with its manifest | the Atlas, on every successful compile |
-| Diagnostics (`SourceDiagnostics`) | The compile outcome of your source: status + positioned findings | the Atlas, on every compile |
 
-Only sources are yours to write: units and diagnostics are **derived content**
-— attempting to POST/PUT them over the generic endpoints is answered `403`,
+Only sources are yours to write: compiled units are **derived content** —
+attempting to POST/PUT them over the generic endpoints is answered `403`,
 because a compiled unit the Atlas did not produce would be a forgery.
-Deleting a source removes its diagnostics with it; already-compiled units
-stay, versioned, for consumers that pinned them.
+Why a source does not compile is recorded as
+[diagnostics](user-guide.md#diagnostics) on that source's own metadata, so it
+travels with it and goes when it goes; already-compiled units stay, versioned,
+for consumers that pinned them.
 
 ## Uploading a source
 
@@ -37,19 +38,26 @@ curl -X POST "http://localhost:8080/atlas/myscope/registries/transformations/sta
      --data-binary @Announce.qvto
 ```
 
-The upload response returns after the compile finished. What happened is in
-the diagnostics document:
+The upload response returns after the compile finished. What happened is on
+the source's own metadata, under the producer `QvtCompile`:
 
 ```bash
-curl "http://localhost:8080/atlas/myscope/registries/transformations/units/draft/Announce/diagnostics" \
+curl "http://localhost:8080/atlas/myscope/registries/transformations/stages/draft/Announce/metadata" \
      -H "Accept: application/json"
 ```
 
-| `compileStatus` | Meaning |
+A source always carries **exactly one** `QvtCompile` root, whichever way the
+compile went — so the outcome never has to be inferred from an absence, and a
+source carrying none means the compile never ran at all:
+
+| Root | Meaning |
 |---|---|
-| `OK` | The source defines a startable root transformation; a compiled unit exists in this stage. `unitFingerprint` is the value a consumer pins. |
-| `INVALID` | The source did not compile. It **stays stored as your draft**; the `entries` carry each finding with `line`, `column`, `severity` and `message` — fix and upload again. |
-| `LIBRARY` | The source is a valid library (no startable root). It is stored and resolved as a dependency of other compilations. |
+| `qvto.compiles` (INFO) | It compiled. The message names the `m2x1:` unit it produced — the value a consumer pins — and whether that unit is a startable transformation or a library others import. |
+| `qvto.does-not-compile` (ERROR) | It did not. The source **stays stored as your draft**; each `qvto.compiler-finding` child carries one compiler message, targeted at its `line:column` — fix and upload again. |
+
+Whether a unit is a startable transformation or a library is not a status
+anybody branches on: the compiler states it in the unit's own manifest, as
+`nature`, and the root above only repeats it for a reader.
 
 Reading the source back with `Accept: text/x-qvto` answers the stored text
 unchanged — the editor round trip.
@@ -119,7 +127,7 @@ all. See [a GDPR report for a transformation](gdpr-transformation-reports.md).
 The registry and the compile action are plain ConfigAdmin configuration — see
 `org.eclipse.fennec.model.atlas.runtime.config.local/configs/workflow.json`
 for the reference shape: a `RegistryService~transformations` factory config
-(`registry.type: TRANSFORMATION`, the three root EClasses, a ResourceSet
-target that knows the `compiled` and `diagnostics` models, a
+(`registry.type: TRANSFORMATION`, the root and derived EClasses, a ResourceSet
+target that knows the `compiled` model, a
 `stageGate.target` pointing at `QvtTransitionGate`) plus a
 `QvtStageActionService` config naming the trigger stages.

@@ -61,10 +61,9 @@
             "http://www.eclipse.org/fennec/m2x/compiled/1.0#//SourceUnit"
         ],
         "derived.eclass.uri": [
-            "http://www.eclipse.org/fennec/m2x/compiled/1.0#//CompiledUnit",
-            "http://eclipse.org/fennec/model/atlas/qvt/diagnostics/1.0.0#//SourceDiagnostics"
+            "http://www.eclipse.org/fennec/m2x/compiled/1.0#//CompiledUnit"
         ],
-        "resourceSet.target": "(&(emf.name=compiled)(emf.name=diagnostics))"
+        "resourceSet.target": "(emf.name=compiled)"
     },
 
     "RegistryService~schema": {

@@ -32,6 +32,7 @@ import org.eclipse.fennec.model.atlas.action.api.ActionContext;
 import org.eclipse.fennec.model.atlas.action.api.StageActionService.ActionEvent;
 import org.eclipse.fennec.model.atlas.action.api.StageActionService.ExitReason;
 import org.eclipse.fennec.model.atlas.mgmt.management.Diagnostic;
+import org.eclipse.fennec.model.atlas.mgmt.management.DiagnosticSeverity;
 import org.eclipse.fennec.model.atlas.mgmt.management.ManagementFactory;
 import org.eclipse.fennec.model.atlas.mgmt.management.ObjectMetadata;
 import org.eclipse.fennec.model.atlas.wf.workflowapi.WritableScopeService;
@@ -165,7 +166,9 @@ class GDPRMetadataDiagnosticsStageActionTest {
 		action().onEnter(context("approved", "report-1"));
 
 		assertEquals(1, scope.writes.size(), "a review that found nothing is a statement, not a reason to skip");
-		assertTrue(scope.writes.get(0).roots().isEmpty());
+		assertEquals(GdprFindingsToDiagnostics.CODE_REVIEW, onlyRoot(scope.writes.get(0)).getCode());
+		assertEquals(DiagnosticSeverity.INFO, onlyRoot(scope.writes.get(0)).getSeverity(),
+				"reviewed and clean, which is not the same as not reviewed");
 	}
 
 	/* ------------------------------------------------------------------ when a review goes */
@@ -187,8 +190,8 @@ class GDPRMetadataDiagnosticsStageActionTest {
 		Write write = scope.writes.get(0);
 		assertEquals("pkg-approved", write.objectId());
 		assertEquals(GdprFindingsToDiagnostics.PRODUCER, write.producer(),
-				"an empty replacement clears this producer's roots and only this producer's");
-		assertTrue(write.roots().isEmpty());
+				"the replacement rewrites this producer's roots and only this producer's");
+		assertEquals(GdprFindingsToDiagnostics.CODE_NO_REVIEW, onlyRoot(write).getCode());
 	}
 
 	@Test
@@ -317,7 +320,7 @@ class GDPRMetadataDiagnosticsStageActionTest {
 	}
 
 	@Test
-	@DisplayName("Withdrawing the only review of a revision clears its findings")
+	@DisplayName("Withdrawing the only review of a revision leaves the object recorded as unreviewed")
 	void deletingTheOnlyReviewClears() {
 		scope.report("gdpr", "approved", "report-1", report(FINGERPRINT));
 		scope.reviewed("schema", "approved", "pkg-approved", FINGERPRINT);
@@ -327,7 +330,16 @@ class GDPRMetadataDiagnosticsStageActionTest {
 		scope.deleteReport("gdpr", "approved", "report-1");
 		action.onExit(exit(context("approved", "report-1"), ExitReason.DELETED));
 
-		assertTrue(scope.writes.get(scope.writes.size() - 1).roots().isEmpty());
+		Diagnostic root = onlyRoot(scope.writes.get(scope.writes.size() - 1));
+		assertEquals(GdprFindingsToDiagnostics.CODE_NO_REVIEW, root.getCode(),
+				"nothing checked it any more, and silence would read as nobody having checked it yet");
+		assertEquals(DiagnosticSeverity.ERROR, root.getSeverity());
+	}
+
+	/** The one root of a write: a producer replaces its roots as a set, and this one writes one. */
+	private static Diagnostic onlyRoot(Write write) {
+		assertEquals(1, write.roots().size(), "one root per producer");
+		return write.roots().get(0);
 	}
 
 	/** The code of the one claim in the tree written last: root -> element -> claim. */

@@ -57,8 +57,10 @@ import org.eclipse.fennec.model.atlas.qvt.AtlasUnitStore;
 import org.eclipse.fennec.model.atlas.qvt.QvtTransitionGate;
 import org.eclipse.fennec.model.atlas.qvt.QvtUnits;
 import org.eclipse.fennec.model.atlas.scope.api.StageGateRefusedException;
-import org.eclipse.fennec.model.atlas.qvt.diagnostics.CompileStatus;
-import org.eclipse.fennec.model.atlas.qvt.diagnostics.SourceDiagnostics;
+import org.eclipse.fennec.m2x.model.compiled.UnitNature;
+import org.eclipse.fennec.model.atlas.mgmt.management.DiagnosticSeverity;
+import org.eclipse.fennec.model.atlas.qvt.QvtStageActionService;
+import org.eclipse.fennec.model.atlas.qvt.QvtTransitionGate;
 import org.eclipse.fennec.model.atlas.tests.common.CommonTestAnnotations;
 import org.eclipse.fennec.model.atlas.wf.workflowapi.RegistryService;
 import org.junit.jupiter.api.DisplayName;
@@ -109,10 +111,9 @@ import org.osgi.test.junit5.service.ServiceExtension;
         @Property(key = "root.eclass.uri", scalar = Scalar.String, type = Type.Array, value = {
                 "http://www.eclipse.org/fennec/m2x/compiled/1.0#//SourceUnit" }),
         @Property(key = "derived.eclass.uri", scalar = Scalar.String, type = Type.Array, value = {
-                "http://www.eclipse.org/fennec/m2x/compiled/1.0#//CompiledUnit",
-                "http://eclipse.org/fennec/model/atlas/qvt/diagnostics/1.0.0#//SourceDiagnostics" }),
+                "http://www.eclipse.org/fennec/m2x/compiled/1.0#//CompiledUnit" }),
         @Property(key = "schemaPackage.target", value = "(emf.nsURI=http://www.eclipse.org/fennec/m2x/compiled/1.0)"),
-        @Property(key = "resourceSet.target", value = "(&(emf.name=compiled)(emf.name=diagnostics))"),
+        @Property(key = "resourceSet.target", value = "(emf.name=compiled)"),
         @Property(key = "storageService.target", value = "(storage.type=file)"),
         @Property(key = "stageActionService.target", value = "(component.name=QvtStageActionService)"),
         @Property(key = "stageActionService.cardinality.minimum", scalar = Scalar.Integer, value = "1"),
@@ -299,13 +300,38 @@ public class QvtUnitHostingIntegrationTest {
         return registry.uploadToStage(SCOPE, stage, document, metadata).getValue();
     }
 
-    private static SourceDiagnostics diagnosticsOf(RegistryService<EObject> registry, String stage,
+    /**
+     * What the compiler made of one source, on that source's own metadata (issue #327). Empty when
+     * it compiled: there is nothing to say, so nothing is said.
+     */
+    private static List<Diagnostic> compileFindings(RegistryService<EObject> registry, String stage,
             String qualifiedName) {
-        EObject content = registry.getContentFromStage(SCOPE, stage,
-                QvtUnits.diagnosticsObjectId(QvtUnits.LANGUAGE_QVTO, qualifiedName));
-        assertNotNull(content, "expected a diagnostics document for " + qualifiedName);
-        assertTrue(content instanceof SourceDiagnostics, "expected SourceDiagnostics, got " + content.eClass());
-        return (SourceDiagnostics) content;
+        ObjectMetadata metadata = registry.getMetadataFromStage(SCOPE, stage, qualifiedName);
+        assertNotNull(metadata, "expected the source " + qualifiedName + " to be stored in " + stage);
+        return metadata.getDiagnostics().stream()
+                .filter(root -> QvtStageActionService.PRODUCER.equals(root.getProducer())).toList();
+    }
+
+    /** The one root saying a source does not compile, or {@code null}. */
+    private static Diagnostic doesNotCompile(RegistryService<EObject> registry, String stage,
+            String qualifiedName) {
+        return rootOf(registry, stage, qualifiedName, QvtTransitionGate.CODE_DOES_NOT_COMPILE);
+    }
+
+    /**
+     * The one root saying a source did compile, which a source that compiled always carries:
+     * absence would be indistinguishable from the action never having run.
+     */
+    private static Diagnostic compiles(RegistryService<EObject> registry, String stage, String qualifiedName) {
+        Diagnostic root = rootOf(registry, stage, qualifiedName, QvtStageActionService.CODE_COMPILES);
+        assertNotNull(root, "a source that compiled says so, so that silence can mean something else");
+        return root;
+    }
+
+    private static Diagnostic rootOf(RegistryService<EObject> registry, String stage, String qualifiedName,
+            String code) {
+        return compileFindings(registry, stage, qualifiedName).stream()
+                .filter(root -> code.equals(root.getCode())).findFirst().orElse(null);
     }
 
     private static RegistryService<EObject> registry(ServiceAware<RegistryService> aware) throws Exception {
@@ -329,11 +355,14 @@ public class QvtUnitHostingIntegrationTest {
         assertTrue(stored instanceof SourceUnit, "the invalid source must stay stored");
         assertEquals(BROKEN, ((SourceUnit) stored).getSource());
 
-        SourceDiagnostics diagnostics = diagnosticsOf(registry, DRAFT, "Broken");
-        assertEquals(CompileStatus.INVALID, diagnostics.getCompileStatus());
-        assertFalse(diagnostics.getEntries().isEmpty(), "the findings must be recorded");
-        assertTrue(diagnostics.getEntries().stream().anyMatch(entry -> entry.getLine() > 0),
-                "at least one finding carries a real position");
+        Diagnostic root = doesNotCompile(registry, DRAFT, "Broken");
+        assertNotNull(root, "why it does not compile must be on the source's own metadata");
+        assertEquals(DiagnosticSeverity.ERROR, root.getSeverity());
+        assertFalse(root.getChildren().isEmpty(), "the findings must be recorded");
+        assertTrue(root.getChildren().stream()
+                .anyMatch(child -> QvtTransitionGate.CODE_COMPILER_FINDING.equals(child.getCode())
+                        && child.getTarget() != null && !child.getTarget().startsWith("0:")),
+                "at least one finding carries a real line:column");
 
         AtlasUnitStore store = new AtlasUnitStore(registry, SCOPE, DRAFT);
         assertTrue(store.versions(QvtUnits.LANGUAGE_QVTO, "Broken", UnitKind.COMPILED).isEmpty(),
@@ -359,26 +388,32 @@ public class QvtUnitHostingIntegrationTest {
         assertEquals(QvtUnits.LANGUAGE_QVTO, document.getManifest().getLanguage());
         assertNotNull(document.getManifest().getUnitFingerprint());
 
-        SourceDiagnostics diagnostics = diagnosticsOf(registry, DRAFT, "Rename");
-        assertEquals(CompileStatus.OK, diagnostics.getCompileStatus());
-        assertEquals(versions.get(0).fingerprint().orElseThrow(), diagnostics.getUnitFingerprint(),
-                "the diagnostics name the unit a consumer pins");
+        Diagnostic compiled = compiles(registry, DRAFT, "Rename");
+        assertEquals(DiagnosticSeverity.INFO, compiled.getSeverity(), "it is a fact, not a finding");
+        assertTrue(compiled.getMessage().contains(versions.get(0).fingerprint().orElseThrow()),
+                "and it names the unit a consumer pins, so that needs no second lookup: "
+                        + compiled.getMessage());
+        assertNull(doesNotCompile(registry, DRAFT, "Rename"));
     }
 
     @Test
-    @DisplayName("A library is stored as a dependency and marked LIBRARY")
+    @DisplayName("A library is stored as a dependency and its manifest says it is one")
     void libraryStoredAsDependency(
             @InjectService(cardinality = 0, timeout = 15000, filter = "(registry.name=" + REGISTRY + ")") //
             ServiceAware<RegistryService> aware) throws Exception {
         RegistryService<EObject> registry = registry(aware);
         uploadSource(registry, DRAFT, "text.Case", "text.Case", CASE_LIB);
 
-        SourceDiagnostics diagnostics = diagnosticsOf(registry, DRAFT, "text.Case");
-        assertEquals(CompileStatus.LIBRARY, diagnostics.getCompileStatus());
+        assertTrue(compiles(registry, DRAFT, "text.Case").getMessage().contains("library"),
+                "a library compiles, and the root says which kind of unit came out");
 
         AtlasUnitStore store = new AtlasUnitStore(registry, SCOPE, DRAFT);
-        assertFalse(store.versions(QvtUnits.LANGUAGE_QVTO, "text.Case", UnitKind.COMPILED).isEmpty(),
-                "the library's compiled form is stored for consumers' prepare");
+        List<UnitKey> compiled = store.versions(QvtUnits.LANGUAGE_QVTO, "text.Case", UnitKind.COMPILED);
+        assertFalse(compiled.isEmpty(), "the library's compiled form is stored for consumers' prepare");
+        // What makes it a library is the manifest the compiler stamped, not anything the Atlas
+        // works out for itself (emf.m2x#224).
+        CompiledUnit document = ((Unit.Packaged) store.get(compiled.get(0)).orElseThrow()).document();
+        assertEquals(UnitNature.LIBRARY, document.getManifest().getNature());
         assertFalse(store.versions(QvtUnits.LANGUAGE_QVTO, "text.Case", UnitKind.SOURCE).isEmpty(),
                 "the working-copy source is visible through the store");
     }
@@ -479,9 +514,9 @@ public class QvtUnitHostingIntegrationTest {
         List<UnitKey> released = releaseStore.versions(QvtUnits.LANGUAGE_QVTO, "Promote", UnitKind.COMPILED);
         assertEquals(1, released.size(), "the source's ENTER in the target stage recompiled it there");
 
-        SourceDiagnostics diagnostics = diagnosticsOf(registry, "release", "Promote");
-        assertEquals(CompileStatus.OK, diagnostics.getCompileStatus());
-        assertEquals(released.get(0).fingerprint().orElseThrow(), diagnostics.getUnitFingerprint());
+        assertTrue(compiles(registry, "release", "Promote").getMessage()
+                .contains(released.get(0).fingerprint().orElseThrow()),
+                "the root in the target stage names the unit recompiled there");
     }
 
     @Test
@@ -510,7 +545,7 @@ public class QvtUnitHostingIntegrationTest {
                 """;
         uploadSource(registry, DRAFT, "gate.Lib", "gate.Lib", lib);
         uploadSource(registry, DRAFT, "GateUser", "GateUser", user);
-        assertEquals(CompileStatus.OK, diagnosticsOf(registry, DRAFT, "GateUser").getCompileStatus(),
+        assertNotNull(compiles(registry, DRAFT, "GateUser"),
                 "precondition: the source compiles in draft, where its library is");
 
         // the library is not in release yet: the source does not compile there, so
@@ -527,9 +562,8 @@ public class QvtUnitHostingIntegrationTest {
                 "the source did not enter the target stage");
         assertTrue(releaseStore.versions(QvtUnits.LANGUAGE_QVTO, "GateUser", UnitKind.COMPILED).isEmpty(),
                 "no unit was derived in the target stage");
-        assertNull(registry.getMetadataFromStage(SCOPE, "release",
-                QvtUnits.diagnosticsObjectId(QvtUnits.LANGUAGE_QVTO, "GateUser")),
-                "no diagnostics document was written in the target stage");
+        assertNull(registry.getMetadataFromStage(SCOPE, "release", "GateUser"),
+                "nothing about the source exists in the target stage at all");
         ObjectMetadata draftCopy = registry.getMetadataFromStage(SCOPE, DRAFT, "GateUser");
         assertNotNull(draftCopy, "the source stays in draft");
 
@@ -562,7 +596,8 @@ public class QvtUnitHostingIntegrationTest {
 
         assertEquals(1, releaseStore.versions(QvtUnits.LANGUAGE_QVTO, "GateUser", UnitKind.COMPILED).size(),
                 "once the library is there the promotion compiles in the target stage");
-        assertEquals(CompileStatus.OK, diagnosticsOf(registry, "release", "GateUser").getCompileStatus());
+        assertNotNull(compiles(registry, "release", "GateUser"),
+                "once the library is there too, the promoted source compiles in release");
         // and the pass cleared the veto on the copy that moved
         assertTrue(registry.getMetadataFromStage(SCOPE, "release", "GateUser").getDiagnostics().stream()
                 .noneMatch(d -> QvtTransitionGate.PRODUCER.equals(d.getProducer())),
@@ -585,7 +620,7 @@ public class QvtUnitHostingIntegrationTest {
                         };
                 }
                 """);
-        assertEquals(CompileStatus.INVALID, diagnosticsOf(registry, DRAFT, "GateBroken").getCompileStatus(),
+        assertNotNull(doesNotCompile(registry, DRAFT, "GateBroken"),
                 "precondition: the upload is accepted and diagnosed as invalid");
 
         assertThrows(StageGateRefusedException.class,
@@ -618,14 +653,15 @@ public class QvtUnitHostingIntegrationTest {
         String second = released.get(0).fingerprint().orElseThrow();
         assertFalse(second.equals(first), "the changed source yields a new unit fingerprint");
 
-        SourceDiagnostics diagnostics = diagnosticsOf(registry, "release", "Repromote");
-        assertEquals(CompileStatus.OK, diagnostics.getCompileStatus());
-        assertEquals(second, diagnostics.getUnitFingerprint(),
-                "the final-stage diagnostics follow the latest promotion, not the first");
+        assertTrue(compiles(registry, "release", "Repromote").getMessage().contains(second),
+                "the final-stage root follows the latest promotion, not the first");
+        assertEquals(second,
+                registry.getMetadataFromStage(SCOPE, "release", QvtUnits.objectId(released.get(0))).getFingerprint(),
+                "and the unit itself carries that fingerprint on its own metadata");
     }
 
     @Test
-    @DisplayName("Deleting a source removes its diagnostics; compiled units stay for pinned consumers")
+    @DisplayName("Deleting a source takes its diagnostics with it; compiled units stay for pinned consumers")
     void deleteRemovesDiagnosticsKeepsUnits(
             @InjectService(cardinality = 0, timeout = 15000, filter = "(registry.name=" + REGISTRY + ")") //
             ServiceAware<RegistryService> aware) throws Exception {
@@ -636,9 +672,10 @@ public class QvtUnitHostingIntegrationTest {
 
         assertTrue(registry.deleteFromStage(SCOPE, DRAFT, "Doomed").getValue());
 
-        assertNull(registry.getContentFromStage(SCOPE, DRAFT,
-                QvtUnits.diagnosticsObjectId(QvtUnits.LANGUAGE_QVTO, "Doomed")),
-                "the diagnostics mirror a source that is gone");
+        // Nothing to clean up any more: the findings live on the source's own metadata, so they
+        // go when it goes (issue #327).
+        assertNull(registry.getMetadataFromStage(SCOPE, DRAFT, "Doomed"),
+                "the source and everything recorded on it are gone");
         assertEquals(1, store.versions(QvtUnits.LANGUAGE_QVTO, "Doomed", UnitKind.COMPILED).size(),
                 "already-compiled units stay resolvable for pinned consumers");
     }

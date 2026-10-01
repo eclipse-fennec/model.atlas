@@ -71,8 +71,8 @@ public class UnreviewedSourceTest {
 		GdprReport report = transformationReport();
 		((TransformationSubject) report.getSubject()).getSourcePackages().get(1).setReportId("gdpr-crm-1");
 
-		assertTrue(mapper.map(report).isEmpty(),
-				"every metamodel reviewed and no finding made: the report asserts nothing, so it writes nothing");
+		assertClean(mapper.map(report),
+				"every metamodel reviewed and no finding made: the report is clean, not incomplete");
 	}
 
 	@Test
@@ -98,11 +98,19 @@ public class UnreviewedSourceTest {
 		subject.setSubjectFingerprint("fp1:clinic");
 		review.setSubject(subject);
 
-		assertTrue(mapper.map(review).isEmpty(),
+		assertClean(mapper.map(review),
 				"a PackageSubject has no packages it rests on, so there is nothing to say about them");
 	}
 
 	/* ------------------------------------------------------------------ helpers */
+
+	/** Asserts the roots are the one INFO root of a review that found nothing of concern. */
+	private static void assertClean(List<Diagnostic> roots, String why) {
+		assertEquals(1, roots.size(), why);
+		assertEquals(GdprFindingsToDiagnostics.CODE_REVIEW, roots.get(0).getCode(), why);
+		assertEquals(DiagnosticSeverity.INFO, roots.get(0).getSeverity(), why);
+		assertTrue(roots.get(0).getChildren().isEmpty(), why);
+	}
 
 	/** A report about a compiled transformation: one reviewed metamodel, one not. */
 	private static GdprReport transformationReport() {

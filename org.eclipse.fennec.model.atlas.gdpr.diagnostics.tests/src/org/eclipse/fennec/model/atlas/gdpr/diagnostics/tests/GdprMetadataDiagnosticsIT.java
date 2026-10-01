@@ -117,7 +117,7 @@ public class GdprMetadataDiagnosticsIT {
 
 	@Test
 	@TestAnnotations.GdprDiagnosticsSetup
-	@DisplayName("a withdrawn review takes its own findings with it and leaves another producer's alone")
+	@DisplayName("a withdrawn review leaves the package recorded as unreviewed, and another producer's alone")
 	public void aDeletedReviewClearsItsOwnFindings(
 			@InjectService(cardinality = 0, timeout = 30000, filter = SCOPE_FILTER) //
 			ServiceAware<WritableScopeService> aware) throws Exception {
@@ -134,11 +134,16 @@ public class GdprMetadataDiagnosticsIT {
 
 		scope.deleteFromStageForRegistry(TestAnnotations.REPORT_REGISTRY, DRAFT, "report-1").getValue();
 
-		Fixtures.await(scope, DRAFT, List::isEmpty, "the withdrawn review's findings to be cleared");
+		// not cleared: nothing checks the package any more, and an empty producer would read as a
+		// package nobody has reviewed yet
+		Diagnostic unreviewed = Fixtures
+				.await(scope, DRAFT, GdprMetadataDiagnosticsIT::noReview, "the package to be recorded as unreviewed")
+				.get(0);
+		assertEquals(DiagnosticSeverity.ERROR, unreviewed.getSeverity());
 		ObjectMetadata metadata = Fixtures.metadata(scope, DRAFT);
-		assertEquals(1, metadata.getDiagnostics().size());
-		assertEquals("some-other-producer", metadata.getDiagnostics().get(0).getProducer(),
-				"a producer only ever clears its own roots");
+		assertEquals(2, metadata.getDiagnostics().size());
+		assertTrue(metadata.getDiagnostics().stream().anyMatch(root -> "some-other-producer".equals(root.getProducer())),
+				"a producer only ever rewrites its own roots");
 	}
 
 	@Test
@@ -233,9 +238,10 @@ public class GdprMetadataDiagnosticsIT {
 		Fixtures.await(scope, DRAFT, found -> "gdpr.finding.PERSONAL_DATA.MEDIUM".equals(childCode(found)),
 				"the earlier review to speak for the revision again");
 
-		// withdrawing the last one leaves nothing behind
+		// withdrawing the last one leaves the package unreviewed, which is a statement of its own
 		scope.deleteFromStageForRegistry(TestAnnotations.REPORT_REGISTRY, DRAFT, "report-ai").getValue();
-		Fixtures.await(scope, DRAFT, List::isEmpty, "the last review's findings to go with it");
+		Fixtures.await(scope, DRAFT, GdprMetadataDiagnosticsIT::noReview,
+				"the last review to leave the package recorded as unreviewed");
 	}
 
 	@Test
@@ -289,6 +295,11 @@ public class GdprMetadataDiagnosticsIT {
 	}
 
 	/** The code of the one claim in the tree: root -> element -> claim; null if the shape differs. */
+	/** True when this producer's only root says there is no review of the package left. */
+	private static boolean noReview(List<Diagnostic> roots) {
+		return roots.size() == 1 && "gdpr.no-review".equals(roots.get(0).getCode());
+	}
+
 	private static String childCode(List<Diagnostic> roots) {
 		if (roots.size() != 1 || roots.get(0).getChildren().size() != 1) {
 			return null;
