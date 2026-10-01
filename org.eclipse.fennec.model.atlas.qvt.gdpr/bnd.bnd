@@ -1,0 +1,56 @@
+Bundle-Name: Model Atlas - GDPR Flow Analysis for QVT
+Bundle-Description: Derives a GDPR report for a compiled QVT-O transformation from the reviews of \
+ the metamodels it was compiled against (issue #319). A transformation is not reviewed, it is \
+ derived: the analyser walks the compiled unit's AST, works out which source feature reaches which \
+ target feature and how, and applies a fixed rule table to what the metamodel reviews already say \
+ about those features.
+
+# The case it exists for: a target field that is harmless on its own receives firstName, lastName
+# and address concatenated into it. Neither model's own review can see that - only the
+# transformation knows the three meet, and only there is it visible that a field-level
+# classification has been folded into something that cannot be classified, minimised or erased
+# per field.
+#
+# It reviews nothing. Every category it asserts was asserted by a model review first, and every
+# citation is carried over from the review it came from, verbatim - the analyser never looks a
+# provision up, so it can never invent one. Where no review exists it says so rather than coming
+# back clean, which is why the subject lists a package with an unset reportId instead of omitting
+# it.
+#
+# No provider, no key, no network: the whole analysis is a pure function of the stored compiled
+# unit and the stored reports.
+
+-workingset: ModelAtlas
+
+-library: enableEMF
+
+-buildpath: \
+	org.eclipse.fennec.gdpr.report.model;version=latest,\
+	org.eclipse.fennec.model.atlas.action.api;version=snapshot,\
+	org.eclipse.fennec.model.atlas.scope.api;version=snapshot,\
+	org.eclipse.fennec.model.atlas.management;version=snapshot,\
+	org.eclipse.fennec.model.atlas.workflow;version=snapshot,\
+	org.eclipse.fennec.m2x.unit;version=latest,\
+	org.eclipse.fennec.m2x.qvto.model;version=latest,\
+	org.eclipse.fennec.m2x.ocl.model;version=latest,\
+	org.osgi.util.promise;version=latest,\
+	org.osgi.service.component;version=latest,\
+	org.osgi.service.metatype.annotations;version=latest
+
+# junit-jupiter-api alone, the way the sibling gdpr bundles have it: the engine and the platform
+# launcher come from the workspace build.gradle, and putting bnd's copies of them here as well
+# mixes two versions of the platform - at which point the engine discovers no tests at all.
+#
+# The other two are what reading a stored compiled unit needs outside OSGi: XMI, and qvtbase,
+# which the imperative OCL package initialises against.
+-testpath: \
+	junit-jupiter-api,\
+	org.eclipse.emf.ecore.xmi,\
+	org.eclipse.fennec.m2x.qvt.model;version=latest
+
+-privatepackage: org.eclipse.fennec.model.atlas.qvt.gdpr
+
+javac.source: 21
+javac.target: 21
+
+Bundle-Version: 1.0.0.SNAPSHOT

@@ -197,6 +197,45 @@ public class QvtUnitHostingIntegrationTest {
     // --- helpers --------------------------------------------------------
 
     @Test
+    @DisplayName("A compiled unit's metadata carries its own m2x1 fingerprint (issue #319)")
+    void compiledUnitMetadataCarriesItsFingerprint(
+            @InjectService(cardinality = 0, timeout = 15000, filter = "(registry.name=" + REGISTRY + ")") //
+            ServiceAware<RegistryService> aware) throws Exception {
+        RegistryService<EObject> registry = registry(aware);
+        uploadSource(registry, DRAFT, "Fingerprinted", "Fingerprinted", RENAME);
+        AtlasUnitStore store = new AtlasUnitStore(registry, SCOPE, DRAFT);
+        List<UnitKey> compiled = store.versions(QvtUnits.LANGUAGE_QVTO, "Fingerprinted", UnitKind.COMPILED);
+        assertEquals(1, compiled.size(), "the source compiled");
+
+        String objectId = QvtUnits.objectId(compiled.get(0));
+        ObjectMetadata metadata = registry.getMetadataFromStage(SCOPE, DRAFT, objectId);
+        assertNotNull(metadata, "the compiled unit is stored");
+
+        // The value the compiler stamped, and the one a review of this transformation names as
+        // its subject. Without it on the metadata the review cannot be attached to the unit it
+        // reviewed, because that resolution is a fingerprint lookup.
+        CompiledUnit stored = (CompiledUnit) registry.getContentFromStage(SCOPE, DRAFT, objectId);
+        String unitFingerprint = stored.getManifest().getUnitFingerprint();
+        assertNotNull(unitFingerprint, "the compiler stamps one");
+        assertTrue(unitFingerprint.startsWith("m2x1:"), unitFingerprint);
+        assertEquals(unitFingerprint, metadata.getFingerprint(),
+                "the metadata carries the unit's own fingerprint, so a lookup by it finds this object");
+
+        // the source the unit came from is a different object with a different m2x1 value, and
+        // deliberately carries none: nothing joins on it, and two schemes that look alike invite
+        // a lookup against the wrong one
+        ObjectMetadata sourceMetadata = registry.getMetadataFromStage(SCOPE, DRAFT, "Fingerprinted");
+        assertNotNull(sourceMetadata, "the source is stored");
+        assertNull(sourceMetadata.getFingerprint(), "a SourceUnit gets none");
+
+        // a recompile keeps it: the objectId ends in the fingerprint, so the same id is the same
+        // unit, and the rewrite path has no metadata of its own to carry one
+        uploadSource(registry, DRAFT, "Fingerprinted", "Fingerprinted", RENAME);
+        assertEquals(unitFingerprint, registry.getMetadataFromStage(SCOPE, DRAFT, objectId).getFingerprint(),
+                "a rewrite keeps what the create put there");
+    }
+
+    @Test
     @DisplayName("A compiled unit depends on every package its manifest lists (issue #250)")
     void compiledUnitDependsOnItsPackages(
             @InjectService(cardinality = 0, timeout = 15000, filter = "(registry.name=" + REGISTRY + ")") //

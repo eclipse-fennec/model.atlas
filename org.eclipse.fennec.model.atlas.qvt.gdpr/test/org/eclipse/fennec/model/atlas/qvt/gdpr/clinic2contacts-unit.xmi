@@ -1,0 +1,185 @@
+<?xml version="1.0" encoding="ASCII"?>
+<compiled:CompiledUnit xmi:version="2.0" xmlns:xmi="http://www.omg.org/XMI" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:compiled="http://www.eclipse.org/fennec/m2x/compiled/1.0" xmlns:ecore="http://www.eclipse.org/emf/2002/Ecore" xmlns:imperativeocl="http://www.eclipse.org/fennec/m2x/qvto/imperativeocl/1.0" xmlns:ocl="http://www.eclipse.org/fennec/m2x/ocl/1.0" xmlns:qvtoperational="http://www.eclipse.org/fennec/m2x/qvto/qvtoperational/1.0" id="ad57eacf-5a88-463a-8ac2-2a760ff8ad95">
+  <manifest formatVersion="1.0" producedBy="org.eclipse.fennec.m2x.unit" language="qvto" qualifiedName="clinic2contacts" unitFingerprint="m2x1:175c17b6cfc57e09e0881d32283049c357b250b400f8561253c5b5610fe18cc8" sourceFingerprint="m2x1:bd5ca5562e673c49cdf196340f52de01eb3829b819b6a339a9e46e668e65e302" dependencyMode="pin">
+    <packageEntry nsURI="http://example.org/clinic/1.0.0" fingerprint="fp1:5b87b0c624cead5c040e43d78ec02112c588f1531311354d7ea0cf1c425843cb" scheme="fp1" role="embedded"/>
+    <packageEntry nsURI="http://example.org/contacts/1.0.0" fingerprint="fp1:0bbb2a335cb6fbf49dbabde6b628abbecfe4f92f3675de534284dc7a4f3d84ca" scheme="fp1" role="embedded"/>
+  </manifest>
+  <unit xsi:type="qvtoperational:OperationalTransformation" name="clinic2contacts" entry="//@unit/clinic2contacts/main" usedModelType="//@satellite.0 //@satellite.1">
+    <eClassifiers xsi:type="ecore:EClass" name="clinic2contacts">
+      <eOperations xsi:type="qvtoperational:EntryOperation" name="main">
+        <body>
+          <content xsi:type="ocl:IteratorExp" isArrow="true" name="collect">
+            <ownedSource xsi:type="ocl:OperationCallExp" name="objectsOfType">
+              <ownedSource xsi:type="ocl:VariableExp" referredVariable="//@satellite.2"/>
+              <ownedArguments xsi:type="ocl:TypeExp">
+                <referredType xsi:type="ecore:EClass" href="http://example.org/clinic/1.0.0#//Patient"/>
+              </ownedArguments>
+            </ownedSource>
+            <ownedBody xsi:type="qvtoperational:MappingCallExp" name="toContact">
+              <ownedSource xsi:type="ocl:VariableExp" referredVariable="//@unit/clinic2contacts/main/@body/@content.0/@ownedIterators.0"/>
+            </ownedBody>
+            <ownedIterators name="_xmap_it"/>
+          </content>
+        </body>
+      </eOperations>
+      <eOperations xsi:type="qvtoperational:MappingOperation" name="toContact">
+        <body xsi:type="qvtoperational:MappingBody">
+          <content xsi:type="imperativeocl:AssignExp" isReset="true">
+            <left xsi:type="ocl:VariableExp" referredVariable="//@satellite.3"/>
+            <value xsi:type="ocl:PropertyCallExp">
+              <type xsi:type="ecore:EDataType" href="http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+              <ownedSource xsi:type="ocl:VariableExp" referredVariable="//@satellite.4">
+                <type xsi:type="ecore:EClass" href="http://example.org/clinic/1.0.0#//Patient"/>
+              </ownedSource>
+              <referredProperty xsi:type="ecore:EAttribute" href="http://example.org/clinic/1.0.0#//Patient/id"/>
+            </value>
+          </content>
+          <content xsi:type="imperativeocl:AssignExp" isReset="true">
+            <left xsi:type="ocl:VariableExp" referredVariable="//@satellite.5"/>
+            <value xsi:type="ocl:PropertyCallExp">
+              <type xsi:type="ecore:EDataType" href="http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+              <ownedSource xsi:type="ocl:VariableExp" referredVariable="//@satellite.4">
+                <type xsi:type="ecore:EClass" href="http://example.org/clinic/1.0.0#//Patient"/>
+              </ownedSource>
+              <referredProperty xsi:type="ecore:EAttribute" href="http://example.org/clinic/1.0.0#//Patient/fullName"/>
+            </value>
+          </content>
+          <content xsi:type="imperativeocl:AssignExp" isReset="true">
+            <left xsi:type="ocl:VariableExp" referredVariable="//@satellite.6"/>
+            <value xsi:type="ocl:PropertyCallExp">
+              <type xsi:type="ecore:EDataType" href="http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+              <ownedSource xsi:type="ocl:VariableExp" referredVariable="//@satellite.4">
+                <type xsi:type="ecore:EClass" href="http://example.org/clinic/1.0.0#//Patient"/>
+              </ownedSource>
+              <referredProperty xsi:type="ecore:EAttribute" href="http://example.org/clinic/1.0.0#//Patient/email"/>
+            </value>
+          </content>
+          <content xsi:type="imperativeocl:AssignExp" isReset="true">
+            <left xsi:type="ocl:VariableExp" referredVariable="//@satellite.7"/>
+            <value xsi:type="ocl:OperationCallExp" name="+">
+              <ownedSource xsi:type="ocl:OperationCallExp" name="+">
+                <ownedSource xsi:type="ocl:OperationCallExp" name="+">
+                  <ownedSource xsi:type="ocl:OperationCallExp" name="+">
+                    <ownedSource xsi:type="ocl:OperationCallExp" name="+">
+                      <ownedSource xsi:type="ocl:StringLiteralExp" stringSymbol="Patient "/>
+                      <ownedArguments xsi:type="ocl:PropertyCallExp">
+                        <type xsi:type="ecore:EDataType" href="http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+                        <ownedSource xsi:type="ocl:VariableExp" referredVariable="//@satellite.4">
+                          <type xsi:type="ecore:EClass" href="http://example.org/clinic/1.0.0#//Patient"/>
+                        </ownedSource>
+                        <referredProperty xsi:type="ecore:EAttribute" href="http://example.org/clinic/1.0.0#//Patient/fullName"/>
+                      </ownedArguments>
+                    </ownedSource>
+                    <ownedArguments xsi:type="ocl:StringLiteralExp" stringSymbol=" ("/>
+                  </ownedSource>
+                  <ownedArguments xsi:type="ocl:PropertyCallExp">
+                    <type xsi:type="ecore:EDataType" href="http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+                    <ownedSource xsi:type="ocl:VariableExp" referredVariable="//@satellite.4">
+                      <type xsi:type="ecore:EClass" href="http://example.org/clinic/1.0.0#//Patient"/>
+                    </ownedSource>
+                    <referredProperty xsi:type="ecore:EAttribute" href="http://example.org/clinic/1.0.0#//Patient/postcode"/>
+                  </ownedArguments>
+                </ownedSource>
+                <ownedArguments xsi:type="ocl:StringLiteralExp" stringSymbol="), diagnosis: "/>
+              </ownedSource>
+              <ownedArguments xsi:type="ocl:PropertyCallExp">
+                <type xsi:type="ecore:EDataType" href="http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+                <ownedSource xsi:type="ocl:VariableExp" referredVariable="//@satellite.4">
+                  <type xsi:type="ecore:EClass" href="http://example.org/clinic/1.0.0#//Patient"/>
+                </ownedSource>
+                <referredProperty xsi:type="ecore:EAttribute" href="http://example.org/clinic/1.0.0#//Patient/diagnosis"/>
+              </ownedArguments>
+            </value>
+          </content>
+        </body>
+        <context name="self">
+          <eType xsi:type="ecore:EClass" href="http://example.org/clinic/1.0.0#//Patient"/>
+        </context>
+        <result name="result">
+          <eType xsi:type="ecore:EClass" href="http://example.org/contacts/1.0.0#//Contact"/>
+        </result>
+      </eOperations>
+    </eClassifiers>
+    <modelParameter name="src" eType="//@satellite.0"/>
+    <modelParameter name="tgt" eType="//@satellite.1" kind="out"/>
+  </unit>
+  <satellite xsi:type="qvtoperational:ModelType" name="CLINIC">
+    <metamodel href="http://example.org/clinic/1.0.0#/"/>
+  </satellite>
+  <satellite xsi:type="qvtoperational:ModelType" name="CONTACTS">
+    <metamodel href="http://example.org/contacts/1.0.0#/"/>
+  </satellite>
+  <satellite xsi:type="ocl:Variable" name="src"/>
+  <satellite xsi:type="ocl:Variable" name="reference"/>
+  <satellite xsi:type="ocl:Variable" name="self">
+    <type xsi:type="ecore:EClass" href="http://example.org/clinic/1.0.0#//Patient"/>
+  </satellite>
+  <satellite xsi:type="ocl:Variable" name="displayName"/>
+  <satellite xsi:type="ocl:Variable" name="contactEmail"/>
+  <satellite xsi:type="ocl:Variable" name="comment"/>
+  <packages name="clinic" nsURI="http://example.org/clinic/1.0.0" nsPrefix="clinic">
+    <eClassifiers xsi:type="ecore:EClass" name="Patient">
+      <eStructuralFeatures xsi:type="ecore:EAttribute" name="id" iD="true">
+        <eType xsi:type="ecore:EDataType" href="http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+      </eStructuralFeatures>
+      <eStructuralFeatures xsi:type="ecore:EAttribute" name="fullName">
+        <eType xsi:type="ecore:EDataType" href="http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+      </eStructuralFeatures>
+      <eStructuralFeatures xsi:type="ecore:EAttribute" name="email">
+        <eType xsi:type="ecore:EDataType" href="http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+      </eStructuralFeatures>
+      <eStructuralFeatures xsi:type="ecore:EAttribute" name="birthDate">
+        <eType xsi:type="ecore:EDataType" href="http://www.eclipse.org/emf/2002/Ecore#//EDate"/>
+      </eStructuralFeatures>
+      <eStructuralFeatures xsi:type="ecore:EAttribute" name="postcode">
+        <eType xsi:type="ecore:EDataType" href="http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+      </eStructuralFeatures>
+      <eStructuralFeatures xsi:type="ecore:EAttribute" name="diagnosis">
+        <eType xsi:type="ecore:EDataType" href="http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+      </eStructuralFeatures>
+      <eStructuralFeatures xsi:type="ecore:EReference" name="appointments" upperBound="-1" eType="//@packages.0/Appointment" containment="true"/>
+    </eClassifiers>
+    <eClassifiers xsi:type="ecore:EClass" name="Appointment">
+      <eStructuralFeatures xsi:type="ecore:EAttribute" name="id" iD="true">
+        <eType xsi:type="ecore:EDataType" href="http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+      </eStructuralFeatures>
+      <eStructuralFeatures xsi:type="ecore:EAttribute" name="scheduledAt">
+        <eType xsi:type="ecore:EDataType" href="http://www.eclipse.org/emf/2002/Ecore#//EDate"/>
+      </eStructuralFeatures>
+      <eStructuralFeatures xsi:type="ecore:EAttribute" name="notes">
+        <eType xsi:type="ecore:EDataType" href="http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+      </eStructuralFeatures>
+      <eStructuralFeatures xsi:type="ecore:EReference" name="physician" eType="//@packages.0/Physician"/>
+    </eClassifiers>
+    <eClassifiers xsi:type="ecore:EClass" name="Physician">
+      <eStructuralFeatures xsi:type="ecore:EAttribute" name="id" iD="true">
+        <eType xsi:type="ecore:EDataType" href="http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+      </eStructuralFeatures>
+      <eStructuralFeatures xsi:type="ecore:EAttribute" name="name">
+        <eType xsi:type="ecore:EDataType" href="http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+      </eStructuralFeatures>
+      <eStructuralFeatures xsi:type="ecore:EAttribute" name="licenceNumber">
+        <eType xsi:type="ecore:EDataType" href="http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+      </eStructuralFeatures>
+    </eClassifiers>
+  </packages>
+  <packages name="contacts" nsURI="http://example.org/contacts/1.0.0" nsPrefix="contacts">
+    <eClassifiers xsi:type="ecore:EClass" name="Contact">
+      <eStructuralFeatures xsi:type="ecore:EAttribute" name="reference" iD="true">
+        <eType xsi:type="ecore:EDataType" href="http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+      </eStructuralFeatures>
+      <eStructuralFeatures xsi:type="ecore:EAttribute" name="displayName">
+        <eType xsi:type="ecore:EDataType" href="http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+      </eStructuralFeatures>
+      <eStructuralFeatures xsi:type="ecore:EAttribute" name="contactEmail">
+        <eType xsi:type="ecore:EDataType" href="http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+      </eStructuralFeatures>
+      <eStructuralFeatures xsi:type="ecore:EAttribute" name="comment">
+        <eType xsi:type="ecore:EDataType" href="http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+      </eStructuralFeatures>
+      <eStructuralFeatures xsi:type="ecore:EAttribute" name="score">
+        <eType xsi:type="ecore:EDataType" href="http://www.eclipse.org/emf/2002/Ecore#//EInt"/>
+      </eStructuralFeatures>
+    </eClassifiers>
+  </packages>
+</compiled:CompiledUnit>

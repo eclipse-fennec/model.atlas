@@ -29,6 +29,11 @@ metadata of the model it is about, so the reviewed package itself says what was 
 on the same event, with its own output and its own configuration. Neither waits on the other, and
 either can be deployed without the other.
 
+A compiled transformation gets a report of its own, derived from the reviews of the metamodels it
+was compiled against rather than written by anybody, and it is kept here in exactly the same shape:
+one document per transformation, one row per compiled revision. See
+[a GDPR report for a transformation](gdpr-transformation-reports.md).
+
 ## What is in it
 
 `GdprReportHistory` has three containment lists, and each becomes a sheet:

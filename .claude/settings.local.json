@@ -68,7 +68,6 @@
       "Bash(awk '/eClassifiers xsi:type=\"ecore:EClass\" name=\"Stage\"/,/<\\\\/eClassifiers>/' org.eclipse.fennec.model.atlas.workflow/model/workflow-api.ecore)",
       "Bash(grep -nA4 \"getScopeInfo\\\\|public String getScopeName\" org.eclipse.fennec.model.atlas.workflow/src/org/eclipse/fennec/model/atlas/workflow/impl/ScopeServiceImpl.java)",
       "Bash(grep -nA1 \"resolveConstraintSet\\(\" org.eclipse.fennec.model.atlas.validation/src/org/eclipse/fennec/model/atlas/validation/impl/ValidationServiceImpl.java)",
-      "Bash(grep -nA8 \"private.*requireConstraintSetApplicable\" org.eclipse.fennec.model.atlas.validation/src/org/eclipse/fennec/model/atlas/validation/impl/ValidationServiceImpl.java)",
       "Bash(sed -n '20,36p' org.eclipse.fennec.model.atlas.workflow/src-wf-api/org/eclipse/fennec/model/atlas/wf/workflowapi/ScopeService.java)",
       "Bash(awk '/eClassifiers xsi:type=\"ecore:EClass\" name=\"ScopeService\"/,/<eOperations|<\\\\/eClassifiers>/' org.eclipse.fennec.model.atlas.workflow/model/workflow-api.ecore)",
       "Bash(sed -n '221,225p' org.eclipse.fennec.model.atlas.workflow/src/org/eclipse/fennec/model/atlas/workflow/impl/AtlasScopeService.java)",

@@ -353,9 +353,11 @@ public class QvtStageActionService implements StageActionService {
     private void writeDiagnostics(RegistryService<EObject> registryService, ActionContext ctx,
             SourceDiagnostics diagnostics) {
         try {
+            // no fingerprint: a diagnostics document is about a source, it is not itself an
+            // artefact anybody addresses by content
             AtlasUnitStore.upsert(registryService, ctx.scope(), ctx.stage(),
                     QvtUnits.diagnosticsObjectId(QvtUnits.LANGUAGE_QVTO, diagnostics.getQualifiedName()),
-                    diagnostics.getQualifiedName(), diagnostics);
+                    diagnostics.getQualifiedName(), diagnostics, null);
         } catch (UnitStoreException e) {
             logger.log(Level.WARNING, e, () -> "Diagnostics for " + diagnostics.getQualifiedName()
                     + " could not be stored in (" + ctx.scope() + ", " + ctx.stage() + ")");

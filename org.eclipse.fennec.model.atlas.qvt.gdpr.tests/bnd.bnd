@@ -1,0 +1,55 @@
+Bundle-Name: Model Atlas QVT GDPR Flow Analysis Tests
+Bundle-Description: OSGi integration tests for the GDPR report of a compiled transformation. They \
+ drive the real stage actions through the real registries: a CompiledUnit stored in the \
+ transformations registry has to produce a transformation report in the report registry, and that \
+ report has to leave diagnostics on the metamodels it is about.
+
+# What is being pinned is the wiring, which no unit test can reach. StageLadder and StagedReviews
+# are pure and tested in the bundle itself; what is not is that the actions are dispatched at all
+# (a registry that does not name one in stageActionService.target binds none and dispatches
+# nothing), that the search path is really taken from the scope, and that the findings are written
+# into the stage the model was found in rather than the stage the event came from.
+#
+# The case these exist for: package visibility runs along a ladder, so a transformation in draft
+# routinely reads a metamodel that lives in approved. Looking only where the transformation is
+# would report that metamodel as unreviewed - which is not merely incomplete but false.
+
+Test-Cases: ${classes;HIERARCHY_INDIRECTLY_ANNOTATED;org.junit.platform.commons.annotation.Testable;CONCRETE}
+
+-workingset: ModelAtlas
+
+-library: \
+	enableOSGi-Test,\
+	enableEMF
+
+-buildpath: \
+	org.osgi.framework;version=latest,\
+	org.osgi.util.promise;version=latest,\
+	org.osgi.util.function;version=latest,\
+	org.osgi.service.cm;version=latest,\
+	org.osgi.service.component;version=latest,\
+	org.osgi.test.junit5.cm;version=latest,\
+	org.eclipse.fennec.emf.osgi.component,\
+	org.eclipse.fennec.model.atlas.management;version=snapshot,\
+	org.eclipse.fennec.model.atlas.workflow;version=snapshot,\
+	org.eclipse.fennec.model.atlas.scope.api;version=snapshot,\
+	org.eclipse.fennec.model.atlas.action.api;version=snapshot,\
+	org.eclipse.fennec.model.atlas.tests.common;version=snapshot,\
+	org.eclipse.fennec.gdpr.report.model;version=latest,\
+	org.eclipse.fennec.m2x.unit;version=latest
+
+Private-Package: org.eclipse.fennec.model.atlas.qvt.gdpr.tests
+
+# The bundle under test. qvt.gdpr is Private-Package, so nothing here imports it - it is driven
+# through the workflow, which is the only way a deployment drives it either.
+-dependson: \
+	org.eclipse.fennec.model.atlas.qvt.gdpr,\
+	org.eclipse.fennec.model.atlas.workflow,\
+	org.eclipse.fennec.model.atlas.management,\
+	org.eclipse.fennec.model.atlas.management.file,\
+	org.eclipse.fennec.model.atlas.management.lucene
+
+Bundle-Version: 1.0.0.SNAPSHOT
+
+# Do not publish this bundle to Maven Central; local install only
+-maven-release: local

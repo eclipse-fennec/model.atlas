@@ -22,7 +22,6 @@ import org.osgi.service.cm.annotations.RequireConfigurationAdmin;
 import org.osgi.test.common.annotation.Property;
 import org.osgi.test.common.annotation.Property.Scalar;
 import org.osgi.test.common.annotation.Property.Type;
-import org.osgi.test.common.annotation.config.WithConfiguration;
 import org.osgi.test.common.annotation.config.WithFactoryConfiguration;
 
 /**
@@ -80,8 +79,14 @@ public class TestAnnotations extends CommonTestAnnotations {
 					STAGE_APPROVED + ":" + STAGE_RELEASE }),
 			@Property(key = "stage.storage.mappings", type = Type.Array, value = { STAGE_DRAFT + ":file",
 					STAGE_APPROVED + ":file", STAGE_RELEASE + ":file" }) })
-	@WithConfiguration(pid = PID_DIAGNOSTICS_ACTION, location = "?", properties = {
+	// A factory configuration, the way the runtimes configure it: one instance per target
+	// registry, and never a singleton configuration of the same PID beside them.
+	@WithFactoryConfiguration(factoryPid = PID_DIAGNOSTICS_ACTION, name = SCHEMA_REGISTRY_NAME, location = "?", properties = {
 			@Property(key = "target.registry", value = SCHEMA_REGISTRY_NAME),
+			// The other half of the pair: which registry the findings go to, and which reports
+			// they are taken from. Every report reaches every instance, so without this one the
+			// reviews of compiled transformations would be written onto packages too.
+			@Property(key = "subject.type", value = "PackageSubject"),
 			@Property(key = "report.stages", type = Type.Array, value = { STAGE_DRAFT, STAGE_APPROVED,
 					STAGE_RELEASE }),
 			@Property(key = "trigger.scopes", type = Type.Array, value = { SCOPE_NAME }),

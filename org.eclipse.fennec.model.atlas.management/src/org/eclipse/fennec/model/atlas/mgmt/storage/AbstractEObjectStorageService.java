@@ -356,6 +356,30 @@ public abstract class AbstractEObjectStorageService implements EObjectStorageSer
      * org.eclipse.emf.ecore.EObject,
      * org.eclipse.fennec.model.atlas.mgmt.management.ObjectMetadata)
      */
+    /**
+     * Whether the fingerprint is written in a scheme this service can compute, and therefore one
+     * it refuses to take from a caller.
+     * <p>
+     * The schemes are asked of {@link FingerprintHelper#supportedSchemes()} rather than named
+     * here, and it is <em>every</em> supported scheme rather than only
+     * {@link FingerprintHelper#currentScheme() the current} one: a value this service could have
+     * computed itself is one it must compute itself, whether or not that scheme is the one new
+     * values are produced in. A scheme added to emf.osgi later is refused here from the moment it
+     * exists, with no second list to keep in step.
+     * <p>
+     * Every other scheme names an identity this service cannot compute — {@code m2x1:} for a
+     * compiled transformation unit, whose compiler stamps it — so the writer's value is the only
+     * one there is, and it is kept (issue #319). A value carrying no scheme at all is in no
+     * scheme this service computes either, so it is kept on the same reasoning.
+     */
+    private static boolean isComputableScheme(String fingerprint) {
+        if (fingerprint == null) {
+            return false;
+        }
+        int separator = fingerprint.indexOf(':');
+        return separator > 0 && FingerprintHelper.supportedSchemes().contains(fingerprint.substring(0, separator));
+    }
+
     @Override
     public Promise<ObjectMetadata> storeObject(String scope, String registry, String stage, String objectId,
             EObject object, ObjectMetadata metadata) {
@@ -384,14 +408,31 @@ public abstract class AbstractEObjectStorageService implements EObjectStorageSer
                     }
                 }
 
-                // Compute and set the model fingerprint for EPackages. Always overwritten
-                // here, never taken from the caller ("computed, never trusted") — and
-                // cleared for non-EPackage objects so a client-supplied value cannot
-                // survive the upload path. Unlike contentHash (bytes identity of the
-                // stored XMI) the fingerprint is the semantic model identity.
+                // The semantic identity of the stored object, unlike contentHash, which is the
+                // bytes identity of the stored XMI.
+                //
+                // An EPackage is fingerprinted here and the value is always overwritten, never
+                // taken from the caller: this service can compute it, so nobody else's word for
+                // it is needed. Any other type keeps whatever the metadata already carries — a
+                // compiled transformation unit is fingerprinted by its compiler (issue #319), and
+                // this service cannot recompute that without knowing a transformation model it
+                // has no business depending on.
+                //
+                // "Computed, never trusted" is unchanged, and now says which values it is about:
+                // the schemes this service can compute, which it asks FingerprintHelper for. It
+                // never adopts a value in one of those — supplying one is either a mistake or an
+                // attempt, and both are answered by clearing it. A value in a scheme it cannot
+                // compute is not its to invent or to discard.
+                //
+                // Nor can an untrusted caller reach this with one: REST builds its ObjectMetadata
+                // fresh from path and query parameters — the request body is the object, never
+                // the metadata — and no REST resource sets a fingerprint at all.
                 if (metadata != null) {
-                    metadata.setFingerprint(
-                            object instanceof EPackage ePackage ? FingerprintHelper.fingerprint(ePackage) : null);
+                    if (object instanceof EPackage ePackage) {
+                        metadata.setFingerprint(FingerprintHelper.fingerprint(ePackage));
+                    } else if (isComputableScheme(metadata.getFingerprint())) {
+                        metadata.setFingerprint(null);
+                    }
                 }
 
                 // Use helper to save both object and metadata

@@ -15,6 +15,7 @@ package org.eclipse.fennec.model.atlas.mgmt.storage;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
@@ -33,6 +34,7 @@ import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
 
+import org.eclipse.fennec.emf.osgi.fingerprint.util.FingerprintHelper;
 import org.eclipse.emf.ecore.EObject;
 import org.eclipse.emf.ecore.EPackage;
 import org.eclipse.emf.ecore.EcoreFactory;
@@ -46,6 +48,7 @@ import org.eclipse.fennec.model.atlas.mgmt.management.ObjectStatus;
 import org.eclipse.fennec.model.atlas.mgmt.management.StorageBackendType;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -172,6 +175,99 @@ public class AbstractEObjectStorageServiceTest {
                 () -> nullRegistryService.activateStorageService());
 
         assertTrue(exception.getMessage().contains("Registry service from getRegistryService() must not be null"));
+    }
+
+    @Test
+    @DisplayName("An EPackage's fingerprint is computed from the object, whatever the caller supplied")
+    public void fingerprintOfAPackageIsAlwaysComputed() throws Exception {
+        storageService.activateStorageService();
+        EPackage testPackage = EcoreFactory.eINSTANCE.createEPackage();
+        testPackage.setName("TestPackage");
+        testPackage.setNsURI("http://example.org/fingerprint/1.0");
+
+        ObjectMetadata metadata = ManagementFactory.eINSTANCE.createObjectMetadata();
+        metadata.setFingerprint("fp1:something-a-caller-made-up");
+        doNothing().when(mockStorageHelper).saveEObject(any(), any(), any(), any(), any(), any());
+        doNothing().when(mockStorageHelper).saveMetadata(any(), any(), any(), any(), any());
+        when(mockStorageHelper.getFileExtension(any())).thenReturn("ecore");
+
+        ObjectMetadata written = storageService
+                .storeObject(TEST_SCOPE, TEST_REGISTRY, TEST_STAGE, "pkg", testPackage, metadata).getValue();
+
+        assertNotEquals("fp1:something-a-caller-made-up", written.getFingerprint(),
+                "a package's fingerprint is the model's identity, never the caller's word for it");
+        assertTrue(written.getFingerprint().startsWith("fp1:"), written.getFingerprint());
+    }
+
+    @Test
+    @DisplayName("Another type keeps the fingerprint the trusted writer put on it, over a rewrite too")
+    public void fingerprintOfAnotherTypeIsKept() throws Exception {
+        // A compiled transformation unit is fingerprinted by its compiler, not by this service:
+        // the value is in the object the Atlas itself stored, and nothing here can recompute it
+        // without knowing the transformation model. Clearing it made a review of a transformation
+        // impossible to attach to the unit it reviewed.
+        storageService.activateStorageService();
+        EObject notAPackage = EcoreFactory.eINSTANCE.createEClass();
+
+        ObjectMetadata metadata = ManagementFactory.eINSTANCE.createObjectMetadata();
+        metadata.setFingerprint("m2x1:175c17b6cfc57e09e0881d32283049c357b250b4");
+        doNothing().when(mockStorageHelper).saveEObject(any(), any(), any(), any(), any(), any());
+        doNothing().when(mockStorageHelper).saveMetadata(any(), any(), any(), any(), any());
+        when(mockStorageHelper.getFileExtension(any())).thenReturn("xmi");
+
+        ObjectMetadata written = storageService
+                .storeObject(TEST_SCOPE, TEST_REGISTRY, TEST_STAGE, "unit", notAPackage, metadata).getValue();
+
+        assertEquals("m2x1:175c17b6cfc57e09e0881d32283049c357b250b4", written.getFingerprint());
+
+        // and again on the rewrite path, which is the one a recompile takes: the stored metadata
+        // is what comes back down, so a value that survives once has to survive every time
+        ObjectMetadata second = storageService
+                .storeObject(TEST_SCOPE, TEST_REGISTRY, TEST_STAGE, "unit", notAPackage, written).getValue();
+        assertEquals("m2x1:175c17b6cfc57e09e0881d32283049c357b250b4", second.getFingerprint());
+    }
+
+    @Test
+    @DisplayName("Every scheme this service can compute is refused from a caller, whichever they are")
+    public void everyComputableSchemeIsRefused() throws Exception {
+        // Asked of the helper rather than written out here, so a scheme emf.osgi adds later is
+        // covered by this test the day it appears - which is the point of not naming 'fp1'.
+        storageService.activateStorageService();
+        doNothing().when(mockStorageHelper).saveEObject(any(), any(), any(), any(), any(), any());
+        doNothing().when(mockStorageHelper).saveMetadata(any(), any(), any(), any(), any());
+        when(mockStorageHelper.getFileExtension(any())).thenReturn("xmi");
+
+        assertFalse(FingerprintHelper.supportedSchemes().isEmpty(), "there is at least one to refuse");
+        for (String scheme : FingerprintHelper.supportedSchemes()) {
+            EObject notAPackage = EcoreFactory.eINSTANCE.createEClass();
+            ObjectMetadata metadata = ManagementFactory.eINSTANCE.createObjectMetadata();
+            metadata.setFingerprint(scheme + ":supplied-by-a-caller");
+
+            ObjectMetadata written = storageService
+                    .storeObject(TEST_SCOPE, TEST_REGISTRY, TEST_STAGE, "obj-" + scheme, notAPackage, metadata)
+                    .getValue();
+
+            assertNull(written.getFingerprint(),
+                    "a value this service could have computed itself is one it must compute itself: " + scheme);
+        }
+        assertFalse(FingerprintHelper.supportedSchemes().contains("m2x1"),
+                "the premise of keeping m2x1: it is not a scheme this service computes");
+    }
+
+    @Test
+    @DisplayName("A type nobody fingerprinted still has none")
+    public void fingerprintStaysUnsetWhenNobodySetOne() throws Exception {
+        storageService.activateStorageService();
+        EObject notAPackage = EcoreFactory.eINSTANCE.createEClass();
+        ObjectMetadata metadata = ManagementFactory.eINSTANCE.createObjectMetadata();
+        doNothing().when(mockStorageHelper).saveEObject(any(), any(), any(), any(), any(), any());
+        doNothing().when(mockStorageHelper).saveMetadata(any(), any(), any(), any(), any());
+        when(mockStorageHelper.getFileExtension(any())).thenReturn("xmi");
+
+        ObjectMetadata written = storageService
+                .storeObject(TEST_SCOPE, TEST_REGISTRY, TEST_STAGE, "plain", notAPackage, metadata).getValue();
+
+        assertNull(written.getFingerprint());
     }
 
     @Test

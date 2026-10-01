@@ -18,11 +18,13 @@
         "scope.target": "(atlas.scope=jena)",
         "document.registry": "gdprdoc"
     },
-    "GDPRMetadataDiagnosticsStageAction": {
+    "GDPRMetadataDiagnosticsStageAction~schema": {
         "target.registry": "schema",
+        "subject.type": "PackageSubject",
         "report.stages": ["draft", "approved", "release"],
         "trigger.scopes": ["jena"],
-        "scope.target": "(atlas.scope=jena)"
+        "scope.target": "(atlas.scope=jena)",
+        "stage.action.name": "GDPRMetadataDiagnosticsStageAction~schema"
     },
     "ModelAtlasObjectPublisher~gdprStatus": {
         "base.uri": "http://localhost:8080/atlas/rest",
