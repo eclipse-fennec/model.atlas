@@ -17,6 +17,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assumptions.assumeFalse;
@@ -44,14 +45,18 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
+import org.eclipse.emf.ecore.EClass;
 import org.eclipse.emf.ecore.EObject;
 import org.eclipse.emf.ecore.EPackage;
 import org.eclipse.emf.ecore.resource.Resource;
 import org.eclipse.emf.ecore.resource.ResourceSet;
 import org.eclipse.emf.ecore.xmi.PackageNotFoundException;
 import org.eclipse.emf.ecore.xmi.impl.XMIResourceFactoryImpl;
+import org.eclipse.emf.ecore.xmi.impl.XMIResourceImpl;
 import org.eclipse.fennec.emf.osgi.ResourceSetFactory;
+import org.eclipse.fennec.emf.osgi.configurator.EPackageConfigurator;
 import org.eclipse.fennec.emf.osgi.configurator.ResourceSetConfigurator;
+import org.eclipse.fennec.emf.osgi.constants.EMFNamespaces;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
@@ -59,6 +64,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.osgi.service.cm.Configuration;
 import org.osgi.service.cm.ConfigurationAdmin;
 import org.osgi.framework.BundleContext;
+import org.osgi.framework.ServiceRegistration;
 import org.osgi.framework.wiring.BundleRevision;
 import org.osgi.framework.Bundle;
 import org.osgi.test.common.annotation.InjectBundleContext;
@@ -171,6 +177,36 @@ public class AtlasClientOsgiIT {
 			<?xml version="1.0" encoding="UTF-8"?>
 			<dd:Thing xmlns:dd="%s" name="world"/>
 			""".formatted(DISCOVERY_NS);
+
+	// ---- local-package fixture (issue #330) -------------------------------
+
+	/** A model the runtime ships itself AND the Atlas holds a copy of. */
+	private static final String LOCAL_BASE_NS = "http://atlas.example/test/localbase/1.0";
+	/** An Atlas-only model whose class extends the base model's {@code Thing}. */
+	private static final String LOCAL_DERIVED_NS = "http://atlas.example/test/localderived/1.0";
+
+	private static final String LOCAL_BASE_ECORE = """
+			<?xml version="1.0" encoding="UTF-8"?>
+			<ecore:EPackage xmi:version="2.0" xmlns:xmi="http://www.omg.org/XMI"
+			    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+			    xmlns:ecore="http://www.eclipse.org/emf/2002/Ecore"
+			    name="localbase" nsURI="%s" nsPrefix="lb">
+			  <eClassifiers xsi:type="ecore:EClass" name="Thing">
+			    <eStructuralFeatures xsi:type="ecore:EAttribute" name="name"
+			        eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+			  </eClassifiers>
+			</ecore:EPackage>
+			""".formatted(LOCAL_BASE_NS);
+
+	private static final String LOCAL_DERIVED_ECORE = """
+			<?xml version="1.0" encoding="UTF-8"?>
+			<ecore:EPackage xmi:version="2.0" xmlns:xmi="http://www.omg.org/XMI"
+			    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+			    xmlns:ecore="http://www.eclipse.org/emf/2002/Ecore"
+			    name="localderived" nsURI="%s" nsPrefix="ld">
+			  <eClassifiers xsi:type="ecore:EClass" name="Special" eSuperTypes="%s#//Thing"/>
+			</ecore:EPackage>
+			""".formatted(LOCAL_DERIVED_NS, LOCAL_BASE_NS);
 
 	private static GenericContainer<?> atlas;
 	private static URI baseUri;
@@ -479,7 +515,96 @@ public class AtlasClientOsgiIT {
 		}
 	}
 
+	@Test
+	public void aFetchedSchemaBindsALocallyShippedPackage(
+			@InjectConfiguration(withFactoryConfig = @WithFactoryConfiguration(factoryPid = PID, name = "localbase",
+					location = "?")) Configuration configuration,
+			@InjectBundleContext BundleContext bundleContext,
+			@InjectService(cardinality = 0,
+					filter = "(atlas.remote=true)") ServiceAware<ResourceSetConfigurator> configurators,
+			@InjectService(filter = "(default.resourceset.epackage.registry=true)") ServiceAware<EPackage.Registry> frameworkRegistries,
+			@InjectService ServiceAware<ResourceSetFactory> resourceSetFactories) throws Exception {
+		// issue #330: the Atlas holds the base model AND this runtime ships it. A schema fetched
+		// from the Atlas that references the base must bind the local package - the one instance
+		// decoding creates objects from - not a second, Atlas-fetched copy of it.
+		assertTrue(awaitEmpty(configurators), "configurators of earlier tests' components should be gone");
+		int baseStatus = uploadSchema(LOCAL_BASE_ECORE, "LocalBase");
+		assertTrue(baseStatus == 201 || baseStatus == 200, () -> "uploading the base schema got HTTP " + baseStatus);
+		int derivedStatus = uploadSchema(LOCAL_DERIVED_ECORE, "LocalDerived");
+		assertTrue(derivedStatus == 201 || derivedStatus == 200,
+				() -> "uploading the derived schema got HTTP " + derivedStatus);
+
+		EPackage shipped = localBasePackage();
+		ServiceRegistration<EPackageConfigurator> local = registerLocally(bundleContext, shipped);
+		try {
+			EPackage.Registry framework = frameworkRegistries.waitForService(SERVICE_WAIT_MS);
+			assertNotNull(framework, "the framework EPackage.Registry must be present");
+			long deadline = System.currentTimeMillis() + SERVICE_WAIT_MS;
+			while (framework.getEPackage(LOCAL_BASE_NS) != shipped && System.currentTimeMillis() < deadline) {
+				Thread.sleep(50L); // emf.osgi binds the configurator asynchronously
+			}
+			assertSame(shipped, framework.getEPackage(LOCAL_BASE_NS), "the local package must reach the framework");
+
+			Hashtable<String, Object> props = baseProps("LAZY");
+			props.put("lazy.resolve.timeout.ms", (int) SERVICE_WAIT_MS * 3);
+			configuration.update(props);
+			assertNotNull(configurators.waitForService(SERVICE_WAIT_MS),
+					"the Atlas ResourceSetConfigurator must be registered first");
+			ResourceSetFactory factory = resourceSetFactories.waitForService(SERVICE_WAIT_MS);
+			assertNotNull(factory, "a framework ResourceSetFactory must be present");
+
+			// Re-create until the factory has bound the configurator (see the LAZY test above).
+			EPackage derived = null;
+			deadline = System.currentTimeMillis() + SERVICE_WAIT_MS * 3;
+			while (derived == null && System.currentTimeMillis() < deadline) {
+				derived = factory.createResourceSet().getPackageRegistry().getEPackage(LOCAL_DERIVED_NS);
+				if (derived == null) {
+					Thread.sleep(50L);
+				}
+			}
+			assertNotNull(derived, LOCAL_DERIVED_NS + " should resolve through the Atlas-aware ResourceSet");
+
+			EClass special = (EClass) derived.getEClassifier("Special");
+			assertEquals(1, special.getESuperTypes().size(), "the super type reference is carried in the XMI");
+			assertSame(shipped.getEClassifier("Thing"), special.getESuperTypes().get(0),
+					"the Atlas schema must extend the locally shipped Thing, not an Atlas copy of it");
+		} finally {
+			local.unregister();
+			deleteSchema(LOCAL_DERIVED_NS); // dependents first: the delete guard (#250) protects the base
+			deleteSchema(LOCAL_BASE_NS);
+		}
+	}
+
 	// ---- helpers ----------------------------------------------------------
+
+	/** The base model as the runtime would ship it: same nsURI, its own instance and resource. */
+	private static EPackage localBasePackage() throws IOException {
+		Resource resource = new XMIResourceImpl(org.eclipse.emf.common.util.URI.createURI(LOCAL_BASE_NS));
+		resource.load(new ByteArrayInputStream(LOCAL_BASE_ECORE.getBytes(StandardCharsets.UTF_8)), java.util.Map.of());
+		return (EPackage) resource.getContents().get(0);
+	}
+
+	/** Register {@code ePackage} the way a local bundle does: a non-remote EPackageConfigurator. */
+	private static ServiceRegistration<EPackageConfigurator> registerLocally(BundleContext bundleContext,
+			EPackage ePackage) {
+		Hashtable<String, Object> props = new Hashtable<>();
+		props.put(EMFNamespaces.EMF_NAME, ePackage.getName());
+		props.put(EMFNamespaces.EMF_MODEL_NSURI, ePackage.getNsURI());
+		props.put(EMFNamespaces.EMF_MODEL_REGISTRATION, EMFNamespaces.MODEL_REGISTRATION_DYNAMIC);
+		props.put(EMFNamespaces.EMF_MODEL_SCOPE, EMFNamespaces.EMF_MODEL_SCOPE_RESOURCE_SET);
+		return bundleContext.registerService(EPackageConfigurator.class, new EPackageConfigurator() {
+
+			@Override
+			public void configureEPackage(EPackage.Registry registry) {
+				registry.put(ePackage.getNsURI(), ePackage);
+			}
+
+			@Override
+			public void unconfigureEPackage(EPackage.Registry registry) {
+				registry.remove(ePackage.getNsURI());
+			}
+		}, props);
+	}
 
 	private static int uploadDriftSchema() throws IOException, InterruptedException {
 		return uploadSchema(DRIFT_ECORE, "DriftRemoval");
