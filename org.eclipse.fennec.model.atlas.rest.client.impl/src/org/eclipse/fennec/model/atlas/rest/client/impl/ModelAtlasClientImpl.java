@@ -60,19 +60,31 @@ public class ModelAtlasClientImpl implements ModelAtlasClient {
 	private final Client client;
 	private final WebTarget baseTarget;
 	private final EPackageDeserializer deserializer;
+	/** The packages this runtime ships itself; they win over an Atlas copy (#330). */
+	private final EPackage.Registry localPackages;
 	private final DriftWatcher driftWatcher;
 
 	private volatile RemoteEPackageProviderImpl ePackages;
 	private final Map<String, RemoteReadableScopeService> readOnlyScopes = new ConcurrentHashMap<>();
 
 	ModelAtlasClientImpl(ClientConfiguration configuration, Client client) {
-		this(configuration, client, new XmiEPackageDeserializer());
+		this(configuration, client, EPackage.Registry.INSTANCE);
+	}
+
+	ModelAtlasClientImpl(ClientConfiguration configuration, Client client, EPackage.Registry localPackages) {
+		this(configuration, client, new XmiEPackageDeserializer(localPackages), localPackages);
 	}
 
 	ModelAtlasClientImpl(ClientConfiguration configuration, Client client, EPackageDeserializer deserializer) {
+		this(configuration, client, deserializer, EPackage.Registry.INSTANCE);
+	}
+
+	ModelAtlasClientImpl(ClientConfiguration configuration, Client client, EPackageDeserializer deserializer,
+			EPackage.Registry localPackages) {
 		this.configuration = Objects.requireNonNull(configuration, "configuration");
 		this.client = Objects.requireNonNull(client, "client");
 		this.deserializer = Objects.requireNonNull(deserializer, "deserializer");
+		this.localPackages = Objects.requireNonNull(localPackages, "localPackages");
 		this.baseTarget = client.target(configuration.getBaseUri());
 		// A client that mirrors the Atlas (EAGER) or pre-fetches a fixed nsURI list
 		// (HYBRID) must learn about packages that appear after start-up; a LAZY client
@@ -182,7 +194,7 @@ public class ModelAtlasClientImpl implements ModelAtlasClient {
 		return newAtlasResourceSet(newAtlasRegistry(scope, stage));
 	}
 
-	/** A package registry that resolves local/INSTANCE first, then the remote Atlas on a miss. */
+	/** A package registry that resolves the local packages first, then the remote Atlas on a miss. */
 	private AtlasDelegatingPackageRegistry newAtlasRegistry() {
 		return newAtlasRegistry(null, null);
 	}
@@ -192,7 +204,7 @@ public class ModelAtlasClientImpl implements ModelAtlasClient {
 	 * (#272). {@code stage == null} is the stage-free final-stage behaviour.
 	 */
 	private AtlasDelegatingPackageRegistry newAtlasRegistry(String scope, String stage) {
-		return new AtlasDelegatingPackageRegistry(EPackage.Registry.INSTANCE, ePackagesImpl(), scope, stage);
+		return new AtlasDelegatingPackageRegistry(localPackages, ePackagesImpl(), scope, stage);
 	}
 
 	/** A ResourceSet with default XMI handling and the given Atlas-aware package registry. */

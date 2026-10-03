@@ -17,11 +17,13 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 
 import org.eclipse.emf.common.util.URI;
 import org.eclipse.emf.ecore.EObject;
 import org.eclipse.emf.ecore.EPackage;
 import org.eclipse.emf.ecore.EcorePackage;
+import org.eclipse.emf.ecore.impl.EPackageRegistryImpl;
 import org.eclipse.emf.ecore.resource.Resource;
 import org.eclipse.emf.ecore.resource.ResourceSet;
 import org.eclipse.emf.ecore.xmi.XMLResource;
@@ -43,8 +45,27 @@ import org.eclipse.fennec.model.atlas.rest.client.api.ModelAtlasClientException;
  * The package is freshly parsed and is <em>not</em> added to any shared
  * registry ({@code EPackage.Registry.INSTANCE} or a framework registry) — that
  * publication is the caller's / Phase-3's concern.
+ * <p>
+ * The parse set's package registry delegates to the registry of the packages
+ * the runtime ships itself, so a reference into one of their namespaces
+ * resolves to the local instance rather than to an Atlas copy (issue #330).
  */
 public class XmiEPackageDeserializer implements EPackageDeserializer {
+
+	private final EPackage.Registry localPackages;
+
+	/** Parses against {@code EPackage.Registry.INSTANCE} as the local packages. */
+	public XmiEPackageDeserializer() {
+		this(EPackage.Registry.INSTANCE);
+	}
+
+	/**
+	 * @param localPackages the packages the runtime ships itself; consulted for
+	 *                      every namespace this document references
+	 */
+	public XmiEPackageDeserializer(EPackage.Registry localPackages) {
+		this.localPackages = Objects.requireNonNull(localPackages, "localPackages");
+	}
 
 	@Override
 	public EPackage deserialize(InputStream content, String nsUri, String mediaType) {
@@ -73,11 +94,12 @@ public class XmiEPackageDeserializer implements EPackageDeserializer {
 
 	/**
 	 * A standalone {@link ResourceSet} for loading Ecore XMI: any URI is handled
-	 * by an {@link EcoreResourceFactoryImpl}, and {@code Ecore} is registered so
-	 * references into it resolve.
+	 * by an {@link EcoreResourceFactoryImpl}, {@code Ecore} is registered so
+	 * references into it resolve, and the local packages sit underneath.
 	 */
 	protected ResourceSet createResourceSet() {
 		ResourceSet resourceSet = new PackageLoadingResourceSet();
+		resourceSet.setPackageRegistry(new EPackageRegistryImpl(localPackages));
 		resourceSet.getResourceFactoryRegistry().getExtensionToFactoryMap()
 				.put(Resource.Factory.Registry.DEFAULT_EXTENSION, new EcoreResourceFactoryImpl());
 		resourceSet.getPackageRegistry().put(EcorePackage.eNS_URI, EcorePackage.eINSTANCE);

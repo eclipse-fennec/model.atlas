@@ -18,6 +18,7 @@ import java.util.List;
 import java.util.ServiceLoader;
 
 import org.eclipse.emf.ecore.EObject;
+import org.eclipse.emf.ecore.EPackage;
 import org.eclipse.emf.ecore.resource.ResourceSet;
 import org.eclipse.fennec.model.atlas.scope.api.ReadableScopeService;
 import org.osgi.annotation.versioning.ProviderType;
@@ -180,6 +181,20 @@ public interface ModelAtlasClient extends AutoCloseable {
 		 * @return this builder
 		 */
 		Builder clientProvider(JakartaRsClientProvider clientProvider);
+
+		/**
+		 * The registry holding the packages this runtime ships itself. A fetched
+		 * schema that references one of their namespaces is wired to the local
+		 * instance instead of a copy fetched from the Atlas (issue #330), the same
+		 * precedence instance decoding already gives a locally shipped package — so
+		 * a runtime that carries a generated model never ends up with two instances
+		 * of it. Defaults to {@code EPackage.Registry.INSTANCE}; the OSGi front-end
+		 * supplies a view of the framework registry without its own publications.
+		 *
+		 * @param localPackages the registry consulted before the Atlas
+		 * @return this builder
+		 */
+		Builder localPackageRegistry(EPackage.Registry localPackages);
 
 		/**
 		 * Build the client. Opens the underlying Jakarta RS client immediately.

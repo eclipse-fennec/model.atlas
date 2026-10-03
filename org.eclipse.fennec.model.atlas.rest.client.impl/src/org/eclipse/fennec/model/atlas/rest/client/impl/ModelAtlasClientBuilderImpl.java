@@ -16,6 +16,7 @@ package org.eclipse.fennec.model.atlas.rest.client.impl;
 import java.net.URI;
 import java.util.Objects;
 
+import org.eclipse.emf.ecore.EPackage;
 import org.eclipse.fennec.model.atlas.rest.client.api.ClientConfiguration;
 import org.eclipse.fennec.model.atlas.rest.client.api.JakartaRsClientProvider;
 import org.eclipse.fennec.model.atlas.rest.client.api.ModelAtlasClient;
@@ -34,6 +35,7 @@ final class ModelAtlasClientBuilderImpl implements ModelAtlasClient.Builder {
 
 	private ClientConfiguration.Builder configuration = ClientConfiguration.builder();
 	private JakartaRsClientProvider clientProvider;
+	private EPackage.Registry localPackages = EPackage.Registry.INSTANCE;
 
 	@Override
 	public ModelAtlasClient.Builder configuration(ClientConfiguration configuration) {
@@ -66,11 +68,17 @@ final class ModelAtlasClientBuilderImpl implements ModelAtlasClient.Builder {
 	}
 
 	@Override
+	public ModelAtlasClient.Builder localPackageRegistry(EPackage.Registry localPackages) {
+		this.localPackages = Objects.requireNonNull(localPackages, "localPackages");
+		return this;
+	}
+
+	@Override
 	public ModelAtlasClient build() {
 		ClientConfiguration config = configuration.build();
 		JakartaRsClientProvider provider = clientProvider != null ? clientProvider
 				: new DefaultJakartaRsClientProvider();
 		Client client = provider.newClient(config);
-		return new ModelAtlasClientImpl(config, client);
+		return new ModelAtlasClientImpl(config, client, localPackages);
 	}
 }
