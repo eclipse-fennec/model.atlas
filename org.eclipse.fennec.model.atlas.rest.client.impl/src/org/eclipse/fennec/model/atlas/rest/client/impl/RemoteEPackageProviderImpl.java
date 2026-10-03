@@ -448,8 +448,12 @@ class RemoteEPackageProviderImpl implements RemoteEPackageProvider {
 	 * inherits is invisible — and the failure surfaces far away, as
 	 * "the feature 'x' is not a valid feature" when an instance is deserialized.
 	 * <p>
-	 * So: collect the namespaces the unresolved proxies point at, fetch each
-	 * through {@code dependencyFetcher} — the same cache-fronted path as any other
+	 * So: collect the namespaces the unresolved proxies point at. One the parse
+	 * set's registry already knows — a package the runtime ships itself, which
+	 * sits underneath it — is left to that registry: the reference must bind the
+	 * very instance the runtime creates objects from, as instance decoding
+	 * already prefers it, or the type identity splits (issue #330). Fetch every
+	 * other one through {@code dependencyFetcher} — the same cache-fronted path as any other
 	 * fetch, which is what keeps one instance per nsURI and makes this recurse for
 	 * a chain of packages — register them with the resource set the package was
 	 * parsed into, and let EMF wire the proxies. What cannot be resolved is logged
@@ -481,6 +485,12 @@ class RemoteEPackageProviderImpl implements RemoteEPackageProvider {
 				// A package caught in a cycle is not in the cache yet, so take the
 				// in-flight instance — the proxy must wire to that very object.
 				EPackage resolved = inFlight.get(dependency);
+				if (resolved == null && resourceSet.getPackageRegistry().getEPackage(dependency) != null) {
+					// Shipped locally: EMF wires the proxy to that instance, no Atlas copy.
+					logger.fine(() -> "EPackage " + nsUri + " references " + dependency
+							+ ", which the runtime ships itself; binding the local package");
+					continue;
+				}
 				if (resolved == null) {
 					resolved = dependencyFetcher.apply(dependency).orElse(null);
 				}

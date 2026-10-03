@@ -195,10 +195,6 @@ public class AtlasClientComponent {
 			@Reference ConfigurationAdmin configurationAdmin,
 			BundleContext bundleContext, AtlasClientConfig config) {
 		ClientConfiguration configuration = toConfiguration(config);
-		this.client = clientFactory.builder()
-				.configuration(configuration)
-				.clientProvider(new WhiteboardJakartaRsClientProvider(clientBuilder))
-				.build();
 		// P3-8: forced remotes publish with a high service.ranking so direct lookups prefer them.
 		int serviceRanking = configuration.isForceRemote() ? FORCE_REMOTE_SERVICE_RANKING : 0;
 		// P3-11: opt-in mirroring of published EPackages into the EMF singleton for legacy consumers.
@@ -206,6 +202,22 @@ public class AtlasClientComponent {
 				: null;
 		this.publisher = new RemoteEPackagePublisher(bundleContext, configuration.getBaseUri().toString(),
 				serviceRanking, globalRegistry);
+		// #254: a generated package's EPackage service appears only when its bundle activates,
+		// which is after its factory initialiser has already read the registry - too late for
+		// the gate to suppress anything. What the bundle DECLARES is readable from the moment
+		// it is installed, so local-first asks both: what is registered, and what is promised.
+		this.declaredLocalPackages = LocalGeneratedPackages.scan(bundleContext);
+		Predicate<String> shippedLocally = nsUri -> declaredLocalPackages.declares(nsUri)
+				|| LocalServiceWatcher.hasLocalService(bundleContext, nsUri);
+		// #330: a fetched schema referencing a model this runtime ships binds the local package,
+		// not an Atlas copy - by the same local-first rule the publication gate below applies.
+		Predicate<String> localWins = configuration.isForceRemote() ? nsUri -> false : shippedLocally;
+		this.client = clientFactory.builder()
+				.configuration(configuration)
+				.clientProvider(new WhiteboardJakartaRsClientProvider(clientBuilder))
+				.localPackageRegistry(new LocallyShippedPackages(frameworkRegistry, localWins,
+						publisher::publishedEPackage))
+				.build();
 		// P5-4: per-scope ReadableScopeService<EObject> publications (keyed atlas.scope).
 		// P6-7: stamp atlas.stage when the client is configured with a primary stage so two
 		// front-ends for the same scope can be told apart; null = stage-free (stamp omitted).
@@ -227,15 +239,8 @@ public class AtlasClientComponent {
 			ScheduledFuture<?> future = debounceExecutor.schedule(task, delayMs, TimeUnit.MILLISECONDS);
 			return () -> future.cancel(false);
 		};
-		// #254: a generated package's EPackage service appears only when its bundle activates,
-		// which is after its factory initialiser has already read the registry - too late for
-		// the gate to suppress anything. What the bundle DECLARES is readable from the moment
-		// it is installed, so local-first asks both: what is registered, and what is promised.
-		this.declaredLocalPackages = LocalGeneratedPackages.scan(bundleContext);
 		LocalFirstPublicationGate gate = new LocalFirstPublicationGate(publisher::publish, publisher::unpublish,
-				nsUri -> declaredLocalPackages.declares(nsUri)
-						|| LocalServiceWatcher.hasLocalService(bundleContext, nsUri),
-				configuration.isForceRemote(), scheduler, LOCAL_DISAPPEAR_DEBOUNCE_MS);
+				shippedLocally, configuration.isForceRemote(), scheduler, LOCAL_DISAPPEAR_DEBOUNCE_MS);
 		this.localServiceWatcher = LocalServiceWatcher.register(bundleContext, gate);
 		// A bundle installed later declares its packages before it runs: withdraw ours in time.
 		declaredLocalPackages.track(bundleContext, new LocalGeneratedPackages.DeclarationListener() {

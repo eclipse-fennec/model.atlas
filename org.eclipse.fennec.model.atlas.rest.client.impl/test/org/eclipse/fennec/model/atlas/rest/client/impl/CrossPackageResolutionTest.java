@@ -24,6 +24,7 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+import java.io.ByteArrayInputStream;
 import java.net.URI;
 import java.time.Duration;
 import java.util.HashMap;
@@ -36,6 +37,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import org.eclipse.emf.ecore.EClass;
 import org.eclipse.emf.ecore.EPackage;
 import org.eclipse.emf.ecore.EStructuralFeature;
+import org.eclipse.emf.ecore.impl.EPackageRegistryImpl;
 import org.eclipse.fennec.model.atlas.rest.client.api.ClientConfiguration;
 import org.junit.jupiter.api.Test;
 import org.mockito.invocation.InvocationOnMock;
@@ -78,9 +80,13 @@ class CrossPackageResolutionTest {
 	}
 
 	private RemoteEPackageProviderImpl provider() {
+		return provider(new XmiEPackageDeserializer());
+	}
+
+	private RemoteEPackageProviderImpl provider(XmiEPackageDeserializer deserializer) {
 		ClientConfiguration config = ClientConfiguration.builder().baseUri(BASE).scopeAllowList(List.of("jena"))
 				.build();
-		return new RemoteEPackageProviderImpl(target, config, new XmiEPackageDeserializer(), () -> List.of());
+		return new RemoteEPackageProviderImpl(target, config, deserializer, () -> List.of());
 	}
 
 	@Test
@@ -103,6 +109,28 @@ class CrossPackageResolutionTest {
 				"a feature inherited from " + EcoreXmiFixtures.BASE_CLASS + " must be visible on the subclass");
 		assertEquals(1, fetchCount(EcoreXmiFixtures.BASE_NS_URI),
 				"the referenced package must be fetched once, through the same cache-fronted path");
+	}
+
+	@Test
+	void aLocallyShippedPackageIsBoundInsteadOfTheAtlasCopy() {
+		documents.putAll(EcoreXmiFixtures.inheritanceChainXmi());
+		// The runtime ships the base model itself — the stand-in for a generated bundle.
+		EPackage shipped = new XmiEPackageDeserializer().deserialize(
+				new ByteArrayInputStream(documents.get(EcoreXmiFixtures.BASE_NS_URI)), EcoreXmiFixtures.BASE_NS_URI,
+				"application/xmi");
+		EPackageRegistryImpl localPackages = new EPackageRegistryImpl();
+		localPackages.put(EcoreXmiFixtures.BASE_NS_URI, shipped);
+
+		EPackage derived = provider(new XmiEPackageDeserializer(localPackages))
+				.getEPackage(EcoreXmiFixtures.DERIVED_NS_URI).orElseThrow();
+
+		EClass vendor = (EClass) derived.getEClassifier(EcoreXmiFixtures.DERIVED_CLASS);
+		assertSame(shipped.getEClassifier(EcoreXmiFixtures.BASE_CLASS), vendor.getESuperTypes().get(0),
+				"the reference must bind the class the runtime creates instances from, not an Atlas copy (#330)");
+		assertNotNull(vendor.getEStructuralFeature(EcoreXmiFixtures.INHERITED_ATTRIBUTE),
+				"the inherited feature is visible through the local package");
+		assertEquals(0, fetchCount(EcoreXmiFixtures.BASE_NS_URI),
+				"a package the runtime ships must not be fetched from the Atlas");
 	}
 
 	@Test
