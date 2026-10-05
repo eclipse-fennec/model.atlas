@@ -23,17 +23,17 @@ import java.util.Set;
 
 import org.eclipse.fennec.model.atlas.mgmt.diagnostics.Diagnostics;
 import org.eclipse.fennec.model.atlas.mgmt.management.Diagnostic;
-import org.eclipse.fennec.model.gdprReport.CombinationFinding;
-import org.eclipse.fennec.model.gdprReport.CombinationKind;
-import org.eclipse.fennec.model.gdprReport.DataCategory;
-import org.eclipse.fennec.model.gdprReport.Evidence;
-import org.eclipse.fennec.model.gdprReport.FeatureEvaluation;
-import org.eclipse.fennec.model.gdprReport.Finding;
-import org.eclipse.fennec.model.gdprReport.FlowEvaluation;
-import org.eclipse.fennec.model.gdprReport.GDPRReportFactory;
-import org.eclipse.fennec.model.gdprReport.GdprReport;
-import org.eclipse.fennec.model.gdprReport.RelevanceLevelType;
-import org.eclipse.fennec.model.gdprReport.TransformationSubject;
+import org.eclipse.fennec.model.compliance.context.CategoryRef;
+import org.eclipse.fennec.model.compliance.context.ContextFactory;
+import org.eclipse.fennec.model.compliance.report.CombinationFinding;
+import org.eclipse.fennec.model.compliance.report.Evidence;
+import org.eclipse.fennec.model.compliance.report.FeatureEvaluation;
+import org.eclipse.fennec.model.compliance.report.Finding;
+import org.eclipse.fennec.model.compliance.report.FlowEvaluation;
+import org.eclipse.fennec.model.compliance.report.ReportFactory;
+import org.eclipse.fennec.model.compliance.report.ComplianceReport;
+import org.eclipse.fennec.model.compliance.report.RelevanceLevel;
+import org.eclipse.fennec.model.compliance.report.TransformationSubject;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -50,7 +50,7 @@ import org.junit.jupiter.api.Test;
 @DisplayName("A derived report's several statements about one element")
 public class TransformationReportNodesTest {
 
-	private static final GDPRReportFactory REPORTS = GDPRReportFactory.eINSTANCE;
+	private static final ReportFactory REPORTS = ReportFactory.eINSTANCE;
 
 	private static final String CLINIC = "http://example.org/clinic/1.0.0";
 	private static final String CONTACTS = "http://example.org/contacts/1.0.0";
@@ -61,15 +61,15 @@ public class TransformationReportNodesTest {
 	@Test
 	@DisplayName("two rules about one flow are two nodes, not one paragraph")
 	public void findingsOfDifferentRulesDoNotFold() {
-		GdprReport report = REPORTS.createGdprReport();
+		ComplianceReport report = REPORTS.createComplianceReport();
 		report.setSubject(subject());
 		FlowEvaluation flow = flow("//Patient/id", "//Contact/reference");
 		// Both DIRECT_IDENTIFIER at HIGH, and they say completely different things.
-		flow.getFindings().add(finding("gdpr.flow.propagation:one", DataCategory.DIRECT_IDENTIFIER,
+		flow.getFindings().add(finding("gdpr.flow.propagation:one", "DIRECT_IDENTIFIER",
 				"It reaches //Contact/reference."));
-		flow.getFindings().add(finding("gdpr.flow.target-disagreement:one", DataCategory.DIRECT_IDENTIFIER,
+		flow.getFindings().add(finding("gdpr.flow.target-disagreement:one", "DIRECT_IDENTIFIER",
 				"The target review calls that field PERSONAL_DATA."));
-		report.getEvaluation().add(flow);
+		report.getEvaluations().add(flow);
 
 		Diagnostic root = mapper.map(report).get(0);
 		assertEquals(List.of("gdpr.flow.propagation", "gdpr.flow.target-disagreement"), codes(root),
@@ -86,12 +86,12 @@ public class TransformationReportNodesTest {
 	@Test
 	@DisplayName("three combinations over one set of flows are three nodes with three ids")
 	public void combinationsOverOneSetDoNotCollide() {
-		GdprReport report = REPORTS.createGdprReport();
+		ComplianceReport report = REPORTS.createComplianceReport();
 		report.setSubject(subject());
 		FlowEvaluation first = flow("//Patient/fullName", COMMENT);
 		FlowEvaluation second = flow("//Patient/diagnosis", COMMENT);
-		report.getEvaluation().add(first);
-		report.getEvaluation().add(second);
+		report.getEvaluations().add(first);
+		report.getEvaluations().add(second);
 		for (String rule : List.of("aggregation", "structure-loss", "target-disagreement")) {
 			report.getCombinations().add(combination("gdpr.flow." + rule + ":toContact#" + COMMENT, first, second));
 		}
@@ -112,16 +112,16 @@ public class TransformationReportNodesTest {
 	@Test
 	@DisplayName("a review's findings on one feature still fold into one claim, as they always did")
 	public void aReviewIsUnchanged() {
-		GdprReport report = REPORTS.createGdprReport();
+		ComplianceReport report = REPORTS.createComplianceReport();
 		report.setSubject(REPORTS.createPackageSubject());
-		((org.eclipse.fennec.model.gdprReport.PackageSubject) report.getSubject()).setNsURI(CLINIC);
+		((org.eclipse.fennec.model.compliance.report.PackageSubject) report.getSubject()).setNsURI(CLINIC);
 		FeatureEvaluation feature = REPORTS.createFeatureEvaluation();
 		feature.setUriFragment("//Patient/postcode");
 		// Two signals for one verdict, with ids that declare nothing. This is the case folding was
 		// written for and it must keep behaving exactly as before.
-		feature.getFindings().add(finding("F-001", DataCategory.QUASI_IDENTIFIER, "The name says postcode."));
-		feature.getFindings().add(finding("F-002", DataCategory.QUASI_IDENTIFIER, "Its type is a short string."));
-		report.getEvaluation().add(feature);
+		feature.getFindings().add(finding("F-001", "QUASI_IDENTIFIER", "The name says postcode."));
+		feature.getFindings().add(finding("F-002", "QUASI_IDENTIFIER", "Its type is a short string."));
+		report.getEvaluations().add(feature);
 
 		Diagnostic root = mapper.map(report).get(0);
 		assertEquals(List.of("gdpr.feature"), codes(root));
@@ -141,8 +141,8 @@ public class TransformationReportNodesTest {
 		return subject;
 	}
 
-	private static org.eclipse.fennec.model.gdprReport.PackageSubject packageEntry(String nsURI) {
-		org.eclipse.fennec.model.gdprReport.PackageSubject entry = REPORTS.createPackageSubject();
+	private static org.eclipse.fennec.model.compliance.report.PackageSubject packageEntry(String nsURI) {
+		org.eclipse.fennec.model.compliance.report.PackageSubject entry = REPORTS.createPackageSubject();
 		entry.setNsURI(nsURI);
 		entry.setSubjectFingerprint("fp1:" + nsURI);
 		entry.setReportId("review-of-" + nsURI);
@@ -160,11 +160,11 @@ public class TransformationReportNodesTest {
 		return flow;
 	}
 
-	private static Finding finding(String id, DataCategory category, String rationale) {
+	private static Finding finding(String id, String category, String rationale) {
 		Finding finding = REPORTS.createFinding();
 		finding.setId(id);
-		finding.setCategory(category);
-		finding.setRelevanceLevel(RelevanceLevelType.HIGH);
+		finding.getCategories().add(categoryRef(category));
+		finding.setRelevanceLevel(RelevanceLevel.HIGH);
 		finding.setRationale(rationale);
 		finding.getEvidence().add(evidence());
 		return finding;
@@ -173,9 +173,9 @@ public class TransformationReportNodesTest {
 	private static CombinationFinding combination(String id, FlowEvaluation... flows) {
 		CombinationFinding combination = REPORTS.createCombinationFinding();
 		combination.setId(id);
-		combination.setCategory(DataCategory.SPECIAL_CATEGORY);
-		combination.setRelevanceLevel(RelevanceLevelType.HIGH);
-		combination.setCombinationKind(CombinationKind.LINKAGE);
+		combination.getCategories().add(categoryRef("SPECIAL_CATEGORY"));
+		combination.setRelevanceLevel(RelevanceLevel.HIGH);
+		combination.getCategories().add(combinationKind("LINKAGE"));
 		combination.setRationale("What " + id + " says.");
 		combination.getEvidence().add(evidence());
 		for (FlowEvaluation flow : flows) {
@@ -199,4 +199,31 @@ public class TransformationReportNodesTest {
 		return root.getChildren().stream().filter(child -> code.equals(child.getCode())).findFirst().orElseThrow()
 				.getChildren().get(0);
 	}
+
+	/**
+	 * A data-category reference, the way a review records one: an id in the context's
+	 * {@code data-categories} taxonomy. The ids are the names the {@code DataCategory} enum had.
+	 */
+	static CategoryRef categoryRef(String categoryId) {
+		CategoryRef ref = ContextFactory.eINSTANCE.createCategoryRef();
+		ref.setContextId("gdpr");
+		ref.setTaxonomyId("data-categories");
+		ref.setCategoryId(categoryId);
+		return ref;
+	}
+
+
+	/**
+	 * How a combination combines, as a review records it: a reference into the context's
+	 * {@code combination-kinds} taxonomy, whose ids are the names the {@code CombinationKind} enum
+	 * had. It rides in the same list as the data categories and is told from them by its taxonomy.
+	 */
+	static CategoryRef combinationKind(String kindId) {
+		CategoryRef ref = ContextFactory.eINSTANCE.createCategoryRef();
+		ref.setContextId("gdpr");
+		ref.setTaxonomyId("combination-kinds");
+		ref.setCategoryId(kindId);
+		return ref;
+	}
+
 }

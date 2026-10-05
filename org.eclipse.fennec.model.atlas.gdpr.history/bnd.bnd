@@ -25,8 +25,10 @@ Bundle-Description: Turns the GDPR reviews stored for one subject into a single 
 -library: enableEMF
 
 -buildpath: \
-	org.eclipse.fennec.gdpr.report.model;version=latest,\
-	org.eclipse.fennec.gdpr.report.history.model;version=latest,\
+	org.eclipse.fennec.compliance.report.model;version=latest,\
+	org.eclipse.fennec.compliance.report.history.model;version=latest,\
+	org.eclipse.fennec.compliance.context.model;version=latest,\
+	org.eclipse.fennec.compliance.corpus.model;version=latest,\
 	org.eclipse.fennec.model.atlas.action.api;version=snapshot,\
 	org.eclipse.fennec.model.atlas.scope.api;version=snapshot,\
 	org.eclipse.fennec.model.atlas.workflow;version=snapshot,\

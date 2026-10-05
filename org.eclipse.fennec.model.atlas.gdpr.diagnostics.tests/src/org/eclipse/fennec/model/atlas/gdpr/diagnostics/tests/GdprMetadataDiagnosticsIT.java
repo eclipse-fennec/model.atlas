@@ -28,8 +28,7 @@ import org.eclipse.fennec.model.atlas.mgmt.management.ManagementFactory;
 import org.eclipse.fennec.model.atlas.mgmt.management.ObjectMetadata;
 import org.eclipse.fennec.model.atlas.tests.common.CommonTestAnnotations;
 import org.eclipse.fennec.model.atlas.wf.workflowapi.WritableScopeService;
-import org.eclipse.fennec.model.gdprReport.DataCategory;
-import org.eclipse.fennec.model.gdprReport.RelevanceLevelType;
+import org.eclipse.fennec.model.compliance.report.RelevanceLevel;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -68,7 +67,7 @@ public class GdprMetadataDiagnosticsIT {
 		String fingerprint = Fixtures.storePackage(scope, DRAFT);
 
 		Fixtures.storeReview(scope,
-				Fixtures.review("report-1", fingerprint, DataCategory.QUASI_IDENTIFIER, RelevanceLevelType.MEDIUM),
+				Fixtures.review("report-1", fingerprint, "QUASI_IDENTIFIER", RelevanceLevel.MEDIUM),
 				DRAFT);
 
 		List<Diagnostic> roots = Fixtures.await(scope, DRAFT, found -> found.size() == 1, "the review's findings");
@@ -106,7 +105,7 @@ public class GdprMetadataDiagnosticsIT {
 		String fingerprint = Fixtures.storePackage(scope, DRAFT);
 
 		Fixtures.storeReview(scope,
-				Fixtures.review("report-1", fingerprint, DataCategory.SPECIAL_CATEGORY, RelevanceLevelType.HIGH),
+				Fixtures.review("report-1", fingerprint, "SPECIAL_CATEGORY", RelevanceLevel.HIGH),
 				APPROVED);
 
 		Fixtures.settle();
@@ -125,7 +124,7 @@ public class GdprMetadataDiagnosticsIT {
 		WritableScopeService<EObject> scope = scope(aware);
 		String fingerprint = Fixtures.storePackage(scope, DRAFT);
 		Fixtures.storeReview(scope,
-				Fixtures.review("report-1", fingerprint, DataCategory.QUASI_IDENTIFIER, RelevanceLevelType.MEDIUM),
+				Fixtures.review("report-1", fingerprint, "QUASI_IDENTIFIER", RelevanceLevel.MEDIUM),
 				DRAFT);
 		Fixtures.await(scope, DRAFT, found -> found.size() == 1, "the review's findings");
 		// somebody else has something to say about the same package
@@ -161,7 +160,7 @@ public class GdprMetadataDiagnosticsIT {
 		java.time.Instant lastChange = before.getLastChangeTime();
 
 		Fixtures.storeReview(scope,
-				Fixtures.review("report-1", fingerprint, DataCategory.QUASI_IDENTIFIER, RelevanceLevelType.MEDIUM),
+				Fixtures.review("report-1", fingerprint, "QUASI_IDENTIFIER", RelevanceLevel.MEDIUM),
 				DRAFT);
 		Fixtures.await(scope, DRAFT, found -> found.size() == 1, "the review's findings");
 
@@ -184,7 +183,7 @@ public class GdprMetadataDiagnosticsIT {
 		WritableScopeService<EObject> scope = scope(aware);
 		String fingerprint = Fixtures.storePackage(scope, DRAFT);
 		Fixtures.storeReview(scope,
-				Fixtures.review("report-1", fingerprint, DataCategory.QUASI_IDENTIFIER, RelevanceLevelType.MEDIUM),
+				Fixtures.review("report-1", fingerprint, "QUASI_IDENTIFIER", RelevanceLevel.MEDIUM),
 				DRAFT);
 		Diagnostic first = Fixtures.await(scope, DRAFT, found -> found.size() == 1, "the first review's findings")
 				.get(0);
@@ -194,7 +193,7 @@ public class GdprMetadataDiagnosticsIT {
 
 		// the same claim, reached again and worded differently
 		Fixtures.storeReview(scope,
-				Fixtures.review("report-2", fingerprint, DataCategory.QUASI_IDENTIFIER, RelevanceLevelType.MEDIUM),
+				Fixtures.review("report-2", fingerprint, "QUASI_IDENTIFIER", RelevanceLevel.MEDIUM),
 				DRAFT);
 		Fixtures.await(scope, DRAFT,
 				found -> "gdpr.finding.QUASI_IDENTIFIER.MEDIUM".equals(childCode(found))
@@ -203,7 +202,7 @@ public class GdprMetadataDiagnosticsIT {
 
 		// a third review of the same feature at another category is another claim
 		Fixtures.storeReview(scope,
-				Fixtures.review("report-3", fingerprint, DataCategory.SPECIAL_CATEGORY, RelevanceLevelType.HIGH),
+				Fixtures.review("report-3", fingerprint, "SPECIAL_CATEGORY", RelevanceLevel.HIGH),
 				DRAFT);
 		Diagnostic child = claim(Fixtures.await(scope, DRAFT,
 				found -> "gdpr.finding.SPECIAL_CATEGORY.HIGH".equals(childCode(found)),
@@ -223,12 +222,12 @@ public class GdprMetadataDiagnosticsIT {
 		String fingerprint = Fixtures.storePackage(scope, DRAFT);
 		// an agent's review of a revision, and a person's correction of the same revision - the
 		// ordinary case, and the one the review document holds as two revisions
-		Fixtures.storeReview(scope, Fixtures.review("report-ai", fingerprint, DataCategory.PERSONAL_DATA,
-				RelevanceLevelType.MEDIUM, "2026-09-28T08:00:00Z"), DRAFT);
+		Fixtures.storeReview(scope, Fixtures.review("report-ai", fingerprint, "PERSONAL_DATA",
+				RelevanceLevel.MEDIUM, "2026-09-28T08:00:00Z"), DRAFT);
 		Fixtures.await(scope, DRAFT, found -> found.size() == 1, "the agent's findings");
 
-		Fixtures.storeReview(scope, Fixtures.review("report-human", fingerprint, DataCategory.QUASI_IDENTIFIER,
-				RelevanceLevelType.HIGH, "2026-09-28T09:00:00Z"), DRAFT);
+		Fixtures.storeReview(scope, Fixtures.review("report-human", fingerprint, "QUASI_IDENTIFIER",
+				RelevanceLevel.HIGH, "2026-09-28T09:00:00Z"), DRAFT);
 		Fixtures.await(scope, DRAFT, found -> "gdpr.finding.QUASI_IDENTIFIER.HIGH".equals(childCode(found)),
 				"the correction to supersede the agent's review");
 
@@ -253,10 +252,10 @@ public class GdprMetadataDiagnosticsIT {
 
 		WritableScopeService<EObject> scope = scope(aware);
 		String fingerprint = Fixtures.storePackage(scope, DRAFT);
-		Fixtures.storeReview(scope, Fixtures.review("report-ai", fingerprint, DataCategory.PERSONAL_DATA,
-				RelevanceLevelType.MEDIUM, "2026-09-28T08:00:00Z"), DRAFT);
-		Fixtures.storeReview(scope, Fixtures.review("report-human", fingerprint, DataCategory.QUASI_IDENTIFIER,
-				RelevanceLevelType.HIGH, "2026-09-28T09:00:00Z"), DRAFT);
+		Fixtures.storeReview(scope, Fixtures.review("report-ai", fingerprint, "PERSONAL_DATA",
+				RelevanceLevel.MEDIUM, "2026-09-28T08:00:00Z"), DRAFT);
+		Fixtures.storeReview(scope, Fixtures.review("report-human", fingerprint, "QUASI_IDENTIFIER",
+				RelevanceLevel.HIGH, "2026-09-28T09:00:00Z"), DRAFT);
 		Fixtures.await(scope, DRAFT, found -> "gdpr.finding.QUASI_IDENTIFIER.HIGH".equals(childCode(found)),
 				"the correction to supersede the agent's review");
 
@@ -289,7 +288,7 @@ public class GdprMetadataDiagnosticsIT {
 
 		// and the instance is not switched off by having ignored one: the next package review lands
 		Fixtures.storeReview(scope,
-				Fixtures.review("report-1", fingerprint, DataCategory.QUASI_IDENTIFIER, RelevanceLevelType.MEDIUM),
+				Fixtures.review("report-1", fingerprint, "QUASI_IDENTIFIER", RelevanceLevel.MEDIUM),
 				DRAFT);
 		Fixtures.await(scope, DRAFT, found -> found.size() == 1, "a package review to still land");
 	}

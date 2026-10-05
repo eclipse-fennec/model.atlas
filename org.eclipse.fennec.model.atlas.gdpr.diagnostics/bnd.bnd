@@ -21,7 +21,9 @@ Bundle-Description: Writes the findings of a GDPR review onto the metadata of th
 -library: enableEMF
 
 -buildpath: \
-	org.eclipse.fennec.gdpr.report.model;version=latest,\
+	org.eclipse.fennec.compliance.report.model;version=latest,\
+	org.eclipse.fennec.compliance.context.model;version=latest,\
+	org.eclipse.fennec.compliance.corpus.model;version=latest,\
 	org.eclipse.fennec.model.atlas.action.api;version=snapshot,\
 	org.eclipse.fennec.model.atlas.scope.api;version=snapshot,\
 	org.eclipse.fennec.model.atlas.workflow;version=snapshot,\

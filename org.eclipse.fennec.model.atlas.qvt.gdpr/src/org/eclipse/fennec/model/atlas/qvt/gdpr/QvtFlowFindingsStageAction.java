@@ -32,10 +32,10 @@ import org.eclipse.fennec.model.atlas.action.api.StageActionService;
 import org.eclipse.fennec.model.atlas.mgmt.management.Diagnostic;
 import org.eclipse.fennec.model.atlas.mgmt.management.ObjectMetadata;
 import org.eclipse.fennec.model.atlas.wf.workflowapi.WritableScopeService;
-import org.eclipse.fennec.model.gdprReport.GDPRReportPackage;
-import org.eclipse.fennec.model.gdprReport.GdprReport;
-import org.eclipse.fennec.model.gdprReport.PackageSubject;
-import org.eclipse.fennec.model.gdprReport.TransformationSubject;
+import org.eclipse.fennec.model.compliance.report.ReportPackage;
+import org.eclipse.fennec.model.compliance.report.ComplianceReport;
+import org.eclipse.fennec.model.compliance.report.PackageSubject;
+import org.eclipse.fennec.model.compliance.report.TransformationSubject;
 import org.osgi.service.component.annotations.Activate;
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.ConfigurationPolicy;
@@ -136,7 +136,7 @@ public class QvtFlowFindingsStageAction implements StageActionService {
 	private static final Logger LOGGER = Logger.getLogger(QvtFlowFindingsStageAction.class.getName());
 
 	/** What the storage layer writes into {@code ActionContext.objectType()} for a report. */
-	private static final String REPORT_TYPE = EcoreUtil.getURI(GDPRReportPackage.Literals.GDPR_REPORT).toString();
+	private static final String REPORT_TYPE = EcoreUtil.getURI(ReportPackage.Literals.COMPLIANCE_REPORT).toString();
 
 	/** Configuration of this component. */
 	@ObjectClassDefinition(name = "QVT Flow Findings Stage Action")
@@ -273,7 +273,7 @@ public class QvtFlowFindingsStageAction implements StageActionService {
 		}
 		ReportAddress address = ReportAddress.of(ctx);
 		EObject content = scope.getContentFromStageForRegistry(ctx.registry(), ctx.stage(), ctx.objectId());
-		if (!(content instanceof GdprReport report)) {
+		if (!(content instanceof ComplianceReport report)) {
 			LOGGER.log(Level.WARNING, () -> String.format(
 					"Report %s is not readable, so nothing was written onto the metamodels it is about.", address));
 			return Promises.resolved(null);
@@ -308,7 +308,7 @@ public class QvtFlowFindingsStageAction implements StageActionService {
 	 */
 	private Promise<Void> apply(ActionContext ctx, String qualifiedName, Map<String, String> also) {
 		String producer = FlowFindingsToDiagnostics.PRODUCER_PREFIX + qualifiedName;
-		GdprReport current = latestAnalysisOf(ctx, qualifiedName);
+		ComplianceReport current = latestAnalysisOf(ctx, qualifiedName);
 		Map<String, List<Diagnostic>> roots = current == null ? Map.of() : FlowFindingsToDiagnostics.map(current);
 
 		Map<String, String> models = new LinkedHashMap<>(also);
@@ -379,12 +379,12 @@ public class QvtFlowFindingsStageAction implements StageActionService {
 	 * report the same way. Only reports whose subject is a {@code TransformationSubject} count - a
 	 * metamodel review has no qualified name and nothing to say here.
 	 */
-	private GdprReport latestAnalysisOf(ActionContext ctx, String qualifiedName) {
-		GdprReport latest = null;
+	private ComplianceReport latestAnalysisOf(ActionContext ctx, String qualifiedName) {
+		ComplianceReport latest = null;
 		Instant latestAt = null;
 		String latestId = null;
 		for (ObjectMetadata metadata : scope.listInStageForRegistry(ctx.registry(), ctx.stage())) {
-			GdprReport candidate = reportAt(ctx, metadata.getObjectId());
+			ComplianceReport candidate = reportAt(ctx, metadata.getObjectId());
 			if (candidate == null || !(candidate.getSubject() instanceof TransformationSubject subject)
 					|| !qualifiedName.equals(trim(subject.getQualifiedName()))) {
 				continue;
@@ -402,10 +402,10 @@ public class QvtFlowFindingsStageAction implements StageActionService {
 		return latest;
 	}
 
-	private GdprReport reportAt(ActionContext ctx, String objectId) {
+	private ComplianceReport reportAt(ActionContext ctx, String objectId) {
 		try {
 			EObject content = scope.getContentFromStageForRegistry(ctx.registry(), ctx.stage(), objectId);
-			return content instanceof GdprReport report ? report : null;
+			return content instanceof ComplianceReport report ? report : null;
 		} catch (RuntimeException goneOrUnreadable) {
 			// Listed a moment ago and not there now, or not parseable: it cannot speak for the
 			// transformation either way, and failing the whole write over it would be worse.
@@ -472,7 +472,7 @@ public class QvtFlowFindingsStageAction implements StageActionService {
 	}
 
 	/** When the analysis ran: what the report says, else when the Atlas last saw it. */
-	private static Instant generatedAt(GdprReport report, ObjectMetadata metadata) {
+	private static Instant generatedAt(ComplianceReport report, ObjectMetadata metadata) {
 		String stated = report.getGeneratedAt();
 		if (stated != null && !stated.isBlank()) {
 			try {

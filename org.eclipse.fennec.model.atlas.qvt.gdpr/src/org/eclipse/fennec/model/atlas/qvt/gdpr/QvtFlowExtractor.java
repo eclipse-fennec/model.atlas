@@ -41,7 +41,7 @@ import org.eclipse.fennec.m2x.model.qvtoperational.MappingOperation;
 import org.eclipse.fennec.m2x.model.qvtoperational.ModelParameter;
 import org.eclipse.fennec.m2x.model.qvtoperational.ModelType;
 import org.eclipse.fennec.m2x.model.qvtoperational.OperationalTransformation;
-import org.eclipse.fennec.model.gdprReport.FlowKind;
+import org.eclipse.fennec.model.compliance.report.FlowKind;
 
 /**
  * Reads the flows out of a stored {@code CompiledUnit}: which source feature reaches which target

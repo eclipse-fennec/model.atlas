@@ -29,22 +29,21 @@ import org.eclipse.emf.ecore.EObject;
 import org.eclipse.fennec.model.atlas.mgmt.management.Diagnostic;
 import org.eclipse.fennec.model.atlas.mgmt.management.DiagnosticSeverity;
 import org.eclipse.fennec.model.atlas.mgmt.management.ManagementFactory;
-import org.eclipse.fennec.model.gdprReport.ClassifierEvaluation;
-import org.eclipse.fennec.model.gdprReport.CombinationFinding;
-import org.eclipse.fennec.model.gdprReport.ConfidenceType;
-import org.eclipse.fennec.model.gdprReport.DataCategory;
-import org.eclipse.fennec.model.gdprReport.Evaluation;
-import org.eclipse.fennec.model.gdprReport.Evidence;
-import org.eclipse.fennec.model.gdprReport.FeatureEvaluation;
-import org.eclipse.fennec.model.gdprReport.Finding;
-import org.eclipse.fennec.model.gdprReport.FlowEvaluation;
-import org.eclipse.fennec.model.gdprReport.GdprReport;
-import org.eclipse.fennec.model.gdprReport.PackageSubject;
-import org.eclipse.fennec.model.gdprReport.RelevanceLevelType;
-import org.eclipse.fennec.model.gdprReport.TransformationSubject;
+import org.eclipse.fennec.model.compliance.report.ClassifierEvaluation;
+import org.eclipse.fennec.model.compliance.report.CombinationFinding;
+import org.eclipse.fennec.model.compliance.report.Confidence;
+import org.eclipse.fennec.model.compliance.report.Evaluation;
+import org.eclipse.fennec.model.compliance.report.Evidence;
+import org.eclipse.fennec.model.compliance.report.FeatureEvaluation;
+import org.eclipse.fennec.model.compliance.report.Finding;
+import org.eclipse.fennec.model.compliance.report.FlowEvaluation;
+import org.eclipse.fennec.model.compliance.report.ComplianceReport;
+import org.eclipse.fennec.model.compliance.report.PackageSubject;
+import org.eclipse.fennec.model.compliance.report.RelevanceLevel;
+import org.eclipse.fennec.model.compliance.report.TransformationSubject;
 
 /**
- * Turns the findings of one {@link GdprReport} into the {@link Diagnostic} trees that are written
+ * Turns the findings of one {@link ComplianceReport} into the {@link Diagnostic} trees that are written
  * onto the metadata of the model the review is about.
  * <p>
  * A pure function of the report, with no OSGi and no storage, so the rules below are unit-testable
@@ -78,7 +77,7 @@ import org.eclipse.fennec.model.gdprReport.TransformationSubject;
  *
  * <h2>Identity: one child per (category, relevance) on one element</h2>
  * <p>
- * A child's {@code code} is {@link #findingCode(DataCategory, RelevanceLevelType)} and its
+ * A child's {@code code} is {@link #findingCode(DataCategory, RelevanceLevel)} and its
  * {@code target} is the element's, so its id turns exactly on <b>element, category and
  * relevance</b>. That is the rule the re-review has to honour: a second review that reaches the
  * same category at the same relevance by another route is the <em>same</em> claim, so it keeps its
@@ -115,6 +114,21 @@ import org.eclipse.fennec.model.gdprReport.TransformationSubject;
 public class GdprFindingsToDiagnostics {
 
 	private static final Logger LOGGER = Logger.getLogger(GdprFindingsToDiagnostics.class.getName());
+
+	/** Which category refs this mapper reads, and which of them say the element is clean. */
+	private final CategoryVocabulary vocabulary;
+
+	/** A mapper reading the vocabulary of the GDPR context, which is the previous behaviour. */
+	public GdprFindingsToDiagnostics() {
+		this(CategoryVocabulary.gdpr());
+	}
+
+	/**
+	 * @param vocabulary the taxonomy and benign ids to read findings with, never {@code null}
+	 */
+	GdprFindingsToDiagnostics(CategoryVocabulary vocabulary) {
+		this.vocabulary = vocabulary;
+	}
 
 	/**
 	 * The producer these diagnostics are written under.
@@ -175,17 +189,27 @@ public class GdprFindingsToDiagnostics {
 	/** Separates the elements a combination spans in its target. */
 	private static final String COMBINATION_SEPARATOR = "+";
 
+	/** Joins the categories of a claim that names more than one. */
+	private static final String CATEGORY_SEPARATOR = "+";
+
 	/**
-	 * The code of the child carrying one claim: the category and the relevance, which together are
-	 * what makes two claims about one element the same claim or two.
+	 * The code of the child carrying one claim: the categories and the relevance, which together
+	 * are what makes two claims about one element the same claim or two.
+	 * <p>
+	 * A claim naming one category - the ordinary case, and the only one the previous report model
+	 * could express - produces the code it always did, so a diagnostic written before this change
+	 * is replaced by its successor rather than left beside it. Several categories join in sorted
+	 * order, and none at all leaves the segment out: a finding that states a relevance without
+	 * saying of what still has to be written, and there is nothing to name it by.
 	 *
-	 * @param category  the claim's category; {@code null} reads as {@code NOT_PERSONAL_DATA}
-	 * @param relevance the claim's relevance; {@code null} reads as {@code NONE}
+	 * @param categories the claim's category ids, sorted; may be empty
+	 * @param relevance  the claim's relevance; {@code null} reads as {@code NONE}
 	 * @return the code, never {@code null}
 	 */
-	public static String findingCode(DataCategory category, RelevanceLevelType relevance) {
-		return CODE_FINDING_PREFIX + (category == null ? DataCategory.NOT_PERSONAL_DATA : category).getName() + "."
-				+ (relevance == null ? RelevanceLevelType.NONE : relevance).getName();
+	public static String findingCode(List<String> categories, RelevanceLevel relevance) {
+		String level = (relevance == null ? RelevanceLevel.NONE : relevance).getName();
+		return categories.isEmpty() ? CODE_FINDING_PREFIX + level
+				: CODE_FINDING_PREFIX + String.join(CATEGORY_SEPARATOR, categories) + "." + level;
 	}
 
 	/**
@@ -196,13 +220,13 @@ public class GdprFindingsToDiagnostics {
 	 * @return the roots, in the order the report examined things; empty when the review found
 	 *         nothing that asserts anything
 	 */
-	public List<Diagnostic> map(GdprReport report) {
+	public List<Diagnostic> map(ComplianceReport report) {
 		if (report == null) {
 			return List.of();
 		}
 		String source = blankToNull(report.getGeneratedBy());
 		List<Diagnostic> elements = new ArrayList<>();
-		for (Evaluation evaluation : report.getEvaluation()) {
+		for (Evaluation evaluation : report.getEvaluations()) {
 			collect(evaluation, source, elements);
 		}
 		for (Map.Entry<NodeKey, List<CombinationFinding>> group : combinationNodes(report).entrySet()) {
@@ -263,7 +287,7 @@ public class GdprFindingsToDiagnostics {
 	 * written, because every element it spoke about was unaddressable: that is a malformed report,
 	 * not a clean model, and it must not read as one.
 	 */
-	private static Diagnostic nothingWritten(GdprReport report, String source) {
+	private Diagnostic nothingWritten(ComplianceReport report, String source) {
 		if (assertsAnything(report)) {
 			return diagnostic(CODE_REVIEW, null, DiagnosticSeverity.WARNING,
 					"GDPR review: it asserts something, but none of its findings names an element they could be "
@@ -278,9 +302,10 @@ public class GdprFindingsToDiagnostics {
 	}
 
 	/** Whether any finding anywhere in the report says something about the data. */
-	private static boolean assertsAnything(GdprReport report) {
+	private boolean assertsAnything(ComplianceReport report) {
 		for (Iterator<EObject> contents = report.eAllContents(); contents.hasNext();) {
-			if (contents.next() instanceof Finding finding && !assertsNothing(finding)) {
+			if (contents.next() instanceof Finding finding
+					&& !assertsNothing(finding, vocabulary.categoriesOf(finding))) {
 				return true;
 			}
 		}
@@ -288,12 +313,12 @@ public class GdprFindingsToDiagnostics {
 	}
 
 	/** How many things the review looked at: classifiers, their features, and flows. */
-	private static int examined(GdprReport report) {
+	private static int examined(ComplianceReport report) {
 		int count = 0;
-		for (Evaluation evaluation : report.getEvaluation()) {
+		for (Evaluation evaluation : report.getEvaluations()) {
 			count++;
 			if (evaluation instanceof ClassifierEvaluation classifier) {
-				count += classifier.getFeatureEvaluation().size();
+				count += classifier.getFeatureEvaluations().size();
 			}
 		}
 		return count;
@@ -335,7 +360,7 @@ public class GdprFindingsToDiagnostics {
 	 * this transformation's business to write it there, and one would appear per transformation
 	 * that reads the model.
 	 */
-	private static List<Diagnostic> unreviewedSources(GdprReport report, String source) {
+	private static List<Diagnostic> unreviewedSources(ComplianceReport report, String source) {
 		if (!(report.getSubject() instanceof TransformationSubject subject)) {
 			return List.of();
 		}
@@ -362,7 +387,7 @@ public class GdprFindingsToDiagnostics {
 	private void collect(Evaluation evaluation, String source, List<Diagnostic> elements) {
 		if (evaluation instanceof ClassifierEvaluation classifier) {
 			elements.addAll(nodesOf(CODE_CLASSIFIER, targetOf(classifier), classifier.getFindings(), source));
-			for (FeatureEvaluation feature : classifier.getFeatureEvaluation()) {
+			for (FeatureEvaluation feature : classifier.getFeatureEvaluations()) {
 				elements.addAll(nodesOf(CODE_FEATURE, targetOf(feature), feature.getFindings(), source));
 			}
 		} else if (evaluation instanceof FeatureEvaluation feature) {
@@ -419,7 +444,7 @@ public class GdprFindingsToDiagnostics {
 	 * kind of statement gets its own node and combinations that really are the same statement fold
 	 * into one.
 	 */
-	private static Map<NodeKey, List<CombinationFinding>> combinationNodes(GdprReport report) {
+	private static Map<NodeKey, List<CombinationFinding>> combinationNodes(ComplianceReport report) {
 		Map<NodeKey, List<CombinationFinding>> grouped = new LinkedHashMap<>();
 		for (CombinationFinding combination : report.getCombinations()) {
 			NodeKey key = new NodeKey(declaredCode(combination, CODE_COMBINATION), combinationTarget(combination));
@@ -499,36 +524,41 @@ public class GdprFindingsToDiagnostics {
 	}
 
 	/**
-	 * Folds an element's findings into one claim per {@code (category, relevance)}, in the order
+	 * Folds an element's findings into one claim per {@code (categories, relevance)}, in the order
 	 * the report first states each. Findings that assert nothing are dropped here.
 	 */
 	private Map<String, Claim> claims(Collection<? extends Finding> findings, String target) {
 		Map<String, Claim> claims = new LinkedHashMap<>();
 		for (Finding finding : findings) {
-			if (assertsNothing(finding)) {
+			List<String> categories = vocabulary.categoriesOf(finding);
+			if (assertsNothing(finding, categories)) {
 				LOGGER.log(Level.FINE, () -> String.format(
 						"Finding '%s' on '%s' is %s at relevance %s, which the review uses for 'examined and "
 								+ "nothing of concern found', so no diagnostic is written for it.",
-						finding.getId(), target, name(finding.getCategory()), name(finding.getRelevanceLevel())));
+						finding.getId(), target, categories.isEmpty() ? "unset" : String.join(", ", categories),
+						name(finding.getRelevanceLevel())));
 				continue;
 			}
-			claims.computeIfAbsent(findingCode(finding.getCategory(), finding.getRelevanceLevel()),
-					code -> new Claim(finding.getCategory(), finding.getRelevanceLevel())).add(finding);
+			claims.computeIfAbsent(findingCode(categories, finding.getRelevanceLevel()),
+					code -> new Claim(categories, finding.getRelevanceLevel())).add(finding);
 		}
 		return claims;
 	}
 
 	/**
 	 * Whether the finding says the element is clean. {@code NONE} relevance is the report model's
-	 * "examined and nothing of concern found"; {@code NOT_PERSONAL_DATA} and {@code ANONYMOUS} are
-	 * the categories that place the data outside the Regulation. A finding that contradicts itself
-	 * - a clean category at a relevance above {@code NONE} - is read on its category, because the
-	 * category is what the claim asserts and the relevance only says how serious it would be.
+	 * "examined and nothing of concern found"; the categories that place the data outside the
+	 * Regulation are the ones {@link CategoryVocabulary#benign()} names. A finding that contradicts
+	 * itself - a clean category at a relevance above {@code NONE} - is read on its categories,
+	 * because they are what the claim asserts and the relevance only says how serious it would be.
+	 * <p>
+	 * A finding that names <em>no</em> category of this vocabulary is not clean. It asserts a
+	 * relevance without saying of what, and the old model's single unset category could not tell
+	 * that apart from "examined and found nothing" - a list can, and silence is never the signal.
 	 */
-	private static boolean assertsNothing(Finding finding) {
-		DataCategory category = finding.getCategory();
-		return finding.getRelevanceLevel() == null || finding.getRelevanceLevel() == RelevanceLevelType.NONE
-				|| category == null || category == DataCategory.NOT_PERSONAL_DATA || category == DataCategory.ANONYMOUS;
+	private boolean assertsNothing(Finding finding, List<String> categories) {
+		return finding.getRelevanceLevel() == null || finding.getRelevanceLevel() == RelevanceLevel.NONE
+				|| vocabulary.allBenign(categories);
 	}
 
 	/**
@@ -536,7 +566,7 @@ public class GdprFindingsToDiagnostics {
 	 * {@code ERROR}: that means the check did not run, and a review that ran and found something is
 	 * not a failure of the check.
 	 */
-	private static DiagnosticSeverity severityOf(RelevanceLevelType relevance) {
+	private static DiagnosticSeverity severityOf(RelevanceLevel relevance) {
 		if (relevance == null) {
 			return DiagnosticSeverity.INFO;
 		}
@@ -617,8 +647,8 @@ public class GdprFindingsToDiagnostics {
 	 * review that reads the same risk as profiling rather than as a quasi-identifier set has not
 	 * changed what it asks a person to decide.
 	 */
-	private static String kindOf(CombinationFinding combination) {
-		return combination.getCombinationKind() == null ? null : combination.getCombinationKind().getName();
+	private String kindOf(CombinationFinding combination) {
+		return vocabulary.combinationKindOf(combination);
 	}
 
 	/* ------------------------------------------------------------------ small helpers */
@@ -657,16 +687,16 @@ public class GdprFindingsToDiagnostics {
 	 */
 	private static final class Claim {
 
-		private final DataCategory category;
-		private final RelevanceLevelType relevance;
+		private final List<String> categories;
+		private final RelevanceLevel relevance;
 		private final List<String> rationales = new ArrayList<>();
 		private final List<String> recommendations = new ArrayList<>();
 		private final Set<String> citations = new LinkedHashSet<>();
-		private ConfidenceType confidence;
+		private Confidence confidence;
 
-		Claim(DataCategory category, RelevanceLevelType relevance) {
-			this.category = category == null ? DataCategory.NOT_PERSONAL_DATA : category;
-			this.relevance = relevance == null ? RelevanceLevelType.NONE : relevance;
+		Claim(List<String> categories, RelevanceLevel relevance) {
+			this.categories = List.copyOf(categories);
+			this.relevance = relevance == null ? RelevanceLevel.NONE : relevance;
 		}
 
 		void add(Finding finding) {
@@ -681,9 +711,16 @@ public class GdprFindingsToDiagnostics {
 			confidence = mostCautious(confidence, finding.getConfidence());
 		}
 
-		/** What the badge says: the claim, in the report's own words. */
+		/**
+		 * What the badge says: the claim, in the report's own words.
+		 * <p>
+		 * The categories are the ids of the context's taxonomy, printed as they are. A reviewer
+		 * reads them, so a context whose category ids are opaque makes an unreadable badge - which
+		 * is a property of that context, not something this can repair without resolving it.
+		 */
 		String label() {
-			return category.getName() + " (" + relevance.getName() + ")";
+			return (categories.isEmpty() ? "unclassified" : String.join(", ", categories)) + " ("
+					+ relevance.getName() + ")";
 		}
 
 		/**
@@ -713,10 +750,10 @@ public class GdprFindingsToDiagnostics {
 
 		/**
 		 * The least certain of two confidences, so folding findings never makes a claim look surer
-		 * than the least sure review that reached it. {@code REQUIRES_PURPOSE_CONFIRMATION} is the
+		 * than the least sure review that reached it. {@code REQUIRES_CONFIRMATION} is the
 		 * most cautious of all: it says the metamodel cannot settle the question.
 		 */
-		private static ConfidenceType mostCautious(ConfidenceType one, ConfidenceType other) {
+		private static Confidence mostCautious(Confidence one, Confidence other) {
 			if (one == null) {
 				return other;
 			}
@@ -726,13 +763,15 @@ public class GdprFindingsToDiagnostics {
 			return cautiousness(one) <= cautiousness(other) ? one : other;
 		}
 
-		private static int cautiousness(ConfidenceType confidence) {
+		private static int cautiousness(Confidence confidence) {
 			return switch (confidence) {
-			case REQUIRES_PURPOSE_CONFIRMATION -> 0;
+			case REQUIRES_CONFIRMATION -> 0;
 			case LOW -> 1;
 			case MEDIUM -> 2;
 			case HIGH -> 3;
 			};
 		}
 	}
+
+
 }

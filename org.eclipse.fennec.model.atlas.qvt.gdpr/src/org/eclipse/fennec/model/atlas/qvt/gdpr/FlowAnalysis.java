@@ -21,6 +21,7 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 
@@ -30,22 +31,22 @@ import org.eclipse.fennec.m2x.model.compiled.PackageEntry;
 import org.eclipse.fennec.model.atlas.qvt.gdpr.QvtFlowExtractor.Direction;
 import org.eclipse.fennec.model.atlas.qvt.gdpr.QvtFlowExtractor.Extraction;
 import org.eclipse.fennec.model.atlas.qvt.gdpr.RuleCatalogue.Rule;
-import org.eclipse.fennec.model.gdprReport.CombinationFinding;
-import org.eclipse.fennec.model.gdprReport.CombinationKind;
-import org.eclipse.fennec.model.gdprReport.DataCategory;
-import org.eclipse.fennec.model.gdprReport.DetectionSignal;
-import org.eclipse.fennec.model.gdprReport.Evidence;
-import org.eclipse.fennec.model.gdprReport.FeatureEvaluation;
-import org.eclipse.fennec.model.gdprReport.Finding;
-import org.eclipse.fennec.model.gdprReport.FlowEvaluation;
-import org.eclipse.fennec.model.gdprReport.FlowKind;
-import org.eclipse.fennec.model.gdprReport.GDPRReportFactory;
-import org.eclipse.fennec.model.gdprReport.GdprReport;
-import org.eclipse.fennec.model.gdprReport.GdprReportOrigin;
-import org.eclipse.fennec.model.gdprReport.LegalCorpusRef;
-import org.eclipse.fennec.model.gdprReport.PackageSubject;
-import org.eclipse.fennec.model.gdprReport.RelevanceLevelType;
-import org.eclipse.fennec.model.gdprReport.TransformationSubject;
+import org.eclipse.fennec.model.compliance.context.CategoryRef;
+import org.eclipse.fennec.model.compliance.context.ContextFactory;
+import org.eclipse.fennec.model.compliance.context.ContextRef;
+import org.eclipse.fennec.model.compliance.report.CombinationFinding;
+import org.eclipse.fennec.model.compliance.report.DetectionSignal;
+import org.eclipse.fennec.model.compliance.report.Evidence;
+import org.eclipse.fennec.model.compliance.report.FeatureEvaluation;
+import org.eclipse.fennec.model.compliance.report.Finding;
+import org.eclipse.fennec.model.compliance.report.FlowEvaluation;
+import org.eclipse.fennec.model.compliance.report.FlowKind;
+import org.eclipse.fennec.model.compliance.report.ReportFactory;
+import org.eclipse.fennec.model.compliance.report.ComplianceReport;
+import org.eclipse.fennec.model.compliance.report.ReportOrigin;
+import org.eclipse.fennec.model.compliance.report.PackageSubject;
+import org.eclipse.fennec.model.compliance.report.RelevanceLevel;
+import org.eclipse.fennec.model.compliance.report.TransformationSubject;
 
 /**
  * Derives the GDPR report of a compiled transformation from the reviews of the metamodels it was
@@ -110,7 +111,15 @@ final class FlowAnalysis {
 	 */
 	private static final String ID_SEPARATOR = "|";
 
-	private static final GDPRReportFactory REPORTS = GDPRReportFactory.eINSTANCE;
+	private static final ReportFactory REPORTS = ReportFactory.eINSTANCE;
+
+	private static final ContextFactory CONTEXTS = ContextFactory.eINSTANCE;
+
+	/** The taxonomy a context holds its combination kinds in. */
+	private static final String COMBINATION_TAXONOMY = "combination-kinds";
+
+	/** The only combination kind a flow analysis is in a position to assert. */
+	private static final String LINKAGE = "LINKAGE";
 
 	private FlowAnalysis() {
 	}
@@ -128,21 +137,22 @@ final class FlowAnalysis {
 	 *         flows and no reviews still produces a report, because "nothing was found" and
 	 *         "nothing was looked at" have to be told apart by a reader
 	 */
-	static GdprReport analyse(CompiledUnit unit, Map<String, GdprReport> reviews, Instant generatedAt) {
+	static ComplianceReport analyse(CompiledUnit unit, Map<String, ComplianceReport> reviews, Instant generatedAt) {
 		CompiledUnitManifest manifest = unit.getManifest();
 		Extraction extraction = QvtFlowExtractor.extract(unit);
 		Map<String, ReviewIndex> byNsURI = reviewsByPackage(manifest, reviews);
 
-		GdprReport report = REPORTS.createGdprReport();
+		ComplianceReport report = REPORTS.createComplianceReport();
 		report.setName("GDPR flow analysis of " + manifest.getQualifiedName());
 		report.setGeneratedAt(generatedAt.toString());
 		report.setGeneratedBy(RuleCatalogue.VERSION);
-		report.setOrigin(GdprReportOrigin.STATIC_ANALYSIS);
+		report.setOrigin(ReportOrigin.STATIC_ANALYSIS);
 		report.setDisclaimer(DISCLAIMER);
-		report.setCorpus(corpusOf(byNsURI));
+		report.getContexts().addAll(contextsOf(byNsURI));
+		report.setLanguage(languageOf(byNsURI));
 		TransformationSubject subject = subjectOf(manifest, unit, extraction, reviews);
 		report.setSubject(subject);
-		report.setReportId(reportIdOf(manifest, subject, report.getCorpus()));
+		report.setReportId(reportIdOf(manifest, subject, report.getContexts(), report.getLanguage()));
 
 		evaluate(extraction, byNsURI, report);
 		notPropagated(extraction, byNsURI, report);
@@ -162,7 +172,7 @@ final class FlowAnalysis {
 	 * subject exists to make visible.
 	 */
 	private static TransformationSubject subjectOf(CompiledUnitManifest manifest, CompiledUnit unit,
-			Extraction extraction, Map<String, GdprReport> reviews) {
+			Extraction extraction, Map<String, ComplianceReport> reviews) {
 		TransformationSubject subject = REPORTS.createTransformationSubject();
 		subject.setQualifiedName(manifest.getQualifiedName());
 		subject.setLanguage(manifest.getLanguage());
@@ -189,12 +199,12 @@ final class FlowAnalysis {
 	 * saying the analysis is incomplete, in the place the model reserved for it - not an omission.
 	 */
 	private static PackageSubject packageSubject(PackageEntry entry, Map<String, String> names,
-			Map<String, GdprReport> reviews) {
+			Map<String, ComplianceReport> reviews) {
 		PackageSubject subject = REPORTS.createPackageSubject();
 		subject.setNsURI(entry.getNsURI());
 		subject.setName(names.get(entry.getNsURI()));
 		subject.setSubjectFingerprint(entry.getFingerprint());
-		GdprReport review = reviews.get(entry.getFingerprint());
+		ComplianceReport review = reviews.get(entry.getFingerprint());
 		if (review != null) {
 			subject.setReportId(review.getReportId());
 		}
@@ -210,10 +220,10 @@ final class FlowAnalysis {
 
 	/** The review of each metamodel, keyed by nsURI instead of by fingerprint. */
 	private static Map<String, ReviewIndex> reviewsByPackage(CompiledUnitManifest manifest,
-			Map<String, GdprReport> reviews) {
+			Map<String, ComplianceReport> reviews) {
 		Map<String, ReviewIndex> byNsURI = new LinkedHashMap<>();
 		for (PackageEntry entry : manifest.getPackageEntry()) {
-			GdprReport review = reviews.get(entry.getFingerprint());
+			ComplianceReport review = reviews.get(entry.getFingerprint());
 			if (review != null) {
 				byNsURI.putIfAbsent(entry.getNsURI(), new ReviewIndex(review));
 			}
@@ -222,26 +232,79 @@ final class FlowAnalysis {
 	}
 
 	/**
-	 * The corpus this report is against: the one the reviews cited from.
+	 * The contexts this report is against: the ones the reviews were made against.
 	 * <p>
 	 * Carried over rather than chosen, because every citation in this report came out of one of
-	 * those reviews - a report cannot claim to be against a corpus it never read. Where no review
-	 * exists there is nothing to carry and nothing is cited either; the reference then names the
-	 * regulation and no consolidation of it, which is a fact rather than a citation.
+	 * those reviews - a report cannot claim to be against a context it never read. The union of
+	 * what the reviews cite, de-duplicated on id and version, so a transformation whose two
+	 * metamodels were reviewed against the same regulation names it once.
+	 *
+	 * @param byNsURI the reviews this analysis rests on
+	 * @return the distinct contexts, in the order they were first met; empty when no review carried
+	 *         one, which is a report that may not be written - see
+	 *         {@link TransformationAnalysis#analyse}
 	 */
-	private static LegalCorpusRef corpusOf(Map<String, ReviewIndex> byNsURI) {
-		LegalCorpusRef carried = byNsURI.values().stream().map(ReviewIndex::corpus).filter(c -> c != null).findFirst()
-				.orElse(null);
-		LegalCorpusRef corpus = REPORTS.createLegalCorpusRef();
-		if (carried == null) {
-			corpus.setCelex(GDPR_CELEX);
-			return corpus;
+	private static List<ContextRef> contextsOf(Map<String, ReviewIndex> byNsURI) {
+		Map<String, ContextRef> distinct = new LinkedHashMap<>();
+		for (ReviewIndex review : byNsURI.values()) {
+			for (ContextRef carried : review.contexts()) {
+				if (carried.getContextId() == null || carried.getContextId().isBlank()) {
+					continue;
+				}
+				ContextRef ref = CONTEXTS.createContextRef();
+				ref.setContextId(carried.getContextId());
+				ref.setContextVersion(carried.getContextVersion());
+				distinct.putIfAbsent(ref.getContextId() + ID_SEPARATOR + ref.getContextVersion(), ref);
+			}
 		}
-		corpus.setCelex(carried.getCelex());
-		corpus.setConsolidatedDate(carried.getConsolidatedDate());
-		corpus.setLanguage(carried.getLanguage());
-		corpus.setFormexSchema(carried.getFormexSchema());
-		return corpus;
+		return new ArrayList<>(distinct.values());
+	}
+
+	/**
+	 * The language this report writes its prose in: the one the reviews it carried its sentences
+	 * from were written in.
+	 * <p>
+	 * The analyser composes no prose of its own beyond the rule catalogue's templates, and every
+	 * rationale it carries over is in the language of the review it came from. Several languages
+	 * among the reviews leave it unset rather than picking one - a document that claims a language
+	 * it is only half in is worse than one that claims none.
+	 */
+	private static String languageOf(Map<String, ReviewIndex> byNsURI) {
+		Set<String> languages = new LinkedHashSet<>();
+		for (ReviewIndex review : byNsURI.values()) {
+			if (review.language() != null && !review.language().isBlank()) {
+				languages.add(review.language().trim().toUpperCase(Locale.ROOT));
+			}
+		}
+		return languages.size() == 1 ? languages.iterator().next() : null;
+	}
+
+	/**
+	 * Records a data category on a finding, as a reference into the taxonomy of the contexts the
+	 * reviews named. Nothing is recorded when the analysis has no category to state.
+	 */
+	private static void dataCategory(Finding finding, String categoryId) {
+		if (categoryId == null) {
+			return;
+		}
+		finding.getCategories().add(categoryRef(ReviewIndex.TAXONOMY, categoryId));
+	}
+
+	/**
+	 * Records how a combination combines. Always {@code LINKAGE}: the analyser raises a combination
+	 * when several classified source fields reach one target field, which is what makes them
+	 * joinable, and it is not in a position to tell that from profiling or from an inference about
+	 * a special category - those are a reviewer's readings, and this one looks only at flows.
+	 */
+	private static void combinationKind(CombinationFinding combination, Map<String, ReviewIndex> byNsURI) {
+		combination.getCategories().add(categoryRef(COMBINATION_TAXONOMY, LINKAGE));
+	}
+
+	private static CategoryRef categoryRef(String taxonomyId, String categoryId) {
+		CategoryRef ref = CONTEXTS.createCategoryRef();
+		ref.setTaxonomyId(taxonomyId);
+		ref.setCategoryId(categoryId);
+		return ref;
 	}
 
 	/**
@@ -258,14 +321,16 @@ final class FlowAnalysis {
 	 * not a new judgement.
 	 */
 	private static String reportIdOf(CompiledUnitManifest manifest, TransformationSubject subject,
-			LegalCorpusRef corpus) {
+			List<ContextRef> contexts, String reportLanguage) {
 		StringBuilder inputs = new StringBuilder(RuleCatalogue.VERSION);
 		List<PackageSubject> rested = new ArrayList<>(subject.getSourcePackages());
 		rested.addAll(subject.getTargetPackages());
 		rested.stream().map(p -> p.getNsURI() + "|" + p.getSubjectFingerprint() + "|" + p.getReportId()).sorted()
 				.forEach(entry -> inputs.append('\n').append(entry));
-		String language = corpus.getLanguage() == null || corpus.getLanguage().isBlank() ? "und"
-				: corpus.getLanguage().toLowerCase();
+		contexts.stream().map(c -> c.getContextId() + "@" + c.getContextVersion()).sorted()
+				.forEach(entry -> inputs.append('\n').append(entry));
+		String language = reportLanguage == null || reportLanguage.isBlank() ? "und"
+				: reportLanguage.toLowerCase();
 		return "gdpr-flow-" + cut(digestOf(manifest.getUnitFingerprint()), 40) + "-"
 				+ cut(sha256(inputs.toString()), 16) + "-" + language;
 	}
@@ -312,13 +377,13 @@ final class FlowAnalysis {
 	 * structure loss and a disagreeing target review are all statements about what arrives
 	 * somewhere, and they are only visible once everything arriving there is together.
 	 */
-	private static void evaluate(Extraction extraction, Map<String, ReviewIndex> byNsURI, GdprReport report) {
+	private static void evaluate(Extraction extraction, Map<String, ReviewIndex> byNsURI, ComplianceReport report) {
 		Map<String, List<Flow>> byTarget = new LinkedHashMap<>();
 		Map<Flow, FlowEvaluation> evaluations = new LinkedHashMap<>();
 		for (Flow flow : extraction.flows()) {
 			FlowEvaluation evaluation = evaluationOf(flow, byNsURI);
 			evaluations.put(flow, evaluation);
-			report.getEvaluation().add(evaluation);
+			report.getEvaluations().add(evaluation);
 			byTarget.computeIfAbsent(flow.mapping() + "->" + flow.targetKey(), key -> new ArrayList<>()).add(flow);
 		}
 		for (List<Flow> arriving : byTarget.values()) {
@@ -376,13 +441,13 @@ final class FlowAnalysis {
 	 * Everything the rules have to say about one target field, given everything that arrives in it.
 	 */
 	private static void apply(List<Flow> arriving, Map<Flow, FlowEvaluation> evaluations,
-			Map<String, ReviewIndex> byNsURI, GdprReport report) {
+			Map<String, ReviewIndex> byNsURI, ComplianceReport report) {
 		Flow any = arriving.get(0);
 		List<Flow> classified = new ArrayList<>();
-		DataCategory worst = null;
-		RelevanceLevelType relevance = null;
+		String worst = null;
+		RelevanceLevel relevance = null;
 		for (Flow flow : arriving) {
-			DataCategory category = ReviewIndex.worstCategory(featureOf(flow, byNsURI));
+			String category = ReviewIndex.worstCategory(featureOf(flow, byNsURI));
 			if (category != null && ReviewIndex.PERSONAL.contains(category)) {
 				classified.add(flow);
 				worst = ReviewIndex.stronger(worst, category);
@@ -411,7 +476,7 @@ final class FlowAnalysis {
 		// why a reader sees the flows nested under it rather than beside it.
 		if (classified.size() > 1) {
 			CombinationFinding combination = REPORTS.createCombinationFinding();
-			combination.setCombinationKind(CombinationKind.LINKAGE);
+			combinationKind(combination, byNsURI);
 			classified.forEach(flow -> combination.getFeatures().add(evaluations.get(flow)));
 			if (fill(combination, Rule.AGGREGATION, any, worst, relevance, byNsURI, classified)) {
 				report.getCombinations().add(combination);
@@ -428,10 +493,10 @@ final class FlowAnalysis {
 		// target category and not only on NOT_PERSONAL_DATA - a DIRECT_IDENTIFIER landing in a
 		// field the target review calls PERSONAL_DATA is a downgrade and went unseen while the rule
 		// was written for the extreme case alone.
-		DataCategory target = ReviewIndex.worstCategory(targetFeatureOf(any, byNsURI));
+		String target = ReviewIndex.worstCategory(targetFeatureOf(any, byNsURI));
 		if (target != null && ReviewIndex.weakerThan(target, worst)) {
 			addTargetFinding(Rule.TARGET_DISAGREEMENT, any, worst, relevance, byNsURI, classified, evaluations,
-					report, Map.of("targetCategory", target.getName()));
+					report, Map.of("targetCategory", target));
 		}
 
 		// PURPOSE_NOT_CARRIED: a purpose is per processing, and the transformation is a new one.
@@ -479,22 +544,22 @@ final class FlowAnalysis {
 	 * A statement about the target field: recorded as a combination when several flows made it
 	 * true, and on the single flow when only one did.
 	 */
-	private static void addTargetFinding(Rule rule, Flow target, DataCategory worst, RelevanceLevelType relevance,
+	private static void addTargetFinding(Rule rule, Flow target, String worst, RelevanceLevel relevance,
 			Map<String, ReviewIndex> byNsURI, List<Flow> classified, Map<Flow, FlowEvaluation> evaluations,
-			GdprReport report) {
+			ComplianceReport report) {
 		addTargetFinding(rule, target, worst, relevance, byNsURI, classified, evaluations, report, Map.of());
 	}
 
-	private static void addTargetFinding(Rule rule, Flow target, DataCategory worst, RelevanceLevelType relevance,
+	private static void addTargetFinding(Rule rule, Flow target, String worst, RelevanceLevel relevance,
 			Map<String, ReviewIndex> byNsURI, List<Flow> classified, Map<Flow, FlowEvaluation> evaluations,
-			GdprReport report, Map<String, String> extra) {
+			ComplianceReport report, Map<String, String> extra) {
 		if (classified.size() == 1) {
 			Flow only = classified.get(0);
 			add(evaluations.get(only), finding(rule, only, worst, relevance, byNsURI, classified, extra));
 			return;
 		}
 		CombinationFinding combination = REPORTS.createCombinationFinding();
-		combination.setCombinationKind(CombinationKind.LINKAGE);
+		combinationKind(combination, byNsURI);
 		classified.forEach(flow -> combination.getFeatures().add(evaluations.get(flow)));
 		if (fill(combination, rule, target, worst, relevance, byNsURI, classified, extra)) {
 			report.getCombinations().add(combination);
@@ -511,7 +576,7 @@ final class FlowAnalysis {
 	 * is about the set, not about each field. It is positive evidence for a data-minimisation
 	 * argument rather than a risk, which is what its relevance says.
 	 */
-	private static void notPropagated(Extraction extraction, Map<String, ReviewIndex> byNsURI, GdprReport report) {
+	private static void notPropagated(Extraction extraction, Map<String, ReviewIndex> byNsURI, ComplianceReport report) {
 		for (Map.Entry<String, ReviewIndex> entry : byNsURI.entrySet()) {
 			String nsURI = entry.getKey();
 			if (extraction.directions().get(nsURI) == Direction.OUT) {
@@ -525,7 +590,7 @@ final class FlowAnalysis {
 			int classified = 0;
 			for (String fragment : review.fragments()) {
 				FeatureEvaluation feature = review.feature(fragment);
-				DataCategory category = ReviewIndex.worstCategory(feature);
+				String category = ReviewIndex.worstCategory(feature);
 				if (category == null || !ReviewIndex.PERSONAL.contains(category)) {
 					continue;
 				}
@@ -544,11 +609,11 @@ final class FlowAnalysis {
 			evaluation.setSourceNsURI(nsURI);
 			Finding finding = REPORTS.createFinding();
 			finding.setId(Rule.NOT_PROPAGATED.code() + ":" + nsURI);
-			finding.setCategory(unreadFeatures.stream().map(ReviewIndex::worstCategory)
+			dataCategory(finding, unreadFeatures.stream().map(ReviewIndex::worstCategory)
 					.reduce(null, ReviewIndex::stronger));
 			// Not a risk: it is the absence of one, so it is recorded at the lowest level that is
 			// still a statement.
-			finding.setRelevanceLevel(RelevanceLevelType.LOW);
+			finding.setRelevanceLevel(RelevanceLevel.LOW);
 			finding.getDetectedBy().add(DetectionSignal.TRANSFORMATION_FLOW);
 			finding.setRationale(RuleCatalogue.rationale(Rule.NOT_PROPAGATED, Map.of(//
 					"nSources", String.valueOf(unread.size()), //
@@ -564,13 +629,13 @@ final class FlowAnalysis {
 				continue;
 			}
 			evaluation.getFindings().add(finding);
-			report.getEvaluation().add(evaluation);
+			report.getEvaluations().add(evaluation);
 		}
 	}
 
 	/* ------------------------------------------------------------------ building a finding */
 
-	private static Finding finding(Rule rule, Flow flow, DataCategory category, RelevanceLevelType relevance,
+	private static Finding finding(Rule rule, Flow flow, String category, RelevanceLevel relevance,
 			Map<String, ReviewIndex> byNsURI, List<Flow> contributing) {
 		return finding(rule, flow, category, relevance, byNsURI, contributing, Map.of());
 	}
@@ -580,15 +645,15 @@ final class FlowAnalysis {
 	 * carry over. The model requires evidence, and a claim nobody backed does not belong in a
 	 * compliance record - so it is dropped rather than invented.
 	 */
-	private static Finding finding(Rule rule, Flow flow, DataCategory category, RelevanceLevelType relevance,
+	private static Finding finding(Rule rule, Flow flow, String category, RelevanceLevel relevance,
 			Map<String, ReviewIndex> byNsURI, List<Flow> contributing, Map<String, String> extra) {
 		Finding finding = REPORTS.createFinding();
 		finding.setId(rule.code() + ":" + idOf(flow));
 		return fill(finding, rule, flow, category, relevance, byNsURI, contributing, extra) ? finding : null;
 	}
 
-	private static boolean fill(Finding finding, Rule rule, Flow flow, DataCategory category,
-			RelevanceLevelType relevance, Map<String, ReviewIndex> byNsURI, List<Flow> contributing) {
+	private static boolean fill(Finding finding, Rule rule, Flow flow, String category,
+			RelevanceLevel relevance, Map<String, ReviewIndex> byNsURI, List<Flow> contributing) {
 		return fill(finding, rule, flow, category, relevance, byNsURI, contributing, Map.of());
 	}
 
@@ -596,13 +661,13 @@ final class FlowAnalysis {
 	 * Writes the rule's sentence and carries its citations over. Answers whether anything could be
 	 * carried: without a citation the finding cannot exist.
 	 */
-	private static boolean fill(Finding finding, Rule rule, Flow flow, DataCategory category,
-			RelevanceLevelType relevance, Map<String, ReviewIndex> byNsURI, List<Flow> contributing,
+	private static boolean fill(Finding finding, Rule rule, Flow flow, String category,
+			RelevanceLevel relevance, Map<String, ReviewIndex> byNsURI, List<Flow> contributing,
 			Map<String, String> extra) {
 		if (finding.getId() == null) {
 			finding.setId(rule.code() + ":" + flow.mapping() + ID_SEPARATOR + flow.targetFeature());
 		}
-		finding.setCategory(category);
+		dataCategory(finding, category);
 		finding.setRelevanceLevel(relevance);
 		// The signal is the transformation itself: the analyser read no name, no type and no
 		// documentation, it read where the value goes.
@@ -621,13 +686,13 @@ final class FlowAnalysis {
 	}
 
 	/** The facts every template may ask for about one target field. */
-	private static Map<String, String> facts(Flow flow, DataCategory category, List<Flow> contributing) {
+	private static Map<String, String> facts(Flow flow, String category, List<Flow> contributing) {
 		Map<String, String> facts = new LinkedHashMap<>();
 		facts.put("mapping", flow.mapping() == null ? "an unnamed mapping" : flow.mapping());
 		facts.put("sourceFeature", flow.sourceFeature() == null ? "an unnamed value" : flow.sourceFeature());
 		facts.put("targetFeature", flow.targetFeature() == null ? "an unresolved field" : flow.targetFeature());
 		facts.put("flowKind", flow.kind() == null ? FlowKind.OPAQUE.getName() : flow.kind().getName());
-		facts.put("category", category == null ? DataCategory.NOT_PERSONAL_DATA.getName() : category.getName());
+		facts.put("category", category == null ? "NOT_PERSONAL_DATA" : category);
 		facts.put("nSources", String.valueOf(contributing.size()));
 		facts.put("nOthers", String.valueOf(Math.max(contributing.size() - 1, 0)));
 		Set<String> sources = new LinkedHashSet<>();

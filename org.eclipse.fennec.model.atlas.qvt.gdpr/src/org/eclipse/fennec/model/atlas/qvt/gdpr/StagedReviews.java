@@ -18,7 +18,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.eclipse.fennec.model.gdprReport.GdprReport;
+import org.eclipse.fennec.model.compliance.report.ComplianceReport;
 
 /**
  * Which review speaks for a metamodel revision, when the reviews may be spread over several stages.
@@ -54,7 +54,7 @@ final class StagedReviews {
 	 * @param fingerprint the revision it is about
 	 * @param report      the review itself
 	 */
-	record Candidate(String stage, String objectId, Instant at, String fingerprint, GdprReport report) {
+	record Candidate(String stage, String objectId, Instant at, String fingerprint, ComplianceReport report) {
 	}
 
 	private StagedReviews() {
@@ -68,7 +68,7 @@ final class StagedReviews {
 	 * @param candidates every review found, in any order
 	 * @return fingerprint to the review that speaks for it
 	 */
-	static Map<String, GdprReport> resolve(List<String> stageOrder, List<Candidate> candidates) {
+	static Map<String, ComplianceReport> resolve(List<String> stageOrder, List<Candidate> candidates) {
 		Map<String, Candidate> best = new LinkedHashMap<>();
 		for (Candidate candidate : candidates) {
 			int rank = stageOrder.indexOf(candidate.stage());
@@ -80,7 +80,7 @@ final class StagedReviews {
 				best.put(candidate.fingerprint(), candidate);
 			}
 		}
-		Map<String, GdprReport> resolved = new LinkedHashMap<>();
+		Map<String, ComplianceReport> resolved = new LinkedHashMap<>();
 		best.forEach((fingerprint, candidate) -> resolved.put(fingerprint, candidate.report()));
 		return resolved;
 	}

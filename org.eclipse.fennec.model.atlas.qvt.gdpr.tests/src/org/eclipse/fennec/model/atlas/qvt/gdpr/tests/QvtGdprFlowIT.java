@@ -24,9 +24,9 @@ import org.eclipse.emf.ecore.EObject;
 import org.eclipse.fennec.model.atlas.mgmt.management.Diagnostic;
 import org.eclipse.fennec.model.atlas.tests.common.CommonTestAnnotations;
 import org.eclipse.fennec.model.atlas.wf.workflowapi.WritableScopeService;
-import org.eclipse.fennec.model.gdprReport.GdprReport;
-import org.eclipse.fennec.model.gdprReport.PackageSubject;
-import org.eclipse.fennec.model.gdprReport.TransformationSubject;
+import org.eclipse.fennec.model.compliance.report.ComplianceReport;
+import org.eclipse.fennec.model.compliance.report.PackageSubject;
+import org.eclipse.fennec.model.compliance.report.TransformationSubject;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -72,7 +72,7 @@ public class QvtGdprFlowIT {
 
 		Fixtures.storeUnit(scope, Fixtures.unit(fingerprint), DRAFT);
 
-		GdprReport report = Fixtures.await(() -> Fixtures.derivedReport(scope, DRAFT), found -> found != null,
+		ComplianceReport report = Fixtures.await(() -> Fixtures.derivedReport(scope, DRAFT), found -> found != null,
 				"the transformation report");
 		TransformationSubject subject = (TransformationSubject) report.getSubject();
 		assertEquals(Fixtures.UNIT_NAME, subject.getQualifiedName());
@@ -101,7 +101,7 @@ public class QvtGdprFlowIT {
 
 		Fixtures.storeUnit(scope, Fixtures.unit(fingerprint), DRAFT);
 
-		GdprReport report = Fixtures.await(() -> Fixtures.derivedReport(scope, DRAFT), found -> found != null,
+		ComplianceReport report = Fixtures.await(() -> Fixtures.derivedReport(scope, DRAFT), found -> found != null,
 				"the transformation report");
 		assertEquals("review-draft", only((TransformationSubject) report.getSubject()).getReportId(),
 				"the ladder is a statement about which stage is authoritative; recency cannot outrank it");
@@ -120,7 +120,7 @@ public class QvtGdprFlowIT {
 
 		Fixtures.storeUnit(scope, Fixtures.unit(fingerprint), RELEASE);
 
-		GdprReport report = Fixtures.await(() -> Fixtures.derivedReport(scope, RELEASE), found -> found != null,
+		ComplianceReport report = Fixtures.await(() -> Fixtures.derivedReport(scope, RELEASE), found -> found != null,
 				"the transformation report");
 		assertNull(only((TransformationSubject) report.getSubject()).getReportId(),
 				"the final stage of the chain points at the parent scope, never back down its own ladder");
@@ -182,7 +182,7 @@ public class QvtGdprFlowIT {
 
 		Fixtures.storeUnit(scope, Fixtures.unit(fingerprint), DRAFT);
 
-		GdprReport report = Fixtures.await(() -> Fixtures.derivedReport(scope, DRAFT), found -> found != null,
+		ComplianceReport report = Fixtures.await(() -> Fixtures.derivedReport(scope, DRAFT), found -> found != null,
 				"the transformation report");
 		PackageSubject rested = only((TransformationSubject) report.getSubject());
 		assertEquals(fingerprint, rested.getSubjectFingerprint(),

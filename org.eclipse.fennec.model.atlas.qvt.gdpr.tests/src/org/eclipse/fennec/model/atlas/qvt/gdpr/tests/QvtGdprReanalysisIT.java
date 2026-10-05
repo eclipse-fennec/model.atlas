@@ -21,7 +21,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.eclipse.emf.ecore.EObject;
 import org.eclipse.fennec.model.atlas.tests.common.CommonTestAnnotations;
 import org.eclipse.fennec.model.atlas.wf.workflowapi.WritableScopeService;
-import org.eclipse.fennec.model.gdprReport.GdprReport;
+import org.eclipse.fennec.model.compliance.report.ComplianceReport;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -62,7 +62,7 @@ public class QvtGdprReanalysisIT {
 		Fixtures.storeUnit(scope, Fixtures.unit(fingerprint), DRAFT);
 
 		// Nothing has reviewed the metamodel yet, so the first analysis is honestly incomplete.
-		GdprReport first = Fixtures.await(() -> Fixtures.derivedReport(scope, DRAFT), found -> found != null,
+		ComplianceReport first = Fixtures.await(() -> Fixtures.derivedReport(scope, DRAFT), found -> found != null,
 				"the first transformation report");
 		assertNull(Fixtures.restedOn(first).getReportId(),
 				"the entry is listed with its fingerprint and no reportId, which is how a report says so");
@@ -71,7 +71,7 @@ public class QvtGdprReanalysisIT {
 		// incomplete report listed.
 		Fixtures.storeReport(scope, Fixtures.review("review-1", fingerprint, "2026-10-01T08:00:00Z"), DRAFT);
 
-		GdprReport completed = Fixtures.await(() -> Fixtures.derivedReport(scope, DRAFT),
+		ComplianceReport completed = Fixtures.await(() -> Fixtures.derivedReport(scope, DRAFT),
 				found -> found != null && Fixtures.restedOn(found).getReportId() != null,
 				"the analysis to be derived again now that a review exists");
 		assertEquals("review-1", Fixtures.restedOn(completed).getReportId());
@@ -94,7 +94,7 @@ public class QvtGdprReanalysisIT {
 		// The review lands in approved; the transformation sits in draft and can see it.
 		Fixtures.storeReport(scope, Fixtures.review("review-1", fingerprint, "2026-10-01T08:00:00Z"), APPROVED);
 
-		GdprReport completed = Fixtures.await(() -> Fixtures.derivedReport(scope, DRAFT),
+		ComplianceReport completed = Fixtures.await(() -> Fixtures.derivedReport(scope, DRAFT),
 				found -> found != null && Fixtures.restedOn(found).getReportId() != null,
 				"the draft transformation to be re-derived from the approved review");
 		assertEquals("review-1", Fixtures.restedOn(completed).getReportId());
@@ -119,7 +119,7 @@ public class QvtGdprReanalysisIT {
 
 		// Without this the transformation would go on looking complete, which is worse than
 		// looking incomplete.
-		GdprReport after = Fixtures.await(() -> Fixtures.derivedReport(scope, DRAFT),
+		ComplianceReport after = Fixtures.await(() -> Fixtures.derivedReport(scope, DRAFT),
 				found -> found != null && Fixtures.restedOn(found).getReportId() == null,
 				"the analysis to be derived again without the withdrawn review");
 		assertNotNull(after);
@@ -135,7 +135,7 @@ public class QvtGdprReanalysisIT {
 		WritableScopeService<EObject> scope = scope(aware);
 		String fingerprint = Fixtures.storeModel(scope, DRAFT);
 		Fixtures.storeUnit(scope, Fixtures.unit(fingerprint), DRAFT);
-		GdprReport first = Fixtures.await(() -> Fixtures.derivedReport(scope, DRAFT), found -> found != null,
+		ComplianceReport first = Fixtures.await(() -> Fixtures.derivedReport(scope, DRAFT), found -> found != null,
 				"the first report");
 
 		// A review of a different revision of the same metamodel. What a review is of is a
@@ -144,7 +144,7 @@ public class QvtGdprReanalysisIT {
 				"2026-10-01T08:00:00Z"), DRAFT);
 
 		Fixtures.settle();
-		GdprReport unchanged = Fixtures.reportById(scope, DRAFT, first.getReportId());
+		ComplianceReport unchanged = Fixtures.reportById(scope, DRAFT, first.getReportId());
 		assertNotNull(unchanged, "the report that was there is still the report that is there");
 		assertNull(Fixtures.restedOn(unchanged).getReportId());
 	}

@@ -40,20 +40,20 @@ import org.eclipse.fennec.m2x.model.compiled.CompiledUnit;
 import org.eclipse.fennec.m2x.model.imperativeocl.ImperativeOclPackage;
 import org.eclipse.fennec.m2x.model.ocl.OclPackage;
 import org.eclipse.fennec.m2x.model.qvtoperational.QvtOperationalPackage;
-import org.eclipse.fennec.model.gdprReport.CombinationFinding;
-import org.eclipse.fennec.model.gdprReport.DataCategory;
-import org.eclipse.fennec.model.gdprReport.Evaluation;
-import org.eclipse.fennec.model.gdprReport.Evaluation;
-import org.eclipse.fennec.model.gdprReport.Evidence;
-import org.eclipse.fennec.model.gdprReport.Finding;
-import org.eclipse.fennec.model.gdprReport.FlowEvaluation;
-import org.eclipse.fennec.model.gdprReport.FlowKind;
-import org.eclipse.fennec.model.gdprReport.GDPRReportPackage;
-import org.eclipse.fennec.model.gdprReport.GdprReport;
-import org.eclipse.fennec.model.gdprReport.GdprReportOrigin;
-import org.eclipse.fennec.model.gdprReport.PackageSubject;
-import org.eclipse.fennec.model.gdprReport.RelevanceLevelType;
-import org.eclipse.fennec.model.gdprReport.TransformationSubject;
+import org.eclipse.fennec.model.compliance.context.CategoryRef;
+import org.eclipse.fennec.model.compliance.report.CombinationFinding;
+import org.eclipse.fennec.model.compliance.report.Evaluation;
+import org.eclipse.fennec.model.compliance.report.Evaluation;
+import org.eclipse.fennec.model.compliance.report.Evidence;
+import org.eclipse.fennec.model.compliance.report.Finding;
+import org.eclipse.fennec.model.compliance.report.FlowEvaluation;
+import org.eclipse.fennec.model.compliance.report.FlowKind;
+import org.eclipse.fennec.model.compliance.report.ReportPackage;
+import org.eclipse.fennec.model.compliance.report.ComplianceReport;
+import org.eclipse.fennec.model.compliance.report.ReportOrigin;
+import org.eclipse.fennec.model.compliance.report.PackageSubject;
+import org.eclipse.fennec.model.compliance.report.RelevanceLevel;
+import org.eclipse.fennec.model.compliance.report.TransformationSubject;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -98,9 +98,9 @@ public class QvtFlowAnalysisTest {
 	@Test
 	@DisplayName("the subject is the transformation, pinned to the revisions it was compiled against")
 	public void theSubjectNamesTheUnitAndItsMetamodels() {
-		GdprReport report = analyse();
+		ComplianceReport report = analyse();
 
-		assertEquals(GdprReportOrigin.STATIC_ANALYSIS, report.getOrigin(), "nothing here was reviewed by anybody");
+		assertEquals(ReportOrigin.STATIC_ANALYSIS, report.getOrigin(), "nothing here was reviewed by anybody");
 		assertEquals(RuleCatalogue.VERSION, report.getGeneratedBy(), "the rule table is what wrote it");
 		assertNotNull(report.getDisclaimer());
 
@@ -120,14 +120,16 @@ public class QvtFlowAnalysisTest {
 				"and the entry points at the review whose findings this report carries over");
 
 		// Carried over, never chosen: every citation in the report came out of those reviews
-		assertEquals("02016R0679-20160504", report.getCorpus().getCelex());
-		assertEquals("EN", report.getCorpus().getLanguage());
+		assertEquals(1, report.getContexts().size(), "both reviews cite the one context, named once");
+		assertEquals("gdpr", report.getContexts().get(0).getContextId());
+		assertEquals("20160504", report.getContexts().get(0).getContextVersion());
+		assertEquals("EN", report.getLanguage(), "and the prose is in the language the reviews were written in");
 	}
 
 	@Test
 	@DisplayName("every assignment of the mapping becomes a flow, with the shape of the expression")
 	public void theFlowsAreReadOffTheCompiledUnit() {
-		GdprReport report = analyse();
+		ComplianceReport report = analyse();
 
 		List<FlowEvaluation> flows = flows(report);
 		assertEquals(6, flows.size(), "three direct assignments plus the three features of the concatenation");
@@ -137,7 +139,7 @@ public class QvtFlowAnalysisTest {
 		assertEquals(FlowKind.DIRECT, direct.getFlowKind(), "a bare property call is a direct copy");
 		assertEquals(Reviews.CLINIC_NS, direct.getSourceNsURI());
 		assertEquals(Reviews.CONTACTS_NS, direct.getTargetNsURI());
-		assertEquals(RelevanceLevelType.HIGH, direct.getRelevanceLevel(), "carried over from the source review");
+		assertEquals(RelevanceLevel.HIGH, direct.getRelevanceLevel(), "carried over from the source review");
 
 		for (String source : List.of("//Patient/fullName", "//Patient/postcode", "//Patient/diagnosis")) {
 			assertEquals(FlowKind.CONCATENATION, flow(report, source, CONTACTS_COMMENT).getFlowKind(),
@@ -148,12 +150,13 @@ public class QvtFlowAnalysisTest {
 	@Test
 	@DisplayName("three classified fields folded into one free-text field: the case this exists for")
 	public void theConcatenationIntoFreeTextIsFound() {
-		GdprReport report = analyse();
+		ComplianceReport report = analyse();
 
 		CombinationFinding aggregation = combination(report, RuleCatalogue.Rule.AGGREGATION);
 		assertEquals(3, aggregation.getFeatures().size(), "fullName, postcode and diagnosis meet in comment");
-		assertEquals(DataCategory.SPECIAL_CATEGORY, aggregation.getCategory(),
+		assertEquals(List.of("SPECIAL_CATEGORY"), ReviewIndex.categoriesOf(aggregation),
 				"what arrives is the strongest of what was combined");
+		assertEquals(List.of("LINKAGE"), kindsOf(aggregation), "and the fields are joinable through it");
 		assertTrue(aggregation.getRationale().contains("//Patient/diagnosis"), aggregation.getRationale());
 		assertTrue(aggregation.getRationale().contains("per field"), aggregation.getRationale());
 
@@ -171,7 +174,7 @@ public class QvtFlowAnalysisTest {
 	@Test
 	@DisplayName("a weaker target classification is a disagreement, not only NOT_PERSONAL_DATA")
 	public void aDowngradeIsFoundToo() {
-		GdprReport report = analyse();
+		ComplianceReport report = analyse();
 
 		// //Patient/id is a DIRECT_IDENTIFIER and lands in //Contact/reference, which the target
 		// review calls PERSONAL_DATA. The probe missed this: its rule fired on NOT_PERSONAL_DATA
@@ -179,13 +182,13 @@ public class QvtFlowAnalysisTest {
 		Finding downgrade = finding(flow(report, "//Patient/id", "//Contact/reference"),
 				RuleCatalogue.Rule.TARGET_DISAGREEMENT);
 		assertNotNull(downgrade, "a weaker target category is a disagreement whatever the two categories are");
-		assertEquals(DataCategory.DIRECT_IDENTIFIER, downgrade.getCategory());
+		assertEquals(List.of("DIRECT_IDENTIFIER"), ReviewIndex.categoriesOf(downgrade));
 	}
 
 	@Test
 	@DisplayName("a purpose stated at the source does not travel with the data")
 	public void aStatedPurposeIsNotCarried() {
-		GdprReport report = analyse();
+		ComplianceReport report = analyse();
 
 		Finding purpose = finding(flow(report, "//Patient/diagnosis", CONTACTS_COMMENT),
 				RuleCatalogue.Rule.PURPOSE_NOT_CARRIED);
@@ -199,16 +202,16 @@ public class QvtFlowAnalysisTest {
 	@Test
 	@DisplayName("classified fields no mapping reads are reported once, not one finding each")
 	public void whatIsNotPropagatedIsAggregated() {
-		GdprReport report = analyse();
+		ComplianceReport report = analyse();
 
-		List<Finding> notPropagated = report.getEvaluation().stream()
+		List<Finding> notPropagated = report.getEvaluations().stream()
 				.flatMap(evaluation -> evaluation.getFindings().stream())
 				.filter(found -> found.getId().startsWith(RuleCatalogue.Rule.NOT_PROPAGATED.code())).toList();
 		assertEquals(1, notPropagated.size(),
 				"one finding about the set; one per feature buries a real metamodel under INFO rows");
 
 		Finding finding = notPropagated.get(0);
-		assertEquals(RelevanceLevelType.LOW, finding.getRelevanceLevel(),
+		assertEquals(RelevanceLevel.LOW, finding.getRelevanceLevel(),
 				"it is evidence for a minimisation argument, not a risk");
 		assertTrue(finding.getRationale().contains("//Patient/birthDate"), finding.getRationale());
 		assertTrue(finding.getRationale().contains("//Physician/name"), finding.getRationale());
@@ -219,7 +222,7 @@ public class QvtFlowAnalysisTest {
 	@Test
 	@DisplayName("citations are carried over verbatim, with one clause added about the flow")
 	public void evidenceIsInheritedAndNeverComposed() {
-		GdprReport report = analyse();
+		ComplianceReport report = analyse();
 
 		Finding propagation = finding(flow(report, "//Patient/diagnosis", CONTACTS_COMMENT),
 				RuleCatalogue.Rule.PROPAGATION);
@@ -238,7 +241,7 @@ public class QvtFlowAnalysisTest {
 	@Test
 	@DisplayName("an unreviewed metamodel leaves the entry's reportId unset and raises no finding")
 	public void anUnreviewedSourceIsSaidInTheSubject() {
-		GdprReport report = FlowAnalysis.analyse(unit, Map.of(), RAN_AT);
+		ComplianceReport report = FlowAnalysis.analyse(unit, Map.of(), RAN_AT);
 
 		TransformationSubject subject = (TransformationSubject) report.getSubject();
 		assertNull(subject.getSourcePackages().get(0).getReportId(),
@@ -247,7 +250,7 @@ public class QvtFlowAnalysisTest {
 				"the package is still listed, with the revision the analysis would have needed a review of");
 
 		assertEquals(6, flows(report).size(), "the dataflow is fact and is recorded whether or not anyone reviewed");
-		assertTrue(report.getEvaluation().stream().allMatch(evaluation -> evaluation.getFindings().isEmpty()),
+		assertTrue(report.getEvaluations().stream().allMatch(evaluation -> evaluation.getFindings().isEmpty()),
 				"but nothing classifies what travels, so there is nothing to find and nothing is claimed");
 		assertTrue(report.getCombinations().isEmpty());
 	}
@@ -255,8 +258,8 @@ public class QvtFlowAnalysisTest {
 	@Test
 	@DisplayName("the same unit and the same reviews produce the same report")
 	public void theAnalysisIsDeterministic() {
-		GdprReport first = analyse();
-		GdprReport second = FlowAnalysis.analyse(unit, reviews(), RAN_AT.plusSeconds(86_400));
+		ComplianceReport first = analyse();
+		ComplianceReport second = FlowAnalysis.analyse(unit, reviews(), RAN_AT.plusSeconds(86_400));
 
 		assertEquals(first.getReportId(), second.getReportId(),
 				"a re-run on unchanged inputs is not a new judgement, so the replay adds no revision");
@@ -264,9 +267,9 @@ public class QvtFlowAnalysisTest {
 
 		// A corrected source review is a changed input, and the report that rests on it is another
 		// revision rather than an overwrite of the one before.
-		GdprReport corrected = Reviews.clinic();
+		ComplianceReport corrected = Reviews.clinic();
 		corrected.setReportId("gdpr-fp1-5b87b0c6-20260924-human");
-		GdprReport afterCorrection = FlowAnalysis.analyse(unit,
+		ComplianceReport afterCorrection = FlowAnalysis.analyse(unit,
 				Map.of(Reviews.CLINIC_FP, corrected, Reviews.CONTACTS_FP, Reviews.contacts()), RAN_AT);
 		assertFalse(first.getReportId().equals(afterCorrection.getReportId()),
 				"otherwise the correction would silently overwrite the analysis that preceded it");
@@ -275,12 +278,12 @@ public class QvtFlowAnalysisTest {
 	@Test
 	@DisplayName("the report survives being written and read back")
 	public void theReportCanBeStoredAndLoadedAgain() throws Exception {
-		GdprReport report = analyse();
+		ComplianceReport report = analyse();
 		assertFalse(report.getCombinations().isEmpty(), "the case that breaks only exists with a combination");
 
 		ResourceSet set = new ResourceSetImpl();
 		set.getResourceFactoryRegistry().getExtensionToFactoryMap().put("*", new XMIResourceFactoryImpl());
-		set.getPackageRegistry().put(GDPRReportPackage.eNS_URI, GDPRReportPackage.eINSTANCE);
+		set.getPackageRegistry().put(ReportPackage.eNS_URI, ReportPackage.eINSTANCE);
 		Resource written = set.createResource(URI.createURI("report.xmi"));
 		written.getContents().add(report);
 		ByteArrayOutputStream bytes = new ByteArrayOutputStream();
@@ -295,12 +298,12 @@ public class QvtFlowAnalysisTest {
 		Resource read = new ResourceSetImpl() {
 			{
 				getResourceFactoryRegistry().getExtensionToFactoryMap().put("*", new XMIResourceFactoryImpl());
-				getPackageRegistry().put(GDPRReportPackage.eNS_URI, GDPRReportPackage.eINSTANCE);
+				getPackageRegistry().put(ReportPackage.eNS_URI, ReportPackage.eINSTANCE);
 			}
 		}.createResource(URI.createURI("report.xmi"));
 		read.load(new ByteArrayInputStream(bytes.toByteArray()), Map.of());
 
-		GdprReport loaded = (GdprReport) read.getContents().get(0);
+		ComplianceReport loaded = (ComplianceReport) read.getContents().get(0);
 		assertEquals(report.getReportId(), loaded.getReportId());
 		assertEquals(report.getCombinations().size(), loaded.getCombinations().size());
 		for (CombinationFinding combination : loaded.getCombinations()) {
@@ -315,25 +318,25 @@ public class QvtFlowAnalysisTest {
 
 	/* ------------------------------------------------------------------ helpers */
 
-	private static GdprReport analyse() {
+	private static ComplianceReport analyse() {
 		return FlowAnalysis.analyse(unit, reviews(), RAN_AT);
 	}
 
-	private static Map<String, GdprReport> reviews() {
+	private static Map<String, ComplianceReport> reviews() {
 		return Map.of(Reviews.CLINIC_FP, Reviews.clinic(), Reviews.CONTACTS_FP, Reviews.contacts());
 	}
 
-	private static List<String> rationales(GdprReport report) {
-		return report.getEvaluation().stream().flatMap(evaluation -> evaluation.getFindings().stream())
+	private static List<String> rationales(ComplianceReport report) {
+		return report.getEvaluations().stream().flatMap(evaluation -> evaluation.getFindings().stream())
 				.map(Finding::getRationale).sorted().toList();
 	}
 
-	private static List<FlowEvaluation> flows(GdprReport report) {
-		return report.getEvaluation().stream().filter(FlowEvaluation.class::isInstance)
+	private static List<FlowEvaluation> flows(ComplianceReport report) {
+		return report.getEvaluations().stream().filter(FlowEvaluation.class::isInstance)
 				.map(FlowEvaluation.class::cast).filter(flow -> flow.getTargetFeature() != null).toList();
 	}
 
-	private static FlowEvaluation flow(GdprReport report, String source, String target) {
+	private static FlowEvaluation flow(ComplianceReport report, String source, String target) {
 		return flows(report).stream()
 				.filter(flow -> source.equals(flow.getSourceFeature()) && target.equals(flow.getTargetFeature()))
 				.findFirst().orElseThrow(() -> new AssertionError("no flow " + source + " -> " + target));
@@ -344,7 +347,7 @@ public class QvtFlowAnalysisTest {
 				.orElse(null);
 	}
 
-	private static CombinationFinding combination(GdprReport report, RuleCatalogue.Rule rule) {
+	private static CombinationFinding combination(ComplianceReport report, RuleCatalogue.Rule rule) {
 		Optional<CombinationFinding> found = report.getCombinations().stream()
 				.filter(combination -> combination.getId().startsWith(rule.code())).findFirst();
 		return found.orElseThrow(() -> new AssertionError("no " + rule + " combination in the report"));
@@ -365,4 +368,11 @@ public class QvtFlowAnalysisTest {
 		}
 		return (CompiledUnit) resource.getContents().get(0);
 	}
+
+	/** The combination-kind ids a finding carries, told from its data categories by taxonomy. */
+	private static List<String> kindsOf(Finding finding) {
+		return finding.getCategories().stream().filter(ref -> "combination-kinds".equals(ref.getTaxonomyId()))
+				.map(CategoryRef::getCategoryId).toList();
+	}
+
 }

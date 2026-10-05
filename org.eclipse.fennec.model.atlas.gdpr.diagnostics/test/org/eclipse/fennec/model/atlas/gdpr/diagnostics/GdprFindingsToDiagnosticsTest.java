@@ -26,18 +26,18 @@ import org.eclipse.fennec.model.atlas.mgmt.management.Diagnostic;
 import org.eclipse.fennec.model.atlas.mgmt.management.DiagnosticSeverity;
 import org.eclipse.fennec.model.atlas.mgmt.management.ManagementFactory;
 import org.eclipse.fennec.model.atlas.mgmt.management.ObjectMetadata;
-import org.eclipse.fennec.model.gdprReport.ClassifierEvaluation;
-import org.eclipse.fennec.model.gdprReport.CombinationFinding;
-import org.eclipse.fennec.model.gdprReport.CombinationKind;
-import org.eclipse.fennec.model.gdprReport.ConfidenceType;
-import org.eclipse.fennec.model.gdprReport.DataCategory;
-import org.eclipse.fennec.model.gdprReport.Evidence;
-import org.eclipse.fennec.model.gdprReport.FeatureEvaluation;
-import org.eclipse.fennec.model.gdprReport.Finding;
-import org.eclipse.fennec.model.gdprReport.FlowEvaluation;
-import org.eclipse.fennec.model.gdprReport.GDPRReportFactory;
-import org.eclipse.fennec.model.gdprReport.GdprReport;
-import org.eclipse.fennec.model.gdprReport.RelevanceLevelType;
+import org.eclipse.fennec.model.compliance.context.CategoryRef;
+import org.eclipse.fennec.model.compliance.context.ContextFactory;
+import org.eclipse.fennec.model.compliance.report.ClassifierEvaluation;
+import org.eclipse.fennec.model.compliance.report.CombinationFinding;
+import org.eclipse.fennec.model.compliance.report.Confidence;
+import org.eclipse.fennec.model.compliance.report.Evidence;
+import org.eclipse.fennec.model.compliance.report.FeatureEvaluation;
+import org.eclipse.fennec.model.compliance.report.Finding;
+import org.eclipse.fennec.model.compliance.report.FlowEvaluation;
+import org.eclipse.fennec.model.compliance.report.ReportFactory;
+import org.eclipse.fennec.model.compliance.report.ComplianceReport;
+import org.eclipse.fennec.model.compliance.report.RelevanceLevel;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -48,21 +48,21 @@ import org.junit.jupiter.api.Test;
 class GdprFindingsToDiagnosticsTest {
 
 	private static final Instant NOW = Instant.parse("2026-09-28T10:00:00Z");
-	private static final GDPRReportFactory FACTORY = GDPRReportFactory.eINSTANCE;
+	private static final ReportFactory FACTORY = ReportFactory.eINSTANCE;
 
 	private final GdprFindingsToDiagnostics mapper = new GdprFindingsToDiagnostics();
 
 	@Test
 	@DisplayName("Everything the producer says hangs under one root, whatever it found")
 	void oneRootPerProducer() {
-		GdprReport report = report();
+		ComplianceReport report = report();
 		FeatureEvaluation one = feature("//Patient/a");
-		one.getFindings().add(finding("F-1", DataCategory.PERSONAL_DATA, RelevanceLevelType.LOW, null, "r", null));
+		one.getFindings().add(finding("F-1", "PERSONAL_DATA", RelevanceLevel.LOW, null, "r", null));
 		FeatureEvaluation two = feature("//Patient/b");
-		two.getFindings().add(finding("F-2", DataCategory.SPECIAL_CATEGORY, RelevanceLevelType.HIGH, null, "r", null));
+		two.getFindings().add(finding("F-2", "SPECIAL_CATEGORY", RelevanceLevel.HIGH, null, "r", null));
 		ClassifierEvaluation classifier = classifier(report, "//Patient", one, two);
 		classifier.getFindings()
-				.add(finding("F-3", DataCategory.PERSONAL_DATA, RelevanceLevelType.MEDIUM, null, "r", null));
+				.add(finding("F-3", "PERSONAL_DATA", RelevanceLevel.MEDIUM, null, "r", null));
 
 		List<Diagnostic> roots = mapper.map(report);
 
@@ -78,10 +78,10 @@ class GdprFindingsToDiagnosticsTest {
 	@Test
 	@DisplayName("A feature with one finding becomes one element node carrying one claim, addressed by the fragment")
 	void oneFindingOnOneFeature() {
-		GdprReport report = report();
+		ComplianceReport report = report();
 		FeatureEvaluation feature = feature("//Patient/category");
-		feature.getFindings().add(finding("F-001", DataCategory.SPECIAL_CATEGORY, RelevanceLevelType.HIGH,
-				ConfidenceType.HIGH, "The literals enumerate religious denominations.", "Establish an Art.9(2) basis.",
+		feature.getFindings().add(finding("F-001", "SPECIAL_CATEGORY", RelevanceLevel.HIGH,
+				Confidence.HIGH, "The literals enumerate religious denominations.", "Establish an Art.9(2) basis.",
 				"Art.9(1)"));
 		classifier(report, "//Patient", feature);
 
@@ -112,14 +112,14 @@ class GdprFindingsToDiagnosticsTest {
 	@Test
 	@DisplayName("Two findings of one category and relevance on one feature are one claim; two categories are two")
 	void findingsFoldByCategoryAndRelevance() {
-		GdprReport report = report();
+		ComplianceReport report = report();
 		FeatureEvaluation feature = feature("//Person/firstName");
-		feature.getFindings().add(finding("F-001", DataCategory.PERSONAL_DATA, RelevanceLevelType.MEDIUM,
-				ConfidenceType.HIGH, "Reached by the feature name.", null, "Art.4(1)"));
-		feature.getFindings().add(finding("F-002", DataCategory.PERSONAL_DATA, RelevanceLevelType.MEDIUM,
-				ConfidenceType.LOW, "Reached by the owning classifier.", null, "Rec.26"));
-		feature.getFindings().add(finding("F-003", DataCategory.QUASI_IDENTIFIER, RelevanceLevelType.MEDIUM,
-				ConfidenceType.MEDIUM, "Contributes to singling out.", null, "Rec.26"));
+		feature.getFindings().add(finding("F-001", "PERSONAL_DATA", RelevanceLevel.MEDIUM,
+				Confidence.HIGH, "Reached by the feature name.", null, "Art.4(1)"));
+		feature.getFindings().add(finding("F-002", "PERSONAL_DATA", RelevanceLevel.MEDIUM,
+				Confidence.LOW, "Reached by the owning classifier.", null, "Rec.26"));
+		feature.getFindings().add(finding("F-003", "QUASI_IDENTIFIER", RelevanceLevel.MEDIUM,
+				Confidence.MEDIUM, "Contributes to singling out.", null, "Rec.26"));
 		classifier(report, "//Person", feature);
 
 		List<Diagnostic> elements = elements(report);
@@ -142,17 +142,17 @@ class GdprFindingsToDiagnosticsTest {
 	@Test
 	@DisplayName("A finding that asserts nothing is not written, and an examined-and-clean feature gets no root")
 	void cleanFindingsAreNotWritten() {
-		GdprReport report = report();
+		ComplianceReport report = report();
 		FeatureEvaluation examinedAndClean = feature("//Patient/fullName");
 		FeatureEvaluation none = feature("//Patient/roomNumber");
 		none.getFindings()
-				.add(finding("F-001", DataCategory.PERSONAL_DATA, RelevanceLevelType.NONE, null, "nothing", null));
+				.add(finding("F-001", "PERSONAL_DATA", RelevanceLevel.NONE, null, "nothing", null));
 		FeatureEvaluation notPersonal = feature("//Patient/currency");
 		notPersonal.getFindings().add(
-				finding("F-002", DataCategory.NOT_PERSONAL_DATA, RelevanceLevelType.MEDIUM, null, "a currency", null));
+				finding("F-002", "NOT_PERSONAL_DATA", RelevanceLevel.MEDIUM, null, "a currency", null));
 		FeatureEvaluation anonymous = feature("//Patient/bucket");
 		anonymous.getFindings()
-				.add(finding("F-003", DataCategory.ANONYMOUS, RelevanceLevelType.LOW, null, "aggregated", null));
+				.add(finding("F-003", "ANONYMOUS", RelevanceLevel.LOW, null, "aggregated", null));
 		classifier(report, "//Patient", examinedAndClean, none, notPersonal, anonymous);
 
 		Diagnostic clean = review(report);
@@ -165,13 +165,13 @@ class GdprFindingsToDiagnosticsTest {
 	@Test
 	@DisplayName("LOW informs, MEDIUM and HIGH warn, and every node carries the worst beneath it")
 	void severityMapping() {
-		GdprReport report = report();
+		ComplianceReport report = report();
 		FeatureEvaluation low = feature("//P/a");
-		low.getFindings().add(finding("F-1", DataCategory.PERSONAL_DATA, RelevanceLevelType.LOW, null, "r", null));
+		low.getFindings().add(finding("F-1", "PERSONAL_DATA", RelevanceLevel.LOW, null, "r", null));
 		FeatureEvaluation mixed = feature("//P/b");
-		mixed.getFindings().add(finding("F-2", DataCategory.PERSONAL_DATA, RelevanceLevelType.LOW, null, "r", null));
+		mixed.getFindings().add(finding("F-2", "PERSONAL_DATA", RelevanceLevel.LOW, null, "r", null));
 		mixed.getFindings()
-				.add(finding("F-3", DataCategory.DIRECT_IDENTIFIER, RelevanceLevelType.HIGH, null, "r", null));
+				.add(finding("F-3", "DIRECT_IDENTIFIER", RelevanceLevel.HIGH, null, "r", null));
 		classifier(report, "//P", low, mixed);
 
 		Diagnostic review = review(report);
@@ -191,16 +191,16 @@ class GdprFindingsToDiagnosticsTest {
 	@Test
 	@DisplayName("The same claim reached differently keeps its id; a changed category or relevance is a new one")
 	void identityTurnsOnElementCategoryAndRelevance() {
-		String first = idOfOnlyChild(oneFinding("//Person/firstName", DataCategory.PERSONAL_DATA,
-				RelevanceLevelType.MEDIUM, "reached by name", "F-001"));
-		String reworded = idOfOnlyChild(oneFinding("//Person/firstName", DataCategory.PERSONAL_DATA,
-				RelevanceLevelType.MEDIUM, "reached by the owning classifier instead", "f1"));
-		String recategorised = idOfOnlyChild(oneFinding("//Person/firstName", DataCategory.SPECIAL_CATEGORY,
-				RelevanceLevelType.MEDIUM, "reached by name", "F-001"));
-		String raised = idOfOnlyChild(oneFinding("//Person/firstName", DataCategory.PERSONAL_DATA,
-				RelevanceLevelType.HIGH, "reached by name", "F-001"));
-		String elsewhere = idOfOnlyChild(oneFinding("//Person/lastName", DataCategory.PERSONAL_DATA,
-				RelevanceLevelType.MEDIUM, "reached by name", "F-001"));
+		String first = idOfOnlyChild(oneFinding("//Person/firstName", "PERSONAL_DATA",
+				RelevanceLevel.MEDIUM, "reached by name", "F-001"));
+		String reworded = idOfOnlyChild(oneFinding("//Person/firstName", "PERSONAL_DATA",
+				RelevanceLevel.MEDIUM, "reached by the owning classifier instead", "f1"));
+		String recategorised = idOfOnlyChild(oneFinding("//Person/firstName", "SPECIAL_CATEGORY",
+				RelevanceLevel.MEDIUM, "reached by name", "F-001"));
+		String raised = idOfOnlyChild(oneFinding("//Person/firstName", "PERSONAL_DATA",
+				RelevanceLevel.HIGH, "reached by name", "F-001"));
+		String elsewhere = idOfOnlyChild(oneFinding("//Person/lastName", "PERSONAL_DATA",
+				RelevanceLevel.MEDIUM, "reached by name", "F-001"));
 
 		assertEquals(first, reworded,
 				"another rationale, another Finding.id and another route are the same claim, so a person's "
@@ -213,13 +213,13 @@ class GdprFindingsToDiagnosticsTest {
 	@Test
 	@DisplayName("A classifier's own findings get their own node, beside its features'")
 	void classifierFindingsAreTheirOwnNode() {
-		GdprReport report = report();
+		ComplianceReport report = report();
 		FeatureEvaluation feature = feature("//Patient/diagnosis");
 		feature.getFindings()
-				.add(finding("F-2", DataCategory.SPECIAL_CATEGORY, RelevanceLevelType.HIGH, null, "health", null));
+				.add(finding("F-2", "SPECIAL_CATEGORY", RelevanceLevel.HIGH, null, "health", null));
 		ClassifierEvaluation classifier = classifier(report, "//Patient", feature);
 		classifier.getFindings()
-				.add(finding("F-1", DataCategory.PERSONAL_DATA, RelevanceLevelType.LOW, null, "a person", null));
+				.add(finding("F-1", "PERSONAL_DATA", RelevanceLevel.LOW, null, "a person", null));
 
 		List<Diagnostic> elements = elements(report);
 
@@ -233,15 +233,15 @@ class GdprFindingsToDiagnosticsTest {
 	@Test
 	@DisplayName("A combination is addressed by the elements it spans, sorted, and names its kind in the message")
 	void combinationSpansItsElements() {
-		GdprReport report = report();
+		ComplianceReport report = report();
 		FeatureEvaluation street = feature("//Patient/street");
 		FeatureEvaluation birthDate = feature("//Patient/birthDate");
 		classifier(report, "//Patient", street, birthDate);
 		CombinationFinding combination = FACTORY.createCombinationFinding();
 		combination.setId("F-003");
-		combination.setCategory(DataCategory.QUASI_IDENTIFIER);
-		combination.setRelevanceLevel(RelevanceLevelType.HIGH);
-		combination.setCombinationKind(CombinationKind.QUASI_IDENTIFIER_SET);
+		combination.getCategories().add(categoryRef("QUASI_IDENTIFIER"));
+		combination.setRelevanceLevel(RelevanceLevel.HIGH);
+		combination.getCategories().add(combinationKind("QUASI_IDENTIFIER_SET"));
 		combination.setRationale("Together they single out an individual.");
 		combination.getEvidence().add(evidence("Rec.26"));
 		// listed in the order the analyser happened to walk them
@@ -263,7 +263,7 @@ class GdprFindingsToDiagnosticsTest {
 	@Test
 	@DisplayName("A flow is addressed by its mapping and the qualified path it carries the value along")
 	void flowAddressing() {
-		GdprReport report = report();
+		ComplianceReport report = report();
 		FlowEvaluation flow = FACTORY.createFlowEvaluation();
 		flow.setId("toContact:Patient.diagnosis->Contact.comment");
 		flow.setMapping("toContact");
@@ -272,8 +272,8 @@ class GdprFindingsToDiagnosticsTest {
 		flow.setTargetNsURI("http://example.org/contacts/1.0");
 		flow.setTargetFeature("//Contact/comment");
 		flow.getFindings()
-				.add(finding("F-1", DataCategory.SPECIAL_CATEGORY, RelevanceLevelType.HIGH, null, "health", null));
-		report.getEvaluation().add(flow);
+				.add(finding("F-1", "SPECIAL_CATEGORY", RelevanceLevel.HIGH, null, "health", null));
+		report.getEvaluations().add(flow);
 
 		List<Diagnostic> elements = elements(report);
 
@@ -287,11 +287,11 @@ class GdprFindingsToDiagnosticsTest {
 	@Test
 	@DisplayName("An element with findings but nothing to address it by is dropped rather than written untargeted")
 	void unaddressableElementIsDropped() {
-		GdprReport report = report();
+		ComplianceReport report = report();
 		FeatureEvaluation nameless = FACTORY.createFeatureEvaluation();
 		nameless.setId("Patient.mystery");
 		nameless.getFindings()
-				.add(finding("F-1", DataCategory.PERSONAL_DATA, RelevanceLevelType.HIGH, null, "r", null));
+				.add(finding("F-1", "PERSONAL_DATA", RelevanceLevel.HIGH, null, "r", null));
 		classifier(report, "//Patient", nameless);
 
 		// an untargeted diagnostic is about the object as a whole and would collide with every
@@ -323,15 +323,15 @@ class GdprFindingsToDiagnosticsTest {
 	void aCleanReviewNamesWhatItExamined() {
 		// "nothing found" after examining nothing and after clearing nineteen features are very
 		// different statements, and only the second is reassuring.
-		GdprReport report = report();
+		ComplianceReport report = report();
 		ClassifierEvaluation classifier = FACTORY.createClassifierEvaluation();
 		classifier.setUriFragment("//Person");
 		for (String name : List.of("//Person/name", "//Person/age")) {
 			FeatureEvaluation feature = FACTORY.createFeatureEvaluation();
 			feature.setUriFragment(name);
-			classifier.getFeatureEvaluation().add(feature);
+			classifier.getFeatureEvaluations().add(feature);
 		}
-		report.getEvaluation().add(classifier);
+		report.getEvaluations().add(classifier);
 
 		assertTrue(review(report).getMessage().contains("3 elements examined"),
 				"the classifier and its two features: " + review(report).getMessage());
@@ -357,14 +357,14 @@ class GdprFindingsToDiagnosticsTest {
 	/* ------------------------------------------------------------------ helpers */
 
 	/** The one root the mapper produces. */
-	private Diagnostic review(GdprReport report) {
+	private Diagnostic review(ComplianceReport report) {
 		List<Diagnostic> roots = mapper.map(report);
 		assertEquals(1, roots.size(), "a producer has exactly one root");
 		return roots.get(0);
 	}
 
 	/** The element nodes under that root. */
-	private List<Diagnostic> elements(GdprReport report) {
+	private List<Diagnostic> elements(ComplianceReport report) {
 		return review(report).getChildren();
 	}
 
@@ -376,34 +376,34 @@ class GdprFindingsToDiagnosticsTest {
 	}
 
 	/** The id the one claim of a single-finding report would be stored under. */
-	private String idOfOnlyChild(GdprReport report) {
+	private String idOfOnlyChild(ComplianceReport report) {
 		List<Diagnostic> roots = mapper.map(report);
 		Diagnostics.prepare(GdprFindingsToDiagnostics.PRODUCER, roots, NOW);
 		return roots.get(0).getChildren().get(0).getChildren().get(0).getId();
 	}
 
-	private static GdprReport oneFinding(String fragment, DataCategory category, RelevanceLevelType relevance,
+	private static ComplianceReport oneFinding(String fragment, String category, RelevanceLevel relevance,
 			String rationale, String findingId) {
-		GdprReport report = report();
+		ComplianceReport report = report();
 		FeatureEvaluation feature = feature(fragment);
 		feature.getFindings().add(finding(findingId, category, relevance, null, rationale, null));
 		classifier(report, "//Person", feature);
 		return report;
 	}
 
-	private static GdprReport report() {
-		GdprReport report = FACTORY.createGdprReport();
+	private static ComplianceReport report() {
+		ComplianceReport report = FACTORY.createComplianceReport();
 		report.setGeneratedBy("claude-sonnet-4-6");
 		return report;
 	}
 
-	private static ClassifierEvaluation classifier(GdprReport report, String fragment, FeatureEvaluation... features) {
+	private static ClassifierEvaluation classifier(ComplianceReport report, String fragment, FeatureEvaluation... features) {
 		ClassifierEvaluation classifier = FACTORY.createClassifierEvaluation();
 		classifier.setUriFragment(fragment);
 		for (FeatureEvaluation feature : features) {
-			classifier.getFeatureEvaluation().add(feature);
+			classifier.getFeatureEvaluations().add(feature);
 		}
-		report.getEvaluation().add(classifier);
+		report.getEvaluations().add(classifier);
 		return classifier;
 	}
 
@@ -413,11 +413,11 @@ class GdprFindingsToDiagnosticsTest {
 		return feature;
 	}
 
-	private static Finding finding(String id, DataCategory category, RelevanceLevelType relevance,
-			ConfidenceType confidence, String rationale, String recommendation, String... citations) {
+	private static Finding finding(String id, String category, RelevanceLevel relevance,
+			Confidence confidence, String rationale, String recommendation, String... citations) {
 		Finding finding = FACTORY.createFinding();
 		finding.setId(id);
-		finding.setCategory(category);
+		finding.getCategories().add(categoryRef(category));
 		finding.setRelevanceLevel(relevance);
 		finding.setConfidence(confidence);
 		finding.setRationale(rationale);
@@ -436,4 +436,31 @@ class GdprFindingsToDiagnosticsTest {
 		evidence.setQuote("...");
 		return evidence;
 	}
+
+	/**
+	 * A data-category reference, the way a review records one: an id in the context's
+	 * {@code data-categories} taxonomy. The ids are the names the {@code DataCategory} enum had.
+	 */
+	static CategoryRef categoryRef(String categoryId) {
+		CategoryRef ref = ContextFactory.eINSTANCE.createCategoryRef();
+		ref.setContextId("gdpr");
+		ref.setTaxonomyId("data-categories");
+		ref.setCategoryId(categoryId);
+		return ref;
+	}
+
+
+	/**
+	 * How a combination combines, as a review records it: a reference into the context's
+	 * {@code combination-kinds} taxonomy, whose ids are the names the {@code CombinationKind} enum
+	 * had. It rides in the same list as the data categories and is told from them by its taxonomy.
+	 */
+	static CategoryRef combinationKind(String kindId) {
+		CategoryRef ref = ContextFactory.eINSTANCE.createCategoryRef();
+		ref.setContextId("gdpr");
+		ref.setTaxonomyId("combination-kinds");
+		ref.setCategoryId(kindId);
+		return ref;
+	}
+
 }

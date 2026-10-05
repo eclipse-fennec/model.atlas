@@ -28,9 +28,9 @@ import org.eclipse.fennec.m2x.model.compiled.CompiledUnit;
 import org.eclipse.fennec.model.atlas.mgmt.management.ManagementFactory;
 import org.eclipse.fennec.model.atlas.mgmt.management.ObjectMetadata;
 import org.eclipse.fennec.model.atlas.wf.workflowapi.WritableScopeService;
-import org.eclipse.fennec.model.gdprReport.GDPRReportPackage;
-import org.eclipse.fennec.model.gdprReport.GdprReport;
-import org.eclipse.fennec.model.gdprReport.PackageSubject;
+import org.eclipse.fennec.model.compliance.report.ReportPackage;
+import org.eclipse.fennec.model.compliance.report.ComplianceReport;
+import org.eclipse.fennec.model.compliance.report.PackageSubject;
 
 /**
  * Deriving a transformation's report and storing it, independently of what asked for it.
@@ -48,7 +48,7 @@ final class TransformationAnalysis {
 	private static final Logger LOGGER = Logger.getLogger(TransformationAnalysis.class.getName());
 
 	/** What the storage layer writes into {@code ActionContext.objectType()} for a report. */
-	static final String REPORT_TYPE = EcoreUtil.getURI(GDPRReportPackage.Literals.GDPR_REPORT).toString();
+	static final String REPORT_TYPE = EcoreUtil.getURI(ReportPackage.Literals.COMPLIANCE_REPORT).toString();
 
 	private final WritableScopeService<EObject> scope;
 	private final String reportRegistry;
@@ -67,12 +67,12 @@ final class TransformationAnalysis {
 	 * @return the stored report
 	 * @throws IllegalStateException if the report could not be stored
 	 */
-	GdprReport analyse(CompiledUnit unit, String stage) {
-		GdprReport report = FlowAnalysis.analyse(unit, reviewsFor(stage), Instant.now());
+	ComplianceReport analyse(CompiledUnit unit, String stage) {
+		ComplianceReport report = FlowAnalysis.analyse(unit, reviewsFor(stage), Instant.now());
 		store(stage, report);
 		LOGGER.info(() -> String.format("GDPR flow analysis of %s stored as %s/%s/%s/%s: %d flows, %d combinations.",
 				unit.getManifest().getQualifiedName(), scope.getScopeName(), reportRegistry, stage,
-				report.getReportId(), report.getEvaluation().size(), report.getCombinations().size()));
+				report.getReportId(), report.getEvaluations().size(), report.getCombinations().size()));
 		return report;
 	}
 
@@ -89,7 +89,7 @@ final class TransformationAnalysis {
 	 * @see StageLadder for which stages those are
 	 * @see StagedReviews for which review speaks for a revision when several do
 	 */
-	Map<String, GdprReport> reviewsFor(String stage) {
+	Map<String, ComplianceReport> reviewsFor(String stage) {
 		List<String> stageOrder = StageLadder.visibleIn(scope.getScope(), reportRegistry, stage);
 		List<StagedReviews.Candidate> candidates = new ArrayList<>();
 		for (String each : stageOrder) {
@@ -109,7 +109,7 @@ final class TransformationAnalysis {
 	private List<StagedReviews.Candidate> reviewsStoredIn(String stage) {
 		List<StagedReviews.Candidate> candidates = new ArrayList<>();
 		for (ObjectMetadata metadata : scope.listInStageForRegistry(reportRegistry, stage)) {
-			GdprReport report = reportAt(stage, metadata.getObjectId());
+			ComplianceReport report = reportAt(stage, metadata.getObjectId());
 			if (report == null || !(report.getSubject() instanceof PackageSubject subject)) {
 				continue;
 			}
@@ -120,10 +120,10 @@ final class TransformationAnalysis {
 	}
 
 	/** One stored report, or {@code null} when it is gone or unreadable. */
-	GdprReport reportAt(String stage, String objectId) {
+	ComplianceReport reportAt(String stage, String objectId) {
 		try {
 			EObject content = scope.getContentFromStageForRegistry(reportRegistry, stage, objectId);
-			return content instanceof GdprReport report ? report : null;
+			return content instanceof ComplianceReport report ? report : null;
 		} catch (RuntimeException goneOrUnreadable) {
 			// Listed a moment ago and not there now, or not parseable: it cannot speak for a
 			// revision either way, and failing the whole analysis over it would be worse.
@@ -133,7 +133,7 @@ final class TransformationAnalysis {
 	}
 
 	/** When a review happened: what it says, else when the Atlas last saw it. */
-	static Instant generatedAt(GdprReport report, ObjectMetadata metadata) {
+	static Instant generatedAt(ComplianceReport report, ObjectMetadata metadata) {
 		String stated = report.getGeneratedAt();
 		if (stated != null && !stated.isBlank()) {
 			try {
@@ -157,7 +157,7 @@ final class TransformationAnalysis {
 	 * same document and a changed input writes another one - which is what lets the transformation's
 	 * history document show a real change rather than a re-run.
 	 */
-	private void store(String stage, GdprReport report) {
+	private void store(String stage, ComplianceReport report) {
 		ObjectMetadata existing = scope.getMetadataFromStageForRegistry(reportRegistry, stage, report.getReportId());
 		try {
 			if (existing == null) {

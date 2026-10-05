@@ -36,16 +36,17 @@ import org.eclipse.fennec.model.atlas.mgmt.management.DiagnosticSeverity;
 import org.eclipse.fennec.model.atlas.mgmt.management.ManagementFactory;
 import org.eclipse.fennec.model.atlas.mgmt.management.ObjectMetadata;
 import org.eclipse.fennec.model.atlas.wf.workflowapi.WritableScopeService;
-import org.eclipse.fennec.model.gdprReport.ClassifierEvaluation;
-import org.eclipse.fennec.model.gdprReport.DataCategory;
-import org.eclipse.fennec.model.gdprReport.Evidence;
-import org.eclipse.fennec.model.gdprReport.FeatureEvaluation;
-import org.eclipse.fennec.model.gdprReport.Finding;
-import org.eclipse.fennec.model.gdprReport.GDPRReportFactory;
-import org.eclipse.fennec.model.gdprReport.GDPRReportPackage;
-import org.eclipse.fennec.model.gdprReport.GdprReport;
-import org.eclipse.fennec.model.gdprReport.PackageSubject;
-import org.eclipse.fennec.model.gdprReport.RelevanceLevelType;
+import org.eclipse.fennec.model.compliance.context.CategoryRef;
+import org.eclipse.fennec.model.compliance.context.ContextFactory;
+import org.eclipse.fennec.model.compliance.report.ClassifierEvaluation;
+import org.eclipse.fennec.model.compliance.report.Evidence;
+import org.eclipse.fennec.model.compliance.report.FeatureEvaluation;
+import org.eclipse.fennec.model.compliance.report.Finding;
+import org.eclipse.fennec.model.compliance.report.ReportFactory;
+import org.eclipse.fennec.model.compliance.report.ReportPackage;
+import org.eclipse.fennec.model.compliance.report.ComplianceReport;
+import org.eclipse.fennec.model.compliance.report.PackageSubject;
+import org.eclipse.fennec.model.compliance.report.RelevanceLevel;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -58,8 +59,8 @@ import org.osgi.util.promise.Promises;
  */
 class GDPRMetadataDiagnosticsStageActionTest {
 
-	private static final GDPRReportFactory REPORTS = GDPRReportFactory.eINSTANCE;
-	private static final String REPORT_TYPE = EcoreUtil.getURI(GDPRReportPackage.Literals.GDPR_REPORT).toString();
+	private static final ReportFactory REPORTS = ReportFactory.eINSTANCE;
+	private static final String REPORT_TYPE = EcoreUtil.getURI(ReportPackage.Literals.COMPLIANCE_REPORT).toString();
 	private static final String FINGERPRINT = "fp1:d92662d3d16860877f59b7b00131d3beb185f35926ab8038cc14aafa389cc37a";
 
 	private final Scope scope = new Scope();
@@ -67,7 +68,7 @@ class GDPRMetadataDiagnosticsStageActionTest {
 	/* ------------------------------------------------------------------ the contract */
 
 	@Test
-	@DisplayName("It answers for a GdprReport only, on enter, update and exit, and replays at startup")
+	@DisplayName("It answers for a ComplianceReport only, on enter, update and exit, and replays at startup")
 	void contract() {
 		var action = action();
 
@@ -144,7 +145,7 @@ class GDPRMetadataDiagnosticsStageActionTest {
 	@Test
 	@DisplayName("A report naming no subject fingerprint belongs to no object")
 	void reportWithoutASubjectIsSkipped() {
-		GdprReport orphan = REPORTS.createGdprReport();
+		ComplianceReport orphan = REPORTS.createComplianceReport();
 		orphan.setSubject(REPORTS.createPackageSubject());
 		scope.report("gdpr", "approved", "report-1", orphan);
 		scope.reviewed("schema", "approved", "pkg-approved", FINGERPRINT);
@@ -157,8 +158,8 @@ class GDPRMetadataDiagnosticsStageActionTest {
 	@Test
 	@DisplayName("A review that found nothing still writes, so a previous run's findings are withdrawn")
 	void aCleanReviewClearsWhatAnEarlierOneSaid() {
-		GdprReport clean = report(FINGERPRINT);
-		((FeatureEvaluation) ((ClassifierEvaluation) clean.getEvaluation().get(0)).getFeatureEvaluation().get(0))
+		ComplianceReport clean = report(FINGERPRINT);
+		((FeatureEvaluation) ((ClassifierEvaluation) clean.getEvaluations().get(0)).getFeatureEvaluations().get(0))
 				.getFindings().clear();
 		scope.report("gdpr", "approved", "report-1", clean);
 		scope.reviewed("schema", "approved", "pkg-approved", FINGERPRINT);
@@ -264,9 +265,9 @@ class GDPRMetadataDiagnosticsStageActionTest {
 	@DisplayName("Two reviews of one revision: the object shows the later one, whichever order they arrive in")
 	void theLaterReviewSupersedesTheEarlier() {
 		scope.report("gdpr", "approved", "report-ai",
-				report(FINGERPRINT, DataCategory.PERSONAL_DATA, RelevanceLevelType.MEDIUM, "2026-09-28T08:00:00Z"));
+				report(FINGERPRINT, "PERSONAL_DATA", RelevanceLevel.MEDIUM, "2026-09-28T08:00:00Z"));
 		scope.report("gdpr", "approved", "report-human",
-				report(FINGERPRINT, DataCategory.QUASI_IDENTIFIER, RelevanceLevelType.HIGH, "2026-09-28T09:00:00Z"));
+				report(FINGERPRINT, "QUASI_IDENTIFIER", RelevanceLevel.HIGH, "2026-09-28T09:00:00Z"));
 		scope.reviewed("schema", "approved", "pkg-approved", FINGERPRINT);
 		var action = action();
 
@@ -283,9 +284,9 @@ class GDPRMetadataDiagnosticsStageActionTest {
 	@DisplayName("Withdrawing the superseded review leaves the one that superseded it standing")
 	void deletingTheSupersededReviewKeepsTheOther() {
 		scope.report("gdpr", "approved", "report-ai",
-				report(FINGERPRINT, DataCategory.PERSONAL_DATA, RelevanceLevelType.MEDIUM, "2026-09-28T08:00:00Z"));
+				report(FINGERPRINT, "PERSONAL_DATA", RelevanceLevel.MEDIUM, "2026-09-28T08:00:00Z"));
 		scope.report("gdpr", "approved", "report-human",
-				report(FINGERPRINT, DataCategory.QUASI_IDENTIFIER, RelevanceLevelType.HIGH, "2026-09-28T09:00:00Z"));
+				report(FINGERPRINT, "QUASI_IDENTIFIER", RelevanceLevel.HIGH, "2026-09-28T09:00:00Z"));
 		scope.reviewed("schema", "approved", "pkg-approved", FINGERPRINT);
 		var action = action();
 		action.onEnter(context("approved", "report-ai"));
@@ -302,9 +303,9 @@ class GDPRMetadataDiagnosticsStageActionTest {
 	@DisplayName("Withdrawing the latest review brings back what the one before it said")
 	void deletingTheLatestReviewFallsBackToTheEarlier() {
 		scope.report("gdpr", "approved", "report-ai",
-				report(FINGERPRINT, DataCategory.PERSONAL_DATA, RelevanceLevelType.MEDIUM, "2026-09-28T08:00:00Z"));
+				report(FINGERPRINT, "PERSONAL_DATA", RelevanceLevel.MEDIUM, "2026-09-28T08:00:00Z"));
 		scope.report("gdpr", "approved", "report-human",
-				report(FINGERPRINT, DataCategory.QUASI_IDENTIFIER, RelevanceLevelType.HIGH, "2026-09-28T09:00:00Z"));
+				report(FINGERPRINT, "QUASI_IDENTIFIER", RelevanceLevel.HIGH, "2026-09-28T09:00:00Z"));
 		scope.reviewed("schema", "approved", "pkg-approved", FINGERPRINT);
 		var action = action();
 		action.onEnter(context("approved", "report-ai"));
@@ -389,14 +390,14 @@ class GDPRMetadataDiagnosticsStageActionTest {
 	}
 
 	/** A review of one package that found special-category data on one feature. */
-	private static GdprReport report(String fingerprint) {
-		return report(fingerprint, DataCategory.SPECIAL_CATEGORY, RelevanceLevelType.HIGH, null);
+	private static ComplianceReport report(String fingerprint) {
+		return report(fingerprint, "SPECIAL_CATEGORY", RelevanceLevel.HIGH, null);
 	}
 
 	/** A review that reached one category at one relevance, at a stated time. */
-	private static GdprReport report(String fingerprint, DataCategory category, RelevanceLevelType relevance,
+	private static ComplianceReport report(String fingerprint, String category, RelevanceLevel relevance,
 			String generatedAt) {
-		GdprReport report = REPORTS.createGdprReport();
+		ComplianceReport report = REPORTS.createComplianceReport();
 		report.setGeneratedBy("claude-opus-5");
 		report.setGeneratedAt(generatedAt);
 		PackageSubject subject = REPORTS.createPackageSubject();
@@ -410,7 +411,7 @@ class GDPRMetadataDiagnosticsStageActionTest {
 		feature.setUriFragment("//Patient/category");
 		Finding finding = REPORTS.createFinding();
 		finding.setId("F-001");
-		finding.setCategory(category);
+		finding.getCategories().add(categoryRef(category));
 		finding.setRelevanceLevel(relevance);
 		finding.setRationale("The literals enumerate religious denominations.");
 		Evidence evidence = REPORTS.createEvidence();
@@ -418,8 +419,8 @@ class GDPRMetadataDiagnosticsStageActionTest {
 		evidence.setQuote("...");
 		finding.getEvidence().add(evidence);
 		feature.getFindings().add(finding);
-		classifier.getFeatureEvaluation().add(feature);
-		report.getEvaluation().add(classifier);
+		classifier.getFeatureEvaluations().add(feature);
+		report.getEvaluations().add(classifier);
 		return report;
 	}
 
@@ -500,4 +501,17 @@ class GDPRMetadataDiagnosticsStageActionTest {
 			}
 		}
 	}
+
+	/**
+	 * A data-category reference, the way a review records one: an id in the context's
+	 * {@code data-categories} taxonomy. The ids are the names the {@code DataCategory} enum had.
+	 */
+	static CategoryRef categoryRef(String categoryId) {
+		CategoryRef ref = ContextFactory.eINSTANCE.createCategoryRef();
+		ref.setContextId("gdpr");
+		ref.setTaxonomyId("data-categories");
+		ref.setCategoryId(categoryId);
+		return ref;
+	}
+
 }

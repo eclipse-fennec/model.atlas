@@ -64,7 +64,7 @@ public class TestAnnotations extends CommonTestAnnotations {
 	@WithFactoryConfiguration(factoryPid = PID_REGISTRY_SERVICE, name = REPORT_REGISTRY, location = "?", properties = {
 			@Property(key = "registry.name", value = REPORT_REGISTRY),
 			@Property(key = "registry.type", value = "OTHER"),
-			@Property(key = "root.eclass.uri", value = REPORT_NS_URI + "#//GdprReport"),
+			@Property(key = "root.eclass.uri", value = REPORT_NS_URI + "#//ComplianceReport"),
 			@Property(key = "schemaPackage.target", value = "(emf.nsURI=" + REPORT_NS_URI + ")"),
 			@Property(key = "resourceSet.target", value = "(emf.name=ecore)"),
 			@Property(key = "storageService.target", value = "(storage.type=file)"),
@@ -85,11 +85,11 @@ public class TestAnnotations extends CommonTestAnnotations {
 	@WithFactoryConfiguration(factoryPid = PID_REGISTRY_SERVICE, name = DOCUMENT_REGISTRY, location = "?", properties = {
 			@Property(key = "registry.name", value = DOCUMENT_REGISTRY),
 			@Property(key = "registry.type", value = "OTHER"),
-			@Property(key = "root.eclass.uri", value = HISTORY_NS_URI + "#//GdprReportHistory"),
+			@Property(key = "root.eclass.uri", value = HISTORY_NS_URI + "#//ComplianceReportHistory"),
 			// Derived: the Atlas builds these documents itself, so the trusted service API may
 			// rewrite one even in a final stage. A document lives in the stage its reviews were
 			// carried out at, and that stage may well be the final one.
-			@Property(key = "derived.eclass.uri", value = HISTORY_NS_URI + "#//GdprReportHistory"),
+			@Property(key = "derived.eclass.uri", value = HISTORY_NS_URI + "#//ComplianceReportHistory"),
 			@Property(key = "schemaPackage.target", value = "(emf.nsURI=" + HISTORY_NS_URI + ")"),
 			@Property(key = "resourceSet.target", value = "(emf.name=ecore)"),
 			@Property(key = "storageService.target", value = "(storage.type=file)"),

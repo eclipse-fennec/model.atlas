@@ -32,31 +32,32 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
-import org.eclipse.fennec.model.gdprReport.ClassifierEvaluation;
-import org.eclipse.fennec.model.gdprReport.ConfidenceType;
-import org.eclipse.fennec.model.gdprReport.Evaluation;
-import org.eclipse.fennec.model.gdprReport.Evidence;
-import org.eclipse.fennec.model.gdprReport.FeatureEvaluation;
-import org.eclipse.fennec.model.gdprReport.Finding;
-import org.eclipse.fennec.model.gdprReport.FlowEvaluation;
-import org.eclipse.fennec.model.gdprReport.GDPRReportPackage;
-import org.eclipse.fennec.model.gdprReport.GdprReport;
-import org.eclipse.fennec.model.gdprReport.GdprReportOrigin;
-import org.eclipse.fennec.model.gdprReport.LegalCorpusRef;
-import org.eclipse.fennec.model.gdprReport.PackageSubject;
-import org.eclipse.fennec.model.gdprReport.RelevanceLevelType;
-import org.eclipse.fennec.model.gdprReport.Subject;
-import org.eclipse.fennec.model.gdprReport.TransformationSubject;
-import org.eclipse.fennec.model.gdprReportHistory.ChangeKind;
-import org.eclipse.fennec.model.gdprReportHistory.ChangeRow;
-import org.eclipse.fennec.model.gdprReportHistory.EvaluationRow;
-import org.eclipse.fennec.model.gdprReportHistory.GDPRReportHistoryFactory;
-import org.eclipse.fennec.model.gdprReportHistory.GdprReportHistory;
-import org.eclipse.fennec.model.gdprReportHistory.ReportRevision;
-import org.eclipse.fennec.model.gdprReportHistory.RevisionOrigin;
+import org.eclipse.fennec.model.compliance.context.CategoryRef;
+import org.eclipse.fennec.model.compliance.context.ContextRef;
+import org.eclipse.fennec.model.compliance.report.ClassifierEvaluation;
+import org.eclipse.fennec.model.compliance.report.Confidence;
+import org.eclipse.fennec.model.compliance.report.Evaluation;
+import org.eclipse.fennec.model.compliance.report.Evidence;
+import org.eclipse.fennec.model.compliance.report.FeatureEvaluation;
+import org.eclipse.fennec.model.compliance.report.Finding;
+import org.eclipse.fennec.model.compliance.report.FlowEvaluation;
+import org.eclipse.fennec.model.compliance.report.ReportPackage;
+import org.eclipse.fennec.model.compliance.report.ComplianceReport;
+import org.eclipse.fennec.model.compliance.report.ReportOrigin;
+import org.eclipse.fennec.model.compliance.report.PackageSubject;
+import org.eclipse.fennec.model.compliance.report.RelevanceLevel;
+import org.eclipse.fennec.model.compliance.report.Subject;
+import org.eclipse.fennec.model.compliance.report.TransformationSubject;
+import org.eclipse.fennec.model.compliance.history.ChangeKind;
+import org.eclipse.fennec.model.compliance.history.ChangeRow;
+import org.eclipse.fennec.model.compliance.history.EvaluationRow;
+import org.eclipse.fennec.model.compliance.history.HistoryFactory;
+import org.eclipse.fennec.model.compliance.history.ComplianceReportHistory;
+import org.eclipse.fennec.model.compliance.history.ReportRevision;
+import org.eclipse.fennec.model.compliance.history.RevisionOrigin;
 
 /**
- * Builds the derived {@link GdprReportHistory} of one subject from the reviews stored for it.
+ * Builds the derived {@link ComplianceReportHistory} of one subject from the reviews stored for it.
  * <p>
  * <b>Everything GDPR-specific in this bundle is here.</b> The stage action around it only decides
  * when to run and where to put the result.
@@ -86,7 +87,7 @@ public class ReportHistoryBuilder {
 	private static final DateTimeFormatter ID_STAMP = DateTimeFormatter.ofPattern("yyyyMMdd-HHmmss")
 			.withZone(ZoneOffset.UTC);
 
-	private static final String CATEGORY = "category";
+	private static final String CATEGORIES = "categories";
 	private static final String RELEVANCE_LEVEL = "relevanceLevel";
 	private static final String CONFIDENCE = "confidence";
 	private static final String RATIONALE = "rationale";
@@ -96,7 +97,7 @@ public class ReportHistoryBuilder {
 
 	private static final Logger LOGGER = Logger.getLogger(ReportHistoryBuilder.class.getName());
 
-	private final GDPRReportHistoryFactory factory = GDPRReportHistoryFactory.eINSTANCE;
+	private final HistoryFactory factory = HistoryFactory.eINSTANCE;
 
 	/**
 	 * Builds the document.
@@ -106,7 +107,7 @@ public class ReportHistoryBuilder {
 	 * @param rebuiltAt when this rebuild happened, required
 	 * @return the history, never {@code null}
 	 */
-	public GdprReportHistory build(List<StoredReport> reports, Instant rebuiltAt) {
+	public ComplianceReportHistory build(List<StoredReport> reports, Instant rebuiltAt) {
 		Objects.requireNonNull(reports, "reports");
 		Objects.requireNonNull(rebuiltAt, "rebuiltAt");
 
@@ -114,7 +115,7 @@ public class ReportHistoryBuilder {
 		ordered.sort(Comparator.comparing(ReportHistoryBuilder::orderingKey)
 				.thenComparing(StoredReport::objectId));
 
-		GdprReportHistory history = factory.createGdprReportHistory();
+		ComplianceReportHistory history = factory.createComplianceReportHistory();
 		history.setRebuiltAt(rebuiltAt.toString());
 		history.setRevisionCount(ordered.size());
 		describeSubject(history, ordered);
@@ -139,7 +140,7 @@ public class ReportHistoryBuilder {
 
 	/* ------------------------------------------------------------------ the subject */
 
-	private void describeSubject(GdprReportHistory history, List<StoredReport> ordered) {
+	private void describeSubject(ComplianceReportHistory history, List<StoredReport> ordered) {
 		// The newest report describes the subject: an older one may predate a rename, and the
 		// fingerprint is the same for all of them anyway while a document covers one revision.
 		for (int i = ordered.size() - 1; i >= 0; i--) {
@@ -179,11 +180,10 @@ public class ReportHistoryBuilder {
 	 * @param history the document being built
 	 * @param ordered the reviews, oldest first
 	 */
-	private static void describeLanguage(GdprReportHistory history, List<StoredReport> ordered) {
+	private static void describeLanguage(ComplianceReportHistory history, List<StoredReport> ordered) {
 		Set<String> languages = new TreeSet<>();
 		for (StoredReport stored : ordered) {
-			LegalCorpusRef corpus = stored.report().getCorpus();
-			String language = corpus == null ? null : corpus.getLanguage();
+			String language = stored.report().getLanguage();
 			if (blankToNull(language) != null) {
 				languages.add(language.trim().toUpperCase(Locale.ROOT));
 			}
@@ -192,7 +192,7 @@ public class ReportHistoryBuilder {
 			LOGGER.log(Level.WARNING, () -> String.format(
 					"Reviews in %d languages (%s) were built into one document; its change sheet compares a "
 							+ "revision in one language against a revision in another and cannot be read. Group the "
-							+ "reports by corpus language and build one document per language.",
+							+ "reports by report language and build one document per language.",
 					languages.size(), String.join(", ", languages)));
 		}
 		history.setReportLanguage(languages.isEmpty() ? null : languages.iterator().next());
@@ -243,7 +243,7 @@ public class ReportHistoryBuilder {
 	/* ------------------------------------------------------------------ sheet 1 */
 
 	private ReportRevision revision(StoredReport stored, int revisionNumber, int changeCount) {
-		GdprReport report = stored.report();
+		ComplianceReport report = stored.report();
 		ReportRevision revision = factory.createReportRevision();
 		revision.setRevisionNumber(revisionNumber);
 		revision.setReportId(stored.objectId());
@@ -256,12 +256,16 @@ public class ReportHistoryBuilder {
 
 		Subject subject = report.getSubject();
 		if (subject != null) {
-			revision.setModelFingerprint(subject.getSubjectFingerprint());
+			revision.setSubjectFingerprint(subject.getSubjectFingerprint());
 		}
-		LegalCorpusRef corpus = report.getCorpus();
-		if (corpus != null) {
-			revision.setCorpusCelex(corpus.getCelex());
-			revision.setCorpusConsolidatedDate(corpus.getConsolidatedDate());
+		// What the revision was judged against. The corpus reference it used to carry named one
+		// consolidation of one legal act; a report now cites its contexts by id and version, and
+		// several of them, so the pair becomes a list. It is what makes "the finding changed
+		// because the regulation did" visible in the change sheet.
+		for (ContextRef context : report.getContexts()) {
+			String version = blankToNull(context.getContextVersion());
+			revision.getContextVersions()
+					.add(version == null ? context.getContextId() : context.getContextId() + "@" + version);
 		}
 		return revision;
 	}
@@ -271,12 +275,12 @@ public class ReportHistoryBuilder {
 	 * limited to the evaluations {@link #flatten} turns into rows: the number answers "how much did
 	 * this review find", and a report whose findings sit on flows has found them all the same.
 	 */
-	private static int countFindings(GdprReport report) {
+	private static int countFindings(ComplianceReport report) {
 		int count = report.getCombinations().size();
-		for (Evaluation evaluation : report.getEvaluation()) {
+		for (Evaluation evaluation : report.getEvaluations()) {
 			count += evaluation.getFindings().size();
 			if (evaluation instanceof ClassifierEvaluation classifier) {
-				for (FeatureEvaluation feature : classifier.getFeatureEvaluation()) {
+				for (FeatureEvaluation feature : classifier.getFeatureEvaluations()) {
 					count += feature.getFindings().size();
 				}
 			}
@@ -290,9 +294,9 @@ public class ReportHistoryBuilder {
 	 * Flattens one report into rows, keyed so that two revisions can be paired. A
 	 * {@link LinkedHashMap} because the sheet should read in the order the report was written.
 	 */
-	private Map<RowKey, EvaluationRow> flatten(GdprReport report, int revisionNumber) {
+	private Map<RowKey, EvaluationRow> flatten(ComplianceReport report, int revisionNumber) {
 		Map<RowKey, EvaluationRow> rows = new LinkedHashMap<>();
-		for (Evaluation evaluation : report.getEvaluation()) {
+		for (Evaluation evaluation : report.getEvaluations()) {
 			if (evaluation instanceof ClassifierEvaluation classifier) {
 				flattenClassifier(rows, classifier, revisionNumber);
 			} else if (evaluation instanceof FlowEvaluation flow) {
@@ -318,7 +322,7 @@ public class ReportHistoryBuilder {
 		if (!classifier.getFindings().isEmpty()) {
 			rows.put(new RowKey(classifierId, ""), classifierRow(classifier, classifierId, revisionNumber));
 		}
-		for (FeatureEvaluation feature : classifier.getFeatureEvaluation()) {
+		for (FeatureEvaluation feature : classifier.getFeatureEvaluations()) {
 			String featureId = identify(feature.getId(), feature.getUriFragment(), feature.getName());
 			if (featureId == null) {
 				continue;
@@ -344,8 +348,8 @@ public class ReportHistoryBuilder {
 		}
 		EvaluationRow row = factory.createEvaluationRow();
 		row.setRevisionNumber(revisionNumber);
-		row.setClassifierId(flowId);
-		row.setClassifierName(blankToNull(flow.getName()) == null ? flow.getMapping() : flow.getName());
+		row.setElementId(flowId);
+		row.setElementName(blankToNull(flow.getName()) == null ? flow.getMapping() : flow.getName());
 		row.setTypeName(flow.getFlowKind() == null ? null : flow.getFlowKind().getName());
 		row.setPurpose(flow.getPurpose());
 		merge(row, flow.getFindings(), flow.getRelevanceLevel());
@@ -366,9 +370,9 @@ public class ReportHistoryBuilder {
 	private EvaluationRow classifierRow(ClassifierEvaluation classifier, String classifierId, int revisionNumber) {
 		EvaluationRow row = factory.createEvaluationRow();
 		row.setRevisionNumber(revisionNumber);
-		row.setClassifierId(classifierId);
-		row.setClassifierName(classifier.getName());
-		row.setClassifierUriFragment(classifier.getUriFragment());
+		row.setElementId(classifierId);
+		row.setElementName(classifier.getName());
+		row.setElementPath(classifier.getUriFragment());
 		merge(row, classifier.getFindings(), null);
 		return row;
 	}
@@ -377,12 +381,12 @@ public class ReportHistoryBuilder {
 			String featureId, int revisionNumber) {
 		EvaluationRow row = factory.createEvaluationRow();
 		row.setRevisionNumber(revisionNumber);
-		row.setClassifierId(classifierId);
-		row.setClassifierName(classifier.getName());
-		row.setClassifierUriFragment(classifier.getUriFragment());
-		row.setFeatureId(featureId);
-		row.setFeatureName(feature.getName());
-		row.setFeatureUriFragment(feature.getUriFragment());
+		row.setElementId(classifierId);
+		row.setElementName(classifier.getName());
+		row.setElementPath(classifier.getUriFragment());
+		row.setChildId(featureId);
+		row.setChildName(feature.getName());
+		row.setChildPath(feature.getUriFragment());
 		row.setTypeName(feature.getTypeName());
 		row.setPurpose(feature.getPurpose());
 		merge(row, feature.getFindings(), feature.getRelevanceLevel());
@@ -394,17 +398,17 @@ public class ReportHistoryBuilder {
 	 * the row still exists - it was examined and nothing was found, which is a statement worth
 	 * keeping - and carries the evaluation's own relevance.
 	 */
-	private void merge(EvaluationRow row, List<Finding> findings, RelevanceLevelType ownRelevance) {
+	private void merge(EvaluationRow row, List<Finding> findings, RelevanceLevel ownRelevance) {
 		Set<String> categories = new TreeSet<>();
 		Set<String> citations = new TreeSet<>();
 		List<String> rationales = new ArrayList<>();
 		List<String> recommendations = new ArrayList<>();
-		RelevanceLevelType relevance = ownRelevance;
-		ConfidenceType confidence = null;
+		RelevanceLevel relevance = ownRelevance;
+		Confidence confidence = null;
 
 		for (Finding finding : findings) {
-			if (finding.getCategory() != null) {
-				categories.add(finding.getCategory().getName());
+			for (CategoryRef category : finding.getCategories()) {
+				addIfPresent(categories, category.getCategoryId());
 			}
 			relevance = highest(relevance, finding.getRelevanceLevel());
 			confidence = mostCautious(confidence, finding.getConfidence());
@@ -415,7 +419,7 @@ public class ReportHistoryBuilder {
 			}
 		}
 
-		row.setCategory(join(categories));
+		row.setCategories(join(categories));
 		row.setRelevanceLevel(relevance == null ? null : relevance.getName());
 		row.setConfidence(confidence == null ? null : confidence.getName());
 		row.setRationale(join(rationales));
@@ -446,7 +450,7 @@ public class ReportHistoryBuilder {
 			if (before == null) {
 				after.setChangeKind(ChangeKind.ADDED);
 				changes.add(change(entry.getKey(), revisionNumber, stored, "", ChangeKind.ADDED, null,
-						after.getCategory()));
+						after.getCategories()));
 				continue;
 			}
 			List<ChangeRow> fieldChanges = compareFields(entry.getKey(), before, after, revisionNumber, stored);
@@ -457,7 +461,7 @@ public class ReportHistoryBuilder {
 		for (Map.Entry<RowKey, EvaluationRow> entry : previous.entrySet()) {
 			if (!current.containsKey(entry.getKey())) {
 				changes.add(change(entry.getKey(), revisionNumber, stored, "", ChangeKind.REMOVED,
-						entry.getValue().getCategory(), null));
+						entry.getValue().getCategories(), null));
 			}
 		}
 		return changes;
@@ -466,7 +470,7 @@ public class ReportHistoryBuilder {
 	private List<ChangeRow> compareFields(RowKey key, EvaluationRow before, EvaluationRow after, int revisionNumber,
 			StoredReport stored) {
 		List<ChangeRow> changes = new ArrayList<>();
-		compare(changes, key, revisionNumber, stored, CATEGORY, before.getCategory(), after.getCategory());
+		compare(changes, key, revisionNumber, stored, CATEGORIES, before.getCategories(), after.getCategories());
 		compare(changes, key, revisionNumber, stored, RELEVANCE_LEVEL, before.getRelevanceLevel(),
 				after.getRelevanceLevel());
 		compare(changes, key, revisionNumber, stored, CONFIDENCE, before.getConfidence(), after.getConfidence());
@@ -524,8 +528,8 @@ public class ReportHistoryBuilder {
 		change.setChangedAt(stored.report().getGeneratedAt());
 		change.setChangedBy(blankToNull(stored.changedBy()) == null ? stored.report().getGeneratedBy()
 				: stored.changedBy());
-		change.setClassifierId(key.classifierId());
-		change.setFeatureId(key.featureId());
+		change.setElementId(key.classifierId());
+		change.setChildId(key.featureId());
 		change.setField(field);
 		change.setChangeKind(kind);
 		change.setOldValue(oldValue);
@@ -577,11 +581,11 @@ public class ReportHistoryBuilder {
 	 * whatever sits at value 0 - a guess in the one column that must not guess.
 	 */
 	private static RevisionOrigin origin(StoredReport stored) {
-		GdprReport report = stored.report();
-		if (!report.eIsSet(GDPRReportPackage.Literals.GDPR_REPORT__ORIGIN)) {
+		ComplianceReport report = stored.report();
+		if (!report.eIsSet(ReportPackage.Literals.COMPLIANCE_REPORT__ORIGIN)) {
 			return stored.origin();
 		}
-		GdprReportOrigin stated = report.getOrigin();
+		ReportOrigin stated = report.getOrigin();
 		if (stated == null) {
 			return stored.origin();
 		}
@@ -618,7 +622,7 @@ public class ReportHistoryBuilder {
 		return identity != null ? identity : blankToNull(name);
 	}
 
-	private static RelevanceLevelType highest(RelevanceLevelType one, RelevanceLevelType other) {
+	private static RelevanceLevel highest(RelevanceLevel one, RelevanceLevel other) {
 		if (one == null) {
 			return other;
 		}
@@ -632,13 +636,13 @@ public class ReportHistoryBuilder {
 	 * The least confident of the two. A row that folds a confident finding together with one that
 	 * needs a purpose confirmed is not a confident row.
 	 * <p>
-	 * <b>Not by enum value.</b> {@code ConfidenceType} runs LOW, MEDIUM, HIGH,
-	 * REQUIRES_PURPOSE_CONFIRMATION, so its ordinal is a declaration order and not a scale:
-	 * REQUIRES_PURPOSE_CONFIRMATION sorts highest while meaning the least settled of all. Comparing
+	 * <b>Not by enum value.</b> {@code Confidence} runs LOW, MEDIUM, HIGH,
+	 * REQUIRES_CONFIRMATION, so its ordinal is a declaration order and not a scale:
+	 * REQUIRES_CONFIRMATION sorts highest while meaning the least settled of all. Comparing
 	 * on {@code getValue()} would quietly report a merged row as HIGH when one of its findings is
 	 * waiting for a human to confirm what the field is for.
 	 */
-	private static ConfidenceType mostCautious(ConfidenceType one, ConfidenceType other) {
+	private static Confidence mostCautious(Confidence one, Confidence other) {
 		if (one == null) {
 			return other;
 		}
@@ -649,9 +653,9 @@ public class ReportHistoryBuilder {
 	}
 
 	/** Least settled first, so the smaller rank is the more cautious answer. */
-	private static int cautiousness(ConfidenceType confidence) {
+	private static int cautiousness(Confidence confidence) {
 		return switch (confidence) {
-		case REQUIRES_PURPOSE_CONFIRMATION -> 0;
+		case REQUIRES_CONFIRMATION -> 0;
 		case LOW -> 1;
 		case MEDIUM -> 2;
 		case HIGH -> 3;

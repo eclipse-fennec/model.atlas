@@ -29,9 +29,9 @@ import org.eclipse.fennec.model.atlas.action.api.ActionContext;
 import org.eclipse.fennec.model.atlas.action.api.StageActionService;
 import org.eclipse.fennec.model.atlas.mgmt.management.ObjectMetadata;
 import org.eclipse.fennec.model.atlas.wf.workflowapi.WritableScopeService;
-import org.eclipse.fennec.model.gdprReport.GdprReport;
-import org.eclipse.fennec.model.gdprReport.PackageSubject;
-import org.eclipse.fennec.model.gdprReport.TransformationSubject;
+import org.eclipse.fennec.model.compliance.report.ComplianceReport;
+import org.eclipse.fennec.model.compliance.report.PackageSubject;
+import org.eclipse.fennec.model.compliance.report.TransformationSubject;
 import org.osgi.service.component.annotations.Activate;
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.ConfigurationPolicy;
@@ -244,7 +244,7 @@ public class QvtGdprReanalysisStageAction implements StageActionService {
 			return Promises.resolved(null);
 		}
 		ReportAddress address = ReportAddress.of(ctx);
-		GdprReport report = reports(ctx).reportAt(ctx.stage(), ctx.objectId());
+		ComplianceReport report = reports(ctx).reportAt(ctx.stage(), ctx.objectId());
 		if (report == null) {
 			LOGGER.log(Level.WARNING, () -> String.format(
 					"Report %s is not readable, so nothing could be said about what rests on it.", address));
@@ -278,7 +278,7 @@ public class QvtGdprReanalysisStageAction implements StageActionService {
 			TransformationAnalysis analysis = reports(ctx);
 			Set<String> done = new LinkedHashSet<>();
 			for (String stage : StageLadder.stagesSeeingIn(scope.getScope(), ctx.registry(), ctx.stage())) {
-				for (GdprReport stale : restingOn(analysis, ctx.registry(), stage, fingerprint)) {
+				for (ComplianceReport stale : restingOn(analysis, ctx.registry(), stage, fingerprint)) {
 					TransformationSubject subject = (TransformationSubject) stale.getSubject();
 					if (!done.add(stage + "/" + subject.getSubjectFingerprint())) {
 						// Two revisions of one transformation's report can name the same unit; it
@@ -298,11 +298,11 @@ public class QvtGdprReanalysisStageAction implements StageActionService {
 	}
 
 	/** The stored transformation reports in one stage that rested on this revision. */
-	private List<GdprReport> restingOn(TransformationAnalysis analysis, String registry, String stage,
+	private List<ComplianceReport> restingOn(TransformationAnalysis analysis, String registry, String stage,
 			String fingerprint) {
-		List<GdprReport> stale = new ArrayList<>();
+		List<ComplianceReport> stale = new ArrayList<>();
 		for (ObjectMetadata metadata : scope.listInStageForRegistry(registry, stage)) {
-			GdprReport report = analysis.reportAt(stage, metadata.getObjectId());
+			ComplianceReport report = analysis.reportAt(stage, metadata.getObjectId());
 			if (report == null || !(report.getSubject() instanceof TransformationSubject subject)) {
 				continue;
 			}
