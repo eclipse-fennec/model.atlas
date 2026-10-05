@@ -1,0 +1,462 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ecore:EPackage xmi:version="2.0" xmlns:xmi="http://www.omg.org/XMI" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xmlns:ecore="http://www.eclipse.org/emf/2002/Ecore" name="mapping" nsURI="https://fennec.eclipse.org/event.atlas/mapping/1.0"
+    nsPrefix="mapping">
+  <eAnnotations source="http://www.eclipse.org/OCL/Import">
+    <details key="ecore" value="http://www.eclipse.org/emf/2002/Ecore"/>
+  </eAnnotations>
+  <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+    <details key="copyrightText" value="Copyright (c) 2012 - 2025 Data In Motion and others.&#xA;All rights reserved. &#xA;&#xA;This program and the accompanying materials are made&#xA;available under the terms of the Eclipse Public License 2.0&#xA;which is available at https://www.eclipse.org/legal/epl-2.0/&#xA;&#xA;SPDX-License-Identifier: EPL-2.0&#xA;&#xA;Contributors:&#xA;     Mark Hoffmann - initial API and implementation"/>
+    <details key="oSGiCompatible" value="true"/>
+    <details key="basePackage" value="org.eclipse.fennec.event.atlas.model"/>
+    <details key="resource" value="XMI"/>
+  </eAnnotations>
+  <eClassifiers xsi:type="ecore:EDataType" name="EInstant" instanceClassName="java.lang.String">
+    <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+      <details key="documentation" value="An ISO-8601 instant literal, e.g. 2026-09-16T10:15:30Z.&#xA;&#xA;A literal that cannot be parsed is logged and treated as no timestamp, so the next timestamp source applies."/>
+    </eAnnotations>
+  </eClassifiers>
+  <eClassifiers xsi:type="ecore:EClass" name="MappingProfile">
+    <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+      <details key="documentation" value="Defines a reusable provider structure template that multiple mappings can conform to.&#xA;This enables different domain models to map to the same target provider structure."/>
+    </eAnnotations>
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="profileId" lowerBound="1"
+        eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString" iD="true">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="Unique identifier for this mapping profile."/>
+      </eAnnotations>
+    </eStructuralFeatures>
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="name" lowerBound="1" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="Human-readable name for this mapping profile."/>
+      </eAnnotations>
+    </eStructuralFeatures>
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="description" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="Optional description of this mapping profile's purpose and usage."/>
+      </eAnnotations>
+    </eStructuralFeatures>
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="version" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"
+        defaultValueLiteral="1.0">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="Version of this mapping profile for compatibility tracking."/>
+      </eAnnotations>
+    </eStructuralFeatures>
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="providerStrategy" eType="#//ProviderStrategy"
+        defaultValueLiteral="SEPARATE">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="Defines how providers are created when multiple mappings use this profile.&#xA;SEPARATE: Each mapping creates its own provider instance (default).&#xA;UNIFIED: All mappings using this profile contribute to a single unified provider."/>
+      </eAnnotations>
+    </eStructuralFeatures>
+    <eStructuralFeatures xsi:type="ecore:EReference" name="provider" lowerBound="1"
+        eType="#//ProfileProvider" containment="true">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="The provider structure definition for this profile."/>
+      </eAnnotations>
+    </eStructuralFeatures>
+  </eClassifiers>
+  <eClassifiers xsi:type="ecore:EClass" name="ProfileProvider">
+    <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+      <details key="documentation" value="Defines the target provider structure that mappings must conform to."/>
+    </eAnnotations>
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="providerId" lowerBound="1"
+        eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString" iD="true">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="The expected provider ID structure (can contain placeholders)."/>
+      </eAnnotations>
+    </eStructuralFeatures>
+    <eStructuralFeatures xsi:type="ecore:EReference" name="services" upperBound="-1"
+        eType="#//ProfileService" containment="true">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="The services that must be present in mappings using this profile."/>
+      </eAnnotations>
+    </eStructuralFeatures>
+    <eStructuralFeatures xsi:type="ecore:EReference" name="admin" eType="#//ProfileAdmin"
+        containment="true">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="The admin service structure for this profile."/>
+      </eAnnotations>
+    </eStructuralFeatures>
+  </eClassifiers>
+  <eClassifiers xsi:type="ecore:EClass" name="ProfileService">
+    <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+      <details key="documentation" value="Defines a service structure that mappings must conform to."/>
+    </eAnnotations>
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="serviceId" lowerBound="1"
+        eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString" iD="true">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="The expected service ID."/>
+      </eAnnotations>
+    </eStructuralFeatures>
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="serviceName" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="The expected service display name."/>
+      </eAnnotations>
+    </eStructuralFeatures>
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="required" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EBoolean"
+        defaultValueLiteral="true">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="Whether this service is required in mappings using this profile."/>
+      </eAnnotations>
+    </eStructuralFeatures>
+    <eStructuralFeatures xsi:type="ecore:EReference" name="resources" upperBound="-1"
+        eType="#//ProfileResource" containment="true">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="The resources that must be present in this service."/>
+      </eAnnotations>
+    </eStructuralFeatures>
+  </eClassifiers>
+  <eClassifiers xsi:type="ecore:EClass" name="ProfileResource">
+    <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+      <details key="documentation" value="Defines a resource structure that mappings must conform to."/>
+    </eAnnotations>
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="resourceId" lowerBound="1"
+        eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString" iD="true">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="The expected resource ID."/>
+      </eAnnotations>
+    </eStructuralFeatures>
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="resourceName" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="The expected resource display name."/>
+      </eAnnotations>
+    </eStructuralFeatures>
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="required" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EBoolean"
+        defaultValueLiteral="true">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="Whether this resource is required in mappings using this profile."/>
+      </eAnnotations>
+    </eStructuralFeatures>
+    <eStructuralFeatures xsi:type="ecore:EReference" name="expectedType" eType="ecore:EClass http://www.eclipse.org/emf/2002/Ecore#//EDataType">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="The expected data type for this resource."/>
+      </eAnnotations>
+    </eStructuralFeatures>
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="expectedUnit" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="The expected unit for this resource (if applicable)."/>
+      </eAnnotations>
+    </eStructuralFeatures>
+  </eClassifiers>
+  <eClassifiers xsi:type="ecore:EClass" name="ProfileAdmin" eSuperTypes="#//ProfileService">
+    <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+      <details key="documentation" value="Defines the admin service structure for a profile."/>
+    </eAnnotations>
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="requiresLocation" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EBoolean"
+        defaultValueLiteral="false">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="Whether location information is required for this profile."/>
+      </eAnnotations>
+    </eStructuralFeatures>
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="requiresFriendlyName" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EBoolean"
+        defaultValueLiteral="false">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="Whether friendly name is required for this profile."/>
+      </eAnnotations>
+    </eStructuralFeatures>
+  </eClassifiers>
+  <eClassifiers xsi:type="ecore:EClass" name="ProviderMapping" eSuperTypes="#//Mapping">
+    <eStructuralFeatures xsi:type="ecore:EReference" name="providerClasses" upperBound="-1"
+        eType="ecore:EClass http://www.eclipse.org/emf/2002/Ecore#//EClass"/>
+    <eStructuralFeatures xsi:type="ecore:EReference" name="services" upperBound="-1"
+        eType="#//ServiceMapping" containment="true"/>
+    <eStructuralFeatures xsi:type="ecore:EReference" name="admin" eType="#//AdminMapping"
+        containment="true"/>
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="providerTimestamp" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EBoolean"
+        defaultValueLiteral="false">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="If set to true, this means the provider timestamp is the same for all services and resources. Updates occur not resource individual.&#xA;This is usually the case when a provider reflects a more complex structure that contains many data / resources.&#xA;The default is false."/>
+      </eAnnotations>
+    </eStructuralFeatures>
+    <eStructuralFeatures xsi:type="ecore:EReference" name="profile" eType="#//MappingProfile">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="Optional reference to a mapping profile that defines the target provider structure.&#xA;When set, this mapping must conform to the profile's defined structure.&#xA;Multiple mappings can reference the same profile to ensure consistent target structures."/>
+      </eAnnotations>
+    </eStructuralFeatures>
+  </eClassifiers>
+  <eClassifiers xsi:type="ecore:EClass" name="ServiceMapping" eSuperTypes="#//Mapping">
+    <eStructuralFeatures xsi:type="ecore:EReference" name="resources" upperBound="-1"
+        eType="#//ResourceMapping" containment="true"/>
+    <eStructuralFeatures xsi:type="ecore:EReference" name="referencedResource" eType="#//ReferenceMapping"
+        containment="true"/>
+    <eStructuralFeatures xsi:type="ecore:EReference" name="temporaryResources" upperBound="-1"
+        eType="#//ResourceMapping" transient="true" containment="true"/>
+  </eClassifiers>
+  <eClassifiers xsi:type="ecore:EClass" name="ResourceMapping" eSuperTypes="http://www.eclipse.org/emf/2002/Ecore#//EAttribute">
+    <eOperations name="mapUnit">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="body" value="&lt;%java.util.Objects%>.requireNonNull(unitFunction);&#xA;Objects.requireNonNull(eobject);&#xA;setUnit(unitFunction.apply(eobject));"/>
+      </eAnnotations>
+      <eParameters name="eobject" lowerBound="1" eType="ecore:EClass http://www.eclipse.org/emf/2002/Ecore#//EObject"/>
+      <eParameters name="unitFunction" lowerBound="1" eType="#//JavaStringFunction"/>
+    </eOperations>
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="unit" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    <eStructuralFeatures xsi:type="ecore:EReference" name="unitFeature" upperBound="-1"
+        eType="ecore:EClass http://www.eclipse.org/emf/2002/Ecore#//EStructuralFeature"/>
+    <eStructuralFeatures xsi:type="ecore:EReference" name="valueFeature" upperBound="-1"
+        eType="ecore:EClass http://www.eclipse.org/emf/2002/Ecore#//EStructuralFeature"/>
+    <eStructuralFeatures xsi:type="ecore:EReference" name="timestamp" lowerBound="1"
+        eType="#//TimestampMapping"/>
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="mid" lowerBound="1" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"
+        iD="true"/>
+    <eStructuralFeatures xsi:type="ecore:EReference" name="extraMetadata" upperBound="-1"
+        eType="#//StringToStringMap" containment="true"/>
+    <eStructuralFeatures xsi:type="ecore:EReference" name="descriptionMapping" eType="#//NameMapping"
+        derived="true"/>
+    <eStructuralFeatures xsi:type="ecore:EReference" name="changeRule" eType="#//ChangeRule"
+        containment="true">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="Optional change rule deciding whether a value change of this resource is stored.&#xA;Contained: the rule belongs to this resource alone. Two resources that behave alike each carry&#xA;their own copy, so changing a threshold means editing every resource that uses it.&#xA;Because the declared type is abstract, an XMI element must name the concrete rule, e.g.&#xA;xsi:type=&quot;mapping:PercentageChangeRule&quot;."/>
+      </eAnnotations>
+    </eStructuralFeatures>
+    <eStructuralFeatures xsi:type="ecore:EReference" name="deletionRule" eType="#//DeletionRule"
+        containment="true">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="Optional deletion rule controlling purging of this resource's stored history data.&#xA;Contained: the rule belongs to this resource alone. Nothing enforces deletion rules yet."/>
+      </eAnnotations>
+    </eStructuralFeatures>
+  </eClassifiers>
+  <eClassifiers xsi:type="ecore:EClass" name="AdminMapping" eSuperTypes="#//ServiceMapping">
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="friendlyName" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    <eStructuralFeatures xsi:type="ecore:EReference" name="friendlyNameFeature" upperBound="-1"
+        eType="ecore:EClass http://www.eclipse.org/emf/2002/Ecore#//EStructuralFeature"/>
+    <eStructuralFeatures xsi:type="ecore:EReference" name="providerPackage" eType="ecore:EClass http://www.eclipse.org/emf/2002/Ecore#//EPackage"/>
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="latitude" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EDoubleObject"/>
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="longitude" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EDoubleObject"/>
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="elevation" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EDoubleObject"/>
+    <eStructuralFeatures xsi:type="ecore:EReference" name="latitudeRef" upperBound="-1"
+        eType="ecore:EClass http://www.eclipse.org/emf/2002/Ecore#//EStructuralFeature"/>
+    <eStructuralFeatures xsi:type="ecore:EReference" name="longitudeRef" upperBound="-1"
+        eType="ecore:EClass http://www.eclipse.org/emf/2002/Ecore#//EStructuralFeature"/>
+    <eStructuralFeatures xsi:type="ecore:EReference" name="elevationRef" upperBound="-1"
+        eType="ecore:EClass http://www.eclipse.org/emf/2002/Ecore#//EStructuralFeature"/>
+  </eClassifiers>
+  <eClassifiers xsi:type="ecore:EClass" name="MetadataMapping"/>
+  <eClassifiers xsi:type="ecore:EDataType" name="JavaStringFunction" instanceTypeName="java.util.function.Function&lt;org.eclipse.emf.ecore.EObject, java.lang.String>"
+      serializable="false"/>
+  <eClassifiers xsi:type="ecore:EClass" name="Mapping">
+    <eOperations name="mapId">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="body" value="&lt;%java.util.Objects%>.requireNonNull(idFunction);&#xA;Objects.requireNonNull(eobject);&#xA;setMid(idFunction.apply(eobject));"/>
+      </eAnnotations>
+      <eParameters name="idFunction" lowerBound="1" eType="#//JavaStringFunction"/>
+      <eParameters name="eobject" lowerBound="1" eType="ecore:EClass http://www.eclipse.org/emf/2002/Ecore#//EObject"/>
+    </eOperations>
+    <eOperations name="mapName">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="body" value="&lt;%java.util.Objects%>.requireNonNull(nameFunction);&#xA;Objects.requireNonNull(eobject);&#xA;NameMapping name = &lt;%org.eclipse.fennec.event.atlas.model.mapping.MappingFactory%>.eINSTANCE.createNameMapping();&#xA;name.setName(nameFunction.apply(eobject));&#xA;setName(name);"/>
+      </eAnnotations>
+      <eParameters name="nameFunction" lowerBound="1" eType="#//JavaStringFunction"/>
+      <eParameters name="eobject" lowerBound="1" eType="ecore:EClass http://www.eclipse.org/emf/2002/Ecore#//EObject"/>
+    </eOperations>
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="mid" lowerBound="1" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"
+        iD="true"/>
+    <eStructuralFeatures xsi:type="ecore:EReference" name="timestamp" eType="#//TimestampMapping"
+        containment="true"/>
+    <eStructuralFeatures xsi:type="ecore:EReference" name="name" lowerBound="1" eType="#//NameMapping"
+        containment="true"/>
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="fqMid" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"
+        changeable="false" volatile="true" transient="true" derived="true">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="get" value="if (&lt;%java.util.Objects%>.nonNull(eContainer())) {&#xA;  String fqId = ((Mapping)eContainer()).getFqMid();&#xA;  Objects.requireNonNull(fqId);&#xA;  return fqId += &quot;.&quot; + getMid();&#xA;} else {&#xA;  return getMid();&#xA;}"/>
+      </eAnnotations>
+    </eStructuralFeatures>
+  </eClassifiers>
+  <eClassifiers xsi:type="ecore:EDataType" name="JavaInstantFunction" instanceTypeName="java.util.function.Function&lt;org.eclipse.emf.ecore.EObject, java.time.Instant>"
+      serializable="false"/>
+  <eClassifiers xsi:type="ecore:EDataType" name="JavaObjectFunction" instanceTypeName="java.util.function.Function&lt;org.eclipse.emf.ecore.EObject, ?>"
+      serializable="false"/>
+  <eClassifiers xsi:type="ecore:EEnum" name="TimestampStrategy">
+    <eLiterals name="NOW"/>
+    <eLiterals name="FEATURE" value="1"/>
+    <eLiterals name="FUNCTION" value="2"/>
+  </eClassifiers>
+  <eClassifiers xsi:type="ecore:EEnum" name="ProviderStrategy">
+    <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+      <details key="documentation" value="Defines how providers are created when multiple mappings use the same profile."/>
+    </eAnnotations>
+    <eLiterals name="SEPARATE" literal="SEPARATE">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="Each mapping creates its own provider instance (default behavior)."/>
+      </eAnnotations>
+    </eLiterals>
+    <eLiterals name="UNIFIED" value="1" literal="UNIFIED">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="All mappings using this profile contribute to a single unified provider."/>
+      </eAnnotations>
+    </eLiterals>
+  </eClassifiers>
+  <eClassifiers xsi:type="ecore:EClass" name="FeatureMapping">
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="functionId" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    <eStructuralFeatures xsi:type="ecore:EReference" name="featurePath" upperBound="-1"
+        eType="ecore:EClass http://www.eclipse.org/emf/2002/Ecore#//EStructuralFeature"/>
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="collectionIndex" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EInt"
+        defaultValueLiteral="0">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="When a feature in the featurePath is a collection, specifies which element index to use during path traversal. Default is 0 (first element).&#xA;This applies to the first collection encountered during feature path traversal.&#xA;&#xA;Example: For a path WeatherReports.reports.weatherStation.id where 'reports' is a collection, setting collectionIndex=0 will navigate to reports[0].weatherStation.id, while collectionIndex=1 will navigate to reports[1].weatherStation.id.&#xA;&#xA;This attribute is inherited by NameMapping, TimestampMapping, and ValueMapping, allowing consistent collection navigation across all feature path uses."/>
+      </eAnnotations>
+    </eStructuralFeatures>
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="collectionFilter" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="Optional filter expression to select a specific element from the collection instead of using a fixed index. The expression syntax and evaluation mechanism are implementation-specific.&#xA;If both collectionIndex and collectionFilter are set, collectionFilter takes precedence.&#xA;This allows for more dynamic selection criteria, such as 'select the element with the earliest timestamp' or 'select the element where type=CURRENT'.&#xA;This attribute is ignored if collectionFeature is not set."/>
+      </eAnnotations>
+    </eStructuralFeatures>
+  </eClassifiers>
+  <eClassifiers xsi:type="ecore:EClass" name="TimestampMapping" eSuperTypes="#//FeatureMapping">
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="strategy" eType="#//TimestampStrategy"/>
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="timestamp" eType="#//EInstant"/>
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="hint" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="A hint like a time-format pattern when converting a timestamp"/>
+      </eAnnotations>
+    </eStructuralFeatures>
+  </eClassifiers>
+  <eClassifiers xsi:type="ecore:EClass" name="NameMapping" eSuperTypes="#//FeatureMapping">
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="name" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+  </eClassifiers>
+  <eClassifiers xsi:type="ecore:EClass" name="ValueMapping" eSuperTypes="#//FeatureMapping">
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="value" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+  </eClassifiers>
+  <eClassifiers xsi:type="ecore:EClass" name="StringToStringMap" instanceClassName="java.util.Map$Entry">
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="key" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="value" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+  </eClassifiers>
+  <eClassifiers xsi:type="ecore:EClass" name="ReferenceMapping" eSuperTypes="#//FeatureMapping">
+    <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+      <details key="documentation" value="Defines a reference-based mapping that automatically generates resources from attributes of the referenced type."/>
+    </eAnnotations>
+    <eStructuralFeatures xsi:type="ecore:EReference" name="filter" upperBound="-1"
+        eType="ecore:EClass http://www.eclipse.org/emf/2002/Ecore#//EAttribute"/>
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="exclude" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EBoolean"
+        defaultValueLiteral="true"/>
+    <eStructuralFeatures xsi:type="ecore:EReference" name="referenceMappings" upperBound="-1"
+        eType="#//ReferenceMapping" containment="true"/>
+    <eStructuralFeatures xsi:type="ecore:EReference" name="targetEClass" eType="ecore:EClass http://www.eclipse.org/emf/2002/Ecore#//EClass">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="Optional specification of the concrete EClass to use for generating resources.&#xA;If not set, the declared type of the feature path's target will be used.&#xA;This is useful when the feature has a base type but you know instances will be of a specific subtype.&#xA;&#xA;Example: If 'reports' is declared as WeatherReport[] but you know instances are MOSMIXWeatherReport,&#xA;set targetEClass to MOSMIXWeatherReport to generate resources from its attributes."/>
+      </eAnnotations>
+    </eStructuralFeatures>
+    <eStructuralFeatures xsi:type="ecore:EReference" name="bindings" upperBound="-1"
+        eType="#//ReferenceResourceBinding" containment="true">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="Optional per-attribute bindings for the resources this reference mapping generates: they&#xA;attach persistence rules and metadata overrides to a subset of those resources.&#xA;&#xA;A binding with an empty 'attributes' list applies to every resource generated here and is&#xA;therefore the default for the whole reference - the same convention 'filter' uses, where an&#xA;empty list means &quot;all attributes&quot;.&#xA;&#xA;Bindings cascade into nested reference mappings ('referenceMappings'): attributes are&#xA;addressed by globally unique EAttribute references, so a binding declared here can name an&#xA;attribute of a nested type. The nearest declaration wins - a binding on the nested mapping&#xA;overrides one declared here for the same attribute, and a nested default overrides this one."/>
+      </eAnnotations>
+    </eStructuralFeatures>
+  </eClassifiers>
+  <eClassifiers xsi:type="ecore:EEnum" name="DurationUnit">
+    <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+      <details key="documentation" value="Time unit for a duration amount."/>
+    </eAnnotations>
+    <eLiterals name="MILLISECONDS"/>
+    <eLiterals name="SECONDS" value="1"/>
+    <eLiterals name="MINUTES" value="2"/>
+    <eLiterals name="HOURS" value="3"/>
+    <eLiterals name="DAYS" value="4"/>
+  </eClassifiers>
+  <eClassifiers xsi:type="ecore:EClass" name="PersistenceRuleRegistry">
+    <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+      <details key="documentation" value="A standalone catalogue of persistence rules to copy from.&#xA;Nothing in the runtime reads it - rules are contained by the ResourceMapping or the&#xA;ReferenceResourceBinding that uses them - so a registry file does not belong in a&#xA;runtime's mappings directory."/>
+    </eAnnotations>
+    <eStructuralFeatures xsi:type="ecore:EReference" name="changeRules" upperBound="-1"
+        eType="#//ChangeRule" containment="true"/>
+    <eStructuralFeatures xsi:type="ecore:EReference" name="deletionRules" upperBound="-1"
+        eType="#//DeletionRule" containment="true"/>
+  </eClassifiers>
+  <eClassifiers xsi:type="ecore:EClass" name="PersistenceRule" abstract="true">
+    <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+      <details key="documentation" value="Common base for persistence rules. A rule is contained by the resource mapping or the&#xA;reference binding that uses it; id, name and description are documentation, not identity."/>
+    </eAnnotations>
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="id" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="Optional label for this rule, useful in logs and when copying a rule out of a catalogue.&#xA;Nothing resolves it - a rule is reached through its container, not by id."/>
+      </eAnnotations>
+    </eStructuralFeatures>
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="name" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="description" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+  </eClassifiers>
+  <eClassifiers xsi:type="ecore:EClass" name="ChangeRule" abstract="true" eSuperTypes="#//PersistenceRule">
+    <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+      <details key="documentation" value="Decides whether a resource value change is forwarded to the history provider.&#xA;Each concrete subtype carries exactly the parameter it needs; comparisons are made against&#xA;the last stored value, and the first value for a resource is always stored."/>
+    </eAnnotations>
+  </eClassifiers>
+  <eClassifiers xsi:type="ecore:EClass" name="PercentageChangeRule" eSuperTypes="#//ChangeRule">
+    <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+      <details key="documentation" value="Store only if the value changed by at least 'percentage' percent relative to the last&#xA;stored value."/>
+    </eAnnotations>
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="percentage" lowerBound="1"
+        eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EDoubleObject"/>
+  </eClassifiers>
+  <eClassifiers xsi:type="ecore:EClass" name="AbsoluteChangeRule" eSuperTypes="#//ChangeRule">
+    <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+      <details key="documentation" value="Store only if the absolute value change since the last stored value is at least 'delta'."/>
+    </eAnnotations>
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="delta" lowerBound="1" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EDoubleObject"/>
+  </eClassifiers>
+  <eClassifiers xsi:type="ecore:EClass" name="CountChangeRule" eSuperTypes="#//ChangeRule">
+    <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+      <details key="documentation" value="Store one value out of every 'n' notifications (n=1 stores every change)."/>
+    </eAnnotations>
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="n" lowerBound="1" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EIntegerObject"/>
+  </eClassifiers>
+  <eClassifiers xsi:type="ecore:EClass" name="TimeThrottleChangeRule" eSuperTypes="#//ChangeRule">
+    <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+      <details key="documentation" value="Store at most once per interval; changes arriving sooner than 'interval' 'intervalUnit'&#xA;after the last stored value are dropped (e.g. interval=5, intervalUnit=MINUTES)."/>
+    </eAnnotations>
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="interval" lowerBound="1"
+        eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EIntegerObject"/>
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="intervalUnit" lowerBound="1"
+        eType="#//DurationUnit"/>
+  </eClassifiers>
+  <eClassifiers xsi:type="ecore:EClass" name="DeletionRule" eSuperTypes="#//PersistenceRule">
+    <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+      <details key="documentation" value="Controls purging of stored history data for a resource."/>
+    </eAnnotations>
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="retention" lowerBound="1"
+        eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EIntegerObject">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="History data older than this age ('retention' 'retentionUnit', e.g. 90 DAYS) is eligible&#xA;for deletion."/>
+      </eAnnotations>
+    </eStructuralFeatures>
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="retentionUnit" lowerBound="1"
+        eType="#//DurationUnit"/>
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="cleanupInterval" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EIntegerObject">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="How often the cleanup runs ('cleanupInterval' 'cleanupIntervalUnit'). If unset, the&#xA;runtime decides the cadence."/>
+      </eAnnotations>
+    </eStructuralFeatures>
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="cleanupIntervalUnit" eType="#//DurationUnit"/>
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="maxCount" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EIntegerObject">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="Optional cap on the number of samples kept per resource."/>
+      </eAnnotations>
+    </eStructuralFeatures>
+  </eClassifiers>
+  <eClassifiers xsi:type="ecore:EClass" name="ReferenceResourceBinding">
+    <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+      <details key="documentation" value="Attaches persistence rules and metadata overrides to a subset of the resources that a&#xA;ReferenceMapping generates.&#xA;&#xA;A reference mapping generates one resource per attribute of the referenced type. Use a binding&#xA;when those resources need different settings - wind speed and temperature rarely tolerate the&#xA;same absolute delta. A binding names the attributes it applies to and carries the settings for&#xA;exactly those.&#xA;&#xA;Every setting resolves independently: for a generated resource, each feature is taken from the&#xA;most specific binding that sets it, and stays unset when no binding does."/>
+    </eAnnotations>
+    <eStructuralFeatures xsi:type="ecore:EReference" name="attributes" upperBound="-1"
+        eType="ecore:EClass http://www.eclipse.org/emf/2002/Ecore#//EAttribute">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="The attributes of the referenced type this binding applies to, referenced the same way as&#xA;ReferenceMapping.filter.&#xA;&#xA;An empty list makes the binding apply to every resource generated from the reference mapping,&#xA;which is how the default for a whole reference is declared.&#xA;&#xA;An attribute named by more than one binding at the same level resolves to the first binding&#xA;that names it; the duplicate is ignored and logged."/>
+      </eAnnotations>
+    </eStructuralFeatures>
+    <eStructuralFeatures xsi:type="ecore:EReference" name="changeRule" eType="#//ChangeRule"
+        containment="true">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="Optional change rule for the selected resources, with the same meaning it has on&#xA;ResourceMapping.changeRule. Contained here, and copied onto every resource this binding&#xA;applies to - the resources get equal rules, not one shared rule."/>
+      </eAnnotations>
+    </eStructuralFeatures>
+    <eStructuralFeatures xsi:type="ecore:EReference" name="deletionRule" eType="#//DeletionRule"
+        containment="true">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="Optional deletion rule for the selected resources, with the same meaning it has on&#xA;ResourceMapping.deletionRule. Contained here, and copied onto every resource this binding&#xA;applies to."/>
+      </eAnnotations>
+    </eStructuralFeatures>
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="unit" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString">
+      <eAnnotations source="http://www.eclipse.org/emf/2002/GenModel">
+        <details key="documentation" value="Optional unit for the selected resources, applied as ResourceMapping.unit.&#xA;&#xA;A generated resource otherwise takes its unit from the source attribute's 'sensinact.mapping'&#xA;annotation, which is copied along with the attribute. Set this when that is not an option -&#xA;a source model that cannot be annotated - or when the mapping publishes a different unit than&#xA;the model declares, for instance an attribute annotated 'F' exposed as 'C' after conversion.&#xA;ResourceMapping.unit takes precedence over the annotation."/>
+      </eAnnotations>
+    </eStructuralFeatures>
+  </eClassifiers>
+</ecore:EPackage>

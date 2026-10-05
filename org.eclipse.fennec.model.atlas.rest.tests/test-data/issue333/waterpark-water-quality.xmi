@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mapping:ProviderMapping
+    xmi:version="2.0"
+    xmlns:xmi="http://www.omg.org/XMI"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xmlns:ecore="http://www.eclipse.org/emf/2002/Ecore"
+    xmlns:mapping="https://fennec.eclipse.org/event.atlas/mapping/1.0"
+    mid="waterpark-water-quality">
+  <timestamp strategy="NOW"/>
+  <name>
+    <featurePath xsi:type="ecore:EAttribute" href="http://data-in-motion.biz/waterparc/domain#//WaterQuality/sensor_id"/>
+  </name>
+  <providerClasses href="http://data-in-motion.biz/waterparc/domain#//WaterQuality"/>
+  <services mid="water-quality">
+    <name name="Water Quality"/>
+    <resources name="ph" timestamp="//@timestamp" mid="ph">
+      <eType xsi:type="ecore:EDataType" href="http://www.eclipse.org/emf/2002/Ecore#//EDouble"/>
+      <valueFeature xsi:type="ecore:EAttribute" href="http://data-in-motion.biz/waterparc/domain#//WaterQuality/ph"/>
+    </resources>
+    <resources name="freeChlorine" unit="mg/l" timestamp="//@timestamp" mid="freechlorine">
+      <eType xsi:type="ecore:EDataType" href="http://www.eclipse.org/emf/2002/Ecore#//EDouble"/>
+      <valueFeature xsi:type="ecore:EAttribute" href="http://data-in-motion.biz/waterparc/domain#//WaterQuality/free_chlorine"/>
+    </resources>
+    <resources name="redox" unit="mV" timestamp="//@timestamp" mid="redox">
+      <eType xsi:type="ecore:EDataType" href="http://www.eclipse.org/emf/2002/Ecore#//EDouble"/>
+      <valueFeature xsi:type="ecore:EAttribute" href="http://data-in-motion.biz/waterparc/domain#//WaterQuality/redox"/>
+    </resources>
+    <resources name="status" timestamp="//@timestamp" mid="status">
+      <eType xsi:type="ecore:EDataType" href="http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+      <valueFeature xsi:type="ecore:EAttribute" href="http://data-in-motion.biz/waterparc/domain#//WaterQuality/status"/>
+    </resources>
+    <resources name="area" timestamp="//@timestamp" mid="area">
+      <eType xsi:type="ecore:EDataType" href="http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+      <valueFeature xsi:type="ecore:EAttribute" href="http://data-in-motion.biz/waterparc/domain#//WaterQuality/area_id"/>
+    </resources>
+  </services>
+  <admin mid="admin" latitude="0" longitude="0" elevation="0">
+    <name name="Admin"/>
+    <providerPackage href="http://data-in-motion.biz/waterparc/domain#/"/>
+  </admin>
+</mapping:ProviderMapping>
