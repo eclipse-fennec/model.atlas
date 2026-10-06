@@ -261,7 +261,7 @@ class RemoteReadableScopeService implements ReadableScopeService<EObject> {
 		Optional<ClientCache.Entry<EObject>> existing = cache.lookup(key);
 		String ifNoneMatch = existing.map(ClientCache.Entry::etag).orElse(null);
 		WebTarget target = registryTarget(key.registry(), key.stage()).path(CONTENT).queryParam("objectId",
-				key.objectId());
+				RestSupport.queryValue(key.objectId()));
 		Response response = RestSupport.get(target, EOBJECT_MEDIA_TYPE, ifNoneMatch);
 		try {
 			if (RestSupport.isNotModified(response)) {

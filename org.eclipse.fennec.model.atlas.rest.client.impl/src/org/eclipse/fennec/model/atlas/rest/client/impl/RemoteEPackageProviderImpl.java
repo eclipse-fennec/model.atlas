@@ -266,11 +266,11 @@ class RemoteEPackageProviderImpl implements RemoteEPackageProvider {
 		// No caching here — the caller (AtlasScopedFetchOnMissRegistry) owns its own cache, and a
 		// pinned read must not be served from, or poison, the nsURI-keyed stage-free cache.
 		WebTarget target = baseTarget.path(scopeName).path(SCHEMA).path("stages").path(stage).path("content")
-				.queryParam("nsUri", nsUri);
+				.queryParam("nsUri", RestSupport.queryValue(nsUri));
 		if (fingerprint != null && !fingerprint.isBlank()) {
 			// A precondition, not a selector: the server still resolves by location and answers
 			// 412 when what it finds there is a different version (RestSupport maps that).
-			target = target.queryParam("fingerprint", fingerprint);
+			target = target.queryParam("fingerprint", RestSupport.queryValue(fingerprint));
 		}
 		// Dependencies are fetched from the same scope AND stage: a package staged in
 		// `draft` must not silently inherit from its parent's `release` content.
@@ -387,7 +387,7 @@ class RemoteEPackageProviderImpl implements RemoteEPackageProvider {
 	private Optional<ContentResult> fetchContent(String scope, String nsUri, String ifNoneMatch) {
 		// Stage-free final-stage content (P5-7): GET /{scope}/schema/content?nsUri=… — the server
 		// resolves the final stage and walks scope inheritance, so no stage name is embedded here.
-		WebTarget target = baseTarget.path(scope).path(SCHEMA).path("content").queryParam("nsUri", nsUri);
+		WebTarget target = baseTarget.path(scope).path(SCHEMA).path("content").queryParam("nsUri", RestSupport.queryValue(nsUri));
 		return fetchContent(target, nsUri, ifNoneMatch, "scope=" + scope, this::getEPackage);
 	}
 
@@ -597,7 +597,7 @@ class RemoteEPackageProviderImpl implements RemoteEPackageProvider {
 	 * entry scope ({@code 204}/{@code 404}/any non-success), so the caller tries the next scope.
 	 */
 	private Optional<PackageMetadata> fetchMetadata(String entryScope, String nsUri) {
-		WebTarget target = baseTarget.path(entryScope).path(SCHEMA).queryParam("nsUri", nsUri);
+		WebTarget target = baseTarget.path(entryScope).path(SCHEMA).queryParam("nsUri", RestSupport.queryValue(nsUri));
 		Response response = RestSupport.get(target, MediaType.APPLICATION_JSON);
 		try {
 			// 204 (not visible from this scope) or any non-success → a miss; the caller
@@ -622,7 +622,7 @@ class RemoteEPackageProviderImpl implements RemoteEPackageProvider {
 	private Optional<EPackage> fetchResolvedContent(String scope, String nsUri) {
 		Optional<ClientCache.Entry<EPackage>> existing = cache.lookup(nsUri);
 		String ifNoneMatch = existing.map(ClientCache.Entry::etag).orElse(null);
-		WebTarget target = baseTarget.path(scope).path(SCHEMA).path("content").queryParam("nsUri", nsUri);
+		WebTarget target = baseTarget.path(scope).path(SCHEMA).path("content").queryParam("nsUri", RestSupport.queryValue(nsUri));
 		Optional<ContentResult> result = fetchContent(target, nsUri, ifNoneMatch, "scope=" + scope, this::getEPackage);
 		if (result.isEmpty()) {
 			return Optional.empty();
