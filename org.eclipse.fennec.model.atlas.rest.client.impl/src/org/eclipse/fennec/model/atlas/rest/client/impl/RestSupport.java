@@ -46,6 +46,19 @@ final class RestSupport {
 	}
 
 	/**
+	 * {@code value} prepared for {@link WebTarget#queryParam(String, Object...)} so the
+	 * server receives it verbatim. JAX-RS leaves percent-encoded sequences in a query
+	 * value as they are and reads braces as a URI template: an object id that contains
+	 * {@code %2F} (the compiled QVT-O units are keyed by a URL-encoded entry key) went
+	 * out as {@code %2F}, the server decoded it once and never found the stored id
+	 * (issue #340). Escaping {@code %} - and the braces - here makes the server's one
+	 * decode yield {@code value} again.
+	 */
+	static String queryValue(String value) {
+		return value.replace("%", "%25").replace("{", "%7B").replace("}", "%7D");
+	}
+
+	/**
 	 * GET {@code target} accepting {@code acceptMediaType}, mapping a transport
 	 * fault ({@link ProcessingException} — connect/read timeout, connection
 	 * refused, …) to {@link TransportException}.
