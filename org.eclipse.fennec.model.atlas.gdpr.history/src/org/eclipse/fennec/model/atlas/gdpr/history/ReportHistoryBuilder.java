@@ -120,6 +120,7 @@ public class ReportHistoryBuilder {
 		history.setRevisionCount(ordered.size());
 		describeSubject(history, ordered);
 		describeLanguage(history, ordered);
+		describeContexts(history, ordered);
 
 		Map<RowKey, EvaluationRow> previous = Map.of();
 		int revisionNumber = 0;
@@ -157,7 +158,7 @@ public class ReportHistoryBuilder {
 			} else if (subject instanceof TransformationSubject transformation) {
 				history.setSubjectName(transformation.getQualifiedName());
 				// The language the subject is WRITTEN IN, e.g. qvto - not the language the review
-				// was carried out in, which is reportLanguage and comes from the corpus.
+				// was written in, which is reportLanguage and comes from the report itself.
 				history.setSubjectLanguage(transformation.getLanguage());
 			}
 			history.setSubjectIdentifier(identifierOf(subject));
@@ -167,9 +168,38 @@ public class ReportHistoryBuilder {
 	}
 
 	/**
-	 * The language the reviews were carried out in, taken from the corpus they quote. It is
-	 * {@code reportLanguage} and not {@code subjectLanguage}: the latter is what a transformation
-	 * subject is written in, which has nothing to do with the language of the legal text.
+	 * Which contexts this subject was ever judged against, each named once, in the order they first
+	 * appear.
+	 * <p>
+	 * On the document and not only on the revisions, because the question it answers - has this
+	 * model been looked at for the CRA, or only for the GDPR? - is a question about the subject.
+	 * The <em>version</em> stays on the revision: that is the thing that moves between two reviews,
+	 * and the change sheet exists to make such a move visible.
+	 *
+	 * @param history the document being built
+	 * @param ordered the reviews, oldest first
+	 */
+	private static void describeContexts(ComplianceReportHistory history, List<StoredReport> ordered) {
+		Set<String> seen = new LinkedHashSet<>();
+		for (StoredReport stored : ordered) {
+			for (ContextRef context : stored.report().getContexts()) {
+				String id = blankToNull(context.getContextId());
+				if (id != null) {
+					seen.add(id);
+				}
+			}
+		}
+		history.getContextIds().addAll(seen);
+	}
+
+	/**
+	 * The language the reviews were written in, as each report states it. It is {@code reportLanguage}
+	 * and not {@code subjectLanguage}: the latter is what a transformation subject is written in,
+	 * which has nothing to do with the language of the prose.
+	 * <p>
+	 * Read off the report and not off the context it cites, because the sheet diffs
+	 * {@code rationale} and {@code recommendation}, which are the report's own words. A German
+	 * review of an English corpus is an ordinary case and it is a German document.
 	 * <p>
 	 * <b>A document covers one language.</b> A review quotes one consolidation of one language
 	 * version from start to seal, so revisions in two languages are not successive revisions of one

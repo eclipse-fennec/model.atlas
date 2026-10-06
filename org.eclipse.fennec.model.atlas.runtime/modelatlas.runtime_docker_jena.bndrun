@@ -20,9 +20,13 @@
 # bundles own the check-side PIDs (they are split because the Configurator applies one of two
 # bundles supplying the same singleton PID wholesale and discards the other).
 #
-# gdpr.report.model is NOT named here any more: the history bundle requires it, so the resolve
-# below brings it in with a version range. Naming it here unversioned as well risked a second,
-# differently versioned copy of the same EPackage.
+# No report model is named here: the history bundle requires compliance.report.history.model,
+# which drags compliance.report, .context and .corpus in with a version range. Naming any of them
+# here unversioned as well risked a second, differently versioned copy of the same EPackage.
+# gdpr.report.model is no longer pulled in at all - the fennec-gdpr bundles import
+# org.eclipse.fennec.model.compliance.report now (issue #332) - so the resolve below must not
+# contain it. If it reappears, something still reads the old EPackage; find it rather than
+# deleting the line.
 -runbundles.docker.jena: \
 	org.eclipse.fennec.event.atlas.mapping,\
 	org.eclipse.fennec.gdpr.action,\
@@ -61,7 +65,7 @@
 # does not load.
 -runrequires.docker.jena: \
 	bnd.identity;id='org.eclipse.fennec.codec.ods',\
-	bnd.identity;id='org.eclipse.fennec.gdpr.report.history.model',\
+	bnd.identity;id='org.eclipse.fennec.compliance.report.history.model',\
 	bnd.identity;id='org.eclipse.fennec.model.atlas.gdpr.history',\
 	bnd.identity;id='org.eclipse.fennec.model.atlas.gdpr.diagnostics',\
 	bnd.identity;id='org.eclipse.fennec.model.atlas.qvt.gdpr',\
@@ -125,12 +129,12 @@
 	org.eclipse.fennec.codec.tabular.model;version='[1.0.0,1.0.1)';startlevel=1052,\
 	org.eclipse.fennec.compliance.context.model;version='[1.0.0,1.0.1)';startlevel=1053,\
 	org.eclipse.fennec.compliance.corpus.model;version='[1.0.0,1.0.1)';startlevel=1054,\
-	org.eclipse.fennec.emf.osgi.component;version='[1.1.0,1.1.1)';startlevel=1055,\
-	org.eclipse.fennec.emf.osgi.eobject.registry;version='[1.1.0,1.1.1)';startlevel=1056,\
-	org.eclipse.fennec.emf.osgi.eobject.registry.metadata;version='[1.1.0,1.1.1)';startlevel=1057,\
-	org.eclipse.fennec.emf.osgi.metadata;version='[1.1.0,1.1.1)';startlevel=1058,\
-	org.eclipse.fennec.gdpr.report.history.model;version='[1.0.0,1.0.1)';startlevel=1059,\
-	org.eclipse.fennec.gdpr.report.model;version='[1.0.0,1.0.1)';startlevel=1060,\
+	org.eclipse.fennec.compliance.report.history.model;version='[1.0.0,1.0.1)';startlevel=1055,\
+	org.eclipse.fennec.compliance.report.model;version='[1.0.0,1.0.1)';startlevel=1056,\
+	org.eclipse.fennec.emf.osgi.component;version='[1.1.0,1.1.1)';startlevel=1057,\
+	org.eclipse.fennec.emf.osgi.eobject.registry;version='[1.1.0,1.1.1)';startlevel=1058,\
+	org.eclipse.fennec.emf.osgi.eobject.registry.metadata;version='[1.1.0,1.1.1)';startlevel=1059,\
+	org.eclipse.fennec.emf.osgi.metadata;version='[1.1.0,1.1.1)';startlevel=1060,\
 	org.eclipse.fennec.m2x.ocl.api;version='[0.1.1,0.1.2)';startlevel=1061,\
 	org.eclipse.fennec.m2x.ocl.engine;version='[0.1.1,0.1.2)';startlevel=1062,\
 	org.eclipse.fennec.m2x.ocl.model;version='[0.1.1,0.1.2)';startlevel=1063,\

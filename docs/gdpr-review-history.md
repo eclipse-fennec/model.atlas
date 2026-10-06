@@ -1,6 +1,6 @@
 # The GDPR review history document
 
-A GDPR review produces a `GdprReport` in the atlas. That report is a machine artefact: correct,
+A GDPR review produces a `ComplianceReport` in the atlas. That report is a machine artefact: correct,
 citable, and unreadable as a compliance document. It also says nothing about *how* the assessment of
 a model got to where it is — which verdict an agent gave, which one a human corrected, and what
 changed between them.
@@ -17,9 +17,11 @@ successive revisions with a changing fingerprint.
 
 It is per **stage** because a review describes the stage it was carried out against: the same model at
 `draft` and at `approved` is two judgements, and merging them would diff one against the other. And per
-**language**, because a review is carried out in one language from start to seal and quotes that
-language's consolidation of the regulation; merged, the diff would report every rationale as rewritten
-on each switch. It is deliberately flat, so the tabular codec renders it as a
+**language**, because a review writes its prose in one language from start to seal; merged, the diff
+would report every rationale as rewritten on each switch. That language is the report's own
+(`ComplianceReport.language`), not the language of a context it cites - the sheet diffs `rationale`
+and `recommendation`, which are the report's words, and a German review of an English corpus is an
+ordinary case. It is deliberately flat, so the tabular codec renders it as a
 spreadsheet without any rendering code: an auditor opens it in LibreOffice or Excel and reads one
 line per thing in the model.
 
@@ -36,23 +38,34 @@ one document per transformation, one row per compiled revision. See
 
 ## What is in it
 
-`GdprReportHistory` has three containment lists, and each becomes a sheet:
+`ComplianceReportHistory` has three containment lists, and each becomes a sheet:
 
 | sheet | one row per | the columns that matter |
 |---|---|---|
-| `GdprReportHistory` | the document | `subjectIdentifier`, `subjectName`, `reportLanguage`, `subjectLanguage` (for a transformation), `rebuiltAt`, `revisionCount` |
-| `ReportRevision` | review run | `revisionNumber`, `reportId`, `generatedAt`, `generatedBy`, `origin`, `findingCount`, `changeCount` |
-| `EvaluationRow` | evaluated classifier or feature - or, for a transformation review, one flow - **per revision** | `classifierId`, `featureId`, `typeName`, `category`, `relevanceLevel`, `confidence`, `rationale`, `recommendation`, `citations`, `changeKind` |
-| `ChangeRow` | field that changed | `revisionNumber`, `changedAt`, `changedBy`, `classifierId`, `featureId`, `field`, `changeKind`, `oldValue`, `newValue` |
+| `ComplianceReportHistory` | the document | `subjectIdentifier`, `subjectName`, `contextIds`, `reportLanguage`, `subjectLanguage` (for a transformation), `rebuiltAt`, `revisionCount` |
+| `ReportRevision` | review run | `revisionNumber`, `reportId`, `generatedAt`, `generatedBy`, `origin`, `subjectFingerprint`, `contextVersions`, `findingCount`, `changeCount` |
+| `EvaluationRow` | evaluated element or child - or, for a transformation review, one flow - **per revision** | `elementId`, `childId`, `typeName`, `categories`, `relevanceLevel`, `confidence`, `rationale`, `recommendation`, `citations`, `changeKind` |
+| `ChangeRow` | field that changed | `revisionNumber`, `changedAt`, `changedBy`, `elementId`, `childId`, `field`, `changeKind`, `oldValue`, `newValue` |
+
+`contextIds` on the document and `contextVersions` on each revision are the two halves of one
+statement: *which* compliance contexts this subject has ever been judged against, and *which
+consolidation of them* each review used. The version belongs to the revision because that is the
+thing that moves between two reviews, and a finding that changed because the regulation did is
+exactly what the change sheet exists to show.
+
+`elementId`/`childId` rather than `classifierId`/`featureId`: the same two columns carry a
+classifier and its feature for a package review, and a flow and nothing for a transformation one.
+`categories` is a list, joined into one cell - a finding may name several, and the diff compares the
+joined value, so a category added beside an existing one reads as one `MODIFIED` row.
 
 The change sheet is the point of the whole document. A human raising a category reads like this:
 
 ```
-rev  changedBy   classifierId  featureId          field       kind      oldValue                      newValue
-2    a-human     Patient       Patient.diagnosis  category    MODIFIED  PERSONAL_DATA                 SPECIAL_CATEGORY
-2    a-human     Patient       Patient.diagnosis  confidence  MODIFIED  REQUIRES_PURPOSE_CONFIRMATION HIGH
+rev  changedBy   elementId     childId            field       kind      oldValue               newValue
+2    a-human     Patient       Patient.diagnosis  categories  MODIFIED  PERSONAL_DATA          SPECIAL_CATEGORY
+2    a-human     Patient       Patient.diagnosis  confidence  MODIFIED  REQUIRES_CONFIRMATION  HIGH
 2    a-human     Patient       Patient.postcode   evidence    REMOVED   Rec.26
-2    a-human     Patient       Patient.email                  ADDED                                   ONLINE_IDENTIFIER
+2    a-human     Patient       Patient.email                  ADDED                            ONLINE_IDENTIFIER
 ```
 
 Two cosmetics are structural to `SQL_TABLES` and cannot be switched off: every sheet carries a
@@ -62,7 +75,7 @@ names, so the tabs read `EvaluationRow` and `ChangeRow`.
 ## How it is produced
 
 `GDPRReportHistoryStageAction` (bundle `org.eclipse.fennec.model.atlas.gdpr.history`) is a stage
-action on the registry that holds the reviews. Whenever a `GdprReport` enters, changes or leaves a
+action on the registry that holds the reviews. Whenever a `ComplianceReport` enters, changes or leaves a
 watched stage, it rebuilds the document of that report's subject.
 
 - **It rebuilds, it does not append.** Every rebuild reads every review of the subject and produces
@@ -72,7 +85,7 @@ watched stage, it rebuilds the document of that report's subject.
 - **One document per subject, stage and language.** The id is
   `gdpr-history-<identifier>-<digest>-<language>`: the identifier flattened to one path segment with
   everything non-alphanumeric replaced by a dash, then eight hex characters of the SHA-256 of the
-  *raw* identifier, then the corpus language.
+  *raw* identifier, then the report language.
 
   The digest is not decoration. Flattening is not injective - `http://x.org/a/b` and
   `http://x.org/a-b` both give `http---x-org-a-b` - and the readable part is truncated, so a long
@@ -106,7 +119,7 @@ representation the content endpoint serves on demand — which also gives CSV, X
 
 ```bash
 curl -o gdpr-history.ods \
-  'http://localhost:8080/atlas/rest/jena/registries/gdprdoc/stages/draft/content?objectId=gdpr-history-https---example-org-clinic-1-0-0-a1b2c3d4-en&mediaType=application/vnd.oasis.opendocument.spreadsheet'
+  'http://localhost:8080/atlas/rest/dimcity/registries/gdprdoc/stages/draft/content?objectId=gdpr-history-https---example-org-clinic-1-0-0-a1b2c3d4-en&mediaType=application/vnd.oasis.opendocument.spreadsheet'
 ```
 
 No `Codec-Options` header is needed. The two options the spreadsheet depends on -
@@ -121,7 +134,7 @@ and you get the JSON.
 To find the documents a scope holds:
 
 ```bash
-curl 'http://localhost:8080/atlas/rest/jena/registries/gdprdoc/stages/draft' -H 'Accept: application/json'
+curl 'http://localhost:8080/atlas/rest/dimcity/registries/gdprdoc/stages/draft' -H 'Accept: application/json'
 ```
 
 ### The two save options are mandatory, not cosmetic
@@ -146,7 +159,7 @@ for the local runtime and in
 `org.eclipse.fennec.model.atlas.runtime.config.docker.file/configs/workflow.json`, which is baked
 into the file image rather than mounted — change one and the others do not follow.
 
-**Only the file image takes the scope from the environment.** There, the `jena` in
+**Only the file image takes the scope from the environment.** There, the scope in
 `trigger.scopes` and `scope.target` below, the scope of `ModelAtlasObjectPublisher~gdprStatus` and
 of `GDPRAtlasRequestStatusStore`, `GDPRCheckStageAction`'s `trigger.scopes` (read once
 DataInMotion/fennec-gdpr#7 is deployed), and the name of the image's own `ScopeService~jena` are all
@@ -161,32 +174,33 @@ objects out as `STORAGE_ROOT/<scope>/<registry>/<stage>/`, and both Lucene index
 as a field — so the name is chosen at first deployment. Renaming it on a volume that already holds
 data does not move that data; the scope comes up empty next to its own old folder. The `Storage
 Scopes` health check reports exactly that shape. The initial-models folder is read per scope
-(`scopes/<scopeName>/…`), so `scopes/jena/` is **not seeded** once the scope is called something
-else. Rename the folder with it — the loader now names the scopes it did find when it gives up. And
+(`scopes/<scopeName>/…`), so `scopes/<old name>/` is **not seeded** once the scope is called
+something else. Rename the folder with it — the loader now names the scopes it did find when it gives up. And
 give the variable a plain name or leave it unset. The default applies only while it is unset: an empty value
 (`-e MODEL_ATLAS_SCOPE=`) does not fail. It registers a scope with an empty name, which every
 `(atlas.scope=)` target matches, and whose REST paths are `/atlas/rest//registries/…`.
 
-The jena image (`configs/jena.json`) and the local jena runtime keep `jena` as a literal, as shown
-below, and do not read the variable.
+The jena image (`configs/jena.json`) and the local jena runtime keep their scope name as a literal,
+as shown below, and do not read the variable. The image's scope is `dimcity`; the local runtime's is
+still `jena`.
 
 ```jsonc
 "GDPRReportHistoryStageAction": {
-    "reports.registry": "gdpr",              // where the GdprReport objects are
+    "reports.registry": "gdpr",              // where the ComplianceReport objects are
     "report.stages": ["draft", "approved", "release"],  // every stage holding reviews; each triggers
-    "trigger.scopes": ["jena"],              // empty means every scope (see below)
-    "scope.target": "(atlas.scope=jena)",
+    "trigger.scopes": ["dimcity"],           // empty means every scope (see below)
+    "scope.target": "(atlas.scope=dimcity)",
     "document.registry": "gdprdoc"           // where the derived document goes; the stage is the
                                              // stage of the reviews, not a configured one
 },
 "RegistryService~gdprdoc": {
     "registry.name": "gdprdoc",
     "registry.type": "OTHER",
-    "root.eclass.uri": ["https://org.eclipse/fennec/gdpr-report-history/1.0.0#//GdprReportHistory"],
+    "root.eclass.uri": ["https://org.eclipse/fennec/compliance/report-history/1.0.0#//ComplianceReportHistory"],
     // Derived: the atlas builds these itself, so the service API may rewrite one even in a final
     // stage. A document lives in the stage its reviews were carried out at, which may be that one.
-    "derived.eclass.uri": ["https://org.eclipse/fennec/gdpr-report-history/1.0.0#//GdprReportHistory"],
-    "schemaPackage.target": "(emf.nsURI=https://org.eclipse/fennec/gdpr-report-history/1.0.0)",
+    "derived.eclass.uri": ["https://org.eclipse/fennec/compliance/report-history/1.0.0#//ComplianceReportHistory"],
+    "schemaPackage.target": "(emf.nsURI=https://org.eclipse/fennec/compliance/report-history/1.0.0)",
     "stages": [
         { "name": "draft",   "writable": true, "final": false },
         { "name": "release", "writable": true, "final": true }
@@ -246,8 +260,8 @@ The feature is optional and ships only in the runtimes that ask for it. In the j
 | bundle | why |
 |---|---|
 | `org.eclipse.fennec.model.atlas.gdpr.history` | the stage action and the builder |
-| `org.eclipse.fennec.gdpr.report.model` | the `GdprReport` EPackage |
-| `org.eclipse.fennec.gdpr.report.history.model` | the `GdprReportHistory` EPackage |
+| `org.eclipse.fennec.compliance.report.model` | the `ComplianceReport` EPackage |
+| `org.eclipse.fennec.compliance.report.history.model` | the `ComplianceReportHistory` EPackage |
 | `org.eclipse.fennec.codec.ods` | the spreadsheet; pulls `codec.tabular`, `codec.tabular.model` and SODS |
 
 The bundle depends on nothing in `fennec-gdpr`, so a deployment where a human uploads a report by

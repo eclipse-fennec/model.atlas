@@ -52,7 +52,7 @@ public class TestAnnotations extends CommonTestAnnotations {
 	public static final String REPORT_REGISTRY = "gdpr";
 	public static final String UNIT_REGISTRY = "transformations";
 
-	public static final String REPORT_NS_URI = "https://org.eclipse/fennec/gdpr-report/1.0.0";
+	public static final String REPORT_NS_URI = "https://org.eclipse/fennec/compliance/report/1.0.0";
 	public static final String COMPILED_NS_URI = "http://www.eclipse.org/fennec/m2x/compiled/1.0";
 
 	public static final String PID_ANALYSER = "QvtGdprFlowStageAction";

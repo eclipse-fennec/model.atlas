@@ -67,6 +67,14 @@ final class Fixtures {
 	/** The producer the transformation projection owns on every model it touches. */
 	static final String PRODUCER = "gdpr.transformation/" + UNIT_NAME;
 
+	/**
+	 * The producer every statement about a reviewed object is written under - including the one
+	 * saying a transformation could not be analysed at all. Not {@link #PRODUCER}: that one is what
+	 * a transformation owns on somebody else's metamodel, this one is what the review owns on the
+	 * object it is about.
+	 */
+	static final String REVIEW_PRODUCER = "gdpr.review";
+
 	private static final ReportFactory REPORTS = ReportFactory.eINSTANCE;
 	private static final CompiledFactory UNITS = CompiledFactory.eINSTANCE;
 	private static final long TIMEOUT_MS = 30_000;
@@ -329,6 +337,23 @@ final class Fixtures {
 			return List.of();
 		}
 		return metadata.getDiagnostics().stream().filter(root -> PRODUCER.equals(root.getProducer())).toList();
+	}
+
+	/**
+	 * The review producer's roots on the compiled unit itself in one stage.
+	 * <p>
+	 * The producer a derived report's findings reach the unit under, which is the point: a
+	 * successful analysis and the statement that none was possible are one producer's two answers
+	 * about one object, so either replaces the other.
+	 */
+	static List<Diagnostic> ownedOnUnit(WritableScopeService<EObject> scope, String stage) {
+		ObjectMetadata metadata = scope.getMetadataFromStageForRegistry(TestAnnotations.UNIT_REGISTRY, stage,
+				UNIT_ID);
+		if (metadata == null) {
+			return List.of();
+		}
+		return metadata.getDiagnostics().stream().filter(root -> REVIEW_PRODUCER.equals(root.getProducer()))
+				.toList();
 	}
 
 	/* ------------------------------------------------------------------ waiting */

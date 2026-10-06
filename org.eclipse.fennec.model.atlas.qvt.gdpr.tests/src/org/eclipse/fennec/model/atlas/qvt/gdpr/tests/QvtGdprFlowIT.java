@@ -15,13 +15,13 @@ package org.eclipse.fennec.model.atlas.qvt.gdpr.tests;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.List;
 
 import org.eclipse.emf.ecore.EObject;
 import org.eclipse.fennec.model.atlas.mgmt.management.Diagnostic;
+import org.eclipse.fennec.model.atlas.mgmt.management.DiagnosticSeverity;
 import org.eclipse.fennec.model.atlas.tests.common.CommonTestAnnotations;
 import org.eclipse.fennec.model.atlas.wf.workflowapi.WritableScopeService;
 import org.eclipse.fennec.model.compliance.report.ComplianceReport;
@@ -87,6 +87,33 @@ public class QvtGdprFlowIT {
 
 	@Test
 	@TestAnnotations.QvtGdprSetup
+	@DisplayName("a metamodel with no review stops the report, and the unit says so")
+	public void anUnreviewedMetamodelStopsTheReport(
+			@InjectService(cardinality = 0, timeout = 30000, filter = SCOPE_FILTER) //
+			ServiceAware<WritableScopeService> aware) throws Exception {
+
+		WritableScopeService<EObject> scope = scope(aware);
+		// The metamodel is stored and nobody has reviewed it. Every flow through it is still a
+		// fact, and nothing says what travels along them.
+		String fingerprint = Fixtures.storeModel(scope, DRAFT);
+		Fixtures.storeUnit(scope, Fixtures.unit(fingerprint), DRAFT);
+
+		List<Diagnostic> roots = Fixtures.await(() -> Fixtures.ownedOnUnit(scope, DRAFT), found -> !found.isEmpty(),
+				"the unanalysable-transformation diagnostic");
+
+		assertEquals(0, Fixtures.transformationReports(scope, DRAFT),
+				"a partial analysis of a transformation reads as an analysis, so none is written at all");
+		assertEquals(1, roots.size(), "one statement about the unit, whatever the number of metamodels");
+		Diagnostic root = roots.get(0);
+		assertEquals(DiagnosticSeverity.ERROR, root.getSeverity(),
+				"the check did not run, which is what ERROR means here");
+		assertEquals(1, root.getChildren().size(), "and it names the metamodel it could not rest on");
+		assertEquals(fingerprint, root.getChildren().get(0).getMessage().replaceAll(".*\\((.*)\\).*", "$1"),
+				"by the revision the unit was compiled against, not merely by name");
+	}
+
+	@Test
+	@TestAnnotations.QvtGdprSetup
 	@DisplayName("the nearest stage answers, even when a later one was reviewed more recently")
 	public void theNearestStageWins(
 			@InjectService(cardinality = 0, timeout = 30000, filter = SCOPE_FILTER) //
@@ -120,10 +147,17 @@ public class QvtGdprFlowIT {
 
 		Fixtures.storeUnit(scope, Fixtures.unit(fingerprint), RELEASE);
 
-		ComplianceReport report = Fixtures.await(() -> Fixtures.derivedReport(scope, RELEASE), found -> found != null,
-				"the transformation report");
-		assertNull(only((TransformationSubject) report.getSubject()).getReportId(),
+		// The review exists, and a released unit cannot see down its own ladder - so from where
+		// this unit stands the metamodel is unreviewed, and the gate is what says so. Reading the
+		// draft review here is the failure this guards against, and it would show up as a report.
+		List<Diagnostic> roots = Fixtures.await(() -> Fixtures.ownedOnUnit(scope, RELEASE),
+				found -> !found.isEmpty(), "the unanalysable-transformation diagnostic");
+		assertEquals(0, Fixtures.transformationReports(scope, RELEASE),
 				"the final stage of the chain points at the parent scope, never back down its own ladder");
+		assertEquals(1, roots.size());
+		assertEquals(DiagnosticSeverity.ERROR, roots.get(0).getSeverity());
+		assertTrue(roots.get(0).getChildren().get(0).getMessage().contains(fingerprint),
+				"and it names the revision a review would have had to be of");
 	}
 
 	@Test
@@ -168,27 +202,6 @@ public class QvtGdprFlowIT {
 
 		Fixtures.await(() -> Fixtures.owned(scope, APPROVED), List::isEmpty,
 				"the withdrawn report's findings to be cleared");
-	}
-
-	@Test
-	@TestAnnotations.QvtGdprSetup
-	@DisplayName("a metamodel nobody reviewed is listed, with its reportId unset")
-	public void anUnreviewedMetamodelIsSaidInTheSubject(
-			@InjectService(cardinality = 0, timeout = 30000, filter = SCOPE_FILTER) //
-			ServiceAware<WritableScopeService> aware) throws Exception {
-
-		WritableScopeService<EObject> scope = scope(aware);
-		String fingerprint = Fixtures.storeModel(scope, DRAFT);
-
-		Fixtures.storeUnit(scope, Fixtures.unit(fingerprint), DRAFT);
-
-		ComplianceReport report = Fixtures.await(() -> Fixtures.derivedReport(scope, DRAFT), found -> found != null,
-				"the transformation report");
-		PackageSubject rested = only((TransformationSubject) report.getSubject());
-		assertEquals(fingerprint, rested.getSubjectFingerprint(),
-				"the package is still listed, with the revision a review would have had to be of");
-		assertNull(rested.getReportId(),
-				"reportId unset IS the statement that the analysis is incomplete rather than clean");
 	}
 
 	/* ------------------------------------------------------------------ helpers */

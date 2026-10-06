@@ -69,12 +69,18 @@ import org.osgi.util.promise.Promises;
  * re-analysis needs: the hit's own subject gives the unit's {@code m2x1:} fingerprint, so the
  * compiled unit is then a lookup rather than a computed objectId.
  * <p>
- * A metamodel that had <b>no review at the time</b> is still listed, with its fingerprint and
- * {@code reportId} unset - so a report that came back incomplete is found by exactly the review it
- * was waiting for, which is the case this feature most needs to catch.
+ * <h2>And the units the gate stopped are answered for by their manifests</h2>
  * <p>
- * The one thing it misses is a unit that has <b>never been analysed</b>: no report, so nothing to
- * match. That is covered from the other side, by the analyser's replay on start-up.
+ * A transformation whose metamodels are not all reviewed has no report at all (issue #332, D3), so
+ * the scan above cannot see it - and it is exactly the case this feature most needs to catch,
+ * because the review that is about to arrive may be the one that completes it. Those units are
+ * found the other way, by scanning the manifests of the compiled units in the same stages for the
+ * changed fingerprint. It costs a read of each unit in the stage, which is why it is the second
+ * pass and not the only one: a transformation that already has a report is answered for by that
+ * report, and the manifests are consulted only for the ones that have none.
+ * <p>
+ * Start-up replay of the analyser covers a unit stored while this runtime was down. It does not
+ * cover a review arriving in a running one, which is what these two passes are for.
  *
  * <h2>Which stages</h2>
  * <p>
@@ -287,6 +293,17 @@ public class QvtGdprReanalysisStageAction implements StageActionService {
 					}
 					rederive(analysis, stage, subject, fingerprint, what);
 				}
+				// The units no report speaks for: the gate stopped their analysis, so the only
+				// place the dependency is still written down is the manifest itself.
+				for (StoredUnit stored : unitsPinning(stage, fingerprint)) {
+					if (!done.add(stage + "/" + stored.unit().getManifest().getUnitFingerprint())) {
+						continue;
+					}
+					LOGGER.info(() -> String.format(
+							"The review of '%s' %s; deriving the report of '%s' in stage '%s', which had none.",
+							fingerprint, what, stored.unit().getManifest().getQualifiedName(), stage));
+					analysis.analyse(stored.unit(), stage, unitRegistry, stored.objectId());
+				}
 			}
 			return Promises.resolved(null);
 		} catch (RuntimeException e) {
@@ -327,8 +344,8 @@ public class QvtGdprReanalysisStageAction implements StageActionService {
 	private void rederive(TransformationAnalysis analysis, String stage, TransformationSubject subject,
 			String fingerprint, String what) {
 		String unitFingerprint = subject.getSubjectFingerprint();
-		CompiledUnit unit = unitAt(stage, unitFingerprint);
-		if (unit == null) {
+		StoredUnit stored = unitAt(stage, unitFingerprint);
+		if (stored == null) {
 			// The report outlived the unit it is about. Nothing to re-derive, and nothing to
 			// invent: whoever deleted the unit owns its report.
 			LOGGER.log(Level.INFO, () -> String.format(
@@ -339,7 +356,7 @@ public class QvtGdprReanalysisStageAction implements StageActionService {
 		}
 		LOGGER.info(() -> String.format("The review of '%s' %s; re-deriving the report of '%s' in stage '%s'.",
 				fingerprint, what, subject.getQualifiedName(), stage));
-		analysis.analyse(unit, stage);
+		analysis.analyse(stored.unit(), stage, unitRegistry, stored.objectId());
 	}
 
 	/**
@@ -357,7 +374,7 @@ public class QvtGdprReanalysisStageAction implements StageActionService {
 	 * A lookup and not a computed objectId, which only works because a compiled unit's
 	 * {@code ObjectMetadata.fingerprint} is the value its own manifest states.
 	 */
-	private CompiledUnit unitAt(String stage, String fingerprint) {
+	private StoredUnit unitAt(String stage, String fingerprint) {
 		if (fingerprint == null || fingerprint.isBlank()) {
 			return null;
 		}
@@ -367,10 +384,40 @@ public class QvtGdprReanalysisStageAction implements StageActionService {
 			}
 			EObject content = scope.getContentFromStageForRegistry(unitRegistry, stage, metadata.getObjectId());
 			if (content instanceof CompiledUnit unit && unit.getManifest() != null) {
-				return unit;
+				return new StoredUnit(metadata.getObjectId(), unit);
 			}
 		}
 		return null;
+	}
+
+	/**
+	 * Every compiled unit in one stage whose manifest pins this revision.
+	 * <p>
+	 * Matched on the fingerprint and not on the nsURI, for the reason {@link #restsOn} gives: what
+	 * a review is of is a revision, and a unit compiled against another revision of the same
+	 * metamodel is not stale because this one changed. A unit that lists the revision twice - a
+	 * model declared {@code inout} - is one unit.
+	 */
+	private List<StoredUnit> unitsPinning(String stage, String fingerprint) {
+		List<StoredUnit> pinning = new ArrayList<>();
+		for (ObjectMetadata metadata : scope.listInStageForRegistry(unitRegistry, stage)) {
+			EObject content = scope.getContentFromStageForRegistry(unitRegistry, stage, metadata.getObjectId());
+			if (!(content instanceof CompiledUnit unit) || unit.getManifest() == null) {
+				continue;
+			}
+			if (unit.getManifest().getPackageEntry().stream()
+					.anyMatch(entry -> fingerprint.equals(entry.getFingerprint()))) {
+				pinning.add(new StoredUnit(metadata.getObjectId(), unit));
+			}
+		}
+		return pinning;
+	}
+
+	/**
+	 * A compiled unit and where it is stored. The id is carried alongside because an analysis that
+	 * cannot be derived is recorded on the unit, and the unit's content does not say where it lives.
+	 */
+	private record StoredUnit(String objectId, CompiledUnit unit) {
 	}
 
 	/* ------------------------------------------------------------------ small helpers */

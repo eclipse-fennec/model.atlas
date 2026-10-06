@@ -1,7 +1,7 @@
 Bundle-Name: Model Atlas GDPR Report History Tests
 Bundle-Description: OSGi integration tests for the derived GDPR review document. They drive the \
  real stage action through the real registries: a report stored in the 'gdpr' registry has to \
- produce a GdprReportHistory in 'gdprdoc', and that document has to render as an ODS with one \
+ produce a ComplianceReportHistory in 'gdprdoc', and that document has to render as an ODS with one \
  sheet per containment list.
 
 # The ODS half cannot be a plain unit test. OdsResourceFactoryComponent is Private-Package in

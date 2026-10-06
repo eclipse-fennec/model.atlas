@@ -51,8 +51,8 @@ public class TestAnnotations extends CommonTestAnnotations {
 	public static final String REPORT_REGISTRY = "gdpr";
 	public static final String DOCUMENT_REGISTRY = "gdprdoc";
 
-	public static final String REPORT_NS_URI = "https://org.eclipse/fennec/gdpr-report/1.0.0";
-	public static final String HISTORY_NS_URI = "https://org.eclipse/fennec/gdpr-report-history/1.0.0";
+	public static final String REPORT_NS_URI = "https://org.eclipse/fennec/compliance/report/1.0.0";
+	public static final String HISTORY_NS_URI = "https://org.eclipse/fennec/compliance/report-history/1.0.0";
 
 	public static final String PID_HISTORY_ACTION = "GDPRReportHistoryStageAction";
 

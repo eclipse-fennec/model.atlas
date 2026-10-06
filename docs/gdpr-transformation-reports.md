@@ -3,7 +3,7 @@
 A metamodel is reviewed. A transformation is **derived**: the atlas walks the compiled unit, works
 out which source field reaches which target field and how, and applies a fixed table of rules to
 what the metamodels' own reviews already say about those fields. No agent, no provider key, no
-network, no legal corpus.
+network, and no compliance context read: the categories and the citations are the reviews' own.
 
 The case it exists for:
 
@@ -40,10 +40,10 @@ SourceUnit uploaded ──▶ QvtStageActionService ──▶ CompiledUnit store
                                                     ▼
                                         QvtGdprFlowStageAction
                                           │  manifest.packageEntry → fp1: per metamodel
-                                          │  each fp1: → that model's GdprReport, same stage
+                                          │  each fp1: → that model's review, or no report at all
                                           │  walk the AST, apply the rules, inherit the evidence
                                           ▼
-                                        GdprReport(TransformationSubject) ──▶ gdpr registry
+                                        ComplianceReport(TransformationSubject) ──▶ gdpr registry
                                           │
            ┌──────────────────────────────┼──────────────────────────────┐
            ▼                              ▼                              ▼
@@ -75,7 +75,12 @@ analysis rested on, split by whether the transformation reads it or writes it:
   <targetPackages nsURI="http://example.org/contacts/1.0.0"
                   subjectFingerprint="fp1:0bbb2a33…" reportId="gdpr-fp1-0bbb2a33-…"/>
 </subject>
+<contexts contextId="gdpr" contextVersion="20160504"/>
 ```
+
+Every `reportId` here is set — that is the gate, not a coincidence; see
+[Where nothing was reviewed, there is no report](#where-nothing-was-reviewed-there-is-no-report).
+The `contexts` are carried over from those reviews, never chosen here.
 
 Each flow becomes a `FlowEvaluation` — one source feature, one target feature, one mapping, and how
 the value travels — and the findings hang off those:
@@ -135,7 +140,7 @@ different things about it:
 | `PURPOSE_NOT_CARRIED` | at the field whose purpose was stated | — |
 | `NOT_PROPAGATED` | the model as a whole | — |
 | `OPAQUE_FLOW` | at the field whose destination is unknown | — |
-| `gdpr.unreviewed-source` | — | — (the compiled unit only) |
+| `gdpr.unreviewed-source` | — | — (the compiled unit only, and only on a report somebody stored) |
 
 `PROPAGATION` is deliberately not written on the source: a metamodel read by several
 transformations would collect one per flow of each of them, and that buries the findings that ask
@@ -233,10 +238,15 @@ transformation that is now out of date. That beats scanning the compiled units' 
 times over — it stays in one registry, it is the stale set exactly, and the hit's own subject gives
 the unit's `m2x1:` fingerprint, so finding the compiled unit is a lookup rather than a computed id.
 
-A metamodel that had **no review at the time** is still listed, with its fingerprint and `reportId`
-unset — so a report that came back incomplete is found by exactly the review it was waiting for,
-which is the case this most needs to catch. The one thing it misses is a unit that has never been
-analysed at all; that is covered from the other side, by the analyser's replay on start-up.
+**And the units the gate stopped are answered for by their manifests.** A transformation whose
+metamodels are not all reviewed has no report at all, so the scan above cannot see it — and it is
+exactly the case this most needs to catch, because the review about to arrive may be the one that
+completes it. Those units are found the other way, by scanning the manifests of the compiled units
+in the same stages for the changed fingerprint. It costs a read of each unit in the stage, which is
+why it is the second pass and not the only one: a transformation that already has a report is
+answered for by that report. Start-up replay of the analyser covers a unit stored while the runtime
+was down; it does not cover a review arriving in a running one, which is what these two passes are
+for.
 
 Which stages are searched is the **inverse of the ladder**: a review landing in `approved` makes
 stale the transformations in `draft` and in `approved`, and none in `release`.
@@ -275,37 +285,63 @@ Carried over from the review of //Patient/diagnosis, which this transformation c
 2 other classified features into //Contact/comment.        ← the one clause the analyser adds
 ```
 
+The **contexts** travel the same way. A `ComplianceReport` names the compliance contexts it was
+judged against, pinned to a version, and a derived report carries over the union of the distinct
+`ContextRef`s of the reviews it rested on. It never names a context of its own choosing, and it
+never resolves one: a transformation is judged against exactly what its metamodels were judged
+against. Since a report is derived only when every metamodel has a review, there is always at least
+one to carry — which is also what makes `contexts [1..*]` satisfiable by construction.
+
 So the analyser never looks a provision up and cannot invent one — the standing failure mode of
 anything that composes a citation instead of quoting it. The other side of it is that a finding
 with nothing to carry cannot be raised at all: `Finding.evidence` is mandatory, and a compliance
 record must not hold a claim nobody backed.
 
-## Where nothing was reviewed, it says so
+## Where nothing was reviewed, there is no report
 
-A metamodel with no review of the revision the unit was compiled against is **listed anyway**, with
-its fingerprint and with `reportId` unset. That unset value is the machine-readable statement that
-the analysis is incomplete, and it reaches the compiled unit as an error:
+A report is derived **only when every metamodel of the manifest has a review** of the revision the
+unit was compiled against. If one has none, nothing is derived, any report an earlier analysis
+stored is withdrawn, and the compiled unit is told why:
 
 ```
 gdpr.review                                                          ERROR   (no target)
-  GDPR review: 4 findings on 3 elements; 1 metamodel it rests on has no review
+  No GDPR analysis of this transformation: 1 of the 3 metamodels it was compiled against have
+  no review of the revision it was compiled against, so nothing classifies the data that travels
+  through them. The analysis is impossible, not clean.
 └── gdpr.unreviewed-source   http://example.org/crm/1.0.0            ERROR
       http://example.org/crm/1.0.0 has no GDPR review of the revision this transformation was
-      compiled against (fp1:7b81f48a…), so nothing classifies the data that travels through it.
-      The analysis is incomplete, not clean.
+      compiled against (fp1:7b81f48a…).
 ```
+
+**Why the whole report and not just the missing part.** A transformation is not reviewed, it is
+derived: every category it asserts was asserted by a metamodel review first. A metamodel with no
+review contributes no classification, so the flows through it are still fact while nothing says
+what travels along them — and a report that is silent about them reads exactly like one that found
+them clean. A partial analysis of a transformation reads as an analysis, and the finding it is
+missing may be the one that mattered. The flows among the *reviewed* metamodels are given up with
+it; that is the deliberate price.
+
+**Three things follow.** The statement goes on the unit under the **same producer** a derived
+report's findings reach it under, `gdpr.review` — so writing it is exactly what withdraws the
+findings of the last analysis that did succeed, and a later successful analysis writes over it in
+turn. A report an earlier analysis stored is **deleted**, because it would otherwise go on claiming
+an analysis that no longer holds and the history document would go on building revisions from it.
+And deleting it is what takes the transformation's findings off the metamodels, since the action
+that put them there answers a report's deletion by clearing them.
 
 `ERROR` is not an exception to the rule that a review never produces one. That rule exists because
 `ERROR` means *the check did not run* rather than *the model is bad* — and here the check genuinely
 did not run. A finding about the data is at most a `WARNING`; a statement that there is no finding
 to make is an `ERROR`.
 
-The dataflow itself is still recorded: the flows are fact whether or not anyone classified what
-travels along them. What is missing is only the classification.
-
 The error lands on the compiled unit and never on the unreviewed metamodel. "You have no GDPR
 review" is a statement about a metamodel, but it is not this transformation's business to write it
 there.
+
+`gdpr.unreviewed-source` still appears as a node on a **stored** report that lists a package with
+its `reportId` unset — a report uploaded by hand or by an agent can still say that, and the
+statement should still reach the object. It is simply no longer the route by which a *derived*
+analysis reports a gap.
 
 ## It is deterministic, and that is what makes the history worth keeping
 
@@ -328,7 +364,8 @@ versioned, and a report can be traced to the exact table of rules that wrote it.
 
 ## What it deliberately does not do
 
-- **It does not review.** It derives. Where no review exists it says so rather than guessing.
+- **It does not review.** It derives. Where no review exists it says so rather than guessing —
+  and rather than deriving the part it could.
 - **Its ceiling is its rule table.** It will never fire a rule nobody wrote down, which is why
   `OPAQUE_FLOW` and an unreviewed source have to be loud — they are the only honest substitute for
   a judgement it cannot make. An absence of findings is not a statement that there is nothing to
@@ -355,8 +392,8 @@ image. From `docker/dockercompose/configs/jena.json`:
                                              // goes into the unit's stage, and the metamodels are
                                              // looked for along the visibility ladder from there
     "trigger.stages": ["draft", "approved", "release"],
-    "trigger.scopes": ["jena"],              // empty means every scope that binds the registry
-    "scope.target": "(atlas.scope=jena)"
+    "trigger.scopes": ["dimcity"],           // empty means every scope that binds the registry
+    "scope.target": "(atlas.scope=dimcity)"
 },
 "RegistryService~transformations": {
     // The action is triggered by a compiled unit, so it binds to the TRANSFORMATION registry, not
@@ -375,16 +412,16 @@ image. From `docker/dockercompose/configs/jena.json`:
     // the gdpr registry; target.registry only says where the findings are then written
     "target.registry": "schema",
     "report.stages": ["draft", "approved", "release"],
-    "trigger.scopes": ["jena"],
-    "scope.target": "(atlas.scope=jena)"
+    "trigger.scopes": ["dimcity"],
+    "scope.target": "(atlas.scope=dimcity)"
 },
 "QvtGdprReanalysisStageAction": {
     // Re-derives a transformation when a review it rests on changes. Also triggered by a REPORT,
     // so it binds to the gdpr registry; unit.registry is where the stale units are looked up
     "unit.registry": "transformations",
     "report.stages": ["draft", "approved", "release"],
-    "trigger.scopes": ["jena"],
-    "scope.target": "(atlas.scope=jena)"
+    "trigger.scopes": ["dimcity"],
+    "scope.target": "(atlas.scope=dimcity)"
 },
 "RegistryService~gdpr": {
     "stageActionService.target":

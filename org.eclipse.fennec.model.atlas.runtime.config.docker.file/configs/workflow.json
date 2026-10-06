@@ -80,7 +80,7 @@
         "scope.name": "$[env:MODEL_ATLAS_SCOPE;default=$[prop:MODEL_ATLAS_SCOPE;default=jena]]",
         "scope.description": "Tenant scope $[env:MODEL_ATLAS_SCOPE;default=$[prop:MODEL_ATLAS_SCOPE;default=jena]]",
         "scope.parent": "atlas",
-        "registryService.target": "(|(registry.name=schema)(registry.name=workspace)(registry.name=DataGen)(registry.name=cocl)(registry.name=sensinactmapping)(registry.name=sensinactprofile)(registry.name=transformations)(registry.name=gdpr)(registry.name=gdprdoc))",
+        "registryService.target": "(|(registry.name=schema)(registry.name=workspace)(registry.name=DataGen)(registry.name=cocl)(registry.name=sensinactmapping)(registry.name=sensinactprofile)(registry.name=transformations)(registry.name=gdpr)(registry.name=gdprdoc)(registry.name=compliance-context))",
         "registryService.cardinality.minimum:int": 1
     },
     "RegistryService~transformations": {
@@ -318,10 +318,10 @@
         "resourceSet.target": "(emf.name=ecore)"
     },
     "RegistryService~gdpr": {
-        "schemaPackage.target": "(emf.nsURI=https://org.eclipse/fennec/gdpr-report/1.0.0)",
+        "schemaPackage.target": "(emf.nsURI=https://org.eclipse/fennec/compliance/report/1.0.0)",
         "registry.type": "OTHER",
         "registry.name": "gdpr",
-        "registry.description": "The Registry to store GDPR Report and GdprRequestStatus objects",
+        "registry.description": "The Registry to store ComplianceReport and ComplianceRequestStatus objects",
         "stageActionService.target": "(|(component.name=GDPRReportHistoryStageAction)(component.name=GDPRMetadataDiagnosticsStageAction)(component.name=QvtFlowFindingsStageAction)(component.name=QvtGdprReanalysisStageAction))",
         "stage.storage.mappings": [
             "draft:file",
@@ -355,16 +355,16 @@
             }
         ],
         "root.eclass.uri": [
-            "https://org.eclipse/fennec/gdpr-report/1.0.0#//GdprReport",
-            "https://org.eclipse/fennec/gdpr-report/1.0.0#//GdprRequestStatus"
+            "https://org.eclipse/fennec/compliance/report/1.0.0#//ComplianceReport",
+            "https://org.eclipse/fennec/compliance/report/1.0.0#//ComplianceRequestStatus"
         ],
         "resourceSet.target": "(emf.name=ecore)"
     },
-    "RegistryService~gdprdoc": {
-        "schemaPackage.target": "(emf.nsURI=https://org.eclipse/fennec/gdpr-report-history/1.0.0)",
+    "RegistryService~compliance-context": {
+        "schemaPackage.target": "(emf.nsURI=https://org.eclipse/fennec/compliance/context/1.0.0)",
         "registry.type": "OTHER",
-        "registry.name": "gdprdoc",
-        "registry.description": "The Registry holding the derived GdprReportHistory documents, one per reviewed model fingerprint",
+        "registry.name": "compliance-context",
+        "registry.description": "The Registry holding the ComplianceContext catalogue: the requirements, taxonomies and corpora a review is made against",
         "stage.storage.mappings": [
             "draft:file",
             "approved:file",
@@ -397,10 +397,51 @@
             }
         ],
         "root.eclass.uri": [
-            "https://org.eclipse/fennec/gdpr-report-history/1.0.0#//GdprReportHistory"
+            "https://org.eclipse/fennec/compliance/context/1.0.0#//ComplianceContext"
+        ],
+        "resourceSet.target": "(emf.name=ecore)"
+    },
+    "RegistryService~gdprdoc": {
+        "schemaPackage.target": "(emf.nsURI=https://org.eclipse/fennec/compliance/report-history/1.0.0)",
+        "registry.type": "OTHER",
+        "registry.name": "gdprdoc",
+        "registry.description": "The Registry holding the derived ComplianceReportHistory documents, one per reviewed subject fingerprint",
+        "stage.storage.mappings": [
+            "draft:file",
+            "approved:file",
+            "release:file"
+        ],
+        "workflow.transitions": [
+                "draft:approved",
+                "approved:release",
+                "release:draft",
+                "approved:draft"
+            ],
+        "delete.after.transition": false,
+        "storageService.target": "(storage.type=file)",
+        "storageService.cardinality.minimum:int": 1,
+        "stages": [
+            {
+                "name": "draft",
+                "writable": true,
+                "final": false
+            },
+            {
+                "name": "approved",
+                "writable": true,
+                "final": false
+            },
+            {
+                "name": "release",
+                "writable": true,
+                "final": true
+            }
+        ],
+        "root.eclass.uri": [
+            "https://org.eclipse/fennec/compliance/report-history/1.0.0#//ComplianceReportHistory"
         ],
         "derived.eclass.uri": [
-            "https://org.eclipse/fennec/gdpr-report-history/1.0.0#//GdprReportHistory"
+            "https://org.eclipse/fennec/compliance/report-history/1.0.0#//ComplianceReportHistory"
         ],
         "resourceSet.target": "(emf.name=ecore)"
     }

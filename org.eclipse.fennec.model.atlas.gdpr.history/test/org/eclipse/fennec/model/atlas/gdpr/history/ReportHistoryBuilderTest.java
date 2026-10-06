@@ -95,6 +95,27 @@ class ReportHistoryBuilderTest {
 		assertEquals("GDPR review history of clinic-renamed", history.getName());
 	}
 
+	@Test
+	@DisplayName("the document names every context its revisions were judged against, once each")
+	void contextsAreCarriedOntoTheDocument() {
+		ComplianceReport first = report("2026-09-15T08:12:00Z", "claude-opus-5");
+		ComplianceReport second = report("2026-09-17T14:20:30Z", "someone");
+		// The same context, re-consolidated, plus a second one the later review also cited.
+		second.getContexts().get(0).setContextVersion("20180523");
+		second.getContexts().add(context("cra", "20241120"));
+
+		ComplianceReportHistory history = builder.build(
+				List.of(stored("gdpr-fp-20260915-081200", first), stored("gdpr-fp-20260917-142030", second)), now);
+
+		assertEquals(List.of("gdpr", "cra"), List.copyOf(history.getContextIds()),
+				"a reader asking what this subject was ever judged against reads the document, not "
+						+ "every revision; a context cited twice is one context");
+		assertEquals(List.of("gdpr@20160504"), List.copyOf(history.getRevisions().get(0).getContextVersions()));
+		assertEquals(List.of("gdpr@20180523", "cra@20241120"),
+				List.copyOf(history.getRevisions().get(1).getContextVersions()),
+				"the version stays on the revision, because that is what moved between the two");
+	}
+
 	/* ------------------------------------------------------------------ the headline case */
 
 	@Test
@@ -457,11 +478,15 @@ class ReportHistoryBuilderTest {
 		subject.setSubjectFingerprint("9f2c1ab7d4e85530");
 		report.setSubject(subject);
 
-		ContextRef context = ContextFactory.eINSTANCE.createContextRef();
-		context.setContextId("gdpr");
-		context.setContextVersion("20160504");
-		report.getContexts().add(context);
+		report.getContexts().add(context("gdpr", "20160504"));
 		return report;
+	}
+
+	private static ContextRef context(String id, String version) {
+		ContextRef context = ContextFactory.eINSTANCE.createContextRef();
+		context.setContextId(id);
+		context.setContextVersion(version);
+		return context;
 	}
 
 	private static ClassifierEvaluation classifier(ComplianceReport report, String name) {
