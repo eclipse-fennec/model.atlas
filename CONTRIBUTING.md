@@ -41,8 +41,8 @@ Background reading:
 
 * Search the [issue tracker](https://github.com/eclipse-fennec/model.atlas/issues)
   first — your problem may already be reported.
-* When filing a new issue, include the Model Atlas image variant
-  (`apicurio` / `file`), image tag, Java version, and a minimal reproducer.
+* When filing a new issue, include the Model Atlas image tag, Java
+  version, and a minimal reproducer.
 * Security issues must **not** be reported as public GitHub issues. Please
   follow the coordinated-disclosure process described in
   [SECURITY.md](SECURITY.md).
@@ -155,12 +155,9 @@ Adding a new third-party library requires Eclipse IP clearance:
 Building the Docker images locally:
 
 ```bash
-./gradlew org.eclipse.fennec.model.atlas.runtime:export.modelatlas.runtime_docker_apicurio
 ./gradlew org.eclipse.fennec.model.atlas.runtime:export.modelatlas.runtime_docker_file
-./gradlew docker:modelatlas_apicurio:prepareDocker
 ./gradlew docker:modelatlas_file:prepareDocker
-docker build -t eclipsefennec/model.atlas:apicurio-snapshot docker/modelatlas_apicurio/
-docker build -t eclipsefennec/model.atlas:file-snapshot     docker/modelatlas_file/
+docker build -t eclipsefennec/model.atlas:file-snapshot docker/modelatlas_file/
 ```
 
 ## Project leads & committers

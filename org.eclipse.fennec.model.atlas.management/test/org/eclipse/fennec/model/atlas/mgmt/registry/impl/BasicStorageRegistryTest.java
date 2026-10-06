@@ -141,7 +141,7 @@ class BasicStorageRegistryTest {
         // When/Then: Retrieving by type
         assertEquals(fileStorage, registry.getStorageByType("file"));
         assertEquals(minioStorage, registry.getStorageByType("minio"));
-        assertNull(registry.getStorageByType("apicurio"));
+        assertNull(registry.getStorageByType("git"));
     }
 
     @Test

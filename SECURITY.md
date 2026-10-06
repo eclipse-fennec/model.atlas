@@ -33,4 +33,4 @@ This information will help us triage your report more quickly.
 
 Only the most recent release of Eclipse Fennec Model Atlas receives security updates:
 
-* Latest release (currently the 0.0.x stream, published as the `apicurio-latest` / `file-latest` container images)
+* Latest release (currently the 0.0.x stream, published as the `file-latest` container image)

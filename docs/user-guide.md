@@ -44,14 +44,13 @@ Fennec Model Atlas is a dynamic EMF model management system that provides a REST
 
 ### Running with Docker
 
-Model Atlas is available as Docker images in two variants:
+Model Atlas is available as a Docker image with file-based storage:
 
 | Variant | Image Tag | Description |
 |---------|-----------|-------------|
 | **File** | `eclipsefennec/model.atlas:file-latest` | Local file-based storage, no external dependencies |
-| **Apicurio** | `eclipsefennec/model.atlas:apicurio-latest` | Uses [Apicurio Registry](https://www.apicur.io/registry/) for versioned artifact storage |
 
-Both are also available on GHCR as `ghcr.io/eclipse-fennec/model.atlas`.
+It is also available on GHCR as `ghcr.io/eclipse-fennec/model.atlas`.
 
 #### File variant (standalone)
 
@@ -59,35 +58,15 @@ Both are also available on GHCR as `ghcr.io/eclipse-fennec/model.atlas`.
 docker run -d -p 8080:8080 eclipsefennec/model.atlas:file-latest
 ```
 
-#### Apicurio variant (with Docker Compose)
-
-The Apicurio variant requires a running Apicurio Registry. Use the provided compose file:
-
-```bash
-docker compose -f docker/dockercompose/docker-compose-apicurio.yml up -d
-```
-
-This starts the full stack:
-
-| Service | URL |
-|---------|-----|
-| Model Atlas | http://localhost:8080 |
-| Apicurio Registry API | http://localhost:8081 |
-| Apicurio Registry UI | http://localhost:8888 |
-
 #### Environment Variables
 
 | Variable | Default | Variant | Description |
 |----------|---------|---------|-------------|
 | `STORAGE_ROOT` | `/tmp/mac` | File | Root directory for file-based storage |
 | `MODEL_ATLAS_SCOPE` | `jena` | File | Name of the image's tenant scope, which the GDPR review also runs in. Chosen at first deployment: `STORAGE_ROOT/<scope>/` holds the data, so renaming it later does not move what is stored. It also renames the initial-models folder that is seeded (`scopes/<name>/`). Use a plain name or leave it unset: an empty value does not fall back to the default. See [GDPR review history](gdpr-review-history.md#configuration) |
-| `APICURIO_HOST` | `localhost` | Apicurio | Hostname of the Apicurio Registry |
-| `APICURIO_PORT` | `8081` | Apicurio | Port of the Apicurio Registry |
-| `INITIAL_MODELS_FOLDER` | `/initial-models` | Both | Folder scanned once on startup to seed initial models. See [Bootstrapping Initial Models](#bootstrapping-initial-models) |
+| `INITIAL_MODELS_FOLDER` | `/initial-models` | File | Folder scanned once on startup to seed initial models. See [Bootstrapping Initial Models](#bootstrapping-initial-models) |
 
-> For more details on Docker setup, see the variant-specific documentation:
-> - [Docker Apicurio variant](../docker/modelatlas_apicurio/README.md)
-> - [Docker File variant](../docker/modelatlas_file/README.md)
+> For more details on Docker setup, see the [Docker File variant](../docker/modelatlas_file/README.md) documentation.
 
 ### Building from Source
 
@@ -95,10 +74,8 @@ This starts the full stack:
 # Build the project (skip tests for faster builds)
 ./gradlew build -x test -x testOSGi
 
-# Export the runtime JARs for a variant
+# Export the runtime JARs
 ./gradlew org.eclipse.fennec.model.atlas.runtime:export.modelatlas.runtime_docker_file
-# or
-./gradlew org.eclipse.fennec.model.atlas.runtime:export.modelatlas.runtime_docker_apicurio
 
 # Prepare and build Docker image
 ./gradlew docker:modelatlas_file:prepareDocker
@@ -1069,9 +1046,9 @@ Each registry is a factory configuration of `RegistryService`:
     "registry.name": "schema",
     "registry.description": "Schema registry for EPackage objects",
     "stage.storage.mappings": [
-      "draft:apicurio",
-      "approved:apicurio",
-      "release:apicurio"
+      "draft:file",
+      "approved:file",
+      "release:file"
     ],
     "workflow.transitions": [
       "draft:approved",
@@ -1083,7 +1060,7 @@ Each registry is a factory configuration of `RegistryService`:
       { "name": "release", "writable": false, "final": true }
     ],
     "delete.after.transition": true,
-    "storageService.target": "(storage.type=apicurio)",
+    "storageService.target": "(storage.type=file)",
     "schemaPackage.target": "(emf.nsURI=http://www.eclipse.org/emf/2002/Ecore)",
     "root.eclass.uri": "http://www.eclipse.org/emf/2002/Ecore#//EPackage"
   }
@@ -1117,17 +1094,6 @@ Storage backends are configured independently and referenced by `storage.type`:
 }
 ```
 
-**Apicurio Registry storage:**
-```json
-{
-  "ApicurioObjectStorage~apicurio": {
-    "base.url": "http://localhost:8081/apis/registry/v3/",
-    "storage.type": "apicurio",
-    "registry.target": "(registry=main)"
-  }
-}
-```
-
 **Shared Lucene Registry** (metadata index across all storage backends):
 ```json
 {
@@ -1138,8 +1104,6 @@ Storage backends are configured independently and referenced by `storage.type`:
   }
 }
 ```
-
-> For details on the Apicurio storage integration, see [Apicurio Management README](../org.eclipse.fennec.model.atlas.management.apicurio/README.md).
 
 ---
 
@@ -1302,13 +1266,10 @@ curl http://localhost:8080/rest/atlas/schema
 
 ### Internal Components
 - [Workflow / ScopeService](../org.eclipse.fennec.model.atlas.workflow/README.md) - Workflow service internals and configuration
-- [Apicurio Storage](../org.eclipse.fennec.model.atlas.management.apicurio/README.md) - Apicurio Registry integration details
 - [Initial Model Bootstrap](../org.eclipse.fennec.model.atlas.bootstrap/README.md) - One-shot loader that seeds models on startup
 
 ### Docker
-- [Docker Apicurio variant](../docker/modelatlas_apicurio/README.md)
 - [Docker File variant](../docker/modelatlas_file/README.md)
-- [Docker Compose Apicurio](../docker/dockercompose/docker-compose-apicurio.yml) - Full stack with Apicurio + UI
 - [Docker Compose File](../docker/dockercompose/docker-compose-file.yml) - Standalone file storage
 
 ---

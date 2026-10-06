@@ -32,7 +32,7 @@ features:
     linkText: REST API
   - icon: 🧱
     title: Pluggable Storage
-    details: Interchangeable storage backends behind one service contract — local filesystem, Apicurio Registry, Git, and Lucene-backed search and indexing.
+    details: Interchangeable storage backends behind one service contract — local filesystem, Git, and Lucene-backed search and indexing.
     link: /guides/user-guide#configuration
     linkText: Configuration
   - icon: 🔄
@@ -51,8 +51,7 @@ them as OSGi services, and exposes them through a RESTful API with multi-tenant
 **scopes**, stage-based **workflows** (draft → review → approved → release) and
 hierarchical schema visibility.
 
-Ready-to-run Docker images are published in two variants — file-based storage
-and [Apicurio Registry](https://www.apicur.io/registry/)-backed storage — see the
+A ready-to-run Docker image with file-based storage is published — see the
 [User Guide](/guides/user-guide#getting-started) to get started. Internal
 development notes (plans, reviews, design documents) live in the
 [`docs/` folder on GitHub](https://github.com/eclipse-fennec/model.atlas/tree/snapshot/docs).

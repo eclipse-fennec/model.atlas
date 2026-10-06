@@ -77,7 +77,7 @@ public interface StorageRegistry {
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
 	 * <!-- begin-model-doc -->
-	 * Get storage service by type (in the sense that the storage.type config property, e.g. apicurio, file, minio, etc).  Returns null if no storage service is registered for the given type.
+	 * Get storage service by type (in the sense that the storage.type config property, e.g. file, git, etc).  Returns null if no storage service is registered for the given type.
 	 * <!-- end-model-doc -->
 	 * @model typeRequired="true"
 	 * @generated
@@ -88,7 +88,7 @@ public interface StorageRegistry {
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
 	 * <!-- begin-model-doc -->
-	 * Get set of all available storage types. Returns the type names of all registered storage services (e.g. ['apicurio', 'file', 'minio']).
+	 * Get set of all available storage types. Returns the type names of all registered storage services (e.g. ['file', 'git']).
 	 * <!-- end-model-doc -->
 	 * @model kind="operation"
 	 * @generated

@@ -933,9 +933,9 @@ Registries define the stages and workflow transitions. The `SchemaPackagesResour
     "registry.name": "schema",
     "registry.description": "The schema registry to store EPackage objects",
     "stage.storage.mappings": [
-      "draft:apicurio",
-      "approved:apicurio",
-      "release:apicurio"
+      "draft:file",
+      "approved:file",
+      "release:file"
     ],
     "workflow.transitions": [
       "draft:approved",
@@ -947,7 +947,7 @@ Registries define the stages and workflow transitions. The `SchemaPackagesResour
       { "name": "release", "writable": false, "final": true }
     ],
     "delete.after.transition": true,
-    "storageService.target": "(storage.type=apicurio)",
+    "storageService.target": "(storage.type=file)",
     "schemaPackage.target": "(emf.nsURI=http://www.eclipse.org/emf/2002/Ecore)",
     "root.eclass.uri": "http://www.eclipse.org/emf/2002/Ecore#//EPackage"
   }
@@ -967,11 +967,6 @@ Storage backends are configured once per type in `storage.json`. Multiple stages
 
 ```json
 {
-  "ApicurioObjectStorage~apicurio": {
-    "base.url": "http://localhost:8081/apis/registry/v3/",
-    "storage.type": "apicurio",
-    "registry.target": "(registry=main)"
-  },
   "FileObjectStorage~file": {
     "workspace.folder": "/data/storage",
     "storage.type": "file",
@@ -983,7 +978,6 @@ Storage backends are configured once per type in `storage.json`. Multiple stages
 **Key Properties**:
 - `storage.type`: Identifies the storage backend (referenced in `stage.storage.mappings`)
 - `workspace.folder` (FileObjectStorage): Root folder for file-based storage
-- `base.url` (ApicurioObjectStorage): Apicurio Registry API URL
 
 ---
 

@@ -407,11 +407,6 @@ Storage backends are configured once per storage type, and registries map stages
 **Storage Configuration** (storage.json):
 ```json
 {
-  "ApicurioObjectStorage~apicurio": {
-    "base.url": "http://localhost:8081/apis/registry/v3/",
-    "storage.type": "apicurio",
-    "registry.target": "(registry=main)"
-  },
   "FileObjectStorage~file": {
     "workspace.folder": "/data/storage",
     "storage.type": "file",
@@ -427,9 +422,9 @@ Storage backends are configured once per storage type, and registries map stages
     "registry.name": "schema",
     "registry.description": "The schema registry to store EPackage objects",
     "stage.storage.mappings": [
-      "draft:apicurio",
-      "approved:apicurio",
-      "release:apicurio"
+      "draft:file",
+      "approved:file",
+      "release:file"
     ],
     "workflow.transitions": [
       "draft:approved",
@@ -440,7 +435,7 @@ Storage backends are configured once per storage type, and registries map stages
       { "name": "approved", "writable": true, "final": false },
       { "name": "release", "writable": false, "final": true }
     ],
-    "storageService.target": "(storage.type=apicurio)"
+    "storageService.target": "(storage.type=file)"
   }
 }
 ```

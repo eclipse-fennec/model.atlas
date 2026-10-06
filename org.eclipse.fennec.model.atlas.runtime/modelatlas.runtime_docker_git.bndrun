@@ -4,7 +4,7 @@
 
 # Variant bndruns are NOT resolved (only modelatlas.runtime_base.bndrun carries the resolved
 # plain -runbundles; a plain -runbundles here would be overridden by the include chain and
-# ignored). Like the apicurio variant, the git additions live in the merged suffix keys below:
+# ignored). The git additions live in the merged suffix keys below:
 # -runbundles.git holds the hand-curated delta on top of the base closure.
 #
 # -runrequires.git documents the git requirements and enables an ad-hoc validation resolve

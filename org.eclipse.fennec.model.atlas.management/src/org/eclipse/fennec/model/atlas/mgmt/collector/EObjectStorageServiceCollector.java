@@ -64,8 +64,8 @@ public class EObjectStorageServiceCollector {
     private final Map<String, EObjectStorageService<?>> storageByKey = new ConcurrentHashMap<>();
 
     /**
-     * @param backendType the backend type of the storage (e.g. apicurio, file, etc)
-     * @param type        the type of the storage (e.g. apicurio, file, etc)
+     * @param backendType the backend type of the storage (e.g. file, git, etc)
+     * @param type        the type of the storage (e.g. file, git, etc)
      * @return the storage service for the specified backendType/type pair
      */
     public EObjectStorageService<?> getStorage(String backendType, String type) {
@@ -84,8 +84,8 @@ public class EObjectStorageServiceCollector {
     /**
      * Check if a storage service exists for the specified backednType/type pair
      *
-     * @param backendType the backend type of the storage (e.g. apicurio, file, etc)
-     * @param type        the type of the storage (e.g. apicurio, file, etc)
+     * @param backendType the backend type of the storage (e.g. file, git, etc)
+     * @param type        the type of the storage (e.g. file, git, etc)
      * @return true if a storage service exists for this backednType/type pair
      */
     public boolean hasStorage(String backendType, String type) {

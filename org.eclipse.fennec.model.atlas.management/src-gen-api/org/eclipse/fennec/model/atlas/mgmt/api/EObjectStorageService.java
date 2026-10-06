@@ -58,7 +58,7 @@ public interface EObjectStorageService<T extends EObject> {
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
 	 * <!-- begin-model-doc -->
-	 * Update an existing object in storage. For backends that don't support in-place updates (e.g., Apicurio), this may perform delete-then-create. Default implementation delegates to storeObject.
+	 * Update an existing object in storage. For backends that don't support in-place updates, this may perform delete-then-create. Default implementation delegates to storeObject.
 	 * <!-- end-model-doc -->
 	 * @model dataType="org.eclipse.fennec.model.atlas.mgmt.management.Promise&lt;org.eclipse.fennec.model.atlas.mgmt.management.ObjectMetadata&gt;" objectIdRequired="true" objectRequired="true" metadataRequired="true"
 	 * @generated
@@ -194,7 +194,7 @@ public interface EObjectStorageService<T extends EObject> {
 	 * <!-- begin-user-doc -->
 	 * <!-- end-user-doc -->
 	 * <!-- begin-model-doc -->
-	 * Get the storage  type (e.g. file, apicurio, etc). The one set via the config property storage.type
+	 * Get the storage  type (e.g. file, git, etc). The one set via the config property storage.type
 	 * <!-- end-model-doc -->
 	 * @model kind="operation" required="true"
 	 * @generated

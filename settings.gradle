@@ -19,7 +19,6 @@ pluginManagement {
 plugins {
   id 'biz.aQute.bnd.workspace'
 }
-include ":docker:modelatlas_apicurio"
 include ":docker:modelatlas_file"
 include ":docker:modelatlas_jena"
 include ":docker:modelatlas_jena_dcat"

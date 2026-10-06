@@ -467,8 +467,8 @@ public abstract class AbstractEObjectStorageService implements EObjectStorageSer
      * <p>
      * Default implementation delegates to
      * {@link #storeObject(String, String, String, String, EObject, ObjectMetadata)}.
-     * Storage backends that require special handling for updates (e.g., Apicurio
-     * which needs delete-then-create) should override this method.
+     * Storage backends that require special handling for updates (e.g. one that
+     * needs delete-then-create) should override this method.
      * </p>
      *
      * @param objectId the object identifier

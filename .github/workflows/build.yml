@@ -31,5 +31,4 @@ jobs:
       # Validate that the runtime bndruns still resolve and export.
       extra-gradle-tasks: >-
         org.eclipse.fennec.model.atlas.runtime:resolve.modelatlas.runtime_base
-        org.eclipse.fennec.model.atlas.runtime:export.modelatlas.runtime_docker_apicurio
         org.eclipse.fennec.model.atlas.runtime:export.modelatlas.runtime_docker_file

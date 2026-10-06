@@ -8,18 +8,18 @@ All workflow definitions live in [`.github/workflows`](../.github/workflows).
 ## Branch model
 
 `snapshot` is the active development line — all PRs target it, and every push
-publishes the `:apicurio-snapshot` / `:file-snapshot` container images.
+publishes the `:file-snapshot` container image.
 `main` always holds the latest released version, available as the
-`:apicurio-latest` / `:file-latest` images on
+`:file-latest` image on
 [Docker Hub](https://hub.docker.com/r/eclipsefennec/model.atlas/tags) and
 [GHCR](https://github.com/eclipse-fennec/model.atlas/pkgs/container/model.atlas).
 This project ships container images instead of Maven Central artifacts.
 
-| Branch     | Purpose                                            | Docker tag suffix                                                                 |
-|------------|----------------------------------------------------|-----------------------------------------------------------------------------------|
-| `snapshot` | Active development. PRs target this branch.       | `apicurio-snapshot`, `file-snapshot`, plus the bundle version (`apicurio-x.y.z`)  |
-| `main`     | Latest release — images here match `:apicurio-latest` / `:file-latest`. | `apicurio-latest`, `file-latest`, plus the bundle version (`apicurio-x.y.z`)      |
-| any other  | Topic branches and PRs run build only, no deploy. | —                                                                                 |
+| Branch     | Purpose                                            | Docker tag suffix                                       |
+|------------|----------------------------------------------------|---------------------------------------------------------|
+| `snapshot` | Active development. PRs target this branch.        | `file-snapshot`, plus the bundle version (`file-x.y.z`) |
+| `main`     | Latest release — images here match `:file-latest`. | `file-latest`, plus the bundle version (`file-x.y.z`)   |
+| any other  | Topic branches and PRs run build only, no deploy.  | —                                                       |
 
 ## Workflow overview
 
@@ -37,7 +37,7 @@ This project ships container images instead of Maven Central artifacts.
              ▼
     ┌────────────────────┐
     │  Container Deploy  │  →  Docker Hub  +  ghcr.io
-    │  (apicurio + file) │     multi-arch: amd64 + arm64
+    │    (file image)    │     multi-arch: amd64 + arm64
     └────────────────────┘
 ```
 
@@ -56,7 +56,6 @@ Two jobs:
 * Runs:
   * `./gradlew clean build --info --stacktrace`
   * `./gradlew org.eclipse.fennec.model.atlas.runtime:resolve.modelatlas.runtime_base --info`
-  * `./gradlew org.eclipse.fennec.model.atlas.runtime:export.modelatlas.runtime_docker_apicurio --info`
   * `./gradlew org.eclipse.fennec.model.atlas.runtime:export.modelatlas.runtime_docker_file --info`
 * Uploads three artifact bundles:
   * `jar-files` — the executable JARs and the REST application bundle
@@ -78,15 +77,12 @@ Steps:
 3. Install the BND CLI from Maven Central
    (`biz.aQute.bnd-7.2.1.jar`) and read `Bundle-Version` from
    `org.eclipse.fennec.model.atlas.rest.application.jar`.
-4. Stage the runtime jars under `docker/modelatlas_apicurio/content/` and
-   `docker/modelatlas_file/content/`.
+4. Stage the runtime jars under `docker/modelatlas_file/content/`.
 5. Set up Docker Buildx and log in to Docker Hub + GHCR.
-6. Build and push two multi-arch images (`linux/amd64,linux/arm64/v8`) per
-   storage variant, tagged according to the branch:
-   * `snapshot` → `:apicurio-snapshot` / `:file-snapshot` plus the
-     version-specific tag
-   * `main` → `:apicurio-latest` / `:file-latest` plus the
-     version-specific tag
+6. Build and push the multi-arch file image (`linux/amd64,linux/arm64/v8`),
+   tagged according to the branch:
+   * `snapshot` → `:file-snapshot` plus the version-specific tag
+   * `main` → `:file-latest` plus the version-specific tag
 
 * **Secrets used by the deploy job:**
   * `DOCKER_USERNAME`, `DOCKER_API_TOKEN` — Docker Hub credentials
@@ -115,9 +111,9 @@ Model Atlas publishes multi-arch container images
 
 | Channel      | Registry & repository                                                                                  | Image tags                                                                                                                | Pushed by                                                       |
 |--------------|--------------------------------------------------------------------------------------------------------|---------------------------------------------------------------------------------------------------------------------------|-----------------------------------------------------------------|
-| Release      | [Docker Hub `eclipsefennec/model.atlas`](https://hub.docker.com/r/eclipsefennec/model.atlas/tags)      | `apicurio-latest`, `file-latest`, `apicurio-<version>`, `file-<version>`                                                  | `build.yml` *Container Deploy* job on `main`                    |
+| Release      | [Docker Hub `eclipsefennec/model.atlas`](https://hub.docker.com/r/eclipsefennec/model.atlas/tags)      | `file-latest`, `file-<version>`                                                                                           | `build.yml` *Container Deploy* job on `main`                    |
 | Release      | [GHCR `ghcr.io/eclipse-fennec/model.atlas`](https://github.com/eclipse-fennec/model.atlas/pkgs/container/model.atlas) | same tags as Docker Hub                                                                                                   | `build.yml` *Container Deploy* job on `main`                    |
-| Snapshot     | Docker Hub `eclipsefennec/model.atlas`                                                                 | `apicurio-snapshot`, `file-snapshot`, `apicurio-<version>`, `file-<version>`                                              | `build.yml` *Container Deploy* job on `snapshot`                |
+| Snapshot     | Docker Hub `eclipsefennec/model.atlas`                                                                 | `file-snapshot`, `file-<version>`                                                                                         | `build.yml` *Container Deploy* job on `snapshot`                |
 | Snapshot     | GHCR `ghcr.io/eclipse-fennec/model.atlas`                                                              | same tags as Docker Hub                                                                                                   | `build.yml` *Container Deploy* job on `snapshot`                |
 
 Pull examples:
@@ -126,18 +122,17 @@ Pull examples:
 # Latest release (file variant)
 docker pull eclipsefennec/model.atlas:file-latest
 
-# Pinned release version (apicurio variant)
-docker pull eclipsefennec/model.atlas:apicurio-0.0.1
+# Pinned release version
+docker pull eclipsefennec/model.atlas:file-0.0.1
 
 # Latest snapshot (file variant)
 docker pull eclipsefennec/model.atlas:file-snapshot
 
 # From GHCR instead of Docker Hub
-docker pull ghcr.io/eclipse-fennec/model.atlas:apicurio-latest
+docker pull ghcr.io/eclipse-fennec/model.atlas:file-latest
 ```
 
-The version-specific tags (`apicurio-<bundle-version>` /
-`file-<bundle-version>`) are derived at build time from `Bundle-Version`
+The version-specific tags (`file-<bundle-version>`) are derived at build time from `Bundle-Version`
 of `org.eclipse.fennec.model.atlas.rest.application.jar`, so they are
 stable references to a specific commit's output.
 
@@ -160,11 +155,11 @@ Maven artifacts; only container images.
   ```bash
   ./gradlew clean build --info
   ```
-* Build the apicurio image locally:
+* Build the file image locally:
   ```bash
-  ./gradlew org.eclipse.fennec.model.atlas.runtime:export.modelatlas.runtime_docker_apicurio
-  ./gradlew docker:modelatlas_apicurio:prepareDocker
-  docker build -t eclipsefennec/model.atlas:apicurio-snapshot docker/modelatlas_apicurio/
+  ./gradlew org.eclipse.fennec.model.atlas.runtime:export.modelatlas.runtime_docker_file
+  ./gradlew docker:modelatlas_file:prepareDocker
+  docker build -t eclipsefennec/model.atlas:file-snapshot docker/modelatlas_file/
   ```
 * License headers:
   ```bash
