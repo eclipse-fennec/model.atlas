@@ -16,8 +16,22 @@ services:
       - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY:-}
       - GDPR_MCP_PUBLIC_URL=${GDPR_MCP_PUBLIC_URL:-}
       - MCP_GDPR_AUTH_TOKEN=${MCP_GDPR_AUTH_TOKEN:-}
+      # The output-token budget of one review turn, thinking included. The default of 16000 is
+      # tight: a run on 2026-10-06 spent all of it reading the model and the vocabulary and was
+      # cut off before recording anything. A truncated turn is resumed rather than failed, so
+      # this is about how many turns a review takes rather than whether it finishes.
+      - GDPR_CHECK_MAX_TOKENS=${GDPR_CHECK_MAX_TOKENS:-}
+      # Where InitialModelLoader looks. Set here rather than in jena.json because the image
+      # already carries one configuration of that PID (runtime.config.docker), and a second
+      # provider of the same singleton PID is decided by Configurator ranking, not by intent.
+      - INITIAL_MODELS_FOLDER=/opt/modelatlas/runtime/initial-models
     volumes:
       - ./configs:/opt/modelatlas/runtime/load:ro
+      # Seeded once on first start by InitialModelLoader: the ComplianceContext catalogue, as
+      # instances of the 'compliance-context' registry of the 'dimcity' scope (issue #332). Mounted
+      # rather than baked in so a context can be swapped without rebuilding the image; re-seeding
+      # is idempotent, so an object id already in the stage is skipped on every later start.
+      - ./initial-models:/opt/modelatlas/runtime/initial-models:ro
       - atlas-data:/opt/modelatlas/runtime/data
       - atlas-log:/opt/modelatlas/runtime/log
 

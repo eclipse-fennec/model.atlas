@@ -25,3 +25,10 @@ bin_test/
 # Per-machine compose environment: the ngrok URL Anthropic dials, the API key that pays for a
 # GDPR review, and the token that must match the GDPR runtime. Never committed.
 docker/dockercompose/.env
+
+# The ComplianceContext catalogue seeded into the 'jena' scope on first start (issue #332).
+# Generated data, not source - and not ours to redistribute: the Grundschutz++ catalogue is
+# CC BY-SA 4.0 and the ISO 27001 mapping carries only identifiers because the text is
+# protected. The README beside this mount says where to get the files.
+docker/dockercompose/initial-models/**
+!docker/dockercompose/initial-models/README.md
