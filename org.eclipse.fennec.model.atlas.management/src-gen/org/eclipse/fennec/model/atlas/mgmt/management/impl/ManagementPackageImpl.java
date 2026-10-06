@@ -1397,7 +1397,6 @@ public class ManagementPackageImpl extends EPackageImpl implements ManagementPac
 		addEEnumLiteral(storageBackendTypeEEnum, StorageBackendType.FILE);
 		addEEnumLiteral(storageBackendTypeEEnum, StorageBackendType.MINIO);
 		addEEnumLiteral(storageBackendTypeEEnum, StorageBackendType.GIT);
-		addEEnumLiteral(storageBackendTypeEEnum, StorageBackendType.APICURIO);
 
 		initEEnum(generationStatusEEnum, GenerationStatus.class, "GenerationStatus");
 		addEEnumLiteral(generationStatusEEnum, GenerationStatus.REQUESTED);
@@ -2040,12 +2039,6 @@ public class ManagementPackageImpl extends EPackageImpl implements ManagementPac
 		   source,
 		   new String[] {
 			   "documentation", "Git-based storage backend"
-		   });
-		addAnnotation
-		  (storageBackendTypeEEnum.getELiterals().get(3),
-		   source,
-		   new String[] {
-			   "documentation", "Apicurio-based storage backend"
 		   });
 		addAnnotation
 		  (generationStatusEEnum,

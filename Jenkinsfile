@@ -61,7 +61,7 @@ pipeline  {
                 echo "I am exporting applications on branch: ${env.GIT_BRANCH}"
 
                 sh "./gradlew org.eclipse.fennec.model.atlas.runtime:resolve.modelatlas.runtime_base --info --stacktrace -Dmaven.repo.local=${WORKSPACE}/.m2"
-                sh "./gradlew org.eclipse.fennec.model.atlas.runtime:export.modelatlas.runtime_docker --info --stacktrace -Dmaven.repo.local=${WORKSPACE}/.m2"
+                sh "./gradlew org.eclipse.fennec.model.atlas.runtime:export.modelatlas.runtime_docker_file --info --stacktrace -Dmaven.repo.local=${WORKSPACE}/.m2"
             }
         }
 
@@ -80,7 +80,7 @@ pipeline  {
                 echo "I am building and publishing a docker image on branch: ${env.GIT_BRANCH}"
                 
                 step([$class: 'DockerBuilderPublisher',
-                      dockerFileDirectory: 'docker/modelatlas_apicurio',
+                      dockerFileDirectory: 'docker/modelatlas_file',
                             cloud: 'docker',
                             tagsString: 'devel.data-in-motion.biz:6000/fennec/modelatlas:latest',
                             pushOnSuccess: true,

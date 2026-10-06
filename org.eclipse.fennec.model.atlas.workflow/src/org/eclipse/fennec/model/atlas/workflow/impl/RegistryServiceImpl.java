@@ -528,8 +528,8 @@ public class RegistryServiceImpl<T extends EObject> implements RegistryService<T
             metadata.setRegistry(config.registry_name());
             metadata.setVersion(version);
 
-            // Update the object in storage (uses updateObject which handles Apicurio
-            // delete-then-create)
+            // Update the object in storage (updateObject lets a backend replace an
+            // object its own way)
             metadata = WorkflowServiceHelper
                     .getPromiseValue(storageService.updateObject(objectId, updatedObject, metadata));
             dispatch(ActionEvent.UPDATE, newContext(scope, stage, metadata, null, null, null, null, false), metadata);
