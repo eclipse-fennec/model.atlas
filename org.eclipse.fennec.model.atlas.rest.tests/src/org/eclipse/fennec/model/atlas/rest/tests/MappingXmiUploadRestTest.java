@@ -224,6 +224,33 @@ public class MappingXmiUploadRestTest extends AbstractRestTest {
 		verifyReferences("the read back mapping", xmi);
 	}
 
+	/**
+	 * Issue #337: the stored mapping served as {@code application/xml}. The codec writes
+	 * it through a copy in a temporary resource of the response's type, and its references
+	 * within the document - each resource's {@code timestamp} - came out as absolute URIs
+	 * of that temporary resource ({@code http://codec.temp/<uuid>#//@timestamp}), which a
+	 * client can never resolve (eclipse-fennec/emf.codec#266).
+	 */
+	@Test
+	@MappingScopeSetup
+	public void providerMappingServedAsXmlKeepsItsReferences(@InjectBundleContext BundleContext context)
+			throws Exception {
+		awaitScope(context);
+		uploadSchema("waterparc-domain.ecore", DOMAIN_NS_URI, "domain");
+		uploadSchema("event-atlas-mapping.ecore", MAPPING_NS_URI, "mapping");
+		assertStatus(201, uploadMapping(), "The mapping XMI must upload");
+
+		Response content = objectStageTarget(CommonTestAnnotations.STAGE_DRAFT).path("content")
+				.queryParam("objectId", OBJECT_ID).request("application/xml").get();
+		assertStatus(200, content, "The uploaded mapping must read back as XML");
+		String xml = content.readEntity(String.class);
+		assertNotNull(xml);
+		assertFalse(xml.contains("codec.temp"),
+				"References within the document must not point into the codec's temporary resource, got: " + xml);
+
+		verifyReferences("the mapping served as XML", xml);
+	}
+
 	/** {@code POST .../stages/draft/Mapping%20WaterQuality.xmi?name=Mapping+WaterQuality&override=true} */
 	private Response uploadMapping() throws IOException {
 		return objectStageTarget(CommonTestAnnotations.STAGE_DRAFT).path(OBJECT_ID)
