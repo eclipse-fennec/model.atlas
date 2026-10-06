@@ -285,11 +285,52 @@ class GdprFindingsToDiagnosticsTest {
 	}
 
 	@Test
+	@DisplayName("A feature with no uriFragment is addressed by its classifier's fragment and its name")
+	void aFeatureWithoutAFragmentFallsBackToItsName() {
+		ComplianceReport report = report();
+		FeatureEvaluation first = FACTORY.createFeatureEvaluation();
+		first.setName("cardNumber");
+		first.getFindings().add(finding("F-1", "DIRECT_IDENTIFIER", RelevanceLevel.HIGH, null, "r1", null));
+		FeatureEvaluation second = FACTORY.createFeatureEvaluation();
+		second.setName("holder");
+		second.getFindings().add(finding("F-2", "PERSONAL_DATA", RelevanceLevel.HIGH, null, "r2", null));
+		classifier(report, "//SubscriptionCard", first, second);
+
+		// Both are written, and each is addressed in its own right: dropping them loses the
+		// findings, and writing both untargeted would mint one id for the two.
+		List<Diagnostic> elements = elements(report);
+		assertEquals(2, elements.size());
+		assertEquals("//SubscriptionCard/cardNumber", elements.get(0).getTarget());
+		assertEquals("//SubscriptionCard/holder", elements.get(1).getTarget());
+	}
+
+	@Test
+	@DisplayName("A classifier with no uriFragment is addressed by its name, and its features hang off that")
+	void aClassifierWithoutAFragmentFallsBackToItsName() {
+		ComplianceReport report = report();
+		FeatureEvaluation feature = FACTORY.createFeatureEvaluation();
+		feature.setName("diagnosis");
+		feature.getFindings().add(finding("F-1", "SPECIAL_CATEGORY", RelevanceLevel.HIGH, null, "r", null));
+		ClassifierEvaluation classifier = classifier(report, null, feature);
+		classifier.setName("Patient");
+		classifier.getFindings().add(finding("F-0", "PERSONAL_DATA", RelevanceLevel.MEDIUM, null, "r0", null));
+
+		List<Diagnostic> elements = elements(report);
+		assertEquals(2, elements.size());
+		assertEquals("//Patient", elements.get(0).getTarget(),
+				"the fragment a name implies, not the bare name: the target is an address");
+		assertEquals("//Patient/diagnosis", elements.get(1).getTarget(),
+				"and a feature is addressed under whatever its classifier resolved to");
+	}
+
+	@Test
 	@DisplayName("An element with findings but nothing to address it by is dropped rather than written untargeted")
 	void unaddressableElementIsDropped() {
 		ComplianceReport report = report();
+		// No uriFragment, no name and no id: there is genuinely nothing to address it by. An id
+		// alone would be enough - it is unique, which is all the drop exists to protect - and a
+		// name alone would give a fragment under its classifier.
 		FeatureEvaluation nameless = FACTORY.createFeatureEvaluation();
-		nameless.setId("Patient.mystery");
 		nameless.getFindings()
 				.add(finding("F-1", "PERSONAL_DATA", RelevanceLevel.HIGH, null, "r", null));
 		classifier(report, "//Patient", nameless);

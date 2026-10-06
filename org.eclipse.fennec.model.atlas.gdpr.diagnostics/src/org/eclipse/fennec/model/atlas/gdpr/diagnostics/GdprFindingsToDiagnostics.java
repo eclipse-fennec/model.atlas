@@ -75,19 +75,22 @@ import org.eclipse.fennec.model.compliance.report.TransformationSubject;
  * rule. Ids are derived, never drawn, which is what lets a report's reader compute the id of a
  * finding without it being stored back on the report.
  *
- * <h2>Identity: one child per (category, relevance) on one element</h2>
+ * <h2>Identity: one child per (categories, relevance) on one element</h2>
  * <p>
- * A child's {@code code} is {@link #findingCode(DataCategory, RelevanceLevel)} and its
- * {@code target} is the element's, so its id turns exactly on <b>element, category and
- * relevance</b>. That is the rule the re-review has to honour: a second review that reaches the
- * same category at the same relevance by another route is the <em>same</em> claim, so it keeps its
- * id and with it whatever a person decided about it. A second review that says
- * {@code SPECIAL_CATEGORY} where the first said {@code PERSONAL_DATA}, or that raises the relevance,
- * is a <em>different</em> claim: it gets a new id, is {@code OPEN}, and the old one disappears when
- * the producer's roots are replaced.
+ * A child's {@code code} is {@link #findingCode(List, RelevanceLevel)} and its {@code target} is
+ * the element's, so its id turns exactly on <b>element, categories and relevance</b>. That is the
+ * rule the re-review has to honour: a second review that reaches the same categories at the same
+ * relevance by another route is the <em>same</em> claim, so it keeps its id and with it whatever a
+ * person decided about it. A second review that says {@code SPECIAL_CATEGORY} where the first said
+ * {@code PERSONAL_DATA}, or that raises the relevance, is a <em>different</em> claim: it gets a new
+ * id, is {@code OPEN}, and the old one disappears when the producer's roots are replaced.
  * <p>
- * Consequently <b>several findings that share an element, a category and a relevance fold into one
- * child</b>, their rationales, recommendations and citations merged. They differ in how the review
+ * A finding may now name <b>several</b> categories. They are joined <em>sorted</em>, so the code
+ * does not depend on the order a reviewer happened to list them in, and a finding naming exactly
+ * one produces the code it always did.
+ * <p>
+ * Consequently <b>several findings that share an element, its categories and a relevance fold into
+ * one child</b>, their rationales, recommendations and citations merged. They differ in how the review
  * reached the claim, not in what it asserts, and there is only one decision for a person to make
  * about it. {@code Finding.id} deliberately plays no part - the analyser assigns it afresh on every
  * run ({@code F-001} in one review, {@code f1} in the next for the same claim), so keying on it
@@ -96,13 +99,19 @@ import org.eclipse.fennec.model.compliance.report.TransformationSubject;
  *
  * <h2>What is written, and at which severity</h2>
  * <p>
- * A finding that <b>asserts nothing</b> is skipped: {@code relevanceLevel} {@code NONE}, or a
- * category of {@code NOT_PERSONAL_DATA} or {@code ANONYMOUS}. Both are the report model's way of
+ * A finding that <b>asserts nothing</b> is skipped: {@code relevanceLevel} {@code NONE}, or every
+ * one of its data categories in the {@linkplain CategoryVocabulary#benign benign set} - by default
+ * the GDPR context's {@code NOT_PERSONAL_DATA} and {@code ANONYMOUS}. Both are the report's way of
  * saying "examined and nothing of concern found", and the report already says that by carrying an
  * evaluation with no findings at all. Note that an EMF enum attribute nobody set reads as its first
- * literal, which is {@code NOT_PERSONAL_DATA} and {@code NONE} respectively, and that XMI does not
- * write a value equal to the default - so a finding that <em>stated</em> it is clean and one that
- * left both fields empty are indistinguishable once stored, and both are skipped.
+ * literal, which for {@code relevanceLevel} is {@code NONE}, and that XMI does not write a value
+ * equal to the default - so a finding that <em>stated</em> no relevance and one that left the field
+ * empty are indistinguishable once stored, and both are skipped.
+ * <p>
+ * A finding naming <b>no</b> category at a relevance above {@code NONE} is <b>written</b>, as
+ * {@code gdpr.finding.<RELEVANCE>}. The old model could not tell an unset category from "examined
+ * and found nothing"; a list can, and a reviewer who states a concern without saying of what has
+ * still stated one.
  * <p>
  * The severity vocabulary is {@code INFO}, {@code WARNING}, {@code ERROR}, and <b>a review never
  * produces {@code ERROR}</b>: the report's own disclaimer says it flags features needing human
@@ -191,6 +200,9 @@ public class GdprFindingsToDiagnostics {
 
 	/** Joins the categories of a claim that names more than one. */
 	private static final String CATEGORY_SEPARATOR = "+";
+
+	/** What an EMF fragment addressing a classifier of the reviewed package starts with. */
+	private static final String FRAGMENT_PREFIX = "//";
 
 	/**
 	 * The code of the child carrying one claim: the categories and the relevance, which together
@@ -578,12 +590,56 @@ public class GdprFindingsToDiagnostics {
 
 	/* ------------------------------------------------------------------ addressing */
 
+	/**
+	 * How a classifier is addressed: its {@code uriFragment}, else the fragment its name implies,
+	 * else its id.
+	 * <p>
+	 * <b>The fallback recovers findings that would otherwise be dropped.</b> An element with
+	 * nothing to address it by is not written at all - see {@link #element} - because an untargeted
+	 * node would mint the same id as every other untargeted node of its kind. So a review that
+	 * names its elements only by name, which a producer may legitimately do, loses every finding on
+	 * them. There is no reason to: a classifier's fragment <em>is</em> {@code //} and its name.
+	 * <p>
+	 * The synthesised value is a fragment rather than the bare name on purpose. A target is an
+	 * address a reader resolves against the model, and two classifiers sharing a feature name would
+	 * otherwise collide back into one node - the very thing the drop exists to prevent.
+	 */
 	private static String targetOf(ClassifierEvaluation classifier) {
-		return blankToNull(classifier.getUriFragment());
+		String fragment = blankToNull(classifier.getUriFragment());
+		if (fragment != null) {
+			return fragment;
+		}
+		String name = blankToNull(classifier.getName());
+		return name != null ? FRAGMENT_PREFIX + name : blankToNull(classifier.getId());
 	}
 
+	/**
+	 * How a feature is addressed: its {@code uriFragment}, else its name under whatever its
+	 * classifier resolved to, else its id.
+	 * <p>
+	 * The owner comes from the containment - {@code featureEvaluations} is a containment list - so
+	 * this holds wherever a feature is reached from, including the cross-references a
+	 * {@link CombinationFinding} holds, where the classifier is not otherwise in hand. A feature
+	 * the report carries directly has no classifier and falls through to its id.
+	 * <p>
+	 * The prefix is only used when the classifier itself resolved to a fragment. Hanging a name off
+	 * an id would read as a path and address nothing.
+	 *
+	 * @see #targetOf(ClassifierEvaluation)
+	 */
 	private static String targetOf(FeatureEvaluation feature) {
-		return blankToNull(feature.getUriFragment());
+		String fragment = blankToNull(feature.getUriFragment());
+		if (fragment != null) {
+			return fragment;
+		}
+		String name = blankToNull(feature.getName());
+		if (name != null && feature.eContainer() instanceof ClassifierEvaluation owner) {
+			String ownerTarget = targetOf(owner);
+			if (ownerTarget != null && ownerTarget.startsWith(FRAGMENT_PREFIX)) {
+				return ownerTarget + "/" + name;
+			}
+		}
+		return blankToNull(feature.getId());
 	}
 
 	/**
