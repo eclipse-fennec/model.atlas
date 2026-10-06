@@ -59,7 +59,7 @@ class JenaAtlasClientIT {
 
 	private static final String IMAGE = "eclipsefennec/model.atlas:jena-snapshot";
 	private static final int HTTP_PORT = 8080;
-	private static final String JENA_SCOPE = "jena";
+	private static final String TENANT_SCOPE = "dimcity";
 
 	/** Mount target matching {@code docker-compose-jena.yml} (./configs:/opt/modelatlas/runtime/load). */
 	private static final String CONFIG_LOAD_DIR = "/opt/modelatlas/runtime/load";
@@ -90,7 +90,7 @@ class JenaAtlasClientIT {
 				.withEnv("ATLAS_HTTP_PORT", String.valueOf(HTTP_PORT))
 				.withFileSystemBind(configsDir, CONFIG_LOAD_DIR, BindMode.READ_ONLY)
 				.waitingFor(Wait.forHttp("/atlas/rest/scopes").forPort(HTTP_PORT).forStatusCode(200)
-						.forResponsePredicate(body -> body.contains(JENA_SCOPE)))
+						.forResponsePredicate(body -> body.contains(TENANT_SCOPE)))
 				.withStartupTimeout(Duration.ofMinutes(2));
 		atlas.start();
 		baseUri = URI.create("http://" + atlas.getHost() + ":" + atlas.getMappedPort(HTTP_PORT) + "/atlas/rest");
@@ -104,7 +104,7 @@ class JenaAtlasClientIT {
 	 * Reads are stage-free (P5-7): no {@code view} is set — the server resolves jena's final stage.
 	 */
 	private static ClientConfiguration.Builder jenaConfig() {
-		return ClientConfiguration.builder().baseUri(baseUri).defaultScope(JENA_SCOPE);
+		return ClientConfiguration.builder().baseUri(baseUri).defaultScope(TENANT_SCOPE);
 	}
 
 	/**
@@ -151,7 +151,7 @@ class JenaAtlasClientIT {
 
 	/** First released nsURI in the jena scope, or skip the test if none. */
 	private static String firstReleasedNsUri() {
-		List<String> nsUris = client.ePackages().listNsUris(JENA_SCOPE);
+		List<String> nsUris = client.ePackages().listNsUris(TENANT_SCOPE);
 		assumeFalse(nsUris.isEmpty(), "jena scope has no released packages to exercise");
 		return nsUris.get(0);
 	}
@@ -159,7 +159,7 @@ class JenaAtlasClientIT {
 	@Test
 	void listScopeNames_includesJena() {
 		List<String> scopes = client.listScopeNames();
-		assertTrue(scopes.contains(JENA_SCOPE), () -> "expected '" + JENA_SCOPE + "' among " + scopes);
+		assertTrue(scopes.contains(TENANT_SCOPE), () -> "expected '" + TENANT_SCOPE + "' among " + scopes);
 	}
 
 	@Test

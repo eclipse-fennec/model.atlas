@@ -93,7 +93,7 @@ public class StagedPackageVisibilityIT {
 
 	private static final String IMAGE = "eclipsefennec/model.atlas:jena-snapshot";
 	private static final int HTTP_PORT = 8080;
-	private static final String JENA_SCOPE = "jena";
+	private static final String TENANT_SCOPE = "dimcity";
 	private static final String FINAL_STAGE = "release";
 	private static final String STAGED = "approved";
 	/** The stage a package is authored at, non-final and not in {@code eager.stages}. */
@@ -132,7 +132,7 @@ public class StagedPackageVisibilityIT {
 				.withEnv("ATLAS_HTTP_PORT", String.valueOf(HTTP_PORT))
 				.withFileSystemBind(resolveConfigsDir(), CONFIG_LOAD_DIR, BindMode.READ_ONLY)
 				.waitingFor(Wait.forHttp("/atlas/rest/scopes").forPort(HTTP_PORT).forStatusCode(200)
-						.forResponsePredicate(body -> body.contains(JENA_SCOPE)))
+						.forResponsePredicate(body -> body.contains(TENANT_SCOPE)))
 				.withStartupTimeout(Duration.ofMinutes(2));
 		atlas.start();
 		baseUri = URI.create("http://" + atlas.getHost() + ":" + atlas.getMappedPort(HTTP_PORT) + "/atlas/rest");
@@ -323,8 +323,8 @@ public class StagedPackageVisibilityIT {
 		Hashtable<String, Object> props = new Hashtable<>();
 		props.put("base.uri", baseUri.toString());
 		props.put("mode", "EAGER");
-		props.put("default.scope", JENA_SCOPE);
-		props.put("eager.scopes", new String[] { JENA_SCOPE });
+		props.put("default.scope", TENANT_SCOPE);
+		props.put("eager.scopes", new String[] { TENANT_SCOPE });
 		props.put("eager.stages", stages);
 		return props;
 	}
@@ -349,7 +349,7 @@ public class StagedPackageVisibilityIT {
 	private static int upload(String ecore, String stage, String name) throws IOException, InterruptedException {
 		HttpResponse<String> response = HttpClient.newHttpClient()
 				.send(HttpRequest
-						.newBuilder(URI.create(baseUri + "/" + JENA_SCOPE + "/schema/stages/" + stage + "?name=" + name))
+						.newBuilder(URI.create(baseUri + "/" + TENANT_SCOPE + "/schema/stages/" + stage + "?name=" + name))
 						.header("Content-Type", "application/xml").POST(HttpRequest.BodyPublishers.ofString(ecore))
 						.build(), HttpResponse.BodyHandlers.ofString());
 		return response.statusCode();
@@ -405,7 +405,7 @@ public class StagedPackageVisibilityIT {
 	 */
 	private static String objectIdAt(String nsUri, String stage) throws IOException, InterruptedException {
 		String listing = HttpClient.newHttpClient()
-				.send(HttpRequest.newBuilder(URI.create(baseUri + "/" + JENA_SCOPE + "/schema/stages/" + stage))
+				.send(HttpRequest.newBuilder(URI.create(baseUri + "/" + TENANT_SCOPE + "/schema/stages/" + stage))
 						.GET().build(), HttpResponse.BodyHandlers.ofString())
 				.body();
 		for (String entry : listing.split("\\{\"objectId\"")) {
@@ -424,7 +424,7 @@ public class StagedPackageVisibilityIT {
 				"objectId":"%s","targetStage":"%s"}""".formatted(objectId, toStage);
 		return HttpClient.newHttpClient().send(HttpRequest
 				.newBuilder(URI.create(
-						baseUri + "/" + JENA_SCOPE + "/schema/stages/" + fromStage + "/actions/transition"))
+						baseUri + "/" + TENANT_SCOPE + "/schema/stages/" + fromStage + "/actions/transition"))
 				.header("Content-Type", "application/json").POST(HttpRequest.BodyPublishers.ofString(body)).build(),
 				HttpResponse.BodyHandlers.ofString()).statusCode();
 	}
@@ -436,7 +436,7 @@ public class StagedPackageVisibilityIT {
 	private static int delete(String nsUri, String stage) throws IOException, InterruptedException {
 		return HttpClient.newHttpClient()
 				.send(HttpRequest
-						.newBuilder(URI.create(baseUri + "/" + JENA_SCOPE + "/schema/stages/" + stage + "?nsUri="
+						.newBuilder(URI.create(baseUri + "/" + TENANT_SCOPE + "/schema/stages/" + stage + "?nsUri="
 								+ URLEncoder.encode(nsUri, StandardCharsets.UTF_8)))
 						.DELETE().build(), HttpResponse.BodyHandlers.ofString())
 				.statusCode();
