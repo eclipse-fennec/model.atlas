@@ -13,6 +13,7 @@
  */
 package org.eclipse.fennec.model.atlas.rest.application.resource;
 
+import java.net.URI;
 import java.time.Instant;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -331,9 +332,7 @@ public class ObjectRegistryResource {
                     ObjectMetadata metadata = scopeService
                             .updateInStageForRegistry(registryName, stageName, object, objectId, version).getValue();
                     Response.ResponseBuilder rb = Response.status(Response.Status.OK)
-                            .header("Location",
-                                    "/".concat(scopeName).concat("/registries/").concat(registryName).concat("/stages/")
-                                            .concat(stageName).concat("?objectId=").concat(objectId))
+                            .location(objectLocation(scopeName, registryName, stageName, objectId))
                             .entity(metadata).header("Content-Type", ResourceSupport.resolvedMediaType(requestContext));
                     ObjectMetadataResponseFilter.attach(requestContext, metadata,
                             ObjectMetadataResponseFilter.CacheTarget.METADATA);
@@ -352,9 +351,7 @@ public class ObjectRegistryResource {
 
             metadata = scopeService.uploadToStageForRegistry(registryName, stageName, object, metadata).getValue();
             Response.ResponseBuilder rb = Response.status(Response.Status.CREATED)
-                    .header("Location",
-                            "/".concat(scopeName).concat("/registries/").concat(registryName).concat("/stages/")
-                                    .concat(stageName).concat("?objectId=").concat(objectId))
+                    .location(objectLocation(scopeName, registryName, stageName, objectId))
                     .entity(metadata).header("Content-Type", ResourceSupport.resolvedMediaType(requestContext));
             ObjectMetadataResponseFilter.attach(requestContext, metadata,
                     ObjectMetadataResponseFilter.CacheTarget.METADATA);
@@ -775,6 +772,21 @@ public class ObjectRegistryResource {
 
     private RegistryService<?> getRegistryServiceByRegistryName(String registryName) {
         return registryCollector.getRegistryServiceByRegistryName(registryName);
+    }
+
+    /**
+     * The {@code Location} of an object in a stage, absolute and built from the request's
+     * base URI. The object id is client-chosen (a file name like
+     * {@code Mapping WaterQuality.xmi}) and has to go into the query encoded: an unencoded
+     * blank makes the header unparseable and the upload answer a 500 (#333). A
+     * {@code /scope/...} path would also lose the application's base path, as Jersey
+     * resolves it against the host.
+     */
+    private URI objectLocation(String scopeName, String registryName, String stageName, String objectId) {
+        return requestContext.getUriInfo().getBaseUriBuilder()
+                .path("{scope}/registries/{registry}/stages/{stage}")
+                .queryParam("objectId", "{objectId}")
+                .build(scopeName, registryName, stageName, objectId);
     }
 
     private static String acceptedRootEClasses(RegistryService<?> registryService) {
