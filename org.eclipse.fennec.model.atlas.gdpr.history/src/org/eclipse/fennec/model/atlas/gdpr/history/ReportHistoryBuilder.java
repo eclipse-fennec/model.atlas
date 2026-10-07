@@ -34,16 +34,19 @@ import java.util.stream.Collectors;
 
 import org.eclipse.fennec.model.compliance.context.CategoryRef;
 import org.eclipse.fennec.model.compliance.context.ContextRef;
+import org.eclipse.fennec.model.compliance.context.RequirementRef;
 import org.eclipse.fennec.model.compliance.report.ClassifierEvaluation;
 import org.eclipse.fennec.model.compliance.report.Confidence;
 import org.eclipse.fennec.model.compliance.report.Evaluation;
 import org.eclipse.fennec.model.compliance.report.Evidence;
 import org.eclipse.fennec.model.compliance.report.FeatureEvaluation;
 import org.eclipse.fennec.model.compliance.report.Finding;
+import org.eclipse.fennec.model.compliance.report.FindingResolution;
 import org.eclipse.fennec.model.compliance.report.FlowEvaluation;
 import org.eclipse.fennec.model.compliance.report.ReportPackage;
 import org.eclipse.fennec.model.compliance.report.ComplianceReport;
 import org.eclipse.fennec.model.compliance.report.ReportOrigin;
+import org.eclipse.fennec.model.compliance.report.ReviewStatus;
 import org.eclipse.fennec.model.compliance.report.PackageSubject;
 import org.eclipse.fennec.model.compliance.report.RelevanceLevel;
 import org.eclipse.fennec.model.compliance.report.Subject;
@@ -93,6 +96,11 @@ public class ReportHistoryBuilder {
 	private static final String RATIONALE = "rationale";
 	private static final String RECOMMENDATION = "recommendation";
 	private static final String PURPOSE = "purpose";
+	private static final String REVIEW_STATUS = "reviewStatus";
+	private static final String TREATMENT = "treatment";
+	private static final String RESOLUTION_JUSTIFICATION = "resolutionJustification";
+	private static final String CORRECTION_NOTE = "correctionNote";
+	private static final String LAWFUL_BASES = "lawfulBases";
 	private static final String EVIDENCE = "evidence";
 
 	private static final Logger LOGGER = Logger.getLogger(ReportHistoryBuilder.class.getName());
@@ -349,7 +357,7 @@ public class ReportHistoryBuilder {
 			// revision. Dropping it silently would be worse, but so would inventing a key.
 			return;
 		}
-		if (!classifier.getFindings().isEmpty()) {
+		if (statesSomething(classifier)) {
 			rows.put(new RowKey(classifierId, ""), classifierRow(classifier, classifierId, revisionNumber));
 		}
 		for (FeatureEvaluation feature : classifier.getFeatureEvaluations()) {
@@ -397,12 +405,32 @@ public class ReportHistoryBuilder {
 				revisionNumber, evaluation.eClass().getName()));
 	}
 
+	/**
+	 * Whether a classifier says anything of its own, and so earns a row beside its features.
+	 * <p>
+	 * Findings are not the only thing it can state. The purpose a feature is processed for and the
+	 * lawful basis it rests on are stated once per classifier, and in a normal review every finding
+	 * sits on a feature - so a guard on findings alone would drop the two cells a person fills by
+	 * hand, which are the ones a reader of a GDPR document is looking for.
+	 * </p>
+	 */
+	private static boolean statesSomething(ClassifierEvaluation classifier) {
+		return !classifier.getFindings().isEmpty() || blankToNull(classifier.getPurpose()) != null
+				|| !classifier.getLawfulBases().isEmpty();
+	}
+
 	private EvaluationRow classifierRow(ClassifierEvaluation classifier, String classifierId, int revisionNumber) {
 		EvaluationRow row = factory.createEvaluationRow();
 		row.setRevisionNumber(revisionNumber);
 		row.setElementId(classifierId);
 		row.setElementName(classifier.getName());
 		row.setElementPath(classifier.getUriFragment());
+		row.setPurpose(classifier.getPurpose());
+		Set<String> bases = new LinkedHashSet<>();
+		for (CategoryRef basis : classifier.getLawfulBases()) {
+			addIfPresent(bases, basis.getCategoryId());
+		}
+		row.setLawfulBases(join(bases));
 		merge(row, classifier.getFindings(), null);
 		return row;
 	}
@@ -436,6 +464,8 @@ public class ReportHistoryBuilder {
 		RelevanceLevel relevance = ownRelevance;
 		Confidence confidence = null;
 
+		Decision decision = new Decision();
+
 		for (Finding finding : findings) {
 			for (CategoryRef category : finding.getCategories()) {
 				addIfPresent(categories, category.getCategoryId());
@@ -447,6 +477,7 @@ public class ReportHistoryBuilder {
 			for (Evidence evidence : finding.getEvidence()) {
 				addIfPresent(citations, evidence.getCitationId());
 			}
+			decision.add(finding);
 		}
 
 		row.setCategories(join(categories));
@@ -455,6 +486,117 @@ public class ReportHistoryBuilder {
 		row.setRationale(join(rationales));
 		row.setRecommendation(join(recommendations));
 		row.setCitations(join(citations));
+		decision.writeTo(row, findings.size());
+	}
+
+	/**
+	 * The human decision of a row's findings, folded the way the rest of the row is folded.
+	 * <p>
+	 * <b>Why every cell joins rather than picks.</b> A row covers a whole feature, and a feature may
+	 * carry several findings decided differently. Reducing them - worst treatment wins, say - would
+	 * report one finding's decision as if it were the row's, and the one it dropped is exactly the
+	 * one a reader would want. So the cells join distinct values in the order the report states
+	 * them, as {@code categories} and {@code citations} already do.
+	 * </p>
+	 * <p>
+	 * <b>{@code reviewStatus} is the exception, and it is not a join.</b> A feature is
+	 * {@code REVIEWED} only when every finding on it has been; one unexamined finding and the row
+	 * reads {@code OPEN}. A half-reviewed feature that reported itself as done would be the one
+	 * mistake this column must not make. It stays empty only when no finding carries a resolution
+	 * at all, which is what "nobody has looked at this yet" looks like.
+	 * </p>
+	 */
+	private static final class Decision {
+
+		private final Set<String> statuses = new LinkedHashSet<>();
+		private final Set<String> treatments = new LinkedHashSet<>();
+		private final List<String> justifications = new ArrayList<>();
+		private final Set<String> decidedBy = new LinkedHashSet<>();
+		private final Set<String> decidedAt = new LinkedHashSet<>();
+		private final Set<String> riskLevels = new LinkedHashSet<>();
+		private final Set<String> measureIds = new LinkedHashSet<>();
+		private final List<String> treatmentNotes = new ArrayList<>();
+		private final Set<String> delegatedTo = new LinkedHashSet<>();
+		private final Set<String> dueDates = new LinkedHashSet<>();
+		private final List<String> correctionNotes = new ArrayList<>();
+		private final Set<String> origins = new LinkedHashSet<>();
+		private final Set<String> requirementIds = new LinkedHashSet<>();
+		private final Set<String> contextIds = new LinkedHashSet<>();
+
+		private int resolved;
+
+		void add(Finding finding) {
+			addIfPresent(correctionNotes, finding.getCorrectionNote());
+			if (finding.eIsSet(ReportPackage.Literals.FINDING__ORIGIN)) {
+				addIfPresent(origins, finding.getOrigin().getName());
+			}
+			for (RequirementRef requirement : finding.getRequirements()) {
+				addIfPresent(requirementIds, requirement.getRequirementId());
+				addIfPresent(contextIds, requirement.getContextId());
+			}
+			for (CategoryRef category : finding.getCategories()) {
+				addIfPresent(contextIds, category.getContextId());
+			}
+
+			FindingResolution resolution = finding.getResolution();
+			if (resolution == null) {
+				return;
+			}
+			resolved++;
+			// Read directly rather than through eIsSet. ACCEPT and OPEN are the first literals of
+			// their enums, so a deliberate "risk accepted" is indistinguishable from an unset
+			// field and eIsSet would drop exactly the decision this column exists to record. The
+			// resolution object's own presence is the signal that somebody decided; inside it the
+			// values are meant.
+			addIfPresent(statuses, resolution.getStatus().getName());
+			addIfPresent(treatments, resolution.getTreatment().getName());
+			addIfPresent(justifications, resolution.getJustification());
+			addIfPresent(decidedBy, resolution.getDecidedBy());
+			addIfPresent(decidedAt, resolution.getDecidedAt());
+			addIfPresent(measureIds, resolution.getMeasureIds());
+			addIfPresent(treatmentNotes, resolution.getTreatmentNote());
+			addIfPresent(delegatedTo, resolution.getDelegatedTo());
+			addIfPresent(dueDates, resolution.getDueDate());
+			if (resolution.getRiskAssessment() != null) {
+				addIfPresent(riskLevels, resolution.getRiskAssessment().getRiskLevel());
+			}
+		}
+
+		void writeTo(EvaluationRow row, int findingCount) {
+			row.setFindingOrigin(join(origins));
+			row.setRequirementIds(join(requirementIds));
+			row.setContextId(join(contextIds));
+			row.setCorrectionNote(join(correctionNotes));
+			if (resolved == 0) {
+				return;
+			}
+			row.setReviewStatus(statusOf(findingCount));
+			row.setTreatment(join(treatments));
+			row.setResolutionJustification(join(justifications));
+			row.setDecidedBy(join(decidedBy));
+			row.setDecidedAt(join(decidedAt));
+			row.setRiskLevel(join(riskLevels));
+			row.setMeasureIds(join(measureIds));
+			row.setTreatmentNote(join(treatmentNotes));
+			row.setDelegatedTo(join(delegatedTo));
+			row.setDueDate(join(dueDates));
+		}
+
+		/**
+		 * {@code REVIEWED} when every finding on the row has been, and empty otherwise.
+		 * <p>
+		 * Empty rather than the literal {@code OPEN}, because the model already says an empty cell
+		 * means the finding is still open - so writing {@code OPEN} states the same thing twice and
+		 * costs a change row saying a status "became open", which is not news. A row that is only
+		 * half decided therefore has no status but does carry the treatment that was decided, which
+		 * reads as what it is: some of this has been dealt with, not all of it.
+		 * </p>
+		 */
+		private String statusOf(int findingCount) {
+			boolean everyFindingReviewed = resolved == findingCount
+					&& statuses.equals(Set.of(ReviewStatus.REVIEWED.getName()));
+			return everyFindingReviewed ? ReviewStatus.REVIEWED.getName() : null;
+		}
 	}
 
 	/* ------------------------------------------------------------------ sheet 3 */
@@ -481,6 +623,12 @@ public class ReportHistoryBuilder {
 				after.setChangeKind(ChangeKind.ADDED);
 				changes.add(change(entry.getKey(), revisionNumber, stored, "", ChangeKind.ADDED, null,
 						after.getCategories()));
+				// The row marker says a row appeared and names what it asserts, which for a
+				// classifier row - purpose and lawful bases, no findings - is nothing at all. The
+				// cells a person filled would then exist in the evaluation sheet and be absent from
+				// the change sheet, which is the one a reader goes to for "what did this revision
+				// decide". So an added row states them too, against an empty before.
+				compareStatedFields(changes, entry.getKey(), revisionNumber, stored, null, after);
 				continue;
 			}
 			List<ChangeRow> fieldChanges = compareFields(entry.getKey(), before, after, revisionNumber, stored);
@@ -507,9 +655,12 @@ public class ReportHistoryBuilder {
 		compare(changes, key, revisionNumber, stored, RATIONALE, before.getRationale(), after.getRationale());
 		compare(changes, key, revisionNumber, stored, RECOMMENDATION, before.getRecommendation(),
 				after.getRecommendation());
+		// Exactly the decision columns the model documents as diffed. decidedBy and decidedAt are
+		// deliberately not among them: they move only together with the status or the
+		// justification, and the change row already names the author in changedBy.
 		// The purpose is the one cell a person is expected to fill by hand, so the revision in
 		// which it appeared, and who wrote it, is the most quoted line this document has.
-		comparePurpose(changes, key, revisionNumber, stored, before.getPurpose(), after.getPurpose());
+		compareStatedFields(changes, key, revisionNumber, stored, before, after);
 		// Citations are compared one by one rather than as a joined cell: a citation that quietly
 		// disappeared between revisions is the single most important thing this document surfaces,
 		// and it must not be buried in a before/after pair of long strings.
@@ -518,18 +669,46 @@ public class ReportHistoryBuilder {
 	}
 
 	/**
-	 * A purpose that appears where there was none is an addition, not a modification: nobody
-	 * changed their mind, somebody answered a question that was open.
+	 * The cells a person fills by hand. {@code before} is {@code null} for a row that did not exist
+	 * in the previous revision, so every stated cell on it reads as an addition.
+	 * <p>
+	 * {@code decidedBy} and {@code decidedAt} are deliberately not among them: the model says they
+	 * move only together with the status or the justification, and the change row already names the
+	 * author in {@code changedBy}.
+	 * </p>
 	 */
-	private void comparePurpose(List<ChangeRow> changes, RowKey key, int revisionNumber, StoredReport stored,
-			String before, String after) {
+	private void compareStatedFields(List<ChangeRow> changes, RowKey key, int revisionNumber, StoredReport stored,
+			EvaluationRow before, EvaluationRow after) {
+		compareStated(changes, key, revisionNumber, stored, PURPOSE, before == null ? null : before.getPurpose(),
+				after.getPurpose());
+		compareStated(changes, key, revisionNumber, stored, LAWFUL_BASES,
+				before == null ? null : before.getLawfulBases(), after.getLawfulBases());
+		compareStated(changes, key, revisionNumber, stored, REVIEW_STATUS,
+				before == null ? null : before.getReviewStatus(), after.getReviewStatus());
+		compareStated(changes, key, revisionNumber, stored, TREATMENT,
+				before == null ? null : before.getTreatment(), after.getTreatment());
+		compareStated(changes, key, revisionNumber, stored, RESOLUTION_JUSTIFICATION,
+				before == null ? null : before.getResolutionJustification(), after.getResolutionJustification());
+		compareStated(changes, key, revisionNumber, stored, CORRECTION_NOTE,
+				before == null ? null : before.getCorrectionNote(), after.getCorrectionNote());
+	}
+
+	/**
+	 * A cell a person fills by hand, compared so that appearing where there was none reads as an
+	 * addition rather than a modification: nobody changed their mind, somebody answered a question
+	 * that was open. The purpose, the lawful bases and every column of a decision are all of this
+	 * kind - they are empty until someone states them, and the revision in which they appeared is
+	 * the line this document is quoted on.
+	 */
+	private void compareStated(List<ChangeRow> changes, RowKey key, int revisionNumber, StoredReport stored,
+			String field, String before, String after) {
 		String was = blankToNull(before);
 		String now = blankToNull(after);
 		if (Objects.equals(was, now)) {
 			return;
 		}
 		ChangeKind kind = was == null ? ChangeKind.ADDED : now == null ? ChangeKind.REMOVED : ChangeKind.MODIFIED;
-		changes.add(change(key, revisionNumber, stored, PURPOSE, kind, was, now));
+		changes.add(change(key, revisionNumber, stored, field, kind, was, now));
 	}
 
 	private void compareCitations(List<ChangeRow> changes, RowKey key, int revisionNumber, StoredReport stored,
@@ -690,6 +869,10 @@ public class ReportHistoryBuilder {
 		case MEDIUM -> 2;
 		case HIGH -> 3;
 		};
+	}
+
+	private static void addIfPresent(java.util.Collection<String> target, java.util.List<String> values) {
+		values.forEach(value -> addIfPresent(target, value));
 	}
 
 	private static void addIfPresent(java.util.Collection<String> target, String value) {
