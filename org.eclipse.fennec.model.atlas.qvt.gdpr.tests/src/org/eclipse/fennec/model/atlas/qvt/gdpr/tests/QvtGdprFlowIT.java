@@ -178,8 +178,9 @@ public class QvtGdprFlowIT {
 		assertEquals(1, roots.size(), "one root per producer");
 		Diagnostic root = roots.get(0);
 		assertEquals("gdpr.transformation", root.getCode());
-		assertEquals(Fixtures.UNIT_FINGERPRINT, root.getSource(),
-				"the revision is recorded on the node, never in the producer");
+		assertEquals("flow-1", root.getSource(),
+				"the node names the analysis it came from, never the producer: open that report and the "
+						+ "compiled revision, who produced it and the flows are all in there");
 		assertTrue(root.getMessage().startsWith(Fixtures.UNIT_NAME + ":"), root.getMessage());
 
 		assertTrue(Fixtures.owned(scope, DRAFT).isEmpty(),

@@ -50,6 +50,8 @@ import org.junit.jupiter.api.Test;
 @DisplayName("A derived report's several statements about one element")
 public class TransformationReportNodesTest {
 
+	private static final String REPORT_ID = "gdpr-fp1-abc-de-20260918-120000";
+
 	private static final ReportFactory REPORTS = ReportFactory.eINSTANCE;
 
 	private static final String CLINIC = "http://example.org/clinic/1.0.0";
@@ -71,7 +73,7 @@ public class TransformationReportNodesTest {
 				"The target review calls that field PERSONAL_DATA."));
 		report.getEvaluations().add(flow);
 
-		Diagnostic root = mapper.map(report).get(0);
+		Diagnostic root = mapper.map(report, REPORT_ID).get(0);
 		assertEquals(List.of("gdpr.flow.propagation", "gdpr.flow.target-disagreement"), codes(root),
 				"the finding's id declares which node it belongs under");
 		String propagation = claim(root, "gdpr.flow.propagation").getMessage();
@@ -96,7 +98,7 @@ public class TransformationReportNodesTest {
 			report.getCombinations().add(combination("gdpr.flow." + rule + ":toContact#" + COMMENT, first, second));
 		}
 
-		List<Diagnostic> roots = mapper.map(report);
+		List<Diagnostic> roots = mapper.map(report, REPORT_ID);
 		Diagnostic root = roots.get(0);
 		assertEquals(List.of("gdpr.flow.aggregation", "gdpr.flow.structure-loss", "gdpr.flow.target-disagreement"),
 				codes(root), "one node per kind of statement, all about the same pair of flows");
@@ -123,7 +125,7 @@ public class TransformationReportNodesTest {
 		feature.getFindings().add(finding("F-002", "QUASI_IDENTIFIER", "Its type is a short string."));
 		report.getEvaluations().add(feature);
 
-		Diagnostic root = mapper.map(report).get(0);
+		Diagnostic root = mapper.map(report, REPORT_ID).get(0);
 		assertEquals(List.of("gdpr.feature"), codes(root));
 		assertEquals(1, root.getChildren().get(0).getChildren().size(), "one claim, both signals in it");
 		assertTrue(root.getChildren().get(0).getChildren().get(0).getMessage().contains("The name says postcode."));

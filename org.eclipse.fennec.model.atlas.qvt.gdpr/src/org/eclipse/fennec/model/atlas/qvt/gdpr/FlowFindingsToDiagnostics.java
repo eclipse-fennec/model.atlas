@@ -133,13 +133,15 @@ final class FlowFindingsToDiagnostics {
 	 *         report names but has nothing to say about is present with an <b>empty</b> list, which
 	 *         is what clears what a previous analysis of the same transformation left there
 	 */
-	static Map<String, List<Diagnostic>> map(ComplianceReport report) {
+	static Map<String, List<Diagnostic>> map(ComplianceReport report, String reportObjectId) {
 		if (!(report.getSubject() instanceof TransformationSubject subject)) {
 			return Map.of();
 		}
-		// The revision, so a reader can see which compiled unit produced a finding without that
-		// deciding who may replace it.
-		String source = blankToNull(subject.getSubjectFingerprint());
+		// The report, not the compiled unit's fingerprint: a finding's origin within this producer
+		// is the analysis it came from, and naming it leaves the diagnostic resolvable - open that
+		// object and the unit's fingerprint, the flows and who produced them are all there. Which
+		// report a finding came from does not decide who may replace it; the producer does.
+		String source = blankToNull(reportObjectId);
 
 		Map<String, Map<ElementKey, Element>> perModel = new LinkedHashMap<>();
 		for (String nsURI : modelsOf(subject)) {

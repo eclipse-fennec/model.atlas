@@ -112,6 +112,37 @@ watched stage, it rebuilds the document of that report's subject.
   own endpoint. The startup replay runs while the HTTP connector is still being configured, so a
   loopback would lose precisely the rebuild that exists to close a gap.
 
+## When a review is withdrawn
+
+A deleted report cannot say which subject it was about, and the delete event carries only an object
+id. The **document** answers instead: every revision in it carries the object id of the review it was
+built from, so the document that quotes a report is what identifies the subject — durably, across a
+restart, unlike anything the runtime holds in memory.
+
+What follows from that depends on which revision was deleted:
+
+| what was deleted | what happens |
+|---|---|
+| the **latest** review of a subject | the document is rebuilt from the reviews that are left |
+| a **superseded** review | nothing. What the subject looks like now has not changed |
+| the **last** review of a stage and language | the document is removed |
+
+**A superseded review is deliberately not rebuilt from.** It would cost the change sheet: revision 2
+is diffed against revision 1, so dropping revision 1 makes revision 2 the first revision, and every
+`ChangeRow` on it disappears — the record that a person decided anything would be destroyed by
+someone tidying up an old agent report. Revision numbers would shift with it. The document is the
+account; the reports are the raw material it was derived from, and deleting raw material does not
+retract the account.
+
+The cost of that choice is a revision whose `reportId` opens nothing. The document says a review
+happened and gives the id of a report that has been deleted, and nothing in it says so. If that
+matters for an audit, the answer is a flag on `ReportRevision` saying the report is no longer
+retrievable — not a rebuild.
+
+**Removal is per stage and language, not per subject.** A rebuild writes the groups it found; any
+document of that subject it did not write had nothing left to derive from and is removed. So a
+subject still reviewed in `draft` keeps its draft document when its `approved` reviews go.
+
 ## Downloading it
 
 The document is **not stored as a spreadsheet**. It is an EObject like any other, and the ODS is a

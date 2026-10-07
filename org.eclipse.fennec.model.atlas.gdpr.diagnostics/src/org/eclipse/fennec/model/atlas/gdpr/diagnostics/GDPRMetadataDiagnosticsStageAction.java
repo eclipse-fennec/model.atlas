@@ -16,6 +16,7 @@ package org.eclipse.fennec.model.atlas.gdpr.diagnostics;
 import java.lang.reflect.InvocationTargetException;
 import java.time.Instant;
 import java.time.format.DateTimeParseException;
+import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
@@ -289,11 +290,9 @@ public class GDPRMetadataDiagnosticsStageAction implements StageActionService {
 		}
 		ReviewedSubject reviewed = subjects.remove(address);
 		if (reviewed == null) {
-			LOGGER.log(Level.INFO, () -> String.format(
-					"GDPR report %s was deleted, but this runtime has no record of which subject it reviewed, so "
-							+ "no diagnostics were cleared. They go when that subject is next reviewed.",
-					address));
-			return Promises.resolved(null);
+			// Nothing in memory, which after a restart is every report this runtime did not itself
+			// write. The reviewed objects still know: read what was written onto them.
+			return rewriteFromWhatWasWritten(ctx, address);
 		}
 		if (!answersFor(reviewed)) {
 			// Somebody else's kind of report, and the instance that did write its findings is
@@ -303,6 +302,79 @@ public class GDPRMetadataDiagnosticsStageAction implements StageActionService {
 		// Recomputed from the reviews that are left, not cleared outright: another review of the
 		// same revision may still stand, and the deleted one may have been the superseded one.
 		return apply(ctx, reviewed.fingerprint());
+	}
+
+	/**
+	 * Rewrites the findings of every object in this stage that carries them.
+	 * <p>
+	 * <b>Why this is not guesswork.</b> A finding of this action sits on the object it is about and
+	 * carries this producer, and that object knows its own fingerprint - which is all
+	 * {@link #apply} needs, and it survives a restart where the in-memory record does not. Before
+	 * this, a report deleted by a runtime that had not written it left its findings standing on an
+	 * object whose review had been withdrawn, with nothing to say so.
+	 * </p>
+	 * <p>
+	 * <b>Why every object and not the reviewed one.</b> A delete carries an object id and nothing
+	 * else, and the id does not name the subject. Each rewrite recomputes from the reviews that are
+	 * still readable - so an object whose review still stands is written what it already had, and
+	 * one whose last review has gone is recorded as unreviewed. The sweep cannot invent a finding,
+	 * and it repairs whatever was missed while nothing was listening.
+	 * </p>
+	 */
+	private Promise<Void> rewriteFromWhatWasWritten(ActionContext ctx, ReportAddress address) {
+		List<String> fingerprints = reviewedObjectsIn(scope.listInStageForRegistry(targetRegistry, ctx.stage()));
+		if (fingerprints.isEmpty()) {
+			// Somebody else's kind of report, or a stage nothing of this action's was written into.
+			LOGGER.log(Level.FINE, () -> String.format(
+					"GDPR report %s was deleted and no object in '%s' carries this producer's findings, so none "
+							+ "were cleared.",
+					address, targetRegistry));
+			return Promises.resolved(null);
+		}
+		LOGGER.log(Level.INFO, () -> String.format(
+				"GDPR report %s was deleted and this runtime had no record of it, so the findings on %d reviewed "
+						+ "object(s) of '%s' were rewritten from the reviews that are left.",
+				address, fingerprints.size(), targetRegistry));
+		// apply() does its write before it returns; the first failure is handed back so the
+		// workflow records it, and the rest are still attempted.
+		Promise<Void> outcome = Promises.resolved(null);
+		for (String fingerprint : fingerprints) {
+			Promise<Void> rewrite = apply(ctx, fingerprint);
+			try {
+				if (rewrite.getFailure() != null) {
+					outcome = rewrite;
+				}
+			} catch (InterruptedException e) {
+				Thread.currentThread().interrupt();
+				return Promises.failed(e);
+			}
+		}
+		return outcome;
+	}
+
+	/**
+	 * The fingerprints of the objects this producer has written findings onto, each once.
+	 *
+	 * @param objects metadata of a stage of the target registry, diagnostics included
+	 * @return the fingerprints, in the order the stage lists them; empty when none of them carries
+	 *         a finding of this action's
+	 */
+	static List<String> reviewedObjectsIn(List<ObjectMetadata> objects) {
+		List<String> fingerprints = new ArrayList<>();
+		for (ObjectMetadata metadata : objects) {
+			String fingerprint = metadata.getFingerprint();
+			if (fingerprint == null || fingerprint.isBlank() || fingerprints.contains(fingerprint)) {
+				// Without a fingerprint the rewrite has nothing to look the object up by.
+				continue;
+			}
+			for (Diagnostic diagnostic : metadata.getDiagnostics()) {
+				if (GdprFindingsToDiagnostics.PRODUCER.equals(diagnostic.getProducer())) {
+					fingerprints.add(fingerprint);
+					break;
+				}
+			}
+		}
+		return fingerprints;
 	}
 
 	/* ------------------------------------------------------------------ the work */
@@ -360,10 +432,11 @@ public class GDPRMetadataDiagnosticsStageAction implements StageActionService {
 					fingerprint, stage, registry, ctx.scope()));
 			return Promises.resolved(null);
 		}
-		ComplianceReport current = latestReviewOf(ctx, fingerprint);
+		Latest current = latestReviewOf(ctx, fingerprint);
 		// Never an empty list: an object whose last review was withdrawn has not been checked, and
 		// clearing the producer would make it indistinguishable from one nobody has reviewed yet.
-		List<Diagnostic> roots = current == null ? mapper.noReview(fingerprint) : mapper.map(current);
+		List<Diagnostic> roots = current == null ? mapper.noReview(fingerprint)
+				: mapper.map(current.report(), current.objectId());
 		String what = current == null ? "withdrawn, so the object is recorded as unreviewed"
 				: "wrote " + roots.size();
 		try {
@@ -433,7 +506,11 @@ public class GDPRMetadataDiagnosticsStageAction implements StageActionService {
 	 * every review of a subject the same way, across every stage.
 	 * </p>
 	 */
-	private ComplianceReport latestReviewOf(ActionContext ctx, String fingerprint) {
+	/** The review that currently speaks, and the object id it is stored under. */
+	private record Latest(ComplianceReport report, String objectId) {
+	}
+
+	private Latest latestReviewOf(ActionContext ctx, String fingerprint) {
 		ComplianceReport latest = null;
 		Instant latestAt = null;
 		String latestId = null;
@@ -453,7 +530,7 @@ public class GDPRMetadataDiagnosticsStageAction implements StageActionService {
 				latestId = metadata.getObjectId();
 			}
 		}
-		return latest;
+		return latest == null ? null : new Latest(latest, latestId);
 	}
 
 	private ComplianceReport reportAt(ActionContext ctx, String objectId) {

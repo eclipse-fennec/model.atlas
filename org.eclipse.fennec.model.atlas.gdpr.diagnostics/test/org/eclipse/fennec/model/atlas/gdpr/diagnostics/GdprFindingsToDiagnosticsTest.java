@@ -47,6 +47,8 @@ import org.junit.jupiter.api.Test;
  */
 class GdprFindingsToDiagnosticsTest {
 
+	private static final String REPORT_ID = "gdpr-fp1-abc-de-20260918-120000";
+
 	private static final Instant NOW = Instant.parse("2026-09-28T10:00:00Z");
 	private static final ReportFactory FACTORY = ReportFactory.eINSTANCE;
 
@@ -64,7 +66,7 @@ class GdprFindingsToDiagnosticsTest {
 		classifier.getFindings()
 				.add(finding("F-3", "PERSONAL_DATA", RelevanceLevel.MEDIUM, null, "r", null));
 
-		List<Diagnostic> roots = mapper.map(report);
+		List<Diagnostic> roots = mapper.map(report, REPORT_ID);
 
 		assertEquals(1, roots.size(), "one root per producer, so a reader collapses it to one row");
 		Diagnostic root = roots.get(0);
@@ -93,7 +95,9 @@ class GdprFindingsToDiagnosticsTest {
 		assertEquals("//Patient/category", element.getTarget());
 		assertEquals(DiagnosticSeverity.WARNING, element.getSeverity());
 		assertEquals("compliance", element.getCategory());
-		assertEquals("claude-sonnet-4-6", element.getSource(), "the source is what produced the review");
+		assertEquals(REPORT_ID, element.getSource(),
+				"the source names the review this finding came from, so a reader can open it; the model that "
+						+ "wrote it, when, and the finding itself are all in there");
 		assertEquals("SPECIAL_CATEGORY (HIGH)", element.getMessage(),
 				"no 'GDPR review' prefix: the root above already says whose finding this is");
 
@@ -349,7 +353,7 @@ class GdprFindingsToDiagnosticsTest {
 	void emptyInputs() {
 		// The two have to stay distinguishable on the object: no root means nobody reviewed it,
 		// and a model reviewed and cleared must not look the same as one nobody looked at.
-		assertEquals(List.of(), mapper.map(null));
+		assertEquals(List.of(), mapper.map(null, REPORT_ID));
 
 		Diagnostic clean = review(report());
 		assertEquals(GdprFindingsToDiagnostics.CODE_REVIEW, clean.getCode());
@@ -399,7 +403,7 @@ class GdprFindingsToDiagnosticsTest {
 
 	/** The one root the mapper produces. */
 	private Diagnostic review(ComplianceReport report) {
-		List<Diagnostic> roots = mapper.map(report);
+		List<Diagnostic> roots = mapper.map(report, REPORT_ID);
 		assertEquals(1, roots.size(), "a producer has exactly one root");
 		return roots.get(0);
 	}
@@ -418,7 +422,7 @@ class GdprFindingsToDiagnosticsTest {
 
 	/** The id the one claim of a single-finding report would be stored under. */
 	private String idOfOnlyChild(ComplianceReport report) {
-		List<Diagnostic> roots = mapper.map(report);
+		List<Diagnostic> roots = mapper.map(report, REPORT_ID);
 		Diagnostics.prepare(GdprFindingsToDiagnostics.PRODUCER, roots, NOW);
 		return roots.get(0).getChildren().get(0).getChildren().get(0).getId();
 	}

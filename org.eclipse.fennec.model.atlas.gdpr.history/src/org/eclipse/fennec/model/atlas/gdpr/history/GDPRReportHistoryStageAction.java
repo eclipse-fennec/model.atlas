@@ -44,6 +44,7 @@ import org.eclipse.fennec.model.compliance.report.ReportPackage;
 import org.eclipse.fennec.model.compliance.report.ComplianceReport;
 import org.eclipse.fennec.model.compliance.report.Subject;
 import org.eclipse.fennec.model.compliance.history.ComplianceReportHistory;
+import org.eclipse.fennec.model.compliance.history.ReportRevision;
 import org.eclipse.fennec.model.compliance.history.RevisionOrigin;
 import org.osgi.service.component.annotations.Activate;
 import org.osgi.service.component.annotations.Component;
@@ -270,37 +271,23 @@ public class GDPRReportHistoryStageAction implements StageActionService {
 
 	private void rebuild(String triggerScope, String objectId) {
 		try {
-			Optional<ComplianceReport> trigger = find(objectId);
-			if (trigger.isEmpty()) {
-				// A deleted report: nothing left to say which subject it was about.
-				LOGGER.log(Level.INFO, () -> String.format(
-						"GDPR report '%s' is no longer readable in %s/%s, so the document it belonged to was not "
-								+ "rebuilt. It catches up when that subject is next reviewed.",
-						objectId, triggerScope, registry));
-				return;
-			}
-			String identifier = ReportHistoryBuilder.identifierOf(trigger.get().getSubject());
+			String identifier = subjectOf(objectId, triggerScope);
 			if (identifier == null) {
-				LOGGER.log(Level.WARNING, () -> String.format(
-						"GDPR report '%s' names no subject identifier, so there is no document it belongs to.",
-						objectId));
 				return;
 			}
 
 			Map<DocumentKey, List<StoredReport>> groups = groupsOf(identifier);
-			if (groups.isEmpty()) {
-				LOGGER.log(Level.INFO, () -> String.format(
-						"No review of subject '%s' is readable any more, so no document was written.", identifier));
-				return;
-			}
 			// Every group of the subject, not only the one that fired: a rebuild reads all of its
 			// reviews anyway, and rebuilding the rest costs one in-memory pass each. It also
 			// repairs a document that was missed while nothing was listening.
 			Instant rebuiltAt = Instant.now();
+			Set<String> written = new LinkedHashSet<>();
 			for (Map.Entry<DocumentKey, List<StoredReport>> group : groups.entrySet()) {
 				ComplianceReportHistory history = builder.build(group.getValue(), rebuiltAt);
 				store(history, group.getKey(), group.getValue().size());
+				written.add(group.getKey().stage() + "/" + documentId(group.getKey()));
 			}
+			removeDocumentsWithNothingLeftToSay(identifier, written);
 		} catch (RuntimeException e) {
 			// Thrown on a background thread: swallowed here so one bad subject cannot take the
 			// executor down and stop every later rebuild.
@@ -308,6 +295,115 @@ public class GDPRReportHistoryStageAction implements StageActionService {
 					"The GDPR review document could not be rebuilt after '%s' changed in %s/%s.", objectId,
 					triggerScope, registry));
 		}
+	}
+
+	/**
+	 * The subject the triggering report is about, or {@code null} when there is nothing to rebuild.
+	 * <p>
+	 * A readable report says so itself. A <b>deleted</b> one cannot, and the id alone does not name
+	 * a subject - so the document that quoted it is asked instead: every revision it holds carries
+	 * the object id of the review it was built from, which makes the link durable in a way the
+	 * runtime's own memory is not. A document written before the last restart still answers.
+	 * </p>
+	 * <p>
+	 * <b>Only the latest revision earns a rebuild.</b> Deleting a superseded review does not change
+	 * what the subject looks like now, and the document keeps its account of that revision, which
+	 * is the point of a document. Deleting the one that currently speaks does change it, and then
+	 * what is left has to be re-read.
+	 * </p>
+	 */
+	private String subjectOf(String objectId, String triggerScope) {
+		Optional<ComplianceReport> trigger = find(objectId);
+		if (trigger.isPresent()) {
+			String identifier = ReportHistoryBuilder.identifierOf(trigger.get().getSubject());
+			if (identifier == null) {
+				LOGGER.log(Level.WARNING, () -> String.format(
+						"GDPR report '%s' names no subject identifier, so there is no document it belongs to.",
+						objectId));
+			}
+			return identifier;
+		}
+		Optional<Quoted> quoted = documentQuoting(objectId);
+		if (quoted.isEmpty()) {
+			LOGGER.log(Level.INFO, () -> String.format(
+					"GDPR report '%s' is no longer readable in %s/%s and no document quotes it, so there is "
+							+ "nothing to rebuild. It catches up when that subject is next reviewed.",
+					objectId, triggerScope, registry));
+			return null;
+		}
+		if (!quoted.get().latest()) {
+			LOGGER.log(Level.INFO, () -> String.format(
+					"GDPR report '%s' was deleted, but it is revision %d of %d of the document of '%s' - a later "
+							+ "review still speaks for that subject, so the document is left as it is.",
+					objectId, quoted.get().revisionNumber(), quoted.get().revisionCount(),
+					quoted.get().subjectIdentifier()));
+			return null;
+		}
+		LOGGER.log(Level.INFO, () -> String.format(
+				"GDPR report '%s' was deleted and was the latest review of '%s', so its document is rebuilt from "
+						+ "the reviews that are left.",
+				objectId, quoted.get().subjectIdentifier()));
+		return quoted.get().subjectIdentifier();
+	}
+
+	/** Where a deleted report is still quoted: which subject, and whether it had the last word. */
+	private record Quoted(String subjectIdentifier, int revisionNumber, int revisionCount) {
+		boolean latest() {
+			return revisionNumber == revisionCount;
+		}
+	}
+
+	private Optional<Quoted> documentQuoting(String reportObjectId) {
+		for (ComplianceReportHistory document : documents()) {
+			for (ReportRevision revision : document.getRevisions()) {
+				if (reportObjectId.equals(revision.getReportId())) {
+					return Optional.of(new Quoted(document.getSubjectIdentifier(), revision.getRevisionNumber(),
+							document.getRevisionCount()));
+				}
+			}
+		}
+		return Optional.empty();
+	}
+
+	/**
+	 * Removes the documents of one subject that this rebuild did not write.
+	 * <p>
+	 * A document is derived from reviews; when the last one of a stage and language is withdrawn
+	 * there is nothing for it to derive. Leaving it would be worse than not having it: it would go
+	 * on quoting a report that can no longer be opened, and nothing in it would say so.
+	 * </p>
+	 */
+	private void removeDocumentsWithNothingLeftToSay(String subjectIdentifier, Set<String> written) {
+		for (String stage : stages) {
+			ReadableRegistryView<EObject> view = scope.registryView(documentRegistry, stage);
+			for (String objectId : view.listObjectIds()) {
+				Optional<ComplianceReportHistory> document = view.get(objectId)
+						.filter(ComplianceReportHistory.class::isInstance).map(ComplianceReportHistory.class::cast);
+				if (document.isEmpty() || !subjectIdentifier.equals(document.get().getSubjectIdentifier())
+						|| written.contains(stage + "/" + objectId)) {
+					continue;
+				}
+				String where = stage;
+				resolveRemoval(scope.deleteFromStageForRegistry(documentRegistry, stage, objectId), objectId);
+				LOGGER.log(Level.INFO, () -> String.format(
+						"No review of '%s' is readable in %s/%s/%s any more, so its GDPR review document '%s' was "
+								+ "removed rather than left quoting reviews that are gone.",
+						subjectIdentifier, scope.getScopeName(), registry, where, objectId));
+			}
+		}
+	}
+
+	/** Every document in the registry, across the stages reviews are read from. */
+	private List<ComplianceReportHistory> documents() {
+		List<ComplianceReportHistory> all = new ArrayList<>();
+		for (String stage : stages) {
+			ReadableRegistryView<EObject> view = scope.registryView(documentRegistry, stage);
+			for (String objectId : view.listObjectIds()) {
+				view.get(objectId).filter(ComplianceReportHistory.class::isInstance)
+						.map(ComplianceReportHistory.class::cast).ifPresent(all::add);
+			}
+		}
+		return all;
 	}
 
 	/**
@@ -417,6 +513,23 @@ public class GDPRReportHistoryStageAction implements StageActionService {
 	 * caller's catch logs it. A promise that failed silently would leave a document that is quietly
 	 * out of date, which is the one thing a compliance record must not be.
 	 */
+	/** Same waiting and same failure message as a write, for the one call that removes instead. */
+	private void resolveRemoval(Promise<Boolean> removed, String objectId) {
+		try {
+			removed.getValue();
+		} catch (InvocationTargetException e) {
+			Throwable cause = e.getCause() == null ? e : e.getCause();
+			throw new IllegalStateException(
+					String.format("The GDPR review document '%s' could not be removed: %s", objectId,
+							cause.getMessage() == null ? cause.getClass().getSimpleName() : cause.getMessage()),
+					cause);
+		} catch (InterruptedException e) {
+			Thread.currentThread().interrupt();
+			throw new IllegalStateException(
+					String.format("Interrupted while removing the GDPR review document '%s'.", objectId), e);
+		}
+	}
+
 	private void resolve(Promise<ObjectMetadata> written, String objectId) {
 		try {
 			written.getValue();

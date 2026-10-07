@@ -228,15 +228,21 @@ public class GdprFindingsToDiagnostics {
 	 * The diagnostics of one review, as roots ready to be handed to
 	 * {@code updateDiagnostics(..., PRODUCER, roots)}.
 	 *
-	 * @param report the review; {@code null} yields an empty list
+	 * @param report         the review; {@code null} yields an empty list
+ * @param reportObjectId the Atlas object id of that review, written onto every diagnostic as its
+ *                       source so a reader can open what produced it
 	 * @return the roots, in the order the report examined things; empty when the review found
 	 *         nothing that asserts anything
 	 */
-	public List<Diagnostic> map(ComplianceReport report) {
+	public List<Diagnostic> map(ComplianceReport report, String reportObjectId) {
 		if (report == null) {
 			return List.of();
 		}
-		String source = blankToNull(report.getGeneratedBy());
+		// The report, not the model that wrote it: a finding's origin within this producer is the
+		// review it came from, and naming it leaves the diagnostic resolvable - open that object
+		// and generatedBy, generatedAt, the origin and the findings themselves are all there. The
+		// model's name is one hop away rather than in the cell.
+		String source = blankToNull(reportObjectId);
 		List<Diagnostic> elements = new ArrayList<>();
 		for (Evaluation evaluation : report.getEvaluations()) {
 			collect(evaluation, source, elements);

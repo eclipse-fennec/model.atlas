@@ -251,18 +251,101 @@ public class QvtFlowFindingsStageAction implements StageActionService {
 		ReportAddress address = ReportAddress.of(ctx);
 		Analysed analysed = remembered.remove(address);
 		if (analysed == null) {
-			// Either a metamodel review, which is not this action's business, or a report this
-			// runtime never saw. Nothing is guessed: a stale diagnostic is better than clearing
-			// the wrong producer's.
-			LOGGER.log(Level.FINE, () -> String.format(
-					"Report %s was deleted and this runtime has no record of it as a transformation analysis, so "
-							+ "no transformation findings were cleared.",
-					address));
-			return Promises.resolved(null);
+			// Nothing in memory, which after a restart is every report this runtime did not itself
+			// write. The metamodels still know: read what was written onto them.
+			return rewriteFromWhatWasWritten(ctx, address);
 		}
 		// Recomputed from the reports that are left, not cleared outright: another revision's
 		// report may still stand, and the deleted one may have been the superseded one.
 		return apply(ctx, analysed.qualifiedName(), analysed.models());
+	}
+
+	/**
+	 * Rewrites every transformation's findings from the metamodels they were written onto.
+	 * <p>
+	 * <b>Why this is not guesswork.</b> The producer a finding carries is
+	 * {@code gdpr.transformation/<qualified name>}, and the object it sits on knows its own nsURI
+	 * and fingerprint - so the metamodels hold exactly what the in-memory record held, and they
+	 * hold it across a restart. Before this, a report deleted by a runtime that had not written it
+	 * left its findings on the metamodels for good: measured on 2026-10-07, a withdrawn flow report
+	 * left seven flow rows standing on models nothing reviewed any more.
+	 * </p>
+	 * <p>
+	 * <b>Why every transformation and not the one that was deleted.</b> A delete carries an object
+	 * id and nothing else, and the id does not say which transformation the report was about. Each
+	 * rewrite recomputes from the reports that are still readable, so a transformation whose
+	 * reports are untouched is written the same bytes it already had - the sweep costs a pass and
+	 * repairs anything missed while nothing was listening, and it cannot invent a finding.
+	 * </p>
+	 */
+	private Promise<Void> rewriteFromWhatWasWritten(ActionContext ctx, ReportAddress address) {
+		Map<String, Map<String, String>> analyses = new LinkedHashMap<>();
+		for (String stage : searchStages(ctx)) {
+			analysesWrittenOn(scope.listInStageForRegistry(targetRegistry, stage))
+					.forEach((qualifiedName, models) -> analyses
+							.computeIfAbsent(qualifiedName, q -> new LinkedHashMap<>()).putAll(models));
+		}
+		if (analyses.isEmpty()) {
+			// A metamodel review, which is not this action's business, or a transformation that
+			// never wrote anything. Either way there is nothing of this action's to clear.
+			LOGGER.log(Level.FINE, () -> String.format(
+					"Report %s was deleted and no metamodel carries transformation findings, so none were cleared.",
+					address));
+			return Promises.resolved(null);
+		}
+		LOGGER.log(Level.INFO, () -> String.format(
+				"Report %s was deleted and this runtime had no record of it, so the findings of %d transformation(s) "
+						+ "were rewritten from what stands on the metamodels: %s.",
+				address, analyses.size(), analyses.keySet()));
+		// apply() does its writes before it returns, so the rewrites are already done by the time
+		// the loop ends; the first failure is handed back so the workflow records it, and the rest
+		// are still attempted - one unwritable metamodel must not stop the others being corrected.
+		Promise<Void> outcome = Promises.resolved(null);
+		for (Map.Entry<String, Map<String, String>> analysis : analyses.entrySet()) {
+			Promise<Void> rewrite = apply(ctx, analysis.getKey(), analysis.getValue());
+			try {
+				if (rewrite.getFailure() != null) {
+					outcome = rewrite;
+				}
+			} catch (InterruptedException e) {
+				Thread.currentThread().interrupt();
+				return Promises.failed(e);
+			}
+		}
+		return outcome;
+	}
+
+	/**
+	 * The transformations that have written onto these models, each with the models it wrote onto
+	 * and the fingerprint each was addressed by - the same shape {@link Analysed} holds in memory.
+	 *
+	 * @param models metadata of a stage of the target registry, diagnostics included
+	 * @return qualified name to nsURI-to-fingerprint; empty when none of them carries a finding of
+	 *         this action's
+	 */
+	static Map<String, Map<String, String>> analysesWrittenOn(List<ObjectMetadata> models) {
+		Map<String, Map<String, String>> analyses = new LinkedHashMap<>();
+		for (ObjectMetadata metadata : models) {
+			Object nsURI = metadata.getProperties().get("nsUri");
+			if (!(nsURI instanceof String declared) || declared.isBlank() || blank(metadata.getFingerprint())) {
+				// A model the rewrite could not address even if it wanted to: it names the model by
+				// nsURI and finds it by fingerprint.
+				continue;
+			}
+			for (Diagnostic diagnostic : metadata.getDiagnostics()) {
+				String producer = diagnostic.getProducer();
+				if (producer == null || !producer.startsWith(FlowFindingsToDiagnostics.PRODUCER_PREFIX)) {
+					continue;
+				}
+				String qualifiedName = producer.substring(FlowFindingsToDiagnostics.PRODUCER_PREFIX.length());
+				if (qualifiedName.isBlank()) {
+					continue;
+				}
+				analyses.computeIfAbsent(qualifiedName, q -> new LinkedHashMap<>())
+						.put(declared, metadata.getFingerprint());
+			}
+		}
+		return analyses;
 	}
 
 	/* ------------------------------------------------------------------ the work */
@@ -308,11 +391,12 @@ public class QvtFlowFindingsStageAction implements StageActionService {
 	 */
 	private Promise<Void> apply(ActionContext ctx, String qualifiedName, Map<String, String> also) {
 		String producer = FlowFindingsToDiagnostics.PRODUCER_PREFIX + qualifiedName;
-		ComplianceReport current = latestAnalysisOf(ctx, qualifiedName);
-		Map<String, List<Diagnostic>> roots = current == null ? Map.of() : FlowFindingsToDiagnostics.map(current);
+		Latest current = latestAnalysisOf(ctx, qualifiedName);
+		Map<String, List<Diagnostic>> roots = current == null ? Map.of()
+				: FlowFindingsToDiagnostics.map(current.report(), current.objectId());
 
 		Map<String, String> models = new LinkedHashMap<>(also);
-		if (current != null && current.getSubject() instanceof TransformationSubject subject) {
+		if (current != null && current.report().getSubject() instanceof TransformationSubject subject) {
 			models.putAll(fingerprintsOf(subject));
 		}
 		try {
@@ -379,7 +463,11 @@ public class QvtFlowFindingsStageAction implements StageActionService {
 	 * report the same way. Only reports whose subject is a {@code TransformationSubject} count - a
 	 * metamodel review has no qualified name and nothing to say here.
 	 */
-	private ComplianceReport latestAnalysisOf(ActionContext ctx, String qualifiedName) {
+	/** The analysis that currently speaks, and the object id it is stored under. */
+	private record Latest(ComplianceReport report, String objectId) {
+	}
+
+	private Latest latestAnalysisOf(ActionContext ctx, String qualifiedName) {
 		ComplianceReport latest = null;
 		Instant latestAt = null;
 		String latestId = null;
@@ -399,7 +487,7 @@ public class QvtFlowFindingsStageAction implements StageActionService {
 				latestId = metadata.getObjectId();
 			}
 		}
-		return latest;
+		return latest == null ? null : new Latest(latest, latestId);
 	}
 
 	private ComplianceReport reportAt(ActionContext ctx, String objectId) {

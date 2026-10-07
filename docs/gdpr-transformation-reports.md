@@ -170,9 +170,12 @@ analysed would replace the first one's findings on it.
 Named per transformation, each owns its roots on every model it touches. Re-analysing, replacing or
 withdrawing one never touches another's, with no read-modify-write anywhere.
 
-The **revision** is deliberately not in the producer but in `Diagnostic.source`. Keyed by the unit
-fingerprint, every recompile would strand the previous revision's findings on the model with
-nothing owning them and nothing able to clear them.
+The **report** is deliberately not in the producer but in `Diagnostic.source`. Keyed by the report,
+every reanalysis would strand the previous one's findings on the model with nothing owning them and
+nothing able to clear them. `source` names the analysis a finding came from — the object id of the
+report in the review registry — so a reader can open it and find the compiled revision, who produced
+it and the flows themselves. None of those is copied into the diagnostic, and none of them is out of
+reach.
 
 A model will therefore carry `gdpr.review` from its own review and one
 `gdpr.transformation/<name>` per transformation that touches it. That is the normal case and what
