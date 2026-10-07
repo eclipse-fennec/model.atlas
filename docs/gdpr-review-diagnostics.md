@@ -66,6 +66,13 @@ count of what there is.
 on the order the analyser listed them in. Its message names how the combination combines — the
 category ref whose taxonomy is `combination-kinds`, e.g. `LINKAGE`.
 
+**Every node names the report it came from**, in `Diagnostic.source`: the object id of the review in
+the report registry. The model that wrote the review, when it ran, its origin and the findings
+themselves are all in that object, so naming it keeps them one fetch away instead of copying one of
+them into the cell and losing the rest. `source` is not an identity — the id is derived from
+producer, code and target — so a later review restating the same claim keeps the diagnostic, its
+`createdTime` and its history, and only moves `source` onto itself.
+
 **A leaf per claim**, coded `gdpr.finding.<CATEGORIES>.<RELEVANCE>`, carrying the review's own
 words: the rationale, then the recommendation, the citations and the confidence. A finding names its
 categories as refs into the `data-categories` taxonomy of the context the review ran against; one
@@ -175,12 +182,37 @@ said, because a producer's roots are replaced as a set.
   producer does not go quiet — it writes the `gdpr.no-review` root, because an object whose review
   was withdrawn has not been checked and must not look like one that was checked and cleared. Only
   this producer's roots are rewritten; another producer's findings on the same object are untouched.
+  What happens when the runtime cannot tell which object the withdrawn report was about is below.
 - **A promotion** needs nothing. A transition carries the same `ObjectMetadata` into the target
   stage, diagnostics included, so a promoted object keeps its findings without anything being
   rewritten.
 - **A restart** replays every stored report, so a review that landed while the runtime was down is
   picked up. The diagnostics it produces are identical — the ids are derived — so the replay is not
-  even a change.
+  even a change. The replay is also what refills the runtime's memory of which subject each report
+  reviewed, which is why a withdrawal after a restart usually behaves exactly like one before it.
+
+### When the runtime does not remember the report
+
+The link from a report to the object it was written onto is kept in memory, and a delete carries an
+object id and nothing else — the id does not name a subject. So a report the runtime has no record
+of is one it cannot clear by looking up. That happens when the report's ENTER never succeeded: a
+replay that failed leaves no record, and the withdrawal then has nothing to work from.
+
+The objects themselves are the durable record. Each one this producer wrote onto carries its roots
+under `gdpr.review` and knows its own fingerprint, so when there is nothing in memory the stage is
+read instead and **every object in it carrying this producer's findings is recomputed**. The same
+holds for `gdpr.transformation/<name>`, where the producer additionally names the transformation, so
+the models and the qualified name are both recovered from what stands on them.
+
+Recomputing rather than clearing is what makes the sweep safe: each object is rewritten from the
+reviews that are still readable, so one whose review stands is written what it already had, and one
+whose last review has gone gets `gdpr.no-review`. It cannot invent a finding, and it repairs
+whatever was missed while nothing was listening.
+
+**It heals the stage the withdrawal happened in, and only that one.** A review describes the stage
+it was carried out against, so the rewrite looks in the stage the deleted report was in — a stale
+finding left in another stage waits until something is deleted from *that* stage. A review in
+`draft` withdrawn while nothing was listening is not repaired by a later deletion in `approved`.
 
 ## When a person is asked to look again
 
