@@ -211,6 +211,14 @@ public class InitialModelLoader {
     private final List<ServiceRegistration<?>> registrations = new ArrayList<>();
     private final List<Configuration> qvtConfigurations = new ArrayList<>();
     private final List<String> seededNsUris = new ArrayList<>();
+    /** nsURIs of the scope-folder packages put into the component-private package registry. */
+    private final List<String> scopeNsUris = new ArrayList<>();
+    /**
+     * Every file below {@code scopes/}, loaded and resolved together with the top-level
+     * models at activation (issue #339); the seeding units only upload what is here.
+     * Written during activation only, read by the seeding thread afterwards.
+     */
+    private final Map<Path, Resource> loadedScopeResources = new HashMap<>();
 
     /**
      * The files of one {@code scopes/<scopeName>/} folder, split into the schema
@@ -474,6 +482,8 @@ public class InitialModelLoader {
         seededNsUris.forEach(EPackageRegistryImpl.INSTANCE::remove);
         seededNsUris.forEach(resourceSet.getPackageRegistry()::remove);
         seededNsUris.clear();
+        scopeNsUris.forEach(resourceSet.getPackageRegistry()::remove);
+        scopeNsUris.clear();
         qvtConfigurations.forEach(c -> {
             try {
                 c.delete();
@@ -572,11 +582,29 @@ public class InitialModelLoader {
         // Validate the WHOLE batch before anything is seeded or registered, so a
         // bad file cannot leave a half-deployed state behind (issue #175 / F39).
         List<EPackage> ePackages = validateEPackages(ePackageResources);
-        // Align each Resource's URI to the EPackage's nsURI and seed the registries
-        // BEFORE resolveAll, so cross-package references between the loaded files
-        // (which use nsURI-based hrefs) can be resolved via the ResourceSet.
+
+        // Issue #339: everything below scopes/ is loaded now as well, and the whole
+        // folder is resolved as ONE set of files before any Resource URI changes.
+        // Each file is still addressed by its location while references are resolved,
+        // so a relative href between two files - across scope folders too - finds the
+        // file it names; nsURI-based hrefs resolve through the package registry, into
+        // which every package is put first. Only then does each package Resource take
+        // its nsURI, so whatever refers to a package from here on - the object type
+        // recorded for an instance, a serialized reference - names the package by its
+        // identity rather than by the file it happened to be read from.
+        List<Resource> scopePackageResources = new ArrayList<>();
+        List<Resource> scopeInstanceResources = new ArrayList<>();
+        createScopeResources(scopePackageResources, scopeInstanceResources);
+        loadFromDisk(scopePackageResources);
         seedEPackages(ePackageResources);
-        ePackageResources.forEach(r -> r.getContents().forEach(EcoreUtil::resolveAll));
+        seedScopePackages(ePackageResources, scopePackageResources);
+        loadFromDisk(scopeInstanceResources);
+        List<Resource> allResources = new ArrayList<>(ePackageResources);
+        allResources.addAll(scopePackageResources);
+        allResources.addAll(scopeInstanceResources);
+        allResources.forEach(r -> r.getContents().forEach(EcoreUtil::resolveAll));
+        alignResourceUris(ePackageResources);
+        alignResourceUris(scopePackageResources);
 
         // Register QVT factory configurations first so that anything watching
         // for the resulting EPackage services as a "ready" signal also sees
@@ -711,24 +739,22 @@ public class InitialModelLoader {
         LOG.log(Level.INFO, () -> "InitialModelLoader: seeding scope '" + scopeName + "' (registry '" + registry
                 + "', stage '" + stage + "') with " + files.size() + " file(s).");
 
+        // Loaded, resolved and aligned to their nsURIs at activation (issue #339).
         List<Resource> packageResources = new ArrayList<>();
         List<Resource> instanceResources = new ArrayList<>();
         List<Path> instanceFiles = new ArrayList<>();
         for (Path file : files) {
-            String name = file.getFileName().toString();
-            String ext = name.substring(name.lastIndexOf('.') + 1).toLowerCase();
-            String uri = file.toUri().toString();
-            switch (ext) {
-            case "jsonschema" -> packageResources.add(loadJsonschema(uri));
-            case "xmi" -> {
-                instanceResources.add(createXmiResource(uri));
-                instanceFiles.add(file);
+            Resource resource = loadedScopeResources.get(file);
+            if (resource == null) {
+                throw new IllegalStateException("InitialModelLoader: " + file + " was not loaded at activation.");
             }
-            default -> packageResources.add(resourceSet.createResource(URI.createURI(uri)));
+            if (file.getFileName().toString().toLowerCase().endsWith(".xmi")) {
+                instanceResources.add(resource);
+                instanceFiles.add(file);
+            } else {
+                packageResources.add(resource);
             }
         }
-        // EPackages first: the instance files may reference them by nsURI
-        loadFromDisk(packageResources);
 
         Set<String> batchNsUris = new HashSet<>();
         List<EPackage> packageRoots = new ArrayList<>();
@@ -750,19 +776,6 @@ public class InitialModelLoader {
             packageRoots.add(ePackage);
         }
 
-        // Align the Resource URIs and seed only the component-private ResourceSet
-        // registry (NOT the global one), so nsURI-based cross-references between the
-        // scope's files resolve. The prototype ResourceSet dies with this component.
-        for (int i = 0; i < packageResources.size(); i++) {
-            Resource resource = packageResources.get(i);
-            EPackage ePackage = packageRoots.get(i);
-            resource.setURI(URI.createURI(ePackage.getNsURI()));
-            resourceSet.getPackageRegistry().put(ePackage.getNsURI(), ePackage);
-        }
-        packageResources.forEach(r -> r.getContents().forEach(EcoreUtil::resolveAll));
-
-        loadFromDisk(instanceResources);
-        instanceResources.forEach(r -> r.getContents().forEach(EcoreUtil::resolveAll));
 
         // Validate every root against the registry's root EClass — the same check
         // the Object Storage REST API performs on an upload.
@@ -1058,20 +1071,93 @@ public class InitialModelLoader {
     }
 
     /**
-     * Sets each root EPackage's factory, realigns the Resource URI to the
-     * EPackage's nsURI and seeds the EMF package registries so that subsequent
-     * {@code EcoreUtil.resolveAll} calls can resolve cross-package references
-     * between the loaded files. Everything seeded is tracked in
-     * {@link #seededNsUris} so {@link #rollback()} can compensate.
+     * Sets each root EPackage's factory and seeds the EMF package registries, so
+     * that nsURI-based references from the other loaded files resolve. The Resource
+     * keeps its file URI until everything is resolved ({@link #alignResourceUris}).
+     * Everything seeded is tracked in {@link #seededNsUris} so {@link #rollback()}
+     * can compensate.
      */
     private void seedEPackages(List<Resource> resources) {
         for (Resource resource : resources) {
             EPackage ePackage = (EPackage) resource.getContents().get(0);
             ePackage.setEFactoryInstance(new EClassResolvingDynamicEFactory());
-            resource.setURI(URI.createURI(ePackage.getNsURI()));
             resourceSet.getPackageRegistry().put(ePackage.getNsURI(), ePackage);
             EPackageRegistryImpl.INSTANCE.put(ePackage.getNsURI(), ePackage);
             seededNsUris.add(ePackage.getNsURI());
+        }
+    }
+
+    /**
+     * Creates a Resource for every file collected below {@code scopes/} (issue #339):
+     * the packages into {@code packages}, the instance files into {@code instances}.
+     * A json schema is loaded right away; everything else is loaded by the caller.
+     */
+    private void createScopeResources(List<Resource> packages, List<Resource> instances) {
+        List<Path> files = new ArrayList<>();
+        synchronized (pendingScopes) {
+            for (ScopeSeed seed : pendingScopes.values()) {
+                files.addAll(seed.schemaFiles);
+                seed.registryFolders.values().forEach(files::addAll);
+            }
+        }
+        for (Path file : files) {
+            String name = file.getFileName().toString();
+            String ext = name.substring(name.lastIndexOf('.') + 1).toLowerCase();
+            String uri = file.toUri().toString();
+            Resource resource = switch (ext) {
+            case "jsonschema" -> loadJsonschema(uri);
+            case "xmi" -> createXmiResource(uri);
+            default -> resourceSet.createResource(URI.createURI(uri));
+            };
+            if (resource == null) {
+                throw new IllegalStateException("InitialModelLoader: no resource factory registered for '" + ext
+                        + "', cannot load " + uri);
+            }
+            loadedScopeResources.put(file, resource);
+            ("xmi".equals(ext) ? instances : packages).add(resource);
+        }
+    }
+
+    /**
+     * Puts the packages of the scope folders into the component-private package
+     * registry - NOT the global one, they are registered by their scope's stage once
+     * seeded - so that nsURI-based references to them resolve while the whole folder is
+     * resolved. An nsURI may occur only once in the initial models folder: two files
+     * declaring it would leave it open which one an instance binds.
+     */
+    private void seedScopePackages(List<Resource> topLevelResources, List<Resource> resources) {
+        Set<String> folderNsUris = new HashSet<>();
+        for (Resource resource : topLevelResources) {
+            folderNsUris.add(((EPackage) resource.getContents().get(0)).getNsURI());
+        }
+        for (Resource resource : resources) {
+            EObject root = resource.getContents().get(0);
+            if (!(root instanceof EPackage ePackage)) {
+                throw new IllegalStateException("InitialModelLoader: resource " + resource.getURI()
+                        + " does not contain an EPackage root.");
+            }
+            String nsURI = ePackage.getNsURI();
+            if (nsURI == null || nsURI.isBlank()) {
+                throw new IllegalStateException(
+                        "InitialModelLoader: encountered EPackage without nsURI in " + resource.getURI());
+            }
+            if (!folderNsUris.add(nsURI)) {
+                throw new IllegalStateException("InitialModelLoader: duplicate EPackage nsURI '" + nsURI
+                        + "' within the initial models folder (" + resource.getURI() + ").");
+            }
+            resourceSet.getPackageRegistry().put(nsURI, ePackage);
+            scopeNsUris.add(nsURI);
+        }
+    }
+
+    /**
+     * Gives each package Resource its EPackage's nsURI, once everything is resolved
+     * (issue #339): from now on a reference to the package - the object type of an
+     * instance, an href written when an instance is stored - names it by its nsURI.
+     */
+    private static void alignResourceUris(List<Resource> resources) {
+        for (Resource resource : resources) {
+            resource.setURI(URI.createURI(((EPackage) resource.getContents().get(0)).getNsURI()));
         }
     }
 

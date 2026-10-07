@@ -31,6 +31,7 @@ import org.eclipse.emf.ecore.EClass;
 import org.eclipse.emf.ecore.EDataType.Internal.ConversionDelegate;
 import org.eclipse.emf.ecore.EObject;
 import org.eclipse.emf.ecore.EPackage;
+import org.eclipse.emf.ecore.EReference;
 import org.eclipse.emf.ecore.EStructuralFeature;
 import org.eclipse.emf.ecore.InternalEObject;
 import org.eclipse.emf.ecore.resource.Resource;
@@ -249,6 +250,11 @@ public abstract class AbstractStorageHelper implements AutoCloseable {
         String objectPath = buildObjectPath(scope, registry, stage, objectId, fileExtension);
         URI objectUri = createStorageURI(scope, registry, stage, objectPath);
 
+        // Saving must not take the object away from its caller (issue #339): adding it to the
+        // storage resource moves it out of the resource - or the container - it sits in, and
+        // everything that refers to it would from then on name the storage file, e.g. the
+        // object type recorded for an instance of a package that was stored before.
+        Placement placement = Placement.of(object);
         // Extension first, content type as fallback — the same lookup loadEObject uses
         // (see createStorageResource / issue #213).
         ResourceOperation objectOp = createStorageResource(objectUri, contentType);
@@ -259,7 +265,44 @@ public abstract class AbstractStorageHelper implements AutoCloseable {
             // Let storage implementation handle the actual persistence
             persistResource(objectPath, objectOp.getResource());
         } finally {
+            placement.restore(object, objectOp.getResource());
             objectOp.cleanup();
+        }
+    }
+
+    /**
+     * Where an object sits before it is saved: in a container's reference, as a root of a
+     * resource, or nowhere - so that it can be put back there afterwards.
+     */
+    private record Placement(Resource resource, int rootIndex, EObject container, EReference feature, int index) {
+
+        static Placement of(EObject object) {
+            EObject container = object.eContainer();
+            if (container != null) {
+                EReference feature = object.eContainmentFeature();
+                int index = feature.isMany() ? ((List<?>) container.eGet(feature)).indexOf(object) : -1;
+                return new Placement(null, -1, container, feature, index);
+            }
+            Resource resource = object.eResource();
+            return new Placement(resource, resource == null ? -1 : resource.getContents().indexOf(object), null, null,
+                    -1);
+        }
+
+        @SuppressWarnings("unchecked")
+        void restore(EObject object, Resource storageResource) {
+            if (container != null) {
+                if (feature.isMany()) {
+                    List<EObject> values = (List<EObject>) container.eGet(feature);
+                    values.add(Math.min(Math.max(index, 0), values.size()), object);
+                } else {
+                    container.eSet(feature, object);
+                }
+            } else if (resource != null) {
+                List<EObject> roots = resource.getContents();
+                roots.add(Math.min(Math.max(rootIndex, 0), roots.size()), object);
+            } else {
+                storageResource.getContents().remove(object);
+            }
         }
     }
 

@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<iarea:AreaConfiguration xmi:version="2.0"
+    xmlns:xmi="http://www.omg.org/XMI"
+    xmlns:iarea="http://test.fennec.eclipse.org/bootstrap/inherited/area/1.0.0"
+    cid="north" name="North" area="north"/>

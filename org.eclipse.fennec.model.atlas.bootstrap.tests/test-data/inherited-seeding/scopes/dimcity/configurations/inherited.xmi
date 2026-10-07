@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<icfg:Configuration xmi:version="2.0"
+    xmlns:xmi="http://www.omg.org/XMI"
+    xmlns:icfg="http://test.fennec.eclipse.org/bootstrap/inherited/configuration/1.0.0"
+    cid="inherited" name="Inherited"/>

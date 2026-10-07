@@ -179,8 +179,10 @@ public class InitialModelLoaderRegistrySeedingIntegrationTest {
         assertEquals(REGISTRY_NAME, alice.getRegistry());
         assertEquals(STAGE, alice.getStage());
         assertEquals("alice", alice.getObjectName());
-        assertTrue(alice.getObjectType().endsWith("#//Person"),
-                "The object type should be the instance's EClass URI but was " + alice.getObjectType());
+        // the type is the class's identity - nsURI-based, as a REST upload records it - not the
+        // location the package happens to be loaded from (issue #339)
+        assertEquals(NS_URI + "#//Person", alice.getObjectType(),
+                "The object type should be the instance's EClass URI");
 
         // an instance without an ID value falls back to the file name
         ObjectMetadata bob = awaitObject(scopeAware, "bob-file", 10000);
