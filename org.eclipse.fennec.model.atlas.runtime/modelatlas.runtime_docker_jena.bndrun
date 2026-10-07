@@ -53,10 +53,11 @@
 # report registry, each with its own output, and a deployment may want either without the other.
 # Both are ConfigurationPolicy.REQUIRE, so being installed is not enough to make them run.
 #
-# qvt.gdpr (issue #319) is the only runtime that can carry it: it derives a transformation's GDPR
-# report from the reviews of its metamodels, so it needs both the m2x/QVT stack and the report
-# registry, and this is the image that has both. It is a third stage action of the same family,
-# triggered by a compiled unit rather than by a report, and REQUIRE like the others.
+# qvt.gdpr (issue #319) derives a transformation's GDPR report from the reviews of its metamodels,
+# so it needs both the m2x/QVT stack and the report registry. It is a third stage action of the
+# same family, triggered by a compiled unit rather than by a report, and REQUIRE like the others.
+# The docker file runtime carries it as well, and names it by hand there; this is the image the
+# flow is tested in, not the only one that can run it.
 #
 # The compliance context models (issue #332) are named here although no bundle requires them yet:
 # the ComplianceContext instances are seeded as data by InitialModelLoader, so the only thing that

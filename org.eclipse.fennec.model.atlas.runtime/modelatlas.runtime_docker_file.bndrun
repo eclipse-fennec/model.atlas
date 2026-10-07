@@ -24,6 +24,13 @@
 # Taken from the docker jena resolve, which is the file to re-read if codec.ods ever grows
 # a dependency. action.api is not repeated here - the included base runtime already carries it.
 # The model bundles come from the published common.models snapshots (cnf/central.mvn).
+#
+# qvt.gdpr (issue #319) belongs here too, and not only in the jena runtime used to test it: the
+# config.docker.file bundle below configures its three stage actions - QvtGdprFlowStageAction,
+# QvtFlowFindingsStageAction and QvtGdprReanalysisStageAction - and RegistryService~transformations
+# names the first in its stageActionService.target. Without the bundle those PIDs apply to nothing
+# and the transformation-level review silently never runs. It needs the m2x/QVT stack and the
+# report registry, and this image has both.
 -runbundles.docker.file: \
 	org.eclipse.fennec.event.atlas.mapping,\
 	org.eclipse.fennec.model.atlas.runtime.config.docker.file,\
@@ -44,6 +51,7 @@
 	org.eclipse.fennec.compliance.report.history.model,\
 	org.eclipse.fennec.model.atlas.gdpr.history,\
 	org.eclipse.fennec.model.atlas.gdpr.diagnostics,\
+	org.eclipse.fennec.model.atlas.qvt.gdpr,\
 	org.eclipse.fennec.codec.ods,\
 	org.eclipse.fennec.codec.tabular,\
 	org.eclipse.fennec.codec.tabular.model,\
