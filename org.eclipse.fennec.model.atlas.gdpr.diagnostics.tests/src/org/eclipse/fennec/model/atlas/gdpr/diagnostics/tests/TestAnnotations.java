@@ -46,7 +46,7 @@ public class TestAnnotations extends CommonTestAnnotations {
 
 	public static final String REPORT_REGISTRY = "gdpr";
 
-	public static final String REPORT_NS_URI = "https://org.eclipse/fennec/gdpr-report/1.0.0";
+	public static final String REPORT_NS_URI = "https://org.eclipse/fennec/compliance/report/1.0.0";
 
 	public static final String PID_DIAGNOSTICS_ACTION = "GDPRMetadataDiagnosticsStageAction";
 
@@ -58,7 +58,7 @@ public class TestAnnotations extends CommonTestAnnotations {
 	@WithFactoryConfiguration(factoryPid = PID_REGISTRY_SERVICE, name = REPORT_REGISTRY, location = "?", properties = {
 			@Property(key = "registry.name", value = REPORT_REGISTRY),
 			@Property(key = "registry.type", value = "OTHER"),
-			@Property(key = "root.eclass.uri", value = REPORT_NS_URI + "#//GdprReport"),
+			@Property(key = "root.eclass.uri", value = REPORT_NS_URI + "#//ComplianceReport"),
 			@Property(key = "schemaPackage.target", value = "(emf.nsURI=" + REPORT_NS_URI + ")"),
 			@Property(key = "resourceSet.target", value = "(emf.name=ecore)"),
 			@Property(key = "storageService.target", value = "(storage.type=file)"),

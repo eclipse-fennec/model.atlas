@@ -1,17 +1,17 @@
 Bundle-Name: Model Atlas GDPR Report History
-Bundle-Description: Turns the GDPR reviews stored for one subject into a single derived \
- GdprReportHistory object: every revision, the assessment each one recorded, and a field-level \
+Bundle-Description: Turns the compliance reviews stored for one subject into a single derived \
+ ComplianceReportHistory object: every revision, the assessment each one recorded, and a field-level \
  diff between them. The object is flat on purpose, so the tabular codec renders it as a \
  spreadsheet a human can read without any rendering code here.
 
-# In model.atlas rather than in fennec-gdpr, although it knows the GdprReport model: the
+# In model.atlas rather than in fennec-gdpr, although it knows the ComplianceReport model: the
 # document has to be produced in a deployment that has no AI review half, where a human
-# uploads a report by hand. This bundle depends on nothing in fennec-gdpr — the GdprReport
-# EPackage lives in common.models — so such a deployment needs only the two model bundles
+# uploads a report by hand. This bundle depends on nothing in fennec-gdpr — the ComplianceReport
+# EPackage lives in common.models — so such a deployment needs only the model bundles
 # and this one. Same shape as org.eclipse.fennec.model.atlas.dcat, which likewise builds
 # against a foreign domain model and ships only in the runtimes that want it.
 #
-# Everything GDPR-specific is in ReportHistoryBuilder. The rest — the stage action, the
+# Everything report-specific is in ReportHistoryBuilder. The rest — the stage action, the
 # read through ReadableRegistryView, the write — is generic, so a second report type
 # wanting the same treatment is a refactor and not a rewrite.
 #
@@ -25,8 +25,10 @@ Bundle-Description: Turns the GDPR reviews stored for one subject into a single 
 -library: enableEMF
 
 -buildpath: \
-	org.eclipse.fennec.gdpr.report.model;version=latest,\
-	org.eclipse.fennec.gdpr.report.history.model;version=latest,\
+	org.eclipse.fennec.compliance.report.model;version=latest,\
+	org.eclipse.fennec.compliance.report.history.model;version=latest,\
+	org.eclipse.fennec.compliance.context.model;version=latest,\
+	org.eclipse.fennec.compliance.corpus.model;version=latest,\
 	org.eclipse.fennec.model.atlas.action.api;version=snapshot,\
 	org.eclipse.fennec.model.atlas.scope.api;version=snapshot,\
 	org.eclipse.fennec.model.atlas.workflow;version=snapshot,\

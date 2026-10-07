@@ -29,9 +29,10 @@ import org.eclipse.fennec.m2x.model.compiled.CompiledUnit;
 import org.eclipse.fennec.model.atlas.mgmt.management.Diagnostic;
 import org.eclipse.fennec.model.atlas.mgmt.management.DiagnosticSeverity;
 import org.eclipse.fennec.model.atlas.qvt.gdpr.RuleCatalogue.Rule;
-import org.eclipse.fennec.model.gdprReport.DataCategory;
-import org.eclipse.fennec.model.gdprReport.GdprReport;
-import org.eclipse.fennec.model.gdprReport.RelevanceLevelType;
+import org.eclipse.fennec.model.compliance.context.CategoryRef;
+import org.eclipse.fennec.model.compliance.context.ContextFactory;
+import org.eclipse.fennec.model.compliance.report.ComplianceReport;
+import org.eclipse.fennec.model.compliance.report.RelevanceLevel;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -55,7 +56,7 @@ public class FlowFindingsOnMetamodelsTest {
 	@BeforeAll
 	static void deriveAndProject() throws Exception {
 		CompiledUnit unit = QvtFlowAnalysisTest.readUnit();
-		GdprReport report = FlowAnalysis.analyse(unit,
+		ComplianceReport report = FlowAnalysis.analyse(unit,
 				Map.of(Reviews.CLINIC_FP, Reviews.clinic(), Reviews.CONTACTS_FP, Reviews.contacts()),
 				Instant.parse("2026-09-30T09:00:00Z"));
 		projection = FlowFindingsToDiagnostics.map(report);
@@ -188,7 +189,7 @@ public class FlowFindingsOnMetamodelsTest {
 	@Test
 	@DisplayName("a model the report names but says nothing about is present with an empty list")
 	public void aModelWithNothingToSayIsStillAnswered() {
-		GdprReport report = FlowAnalysis.analyse(unit(), Map.of(), Instant.parse("2026-09-30T09:00:00Z"));
+		ComplianceReport report = FlowAnalysis.analyse(unit(), Map.of(), Instant.parse("2026-09-30T09:00:00Z"));
 		Map<String, List<Diagnostic>> nothing = FlowFindingsToDiagnostics.map(report);
 
 		assertEquals(Set.of(Reviews.CLINIC_NS, Reviews.CONTACTS_NS), nothing.keySet(),
@@ -202,10 +203,10 @@ public class FlowFindingsOnMetamodelsTest {
 	public void anUnknownRuleIsNotDropped() {
 		// A report may have been written by hand or restored from a backup. Not knowing which end
 		// a statement belongs to is no reason to write it nowhere.
-		GdprReport report = FlowAnalysis.analyse(unit(),
+		ComplianceReport report = FlowAnalysis.analyse(unit(),
 				Map.of(Reviews.CLINIC_FP, Reviews.clinic(), Reviews.CONTACTS_FP, Reviews.contacts()),
 				Instant.parse("2026-09-30T09:00:00Z"));
-		report.getEvaluation().stream().flatMap(evaluation -> evaluation.getFindings().stream())
+		report.getEvaluations().stream().flatMap(evaluation -> evaluation.getFindings().stream())
 				.filter(finding -> finding.getId().startsWith(Rule.PROPAGATION.code()))
 				.forEach(finding -> finding.setId("something-a-person-typed"));
 
@@ -227,17 +228,17 @@ public class FlowFindingsOnMetamodelsTest {
 	@Test
 	@DisplayName("a finding that says the field is clean is not written at all")
 	public void nothingOfConcernIsNotADiagnostic() {
-		GdprReport report = FlowAnalysis.analyse(unit(),
+		ComplianceReport report = FlowAnalysis.analyse(unit(),
 				Map.of(Reviews.CLINIC_FP, Reviews.clinic(), Reviews.CONTACTS_FP, Reviews.contacts()),
 				Instant.parse("2026-09-30T09:00:00Z"));
-		report.getEvaluation().stream().flatMap(evaluation -> evaluation.getFindings().stream())
+		report.getEvaluations().stream().flatMap(evaluation -> evaluation.getFindings().stream())
 				.forEach(finding -> {
-					finding.setCategory(DataCategory.NOT_PERSONAL_DATA);
-					finding.setRelevanceLevel(RelevanceLevelType.NONE);
+					finding.getCategories().add(categoryRef("NOT_PERSONAL_DATA"));
+					finding.setRelevanceLevel(RelevanceLevel.NONE);
 				});
 		report.getCombinations().forEach(combination -> {
-			combination.setCategory(DataCategory.NOT_PERSONAL_DATA);
-			combination.setRelevanceLevel(RelevanceLevelType.NONE);
+			combination.getCategories().add(categoryRef("NOT_PERSONAL_DATA"));
+			combination.setRelevanceLevel(RelevanceLevel.NONE);
 		});
 
 		Map<String, List<Diagnostic>> mapped = FlowFindingsToDiagnostics.map(report);
@@ -294,4 +295,17 @@ public class FlowFindingsOnMetamodelsTest {
 		}
 		return all;
 	}
+
+	/**
+	 * A data-category reference, the way a review records one: an id in the context's
+	 * {@code data-categories} taxonomy. The ids are the names the {@code DataCategory} enum had.
+	 */
+	static CategoryRef categoryRef(String categoryId) {
+		CategoryRef ref = ContextFactory.eINSTANCE.createCategoryRef();
+		ref.setContextId("gdpr");
+		ref.setTaxonomyId("data-categories");
+		ref.setCategoryId(categoryId);
+		return ref;
+	}
+
 }

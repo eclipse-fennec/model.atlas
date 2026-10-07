@@ -40,12 +40,11 @@ import org.eclipse.fennec.model.atlas.mgmt.management.ManagementFactory;
 import org.eclipse.fennec.model.atlas.mgmt.management.ObjectMetadata;
 import org.eclipse.fennec.model.atlas.scope.api.ReadableRegistryView;
 import org.eclipse.fennec.model.atlas.wf.workflowapi.WritableScopeService;
-import org.eclipse.fennec.model.gdprReport.GDPRReportPackage;
-import org.eclipse.fennec.model.gdprReport.GdprReport;
-import org.eclipse.fennec.model.gdprReport.LegalCorpusRef;
-import org.eclipse.fennec.model.gdprReport.Subject;
-import org.eclipse.fennec.model.gdprReportHistory.GdprReportHistory;
-import org.eclipse.fennec.model.gdprReportHistory.RevisionOrigin;
+import org.eclipse.fennec.model.compliance.report.ReportPackage;
+import org.eclipse.fennec.model.compliance.report.ComplianceReport;
+import org.eclipse.fennec.model.compliance.report.Subject;
+import org.eclipse.fennec.model.compliance.history.ComplianceReportHistory;
+import org.eclipse.fennec.model.compliance.history.RevisionOrigin;
 import org.osgi.service.component.annotations.Activate;
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.ConfigurationPolicy;
@@ -58,12 +57,12 @@ import org.osgi.util.promise.Promise;
 import org.osgi.util.promise.Promises;
 
 /**
- * Rebuilds the {@link GdprReportHistory} of a subject whenever one of its reviews lands, changes or
+ * Rebuilds the {@link ComplianceReportHistory} of a subject whenever one of its reviews lands, changes or
  * leaves.
  * <p>
  * <b>The object type is an EClass URI, not a name.</b> {@code ActionContext.objectType()} is set to
  * {@code EcoreUtil.getURI(object.eClass()).toString()} by the storage layer, so matching
- * {@code "GdprReport"} would compile, deploy, resolve and never fire once.
+ * {@code "ComplianceReport"} would compile, deploy, resolve and never fire once.
  * <p>
  * <b>It filters by scope, which the SPI does not do for it.</b> The workflow dispatches on object
  * type, stage and event only - a registry instance is shared by every scope that binds it, so an
@@ -72,7 +71,7 @@ import org.osgi.util.promise.Promises;
  * <p>
  * <b>It never triggers itself.</b> The document is written to its own registry, which binds no
  * stage action at all, and even in the reports' registry {@link #supportsObjectType(String)} only
- * answers for a {@code GdprReport}.
+ * answers for a {@code ComplianceReport}.
  * <p>
  * <b>The write is in-process.</b> It goes straight through {@link WritableScopeService}, not through
  * a REST call to this same runtime. A loopback cannot work during the startup replay, which runs
@@ -95,7 +94,7 @@ public class GDPRReportHistoryStageAction implements StageActionService {
 	private static final Logger LOGGER = Logger.getLogger(GDPRReportHistoryStageAction.class.getName());
 
 	/** What the storage layer writes into {@code ActionContext.objectType()} for a report. */
-	private static final String REPORT_TYPE = EcoreUtil.getURI(GDPRReportPackage.Literals.GDPR_REPORT).toString();
+	private static final String REPORT_TYPE = EcoreUtil.getURI(ReportPackage.Literals.COMPLIANCE_REPORT).toString();
 
 	/**
 	 * Stands in for the language of a review that does not state one. A visible placeholder rather
@@ -118,7 +117,7 @@ public class GDPRReportHistoryStageAction implements StageActionService {
 	public @interface Config {
 
 		@AttributeDefinition(name = "Report registry", //
-				description = "The object registry the GdprReport objects are stored in.")
+				description = "The object registry the ComplianceReport objects are stored in.")
 		String reports_registry() default "gdpr";
 
 		@AttributeDefinition(name = "Report stages", //
@@ -141,7 +140,7 @@ public class GDPRReportHistoryStageAction implements StageActionService {
 		String scope_target() default "(atlas.scope=jena)";
 
 		@AttributeDefinition(name = "Document registry", //
-				description = "The object registry the derived GdprReportHistory documents are written to. "
+				description = "The object registry the derived ComplianceReportHistory documents are written to. "
 						+ "Keep it separate from the report registry: a registry that binds no stage action "
 						+ "cannot re-trigger the action that writes into it.")
 		String document_registry() default "gdprdoc";
@@ -271,7 +270,7 @@ public class GDPRReportHistoryStageAction implements StageActionService {
 
 	private void rebuild(String triggerScope, String objectId) {
 		try {
-			Optional<GdprReport> trigger = find(objectId);
+			Optional<ComplianceReport> trigger = find(objectId);
 			if (trigger.isEmpty()) {
 				// A deleted report: nothing left to say which subject it was about.
 				LOGGER.log(Level.INFO, () -> String.format(
@@ -299,7 +298,7 @@ public class GDPRReportHistoryStageAction implements StageActionService {
 			// repairs a document that was missed while nothing was listening.
 			Instant rebuiltAt = Instant.now();
 			for (Map.Entry<DocumentKey, List<StoredReport>> group : groups.entrySet()) {
-				GdprReportHistory history = builder.build(group.getValue(), rebuiltAt);
+				ComplianceReportHistory history = builder.build(group.getValue(), rebuiltAt);
 				store(history, group.getKey(), group.getValue().size());
 			}
 		} catch (RuntimeException e) {
@@ -325,7 +324,7 @@ public class GDPRReportHistoryStageAction implements StageActionService {
 		for (String stage : stages) {
 			ReadableRegistryView<EObject> view = scope.registryView(registry, stage);
 			for (String objectId : view.listObjectIds()) {
-				view.get(objectId).filter(GdprReport.class::isInstance).map(GdprReport.class::cast)
+				view.get(objectId).filter(ComplianceReport.class::isInstance).map(ComplianceReport.class::cast)
 						.filter(report -> isAbout(report, subjectIdentifier))
 						.ifPresent(report -> groups
 								.computeIfAbsent(new DocumentKey(subjectIdentifier, stage, languageOf(report)),
@@ -352,18 +351,18 @@ public class GDPRReportHistoryStageAction implements StageActionService {
 	 * The origin is whatever the report says; the builder reads it from the content and only falls
 	 * back to what is passed here for a report written before the model carried the field.
 	 */
-	private static StoredReport stored(String objectId, GdprReport report) {
+	private static StoredReport stored(String objectId, ComplianceReport report) {
 		return new StoredReport(objectId, report, null, RevisionOrigin.UNKNOWN);
 	}
 
-	private static boolean isAbout(GdprReport report, String subjectIdentifier) {
+	private static boolean isAbout(ComplianceReport report, String subjectIdentifier) {
 		return subjectIdentifier.equals(ReportHistoryBuilder.identifierOf(report.getSubject()));
 	}
 
-	private Optional<GdprReport> find(String objectId) {
+	private Optional<ComplianceReport> find(String objectId) {
 		for (String stage : stages) {
-			Optional<GdprReport> found = scope.registryView(registry, stage).get(objectId)
-					.filter(GdprReport.class::isInstance).map(GdprReport.class::cast);
+			Optional<ComplianceReport> found = scope.registryView(registry, stage).get(objectId)
+					.filter(ComplianceReport.class::isInstance).map(ComplianceReport.class::cast);
 			if (found.isPresent()) {
 				return found;
 			}
@@ -383,7 +382,7 @@ public class GDPRReportHistoryStageAction implements StageActionService {
 	 * ENTER and {@code updateInStage} always dispatches UPDATE, and which one is correct depends on
 	 * whether the object is already there.
 	 */
-	private void store(GdprReportHistory history, DocumentKey key, int revisions) {
+	private void store(ComplianceReportHistory history, DocumentKey key, int revisions) {
 		String objectId = documentId(key);
 		// The stage of the reviews, not a configured one: the document is stage-specific, and two
 		// groups of one subject share an objectId, so writing them to one stage would have the
@@ -502,15 +501,16 @@ public class GDPRReportHistoryStageAction implements StageActionService {
 	/**
 	 * The language a review was carried out in, normalised; {@value #UNKNOWN_LANGUAGE} when unstated.
 	 * <p>
-	 * Read from the report's own corpus, which is where it is recorded: the review quotes one
-	 * consolidation of one language version and the tool that starts a report copies that language
-	 * from the corpus it used. A review that names none is kept in a group of its own rather than
-	 * folded into a named one - it is the honest answer, and it keeps one unlabelled report from
-	 * corrupting the diff of a real language.
+	 * Read from the report's own {@code language}, which is where it is recorded: the review states
+	 * the language its prose is written in, which is what the change sheet diffs. It is not the
+	 * language of the contexts it cites - a report may quote a German corpus and reason in English,
+	 * and the two were conflated while the corpus reference was the only thing carrying a language.
+	 * A review that names none is kept in a group of its own rather than folded into a named one -
+	 * it is the honest answer, and it keeps one unlabelled report from corrupting the diff of a
+	 * real language.
 	 */
-	private static String languageOf(GdprReport report) {
-		LegalCorpusRef corpus = report.getCorpus();
-		String language = corpus == null ? null : corpus.getLanguage();
+	private static String languageOf(ComplianceReport report) {
+		String language = report.getLanguage();
 		return blank(language) ? UNKNOWN_LANGUAGE : language.trim().toUpperCase(Locale.ROOT);
 	}
 

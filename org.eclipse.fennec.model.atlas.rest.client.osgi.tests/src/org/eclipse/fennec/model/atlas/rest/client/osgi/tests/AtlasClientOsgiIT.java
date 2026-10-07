@@ -117,7 +117,7 @@ public class AtlasClientOsgiIT {
 
 	private static final String IMAGE = "eclipsefennec/model.atlas:jena-snapshot";
 	private static final int HTTP_PORT = 8080;
-	private static final String JENA_SCOPE = "jena";
+	private static final String TENANT_SCOPE = "dimcity";
 	/** jena's schema registry final stage is {@code release}, not the client default {@code released}. */
 	private static final String JENA_VIEW = "release";
 	private static final String CONFIG_LOAD_DIR = "/opt/modelatlas/runtime/load";
@@ -222,7 +222,7 @@ public class AtlasClientOsgiIT {
 				.withEnv("ATLAS_HTTP_PORT", String.valueOf(HTTP_PORT))
 				.withFileSystemBind(resolveConfigsDir(), CONFIG_LOAD_DIR, BindMode.READ_ONLY)
 				.waitingFor(Wait.forHttp("/atlas/rest/scopes").forPort(HTTP_PORT).forStatusCode(200)
-						.forResponsePredicate(body -> body.contains(JENA_SCOPE)))
+						.forResponsePredicate(body -> body.contains(TENANT_SCOPE)))
 				.withStartupTimeout(Duration.ofMinutes(2));
 		atlas.start();
 		baseUri = URI.create("http://" + atlas.getHost() + ":" + atlas.getMappedPort(HTTP_PORT) + "/atlas/rest");
@@ -247,7 +247,7 @@ public class AtlasClientOsgiIT {
 		assumeFalse(releasedNsUris().isEmpty(), "jena scope has no released packages to publish");
 
 		Hashtable<String, Object> props = baseProps("EAGER");
-		props.put("eager.scopes", new String[] { JENA_SCOPE });
+		props.put("eager.scopes", new String[] { TENANT_SCOPE });
 		configuration.update(props);
 
 		EPackage published = remotePackages.waitForService(SERVICE_WAIT_MS);
@@ -364,7 +364,7 @@ public class AtlasClientOsgiIT {
 		// visible the fallback decision has already been made. With resource.set.fallback=false
 		// no Atlas ResourceSetConfigurator must have been registered.
 		Hashtable<String, Object> props = baseProps("EAGER");
-		props.put("eager.scopes", new String[] { JENA_SCOPE });
+		props.put("eager.scopes", new String[] { TENANT_SCOPE });
 		props.put("resource.set.fallback", Boolean.FALSE);
 		configuration.update(props);
 
@@ -389,7 +389,7 @@ public class AtlasClientOsgiIT {
 		Configuration configuration = configAdmin.createFactoryConfiguration(PID, "?");
 		try {
 			Hashtable<String, Object> props = baseProps("EAGER");
-			props.put("eager.scopes", new String[] { JENA_SCOPE });
+			props.put("eager.scopes", new String[] { TENANT_SCOPE });
 			configuration.update(props);
 
 			assertNotNull(remotePackages.waitForService(SERVICE_WAIT_MS),
@@ -478,7 +478,7 @@ public class AtlasClientOsgiIT {
 			// resource.set.fallback=false removes the LAZY Atlas fallback, so a later successful
 			// deserialization can ONLY come from the published trio — i.e. from discovery.
 			Hashtable<String, Object> props = baseProps("EAGER");
-			props.put("eager.scopes", new String[] { JENA_SCOPE });
+			props.put("eager.scopes", new String[] { TENANT_SCOPE });
 			props.put("drift.check.interval.ms", (int) DRIFT_INTERVAL_MS);
 			props.put("resource.set.fallback", Boolean.FALSE);
 			configuration.update(props);
@@ -617,7 +617,7 @@ public class AtlasClientOsgiIT {
 	/** POST an .ecore into jena's writable final stage. */
 	private static int uploadSchema(String ecore, String name) throws IOException, InterruptedException {
 		HttpResponse<String> response = HttpClient.newHttpClient().send(HttpRequest
-				.newBuilder(URI.create(baseUri + "/" + JENA_SCOPE + "/schema/stages/" + JENA_VIEW + "?name=" + name))
+				.newBuilder(URI.create(baseUri + "/" + TENANT_SCOPE + "/schema/stages/" + JENA_VIEW + "?name=" + name))
 				.header("Content-Type", "application/xml").POST(HttpRequest.BodyPublishers.ofString(ecore))
 				.build(), HttpResponse.BodyHandlers.ofString());
 		return response.statusCode();
@@ -627,7 +627,7 @@ public class AtlasClientOsgiIT {
 	private static int deleteSchema(String nsUri) throws IOException, InterruptedException {
 		String nsUriParam = URLEncoder.encode(nsUri, StandardCharsets.UTF_8);
 		HttpResponse<String> response = HttpClient.newHttpClient().send(HttpRequest.newBuilder(
-				URI.create(baseUri + "/" + JENA_SCOPE + "/schema/stages/" + JENA_VIEW + "?nsUri=" + nsUriParam))
+				URI.create(baseUri + "/" + TENANT_SCOPE + "/schema/stages/" + JENA_VIEW + "?nsUri=" + nsUriParam))
 				.DELETE().build(), HttpResponse.BodyHandlers.ofString());
 		return response.statusCode();
 	}
@@ -700,7 +700,7 @@ public class AtlasClientOsgiIT {
 				declaringBundleJar(nsUri));
 		try {
 			Hashtable<String, Object> props = baseProps("EAGER");
-			props.put("eager.scopes", new String[] { JENA_SCOPE });
+			props.put("eager.scopes", new String[] { TENANT_SCOPE });
 			configuration.update(props);
 
 			assertNotNull(remotePackages.waitForService(SERVICE_WAIT_MS), "the sweep should publish something");
@@ -773,7 +773,7 @@ public class AtlasClientOsgiIT {
 	 */
 	private static List<String> atlasOwnedNsUris() throws Exception {
 		HttpResponse<String> response = HttpClient.newHttpClient().send(
-				HttpRequest.newBuilder(URI.create(baseUri + "/" + JENA_SCOPE + "/schema")).GET().build(),
+				HttpRequest.newBuilder(URI.create(baseUri + "/" + TENANT_SCOPE + "/schema")).GET().build(),
 				HttpResponse.BodyHandlers.ofString());
 		if (response.statusCode() != 200) {
 			return List.of();
@@ -804,7 +804,7 @@ public class AtlasClientOsgiIT {
 		props.put("base.uri", baseUri.toString());
 		props.put("mode", mode);
 		props.put("view", JENA_VIEW);
-		props.put("default.scope", JENA_SCOPE);
+		props.put("default.scope", TENANT_SCOPE);
 		return props;
 	}
 
@@ -816,7 +816,7 @@ public class AtlasClientOsgiIT {
 	 */
 	private static List<String> releasedNsUris() throws Exception {
 		HttpResponse<String> response = HttpClient.newHttpClient().send(
-				HttpRequest.newBuilder(URI.create(baseUri + "/" + JENA_SCOPE + "/schema")).GET().build(),
+				HttpRequest.newBuilder(URI.create(baseUri + "/" + TENANT_SCOPE + "/schema")).GET().build(),
 				HttpResponse.BodyHandlers.ofString());
 		if (response.statusCode() != 200) {
 			return List.of();

@@ -13,16 +13,18 @@
  */
 package org.eclipse.fennec.model.atlas.qvt.gdpr;
 
-import org.eclipse.fennec.model.gdprReport.ClassifierEvaluation;
-import org.eclipse.fennec.model.gdprReport.DataCategory;
-import org.eclipse.fennec.model.gdprReport.Evidence;
-import org.eclipse.fennec.model.gdprReport.FeatureEvaluation;
-import org.eclipse.fennec.model.gdprReport.Finding;
-import org.eclipse.fennec.model.gdprReport.GDPRReportFactory;
-import org.eclipse.fennec.model.gdprReport.GdprReport;
-import org.eclipse.fennec.model.gdprReport.GdprReportOrigin;
-import org.eclipse.fennec.model.gdprReport.PackageSubject;
-import org.eclipse.fennec.model.gdprReport.RelevanceLevelType;
+import org.eclipse.fennec.model.compliance.context.CategoryRef;
+import org.eclipse.fennec.model.compliance.context.ContextRef;
+import org.eclipse.fennec.model.compliance.context.ContextFactory;
+import org.eclipse.fennec.model.compliance.report.ClassifierEvaluation;
+import org.eclipse.fennec.model.compliance.report.Evidence;
+import org.eclipse.fennec.model.compliance.report.FeatureEvaluation;
+import org.eclipse.fennec.model.compliance.report.Finding;
+import org.eclipse.fennec.model.compliance.report.ReportFactory;
+import org.eclipse.fennec.model.compliance.report.ComplianceReport;
+import org.eclipse.fennec.model.compliance.report.ReportOrigin;
+import org.eclipse.fennec.model.compliance.report.PackageSubject;
+import org.eclipse.fennec.model.compliance.report.RelevanceLevel;
 
 /**
  * The two metamodel reviews the compiled unit of {@link QvtFlowAnalysisTest} was compiled against.
@@ -50,59 +52,59 @@ final class Reviews {
 	/** The purpose a person entered on the diagnosis field, and the reason one rule fires at all. */
 	static final String DIAGNOSIS_PURPOSE = "Stored to support the treating physician";
 
-	private static final GDPRReportFactory REPORTS = GDPRReportFactory.eINSTANCE;
+	private static final ReportFactory REPORTS = ReportFactory.eINSTANCE;
 
 	private Reviews() {
 	}
 
 	/** The source model's review: a patient record, reviewed in full. */
-	static GdprReport clinic() {
-		GdprReport report = report("gdpr-fp1-5b87b0c6-20260923-human", "clinic", CLINIC_NS, CLINIC_FP,
-				GdprReportOrigin.HUMAN);
+	static ComplianceReport clinic() {
+		ComplianceReport report = report("gdpr-fp1-5b87b0c6-20260923-human", "clinic", CLINIC_NS, CLINIC_FP,
+				ReportOrigin.HUMAN);
 		ClassifierEvaluation patient = classifier(report, "Patient");
-		feature(patient, "//Patient/id", DataCategory.DIRECT_IDENTIFIER, RelevanceLevelType.HIGH, null, "Art.4(1)",
+		feature(patient, "//Patient/id", "DIRECT_IDENTIFIER", RelevanceLevel.HIGH, null, "Art.4(1)",
 				"any information relating to an identified or identifiable natural person");
-		feature(patient, "//Patient/fullName", DataCategory.DIRECT_IDENTIFIER, RelevanceLevelType.HIGH, null,
+		feature(patient, "//Patient/fullName", "DIRECT_IDENTIFIER", RelevanceLevel.HIGH, null,
 				"Art.4(1)", "any information relating to an identified or identifiable natural person");
-		feature(patient, "//Patient/email", DataCategory.DIRECT_IDENTIFIER, RelevanceLevelType.HIGH, null, "Art.4(1)",
+		feature(patient, "//Patient/email", "DIRECT_IDENTIFIER", RelevanceLevel.HIGH, null, "Art.4(1)",
 				"any information relating to an identified or identifiable natural person");
-		feature(patient, "//Patient/birthDate", DataCategory.QUASI_IDENTIFIER, RelevanceLevelType.MEDIUM, null,
+		feature(patient, "//Patient/birthDate", "QUASI_IDENTIFIER", RelevanceLevel.MEDIUM, null,
 				"Rec.26", "account should be taken of all the means reasonably likely to be used");
-		feature(patient, "//Patient/postcode", DataCategory.QUASI_IDENTIFIER, RelevanceLevelType.MEDIUM, null,
+		feature(patient, "//Patient/postcode", "QUASI_IDENTIFIER", RelevanceLevel.MEDIUM, null,
 				"Rec.26", "account should be taken of all the means reasonably likely to be used");
-		feature(patient, "//Patient/diagnosis", DataCategory.SPECIAL_CATEGORY, RelevanceLevelType.HIGH,
+		feature(patient, "//Patient/diagnosis", "SPECIAL_CATEGORY", RelevanceLevel.HIGH,
 				DIAGNOSIS_PURPOSE, "Art.9(1)", "data concerning health");
-		feature(patient, "//Patient/appointments", DataCategory.SPECIAL_CATEGORY, RelevanceLevelType.HIGH, null,
+		feature(patient, "//Patient/appointments", "SPECIAL_CATEGORY", RelevanceLevel.HIGH, null,
 				"Art.9(1)", "data concerning health");
 
 		ClassifierEvaluation physician = classifier(report, "Physician");
-		feature(physician, "//Physician/name", DataCategory.DIRECT_IDENTIFIER, RelevanceLevelType.MEDIUM, null,
+		feature(physician, "//Physician/name", "DIRECT_IDENTIFIER", RelevanceLevel.MEDIUM, null,
 				"Art.4(1)", "any information relating to an identified or identifiable natural person");
 		return report;
 	}
 
 	/** The target model's review: written for the probe, with one deliberately free-text field. */
-	static GdprReport contacts() {
-		GdprReport report = report("gdpr-fp1-0bbb2a33-20260923-121250", "contacts", CONTACTS_NS, CONTACTS_FP,
-				GdprReportOrigin.AI_AGENT);
+	static ComplianceReport contacts() {
+		ComplianceReport report = report("gdpr-fp1-0bbb2a33-20260923-121250", "contacts", CONTACTS_NS, CONTACTS_FP,
+				ReportOrigin.AI_AGENT);
 		ClassifierEvaluation contact = classifier(report, "Contact");
 		// Weaker than the DIRECT_IDENTIFIER that arrives in it - the disagreement the probe missed
-		feature(contact, "//Contact/reference", DataCategory.PERSONAL_DATA, RelevanceLevelType.HIGH, null, "Art.4(1)",
+		feature(contact, "//Contact/reference", "PERSONAL_DATA", RelevanceLevel.HIGH, null, "Art.4(1)",
 				"any information relating to an identified or identifiable natural person");
-		feature(contact, "//Contact/displayName", DataCategory.DIRECT_IDENTIFIER, RelevanceLevelType.HIGH, null,
+		feature(contact, "//Contact/displayName", "DIRECT_IDENTIFIER", RelevanceLevel.HIGH, null,
 				"Art.4(1)", "any information relating to an identified or identifiable natural person");
-		feature(contact, "//Contact/contactEmail", DataCategory.DIRECT_IDENTIFIER, RelevanceLevelType.HIGH, null,
+		feature(contact, "//Contact/contactEmail", "DIRECT_IDENTIFIER", RelevanceLevel.HIGH, null,
 				"Art.4(1)", "any information relating to an identified or identifiable natural person");
-		feature(contact, "//Contact/comment", DataCategory.PERSONAL_DATA, RelevanceLevelType.MEDIUM, null, "Art.4(1)",
+		feature(contact, "//Contact/comment", "PERSONAL_DATA", RelevanceLevel.MEDIUM, null, "Art.4(1)",
 				"any information relating to an identified or identifiable natural person");
 		return report;
 	}
 
 	/* ------------------------------------------------------------------ building blocks */
 
-	private static GdprReport report(String reportId, String name, String nsURI, String fingerprint,
-			GdprReportOrigin origin) {
-		GdprReport report = REPORTS.createGdprReport();
+	private static ComplianceReport report(String reportId, String name, String nsURI, String fingerprint,
+			ReportOrigin origin) {
+		ComplianceReport report = REPORTS.createComplianceReport();
 		report.setReportId(reportId);
 		report.setName("GDPR review of " + name);
 		report.setGeneratedAt("2026-09-23T08:51:08Z");
@@ -112,24 +114,25 @@ final class Reviews {
 		subject.setNsURI(nsURI);
 		subject.setSubjectFingerprint(fingerprint);
 		report.setSubject(subject);
-		report.setCorpus(REPORTS.createLegalCorpusRef());
-		report.getCorpus().setCelex("02016R0679-20160504");
-		report.getCorpus().setConsolidatedDate("20160504");
-		report.getCorpus().setLanguage("EN");
+		ContextRef context = ContextFactory.eINSTANCE.createContextRef();
+		context.setContextId("gdpr");
+		context.setContextVersion("20160504");
+		report.getContexts().add(context);
+		report.setLanguage("EN");
 		return report;
 	}
 
-	private static ClassifierEvaluation classifier(GdprReport report, String name) {
+	private static ClassifierEvaluation classifier(ComplianceReport report, String name) {
 		ClassifierEvaluation classifier = REPORTS.createClassifierEvaluation();
 		classifier.setId(name);
 		classifier.setName(name);
 		classifier.setUriFragment("//" + name);
-		report.getEvaluation().add(classifier);
+		report.getEvaluations().add(classifier);
 		return classifier;
 	}
 
-	private static void feature(ClassifierEvaluation classifier, String uriFragment, DataCategory category,
-			RelevanceLevelType relevance, String purpose, String citationId, String quote) {
+	private static void feature(ClassifierEvaluation classifier, String uriFragment, String category,
+			RelevanceLevel relevance, String purpose, String citationId, String quote) {
 		FeatureEvaluation feature = REPORTS.createFeatureEvaluation();
 		feature.setId(uriFragment);
 		feature.setName(uriFragment.substring(uriFragment.lastIndexOf('/') + 1));
@@ -138,7 +141,7 @@ final class Reviews {
 		feature.setPurpose(purpose);
 		Finding finding = REPORTS.createFinding();
 		finding.setId(uriFragment + "-1");
-		finding.setCategory(category);
+		finding.getCategories().add(categoryRef(category));
 		finding.setRelevanceLevel(relevance);
 		finding.setRationale("The reviewer's reason for " + uriFragment + ".");
 		Evidence evidence = REPORTS.createEvidence();
@@ -149,6 +152,19 @@ final class Reviews {
 		evidence.setRelevance("The reviewer's relevance for " + uriFragment + ".");
 		finding.getEvidence().add(evidence);
 		feature.getFindings().add(finding);
-		classifier.getFeatureEvaluation().add(feature);
+		classifier.getFeatureEvaluations().add(feature);
 	}
+
+	/**
+	 * A data-category reference, the way a review records one: an id in the context's
+	 * {@code data-categories} taxonomy. The ids are the names the {@code DataCategory} enum had.
+	 */
+	static CategoryRef categoryRef(String categoryId) {
+		CategoryRef ref = ContextFactory.eINSTANCE.createCategoryRef();
+		ref.setContextId("gdpr");
+		ref.setTaxonomyId("data-categories");
+		ref.setCategoryId(categoryId);
+		return ref;
+	}
+
 }

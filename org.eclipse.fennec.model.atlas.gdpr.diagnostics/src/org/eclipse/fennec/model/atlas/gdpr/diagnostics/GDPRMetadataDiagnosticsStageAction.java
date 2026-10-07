@@ -33,9 +33,9 @@ import org.eclipse.fennec.model.atlas.action.api.StageActionService;
 import org.eclipse.fennec.model.atlas.mgmt.management.Diagnostic;
 import org.eclipse.fennec.model.atlas.mgmt.management.ObjectMetadata;
 import org.eclipse.fennec.model.atlas.wf.workflowapi.WritableScopeService;
-import org.eclipse.fennec.model.gdprReport.GDPRReportPackage;
-import org.eclipse.fennec.model.gdprReport.GdprReport;
-import org.eclipse.fennec.model.gdprReport.Subject;
+import org.eclipse.fennec.model.compliance.report.ReportPackage;
+import org.eclipse.fennec.model.compliance.report.ComplianceReport;
+import org.eclipse.fennec.model.compliance.report.Subject;
 import org.osgi.service.component.annotations.Activate;
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.ConfigurationPolicy;
@@ -130,7 +130,7 @@ public class GDPRMetadataDiagnosticsStageAction implements StageActionService {
 	private static final Logger LOGGER = Logger.getLogger(GDPRMetadataDiagnosticsStageAction.class.getName());
 
 	/** What the storage layer writes into {@code ActionContext.objectType()} for a report. */
-	private static final String REPORT_TYPE = EcoreUtil.getURI(GDPRReportPackage.Literals.GDPR_REPORT).toString();
+	private static final String REPORT_TYPE = EcoreUtil.getURI(ReportPackage.Literals.COMPLIANCE_REPORT).toString();
 
 	/**
 	 * Configuration of this component.
@@ -312,7 +312,7 @@ public class GDPRMetadataDiagnosticsStageAction implements StageActionService {
 			return Promises.resolved(null);
 		}
 		ReportAddress address = ReportAddress.of(ctx);
-		GdprReport report = read(ctx);
+		ComplianceReport report = read(ctx);
 		if (report == null) {
 			LOGGER.log(Level.WARNING, () -> String.format(
 					"GDPR report %s is not readable, so no findings were written onto the object it reviewed.",
@@ -360,7 +360,7 @@ public class GDPRMetadataDiagnosticsStageAction implements StageActionService {
 					fingerprint, stage, registry, ctx.scope()));
 			return Promises.resolved(null);
 		}
-		GdprReport current = latestReviewOf(ctx, fingerprint);
+		ComplianceReport current = latestReviewOf(ctx, fingerprint);
 		// Never an empty list: an object whose last review was withdrawn has not been checked, and
 		// clearing the producer would make it indistinguishable from one nobody has reviewed yet.
 		List<Diagnostic> roots = current == null ? mapper.noReview(fingerprint) : mapper.map(current);
@@ -400,9 +400,9 @@ public class GDPRMetadataDiagnosticsStageAction implements StageActionService {
 		return null;
 	}
 
-	private GdprReport read(ActionContext ctx) {
+	private ComplianceReport read(ActionContext ctx) {
 		EObject content = scope.getContentFromStageForRegistry(ctx.registry(), ctx.stage(), ctx.objectId());
-		return content instanceof GdprReport report ? report : null;
+		return content instanceof ComplianceReport report ? report : null;
 	}
 
 	/**
@@ -433,12 +433,12 @@ public class GDPRMetadataDiagnosticsStageAction implements StageActionService {
 	 * every review of a subject the same way, across every stage.
 	 * </p>
 	 */
-	private GdprReport latestReviewOf(ActionContext ctx, String fingerprint) {
-		GdprReport latest = null;
+	private ComplianceReport latestReviewOf(ActionContext ctx, String fingerprint) {
+		ComplianceReport latest = null;
 		Instant latestAt = null;
 		String latestId = null;
 		for (ObjectMetadata metadata : scope.listInStageForRegistry(ctx.registry(), ctx.stage())) {
-			GdprReport candidate = reportAt(ctx, metadata.getObjectId());
+			ComplianceReport candidate = reportAt(ctx, metadata.getObjectId());
 			ReviewedSubject about = candidate == null ? null : ReviewedSubject.of(candidate);
 			if (about == null || !fingerprint.equals(about.fingerprint())) {
 				continue;
@@ -456,10 +456,10 @@ public class GDPRMetadataDiagnosticsStageAction implements StageActionService {
 		return latest;
 	}
 
-	private GdprReport reportAt(ActionContext ctx, String objectId) {
+	private ComplianceReport reportAt(ActionContext ctx, String objectId) {
 		try {
 			EObject content = scope.getContentFromStageForRegistry(ctx.registry(), ctx.stage(), objectId);
-			return content instanceof GdprReport report ? report : null;
+			return content instanceof ComplianceReport report ? report : null;
 		} catch (RuntimeException goneOrUnreadable) {
 			// Listed a moment ago and not there now, or not parseable: it cannot speak for the
 			// revision either way, and failing the whole write over it would be worse.
@@ -474,7 +474,7 @@ public class GDPRMetadataDiagnosticsStageAction implements StageActionService {
 	 * state its own generation time cannot claim to supersede one that does, which is why the
 	 * stated value comes first.
 	 */
-	private static Instant generatedAt(GdprReport report, ObjectMetadata metadata) {
+	private static Instant generatedAt(ComplianceReport report, ObjectMetadata metadata) {
 		String stated = report.getGeneratedAt();
 		if (stated != null && !stated.isBlank()) {
 			try {
@@ -500,7 +500,7 @@ public class GDPRMetadataDiagnosticsStageAction implements StageActionService {
 	private record ReviewedSubject(String fingerprint, String subjectType) {
 
 		/** What the report says, or {@code null} when it names no revision to write onto. */
-		static ReviewedSubject of(GdprReport report) {
+		static ReviewedSubject of(ComplianceReport report) {
 			Subject subject = report.getSubject();
 			String fingerprint = subject == null ? null : subject.getSubjectFingerprint();
 			if (blank(fingerprint)) {
@@ -533,9 +533,9 @@ public class GDPRMetadataDiagnosticsStageAction implements StageActionService {
 	/** The concrete subclasses of {@code Subject} the report model has, by EClass name. */
 	private static Set<String> subjectTypes() {
 		Set<String> names = new LinkedHashSet<>();
-		for (EClassifier classifier : GDPRReportPackage.eINSTANCE.getEClassifiers()) {
+		for (EClassifier classifier : ReportPackage.eINSTANCE.getEClassifiers()) {
 			if (classifier instanceof EClass candidate && !candidate.isAbstract()
-					&& GDPRReportPackage.Literals.SUBJECT.isSuperTypeOf(candidate)) {
+					&& ReportPackage.Literals.SUBJECT.isSuperTypeOf(candidate)) {
 				names.add(candidate.getName());
 			}
 		}

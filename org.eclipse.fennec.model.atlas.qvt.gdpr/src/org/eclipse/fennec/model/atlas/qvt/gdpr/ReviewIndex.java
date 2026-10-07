@@ -20,15 +20,15 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import org.eclipse.fennec.model.gdprReport.ClassifierEvaluation;
-import org.eclipse.fennec.model.gdprReport.DataCategory;
-import org.eclipse.fennec.model.gdprReport.Evaluation;
-import org.eclipse.fennec.model.gdprReport.Evidence;
-import org.eclipse.fennec.model.gdprReport.FeatureEvaluation;
-import org.eclipse.fennec.model.gdprReport.Finding;
-import org.eclipse.fennec.model.gdprReport.GdprReport;
-import org.eclipse.fennec.model.gdprReport.LegalCorpusRef;
-import org.eclipse.fennec.model.gdprReport.RelevanceLevelType;
+import org.eclipse.fennec.model.compliance.context.CategoryRef;
+import org.eclipse.fennec.model.compliance.context.ContextRef;
+import org.eclipse.fennec.model.compliance.report.ClassifierEvaluation;
+import org.eclipse.fennec.model.compliance.report.Evaluation;
+import org.eclipse.fennec.model.compliance.report.Evidence;
+import org.eclipse.fennec.model.compliance.report.FeatureEvaluation;
+import org.eclipse.fennec.model.compliance.report.Finding;
+import org.eclipse.fennec.model.compliance.report.ComplianceReport;
+import org.eclipse.fennec.model.compliance.report.RelevanceLevel;
 
 /**
  * One metamodel's review, indexed the way a flow asks about it: by the {@code uriFragment} of the
@@ -41,36 +41,47 @@ import org.eclipse.fennec.model.gdprReport.RelevanceLevelType;
 final class ReviewIndex {
 
 	/**
+	 * The taxonomy a review's data categories point into. Everything else a finding may reference -
+	 * a combination kind, a lawful basis - is in a taxonomy of its own and is not a classification
+	 * of the data, so it is read past here.
+	 */
+	static final String TAXONOMY = "data-categories";
+
+	/**
 	 * The categories that mean personal data is involved. {@code PSEUDONYMISED} and
 	 * {@code ANONYMOUS} are deliberately not among them: they are what a field looks like after the
 	 * measure worked, so a flow carrying one of those is not a flow of identifiable data - but they
 	 * do rank above {@code NOT_PERSONAL_DATA} in {@link #SEVERITY}, because losing pseudonymisation
 	 * along the way is still worth seeing.
 	 */
-	static final Set<DataCategory> PERSONAL = Set.of(DataCategory.PERSONAL_DATA, DataCategory.DIRECT_IDENTIFIER,
-			DataCategory.QUASI_IDENTIFIER, DataCategory.ONLINE_IDENTIFIER, DataCategory.LOCATION_DATA,
-			DataCategory.SPECIAL_CATEGORY, DataCategory.CRIMINAL_CONVICTION_DATA, DataCategory.CHILD_DATA);
+	static final Set<String> PERSONAL = Set.of("PERSONAL_DATA", "DIRECT_IDENTIFIER", "QUASI_IDENTIFIER",
+			"ONLINE_IDENTIFIER", "LOCATION_DATA", "SPECIAL_CATEGORY", "CRIMINAL_CONVICTION_DATA", "CHILD_DATA");
 
 	/**
 	 * Weakest to strongest, which is the order two classifications are compared in - for the worst
 	 * category reaching a field, and for deciding that a target review classifies a field more
 	 * weakly than what arrives in it. It is an ordering of how much the category constrains
 	 * processing, not a ranking of harm.
+	 * <p>
+	 * <b>Ids and no longer enum literals.</b> A finding used to carry one {@code DataCategory};
+	 * it now carries references into a taxonomy of the context the review ran against. These are
+	 * the ids the GDPR context gives its categories, which are the names the enum had - so the
+	 * ordering is unchanged and so is every verdict that depends on it. A category this list does
+	 * not name ranks below all of them, which is the cautious reading only because such a category
+	 * also fails {@link #PERSONAL} and therefore never reaches a comparison.
 	 */
-	private static final List<DataCategory> SEVERITY = List.of(DataCategory.NOT_PERSONAL_DATA,
-			DataCategory.ANONYMOUS, DataCategory.PSEUDONYMISED, DataCategory.PERSONAL_DATA,
-			DataCategory.ONLINE_IDENTIFIER, DataCategory.LOCATION_DATA, DataCategory.QUASI_IDENTIFIER,
-			DataCategory.DIRECT_IDENTIFIER, DataCategory.CHILD_DATA, DataCategory.CRIMINAL_CONVICTION_DATA,
-			DataCategory.SPECIAL_CATEGORY);
+	private static final List<String> SEVERITY = List.of("NOT_PERSONAL_DATA", "ANONYMOUS", "PSEUDONYMISED",
+			"PERSONAL_DATA", "ONLINE_IDENTIFIER", "LOCATION_DATA", "QUASI_IDENTIFIER", "DIRECT_IDENTIFIER",
+			"CHILD_DATA", "CRIMINAL_CONVICTION_DATA", "SPECIAL_CATEGORY");
 
-	private final GdprReport report;
+	private final ComplianceReport report;
 	private final Map<String, FeatureEvaluation> byFragment = new LinkedHashMap<>();
 
-	ReviewIndex(GdprReport report) {
+	ReviewIndex(ComplianceReport report) {
 		this.report = report;
-		for (Evaluation evaluation : report.getEvaluation()) {
+		for (Evaluation evaluation : report.getEvaluations()) {
 			if (evaluation instanceof ClassifierEvaluation classifier) {
-				for (FeatureEvaluation feature : classifier.getFeatureEvaluation()) {
+				for (FeatureEvaluation feature : classifier.getFeatureEvaluations()) {
 					index(feature);
 				}
 			} else if (evaluation instanceof FeatureEvaluation feature) {
@@ -92,12 +103,17 @@ final class ReviewIndex {
 	}
 
 	/**
-	 * The corpus the review cited against. A transformation report carries it over rather than
-	 * naming one of its own: every citation in it came from a review, so the corpus those quotes
-	 * were read from is the corpus this report is against.
+	 * The contexts the review was made against. A transformation report carries them over rather
+	 * than naming any of its own: every citation in it came from a review, so the contexts those
+	 * quotes were read against are the contexts this report is against.
 	 */
-	LegalCorpusRef corpus() {
-		return report.getCorpus();
+	List<ContextRef> contexts() {
+		return report.getContexts();
+	}
+
+	/** The language the review wrote its prose in, or {@code null} when it did not say. */
+	String language() {
+		return report.getLanguage();
 	}
 
 	/** What the review says about one feature, or {@code null} if it says nothing about it. */
@@ -113,26 +129,49 @@ final class ReviewIndex {
 	/* ------------------------------------------------------------------ reading an evaluation */
 
 	/**
+	 * Every data category a finding claims, in this vocabulary's taxonomy.
+	 * <p>
+	 * A finding may now name several where it could name one, and may name refs of other taxonomies
+	 * beside them - the combination kind travels that way. Only this taxonomy's are classifications
+	 * of the data.
+	 *
+	 * @param finding the finding, never {@code null}
+	 * @return the category ids, possibly empty
+	 */
+	static List<String> categoriesOf(Finding finding) {
+		List<String> ids = new ArrayList<>();
+		for (CategoryRef ref : finding.getCategories()) {
+			if (TAXONOMY.equals(ref.getTaxonomyId()) && ref.getCategoryId() != null
+					&& !ref.getCategoryId().isBlank()) {
+				ids.add(ref.getCategoryId().trim());
+			}
+		}
+		return ids;
+	}
+
+	/**
 	 * The strongest category anybody claimed about the feature, or {@code null} when the review
 	 * made no claim. Several findings on one feature is the ordinary case - a reviewer records each
-	 * signal separately - and what travels along a flow is the strongest of them.
+	 * signal separately - and what travels along a flow is the strongest of them. A single finding
+	 * may now claim several categories as well, and they are weighed the same way.
 	 */
-	static DataCategory worstCategory(FeatureEvaluation feature) {
-		DataCategory worst = null;
+	static String worstCategory(FeatureEvaluation feature) {
+		String worst = null;
 		if (feature == null) {
 			return null;
 		}
 		for (Finding finding : feature.getFindings()) {
-			DataCategory candidate = finding.getCategory();
-			if (candidate != null && (worst == null || SEVERITY.indexOf(candidate) > SEVERITY.indexOf(worst))) {
-				worst = candidate;
+			for (String candidate : categoriesOf(finding)) {
+				if (worst == null || SEVERITY.indexOf(candidate) > SEVERITY.indexOf(worst)) {
+					worst = candidate;
+				}
 			}
 		}
 		return worst;
 	}
 
 	/** Whether the first classification constrains processing less than the second. */
-	static boolean weakerThan(DataCategory first, DataCategory second) {
+	static boolean weakerThan(String first, String second) {
 		if (first == null || second == null) {
 			return false;
 		}
@@ -140,7 +179,7 @@ final class ReviewIndex {
 	}
 
 	/** The stronger of two categories, either of which may be absent. */
-	static DataCategory stronger(DataCategory first, DataCategory second) {
+	static String stronger(String first, String second) {
 		if (first == null) {
 			return second;
 		}
@@ -151,7 +190,7 @@ final class ReviewIndex {
 	}
 
 	/** The higher of two relevance levels, either of which may be absent. */
-	static RelevanceLevelType higher(RelevanceLevelType first, RelevanceLevelType second) {
+	static RelevanceLevel higher(RelevanceLevel first, RelevanceLevel second) {
 		if (first == null) {
 			return second;
 		}

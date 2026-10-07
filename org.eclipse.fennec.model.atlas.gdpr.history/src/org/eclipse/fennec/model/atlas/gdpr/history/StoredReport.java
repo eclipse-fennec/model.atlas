@@ -15,14 +15,14 @@ package org.eclipse.fennec.model.atlas.gdpr.history;
 
 import java.util.Objects;
 
-import org.eclipse.fennec.model.gdprReport.GdprReport;
-import org.eclipse.fennec.model.gdprReportHistory.RevisionOrigin;
+import org.eclipse.fennec.model.compliance.report.ComplianceReport;
+import org.eclipse.fennec.model.compliance.history.RevisionOrigin;
 
 /**
  * One stored review, as the history builder receives it: the report together with the two things
  * only the storage layer knows.
  * <p>
- * <b>Why the id is passed in rather than read from the report.</b> A {@code GdprReport} carries no
+ * <b>Why the id is passed in rather than read from the report.</b> A {@code ComplianceReport} carries no
  * report id of its own, so the Atlas object id is the only thing that ties a revision back to the
  * sealed report someone can go and open. Should the report model ever gain such an attribute, this
  * stays the addressing id and the one in the content becomes a claim to check against it.
@@ -39,7 +39,7 @@ import org.eclipse.fennec.model.gdprReportHistory.RevisionOrigin;
  * @param origin    where the revision came from; {@code null} is read as
  *                  {@link RevisionOrigin#UNKNOWN}
  */
-public record StoredReport(String objectId, GdprReport report, String changedBy, RevisionOrigin origin) {
+public record StoredReport(String objectId, ComplianceReport report, String changedBy, RevisionOrigin origin) {
 
 	/**
 	 * @param objectId  the Atlas object id, required
@@ -62,7 +62,7 @@ public record StoredReport(String objectId, GdprReport report, String changedBy,
 	 * @param report   the report
 	 * @return the stored report, with {@link RevisionOrigin#UNKNOWN}
 	 */
-	public static StoredReport of(String objectId, GdprReport report) {
+	public static StoredReport of(String objectId, ComplianceReport report) {
 		return new StoredReport(objectId, report, null, RevisionOrigin.UNKNOWN);
 	}
 }

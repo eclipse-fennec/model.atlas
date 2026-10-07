@@ -1,6 +1,6 @@
 # GDPR review findings on the reviewed model
 
-A GDPR review produces a `GdprReport` in the atlas. Nothing on the **reviewed model** says so: open
+A GDPR review produces a `ComplianceReport` in the atlas. Nothing on the **reviewed model** says so: open
 the schema registry and the package that was found to hold special-category data looks exactly like
 one that was found clean. You have to know a report exists, and where, before you can learn that
 the model needs looking at.
@@ -63,10 +63,16 @@ count of what there is.
 `gdpr.feature` a feature's (`//Patient/denomination`), `gdpr.flow` a transformation's path
 (`mapping:<nsURI>#<source>-><nsURI>#<target>`, since a flow has no fragment of its own), and
 `gdpr.combination` the elements a `CombinationFinding` spans, sorted so the address does not depend
-on the order the analyser listed them in. Its message names the `combinationKind`.
+on the order the analyser listed them in. Its message names how the combination combines — the
+category ref whose taxonomy is `combination-kinds`, e.g. `LINKAGE`.
 
-**A leaf per claim**, coded `gdpr.finding.<CATEGORY>.<RELEVANCE>`, carrying the review's own words:
-the rationale, then the recommendation, the citations and the confidence.
+**A leaf per claim**, coded `gdpr.finding.<CATEGORIES>.<RELEVANCE>`, carrying the review's own
+words: the rationale, then the recommendation, the citations and the confidence. A finding names its
+categories as refs into the `data-categories` taxonomy of the context the review ran against; one
+category gives `gdpr.finding.SPECIAL_CATEGORY.HIGH`, several are joined **sorted** with `+` so the
+code does not depend on the order a reviewer listed them in, and a finding that names none at a
+relevance above `NONE` is written as `gdpr.finding.HIGH` rather than dropped. A ref from any other
+taxonomy is not part of the code.
 
 **Severities.** `MEDIUM` and `HIGH` are `WARNING`, `LOW` is `INFO`, and **no finding is ever an
 `ERROR`**. The report's own disclaimer says it flags features needing human review and must not
@@ -75,10 +81,12 @@ it is. Nothing is lost by collapsing `MEDIUM` and `HIGH` onto one severity — t
 of the leaf's code, and therefore of its identity. `ERROR` is reserved for the two nodes that say
 the check did *not* run: `gdpr.unreviewed-source` and `gdpr.no-review`.
 
-**A finding that asserts nothing is not written**: `relevanceLevel` `NONE`, or a category of
-`NOT_PERSONAL_DATA` or `ANONYMOUS`. A review does not record cleanliness as a finding anyway — it
-records it by holding an evaluation with no findings — so this is mostly a guard against a
-contradictory one.
+**A finding that asserts nothing is not written**: `relevanceLevel` `NONE`, or every one of its
+data categories in the benign set. That set is a component property of the two stage actions,
+defaulted to the GDPR context's `NOT_PERSONAL_DATA` and `ANONYMOUS`; a deployment reviewing against
+another context names its own ids there rather than needing code. A review does not record
+cleanliness as a finding anyway — it records it by holding an evaluation with no findings — so this
+is mostly a guard against a contradictory one.
 
 ### Silence is never the answer
 
@@ -116,7 +124,7 @@ subject it answers for with `subject.type`.
 written, and a miss is logged and dropped rather than searched for elsewhere:
 
 ```
-No object with fingerprint 'fp1:b55ae564…' is in stage 'draft' of registry 'schema' in scope 'jena',
+No object with fingerprint 'fp1:b55ae564…' is in stage 'draft' of registry 'schema' in scope 'dimcity',
 so the GDPR review's findings were not written. They land when the reviewed object and its review
 are in the same stage.
 ```
@@ -176,13 +184,13 @@ said, because a producer's roots are replaced as a set.
 
 ## When a person is asked to look again
 
-A leaf's id turns on the **element, the category and the relevance**. Everything above it in the
+A leaf's id turns on the **element, the categories and the relevance**. Everything above it in the
 tree is fixed for this producer, so:
 
 - the same claim reached by another route — a reworded rationale, one more `detectedBy`, a
   different `Finding.id` — is the **same** diagnostic. It keeps its id, and with it an
   `ACKNOWLEDGED` or `RESOLVED` a person set.
-- a changed category, or a changed relevance, is a **different** claim: a new id, status `OPEN`,
+- a changed category set, or a changed relevance, is a **different** claim: a new id, status `OPEN`,
   and the old one disappears with the rewrite. A judgement that moved is one a person has to look
   at again.
 
@@ -190,10 +198,10 @@ tree is fixed for this producer, so:
 review, `f1` in the next for the same claim), so keying on it would make every diagnostic look new
 every time.
 
-Several findings that share an element, a category and a relevance **fold into one leaf**, their
+Several findings that share an element, its categories and a relevance **fold into one leaf**, their
 rationales, recommendations and citations merged and the least certain confidence kept. They differ
 in how the review reached the claim, not in what it asserts, and there is one decision to make about
-it. Two findings of *different* categories on one feature stay two leaves — as do `PERSONAL_DATA` at
+it. Two findings of *different* category sets on one feature stay two leaves — as do `PERSONAL_DATA` at
 `HIGH` and at `MEDIUM` on the same feature, which a live review does produce.
 
 `Finding.diagnosticId` is left unset by this path. The id is derivable from values a reader of the
@@ -218,16 +226,16 @@ The file image takes its scope from `MODEL_ATLAS_SCOPE`, as
     "subject.type": "PackageSubject",        // and which reports those are. Every report reaches
                                              // every instance; this is what keeps them apart
     "report.stages": ["draft", "approved", "release"],  // the report stages this answers for
-    "trigger.scopes": ["jena"],              // empty means every scope that binds the registry
-    "scope.target": "(atlas.scope=jena)",
+    "trigger.scopes": ["dimcity"],           // empty means every scope that binds the registry
+    "scope.target": "(atlas.scope=dimcity)",
     "stage.action.name": "GDPRMetadataDiagnosticsStageAction~schema"
 },
 "GDPRMetadataDiagnosticsStageAction~transformations": {
     "target.registry": "transformations",    // the same action again, for reviews of compiled units
     "subject.type": "TransformationSubject",
     "report.stages": ["draft", "approved", "release"],
-    "trigger.scopes": ["jena"],
-    "scope.target": "(atlas.scope=jena)",
+    "trigger.scopes": ["dimcity"],
+    "scope.target": "(atlas.scope=dimcity)",
     "stage.action.name": "GDPRMetadataDiagnosticsStageAction~transformations"
 },
 "RegistryService~gdpr": {
@@ -267,11 +275,11 @@ does not start writing them by having the bundle installed.
 
 ```bash
 # everything this producer says about one model
-curl -s "http://localhost:8080/atlas/rest/jena/registries/schema/stages/approved?objectId=<objectId>" \
+curl -s "http://localhost:8080/atlas/rest/dimcity/registries/schema/stages/approved?objectId=<objectId>" \
   | jq '.diagnostics[] | select(.producer=="gdpr.review")'
 
 # every reviewed object in a stage, one line per finding
-curl -s "http://localhost:8080/atlas/rest/jena/registries/schema/stages/approved" \
+curl -s "http://localhost:8080/atlas/rest/dimcity/registries/schema/stages/approved" \
   | jq -r '.metadata[] | select(.diagnostics) | . as $m | .diagnostics[]
            | select(.producer=="gdpr.review")
            | "\($m.properties.nsUri)\t\(.severity)\t\(.message)"'
@@ -289,7 +297,7 @@ default. Absent means `OPEN`.
 - **It does not decide anything the review did not.** No severity is inferred, no finding is
   merged across elements, no claim is invented from a clean evaluation.
 - **It does not touch `fennec-gdpr`,** and it does not make the review depend on the atlas knowing
-  about diagnostics. It does not change `gdpr-report.ecore` either: scope and stage stay out of a
+  about diagnostics. It does not change `report.ecore` either: scope and stage stay out of a
   shared model.
 - **It does not write to more than one address.** A fingerprint held in two stages is two objects,
   and one stage's review says nothing about the other's copy.
@@ -305,7 +313,7 @@ Optional, and ships only in the runtimes that ask for it:
 | bundle | why |
 |---|---|
 | `org.eclipse.fennec.model.atlas.gdpr.diagnostics` | the stage action and the mapper |
-| `org.eclipse.fennec.gdpr.report.model` | the `GdprReport` EPackage |
+| `org.eclipse.fennec.compliance.report.model` | the `ComplianceReport` EPackage |
 
 It depends on nothing in `fennec-gdpr`, so a deployment where a human uploads a report by hand —
 with no AI review half — needs only these two.

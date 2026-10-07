@@ -11,17 +11,32 @@
 # bundles own the check-side PIDs (they are split because the Configurator applies one of two
 # bundles supplying the same singleton PID wholesale and discards the other).
 #
+# The compliance models (issue #332) replace gdpr-report and gdpr-report-history: a review is now
+# a ComplianceReport naming the ContextRefs it was made against, and context.ecore cross-references
+# corpus.ecore, so three model bundles stand where one did. gdpr.report.model is gone from this
+# list: the fennec-gdpr bundles now import org.eclipse.fennec.model.compliance.report, so nothing
+# in this runtime reads the old EPackage.
+#
 # The GDPR review document (AP4/AP5 of the ODS plan) and the ODS codec it is downloaded through.
 # This file is '-resolve: never', so unlike the docker jena runtime the closure is named by hand:
 # codec.ods needs codec.tabular, codec.tabular.model and SODS, and gdpr.history needs the history
 # model. gdpr.diagnostics (issue #318) needs nothing the list does not already carry.
 # Taken from the docker jena resolve, which is the file to re-read if codec.ods ever grows
 # a dependency. action.api is not repeated here - the included base runtime already carries it.
-# Both gdpr model bundles come from the published common.models snapshots (cnf/central.mvn).
+# The model bundles come from the published common.models snapshots (cnf/central.mvn).
+#
+# qvt.gdpr (issue #319) belongs here too, and not only in the jena runtime used to test it: the
+# config.docker.file bundle below configures its three stage actions - QvtGdprFlowStageAction,
+# QvtFlowFindingsStageAction and QvtGdprReanalysisStageAction - and RegistryService~transformations
+# names the first in its stageActionService.target. Without the bundle those PIDs apply to nothing
+# and the transformation-level review silently never runs. It needs the m2x/QVT stack and the
+# report registry, and this image has both.
 -runbundles.docker.file: \
 	org.eclipse.fennec.event.atlas.mapping,\
 	org.eclipse.fennec.model.atlas.runtime.config.docker.file,\
-	org.eclipse.fennec.gdpr.report.model,\
+	org.eclipse.fennec.compliance.report.model,\
+	org.eclipse.fennec.compliance.context.model,\
+	org.eclipse.fennec.compliance.corpus.model,\
 	org.eclipse.fennec.gdpr.action,\
 	org.eclipse.fennec.gdpr.check,\
 	org.eclipse.fennec.ai.apis.meta.model,\
@@ -33,9 +48,10 @@
 	org.eclipse.fennec.gdpr.store.atlas,\
 	org.eclipse.fennec.gdpr.runtime.config.common,\
 	org.eclipse.fennec.gdpr.runtime.config.check,\
-	org.eclipse.fennec.gdpr.report.history.model,\
+	org.eclipse.fennec.compliance.report.history.model,\
 	org.eclipse.fennec.model.atlas.gdpr.history,\
 	org.eclipse.fennec.model.atlas.gdpr.diagnostics,\
+	org.eclipse.fennec.model.atlas.qvt.gdpr,\
 	org.eclipse.fennec.codec.ods,\
 	org.eclipse.fennec.codec.tabular,\
 	org.eclipse.fennec.codec.tabular.model,\

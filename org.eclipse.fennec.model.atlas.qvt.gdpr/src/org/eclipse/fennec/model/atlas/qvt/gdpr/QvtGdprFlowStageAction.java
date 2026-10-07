@@ -25,10 +25,11 @@ import org.eclipse.emf.ecore.EObject;
 import org.eclipse.emf.ecore.util.EcoreUtil;
 import org.eclipse.fennec.m2x.model.compiled.CompiledPackage;
 import org.eclipse.fennec.m2x.model.compiled.CompiledUnit;
+import org.eclipse.fennec.model.compliance.report.ComplianceReport;
 import org.eclipse.fennec.model.atlas.action.api.ActionContext;
 import org.eclipse.fennec.model.atlas.action.api.StageActionService;
 import org.eclipse.fennec.model.atlas.wf.workflowapi.WritableScopeService;
-import org.eclipse.fennec.model.gdprReport.GDPRReportPackage;
+import org.eclipse.fennec.model.compliance.report.ReportPackage;
 import org.osgi.service.component.annotations.Activate;
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.ConfigurationPolicy;
@@ -119,7 +120,7 @@ public class QvtGdprFlowStageAction implements StageActionService {
 	/** What the storage layer writes into {@code ActionContext.objectType()} for a compiled unit. */
 	private static final String UNIT_TYPE = EcoreUtil.getURI(CompiledPackage.Literals.COMPILED_UNIT).toString();
 
-	private static final String REPORT_TYPE = EcoreUtil.getURI(GDPRReportPackage.Literals.GDPR_REPORT).toString();
+	private static final String REPORT_TYPE = EcoreUtil.getURI(ReportPackage.Literals.COMPLIANCE_REPORT).toString();
 
 	/** Configuration of this component. */
 	@ObjectClassDefinition(name = "QVT GDPR Flow Analysis Stage Action")
@@ -283,7 +284,14 @@ public class QvtGdprFlowStageAction implements StageActionService {
 			return Promises.resolved(null);
 		}
 		try {
-			produced.put(address, analysis.analyse(unit, ctx.stage()).getReportId());
+			ComplianceReport report = analysis.analyse(unit, ctx.stage(), ctx.registry(), ctx.objectId());
+			if (report == null) {
+				// A metamodel it rests on has no review, so there is no report and nothing to
+				// remember: the gap is on the unit, written by the analysis itself.
+				produced.remove(address);
+			} else {
+				produced.put(address, report.getReportId());
+			}
 			return Promises.resolved(null);
 		} catch (RuntimeException e) {
 			// Failed rather than swallowed: the workflow records it on the unit as a

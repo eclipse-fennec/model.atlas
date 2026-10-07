@@ -1,7 +1,7 @@
 Bundle-Name: Model Atlas GDPR Report History Tests
 Bundle-Description: OSGi integration tests for the derived GDPR review document. They drive the \
  real stage action through the real registries: a report stored in the 'gdpr' registry has to \
- produce a GdprReportHistory in 'gdprdoc', and that document has to render as an ODS with one \
+ produce a ComplianceReportHistory in 'gdprdoc', and that document has to render as an ODS with one \
  sheet per containment list.
 
 # The ODS half cannot be a plain unit test. OdsResourceFactoryComponent is Private-Package in
@@ -30,8 +30,10 @@ Test-Cases: ${classes;HIERARCHY_INDIRECTLY_ANNOTATED;org.junit.platform.commons.
 	org.eclipse.fennec.model.atlas.scope.api;version=snapshot,\
 	org.eclipse.fennec.model.atlas.action.api;version=snapshot,\
 	org.eclipse.fennec.model.atlas.tests.common;version=snapshot,\
-	org.eclipse.fennec.gdpr.report.model;version=latest,\
-	org.eclipse.fennec.gdpr.report.history.model;version=latest
+	org.eclipse.fennec.compliance.report.model;version=latest,\
+	org.eclipse.fennec.compliance.report.history.model;version=latest,\
+	org.eclipse.fennec.compliance.context.model;version=latest,\
+	org.eclipse.fennec.compliance.corpus.model;version=latest
 
 Private-Package: org.eclipse.fennec.model.atlas.gdpr.history.tests
 

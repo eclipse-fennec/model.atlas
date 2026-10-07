@@ -30,16 +30,18 @@ import org.eclipse.fennec.model.atlas.mgmt.management.Diagnostic;
 import org.eclipse.fennec.model.atlas.mgmt.management.ManagementFactory;
 import org.eclipse.fennec.model.atlas.mgmt.management.ObjectMetadata;
 import org.eclipse.fennec.model.atlas.wf.workflowapi.WritableScopeService;
-import org.eclipse.fennec.model.gdprReport.ClassifierEvaluation;
-import org.eclipse.fennec.model.gdprReport.DataCategory;
-import org.eclipse.fennec.model.gdprReport.Evidence;
-import org.eclipse.fennec.model.gdprReport.FeatureEvaluation;
-import org.eclipse.fennec.model.gdprReport.Finding;
-import org.eclipse.fennec.model.gdprReport.GDPRReportFactory;
-import org.eclipse.fennec.model.gdprReport.GdprReport;
-import org.eclipse.fennec.model.gdprReport.PackageSubject;
-import org.eclipse.fennec.model.gdprReport.RelevanceLevelType;
-import org.eclipse.fennec.model.gdprReport.TransformationSubject;
+import org.eclipse.fennec.model.compliance.context.CategoryRef;
+import org.eclipse.fennec.model.compliance.context.ContextRef;
+import org.eclipse.fennec.model.compliance.context.ContextFactory;
+import org.eclipse.fennec.model.compliance.report.ClassifierEvaluation;
+import org.eclipse.fennec.model.compliance.report.Evidence;
+import org.eclipse.fennec.model.compliance.report.FeatureEvaluation;
+import org.eclipse.fennec.model.compliance.report.Finding;
+import org.eclipse.fennec.model.compliance.report.ReportFactory;
+import org.eclipse.fennec.model.compliance.report.ComplianceReport;
+import org.eclipse.fennec.model.compliance.report.PackageSubject;
+import org.eclipse.fennec.model.compliance.report.RelevanceLevel;
+import org.eclipse.fennec.model.compliance.report.TransformationSubject;
 
 /**
  * The package under review, the review of it, and waiting for what the action makes of the two.
@@ -53,7 +55,7 @@ final class Fixtures {
 	/** The producer whose roots the action owns. */
 	static final String PRODUCER = "gdpr.review";
 
-	private static final GDPRReportFactory REPORTS = GDPRReportFactory.eINSTANCE;
+	private static final ReportFactory REPORTS = ReportFactory.eINSTANCE;
 	private static final long TIMEOUT_MS = 30_000;
 	private static final long POLL_MS = 100;
 
@@ -92,15 +94,15 @@ final class Fixtures {
 	}
 
 	/** A review of one revision that found something on one feature. */
-	static GdprReport review(String reportId, String fingerprint, DataCategory category,
-			RelevanceLevelType relevance) {
+	static ComplianceReport review(String reportId, String fingerprint, String category,
+			RelevanceLevel relevance) {
 		return review(reportId, fingerprint, category, relevance, "2026-09-28T10:00:00Z");
 	}
 
 	/** The same, carried out at a stated time; which review speaks for a revision turns on it. */
-	static GdprReport review(String reportId, String fingerprint, DataCategory category,
-			RelevanceLevelType relevance, String generatedAt) {
-		GdprReport report = REPORTS.createGdprReport();
+	static ComplianceReport review(String reportId, String fingerprint, String category,
+			RelevanceLevel relevance, String generatedAt) {
+		ComplianceReport report = REPORTS.createComplianceReport();
 		report.setReportId(reportId);
 		report.setName("GDPR review of person");
 		report.setGeneratedAt(generatedAt);
@@ -112,9 +114,11 @@ final class Fixtures {
 		subject.setSubjectFingerprint(fingerprint);
 		report.setSubject(subject);
 
-		report.setCorpus(REPORTS.createLegalCorpusRef());
-		report.getCorpus().setCelex("32016R0679");
-		report.getCorpus().setLanguage("DE");
+		ContextRef context = ContextFactory.eINSTANCE.createContextRef();
+		context.setContextId("gdpr");
+		context.setContextVersion("20160504");
+		report.getContexts().add(context);
+		report.setLanguage("DE");
 
 		ClassifierEvaluation classifier = REPORTS.createClassifierEvaluation();
 		classifier.setId("Person");
@@ -127,7 +131,7 @@ final class Fixtures {
 		feature.setRelevanceLevel(relevance);
 		Finding finding = REPORTS.createFinding();
 		finding.setId("F-001");
-		finding.setCategory(category);
+		finding.getCategories().add(categoryRef(category));
 		finding.setRelevanceLevel(relevance);
 		finding.setRationale("A date of birth contributes to singling out an individual.");
 		Evidence evidence = REPORTS.createEvidence();
@@ -136,8 +140,8 @@ final class Fixtures {
 		evidence.setVerbatim(true);
 		finding.getEvidence().add(evidence);
 		feature.getFindings().add(finding);
-		classifier.getFeatureEvaluation().add(feature);
-		report.getEvaluation().add(classifier);
+		classifier.getFeatureEvaluations().add(feature);
+		report.getEvaluations().add(classifier);
 		return report;
 	}
 
@@ -151,8 +155,8 @@ final class Fixtures {
 	 * the transformation report the package's own fingerprint removes that accident, and what is
 	 * left is the rule.
 	 */
-	static GdprReport transformationReview(String reportId, String fingerprint) {
-		GdprReport report = review(reportId, fingerprint, DataCategory.SPECIAL_CATEGORY, RelevanceLevelType.HIGH);
+	static ComplianceReport transformationReview(String reportId, String fingerprint) {
+		ComplianceReport report = review(reportId, fingerprint, "SPECIAL_CATEGORY", RelevanceLevel.HIGH);
 		report.setName("GDPR review of clinic2contacts");
 		TransformationSubject subject = REPORTS.createTransformationSubject();
 		subject.setQualifiedName("clinic2contacts");
@@ -163,7 +167,7 @@ final class Fixtures {
 	}
 
 	/** Stores a review into one stage of the report registry, the way the REST resource does. */
-	static void storeReview(WritableScopeService<EObject> scope, GdprReport report, String stage) throws Exception {
+	static void storeReview(WritableScopeService<EObject> scope, ComplianceReport report, String stage) throws Exception {
 		ObjectMetadata metadata = ManagementFactory.eINSTANCE.createObjectMetadata();
 		metadata.setObjectId(report.getReportId());
 		metadata.setObjectName(report.getName());
@@ -220,4 +224,17 @@ final class Fixtures {
 	static void settle() throws InterruptedException {
 		Thread.sleep(1_000);
 	}
+
+	/**
+	 * A data-category reference, the way a review records one: an id in the context's
+	 * {@code data-categories} taxonomy. The ids are the names the {@code DataCategory} enum had.
+	 */
+	static CategoryRef categoryRef(String categoryId) {
+		CategoryRef ref = ContextFactory.eINSTANCE.createCategoryRef();
+		ref.setContextId("gdpr");
+		ref.setTaxonomyId("data-categories");
+		ref.setCategoryId(categoryId);
+		return ref;
+	}
+
 }

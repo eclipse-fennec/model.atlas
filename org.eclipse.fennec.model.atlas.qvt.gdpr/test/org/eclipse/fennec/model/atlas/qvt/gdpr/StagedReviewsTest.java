@@ -21,8 +21,8 @@ import java.util.List;
 import java.util.Map;
 
 import org.eclipse.fennec.model.atlas.qvt.gdpr.StagedReviews.Candidate;
-import org.eclipse.fennec.model.gdprReport.GDPRReportFactory;
-import org.eclipse.fennec.model.gdprReport.GdprReport;
+import org.eclipse.fennec.model.compliance.report.ReportFactory;
+import org.eclipse.fennec.model.compliance.report.ComplianceReport;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -46,9 +46,9 @@ public class StagedReviewsTest {
 	@Test
 	@DisplayName("a review one stage up is found when the transformation's own stage has none")
 	public void aReviewFromAnotherStageIsFound() {
-		GdprReport approved = report("in-approved");
+		ComplianceReport approved = report("in-approved");
 
-		Map<String, GdprReport> resolved = StagedReviews.resolve(LADDER,
+		Map<String, ComplianceReport> resolved = StagedReviews.resolve(LADDER,
 				List.of(new Candidate("approved", "r1", EARLY, FP, approved)));
 
 		assertEquals(approved, resolved.get(FP),
@@ -58,12 +58,12 @@ public class StagedReviewsTest {
 	@Test
 	@DisplayName("stage order decides, and a later stage never overrides an earlier one")
 	public void stageOrderBeatsRecency() {
-		GdprReport inDraft = report("in-draft");
-		GdprReport inApproved = report("in-approved");
+		ComplianceReport inDraft = report("in-draft");
+		ComplianceReport inApproved = report("in-approved");
 
 		// The approved one is a month newer. It still loses: the list says which stages are
 		// authoritative, and recency cannot outrank that.
-		Map<String, GdprReport> resolved = StagedReviews.resolve(LADDER,
+		Map<String, ComplianceReport> resolved = StagedReviews.resolve(LADDER,
 				List.of(new Candidate("approved", "r2", LATE, FP, inApproved),
 						new Candidate("draft", "r1", EARLY, FP, inDraft)));
 
@@ -78,11 +78,11 @@ public class StagedReviewsTest {
 	@Test
 	@DisplayName("within one stage the latest review still wins")
 	public void recencyDecidesWithinAStage() {
-		GdprReport agent = report("agent");
-		GdprReport correction = report("human-correction");
+		ComplianceReport agent = report("agent");
+		ComplianceReport correction = report("human-correction");
 
 		// An agent's review and a person's correction of the same revision, the ordinary case.
-		Map<String, GdprReport> resolved = StagedReviews.resolve(LADDER,
+		Map<String, ComplianceReport> resolved = StagedReviews.resolve(LADDER,
 				List.of(new Candidate("approved", "r1", EARLY, FP, agent),
 						new Candidate("approved", "r2", LATE, FP, correction)));
 
@@ -92,8 +92,8 @@ public class StagedReviewsTest {
 	@Test
 	@DisplayName("two reviews stamped the same second order the same way on every run")
 	public void theObjectIdBreaksATie() {
-		GdprReport first = report("first");
-		GdprReport second = report("second");
+		ComplianceReport first = report("first");
+		ComplianceReport second = report("second");
 
 		assertEquals(second, StagedReviews.resolve(LADDER,
 				List.of(new Candidate("approved", "r-a", EARLY, FP, first),
@@ -108,7 +108,7 @@ public class StagedReviewsTest {
 	@Test
 	@DisplayName("a review in a stage nobody listed does not count")
 	public void anUnlistedStageIsIgnored() {
-		Map<String, GdprReport> resolved = StagedReviews.resolve(List.of("approved"),
+		Map<String, ComplianceReport> resolved = StagedReviews.resolve(List.of("approved"),
 				List.of(new Candidate("draft", "r1", LATE, FP, report("in-draft"))));
 
 		assertTrue(resolved.isEmpty(),
@@ -118,10 +118,10 @@ public class StagedReviewsTest {
 	@Test
 	@DisplayName("each revision is answered by its own stage, not by one stage for all of them")
 	public void differentRevisionsResolveInDifferentStages() {
-		GdprReport hr = report("hr");
-		GdprReport payroll = report("payroll");
+		ComplianceReport hr = report("hr");
+		ComplianceReport payroll = report("payroll");
 
-		Map<String, GdprReport> resolved = StagedReviews.resolve(LADDER,
+		Map<String, ComplianceReport> resolved = StagedReviews.resolve(LADDER,
 				List.of(new Candidate("draft", "r1", EARLY, "fp1:hr", hr),
 						new Candidate("release", "r2", EARLY, "fp1:payroll", payroll)));
 
@@ -137,8 +137,8 @@ public class StagedReviewsTest {
 				List.of(new Candidate("draft", "r1", EARLY, "  ", report("blank")))).isEmpty());
 	}
 
-	private static GdprReport report(String id) {
-		GdprReport report = GDPRReportFactory.eINSTANCE.createGdprReport();
+	private static ComplianceReport report(String id) {
+		ComplianceReport report = ReportFactory.eINSTANCE.createComplianceReport();
 		report.setReportId(id);
 		return report;
 	}

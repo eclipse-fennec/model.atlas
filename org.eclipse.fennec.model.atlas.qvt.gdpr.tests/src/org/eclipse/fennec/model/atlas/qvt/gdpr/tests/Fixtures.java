@@ -35,18 +35,20 @@ import org.eclipse.fennec.model.atlas.mgmt.management.Diagnostic;
 import org.eclipse.fennec.model.atlas.mgmt.management.ManagementFactory;
 import org.eclipse.fennec.model.atlas.mgmt.management.ObjectMetadata;
 import org.eclipse.fennec.model.atlas.wf.workflowapi.WritableScopeService;
-import org.eclipse.fennec.model.gdprReport.ClassifierEvaluation;
-import org.eclipse.fennec.model.gdprReport.DataCategory;
-import org.eclipse.fennec.model.gdprReport.Evidence;
-import org.eclipse.fennec.model.gdprReport.FeatureEvaluation;
-import org.eclipse.fennec.model.gdprReport.Finding;
-import org.eclipse.fennec.model.gdprReport.FlowEvaluation;
-import org.eclipse.fennec.model.gdprReport.FlowKind;
-import org.eclipse.fennec.model.gdprReport.GDPRReportFactory;
-import org.eclipse.fennec.model.gdprReport.GdprReport;
-import org.eclipse.fennec.model.gdprReport.PackageSubject;
-import org.eclipse.fennec.model.gdprReport.RelevanceLevelType;
-import org.eclipse.fennec.model.gdprReport.TransformationSubject;
+import org.eclipse.fennec.model.compliance.context.CategoryRef;
+import org.eclipse.fennec.model.compliance.context.ContextRef;
+import org.eclipse.fennec.model.compliance.context.ContextFactory;
+import org.eclipse.fennec.model.compliance.report.ClassifierEvaluation;
+import org.eclipse.fennec.model.compliance.report.Evidence;
+import org.eclipse.fennec.model.compliance.report.FeatureEvaluation;
+import org.eclipse.fennec.model.compliance.report.Finding;
+import org.eclipse.fennec.model.compliance.report.FlowEvaluation;
+import org.eclipse.fennec.model.compliance.report.FlowKind;
+import org.eclipse.fennec.model.compliance.report.ReportFactory;
+import org.eclipse.fennec.model.compliance.report.ComplianceReport;
+import org.eclipse.fennec.model.compliance.report.PackageSubject;
+import org.eclipse.fennec.model.compliance.report.RelevanceLevel;
+import org.eclipse.fennec.model.compliance.report.TransformationSubject;
 
 /**
  * The metamodel, its review, and the compiled unit that reads it - plus waiting for what the
@@ -65,7 +67,15 @@ final class Fixtures {
 	/** The producer the transformation projection owns on every model it touches. */
 	static final String PRODUCER = "gdpr.transformation/" + UNIT_NAME;
 
-	private static final GDPRReportFactory REPORTS = GDPRReportFactory.eINSTANCE;
+	/**
+	 * The producer every statement about a reviewed object is written under - including the one
+	 * saying a transformation could not be analysed at all. Not {@link #PRODUCER}: that one is what
+	 * a transformation owns on somebody else's metamodel, this one is what the review owns on the
+	 * object it is about.
+	 */
+	static final String REVIEW_PRODUCER = "gdpr.review";
+
+	private static final ReportFactory REPORTS = ReportFactory.eINSTANCE;
 	private static final CompiledFactory UNITS = CompiledFactory.eINSTANCE;
 	private static final long TIMEOUT_MS = 30_000;
 	private static final long POLL_MS = 100;
@@ -168,8 +178,8 @@ final class Fixtures {
 	/* ------------------------------------------------------------------ the reviews */
 
 	/** A review of one metamodel revision, carried out at a stated time. */
-	static GdprReport review(String reportId, String fingerprint, String generatedAt) {
-		GdprReport report = REPORTS.createGdprReport();
+	static ComplianceReport review(String reportId, String fingerprint, String generatedAt) {
+		ComplianceReport report = REPORTS.createComplianceReport();
 		report.setReportId(reportId);
 		report.setName("GDPR review of person");
 		report.setGeneratedAt(generatedAt);
@@ -180,9 +190,8 @@ final class Fixtures {
 		subject.setNsURI(MODEL_NS_URI);
 		subject.setSubjectFingerprint(fingerprint);
 		report.setSubject(subject);
-		report.setCorpus(REPORTS.createLegalCorpusRef());
-		report.getCorpus().setCelex("32016R0679");
-		report.getCorpus().setLanguage("EN");
+		report.getContexts().add(gdprContext());
+		report.setLanguage("EN");
 
 		ClassifierEvaluation classifier = REPORTS.createClassifierEvaluation();
 		classifier.setId("Person");
@@ -190,11 +199,11 @@ final class Fixtures {
 		FeatureEvaluation feature = REPORTS.createFeatureEvaluation();
 		feature.setId("Person.birthDate");
 		feature.setUriFragment(REVIEWED_FEATURE);
-		feature.setRelevanceLevel(RelevanceLevelType.MEDIUM);
-		feature.getFindings().add(finding("F-001", DataCategory.QUASI_IDENTIFIER,
+		feature.setRelevanceLevel(RelevanceLevel.MEDIUM);
+		feature.getFindings().add(finding("F-001", "QUASI_IDENTIFIER",
 				"A date of birth contributes to singling out an individual."));
-		classifier.getFeatureEvaluation().add(feature);
-		report.getEvaluation().add(classifier);
+		classifier.getFeatureEvaluations().add(feature);
+		report.getEvaluations().add(classifier);
 		return report;
 	}
 
@@ -202,14 +211,13 @@ final class Fixtures {
 	 * A report about the transformation, as the analyser would have written it - used where a test
 	 * is about what happens to a stored transformation report rather than about deriving one.
 	 */
-	static GdprReport transformationReport(String reportId, String modelFingerprint) {
-		GdprReport report = REPORTS.createGdprReport();
+	static ComplianceReport transformationReport(String reportId, String modelFingerprint) {
+		ComplianceReport report = REPORTS.createComplianceReport();
 		report.setReportId(reportId);
 		report.setName("GDPR flow analysis of " + UNIT_NAME);
 		report.setGeneratedAt("2026-10-01T09:00:00Z");
 		report.setGeneratedBy("qvt-flow-analysis/1");
-		report.setCorpus(REPORTS.createLegalCorpusRef());
-		report.getCorpus().setCelex("32016R0679");
+		report.getContexts().add(gdprContext());
 
 		TransformationSubject subject = REPORTS.createTransformationSubject();
 		subject.setQualifiedName(UNIT_NAME);
@@ -231,19 +239,19 @@ final class Fixtures {
 		flow.setTargetNsURI("http://test.fennec.eclipse.org/qvt-gdpr/contact/1.0.0");
 		flow.setTargetFeature("//Contact/comment");
 		flow.setFlowKind(FlowKind.CONCATENATION);
-		flow.setRelevanceLevel(RelevanceLevelType.MEDIUM);
+		flow.setRelevanceLevel(RelevanceLevel.MEDIUM);
 		// A statement about the SOURCE end, so it lands on the model this test stores.
 		flow.getFindings().add(finding("gdpr.flow.structure-loss:toContact#//Contact/comment",
-				DataCategory.QUASI_IDENTIFIER, "//Contact/comment cannot carry that classification."));
-		report.getEvaluation().add(flow);
+				"QUASI_IDENTIFIER", "//Contact/comment cannot carry that classification."));
+		report.getEvaluations().add(flow);
 		return report;
 	}
 
-	private static Finding finding(String id, DataCategory category, String rationale) {
+	private static Finding finding(String id, String category, String rationale) {
 		Finding finding = REPORTS.createFinding();
 		finding.setId(id);
-		finding.setCategory(category);
-		finding.setRelevanceLevel(RelevanceLevelType.MEDIUM);
+		finding.getCategories().add(categoryRef(category));
+		finding.setRelevanceLevel(RelevanceLevel.MEDIUM);
 		finding.setRationale(rationale);
 		Evidence evidence = REPORTS.createEvidence();
 		evidence.setCitationId("Rec.26");
@@ -254,7 +262,7 @@ final class Fixtures {
 	}
 
 	/** Stores a report into one stage of the report registry, the way the REST resource does. */
-	static void storeReport(WritableScopeService<EObject> scope, GdprReport report, String stage) throws Exception {
+	static void storeReport(WritableScopeService<EObject> scope, ComplianceReport report, String stage) throws Exception {
 		ObjectMetadata metadata = ManagementFactory.eINSTANCE.createObjectMetadata();
 		metadata.setObjectId(report.getReportId());
 		metadata.setObjectName(report.getName());
@@ -274,14 +282,14 @@ final class Fixtures {
 	 * covers its inputs - so a stage legitimately holds several, and the one that speaks is the
 	 * most recent. The same reading the projection onto the metamodels uses.
 	 */
-	static GdprReport derivedReport(WritableScopeService<EObject> scope, String stage) {
-		GdprReport latest = null;
+	static ComplianceReport derivedReport(WritableScopeService<EObject> scope, String stage) {
+		ComplianceReport latest = null;
 		Instant latestAt = null;
 		String latestId = null;
 		for (ObjectMetadata metadata : scope.listInStageForRegistry(TestAnnotations.REPORT_REGISTRY, stage)) {
 			EObject content = scope.getContentFromStageForRegistry(TestAnnotations.REPORT_REGISTRY, stage,
 					metadata.getObjectId());
-			if (!(content instanceof GdprReport report)
+			if (!(content instanceof ComplianceReport report)
 					|| !(report.getSubject() instanceof TransformationSubject)) {
 				continue;
 			}
@@ -297,13 +305,13 @@ final class Fixtures {
 	}
 
 	/** The transformation report the analyser stored, by its reportId, or {@code null}. */
-	static GdprReport reportById(WritableScopeService<EObject> scope, String stage, String reportId) {
+	static ComplianceReport reportById(WritableScopeService<EObject> scope, String stage, String reportId) {
 		EObject content = scope.getContentFromStageForRegistry(TestAnnotations.REPORT_REGISTRY, stage, reportId);
-		return content instanceof GdprReport report ? report : null;
+		return content instanceof ComplianceReport report ? report : null;
 	}
 
 	/** What a derived report says it rested on, for the one metamodel its unit names. */
-	static PackageSubject restedOn(GdprReport report) {
+	static PackageSubject restedOn(ComplianceReport report) {
 		TransformationSubject subject = (TransformationSubject) report.getSubject();
 		return subject.getSourcePackages().isEmpty() ? null : subject.getSourcePackages().get(0);
 	}
@@ -314,7 +322,7 @@ final class Fixtures {
 		for (ObjectMetadata metadata : scope.listInStageForRegistry(TestAnnotations.REPORT_REGISTRY, stage)) {
 			EObject content = scope.getContentFromStageForRegistry(TestAnnotations.REPORT_REGISTRY, stage,
 					metadata.getObjectId());
-			if (content instanceof GdprReport report && report.getSubject() instanceof TransformationSubject) {
+			if (content instanceof ComplianceReport report && report.getSubject() instanceof TransformationSubject) {
 				count++;
 			}
 		}
@@ -329,6 +337,23 @@ final class Fixtures {
 			return List.of();
 		}
 		return metadata.getDiagnostics().stream().filter(root -> PRODUCER.equals(root.getProducer())).toList();
+	}
+
+	/**
+	 * The review producer's roots on the compiled unit itself in one stage.
+	 * <p>
+	 * The producer a derived report's findings reach the unit under, which is the point: a
+	 * successful analysis and the statement that none was possible are one producer's two answers
+	 * about one object, so either replaces the other.
+	 */
+	static List<Diagnostic> ownedOnUnit(WritableScopeService<EObject> scope, String stage) {
+		ObjectMetadata metadata = scope.getMetadataFromStageForRegistry(TestAnnotations.UNIT_REGISTRY, stage,
+				UNIT_ID);
+		if (metadata == null) {
+			return List.of();
+		}
+		return metadata.getDiagnostics().stream().filter(root -> REVIEW_PRODUCER.equals(root.getProducer()))
+				.toList();
 	}
 
 	/* ------------------------------------------------------------------ waiting */
@@ -364,4 +389,26 @@ final class Fixtures {
 	static void settle() throws InterruptedException {
 		Thread.sleep(1_500);
 	}
+
+	/**
+	 * A data-category reference, the way a review records one: an id in the context's
+	 * {@code data-categories} taxonomy. The ids are the names the {@code DataCategory} enum had.
+	 */
+	static CategoryRef categoryRef(String categoryId) {
+		CategoryRef ref = ContextFactory.eINSTANCE.createCategoryRef();
+		ref.setContextId("gdpr");
+		ref.setTaxonomyId("data-categories");
+		ref.setCategoryId(categoryId);
+		return ref;
+	}
+
+
+	/** The context a review of this fixture's metamodel was made against. */
+	static ContextRef gdprContext() {
+		ContextRef context = ContextFactory.eINSTANCE.createContextRef();
+		context.setContextId("gdpr");
+		context.setContextVersion("20160504");
+		return context;
+	}
+
 }

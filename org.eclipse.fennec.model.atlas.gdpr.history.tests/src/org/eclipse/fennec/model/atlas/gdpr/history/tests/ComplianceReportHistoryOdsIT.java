@@ -35,7 +35,7 @@ import org.eclipse.emf.ecore.resource.Resource;
 import org.eclipse.emf.ecore.resource.ResourceSet;
 import org.eclipse.emf.ecore.resource.impl.ResourceSetImpl;
 import org.eclipse.fennec.model.atlas.wf.workflowapi.WritableScopeService;
-import org.eclipse.fennec.model.gdprReportHistory.GdprReportHistory;
+import org.eclipse.fennec.model.compliance.history.ComplianceReportHistory;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -61,7 +61,7 @@ import org.osgi.test.junit5.service.ServiceExtension;
 @ExtendWith(ServiceExtension.class)
 @ExtendWith(ConfigurationExtension.class)
 @DisplayName("GDPR review document - ODS rendering")
-public class GdprReportHistoryOdsIT {
+public class ComplianceReportHistoryOdsIT {
 
 	private static final String SCOPE_FILTER = "(atlas.scope=" + TestAnnotations.SCOPE_NAME + ")";
 	private static final String ODS_FILTER = "(emf.fileExtension=ods)";
@@ -82,13 +82,13 @@ public class GdprReportHistoryOdsIT {
 			@InjectService(cardinality = 0, timeout = 30000, filter = ODS_FILTER) //
 			ServiceAware<Resource.Factory> odsAware) throws Exception {
 
-		GdprReportHistory document = twoRevisionDocument(scopeAware);
+		ComplianceReportHistory document = twoRevisionDocument(scopeAware);
 		Resource.Factory ods = odsAware.waitForService(30000);
 		assertNotNull(ods, "the ODS codec has to be in the runtime for the document to be downloadable");
 
 		String content = new String(contentXml(render(ods, document, SHEETS_AND_DEFAULTS)), StandardCharsets.UTF_8);
 
-		assertEquals(List.of("GdprReportHistory", "ReportRevision", "EvaluationRow", "ChangeRow"), sheets(content),
+		assertEquals(List.of("ComplianceReportHistory", "ReportRevision", "EvaluationRow", "ChangeRow"), sheets(content),
 				"one sheet per containment list, in containment order");
 		assertTrue(content.contains("SPECIAL_CATEGORY"), "the raised category belongs in the change sheet");
 		assertTrue(content.contains("UNCHANGED"),
@@ -108,18 +108,18 @@ public class GdprReportHistoryOdsIT {
 
 		// Not a curiosity: this is why the two options are mandatory rather than cosmetic. If a
 		// future codec default makes this test fail, the endpoint's documentation is what changes.
-		GdprReportHistory document = twoRevisionDocument(scopeAware);
+		ComplianceReportHistory document = twoRevisionDocument(scopeAware);
 		Resource.Factory ods = odsAware.waitForService(30000);
 
 		String content = new String(contentXml(render(ods, document, Map.of())), StandardCharsets.UTF_8);
 
-		assertEquals(List.of("GdprReportHistory"), sheets(content),
+		assertEquals(List.of("ComplianceReportHistory"), sheets(content),
 				"the default reference mode drops the containment lists, so the document is empty");
 	}
 
 	/* ------------------------------------------------------------------ fixtures */
 
-	private static GdprReportHistory twoRevisionDocument(ServiceAware<WritableScopeService> scopeAware)
+	private static ComplianceReportHistory twoRevisionDocument(ServiceAware<WritableScopeService> scopeAware)
 			throws Exception {
 		@SuppressWarnings("unchecked")
 		WritableScopeService<EObject> scope = scopeAware.waitForService(30000);
@@ -131,7 +131,7 @@ public class GdprReportHistoryOdsIT {
 	}
 
 	/** Saves the document through the real ODS factory and hands back the bytes. */
-	private static byte[] render(Resource.Factory factory, GdprReportHistory document, Map<Object, Object> options)
+	private static byte[] render(Resource.Factory factory, ComplianceReportHistory document, Map<Object, Object> options)
 			throws Exception {
 		ResourceSet resourceSet = new ResourceSetImpl();
 		resourceSet.getResourceFactoryRegistry().getExtensionToFactoryMap().put("ods", factory);

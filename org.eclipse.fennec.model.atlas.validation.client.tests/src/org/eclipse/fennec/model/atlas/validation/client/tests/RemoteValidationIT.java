@@ -82,11 +82,11 @@ import org.testcontainers.containers.wait.strategy.Wait;
  * {@code docker/dockercompose/configs/jena.json};</li>
  * <li>drive the {@code rest.client.osgi} ConfigAdmin factory at the container →
  * {@code RemoteScopeServicePublisher} (P5-4) publishes a
- * {@code ReadableScopeService(atlas.scope=jena, atlas.remote=true)} the collector binds;</li>
+ * {@code ReadableScopeService(atlas.scope=dimcity, atlas.remote=true)} the collector binds;</li>
  * <li>seed an {@code OclConstraintSet} into {@code jena/cocl} at the final stage through the
  * writable REST endpoint ({@code ObjectRegistryResource.createObject}) — the remote client is
  * read-only, so the object must exist on the server;</li>
- * <li>call {@code ValidationService.validateWithOcl(company, coclId, "jena", rs)}; the constraint
+ * <li>call {@code ValidationService.validateWithOcl(company, coclId, "dimcity", rs)}; the constraint
  * set is fetched from the <em>remote</em> scope (P5-0 content endpoint) and applied.</li>
  * </ol>
  * Skipped automatically when Docker or the local {@code jena-snapshot} image is absent (so a
@@ -103,7 +103,7 @@ public class RemoteValidationIT {
 
 	private static final String IMAGE = "eclipsefennec/model.atlas:jena-snapshot";
 	private static final int HTTP_PORT = 8080;
-	private static final String JENA_SCOPE = "jena";
+	private static final String TENANT_SCOPE = "dimcity";
 	private static final String COCL_REGISTRY = "cocl";
 	/** jena's final (and writable) stage, per jena.json. */
 	private static final String FINAL_STAGE = "release";
@@ -127,7 +127,7 @@ public class RemoteValidationIT {
 				.withEnv("ATLAS_HTTP_PORT", String.valueOf(HTTP_PORT))
 				.withFileSystemBind(resolveConfigsDir(), CONFIG_LOAD_DIR, BindMode.READ_ONLY)
 				.waitingFor(Wait.forHttp("/atlas/rest/scopes").forPort(HTTP_PORT).forStatusCode(200)
-						.forResponsePredicate(body -> body.contains(JENA_SCOPE)))
+						.forResponsePredicate(body -> body.contains(TENANT_SCOPE)))
 				.withStartupTimeout(Duration.ofMinutes(2));
 		atlas.start();
 		baseUri = URI.create("http://" + atlas.getHost() + ":" + atlas.getMappedPort(HTTP_PORT) + "/atlas/rest");
@@ -146,16 +146,16 @@ public class RemoteValidationIT {
 			@InjectConfiguration(withFactoryConfig = @WithFactoryConfiguration(factoryPid = PID, name = "remote",
 					location = "?")) Configuration configuration,
 			@InjectService(cardinality = 0,
-					filter = "(&(atlas.scope=jena)(atlas.remote=true))") ServiceAware<ReadableScopeService> remoteScope,
+					filter = "(&(atlas.scope=" + TENANT_SCOPE + ")(atlas.remote=true))") ServiceAware<ReadableScopeService> remoteScope,
 			@InjectService ServiceAware<ResourceSetFactory> resourceSetFactories,
 			@InjectService ServiceAware<ValidationService> validationServices) throws Exception {
 
-		// 1. Activate the remote client → P5-4 publishes ReadableScopeService(atlas.scope=jena).
+		// 1. Activate the remote client → P5-4 publishes ReadableScopeService(atlas.scope=dimcity).
 		//    LAZY: no EPackage prefetch needed; scope publication is independent of the mode.
 		Hashtable<String, Object> props = new Hashtable<>();
 		props.put("base.uri", baseUri.toString());
 		props.put("mode", "LAZY");
-		props.put("scope.allow.list", new String[] { JENA_SCOPE });
+		props.put("scope.allow.list", new String[] { TENANT_SCOPE });
 		configuration.update(props);
 
 		// 2. The remote scope publication appears (and is thus bound by the collector).
@@ -177,20 +177,20 @@ public class RemoteValidationIT {
 		// 4a. A valid Company passes — the constraint set was fetched from the REMOTE scope and applied.
 		Company valid = DGFactory.eINSTANCE.createCompany();
 		valid.setName("Acme");
-		ValidationResponse okResponse = validation.validateWithOcl(valid, coclId, JENA_SCOPE, resourceSet);
+		ValidationResponse okResponse = validation.validateWithOcl(valid, coclId, TENANT_SCOPE, resourceSet);
 		assertNotNull(okResponse, "validation against the remote scope must produce a response");
 		assertTrue(!hasConstraintFailure(okResponse, "self.name <> null"),
 				"a Company with a name must satisfy the remotely-fetched constraint");
 
 		// 4b. An invalid Company fails the same remotely-fetched constraint.
 		Company invalid = DGFactory.eINSTANCE.createCompany(); // name == null
-		ValidationResponse failResponse = validation.validateWithOcl(invalid, coclId, JENA_SCOPE, resourceSet);
+		ValidationResponse failResponse = validation.validateWithOcl(invalid, coclId, TENANT_SCOPE, resourceSet);
 		assertTrue(hasConstraintFailure(failResponse, "self.name <> null"),
 				"a Company without a name must fail the remotely-fetched constraint");
 
 		// 4c. An unknown id proves the lookup really hits the remote scope (nothing found → 400-equivalent).
 		assertThrows(IllegalArgumentException.class,
-				() -> validation.validateWithOcl(valid, "no-such-cocl", JENA_SCOPE, resourceSet),
+				() -> validation.validateWithOcl(valid, "no-such-cocl", TENANT_SCOPE, resourceSet),
 				"an unknown C-OCL id must fail to resolve against the remote scope");
 	}
 
@@ -231,7 +231,7 @@ public class RemoteValidationIT {
 	 * but Jersey registers only the first HTTP-method designator, so PUT 405s — POST it is.
 	 */
 	private static int uploadObject(String registry, String stage, String objectId, String xmi) throws Exception {
-		URI target = URI.create(baseUri + "/" + JENA_SCOPE + "/registries/" + registry + "/stages/" + stage + "/"
+		URI target = URI.create(baseUri + "/" + TENANT_SCOPE + "/registries/" + registry + "/stages/" + stage + "/"
 				+ objectId + "?version=1.0&override=true");
 		HttpResponse<String> response = HttpClient.newHttpClient().send(
 				HttpRequest.newBuilder(target).header("Content-Type", "application/xmi")

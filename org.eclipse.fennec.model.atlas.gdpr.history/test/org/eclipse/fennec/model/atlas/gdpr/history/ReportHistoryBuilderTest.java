@@ -22,26 +22,27 @@ import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 
-import org.eclipse.fennec.model.gdprReport.ClassifierEvaluation;
-import org.eclipse.fennec.model.gdprReport.ConfidenceType;
-import org.eclipse.fennec.model.gdprReport.DataCategory;
-import org.eclipse.fennec.model.gdprReport.Evidence;
-import org.eclipse.fennec.model.gdprReport.FeatureEvaluation;
-import org.eclipse.fennec.model.gdprReport.Finding;
-import org.eclipse.fennec.model.gdprReport.FlowEvaluation;
-import org.eclipse.fennec.model.gdprReport.GDPRReportFactory;
-import org.eclipse.fennec.model.gdprReport.GdprReport;
-import org.eclipse.fennec.model.gdprReport.GdprReportOrigin;
-import org.eclipse.fennec.model.gdprReport.LegalCorpusRef;
-import org.eclipse.fennec.model.gdprReport.RelevanceLevelType;
-import org.eclipse.fennec.model.gdprReport.TransformationSubject;
-import org.eclipse.fennec.model.gdprReport.PackageSubject;
-import org.eclipse.fennec.model.gdprReportHistory.ChangeKind;
-import org.eclipse.fennec.model.gdprReportHistory.ChangeRow;
-import org.eclipse.fennec.model.gdprReportHistory.EvaluationRow;
-import org.eclipse.fennec.model.gdprReportHistory.GdprReportHistory;
-import org.eclipse.fennec.model.gdprReportHistory.ReportRevision;
-import org.eclipse.fennec.model.gdprReportHistory.RevisionOrigin;
+import org.eclipse.fennec.model.compliance.context.CategoryRef;
+import org.eclipse.fennec.model.compliance.context.ContextRef;
+import org.eclipse.fennec.model.compliance.context.ContextFactory;
+import org.eclipse.fennec.model.compliance.report.ClassifierEvaluation;
+import org.eclipse.fennec.model.compliance.report.Confidence;
+import org.eclipse.fennec.model.compliance.report.Evidence;
+import org.eclipse.fennec.model.compliance.report.FeatureEvaluation;
+import org.eclipse.fennec.model.compliance.report.Finding;
+import org.eclipse.fennec.model.compliance.report.FlowEvaluation;
+import org.eclipse.fennec.model.compliance.report.ReportFactory;
+import org.eclipse.fennec.model.compliance.report.ComplianceReport;
+import org.eclipse.fennec.model.compliance.report.ReportOrigin;
+import org.eclipse.fennec.model.compliance.report.RelevanceLevel;
+import org.eclipse.fennec.model.compliance.report.TransformationSubject;
+import org.eclipse.fennec.model.compliance.report.PackageSubject;
+import org.eclipse.fennec.model.compliance.history.ChangeKind;
+import org.eclipse.fennec.model.compliance.history.ChangeRow;
+import org.eclipse.fennec.model.compliance.history.EvaluationRow;
+import org.eclipse.fennec.model.compliance.history.ComplianceReportHistory;
+import org.eclipse.fennec.model.compliance.history.ReportRevision;
+import org.eclipse.fennec.model.compliance.history.RevisionOrigin;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -51,7 +52,7 @@ import org.junit.jupiter.api.Test;
  */
 class ReportHistoryBuilderTest {
 
-	private static final GDPRReportFactory REPORTS = GDPRReportFactory.eINSTANCE;
+	private static final ReportFactory REPORTS = ReportFactory.eINSTANCE;
 
 	private final ReportHistoryBuilder builder = new ReportHistoryBuilder();
 	private final Instant now = Instant.parse("2026-09-18T12:00:00Z");
@@ -61,11 +62,11 @@ class ReportHistoryBuilderTest {
 	@Test
 	@DisplayName("a single review produces one revision and no changes")
 	void firstRevisionHasNothingToDifferFrom() {
-		GdprReport report = report("2026-09-15T08:12:00Z", "claude-opus-5");
-		feature(classifier(report, "Patient"), "Patient.dateOfBirth", DataCategory.PERSONAL_DATA,
-				RelevanceLevelType.MEDIUM, ConfidenceType.HIGH, "Identifies a person.", "Art.4(1)");
+		ComplianceReport report = report("2026-09-15T08:12:00Z", "claude-opus-5");
+		feature(classifier(report, "Patient"), "Patient.dateOfBirth", "PERSONAL_DATA",
+				RelevanceLevel.MEDIUM, Confidence.HIGH, "Identifies a person.", "Art.4(1)");
 
-		GdprReportHistory history = builder.build(List.of(stored("gdpr-fp-20260915-081200", report)), now);
+		ComplianceReportHistory history = builder.build(List.of(stored("gdpr-fp-20260915-081200", report)), now);
 
 		assertEquals(1, history.getRevisionCount());
 		assertEquals(1, history.getRevisions().size());
@@ -79,19 +80,40 @@ class ReportHistoryBuilderTest {
 	@Test
 	@DisplayName("the subject is described from the newest report")
 	void subjectComesFromTheNewestReport() {
-		GdprReport first = report("2026-09-15T08:12:00Z", "claude-opus-5");
-		GdprReport second = report("2026-09-17T14:20:30Z", "someone");
+		ComplianceReport first = report("2026-09-15T08:12:00Z", "claude-opus-5");
+		ComplianceReport second = report("2026-09-17T14:20:30Z", "someone");
 		((PackageSubject) second.getSubject()).setName("clinic-renamed");
 
-		GdprReportHistory history = builder.build(
+		ComplianceReportHistory history = builder.build(
 				List.of(stored("gdpr-fp-20260915-081200", first), stored("gdpr-fp-20260917-142030", second)), now);
 
 		assertEquals("clinic-renamed", history.getSubjectName());
 		assertEquals("https://example.org/clinic/1.0.0", history.getSubjectIdentifier(),
 				"the document is filed under the nsURI, which a rename does not move");
-		assertEquals("9f2c1ab7d4e85530", history.getRevisions().get(1).getModelFingerprint(),
+		assertEquals("9f2c1ab7d4e85530", history.getRevisions().get(1).getSubjectFingerprint(),
 				"the fingerprint is a property of the revision now, not of the document");
 		assertEquals("GDPR review history of clinic-renamed", history.getName());
+	}
+
+	@Test
+	@DisplayName("the document names every context its revisions were judged against, once each")
+	void contextsAreCarriedOntoTheDocument() {
+		ComplianceReport first = report("2026-09-15T08:12:00Z", "claude-opus-5");
+		ComplianceReport second = report("2026-09-17T14:20:30Z", "someone");
+		// The same context, re-consolidated, plus a second one the later review also cited.
+		second.getContexts().get(0).setContextVersion("20180523");
+		second.getContexts().add(context("cra", "20241120"));
+
+		ComplianceReportHistory history = builder.build(
+				List.of(stored("gdpr-fp-20260915-081200", first), stored("gdpr-fp-20260917-142030", second)), now);
+
+		assertEquals(List.of("gdpr", "cra"), List.copyOf(history.getContextIds()),
+				"a reader asking what this subject was ever judged against reads the document, not "
+						+ "every revision; a context cited twice is one context");
+		assertEquals(List.of("gdpr@20160504"), List.copyOf(history.getRevisions().get(0).getContextVersions()));
+		assertEquals(List.of("gdpr@20180523", "cra@20241120"),
+				List.copyOf(history.getRevisions().get(1).getContextVersions()),
+				"the version stays on the revision, because that is what moved between the two");
 	}
 
 	/* ------------------------------------------------------------------ the headline case */
@@ -99,23 +121,23 @@ class ReportHistoryBuilderTest {
 	@Test
 	@DisplayName("a raised category is one MODIFIED change, not a removal plus an addition")
 	void raisedCategoryIsAModification() {
-		GdprReport before = report("2026-09-15T08:12:00Z", "claude-opus-5");
-		feature(classifier(before, "Patient"), "Patient.diagnosis", DataCategory.PERSONAL_DATA,
-				RelevanceLevelType.HIGH, ConfidenceType.REQUIRES_PURPOSE_CONFIRMATION, "Free-text notes.",
+		ComplianceReport before = report("2026-09-15T08:12:00Z", "claude-opus-5");
+		feature(classifier(before, "Patient"), "Patient.diagnosis", "PERSONAL_DATA",
+				RelevanceLevel.HIGH, Confidence.REQUIRES_CONFIRMATION, "Free-text notes.",
 				"Art.4(15)");
 
-		GdprReport after = report("2026-09-17T14:20:30Z", "a.reviewer@example.org");
-		feature(classifier(after, "Patient"), "Patient.diagnosis", DataCategory.SPECIAL_CATEGORY,
-				RelevanceLevelType.HIGH, ConfidenceType.HIGH, "Confirmed: clinical diagnoses.", "Art.9(1)");
+		ComplianceReport after = report("2026-09-17T14:20:30Z", "a.reviewer@example.org");
+		feature(classifier(after, "Patient"), "Patient.diagnosis", "SPECIAL_CATEGORY",
+				RelevanceLevel.HIGH, Confidence.HIGH, "Confirmed: clinical diagnoses.", "Art.9(1)");
 
-		GdprReportHistory history = builder.build(List.of(stored("gdpr-fp-20260915-081200", before),
+		ComplianceReportHistory history = builder.build(List.of(stored("gdpr-fp-20260915-081200", before),
 				human("gdpr-fp-20260917-142030", after, "a.reviewer@example.org")), now);
 
 		assertEquals(ChangeKind.MODIFIED, row(history, 2, "Patient", "Patient.diagnosis").getChangeKind());
-		assertEquals("PERSONAL_DATA", change(history, "category").getOldValue());
-		assertEquals("SPECIAL_CATEGORY", change(history, "category").getNewValue());
-		assertEquals(ChangeKind.MODIFIED, change(history, "category").getChangeKind());
-		assertEquals("REQUIRES_PURPOSE_CONFIRMATION", change(history, "confidence").getOldValue());
+		assertEquals("PERSONAL_DATA", change(history, "categories").getOldValue());
+		assertEquals("SPECIAL_CATEGORY", change(history, "categories").getNewValue());
+		assertEquals(ChangeKind.MODIFIED, change(history, "categories").getChangeKind());
+		assertEquals("REQUIRES_CONFIRMATION", change(history, "confidence").getOldValue());
 		assertEquals("HIGH", change(history, "confidence").getNewValue());
 		assertNotNull(change(history, "rationale"), "a reworded justification is a change worth recording");
 
@@ -132,15 +154,15 @@ class ReportHistoryBuilderTest {
 	@Test
 	@DisplayName("a dropped citation is its own REMOVED row, not a rewritten cell")
 	void droppedCitationIsVisible() {
-		GdprReport before = report("2026-09-15T08:12:00Z", "claude-opus-5");
-		feature(classifier(before, "Patient"), "Patient.postcode", DataCategory.QUASI_IDENTIFIER,
-				RelevanceLevelType.MEDIUM, ConfidenceType.MEDIUM, "Narrows a population.", "Art.4(1)", "Rec.26");
+		ComplianceReport before = report("2026-09-15T08:12:00Z", "claude-opus-5");
+		feature(classifier(before, "Patient"), "Patient.postcode", "QUASI_IDENTIFIER",
+				RelevanceLevel.MEDIUM, Confidence.MEDIUM, "Narrows a population.", "Art.4(1)", "Rec.26");
 
-		GdprReport after = report("2026-09-17T14:20:30Z", "claude-opus-5");
-		feature(classifier(after, "Patient"), "Patient.postcode", DataCategory.QUASI_IDENTIFIER,
-				RelevanceLevelType.MEDIUM, ConfidenceType.MEDIUM, "Narrows a population.", "Art.4(1)");
+		ComplianceReport after = report("2026-09-17T14:20:30Z", "claude-opus-5");
+		feature(classifier(after, "Patient"), "Patient.postcode", "QUASI_IDENTIFIER",
+				RelevanceLevel.MEDIUM, Confidence.MEDIUM, "Narrows a population.", "Art.4(1)");
 
-		GdprReportHistory history = builder.build(List.of(stored("gdpr-fp-20260915-081200", before),
+		ComplianceReportHistory history = builder.build(List.of(stored("gdpr-fp-20260915-081200", before),
 				stored("gdpr-fp-20260917-142030", after)), now);
 
 		List<ChangeRow> changes = history.getChanges();
@@ -156,36 +178,36 @@ class ReportHistoryBuilderTest {
 	@Test
 	@DisplayName("a feature that appears is ADDED; one that disappears is REMOVED with no ghost row")
 	void appearingAndDisappearingFeatures() {
-		GdprReport before = report("2026-09-15T08:12:00Z", "claude-opus-5");
+		ComplianceReport before = report("2026-09-15T08:12:00Z", "claude-opus-5");
 		ClassifierEvaluation beforePatient = classifier(before, "Patient");
-		feature(beforePatient, "Patient.dateOfBirth", DataCategory.PERSONAL_DATA, RelevanceLevelType.MEDIUM,
-				ConfidenceType.HIGH, "Identifies a person.", "Art.4(1)");
-		feature(beforePatient, "Patient.postcode", DataCategory.QUASI_IDENTIFIER, RelevanceLevelType.LOW,
-				ConfidenceType.MEDIUM, "Narrows a population.", "Rec.26");
+		feature(beforePatient, "Patient.dateOfBirth", "PERSONAL_DATA", RelevanceLevel.MEDIUM,
+				Confidence.HIGH, "Identifies a person.", "Art.4(1)");
+		feature(beforePatient, "Patient.postcode", "QUASI_IDENTIFIER", RelevanceLevel.LOW,
+				Confidence.MEDIUM, "Narrows a population.", "Rec.26");
 
-		GdprReport after = report("2026-09-17T14:20:30Z", "claude-opus-5");
+		ComplianceReport after = report("2026-09-17T14:20:30Z", "claude-opus-5");
 		ClassifierEvaluation afterPatient = classifier(after, "Patient");
-		feature(afterPatient, "Patient.dateOfBirth", DataCategory.PERSONAL_DATA, RelevanceLevelType.MEDIUM,
-				ConfidenceType.HIGH, "Identifies a person.", "Art.4(1)");
-		feature(afterPatient, "Patient.email", DataCategory.ONLINE_IDENTIFIER, RelevanceLevelType.HIGH,
-				ConfidenceType.HIGH, "A contact address.", "Art.4(1)");
+		feature(afterPatient, "Patient.dateOfBirth", "PERSONAL_DATA", RelevanceLevel.MEDIUM,
+				Confidence.HIGH, "Identifies a person.", "Art.4(1)");
+		feature(afterPatient, "Patient.email", "ONLINE_IDENTIFIER", RelevanceLevel.HIGH,
+				Confidence.HIGH, "A contact address.", "Art.4(1)");
 
-		GdprReportHistory history = builder.build(List.of(stored("gdpr-fp-20260915-081200", before),
+		ComplianceReportHistory history = builder.build(List.of(stored("gdpr-fp-20260915-081200", before),
 				stored("gdpr-fp-20260917-142030", after)), now);
 
 		assertEquals(ChangeKind.ADDED, row(history, 2, "Patient", "Patient.email").getChangeKind());
 		assertEquals(ChangeKind.UNCHANGED, row(history, 2, "Patient", "Patient.dateOfBirth").getChangeKind());
 
 		ChangeRow added = changeOf(history, "", ChangeKind.ADDED);
-		assertEquals("Patient.email", added.getFeatureId());
+		assertEquals("Patient.email", added.getChildId());
 		assertEquals("ONLINE_IDENTIFIER", added.getNewValue());
 
 		ChangeRow removed = changeOf(history, "", ChangeKind.REMOVED);
-		assertEquals("Patient.postcode", removed.getFeatureId());
+		assertEquals("Patient.postcode", removed.getChildId());
 		assertEquals("QUASI_IDENTIFIER", removed.getOldValue());
 
 		assertTrue(history.getEvaluations().stream()
-				.noneMatch(r -> r.getRevisionNumber() == 2 && "Patient.postcode".equals(r.getFeatureId())),
+				.noneMatch(r -> r.getRevisionNumber() == 2 && "Patient.postcode".equals(r.getChildId())),
 				"a revision says nothing about a feature it did not evaluate");
 	}
 
@@ -194,22 +216,22 @@ class ReportHistoryBuilderTest {
 	@Test
 	@DisplayName("reordered findings are not a change, and Finding.id is never matched on")
 	void reorderingIsNotAChange() {
-		GdprReport before = report("2026-09-15T08:12:00Z", "claude-opus-5");
+		ComplianceReport before = report("2026-09-15T08:12:00Z", "claude-opus-5");
 		ClassifierEvaluation beforePatient = classifier(before, "Patient");
-		finding(feature(beforePatient, "Patient.dateOfBirth", null, RelevanceLevelType.MEDIUM), "F-001",
-				DataCategory.PERSONAL_DATA, RelevanceLevelType.MEDIUM, ConfidenceType.HIGH, "Identifies.", "Art.4(1)");
-		finding(feature(beforePatient, "Patient.postcode", null, RelevanceLevelType.LOW), "F-002",
-				DataCategory.QUASI_IDENTIFIER, RelevanceLevelType.LOW, ConfidenceType.MEDIUM, "Narrows.", "Rec.26");
+		finding(feature(beforePatient, "Patient.dateOfBirth", null, RelevanceLevel.MEDIUM), "F-001",
+				"PERSONAL_DATA", RelevanceLevel.MEDIUM, Confidence.HIGH, "Identifies.", "Art.4(1)");
+		finding(feature(beforePatient, "Patient.postcode", null, RelevanceLevel.LOW), "F-002",
+				"QUASI_IDENTIFIER", RelevanceLevel.LOW, Confidence.MEDIUM, "Narrows.", "Rec.26");
 
 		// Same content, written in the other order, with the F-numbers consequently swapped.
-		GdprReport after = report("2026-09-17T14:20:30Z", "claude-opus-5");
+		ComplianceReport after = report("2026-09-17T14:20:30Z", "claude-opus-5");
 		ClassifierEvaluation afterPatient = classifier(after, "Patient");
-		finding(feature(afterPatient, "Patient.postcode", null, RelevanceLevelType.LOW), "F-001",
-				DataCategory.QUASI_IDENTIFIER, RelevanceLevelType.LOW, ConfidenceType.MEDIUM, "Narrows.", "Rec.26");
-		finding(feature(afterPatient, "Patient.dateOfBirth", null, RelevanceLevelType.MEDIUM), "F-002",
-				DataCategory.PERSONAL_DATA, RelevanceLevelType.MEDIUM, ConfidenceType.HIGH, "Identifies.", "Art.4(1)");
+		finding(feature(afterPatient, "Patient.postcode", null, RelevanceLevel.LOW), "F-001",
+				"QUASI_IDENTIFIER", RelevanceLevel.LOW, Confidence.MEDIUM, "Narrows.", "Rec.26");
+		finding(feature(afterPatient, "Patient.dateOfBirth", null, RelevanceLevel.MEDIUM), "F-002",
+				"PERSONAL_DATA", RelevanceLevel.MEDIUM, Confidence.HIGH, "Identifies.", "Art.4(1)");
 
-		GdprReportHistory history = builder.build(List.of(stored("gdpr-fp-20260915-081200", before),
+		ComplianceReportHistory history = builder.build(List.of(stored("gdpr-fp-20260915-081200", before),
 				stored("gdpr-fp-20260917-142030", after)), now);
 
 		assertTrue(history.getChanges().isEmpty(),
@@ -219,33 +241,33 @@ class ReportHistoryBuilderTest {
 	@Test
 	@DisplayName("two findings on one feature widen the category cell rather than splitting the row")
 	void severalFindingsMergeIntoOneRow() {
-		GdprReport report = report("2026-09-15T08:12:00Z", "claude-opus-5");
+		ComplianceReport report = report("2026-09-15T08:12:00Z", "claude-opus-5");
 		FeatureEvaluation home = feature(classifier(report, "Patient"), "Patient.homeAddress", null,
-				RelevanceLevelType.LOW);
-		finding(home, "F-001", DataCategory.LOCATION_DATA, RelevanceLevelType.MEDIUM, ConfidenceType.HIGH,
+				RelevanceLevel.LOW);
+		finding(home, "F-001", "LOCATION_DATA", RelevanceLevel.MEDIUM, Confidence.HIGH,
 				"A place of residence.", "Art.4(1)");
-		finding(home, "F-002", DataCategory.QUASI_IDENTIFIER, RelevanceLevelType.HIGH,
-				ConfidenceType.REQUIRES_PURPOSE_CONFIRMATION, "Narrows a population.", "Rec.26");
+		finding(home, "F-002", "QUASI_IDENTIFIER", RelevanceLevel.HIGH,
+				Confidence.REQUIRES_CONFIRMATION, "Narrows a population.", "Rec.26");
 
-		GdprReportHistory history = builder.build(List.of(stored("gdpr-fp-20260915-081200", report)), now);
+		ComplianceReportHistory history = builder.build(List.of(stored("gdpr-fp-20260915-081200", report)), now);
 
 		EvaluationRow row = row(history, 1, "Patient", "Patient.homeAddress");
-		assertEquals("LOCATION_DATA, QUASI_IDENTIFIER", row.getCategory());
+		assertEquals("LOCATION_DATA, QUASI_IDENTIFIER", row.getCategories());
 		assertEquals("HIGH", row.getRelevanceLevel(), "the highest relevance of the findings");
-		assertEquals("REQUIRES_PURPOSE_CONFIRMATION", row.getConfidence(), "the least confident of the findings");
+		assertEquals("REQUIRES_CONFIRMATION", row.getConfidence(), "the least confident of the findings");
 		assertEquals("Art.4(1), Rec.26", row.getCitations());
 	}
 
 	@Test
 	@DisplayName("a feature examined and found irrelevant still gets a row")
 	void examinedButNotFlaggedIsStillStated() {
-		GdprReport report = report("2026-09-15T08:12:00Z", "claude-opus-5");
-		feature(classifier(report, "Appointment"), "Appointment.staffNotes", null, RelevanceLevelType.NONE);
+		ComplianceReport report = report("2026-09-15T08:12:00Z", "claude-opus-5");
+		feature(classifier(report, "Appointment"), "Appointment.staffNotes", null, RelevanceLevel.NONE);
 
-		GdprReportHistory history = builder.build(List.of(stored("gdpr-fp-20260915-081200", report)), now);
+		ComplianceReportHistory history = builder.build(List.of(stored("gdpr-fp-20260915-081200", report)), now);
 
 		EvaluationRow row = row(history, 1, "Appointment", "Appointment.staffNotes");
-		assertNull(row.getCategory(), "nothing was found");
+		assertNull(row.getCategories(), "nothing was found");
 		assertEquals("NONE", row.getRelevanceLevel(), "but it was examined, and that is a statement");
 	}
 
@@ -254,10 +276,10 @@ class ReportHistoryBuilderTest {
 	@Test
 	@DisplayName("revisions are ordered by generatedAt, whatever order they arrive in")
 	void ordersByGeneratedAt() {
-		GdprReport newest = report("2026-09-17T14:20:30Z", "claude-opus-5");
-		GdprReport oldest = report("2026-09-15T08:12:00Z", "claude-opus-5");
+		ComplianceReport newest = report("2026-09-17T14:20:30Z", "claude-opus-5");
+		ComplianceReport oldest = report("2026-09-15T08:12:00Z", "claude-opus-5");
 
-		GdprReportHistory history = builder.build(List.of(stored("gdpr-fp-20260917-142030", newest),
+		ComplianceReportHistory history = builder.build(List.of(stored("gdpr-fp-20260917-142030", newest),
 				stored("gdpr-fp-20260915-081200", oldest)), now);
 
 		assertEquals("gdpr-fp-20260915-081200", history.getRevisions().get(0).getReportId());
@@ -269,10 +291,10 @@ class ReportHistoryBuilderTest {
 	@Test
 	@DisplayName("a report without a usable generatedAt is ordered by the timestamp in its id")
 	void fallsBackToTheTimestampInTheId() {
-		GdprReport undated = report(null, "claude-opus-5");
-		GdprReport dated = report("2026-09-15T08:12:00Z", "claude-opus-5");
+		ComplianceReport undated = report(null, "claude-opus-5");
+		ComplianceReport dated = report("2026-09-15T08:12:00Z", "claude-opus-5");
 
-		GdprReportHistory history = builder.build(List.of(stored("gdpr-fp-20260917-142030", undated),
+		ComplianceReportHistory history = builder.build(List.of(stored("gdpr-fp-20260917-142030", undated),
 				stored("gdpr-fp-20260915-081200", dated)), now);
 
 		assertEquals("gdpr-fp-20260915-081200", history.getRevisions().get(0).getReportId());
@@ -283,7 +305,7 @@ class ReportHistoryBuilderTest {
 	@Test
 	@DisplayName("no reports is an empty document, not a failure")
 	void emptyInputIsAnEmptyDocument() {
-		GdprReportHistory history = builder.build(List.of(), now);
+		ComplianceReportHistory history = builder.build(List.of(), now);
 
 		assertEquals(0, history.getRevisionCount());
 		assertTrue(history.getRevisions().isEmpty());
@@ -296,10 +318,10 @@ class ReportHistoryBuilderTest {
 	@Test
 	@DisplayName("a transformation review is flattened by flow, named after its qualified name")
 	void transformationReviewIsFlattenedByFlow() {
-		GdprReport report = REPORTS.createGdprReport();
+		ComplianceReport report = REPORTS.createComplianceReport();
 		report.setGeneratedAt("2026-09-24T10:00:00Z");
 		report.setGeneratedBy("static-analysis");
-		report.setOrigin(GdprReportOrigin.STATIC_ANALYSIS);
+		report.setOrigin(ReportOrigin.STATIC_ANALYSIS);
 		TransformationSubject subject = REPORTS.createTransformationSubject();
 		subject.setQualifiedName("clinic.Anonymise");
 		subject.setLanguage("qvto");
@@ -309,33 +331,33 @@ class ReportHistoryBuilderTest {
 		flow.setId("Patient.name->Record.label");
 		flow.setName("Patient.name -> Record.label");
 		flow.setMapping("patientToRecord");
-		flow.setRelevanceLevel(RelevanceLevelType.HIGH);
+		flow.setRelevanceLevel(RelevanceLevel.HIGH);
 		flow.setPurpose("copies the name verbatim");
-		report.getEvaluation().add(flow);
+		report.getEvaluations().add(flow);
 		Finding finding = REPORTS.createFinding();
 		finding.setId("F-001");
-		finding.setCategory(DataCategory.PERSONAL_DATA);
-		finding.setRelevanceLevel(RelevanceLevelType.HIGH);
+		finding.getCategories().add(categoryRef("PERSONAL_DATA"));
+		finding.setRelevanceLevel(RelevanceLevel.HIGH);
 		finding.setRationale("a person's name flows into the target unchanged");
 		flow.getFindings().add(finding);
 
-		GdprReportHistory history = builder.build(List.of(stored("gdpr-tr-20260924-100000", report)), now);
+		ComplianceReportHistory history = builder.build(List.of(stored("gdpr-tr-20260924-100000", report)), now);
 
 		assertEquals("clinic.Anonymise", history.getSubjectName());
 		// what the transformation is WRITTEN IN; the review's own language is reportLanguage
 		assertEquals("qvto", history.getSubjectLanguage());
 		assertEquals("clinic.Anonymise", history.getSubjectIdentifier(),
 				"a transformation is filed under its qualified name, a package under its nsURI");
-		assertEquals("77aa88bb99cc00dd", history.getRevisions().get(0).getModelFingerprint());
+		assertEquals("77aa88bb99cc00dd", history.getRevisions().get(0).getSubjectFingerprint());
 		assertEquals("GDPR review history of clinic.Anonymise", history.getName());
 		assertEquals(RevisionOrigin.STATIC_ANALYSIS, history.getRevisions().get(0).getOrigin());
 		assertEquals(1, history.getRevisions().get(0).getFindingCount());
 		assertEquals(1, history.getEvaluations().size());
 		EvaluationRow row = history.getEvaluations().get(0);
-		assertEquals("Patient.name->Record.label", row.getClassifierId());
-		assertEquals("Patient.name -> Record.label", row.getClassifierName());
+		assertEquals("Patient.name->Record.label", row.getElementId());
+		assertEquals("Patient.name -> Record.label", row.getElementName());
 		assertEquals("copies the name verbatim", row.getPurpose());
-		assertEquals(RelevanceLevelType.HIGH.getName(), row.getRelevanceLevel());
+		assertEquals(RelevanceLevel.HIGH.getName(), row.getRelevanceLevel());
 		assertTrue(row.getRationale().contains("flows into the target"));
 	}
 
@@ -344,20 +366,20 @@ class ReportHistoryBuilderTest {
 	@Test
 	@DisplayName("a purpose filled in by a human is an ADDED change naming who wrote it")
 	void aHumanAnsweringTheOpenQuestionIsRecorded() {
-		GdprReport before = report("2026-09-15T08:12:00Z", "claude-opus-5");
-		before.setOrigin(GdprReportOrigin.AI_AGENT);
-		feature(classifier(before, "Patient"), "Patient.diagnosis", DataCategory.PERSONAL_DATA,
-				RelevanceLevelType.HIGH, ConfidenceType.REQUIRES_PURPOSE_CONFIRMATION, "Free-text notes.",
+		ComplianceReport before = report("2026-09-15T08:12:00Z", "claude-opus-5");
+		before.setOrigin(ReportOrigin.AI_AGENT);
+		feature(classifier(before, "Patient"), "Patient.diagnosis", "PERSONAL_DATA",
+				RelevanceLevel.HIGH, Confidence.REQUIRES_CONFIRMATION, "Free-text notes.",
 				"Art.4(15)");
 
-		GdprReport after = report("2026-09-17T14:20:30Z", "claude-opus-5");
-		after.setOrigin(GdprReportOrigin.HUMAN);
+		ComplianceReport after = report("2026-09-17T14:20:30Z", "claude-opus-5");
+		after.setOrigin(ReportOrigin.HUMAN);
 		FeatureEvaluation diagnosis = feature(classifier(after, "Patient"), "Patient.diagnosis",
-				DataCategory.PERSONAL_DATA, RelevanceLevelType.HIGH, ConfidenceType.HIGH, "Free-text notes.",
+				"PERSONAL_DATA", RelevanceLevel.HIGH, Confidence.HIGH, "Free-text notes.",
 				"Art.4(15)");
 		diagnosis.setPurpose("Billing and continuity of treatment, Art.9(2)(h).");
 
-		GdprReportHistory history = builder.build(List.of(stored("gdpr-fp-20260915-081200", before),
+		ComplianceReportHistory history = builder.build(List.of(stored("gdpr-fp-20260915-081200", before),
 				human("gdpr-fp-20260917-142030", after, "a.reviewer@example.org")), now);
 
 		assertEquals("Billing and continuity of treatment, Art.9(2)(h).",
@@ -371,7 +393,7 @@ class ReportHistoryBuilderTest {
 				"the person who answered, not the model that asked");
 
 		// The pair reads as one action: the question was answered and the confidence moved with it.
-		assertEquals("REQUIRES_PURPOSE_CONFIRMATION", change(history, "confidence").getOldValue());
+		assertEquals("REQUIRES_CONFIRMATION", change(history, "confidence").getOldValue());
 		assertEquals("HIGH", change(history, "confidence").getNewValue());
 		assertEquals(RevisionOrigin.HUMAN, history.getRevisions().get(1).getOrigin());
 	}
@@ -379,9 +401,9 @@ class ReportHistoryBuilderTest {
 	@Test
 	@DisplayName("a report that never stated an origin is UNKNOWN, not the first literal")
 	void anUnstatedOriginIsNotAGuess() {
-		GdprReport silent = report("2026-09-15T08:12:00Z", "claude-opus-5");
+		ComplianceReport silent = report("2026-09-15T08:12:00Z", "claude-opus-5");
 
-		GdprReportHistory history = builder.build(
+		ComplianceReportHistory history = builder.build(
 				List.of(new StoredReport("gdpr-fp-20260915-081200", silent, null, null)), now);
 
 		assertEquals(RevisionOrigin.UNKNOWN, history.getRevisions().get(0).getOrigin(),
@@ -391,10 +413,10 @@ class ReportHistoryBuilderTest {
 	@Test
 	@DisplayName("the origin in the report wins over the one the caller guessed")
 	void theReportSpeaksForItself() {
-		GdprReport stated = report("2026-09-15T08:12:00Z", "someone");
-		stated.setOrigin(GdprReportOrigin.HUMAN);
+		ComplianceReport stated = report("2026-09-15T08:12:00Z", "someone");
+		stated.setOrigin(ReportOrigin.HUMAN);
 
-		GdprReportHistory history = builder.build(
+		ComplianceReportHistory history = builder.build(
 				List.of(new StoredReport("gdpr-fp-20260915-081200", stated, null, RevisionOrigin.AI_AGENT)), now);
 
 		assertEquals(RevisionOrigin.HUMAN, history.getRevisions().get(0).getOrigin());
@@ -403,10 +425,10 @@ class ReportHistoryBuilderTest {
 	@Test
 	@DisplayName("a report derived by a program is recorded as STATIC_ANALYSIS, not as an agent")
 	void aDerivedReviewIsNeitherAgentNorPerson() {
-		GdprReport derived = report("2026-09-15T08:12:00Z", "qvto-flow-analyser");
-		derived.setOrigin(GdprReportOrigin.STATIC_ANALYSIS);
+		ComplianceReport derived = report("2026-09-15T08:12:00Z", "qvto-flow-analyser");
+		derived.setOrigin(ReportOrigin.STATIC_ANALYSIS);
 
-		GdprReportHistory history = builder.build(
+		ComplianceReportHistory history = builder.build(
 				List.of(new StoredReport("gdpr-fp-20260915-081200", derived, null, RevisionOrigin.AI_AGENT)), now);
 
 		assertEquals(RevisionOrigin.STATIC_ANALYSIS, history.getRevisions().get(0).getOrigin(),
@@ -416,20 +438,20 @@ class ReportHistoryBuilderTest {
 	@Test
 	@DisplayName("a withdrawn purpose is REMOVED, and a reworded one MODIFIED")
 	void purposeCanAlsoChangeAndGoAway() {
-		GdprReport first = report("2026-09-15T08:12:00Z", "a.reviewer@example.org");
-		feature(classifier(first, "Patient"), "Patient.diagnosis", DataCategory.PERSONAL_DATA,
-				RelevanceLevelType.HIGH, ConfidenceType.HIGH, "Notes.", "Art.4(15)").setPurpose("Billing.");
+		ComplianceReport first = report("2026-09-15T08:12:00Z", "a.reviewer@example.org");
+		feature(classifier(first, "Patient"), "Patient.diagnosis", "PERSONAL_DATA",
+				RelevanceLevel.HIGH, Confidence.HIGH, "Notes.", "Art.4(15)").setPurpose("Billing.");
 
-		GdprReport second = report("2026-09-16T09:00:00Z", "a.reviewer@example.org");
-		feature(classifier(second, "Patient"), "Patient.diagnosis", DataCategory.PERSONAL_DATA,
-				RelevanceLevelType.HIGH, ConfidenceType.HIGH, "Notes.", "Art.4(15)")
+		ComplianceReport second = report("2026-09-16T09:00:00Z", "a.reviewer@example.org");
+		feature(classifier(second, "Patient"), "Patient.diagnosis", "PERSONAL_DATA",
+				RelevanceLevel.HIGH, Confidence.HIGH, "Notes.", "Art.4(15)")
 						.setPurpose("Billing and continuity of treatment.");
 
-		GdprReport third = report("2026-09-17T14:20:30Z", "a.reviewer@example.org");
-		feature(classifier(third, "Patient"), "Patient.diagnosis", DataCategory.PERSONAL_DATA,
-				RelevanceLevelType.HIGH, ConfidenceType.HIGH, "Notes.", "Art.4(15)");
+		ComplianceReport third = report("2026-09-17T14:20:30Z", "a.reviewer@example.org");
+		feature(classifier(third, "Patient"), "Patient.diagnosis", "PERSONAL_DATA",
+				RelevanceLevel.HIGH, Confidence.HIGH, "Notes.", "Art.4(15)");
 
-		GdprReportHistory history = builder.build(List.of(stored("gdpr-fp-20260915-081200", first),
+		ComplianceReportHistory history = builder.build(List.of(stored("gdpr-fp-20260915-081200", first),
 				stored("gdpr-fp-20260916-090000", second), stored("gdpr-fp-20260917-142030", third)), now);
 
 		ChangeRow reworded = changeOf(history, "purpose", ChangeKind.MODIFIED);
@@ -445,8 +467,8 @@ class ReportHistoryBuilderTest {
 
 	/* ------------------------------------------------------------------ fixtures */
 
-	private static GdprReport report(String generatedAt, String generatedBy) {
-		GdprReport report = REPORTS.createGdprReport();
+	private static ComplianceReport report(String generatedAt, String generatedBy) {
+		ComplianceReport report = REPORTS.createComplianceReport();
 		report.setGeneratedAt(generatedAt);
 		report.setGeneratedBy(generatedBy);
 
@@ -456,45 +478,49 @@ class ReportHistoryBuilderTest {
 		subject.setSubjectFingerprint("9f2c1ab7d4e85530");
 		report.setSubject(subject);
 
-		LegalCorpusRef corpus = REPORTS.createLegalCorpusRef();
-		corpus.setCelex("32016R0679");
-		corpus.setConsolidatedDate("2016-05-04");
-		report.setCorpus(corpus);
+		report.getContexts().add(context("gdpr", "20160504"));
 		return report;
 	}
 
-	private static ClassifierEvaluation classifier(GdprReport report, String name) {
+	private static ContextRef context(String id, String version) {
+		ContextRef context = ContextFactory.eINSTANCE.createContextRef();
+		context.setContextId(id);
+		context.setContextVersion(version);
+		return context;
+	}
+
+	private static ClassifierEvaluation classifier(ComplianceReport report, String name) {
 		ClassifierEvaluation classifier = REPORTS.createClassifierEvaluation();
 		classifier.setId(name);
 		classifier.setName(name);
 		classifier.setUriFragment("//" + name);
-		report.getEvaluation().add(classifier);
+		report.getEvaluations().add(classifier);
 		return classifier;
 	}
 
-	private static FeatureEvaluation feature(ClassifierEvaluation classifier, String id, DataCategory category,
-			RelevanceLevelType relevance) {
+	private static FeatureEvaluation feature(ClassifierEvaluation classifier, String id, String category,
+			RelevanceLevel relevance) {
 		FeatureEvaluation feature = REPORTS.createFeatureEvaluation();
 		feature.setId(id);
 		feature.setName(id.substring(id.indexOf('.') + 1));
 		feature.setUriFragment("//" + id.replace('.', '/'));
 		feature.setRelevanceLevel(relevance);
-		classifier.getFeatureEvaluation().add(feature);
+		classifier.getFeatureEvaluations().add(feature);
 		return feature;
 	}
 
-	private static FeatureEvaluation feature(ClassifierEvaluation classifier, String id, DataCategory category,
-			RelevanceLevelType relevance, ConfidenceType confidence, String rationale, String... citations) {
+	private static FeatureEvaluation feature(ClassifierEvaluation classifier, String id, String category,
+			RelevanceLevel relevance, Confidence confidence, String rationale, String... citations) {
 		FeatureEvaluation feature = feature(classifier, id, category, relevance);
 		finding(feature, "F-001", category, relevance, confidence, rationale, citations);
 		return feature;
 	}
 
-	private static Finding finding(FeatureEvaluation feature, String id, DataCategory category,
-			RelevanceLevelType relevance, ConfidenceType confidence, String rationale, String... citations) {
+	private static Finding finding(FeatureEvaluation feature, String id, String category,
+			RelevanceLevel relevance, Confidence confidence, String rationale, String... citations) {
 		Finding finding = REPORTS.createFinding();
 		finding.setId(id);
-		finding.setCategory(category);
+		finding.getCategories().add(categoryRef(category));
 		finding.setRelevanceLevel(relevance);
 		finding.setConfidence(confidence);
 		finding.setRationale(rationale);
@@ -508,33 +534,46 @@ class ReportHistoryBuilderTest {
 		return finding;
 	}
 
-	private static StoredReport stored(String objectId, GdprReport report) {
+	private static StoredReport stored(String objectId, ComplianceReport report) {
 		return new StoredReport(objectId, report, null, RevisionOrigin.AI_AGENT);
 	}
 
-	private static StoredReport human(String objectId, GdprReport report, String user) {
+	private static StoredReport human(String objectId, ComplianceReport report, String user) {
 		return new StoredReport(objectId, report, user, RevisionOrigin.HUMAN);
 	}
 
 	/* ------------------------------------------------------------------ lookups */
 
-	private static EvaluationRow row(GdprReportHistory history, int revision, String classifierId, String featureId) {
+	private static EvaluationRow row(ComplianceReportHistory history, int revision, String classifierId, String featureId) {
 		Optional<EvaluationRow> row = history.getEvaluations().stream()
-				.filter(r -> r.getRevisionNumber() == revision && classifierId.equals(r.getClassifierId())
-						&& featureId.equals(r.getFeatureId()))
+				.filter(r -> r.getRevisionNumber() == revision && classifierId.equals(r.getElementId())
+						&& featureId.equals(r.getChildId()))
 				.findFirst();
 		assertTrue(row.isPresent(), "no row for " + featureId + " in revision " + revision);
 		return row.get();
 	}
 
-	private static ChangeRow change(GdprReportHistory history, String field) {
+	private static ChangeRow change(ComplianceReportHistory history, String field) {
 		return history.getChanges().stream().filter(c -> field.equals(c.getField())).findFirst().orElse(null);
 	}
 
-	private static ChangeRow changeOf(GdprReportHistory history, String field, ChangeKind kind) {
+	private static ChangeRow changeOf(ComplianceReportHistory history, String field, ChangeKind kind) {
 		Optional<ChangeRow> change = history.getChanges().stream()
 				.filter(c -> field.equals(c.getField()) && kind == c.getChangeKind()).findFirst();
 		assertTrue(change.isPresent(), "no " + kind + " change for field '" + field + "'");
 		return change.get();
 	}
+
+	/**
+	 * A data-category reference, the way a review records one: an id in the context's
+	 * {@code data-categories} taxonomy. The ids are the names the {@code DataCategory} enum had.
+	 */
+	static CategoryRef categoryRef(String categoryId) {
+		CategoryRef ref = ContextFactory.eINSTANCE.createCategoryRef();
+		ref.setContextId("gdpr");
+		ref.setTaxonomyId("data-categories");
+		ref.setCategoryId(categoryId);
+		return ref;
+	}
+
 }

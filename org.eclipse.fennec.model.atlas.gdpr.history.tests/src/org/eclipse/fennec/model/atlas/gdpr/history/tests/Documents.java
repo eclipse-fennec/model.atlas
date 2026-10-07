@@ -22,8 +22,8 @@ import org.eclipse.emf.ecore.util.EcoreUtil;
 import org.eclipse.fennec.model.atlas.mgmt.management.ManagementFactory;
 import org.eclipse.fennec.model.atlas.mgmt.management.ObjectMetadata;
 import org.eclipse.fennec.model.atlas.wf.workflowapi.WritableScopeService;
-import org.eclipse.fennec.model.gdprReport.GdprReport;
-import org.eclipse.fennec.model.gdprReportHistory.GdprReportHistory;
+import org.eclipse.fennec.model.compliance.report.ComplianceReport;
+import org.eclipse.fennec.model.compliance.history.ComplianceReportHistory;
 
 /**
  * Storing a review and waiting for the document the action derives from it.
@@ -46,12 +46,12 @@ final class Documents {
 	}
 
 	/** Stores a review in the reports registry, the way the REST resource stores one. */
-	static void store(WritableScopeService<EObject> scope, GdprReport report) throws Exception {
+	static void store(WritableScopeService<EObject> scope, ComplianceReport report) throws Exception {
 		store(scope, report, REVIEW_STAGE);
 	}
 
 	/** Stores a review into one stage of the reports registry. */
-	static void store(WritableScopeService<EObject> scope, GdprReport report, String stage) throws Exception {
+	static void store(WritableScopeService<EObject> scope, ComplianceReport report, String stage) throws Exception {
 		ObjectMetadata metadata = ManagementFactory.eINSTANCE.createObjectMetadata();
 		metadata.setObjectId(report.getReportId());
 		metadata.setObjectName(report.getName());
@@ -67,14 +67,14 @@ final class Documents {
 	 * Polling rather than a latch: the rebuild runs on the action's own executor, so the store call
 	 * returns before the document exists - by design, because the workflow must not wait on it.
 	 */
-	static GdprReportHistory awaitRevisions(WritableScopeService<EObject> scope, int revisions) {
+	static ComplianceReportHistory awaitRevisions(WritableScopeService<EObject> scope, int revisions) {
 		return awaitRevisions(scope, revisions, REVIEW_STAGE);
 	}
 
 	/** Waits for the document of one stage to carry exactly {@code revisions} revisions. */
-	static GdprReportHistory awaitRevisions(WritableScopeService<EObject> scope, int revisions, String stage) {
+	static ComplianceReportHistory awaitRevisions(WritableScopeService<EObject> scope, int revisions, String stage) {
 		long deadline = System.currentTimeMillis() + TIMEOUT_MS;
-		GdprReportHistory last = null;
+		ComplianceReportHistory last = null;
 		while (System.currentTimeMillis() < deadline) {
 			last = read(scope, Reports.LANGUAGE, stage);
 			if (last != null && last.getRevisionCount() == revisions) {
@@ -93,12 +93,12 @@ final class Documents {
 	}
 
 	/** The document, or null while it is not there yet. */
-	static GdprReportHistory read(WritableScopeService<EObject> scope) {
+	static ComplianceReportHistory read(WritableScopeService<EObject> scope) {
 		return read(scope, Reports.LANGUAGE);
 	}
 
 	/** The document of one language, or null while it is not there yet. */
-	static GdprReportHistory read(WritableScopeService<EObject> scope, String language) {
+	static ComplianceReportHistory read(WritableScopeService<EObject> scope, String language) {
 		return read(scope, language, REVIEW_STAGE);
 	}
 
@@ -106,21 +106,21 @@ final class Documents {
 	 * The document of one language, from the stage its reviews were carried out at, or null while it
 	 * is not there yet. A document lives in that stage: the id does not name it.
 	 */
-	static GdprReportHistory read(WritableScopeService<EObject> scope, String language, String stage) {
+	static ComplianceReportHistory read(WritableScopeService<EObject> scope, String language, String stage) {
 		try {
 			EObject stored = scope.getContentFromStageForRegistry(TestAnnotations.DOCUMENT_REGISTRY, stage,
 					documentId(language));
-			return stored instanceof GdprReportHistory history ? history : null;
+			return stored instanceof ComplianceReportHistory history ? history : null;
 		} catch (RuntimeException notThereYet) {
 			return null;
 		}
 	}
 
 	/** Waits for the document of one language to exist. */
-	static GdprReportHistory awaitDocument(WritableScopeService<EObject> scope, String language) {
+	static ComplianceReportHistory awaitDocument(WritableScopeService<EObject> scope, String language) {
 		long deadline = System.currentTimeMillis() + TIMEOUT_MS;
 		while (System.currentTimeMillis() < deadline) {
-			GdprReportHistory found = read(scope, language);
+			ComplianceReportHistory found = read(scope, language);
 			if (found != null) {
 				return found;
 			}

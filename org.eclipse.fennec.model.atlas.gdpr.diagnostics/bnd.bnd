@@ -5,9 +5,14 @@ Bundle-Description: Writes the findings of a GDPR review onto the metadata of th
 
 # In model.atlas rather than in fennec-gdpr, for the reason the history bundle gives: the
 # feature has to work in a deployment that has no AI review half, where a human uploads a
-# report by hand. Nothing here depends on fennec-gdpr - the GdprReport EPackage lives in
-# common.models - and nothing here changes gdpr-report.ecore, which is a shared model that
+# report by hand. Nothing here depends on fennec-gdpr - the ComplianceReport EPackage lives in
+# common.models - and nothing here changes report.ecore, which is a shared model that
 # knows nothing of Atlas topology.
+#
+# Which vocabulary a review speaks is configuration, not code: the data-category ids, the
+# benign ones among them and the combination-kind taxonomy are component properties defaulted
+# to what the GDPR context names, so a deployment reviewing against another context says so
+# there (issue #332, D1/D5).
 #
 # Sibling of org.eclipse.fennec.model.atlas.gdpr.history, not part of it: one action, one
 # output. Both run off the same event with onFailure 'continue', so a failing metadata write
@@ -21,7 +26,9 @@ Bundle-Description: Writes the findings of a GDPR review onto the metadata of th
 -library: enableEMF
 
 -buildpath: \
-	org.eclipse.fennec.gdpr.report.model;version=latest,\
+	org.eclipse.fennec.compliance.report.model;version=latest,\
+	org.eclipse.fennec.compliance.context.model;version=latest,\
+	org.eclipse.fennec.compliance.corpus.model;version=latest,\
 	org.eclipse.fennec.model.atlas.action.api;version=snapshot,\
 	org.eclipse.fennec.model.atlas.scope.api;version=snapshot,\
 	org.eclipse.fennec.model.atlas.workflow;version=snapshot,\

@@ -13,7 +13,7 @@
  */
 package org.eclipse.fennec.model.atlas.qvt.gdpr;
 
-import org.eclipse.fennec.model.gdprReport.FlowKind;
+import org.eclipse.fennec.model.compliance.report.FlowKind;
 
 /**
  * One path along which a compiled transformation moves a value: one source feature reaching one

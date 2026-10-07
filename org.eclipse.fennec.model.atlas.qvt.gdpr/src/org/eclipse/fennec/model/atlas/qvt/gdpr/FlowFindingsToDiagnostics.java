@@ -26,15 +26,14 @@ import org.eclipse.fennec.model.atlas.mgmt.management.Diagnostic;
 import org.eclipse.fennec.model.atlas.mgmt.management.DiagnosticSeverity;
 import org.eclipse.fennec.model.atlas.mgmt.management.ManagementFactory;
 import org.eclipse.fennec.model.atlas.qvt.gdpr.RuleCatalogue.Rule;
-import org.eclipse.fennec.model.gdprReport.CombinationFinding;
-import org.eclipse.fennec.model.gdprReport.DataCategory;
-import org.eclipse.fennec.model.gdprReport.Evaluation;
-import org.eclipse.fennec.model.gdprReport.Evidence;
-import org.eclipse.fennec.model.gdprReport.Finding;
-import org.eclipse.fennec.model.gdprReport.FlowEvaluation;
-import org.eclipse.fennec.model.gdprReport.GdprReport;
-import org.eclipse.fennec.model.gdprReport.RelevanceLevelType;
-import org.eclipse.fennec.model.gdprReport.TransformationSubject;
+import org.eclipse.fennec.model.compliance.report.CombinationFinding;
+import org.eclipse.fennec.model.compliance.report.Evaluation;
+import org.eclipse.fennec.model.compliance.report.Evidence;
+import org.eclipse.fennec.model.compliance.report.Finding;
+import org.eclipse.fennec.model.compliance.report.FlowEvaluation;
+import org.eclipse.fennec.model.compliance.report.ComplianceReport;
+import org.eclipse.fennec.model.compliance.report.RelevanceLevel;
+import org.eclipse.fennec.model.compliance.report.TransformationSubject;
 
 /**
  * Projects a transformation's report onto the <em>metamodels</em> it is about (issue #319, WP3).
@@ -110,6 +109,12 @@ final class FlowFindingsToDiagnostics {
 	/** The diagnostic category the whole GDPR family writes under. */
 	static final String CATEGORY = "compliance";
 
+	/** What a claim is badged with when the finding names no data category at all. */
+	private static final String UNCLASSIFIED = "unclassified";
+
+	/** The categories that place the data outside the Regulation, as the GDPR context names them. */
+	private static final Set<String> BENIGN = Set.of("NOT_PERSONAL_DATA", "ANONYMOUS");
+
 	private static final Logger LOGGER = Logger.getLogger(FlowFindingsToDiagnostics.class.getName());
 
 	private FlowFindingsToDiagnostics() {
@@ -128,7 +133,7 @@ final class FlowFindingsToDiagnostics {
 	 *         report names but has nothing to say about is present with an <b>empty</b> list, which
 	 *         is what clears what a previous analysis of the same transformation left there
 	 */
-	static Map<String, List<Diagnostic>> map(GdprReport report) {
+	static Map<String, List<Diagnostic>> map(ComplianceReport report) {
 		if (!(report.getSubject() instanceof TransformationSubject subject)) {
 			return Map.of();
 		}
@@ -140,7 +145,7 @@ final class FlowFindingsToDiagnostics {
 		for (String nsURI : modelsOf(subject)) {
 			perModel.put(nsURI, new LinkedHashMap<>());
 		}
-		for (Evaluation evaluation : report.getEvaluation()) {
+		for (Evaluation evaluation : report.getEvaluations()) {
 			if (evaluation instanceof FlowEvaluation flow) {
 				for (Finding finding : flow.getFindings()) {
 					route(finding, List.of(flow), perModel);
@@ -183,12 +188,12 @@ final class FlowFindingsToDiagnostics {
 				// would say that field is special-category data when its own review says it is a
 				// name. What travels is the field's own classification; what arrives is the set's.
 				place(perModel, flow.getSourceNsURI(), code, blankToNull(flow.getSourceFeature()), finding,
-						firstOf(categoryOf(flow), finding.getCategory()),
+						firstOf(categoryOf(flow), worstCategoryOf(finding)),
 						firstOf(statedRelevanceOf(flow), finding.getRelevanceLevel()));
 			}
 			if (target) {
 				place(perModel, flow.getTargetNsURI(), code, blankToNull(flow.getTargetFeature()), finding,
-						finding.getCategory(), finding.getRelevanceLevel());
+						worstCategoryOf(finding), finding.getRelevanceLevel());
 			}
 		}
 	}
@@ -198,10 +203,22 @@ final class FlowFindingsToDiagnostics {
 	 * classification of the field it reads, carried onto the flow when the report was derived.
 	 * {@code null} when nothing classified it.
 	 */
-	private static DataCategory categoryOf(FlowEvaluation flow) {
-		DataCategory strongest = null;
+	private static String categoryOf(FlowEvaluation flow) {
+		String strongest = null;
 		for (Finding finding : flow.getFindings()) {
-			strongest = ReviewIndex.stronger(strongest, finding.getCategory());
+			strongest = ReviewIndex.stronger(strongest, worstCategoryOf(finding));
+		}
+		return strongest;
+	}
+
+	/**
+	 * The strongest data category one finding claims. A finding may name several where the previous
+	 * model allowed one, and a badge states the one that constrains processing most.
+	 */
+	private static String worstCategoryOf(Finding finding) {
+		String strongest = null;
+		for (String candidate : ReviewIndex.categoriesOf(finding)) {
+			strongest = ReviewIndex.stronger(strongest, candidate);
 		}
 		return strongest;
 	}
@@ -214,9 +231,9 @@ final class FlowFindingsToDiagnostics {
 	 * "examined and nothing of concern found". Taken at face value it would quietly downgrade a
 	 * finding to "nothing to see" on the strength of a field nobody filled in.
 	 */
-	private static RelevanceLevelType statedRelevanceOf(FlowEvaluation flow) {
-		RelevanceLevelType relevance = flow.getRelevanceLevel();
-		return relevance == null || relevance == RelevanceLevelType.NONE ? null : relevance;
+	private static RelevanceLevel statedRelevanceOf(FlowEvaluation flow) {
+		RelevanceLevel relevance = flow.getRelevanceLevel();
+		return relevance == null || relevance == RelevanceLevel.NONE ? null : relevance;
 	}
 
 	private static <T> T firstOf(T preferred, T fallback) {
@@ -234,7 +251,7 @@ final class FlowFindingsToDiagnostics {
 	}
 
 	private static void place(Map<String, Map<ElementKey, Element>> perModel, String nsURI, String code,
-			String feature, Finding finding, DataCategory category, RelevanceLevelType relevance) {
+			String feature, Finding finding, String category, RelevanceLevel relevance) {
 		if (nsURI == null) {
 			return;
 		}
@@ -318,7 +335,7 @@ final class FlowFindingsToDiagnostics {
 
 		private final Map<String, Claim> claims = new LinkedHashMap<>();
 
-		void add(Finding finding, DataCategory category, RelevanceLevelType relevance) {
+		void add(Finding finding, String category, RelevanceLevel relevance) {
 			claims.computeIfAbsent(findingCode(category, relevance), code -> new Claim(category, relevance))
 					.add(finding);
 		}
@@ -352,14 +369,14 @@ final class FlowFindingsToDiagnostics {
 	 */
 	private static final class Claim {
 
-		private final DataCategory category;
-		private final RelevanceLevelType relevance;
+		private final String category;
+		private final RelevanceLevel relevance;
 		private final List<String> rationales = new ArrayList<>();
 		private final Set<String> citations = new LinkedHashSet<>();
 
-		Claim(DataCategory category, RelevanceLevelType relevance) {
-			this.category = category == null ? DataCategory.NOT_PERSONAL_DATA : category;
-			this.relevance = relevance == null ? RelevanceLevelType.NONE : relevance;
+		Claim(String category, RelevanceLevel relevance) {
+			this.category = category == null ? UNCLASSIFIED : category;
+			this.relevance = relevance == null ? RelevanceLevel.NONE : relevance;
 		}
 
 		void add(Finding finding) {
@@ -376,7 +393,7 @@ final class FlowFindingsToDiagnostics {
 		}
 
 		String label() {
-			return category.getName() + " (" + relevance.getName() + ")";
+			return category + " (" + relevance.getName() + ")";
 		}
 
 		/** The report's own words, and what it quoted. Nothing here is composed. */
@@ -391,21 +408,22 @@ final class FlowFindingsToDiagnostics {
 
 	/* ------------------------------------------------------------------ small helpers */
 
-	static String findingCode(DataCategory category, RelevanceLevelType relevance) {
-		return CODE_FINDING_PREFIX + (category == null ? DataCategory.NOT_PERSONAL_DATA : category).getName() + "."
-				+ (relevance == null ? RelevanceLevelType.NONE : relevance).getName();
+	static String findingCode(String category, RelevanceLevel relevance) {
+		return CODE_FINDING_PREFIX + (category == null ? UNCLASSIFIED : category) + "."
+				+ (relevance == null ? RelevanceLevel.NONE : relevance).getName();
 	}
 
 	/**
 	 * Whether the finding says there is nothing of concern. The same reading the review mapper
-	 * uses: {@code NONE} relevance is the report model's "examined and nothing found", and
-	 * {@code NOT_PERSONAL_DATA} and {@code ANONYMOUS} place the data outside the Regulation.
+	 * uses: {@code NONE} relevance is the report model's "examined and nothing found", and the
+	 * benign categories place the data outside the Regulation.
 	 */
 	private static boolean assertsNothing(Finding finding) {
-		DataCategory category = finding.getCategory();
-		return finding.getRelevanceLevel() == null || finding.getRelevanceLevel() == RelevanceLevelType.NONE
-				|| category == null || category == DataCategory.NOT_PERSONAL_DATA
-				|| category == DataCategory.ANONYMOUS;
+		if (finding.getRelevanceLevel() == null || finding.getRelevanceLevel() == RelevanceLevel.NONE) {
+			return true;
+		}
+		List<String> categories = ReviewIndex.categoriesOf(finding);
+		return !categories.isEmpty() && BENIGN.containsAll(categories);
 	}
 
 	/**
@@ -413,7 +431,7 @@ final class FlowFindingsToDiagnostics {
 	 * means the check did not run, and an analysis that ran and found something is not a failure of
 	 * the check. What did not run is said on the compiled unit, where the report is.
 	 */
-	private static DiagnosticSeverity severityOf(RelevanceLevelType relevance) {
+	private static DiagnosticSeverity severityOf(RelevanceLevel relevance) {
 		if (relevance == null) {
 			return DiagnosticSeverity.INFO;
 		}
@@ -440,4 +458,6 @@ final class FlowFindingsToDiagnostics {
 	private static String blankToNull(String value) {
 		return value == null || value.isBlank() ? null : value.trim();
 	}
+
+
 }

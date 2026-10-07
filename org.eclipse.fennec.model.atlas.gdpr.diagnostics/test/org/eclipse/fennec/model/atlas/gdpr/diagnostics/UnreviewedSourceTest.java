@@ -21,10 +21,10 @@ import java.util.List;
 
 import org.eclipse.fennec.model.atlas.mgmt.management.Diagnostic;
 import org.eclipse.fennec.model.atlas.mgmt.management.DiagnosticSeverity;
-import org.eclipse.fennec.model.gdprReport.GDPRReportFactory;
-import org.eclipse.fennec.model.gdprReport.GdprReport;
-import org.eclipse.fennec.model.gdprReport.PackageSubject;
-import org.eclipse.fennec.model.gdprReport.TransformationSubject;
+import org.eclipse.fennec.model.compliance.report.ReportFactory;
+import org.eclipse.fennec.model.compliance.report.ComplianceReport;
+import org.eclipse.fennec.model.compliance.report.PackageSubject;
+import org.eclipse.fennec.model.compliance.report.TransformationSubject;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -36,7 +36,7 @@ import org.junit.jupiter.api.Test;
 @DisplayName("A metamodel the report rests on that nobody reviewed")
 public class UnreviewedSourceTest {
 
-	private static final GDPRReportFactory REPORTS = GDPRReportFactory.eINSTANCE;
+	private static final ReportFactory REPORTS = ReportFactory.eINSTANCE;
 
 	private static final String REVIEWED = "http://example.org/clinic/1.0.0";
 	private static final String UNREVIEWED = "http://example.org/crm/1.0.0";
@@ -46,7 +46,7 @@ public class UnreviewedSourceTest {
 	@Test
 	@DisplayName("is an error on the compiled unit, and says the analysis is incomplete rather than clean")
 	public void anUnreviewedSourceIsAnError() {
-		GdprReport report = transformationReport();
+		ComplianceReport report = transformationReport();
 
 		List<Diagnostic> roots = mapper.map(report);
 		assertEquals(1, roots.size(), "one root per producer, as for any review");
@@ -68,7 +68,7 @@ public class UnreviewedSourceTest {
 	@Test
 	@DisplayName("is not raised for a metamodel that does carry a review")
 	public void aReviewedSourceIsSilent() {
-		GdprReport report = transformationReport();
+		ComplianceReport report = transformationReport();
 		((TransformationSubject) report.getSubject()).getSourcePackages().get(1).setReportId("gdpr-crm-1");
 
 		assertClean(mapper.map(report),
@@ -78,7 +78,7 @@ public class UnreviewedSourceTest {
 	@Test
 	@DisplayName("is raised once for a model the transformation both reads and writes")
 	public void anInoutModelIsNotReportedTwice() {
-		GdprReport report = transformationReport();
+		ComplianceReport report = transformationReport();
 		TransformationSubject subject = (TransformationSubject) report.getSubject();
 		// A model declared inout belongs in both lists, as two entries with the same nsURI and
 		// fingerprint - which must not become two errors about one model.
@@ -92,7 +92,7 @@ public class UnreviewedSourceTest {
 	@Test
 	@DisplayName("is a transformation's business only: a review of a package never raises it")
 	public void aPackageReviewIsUnaffected() {
-		GdprReport review = REPORTS.createGdprReport();
+		ComplianceReport review = REPORTS.createComplianceReport();
 		PackageSubject subject = REPORTS.createPackageSubject();
 		subject.setNsURI(REVIEWED);
 		subject.setSubjectFingerprint("fp1:clinic");
@@ -113,8 +113,8 @@ public class UnreviewedSourceTest {
 	}
 
 	/** A report about a compiled transformation: one reviewed metamodel, one not. */
-	private static GdprReport transformationReport() {
-		GdprReport report = REPORTS.createGdprReport();
+	private static ComplianceReport transformationReport() {
+		ComplianceReport report = REPORTS.createComplianceReport();
 		report.setReportId("gdpr-flow-1");
 		report.setGeneratedBy("qvt-flow-analysis/1");
 		TransformationSubject subject = REPORTS.createTransformationSubject();

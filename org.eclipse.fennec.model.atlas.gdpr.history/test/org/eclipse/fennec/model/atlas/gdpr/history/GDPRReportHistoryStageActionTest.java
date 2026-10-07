@@ -40,15 +40,16 @@ import org.eclipse.fennec.model.atlas.mgmt.management.ManagementFactory;
 import org.eclipse.fennec.model.atlas.mgmt.management.ObjectMetadata;
 import org.eclipse.fennec.model.atlas.scope.api.ReadableRegistryView;
 import org.eclipse.fennec.model.atlas.wf.workflowapi.WritableScopeService;
-import org.eclipse.fennec.model.gdprReport.ClassifierEvaluation;
-import org.eclipse.fennec.model.gdprReport.GDPRReportFactory;
-import org.eclipse.fennec.model.gdprReport.GDPRReportPackage;
-import org.eclipse.fennec.model.gdprReport.GdprReport;
-import org.eclipse.fennec.model.gdprReport.GdprReportOrigin;
-import org.eclipse.fennec.model.gdprReport.LegalCorpusRef;
-import org.eclipse.fennec.model.gdprReport.PackageSubject;
-import org.eclipse.fennec.model.gdprReportHistory.GdprReportHistory;
-import org.eclipse.fennec.model.gdprReportHistory.ReportRevision;
+import org.eclipse.fennec.model.compliance.context.ContextFactory;
+import org.eclipse.fennec.model.compliance.context.ContextRef;
+import org.eclipse.fennec.model.compliance.report.ClassifierEvaluation;
+import org.eclipse.fennec.model.compliance.report.ReportFactory;
+import org.eclipse.fennec.model.compliance.report.ReportPackage;
+import org.eclipse.fennec.model.compliance.report.ComplianceReport;
+import org.eclipse.fennec.model.compliance.report.ReportOrigin;
+import org.eclipse.fennec.model.compliance.report.PackageSubject;
+import org.eclipse.fennec.model.compliance.history.ComplianceReportHistory;
+import org.eclipse.fennec.model.compliance.history.ReportRevision;
 import org.junit.jupiter.api.DisplayName;
 import org.osgi.util.promise.Promise;
 import org.osgi.util.promise.Promises;
@@ -60,7 +61,7 @@ import org.junit.jupiter.api.Test;
  */
 class GDPRReportHistoryStageActionTest {
 
-	private static final GDPRReportFactory REPORTS = GDPRReportFactory.eINSTANCE;
+	private static final ReportFactory REPORTS = ReportFactory.eINSTANCE;
 	private static final String FINGERPRINT = "fp1:9f2c1ab7d4e85530";
 	private static final String OTHER_FINGERPRINT = "fp1:0000deadbeef0000";
 	private static final String NS_URI = "https://example.org/clinic/1.0.0";
@@ -85,8 +86,8 @@ class GDPRReportHistoryStageActionTest {
 		var action = action(new String[] { "draft" }, new String[0]);
 
 		assertTrue(action.supportsObjectType(
-				EcoreUtil.getURI(GDPRReportPackage.Literals.GDPR_REPORT).toString()));
-		assertFalse(action.supportsObjectType("GdprReport"),
+				EcoreUtil.getURI(ReportPackage.Literals.COMPLIANCE_REPORT).toString()));
+		assertFalse(action.supportsObjectType("ComplianceReport"),
 				"the storage layer writes the EClass URI; matching the simple name would never fire");
 		assertFalse(action.supportsObjectType("http://www.eclipse.org/emf/2002/Ecore#//EPackage"));
 	}
@@ -192,13 +193,13 @@ class GDPRReportHistoryStageActionTest {
 
 		assertTrue(scope.awaitWrite());
 		await(() -> scope.documents.size() == 1);
-		GdprReportHistory document = scope.documents.get("draft/" + ID_EN);
+		ComplianceReportHistory document = scope.documents.get("draft/" + ID_EN);
 		assertNotNull(document, "a changed fingerprint under an unchanged nsURI is not a second document");
 		assertEquals(List.of("gdpr-first", "gdpr-second"),
 				document.getRevisions().stream().map(ReportRevision::getReportId).toList(),
 				"both reviews belong to the one document, oldest first");
 		assertEquals(List.of(FINGERPRINT, OTHER_FINGERPRINT),
-				document.getRevisions().stream().map(ReportRevision::getModelFingerprint).toList(),
+				document.getRevisions().stream().map(ReportRevision::getSubjectFingerprint).toList(),
 				"and each revision keeps the fingerprint it was about");
 	}
 
@@ -216,8 +217,8 @@ class GDPRReportHistoryStageActionTest {
 		assertEquals(Set.of("draft/" + ID_EN, "draft/" + ID_DE),
 				scope.documents.keySet(), "one document per language, both rebuilt although only DE fired");
 
-		GdprReportHistory english = scope.documents.get("draft/" + ID_EN);
-		GdprReportHistory german = scope.documents.get("draft/" + ID_DE);
+		ComplianceReportHistory english = scope.documents.get("draft/" + ID_EN);
+		ComplianceReportHistory german = scope.documents.get("draft/" + ID_DE);
 		assertEquals("EN", english.getReportLanguage());
 		assertEquals("DE", german.getReportLanguage());
 		assertEquals(List.of("gdpr-en"),
@@ -266,7 +267,7 @@ class GDPRReportHistoryStageActionTest {
 	@DisplayName("a report with no subject fingerprint belongs to no document")
 	void aReportWithoutASubjectIsSkipped() throws Exception {
 		var action = action(new String[] { "draft" }, new String[0]);
-		GdprReport orphan = REPORTS.createGdprReport();
+		ComplianceReport orphan = REPORTS.createComplianceReport();
 		orphan.setGeneratedAt("2026-09-15T08:12:00Z");
 		scope.put("draft", "gdpr-orphan", orphan);
 
@@ -324,23 +325,23 @@ class GDPRReportHistoryStageActionTest {
 
 	private static ActionContext context(String scopeName, String stage, String objectId) {
 		return new ActionContext(scopeName, "gdpr", objectId,
-				EcoreUtil.getURI(GDPRReportPackage.Literals.GDPR_REPORT).toString(), stage, null, null, null,
+				EcoreUtil.getURI(ReportPackage.Literals.COMPLIANCE_REPORT).toString(), stage, null, null, null,
 				"someone", Instant.now(), null, false, Map.of());
 	}
 
-	private static GdprReport report(String generatedAt, String fingerprint) {
+	private static ComplianceReport report(String generatedAt, String fingerprint) {
 		return report(generatedAt, fingerprint, "EN");
 	}
 
-	private static GdprReport report(String generatedAt, String fingerprint, String language) {
+	private static ComplianceReport report(String generatedAt, String fingerprint, String language) {
 		return report(generatedAt, fingerprint, language, NS_URI);
 	}
 
-	private static GdprReport report(String generatedAt, String fingerprint, String language, String nsURI) {
-		GdprReport report = REPORTS.createGdprReport();
+	private static ComplianceReport report(String generatedAt, String fingerprint, String language, String nsURI) {
+		ComplianceReport report = REPORTS.createComplianceReport();
 		report.setGeneratedAt(generatedAt);
 		report.setGeneratedBy("claude-opus-5");
-		report.setOrigin(GdprReportOrigin.AI_AGENT);
+		report.setOrigin(ReportOrigin.AI_AGENT);
 
 		PackageSubject subject = REPORTS.createPackageSubject();
 		subject.setName("clinic");
@@ -348,15 +349,16 @@ class GDPRReportHistoryStageActionTest {
 		subject.setSubjectFingerprint(fingerprint);
 		report.setSubject(subject);
 
-		LegalCorpusRef corpus = REPORTS.createLegalCorpusRef();
-		corpus.setCelex("32016R0679");
-		corpus.setLanguage(language);
-		report.setCorpus(corpus);
+		ContextRef context = ContextFactory.eINSTANCE.createContextRef();
+		context.setContextId("gdpr");
+		context.setContextVersion("20160504");
+		report.getContexts().add(context);
+		report.setLanguage(language);
 
 		ClassifierEvaluation classifier = REPORTS.createClassifierEvaluation();
 		classifier.setId("Patient");
 		classifier.setName("Patient");
-		report.getEvaluation().add(classifier);
+		report.getEvaluations().add(classifier);
 		return report;
 	}
 
@@ -372,14 +374,14 @@ class GDPRReportHistoryStageActionTest {
 		final AtomicReference<String> writtenId = new AtomicReference<>();
 		final AtomicReference<String> writtenVersion = new AtomicReference<>();
 		final AtomicReference<String> outcome = new AtomicReference<>();
-		final AtomicReference<GdprReportHistory> written = new AtomicReference<>();
+		final AtomicReference<ComplianceReportHistory> written = new AtomicReference<>();
 		/**
 		 * Every document written, by {@code <stage>/<objectId>} - the way the registry addresses
 		 * one. The stage is part of the key and not of the id: one subject reviewed at two stages
 		 * is two documents sharing an objectId, exactly as a package promoted between stages keeps
 		 * its own.
 		 */
-		final Map<String, GdprReportHistory> documents = new ConcurrentHashMap<>();
+		final Map<String, ComplianceReportHistory> documents = new ConcurrentHashMap<>();
 		private final CountDownLatch stored = new CountDownLatch(1);
 		private volatile ObjectMetadata existing;
 
@@ -404,8 +406,8 @@ class GDPRReportHistoryStageActionTest {
 			outcome.set(how);
 			writtenId.set(objectId);
 			writtenVersion.set(version);
-			written.set((GdprReportHistory) object);
-			documents.put(stage + "/" + objectId, (GdprReportHistory) object);
+			written.set((ComplianceReportHistory) object);
+			documents.put(stage + "/" + objectId, (ComplianceReportHistory) object);
 			stored.countDown();
 			return Promises.resolved(metadata);
 		}

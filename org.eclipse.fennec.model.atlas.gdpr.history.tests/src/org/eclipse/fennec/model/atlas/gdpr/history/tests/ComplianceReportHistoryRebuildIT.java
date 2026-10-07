@@ -22,11 +22,11 @@ import java.util.List;
 
 import org.eclipse.emf.ecore.EObject;
 import org.eclipse.fennec.model.atlas.wf.workflowapi.WritableScopeService;
-import org.eclipse.fennec.model.gdprReportHistory.ChangeKind;
-import org.eclipse.fennec.model.gdprReportHistory.ChangeRow;
-import org.eclipse.fennec.model.gdprReportHistory.GdprReportHistory;
-import org.eclipse.fennec.model.gdprReportHistory.ReportRevision;
-import org.eclipse.fennec.model.gdprReportHistory.RevisionOrigin;
+import org.eclipse.fennec.model.compliance.history.ChangeKind;
+import org.eclipse.fennec.model.compliance.history.ChangeRow;
+import org.eclipse.fennec.model.compliance.history.ComplianceReportHistory;
+import org.eclipse.fennec.model.compliance.history.ReportRevision;
+import org.eclipse.fennec.model.compliance.history.RevisionOrigin;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -48,7 +48,7 @@ import org.osgi.test.junit5.service.ServiceExtension;
 @ExtendWith(ServiceExtension.class)
 @ExtendWith(ConfigurationExtension.class)
 @DisplayName("GDPR review document - rebuild")
-public class GdprReportHistoryRebuildIT {
+public class ComplianceReportHistoryRebuildIT {
 
 	private static final String SCOPE_FILTER = "(atlas.scope=" + TestAnnotations.SCOPE_NAME + ")";
 
@@ -62,11 +62,11 @@ public class GdprReportHistoryRebuildIT {
 		WritableScopeService<EObject> scope = scope(aware);
 		Documents.store(scope, Reports.agentReview());
 
-		GdprReportHistory document = Documents.awaitRevisions(scope, 1);
+		ComplianceReportHistory document = Documents.awaitRevisions(scope, 1);
 		assertEquals("clinic", document.getSubjectName());
 		assertEquals(Reports.SUBJECT_NS_URI, document.getSubjectIdentifier(),
 				"the document is filed under the subject's nsURI, not under one revision's fingerprint");
-		assertEquals(Reports.FINGERPRINT, document.getRevisions().get(0).getModelFingerprint());
+		assertEquals(Reports.FINGERPRINT, document.getRevisions().get(0).getSubjectFingerprint());
 
 		ReportRevision only = document.getRevisions().get(0);
 		assertEquals(1, only.getRevisionNumber());
@@ -91,7 +91,7 @@ public class GdprReportHistoryRebuildIT {
 		// The live failure this covers: the rebuild has to REPLACE the document it already wrote.
 		// Writing it as a create gets a 409, and the document freezes at revision 1.
 		Documents.store(scope, Reports.humanCorrection());
-		GdprReportHistory document = Documents.awaitRevisions(scope, 2);
+		ComplianceReportHistory document = Documents.awaitRevisions(scope, 2);
 
 		assertEquals(List.of("gdpr-clinic-20260922-070000", "gdpr-clinic-20260922-090000"),
 				document.getRevisions().stream().map(ReportRevision::getReportId).toList(),
@@ -100,15 +100,15 @@ public class GdprReportHistoryRebuildIT {
 				"a verdict must not be attributed to the wrong author");
 
 		ChangeRow raised = document.getChanges().stream()
-				.filter(change -> "Patient.diagnosis".equals(change.getFeatureId()))
-				.filter(change -> "category".equals(change.getField())).findFirst().orElse(null);
+				.filter(change -> "Patient.diagnosis".equals(change.getChildId()))
+				.filter(change -> "categories".equals(change.getField())).findFirst().orElse(null);
 		assertNotNull(raised, "raising the category of a feature is the change the document exists for");
 		assertEquals(ChangeKind.MODIFIED, raised.getChangeKind());
 		assertEquals("PERSONAL_DATA", raised.getOldValue());
 		assertEquals("SPECIAL_CATEGORY", raised.getNewValue());
 
 		assertTrue(document.getChanges().stream()
-				.anyMatch(change -> "Patient.email".equals(change.getFeatureId())
+				.anyMatch(change -> "Patient.email".equals(change.getChildId())
 						&& ChangeKind.ADDED == change.getChangeKind()),
 				"a feature the second review added is an addition, not a modification");
 	}
@@ -129,14 +129,14 @@ public class GdprReportHistoryRebuildIT {
 		// rationale as rewritten, which is the whole content of the sheet.
 		Documents.store(scope, Reports.germanReview());
 
-		GdprReportHistory german = Documents.awaitDocument(scope, "DE");
+		ComplianceReportHistory german = Documents.awaitDocument(scope, "DE");
 		assertEquals("DE", german.getReportLanguage());
 		assertEquals(1, german.getRevisionCount(), "the German document holds the German review alone");
 		assertEquals(List.of("gdpr-clinic-de-20260922-080000"),
 				german.getRevisions().stream().map(ReportRevision::getReportId).toList());
 		assertTrue(german.getChanges().isEmpty(), "a first review in a language has nothing to diff against");
 
-		GdprReportHistory english = Documents.read(scope, "EN");
+		ComplianceReportHistory english = Documents.read(scope, "EN");
 		assertNotNull(english, "the English document must still be there");
 		assertEquals("EN", english.getReportLanguage());
 		assertEquals(1, english.getRevisionCount(), "the German review is not a revision of the English document");
@@ -159,7 +159,7 @@ public class GdprReportHistoryRebuildIT {
 		Documents.awaitRevisions(scope, 1, "release");
 
 		Documents.store(scope, Reports.humanCorrection(), "release");
-		GdprReportHistory document = Documents.awaitRevisions(scope, 2, "release");
+		ComplianceReportHistory document = Documents.awaitRevisions(scope, 2, "release");
 
 		assertEquals(2, document.getRevisionCount(), "a rebuild in the final stage must not be refused");
 		assertEquals(Reports.SUBJECT_NS_URI, document.getSubjectIdentifier());

@@ -41,7 +41,7 @@ import java.util.regex.Pattern;
  */
 final class RuleCatalogue {
 
-	/** Which table of rules wrote a report. It goes into {@code GdprReport.generatedBy}. */
+	/** Which table of rules wrote a report. It goes into {@code ComplianceReport.generatedBy}. */
 	static final String VERSION = "qvt-flow-analysis/1";
 
 	/**

@@ -35,7 +35,9 @@ Test-Cases: ${classes;HIERARCHY_INDIRECTLY_ANNOTATED;org.junit.platform.commons.
 	org.eclipse.fennec.model.atlas.scope.api;version=snapshot,\
 	org.eclipse.fennec.model.atlas.action.api;version=snapshot,\
 	org.eclipse.fennec.model.atlas.tests.common;version=snapshot,\
-	org.eclipse.fennec.gdpr.report.model;version=latest,\
+	org.eclipse.fennec.compliance.report.model;version=latest,\
+	org.eclipse.fennec.compliance.context.model;version=latest,\
+	org.eclipse.fennec.compliance.corpus.model;version=latest,\
 	org.eclipse.fennec.m2x.unit;version=latest
 
 Private-Package: org.eclipse.fennec.model.atlas.qvt.gdpr.tests
