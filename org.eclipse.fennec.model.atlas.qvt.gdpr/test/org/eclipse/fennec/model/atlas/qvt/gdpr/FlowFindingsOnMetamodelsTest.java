@@ -47,9 +47,10 @@ import org.junit.jupiter.api.Test;
 @DisplayName("A transformation's findings on the metamodels it touches")
 public class FlowFindingsOnMetamodelsTest {
 
+	private static final String FLOW_REPORT_ID = "gdpr-flow-abc-def-de";
+
 	private static final String COMMENT = "//Contact/comment";
 	private static final String DIAGNOSIS = "//Patient/diagnosis";
-	private static final String UNIT_FINGERPRINT = "m2x1:175c17b6cfc57e09e0881d32283049c357b250b400f8561253c5b5610fe18cc8";
 
 	private static Map<String, List<Diagnostic>> projection;
 
@@ -59,7 +60,7 @@ public class FlowFindingsOnMetamodelsTest {
 		ComplianceReport report = FlowAnalysis.analyse(unit,
 				Map.of(Reviews.CLINIC_FP, Reviews.clinic(), Reviews.CONTACTS_FP, Reviews.contacts()),
 				Instant.parse("2026-09-30T09:00:00Z"));
-		projection = FlowFindingsToDiagnostics.map(report);
+		projection = FlowFindingsToDiagnostics.map(report, FLOW_REPORT_ID);
 	}
 
 	@Test
@@ -174,14 +175,16 @@ public class FlowFindingsOnMetamodelsTest {
 	}
 
 	@Test
-	@DisplayName("every node names the compiled revision it came from")
-	public void theRevisionIsRecordedWithoutOwningTheFindings() {
-		// The producer is keyed by the qualified name, not by the fingerprint: keyed by the
-		// fingerprint, every recompile would strand the previous revision's findings on the model
-		// with nothing able to clear them. The revision goes here instead.
+	@DisplayName("every node names the analysis it came from, so it can be opened")
+	public void theAnalysisIsRecordedWithoutOwningTheFindings() {
+		// The producer is keyed by the qualified name, not by the report: keyed by the report,
+		// every reanalysis would strand the previous one's findings on the model with nothing able
+		// to clear them. Which report a finding came from goes here instead - and through it the
+		// compiled revision, who produced it and the flows themselves, none of which have to be
+		// copied into the cell to stay reachable.
 		for (List<Diagnostic> roots : projection.values()) {
 			for (Diagnostic node : flatten(roots)) {
-				assertEquals(UNIT_FINGERPRINT, node.getSource(), node.getCode());
+				assertEquals(FLOW_REPORT_ID, node.getSource(), node.getCode());
 			}
 		}
 	}
@@ -190,7 +193,7 @@ public class FlowFindingsOnMetamodelsTest {
 	@DisplayName("a model the report names but says nothing about is present with an empty list")
 	public void aModelWithNothingToSayIsStillAnswered() {
 		ComplianceReport report = FlowAnalysis.analyse(unit(), Map.of(), Instant.parse("2026-09-30T09:00:00Z"));
-		Map<String, List<Diagnostic>> nothing = FlowFindingsToDiagnostics.map(report);
+		Map<String, List<Diagnostic>> nothing = FlowFindingsToDiagnostics.map(report, FLOW_REPORT_ID);
 
 		assertEquals(Set.of(Reviews.CLINIC_NS, Reviews.CONTACTS_NS), nothing.keySet(),
 				"both models are answered for, or a previous analysis's findings would never be cleared");
@@ -210,7 +213,7 @@ public class FlowFindingsOnMetamodelsTest {
 				.filter(finding -> finding.getId().startsWith(Rule.PROPAGATION.code()))
 				.forEach(finding -> finding.setId("something-a-person-typed"));
 
-		Map<String, List<Diagnostic>> mapped = FlowFindingsToDiagnostics.map(report);
+		Map<String, List<Diagnostic>> mapped = FlowFindingsToDiagnostics.map(report, FLOW_REPORT_ID);
 		assertTrue(codes(mapped.get(Reviews.CLINIC_NS).get(0)).stream()
 				.anyMatch(code -> code.contains("something-a-person-typed")),
 				"the source end has it now, where a recognised propagation would not have gone");
@@ -221,7 +224,7 @@ public class FlowFindingsOnMetamodelsTest {
 	@Test
 	@DisplayName("a review of a metamodel is not a transformation report and yields nothing")
 	public void aPackageReviewIsNotProjected() {
-		assertTrue(FlowFindingsToDiagnostics.map(Reviews.clinic()).isEmpty(),
+		assertTrue(FlowFindingsToDiagnostics.map(Reviews.clinic(), FLOW_REPORT_ID).isEmpty(),
 				"only a TransformationSubject says anything about other models");
 	}
 
@@ -241,7 +244,7 @@ public class FlowFindingsOnMetamodelsTest {
 			combination.setRelevanceLevel(RelevanceLevel.NONE);
 		});
 
-		Map<String, List<Diagnostic>> mapped = FlowFindingsToDiagnostics.map(report);
+		Map<String, List<Diagnostic>> mapped = FlowFindingsToDiagnostics.map(report, FLOW_REPORT_ID);
 		assertTrue(mapped.values().stream().allMatch(List::isEmpty),
 				"NONE relevance is the report model's 'examined and nothing of concern found'");
 	}

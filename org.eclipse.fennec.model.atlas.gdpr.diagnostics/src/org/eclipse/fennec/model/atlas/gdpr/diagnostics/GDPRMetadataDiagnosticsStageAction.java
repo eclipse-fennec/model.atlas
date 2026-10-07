@@ -432,10 +432,11 @@ public class GDPRMetadataDiagnosticsStageAction implements StageActionService {
 					fingerprint, stage, registry, ctx.scope()));
 			return Promises.resolved(null);
 		}
-		ComplianceReport current = latestReviewOf(ctx, fingerprint);
+		Latest current = latestReviewOf(ctx, fingerprint);
 		// Never an empty list: an object whose last review was withdrawn has not been checked, and
 		// clearing the producer would make it indistinguishable from one nobody has reviewed yet.
-		List<Diagnostic> roots = current == null ? mapper.noReview(fingerprint) : mapper.map(current);
+		List<Diagnostic> roots = current == null ? mapper.noReview(fingerprint)
+				: mapper.map(current.report(), current.objectId());
 		String what = current == null ? "withdrawn, so the object is recorded as unreviewed"
 				: "wrote " + roots.size();
 		try {
@@ -505,7 +506,11 @@ public class GDPRMetadataDiagnosticsStageAction implements StageActionService {
 	 * every review of a subject the same way, across every stage.
 	 * </p>
 	 */
-	private ComplianceReport latestReviewOf(ActionContext ctx, String fingerprint) {
+	/** The review that currently speaks, and the object id it is stored under. */
+	private record Latest(ComplianceReport report, String objectId) {
+	}
+
+	private Latest latestReviewOf(ActionContext ctx, String fingerprint) {
 		ComplianceReport latest = null;
 		Instant latestAt = null;
 		String latestId = null;
@@ -525,7 +530,7 @@ public class GDPRMetadataDiagnosticsStageAction implements StageActionService {
 				latestId = metadata.getObjectId();
 			}
 		}
-		return latest;
+		return latest == null ? null : new Latest(latest, latestId);
 	}
 
 	private ComplianceReport reportAt(ActionContext ctx, String objectId) {

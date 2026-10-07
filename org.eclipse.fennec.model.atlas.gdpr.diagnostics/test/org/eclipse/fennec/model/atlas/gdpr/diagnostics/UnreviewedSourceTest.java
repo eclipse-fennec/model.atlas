@@ -36,6 +36,8 @@ import org.junit.jupiter.api.Test;
 @DisplayName("A metamodel the report rests on that nobody reviewed")
 public class UnreviewedSourceTest {
 
+	private static final String REPORT_ID = "gdpr-fp1-abc-de-20260918-120000";
+
 	private static final ReportFactory REPORTS = ReportFactory.eINSTANCE;
 
 	private static final String REVIEWED = "http://example.org/clinic/1.0.0";
@@ -48,7 +50,7 @@ public class UnreviewedSourceTest {
 	public void anUnreviewedSourceIsAnError() {
 		ComplianceReport report = transformationReport();
 
-		List<Diagnostic> roots = mapper.map(report);
+		List<Diagnostic> roots = mapper.map(report, REPORT_ID);
 		assertEquals(1, roots.size(), "one root per producer, as for any review");
 		Diagnostic root = roots.get(0);
 		assertEquals(DiagnosticSeverity.ERROR, root.getSeverity(),
@@ -71,7 +73,7 @@ public class UnreviewedSourceTest {
 		ComplianceReport report = transformationReport();
 		((TransformationSubject) report.getSubject()).getSourcePackages().get(1).setReportId("gdpr-crm-1");
 
-		assertClean(mapper.map(report),
+		assertClean(mapper.map(report, REPORT_ID),
 				"every metamodel reviewed and no finding made: the report is clean, not incomplete");
 	}
 
@@ -84,7 +86,7 @@ public class UnreviewedSourceTest {
 		// fingerprint - which must not become two errors about one model.
 		subject.getTargetPackages().add(packageEntry(UNREVIEWED, "fp1:crm", null));
 
-		Diagnostic root = mapper.map(report).get(0);
+		Diagnostic root = mapper.map(report, REPORT_ID).get(0);
 		assertEquals(1, root.getChildren().stream()
 				.filter(child -> GdprFindingsToDiagnostics.CODE_UNREVIEWED_SOURCE.equals(child.getCode())).count());
 	}
@@ -98,7 +100,7 @@ public class UnreviewedSourceTest {
 		subject.setSubjectFingerprint("fp1:clinic");
 		review.setSubject(subject);
 
-		assertClean(mapper.map(review),
+		assertClean(mapper.map(review, REPORT_ID),
 				"a PackageSubject has no packages it rests on, so there is nothing to say about them");
 	}
 

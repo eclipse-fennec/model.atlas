@@ -391,11 +391,12 @@ public class QvtFlowFindingsStageAction implements StageActionService {
 	 */
 	private Promise<Void> apply(ActionContext ctx, String qualifiedName, Map<String, String> also) {
 		String producer = FlowFindingsToDiagnostics.PRODUCER_PREFIX + qualifiedName;
-		ComplianceReport current = latestAnalysisOf(ctx, qualifiedName);
-		Map<String, List<Diagnostic>> roots = current == null ? Map.of() : FlowFindingsToDiagnostics.map(current);
+		Latest current = latestAnalysisOf(ctx, qualifiedName);
+		Map<String, List<Diagnostic>> roots = current == null ? Map.of()
+				: FlowFindingsToDiagnostics.map(current.report(), current.objectId());
 
 		Map<String, String> models = new LinkedHashMap<>(also);
-		if (current != null && current.getSubject() instanceof TransformationSubject subject) {
+		if (current != null && current.report().getSubject() instanceof TransformationSubject subject) {
 			models.putAll(fingerprintsOf(subject));
 		}
 		try {
@@ -462,7 +463,11 @@ public class QvtFlowFindingsStageAction implements StageActionService {
 	 * report the same way. Only reports whose subject is a {@code TransformationSubject} count - a
 	 * metamodel review has no qualified name and nothing to say here.
 	 */
-	private ComplianceReport latestAnalysisOf(ActionContext ctx, String qualifiedName) {
+	/** The analysis that currently speaks, and the object id it is stored under. */
+	private record Latest(ComplianceReport report, String objectId) {
+	}
+
+	private Latest latestAnalysisOf(ActionContext ctx, String qualifiedName) {
 		ComplianceReport latest = null;
 		Instant latestAt = null;
 		String latestId = null;
@@ -482,7 +487,7 @@ public class QvtFlowFindingsStageAction implements StageActionService {
 				latestId = metadata.getObjectId();
 			}
 		}
-		return latest;
+		return latest == null ? null : new Latest(latest, latestId);
 	}
 
 	private ComplianceReport reportAt(ActionContext ctx, String objectId) {
