@@ -44,7 +44,9 @@ public @interface AtlasEObjectProviderConfig {
 	@AttributeDefinition(name = "Object ids", required = false, description = "Explicit object ids to load; empty loads every object the registries list.")
 	String[] object_ids() default {};
 
-	@AttributeDefinition(name = "Stage", required = false, description = "Atlas stage to read from; empty reads the final stage.")
+	@AttributeDefinition(name = "Stage", required = false, description = "Atlas stage to read from; empty reads the final stage. "
+			+ "Naming the final stage binds the same EPackage instances as leaving it empty; a non-final stage "
+			+ "binds package instances of its own.")
 	String stage() default "";
 
 	@AttributeDefinition(name = "Key feature", required = false, description = "Attribute of the fetched objects whose "

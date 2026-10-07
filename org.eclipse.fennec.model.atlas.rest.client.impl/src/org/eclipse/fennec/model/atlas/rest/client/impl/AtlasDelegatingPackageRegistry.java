@@ -15,10 +15,10 @@ package org.eclipse.fennec.model.atlas.rest.client.impl;
 
 import java.util.Objects;
 import java.util.Optional;
-import java.util.concurrent.ConcurrentHashMap;
 
 import org.eclipse.emf.ecore.EFactory;
 import org.eclipse.emf.ecore.EPackage;
+import org.eclipse.fennec.model.atlas.rest.client.impl.spi.ConcurrentPackageRegistry;
 import org.eclipse.fennec.model.atlas.rest.client.api.DriftListener;
 import org.eclipse.fennec.model.atlas.rest.client.api.RemoteEPackageProvider;
 
@@ -36,23 +36,23 @@ import org.eclipse.fennec.model.atlas.rest.client.api.RemoteEPackageProvider;
  * </ol>
  * It is also a {@link DriftListener}: on a package change or removal the cached
  * entry is evicted so the next look-up re-fetches. The own entries are held in a
- * thread-safe map (this class <em>is</em> a {@link ConcurrentHashMap}), since
- * loads and drift eviction can run on different threads.
+ * thread-safe map (this class <em>is</em> a {@link ConcurrentPackageRegistry}, with the
+ * {@code null} semantics of EMF's own registry), since loads and drift eviction can
+ * run on different threads.
  * <p>
  * Standalone and reusable: the plain-Java {@code newResourceSet()} installs it,
  * and the Phase-3 OSGi {@code ResourceSetConfigurator} wraps framework
  * ResourceSets with the same delegate.
  */
-public class AtlasDelegatingPackageRegistry extends ConcurrentHashMap<String, Object>
+public class AtlasDelegatingPackageRegistry extends ConcurrentPackageRegistry
 		implements EPackage.Registry, DriftListener {
 
-	private static final long serialVersionUID = 1L;
 
-	private final transient EPackage.Registry primary;
-	private final transient RemoteEPackageProvider remote;
+	private final EPackage.Registry primary;
+	private final RemoteEPackageProvider remote;
 	/** Atlas location a remote miss is resolved at; both null means stage-free (final stage). */
-	private final transient String scope;
-	private final transient String stage;
+	private final String scope;
+	private final String stage;
 
 	/** Stage-free: a remote miss resolves against the scope's final stage, server-side. */
 	public AtlasDelegatingPackageRegistry(EPackage.Registry primary, RemoteEPackageProvider remote) {

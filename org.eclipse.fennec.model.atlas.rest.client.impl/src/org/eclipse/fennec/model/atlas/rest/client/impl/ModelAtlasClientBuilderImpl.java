@@ -18,6 +18,7 @@ import java.util.Objects;
 
 import org.eclipse.emf.ecore.EPackage;
 import org.eclipse.fennec.model.atlas.rest.client.api.ClientConfiguration;
+import org.eclipse.fennec.model.atlas.rest.client.api.DecodingRegistryProvider;
 import org.eclipse.fennec.model.atlas.rest.client.api.JakartaRsClientProvider;
 import org.eclipse.fennec.model.atlas.rest.client.api.ModelAtlasClient;
 import org.eclipse.fennec.model.atlas.rest.client.impl.spi.DefaultJakartaRsClientProvider;
@@ -36,6 +37,7 @@ final class ModelAtlasClientBuilderImpl implements ModelAtlasClient.Builder {
 	private ClientConfiguration.Builder configuration = ClientConfiguration.builder();
 	private JakartaRsClientProvider clientProvider;
 	private EPackage.Registry localPackages = EPackage.Registry.INSTANCE;
+	private DecodingRegistryProvider decodingRegistries;
 
 	@Override
 	public ModelAtlasClient.Builder configuration(ClientConfiguration configuration) {
@@ -74,11 +76,17 @@ final class ModelAtlasClientBuilderImpl implements ModelAtlasClient.Builder {
 	}
 
 	@Override
+	public ModelAtlasClient.Builder decodingRegistry(DecodingRegistryProvider decodingRegistries) {
+		this.decodingRegistries = decodingRegistries;
+		return this;
+	}
+
+	@Override
 	public ModelAtlasClient build() {
 		ClientConfiguration config = configuration.build();
 		JakartaRsClientProvider provider = clientProvider != null ? clientProvider
 				: new DefaultJakartaRsClientProvider();
 		Client client = provider.newClient(config);
-		return new ModelAtlasClientImpl(config, client, localPackages);
+		return new ModelAtlasClientImpl(config, client, localPackages, decodingRegistries);
 	}
 }

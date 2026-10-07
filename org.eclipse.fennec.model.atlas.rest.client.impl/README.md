@@ -204,6 +204,22 @@ System.out.println(finalView.getStageName());     // null  (= final, server-reso
 The two views are independent: a `snapshot` read and a final read for the same id can
 return different content and do not share a cache slot.
 
+#### Which `EPackage` instances a read object binds (#347)
+
+A read object references its metamodel by nsURI; the client resolves it per scope and stage:
+
+* every read of the same stage binds the **same** package instances;
+* a read that names the scope's **final** stage (of its schema registry) binds what a
+  stage-free read binds — naming the final stage does not change package identity;
+* a non-final stage (`snapshot`, `draft`, …) has package instances of its own, separate from
+  the final stage's: its metamodel can differ from the released one.
+
+A runtime that keeps its own registries per scope and stage can hand them in with
+`ModelAtlasClient.builder().decodingRegistry((scope, stage) -> …)`; read objects then bind
+the packages those registries hold (`null` from the provider falls back to the behavior
+above). Packages the runtime ships itself always win (`localPackageRegistry`, #330). The
+OSGi front-end does this for every scope and stage it generates a registry chain for.
+
 ## Configuration reference (honored by the plain-Java client)
 
 Set these via `ModelAtlasClient.builder()…` or by passing a fully-built

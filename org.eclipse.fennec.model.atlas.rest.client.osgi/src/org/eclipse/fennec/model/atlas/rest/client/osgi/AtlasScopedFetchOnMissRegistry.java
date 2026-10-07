@@ -15,10 +15,10 @@ package org.eclipse.fennec.model.atlas.rest.client.osgi;
 
 import java.util.Objects;
 import java.util.Optional;
-import java.util.concurrent.ConcurrentHashMap;
 
 import org.eclipse.emf.ecore.EFactory;
 import org.eclipse.emf.ecore.EPackage;
+import org.eclipse.fennec.model.atlas.rest.client.impl.spi.ConcurrentPackageRegistry;
 import org.eclipse.fennec.model.atlas.rest.client.api.DriftListener;
 import org.eclipse.fennec.model.atlas.rest.client.api.PackageDrift;
 import org.eclipse.fennec.model.atlas.rest.client.api.RemoteEPackageProvider;
@@ -47,20 +47,19 @@ import org.eclipse.fennec.model.atlas.rest.client.api.RemoteEPackageProvider;
  * Also a {@link DriftListener}: on a package change or removal the cached entry is evicted
  * so the next lookup re-fetches from Atlas at the correct stage.
  */
-class AtlasScopedFetchOnMissRegistry extends ConcurrentHashMap<String, Object>
+class AtlasScopedFetchOnMissRegistry extends ConcurrentPackageRegistry
 		implements EPackage.Registry, DriftListener {
 
 	static final String FETCH_ON_MISS_PROPERTY = "atlas.fetch.on.miss";
 
-	private static final long serialVersionUID = 1L;
 
 	private final String scope;
 	/** Null means stage-free (final stage). */
 	private final String stage;
-	private final transient RemoteEPackageProvider provider;
-	private final transient EPackage.Registry parent;
+	private final RemoteEPackageProvider provider;
+	private final EPackage.Registry parent;
 	/** Told what this bridge holds (#277); {@link StagedPackageSink#NONE} when nothing is listening. */
-	private final transient StagedPackageSink sink;
+	private final StagedPackageSink sink;
 
 	AtlasScopedFetchOnMissRegistry(String scope, String stage, RemoteEPackageProvider provider,
 			EPackage.Registry parent) {

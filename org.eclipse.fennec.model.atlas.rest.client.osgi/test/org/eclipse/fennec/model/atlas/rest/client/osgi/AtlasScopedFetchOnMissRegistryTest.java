@@ -14,6 +14,7 @@
 package org.eclipse.fennec.model.atlas.rest.client.osgi;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -105,6 +106,20 @@ class AtlasScopedFetchOnMissRegistryTest {
 		public List<PackageDescriptor> listPackagesAtStage(String scopeName, String stage) {
 			return List.of();
 		}
+	}
+
+	// ---- the null namespace (#347) ---------------------------------------
+
+	@Test
+	void get_nullKey_answersNull_likeAnEmfRegistry() {
+		// The registry chain emf.osgi generates delegates map look-ups to this bridge, and
+		// EMF looks up the null namespace while parsing; a ConcurrentHashMap would throw.
+		AtlasScopedFetchOnMissRegistry registry = new AtlasScopedFetchOnMissRegistry(SCOPE, STAGE,
+				new FakeProvider(), new EPackageRegistryImpl());
+
+		assertNull(registry.get(null));
+		assertFalse(registry.containsKey(null));
+		assertNull(registry.getEPackage(null));
 	}
 
 	// ---- cache miss → stage-aware fetch ------------------------------------
