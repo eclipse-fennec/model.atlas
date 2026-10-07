@@ -12,48 +12,29 @@ Feature guides:
 
 ## Docker
 
-Model Atlas is available as a Docker image in two variants, each tailored to a different storage backend.
+Model Atlas is available as a Docker image with file-based storage.
 
-### Image Variants
+### Image
 
-| Variant | Image Tag | Description |
-|---------|-----------|-------------|
-| **Apicurio** | `eclipsefennec/model.atlas:apicurio-latest` | Uses [Apicurio Registry](https://www.apicur.io/registry/) for model storage with a full workflow (draft, approved, release stages) |
-| **File** | `eclipsefennec/model.atlas:file-latest` | Uses local file-based storage, no external dependencies required |
+| Image Tag | Description |
+|-----------|-------------|
+| `eclipsefennec/model.atlas:file-latest` | Uses local file-based storage, no external dependencies required |
 
-Both variants are also available on GHCR as `ghcr.io/eclipse-fennec/model.atlas`.
+The image is also available on GHCR as `ghcr.io/eclipse-fennec/model.atlas`.
 
-Snapshot builds from the `snapshot` branch are tagged as `apicurio-snapshot` and `file-snapshot`. Version-specific tags (e.g. `apicurio-0.0.1`) are also published.
+Snapshot builds from the `snapshot` branch are tagged as `file-snapshot`. Version-specific tags (e.g. `file-0.0.1`) are also published.
 
-### Quick Start (File variant)
+### Quick Start
 
 ```bash
 docker run -d -p 8080:8080 eclipsefennec/model.atlas:file-latest
 ```
 
-### Quick Start (Apicurio variant)
-
-The Apicurio variant requires a running Apicurio Registry. Use the provided Docker Compose file:
-
-```bash
-docker compose -f docker/dockercompose/docker-compose-apicurio.yml up -d
-```
-
-This starts Model Atlas together with Apicurio Registry and its UI:
-
-| Service | URL |
-|---------|-----|
-| Model Atlas | http://localhost:8080 |
-| Apicurio Registry API | http://localhost:8081 |
-| Apicurio Registry UI | http://localhost:8888 |
-
 ### Environment Variables
 
 | Variable | Default | Description |
 |----------|---------|-------------|
-| `APICURIO_HOST` | `localhost` | Hostname of the Apicurio Registry (Apicurio variant only) |
-| `APICURIO_PORT` | `8081` | Port of the Apicurio Registry (Apicurio variant only) |
-| `STORAGE_ROOT` | `/tmp/mac` | Root directory for file-based storage (File variant only) |
+| `STORAGE_ROOT` | `/tmp/mac` | Root directory for file-based storage |
 
 ### Docker Compose Files
 
@@ -61,7 +42,6 @@ Pre-configured compose files are available in `docker/dockercompose/`:
 
 | File | Description |
 |------|-------------|
-| `docker-compose-apicurio.yml` | Model Atlas with Apicurio Registry and UI |
 | `docker-compose-file.yml` | Model Atlas with file-based storage (standalone) |
 
 ### Building Locally
@@ -70,27 +50,24 @@ Pre-configured compose files are available in `docker/dockercompose/`:
 # Build the project
 ./gradlew build -x test -x testOSGi
 
-# Export the runtime JARs
-./gradlew org.eclipse.fennec.model.atlas.runtime:export.modelatlas.runtime_docker_apicurio
+# Export the runtime JAR
 ./gradlew org.eclipse.fennec.model.atlas.runtime:export.modelatlas.runtime_docker_file
 
-# Prepare and build Docker images
-./gradlew docker:modelatlas_apicurio:prepareDocker
+# Prepare and build the Docker image
 ./gradlew docker:modelatlas_file:prepareDocker
 
-docker build -t eclipsefennec/model.atlas:apicurio-snapshot docker/modelatlas_apicurio/
 docker build -t eclipsefennec/model.atlas:file-snapshot docker/modelatlas_file/
 ```
 
 ## Branches & releases
 
 * `snapshot` is the active development branch. PRs land here first; every
-  push builds and publishes the `:apicurio-snapshot` / `:file-snapshot`
-  container images to Docker Hub and GHCR.
+  push builds and publishes the `:file-snapshot` container image to Docker
+  Hub and GHCR.
 * `main` always holds the latest released version. A release publishes both:
   the OSGi bundles go to Maven Central under the group id
   `org.eclipse.fennec.model.atlas` (`maven-central: true` in `cnf/build.bnd`),
-  and the runtime images appear as `:apicurio-latest` / `:file-latest`
+  and the runtime image appears as `:file-latest`
   on [Docker Hub](https://hub.docker.com/r/eclipsefennec/model.atlas/tags) and
   [GHCR](https://github.com/eclipse-fennec/model.atlas/pkgs/container/model.atlas),
   alongside a version-pinned tag built from `Bundle-Version`. Test and

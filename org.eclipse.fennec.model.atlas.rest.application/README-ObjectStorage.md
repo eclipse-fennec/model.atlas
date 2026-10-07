@@ -878,11 +878,6 @@ Storage backends are configured once per type in `storage.json`. Multiple stages
 
 ```json
 {
-  "ApicurioObjectStorage~apicurio": {
-    "base.url": "http://localhost:8081/apis/registry/v3/",
-    "storage.type": "apicurio",
-    "registry.target": "(registry=main)"
-  },
   "FileObjectStorage~file": {
     "workspace.folder": "/data/storage",
     "storage.type": "file",
@@ -894,7 +889,6 @@ Storage backends are configured once per type in `storage.json`. Multiple stages
 **Key Properties**:
 - `storage.type`: Identifies the storage backend (referenced in `stage.storage.mappings`)
 - `workspace.folder` (FileObjectStorage): Root folder for file-based storage
-- `base.url` (ApicurioObjectStorage): Apicurio Registry API URL
 
 ---
 

@@ -34,10 +34,8 @@ jobs:
       # and hand them to the container job as the release-jars artifact.
       extra-gradle-tasks: >-
         org.eclipse.fennec.model.atlas.runtime:resolve.modelatlas.runtime_base
-        org.eclipse.fennec.model.atlas.runtime:export.modelatlas.runtime_docker_apicurio
         org.eclipse.fennec.model.atlas.runtime:export.modelatlas.runtime_docker_file
       artifact-paths: |
-        org.eclipse.fennec.model.atlas.runtime/generated/distributions/executable/modelatlas.runtime_docker_apicurio.jar
         org.eclipse.fennec.model.atlas.runtime/generated/distributions/executable/modelatlas.runtime_docker_file.jar
         org.eclipse.fennec.model.atlas.rest.application/generated/org.eclipse.fennec.model.atlas.rest.application.jar
     secrets: inherit
@@ -46,23 +44,7 @@ jobs:
   # above, so the jars they embed are the jars published to Maven in that same
   # Gradle invocation. One job per variant: the central workflow builds one
   # image per call (eclipse-fennec/.github, docs/ci-cd-reusable-workflows.md
-  # §5.7), which also lets the two variants build in parallel.
-  container-apicurio:
-    needs: release
-    uses: eclipse-fennec/.github/.github/workflows/reusable-container.yml@074409595cdb7f4afc3c3ab521fe720b05f913b3 # eclipse-fennec/.github#43
-    with:
-      image-name: model.atlas
-      docker-label: snapshot
-      variant: apicurio
-      java-version: '25'
-      docker-context: docker/modelatlas_apicurio
-      runtime-jar: modelatlas.runtime_docker_apicurio.jar
-      # Both Dockerfiles COPY a variant-independent name.
-      runtime-jar-target: modelatlas.runtime_docker.jar
-      runtime-dir: org.eclipse.fennec.model.atlas.runtime/runtime
-      version-jar: org.eclipse.fennec.model.atlas.rest.application.jar
-    secrets: inherit
-
+  # §5.7).
   container-file:
     needs: release
     uses: eclipse-fennec/.github/.github/workflows/reusable-container.yml@074409595cdb7f4afc3c3ab521fe720b05f913b3 # eclipse-fennec/.github#43
@@ -73,7 +55,7 @@ jobs:
       java-version: '25'
       docker-context: docker/modelatlas_file
       runtime-jar: modelatlas.runtime_docker_file.jar
-      # Both Dockerfiles COPY a variant-independent name.
+      # The Dockerfile COPYs a variant-independent name.
       runtime-jar-target: modelatlas.runtime_docker.jar
       runtime-dir: org.eclipse.fennec.model.atlas.runtime/runtime
       version-jar: org.eclipse.fennec.model.atlas.rest.application.jar

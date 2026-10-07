@@ -66,7 +66,7 @@ import org.osgi.service.component.ComponentServiceObjects;
  *
  * <h3>objectId = {@code scope/stage/repoPath} (D9 workaround)</h3>
  * <p>The shared registry cache is keyed by {@code objectId} alone (one entry per
- * id, globally, across scopes/backends). File/apicurio are safe because an object
+ * id, globally, across scopes/backends). File storage is safe because an object
  * lives in one stage at a time, but git has the same repo path on several branches
  * (= stages) at once, so a bare repo-path objectId would collide across branches
  * (and across scopes sharing a stage name + path). The decided workaround is to

@@ -33,7 +33,7 @@ public @interface RegistryServiceConfig {
     @AttributeDefinition(name = "Registry Type", description = "The role of this registry: SCHEMA (holds EPackages), COCL (holds OCL constraint sets), TRANSFORMATION (holds transformation sources and compiled units), OTHER (general purpose)", required = false, defaultValue = "OTHER")
     String registry_type() default "OTHER";
 
-    @AttributeDefinition(name = "Stage Storage Mappings", description = "Array of ':'-separated stage→storage mappings (e.g., [draft:mongodb,approved:minio,release:apicurio])", required = true)
+    @AttributeDefinition(name = "Stage Storage Mappings", description = "Array of ':'-separated stage→storage mappings (e.g., [draft:file,approved:file,release:git])", required = true)
     String[] stage_storage_mappings();
 
     @AttributeDefinition(name = "Workflow Transitions", description = "Array of ':'-separated fromStage→toStage allowed transitions (e.g. [draft:approved, approved:release])", required = true)

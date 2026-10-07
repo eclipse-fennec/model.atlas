@@ -98,4 +98,13 @@ class RestSupportTest {
         assertFalse(plain instanceof OperationRefusedException);
         assertTrue(plain.getMessage().contains("boom"));
     }
+
+    @Test
+    @DisplayName("A query value keeps its percent-encoded characters and braces through the server's one decode (#340)")
+    void queryValueEscapesPercentAndBraces() {
+        assertEquals("qvto%252Fcompiled%252Fx%253Afp", RestSupport.queryValue("qvto%2Fcompiled%2Fx%3Afp"));
+        assertEquals("unit%7Bdraft%7D", RestSupport.queryValue("unit{draft}"));
+        assertEquals("urn:ns:plain/1.0", RestSupport.queryValue("urn:ns:plain/1.0"),
+                "Everything else is left to the JAX-RS encoding");
+    }
 }

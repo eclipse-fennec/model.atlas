@@ -7,7 +7,7 @@ stays in sync via **webhooks** and an always-on **reconcile poll**.
 
 It plugs into the existing storage/registry machinery as an `EObjectStorageService`
 (`storage.backend=git`), so scopes, registries, stages, `ReadableScopeService`, and dynamic
-EPackage registration all work exactly as they do for the file/Apicurio backends — the git
+EPackage registration all work exactly as they do for the file backend — the git
 specifics are confined to this bundle.
 
 > For the design rationale, rejected alternatives, and decision history, see `PLAN.md`.
@@ -124,7 +124,7 @@ covers add/modify/remove uniformly.
 The repo is **self-contained**: it ships `.ecore` models alongside their instances. Those
 EPackages are registered as OSGi services by the **existing** workflow machinery
 (`EPackageStageActionService` → `DynamicEPackageRegistrationService`, consumed by the
-per-stage registry chain) — the same path the file/Apicurio backends use. Git adds two things:
+per-stage registry chain) — the same path the file backend uses. Git adds two things:
 
 - **Cold start** is free: the git helper primes schemas into the shared cache in its
   constructor (before the `RegistryService` binds), so the startup replay registers them.

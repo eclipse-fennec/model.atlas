@@ -128,7 +128,7 @@ public class EObjectFileStorageService extends AbstractEObjectStorageService {
         @AttributeDefinition(name = "Workspace Folder", description = "Folder path for storing objects and metadata")
         String workspace_folder() default "/tmp/epackage-storage";
 
-        @AttributeDefinition(name = "Storage Type", description = "Type of this storage service (file, apicurio, minio, etc.)")
+        @AttributeDefinition(name = "Storage Type", description = "Type of this storage service (file, git, etc.)")
         String storage_type() default "file";
     }
 
