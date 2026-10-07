@@ -197,6 +197,17 @@ public interface ModelAtlasClient extends AutoCloseable {
 		Builder localPackageRegistry(EPackage.Registry localPackages);
 
 		/**
+		 * Optional: the registries objects read from a scope are decoded against (issue
+		 * #347), so they bind the packages the rest of the runtime holds for that scope and
+		 * stage. Where the provider answers {@code null}, or none is set, the client uses
+		 * registries of its own, one per scope and stage.
+		 *
+		 * @param decodingRegistries the provider, or {@code null} for none
+		 * @return this builder
+		 */
+		Builder decodingRegistry(DecodingRegistryProvider decodingRegistries);
+
+		/**
 		 * Build the client. Opens the underlying Jakarta RS client immediately.
 		 *
 		 * @return a ready-to-use, must-be-closed client

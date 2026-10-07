@@ -185,6 +185,8 @@ public class AtlasClientComponent {
 	}
 	/** P6-6: manages the ConfigAdmin EPackageRegistry + ResourceSetFactory pairs. */
 	private final AtlasEPackageRegistryConfigurator registryConfigurator;
+	/** #347: hands those registry chains to the client, so the objects it reads bind their packages. */
+	private final ScopeRegistryDecoding scopeRegistryDecoding;
 	/** #238: re-runs the start-up sync until it completes. Idle once one pass has. */
 	private final PrefetchRetry prefetchRetry;
 
@@ -212,11 +214,15 @@ public class AtlasClientComponent {
 		// #330: a fetched schema referencing a model this runtime ships binds the local package,
 		// not an Atlas copy - by the same local-first rule the publication gate below applies.
 		Predicate<String> localWins = configuration.isForceRemote() ? nsUri -> false : shippedLocally;
+		// #347: objects read for a scope and stage decode against the registry chain the framework
+		// resolves that scope and stage with, wherever this component generates one.
+		this.scopeRegistryDecoding = new ScopeRegistryDecoding(bundleContext);
 		this.client = clientFactory.builder()
 				.configuration(configuration)
 				.clientProvider(new WhiteboardJakartaRsClientProvider(clientBuilder))
 				.localPackageRegistry(new LocallyShippedPackages(frameworkRegistry, localWins,
 						publisher::publishedEPackage))
+				.decodingRegistry(scopeRegistryDecoding)
 				.build();
 		// P5-4: per-scope ReadableScopeService<EObject> publications (keyed atlas.scope).
 		// P6-7: stamp atlas.stage when the client is configured with a primary stage so two
@@ -337,6 +343,9 @@ public class AtlasClientComponent {
 	/** Release everything in the reverse order of build-up; safe to call from a failed activation. */
 	private void tearDown() {
 		unregisterQuietly(resourceSetConfiguratorReg); // stop wrapping new ResourceSets first
+		if (scopeRegistryDecoding != null) {
+			scopeRegistryDecoding.close(); // reads decode against the client's own registries again
+		}
 		// P6-6: delete ConfigAdmin pairs and unregister fetch-on-miss bridge services.
 		if (registryConfigurator != null) {
 			registryConfigurator.close();
@@ -486,6 +495,7 @@ public class AtlasClientComponent {
 		client.addDriftListener(bridge);
 		try {
 			registryConfigurator.register(scope, stage);
+			scopeRegistryDecoding.generated(scope, stage);
 		} catch (IOException e) {
 			LOGGER.log(Level.WARNING,
 					"Failed to register ConfigAdmin scope registry for scope='" + scope + "'"

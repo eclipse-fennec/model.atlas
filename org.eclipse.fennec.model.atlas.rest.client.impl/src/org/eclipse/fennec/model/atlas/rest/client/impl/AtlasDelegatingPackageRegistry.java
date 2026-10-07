@@ -125,6 +125,21 @@ public class AtlasDelegatingPackageRegistry extends ConcurrentHashMap<String, Ob
 		return ePackage != null ? ePackage.getEFactoryInstance() : null;
 	}
 
+	/**
+	 * A {@code ConcurrentHashMap} rejects a {@code null} key, an EMF package registry must
+	 * not: EMF asks for the {@code null} namespace while it parses a document, and a
+	 * registry that delegates to this one passes such a look-up through (#347).
+	 */
+	@Override
+	public Object get(Object key) {
+		return key == null ? null : super.get(key);
+	}
+
+	@Override
+	public boolean containsKey(Object key) {
+		return key != null && super.containsKey(key);
+	}
+
 	private EPackage resolveOwn(String nsURI) {
 		Object value = get(nsURI);
 		if (value instanceof EPackage ePackage) {

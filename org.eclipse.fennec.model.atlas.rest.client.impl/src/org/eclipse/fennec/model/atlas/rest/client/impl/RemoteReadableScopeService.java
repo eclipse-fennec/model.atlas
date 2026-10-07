@@ -17,10 +17,12 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Stream;
 
@@ -89,24 +91,54 @@ class RemoteReadableScopeService implements ReadableScopeService<EObject> {
 
 	private final WebTarget baseTarget;
 	private final String scopeName;
-	/** stage (null = final) → a ResourceSet whose package registry resolves at that stage (#272). */
-	private final Function<String, ResourceSet> resourceSetFactory;
+	/** stage (null = final) → a ResourceSet whose package registry resolves at that stage (#272, #347). */
+	private final DecodingResourceSets resourceSetFactory;
 	private final ClientCache<ObjectKey, EObject> cache;
 	/**
-	 * Lazily-cached {@code registry name → RegistryType} map for this scope, used by the
-	 * SCHEMA-registry guard. A registry's type is structural and rarely drifts, so it is
-	 * fetched once per service instance (via {@link #getScopeInfo()}) and memoized.
+	 * Lazily-cached structure of this scope: the {@code registry name → RegistryType} map the
+	 * SCHEMA-registry guard uses, and the final stages of its schema registries. Both are
+	 * structural and rarely drift, so they are fetched once per service instance (via
+	 * {@link #getScopeInfo()}) and memoized.
 	 */
-	private volatile Map<String, RegistryType> registryTypes;
+	private volatile ScopeShape scopeShape;
+
+	/**
+	 * Supplies the {@link ResourceSet} a fetched object is decoded in (#347).
+	 */
+	@FunctionalInterface
+	interface DecodingResourceSets {
+
+		/**
+		 * @param stage      the stage the object is read from, {@code null} for a stage-free read
+		 * @param finalStage whether {@code stage} is the final stage of the scope's schema
+		 *                   registry, so its packages are the ones a stage-free read resolves
+		 * @return a ResourceSet whose package registry resolves the object's metamodel there
+		 */
+		ResourceSet forStage(String stage, boolean finalStage);
+	}
+
+	/** Registry types, and the final stages of the scope's schema registries. */
+	private record ScopeShape(Map<String, RegistryType> registryTypes, Set<String> schemaFinalStages) {
+	}
 
 	RemoteReadableScopeService(WebTarget baseTarget, ClientConfiguration configuration, String scopeName,
 			Function<String, ResourceSet> resourceSetFactory) {
+		this(baseTarget, configuration, scopeName, ignoringFinalStage(resourceSetFactory));
+	}
+
+	RemoteReadableScopeService(WebTarget baseTarget, ClientConfiguration configuration, String scopeName,
+			DecodingResourceSets resourceSetFactory) {
 		this(baseTarget, configuration, scopeName, resourceSetFactory,
 				new ClientCache<>(configuration.getCacheMaxEntries(), configuration.getCacheTtlMs()));
 	}
 
 	RemoteReadableScopeService(WebTarget baseTarget, ClientConfiguration configuration, String scopeName,
 			Function<String, ResourceSet> resourceSetFactory, ClientCache<ObjectKey, EObject> cache) {
+		this(baseTarget, configuration, scopeName, ignoringFinalStage(resourceSetFactory), cache);
+	}
+
+	RemoteReadableScopeService(WebTarget baseTarget, ClientConfiguration configuration, String scopeName,
+			DecodingResourceSets resourceSetFactory, ClientCache<ObjectKey, EObject> cache) {
 		this.baseTarget = Objects.requireNonNull(baseTarget, "baseTarget");
 		Objects.requireNonNull(configuration, "configuration");
 		this.scopeName = Objects.requireNonNull(scopeName, "scopeName");
@@ -125,7 +157,12 @@ class RemoteReadableScopeService implements ReadableScopeService<EObject> {
 	 * populates the map lazily on first guarded read.
 	 */
 	void primeRegistryTypes(Map<String, RegistryType> types) {
-		this.registryTypes = Map.copyOf(types);
+		this.scopeShape = new ScopeShape(Map.copyOf(types), Set.of());
+	}
+
+	private static DecodingResourceSets ignoringFinalStage(Function<String, ResourceSet> resourceSetFactory) {
+		Objects.requireNonNull(resourceSetFactory, "resourceSetFactory");
+		return (stage, finalStage) -> resourceSetFactory.apply(stage);
 	}
 
 	/** Outcome of revalidating one cached object view during drift (P6-5). */
@@ -294,7 +331,8 @@ class RemoteReadableScopeService implements ReadableScopeService<EObject> {
 	 * stage's metamodel. A stage-free key (final stage) keeps the previous behaviour.
 	 */
 	private EObject loadEObject(byte[] body, ObjectKey key) {
-		ResourceSet resourceSet = resourceSetFactory.apply(key.stage());
+		boolean finalStage = key.stage() != null && scopeShape().schemaFinalStages().contains(key.stage());
+		ResourceSet resourceSet = resourceSetFactory.forStage(key.stage(), finalStage);
 		// Be robust if a bare ResourceSet is supplied: ensure an XMI factory is present.
 		resourceSet.getResourceFactoryRegistry().getExtensionToFactoryMap()
 				.putIfAbsent(Resource.Factory.Registry.DEFAULT_EXTENSION, new XMIResourceFactoryImpl());
@@ -359,28 +397,41 @@ class RemoteReadableScopeService implements ReadableScopeService<EObject> {
 	 * {@code registry name → type} map (double-checked) on first use.
 	 */
 	private RegistryType registryTypeOf(String registry) {
-		Map<String, RegistryType> types = registryTypes;
-		if (types == null) {
+		return scopeShape().registryTypes().get(registry);
+	}
+
+	/** The memoized {@link ScopeShape}, fetched (double-checked) on first use. */
+	private ScopeShape scopeShape() {
+		ScopeShape shape = scopeShape;
+		if (shape == null) {
 			synchronized (this) {
-				types = registryTypes;
-				if (types == null) {
-					types = loadRegistryTypes();
-					registryTypes = types;
+				shape = scopeShape;
+				if (shape == null) {
+					shape = loadScopeShape();
+					scopeShape = shape;
 				}
 			}
 		}
-		return types.get(registry);
+		return shape;
 	}
 
-	/** Read the {@code registry name → type} map from {@link #getScopeInfo()}. */
-	private Map<String, RegistryType> loadRegistryTypes() {
+	/** Read the registry types and the schema registries' final stages from {@link #getScopeInfo()}. */
+	private ScopeShape loadScopeShape() {
 		Map<String, RegistryType> types = new HashMap<>();
+		Set<String> schemaFinalStages = new HashSet<>();
 		for (RegistryInfo ri : getScopeInfo().getRegistries()) {
 			if (ri.getName() != null) {
 				types.put(ri.getName(), ri.getType());
 			}
+			if (ri.getType() == RegistryType.SCHEMA) {
+				for (StageInfo si : ri.getStages()) {
+					if (si.isFinal() && si.getName() != null) {
+						schemaFinalStages.add(si.getName());
+					}
+				}
+			}
 		}
-		return types;
+		return new ScopeShape(types, Set.copyOf(schemaFinalStages));
 	}
 
 	/** Extract {@code objectId}s from an {@code ObjectMetadataContainer} JSON body. */

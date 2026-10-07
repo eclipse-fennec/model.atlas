@@ -26,6 +26,7 @@ import org.eclipse.emf.ecore.resource.ResourceSet;
 import org.eclipse.emf.ecore.resource.impl.ResourceSetImpl;
 import org.eclipse.emf.ecore.xmi.impl.XMIResourceFactoryImpl;
 import org.eclipse.fennec.model.atlas.rest.client.api.ClientConfiguration;
+import org.eclipse.fennec.model.atlas.rest.client.api.DecodingRegistryProvider;
 import org.eclipse.fennec.model.atlas.rest.client.api.ResolutionMode;
 import org.eclipse.fennec.model.atlas.rest.client.api.DriftListener;
 import org.eclipse.fennec.model.atlas.rest.client.api.DriftReport;
@@ -66,13 +67,25 @@ public class ModelAtlasClientImpl implements ModelAtlasClient {
 
 	private volatile RemoteEPackageProviderImpl ePackages;
 	private final Map<String, RemoteReadableScopeService> readOnlyScopes = new ConcurrentHashMap<>();
+	/** Optional (#347): the registries a runtime wants objects decoded against; {@code null} for none. */
+	private final DecodingRegistryProvider decodingRegistries;
+	/**
+	 * The client's own decode registries, one per (scope, stage) (#347): repeated reads of a
+	 * stage bind one instance of each package instead of a fresh copy per read.
+	 */
+	private final Map<DecodingKey, AtlasDelegatingPackageRegistry> ownDecodingRegistries = new ConcurrentHashMap<>();
 
 	ModelAtlasClientImpl(ClientConfiguration configuration, Client client) {
 		this(configuration, client, EPackage.Registry.INSTANCE);
 	}
 
 	ModelAtlasClientImpl(ClientConfiguration configuration, Client client, EPackage.Registry localPackages) {
-		this(configuration, client, new XmiEPackageDeserializer(localPackages), localPackages);
+		this(configuration, client, localPackages, null);
+	}
+
+	ModelAtlasClientImpl(ClientConfiguration configuration, Client client, EPackage.Registry localPackages,
+			DecodingRegistryProvider decodingRegistries) {
+		this(configuration, client, new XmiEPackageDeserializer(localPackages), localPackages, decodingRegistries);
 	}
 
 	ModelAtlasClientImpl(ClientConfiguration configuration, Client client, EPackageDeserializer deserializer) {
@@ -81,6 +94,12 @@ public class ModelAtlasClientImpl implements ModelAtlasClient {
 
 	ModelAtlasClientImpl(ClientConfiguration configuration, Client client, EPackageDeserializer deserializer,
 			EPackage.Registry localPackages) {
+		this(configuration, client, deserializer, localPackages, null);
+	}
+
+	ModelAtlasClientImpl(ClientConfiguration configuration, Client client, EPackageDeserializer deserializer,
+			EPackage.Registry localPackages, DecodingRegistryProvider decodingRegistries) {
+		this.decodingRegistries = decodingRegistries;
 		this.configuration = Objects.requireNonNull(configuration, "configuration");
 		this.client = Objects.requireNonNull(client, "client");
 		this.deserializer = Objects.requireNonNull(deserializer, "deserializer");
@@ -180,18 +199,54 @@ public class ModelAtlasClientImpl implements ModelAtlasClient {
 		// One service (and one cache) per scope; repeated calls return the same instance.
 		return readOnlyScopes.computeIfAbsent(scopeName,
 				s -> new RemoteReadableScopeService(baseTarget, configuration, s,
-						stage -> newDecodingResourceSet(s, stage)));
+						(stage, finalStage) -> newDecodingResourceSet(s, stage, finalStage)));
 	}
 
 	/**
-	 * A transient, Atlas-aware {@link ResourceSet} for decoding a fetched EObject's XMI.
-	 * Like {@link #newResourceSet()} but <em>not</em> registered as a drift listener: it
-	 * is short-lived (one decode), so registering it would leak a listener on every
-	 * {@code get(...)}. Remote package look-ups still go through the shared, drift-aware
-	 * EPackage provider.
+	 * A transient {@link ResourceSet} for decoding one fetched EObject's XMI, over the
+	 * long-lived package registry of its scope and stage ({@link #decodingRegistry}).
 	 */
-	private ResourceSet newDecodingResourceSet(String scope, String stage) {
-		return newAtlasResourceSet(newAtlasRegistry(scope, stage));
+	private ResourceSet newDecodingResourceSet(String scope, String stage, boolean finalStage) {
+		return newAtlasResourceSet(decodingRegistry(scope, stage, finalStage));
+	}
+
+	/**
+	 * The package registry an object read from {@code scope} at {@code stage} is decoded
+	 * against (#347). Every read of a stage has to bind the same package instances, and
+	 * preferably the ones the rest of the runtime holds:
+	 * <ol>
+	 * <li>the registry the {@link DecodingRegistryProvider} supplies for the stage as named;</li>
+	 * <li>for the scope's final stage, the one it supplies for the stage-free case - the final
+	 * stage <em>is</em> what a stage-free read resolves;</li>
+	 * <li>otherwise the client's own registry for the stage, created once. The final stage
+	 * resolves stage-free there as well, into the provider's nsURI cache, so a read that names
+	 * the final stage binds what a stage-free read binds.</li>
+	 * </ol>
+	 */
+	EPackage.Registry decodingRegistry(String scope, String stage, boolean finalStage) {
+		EPackage.Registry shared = supplied(scope, stage);
+		if (shared == null && stage != null && finalStage) {
+			shared = supplied(scope, null);
+		}
+		if (shared != null) {
+			return new SharedDecodingRegistry(localPackages, shared);
+		}
+		String packageStage = finalStage ? null : stage;
+		return ownDecodingRegistries.computeIfAbsent(new DecodingKey(scope, packageStage), key -> {
+			AtlasDelegatingPackageRegistry registry = newAtlasRegistry(key.scope(), key.stage());
+			// Long-lived now, so it has to drop what the Atlas changes or removes, like the
+			// registry behind newResourceSet().
+			addDriftListener(registry);
+			return registry;
+		});
+	}
+
+	private EPackage.Registry supplied(String scope, String stage) {
+		return decodingRegistries == null ? null : decodingRegistries.registryFor(scope, stage);
+	}
+
+	/** Key of a decode registry; {@code stage == null} is the stage-free (final-stage) one. */
+	private record DecodingKey(String scope, String stage) {
 	}
 
 	/** A package registry that resolves the local packages first, then the remote Atlas on a miss. */
@@ -208,7 +263,7 @@ public class ModelAtlasClientImpl implements ModelAtlasClient {
 	}
 
 	/** A ResourceSet with default XMI handling and the given Atlas-aware package registry. */
-	private static ResourceSet newAtlasResourceSet(AtlasDelegatingPackageRegistry registry) {
+	private static ResourceSet newAtlasResourceSet(EPackage.Registry registry) {
 		ResourceSetImpl resourceSet = new ResourceSetImpl();
 		resourceSet.getResourceFactoryRegistry().getExtensionToFactoryMap()
 				.put(Resource.Factory.Registry.DEFAULT_EXTENSION, new XMIResourceFactoryImpl());

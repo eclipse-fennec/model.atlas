@@ -435,6 +435,14 @@ The same contract is what an in-process server publishes, so a consumer's `@Refe
 binds either source identically. **Note:** reading a `SCHEMA`-typed registry through
 this service throws — use the EPackage path above for schemas.
 
+Objects read through these services bind the same `EPackage` instances the framework
+resolves their scope and stage with (#347): for every `(scope, stage)` in
+`eager.scopes × eager.stages` the front-end decodes reads against the generated registry
+chain described below, so a read object and a framework `ResourceSet` for that scope and
+stage share their packages. For a scope or stage without such a chain the client keeps one
+set of instances per stage; a read naming the final stage binds the stage-free instances.
+A non-final stage (e.g. `draft`) always has package instances of its own.
+
 ### Stage-scoped EPackage registries (`AtlasEPackageRegistry`)
 
 When `eager.scopes` is set, the front-end creates a **configurable `EPackageRegistry` +
