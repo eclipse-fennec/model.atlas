@@ -14,10 +14,10 @@
 package org.eclipse.fennec.model.atlas.rest.client.impl;
 
 import java.util.Objects;
-import java.util.concurrent.ConcurrentHashMap;
 
 import org.eclipse.emf.ecore.EFactory;
 import org.eclipse.emf.ecore.EPackage;
+import org.eclipse.fennec.model.atlas.rest.client.impl.spi.ConcurrentPackageRegistry;
 import org.eclipse.fennec.model.atlas.rest.client.api.DecodingRegistryProvider;
 
 /**
@@ -29,12 +29,11 @@ import org.eclipse.fennec.model.atlas.rest.client.api.DecodingRegistryProvider;
  * object binds exactly the instances they hold, and keeping them fresh stays with their
  * owner.
  */
-final class SharedDecodingRegistry extends ConcurrentHashMap<String, Object> implements EPackage.Registry {
+final class SharedDecodingRegistry extends ConcurrentPackageRegistry implements EPackage.Registry {
 
-	private static final long serialVersionUID = 1L;
 
-	private final transient EPackage.Registry local;
-	private final transient EPackage.Registry shared;
+	private final EPackage.Registry local;
+	private final EPackage.Registry shared;
 
 	SharedDecodingRegistry(EPackage.Registry local, EPackage.Registry shared) {
 		this.local = Objects.requireNonNull(local, "local");
@@ -46,21 +45,6 @@ final class SharedDecodingRegistry extends ConcurrentHashMap<String, Object> imp
 		EPackage ePackage = local.getEPackage(nsURI);
 		// EMF asks for the null namespace while parsing; only a local package can live there.
 		return ePackage != null || nsURI == null ? ePackage : shared.getEPackage(nsURI);
-	}
-
-	/**
-	 * A {@code ConcurrentHashMap} rejects a {@code null} key, an EMF package registry must
-	 * not: EMF asks for the {@code null} namespace while it parses a document, and a
-	 * registry that delegates to this one passes such a look-up through (#347).
-	 */
-	@Override
-	public Object get(Object key) {
-		return key == null ? null : super.get(key);
-	}
-
-	@Override
-	public boolean containsKey(Object key) {
-		return key != null && super.containsKey(key);
 	}
 
 	@Override

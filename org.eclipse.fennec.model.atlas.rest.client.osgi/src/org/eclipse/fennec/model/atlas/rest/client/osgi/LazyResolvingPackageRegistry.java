@@ -27,6 +27,7 @@ import java.util.logging.Logger;
 
 import org.eclipse.emf.ecore.EFactory;
 import org.eclipse.emf.ecore.EPackage;
+import org.eclipse.fennec.model.atlas.rest.client.impl.spi.ConcurrentPackageRegistry;
 import org.eclipse.fennec.model.atlas.rest.client.api.ModelAtlasClientException;
 import org.eclipse.fennec.model.atlas.rest.client.api.RemoteEPackageProvider;
 import org.eclipse.fennec.model.atlas.rest.client.api.ResolvedEPackage;
@@ -61,32 +62,32 @@ import org.eclipse.fennec.model.atlas.rest.client.api.ResolvedEPackage;
  * fetch+publish+wait and the others await its result on a shared future, so the server
  * is hit once.
  * <p>
- * It is a {@link ConcurrentHashMap} (so it satisfies the full {@code EPackage.Registry}
- * /{@code Map} contract out of the box, like the Phase-2 {@code AtlasDelegatingPackageRegistry}).
+ * It is a {@link ConcurrentPackageRegistry}, so it satisfies the full {@code EPackage.Registry}
+ * /{@code Map} contract - {@code null} keys and values included, as EMF's own registry -
+ * like the Phase-2 {@code AtlasDelegatingPackageRegistry}.
  * Not yet wired into framework {@code ResourceSet}s — that is P3-10's
  * {@code ResourceSetConfigurator}, which installs this registry as a ResourceSet's
  * package registry.
  */
-final class LazyResolvingPackageRegistry extends ConcurrentHashMap<String, Object> implements EPackage.Registry {
+final class LazyResolvingPackageRegistry extends ConcurrentPackageRegistry implements EPackage.Registry {
 
-	private static final long serialVersionUID = 1L;
 
 	/** Default gap between framework-registry visibility polls. */
 	static final long DEFAULT_POLL_INTERVAL_MS = 25L;
 
 	private static final Logger LOGGER = Logger.getLogger(LazyResolvingPackageRegistry.class.getName());
 
-	private final transient EPackage.Registry primary;
-	private final transient RemoteEPackageProvider remote;
-	private final transient PackagePublication publication;
-	private final transient Function<String, EPackage> publishedLookup;
+	private final EPackage.Registry primary;
+	private final RemoteEPackageProvider remote;
+	private final PackagePublication publication;
+	private final Function<String, EPackage> publishedLookup;
 	private final long timeoutMs;
 	private final long pollIntervalMs;
-	private final transient LongSupplier clock;
-	private final transient Sleeper sleeper;
+	private final LongSupplier clock;
+	private final Sleeper sleeper;
 
 	/** One in-flight resolution per nsURI, so concurrent callers share a single fetch+publish+wait. */
-	private final transient ConcurrentHashMap<String, CompletableFuture<EPackage>> inFlight = new ConcurrentHashMap<>();
+	private final ConcurrentHashMap<String, CompletableFuture<EPackage>> inFlight = new ConcurrentHashMap<>();
 
 	/** Sleep seam (so tests need not actually sleep). */
 	@FunctionalInterface
