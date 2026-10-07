@@ -20,21 +20,28 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.time.Instant;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 
 import org.eclipse.fennec.model.compliance.context.CategoryRef;
 import org.eclipse.fennec.model.compliance.context.ContextRef;
+import org.eclipse.fennec.model.compliance.context.RequirementRef;
 import org.eclipse.fennec.model.compliance.context.ContextFactory;
 import org.eclipse.fennec.model.compliance.report.ClassifierEvaluation;
 import org.eclipse.fennec.model.compliance.report.Confidence;
 import org.eclipse.fennec.model.compliance.report.Evidence;
 import org.eclipse.fennec.model.compliance.report.FeatureEvaluation;
 import org.eclipse.fennec.model.compliance.report.Finding;
+import org.eclipse.fennec.model.compliance.report.FindingResolution;
 import org.eclipse.fennec.model.compliance.report.FlowEvaluation;
 import org.eclipse.fennec.model.compliance.report.ReportFactory;
 import org.eclipse.fennec.model.compliance.report.ComplianceReport;
 import org.eclipse.fennec.model.compliance.report.ReportOrigin;
 import org.eclipse.fennec.model.compliance.report.RelevanceLevel;
+
+import org.eclipse.fennec.model.compliance.report.ReviewStatus;
+import org.eclipse.fennec.model.compliance.report.RiskAssessment;
+import org.eclipse.fennec.model.compliance.report.RiskTreatment;
 import org.eclipse.fennec.model.compliance.report.TransformationSubject;
 import org.eclipse.fennec.model.compliance.report.PackageSubject;
 import org.eclipse.fennec.model.compliance.history.ChangeKind;
@@ -467,6 +474,190 @@ class ReportHistoryBuilderTest {
 
 	/* ------------------------------------------------------------------ fixtures */
 
+	/* ------------------------------------------------------------------ the human decision */
+
+	@Test
+	@DisplayName("a decided finding puts the whole decision on its row")
+	void aDecidedFindingCarriesItsResolution() {
+		ComplianceReport report = report("2026-09-15T08:12:00Z", "a-human");
+		FeatureEvaluation feature = feature(classifier(report, "Visitor"), "Visitor.note", "PERSONAL_DATA",
+				RelevanceLevel.LOW, Confidence.HIGH, "Free text.", "Art.4(1)");
+		Finding finding = feature.getFindings().get(0);
+		finding.setOrigin(ReportOrigin.HUMAN);
+		finding.setCorrectionNote("No Art. 9 link after the rebuild.");
+		finding.getRequirements().add(requirement("Art.5(1)(c)"));
+		finding.setResolution(resolution(ReviewStatus.REVIEWED, RiskTreatment.MITIGATE,
+				"Free text is replaced by a picklist.", "i.salvadori@example.org", "2026-09-15T08:30:00Z"));
+
+		ComplianceReportHistory history = builder.build(List.of(stored("gdpr-fp-20260915-081200", report)), now);
+		EvaluationRow row = row(history, 1, "Visitor", "Visitor.note");
+
+		assertEquals("REVIEWED", row.getReviewStatus());
+		assertEquals("MITIGATE", row.getTreatment());
+		assertEquals("Free text is replaced by a picklist.", row.getResolutionJustification());
+		assertEquals("i.salvadori@example.org", row.getDecidedBy());
+		assertEquals("2026-09-15T08:30:00Z", row.getDecidedAt());
+		assertEquals("M-UI-11, M-UI-12", row.getMeasureIds(), "measures are comma separated, as the model says");
+		assertEquals("Picklist ships in November.", row.getTreatmentNote());
+		assertEquals("the data protection officer", row.getDelegatedTo());
+		assertEquals("2026-11-30", row.getDueDate());
+		assertEquals("MEDIUM", row.getRiskLevel(), "from the assessment the treatment is based on");
+		assertEquals("No Art. 9 link after the rebuild.", row.getCorrectionNote());
+		assertEquals("HUMAN", row.getFindingOrigin());
+		assertEquals("Art.5(1)(c)", row.getRequirementIds());
+		assertEquals("gdpr", row.getContextId());
+	}
+
+	@Test
+	@DisplayName("an undecided finding leaves the decision cells empty, which is what 'still open' looks like")
+	void anUndecidedFindingLeavesTheDecisionEmpty() {
+		ComplianceReport report = report("2026-09-15T08:12:00Z", "claude-opus-5");
+		feature(classifier(report, "Visitor"), "Visitor.note", "PERSONAL_DATA", RelevanceLevel.LOW,
+				Confidence.HIGH, "Free text.", "Art.4(1)");
+
+		ComplianceReportHistory history = builder.build(List.of(stored("gdpr-fp-20260915-081200", report)), now);
+		EvaluationRow row = row(history, 1, "Visitor", "Visitor.note");
+
+		assertNull(row.getReviewStatus(), "empty means nobody has decided it yet");
+		assertNull(row.getTreatment());
+		assertNull(row.getDecidedBy());
+		assertNull(row.getDueDate());
+	}
+
+	@Test
+	@DisplayName("a feature is REVIEWED only when every one of its findings is, and empty until then")
+	void aHalfReviewedFeatureIsStillOpen() {
+		ComplianceReport report = report("2026-09-15T08:12:00Z", "a-human");
+		FeatureEvaluation feature = feature(classifier(report, "Visitor"), "Visitor.note", "PERSONAL_DATA",
+				RelevanceLevel.MEDIUM, Confidence.HIGH, "Contact details.", "Art.4(1)");
+		Finding decided = feature.getFindings().get(0);
+		decided.setResolution(resolution(ReviewStatus.REVIEWED, RiskTreatment.ACCEPT, "Accepted.",
+				"i.salvadori@example.org", "2026-09-15T08:30:00Z"));
+		finding(feature, "F-002", "SPECIAL_CATEGORY", RelevanceLevel.HIGH, Confidence.REQUIRES_CONFIRMATION,
+				"Health data may be typed in here.", "Art.9(1)");
+
+		ComplianceReportHistory history = builder.build(List.of(stored("gdpr-fp-20260915-081200", report)), now);
+		EvaluationRow row = row(history, 1, "Visitor", "Visitor.note");
+
+		assertNull(row.getReviewStatus(),
+				"one finding on this feature has not been looked at; the model reads an empty status as "
+						+ "still open, so writing OPEN would say it twice");
+		assertEquals("ACCEPT", row.getTreatment(), "the one decision there is, is still worth stating");
+	}
+
+	@Test
+	@DisplayName("findings decided differently are joined rather than reduced to one of them")
+	void differingTreatmentsAreBothStated() {
+		ComplianceReport report = report("2026-09-15T08:12:00Z", "a-human");
+		FeatureEvaluation feature = feature(classifier(report, "Visitor"), "Visitor.note", "PERSONAL_DATA",
+				RelevanceLevel.MEDIUM, Confidence.HIGH, "Contact details.", "Art.4(1)");
+		feature.getFindings().get(0).setResolution(resolution(ReviewStatus.REVIEWED, RiskTreatment.ACCEPT,
+				"Accepted.", "i.salvadori@example.org", "2026-09-15T08:30:00Z"));
+		Finding second = finding(feature, "F-002", "SPECIAL_CATEGORY", RelevanceLevel.HIGH, Confidence.HIGH,
+				"Health data may be typed in here.", "Art.9(1)");
+		second.setResolution(resolution(ReviewStatus.REVIEWED, RiskTreatment.MITIGATE, "Picklist.",
+				"i.salvadori@example.org", "2026-09-15T08:30:00Z"));
+
+		ComplianceReportHistory history = builder.build(List.of(stored("gdpr-fp-20260915-081200", report)), now);
+		EvaluationRow row = row(history, 1, "Visitor", "Visitor.note");
+
+		assertEquals("REVIEWED", row.getReviewStatus());
+		assertEquals("ACCEPT, MITIGATE", row.getTreatment(),
+				"a row that covers two findings must not report one of their treatments as if it were the row's");
+		assertEquals("Accepted., Picklist.", row.getResolutionJustification());
+	}
+
+	@Test
+	@DisplayName("a classifier states its purpose and lawful bases even when every finding sits on a feature")
+	void aClassifierRowCarriesPurposeAndLawfulBases() {
+		ComplianceReport report = report("2026-09-15T08:12:00Z", "a-human");
+		ClassifierEvaluation visitor = classifier(report, "Visitor");
+		visitor.setPurpose("Membership administration and contract performance.");
+		visitor.getLawfulBases().add(lawfulBasis("ART6_1_B"));
+		visitor.getLawfulBases().add(lawfulBasis("ART6_1_F"));
+		// every finding sits on the feature, which is the normal shape of a review
+		feature(visitor, "Visitor.note", "PERSONAL_DATA", RelevanceLevel.LOW, Confidence.HIGH, "Free text.",
+				"Art.4(1)");
+
+		ComplianceReportHistory history = builder.build(List.of(stored("gdpr-fp-20260915-081200", report)), now);
+		EvaluationRow row = row(history, 1, "Visitor", null);
+
+		assertEquals("Membership administration and contract performance.", row.getPurpose());
+		assertEquals("ART6_1_B, ART6_1_F", row.getLawfulBases(), "comma separated, as the model says");
+	}
+
+	@Test
+	@DisplayName("a classifier with nothing to say earns no row")
+	void aSilentClassifierHasNoRow() {
+		ComplianceReport report = report("2026-09-15T08:12:00Z", "claude-opus-5");
+		feature(classifier(report, "Visitor"), "Visitor.note", "PERSONAL_DATA", RelevanceLevel.LOW,
+				Confidence.HIGH, "Free text.", "Art.4(1)");
+
+		ComplianceReportHistory history = builder.build(List.of(stored("gdpr-fp-20260915-081200", report)), now);
+
+		assertTrue(history.getEvaluations().stream().noneMatch(r -> r.getChildId() == null),
+				"a classifier without findings, purpose or lawful bases states nothing of its own");
+	}
+
+	@Test
+	@DisplayName("a decision taken between two revisions reaches the change sheet")
+	void aDecisionIsDiffed() {
+		ComplianceReport first = report("2026-09-15T08:12:00Z", "claude-opus-5");
+		feature(classifier(first, "Visitor"), "Visitor.note", "PERSONAL_DATA", RelevanceLevel.LOW,
+				Confidence.HIGH, "Free text.", "Art.4(1)");
+
+		ComplianceReport second = report("2026-09-17T14:20:30Z", "a-human");
+		FeatureEvaluation reviewed = feature(classifier(second, "Visitor"), "Visitor.note", "PERSONAL_DATA",
+				RelevanceLevel.LOW, Confidence.HIGH, "Free text.", "Art.4(1)");
+		Finding finding = reviewed.getFindings().get(0);
+		finding.setCorrectionNote("Checked with the controller.");
+		finding.setResolution(resolution(ReviewStatus.REVIEWED, RiskTreatment.ACCEPT, "Residual risk accepted.",
+				"i.salvadori@example.org", "2026-09-17T14:00:00Z"));
+
+		ComplianceReportHistory history = builder.build(
+				List.of(stored("gdpr-fp-20260915-081200", first), human("gdpr-fp-20260917-142030", second, "a-human")),
+				now);
+
+		ChangeRow status = changeOf(history, "reviewStatus", ChangeKind.ADDED);
+		assertEquals("REVIEWED", status.getNewValue());
+		assertEquals("a-human", status.getChangedBy());
+		assertEquals("ACCEPT", changeOf(history, "treatment", ChangeKind.ADDED).getNewValue());
+		assertEquals("Residual risk accepted.",
+				changeOf(history, "resolutionJustification", ChangeKind.ADDED).getNewValue());
+		assertEquals("Checked with the controller.",
+				changeOf(history, "correctionNote", ChangeKind.ADDED).getNewValue());
+		assertNull(change(history, "decidedBy"),
+				"the model says decidedBy is not diffed on its own - changedBy already names the author");
+		assertNull(change(history, "decidedAt"), "nor decidedAt");
+	}
+
+
+	@Test
+	@DisplayName("a row that appears already stating a purpose and a lawful basis says so in the change sheet")
+	void anAddedRowStatesWhatAPersonPutOnIt() {
+		ComplianceReport first = report("2026-09-15T08:12:00Z", "claude-opus-5");
+		feature(classifier(first, "Visitor"), "Visitor.note", "PERSONAL_DATA", RelevanceLevel.LOW,
+				Confidence.HIGH, "Free text.", "Art.4(1)");
+
+		ComplianceReport second = report("2026-09-17T14:20:30Z", "a-human");
+		ClassifierEvaluation visitor = classifier(second, "Visitor");
+		visitor.setPurpose("Membership administration.");
+		visitor.getLawfulBases().add(lawfulBasis("ART6_1_B"));
+		feature(visitor, "Visitor.note", "PERSONAL_DATA", RelevanceLevel.LOW, Confidence.HIGH, "Free text.",
+				"Art.4(1)");
+
+		ComplianceReportHistory history = builder.build(
+				List.of(stored("gdpr-fp-20260915-081200", first), human("gdpr-fp-20260917-142030", second, "a-human")),
+				now);
+
+		assertEquals(ChangeKind.ADDED, row(history, 2, "Visitor", null).getChangeKind(),
+				"the classifier had nothing to say in revision 1, so its row is new");
+		assertEquals("Membership administration.", changeOf(history, "purpose", ChangeKind.ADDED).getNewValue(),
+				"a cell a person filled on a brand new row must still reach the change sheet");
+		assertEquals("ART6_1_B", changeOf(history, "lawfulBases", ChangeKind.ADDED).getNewValue());
+		assertEquals("a-human", changeOf(history, "lawfulBases", ChangeKind.ADDED).getChangedBy());
+	}
+
 	private static ComplianceReport report(String generatedAt, String generatedBy) {
 		ComplianceReport report = REPORTS.createComplianceReport();
 		report.setGeneratedAt(generatedAt);
@@ -534,6 +725,40 @@ class ReportHistoryBuilderTest {
 		return finding;
 	}
 
+	private static FindingResolution resolution(ReviewStatus status, RiskTreatment treatment, String justification,
+			String decidedBy, String decidedAt) {
+		FindingResolution resolution = REPORTS.createFindingResolution();
+		resolution.setStatus(status);
+		resolution.setTreatment(treatment);
+		resolution.setJustification(justification);
+		resolution.setDecidedBy(decidedBy);
+		resolution.setDecidedAt(decidedAt);
+		resolution.getMeasureIds().add("M-UI-11");
+		resolution.getMeasureIds().add("M-UI-12");
+		resolution.setTreatmentNote("Picklist ships in November.");
+		resolution.setDelegatedTo("the data protection officer");
+		resolution.setDueDate("2026-11-30");
+		RiskAssessment assessment = REPORTS.createRiskAssessment();
+		assessment.setRiskLevel("MEDIUM");
+		resolution.setRiskAssessment(assessment);
+		return resolution;
+	}
+
+	private static RequirementRef requirement(String id) {
+		RequirementRef ref = ContextFactory.eINSTANCE.createRequirementRef();
+		ref.setContextId("gdpr");
+		ref.setRequirementId(id);
+		return ref;
+	}
+
+	private static CategoryRef lawfulBasis(String categoryId) {
+		CategoryRef ref = ContextFactory.eINSTANCE.createCategoryRef();
+		ref.setContextId("gdpr");
+		ref.setTaxonomyId("lawful-bases");
+		ref.setCategoryId(categoryId);
+		return ref;
+	}
+
 	private static StoredReport stored(String objectId, ComplianceReport report) {
 		return new StoredReport(objectId, report, null, RevisionOrigin.AI_AGENT);
 	}
@@ -547,7 +772,7 @@ class ReportHistoryBuilderTest {
 	private static EvaluationRow row(ComplianceReportHistory history, int revision, String classifierId, String featureId) {
 		Optional<EvaluationRow> row = history.getEvaluations().stream()
 				.filter(r -> r.getRevisionNumber() == revision && classifierId.equals(r.getElementId())
-						&& featureId.equals(r.getChildId()))
+						&& Objects.equals(featureId, r.getChildId()))
 				.findFirst();
 		assertTrue(row.isPresent(), "no row for " + featureId + " in revision " + revision);
 		return row.get();
