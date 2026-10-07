@@ -50,6 +50,7 @@ import org.eclipse.fennec.model.compliance.report.ReportOrigin;
 import org.eclipse.fennec.model.compliance.report.PackageSubject;
 import org.eclipse.fennec.model.compliance.history.ComplianceReportHistory;
 import org.eclipse.fennec.model.compliance.history.ReportRevision;
+import org.eclipse.fennec.model.compliance.history.RevisionOrigin;
 import org.junit.jupiter.api.DisplayName;
 import org.osgi.util.promise.Promise;
 import org.osgi.util.promise.Promises;
@@ -276,6 +277,65 @@ class GDPRReportHistoryStageActionTest {
 		assertFalse(scope.awaitWrite());
 	}
 
+	/* ------------------------------------------------------------------ a withdrawn review */
+
+	@Test
+	@DisplayName("deleting the latest review rebuilds the document from the ones that are left")
+	void deletingTheLatestReviewRebuildsTheDocument() throws Exception {
+		ComplianceReport first = report("2026-09-15T08:12:00Z", FINGERPRINT);
+		ComplianceReport second = report("2026-09-17T14:20:30Z", FINGERPRINT);
+		scope.putDocument("draft", ID_EN, new ReportHistoryBuilder().build(
+				List.of(new StoredReport("gdpr-a", first, null, RevisionOrigin.AI_AGENT),
+						new StoredReport("gdpr-b", second, null, RevisionOrigin.AI_AGENT)),
+				Instant.parse("2026-09-18T12:00:00Z")));
+		// the newer review has been deleted; only the older one is still readable
+		scope.put("draft", "gdpr-a", first);
+		var action = action(new String[] { "draft" }, new String[0]);
+
+		action.onExit(context("jena", "draft", "gdpr-b"));
+
+		assertTrue(scope.awaitWrite(), "the document named the deleted review, so it has to be rewritten");
+		assertEquals(1, scope.written.get().getRevisionCount(),
+				"the withdrawn review is gone from the document, the one that stands is not");
+		assertEquals("gdpr-a", scope.written.get().getRevisions().get(0).getReportId());
+	}
+
+	@Test
+	@DisplayName("deleting a superseded review leaves the document alone")
+	void deletingAnEarlierReviewChangesNothing() throws Exception {
+		ComplianceReport first = report("2026-09-15T08:12:00Z", FINGERPRINT);
+		ComplianceReport second = report("2026-09-17T14:20:30Z", FINGERPRINT);
+		scope.putDocument("draft", ID_EN, new ReportHistoryBuilder().build(
+				List.of(new StoredReport("gdpr-a", first, null, RevisionOrigin.AI_AGENT),
+						new StoredReport("gdpr-b", second, null, RevisionOrigin.AI_AGENT)),
+				Instant.parse("2026-09-18T12:00:00Z")));
+		scope.put("draft", "gdpr-b", second);
+		var action = action(new String[] { "draft" }, new String[0]);
+
+		action.onExit(context("jena", "draft", "gdpr-a"));
+
+		assertFalse(scope.awaitWrite(),
+				"what the document says the subject looks like now has not changed, so it is not rewritten");
+		assertTrue(scope.deleted.isEmpty(), "and nothing is removed");
+	}
+
+	@Test
+	@DisplayName("deleting the only review of a subject removes its document")
+	void deletingTheOnlyReviewRemovesTheDocument() throws Exception {
+		ComplianceReport only = report("2026-09-15T08:12:00Z", FINGERPRINT);
+		scope.putDocument("draft", ID_EN, new ReportHistoryBuilder().build(
+				List.of(new StoredReport("gdpr-a", only, null, RevisionOrigin.AI_AGENT)),
+				Instant.parse("2026-09-18T12:00:00Z")));
+		// nothing is put into the report registry: the review is gone
+		var action = action(new String[] { "draft" }, new String[0]);
+
+		action.onExit(context("jena", "draft", "gdpr-a"));
+
+		assertTrue(scope.awaitDelete(), "a document describing no review at all is a document about nothing");
+		assertEquals(List.of("draft/" + ID_EN), scope.deleted);
+		assertFalse(scope.awaitWrite(), "and it is removed rather than rewritten empty");
+	}
+
 	/* ------------------------------------------------------------------ how it writes */
 
 	@Test
@@ -370,6 +430,11 @@ class GDPRReportHistoryStageActionTest {
 	 */
 	static class Scope implements WritableScopeService<EObject> {
 		private final Map<String, Map<String, EObject>> byStage = new LinkedHashMap<>();
+		/** The document registry, kept apart from the reports so a view answers for one of them. */
+		private final Map<String, Map<String, EObject>> documentsByStage = new LinkedHashMap<>();
+		/** Every document deleted, as {@code <stage>/<objectId>}. */
+		final List<String> deleted = new java.util.concurrent.CopyOnWriteArrayList<>();
+		private final CountDownLatch removed = new CountDownLatch(1);
 
 		final AtomicReference<String> writtenId = new AtomicReference<>();
 		final AtomicReference<String> writtenVersion = new AtomicReference<>();
@@ -387,6 +452,16 @@ class GDPRReportHistoryStageActionTest {
 
 		void put(String stage, String objectId, EObject object) {
 			byStage.computeIfAbsent(stage, s -> new LinkedHashMap<>()).put(objectId, object);
+		}
+
+		/** Seeds the document registry, the way a previous rebuild would have left it. */
+		void putDocument(String stage, String objectId, EObject document) {
+			documentsByStage.computeIfAbsent(stage, s -> new LinkedHashMap<>()).put(objectId, document);
+		}
+
+		/** True if a document was deleted; false after a short wait if none was. */
+		boolean awaitDelete() throws InterruptedException {
+			return removed.await(5, TimeUnit.SECONDS);
 		}
 
 		/** Makes the document registry answer as if a document were already stored. */
@@ -475,7 +550,13 @@ class GDPRReportHistoryStageActionTest {
 
 		@Override
 		public Promise<Boolean> deleteFromStageForRegistry(String registry, String stage, String objectId) {
-			throw new UnsupportedOperationException();
+			deleted.add(stage + "/" + objectId);
+			Map<String, EObject> inStage = documentsByStage.get(stage);
+			if (inStage != null) {
+				inStage.remove(objectId);
+			}
+			removed.countDown();
+			return Promises.resolved(Boolean.TRUE);
 		}
 
 		@Override
@@ -568,7 +649,8 @@ class GDPRReportHistoryStageActionTest {
 
 		@Override
 		public ReadableRegistryView<EObject> registryView(String registry, String stage) {
-			return view(byStage.getOrDefault(stage, Map.of()));
+			Map<String, Map<String, EObject>> source = "gdprdoc".equals(registry) ? documentsByStage : byStage;
+			return view(source.getOrDefault(stage, Map.of()));
 		}
 
 		private ReadableRegistryView<EObject> view(Map<String, EObject> objects) {
