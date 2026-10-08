@@ -360,6 +360,13 @@
         ],
         "resourceSet.target": "(emf.name=ecore)"
     },
+    "InitialModelLoaderRequiredModels": {
+        "required.models": [
+            "https://org.eclipse/fennec/compliance/context/1.0.0",
+            "https://org.eclipse/fennec/compliance/corpus/1.0.0",
+            "https://org.eclipse/fennec/compliance/inventory/1.0.0"
+        ]
+    },
     "RegistryService~compliance-context": {
         "schemaPackage.target": "(emf.nsURI=https://org.eclipse/fennec/compliance/context/1.0.0)",
         "registry.type": "OTHER",

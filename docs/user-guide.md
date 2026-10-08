@@ -1198,6 +1198,17 @@ The loader is configured via the `InitialModelLoader` PID:
 The loader silently does nothing when the folder is blank, missing, not a directory,
 or still contains an un-interpolated `$[env:...]` template.
 
+If seeded instances use models that ship in bundles (for example the compliance
+models), list their nsURIs in the `InitialModelLoaderRequiredModels` PID. The loader
+then starts only once all of them are registered:
+
+| Property | Default | Description |
+|----------|---------|-------------|
+| `required.models` | (none) | nsURIs of the bundle-shipped models the initial models refer to. |
+| `required.models.wait.seconds` | `60` | After how many seconds the models still missing are logged as an error. |
+
+A listed model the runtime does not carry keeps the loader from starting.
+
 ### Using it with Docker
 
 The Docker runtime wires the folder to the `INITIAL_MODELS_FOLDER` environment
