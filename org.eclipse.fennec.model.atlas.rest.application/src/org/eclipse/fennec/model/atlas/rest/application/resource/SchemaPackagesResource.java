@@ -13,8 +13,6 @@
  */
 package org.eclipse.fennec.model.atlas.rest.application.resource;
 
-import java.net.URLEncoder;
-import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.util.LinkedHashSet;
 import java.util.LinkedList;
@@ -363,7 +361,7 @@ public class SchemaPackagesResource {
                     }
                     ePackageIndex.index(metadata, ePackage);
                     Response.ResponseBuilder rb = Response.status(Response.Status.OK)
-                            .header("Location", packageLocation(scopeName, stageName, validatedNsUri))
+                            .location(packageLocation(scopeName, stageName, validatedNsUri))
                             .entity(metadata).header("Content-Type", ResourceSupport.resolvedMediaType(requestContext));
                     ObjectMetadataResponseFilter.attach(requestContext, metadata,
                             ObjectMetadataResponseFilter.CacheTarget.METADATA);
@@ -392,7 +390,7 @@ public class SchemaPackagesResource {
             ePackageIndex.index(metadata, ePackage);
 
             Response.ResponseBuilder rb = Response.status(Response.Status.CREATED)
-                    .header("Location", packageLocation(scopeName, stageName, validatedNsUri))
+                    .location(packageLocation(scopeName, stageName, validatedNsUri))
                     .entity(metadata).header("Content-Type", ResourceSupport.resolvedMediaType(requestContext));
             ObjectMetadataResponseFilter.attach(requestContext, metadata,
                     ObjectMetadataResponseFilter.CacheTarget.METADATA);
@@ -1157,9 +1155,16 @@ public class SchemaPackagesResource {
         return matches.isEmpty() ? null : matches.get(0);
     }
 
-    private String packageLocation(String scopeName, String stageName, String nsUri) {
-        return "/".concat(scopeName).concat("/schema/stages/").concat(stageName).concat("?nsUri=")
-                .concat(URLEncoder.encode(nsUri, StandardCharsets.UTF_8));
+    /**
+     * The {@code Location} of a package in a stage, absolute and built from the request's
+     * base URI. A {@code /scope/...} path would lose the application's base path, as Jersey
+     * resolves it against the host (#335). The nsURI goes into the query encoded.
+     */
+    private java.net.URI packageLocation(String scopeName, String stageName, String nsUri) {
+        return requestContext.getUriInfo().getBaseUriBuilder()
+                .path("{scope}/schema/stages/{stage}")
+                .queryParam("nsUri", "{nsUri}")
+                .build(scopeName, stageName, nsUri);
     }
 
     private static void requireNsUri(String nsUri) {
