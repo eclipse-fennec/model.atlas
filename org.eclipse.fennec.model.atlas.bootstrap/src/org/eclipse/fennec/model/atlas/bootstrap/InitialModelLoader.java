@@ -583,25 +583,33 @@ public class InitialModelLoader {
         // bad file cannot leave a half-deployed state behind (issue #175 / F39).
         List<EPackage> ePackages = validateEPackages(ePackageResources);
 
-        // Issue #339: everything below scopes/ is loaded now as well, and the whole
-        // folder is resolved as ONE set of files before any Resource URI changes.
-        // Each file is still addressed by its location while references are resolved,
-        // so a relative href between two files - across scope folders too - finds the
-        // file it names; nsURI-based hrefs resolve through the package registry, into
-        // which every package is put first. Only then does each package Resource take
-        // its nsURI, so whatever refers to a package from here on - the object type
-        // recorded for an instance, a serialized reference - names the package by its
-        // identity rather than by the file it happened to be read from.
+        // Issue #339: every package below scopes/ is loaded now as well, and all of them are
+        // resolved as ONE set of files before any Resource URI changes. Each file is still
+        // addressed by its location while references are resolved, so a relative href between
+        // two package files - across scope folders too - finds the file it names; nsURI-based
+        // hrefs resolve through the package registry, into which every package is put first.
+        // Only then does each package Resource take its nsURI, so whatever refers to a package
+        // from here on - the object type recorded for an instance, a serialized reference -
+        // names the package by its identity rather than by the file it happened to be read from.
+        //
+        // Issue #351: the instance files are created here but read in seedFilesIntoRegistry,
+        // once the registry they belong to is bound. Their EPackage may ship in a bundle that
+        // nothing orders ahead of this component - the resolved runtimes assign start levels in
+        // alphabetical order, the hand-written ones assign none at all - and reading an instance
+        // before its package is registered fails with a PackageNotFoundException that no later
+        // arrival can repair, because Declarative Services does not retry an activation that
+        // threw. The registry already waits for precisely that package, its schemaPackage being
+        // a mandatory reference (issue #169), so the registry binding is the signal that reading
+        // is safe. Instance hrefs are therefore resolved against the aligned package URIs, which
+        // names a package by nsURI rather than by the file it was read from.
         List<Resource> scopePackageResources = new ArrayList<>();
         List<Resource> scopeInstanceResources = new ArrayList<>();
         createScopeResources(scopePackageResources, scopeInstanceResources);
         loadFromDisk(scopePackageResources);
         seedEPackages(ePackageResources);
         seedScopePackages(ePackageResources, scopePackageResources);
-        loadFromDisk(scopeInstanceResources);
         List<Resource> allResources = new ArrayList<>(ePackageResources);
         allResources.addAll(scopePackageResources);
-        allResources.addAll(scopeInstanceResources);
         allResources.forEach(r -> r.getContents().forEach(EcoreUtil::resolveAll));
         alignResourceUris(ePackageResources);
         alignResourceUris(scopePackageResources);
@@ -739,14 +747,18 @@ public class InitialModelLoader {
         LOG.log(Level.INFO, () -> "InitialModelLoader: seeding scope '" + scopeName + "' (registry '" + registry
                 + "', stage '" + stage + "') with " + files.size() + " file(s).");
 
-        // Loaded, resolved and aligned to their nsURIs at activation (issue #339).
+        // The package files were loaded, resolved and aligned to their nsURIs at activation
+        // (issue #339). The instance files were only created there: they are read just below,
+        // now that this registry is bound and with it the EPackage its root EClass lives in
+        // (issue #351).
         List<Resource> packageResources = new ArrayList<>();
         List<Resource> instanceResources = new ArrayList<>();
         List<Path> instanceFiles = new ArrayList<>();
         for (Path file : files) {
             Resource resource = loadedScopeResources.get(file);
             if (resource == null) {
-                throw new IllegalStateException("InitialModelLoader: " + file + " was not loaded at activation.");
+                throw new IllegalStateException(
+                        "InitialModelLoader: " + file + " was not collected at activation.");
             }
             if (file.getFileName().toString().toLowerCase().endsWith(".xmi")) {
                 instanceResources.add(resource);
@@ -755,6 +767,10 @@ public class InitialModelLoader {
                 packageResources.add(resource);
             }
         }
+
+        // Reading the instances is what needed the registry to be there (issue #351).
+        loadFromDisk(instanceResources);
+        instanceResources.forEach(r -> r.getContents().forEach(EcoreUtil::resolveAll));
 
         Set<String> batchNsUris = new HashSet<>();
         List<EPackage> packageRoots = new ArrayList<>();

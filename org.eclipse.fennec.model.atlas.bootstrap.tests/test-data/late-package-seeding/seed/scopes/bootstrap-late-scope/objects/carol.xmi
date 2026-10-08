@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<lperson:Person xmi:version="2.0"
+    xmlns:xmi="http://www.omg.org/XMI"
+    xmlns:lperson="http://test.fennec.eclipse.org/bootstrap/late/person/1.0.0"
+    pid="carol" name="Carol"/>
