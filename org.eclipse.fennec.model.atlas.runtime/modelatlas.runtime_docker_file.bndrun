@@ -21,7 +21,8 @@
 # in this runtime requires it - an Inventory is seeded as data, so the only thing that needs its
 # EPackage is the registry that stores it, and RegistryServiceImpl's schemaPackage reference is
 # mandatory, so without the bundle such a registry never activates and the scope fails to start.
-# Unlike context.ecore it cross-references no other compliance model, so it travels alone.
+# It cross-references context.ecore (ContextRef, CategoryRef, RequirementRef), so it needs the
+# context and corpus models listed next to it.
 #
 # The GDPR review document (AP4/AP5 of the ODS plan) and the ODS codec it is downloaded through.
 # This file is '-resolve: never', so unlike the docker jena runtime the closure is named by hand:

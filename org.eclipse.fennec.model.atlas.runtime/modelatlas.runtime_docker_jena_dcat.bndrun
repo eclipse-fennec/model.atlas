@@ -162,14 +162,16 @@
 	org.objectweb.asm.tree.analysis;version='[9.10.1,9.10.2)';startlevel=1140,\
 	org.objectweb.asm.util;version='[9.10.1,9.10.2)';startlevel=1141,\
 	org.osgi.service.component;version='[1.5.1,1.5.2)';startlevel=1142,\
-	org.osgi.service.jakartars;version='[2.0.0,2.0.1)';startlevel=1143,\
-	org.osgi.service.log;version='[1.5.0,1.5.1)';startlevel=1144,\
-	org.osgi.service.typedevent;version='[1.0.0,1.0.1)';startlevel=1145,\
-	org.osgi.util.converter;version='[1.0.9,1.0.10)';startlevel=1146,\
-	org.osgi.util.function;version='[1.2.0,1.2.1)';startlevel=1147,\
-	org.osgi.util.promise;version='[1.3.0,1.3.1)';startlevel=1148,\
-	org.osgi.util.pushstream;version='[1.1.0,1.1.1)';startlevel=1149,\
-	org.snakeyaml.engine;version='[3.0.1,3.0.2)';startlevel=1150,\
-	tools.jackson.core.jackson-core;version='[3.2.2,3.2.3)';startlevel=1151,\
-	tools.jackson.core.jackson-databind;version='[3.2.2,3.2.3)';startlevel=1152,\
-	tools.jackson.dataformat.jackson-dataformat-yaml;version='[3.2.2,3.2.3)';startlevel=1153
+	org.osgi.service.event;version='[1.4.1,1.4.2)';startlevel=1143,\
+	org.osgi.service.jakartars;version='[2.0.0,2.0.1)';startlevel=1144,\
+	org.osgi.service.log;version='[1.5.0,1.5.1)';startlevel=1145,\
+	org.osgi.service.servlet;version='[2.0.0,2.0.1)';startlevel=1146,\
+	org.osgi.service.typedevent;version='[1.0.0,1.0.1)';startlevel=1147,\
+	org.osgi.util.converter;version='[1.0.9,1.0.10)';startlevel=1148,\
+	org.osgi.util.function;version='[1.2.0,1.2.1)';startlevel=1149,\
+	org.osgi.util.promise;version='[1.3.0,1.3.1)';startlevel=1150,\
+	org.osgi.util.pushstream;version='[1.1.0,1.1.1)';startlevel=1151,\
+	org.snakeyaml.engine;version='[3.0.1,3.0.2)';startlevel=1152,\
+	tools.jackson.core.jackson-core;version='[3.2.2,3.2.3)';startlevel=1153,\
+	tools.jackson.core.jackson-databind;version='[3.2.2,3.2.3)';startlevel=1154,\
+	tools.jackson.dataformat.jackson-dataformat-yaml;version='[3.2.2,3.2.3)';startlevel=1155
